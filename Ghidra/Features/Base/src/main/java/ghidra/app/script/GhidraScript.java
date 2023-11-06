@@ -2360,6 +2360,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 
 	public GhidraValuesMap askValues(String title, String optionalMessage, GhidraValuesMap values)
 			throws CancelledException {
+		values.setTaskMonitor(monitor);
 		for (AbstractValue<?> value : values.getValues()) {
 			String key = join(title, value.getName());
 			loadAskValue(value.getValue(), s -> value.setAsText(s), key);

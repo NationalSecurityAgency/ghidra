@@ -17,7 +17,6 @@
 // @category Examples
 import ghidra.app.script.GhidraScript;
 import ghidra.features.base.values.GhidraValuesMap;
-import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.util.MessageType;
 
@@ -28,20 +27,12 @@ public class AskValuesExampleScript extends GhidraScript {
 		GhidraValuesMap values = new GhidraValuesMap();
 
 		values.defineString("Name");
-		values.defineAddress("Address", currentProgram);
 		values.defineInt("Count");
 		values.defineInt("Max Results", 100);
 		values.defineChoice("Priority", "Low", "Low", "Medium", "High");
-
-		// When asking for a program, you must supply a consumer that you will use
-		// to release the program. Since programs share open instances, Ghidra uses
-		// consumers to keep track of these uses. Scripts can just add themselves
-		// as the consumer (The askProgram() method does this for you). It is
-		// important to release it when you are done with. Optionally, you can also
-		// provide a tool in which case the program will also be opened in the tool (and the
-		// tool would then also add itself as a consumer). Otherwise, the program will not 
-		// show up in the tool and when you release the consumer, it will be closed.
-		values.defineProgram("Other Program", this, state.getTool());
+		values.defineProgram("Other Program");
+		values.defineProjectFile("Project File");
+		values.defineProjectFolder("Project Folder");
 
 		// Optional validator that can be set to validate values before the dialog returns. It
 		// is called when the "Ok" button is pushed and must return true before the dialog exits.
@@ -70,14 +61,23 @@ public class AskValuesExampleScript extends GhidraScript {
 		//dialog. The values map returned may or may not be the same instance as the one passed in.
 
 		String name = values.getString("Name");
-		Address address = values.getAddress("Address");
 		int age = values.getInt("Count");
 		int max = values.getInt("Max Results");
 		String priority = values.getChoice("Priority");
-		Program program = values.getProgram("Other Program");
+
+		// When asking for a program, you must supply a consumer that you will use
+		// to release the program. Since programs share open instances, Ghidra uses
+		// consumers to keep track of these uses. Scripts can just add themselves
+		// as the consumer (The askProgram() method does this for you). It is
+		// important to release it when you are done with it. Optionally, you can also
+		// provide a tool in which case the program will also be opened in the tool (and the
+		// tool would then also add itself as a consumer). Otherwise, the program will not 
+		// show up in the tool and when you release the consumer, it will be closed.
+		// NOTE: if you call getProgram() more than once, the consumer will be added multiple times
+		// and you must release it multiple times
+		Program program = values.getProgram("Other Program", this, state.getTool());
 
 		println("Name = " + name);
-		println("Address = " + address);
 		println("Count = " + age);
 		println("Max Results = " + max);
 		println("Priority = " + priority);

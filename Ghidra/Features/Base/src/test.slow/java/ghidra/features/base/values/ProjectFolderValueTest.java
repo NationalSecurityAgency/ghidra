@@ -19,8 +19,6 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import ghidra.features.base.values.ProjectFolderValue;
-
 public class ProjectFolderValueTest extends AbstractValueIntegrationTest {
 	private static final String NAME = "Project File";
 
@@ -31,24 +29,24 @@ public class ProjectFolderValueTest extends AbstractValueIntegrationTest {
 		assertTrue(values.isDefined(NAME));
 		assertFalse(values.hasValue(NAME));
 
-		values.setProjectFolder(NAME, folder);
+		values.setProjectFolder(NAME, folderA);
 		assertTrue(values.hasValue(NAME));
 
-		assertEquals(folder, values.getProjectFolder(NAME));
+		assertEquals(folderA, values.getProjectFolder(NAME));
 	}
 
 	@Test
 	public void testProjectFolderValueWithDefault() {
-		values.defineProjectFolder(NAME, rootFolder);
+		values.defineProjectFolder(NAME, "/A");
 
 		assertTrue(values.isDefined(NAME));
 		assertTrue(values.hasValue(NAME));
-		assertEquals(rootFolder, values.getProjectFolder(NAME));
+		assertEquals(folderA, values.getProjectFolder(NAME));
 
-		values.setProjectFolder(NAME, folder);
+		values.setProjectFolder(NAME, folderB);
 		assertTrue(values.hasValue(NAME));
 
-		assertEquals(folder, values.getProjectFolder(NAME));
+		assertEquals(folderB, values.getProjectFolder(NAME));
 
 		values.setProjectFolder(NAME, null);
 		assertFalse(values.hasValue(NAME));
@@ -57,7 +55,7 @@ public class ProjectFolderValueTest extends AbstractValueIntegrationTest {
 	@Test
 	public void testGetAsText() {
 		ProjectFolderValue value1 = new ProjectFolderValue(NAME);
-		ProjectFolderValue value2 = new ProjectFolderValue(NAME, folder);
+		ProjectFolderValue value2 = new ProjectFolderValue(NAME, "/A");
 		assertNull(value1.getAsText());
 		assertEquals("/A", value2.getAsText());
 	}
@@ -65,7 +63,7 @@ public class ProjectFolderValueTest extends AbstractValueIntegrationTest {
 	@Test
 	public void testSetAsText() {
 		ProjectFolderValue v = new ProjectFolderValue(NAME);
-		assertEquals(folder, v.setAsText("/A"));
+		assertEquals(folderA, v.setAsText("/A"));
 		try {
 			v.setAsText(null);
 			fail("Expected exception");
@@ -102,36 +100,36 @@ public class ProjectFolderValueTest extends AbstractValueIntegrationTest {
 		assertFalse(values.hasValue(NAME));
 
 		showDialogOnSwingWithoutBlocking();
-		setProjectFolderOnProjectTree(values.getAbstractValue(NAME), folder);
+		setProjectFolderOnProjectTree(values.getAbstractValue(NAME), folderA);
 		pressOk();
 
 		assertTrue(values.hasValue(NAME));
-		assertEquals(folder, values.getProjectFolder(NAME));
+		assertEquals(folderA, values.getProjectFolder(NAME));
 	}
 
 	@Test
 	public void testDefaultValueWithNoDialogInput() {
-		values.defineProjectFolder(NAME, folder);
+		values.defineProjectFolder(NAME, "/A");
 		assertTrue(values.hasValue(NAME));
 
 		showDialogOnSwingWithoutBlocking();
 		pressOk();
 
 		assertTrue(values.hasValue(NAME));
-		assertEquals(folder, values.getProjectFolder(NAME));
+		assertEquals(folderA, values.getProjectFolder(NAME));
 	}
 
 	@Test
 	public void testDefaultValueWithDialogInput() {
-		values.defineProjectFolder(NAME, rootFolder);
+		values.defineProjectFolder(NAME, "/A");
 		assertTrue(values.hasValue(NAME));
 
 		showDialogOnSwingWithoutBlocking();
-		setProjectFolderOnProjectTree(values.getAbstractValue(NAME), folder);
+		setProjectFolderOnProjectTree(values.getAbstractValue(NAME), folderB);
 		pressOk();
 
 		assertTrue(values.hasValue(NAME));
-		assertEquals(folder, values.getProjectFolder(NAME));
+		assertEquals(folderB, values.getProjectFolder(NAME));
 	}
 
 }

@@ -16,102 +16,91 @@
 package ghidra.features.base.values;
 
 import java.awt.BorderLayout;
+import java.util.Objects;
 
 import javax.swing.*;
 
 import docking.widgets.button.BrowseButton;
-import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.DataTreeDialog;
 import ghidra.framework.model.*;
 import ghidra.framework.store.FileSystem;
 
 /**
- * Component used by Values that use the DataTreeDialog for picking DomainFiles and DomainFolders
+ * Base class for either project file chooser or project folder chooser
  */
-class ProjectBrowserPanel extends JPanel {
-	private JTextField textField;
+abstract class AbstractProjectBrowserPanel extends JPanel {
+	protected Project project;
+	protected JTextField textField;
 	private JButton browseButton;
-	private boolean selectFolders;
+	private DomainFolder startFolder;
+	private int type;
+	protected DomainFileFilter filter = null;
 
-	ProjectBrowserPanel(String name, boolean selectFolders) {
+	AbstractProjectBrowserPanel(int type, Project project, String name, String startPath) {
 		super(new BorderLayout());
-		this.selectFolders = selectFolders;
+		this.type = type;
+		this.project = Objects.requireNonNull(project);
+		this.startFolder = parseDomainFolder(project, startPath);
 		setName(name);
 		textField = new JTextField(20);
 		browseButton = new BrowseButton();
-		browseButton.addActionListener(e -> showDomainFileChooser());
+		browseButton.addActionListener(e -> showProjectChooser());
 		add(textField, BorderLayout.CENTER);
 		add(browseButton, BorderLayout.EAST);
 	}
 
-	void setDomainFile(DomainFile value) {
-		String text = value == null ? "" : value.getPathname();
-		textField.setText(text);
-	}
+	private void showProjectChooser() {
+		DataTreeDialog dialog =
+			new DataTreeDialog(null, "Choose " + getName(), type, filter, project);
 
-	void setDomainFolder(DomainFolder value) {
-		String text = value == null ? "" : value.getPathname();
-		textField.setText(text);
-	}
+		if (startFolder != null) {
+			dialog.selectFolder(startFolder);
+		}
+		intializeCurrentValue(dialog);
 
-	private void showDomainFileChooser() {
-		DataTreeDialog dialog = new DataTreeDialog(null, "Choose " + getName(),
-			selectFolders ? DataTreeDialog.CHOOSE_FOLDER : DataTreeDialog.OPEN);
 		dialog.show();
+
 		if (dialog.wasCancelled()) {
 			return;
 		}
-		String text = selectFolders ? dialog.getDomainFolder().getPathname()
-				: dialog.getDomainFile().getPathname();
+		String text = getSelectedPath(dialog);
 		textField.setText(text);
 		dialog.dispose();
 	}
 
-	DomainFile getDomainFile() {
-		String text = textField.getText().trim();
-		if (text.isBlank()) {
-			return null;
-		}
-		return parseDomainFile(text);
-	}
+	protected abstract String getSelectedPath(DataTreeDialog dialog);
+
+	protected abstract void intializeCurrentValue(DataTreeDialog dialog);
 
 	String getText() {
 		return textField.getText().trim();
 	}
 
-	DomainFolder getDomainFolder() {
-		String text = textField.getText().trim();
-		if (text.isBlank()) {
-			return parseDomainFolder("/");
-		}
-		return parseDomainFolder(text);
-	}
-
-	static DomainFile parseDomainFile(String val) {
+	static DomainFile parseDomainFile(Project project, String val) {
 		// Add the slash to make it an absolute path
 		if (!val.isEmpty() && val.charAt(0) != FileSystem.SEPARATOR_CHAR) {
 			val = FileSystem.SEPARATOR_CHAR + val;
 		}
-		Project activeProject = AppInfo.getActiveProject();
-		DomainFile df = activeProject.getProjectData().getFile(val);
+		DomainFile df = project.getProjectData().getFile(val);
 		if (df != null) {
 			return df;
 		}
 		return null;
 	}
 
-	static DomainFolder parseDomainFolder(String path) {
+	static DomainFolder parseDomainFolder(Project project, String path) {
+		if (path == null) {
+			return null;
+		}
 		path = path.trim();
 		// Add the slash to make it an absolute path
 		if (path.isEmpty() || path.charAt(0) != FileSystem.SEPARATOR_CHAR) {
 			path = FileSystem.SEPARATOR_CHAR + path;
 		}
-		Project activeProject = AppInfo.getActiveProject();
-		DomainFolder df = activeProject.getProjectData().getFolder(path);
+		DomainFolder df = project.getProjectData().getFolder(path);
 		if (df != null) {
 			return df;
 		}
 		return null;
 	}
-
 }

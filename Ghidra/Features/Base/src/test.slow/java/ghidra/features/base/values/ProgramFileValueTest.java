@@ -20,16 +20,15 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 import ghidra.app.services.ProgramManager;
-import ghidra.features.base.values.ProgramValue;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
 
-public class ProgramValueTest extends AbstractValueIntegrationTest {
+public class ProgramFileValueTest extends AbstractValueIntegrationTest {
 	private static final String NAME = "Program";
 
 	@Test
-	public void testProgramValueNoDefault() {
-		values.defineProgram(NAME, this, null);
+	public void testProgramValueNoDefault() throws Exception {
+		values.defineProgram(NAME);
 
 		assertTrue(values.isDefined(NAME));
 		assertFalse(values.hasValue(NAME));
@@ -37,38 +36,41 @@ public class ProgramValueTest extends AbstractValueIntegrationTest {
 		values.setProgram(NAME, programA);
 		assertTrue(values.hasValue(NAME));
 
-		assertEquals(programA, values.getProgram(NAME));
+		assertEquals(programA, values.getProgram(NAME, this, null));
 	}
 
 	@Test
-	public void testProgramValueWithDefault() {
-		values.defineProgram(NAME, programA, this, null);
+	public void testSetValue() throws Exception {
+		values.defineProgram(NAME);
+		values.setProgram(NAME, programA);
 
 		assertTrue(values.isDefined(NAME));
 		assertTrue(values.hasValue(NAME));
-		assertEquals(programA, values.getProgram(NAME));
+		assertEquals(programA, values.getProgram(NAME, this, null));
 
 		values.setProgram(NAME, programB);
 		assertTrue(values.hasValue(NAME));
 
-		assertEquals(programB, values.getProgram(NAME));
+		assertEquals(programB, values.getProgram(NAME, this, null));
 
 		values.setProgram(NAME, null);
 		assertFalse(values.hasValue(NAME));
 	}
 
 	@Test
-	public void testGetAsText() {
-		ProgramValue value1 = new ProgramValue(NAME, this, null);
-		ProgramValue value2 = new ProgramValue(NAME, programA, this, null);
-		assertNull(value1.getAsText());
-		assertEquals("/A/A", value2.getAsText());
+	public void testGetAsText() throws Exception {
+		ProgramFileValue value = values.defineProgram(NAME);
+		assertNull(value.getAsText());
+
+		values.setProgram(NAME, programA);
+
+		assertEquals("/A/A", value.getAsText());
 	}
 
 	@Test
 	public void testSetAsText() {
-		ProgramValue v = new ProgramValue(NAME, this, null);
-		assertEquals(programA, v.setAsText("/A/A"));
+		ProgramFileValue v = new ProgramFileValue(NAME);
+		assertEquals(programA.getDomainFile(), v.setAsText("/A/A"));
 		try {
 			v.setAsText(null);
 			fail("Expected exception");
@@ -86,20 +88,20 @@ public class ProgramValueTest extends AbstractValueIntegrationTest {
 	}
 
 	@Test
-	public void testNoDefaultValueWithNoDialogInput() {
-		values.defineProgram(NAME, this, null);
+	public void testNoDefaultValueWithNoDialogInput() throws Exception {
+		values.defineProgram(NAME);
 		assertFalse(values.hasValue(NAME));
 
 		showDialogOnSwingWithoutBlocking();
 		pressOk();
 
 		assertFalse(values.hasValue(NAME));
-		assertNull(values.getProgram(NAME));
+		assertNull(values.getProgram(NAME, this, null));
 	}
 
 	@Test
-	public void testNoDefaultValueWithDialogInput() {
-		values.defineProgram(NAME, this, null);
+	public void testNoDefaultValueWithDialogInput() throws Exception {
+		values.defineProgram(NAME);
 		assertFalse(values.hasValue(NAME));
 
 		showDialogOnSwingWithoutBlocking();
@@ -107,49 +109,67 @@ public class ProgramValueTest extends AbstractValueIntegrationTest {
 		pressOk();
 
 		assertTrue(values.hasValue(NAME));
-		assertEquals(programA, values.getProgram(NAME));
+		assertEquals(programA, values.getProgram(NAME, this, null));
 	}
 
 	@Test
-	public void testDefaultValueWithNoDialogInput() {
-		values.defineProgram(NAME, programA, this, null);
-		assertTrue(values.hasValue(NAME));
+	public void testExistingValueWithNoDialogInput() throws Exception {
+		values.defineProgram(NAME);
+		values.setProgram(NAME, programA);
 
 		showDialogOnSwingWithoutBlocking();
 		pressOk();
 
 		assertTrue(values.hasValue(NAME));
-		assertEquals(programA, values.getProgram(NAME));
+		assertEquals(programA, values.getProgram(NAME, this, null));
 	}
 
 	@Test
-	public void testDefaultValueWithDialogInput() {
-		values.defineProgram(NAME, programA, this, null);
-		assertTrue(values.hasValue(NAME));
+	public void testDefaultValueWithDialogInput() throws Exception {
+		values.defineProgram(NAME);
+		values.setProgram(NAME, programA);
 
 		showDialogOnSwingWithoutBlocking();
 		setProjectFileOnProjectTree(values.getAbstractValue(NAME), programB.getDomainFile());
 		pressOk();
 
 		assertTrue(values.hasValue(NAME));
-		assertEquals(programB, values.getProgram(NAME));
+		assertEquals(programB, values.getProgram(NAME, this, null));
 	}
 
 	@Test
-	public void testOpenProgramInTool() {
+	public void testOpenProgramInTool() throws Exception {
 		PluginTool tool = env.createDefaultTool();
 		ProgramManager programManagerService = tool.getService(ProgramManager.class);
 		Program[] allOpenPrograms = programManagerService.getAllOpenPrograms();
 		assertEquals(0, allOpenPrograms.length);
 
-		values.defineProgram(NAME, this, tool);
+		values.defineProgram(NAME);
 		showDialogOnSwingWithoutBlocking();
 		setProjectFileOnProjectTree(values.getAbstractValue(NAME), programA.getDomainFile());
 		pressOk();
 
+		Program p = values.getProgram(NAME, this, tool);
+
 		allOpenPrograms = programManagerService.getAllOpenPrograms();
 		assertEquals(1, allOpenPrograms.length);
-		assertEquals(programA, allOpenPrograms[0]);
+		assertEquals(p, allOpenPrograms[0]);
 	}
 
+	@Test
+	public void testOpenProgramMutltipleTimes() throws Exception {
+		values.defineProgram(NAME);
+		assertEquals(1, programA.getConsumerList().size());
+		showDialogOnSwingWithoutBlocking();
+		setProjectFileOnProjectTree(values.getAbstractValue(NAME), programA.getDomainFile());
+		pressOk();
+
+		Program p1 = values.getProgram(NAME, this, null);
+		assertEquals(2, programA.getConsumerList().size());
+		Program p2 = values.getProgram(NAME, this, null);
+		assertEquals(p1, p2);
+		assertEquals(3, programA.getConsumerList().size());
+		p1.release(this);
+		p2.release(this);
+	}
 }

@@ -133,6 +133,7 @@ public class ValuesMapDialog extends DialogComponentProvider {
 
 	@Override
 	protected void cancelCallback() {
+		valuesMap.reset();
 		cancelled = true;
 		super.cancelCallback();
 	}

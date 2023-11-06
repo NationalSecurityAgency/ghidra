@@ -19,8 +19,6 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import ghidra.features.base.values.ProjectFileValue;
-
 public class ProjectFileValueTest extends AbstractValueIntegrationTest {
 	private static final String NAME = "Project File";
 
@@ -39,7 +37,8 @@ public class ProjectFileValueTest extends AbstractValueIntegrationTest {
 
 	@Test
 	public void testProjectFileValueWithDefault() {
-		values.defineProjectFile(NAME, fileA);
+		values.defineProjectFile(NAME);
+		values.setProjectFile(NAME, fileA);
 
 		assertTrue(values.isDefined(NAME));
 		assertTrue(values.hasValue(NAME));
@@ -57,7 +56,9 @@ public class ProjectFileValueTest extends AbstractValueIntegrationTest {
 	@Test
 	public void testGetAsText() {
 		ProjectFileValue value1 = new ProjectFileValue(NAME);
-		ProjectFileValue value2 = new ProjectFileValue(NAME, fileA);
+		ProjectFileValue value2 = new ProjectFileValue(NAME);
+		value2.setValue(fileA);
+
 		assertNull(value1.getAsText());
 		assertEquals("/A/A", value2.getAsText());
 	}
@@ -109,7 +110,8 @@ public class ProjectFileValueTest extends AbstractValueIntegrationTest {
 
 	@Test
 	public void testDefaultValueWithNoDialogInput() {
-		values.defineProjectFile(NAME, fileA);
+		values.defineProjectFile(NAME);
+		values.setProjectFile(NAME, fileA);
 		assertTrue(values.hasValue(NAME));
 
 		showDialogOnSwingWithoutBlocking();
@@ -121,7 +123,8 @@ public class ProjectFileValueTest extends AbstractValueIntegrationTest {
 
 	@Test
 	public void testDefaultValueWithDialogInput() {
-		values.defineProjectFile(NAME, fileA);
+		values.defineProjectFile(NAME);
+		values.setProjectFile(NAME, fileA);
 		assertTrue(values.hasValue(NAME));
 
 		showDialogOnSwingWithoutBlocking();

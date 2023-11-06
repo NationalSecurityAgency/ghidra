@@ -91,33 +91,33 @@ public class LanguageValue extends AbstractValue<LanguageCompilerSpecPair> {
 	/**
 	 * Parses a LanguageCompilerSpecPair from a string. 
 	 *
-	 * @param val The string to parse.
+	 * @param languageString The string to parse.
 	 * @return The LanguageCompilerSpecPair parsed from a string or null if the string does
 	 * not parse to a known language-compiler pair.
-	 * @throws ValuesMapParseException 
+	 * @throws ValuesMapParseException if the value can't be parsed into a LanguageComilerSpecPair
 	 */
-	public LanguageCompilerSpecPair parseLanguageCompileSpecPair(String val)
+	public LanguageCompilerSpecPair parseLanguageCompileSpecPair(String languageString)
 			throws ValuesMapParseException {
 
-		if (val.isBlank()) {
+		if (languageString.isBlank()) {
 			return null;
 		}
 		// Split on last colon to get separated languageID and compilerSpecID
-		int lastColon = val.lastIndexOf(':');
+		int lastColon = languageString.lastIndexOf(':');
 		if (lastColon < 1) {
 			throw new ValuesMapParseException(getName(), "Language/Compiler Spec",
-				"Could not parse \"" + val + "\".");
+				"Could not parse \"" + languageString + "\".");
 		}
 
 		Set<LanguageCompilerSpecPair> languages = getLanguagesCompilerPairs();
 
-		String langId = val.substring(0, lastColon);
-		String compilerId = val.substring(lastColon + 1);
+		String langId = languageString.substring(0, lastColon);
+		String compilerId = languageString.substring(lastColon + 1);
 
 		LanguageCompilerSpecPair storedLCS = new LanguageCompilerSpecPair(langId, compilerId);
 		if (!languages.contains(storedLCS)) {
 			throw new ValuesMapParseException(getName(), "Language/Compiler Spec",
-				"Unknown language/Compiler Pair for \"" + val + "\"");
+				"Unknown language/Compiler Pair for \"" + languageString + "\"");
 		}
 		return storedLCS;
 	}

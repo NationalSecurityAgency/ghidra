@@ -333,18 +333,11 @@ public abstract class DomainObjectAdapter implements DomainObject {
 
 	@Override
 	public boolean addConsumer(Object consumer) {
-		if (consumer == null) {
-			throw new IllegalArgumentException("Consumer must not be null");
-		}
+		Objects.requireNonNull(consumer);
 
 		synchronized (consumers) {
 			if (isClosed()) {
 				return false;
-			}
-
-			if (consumers.contains(consumer)) {
-				throw new IllegalArgumentException("Attempted to acquire the " +
-					"domain object more than once by the same consumer: " + consumer);
 			}
 			consumers.add(consumer);
 		}
@@ -359,18 +352,7 @@ public abstract class DomainObjectAdapter implements DomainObject {
 	}
 
 	/**
-	 * Returns true if the this file is used only by the given consumer
-	 * @param consumer the consumer
-	 * @return true if the this file is used only by the given consumer
-	 */
-	boolean isUsedExclusivelyBy(Object consumer) {
-		synchronized (consumers) {
-			return (consumers.size() == 1) && (consumers.contains(consumer));
-		}
-	}
-
-	/**
-	 * Returns true if the given tool is using this object.
+	 * Returns true if the given consumer is using this object.
 	 */
 	@Override
 	public boolean isUsedBy(Object consumer) {

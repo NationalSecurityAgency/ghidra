@@ -19,9 +19,9 @@ import javax.swing.JComponent;
 import javax.swing.JTextField;
 
 import docking.widgets.values.*;
+import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.DataTreeDialog;
-import ghidra.framework.model.DomainFile;
-import ghidra.framework.model.DomainFolder;
+import ghidra.framework.model.*;
 
 /**
  * Value class for project folders ({@link DomainFile}). The editor component consists of the
@@ -37,20 +37,42 @@ import ghidra.framework.model.DomainFolder;
  */
 public class ProjectFolderValue extends AbstractValue<DomainFolder> {
 
-	private ProjectBrowserPanel domainFilePanel;
+	private Project project;
+	private ProjectFolderBrowserPanel domainFilePanel;
 
+	/**
+	 * Constructor for ProjectFolderValues with the given name.
+	 * @param name the name of the value
+	 */
 	public ProjectFolderValue(String name) {
 		this(name, null);
 	}
 
-	public ProjectFolderValue(String name, DomainFolder defaultValue) {
-		super(name, defaultValue);
+	/**
+	 * Constructor for creating a new ProjectFolderValue with the given name and a path
+	 * for a default folder value.
+	 * @param name the name of the value
+	 * @param defaultValuePath the path for a default folder value
+	 */
+	public ProjectFolderValue(String name, String defaultValuePath) {
+		this(name, AppInfo.getActiveProject(), defaultValuePath);
+	}
+
+	/**
+	 * Constructor for creating ProjectFolderValues for projects other than the active project.
+	 * @param name the name of the value
+	 * @param project the project to find a folder from
+	 * @param defaultValuePath the path of a default folder value
+	 */
+	public ProjectFolderValue(String name, Project project, String defaultValuePath) {
+		super(name, AbstractProjectBrowserPanel.parseDomainFolder(project, defaultValuePath));
+		this.project = project;
 	}
 
 	@Override
 	public JComponent getComponent() {
 		if (domainFilePanel == null) {
-			domainFilePanel = new ProjectBrowserPanel(getName(), true);
+			domainFilePanel = new ProjectFolderBrowserPanel(project, getName(), null);
 		}
 		return domainFilePanel;
 	}
@@ -83,7 +105,7 @@ public class ProjectFolderValue extends AbstractValue<DomainFolder> {
 
 	@Override
 	protected DomainFolder fromString(String valueString) {
-		DomainFolder df = ProjectBrowserPanel.parseDomainFolder(valueString);
+		DomainFolder df = AbstractProjectBrowserPanel.parseDomainFolder(project, valueString);
 		if (df == null) {
 			throw new IllegalArgumentException("Can't find domain folder: " + valueString);
 		}
@@ -93,6 +115,40 @@ public class ProjectFolderValue extends AbstractValue<DomainFolder> {
 	@Override
 	protected String toString(DomainFolder v) {
 		return v.getPathname();
+	}
+
+	/**
+	 * Component used by ProjectFolderValues for picking project folders
+	 */
+	class ProjectFolderBrowserPanel extends AbstractProjectBrowserPanel {
+
+		ProjectFolderBrowserPanel(Project project, String name, String startPath) {
+			super(DataTreeDialog.CHOOSE_FOLDER, project, name, startPath);
+		}
+
+		void setDomainFolder(DomainFolder value) {
+			String text = value == null ? "" : value.getPathname();
+			textField.setText(text);
+		}
+
+		@Override
+		protected void intializeCurrentValue(DataTreeDialog dialog) {
+			DomainFolder current = getDomainFolder();
+			dialog.selectFolder(current);
+		}
+
+		@Override
+		protected String getSelectedPath(DataTreeDialog dialog) {
+			return dialog.getDomainFolder().getPathname();
+		}
+
+		DomainFolder getDomainFolder() {
+			String text = textField.getText().trim();
+			if (text.isBlank()) {
+				return parseDomainFolder(project, "/");
+			}
+			return parseDomainFolder(project, text);
+		}
 	}
 
 }
