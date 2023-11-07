@@ -33,7 +33,7 @@ public class FdInputStream extends InputStream {
 	private static final PosixC LIB_POSIX = PosixC.INSTANCE;
 
 	private final int fd;
-	private boolean closed = false;
+	private volatile boolean closed = false;
 
 	/**
 	 * Wrap the given file descriptor in an {@link InputStream}
@@ -85,7 +85,8 @@ public class FdInputStream extends InputStream {
 	}
 
 	@Override
-	public synchronized void close() throws IOException {
+	public void close() throws IOException {
 		closed = true;
+		// NB. The Pty is responsible for closing the fd
 	}
 }
