@@ -479,11 +479,13 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		}
 
 		int num = debugInfo.getNumModules();
-		// moduleNumber zero is our global/public group.
+		// moduleNumber zero (SymbolGroup.PUBLIC_GLOBAL_MODULE_NUMBER) is our global/public group.
 		for (int moduleNumber = 0; moduleNumber <= num; moduleNumber++) {
 			checkCancelled();
-			Map<Long, AbstractMsSymbol> symbols = debugInfo.getModuleSymbolsByOffset(moduleNumber);
-			SymbolGroup symbolGroup = new SymbolGroup(symbols, moduleNumber);
+			// Keeping next two lines until all other calls to them are removed
+//			Map<Long, AbstractMsSymbol> symbols = debugInfo.getModuleSymbolsByOffset(moduleNumber);
+//			SymbolGroup symbolGroup = new SymbolGroup(symbols, moduleNumber);
+			SymbolGroup symbolGroup = new SymbolGroup(pdb, moduleNumber);
 			mySymbolGroups.add(symbolGroup);
 		}
 		return mySymbolGroups;
@@ -1172,9 +1174,11 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			if (symbolGroup == null) {
 				continue; // should not happen
 			}
-			totalCount += symbolGroup.size();
+			totalCount++;
+			//totalCount += symbolGroup.size();
 		}
-		monitor.setMessage("PDB: Applying " + totalCount + " module symbol components...");
+		monitor.setMessage("PDB: Applying module symbol components...");
+		//monitor.setMessage("PDB: Applying " + totalCount + " module symbol components...");
 		monitor.initialize(totalCount);
 
 		// Process symbols list for each module
@@ -1187,6 +1191,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			}
 			AbstractMsSymbolIterator iter = symbolGroup.iterator();
 			processSymbolGroup(moduleNumber, iter);
+			monitor.increment();
 //			catelogSymbols(index, symbolGroup);
 			// do not call monitor.incrementProgress(1) here, as it is updated inside of
 			//  processSymbolGroup.
@@ -1525,7 +1530,8 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			if (symbolGroup == null) {
 				continue; // should not happen
 			}
-			totalCount += symbolGroup.size();
+			//totalCount += symbolGroup.size();
+			totalCount++;
 		}
 		monitor.setMessage("PDB: Processing module thunks...");
 		monitor.initialize(totalCount);
@@ -1550,8 +1556,9 @@ public class DefaultPdbApplicator implements PdbApplicator {
 				else {
 					iter.next();
 				}
-				monitor.incrementProgress(1);
+				//monitor.incrementProgress(1);
 			}
+			monitor.incrementProgress(1);
 		}
 
 	}

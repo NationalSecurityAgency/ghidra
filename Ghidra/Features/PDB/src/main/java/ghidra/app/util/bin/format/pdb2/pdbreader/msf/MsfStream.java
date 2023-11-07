@@ -41,6 +41,7 @@ public class MsfStream {
 	 * The maximum length of a stream that we currently allow under this design.
 	 */
 	public static final int MAX_STREAM_LENGTH = Integer.MAX_VALUE;
+	public static final int NIL_STREAM_NUMBER = 0xffff;
 
 	//==============================================================================================
 	// Internals

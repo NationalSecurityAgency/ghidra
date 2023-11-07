@@ -19,7 +19,9 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
 
+import ghidra.app.util.bin.format.pdb2.pdbreader.msf.MsfStream;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
+import ghidra.util.datastruct.LRUMap;
 import ghidra.util.exception.CancelledException;
 
 /**
@@ -34,6 +36,15 @@ public class SymbolRecords {
 	private AbstractPdb pdb;
 	private Map<Long, AbstractMsSymbol> symbolsByOffset;
 	private List<Map<Long, AbstractMsSymbol>> moduleSymbolsByOffset = new ArrayList<>();
+
+	// Used for CvSig part of streams.  See methods below.
+	private boolean getSig = true;
+	private int cvSignature = -1;
+	private int cvSignatureCase1and2Stream = MsfStream.NIL_STREAM_NUMBER;
+
+	// Used for caching symbol records
+	private double factor;
+	private Map<Integer, LRUMap<Integer, SymLen>> symbolCache;
 
 	/**
 	 * Constructor
@@ -71,6 +82,8 @@ public class SymbolRecords {
 	 * @throws CancelledException upon user cancellation
 	 */
 	void deserialize() throws IOException, PdbException, CancelledException {
+		initializeCache(0.001);
+		determineCvSigValues(); // new method for random-access symbol work
 		processSymbols();
 		processModuleSymbols();
 	}
@@ -115,7 +128,7 @@ public class SymbolRecords {
 		for (ModuleInformation module : debugInfo.moduleInformationList) {
 			pdb.checkCancelled();
 			int streamNumber = module.getStreamNumberDebugInformation();
-			if (streamNumber == 0xffff) {
+			if (streamNumber == MsfStream.NIL_STREAM_NUMBER) {
 				moduleSymbolsByOffset.add(new TreeMap<>());
 				continue;
 			}
@@ -155,6 +168,96 @@ public class SymbolRecords {
 		}
 	}
 
+	// These methods are trying to adapt the logic of the previous method here (which attempted
+	//  to capture the logic of the original MSFT design) to the new random access
+	//  model.  However, the logic was never verified with other/older PDBs to know if the
+	//  signature was only seen on the first module stream.  So, we really do not know if we
+	//  should continue with this logic or not.
+	//
+	// Following is comment from the method that has been replaced, which might still be applicable:
+	//
+	// Could split this method up into separate methods: one for module symbols and the other for
+	// Lines processing.  Note: would be processing streams more than once; lines would need to
+	// skip over the symbols.
+	private void determineCvSigValues() throws CancelledException, IOException, PdbException {
+		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if (debugInfo == null) {
+			return;
+		}
+		// We are assuming that first in the list is the one to look at for cases 1 and 2.
+		//  If something else like lowest stream number, then need to change the logic.
+		ModuleInformation moduleInfo = debugInfo.getModuleInformationList().get(0);
+		int streamNumber = moduleInfo.getStreamNumberDebugInformation();
+		if (streamNumber == MsfStream.NIL_STREAM_NUMBER) {
+			moduleSymbolsByOffset.add(new TreeMap<>());
+			return;
+		}
+		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber);
+		// Skipping pulling out of sub-reader for symbols, as symbols stuff is first.
+		if (getSig) {
+			cvSignature = reader.parseInt();
+		}
+		switch (cvSignature) {
+			case 1:
+			case 2:
+				// We have no 1,2 examples to test this logic for cvSignature.  Confirming
+				// or rejecting this logic is important for simplifying/refactoring this
+				// method or writing new methods to allow for extraction of information from
+				// individual modules.  The current implementation has cross-module logic
+				// (setting state in the processing of the first and using this state in the
+				// processing of follow-on modules).
+				getSig = false;
+				break;
+			case 4:
+				break;
+			default:
+				if (cvSignature < 0x10000) {
+					throw new PdbException(
+						"Invalid module CV signature in stream " + streamNumber);
+				}
+				break;
+		}
+		cvSignatureCase1and2Stream = streamNumber;
+	}
+
+	/**
+	 * Returns the space occupied by the cvSignature for the stream number
+	 * @param streamNumber the stream number
+	 * @return the space
+	 * @throws CancelledException upon user cancellation
+	 * @throws IOException upon error reading from file
+	 * @throws PdbException upon processing error
+	 */
+	public int getCvSigLength(int streamNumber)
+			throws CancelledException, IOException, PdbException {
+		if (cvSignatureCase1and2Stream == MsfStream.NIL_STREAM_NUMBER) {
+			throw new PdbException("CvSignLength not initialized");
+		}
+		if (streamNumber == MsfStream.NIL_STREAM_NUMBER) {
+			throw new PdbException("Attempting to read unassigned stream");
+		}
+		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, 0, 4);
+		if (getSig) {
+			cvSignature = reader.parseInt();
+		}
+		int size = 0;
+		switch (cvSignature) {
+			case 1:
+			case 2:
+				if (streamNumber == cvSignatureCase1and2Stream) {
+					size = 4;
+				}
+				// else size remains 0
+				break;
+			case 4:
+				size = 4;
+				break;
+			default:
+				throw new PdbException("PDB Error: Bad CvSsigLength state");
+		}
+		return size;
+	}
+
 	/**
 	 * Deserializes the {@link AbstractMsSymbol} symbols from the {@link PdbByteReader} and
 	 * returns a {@link Map}&lt;{@link Long},{@link AbstractMsSymbol}&gt; of buffer offsets to
@@ -179,6 +282,101 @@ public class SymbolRecords {
 			mySymbolsByOffset.put((long) offset, symbol);
 		}
 		return mySymbolsByOffset;
+	}
+
+	public record SymLen(AbstractMsSymbol symbol, int length) {}
+
+	/**
+	 * Returns the symbol at the offset of the stream assigned to the module
+	 * @param moduleNumber the module
+	 * @param offset the stream offset
+	 * @return the PDB symbol
+	 * @throws PdbException upon moduleNumber out of range or no module information
+	 * @throws CancelledException upon user cancellation
+	 */
+	public SymLen getRandomAccessRecordUsingModuleNumber(int moduleNumber, int offset)
+			throws PdbException, CancelledException {
+		ModuleInformation moduleInfo = pdb.getDebugInfo().getModuleInformation(moduleNumber);
+		int streamNumber = moduleInfo.getStreamNumberDebugInformation();
+		if (streamNumber == MsfStream.NIL_STREAM_NUMBER) {
+			return null;
+		}
+		return getRandomAccessRecord(streamNumber, offset);
+	}
+
+	// TODO: consider pre-storing the lengths with one build stream read.  However, that would
+	//  consume more memory, so only do this if willing to improve process performance at
+	//  cost of memroy.
+	//Map<Long, Integer> recordLengths = new TreeMap<>();
+
+	/**
+	 * Returns the symbol at the offset of the stream
+	 * @param streamNumber the stream
+	 * @param offset the stream offset
+	 * @return the PDB symbol
+	 * @throws PdbException upon moduleNumber out of range or no module information
+	 * @throws CancelledException upon user cancellation
+	 */
+	public SymLen getRandomAccessRecord(int streamNumber, int offset)
+			throws CancelledException, PdbException {
+		// TODO: Further investigate caching for larger PDBs with other coming changes
+//		LRUMap<Integer, SymLen> streamSymbolCache = getSymbolCache(streamNumber);
+//		SymLen symLen = streamSymbolCache.get(offset);
+//		if (symLen == null) {
+//			symLen = getRandomAccessRecordFromStream(streamNumber, offset);
+//			streamSymbolCache.put(offset, symLen);
+//		}
+//		return symLen;
+		return getRandomAccessRecordFromStream(streamNumber, offset);
+	}
+
+	/**
+	 * Returns the symbol at the offset of the stream
+	 * @param streamNumber the stream
+	 * @param offset the stream offset
+	 * @return the PDB symbol
+	 * @throws PdbException upon moduleNumber out of range or no module information
+	 * @throws CancelledException upon user cancellation
+	 */
+	private SymLen getRandomAccessRecordFromStream(int streamNumber, int offset)
+			throws CancelledException, PdbException {
+		try {
+			PdbByteReader reader;
+			reader = pdb.getReaderForStreamNumber(streamNumber, offset, 2);
+			int recordLength = reader.parseUnsignedShortVal();
+			// offset + 2 where 2 is sizeof(short)
+			PdbByteReader recordReader =
+				pdb.getReaderForStreamNumber(streamNumber, offset + 2, recordLength);
+			AbstractMsSymbol symbol = SymbolParser.parse(pdb, recordReader);
+			return new SymLen(symbol, recordLength + 2);
+		}
+		catch (IOException e) {
+			return null;
+		}
+	}
+
+	private void initializeCache(double factorArg) {
+		// See notes about factor where the value is used.
+		this.factor = factorArg;
+		symbolCache = new HashMap<>();
+	}
+
+	private LRUMap<Integer, SymLen> getSymbolCache(int streamNumber) {
+		LRUMap<Integer, SymLen> streamSymbolCache = symbolCache.get(streamNumber);
+		if (streamSymbolCache == null) {
+			MsfStream stream = pdb.getMsf().getStream(streamNumber);
+			if (stream == null) {
+				return null;
+			}
+			// Note that stream length is in bytes; factor needs to deal with both ratio of
+			//  bytes to average symbol record size and the sizing of the cache as a percentage
+			//  of total number of symbol records in the stream.  We are adding a fixed number
+			//  for a minimum size.
+			int size = (int) (factor * stream.getLength() + 256);
+			streamSymbolCache = new LRUMap<>(size);
+			symbolCache.put(streamNumber, streamSymbolCache);
+		}
+		return streamSymbolCache;
 	}
 
 	/**
