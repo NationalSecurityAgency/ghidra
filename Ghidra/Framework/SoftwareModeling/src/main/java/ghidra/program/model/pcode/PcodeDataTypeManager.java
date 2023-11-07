@@ -1215,7 +1215,7 @@ public class PcodeDataTypeManager {
 	}
 
 	/**
-	 * Encode the coretypes to the stream
+	 * Encode the core data-types to the stream
 	 * @param encoder is the stream encoder
 	 * @throws IOException for errors in the underlying stream
 	 */
@@ -1233,8 +1233,7 @@ public class PcodeDataTypeManager {
 			if (typeMap.isUtf) {
 				encoder.writeBool(ATTRIB_UTF, true);
 			}
-			// Encode special id ( <0 for builtins )
-			encoder.writeSignedInteger(ATTRIB_ID, typeMap.id);
+			encoder.writeUnsignedInteger(ATTRIB_ID, typeMap.id);
 			encoder.closeElement(ELEM_TYPE);
 		}
 		encoder.closeElement(ELEM_CORETYPES);
