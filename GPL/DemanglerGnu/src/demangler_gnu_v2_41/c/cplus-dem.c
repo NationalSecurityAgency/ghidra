@@ -3,7 +3,7 @@
  * NOTE: See binutils/libiberty/COPYING.LIB
  */
 /* Demangler for GNU C++
-   Copyright (C) 1989-2019 Free Software Foundation, Inc.
+   Copyright (C) 1989-2023 Free Software Foundation, Inc.
    Written by James Clark (jjc@jclark.uucp)
    Rewritten by Fred Fish (fnf@cygnus.com) for ARM and Lucid demangling
    Modified by Satish Pai (pai@apollo.hp.com) for HP demangling
@@ -56,7 +56,6 @@ void * realloc ();
 #define CURRENT_DEMANGLING_STYLE options
 
 #include "libiberty.h"
-#include "rust-demangle.h"
 
 enum demangling_styles current_demangling_style = auto_demangling;
 
@@ -164,27 +163,20 @@ cplus_demangle (const char *mangled, int options)
   if ((options & DMGL_STYLE_MASK) == 0)
     options |= (int) current_demangling_style & DMGL_STYLE_MASK;
 
+  /* The Rust demangling is implemented elsewhere.
+     Legacy Rust symbols overlap with GNU_V3, so try Rust first.  */
+  if (RUST_DEMANGLING || AUTO_DEMANGLING)
+    {
+      ret = rust_demangle (mangled, options);
+      if (ret || RUST_DEMANGLING)
+        return ret;
+    }
+
   /* The V3 ABI demangling is implemented elsewhere.  */
-  if (GNU_V3_DEMANGLING || RUST_DEMANGLING || AUTO_DEMANGLING)
+  if (GNU_V3_DEMANGLING || AUTO_DEMANGLING)
     {
       ret = cplus_demangle_v3 (mangled, options);
-      if (GNU_V3_DEMANGLING)
-	return ret;
-
-      if (ret)
-	{
-	  /* Rust symbols are GNU_V3 mangled plus some extra subtitutions.
-	     The subtitutions are always smaller, so do in place changes.  */
-	  if (rust_is_mangled (ret))
-	    rust_demangle_sym (ret);
-	  else if (RUST_DEMANGLING)
-	    {
-	      free (ret);
-	      ret = NULL;
-	    }
-	}
-
-      if (ret || RUST_DEMANGLING)
+      if (ret || GNU_V3_DEMANGLING)
 	return ret;
     }
 
@@ -206,27 +198,6 @@ cplus_demangle (const char *mangled, int options)
     }
 
   return (ret);
-}
-
-char *
-rust_demangle (const char *mangled, int options)
-{
-  /* Rust symbols are GNU_V3 mangled plus some extra subtitutions.  */
-  char *ret = cplus_demangle_v3 (mangled, options);
-
-  /* The Rust subtitutions are always smaller, so do in place changes.  */
-  if (ret != NULL)
-    {
-      if (rust_is_mangled (ret))
-	rust_demangle_sym (ret);
-      else
-	{
-	  free (ret);
-	  ret = NULL;
-	}
-    }
-
-  return ret;
 }
 
 /* Demangle ada names.  The encoding is documented in gcc/ada/exp_dbug.ads.  */

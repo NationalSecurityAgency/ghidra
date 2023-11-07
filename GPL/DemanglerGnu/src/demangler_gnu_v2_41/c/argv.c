@@ -3,7 +3,7 @@
  * NOTE: See binutils/libiberty/COPYING.LIB
  */
 /* Create and destroy argument vectors (argv's)
-   Copyright (C) 1992-2019 Free Software Foundation, Inc.
+   Copyright (C) 1992-2023 Free Software Foundation, Inc.
    Written by Fred Fish @ Cygnus Support
 
 This file is part of the libiberty library.
@@ -293,8 +293,8 @@ char **buildargv (const char *input)
 @deftypefn Extension int writeargv (char * const *@var{argv}, FILE *@var{file})
 
 Write each member of ARGV, handling all necessary quoting, to the file
-named by FILE, separated by whitespace.  Return 0 on success, non-zero
-if an error occurred while writing to FILE.
+associated with FILE, separated by whitespace.  Return 0 on success,
+non-zero if an error occurred while writing to FILE.
 
 @end deftypefn
 
@@ -303,8 +303,6 @@ if an error occurred while writing to FILE.
 int
 writeargv (char * const *argv, FILE *f)
 {
-  int status = 0;
-
   if (f == NULL)
     return 1;
 
@@ -318,29 +316,26 @@ writeargv (char * const *argv, FILE *f)
 
           if (ISSPACE(c) || c == '\\' || c == '\'' || c == '"')
             if (EOF == fputc ('\\', f))
-              {
-                status = 1;
-                goto done;
-              }
+              return 1;
 
           if (EOF == fputc (c, f))
-            {
-              status = 1;
-              goto done;
-            }
+            return 1;
+	  
           arg++;
         }
 
+      /* Write out a pair of quotes for an empty argument.  */
+      if (arg == *argv)
+        if (EOF == fputs ("\"\"", f))
+          return 1;
+
       if (EOF == fputc ('\n', f))
-        {
-          status = 1;
-          goto done;
-        }
+        return 1;
+      
       argv++;
     }
 
- done:
-  return status;
+  return 0;
 }
 
 /*
@@ -438,7 +433,10 @@ expandargv (int *argcp, char ***argvp)
 	     due to CR/LF->CR translation when reading text files.
 	     That does not in-and-of itself indicate failure.  */
 	  && ferror (f))
-	goto error;
+	{
+	  free (buffer);
+	  goto error;
+	}
       /* Add a NUL terminator.  */
       buffer[len] = '\0';
       /* If the file is empty or contains only whitespace, buildargv would

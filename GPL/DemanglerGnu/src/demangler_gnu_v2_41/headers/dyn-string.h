@@ -3,7 +3,7 @@
  * NOTE: See binutils/include/COPYING3
  */
 /* An abstract string datatype.
-   Copyright (C) 1998-2019 Free Software Foundation, Inc.
+   Copyright (C) 1998-2023 Free Software Foundation, Inc.
    Contributed by Mark Mitchell (mark@markmitchell.com).
 
 This file is part of GCC.

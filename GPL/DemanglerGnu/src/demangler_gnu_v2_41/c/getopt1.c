@@ -1,9 +1,9 @@
 /* ###
- * IP: GPL 3
+ * IP: GPL 3 Linking Permitted
  * NOTE: See binutils/include/COPYING3
  */
 /* getopt_long and getopt_long_only entry points for GNU getopt.
-   Copyright (C) 1987-2019 Free Software Foundation, Inc.
+   Copyright (C) 1987-2023 Free Software Foundation, Inc.
 
    NOTE: This source is derived from an old version taken from the GNU C
    Library (glibc).

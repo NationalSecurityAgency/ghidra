@@ -1,6 +1,6 @@
 /* ###
  * IP: LGPL 2.1
- * NOTE: license is not in file, but in the directory from whence it came: binutils-2.24/libiberty/COPYING.LIB
+ * NOTE: See binutils/libiberty/COPYING.LIB
  */
 /* alloca.c -- allocate automatically reclaimed memory
    (Mostly) portable public-domain implementation -- D A Gwyn
@@ -162,7 +162,7 @@ static header *last_alloca_header = NULL;	/* -> last alloca header.  */
 
 /* @undocumented C_alloca */
 
-PTR
+void *
 C_alloca (size_t size)
 {
   auto char probe;		/* Probes stack depth: */
@@ -185,7 +185,7 @@ C_alloca (size_t size)
 	{
 	  register header *np = hp->h.next;
 
-	  free ((PTR) hp);	/* Collect garbage.  */
+	  free ((void *) hp);	/* Collect garbage.  */
 
 	  hp = np;		/* -> next header.  */
 	}
@@ -214,7 +214,7 @@ C_alloca (size_t size)
 
     /* User storage begins just after header.  */
 
-    return (PTR) ((char *) new_storage + sizeof (header));
+    return (void *) ((char *) new_storage + sizeof (header));
   }
 }
 

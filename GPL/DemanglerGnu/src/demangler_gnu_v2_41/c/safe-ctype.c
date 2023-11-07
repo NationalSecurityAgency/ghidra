@@ -1,10 +1,10 @@
 /* ###
  * IP: LGPL 2.1
- * NOTE: See binutils/include/COPYING
+ * NOTE: See binutils/libiberty/COPYING.LIB
  */
 /* <ctype.h> replacement macros.
 
-   Copyright (C) 2000-2019 Free Software Foundation, Inc.
+   Copyright (C) 2000-2023 Free Software Foundation, Inc.
    Contributed by Zack Weinberg <zackw@stanford.edu>.
 
 This file is part of the libiberty library.

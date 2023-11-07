@@ -2,7 +2,7 @@
  * IP: GPL 3
  */
 /* Demangler for GNU C++ - main program
-   Copyright (C) 1989-2019 Free Software Foundation, Inc.
+   Copyright (C) 1989-2023 Free Software Foundation, Inc.
    Written by James Clark (jjc@jclark.uucp)
    Rewritten by Fred Fish (fnf@cygnus.com) for ARM and Lucid demangling
    Modified by Satish Pai (pai@apollo.hp.com) for HP demangling
@@ -23,23 +23,34 @@
    along with GCC; see the file COPYING.  If not, write to the Free
    Software Foundation, 51 Franklin Street - Fifth Floor, Boston, MA
    02110-1301, USA.  
-
-	   					CHANGE NOTICE:
-		This file was changed on July 22nd, 2020.
    
-*/
+   
+   	   					CHANGE NOTICE:
+		This file was changed on October 31st, 2023.
+   
+ */   
 
-#include <stdlib.h>
-#include <string.h>
+// #include "sysdep.h" // Changed 10/31/23
+// error reporting front end
+// #include "bfd.h" // Changed 10/31/23
+
+#include <stdlib.h> // Changed 10/31/23
+#include <string.h> // Changed 10/31/23
 
 #include "libiberty.h"
 #include "demangle.h"
 #include "getopt.h"
 #include "safe-ctype.h"
 
+// bfd code
+// #include "bucomm.h" // Changed 10/31/23
+
 static int flags = DMGL_PARAMS | DMGL_ANSI | DMGL_VERBOSE;
-static int strip_underscore = 0; // TARGET_PREPENDS_UNDERSCORE; // Changed Jan 22, 2020
-static const char *program_name;								// Changed Jan 22, 2020
+static int strip_underscore  = 0; // TARGET_PREPENDS_UNDERSCORE; // Changed 10/31/23
+
+// declared in bucomm.c
+static const char *program_name; // Changed 10/31/23
+
 
 static const struct option long_options[] =
 {
@@ -108,10 +119,12 @@ Usage: %s [options] [mangled names]\n", program_name);
   fprintf (stream, "\
 Options are:\n\
   [-_|--strip-underscore]     Ignore first leading underscore%s\n",
-	   strip_underscore ? " (default)" : "");					// Changed Jan 22, 2020
+	   // TARGET_PREPENDS_UNDERSCORE ? " (default)" : ""); // Changed 10/31/23
+	   strip_underscore ? " (default)" : ""); // Changed 10/31/23
   fprintf (stream, "\
   [-n|--no-strip-underscore]  Do not ignore a leading underscore%s\n",
-	   strip_underscore ? "" : " (default)");					// Changed Jan 22, 2020
+	   // TARGET_PREPENDS_UNDERSCORE ? "" : " (default)"); // Changed 10/31/23
+	   strip_underscore ? "" : " (default)"); // Changed 10/31/23
   fprintf (stream, "\
   [-p|--no-params]            Do not display function arguments\n\
   [-i|--no-verbose]           Do not show implementation details (if any)\n\
@@ -130,11 +143,11 @@ Demangled names are displayed to stdout.\n\
 If a name cannot be demangled it is just echoed to stdout.\n\
 If no names are provided on the command line, stdin is read.\n");
 
-	/* Changed Jan 22, 2020
+/* Changed 10/31/23
+	// defined in version.h
   if (REPORT_BUGS_TO[0] && status == 0)
     fprintf (stream, _("Report bugs to %s.\n"), REPORT_BUGS_TO);
-    */ 
-   
+*/
   exit (status);
 }
 
@@ -158,8 +171,8 @@ main (int argc, char **argv)
   enum demangling_styles style = auto_demangling;
 
   program_name = argv[0];
-  // xmalloc_set_program_name (program_name);   // Changed Jan 22, 2020
-  // bfd_set_error_program_name (program_name); // Changed Jan 22, 2020
+  // xmalloc_set_program_name (program_name); // Changed 10/31/23
+  // bfd_set_error_program_name (program_name); // Changed 10/31/23
 
   expandargv (&argc, &argv);
 
@@ -191,7 +204,8 @@ main (int argc, char **argv)
 	  flags &= ~ DMGL_VERBOSE;
 	  break;
 	case 'v':
-		printf ("(GNU Binutils) c++filt 2.33.1\n"); // Changed Jan 22, 2020
+	  // print_version ("c++filt");  // Changed 10/31/23
+	  printf ("c++filt 2.41\n"); // Changed 10/31/23
 	  return 0;
 	case '_':
 	  strip_underscore = 1;
@@ -230,13 +244,14 @@ main (int argc, char **argv)
     case rust_demangling:
        valid_symbols = standard_symbol_characters ();
       break;
-    default: {
+    default:
       /* Folks should explicitly indicate the appropriate alphabet for
 	 each demangling.  Providing a default would allow the
 	 question to go unconsidered.  */
-	    fprintf (stderr, "Internal error: no symbol alphabet for current style\n");	// Changed Jan 22, 2020	
-  		exit (1);                                       							// Changed Jan 22, 2020
-  	  }
+      // fatal ("Internal error: no symbol alphabet for current style"); // Changed 10/31/23
+      fprintf (stderr, "Internal error: no symbol alphabet for current style\n"); // Changed 10/31/23	
+  		exit (1);                                       						  // Changed 10/31/23
+      
     }
 
   for (;;)

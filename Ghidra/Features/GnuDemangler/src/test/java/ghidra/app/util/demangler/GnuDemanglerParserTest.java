@@ -33,7 +33,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	@Before
 	public void setUp() throws Exception {
 		process = GnuDemanglerNativeProcess
-				.getDemanglerNativeProcess(GnuDemanglerOptions.GNU_DEMANGLER_V2_33_1);
+				.getDemanglerNativeProcess(GnuDemanglerOptions.GNU_DEMANGLER_V2_41);
 		parser = new GnuDemanglerParser();
 	}
 
@@ -1025,12 +1025,11 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		String demangled = process.demangle(mangled);
 
 		/*
-		 	typeinfo for
-		 		std::__ndk1::__function::__func<
-		 			dummy::it::other::Namespace::function(float)::$_2::operator()(dummy::it::other::Namespace*) const::{lambda(dummy::it::other::Namespace*)#1},
-		 			std::__ndk1::allocator<{lambda(dummy::it::other::Namespace*)#1}>,
-		 			int (dummy::it::other::Namespace*)
-		 		>
+			typeinfo for 
+				std::__ndk1::__function::__func<
+					dummy::it::other::Namespace::function(float)::$_2::operator()(dummy::it::other::Namespace*) const::{lambda(dummy::it::other::Namespace*)#1},
+					std::__ndk1::allocator<dummy::it::other::Namespace::function(float)::$_2::operator()(dummy::it::other::Namespace*) const::{lambda(dummy::it::other::Namespace*)#1}>,
+					int (dummy::it::other::Namespace*)>
 		
 		 	'__func' has 3 template parameters, the operator and the allocator
 		
@@ -1042,7 +1041,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		String lambdaOperator =
 			dummyNs + "::function(float)::$_2::operator()(" + dummyNsP + ")const::" + lambda;
-		String lambdaAllocator = "std::__ndk1::allocator<" + lambda + ">";
+		String lambdaAllocator = "std::__ndk1::allocator<" + lambdaOperator + ">";
 		String thirdParam = "int(" + dummyNsP + ")";
 
 		String infoNs = "std::__ndk1::__function::";
@@ -1092,7 +1091,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		String signature = object.getSignature(false);
 		assertEquals(
-			"undefined std::__array_traits<LayerDetails::RandomProviderT<LayerDetails::LayerBase::initRandom(long,long)const::{lambda(long&,unsigned_int)#1}>,4ul>::_S_ref(LayerDetails::LayerBase::initRandom(long,long) const::{lambda(long&, unsigned int)#1} const &[],unsigned long)",
+			"undefined std::__array_traits<LayerDetails::RandomProviderT<LayerDetails::LayerBase::initRandom(long,long)const::{lambda(long&,unsigned_int)#1}>,4ul>::_S_ref(LayerDetails::RandomProviderT<LayerDetails::LayerBase::initRandom(long, long) const::{lambda(long&, unsigned int)#1}> const &[],unsigned long)",
 			signature);
 	}
 
@@ -1163,6 +1162,8 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		
 		 lambda contents - lambdas in templates and as a parameter
 		
+		 Note: the demangled string makes use of the 'auto' parameter keyword
+		
 		 	bool (***
 		 			const* std::
 		 				__addressof<
@@ -1196,7 +1197,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		String signature = object.getSignature(false);
 		assertEquals(
-			"undefined Bedrock::Threading::TLSDetail::DefaultConstructor<bool(**)(AssertHandlerContext_const&),void>::create()::{lambda(bool(***const*std::__addressof<Bedrock::Threading::TLSDetail::DefaultConstructor<bool(**)(AssertHandlerContext_const&),void>::create()::{lambda(bool(***const)(AssertHandlerContext_const&))#1}>(Bedrock::Threading::TLSDetail::DefaultConstructor<bool(**)(AssertHandlerContext_const&),void>::create()::{lambda(bool(***const&)(AssertHandlerContext_const&))#1}))(AssertHandlerContext_const&))#1}",
+			"undefined Bedrock::Threading::TLSDetail::DefaultConstructor<bool(**)(AssertHandlerContext_const&),void>::create()::{lambda(bool(***const*std::__addressof<Bedrock::Threading::TLSDetail::DefaultConstructor<bool(**)(AssertHandlerContext_const&),void>::create()::{lambda(bool(***const)(AssertHandlerContext_const&))#1}>(auto:1&))(AssertHandlerContext_const&))#1}",
 			signature);
 	}
 
@@ -1997,7 +1998,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		String signature = object.getSignature(false);
 		assertEquals(
-			"int LayerDetails::RandomProviderT<LayerDetails::LayerBase::initRandom(long,long)const::{lambda(long&,unsigned_int)#1}>::operator()<int,2ul>(LayerDetails::RandomProviderT<LayerDetails::LayerBase::initRandom(long,long)const::{lambda(long&,unsigned_int)#1}>::operator() const &[])",
+			"int LayerDetails::RandomProviderT<LayerDetails::LayerBase::initRandom(long,long)const::{lambda(long&,unsigned_int)#1}>::operator()<int,2ul>(int const &[])",
 			signature);
 	}
 
@@ -2138,6 +2139,34 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	public void testGetDataType_LongLong() throws Exception {
 		assertNotNull(
 			new DemangledDataType("fake", "fake", DemangledDataType.LONG_LONG).getDataType(null));
+	}
+
+	@Test
+	public void testRustLegacyHashIsIgnored() throws Exception {
+
+		//
+		// Mangled: _ZN3std2io4Read11read_to_end17hb85a0f6802e14499E
+		//
+		// Demangled: std::io::Read::read_to_end::hb85a0f6802e14499
+		//
+		// Parsed: std::io::Read::read_to_end
+		//
+		// Legacy mangled rust symbols:
+		// - start with _ZN
+		// - end withe E or E.
+		// - have a 16 digit hash that starts with 17h
+		//
+		String mangled = "_ZN3std2io4Read11read_to_end17hb85a0f6802e14499E";
+		String demangled = process.demangle(mangled);
+
+		assertEquals(demangled, "std::io::Read::read_to_end::hb85a0f6802e14499");
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertNotNull(object);
+		assertType(object, DemangledVariable.class);
+
+		String signature = object.getSignature(false);
+		assertEquals("std::io::Read::read_to_end", signature);
 	}
 
 	private void assertType(Demangled o, Class<?> c) {

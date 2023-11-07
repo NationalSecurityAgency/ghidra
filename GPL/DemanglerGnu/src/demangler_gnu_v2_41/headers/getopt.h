@@ -3,7 +3,7 @@
  * NOTE: See binutils/include/COPYING3
  */
 /* Declarations for getopt.
-   Copyright (C) 1989-2019 Free Software Foundation, Inc.
+   Copyright (C) 1989-2023 Free Software Foundation, Inc.
 
    NOTE: The canonical source of this file is maintained with the GNU C Library.
    Bugs can be reported to bug-glibc@gnu.org.
