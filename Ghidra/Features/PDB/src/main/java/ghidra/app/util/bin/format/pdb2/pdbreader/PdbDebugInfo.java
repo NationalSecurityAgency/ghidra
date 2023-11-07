@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
 
+import ghidra.app.util.bin.format.pdb2.pdbreader.msf.MsfStream;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.util.exception.CancelledException;
 
@@ -266,6 +267,14 @@ public abstract class PdbDebugInfo {
 		return publicSymbolInformation;
 	}
 
+	/**
+	 * Returns the stream number for {@link SymbolRecords} component
+	 * @return stream number
+	 */
+	public int getSymbolRecordsStreamNumber() {
+		return streamNumberSymbolRecords;
+	}
+
 	//==============================================================================================
 	// Package-Protected Internals
 	//==============================================================================================
@@ -283,14 +292,6 @@ public abstract class PdbDebugInfo {
 	 */
 	int getPublicStaticSymbolsHashMaybeStreamNumber() {
 		return streamNumberPublicStaticSymbolsHashMaybe;
-	}
-
-	/**
-	 * Returns the stream number for {@link SymbolRecords} component
-	 * @return stream number
-	 */
-	int getSymbolRecordsStreamNumber() {
-		return streamNumberSymbolRecords;
 	}
 
 	//==============================================================================================
@@ -642,7 +643,7 @@ public abstract class PdbDebugInfo {
 	 */
 	public MsSymbolIterator getSymbolIterator()
 			throws CancelledException, IOException {
-		if (streamNumberSymbolRecords == 0xffff) {
+		if (streamNumberSymbolRecords == MsfStream.NIL_STREAM_NUMBER) {
 			return null;
 		}
 		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumberSymbolRecords);
