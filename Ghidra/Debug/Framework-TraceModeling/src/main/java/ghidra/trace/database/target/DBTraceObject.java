@@ -36,6 +36,7 @@ import ghidra.trace.database.module.*;
 import ghidra.trace.database.stack.DBTraceObjectStack;
 import ghidra.trace.database.stack.DBTraceObjectStackFrame;
 import ghidra.trace.database.target.InternalTraceObjectValue.ValueLifespanSetter;
+import ghidra.trace.database.target.ValueSpace.EntryKeyDimension;
 import ghidra.trace.database.target.ValueSpace.SnapDimension;
 import ghidra.trace.database.target.visitors.*;
 import ghidra.trace.database.target.visitors.TreeTraversal.Visitor;
@@ -366,7 +367,10 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	}
 
 	protected Collection<? extends InternalTraceObjectValue> doGetValues(Lifespan lifespan) {
-		return manager.valueMap.reduce(TraceObjectValueQuery.values(this, lifespan)).values();
+		return manager.valueMap
+				.reduce(TraceObjectValueQuery.values(this, lifespan)
+						.starting(EntryKeyDimension.FORWARD))
+				.values();
 	}
 
 	protected Collection<? extends InternalTraceObjectValue> cachedDoGetValues(Lifespan lifespan) {

@@ -109,7 +109,7 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 					ghidra trace start
 					%s
 					ghidra trace tx-open "Fake" 'ghidra trace create-obj Breakpoints'
-					start"""
+					starti"""
 					.formatted(INSTRUMENT_STOPPED));
 			RemoteMethod refreshBreakpoints = conn.getMethod("refresh_breakpoints");
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
@@ -129,26 +129,27 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 						.getValuePaths(Lifespan.at(0),
 							PathPredicates.parse("Inferiors[1].Breakpoints[]"))
 						.map(p -> p.getLastEntry())
+						.sorted(Comparator.comparing(TraceObjectValue::getEntryKey))
 						.toList();
 				assertEquals(5, infBreakLocVals.size());
 				AddressRange rangeMain =
 					infBreakLocVals.get(0).getChild().getValue(0, "_range").castValue();
 				Address main = rangeMain.getMinAddress();
 
-				// The temporary breakpoint uses up number 1
-				assertBreakLoc(infBreakLocVals.get(0), "[2.1]", main, 1,
+				// NB. starti avoid use of temporary main breakpoint
+				assertBreakLoc(infBreakLocVals.get(0), "[1.1]", main, 1,
 					Set.of(TraceBreakpointKind.SW_EXECUTE),
 					"main");
-				assertBreakLoc(infBreakLocVals.get(1), "[3.1]", main.add(10), 1,
+				assertBreakLoc(infBreakLocVals.get(1), "[2.1]", main.add(10), 1,
 					Set.of(TraceBreakpointKind.HW_EXECUTE),
 					"*main+10");
-				assertBreakLoc(infBreakLocVals.get(2), "[4.1]", main.add(20), 1,
+				assertBreakLoc(infBreakLocVals.get(2), "[3.1]", main.add(20), 1,
 					Set.of(TraceBreakpointKind.WRITE),
 					"-location *((char*)(&main+20))");
-				assertBreakLoc(infBreakLocVals.get(3), "[5.1]", main.add(30), 8,
+				assertBreakLoc(infBreakLocVals.get(3), "[4.1]", main.add(30), 8,
 					Set.of(TraceBreakpointKind.READ),
 					"-location *((char(*)[8])(&main+30))");
-				assertBreakLoc(infBreakLocVals.get(4), "[6.1]", main.add(40), 5,
+				assertBreakLoc(infBreakLocVals.get(4), "[5.1]", main.add(40), 5,
 					Set.of(TraceBreakpointKind.READ, TraceBreakpointKind.WRITE),
 					"-location *((char(*)[5])(&main+40))");
 			}
@@ -163,7 +164,7 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 					ghidra trace start
 					%s
 					ghidra trace tx-open "Fake" 'ghidra trace create-obj Inferiors[1].Breakpoints'
-					start"""
+					starti"""
 					.formatted(INSTRUMENT_STOPPED));
 			RemoteMethod refreshInfBreakpoints = conn.getMethod("refresh_inf_breakpoints");
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
@@ -183,26 +184,27 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 						.getValuePaths(Lifespan.at(0),
 							PathPredicates.parse("Inferiors[1].Breakpoints[]"))
 						.map(p -> p.getLastEntry())
+						.sorted(Comparator.comparing(TraceObjectValue::getEntryKey))
 						.toList();
 				assertEquals(5, infBreakLocVals.size());
 				AddressRange rangeMain =
 					infBreakLocVals.get(0).getChild().getValue(0, "_range").castValue();
 				Address main = rangeMain.getMinAddress();
 
-				// The temporary breakpoint uses up number 1
-				assertBreakLoc(infBreakLocVals.get(0), "[2.1]", main, 1,
+				// NB. starti avoid use of temporary main breakpoint
+				assertBreakLoc(infBreakLocVals.get(0), "[1.1]", main, 1,
 					Set.of(TraceBreakpointKind.SW_EXECUTE),
 					"main");
-				assertBreakLoc(infBreakLocVals.get(1), "[3.1]", main.add(10), 1,
+				assertBreakLoc(infBreakLocVals.get(1), "[2.1]", main.add(10), 1,
 					Set.of(TraceBreakpointKind.HW_EXECUTE),
 					"*main+10");
-				assertBreakLoc(infBreakLocVals.get(2), "[4.1]", main.add(20), 1,
+				assertBreakLoc(infBreakLocVals.get(2), "[3.1]", main.add(20), 1,
 					Set.of(TraceBreakpointKind.WRITE),
 					"-location *((char*)(&main+20))");
-				assertBreakLoc(infBreakLocVals.get(3), "[5.1]", main.add(30), 8,
+				assertBreakLoc(infBreakLocVals.get(3), "[4.1]", main.add(30), 8,
 					Set.of(TraceBreakpointKind.READ),
 					"-location *((char(*)[8])(&main+30))");
-				assertBreakLoc(infBreakLocVals.get(4), "[6.1]", main.add(40), 5,
+				assertBreakLoc(infBreakLocVals.get(4), "[5.1]", main.add(40), 5,
 					Set.of(TraceBreakpointKind.READ, TraceBreakpointKind.WRITE),
 					"-location *((char(*)[5])(&main+40))");
 			}
@@ -735,7 +737,7 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 					resume.invoke(Map.of("inferior", inf1));
 					waitRunning();
 
-					interrupt.invoke(Map.of());
+					interrupt.invoke(Map.of("inferior", inf1));
 					waitStopped();
 				}
 
@@ -851,7 +853,7 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 					%s
 					start"""
 					.formatted(INSTRUMENT_STOPPED));
-			RemoteMethod stepAdvance = conn.getMethod("step_advance");
+			RemoteMethod stepAdvance = conn.getMethod("Advance");
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
@@ -879,7 +881,7 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 					%s
 					start"""
 					.formatted(INSTRUMENT_STOPPED));
-			RemoteMethod stepReturn = conn.getMethod("step_return");
+			RemoteMethod stepReturn = conn.getMethod("Return");
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();

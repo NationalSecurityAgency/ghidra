@@ -57,6 +57,7 @@ public class TraceRmiLauncherServicePluginTest extends AbstractGhidraHeadedDebug
 					Map<String, ?> arguments, RelPrompt relPrompt) {
 				Map<String, Object> args = new HashMap<>(arguments);
 				args.put("arg:1", file);
+				args.put("env:OPT_START_CMD", "starti");
 				return args;
 			}
 		};

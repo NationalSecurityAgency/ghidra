@@ -858,6 +858,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			assertEquals("""
 					Parent          Key       Span     Value           Type
+					Test.Objects[1] vaddr     [0,+inf) ram:deadbeef    ADDRESS
 					Test.Objects[1] vbool     [0,+inf) True            BOOL
 					Test.Objects[1] vboolarr  [0,+inf) [True, False]   BOOL_ARR
 					Test.Objects[1] vbyte     [0,+inf) 1               BYTE
@@ -871,8 +872,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 					Test.Objects[1] vobj      [0,+inf) Test.Objects[1] OBJECT
 					Test.Objects[1] vshort    [0,+inf) 2               SHORT
 					Test.Objects[1] vshortarr [0,+inf) [1, 2, 3]       SHORT_ARR
-					Test.Objects[1] vstring   [0,+inf) 'Hello'         STRING
-					Test.Objects[1] vaddr     [0,+inf) ram:deadbeef    ADDRESS""",
+					Test.Objects[1] vstring   [0,+inf) 'Hello'         STRING""",
 				extractOutSection(out, "---GetValues---"));
 		}
 	}
@@ -1012,7 +1012,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				%s
 				ghidra trace connect %s
 				file bash
-				start
+				starti
 				ghidra trace start
 				ghidra trace tx-start "Tx"
 				break main
@@ -1031,26 +1031,27 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 					.getValuePaths(Lifespan.at(0),
 						PathPredicates.parse("Inferiors[1].Breakpoints[]"))
 					.map(p -> p.getLastEntry())
+					.sorted(Comparator.comparing(TraceObjectValue::getEntryKey))
 					.toList();
 			assertEquals(5, infBreakLocVals.size());
 			AddressRange rangeMain =
 				infBreakLocVals.get(0).getChild().getValue(0, "_range").castValue();
 			Address main = rangeMain.getMinAddress();
 
-			// The temporary breakpoint uses up number 1
-			assertBreakLoc(infBreakLocVals.get(0), "[2.1]", main, 1,
+			// NB. starti avoid use of temporary main breakpoint
+			assertBreakLoc(infBreakLocVals.get(0), "[1.1]", main, 1,
 				Set.of(TraceBreakpointKind.SW_EXECUTE),
 				"main");
-			assertBreakLoc(infBreakLocVals.get(1), "[3.1]", main.add(10), 1,
+			assertBreakLoc(infBreakLocVals.get(1), "[2.1]", main.add(10), 1,
 				Set.of(TraceBreakpointKind.HW_EXECUTE),
 				"*main+10");
-			assertBreakLoc(infBreakLocVals.get(2), "[4.1]", main.add(20), 1,
+			assertBreakLoc(infBreakLocVals.get(2), "[3.1]", main.add(20), 1,
 				Set.of(TraceBreakpointKind.WRITE),
 				"-location *((char*)(&main+20))");
-			assertBreakLoc(infBreakLocVals.get(3), "[5.1]", main.add(30), 8,
+			assertBreakLoc(infBreakLocVals.get(3), "[4.1]", main.add(30), 8,
 				Set.of(TraceBreakpointKind.READ),
 				"-location *((char(*)[8])(&main+30))");
-			assertBreakLoc(infBreakLocVals.get(4), "[6.1]", main.add(40), 5,
+			assertBreakLoc(infBreakLocVals.get(4), "[5.1]", main.add(40), 5,
 				Set.of(TraceBreakpointKind.READ, TraceBreakpointKind.WRITE),
 				"-location *((char(*)[5])(&main+40))");
 		}

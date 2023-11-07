@@ -43,7 +43,6 @@ import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.dbg.util.PathPattern;
 import ghidra.dbg.util.PathUtils;
-import ghidra.debug.api.control.ControlMode;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.debug.api.tracermi.*;
@@ -788,6 +787,14 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		return makeArgument(ent.getKey(), ent.getValue());
 	}
 
+	protected boolean followsPresent(Trace trace) {
+		DebuggerControlService controlService = this.controlService;
+		if (controlService == null) {
+			return true;
+		}
+		return controlService.getCurrentMode(trace).followsPresent();
+	}
+
 	protected ReplyActivate handleActivate(RequestActivate req) {
 		OpenTrace open = requireOpenTrace(req.getOid());
 		TraceObject object = open.getObject(req.getObject(), true);
@@ -795,8 +802,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		if (coords.getTrace() != open.trace) {
 			coords = DebuggerCoordinates.NOWHERE;
 		}
-		ControlMode mode = controlService.getCurrentMode(open.trace);
-		if (open.lastSnapshot != null && mode.followsPresent()) {
+		if (open.lastSnapshot != null && followsPresent(open.trace)) {
 			coords = coords.snap(open.lastSnapshot.getKey());
 		}
 		DebuggerCoordinates finalCoords = coords.object(object);
@@ -972,6 +978,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 						.getValuePaths(toLifespan(req.getSpan()),
 							toPathPattern(req.getPattern()))
 						.map(TraceRmiHandler::makeValDesc)
+						.sorted(Comparator.comparing(ValDesc::getKey))
 						.toList())
 				.build();
 	}
