@@ -504,6 +504,10 @@ public abstract class PcodeEmit {
 		VarnodeData[] dyncache = null;
 		VarnodeTpl vn, outvn;
 		int isize = opt.getInput().length;
+		
+		if (isize > incache.length) {
+			incache = new VarnodeData[isize];
+		}
 
 		// First build all the inputs
 		for (int i = 0; i < isize; ++i) {
