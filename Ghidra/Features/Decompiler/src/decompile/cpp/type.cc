@@ -3083,7 +3083,7 @@ Datatype *TypeFactory::findAdd(Datatype &ct)
 
   if (ct.name.size()!=0) {	// If there is a name
     if (ct.id == 0)		// There must be an id
-      throw LowlevelError("Datatype must have a valid id");
+      throw LowlevelError("Datatype must have a valid id: "+ct.name);
     res = findByIdLocal(ct.name,ct.id); // Lookup type by it
     if (res != (Datatype *)0) { // If a type has this name
       if (0!=res->compareDependency( ct )) // Check if it is the same type
