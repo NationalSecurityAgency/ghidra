@@ -63,7 +63,7 @@ public class TraceRmiLauncherServicePluginTest extends AbstractGhidraHeadedDebug
 		};
 	}
 
-	@Test
+	// @Test // This is currently hanging the test machine. The gdb process is left running
 	public void testLaunchLocalGdb() throws Exception {
 		createProgram(getSLEIGH_X86_64_LANGUAGE());
 		try (Transaction tx = program.openTransaction("Rename")) {
