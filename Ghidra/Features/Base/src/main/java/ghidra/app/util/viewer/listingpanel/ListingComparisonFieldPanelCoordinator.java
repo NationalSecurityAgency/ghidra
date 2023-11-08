@@ -132,11 +132,8 @@ public class ListingComparisonFieldPanelCoordinator extends LayoutLockedFieldPan
 			(leftAddress != null) ? leftAddressIndexMap.getIndex(leftAddress) : null;
 		BigInteger rightIndex =
 			(rightAddress != null) ? rightAddressIndexMap.getIndex(rightAddress) : null;
-
-		BigInteger[] lineNumbers =
-			new BigInteger[] { (leftIndex != null) ? leftIndex : BigInteger.ZERO,
-				(rightIndex != null) ? rightIndex : BigInteger.ZERO };
-		setLockedLines(lineNumbers);
+		//lockLines will set null args to BigInteger.ZERO
+		lockLines(leftIndex, rightIndex);
 	}
 
 	/**
