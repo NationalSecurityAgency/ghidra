@@ -1196,10 +1196,10 @@ public class MachoProgramBuilder {
 			}
 
 			if (libraryPath != null) {
-				libraryPaths.add(libraryPath);
 				int index = libraryPath.lastIndexOf("/");
 				String libraryName = index != -1 ? libraryPath.substring(index + 1) : libraryPath;
 				if (!libraryName.equals(program.getName())) {
+					libraryPaths.add(libraryPath);
 					addLibrary(libraryPath);
 					props.setString(
 						ExternalSymbolResolver.getRequiredLibraryProperty(libraryIndex++),
