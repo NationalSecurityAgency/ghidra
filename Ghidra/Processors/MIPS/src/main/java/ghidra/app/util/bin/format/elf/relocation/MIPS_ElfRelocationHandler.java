@@ -722,7 +722,6 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 				}
 				else {
 					memory.setInt(relocationAddress, (int) symbolValue);
-					byteLength = 8;
 				}
 				status = Status.APPLIED;
 				break;
