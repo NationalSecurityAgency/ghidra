@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.*;
 
+import ghidra.plugin.importer.ProgramMappingService;
+import ghidra.program.model.listing.Program;
 import ghidra.util.SystemUtilities;
 
 /**
@@ -62,6 +64,27 @@ import ghidra.util.SystemUtilities;
  */
 public class FSRL {
 	public static final String PARAM_MD5 = "MD5";
+
+	/**
+	 * Returns the {@link FSRL} stored in a {@link Program}'s properties, or null if not present
+	 * or malformed.
+	 * 
+	 * @param program {@link Program}
+	 * @return {@link FSRL} from program's properties, or null if not present or invalid
+	 */
+	public static FSRL fromProgram(Program program) {
+		String fsrlStr = program.getOptions(Program.PROGRAM_INFO)
+				.getString(ProgramMappingService.PROGRAM_SOURCE_FSRL, null);
+		if (fsrlStr != null) {
+			try {
+				return FSRL.fromString(fsrlStr);
+			}
+			catch (MalformedURLException e) {
+				// fall thru, return null
+			}
+		}
+		return null;
+	}
 
 	/**
 	 * Creates a {@link FSRL} from a raw string.  The parent portions of the FSRL
