@@ -218,6 +218,7 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 			if (alignment < 1) {
 				alignment = 1;
 			}
+
 			do {
 				// skip past delay slot instructions
 				try {
@@ -228,8 +229,16 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 				catch (AddressOverflowException e) {
 					return null;
 				}
+				// if an instruction is in a delay slot and has references to it,
+				// consider this the fallfrom instruction
+				if (instr != null && instr.isInDelaySlot() && instr.hasFallthrough()) {
+					if (program.getSymbolTable().hasSymbol(instr.getMinAddress())) {
+						break;
+					}
+				}
 			}
 			while (instr != null && instr.isInDelaySlot());
+			
 			if (instr == null) {
 				return null;
 			}
