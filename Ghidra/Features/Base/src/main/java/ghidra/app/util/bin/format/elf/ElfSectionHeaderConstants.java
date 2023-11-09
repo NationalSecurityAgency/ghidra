@@ -100,6 +100,22 @@ public class ElfSectionHeaderConstants {
 	/**Android's experimental support for SHT_RELR sections (see above) */
 	public static final int SHT_ANDROID_RELR = 0x6fffff00;
 
+	/** LLVM-specific section header types **/
+	public static final int SHT_LLVM_ODRTAB = 0x6fff4c00;	// LLVM ODR table.
+	public static final int SHT_LLVM_LINKER_OPTIONS = 0x6fff4c01; // LLVM Linker Options.
+	public static final int SHT_LLVM_ADDRSIG = 0x6fff4c03;	// List of address-significant symbols
+															// for safe ICF.
+	public static final int SHT_LLVM_DEPENDENT_LIBRARIES = 0x6fff4c04; // LLVM Dependent Library Specifiers.
+	public static final int SHT_LLVM_SYMPART = 0x6fff4c05;		// Symbol partition specification.
+	public static final int SHT_LLVM_PART_EHDR = 0x6fff4c06;	// ELF header for loadable partition.
+	public static final int SHT_LLVM_PART_PHDR = 0x6fff4c07;	// Phdrs for loadable partition.
+	public static final int SHT_LLVM_BB_ADDR_MAP_V0 = 0x6fff4c08;	// LLVM Basic Block Address Map (old version kept for
+																	// backward-compatibility).
+	public static final int SHT_LLVM_CALL_GRAPH_PROFILE = 0x6fff4c09; // LLVM Call Graph Profile.
+	public static final int SHT_LLVM_BB_ADDR_MAP = 0x6fff4c0a;	// LLVM Basic Block Address Map.
+	public static final int SHT_LLVM_OFFLOADING = 0x6fff4c0b;	// LLVM device offloading data.
+	public static final int SHT_LLVM_LTO = 0x6fff4c0c;			// .llvm.lto for fat LTO.
+
 	/**Object attributes */
 	public static final int SHT_GNU_ATTRIBUTES = 0x6ffffff5;
 	/**GNU-style hash table */
@@ -172,5 +188,5 @@ public class ElfSectionHeaderConstants {
 	public static final short SHN_XINDEX = (short) 0xffff;
 	/**upper bound on range of reserved indexes*/
 	public static final short SHN_HIRESERVE = (short) 0xffff;
-	
+
 }
