@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 %define api.prefix {sleigh}
+%define api.header.include {"ghidra/slghparse.hh"}
 %{
 #include "slgh_compile.hh"
 

@@ -136,7 +136,7 @@ model {
 		         // 	  include "grammar.cc"				// used by diagnostic console mode
 		            }
 					exportedHeaders {
-						srcDir "src/decompile/cpp"
+						srcDir "src/decompile/cpp/include"
 					}
 				} // end cpp				
 			} // end sources
@@ -183,7 +183,7 @@ model {
 						include "slghscan.cc"
 					}
 					exportedHeaders {
-						srcDir "src/decompile/cpp"
+						srcDir "src/decompile/cpp/include"
 					}
 				} // end cpp
 			} // end sources (sleigh)

@@ -354,7 +354,7 @@ int main(int argc,char **argv)
 --OPT_CXXFLAGS=-O2 -Wall -Wno-sign-compare
 --
 --# libraries
---INCLUDES=-I./src
+--INCLUDES=-I./src/include
 --
 --LNK=src/libsla.a
 --
