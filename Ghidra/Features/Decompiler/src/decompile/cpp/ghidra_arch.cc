@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ghidra_context.hh"
-#include "loadimage_ghidra.hh"
-#include "database_ghidra.hh"
-#include "ghidra_translate.hh"
-#include "typegrp_ghidra.hh"
-#include "comment_ghidra.hh"
-#include "string_ghidra.hh"
-#include "cpool_ghidra.hh"
-#include "inject_ghidra.hh"
+#include "ghidra/ghidra_context.hh"
+#include "ghidra/loadimage_ghidra.hh"
+#include "ghidra/database_ghidra.hh"
+#include "ghidra/ghidra_translate.hh"
+#include "ghidra/typegrp_ghidra.hh"
+#include "ghidra/comment_ghidra.hh"
+#include "ghidra/string_ghidra.hh"
+#include "ghidra/cpool_ghidra.hh"
+#include "ghidra/inject_ghidra.hh"
 
 namespace ghidra {
 

@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ruleaction.hh"
-#include "coreaction.hh"
-#include "subflow.hh"
-#include "rangeutil.hh"
+#include "ghidra/ruleaction.hh"
+#include "ghidra/coreaction.hh"
+#include "ghidra/subflow.hh"
+#include "ghidra/rangeutil.hh"
 
 namespace ghidra {
 

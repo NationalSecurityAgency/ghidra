@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "options.hh"
-#include "funcdata.hh"
-#include "flow.hh"
-#include "printc.hh"
+#include "ghidra/options.hh"
+#include "ghidra/funcdata.hh"
+#include "ghidra/flow.hh"
+#include "ghidra/printc.hh"
 
 namespace ghidra {
 

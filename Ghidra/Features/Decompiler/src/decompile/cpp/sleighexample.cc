@@ -17,9 +17,9 @@
 // Dump the raw pcode instructions
 
 // Root include for parsing using SLEIGH
-#include "loadimage.hh"
-#include "sleigh.hh"
-#include "emulate.hh"
+#include "ghidra/loadimage.hh"
+#include "ghidra/sleigh.hh"
+#include "ghidra/emulate.hh"
 #include <iostream>
 
 using std::cerr;

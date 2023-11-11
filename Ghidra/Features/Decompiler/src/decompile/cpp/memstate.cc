@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "memstate.hh"
-#include "translate.hh"
+#include "ghidra/memstate.hh"
+#include "ghidra/translate.hh"
 
 namespace ghidra {
 

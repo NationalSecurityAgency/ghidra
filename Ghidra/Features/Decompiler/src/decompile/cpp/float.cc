@@ -14,8 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "float.hh"
-#include "address.hh"
+#include "ghidra/float.hh"
+#include "ghidra/address.hh"
 
 #include <cmath>
 #include <limits>

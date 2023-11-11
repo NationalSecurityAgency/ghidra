@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "slghpattern.hh"
+#include "ghidra/slghpattern.hh"
 
 namespace ghidra {
 

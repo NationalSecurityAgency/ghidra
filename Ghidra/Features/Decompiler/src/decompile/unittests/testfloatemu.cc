@@ -16,9 +16,9 @@
 /// \file test.cc
 /// \brief Unit tests for Ghidra C++ components.
 
-#include "float.hh"
-#include "opbehavior.hh"
-#include "test.hh"
+#include "ghidra/float.hh"
+#include "ghidra/opbehavior.hh"
+#include "ghidra/test.hh"
 
 #include <cmath>
 #include <cstdint>

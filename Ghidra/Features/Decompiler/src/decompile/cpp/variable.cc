@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "variable.hh"
-#include "op.hh"
-#include "database.hh"
+#include "ghidra/variable.hh"
+#include "ghidra/op.hh"
+#include "ghidra/database.hh"
 
 namespace ghidra {
 

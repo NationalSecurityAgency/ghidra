@@ -15,10 +15,10 @@
  */
 // Set up decompiler for specific architectures
 
-#include "coreaction.hh"
-#include "flow.hh"
+#include "ghidra/coreaction.hh"
+#include "ghidra/flow.hh"
 #ifdef CPUI_RULECOMPILE
-#include "rulecompile.hh"
+#include "ghidra/rulecompile.hh"
 #endif
 #ifdef CPUI_STATISTICS
 #include <cmath>

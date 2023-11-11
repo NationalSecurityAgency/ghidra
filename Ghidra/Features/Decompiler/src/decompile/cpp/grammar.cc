@@ -90,7 +90,7 @@
 
 /* First part of user prologue.  */
 
-#include "grammar.hh"
+#include "ghidra/grammar.hh"
 
 namespace ghidra {
 

@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "context.hh"
-#include "slghsymbol.hh"
-#include "translate.hh"
+#include "ghidra/context.hh"
+#include "ghidra/slghsymbol.hh"
+#include "ghidra/translate.hh"
 
 namespace ghidra {
 

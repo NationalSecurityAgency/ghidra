@@ -14,8 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "block.hh"
-#include "funcdata.hh"
+#include "ghidra/block.hh"
+#include "ghidra/funcdata.hh"
 
 namespace ghidra {
 

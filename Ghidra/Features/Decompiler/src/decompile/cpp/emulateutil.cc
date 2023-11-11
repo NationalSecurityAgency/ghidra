@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "architecture.hh"
-#include "emulateutil.hh"
+#include "ghidra/architecture.hh"
+#include "ghidra/emulateutil.hh"
 
 namespace ghidra {
 

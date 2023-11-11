@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "fspec.hh"
-#include "funcdata.hh"
+#include "ghidra/fspec.hh"
+#include "ghidra/funcdata.hh"
 
 namespace ghidra {
 

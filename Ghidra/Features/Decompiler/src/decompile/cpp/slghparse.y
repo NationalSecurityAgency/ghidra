@@ -16,7 +16,7 @@
 %define api.prefix {sleigh}
 %define api.header.include {"ghidra/slghparse.hh"}
 %{
-#include "slgh_compile.hh"
+#include "ghidra/slgh_compile.hh"
 
 extern FILE *sleighin;
 extern int sleighlex(void);

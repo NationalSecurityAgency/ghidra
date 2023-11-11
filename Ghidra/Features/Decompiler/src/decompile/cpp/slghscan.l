@@ -26,11 +26,11 @@
 static int isatty (int fildes) { return 0; }
 #endif
 
-#include "slgh_compile.hh"
+#include "ghidra/slgh_compile.hh"
 
 namespace ghidra {
 
-#include "slghparse.hh"
+#include "ghidra/slghparse.hh"
 
 struct FileStreamState {
   YY_BUFFER_STATE lastbuffer;	// Last lex buffer corresponding to the stream

@@ -88,7 +88,7 @@
 /* Copy the first part of user declarations.  */
 
 
-#include "slgh_compile.hh"
+#include "ghidra/slgh_compile.hh"
 
 extern FILE *sleighin;
 extern int sleighlex(void);
@@ -119,7 +119,7 @@ extern int sleigherror(const char *str );
 #endif
 
 /* In a future release of Bison, this section will be replaced
-   by #include "slghparse.hh".  */
+   by #include "ghidra/slghparse.hh".  */
 #ifndef YY_SLEIGH_SLGHPARSE_HH_INCLUDED
 # define YY_SLEIGH_SLGHPARSE_HH_INCLUDED
 /* Debug traces.  */

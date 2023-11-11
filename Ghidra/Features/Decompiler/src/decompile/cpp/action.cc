@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "action.hh"
-#include "funcdata.hh"
+#include "ghidra/action.hh"
+#include "ghidra/funcdata.hh"
 
-#include "coreaction.hh"
+#include "ghidra/coreaction.hh"
 
 namespace ghidra {
 

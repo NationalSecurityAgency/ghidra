@@ -15,7 +15,7 @@
  */
 %define api.prefix {grammar}
 %{
-#include "grammar.hh"
+#include "ghidra/grammar.hh"
 
 namespace ghidra {
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "interface.hh"
+#include "ghidra/interface.hh"
 #ifdef __REMOTE_SOCKET__
 #include "sys/socket.h"
 #include "sys/un.h"

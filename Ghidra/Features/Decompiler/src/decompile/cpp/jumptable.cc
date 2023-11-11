@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "jumptable.hh"
-#include "emulate.hh"
-#include "flow.hh"
+#include "ghidra/jumptable.hh"
+#include "ghidra/emulate.hh"
+#include "ghidra/flow.hh"
 
 namespace ghidra {
 

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "pcodeinject.hh"
-#include "architecture.hh"
+#include "ghidra/pcodeinject.hh"
+#include "ghidra/architecture.hh"
 
 namespace ghidra {
 

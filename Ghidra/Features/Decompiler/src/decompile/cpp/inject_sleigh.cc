@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "inject_sleigh.hh"
-#include "pcodeparse.hh"
-#include "architecture.hh"
+#include "ghidra/inject_sleigh.hh"
+#include "ghidra/pcodeparse.hh"
+#include "ghidra/architecture.hh"
 
 namespace ghidra {
 

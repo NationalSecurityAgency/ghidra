@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "funcdata.hh"
-#include "flow.hh"
+#include "ghidra/funcdata.hh"
+#include "ghidra/flow.hh"
 
 namespace ghidra {
 

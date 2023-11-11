@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "sleigh_arch.hh"
-#include "inject_sleigh.hh"
+#include "ghidra/sleigh_arch.hh"
+#include "ghidra/inject_sleigh.hh"
 
 namespace ghidra {
 
