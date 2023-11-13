@@ -1,0 +1,22 @@
+{
+  "image": "mcr.microsoft.com/devcontainers/java",
+  "features": {
+    "ghcr.io/devcontainers/features/java:1": {"version": "17", "installGradle": true},
+    "ghcr.io/devcontainers/features/sshd:1": {"version": "latest"}
+},
+"hostRequirements": {
+   "cpus": 4,
+   "memory": "16gb",
+   "storage": "32gb"
+},
+"customizations": {
+  "vscode": {
+    "extensions": [
+      "vscjava.vscode-java-debug",
+      "vscjava.vscode-java-pack",
+      "vscjava.vscode-gradle",
+      "ms-vscode.cpptools-extension-pack"
+    ]
+  }
+}
+}
