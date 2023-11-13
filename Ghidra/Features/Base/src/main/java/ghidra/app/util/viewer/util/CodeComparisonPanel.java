@@ -354,6 +354,7 @@ public abstract class CodeComparisonPanel<T extends FieldPanelCoordinator> exten
 		}
 		this.syncScrolling = syncScrolling;
 
+
 		// Refresh the left panel.
 		FieldPanel leftPanel = getLeftFieldPanel();
 		leftPanel.validate();
@@ -362,6 +363,7 @@ public abstract class CodeComparisonPanel<T extends FieldPanelCoordinator> exten
 		FieldPanel rightPanel = getRightFieldPanel();
 		rightPanel.validate();
 		rightPanel.invalidate();
+
 
 		setFieldPanelCoordinator(syncScrolling ? createFieldPanelCoordinator() : null);
 	}
