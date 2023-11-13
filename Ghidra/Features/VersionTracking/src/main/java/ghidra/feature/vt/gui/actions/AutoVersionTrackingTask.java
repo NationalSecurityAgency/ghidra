@@ -1224,10 +1224,14 @@ public class AutoVersionTrackingTask extends Task {
 			if (map.keySet().isEmpty()) {
 				continue;
 			}
-
+			
 			// get offset from top of function to use in function to operandMap map
-			Long offset =
-				inst.getAddress().subtract(function.getEntryPoint().getOffset()).getOffset();
+			// can be positive or negative offset (positive means instruction address is after 
+			// the entry address, negative means instruction address is before entry address)
+			Long entryOffset = function.getEntryPoint().getOffset();
+			Long instOffset = inst.getAddress().getOffset();
+			Long offset = instOffset - entryOffset;
+
 			offsetToOperandsMap.put(offset, map);
 		}
 
