@@ -53,8 +53,10 @@ import ghidra.util.exception.DuplicateNameException;
  * Most of these are already integrated via the {@link DebuggerEmulationService}. Please see if that
  * service satisfies your use case before employing these directly.
  */
-public enum ProgramEmulationUtils {
-	;
+public class ProgramEmulationUtils {
+	private ProgramEmulationUtils() {
+	}
+
 	public static final String BLOCK_NAME_STACK = "STACK";
 
 	/**
@@ -122,21 +124,27 @@ public enum ProgramEmulationUtils {
 	 * Create regions for each block in a program, without relocation, and map the program in
 	 * 
 	 * <p>
-	 * This creates a region for each loaded, non-overlay block in the program. Permissions/flags
-	 * are assigned accordingly. A single static mapping is generated to cover the entire range of
-	 * created regions. Note that no bytes are copied in, as that could be prohibitive for large
-	 * programs. Instead, the emulator should load them, based on the static mapping, as needed.
+	 * This creates a region for each loaded, block in the program. Typically, only non-overlay
+	 * blocks are included. To activate an overlay space, include it in the set of
+	 * {@code activeOverlays}. This will alter the mapping from the trace to the static program such
+	 * that the specified overlays are effective. The gaps between overlays are mapped to their
+	 * physical (non-overlay) portions. Permissions/flags are assigned accordingly. Note that no
+	 * bytes are copied in, as that could be prohibitive for large programs. Instead, the emulator
+	 * should load them, based on the static mapping, as needed.
 	 * 
 	 * <p>
 	 * A transaction must already be started on the destination trace.
 	 * 
 	 * @param snapshot the destination snapshot, usually 0
 	 * @param program the program to load
+	 * @param activeOverlays which overlay spaces to use
 	 */
-	public static void loadExecutable(TraceSnapshot snapshot, Program program) {
+	public static void loadExecutable(TraceSnapshot snapshot, Program program,
+			List<AddressSpace> activeOverlays) {
 		Trace trace = snapshot.getTrace();
 		PathPattern patRegion = computePatternRegion(trace);
 		Map<AddressSpace, Extrema> extremaBySpace = new HashMap<>();
+		Lifespan nowOn = Lifespan.nowOn(snapshot.getKey());
 		try {
 			for (MemoryBlock block : program.getMemory().getBlocks()) {
 				if (!DebuggerStaticMappingUtils.isReal(block)) {
@@ -147,18 +155,35 @@ public enum ProgramEmulationUtils {
 						.consider(range);
 				String modName = getModuleName(program);
 
-				// TODO: Do I populate modules, since the mapping will already be done?
+				// NB. No need to populate as module.
+				// UI will sync from mapping, so it's obvious where the cursor is.
 				String path = PathUtils.toString(patRegion
 						.applyKeys(block.getStart() + "-" + modName + ":" + block.getName())
 						.getSingletonPath());
 				trace.getMemoryManager()
 						.createRegion(path, snapshot.getKey(), range, getRegionFlags(block));
 			}
+			AddressSet identical = new AddressSet();
 			for (Extrema extrema : extremaBySpace.values()) {
+				identical.add(extrema.getMin(), extrema.getMax());
+			}
+			for (MemoryBlock block : program.getMemory().getBlocks()) {
+				if (!block.isOverlay() ||
+					!activeOverlays.contains(block.getStart().getAddressSpace())) {
+					continue;
+				}
+				Address phys = block.getStart().getPhysicalAddress();
 				DebuggerStaticMappingUtils.addMapping(
-					new DefaultTraceLocation(trace, null, Lifespan.nowOn(snapshot.getKey()),
-						extrema.getMin()),
-					new ProgramLocation(program, extrema.getMin()), extrema.getLength(), false);
+					new DefaultTraceLocation(trace, null, nowOn, phys),
+					new ProgramLocation(program, block.getStart()),
+					block.getSize(), false);
+				identical.delete(phys, block.getEnd().getPhysicalAddress());
+			}
+			for (AddressRange range : identical) {
+				DebuggerStaticMappingUtils.addMapping(
+					new DefaultTraceLocation(trace, null, nowOn, range.getMinAddress()),
+					new ProgramLocation(program, range.getMinAddress()),
+					range.getLength(), false);
 			}
 		}
 		catch (TraceOverlappedRegionException | DuplicateNameException
@@ -407,7 +432,10 @@ public enum ProgramEmulationUtils {
 				TraceSnapshot initial =
 					trace.getTimeManager().createSnapshot(EMULATION_STARTED_AT + pc);
 				long snap = initial.getKey();
-				loadExecutable(initial, program);
+				List<AddressSpace> overlays =
+					pc.getAddressSpace().isOverlaySpace() ? List.of(pc.getAddressSpace())
+							: List.of();
+				loadExecutable(initial, program, overlays);
 				doLaunchEmulationThread(trace, snap, program, pc, pc);
 			}
 			trace.clearUndo();
