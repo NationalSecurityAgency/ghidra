@@ -31,7 +31,7 @@ import db.Transaction;
 import docking.widgets.table.RowWrappedEnumeratedColumnTableModel;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerIntegrationTest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.breakpoint.DebuggerBreakpointsProvider.LogicalBreakpointTableModel;
 import ghidra.app.plugin.core.debug.gui.console.DebuggerConsolePlugin;
@@ -39,9 +39,14 @@ import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin
 import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.services.*;
+import ghidra.dbg.model.TestTargetProcess;
+import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
+import ghidra.dbg.target.TargetBreakpointSpecContainer;
+import ghidra.debug.api.action.ActionSource;
 import ghidra.debug.api.breakpoint.LogicalBreakpoint;
 import ghidra.debug.api.breakpoint.LogicalBreakpoint.State;
 import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.model.TraceRecorder;
 import ghidra.framework.store.LockException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
@@ -50,17 +55,13 @@ import ghidra.program.model.mem.MemoryConflictException;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 @Category(NightlyCategory.class) // this may actually be an @PortSensitive test
-public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
-		extends AbstractGhidraHeadedDebuggerIntegrationTest {
+public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebuggerTest {
 	protected static final long TIMEOUT_MILLIS =
 		SystemUtilities.isInTestingBatchMode() ? 5000 : Long.MAX_VALUE;
 
@@ -69,46 +70,12 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 	protected DebuggerStaticMappingService mappingService;
 	protected DebuggerLogicalBreakpointService breakpointService;
 
-	protected abstract T createTarget1() throws Throwable;
-
-	protected abstract T createTarget3() throws Throwable;
-
-	protected abstract P getProcess1();
-
-	protected abstract P getProcess3();
-
-	protected abstract Trace getTrace(T t);
-
-	protected abstract void waitTarget(T t) throws Throwable;
-
-	protected abstract void addLiveMemory(P process) throws Throwable;
-
-	protected abstract void addLiveBreakpoint(T target, long offset) throws Throwable;
-
-	protected abstract void assertNotLiveBreakpoint(T target, TraceBreakpoint breakpoint)
-			throws Throwable;
-
-	protected void addLiveMemoryAndBreakpoint(P process, T target) throws Throwable {
-		addLiveMemory(process);
-		addLiveBreakpoint(target, 0x55550123);
-	}
-
-	protected abstract void handleSetBreakpointInvocation(Set<TraceBreakpointKind> expectedKinds,
-			long dynOffset) throws Throwable;
-
-	protected abstract void handleToggleBreakpointInvocation(TraceBreakpoint expectedBreakpoint,
-			boolean expectedEnabled) throws Throwable;
-
-	protected void addStaticMemoryAndBreakpoint() throws LockException, DuplicateNameException,
-			MemoryConflictException, AddressOverflowException, CancelledException {
-		try (Transaction tx = program.openTransaction("Add bookmark break")) {
-			program.getMemory()
-					.createInitializedBlock(".text", addr(program, 0x00400000), 0x1000, (byte) 0,
-						TaskMonitor.DUMMY, false);
-			program.getBookmarkManager()
-					.setBookmark(addr(program, 0x00400123), LogicalBreakpoint.ENABLED_BOOKMARK_TYPE,
-						"SW_EXECUTE;1", "");
-		}
+	@Before
+	public void setUpBreakpointsProviderTest() throws Exception {
+		breakpointsPlugin = addPlugin(tool, DebuggerBreakpointsPlugin.class);
+		breakpointsProvider = waitForComponentProvider(DebuggerBreakpointsProvider.class);
+		mappingService = tool.getService(DebuggerStaticMappingService.class);
+		breakpointService = tool.getService(DebuggerLogicalBreakpointService.class);
 	}
 
 	protected void addMapping(Trace trace, Program prog) throws Exception {
@@ -119,16 +86,32 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 		}
 	}
 
-	protected void assertProviderEmpty() {
-		assertTrue(breakpointsProvider.breakpointTableModel.getModelData().isEmpty());
+	protected void addLiveMemoryAndBreakpoint(TestTargetProcess process, TraceRecorder recorder)
+			throws Exception {
+		process.addRegion("bin:.text", mb.rng(0x55550000, 0x55550fff), "rx");
+		addLiveBreakpoint(recorder, 0x55550123);
 	}
 
-	@Before
-	public void setUpBreakpointsProviderTest() throws Exception {
-		breakpointsPlugin = addPlugin(tool, DebuggerBreakpointsPlugin.class);
-		breakpointsProvider = waitForComponentProvider(DebuggerBreakpointsProvider.class);
-		mappingService = tool.getService(DebuggerStaticMappingService.class);
-		breakpointService = tool.getService(DebuggerLogicalBreakpointService.class);
+	protected void addLiveBreakpoint(TraceRecorder recorder, long offset) throws Exception {
+		TargetBreakpointSpecContainer cont = getBreakpointContainer(recorder);
+		cont.placeBreakpoint(mb.addr(offset), Set.of(TargetBreakpointKind.SW_EXECUTE))
+				.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+	}
+
+	protected void addStaticMemoryAndBreakpoint() throws LockException, MemoryConflictException,
+			AddressOverflowException, CancelledException {
+		try (Transaction tx = program.openTransaction("Add bookmark break")) {
+			program.getMemory()
+					.createInitializedBlock(".text", addr(program, 0x00400000), 0x1000, (byte) 0,
+						TaskMonitor.DUMMY, false);
+			program.getBookmarkManager()
+					.setBookmark(addr(program, 0x00400123), LogicalBreakpoint.ENABLED_BOOKMARK_TYPE,
+						"SW_EXECUTE;1", "");
+		}
+	}
+
+	protected void assertProviderEmpty() {
+		assertTrue(breakpointsProvider.breakpointTableModel.getModelData().isEmpty());
 	}
 
 	@Test
@@ -139,11 +122,14 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 
 	@Test
 	public void testAddLiveOpenTracePopulatesProvider() throws Throwable {
-		T target = createTarget1();
-		Trace trace = getTrace(target);
+		createTestModel();
+		mb.createTestProcessesAndThreads();
+		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
+			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
+		Trace trace = recorder.getTrace();
 
-		addLiveMemoryAndBreakpoint(getProcess1(), target);
-		waitTarget(target);
+		addLiveMemoryAndBreakpoint(mb.testProcess1, recorder);
+		waitRecorder(recorder);
 
 		// NB, optionally open trace. Mapping only works if open...
 		traceManager.openTrace(trace);
@@ -158,12 +144,15 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 	}
 
 	@Test
-	public void testToggleLiveViaTable() throws Throwable {
-		T target = createTarget1();
-		Trace trace = getTrace(target);
+	public void testToggleLiveViaTable() throws Exception {
+		createTestModel();
+		mb.createTestProcessesAndThreads();
+		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
+			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
+		Trace trace = recorder.getTrace();
 
-		addLiveMemoryAndBreakpoint(getProcess1(), target);
-		waitTarget(target);
+		addLiveMemoryAndBreakpoint(mb.testProcess1, recorder);
+		waitForDomainObject(trace);
 
 		traceManager.openTrace(trace);
 		waitForSwing();
@@ -174,14 +163,10 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 
 		// NB, the row does not take the value immediately, but via async callbacks
 		row.setEnabled(false);
-		handleToggleBreakpointInvocation(
-			Unique.assertOne(row.getLogicalBreakpoint().getTraceBreakpoints(trace)), false);
 
 		waitForPass(() -> assertEquals(State.INCONSISTENT_DISABLED, row.getState()));
 
 		row.setEnabled(true);
-		handleToggleBreakpointInvocation(
-			Unique.assertOne(row.getLogicalBreakpoint().getTraceBreakpoints(trace)), true);
 
 		waitForPass(() -> assertEquals(State.INCONSISTENT_ENABLED, row.getState()));
 	}
@@ -225,14 +210,17 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 
 	@Test
 	public void testEnablementColumnMapped() throws Throwable {
-		T target = createTarget1();
-		Trace trace = getTrace(target);
+		createTestModel();
+		mb.createTestProcessesAndThreads();
+		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
+			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
+		Trace trace = recorder.getTrace();
 		createProgramFromTrace(trace);
 		intoProject(trace);
 		intoProject(program);
 
 		addMapping(trace, program);
-		addLiveMemoryAndBreakpoint(getProcess1(), target);
+		addLiveMemoryAndBreakpoint(mb.testProcess1, recorder);
 		addStaticMemoryAndBreakpoint();
 		programManager.openProgram(program);
 		traceManager.openTrace(trace);
@@ -256,10 +244,8 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 		waitForPass(() -> assertEquals(State.INCONSISTENT_DISABLED, row.getState()));
 
 		// NOTE: This acts on the corresponding target, not directly on trace
-		CompletableFuture<Void> disable = lb.disableForTrace(trace);
-		handleToggleBreakpointInvocation(Unique.assertOne(lb.getTraceBreakpoints(trace)), false);
-		waitOn(disable);
-		waitTarget(target);
+		waitOn(lb.disableForTrace(trace));
+		waitRecorder(recorder);
 
 		waitForPass(() -> assertEquals(State.DISABLED, row.getState()));
 
@@ -269,10 +255,8 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 		waitForPass(() -> assertEquals(State.INCONSISTENT_ENABLED, row.getState()));
 
 		// This duplicates the initial case, but without it, I just feel incomplete
-		CompletableFuture<Void> enable = lb.enableForTrace(trace);
-		handleToggleBreakpointInvocation(Unique.assertOne(lb.getTraceBreakpoints(trace)), true);
-		waitOn(enable);
-		waitTarget(target);
+		waitOn(lb.enableForTrace(trace));
+		waitRecorder(recorder);
 
 		waitForPass(() -> assertEquals(State.ENABLED, row.getState()));
 	}
@@ -509,11 +493,14 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 	}
 
 	@Test
-	public void testActionMakeBreakpointsEffective() throws Throwable {
+	public void testActionMakeBreakpointsEffective() throws Exception {
 		DebuggerConsolePlugin consolePlugin = addPlugin(tool, DebuggerConsolePlugin.class);
 
-		T target = createTarget1();
-		Trace trace = getTrace(target);
+		createTestModel();
+		mb.createTestProcessesAndThreads();
+		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
+			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
+		Trace trace = recorder.getTrace();
 		createProgramFromTrace(trace);
 		intoProject(trace);
 		intoProject(program);
@@ -534,7 +521,6 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 		});
 
 		performAction(breakpointsProvider.actionMakeBreakpointsEffective);
-		handleSetBreakpointInvocation(TraceBreakpointKindSet.SW_EXECUTE, 0x55550123);
 
 		waitForPass(() -> {
 			assertFalse(breakpointsProvider.actionMakeBreakpointsEffective.isEnabled());
@@ -552,11 +538,16 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 
 	@Test
 	public void testActionFilters() throws Throwable {
-		T target1 = createTarget1();
-		Trace trace1 = getTrace(target1);
+		createTestModel();
+		mb.createTestProcessesAndThreads();
 
-		T target3 = createTarget3();
-		Trace trace3 = getTrace(target3);
+		TraceRecorder recorder1 = modelService.recordTarget(mb.testProcess1,
+			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
+		Trace trace1 = recorder1.getTrace();
+
+		TraceRecorder recorder3 = modelService.recordTarget(mb.testProcess3,
+			createTargetTraceMapper(mb.testProcess3), ActionSource.AUTOMATIC);
+		Trace trace3 = recorder3.getTrace();
 
 		createProgramFromTrace(trace1);
 		intoProject(trace1);
@@ -565,12 +556,12 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 
 		addMapping(trace1, program);
 		addMapping(trace3, program);
-		addLiveMemoryAndBreakpoint(getProcess1(), target1);
-		addLiveBreakpoint(target1, 0x55550321);
-		addLiveMemoryAndBreakpoint(getProcess3(), target3);
-		addLiveBreakpoint(target3, 0x55550321);
-		waitTarget(target1);
-		waitTarget(target3);
+		addLiveMemoryAndBreakpoint(mb.testProcess1, recorder1);
+		addLiveBreakpoint(recorder1, 0x55550321);
+		addLiveMemoryAndBreakpoint(mb.testProcess3, recorder3);
+		addLiveBreakpoint(recorder3, 0x55550321);
+		waitRecorder(recorder1);
+		waitRecorder(recorder3);
 		addStaticMemoryAndBreakpoint();
 		// Note, no program breakpoint for 0321...
 
@@ -736,18 +727,21 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 	}
 
 	@Test
-	public void testTablesAndStatesWhenModeChanges() throws Throwable {
+	public void testTablesAndStatesWhenhModeChanges() throws Throwable {
 		DebuggerControlService controlService =
 			addPlugin(tool, DebuggerControlServicePlugin.class);
 
-		T target = createTarget1();
-		Trace trace = getTrace(target);
+		createTestModel();
+		mb.createTestProcessesAndThreads();
+		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
+			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
+		Trace trace = recorder.getTrace();
 		createProgramFromTrace(trace);
 		intoProject(trace);
 		intoProject(program);
 
-		addLiveMemory(getProcess1());
-		waitTarget(target);
+		mb.testProcess1.addRegion("bin:.text", mb.rng(0x55550000, 0x55550fff), "rx");
+		waitRecorder(recorder);
 		addMapping(trace, program);
 		addStaticMemoryAndBreakpoint();
 		programManager.openProgram(program);
@@ -769,7 +763,7 @@ public abstract class AbstractDebuggerBreakpointsProviderTest<T, P>
 		lbRow1.setEnabled(true);
 		TraceBreakpoint emuBpt = waitForValue(
 			() -> Unique.assertAtMostOne(trace.getBreakpointManager().getAllBreakpoints()));
-		assertNotLiveBreakpoint(target, emuBpt);
+		assertNull(recorder.getTargetBreakpoint(emuBpt));
 
 		LogicalBreakpointRow lbRow2 =
 			Unique.assertOne(breakpointsProvider.breakpointTableModel.getModelData());
