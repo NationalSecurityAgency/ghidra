@@ -1,0 +1,578 @@
+
+define endian=little;
+
+define alignment=4;
+
+define space ram      type=ram_space        size=$(REGSIZE) default;
+define space iocsr    type=ram_space        size=$(REGSIZE);
+define space register type=register_space   size=4;
+
+define register offset=0x0 size=$(REGSIZE) [
+	pc   scr0 scr1 scr2 scr3
+];
+
+define register offset=0x40 size=1 [
+	fcc0 fcc1 fcc2 fcc3 fcc4 fcc5 fcc6 fcc7
+];
+
+define register offset=0x48 size=4 [
+	fcsr
+];
+
+# ABI names:
+#  "$zero", "$ra", "$tp", "$sp", "$a0", "$a1", "$a2", "$a3",
+#  "$a4",   "$a5", "$a6", "$a7", "$t0", "$t1", "$t2", "$t3",
+#  "$t4",   "$t5", "$t6", "$t7", "$t8", "$x",  "$fp", "$s0",
+#  "$s1",   "$s2", "$s3", "$s4", "$s5", "$s6", "$s7", "$s8",
+
+# GPR General Purpose Registers
+define register offset=0x100 size=$(REGSIZE) [
+	zero ra   tp   sp   a0   a1   a2   a3
+	a4   a5   a6   a7   t0   t1   t2   t3
+	t4   t5   t6   t7   t8   r21  fp   s0
+	s1   s2   s3   s4   s5   s6   s7   s8
+];
+
+@ifdef LA64
+
+define register offset=0x100 size=4 [
+	r0_lo  r0_hi  ra_lo  ra_hi  tp_lo  tp_hi  sp_lo  sp_hi
+	a0_lo  a0_hi  a1_lo  a1_hi  a2_lo  a2_hi  a3_lo  a3_hi
+	a4_lo  a4_hi  a5_lo  a5_hi  a6_lo  a6_hi  a7_lo  a7_hi
+	t0_lo  t0_hi  t1_lo  t1_hi  t2_lo  t2_hi  t3_lo  t3_hi
+	t4_lo  t4_hi  t5_lo  t5_hi  t6_lo  t6_hi  t7_lo  t7_hi
+	t8_lo  t8_hi  r21_lo r21_hi fp_lo  fp_hi  s0_lo  s0_hi
+	s1_lo  s1_hi  s2_lo  s2_hi  s3_lo  s3_hi  s4_lo  s4_hi
+	s5_lo  s5_hi  s6_lo  s6_hi  s7_lo  s7_hi  s8_lo  s8_hi
+];
+
+@endif
+
+# Floating Point registers (either 32- or 64-bit)
+@if FREGSIZE == "4"
+define register offset=0x1000 size=4 [
+	fa0  _    _    _    _    _    _    _    fa1  _    _    _    _    _    _    _
+	fa2  _    _    _    _    _    _    _    fa3  _    _    _    _    _    _    _
+	fa4  _    _    _    _    _    _    _    fa5  _    _    _    _    _    _    _
+	fa6  _    _    _    _    _    _    _    fa7  _    _    _    _    _    _    _
+	ft0  _    _    _    _    _    _    _    ft1  _    _    _    _    _    _    _
+	ft2  _    _    _    _    _    _    _    ft3  _    _    _    _    _    _    _
+	ft4  _    _    _    _    _    _    _    ft5  _    _    _    _    _    _    _
+	ft6  _    _    _    _    _    _    _    ft7  _    _    _    _    _    _    _
+	ft8  _    _    _    _    _    _    _    ft9  _    _    _    _    _    _    _
+	ft10 _    _    _    _    _    _    _    ft11 _    _    _    _    _    _    _
+	ft12 _    _    _    _    _    _    _    ft13 _    _    _    _    _    _    _
+	ft14 _    _    _    _    _    _    _    ft15 _    _    _    _    _    _    _
+	fs0  _    _    _    _    _    _    _    fs1  _    _    _    _    _    _    _
+	fs2  _    _    _    _    _    _    _    fs3  _    _    _    _    _    _    _
+	fs4  _    _    _    _    _    _    _    fs5  _    _    _    _    _    _    _
+	fs6  _    _    _    _    _    _    _    fs7  _    _    _    _    _    _    _
+];
+
+define register offset=0x1000 size=8 [
+	fa0_1   _       _       _       fa2_3   _       _       _
+	fa4_5   _       _       _       fa6_7   _       _       _
+	ft8_9   _       _       _       ft10_11 _       _       _
+	ft12_13 _       _       _       ft14_15 _       _       _
+	ft16_17 _       _       _       ft18_19 _       _       _
+	ft20_21 _       _       _       ft22_23 _       _       _
+	fs24_25 _       _       _       fs26_27 _       _       _
+	fs28_29 _       _       _       fs30_31 _       _       _
+];
+
+@else
+
+define register offset=0x1000 size=4 [
+	fa0_lo  _       _       _       _       _       _       _       fa1_lo  _       _       _       _       _       _       _
+	fa2_lo  _       _       _       _       _       _       _       fa3_lo  _       _       _       _       _       _       _
+	fa4_lo  _       _       _       _       _       _       _       fa5_lo  _       _       _       _       _       _       _
+	fa6_lo  _       _       _       _       _       _       _       fa7_lo  _       _       _       _       _       _       _
+	ft0_lo  _       _       _       _       _       _       _       ft1_lo  _       _       _       _       _       _       _
+	ft2_lo  _       _       _       _       _       _       _       ft3_lo  _       _       _       _       _       _       _
+	ft4_lo  _       _       _       _       _       _       _       ft5_lo  _       _       _       _       _       _       _
+	ft6_lo  _       _       _       _       _       _       _       ft7_lo  _       _       _       _       _       _       _
+	ft8_lo  _       _       _       _       _       _       _       ft9_lo  _       _       _       _       _       _       _
+	ft10_lo _       _       _       _       _       _       _       ft11_lo _       _       _       _       _       _       _
+	ft12_lo _       _       _       _       _       _       _       ft13_lo _       _       _       _       _       _       _
+	ft14_lo _       _       _       _       _       _       _       ft15_lo _       _       _       _       _       _       _
+	fs0_lo  _       _       _       _       _       _       _       fs1_lo  _       _       _       _       _       _       _
+	fs2_lo  _       _       _       _       _       _       _       fs3_lo  _       _       _       _       _       _       _
+	fs4_lo  _       _       _       _       _       _       _       fs5_lo  _       _       _       _       _       _       _
+	fs6_lo  _       _       _       _       _       _       _       fs7_lo  _       _       _       _       _       _       _
+];
+
+define register offset=0x1000 size=8 [
+	fa0  _    _    _    fa1  _    _    _    fa2  _    _    _    fa3  _    _    _
+	fa4  _    _    _    fa5  _    _    _    fa6  _    _    _    fa7  _    _    _
+	ft0  _    _    _    ft1  _    _    _    ft2  _    _    _    ft3  _    _    _
+	ft4  _    _    _    ft5  _    _    _    ft6  _    _    _    ft7  _    _    _
+	ft8  _    _    _    ft9  _    _    _    ft10 _    _    _    ft11 _    _    _
+	ft12 _    _    _    ft13 _    _    _    ft14 _    _    _    ft15 _    _    _
+	fs0  _    _    _    fs1  _    _    _    fs2  _    _    _    fs3  _    _    _
+	fs4  _    _    _    fs5  _    _    _    fs6  _    _    _    fs7  _    _    _
+];
+
+@endif #FREGSIZE == 32
+
+# SIMD eXtension 256-bit registers (lsx)
+# overlaps the floating point registers above
+define register offset=0x1000 size=16 [
+	v0  _   v1  _   v2  _   v3  _   v4  _   v5  _   v6  _   v7  _
+	v8  _   v9  _   v10 _   v11 _   v12 _   v13 _   v14 _   v15 _
+	v16 _   v17 _   v18 _   v19 _   v20 _   v21 _   v22 _   v23 _
+	v24 _   v25 _   v26 _   v27 _   v28 _   v29 _   v30 _   v31 _
+];
+
+# AdVanced SIMD eXtension 256-bit registers (lasx)
+# overlaps the floating point registers above
+define register offset=0x1000 size=32 [
+	x0  x1  x2  x3  x4  x5  x6  x7
+	x8  x9  x10 x11 x12 x13 x14 x15
+	x16 x17 x18 x19 x20 x21 x22 x23
+	x24 x25 x26 x27 x28 x29 x30 x31
+];
+
+@define CSR_OFFSET "0x2000" #used for the csr instructions csrxchg/cssrd/cssrw
+define register offset=$(CSR_OFFSET) size=$(REGSIZE) [
+	crmd      prmd      euen      misc      ecfg      estat     era       badv
+	badi      csr9      csr10     csr11     eentry    csr13     csr14     csr15
+	tlbidx    tlbehi    tlbelo0   tlbelo1   csr20     csr21     csr22     csr23
+	asid      pgdl      pgdh      pgd       pwcl      pwch      stlbps    rvacfg
+	cpuid     prcfg1    prcfg2    prcfg3    csr36     csr37     csr38     csr39
+	csr40     csr41     csr42     csr43     csr44     csr45     csr46     csr47
+	save0     save1     save2     save3     save4     save5     save6     save7
+	save8     save9     save10    save11    save12    save13    save14    save15
+	tid       tcfg      tval      cntc      ticlr     csr69     csr70     csr71
+	csr72     csr73     csr74     csr75     csr76     csr78     csr79
+	csr80     csr81     csr82     csr83     csr84     csr85     csr86     csr87
+	csr88     csr89     csr90     csr91     csr92     csr93     csr94     csr95
+	llbctl    csr97     csr98     csr99     csr100    csr101    csr102    csr103
+	csr104    csr105    csr106    csr107    csr108    csr109    csr110    csr111
+	csr112    csr113    csr114    csr115    csr116    csr117    csr118    csr119
+	csr120    csr121    csr122    csr123    csr124    csr125    csr126    csr127
+	impctl1   impctl2   csr130    csr131    csr132    csr133    csr134    csr135
+	tlbrentry tlbrbadv  tlbrera   tlbrsave  tlbrelo0  tlbrelo1  tlbrehi   tlbrprmd
+	merrctl   merrinfo1 merrinfo2 merrentry merrera   merrsave  csr150    csr151
+	ctag      csr153    csr154    csr155    csr156    csr157    csr158    csr159
+	csr160    csr161    csr162    csr163    csr164    csr165    csr166    csr167
+	csr168    csr169    csr170    csr171    csr172    csr173    csr174    csr175
+	csr176    csr177    csr178    csr179    csr180    csr181    csr182    csr183
+	csr184    csr185    csr186    csr187    csr188    csr189    csr190    csr191
+	csr192    csr193    csr194    csr195    csr196    csr197    csr198    csr199
+	csr200    csr201    csr202    csr203    csr204    csr205    csr206    csr207
+	csr208    csr209    csr210    csr211    csr212    csr213    csr214    csr215
+	csr216    csr217    csr218    csr219    csr220    csr221    csr222    csr223
+	csr224    csr225    csr226    csr227    csr228    csr229    csr230    csr231
+	csr232    csr233    csr234    csr235    csr236    csr237    csr238    csr239
+	csr240    csr241    csr242    csr243    csr244    csr245    csr246    csr247
+	csr248    csr249    csr250    csr251    csr252    csr253    csr254    csr255
+	csr256    csr257    csr258    csr259    csr260    csr261    csr262    csr263
+];
+
+# Dummy registers for floating point comparison
+define register offset=0x5000 size=4 [
+	FCMP1 FCMP2
+];
+
+define register offset=0x5008 size=1 [
+	FCMPR
+];
+
+define register offset=0x5100 size=8 [
+	DCMP1 DCMP2
+];
+
+define register offset=0x5110 size=1 [
+	DCMPR
+];
+
+define register offset=0x50 size=4   contextreg;
+
+define context contextreg
+	phase = (0,1) ;
+
+define token instr(32)
+	instword  = ( 0,31)
+	op26_31   = (26,31)
+	op25_31   = (25,31)
+	op24_31   = (24,31)
+	op23_31   = (23,31)
+	op22_31   = (22,31)
+	op21_31   = (21,31)
+	op20_31   = (20,31)
+	op19_31   = (19,31)
+	op18_31   = (18,31)
+	op18_19   = (18,19)
+	op17_31   = (17,31)
+	op16_31   = (16,31)
+	op15_31   = (15,31)
+	op15_15   = (15,15)
+	op14_31   = (14,31)
+	op13_31   = (13,31)
+	op12_31   = (12,31)
+	op11_31   = (11,31)
+	op10_31   = (10,31)
+	op8_31    = ( 8,31)
+	op8_9     = ( 8, 9)
+	op7_31    = ( 7,31)
+	op5_9     = ( 5, 9)
+	op5_31    = ( 5,31)
+	op4_4     = ( 4, 4)
+	op3_4     = ( 3, 4)
+	op2_4     = ( 2, 4)
+	op0_2     = ( 0, 2)
+	op0_4     = ( 0, 4)
+	op0_31    = ( 0,31)
+
+	ccf       = (16,19)
+	ccf_s     = (15,15)
+
+	simm5_20  = ( 5,24) signed
+	simm5_13  = ( 5,17) signed
+	simm10_9  = (10,18) signed
+	simm10_8  = (10,17) signed
+	simm10_5  = (10,14) signed
+	simm10_14 = (10,23) signed
+	simm10_16 = (10,25) signed
+	simm10_12 = (10,21) signed
+	simm10_11 = (10,20) signed
+	simm10_10 = (10,19) signed
+	simm0_5   = ( 0, 4) signed
+	simm0_10  = ( 0, 9) signed
+
+	rK        = (10,14)
+	rK32      = (10,14)
+
+	rJ        = ( 5, 9)
+	rJ32      = ( 5, 9)
+
+	rD        = ( 0, 4)
+	rD32      = ( 0, 4)
+
+	xrK       = (10,14)
+	xrJ       = ( 5, 9)
+	xrD       = ( 0, 4)
+	xrA       = (15,19)
+
+	vrK       = (10,14)
+	vrJ       = ( 5, 9)
+	vrD       = ( 0, 4)
+	vrA       = (15,19)
+
+	lbtrJ     = ( 5, 6)
+	lbtrD     = ( 0, 1)
+
+	frK       = (10,14)
+	frJ       = ( 5, 9)
+	frD       = ( 0, 4)
+	frA       = (15,19)
+
+	drK       = (10,14)
+	drJ       = ( 5, 9)
+	drD       = ( 0, 4)
+	drA       = (15,19)
+
+	fccJ      = ( 5, 7)
+	fccD      = ( 0, 2)
+	fccA      = (15,17)
+
+	imm5_5    = ( 5, 9)
+	imm5_3    = ( 5, 7)
+	imm18_5   = (18,22)
+	imm18_4   = (18,21)
+	imm18_3   = (18,20)
+	imm18_2   = (18,19)
+	imm18_1   = (18,18)
+	imm16_6   = (16,21)
+	imm16_5   = (16,20)
+	imm15_3   = (15,17)
+	imm15_2   = (15,16)
+	imm10_8   = (10,17)
+	imm10_7   = (10,16)
+	imm10_6   = (10,15)
+	imm10_5   = (10,14)
+	imm10_4   = (10,13)
+	imm10_3   = (10,12)
+	imm10_2   = (10,11)
+	imm10_16  = (10,25)
+	imm10_14  = (10,23)
+	imm10_12  = (10,21)
+	imm10_1   = (10,10)
+	imm0_5    = ( 0, 4)
+	imm0_4    = ( 0, 3)
+	imm0_15   = ( 0,14)
+;
+
+attach variables [ rD rJ rK ] [
+	zero	ra	tp	sp	a0	a1	a2	a3
+	a4	a5	a6	a7	t0	t1	t2	t3
+	t4	t5	t6	t7	t8	r21	fp	s0
+	s1	s2	s3	s4	s5	s6	s7	s8
+];
+
+@ifdef LA64
+attach variables [ rD32 rJ32 rK32 ] [
+	r0_lo	ra_lo	tp_lo	sp_lo
+	a0_lo	a1_lo	a2_lo	a3_lo
+	a4_lo	a5_lo	a6_lo	a7_lo
+	t0_lo	t1_lo	t2_lo	t3_lo
+	t4_lo	t5_lo	t6_lo	t7_lo
+	t8_lo	r21_lo	fp_lo	s0_lo
+	s1_lo	s2_lo	s3_lo	s4_lo
+	s5_lo	s6_lo	s7_lo	s8_lo
+];
+
+@else
+# For LA32 these are the same as rD, rJ, rK
+attach variables [ rD32 rJ32 rK32 ] [
+	zero	ra	tp	sp	a0	a1	a2	a3
+	a4	a5	a6	a7	t0	t1	t2	t3
+	t4	t5	t6	t7	t8	r21	fp	s0
+	s1	s2	s3	s4	s5	s6	s7	s8
+];
+
+@endif
+
+
+@if FREGSIZE == "8"
+# For 64-bit floating point single instruction operands use only the low part
+attach variables [ frD frJ frK ] [
+	fa0_lo	fa1_lo	fa2_lo	fa3_lo	fa4_lo	fa5_lo	fa6_lo	fa7_lo
+	ft0_lo	ft1_lo	ft2_lo	ft3_lo	ft4_lo	ft5_lo	ft6_lo	ft7_lo
+	ft8_lo	ft9_lo	ft10_lo	ft11_lo	ft12_lo	ft13_lo	ft14_lo	ft15_lo
+	fs0_lo	fs1_lo	fs2_lo	fs3_lo	fs4_lo	fs5_lo	fs6_lo	fs7_lo
+];
+
+attach variables [ drD drJ drK ] [
+	fa0		fa1		fa2		fa3		fa4		fa5		fa6		fa7	
+	ft0		ft1		ft2		ft3		ft4		ft5		ft6		ft7	
+	ft8		ft9		ft10	ft11	ft12	ft13	ft14	ft15
+	fs0		fs1		fs2		fs3		fs4		fs5		fs6		fs7	
+];
+
+@else
+
+attach variables [ frD frJ frK ] [
+	fa0		fa1		fa2		fa3		fa4		fa5		fa6		fa7	
+	ft0		ft1		ft2		ft3		ft4		ft5		ft6		ft7	
+	ft8		ft9		ft10	ft11	ft12	ft13	ft14	ft15
+	fs0		fs1		fs2		fs3		fs4		fs5		fs6		fs7	
+];
+
+# For 64-bit floating point Double instruction operands need to bond two 32-bit FPRs
+attach variables [ drD drJ drK ] [
+	fa0_1	_	fa2_3	_	fa4_5	_	fa6_7	_
+	ft8_9	_	ft10_11	_	ft12_13	_	ft14_15	_
+	ft16_17	_	ft18_19	_	ft20_21	_	ft22_23	_
+	fs24_25	_	fs26_27	_	fs28_29	_	fs30_31	_
+];
+
+@endif
+
+
+attach variables [vrD vrJ vrK vrA] [
+	v0	v1	v2	v3	v4	v5	v6	v7 
+	v8	v9	v10	v11	v12	v13	v14	v15 
+	v16	v17	v18	v19	v20	v21	v22	v23 
+	v24	v25	v26	v27	v28	v29	v30	v31 
+];
+
+
+attach variables [xrD xrJ xrK xrA] [
+	x0	x1	x2	x3	x4	x5	x6	x7
+	x8	x9	x10	x11	x12	x13	x14	x15
+	x16	x17	x18	x19	x20	x21	x22	x23
+	x24	x25	x26	x27	x28	x29	x30	x31
+];
+
+
+attach variables [ fccD fccJ fccA] [
+	fcc0 fcc1 fcc2 fcc3 fcc4 fcc5 fcc6 fcc7
+];
+
+# Register subconstructors
+RD: rD    is rD        { export rD; }
+
+RDsrc: rD  is rD        { export rD; }
+RDsrc: rD  is rD & rD=0 { export 0:$(REGSIZE); }
+
+RJ: rJ    is rJ        { export rJ; }
+
+RJsrc: rJ  is rJ        { export rJ; }
+RJsrc: rJ  is rJ & rJ=0 { export 0:$(REGSIZE); }
+
+RK: rK    is rK        { export rK; }
+
+RKsrc: rK  is rK        { export rK; }
+RKsrc: rK  is rK & rK=0 { export 0:$(REGSIZE); }
+
+RD32: rD  is rD & rD32 { export rD32; }
+
+RD32src: rD  is rD & rD32   { export rD32; }
+RD32src: rD  is rD & rD32=0 { export 0:4; }
+
+RJ32: rJ  is rJ & rJ32 { export rJ32; }
+
+RJ32src: rJ  is rJ & rJ32   { export rJ32; }
+RJ32src: rJ  is rJ & rJ32=0 { export 0:4; }
+
+RK32: rK  is rK & rK32 { export rK32; }
+
+RK32src: rK  is rK & rK32   { export rK32; }
+RK32src: rK  is rK & rK32=0 { export 0:4; }
+
+@if FREGSIZE == "8"
+
+FRD: drD  is drD { export drD; }
+
+FRJ: drJ  is drJ { export drJ; }
+
+FRK: drK  is drK { export drK; }
+
+@else
+
+FRD: frD  is frD { export frD; }
+
+FRJ: frJ  is frJ { export frJ; }
+
+FRK: frK  is frK { export frK; }
+
+@endif
+
+# Immediate operand sub-constructors
+addu16_imm: val  is simm10_16 [val = simm10_16 << 16;] { export *[const]:$(REGSIZE) val; }
+
+alsl_shift: sa2  is imm15_2 [sa2 = imm15_2 + 1;] { export *[const]:1 sa2; }
+
+ldst_addr: RJsrc(simm10_12)  is RJsrc & simm10_12 { local vaddr:$(REGSIZE) = RJsrc + simm10_12; export vaddr; }
+
+ldstptr_addr: RJsrc(voffs)  is RJsrc & simm10_14 [voffs = (simm10_14 << 2);] { local vaddr:$(REGSIZE) = RJsrc + voffs; export vaddr; }
+
+ldstx_addr: RJsrc(RKsrc)  is RJsrc & RKsrc { local vaddr:$(REGSIZE) = RJsrc + RKsrc; export vaddr; }
+
+pcadd2:  reloffs   is simm5_20 [reloffs = inst_start + (simm5_20 << 2);]  { export *[const]:$(REGSIZE) reloffs; }
+pcadd12: reloffs  is simm5_20 [reloffs = inst_start + (simm5_20 << 12);] { export *[const]:$(REGSIZE) reloffs; }
+
+pcala12: reloffs  is simm5_20 [reloffs = (inst_start & ~0xfff) + (simm5_20 << 12);] { export *[const]:$(REGSIZE) reloffs; }
+
+pcadd18: reloffs  is simm5_20 [reloffs = inst_start + (simm5_20 << 18);] { export *[const]:$(REGSIZE) reloffs; }
+
+Rel16: reloc  is simm10_16            [ reloc = inst_start + (simm10_16 << 2); ]                               { export *:$(ADDRSIZE) reloc; }
+Rel21: reloc  is imm10_16 & simm0_5  [ reloc = inst_start + (((simm0_5 << 16) + imm10_16) << 2); ]   { export *:$(ADDRSIZE) reloc; }
+Rel26: reloc  is imm10_16 & simm0_10 [ reloc = inst_start + (((simm0_10 << 16) | imm10_16) << 2); ] { export *:$(ADDRSIZE) reloc; }
+
+RelJ16: RJsrc, simm10_16  is RJsrc & simm10_16 { local tmp:$(ADDRSIZE) = RJsrc + (simm10_16 << 2); export tmp; }
+
+simm12i: immed  is simm5_20  [immed = simm5_20  << 12; ] { export *[const]:$(REGSIZE) immed; }
+
+simm32i: immed  is simm5_20  [immed = simm5_20  << 32; ] { export *[const]:$(REGSIZE) immed; }
+
+simm52i: immed  is simm10_12 [immed = simm10_12 << 52; ] { export *[const]:$(REGSIZE) immed; }
+
+# general pcodeops
+define pcodeop break;
+define pcodeop cpucfg;
+
+define pcodeop addr_bound_exception;
+define pcodeop bound_check_exception;
+
+define pcodeop crc_ieee802.3;
+define pcodeop crc_castagnoli;
+
+define pcodeop dbcl;
+
+define pcodeop dbar;
+define pcodeop ibar;
+
+define pcodeop iocsrrd;
+define pcodeop iocsrwr;
+
+define pcodeop preld_loadl1cache;
+define pcodeop preld_storel1cache;
+define pcodeop preld_nop;
+
+define pcodeop preldx_loadl1cache;
+define pcodeop preldx_storel1cache;
+define pcodeop preldx_nop;
+
+# param: 0 = low word, 1 = high word, 2 = both (for rdtime.d)
+define pcodeop rdtime.counter;
+define pcodeop rdtime.counterid;
+define pcodeop syscall;
+
+define pcodeop f_scaleb;
+define pcodeop f_logb;
+define pcodeop f_class;
+define pcodeop round_even;
+
+#
+# MACROS
+#
+macro bitrev32(input, output) {
+	local v = input;
+	v = ((v & 0xffff0000) >> 16) | ((v & 0x0000ffff) << 16);
+	v = ((v & 0xff00ff00) >> 8)  | ((v & 0x00ff00ff) << 8);
+	v = ((v & 0xf0f0f0f0) >> 4)  | ((v & 0x0f0f0f0f) << 4);
+	v = ((v & 0xcccccccc) >> 2)  | ((v & 0x33333333) << 2);
+	v = ((v & 0xaaaaaaaa) >> 1)  | ((v & 0x55555555) << 1);
+	output = v;
+}
+
+macro bitrev64(input, output) {
+	local v = input;
+	v = ((v & 0xffffffff00000000) >> 32) | ((v & 0x00000000ffffffff) << 32);
+	v = ((v & 0xffff0000ffff0000) >> 16) | ((v & 0x0000ffff0000ffff) << 16);
+	v = ((v & 0xff00ff00ff00ff00) >> 8)  | ((v & 0x00ff00ff00ff00ff) << 8);
+	v = ((v & 0xf0f0f0f0f0f0f0f0) >> 4)  | ((v & 0x0f0f0f0f0f0f0f0f) << 4);
+	v = ((v & 0xcccccccccccccccc) >> 2)  | ((v & 0x3333333333333333) << 2);
+	v = ((v & 0xaaaaaaaaaaaaaaaa) >> 1)  | ((v & 0x5555555555555555) << 1);
+	output = v;
+}
+
+macro byterev(input, output) {
+	local v = input;
+	v = ((v & 0xf0) >> 4) | ((v & 0x0f) << 4);
+	v = ((v & 0xcc) >> 2) | ((v & 0x33) << 2);
+	v = ((v & 0xaa) >> 1) | ((v & 0x55) << 1);
+	output = v;
+}
+
+macro byterev32(input, output) {
+	local v = input;
+	v = ((v & 0xf0f0f0f0) >> 4)  | ((v & 0x0f0f0f0f) << 4);
+	v = ((v & 0xcccccccc) >> 2)  | ((v & 0x33333333) << 2);
+	v = ((v & 0xaaaaaaaa) >> 1)  | ((v & 0x55555555) << 1);
+	output = v;
+}
+
+macro byterev64(input, output) {
+	local v = input;
+	v = ((v & 0xf0f0f0f0f0f0f0f0) >> 4)  | ((v & 0x0f0f0f0f0f0f0f0f) << 4);
+	v = ((v & 0xcccccccccccccccc) >> 2)  | ((v & 0x3333333333333333) << 2);
+	v = ((v & 0xaaaaaaaaaaaaaaaa) >> 1)  | ((v & 0x5555555555555555) << 1);
+	output = v;
+}
+
+macro tzcount32(input, count) {
+	count = 32;
+	local v = input & (-input);
+	count = count -      zext(v != 0);
+	count = count - 16 * zext((v & 0x0000ffff) != 0);
+	count = count -  8 * zext((v & 0x00ff00ff) != 0);
+	count = count -  4 * zext((v & 0x0f0f0f0f) != 0);
+	count = count -  2 * zext((v & 0x33333333) != 0);
+	count = count -  1 * zext((v & 0x55555555) != 0);
+}
+
+macro tzcount64(input, count) {
+	count = 64;
+	local v:8 = input & (-input);
+	count = count -  1 * zext(v != 0);
+	count = count - 32 * zext((v & 0x00000000ffffffff) != 0);
+	count = count - 16 * zext((v & 0x0000ffff0000ffff) != 0);
+	count = count -  8 * zext((v & 0x00ff00ff00ff00ff) != 0);
+	count = count -  4 * zext((v & 0x0f0f0f0f0f0f0f0f) != 0);
+	count = count -  2 * zext((v & 0x3333333333333333) != 0);
+	count = count -  1 * zext((v & 0x5555555555555555) != 0);
+}
+
