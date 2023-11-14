@@ -2366,6 +2366,10 @@ public abstract class GhidraScript extends FlatProgramAPI {
 			loadAskValue(value.getValue(), s -> value.setAsText(s), key);
 		}
 		if (isRunningHeadless()) {
+			ScriptStatusListener status = new ScriptStatusListener();
+			if (!values.isValid(status)) {
+				throw new IllegalArgumentException("Validation Failed!: " + status.toString());
+			}
 			return values;
 		}
 		String key = generateKey(values);
@@ -3948,6 +3952,36 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		}
 
 		return result;
+	}
+
+	private class ScriptStatusListener implements StatusListener {
+		StringBuilder errors = new StringBuilder();
+
+		@Override
+		public void setStatusText(String text) {
+			errors.append(text);
+			errors.append("\n");
+		}
+
+		@Override
+		public void setStatusText(String text, MessageType messageType) {
+			setStatusText(text);
+		}
+
+		@Override
+		public void setStatusText(String text, MessageType type, boolean alert) {
+			setStatusText(text);
+		}
+
+		@Override
+		public void clearStatusText() {
+			// not supported
+		}
+
+		@Override
+		public final String toString() {
+			return errors.toString();
+		}
 	}
 
 }
