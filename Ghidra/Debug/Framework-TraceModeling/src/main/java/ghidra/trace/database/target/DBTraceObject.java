@@ -150,7 +150,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 		}
 	};
 	private CachedLifespanValues cachedLifespanValues = null;
-	private MutableLifeSet cachedLife = null;
+	private volatile MutableLifeSet cachedLife = null;
 
 	public DBTraceObject(DBTraceObjectManager manager, DBCachedObjectStore<?> store,
 			DBRecord record) {
@@ -223,11 +223,11 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 				}
 			}
 			MutableLifeSet result = new DefaultLifeSet();
-			// NOTE: connected ranges should already be coalesced
-			// No need to apply discreet domain
 			getCanonicalParents(Lifespan.ALL).forEach(v -> result.add(v.getLifespan()));
 			cachedLife = result;
-			return result;
+			synchronized (result) {
+				return DefaultLifeSet.copyOf(result);
+			}
 		}
 	}
 

@@ -188,6 +188,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 						.getValuePaths(Lifespan.at(0),
 							PathPredicates.parse("Processes[].Watchpoints[]"))
 						.map(p -> p.getLastEntry())
+						.sorted(Comparator.comparing(TraceObjectValue::getEntryKey))
 						.toList();
 				assertEquals(3, procWatchLocVals.size());
 				AddressRange rangeMain0 =

@@ -1274,8 +1274,7 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 				long snap = 0;
-				long pcOff =
-					Integer.decode(conn.executeCapture("print/x $pc").split("=")[1].strip());
+				long pcOff = Long.decode(conn.executeCapture("print/x $pc").split("=")[1].strip());
 				TraceObject inf1 = Objects.requireNonNull(tb.obj("Inferiors[1]"));
 
 				readMem.invoke(Map.ofEntries(
@@ -1306,8 +1305,7 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
-				long pcOff =
-					Integer.decode(conn.executeCapture("print/x $pc").split("=")[1].strip());
+				long pcOff = Long.decode(conn.executeCapture("print/x $pc").split("=")[1].strip());
 				TraceObject inf1 = Objects.requireNonNull(tb.obj("Inferiors[1]"));
 
 				writeMem.invoke(Map.ofEntries(

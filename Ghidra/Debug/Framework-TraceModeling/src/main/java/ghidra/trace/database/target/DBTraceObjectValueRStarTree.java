@@ -23,6 +23,8 @@ import java.util.function.Predicate;
 import db.DBRecord;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.address.AddressSetView;
+import ghidra.trace.database.target.ValueSpace.AddressDimension;
+import ghidra.trace.database.target.ValueSpace.EntryKeyDimension;
 import ghidra.trace.model.Lifespan;
 import ghidra.util.database.*;
 import ghidra.util.database.spatial.AbstractConstraintsTree;
@@ -58,7 +60,14 @@ public class DBTraceObjectValueRStarTree extends AbstractHyperRStarTree< //
 
 		public AddressSetView getAddressSetView(Lifespan at,
 				Predicate<? super InternalTraceObjectValue> predicate) {
-			return new DBTraceObjectValueMapAddressSetView(factory, lock, this, predicate);
+			return new DBTraceObjectValueMapAddressSetView(factory, lock,
+				this.reduce(TraceObjectValueQuery.intersecting(
+					EntryKeyDimension.INSTANCE.absoluteMin(),
+					EntryKeyDimension.INSTANCE.absoluteMax(),
+					at,
+					AddressDimension.INSTANCE.absoluteMin(),
+					AddressDimension.INSTANCE.absoluteMax())),
+				predicate);
 		}
 	}
 

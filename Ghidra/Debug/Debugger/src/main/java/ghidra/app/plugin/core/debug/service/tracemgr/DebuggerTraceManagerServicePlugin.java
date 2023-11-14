@@ -1038,7 +1038,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			}
 			if (current.getTrace() != newTrace) {
 				/**
-				 * The snap needs to match upon re-activating this trace, lset it look like the user
+				 * The snap needs to match upon re-activating this trace, lest it look like the user
 				 * intentionally navigated to the past. That may cause the control mode to switch
 				 * off of "Target."
 				 */

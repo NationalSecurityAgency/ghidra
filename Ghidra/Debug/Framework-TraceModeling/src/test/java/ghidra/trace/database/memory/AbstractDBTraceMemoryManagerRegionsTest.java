@@ -15,7 +15,8 @@
  */
 package ghidra.trace.database.memory;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.io.IOException;
 import java.util.Set;
@@ -23,6 +24,7 @@ import java.util.Set;
 import org.junit.*;
 
 import db.Transaction;
+import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
@@ -151,8 +153,9 @@ public abstract class AbstractDBTraceMemoryManagerRegionsTest
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 		}
 
-		assertEquals(b.set(b.range(0x1000, 0x1fff)), memory.getRegionsAddressSet(0));
-		assertEquals(b.set(), memory.getRegionsAddressSet(-1));
+		assertEquals(b.set(b.range(0x1000, 0x1fff)),
+			new AddressSet(memory.getRegionsAddressSet(0)));
+		assertEquals(b.set(), new AddressSet(memory.getRegionsAddressSet(-1)));
 	}
 
 	@Test
@@ -164,8 +167,9 @@ public abstract class AbstractDBTraceMemoryManagerRegionsTest
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 		}
 
-		assertEquals(b.set(b.range(0x1000, 0x1fff)), memory.getRegionsAddressSetWith(0, r -> true));
-		assertEquals(b.set(), memory.getRegionsAddressSetWith(-1, r -> true));
-		assertEquals(b.set(), memory.getRegionsAddressSetWith(0, r -> false));
+		assertEquals(b.set(b.range(0x1000, 0x1fff)),
+			new AddressSet(memory.getRegionsAddressSetWith(0, r -> true)));
+		assertEquals(b.set(), new AddressSet(memory.getRegionsAddressSetWith(-1, r -> true)));
+		assertEquals(b.set(), new AddressSet(memory.getRegionsAddressSetWith(0, r -> false)));
 	}
 }
