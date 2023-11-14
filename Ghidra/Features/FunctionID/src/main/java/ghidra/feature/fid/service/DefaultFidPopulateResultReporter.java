@@ -67,7 +67,7 @@ public class DefaultFidPopulateResultReporter implements FidPopulateResultReport
 			buffer.append('\n');
 		}
 		TextAreaDialog dialog =
-			new TextAreaDialog("FidDb Popluate Results", buffer.toString(), true);
+			new TextAreaDialog("FidDb Populate Results", buffer.toString(), true);
 		DockingWindowManager.showDialog(dialog);
 	}
 
