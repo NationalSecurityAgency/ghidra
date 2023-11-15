@@ -440,7 +440,10 @@ public abstract class DecompilerCodeComparisonPanel<T extends DualDecompilerFiel
 		}
 
 		// Kick the tool so action buttons will be updated
-		tool.getActiveComponentProvider().contextChanged();
+		ComponentProvider provider = tool.getWindowManager().getProvider(comp);
+		if (provider != null) {
+			provider.contextChanged();
+		}
 	}
 
 	private void setDualPanelFocus(int leftOrRight) {
