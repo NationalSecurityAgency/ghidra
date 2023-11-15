@@ -79,7 +79,7 @@ EXTERNAL_CONSOLEEXT_NAMES=$(subst .cc,,$(notdir $(EXTERNAL_CONSOLEEXT_SOURCE)))
 CORE=	xml marshal space float address pcoderaw translate opcodes globalcontext
 # Additional core files for any projects that decompile
 DECCORE=capability architecture options graph cover block cast typeop database cpool \
-	comment stringmanage fspec action loadimage grammar varnode op \
+	comment stringmanage modelrules fspec action loadimage grammar varnode op \
 	type variable varmap jumptable emulate emulateutil flow userop \
 	funcdata funcdata_block funcdata_op funcdata_varnode unionresolve pcodeinject \
 	heritage prefersplit rangeutil ruleaction subflow blockaction merge double \

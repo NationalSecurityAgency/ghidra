@@ -196,7 +196,7 @@ public:
 /// from \e most \e significant to \e least \e significant.
 class JoinRecord {
   friend class AddrSpaceManager;
-  vector<VarnodeData> pieces;	///< All the physical pieces of the symbol
+  vector<VarnodeData> pieces;	///< All the physical pieces of the symbol, most significant to least
   VarnodeData unified; ///< Special entry representing entire symbol in one chunk
 public:
   int4 numPieces(void) const { return pieces.size(); }	///< Get number of pieces in this record

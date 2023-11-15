@@ -675,6 +675,7 @@ extern AttributeId ATTRIB_TYPELOCK;	///< Marshaling attribute "typelock"
 extern AttributeId ATTRIB_VAL;		///< Marshaling attribute "val"
 extern AttributeId ATTRIB_VALUE;	///< Marshaling attribute "value"
 extern AttributeId ATTRIB_WORDSIZE;	///< Marshaling attribute "wordsize"
+extern AttributeId ATTRIB_STORAGE;	///< Marshaling attribute "storage"
 
 extern ElementId ELEM_DATA;		///< Marshaling element \<data>
 extern ElementId ELEM_INPUT;		///< Marshaling element \<input>

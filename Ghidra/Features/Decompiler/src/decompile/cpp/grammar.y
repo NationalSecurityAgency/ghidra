@@ -719,18 +719,22 @@ bool FunctionModifier::isValid(void) const
 Datatype *FunctionModifier::modType(Datatype *base,const TypeDeclarator *decl,Architecture *glb) const
 
 {
-  vector<Datatype *> intypes;
+  PrototypePieces proto;
 
+  if (base == (Datatype *)0)
+    proto.outtype = glb->types->getTypeVoid();
+  else
+    proto.outtype = base;
   // Varargs is encoded as extra null pointer in paramlist
-  bool dotdotdot = false;
+  proto.firstVarArgSlot = -1;
   if ((!paramlist.empty())&&(paramlist.back() == (TypeDeclarator *)0)) {
-    dotdotdot = true;
+    proto.firstVarArgSlot = paramlist.size() - 1;
   }
 
-  getInTypes(intypes,glb);
+  getInTypes(proto.intypes,glb);
 
-  ProtoModel *protomodel = decl->getModel(glb);
-  return glb->types->getTypeCode(protomodel,base,intypes,dotdotdot);
+  proto.model = decl->getModel(glb);
+  return glb->types->getTypeCode(proto);
 }
 
 TypeDeclarator::~TypeDeclarator(void)
@@ -781,7 +785,7 @@ bool TypeDeclarator::getPrototype(PrototypePieces &pieces,Architecture *glb) con
   fmod->getInTypes(pieces.intypes,glb);
   pieces.innames.clear();
   fmod->getInNames(pieces.innames);
-  pieces.dotdotdot = fmod->isDotdotdot();
+  pieces.firstVarArgSlot = fmod->isDotdotdot() ? pieces.intypes.size() : -1;
 
   // Construct the output type
   pieces.outtype = basetype;

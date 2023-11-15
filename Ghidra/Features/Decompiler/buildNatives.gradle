@@ -71,6 +71,7 @@ model {
 		                include "cpool.cc"
 		                include "comment.cc"
 						include "stringmanage.cc"
+						include "modelrules.cc"
 		                include "fspec.cc"
 		                include "action.cc"
 		                include "loadimage.cc"

@@ -290,7 +290,8 @@
     <optional> <attribute name="maxsize"/> </optional>
     <optional> <attribute name="minsize"/> </optional>
     <optional> <attribute name="align"/> </optional>
-    <optional> <attribute name="metatype"/> </optional>
+    <optional> <attribute name="storage"/> </optional>
+    <optional> <attribute name="metatype"/> </optional>  <!-- deprecated -->
     <optional> <attribute name="extension"/> </optional>
     <!--
         THIS IS THE WEAK ADDR TYPE.  Attribute size is not required.
@@ -341,6 +342,81 @@
     </choice>
   </define>
 
+  <define name="model_datatype_type">
+    <attribute name="name"/>
+    <optional><attribute name="minsize"/></optional>
+    <optional><attribute name="maxsize"/></optional>
+  </define>
+  
+  <define name="modelrule_type">
+    <element name="datatype">
+      <ref name="model_datatype_type"/>
+    </element>
+    <interleave>
+      <optional>
+        <element name="varargs">
+          <empty/>
+        </element>
+      </optional>
+      <optional>
+        <element name="position">
+          <attribute name="index"/>
+        </element>
+      </optional>
+      <zeroOrMore>
+        <element name="datatype_at">
+          <attribute name="index"/>
+          <element name="datatype">
+            <ref name="model_datatype_type"/>
+          </element>
+        </element>
+      </zeroOrMore>
+    </interleave>
+    <choice>
+      <element name="consume">
+        <attribute name="storage"/>
+      </element>
+      <element name="convert_to_ptr">
+        <empty/>
+      </element>
+      <element name="goto_stack">
+        <empty/>
+      </element>
+      <element name="join">
+        <optional>
+          <attribute name="reversejustify">
+            <ref name="boolean_type"/>
+          </attribute>
+        </optional>
+        <optional>
+          <attribute name="align">
+            <ref name="boolean_type"/>
+          </attribute>
+        </optional>
+        <optional>
+          <attribute name="storage"/>
+        </optional>
+      </element>
+      <element name="hidden_return">
+        <optional>
+          <attribute name="voidlock">
+            <ref name="boolean_type"/>
+          </attribute>
+        </optional>
+      </element>
+      <element name="join_per_primitive">
+        <optional>
+          <attribute name="storage"/>
+        </optional>
+      </element>
+    </choice>
+    <zeroOrMore>
+      <element name="consume_extra">
+        <attribute name="storage"/>
+      </element>
+    </zeroOrMore>
+  </define>
+ 
   <define name="prototype_type">
     <attribute name="extrapop"/>
     <attribute name="stackshift"/>
@@ -377,6 +453,11 @@
             </element>
           </zeroOrMore>
         </interleave>
+        <zeroOrMore>
+          <element name="rule">
+            <ref name="modelrule_type"/>
+          </element>
+        </zeroOrMore>
       </element>
 
       <element name="output">
@@ -384,6 +465,11 @@
         <zeroOrMore>
           <element name="pentry">
             <ref name="pentry_type"/>
+          </element>
+        </zeroOrMore>
+        <zeroOrMore>
+          <element name="rule">
+            <ref name="modelrule_type"/>
           </element>
         </zeroOrMore>
       </element>
