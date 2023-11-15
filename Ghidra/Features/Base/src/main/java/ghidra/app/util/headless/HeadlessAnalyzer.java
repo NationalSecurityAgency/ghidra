@@ -591,10 +591,7 @@ public class HeadlessAnalyzer {
 			writer.flush();
 		}
 		catch (Exception exc) {
-			Program prog = scriptState.getCurrentProgram();
-			String path = (prog != null ? " ( " + prog.getExecutablePath() + " ) " : "");
-			String logErrorMsg =
-				"REPORT SCRIPT ERROR: " + path + " " + scriptName + " : " + exc.getMessage();
+			String logErrorMsg = "REPORT SCRIPT ERROR: ";
 			Msg.error(this, logErrorMsg, exc);
 			return false;
 		}

@@ -105,7 +105,7 @@ public class ProgramFileValue extends ProjectFileValue {
 			return null;
 		}
 
-		Program program = (Program) domainFile.getDomainObject(consumer, false, false, monitor);
+		Program program = (Program) domainFile.getDomainObject(consumer, true, false, monitor);
 
 		if (tool != null && program != null) {
 			tool.getService(ProgramManager.class).openProgram(program);
