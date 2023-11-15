@@ -111,6 +111,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 						.getValuePaths(Lifespan.at(0),
 							PathPredicates.parse("Processes[].Breakpoints[]"))
 						.map(p -> p.getLastEntry())
+						.sorted(Comparator.comparing(TraceObjectValue::getEntryKey))
 						.toList();
 				assertEquals(2, procBreakLocVals.size());
 				AddressRange rangeMain =
@@ -150,6 +151,7 @@ public class LldbMethodsTest extends AbstractLldbTraceRmiTest {
 						.getValuePaths(Lifespan.at(0),
 							PathPredicates.parse("Processes[].Breakpoints[]"))
 						.map(p -> p.getLastEntry())
+						.sorted(Comparator.comparing(TraceObjectValue::getEntryKey))
 						.toList();
 				assertEquals(2, procBreakLocVals.size());
 				AddressRange rangeMain =
