@@ -15,6 +15,7 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
+import java.io.IOException;
 import java.util.*;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -35,7 +36,7 @@ abstract class PdbAddressCalculator {
 	private int maxSegment;
 
 	static PdbAddressCalculator chooseAddressCalculator(PdbApplicator applicator, Address imageBase)
-			throws CancelledException {
+			throws CancelledException, PdbException, IOException {
 
 		AbstractPdb pdb = applicator.getPdb();
 		PdbDebugInfo dbi = pdb.getDebugInfo();
@@ -91,7 +92,7 @@ abstract class PdbAddressCalculator {
 	// We wouldn't have this method if we hadn't found an example where what is supposed to be
 	// an RVA in PeCoffSection is instead a VA.  Issue found in one Delphi example.  All other
 	// non-Delphi examples seem to have RVA.
-	static long getCorrection(PdbApplicator applicator) throws CancelledException {
+	static long getCorrection(PdbApplicator applicator) throws CancelledException, PdbException {
 
 		AbstractMsSymbol symbol = applicator.getLinkerModuleCompileSymbol();
 		String name = "";

@@ -126,13 +126,13 @@ public class Module {
 	 * Returns an MsSymbolIterator for the symbols of this module
 	 * @return the iterator
 	 * @throws CancelledException upon user cancellation
+	 * @throws IOException upon error reading stream
 	 * @throws PdbException upon invalid cvSignature
 	 */
-	public MsSymbolIterator getSymbolIterator() throws CancelledException, PdbException {
-		PdbByteReader symbolsReader = getSymbolsReader();
-		parseSignature(symbolsReader);
-		MsSymbolIterator iterator = new MsSymbolIterator(pdb, symbolsReader);
-		return iterator;
+	public MsSymbolIterator iterator() throws CancelledException, IOException, PdbException {
+		int startingOffset = pdb.getDebugInfo().getSymbolRecords().getCvSigLength(streamNumber);
+		int lengthSymbols = moduleInformation.getSizeLocalSymbolsDebugInformation();
+		return new MsSymbolIterator(pdb, streamNumber, startingOffset, lengthSymbols);
 	}
 
 	private void parseSignature(PdbByteReader symbolsReader) throws PdbException {
@@ -333,13 +333,14 @@ public class Module {
 
 	private void dumpSymbols(Writer writer)
 			throws IOException, CancelledException, PdbException {
-		writer.write("Symbols-----------------------------------------------------\n");
-		MsSymbolIterator symbolIterator = getSymbolIterator();
-		while (symbolIterator.hasNext()) {
+		writer.write("Symbols-----------------------------------------------------");
+		MsSymbolIterator symbolIter = iterator();
+		while (symbolIter.hasNext()) {
 			pdb.checkCancelled();
-			AbstractMsSymbol symbol = symbolIterator.next();
+			AbstractMsSymbol symbol = symbolIter.next();
+			writer.append("\n------------------------------------------------------------\n");
+			writer.append(String.format("Offset: 0X%08X\n", symbolIter.getCurrentOffset()));
 			writer.append(symbol.toString());
-			writer.append("\n");
 		}
 		writer.write("End Symbols-------------------------------------------------\n");
 	}

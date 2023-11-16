@@ -18,6 +18,7 @@ package ghidra.app.util.pdb.pdbapplicator;
 import java.util.*;
 
 import ghidra.app.cmd.function.CallDepthChangeInfo;
+import ghidra.app.util.bin.format.pdb2.pdbreader.MsSymbolIterator;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractManagedProcedureMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
@@ -26,7 +27,6 @@ import ghidra.app.util.bin.format.pe.cli.tables.CliTableMethodDef.CliMethodDefRo
 import ghidra.app.util.bin.format.pe.cli.tables.CliTableMethodImpl.CliMethodImplRow;
 import ghidra.app.util.bin.format.pe.cli.tables.CliTableMethodSemantics.CliMethodSemanticsRow;
 import ghidra.app.util.bin.format.pe.cli.tables.CliTableMethodSpec.CliMethodSpecRow;
-import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.DataType;
@@ -80,8 +80,8 @@ public class ManagedProcedureSymbolApplier extends MsSymbolApplier
 	 * @param iter the Iterator containing the symbol sequence being processed
 	 * @throws CancelledException upon user cancellation
 	 */
-	public ManagedProcedureSymbolApplier(DefaultPdbApplicator applicator,
-			AbstractMsSymbolIterator iter) throws CancelledException {
+	public ManagedProcedureSymbolApplier(DefaultPdbApplicator applicator, MsSymbolIterator iter)
+			throws CancelledException {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
 		symbolBlockNestingLevel = 0;

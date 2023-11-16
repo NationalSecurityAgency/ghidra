@@ -120,48 +120,22 @@ public abstract class TypeProgramInterface implements TPI {
 	}
 
 	/**
-	 * Retrieves the {@link AbstractMsType} record indicated by the recordNumber.  The record must
-	 * already have been parsed and inserted into the list
+	 * Retrieves the {@link AbstractMsType} record indicated by the recordNumber
 	 * @param recordNumber record number to look up
 	 * @return {@link AbstractMsType} pertaining to the record number
 	 */
 	@Override
-	public AbstractMsType getRecord(int recordNumber) {
-		if (recordNumber < 0 || recordNumber - typeIndexMin > typeList.size()) {
-			// This should not happen, but we have seen it and cannot yet explain it.
-			// So, for now, we are creating and returning a new BadMsType.
-			PdbLog.logBadTypeRecordIndex(this, recordNumber);
-			BadMsType type = new BadMsType(pdb, 0);
-			type.setRecordNumber(RecordNumber.make(recordCategory, recordNumber));
-			return type;
-		}
-		if (recordNumber < typeIndexMin) {
-			PrimitiveMsType primitive = primitiveTypesByRecordNumber.get(recordNumber);
-			if (primitive == null) {
-				primitive = new PrimitiveMsType(pdb, recordNumber);
-				primitiveTypesByRecordNumber.put(recordNumber, primitive);
-			}
-			return primitive;
-		}
-		return typeList.get(recordNumber - typeIndexMin);
-	}
-
-	@Override
 	public AbstractMsType getRandomAccessRecord(int recordNumber) {
-		if (recordNumber < 0 || recordNumber - typeIndexMin > typeList.size()) {
+		if (recordNumber < 0 || recordNumber - typeIndexMin > offLenRecords.size()) {
 			// This should not happen, but we have seen it and cannot yet explain it.
 			// So, for now, we are creating and returning a new BadMsType.
 			PdbLog.logBadTypeRecordIndex(this, recordNumber);
-			BadMsType type = new BadMsType(pdb, 0);
-			type.setRecordNumber(RecordNumber.make(recordCategory, recordNumber));
-			return type;
+			BadMsType badType = new BadMsType(pdb, 0);
+			badType.setRecordNumber(RecordNumber.make(recordCategory, recordNumber));
+			return badType;
 		}
-		if (recordNumber < typeIndexMin) {
-			PrimitiveMsType primitive = primitiveTypesByRecordNumber.get(recordNumber);
-			if (primitive == null) {
-				primitive = new PrimitiveMsType(pdb, recordNumber);
-				primitiveTypesByRecordNumber.put(recordNumber, primitive);
-			}
+		PrimitiveMsType primitive = getPrimitiveRecord(recordNumber);
+		if (primitive != null) {
 			return primitive;
 		}
 
@@ -171,6 +145,7 @@ public abstract class TypeProgramInterface implements TPI {
 		try {
 			PdbByteReader recordReader =
 				pdb.getReaderForStreamNumber(streamNumber, offLen.offset(), offLen.length());
+			recordReader.markAlign(2);
 			return TypeParser.parseRecord(pdb, recordReader, rn);
 		}
 		catch (PdbException | IOException | CancelledException e) {
@@ -180,18 +155,31 @@ public abstract class TypeProgramInterface implements TPI {
 		}
 	}
 
+	protected PrimitiveMsType getPrimitiveRecord(int recordNumber) {
+		if (recordNumber >= typeIndexMin) {
+			return null;
+		}
+		PrimitiveMsType primitive = primitiveTypesByRecordNumber.get(recordNumber);
+		if (primitive == null) {
+			primitive = new PrimitiveMsType(pdb, recordNumber);
+			primitiveTypesByRecordNumber.put(recordNumber, primitive);
+		}
+		return primitive;
+	}
+
 	//==============================================================================================
 	// Package-Protected Internals
 	//==============================================================================================
 	/**
-	 * Deserializes this {@link TypeProgramInterface}
+	 * Deserializes and initializes {@link TypeProgramInterface} basic information so that later
+	 * queries can be made
 	 * @return version number of the {@link TypeProgramInterface}
 	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
 	 *  inability to read required bytes
 	 * @throws PdbException upon not enough data left to parse
 	 * @throws CancelledException upon user cancellation
 	 */
-	int deserialize() throws IOException, PdbException, CancelledException {
+	int initialize() throws IOException, PdbException, CancelledException {
 		if (pdb.getMsf() == null) {
 			// Should only be null dummy PDBs used for testing.
 			throw new PdbException("Unexpected null MSF.");
@@ -205,9 +193,9 @@ public abstract class TypeProgramInterface implements TPI {
 		//  we have this commented out.
 		//hash.deserializeHashStreams(pdb.getMonitor());
 
+		// TODO: consider other mechanisms than offset/length values for use by an iterator.
+		//  Need to be able to access by record number, so might not have much choice.
 		createOffLenRecords(reader);
-
-		deserializeTypeRecords(reader);
 
 		return versionNumber;
 	}
@@ -244,36 +232,6 @@ public abstract class TypeProgramInterface implements TPI {
 		this.typeIndexMaxExclusive = typeIndexMaxExclusive;
 	}
 
-	/**
-	 * IMPORTANT: This method is for testing only.  It allows us to set a record for a particular
-	 * record number
-	 * @param recordNumber record number for the {@link AbstractMsType} to be inserted
-	 * @param type {@link AbstractMsType} to be inserted
-	 * @return {@code true} if successful
-	 */
-	boolean setRecord(int recordNumber, AbstractMsType type) {
-		if (recordNumber < typeIndexMin) {
-			return false;
-		}
-		for (int i = typeList.size() + typeIndexMin; i <= recordNumber; i++) {
-			// Add the same record for each index up to the one needed.
-			typeList.add(type);
-		}
-		return true;
-	}
-
-	/**
-	 * IMPORTANT: This method is for testing only.  It allows us to add a record that gets its
-	 * record number automatically assigned
-	 * @param type {@link AbstractMsType} to be inserted
-	 * @return record number assigned
-	 */
-	int addRecord(AbstractMsType type) {
-		int newRecordNum = typeList.size() + typeIndexMin;
-		typeList.add(type);
-		return newRecordNum;
-	}
-
 	//==============================================================================================
 	// Abstract Methods
 	//==============================================================================================
@@ -308,40 +266,6 @@ public abstract class TypeProgramInterface implements TPI {
 		reader.setIndex(savedIndex); // restore reader to original state
 	}
 
-	/**
-	 * Deserializes the Type Records of this class
-	 * @param reader {@link PdbByteReader} from which to deserialize the data
-	 * @throws PdbException upon not enough data left to parse
-	 * @throws CancelledException upon user cancellation
-	 */
-	protected void deserializeTypeRecords(PdbByteReader reader)
-			throws PdbException, CancelledException {
-		int recordLength;
-		int recordNumber = typeIndexMin;
-
-		while (reader.hasMore()) {
-			pdb.checkCancelled();
-
-			recordLength = reader.parseUnsignedShortVal();
-			PdbByteReader recordReader = reader.getSubPdbByteReader(recordLength);
-			recordReader.markAlign(2);
-
-			// No need to call either of these, because we do not expect the record number
-			//  to have a high bit set here.  If we did, we would have to check 'category' to
-			//  know which of the two to call, and we'd have to create an AbstractTypeIndex:
-			//    	parseTypeRecordNumber(recordReader, recordNumber);
-			//    	parseItemRecordNumber(recordReader, recordNumber);
-			AbstractMsType type = TypeParser.parseRecord(pdb, recordReader,
-				RecordNumber.make(recordCategory, recordNumber));
-			typeList.add(type);
-			recordNumber++;
-		}
-		if (recordNumber != typeIndexMaxExclusive) {
-			PdbLog.message(this.getClass().getSimpleName() + ": Header max records: " +
-				typeIndexMaxExclusive + "; parsed records: " + recordNumber);
-		}
-	}
-
 	//TODO: more to do for outputting individual records (might want a toString or dump method
 	// on each).
 	/**
@@ -350,8 +274,8 @@ public abstract class TypeProgramInterface implements TPI {
 	 * @throws IOException on issue writing to the {@link Writer}
 	 */
 	protected void dumpTypeRecords(Writer writer) throws IOException {
-		int recordNum = typeIndexMin;
-		for (AbstractMsType type : typeList) {
+		for (int recordNum = typeIndexMin; recordNum < typeIndexMaxExclusive; recordNum++) {
+			AbstractMsType type = getRandomAccessRecord(recordNum);
 			StringBuilder builder = new StringBuilder();
 			builder.append("------------------------------------------------------------\n");
 			builder.append("Record: ");
@@ -367,7 +291,6 @@ public abstract class TypeProgramInterface implements TPI {
 				builder.append("(null)\n"); //Temporary output value.
 			}
 			writer.write(builder.toString());
-			recordNum++;
 		}
 	}
 

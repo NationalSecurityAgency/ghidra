@@ -15,10 +15,10 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
+import ghidra.app.util.bin.format.pdb2.pdbreader.MsSymbolIterator;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractReferenceMsSymbol;
-import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 
@@ -34,7 +34,7 @@ public class ReferenceSymbolApplier extends MsSymbolApplier {
 	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
 	 * @param iter the Iterator containing the symbol sequence being processed
 	 */
-	public ReferenceSymbolApplier(DefaultPdbApplicator applicator, AbstractMsSymbolIterator iter) {
+	public ReferenceSymbolApplier(DefaultPdbApplicator applicator, MsSymbolIterator iter) {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
 		if (!(abstractSymbol instanceof AbstractReferenceMsSymbol)) {
@@ -52,19 +52,19 @@ public class ReferenceSymbolApplier extends MsSymbolApplier {
 	@Override
 	void apply() throws CancelledException, PdbException {
 		// Potential recursive call via applicator.procSym().
-		AbstractMsSymbolIterator refIter = getInitializedReferencedSymbolGroupIterator();
+		MsSymbolIterator refIter = getInitializedReferencedSymbolGroupIterator();
 		if (refIter == null) {
 			throw new PdbException("PDB: Referenced Symbol Error - null refIter");
 		}
 		applicator.procSym(refIter);
 	}
 
-	AbstractMsSymbolIterator getInitializedReferencedSymbolGroupIterator() {
+	MsSymbolIterator getInitializedReferencedSymbolGroupIterator() throws PdbException {
 		SymbolGroup refSymbolGroup = getReferencedSymbolGroup();
 		if (refSymbolGroup == null) {
 			return null;
 		}
-		AbstractMsSymbolIterator refIter = refSymbolGroup.iterator();
+		MsSymbolIterator refIter = refSymbolGroup.getSymbolIterator();
 		refIter.initGetByOffset(getOffsetInReferencedSymbolGroup());
 		return refIter;
 	}

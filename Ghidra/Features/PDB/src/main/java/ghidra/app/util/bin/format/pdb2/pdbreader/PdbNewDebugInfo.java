@@ -146,16 +146,15 @@ public class PdbNewDebugInfo extends PdbDebugInfo {
 	}
 
 	@Override
-	protected void deserializeAdditionalSubstreams()
+	protected void initializeAdditionalComponentsForSubstreams()
 			throws IOException, PdbException, CancelledException {
 		// TODO: evaluate.  I don't think we need GlobalSymbolInformation (hash) or the
 		//  PublicSymbolInformation (hash), as they are both are search mechanisms.
-		symbolRecords.deserialize();
-		globalSymbolInformation.deserialize(getGlobalSymbolsHashMaybeStreamNumber());
-		publicSymbolInformation.deserialize(getPublicStaticSymbolsHashMaybeStreamNumber());
+		symbolRecords.initialize();
+		globalSymbolInformation.initialize();
+		publicSymbolInformation.initialize();
 		//TODO: Process further information that might be found from ProcessTypeServerMap,
 		// and processEditAndContinueInformation.
-		debugData.deserialize();
 	}
 
 	@Override
@@ -229,7 +228,8 @@ public class PdbNewDebugInfo extends PdbDebugInfo {
 	}
 
 	@Override
-	protected void dumpInternalSubstreams(Writer writer) throws IOException, CancelledException {
+	protected void dumpInternalSubstreams(Writer writer)
+			throws IOException, CancelledException, PdbException {
 		writer.write("ModuleInformationList---------------------------------------\n");
 		dumpModuleInformation(writer);
 		writer.write("\nEnd ModuleInformationList-----------------------------------\n");

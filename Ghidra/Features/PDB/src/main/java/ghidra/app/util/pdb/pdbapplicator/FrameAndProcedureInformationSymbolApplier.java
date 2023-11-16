@@ -15,10 +15,10 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
+import ghidra.app.util.bin.format.pdb2.pdbreader.MsSymbolIterator;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.ExtraFrameAndProcedureInformationMsSymbol;
-import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 
@@ -35,7 +35,7 @@ public class FrameAndProcedureInformationSymbolApplier extends MsSymbolApplier {
 	 * @param iter the Iterator containing the symbol sequence being processed
 	 */
 	public FrameAndProcedureInformationSymbolApplier(DefaultPdbApplicator applicator,
-			AbstractMsSymbolIterator iter) {
+			MsSymbolIterator iter) {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
 		if (!(abstractSymbol instanceof ExtraFrameAndProcedureInformationMsSymbol)) {

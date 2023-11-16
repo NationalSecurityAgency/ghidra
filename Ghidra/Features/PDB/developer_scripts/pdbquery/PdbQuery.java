@@ -15,13 +15,12 @@
  */
 package pdbquery;
 
-import java.util.Map;
-
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.PrimitiveMsType;
+import ghidra.app.util.pdb.pdbapplicator.SymbolGroup;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -184,9 +183,10 @@ public class PdbQuery {
 	 * @param pdb the PDB to search
 	 * @param searchString the search string
 	 * @throws CancelledException upon user cancellation
+	 * @throws PdbException upon issue creating an iterator
 	 */
 	public static void searchSymbols(GhidraScript script, AbstractPdb pdb, String searchString)
-			throws CancelledException {
+			throws CancelledException, PdbException {
 
 		PdbDebugInfo debugInfo = pdb.getDebugInfo();
 		if (debugInfo == null) {
@@ -198,40 +198,25 @@ public class PdbQuery {
 
 		int numModules = debugInfo.getNumModules();
 		TaskMonitor monitor = script.getMonitor();
-		int numSymbols = 0;
-		for (int module = 0; module <= numModules; module++) {
-			monitor.checkCancelled();
-			try {
-				Map<Long, AbstractMsSymbol> symbols = debugInfo.getModuleSymbolsByOffset(module);
-				numSymbols += symbols.size();
-			}
-			catch (PdbException e) {
-				// just skip the module... logging this in the next loop.
-			}
-		}
 
-		monitor.initialize(numSymbols);
-		println(script, "Searching " + numSymbols + " PDB symbol components...");
+		monitor.initialize(numModules);
+		println(script, "Searching " + numModules + "PDB modules' symbol components...");
 		for (int module = 0; module <= numModules; module++) {
 			monitor.checkCancelled();
-			try {
-				Map<Long, AbstractMsSymbol> symbols = debugInfo.getModuleSymbolsByOffset(module);
-				numSymbols += symbols.size();
-				for (Map.Entry<Long, AbstractMsSymbol> entry : symbols.entrySet()) {
-					monitor.checkCancelled();
-					AbstractMsSymbol symbol = entry.getValue();
-					String symbolString = symbol.toString();
-					if (symbolString.contains(searchString)) {
-						results.append("Module " + module + ", Offset " + entry.getKey() + ":\n");
-						results.append(symbolString);
-						results.append('\n');
-					}
-					monitor.incrementProgress(1);
+			SymbolGroup symbolGroup = new SymbolGroup(pdb, module);
+			MsSymbolIterator iter = symbolGroup.getSymbolIterator();
+			while (iter.hasNext()) {
+				monitor.checkCancelled();
+				AbstractMsSymbol symbol = iter.next();
+				String symbolString = symbol.toString();
+				if (symbolString.contains(searchString)) {
+					results.append(
+						"Module " + module + ", Offset " + iter.getCurrentOffset() + ":\n");
+					results.append(symbolString);
+					results.append('\n');
 				}
 			}
-			catch (PdbException e) {
-				Msg.debug(PdbQuery.class, "Skipping module " + module + " due to exception.");
-			}
+			monitor.incrementProgress(1);
 		}
 		println(script, results.toString());
 	}

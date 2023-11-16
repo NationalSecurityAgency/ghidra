@@ -120,7 +120,7 @@ public class ComplexTypeMapper {
 			// to TYPE as we could get using applicator.getPdb().getTypeRecord(recordNumber)
 			// where recordNumber is a RecordNumber.  This is because we are not expecting
 			// a remap for Complex types.
-			AbstractMsType type = typeProgramInterface.getRecord(indexNumber);
+			AbstractMsType type = typeProgramInterface.getRandomAccessRecord(indexNumber);
 			if (type instanceof AbstractCompositeMsType compositeType) {
 				mapComplexTypesByPath(compositeFIFOsByPath, indexNumber, compositeType);
 			}
