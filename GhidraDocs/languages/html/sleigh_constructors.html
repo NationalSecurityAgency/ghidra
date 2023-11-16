@@ -629,7 +629,7 @@ if, when all the variables are evaluated, the equation is true.
 </p>
 <div class="informalexample"><pre class="programlisting">
 :xor r1,r2 is opcode=0xcd &amp; r1 &amp; r2 { r1 = r1 ^ r2; }
-:clr r1    is opcode=0xcd &amp; r1 &amp; r2=r1 { r1 = 0; }
+:clr r1    is opcode=0xcd &amp; r1 &amp; r1=r2 { r1 = 0; }
 </pre></div>
 <p>
 </p>
