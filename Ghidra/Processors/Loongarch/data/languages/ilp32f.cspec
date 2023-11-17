@@ -29,28 +29,28 @@
   <default_proto>
     <prototype name="__stdcall" extrapop="0" stackshift="0">
       <input>
-        <pentry minsize="1" maxsize="8" metatype="float">
+        <pentry minsize="1" maxsize="4" metatype="float">
           <register name="fa0"/>
         </pentry>
-        <pentry minsize="1" maxsize="8" metatype="float">
+        <pentry minsize="1" maxsize="4" metatype="float">
           <register name="fa1"/>
         </pentry>
-        <pentry minsize="1" maxsize="8" metatype="float">
+        <pentry minsize="1" maxsize="4" metatype="float">
           <register name="fa2"/>
         </pentry>
-        <pentry minsize="1" maxsize="8" metatype="float">
+        <pentry minsize="1" maxsize="4" metatype="float">
           <register name="fa3"/>
         </pentry>
-        <pentry minsize="1" maxsize="8" metatype="float">
+        <pentry minsize="1" maxsize="4" metatype="float">
           <register name="fa4"/>
         </pentry>
-        <pentry minsize="1" maxsize="8" metatype="float">
+        <pentry minsize="1" maxsize="4" metatype="float">
           <register name="fa5"/>
         </pentry>
-        <pentry minsize="1" maxsize="8" metatype="float">
+        <pentry minsize="1" maxsize="4" metatype="float">
           <register name="fa6"/>
         </pentry>
-        <pentry minsize="1" maxsize="8" metatype="float">
+        <pentry minsize="1" maxsize="4" metatype="float">
           <register name="fa7"/>
         </pentry>
         <pentry minsize="1" maxsize="4">
@@ -94,7 +94,7 @@
         </pentry>
       </input>
       <output>
-        <pentry minsize="1" maxsize="8" metatype="float">
+        <pentry minsize="1" maxsize="4" metatype="float">
           <register name="fa0"/>
         </pentry>
         <pentry minsize="1" maxsize="4">
