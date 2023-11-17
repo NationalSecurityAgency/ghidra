@@ -114,6 +114,7 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 
 		categoryComboBox = new GhidraComboBox<>(getModel());
 		categoryComboBox.setEditable(true);
+		categoryComboBox.setEnterKeyForwarding(true);
 		descriptionTextField = new JTextField(20);
 
 		panel.add(new JLabel("Address: ", SwingConstants.RIGHT));
