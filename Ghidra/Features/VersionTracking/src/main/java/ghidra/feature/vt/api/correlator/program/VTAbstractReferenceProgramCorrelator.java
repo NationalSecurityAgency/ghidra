@@ -393,7 +393,7 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 
 		Counter totalMatches = new Counter();
 		Collection<VTMatchSet> matchSets = getMatchSets(matchSet.getSession(), totalMatches);
-		monitor.initialize(totalMatches.count);
+		monitor.initialize(totalMatches.count());
 
 		// Loop through the matchSets in order to get total source and destination reference
 		// counts that pass the filter
@@ -471,7 +471,7 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 			}
 
 			dedupedMatchSets.put(name, ms);
-			totalMatches.count += ms.getMatchCount();
+			totalMatches.add(ms.getMatchCount());
 		}
 
 		return dedupedMatchSets.values();

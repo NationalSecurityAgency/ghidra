@@ -648,7 +648,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 					"Program-architecture change not permitted");
 			}
 
-			if (!dbHandle.canUpdate()) {
+			if (readOnlyMode) {
 				throw new ReadOnlyException("Read-only Archive: " + getName());
 			}
 

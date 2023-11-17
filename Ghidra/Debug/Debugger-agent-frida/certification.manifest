@@ -1,8 +1,6 @@
 ##VERSION: 2.0
 ##MODULE IP: Apache License 2.0
 ##MODULE IP: Apache License 2.0 with LLVM Exceptions
-.classpath||NONE||reviewed||END|
-.project||NONE||reviewed||END|
 FridaNotes.txt||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|

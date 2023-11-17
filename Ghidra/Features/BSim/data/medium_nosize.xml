@@ -1,0 +1,13 @@
+<dbconfig>
+<info>
+ <name>Medium No Size</name>
+ <owner>Example Owner</owner>
+ <description>A medium sized (~10 million functions) database tuned for executables with different address/register sizes</description>
+ <major>0</major>
+ <minor>0</minor>
+ <settings>0x4d</settings>
+</info>
+<k>17</k>
+<L>146</L>
+<weightsfile>lshweights_nosize.xml</weightsfile>
+</dbconfig>

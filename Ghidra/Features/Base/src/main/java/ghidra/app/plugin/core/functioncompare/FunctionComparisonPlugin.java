@@ -18,15 +18,19 @@ package ghidra.app.plugin.core.functioncompare;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import docking.ComponentProviderActivationListener;
 import ghidra.app.CorePluginPackage;
-import ghidra.app.events.*;
+import ghidra.app.events.ProgramActivatedPluginEvent;
+import ghidra.app.events.ProgramClosedPluginEvent;
+import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.plugin.core.functioncompare.actions.CompareFunctionsAction;
 import ghidra.app.plugin.core.functioncompare.actions.CompareFunctionsFromListingAction;
 import ghidra.app.services.FunctionComparisonService;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.DomainObjectChangeRecord;
+import ghidra.framework.model.DomainObjectChangedEvent;
+import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -57,7 +61,7 @@ import ghidra.util.Swing;
 )
 //@formatter:on
 public class FunctionComparisonPlugin extends ProgramPlugin
-	implements DomainObjectListener, FunctionComparisonService {
+		implements DomainObjectListener, FunctionComparisonService {
 
 	static final String MENU_PULLRIGHT = "CompareFunctions";
 	static final String POPUP_MENU_GROUP = "CompareFunction";
@@ -132,7 +136,7 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 	}
 
 	private FunctionComparisonProvider getFromSwingBlocking(
-		Supplier<FunctionComparisonProvider> comparer) {
+			Supplier<FunctionComparisonProvider> comparer) {
 
 		if (Swing.isSwingThread()) {
 			return comparer.get();
@@ -141,21 +145,12 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 		return Swing.runNow(comparer);
 	}
 
+	void providerClosed(FunctionComparisonProvider provider) {
+		functionComparisonManager.providerClosed(provider);
+	}
 //==================================================================================================
 // Service Methods
 //==================================================================================================	
-
-	@Override
-	public void addFunctionComparisonProviderListener(
-		ComponentProviderActivationListener listener) {
-		runOnSwingNonBlocking(() -> functionComparisonManager.addProviderListener(listener));
-	}
-
-	@Override
-	public void removeFunctionComparisonProviderListener(
-		ComponentProviderActivationListener listener) {
-		runOnSwingNonBlocking(() -> functionComparisonManager.removeProviderListener(listener));
-	}
 
 	@Override
 	public void removeFunction(Function function) {
@@ -174,7 +169,7 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 
 	@Override
 	public FunctionComparisonProvider compareFunctions(Function source,
-		Function target) {
+			Function target) {
 		return getFromSwingBlocking(
 			() -> functionComparisonManager.compareFunctions(source, target));
 	}
@@ -192,8 +187,9 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 
 	@Override
 	public void compareFunctions(Function source, Function target,
-		FunctionComparisonProvider provider) {
+			FunctionComparisonProvider provider) {
 		runOnSwingNonBlocking(
 			() -> functionComparisonManager.compareFunctions(source, target, provider));
 	}
+
 }

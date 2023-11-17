@@ -1,0 +1,30 @@
+#!/bin/bash
+#
+# Command-line script for controlling (start/stop) the BSim database
+
+# maximum heap memory (may be increased)
+MAXMEM=768M
+
+# launch mode  (fg, bg, debug, debug-suspend)
+LAUNCH_MODE=fg
+
+#set debug port for debug mode if used
+
+OS=`uname -s`
+MACHINE=`uname -m`
+
+SED=/bin/sed
+if [ "$OS" = "Darwin" ]; then
+    SED=/usr/bin/sed
+fi
+
+LAUNCH_DIR=`echo $0 | $SED -e 's/[^\/]*$//'`
+if [ "$LAUNCH_DIR" = "" ]; then
+   LAUNCH_DIR="./";
+fi
+
+# Some JVM's with class data sharing enabled have issues with BSim starting with Ghidra's custom 
+# classloader, so we will disable sharing
+VMARG_LIST="-Xshare:off"
+
+${LAUNCH_DIR}launch.sh $LAUNCH_MODE jdk "BSimControl" $MAXMEM "${VMARG_LIST}" ghidra.features.bsim.query.BSimControlLaunchable "$@"

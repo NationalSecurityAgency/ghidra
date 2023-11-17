@@ -84,14 +84,14 @@ DECCORE=capability architecture options graph cover block cast typeop database c
 	funcdata funcdata_block funcdata_op funcdata_varnode unionresolve pcodeinject \
 	heritage prefersplit rangeutil ruleaction subflow blockaction merge double \
 	transform coreaction condexe override dynamic crc32 prettyprint \
-	printlanguage printc printjava memstate opbehavior paramid $(COREEXT_NAMES)
+	printlanguage printc printjava memstate opbehavior paramid signature $(COREEXT_NAMES)
 # Files used for any project that use the sleigh decoder
 SLEIGH=	sleigh pcodeparse pcodecompile sleighbase slghsymbol \
 	slghpatexpress slghpattern semantics context filemanage
 # Additional files for the GHIDRA specific build
 GHIDRA=	ghidra_arch inject_ghidra ghidra_translate loadimage_ghidra \
 	typegrp_ghidra database_ghidra ghidra_context cpool_ghidra \
-	ghidra_process comment_ghidra string_ghidra $(GHIDRAEXT_NAMES)
+	ghidra_process comment_ghidra string_ghidra signature_ghidra $(GHIDRAEXT_NAMES)
 # Additional files specific to the sleigh compiler
 SLACOMP=slgh_compile slghparse slghscan
 # Additional special files that should not be considered part of the library
