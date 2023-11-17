@@ -114,8 +114,8 @@ public class AssemblyTreeResolver {
 		patStream.forEach(results::add);
 
 		results = resolveRootRecursion(results);
-		results = resolvePendingBackfills(results);
 		results = selectContext(results);
+		results = resolvePendingBackfills(results);
 		// TODO: Remove this? It's subsumed by filterByDisassembly, and more accurately....
 		results = filterForbidden(results);
 		results = filterByDisassembly(results);
