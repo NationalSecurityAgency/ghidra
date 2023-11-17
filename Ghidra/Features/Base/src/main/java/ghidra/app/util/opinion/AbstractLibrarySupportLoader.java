@@ -17,8 +17,7 @@ package ghidra.app.util.opinion;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -1110,13 +1109,18 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		List<FileSystemSearchPath> result = new ArrayList<>();
 		FileSystemService fsService = FileSystemService.getInstance();
 		if (isLoadSystemLibraries(options) || shouldSearchAllPaths(options)) {
-			List<Path> searchPaths = LibrarySearchPathManager.getLibraryPathsList()
-					.stream()
-					.map(s -> Path.of(s).normalize())
-					.filter(Path::isAbsolute)
-					.filter(Files::exists)
-					.toList();
-
+			List<Path> searchPaths = new ArrayList<>();
+			for (String str : LibrarySearchPathManager.getLibraryPathsList()) {
+				try {
+					Path path = Path.of(str).normalize();
+					if (path.isAbsolute() && Files.exists(path)) {
+						searchPaths.add(path);
+					}
+				}
+				catch (InvalidPathException e) {
+					log.appendMsg("Skipping invalid system library search path: \"" + str + "\"");
+				}
+			}
 			for (Path searchPath : searchPaths) {
 				try {
 					FSRL searchFSRL =
