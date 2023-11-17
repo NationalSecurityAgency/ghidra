@@ -18,6 +18,7 @@ package ghidra.app.util.bin.format.elf;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.zip.InflaterInputStream;
 
@@ -25,8 +26,6 @@ import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.MemoryLoadable;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
-import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.mem.MemoryBlock;
 import ghidra.util.Msg;
 import ghidra.util.StringUtilities;
 
@@ -73,57 +72,62 @@ import ghidra.util.StringUtilities;
 
 public class ElfSectionHeader implements StructConverter, MemoryLoadable {
 
-	private int sh_name;
-	private int sh_type;
-	private long sh_flags;
-	private long sh_addr;
-	private long sh_offset;
-	private long sh_size;
-	private int sh_link;
-	private int sh_info;
-	private long sh_addralign;
-	private long sh_entsize;
+	private final BinaryReader reader;
+	private final ElfHeader header;
 
-	private BinaryReader reader;
+	private final int sh_name;
+	private final int sh_type;
+	private final long sh_flags;
+	private long sh_addr; // may get altered after instantiation
+	private final long sh_offset;
+	private final long sh_size;
+	private final int sh_link;
+	private final int sh_info;
+	private final long sh_addralign;
+	private final long sh_entsize;
 
-	private ElfHeader header;
-	private String name;
-	private byte[] data;
-	private boolean modified = false;
-	private boolean bytesChanged = false;
+	private String name; // delayed initialization
 
 	private ElfCompressedSectionHeader compressedHeader;
 
+	/**
+	 * Construct {@link ElfSectionHeader}
+	 * @param reader dedicated reader instance positioned to the start of the program header data.
+	 * (the reader supplied will be retained and altered).
+	 * @param header ELF header
+	 * @throws IOException if an IO error occurs during parse
+	 */
 	public ElfSectionHeader(BinaryReader reader, ElfHeader header) throws IOException {
+
 		this.reader = reader;
 		this.header = header;
 
 		sh_name = reader.readNextInt();
 		sh_type = reader.readNextInt();
 
-		if (header.is32Bit()) {
-			sh_flags = Integer.toUnsignedLong(reader.readNextInt());
-			sh_addr = Integer.toUnsignedLong(reader.readNextInt());
-			sh_offset = Integer.toUnsignedLong(reader.readNextInt());
-			sh_size = Integer.toUnsignedLong(reader.readNextInt());
-		}
-		else if (header.is64Bit()) {
+		if (header.is64Bit()) {
 			sh_flags = reader.readNextLong();
 			sh_addr = reader.readNextLong();
 			sh_offset = reader.readNextLong();
 			sh_size = reader.readNextLong();
 		}
+		else { // assume 32-bit
+			sh_flags = reader.readNextUnsignedInt();
+			sh_addr = reader.readNextUnsignedInt();
+			sh_offset = reader.readNextUnsignedInt();
+			sh_size = reader.readNextUnsignedInt();
+		}
 
 		sh_link = reader.readNextInt();
 		sh_info = reader.readNextInt();
 
-		if (header.is32Bit()) {
-			sh_addralign = Integer.toUnsignedLong(reader.readNextInt());
-			sh_entsize = Integer.toUnsignedLong(reader.readNextInt());
-		}
-		else if (header.is64Bit()) {
+		if (header.is64Bit()) {
 			sh_addralign = reader.readNextLong();
 			sh_entsize = reader.readNextLong();
+		}
+		else { // assume 32-bit
+			sh_addralign = reader.readNextUnsignedInt();
+			sh_entsize = reader.readNextUnsignedInt();
 		}
 
 		if ((sh_flags & ElfSectionHeaderConstants.SHF_COMPRESSED) != 0) {
@@ -148,7 +152,6 @@ public class ElfSectionHeader implements StructConverter, MemoryLoadable {
 		}
 		catch (IOException e) {
 			Msg.warn(this, "Error reading compressed section information: " + e);
-			Msg.debug(this, "Error reading compressed section information", e);
 		}
 		return null;
 	}
@@ -157,56 +160,6 @@ public class ElfSectionHeader implements StructConverter, MemoryLoadable {
 		long endOffset = sh_offset + sh_size;
 		return !isAlloc() && sh_offset >= 0 && sh_size > 0 && endOffset > 0 &&
 			endOffset <= streamLength;
-	}
-
-	ElfSectionHeader(ElfHeader header, MemoryBlock block, int sh_name, long imageBase)
-			throws MemoryAccessException {
-
-		this.header = header;
-		this.sh_name = sh_name;
-
-		if (block.isInitialized()) {
-			sh_type = ElfSectionHeaderConstants.SHT_PROGBITS;
-		}
-		else {
-			sh_type = ElfSectionHeaderConstants.SHT_NOBITS;
-		}
-		sh_flags = ElfSectionHeaderConstants.SHF_ALLOC | ElfSectionHeaderConstants.SHF_WRITE |
-			ElfSectionHeaderConstants.SHF_EXECINSTR;
-		sh_addr = block.getStart().getOffset();
-		sh_offset = block.getStart().getAddressableWordOffset() - imageBase;
-		sh_size = block.getSize();
-		sh_link = 0;
-		sh_info = 0;
-		sh_addralign = 0;
-		sh_entsize = 0;
-		name = block.getName();
-
-		data = new byte[(int) sh_size];
-		if (block.isInitialized()) {
-			block.getBytes(block.getStart(), data);
-		}
-
-		modified = true;
-	}
-
-	ElfSectionHeader(ElfHeader header, String name, int sh_name, int type) {
-		this.header = header;
-		this.name = name;
-		this.sh_name = sh_name;
-		this.sh_type = type;
-
-		sh_flags = ElfSectionHeaderConstants.SHF_ALLOC | ElfSectionHeaderConstants.SHF_WRITE |
-			ElfSectionHeaderConstants.SHF_EXECINSTR;
-		sh_link = 0;
-		sh_info = 0;
-		sh_addralign = 0;
-		sh_entsize = 0;
-
-		data = new byte[0];
-		sh_size = 0;
-		sh_addr = -1;
-		sh_offset = -1;
 	}
 
 	/**
@@ -539,24 +492,6 @@ public class ElfSectionHeader implements StructConverter, MemoryLoadable {
 	}
 
 	/**
-	 * Returns true if the data bytes have changed for this section.
-	 * @return true if the data bytes have changed for this section
-	 */
-	public boolean isBytesChanged() {
-		return bytesChanged;
-	}
-
-	/**
-	 * Returns true if this section has been modified.
-	 * A modified section requires that a new program header
-	 * get created.
-	 * @return true if this section has been modified
-	 */
-	public boolean isModified() {
-		return modified;
-	}
-
-	/**
 	 * Sets the start address of this section.
 	 * @param addr the new start address of this section
 	 */
@@ -626,7 +561,7 @@ public class ElfSectionHeader implements StructConverter, MemoryLoadable {
 
 	@Override
 	public int hashCode() {
-		return (int) ((17 * sh_offset) + (sh_offset >>> 32));
+		return Objects.hash(sh_offset);
 	}
 
 	@Override
@@ -635,11 +570,10 @@ public class ElfSectionHeader implements StructConverter, MemoryLoadable {
 			return false;
 		}
 		ElfSectionHeader other = (ElfSectionHeader) obj;
-		return reader == other.reader && sh_name == other.sh_name && sh_type == other.sh_type &&
-			sh_flags == other.sh_flags && sh_addr == other.sh_addr &&
-			sh_offset == other.sh_offset && sh_size == other.sh_size && sh_link == other.sh_link &&
-			sh_info == other.sh_info && sh_addralign == other.sh_addralign &&
-			sh_entsize == other.sh_entsize;
+		return sh_name == other.sh_name && sh_type == other.sh_type && sh_flags == other.sh_flags &&
+			sh_addr == other.sh_addr && sh_offset == other.sh_offset && sh_size == other.sh_size &&
+			sh_link == other.sh_link && sh_info == other.sh_info &&
+			sh_addralign == other.sh_addralign && sh_entsize == other.sh_entsize;
 	}
 
 }
