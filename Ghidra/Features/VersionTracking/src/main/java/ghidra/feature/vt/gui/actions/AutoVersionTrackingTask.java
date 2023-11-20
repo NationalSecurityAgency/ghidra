@@ -71,8 +71,9 @@ import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.WrappingTaskMonitor;
 
 /**
- *  This command runs all of the <b>exact</b> {@link VTProgramCorrelator}s that return
- *  unique matches (i.e., only one of each match is found in each program):
+ *  If their options are set, this command runs all of the 
+ *  <b>exact</b> {@link VTProgramCorrelator}s that return unique matches (i.e., only one of each 
+ *  match is found in each program) for each correlator selected in the autoVT options to run:
  *  <ol>
  *  <li> Exact Symbol Name correlator </li>
  *  <li> Exact Data correlator </li>
@@ -81,19 +82,28 @@ import ghidra.util.task.WrappingTaskMonitor;
  *  <li> Exact Function Mnemonic correlator </li>
  *  </ol>
  *
- *  <P> After running each correlator all matches are accepted since they are exact/unique matches
- *  and all markup from the source program functions is applied to the matching destination program
- *  functions.
+ *  <P> After running each of the above correlators all matches are accepted since they are 
+ *  exact/unique matches and all markup from the source program functions is applied to the matching 
+ *  destination program functions.
  *
- * 	<P> Next, this command runs the Duplicate Function Instruction correlator to find any non-unique
- *  functions with exact instruction bytes then compares their operands to determine and accept
- *  correct matches with markup.
+ * 	<P> Next, if the autoVT option for this correlator is selected, the command runs the 
+ *  Duplicate Function Instruction correlator to find any non-unique
+ *  functions with exact instruction bytes. It then compares their operands to try and determine 
+ *  unique matches within matching sets and if found will accept correct matches and apply markup.
  *
- *  <P> The command then gets a little more speculative by running the Combined Function and Data
- *  Reference correlator, which uses match information from the previous correlators to find more
- *  matches.
+ *  <P> If chosen, the command then gets a little more speculative by running the Data Reference
+ *  Correlator, the Function Reference Correlator, and/or the Combined Function and Data Reference 
+ *  Correlator, which use accepted match information from the previous correlators to find more
+ *  matches. Only the matches with minimum score/confidence values, as chosen in the autoVT options, 
+ *  will be accepted.
  *
- *  <P> As more techniques get developed, more automation will be added to this command.
+ *  <P> If the user chooses to create implied matches then whenever matches are accepted, matches 
+ *  that can be implied by those matches as new matches will be created. If the user chooses to 
+ *  accept applied matches, then they will be applied if the chosen minimum vote count is met and if
+ *  the chosen maximum conflict count is not exceeded.
+ *  
+ *  All options can be set in the Version Tracking Match Window's Edit -> Tool Options in 
+ *  Version Tracking/Auto Version Tracking option folder. 
  *
  */
 public class AutoVersionTrackingTask extends Task {
@@ -106,36 +116,30 @@ public class AutoVersionTrackingTask extends Task {
 	private Program destinationProgram;
 	private AddressSetView sourceAddressSet;
 	private AddressSetView destinationAddressSet;
-	private double minCombinedReferenceCorrelatorScore;
-	private double minCombinedReferenceCorrelatorConfidence;
-	private ToolOptions applyOptions;
+	private ToolOptions toolOptions;
 	private String statusMsg = null;
 	private static int NUM_CORRELATORS = 8;
 
 	/**
 	 * Constructor for a modal/blocking AutoVersionTrackingTask
 	 *
-
+	
 	 * @param session The Version Tracking session containing the source, destination, correlator
 	 * and match information needed for this command.
-	 * @param options the options used when applying matches
+	 * @param toolOptions the options used when applying matches
 	 * @param minCombinedReferenceCorrelatorScore The minimum score used to limit matches created by
 	 * the Combined Reference Correlator.
 	 * @param minCombinedReferenceCorrelatorConfidence The minimum confidence used to limit matches
 	 * created by the Combined Reference Correlator.
 	 */
-	public AutoVersionTrackingTask(VTSession session, ToolOptions options,
-			double minCombinedReferenceCorrelatorScore,
-			double minCombinedReferenceCorrelatorConfidence) {
+	public AutoVersionTrackingTask(VTSession session, ToolOptions toolOptions) {
 		super(NAME, true, true, true);
 		this.session = session;
 		this.matchInfoFactory = new MatchInfoFactory();
 		this.addressCorrelator = new AddressCorrelatorManager(() -> session);
 		this.sourceProgram = session.getSourceProgram();
 		this.destinationProgram = session.getDestinationProgram();
-		this.minCombinedReferenceCorrelatorScore = minCombinedReferenceCorrelatorScore;
-		this.minCombinedReferenceCorrelatorConfidence = minCombinedReferenceCorrelatorConfidence;
-		this.applyOptions = options;
+		this.toolOptions = toolOptions;
 	}
 
 	@Override
@@ -173,11 +177,12 @@ public class AutoVersionTrackingTask extends Task {
 		int count = 0;
 		monitor.doInitialize(NUM_CORRELATORS);
 
-		// save user option and use to determine whether to handle implied matches at all later
-		boolean autoCreateImpliedMatches =
-			applyOptions.getBoolean(VTOptionDefines.AUTO_CREATE_IMPLIED_MATCH, false);
+		// save user's Version Tracking (not AutoVT) Create implied match option 
 
-		// Turn off auto implied matches and handle later if user had that option set
+		boolean originalImpliedMatchOption =
+			toolOptions.getBoolean(VTOptionDefines.AUTO_CREATE_IMPLIED_MATCH, false);
+
+		// Turn off auto implied matches and handle later if user had that Auto VT option set
 		// This is because when run from the VT GUI action implied matches are created automatically
 		// by the VT controller when the option is set but they are not created when called from a 
 		// script since there is no VT controller in that case. If allowed to happen in 
@@ -185,50 +190,85 @@ public class AutoVersionTrackingTask extends Task {
 		// votes will be wrong. This Task doesn't know if called from GUI or script so this is 
 		// klunky but will make sure they are only processed once and will make sure the user option
 		// is put back the way the user had it. 
-		applyOptions.setBoolean(VTOptionDefines.AUTO_CREATE_IMPLIED_MATCH, false);
+		toolOptions.setBoolean(VTOptionDefines.AUTO_CREATE_IMPLIED_MATCH, false);
 
-		// Use default options for all of the "exact" correlators; passed in options for the others
-		VTOptions options;
+		// Start with each correlator's default options and overwrite with appropriate 
+		// corresponding AutoVT options
+		VTOptions vtOptions;
 
+		String prefix = "%s correlation (%d of " + NUM_CORRELATORS + ") - ";
 
 		// Run the correlators in the following order:
 		// Do this one first because we don't want it to find ones that get markup applied by later
 		// correlators
-		VTProgramCorrelatorFactory factory = new SymbolNameProgramCorrelatorFactory();
-		options = factory.createDefaultOptions();
+		boolean runExactSymbolCorrelator =
+			toolOptions.getBoolean(VTOptionDefines.RUN_EXACT_SYMBOL_OPTION, true);
+		if (runExactSymbolCorrelator) {
+			VTProgramCorrelatorFactory factory = new SymbolNameProgramCorrelatorFactory();
 
-		String prefix = "%s correlation (%d of " + NUM_CORRELATORS + ") - ";
-		monitor.setPrefix(String.format(prefix, "Symbol Name", ++count));
-		hasApplyErrors = correlateAndPossiblyApply(factory, options, monitor);
-		monitor.doIncrementProgress();
+			vtOptions = factory.createDefaultOptions();
+			int symbolMin = toolOptions.getInt(VTOptionDefines.SYMBOL_CORRELATOR_MIN_LEN_OPTION, 3);
+			vtOptions.setInt(SymbolNameProgramCorrelatorFactory.MIN_SYMBOL_NAME_LENGTH, symbolMin);
 
-		factory = new ExactDataMatchProgramCorrelatorFactory();
-		options = factory.createDefaultOptions();
+			monitor.setPrefix(String.format(prefix, "Symbol Name", ++count));
+			hasApplyErrors = correlateAndPossiblyApply(factory, vtOptions, monitor);
+			monitor.doIncrementProgress();
+		}
+		boolean runExactDataCorrelator =
+			toolOptions.getBoolean(VTOptionDefines.RUN_EXACT_DATA_OPTION, true);
+		if (runExactDataCorrelator) {
+			VTProgramCorrelatorFactory factory = new ExactDataMatchProgramCorrelatorFactory();
 
-		monitor.setPrefix(String.format(prefix, "Exact Data", ++count));
-		hasApplyErrors |= correlateAndPossiblyApply(factory, options, monitor);
-		monitor.doIncrementProgress();
+			vtOptions = factory.createDefaultOptions();
+			int dataMin = toolOptions.getInt(VTOptionDefines.DATA_CORRELATOR_MIN_LEN_OPTION, 5);
+			vtOptions.setInt(ExactDataMatchProgramCorrelatorFactory.DATA_MINIMUM_SIZE, dataMin);
 
-		factory = new ExactMatchBytesProgramCorrelatorFactory();
-		options = factory.createDefaultOptions();
+			monitor.setPrefix(String.format(prefix, "Exact Data", ++count));
+			hasApplyErrors |= correlateAndPossiblyApply(factory, vtOptions, monitor);
+			monitor.doIncrementProgress();
+		}
 
-		monitor.setPrefix(String.format(prefix, "Exact Bytes", ++count));
-		hasApplyErrors |= correlateAndPossiblyApply(factory, options, monitor);
-		monitor.doIncrementProgress();
+		int minFunctionLen =
+			toolOptions.getInt(VTOptionDefines.FUNCTION_CORRELATOR_MIN_LEN_OPTION, 10);
 
-		factory = new ExactMatchInstructionsProgramCorrelatorFactory();
-		options = factory.createDefaultOptions();
+		boolean runExactFunctionBytesCorrelator =
+			toolOptions.getBoolean(VTOptionDefines.RUN_EXACT_FUNCTION_BYTES_OPTION, true);
+		if (runExactFunctionBytesCorrelator) {
+			VTProgramCorrelatorFactory factory = new ExactMatchBytesProgramCorrelatorFactory();
+			vtOptions = factory.createDefaultOptions();
 
-		monitor.setPrefix(String.format(prefix, "Exact Instructions", ++count));
-		hasApplyErrors |= correlateAndPossiblyApply(factory, options, monitor);
-		monitor.doIncrementProgress();
+			vtOptions.setInt(ExactMatchBytesProgramCorrelatorFactory.FUNCTION_MINIMUM_SIZE,
+				minFunctionLen);
 
-		factory = new ExactMatchMnemonicsProgramCorrelatorFactory();
-		options = factory.createDefaultOptions();
+			monitor.setPrefix(String.format(prefix, "Exact Bytes", ++count));
+			hasApplyErrors |= correlateAndPossiblyApply(factory, vtOptions, monitor);
+			monitor.doIncrementProgress();
+		}
 
-		monitor.setPrefix(String.format(prefix, "Exact Mnemonic", ++count));
-		hasApplyErrors |= correlateAndPossiblyApply(factory, options, monitor);
-		monitor.doIncrementProgress();
+		boolean runExactFunctionInstCorrelator =
+			toolOptions.getBoolean(VTOptionDefines.RUN_EXACT_FUNCTION_INST_OPTION, true);
+		if (runExactFunctionInstCorrelator) {
+			VTProgramCorrelatorFactory factory =
+				new ExactMatchInstructionsProgramCorrelatorFactory();
+			vtOptions = factory.createDefaultOptions();
+
+			vtOptions.setInt(ExactMatchInstructionsProgramCorrelatorFactory.FUNCTION_MINIMUM_SIZE,
+				minFunctionLen);
+
+			monitor.setPrefix(String.format(prefix, "Exact Instructions", ++count));
+			hasApplyErrors |= correlateAndPossiblyApply(factory, vtOptions, monitor);
+			monitor.doIncrementProgress();
+
+			factory = new ExactMatchMnemonicsProgramCorrelatorFactory();
+			vtOptions = factory.createDefaultOptions();
+
+			vtOptions.setInt(ExactMatchMnemonicsProgramCorrelatorFactory.FUNCTION_MINIMUM_SIZE,
+				minFunctionLen);
+			monitor.setPrefix(String.format(prefix, "Exact Mnemonic", ++count));
+			hasApplyErrors |= correlateAndPossiblyApply(factory, vtOptions, monitor);
+			monitor.doIncrementProgress();
+		}
+
 
 		// This is the first of the "speculative" post-correlator match algorithm. The correlator
 		// returns all duplicate function instruction matches so there will always be more
@@ -237,12 +277,30 @@ public class AutoVersionTrackingTask extends Task {
 		// Given that each function must contains the same instructions to even become a match,
 		// and the compare function mechanism has been very well tested, the mechanism for
 		// finding the correct match is very accurate.
-		factory = new DuplicateFunctionMatchProgramCorrelatorFactory();
-		options = factory.createDefaultOptions();
+		boolean runDupeFunctionCorrelator =
+			toolOptions.getBoolean(VTOptionDefines.RUN_DUPE_FUNCTION_OPTION, true);
 
-		monitor.setPrefix(String.format(prefix, "Duplicate Function", ++count));
-		hasApplyErrors |= correlateAndPossiblyApplyDuplicateFunctions(factory, options, monitor);
-		monitor.doIncrementProgress();
+		if (runDupeFunctionCorrelator) {
+
+			VTProgramCorrelatorFactory factory =
+				new DuplicateFunctionMatchProgramCorrelatorFactory();
+			vtOptions = factory.createDefaultOptions();
+
+			// if Auto VT min function length for dupe matches is different than current
+			// exact instruction match setting temporarily change it for auto VT run
+			int dupFunctionMinLen =
+				toolOptions.getInt(VTOptionDefines.DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION, 10);
+
+			vtOptions.setInt(
+				ExactMatchInstructionsProgramCorrelatorFactory.FUNCTION_MINIMUM_SIZE,
+				dupFunctionMinLen);
+
+			monitor.setPrefix(String.format(prefix, "Duplicate Function", ++count));
+			hasApplyErrors |=
+				correlateAndPossiblyApplyDuplicateFunctions(factory, vtOptions, monitor);
+			monitor.doIncrementProgress();
+
+		}
 
 		// The rest are mores speculative matching algorithms because they depend on our
 		// choosing the correct score/confidence pair to determine very probable matches. These
@@ -251,65 +309,93 @@ public class AutoVersionTrackingTask extends Task {
 
 		// Get the names of the confidence and similarity score thresholds that
 		// are used by all of the "reference" correlators
-		String confidenceOption = VTAbstractReferenceProgramCorrelatorFactory.CONFIDENCE_THRESHOLD;
-		String scoreOption = VTAbstractReferenceProgramCorrelatorFactory.SIMILARITY_THRESHOLD;
+		boolean runRefCorrelators =
+			toolOptions.getBoolean(VTOptionDefines.RUN_REF_CORRELATORS_OPTION, true);
+		if (runRefCorrelators) {
 
-		// Get the number of data and function matches
-		int numDataMatches = getNumberOfDataMatches(monitor);
-		int numFunctionMatches = getNumberOfFunctionMatches(monitor);
+			double minScore = toolOptions.getDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 0.95);
+			double minConf = toolOptions.getDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
 
-		// Run the DataReferenceCorrelator if there are accepted data matches but no accepted
-		// function matches
-		if (numDataMatches > 0 && numFunctionMatches == 0) {
-			factory = new DataReferenceProgramCorrelatorFactory();
-			options = factory.createDefaultOptions();
-			options.setDouble(confidenceOption, minCombinedReferenceCorrelatorConfidence);
-			options.setDouble(scoreOption, minCombinedReferenceCorrelatorScore);
 
-			monitor.setPrefix(String.format(prefix, "Data Reference", ++count));
-			hasApplyErrors = hasApplyErrors | correlateAndPossiblyApply(factory, options, monitor);
-			monitor.doIncrementProgress();
+			// Get the number of data and function matches
+			int numDataMatches = getNumberOfDataMatches(monitor);
+			int numFunctionMatches = getNumberOfFunctionMatches(monitor);
 
-			// Get the number of data and function matches again if this correlator ran
-			numDataMatches = getNumberOfDataMatches(monitor);
-			numFunctionMatches = getNumberOfFunctionMatches(monitor);
+			// Run the DataReferenceCorrelator if there are accepted data matches but no accepted
+			// function matches
+			if (numDataMatches > 0 && numFunctionMatches == 0) {
+				VTProgramCorrelatorFactory factory = new DataReferenceProgramCorrelatorFactory();
+				vtOptions = factory.createDefaultOptions();
+
+				vtOptions.setDouble(
+					VTAbstractReferenceProgramCorrelatorFactory.CONFIDENCE_THRESHOLD, minConf);
+				vtOptions.setDouble(
+					VTAbstractReferenceProgramCorrelatorFactory.SIMILARITY_THRESHOLD, minScore);
+
+				monitor.setPrefix(String.format(prefix, "Data Reference", ++count));
+				hasApplyErrors =
+					hasApplyErrors | correlateAndPossiblyApply(factory, vtOptions, monitor);
+				monitor.doIncrementProgress();
+
+				// Get the number of data and function matches again if this correlator ran
+				numDataMatches = getNumberOfDataMatches(monitor);
+				numFunctionMatches = getNumberOfFunctionMatches(monitor);
+			}
+
+			// Run the FunctionReferenceCorrelator if there are accepted function matches but no
+			// accepted data matches
+			if (numDataMatches > 0 && numFunctionMatches == 0) {
+				VTProgramCorrelatorFactory factory =
+					new FunctionReferenceProgramCorrelatorFactory();
+				vtOptions = factory.createDefaultOptions();
+				vtOptions.setDouble(
+					VTAbstractReferenceProgramCorrelatorFactory.CONFIDENCE_THRESHOLD, minConf);
+				vtOptions.setDouble(
+					VTAbstractReferenceProgramCorrelatorFactory.SIMILARITY_THRESHOLD, minScore);
+				factory = new FunctionReferenceProgramCorrelatorFactory();
+
+				monitor.setPrefix(String.format(prefix, "Function Reference", ++count));
+				hasApplyErrors =
+					hasApplyErrors | correlateAndPossiblyApply(factory, vtOptions, monitor);
+				monitor.doIncrementProgress();
+
+				// Get the number of data and function matches again if this correlator ran
+				numDataMatches = getNumberOfDataMatches(monitor);
+				numFunctionMatches = getNumberOfFunctionMatches(monitor);
+			}
+
+			// Run the CombinedDataAndFunctionReferenceCorrelator if there are both accepted function
+			// matches but and data matches
+			if (numDataMatches > 0 && numFunctionMatches > 0) {
+				VTProgramCorrelatorFactory factory =
+					new CombinedFunctionAndDataReferenceProgramCorrelatorFactory();
+				vtOptions = factory.createDefaultOptions();
+				vtOptions.setDouble(
+					VTAbstractReferenceProgramCorrelatorFactory.CONFIDENCE_THRESHOLD, minConf);
+				vtOptions.setDouble(
+					VTAbstractReferenceProgramCorrelatorFactory.SIMILARITY_THRESHOLD, minScore);
+
+				monitor.setPrefix(String.format(prefix, "Function and Data", ++count));
+				hasApplyErrors =
+					hasApplyErrors | correlateAndPossiblyApply(factory, vtOptions, monitor);
+				monitor.doIncrementProgress();
+			}
 		}
 
-		// Run the FunctionReferenceCorrelator if there are accepted function matches but no
-		// accepted data matches
-		if (numDataMatches > 0 && numFunctionMatches == 0) {
-			factory = new FunctionReferenceProgramCorrelatorFactory();
-			options = factory.createDefaultOptions();
-			options.setDouble(confidenceOption, minCombinedReferenceCorrelatorConfidence);
-			options.setDouble(scoreOption, minCombinedReferenceCorrelatorScore);
-			factory = new FunctionReferenceProgramCorrelatorFactory();
+		// Use the AutoVT create implied match option to decide whether to create implied matches
+		// when running AutoVT
+		boolean autoCreateImpliedMatches =
+			toolOptions.getBoolean(VTOptionDefines.CREATE_IMPLIED_MATCHES_OPTION, false);
 
-			monitor.setPrefix(String.format(prefix, "Function Reference", ++count));
-			hasApplyErrors = hasApplyErrors | correlateAndPossiblyApply(factory, options, monitor);
-			monitor.doIncrementProgress();
-
-			// Get the number of data and function matches again if this correlator ran
-			numDataMatches = getNumberOfDataMatches(monitor);
-			numFunctionMatches = getNumberOfFunctionMatches(monitor);
-		}
-
-		// Run the CombinedDataAndFunctionReferenceCorrelator if there are both accepted function
-		// matches but and data matches
-		if (numDataMatches > 0 && numFunctionMatches > 0) {
-			factory = new CombinedFunctionAndDataReferenceProgramCorrelatorFactory();
-			options = factory.createDefaultOptions();
-			options.setDouble(confidenceOption, minCombinedReferenceCorrelatorConfidence);
-			options.setDouble(scoreOption, minCombinedReferenceCorrelatorScore);
-
-			monitor.setPrefix(String.format(prefix, "Function and Data", ++count));
-			hasApplyErrors = hasApplyErrors | correlateAndPossiblyApply(factory, options, monitor);
-			monitor.doIncrementProgress();
-		}
-
-		// if user had implied match option chosen then figure out implied matches now
-		// TODO: add option for applying good matches and num votes/conflicts
+		// if implied matches are to be created, determine whether user wants them auto-applied
+		// and determine the min votes and max conflicts option limits to use
 		if (autoCreateImpliedMatches) {
-			hasApplyErrors = hasApplyErrors | createImpliedMatches(true, monitor);
+			boolean applyImpliedMatches =
+				toolOptions.getBoolean(VTOptionDefines.APPLY_IMPLIED_MATCHES_OPTION, true);
+			int minVotes = toolOptions.getInt(VTOptionDefines.MIN_VOTES_OPTION, 2);
+			int maxConflicts = toolOptions.getInt(VTOptionDefines.MAX_CONFLICTS_OPTION, 2);
+			hasApplyErrors = hasApplyErrors |
+				createImpliedMatches(applyImpliedMatches, minVotes, maxConflicts, monitor);
 		}
 
 		String applyMarkupStatus = " with no apply markup errors.";
@@ -319,12 +405,9 @@ public class AutoVersionTrackingTask extends Task {
 		}
 		statusMsg = NAME + " completed successfully" + applyMarkupStatus;
 
-
-
-		// reset auto implied match option to user choice
-		// TODO: make separate AutoVT implied match option
-		applyOptions.setBoolean(VTOptionDefines.AUTO_CREATE_IMPLIED_MATCH,
-			autoCreateImpliedMatches);
+		// reset the Version Tracking auto implied match option to user choice
+		toolOptions.setBoolean(VTOptionDefines.AUTO_CREATE_IMPLIED_MATCH,
+			originalImpliedMatchOption);
 
 	}
 
@@ -333,19 +416,20 @@ public class AutoVersionTrackingTask extends Task {
 	 * @param applyGoodMatches if true, create applied matches for "good" implied matches based on
 	 * votes/conflict information. For all the applied implied matches, rerun the creation of 
 	 * applied matches until no new ones found.
+	 * @param applyGoodMatches if true, apply matches if minVotes met and maxConflicts not exceeded 
+	 * for particular match, if false, don't apply any matches
+	 * @param minVotes minimum votes needed to apply a match
+	 * @param maxConflicts maximum conflicts allowed to apply a match
 	 * @param monitor the task monitor
 	 * @return true if there are any apply errors, false otherwise
 	 * @throws CancelledException if cancelled
 	 */
-	private boolean createImpliedMatches(boolean applyGoodMatches, TaskMonitor monitor)
+	private boolean createImpliedMatches(boolean applyGoodMatches, int minVotes, int maxConflicts,
+			TaskMonitor monitor)
 			throws CancelledException {
 
 		Set<VTAssociation> processedSrcDestPairs = new HashSet<>();
 		List<VTMatchSet> matchSets = session.getMatchSets();
-
-		//TODO: make these options 
-		int minVoteCountNeeded = 2;
-		int maxConflictsAllowed = 0;
 
 		monitor.setMessage("Creating Implied Matches...");
 		monitor.initialize(matchSets.size());
@@ -371,8 +455,8 @@ public class AutoVersionTrackingTask extends Task {
 		VTMatchSet impliedMatchSet = session.getImpliedMatchSet();
 
 		Set<VTMatch> goodImpliedMatches =
-			findGoodImpliedMatches(impliedMatchSet.getMatches(), minVoteCountNeeded,
-				maxConflictsAllowed, monitor);
+			findGoodImpliedMatches(impliedMatchSet.getMatches(), minVotes,
+				maxConflicts, monitor);
 
 		while (goodImpliedMatches.size() > 0) {
 
@@ -387,7 +471,7 @@ public class AutoVersionTrackingTask extends Task {
 			// possibly find more "good" implied matches from any new implied matches found
 			impliedMatchSet = session.getImpliedMatchSet();
 			goodImpliedMatches = findGoodImpliedMatches(impliedMatchSet.getMatches(),
-				minVoteCountNeeded, maxConflictsAllowed, monitor);
+				minVotes, maxConflicts, monitor);
 		}
 
 		return hasApplyErrors;
@@ -612,7 +696,7 @@ public class AutoVersionTrackingTask extends Task {
 			}
 
 			ApplyMarkupItemTask markupTask =
-				new ApplyMarkupItemTask(session, markupItems, applyOptions);
+				new ApplyMarkupItemTask(session, markupItems, toolOptions);
 
 			markupTask.run(monitor);
 			boolean currentMatchHasErrors = markupTask.hasErrors();
@@ -789,7 +873,6 @@ public class AutoVersionTrackingTask extends Task {
 
 		// from the initial set of related associations get all the other ones that have related
 		// associations with all the source/destinations of the newly found associations
-
 		for (VTAssociation association : relatedAssociations) {
 			monitor.checkCancelled();
 
@@ -1242,6 +1325,12 @@ public class AutoVersionTrackingTask extends Task {
 		return offsetToOperandsMap;
 	}
 
+	/**
+	 * Method to create offset/operand mapping for each function in match set
+	 * if more than one identical offset/operand mapping in src or dest piles then remove
+	 * if no operands remove
+	 * 
+	 */
 	private Map<Integer, Object> createOperandsMap(Instruction inst) {
 
 		Map<Integer, Object> map = new HashMap<>();
@@ -1274,14 +1363,6 @@ public class AutoVersionTrackingTask extends Task {
 		}
 		return map;
 	}
-
-
-	/**
-	 * Method to create offset/operand mapping for each function in match set
-	 * if more than one identical offset/operand mapping in src or dest piles then remove
-	 * if no operands remove
-	 * 
-	 */
 
 	/**
 	 * Try to accept the given match and if can accept the match try to apply its markup
@@ -1316,7 +1397,7 @@ public class AutoVersionTrackingTask extends Task {
 				if (markupItems != null && markupItems.size() != 0) {
 
 					ApplyMarkupItemTask markupTask =
-						new ApplyMarkupItemTask(session, markupItems, applyOptions);
+						new ApplyMarkupItemTask(session, markupItems, toolOptions);
 					markupTask.run(monitor);
 					boolean currentMatchHasErrors = markupTask.hasErrors();
 					if (currentMatchHasErrors) {

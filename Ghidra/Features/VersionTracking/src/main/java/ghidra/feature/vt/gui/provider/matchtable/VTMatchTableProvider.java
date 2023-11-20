@@ -15,34 +15,153 @@
  */
 package ghidra.feature.vt.gui.provider.matchtable;
 
-import static ghidra.feature.vt.gui.actions.TableSelectionTrackingState.*;
-import static ghidra.feature.vt.gui.plugin.VTPlugin.*;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.*;
+import static ghidra.feature.vt.gui.actions.TableSelectionTrackingState.MAINTAIN_SELECTED_ROW_INDEX;
+import static ghidra.feature.vt.gui.actions.TableSelectionTrackingState.MAINTAIN_SELECTED_ROW_VALUE;
+import static ghidra.feature.vt.gui.actions.TableSelectionTrackingState.NO_SELECTION_TRACKING;
+import static ghidra.feature.vt.gui.plugin.VTPlugin.FILTERED_ICON;
+import static ghidra.feature.vt.gui.plugin.VTPlugin.UNFILTERED_ICON;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.ACCEPT_MATCH_OPTIONS_NAME;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.APPLY_DATA_NAME_ON_ACCEPT;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.APPLY_FUNCTION_NAME_ON_ACCEPT;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.APPLY_IMPLIED_MATCHES_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.APPLY_MARKUP_OPTIONS_NAME;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.AUTO_CREATE_IMPLIED_MATCH;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.AUTO_VT_OPTIONS_NAME;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.CALLING_CONVENTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.CALL_FIXUP;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.CREATE_IMPLIED_MATCHES_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DATA_CORRELATOR_MIN_LEN_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DATA_MATCH_DATA_TYPE;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_CALLING_CONVENTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_CALL_FIXUP;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_DATA_MATCH_DATA_TYPE;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_EOL_COMMENTS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_FUNCTION_NAME;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_FUNCTION_RETURN_TYPE;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_FUNCTION_SIGNATURE;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_HIGHEST_NAME_PRIORITY;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_IGNORE_EXCLUDED_MARKUP_ITEMS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_IGNORE_INCOMPLETE_MARKUP_ITEMS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_INLINE;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_LABELS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_NO_RETURN;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PARAMETER_COMMENTS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PARAMETER_DATA_TYPES;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PARAMETER_NAMES;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PARAMETER_NAMES_REPLACE_IF_SAME_PRIORITY;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PLATE_COMMENTS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_POST_COMMENTS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PRE_COMMENTS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_REPEATABLE_COMMENTS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_VAR_ARGS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DISPLAY_APPLY_MARKUP_OPTIONS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.END_OF_LINE_COMMENT;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.FUNCTION_CORRELATOR_MIN_LEN_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.FUNCTION_NAME;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.FUNCTION_RETURN_TYPE;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.FUNCTION_SIGNATURE;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.HIGHEST_NAME_PRIORITY;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.IGNORE_EXCLUDED_MARKUP_ITEMS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.IGNORE_INCOMPLETE_MARKUP_ITEMS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.INLINE;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.LABELS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.MAX_CONFLICTS_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.MIN_VOTES_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.NO_RETURN;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.PARAMETER_COMMENTS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.PARAMETER_DATA_TYPES;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.PARAMETER_NAMES;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.PARAMETER_NAMES_REPLACE_IF_SAME_PRIORITY;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.PLATE_COMMENT;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.POST_COMMENT;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.PRE_COMMENT;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.REPEATABLE_COMMENT;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.RUN_DUPE_FUNCTION_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.RUN_EXACT_DATA_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.RUN_EXACT_FUNCTION_BYTES_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.RUN_EXACT_FUNCTION_INST_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.RUN_EXACT_SYMBOL_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.RUN_REF_CORRELATORS_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.SYMBOL_CORRELATOR_MIN_LEN_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.VAR_ARGS;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
+import java.awt.Adjustable;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.*;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 
-import docking.*;
-import docking.widgets.table.*;
+import docking.ActionContext;
+import docking.DockingWindowManager;
+import docking.WindowPosition;
+import docking.widgets.table.AbstractSortedTableModel;
+import docking.widgets.table.GTable;
+import docking.widgets.table.RowObjectSelectionManager;
+import docking.widgets.table.RowObjectTableModel;
+import docking.widgets.table.SelectionManager;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import ghidra.feature.vt.api.impl.VTChangeManager;
 import ghidra.feature.vt.api.impl.VersionTrackingChangeRecord;
-import ghidra.feature.vt.api.main.*;
-import ghidra.feature.vt.gui.actions.*;
+import ghidra.feature.vt.api.main.VTMarkupItem;
+import ghidra.feature.vt.api.main.VTMatch;
+import ghidra.feature.vt.api.main.VTSession;
+import ghidra.feature.vt.gui.actions.AcceptMatchAction;
+import ghidra.feature.vt.gui.actions.ApplyBlockedMatchAction;
+import ghidra.feature.vt.gui.actions.ApplyMatchAction;
+import ghidra.feature.vt.gui.actions.ChooseMatchTagAction;
+import ghidra.feature.vt.gui.actions.ClearMatchAction;
+import ghidra.feature.vt.gui.actions.CreateSelectionAction;
+import ghidra.feature.vt.gui.actions.EditAllTagsAction;
+import ghidra.feature.vt.gui.actions.MatchTableSelectionAction;
+import ghidra.feature.vt.gui.actions.RejectMatchAction;
+import ghidra.feature.vt.gui.actions.RemoveMatchAction;
+import ghidra.feature.vt.gui.actions.RemoveMatchTagAction;
+import ghidra.feature.vt.gui.actions.TableSelectionTrackingState;
 import ghidra.feature.vt.gui.editors.MatchTagCellEditor;
-import ghidra.feature.vt.gui.filters.*;
+import ghidra.feature.vt.gui.filters.AncillaryFilterDialogComponentProvider;
+import ghidra.feature.vt.gui.filters.Filter;
 import ghidra.feature.vt.gui.filters.Filter.FilterEditingStatus;
-import ghidra.feature.vt.gui.plugin.*;
-import ghidra.feature.vt.gui.util.*;
-import ghidra.feature.vt.gui.util.AbstractVTMatchTableModel.*;
-import ghidra.framework.model.*;
+import ghidra.feature.vt.gui.filters.FilterDialogModel;
+import ghidra.feature.vt.gui.filters.FilterStatusListener;
+import ghidra.feature.vt.gui.plugin.VTController;
+import ghidra.feature.vt.gui.plugin.VTControllerListener;
+import ghidra.feature.vt.gui.plugin.VTPlugin;
+import ghidra.feature.vt.gui.plugin.VersionTrackingPluginPackage;
+import ghidra.feature.vt.gui.util.AbstractVTMatchTableModel.DestinationLabelTableColumn;
+import ghidra.feature.vt.gui.util.AbstractVTMatchTableModel.SourceLabelTableColumn;
+import ghidra.feature.vt.gui.util.AbstractVTMatchTableModel.StatusTableColumn;
+import ghidra.feature.vt.gui.util.AbstractVTMatchTableModel.TagTableColumn;
+import ghidra.feature.vt.gui.util.AllTextFilter;
+import ghidra.feature.vt.gui.util.FilterIconFlashTimer;
+import ghidra.feature.vt.gui.util.MatchInfo;
+import ghidra.feature.vt.gui.util.MatchStatusRenderer;
+import ghidra.feature.vt.gui.util.VTSymbolRenderer;
+import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.DomainObjectChangeRecord;
+import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -708,10 +827,73 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 				.setOptionsHelpLocation(
 					new HelpLocation("VersionTracking", "Apply Markup Options"));
 
+
+		// Auto VT options
+
+		// put checkboxes to determine which correlators to run during auto VT
+		vtOptions.registerOption(CREATE_IMPLIED_MATCHES_OPTION, true, null,
+			"Create Implied Matches when AutoVT correlators apply function matches.");
+		vtOptions.registerOption(RUN_EXACT_DATA_OPTION, true, null, "Run the Exact Data Correlator");
+		vtOptions.registerOption(RUN_EXACT_SYMBOL_OPTION, true, null, "Run the Exact Symbol Correlator");
+		vtOptions.registerOption(RUN_EXACT_FUNCTION_BYTES_OPTION, true, null,
+			"Run the Exact Function Bytes Correlator");
+		vtOptions.registerOption(RUN_EXACT_FUNCTION_INST_OPTION, true, null,
+			"Run the Exact Function Instruction Bytes and Mnemonics Correlators");
+		vtOptions.registerOption(RUN_DUPE_FUNCTION_OPTION, true, null,
+			"Run the Duplicate Function Instruction Correlator");
+		vtOptions.registerOption(RUN_REF_CORRELATORS_OPTION, true, null, "Run the Reference Correlators");
+
+		// create sub options for each auto VT correlator
+		vtOptions.registerOption(APPLY_IMPLIED_MATCHES_OPTION, true, null,
+			"Apply implied matches if minimum vote count is met and maximum conflict count is not exceeded.");
+		vtOptions.registerOption(MIN_VOTES_OPTION, 2, null,
+			"The minimum number of votes needed to apply an implied match.");
+		vtOptions.registerOption(MAX_CONFLICTS_OPTION, 0, null,
+			"The maximum number of conflicts allowed to apply an implied match.");
+
+		vtOptions.registerOption(SYMBOL_CORRELATOR_MIN_LEN_OPTION, 3, null,
+			"Minimum Symbol Name Length of Auto Version Tracking Symbol Correlator");
+		vtOptions.getOptions(SYMBOL_CORRELATOR_MIN_LEN_OPTION)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.registerOption(DATA_CORRELATOR_MIN_LEN_OPTION, 5, null,
+			"Minimum Data Length of Auto Version Tracking Data Correlator");
+		vtOptions.getOptions(DATA_CORRELATOR_MIN_LEN_OPTION)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.registerOption(FUNCTION_CORRELATOR_MIN_LEN_OPTION, 10, null,
+			"Minimum Function Length of Auto Version Tracking Duplicate Function Correlator");
+		vtOptions.getOptions(FUNCTION_CORRELATOR_MIN_LEN_OPTION)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.registerOption(DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION, 10, null,
+			"Minimum Function Length of Auto Version Tracking Duplicate Function Correlator");
+		vtOptions.getOptions(DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.registerOption(REF_CORRELATOR_MIN_SCORE_OPTION, 0.95, null,
+			"Minimum Score of all Auto Version Tracking Reference Function Correlators (Data, Function, and Combined Function and Data)");
+		vtOptions.getOptions(REF_CORRELATOR_MIN_SCORE_OPTION)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.registerOption(REF_CORRELATOR_MIN_CONF_OPTION, 10.0, null,
+			"Minimum Confidence of all Auto Version Tracking Reference Function Correlator (Data, Function, and Combined Function and Data)");
+		vtOptions.getOptions(REF_CORRELATOR_MIN_CONF_OPTION)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
 		HelpLocation applyOptionsHelpLocation =
 			new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Version_Tracking_Apply_Options");
 		HelpLocation applyMatchOptionsHelpLocation =
 			new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Match_Apply_Options");
+
+		HelpLocation autoVTHelpLocation =
+			new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options");
 
 		vtOptions.setOptionsHelpLocation(applyOptionsHelpLocation);
 
@@ -720,6 +902,9 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 
 		vtOptions.getOptions(APPLY_MARKUP_OPTIONS_NAME)
 				.setOptionsHelpLocation(applyMatchOptionsHelpLocation);
+
+		vtOptions.setOptionsHelpLocation(autoVTHelpLocation);
+		vtOptions.getOptions(AUTO_VT_OPTIONS_NAME).setOptionsHelpLocation(autoVTHelpLocation);
 	}
 
 //==================================================================================================

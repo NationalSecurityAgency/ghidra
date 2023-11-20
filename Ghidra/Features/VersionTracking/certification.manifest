@@ -9,6 +9,7 @@ data/version.tracking.theme.properties||GHIDRA||||END|
 src/main/docs/VTClasses.png||GHIDRA||reviewed||END|
 src/main/docs/VTGuiImpl.png||GHIDRA||reviewed||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||reviewed||END|
+src/main/help/help/topics/VersionTrackingPlugin/VT_AutoVT.html||GHIDRA||||END|
 src/main/help/help/topics/VersionTrackingPlugin/VT_Correlators.html||GHIDRA||||END|
 src/main/help/help/topics/VersionTrackingPlugin/VT_Preconditions.html||GHIDRA||||END|
 src/main/help/help/topics/VersionTrackingPlugin/VT_Tool.html||GHIDRA||||END|
