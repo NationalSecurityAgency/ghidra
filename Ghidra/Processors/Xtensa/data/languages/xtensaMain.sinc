@@ -1,0 +1,116 @@
+# Various 32-bit pointers relative to PC. Any operands that are split across non-consecutive
+# bits are named foo_LL_LM_ML_MM, where LL is the least significant bits of the least
+# singificant operand half, LM the most significant bits of the least significant operand half, etc.
+
+srel_16_23: rel is s8_16_23  [ rel = inst_start + s8_16_23  + 4; ] { export *:4 rel; }
+
+srel_12_23: rel is s12_12_23 [ rel = inst_start + s12_12_23 + 4; ] { export *:4 rel; }
+
+srel_6_23:  rel is s8_6_23   [ rel = inst_start + s8_6_23   + 4; ] { export *:4 rel; }
+
+urel_12_15_4_5: rel is n_u2_4_5 & n_u4_12_15 [
+    rel = inst_start + ((n_u2_4_5 << 4) | n_u4_12_15) + 4;
+] { export *:4 rel; }
+
+srel_6_23_sb2: rel is s8_6_23 [
+    rel = (inst_start & ~3) + ( s8_6_23 << 2 ) + 4;
+] { export *:4 rel; }
+
+srel_8_23_oex_sb2: rel is u16_8_23 [
+    rel = ((inst_start + 3) & ~3) + ((u16_8_23 | 0xffff0000) << 2);
+] { export *:4 rel; }
+
+# Immediates split across the instruction.
+u5_8_11_20: tmp is u1_20 & u4_8_11  [ tmp = (u1_20 << 4) | u4_8_11; ] { export *[const]:4 tmp; }
+u5_4_7_20:  tmp is u1_20 & u4_4_7   [ tmp = 32 - ((u1_20 << 4) | u4_4_7);  ] { export *[const]:4 tmp; }
+u5_8_11_16: tmp is u1_16 & u4_8_11  [ tmp = (u1_16 << 4) | u4_8_11; ] { export *[const]:4 tmp; }
+u5_4_7_12:  tmp is u1_12 & u4_4_7   [ tmp = (u1_12 << 4) | u4_4_7;  ] { export *[const]:4 tmp; }
+u5_8_11_4:  tmp is u1_4 & u4_8_11   [ tmp = (u1_4  << 4) | u4_8_11; ] { export *[const]:4 tmp; }
+
+# Signed 12-bit (extended to 16) immediate, used by MOVI.
+s16_16_23_8_11: tmp is s4_8_11 & u8_16_23 [
+   tmp = (s4_8_11 << 8) | u8_16_23;
+] { export *[const]:2 tmp; }
+
+# An “asymmetric” immediate from -32..95, used by MOVI.N.
+n_s8_12_15_4_6_asymm: tmp is n_s3_4_6 & n_s4_12_15 [
+    tmp = ((((n_s3_4_6 & 7) << 4) | (n_s4_12_15 & 15)) |
+          ((((n_s3_4_6 >> 2) & 1) & ((n_s3_4_6 >> 1) & 1)) << 7));
+] { export *[const]:1 tmp; }
+
+# Immediates shifted or with offset.
+s16_16_23_sb8:  tmp is s8_16_23     [ tmp = s8_16_23  << 8; ] { export *[const]:4 tmp; }
+u15_12_23_sb3:  tmp is u12_12_23    [ tmp = u12_12_23 << 3; ] { export *[const]:4 tmp; }
+u10_16_23_sb2:  tmp is u8_16_23     [ tmp = u8_16_23  << 2; ] { export *[const]:4 tmp; }
+u9_16_23_sb1:   tmp is u8_16_23     [ tmp = u8_16_23  << 1; ] { export *[const]:4 tmp; }
+u5_20_23_plus1: tmp is u4_20_23     [ tmp = u4_20_23   + 1; ] { export *[const]:4 tmp; }
+u8_20_23_sb4:   tmp is u4_20_23     [ tmp = u4_20_23  << 4; ] { export *[const]:4 tmp; }
+u5_4_7_plus7:   tmp is u4_4_7       [ tmp = u4_4_7     + 7; ] { export *[const]:4 tmp; }
+
+n_u6_12_15_sb2: tmp is n_u4_12_15  [ tmp = n_u4_12_15 << 2; ] { export *[const]:4 tmp; }
+
+# One-extended. FIXME: Verify this. Only used by [LS]32E (window extension), which aren’t yet
+# implemented.
+s5_12_15_oex:  tmp is u4_12_15      [ tmp = (u4_12_15 << 2) - 64; ] { export *[const]:2 tmp; }
+
+# Some 4-bit immediates with mappings that can’t be (easily) expressed in a single disassembly action.
+
+# n_u4_4_7 with 0 being -1, used by ADDI.N.
+n_s4_4_7_nozero: tmp is n_u4_4_7 = 0  [ tmp = -1;         ] { export *[const]:4 tmp; }
+n_s4_4_7_nozero: tmp is n_u4_4_7      [ tmp = n_u4_4_7+0; ] { export *[const]:4 tmp; }
+
+# B4CONST(ar) (Branch Immediate) encodings, pg. 41 f.
+r_b4const: tmp is ar = 0         [ tmp = 0xffffffff; ] { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 1         [ tmp = 0x1; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 2         [ tmp = 0x2; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 3         [ tmp = 0x3; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 4         [ tmp = 0x4; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 5         [ tmp = 0x5; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 6         [ tmp = 0x6; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 7         [ tmp = 0x7; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 8         [ tmp = 0x8; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 9         [ tmp = 0xa; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 10        [ tmp = 0xc; ]        { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 11        [ tmp = 0x10; ]       { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 12        [ tmp = 0x20; ]       { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 13        [ tmp = 0x40; ]       { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 14        [ tmp = 0x80; ]       { export *[const]:4 tmp; }
+r_b4const: tmp is ar = 15        [ tmp = 0x100; ]      { export *[const]:4 tmp; }
+
+# B4CONSTU(ar) (Branch Unsigned Immediate) encodings, pg. 42.
+r_b4constu: tmp is ar = 0         [ tmp = 0x8000; ] { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 1         [ tmp = 0x1000; ] { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 2         [ tmp = 0x2; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 3         [ tmp = 0x3; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 4         [ tmp = 0x4; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 5         [ tmp = 0x5; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 6         [ tmp = 0x6; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 7         [ tmp = 0x7; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 8         [ tmp = 0x8; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 9         [ tmp = 0xa; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 10        [ tmp = 0xc; ]    { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 11        [ tmp = 0x10; ]   { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 12        [ tmp = 0x20; ]   { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 13        [ tmp = 0x40; ]   { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 14        [ tmp = 0x80; ]   { export *[const]:4 tmp; }
+r_b4constu: tmp is ar = 15        [ tmp = 0x100; ]  { export *[const]:4 tmp; }
+
+Ret4: loc	is epsilon	[loc = ((inst_start + 3) & 0x0fffffff) | 0x40000000; ] { ret:4 = loc; export ret; }
+Ret8: loc	is epsilon	[loc = ((inst_start + 3) & 0x0fffffff) | 0x80000000; ] { ret:4 = loc; export ret; }
+Ret12: loc	is epsilon	[loc = ((inst_start + 3) & 0x0fffffff) | 0xc0000000; ] { ret:4 = loc; export ret; }
+
+:^instruction is phase=0 & loopMode=1 & instruction [ phase=1; ] {
+	build instruction;
+	if (LCOUNT == 0 || $(PS_EXCM)) goto inst_next;
+	LCOUNT = LCOUNT - 1;
+	goto [LBEG];
+}
+:^instruction is phase=0 & loopMode=1 & loopEnd=1 & instruction
+	[ loopMode=0; phase=1; ] {
+	build instruction;
+}
+
+:^instruction is phase=0 & loopMode=0 & instruction
+	[ phase=1; ] {
+	build instruction;
+}
