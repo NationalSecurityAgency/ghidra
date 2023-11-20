@@ -932,9 +932,11 @@ public class KeyBindingUtils {
 	private static File getStartingDir() {
 		String lastDirectoryPath = Preferences.getProperty(LAST_KEY_BINDING_EXPORT_DIRECTORY);
 		if (lastDirectoryPath != null) {
-			return new File(lastDirectoryPath);
+			File dir = new File(lastDirectoryPath);
+			if (dir.isDirectory()) {
+				return dir;
+			}
 		}
-
 		return new File(System.getProperty("user.home"));
 	}
 
