@@ -32,6 +32,7 @@ dependencies {
 	api "org.apache.logging.log4j:log4j-api:2.17.1"
 	api "org.apache.logging.log4j:log4j-core:2.17.1"
 	api "org.apache.commons:commons-collections4:4.1"
+	api "org.apache.commons:commons-compress:1.21"
 	api "org.apache.commons:commons-lang3:3.12.0"
 	api "org.apache.commons:commons-text:1.10.0"
 	api "commons-io:commons-io:2.11.0"	

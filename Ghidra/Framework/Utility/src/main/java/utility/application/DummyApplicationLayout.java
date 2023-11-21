@@ -17,6 +17,7 @@ package utility.application;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import generic.jar.ResourceFile;
 import ghidra.framework.ApplicationProperties;
@@ -30,7 +31,7 @@ public class DummyApplicationLayout extends ApplicationLayout {
 
 	/**
 	 * Constructs a new dummy application layout object.
-	 * 
+	 * @param name the application name
 	 * @throws FileNotFoundException if there was a problem getting a user directory.
 	 */
 	public DummyApplicationLayout(String name) throws FileNotFoundException {
@@ -48,5 +49,7 @@ public class DummyApplicationLayout extends ApplicationLayout {
 
 		// User directories
 		userTempDir = ApplicationUtilities.getDefaultUserTempDir(applicationProperties);
+
+		extensionInstallationDirs = Collections.emptyList();
 	}
 }

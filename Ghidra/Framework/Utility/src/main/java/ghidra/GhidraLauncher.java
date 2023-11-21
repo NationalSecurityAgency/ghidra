@@ -145,17 +145,36 @@ public class GhidraLauncher {
 			// First add Eclipse's module "bin" paths.  If we didn't find any, assume Ghidra was 
 			// compiled with Gradle, and add the module jars Gradle built.
 			addModuleBinPaths(classpathList, modules);
-			if (classpathList.isEmpty()) {
+			boolean gradleDevMode = classpathList.isEmpty();
+			if (gradleDevMode) {
+				// Add the module jars Gradle built.
+				// Note: this finds Extensions' jar files so there is no need to to call
+				// addExtensionJarPaths()
 				addModuleJarPaths(classpathList, modules);
 			}
+			else { /* Eclipse dev mode */
+				// Support loading pre-built, jar-based, non-repo extensions in Eclipse dev mode
+				addExtensionJarPaths(classpathList, modules, layout);
+			}
 
-			addExtensionJarPaths(classpathList, modules, layout);
+			// In development mode, jars do not live in module directories. Instead, each jar lives
+			// in an external, non-repo location, which is listed in build/libraryDependencies.txt.
 			addExternalJarPaths(classpathList, layout.getApplicationRootDirs());
 		}
 		else {
 			addPatchPaths(classpathList, layout.getPatchDir());
 			addModuleJarPaths(classpathList, modules);
 		}
+
+		//
+		// The framework may choose to handle extension class loading separately from all other 
+		// class loading.  In that case, we will separate the extension jar files from standard 
+		// module jar files. 
+		//
+		// (If the custom extension class loading is disabled, then the extensions will be put onto
+		// the standard classpath.)
+		setExtensionJarPaths(modules, layout, classpathList);
+
 		classpathList = orderClasspath(classpathList, modules);
 		return classpathList;
 	}
@@ -200,6 +219,30 @@ public class GhidraLauncher {
 	private static void addModuleJarPaths(List<String> pathList, Map<String, GModule> modules) {
 		Collection<ResourceFile> dirs = ModuleUtilities.getModuleLibDirectories(modules.values());
 		dirs.forEach(d -> pathList.addAll(findJarsInDir(d)));
+	}
+
+	/**
+	 * Initializes the Extension classpath system property, unless disabled.
+	 * @param modules the known modules
+	 * @param layout the application layout
+	 * @param classpathList the standard classpath elements
+	 */
+	private static void setExtensionJarPaths(Map<String, GModule> modules,
+			GhidraApplicationLayout layout, List<String> classpathList) {
+
+		if (!Boolean.getBoolean(GhidraClassLoader.ENABLE_RESTRICTED_EXTENSIONS_PROPERTY)) {
+			// custom extension class loader is disabled; use normal classpath
+			return;
+		}
+
+		List<String> extClasspathList = new ArrayList<>();
+		addExtensionJarPaths(extClasspathList, modules, layout);
+
+		// Remove the extensions that were added before this method was called
+		classpathList.removeAll(extClasspathList);
+
+		String extCp = String.join(File.pathSeparator, extClasspathList);
+		System.setProperty(GhidraClassLoader.CP_EXT, extCp);
 	}
 
 	/**

@@ -31,15 +31,17 @@ import docking.DialogComponentProvider;
 import docking.test.AbstractDockingTest;
 import generic.jar.ResourceFile;
 import ghidra.framework.Application;
+import ghidra.util.extensions.ExtensionDetails;
+import ghidra.util.extensions.ExtensionUtils;
 import utilities.util.FileUtilities;
 import utility.application.ApplicationLayout;
 import utility.function.ExceptionalCallback;
 import utility.module.ModuleUtilities;
 
 /**
- * Tests for the {@link ExtensionUtils} class.
+ * Tests for the {@link ExtensionInstaller} class.
  */
-public class ExtensionUtilsTest extends AbstractDockingTest {
+public class ExtensionInstallerTest extends AbstractDockingTest {
 
 	private static final String BUILD_FOLDER_NAME = "TestExtensionParentDir";
 	private static final String TEST_EXT_NAME = "test";
@@ -87,7 +89,7 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 
 		// Create an extension and install it.
 		File file = createExtensionZip(TEST_EXT_NAME);
-		ExtensionUtils.install(file);
+		ExtensionInstaller.install(file);
 
 		// Verify there is something in the installation directory and it has the correct name
 		checkExtensionInstalledInFilesystem(TEST_EXT_NAME);
@@ -101,7 +103,7 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 
 		// Create an extension and install it.
 		File file = createExtensionFolderInArchiveDir();
-		ExtensionUtils.install(file);
+		ExtensionInstaller.install(file);
 
 		// Verify the extension is in the install folder and has the correct name
 		checkExtensionInstalledInFilesystem(TEST_EXT_NAME);
@@ -142,10 +144,9 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 	@Test
 	public void testBadInputs() throws Exception {
 		errorsExpected(() -> {
-			assertFalse(ExtensionUtils.isExtension(null));
-			assertFalse(ExtensionUtils.install(new File("this/file/does/not/exist")));
-			assertFalse(ExtensionUtils.install(null));
-			assertFalse(ExtensionUtils.installExtensionFromArchive(null));
+			assertFalse(ExtensionInstaller.install(new File("this/file/does/not/exist")));
+			assertFalse(ExtensionInstaller.install(null));
+			assertFalse(ExtensionInstaller.installExtensionFromArchive(null));
 		});
 	}
 
@@ -156,7 +157,7 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 		extension.setArchivePath(zipFile.getAbsolutePath());
 		String ghidraVersion = Application.getApplicationVersion();
 		extension.setVersion(ghidraVersion);
-		assertTrue(ExtensionUtils.installExtensionFromArchive(extension));
+		assertTrue(ExtensionInstaller.installExtensionFromArchive(extension));
 	}
 
 	@Test
@@ -168,7 +169,7 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 
 		AtomicBoolean didInstall = new AtomicBoolean();
 		runSwingLater(() -> {
-			didInstall.set(ExtensionUtils.installExtensionFromArchive(extension));
+			didInstall.set(ExtensionInstaller.installExtensionFromArchive(extension));
 		});
 
 		DialogComponentProvider confirmDialog =
@@ -187,7 +188,7 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 
 		AtomicBoolean didInstall = new AtomicBoolean();
 		runSwingLater(() -> {
-			didInstall.set(ExtensionUtils.installExtensionFromArchive(extension));
+			didInstall.set(ExtensionInstaller.installExtensionFromArchive(extension));
 		});
 
 		DialogComponentProvider confirmDialog =
@@ -207,7 +208,7 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 
 		AtomicBoolean didInstall = new AtomicBoolean();
 		runSwingLater(() -> {
-			didInstall.set(ExtensionUtils.installExtensionFromArchive(extension));
+			didInstall.set(ExtensionInstaller.installExtensionFromArchive(extension));
 		});
 
 		DialogComponentProvider confirmDialog =
@@ -221,7 +222,7 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 	public void testMarkForUninstall_ClearMark() throws Exception {
 
 		File externalFolder = createExternalExtensionInFolder();
-		assertTrue(ExtensionUtils.install(externalFolder));
+		assertTrue(ExtensionInstaller.install(externalFolder));
 
 		ExtensionDetails extension = assertExtensionInstalled(TEST_EXT_NAME);
 
@@ -238,7 +239,7 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 	public void testCleanupUninstalledExtions_WithExtensionMarkedForUninstall() throws Exception {
 
 		File externalFolder = createExternalExtensionInFolder();
-		assertTrue(ExtensionUtils.install(externalFolder));
+		assertTrue(ExtensionInstaller.install(externalFolder));
 
 		ExtensionDetails extension = assertExtensionInstalled(TEST_EXT_NAME);
 
@@ -255,8 +256,8 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 	public void testCleanupUninstalledExtions_SomeExtensionMarkedForUninstall() throws Exception {
 
 		List<File> extensionFolders = createTwoExternalExtensionsInFolder();
-		assertTrue(ExtensionUtils.install(extensionFolders.get(0)));
-		assertTrue(ExtensionUtils.install(extensionFolders.get(1)));
+		assertTrue(ExtensionInstaller.install(extensionFolders.get(0)));
+		assertTrue(ExtensionInstaller.install(extensionFolders.get(1)));
 
 		Set<ExtensionDetails> extensions = ExtensionUtils.getInstalledExtensions();
 		assertEquals(extensions.size(), 2);
@@ -279,7 +280,7 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 	public void testCleanupUninstalledExtions_NoExtensionsMarkedForUninstall() throws Exception {
 
 		File externalFolder = createExternalExtensionInFolder();
-		assertTrue(ExtensionUtils.install(externalFolder));
+		assertTrue(ExtensionInstaller.install(externalFolder));
 		assertExtensionInstalled(TEST_EXT_NAME);
 
 		// This should not uninstall any extensions
@@ -299,7 +300,7 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 		String appVersion = Application.getApplicationVersion();
 		File extensionFolder =
 			doCreateExternalExtensionInFolder(buildFolder, TEST_EXT_NAME, appVersion);
-		assertTrue(ExtensionUtils.install(extensionFolder));
+		assertTrue(ExtensionInstaller.install(extensionFolder));
 
 		Set<ExtensionDetails> extensions = ExtensionUtils.getInstalledExtensions();
 		assertEquals(extensions.size(), 1);
@@ -313,7 +314,7 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 
 		AtomicBoolean didInstall = new AtomicBoolean();
 		runSwingLater(() -> {
-			didInstall.set(ExtensionUtils.install(extensionFolder2));
+			didInstall.set(ExtensionInstaller.install(extensionFolder2));
 		});
 
 		DialogComponentProvider confirmDialog =
@@ -329,7 +330,7 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 		checkCleanInstall();
 
 		runSwingLater(() -> {
-			didInstall.set(ExtensionUtils.install(extensionFolder2));
+			didInstall.set(ExtensionInstaller.install(extensionFolder2));
 		});
 
 		// no longer an installed extension conflict; now we have a version mismatch 
@@ -349,7 +350,7 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 		String appVersion = Application.getApplicationVersion();
 		File extensionFolder =
 			doCreateExternalExtensionInFolder(buildFolder, TEST_EXT_NAME, appVersion);
-		assertTrue(ExtensionUtils.install(extensionFolder));
+		assertTrue(ExtensionInstaller.install(extensionFolder));
 
 		// create another extension Foo v2
 		File buildFolder2 = createTempDirectory("TestExtensionParentDir2");
@@ -359,7 +360,7 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 
 		AtomicBoolean didInstall = new AtomicBoolean();
 		runSwingLater(() -> {
-			didInstall.set(ExtensionUtils.install(extensionFolder2));
+			didInstall.set(ExtensionInstaller.install(extensionFolder2));
 		});
 
 		DialogComponentProvider confirmDialog =
@@ -379,7 +380,7 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 		String appVersion = Application.getApplicationVersion();
 		File extensionFolder =
 			doCreateExternalExtensionInFolder(buildFolder, TEST_EXT_NAME, appVersion);
-		assertTrue(ExtensionUtils.install(extensionFolder));
+		assertTrue(ExtensionInstaller.install(extensionFolder));
 
 		Set<ExtensionDetails> extensions = ExtensionUtils.getInstalledExtensions();
 		assertEquals(extensions.size(), 1);
@@ -393,7 +394,7 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 
 		AtomicBoolean didInstall = new AtomicBoolean();
 		runSwingLater(() -> {
-			didInstall.set(ExtensionUtils.install(extensionFolder2));
+			didInstall.set(ExtensionInstaller.install(extensionFolder2));
 		});
 
 		DialogComponentProvider confirmDialog =
@@ -409,7 +410,7 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 		checkCleanInstall();
 
 		runSwingLater(() -> {
-			didInstall.set(ExtensionUtils.install(extensionFolder2));
+			didInstall.set(ExtensionInstaller.install(extensionFolder2));
 		});
 
 		waitFor(didInstall);
@@ -437,7 +438,7 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 
 		errorsExpected(() -> {
 			File zipFile = createZipWithMultipleExtensions();
-			assertFalse(ExtensionUtils.install(zipFile));
+			assertFalse(ExtensionInstaller.install(zipFile));
 		});
 	}
 
@@ -452,7 +453,7 @@ public class ExtensionUtilsTest extends AbstractDockingTest {
 
 		String nameProperty = "ExtensionNamedFoo";
 		File externalFolder = createExtensionWithMismatchingNamePropertyString(nameProperty);
-		assertTrue(ExtensionUtils.install(externalFolder));
+		assertTrue(ExtensionInstaller.install(externalFolder));
 
 		ExtensionDetails extension = assertExtensionInstalled(nameProperty);
 

@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.framework.project.extensions;
+package ghidra.util.extensions;
 
 import java.io.File;
-import java.util.List;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.*;
 
 import generic.jar.ResourceFile;
 import generic.json.Json;
@@ -192,15 +194,40 @@ public class ExtensionDetails implements Comparable<ExtensionDetails> {
 	}
 
 	/**
+	 * Returns URLs for all jar files living in the {extension dir}/lib directory for an installed
+	 * extension.
+	 * 
+	 * @return the URLs
+	 */
+	public Set<URL> getLibraries() {
+		if (!isInstalled()) {
+			return Collections.emptySet();
+		}
+
+		Set<File> jarFiles = new HashSet<>();
+		findJarFiles(new File(installDir, "lib"), jarFiles);
+		Set<URL> paths = new HashSet<>();
+		for (File jar : jarFiles) {
+			try {
+				URL jarUrl = jar.toURI().toURL();
+				paths.add(jarUrl);
+			}
+			catch (MalformedURLException e) {
+				continue;
+			}
+		}
+		return paths;
+	}
+
+	/**
 	 * An extension is known to be installed if it has a valid installation path AND that path
 	 * contains a Module.manifest file.   Extensions that are {@link #isPendingUninstall()} are 
 	 * still on the filesystem, may be in use by the tool, but will be removed upon restart.
 	 * <p>
 	 * Note: The module manifest file is a marker that indicates several things; one of which is
-	 * the installation status of an extension. When a user marks an extension to be uninstalled (by
-	 * checking the appropriate checkbox in the {@link ExtensionTableModel}), the only thing
-	 * that is done is to remove this manifest file, which tells the {@link ExtensionTableProvider}
-	 * to remove the entire extension directory on the next launch.
+	 * the installation status of an extension. When a user marks an extension to be uninstalled via
+	 * the UI, the only thing that is done is to remove this manifest file, which tells the tool to 
+	 * remove the entire extension directory on the next launch.
 	 * 
 	 * @return true if the extension is installed.
 	 */
@@ -329,7 +356,7 @@ public class ExtensionDetails implements Comparable<ExtensionDetails> {
 	public boolean clearMarkForUninstall() {
 
 		if (installDir == null) {
-			Msg.error(ExtensionUtils.class,
+			Msg.error(this,
 				"Cannot restore extension; extension installation dir is missing for: " + name);
 			return false; // already marked as uninstalled
 		}
@@ -372,5 +399,17 @@ public class ExtensionDetails implements Comparable<ExtensionDetails> {
 	@Override
 	public String toString() {
 		return Json.toString(this);
+	}
+
+	private void findJarFiles(File dir, Set<File> jarFiles) {
+		File[] files = dir.listFiles();
+		if (files == null) {
+			return;
+		}
+		for (File f : files) {
+			if (f.isFile() && f.getName().endsWith(".jar")) {
+				jarFiles.add(f);
+			}
+		}
 	}
 }

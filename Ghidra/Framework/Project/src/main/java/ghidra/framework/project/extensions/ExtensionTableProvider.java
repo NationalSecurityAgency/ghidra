@@ -33,6 +33,7 @@ import ghidra.framework.Application;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
+import ghidra.util.extensions.ExtensionUtils;
 import ghidra.util.filechooser.GhidraFileChooserModel;
 import ghidra.util.filechooser.GhidraFileFilter;
 import resources.Icons;
@@ -105,7 +106,7 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 		super.dialogClosed();
 
 		if (extensionTablePanel.getTableModel().hasModelChanged() || requireRestart) {
-			Msg.showInfo(this, getComponent(), "Extensions Changed!",
+			Msg.showInfo(this, null, "Extensions Changed!",
 				"Please restart Ghidra for extension changes to take effect.");
 		}
 	}
@@ -176,7 +177,7 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 				continue;
 			}
 
-			boolean success = ExtensionUtils.install(file);
+			boolean success = ExtensionInstaller.install(file);
 			didInstall |= success;
 		}
 		return didInstall;

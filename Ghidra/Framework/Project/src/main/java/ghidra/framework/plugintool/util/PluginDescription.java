@@ -153,7 +153,7 @@ public class PluginDescription implements Comparable<PluginDescription> {
 	 */
 	public String getModuleName() {
 		if (moduleName == null) {
-			ResourceFile moduleDir = Application.getModuleContainingClass(pluginClass.getName());
+			ResourceFile moduleDir = Application.getModuleContainingClass(pluginClass);
 			moduleName = (moduleDir == null) ? "<No Module>" : moduleDir.getName();
 		}
 
