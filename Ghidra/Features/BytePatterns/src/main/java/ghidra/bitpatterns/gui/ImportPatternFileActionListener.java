@@ -64,7 +64,10 @@ public class ImportPatternFileActionListener implements ActionListener {
 		fileChooser.setTitle("Select Pattern File");
 		String baseDir = Preferences.getProperty(XML_IMPORT_DIR_PROPERTY);
 		if (baseDir != null) {
-			fileChooser.setCurrentDirectory(new File(baseDir));
+			File dir = new File(baseDir);
+			if (dir.isDirectory()) {
+				fileChooser.setCurrentDirectory(dir);
+			}
 		}
 		ExtensionFileFilter xmlFilter = new ExtensionFileFilter("xml", "XML Files");
 		fileChooser.setFileFilter(xmlFilter);
