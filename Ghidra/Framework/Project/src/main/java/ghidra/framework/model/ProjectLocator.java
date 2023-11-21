@@ -125,8 +125,8 @@ public class ProjectLocator {
 			scanIndex = 4;
 		}
 		checkInvalidChar("path", path, scanIndex);
-		if (!path.endsWith(File.separator)) {
-			path += File.separator;
+		if (!path.endsWith("/")) {
+			path += "/";
 		}
 		return path;
 	}

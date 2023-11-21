@@ -312,9 +312,12 @@ public class PathnameTablePanel extends JPanel {
 				}
 			});
 		}
-		String dir = Preferences.getProperty(preferenceForLastSelectedDir);
-		if (dir != null) {
-			fileChooser.setCurrentDirectory(new File(dir));
+		String dirPath = Preferences.getProperty(preferenceForLastSelectedDir);
+		if (dirPath != null) {
+			File dir = new File(dirPath);
+			if (dir.isDirectory()) {
+				fileChooser.setCurrentDirectory(dir);
+			}
 		}
 
 		List<File> files = fileChooser.getSelectedFiles();

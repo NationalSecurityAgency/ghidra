@@ -145,7 +145,10 @@ class ToolServicesImpl implements ToolServices {
 
 		String exportDir = Preferences.getProperty(Preferences.LAST_TOOL_EXPORT_DIRECTORY);
 		if (exportDir != null) {
-			newFileChooser.setCurrentDirectory(new File(exportDir));
+			File dir = new File(exportDir);
+			if (dir.isDirectory()) {
+				newFileChooser.setCurrentDirectory(dir);
+			}
 		}
 
 		newFileChooser.setTitle("Export Tool");
