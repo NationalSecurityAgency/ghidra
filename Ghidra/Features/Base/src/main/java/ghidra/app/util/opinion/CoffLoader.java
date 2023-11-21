@@ -30,8 +30,7 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.Undefined;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
@@ -182,6 +181,7 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 			processSymbols(header, program, monitor, log, sectionsMap, symbolsMap);
 			processEntryPoint(header, program, monitor, log);
 			processRelocations(header, program, sectionsMap, symbolsMap, log, monitor);
+			markupHeaders(header, program, fileBytes, log, monitor);
 		}
 		catch (AddressOverflowException e) {
 			throw new IOException(e);
@@ -750,6 +750,50 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 		String logMessage = String.format("Failed to apply COFF Relocation type 0x%x at %s: %s",
 			relocationType, address.toString(), message);
 		Msg.error(this, program.getName() + ": " + logMessage, causeToReport);
+	}
+
+	private void markupHeaders(CoffFileHeader header, Program program, FileBytes fileBytes,
+			MessageLog log, TaskMonitor monitor) {
+		monitor.setMessage("Marking up headers...");
+		try {
+			Map<Long, DataType> dtMap = new HashMap<>();
+			long blockSize = 0;
+
+			// Header
+			dtMap.put(blockSize, header.toDataType());
+			blockSize += header.sizeof();
+
+			// Optional Header
+			AoutHeader optionalHeader = header.getOptionalHeader();
+			if (header.getOptionalHeader() != null) {
+				dtMap.put(blockSize, optionalHeader.toDataType());
+				blockSize += header.getOptionalHeaderSize();
+			}
+
+			// Sections
+			for (CoffSectionHeader section : header.getSections()) {
+				DataType dt = section.toDataType();
+				dtMap.put(blockSize, dt);
+				blockSize += dt.getLength();
+			}
+
+			// Create memory block
+			Address headerSpaceAddr = AddressSpace.OTHER_SPACE.getAddress(0);
+			MemoryBlock headerBlock =
+				MemoryBlockUtils.createInitializedBlock(program, true, "HEADER", headerSpaceAddr,
+					fileBytes, 0, blockSize, "", "", false, false, false, log);
+			Address addr = headerBlock.getStart();
+
+			// Create data
+			for (long offset : dtMap.keySet()) {
+				DataUtilities.createData(program, addr.add(offset), dtMap.get(offset), -1,
+					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+			}
+
+		}
+		catch (Exception e) {
+			log.appendMsg("Failed to markup headers");
+		}
 	}
 
 	@Override
