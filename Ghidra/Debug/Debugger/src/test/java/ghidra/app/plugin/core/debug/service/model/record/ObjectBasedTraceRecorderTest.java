@@ -440,10 +440,10 @@ public class ObjectBasedTraceRecorderTest extends AbstractGhidraHeadedDebuggerTe
 		assertEquals(tb.range(0x00400123, 0x00400126), loc.getRange());
 		assertEquals(Set.of(TraceBreakpointKind.SW_EXECUTE), loc.getKinds());
 
-		assertEquals(List.of(),
-			recorder.collectBreakpointContainers(mb.testThread1));
-		assertEquals(List.of(mb.testProcess1.breaks, mb.testProcess3.breaks),
-			recorder.collectBreakpointContainers(null));
+		assertEquals(Set.of(),
+			Set.copyOf(recorder.collectBreakpointContainers(mb.testThread1)));
+		assertEquals(Set.of(mb.testProcess1.breaks, mb.testProcess3.breaks),
+			Set.copyOf(recorder.collectBreakpointContainers(null)));
 
 		TargetBreakpointLocation targetLoc = recorder.getTargetBreakpoint(loc);
 		assertEquals(loc, recorder.getTraceBreakpoint(targetLoc));
@@ -453,7 +453,8 @@ public class ObjectBasedTraceRecorderTest extends AbstractGhidraHeadedDebuggerTe
 			Set.of(TargetBreakpointKind.SW_EXECUTE)));
 		flushAndWait();
 		assertEquals(2, breaks.getAllBreakpoints().size());
-		assertEquals(List.of(targetLoc), recorder.collectBreakpoints(mb.testThread1));
+		assertEquals(Set.of(targetLoc),
+			Set.copyOf(recorder.collectBreakpoints(mb.testThread1)));
 	}
 
 	@Test
