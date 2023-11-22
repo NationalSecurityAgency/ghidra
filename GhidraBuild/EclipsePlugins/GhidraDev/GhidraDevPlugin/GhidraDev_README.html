@@ -53,6 +53,16 @@ change with future releases.</p>
 </ul>
 
 <h2><a name="ChangeHistory"></a>Change History</h2>
+<p><u><b>3.0.2</b>:</u> 
+<ul>
+  <li>
+    GhidraDev no longer throws an IOException when performing a "Link Ghidra" action on a Ghidra 
+    project whose original Ghidra installation moved.
+  </li>
+  <li>
+    GhidraDev now prevents unsupported versions of PyDev from being used.
+  </li>
+</ul>
 <p><u><b>3.0.1</b>:</u> 
 <ul>
   <li>
@@ -157,7 +167,7 @@ that specify other projects on their build paths.</p>
 
 <h2><a name="OptionalRequirements"></a>Optional Requirements</h2>
 <ul>
-  <li>PyDev 6.3.1 or later (<a href="#PyDevSupport">more info</a>)</li>
+  <li>PyDev 6.3.1 - 9.3.0 (<a href="#PyDevSupport">more info</a>)</li>
   <li>CDT 8.6.0 or later</li>
   <li>
     Gradle - required version(s) specified by linked Ghidra release 
@@ -410,6 +420,15 @@ installation directory.</p>
         to your Ghida module project, which automatically happens when the project is created.
         Simply <a href="#LinkGhidra">relink</a> your Ghidra installation to the project, and your
         project will pick up any newly discovered Ghidra extensions.</p>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <b><i>Why doesn't GhidraDev support PyDev 10.0 or later?</i></b>
+    <ul>
+      <li>
+        <p>PyDev dropped support for Python 2 in their 10.0 release.  Ghidra currently does not 
+        support Python 3.</p>
       </li>
     </ul>
   </li>
