@@ -27,6 +27,7 @@ import docking.widgets.table.*;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
+import ghidra.util.extensions.ExtensionDetails;
 import help.Help;
 import help.HelpService;
 

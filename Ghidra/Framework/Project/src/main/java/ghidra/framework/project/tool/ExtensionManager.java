@@ -16,7 +16,6 @@
 package ghidra.framework.project.tool;
 
 import java.io.File;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -29,10 +28,10 @@ import generic.json.Json;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.dialog.PluginInstallerDialog;
 import ghidra.framework.plugintool.util.PluginDescription;
-import ghidra.framework.project.extensions.ExtensionDetails;
-import ghidra.framework.project.extensions.ExtensionUtils;
 import ghidra.util.NumericUtilities;
 import ghidra.util.classfinder.ClassSearcher;
+import ghidra.util.extensions.ExtensionDetails;
+import ghidra.util.extensions.ExtensionUtils;
 import ghidra.util.xml.XmlUtilities;
 import utilities.util.FileUtilities;
 
@@ -191,12 +190,7 @@ class ExtensionManager {
 		Set<PluginPath> pluginPaths = getPluginPaths();
 		Set<Class<?>> extensionPlugins = new HashSet<>();
 		for (ExtensionDetails extension : extensions) {
-			File installDir = extension.getInstallDir();
-			if (installDir == null) {
-				continue;
-			}
-
-			Set<Class<?>> classes = findPluginsLoadedFromExtension(installDir, pluginPaths);
+			Set<Class<?>> classes = findPluginsLoadedFromExtension(extension, pluginPaths);
 			extensionPlugins.addAll(classes);
 		}
 
@@ -219,72 +213,36 @@ class ExtensionManager {
 	 * classpath. For each class, the original resource file is compared against the
 	 * given extension folder and the jar files for that extension. 
 	 *
-	 * @param dir the directory to search, or a jar file
+	 * @param extension the extension from which to find plugins
 	 * @param pluginPaths all loaded plugin paths
 	 * @return list of {@link Plugin} classes, or empty list if none found
 	 */
-	private static Set<Class<?>> findPluginsLoadedFromExtension(File dir,
+	private static Set<Class<?>> findPluginsLoadedFromExtension(ExtensionDetails extension,
 			Set<PluginPath> pluginPaths) {
 
-		Set<Class<?>> result = new HashSet<>();
+		if (!extension.isInstalled()) {
+			return Collections.emptySet();
+		}
 
 		// Find any jar files in the directory provided
-		Set<String> jarPaths = getJarPaths(dir);
+		Set<URL> jarPaths = extension.getLibraries();
 
 		// Now get all Plugin.class file paths and see if any of them were loaded from one of the 
 		// extension the given extension directory
+		Set<Class<?>> result = new HashSet<>();
 		for (PluginPath pluginPath : pluginPaths) {
-			if (pluginPath.isFrom(dir)) {
+			if (pluginPath.isFrom(extension.getInstallDir())) {
 				result.add(pluginPath.getPluginClass());
 				continue;
 			}
 
-			for (String jarPath : jarPaths) {
-				if (pluginPath.isFrom(jarPath)) {
+			for (URL jarUrl : jarPaths) {
+				if (pluginPath.isFrom(jarUrl)) {
 					result.add(pluginPath.getPluginClass());
 				}
 			}
 		}
 		return result;
-	}
-
-	private static Set<String> getJarPaths(File dir) {
-		Set<File> jarFiles = new HashSet<>();
-		findJarFiles(dir, jarFiles);
-		Set<String> paths = new HashSet<>();
-		for (File jar : jarFiles) {
-			try {
-				URL jarUrl = jar.toURI().toURL();
-				paths.add(jarUrl.getPath());
-			}
-			catch (MalformedURLException e) {
-				continue;
-			}
-		}
-		return paths;
-	}
-
-	/**
-	 * Populates the given list with all discovered jar files found in the given directory and
-	 * its subdirectories.
-	 *
-	 * @param dir the directory to search
-	 * @param jarFiles list of found jar files
-	 */
-	private static void findJarFiles(File dir, Set<File> jarFiles) {
-		File[] files = dir.listFiles();
-		if (files == null) {
-			return;
-		}
-		for (File f : files) {
-			if (f.isDirectory()) {
-				findJarFiles(f, jarFiles);
-			}
-
-			if (f.isFile() && f.getName().endsWith(".jar")) {
-				jarFiles.add(f);
-			}
-		}
 	}
 
 	private static class PluginPath {
@@ -304,7 +262,8 @@ class ExtensionManager {
 			return FileUtilities.isPathContainedWithin(dir, pluginFile);
 		}
 
-		boolean isFrom(String jarPath) {
+		boolean isFrom(URL jarUrl) {
+			String jarPath = jarUrl.getPath();
 			return pluginLocation.contains(jarPath);
 		}
 

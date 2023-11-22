@@ -35,13 +35,13 @@ import docking.wizard.WizardManager;
 import docking.wizard.WizardPanel;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.archive.RestoreDialog;
-import ghidra.framework.data.GhidraFileData;
 import ghidra.framework.data.DefaultProjectData;
+import ghidra.framework.data.GhidraFileData;
 import ghidra.framework.main.*;
 import ghidra.framework.model.*;
-import ghidra.framework.plugintool.dialog.*;
 import ghidra.framework.preferences.Preferences;
-import ghidra.framework.project.extensions.*;
+import ghidra.framework.project.extensions.ExtensionTablePanel;
+import ghidra.framework.project.extensions.ExtensionTableProvider;
 import ghidra.framework.remote.User;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.ProgramContentHandler;
@@ -50,6 +50,7 @@ import ghidra.test.ProjectTestUtils;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.extensions.ExtensionDetails;
 import ghidra.util.task.TaskMonitor;
 import resources.MultiIcon;
 
@@ -703,7 +704,7 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 		Language language = getZ80_LANGUAGE();
 		DomainFile otherFile =
 			ProjectTestUtils.createProgramFile(otherProject, "Program1", language,
-			language.getDefaultCompilerSpec(), null);
+				language.getDefaultCompilerSpec(), null);
 		ProjectTestUtils.createProgramFile(otherProject, "Program2", language,
 			language.getDefaultCompilerSpec(), null);
 
