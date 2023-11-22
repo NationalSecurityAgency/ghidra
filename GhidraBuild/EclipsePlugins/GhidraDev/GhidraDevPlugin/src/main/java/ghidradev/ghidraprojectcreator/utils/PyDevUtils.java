@@ -29,8 +29,7 @@ import javax.naming.OperationNotSupportedException;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.*;
 
 import ghidradev.Activator;
 
@@ -40,6 +39,7 @@ import ghidradev.Activator;
 public class PyDevUtils {
 
 	public final static String MIN_SUPPORTED_VERSION = "6.3.1";
+	public final static String MAX_SUPPORTED_VERSION = "9.3.0";
 
 	/**
 	 * Checks to see if a supported version of PyDev is installed.
@@ -47,12 +47,15 @@ public class PyDevUtils {
 	 * @return True if a supported version of PyDev is installed; otherwise, false.
 	 */
 	public static boolean isSupportedPyDevInstalled() {
+		Version min = Version.valueOf(MIN_SUPPORTED_VERSION);
+		Version max = Version.valueOf(MAX_SUPPORTED_VERSION);
 		try {
-			if (PyDevUtilsInternal.isPyDevInstalled()) {
+			Version version = PyDevUtilsInternal.getPyDevVersion();
+			if (version != null) {
 				// Make sure the installed version of PyDev is new enough to support the following
 				// operation.
 				getJython27InterpreterNames();
-				return true;
+				return version.compareTo(min) >= 0 && version.compareTo(max) <= 0;
 			}
 		}
 		catch (OperationNotSupportedException | NoClassDefFoundError e) {

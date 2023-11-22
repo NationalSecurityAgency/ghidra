@@ -22,8 +22,7 @@ import java.util.stream.Collectors;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jdt.core.IClasspathEntry;
 import org.eclipse.jdt.core.IJavaProject;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.*;
 import org.python.pydev.ast.interpreter_managers.InterpreterInfo;
 import org.python.pydev.ast.interpreter_managers.InterpreterManagersAPI;
 import org.python.pydev.core.*;
@@ -44,19 +43,22 @@ import ghidradev.EclipseMessageUtils;
 class PyDevUtilsInternal {
 
 	/**
-	 * Checks to see if PyDev is installed.
+	 * Get the version of PyDev that is installed
 	 * 
-	 * @return True if PyDev is installed; otherwise, false.
+	 * @return The {@link Version} of the installed PyDev, or null if PyDev is not installed.
 	 * @throws NoClassDefFoundError if PyDev is not installed.
 	 */
-	public static boolean isPyDevInstalled() throws NoClassDefFoundError {
-		for (Bundle bundle : FrameworkUtil.getBundle(
-			PyDevUtilsInternal.class).getBundleContext().getBundles()) {
+	public static Version getPyDevVersion() throws NoClassDefFoundError {
+		for (Bundle bundle : FrameworkUtil.getBundle(PyDevUtilsInternal.class)
+				.getBundleContext()
+				.getBundles()) {
 			if (bundle.getSymbolicName().contains("pydev")) {
-				return true;
+				// remove qualifier to make version comparisons more straightforward
+				Version version = bundle.getVersion();
+				return new Version(version.getMajor(), version.getMinor(), version.getMicro());
 			}
 		}
-		return false;
+		return null;
 	}
 
 	/**
