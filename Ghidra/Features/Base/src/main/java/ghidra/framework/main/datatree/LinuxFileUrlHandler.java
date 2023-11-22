@@ -51,10 +51,14 @@ public final class LinuxFileUrlHandler extends AbstractFileListFlavorHandler {
 
 	@Override
 	// This is for the DataFlavorHandler interface for handling node drops in DataTrees
-	public void handle(PluginTool tool, DataTree dataTree, GTreeNode destinationNode,
+	public boolean handle(PluginTool tool, DataTree dataTree, GTreeNode destinationNode,
 			Object transferData, int dropAction) {
 		List<File> files = toFiles(transferData);
+		if (files.isEmpty()) {
+			return false;
+		}
 		doImport(getDomainFolder(destinationNode), files, tool, dataTree);
+		return true;
 	}
 
 	private List<File> toFiles(Object transferData) {
