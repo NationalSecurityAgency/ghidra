@@ -143,6 +143,29 @@ public interface Instruction extends CodeUnit, ProcessorContext {
 	 * this instruction.
 	 * This is useful for handling instructions that are found
 	 * in a delay slot.
+	 * 
+	 * Note: if an instruction is in a delayslot, then it may have
+	 *    a branch into the delayslot, which is handled as follows
+	 *    
+	 * <pre>
+	 * JMPIF Y, X
+	 *   lab:
+	 *     _ADD         getFallFrom() = JMPIF
+	 * MOV              getFallFrom() = _ADD
+	 * 
+	 * JMP Y, X
+	 *   lab:
+	 *     _ADD         getFallFrom() = null
+	 * MOV              getFallFrom() = _ADD
+	 *
+	 * JMPIF Y, X
+	 *     _ADD         getFallFrom() = JMPIF
+	 * MOV              getFallFrom() = JMPIF
+	 *   
+	 * JMP Y, X
+	 *     _ADD         getFallFrom() = JMP
+	 * MOV              getFallFrom() = null
+	 *</pre>
 	 */
 	public Address getFallFrom();
 

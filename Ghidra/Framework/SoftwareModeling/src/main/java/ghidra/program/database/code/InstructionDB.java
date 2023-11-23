@@ -220,7 +220,7 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 			}
 
 			do {
-				// skip past delay slot instructions
+				// skip past delay slot instructions which satisfy specific conditions
 				try {
 					instr = program.getListing()
 							.getInstructionContaining(
@@ -229,28 +229,31 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 				catch (AddressOverflowException e) {
 					return null;
 				}
-				// if an instruction is in a delay slot and has references to it,
-				// consider this the fallfrom instruction
-				if (instr != null && instr.isInDelaySlot() && instr.hasFallthrough()) {
-					if (program.getSymbolTable().hasSymbol(instr.getMinAddress())) {
-						break;
-					}
-				}
 			}
-			while (instr != null && instr.isInDelaySlot());
+			// Continue walking instructions backwards if a delay-slot instruction is found and 
+			// either the delay slot instruction does not fallthrough or it does not have a 
+			// ref or label on it.
+			while (instr != null && instr.isInDelaySlot() &&
+				(!instr.hasFallthrough() ||
+					!program.getSymbolTable().hasSymbol(instr.getMinAddress())));
 			
 			if (instr == null) {
 				return null;
 			}
 
-			// If this instruction is in a delay slot,
-			// it is assumed to always fall from the delay-slotted
-			// instruction regardless of its fall-through
 			if (this.isInDelaySlot()) {
+				// If this instruction is within delay-slot, return a null fall-from address if 
+				// previous instruction (i.e., instruction with delay slot, found above)
+				// does not have a fallthrough and this instruction has a ref or label on it.
+				if (!instr.hasFallthrough() &&
+					program.getSymbolTable().hasSymbol(this.getMinAddress())) {
+					return null;
+				}
+				// Return previous instruction's address (i.e., instruction with delay slot, found above)
 				return instr.getMinAddress();
 			}
 
-			// No delay slot, but check if the instruction falls into this one.
+			// No delay-slot, but check if the instruction falls into this one.
 			Address fallAddr = instr.getFallThrough();
 			if (fallAddr != null && fallAddr.equals(address)) {
 				return instr.getMinAddress();
