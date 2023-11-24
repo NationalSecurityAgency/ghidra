@@ -60,6 +60,9 @@ public class ExtensionInstallerTest extends AbstractDockingTest {
 
 		setErrorGUIEnabled(false);
 
+		// clear static caching of extensions
+		ExtensionUtils.clearCache();
+
 		appLayout = Application.getApplicationLayout();
 
 		FileUtilities.deleteDir(appLayout.getExtensionArchiveDir().getFile(false));
@@ -290,7 +293,7 @@ public class ExtensionInstallerTest extends AbstractDockingTest {
 
 //=================================================================================================
 // Edge Cases
-//=================================================================================================	
+//=================================================================================================
 
 	@Test
 	public void testInstallingNewExtension_SameName_NewVersion() throws Exception {
@@ -317,8 +320,7 @@ public class ExtensionInstallerTest extends AbstractDockingTest {
 			didInstall.set(ExtensionInstaller.install(extensionFolder2));
 		});
 
-		DialogComponentProvider confirmDialog =
-			waitForDialogComponent("Duplicate Extension");
+		DialogComponentProvider confirmDialog = waitForDialogComponent("Duplicate Extension");
 		pressButtonByText(confirmDialog, "Remove Existing");
 
 		waitForSwing();
@@ -333,7 +335,7 @@ public class ExtensionInstallerTest extends AbstractDockingTest {
 			didInstall.set(ExtensionInstaller.install(extensionFolder2));
 		});
 
-		// no longer an installed extension conflict; now we have a version mismatch 
+		// no longer an installed extension conflict; now we have a version mismatch
 		confirmDialog = waitForDialogComponent("Extension Version Mismatch");
 		pressButtonByText(confirmDialog, "Install Anyway");
 
@@ -363,8 +365,7 @@ public class ExtensionInstallerTest extends AbstractDockingTest {
 			didInstall.set(ExtensionInstaller.install(extensionFolder2));
 		});
 
-		DialogComponentProvider confirmDialog =
-			waitForDialogComponent("Duplicate Extension");
+		DialogComponentProvider confirmDialog = waitForDialogComponent("Duplicate Extension");
 		pressButtonByText(confirmDialog, "Cancel");
 		waitForSwing();
 
@@ -397,8 +398,7 @@ public class ExtensionInstallerTest extends AbstractDockingTest {
 			didInstall.set(ExtensionInstaller.install(extensionFolder2));
 		});
 
-		DialogComponentProvider confirmDialog =
-			waitForDialogComponent("Duplicate Extension");
+		DialogComponentProvider confirmDialog = waitForDialogComponent("Duplicate Extension");
 		pressButtonByText(confirmDialog, "Remove Existing");
 
 		waitForSwing();
@@ -426,14 +426,14 @@ public class ExtensionInstallerTest extends AbstractDockingTest {
 
 		/*
 		 	Create a zip file that looks something like this:
-		 	
+
 		 	/
 		 	 	{Extension Name 1}/
 					extension.properties
-		
+
 				{Extension Name 2}/
 					extension.properties
-		 	 
+
 		 */
 
 		errorsExpected(() -> {
@@ -446,9 +446,9 @@ public class ExtensionInstallerTest extends AbstractDockingTest {
 	public void testInstallThenUninstallThenReinstallWhenExtensionNameDoesntMatchFolder()
 			throws Exception {
 
-		// This tests a previous failure case where an extension could not be reinstalled if its 
+		// This tests a previous failure case where an extension could not be reinstalled if its
 		// name did not match the folder it was installed into.  This could happen because the code
-		// that installed the extension did not match the code to clear the 'mark for uninstall' 
+		// that installed the extension did not match the code to clear the 'mark for uninstall'
 		// condition.
 
 		String nameProperty = "ExtensionNamedFoo";
@@ -493,10 +493,9 @@ public class ExtensionInstallerTest extends AbstractDockingTest {
 
 	private void assertExtensionNotInstalled(String name, String version) {
 		Set<ExtensionDetails> extensions = ExtensionUtils.getInstalledExtensions();
-		Optional<ExtensionDetails> match =
-			extensions.stream()
-					.filter(e -> e.getName().equals(name) && e.getVersion().equals(version))
-					.findFirst();
+		Optional<ExtensionDetails> match = extensions.stream()
+				.filter(e -> e.getName().equals(name) && e.getVersion().equals(version))
+				.findFirst();
 		assertFalse("Extension should not be installed: '" + name + "'", match.isPresent());
 	}
 
@@ -594,8 +593,7 @@ public class ExtensionInstallerTest extends AbstractDockingTest {
 	}
 
 	private File doCreateExternalExtensionInFolder(File externalFolder, String extensionName,
-			String version)
-			throws Exception {
+			String version) throws Exception {
 		return doCreateExternalExtensionInFolder(externalFolder, extensionName, extensionName,
 			version);
 	}
@@ -609,9 +607,8 @@ public class ExtensionInstallerTest extends AbstractDockingTest {
 			version);
 	}
 
-	private File doCreateExternalExtensionInFolder(File externalFolder,
-			String extensionName, String nameProperty, String version)
-			throws Exception {
+	private File doCreateExternalExtensionInFolder(File externalFolder, String extensionName,
+			String nameProperty, String version) throws Exception {
 		ResourceFile root = new ResourceFile(new ResourceFile(externalFolder), extensionName);
 		root.mkdir();
 

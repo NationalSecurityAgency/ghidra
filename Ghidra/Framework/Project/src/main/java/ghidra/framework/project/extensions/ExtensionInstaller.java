@@ -43,7 +43,7 @@ import utility.application.ApplicationLayout;
  * <li>createdOn (format: MM/dd/yyyy)</li>
  * <li>version</li>
  * </ul>
- * 
+ *
  * <p>
  * Extensions may be installed/uninstalled by users at runtime, using the
  * {@link ExtensionTableProvider}. Installation consists of unzipping the extension archive to an
@@ -57,7 +57,7 @@ public class ExtensionInstaller {
 	/**
 	 * Installs the given extension file. This can be either an archive (zip) or a directory that
 	 * contains an extension.properties file.
-	 * 
+	 *
 	 * @param file the extension to install
 	 * @return true if the extension was successfully installed
 	 */
@@ -121,8 +121,7 @@ public class ExtensionInstaller {
 
 		String archivePath = extension.getArchivePath();
 		if (archivePath == null) {
-			log.error(
-				"Cannot install from archive; extension is missing archive path");
+			log.error("Cannot install from archive; extension is missing archive path");
 			return false;
 		}
 
@@ -143,7 +142,7 @@ public class ExtensionInstaller {
 	 * Compares the given extension version to the current Ghidra version.  If they are different,
 	 * then the user will be prompted to confirm the installation.   This method will return true
 	 * if the versions match or the user has chosen to install anyway.
-	 * 
+	 *
 	 * @param extension the extension
 	 * @return true if the versions match or the user has chosen to install anyway
 	 */
@@ -161,9 +160,7 @@ public class ExtensionInstaller {
 		String message = "Extension version mismatch.\nName: " + extension.getName() +
 			"Extension version: " + extVersion + ".\nGhidra version: " + appVersion + ".";
 		int choice = OptionDialog.showOptionDialogWithCancelAsDefaultButton(null,
-			"Extension Version Mismatch",
-			message,
-			"Install Anyway");
+			"Extension Version Mismatch", message, "Install Anyway");
 		if (choice != OptionDialog.OPTION_ONE) {
 			log.info(removeNewlines(message + " Did not install"));
 			return false;
@@ -201,16 +198,12 @@ public class ExtensionInstaller {
 				"Installed extension version: " + installedExtension.getVersion() + ".\n\n" +
 				"To install, click 'Remove Existing', restart Ghidra, then install again.";
 		int choice = OptionDialog.showOptionDialogWithCancelAsDefaultButton(null,
-			"Duplicate Extension",
-			message,
-			"Remove Existing");
+			"Duplicate Extension", message, "Remove Existing");
 
 		String installPath = installedExtension.getInstallPath();
 		if (choice != OptionDialog.OPTION_ONE) {
-			log.info(
-				removeNewlines(
-					message + " Skipping installation. Original extension still installed: " +
-						installPath));
+			log.info(removeNewlines(message +
+				" Skipping installation. Original extension still installed: " + installPath));
 			return true;
 		}
 
@@ -218,10 +211,9 @@ public class ExtensionInstaller {
 		// At this point the user would like to replace the existing extension.  We cannot delete
 		// the existing extension, as it may be in use; mark it for removal.
 		//
-		log.info(
-			removeNewlines(
-				message + " Installing new extension. Existing extension will be removed after " +
-					"restart: " + installPath));
+		log.info(removeNewlines(
+			message + " Installing new extension. Existing extension will be removed after " +
+				"restart: " + installPath));
 		installedExtension.markForUninstall();
 		return true;
 	}

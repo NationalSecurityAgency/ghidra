@@ -41,8 +41,8 @@ import utility.application.ApplicationLayout;
  */
 public class ExtensionUtils {
 
-	/** 
-	 * Magic number that identifies the first bytes of a ZIP archive. This is used to verify that a 
+	/**
+	 * Magic number that identifies the first bytes of a ZIP archive. This is used to verify that a
 	 * file is a zip rather than just checking the extension.
 	 */
 	private static final int ZIPFILE = 0x504b0304;
@@ -87,7 +87,7 @@ public class ExtensionUtils {
 	 * Returns true if the given file or directory is a valid ghidra extension.
 	 * <p>
 	 * Note: This means that the zip or directory contains an extension.properties file.
-	 * 
+	 *
 	 * @param file the zip or directory to inspect
 	 * @return true if the given file represents a valid extension
 	 */
@@ -96,12 +96,13 @@ public class ExtensionUtils {
 	}
 
 	public static boolean install(ExtensionDetails extension, File file, TaskMonitor monitor) {
+		boolean success = false;
 		try {
 			if (file.isFile()) {
-				return unzipToInstallationFolder(extension, file, monitor);
+				success = unzipToInstallationFolder(extension, file, monitor);
 			}
 
-			return copyToInstallationFolder(file, monitor);
+			success = copyToInstallationFolder(extension, file, monitor);
 		}
 		catch (CancelledException e) {
 			log.info("Extension installation cancelled by user");
@@ -110,7 +111,12 @@ public class ExtensionUtils {
 			Msg.showError(ExtensionUtils.class, null, "Error Installing Extension",
 				"Unexpected error installing extension", e);
 		}
-		return false;
+
+		if (success) {
+			extensions.add(extension);
+		}
+
+		return success;
 	}
 
 	public static Set<ExtensionDetails> getActiveInstalledExtensions() {
@@ -120,7 +126,7 @@ public class ExtensionUtils {
 	/**
 	 * Returns all installed extensions. These are all the extensions found in
 	 * {@link ApplicationLayout#getExtensionInstallationDirs}.
-	 * 
+	 *
 	 * @return set of installed extensions
 	 */
 	public static Set<ExtensionDetails> getInstalledExtensions() {
@@ -197,8 +203,15 @@ public class ExtensionUtils {
 	 */
 	public static void reload() {
 		log.trace("Clearing extensions cache");
-		extensions = null;
+		clearCache();
 		getAllInstalledExtensions();
+	}
+
+	/**
+	 * Clears any cached extensions.
+	 */
+	public static void clearCache() {
+		extensions = null;
 	}
 
 	/**
@@ -207,7 +220,7 @@ public class ExtensionUtils {
 	 * part of the build processes.
 	 * <p>
 	 * Archived extensions may be zip files and directories.
-	 * 
+	 *
 	 * @return set of archive extensions
 	 */
 	public static Set<ExtensionDetails> getArchiveExtensions() {
@@ -260,8 +273,7 @@ public class ExtensionUtils {
 			}
 		}
 		catch (IOException e) {
-			log.error(
-				"Unable to read zip file to get extension properties: " + file, e);
+			log.error("Unable to read zip file to get extension properties: " + file, e);
 		}
 		return null;
 	}
@@ -276,10 +288,9 @@ public class ExtensionUtils {
 			}
 
 			if (results.contains(extension)) {
-				log.error(
-					"Skipping extension \"" + extension.getName() + "\" found at " +
-						extension.getInstallPath() +
-						".\nArchived extension by that name already found.");
+				log.error("Skipping extension \"" + extension.getName() + "\" found at " +
+					extension.getInstallPath() +
+					".\nArchived extension by that name already found.");
 			}
 			results.add(extension);
 		}
@@ -299,9 +310,8 @@ public class ExtensionUtils {
 			extension.setArchivePath(extDir.getAbsolutePath());
 
 			if (results.contains(extension)) {
-				log.error(
-					"Skipping duplicate extension \"" + extension.getName() + "\" found at " +
-						extension.getInstallPath());
+				log.error("Skipping duplicate extension \"" + extension.getName() + "\" found at " +
+					extension.getInstallPath());
 			}
 			results.add(extension);
 		}
@@ -368,8 +378,7 @@ public class ExtensionUtils {
 			Properties nextProperties = getProperties(zipFile, entry);
 			if (nextProperties != null) {
 				if (props != null) {
-					throw new IOException(
-						"Zip file contains multiple extension properties files");
+					throw new IOException("Zip file contains multiple extension properties files");
 				}
 				props = nextProperties;
 			}
@@ -403,7 +412,7 @@ public class ExtensionUtils {
 	 * <p>
 	 * Searching the child directories of a directory allows clients to pick an extension parent
 	 * directory that contains multiple extension directories.
-	 * 
+	 *
 	 * @param installDir the directory that contains extension subdirectories
 	 * @return list of extension.properties files
 	 */
@@ -427,7 +436,7 @@ public class ExtensionUtils {
 	/**
 	 * Returns an extension.properties or extension.properties.uninstalled file if the given
 	 * directory contains one.
-	 * 
+	 *
 	 * @param dir the directory to search
 	 * @return the file, or null if doesn't exist
 	 */
@@ -448,7 +457,7 @@ public class ExtensionUtils {
 
 	/**
 	 * Returns true if the given file is a valid .zip archive.
-	 * 
+	 *
 	 * @param file the file to test
 	 * @return true if file is a valid zip
 	 */
@@ -483,28 +492,30 @@ public class ExtensionUtils {
 	 * location will be deleted.
 	 * <p>
 	 * Note: Any existing folder with the same name will be overwritten.
-	 * 
+	 *
+	 * @param extension the extension
 	 * @param sourceFolder the extension folder
 	 * @param monitor the task monitor
 	 * @return true if successful
 	 * @throws IOException if the delete or copy fails
 	 * @throws CancelledException if the user cancels the copy
 	 */
-	private static boolean copyToInstallationFolder(File sourceFolder, TaskMonitor monitor)
-			throws IOException, CancelledException {
+	private static boolean copyToInstallationFolder(ExtensionDetails extension, File sourceFolder,
+			TaskMonitor monitor) throws IOException, CancelledException {
 
 		log.trace("Copying extension from " + sourceFolder);
 
 		ApplicationLayout layout = Application.getApplicationLayout();
 		ResourceFile installDir = layout.getExtensionInstallationDirs().get(0);
 		File installDirRoot = installDir.getFile(false);
-		File newDir = new File(installDirRoot, sourceFolder.getName());
-		if (hasExistingExtension(newDir, monitor)) {
+		File destinationFolder = new File(installDirRoot, sourceFolder.getName());
+		if (hasExistingExtension(destinationFolder, monitor)) {
 			return false;
 		}
 
-		log.trace("Copying extension to " + newDir);
-		FileUtilities.copyDir(sourceFolder, newDir, monitor);
+		log.trace("Copying extension to " + destinationFolder);
+		FileUtilities.copyDir(sourceFolder, destinationFolder, monitor);
+		extension.setInstallDir(destinationFolder);
 		return true;
 	}
 
@@ -514,7 +525,7 @@ public class ExtensionUtils {
 	 * <p>
 	 * Note: This method uses the Apache zip files since they keep track of permissions info;
 	 * the built-in java objects (e.g., ZipEntry) do not.
-	 * 
+	 *
 	 * @param extension the extension
 	 * @param file the zip file to unpack
 	 * @param monitor the task monitor
@@ -524,8 +535,7 @@ public class ExtensionUtils {
 	 * @throws IOException if error unzipping zip file
 	 */
 	private static boolean unzipToInstallationFolder(ExtensionDetails extension, File file,
-			TaskMonitor monitor)
-			throws CancelledException, IOException {
+			TaskMonitor monitor) throws CancelledException, IOException {
 
 		log.trace("Unzipping extension from " + file);
 
@@ -554,6 +564,8 @@ public class ExtensionUtils {
 				}
 			}
 		}
+
+		extension.setInstallDir(destinationFolder);
 		return true;
 	}
 
@@ -600,7 +612,7 @@ public class ExtensionUtils {
 
 	/**
 	 * Converts Unix permissions to a set of {@link PosixFilePermission}s.
-	 * 
+	 *
 	 * @param unixMode integer representation of file permissions
 	 * @return set of POSIX file permissions
 	 */
