@@ -38,12 +38,12 @@ public class Extensions {
 	}
 
 	/**
-	 * Returns all extensions matching the given details 
+	 * Returns all extensions matching the given details
 	 * @param e the extension details to match
 	 * @return all matching extensions
 	 */
 	public List<ExtensionDetails> getMatchingExtensions(ExtensionDetails e) {
-		return extensionsByName.computeIfAbsent(e.getName(), name -> List.of());
+		return extensionsByName.computeIfAbsent(e.getName(), name -> new ArrayList<>());
 	}
 
 	/**
@@ -68,8 +68,8 @@ public class Extensions {
 	}
 
 	/**
-	 * Removes any extensions that have already been marked for removal.  This should be called 
-	 * before any class loading has occurred. 
+	 * Removes any extensions that have already been marked for removal.  This should be called
+	 * before any class loading has occurred.
 	 */
 	void cleanupExtensionsMarkedForRemoval() {
 
@@ -187,8 +187,7 @@ public class Extensions {
 		for (int i = 1; i < extensions.size(); i++) {
 			ExtensionDetails duplicate = extensions.get(i);
 			log.info("Duplicate extension found '" + name + "'.  Keeping extension from " +
-				loadedInstallDir + ".  Skipping extension found at " +
-				duplicate.getInstallDir());
+				loadedInstallDir + ".  Skipping extension found at " + duplicate.getInstallDir());
 		}
 	}
 
