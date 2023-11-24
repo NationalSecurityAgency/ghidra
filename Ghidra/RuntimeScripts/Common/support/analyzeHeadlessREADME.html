@@ -404,9 +404,10 @@ The Headless Analyzer uses the command-line parameters discussed below. See <a h
     Specifying a positive integer value for the optional <typewriter>&lt;depth&gt;</typewriter>
     argument enables recursive descent into supported container files (e.g., zip, tar, .a, etc).
     The depth value only applies to nested container files. Intermediate directories found within 
-    each nested container file are not affected by the specified depth value.  Specifying a depth 
-    value of 0 has the same effect as not specifying any depth value (i.e., container files will not be recursed into).
-   </LI>
+    each nested container file are not affected by the specified depth value.  If a depth value is
+    not specified, it will default to 0 if importing a directory, and 1 if importing a file.  A
+    depth of 0 will prevent recursing into any container files.
+    </LI>
 
     <br><br>
 

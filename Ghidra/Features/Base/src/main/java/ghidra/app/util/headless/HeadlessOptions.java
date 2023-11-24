@@ -63,7 +63,7 @@ public class HeadlessOptions {
 
 	// -recursive
 	boolean recursive;
-	int recursiveDepth;
+	Integer recursiveDepth; // 'null' means use default depth, which is different for files vs dirs
 
 	// -readOnly
 	boolean readOnly;
@@ -130,7 +130,7 @@ public class HeadlessOptions {
 		propertiesFilePaths = new ArrayList<>();
 		overwrite = false;
 		recursive = false;
-		recursiveDepth = 0;
+		recursiveDepth = null;
 		readOnly = false;
 		deleteProject = false;
 		analyze = true;
@@ -343,9 +343,7 @@ public class HeadlessOptions {
 	 */
 	public void enableRecursiveProcessing(boolean enabled, Integer depth) {
 		this.recursive = enabled;
-		if (depth != null) {
-			this.recursiveDepth = depth;
-		}
+		this.recursiveDepth = depth;
 	}
 
 	/**

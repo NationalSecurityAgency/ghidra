@@ -1656,10 +1656,13 @@ public class HeadlessAnalyzer {
 			messageLog, TaskMonitor.DUMMY);
 	}
 
-	private void processWithImport(FSRL fsrl, String folderPath, int depth, boolean isFirstTime)
+	private void processWithImport(FSRL fsrl, String folderPath, Integer depth, boolean isFirstTime)
 			throws IOException {
 		try (RefdFile refdFile = fsService.getRefdFile(fsrl, TaskMonitor.DUMMY)) {
 			GFile file = refdFile.file;
+			if (depth == null && isFirstTime) {
+				depth = file.isDirectory() ? 0 : 1; // set default depth
+			}
 			if ((options.recursive || isFirstTime) && file.isDirectory()) {
 				processFS(file.getFilesystem(), file, folderPath, depth);
 				return;
