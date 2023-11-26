@@ -204,8 +204,9 @@ public abstract class TypeProgramInterface implements TPI {
 	 * Dumps this class.  This package-protected method is for debugging only
 	 * @param writer {@link Writer} to which to write the debug dump
 	 * @throws IOException on issue writing to the {@link Writer}
+	 * @throws CancelledException upon user cancellation
 	 */
-	void dump(Writer writer) throws IOException {
+	void dump(Writer writer) throws IOException, CancelledException {
 		writer.write("TypeProgramInterfaceHeader----------------------------------\n");
 		dumpHeader(writer);
 		writer.write("\nEnd TypeProgramInterfaceHeader------------------------------\n");
@@ -272,9 +273,11 @@ public abstract class TypeProgramInterface implements TPI {
 	 * Dumps the Type Records.  This method is for debugging only
 	 * @param writer {@link Writer} to which to dump the records
 	 * @throws IOException on issue writing to the {@link Writer}
+	 * @throws CancelledException upon user cancellation
 	 */
-	protected void dumpTypeRecords(Writer writer) throws IOException {
+	protected void dumpTypeRecords(Writer writer) throws IOException, CancelledException {
 		for (int recordNum = typeIndexMin; recordNum < typeIndexMaxExclusive; recordNum++) {
+			pdb.checkCancelled();
 			AbstractMsType type = getRandomAccessRecord(recordNum);
 			StringBuilder builder = new StringBuilder();
 			builder.append("------------------------------------------------------------\n");

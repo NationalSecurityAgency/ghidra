@@ -28,6 +28,7 @@ import ghidra.util.exception.CancelledException;
  */
 public class C11Lines {
 
+	private AbstractPdb pdb;
 	private int cFile; // unsigned short
 	private int cSeg; // unsigned short
 	// array of (Windows C) unsigned long values (which is 32-bit int); we are limiting to java int.
@@ -54,6 +55,7 @@ public class C11Lines {
 
 	private C11Lines(AbstractPdb pdb, PdbByteReader reader)
 			throws PdbException, CancelledException {
+		this.pdb = pdb;
 		if (reader.numRemaining() < 4) {
 			return;
 		}
@@ -138,25 +140,34 @@ public class C11Lines {
 
 	@Override
 	public String toString() {
-		return dump();
+		try {
+			return dump();
+		}
+		catch (CancelledException e) {
+			return "";
+		}
 	}
 
 	/**
 	 * Dumps this class.  This package-protected method is for debugging only.
 	 * @return the {@link String} output.
+	 * @throws CancelledException upon user cancellation
 	 */
-	String dump() {
+	String dump() throws CancelledException {
 		StringBuilder builder = new StringBuilder();
 		builder.append("Lines-------------------------------------------------------\n");
 		builder.append("cFile: " + cFile + " cSeg: " + cSeg + "\n");
 		for (int i = 0; i < cFile; i++) {
+			pdb.checkCancelled();
 			builder.append("baseSrcFile[" + i + "]: " + baseSrcFile.get(i) + "\n");
 		}
 		for (int i = 0; i < cSeg; i++) {
+			pdb.checkCancelled();
 			builder.append(i + ": start:" + startEnd.get(i).getStart() + " end: " +
 				startEnd.get(i).getEnd() + " seg: " + seg.get(i) + "\n");
 		}
 		for (int i = 0; i < cFile; i++) {
+			pdb.checkCancelled();
 			builder.append(
 				"  file[" + i + "]: cSeg: " + ccSegs.get(i) + " name: " + names.get(i) + "\n");
 			List<Integer> myBaseSrcLn = baseSrcLines.get(i);
@@ -170,6 +181,7 @@ public class C11Lines {
 			List<List<Long>> fileSegOffsets = offsets.get(i);
 			List<List<Integer>> fileSegLineNums = lineNumbers.get(i);
 			for (int j = 0; j < fileSegOffsets.size(); j++) {
+				pdb.checkCancelled();
 				List<Long> segOffsets = fileSegOffsets.get(j);
 				List<Integer> segLineNums = fileSegLineNums.get(j);
 				builder.append("  seg[" + j + "]: Seg: " + segNums.get(j) + " cPair: " +
