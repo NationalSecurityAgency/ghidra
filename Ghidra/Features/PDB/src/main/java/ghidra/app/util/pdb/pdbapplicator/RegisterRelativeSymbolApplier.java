@@ -17,10 +17,10 @@ package ghidra.app.util.pdb.pdbapplicator;
 
 import java.util.Objects;
 
+import ghidra.app.util.bin.format.pdb2.pdbreader.MsSymbolIterator;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractRegisterRelativeAddressMsSymbol;
-import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
@@ -40,7 +40,7 @@ public class RegisterRelativeSymbolApplier extends MsSymbolApplier {
 	 * @param iter the Iterator containing the symbol sequence being processed
 	 */
 	public RegisterRelativeSymbolApplier(DefaultPdbApplicator applicator,
-			AbstractMsSymbolIterator iter) {
+			MsSymbolIterator iter) {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
 		if (!(abstractSymbol instanceof AbstractRegisterRelativeAddressMsSymbol)) {

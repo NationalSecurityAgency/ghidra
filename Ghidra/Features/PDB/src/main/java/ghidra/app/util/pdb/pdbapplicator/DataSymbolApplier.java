@@ -15,11 +15,9 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
-import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
+import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractDataMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
-import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
@@ -40,7 +38,7 @@ public class DataSymbolApplier extends MsSymbolApplier {
 	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
 	 * @param iter the Iterator containing the symbol sequence being processed
 	 */
-	public DataSymbolApplier(DefaultPdbApplicator applicator, AbstractMsSymbolIterator iter) {
+	public DataSymbolApplier(DefaultPdbApplicator applicator, MsSymbolIterator iter) {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
 		if (!(abstractSymbol instanceof AbstractDataMsSymbol)) {
@@ -170,11 +168,15 @@ public class DataSymbolApplier extends MsSymbolApplier {
 		}
 		if (existingData == null) {
 			try {
-				applicator.getProgram().getListing().clearCodeUnits(address,
-					address.add(dataTypeLength - 1), false);
+				applicator.getProgram()
+						.getListing()
+						.clearCodeUnits(address,
+							address.add(dataTypeLength - 1), false);
 				if (dataType.getLength() == -1) {
-					applicator.getProgram().getListing().createData(address, dataType,
-						dataTypeLength);
+					applicator.getProgram()
+							.getListing()
+							.createData(address, dataType,
+								dataTypeLength);
 				}
 				else {
 					applicator.getProgram().getListing().createData(address, dataType);
@@ -187,8 +189,10 @@ public class DataSymbolApplier extends MsSymbolApplier {
 		}
 		else if (isDataReplaceable(existingData)) {
 			try {
-				applicator.getProgram().getListing().clearCodeUnits(address,
-					address.add(dataTypeLength - 1), false);
+				applicator.getProgram()
+						.getListing()
+						.clearCodeUnits(address,
+							address.add(dataTypeLength - 1), false);
 				applicator.getProgram().getListing().createData(address, dataType, dataTypeLength);
 			}
 			catch (CodeUnitInsertionException e) {

@@ -16,11 +16,9 @@
 package ghidra.app.util.pdb.pdbapplicator;
 
 import ghidra.app.util.SymbolPath;
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
-import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
+import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractUserDefinedTypeMsSymbol;
-import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
@@ -38,7 +36,7 @@ public class TypedefSymbolApplier extends MsSymbolApplier {
 	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
 	 * @param iter the Iterator containing the symbol sequence being processed
 	 */
-	public TypedefSymbolApplier(DefaultPdbApplicator applicator, AbstractMsSymbolIterator iter) {
+	public TypedefSymbolApplier(DefaultPdbApplicator applicator, MsSymbolIterator iter) {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
 		if (!(abstractSymbol instanceof AbstractUserDefinedTypeMsSymbol)) {
@@ -120,7 +118,7 @@ public class TypedefSymbolApplier extends MsSymbolApplier {
 
 		SymbolPath symbolPath = new SymbolPath(name);
 		CategoryPath categoryPath =
-			applicator.getTypedefsCategory(iter.getModuleNumber(), symbolPath);
+			applicator.getTypedefsCategory(applicator.getCurrentModuleNumber(), symbolPath);
 		DataType typedef = new TypedefDataType(categoryPath.getParent(), categoryPath.getName(),
 			dataType, applicator.getDataTypeManager());
 

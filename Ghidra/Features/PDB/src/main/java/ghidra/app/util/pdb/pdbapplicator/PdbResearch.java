@@ -22,7 +22,6 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
-import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.CompilerSpec;
@@ -337,8 +336,7 @@ public class PdbResearch {
 
 		String nn = applier.getMsType().getName();
 		if ("std::__1::__map_value_compare<std::__1::basic_string<char>,std::__1::__value_type<std::__1::basic_string<char>,std::__1::basic_string<wchar_t> >,std::__1::less<void>,1>"
-				.equals(
-					nn)) {
+				.equals(nn)) {
 			doNothingSetBreakPointHere();
 		}
 		if ("class std::__1::__iostream_category".equals(nn)) {
@@ -430,7 +428,7 @@ public class PdbResearch {
 		monitor.setMessage("PDB: Applying typedefs...");
 		monitor.initialize(offsets.size());
 
-		AbstractMsSymbolIterator iter = symbolGroup.iterator();
+		MsSymbolIterator iter = symbolGroup.getSymbolIterator();
 		for (long offset : offsets) {
 			monitor.checkCancelled();
 			iter.initGetByOffset(offset);
@@ -441,8 +439,8 @@ public class PdbResearch {
 		}
 	}
 
-	static private boolean childWalkSym(DefaultPdbApplicator applicator, int moduleNumber,
-			AbstractMsSymbolIterator iter) throws PdbException, CancelledException {
+	static private boolean childWalkSym(DefaultPdbApplicator applicator, int streamNumber,
+			MsSymbolIterator iter) throws PdbException, CancelledException {
 		if (!iter.hasNext()) {
 			return false;
 		}
@@ -459,18 +457,18 @@ public class PdbResearch {
 		}
 		else if (applier instanceof ReferenceSymbolApplier) {
 			ReferenceSymbolApplier refSymbolApplier = (ReferenceSymbolApplier) applier;
-			AbstractMsSymbolIterator refIter =
+			MsSymbolIterator refIter =
 				refSymbolApplier.getInitializedReferencedSymbolGroupIterator();
 			if (refIter == null) {
 				throw new PdbException("PDB: Referenced Symbol Error - not refIter");
 			}
 			// recursion
-			childWalkSym(applicator, refIter.getModuleNumber(), refIter);
+			childWalkSym(applicator, refIter.getStreamNumber(), refIter);
 		}
 		else if (applier instanceof DataSymbolApplier) {
 			DataSymbolApplier dataSymbolApplier = (DataSymbolApplier) applier;
 			MsTypeApplier typeApplier = dataSymbolApplier.getTypeApplier();
-			childWalkType(moduleNumber, typeApplier);
+			childWalkType(streamNumber, typeApplier);
 		}
 		else if (applier instanceof FunctionSymbolApplier) {
 			FunctionSymbolApplier functionSymbolApplier = (FunctionSymbolApplier) applier;
@@ -620,7 +618,7 @@ public class PdbResearch {
 	 * reuse caused by Templates and/or Identical Code Folding.
 	 */
 	static void studyAggregateSymbols(DefaultPdbApplicator applicator, TaskMonitor monitor)
-			throws CancelledException {
+			throws CancelledException, PdbException {
 		Map<Address, List<Stuff>> mapByAddress = new HashMap<>();
 		processPublicSymbols(applicator, mapByAddress, monitor);
 		processGlobalSymbols(applicator, mapByAddress, monitor);
@@ -629,7 +627,8 @@ public class PdbResearch {
 	}
 
 	private static void processPublicSymbols(DefaultPdbApplicator applicator,
-			Map<Address, List<Stuff>> map, TaskMonitor monitor) throws CancelledException {
+			Map<Address, List<Stuff>> map, TaskMonitor monitor)
+			throws CancelledException, PdbException {
 		AbstractPdb pdb = applicator.getPdb();
 
 		PdbDebugInfo debugInfo = pdb.getDebugInfo();
@@ -644,11 +643,10 @@ public class PdbResearch {
 
 		PublicSymbolInformation publicSymbolInformation = debugInfo.getPublicSymbolInformation();
 		List<Long> offsets = publicSymbolInformation.getModifiedHashRecordSymbolOffsets();
-		monitor.setMessage(
-			"PDB: Applying " + offsets.size() + " public symbol components...");
+		monitor.setMessage("PDB: Applying " + offsets.size() + " public symbol components...");
 		monitor.initialize(offsets.size());
 
-		AbstractMsSymbolIterator iter = symbolGroup.iterator();
+		MsSymbolIterator iter = symbolGroup.getSymbolIterator();
 		for (long offset : offsets) {
 			monitor.checkCancelled();
 			iter.initGetByOffset(offset);
@@ -664,7 +662,8 @@ public class PdbResearch {
 	}
 
 	private static void processGlobalSymbols(DefaultPdbApplicator applicator,
-			Map<Address, List<Stuff>> map, TaskMonitor monitor) throws CancelledException {
+			Map<Address, List<Stuff>> map, TaskMonitor monitor)
+			throws CancelledException, PdbException {
 		AbstractPdb pdb = applicator.getPdb();
 
 		PdbDebugInfo debugInfo = pdb.getDebugInfo();
@@ -682,7 +681,7 @@ public class PdbResearch {
 		monitor.setMessage("PDB: Applying global symbols...");
 		monitor.initialize(offsets.size());
 
-		AbstractMsSymbolIterator iter = symbolGroup.iterator();
+		MsSymbolIterator iter = symbolGroup.getSymbolIterator();
 		for (long offset : offsets) {
 			monitor.checkCancelled();
 			iter.initGetByOffset(offset);
@@ -698,7 +697,8 @@ public class PdbResearch {
 	}
 
 	private static void processModuleSymbols(DefaultPdbApplicator applicator,
-			Map<Address, List<Stuff>> map, TaskMonitor monitor) throws CancelledException {
+			Map<Address, List<Stuff>> map, TaskMonitor monitor)
+			throws CancelledException, PdbException {
 		AbstractPdb pdb = applicator.getPdb();
 		PdbDebugInfo debugInfo = pdb.getDebugInfo();
 		if (debugInfo == null) {
@@ -715,8 +715,7 @@ public class PdbResearch {
 			}
 			totalCount += symbolGroup.size();
 		}
-		monitor.setMessage(
-			"PDB: Applying " + totalCount + " module symbol components...");
+		monitor.setMessage("PDB: Applying " + totalCount + " module symbol components...");
 		monitor.initialize(totalCount);
 
 		// Process symbols list for each module
@@ -731,7 +730,7 @@ public class PdbResearch {
 			if (symbolGroup == null) {
 				continue;
 			}
-			AbstractMsSymbolIterator iter = symbolGroup.iterator();
+			MsSymbolIterator iter = symbolGroup.getSymbolIterator();
 			processSymbolGroup(applicator, map, moduleNumber, iter, monitor);
 			// do not call monitor.incrementProgress(1) here, as it is updated inside of
 			//  processSymbolGroup.
@@ -739,7 +738,7 @@ public class PdbResearch {
 	}
 
 	private static void processSymbolGroup(DefaultPdbApplicator applicator,
-			Map<Address, List<Stuff>> map, int moduleNumber, AbstractMsSymbolIterator iter,
+			Map<Address, List<Stuff>> map, int moduleNumber, MsSymbolIterator iter,
 			TaskMonitor monitor) throws CancelledException {
 		iter.initGet();
 		while (iter.hasNext()) {
