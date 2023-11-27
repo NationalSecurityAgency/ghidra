@@ -75,6 +75,15 @@ public class GhidraURL {
 	}
 
 	/**
+	 * Tests if the given url is using the Ghidra protocol
+	 * @param url the url to test
+	 * @return true if the url is using the Ghidra protocol
+	 */
+	public static boolean isGhidraURL(URL url) {
+		return url != null && url.getProtocol().equals(PROTOCOL);
+	}
+
+	/**
 	 * Determine if URL string uses a local format (e.g., {@code ghidra:/path...}).
 	 * Extensive validation is not performed.  This method is intended to differentiate
 	 * from a server URL only.

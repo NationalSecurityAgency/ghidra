@@ -26,6 +26,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import db.Transaction;
 import ghidra.framework.data.DomainObjectEventQueues;
+import ghidra.framework.data.DomainObjectFileListener;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.store.LockException;
@@ -1272,6 +1273,16 @@ public class DBTraceProgramView implements TraceProgramView {
 	@Override
 	public void removeCloseListener(DomainObjectClosedListener listener) {
 		trace.removeCloseListener(listener);
+	}
+
+	@Override
+	public void addDomainFileListener(DomainObjectFileListener listener) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void removeDomainFileListener(DomainObjectFileListener listener) {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

@@ -20,8 +20,8 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import db.*;
+import ghidra.app.util.task.OpenProgramRequest;
 import ghidra.app.util.task.OpenProgramTask;
-import ghidra.app.util.task.OpenProgramTask.OpenProgramRequest;
 import ghidra.feature.vt.api.correlator.program.ImpliedMatchProgramCorrelator;
 import ghidra.feature.vt.api.correlator.program.ManualMatchProgramCorrelator;
 import ghidra.feature.vt.api.impl.*;

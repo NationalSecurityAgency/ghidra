@@ -43,6 +43,16 @@ public class Dummy {
 	}
 
 	/**
+	 * Creates a dummy consumer
+	 * @return a dummy consumer
+	 */
+	public static <T, U> BiConsumer<T, U> biConsumer() {
+		return (t, u) -> {
+			// no-op
+		};
+	}
+
+	/**
 	 * Creates a dummy function
 	 * @param <T> the input type
 	 * @param <R> the result type
@@ -80,6 +90,17 @@ public class Dummy {
 	 */
 	public static <T> Consumer<T> ifNull(Consumer<T> c) {
 		return c == null ? consumer() : c;
+	}
+
+	/**
+	 * Returns the given consumer object if it is not {@code null}.  Otherwise, a 
+	 * {@link #biConsumer()} is returned.  This is useful to avoid using {@code null}.
+	 *
+	 * @param c the consumer function to check for {@code null}
+	 * @return a non-null consumer
+	 */
+	public static <T, U> BiConsumer<T, U> ifNull(BiConsumer<T, U> c) {
+		return c == null ? biConsumer() : c;
 	}
 
 	/**
