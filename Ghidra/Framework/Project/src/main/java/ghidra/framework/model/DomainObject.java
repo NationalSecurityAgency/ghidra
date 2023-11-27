@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import ghidra.framework.data.DomainObjectFileListener;
 import ghidra.framework.options.Options;
 import ghidra.util.ReadOnlyException;
 import ghidra.util.exception.CancelledException;
@@ -164,6 +165,22 @@ public interface DomainObject {
 	 * @param listener the listener to remove.
 	 */
 	public void removeCloseListener(DomainObjectClosedListener listener);
+
+	/**
+	 * Adds a listener that will be notified when this DomainFile associated with this
+	 * DomainObject changes, such as when a 'Save As' action occurs. Unlike DomainObject events,
+	 * these notifications are not buffered and happen immediately when the DomainFile is changed.
+	 *
+	 * @param listener the listener to be notified when the associated DomainFile changes
+	 */
+	public void addDomainFileListener(DomainObjectFileListener listener);
+
+	/**
+	 * Removes the given DomainObjectFileListener listener.
+	 *
+	 * @param listener the listener to remove.
+	 */
+	public void removeDomainFileListener(DomainObjectFileListener listener);
 
 	/**
 	 * Creates a private event queue that can be flushed independently from the main event queue.

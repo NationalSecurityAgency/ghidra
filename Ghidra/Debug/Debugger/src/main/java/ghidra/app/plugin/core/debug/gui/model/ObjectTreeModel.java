@@ -621,9 +621,7 @@ public class ObjectTreeModel implements DisplaysModified {
 
 	protected List<GTreeNode> generateObjectChildren(TraceObject object) {
 		List<GTreeNode> result = ObjectTableModel
-				.distinctCanonical(object.getValues(span)
-						.stream()
-						.filter(this::isValueVisible))
+				.distinctCanonical(object.getValues(span).stream().filter(this::isValueVisible))
 				.map(v -> nodeCache.getOrCreateNode(v))
 				.sorted()
 				.collect(Collectors.toList());

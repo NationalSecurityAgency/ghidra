@@ -21,6 +21,7 @@ import java.util.*;
 
 import db.Transaction;
 import ghidra.feature.vt.api.main.*;
+import ghidra.framework.data.DomainObjectFileListener;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.store.LockException;
@@ -88,6 +89,16 @@ public class EmptyVTSession implements VTSession {
 
 	@Override
 	public void removeCloseListener(DomainObjectClosedListener listener) {
+		// do nothing
+	}
+
+	@Override
+	public void addDomainFileListener(DomainObjectFileListener listener) {
+		// do nothing
+	}
+
+	@Override
+	public void removeDomainFileListener(DomainObjectFileListener listener) {
 		// do nothing
 	}
 
