@@ -61,9 +61,7 @@ public final class LinuxFileUrlHandler extends AbstractFileListFlavorHandler {
 
 		return toFiles(transferData, s -> {
 			try {
-				// Replacing the spaces with "%20" will allow for file paths with spaces to be parsed correctly
-                // and not cause an exception
-                return new File(new URL(s.replaceAll(" ", "%20")).toURI());
+				return new File(new URL(s.replaceAll(" ", "%20")).toURI()); // fixup spaces
 			}
 			catch (MalformedURLException e) {
 				// this could be the case that this handler is attempting to process an arbitrary
