@@ -602,11 +602,11 @@ public abstract class PdbDebugInfo {
 	}
 
 	private void dumpSymbols(Writer writer) throws CancelledException, IOException, PdbException {
-		MsSymbolIterator iteratorx = getSymbolIterator();
+		MsSymbolIterator iterator = getSymbolIterator();
 		List<AbstractMsSymbol> symbols = new ArrayList<>();
-		while (iteratorx.hasNext()) {
+		while (iterator.hasNext()) {
 			pdb.checkCancelled();
-			symbols.add(iteratorx.next());
+			symbols.add(iterator.next());
 		}
 	}
 

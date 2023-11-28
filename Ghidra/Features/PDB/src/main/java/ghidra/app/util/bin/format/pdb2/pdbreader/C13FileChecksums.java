@@ -65,19 +65,21 @@ public class C13FileChecksums extends C13Section {
 
 	@Override
 	public String toString() {
-		return String.format(
-			"%s: num checksums = %d", getClass().getSimpleName(), fileChecksums.size());
+		return String.format("%s: num checksums = %d", getClass().getSimpleName(),
+			fileChecksums.size());
 	}
 
 	/**
 	 * Dumps this class to a Writer
 	 * @param writer {@link Writer} to which to dump the information
 	 * @throws IOException Upon IOException writing to the {@link Writer}
+	 * @throws CancelledException upon user cancellation
 	 */
 	@Override
-	void dump(Writer writer) throws IOException {
+	void dump(Writer writer, TaskMonitor monitor) throws IOException, CancelledException {
 		writer.write("C13FileChecksums--------------------------------------------\n");
 		for (FileChecksum checksum : fileChecksums) {
+			monitor.checkCancelled();
 			writer.write(checksum.toString());
 			writer.write('\n');
 		}

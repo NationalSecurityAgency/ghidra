@@ -53,8 +53,7 @@ public class Pdb700 extends AbstractPdb {
 	// Abstract Methods
 	//==============================================================================================
 	@Override
-	void deserializeDirectory()
-			throws IOException, PdbException, CancelledException {
+	void deserializeDirectory() throws IOException, PdbException, CancelledException {
 		PdbByteReader reader = getDirectoryReader();
 		deserializeVersionSignatureAge(reader);
 		guid = reader.parseGUID();

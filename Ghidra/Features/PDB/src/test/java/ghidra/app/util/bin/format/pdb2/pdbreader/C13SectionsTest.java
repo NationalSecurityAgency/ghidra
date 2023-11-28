@@ -173,10 +173,13 @@ public class C13SectionsTest extends AbstractGenericTest {
 		PdbByteReader reader = new PdbByteReader(bytes);
 		FileChecksum fileChecksum = new FileChecksum(reader);
 		String result = fileChecksum.toString();
-		assertEquals("0x00001030, 0x40 Sha256ChecksumType(03): " +
+		//@formatter:off
+		assertEquals(
+			"0x00001030, 0x40 Sha256ChecksumType(03): " +
 			"00225566002255660022556600225566002255660022556600225566002255660022556600225566" +
 			"002255660022556600225566002255660022556600225566",
 			result);
+		//@formatter:on
 	}
 
 	@Test
@@ -206,8 +209,10 @@ public class C13SectionsTest extends AbstractGenericTest {
 		C13Section section = C13Section.parse(reader, TaskMonitor.DUMMY);
 		assertTrue(section instanceof C13FileChecksums);
 		StringWriter writer = new StringWriter();
-		section.dump(writer);
-		assertEquals("C13FileChecksums--------------------------------------------\n" +
+		section.dump(writer, TaskMonitor.DUMMY);
+		//@formatter:off
+		assertEquals(
+			"C13FileChecksums--------------------------------------------\n" +
 			"0x00002000, 0x00 NoneChecksumType(00): \n" +
 			"0x00002010, 0x00 NoneChecksumType(00): \n" +
 			"0x00002020, 0x10 Md5ChecksumType(01): 554433221100ffeeddccbbaa99887766\n" +
@@ -222,7 +227,9 @@ public class C13SectionsTest extends AbstractGenericTest {
 			"0x00002070, 0x40 Sha256ChecksumType(03): 00225566002255660022556600225566" +
 			"002255660022556600225566002255660022556600225566002255660022556600225566" +
 			"002255660022556600225566\n" +
-			"End C13FileChecksums----------------------------------------\n", writer.toString());
+			"End C13FileChecksums----------------------------------------\n",
+			writer.toString());
+		//@formatter:on
 	}
 
 	//==============================================================================================
@@ -254,9 +261,9 @@ public class C13SectionsTest extends AbstractGenericTest {
 	 * @return final byte array of checksum data
 	 */
 	private byte[] createC13Md5FileChecksumBytes(long offsetFilename) {
-		return createC13FileChecksumBytes(offsetFilename, 0x01, new byte[] { 0x55, 0x44, 0x33, 0x22,
-			0x11, 0x00, (byte) 0xff, (byte) 0xee, (byte) 0xdd, (byte) 0xcc, (byte) 0xbb,
-			(byte) 0xaa, (byte) 0x99, (byte) 0x88, 0x77, 0x66 });
+		return createC13FileChecksumBytes(offsetFilename, 0x01,
+			new byte[] { 0x55, 0x44, 0x33, 0x22, 0x11, 0x00, (byte) 0xff, (byte) 0xee, (byte) 0xdd,
+				(byte) 0xcc, (byte) 0xbb, (byte) 0xaa, (byte) 0x99, (byte) 0x88, 0x77, 0x66 });
 	}
 
 	/**
@@ -336,8 +343,10 @@ public class C13SectionsTest extends AbstractGenericTest {
 		C13Section section = C13Section.parse(reader, TaskMonitor.DUMMY);
 		assertTrue(section instanceof C13Lines);
 		StringWriter writer = new StringWriter();
-		section.dump(writer);
-		assertEquals("C13Lines----------------------------------------------------\n" +
+		section.dump(writer, TaskMonitor.DUMMY);
+		//@formatter:off
+		assertEquals(
+			"C13Lines----------------------------------------------------\n" +
 			"offCon: 0x00004000 segCon: 1 flags: 0x00000000 lenCon: 0x00000010\n" +
 			"fileId: 001000, nLines: 3, lenFileBlock: 36\n" +
 			"16 0x00004100 Statement\n" +
@@ -346,7 +355,9 @@ public class C13SectionsTest extends AbstractGenericTest {
 			"fileId: 002000, nLines: 2, lenFileBlock: 28\n" +
 			"32 0x00004200 Expression\n" +
 			"33 0x00004201 Expression\n" +
-			"End C13Lines------------------------------------------------\n", writer.toString());
+			"End C13Lines------------------------------------------------\n",
+			writer.toString());
+		//@formatter:on
 	}
 
 	@Test
@@ -356,8 +367,10 @@ public class C13SectionsTest extends AbstractGenericTest {
 		C13Section section = C13Section.parse(reader, TaskMonitor.DUMMY);
 		assertTrue(section instanceof C13Lines);
 		StringWriter writer = new StringWriter();
-		section.dump(writer);
-		assertEquals("C13Lines----------------------------------------------------\n" +
+		section.dump(writer, TaskMonitor.DUMMY);
+		//@formatter:off
+		assertEquals(
+			"C13Lines----------------------------------------------------\n" +
 			"offCon: 0x00004000 segCon: 1 flags: 0x00000001 lenCon: 0x00000010\n" +
 			"fileId: 001000, nLines: 3, lenFileBlock: 48\n" +
 			"   16:    0-   16-    1 0x00004100 Statement\n" +
@@ -366,7 +379,9 @@ public class C13SectionsTest extends AbstractGenericTest {
 			"fileId: 002000, nLines: 2, lenFileBlock: 36\n" +
 			"   32:    0-   32-    1 0x00004200 Expression\n" +
 			"   33:    2-   34-    3 0x00004201 Expression\n" +
-			"End C13Lines------------------------------------------------\n", writer.toString());
+			"End C13Lines------------------------------------------------\n",
+			writer.toString());
+		//@formatter:on
 	}
 
 	@Test
@@ -376,8 +391,10 @@ public class C13SectionsTest extends AbstractGenericTest {
 		C13Section section = C13Section.parse(reader, TaskMonitor.DUMMY);
 		assertTrue(section instanceof C13IlLines);
 		StringWriter writer = new StringWriter();
-		section.dump(writer);
-		assertEquals("C13IlLines--------------------------------------------------\n" +
+		section.dump(writer, TaskMonitor.DUMMY);
+		//@formatter:off
+		assertEquals(
+			"C13IlLines--------------------------------------------------\n" +
 			"offCon: 0x00004000 segCon: 1 flags: 0x00000000 lenCon: 0x00000010\n" +
 			"fileId: 001000, nLines: 3, lenFileBlock: 36\n" +
 			"16 0x00004100 Statement\n" +
@@ -386,7 +403,9 @@ public class C13SectionsTest extends AbstractGenericTest {
 			"fileId: 002000, nLines: 2, lenFileBlock: 28\n" +
 			"32 0x00004200 Expression\n" +
 			"33 0x00004201 Expression\n" +
-			"End C13IlLines----------------------------------------------\n", writer.toString());
+			"End C13IlLines----------------------------------------------\n",
+			writer.toString());
+		//@formatter:on
 	}
 
 	@Test
@@ -396,8 +415,10 @@ public class C13SectionsTest extends AbstractGenericTest {
 		C13Section section = C13Section.parse(reader, TaskMonitor.DUMMY);
 		assertTrue(section instanceof C13IlLines);
 		StringWriter writer = new StringWriter();
-		section.dump(writer);
-		assertEquals("C13IlLines--------------------------------------------------\n" +
+		section.dump(writer, TaskMonitor.DUMMY);
+		//@formatter:off
+		assertEquals(
+			"C13IlLines--------------------------------------------------\n" +
 			"offCon: 0x00004000 segCon: 1 flags: 0x00000001 lenCon: 0x00000010\n" +
 			"fileId: 001000, nLines: 3, lenFileBlock: 48\n" +
 			"   16:    0-   16-    1 0x00004100 Statement\n" +
@@ -406,7 +427,9 @@ public class C13SectionsTest extends AbstractGenericTest {
 			"fileId: 002000, nLines: 2, lenFileBlock: 36\n" +
 			"   32:    0-   32-    1 0x00004200 Expression\n" +
 			"   33:    2-   34-    3 0x00004201 Expression\n" +
-			"End C13IlLines----------------------------------------------\n", writer.toString());
+			"End C13IlLines----------------------------------------------\n",
+			writer.toString());
+		//@formatter:on
 	}
 
 	//==============================================================================================
@@ -542,8 +565,7 @@ public class C13SectionsTest extends AbstractGenericTest {
 		return writer.get();
 	}
 
-	private byte[] createC13LinesColumnRecord(int offsetColumnStart,
-			int offsetColumnEnd) {
+	private byte[] createC13LinesColumnRecord(int offsetColumnStart, int offsetColumnEnd) {
 		PdbByteWriter writer = new PdbByteWriter();
 		writer.putUnsignedShort(offsetColumnStart);
 		writer.putUnsignedShort(offsetColumnEnd);
@@ -572,11 +594,15 @@ public class C13SectionsTest extends AbstractGenericTest {
 		C13Section section = C13Section.parse(reader, TaskMonitor.DUMMY);
 		assertTrue(section instanceof C13CrossScopeExports);
 		StringWriter writer = new StringWriter();
-		section.dump(writer);
-		assertEquals("C13CrossScopeExports----------------------------------------\n" +
+		section.dump(writer, TaskMonitor.DUMMY);
+		//@formatter:off
+		assertEquals(
+			"C13CrossScopeExports----------------------------------------\n" +
 			"0x00000100, 0x00001000\n" +
 			"0x00000101, 0x00001001\n" +
-			"End C13CrossScopeExports------------------------------------\n", writer.toString());
+			"End C13CrossScopeExports------------------------------------\n",
+			writer.toString());
+		//@formatter:on
 	}
 
 	//==============================================================================================
@@ -602,11 +628,15 @@ public class C13SectionsTest extends AbstractGenericTest {
 		C13Section section = C13Section.parse(reader, TaskMonitor.DUMMY);
 		assertTrue(section instanceof C13CrossScopeImports);
 		StringWriter writer = new StringWriter();
-		section.dump(writer);
-		assertEquals("C13CrossScopeImports----------------------------------------\n" +
+		section.dump(writer, TaskMonitor.DUMMY);
+		//@formatter:off
+		assertEquals(
+			"C13CrossScopeImports----------------------------------------\n" +
 			"0x00000100,     1 0x00001000\n" +
 			"0x00000101,     2 0x00002000 0x00002001\n" +
-			"End C13CrossScopeImports------------------------------------\n", writer.toString());
+			"End C13CrossScopeImports------------------------------------\n",
+			writer.toString());
+		//@formatter:on
 	}
 
 	//==============================================================================================
@@ -636,12 +666,16 @@ public class C13SectionsTest extends AbstractGenericTest {
 		C13Section section = C13Section.parse(reader, TaskMonitor.DUMMY);
 		assertTrue(section instanceof C13InlineeLines);
 		StringWriter writer = new StringWriter();
-		section.dump(writer);
-		assertEquals("C13InlineeLines---------------------------------------------\n" +
+		section.dump(writer, TaskMonitor.DUMMY);
+		//@formatter:off
+		assertEquals(
+			"C13InlineeLines---------------------------------------------\n" +
 			"Signature: 0x000\n" +
 			"0x000001000, 0x000001, 256\n" +
 			"0x000002000, 0x000002, 512\n" +
-			"End C13InlineeLines-----------------------------------------\n", writer.toString());
+			"End C13InlineeLines-----------------------------------------\n",
+			writer.toString());
+		//@formatter:on
 	}
 
 	@Test
@@ -651,12 +685,16 @@ public class C13SectionsTest extends AbstractGenericTest {
 		C13Section section = C13Section.parse(reader, TaskMonitor.DUMMY);
 		assertTrue(section instanceof C13InlineeLines);
 		StringWriter writer = new StringWriter();
-		section.dump(writer);
-		assertEquals("C13InlineeLines---------------------------------------------\n" +
+		section.dump(writer, TaskMonitor.DUMMY);
+		//@formatter:off
+		assertEquals(
+			"C13InlineeLines---------------------------------------------\n" +
 			"Signature: 0x001\n" +
 			"0x000001000, 0x000001, 256\n" +
 			"0x000002000, 0x000002, 512 0x000003 0x000004\n" +
-			"End C13InlineeLines-----------------------------------------\n", writer.toString());
+			"End C13InlineeLines-----------------------------------------\n",
+			writer.toString());
+		//@formatter:on
 	}
 
 	//==============================================================================================
@@ -665,8 +703,7 @@ public class C13SectionsTest extends AbstractGenericTest {
 		recordsWriter.putInt(0x00); // InlineeLines signature
 		recordsWriter.putBytes(createC13InlineeLinesRecord(0x1000L + twiddle, 0x1, 0x100));
 		recordsWriter.putBytes(createC13InlineeLinesRecord(0x2000L + twiddle, 0x2, 0x200));
-		byte[] C13InlineeBytes =
-			createC13SectionBytes(C13Type.INLINEE_LINES, recordsWriter.get());
+		byte[] C13InlineeBytes = createC13SectionBytes(C13Type.INLINEE_LINES, recordsWriter.get());
 		return C13InlineeBytes;
 	}
 
@@ -677,8 +714,7 @@ public class C13SectionsTest extends AbstractGenericTest {
 				.putBytes(createC13ExtendedInlineeLinesRecord(0x1000L, 0x1, 0x100, new int[] {}));
 		recordsWriter.putBytes(
 			createC13ExtendedInlineeLinesRecord(0x2000L, 0x2, 0x200, new int[] { 0x3, 0x4 }));
-		byte[] C13InlineeBytes =
-			createC13SectionBytes(C13Type.INLINEE_LINES, recordsWriter.get());
+		byte[] C13InlineeBytes = createC13SectionBytes(C13Type.INLINEE_LINES, recordsWriter.get());
 		return C13InlineeBytes;
 	}
 
@@ -709,13 +745,14 @@ public class C13SectionsTest extends AbstractGenericTest {
 		PdbByteReader reader = new PdbByteReader(c13SectionsBytes);
 		StringWriter writer = new StringWriter();
 		C13SectionIterator<C13StringTable> iterator =
-			new C13SectionIterator<>(reader, C13StringTable.class, true,
-				TaskMonitor.DUMMY);
+			new C13SectionIterator<>(reader, C13StringTable.class, true, TaskMonitor.DUMMY);
 		while (iterator.hasNext()) {
 			C13Section c13Section = iterator.next();
-			c13Section.dump(writer);
+			c13Section.dump(writer, TaskMonitor.DUMMY);
 		}
-		assertEquals("C13StringTable----------------------------------------------\n" +
+		//@formatter:off
+		assertEquals(
+			"C13StringTable----------------------------------------------\n" +
 			"***NOT IMPLEMENTED***  Bytes follow...\n" +
 			"limit: 1\n" +
 			"index: 0\n" +
@@ -746,7 +783,9 @@ public class C13SectionsTest extends AbstractGenericTest {
 			"first: 0\n" +
 			"last: 2\n" +
 			"000000 33 33\n" +
-			"End C13StringTable------------------------------------------\n", writer.toString());
+			"End C13StringTable------------------------------------------\n",
+			writer.toString());
+		//@formatter:on
 	}
 
 	@Test
@@ -754,13 +793,14 @@ public class C13SectionsTest extends AbstractGenericTest {
 		PdbByteReader reader = new PdbByteReader(c13SectionsBytes);
 		StringWriter writer = new StringWriter();
 		C13SectionIterator<C13FileChecksums> iterator =
-			new C13SectionIterator<>(reader, C13FileChecksums.class, true,
-				TaskMonitor.DUMMY);
+			new C13SectionIterator<>(reader, C13FileChecksums.class, true, TaskMonitor.DUMMY);
 		while (iterator.hasNext()) {
 			C13Section c13Section = iterator.next();
-			c13Section.dump(writer);
+			c13Section.dump(writer, TaskMonitor.DUMMY);
 		}
-		assertEquals("C13FileChecksums--------------------------------------------\n" +
+		//@formatter:off
+		assertEquals(
+			"C13FileChecksums--------------------------------------------\n" +
 			"0x00002000, 0x00 NoneChecksumType(00): \n" +
 			"0x00002010, 0x00 NoneChecksumType(00): \n" +
 			"0x00002020, 0x10 Md5ChecksumType(01): 554433221100ffeeddccbbaa99887766\n" +
@@ -823,7 +863,9 @@ public class C13SectionsTest extends AbstractGenericTest {
 			"0x00002073, 0x40 Sha256ChecksumType(03): 00225566002255660022556600225566" +
 			"002255660022556600225566002255660022556600225566002255660022556600225566" +
 			"002255660022556600225566\n" +
-			"End C13FileChecksums----------------------------------------\n", writer.toString());
+			"End C13FileChecksums----------------------------------------\n",
+			writer.toString());
+		//@formatter:on
 	}
 
 	@Test
@@ -831,13 +873,14 @@ public class C13SectionsTest extends AbstractGenericTest {
 		PdbByteReader reader = new PdbByteReader(c13SectionsBytes);
 		StringWriter writer = new StringWriter();
 		C13SectionIterator<C13FrameData> iterator =
-			new C13SectionIterator<>(reader, C13FrameData.class, true,
-				TaskMonitor.DUMMY);
+			new C13SectionIterator<>(reader, C13FrameData.class, true, TaskMonitor.DUMMY);
 		while (iterator.hasNext()) {
 			C13Section c13Section = iterator.next();
-			c13Section.dump(writer);
+			c13Section.dump(writer, TaskMonitor.DUMMY);
 		}
-		assertEquals("C13FrameData------------------------------------------------\n" +
+		//@formatter:off
+		assertEquals(
+			"C13FrameData------------------------------------------------\n" +
 			"***NOT IMPLEMENTED***  Bytes follow...\n" +
 			"limit: 1\n" +
 			"index: 0\n" +
@@ -868,7 +911,9 @@ public class C13SectionsTest extends AbstractGenericTest {
 			"first: 0\n" +
 			"last: 2\n" +
 			"000000 33 33\n" +
-			"End C13FrameData--------------------------------------------\n", writer.toString());
+			"End C13FrameData--------------------------------------------\n",
+			writer.toString());
+		//@formatter:on
 	}
 
 	@Test
@@ -876,13 +921,14 @@ public class C13SectionsTest extends AbstractGenericTest {
 		PdbByteReader reader = new PdbByteReader(c13SectionsBytes);
 		StringWriter writer = new StringWriter();
 		C13SectionIterator<C13InlineeLines> iterator =
-			new C13SectionIterator<>(reader, C13InlineeLines.class, true,
-				TaskMonitor.DUMMY);
+			new C13SectionIterator<>(reader, C13InlineeLines.class, true, TaskMonitor.DUMMY);
 		while (iterator.hasNext()) {
 			C13Section c13Section = iterator.next();
-			c13Section.dump(writer);
+			c13Section.dump(writer, TaskMonitor.DUMMY);
 		}
-		assertEquals("C13InlineeLines---------------------------------------------\n" +
+		//@formatter:off
+		assertEquals(
+			"C13InlineeLines---------------------------------------------\n" +
 			"Signature: 0x000\n" +
 			"0x000001000, 0x000001, 256\n" +
 			"0x000002000, 0x000002, 512\n" +
@@ -901,7 +947,9 @@ public class C13SectionsTest extends AbstractGenericTest {
 			"Signature: 0x000\n" +
 			"0x000001003, 0x000001, 256\n" +
 			"0x000002003, 0x000002, 512\n" +
-			"End C13InlineeLines-----------------------------------------\n", writer.toString());
+			"End C13InlineeLines-----------------------------------------\n",
+			writer.toString());
+		//@formatter:on
 	}
 
 	@Test
@@ -909,13 +957,14 @@ public class C13SectionsTest extends AbstractGenericTest {
 		PdbByteReader reader = new PdbByteReader(c13SectionsBytes);
 		StringWriter writer = new StringWriter();
 		C13SectionIterator<C13CrossScopeImports> iterator =
-			new C13SectionIterator<>(reader, C13CrossScopeImports.class, true,
-				TaskMonitor.DUMMY);
+			new C13SectionIterator<>(reader, C13CrossScopeImports.class, true, TaskMonitor.DUMMY);
 		while (iterator.hasNext()) {
 			C13Section c13Section = iterator.next();
-			c13Section.dump(writer);
+			c13Section.dump(writer, TaskMonitor.DUMMY);
 		}
-		assertEquals("C13CrossScopeImports----------------------------------------\n" +
+		//@formatter:off
+		assertEquals(
+			"C13CrossScopeImports----------------------------------------\n" +
 			"0x00000100,     1 0x00001000\n" +
 			"0x00000101,     2 0x00002000 0x00002001\n" +
 			"End C13CrossScopeImports------------------------------------\n" +
@@ -930,7 +979,9 @@ public class C13SectionsTest extends AbstractGenericTest {
 			"C13CrossScopeImports----------------------------------------\n" +
 			"0x00000103,     1 0x00001000\n" +
 			"0x00000104,     2 0x00002000 0x00002001\n" +
-			"End C13CrossScopeImports------------------------------------\n", writer.toString());
+			"End C13CrossScopeImports------------------------------------\n",
+			writer.toString());
+		//@formatter:on
 	}
 
 	@Test
@@ -938,13 +989,14 @@ public class C13SectionsTest extends AbstractGenericTest {
 		PdbByteReader reader = new PdbByteReader(c13SectionsBytes);
 		StringWriter writer = new StringWriter();
 		C13SectionIterator<C13CrossScopeExports> iterator =
-			new C13SectionIterator<>(reader, C13CrossScopeExports.class, true,
-				TaskMonitor.DUMMY);
+			new C13SectionIterator<>(reader, C13CrossScopeExports.class, true, TaskMonitor.DUMMY);
 		while (iterator.hasNext()) {
 			C13Section c13Section = iterator.next();
-			c13Section.dump(writer);
+			c13Section.dump(writer, TaskMonitor.DUMMY);
 		}
-		assertEquals("C13CrossScopeExports----------------------------------------\n" +
+		//@formatter:off
+		assertEquals(
+			"C13CrossScopeExports----------------------------------------\n" +
 			"0x00000100, 0x00001000\n" +
 			"0x00000101, 0x00001001\n" +
 			"End C13CrossScopeExports------------------------------------\n" +
@@ -959,7 +1011,9 @@ public class C13SectionsTest extends AbstractGenericTest {
 			"C13CrossScopeExports----------------------------------------\n" +
 			"0x00000103, 0x00001000\n" +
 			"0x00000104, 0x00001001\n" +
-			"End C13CrossScopeExports------------------------------------\n", writer.toString());
+			"End C13CrossScopeExports------------------------------------\n",
+			writer.toString());
+		//@formatter:on
 	}
 
 	@Test
@@ -967,13 +1021,14 @@ public class C13SectionsTest extends AbstractGenericTest {
 		PdbByteReader reader = new PdbByteReader(c13SectionsBytes);
 		StringWriter writer = new StringWriter();
 		C13SectionIterator<C13IlLines> iterator =
-			new C13SectionIterator<>(reader, C13IlLines.class, true,
-				TaskMonitor.DUMMY);
+			new C13SectionIterator<>(reader, C13IlLines.class, true, TaskMonitor.DUMMY);
 		while (iterator.hasNext()) {
 			C13Section c13Section = iterator.next();
-			c13Section.dump(writer);
+			c13Section.dump(writer, TaskMonitor.DUMMY);
 		}
-		assertEquals("C13IlLines--------------------------------------------------\n" +
+		//@formatter:off
+		assertEquals(
+			"C13IlLines--------------------------------------------------\n" +
 			"offCon: 0x00004000 segCon: 1 flags: 0x00000000 lenCon: 0x00000010\n" +
 			"fileId: 001000, nLines: 3, lenFileBlock: 36\n" +
 			"16 0x00004100 Statement\n" +
@@ -1012,7 +1067,9 @@ public class C13SectionsTest extends AbstractGenericTest {
 			"fileId: 002000, nLines: 2, lenFileBlock: 28\n" +
 			"32 0x00004200 Expression\n" +
 			"33 0x00004201 Expression\n" +
-			"End C13IlLines----------------------------------------------\n", writer.toString());
+			"End C13IlLines----------------------------------------------\n",
+			writer.toString());
+		//@formatter:on
 	}
 
 	@Test
@@ -1020,13 +1077,14 @@ public class C13SectionsTest extends AbstractGenericTest {
 		PdbByteReader reader = new PdbByteReader(c13SectionsBytes);
 		StringWriter writer = new StringWriter();
 		C13SectionIterator<C13FuncMdTokenMap> iterator =
-			new C13SectionIterator<>(reader, C13FuncMdTokenMap.class, true,
-				TaskMonitor.DUMMY);
+			new C13SectionIterator<>(reader, C13FuncMdTokenMap.class, true, TaskMonitor.DUMMY);
 		while (iterator.hasNext()) {
 			C13Section c13Section = iterator.next();
-			c13Section.dump(writer);
+			c13Section.dump(writer, TaskMonitor.DUMMY);
 		}
-		assertEquals("C13FuncMdTokenMap-------------------------------------------\n" +
+		//@formatter:off
+		assertEquals(
+			"C13FuncMdTokenMap-------------------------------------------\n" +
 			"***NOT IMPLEMENTED***  Bytes follow...\n" +
 			"limit: 1\n" +
 			"index: 0\n" +
@@ -1057,7 +1115,9 @@ public class C13SectionsTest extends AbstractGenericTest {
 			"first: 0\n" +
 			"last: 2\n" +
 			"000000 33 33\n" +
-			"End C13FuncMdTokenMap---------------------------------------\n", writer.toString());
+			"End C13FuncMdTokenMap---------------------------------------\n",
+			writer.toString());
+		//@formatter:on
 	}
 
 	@Test
@@ -1065,13 +1125,14 @@ public class C13SectionsTest extends AbstractGenericTest {
 		PdbByteReader reader = new PdbByteReader(c13SectionsBytes);
 		StringWriter writer = new StringWriter();
 		C13SectionIterator<C13TypeMdTokenMap> iterator =
-			new C13SectionIterator<>(reader, C13TypeMdTokenMap.class, true,
-				TaskMonitor.DUMMY);
+			new C13SectionIterator<>(reader, C13TypeMdTokenMap.class, true, TaskMonitor.DUMMY);
 		while (iterator.hasNext()) {
 			C13Section c13Section = iterator.next();
-			c13Section.dump(writer);
+			c13Section.dump(writer, TaskMonitor.DUMMY);
 		}
-		assertEquals("C13TypeMdTokenMap-------------------------------------------\n" +
+		//@formatter:off
+		assertEquals(
+			"C13TypeMdTokenMap-------------------------------------------\n" +
 			"***NOT IMPLEMENTED***  Bytes follow...\n" +
 			"limit: 1\n" +
 			"index: 0\n" +
@@ -1102,7 +1163,9 @@ public class C13SectionsTest extends AbstractGenericTest {
 			"first: 0\n" +
 			"last: 2\n" +
 			"000000 33 33\n" +
-			"End C13TypeMdTokenMap---------------------------------------\n", writer.toString());
+			"End C13TypeMdTokenMap---------------------------------------\n",
+			writer.toString());
+		//@formatter:on
 	}
 
 	@Test
@@ -1110,13 +1173,14 @@ public class C13SectionsTest extends AbstractGenericTest {
 		PdbByteReader reader = new PdbByteReader(c13SectionsBytes);
 		StringWriter writer = new StringWriter();
 		C13SectionIterator<C13MergedAssemblyInput> iterator =
-			new C13SectionIterator<>(reader, C13MergedAssemblyInput.class, true,
-				TaskMonitor.DUMMY);
+			new C13SectionIterator<>(reader, C13MergedAssemblyInput.class, true, TaskMonitor.DUMMY);
 		while (iterator.hasNext()) {
 			C13Section c13Section = iterator.next();
-			c13Section.dump(writer);
+			c13Section.dump(writer, TaskMonitor.DUMMY);
 		}
-		assertEquals("C13MergedAssemblyInput--------------------------------------\n" +
+		//@formatter:off
+		assertEquals(
+			"C13MergedAssemblyInput--------------------------------------\n" +
 			"***NOT IMPLEMENTED***  Bytes follow...\n" +
 			"limit: 1\n" +
 			"index: 0\n" +
@@ -1147,7 +1211,9 @@ public class C13SectionsTest extends AbstractGenericTest {
 			"first: 0\n" +
 			"last: 2\n" +
 			"000000 33 33\n" +
-			"End C13MergedAssemblyInput----------------------------------\n", writer.toString());
+			"End C13MergedAssemblyInput----------------------------------\n",
+			writer.toString());
+		//@formatter:on
 	}
 
 	@Test
@@ -1155,13 +1221,14 @@ public class C13SectionsTest extends AbstractGenericTest {
 		PdbByteReader reader = new PdbByteReader(c13SectionsBytes);
 		StringWriter writer = new StringWriter();
 		C13SectionIterator<C13CoffSymbolRva> iterator =
-			new C13SectionIterator<>(reader, C13CoffSymbolRva.class, true,
-				TaskMonitor.DUMMY);
+			new C13SectionIterator<>(reader, C13CoffSymbolRva.class, true, TaskMonitor.DUMMY);
 		while (iterator.hasNext()) {
 			C13Section c13Section = iterator.next();
-			c13Section.dump(writer);
+			c13Section.dump(writer, TaskMonitor.DUMMY);
 		}
-		assertEquals("C13CoffSymbolRva--------------------------------------------\n" +
+		//@formatter:off
+		assertEquals(
+			"C13CoffSymbolRva--------------------------------------------\n" +
 			"***NOT IMPLEMENTED***  Bytes follow...\n" +
 			"limit: 1\n" +
 			"index: 0\n" +
@@ -1192,7 +1259,9 @@ public class C13SectionsTest extends AbstractGenericTest {
 			"first: 0\n" +
 			"last: 2\n" +
 			"000000 33 33\n" +
-			"End C13CoffSymbolRva----------------------------------------\n", writer.toString());
+			"End C13CoffSymbolRva----------------------------------------\n",
+			writer.toString());
+		//@formatter:on
 	}
 
 	@Test

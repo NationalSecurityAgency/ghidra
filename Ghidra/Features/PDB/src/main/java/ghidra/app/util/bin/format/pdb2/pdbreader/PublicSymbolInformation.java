@@ -252,6 +252,7 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 		builder.append("numAddressMapSymbolOffsets: " + myAddressMapSymbolOffsets.size() + "\n");
 		int num = 0;
 		for (Long val : myAddressMapSymbolOffsets) {
+			pdb.checkCancelled();
 			builder.append(String.format("0X%08X: 0X%012X\n", num++, val));
 		}
 		builder.append("\nEnd AddressMapSymbolOffsets---------------------------------\n");
@@ -292,6 +293,7 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 		builder.append("numThunkTargetOffsetsByTableOffset: " +
 			myThunkTargetOffsetsByTableOffset.size() + "\n");
 		for (Map.Entry<Integer, Integer> entry : myThunkTargetOffsetsByTableOffset.entrySet()) {
+			pdb.checkCancelled();
 			builder.append(String.format("0X%08X  0X%08X\n", entry.getKey(), entry.getValue()));
 		}
 		builder.append("\nEnd ThunkMap------------------------------------------------\n");

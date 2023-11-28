@@ -313,8 +313,8 @@ public class PdbNewDebugInfo extends PdbDebugInfo {
 			pdb.checkCancelled();
 			int offset = substreamReader.parseInt();
 			bufferReader.setIndex(offset);
-			String name = bufferReader.parseNullTerminatedString(
-				pdb.getPdbReaderOptions().getOneByteCharset());
+			String name = bufferReader
+					.parseNullTerminatedString(pdb.getPdbReaderOptions().getOneByteCharset());
 			//if (name != null) {
 			if (name.length() != 0) {
 				realEntryCount++;
@@ -336,9 +336,12 @@ public class PdbNewDebugInfo extends PdbDebugInfo {
 	 * Dumps the EditAndContinueNameList.  This package-protected method is for debugging only.
 	 * @param writer {@link Writer} to which to write the debug dump
 	 * @throws IOException on issue writing to the {@link Writer}
+	 * @throws CancelledException upon user cancellation
 	 */
-	protected void dumpEditAndContinueNameList(Writer writer) throws IOException {
+	protected void dumpEditAndContinueNameList(Writer writer)
+			throws IOException, CancelledException {
 		for (String name : editAndContinueNameList) {
+			pdb.checkCancelled();
 			writer.write(String.format("Name: %s\n", name));
 		}
 	}

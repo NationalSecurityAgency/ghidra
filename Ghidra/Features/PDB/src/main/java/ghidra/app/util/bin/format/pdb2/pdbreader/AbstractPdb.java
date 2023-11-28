@@ -658,13 +658,13 @@ public abstract class AbstractPdb implements AutoCloseable {
 		nameTable.deserializeDirectory(reader);
 		// Read the parameters.
 		while (reader.hasMore()) {
-			getMonitor().checkCancelled();
+			checkCancelled();
 			int val = reader.parseInt();
 			parameters.add(val);
 		}
 		// Check the parameters for IDs
 		for (int param : parameters) {
-			getMonitor().checkCancelled();
+			checkCancelled();
 			if (param == MINIMAL_DEBUG_INFO_PARAM) {
 				minimalDebugInfo = true;
 			}

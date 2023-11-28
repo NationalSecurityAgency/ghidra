@@ -73,11 +73,13 @@ public class C13CrossScopeImports extends C13Section {
 	 * Dumps this class to a Writer
 	 * @param writer {@link Writer} to which to dump the information
 	 * @throws IOException Upon IOException writing to the {@link Writer}
+	 * @throws CancelledException upon user cancellation
 	 */
 	@Override
-	void dump(Writer writer) throws IOException {
+	void dump(Writer writer, TaskMonitor monitor) throws IOException, CancelledException {
 		writer.write("C13CrossScopeImports----------------------------------------\n");
 		for (CrossScopeImport crossScopeImport : crossScopeImports) {
+			monitor.checkCancelled();
 			writer.write(crossScopeImport.toString());
 			writer.write('\n');
 		}
