@@ -113,12 +113,10 @@ public class Pagedump extends DumpFile {
 		props.setString("Executable Format", PeLoader.PE_NAME);
 		initManagerList(addins);
 
-		createBlocks =
-			OptionUtils.getBooleanOptionValue(CREATE_MEMORY_BLOCKS_OPTION_NAME,
-				options, CREATE_MEMORY_BLOCKS_OPTION_DEFAULT);
-		String pdbLocation =
-			OptionUtils.getOption(DEBUG_DATA_PATH_OPTION_NAME, options,
-				DEBUG_DATA_PATH_OPTION_DEFAULT);
+		createBlocks = OptionUtils.getBooleanOptionValue(CREATE_MEMORY_BLOCKS_OPTION_NAME, options,
+			CREATE_MEMORY_BLOCKS_OPTION_DEFAULT);
+		String pdbLocation = OptionUtils.getOption(DEBUG_DATA_PATH_OPTION_NAME, options,
+			DEBUG_DATA_PATH_OPTION_DEFAULT);
 		if (!pdbLocation.equals("")) {
 			loadKernelPDB(pdbLocation, monitor);
 		}
@@ -152,8 +150,7 @@ public class Pagedump extends DumpFile {
 						data.add(new DumpData(hdrLen, dt));
 						data.add(new DumpData(full.getHeaderSize(), "Physical_Memory", 0));
 						offset = (int) full.getHeaderSize();
-						addInteriorAddressObject("DumpHeader", hdrLen, hdrLen,
-							offset - hdrLen);
+						addInteriorAddressObject("DumpHeader", hdrLen, hdrLen, offset - hdrLen);
 						if (createBlocks) {
 							mapPages(monitor);
 						}
@@ -164,20 +161,17 @@ public class Pagedump extends DumpFile {
 						break;
 				}
 
-				addInteriorAddressObject("Unknown", offset, offset,
-					reader.length() - offset);
+				addInteriorAddressObject("Unknown", offset, offset, reader.length() - offset);
 				break;
 
 			case DUMP_TYPE_TRIAGE:
 				triage = new TriageDump(reader, hdrLen);
 				dt = triage.toDataType();
 				data.add(new DumpData(hdrLen, dt));
-				addInteriorAddressObject("DumpHeader", hdrLen, hdrLen,
-					triage.getSizeOfDump());
+				addInteriorAddressObject("DumpHeader", hdrLen, hdrLen, triage.getSizeOfDump());
 
 				long next = hdrLen + triage.getSizeOfDump();
-				addInteriorAddressObject("Unknown", next,
-					next, reader.length() - next);
+				addInteriorAddressObject("Unknown", next, next, reader.length() - next);
 
 				buildKernelStructures();
 				break;
@@ -199,12 +193,12 @@ public class Pagedump extends DumpFile {
 		PdbReaderOptions readerOptions = new PdbReaderOptions();
 		PdbApplicatorOptions applicatorOptions = new PdbApplicatorOptions();
 		applicatorOptions.setProcessingControl(PdbApplicatorControl.DATA_TYPES_ONLY);
-		try (AbstractPdb pdb = PdbParser.parse(pdbFile.getPath(), readerOptions, monitor)) {
+		try (AbstractPdb pdb = PdbParser.parse(pdbFile, readerOptions, monitor)) {
 			monitor.setMessage("PDB: Parsing " + pdbFile + "...");
 			pdb.deserialize();
 			DefaultPdbApplicator applicator = new DefaultPdbApplicator(pdb);
-			applicator.applyTo(program, dtm, program.getImageBase(),
-				applicatorOptions, (MessageLog) null);
+			applicator.applyTo(program, dtm, program.getImageBase(), applicatorOptions,
+				(MessageLog) null);
 		}
 		catch (PdbException | IOException | CancelledException e) {
 			Msg.error(this, e.getMessage());
@@ -218,16 +212,16 @@ public class Pagedump extends DumpFile {
 			long runLength = run.getPageCount() * PAGE_SIZE;
 			boolean outOfBounds = runLength + total * PAGE_SIZE > reader.length();
 			long bound = (outOfBounds) ? (reader.length() - total * PAGE_SIZE) : runLength;
-			ArrayDataType adt =
-				new ArrayDataType(StructConverter.BYTE, (int) bound, 1);
+			ArrayDataType adt = new ArrayDataType(StructConverter.BYTE, (int) bound, 1);
 			data.add(new DumpData(total * PAGE_SIZE, adt));
 
 			// NB: Not sure if or where to place these
 			//addInteriorAddressObject(DumpFileLoader.LOCAL, total * PAGE_SIZE,
 			//	run.getBasePage() * PAGE_SIZE, run.getPageCount() * PAGE_SIZE);
 			total += run.getPageCount();
-			if (outOfBounds)
+			if (outOfBounds) {
 				break;
+			}
 		}
 	}
 
@@ -313,8 +307,7 @@ public class Pagedump extends DumpFile {
 					}
 				}
 				uds.add(new ArrayDataType(udt, (int) count, udt.getLength()),
-					udt.getLength() * (int) count,
-					"UnloadedDrivers", null);
+					udt.getLength() * (int) count, "UnloadedDrivers", null);
 			}
 			data.add(new DumpData(offset, uds));
 		}
@@ -325,8 +318,9 @@ public class Pagedump extends DumpFile {
 		while (offset < end) {
 			int len = reader.readInt(offset);
 			data.add(new DumpData(offset, StructConverter.DWORD, "", false, false));
-			if (len == 0 || len == 0xFFFFFFFF)
+			if (len == 0 || len == 0xFFFFFFFF) {
 				break;
+			}
 			offset += 4;
 			DumpData dd = new DumpData(offset, new TerminatedUnicodeDataType(), "", false, false);
 			dd.setSize(len * 2 + 2);
@@ -348,8 +342,8 @@ public class Pagedump extends DumpFile {
 			DataType db = null;
 			for (int i = 0; i < triage.getDataBlocksCount(); i++) {
 				TriageDataBlock tdb = new TriageDataBlock(reader, reader.getPointerIndex());
-				addInteriorAddressObject(DumpFileLoader.MEMORY, tdb.getOffset(),
-					tdb.getAddress(), tdb.getSize());
+				addInteriorAddressObject(DumpFileLoader.MEMORY, tdb.getOffset(), tdb.getAddress(),
+					tdb.getSize());
 				VA2fileOffset.put(tdb.getAddress(), tdb.getOffset());
 				db = tdb.toDataType();
 			}
@@ -387,8 +381,7 @@ public class Pagedump extends DumpFile {
 				if (namePtr != 0) {
 					long fileOffset = virtualToRva(namePtr);
 					String name = reader.readUnicodeString(fileOffset);
-					addExteriorAddressObject(name, 0, entry.getDllBase(),
-						entry.getSizeOfImage());
+					addExteriorAddressObject(name, 0, entry.getDllBase(), entry.getSizeOfImage());
 				}
 				next = entry.getList_Flink();
 				if (entryKeys.contains(next)) {
@@ -464,10 +457,8 @@ public class Pagedump extends DumpFile {
 
 	@Override
 	public void analyze(TaskMonitor monitor) {
-		boolean analyzeEmbeddedObjects =
-			OptionUtils.getBooleanOptionValue(ANALYZE_EMBEDDED_OBJECTS_OPTION_NAME,
-				options,
-				ANALYZE_EMBEDDED_OBJECTS_OPTION_DEFAULT);
+		boolean analyzeEmbeddedObjects = OptionUtils.getBooleanOptionValue(
+			ANALYZE_EMBEDDED_OBJECTS_OPTION_NAME, options, ANALYZE_EMBEDDED_OBJECTS_OPTION_DEFAULT);
 		if (analyzeEmbeddedObjects) {
 			ModuleToPeHelper.queryModules(program, monitor);
 		}
@@ -566,7 +557,7 @@ public class Pagedump extends DumpFile {
 	private boolean isValid(int flags) {
 		return (flags & 0x1) > 0;
 	}
-	
+
 	private void walkPages(int page, long va, int depth, boolean lp) throws IOException {
 		long fileOffset = fileOffset(page);
 		if (fileOffset < 0) {
@@ -615,7 +606,7 @@ public class Pagedump extends DumpFile {
 	 * Get default <code>Pagedump</code> loader options. Includes
 	 * {@link #DEBUG_DATA_PATH_OPTION_NAME} plus default {@link DumpFile} options (see
 	 * {@link DumpFile#getDefaultOptions(DumpFileReader)}).
-	 * 
+	 *
 	 * @param reader dump file reader
 	 * @return default collection of Pagedump loader options
 	 */

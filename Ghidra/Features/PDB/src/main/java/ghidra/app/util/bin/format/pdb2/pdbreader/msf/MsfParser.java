@@ -16,9 +16,9 @@
 package ghidra.app.util.bin.format.pdb2.pdbreader.msf;
 
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.Objects;
 
+import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbReaderOptions;
 import ghidra.util.exception.CancelledException;
@@ -33,7 +33,7 @@ public class MsfParser {
 	/**
 	 * Detects, creates, and returns the appropriate {@link Msf} object found for
 	 * the filename given
-	 * @param filename name of the file to process
+	 * @param byteProvider the ByteProvider providing bytes for the MSF
 	 * @param pdbOptions {@link PdbReaderOptions} used for processing the PDB
 	 * @param monitor {@link TaskMonitor} used for checking cancellation
 	 * @return derived {@link Msf} object
@@ -41,24 +41,23 @@ public class MsfParser {
 	 * @throws PdbException if an appropriate object cannot be created
 	 * @throws CancelledException upon user cancellation
 	 */
-	public static Msf parse(String filename, PdbReaderOptions pdbOptions,
+	public static Msf parse(ByteProvider byteProvider, PdbReaderOptions pdbOptions,
 			TaskMonitor monitor) throws IOException, PdbException, CancelledException {
-		Objects.requireNonNull(filename, "filename cannot be null");
+		Objects.requireNonNull(byteProvider, "byteProvider cannot be null");
 		Objects.requireNonNull(pdbOptions, "pdbOptions cannot be null");
 		Objects.requireNonNull(monitor, "monitor cannot be null");
 
 		Msf msf;
-		RandomAccessFile file = new RandomAccessFile(filename, "r");
-		if (Msf200.detected(file)) {
-			msf = new Msf200(file, filename, monitor, pdbOptions);
+		if (Msf200.detected(byteProvider)) {
+			msf = new Msf200(byteProvider, monitor, pdbOptions);
 		}
-		else if (Msf700.detected(file)) {
-			msf = new Msf700(file, filename, monitor, pdbOptions);
+		else if (Msf700.detected(byteProvider)) {
+			msf = new Msf700(byteProvider, monitor, pdbOptions);
 		}
 		else {
-			// Must close the file here.  In cases where MSF is created, the MSF takes
+			// Must close the ByteProvider here.  In cases where MSF is created, the MSF takes
 			//  responsibility for closing the file.
-			file.close();
+			byteProvider.close();
 			throw new PdbException("MSF format not detected");
 		}
 		msf.deserialize();
