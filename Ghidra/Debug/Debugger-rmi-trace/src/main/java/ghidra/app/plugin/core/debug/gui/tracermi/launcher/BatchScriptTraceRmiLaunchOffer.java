@@ -25,47 +25,38 @@ import ghidra.app.plugin.core.debug.gui.tracermi.launcher.ScriptAttributesParser
 import ghidra.program.model.listing.Program;
 
 /**
- * A launcher implemented by a simple UNIX shell script.
- * 
+ * A launcher implemented by a simple DOS/Windows batch file.
+ *
  * <p>
- * The script must start with an attributes header in a comment block. See
- * {@link ScriptAttributesParser}.
+ * The script must start with an attributes header in a comment block.
  */
-public class UnixShellScriptTraceRmiLaunchOffer extends AbstractScriptTraceRmiLaunchOffer {
-	public static final String SHEBANG = "#!";
+public class BatchScriptTraceRmiLaunchOffer extends AbstractScriptTraceRmiLaunchOffer {
+	public static final String REM = "::";
+	public static final int REM_LEN = REM.length();
 
-	/**
-	 * Create a launch offer from the given shell script.
-	 * 
-	 * @param program the current program, usually the target image. In general, this should be used
-	 *            for at least two purposes. 1) To populate the default command line. 2) To ensure
-	 *            the target image is mapped in the resulting target trace.
-	 * @throws FileNotFoundException
-	 */
-	public static UnixShellScriptTraceRmiLaunchOffer create(TraceRmiLauncherServicePlugin plugin,
+	public static BatchScriptTraceRmiLaunchOffer create(TraceRmiLauncherServicePlugin plugin,
 			Program program, File script) throws FileNotFoundException {
 		ScriptAttributesParser parser = new ScriptAttributesParser() {
 			@Override
 			protected boolean ignoreLine(int lineNo, String line) {
-				return line.isBlank() || line.startsWith(SHEBANG) && lineNo == 1;
+				return line.isBlank();
 			}
 
 			@Override
 			protected String removeDelimiter(String line) {
 				String stripped = line.stripLeading();
-				if (!stripped.startsWith("#")) {
+				if (!stripped.startsWith(REM)) {
 					return null;
 				}
-				return stripped.substring(1);
+				return stripped.substring(REM_LEN);
 			}
 		};
 		ScriptAttributes attrs = parser.parseFile(script);
-		return new UnixShellScriptTraceRmiLaunchOffer(plugin, program, script,
-			"UNIX_SHELL:" + script.getName(), attrs);
+		return new BatchScriptTraceRmiLaunchOffer(plugin, program, script,
+			"BATCH_FILE:" + script.getName(), attrs);
 	}
 
-	private UnixShellScriptTraceRmiLaunchOffer(TraceRmiLauncherServicePlugin plugin,
-			Program program,
+	private BatchScriptTraceRmiLaunchOffer(TraceRmiLauncherServicePlugin plugin, Program program,
 			File script, String configName, ScriptAttributes attrs) {
 		super(plugin, program, script, configName, attrs);
 	}

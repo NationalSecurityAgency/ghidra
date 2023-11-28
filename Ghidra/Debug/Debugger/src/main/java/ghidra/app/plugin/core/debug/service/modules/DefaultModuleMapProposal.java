@@ -25,6 +25,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryRegion;
+import ghidra.trace.model.memory.TraceObjectMemoryRegion;
 import ghidra.trace.model.modules.TraceModule;
 
 public class DefaultModuleMapProposal
@@ -207,10 +208,14 @@ public class DefaultModuleMapProposal
 		catch (AddressOverflowException e) {
 			return; // Just score it as having no matches?
 		}
+		Lifespan lifespan = module.getLifespan();
 		for (TraceMemoryRegion region : module.getTrace()
 				.getMemoryManager()
-				.getRegionsIntersecting(module.getLifespan(), moduleRange)) {
-			getMatcher(region.getMinAddress().subtract(moduleBase)).region = region;
+				.getRegionsIntersecting(lifespan, moduleRange)) {
+			Address min = region instanceof TraceObjectMemoryRegion objReg
+					? objReg.getMinAddress(lifespan.lmin())
+					: region.getMinAddress();
+			getMatcher(min.subtract(moduleBase)).region = region;
 		}
 	}
 

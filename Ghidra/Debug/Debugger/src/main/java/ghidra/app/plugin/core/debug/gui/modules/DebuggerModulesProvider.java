@@ -251,7 +251,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		if (context instanceof DebuggerObjectActionContext ctx) {
 			return DebuggerModulesPanel.getSelectedModulesFromContext(ctx);
 		}
-		return null;
+		return Set.of();
 	}
 
 	protected static Set<TraceSection> getSelectedSections(ActionContext context) {
@@ -264,7 +264,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		if (context instanceof DebuggerObjectActionContext ctx) {
 			return DebuggerModulesPanel.getSelectedSectionsFromContext(ctx);
 		}
-		return null;
+		return Set.of();
 	}
 
 	protected static AddressSetView getSelectedAddresses(ActionContext context) {
@@ -299,7 +299,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 			}
 
 			AddressSetView sel = getSelectedAddresses(context);
-			if (sel == null) {
+			if (sel == null || sel.isEmpty()) {
 				return;
 			}
 
@@ -540,9 +540,8 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 				.onAction(this::activatedMapModules)
 				.buildAndInstallLocal(this);
 		actionMapModuleTo = MapModuleToAction.builder(plugin)
-				.withContext(DebuggerModuleActionContext.class)
-				.enabledWhen(ctx -> currentProgram != null && ctx.getSelectedModules().size() == 1)
-				.popupWhen(ctx -> currentProgram != null && ctx.getSelectedModules().size() == 1)
+				.enabledWhen(ctx -> currentProgram != null && getSelectedModules(ctx).size() == 1)
+				.popupWhen(ctx -> currentProgram != null && getSelectedModules(ctx).size() == 1)
 				.onAction(this::activatedMapModuleTo)
 				.buildAndInstallLocal(this);
 		actionMapSections = MapSectionsAction.builder(plugin)
@@ -551,9 +550,8 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 				.onAction(this::activatedMapSections)
 				.buildAndInstallLocal(this);
 		actionMapSectionTo = MapSectionToAction.builder(plugin)
-				.withContext(DebuggerSectionActionContext.class)
-				.enabledWhen(ctx -> currentProgram != null && ctx.getSelectedSections().size() == 1)
-				.popupWhen(ctx -> currentProgram != null && ctx.getSelectedSections().size() == 1)
+				.enabledWhen(ctx -> currentProgram != null && getSelectedSections(ctx).size() == 1)
+				.popupWhen(ctx -> currentProgram != null && getSelectedSections(ctx).size() == 1)
 				.onAction(this::activatedMapSectionTo)
 				.buildAndInstallLocal(this);
 		actionMapSectionsTo = MapSectionsToAction.builder(plugin)

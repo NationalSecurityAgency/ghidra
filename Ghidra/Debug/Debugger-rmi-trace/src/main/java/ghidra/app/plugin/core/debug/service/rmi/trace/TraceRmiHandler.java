@@ -20,8 +20,6 @@ import java.math.BigInteger;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -329,17 +327,17 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		}
 	}
 
-	protected DomainFolder createFolders(DomainFolder parent, Path path)
+	protected DomainFolder createFolders(DomainFolder parent, List<String> path)
 			throws InvalidNameException, IOException {
 		return createFolders(parent, path, 0);
 	}
 
-	protected DomainFolder createFolders(DomainFolder parent, Path path, int index)
+	protected DomainFolder createFolders(DomainFolder parent, List<String> path, int index)
 			throws InvalidNameException, IOException {
-		if (path == null && index == 0 || index == path.getNameCount()) {
+		if (path == null && index == 0 || index == path.size()) {
 			return parent;
 		}
-		String name = path.getName(index).toString();
+		String name = path.get(index);
 		return createFolders(getOrCreateFolder(parent, name), path, index + 1);
 	}
 
@@ -859,15 +857,19 @@ public class TraceRmiHandler implements TraceRmiConnection {
 	protected ReplyCreateTrace handleCreateTrace(RequestCreateTrace req)
 			throws InvalidNameException, IOException, CancelledException {
 		DomainFolder traces = getOrCreateNewTracesFolder();
-		Path path = Paths.get(req.getPath().getPath());
-		DomainFolder folder = createFolders(traces, path.getParent());
+		List<String> path = sanitizePath(req.getPath().getPath());
+		DomainFolder folder = createFolders(traces, path.subList(0, path.size() - 1));
 		CompilerSpec cs = requireCompilerSpec(req.getLanguage(), req.getCompiler());
-		DBTrace trace = new DBTrace(path.getFileName().toString(), cs, this);
+		DBTrace trace = new DBTrace(path.get(path.size() - 1), cs, this);
 		TraceRmiTarget target = new TraceRmiTarget(plugin.getTool(), this, trace);
 		DoId doId = requireAvailableDoId(req.getOid());
 		openTraces.put(new OpenTrace(doId, trace, target));
 		createDeconflictedFile(folder, trace);
 		return ReplyCreateTrace.getDefaultInstance();
+	}
+
+	protected static List<String> sanitizePath(String path) {
+		return Stream.of(path.split("\\\\|/")).filter(p -> !p.isBlank()).toList();
 	}
 
 	protected ReplyDeleteBytes handleDeleteBytes(RequestDeleteBytes req)

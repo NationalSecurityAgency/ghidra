@@ -15,6 +15,7 @@
  */
 package ghidra.pty.windows;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -75,7 +76,7 @@ public class ConPtyChild extends ConPtyEndpoint implements PtyChild {
 
 	@Override
 	public LocalWindowsNativeProcessPtySession session(String[] args, Map<String, String> env,
-			Collection<TermMode> mode) throws IOException {
+			File workingDirectory, Collection<TermMode> mode) throws IOException {
 		/**
 		 * TODO: How to incorporate environment into CreateProcess?
 		 * 
@@ -91,9 +92,11 @@ public class ConPtyChild extends ConPtyEndpoint implements PtyChild {
 			null /*lpProcessAttributes*/,
 			null /*lpThreadAttributes*/,
 			false /*bInheritHandles*/,
-			ConPty.EXTENDED_STARTUPINFO_PRESENT /*dwCreationFlags*/,
-			null /*lpEnvironment*/,
-			null /*lpCurrentDirectory*/,
+			new DWORD(Kernel32.EXTENDED_STARTUPINFO_PRESENT |
+				Kernel32.CREATE_UNICODE_ENVIRONMENT) /*dwCreationFlags*/,
+			env == null ? null : new WString(ShellUtils.generateEnvBlock(env)),
+			workingDirectory == null ? null
+					: new WString(workingDirectory.getAbsolutePath()) /*lpCurrentDirectory*/,
 			si /*lpStartupInfo*/,
 			pi /*lpProcessInformation*/).booleanValue()) {
 			throw new LastErrorException(Kernel32.INSTANCE.GetLastError());

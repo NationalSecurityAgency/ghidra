@@ -48,8 +48,11 @@ public class SshPtyChild extends SshPtyEndpoint implements PtyChild {
 	}
 
 	@Override
-	public SshPtySession session(String[] args, Map<String, String> env, Collection<TermMode> mode)
-			throws IOException {
+	public SshPtySession session(String[] args, Map<String, String> env, File workingDirectory,
+			Collection<TermMode> mode) throws IOException {
+		if (workingDirectory != null) {
+			throw new UnsupportedOperationException();
+		}
 		/**
 		 * TODO: This syntax assumes a UNIX-style shell, and even among them, this may not be
 		 * universal. This certainly works for my version of bash :)
