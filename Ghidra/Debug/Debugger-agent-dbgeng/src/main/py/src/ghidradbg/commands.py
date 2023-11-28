@@ -19,6 +19,7 @@ import os.path
 import socket
 import time
 import sys
+import re
 
 from ghidratrace import sch
 from ghidratrace.client import Client, Address, AddressRange, TraceObject
@@ -185,7 +186,7 @@ def compute_name(progname=None):
             progname = buffer.decode('utf-8')
         except Exception:
             return 'pydbg/noname'
-    return 'pydbg/' + progname.split('/')[-1]
+    return 'pydbg/' + re.split(r'/|\\', progname)[-1]
 
 
 def start_trace(name):
@@ -1301,7 +1302,36 @@ def ghidra_util_wait_stopped(timeout=1):
         time.sleep(0.1)
         if time.time() - start > timeout:
             raise RuntimeError('Timed out waiting for thread to stop')
-           
-    
+
+
 def dbg():
     return util.get_debugger()
+
+
+SHOULD_WAIT = ['GO', 'STEP_BRANCH', 'STEP_INTO', 'STEP_OVER']
+
+
+def repl():
+    print("This is the dbgeng.dll (WinDbg) REPL. To drop to Python3, press Ctrl-C.")
+    while True:
+        # TODO: Implement prompt retrieval in PR to pybag?
+        print('dbg> ', end='')
+        try:
+            cmd = input().strip()
+            if not cmd:
+                continue
+            dbg().cmd(cmd, quiet=False)
+            stat = dbg().exec_status()
+            if stat != 'BREAK':
+                dbg().wait()
+            else:
+                pass
+                #dbg().dispatch_events()
+        except KeyboardInterrupt as e:
+            print("")
+            print("You have left the dbgeng REPL and are now at the Python3 interpreter.")
+            print("use repl() to re-enter.")
+            return
+        except:
+            # Assume cmd() has already output the error
+            pass

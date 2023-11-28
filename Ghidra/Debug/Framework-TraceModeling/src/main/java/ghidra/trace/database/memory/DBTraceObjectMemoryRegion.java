@@ -196,13 +196,21 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 	}
 
 	@Override
+	public AddressRange getRange(long snap) {
+		try (LockHold hold = object.getTrace().lockRead()) {
+			// TODO: Caching without regard to snap seems bad
+			return range = TraceObjectInterfaceUtils.getValue(object, snap,
+				TargetMemoryRegion.RANGE_ATTRIBUTE_NAME, AddressRange.class, range);
+		}
+	}
+
+	@Override
 	public AddressRange getRange() {
 		try (LockHold hold = object.getTrace().lockRead()) {
 			if (object.getLife().isEmpty()) {
 				return range;
 			}
-			return range = TraceObjectInterfaceUtils.getValue(object, getCreationSnap(),
-				TargetMemoryRegion.RANGE_ATTRIBUTE_NAME, AddressRange.class, range);
+			return getRange(getCreationSnap());
 		}
 	}
 
@@ -211,6 +219,12 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			setRange(DBTraceUtils.toRange(min, getMaxAddress()));
 		}
+	}
+
+	@Override
+	public Address getMinAddress(long snap) {
+		AddressRange range = getRange(snap);
+		return range == null ? null : range.getMinAddress();
 	}
 
 	@Override
@@ -224,6 +238,12 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			setRange(DBTraceUtils.toRange(getMinAddress(), max));
 		}
+	}
+
+	@Override
+	public Address getMaxAddress(long snap) {
+		AddressRange range = getRange(snap);
+		return range == null ? null : range.getMaxAddress();
 	}
 
 	@Override

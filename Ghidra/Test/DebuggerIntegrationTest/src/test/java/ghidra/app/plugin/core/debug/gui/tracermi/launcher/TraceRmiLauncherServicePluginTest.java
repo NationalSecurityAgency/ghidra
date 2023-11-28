@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.debug.gui.tracermi.launcher;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assume.assumeTrue;
 
 import java.util.*;
 
@@ -28,6 +29,7 @@ import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.services.TraceRmiLauncherService;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer.*;
+import ghidra.framework.OperatingSystem;
 import ghidra.util.task.ConsoleTaskMonitor;
 
 public class TraceRmiLauncherServicePluginTest extends AbstractGhidraHeadedDebuggerTest {
@@ -50,7 +52,7 @@ public class TraceRmiLauncherServicePluginTest extends AbstractGhidraHeadedDebug
 		assertFalse(launcherService.getOffers(program).isEmpty());
 	}
 
-	protected LaunchConfigurator fileOnly(String file) {
+	protected LaunchConfigurator gdbFileOnly(String file) {
 		return new LaunchConfigurator() {
 			@Override
 			public Map<String, ?> configureLauncher(TraceRmiLaunchOffer offer,
@@ -65,21 +67,58 @@ public class TraceRmiLauncherServicePluginTest extends AbstractGhidraHeadedDebug
 
 	// @Test // This is currently hanging the test machine. The gdb process is left running
 	public void testLaunchLocalGdb() throws Exception {
+		assumeTrue(OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.LINUX);
+
 		createProgram(getSLEIGH_X86_64_LANGUAGE());
 		try (Transaction tx = program.openTransaction("Rename")) {
 			program.setName("bash");
 		}
 		programManager.openProgram(program);
 
-		TraceRmiLaunchOffer gdbOffer = findByTitle(launcherService.getOffers(program), "gdb");
+		TraceRmiLaunchOffer offer = findByTitle(launcherService.getOffers(program), "gdb");
 
 		try (LaunchResult result =
-			gdbOffer.launchProgram(new ConsoleTaskMonitor(), fileOnly("/usr/bin/bash"))) {
+			offer.launchProgram(new ConsoleTaskMonitor(), gdbFileOnly("/usr/bin/bash"))) {
 			if (result.exception() != null) {
 				throw new AssertionError(result.exception());
 			}
 
 			assertEquals("bash", result.trace().getName());
+			assertEquals(getSLEIGH_X86_64_LANGUAGE(), result.trace().getBaseLanguage());
+		}
+	}
+
+	protected LaunchConfigurator dbgengFileOnly(String file) {
+		return new LaunchConfigurator() {
+			@Override
+			public Map<String, ?> configureLauncher(TraceRmiLaunchOffer offer,
+					Map<String, ?> arguments, RelPrompt relPrompt) {
+				Map<String, Object> args = new HashMap<>(arguments);
+				args.put("env:OPT_TARGET_IMG", file);
+				return args;
+			}
+		};
+	}
+
+	@Test
+	public void testLaunchLocalDbgeng() throws Exception {
+		assumeTrue(OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS);
+
+		createProgram(getSLEIGH_X86_64_LANGUAGE());
+		try (Transaction tx = program.openTransaction("Rename")) {
+			program.setName("notepad.exe");
+		}
+		programManager.openProgram(program);
+
+		TraceRmiLaunchOffer offer = findByTitle(launcherService.getOffers(program), "dbgeng");
+
+		try (LaunchResult result =
+			offer.launchProgram(new ConsoleTaskMonitor(), dbgengFileOnly("notepad.exe"))) {
+			if (result.exception() != null) {
+				throw new AssertionError(result.exception());
+			}
+
+			assertEquals("notepad.exe", result.trace().getName());
 			assertEquals(getSLEIGH_X86_64_LANGUAGE(), result.trace().getBaseLanguage());
 		}
 	}

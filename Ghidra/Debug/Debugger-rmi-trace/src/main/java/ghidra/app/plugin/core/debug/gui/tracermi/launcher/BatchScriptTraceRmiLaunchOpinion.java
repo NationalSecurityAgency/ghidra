@@ -24,13 +24,13 @@ import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 
-public class UnixShellScriptTraceRmiLaunchOpinion extends AbstractTraceRmiLaunchOpinion {
+public class BatchScriptTraceRmiLaunchOpinion extends AbstractTraceRmiLaunchOpinion {
 
 	@Override
 	public Collection<TraceRmiLaunchOffer> getOffers(TraceRmiLauncherServicePlugin plugin,
 			Program program) {
 		return getScriptPaths(plugin.getTool())
-				.flatMap(rf -> Stream.of(rf.listFiles(crf -> crf.getName().endsWith(".sh"))))
+				.flatMap(rf -> Stream.of(rf.listFiles(crf -> crf.getName().endsWith(".bat"))))
 				.flatMap(sf -> createOffer(plugin, program, sf))
 				.collect(Collectors.toList());
 	}
@@ -38,8 +38,8 @@ public class UnixShellScriptTraceRmiLaunchOpinion extends AbstractTraceRmiLaunch
 	protected Stream<TraceRmiLaunchOffer> createOffer(TraceRmiLauncherServicePlugin plugin,
 			Program program, ResourceFile scriptFile) {
 		try {
-			return Stream.of(UnixShellScriptTraceRmiLaunchOffer.create(plugin, program,
-				scriptFile.getFile(false)));
+			return Stream.of(
+				BatchScriptTraceRmiLaunchOffer.create(plugin, program, scriptFile.getFile(false)));
 		}
 		catch (Exception e) {
 			Msg.error(this, "Could not offer " + scriptFile + ": " + e.getMessage(), e);

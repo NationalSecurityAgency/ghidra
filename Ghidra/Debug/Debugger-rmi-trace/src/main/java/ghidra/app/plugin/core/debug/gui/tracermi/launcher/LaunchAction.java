@@ -88,6 +88,9 @@ public class LaunchAction extends MultiActionDockingAction {
 
 	ConfigLast findMostRecentConfig() {
 		Program program = plugin.currentProgram;
+		if (program == null) {
+			return null;
+		}
 		ConfigLast best = null;
 
 		ProgramUserData userData = program.getProgramUserData();
@@ -113,14 +116,16 @@ public class LaunchAction extends MultiActionDockingAction {
 
 		List<DockingActionIf> actions = new ArrayList<>();
 
-		ProgramUserData userData = program.getProgramUserData();
 		Map<String, Long> saved = new HashMap<>();
-		for (String propName : userData.getStringPropertyNames()) {
-			ConfigLast check = checkSavedConfig(userData, propName);
-			if (check == null) {
-				continue;
+		if (program != null) {
+			ProgramUserData userData = program.getProgramUserData();
+			for (String propName : userData.getStringPropertyNames()) {
+				ConfigLast check = checkSavedConfig(userData, propName);
+				if (check == null) {
+					continue;
+				}
+				saved.put(check.configName, check.last);
 			}
-			saved.put(check.configName, check.last);
 		}
 
 		for (TraceRmiLaunchOffer offer : offers) {
@@ -134,6 +139,8 @@ public class LaunchAction extends MultiActionDockingAction {
 					.build());
 			Long last = saved.get(offer.getConfigName());
 			if (last == null) {
+				// NB. If program == null, this will always happen.
+				// Thus, no worries about program.getName() below.
 				continue;
 			}
 			actions.add(new ActionBuilder(offer.getConfigName(), plugin.getName())
@@ -172,6 +179,11 @@ public class LaunchAction extends MultiActionDockingAction {
 			// Make accessible to this file
 			return super.showPopup();
 		}
+
+		@Override
+		public String getToolTipText() {
+			return getDescription();
+		}
 	}
 
 	@Override
@@ -180,19 +192,45 @@ public class LaunchAction extends MultiActionDockingAction {
 	}
 
 	@Override
-	public void actionPerformed(ActionContext context) {
-		// See comment on super method about use of runLater
-		ConfigLast last = findMostRecentConfig();
+	public boolean isEnabledForContext(ActionContext context) {
+		return plugin.currentProgram != null;
+	}
+
+	protected TraceRmiLaunchOffer findOffer(ConfigLast last) {
 		if (last == null) {
-			Swing.runLater(() -> button.showPopup());
-			return;
+			return null;
 		}
 		for (TraceRmiLaunchOffer offer : plugin.getOffers(plugin.currentProgram)) {
 			if (offer.getConfigName().equals(last.configName)) {
-				plugin.relaunch(offer);
-				return;
+				return offer;
 			}
 		}
-		Swing.runLater(() -> button.showPopup());
+		return null;
+	}
+
+	@Override
+	public void actionPerformed(ActionContext context) {
+		// See comment on super method about use of runLater
+		ConfigLast last = findMostRecentConfig();
+		TraceRmiLaunchOffer offer = findOffer(last);
+		if (offer == null) {
+			Swing.runLater(() -> button.showPopup());
+			return;
+		}
+		plugin.relaunch(offer);
+	}
+
+	@Override
+	public String getDescription() {
+		Program program = plugin.currentProgram;
+		if (program == null) {
+			return "Launch (program required)";
+		}
+		ConfigLast last = findMostRecentConfig();
+		TraceRmiLaunchOffer offer = findOffer(last);
+		if (last == null) {
+			return "Configure and launch " + program.getName();
+		}
+		return "Re-launch " + program.getName() + " using " + offer.getTitle();
 	}
 }
