@@ -15,13 +15,14 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import ghidra.app.util.DataTypeNamingUtil;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.CallingConvention;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.FunctionDefinitionDataType;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.InvalidInputException;
@@ -31,211 +32,109 @@ import ghidra.util.exception.InvalidInputException;
  */
 public abstract class AbstractFunctionTypeApplier extends MsTypeApplier {
 
-	private FunctionDefinitionDataType functionDefinition;
-
-	private MsTypeApplier returnApplier;
-	private ArgumentsListTypeApplier argsListApplier;
-	private CallingConvention callingConvention;
-	private boolean hasThisPointer;
-
+	// Intended for: see children
 	/**
 	 * Constructor for the applicator that applies a "function" type, transforming it into a
 	 * Ghidra DataType.
 	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
-	 * @param msType {@link AbstractMsType} to processes
 	 */
-	public AbstractFunctionTypeApplier(DefaultPdbApplicator applicator, AbstractMsType msType) {
-		super(applicator, msType);
-//		String funcName = applicator.getNextAnonymousFunctionName();
-		functionDefinition = new FunctionDefinitionDataType(
-			applicator.getAnonymousFunctionsCategory(), "_func", applicator.getDataTypeManager());
-		// Updating before trying to apply... if applyFunction fails, then this name will go
-		// unused for the most part, but we also will not get a conflict on the name.
-//		applicator.incrementNextAnonymousFunctionName();
-		dataType = functionDefinition;
-	}
-
-	//==============================================================================================
-	@Override
-	void deferredApply() throws PdbException, CancelledException {
-		if (isDeferred()) {
-			applyInternal();
-		}
-	}
-
-	//==============================================================================================
-	/**
-	 * Returns the function definition being created by this applier.
-	 * @return the function definition.
-	 */
-	FunctionDefinitionDataType getFunctionDefinition() {
-		return functionDefinition;
-	}
-
-	@Override
-	DataType getCycleBreakType() {
-		if (dataType != null) {
-			return dataType;
-		}
-		return functionDefinition;
-	}
-
-	/**
-	 * Returns the type applier of the return type
-	 * @return the type applier
-	 */
-	MsTypeApplier getReturnTypeApplier() {
-		return applicator.getTypeApplier(getReturnRecordNumber());
-	}
-
-	/**
-	 * Returns the {@link ArgumentsListTypeApplier}
-	 * @return the type applier
-	 */
-	ArgumentsListTypeApplier getArgsListApplier() {
-		MsTypeApplier argsApplier = applicator.getTypeApplier(getArgListRecordNumber());
-		if (argsApplier instanceof ArgumentsListTypeApplier) {
-			return (ArgumentsListTypeApplier) applicator.getTypeApplier(getArgListRecordNumber());
-		}
-		return null;
+	public AbstractFunctionTypeApplier(DefaultPdbApplicator applicator) {
+		super(applicator);
 	}
 
 	/**
 	 * Returns the {@link CallingConvention}
+	 * @param type the PDB type being inspected
 	 * @return the calling convention
 	 */
-	protected abstract CallingConvention getCallingConvention();
+	protected abstract CallingConvention getCallingConvention(AbstractMsType type);
 
 	/**
-	 * Returns whether the function has a "this" pointer
-	 * @return {@code true} if it has a "this" pointer
+	 * Returns the function "this" pointer
+	 * @param type the PDB type being inspected
+	 * @param fixupContext the fixup context to use; or pass in null during fixup process
+	 * @param breakCycle specify {@code true} when employing break-cycle logic (pointers to
+	 * Composites within composites)
+	 * @return the "this" pointer or null if does not have or is not a recognized type
+	 * @throws CancelledException upon user cancellation
+	 * @throws PdbException upon processing error
 	 */
-	protected abstract boolean hasThisPointer();
+	protected abstract Pointer getThisPointer(AbstractMsType type, FixupContext fixupContext,
+			boolean breakCycle) throws CancelledException, PdbException;
 
 	/**
-	 * Returns the {@link RecordNumber} of the function return type
-	 * @return the record number
+	 * Returns the containing class if function member of class
+	 * @param type the PDB type being inspected
+	 * @param fixupContext the fixup context to use; or pass in null during fixup process
+	 * @param breakCycle specify {@code true} when employing break-cycle logic (pointers to
+	 * Composites within composites)
+	 * @return the containing class composite type
+	 * @throws CancelledException upon user cancellation
+	 * @throws PdbException upon processing error
 	 */
-	protected abstract RecordNumber getReturnRecordNumber();
+	protected abstract Composite getContainingComplexApplier(AbstractMsType type,
+			FixupContext fixupContext, boolean breakCycle) throws CancelledException, PdbException;
 
 	/**
-	 * Returns the {@link RecordNumber} of the function arguments list
-	 * @return the record number
+	 * Processes containing class if one exists
+	 * @param type the PDB type being inspected
 	 */
-	protected abstract RecordNumber getArgListRecordNumber();
+	protected abstract void processContainingType(AbstractMsType type);
 
 	/**
 	 * Returns if known to be a constructor.
+	 * @param type the PDB type being inspected
 	 * @return true if constructor.
 	 */
-	protected boolean isConstructor() {
+	protected boolean isConstructor(AbstractMsType type) {
 		return false;
 	}
 
 	/**
-	 * Method to create the {@link DataType} based upon the type indices of the calling
-	 * convention, return type, and arguments list.
-	 * @param callingConventionParam Identification of the {@link AbstractMsType} record of the
-	 * {@link CallingConvention}.
-	 * @param hasThisPointerParam true if has a this pointer
-	 * @return {@link DataType} created or null upon issue.
-	 * @throws PdbException when unexpected function internals are found.
-	 * @throws CancelledException Upon user cancellation
+	 * Returns the {@link RecordNumber} of the function return type
+	 * @param type the PDB type being inspected
+	 * @return the record number
 	 */
-	protected DataType applyFunction(CallingConvention callingConventionParam,
-			boolean hasThisPointerParam) throws PdbException, CancelledException {
-//		String funcName = applicator.getCategoryUtils().getNextAnonymousFunctionName();
-//		FunctionDefinitionDataType functionDefinition = new FunctionDefinitionDataType(
-//			applicator.getCategoryUtils().getAnonymousFunctionsCategory(), funcName,
-//			applicator.getDataTypeManager());
+	protected abstract RecordNumber getReturnRecordNumber(AbstractMsType type);
 
-		this.callingConvention = callingConventionParam;
-		this.hasThisPointer = hasThisPointerParam;
-		returnApplier = getReturnTypeApplier();
-		argsListApplier = getArgsListApplier();
+	/**
+	 * Returns the {@link RecordNumber} of the function arguments list
+	 * @param type the PDB type being inspected
+	 * @return the record number
+	 */
+	protected abstract RecordNumber getArgListRecordNumber(AbstractMsType type);
 
-		applyOrDeferForDependencies();
-//		applyInternal();
-
-		// 20190725 remove for second pass in applicator
-//		// TODO: what handler should we really use?
-//		DataType resolvedFunctionDefinition = applicator.resolve(functionDefinition);
-//
-//		if (resolvedFunctionDefinition == null) {
-//			applicator.getLog().appendMsg("Function definition type not resolved for " + functionDefinition.getName());
-//			return null;
-//		}
-//		if (!(resolvedFunctionDefinition instanceof FunctionDefinition)) {
-//			// Error... can this happen?
-//			// Remove what was just created?
-//			applicator.getLog().appendMsg("Non-function resolved for " + functionDefinition.getName());
-//			return null;
-//		}
-
-//		// Only update if successful.
-//		applicator.getCategoryUtils().incrementNextAnonymousFunctionName();
-//		return resolvedFunctionDefinition;
-		return functionDefinition;
-	}
-
-	private void applyOrDeferForDependencies() throws CancelledException {
-		if (returnApplier.isDeferred()) {
-			applicator.addApplierDependency(this, returnApplier);
-			setDeferred();
-		}
-		if (argsListApplier != null) {
-			argsListApplier.checkForDependencies(this);
-		}
-
-		if (!isDeferred()) {
-			applyInternal();
-		}
-	}
-
-	private void applyInternal() throws CancelledException {
-		if (isApplied()) {
-			return;
-		}
-		if (!setReturnType()) {
-			return;
-		}
-		if (argsListApplier != null) {
-			argsListApplier.applyTo(this);
-		}
-		setCallingConvention(applicator, callingConvention, hasThisPointer);
-		DataTypeNamingUtil.setMangledAnonymousFunctionName(functionDefinition);
-		setApplied();
-
-//		resolvedDataType = applicator.resolveHighUse(dataType);
-//		if (resolvedDataType != null) {
-//			resolved = true;
-//		}
-	}
-
-	private boolean setReturnType() {
-
-		if (isConstructor()) {
+	private boolean setReturnType(FunctionDefinitionDataType functionDefinition,
+			AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
+			throws CancelledException, PdbException {
+		if (isConstructor(type)) {
 			return true;
 		}
-
-		DataType returnDataType = returnApplier.getDataType();
-		if (returnDataType == null) {
-			applicator.appendLogMsg("Return type is null in " + functionDefinition.getName());
+		RecordNumber returnRecord = getReturnRecordNumber(type);
+		if (returnRecord == null) {
 			return false;
 		}
-		functionDefinition.setReturnType(returnDataType);
+		DataType returnType =
+			applicator.getProcessedDataType(returnRecord, fixupContext, breakCycle);
+		if (returnType == null) {
+			return false;
+		}
+		if (applicator.isPlaceholderPointer(returnType)) {
+			return false;
+		}
+		functionDefinition.setReturnType(returnType);
 		return true;
 	}
 
-	private void setCallingConvention(DefaultPdbApplicator applicator,
-			CallingConvention callingConvention, boolean hasThisPointer) {
+	private void setCallingConvention(FunctionDefinitionDataType functionDefinition,
+			CallingConvention callingConvention, Pointer thisPointer) {
 		String convention;
-		if (hasThisPointer) {
+		if (thisPointer != null) {
 			convention = CompilerSpec.CALLING_CONVENTION_thiscall;
 		}
 		else {
 			// Since we are a member function, we will always assume a _thiscall...
-			// but how do we know it is not a atatic member function (no "this")?
+			// but how do we know it is not a static member function (no "this")?
 			switch (callingConvention) {
 				// TODO: figure all of these out.
 				case THISCALL: // "this" passed in register (we have not yet seen this)
@@ -248,10 +147,6 @@ public abstract class AbstractFunctionTypeApplier extends MsTypeApplier {
 					convention = CompilerSpec.CALLING_CONVENTION_vectorcall;
 					break;
 				default:
-//				applicator.getLog().appendMsg(
-//					"TODO: calling convention not implemented for value " + callingConventionVal +
-//						" in " + funcName);
-					//convention = GenericCallingConvention.cdecl;
 					convention = CompilerSpec.CALLING_CONVENTION_cdecl;
 					break;
 			}
@@ -263,6 +158,116 @@ public abstract class AbstractFunctionTypeApplier extends MsTypeApplier {
 			applicator.appendLogMsg("Failed to set calling convention `" + convention + "` for " +
 				functionDefinition.getName());
 		}
+	}
+
+	private boolean setArguments(FunctionDefinitionDataType functionDefinition, AbstractMsType type,
+			FixupContext fixupContext, boolean breakCycle) throws CancelledException, PdbException {
+
+		RecordNumber argsRecord = getArgListRecordNumber(type);
+		AbstractMsType aType = applicator.getPdb().getTypeRecord(argsRecord);
+		if (!(aType instanceof AbstractArgumentsListMsType argsList)) {
+			applicator.appendLogMsg(
+				"PDB Warning: expecting args list but found " + aType.getClass().getSimpleName() +
+					" for parameter list of " + functionDefinition.getName());
+			return false;
+		}
+
+		boolean hasPlaceholder = false;
+
+		List<RecordNumber> args = argsList.getArgRecordNumbers();
+		List<ParameterDefinition> parameterDefinitionList = new ArrayList<>();
+		int parameterCount = 0;
+		for (RecordNumber arg : args) {
+			applicator.checkCancelled();
+
+			AbstractMsType argMsType = applicator.getPdb().getTypeRecord(arg);
+			if (argMsType instanceof PrimitiveMsType primitive && primitive.isNoType()) {
+				// Arguments list is empty. (There better not have been any arguments up until
+				//  now.)
+				break;
+			}
+
+			DataType argDataType = applicator.getProcessedDataType(arg, fixupContext, breakCycle);
+			if (argDataType == null) {
+				applicator.appendLogMsg(
+					"PDB Warning: No type conversion for " + argMsType.toString() +
+						" for parameter " + parameterCount + " of " + functionDefinition.getName());
+			}
+			else {
+				if (applicator.isPlaceholderPointer(argDataType)) {
+					hasPlaceholder = true;
+				}
+				try {
+					ParameterDefinition parameterDefinition =
+						new ParameterDefinitionImpl(null, argDataType, "");
+					parameterDefinitionList.add(parameterDefinition);
+					parameterCount++;
+				}
+				catch (IllegalArgumentException e) {
+					try {
+						DataType substitute =
+							Undefined.getUndefinedDataType(argDataType.getLength());
+						ParameterDefinition parameterDefinition =
+							new ParameterDefinitionImpl(null, substitute, "");
+						parameterDefinitionList.add(parameterDefinition);
+						parameterCount++;
+						applicator.appendLogMsg("PDB Warning: Could not apply type " + argDataType +
+							" for parameter " + parameterCount + " of " +
+							functionDefinition.getName() + ". Using undefined type instead.");
+					}
+					catch (IllegalArgumentException e1) {
+						applicator.appendLogMsg("PDB Warning: Could not apply type " + argDataType +
+							" for parameter " + parameterCount + " of " +
+							functionDefinition.getName() + ". Undefined failed: " + e1);
+
+					}
+					return false;
+				}
+			}
+		}
+		if (hasPlaceholder) {
+			return false;
+		}
+		functionDefinition.setArguments(parameterDefinitionList
+				.toArray(new ParameterDefinition[parameterDefinitionList.size()]));
+		return true;
+	}
+
+	@Override
+	public DataType apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
+			throws CancelledException, PdbException {
+		DataType existing = applicator.getDataType(type);
+		if (existing != null) {
+			return existing;
+		}
+		FunctionDefinitionDataType functionDefinition = new FunctionDefinitionDataType(
+			applicator.getAnonymousFunctionsCategory(), "_func", applicator.getDataTypeManager());
+
+		boolean hasPlaceholder = false;
+
+		processContainingType(type);
+
+		if (!setReturnType(functionDefinition, type, fixupContext, breakCycle)) {
+			hasPlaceholder = true;
+		}
+
+		if (!setArguments(functionDefinition, type, fixupContext, breakCycle)) {
+			hasPlaceholder = true;
+		}
+
+		if (hasPlaceholder) {
+			return null;
+		}
+
+		Pointer thisPointer = getThisPointer(type, fixupContext, breakCycle);
+		CallingConvention convention = getCallingConvention(type);
+		setCallingConvention(functionDefinition, convention, thisPointer);
+
+		DataTypeNamingUtil.setMangledAnonymousFunctionName(functionDefinition);
+
+		DataType resolvedType = applicator.resolve(functionDefinition);
+		applicator.putDataType(type, resolvedType);
+		return resolvedType;
 	}
 
 }

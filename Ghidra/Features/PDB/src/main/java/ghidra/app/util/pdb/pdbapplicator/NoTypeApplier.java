@@ -15,9 +15,10 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.math.BigInteger;
-
+import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
+import ghidra.program.model.data.DataType;
+import ghidra.util.exception.CancelledException;
 
 /**
  * Used for creating a wrapper for when there is not associated type to the PDB type (or if we
@@ -25,26 +26,21 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
  */
 public class NoTypeApplier extends MsTypeApplier {
 
+	// Intended for: AbstractMsType
 	/**
 	 * Constructor for nested type applier.
 	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
-	 * @param msType {@link AbstractMsType} to process.
 	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public NoTypeApplier(DefaultPdbApplicator applicator, AbstractMsType msType)
+	public NoTypeApplier(DefaultPdbApplicator applicator)
 			throws IllegalArgumentException {
-		super(applicator, msType);
+		super(applicator);
 	}
 
 	@Override
-	BigInteger getSize() {
-		return BigInteger.ZERO;
+	DataType apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
+			throws PdbException, CancelledException {
+		// do nothing
+		return null;
 	}
-
-	@Override
-	void apply() {
-		// Do nothing (maybe should log something... not sure)
-		// applicator.getLog().appendMsg("");
-	}
-
 }

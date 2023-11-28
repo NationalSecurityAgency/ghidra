@@ -15,57 +15,34 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.math.BigInteger;
-import java.util.*;
-
-import ghidra.app.util.bin.format.pdb2.pdbreader.*;
+import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
+import ghidra.app.util.bin.format.pdb2.pdbreader.PdbLog;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.CancelledException;
 
 /**
- * Abstract class representing the applier for a specific {@link AbstractMsType}.  The
- * {@link #apply()} method creates an associated {@link DataType}, if applicable.
+ * Abstract class representing the applier for a specific PDB_ID type.  The
+ * {@link #apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)} method
+ * creates an associated {@link DataType}, if applicable,  The latter of these forces the
+ * creation of the defined type when and forward reference type is not appropriate for the
+ * consumer.  Note that this should only be used when sanctioned and not on a whim.  Currently,
+ * such situations include when ghidra needs a defined type for the underlying type of an array,
+ * when used as a base class of a class or when needed as a member of another class/composite.
  * Methods associated with the {@link MsTypeApplier} or derived class will
  * make fields available to the user, first by trying to get them from the {@link DataType},
- * otherwise getting them from the {@link AbstractMsType}.
+ * otherwise getting them from the {@link AbstractMsType} argument.
  */
 public abstract class MsTypeApplier {
 
 	protected DefaultPdbApplicator applicator;
-	protected AbstractMsType msType;
-	protected int index;
-	protected DataType dataType;
-	// separate copy for now.  Might eventually just replace dataType (above)--would have to
-	//  change getDataType().
-	protected DataType resolvedDataType;
-	protected boolean resolved = false;
-	protected boolean applied = false;
 
-	private boolean isDeferred = false;
-
-	protected Set<MsTypeApplier> waitSet = new HashSet<>();
-
-	public int getIndex() {
-		return index;
-	}
-	
 	/**
 	 * Constructor.
 	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
-	 * @param msType {@link AbstractMsType} to apply.
 	 */
-	public MsTypeApplier(DefaultPdbApplicator applicator, AbstractMsType msType) {
+	public MsTypeApplier(DefaultPdbApplicator applicator) {
 		this.applicator = applicator;
-		this.msType = msType;
-		RecordNumber recordNumber = msType.getRecordNumber();
-		if (recordNumber != null) {
-			index = recordNumber.getNumber();
-		}
-		else {
-			index = -1;
-		}
-		dataType = null;
 	}
 
 	/**
@@ -78,180 +55,53 @@ public abstract class MsTypeApplier {
 	}
 
 	/**
-	 * Returns {@code true} if the type has been applied
-	 * @return {@code true} if applied.
-	 */
-	boolean isApplied() {
-		return applied;
-	}
-
-	/**
-	 * Sets the {@code applied} flag to {@code true}
-	 */
-	void setApplied() {
-		applied = true;
-	}
-
-	/**
-	 * Sets the isDeferred flag to indicate that the application of the information should be
-	 * done when the {@link @deferredApply()} method is called
-	 */
-	void setDeferred() {
-		isDeferred = true;
-	}
-
-	/**
-	 * Returns {@code true} if the application as been deferred (during the {@link #apply()}
-	 * method.  The {@link #deferredApply()} method will need to be applied at the appropriate
-	 * place in the processing sequence (depending on data dependency ordering) as determined
-	 * and driven by the {@link DefaultPdbApplicator}.
-	 * @return {@code true} if application was deferred
-	 */
-	boolean isDeferred() {
-		return isDeferred;
-	}
-
-	/**
-	 * Performs the work required in a deferred application of the data type.  This method
-	 * is used by the {@link DefaultPdbApplicator} in the correct data dependency sequence.
-	 * @throws PdbException on error applying the data type
-	 * @throws CancelledException on user cancellation
-	 */
-	void deferredApply() throws PdbException, CancelledException {
-		// default is to do nothing, as most appliers are not deferrable (or should not be).
-	}
-
-	/**
-	 * Returns the applier for this type that needs to be called when the data type is processed
-	 * in dependency order.  This will usually return "this," except in cases where there can be
-	 * forward references and definition appliers for the same type.
-	 * @return the applier to be used for doing the real applier work when dependency order
-	 * matters.
-	 */
-	MsTypeApplier getDependencyApplier() {
-		return this;
-	}
-
-	/**
-	 * Resolves the type through the DataTypeManager and makes the resolved type primary.
-	 */
-	void resolve() {
-		if (resolved) {
-			return;
-		}
-		if (dataType != null) {
-			resolvedDataType = applicator.resolve(dataType);
-		}
-		resolved = true;
-	}
-
-	/**
-	 * Returns the {@link AbstractMsType} associated with this applier/wrapper.
-	 * @return {@link AbstractMsType} associated with this applier/wrapper.
-	 */
-	AbstractMsType getMsType() {
-		return msType;
-	}
-
-	/**
-	 * Returns the {@link DataType} associated with this applier/wrapper.
-	 * @return {@link DataType} associated with this applier/wrapper.
-	 */
-	DataType getDataType() {
-		if (resolved) {
-			return resolvedDataType;
-		}
-		return dataType;
-	}
-
-	/**
-	 * Returns either a DataTypeDB or an type (IMPL that might be an empty container) that
-	 * suffices to break cyclical dependencies in data type generation.
-	 * @return the data type.
-	 */
-	DataType getCycleBreakType() {
-		return getDataType();
-	}
-
-	/**
 	 * Apply the {@link AbstractMsType} in an attempt to create a Ghidra type.
+	 * @param type the PDB type to work on
+	 * @param fixupContext the fixup context to use; or pass in null during fixup process
+	 * @param breakCycle TODO
+	 * @return the resultant DataType
 	 * @throws PdbException if there was a problem processing the data.
 	 * @throws CancelledException upon user cancellation
 	 */
-	abstract void apply() throws PdbException, CancelledException;
-
-	/**
-	 * Returns the size of the type or 0 if unknown.
-	 * @return the size; zero if unknown.
-	 */
-	abstract BigInteger getSize();
+	abstract DataType apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
+			throws PdbException, CancelledException;
 
 	/**
 	 * Returns the (long) size of the type or 0 if unknown. Or Long.MAX_VALUE if too large.
+	 * @param type the PDB type being inspected
 	 * @return the size; zero if unknown.
 	 */
-	long getSizeLong() {
-		return DefaultPdbApplicator.bigIntegerToLong(applicator, getSize());
+	long getSizeLong(AbstractMsType type) {
+		return applicator.bigIntegerToLong(type.getSize());
 	}
 
 	/**
 	 * Returns the (int) size of the type or 0 if unknown. Or Integer.MAX_VALUE if too large.
+	 * @param type the PDB type being inspected
 	 * @return the size; zero if unknown.
 	 */
-	int getSizeInt() {
-		return DefaultPdbApplicator.bigIntegerToInt(applicator, getSize());
+	int getSizeInt(AbstractMsType type) {
+		return applicator.bigIntegerToInt(type.getSize());
 	}
 
-	@Override
-	public String toString() {
-		return msType.toString();
-	}
+	//==============================================================================================
+	// TODO: Need to investigate if we adopt the following... if so, should use them consistently.
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + index;
-		result = prime * result + msType.getClass().getSimpleName().hashCode();
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		MsTypeApplier other = (MsTypeApplier) obj;
-		if (index != other.index) {
-			return false;
-		}
-		if (!msType.getClass().getSimpleName().equals(other.msType.getClass().getSimpleName())) {
-			return false;
-		}
-		return true;
-	}
-
-	protected void waitSetPut(MsTypeApplier applier) {
-		waitSet.add(applier);
-	}
-
-	protected boolean waitSetRemove(MsTypeApplier applier) {
-		return waitSet.remove(applier);
-	}
-
-	protected boolean waitSetIsEmpty() {
-		return waitSet.isEmpty();
-	}
-
-	protected MsTypeApplier waitSetGetNext() {
-		List<MsTypeApplier> list = new ArrayList<>(waitSet);
-		return list.get(0);
-	}
-
+//	/**
+//	 * Convenience method for getting the {@link DataType} from the applicator pertaining
+//	 * to this PDB type
+//	 * @param type the PDB type
+//	 * @return the ghidra data type
+//	 */
+//	DataType getDataType(AbstractMsType type) {
+//		return applicator.getDataType(type);
+//	}
+//
+//	protected int getIndex(AbstractMsType type) {
+//		RecordNumber recordNumber = type.getRecordNumber();
+//		if (recordNumber != null) {
+//			return recordNumber.getNumber();
+//		}
+//		return -1;
+//	}
 }

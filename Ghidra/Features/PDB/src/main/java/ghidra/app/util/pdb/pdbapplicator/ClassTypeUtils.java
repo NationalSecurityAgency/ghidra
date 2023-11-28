@@ -29,19 +29,6 @@ public class ClassTypeUtils {
 	private ClassTypeUtils() {
 	}
 
-	/**
-	 * Returns an "internals" CategoryPath within the datatype managed by the applier
-	 * @param applier for the owning composite datatype of the internals path
-	 * @return the CategoryPath
-	 */
-	public static CategoryPath getInternalsCategoryPath(CompositeTypeApplier applier) {
-		DataType dt = applier.getDataType();
-		if (dt instanceof Composite composite) {
-			return getInternalsCategoryPath(composite);
-		}
-		return null;
-	}
-
 	// TODO: Eventually consider changing Composite argument below as model is refined.
 	/**
 	 * Returns an "internals" CategoryPath for the owning composite datatype
@@ -54,18 +41,12 @@ public class ClassTypeUtils {
 	}
 
 	/**
-	 * Returns a DataTypePath for the named type within the "internals" category of the type
-	 * managed byte the applier
-	 * @param applier the applier
-	 * @param name the name of the type for the DataTypePath
-	 * @return the DataTypePath
+	 * Returns an "internals" CategoryPath for the owning composite datatype
+	 * @param categoryPath path of the composite
+	 * @return the CategoryPath
 	 */
-	public static DataTypePath getInternalsDataTypePath(CompositeTypeApplier applier, String name) {
-		CategoryPath cp = getInternalsCategoryPath(applier);
-		if (cp == null || StringUtils.isAllBlank(name)) {
-			return null;
-		}
-		return new DataTypePath(cp, name);
+	public static CategoryPath getInternalsCategoryPath(CategoryPath categoryPath) {
+		return categoryPath.extend(INTERNALS);
 	}
 
 	// TODO: Eventually consider changing Composite argument below as model is refined.

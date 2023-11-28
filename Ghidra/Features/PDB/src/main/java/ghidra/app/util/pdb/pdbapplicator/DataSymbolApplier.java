@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,13 +52,12 @@ public class DataSymbolApplier extends MsSymbolApplier {
 	void applyTo(MsSymbolApplier applyToApplier) throws PdbException, CancelledException {
 		if (applyToApplier instanceof FunctionSymbolApplier) {
 			FunctionSymbolApplier functionSymbolApplier = (FunctionSymbolApplier) applyToApplier;
-			MsTypeApplier applier = getTypeApplier();
-			DataType dataType = applier.getDataType();
+			DataType dataType = applicator.getCompletedDataType(symbol.getTypeRecordNumber());
 			if (dataType == null) { // TODO: check that we can have null here.
 				return; // silently return.
 			}
 			Address address = applicator.getAddress(symbol);
-			if (!createData(address, applier)) {
+			if (!createData(address, dataType)) {
 				return;
 			}
 			functionSymbolApplier.setLocalVariable(address, symbol.getName(), dataType);
@@ -82,27 +81,14 @@ public class DataSymbolApplier extends MsSymbolApplier {
 		return applicator.getTypeApplier(symbol.getTypeRecordNumber());
 	}
 
-	boolean createData(Address address, RecordNumber typeRecordNumber) {
-		MsTypeApplier applier = applicator.getTypeApplier(typeRecordNumber);
-		if (applier == null) {
-			applicator.appendLogMsg("Error: Failed to resolve datatype RecordNumber " +
-				typeRecordNumber + " at " + address);
-			return false;
-		}
-		return createData(address, applier);
+	boolean createData(Address address, RecordNumber typeRecordNumber)
+			throws CancelledException, PdbException {
+		DataType dataType = applicator.getCompletedDataType(symbol.getTypeRecordNumber());
+		return createData(address, dataType);
 	}
 
-	boolean createData(Address address, MsTypeApplier applier) {
+	boolean createData(Address address, DataType dataType) {
 		if (applicator.isInvalidAddress(address, symbol.getName())) {
-			return false;
-		}
-		DataType dataType = applier.getDataType();
-		if (dataType == null) {
-			if (!(applier instanceof PrimitiveTypeApplier) ||
-				!((PrimitiveTypeApplier) applier).isNoType()) {
-				applicator.appendLogMsg("Error: Failed to resolve datatype " +
-					applier.getMsType().getName() + " at " + address);
-			}
 			return false;
 		}
 		if (applicator.getImageBase().equals(address) &&
@@ -170,13 +156,11 @@ public class DataSymbolApplier extends MsSymbolApplier {
 			try {
 				applicator.getProgram()
 						.getListing()
-						.clearCodeUnits(address,
-							address.add(dataTypeLength - 1), false);
+						.clearCodeUnits(address, address.add(dataTypeLength - 1), false);
 				if (dataType.getLength() == -1) {
 					applicator.getProgram()
 							.getListing()
-							.createData(address, dataType,
-								dataTypeLength);
+							.createData(address, dataType, dataTypeLength);
 				}
 				else {
 					applicator.getProgram().getListing().createData(address, dataType);
@@ -191,8 +175,7 @@ public class DataSymbolApplier extends MsSymbolApplier {
 			try {
 				applicator.getProgram()
 						.getListing()
-						.clearCodeUnits(address,
-							address.add(dataTypeLength - 1), false);
+						.clearCodeUnits(address, address.add(dataTypeLength - 1), false);
 				applicator.getProgram().getListing().createData(address, dataType, dataTypeLength);
 			}
 			catch (CodeUnitInsertionException e) {
