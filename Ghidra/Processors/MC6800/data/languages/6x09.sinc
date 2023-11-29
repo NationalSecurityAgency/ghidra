@@ -1268,7 +1268,7 @@ macro PushEntireState()
 
 :STU OP2    is (op=0xDF | op=0xEF | op=0xFF) ... & OP2
 {
-        storeRegister(X, OP2);
+        storeRegister(U, OP2);
 }
 
 ################################################################
