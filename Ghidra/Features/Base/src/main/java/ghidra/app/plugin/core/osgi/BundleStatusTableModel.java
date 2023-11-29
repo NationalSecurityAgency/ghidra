@@ -337,7 +337,7 @@ public class BundleStatusTableModel
 				for (GhidraBundle bundle : bundles) {
 					addNewStatusNoFire(bundle);
 				}
-				fireTableRowsInserted(index, bundles.size() - 1);
+				fireTableRowsInserted(index, index + bundles.size() - 1);
 			});
 		}
 
