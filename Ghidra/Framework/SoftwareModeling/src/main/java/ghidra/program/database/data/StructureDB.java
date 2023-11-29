@@ -1645,6 +1645,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		record.setIntValue(CompositeDBAdapter.COMPOSITE_NUM_COMPONENTS_COL, numComponents);
 		record.setIntValue(CompositeDBAdapter.COMPOSITE_LENGTH_COL, structLength);
 		record.setIntValue(CompositeDBAdapter.COMPOSITE_ALIGNMENT_COL, structAlignment);
+		record.setString(CompositeDBAdapter.COMPOSITE_COMMENT_COL, struct.getDescription());
 		compositeAdapter.updateRecord(record, true); // updates timestamp
 
 		if (notify) {

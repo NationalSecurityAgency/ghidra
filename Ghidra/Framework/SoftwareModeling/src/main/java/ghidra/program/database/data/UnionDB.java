@@ -344,6 +344,9 @@ class UnionDB extends CompositeDB implements UnionInternal {
 			doAdd(resolvedDts[i], dtc.getLength(), dtc.getFieldName(), dtc.getComment(), false);
 		}
 
+		record.setString(CompositeDBAdapter.COMPOSITE_COMMENT_COL, union.getDescription());
+		compositeAdapter.updateRecord(record, false);
+
 		repack(false, false); // updates timestamp
 
 		if (notify) {
