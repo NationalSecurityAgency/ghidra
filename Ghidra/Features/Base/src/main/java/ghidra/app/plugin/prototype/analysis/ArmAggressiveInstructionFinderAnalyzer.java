@@ -49,12 +49,7 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 	private AddressSet lastBody = null;
 	private int lastBodyTheSameCount = 0;
 	private PseudoDisassembler pseudo;
-	private AddressSetView todoSet;
-
-//	private HashMap<BigInteger, Integer> funcStartMap;
-//	private HashMap<BigInteger, BigInteger> tmodeStartMap;
-//	private long lastProgramHash;
-//	private long lastFuncCount = 0;
+	private AddressSet todoSet;
 
 	public ArmAggressiveInstructionFinderAnalyzer() {
 		super(NAME, DESCRIPTION, AnalyzerType.BYTE_ANALYZER);
@@ -85,10 +80,7 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 
 		pseudo = new PseudoDisassembler(program);
 
-		//Gather up all patterns for current functions starts
-//		computeExistingMasks(monitor);
-
-//		AddressSet followingStarts = findStartsAfterFunctions();
+		// TODO: get valid function start patterns from function start pattern analyzer
 
 		//First look for ending Pattern between known functions (Alignment) and data before the function
 		//Look after each known pattern for function starts first
@@ -97,6 +89,11 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 		//If there are known good function starts, use those.
 
 		monitor.setMessage("ARM AIF " + set.getMinAddress());
+		long maxCount = program.getMemory().getExecuteSet().getNumAddresses();
+		if (maxCount == 0) {
+			maxCount = program.getMemory().getNumAddresses();
+		}
+		monitor.setMaximum(maxCount);
 
 		// make sure to put on things that are external entry points, but not defined symbols.
 		// try disassembling as ARM/THUMB at entry points first
@@ -114,8 +111,7 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 			}
 
 			Symbol symbol = symbolTable.getPrimarySymbol(entry);
-			AddressSet subSet = new AddressSet(entry, entry);
-			todoSet = todoSet.subtract(subSet);
+			todoSet.delete(entry, entry);
 
 			if (!symbol.isExternalEntryPoint()) {
 				continue;
@@ -126,22 +122,46 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 			}
 		}
 
-		// get an instruction iterator
+		// iterate over undefined blocks, check for a few bytes after the start
+		//    Don't do 00 bytes, align correctly
+		int numInstChecked = 0;
+		int addrCount = 0;
 		while (todoSet.isEmpty() == false) {
+			
+			addrCount++;
+			if (addrCount % 256 == 1)
+			{
+				monitor.setProgress(maxCount - todoSet.getNumAddresses());
+			}
 
 			Data data;
 			Address minAddr = todoSet.getMinAddress();
 
 			if ((minAddr.getOffset() % 2) != 0) {
-				todoSet = todoSet.subtract(new AddressSet(minAddr, minAddr));
+				todoSet.delete(minAddr, minAddr);
 				continue;
+			}
+			if (numInstChecked > 4) {
+				// jump to the next defined thing, then to next undefined
+				numInstChecked = 0;
+				CodeUnit cu = listing.getDefinedCodeUnitAfter(minAddr);
+				if (cu != null) {
+					todoSet.delete(minAddr, cu.getMaxAddress());
+					minAddr = cu.getMaxAddress().next();
+				} else {
+					return true;
+				}
 			}
 			data = listing.getUndefinedDataAt(minAddr);
 			if (data == null) {
-				todoSet = todoSet.subtract(new AddressSet(minAddr, minAddr));
+				numInstChecked = 0;
+				todoSet.delete(minAddr, minAddr);
 				data = listing.getFirstUndefinedData(todoSet, monitor);
 			}
 			if (data == null) {
+				return true;
+			}
+			if (todoSet.isEmpty()) {
 				return true;
 			}
 
@@ -151,10 +171,8 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 				break;
 			}
 
-			AddressSet subSet = new AddressSet(todoSet.getMinAddress(), data.getMaxAddress());
-
 			boolean contains = todoSet.contains(entry);
-			todoSet = todoSet.subtract(subSet);
+			todoSet.delete(minAddr, data.getMaxAddress());
 
 			if (contains) {
 
@@ -164,6 +182,7 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 					scheduleFollowOnAnalysis(program, todoSet);
 					return true;
 				}
+				numInstChecked++;
 			}
 		}
 
@@ -207,43 +226,48 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 	}
 
 	private boolean doValidStart(Address entry, TaskMonitor monitor) {
-		// try the mode of the last instruction above this place
+		BigInteger tmodeVal = null;
 
-		BigInteger curValue = null;
-		PseudoDisassemblerContext pseudoContext =
-			new PseudoDisassemblerContext(curProgram.getProgramContext());
-
-		// get the current value from the program context
+		// Try to figure out the right TMode to use
 		if (tmodeReg != null) {
-			curValue = curProgram.getProgramContext().getValue(tmodeReg, entry, false);
-			// if it doesn't have one set, try to get it the last context from the instruction before
-			if (curValue == null) {
-				Instruction instr = listing.getInstructionBefore(entry);
-				if (instr != null) {
-					curValue =
-						curProgram.getProgramContext().getValue(tmodeReg, instr.getMinAddress(), false);
-					if (curValue != null) {
-						pseudoContext.setValue(tmodeReg, entry, curValue);
-					}
-				}
+			// try to get TMode at last context from the instruction before
+			Instruction instr = listing.getInstructionBefore(entry);
+			if (instr != null) {
+				Address addr = instr.getMinAddress();
+				tmodeVal = curProgram.getProgramContext().getValue(tmodeReg, addr, false);
+			}
+			
+			// if instruction doesn't have one set, try to get it from the program
+			if (tmodeVal == null) {
+				tmodeVal = curProgram.getProgramContext().getValue(tmodeReg, entry, false);
+			}
+			
+			// still no value, start at ARM mode (0)
+			if (tmodeVal == null) {
+				tmodeVal = BigInteger.ZERO;  
 			}
 		}
-		boolean isvalid = pseudo.checkValidSubroutine(entry, pseudoContext, true, false); // try the current mode
+		
+		// try the TMode
+		boolean isvalid = false;
+		try {
+			isvalid = checkValidARMTMode(entry, tmodeVal);
+		}
+		catch (InsufficientBytesException | UnknownInstructionException
+				| UnknownContextException e) {
+			// ignore, mode not valid
+		}
 
+		// try the opposite Thumb mode
 		if (!isvalid && tmodeReg != null) {
-			// TMode is single bit value
-			if (curValue != null) {
-				curValue = curValue.flipBit(0);
+			tmodeVal = tmodeVal.flipBit(0);
+			try {
+				isvalid = checkValidARMTMode(entry, tmodeVal);
 			}
-			else {
-				curValue = BigInteger.ONE;
+			catch (InsufficientBytesException | UnknownInstructionException
+					| UnknownContextException e) {
+				// ignore, not valid
 			}
-
-			pseudoContext = new PseudoDisassemblerContext(curProgram.getProgramContext());
-			pseudoContext.setValue(tmodeReg, entry, curValue);
-
-			isvalid = pseudo.checkValidSubroutine(entry, pseudoContext, true, false);
-
 		}
 		if (!isvalid) {
 			return false;
@@ -257,10 +281,18 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 		if (sym != null && sym.getSource() == SourceType.IMPORTED) {
 			addsInfo = true;
 		}
-		pseudoContext = new PseudoDisassemblerContext(curProgram.getProgramContext());
+		
+		// set the TMode to the mode figured out
+		PseudoDisassemblerContext pseudoContext =
+				new PseudoDisassemblerContext(curProgram.getProgramContext());
 		if (tmodeReg != null) {
-			pseudoContext.setValue(tmodeReg, entry, curValue);
+			pseudoContext.setValue(tmodeReg, entry, tmodeVal);
 		}
+		
+		// Compute the possibly body, and note any evidence this code is worth
+		// taking a risk and disassembling.  It must be consistent with existing code,
+		// and add more information, like newly discovered code or a ref to an existing
+		// function.
 		AddressSet body =
 			pseudo.followSubFlows(entry, pseudoContext, 1000, new PseudoFlowProcessor() {
 				Object lastResults[] = null;
@@ -342,10 +374,12 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 					if (ftype.isCall() && ftype.isComputed() && lastResults != null &&
 						instr.getNumOperands() == 1) {
 						Register reg = instr.getRegister(0);
-						for (int i = 0; i < lastResults.length; i++) {
-							if (reg.equals(lastResults[i])) {
-								addsInfo = true;
-								return true;
+						if (reg != null) {
+							for (int i = 0; i < lastResults.length; i++) {
+								if (reg.equals(lastResults[i])) {
+									addsInfo = true;
+									return true;
+								}
 							}
 						}
 					}
@@ -378,7 +412,7 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 		// if this body is a subset of last body, assume we will keep disassembling the same thing since we keep getting the same body
 		//
 		if (lastBody != null && lastBody.contains(body) && (lastBodyTheSameCount++ > 5)) {
-			todoSet = todoSet.subtract(body);
+			todoSet.delete(body);
 			lastBody = null;
 			lastBodyTheSameCount = 0;
 		}
@@ -409,7 +443,7 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 				curProgram.getReferenceManager().getReferenceCountTo(entry) > 0) {
 				// don't try to do anything with the flow from here.
 				AddressSet badSet = new AddressSet(body.getMinAddress(), body.getMaxAddress());
-				todoSet = todoSet.subtract(badSet);
+				todoSet.delete(badSet);
 				return false;
 			}
 		}
@@ -431,6 +465,10 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 				distance = 0x777777;
 				break;
 			}
+			// TODO: This protects against a jump to a small terminal instruction block
+			//       Is this the right way to detect?
+			// TODO: If the code flows into other code, it could be branching to it,
+			//       which shouldn't be included in the body of the function.
 			if (range.getLength() <= 4) {
 				distance = 0x777777;
 				break;
@@ -449,7 +487,7 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 
 		if (isvalid) {
 			try {
-				curProgram.getProgramContext().setValue(tmodeReg, entry, entry, curValue);
+				curProgram.getProgramContext().setValue(tmodeReg, entry, entry, tmodeVal);
 			}
 			catch (ContextChangeException e) {
 				Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
@@ -468,7 +506,7 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 				clearCmd.applyTo(curProgram);
 				return false;
 			}
-			todoSet = todoSet.subtract(cmd.getDisassembledAddressSet());
+			todoSet.delete(cmd.getDisassembledAddressSet());
 			BookmarkEditCmd bcmd =
 				new BookmarkEditCmd(entry, BookmarkType.ANALYSIS,
 					"ARM Aggressive Intruction Finder", "Found code");
@@ -479,13 +517,58 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 		return false;
 	}
 
+	private boolean checkValidARMTMode(Address entry, BigInteger thumbValue)
+			throws InsufficientBytesException, UnknownInstructionException,
+			UnknownContextException {
+		
+		PseudoDisassemblerContext pseudoContext = new PseudoDisassemblerContext(curProgram.getProgramContext());
+		
+		if (tmodeReg != null && thumbValue != null) {
+			pseudoContext.setValue(tmodeReg, entry, thumbValue);
+		}
+		
+		pseudoContext.flowStart(entry);
+		PseudoInstruction instr = pseudo.disassemble(entry, pseudoContext, false);
+		
+		pseudoContext = new PseudoDisassemblerContext(curProgram.getProgramContext());
+		pseudoContext.setValue(tmodeReg, entry, thumbValue);
+
+		if (instr != null && !isFillerInstruction(instr)) { 
+			return pseudo.checkValidSubroutine(entry, pseudoContext, true, false); // try the current mode
+		}
+		return false;
+	}
+
+	private boolean isFillerInstruction(PseudoInstruction instr) {
+		String mnemonic= instr.getMnemonicString();
+		
+		if (mnemonic.equals("nop")) {
+			return true;
+		}
+		
+		if (mnemonic.equals("mov") || mnemonic.equals("movs")) {
+			// if input and output register are the same is filler
+			if (instr.getNumOperands() == 2) {
+				Register reg1 = instr.getRegister(0);
+				Register reg2 = instr.getRegister(1);
+				if (reg1 != null && reg1.equals(reg2)) {
+					return true;
+				}
+			}
+		}
+		
+		return false;
+	}
+
 	/**
 	 * Check if there are blocks marked executable.
 	 *   If there are exec blocks, remove all un-exec blocks from the set.
-	 * @param program
-	 * @param set
+	 * @param program program
+	 * @param set addresses to be checked
+	 * 
+	 * @return set of address that are executable
 	 */
-	private AddressSetView checkExecBlocks(Program program, AddressSetView set) {
+	private AddressSet checkExecBlocks(Program program, AddressSetView set) {
 		// check if there is a block marked unexec
 
 		AddressSet execSet = new AddressSet();
@@ -497,106 +580,11 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 		}
 
 		if (execSet.isEmpty()) {
-			return set;
+			return new AddressSet(set);
 		}
 		if (set.isEmpty()) {
 			return execSet;
 		}
 		return set.intersect(execSet);
 	}
-
-//	private boolean computeExistingMasks(TaskMonitor monitor) {
-//		long funcCount = curProgram.getFunctionManager().getFunctionCount();
-//		
-//		if (funcStartMap == null || lastProgramHash != curProgram.hashCode() ||
-//				funcStartMap.isEmpty() || funcCount > (lastFuncCount * 1.10)) {
-//				lastProgramHash = curProgram.hashCode();
-//				lastFuncCount = funcCount;
-//				
-//				funcStartMap = new HashMap<BigInteger, Integer>();
-//		}
-//		
-//		if (funcCount < 20 || curProgram.getListing().getNumInstructions() <= 0) {
-//			return false;
-//		}
-//		
-//		monitor.setMessage("AIF - hashing functions");
-//		
-//		FunctionManager functionManager = curProgram.getFunctionManager();
-//		FunctionIterator funcs = functionManager.getFunctions(true);
-//		int functionCount = functionManager.getFunctionCount();
-//		monitor.initialize(functionCount);
-//
-//		while (funcs.hasNext()) {
-//			monitor.incrementProgress(1);
-//			Function function = funcs.next();
-//
-//			Address entry = function.getEntryPoint();
-//
-//			// get the current value from the program context
-//			BigInteger tmodeVal = curProgram.getProgramContext().getValue( tmodeReg, entry, false);
-//			
-//			Instruction instr = curProgram.getListing().getInstructionAt(entry);
-//			if (instr == null) {
-//				continue;
-//			}
-//			try {
-//				SleighDebugLogger ilog =
-//					new SleighDebugLogger(curProgram, entry, SleighDebugMode.MASKS_ONLY);
-//				if (ilog.parseFailed()) {
-//					continue;
-//				}
-//				byte[] imask = ilog.getInstructionMask();
-//				if (imask.length == 1) {
-//					imask[0] = (byte) 0xff;
-//				}
-//				byte[] ibytes = ilog.getMaskedBytes(imask);
-//				int ilen = instr.getLength();
-//
-//				instr = curProgram.getListing().getInstructionAt(instr.getMaxAddress().add(1));
-//				if (instr != null) {
-//					ilog =
-//						new SleighDebugLogger(curProgram, entry.add(ibytes.length),
-//							SleighDebugMode.MASKS_ONLY);
-//					byte[] imask2 = ilog.getInstructionMask();
-//					if (imask2.length == 1) {
-//						imask2[0] = (byte) 0xff;
-//					}
-//					byte[] ibytes2 = ilog.getMaskedBytes(imask2);
-//					byte[] ibytes1 = ibytes;
-//					ibytes = new byte[ibytes1.length + ibytes2.length];
-//					System.arraycopy(ibytes1, 0, ibytes, 0, ibytes1.length);
-//					System.arraycopy(ibytes2, 0, ibytes, ibytes1.length, ibytes2.length);
-//				}
-//
-//				BigInteger bi = new BigInteger(ibytes);
-//				Integer count = funcStartMap.get(bi);
-//				if (count != null) {
-//					count++;
-//					funcStartMap.put(bi, count);
-//					// tmodeStartMap.put(bi, tmodeVal);
-//					continue;
-//				}
-//				funcStartMap.put(bi, 1);
-//				//tmodeStartMap.put(bi, tmodeVal);
-//			}
-//			catch (IllegalStateException exc) {
-//				continue;
-//			}
-//			catch (IllegalArgumentException exc) {
-//				continue;
-//			}
-//		}
-////			Err.info(this, "" + funcList.size() + " number of starts");
-////			
-////			Iterator iter = funcStartMap.keySet().iterator();
-////			while (iter.hasNext()) {
-////				BigInteger key = (BigInteger) iter.next();
-////				Integer val = funcStartMap.get(key);
-////				Err.info(this, "   " + key + " = " + val + "\t\t\t\t");
-////			}
-//		
-//		return true;
-//	}
-
 }
