@@ -213,12 +213,11 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 		try {
 			checkDeleted();
 			record.setString(CompositeDBAdapter.COMPOSITE_COMMENT_COL, desc);
-			try {
-				compositeAdapter.updateRecord(record, true);
-			}
-			catch (IOException e) {
-				dataMgr.dbError(e);
-			}
+			compositeAdapter.updateRecord(record, true);
+			dataMgr.dataTypeChanged(this, false);
+		}
+		catch (IOException e) {
+			dataMgr.dbError(e);
 		}
 		finally {
 			lock.release();
