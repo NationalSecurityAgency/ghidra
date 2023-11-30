@@ -1118,6 +1118,21 @@ public class DecompileOptions {
 	}
 
 	/**
+	 * @return true if the decompiler currently respects read-only flags
+	 */
+	public boolean isRespectReadOnly() {
+		return readOnly;
+	}
+
+	/**
+	 * Set whether the decompiler should respect read-only flags as part of its analysis.
+	 * @param readOnly is true if read-only flags are respected
+	 */
+	public void setRespectReadOnly(boolean readOnly) {
+		this.readOnly = readOnly;
+	}
+
+	/**
 	 * If the decompiler currently applies transformation rules that identify and
 	 * simplify double precision arithmetic operations, true is returned.
 	 * @return true if the decompiler applies double precision rules
