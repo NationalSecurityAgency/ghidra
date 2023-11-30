@@ -492,7 +492,7 @@ attach variables [ debugreg_x ]  [ DR8 DR9 DR10 DR11 DR12 DR13 DR14 DR15 ];
 attach variables creg  [ CR0 CR1 CR2 CR3 CR4 CR5 CR6 CR7 ];
 attach variables creg_x [ CR8 CR9 CR10 CR11 CR12 CR13 CR14 CR15 ];
 @else
-attach variables [ testreg ]   [ TR0 TR1 TR2 TR3 TR6 TR7 TR6 TR7 ];
+attach variables [ testreg ]   [ TR0 TR1 TR2 TR3 TR4 TR5 TR6 TR7 ];
 attach variables creg  [ CR0 _ CR2 CR3 CR4 _ _ _ ];
 @endif
 
@@ -3189,10 +3189,8 @@ define pcodeop TaskRegister;
 
 @ifndef IA64
 # These are obsolete instructions after the 486 generation.
-# They were erroneously placed in the IA64 build.
-# They were removed to facilitate instruction patching to generate "MOV EAX, 0x2" correctly.
-#:MOV r32, testreg	is vexMode=0 & byte=0xf; byte=0x24; r32 &  testreg & mod=3  { r32 =  testreg; }
-#:MOV testreg, r32	is vexMode=0 & byte=0xf; byte=0x26; r32 &  testreg & mod=3  {  testreg = r32; }
+:MOV r32, testreg	is vexMode=0 & byte=0xf; byte=0x24; r32 &  testreg & mod=3  { r32 =  testreg; }
+:MOV testreg, r32	is vexMode=0 & byte=0xf; byte=0x26; r32 &  testreg & mod=3  {  testreg = r32; }
 @endif
 
 define pcodeop swap_bytes;
