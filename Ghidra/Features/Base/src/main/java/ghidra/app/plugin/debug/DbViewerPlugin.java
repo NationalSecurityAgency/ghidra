@@ -41,7 +41,7 @@ import resources.Icons;
 //@formatter:on
 public class DbViewerPlugin extends Plugin {
 
-	private DbViewerProvider viewer;
+	private DbViewerProvider provider;
 	private DockingAction refreshAction;
 
 	public DbViewerPlugin(PluginTool tool) {
@@ -52,11 +52,11 @@ public class DbViewerPlugin extends Plugin {
 
 	@Override
 	protected void dispose() {
-		if (viewer != null) {
+		if (provider != null) {
 			deactivateViewer();
-			tool.removeComponentProvider(viewer);
-			viewer.dispose();
-			viewer = null;
+			tool.removeComponentProvider(provider);
+			provider.dispose();
+			provider = null;
 		}
 		super.dispose();
 	}
@@ -66,8 +66,8 @@ public class DbViewerPlugin extends Plugin {
 		refreshAction = new DockingAction("Refresh", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				if (viewer != null) {
-					viewer.refresh();
+				if (provider != null) {
+					provider.refresh();
 				}
 			}
 		};
@@ -78,19 +78,19 @@ public class DbViewerPlugin extends Plugin {
 	}
 
 	private void activateViewer(DomainObjectAdapterDB dobj) {
-		if (viewer == null) {
-			viewer = new DbViewerProvider(this);
-			tool.addComponentProvider(viewer, false);
-			tool.addLocalAction(viewer, refreshAction);
+		if (provider == null) {
+			provider = new DbViewerProvider(this);
+			tool.addComponentProvider(provider, false);
+			tool.addLocalAction(provider, refreshAction);
 		}
-		viewer.openDatabase(dobj.getName(), dobj.getDBHandle());
+		provider.openDatabase(dobj.getName(), dobj.getDBHandle());
 		refreshAction.setEnabled(true);
 	}
 
 	private void deactivateViewer() {
-		if (viewer != null) {
+		if (provider != null) {
 			refreshAction.setEnabled(false);
-			viewer.closeDatabase();
+			provider.closeDatabase();
 		}
 	}
 

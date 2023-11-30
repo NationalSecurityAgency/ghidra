@@ -293,7 +293,6 @@ public class FidDebugPlugin extends ProgramPlugin implements ChangeListener {
 	 * @param choices array of choices for the users
 	 * @param defaultValue the default value to select
 	 * @return the user's choice, or null
-	 * @throws CancelledException if the user cancels
 	 */
 	protected <T> T askChoice(String title, String message, List<T> choices, T defaultValue) {
 		AskDialog<T> dialog =

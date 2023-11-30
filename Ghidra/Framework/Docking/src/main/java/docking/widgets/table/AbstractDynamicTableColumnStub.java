@@ -23,6 +23,8 @@ import ghidra.framework.plugintool.ServiceProvider;
  * the DATA_SOURCE parameter of DynamicTableColumn.  This class will stub the default 
  * {@link #getValue(Object, Settings, Object, ServiceProvider)} method and
  * call a version of the method that does not have the DATA_SOURCE parameter.
+ * @param <ROW_TYPE> the row type
+ * @param <COLUMN_TYPE> the column type
  */
 public abstract class AbstractDynamicTableColumnStub<ROW_TYPE, COLUMN_TYPE> extends
 		AbstractDynamicTableColumn<ROW_TYPE, COLUMN_TYPE, Object> {
