@@ -142,7 +142,7 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 		}
 	}
 
-	private TableColumnDescriptor<ROW_TYPE> getTableColumnDescriptor() {
+	protected TableColumnDescriptor<ROW_TYPE> getTableColumnDescriptor() {
 		if (columnDescriptor == null) {
 			columnDescriptor = createTableColumnDescriptor();
 		}

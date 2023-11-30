@@ -228,6 +228,122 @@
 	</BLOCKQUOTE>
 
     <P class="providedbyplugin">Provided By: <I>StringTablePlugin</I></P>
+    
+    <H3><A name="Encoded_Strings_Dialog"></A>Search For Encoded Strings</H3>
+
+    <BLOCKQUOTE>
+      <P>The <b>Encoded Strings Dialog</b> is an alternate way to find and
+      create string instances in undefined data locations.  It allows setting the character
+      set (charset) of the string to be created, as well as the ability to filter out byte
+      sequences from the selected locations that are not valid strings.</P>
+      <P>The <b>Encoded Strings Dialog</b> will initially allow the user to select the character set of the
+      string to create, and displays a preview of the strings found in the current selection:</P>
+    </BLOCKQUOTE>
+    <DIV align="center">
+      <CENTER>
+        <TABLE border="0" width="100%">
+          <TBODY>
+            <TR>
+              <TD align="center" width="100%"><IMG src="images/EncodedStringsDialog_initial.png"></TD>
+            </TR>
+          </TBODY>
+        </TABLE>
+      </CENTER>
+    </DIV>
+    
+    <P><B>Advanced options</B></P>
+    
+    <BLOCKQUOTE>
+      <P>Click the <b>Advanced...</b> and the <b>A-Z,&#x6211;&#x7684;...</B> (Filter by character scripts)
+      buttons to show additional options that will allow filtering the selected byte range for
+      strings containing specific scripts (alphabets) and also excluding strings that have
+      properties that are unwanted.</P>
+    </BLOCKQUOTE>
+    <DIV align="center">
+      <CENTER>
+        <TABLE border="0" width="100%">
+          <TBODY>
+            <TR>
+              <TD align="center" width="100%"><IMG src="images/EncodedStringsDialog_advancedoptions.png"></TD>
+            </TR>
+          </TBODY>
+        </TABLE>
+      </CENTER>
+    </DIV>
+    
+    <P><B>Character Script filtering</B></P>
+
+    <BLOCKQUOTE>
+      <P>The <b>Script</b> drop-down list and the various <b>Allow Additional</b> toggle buttons
+      control how strings are filtered based on the script (Latin, Cyrillic, Arabic, etc) of each
+      of the characters found in the string.</P>
+      <P>The script chosen in the drop-down list will limit the included strings to strings that
+      include at least one character of the desired script.</P>
+      <P>If no <b>Allow Additional</b> toggle buttons are pressed, included strings will be limited
+      to strings that are solely comprised of characters from the chosen script (alphabet).  This
+      would exclude strings that contain characters such as the space character or numeric characters
+      (labeled as the <b>Common</b> script), which typically is not desired.  Select the <b>0-9,!?</b>
+      toggle to allow those characters.</P>
+      <P>The <b>A-Z</b> (Latin) toggle will allow Latin characters to be present in included
+      strings.  This is redundant if the <b>Script</b> drop-down list is already set to Latin,
+      but becomes useful when another script is chosen, to allow including strings that are a
+      mixture of the selected script and Latin, which commonly occurs when strings have symbol
+      names, scientific units, etc.</P>
+      <P>The <b>Any</b> toggle will allow any additional script to be present in included strings.</P>
+      <P>More advanced filtering logic can be had by creating a column
+      filter using <b>Create Column Filter</b> button in the lower right corner of the preview area
+      and filtering on the <b>Unicode Script</b> column.</P>
+    </BLOCKQUOTE>
+    
+    <P><B>Exclude codec errors, non-standard control chars</B></P>
+    
+    <BLOCKQUOTE>
+    	<P>The <b>Exclude codec errors</b> check box excludes strings that contain the Unicode
+    	REPLACEMENT character, which is placed into decoded strings when the charset codec logic
+    	encounters a byte or byte sequence that is invalid.  For example, the <b>US-ASCII</b>
+    	charset will translate bytes greater than 0x7f into REPLACEMENT characters.</P>
+    	<P>The <b>Exclude non-std ctrl chars</b> check box excludes strings that contain
+    	characters that correspond to control characters in the range 1..31, but ignoring
+    	common control characters such as tab, CR, LF.</P>
+    </BLOCKQUOTE>
+    	    
+    
+    <P><B>Exclude invalid strings</B></P>
+    
+    <BLOCKQUOTE>
+    	<P>The <b>Exclude invalid strings</b> option tests each candidate string against a pre-built
+    	trigram frequency model and rejects strings that score lower than a cut-off value.</P>
+    	<P>The built-in string model file was trained with mostly english strings, and will
+    	probably mark valid words from other languages as invalid.</P>
+    </BLOCKQUOTE>
+    
+    <P><B>Misc options</B></P>
+    
+    <BLOCKQUOTE>
+    	<P><b>Minimum Length</b> - excludes strings shorter than this (measured in characters, not
+    	bytes)</P>
+    	<P><b>Align start of string</b> - ensures strings start at a location that is evenly divisible
+    	by the alignment requirements of the character size of the charset.</P>
+    	<P><b>Truncate at ref</b> - ends strings early when there is an inbound reference to a
+    	character inside the string.</P>
+    </BLOCKQUOTE>    
+
+    <P><B>Tip</B></P>
+    
+    <BLOCKQUOTE>
+      <P>When an option is responsible for excluding / filtering-out a string, that option will
+      have a red superscripted number next to it that contains the total count of strings
+      excluded by that option.</P>
+    </BLOCKQUOTE>
+    
+    <P><B>Related</B></P>
+    
+    <BLOCKQUOTE>
+      <P>See the <a href="../ViewStringsPlugin/ViewStringsPlugin.htm">Defined Strings</a> window to see
+      already created strings.</P>
+    </BLOCKQUOTE>
+    
+    <P class="providedbyplugin">Provided By: <I>EncodedStringsPlugin</I></P>
 
     <P class="relatedtopic">Related Topics:</P>
 

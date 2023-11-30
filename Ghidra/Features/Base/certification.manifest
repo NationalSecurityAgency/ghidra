@@ -41,7 +41,7 @@ data/parserprofiles/linux_64.prf||GHIDRA||||END|
 data/parserprofiles/objc_mac_carbon.prf||GHIDRA||||END|
 data/parserprofiles/vs12Local.prf||GHIDRA||||END|
 data/pcodetest/EmuTesting.gdt||GHIDRA||||END|
-data/stringngrams/StringModel.sng||GHIDRA||reviewed||END|
+data/stringngrams/StringModel.sng||GHIDRA||||END|
 data/symbols/README.txt||GHIDRA||||END|
 data/symbols/win16/commctrl.exports||GHIDRA||||END|
 data/symbols/win16/commdlg.exports||GHIDRA||||END|
@@ -510,6 +510,8 @@ src/main/help/help/topics/Search/Search_for_DirectReferences.htm||GHIDRA||||END|
 src/main/help/help/topics/Search/Search_for_Strings.htm||GHIDRA||||END|
 src/main/help/help/topics/Search/Searching.htm||GHIDRA||||END|
 src/main/help/help/topics/Search/images/DirectReferences.png||GHIDRA||||END|
+src/main/help/help/topics/Search/images/EncodedStringsDialog_advancedoptions.png||GHIDRA||||END|
+src/main/help/help/topics/Search/images/EncodedStringsDialog_initial.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/MultipleSelectionError.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/QueryResultsSearch.png||GHIDRA||||END|
 src/main/help/help/topics/Search/images/SearchForAddressTables.png||GHIDRA||||END|

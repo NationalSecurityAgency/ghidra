@@ -26,8 +26,7 @@ import java.util.*;
 
 import generic.stl.Pair;
 import ghidra.docking.settings.*;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressOutOfBoundsException;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.RenderUnicodeSettingsDefinition.RENDER_ENUM;
 import ghidra.program.model.data.StringRenderParser.StringParseException;
 import ghidra.program.model.lang.Endian;
@@ -378,6 +377,19 @@ public class StringDataInstance {
 	 */
 	public Address getAddress() {
 		return buf.getAddress();
+	}
+
+	public Address getEndAddress() {
+		try {
+			return length > 0 ? buf.getAddress().addNoWrap(length - 1) : buf.getAddress();
+		}
+		catch (AddressOverflowException e) {
+			return buf.getAddress();
+		}
+	}
+
+	public AddressRange getAddressRange() {
+		return new AddressRangeImpl(getAddress(), getEndAddress());
 	}
 
 	private boolean isBadCharSize() {
