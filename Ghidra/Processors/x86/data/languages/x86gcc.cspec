@@ -25,6 +25,7 @@
   <global>
     <range space="ram"/>
     <range space="OTHER"/>
+    <register name="MXCSR"/>
   </global>
   <stackpointer register="ESP" space="ram"/>
   <returnaddress>

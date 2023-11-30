@@ -35,6 +35,7 @@
   
   <global>
     <range space="ram"/>
+    <register name="MXCSR"/>
   </global>
   <stackpointer register="RSP" space="ram"/>
   <returnaddress>
