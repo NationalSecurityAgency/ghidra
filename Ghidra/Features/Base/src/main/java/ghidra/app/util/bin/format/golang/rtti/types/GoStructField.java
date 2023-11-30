@@ -21,6 +21,9 @@ import ghidra.app.util.bin.format.golang.rtti.GoName;
 import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 
+/**
+ * Structure used to define a field in a {@link GoStructType struct type}.
+ */
 @StructureMapping(structureName = "runtime.structfield")
 public class GoStructField {
 
@@ -31,12 +34,12 @@ public class GoStructField {
 	private StructureContext<GoStructField> context;
 
 	@FieldMapping
-	@MarkupReference
-	@EOLComment("nameString")
+	@MarkupReference("getGoName")
+	@EOLComment("getName")
 	private long name;	// direct ptr to GoName
 
 	@FieldMapping
-	@MarkupReference("type")
+	@MarkupReference("getType")
 	private long typ;	// direct ptr to GoType
 
 	@FieldMapping(optional = true) //<=1.18
@@ -45,23 +48,44 @@ public class GoStructField {
 	@FieldMapping(optional = true) //>=1.19 
 	private long offset;
 
+	/**
+	 * Returns the name of this field.
+	 * 
+	 * @return name of this field as it's raw GoName value
+	 * @throws IOException if error reading
+	 */
 	@Markup
-	public GoName getName() throws IOException {
+	public GoName getGoName() throws IOException {
 		return name != 0
 				? context.getDataTypeMapper().readStructure(GoName.class, name)
 				: null;
 	}
 
+	/**
+	 * Returns the type of this field.
+	 * 
+	 * @return type of this field
+	 * @throws IOException if error reading
+	 */
 	@Markup
 	public GoType getType() throws IOException {
 		return programContext.getGoType(typ);
 	}
 
+	/**
+	 * Setter called by offsetAnon field's serialization, referred by fieldmapping annotation.
+	 * 
+	 * @param offsetAnon value
+	 */
 	public void setOffsetAnon(long offsetAnon) {
 		this.offsetAnon = offsetAnon;
 		this.offset = offsetAnon >> 1;
 	}
 
+	/**
+	 * Returns the offset of this field.
+	 * @return offset of this field
+	 */
 	public long getOffset() {
 		return offset;
 	}
@@ -70,9 +94,13 @@ public class GoStructField {
 //		return (offsetAnon & 0x1) != 0;
 //	}
 
-	public String getNameString() throws IOException {
-		GoName n = getName();
-		return n != null ? n.getName() : null;
+	/**
+	 * Returns the name of this field.
+	 * 
+	 * @return name of this field
+	 */
+	public String getName() {
+		return programContext.getSafeName(this::getGoName, this, null).getName();
 	}
 }
 /*

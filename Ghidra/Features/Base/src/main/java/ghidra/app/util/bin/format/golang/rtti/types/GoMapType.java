@@ -20,6 +20,7 @@ import java.util.Set;
 
 import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.bin.format.golang.structmapping.*;
+import ghidra.app.util.viewer.field.AddressAnnotatedStringHandler;
 import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 
@@ -33,12 +34,15 @@ import ghidra.util.Msg;
 public class GoMapType extends GoType {
 
 	@FieldMapping
+	@MarkupReference("getKey")
 	private long key;	// ptr to type
 
 	@FieldMapping
+	@MarkupReference("getElement")
 	private long elem;	// ptr to type
 
 	@FieldMapping
+	@MarkupReference("getBucket")
 	private long bucket;	// ptr to type
 
 	@FieldMapping
@@ -60,16 +64,34 @@ public class GoMapType extends GoType {
 		// empty
 	}
 
+	/**
+	 * Returns the GoType that defines the map's key, referenced by the key field's markup annotation
+	 * 
+	 * @return GoType that defines the map's key
+	 * @throws IOException if error reading data
+	 */
 	@Markup
 	public GoType getKey() throws IOException {
 		return programContext.getGoType(key);
 	}
 
+	/**
+	 * Returns the GoType that defines the map's element, referenced by the element field's markup annotation
+	 * 
+	 * @return GoType that defines the map's element
+	 * @throws IOException if error reading data
+	 */
 	@Markup
 	public GoType getElement() throws IOException {
 		return programContext.getGoType(elem);
 	}
 
+	/**
+	 * Returns the GoType that defines the map's bucket, referenced by the bucket field's markup annotation
+	 * 
+	 * @return GoType that defines the map's bucket
+	 * @throws IOException if error reading data
+	 */
 	@Markup
 	public GoType getBucket() throws IOException {
 		return programContext.getGoType(bucket);
@@ -83,13 +105,14 @@ public class GoMapType extends GoType {
 			// a void*
 			return programContext.getDTM().getPointer(null);
 		}
-		DataType mapDT = mapGoType.recoverDataType();
+		DataType mapDT = programContext.getRecoveredType(mapGoType);
 		Pointer ptrMapDt = programContext.getDTM().getPointer(mapDT);
 		if (typ.getSize() != ptrMapDt.getLength()) {
 			Msg.warn(this, "Size mismatch between map type and recovered type");
 		}
-		TypedefDataType typedef = new TypedefDataType(programContext.getRecoveredTypesCp(),
-			getStructureName(), ptrMapDt, programContext.getDTM());
+		TypedefDataType typedef =
+			new TypedefDataType(programContext.getRecoveredTypesCp(getPackagePathString()),
+				getUniqueTypename(), ptrMapDt, programContext.getDTM());
 		return typedef;
 	}
 
@@ -112,4 +135,20 @@ public class GoMapType extends GoType {
 		}
 		return true;
 	}
+
+	@Override
+	protected String getTypeDeclString() throws IOException {
+		// type CustomMaptype map[keykey]valuetype
+		String selfName = typ.getName();
+		String keyName = programContext.getGoTypeName(key);
+		String elemName = programContext.getGoTypeName(elem);
+		String defStr = "map[%s]%s".formatted(keyName, elemName);
+		String defStrWithLinks = "map[%s]%s".formatted(
+			AddressAnnotatedStringHandler.createAddressAnnotationString(key, keyName),
+			AddressAnnotatedStringHandler.createAddressAnnotationString(elem, elemName));
+		boolean hasName = !defStr.equals(selfName);
+
+		return "type %s%s".formatted(hasName ? selfName + " " : "", defStrWithLinks);
+	}
+
 }

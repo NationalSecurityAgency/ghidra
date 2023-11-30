@@ -27,6 +27,11 @@ public class GoConstants {
 	 * Category path to place golang types in
 	 */
 	public static final CategoryPath GOLANG_CATEGORYPATH = new CategoryPath("/golang");
+	public static final CategoryPath GOLANG_BOOTSTRAP_FUNCS_CATEGORYPATH =
+		GOLANG_CATEGORYPATH.extend("functions");
+	public static final CategoryPath GOLANG_RECOVERED_TYPES_CATEGORYPATH =
+		new CategoryPath("/golang-recovered");
+
 
 	public static final String GOLANG_ABI_INTERNAL_CALLINGCONVENTION_NAME = "abi-internal";
 	public static final String GOLANG_ABI0_CALLINGCONVENTION_NAME = "abi0";

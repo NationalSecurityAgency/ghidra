@@ -29,6 +29,8 @@ import ghidra.util.Msg;
  * <p>
  * To coerce java inheritance and structmapping features to match the layout of go rtti type structs,
  * this class is constructed strangely.
+ * <p>
+ * {@link GoType} structure that defines a built-in primitive type.
  */
 @StructureMapping(structureName = "runtime._type")
 public class GoPlainType extends GoType implements StructureReader<GoType> {
@@ -65,9 +67,10 @@ public class GoPlainType extends GoType implements StructureReader<GoType> {
 			dt = super.recoverDataType();
 		}
 
-		String name = typ.getNameString();
+		String name = getUniqueTypename();
 		if (!dt.getName().equalsIgnoreCase(name)) {
-			dt = new TypedefDataType(programContext.getRecoveredTypesCp(), name, dt, dtm);
+			dt = new TypedefDataType(programContext.getRecoveredTypesCp(getPackagePathString()),
+				name, dt, dtm);
 		}
 		if (dt.getLength() != typ.getSize()) {
 			Msg.warn(this,
@@ -81,5 +84,6 @@ public class GoPlainType extends GoType implements StructureReader<GoType> {
 	public boolean discoverGoTypes(Set<Long> discoveredTypes) throws IOException {
 		return super.discoverGoTypes(discoveredTypes);
 	}
+
 
 }

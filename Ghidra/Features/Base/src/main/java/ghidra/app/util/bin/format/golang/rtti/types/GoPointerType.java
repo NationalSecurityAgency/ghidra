@@ -15,23 +15,33 @@
  */
 package ghidra.app.util.bin.format.golang.rtti.types;
 
+import java.io.IOException;
 import java.util.Set;
 
-import java.io.IOException;
-
 import ghidra.app.util.bin.format.golang.structmapping.*;
+import ghidra.app.util.viewer.field.AddressAnnotatedStringHandler;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.PointerDataType;
 
+/**
+ * {@link GoType} structure that defines a pointer.
+ */
 @StructureMapping(structureName = "runtime.ptrtype")
 public class GoPointerType extends GoType {
 	@FieldMapping
-	@MarkupReference("element")
+	@MarkupReference("getElement")
 	private long elem;
 
 	public GoPointerType() {
+		// empty
 	}
 
+	/**
+	 * Returns a reference to the element's type.
+	 * 
+	 * @return reference to the element's type
+	 * @throws IOException if error reading data
+	 */
 	@Markup
 	public GoType getElement() throws IOException {
 		return programContext.getGoType(elem);
@@ -58,4 +68,25 @@ public class GoPointerType extends GoType {
 		}
 		return true;
 	}
+
+	@Override
+	public String getStructureNamespace() throws IOException {
+		GoType elementType = getElement();
+		return elementType != null
+				? elementType.getStructureNamespace()
+				: super.getStructureNamespace();
+	}
+
+	@Override
+	protected String getTypeDeclString() throws IOException {
+		// type PointerTypeName *elementType
+		String selfName = getName();
+		String elemName = programContext.getGoTypeName(elem);
+		String defStr = "*" + elemName;
+		String defStrWithLinks =
+			"*" + AddressAnnotatedStringHandler.createAddressAnnotationString(elem, elemName);
+		boolean hasName = !defStr.equals(selfName);
+		return "type %s%s".formatted(hasName ? selfName + " " : "", defStrWithLinks);
+	}
+
 }

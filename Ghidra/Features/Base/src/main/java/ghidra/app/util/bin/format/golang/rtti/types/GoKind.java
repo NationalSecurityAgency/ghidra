@@ -15,6 +15,9 @@
  */
 package ghidra.app.util.bin.format.golang.rtti.types;
 
+/**
+ * Enum defining the various golang primitive types
+ */
 public enum GoKind {
 	invalid,
 	Bool,                   // 1

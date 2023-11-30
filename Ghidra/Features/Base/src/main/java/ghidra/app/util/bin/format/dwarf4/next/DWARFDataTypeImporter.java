@@ -28,6 +28,7 @@ import ghidra.app.util.DataTypeNamingUtil;
 import ghidra.app.util.bin.format.dwarf4.*;
 import ghidra.app.util.bin.format.dwarf4.attribs.DWARFNumericAttribute;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFEndianity;
+import ghidra.app.util.bin.format.dwarf4.encoding.DWARFSourceLanguage;
 import ghidra.app.util.bin.format.dwarf4.expression.DWARFExpressionException;
 import ghidra.app.util.bin.format.golang.rtti.types.GoKind;
 import ghidra.program.database.DatabaseObject;
@@ -197,10 +198,7 @@ public class DWARFDataTypeImporter {
 				break;
 
 			case DW_TAG_subroutine_type:
-				result = makeDataTypeForFunctionDefinition(diea, true);
-				break;
-			case DW_TAG_subprogram:
-				result = makeDataTypeForFunctionDefinition(diea, false);
+				result = makeDataTypeForFunctionDefinition(diea);
 				break;
 			default:
 				Msg.warn(this, "Unsupported datatype in die: " + diea.toString());
@@ -265,18 +263,35 @@ public class DWARFDataTypeImporter {
 	/*
 	 * Returns a Ghidra {@link FunctionDefinition} datatype built using the info from the DWARF die.
 	 * <p>
-	 * Function types may be assigned "mangled" names with parameter type info if the name
-	 * is already used or if this is an unnamed function defintion.
-	 * <p>
-	 * Can accept DW_TAG_subprogram, DW_TAG_subroutine_type DIEAs.
-	 * <p>
-	 * The logic of this impl is the same as {@link DWARFDataTypeManager#createFunctionDefinitionDataType(DIEAggregate)}
-	 * but the impls can't be shared without excessive over-engineering.
+	 * Function types may be assigned "mangled" names with parameter type info if this is an 
+	 * unnamed function definition.
 	 */
-	private DWARFDataType makeDataTypeForFunctionDefinition(DIEAggregate diea,
-			boolean mangleAnonFuncNames) throws IOException, DWARFExpressionException {
+	private DWARFDataType makeDataTypeForFunctionDefinition(DIEAggregate diea)
+			throws IOException, DWARFExpressionException {
 
 		DWARFNameInfo dni = prog.getName(diea);
+
+		// push an empty funcdef data type into the lookup cache to prevent recursive loops
+		FunctionDefinitionDataType funcDef =
+			new FunctionDefinitionDataType(dni.getParentCP(), dni.getName(), dataTypeManager);
+		DataType dtToAdd = funcDef;
+
+		int cuLang = diea.getCompilationUnit().getCompileUnit().getLanguage();
+		if (cuLang == DWARFSourceLanguage.DW_LANG_Go) {
+			if (diea.hasAttribute(DW_AT_byte_size)) {
+				// if the funcdef has a bytesize attribute, we should convert this data type to a ptr
+				long ptrSize = diea.getUnsignedLong(DW_AT_byte_size, -1);
+				if (ptrSize == dataTypeManager.getDataOrganization().getPointerSize()) {
+					ptrSize = -1;// use default pointer size
+				}
+				dtToAdd = dwarfDTM.getPtrTo(dtToAdd, (int) ptrSize);
+			}
+			//  golang funcdefs are ptr->ptr->funcs
+			dtToAdd = dwarfDTM.getPtrTo(dtToAdd, -1);
+		}
+
+		DWARFDataType result = new DWARFDataType(dtToAdd, dni, diea.getOffset());
+		recordTempDataType(result);  // prevents recursive type-lookups for this funcdef
 
 		DWARFDataType returnType = getDataType(diea.getTypeRef(), voidDDT);
 
@@ -288,15 +303,6 @@ public class DWARFDataTypeImporter {
 			DWARFDataType paramDT = getDataType(paramDIEA.getTypeRef(), null);
 			DataType dt = fixupDataTypeInconsistencies(paramDT);
 
-			if (dt == null && DWARFUtil.isPointerDataType(paramDIEA.getTypeRef())) {
-				// Hack to handle Golang self-referencing func defs.
-				Msg.error(this,
-					"Error resolving parameter data type, probable recursive definition, replacing with void*: " +
-						dni.getName());
-				Msg.debug(this, "Problem funcDef: " + diea.toString());
-				Msg.debug(this, "Problem param: " + paramDIEA);
-				dt = dwarfDTM.getPtrTo(dwarfDTM.getVoidType());
-			}
 			if (dt == null || dt.getLength() <= 0) {
 				Msg.error(this, "Bad function parameter type for " + dni.asCategoryPath());
 				return null;
@@ -308,8 +314,6 @@ public class DWARFDataTypeImporter {
 			foundThisParam |= DWARFUtil.isThisParam(paramDIEA);
 		}
 
-		FunctionDefinitionDataType funcDef =
-			new FunctionDefinitionDataType(dni.getParentCP(), dni.getName(), dataTypeManager);
 		funcDef.setReturnType(returnType.dataType);
 		funcDef.setNoReturn(diea.getBool(DW_AT_noreturn, false));
 		funcDef.setArguments(params.toArray(new ParameterDefinition[params.size()]));
@@ -327,9 +331,8 @@ public class DWARFDataTypeImporter {
 			}
 		}
 
-		if (dni.isAnon() && mangleAnonFuncNames) {
-			String mangledName =
-				DataTypeNamingUtil.setMangledAnonymousFunctionName(funcDef);
+		if (dni.isAnon()) {
+			String mangledName = DataTypeNamingUtil.setMangledAnonymousFunctionName(funcDef);
 			dni = dni.replaceName(mangledName, dni.getOriginalName());
 		}
 
@@ -339,17 +342,7 @@ public class DWARFDataTypeImporter {
 			updateMapping(origPD.getDataType(), newPD.getDataType());
 		}
 
-		DataType dtToAdd = funcDef;
-		if (diea.hasAttribute(DW_AT_byte_size)) {
-			// if the funcdef has a bytesize attribute, we should convert this data type to a ptr
-			long ptrSize = diea.getUnsignedLong(DW_AT_byte_size, -1);
-			if (ptrSize == dataTypeManager.getDataOrganization().getPointerSize()) {
-				ptrSize = -1;// use default pointer size
-			}
-			dtToAdd = dwarfDTM.getPtrTo(dtToAdd, (int) ptrSize);
-		}
-
-		return new DWARFDataType(dtToAdd, dni, diea.getOffset());
+		return result;
 	}
 
 	/**
@@ -1301,11 +1294,16 @@ public class DWARFDataTypeImporter {
 
 		boolean typedefWithSameName = DataTypeUtilities.equalsIgnoreConflict(
 			typedefDNI.asDataTypePath().getPath(), refdDT.dataType.getPathName());
-		if (!typedefWithSameName && refdDT.dataType instanceof Pointer ptrDT &&
-			ptrDT.getDataType() instanceof FunctionDefinition pointedToFuncDefDT) {
-			// hack to handle funcDefs that produce a ptr_to_funcdef instead of a funcdef type, which messes with name compare
-			typedefWithSameName = DataTypeUtilities.equalsIgnoreConflict(
-				typedefDNI.asDataTypePath().getPath(), pointedToFuncDefDT.getPathName());
+		if (!typedefWithSameName && refdDT.dataType instanceof Pointer ptrDT) {
+			if (ptrDT.getDataType() instanceof Pointer ptrptrDT) {
+				// handle double ptr-to-ptr-to-funcdef (golang typedefs to funcdefs)
+				ptrDT = ptrptrDT;
+			}
+			if (ptrDT.getDataType() instanceof FunctionDefinition pointedToFuncDefDT) {
+				// hack to handle funcDefs that produce a ptr_to_funcdef instead of a funcdef type, which messes with name compare
+				typedefWithSameName = DataTypeUtilities.equalsIgnoreConflict(
+					typedefDNI.asDataTypePath().getPath(), pointedToFuncDefDT.getPathName());
+			}
 		}
 
 		if (typedefWithSameName) {

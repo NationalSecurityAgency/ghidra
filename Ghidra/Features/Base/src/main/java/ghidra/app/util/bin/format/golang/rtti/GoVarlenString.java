@@ -17,6 +17,7 @@ package ghidra.app.util.bin.format.golang.rtti;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.golang.structmapping.*;
@@ -57,30 +58,66 @@ public class GoVarlenString implements StructureReader<GoVarlenString> {
 		this.bytes = reader.readNextByteArray(strLen);
 	}
 
+	/**
+	 * Returns the string's length
+	 * 
+	 * @return string's length
+	 */
 	public int getStrlen() {
 		return bytes.length;
 	}
 
+	/**
+	 * Returns the string length's length (length of the leb128 number)
+	 * 
+	 * @return string length's length
+	 */
 	public int getStrlenLen() {
 		return strlenLen;
 	}
 
+	/**
+	 * Returns the raw bytes of the string
+	 * 
+	 * @return raw bytes of the string
+	 */
 	public byte[] getBytes() {
 		return bytes;
 	}
 
+	/**
+	 * Returns the string value.
+	 * 
+	 * @return string value
+	 */
 	public String getString() {
 		return new String(bytes, StandardCharsets.UTF_8);
 	}
 
+	/**
+	 * Returns the data type that is needed to hold the string length field.
+	 * 
+	 * @return data type needed to hold the string length field
+	 */
 	public DataTypeInstance getStrlenDataType() {
 		return DataTypeInstance.getDataTypeInstance(UnsignedLeb128DataType.dataType, strlenLen,
 			false);
 	}
 
+	/**
+	 * Returns the data type that holds the raw string value.
+	 * 
+	 * @return data type that holds the raw string value.
+	 */
 	public DataType getValueDataType() {
 		return new ArrayDataType(CharDataType.dataType, bytes.length, -1,
 			context.getDataTypeMapper().getDTM());
+	}
+
+	@Override
+	public String toString() {
+		return String.format("GoVarlenString [context=%s, strlenLen=%s, bytes=%s, getString()=%s]",
+			context, strlenLen, Arrays.toString(bytes), getString());
 	}
 
 }

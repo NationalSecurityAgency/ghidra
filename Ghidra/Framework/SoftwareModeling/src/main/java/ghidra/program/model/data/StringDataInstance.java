@@ -205,6 +205,37 @@ public class StringDataInstance {
 		return NULL_INSTANCE;
 	}
 
+	/**
+	 * Formats a string value so that it is in the form of a symbol label.
+	 * 
+	 * @param prefixStr data type prefix, see {@link AbstractStringDataType#getDefaultLabelPrefix()}
+	 * @param str string value
+	 * @param options display options
+	 * @return string, suitable to be used as a label
+	 */
+	public static String makeStringLabel(String prefixStr, String str,
+			DataTypeDisplayOptions options) {
+		boolean needsUnderscore = false;
+		StringBuilder buffer = new StringBuilder();
+		for (int i = 0, strLength = str.length(); i < strLength &&
+			buffer.length() < options.getLabelStringLength();) {
+			int codePoint = str.codePointAt(i);
+			if (StringUtilities.isDisplayable(codePoint) && (codePoint != ' ')) {
+				if (needsUnderscore) {
+					buffer.append('_');
+					needsUnderscore = false;
+				}
+				buffer.appendCodePoint(codePoint);
+			}
+			else {
+				needsUnderscore = true;
+				// discard character
+			}
+			i += Character.charCount(codePoint);
+		}
+		return prefixStr + buffer.toString();
+	}
+
 	//-----------------------------------------------------------------------------
 	/**
 	 * A {@link StringDataInstance} that represents a non-existent string.
@@ -1017,25 +1048,7 @@ public class StringDataInstance {
 			return prefixStr;
 		}
 
-		boolean needsUnderscore = false;
-		StringBuilder buffer = new StringBuilder();
-		for (int i = 0, strLength = str.length(); i < strLength &&
-			buffer.length() < options.getLabelStringLength();) {
-			int codePoint = str.codePointAt(i);
-			if (StringUtilities.isDisplayable(codePoint) && (codePoint != ' ')) {
-				if (needsUnderscore) {
-					buffer.append('_');
-					needsUnderscore = false;
-				}
-				buffer.appendCodePoint(codePoint);
-			}
-			else {
-				needsUnderscore = true;
-				// discard character
-			}
-			i += Character.charCount(codePoint);
-		}
-		return prefixStr + buffer.toString();
+		return makeStringLabel(prefixStr, str, options);
 	}
 
 	public String getOffcutLabelString(String prefixStr, String abbrevPrefixStr, String defaultStr,

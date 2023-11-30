@@ -15,43 +15,47 @@
  */
 package ghidra.app.util.bin.format.golang;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
-import ghidra.app.plugin.core.analysis.GolangSymbolAnalyzer;
-import ghidra.app.util.bin.format.dwarf4.DIEAggregate;
-import ghidra.app.util.bin.format.dwarf4.DWARFUtil;
+import ghidra.app.plugin.core.analysis.TransientProgramProperties;
+import ghidra.app.plugin.core.analysis.TransientProgramProperties.SCOPE;
+import ghidra.app.util.bin.format.dwarf4.*;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFSourceLanguage;
 import ghidra.app.util.bin.format.dwarf4.funcfixup.DWARFFunctionFixup;
 import ghidra.app.util.bin.format.dwarf4.next.*;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFFunction.CommitMode;
+import ghidra.app.util.bin.format.golang.rtti.GoFuncData;
+import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.SymbolType;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ExtensionPointProperties;
-import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.task.TaskMonitor;
 
 /**
- * Fixups for golang functions.
+ * Fixups for golang functions found during DWARF processing.
  * <p>
  * Fixes storage of parameters to match the go callspec and modifies parameter lists to match
  * Ghidra's capabilities.
  * <p>
- * Special characters used by golang in symbol names are fixed up in 
- * DWARFProgram.fixupSpecialMeaningCharacters():
- *   <li>"\u00B7" (middle dot) -> "."
- *   <li>"\u2215" (weird slash) -> "/"
+ * Special characters used by golang in symbol names (middle dot \u00B7, weird slash \u2215) are 
+ * fixed up in DWARFProgram.getDWARFNameInfo() by calling 
+ * GoSymbolName.fixGolangSpecialSymbolnameChars().
+ * <p>
+ * Go's 'unique' usage of DW_TAG_subroutine_type to define its ptr-to-ptr-to-func is handled in
+ * DWARFDataTypeImporter.makeDataTypeForFunctionDefinition().
+ * <p>
  */
 @ExtensionPointProperties(priority = DWARFFunctionFixup.PRIORITY_NORMAL_EARLY)
 public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 
 	public static final CategoryPath GOLANG_API_EXPORT =
 		new CategoryPath(CategoryPath.ROOT, "GolangAPIExport");
+	private static final String GOLANG_FUNC_INFO_PREFIX = "Golang function info: ";
 
 	/**
 	 * Returns true if the specified {@link DWARFFunction} wrapper refers to a function in a golang
@@ -73,33 +77,43 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 		return true;
 	}
 
+	private GoRttiMapper goBinary;
+
 	@Override
-	public void fixupDWARFFunction(DWARFFunction dfunc, Function gfunc) {
-		if (!isGolangFunction(dfunc)) {
-			return;
-		}
-		GoVer goVersion = getGolangVersion(dfunc);
-		if (goVersion == GoVer.UNKNOWN) {
+	public void fixupDWARFFunction(DWARFFunction dfunc) throws DWARFException {
+		if (!isGolangFunction(dfunc) || !initGoBinaryContext(dfunc, TaskMonitor.DUMMY)) {
 			return;
 		}
 
-		DataTypeManager dtm = gfunc.getProgram().getDataTypeManager();
-		GoParamStorageAllocator storageAllocator =
-			new GoParamStorageAllocator(gfunc.getProgram(), goVersion);
+		GoFuncData funcData = goBinary.getFunctionData(dfunc.address);
+		if (funcData == null) {
+			appendComment(dfunc.function, GOLANG_FUNC_INFO_PREFIX, "No function data");
+			dfunc.signatureCommitMode = CommitMode.SKIP;
+			return;
+		}
+		if (!funcData.getFlags().isEmpty()) {
+			// Don't apply any DWARF info to special functions (ASM) as they are typically
+			// marked as no-params, but in reality they do have params passed in a non-standard way.
+			dfunc.signatureCommitMode = CommitMode.SKIP;
+			return;
+		}
 
-		if (GoFunctionFixup.isGolangAbi0Func(gfunc)) {
+		DataTypeManager dtm = goBinary.getProgram().getDataTypeManager();
+		GoParamStorageAllocator storageAllocator = goBinary.newStorageAllocator();
+
+		if (goBinary.isGolangAbi0Func(dfunc.function)) {
 			// Some (typically lower level) functions in the binary will be marked with a 
 			// symbol that ends in the string "abi0".  
 			// Throw away all registers and force stack allocation for everything 
 			storageAllocator.setAbi0Mode();
-			dfunc.prototypeModel = storageAllocator.getAbi0CallingConvention();
-		}
-		else {
-			dfunc.prototypeModel = storageAllocator.getAbiInternalCallingConvention();
 		}
 
+		dfunc.callingConventionName =
+			storageAllocator.isAbi0Mode() ? GoConstants.GOLANG_ABI0_CALLINGCONVENTION_NAME
+					: GoConstants.GOLANG_ABI_INTERNAL_CALLINGCONVENTION_NAME;
+
 		GoFunctionMultiReturn multiReturnInfo = fixupFormalFuncDef(dfunc, storageAllocator, dtm);
-		fixupCustomStorage(dfunc, gfunc, storageAllocator, dtm, multiReturnInfo);
+		fixupCustomStorage(dfunc, storageAllocator, dtm, multiReturnInfo);
 	}
 
 	private GoFunctionMultiReturn fixupFormalFuncDef(DWARFFunction dfunc,
@@ -109,10 +123,19 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 		// auto-assigned.
 		// Pull them out of the param list and create a structure to hold them as the return value
 		// They also need to be sorted so that stack storage items appear last, after register items.
+		// Note: sometimes Go will duplicate the dwarf information about return values, which
+		// will lead to have multiple "~r0", "~r1" elements.  These need to be de-duped.
 		List<DWARFVariable> realParams = new ArrayList<>();
 		List<DWARFVariable> returnParams = new ArrayList<>();
+		Set<String> returnParamNames = new HashSet<>();
 		for (DWARFVariable dvar : dfunc.params) {
 			if (dvar.isOutputParameter) {
+				if (returnParamNames.contains(dvar.name.getName())) {
+					// skip this, its probably a duplicate.  Golang github issue #61357
+					continue;
+				}
+				returnParamNames.add(dvar.name.getName());
+
 				returnParams.add(dvar);
 			}
 			else {
@@ -136,9 +159,8 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 		return multiReturn;
 	}
 
-	private void fixupCustomStorage(DWARFFunction dfunc, Function gfunc,
-			GoParamStorageAllocator storageAllocator, DataTypeManager dtm,
-			GoFunctionMultiReturn multiReturn) {
+	private void fixupCustomStorage(DWARFFunction dfunc, GoParamStorageAllocator storageAllocator,
+			DataTypeManager dtm, GoFunctionMultiReturn multiReturn) {
 		//
 		// This method implements the pseudo-code in
 		// https://github.com/golang/go/blob/master/src/cmd/compile/abi-internal.md.
@@ -200,9 +222,9 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 						storageAllocator, false);
 				}
 
-				Program program = gfunc.getProgram();
+				Program program = goBinary.getProgram();
 				if (!program.getMemory().isBigEndian()) {
-					// revserse the ordering of the storage varnodes when little-endian
+					// Reverse the ordering of the storage varnodes when little-endian
 					List<Varnode> varnodes = dfunc.retval.getVarnodes();
 					GoFunctionFixup.reverseNonStackStorageLocations(varnodes);
 					dfunc.retval.setVarnodes(varnodes);
@@ -267,93 +289,26 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 		return returnResultVar;
 	}
 
-//	/**
-//	 * Create a structure that holds the multiple return values from a golang func.
-//	 * <p>
-//	 * The contents of the structure may not be in the same order as the formal declaration,
-//	 * but instead are ordered to make custom varnode storage work.
-//	 * <p>
-//	 * Because stack varnodes must be placed in a certain order of storage, items that are
-//	 * stack based are tagged with a text comment "stack" to allow storage to be correctly 
-//	 * recalculated later.
-//	 *   
-//	 * @param returnParams
-//	 * @param dfunc
-//	 * @param dtm
-//	 * @param storageAllocator
-//	 * @return
-//	 */
-//	public static Structure createStructForReturnValues(List<DWARFVariable> returnParams,
-//			DWARFFunction dfunc, DataTypeManager dtm,
-//			GoParamStorageAllocator storageAllocator) {
-//
-//		String returnStructName = dfunc.name.getName() + MULTIVALUE_RETURNTYPE_SUFFIX;
-//		DWARFNameInfo structDNI = dfunc.name.replaceName(returnStructName, returnStructName);
-//		Structure struct =
-//			new StructureDataType(structDNI.getParentCP(), structDNI.getName(), 0, dtm);
-//		struct.setPackingEnabled(true);
-//		struct.setExplicitPackingValue(1);
-//
-//		storageAllocator = storageAllocator.clone();
-//		List<DWARFVariable> stackResults = new ArrayList<>();
-//		// TODO: zero-length items also need to be segregated at the end of the struct
-//		for (DWARFVariable dvar : returnParams) {
-//			List<Register> regs = storageAllocator.getRegistersFor(dvar.type);
-//			if (regs == null || regs.isEmpty()) {
-//				stackResults.add(dvar);
-//			}
-//			else {
-//				struct.add(dvar.type, dvar.name.getName(), regs.toString());
-//			}
-//		}
-//
-//		boolean be = dfunc.getProgram().isBigEndian();
-//
-//		// add these to the struct last or first, depending on endianness
-//		for (int i = 0; i < stackResults.size(); i++) {
-//			DWARFVariable dvar = stackResults.get(i);
-//			if (be) {
-//				struct.add(dvar.type, dvar.name.getName(), "stack");
-//			}
-//			else {
-//				struct.insert(i, dvar.type, -1, dvar.name.getName(), "stack");
-//			}
-//		}
-//
-//		return struct;
-//	}
-
-	private void exportOrigFuncDef(DWARFFunction dfunc, DataTypeManager dtm) {
-		try {
-			FunctionDefinition funcDef = dfunc.asFuncDef();
-			funcDef.setCategoryPath(GOLANG_API_EXPORT);
-			dtm.addDataType(funcDef, DataTypeConflictHandler.KEEP_HANDLER);
-		}
-		catch (DuplicateNameException e) {
-			// skip
-		}
-	}
-
-	private GoVer getGolangVersion(DWARFFunction dfunc) {
-		DWARFProgram dprog = dfunc.getProgram();
-		GoVer ver = dprog.getOpaqueProperty(GoVer.class, null, GoVer.class);
-		if (ver == null) {
-			GoBuildInfo goBuildInfo = GoBuildInfo.fromProgram(dprog.getGhidraProgram());
-			ver = goBuildInfo != null ? goBuildInfo.getVerEnum() : GoVer.UNKNOWN;
-			dprog.setOpaqueProperty(GoVer.class, ver);
-		}
-		return ver;
-	}
-
 	private static final String GOLANG_ZEROBASE_ADDR = "GOLANG_ZEROBASE_ADDR";
 
 	private Address getZerobaseAddress(DWARFFunction dfunc) {
 		DWARFProgram dprog = dfunc.getProgram();
-		Address zerobaseAddr = dprog.getOpaqueProperty(GOLANG_ZEROBASE_ADDR, null, Address.class);
-		if (zerobaseAddr == null) {
-			zerobaseAddr = GolangSymbolAnalyzer.getZerobaseAddress(dprog.getGhidraProgram());
-			dprog.setOpaqueProperty(GOLANG_ZEROBASE_ADDR, zerobaseAddr);
-		}
+		Program program = dprog.getGhidraProgram();
+		Address zerobaseAddr = TransientProgramProperties.getProperty(program, GOLANG_ZEROBASE_ADDR,
+			SCOPE.ANALYSIS_SESSION, Address.class, () -> GoRttiMapper.getZerobaseAddress(program));
 		return zerobaseAddr;
+	}
+
+	private boolean initGoBinaryContext(DWARFFunction dfunc, TaskMonitor monitor) {
+		if (goBinary == null) {
+			Program program = dfunc.getProgram().getGhidraProgram();
+			goBinary = GoRttiMapper.getSharedGoBinary(program, monitor);
+		}
+		return goBinary != null;
+	}
+
+	private void appendComment(Function func, String prefix, String comment) {
+		DWARFUtil.appendComment(goBinary.getProgram(), func.getEntryPoint(), CodeUnit.PLATE_COMMENT,
+			prefix, comment, "\n");
 	}
 }
