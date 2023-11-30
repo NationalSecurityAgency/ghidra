@@ -4114,6 +4114,40 @@
   </tip>
 </sect2>
 
+<sect2 id="ToolBarEliminateUnreachableCode">
+  <title>Eliminate Unreachable Code</title>
+  <para>
+    <guiicon>
+      <inlinemediaobject>
+	<imageobject>
+	  <imagedata condition="noscaling" fileref="icon.decompiler.action.provider.unreachable" contentwidth="16px" contentdepth="16px"/>
+	  <imagedata condition="withscaling" fileref="icon.decompiler.action.provider.unreachable" contentwidth="0.15in" contentdepth="0.15in"/>
+	</imageobject>
+      </inlinemediaobject>
+      </guiicon>&nbsp;- toggle button
+  </para>
+  <para>
+	Quickly turn off the <xref linkend="AnalysisUnreachable"/> decompiler setting.
+  </para>
+</sect2>
+
+<sect2 id="ToolBarRespectReadOnly">
+  <title>Respect Read-only Flags</title>
+  <para>
+    <guiicon>
+      <inlinemediaobject>
+	<imageobject>
+	  <imagedata condition="noscaling" fileref="icon.decompiler.action.provider.readonly" contentwidth="16px" contentdepth="16px"/>
+	  <imagedata condition="withscaling" fileref="icon.decompiler.action.provider.readonly" contentwidth="0.15in" contentdepth="0.15in"/>
+	</imageobject>
+      </inlinemediaobject>
+      </guiicon>&nbsp;- toggle button
+  </para>
+  <para>
+	Quickly turn off the <xref linkend="AnalysisReadOnly"/> decompiler setting.
+  </para>
+</sect2>
+
 <sect2 id="ToolBarCopy">
   <title>Copy</title>
   <para>

@@ -389,7 +389,6 @@ src/main/help/help/topics/MemoryMapPlugin/images/MoveMemory.png||GHIDRA||||END|
 src/main/help/help/topics/MemoryMapPlugin/images/SetImageBaseDialog.png||GHIDRA||||END|
 src/main/help/help/topics/MemoryMapPlugin/images/SplitMemoryBlock.png||GHIDRA||||END|
 src/main/help/help/topics/Misc/Appendix.htm||GHIDRA||||END|
-src/main/help/help/topics/Misc/Tips.htm||NONE||||END|
 src/main/help/help/topics/Misc/Welcome_to_Ghidra_Help.htm||GHIDRA||||END|
 src/main/help/help/topics/Navigation/Navigation.htm||GHIDRA||||END|
 src/main/help/help/topics/Navigation/images/GoToDialog.png||GHIDRA||||END|
@@ -886,6 +885,7 @@ src/main/resources/images/searchm_obj.gif||GHIDRA||||END|
 src/main/resources/images/searchm_pink.gif||GHIDRA||||END|
 src/main/resources/images/settings16.gif||GHIDRA||||END|
 src/main/resources/images/sitemap_color.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/resources/images/slash.png||GHIDRA||||END|
 src/main/resources/images/smallLeftArrow.png||GHIDRA||||END|
 src/main/resources/images/smallRightArrow.png||GHIDRA||||END|
 src/main/resources/images/small_minus.png||GHIDRA||||END|
