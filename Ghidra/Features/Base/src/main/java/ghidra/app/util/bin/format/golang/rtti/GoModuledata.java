@@ -17,7 +17,6 @@ package ghidra.app.util.bin.format.golang.rtti;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.golang.rtti.types.GoType;
@@ -31,10 +30,11 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Represents a golang moduledata structure, which contains a lot of invaluable bootstrapping
+ * Represents a golang moduledata structure, which contains a lot of valuable bootstrapping
  * data for RTTI and function data. 
  */
 @StructureMapping(structureName = "runtime.moduledata")
@@ -59,6 +59,9 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 
 	@FieldMapping(fieldName = "etypes")
 	private long typesEndOffset;
+
+	@FieldMapping(optional = true)
+	private long gofunc;
 
 	@FieldMapping(fieldName = "typelinks")
 	private GoSlice typeLinks;
@@ -108,24 +111,62 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 		return programContext.readStructure(GoPcHeader.class, pcHeader);
 	}
 
+	/**
+	 * Returns the address of the beginning of the text section.
+	 * 
+	 * @return address of the beginning of the text section
+	 */
 	public Address getText() {
 		return programContext.getCodeAddress(text);
 	}
 
+	/**
+	 * Returns the starting offset of type info
+	 * 
+	 * @return starting offset of type info
+	 */
 	public long getTypesOffset() {
 		return typesOffset;
 	}
 
+	/**
+	 * Returns the ending offset of type info
+	 * 
+	 * @return ending offset of type info
+	 */
 	public long getTypesEndOffset() {
 		return typesEndOffset;
 	}
 
+	/**
+	 * Return the offset of the gofunc location
+	 * @return offset of the gofunc location
+	 */
+	public long getGofunc() {
+		return gofunc;
+	}
+
+	/**
+	 * Reads a {@link GoFuncData} structure from the pclntable.
+	 * 
+	 * @param offset relative to the pclntable
+	 * @return {@link GoFuncData}
+	 * @throws IOException if error reading data
+	 */
 	public GoFuncData getFuncDataInstance(long offset) throws IOException {
 		return programContext.readStructure(GoFuncData.class, pclntable.getArrayOffset() + offset);
 	}
 
+	/**
+	 * Returns true if this GoModuleData is the module data that contains the specified
+	 * GoFuncData structure.
+	 * 
+	 * @param offset offset of a GoFuncData structure
+	 * @return true if this GoModuleData is the module data that contains the specified GoFuncData
+	 * structure
+	 */
 	public boolean containsFuncDataInstance(long offset) {
-		return pclntable.isOffsetWithinData(offset, 1);
+		return pclntable.containsOffset(offset, 1);
 	}
 
 	/**
@@ -143,9 +184,14 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 		return subSlice;
 	}
 
+	/**
+	 * Returns true if this module data structure contains sane values.
+	 * 
+	 * @return true if this module data structure contains sane values
+	 */
 	public boolean isValid() {
 		MemoryBlock txtBlock = programContext.getProgram().getMemory().getBlock(".text");
-		if (txtBlock != null && txtBlock.getStart().getOffset() != text) {
+		if (txtBlock != null && !txtBlock.contains(getText())) {
 			return false;
 		}
 
@@ -164,10 +210,21 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 		return true;
 	}
 
+	/**
+	 * Returns a slice that contains all the function names.
+	 * 
+	 * @return slice that contains all the function names
+	 */
 	public GoSlice getFuncnametab() {
 		return funcnametab;
 	}
 
+	/**
+	 * Returns a list of all functions contained in this module.
+	 * 
+	 * @return list of all functions contained in this module
+	 * @throws IOException if error reading data
+	 */
 	public List<GoFuncData> getAllFunctionData() throws IOException {
 		List<GoFunctabEntry> functabentries =
 			getFunctabEntriesSlice().readList(GoFunctabEntry.class);
@@ -178,32 +235,86 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 		return result;
 	}
 
+	/**
+	 * Returns the cutab slice.
+	 * 
+	 * @return cutab slice
+	 */
+	public GoSlice getCutab() {
+		return cutab;
+	}
+
+	/**
+	 * Returns the filetab slice.
+	 * 
+	 * @return filetab slice
+	 */
+	public GoSlice getFiletab() {
+		return filetab;
+	}
+
+	/**
+	 * Returns the filename at the specified offset.
+	 * 
+	 * @param fileoff offset in the filetab of the filename
+	 * @return filename
+	 * @throws IOException if error reading
+	 */
+	public String getFilename(long fileoff) throws IOException {
+		return programContext.getReader(filetab.getElementOffset(1, fileoff)).readNextUtf8String();
+	}
+
+	/**
+	 * Returns the pctab slice.
+	 * 
+	 * @return pctab slice
+	 */
+	public GoSlice getPctab() {
+		return pctab;
+	}
+
+	/**
+	 * Returns a reference to the controlling {@link GoRttiMapper go binary} context.
+	 * 
+	 * @return reference to the controlling {@link GoRttiMapper go binary} context
+	 */
+	public GoRttiMapper getGoBinary() {
+		return programContext;
+	}
+
 	@Override
 	public StructureContext<GoModuledata> getStructureContext() {
 		return structureContext;
 	}
 
 	@Override
-	public void additionalMarkup(MarkupSession session) throws IOException {
-		typeLinks.markupArray("moduledata.typeLinks", programContext.getInt32DT(), false, session);
+	public void additionalMarkup(MarkupSession session) throws IOException, CancelledException {
+		typeLinks.markupArray("moduledata.typeLinks", null, programContext.getInt32DT(), false,
+			session);
 		typeLinks.markupElementReferences(4, getTypeList(), session);
 
-		itablinks.markupArray("moduledata.itablinks", GoItab.class, true, session);
+		itablinks.markupArray("moduledata.itablinks", null, GoItab.class, true, session);
 
 		markupStringTable(funcnametab.getArrayAddress(), funcnametab.getLen(), session);
 		markupStringTable(filetab.getArrayAddress(), filetab.getLen(), session);
 
 		GoSlice subSlice = getFunctabEntriesSlice();
-		subSlice.markupArray("moduledata.ftab", GoFunctabEntry.class, false, session);
+		subSlice.markupArray("moduledata.ftab", null, GoFunctabEntry.class, false, session);
 		subSlice.markupArrayElements(GoFunctabEntry.class, session);
 
 		Structure textsectDT =
 			programContext.getGhidraDataType("runtime.textsect", Structure.class);
 		if (textsectDT != null) {
-			textsectmap.markupArray("runtime.textsectionmap", textsectDT, false, session);
+			textsectmap.markupArray("runtime.textsectionmap", null, textsectDT, false, session);
 		}
 	}
 
+	/**
+	 * Returns a list of the GoItabs present in this module.
+	 * 
+	 * @return list of the GoItabs present in this module
+	 * @throws IOException if error reading data
+	 */
 	@Markup
 	public List<GoItab> getItabs() throws IOException {
 		List<GoItab> result = new ArrayList<>();
@@ -238,6 +349,12 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 		}
 	}
 
+	/**
+	 * Returns an iterator that walks all the types contained in this module
+	 * 
+	 * @return iterator that walks all the types contained in this module
+	 * @throws IOException if error reading data
+	 */
 	@Markup
 	public Iterator<GoType> iterateTypes() throws IOException {
 		return getTypeList().stream()
@@ -253,12 +370,18 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 				.iterator();
 	}
 
+	/**
+	 * Returns a list of locations of the types contained in this module.
+	 * 
+	 * @return list of addresses of GoType structures
+	 * @throws IOException if error reading data 
+	 */
 	public List<Address> getTypeList() throws IOException {
 		long[] typeOffsets = typeLinks.readUIntList(4 /* always sizeof(int32) */);
 		Address typesBaseAddr = programContext.getDataAddress(typesOffset);
 		List<Address> result = Arrays.stream(typeOffsets)
 				.mapToObj(offset -> typesBaseAddr.add(offset))
-				.collect(Collectors.toList());
+				.toList();
 		return result;
 	}
 

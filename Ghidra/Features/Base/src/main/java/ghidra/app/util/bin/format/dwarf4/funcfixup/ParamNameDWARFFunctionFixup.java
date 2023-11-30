@@ -16,7 +16,6 @@
 package ghidra.app.util.bin.format.dwarf4.funcfixup;
 
 import ghidra.app.util.bin.format.dwarf4.next.*;
-import ghidra.program.model.listing.Function;
 import ghidra.util.classfinder.ExtensionPointProperties;
 
 /**
@@ -26,13 +25,13 @@ import ghidra.util.classfinder.ExtensionPointProperties;
 public class ParamNameDWARFFunctionFixup implements DWARFFunctionFixup {
 
 	@Override
-	public void fixupDWARFFunction(DWARFFunction dfunc, Function gfunc) {
+	public void fixupDWARFFunction(DWARFFunction dfunc) {
 
 		// Fix any dups among the parameters, to-be-added-local vars, and already present local vars
 		NameDeduper nameDeduper = new NameDeduper();
 		nameDeduper.addReservedNames(dfunc.getAllParamNames());
 		nameDeduper.addReservedNames(dfunc.getAllLocalVariableNames());
-		nameDeduper.addUsedNames(dfunc.getNonParamSymbolNames(gfunc));
+		nameDeduper.addUsedNames(dfunc.getNonParamSymbolNames());
 
 		for (DWARFVariable param : dfunc.params) {
 			String newName = nameDeduper.getUniqueName(param.name.getName());

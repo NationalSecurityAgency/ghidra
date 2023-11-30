@@ -35,6 +35,33 @@ public class AddressAnnotatedStringHandler implements AnnotatedStringHandler {
 		"@address annotation must have an address" + "string";
 	private static final String[] SUPPORTED_ANNOTATIONS = { "address", "addr" };
 
+	/**
+	 * Constructs a well-formed Address Annotation comment string.
+	 * 
+	 * @param destinationAddress destination of the annotation
+	 * @param displayText text that will be used as the body of the annotation.  Problematic
+	 * characters will be escaped
+	 * @return string
+	 */
+	public static String createAddressAnnotationString(Address destinationAddress,
+			String displayText) {
+		return "{@address %s %s}".formatted(destinationAddress.toString(false),
+			AnnotatedStringHandler.escapeAnnotationPart(displayText));
+	}
+
+	/**
+	 * Constructs a well-formed Address Annotation comment string.
+	 * 
+	 * @param addressOffset destination of the annotation
+	 * @param displayText text that will be used as the body of the annotation.  Problematic
+	 * characters will be escaped
+	 * @return string
+	 */
+	public static String createAddressAnnotationString(long addressOffset, String displayText) {
+		return "{@address 0x%x %s}".formatted(addressOffset,
+			AnnotatedStringHandler.escapeAnnotationPart(displayText));
+	}
+
 	@Override
 	public AttributedString createAnnotatedString(AttributedString prototypeString, String[] text,
 			Program program) throws AnnotationException {

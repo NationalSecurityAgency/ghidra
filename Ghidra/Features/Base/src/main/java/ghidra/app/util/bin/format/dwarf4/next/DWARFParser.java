@@ -15,10 +15,9 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-
-import java.io.IOException;
 
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.util.bin.format.dwarf4.DWARFException;

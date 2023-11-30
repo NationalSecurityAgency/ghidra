@@ -17,6 +17,8 @@ package ghidra.app.util.bin.format.golang.structmapping;
 
 import java.io.IOException;
 
+import ghidra.util.exception.CancelledException;
+
 /**
  * Function that decorates a Ghidra structure 
  * 
@@ -30,7 +32,8 @@ public interface StructureMarkupFunction<T> {
 	 * @param context {@link StructureContext}
 	 * @param markupSession state and methods to assist marking up the program 
 	 * @throws IOException thrown if error performing the markup
+	 * @throws CancelledException 
 	 */
 	void markupStructure(StructureContext<T> context, MarkupSession markupSession)
-			throws IOException;
+			throws IOException, CancelledException;
 }

@@ -13,11 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.analysis;
+package ghidra.app.util.bin.format.golang.rtti;
 
 /**
- * Marker interface for program-specific state information held by {@link AnalysisStateInfo}
+ * An index into a GoFuncData's variable-sized pcdata array.  See GoFuncData's npcdata field
+ * for the actual array size.  
  */
-public interface AnalysisState {
-	// marker interface
+public enum GoPcDataTable {
+	PCDATA_UnsafePoint, // 0
+	PCDATA_StackMapIndex, // 1
+	PCDATA_InlTreeIndex, // 2
+	PCDATA_ArgLiveIndex // 3
 }

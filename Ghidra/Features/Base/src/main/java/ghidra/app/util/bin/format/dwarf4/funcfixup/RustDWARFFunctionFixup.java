@@ -19,7 +19,6 @@ import ghidra.app.util.bin.format.dwarf4.DIEAggregate;
 import ghidra.app.util.bin.format.dwarf4.DWARFException;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFSourceLanguage;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFFunction;
-import ghidra.program.model.listing.Function;
 import ghidra.util.classfinder.ExtensionPointProperties;
 
 /**
@@ -29,7 +28,7 @@ import ghidra.util.classfinder.ExtensionPointProperties;
 public class RustDWARFFunctionFixup implements DWARFFunctionFixup {
 
 	@Override
-	public void fixupDWARFFunction(DWARFFunction dfunc, Function gfunc) throws DWARFException {
+	public void fixupDWARFFunction(DWARFFunction dfunc) throws DWARFException {
 		DIEAggregate diea = dfunc.diea;
 		int cuLang = diea.getCompilationUnit().getCompileUnit().getLanguage();
 		if (cuLang == DWARFSourceLanguage.DW_LANG_Rust && dfunc.params.isEmpty()) {

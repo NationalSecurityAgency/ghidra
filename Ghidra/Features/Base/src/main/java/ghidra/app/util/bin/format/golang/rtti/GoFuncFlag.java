@@ -13,23 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.bin.format.golang.rtti.types;
+package ghidra.app.util.bin.format.golang.rtti;
 
 import java.util.EnumSet;
 import java.util.Set;
 
 /**
- * Enum defining the various bitflags held in a GoType's tflag
+ * Bitmask flags for runtime._func (GoFuncData) flags field.
  */
-public enum GoTypeFlag {
-	Uncommon(1 << 0),		// 1
-	ExtraStar(1 << 1),		// 2
-	Named(1 << 2),			// 4
-	RegularMemory(1 << 3);	// 8
+public enum GoFuncFlag {
+
+	TOPFRAME(1 << 0),		// 1
+	SPWRITE(1 << 1),		// 2
+	ASM(1 << 2);			// 4
 
 	private final int value;
 
-	GoTypeFlag(int i) {
+	private GoFuncFlag(int i) {
 		this.value = i;
 	}
 
@@ -41,9 +41,9 @@ public enum GoTypeFlag {
 		return (i & value) != 0;
 	}
 
-	public static Set<GoTypeFlag> parseFlags(int b) {
-		EnumSet<GoTypeFlag> result = EnumSet.noneOf(GoTypeFlag.class);
-		for (GoTypeFlag flag : values()) {
+	public static Set<GoFuncFlag> parseFlags(int b) {
+		EnumSet<GoFuncFlag> result = EnumSet.noneOf(GoFuncFlag.class);
+		for (GoFuncFlag flag : values()) {
 			if (flag.isSet(b)) {
 				result.add(flag);
 			}

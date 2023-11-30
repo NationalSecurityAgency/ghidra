@@ -15,10 +15,9 @@
  */
 package ghidra.app.util.opinion;
 
-import java.util.*;
-
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.*;
 
 import com.google.common.primitives.Bytes;
 
@@ -26,8 +25,10 @@ import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.format.elf.info.ElfInfoItem.ItemWithAddress;
 import ghidra.app.util.bin.format.golang.GoBuildInfo;
 import ghidra.app.util.bin.format.golang.PEGoBuildId;
+import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.bin.format.mz.DOSHeader;
 import ghidra.app.util.bin.format.pe.*;
 import ghidra.app.util.bin.format.pe.ImageCor20Header.ImageCor20Flags;
@@ -141,7 +142,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			processDelayImports(optionalHeader, program, monitor, log);
 			processRelocations(optionalHeader, program, monitor, log);
 			processDebug(optionalHeader, ntHeader, sectionToAddress, program, options, monitor);
-			processProperties(optionalHeader, program, monitor);
+			processProperties(optionalHeader, ntHeader, program, monitor);
 			processComments(program.getListing(), monitor);
 			processSymbols(ntHeader, sectionToAddress, program, monitor, log);
 
@@ -275,7 +276,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		}
 	}
 
-	private void processProperties(OptionalHeader optionalHeader, Program prog,
+	private void processProperties(OptionalHeader optionalHeader, NTHeader ntHeader, Program prog,
 			TaskMonitor monitor) {
 		if (monitor.isCancelled()) {
 			return;
@@ -284,6 +285,24 @@ public class PeLoader extends AbstractPeDebugLoader {
 		props.setInt("SectionAlignment", optionalHeader.getSectionAlignment());
 		props.setBoolean(RelocationTable.RELOCATABLE_PROP_NAME,
 			prog.getRelocationTable().getSize() > 0);
+
+		if (GoRttiMapper.isGolangProgram(prog)) {
+			processGolangProperties(optionalHeader, ntHeader, prog, monitor);
+		}
+	}
+
+	private void processGolangProperties(OptionalHeader optionalHeader, NTHeader ntHeader,
+			Program prog, TaskMonitor monitor) {
+
+		ItemWithAddress<PEGoBuildId> buildId = PEGoBuildId.findBuildId(prog);
+		if (buildId != null) {
+			buildId.item().markupProgram(prog, buildId.address());
+		}
+		ItemWithAddress<GoBuildInfo> buildInfo = GoBuildInfo.findBuildInfo(prog);
+		if (buildInfo != null) {
+			buildInfo.item().markupProgram(prog, buildInfo.address());
+		}
+
 	}
 
 	private void processRelocations(OptionalHeader optionalHeader, Program prog,
@@ -894,7 +913,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			public final String label; // value stored as ProgramInformation.Compiler property
 			public final String family; // used for Opinion secondary query param
 
-			private CompilerEnum(String label, String secondary) {
+			CompilerEnum(String label, String secondary) {
 				this.label = label;
 				this.family = secondary;
 			}

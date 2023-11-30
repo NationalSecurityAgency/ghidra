@@ -15,27 +15,35 @@
  */
 package ghidra.app.util.bin.format.golang.rtti.types;
 
-import java.util.Set;
-
 import java.io.IOException;
+import java.util.Set;
 
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 
+/**
+ * A {@link GoType} structure that defines a go channel
+ */
 @StructureMapping(structureName = "runtime.chantype")
 public class GoChanType extends GoType {
 
 	@FieldMapping
-	@MarkupReference("element")
+	@MarkupReference("getElement")
 	private long elem;
 
 	@FieldMapping
 	private long dir;
 
 	public GoChanType() {
+		// empty
 	}
 
+	/**
+	 * Returns a reference to the {@link GoType} that defines the elements this channel uses
+	 * @return reference to the {@link GoType} that defines the elements this channel uses
+	 * @throws IOException if error reading type
+	 */
 	@Markup
 	public GoType getElement() throws IOException {
 		return programContext.getGoType(elem);
@@ -50,13 +58,14 @@ public class GoChanType extends GoType {
 			return programContext.getDTM().getPointer(null);
 		}
 
-		DataType chanDT = chanGoType.recoverDataType();
+		DataType chanDT = programContext.getRecoveredType(chanGoType);
 		Pointer ptrChanDt = programContext.getDTM().getPointer(chanDT);
 		if (typ.getSize() != ptrChanDt.getLength()) {
 			Msg.warn(this, "Size mismatch between chan type and recovered type");
 		}
-		TypedefDataType typedef = new TypedefDataType(programContext.getRecoveredTypesCp(),
-			getStructureName(), ptrChanDt, programContext.getDTM());
+		TypedefDataType typedef =
+			new TypedefDataType(programContext.getRecoveredTypesCp(getPackagePathString()),
+				getUniqueTypename(), ptrChanDt, programContext.getDTM());
 		return typedef;
 
 	}

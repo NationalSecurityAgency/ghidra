@@ -20,6 +20,7 @@ import java.util.Set;
 
 import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.bin.format.golang.structmapping.*;
+import ghidra.app.util.viewer.field.AddressAnnotatedStringHandler;
 import ghidra.program.model.data.*;
 
 /**
@@ -32,12 +33,18 @@ import ghidra.program.model.data.*;
 public class GoSliceType extends GoType {
 
 	@FieldMapping
-	@MarkupReference("element")
+	@MarkupReference("getElement")
 	private long elem;
 
 	public GoSliceType() {
+		// empty
 	}
 
+	/**
+	 * Returns a reference to the element's type.
+	 * @return reference to the element's type
+	 * @throws IOException if error reading data
+	 */
 	@Markup
 	public GoType getElement() throws IOException {
 		return programContext.getGoType(elem);
@@ -45,13 +52,14 @@ public class GoSliceType extends GoType {
 
 	@Override
 	public DataType recoverDataType() throws IOException {
-		StructureDataType sliceDT = new StructureDataType(programContext.getRecoveredTypesCp(),
-			typ.getNameString(), 0, programContext.getDTM());
+		StructureDataType sliceDT =
+			new StructureDataType(programContext.getRecoveredTypesCp(getPackagePathString()),
+				getUniqueTypename(), 0, programContext.getDTM());
 		programContext.cacheRecoveredDataType(this, sliceDT);
 
 		// fixup the generic void* field with the specific element* type
 		GoType elementType = getElement();
-		DataType elementDT = elementType.recoverDataType();
+		DataType elementDT = programContext.getRecoveredType(elementType);
 		Pointer elementPtrDT = programContext.getDTM().getPointer(elementDT);
 
 		Structure genericSliceDT = programContext.getGenericSliceDT();
@@ -75,6 +83,31 @@ public class GoSliceType extends GoType {
 			elementType.discoverGoTypes(discoveredTypes);
 		}
 		return true;
+	}
+
+	@Override
+	public String getStructureNamespace() throws IOException {
+		String packagePath = getPackagePathString();
+		if (packagePath != null) {
+			return packagePath;
+		}
+		GoType elementType = getElement();
+		return elementType != null
+				? elementType.getStructureNamespace()
+				: super.getStructureNamespace();
+	}
+
+	@Override
+	protected String getTypeDeclString() throws IOException {
+		// type CustomSliceType []elementType
+		String selfName = typ.getName();
+		String elemName = programContext.getGoTypeName(elem);
+		String defStr = "[]%s".formatted(elemName);
+		String defStrWithLinks = "[]%s".formatted(
+			AddressAnnotatedStringHandler.createAddressAnnotationString(elem, elemName));
+		boolean hasName = !defStr.equals(selfName);
+
+		return "type %s%s".formatted(hasName ? selfName + " " : "", defStrWithLinks);
 	}
 
 }

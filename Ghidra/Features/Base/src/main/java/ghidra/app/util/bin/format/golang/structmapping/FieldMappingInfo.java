@@ -21,9 +21,9 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.DataTypeComponent;
-import ghidra.program.model.data.Structure;
+import ghidra.program.model.data.*;
 import ghidra.program.model.listing.CodeUnit;
+import ghidra.util.exception.CancelledException;
 
 /**
  * Immutable information needed to deserialize a field in a structure mapped class.
@@ -205,11 +205,8 @@ public class FieldMappingInfo<T> {
 		Class<?> fieldType = field.getType();
 
 		// TODO: be more strict about setter name, if specified it must be found or error
-		Method setterMethod = ReflectionHelper.findSetter(field.getName(), setterNameOverride,
+		this.setterMethod = ReflectionHelper.findSetter(field.getName(), setterNameOverride,
 			structTargetClass, fieldType);
-		if (setterMethod != null) {
-			this.setterMethod = setterMethod;
-		}
 
 		// setup the logic for deserializing the value from the in-memory structure
 		if (fieldReadValueClass != FieldReadFunction.class) {
@@ -274,13 +271,14 @@ public class FieldMappingInfo<T> {
 	}
 
 	private Object readStructureMappedTypeFunc(FieldContext<T> context) throws IOException {
+		DataType fieldDT = context.dtc() != null ? context.dtc().getDataType() : null;
 		return context.structureContext()
 				.getDataTypeMapper()
-				.readStructure(field.getType(), context.reader());
+				.readStructure(field.getType(), fieldDT, context.reader());
 	}
 
 	private void markupNestedStructure(FieldContext<T> fieldContext, MarkupSession markupSession)
-			throws IOException {
+			throws IOException, CancelledException {
 		markupSession.markup(fieldContext.getValue(Object.class), true);
 	}
 
