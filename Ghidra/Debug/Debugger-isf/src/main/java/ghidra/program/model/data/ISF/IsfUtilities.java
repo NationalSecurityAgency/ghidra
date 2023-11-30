@@ -20,46 +20,6 @@ import ghidra.program.model.data.Enum;
 
 public class IsfUtilities {
 
-	// list of Ghidra built-in type names which correspond to C primitive types
-	private static String[] INTEGRAL_TYPES = { "char", "short", "int", "long", "long long",
-		"__int64", "float", "double", "long double", "void" };
-
-	private static String[] INTEGRAL_MODIFIERS =
-		{ "signed", "unsigned", "const", "static", "volatile", "mutable", };
-
-	public static boolean isIntegral(String typedefName, String basetypeName) {
-		for (String type : INTEGRAL_TYPES) {
-			if (typedefName.equals(type)) {
-				return true;
-			}
-		}
-
-		boolean endsWithIntegralType = false;
-		for (String type : INTEGRAL_TYPES) {
-			if (typedefName.endsWith(" " + type)) {
-				endsWithIntegralType = true;
-				break;
-			}
-		}
-		boolean containsIntegralModifier = false;
-		for (String modifier : INTEGRAL_MODIFIERS) {
-			if (typedefName.indexOf(modifier + " ") >= 0 ||
-				typedefName.indexOf(" " + modifier) >= 0) {
-				return true;
-			}
-		}
-
-		if (endsWithIntegralType && containsIntegralModifier) {
-			return true;
-		}
-
-		if (typedefName.endsWith(" " + basetypeName)) {
-			return containsIntegralModifier;
-		}
-
-		return false;
-	}
-
 	public static DataType getBaseDataType(DataType dt) {
 		while (dt != null) {
 			if (dt instanceof Array) {
@@ -117,7 +77,7 @@ public class IsfUtilities {
 			return "enum";
 		}
 		if (dt instanceof TypeDef) {
-			return "base"; //"typedef";
+			return "typedef";
 		}
 		if (dt instanceof FunctionDefinition) {
 			return "function";
@@ -133,7 +93,7 @@ public class IsfUtilities {
 
 	public static String getBuiltInKind(BuiltInDataType dt) {
 		if (dt instanceof AbstractIntegerDataType) {
-			return dt.getLength() == 1 ? "char" : "int";
+			return dt.getName();
 		}
 		if (dt instanceof AbstractFloatDataType) {
 			return "float";
@@ -145,7 +105,7 @@ public class IsfUtilities {
 			return "char"; // "string";
 		}
 		if (dt instanceof PointerDataType) {
-			return "void"; //"pointer";
+			return "pointer";
 		}
 		if (dt instanceof VoidDataType) {
 			return "void";
@@ -185,11 +145,48 @@ public class IsfUtilities {
 		return dt.getLength();
 	}
 
-	public static Boolean getSigned(DataType dt) {
-		return dt.getDataOrganization().isSignedChar();
-	}
-
 	public static String getEndianness(DataType dt) {
 		return dt.getDataOrganization().isBigEndian() ? "big" : "little";
 	}
+	
+//	// list of Ghidra built-in type names which correspond to C primitive types
+//	private static String[] INTEGRAL_TYPES = { "char", "short", "int", "long", "long long",
+//		"__int64", "float", "double", "long double", "void" };
+//
+//	private static String[] INTEGRAL_MODIFIERS =
+//		{ "signed", "unsigned", "const", "static", "volatile", "mutable", };
+//
+//	public static boolean isIntegral(String typedefName, String basetypeName) {
+//		for (String type : INTEGRAL_TYPES) {
+//			if (typedefName.equals(type)) {
+//				return true;
+//			}
+//		}
+//
+//		boolean endsWithIntegralType = false;
+//		for (String type : INTEGRAL_TYPES) {
+//			if (typedefName.endsWith(" " + type)) {
+//				endsWithIntegralType = true;
+//				break;
+//			}
+//		}
+//		boolean containsIntegralModifier = false;
+//		for (String modifier : INTEGRAL_MODIFIERS) {
+//			if (typedefName.indexOf(modifier + " ") >= 0 ||
+//				typedefName.indexOf(" " + modifier) >= 0) {
+//				return true;
+//			}
+//		}
+//
+//		if (endsWithIntegralType && containsIntegralModifier) {
+//			return true;
+//		}
+//
+//		if (typedefName.endsWith(" " + basetypeName)) {
+//			return containsIntegralModifier;
+//		}
+//
+//		return false;
+//	}
+
 }

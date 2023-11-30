@@ -389,7 +389,6 @@ src/main/help/help/topics/MemoryMapPlugin/images/MoveMemory.png||GHIDRA||||END|
 src/main/help/help/topics/MemoryMapPlugin/images/SetImageBaseDialog.png||GHIDRA||||END|
 src/main/help/help/topics/MemoryMapPlugin/images/SplitMemoryBlock.png||GHIDRA||||END|
 src/main/help/help/topics/Misc/Appendix.htm||GHIDRA||||END|
-src/main/help/help/topics/Misc/Tips.htm||NONE||||END|
 src/main/help/help/topics/Misc/Welcome_to_Ghidra_Help.htm||GHIDRA||||END|
 src/main/help/help/topics/Navigation/Navigation.htm||GHIDRA||||END|
 src/main/help/help/topics/Navigation/images/GoToDialog.png||GHIDRA||||END|

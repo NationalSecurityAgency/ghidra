@@ -64,8 +64,12 @@ import ghidra.util.task.*;
 public class ExporterDialog extends DialogComponentProvider implements AddressFactoryService {
 
 	private static final String XML_WARNING =
-		"   Warning: XML is lossy and intended only for transfering data to external tools. " +
-			"GZF is the recommended format for saving and sharing program data.";
+			"   Warning: XML is lossy and intended only for transfering data to external tools. " +
+				"GZF is the recommended format for saving and sharing program data.";
+
+	private static final String SARIF_WARNING =
+			"   Warning: SARIF is lossy and intended only for transfering data to external tools. " +
+				"GZF is the recommended format for saving and sharing program data.";
 
 	private static String lastUsedExporterName = GzfExporter.NAME; // default to GZF first time
 
@@ -393,6 +397,9 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 		}
 		if (getSelectedExporter().getName().contains("XML")) {
 			setStatusText(XML_WARNING);
+		}
+		if (getSelectedExporter().getName().contains("SARIF")) {
+			setStatusText(SARIF_WARNING);
 		}
 		setOkEnabled(true);
 	}

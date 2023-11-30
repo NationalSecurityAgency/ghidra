@@ -17,13 +17,14 @@ package ghidra.program.model.data.ISF;
 
 import ghidra.program.model.data.Array;
 
-public class IsfDataTypeArray implements IsfObject {
+public class IsfDataTypeArray extends AbstractIsfObject {
 
 	public String kind;
 	public Integer count;
 	public IsfObject subtype;
 
 	public IsfDataTypeArray(Array arr, IsfObject typeObj) {
+		super(arr);
 		kind = IsfUtilities.getKind(arr);
 		count = arr.getNumElements();
 		subtype = typeObj;
