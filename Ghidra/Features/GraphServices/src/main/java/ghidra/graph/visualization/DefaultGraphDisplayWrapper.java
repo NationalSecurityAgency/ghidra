@@ -55,7 +55,7 @@ public class DefaultGraphDisplayWrapper
 
 	@Override
 	public void setFocusedVertex(AttributedVertex vertex, EventTrigger eventTrigger) {
-		Swing.runNow(() -> delegate.setFocusedVertex(vertex));
+		Swing.runNow(() -> delegate.setFocusedVertex(vertex, eventTrigger));
 	}
 
 	@Override
