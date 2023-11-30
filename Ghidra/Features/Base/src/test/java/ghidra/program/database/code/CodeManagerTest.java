@@ -470,7 +470,7 @@ public class CodeManagerTest extends AbstractGenericTest {
 		Instruction inst = listing.getInstructionAt(addr(0x1100));
 		inst.setProperty("Numbers", 12);
 
-		PropertyMap map = listing.getPropertyMap("Numbers");
+		PropertyMap<?> map = listing.getPropertyMap("Numbers");
 		assertNotNull(map);
 
 		inst.setProperty("FavoriteColor", new SaveableColor(Palette.RED));
