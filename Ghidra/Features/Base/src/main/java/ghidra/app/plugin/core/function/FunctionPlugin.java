@@ -26,7 +26,6 @@ import ghidra.app.context.ListingActionContext;
 import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.*;
-import ghidra.app.util.AddEditDialog;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.plugintool.*;
@@ -118,8 +117,6 @@ public class FunctionPlugin extends Plugin implements DataService {
 	private List<DataAction> favoriteActions = new ArrayList<>();
 	private List<CycleGroupAction> cgActions = new ArrayList<>();
 
-	private AddEditDialog functionNameDialog;
-	private AddEditDialog variableNameDialog;
 	private VariableCommentDialog variableCommentDialog;
 	private DataTypeManagerChangeListenerAdapter adapter;
 	private EditFunctionAction editFunctionAction;
@@ -148,14 +145,7 @@ public class FunctionPlugin extends Plugin implements DataService {
 			dtmService.removeDataTypeManagerChangeListener(adapter);
 		}
 		super.dispose();
-		if (functionNameDialog != null) {
-			functionNameDialog.close();
-			functionNameDialog = null;
-		}
-		if (variableNameDialog != null) {
-			variableNameDialog.close();
-			variableNameDialog = null;
-		}
+
 		if (variableCommentDialog != null) {
 			variableCommentDialog.close();
 			variableCommentDialog = null;
