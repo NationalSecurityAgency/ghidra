@@ -15,14 +15,14 @@
  */
 package pdb.symbolserver;
 
-import java.io.*;
-import java.nio.file.Files;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.io.FilenameUtils;
 
-import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.formats.gfilesystem.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -96,31 +96,19 @@ public class ContainerFileSymbolServer implements SymbolServer {
 			TaskMonitor monitor) {
 
 		try (RefdFile fref = getFile(fileInfo.getName(), monitor)) {
-			// TODO: need to be able to read info from candidate pdb file using some type of stream
 			if (fref != null) {
 				GFile file = fref.file;
 				GFileSystem fs = file.getFilesystem();
-				try (ByteProvider bp = fs.getByteProvider(file, monitor)) {
-					File tmpPdbFile = fsService.createPlaintextTempFile(bp, "temp_pdb", monitor);
-					File tmpPdbDir =
-						Files.createTempDirectory(tmpPdbFile.getParentFile().toPath(), "temp_pdb")
-								.toFile();
-					File destPdbFile = new File(tmpPdbDir, file.getName()).getCanonicalFile();
-					if (!destPdbFile.getParentFile().equals(tmpPdbDir)) {
-						throw new IOException("Bad filename: " + destPdbFile);
-					}
-					if (!tmpPdbFile.renameTo(destPdbFile)) {
-						throw new IOException(
-							"Unable to move file: " + tmpPdbFile + " to " + destPdbFile);
-					}
-					SymbolFileInfo foundInfo = SymbolFileInfo.fromFile(destPdbFile, monitor);
-					destPdbFile.delete();
-					tmpPdbDir.delete();
-					return List.of(new SymbolFileLocation(file.getName(), this, foundInfo));
+				try (AbstractPdb pdb = PdbParser.parse(fs.getByteProvider(file, monitor),
+					new PdbReaderOptions(), monitor)) {
+					PdbIdentifiers pdbIdent = pdb.getIdentifiers();
+					SymbolFileInfo foundInfo =
+						SymbolFileInfo.fromPdbIdentifiers(file.getName(), pdbIdent);
+					return List.of(new SymbolFileLocation(fileInfo.getName(), this, foundInfo));
 				}
 			}
 		}
-		catch (IOException | CancelledException e) {
+		catch (Exception e) {
 			// fall thru
 		}
 		return List.of();
