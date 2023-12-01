@@ -91,8 +91,8 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 			}
 		}
 		catch (CancelledException e) {
- 			return;
- 		}
+			return;
+		}
 		catch (IOException e) {
 			throw e;
 		}
@@ -137,7 +137,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 			for (FatArch architecture : architectures) {
 				ByteProvider bp = new ByteProviderWrapper(provider, architecture.getOffset(),
 					architecture.getSize()) {
-					
+
 					@Override // Ensure the parent provider gets closed when the wrapper does
 					public void close() throws IOException {
 						super.provider.close();

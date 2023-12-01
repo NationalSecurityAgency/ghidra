@@ -25,6 +25,8 @@ import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
+import ghidra.app.plugin.core.analysis.rust.RustConstants;
+import ghidra.app.plugin.core.analysis.rust.RustUtilities;
 import ghidra.app.util.*;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.MemoryLoadable;
@@ -185,6 +187,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			adjustReadOnlyMemoryRegions(monitor);
 
 			markupElfInfoProducers(monitor);
+
+			setCompiler(monitor);
 
 			success = true;
 		}
@@ -2433,6 +2437,21 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			monitor.checkCancelled();
 
 			elfInfoProducer.markupElfInfo(monitor);
+		}
+	}
+
+	private void setCompiler(TaskMonitor monitor) {
+		// Check for Rust
+		try {
+			if (RustUtilities.isRust(program, ElfSectionHeaderConstants.dot_rodata)) {
+				int extensionCount = RustUtilities.addExtensions(program, monitor,
+					RustConstants.RUST_EXTENSIONS_UNIX);
+				log.appendMsg("Installed " + extensionCount + " Rust cspec extensions");
+				program.setCompiler("rustc");
+			}
+		}
+		catch (IOException e) {
+			log.appendException(e);
 		}
 	}
 
