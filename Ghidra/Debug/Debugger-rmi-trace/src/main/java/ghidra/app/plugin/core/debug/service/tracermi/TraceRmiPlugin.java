@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.service.rmi.trace;
+package ghidra.app.plugin.core.debug.service.tracermi;
 
 import java.io.IOException;
 import java.net.*;
@@ -24,14 +24,16 @@ import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceActivatedPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.app.services.*;
-import ghidra.debug.api.tracermi.TraceRmiConnection;
+import ghidra.debug.api.progress.CloseableTaskMonitor;
+import ghidra.debug.api.tracermi.*;
+import ghidra.debug.api.tracermi.TraceRmiServiceListener.ConnectMode;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.AutoService.Wiring;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.util.Swing;
+import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.task.ConsoleTaskMonitor;
-import ghidra.util.task.TaskMonitor;
 
 @PluginInfo(
 	shortDescription = "Connect to back-end debuggers via Trace RMI",
@@ -56,26 +58,41 @@ import ghidra.util.task.TaskMonitor;
 public class TraceRmiPlugin extends Plugin implements InternalTraceRmiService {
 	private static final int DEFAULT_PORT = 15432;
 
+	static class FallbackTaskMonitor extends ConsoleTaskMonitor implements CloseableTaskMonitor {
+		@Override
+		public void close() {
+			// Nothing
+		}
+	}
+
 	@AutoServiceConsumed
 	private DebuggerTargetService targetService;
+	@AutoServiceConsumed
+	private ProgressService progressService;
 	@SuppressWarnings("unused")
 	private final Wiring autoServiceWiring;
-
-	private final TaskMonitor monitor = new ConsoleTaskMonitor();
 
 	private SocketAddress serverAddress = new InetSocketAddress("0.0.0.0", DEFAULT_PORT);
 	private TraceRmiServer server;
 
 	private final Set<TraceRmiHandler> handlers = new LinkedHashSet<>();
+	private final Set<DefaultTraceRmiAcceptor> acceptors = new LinkedHashSet<>();
+
+	final ListenerSet<TraceRmiServiceListener> listeners =
+		new ListenerSet<>(TraceRmiServiceListener.class, true);
+
+	private final CloseableTaskMonitor fallbackMonitor = new FallbackTaskMonitor();
 
 	public TraceRmiPlugin(PluginTool tool) {
 		super(tool);
 		autoServiceWiring = AutoService.wireServicesProvidedAndConsumed(this);
 	}
 
-	public TaskMonitor getTaskMonitor() {
-		// TODO: Create one in the Debug Console?
-		return monitor;
+	protected CloseableTaskMonitor createMonitor() {
+		if (progressService == null) {
+			return fallbackMonitor;
+		}
+		return progressService.publishTask();
 	}
 
 	@Override
@@ -102,14 +119,16 @@ public class TraceRmiPlugin extends Plugin implements InternalTraceRmiService {
 		}
 		server = new TraceRmiServer(this, serverAddress);
 		server.start();
+		listeners.invoke().serverStarted(server.getAddress());
 	}
 
 	@Override
 	public void stopServer() {
 		if (server != null) {
 			server.close();
+			server = null;
+			listeners.invoke().serverStopped();
 		}
-		server = null;
 	}
 
 	@Override
@@ -124,6 +143,7 @@ public class TraceRmiPlugin extends Plugin implements InternalTraceRmiService {
 		socket.connect(address);
 		TraceRmiHandler handler = new TraceRmiHandler(this, socket);
 		handler.start();
+		listeners.invoke().connected(handler, ConnectMode.CONNECT, null);
 		return handler;
 	}
 
@@ -131,25 +151,52 @@ public class TraceRmiPlugin extends Plugin implements InternalTraceRmiService {
 	public DefaultTraceRmiAcceptor acceptOne(SocketAddress address) throws IOException {
 		DefaultTraceRmiAcceptor acceptor = new DefaultTraceRmiAcceptor(this, address);
 		acceptor.start();
+		listeners.invoke().waitingAccept(acceptor);
 		return acceptor;
 	}
 
 	void addHandler(TraceRmiHandler handler) {
-		handlers.add(handler);
+		synchronized (handlers) {
+			handlers.add(handler);
+		}
 	}
 
 	void removeHandler(TraceRmiHandler handler) {
-		handlers.remove(handler);
+		synchronized (handlers) {
+			handlers.remove(handler);
+		}
 	}
 
 	@Override
 	public Collection<TraceRmiConnection> getAllConnections() {
-		return List.copyOf(handlers);
+		synchronized (handlers) {
+			return List.copyOf(handlers);
+		}
 	}
 
-	void publishTarget(TraceRmiTarget target) {
+	void addAcceptor(DefaultTraceRmiAcceptor acceptor) {
+		synchronized (acceptors) {
+			acceptors.add(acceptor);
+		}
+	}
+
+	void removeAcceptor(DefaultTraceRmiAcceptor acceptor) {
+		synchronized (acceptors) {
+			acceptors.remove(acceptor);
+		}
+	}
+
+	@Override
+	public Collection<TraceRmiAcceptor> getAllAcceptors() {
+		synchronized (acceptors) {
+			return List.copyOf(acceptors);
+		}
+	}
+
+	void publishTarget(TraceRmiHandler handler, TraceRmiTarget target) {
 		Swing.runIfSwingOrRunLater(() -> {
 			targetService.publishTarget(target);
+			listeners.invoke().targetPublished(handler, target);
 		});
 	}
 
@@ -157,5 +204,15 @@ public class TraceRmiPlugin extends Plugin implements InternalTraceRmiService {
 		Swing.runIfSwingOrRunLater(() -> {
 			targetService.withdrawTarget(target);
 		});
+	}
+
+	@Override
+	public void addTraceServiceListener(TraceRmiServiceListener listener) {
+		listeners.add(listener);
+	}
+
+	@Override
+	public void removeTraceServiceListener(TraceRmiServiceListener listener) {
+		listeners.remove(listener);
 	}
 }

@@ -427,9 +427,11 @@ message Method {
 message RequestNegotiate {
 	string version = 1;
 	repeated Method methods = 2;
+	string description = 3;
 }
 
 message ReplyNegotiate {
+	string description = 1;
 }
 
 message XRequestInvokeMethod {

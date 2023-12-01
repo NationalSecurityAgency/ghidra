@@ -21,12 +21,11 @@ import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.DockingActionIf;
-import ghidra.dbg.DebuggerConsoleLogger;
 import ghidra.framework.plugintool.ServiceInfo;
 import ghidra.util.HTMLUtilities;
 
 @ServiceInfo(defaultProviderName = "ghidra.app.plugin.core.debug.gui.console.DebuggerConsolePlugin")
-public interface DebuggerConsoleService extends DebuggerConsoleLogger {
+public interface DebuggerConsoleService {
 
 	/**
 	 * Log a message to the console

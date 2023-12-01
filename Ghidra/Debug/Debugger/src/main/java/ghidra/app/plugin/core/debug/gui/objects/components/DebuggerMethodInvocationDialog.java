@@ -205,7 +205,7 @@ public class DebuggerMethodInvocationDialog extends DialogComponentProvider
 	protected boolean resetRequested;
 
 	private final PluginTool tool;
-	private Map<String, ParameterDescription<?>> parameters;
+	Map<String, ParameterDescription<?>> parameters;
 
 	// TODO: Not sure this is the best keying, but I think it works.
 	private Map<NameTypePair, Object> memorized = new HashMap<>();
@@ -275,13 +275,13 @@ public class DebuggerMethodInvocationDialog extends DialogComponentProvider
 		close();
 	}
 
-	private void invoke(ActionEvent evt) {
+	void invoke(ActionEvent evt) {
 		this.arguments = TargetMethod.validateArguments(parameters, collectArguments(), false);
 		this.resetRequested = false;
 		close();
 	}
 
-	private void reset(ActionEvent evt) {
+	void reset(ActionEvent evt) {
 		this.arguments = new LinkedHashMap<>();
 		this.resetRequested = true;
 		close();
@@ -341,6 +341,10 @@ public class DebuggerMethodInvocationDialog extends DialogComponentProvider
 
 	public <T> T getMemorizedArgument(String name, Class<T> type) {
 		return type.cast(memorized.get(new NameTypePair(name, type)));
+	}
+
+	public void forgetMemorizedArguments() {
+		memorized.clear();
 	}
 
 	@Override

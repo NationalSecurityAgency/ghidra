@@ -17,6 +17,8 @@ package ghidra.app.plugin.core.debug.gui.tracermi.connection;
 
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
+import ghidra.app.plugin.core.debug.event.TraceActivatedPluginEvent;
+import ghidra.app.plugin.core.debug.event.TraceInactiveCoordinatesPluginEvent;
 import ghidra.app.services.TraceRmiService;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -29,14 +31,30 @@ import ghidra.framework.plugintool.util.PluginStatus;
 			""",
 	category = PluginCategoryNames.DEBUGGER,
 	packageName = DebuggerPluginPackage.NAME,
-	status = PluginStatus.RELEASED,
+	status = PluginStatus.STABLE,
+	eventsConsumed = {
+		TraceActivatedPluginEvent.class,
+		TraceInactiveCoordinatesPluginEvent.class,
+	},
 	servicesRequired = {
 		TraceRmiService.class,
 	})
 public class TraceRmiConnectionManagerPlugin extends Plugin {
+	private final TraceRmiConnectionManagerProvider provider;
+
 	public TraceRmiConnectionManagerPlugin(PluginTool tool) {
 		super(tool);
+		this.provider = new TraceRmiConnectionManagerProvider(this);
 	}
 
-	// TODO: Add the actual provider. This will probably replace DebuggerTargetsPlugin.
+	@Override
+	public void processEvent(PluginEvent event) {
+		super.processEvent(event);
+		if (event instanceof TraceActivatedPluginEvent evt) {
+			provider.coordinates(evt.getActiveCoordinates());
+		}
+		if (event instanceof TraceInactiveCoordinatesPluginEvent evt) {
+			provider.coordinates(evt.getCoordinates());
+		}
+	}
 }

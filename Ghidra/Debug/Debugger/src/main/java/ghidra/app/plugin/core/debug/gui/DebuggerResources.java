@@ -68,6 +68,8 @@ public interface DebuggerResources {
 	Icon ICON_DEBUGGER = new GIcon("icon.debugger");
 
 	Icon ICON_CONNECTION = new GIcon("icon.debugger.connect");
+	Icon ICON_CONNECT_ACCEPT = new GIcon("icon.debugger.connect.accept");
+	Icon ICON_CONNECT_OUTBOUND = new GIcon("icon.debugger.connect.outbound");
 	Icon ICON_DISCONNECT = new GIcon("icon.debugger.disconnect");
 
 	Icon ICON_PROCESS = new GIcon("icon.debugger.process");

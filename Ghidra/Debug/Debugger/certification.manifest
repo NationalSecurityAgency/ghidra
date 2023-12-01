@@ -107,6 +107,8 @@ src/main/resources/images/breakpoints-disable-all.png||GHIDRA||||END|
 src/main/resources/images/breakpoints-enable-all.png||GHIDRA||||END|
 src/main/resources/images/breakpoints-make-effective.png||GHIDRA||||END|
 src/main/resources/images/conf.png||GHIDRA||||END|
+src/main/resources/images/connect-accept.png||GHIDRA||||END|
+src/main/resources/images/connect-outbound.png||GHIDRA||||END|
 src/main/resources/images/connect.png||GHIDRA||||END|
 src/main/resources/images/console.png||GHIDRA||||END|
 src/main/resources/images/debugger.png||GHIDRA||||END|
@@ -157,6 +159,8 @@ src/main/svg/breakpoints-clear-all.svg||GHIDRA||||END|
 src/main/svg/breakpoints-disable-all.svg||GHIDRA||||END|
 src/main/svg/breakpoints-enable-all.svg||GHIDRA||||END|
 src/main/svg/breakpoints-make-effective.svg||GHIDRA||||END|
+src/main/svg/connect-accept.svg||GHIDRA||||END|
+src/main/svg/connect-outbound.svg||GHIDRA||||END|
 src/main/svg/connect.svg||GHIDRA||||END|
 src/main/svg/console.svg||GHIDRA||||END|
 src/main/svg/debugger.svg||GHIDRA||||END|

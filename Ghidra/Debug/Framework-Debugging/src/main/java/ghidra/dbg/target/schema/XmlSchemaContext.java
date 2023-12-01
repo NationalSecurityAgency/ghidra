@@ -150,11 +150,19 @@ public class XmlSchemaContext extends DefaultSchemaContext {
 		return names.computeIfAbsent(name, SchemaName::new);
 	}
 
+	private String requireAttributeValue(Element elem, String name) {
+		String value = elem.getAttributeValue(name);
+		if (value == null) {
+			throw new IllegalArgumentException("Missing attribute " + name + " in " + elem);
+		}
+		return value;
+	}
+
 	public TargetObjectSchema schemaFromXml(Element schemaElem) {
 		SchemaBuilder builder = builder(name(schemaElem.getAttributeValue("name", "")));
 
 		for (Element ifaceElem : XmlUtilities.getChildren(schemaElem, "interface")) {
-			String ifaceName = ifaceElem.getAttributeValue("name");
+			String ifaceName = requireAttributeValue(ifaceElem, "name");
 			Class<? extends TargetObject> iface = TargetObject.INTERFACES_BY_NAME.get(ifaceName);
 			if (iface == null) {
 				Msg.warn(this, "Unknown interface name: '" + ifaceName + "'");
@@ -166,18 +174,18 @@ public class XmlSchemaContext extends DefaultSchemaContext {
 
 		builder.setCanonicalContainer(parseBoolean(schemaElem, "canonical"));
 		builder.setElementResyncMode(
-			ResyncMode.valueOf(schemaElem.getAttributeValue("elementResync")));
+			ResyncMode.valueOf(requireAttributeValue(schemaElem, "elementResync")));
 		builder.setAttributeResyncMode(
-			ResyncMode.valueOf(schemaElem.getAttributeValue("attributeResync")));
+			ResyncMode.valueOf(requireAttributeValue(schemaElem, "attributeResync")));
 
 		for (Element elemElem : XmlUtilities.getChildren(schemaElem, "element")) {
-			SchemaName schema = name(elemElem.getAttributeValue("schema"));
+			SchemaName schema = name(requireAttributeValue(elemElem, "schema"));
 			String index = elemElem.getAttributeValue("index", "");
 			builder.addElementSchema(index, schema, elemElem);
 		}
 
 		for (Element attrElem : XmlUtilities.getChildren(schemaElem, "attribute")) {
-			SchemaName schema = name(attrElem.getAttributeValue("schema"));
+			SchemaName schema = name(requireAttributeValue(attrElem, "schema"));
 			boolean required = parseBoolean(attrElem, "required");
 			boolean fixed = parseBoolean(attrElem, "fixed");
 			boolean hidden = parseBoolean(attrElem, "hidden");

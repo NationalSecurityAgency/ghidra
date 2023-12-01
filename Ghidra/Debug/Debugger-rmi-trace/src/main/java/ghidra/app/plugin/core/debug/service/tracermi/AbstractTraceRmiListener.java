@@ -13,37 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.service.rmi.trace;
+package ghidra.app.plugin.core.debug.service.tracermi;
 
 import java.io.IOException;
 import java.net.*;
 
+import ghidra.debug.api.tracermi.TraceRmiAcceptor;
+import ghidra.debug.api.tracermi.TraceRmiServiceListener.ConnectMode;
 import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
 
-public class TraceRmiServer {
+public abstract class AbstractTraceRmiListener {
 	protected final TraceRmiPlugin plugin;
 	protected final SocketAddress address;
 
 	protected ServerSocket socket;
 
-	public TraceRmiServer(TraceRmiPlugin plugin, SocketAddress address) {
+	public AbstractTraceRmiListener(TraceRmiPlugin plugin, SocketAddress address) {
 		this.plugin = plugin;
 		this.address = address;
 	}
 
-	protected void bind() throws IOException {
-		socket.bind(address);
-	}
+	protected abstract void bind() throws IOException;
 
 	public void start() throws IOException {
 		socket = new ServerSocket();
 		bind();
-		new Thread(this::serviceLoop, "trace-rmi server " + socket.getLocalSocketAddress()).start();
+		startServiceLoop();
 	}
+
+	protected abstract void startServiceLoop();
 
 	public void setTimeout(int millis) throws SocketException {
 		socket.setSoTimeout(millis);
 	}
+
+	protected abstract ConnectMode getConnectMode();
 
 	/**
 	 * Accept a connection and handle its requests.
@@ -54,34 +59,15 @@ public class TraceRmiServer {
 	 * 
 	 * @return the handler
 	 * @throws IOException on error
+	 * @throws CancelledException if the accept is cancelled
 	 */
 	@SuppressWarnings("resource")
-	protected TraceRmiHandler accept() throws IOException {
+	protected TraceRmiHandler doAccept(TraceRmiAcceptor acceptor) throws IOException {
 		Socket client = socket.accept();
 		TraceRmiHandler handler = new TraceRmiHandler(plugin, client);
 		handler.start();
+		plugin.listeners.invoke().connected(handler, getConnectMode(), acceptor);
 		return handler;
-	}
-
-	protected void serviceLoop() {
-		try {
-			accept();
-		}
-		catch (IOException e) {
-			if (socket.isClosed()) {
-				return;
-			}
-			Msg.error("Error accepting TraceRmi client", e);
-			return;
-		}
-		finally {
-			try {
-				socket.close();
-			}
-			catch (IOException e) {
-				Msg.error("Error closing TraceRmi service", e);
-			}
-		}
 	}
 
 	public void close() {

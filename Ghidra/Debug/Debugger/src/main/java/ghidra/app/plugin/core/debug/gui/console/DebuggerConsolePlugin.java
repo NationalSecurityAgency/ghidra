@@ -152,7 +152,7 @@ public class DebuggerConsolePlugin extends Plugin implements DebuggerConsoleServ
 	 * @param ctx the context
 	 * @return the the log entry
 	 */
-	public LogRow getLogRow(ActionContext ctx) {
+	public LogRow<?> getLogRow(ActionContext ctx) {
 		return provider.getLogRow(ctx);
 	}
 }

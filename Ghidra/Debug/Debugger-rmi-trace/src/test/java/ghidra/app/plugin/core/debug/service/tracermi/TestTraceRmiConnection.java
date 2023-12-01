@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.service.rmi.trace;
+package ghidra.app.plugin.core.debug.service.tracermi;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -28,6 +28,7 @@ import ghidra.async.AsyncPairingQueue;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.debug.api.target.ActionName;
+import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracermi.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.trace.model.Trace;
@@ -87,6 +88,11 @@ public class TestTraceRmiConnection implements TraceRmiConnection {
 		public Object getDefaultValue() {
 			return defaultValue;
 		}
+	}
+
+	@Override
+	public String getDescription() {
+		return "Test Trace RMI connnection";
 	}
 
 	@Override
@@ -184,5 +190,10 @@ public class TestTraceRmiConnection implements TraceRmiConnection {
 		catch (InterruptedException | ExecutionException e) {
 			throw new AssertionError(e);
 		}
+	}
+
+	@Override
+	public Collection<Target> getTargets() {
+		return List.copyOf(targets.values());
 	}
 }
