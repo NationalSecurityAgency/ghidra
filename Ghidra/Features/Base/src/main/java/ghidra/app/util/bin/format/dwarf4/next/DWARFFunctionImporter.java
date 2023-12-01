@@ -346,14 +346,21 @@ public class DWARFFunctionImporter {
 		SymbolTable symbolTable = currentProgram.getSymbolTable();
 		Symbol labelSym = null;
 
+		if (!currentProgram.getMemory().contains(address)) {
+			if (!globalVar.isZeroByte()) {
+				Msg.error(this, "Invalid location for global variable %s:%s @%s".formatted(name,
+					dataType.getName(), address));
+			}
+			return;
+		}
+
 		if (globalVar.isZeroByte() || !variablesProcesesed.contains(address)) {
 			try {
 				labelSym = symbolTable.createLabel(address, name, namespace, SourceType.IMPORTED);
 			}
 			catch (InvalidInputException e) {
-				Msg.error(this,
-					String.format("Error creating label for global variable %s/%s at %s",
-						namespace, name, address));
+				Msg.error(this, "Error creating label for global variable %s/%s at %s"
+						.formatted(namespace, name, address));
 				return;
 			}
 		}
@@ -362,8 +369,8 @@ public class DWARFFunctionImporter {
 			// because this is a zero-length data type (ie. array[0]),
 			// don't create a variable at the location since it will prevent other elements
 			// from occupying the same offset
-			appendComment(address, CodeUnit.PRE_COMMENT, String.format(
-				"Zero length variable: %s: %s", name, dataType.getDisplayName()), "\n");
+			appendComment(address, CodeUnit.PRE_COMMENT,
+				"Zero length variable: %s: %s".formatted(name, dataType.getDisplayName()), "\n");
 
 			return;
 		}
@@ -378,19 +385,20 @@ public class DWARFFunctionImporter {
 			setExternalEntryPoint(true, address);
 		}
 
-		try {
-			if (dataType instanceof Dynamic || dataType instanceof FactoryDataType) {
-				appendComment(address, CodeUnit.EOL_COMMENT,
-					"Unsupported dynamic data type: " + dataType, "\n");
-				dataType = Undefined.getUndefinedDataType(1);
-			}
-			DWARFDataInstanceHelper dih = new DWARFDataInstanceHelper(currentProgram);
-			if (!dih.isDataTypeCompatibleWithAddress(dataType, address)) {
-				appendComment(address, CodeUnit.EOL_COMMENT, String.format(
-					"Could not place DWARF static variable %s: %s @%s because existing data type conflicts.",
-					globalVar.name.getName(), dataType.getName(), address), "\n");
-			}
-			else {
+		if (dataType instanceof Dynamic || dataType instanceof FactoryDataType) {
+			appendComment(address, CodeUnit.EOL_COMMENT,
+				"Unsupported dynamic data type: " + dataType, "\n");
+			dataType = Undefined.getUndefinedDataType(1);
+		}
+		DWARFDataInstanceHelper dih = new DWARFDataInstanceHelper(currentProgram);
+		if (!dih.isDataTypeCompatibleWithAddress(dataType, address)) {
+			appendComment(address, CodeUnit.EOL_COMMENT,
+				"Could not place DWARF static variable %s: %s @%s because existing data type conflicts."
+						.formatted(name, dataType.getName(), address),
+				"\n");
+		}
+		else {
+			try {
 				Data varData = DataUtilities.createData(currentProgram, address, dataType, -1,
 					ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
 				if (varData != null && globalVar.sourceInfo != null) {
@@ -398,12 +406,13 @@ public class DWARFFunctionImporter {
 						globalVar.sourceInfo.getFilename());
 				}
 				variablesProcesesed.add(address);
+				importSummary.globalVarsAdded++;
+			}
+			catch (CodeUnitInsertionException e) {
+				Msg.error(this, "Error creating global variable %s:%s @%s: %s".formatted(name,
+					dataType.getName(), address, e.getMessage()));
 			}
 		}
-		catch (CodeUnitInsertionException e) {
-			Msg.error(this, "Error creating data object at " + address, e);
-		}
-		importSummary.globalVarsAdded++;
 
 		if (globalVar.sourceInfo != null) {
 			appendComment(address, CodeUnit.EOL_COMMENT, globalVar.sourceInfo.getDescriptionStr(),
