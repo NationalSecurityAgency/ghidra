@@ -44,7 +44,7 @@ public abstract class AbstractIsfWriter implements Closeable {
 	protected JsonArray objects = new JsonArray();
 
 	public AbstractIsfWriter(Writer baseWriter) throws IOException {
-		if (writer != null) {
+		if (baseWriter != null) {
 			this.writer = new JsonWriter(baseWriter);
 			writer.setIndent("  ");
 		}

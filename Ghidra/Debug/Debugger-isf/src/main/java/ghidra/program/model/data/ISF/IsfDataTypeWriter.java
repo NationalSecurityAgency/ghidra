@@ -84,7 +84,6 @@ public class IsfDataTypeWriter extends AbstractIsfWriter {
 
 	private List<Address> requestedAddresses = new ArrayList<>();
 	private List<String> requestedSymbols = new ArrayList<>();
-	// private List<String> requestedTypes = new ArrayList<>();
 	private List<DataType> requestedDataTypes = new ArrayList<>();
 	private boolean skipSymbols = false;
 	private boolean skipTypes = false;
@@ -99,6 +98,7 @@ public class IsfDataTypeWriter extends AbstractIsfWriter {
 	 */
 	public IsfDataTypeWriter(DataTypeManager dtm, List<DataType> target, Writer baseWriter) throws IOException {
 		super(baseWriter);
+		this.baseWriter = baseWriter;
 		this.dtm = dtm;
 		if (dtm != null) {
 			dataOrganization = dtm.getDataOrganization();
@@ -113,10 +113,15 @@ public class IsfDataTypeWriter extends AbstractIsfWriter {
 		enums = new JsonObject();
 		functions = new JsonObject();
 		symbols = new JsonObject();
-		requestedDataTypes = target;
+		requestedDataTypes = target == null ? new ArrayList<>() : target;
 		STRICT = true;
 	}
 
+	public JsonObject getRootObject(TaskMonitor monitor) throws CancelledException, IOException {
+		genRoot(monitor);
+		return data;
+	}
+	
 	@Override
 	protected void genRoot(TaskMonitor monitor) throws CancelledException, IOException {
 		genMetadata();
