@@ -1,4 +1,5 @@
 ##VERSION: 2.0
+##MODULE IP: MIT
 Module.manifest||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
