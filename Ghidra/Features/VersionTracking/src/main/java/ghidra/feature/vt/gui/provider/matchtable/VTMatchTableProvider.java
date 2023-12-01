@@ -26,7 +26,13 @@ import static ghidra.feature.vt.gui.util.VTOptionDefines.APPLY_FUNCTION_NAME_ON_
 import static ghidra.feature.vt.gui.util.VTOptionDefines.APPLY_IMPLIED_MATCHES_OPTION;
 import static ghidra.feature.vt.gui.util.VTOptionDefines.APPLY_MARKUP_OPTIONS_NAME;
 import static ghidra.feature.vt.gui.util.VTOptionDefines.AUTO_CREATE_IMPLIED_MATCH;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.AUTO_VT_DATA_CORRELATOR;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.AUTO_VT_DUPLICATE_FUNCTION_CORRELATOR;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.AUTO_VT_EXACT_FUNCTION_CORRELATORS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.AUTO_VT_IMPLIED_MATCH_CORRELATOR;
 import static ghidra.feature.vt.gui.util.VTOptionDefines.AUTO_VT_OPTIONS_NAME;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.AUTO_VT_REFERENCE_CORRELATORS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.AUTO_VT_SYMBOL_CORRELATOR;
 import static ghidra.feature.vt.gui.util.VTOptionDefines.CALLING_CONVENTION;
 import static ghidra.feature.vt.gui.util.VTOptionDefines.CALL_FIXUP;
 import static ghidra.feature.vt.gui.util.VTOptionDefines.CREATE_IMPLIED_MATCHES_OPTION;
@@ -842,6 +848,32 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		vtOptions.registerOption(RUN_DUPE_FUNCTION_OPTION, true, null,
 			"Run the Duplicate Function Instruction Correlator");
 		vtOptions.registerOption(RUN_REF_CORRELATORS_OPTION, true, null, "Run the Reference Correlators");
+
+		// set help for the sub categories
+
+		vtOptions.getOptions(AUTO_VT_OPTIONS_NAME + "." + AUTO_VT_IMPLIED_MATCH_CORRELATOR)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.getOptions(AUTO_VT_OPTIONS_NAME + "." + AUTO_VT_SYMBOL_CORRELATOR)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.getOptions(AUTO_VT_OPTIONS_NAME + "." + AUTO_VT_DATA_CORRELATOR)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.getOptions(AUTO_VT_OPTIONS_NAME + "." + AUTO_VT_EXACT_FUNCTION_CORRELATORS)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.getOptions(AUTO_VT_OPTIONS_NAME + "." + AUTO_VT_DUPLICATE_FUNCTION_CORRELATOR)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.getOptions(AUTO_VT_OPTIONS_NAME + "." + AUTO_VT_REFERENCE_CORRELATORS)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
 
 		// create sub options for each auto VT correlator
 		vtOptions.registerOption(APPLY_IMPLIED_MATCHES_OPTION, true, null,
