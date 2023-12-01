@@ -100,7 +100,7 @@ public class FindPossibleReferencesPlugin extends Plugin {
 	private void createActions() {
 		action = new ActionBuilder(SEARCH_DIRECT_REFS_ACTION_NAME, getName())
 			.menuPath(ToolConstants.MENU_SEARCH, "For Direct References")
-			.menuGroup("search for")
+			.menuGroup("search for", "DirectReferences")
 			.helpLocation(new HelpLocation(HelpTopics.SEARCH, SEARCH_DIRECT_REFS_ACTION_NAME))
 			.description(getPluginDescription().getDescription())
 			.withContext(ListingActionContext.class, true)
