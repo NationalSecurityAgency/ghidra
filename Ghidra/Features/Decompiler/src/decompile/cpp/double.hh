@@ -70,6 +70,7 @@ public:
   void buildHiFromWhole(Funcdata &data);	///< Rebuild the most significant piece as a CPUI_SUBPIECE of the \b whole
   PcodeOp *findEarliestSplitPoint(void);	///< Find the earliest definition point of the \b lo and \b hi pieces
   PcodeOp *findOutExist(void);			///< Find the point at which the output \b whole must exist
+  bool exceedsConstPrecision(void) const;	///< Check if \b this is a constant that exceeds precision limits
   static bool adjacentOffsets(Varnode *vn1,Varnode *vn2,uintb size1);
   static bool testContiguousPointers(PcodeOp *most,PcodeOp *least,PcodeOp *&first,PcodeOp *&second,AddrSpace *&spc);
   static bool isAddrTiedContiguous(Varnode *lo,Varnode *hi,Address &res);

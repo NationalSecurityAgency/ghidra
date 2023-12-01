@@ -476,6 +476,23 @@ void Datatype::encodeRef(Encoder &encoder) const
     encode(encoder);
 }
 
+/// If \b this has no component data-types, return \b true.
+/// If \b this has only a single primitive component filling the whole data-type, also return \b true.
+/// \return \b true if \b this data-type is made up of a single primitive
+bool Datatype::isPrimitiveWhole(void) const
+
+{
+  if (!isPieceStructured()) return true;
+  if (metatype == TYPE_ARRAY || metatype == TYPE_STRUCT) {
+    if (numDepend() > 0) {
+      Datatype *component = getDepend(0);
+      if (component->getSize() == getSize())
+	return component->isPrimitiveWhole();
+    }
+  }
+  return false;
+}
+
 /// Called only if the \b typedefImm field is non-null.  Encode the data-type to the
 /// stream as a simple \<typedef> element including only the names and ids of \b this and
 /// the data-type it typedefs.

@@ -1667,8 +1667,8 @@ int4 ActionParamDouble::apply(Funcdata &data)
     for(int4 i=0;i<numparams;++i) {
       ProtoParameter *param = fp.getParam(i);
       Datatype *tp = param->getType();
-      type_metatype mt = tp->getMetatype();
-      if ((mt==TYPE_ARRAY)||(mt==TYPE_STRUCT)) continue; // Not double precision objects
+      if (!tp->isPrimitiveWhole())
+	continue;		// Not double precision objects
       Varnode *vn = data.findVarnodeInput(tp->getSize(),param->getAddress());
       if (vn == (Varnode *)0) continue;
       if (vn->getSize() < minDoubleSize) continue;
