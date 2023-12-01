@@ -1,0 +1,24 @@
+#!/bin/bash
+#
+# Command-line script for starting GhidraGo
+
+# launch mode  (fg, bg, debug, debug-suspend, debug-suspend-launcher)
+LAUNCH_MODE=fg
+
+# Resolve symbolic link if present and get the directory this script lives in.
+# NOTE: "readlink -f" is best but works on Linux only, "readlink" will only work if your PWD
+# contains the link you are calling (which is the best we can do on macOS), and the "echo" is the 
+# fallback, which doesn't attempt to do anything with links.
+SCRIPT_FILE="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
+
+# in dev mode, SCRIPT_FILE is Ghidra/RuntimeScripts_U/Linux/support/GhidraGo/ghidraGo
+# in release mode, SCRIPT_FILE is support/GhidraGo/ghidraGo
+# BASE_DIR is the base directory of ext-u. 
+# Initally assume to be in release mode.
+BASE_DIR="${SCRIPT_FILE%/*}/../.."
+
+if [ ! -d "$BASE_DIR/Ghidra" ]; then
+	BASE_DIR="${BASE_DIR}/../../../../ghidra/Ghidra/RuntimeScripts/Linux"
+fi
+
+"${BASE_DIR}"/support/launch.sh $LAUNCH_MODE jdk GhidraGo "" "" ghidra.GhidraGo "$@"
