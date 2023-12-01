@@ -18,8 +18,8 @@ package ghidra.app.plugin.core.debug.gui;
 import java.util.Set;
 
 import db.Transaction;
-import ghidra.app.plugin.core.debug.service.rmi.trace.TestTraceRmiConnection;
-import ghidra.app.plugin.core.debug.service.rmi.trace.TestTraceRmiConnection.*;
+import ghidra.app.plugin.core.debug.service.tracermi.TestTraceRmiConnection;
+import ghidra.app.plugin.core.debug.service.tracermi.TestTraceRmiConnection.*;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.debug.api.target.ActionName;

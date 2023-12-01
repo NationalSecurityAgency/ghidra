@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.dbg;
+package ghidra.app.plugin.core.debug.service.tracermi;
 
-public interface DebuggerConsoleLogger {
+import ghidra.program.model.address.AddressOverflowException;
 
+public interface ValueSupplier {
+	Object get(ValueDecoder decoder) throws AddressOverflowException;
 }

@@ -46,7 +46,7 @@ import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.mapping.ObjectBasedDebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin;
-import ghidra.app.plugin.core.debug.service.rmi.trace.TestTraceRmiConnection.TestRemoteMethod;
+import ghidra.app.plugin.core.debug.service.tracermi.TestTraceRmiConnection.TestRemoteMethod;
 import ghidra.app.services.DebuggerControlService;
 import ghidra.app.services.DebuggerEmulationService;
 import ghidra.app.services.DebuggerEmulationService.CachedEmulator;

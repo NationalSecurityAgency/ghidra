@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.service.rmi.trace;
+package ghidra.app.plugin.core.debug.service.tracermi;
 
-import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiHandler.*;
+import ghidra.app.plugin.core.debug.service.tracermi.TraceRmiHandler.*;
 import ghidra.debug.api.tracermi.TraceRmiError;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;

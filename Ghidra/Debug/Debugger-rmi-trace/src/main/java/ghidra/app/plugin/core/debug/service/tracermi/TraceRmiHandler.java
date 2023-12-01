@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.service.rmi.trace;
+package ghidra.app.plugin.core.debug.service.tracermi;
 
 import java.io.*;
 import java.math.BigInteger;
@@ -41,9 +41,12 @@ import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.dbg.util.PathPattern;
 import ghidra.dbg.util.PathUtils;
+import ghidra.debug.api.progress.CloseableTaskMonitor;
 import ghidra.debug.api.target.ActionName;
+import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.debug.api.tracermi.*;
+import ghidra.framework.Application;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.AutoService.Wiring;
@@ -65,7 +68,6 @@ import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateFileException;
-import ghidra.util.task.TaskMonitor;
 
 public class TraceRmiHandler implements TraceRmiConnection {
 	public static final String VERSION = "10.4";
@@ -180,7 +182,14 @@ public class TraceRmiHandler implements TraceRmiConnection {
 			byTrace.put(openTrace.trace, openTrace);
 			first.complete(openTrace);
 
-			plugin.publishTarget(openTrace.target);
+			plugin.publishTarget(TraceRmiHandler.this, openTrace.target);
+		}
+
+		public synchronized List<Target> getTargets() {
+			return byId.values()
+					.stream()
+					.map(ot -> ot.target)
+					.collect(Collectors.toUnmodifiableList());
 		}
 
 		public CompletableFuture<OpenTrace> getFirstAsync() {
@@ -192,7 +201,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 	private final Socket socket;
 	private final InputStream in;
 	private final OutputStream out;
-	private final CompletableFuture<Void> negotiate = new CompletableFuture<>();
+	private final CompletableFuture<String> negotiate = new CompletableFuture<>();
 	private final CompletableFuture<Void> closed = new CompletableFuture<>();
 	private final Set<TerminalSession> terminals = new LinkedHashSet<>();
 
@@ -276,8 +285,8 @@ public class TraceRmiHandler implements TraceRmiConnection {
 			DoId nextKey = openTraces.idSet().iterator().next();
 			OpenTrace open = openTraces.removeById(nextKey);
 			if (traceManager == null || traceManager.isSaveTracesByDefault()) {
-				try {
-					open.trace.save("Save on Disconnect", plugin.getTaskMonitor());
+				try (CloseableTaskMonitor monitor = plugin.createMonitor()) {
+					open.trace.save("Save on Disconnect", monitor);
 				}
 				catch (IOException e) {
 					Msg.error(this, "Could not save " + open.trace);
@@ -289,6 +298,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 			open.trace.release(this);
 		}
 		closed.complete(null);
+		plugin.listeners.invoke().disconnected(this);
 	}
 
 	@Override
@@ -344,18 +354,19 @@ public class TraceRmiHandler implements TraceRmiConnection {
 	protected DomainFile createDeconflictedFile(DomainFolder parent, DomainObject object)
 			throws InvalidNameException, CancelledException, IOException {
 		String name = object.getName();
-		TaskMonitor monitor = plugin.getTaskMonitor();
-		for (int nextId = 1; nextId < 100; nextId++) {
-			try {
-				return parent.createFile(name, object, monitor);
+		try (CloseableTaskMonitor monitor = plugin.createMonitor()) {
+			for (int nextId = 1; nextId < 100; nextId++) {
+				try {
+					return parent.createFile(name, object, monitor);
+				}
+				catch (DuplicateFileException e) {
+					name = object.getName() + "." + nextId;
+				}
 			}
-			catch (DuplicateFileException e) {
-				name = object.getName() + "." + nextId;
-			}
+			name = object.getName() + "." + System.currentTimeMillis();
+			// Don't catch it this last time
+			return parent.createFile(name, object, monitor);
 		}
-		name = object.getName() + "." + System.currentTimeMillis();
-		// Don't catch it this last time
-		return parent.createFile(name, object, monitor);
 	}
 
 	public void start() {
@@ -911,16 +922,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		OpenTrace open = requireOpenTrace(req.getOid());
 		long snap = req.getSnap().getSnap();
 
-		/**
-		 * TODO: Is this composition of laziness upon laziness efficient enough?
-		 * 
-		 * <p>
-		 * Can experiment with ordering of address-set-view "expression" to optimize early
-		 * termination.
-		 * 
-		 * <p>
-		 * Want addresses satisfying {@code known | (readOnly & everKnown)}
-		 */
+		// Want addresses satisfying {@code known | (readOnly & everKnown)}
 		TraceMemoryManager memoryManager = open.trace.getMemoryManager();
 		AddressSetView readOnly =
 			memoryManager.getRegionsAddressSetWith(snap, r -> !r.isWrite());
@@ -939,8 +941,9 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		dis.setInitialContext(DebuggerDisassemblerPlugin.deriveAlternativeDefaultContext(
 			host.getLanguage(), host.getLanguage().getLanguageID(), start));
 
-		TaskMonitor monitor = plugin.getTaskMonitor();
-		dis.applyToTyped(open.trace.getFixedProgramView(snap), monitor);
+		try (CloseableTaskMonitor monitor = plugin.createMonitor()) {
+			dis.applyToTyped(open.trace.getFixedProgramView(snap), monitor);
+		}
 
 		return ReplyDisassemble.newBuilder()
 				.setLength(dis.getDisassembledAddressSet().getNumAddresses())
@@ -1027,8 +1030,10 @@ public class TraceRmiHandler implements TraceRmiConnection {
 				new SchemaName(m.getReturnType().getName()));
 			methodRegistry.add(rm);
 		}
-		negotiate.complete(null);
-		return ReplyNegotiate.getDefaultInstance();
+		negotiate.complete(req.getDescription());
+		return ReplyNegotiate.newBuilder()
+				.setDescription(Application.getName() + " " + Application.getApplicationVersion())
+				.build();
 	}
 
 	protected ReplyPutBytes handlePutBytes(RequestPutBytes req) {
@@ -1110,7 +1115,9 @@ public class TraceRmiHandler implements TraceRmiConnection {
 	protected ReplySaveTrace handleSaveTrace(RequestSaveTrace req)
 			throws CancelledException, IOException {
 		OpenTrace open = requireOpenTrace(req.getOid());
-		open.trace.save("TraceRMI", plugin.getTaskMonitor());
+		try (CloseableTaskMonitor monitor = plugin.createMonitor()) {
+			open.trace.save("TraceRMI", monitor);
+		}
 		return ReplySaveTrace.getDefaultInstance();
 	}
 
@@ -1271,9 +1278,25 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		return openTraces.getByTrace(trace) != null;
 	}
 
+	@Override
+	public Collection<Target> getTargets() {
+		return openTraces.getTargets();
+	}
+
 	public void registerTerminals(Collection<TerminalSession> terminals) {
 		synchronized (this.terminals) {
 			this.terminals.addAll(terminals);
 		}
+	}
+
+	@Override
+	public String getDescription() {
+		// NOTE: Negotiation happens during construction, so unless this is called internally,
+		// or there's some error, we should always have a read description.
+		String description = negotiate.getNow("(Negotiating...)");
+		if (description.isBlank()) {
+			return "Trace RMI";
+		}
+		return description;
 	}
 }

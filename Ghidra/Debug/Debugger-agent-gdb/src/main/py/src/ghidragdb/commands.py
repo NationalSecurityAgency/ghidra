@@ -201,7 +201,9 @@ def ghidra_trace_connect(address, *, is_mi, **kwargs):
     try:
         c = socket.socket()
         c.connect((host, int(port)))
-        STATE.client = Client(c, methods.REGISTRY)
+        STATE.client = Client(
+            c, "gdb-" + util.GDB_VERSION.full, methods.REGISTRY)
+        print(f"Connected to {STATE.client.description} at {address}")
     except ValueError:
         raise gdb.GdbError("port must be numeric")
 
@@ -320,9 +322,11 @@ def ghidra_trace_info(*, is_mi, **kwargs):
         return
     host, port = STATE.client.s.getpeername()
     if is_mi:
-        result['connection'] = "{}:{}".format(host, port)
+        result['description'] = STATE.client.description
+        result['address'] = f"{host}:{port}"
     else:
-        gdb.write("Connected to Ghidra at {}:{}\n".format(host, port))
+        gdb.write(
+            f"Connected to {STATE.client.description} at {host}:{port}\n")
     if STATE.trace is None:
         if is_mi:
             result['tracing'] = False

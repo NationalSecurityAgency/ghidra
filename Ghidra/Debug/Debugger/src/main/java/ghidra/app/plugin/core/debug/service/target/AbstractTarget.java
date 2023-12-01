@@ -102,7 +102,7 @@ public abstract class AbstractTarget implements Target {
 				return address;
 			}
 		}
-		if (context.getContextObject() instanceof MarkerLocation ml) {
+		if (context != null && context.getContextObject() instanceof MarkerLocation ml) {
 			Address address = findAddress(ml);
 			if (address != null) {
 				return address;

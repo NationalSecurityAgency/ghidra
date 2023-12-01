@@ -22,7 +22,7 @@ import java.util.*;
 import org.junit.Before;
 
 import db.Transaction;
-import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiTarget;
+import ghidra.app.plugin.core.debug.service.tracermi.TraceRmiTarget;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
