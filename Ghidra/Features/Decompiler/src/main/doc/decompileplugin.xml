@@ -39,7 +39,7 @@
     plug-in enabled, but if it is disabled for some reason, it can be enabled from within
     a Code Browser by selecting the
     <informalexample>
-      <emphasis role="bold">File -> Configure...</emphasis>
+      <emphasis role="bold">File -> Configure</emphasis>
     </informalexample>
     menu option, then clicking on the <emphasis>Configure</emphasis> link under the
     <emphasis role="bold">Ghidra Core</emphasis> section and checking the box next to
@@ -3267,6 +3267,36 @@
 	<para>
 	  Assign the background color for the Decompiler window.
 	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry id="DisplayBraceFormatting">
+      <term><emphasis role="bold">Brace Format for &lt;kind-of&gt; blocks</emphasis></term>
+      <listitem>
+	<para>
+          Choose how braces are placed after function declarations, or other kinds of code blocks in Decompiler output.
+          Formatting can be controlled for:
+          <informalexample>
+            <itemizedlist mark='bullet'>
+	      <listitem><emphasis role="bold">function blocks</emphasis> - the main function bodies</listitem>
+	      <listitem><emphasis role="bold">if/else blocks</emphasis> - blocks delineated by the <code>if</code> and <code>else</code> keywords</listitem>
+	      <listitem><emphasis role="bold">loop blocks</emphasis> - blocks delineated by the <code>for</code>, <code>do</code>, and <code>while</code> keywords</listitem>
+	      <listitem><emphasis role="bold">switch blocks</emphasis> - blocks delineated by the <code>switch</code> keyword</listitem>
+            </itemizedlist>
+          </informalexample>
+          The different formatting options primarily control how the opening brace is displayed relative to the line containing
+          the declaration or keyword starting the block.  The formatting options are:
+          <informalexample>
+            <itemizedlist mark='bullet'>
+	      <listitem><emphasis role="bold">Same line</emphasis> - opening brace placed on same line</listitem>
+	      <listitem><emphasis role="bold">Next line</emphasis> - opening brace placed on the next line</listitem>
+	      <listitem><emphasis role="bold">Skip one line</emphasis> - opening brace placed on line after a blank line</listitem>
+            </itemizedlist>
+          </informalexample>
+	</para>
+        <para>
+          The "Same line" option is consistent with K &amp; R code formatting style.  The "Next line" option is consistent with
+          the Allman formatting style.
+        </para>
       </listitem>
     </varlistentry>
     <varlistentry id="DisplayColorDefault">

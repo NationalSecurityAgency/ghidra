@@ -58,6 +58,38 @@ void Emit::spaces(int4 num,int4 bump)
   }
 }
 
+int4 Emit::openBraceIndent(const string &brace,brace_style style)
+
+{
+  if (style == same_line)
+    spaces(1);
+  else if (style == skip_line) {
+    tagLine();
+    tagLine();
+  }
+  else {
+    tagLine();
+  }
+  int4 id = startIndent();
+  print(brace);
+  return id;
+}
+
+void Emit::openBrace(const string &brace,brace_style style)
+
+{
+  if (style == same_line)
+    spaces(1);
+  else if (style == skip_line) {
+    tagLine();
+    tagLine();
+  }
+  else {
+    tagLine();
+  }
+  print(brace);
+}
+
 EmitMarkup::~EmitMarkup(void)
 
 {

@@ -148,6 +148,10 @@ protected:
   bool option_nocasts;		///< Don't print a cast if \b true
   bool option_unplaced;		///< Set to \b true if we should display unplaced comments
   bool option_hide_exts;	///< Set to \b true if we should hide implied extension operations
+  Emit::brace_style option_brace_func;		///< How function declaration braces should be formatted
+  Emit::brace_style option_brace_ifelse;	///< How braces for if/else blocks are formatted
+  Emit::brace_style option_brace_loop;		///< How braces for loop blocks are formatted
+  Emit::brace_style option_brace_switch;	///< How braces for switch blocks are formatted
   string nullToken;		///< Token to use for 'null'
   string sizeSuffix;		///< Characters to print to indicate a \e long integer token
   CommentSorter commsorter;	///< Container/organizer for comments in the current function
@@ -238,6 +242,10 @@ public:
   void setCPlusPlusStyleComments(void) { setCommentDelimeter("// ","",true); }	///< Set c++-style "//" comment delimiters
   void setDisplayUnplaced(bool val) { option_unplaced = val; }	///< Toggle whether \e unplaced comments are displayed in the header
   void setHideImpliedExts(bool val) { option_hide_exts = val; }	///< Toggle whether implied extensions are hidden
+  void setBraceFormatFunction(Emit::brace_style style) { option_brace_func = style; }	///< Set how function declarations are formatted
+  void setBraceFormatIfElse(Emit::brace_style style) { option_brace_ifelse = style; }	///< Set how if/else blocks are formatted
+  void setBraceFormatLoop(Emit::brace_style style) { option_brace_loop = style; }	///< Set how loop blocks are formatted
+  void setBraceFormatSwitch(Emit::brace_style style) { option_brace_switch = style; }	///< Set how switch blocks are formatted
   virtual ~PrintC(void) {}
   virtual void resetDefaults(void);
   virtual void initializeFromArchitecture(void);
@@ -341,8 +349,9 @@ public:
 /// The open brace can be canceled if the block decides it wants to use "else if" syntax.
 class PendingBrace : public PendPrint {
   int4 indentId;		///< Id associated with the new indent level
+  Emit::brace_style style;	///< Style to use for pending brace
 public:
-  PendingBrace(void) { indentId = -1; }			///< Constructor
+  PendingBrace(Emit::brace_style s) { indentId = -1; style = s; }			///< Constructor
   int4 getIndentId(void) const { return indentId; }	///< If commands have been issued, returns the new indent level id.
   virtual void callback(Emit *emit);
 };

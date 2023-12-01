@@ -314,6 +314,8 @@ public record ElementId(String name, int id) {
 	public static final ElementId ELEM_TOGGLERULE = new ElementId("togglerule", 209);
 	public static final ElementId ELEM_WARNING = new ElementId("warning", 210);
 
+	public static final ElementId ELEM_BRACEFORMAT = new ElementId("braceformat", 284);
+
 	// jumptable
 	public static final ElementId ELEM_BASICOVERRIDE = new ElementId("basicoverride", 211);
 	public static final ElementId ELEM_DEST = new ElementId("dest", 212);
@@ -439,5 +441,5 @@ public record ElementId(String name, int id) {
 	public static final ElementId ELEM_JOIN_PER_PRIMITIVE =
 		new ElementId("join_per_primitive", 283);
 
-	public static final ElementId ELEM_UNKNOWN = new ElementId("XMLunknown", 284);
+	public static final ElementId ELEM_UNKNOWN = new ElementId("XMLunknown", 285);
 }
