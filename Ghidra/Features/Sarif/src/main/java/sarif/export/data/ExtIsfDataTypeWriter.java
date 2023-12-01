@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.List;
 
+import com.google.gson.JsonObject;
+
 import ghidra.program.model.data.Array;
 import ghidra.program.model.data.BitFieldDataType;
 import ghidra.program.model.data.BuiltInDataType;
@@ -50,6 +52,11 @@ public class ExtIsfDataTypeWriter extends IsfDataTypeWriter {
 		STRICT = false;
 	}
 
+	public JsonObject getRootObject(TaskMonitor monitor) throws CancelledException, IOException {
+		genRoot(monitor);
+		return root;
+	}
+	
 	@Override
 	protected void genRoot(TaskMonitor monitor) throws CancelledException, IOException {
 		super.genRoot(monitor);
