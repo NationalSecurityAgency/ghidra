@@ -403,7 +403,7 @@ public class DWARFVariable {
 			}
 			else if (exprEvaluator.getRawLastRegister() == -1 && res != 0) {
 				// static global variable location
-				setRamStorage(res);
+				setRamStorage(res + prog.getProgramBaseAddressFixup());
 			}
 			else {
 				Msg.error(this,
