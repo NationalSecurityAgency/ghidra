@@ -28,6 +28,10 @@ dependencies {
 	api project(':Pty')
 	api project(':Debugger')
 	api project(':Debugger-api')
+	
+	testImplementation project(path: ':Debugger', configuration: 'testArtifacts')
+	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
+	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
 }
 
 task generateProtoPy {
