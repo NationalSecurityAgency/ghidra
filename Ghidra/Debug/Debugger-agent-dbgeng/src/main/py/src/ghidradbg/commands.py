@@ -174,7 +174,7 @@ def ghidra_trace_listen(address='0.0.0.0:0'):
         c, (chost, cport) = s.accept()
         s.close()
         print("Connection from {}:{}\n".format(chost, cport))
-        STATE.client = Client(c, methods.REGISTRY)
+        STATE.client = Client(c, "TBD", methods.REGISTRY)
     except ValueError:
         raise RuntimeError("port must be numeric")
 
