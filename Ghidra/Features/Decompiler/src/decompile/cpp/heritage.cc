@@ -2065,11 +2065,9 @@ void Heritage::splitJoinRead(Varnode *vn,JoinRecord *joinrec)
 
 {
   PcodeOp *op = vn->loneDescend(); // vn isFree, so loneDescend must be non-null
-  bool preventConstCollapse = false;
+  bool isPrimitive = true;
   if (vn->isTypeLock()) {
-    type_metatype meta = vn->getType()->getMetatype();
-    if (meta == TYPE_STRUCT || meta == TYPE_ARRAY)
-      preventConstCollapse = true;
+    isPrimitive = vn->getType()->isPrimitiveWhole();
   }
   
   vector<Varnode *> lastcombo;
@@ -2090,10 +2088,13 @@ void Heritage::splitJoinRead(Varnode *vn,JoinRecord *joinrec)
       fd->opSetInput(concat,mosthalf,0);
       fd->opSetInput(concat,leasthalf,1);
       fd->opInsertBefore(concat,op);
-      if (preventConstCollapse)
+      if (isPrimitive) {
+	mosthalf->setPrecisHi();	// Set precision flags to trigger "double precision" rules
+	leasthalf->setPrecisLo();
+      }
+      else {
 	fd->opMarkNoCollapse(concat);
-      mosthalf->setPrecisHi();	// Set precision flags to trigger "double precision" rules
-      leasthalf->setPrecisLo();
+      }
       op = concat;		// Keep -op- as the earliest op in the concatenation construction
     }
 
@@ -2118,6 +2119,9 @@ void Heritage::splitJoinWrite(Varnode *vn,JoinRecord *joinrec)
 {
   PcodeOp *op = vn->getDef();	// vn cannot be free, either it has def, or it is input
   BlockBasic *bb = (BlockBasic *)fd->getBasicBlocks().getBlock(0);
+  bool isPrimitive = true;
+  if (vn->isTypeLock())
+    isPrimitive = vn->getType()->isPrimitiveWhole();
 
   vector<Varnode *> lastcombo;
   vector<Varnode *> nextlev;
@@ -2151,8 +2155,10 @@ void Heritage::splitJoinWrite(Varnode *vn,JoinRecord *joinrec)
       fd->opSetInput(split,curvn,0);
       fd->opSetInput(split,fd->newConstant(4,0),1);
       fd->opInsertAfter(split,op);
-      mosthalf->setPrecisHi();	// Make sure we set the precision flags to trigger "double precision" rules
-      leasthalf->setPrecisLo();
+      if (isPrimitive) {
+	mosthalf->setPrecisHi();	// Make sure we set the precision flags to trigger "double precision" rules
+	leasthalf->setPrecisLo();
+      }
       op = split;		// Keep -op- as the latest op in the split construction
     }
 

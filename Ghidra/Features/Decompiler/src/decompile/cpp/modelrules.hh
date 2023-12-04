@@ -286,7 +286,7 @@ class MultiSlotAssign : public AssignAction {
   void initializeEntries(void);		///< Cache specific ParamEntry needed by the action
 public:
   MultiSlotAssign(const ParamListStandard *res);	///< Constructor for use with decode
-  MultiSlotAssign(type_class store,bool stack,bool mostSig,bool align,bool justRight,const ParamListStandard *res);
+  MultiSlotAssign(type_class store,bool stack,bool mostSig,bool align,bool justRight,const ParamListStandard *res);	///< Constructor
   virtual AssignAction *clone(const ParamListStandard *newResource) const {
     return new MultiSlotAssign(resourceType,consumeFromStack,consumeMostSig,enforceAlignment,justifyRight,newResource); }
   virtual uint4 assignAddress(Datatype *dt,const PrototypePieces &proto,int4 pos,TypeFactory &tlist,
@@ -304,7 +304,7 @@ class MultiMemberAssign : public AssignAction {
   bool consumeFromStack;		///< True if resources should be consumed from the stack
   bool consumeMostSig;			///< True if resources are consumed starting with most significant bytes
 public:
-  MultiMemberAssign(type_class store,bool stack,bool mostSig,const ParamListStandard *res);
+  MultiMemberAssign(type_class store,bool stack,bool mostSig,const ParamListStandard *res);	///< Constructor
   virtual AssignAction *clone(const ParamListStandard *newResource) const {
     return new MultiMemberAssign(resourceType,consumeFromStack,consumeMostSig,newResource); }
   virtual uint4 assignAddress(Datatype *dt,const PrototypePieces &proto,int4 pos,TypeFactory &tlist,
