@@ -24,11 +24,8 @@
 
     <P>The console logs messages from Ghidra related to the debugger. Depending on the exact
     configuration, this can comprise a wide range of components, including all GUI views, active
-    connectors, and running agents. Currently, it implements an appender to gather all Log4J
-    messages emitted by Ghidra and filters for debugger-related packages and a level in the range
-    INFO through FATAL, inclusive. That feature will likely be removed as more components are
-    programmed to work directly with the console. Soon, it may also provide a command-line
-    interface to control Ghidra's debugging sessions and interact with traces.</P>
+    connectors, and running agents. Soon, it may also provide a command-line interface to control
+    Ghidra's debugging sessions and interact with traces.</P>
 
     <P>Some log messages include an action context, allowing plug-ins to offer actions on that
     message. These are said to be "actionable" messages. A noteworthy example is when navigating to
@@ -68,5 +65,10 @@
     <H3><A name="select_none"></A>Select None</H3>
 
     <P>Resets the selection, usually so table scrolling can be restored to "normal."</P>
+
+    <H3><A name="cancel"></A>Cancel</H3>
+
+    <P>Some experimental features may display progress entries in the log for background tasks they
+    run. This action is displayed in the Actions column and will cancel the task.</P>
   </BODY>
 </HTML>

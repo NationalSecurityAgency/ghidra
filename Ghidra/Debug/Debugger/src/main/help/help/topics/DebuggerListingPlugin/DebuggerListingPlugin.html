@@ -165,6 +165,16 @@
       <LI><CODE>*:8 (RSP+8)</CODE> &mdash; The address pointed to by stack offset 8</LI>
     </UL>
 
+    <H3><A name="auto_disassembly"></A>Auto-Disassembly</H3>
+
+    <P>This action is always available. It automatically disassembles starting at the current
+    program counter. It applies only when a "Track Program Counter" option is selected in the <A
+    href="#track_location">Track Location</A> action. Disassembly occurs whenever the program
+    counter is updated, when the memory at the program counter is updated, or when navigating to a
+    new context. It terminates at the first branch encountered. Disassembly can be performed
+    manually using the <A href=
+    "help/topics/DisassemblerPlugin/Disassembly.htm#Disassemble">Disassemble</A> command.</P>
+
     <H3><A name="auto_sync_cursor_static"></A>Auto-Sync Cursor with Static Listing</H3>
 
     <P>This action is always available, but only on the primary dynamic listing. It configures
