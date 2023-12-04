@@ -80,11 +80,12 @@ public class EncodedStringsPlugin extends ProgramPlugin {
 
 	private void registerOptions() {
 		ToolOptions options = tool.getOptions(STRINGS_OPTION_NAME);
-		options.registerOption(CHARSET_OPTIONNAME, CHARSET_DEFAULT_VALUE, null,
+		options.registerOption(CHARSET_OPTIONNAME, CHARSET_DEFAULT_VALUE, HELP_LOCATION,
 			"Name of default charset.");
-		options.registerOption(STRINGMODEL_FILENAME_OPTIONNAME, STRINGMODEL_FILENAME_DEFAULT, null,
+		options.registerOption(STRINGMODEL_FILENAME_OPTIONNAME, STRINGMODEL_FILENAME_DEFAULT,
+			HELP_LOCATION,
 			"Name of default string model file.");
-		options.registerOption(TRANSLATE_SERVICE_OPTIONNAME, "", null,
+		options.registerOption(TRANSLATE_SERVICE_OPTIONNAME, "", HELP_LOCATION,
 			"Name of default translation service.");
 	}
 
