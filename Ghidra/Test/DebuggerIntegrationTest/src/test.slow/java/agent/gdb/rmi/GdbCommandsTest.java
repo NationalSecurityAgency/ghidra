@@ -36,6 +36,7 @@ import ghidra.dbg.testutil.DummyProc;
 import ghidra.dbg.util.PathPredicates;
 import ghidra.debug.api.tracermi.TraceRmiAcceptor;
 import ghidra.debug.api.tracermi.TraceRmiConnection;
+import ghidra.framework.Application;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.Float10DataType;
@@ -182,6 +183,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 					file bash
 					echo \\n---Import---\\n
 					ghidra trace info
+					echo \\n---BeforeConnect---\\n
 					ghidra trace connect %s
 					echo \\n---Connect---\\n
 					ghidra trace info
@@ -202,16 +204,19 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				Not connected to Ghidra""",
 			extractOutSection(out, "---Import---"));
 		assertEquals("""
-				Connected to Ghidra at %s
-				No trace""".formatted(refAddr.get()),
+				Connected to %s %s at %s
+				No trace""".formatted(
+			Application.getName(), Application.getApplicationVersion(), refAddr.get()),
 			extractOutSection(out, "---Connect---"));
 		assertEquals("""
-				Connected to Ghidra at %s
-				Trace active""".formatted(refAddr.get()),
+				Connected to %s %s at %s
+				Trace active""".formatted(
+			Application.getName(), Application.getApplicationVersion(), refAddr.get()),
 			extractOutSection(out, "---Start---"));
 		assertEquals("""
-				Connected to Ghidra at %s
-				No trace""".formatted(refAddr.get()),
+				Connected to %s %s at %s
+				No trace""".formatted(
+			Application.getName(), Application.getApplicationVersion(), refAddr.get()),
 			extractOutSection(out, "---Stop---"));
 		assertEquals("""
 				Not connected to Ghidra""",

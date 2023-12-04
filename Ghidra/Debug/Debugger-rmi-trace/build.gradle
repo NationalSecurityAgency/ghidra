@@ -32,6 +32,7 @@ dependencies {
 	testImplementation project(path: ':Debugger', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
+	testImplementation project(path: ':Framework-TraceModeling', configuration: 'testArtifacts')
 }
 
 task generateProtoPy {

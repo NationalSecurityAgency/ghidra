@@ -34,7 +34,7 @@ import ghidra.framework.plugintool.ServiceInfo;
  */
 @ServiceInfo(
 	description = "A service for accepting and creating Trace RMI connections",
-	defaultProviderName = "ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiPlugin")
+	defaultProviderName = "ghidra.app.plugin.core.debug.service.tracermi.TraceRmiPlugin")
 public interface TraceRmiService {
 	/**
 	 * Get the address (and port) of the Trace RMI TCP server

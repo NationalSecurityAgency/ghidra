@@ -240,7 +240,8 @@ def ghidra_trace_listen(address=None, *, is_mi, **kwargs):
         c, (chost, cport) = s.accept()
         s.close()
         gdb.write("Connection from {}:{}\n".format(chost, cport))
-        STATE.client = Client(c, "TBD", methods.REGISTRY)
+        STATE.client = Client(
+            c, "gdb-" + util.GDB_VERSION.full, methods.REGISTRY)
     except ValueError:
         raise gdb.GdbError("port must be numeric")
 
