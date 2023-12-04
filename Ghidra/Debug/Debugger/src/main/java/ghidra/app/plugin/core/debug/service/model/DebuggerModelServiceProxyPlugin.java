@@ -72,10 +72,18 @@ import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-@PluginInfo(shortDescription = "Debugger models manager service (proxy to front-end)", description = "Manage debug sessions, connections, and trace recording", category = PluginCategoryNames.DEBUGGER, packageName = DebuggerPluginPackage.NAME, status = PluginStatus.RELEASED, eventsConsumed = {
-	ProgramActivatedPluginEvent.class, ProgramClosedPluginEvent.class, }, servicesRequired = {
+@PluginInfo(
+	shortDescription = "Debugger models manager service (proxy to front-end)",
+	description = "Manage debug sessions, connections, and trace recording",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
+	eventsConsumed = {
+		ProgramActivatedPluginEvent.class, ProgramClosedPluginEvent.class, },
+	servicesRequired = {
 		DebuggerTargetService.class,
-		DebuggerTraceManagerService.class, }, servicesProvided = { DebuggerModelService.class, })
+		DebuggerTraceManagerService.class, },
+	servicesProvided = { DebuggerModelService.class, })
 public class DebuggerModelServiceProxyPlugin extends Plugin
 		implements DebuggerModelServiceInternal {
 
@@ -188,9 +196,11 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 		@Override
 		public void elementAdded(TraceRecorder element) {
 			recorderListeners.invoke().elementAdded(element);
-			Swing.runIfSwingOrRunLater(() -> {
+			Swing.runLater(() -> {
 				TraceRecorderTarget target = new TraceRecorderTarget(tool, element);
-				targets.put(element, target);
+				if (targets.put(element, target) == target) {
+					return;
+				}
 				targetService.publishTarget(target);
 			});
 		}
@@ -198,8 +208,12 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 		@Override
 		public void elementRemoved(TraceRecorder element) {
 			recorderListeners.invoke().elementRemoved(element);
-			Swing.runIfSwingOrRunLater(() -> {
-				targetService.withdrawTarget(Objects.requireNonNull(targets.get(element)));
+			Swing.runLater(() -> {
+				TraceRecorderTarget target = targets.remove(element);
+				if (target == null) {
+					return;
+				}
+				targetService.withdrawTarget(target);
 			});
 
 		}
