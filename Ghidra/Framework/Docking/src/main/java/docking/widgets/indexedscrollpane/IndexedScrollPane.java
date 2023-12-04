@@ -50,6 +50,14 @@ public class IndexedScrollPane extends JPanel implements IndexScrollListener {
 
 		add(scrollPane);
 		viewport = scrollPane.getViewport();
+
+		// This scroll pane does not have the view component track the width. This is to
+		// prevent a text clipping issue caused by the scroll pane not compensating for the
+		// scroll bars. Since the component may not occupy the full width of this scroll pane,
+		// we need to process any scroll wheel events that happen outside of that component.
+		viewport.addMouseWheelListener(e -> {
+			scrollable.mouseWheelMoved(e.getPreciseWheelRotation(), e.isShiftDown());
+		});
 		viewport.setBackground(comp.getBackground());
 		viewport.addChangeListener(e -> viewportStateChanged());
 		viewport.setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
@@ -191,6 +199,7 @@ public class IndexedScrollPane extends JPanel implements IndexScrollListener {
 		ScrollView(JComponent component) {
 			setLayout(new ScrollViewLayout());
 			add(component);
+
 		}
 
 		@Override
