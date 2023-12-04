@@ -92,7 +92,7 @@ public enum ControlMode {
 
 		@Override
 		public boolean isSelectable(DebuggerCoordinates coordinates) {
-			return coordinates.isAliveAndPresent();
+			return coordinates.isAlive();
 		}
 
 		@Override
@@ -153,7 +153,7 @@ public enum ControlMode {
 
 		@Override
 		public boolean isSelectable(DebuggerCoordinates coordinates) {
-			return coordinates.isAliveAndPresent();
+			return coordinates.isAlive();
 		}
 
 		@Override
