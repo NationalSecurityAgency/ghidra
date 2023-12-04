@@ -1012,7 +1012,8 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 
 				// it has a help location; is it valid?
 				if (hl != null && !isValidHelpLocation(hl)) {
-					missing.add(name + "." + name);
+					isValidHelpLocation(hl);
+					missing.add(options.getName() + "." + name);
 				}
 			}
 		}
