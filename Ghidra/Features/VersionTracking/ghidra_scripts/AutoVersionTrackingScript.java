@@ -115,17 +115,19 @@ public class AutoVersionTrackingScript extends GhidraScript {
 		});
 
 		startupValues = askValues("Enter Auto Version Tracking Information",
-			"Changing these options will not change the corresponding tool options",
-			startupValues);
+			"Changing these options will not change the corresponding tool options", startupValues);
 
 		DomainFolder folder = startupValues.getProjectFolder("Version Tracking Session Folder");
 
 		String name = startupValues.getString("Version Tracking Session Name");
 		boolean isCurrentProgramSourceProg =
 			startupValues.getBoolean("Check if current program is the Source Program");
-		Program otherProgram =
-			startupValues.getProgram("Please select the other program", this, state.getTool());
 
+		// setting auto upgrade to isHeadless, will cause headless uses to auto upgrade, but in
+		// Gui mode, will prompt before upgrading.
+		boolean autoUpgradeIfNeeded = isRunningHeadless();
+		Program otherProgram = startupValues.getProgram("Please select the other program", this,
+			state.getTool(), autoUpgradeIfNeeded);
 
 		if (isCurrentProgramSourceProg) {
 			sourceProgram = currentProgram;
@@ -140,14 +142,11 @@ public class AutoVersionTrackingScript extends GhidraScript {
 			return;
 		}
 
-
 		// Need to end the script transaction or it interferes with vt things that need locks
 		end(true);
 
-
 		VTSession session =
 			VTSessionDB.createVTSession(name, sourceProgram, destinationProgram, this);
-
 
 		if (folder.getFile(name) == null) {
 			folder.createFile(name, session, monitor);
@@ -157,7 +156,7 @@ public class AutoVersionTrackingScript extends GhidraScript {
 		GhidraValuesMap optionsMap = createDefaultOptions();
 
 		// if running script in GUI get options from user and update the vtOptions with them
-		if(!isRunningHeadless()) {
+		if (!isRunningHeadless()) {
 			optionsMap = getOptionsFromUser();
 
 		}
@@ -177,11 +176,9 @@ public class AutoVersionTrackingScript extends GhidraScript {
 
 		ToolOptions vtOptions = setToolOptionsFromOptionsMap(optionsMap);
 
-		AutoVersionTrackingTask autoVtTask =
-			new AutoVersionTrackingTask(session, vtOptions);
+		AutoVersionTrackingTask autoVtTask = new AutoVersionTrackingTask(session, vtOptions);
 
 		TaskLauncher.launch(autoVtTask);
-
 
 		// if not running headless user can decide whether to save or not
 		// if running headless - must save here or nothing that was done in this script will be
@@ -190,7 +187,6 @@ public class AutoVersionTrackingScript extends GhidraScript {
 			otherProgram.save("Updated with Auto Version Tracking", monitor);
 			session.save();
 		}
-
 
 		println(autoVtTask.getStatusMsg());
 		otherProgram.release(this);
@@ -257,8 +253,7 @@ public class AutoVersionTrackingScript extends GhidraScript {
 		GhidraValuesMap optionsValues = createDefaultOptions();
 
 		optionsValues = askValues("Enter Auto Version Tracking Options",
-			"These options will not be saved to your current tool options.",
-			optionsValues);
+			"These options will not be saved to your current tool options.", optionsValues);
 
 		return optionsValues;
 	}

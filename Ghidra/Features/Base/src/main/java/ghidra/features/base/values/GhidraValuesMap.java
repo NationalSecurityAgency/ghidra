@@ -209,17 +209,23 @@ public class GhidraValuesMap extends GValuesMap {
 	 * @param consumer the consumer to be used to open the program
 	 * @param tool if non-null, the program will also be opened in the given tool. Note: the
 	 * program will only be added to the tool once even if this method is called multiple times.
-	 * @return the project folder value
-	 * @throws VersionException if the Program being opened is an older version than the 
+	 * @param upgradeIfNeeded if true, program will be upgraded if needed and possible. If false,
+	 * the program will only be upgraded after first prompting the user. In headless mode, it will
+	 * attempt to upgrade only if the parameter is true.
+	 * @return an opened program with the given consumer for the selected domain file or null if
+	 * no program was selected.
+	 * @throws VersionException if the Program is out-of-date from the version of GHIDRA and an 
+	 * upgrade was not been performed. In non-headless mode, the user will have already been
+	 * notified via a popup dialog.
 	 * current Ghidra Program version.
 	 * @throws IOException if there is an error accessing the Program's DomainObject
 	 * @throws CancelledException if the operation is cancelled
 	 * @throws IllegalArgumentException if the name hasn't been defined as a project folder type
 	 */
-	public Program getProgram(String name, Object consumer, Tool tool)
+	public Program getProgram(String name, Object consumer, Tool tool, boolean upgradeIfNeeded)
 			throws VersionException, IOException, CancelledException {
 		ProgramFileValue programFileValue = getValue(name, ProgramFileValue.class, "Program");
-		return programFileValue.openProgram(consumer, tool, monitor);
+		return programFileValue.openProgram(consumer, tool, upgradeIfNeeded, monitor);
 	}
 
 	/**
