@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * Created on Oct 29, 2003
- *
- * Deals with the direct interface between C/C++ decompiler
- */
 
 package ghidra.app.decompiler;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
 import java.io.*;
+import java.util.ArrayList;
 
 import generic.jar.ResourceFile;
+import ghidra.app.decompiler.signature.DebugSignature;
+import ghidra.app.decompiler.signature.SignatureResult;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.plugin.processors.sleigh.UniqueLayout;
 import ghidra.program.model.address.*;
@@ -147,12 +148,15 @@ public class DecompInterface {
 	};
 
 	// Initialization state
-	private String actionname; // Name of simplification action
-	private DecompileOptions options; // Current decompiler options
-	private boolean printSyntaxTree; // Whether syntax tree is returned
-	private boolean printCCode; // Whether C code is returned
-	private boolean sendParamMeasures; // Whether Parameter Measures are returned
-	private boolean jumpLoad; // Whether jumptable load information is returned
+	private String actionname;			// Name of simplification action
+	private DecompileOptions options; 	// Current decompiler options
+	private boolean printSyntaxTree; 	// Whether syntax tree is returned
+	private boolean printCCode; 		// Whether C code is returned
+	private boolean sendParamMeasures; 	// Whether Parameter Measures are returned
+	private boolean jumpLoad; 			// Whether jumptable load information is returned
+	private short major;				// Major decompiler version
+	private short minor;				// Minor decompiler version
+	private int sigSettings;			// Settings for signature generation (0=not configured)
 
 	public DecompInterface() {
 		program = null;
@@ -170,6 +174,9 @@ public class DecompInterface {
 		printCCode = true;
 		sendParamMeasures = false;
 		jumpLoad = false;
+		major = 0;			// 0 indicates the major/minor values have yet to be fetched from decompiler
+		minor = 0;
+		sigSettings = 0;
 	}
 
 	/**
@@ -328,6 +335,20 @@ public class DecompInterface {
 			decompProcess.sendCommand2Params("setAction", "", "jumpload", stringResponse);
 			if (!stringResponse.toString().equals("t")) {
 				throw new IOException("Could not turn on jumptable loads");
+			}
+		}
+		if (sigSettings != 0) {
+			decompProcess.sendCommand1Param("setSignatureSettings", Integer.toString(sigSettings),
+				stringResponse);
+			if (stringResponse.isEmpty()) {
+				if (decompCallback.getNativeMessage().startsWith("Bad command")) {
+					throw new DecompileException("Decompiler",
+						"Decompiler executable not built with signature module");
+				}
+				throw new DecompileException("Decompiler", decompCallback.getNativeMessage());
+			}
+			if (!stringResponse.toString().equals("t")) {
+				throw new IOException("Could not set signature settings");
 			}
 		}
 	}
@@ -891,6 +912,217 @@ public class DecompInterface {
 			overlayEncodingSet.setOverlay(overlay);
 		}
 		return overlayEncodingSet;
+	}
 
+	/**
+	 * Read the major/minor version numbers from the stream.
+	 * @param decoder is the stream decoder
+	 * @throws DecoderException for problems parsing the stream or if the returned settings do not match
+	 */
+	private void decodeVersionNumber(Decoder decoder) throws DecoderException {
+		int el = decoder.openElement(ELEM_SIGSETTINGS);
+		int subel = decoder.openElement(ELEM_MAJOR);
+		major = (short) decoder.readSignedInteger(ATTRIB_CONTENT);
+		decoder.closeElement(subel);
+		subel = decoder.openElement(ELEM_MINOR);
+		minor = (short) decoder.readSignedInteger(ATTRIB_CONTENT);
+		decoder.closeElement(subel);
+		subel = decoder.openElement(ELEM_SETTINGS);
+		int settings = (int) decoder.readUnsignedInteger(ATTRIB_CONTENT);
+		decoder.closeElement(subel);
+		decoder.closeElement(el);
+		if (settings != sigSettings) {
+			throw new DecoderException("Decompiler settings are not configured");
+		}
+	}
+
+	/**
+	 * Query the decompiler process for its major/minor version numbers.
+	 * Additionally the decompiler returns its signature settings (which should match the
+	 * signatureSettings configured on this interface)
+	 */
+	private void fillinVersionNumber() {
+		try {
+			verifyProcess();
+			decompProcess.sendCommand("getSignatureSettings", baseEncodingSet.mainResponse);
+			decompileMessage = decompCallback.getNativeMessage();
+		}
+		catch (Exception e) {
+			decompileMessage = "Exception while retrieving settings: " + e.getMessage() + '\n';
+		}
+		// flushCache();   // We don't need to flush the cache
+		if (!baseEncodingSet.mainResponse.isEmpty()) {
+			try {
+				decodeVersionNumber(baseEncodingSet.mainResponse);
+			}
+			catch (Exception e) {
+				decompileMessage = "Exception while parsing signatures: " + e.getMessage() + '\n';
+			}
+		}
+	}
+
+	/**
+	 * @return the major version number of the decompiler
+	 */
+	public synchronized short getMajorVersion() {
+		if (major == 0) {
+			fillinVersionNumber();
+		}
+		return major;
+	}
+
+	/**
+	 * @return the minor version number of the decompiler
+	 */
+	public synchronized short getMinorVersion() {
+		if (major == 0) {
+			fillinVersionNumber();
+		}
+		return minor;
+	}
+
+	/**
+	 * @return the signature settings of the decompiler
+	 */
+	public synchronized int getSignatureSettings() {
+		if (major == 0) {
+			fillinVersionNumber();	// Verify the process settings match the configured settings
+		}
+		return sigSettings;
+	}
+
+	/**
+	 * Set the desired signature generation settings. 
+	 * @param value is the new desired setting
+	 * @return true if the settings took effect
+	 */
+	public boolean setSignatureSettings(int value) {
+		sigSettings = value;
+		// Property can be set before process exists
+		if (decompProcess == null) {
+			return true;
+		}
+		try {
+			verifyProcess();
+			decompProcess.sendCommand1Param("setSignatureSettings", Integer.toString(sigSettings),
+				stringResponse);
+			return stringResponse.toString().equals("t");
+		}
+		catch (IOException e) {
+			// don't care
+		}
+		catch (DecompileException e) {
+			// don't care
+		}
+		stopProcess();
+		return false;
+	}
+
+	/**
+	 * Generate a signature, using the current signature settings, for the given function.
+	 * The signature is returned as a raw feature vector, {@link SignatureResult}.
+	 * @param func is the given function
+	 * @param keepcalllist is true if direct call addresses are collected as part of the result
+	 * @param timeoutSecs is the maximum amount of time to spend decompiling the function
+	 * @param monitor is the TaskMonitor
+	 * @return the feature vector
+	 */
+	public synchronized SignatureResult generateSignatures(Function func, boolean keepcalllist,
+			int timeoutSecs, TaskMonitor monitor) {
+
+		decompileMessage = "";
+		if (monitor != null && monitor.isCancelled()) {
+			return null;
+		}
+
+		if (monitor != null) {
+			monitor.addCancelledListener(monitorListener);
+		}
+		Decoder decoder = null;
+		try {
+			Address funcEntry = func.getEntryPoint();
+			decompCallback.setFunction(func, funcEntry, null);
+			verifyProcess();
+			EncodeDecodeSet activeSet = setupEncodeDecode(funcEntry);
+			decoder = activeSet.mainResponse;
+			activeSet.mainQuery.clear();
+			AddressXML.encode(activeSet.mainQuery, funcEntry);
+			decompProcess.sendCommandTimeout("generateSignatures", timeoutSecs, activeSet);
+			decompileMessage = decompCallback.getNativeMessage();
+		}
+		catch (Exception ex) {
+			decompileMessage = "Exception while generating signatures: " + ex.getMessage() + '\n';
+		}
+		finally {
+			if (monitor != null) {
+				monitor.removeCancelledListener(monitorListener);
+			}
+		}
+		flushCache();
+		if (!decoder.isEmpty()) {
+			try {
+				return SignatureResult.decode(decoder, func, keepcalllist);
+			}
+			catch (DecoderException e) {		// Error walking the DOM
+				decompileMessage = "Exception while parsing signatures: " + e.getMessage() + '\n';
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Generate a signature, using the current signature settings, for the given function.
+	 * The signature is returned as a sequence of features (feature vector). Each feature
+	 * is returned as a separate record with additional metadata describing the information
+	 * incorporated into it.
+	 * @param func is the given function
+	 * @param timeoutSecs is the maximum number of seconds to spend decompiling the function
+	 * @param monitor is the TaskMonitor
+	 * @return the array of feature descriptions
+	 */
+	public synchronized ArrayList<DebugSignature> debugSignatures(Function func, int timeoutSecs,
+			TaskMonitor monitor) {
+		decompileMessage = "";
+		if (monitor != null && monitor.isCancelled()) {
+			return null;
+		}
+
+		if (monitor != null) {
+			monitor.addCancelledListener(monitorListener);
+		}
+		Decoder decoder = null;
+		try {
+			Address funcEntry = func.getEntryPoint();
+			decompCallback.setFunction(func, funcEntry, null);
+			verifyProcess();
+			EncodeDecodeSet activeSet = setupEncodeDecode(funcEntry);
+			decoder = activeSet.mainResponse;
+			activeSet.mainQuery.clear();
+			AddressXML.encode(activeSet.mainQuery, funcEntry);
+			decompProcess.sendCommandTimeout("debugSignatures", timeoutSecs, activeSet);
+			decompileMessage = decompCallback.getNativeMessage();
+		}
+		catch (Exception ex) {
+			decompileMessage = "Exception while debugging signatures: " + ex.getMessage() + '\n';
+		}
+		finally {
+			if (monitor != null) {
+				monitor.removeCancelledListener(monitorListener);
+			}
+		}
+		flushCache();
+		if (!decoder.isEmpty()) {
+			try {
+				return DebugSignature.decodeSignatures(decoder, func);
+			}
+			catch (DecoderException e) {
+				decompileMessage = "Exception while debugging signatures: " + e.getMessage() + '\n';
+			}
+			catch (Exception e) {			// Error with the underlying stream
+				decompileMessage =
+					"Error in stream describing signatures: " + e.getMessage() + '\n';
+			}
+		}
+		return null;
 	}
 }

@@ -1,0 +1,6 @@
+# Locality Sensitive Hashing extension
+comment = 'a feature vector type and a locality sensitive hashing index'
+default_version = '1.0'
+module_pathname = '$libdir/lshvector'
+superuser = false
+relocatable = true

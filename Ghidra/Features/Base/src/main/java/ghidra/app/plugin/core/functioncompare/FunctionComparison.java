@@ -33,7 +33,8 @@ public class FunctionComparison implements Comparable<FunctionComparison> {
 	private Function source;
 
 	/** Use a tree so functions are always kept in sorted order */
-	private Set<Function> targets = new TreeSet<>(new FunctionComparator());
+	private FunctionComparator functionComparator = new FunctionComparator();
+	private Set<Function> targets = new TreeSet<>(functionComparator);
 
 	/**
 	 * Returns the source function
@@ -105,28 +106,7 @@ public class FunctionComparison implements Comparable<FunctionComparison> {
 	 */
 	@Override
 	public int compareTo(FunctionComparison o) {
-		if (o == null) {
-			return 1;
-		}
-
-		String sourcePath = getSource().getProgram().getDomainFile().getPathname();
-		String otherPath = o.getSource().getProgram().getDomainFile().getPathname();
-
-		String sourceName = getSource().getName();
-		String otherName = o.getSource().getName();
-		int result = sourcePath.compareTo(otherPath);
-		if (result != 0) {
-			return result;
-		}
-
-		// equal paths
-		result = sourceName.compareTo(otherName);
-		if (result != 0) {
-			return result;
-		}
-
-		// equal names
-		return getSource().getEntryPoint().compareTo(o.getSource().getEntryPoint());
+		return functionComparator.compare(source, o.source);
 	}
 
 	/**
@@ -144,21 +124,18 @@ public class FunctionComparison implements Comparable<FunctionComparison> {
 
 			String o1Path = o1.getProgram().getDomainFile().getPathname();
 			String o2Path = o2.getProgram().getDomainFile().getPathname();
-			int result = o1Path.compareTo(o2Path);
-			if (result != 0) {
-				return result;
-			}
 
-			// equal paths
 			String o1Name = o1.getName();
 			String o2Name = o2.getName();
-			result = o1Name.compareTo(o2Name);
-			if (result != 0) {
-				return result;
+
+			if (o1Path.equals(o2Path)) {
+				if (o1Name.equals(o2Name)) {
+					return o1.getEntryPoint().compareTo(o2.getEntryPoint());
+				}
+				return o1Name.compareTo(o2Name);
 			}
 
-			// equal names
-			return o1.getEntryPoint().compareTo(o2.getEntryPoint());
+			return o1Path.compareTo(o2Path);
 		}
 	}
 }

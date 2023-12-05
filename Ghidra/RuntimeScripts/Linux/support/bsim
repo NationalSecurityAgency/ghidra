@@ -1,0 +1,25 @@
+#!/bin/bash
+#
+# Command-line script for interacting with a BSim database
+
+# maximum heap memory (may be increased)
+MAXMEM=768M
+
+# launch mode  (fg, bg, debug, debug-suspend)
+LAUNCH_MODE=fg
+
+#set debug port for debug mode if used
+
+OS=`uname -s`
+
+SED=/bin/sed
+if [ "$OS" = "Darwin" ]; then
+    SED=/usr/bin/sed
+fi
+
+LAUNCH_DIR=`echo $0 | $SED -e 's/[^\/]*$//'`
+if [ "$LAUNCH_DIR" = "" ]; then
+   LAUNCH_DIR="./";
+fi
+
+${LAUNCH_DIR}launch.sh $LAUNCH_MODE jdk "BSim" $MAXMEM "" ghidra.features.bsim.query.ingest.BSimLaunchable "$@"

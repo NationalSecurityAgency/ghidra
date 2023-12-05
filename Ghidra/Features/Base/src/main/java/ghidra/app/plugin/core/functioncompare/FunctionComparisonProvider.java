@@ -31,7 +31,6 @@ import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.app.util.viewer.util.CodeComparisonPanel;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
-import ghidra.framework.plugintool.Plugin;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
@@ -47,7 +46,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 
 	protected static final String HELP_TOPIC = "FunctionComparison";
 	protected FunctionComparisonPanel functionComparisonPanel;
-	protected Plugin plugin;
+	protected FunctionComparisonPlugin plugin;
 
 	/** Contains all the comparison data to be displayed by this provider */
 	protected FunctionComparisonModel model;
@@ -61,7 +60,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	 *        the same window
 	 * @param owner the provider owner, usually a plugin name
 	 */
-	public FunctionComparisonProvider(Plugin plugin, String name, String owner) {
+	public FunctionComparisonProvider(FunctionComparisonPlugin plugin, String name, String owner) {
 		this(plugin, name, owner, null);
 	}
 
@@ -74,7 +73,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	 * @param owner the provider owner, usually a plugin name
 	 * @param contextType the type of context supported by this provider; may be null
 	 */
-	public FunctionComparisonProvider(Plugin plugin, String name, String owner,
+	public FunctionComparisonProvider(FunctionComparisonPlugin plugin, String name, String owner,
 			Class<?> contextType) {
 		super(plugin.getTool(), name, owner, contextType);
 		this.plugin = plugin;
@@ -97,6 +96,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	public void closeComponent() {
 		super.closeComponent();
 		closeListener.call();
+		closeListener = Callback.dummy();
 	}
 
 	@Override
@@ -128,6 +128,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	public void removeFromTool() {
 		tool.removePopupActionProvider(this);
 		super.removeFromTool();
+		plugin.providerClosed(this);
 	}
 
 	@Override
@@ -198,7 +199,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	 * @param functions the functions to remove
 	 */
 	public void removeFunctions(Set<Function> functions) {
-		functions.stream().forEach(f -> model.removeFunction(f));
+		model.removeFunctions(functions);
 		closeIfEmpty();
 	}
 

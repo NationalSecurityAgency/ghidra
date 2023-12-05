@@ -17,13 +17,9 @@ package ghidra.app.util.viewer.listingpanel;
 
 import docking.ComponentProvider;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
-import ghidra.app.context.NavigatableActionContext;
-import ghidra.app.nav.Navigatable;
+import ghidra.app.util.viewer.util.CodeComparisonActionContext;
 import ghidra.app.util.viewer.util.CodeComparisonPanel;
-import ghidra.app.util.viewer.util.CodeComparisonPanelActionContext;
-import ghidra.program.model.listing.Program;
-import ghidra.program.util.ProgramLocation;
-import ghidra.program.util.ProgramSelection;
+import ghidra.program.model.listing.Function;
 
 // Note: If you want to get the typical actions for things like comments, labels, bookmarks, etc.
 //       that are available in the CodeBrowser then change this to extend ListingActionContext.
@@ -32,44 +28,16 @@ import ghidra.program.util.ProgramSelection;
 /**
  * Action context for a ListingCodeComparisonPanel.
  */
-public class DualListingActionContext extends NavigatableActionContext
-		implements CodeComparisonPanelActionContext {
+public class DualListingActionContext extends CodeComparisonActionContext {
 
 	private CodeComparisonPanel<? extends FieldPanelCoordinator> codeComparisonPanel = null;
 
 	/**
 	 * Constructor for a dual listing's action context.
 	 * @param provider the provider that uses this action context.
-	 * @param navigatable the navigatable for this action context.
-	 * @param program the program in the listing providing this context.
-	 * @param location the location indicated by this context.
-	 * @param selection the listing selection for this context.
-	 * @param highlight the listing highlight for this context.
 	 */
-	public DualListingActionContext(ComponentProvider provider, Navigatable navigatable,
-			Program program, ProgramLocation location, ProgramSelection selection,
-			ProgramSelection highlight) {
-		super(provider, navigatable, program, location, selection, highlight);
-	}
-
-	/**
-	 * Constructor for a dual listing's action context.
-	 * @param provider the provider that uses this action context.
-	 * @param navigatable the navigatable for this action context.
-	 * @param location the location indicated by this context.
-	 */
-	public DualListingActionContext(ComponentProvider provider, Navigatable navigatable,
-			ProgramLocation location) {
-		super(provider, navigatable, location);
-	}
-
-	/**
-	 * Constructor for a dual listing's action context.
-	 * @param provider the provider that uses this action context.
-	 * @param navigatable the navigatable for this action context.
-	 */
-	public DualListingActionContext(ComponentProvider provider, Navigatable navigatable) {
-		super(provider, navigatable);
+	public DualListingActionContext(ComponentProvider provider) {
+		super(provider);
 	}
 
 	/**
@@ -84,5 +52,21 @@ public class DualListingActionContext extends NavigatableActionContext
 	@Override
 	public CodeComparisonPanel<? extends FieldPanelCoordinator> getCodeComparisonPanel() {
 		return codeComparisonPanel;
+	}
+
+	@Override
+	public Function getSourceFunction() {
+		boolean leftHasFocus = codeComparisonPanel.leftPanelHasFocus();
+
+		return leftHasFocus ? codeComparisonPanel.getRightFunction()
+				: codeComparisonPanel.getLeftFunction();
+	}
+
+	@Override
+	public Function getTargetFunction() {
+		boolean leftHasFocus = codeComparisonPanel.leftPanelHasFocus();
+
+		return leftHasFocus ? codeComparisonPanel.getLeftFunction()
+				: codeComparisonPanel.getRightFunction();
 	}
 }

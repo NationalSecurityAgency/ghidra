@@ -19,7 +19,7 @@ import java.util.*;
 
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
@@ -50,7 +50,7 @@ public class FunctionUtility {
 	 * the target namespace. This probably can't happen
 	 */
 	public static void applyNameAndNamespace(Function target, Function source)
-		throws DuplicateNameException, InvalidInputException, CircularDependencyException {
+			throws DuplicateNameException, InvalidInputException, CircularDependencyException {
 		String name = source.getName();
 		Namespace targetNamespace = getOrCreateSourceNamespaceInTarget(target, source);
 		Symbol symbol = target.getSymbol();
@@ -61,24 +61,68 @@ public class FunctionUtility {
 	 * Updates the destination function so its signature will match the source function's signature
 	 * as closely as possible. This method will try to create conflict names if necessary for the
 	 * function and its parameters.
+	 * <br>
+	 * All datatypes will be resolved using the 
+	 * {@link DataTypeConflictHandler#DEFAULT_HANDLER default conflict handler}.
+	 * 
 	 * @param destinationFunction the destination function to update
 	 * @param sourceFunction the source function to use as a template
 	 * @throws InvalidInputException if the function name or a variable name is invalid or if a
-	 * parameter data type is not a fixed length.
+	 *                        parameter data type is not a fixed length.
 	 * @throws DuplicateNameException This shouldn't happen since it will try to create conflict
-	 * names for the function and its variables if necessary. Otherwise, this would be because
-	 * the function's name or a variable name already exists.
+	 *                        names for the function and its variables if necessary. Otherwise, 
+	 *                        this would be because the function's name or a variable name already exists.
 	 * @throws CircularDependencyException if namespaces have circular references
 	 */
 	public static void updateFunction(Function destinationFunction, Function sourceFunction)
-		throws InvalidInputException, DuplicateNameException, CircularDependencyException {
+			throws InvalidInputException, DuplicateNameException, CircularDependencyException {
 
-		updateFunctionExceptName(destinationFunction, sourceFunction);
+		applySignature(destinationFunction, sourceFunction, false,
+			DataTypeConflictHandler.DEFAULT_HANDLER);
+	}
+
+	/**
+	 * Updates the destination function so its signature will match the source function's signature
+	 * as closely as possible. This method will try to create conflict names if necessary for the
+	 * function and its parameters.
+	 * 
+	 * @param destinationFunction the destination function to update
+	 * @param sourceFunction  the source function to use as a template
+	 * @param applyEmptyComposites If true, applied composites will be resolved without their
+	 *                        respective components if the type does not already exist in the 
+	 *                        destination datatype manager.  If false, normal type resolution 
+	 *                        will occur.
+	 * @param conflictHandler conflict handler to be used when applying datatypes to the
+	 *                        destination program.  If this value is not null or 
+	 *                        {@link DataTypeConflictHandler#DEFAULT_HANDLER} the datatypes will be 
+	 *                        resolved prior to updating the destinationFunction.  This handler
+	 *                        will provide some control over how applied datatype are handled when 
+	 *                        they conflict with existing datatypes. 
+	 *                        See {@link DataTypeConflictHandler} which provides some predefined
+	 *                        handlers.
+	 * @throws InvalidInputException if the function name or a variable name is invalid or if a
+	 *                        parameter data type is not a fixed length.
+	 * @throws DuplicateNameException This shouldn't happen since it will try to create conflict
+	 *                        names for the function and its variables if necessary. Otherwise, 
+	 *                        this would be because the function's name or a variable name already exists.
+	 * @throws CircularDependencyException if namespaces have circular references
+	 */
+	public static void applySignature(Function destinationFunction, Function sourceFunction,
+			boolean applyEmptyComposites, DataTypeConflictHandler conflictHandler)
+			throws InvalidInputException, DuplicateNameException, CircularDependencyException {
+
+		if (conflictHandler == null) {
+			conflictHandler = DataTypeConflictHandler.DEFAULT_HANDLER;
+		}
+		updateFunctionExceptName(destinationFunction, sourceFunction, applyEmptyComposites,
+			conflictHandler);
 		applyNameAndNamespace(destinationFunction, sourceFunction);
 	}
 
 	private static void updateFunctionExceptName(Function destinationFunction,
-		Function sourceFunction) throws InvalidInputException, DuplicateNameException {
+			Function sourceFunction, boolean applyEmptyComposites,
+			DataTypeConflictHandler conflictHandler)
+			throws InvalidInputException, DuplicateNameException {
 
 		Program sourceProgram = sourceFunction.getProgram();
 		Program destinationProgram = destinationFunction.getProgram();
@@ -88,21 +132,45 @@ public class FunctionUtility {
 			determineCallingConventionName(destinationFunction, sourceFunction, sameLanguage);
 		boolean useCustomStorage =
 			determineCustomStorageUse(destinationFunction, sourceFunction, sameLanguage);
-		boolean force = true;
-		SourceType source = sourceFunction.getSignatureSource();
-		Variable returnValue =
-			determineReturnValue(destinationFunction, sourceFunction, useCustomStorage);
-		List<Parameter> newParams =
-			determineParameters(destinationFunction, sourceFunction, useCustomStorage);
-		setUniqueParameterNames(destinationFunction, newParams);
-		destinationFunction.updateFunction(callingConventionName, returnValue, newParams,
-			useCustomStorage ? FunctionUpdateType.CUSTOM_STORAGE
-				: FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS,
-			force, source);
+
+		DataTypeManager destinationDtm = destinationFunction.getProgram().getDataTypeManager();
+		final DataTypeCleaner dtCleaner =
+			applyEmptyComposites ? new DataTypeCleaner(destinationDtm, true) : null;
+		try {
+			SourceType source = sourceFunction.getSignatureSource();
+			Variable returnValue =
+				determineReturnValue(destinationFunction, sourceFunction, useCustomStorage,
+					dt -> prepareDataType(dt, destinationDtm, dtCleaner, conflictHandler));
+			List<Parameter> newParams =
+				determineParameters(destinationFunction, sourceFunction, useCustomStorage,
+					dt -> prepareDataType(dt, destinationDtm, dtCleaner, conflictHandler));
+			setUniqueParameterNames(destinationFunction, newParams);
+			destinationFunction.updateFunction(callingConventionName, returnValue, newParams,
+				useCustomStorage ? FunctionUpdateType.CUSTOM_STORAGE
+						: FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS,
+				true, source);
+		}
+		finally {
+			if (dtCleaner != null) {
+				dtCleaner.close();
+			}
+		}
+
 		applyInline(destinationFunction, sourceFunction);
 		applyNoReturn(destinationFunction, sourceFunction);
 		applyVarArgs(destinationFunction, sourceFunction);
 		applyCallFixup(destinationFunction, sourceFunction, sameLanguage);
+	}
+
+	private static DataType prepareDataType(DataType dt, DataTypeManager destinationDtm,
+			DataTypeCleaner dtCleaner, DataTypeConflictHandler conflictHandler) {
+		if (dtCleaner != null) {
+			dt = dtCleaner.clean(dt);
+		}
+		if (conflictHandler != DataTypeConflictHandler.DEFAULT_HANDLER) {
+			dt = destinationDtm.resolve(dt, conflictHandler);
+		}
+		return dt;
 	}
 
 	/**
@@ -117,7 +185,7 @@ public class FunctionUtility {
 	 * @throws DuplicateNameException
 	 */
 	public static void setUniqueParameterNames(Function function, List<Parameter> parameters)
-		throws DuplicateNameException, InvalidInputException {
+			throws DuplicateNameException, InvalidInputException {
 		SymbolTable symbolTable = function.getProgram().getSymbolTable();
 
 		// Create a set containing all the unique parameter names determined so far so they can
@@ -146,7 +214,7 @@ public class FunctionUtility {
 	 * @return a unique parameter name
 	 */
 	private static String getUniqueReplacementParameterName(SymbolTable symbolTable,
-		Function function, String name, Set<String> namesNotToBeUsed) {
+			Function function, String name, Set<String> namesNotToBeUsed) {
 		if (name == null || SymbolUtilities.isDefaultParameterName(name)) {
 			return name;
 		}
@@ -166,7 +234,7 @@ public class FunctionUtility {
 	 * that doesn't conflict with any in the set of names not to be used.
 	 */
 	private static String getUniqueNameIgnoringCurrentParameters(SymbolTable symbolTable,
-		Function function, String baseName, Set<String> namesNotToBeUsed) {
+			Function function, String baseName, Set<String> namesNotToBeUsed) {
 		String name = baseName;
 		if (name != null) {
 			// establish unique name
@@ -211,7 +279,7 @@ public class FunctionUtility {
 	}
 
 	private static void applyCallFixup(Function destinationFunction, Function sourceFunction,
-		boolean sameLanguage) {
+			boolean sameLanguage) {
 		String sourceCallFixup = sourceFunction.getCallFixup();
 		String destCallFixup = destinationFunction.getCallFixup();
 		if (SystemUtilities.isEqual(destCallFixup, sourceCallFixup)) {
@@ -233,7 +301,7 @@ public class FunctionUtility {
 	 * already exists.
 	 */
 	static void setFunctionName(Function destinationFunction, Function sourceFunction)
-		throws InvalidInputException, DuplicateNameException {
+			throws InvalidInputException, DuplicateNameException {
 		String sourceName = sourceFunction.getName();
 		Address sourceEntryPoint = sourceFunction.getEntryPoint();
 		Namespace sourceNamespace = sourceFunction.getParentNamespace();
@@ -307,13 +375,17 @@ public class FunctionUtility {
 	}
 
 	private static String determineCallingConventionName(Function destinationFunction,
-		Function sourceFunction, boolean sameLanguageAndCompilerSpec) {
+			Function sourceFunction, boolean sameLanguageAndCompilerSpec) {
+		String sourceConv = sourceFunction.getCallingConventionName();
+		if (CompilerSpec.CALLING_CONVENTION_thiscall.equals(sourceConv)) {
+			return sourceConv;
+		}
 		return sameLanguageAndCompilerSpec ? sourceFunction.getCallingConventionName()
-			: destinationFunction.getCallingConventionName();
+				: destinationFunction.getCallingConventionName();
 	}
 
 	private static boolean determineCustomStorageUse(Function destinationFunction,
-		Function sourceFunction, boolean sameLanguage) {
+			Function sourceFunction, boolean sameLanguage) {
 		boolean useCustomStorage = sourceFunction.hasCustomVariableStorage();
 		if (useCustomStorage) {
 			return sameLanguage; // only use for same language.
@@ -322,28 +394,39 @@ public class FunctionUtility {
 	}
 
 	private static Variable determineReturnValue(Function destinationFunction,
-		Function sourceFunction, boolean useCustomStorage) throws InvalidInputException {
+			Function sourceFunction, boolean useCustomStorage,
+			java.util.function.Function<DataType, DataType> prepareDataType)
+			throws InvalidInputException {
 		Program destinationProgram = destinationFunction.getProgram();
 		Parameter sourceReturn = sourceFunction.getReturn();
-		DataType dataType = sourceReturn.getDataType();
 		VariableStorage storage =
 			(useCustomStorage) ? sourceReturn.getVariableStorage().clone(destinationProgram)
-				: VariableStorage.UNASSIGNED_STORAGE;
+					: VariableStorage.UNASSIGNED_STORAGE;
+		DataType dataType = prepareDataType.apply(sourceReturn.getDataType());
+		if (dataType.isZeroLength()) {
+			storage = VariableStorage.UNASSIGNED_STORAGE;
+		}
 		Parameter returnValue = new ReturnParameterImpl(dataType, storage, destinationProgram);
 		return returnValue;
 	}
 
 	private static List<Parameter> determineParameters(Function destinationFunction,
-		Function sourceFunction, boolean useCustomStorage) throws InvalidInputException {
+			Function sourceFunction, boolean useCustomStorage,
+			java.util.function.Function<DataType, DataType> prepareDataType)
+			throws InvalidInputException {
 		Program destinationProgram = destinationFunction.getProgram();
 		List<Parameter> parameters = new ArrayList<>();
 		Parameter[] sourceParameters = sourceFunction.getParameters();
 		for (Parameter sourceParameter : sourceParameters) {
 			String name = sourceParameter.getName();
-			DataType dataType = sourceParameter.getDataType();
 			VariableStorage storage =
 				(useCustomStorage) ? sourceParameter.getVariableStorage().clone(destinationProgram)
-					: VariableStorage.UNASSIGNED_STORAGE;
+						: VariableStorage.UNASSIGNED_STORAGE;
+			DataType dataType = prepareDataType.apply(sourceParameter.getDataType());
+			if (dataType.isZeroLength()) {
+				storage = VariableStorage.UNASSIGNED_STORAGE;
+			}
+
 			SourceType source = sourceParameter.getSource();
 			Parameter parameter =
 				new ParameterImpl(name, dataType, storage, destinationProgram, source);
@@ -399,7 +482,7 @@ public class FunctionUtility {
 	}
 
 	private static Namespace getOrCreateSourceNamespaceInTarget(Function target, Function source)
-		throws DuplicateNameException, InvalidInputException {
+			throws DuplicateNameException, InvalidInputException {
 
 		Namespace targetNamespace = target.getParentNamespace();
 		Namespace sourceNamespace = source.getParentNamespace();
@@ -410,7 +493,7 @@ public class FunctionUtility {
 	}
 
 	private static Namespace getOrCreateTargetNamespace(Program program, Namespace otherNamespace)
-		throws DuplicateNameException, InvalidInputException {
+			throws DuplicateNameException, InvalidInputException {
 		if (otherNamespace.isGlobal()) {
 			return program.getGlobalNamespace();
 		}

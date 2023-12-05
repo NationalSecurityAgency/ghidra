@@ -454,7 +454,8 @@ public class DemangledFunction extends DemangledObject {
 		}
 
 		ApplyFunctionSignatureCmd cmd = new ApplyFunctionSignatureCmd(function.getEntryPoint(),
-			signature, SourceType.IMPORTED, true, FunctionRenameOption.RENAME_IF_DEFAULT);
+			signature, SourceType.IMPORTED, true, false, DataTypeConflictHandler.DEFAULT_HANDLER,
+			FunctionRenameOption.RENAME_IF_DEFAULT);
 		cmd.applyTo(program);
 
 		return true;
@@ -594,8 +595,8 @@ public class DemangledFunction extends DemangledObject {
 		return null;
 	}
 
-	private Structure maybeUpdateCallingConventionAndCreateClass(Program program,
-			Function function, DemanglerOptions options) {
+	private Structure maybeUpdateCallingConventionAndCreateClass(Program program, Function function,
+			DemanglerOptions options) {
 
 		String convention = validateCallingConvention(program, function, options);
 		if (convention == null) {
