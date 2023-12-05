@@ -35,7 +35,7 @@ public class RustDemangler implements Demangler {
 	@Override
 	public boolean canDemangle(Program program) {
 		String name = program.getCompiler();
-		return name != null && name.contains("rustc");
+		return name.contains("rustc");
 	}
 
 	@Override

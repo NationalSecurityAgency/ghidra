@@ -911,11 +911,13 @@ public class DBTraceProgramView implements TraceProgramView {
 
 	@Override
 	public String getCompiler() {
-		return null;
+		// TODO: not yet implemented
+		return "unknown";
 	}
 
 	@Override
 	public void setCompiler(String compiler) {
+		// TODO: not yet implemented
 		throw new UnsupportedOperationException();
 	}
 

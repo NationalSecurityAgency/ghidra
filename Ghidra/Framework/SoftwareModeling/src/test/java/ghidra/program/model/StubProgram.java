@@ -397,7 +397,7 @@ public class StubProgram implements Program {
 
 	@Override
 	public String getCompiler() {
-		throw new UnsupportedOperationException();
+		return "unknown";
 	}
 
 	@Override
