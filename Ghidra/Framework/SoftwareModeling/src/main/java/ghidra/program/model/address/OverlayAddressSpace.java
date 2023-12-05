@@ -41,8 +41,8 @@ public abstract class OverlayAddressSpace extends AbstractAddressSpace {
 
 	/**
 	 * Get the ordered key assigned to this overlay address space instance  This value is used
-	 * when performing {@link #equals(Object)} and {@link AddressSpace#compareTo(AddressSpace)}
-	 * operations.  
+	 * when performing {@link #equals(Object)} and {@link #compareTo(AddressSpace)}
+	 * operations.
 	 * <p>
 	 * If this value does not have its optimal value (i.e., same as address space name), the 
 	 * associated {@link AddressFactory} should report a 
