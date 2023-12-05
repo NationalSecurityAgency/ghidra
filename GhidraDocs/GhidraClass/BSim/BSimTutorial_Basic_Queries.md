@@ -22,7 +22,7 @@ There are a number of ways to initiate a BSim query, including:
 
 - **BSim -> Search Functions...** from the Code Browser.
 - Right-click in the Listing and select **BSim -> Search Functions...**
-- Click on the BSim icon in the toolbar.
+- Click on the BSim icon ![BSim toolbar icon](images/preferences-web-browser-shortcuts.png) in the Code Browser toolbar.
 
 For these cases, the function(s) being queried depend on the current selection.
 If there is no selection, the function containing the current address is queried.
@@ -44,7 +44,7 @@ From the BSim Search Dialog, you can
 - Bound the number of results returned for each function.
 - Set query filters.
 
-![](./images/bsim_search_dialog.png)
+![](images/bsim_search_dialog.png)
 
 #### Selecting a BSim Database
 
@@ -66,7 +66,7 @@ The respective fields in the dialog set lower bounds for these values for the ma
     - Sharing rare features contributes more to this score than sharing common features. 
     - There is no upper bound for confidence when considered over all pairs of vectors.
     However, if you fix a vector *v*, the greatest possible confidence score for a comparison involving *v* occurs when *v* is compared to itself.
-    The resulting confidence value is called the **self significance** of *v*.
+    The resulting confidence value is called the **self-significance** of *v*.
     
 Confidence is used to judge the significance of a match.
 For example, many executables contain a function which simply returns a constant value.
@@ -79,19 +79,18 @@ The results of a BSim query can be sorted by the similarity and/or confidence of
 The **Matches per Function** bound controls the number of results returned for a single function.
 Note that in large collections, certain small or common functions might have substantial numbers of identical matches.
 
+Filters are discussed in [BSim Filters](BSimTutorial_Filters.md).
+
 #### Performing the Query    
 
 Click the **Search** button in the dialog to perform a query.
     
-**Notes**: 
-
-1. Filters are discussed in [BSim Filters](BSimTutorial_Filters.md).
-1. After successfully issuing a query, you will also see a **Search Function(s)** action (without the ellipsis) in certain contexts.
+After successfully issuing a query, you will also see a **Search Function(s)** action (without the ellipsis) in certain contexts.
 This will perform a BSim query on the selected functions using the same parameters as the last query (skipping the BSim Seach Dialog).
 
-## Exercises:
+## Exercises
 
-The database `example` contains vectors from a Linux executable used by Ghidra's GNU demangler.
+The database ``example`` contains vectors from a Linux executable used by Ghidra's GNU demangler.
 Ghidra ships with several other versions of this executable. 
 We use these different versions to demonstrate some of the capabilities of BSim.
 
@@ -105,22 +104,19 @@ We use these different versions to demonstrate some of the capabilities of BSim.
     - Note that the function names **are** present in ``demangler_gnu_v2_41``. 
 1. Using the default query options, query `example` for matches to the function at ``140006760``. 
 1. You should see the following search results:
-    ![results](./images/basic_query.png)
+    ![results](images/basic_query.png)
     - In this case, there is exactly one match, the similarity is 1.0, and the matching function has a non-default name (it won't always be this easy).
-    - **Note**: The results window has two tables: the function-level results (upper table) and the executable-level results (lower table). 
-    The executable-level results are covered in [Executable-level Results](BSimTutorial_Exe_Results.md)
-1. Right-click on the row of a match to see the available actions: 
-    ![actions](./images/actions.png)
-1. Select the **Compare Functions** action to bring up the side-by-side comparison.
+    - The results window has two tables: the function-level results (upper table) and the executable-level results (lower table). 
+    The executable-level results are covered in [From Matching Functions to Matching Executables](BSimTutorial_Exe_Results.md).
+1. Right-click on the row of the match and select the **Compare Functions** action to bring up the side-by-side comparison. 
     - The **Listing View** tab shows the disassembly.
     - The **Decompiler Diff View** tab shows the decompiled code.
     - Differences in the code are automatically highlighted in blue.
-    - Either view can be toggled between a horizontal split and a vertical split using the drop-down menu.
-    - **Note**: We cover the Decompiler Diff View in greater detail in [Applying Function Signatures](BSimTutorial_Applying_Function_Signatures.md)
+    - Either view can be toggled between a horizontal split and a vertical split using the drop-down menu. 
 1. Examine the diff views to verify that the match is valid.
-1. Using the `Apply Function Names and Namespaces` action, transfer the name from the search result to the queried function.
+1. Using the **Apply Name** action, apply the name from the search result to the queried function.
 
-TODO: explain why there are different apply actions
+**Note**: We cover the Decompiler Diff View in greater detail and discuss the various "Apply" actions in [Evaluating Matches and Applying Information](BSimTutorial_Evaluating_Matches.md).
 
 ### Exercise 2: Changes to the Source Code
 
@@ -128,7 +124,7 @@ TODO: explain why there are different apply actions
     - This executable is based on an earlier version of the source code than the executable in ``example``.
 1. Navigate to the function ``expandargv`` in ``demangler_gnu_v2_24`` and issue a BSim query.
 1. What differences do you see in the decompiled code?
-    <details><summary>In demangler_gnu_v2_41...</summary> Answer: The call to dupargv is now in an if clause (and decompiler creates a related local variable) and there are two additional calls to free. </details>
+    <details><summary>In demangler_gnu_v2_41...</summary> The main differences are that call to dupargv is now in an if clause (and decompiler creates a related local variable) and there are two additional calls to free. </details>
 1. The relevant source files are included with the Ghidra distribution:
     - ``<ghidra_install_dir>/GPL/DemanglerGnu/src/demangler_gnu_v2_24/c/argv.c``
     - ``<ghidra_install_dir>/GPL/DemanglerGnu/src/demangler/gnu_v2_41/c/argv.c``
@@ -140,9 +136,10 @@ TODO: explain why there are different apply actions
 ``<ghidra_install_dir>/GPL/DemanglerGnu/os/mac_arm_64/demangler_gnu_v2_41``.  
     - This executable is based on the same source code as the executable in `example` but compiled for a different architecture.
     - **Note**: this file has the same name as the one used to populate the BSim database, so you will have to give the resulting Ghidra program a different name or import it into a different directory in your Ghidra project.
-1. Navigate to ``_expandargv`` and issue a BSim query.  What differences do you see regarding ``memmove`` and ``memcpy``?
-   <details><summary>In the arm64 version...</summary> Answer: In the arm64_version, the compiler replaced these functions with __memmove_chk and __memcpy_chk.  The __chk versions have an extra parameter related to preventing buffer overflows. Neither the names nor the bodies of callees are incorporated into BSim signatures, but the arguments of a call are, so this change partly explains why the BSim vectors are not identical.</details>
-1. Examine the ``Listing View`` tab and verify that the architectures are different.
+1. Navigate to ``_expandargv`` and issue a BSim query.
+In the decompiler diff view, what differences do you see regarding ``memmove`` and ``memcpy``?
+   <details><summary>In the arm64 version...</summary> In the arm64_version, the compiler replaced these functions with __memmove_chk and __memcpy_chk.  The __chk versions have an extra parameter related to preventing buffer overflows. Neither the names nor the bodies of callees are incorporated into BSim signatures, but the arguments of a call are, so this change partly explains why the BSim vectors are not identical.</details>
+1. Examine the **Listing View** tab and verify that the architectures are different.
 
 
 ## A Remark on Query Thresholds and Indices
