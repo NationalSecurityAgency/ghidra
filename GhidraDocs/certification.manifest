@@ -1,7 +1,9 @@
 ##VERSION: 2.0
 ##MODULE IP: Creative Commons Attribution 2.5
+##MODULE IP: Crystal Clear Icons - LGPL 2.1
 ##MODULE IP: FAMFAMFAM Icons - CC 2.5
 ##MODULE IP: LGPL 2.1
+##MODULE IP: LGPL 3.0
 ##MODULE IP: Modified Nuvola Icons - LGPL 2.1
 ##MODULE IP: Nuvola Icons - LGPL 2.1
 ##MODULE IP: Public Domain
@@ -28,20 +30,25 @@ GhidraClass/BSim/BSimTutorial_Exe_Results.md||GHIDRA||||END|
 GhidraClass/BSim/BSimTutorial_Filters.md||GHIDRA||||END|
 GhidraClass/BSim/BSimTutorial_Ghidra_Command_Line.md||GHIDRA||||END|
 GhidraClass/BSim/BSimTutorial_Intro.md||GHIDRA||||END|
-GhidraClass/BSim/BSimTutorial_Overview.md||GHIDRA||||END|
+GhidraClass/BSim/BSimTutorial_Overview_Queries.md||GHIDRA||||END|
 GhidraClass/BSim/BSimTutorial_Scripting.md||GHIDRA||||END|
 GhidraClass/BSim/README.md||GHIDRA||||END|
 GhidraClass/BSim/images/actions.png||GHIDRA||||END|
 GhidraClass/BSim/images/basic_query.png||GHIDRA||||END|
 GhidraClass/BSim/images/bsim_search_dialog.png||GHIDRA||||END|
 GhidraClass/BSim/images/configure.png||GHIDRA||||END|
+GhidraClass/BSim/images/decomp_diff.png||GHIDRA||||END|
 GhidraClass/BSim/images/exe_results.png||GHIDRA||||END|
 GhidraClass/BSim/images/exe_results_actions.png||GHIDRA||||END|
+GhidraClass/BSim/images/exec.png||Crystal Clear Icons - LGPL 2.1||||END|
 GhidraClass/BSim/images/feature_visualizer.png||GHIDRA||||END|
-GhidraClass/BSim/images/filter_results.png||GHIDRA||||END|
+GhidraClass/BSim/images/information.png||FAMFAMFAM Icons - CC 2.5||||END|
+GhidraClass/BSim/images/lock.gif||GHIDRA||||END|
 GhidraClass/BSim/images/overview_window.png||GHIDRA||||END|
+GhidraClass/BSim/images/preferences-web-browser-shortcuts.png||LGPL 3.0||||END|
 GhidraClass/BSim/images/script_manager.png||GHIDRA||||END|
-GhidraClass/BSim/images/search_info.png||GHIDRA||||END|
+GhidraClass/BSim/images/text_align_justify.png||FAMFAMFAM Icons - CC 2.5||||END|
+GhidraClass/BSim/images/unlock.gif||GHIDRA||||END|
 GhidraClass/Beginner/Images/GhidraLogo64.png||GHIDRA||||END|
 GhidraClass/Beginner/Introduction_to_Ghidra_Student_Guide.html||GHIDRA|||This file contains mostly Ghidra content, but also includes code that is available for distribution, without restrictions, from https://github.com/paulrouget/dzslides.|END|
 GhidraClass/Beginner/Introduction_to_Ghidra_Student_Guide_withNotes.html||Public Domain|||Slight modification of code that is available for distribution, without restrictions, (original extremely permissive wtf license allows us to change IP to Public Domain),from https://github.com/paulrouget/dzslides.|END|

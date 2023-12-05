@@ -12,7 +12,7 @@ To enable BSim, perform the following steps:
 1. Click on the ``Configure`` link of the ``BSim`` entry.
 1. In the resulting dialog, ensure that the checkbox for ``BSimSearchPlugin`` is checked.
 
-![](./images/configure.png)
+![](images/configure.png)
  
  Next Section: [Creating and Populating a BSim Database from the GUI](BSimTutorial_Creating_Database_From_GUI.md)
 

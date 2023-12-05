@@ -29,7 +29,7 @@ The index drastically reduces the number of vector comparisons needed and allows
 databases holding up to 10 million unique vectors, and a *large* template, intended for databases holding up to 100 million unique vectors.
 
 Querying ``foo`` against a BSim database typically yields a number of potential matches.
-Each individual match for ``foo`` can be compared to `foo` in a side-by-side view, and certain information (such as function name) can be quickly transferred from a match to ``foo``. 
+Each individual match for ``foo`` can be compared to `foo` in a side-by-side view, and certain information (such as function name) can be quickly copied from a match to ``foo``. 
 
 We frequently call BSim vectors the *BSim signature* of a function, or just the *signature* when the context is clear.
 
@@ -46,7 +46,7 @@ Using BSim involves the following components:
 - A *BSim Client*, i.e., an instance of Ghidra with the BSim plugin enabled.
     - This is where the reverse engineering happens.
 - A *BSim Database*, which stores the BSim signatures.
-    - Also stores some metadata about each function and the containing executable.
+    - Also stores some metadata about each function and its containing executable.
     - In particular, stores the ghidra:// URL of the associated Ghidra program.
     - Does not store disassembly or decompiled functions.
 - A *Ghidra Project*, which stores the analyzed programs used to populate the BSim database.

@@ -10,10 +10,10 @@ Next, perform the following steps from the Ghidra Code Browser:
 
 1.  Run the Ghidra script ``CreateH2BSimDatabaseScript.java``.
 1.  In the resulting dialog:
-    1. Enter "example" in the `Database Name` field. 
-    1. Select the new directory in the `Database Directory` field.
+    1. Enter "example" in the **Database Name** field. 
+    1. Select the new directory in the **Database Directory** field.
     1. Don't change any of the other fields.  
-1.  Click OK.
+1.  Click **OK**.
 
 ## Populating the Database
 

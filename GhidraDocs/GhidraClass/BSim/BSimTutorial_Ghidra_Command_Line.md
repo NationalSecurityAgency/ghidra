@@ -1,7 +1,7 @@
 # Ghidra Analysis from the Command Line 
 
 For the remaining exercises, we need to populate our BSim database with a number of binaries. 
-We'd like a consistent set of binaries for the tutorial, but we don't want to clutter the Ghidra distribution with dozens of additional executables that aren't actually used by the codebase.
+We'd like a consistent set of binaries for the tutorial, but we don't want to clutter the Ghidra distribution with dozens of additional executables.
 Fortunately, the BSim plugin includes a script for building the PostgreSQL backend, and that build process creates hundreds of object files.
 So we can just build PostgreSQL and harvest the object files we need.
 
@@ -10,6 +10,9 @@ We do not run any PostgreSQL code, we simply analyze some files produced when bu
 
 Note that these files must be built on a machine running Linux.
 Windows users can build these files in a Linux virtual machine.
+
+First, download ``postgresql-15.3.tar.gz`` from the PostgreSQL web site.
+Put this file in ``<ghidra_install_dir>/Ghidra/Features/BSim``.
 
 To build the files, execute the following commands in a shell: [^1] 
 
@@ -22,13 +25,12 @@ export CFLAGS="-O2 -g"
 ./make-postgres.sh
 mkdir ~/postgres_object_files
 cd build
-find . -name pl*.o -exec cp {} ~/postgres_object_files/ \;
+find . -name p*o -size +100000c -size -700000c -exec cp {} ~/postgres_object_files/ \;
 cd os/linux_x86_64/postgresql/bin
 strip -s postgres
 ```
 
-To continue on Windows, transfer the ``~/postgres_object_files`` directory and the (stripped) ``postgres`` executable to your Windows machine.
-
+To continue on Windows, transfer the ``~/postgres_object_files`` directory and the stripped ``postgres`` executable to your Windows machine.
 
 ## Importing and Analyzing the Exercise Files
 

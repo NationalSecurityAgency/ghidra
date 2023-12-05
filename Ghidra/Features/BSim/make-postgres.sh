@@ -20,7 +20,7 @@
 # below (POSTGRES_CONFIG_OPTIONS) may be adjusted if required
 # (e.g., build without openssl use, etc.). 
 #
-# See https://www.postgresql.org/docs/10/install-procedure.html
+# See https://www.postgresql.org/docs/15/install-procedure.html
 # for supported postgresql config options.
 #
 # Additional packages may need to be installed include to perform the 
