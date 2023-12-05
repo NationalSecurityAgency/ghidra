@@ -110,7 +110,9 @@ public class GoRttiMapper extends DataTypeMapper {
 				Msg.info(GoRttiMapper.class, "Reading golang binary info: " + program.getName());
 				try {
 					GoRttiMapper supplier_result = getGoBinary(program);
-					supplier_result.init(monitor);
+					if (supplier_result != null) {
+						supplier_result.init(monitor);
+					}
 					return supplier_result;
 				}
 				catch (IllegalArgumentException | IOException e) {

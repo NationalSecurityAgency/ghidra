@@ -107,8 +107,7 @@ public class TransientProgramProperties {
 			if (supplierVal == null) {
 				return null;
 			}
-			property = new Property(key, supplierVal, scope);
-			perProgramProps.addProperty(key, supplierVal, scope);
+			property = perProgramProps.addProperty(key, supplierVal, scope);
 		}
 		if (property.scope != scope) {
 			throw new IllegalArgumentException("Mismatched Program property scope");
@@ -178,14 +177,16 @@ public class TransientProgramProperties {
 			}
 		}
 
-		private void addProperty(Object key, Object value, SCOPE scope) {
+		private Property addProperty(Object key, Object value, SCOPE scope) {
 			if (scope == SCOPE.ANALYSIS_SESSION) {
 				if (!aamListenerAdded) {
 					AutoAnalysisManager.getAnalysisManager(program).addListener(this);
 					aamListenerAdded = true;
 				}
 			}
-			props.put(key, new Property(key, value, scope));
+			Property newProperty = new Property(key, value, scope);
+			props.put(key, newProperty);
+			return newProperty;
 		}
 
 	}
