@@ -334,10 +334,12 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 
 	static class CancelAction extends DockingAction {
 		static final Icon ICON = Icons.STOP_ICON;
+		static final String HELP_ANCHOR = "cancel";
 
 		public CancelAction(Plugin owner) {
 			super("Cancel", owner.getName());
 			setToolBarData(new ToolBarData(ICON));
+			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
 		}
 
 		@Override
