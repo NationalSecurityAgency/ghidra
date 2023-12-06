@@ -62,7 +62,7 @@ import ghidra.util.task.*;
 				"of previously analyzed functions and returns a table of similar functions",
 			packageName = BsimPluginPackage.NAME,
 			shortDescription = "Search Bsim database(s) for similar functions",
-			status = PluginStatus.STABLE)
+			status = PluginStatus.RELEASED)
 //@formatter:on
 public class BSimSearchPlugin extends ProgramPlugin {
 
