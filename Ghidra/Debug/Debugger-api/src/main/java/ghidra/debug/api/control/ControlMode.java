@@ -91,6 +91,14 @@ public enum ControlMode {
 		}
 
 		@Override
+		public ControlMode modeOnChange(DebuggerCoordinates coordinates) {
+			if (coordinates.isAliveAndPresent()) {
+				return this;
+			}
+			return getAlternative(coordinates);
+		}
+
+		@Override
 		public boolean isSelectable(DebuggerCoordinates coordinates) {
 			return coordinates.isAlive();
 		}
@@ -149,6 +157,14 @@ public enum ControlMode {
 		@Override
 		public boolean useEmulatedBreakpoints() {
 			return false;
+		}
+
+		@Override
+		public ControlMode modeOnChange(DebuggerCoordinates coordinates) {
+			if (coordinates.isAliveAndPresent()) {
+				return this;
+			}
+			return getAlternative(coordinates);
 		}
 
 		@Override
