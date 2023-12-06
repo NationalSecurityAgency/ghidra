@@ -49,10 +49,13 @@ public class CompareFuncsFromMatchedTokensAction extends AbstractMatchedTokensAc
 			PluginTool tool) {
 		super(ACTION_NAME, tool.getName(), diffPanel, false);
 		this.tool = tool;
-		MenuData menuData = new MenuData(new String[] { ACTION_NAME }, null, MENU_GROUP);
-		setPopupMenuData(menuData);
-		setEnabled(true);
-		setHelpLocation(new HelpLocation(HELP_TOPIC, "Compare Matching Callees"));
+		FunctionComparisonService service = tool.getService(FunctionComparisonService.class);
+		if (service != null) {
+			MenuData menuData = new MenuData(new String[] { ACTION_NAME }, null, MENU_GROUP);
+			setPopupMenuData(menuData);
+			setEnabled(true);
+			setHelpLocation(new HelpLocation(HELP_TOPIC, "Compare Matching Callees"));
+		}
 	}
 
 	@Override
