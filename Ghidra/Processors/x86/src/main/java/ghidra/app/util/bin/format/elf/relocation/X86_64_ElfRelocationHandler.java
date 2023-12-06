@@ -44,8 +44,10 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 		return new X86_64_ElfRelocationContext(this, loadHelper, symbolMap);
 	}
 
+	@Override
 	public RelocationResult relocate(ElfRelocationContext elfRelocationContext,
-			ElfRelocation relocation, Address relocationAddress) throws MemoryAccessException, NotFoundException {
+			ElfRelocation relocation, Address relocationAddress)
+			throws MemoryAccessException, NotFoundException {
 
 		ElfHeader elf = elfRelocationContext.getElfHeader();
 		if (elf.e_machine() != ElfConstants.EM_X86_64) {
@@ -89,8 +91,8 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 				value = symbolValue + addend;
 				memory.setLong(relocationAddress, value);
 				if (symbolIndex != 0 && addend != 0 && !sym.isSection()) {
-					warnExternalOffsetRelocation(program, relocationAddress,
-						symbolAddr, symbolName, addend, elfRelocationContext.getLog());
+					warnExternalOffsetRelocation(program, relocationAddress, symbolAddr, symbolName,
+						addend, elfRelocationContext.getLog());
 					applyComponentOffsetPointer(program, relocationAddress, addend);
 				}
 				break;
@@ -205,7 +207,6 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 				}
 				break;
 
-
 			case X86_64_ElfRelocationConstants.R_X86_64_GOTPCRELX:
 			case X86_64_ElfRelocationConstants.R_X86_64_REX_GOTPCRELX:
 
@@ -234,7 +235,8 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 					if (modRM == (byte) 0x25) { // check for indirect JMP op
 						// convert to direct JMP op
 						// must compensate for shorter instruction by appending NOP
-						elfRelocationContext.getLoadHelper().addArtificialRelocTableEntry(opAddr, 2);
+						elfRelocationContext.getLoadHelper()
+								.addArtificialRelocTableEntry(opAddr, 2);
 						memory.setByte(opAddr, (byte) 0xe9); // direct JMP op
 						memory.setByte(relocationAddress.add(3), (byte) 0x90); // append NOP
 						directValueAddr = modRMAddr;
@@ -243,7 +245,8 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 					else if (modRM == (byte) 0x15) { // check for indirect CALL instruction
 						// convert to direct CALL instruction
 						// use of addr32 prefix allows use of single instruction
-						elfRelocationContext.getLoadHelper().addArtificialRelocTableEntry(opAddr, 2);
+						elfRelocationContext.getLoadHelper()
+								.addArtificialRelocTableEntry(opAddr, 2);
 						memory.setByte(opAddr, (byte) 0x67); // addr32 prefix
 						memory.setByte(modRMAddr, (byte) 0xe8); // direct CALL op
 						directValueAddr = relocationAddress;
@@ -260,7 +263,7 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 				// Let R_X86_64_GOTPCREL case handle as simple GOTPCREL relocation.
 
 			case X86_64_ElfRelocationConstants.R_X86_64_GOTPCREL:
-				Address symbolGotAddress = x86RelocationContext.getGotEntryAddress(symbolValue);
+				Address symbolGotAddress = x86RelocationContext.getGotEntryAddress(sym);
 				if (symbolGotAddress == null) {
 					markAsError(program, relocationAddress, type, symbolName,
 						"GOT allocation failure", elfRelocationContext.getLog());
@@ -272,7 +275,7 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 				break;
 
 			case X86_64_ElfRelocationConstants.R_X86_64_GOTPCREL64:
-				symbolGotAddress = x86RelocationContext.getGotEntryAddress(symbolValue);
+				symbolGotAddress = x86RelocationContext.getGotEntryAddress(sym);
 				if (symbolGotAddress == null) {
 					markAsError(program, relocationAddress, "R_X86_64_GOTPCREL64", symbolName,
 						"GOT allocation failure", elfRelocationContext.getLog());
