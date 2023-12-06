@@ -17,7 +17,7 @@ package ghidra.lifecycle;
 
 /**
  * This serves both as a marker interface for classes missing important methods and as container for
- * the {@link #TODO(String, Object...))} method.
+ * the {@link #TODO(String, Object...)} method.
  * 
  * <p>
  * TODO: It'd be nice to optionally ignore TODO exceptions, but this seems to require a dependency

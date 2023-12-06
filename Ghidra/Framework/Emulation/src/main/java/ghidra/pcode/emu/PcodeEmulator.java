@@ -15,8 +15,7 @@
  */
 package ghidra.pcode.emu;
 
-import java.util.List;
-
+import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.emu.auxiliary.AuxPcodeEmulator;
 import ghidra.pcode.exec.*;
 import ghidra.program.model.address.Address;
@@ -40,20 +39,20 @@ import ghidra.program.model.lang.Language;
  * or one of its derivatives to create a concrete-plus-auxiliary style emulator.
  * 
  * <pre>
- * emulator      : PcodeMachine<T>
- *  - language     : SleighLanguage
- *  - arithmetic   : PcodeArithmetic<T>
- *  - sharedState  : PcodeExecutorState<T>
- *  - library      : PcodeUseropLibrary<T>
- *  - injects      : Map<Address, PcodeProgram>
- *  - threads      : List<PcodeThread<T>>
- *    - [0]          : PcodeThread<T>
- *      - decoder      : InstructionDecoder
- *      - executor     : PcodeExecutor<T>
- *      - frame        : PcodeFrame
- *      - localState   : PcodeExecutorState<T>
- *      - library      : PcodeUseropLibrary<T>
- *      - injects      : Map<Address, PcodeProgram>
+ * emulator      : {@link PcodeMachine}{@code <T>}
+ *  - language     : {@link SleighLanguage}
+ *  - arithmetic   : {@link PcodeArithmetic}{@code <T>}
+ *  - sharedState  : {@link PcodeExecutorState}{@code <T>}
+ *  - library      : {@link PcodeUseropLibrary}{@code <T>}
+ *  - injects      : {@code Map<Address, }{@link PcodeProgram}{@code >}
+ *  - threads      : {@code List<}{@link PcodeThread}{@code <T>>}
+ *    - [0]          : {@link PcodeThread}{@code <T>}
+ *      - decoder      : {@link InstructionDecoder}
+ *      - executor     : {@link PcodeExecutor}{@code <T>}
+ *      - frame        : {@link PcodeFrame}
+ *      - localState   : {@link PcodeExecutorState}{@code <T>}
+ *      - library      : {@link PcodeUseropLibrary}{@code <T>}
+ *      - injects      : {@code Map<Address, }{@link PcodeProgram}{@code >}
  *    - [1] ...
  * </pre>
  * 
@@ -102,7 +101,7 @@ import ghidra.program.model.lang.Language;
  * Alternatively, if the target program never invokes system calls directly, but rather via
  * system-provided APIs, then it may suffice to stub out those imports. Typically, Ghidra will place
  * a "thunk" at each import address with the name of the import. Stubbing an import is accomplished
- * by injecting p-code at the import address. See {@link PcodeMachine#inject(Address, List)}. The
+ * by injecting p-code at the import address. See {@link PcodeMachine#inject(Address, String)}. The
  * inject will need to replicate the semantics of that call to the desired fidelity.
  * <b>IMPORTANT:</b> The inject must also return control to the calling function, usually by
  * replicating the conventions of the target platform.
