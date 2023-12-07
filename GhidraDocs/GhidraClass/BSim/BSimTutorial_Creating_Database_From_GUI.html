@@ -1,0 +1,38 @@
+<h1 id="creating-and-populating-a-bsim-database-from-the-ghidra-gui">Creating and Populating a BSim Database from the Ghidra GUI</h1>
+
+<p>This section explains how to create and populate an H2-backed BSim database from the Ghidra GUI.</p>
+
+<h2 id="creating-the-database">Creating the Database</h2>
+
+<p>To create a BSim database, first create a directory on your file system to contain the database.</p>
+
+<p>Next, perform the following steps from the Ghidra Code Browser:</p>
+
+<ol>
+  <li>Run the Ghidra script <code>CreateH2BSimDatabaseScript.java</code>.</li>
+  <li>In the resulting dialog:
+    <ol>
+      <li>Enter “example” in the <strong>Database Name</strong> field.</li>
+      <li>Select the new directory in the <strong>Database Directory</strong> field.</li>
+      <li>Don’t change any of the other fields.</li>
+    </ol>
+  </li>
+  <li>Click <strong>OK</strong>.</li>
+</ol>
+
+<h2 id="populating-the-database">Populating the Database</h2>
+
+<p>We now populate the database with an executable which is contained in the Ghidra distribution.</p>
+
+<ol>
+  <li>Import and analyze the executable <code>&lt;ghidra_install_dir&gt;/GPL/DemanglerGnu/os/linux_x86_64/demangler_gnu_v2_41</code> using the default analysis options.</li>
+  <li>Run the Ghidra script <code>AddProgramToH2BSimDatabaseScript.java</code> on this program.
+    <ul>
+      <li>The script will ask you to select an H2 database file.  Use <code>example.mv.db</code> in the database directory.</li>
+    </ul>
+  </li>
+  <li>In general you can run this script on other programs to add their signatures to this database, but that’s not necessary for the exercises in the next section.</li>
+</ol>
+
+<p>Next Section: <a href="BSimTutorial_Basic_Queries.html">Basic BSim Queries</a></p>
+

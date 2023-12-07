@@ -25,8 +25,7 @@ BSim vectors can be stored in a dedicated database.
 BSim databases intended to hold large[^1] numbers of vectors maintain an index based on *locality-sensitive hashing*. 
 The index drastically reduces the number of vector comparisons needed and allows for rapid retrieval of results.
 
-[^1]: Creating a database requires a *database template*, which determines the specifics of the index.  Currently, Ghidra provides a *medium* template, intended for
-databases holding up to 10 million unique vectors, and a *large* template, intended for databases holding up to 100 million unique vectors.
+[^1]: Creating a database requires a *database template*, which determines the specifics of the index. Currently, Ghidra provides a *medium* template, intended for databases holding up to 10 million unique vectors, and a *large* template, intended for databases holding up to 100 million unique vectors.
 
 Querying ``foo`` against a BSim database typically yields a number of potential matches.
 Each individual match for ``foo`` can be compared to `foo` in a side-by-side view, and certain information (such as function name) can be quickly copied from a match to ``foo``. 

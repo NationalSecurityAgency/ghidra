@@ -1,0 +1,51 @@
+<h1 id="overview-queries">Overview Queries</h1>
+
+<p>An <strong>Overview Query</strong> queries a BSim database for the number of matches to each function in an executable.
+The matching functions themselves are not returned. 
+Similarity and Confidence thresholds can be set for an Overview Query, but there is no “Matches per Function” bound and no filters can be applied.</p>
+
+<p>To perform an Overview Query, select <strong>BSim -&gt; Perform Overview…</strong> from the Code Browser.</p>
+
+<h2 id="exercise-hit-counts-and-self-significance">Exercise: Hit Counts and Self-Significance</h2>
+
+<ol>
+  <li>Perform an Overview query on <code>postgres</code> using the default query thresholds.
+You should see the following result:
+<img src="images/overview_window.png" alt="overview window" /></li>
+  <li>Sort the table by the “Hit Count” column in ascending order.  Typically, the functions with the largest hit counts will have low self-significance.
+Verify that that is the case for this table.</li>
+  <li>Q: Examine the functions with the highest hit count. Why are there so many matches for these functions?
+    <details><summary>Answer:</summary> These are all instances of PostgreSQL statistics-reporting functions.  Their bodies are quite similar and they have identical BSim signatures.</details>
+  </li>
+</ol>
+
+<h2 id="exercise-selections-and-queries">Exercise: Selections and Queries</h2>
+
+<p>Using the hit count column, it is possible to exclude functions with large numbers of matches.</p>
+
+<ol>
+  <li>In the Overview Table, select all functions whose hit count is 2 or less.</li>
+  <li>Right-click on the selection and perform the <strong>Search Selected Functions</strong> action.
+Sort the query results by descending <strong>Function Count</strong> and verify that <code>demangler_gnu_v2_41</code> is far down the list.</li>
+</ol>
+
+<h2 id="exercise-vector-hashes">Exercise: Vector Hashes</h2>
+
+<p>Suppose <code>foo</code> and <code>bar</code> have the same number of hits in the Overview table.
+There are two possibilities:</p>
+<ol>
+  <li><code>foo</code> and <code>bar</code> have distinct feature vectors which happen to have the same number of matches.</li>
+  <li><code>foo</code> and <code>bar</code> have the same feature vector.</li>
+</ol>
+
+<p>An optional column, <strong>Vector Hash</strong>, can be used to distinguish between these two cases.</p>
+
+<ol>
+  <li>Enable the <strong>Vector Hash</strong> Column in the Overview Table.</li>
+  <li>Find two functions with the same vector hash.</li>
+  <li>Select the two corresponding rows in the table and then transfer the selection to the Listing using the <img src="images/text_align_justify.png" alt="make selection icon" /> icon in the BSim Overview toolbar.</li>
+  <li>In the Listing, press <code>Shift-C</code> or right-click and perform the <strong>Compare Selected Functions</strong> action.</li>
+  <li>In the resulting Function Comparison window, convince yourself that these two functions should have the same BSim signature.</li>
+</ol>
+
+<p>Next Section: <a href="BSimTutorial_Filters.html">Queries and Filters</a></p>

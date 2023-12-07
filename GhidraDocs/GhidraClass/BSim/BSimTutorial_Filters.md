@@ -1,13 +1,13 @@
 # BSim Filters
 
-There are a number of filters that can be applied to BSim queries, involving names, architectures, compilers, ingest dates, user-defined executable categories, and many other attributes.
+There are a number of filters that can be applied to BSim queries, involving names, architectures, compilers, ingest dates, user-defined executable categories, and other attributes.
 
 Filters be can applied *server-side* or *client-side*.
-Server-side filters affect the query results sent to Ghidra from a BSim server.
-Client-side filters apply to the BSim Search results table and can be added and removed at will.
-However, to "undo" a server-side filter, you have to issue an additional BSim query without the filter.
+Server-side filters affect the query results sent to Ghidra from a BSim server and can be applied using the **Filters** drop-down in the BSim Search dialog.
+Client-side filters apply to the BSim Search results table and can be added and removed at will using the **Filter Results** icon ![Filter Results](images/exec.png).
+However, to "undo" a server-side filter, you have to issue another BSim query without the filter.
 
-Server-side filters can be applied using the **Filters** drop-down in the BSim Search dialog.
+
 
 ## Exercise: Filters
 

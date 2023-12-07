@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//Generate BSim signatures for the current program.  The URL for the program is
-//created from the local storage location.  These signatures are intended for the
-//in-memory database backend.
+//Generates and commits the BSim signatures for the currentProgram to the
+//selected H2 BSim database
 //@category BSim
 import java.io.File;
 import java.io.IOException;
@@ -41,9 +40,6 @@ import ghidra.program.model.listing.FunctionManager;
 import ghidra.util.MessageType;
 import ghidra.util.Msg;
 
-//@category BSim
-//Generates and commits the BSim signatures for the currentProgram to the
-//selected H2 BSim database
 public class AddProgramToH2BSimDatabaseScript extends GhidraScript {
 
 	private static final String DATABASE = "H2 Database";
