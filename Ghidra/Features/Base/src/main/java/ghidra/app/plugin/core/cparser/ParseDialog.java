@@ -228,6 +228,7 @@ class ParseDialog extends ReusableDialogComponentProvider {
 				pathName = (pathName == null ? "" : pathName.trim());
 
 				if (pathName.length() == 0 || pathName.startsWith("#")) {
+					label.setForeground(getUneditableForegroundColor(data.isSelected()));
 					return label;
 				}
 

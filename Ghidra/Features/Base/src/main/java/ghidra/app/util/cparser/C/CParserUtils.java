@@ -482,7 +482,7 @@ public class CParserUtils {
 				e.printStackTrace();
 			}
         }
-        
+
         return parseHeaderFiles(openDTMgrs, filenames, includePaths, args, existingDTMgr, monitor);
     }
 	
@@ -535,7 +535,7 @@ public class CParserUtils {
 		String fName = dtMgr.getName();
 		
 		// make a path to tmpdir with name of data type manager
-		String path = System.getProperty("java.io.tmpdir") + File.pathSeparator + fName;
+		String path = System.getProperty("java.io.tmpdir") + File.separator + fName;
 		// if file data type manager, use path to .gdt file
 		if (dtMgr instanceof FileDataTypeManager) {
 			path = ((FileDataTypeManager) dtMgr).getPath();
@@ -572,7 +572,7 @@ public class CParserUtils {
 						continue;
 					}
 					for (String element : children) {
-						File child = new File(file.getAbsolutePath() + "/" + element);
+						File child = new File(file.getAbsolutePath() + File.separator + element);
 						if (child.getName().endsWith(".h")) {
 							parseFile(child.getAbsolutePath(), monitor, cpp);
 						}
@@ -628,11 +628,11 @@ public class CParserUtils {
 			throws ghidra.app.util.cparser.CPP.ParseException {
 		monitor.setMessage("PreProcessing " + filename);
 		try {
-			Msg.info(CParserUtils.class, "parse " + filename);
+			Msg.info(CParserUtils.class, "parse: " + filename);
 			cpp.parse(filename);
 		}
 		catch (Throwable e) {
-			Msg.error(CParserUtils.class, "Parsing file :" + filename);
+			Msg.error(CParserUtils.class, "Parsing file: " + filename);
 			Msg.error(CParserUtils.class, "Unexpected Exception: " + e.getMessage(), e);
 
 			throw new ghidra.app.util.cparser.CPP.ParseException(e.getMessage());
@@ -693,7 +693,7 @@ public class CParserUtils {
 	// the error message contains an 'after' text, which is the text that comes after the
 	// invalid text
 	private static int getTokenMgrErrorIndexOfInvalidText(String message, String functionString) {
-		String invalidCharMarker = "after : ";
+		String invalidCharMarker = "after: ";
 		int index = message.indexOf(invalidCharMarker);
 		if (index >= 0) {
 			String remainder = message.substring(index + invalidCharMarker.length());
