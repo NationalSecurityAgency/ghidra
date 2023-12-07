@@ -528,6 +528,9 @@ public class GhidraFileData {
 			projectData.clearDomainObject(getPathname());
 			// generate IOException
 			Throwable cause = e.getCause();
+			if (cause == null) {
+				cause = e;
+			}
 			if (cause instanceof IOException) {
 				throw (IOException) cause;
 			}
@@ -831,9 +834,12 @@ public class GhidraFileData {
 	}
 
 	/**
-	 * Returns whether the object is read-only. From a framework point of view a read-only object 
-	 * can never be changed.
-	 * @return true if read-only
+	 * Returns whether this file is explicitly marked as read-only.  This method is only supported
+	 * by the local file system and does not apply to a versioned file that is not checked-out.
+	 * A versioned file that is not checked-out will always return false, while a 
+	 * {@link DomainFileProxy} will always return true.
+	 * From a framework point of view a read-only file can never be changed.
+	 * @return true if this file is marked read-only
 	 */
 	boolean isReadOnly() {
 		synchronized (fileSystem) {

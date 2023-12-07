@@ -25,50 +25,81 @@ import ghidra.feature.vt.api.util.VTOptions;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
 import ghidra.program.model.listing.*;
+import ghidra.util.InvalidNameException;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 
-public abstract class GhidraVersionTrackingScript extends GhidraScript {
-	protected VTSession vtSession;
-	protected Program sourceProgram;
-	protected Program destinationProgram;
+public abstract class AbstractGhidraVersionTrackingScript extends GhidraScript {
+	private VTSession vtSession;
+	private Program sourceProgram;
+	private Program destinationProgram;
 
 	private int transactionID;
 
-	public void createVersionTrackingSession(String sourceProgramPath,
-			String destinationProgramPath) throws Exception {
+	protected VTSession getVTSession() {
+		return vtSession;
+	}
+
+	protected Program getSourceProgram() {
+		return sourceProgram;
+	}
+
+	protected Program getDestinationProgram() {
+		return destinationProgram;
+	}
+
+	public VTSession createVersionTrackingSession(String sourceProgramPath,
+			String destinationProgramPath)
+			throws VersionException, CancelledException, IOException {
 
 		if (vtSession != null) {
 			throw new RuntimeException("Attempted to open a new session with one already open!");
 		}
-		sourceProgram = openProgram(sourceProgramPath);
-		destinationProgram = openProgram(destinationProgramPath);
 
-		createVersionTrackingSession("New Session", sourceProgram, destinationProgram);
+		try {
+			sourceProgram = openProgram(sourceProgramPath);
+
+			destinationProgram = openProgram(destinationProgramPath);
+
+			vtSession = new VTSessionDB("New Session", sourceProgram, destinationProgram, this);
+			transactionID = vtSession.startTransaction("VT Script");
+		}
+		finally {
+			if (vtSession == null) {
+				closeVersionTrackingSession();
+			}
+		}
+		return vtSession;
 	}
 
-	public void createVersionTrackingSession(String name, Program source, Program destination)
-			throws Exception {
+	public VTSession createVersionTrackingSession(String name, Program source, Program destination)
+			throws IOException {
 
 		if (vtSession != null) {
 			throw new RuntimeException("Attempted to create a new session with one already open!");
 		}
-		sourceProgram = source;
-		destinationProgram = destination;
 
-		if (!sourceProgram.isUsedBy(this)) {
+		try {
+			sourceProgram = source;
 			sourceProgram.addConsumer(this);
-		}
-		if (!destinationProgram.isUsedBy(this)) {
-			destinationProgram.addConsumer(this);
-		}
 
-		vtSession = VTSessionDB.createVTSession(name, sourceProgram, destinationProgram, this);
-		transactionID = vtSession.startTransaction("VT Script");
+			destinationProgram = destination;
+			destinationProgram.addConsumer(this);
+
+			vtSession = new VTSessionDB(name, sourceProgram, destinationProgram, this);
+			transactionID = vtSession.startTransaction("VT Script");
+		}
+		finally {
+			if (vtSession == null) {
+				closeVersionTrackingSession();
+			}
+		}
+		return vtSession;
 	}
 
-	public void openVersionTrackingSession(String path) throws Exception {
+	public VTSession openVersionTrackingSession(String path)
+			throws VersionException, CancelledException, IOException {
 		if (vtSession != null) {
 			throw new RuntimeException("Attempted to open a session with one already open!");
 		}
@@ -79,62 +110,78 @@ public abstract class GhidraVersionTrackingScript extends GhidraScript {
 		DomainFile file = state.getProject().getProjectData().getFile(path);
 		vtSession = (VTSessionDB) file.getDomainObject(this, true, true, monitor);
 		sourceProgram = vtSession.getSourceProgram();
+		sourceProgram.addConsumer(this);
 		destinationProgram = vtSession.getDestinationProgram();
+		destinationProgram.addConsumer(this);
 
-		if (!sourceProgram.isUsedBy(this)) {
-			sourceProgram.addConsumer(this);
-		}
-		if (!destinationProgram.isUsedBy(this)) {
-			destinationProgram.addConsumer(this);
-		}
 		transactionID = vtSession.startTransaction("VT Script");
+		return vtSession;
 	}
 
 	public void saveVersionTrackingSession() throws IOException {
+		if (vtSession != null) {
+			throw new RuntimeException("Attempted to save a session when not open!");
+		}
 		vtSession.endTransaction(transactionID, true);
-		vtSession.save();
-		transactionID = vtSession.startTransaction("VT Script");
+		try {
+			vtSession.save();
+		}
+		finally {
+			transactionID = vtSession.startTransaction("VT Script");
+		}
 	}
 
-	public void saveSessionAs(String path, String name) throws Exception {
-		DomainFolder folder = state.getProject().getProjectData().getFolder(path);
-		folder.createFile(name, vtSession, monitor);
-		vtSession.setName(name);
+	public void saveSessionAs(String path, String name)
+			throws InvalidNameException, CancelledException, IOException {
+		if (vtSession != null) {
+			throw new RuntimeException("Attempted to save a session when not open!");
+		}
+		vtSession.endTransaction(transactionID, true);
+		try {
+			DomainFolder folder = state.getProject().getProjectData().getFolder(path);
+			folder.createFile(name, vtSession, monitor);
+			vtSession.setName(name);
+		}
+		finally {
+			transactionID = vtSession.startTransaction("VT Script");
+		}
 	}
 
 	@Override
 	public void cleanup(boolean success) {
 		closeVersionTrackingSession();
-		if (destinationProgram != null) {
-			closeProgram(destinationProgram);
-		}
-		if (sourceProgram != null) {
-			closeProgram(sourceProgram);
-		}
-		sourceProgram = null;
-		destinationProgram = null;
+		super.cleanup(success);
 	}
 
+	/**
+	 * This will release the current session and both source and destination programs.
+	 * If either program needs to be held it is the script's responsibility to first retain
+	 * the instance and add itself as a consumer.  Any program consumer must release it
+	 * when done using it.
+	 */
 	public void closeVersionTrackingSession() {
 		if (vtSession != null) {
 			vtSession.endTransaction(transactionID, true);
 			vtSession.release(this);
+			vtSession = null;
 		}
-
+		if (destinationProgram != null) {
+			destinationProgram.release(this);
+			destinationProgram = null;
+		}
+		if (sourceProgram != null) {
+			sourceProgram.release(this);
+			sourceProgram = null;
+		}
 	}
 
-	public Program openProgram(String path)
+	private Program openProgram(String path)
 			throws VersionException, CancelledException, IOException {
 		if (state.getProject() == null) {
 			throw new RuntimeException("No project open.");
 		}
 		DomainFile file = state.getProject().getProjectData().getFile(path);
 		return (Program) file.getDomainObject(this, true, true, monitor);
-	}
-
-	@Override
-	public void closeProgram(Program program) {
-		program.release(this);
 	}
 
 	public Set<String> getSourceFunctions() {

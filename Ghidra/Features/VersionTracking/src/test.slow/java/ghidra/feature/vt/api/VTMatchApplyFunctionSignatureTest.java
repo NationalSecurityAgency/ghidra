@@ -81,9 +81,8 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		VTPlugin plugin = getPlugin(tool, VTPlugin.class);
 		controller = new VTControllerImpl(plugin);
 
-		session =
-			VTSessionDB.createVTSession(testName.getMethodName() + " - Test Match Set Manager",
-				sourceProgram, destinationProgram, this);
+		session = new VTSessionDB(testName.getMethodName() + " - Test Match Set Manager",
+			sourceProgram, destinationProgram, this);
 
 		runSwing(() -> controller.openVersionTrackingSession(session));
 
@@ -390,8 +389,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 	}
 
 	@Test
-	public void testApplyMatch_ReplaceSignature_CustomSourceAndDest()
-			throws Exception {
+	public void testApplyMatch_ReplaceSignature_CustomSourceAndDest() throws Exception {
 
 		useMatch("0x00401040", "0x00401040");
 
@@ -442,8 +440,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 	}
 
 	@Test
-	public void testApplyMatch_ReplaceSignature_NormalSourceCustomDest()
-			throws Exception {
+	public void testApplyMatch_ReplaceSignature_NormalSourceCustomDest() throws Exception {
 
 		useMatch("0x00401040", "0x00401040");
 
@@ -666,9 +663,8 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 
 		env.release(destinationProgram);
 		destinationProgram = createToyDestinationProgram();// env.getProgram("helloProgram"); // get a program without cdecl
-		session =
-			VTSessionDB.createVTSession(testName.getMethodName() + " - Test Match Set Manager",
-				sourceProgram, destinationProgram, this);
+		session = new VTSessionDB(testName.getMethodName() + " - Test Match Set Manager",
+			sourceProgram, destinationProgram, this);
 		runSwing(() -> controller.openVersionTrackingSession(session));
 
 		useMatch("0x00401040", "0x00010938");

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 // A script that runs Auto Version Tracking given the options set in one of the following ways:
 // 1. If script is run from the CodeBrowser, the GUI options are set in a pop up dialog by user.
 // 2. If script is run in headless mode either the defaults provided by the script are used or the 
@@ -129,67 +130,72 @@ public class AutoVersionTrackingScript extends GhidraScript {
 		Program otherProgram = startupValues.getProgram("Please select the other program", this,
 			state.getTool(), autoUpgradeIfNeeded);
 
-		if (isCurrentProgramSourceProg) {
-			sourceProgram = currentProgram;
-			destinationProgram = otherProgram;
-		}
-		else {
-			destinationProgram = currentProgram;
-			sourceProgram = otherProgram;
-		}
-
-		if (sourceProgram == null || destinationProgram == null) {
-			return;
-		}
-
-		// Need to end the script transaction or it interferes with vt things that need locks
-		end(true);
-
-		VTSession session =
-			VTSessionDB.createVTSession(name, sourceProgram, destinationProgram, this);
-
-		if (folder.getFile(name) == null) {
-			folder.createFile(name, session, monitor);
-		}
-
-		// create a default options map in case cannot get user input
-		GhidraValuesMap optionsMap = createDefaultOptions();
-
-		// if running script in GUI get options from user and update the vtOptions with them
-		if (!isRunningHeadless()) {
-			optionsMap = getOptionsFromUser();
-
-		}
-		// else if running script in headless get possible options set by prescript that saves
-		// optionsMap in script state variable and update the vtOptions with them
-		else {
-			// try to get options map from state if running headless
-			// if user runs prescript to set up their own options map those options will be used
-			// See SetAutoVersionTrackingOptionsScript.java as an example
-			GhidraValuesMap stateOptionsMap =
-				(GhidraValuesMap) state.getEnvironmentVar("autoVTOptionsMap");
-			if (optionsMap != null) {
-				optionsMap = stateOptionsMap;
+		VTSession session = null;
+		try {
+			if (isCurrentProgramSourceProg) {
+				sourceProgram = currentProgram;
+				destinationProgram = otherProgram;
+			}
+			else {
+				destinationProgram = currentProgram;
+				sourceProgram = otherProgram;
 			}
 
-		}
+			if (sourceProgram == null || destinationProgram == null) {
+				return;
+			}
 
-		ToolOptions vtOptions = setToolOptionsFromOptionsMap(optionsMap);
+			// Need to end the script transaction or it interferes with vt things that need locks
+			end(true);
 
-		AutoVersionTrackingTask autoVtTask = new AutoVersionTrackingTask(session, vtOptions);
+			session = new VTSessionDB(name, sourceProgram, destinationProgram, this);
 
-		TaskLauncher.launch(autoVtTask);
+			if (folder.getFile(name) == null) {
+				folder.createFile(name, session, monitor);
+			}
 
-		// if not running headless user can decide whether to save or not
-		// if running headless - must save here or nothing that was done in this script will be
-		// accessible later.
-		if (isRunningHeadless()) {
+			// create a default options map in case cannot get user input
+			GhidraValuesMap optionsMap = createDefaultOptions();
+
+			// if running script in GUI get options from user and update the vtOptions with them
+			if (!isRunningHeadless()) {
+				optionsMap = getOptionsFromUser();
+
+			}
+			// else if running script in headless get possible options set by prescript that saves
+			// optionsMap in script state variable and update the vtOptions with them
+			else {
+				// try to get options map from state if running headless
+				// if user runs prescript to set up their own options map those options will be used
+				// See SetAutoVersionTrackingOptionsScript.java as an example
+				GhidraValuesMap stateOptionsMap =
+					(GhidraValuesMap) state.getEnvironmentVar("autoVTOptionsMap");
+				if (optionsMap != null) {
+					optionsMap = stateOptionsMap;
+				}
+
+			}
+
+			ToolOptions vtOptions = setToolOptionsFromOptionsMap(optionsMap);
+
+			AutoVersionTrackingTask autoVtTask = new AutoVersionTrackingTask(session, vtOptions);
+
+			TaskLauncher.launch(autoVtTask);
+
+			// Save destination program and session changes
 			otherProgram.save("Updated with Auto Version Tracking", monitor);
 			session.save();
-		}
 
-		println(autoVtTask.getStatusMsg());
-		otherProgram.release(this);
+			println(autoVtTask.getStatusMsg());
+		}
+		finally {
+			if (otherProgram != null) {
+				otherProgram.release(this);
+			}
+			if (session != null) {
+				session.release(this);
+			}
+		}
 	}
 
 	/**

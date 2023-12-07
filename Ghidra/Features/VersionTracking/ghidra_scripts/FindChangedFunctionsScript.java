@@ -20,14 +20,14 @@
 import java.util.Collection;
 import java.util.Set;
 
-import ghidra.feature.vt.GhidraVersionTrackingScript;
+import ghidra.feature.vt.AbstractGhidraVersionTrackingScript;
 import ghidra.feature.vt.api.main.VTMatch;
 import ghidra.framework.model.Project;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 
-public class FindChangedFunctionsScript extends GhidraVersionTrackingScript {
+public class FindChangedFunctionsScript extends AbstractGhidraVersionTrackingScript {
 
 	private Program p1;
 	private Program p2;

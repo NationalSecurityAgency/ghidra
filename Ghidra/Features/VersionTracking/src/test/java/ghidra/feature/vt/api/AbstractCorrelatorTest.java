@@ -79,8 +79,7 @@ public abstract class AbstractCorrelatorTest extends AbstractGhidraHeadedIntegra
 	protected void exerciseFunctionsForFactory(final VTProgramCorrelatorFactory factory,
 			AddressSetView sourceSetThatShouldBeFound) throws Exception {
 		String name = factory.getName();
-		VTSession session =
-			VTSessionDB.createVTSession(name, sourceProgram, destinationProgram, this);
+		VTSession session = new VTSessionDB(name, sourceProgram, destinationProgram, this);
 
 		try {
 			int sessionTransaction = session.startTransaction(name);
@@ -145,8 +144,7 @@ public abstract class AbstractCorrelatorTest extends AbstractGhidraHeadedIntegra
 	protected void exercisePreciseMatchesForFactory(VTProgramCorrelatorFactory factory,
 			Map<Address, Address> map) throws Exception {
 		String name = factory.getName();
-		VTSession session =
-			VTSessionDB.createVTSession(name, sourceProgram, destinationProgram, this);
+		VTSession session = new VTSessionDB(name, sourceProgram, destinationProgram, this);
 
 		try {
 			int sessionTransaction = session.startTransaction(name);

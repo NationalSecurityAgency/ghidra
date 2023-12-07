@@ -46,7 +46,7 @@ public interface VTController extends VTSessionSupplier {
 	@Override
 	public VTSession getSession();
 
-	public void openVersionTrackingSession(DomainFile domainFile);
+	public boolean openVersionTrackingSession(DomainFile domainFile);
 
 	public void openVersionTrackingSession(VTSession session);
 

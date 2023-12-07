@@ -94,7 +94,6 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		consumers = new ArrayList<Object>();
 		consumers.add(consumer);
 		if (!UserData.class.isAssignableFrom(getClass())) {
-			// UserData instances do not utilize DomainFile storage
 			domainFile = new DomainFileProxy(name, this);
 		}
 	}
@@ -185,7 +184,12 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		return temporary;
 	}
 
-	protected void setDomainFile(DomainFile df) {
+	/**
+	 * Set the {@link DomainFile} associated with this instance.
+	 * @param df domain file
+	 * @throws DomainObjectException if a severe failure occurs during the operation.
+	 */
+	protected void setDomainFile(DomainFile df) throws DomainObjectException {
 		if (df == null) {
 			throw new IllegalArgumentException("DomainFile must not be null");
 		}
@@ -197,7 +201,6 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		domainFile = df;
 		fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.FILE_CHANGED, oldDf, df));
 		fileChangeListeners.invoke().domainFileChanged(this);
-
 	}
 
 	protected void close() {

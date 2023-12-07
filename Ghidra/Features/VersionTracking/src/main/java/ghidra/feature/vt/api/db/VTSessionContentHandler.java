@@ -13,33 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.feature.vt.api.impl;
+package ghidra.feature.vt.api.db;
 
 import java.io.IOException;
 
 import javax.swing.Icon;
 
 import db.DBHandle;
-import db.OpenMode;
 import db.buffers.BufferFile;
 import generic.theme.GIcon;
-import ghidra.feature.vt.api.db.VTSessionDB;
 import ghidra.framework.data.DBContentHandler;
 import ghidra.framework.data.DomainObjectMergeManager;
 import ghidra.framework.model.ChangeSet;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.*;
-import ghidra.util.InvalidNameException;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 public class VTSessionContentHandler extends DBContentHandler<VTSessionDB> {
 
-	private static Icon ICON = new GIcon("icon.version.tracking.session.content.type");
+	public static final String CONTENT_TYPE = "VersionTracking";
 
-	public final static String CONTENT_TYPE = "VersionTracking";
+	private static final Icon ICON = new GIcon("icon.version.tracking.session.content.type");
 
 	@Override
 	public long createFile(FileSystem fs, FileSystem userfs, String path, String name,
@@ -74,22 +71,40 @@ public class VTSessionContentHandler extends DBContentHandler<VTSessionDB> {
 		return "Version Tracking";
 	}
 
+	private void checkContentAndExclusiveCheckout(FolderItem item) throws IOException {
+		String contentType = item.getContentType();
+		if (!contentType.equals(CONTENT_TYPE)) {
+			throw new IOException("Unsupported content type: " + contentType);
+		}
+
+		// NOTE: item.isVersioned indicates that item is located on versioned filesystem
+		// and is not checked-out, otheriwse assume item in local filesystem and must
+		// ensure if any checkout is exclusive.
+		if (item.isVersioned() || (item.isCheckedOut() && !item.isCheckedOutExclusive())) {
+			throw new IOException(
+				"Unsupported VT Session use: session file must be checked-out exclusive");
+		}
+	}
+
 	@Override
 	public VTSessionDB getDomainObject(FolderItem item, FileSystem userfs, long checkoutId,
 			boolean okToUpgrade, boolean okToRecover, Object consumer, TaskMonitor monitor)
 			throws IOException, CancelledException, VersionException {
 
-		String contentType = item.getContentType();
-		if (!contentType.equals(CONTENT_TYPE)) {
-			throw new IOException("Unsupported content type: " + contentType);
+		checkContentAndExclusiveCheckout(item);
+
+		if (item.isReadOnly()) {
+			throw new ReadOnlyException("VT Session file is set read-only which prevents its use");
 		}
+
 		try {
 			DatabaseItem dbItem = (DatabaseItem) item;
 			BufferFile bf = dbItem.openForUpdate(checkoutId);
 			DBHandle dbh = new DBHandle(bf, okToRecover, monitor);
 			boolean success = false;
 			try {
-				VTSessionDB db = VTSessionDB.getVTSession(dbh, OpenMode.UPGRADE, consumer, monitor);
+				// NOTE: Always open with DB upgrade enabled
+				VTSessionDB db = new VTSessionDB(dbh, monitor, consumer);
 				success = true;
 				return db;
 			}
@@ -99,13 +114,7 @@ public class VTSessionContentHandler extends DBContentHandler<VTSessionDB> {
 				}
 			}
 		}
-		catch (VersionException e) {
-			throw e;
-		}
-		catch (IOException e) {
-			throw e;
-		}
-		catch (CancelledException e) {
+		catch (VersionException | IOException | CancelledException e) {
 			throw e;
 		}
 		catch (Throwable t) {
@@ -134,12 +143,7 @@ public class VTSessionContentHandler extends DBContentHandler<VTSessionDB> {
 			int minChangeVersion, TaskMonitor monitor)
 			throws IOException, CancelledException, VersionException {
 
-		String contentType = item.getContentType();
-		if (!contentType.equals(CONTENT_TYPE)) {
-			throw new IOException("Unsupported content type: " + contentType);
-		}
 		return getReadOnlyObject(item, -1, false, consumer, monitor);
-
 	}
 
 	@Override
@@ -154,43 +158,14 @@ public class VTSessionContentHandler extends DBContentHandler<VTSessionDB> {
 			Object consumer, TaskMonitor monitor)
 			throws IOException, VersionException, CancelledException {
 
-		String contentType = item.getContentType();
-		if (contentType != null && !contentType.equals(CONTENT_TYPE)) {
-			throw new IOException("Unsupported content type: " + contentType);
-		}
-		try {
-			DatabaseItem dbItem = (DatabaseItem) item;
-			BufferFile bf = dbItem.open();
-			DBHandle dbh = new DBHandle(bf);
-			boolean success = false;
-			try {
-				VTSessionDB manager =
-					VTSessionDB.getVTSession(dbh, OpenMode.READ_ONLY, consumer, monitor);
-				success = true;
-				return manager;
-			}
-			finally {
-				if (!success) {
-					dbh.close();
-				}
-			}
-		}
-		catch (IOException e) {
-			throw e;
-		}
-		catch (Throwable t) {
-			Msg.error(this, "Get read-only object failed", t);
-			String msg = t.getMessage();
-			if (msg == null) {
-				msg = t.toString();
-			}
-			throw new IOException("Open failed: " + msg, t);
-		}
+		checkContentAndExclusiveCheckout(item);
+
+		throw new ReadOnlyException("VT Session does not support read-only use");
 	}
 
 	@Override
 	public boolean isPrivateContentType() {
-		return true;
+		return false;
 	}
 
 }

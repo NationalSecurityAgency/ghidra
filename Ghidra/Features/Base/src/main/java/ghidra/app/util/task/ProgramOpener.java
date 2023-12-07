@@ -45,7 +45,7 @@ import ghidra.util.task.TaskMonitor;
 public class ProgramOpener {
 	private final Object consumer;
 	private String openPromptText = "Open";
-	private boolean silent = false; 	// if true operation does not permit interaction
+	private boolean silent = SystemUtilities.isInHeadlessMode(); 	// if true operation does not permit interaction
 	private boolean noCheckout = false; // if true operation should not perform optional checkout
 
 	/**
@@ -253,8 +253,9 @@ public class ProgramOpener {
 				if (domainFile.checkout(dialog.exclusiveCheckout(), monitor)) {
 					return;
 				}
-				Msg.showError(this, null, "Checkout Failed", "Exclusive checkout failed for: " +
-					domainFile.getName() + "\nOne or more users have file checked out!");
+				Msg.showError(this, null, "Checkout Failed",
+					"Exclusive checkout failed for: " + domainFile.getName() +
+						"\nOne or more users have file checked out!");
 			}
 			catch (CancelledException e) {
 				// we don't care, the task has been cancelled

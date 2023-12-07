@@ -60,7 +60,7 @@ public class DomainFileProxy implements DomainFile {
 	}
 
 	DomainFileProxy(String name, String parentPath, DomainObjectAdapter doa, int version,
-			String fileID, ProjectLocator projectLocation) {
+			String fileID, ProjectLocator projectLocation) throws IOException {
 
 		this(name, doa);
 		this.parentPath = parentPath;
