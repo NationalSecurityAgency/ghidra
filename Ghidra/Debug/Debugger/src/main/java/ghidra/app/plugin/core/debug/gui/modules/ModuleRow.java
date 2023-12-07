@@ -40,17 +40,20 @@ public class ModuleRow {
 		}
 	}
 
+	public static String computeShortName(String path) {
+		int sep = path.lastIndexOf('\\');
+		if (sep > 0 && sep < path.length()) {
+			path = path.substring(sep + 1);
+		}
+		sep = path.lastIndexOf('/');
+		if (sep > 0 && sep < path.length()) {
+			path = path.substring(sep + 1);
+		}
+		return path;
+	}
+
 	public String getShortName() {
-		String name = module.getName();
-		int sep = name.lastIndexOf('\\');
-		if (sep > 0 && sep < name.length()) {
-			name = name.substring(sep + 1);
-		}
-		sep = name.lastIndexOf('/');
-		if (sep > 0 && sep < name.length()) {
-			name = name.substring(sep + 1);
-		}
-		return name;
+		return computeShortName(module.getName());
 	}
 
 	public String getName() {
