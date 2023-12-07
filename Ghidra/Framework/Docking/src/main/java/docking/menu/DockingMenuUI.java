@@ -15,12 +15,12 @@
  */
 package docking.menu;
 
-import javax.swing.*;
-import javax.swing.plaf.ComponentUI;
+import javax.swing.JComponent;
+import javax.swing.UIManager;
 import javax.swing.plaf.MenuItemUI;
 
 public class DockingMenuUI extends DockingMenuItemUI {
-	public static ComponentUI createUI(JComponent c) {
+	public static DockingMenuUI createUI(JComponent c) {
 		DockingMenuUI result = new DockingMenuUI();
 		result.ui = (MenuItemUI) UIManager.getDefaults().getUI(c);
 		return result;

@@ -303,7 +303,11 @@ public abstract class DockingAction implements DockingActionIf {
 			String text = menuData.getMenuItemName();
 			String trimmed = StringUtilities.trimMiddle(text, 50);
 			menuItem.setText(trimmed);
-			menuItem.setIcon(menuData.getMenuIcon());
+			Icon icon = menuData.getMenuIcon();
+			menuItem.setIcon(icon);
+			if (icon != null) {
+				menuItem.setDisabledIcon(ResourceManager.getDisabledIcon(icon));
+			}
 			menuItem.setMnemonic(menuData.getMnemonic());
 		}
 		else {
