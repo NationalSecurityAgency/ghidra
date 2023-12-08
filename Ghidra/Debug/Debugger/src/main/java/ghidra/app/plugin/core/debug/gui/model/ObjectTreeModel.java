@@ -25,8 +25,7 @@ import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.dbg.target.*;
 import ghidra.dbg.util.PathUtils.TargetObjectKeyComparator;
-import ghidra.framework.model.DomainObject;
-import ghidra.framework.model.DomainObjectClosedListener;
+import ghidra.framework.model.*;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceObjectChangeType;
 import ghidra.trace.model.target.*;
@@ -39,6 +38,7 @@ public class ObjectTreeModel implements DisplaysModified {
 	class ListenerForChanges extends TraceDomainObjectListener
 			implements DomainObjectClosedListener {
 		public ListenerForChanges() {
+			listenForUntyped(DomainObject.DO_OBJECT_RESTORED, this::domainObjectRestored);
 			listenFor(TraceObjectChangeType.CREATED, this::objectCreated);
 			listenFor(TraceObjectChangeType.VALUE_CREATED, this::valueCreated);
 			listenFor(TraceObjectChangeType.VALUE_DELETED, this::valueDeleted);
@@ -48,6 +48,10 @@ public class ObjectTreeModel implements DisplaysModified {
 		@Override
 		public void domainObjectClosed(DomainObject dobj) {
 			setTrace(null);
+		}
+
+		public void domainObjectRestored(DomainObjectChangeRecord rec) {
+			reload();
 		}
 
 		protected boolean isEventValue(TraceObjectValue value) {
