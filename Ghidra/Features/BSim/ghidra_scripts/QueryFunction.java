@@ -25,27 +25,24 @@ import ghidra.features.bsim.query.description.*;
 import ghidra.features.bsim.query.protocol.*;
 import ghidra.program.model.listing.Function;
 
-
 public class QueryFunction extends GhidraScript {
 
-	//GenSignatures gensig;
-	//FunctionDatabase database;
 	private static final int MATCHES_PER_FUNC = 10;
 	private static final double SIMILARITY_BOUND = 0.7;
 	private static final double CONFIDENCE_BOUND = 0.0;
-	
+
 	@Override
 	public void run() throws Exception {
 		if (currentProgram == null) {
 			return;
 		}
-        Function func = this.getFunctionContaining(this.currentAddress);
-        if (func == null){ 
-        	popup("No function selected!");
-        	return;
-        }
-		
-        String DATABASE_URL = askString("Enter Database URL", "URL");
+		Function func = this.getFunctionContaining(this.currentAddress);
+		if (func == null) {
+			popup("No function selected!");
+			return;
+		}
+
+		String DATABASE_URL = askString("Enter Database URL", "URL");
 		URL url = BSimClientFactory.deriveBSimURL(DATABASE_URL);
 		try (FunctionDatabase database = BSimClientFactory.buildClient(url, false)) {
 			if (!database.initialize()) {

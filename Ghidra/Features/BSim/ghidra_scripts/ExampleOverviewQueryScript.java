@@ -26,24 +26,22 @@ import ghidra.features.bsim.query.protocol.SimilarityVectorResult;
 import ghidra.program.database.symbol.FunctionSymbol;
 import ghidra.program.model.listing.*;
 
+public class ExampleOverviewQueryScript extends GhidraScript {
+	private static final double SIMILARITY_BOUND = 0.7;
+	private static final double SIGNIFICANCE_BOUND = 0.0;
 
-public class ExampleOverviewQuery extends GhidraScript {
-   	private static final double SIMILARITY_BOUND = 0.7;
-    private static final double SIGNIFICANCE_BOUND = 0.0;
-	
-	
 	@Override
 	protected void run() throws Exception {
 		Program queryingProgram = currentProgram;
 		HashSet<FunctionSymbol> funcsToQuery = new HashSet<>();
 		FunctionIterator fIter = queryingProgram.getFunctionManager().getFunctionsNoStubs(true);
-		for (Function func : fIter){
+		for (Function func : fIter) {
 			funcsToQuery.add((FunctionSymbol) func.getSymbol());
-		}      
+		}
 		SFOverviewInfo overviewInfo = new SFOverviewInfo(funcsToQuery);
-        overviewInfo.setSimilarityThreshold(SIMILARITY_BOUND);
+		overviewInfo.setSimilarityThreshold(SIMILARITY_BOUND);
 		overviewInfo.setSignificanceThreshold(SIGNIFICANCE_BOUND);
-		
+
 		try (SimilarFunctionQueryService queryService =
 			new SimilarFunctionQueryService(queryingProgram)) {
 			String DATABASE_URL = askString("Enter database URL", "URL:");
@@ -65,5 +63,4 @@ public class ExampleOverviewQuery extends GhidraScript {
 			printf("%s\n", buf.toString());
 		}
 	}
-
 }

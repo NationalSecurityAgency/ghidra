@@ -123,7 +123,7 @@ public class QueryWithFiltersScript extends GhidraScript {
 		// the items are "AND'd together.
 		// 
 		// ie: "The compiler cannot equal windows AND the compiler cannot equal foo_compiler".
-		addBsimFilter(new CompilerBSimFilterType(), "windows, foo_compiler");
+		addBsimFilter(new NotCompilerBSimFilterType(), "windows, foo_compiler");
 
 		//connect to the database
 		try {
@@ -149,8 +149,7 @@ public class QueryWithFiltersScript extends GhidraScript {
 		// set returned from the previous query.
 		addBsimFilter(new Md5BSimFilterType(), currentProgram.getExecutableMD5());
 		addBsimFilter(new CompilerBSimFilterType(), "gcc");
-		addBsimFilter(new FunctionTagBSimFilterType("KNOWN_LIBRARY", queryService),
-			"false");
+		//addBsimFilter(new FunctionTagBSimFilterType("KNOWN_LIBRARY", queryService), "false");
 
 		// Apply the filters and print results.
 		List<BSimMatchResult> filteredRows =
@@ -194,7 +193,7 @@ public class QueryWithFiltersScript extends GhidraScript {
 	 * @throws CancelledException if the user cancelled the operation
 	 */
 	private List<BSimMatchResult> executeQuery(SFQueryInfo qInfo)
-		throws QueryDatabaseException, CancelledException {
+			throws QueryDatabaseException, CancelledException {
 
 		SFQueryResult queryResults = queryService.querySimilarFunctions(qInfo, null, monitor);
 		List<BSimMatchResult> resultRows =
@@ -228,8 +227,8 @@ public class QueryWithFiltersScript extends GhidraScript {
 			@Override
 			public boolean test(Program t, FunctionDescription u) {
 				return queryService.getLSHVectorFactory()
-					.getSelfSignificance(
-						u.getSignatureRecord().getLSHVector()) >= SELF_SIGNIFICANCE_BOUND;
+						.getSelfSignificance(
+							u.getSignatureRecord().getLSHVector()) >= SELF_SIGNIFICANCE_BOUND;
 			}
 		});
 
@@ -238,9 +237,10 @@ public class QueryWithFiltersScript extends GhidraScript {
 		//				Filters out any functions with a self significance less than a 
 		//				certain value.
 		//
-		preFilter.addPredicate((x, y) -> queryService.getLSHVectorFactory()
-			.getSelfSignificance(
-				y.getSignatureRecord().getLSHVector()) >= SELF_SIGNIFICANCE_BOUND);
+		preFilter.addPredicate((x,
+				y) -> queryService.getLSHVectorFactory()
+						.getSelfSignificance(
+							y.getSignatureRecord().getLSHVector()) >= SELF_SIGNIFICANCE_BOUND);
 
 		//
 		// Option 3. 	Static method
@@ -276,7 +276,7 @@ public class QueryWithFiltersScript extends GhidraScript {
 			program.getAddressFactory().getDefaultAddressSpace().getAddress(funcDesc.getAddress());
 
 		Function function = program.getFunctionManager().getFunctionAt(address);
-		if (function == null || function.getName().equals(funcDesc.getFunctionName())) {
+		if (function == null || !function.getName().equals(funcDesc.getFunctionName())) {
 			return false;
 		}
 		return function.getSymbol().getSource() != SourceType.ANALYSIS;

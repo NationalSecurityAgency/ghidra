@@ -16,8 +16,8 @@
 # Example of how to perform an overview query in a script
 # @category BSim.python
 
-import ghidra.query.facade.SFOverviewInfo as SFOverviewInfo
-import ghidra.query.facade.SimilarFunctionQueryService as SimilarFunctionQueryService
+import ghidra.features.bsim.query.facade.SFOverviewInfo as SFOverviewInfo
+import ghidra.features.bsim.query.facade.SimilarFunctionQueryService as SimilarFunctionQueryService
 import java.util.HashSet
 
 SIMILARITY_BOUND = 0.7
@@ -37,7 +37,7 @@ DB_URL = askString("Enter database URL", "URL:")
 queryService.initializeDatabase(DB_URL)
 vectorFactory = queryService.getLSHVectorFactory()
 
-overviewResults = queryService.overviewSimilarFunctions(overviewInfo, monitor)
+overviewResults = queryService.overviewSimilarFunctions(overviewInfo, None, monitor)
 
 for result in overviewResults.result:
     print "Name: %s" % result.getBase().getFunctionName()
