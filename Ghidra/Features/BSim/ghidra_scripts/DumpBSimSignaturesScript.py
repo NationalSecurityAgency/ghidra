@@ -13,36 +13,38 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 ##
-# Use the decompiler to generate signatures for the function at the current address, then dump the 
+# Generate the BSim signature for the function at the current address, then dump the 
 # signature hashes to the console 
 # @category: BSim.python
 
-import ghidra.app.decompiler.tracking.DecompInterfaceTracking as DecompInterfaceTracking
+import ghidra.app.decompiler.DecompInterface as DecompInterface
 import ghidra.app.decompiler.DecompileOptions as DecompileOptions
 import generic.lsh.vector.WeightedLSHCosineVectorFactory as WeightedLSHCosineVectorFactory
-import ghidra.query.GenSignatures as GenSignatures
+import ghidra.features.bsim.query.GenSignatures as GenSignatures
 import ghidra.xml.NonThreadedXmlPullParserImpl as NonThreadedXmlPullParserImpl
 import ghidra.util.xml.SpecXmlUtils as SpecXmlUtils
 
 
 def processFunction(func):
-    decompiler = ghidra.app.decompiler.tracking.DecompInterfaceTracking()
-    options = ghidra.app.decompiler.DecompileOptions()
-    decompiler.setOptions(options)
-    decompiler.toggleSyntaxTree(False)
-    decompiler.setSignatureSettings(getSettings())
-    if not decompiler.openProgram(currentProgram):
-        print "Unable to initialize the Decompiler interface!"
-        print "%s" % decompiler.getLastMessage()
-        return
-    sigres = decompiler.generateSignatures(func, False, 10, None)
-    buf = java.lang.StringBuffer()
-    for i,res in enumerate(sigres.features):
-        buf.append(java.lang.Integer.toHexString(sigres.features[i]))
-        buf.append("\n")
-    print buf.toString()
-    decompiler.closeProgram()
-    decompiler.dispose()
+    decompiler = ghidra.app.decompiler.DecompInterface()
+    try:
+        options = ghidra.app.decompiler.DecompileOptions()
+        decompiler.setOptions(options)
+        decompiler.toggleSyntaxTree(False)
+        decompiler.setSignatureSettings(getSettings())
+        if not decompiler.openProgram(currentProgram):
+            print "Unable to initialize the Decompiler interface!"
+            print "%s" % decompiler.getLastMessage()
+            return
+        sigres = decompiler.generateSignatures(func, False, 10, None)
+        buf = java.lang.StringBuffer()
+        for i,res in enumerate(sigres.features):
+            buf.append(java.lang.Integer.toHexString(sigres.features[i]))
+            buf.append("\n")
+        print buf.toString()
+    finally:
+        decompiler.closeProgram()
+        decompiler.dispose()
 
 def getSettings():
     vectorFactory = WeightedLSHCosineVectorFactory()

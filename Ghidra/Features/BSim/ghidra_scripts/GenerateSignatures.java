@@ -50,24 +50,31 @@ public class GenerateSignatures extends GhidraScript {
 
 		final LSHVectorFactory vectorFactory = FunctionDatabase.generateLSHVectorFactory();
 		final GenSignatures gensig = new GenSignatures(true);
-		final String templatename =
-			askString("GenerateSignatures:", "Database template", "medium_nosize");
-		final Configuration config = FunctionDatabase.loadConfigurationTemplate(templatename);
-		vectorFactory.set(config.weightfactory, config.idflookup, config.info.settings);
-		gensig.setVectorFactory(vectorFactory);
-		gensig.addExecutableCategories(config.info.execats);
-		gensig.addFunctionTags(config.info.functionTags);
-		gensig.addDateColumnName(config.info.dateColumnName);
-		final String repo = "ghidra://localhost/" + state.getProject().getName();
-		final String path = GenSignatures.getPathFromDomainFile(currentProgram);
-		gensig.openProgram(this.currentProgram, null, null, null, repo, path);
-		final FunctionManager fman = currentProgram.getFunctionManager();
-		final Iterator<Function> iter = fman.getFunctions(true);
-		gensig.scanFunctions(iter, fman.getFunctionCount(), monitor);
-		final FileWriter fwrite = new FileWriter(file);
-		final DescriptionManager manager = gensig.getDescriptionManager();
-		manager.saveXml(fwrite);
-		fwrite.close();
+		try {
+			final String templatename =
+				askString("GenerateSignatures:", "Database template", "medium_nosize");
+			final Configuration config = FunctionDatabase.loadConfigurationTemplate(templatename);
+			vectorFactory.set(config.weightfactory, config.idflookup, config.info.settings);
+			gensig.setVectorFactory(vectorFactory);
+			gensig.addExecutableCategories(config.info.execats);
+			gensig.addFunctionTags(config.info.functionTags);
+			gensig.addDateColumnName(config.info.dateColumnName);
+			final String repo = "ghidra://localhost/" + state.getProject().getName();
+			final String path = GenSignatures.getPathFromDomainFile(currentProgram);
+			gensig.openProgram(this.currentProgram, null, null, null, repo, path);
+			final FunctionManager fman = currentProgram.getFunctionManager();
+			final Iterator<Function> iter = fman.getFunctions(true);
+			gensig.scanFunctions(iter, fman.getFunctionCount(), monitor);
+			try (FileWriter fwrite = new FileWriter(file)) {
+				final DescriptionManager manager = gensig.getDescriptionManager();
+				manager.saveXml(fwrite);
+				fwrite.close();
+			}
+		}
+		finally {
+			gensig.dispose();
+		}
+
 	}
 
 }

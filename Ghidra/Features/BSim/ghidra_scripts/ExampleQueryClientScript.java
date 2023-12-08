@@ -20,18 +20,51 @@ import java.io.StringWriter;
 import java.net.URL;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.script.GhidraScript;
-import ghidra.features.bsim.query.BSimClientFactory;
-import ghidra.features.bsim.query.FunctionDatabase;
+import ghidra.features.base.values.GhidraValuesMap;
+import ghidra.features.bsim.query.*;
 import ghidra.features.bsim.query.description.*;
 import ghidra.features.bsim.query.protocol.*;
+import ghidra.util.MessageType;
 import ghidra.util.Msg;
 
-public class ExampleQueryClient extends GhidraScript {
+public class ExampleQueryClientScript extends GhidraScript {
+
+	private static final String URL = "URL";
+	private static final String EXECUTABLE_NAME = "Executable Name";
+	private static final String FUNCTION_NAME = "Function Name";
 
 	@Override
 	protected void run() throws Exception {
-		URL url = BSimClientFactory.deriveBSimURL("ghidra://localhost/repo");
+		GhidraValuesMap values = new GhidraValuesMap();
+		values.defineString(URL);
+		values.defineString(EXECUTABLE_NAME);
+		values.defineString(FUNCTION_NAME);
+
+		values.setValidator((valueMap, status) -> {
+			String url = valueMap.getString(URL);
+			if (StringUtils.isBlank(url)) {
+				status.setStatusText(URL + " cannot be empty!", MessageType.ERROR);
+				return false;
+			}
+			String exe = valueMap.getString(EXECUTABLE_NAME);
+			if (StringUtils.isBlank(exe)) {
+				status.setStatusText(EXECUTABLE_NAME + " cannot be empty!", MessageType.ERROR);
+				return false;
+			}
+			String func = valueMap.getString(FUNCTION_NAME);
+			if (StringUtils.isBlank(func)) {
+				status.setStatusText(FUNCTION_NAME + " cannot be empty!", MessageType.ERROR);
+				return false;
+			}
+			return true;
+		});
+
+		askValues("BSim Query Info", "BSim Query Info", values);
+
+		URL url = BSimClientFactory.deriveBSimURL(values.getString(URL));
 		try (FunctionDatabase client = BSimClientFactory.buildClient(url, false)) {
 			if (!client.initialize()) {
 				Msg.error(this, "Unable to connect to server");
@@ -45,15 +78,16 @@ public class ExampleQueryClient extends GhidraScript {
 			write.flush();
 
 			QueryName exequery = new QueryName();
-			exequery.spec.exename = "libdocdoxygenplugin.so";
+			exequery.spec.exename = values.getString(EXECUTABLE_NAME);
 			ResponseName respname = exequery.execute(client);
 			if (respname == null) {
 				Msg.error(this, client.getLastError());
 				return;
 			}
+
 			ExecutableRecord erec = respname.manage.getExecutableRecordSet().first();
 			FunctionDescription funcrec =
-				respname.manage.findFunctionByName("DocDoxygenPlugin::createCatalog", erec);
+				respname.manage.findFunctionByName(values.getString(FUNCTION_NAME), erec);
 
 			QueryChildren childquery = new QueryChildren();
 			childquery.md5sum = funcrec.getExecutableRecord().getMd5();
@@ -76,7 +110,7 @@ public class ExampleQueryClient extends GhidraScript {
 				}
 			}
 			write.flush();
-			Msg.info(this, write.toString());
+			printf("%s", write.toString());
 		}
 	}
 
