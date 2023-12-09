@@ -25,19 +25,18 @@ import ghidra.features.bsim.query.FunctionDatabase;
 import ghidra.features.bsim.query.client.*;
 import ghidra.features.bsim.query.description.ExecutableRecord;
 
-public class CompareExecutables extends GhidraScript {
+public class CompareExecutablesScript extends GhidraScript {
 
 	private ExecutableComparison exeCompare;
+
 	@Override
 	protected void run() throws Exception {
 		URL url = BSimClientFactory.deriveBSimURL("ghidra://localhost/repo");
 		try (FunctionDatabase database = BSimClientFactory.buildClient(url, true)) {
 			//		FileScoreCaching cache = new FileScoreCaching("/tmp/test_scorecacher.txt");
 			TableScoreCaching cache = new TableScoreCaching(database);
-			exeCompare =
-				new ExecutableComparison(database, 1000000, "11111111111111111111111111111111",
-					cache,
-					monitor);
+			exeCompare = new ExecutableComparison(database, 1000000,
+				"11111111111111111111111111111111", cache, monitor);
 			// Specify the list of executables to compare by giving their md5 hash
 			//		exeCompare.addExecutable("22222222222222222222222222222222");	// 32 hex-digit string
 			//		exeCompare.addExecutable("33333333333333333333333333333333");

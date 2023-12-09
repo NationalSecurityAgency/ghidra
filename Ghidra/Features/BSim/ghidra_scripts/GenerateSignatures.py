@@ -18,8 +18,8 @@
 
 import java.lang.System as System
 import java.io.File as File
-import ghidra.query.FunctionDatabase as FunctionDatabase
-import ghidra.query.GenSignatures as GenSignatures
+import ghidra.features.bsim.query.FunctionDatabase as FunctionDatabase
+import ghidra.features.bsim.query.GenSignatures as GenSignatures
 import java.io.FileWriter as FileWriter
 
 def run():

@@ -16,9 +16,9 @@
 # Example of performing a BSim query on a single function
 # @category BSim.python  
 
-import ghidra.query.BSimClientFactory as BSimClientFactory
-import ghidra.query.GenSignatures as GenSignatures
-import ghidra.query.protocol.QueryNearest as QueryNearest
+import ghidra.features.bsim.query.BSimClientFactory as BSimClientFactory
+import ghidra.features.bsim.query.GenSignatures as GenSignatures
+import ghidra.features.bsim.query.protocol.QueryNearest as QueryNearest
 
 MATCHES_PER_FUNC = 100
 SIMILARITY_BOUND = 0.7

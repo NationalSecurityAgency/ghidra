@@ -21,13 +21,14 @@ import ghidra.program.model.listing.Program;
 // suitable for BSim ingest process.  Intended to be invoked as an analyzeHeadless -preScript
 //@category BSim
 
+//note: script mentioned in BSim documentation by name
 public class TailoredAnalysis extends GhidraScript {
 
 	@Override
 	public void run() throws Exception {
 		Options pl = currentProgram.getOptions(Program.ANALYSIS_PROPERTIES);
 		pl.setBoolean("Decompiler Parameter ID", false);
-		
+
 		// These analyzers generate lots of cross references, which are not necessary for
 		// signature analysis, and take time to run.  On the other hand, you may want
 		// them in general to facilitate general analysis
@@ -42,9 +43,15 @@ public class TailoredAnalysis extends GhidraScript {
 //      analyzerOptions.setBoolean("Commit Function Signatures", false);
 
 		// You really want these options turned on
-        pl.setBoolean("Shared Return Calls",true);
-        pl.setBoolean("Function Start Search", true);
-        pl.setBoolean("DWARF", false);
+		pl.setBoolean("Shared Return Calls", true);
+		pl.setBoolean("Function Start Search", true);
+
+		//The DWARF analyzer can take a long time, so for mass ingest it might be worth
+		//turning it off
+		//Moreover, the DWARF analyzer can lock prototypes, which can change the BSim signature
+		//of a function.  This can negatively impact matches between executables with DWARF 
+		//and executables without it.
+		pl.setBoolean("DWARF", false);
 //        Options analyzerOptions = pl.getOptions("Function Start Search");
 //        analyzerOptions.setBoolean("Search Data Blocks", true);
 //        analyzerOptions = pl.getOptions("Function Start Search After Code");
