@@ -23,7 +23,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.collections4.IteratorUtils;
 import org.jdom.JDOMException;
 
 import db.*;
@@ -37,16 +36,16 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceManager;
-import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMap;
-import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
+import ghidra.trace.database.breakpoint.DBTraceObjectBreakpointLocation;
 import ghidra.trace.database.module.TraceObjectSection;
-import ghidra.trace.database.target.DBTraceObjectValue.PrimaryTriple;
+import ghidra.trace.database.target.DBTraceObjectValueRStarTree.DBTraceObjectValueMap;
+import ghidra.trace.database.target.ValueSpace.EntryKeyDimension;
 import ghidra.trace.database.target.visitors.SuccessorsRelativeVisitor;
 import ghidra.trace.database.thread.DBTraceObjectThread;
-import ghidra.trace.model.*;
+import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceObjectChangeType;
-import ghidra.trace.model.breakpoint.TraceBreakpointKind;
-import ghidra.trace.model.breakpoint.TraceObjectBreakpointLocation;
+import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceObjectModule;
 import ghidra.trace.model.stack.TraceObjectStack;
@@ -69,6 +68,7 @@ import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager {
+	private static final int OBJECTS_CONTAINING_CACHE_SIZE = 100;
 
 	public static class DBTraceObjectSchemaDBFieldCodec extends
 			AbstractDBFieldCodec<SchemaContext, DBTraceObjectSchemaEntry, StringField> {
@@ -148,23 +148,32 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 		}
 	}
 
+	record ObjectsContainingKey(long snap, Address address, String key,
+			Class<? extends TraceObjectInterface> iface) {
+	}
+
 	protected final ReadWriteLock lock;
 	protected final DBTrace trace;
 
 	protected final DBCachedObjectStore<DBTraceObjectSchemaEntry> schemaStore;
 	protected final DBCachedObjectStore<DBTraceObject> objectStore;
-	protected final DBCachedObjectStore<DBTraceObjectValue> valueStore;
-
-	protected final DBTraceAddressSnapRangePropertyMap<DBTraceObjectAddressRangeValue, DBTraceObjectAddressRangeValue> rangeValueMap;
+	protected final DBTraceObjectValueRStarTree valueTree;
+	protected final DBTraceObjectValueMap valueMap;
 
 	protected final DBCachedObjectIndex<TraceObjectKeyPath, DBTraceObject> objectsByPath;
-	protected final DBCachedObjectIndex<PrimaryTriple, DBTraceObjectValue> valuesByTriple;
-	protected final DBCachedObjectIndex<DBTraceObject, DBTraceObjectValue> valuesByChild;
 
 	protected final Collection<TraceObject> objectsView;
 	protected final Collection<TraceObjectValue> valuesView;
 
 	protected TargetObjectSchema rootSchema;
+
+	protected final Map<ObjectsContainingKey, Collection<?>> objectsContainingCache =
+		new LinkedHashMap<>() {
+			protected boolean removeEldestEntry(
+					Map.Entry<ObjectsContainingKey, Collection<?>> eldest) {
+				return size() > OBJECTS_CONTAINING_CACHE_SIZE;
+			}
+		};
 
 	public DBTraceObjectManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace)
@@ -178,33 +187,17 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 		loadRootSchema();
 		objectStore = factory.getOrCreateCachedStore(DBTraceObject.TABLE_NAME,
 			DBTraceObject.class, (s, r) -> new DBTraceObject(this, s, r), true);
-		valueStore = factory.getOrCreateCachedStore(DBTraceObjectValue.TABLE_NAME,
-			DBTraceObjectValue.class, (s, r) -> new DBTraceObjectValue(this, s, r), true);
-		rangeValueMap = new DBTraceAddressSnapRangePropertyMap<>(
-			DBTraceObjectAddressRangeValue.TABLE_NAME, dbh, openMode, lock, monitor, baseLanguage,
-			trace, null, DBTraceObjectAddressRangeValue.class,
-			(t, s, r) -> new DBTraceObjectAddressRangeValue(this, t, s, r));
+
+		valueTree = new DBTraceObjectValueRStarTree(this, factory,
+			DBTraceObjectValueData.TABLE_NAME, ValueSpace.INSTANCE, DBTraceObjectValueData.class,
+			DBTraceObjectValueNode.class, false, 50);
+		valueMap = valueTree.asSpatialMap();
 
 		objectsByPath =
 			objectStore.getIndex(TraceObjectKeyPath.class, DBTraceObject.PATH_COLUMN);
-		valuesByTriple =
-			valueStore.getIndex(PrimaryTriple.class, DBTraceObjectValue.TRIPLE_COLUMN);
-		valuesByChild =
-			valueStore.getIndex(DBTraceObject.class, DBTraceObjectValue.CHILD_COLUMN);
 
 		objectsView = Collections.unmodifiableCollection(objectStore.asMap().values());
-		valuesView = new AbstractCollection<>() {
-			@Override
-			public Iterator<TraceObjectValue> iterator() {
-				return IteratorUtils.chainedIterator(valueStore.asMap().values().iterator(),
-					rangeValueMap.values().iterator());
-			}
-
-			@Override
-			public int size() {
-				return objectStore.getRecordCount() + rangeValueMap.size();
-			}
-		};
+		valuesView = Collections.unmodifiableCollection(valueMap.values());
 	}
 
 	protected void loadRootSchema() {
@@ -225,8 +218,7 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 	@Override
 	public void invalidateCache(boolean all) {
 		objectStore.invalidateCache();
-		valueStore.invalidateCache();
-		rangeValueMap.invalidateCache(all);
+		valueTree.invalidateCache();
 		schemaStore.invalidateCache();
 		loadRootSchema();
 	}
@@ -281,24 +273,22 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 
 	protected InternalTraceObjectValue doCreateValue(Lifespan lifespan,
 			DBTraceObject parent, String key, Object value) {
-		if (value instanceof AddressRange) {
-			DBTraceObjectAddressRangeValue entry = rangeValueMap
-					.put(new ImmutableTraceAddressSnapRange((AddressRange) value, lifespan), null);
-			entry.set(parent, key, false);
-			emitValueCreated(parent, entry);
-			return entry;
+		InternalTraceObjectValue entry = valueTree.asSpatialMap()
+				.put(new ImmutableValueShape(parent, value, key, lifespan), null);
+		if (value instanceof DBTraceObject child) {
+			child.notifyParentValueCreated(entry);
 		}
-		else if (value instanceof Address) {
-			Address address = (Address) value;
-			AddressRange singleton = new AddressRangeImpl(address, address);
-			DBTraceObjectAddressRangeValue entry = rangeValueMap
-					.put(new ImmutableTraceAddressSnapRange(singleton, lifespan), null);
-			entry.set(parent, key, true);
-			emitValueCreated(parent, entry);
-			return entry;
+		else {
+			entry.doSetPrimitive(value);
 		}
-		DBTraceObjectValue entry = valueStore.create();
-		entry.set(lifespan, parent, key, value);
+
+		if (parent != null) { // Root
+			parent.notifyValueCreated(entry);
+		}
+
+		// TODO: Perhaps a little drastic
+		invalidateObjectsContainingCache();
+
 		emitValueCreated(parent, entry);
 		return entry;
 	}
@@ -350,6 +340,12 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 		}
 	}
 
+	public DBTraceObjectValueData getRootValue() {
+		try (LockHold hold = trace.lockRead()) {
+			return valueTree.getDataStore().getObjectAt(0);
+		}
+	}
+
 	@Override
 	public DBTraceObject getRootObject() {
 		return getObjectById(0);
@@ -381,7 +377,7 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 	public Stream<? extends TraceObjectValPath> getValuePaths(Lifespan span,
 			PathPredicates predicates) {
 		try (LockHold hold = trace.lockRead()) {
-			DBTraceObjectValue rootVal = valueStore.getObjectAt(0);
+			DBTraceObjectValueData rootVal = getRootValue();
 			if (rootVal == null) {
 				return Stream.of();
 			}
@@ -401,14 +397,18 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 
 	@Override
 	public Collection<? extends TraceObjectValue> getValuesIntersecting(Lifespan span,
-			AddressRange range) {
-		return Collections.unmodifiableCollection(
-			rangeValueMap.reduce(TraceAddressSnapRangeQuery.intersecting(range, span)).values());
+			AddressRange range, String entryKey) {
+		return Collections
+				.unmodifiableCollection(valueMap.reduce(TraceObjectValueQuery.intersecting(
+					entryKey != null ? entryKey : EntryKeyDimension.INSTANCE.absoluteMin(),
+					entryKey != null ? entryKey : EntryKeyDimension.INSTANCE.absoluteMax(),
+					span, range)).values());
 	}
 
-	public Collection<? extends TraceObjectValue> getValuesAt(long snap, Address address) {
+	public Collection<? extends TraceObjectValue> getValuesAt(long snap, Address address,
+			String entryKey) {
 		return Collections.unmodifiableCollection(
-			rangeValueMap.reduce(TraceAddressSnapRangeQuery.at(address, snap)).values());
+			valueMap.reduce(TraceObjectValueQuery.at(entryKey, snap, address)).values());
 	}
 
 	@Override
@@ -445,8 +445,7 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 	@Override
 	public void clear() {
 		try (LockHold hold = trace.lockWrite()) {
-			valueStore.deleteAll();
-			rangeValueMap.clear();
+			valueMap.clear();
 			objectStore.deleteAll();
 			schemaStore.deleteAll();
 			rootSchema = null;
@@ -458,8 +457,16 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 		object.emitEvents(new TraceChangeRecord<>(TraceObjectChangeType.DELETED, null, object));
 	}
 
-	protected void doDeleteEdge(DBTraceObjectValue edge) {
-		valueStore.delete(edge);
+	protected void doDeleteEdge(DBTraceObjectValueData edge) {
+		valueTree.doDeleteEntry(edge);
+
+		// TODO: Perhaps a little drastic....
+		/**
+		 * NB. An object in one of these queries had to have an edge. Deleting that object will also
+		 * delete referring edges, so the cache will get invalidated. No need to repeat in
+		 * doDeleteObject.
+		 */
+		invalidateObjectsContainingCache();
 	}
 
 	public boolean hasSchema() {
@@ -508,35 +515,51 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 		}
 	}
 
-	protected <I extends TraceObjectInterface> Stream<I> doParentsWithKeyHaving(
-			Stream<? extends TraceObjectValue> values, String key, Class<I> iface) {
-		return values.filter(v -> key.equals(v.getEntryKey()))
-				.map(v -> v.getParent())
+	protected <I extends TraceObjectInterface> Stream<I> doParentsHaving(
+			Stream<? extends TraceObjectValue> values, Class<I> iface) {
+		return values.map(v -> v.getParent())
 				.map(o -> o.queryInterface(iface))
 				.filter(i -> i != null);
 	}
 
+	protected void invalidateObjectsContainingCache() {
+		synchronized (objectsContainingCache) {
+			objectsContainingCache.clear();
+		}
+	}
+
+	protected Collection<? extends TraceObjectInterface> doGetObjectsContaining(
+			ObjectsContainingKey key) {
+		return doParentsHaving(getValuesAt(key.snap, key.address, key.key).stream(), key.iface)
+				.collect(Collectors.toSet());
+	}
+
+	@SuppressWarnings("unchecked")
 	public <I extends TraceObjectInterface> Collection<I> getObjectsContaining(long snap,
 			Address address, String key, Class<I> iface) {
 		try (LockHold hold = trace.lockRead()) {
-			return doParentsWithKeyHaving(getValuesAt(snap, address).stream(), key,
-				iface).collect(Collectors.toSet());
+			synchronized (objectsContainingCache) {
+				return (Collection<I>) objectsContainingCache.computeIfAbsent(
+					new ObjectsContainingKey(snap, address, key, iface),
+					this::doGetObjectsContaining);
+			}
 		}
 	}
 
 	public <I extends TraceObjectInterface> I getObjectContaining(long snap, Address address,
 			String key, Class<I> iface) {
-		try (LockHold hold = trace.lockRead()) {
-			return doParentsWithKeyHaving(getValuesAt(snap, address).stream(), key,
-				iface).findAny().orElse(null);
+		Collection<I> col = getObjectsContaining(snap, address, key, iface);
+		if (col.isEmpty()) {
+			return null;
 		}
+		return col.iterator().next();
 	}
 
 	public <I extends TraceObjectInterface> Collection<I> getObjectsIntersecting(
 			Lifespan lifespan, AddressRange range, String key, Class<I> iface) {
 		try (LockHold hold = trace.lockRead()) {
-			return doParentsWithKeyHaving(getValuesIntersecting(lifespan, range).stream(), key,
-				iface).collect(Collectors.toSet());
+			return doParentsHaving(getValuesIntersecting(lifespan, range, key).stream(), iface)
+					.collect(Collectors.toSet());
 		}
 	}
 
@@ -549,7 +572,7 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 
 	public <I extends TraceObjectInterface> AddressSetView getObjectsAddressSet(long snap,
 			String key, Class<I> ifaceCls, Predicate<? super I> predicate) {
-		return rangeValueMap.getAddressSetView(Lifespan.at(snap), v -> {
+		return valueMap.getAddressSetView(Lifespan.at(snap), v -> {
 			if (!key.equals(v.getEntryKey())) {
 				return false;
 			}
@@ -599,14 +622,17 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 				"breakpoint specification on the given path.");
 		}
 		try (LockHold hold = trace.lockWrite()) {
-			TraceObjectBreakpointLocation loc =
-				doAddWithInterface(path, TraceObjectBreakpointLocation.class);
+			DBTraceObjectBreakpointLocation loc =
+				(DBTraceObjectBreakpointLocation) doAddWithInterface(path,
+					TraceObjectBreakpointLocation.class);
 			loc.setName(lifespan, path);
 			loc.setRange(lifespan, range);
-			// NB. Ignore threads. I'd like to deprecate that field, anyway.
-			loc.setKinds(lifespan, kinds);
 			loc.setEnabled(lifespan, enabled);
 			loc.setComment(lifespan, comment);
+
+			TraceObjectBreakpointSpec spec = loc.getOrCreateSpecification();
+			// NB. Ignore threads. I'd like to deprecate that field, anyway.
+			spec.setKinds(lifespan, kinds);
 			loc.getObject().insert(lifespan, ConflictResolution.DENY);
 			return loc;
 		}

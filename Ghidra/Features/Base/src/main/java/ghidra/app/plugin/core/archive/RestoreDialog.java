@@ -394,9 +394,9 @@ public class RestoreDialog extends ReusableDialogComponentProvider {
 		jarFileChooser.setTitle("Restore a Ghidra Project - Archive");
 		String lastDirSelected = Preferences.getProperty(ArchivePlugin.LAST_ARCHIVE_DIR);
 		if (lastDirSelected != null) {
-			File file = new File(lastDirSelected);
-			if (file.exists()) {
-				jarFileChooser.setCurrentDirectory(file);
+			File dir = new File(lastDirSelected);
+			if (dir.isDirectory()) {
+				jarFileChooser.setCurrentDirectory(dir);
 			}
 		}
 		File jarFile = null;

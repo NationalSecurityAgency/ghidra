@@ -4,7 +4,7 @@
 <title>SLEIGH</title>
 <link rel="stylesheet" type="text/css" href="DefaultStyle.css">
 <link rel="stylesheet" type="text/css" href="languages.css">
-<meta name="generator" content="DocBook XSL Stylesheets Vsnapshot">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="sleigh.html" title="SLEIGH">
 <link rel="next" href="sleigh_layout.html" title="2. Basic Specification Layout">
 </head>
@@ -27,7 +27,7 @@
 <div><h1 class="title">
 <a name="sleigh_title"></a>SLEIGH</h1></div>
 <div><h3 class="subtitle"><i>A Language for Rapid Processor Specification</i></h3></div>
-<div><p class="releaseinfo">Last updated March 2, 2023</p></div>
+<div><p class="releaseinfo">Last updated October 31, 2023</p></div>
 <div><p class="pubdate">Originally published December 16, 2005</p></div>
 </div>
 <hr>
@@ -109,7 +109,8 @@
   several redesign iterations, but it can still trace its heritage
   from the language SLED, from whom its name is derived. SLED, the
   “Specification Language for Encoding and Decoding”, was defined by
-  Norman Ramsey and Mary F. Fernandez as a concise way to define the
+  Norman Ramsey and Mary F. Fernández in <a class="xref" href="sleigh.html#Ramsey97">[3]</a>
+  as a concise way to define the
   translation, in both directions, between machine instructions and
   their corresponding assembly statements. This facilitated the
   development of architecture independent disassemblers and
@@ -119,13 +120,51 @@
   The direct predecessor of SLEIGH was an implementation of SLED for
   GHIDRA, which concentrated on its reverse-engineering
   capabilities. The main addition of SLEIGH is the ability to provide
-  semantic descriptions of instructions for data-flow and
-  decompilation analysis. This piece of SLEIGH was originally a
-  separate language, the Semantic Syntax Language (SSL), very loosely
-  based on concepts and a language of the same name developed by
-  Cristina Cifuentes, Mike Van Emmerik and Norman Ramsey, for the
-  University of Queensland Binary Translator (UQBT) project.
+  semantic descriptions of instructions for data-flow and decompilation
+  analysis. This piece of SLEIGH borrowed ideas from the Semantic Syntax Language (SSL),
+  a specification language developed in <a class="xref" href="sleigh.html#Cifuentes00">[2]</a> for the
+  University of Queensland Binary Translator (UQBT) project by
+  Cristina Cifuentes, Mike Van Emmerik and Norman Ramsey.
 </p>
+<p>
+  Dr. Cristina Cifuentes' work, in general, was an important starting point for the GHIDRA decompiler.
+  Its design follows the basic structure layed out in her 1994 thesis "Reverse Compilation Techniques":
+  </p>
+<div class="informalexample"><div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">
+      Disassembly of machine instructions and translation to an intermediate representation (IR).
+    </li>
+<li class="listitem" style="list-style-type: disc">
+      Transformation toward a high-level representation via
+      <div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: circle; ">
+<li class="listitem" style="list-style-type: circle">
+          Data-flow analysis, including dead code analysis and copy propagation.
+	    </li>
+<li class="listitem" style="list-style-type: circle">
+          Control-flow analysis, using graph reducibility to achieve a structured representation.
+	    </li>
+</ul></div>
+</li>
+<li class="listitem" style="list-style-type: disc">
+      Back-end code generation from the transformed representation.
+    </li>
+</ul></div></div>
+<p>
+  In keeping with her philosophy of decompilation, SLEIGH is GHIDRA's implementation of the first step.
+  It efficiently couples disassembly of machine instructions with the initial translation into an IR.
+</p>
+<div class="bibliolist">
+<p class="title"><b>References</b></p>
+<div class="biblioentry">
+<a name="Cifuentes94"></a><p>[1] <span class="authorgroup"><span class="firstname">Cristina</span> <span class="surname">Cifuentes</span>. </span><span class="title"><i>Reverse Compilation Techniques</i>. </span><span class="pubdate">1994. </span><span class="publisher"><span class="publishername">Ph.D. Dissertation. Queensland University of Technology. </span><span class="address"><span class="city">Brisbane City</span>, <span class="state">QLD</span>, <span class="country">Australia</span>. </span></span></p>
+</div>
+<div class="biblioentry">
+<a name="Cifuentes00"></a><p>[2] <span class="biblioset"><span class="authorgroup"><span class="firstname">Cristina</span> <span class="surname">Cifuentes</span> and <span class="firstname">Mike</span> <span class="surname">Van Emmerik</span>. </span>“UQBT: Adaptable Binary Translation at Low Cost”. </span><span class="biblioset"><i>Computer</i>. <span class="date">(Mar. 2000). </span><span class="pagenums">pp. 60-66. </span></span></p>
+</div>
+<div class="biblioentry">
+<a name="Ramsey97"></a><p>[3] <span class="biblioset"><span class="authorgroup"><span class="firstname">Norman</span> <span class="surname">Ramsey</span> and <span class="firstname">Mary F.</span> <span class="surname">Fernández</span>. </span>“Specifying Representations of Machine Instructions”. </span><span class="biblioset"><i>ACM Trans. Programming Languages and Systems</i>. <span class="date">(May 1997). </span><span class="pagenums">pp. 492-524. </span></span></p>
+</div>
+</div>
 </div>
 <div class="simplesect">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">

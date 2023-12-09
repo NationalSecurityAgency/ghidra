@@ -70,7 +70,6 @@ public abstract class LookAndFeelManager {
 		doInstallLookAndFeel();
 		processJavaDefaults();
 		fixupLookAndFeelIssues();
-		installGlobalProperties();
 		installCustomLookAndFeelActions();
 		updateComponentUis();
 	}
@@ -157,22 +156,26 @@ public abstract class LookAndFeelManager {
 
 	/**
 	 * Called when one or more fonts have changed.
-	 * @param changedJavaFontIds the set of Java Font ids that are affected by this change
+	 * <p>
+	 * This will update the Java {@link UIManager} and trigger a reload of the UIs.
+	 * 
+	 * @param changedFontIds the set of Java Font ids that are affected by this change; these are
+	 * the normalized ids
 	 */
-	public void fontsChanged(Set<String> changedJavaFontIds) {
+	public void fontsChanged(Set<String> changedFontIds) {
 		UIDefaults defaults = UIManager.getDefaults();
-		for (String changedFontId : changedJavaFontIds) {
+		for (String changedFontId : changedFontIds) {
 			// even though all these derive from the new font, they might be different
 			// because of FontModifiers.
 			Font font = Gui.getFont(changedFontId);
-			String lafFontId = normalizedIdToLafIdMap.get(changedFontId);
-			if (lafFontId != null) {
+			String javaFontId = normalizedIdToLafIdMap.get(changedFontId);
+			if (javaFontId != null) {
 				// lafFontId is null for group ids
-				defaults.put(lafFontId, new FontUIResource(font));
+				defaults.put(javaFontId, new FontUIResource(font));
 			}
 		}
 
-		if (!changedJavaFontIds.isEmpty()) {
+		if (!changedFontIds.isEmpty()) {
 			updateComponentUis();
 		}
 
@@ -231,10 +234,23 @@ public abstract class LookAndFeelManager {
 	}
 
 	/**
-	 * Subclass may override this method to do specific LookAndFeel fix ups
+	 * Subclass may override this method to do specific LookAndFeel fixes.
+	 * <p>
+	 * This will get called after default values are loaded.  This means that any values installed
+	 * by this method will overwrite any values registered by the theme.
+	 * <p>
+	 * Standard properties, such as strings and booleans, can be set inside of the theme
+	 * properties files.  For more complicated UIManager properties, look and feel classes will
+	 * need to override this method and install those directly.
+	 * <p>
+	 * Any property installed here will not fully be part of the theme system, but rather will be
+	 * directly installed into the Java Look and Feel.  Thus, properties installed here will be
+	 * hard-coded overrides for the system.  If we decided that a hard-coded value should be put
+	 * into the theme system, then we will need to add support for that property type so that it
+	 * can be used when loading the theme files.
 	 */
 	protected void fixupLookAndFeelIssues() {
-		// no generic fix-ups at this time.
+		installGlobalFontSizeOverride();
 	}
 
 	/**
@@ -244,15 +260,14 @@ public abstract class LookAndFeelManager {
 	 */
 	protected void processJavaDefaults() {
 		UIDefaults defaults = UIManager.getDefaults();
-		UiDefaultsMapper uiDefaultsMapper = getUiDefaultsMapper(defaults);
-
-		GThemeValueMap javaDefaults = uiDefaultsMapper.getJavaDefaults();
+		UiDefaultsMapper uiDefaultsMapper = createUiDefaultsMapper(defaults);
+		GThemeValueMap javaDefaults = uiDefaultsMapper.getNormalizedJavaDefaults();
 		themeManager.setJavaDefaults(javaDefaults);
 		uiDefaultsMapper.installValuesIntoUIDefaults(themeManager.getCurrentValues());
 		normalizedIdToLafIdMap = uiDefaultsMapper.getNormalizedIdToLafIdMap();
 	}
 
-	protected abstract UiDefaultsMapper getUiDefaultsMapper(UIDefaults defaults);
+	protected abstract UiDefaultsMapper createUiDefaultsMapper(UIDefaults defaults);
 
 	protected String findLookAndFeelClassName(String lookAndFeelName) {
 		LookAndFeelInfo[] installedLookAndFeels = UIManager.getInstalledLookAndFeels();
@@ -277,36 +292,18 @@ public abstract class LookAndFeelManager {
 		return false;
 	}
 
-	protected void setKeyBinding(String existingKsText, String newKsText, String[] prefixValues) {
+	protected void setKeyBinding(String existingKsText, String newKsText,
+			String[] prefixValues) {
 
 		KeyStroke existingKs = KeyStroke.getKeyStroke(existingKsText);
 		KeyStroke newKs = KeyStroke.getKeyStroke(newKsText);
-
+		UIDefaults uiDefaults = UIManager.getDefaults();
 		for (String properyPrefix : prefixValues) {
-
-			UIDefaults defaults = UIManager.getDefaults();
-			Object object = defaults.get(properyPrefix + ".focusInputMap");
+			Object object = uiDefaults.get(properyPrefix + ".focusInputMap");
 			InputMap inputMap = (InputMap) object;
 			Object action = inputMap.get(existingKs);
 			inputMap.put(newKs, action);
 		}
-	}
-
-	private void installGlobalLookAndFeelAttributes() {
-		// Fix up the default fonts that Java 1.5.0 changed to Courier, which looked terrible.
-		Font f = new Font("Monospaced", Font.PLAIN, 12);
-		UIManager.put("PasswordField.font", f);
-		UIManager.put("TextArea.font", f);
-
-		// We like buttons that change on hover, so force that to happen (see Tracker SCR 3966)
-		UIManager.put("Button.rollover", Boolean.TRUE);
-		UIManager.put("ToolBar.isRollover", Boolean.TRUE);
-	}
-
-	private void installPopupMenuSettingsOverride() {
-		// Java 1.6 UI consumes MousePressed event when dismissing popup menu
-		// which prevents application components from getting this event.
-		UIManager.put("PopupMenu.consumeEventOnClose", Boolean.FALSE);
 	}
 
 	private void installGlobalFontSizeOverride() {
@@ -373,12 +370,6 @@ public abstract class LookAndFeelManager {
 			InputMap inputMap = (InputMap) object;
 			inputMap.put(keyStroke, action);
 		}
-	}
-
-	private void installGlobalProperties() {
-		installGlobalLookAndFeelAttributes();
-		installGlobalFontSizeOverride();
-		installPopupMenuSettingsOverride();
 	}
 
 	/**

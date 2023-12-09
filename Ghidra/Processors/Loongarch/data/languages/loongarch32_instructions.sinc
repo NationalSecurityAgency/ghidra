@@ -1,0 +1,1326 @@
+
+####################
+# Base Instructions
+####################
+
+
+#la-base-32.txt add.w mask=0x00100000	[@la32, @primary, @qemu]
+#0x00100000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:add.w  RD, RJ32src, RK32src   is op15_31=0x20 & RD & RJ32src & RK32src {
+	local add1:4 = RJ32src;
+	local add2:4 = RK32src;
+	local result = add1 + add2;
+	RD = sext(result);
+}
+
+#la-base-32.txt addi.w mask=0x02800000	[@la32, @primary, @qemu]
+#0x02800000	0xffc00000	r0:5,r5:5,s10:12	['reg0_5_s0', 'reg5_5_s0', 'simm10_12_s0']
+:addi.w  RD, RJ32src, simm10_12  is op22_31=0xa & RD & RJ32src & simm10_12 {
+	local add1:4 = RJ32src;
+	local add2:4 = simm10_12;
+	local result = add1 + add2;
+	RD = sext(result);
+}
+
+
+#la-bitops-32.txt sladd.w mask=0x00040000	[@orig_name=alsl.w, @orig_fmt=DJKUa2pp1, @la32]
+#0x00040000	0xfffe0000	r0:5,r5:5,r10:5,u15:2+1	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0', 'imm15_2+1_s0']
+:alsl.w  RD, RJ32src, RK32src, alsl_shift  is op17_31=0x2 & RD & RJ32src & RK32src & alsl_shift {
+	local result:4 = (RJ32src << alsl_shift) + RK32src;
+	RD = sext(result);
+}
+
+
+#la-base-32.txt and mask=0x00148000	[@la32, @primary, @qemu]
+#0x00148000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:and  RD, RJsrc, RKsrc         is op15_31=0x29 & RD & RJsrc & RKsrc {
+	RD = RJsrc & RKsrc;
+}
+
+#la-base-32.txt andi mask=0x03400000	[@la32, @primary, @qemu]
+#0x03400000	0xffc00000	r0:5,r5:5,u10:12	['reg0_5_s0', 'reg5_5_s0', 'imm10_12_s0']
+:andi  RD, RJsrc, imm10_12     is op22_31=0xd & RD & RJsrc & imm10_12 {
+	RD = RJsrc & imm10_12;
+}
+
+# alias of andi r0, r0, 0
+:nop                           is op22_31=0xd & rD=0 & rJ=0 & imm10_12=0 {
+}
+
+#la-base-32.txt andn mask=0x00168000	[@la32, @primary, @qemu]
+#0x00168000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:andn  RD, RJsrc, RKsrc        is op15_31=0x2d & RD & RJsrc & RKsrc {
+	RD = RJsrc & ~(RKsrc);
+}
+
+
+#la-base-32.txt break mask=0x002a0000	[@la32, @primary]
+#0x002a0000	0xffff8000	u0:15	['imm0_15_s0']
+:break  imm0_15                is op15_31=0x54 & imm0_15 {
+	local code:2 = imm0_15;
+	local addr:$(REGSIZE) = break(code);
+	goto [addr];
+}
+
+
+#la-base-32.txt cpucfg mask=0x00006c00	[@la32]
+#0x00006c00	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
+:cpucfg  RD, RJ32src           is op10_31=0x1b & RD & RJ32src {
+	RD = cpucfg(RJ32src);
+}
+
+
+#la-base-32.txt dbgcall mask=0x002a8000	[@orig_name=dbcl]
+#0x002a8000	0xffff8000	u0:15	['imm0_15_s0']
+:dbcl  imm0_15                 is op15_31=0x55 & imm0_15 {
+	local code:2 = imm0_15;
+	dbcl(code);
+}
+
+
+#la-mul-32.txt div.w mask=0x00200000	[@la32, @primary, @qemu]
+#0x00200000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:div.w  RD, RJ32src, RK32src   is op15_31=0x40 & RD & RJ32src & RK32src {
+	tmp:4 = RJ32src s/ RK32src;
+	RD = sext(tmp);
+}
+
+#la-mul-32.txt div.wu mask=0x00210000	[@la32, @primary, @qemu]
+#0x00210000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:div.wu  RD, RJ32src, RK32src  is op15_31=0x42 & RD & RJ32src & RK32src {
+	tmp:4 = RJ32src / RK32src;
+	RD = sext(tmp);
+}
+
+
+#la-base-32.txt sext.b mask=0x00005c00	[@orig_name=ext.w.b, @la32, @qemu]
+#0x00005c00	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
+:ext.w.b  RD, RJsrc            is op10_31=0x17 & RD & RJsrc {
+	local tmp:1 = RJsrc(0);
+	RD = sext(tmp);
+}
+
+#la-base-32.txt sext.h mask=0x00005800	[@orig_name=ext.w.h, @la32, @qemu]
+#0x00005800	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
+:ext.w.h  RD, RJsrc            is op10_31=0x16 & RD & RJsrc {
+	local tmp:2 = RJsrc(0);
+	RD = sext(tmp);
+}
+
+
+#la-base-32.txt lu12i.w mask=0x14000000	[@la32, @primary, @qemu]
+#0x14000000	0xfe000000	r0:5,s5:20	['reg0_5_s0', 'simm5_20_s0']
+:lu12i.w  RD, simm12i          is op25_31=0xa & RD & simm12i {
+	RD = sext(simm12i);
+}
+
+
+#la-base-32.txt maskeqz mask=0x00130000	[@la32, @qemu]
+#0x00130000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:maskeqz  RD, RJsrc, RKsrc     is op15_31=0x26 & RD & RJsrc & RKsrc {
+	local test = (RKsrc == 0);
+	RD = (zext(test) * 0) +  (zext(!test) * RJsrc);
+}
+
+
+#la-base-32.txt masknez mask=0x00138000	[@la32, @qemu]
+#0x00138000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:masknez  RD, RJsrc, RKsrc     is op15_31=0x27 & RD & RJsrc & RKsrc {
+	local test = (RKsrc != 0);
+	RD = (zext(test) * 0) +  (zext(!test) * RJsrc);
+}
+
+
+#la-mul-32.txt mod.w mask=0x00208000	[@la32, @primary, @qemu]
+#0x00208000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:mod.w  RD, RJ32src, RK32src   is op15_31=0x41 & RD & RJ32src & RK32src {
+	tmp:4 = RJ32src s% RK32src;
+	RD = sext(tmp);
+}
+
+
+
+#la-mul-32.txt mod.wu mask=0x00218000	[@la32, @primary, @qemu]
+#0x00218000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:mod.wu  RD, RJ32src, RK32src  is op15_31=0x43 & RD & RJ32src & RK32src {
+	tmp:4 = RJ32src % RK32src;
+	RD = sext(tmp);
+}
+
+
+#la-mul-32.txt mul.w mask=0x001c0000	[@la32, @primary, @qemu]
+#0x001c0000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:mul.w  RD, RJ32src, RK32src   is op15_31=0x38 & RD & RJ32src & RK32src {
+	tmp1:8 = sext( RJ32src );
+	tmp2:8 = sext( RK32src );
+	prod:8 = tmp1 * tmp2;
+	RD = sext( prod:4 );
+}
+
+#la-mul-32.txt mulh.w mask=0x001c8000	[@la32, @primary, @qemu]
+#0x001c8000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:mulh.w  RD, RJ32src, RK32src  is op15_31=0x39 & RD & RJ32src & RK32src {
+	tmp1:8 = sext( RJ32src );
+	tmp2:8 = sext( RK32src );
+	prod:8 = tmp1 * tmp2;
+	prod = prod >> 32;
+	RD = sext( prod:4 );
+}
+
+#la-mul-32.txt mulh.wu mask=0x001d0000	[@la32, @primary, @qemu]
+#0x001d0000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:mulh.wu  RD, RJ32src, RK32src is op15_31=0x3a & RD & RJ32src & RK32src {
+	tmp1:8 = zext( RJ32src );
+	tmp2:8 = zext( RK32src );
+	prod:8 = tmp1 * tmp2;
+	prod = prod >> 32;
+	RD = sext( prod:4 );
+}
+
+
+#la-base-32.txt nor mask=0x00140000	[@la32, @primary, @qemu]
+#0x00140000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:nor  RD, RJsrc, RKsrc         is op15_31=0x28 & RD & RJsrc & RKsrc {
+	RD = ~(RJsrc | RKsrc);
+}
+
+
+#la-base-32.txt or mask=0x00150000	[@la32, @primary, @qemu]
+#0x00150000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:or  RD, RJsrc, RKsrc          is op15_31=0x2a & RD & RJsrc & RKsrc {
+	RD = RJsrc | RKsrc;
+}
+
+# alias of or rd, rj, zero
+:move  RD, RJsrc               is op15_31=0x2a & RD & RJsrc & rK=0 {
+	RD = RJsrc;
+}
+
+#la-base-32.txt ori mask=0x03800000	[@la32, @primary, @qemu]
+#0x03800000	0xffc00000	r0:5,r5:5,u10:12	['reg0_5_s0', 'reg5_5_s0', 'imm10_12_s0']
+:ori  RD, RJsrc, imm10_12      is op22_31=0xe & RD & RJsrc & imm10_12 {
+	RD = RJsrc | imm10_12;
+}
+
+
+#la-base-32.txt orn mask=0x00160000	[@la32, @primary, @qemu]
+#0x00160000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:orn  RD, RJsrc, RKsrc         is op15_31=0x2c & RD & RJsrc & RKsrc {
+	RD = RJsrc | ~(RKsrc);
+}
+
+
+#la-base-32.txt pcaddu2i mask=0x18000000	[@orig_name=pcaddi, @la32, @primary, @qemu]
+#0x18000000	0xfe000000	r0:5,s5:20	['reg0_5_s0', 'simm5_20_s0']
+:pcaddi  RD,pcadd2             is op25_31=0xc & RD & pcadd2 {
+	RD = pcadd2;
+}
+
+#la-base-32.txt pcalau12i mask=0x1a000000	[@la32, @qemu]
+#0x1a000000	0xfe000000	r0:5,s5:20	['reg0_5_s0', 'simm5_20_s0']
+:pcalau12i  RD, pcala12        is op25_31=0xd & RD & pcala12 {
+	RD = pcala12;
+}
+
+
+#la-base-32.txt pcaddu12i mask=0x1c000000	[@la32, @primary, @qemu]
+#0x1c000000	0xfe000000	r0:5,s5:20	['reg0_5_s0', 'simm5_20_s0']
+:pcaddu12i  RD, pcadd12        is op25_31=0xe & RD & pcadd12 {
+	RD = pcadd12;
+}
+
+
+#la-base-32.txt pcaddu18i mask=0x1e000000	[@qemu]
+#0x1e000000	0xfe000000	r0:5,s5:20	['reg0_5_s0', 'simm5_20_s0']
+:pcaddu18i  RD, pcadd18        is op25_31=0xf & RD & pcadd18 {
+	RD = pcadd18;
+}
+
+
+#la-base-32.txt rdtimel.w mask=0x00006000	[@la32, @primary]
+#0x00006000	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
+:rdtimel.w  RD32, RJ32         is op10_31=0x18 & RD32 & RJ32 {
+	local tmp:1 = 0;
+	RD32 = rdtime.counter(tmp);
+	RJ32 = rdtime.counterid(tmp);
+}
+
+
+#la-base-32.txt rdtimeh.w mask=0x00006400	[@la32, @primary]
+#0x00006400	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
+:rdtimeh.w  RD32, RJ32         is op10_31=0x19 & RD32 & RJ32 {
+	local tmp:1 = 1;
+	RD32 = rdtime.counter(tmp);
+	RJ32 = rdtime.counterid(tmp);
+}
+
+
+#la-base-32.txt rotr.w mask=0x001b0000	[@la32, @qemu]
+#0x001b0000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:rotr.w  RD, RJ32src, RK32src  is op15_31=0x36 & RD & RJ32src & RK32src {
+	local shift:1 = RK32src(0) & 0x1f;
+	local tmp1:4 = RJ32src s>> shift;
+	local tmp2:4 = RJ32src << (32 - shift);
+	local result = tmp1 + tmp2;
+
+	RD = sext(result);
+
+}
+
+#la-base-32.txt rotri.w mask=0x004c8000	[@la32, @qemu]
+#0x004c8000	0xffff8000	r0:5,r5:5,u10:5	['reg0_5_s0', 'reg5_5_s0', 'imm10_5_s0']
+:rotri.w  RD, RJ32src, imm10_5 is op15_31=0x99 & RD & RJ32src & imm10_5 {
+	local shift:1 = imm10_5;
+	local tmp1:4 = RJ32src s>> shift;
+	local tmp2:4 = RJ32src << (32 - shift);
+	local result = tmp1 + tmp2;
+
+	RD = sext(result);
+
+}
+
+
+#la-base-32.txt sll.w mask=0x00170000	[@la32, @primary, @qemu]
+#0x00170000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:sll.w  RD, RJ32src, RK32src   is op15_31=0x2e & RD & RJ32src & RK32src {
+	local shift:1 = RK32src(0) & 0x1f;
+	local result:4 = RJ32src << shift;
+	RD = sext(result);
+}
+
+#la-base-32.txt slli.w mask=0x00408000	[@la32, @primary, @qemu]
+#0x00408000	0xffff8000	r0:5,r5:5,u10:5	['reg0_5_s0', 'reg5_5_s0', 'imm10_5_s0']
+:slli.w  RD, RJ32src, imm10_5  is op15_31=0x81 & RD & RJ32src& imm10_5 {
+	local shift:1 = imm10_5 & 0x1f;
+	local result:4 = RJ32src << shift;
+	RD = sext(result);
+}
+
+
+#la-base-32.txt slt mask=0x00120000	[@la32, @primary, @qemu]
+#0x00120000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:slt  RD, RJsrc, RKsrc         is op15_31=0x24 & RD & RJsrc & RKsrc {
+	RD = zext( RJsrc s< RKsrc );
+}
+
+#la-base-32.txt sltu mask=0x00128000	[@la32, @primary, @qemu]
+#0x00128000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:sltu  RD, RJsrc, RKsrc        is op15_31=0x25 & RD & RJsrc & RKsrc {
+	RD = zext( RJsrc < RKsrc );
+}
+
+#la-base-32.txt slti mask=0x02000000	[@la32, @primary, @qemu]
+#0x02000000	0xffc00000	r0:5,r5:5,s10:12	['reg0_5_s0', 'reg5_5_s0', 'simm10_12_s0']
+:slti  RD, RJsrc, simm10_12    is op22_31=0x8 & RD & RJsrc & simm10_12 {
+	RD = zext( RJsrc s< simm10_12 );
+}
+
+#la-base-32.txt sltui mask=0x02400000	[@la32, @primary, @qemu]
+#0x02400000	0xffc00000	r0:5,r5:5,s10:12	['reg0_5_s0', 'reg5_5_s0', 'simm10_12_s0']
+:sltui  RD, RJsrc, simm10_12   is op22_31=0x9 & RD & RJsrc & simm10_12 {
+	RD = zext( RJsrc < simm10_12 );
+}
+
+
+#la-base-32.txt srl.w mask=0x00178000	[@la32, @primary, @qemu]
+#0x00178000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:srl.w  RD, RJ32src, RK32src   is op15_31=0x2f & RD & RJ32src & RK32src {
+	local shift:1 = RK32src(0) & 0x1f;
+	local result:4 = RJ32src >> shift;
+	RD = sext(result);
+}
+
+#la-base-32.txt srli.w mask=0x00448000	[@la32, @primary, @qemu]
+#0x00448000	0xffff8000	r0:5,r5:5,u10:5	['reg0_5_s0', 'reg5_5_s0', 'imm10_5_s0']
+:srli.w  RD, RJ32src, imm10_5  is op15_31=0x89 & RD & RJ32src & imm10_5 {
+	local shift:1 = imm10_5 & 0x1f;
+	local result:4 = RJ32src >> shift;
+	RD = sext(result);
+}
+
+
+#la-base-32.txt sra.w mask=0x00180000	[@la32, @primary, @qemu]
+#0x00180000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:sra.w  RD, RJ32src, RK32src   is op15_31=0x30 & RD & RJ32src & RK32src {
+	local shift:1 = RK32src(0) & 0x1f;
+	local result:4 = RJ32src s>> shift;
+	RD = sext(result);
+}
+
+#la-base-32.txt srai.w mask=0x00488000	[@la32, @primary, @qemu]
+#0x00488000	0xffff8000	r0:5,r5:5,u10:5	['reg0_5_s0', 'reg5_5_s0', 'imm10_5_s0']
+:srai.w  RD, RJ32src, imm10_5  is op15_31=0x91 & RD & RJ32src & imm10_5 {
+	local shift:1 = imm10_5 & 0x1f;
+	local result:4 = RJ32src s>> shift;
+	RD = sext(result);
+}
+
+
+#la-base-32.txt sub.w mask=0x00110000	[@la32, @primary, @qemu]
+#0x00110000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:sub.w  RD, RJ32src, RK32src   is op15_31=0x22 & RD & RJ32src & RK32src {
+	local sub1:4 = RJ32src;
+	local sub2:4 = RK32src;
+	local result = sub1 - sub2;
+	RD = sext(result);
+}
+
+
+#la-base-32.txt syscall mask=0x002b0000	[@la32, @primary]
+#0x002b0000	0xffff8000	u0:15	['imm0_15_s0']
+:syscall  imm0_15              is op15_31=0x56 & imm0_15 {
+	local code:2 = imm0_15;
+	syscall(code);
+}
+
+
+#la-base-32.txt xor mask=0x00158000	[@la32, @primary, @qemu]
+#0x00158000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:xor  RD, RJsrc, RKsrc         is op15_31=0x2b & RD & RJsrc & RKsrc {
+	RD = RJsrc ^ RKsrc;
+}
+
+#la-base-32.txt xori mask=0x03c00000	[@la32, @primary, @qemu]
+#0x03c00000	0xffc00000	r0:5,r5:5,u10:12	['reg0_5_s0', 'reg5_5_s0', 'imm10_12_s0']
+:xori  RD, RJsrc, imm10_12     is op22_31=0xf & RD & RJsrc & imm10_12 {
+	RD = RJsrc ^ imm10_12;
+}
+
+
+##########################
+# Load/Store Instructions
+##########################
+
+#la-base-32.txt ldox4.w mask=0x24000000	[@orig_name=ldptr.w, @orig_fmt=DJSk14ps2]
+#0x24000000	0xff000000	r0:5,r5:5,so10:14<<2	['reg0_5_s0', 'reg5_5_s0', 'soffs10_14_s0']
+:ldptr.w  RD, ldstptr_addr     is op24_31=0x24 & RD & RJsrc & ldstptr_addr {
+	local data:4 = *[ram]:4 ldstptr_addr;
+	RD = sext(data);
+}
+
+
+#la-base-32.txt stox4.w mask=0x25000000	[@orig_name=stptr.w, @orig_fmt=DJSk14ps2]
+#0x25000000	0xff000000	r0:5,r5:5,so10:14<<2	['reg0_5_s0', 'reg5_5_s0', 'soffs10_14_s0']
+:stptr.w  RD, ldstptr_addr     is op24_31=0x25 & RD32 & RD & ldstptr_addr {
+	*[ram]:4 ldstptr_addr = RD32;
+}
+
+
+#la-base-32.txt ld.b mask=0x28000000	[@la32, @primary, @qemu]
+#0x28000000	0xffc00000	r0:5,r5:5,so10:12	['reg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
+:ld.b  RD, ldst_addr           is op22_31=0xa0 & RD & RJsrc & ldst_addr {
+	RD = sext(*[ram]:1 ldst_addr);
+}
+
+
+#la-base-32.txt ld.h mask=0x28400000	[@la32, @primary, @qemu]
+#0x28400000	0xffc00000	r0:5,r5:5,so10:12	['reg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
+:ld.h  RD, ldst_addr           is op22_31=0xa1 & RD & RJsrc & ldst_addr {
+	RD = sext(*[ram]:2 ldst_addr);
+}
+
+
+#la-base-32.txt ld.w mask=0x28800000	[@la32, @primary, @qemu]
+#0x28800000	0xffc00000	r0:5,r5:5,so10:12	['reg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
+:ld.w  RD, ldst_addr           is op22_31=0xa2 & RD & RJsrc & ldst_addr {
+	local data:4 = *[ram]:4 ldst_addr;
+	RD = sext(data);
+}
+
+
+#la-base-32.txt st.b mask=0x29000000	[@la32, @primary, @qemu]
+#0x29000000	0xffc00000	r0:5,r5:5,so10:12	['reg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
+:st.b  RDsrc, ldst_addr        is op22_31=0xa4 & RDsrc & ldst_addr {
+	*[ram]:1 ldst_addr = RDsrc:1;
+}
+
+#la-base-32.txt st.h mask=0x29400000	[@la32, @primary, @qemu]
+#0x29400000	0xffc00000	r0:5,r5:5,so10:12	['reg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
+:st.h  RDsrc, ldst_addr        is op22_31=0xa5 & RDsrc & ldst_addr {
+	*[ram]:2 ldst_addr = RDsrc:2;
+}
+
+#la-base-32.txt st.w mask=0x29800000	[@la32, @primary, @qemu]
+#0x29800000	0xffc00000	r0:5,r5:5,so10:12	['reg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
+:st.w  RDsrc, ldst_addr        is op22_31=0xa6 & RDsrc & ldst_addr {
+	*[ram]:4 ldst_addr = RDsrc:4;
+}
+
+
+#la-base-32.txt ld.bu mask=0x2a000000	[@la32, @primary, @qemu]
+#0x2a000000	0xffc00000	r0:5,r5:5,so10:12	['reg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
+:ld.bu  RD, ldst_addr          is op22_31=0xa8 & RD & RJsrc & ldst_addr {
+	RD = zext(*[ram]:1 ldst_addr);
+}
+
+
+#la-base-32.txt ld.hu mask=0x2a400000	[@la32, @primary, @qemu]
+#0x2a400000	0xffc00000	r0:5,r5:5,so10:12	['reg0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
+:ld.hu  RD, ldst_addr          is op22_31=0xa9 & RD & RJsrc & ldst_addr {
+	RD = zext(*[ram]:2 ldst_addr);
+}
+
+#la-base-32.txt preld mask=0x2ac00000	[@orig_fmt=Ud5JSk12, @la32, @primary]
+#0x2ac00000	0xffc00000	u0:5,r5:5,so10:12	['imm0_5_s0', 'reg5_5_s0', 'soffs10_12_s0']
+:preld  imm0_5, ldst_addr      is op22_31=0xab & imm0_5 & op0_4=0 & ldst_addr {
+	preld_loadl1cache(0:1, ldst_addr);
+}
+
+:preld  imm0_5, ldst_addr      is op22_31=0xab & imm0_5 & op0_4=8 & ldst_addr {
+	local hint:1 = imm0_5;
+	preld_storel1cache(8:1, ldst_addr);
+}
+
+:preld  imm0_5, ldst_addr      is op22_31=0xab  & imm0_5 & ldst_addr {
+	preld_nop();
+}
+
+
+#la-base-32.txt preldx mask=0x382c0000	[@orig_fmt=Ud5JK]
+#0x382c0000	0xffff8000	u0:5,r5:5,r10:5	['imm0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:preldx  imm0_5, RJsrc, RKsrc  is op15_31=0x7058 & RJsrc & RKsrc & imm0_5 & op0_4=0 {
+	preldx_loadl1cache(0:1, RJsrc, RKsrc);
+}
+
+:preldx  imm0_5, RJsrc, RKsrc  is op15_31=0x7058 & RJsrc & RKsrc & imm0_5 & op0_4=8 {
+	preldx_storel1cache(8:1, RJsrc, RKsrc);
+}
+
+:preldx  imm0_5, RJsrc, RKsrc  is op15_31=0x7058 & RJsrc & RKsrc & imm0_5 {
+	preldx_nop(imm0_5:1, RJsrc, RJsrc);
+}
+#la-base-32.txt ldx.b mask=0x38000000	[@qemu]
+#0x38000000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:ldx.b  RD, ldstx_addr         is op15_31=0x7000 & RD & ldstx_addr {
+	RD = sext(*[ram]:1 ldstx_addr);
+}
+
+
+#la-base-32.txt ldx.h mask=0x38040000	[@qemu]
+#0x38040000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:ldx.h  RD, ldstx_addr         is op15_31=0x7008 & RD & ldstx_addr {
+	RD = sext(*[ram]:2 ldstx_addr);
+}
+
+
+#la-base-32.txt ldx.w mask=0x38080000	[@qemu]
+#0x38080000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:ldx.w  RD, ldstx_addr         is op15_31=0x7010 & RD & ldstx_addr {
+	local data:4 = *[ram]:4 ldstx_addr;
+	RD = sext(data);
+}
+
+
+#la-base-32.txt stx.b mask=0x38100000	[@qemu]
+#0x38100000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:stx.b  RDsrc, ldstx_addr      is op15_31=0x7020 & RDsrc & ldstx_addr {
+	*[ram]:1 ldstx_addr = RDsrc:1;
+}
+
+
+#la-base-32.txt stx.h mask=0x38140000	[@qemu]
+#0x38140000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:stx.h  RDsrc, ldstx_addr      is op15_31=0x7028 & RDsrc & ldstx_addr {
+	*[ram]:2 ldstx_addr = RDsrc:2;
+}
+
+
+#la-base-32.txt stx.w mask=0x38180000	[@qemu]
+#0x38180000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:stx.w  RDsrc, ldstx_addr      is op15_31=0x7030 & RDsrc & RD32src & ldstx_addr {
+	*[ram]:4 ldstx_addr = RD32src;
+}
+
+
+#la-base-32.txt ldx.bu mask=0x38200000	[@qemu]
+#0x38200000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:ldx.bu  RD, ldstx_addr        is op15_31=0x7040 & RD & ldstx_addr {
+	RD = zext(*[ram]:1 ldstx_addr);
+}
+
+
+#la-base-32.txt ldx.hu mask=0x38240000	[@qemu]
+#0x38240000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:ldx.hu  RD, ldstx_addr        is op15_31=0x7048 & RD & ldstx_addr {
+	RD = zext(*[ram]:2 ldstx_addr);
+}
+
+
+#la-base-32.txt dbar mask=0x38720000	[@la32, @primary, @qemu]
+#0x38720000	0xffff8000	u0:15	['imm0_15_s0']
+:dbar  imm0_15                 is op15_31=0x70e4 & imm0_15 {
+	local code:2 = imm0_15;
+	dbar(code);
+}
+
+
+#la-base-32.txt ibar mask=0x38728000	[@la32, @primary]
+#0x38728000	0xffff8000	u0:15	['imm0_15_s0']
+:ibar  imm0_15                 is op15_31=0x70e5 & imm0_15 {
+	local code:2 = imm0_15;
+	ibar(code);
+}
+
+
+######################
+# Branch Instructions
+######################
+
+
+#la-base-32.txt b mask=0x50000000	[@orig_fmt=Sd10k16ps2, @la32, @primary, @qemu]
+#0x50000000	0xfc000000	sb0:10|10:16<<2	['sbranch0_0_s2']
+:b  Rel26                      is op26_31=0x14 & Rel26 {
+	goto Rel26;
+}
+
+#la-base-32.txt bl mask=0x54000000	[@orig_fmt=Sd10k16ps2, @la32, @primary, @qemu]
+#0x54000000	0xfc000000	sb0:10|10:16<<2	['sbranch0_0_s2']
+:bl  Rel26                     is op26_31=0x15 & Rel26 {
+	ra = inst_next;
+	call Rel26;
+}
+
+:bl  Rel26                     is op26_31=0x15 & Rel26 & imm10_16=1 & simm0_10=0 {
+	ra = inst_next;
+	goto Rel26;
+}
+
+#la-base-32.txt beq mask=0x58000000	[@orig_fmt=JDSk16ps2, @la32, @primary, @qemu]
+#0x58000000	0xfc000000	r5:5,r0:5,sb10:16<<2	['reg5_5_s0', 'reg0_5_s0', 'sbranch10_16_s0']
+:beq  RDsrc, RJsrc, Rel16      is op26_31=0x16 & RDsrc & RJsrc & Rel16 {
+	if(RJsrc == RDsrc) goto Rel16;
+}
+
+#la-base-32.txt beqz mask=0x40000000	[@orig_fmt=JSd5k16ps2, @la32]
+#0x40000000	0xfc000000	r5:5,sb0:5|10:16<<2	['reg5_5_s0', 'sbranch0_0_s2']
+:beqz  RJsrc, Rel21            is op26_31=0x10 & RJsrc & Rel21 {
+	if (RJsrc == 0) goto Rel21;
+}
+
+
+#la-base-32.txt ble mask=0x64000000	[@orig_name=bge, @orig_fmt=JDSk16ps2, @la32, @primary, @qemu]
+#0x64000000	0xfc000000	r5:5,r0:5,sb10:16<<2	['reg5_5_s0', 'reg0_5_s0', 'sbranch10_16_s0']
+:bge  RDsrc, RJsrc, Rel16      is op26_31=0x19 & RDsrc & RJsrc & Rel16 {
+	if(RJsrc s>= RDsrc) goto Rel16;
+}
+
+:bgez  RJsrc, Rel16            is op26_31=0x19 & rD=0 & RJsrc & Rel16 {
+	if(RJsrc s>= 0) goto Rel16;
+}
+
+:blez  RDsrc, Rel16            is op26_31=0x19 & RDsrc & rJ=0 & Rel16 {
+	if(0 s>= RDsrc) goto Rel16;
+}
+
+#la-base-32.txt bleu mask=0x6c000000	[@orig_name=bgeu, @orig_fmt=JDSk16ps2, @la32, @primary, @qemu]
+#0x6c000000	0xfc000000	r5:5,r0:5,sb10:16<<2	['reg5_5_s0', 'reg0_5_s0', 'sbranch10_16_s0']
+:bgeu  RDsrc, RJsrc, Rel16     is op26_31=0x1b & RDsrc & RJsrc & Rel16 {
+	if(RJsrc >= RDsrc) goto Rel16;
+}
+
+
+#la-base-32.txt bgt mask=0x60000000	[@orig_name=blt, @orig_fmt=JDSk16ps2, @la32, @primary, @qemu]
+#0x60000000	0xfc000000	r5:5,r0:5,sb10:16<<2	['reg5_5_s0', 'reg0_5_s0', 'sbranch10_16_s0']
+:blt  RDsrc, RJsrc, Rel16      is op26_31=0x18 & RDsrc & RJsrc & Rel16 {
+	if(RJsrc s< RDsrc) goto Rel16;
+}
+
+:bltz  RJsrc, Rel16            is op26_31=0x18 & rD=0 & RJsrc & Rel16 {
+	if(RJsrc s< 0) goto Rel16;
+}
+
+:bgtz  RDsrc, Rel16            is op26_31=0x18 & RDsrc & rJ=0 & Rel16 {
+	if(0 s< RDsrc) goto Rel16;
+}
+#la-base-32.txt bgtu mask=0x68000000	[@orig_name=bltu, @orig_fmt=JDSk16ps2, @la32, @primary, @qemu]
+#0x68000000	0xfc000000	r5:5,r0:5,sb10:16<<2	['reg5_5_s0', 'reg0_5_s0', 'sbranch10_16_s0']
+:bltu  RDsrc, RJsrc, Rel16     is op26_31=0x1a & RDsrc & RJsrc & Rel16 {
+	if(RJsrc < RDsrc) goto Rel16;
+}
+
+
+#la-base-32.txt bne mask=0x5c000000	[@orig_fmt=JDSk16ps2, @la32, @primary, @qemu]
+#0x5c000000	0xfc000000	r5:5,r0:5,sb10:16<<2	['reg5_5_s0', 'reg0_5_s0', 'sbranch10_16_s0']
+:bne  RDsrc, RJsrc, Rel16      is op26_31=0x17 & RDsrc & RJsrc & Rel16 {
+	if(RJsrc != RDsrc) goto Rel16;
+}
+
+#la-base-32.txt bnez mask=0x44000000	[@orig_fmt=JSd5k16ps2, @la32]
+#0x44000000	0xfc000000	r5:5,sb0:5|10:16<<2	['reg5_5_s0', 'sbranch0_0_s2']
+:bnez  RJsrc, Rel21            is op26_31=0x11 & RJsrc & Rel21 {
+	if (RJsrc != 0) goto Rel21;
+}
+
+
+#la-base-32.txt jirl mask=0x4c000000	[@orig_fmt=DJSk16ps2, @la32, @primary, @qemu]
+#0x4c000000	0xfc000000	r0:5,r5:5,so10:16<<2	['reg0_5_s0', 'reg5_5_s0', 'soffs10_16_s0']
+:jirl  RD, RelJ16              is op26_31=0x13 & RD & RJsrc & RelJ16 {
+	RD = inst_next;
+	call [RelJ16];
+}
+
+# alias of jirl zero, ra, 0
+:ret                           is op26_31=0x13 & rD=0x0 & rJ=0x1 & RJsrc & simm10_16=0 {
+	local retAddr = RJsrc;
+	return [retAddr];
+}
+
+# alias of jirl zero, rj, 0
+:jr RJsrc                      is op26_31=0x13 & rD=0x0 & RJsrc & simm10_16=0 {
+	pc = RJsrc;
+	goto [pc];
+}
+
+
+######################
+# Atomic Instructions
+######################
+
+
+#la-atomics-32.txt ll.w mask=0x20000000	[@orig_fmt=DJSk14ps2, @la32, @primary]
+#0x20000000	0xff000000	r0:5,r5:5,so10:14<<2	['reg0_5_s0', 'reg5_5_s0', 'soffs10_14_s0']
+:ll.w  RD, ldstptr_addr        is op24_31=0x20 & RD & ldstptr_addr {
+	local data:4 = *[ram]:4 ldstptr_addr;
+	RD = sext(data);
+}
+
+
+#la-atomics-32.txt sc.w mask=0x21000000	[@orig_fmt=DJSk14ps2, @la32, @primary]
+#0x21000000	0xff000000	r0:5,r5:5,so10:14<<2	['reg0_5_s0', 'reg5_5_s0', 'soffs10_14_s0']
+:sc.w  RD, ldstptr_addr        is op24_31=0x21 & RD & ldstptr_addr {
+	*[ram]:4 ldstptr_addr = RD:4;
+}
+
+
+#la-atomics-32.txt amswap.w mask=0x38600000	[@orig_fmt=DKJ]
+#0x38600000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
+:amswap.w  RD, RJsrc, RK32src  is op15_31=0x70c0 & RD & RJsrc & RK32src {
+	local val:4 = *[ram]:4 RJsrc;
+	RD = sext(val);
+	*[ram]:4 RJsrc = RK32src;
+}
+
+
+#la-atomics-32.txt amadd.w mask=0x38610000	[@orig_fmt=DKJ]
+#0x38610000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
+:amadd.w  RD, RJsrc, RK32src   is op15_31=0x70c2 & RD & RJsrc & RK32src {
+	local val:4 = *[ram]:4 RJsrc;
+	RD = sext(val);
+	*[ram]:4 RJsrc = (RK32src + val);
+}
+
+
+#la-atomics-32.txt amand.w mask=0x38620000	[@orig_fmt=DKJ]
+#0x38620000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
+:amand.w  RD, RJsrc, RK32src   is op15_31=0x70c4 & RD & RJsrc & RK32src {
+	local val:4 = *[ram]:4 RJsrc;
+	RD = sext(val);
+	*[ram]:4 RJsrc = (RK32src & val);
+}
+
+
+#la-atomics-32.txt amor.w mask=0x38630000	[@orig_fmt=DKJ]
+#0x38630000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
+:amor.w  RD, RJsrc, RK32src    is op15_31=0x70c6 & RD & RJsrc & RK32src {
+	local val:4 = *[ram]:4 RJsrc;
+	RD = sext(val);
+	*[ram]:4 RJsrc = (RK32src | val);
+}
+
+
+#la-atomics-32.txt amxor.w mask=0x38640000	[@orig_fmt=DKJ]
+#0x38640000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
+:amxor.w  RD, RJsrc, RK32src   is op15_31=0x70c8 & RD & RJsrc & RK32src {
+	local val:4 = *[ram]:4 RJsrc;
+	RD = sext(val);
+	*[ram]:4 RJsrc = (RK32src ^ val);
+}
+
+
+#la-atomics-32.txt ammax.w mask=0x38650000	[@orig_fmt=DKJ]
+#0x38650000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
+:ammax.w  RD, RJsrc, RK32src   is op15_31=0x70ca & RD & RJsrc & RK32src {
+	local val1:4 = *[ram]:4 RJsrc;
+	local val2:4 = RK32src;
+	local test = (val1 s>= val2);
+	RD = sext(val1);
+	*[ram]:4 RJsrc = (zext(test) * val1) + (zext(!test) * val2);
+}
+
+
+#la-atomics-32.txt ammin.w mask=0x38660000	[@orig_fmt=DKJ]
+#0x38660000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
+:ammin.w  RD, RJsrc, RK32src   is op15_31=0x70cc & RD & RJsrc & RK32src {
+	local val1:4 = *[ram]:4 RJsrc;
+	local val2:4 = RK32src;
+	local test = (val1 s<= val2);
+	RD = sext(val1);
+	*[ram]:4 RJsrc = (zext(test) * val1) + (zext(!test) * val2);
+}
+
+
+#la-atomics-32.txt amswap_db.w mask=0x38690000	[@orig_fmt=DKJ]
+#0x38690000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
+:amswap_db.w  RD, RJsrc, RK32src  is op15_31=0x70d2 & RD & RJsrc & RK32src {
+	dbar(0:1);
+	local val:4 = *[ram]:4 RJsrc;
+	RD = zext(val);
+	*[ram]:4 RJsrc = RK32src;
+}
+
+
+#la-atomics-32.txt amadd_db.w mask=0x386a0000	[@orig_fmt=DKJ]
+#0x386a0000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
+:amadd_db.w  RD, RJsrc, RK32src is op15_31=0x70d4 & RD & RJsrc & RK32src {
+	dbar(0:1);
+	local val:4 = *[ram]:4 RJsrc;
+	RD = sext(val);
+	*[ram]:4 RJsrc = (RK32src + val);
+}
+
+
+#la-atomics-32.txt amand_db.w mask=0x386b0000	[@orig_fmt=DKJ]
+#0x386b0000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
+:amand_db.w  RD, RJsrc, RK32src is op15_31=0x70d6 & RD & RJsrc & RK32src {
+	dbar(0:1);
+	local val:4 = *[ram]:4 RJsrc;
+	RD = sext(val);
+	*[ram]:4 RJsrc = (RK32src & val);
+}
+
+
+#la-atomics-32.txt amor_db.w mask=0x386c0000	[@orig_fmt=DKJ]
+#0x386c0000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
+:amor_db.w  RD, RJsrc, RK32src is op15_31=0x70d8 & RD & RJsrc & RK32src {
+	dbar(0:1);
+	local val:4 = *[ram]:4 RJsrc;
+	RD = sext(val);
+	*[ram]:4 RJsrc = (RK32src | val);
+}
+
+
+#la-atomics-32.txt amxor_db.w mask=0x386d0000	[@orig_fmt=DKJ]
+#0x386d0000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
+:amxor_db.w  RD, RJsrc, RK32src is op15_31=0x70da & RD & RJsrc & RK32src {
+	dbar(0:1);
+	local val:4 = *[ram]:4 RJsrc;
+	RD = sext(val);
+	*[ram]:4 RJsrc = (RK32src ^ val);
+}
+
+
+#la-atomics-32.txt ammax_db.w mask=0x386e0000	[@orig_fmt=DKJ]
+#0x386e0000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
+:ammax_db.w  RD, RJsrc, RK32src is op15_31=0x70dc & RD & RJsrc & RK32src {
+	dbar(0:1);
+	local val1:4 = *[ram]:4 RJsrc;
+	local val2:4 = RK32src;
+	local test = (val1 s>= val2);
+	RD = sext(val1);
+	*[ram]:4 RJsrc = (zext(test) * val1) + (zext(!test) * val2);
+}
+
+
+#la-atomics-32.txt ammin_db.w mask=0x386f0000	[@orig_fmt=DKJ]
+#0x386f0000	0xffff8000	r0:5,r10:5,r5:5	['reg0_5_s0', 'reg10_5_s0', 'reg5_5_s0']
+:ammin_db.w  RD, RJsrc, RK32src is op15_31=0x70de & RD & RJsrc & RK32src {
+	dbar(0:1);
+	local val1:4 = *[ram]:4 RJsrc;
+	local val2:4 = RK32src;
+	local test = (val1 s<= val2);
+	RD = sext(val1);
+	*[ram]:4 RJsrc = (zext(test) * val1) + (zext(!test) * val2);
+}
+
+
+################################
+# Bit-manipulation Instructions
+################################
+
+
+#la-bitops-32.txt clo.w mask=0x00001000	[@la32]
+#0x00001000	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
+:clo.w RD, RJ32src             is op10_31=0x4 & RD & RJ32src {
+	RD = lzcount( ~RJ32src );
+}
+
+
+#la-bitops-32.txt clz.w mask=0x00001400	[@la32, @qemu]
+#0x00001400	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
+:clz.w RD, RJ32src             is op10_31=0x5 & RD & RJ32src {
+	RD = lzcount( RJ32src );
+}
+
+
+
+#define pcodeop tzcount;
+#la-bitops-32.txt cto.w mask=0x00001800	[@la32]
+#0x00001800	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
+:cto.w RD, RJ32src             is op10_31=0x6 & RD & RJ32src {
+	local tmp:4 = 0;
+	tzcount32(~RJ32src, tmp);
+	RD = zext(tmp);
+}
+
+#la-bitops-32.txt ctz.w mask=0x00001c00	[@la32, @qemu]
+#0x00001c00	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
+:ctz.w RD, RJ32src             is op10_31=0x7 & RD & RJ32src {
+	local tmp:4 = 0;
+	tzcount32(RJ32src, tmp);
+	RD = zext(tmp);
+}
+
+
+#la-bitops-32.txt revb.2h mask=0x00003000	[@la32, @qemu]
+#0x00003000	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
+:revb.2h RD, RJ32src           is op10_31=0xc & RD & RJ32src {
+	tmp0:4 = (zext(RJ32src[0,8]) << 8) + zext(RJ32src[8,8]);
+	tmp1:4 = (zext(RJ32src[16,8]) << 8) + zext(RJ32src[24,8]);
+	RD = sext((tmp1 << 16) + tmp0);
+}
+
+
+#la-bitops-32.txt revbit.4b mask=0x00004800	[@orig_name=bitrev.4b, @la32]
+#0x00004800	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
+:bitrev.4b RD, RJ32src         is op10_31=0x12 & RD & RJ32src {
+	local v:4 = 0;
+	byterev32(RJ32src, v);
+	RD = sext(v);
+}
+
+
+#la-bitops-32.txt revbit.w mask=0x00005000	[@orig_name=bitrev.w, @la32]
+#0x00005000	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
+:bitrev.w RD, RJ32src          is op10_31=0x14 & RD & RJ32src {
+	local v:4 = 0;
+	bitrev32(RJ32src, v);
+	RD = sext(v);
+}
+
+
+#la-bitops-32.txt catpick.w mask=0x00080000	[@orig_name=bytepick.w, @la32]
+#0x00080000	0xfffe0000	r0:5,r5:5,r10:5,u15:2	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0', 'imm15_2_s0']
+:bytepick.w RD, RJ32src, RK32src, imm15_2  is op17_31=0x4 & RD & RJ32src & RK32src & imm15_2 {
+	local bitstop:1 = 8 * (4 - imm15_2);
+	local mask:4 = (1 <<  bitstop) - 1;
+	local tmp_hi:4 = RK32src & ~mask;
+	local tmp_lo:4 = (RJ32src & (mask << (32-bitstop)) >> (32-bitstop));
+	RD = sext(tmp_hi + tmp_lo);
+}
+
+define pcodeop crc.w.b.w;
+
+#la-bitops-32.txt crc.w.b.w mask=0x00240000	
+#0x00240000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:crc.w.b.w RD, RJ32src, RK32src is op15_31=0x48 & RD & RJ32src & RK32src {
+	local val:1 = RJ32src(0);
+	RD = crc_ieee802.3(RK32src, val, 16:1, 0xedb88320:4);
+}
+
+define pcodeop crc.w.h.w;
+
+#la-bitops-32.txt crc.w.h.w mask=0x00248000	
+#0x00248000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:crc.w.h.w RD, RJ32src, RK32src is op15_31=0x49 & RD & RJ32src & RK32src {
+	local val:2 = RJ32src(0);
+	RD = crc_ieee802.3(RK32src, val, 16:1, 0xedb88320:4);
+}
+
+define pcodeop crc.w.w.w;
+
+#la-bitops-32.txt crc.w.w.w mask=0x00250000	
+#0x00250000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:crc.w.w.w RD, RJ32src, RK32src is op15_31=0x4a & RD & RJ32src & RK32src {
+	RD = crc_ieee802.3(RK32src, RJ32src, 32:1, 0xedb88320:4);
+}
+
+define pcodeop crcc.w.b.w;
+
+#la-bitops-32.txt crcc.w.b.w mask=0x00260000	
+#0x00260000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:crcc.w.b.w RD, RJ32src, RK32src  is op15_31=0x4c & RD & RJ32src & RK32src {
+	local val:1 = RJ32src(0);
+	RD = crc_castagnoli(RK32src, val, 8:1, 0x82f63b78:4);
+}
+
+define pcodeop crcc.w.h.w;
+
+#la-bitops-32.txt crcc.w.h.w mask=0x00268000	
+#0x00268000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:crcc.w.h.w RD, RJ32src, RK32src  is op15_31=0x4d & RD & RJ32src & RK32src {
+	local val:2 = RJ32src(0);
+	RD = crc_castagnoli(RK32src, val, 16:1, 0x82f63b78:4);
+}
+
+define pcodeop crcc.w.w.w;
+
+#la-bitops-32.txt crcc.w.w.w mask=0x00270000	
+#0x00270000	0xffff8000	r0:5,r5:5,r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:crcc.w.w.w RD, RJ32src, RK32src  is op15_31=0x4e & RD & RJ32src & RK32src {
+	RD = crc_castagnoli(RK32src, RJ32src, 32:1, 0x82f63b78:4);
+}
+
+define pcodeop bstrins.w;
+
+#la-bitops-32.txt bstrins.w mask=0x00600000	[@orig_fmt=DJUm5Uk5, @la32, @qemu]
+#0x00600000	0xffe08000	r0:5,r5:5,u16:5,u10:5	['reg0_5_s0', 'reg5_5_s0', 'imm16_5_s0', 'imm10_5_s0']
+:bstrins.w RD, RJ32src, imm16_5, imm10_5  is op21_31=0x3 & op15_15=0x0 & RD & RD32 & RJ32src & imm10_5 & imm16_5 {
+	local msb:1 = imm16_5;
+	local lsb:1 = imm10_5;
+	local len:1 = msb + 1 - lsb;
+	local mask:4 = (1 << len) - 1;
+	local repl:4 = (RJ32src & (mask << lsb)) >> lsb;
+	RD = sext((RD32 & (~mask)) | repl);
+}
+
+
+#la-bitops-32.txt bstrpick.w mask=0x00608000	[@orig_fmt=DJUm5Uk5, @la32, @qemu]
+#0x00608000	0xffe08000	r0:5,r5:5,u16:5,u10:5	['reg0_5_s0', 'reg5_5_s0', 'imm16_5_s0', 'imm10_5_s0']
+:bstrpick.w RD, RJ32src, imm16_5, imm10_5,  is op21_31=0x3 & op15_15=0x1 & RD & RJ32src & imm10_5 & imm16_5 {
+	local msb:1 = imm16_5;
+	local lsb:1 = imm10_5;
+	local len:1 = msb + 1 - lsb;
+	local mask:4 = (1 << len) - 1;
+	local repl:4 = (RJ32src & (mask << lsb)) >> lsb;
+	RD = sext(repl);
+}
+
+
+###############################
+# Bounds-checking Instructions
+###############################
+
+
+#la-bound.txt asrtle mask=0x00010000	[@orig_name=asrtle.d]
+#0x00010000	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:asrtle.d RJsrc, RKsrc         is op15_31=0x2 & op0_4=0x0 & RJsrc & RKsrc {
+	if (RJsrc <= RKsrc) goto inst_next;
+	addr_bound_exception(RJsrc, RKsrc);
+}
+
+#la-bound.txt asrtgt mask=0x00018000	[@orig_name=asrtgt.d]
+#0x00018000	0xffff801f	r5:5, r10:5	['reg5_5_s0', 'reg10_5_s0']
+:asrtgt.d RJsrc, RKsrc         is op15_31=0x3 & op0_4=0x0 & RJsrc & RKsrc {
+	if (RJsrc > RKsrc) goto inst_next;
+	addr_bound_exception(RJsrc, RKsrc);
+}
+
+
+#la-bound.txt ldgt.b mask=0x38780000	
+#0x38780000	0xffff8000	r0:5, r5:5, r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:ldgt.b RD, RJsrc, RKsrc       is op15_31=0x70f0 & RD & RJsrc & RKsrc {
+	local vaddr = RJsrc;
+	if (vaddr > RKsrc) goto <load>;
+	bound_check_exception(RJsrc, RKsrc);
+	goto inst_next;
+	<load>
+	RD = sext(*[ram]:1 vaddr);
+}
+
+#la-bound.txt ldgt.h mask=0x38788000	
+#0x38788000	0xffff8000	r0:5, r5:5, r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:ldgt.h RD, RJsrc, RKsrc       is op15_31=0x70f1 & RD & RJsrc & RKsrc {
+	local vaddr = RJsrc;
+	if (vaddr > RKsrc) goto <load>;
+	bound_check_exception(RJsrc, RKsrc);
+	goto inst_next;
+	<load>
+	RD = sext(*[ram]:2 vaddr);
+}
+
+#la-bound.txt ldgt.w mask=0x38790000	
+#0x38790000	0xffff8000	r0:5, r5:5, r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:ldgt.w RD, RJsrc, RKsrc       is op15_31=0x70f2 & RD & RJsrc & RKsrc {
+	local vaddr = RJsrc;
+	if (vaddr > RKsrc) goto <load>;
+	bound_check_exception(RJsrc, RKsrc);
+	goto inst_next;
+	<load>
+	RD = sext(*[ram]:4 vaddr);
+}
+
+
+#la-bound.txt ldle.b mask=0x387a0000	
+#0x387a0000	0xffff8000	r0:5, r5:5, r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:ldle.b RD, RJsrc, RKsrc       is op15_31=0x70f4 & RD & RJsrc & RKsrc {
+	local vaddr = RJsrc;
+	if (vaddr <= RKsrc) goto <load>;
+	bound_check_exception(RJsrc, RKsrc);
+	goto inst_next;
+	<load>
+	RD = sext(*[ram]:1 vaddr);
+}
+
+#la-bound.txt ldle.h mask=0x387a8000	
+#0x387a8000	0xffff8000	r0:5, r5:5, r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:ldle.h RD, RJsrc, RKsrc       is op15_31=0x70f5 & RD & RJsrc & RKsrc {
+	local vaddr = RJsrc;
+	if (vaddr <= RKsrc) goto <load>;
+	bound_check_exception(RJsrc, RKsrc);
+	goto inst_next;
+	<load>
+	RD = sext(*[ram]:2 vaddr);
+}
+
+#la-bound.txt ldle.w mask=0x387b0000	
+#0x387b0000	0xffff8000	r0:5, r5:5, r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:ldle.w RD, RJsrc, RKsrc       is op15_31=0x70f6 & RD & RJsrc & RKsrc {
+	local vaddr = RJsrc;
+	if (vaddr <= RKsrc) goto <load>;
+	bound_check_exception(RJsrc, RKsrc);
+	goto inst_next;
+	<load>
+	RD = sext(*[ram]:4 vaddr);
+}
+
+
+#la-bound.txt stgt.b mask=0x387c0000	
+#0x387c0000	0xffff8000	r0:5, r5:5, r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:stgt.b RDsrc, RJsrc, RKsrc    is op15_31=0x70f8 & RDsrc & RJsrc & RKsrc {
+	local vaddr = RJsrc;
+	if (vaddr > RKsrc) goto <store>;
+	bound_check_exception(vaddr, RKsrc);
+	goto inst_next;
+	<store>
+	*[ram]:1 RJsrc = RDsrc:1;
+}
+
+#la-bound.txt stgt.h mask=0x387c8000	
+#0x387c8000	0xffff8000	r0:5, r5:5, r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:stgt.h RDsrc, RJsrc, RKsrc    is op15_31=0x70f9 & RDsrc & RJsrc & RKsrc {
+	local vaddr = RJsrc;
+	if (vaddr > RKsrc) goto <store>;
+	bound_check_exception(vaddr, RKsrc);
+	goto inst_next;
+	<store>
+	*[ram]:2 vaddr = RDsrc:2;
+}
+
+#la-bound.txt stgt.w mask=0x387d0000	
+#0x387d0000	0xffff8000	r0:5, r5:5, r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:stgt.w RDsrc, RJsrc, RKsrc    is op15_31=0x70fa & RDsrc & RJsrc & RKsrc {
+	local vaddr = RJsrc;
+	if (vaddr > RKsrc) goto <store>;
+	bound_check_exception(RJsrc, RKsrc);
+	goto inst_next;
+	<store>
+	*[ram]:4 vaddr = RDsrc:4;
+}
+
+#la-bound.txt stle.b mask=0x387e0000	
+#0x387e0000	0xffff8000	r0:5, r5:5, r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:stle.b RDsrc, RJsrc, RKsrc    is op15_31=0x70fc & RDsrc & RJsrc & RKsrc {
+	local vaddr = RJsrc;
+	if (vaddr <= RKsrc) goto <store>;
+	bound_check_exception(RJsrc, RKsrc);
+	goto inst_next;
+	<store>
+	*[ram]:1 vaddr = RDsrc:1;
+}
+
+#la-bound.txt stle.h mask=0x387e8000	
+#0x387e8000	0xffff8000	r0:5, r5:5, r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:stle.h RDsrc, RJsrc, RKsrc    is op15_31=0x70fd & RDsrc & RJsrc & RKsrc {
+	local vaddr = RJsrc;
+	if (vaddr <= RKsrc) goto <store>;
+	bound_check_exception(RJsrc, RKsrc);
+	goto inst_next;
+	<store>
+	*[ram]:2 vaddr = RDsrc:2;
+}
+
+#la-bound.txt stle.w mask=0x387f0000	
+#0x387f0000	0xffff8000	r0:5, r5:5, r10:5	['reg0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:stle.w RDsrc, RJsrc, RKsrc    is op15_31=0x70fe & RDsrc & RJsrc & RKsrc {
+	local vaddr = RJsrc;
+	if (vaddr <= RKsrc) goto <store>;
+	bound_check_exception(RJsrc, RKsrc);
+	goto inst_next;
+	<store>
+	*[ram]:4 vaddr = RDsrc:4;
+}
+
+
+#########################
+# PRIVILEGED INSTRUCTIONS
+#########################
+
+#la-privileged-32.txt csrxchg mask=0x04000000	[@primary]
+#0x04000000	0xff000000	r0:5,r5:5,u10:14	['reg0_5_s0', 'reg5_5_s0', 'imm10_14_s0']
+csr: csr is imm10_14 [csr = $(CSR_OFFSET) + imm10_14 * $(REGSIZE);] {
+	export *[register]:$(REGSIZE) csr;
+}
+
+:csrxchg  RD, RJsrc, csr is op24_31=0x4 & RD & RJsrc & csr {
+	local csrval:$(REGSIZE) = csr;
+	local mask = RJsrc;
+	csr = RD & mask;
+	RD = csrval & mask;
+}
+
+:csrrd  RD, csr is op24_31=0x4 & RD & op5_9=0 & csr {
+	RD = csr;
+}
+
+:csrrw  RD, csr is op24_31=0x4 & RD & op5_9=1 & csr {
+	local csrval:$(REGSIZE) = csr;
+	csr = RD;
+	RD = csrval;
+}
+
+define pcodeop cacop;
+#la-privileged-32.txt cacop mask=0x06000000	[@orig_fmt=Ud5JSk12, @primary]
+#0x06000000	0xffc00000	u0:5,r5:5,s10:12	['imm0_5_s0', 'reg5_5_s0', 'simm10_12_s0']
+cache_obj: op0_2 is op0_2 { local tmp:1 = op0_2; export *[const]:1 tmp; }
+op_type: "initialization" is op3_4=0 { export 0:1; } 
+op_type: "consistency"    is op3_4=1 { export 1:1; } 
+op_type: "coherency"      is op3_4=2 { export 2:1; } 
+op_type: "Custom"         is op3_4=3 { export 3:1; }
+
+:cacop  op_type^"("^cache_obj^")", ldst_addr is op22_31=0x18 & cache_obj & op_type & ldst_addr {
+	cacop(op_type, cache_obj, ldst_addr);
+}
+
+
+define pcodeop lddir;
+level: imm10_8 is imm10_8 { export *[const]:1 imm10_8; }
+#la-privileged-32.txt lddir mask=0x06400000	
+#0x06400000	0xfffc0000	r0:5,r5:5,u10:8	['reg0_5_s0', 'reg5_5_s0', 'imm10_8_s0']
+:lddir  RD, RJsrc, level is op18_31=0x190 & RD & RJsrc & level {
+	RD = lddir(RJsrc, level);
+}
+
+
+define pcodeop ldpte;
+seq: imm10_8 is imm10_8 { export *[const]:1 imm10_8; }
+#la-privileged-32.txt ldpte mask=0x06440000	
+#0x06440000	0xfffc001f	r5:5,u10:8	['reg5_5_s0', 'imm10_8_s0']
+:ldpte  RJsrc, seq is op18_31=0x191 & op0_4=0x0 & RJsrc & seq {
+	ldpte(RJsrc, seq);
+}
+
+
+
+#la-privileged-32.txt iocsrrd.b mask=0x06480000	
+#0x06480000	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
+:iocsrrd.b  RD, RJsrc is op10_31=0x19200 & RD & RJsrc {
+	local val:1 = *[iocsr]:1 RJsrc;
+	RD = sext(val);
+}
+
+
+#la-privileged-32.txt iocsrrd.h mask=0x06480400	
+#0x06480400	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
+:iocsrrd.h  RD, RJsrc is op10_31=0x19201 & RD & RJsrc {
+	local val:2 = *[iocsr]:2 RJsrc;
+	RD = sext(val);
+}
+
+
+#la-privileged-32.txt iocsrrd.w mask=0x06480800	
+#0x06480800	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
+:iocsrrd.w  RD, RJsrc is op10_31=0x19202 & RD & RJsrc {
+	local val:4 = *[iocsr]:4 RJsrc;
+	RD = sext(val);
+}
+
+
+
+#la-privileged-32.txt iocsrwr.b mask=0x06481000	
+#0x06481000	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
+:iocsrwr.b  RDsrc, RJsrc is op10_31=0x19204 & RDsrc & RJsrc {
+    local val:1 = RDsrc:1;
+    *[iocsr]:1 RJsrc = val;
+}
+
+
+#la-privileged-32.txt iocsrwr.h mask=0x06481400	
+#0x06481400	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
+:iocsrwr.h  RDsrc, RJsrc is op10_31=0x19205 & RDsrc & RJsrc {
+    local val:2= RDsrc:2;
+    *[iocsr]:2 RJsrc = val;
+}
+
+
+#la-privileged-32.txt iocsrwr.w mask=0x06481800	
+#0x06481800	0xfffffc00	r0:5,r5:5	['reg0_5_s0', 'reg5_5_s0']
+:iocsrwr.w  RDsrc, RJsrc is op10_31=0x19206 & RDsrc & RJsrc {
+    local val:4= RDsrc:4;
+    *[iocsr]:4 RJsrc = val;
+}
+
+
+define pcodeop tlbclr;
+#la-privileged-32.txt tlbclr mask=0x06482000	
+#0x06482000	0xffffffff
+:tlbclr  is instword=0x06482000 {
+	tlbclr();
+}
+
+
+define pcodeop tlbflush;
+#la-privileged-32.txt tlbflush mask=0x06482400	
+#0x06482400	0xffffffff
+:tlbflush  is instword=0x06482400 {
+	tlbflush();
+}
+
+
+define pcodeop tlbsrch;
+#la-privileged-32.txt tlbsrch mask=0x06482800	[@primary]
+#0x06482800	0xffffffff
+:tlbsrch  is instword=0x06482800 {
+	tlbsrch();
+}
+
+
+define pcodeop tlbrd;
+#la-privileged-32.txt tlbrd mask=0x06482c00	[@primary]
+#0x06482c00	0xffffffff
+:tlbrd  is instword=0x06482c00 {
+	tlbrd();
+}
+
+
+define pcodeop tlbwr;
+#la-privileged-32.txt tlbwr mask=0x06483000	[@primary]
+#0x06483000	0xffffffff
+:tlbwr  is instword=0x06483000 {
+	tlbwr();
+}
+
+
+define pcodeop tlbfill;
+#la-privileged-32.txt tlbfill mask=0x06483400	[@primary]
+#0x06483400	0xffffffff
+:tlbfill  is instword=0x06483400 {
+	tlbfill();
+}
+
+
+define pcodeop ertn;
+#la-privileged-32.txt eret mask=0x06483800	[@orig_name=ertn, @primary]
+#0x06483800	0xffffffff
+:ertn  is instword=0x06483800 {
+	local ret:$(REGSIZE) = ertn();
+	return [ret];
+}
+
+
+define pcodeop idle;
+#la-privileged-32.txt idle mask=0x06488000	[@primary]
+#0x06488000	0xffff8000	u0:15	['imm0_15_s0']
+:idle  imm0_15 is op15_31=0xc91 & imm0_15 {
+	idle(imm0_15:2);
+}
+
+
+define pcodeop invtlb;
+#la-privileged-32.txt tlbinv mask=0x06498000	[@orig_name=invtlb, @orig_fmt=Ud5JK, @primary]
+#0x06498000	0xffff8000	u0:5,r5:5,r10:5	['imm0_5_s0', 'reg5_5_s0', 'reg10_5_s0']
+:invtlb  RJsrc, RKsrc, imm0_5 is op15_31=0xc93 & RJsrc & RKsrc & imm0_5 {
+	invtlb(RJsrc, RKsrc, imm0_5:1);
+}
+
+
+

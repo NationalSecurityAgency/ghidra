@@ -787,10 +787,9 @@ public class LoadPdbDialog extends DialogComponentProvider {
 			return null;
 		}
 		SymbolServer symbolServer = symbolFileLocation.getSymbolServer();
-		if (!(symbolServer instanceof SymbolStore)) {
+		if (!(symbolServer instanceof SymbolStore symbolStore)) {
 			return null;
 		}
-		SymbolStore symbolStore = (SymbolStore) symbolServer;
 		File file = symbolStore.getFile(symbolFileLocation.getPath());
 		return SymbolStore.isCompressedFilename(file.getName()) ? null : file;
 	}

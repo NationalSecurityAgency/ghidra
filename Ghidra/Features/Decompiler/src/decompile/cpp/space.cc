@@ -578,9 +578,9 @@ void JoinSpace::encodeAttributes(Encoder &encoder,uintb offset,int4 size) const
   encodeAttributes(encoder,offset);	// Ignore size
 }
 
-/// Parse a join address the current element.  Pieces of the join are encoded as a sequence
-/// of attributes.  The Translate::findAddJoin method is used to construct a logical
-/// address within the join space.
+/// Parse the current element as a join address.  Pieces of the join are encoded as a sequence
+/// of ATTRIB_PIECE attributes.  "piece1" corresponds to the most significant piece. The
+/// Translate::findAddJoin method is used to construct a logical address within the join space.
 /// \param decoder is the stream decoder
 /// \param size is a reference to be filled in as the size encoded by the tag
 /// \return the offset of the final address encoded by the tag

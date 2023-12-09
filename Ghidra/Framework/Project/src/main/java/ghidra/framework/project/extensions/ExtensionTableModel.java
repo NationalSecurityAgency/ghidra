@@ -27,6 +27,8 @@ import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.extensions.ExtensionDetails;
+import ghidra.util.extensions.ExtensionUtils;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
 import ghidra.util.task.TaskMonitor;
@@ -155,7 +157,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 		// into this state is by clicking an extension that was discovered in the 'extension 
 		// archives folder'		
 		if (extension.isFromArchive()) {
-			if (ExtensionUtils.installExtensionFromArchive(extension)) {
+			if (ExtensionInstaller.installExtensionFromArchive(extension)) {
 				refreshTable();
 			}
 			return;
@@ -192,6 +194,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 			return;
 		}
 
+		ExtensionUtils.reload();
 		Set<ExtensionDetails> archived = ExtensionUtils.getArchiveExtensions();
 		Set<ExtensionDetails> installed = ExtensionUtils.getInstalledExtensions();
 

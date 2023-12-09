@@ -348,6 +348,10 @@ public class FollowFlow {
 				nextSymbolAddr = null;
 			}
 		}
+		
+		// Delay adding instructions in delay slots to the functions body
+		// until the end.  This allows for branches into the delay slot to be handled correctly.
+		AddressSet delaySlotSet = new AddressSet();
 
 		while (!monitor.isCancelled() && !instructionStack.isEmpty()) {
 
@@ -367,36 +371,25 @@ public class FollowFlow {
 			if (flowAddressSet.contains(currentAddress)) {
 				continue;
 			}
-
-			// If code unit is a delay-slot instruction, backup to delayed instruction     	
+  	
 			Instruction instr = currentInstr;
-//        	while (instr.isInDelaySlot()) {      		
-//        		Address fallFrom = instr.getFallFrom();
-//        		if (fallFrom == null) {
-//        			// assumes delay slot instructions have no flow
-//        			flowAddressSet.addRange(instr.getMinAddress(),
-//                                    currentInstr.getMaxAddress());
-//  					break;
-//        		}
-//        		instr = program.getListing().getInstructionContaining(fallFrom);	
-//        	}
-//        	if (instr.isInDelaySlot())
-//        		continue;  // unable to find non-delay-slot instruction
-//			currentInstr = instr;
 
-			// handle instruction - include associated delay slot instructions
+			// handle instruction with delay slot instructions
 			Address end = instr.getMaxAddress();
 			int delaySlotDepth = instr.getDelaySlotDepth();
 			for (int i = 0; i < delaySlotDepth; i++) {
 				instr = instr.getNext();
 				if (instr == null)
 					break;
-				end = instr.getMaxAddress();
+				delaySlotSet.add(instr.getMinAddress(),instr.getMaxAddress());
 			}
 			flowAddressSet.addRange(currentInstr.getMinAddress(), end);
 			followInstruction(instructionStack, flowAddressSet, currentInstr);
 
 		}
+		
+		// add in any instructions that were in a delayslot
+		flowAddressSet.add(delaySlotSet);
 	} // followCode
 
 	/**

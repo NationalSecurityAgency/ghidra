@@ -22,8 +22,7 @@ import docking.action.MenuData;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import ghidra.app.util.viewer.util.CodeComparisonPanel;
 import ghidra.app.util.viewer.util.CodeComparisonPanelActionContext;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.util.FunctionUtility;
 import ghidra.util.*;
 import ghidra.util.exception.DuplicateNameException;
@@ -109,7 +108,7 @@ public abstract class AbstractApplyFunctionSignatureAction extends DockingAction
 	 * @return true if the non-focused panel is read-only
 	 */
 	protected boolean hasReadOnlyNonFocusedSide(
-			CodeComparisonPanel<? extends FieldPanelCoordinator> codeComparisonPanel) {
+		CodeComparisonPanel<? extends FieldPanelCoordinator> codeComparisonPanel) {
 		Function leftFunction = codeComparisonPanel.getLeftFunction();
 		Function rightFunction = codeComparisonPanel.getRightFunction();
 
@@ -134,7 +133,7 @@ public abstract class AbstractApplyFunctionSignatureAction extends DockingAction
 	 * @return true if the operation was successful
 	 */
 	protected boolean updateFunction(ComponentProvider provider, Function destinationFunction,
-			Function sourceFunction) {
+		Function sourceFunction) {
 
 		Program program = destinationFunction.getProgram();
 		int txID = program.startTransaction(ACTION_NAME);
@@ -144,7 +143,7 @@ public abstract class AbstractApplyFunctionSignatureAction extends DockingAction
 			FunctionUtility.updateFunction(destinationFunction, sourceFunction);
 			commit = true;
 		}
-		catch (InvalidInputException | DuplicateNameException e) {
+		catch (InvalidInputException | DuplicateNameException | CircularDependencyException e) {
 			String message = "Couldn't apply the function signature from " +
 				sourceFunction.getName() + " to " + destinationFunction.getName() + " @ " +
 				destinationFunction.getEntryPoint().toString() + ". " + e.getMessage();

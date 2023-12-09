@@ -25,7 +25,7 @@ import org.junit.Test;
 
 import db.Transaction;
 import docking.widgets.dialogs.InputDialog;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
 import ghidra.trace.database.time.DBTraceSnapshot;
@@ -34,7 +34,7 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 
-public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerTest {
 
 	protected DebuggerTimePlugin timePlugin;
 	protected DebuggerTimeProvider timeProvider;

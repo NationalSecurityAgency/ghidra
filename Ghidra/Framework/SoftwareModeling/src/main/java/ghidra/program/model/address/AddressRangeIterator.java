@@ -19,7 +19,6 @@ import java.util.Iterator;
 
 import util.CollectionUtils;
 
-
 /**
  * AddressRangeIterator is used to iterate over some set of addresses.
  *
@@ -27,4 +26,10 @@ import util.CollectionUtils;
  * @see CollectionUtils#asIterable
  */
 
-public interface AddressRangeIterator extends Iterator<AddressRange>, Iterable<AddressRange> {}
+public interface AddressRangeIterator extends Iterator<AddressRange>, Iterable<AddressRange> {
+
+	@Override
+	default Iterator<AddressRange> iterator() {
+		return this;
+	}
+}

@@ -167,15 +167,14 @@ public class XRefFieldFactory extends FieldFactory {
 	private void setupNamespaceOptions(Options fieldOptions) {
 		// we need to install a custom editor that allows us to edit a group of related options
 		fieldOptions.registerOption(NAMESPACE_OPTIONS_KEY, OptionType.CUSTOM_TYPE,
-			new NamespaceWrappedOption(), null, "Adjusts the XREFs Field namespace display",
-			namespaceOptionsEditor);
+			new NamespaceWrappedOption(), new HelpLocation("CodeBrowserPlugin", "XREFs_Field"),
+			"Adjusts the XREFs Field namespace display", namespaceOptionsEditor);
 		CustomOption customOption = fieldOptions.getCustomOption(NAMESPACE_OPTIONS_KEY, null);
-		fieldOptions.getOptions(NAMESPACE_OPTIONS_KEY)
-				.setOptionsHelpLocation(new HelpLocation("CodeBrowserPlugin", "XREFs_Field"));
+
 		if (!(customOption instanceof NamespaceWrappedOption)) {
 			throw new AssertException("Someone set an option for " + NAMESPACE_OPTIONS_KEY +
 				" that is not the expected " +
-				"ghidra.app.util.viewer.field.NamespaceWrappedOption type.");
+				NamespaceWrappedOption.class.getName() + " type.");
 		}
 
 		NamespaceWrappedOption namespaceOption = (NamespaceWrappedOption) customOption;

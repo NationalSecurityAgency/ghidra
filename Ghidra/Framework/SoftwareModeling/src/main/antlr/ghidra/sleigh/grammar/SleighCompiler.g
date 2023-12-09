@@ -1168,7 +1168,13 @@ assignment returns [VectorSTL<OpTpl> value]
 	|	^(t=OP_ASSIGN ^(OP_IDENTIFIER id=.) e=expr) {
 			SleighSymbol sym = pcode.findSymbol($id.getText());
 			if (sym == null) {
-				$value = pcode.newOutput(find(id), false, e, $id.getText());	
+				$value = pcode.newOutput(find(id), false, e, $id.getText());
+            } else if (sym instanceof BitrangeSymbol) {
+                BitrangeSymbol bitSym = (BitrangeSymbol)sym;
+                VarnodeSymbol parent = bitSym.getParentSymbol();
+                $value = pcode.assignBitRange(find(t), parent.getVarnode(),
+                                              bitSym.getBitOffset(),
+                                              bitSym.numBits(),e);
 			} else if(sym.getType() != symbol_type.start_symbol
 					&& sym.getType() != symbol_type.end_symbol
 					&& sym.getType() != symbol_type.next2_symbol
@@ -1450,7 +1456,7 @@ expr returns [ExprTree value]
 	|	s=sizedstar { $value = pcode.createLoad(s.first.location, s.first, s.second); }
 
 	|	a=expr_apply { $value = (ExprTree) $a.value; }
-	|	v=varnode { $value = new ExprTree(v.location, v); }
+	|	v=varnode_or_bitsym["expression"] { $value = $v.value; }
 	|	b=bitrange { $value = $b.value; }
 	|	i=integer { $value = new ExprTree(i.location, new VarnodeTpl(i.location, new ConstTpl(pcode.getConstantSpace()),
 				new ConstTpl(ConstTpl.const_type.real, $i.value.longValue()),
@@ -1460,6 +1466,30 @@ expr returns [ExprTree value]
 
 	|	^(t=OP_BITRANGE2 ss=specific_symbol["expression"] i=integer) {
 			$value = pcode.createBitRange(find(t), ss, 0, ($i.value.intValue() * 8));
+		}
+	;
+
+varnode_or_bitsym[String purpose] returns [ExprTree value]
+	:	^(t=OP_IDENTIFIER s=.) {
+            SleighSymbol sym = pcode.findSymbol($s.getText());
+            if (sym == null) {
+                unknownSymbolError($s.getText(), find($s), "varnode or bitrange symbol", purpose);
+            } else if (sym instanceof BitrangeSymbol) {
+                BitrangeSymbol bitSym = (BitrangeSymbol)sym;
+                $value = pcode.createBitRange(find(t), bitSym.getParentSymbol(),
+                                              bitSym.getBitOffset(),
+                                              bitSym.numBits());
+            } else if (sym instanceof SpecificSymbol) {
+                VarnodeTpl vTemp = ((SpecificSymbol)sym).getVarnode();
+                $value = new ExprTree(vTemp.location, vTemp);
+            } else {
+                undeclaredSymbolError(sym, find($s), purpose);
+            }
+        }
+	|	v=varnode_adorned { $value = new ExprTree($v.value.location,$v.value); }
+	|	t=OP_WILDCARD {
+			wildcardError($t, purpose);
+			$value = null;
 		}
 	;
 
@@ -1517,9 +1547,8 @@ expr_operands returns [VectorSTL<ExprTree> value]
 	:	(e=expr { value.push_back(e); })*
 	;
 
-varnode returns [VarnodeTpl value]
-	:	ss=specific_symbol["varnode reference"] { $value = ss.getVarnode(); }
-	|	^(t=OP_TRUNCATION_SIZE n=integer m=integer) {
+varnode_adorned returns [VarnodeTpl value]
+	:	^(t=OP_TRUNCATION_SIZE n=integer m=integer) {
 			if ($m.value.longValue() > 8) {
 				reportError(find(t), "Constant varnode size must not exceed 8 (" +
 				$n.value.longValue() + ":" + $m.value.longValue() + ")");
@@ -1530,6 +1559,11 @@ varnode returns [VarnodeTpl value]
 		}
 	|	^(OP_ADDRESS_OF ^(OP_SIZING_SIZE i=integer) v=varnode) { $value = pcode.addressOf(v, $i.value.intValue()); }
 	|	^(OP_ADDRESS_OF v=varnode) { $value = pcode.addressOf(v, 0); }
+	;
+
+varnode returns [VarnodeTpl value]
+	:	ss=specific_symbol["varnode reference"] { $value = ss.getVarnode(); }
+	|	v=varnode_adorned { $value = $v.value; }
 	;
 
 qstring returns [String value]

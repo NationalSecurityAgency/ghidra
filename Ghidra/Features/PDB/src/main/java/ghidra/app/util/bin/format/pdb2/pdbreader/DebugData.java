@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
 
+import ghidra.app.util.bin.format.pdb2.pdbreader.msf.MsfStream;
 import ghidra.util.exception.CancelledException;
 
 /**
@@ -134,9 +135,9 @@ public class DebugData {
 	 * Deserialize {@link DebugData} header from the {@link PdbByteReader} input.  This parses
 	 *  stream numbers for varying Debug Types--the order/location of the stream number is for
 	 *  each particular debug type (e.g., the first stream number read is for the stream containing
-	 *  Frame Pointer Omission debug data).  A stream number of 0XFFFF says that there is no data
-	 *  for that debug type; else the stream number represents the stream that should
-	 *  be deserialized to retrieve the debug data of that type.  The
+	 *  Frame Pointer Omission debug data).  A stream number of 0XFFFF (MsfStream.NIL_STREAM_NUMBER)
+	 *  says that there is no data for that debug type; else the stream number represents the
+	 *  stream that should be deserialized to retrieve the debug data of that type.  The
 	 *  {@link #deserialize()} method deserializes each of these streams
 	 *  that are valid to the corresponding debug data type
 	 * @param reader {@link PdbByteReader} from which to parse the header
@@ -172,7 +173,7 @@ public class DebugData {
 		}
 		for (DebugType dbg : DebugType.values()) {
 			int streamNum = debugStreams.get(dbg.getValue());
-			if (streamNum == 0XFFFF) {
+			if (streamNum == MsfStream.NIL_STREAM_NUMBER) {
 				continue;
 			}
 			switch (dbg) {

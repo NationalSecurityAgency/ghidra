@@ -19,9 +19,9 @@ import java.util.Collection;
 import java.util.Set;
 
 import ghidra.app.plugin.core.debug.service.model.interfaces.ManagedBreakpointRecorder;
-import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.target.*;
 import ghidra.dbg.util.PathUtils;
+import ghidra.debug.api.model.TraceRecorder;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.*;

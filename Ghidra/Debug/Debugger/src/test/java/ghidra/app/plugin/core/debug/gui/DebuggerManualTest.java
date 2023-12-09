@@ -33,7 +33,6 @@ import ghidra.app.plugin.core.debug.gui.register.DebuggerRegistersPlugin;
 import ghidra.app.plugin.core.debug.gui.target.DebuggerTargetsPlugin;
 import ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsPlugin;
 import ghidra.app.plugin.core.debug.gui.time.DebuggerTimePlugin;
-import ghidra.app.plugin.core.debug.service.workflow.DebuggerWorkflowServiceProxyPlugin;
 import ghidra.app.plugin.core.disassembler.DisassemblerPlugin;
 import ghidra.app.plugin.core.equate.EquatePlugin;
 import ghidra.app.plugin.core.function.FunctionPlugin;
@@ -51,7 +50,7 @@ import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceOverlappedRegionException;
 import ghidra.util.exception.DuplicateNameException;
 
-public class DebuggerManualTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerManualTest extends AbstractGhidraHeadedDebuggerTest {
 
 	protected ToyDBTraceBuilder ub;
 
@@ -89,7 +88,6 @@ public class DebuggerManualTest extends AbstractGhidraHeadedDebuggerGUITest {
 		addPlugin(tool, DebuggerTargetsPlugin.class);
 		addPlugin(tool, DebuggerThreadsPlugin.class);
 		addPlugin(tool, DebuggerTimePlugin.class);
-		addPlugin(tool, DebuggerWorkflowServiceProxyPlugin.class);
 
 		//addPlugin(tool, AssemblerPlugin.class);
 		addPlugin(tool, ByteViewerPlugin.class);

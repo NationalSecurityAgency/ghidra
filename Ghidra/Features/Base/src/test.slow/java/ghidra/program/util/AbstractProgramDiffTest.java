@@ -15,14 +15,14 @@
  */
 package ghidra.program.util;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
-import ghidra.test.ClassicSampleX86ProgramBuilder;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
+import ghidra.test.ClassicSampleX86ProgramBuilder;
 import ghidra.util.exception.CancelledException;
 
 public class AbstractProgramDiffTest extends AbstractGhidraHeadedIntegrationTest {
@@ -33,17 +33,34 @@ public class AbstractProgramDiffTest extends AbstractGhidraHeadedIntegrationTest
 	protected Program p1;
 	protected Program p2;
 
+	/**
+	 * Generate address in p1's default address space
+	 * @param offset address offset
+	 * @return address
+	 */
 	protected Address addr(int offset) {
 		AddressSpace space = p1.getAddressFactory().getDefaultAddressSpace();
 		return space.getAddress(offset);
 	}
 
-	protected Address addr(Program program, int offset) {
+	/**
+	 * Generate address in specified program's default address space
+	 * @param program target program
+	 * @param offset address offset
+	 * @return address
+	 */
+	protected static Address addr(Program program, int offset) {
 		AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
 		return space.getAddress(offset);
 	}
 
-	protected Address addr(Program program, String addrString) {
+	/**
+	 * Generate address from parsed string within specified program.
+	 * @param program target program
+	 * @param addrString address string (w/ optional space name) to be parsed
+	 * @return addressor null if parse fails
+	 */
+	protected static Address addr(Program program, String addrString) {
 		return program.getAddressFactory().getAddress(addrString);
 	}
 

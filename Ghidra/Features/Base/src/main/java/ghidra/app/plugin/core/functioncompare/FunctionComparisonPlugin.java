@@ -57,7 +57,7 @@ import ghidra.util.Swing;
 )
 //@formatter:on
 public class FunctionComparisonPlugin extends ProgramPlugin
-		implements DomainObjectListener, FunctionComparisonService {
+	implements DomainObjectListener, FunctionComparisonService {
 
 	static final String MENU_PULLRIGHT = "CompareFunctions";
 	static final String POPUP_MENU_GROUP = "CompareFunction";
@@ -132,7 +132,7 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 	}
 
 	private FunctionComparisonProvider getFromSwingBlocking(
-			Supplier<FunctionComparisonProvider> comparer) {
+		Supplier<FunctionComparisonProvider> comparer) {
 
 		if (Swing.isSwingThread()) {
 			return comparer.get();
@@ -147,13 +147,13 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 
 	@Override
 	public void addFunctionComparisonProviderListener(
-			ComponentProviderActivationListener listener) {
+		ComponentProviderActivationListener listener) {
 		runOnSwingNonBlocking(() -> functionComparisonManager.addProviderListener(listener));
 	}
 
 	@Override
 	public void removeFunctionComparisonProviderListener(
-			ComponentProviderActivationListener listener) {
+		ComponentProviderActivationListener listener) {
 		runOnSwingNonBlocking(() -> functionComparisonManager.removeProviderListener(listener));
 	}
 
@@ -168,8 +168,13 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 	}
 
 	@Override
+	public FunctionComparisonProvider createFunctionComparisonProvider() {
+		return getFromSwingBlocking(() -> functionComparisonManager.createProvider());
+	}
+
+	@Override
 	public FunctionComparisonProvider compareFunctions(Function source,
-			Function target) {
+		Function target) {
 		return getFromSwingBlocking(
 			() -> functionComparisonManager.compareFunctions(source, target));
 	}
@@ -187,7 +192,7 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 
 	@Override
 	public void compareFunctions(Function source, Function target,
-			FunctionComparisonProvider provider) {
+		FunctionComparisonProvider provider) {
 		runOnSwingNonBlocking(
 			() -> functionComparisonManager.compareFunctions(source, target, provider));
 	}

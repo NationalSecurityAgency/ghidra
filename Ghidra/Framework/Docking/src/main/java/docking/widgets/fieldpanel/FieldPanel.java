@@ -45,7 +45,7 @@ import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.util.*;
 
 public class FieldPanel extends JPanel
-		implements IndexedScrollable, LayoutModelListener, ChangeListener, Accessible {
+		implements IndexedScrollable, LayoutModelListener, ChangeListener {
 	public static final int MOUSEWHEEL_LINES_TO_SCROLL = 3;
 
 	private LayoutModel model;
@@ -335,7 +335,7 @@ public class FieldPanel extends JPanel
 	/**
 	 * Returns true if the given field location is rendered on the screen; false if scrolled
 	 * offscreen
-	 * 
+	 * @param location the location
 	 * @return true if the location is on the screen
 	 */
 	public boolean isLocationVisible(FieldLocation location) {
@@ -1305,7 +1305,7 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Finds the layout containing the given y position.
-	 * 
+	 * @param y the y location
 	 * @return the layout.
 	 */
 	AnchoredLayout findLayoutAt(int y) {
@@ -1320,10 +1320,10 @@ public class FieldPanel extends JPanel
 	/**
 	 * Notifies all FieldMouselisteners that the cursor position changed.
 	 */
-	private void notifyFieldMouseListeners(final MouseEvent ev) {
-		final FieldLocation loc = new FieldLocation(cursorPosition);
-		final Field field = cursorHandler.getCurrentField();
-		SystemUtilities.runSwingLater(() -> {
+	private void notifyFieldMouseListeners(MouseEvent ev) {
+		FieldLocation loc = new FieldLocation(cursorPosition);
+		Field field = cursorHandler.getCurrentField();
+		Swing.runLater(() -> {
 			for (FieldMouseListener l : fieldMouseListeners) {
 				l.buttonPressed(loc, field, ev);
 			}

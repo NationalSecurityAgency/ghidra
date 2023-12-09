@@ -31,7 +31,6 @@ import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointAction;
 import ghidra.dbg.util.PathUtils;
-import ghidra.util.datastruct.ListenerMap.ListenerEntry;
 import ghidra.util.datastruct.ListenerSet;
 
 public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl implements //
@@ -69,79 +68,81 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 		}
 	}
 
-	protected static Class<? extends DbgModelTargetObject> lookupWrapperType(String type, String parentName) {
+	protected static Class<? extends DbgModelTargetObject> lookupWrapperType(String type,
+			String parentName) {
 		switch (type) {
-		case "Available":
-			return DbgModelTargetAvailableContainer.class;
-		case "Sessions":
-			return DbgModelTargetSessionContainer.class;
-		case "Processes":
-			return DbgModelTargetProcessContainer.class;
-		case "Threads":
-			return DbgModelTargetThreadContainer.class;
-		case "Modules":
-			return DbgModelTargetModuleContainer.class;
-		case "Frames":
-			return DbgModelTargetStack.class;
-		case "Registers":
-			return DbgModelTargetRegisterContainer.class;
-		case "Attributes":
-			return DbgModelTargetSessionAttributes.class;
-		case "Breakpoints":
-			return DbgModelTargetBreakpointContainer.class;
-		case "cursession":
-			return DbgModelTargetSession.class;
-		case "curprocess":
-			return DbgModelTargetProcess.class;
-		case "curthread":
-			return DbgModelTargetThread.class;
-		case "curframe":
-			return DbgModelTargetStackFrame.class;
-		case "User":
-			return DbgModelTargetRegisterBank.class;
-		case "TTD":
-			return DbgModelTargetTTD.class;
-		case "Debug":
-			return DbgModelTargetDebugContainer.class;
+			case "Available":
+				return DbgModelTargetAvailableContainer.class;
+			case "Sessions":
+				return DbgModelTargetSessionContainer.class;
+			case "Processes":
+				return DbgModelTargetProcessContainer.class;
+			case "Threads":
+				return DbgModelTargetThreadContainer.class;
+			case "Modules":
+				return DbgModelTargetModuleContainer.class;
+			case "Frames":
+				return DbgModelTargetStack.class;
+			case "Registers":
+				return DbgModelTargetRegisterContainer.class;
+			case "Attributes":
+				return DbgModelTargetSessionAttributes.class;
+			case "Breakpoints":
+				return DbgModelTargetBreakpointContainer.class;
+			case "cursession":
+				return DbgModelTargetSession.class;
+			case "curprocess":
+				return DbgModelTargetProcess.class;
+			case "curthread":
+				return DbgModelTargetThread.class;
+			case "curframe":
+				return DbgModelTargetStackFrame.class;
+			case "User":
+				return DbgModelTargetRegisterBank.class;
+			case "TTD":
+				return DbgModelTargetTTD.class;
+			case "Debug":
+				return DbgModelTargetDebugContainer.class;
 		}
 		if (parentName != null) {
 			switch (parentName) {
-			case "Available":
-				return DbgModelTargetAvailable.class;
-			case "Sessions":
-				return DbgModelTargetSession.class;
-			case "Processes":
-				return DbgModelTargetProcess.class;
-			case "Threads":
-				return DbgModelTargetThread.class;
-			case "Modules":
-				return DbgModelTargetModule.class;
-			case "Frames":
-				return DbgModelTargetStackFrame.class;
-			case "Breakpoints":
-				return DbgModelTargetBreakpointSpec.class;
-			// case "Registers":
-			// return DbgModelTargetRegisterBank.class;
-			case "FloatingPoint":
-			case "Kernel":
-			case "SIMD":
-			case "VFP":
-			case "User":
-				return DbgModelTargetRegister.class;
+				case "Available":
+					return DbgModelTargetAvailable.class;
+				case "Sessions":
+					return DbgModelTargetSession.class;
+				case "Processes":
+					return DbgModelTargetProcess.class;
+				case "Threads":
+					return DbgModelTargetThread.class;
+				case "Modules":
+					return DbgModelTargetModule.class;
+				case "Frames":
+					return DbgModelTargetStackFrame.class;
+				case "Breakpoints":
+					return DbgModelTargetBreakpointSpec.class;
+				// case "Registers":
+				// return DbgModelTargetRegisterBank.class;
+				case "FloatingPoint":
+				case "Kernel":
+				case "SIMD":
+				case "VFP":
+				case "User":
+					return DbgModelTargetRegister.class;
 			}
 		}
 		return null;
 	}
 
-	public static DbgModelTargetObject makeProxy(DbgModel2Impl model, DbgModelTargetObject parent, String key,
-			ModelObject object) {
+	public static DbgModelTargetObject makeProxy(DbgModel2Impl model, DbgModelTargetObject parent,
+			String key, ModelObject object) {
 		List<Class<? extends TargetObject>> mixins = new ArrayList<>();
 		String lkey = key;
 		String pname = parent.getName();
 
 		if (object.getKind().equals(ModelObjectKind.OBJECT_METHOD)) {
 			mixins.add(DbgModelTargetMethod.class);
-		} else {
+		}
+		else {
 			Class<? extends DbgModelTargetObject> mixin = lookupWrapperType(lkey, pname);
 			if (mixin != null) {
 				mixins.add(mixin);
@@ -161,12 +162,7 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 	private boolean breakpointEnabled;
 
 	private final ListenerSet<TargetBreakpointAction> breakpointActions =
-		new ListenerSet<>(TargetBreakpointAction.class) {
-			// Use strong references on actions
-			protected Map<TargetBreakpointAction, ListenerEntry<? extends TargetBreakpointAction>> createMap() {
-				return new LinkedHashMap<>();
-			}
-		};
+		new ListenerSet<>(TargetBreakpointAction.class, false);
 
 	// Extending DefaultTargetObject may spare you from listeners, elements, and
 	// attributes
@@ -175,8 +171,8 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 
 	// any other fields you need to support your impl
 
-	public DelegateDbgModel2TargetObject(DbgModel2Impl model, DbgModelTargetObject parent, String key,
-			ModelObject modelObject, List<Class<? extends TargetObject>> mixins) {
+	public DelegateDbgModel2TargetObject(DbgModel2Impl model, DbgModelTargetObject parent,
+			String key, ModelObject modelObject, List<Class<? extends TargetObject>> mixins) {
 		super(model, mixins, model, parent.getProxy(), key, getHintForObject(modelObject));
 		// System.err.println(this);
 		this.state = new ProxyState(model, modelObject);
@@ -198,8 +194,8 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 		if (mixin != null) {
 			mixins.add(mixin);
 		}
-		DelegateDbgModel2TargetObject delegate = new DelegateDbgModel2TargetObject(getModel(), p, key, modelObject,
-				mixins);
+		DelegateDbgModel2TargetObject delegate =
+			new DelegateDbgModel2TargetObject(getModel(), p, key, modelObject, mixins);
 		return delegate;
 	}
 
@@ -226,41 +222,41 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 	protected void checkExited(DbgState state, DbgCause cause) {
 		TargetExecutionState exec = TargetExecutionState.INACTIVE;
 		switch (state) {
-		case NOT_STARTED: {
-			exec = TargetExecutionState.INACTIVE;
-			break;
-		}
-		case STARTING: {
-			exec = TargetExecutionState.ALIVE;
-			break;
-		}
-		case RUNNING: {
-			exec = TargetExecutionState.RUNNING;
-			resetModified();
-			onRunning();
-			break;
-		}
-		case STOPPED: {
-			exec = TargetExecutionState.STOPPED;
-			onStopped();
-			break;
-		}
-		case EXIT: {
-			exec = TargetExecutionState.TERMINATED;
-			onExit();
-			break;
-		}
-		case SESSION_EXIT: {
-			getModel().close();
-			return;
-		}
+			case NOT_STARTED: {
+				exec = TargetExecutionState.INACTIVE;
+				break;
+			}
+			case STARTING: {
+				exec = TargetExecutionState.ALIVE;
+				break;
+			}
+			case RUNNING: {
+				exec = TargetExecutionState.RUNNING;
+				resetModified();
+				onRunning();
+				break;
+			}
+			case STOPPED: {
+				exec = TargetExecutionState.STOPPED;
+				onStopped();
+				break;
+			}
+			case EXIT: {
+				exec = TargetExecutionState.TERMINATED;
+				onExit();
+				break;
+			}
+			case SESSION_EXIT: {
+				getModel().close();
+				return;
+			}
 		}
 		if (proxy instanceof TargetExecutionStateful) {
 			if (proxy instanceof DbgModelTargetSession) {
 				if (state != DbgState.EXIT) {
 					setExecutionState(exec, "Refreshed");
 				}
-			} 
+			}
 			else {
 				TargetExecutionState previous = this.getExecutionState();
 				if (!previous.equals(TargetExecutionState.INACTIVE)) {
@@ -368,7 +364,7 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 		}
 		if (proxy instanceof TargetAccessConditioned) {
 			changeAttributes(List.of(), List.of(), Map.of( //
-					TargetAccessConditioned.ACCESSIBLE_ATTRIBUTE_NAME, accessible //
+				TargetAccessConditioned.ACCESSIBLE_ATTRIBUTE_NAME, accessible //
 			), "Accessibility changed");
 		}
 	}
@@ -420,16 +416,18 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 			List<DelegateDbgModel2TargetObject> delegates = new ArrayList<>();
 			TargetObject stack = (TargetObject) getCachedAttribute("Stack");
 			if (stack != null) {
-				DbgModelTargetStack frames = (DbgModelTargetStack) stack.getCachedAttribute("Frames");
+				DbgModelTargetStack frames =
+					(DbgModelTargetStack) stack.getCachedAttribute("Frames");
 				delegates.add((DelegateDbgModel2TargetObject) frames.getDelegate());
 			}
-			DbgModelTargetRegisterContainer container = (DbgModelTargetRegisterContainer) getCachedAttribute(
-					"Registers");
+			DbgModelTargetRegisterContainer container =
+				(DbgModelTargetRegisterContainer) getCachedAttribute("Registers");
 			if (container == null) {
 				return;
 			}
 			delegates.add((DelegateDbgModel2TargetObject) container.getDelegate());
-			DbgModelTargetRegisterBank bank = (DbgModelTargetRegisterBank) container.getCachedAttribute("User");
+			DbgModelTargetRegisterBank bank =
+				(DbgModelTargetRegisterBank) container.getCachedAttribute("User");
 			if (bank == null) {
 				return;
 			}
@@ -457,7 +455,8 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 				for (TargetObject obj : getCachedElements().values()) {
 					if (obj instanceof TargetStackFrame) {
 						DbgModelTargetObject frame = (DbgModelTargetObject) obj;
-						DelegateDbgModel2TargetObject delegate = (DelegateDbgModel2TargetObject) frame.getDelegate();
+						DelegateDbgModel2TargetObject delegate =
+							(DelegateDbgModel2TargetObject) frame.getDelegate();
 						delegate.threadStateChangedSpecific(state, reason);
 					}
 				}

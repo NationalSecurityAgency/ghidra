@@ -15,7 +15,7 @@
  */
 package docking.widgets.table;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.util.List;
 
@@ -389,7 +389,7 @@ public class GhidraTableFilterTest extends AbstractGhidraHeadedIntegrationTest {
 	private void setFilterOptions(TextFilterStrategy filterStrategy, boolean inverted,
 			boolean multiTerm, char splitter, MultitermEvaluationMode evalMode) {
 		filterPanel.setFilterOptions(new FilterOptions(filterStrategy, false, false, inverted,
-			multiTerm, splitter, evalMode));
+			false, multiTerm, splitter, evalMode));
 		waitForSwing();
 	}
 

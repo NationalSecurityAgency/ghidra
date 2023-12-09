@@ -54,7 +54,7 @@ class GlobalReferenceIterator implements ParsingIterator<MsSymbolIterator> {
 				"Cannot create " + getClass() + " because PDB Debug Info is null");
 		}
 		symbolsStreamNumber = debugInfo.getSymbolRecordsStreamNumber();
-		if (symbolsStreamNumber == 0xffff) {
+		if (symbolsStreamNumber == MsfStream.NIL_STREAM_NUMBER) {
 			throw new PdbException(
 				"Cannot create " + getClass() + " because there is no symbol stream");
 		}

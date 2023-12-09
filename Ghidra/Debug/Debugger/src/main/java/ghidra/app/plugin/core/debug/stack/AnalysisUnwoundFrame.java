@@ -21,8 +21,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import ghidra.app.plugin.core.bookmark.BookmarkNavigator;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.services.DebuggerControlService.StateEditor;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.BytesPcodeArithmetic;

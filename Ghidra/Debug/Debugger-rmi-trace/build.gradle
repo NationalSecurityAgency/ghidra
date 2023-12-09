@@ -27,6 +27,7 @@ eclipse.project.name = 'Debug Debugger-rmi-trace'
 dependencies {
 	api project(':Pty')
 	api project(':Debugger')
+	api project(':Debugger-api')
 }
 
 task generateProtoPy {

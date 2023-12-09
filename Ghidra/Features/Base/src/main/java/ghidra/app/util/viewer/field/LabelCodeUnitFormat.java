@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +14,8 @@
  * limitations under the License.
  */
 package ghidra.app.util.viewer.field;
+
+import javax.help.UnsupportedOperationException;
 
 import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.address.Address;
@@ -35,7 +36,10 @@ public class LabelCodeUnitFormat extends BrowserCodeUnitFormat {
 
 	@Override
 	protected String getOffcutLabelStringForInstruction(Address offcutAddress,
-			Instruction instruction) {
+			Instruction instruction, Address markupAddress) {
+		if (markupAddress != null) {
+			throw new UnsupportedOperationException();
+		}
 		Program program = instruction.getProgram();
 		Symbol offsym = program.getSymbolTable().getPrimarySymbol(offcutAddress);
 		Address instructionAddress = instruction.getMinAddress();

@@ -280,7 +280,7 @@ public interface TargetMethod extends TargetObject {
 		 * @param <T> the type of the parameter
 		 * @param type the class representing the type of the parameter
 		 * @param name the name of the parameter
-		 * @param choices the non-empty set of choices
+		 * @param choices the non-empty set of choices. The first is the default.
 		 * @param display the human-readable name of this parameter
 		 * @param description the human-readable description of this parameter
 		 * @return the new parameter description
@@ -288,6 +288,27 @@ public interface TargetMethod extends TargetObject {
 		public static <T> ParameterDescription<T> choices(Class<T> type, String name,
 				Collection<T> choices, String display, String description) {
 			T defaultValue = choices.iterator().next();
+			return new ParameterDescription<>(type, name, false, defaultValue, display, description,
+				choices);
+		}
+
+		/**
+		 * Create a parameter having enumerated choices
+		 * 
+		 * @param <T> the type of the parameter
+		 * @param type the class representing the type of the parameter
+		 * @param name the name of the parameter
+		 * @param choices the non-empty set of choices
+		 * @param defaultValue the default value of this parameter
+		 * @param display the human-readable name of this parameter
+		 * @param description the human-readable description of this parameter
+		 * @return the new parameter description
+		 */
+		public static <T> ParameterDescription<T> choices(Class<T> type, String name,
+				Collection<T> choices, T defaultValue, String display, String description) {
+			if (!choices.contains(defaultValue)) {
+				throw new IllegalArgumentException("Default must be one of the choices.");
+			}
 			return new ParameterDescription<>(type, name, false, defaultValue, display, description,
 				choices);
 		}
@@ -440,7 +461,7 @@ public interface TargetMethod extends TargetObject {
 			}
 			if (required) {
 				throw new DebuggerIllegalArgumentException(
-					"Missing required parameter '" + name + "'");
+					"Missing required parameter '" + display + "' (" + name + ")");
 			}
 			return defaultValue;
 		}
@@ -618,7 +639,7 @@ public interface TargetMethod extends TargetObject {
 	 * @param permitExtras false to require every named argument has a named parameter
 	 * @return the map of validated arguments
 	 */
-	static Map<String, ?> validateArguments(Map<String, ParameterDescription<?>> parameters,
+	static Map<String, Object> validateArguments(Map<String, ParameterDescription<?>> parameters,
 			Map<String, ?> arguments, boolean permitExtras) {
 		if (!permitExtras) {
 			if (!parameters.keySet().containsAll(arguments.keySet())) {

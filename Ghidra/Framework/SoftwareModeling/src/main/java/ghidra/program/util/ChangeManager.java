@@ -505,6 +505,21 @@ public interface ChangeManager {
 	 */
 	public static final int DOCR_OBJECT_CREATED = 132;
 
+	/**
+	 * An overlay address space was added.
+	 */
+	public static final int DOCR_OVERLAY_SPACE_ADDED = 133;
+
+	/**
+	 * An overlay address space was removed.
+	 */
+	public static final int DOCR_OVERLAY_SPACE_REMOVED = 134;
+
+	/**
+	 * An overlay address space was renamed.
+	 */
+	public static final int DOCR_OVERLAY_SPACE_RENAMED = 135;
+
 	///////////////////////////////////////////////////////////////////////
 	//
 	//                       Trees 
@@ -840,8 +855,8 @@ public interface ChangeManager {
 	 * @param newValue new value or an Object that is related to the
 	 * the event
 	 */
-	public void setObjChanged(int type, AddressSetView addrSet, Object affectedObj,
-			Object oldValue, Object newValue);
+	public void setObjChanged(int type, AddressSetView addrSet, Object affectedObj, Object oldValue,
+			Object newValue);
 
 	/**
 	 * Mark the state of a Program as having changed and generate

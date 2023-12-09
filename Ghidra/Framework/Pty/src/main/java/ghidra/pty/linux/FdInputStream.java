@@ -18,6 +18,7 @@ package ghidra.pty.linux;
 import java.io.IOException;
 import java.io.InputStream;
 
+import com.sun.jna.LastErrorException;
 import com.sun.jna.Memory;
 
 /**
@@ -32,7 +33,7 @@ public class FdInputStream extends InputStream {
 	private static final PosixC LIB_POSIX = PosixC.INSTANCE;
 
 	private final int fd;
-	private boolean closed = false;
+	private volatile boolean closed = false;
 
 	/**
 	 * Wrap the given file descriptor in an {@link InputStream}
@@ -69,13 +70,23 @@ public class FdInputStream extends InputStream {
 			return 0;
 		}
 		Memory buf = new Memory(len);
-		int ret = LIB_POSIX.read(fd, buf, len);
+		int ret;
+		try {
+			ret = LIB_POSIX.read(fd, buf, len);
+		}
+		catch (LastErrorException e) {
+			if (e.getErrorCode() == 5 || e.getErrorCode() == 9) {
+				throw new IOException(e);
+			}
+			throw e;
+		}
 		buf.read(0, b, off, ret);
 		return ret;
 	}
 
 	@Override
-	public synchronized void close() throws IOException {
+	public void close() throws IOException {
 		closed = true;
+		// NB. The Pty is responsible for closing the fd
 	}
 }

@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
 
+import ghidra.app.util.bin.format.pdb2.pdbreader.msf.MsfStream;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
@@ -417,7 +418,7 @@ public abstract class TypeProgramInterface implements TPI {
 		protected void initHeader200500(int hashStreamNumberParam, int typeIndexMinParam,
 				int typeIndexMaxExclusiveParam) throws PdbException {
 			hashStreamNumber = hashStreamNumberParam;
-			hashStreamNumberAuxiliary = 0xffff;
+			hashStreamNumberAuxiliary = MsfStream.NIL_STREAM_NUMBER;
 			hashKeySize = 2;
 			numHashBins = 0x1000;
 			offsetHashVals = 0;
@@ -449,7 +450,7 @@ public abstract class TypeProgramInterface implements TPI {
 			//  contents might need to get concatenated with the contents of the primary
 			//  stream before the processing takes place, but the API does not show it being
 			//  used at all.
-			if (hashStreamNumber == 0xffff) {
+			if (hashStreamNumber == MsfStream.NIL_STREAM_NUMBER) {
 				return;
 			}
 			PdbByteReader reader = pdb.getReaderForStreamNumber(hashStreamNumber);
@@ -468,7 +469,7 @@ public abstract class TypeProgramInterface implements TPI {
 			deserializeTypeIndexOffsetPairs(typeInfoOffsetPairsReader, monitor);
 			deserializeHashVals(hashValsReader, monitor);
 
-			if (hashStreamNumberAuxiliary == 0xffff) {
+			if (hashStreamNumberAuxiliary == MsfStream.NIL_STREAM_NUMBER) {
 				return;
 			}
 			PdbByteReader readerAuxiliary = pdb.getReaderForStreamNumber(hashStreamNumberAuxiliary);

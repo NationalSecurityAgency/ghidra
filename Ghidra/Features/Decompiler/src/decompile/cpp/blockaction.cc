@@ -1188,13 +1188,11 @@ void CollapseStructure::orderLoopBodies(void)
 bool CollapseStructure::updateLoopBody(void)
 
 {
+  if (finaltrace) {		// If we've already performed trace on DAG with no likely goto edges
+    return false;		// don't repeat the trace
+  }
   FlowBlock *loopbottom = (FlowBlock *)0;
   FlowBlock *looptop = (FlowBlock *)0;
-  if (finaltrace) {		// If we've already performed the final trace
-    if (likelyiter == likelygoto.end())
-      return false;		// We have nothing more to give
-    return true;
-  }
   while (loopbodyiter != loopbody.end()) {	// Last innermost loop
     loopbottom = (*loopbodyiter).getCurrentBounds(&looptop,&graph);
     if (loopbottom != (FlowBlock *)0) {
@@ -1206,8 +1204,10 @@ bool CollapseStructure::updateLoopBody(void)
     likelylistfull = false;	// Need to generate likely list for new loopbody (or no loopbody)
     loopbottom = (FlowBlock *)0;
   }
-  if (likelylistfull) return true;
-  // If we reach here, need to generate likely gotos for a new inner loop
+  if (likelylistfull && likelyiter != likelygoto.end())
+      return true;
+
+  // If we reach here, need to generate likely gotos for a new inner loop or DAG
   likelygoto.clear();		// Clear out any old likely gotos from last inner loop
   TraceDAG tracer(likelygoto);
   if (loopbottom != (FlowBlock *)0) {
@@ -1216,7 +1216,6 @@ bool CollapseStructure::updateLoopBody(void)
     (*loopbodyiter).setExitMarks(&graph); // Set the bounds of the TraceDAG
   }
   else {
-    finaltrace = true;
     for(uint4 i=0;i<graph.getSize();++i) {
       FlowBlock *bl = graph.getBlock(i);
       if (bl->sizeIn() == 0)
@@ -1225,11 +1224,15 @@ bool CollapseStructure::updateLoopBody(void)
   }
   tracer.initialize();
   tracer.pushBranches();
+  likelylistfull = true;		// Mark likelygoto generation complete for current loop or DAG
   if (loopbottom != (FlowBlock *)0) {
     (*loopbodyiter).emitLikelyEdges(likelygoto,&graph);
     (*loopbodyiter).clearExitMarks(&graph);
   }
-  likelylistfull = true;
+  else if (likelygoto.empty()) {
+    finaltrace = true;		// No loops left and trace didn't find gotos
+    return false;
+  }
   likelyiter = likelygoto.begin();
   return true;
 }

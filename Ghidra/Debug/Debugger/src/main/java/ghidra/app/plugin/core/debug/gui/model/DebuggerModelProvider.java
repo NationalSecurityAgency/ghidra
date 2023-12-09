@@ -31,7 +31,6 @@ import docking.action.ToggleDockingAction;
 import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import generic.theme.GColor;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
@@ -42,6 +41,7 @@ import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTreeModel.AbstractNode;
 import ghidra.app.plugin.core.debug.gui.model.PathTableModel.PathRow;
 import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.AutoConfigState;
 import ghidra.framework.plugintool.AutoService;
@@ -453,7 +453,8 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		if (parent == null) {
 			return null;
 		}
-		for (TraceObjectValue value : parent.getValues()) {
+		for (TraceObjectValue value : parent.getValues(
+			isLimitToCurrentSnap() ? Lifespan.at(current.getSnap()) : Lifespan.ALL)) {
 			if (Objects.equals(object, value.getValue())) {
 				return value.getCanonicalPath();
 			}

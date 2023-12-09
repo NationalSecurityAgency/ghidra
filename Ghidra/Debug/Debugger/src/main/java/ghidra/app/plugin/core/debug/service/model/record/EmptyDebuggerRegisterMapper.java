@@ -17,9 +17,8 @@ package ghidra.app.plugin.core.debug.service.model.record;
 
 import java.util.Set;
 
-import ghidra.app.plugin.core.debug.mapping.DebuggerRegisterMapper;
-import ghidra.app.plugin.core.debug.register.RegisterTypeInfo;
 import ghidra.dbg.target.TargetRegister;
+import ghidra.debug.api.model.DebuggerRegisterMapper;
 import ghidra.program.model.lang.Register;
 
 public class EmptyDebuggerRegisterMapper implements DebuggerRegisterMapper {
@@ -40,11 +39,6 @@ public class EmptyDebuggerRegisterMapper implements DebuggerRegisterMapper {
 
 	@Override
 	public Register targetToTrace(TargetRegister tReg) {
-		return null;
-	}
-
-	@Override
-	public RegisterTypeInfo getDefaultTypeInfo(Register lReg) {
 		return null;
 	}
 

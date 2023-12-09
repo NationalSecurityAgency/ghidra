@@ -207,6 +207,11 @@ class DockableToolBarManager {
 		@Override
 		public boolean isEnabledForContext(ActionContext context) {
 			ComponentProvider provider = context.getComponentProvider();
+			if (provider == null) {
+				// Some context providers do not specify the provider when creating a contexts
+				DockingWindowManager dwm = DockingWindowManager.getActiveInstance();
+				provider = dwm.getActiveComponentProvider();
+			}
 			return provider == dockableComponent.getComponentProvider();
 		}
 	}

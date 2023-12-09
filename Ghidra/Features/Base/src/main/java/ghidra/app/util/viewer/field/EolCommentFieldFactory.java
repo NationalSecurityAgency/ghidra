@@ -16,6 +16,7 @@
 package ghidra.app.util.viewer.field;
 
 import java.awt.Color;
+import java.beans.PropertyEditor;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,57 +29,49 @@ import ghidra.app.util.viewer.field.ListingColors.CommentColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.proxy.ProxyObj;
-import ghidra.framework.options.Options;
-import ghidra.framework.options.ToolOptions;
+import ghidra.framework.options.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.bean.field.AnnotatedTextFieldElement;
+import ghidra.util.exception.AssertException;
 
 /**
-  *  Generates End of line comment Fields.
-  */
+ * Generates End of line comment Fields.
+ */
 public class EolCommentFieldFactory extends FieldFactory {
 	public static final String FIELD_NAME = "EOL Comment";
 	private static final String GROUP_TITLE = "EOL Comments Field";
 	private static final String SEMICOLON_PREFIX = "; ";
-	public static final String ENABLE_WORD_WRAP_MSG =
+
+	public static final String ENABLE_WORD_WRAP_KEY =
 		GROUP_TITLE + Options.DELIMITER + FieldUtils.WORD_WRAP_OPTION_NAME;
-	public static final String MAX_DISPLAY_LINES_MSG =
-		GROUP_TITLE + Options.DELIMITER + "Maximum Lines To Display";
-	public static final String ENABLE_SHOW_SEMICOLON_MSG =
-		GROUP_TITLE + Options.DELIMITER + "Show Semicolon at Start of Each Line";
-	public static final String ENABLE_ALWAYS_SHOW_REPEATABLE_MSG =
-		GROUP_TITLE + Options.DELIMITER + "Always Show the Repeatable Comment";
-	public static final String ENABLE_ALWAYS_SHOW_REF_REPEATABLE_MSG =
-		GROUP_TITLE + Options.DELIMITER + "Always Show the Referenced Repeatable Comments";
-	public static final String ENABLE_ALWAYS_SHOW_AUTOMATIC_MSG =
-		GROUP_TITLE + Options.DELIMITER + "Always Show the Automatic Comment";
-	public static final String USE_ABBREVIATED_AUTOMITIC_COMMENT_MSG =
-		GROUP_TITLE + Options.DELIMITER + "Use Abbreviated Automatic Comments";
-	public static final String SHOW_FUNCTION_AUTOMITIC_COMMENT_MSG =
-		GROUP_TITLE + Options.DELIMITER + "Show Function Reference Automatic Comments";
-	public static final String ENABLE_PREPEND_REF_ADDRESS_MSG =
-		GROUP_TITLE + Options.DELIMITER + "Prepend the Address to Each Referenced Comment";
+	public static final String MAX_DISPLAY_LINES_KEY =
+		GROUP_TITLE + Options.DELIMITER + "Maximum Lines";
+	public static final String ENABLE_SHOW_SEMICOLON_KEY =
+		GROUP_TITLE + Options.DELIMITER + "Prepend Semicolon";
+	public static final String ENABLE_PREPEND_REF_ADDRESS_KEY =
+		GROUP_TITLE + Options.DELIMITER + "Prepend Address to References";
+	public static final String EXTRA_COMMENT_KEY =
+		GROUP_TITLE + Options.DELIMITER + "Auto Comments";
+
 	public static final Color DEFAULT_COLOR = Palette.BLUE;
 
 	private boolean isWordWrap;
 	private int maxDisplayLines;
 	private boolean showSemicolon;
-	private boolean alwaysShowRepeatable;
-	private boolean alwaysShowRefRepeatables;
-	private boolean alwaysShowAutomatic;
-	private boolean useAbbreviatedAutomatic;
-	private boolean showAutomaticFunctions;
 	private boolean prependRefAddress;
 	private int repeatableCommentStyle;
 	private int automaticCommentStyle;
 	private int refRepeatableCommentStyle;
 
-	// The codeUnitFormatOptions is used to monitor "follow pointer..." option to avoid
-	// duplication of data within auto-comment.  We don't bother adding a listener
-	// to kick the model since this is done by the operand field.
+	private EolExtraCommentsOption extraCommentsOption = new EolExtraCommentsOption();
+	private PropertyEditor extraCommmentsEditor = new EolExtraCommentsPropertyEditor();
+
+	// The codeUnitFormatOptions is used to monitor "follow pointer..." option to avoid duplication
+	// of data within auto-comment.  We don't bother adding a listener to kick the model since this
+	// is done by the operand field.
 	private BrowserCodeUnitFormatOptions codeUnitFormatOptions;
 
 	/**
@@ -100,55 +93,48 @@ public class EolCommentFieldFactory extends FieldFactory {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 		HelpLocation hl = new HelpLocation("CodeBrowserPlugin", "EOL_Comments_Field");
 
-		fieldOptions.registerOption(MAX_DISPLAY_LINES_MSG, 6, hl,
+		fieldOptions.registerOption(MAX_DISPLAY_LINES_KEY, 6, hl,
 			"The maximum number of lines used to display the end-of-line comment.");
-		fieldOptions.registerOption(ENABLE_WORD_WRAP_MSG, false, hl,
+		fieldOptions.registerOption(ENABLE_WORD_WRAP_KEY, false, hl,
 			FieldUtils.WORD_WRAP_OPTION_DESCRIPTION);
 
-		fieldOptions.registerOption(ENABLE_SHOW_SEMICOLON_MSG, false, hl,
+		fieldOptions.registerOption(ENABLE_SHOW_SEMICOLON_KEY, false, hl,
 			"Displays a semi-colon before each line in the end-of-line comment. " +
 				"This option is ignored if word wrapping is on.");
 
-		fieldOptions.registerOption(ENABLE_ALWAYS_SHOW_REPEATABLE_MSG, false, hl,
-			"Displays all referenced repeatable comments even if there is an EOL " +
-				"or repeatable comment at the code unit.");
-
-		fieldOptions.registerOption(ENABLE_ALWAYS_SHOW_REF_REPEATABLE_MSG, false, hl,
-			"Displays all referenced repeatable comments even if there is an EOL " +
-				"or repeatable comment at the code unit.");
-		fieldOptions.registerOption(ENABLE_ALWAYS_SHOW_AUTOMATIC_MSG, false, hl,
-			"Displays an automatic comment whenever one exists instead of only if there " +
-				"aren't any EOL or repeatable comments.");
-		fieldOptions.registerOption(USE_ABBREVIATED_AUTOMITIC_COMMENT_MSG, true, hl,
-			"When showing automatic comments, show the smallest amount of information possible");
-		fieldOptions.registerOption(SHOW_FUNCTION_AUTOMITIC_COMMENT_MSG, true, hl,
-			"When showing automatic comments, show direct function references");
-
-		fieldOptions.registerOption(ENABLE_PREPEND_REF_ADDRESS_MSG, false, hl,
+		fieldOptions.registerOption(ENABLE_PREPEND_REF_ADDRESS_KEY, false, hl,
 			"Displays the address before each referenced repeatable comment.");
 
-		maxDisplayLines = fieldOptions.getInt(MAX_DISPLAY_LINES_MSG, 6);
-		isWordWrap = fieldOptions.getBoolean(ENABLE_WORD_WRAP_MSG, false);
+		maxDisplayLines = fieldOptions.getInt(MAX_DISPLAY_LINES_KEY, 6);
+		isWordWrap = fieldOptions.getBoolean(ENABLE_WORD_WRAP_KEY, false);
 		repeatableCommentStyle =
 			displayOptions.getInt(OptionsGui.COMMENT_REPEATABLE.getStyleOptionName(), -1);
 		automaticCommentStyle =
 			displayOptions.getInt(OptionsGui.COMMENT_AUTO.getStyleOptionName(), -1);
 		refRepeatableCommentStyle =
 			displayOptions.getInt(OptionsGui.COMMENT_REF_REPEAT.getStyleOptionName(), -1);
-		showSemicolon = fieldOptions.getBoolean(ENABLE_SHOW_SEMICOLON_MSG, false);
-		alwaysShowRepeatable = fieldOptions.getBoolean(ENABLE_ALWAYS_SHOW_REPEATABLE_MSG, false);
-		alwaysShowRefRepeatables =
-			fieldOptions.getBoolean(ENABLE_ALWAYS_SHOW_REF_REPEATABLE_MSG, false);
-		alwaysShowAutomatic = fieldOptions.getBoolean(ENABLE_ALWAYS_SHOW_AUTOMATIC_MSG, false);
-		useAbbreviatedAutomatic =
-			fieldOptions.getBoolean(USE_ABBREVIATED_AUTOMITIC_COMMENT_MSG, true);
-		showAutomaticFunctions = fieldOptions.getBoolean(SHOW_FUNCTION_AUTOMITIC_COMMENT_MSG, true);
-
-		prependRefAddress = fieldOptions.getBoolean(ENABLE_PREPEND_REF_ADDRESS_MSG, false);
+		showSemicolon = fieldOptions.getBoolean(ENABLE_SHOW_SEMICOLON_KEY, false);
+		prependRefAddress = fieldOptions.getBoolean(ENABLE_PREPEND_REF_ADDRESS_KEY, false);
 
 		fieldOptions.getOptions(GROUP_TITLE).setOptionsHelpLocation(hl);
 
 		codeUnitFormatOptions = new BrowserCodeUnitFormatOptions(fieldOptions, true);
+
+		setupAutoCommentOptions(fieldOptions, hl);
+	}
+
+	private void setupAutoCommentOptions(Options fieldOptions, HelpLocation hl) {
+		fieldOptions.registerOption(EXTRA_COMMENT_KEY, OptionType.CUSTOM_TYPE,
+			new EolExtraCommentsOption(), hl, "The group of auto comment options",
+			extraCommmentsEditor);
+		CustomOption customOption = fieldOptions.getCustomOption(EXTRA_COMMENT_KEY, null);
+
+		if (!(customOption instanceof EolExtraCommentsOption)) {
+			throw new AssertException("Someone set an option for " + EXTRA_COMMENT_KEY +
+				" that is not the expected " + EolExtraCommentsOption.class.getName() + " type.");
+		}
+
+		extraCommentsOption = (EolExtraCommentsOption) customOption;
 	}
 
 	/**
@@ -161,28 +147,19 @@ public class EolCommentFieldFactory extends FieldFactory {
 	@Override
 	public void fieldOptionsChanged(Options options, String optionName, Object oldValue,
 			Object newValue) {
-		if (optionName.equals(MAX_DISPLAY_LINES_MSG)) {
+		if (optionName.equals(MAX_DISPLAY_LINES_KEY)) {
 			setMaximumLinesToDisplay(((Integer) newValue).intValue(), options);
 		}
-		else if (optionName.equals(ENABLE_WORD_WRAP_MSG)) {
+		else if (optionName.equals(ENABLE_WORD_WRAP_KEY)) {
 			isWordWrap = ((Boolean) newValue).booleanValue();
 		}
-		else if (optionName.equals(ENABLE_SHOW_SEMICOLON_MSG)) {
+		else if (optionName.equals(ENABLE_SHOW_SEMICOLON_KEY)) {
 			showSemicolon = ((Boolean) newValue).booleanValue();
 		}
-		else if (optionName.equals(ENABLE_ALWAYS_SHOW_REPEATABLE_MSG)) {
-			alwaysShowRepeatable = ((Boolean) newValue).booleanValue();
+		else if (optionName.equals(EXTRA_COMMENT_KEY)) {
+			extraCommentsOption = (EolExtraCommentsOption) newValue;
 		}
-		else if (optionName.equals(ENABLE_ALWAYS_SHOW_REF_REPEATABLE_MSG)) {
-			alwaysShowRefRepeatables = ((Boolean) newValue).booleanValue();
-		}
-		else if (optionName.equals(ENABLE_ALWAYS_SHOW_AUTOMATIC_MSG)) {
-			alwaysShowAutomatic = ((Boolean) newValue).booleanValue();
-		}
-		else if (optionName.equals(USE_ABBREVIATED_AUTOMITIC_COMMENT_MSG)) {
-			useAbbreviatedAutomatic = ((Boolean) newValue).booleanValue();
-		}
-		else if (optionName.equals(ENABLE_PREPEND_REF_ADDRESS_MSG)) {
+		else if (optionName.equals(ENABLE_PREPEND_REF_ADDRESS_KEY)) {
 			prependRefAddress = ((Boolean) newValue).booleanValue();
 		}
 	}
@@ -249,7 +226,7 @@ public class EolCommentFieldFactory extends FieldFactory {
 	private void setMaximumLinesToDisplay(int maxLines, Options options) {
 		if (maxLines < 1) {
 			maxLines = 1;
-			options.setInt(MAX_DISPLAY_LINES_MSG, maxLines);
+			options.setInt(MAX_DISPLAY_LINES_KEY, maxLines);
 		}
 		maxDisplayLines = maxLines;
 	}
@@ -279,57 +256,42 @@ public class EolCommentFieldFactory extends FieldFactory {
 			}
 		}
 
-		DisplayableEol displayableEol =
-			new DisplayableEol(cu, alwaysShowRepeatable, alwaysShowRefRepeatables,
-				alwaysShowAutomatic, codeUnitFormatOptions.followReferencedPointers(),
-				maxDisplayLines, useAbbreviatedAutomatic, showAutomaticFunctions);
-
-		List<FieldElement> elementList = new ArrayList<>();
+		EolComments comments = new EolComments(cu, codeUnitFormatOptions.followReferencedPointers(),
+			maxDisplayLines, extraCommentsOption);
 
 		// This Code Unit's End of Line Comment
-		AttributedString myEolPrefixString = new AttributedString(SEMICOLON_PREFIX,
-			CommentColors.EOL, getMetrics(style), false, null);
-		String[] eolComments = displayableEol.getEOLComments();
-		List<FieldElement> eolFieldElements = convertToFieldElements(program, eolComments,
-			myEolPrefixString, showSemicolon, isWordWrap, getNextRow(elementList));
-		elementList.addAll(eolFieldElements);
+		List<FieldElement> elementList = new ArrayList<>();
+		AttributedString prefix = createPrefix(CommentStyle.EOL);
+		List<String> eols = comments.getEOLComments();
+		List<FieldElement> eolElements = convertToFieldElements(program, eols, prefix, 0);
+		elementList.addAll(eolElements);
 
-		// This Code Unit's Repeatable Comment
-		if (alwaysShowRepeatable || elementList.isEmpty()) {
-			AttributedString myRepeatablePrefixString = new AttributedString(SEMICOLON_PREFIX,
-				CommentColors.REPEATABLE, getMetrics(repeatableCommentStyle), false, null);
-			String[] repeatableComments = displayableEol.getRepeatableComments();
-			List<FieldElement> repeatableFieldElements =
-				convertToFieldElements(program, repeatableComments, myRepeatablePrefixString,
-					showSemicolon, isWordWrap, getNextRow(elementList));
-			elementList.addAll(repeatableFieldElements);
+		if (comments.isShowingRepeatables()) {
+			prefix = createPrefix(CommentStyle.REPEATABLE);
+			int row = getNextRow(elementList);
+			List<String> repeatables = comments.getRepeatableComments();
+			List<FieldElement> elements = convertToFieldElements(program, repeatables, prefix, row);
+			elementList.addAll(elements);
 		}
 
-		// Referenced Repeatable Comments
-		if (alwaysShowRefRepeatables || elementList.isEmpty()) {
-			AttributedString refRepeatPrefixString = new AttributedString(SEMICOLON_PREFIX,
-				CommentColors.REF_REPEATABLE, getMetrics(refRepeatableCommentStyle), false, null);
-			int refRepeatCount = displayableEol.getReferencedRepeatableCommentsCount();
-			for (int subTypeIndex = 0; subTypeIndex < refRepeatCount; subTypeIndex++) {
-				RefRepeatComment refRepeatComment =
-					displayableEol.getReferencedRepeatableComments(subTypeIndex);
-				String[] refRepeatComments = refRepeatComment.getCommentLines();
-				List<FieldElement> refRepeatFieldElements = convertToRefFieldElements(
-					refRepeatComments, program, refRepeatPrefixString, showSemicolon, isWordWrap,
-					prependRefAddress, refRepeatComment.getAddress(), getNextRow(elementList));
-				elementList.addAll(refRepeatFieldElements);
+		if (comments.isShowingRefRepeatables()) {
+			prefix = createPrefix(CommentStyle.REF_REPEATABLE);
+			List<RefRepeatComment> refRepeatables = comments.getReferencedRepeatableComments();
+			for (RefRepeatComment comment : refRepeatables) {
+				int row = getNextRow(elementList);
+				String[] lines = comment.getCommentLines();
+				List<FieldElement> elements =
+					convertToRefFieldElements(lines, program, prefix, comment.getAddress(), row);
+				elementList.addAll(elements);
 			}
 		}
 
-		// Automatic Comment
-		if (alwaysShowAutomatic || elementList.isEmpty()) {
-			AttributedString autoCommentPrefixString = new AttributedString(SEMICOLON_PREFIX,
-				CommentColors.AUTO, getMetrics(automaticCommentStyle), false, null);
-			String[] autoComment = displayableEol.getAutomaticComment();
-			List<FieldElement> autoCommentFieldElements =
-				convertToFieldElements(program, autoComment, autoCommentPrefixString, showSemicolon,
-					isWordWrap, getNextRow(elementList));
-			elementList.addAll(autoCommentFieldElements);
+		if (comments.isShowingAutoComments()) {
+			prefix = createPrefix(CommentStyle.AUTO);
+			int row = getNextRow(elementList);
+			List<String> autos = comments.getAutomaticComment();
+			List<FieldElement> elements = convertToFieldElements(program, autos, prefix, row);
+			elementList.addAll(elements);
 		}
 
 		FieldElement[] fieldElements = elementList.toArray(new FieldElement[elementList.size()]);
@@ -338,6 +300,30 @@ public class EolCommentFieldFactory extends FieldFactory {
 		}
 		return ListingTextField.createMultilineTextField(this, proxy, fieldElements, x, width,
 			maxDisplayLines, hlProvider);
+	}
+
+	private AttributedString createPrefix(CommentStyle commentStyle) {
+		if (commentStyle == CommentStyle.EOL) {
+			return new AttributedString(SEMICOLON_PREFIX, CommentColors.EOL, getMetrics(style),
+				false, null);
+		}
+		if (commentStyle == CommentStyle.REPEATABLE) {
+			return new AttributedString(SEMICOLON_PREFIX, CommentColors.REPEATABLE,
+				getMetrics(repeatableCommentStyle), false, null);
+		}
+		if (commentStyle == CommentStyle.REF_REPEATABLE) {
+			return new AttributedString(SEMICOLON_PREFIX, CommentColors.REF_REPEATABLE,
+				getMetrics(refRepeatableCommentStyle), false, null);
+		}
+		if (commentStyle == CommentStyle.AUTO) {
+			return new AttributedString(SEMICOLON_PREFIX, CommentColors.AUTO,
+				getMetrics(automaticCommentStyle), false, null);
+		}
+		throw new AssertException("Unexected comment style: " + commentStyle);
+	}
+
+	private enum CommentStyle {
+		EOL, REPEATABLE, REF_REPEATABLE, AUTO;
 	}
 
 	private int getNextRow(List<FieldElement> elementList) {
@@ -352,43 +338,41 @@ public class EolCommentFieldFactory extends FieldFactory {
 		return 0;
 	}
 
-	private List<FieldElement> convertToFieldElements(Program program, String[] comments,
-			AttributedString currentPrefixString, boolean showPrefix, boolean wordWrap,
-			int nextRow) {
+	private List<FieldElement> convertToFieldElements(Program program, List<String> comments,
+			AttributedString prefix, int row) {
 
 		List<FieldElement> fieldElements = new ArrayList<>();
-		if (comments.length == 0) {
+		if (comments.isEmpty()) {
 			return fieldElements;
 		}
-		for (int rowIndex = 0; rowIndex < comments.length; rowIndex++) {
-			int encodedRow = nextRow + rowIndex;
-			fieldElements.add(CommentUtils.parseTextForAnnotations(comments[rowIndex], program,
-				currentPrefixString, encodedRow));
+
+		for (int commentRow = 0; commentRow < comments.size(); commentRow++) {
+			int offsetRow = row + commentRow;
+			fieldElements.add(CommentUtils.parseTextForAnnotations(comments.get(commentRow),
+				program, prefix, offsetRow));
 		}
 
-		if (wordWrap) {
-			int lineWidth = showPrefix ? width - currentPrefixString.getStringWidth() : width;
+		if (isWordWrap) {
+			int lineWidth = showSemicolon ? width - prefix.getStringWidth() : width;
 			fieldElements = FieldUtils.wrap(fieldElements, lineWidth);
 		}
 
-		if (showPrefix) {
+		if (showSemicolon) {
 			for (int i = 0; i < fieldElements.size(); i++) {
 				RowColLocation startRowCol =
 					fieldElements.get(i).getDataLocationForCharacterIndex(0);
 				int encodedRow = startRowCol.row();
 				int encodedCol = startRowCol.col();
-				FieldElement prefix =
-					new TextFieldElement(currentPrefixString, encodedRow, encodedCol);
+				FieldElement prefixElement = new TextFieldElement(prefix, encodedRow, encodedCol);
 				fieldElements.set(i,
-					new CompositeFieldElement(new FieldElement[] { prefix, fieldElements.get(i) }));
+					new CompositeFieldElement(List.of(prefixElement, fieldElements.get(i))));
 			}
 		}
 		return fieldElements;
 	}
 
 	private List<FieldElement> convertToRefFieldElements(String[] comments, Program program,
-			AttributedString currentPrefixString, boolean showPrefix, boolean wordWrap,
-			boolean showRefAddress, Address refAddress, int nextRow) {
+			AttributedString currentPrefixString, Address refAddress, int nextRow) {
 
 		int numCommentLines = comments.length;
 		List<FieldElement> fieldElements = new ArrayList<>();
@@ -400,7 +384,7 @@ public class EolCommentFieldFactory extends FieldFactory {
 			fieldElements.add(CommentUtils.parseTextForAnnotations(comments[rowIndex], program,
 				currentPrefixString, encodedRow));
 		}
-		if (showRefAddress) {
+		if (prependRefAddress) {
 			FieldElement commentElement = fieldElements.get(0);
 			// Address
 			String refAddrComment = "{@address " + refAddress.toString() + "}";
@@ -418,12 +402,12 @@ public class EolCommentFieldFactory extends FieldFactory {
 				new FieldElement[] { addressElement, spacerElement, commentElement }));
 		}
 
-		if (wordWrap) {
-			int lineWidth = showPrefix ? width - currentPrefixString.getStringWidth() : width;
+		if (isWordWrap) {
+			int lineWidth = showSemicolon ? width - currentPrefixString.getStringWidth() : width;
 			fieldElements = FieldUtils.wrap(fieldElements, lineWidth);
 		}
 
-		if (showPrefix) {
+		if (showSemicolon) {
 			for (int i = 0; i < fieldElements.size(); i++) {
 				RowColLocation startRowCol =
 					fieldElements.get(i).getDataLocationForCharacterIndex(0);
@@ -451,10 +435,8 @@ public class EolCommentFieldFactory extends FieldFactory {
 			return null;
 		}
 		CodeUnit cu = (CodeUnit) obj;
-		DisplayableEol displayableEol =
-			new DisplayableEol(cu, alwaysShowRepeatable, alwaysShowRefRepeatables,
-				alwaysShowAutomatic, codeUnitFormatOptions.followReferencedPointers(),
-				maxDisplayLines, useAbbreviatedAutomatic, showAutomaticFunctions);
+		EolComments displayableEol = new EolComments(cu,
+			codeUnitFormatOptions.followReferencedPointers(), maxDisplayLines, extraCommentsOption);
 
 		// Hold position in connected tool if navigating within semicolon.
 		int numLeadColumns = 0;
@@ -489,10 +471,8 @@ public class EolCommentFieldFactory extends FieldFactory {
 			return null;
 		}
 
-		DisplayableEol displayableEol =
-			new DisplayableEol((CodeUnit) obj, alwaysShowRepeatable, alwaysShowRefRepeatables,
-				alwaysShowAutomatic, codeUnitFormatOptions.followReferencedPointers(),
-				maxDisplayLines, useAbbreviatedAutomatic, showAutomaticFunctions);
+		EolComments displayableEol = new EolComments((CodeUnit) obj,
+			codeUnitFormatOptions.followReferencedPointers(), maxDisplayLines, extraCommentsOption);
 
 		ListingTextField btf = (ListingTextField) bf;
 		RowColLocation eolRowCol = displayableEol.getRowCol((CommentFieldLocation) loc);

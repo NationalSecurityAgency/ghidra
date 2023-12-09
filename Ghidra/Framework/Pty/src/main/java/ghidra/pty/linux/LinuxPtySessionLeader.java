@@ -68,6 +68,8 @@ public class LinuxPtySessionLeader {
 			LIB_POSIX.execv(subArgs.get(0), subArgs.toArray(new String[0]));
 		}
 		catch (Throwable t) {
+			// Print to both redirected and to inherited stderr
+			System.err.println("Could not execute " + subArgs.get(0) + ": " + t.getMessage());
 			if (bk != -1) {
 				try {
 					int bkt = bk;

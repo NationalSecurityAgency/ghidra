@@ -19,10 +19,10 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.app.plugin.core.debug.service.model.DebuggerModelServicePlugin;
 import ghidra.app.plugin.core.debug.service.model.DefaultTraceRecorder;
-import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.target.*;
+import ghidra.debug.api.model.*;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.trace.model.Trace;
@@ -97,7 +97,7 @@ public class DefaultDebuggerTargetTraceMapper implements DebuggerTargetTraceMapp
 	}
 
 	@Override
-	public TraceRecorder startRecording(DebuggerModelServicePlugin service, Trace trace) {
-		return new DefaultTraceRecorder(service, trace, target, this);
+	public TraceRecorder startRecording(PluginTool tool, Trace trace) {
+		return new DefaultTraceRecorder(tool, trace, target, this);
 	}
 }

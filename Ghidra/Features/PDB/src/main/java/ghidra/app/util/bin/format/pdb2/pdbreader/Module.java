@@ -73,7 +73,7 @@ public class Module {
 
 	private void precalculateStreamLocations() {
 		streamNumber = moduleInformation.getStreamNumberDebugInformation();
-		if (streamNumber == 0xffff) {
+		if (streamNumber == MsfStream.NIL_STREAM_NUMBER) {
 			return;
 		}
 		stream = pdb.getMsf().getStream(streamNumber);
@@ -272,7 +272,7 @@ public class Module {
 
 	private PdbByteReader getReader(int offset, int size, String sectionName)
 			throws CancelledException {
-		if (streamNumber == 0xffff) {
+		if (streamNumber == MsfStream.NIL_STREAM_NUMBER) {
 			return PdbByteReader.DUMMY;
 		}
 

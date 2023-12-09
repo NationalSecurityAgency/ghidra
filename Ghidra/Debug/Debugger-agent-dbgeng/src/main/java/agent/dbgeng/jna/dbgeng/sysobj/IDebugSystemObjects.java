@@ -103,4 +103,6 @@ public interface IDebugSystemObjects extends IUnknown {
 
 	HRESULT GetCurrentProcessDataOffset(ULONGLONGByReference SysOffset);
 
+	HRESULT GetCurrentProcessExecutableName(byte[] Buffer, ULONG BufferSize, ULONGByReference ExeSize);
+
 }

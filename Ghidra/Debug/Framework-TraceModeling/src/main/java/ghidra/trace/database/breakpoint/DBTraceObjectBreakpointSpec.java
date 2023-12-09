@@ -46,7 +46,7 @@ public class DBTraceObjectBreakpointSpec
 		implements TraceObjectBreakpointSpec, DBTraceObjectInterface {
 	private final DBTraceObject object;
 
-	private TraceBreakpointKindSet kinds;
+	private TraceBreakpointKindSet kinds = TraceBreakpointKindSet.of();
 
 	public DBTraceObjectBreakpointSpec(DBTraceObject object) {
 		this.object = object;

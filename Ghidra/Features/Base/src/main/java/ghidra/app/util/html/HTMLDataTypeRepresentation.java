@@ -378,10 +378,13 @@ public abstract class HTMLDataTypeRepresentation {
 		if (length < 0) {
 			return new TextLine(" <i>Unsized</i>");
 		}
+
 		if (dataType.isZeroLength()) {
-			length = 0;
+			return new TextLine("0");
 		}
-		return new TextLine(Integer.toString(length));
+
+		return new TextLine(
+			Integer.toString(length) + " (" + NumericUtilities.toHexString(length) + ")");
 	}
 
 	private static boolean canLinkDataType(DataType dt) {

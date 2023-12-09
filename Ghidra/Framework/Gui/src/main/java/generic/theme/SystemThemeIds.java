@@ -22,7 +22,7 @@ import generic.theme.laf.UiDefaultsMapper;
  * and Feel (LaF) is being used.
  * <P>
  * Various LaFs have different names for common concepts and even define additional concepts not
- * listed here. The values in this class are those the application used use regardless of the LaF
+ * listed here. The values in this class are those the application uses use regardless of the LaF
  * being used. When we load a specific LaF, a {@link UiDefaultsMapper} specific to that LaF is used
  * to map its common LaF ids to these standard system ids. The {@link GThemeDefaults} uses these
  * system ids to define colors that can be used throughout the application without using these ids

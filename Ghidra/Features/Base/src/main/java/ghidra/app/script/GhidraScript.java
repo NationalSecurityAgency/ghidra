@@ -20,12 +20,15 @@ import java.io.*;
 import java.rmi.ConnectException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
+import docking.DockingWindowManager;
 import docking.widgets.OptionDialog;
 import docking.widgets.PasswordDialog;
 import docking.widgets.dialogs.MultiLineMessageDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
+import docking.widgets.values.*;
 import generic.jar.ResourceFile;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.analysis.AnalysisWorker;
@@ -44,6 +47,7 @@ import ghidra.app.util.opinion.*;
 import ghidra.app.util.query.TableService;
 import ghidra.app.util.viewer.field.BrowserCodeUnitFormat;
 import ghidra.app.util.viewer.field.CommentUtils;
+import ghidra.features.base.values.GhidraValuesMap;
 import ghidra.framework.Application;
 import ghidra.framework.client.*;
 import ghidra.framework.cmd.BackgroundCommand;
@@ -2328,6 +2332,71 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	}
 
 	/**
+	 * Prompts for multiple values at the same time. To use this method, you must first
+	 * create a {@link GhidraValuesMap} and define the values that will be supplied by this method. 
+	 * In the GUI environment, this will result in a single dialog with an entry for each value
+	 * defined in the values map. This method returns a GhidraValuesMap with the values supplied by
+	 * the user in GUI mode or command line arguments in headless mode. If the user cancels the 
+	 * dialog, a cancelled exception will be thrown, and unless it is explicity caught by the 
+	 * script, will terminate the script. Also, if the values map has a {@link ValuesMapValidator}, 
+	 * the values will be validated when the user presses the "OK" button and will only exit the 
+	 * dialog if the validate check passes. Otherwise, the validator should have reported an error
+	 * message in the dialog and the dialog will remain visible.
+	 * 
+	 * <p>
+	 * Regardless of environment -- if script arguments have been set, this method will use the
+	 * next arguments in the array and advance the array index until all values in the values map
+	 * have been satisfied and so the next call to an ask method will get the next argument after
+	 * those consumed by this call. 
+	 * 
+	 * @param title the title of the dialog if in GUI mode
+	 * @param optionalMessage an optional message that is displayed in the dialog, just above the
+	 * list of name/value pairs
+	 * @param values the GhidraValuesMap containing the values to include in the dialog.
+	 * @return the GhidraValuesMap with values set from user input in the dialog (This is the same
+	 * instance that was passed in, so you don't need to use this)
+	 * @throws CancelledException if the user hit the 'cancel' button in GUI mode
+	 */
+
+	public GhidraValuesMap askValues(String title, String optionalMessage, GhidraValuesMap values)
+			throws CancelledException {
+		values.setTaskMonitor(monitor);
+		for (AbstractValue<?> value : values.getValues()) {
+			String key = join(title, value.getName());
+			loadAskValue(value.getValue(), s -> value.setAsText(s), key);
+		}
+		if (isRunningHeadless()) {
+			ScriptStatusListener status = new ScriptStatusListener();
+			if (!values.isValid(status)) {
+				throw new IllegalArgumentException("Validation Failed!: " + status.toString());
+			}
+			return values;
+		}
+		String key = generateKey(values);
+		return doAsk(GValuesMap.class, title, key, values, v -> {
+			if (v != values) {
+				values.copyValues(v);
+			}
+			ValuesMapDialog dialog = new ValuesMapDialog(title, optionalMessage, values);
+			DockingWindowManager.showDialog(dialog);
+			if (dialog.isCancelled()) {
+				throw new CancelledException();
+			}
+			return (GhidraValuesMap) dialog.getValues();
+		});
+	}
+
+	/**
+	 * Generates a string key unique to the values defined in the given ValuesMap. Used to store
+	 * and load previously chosen values for the given values map.
+	 * @param valuesMap the ValuesMap to generate a key for
+	 * @return a string that is unique for the values defined in the given ValuesMap
+	 */
+	private String generateKey(GValuesMap valuesMap) {
+		return valuesMap.getValues().stream().map(v -> v.getName()).collect(Collectors.joining());
+	}
+
+	/**
 	 * Returns an int, using the String parameters for guidance.  The actual behavior of the
 	 * method depends on your environment, which can be GUI or headless.
 	 * <p>
@@ -3883,6 +3952,36 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		}
 
 		return result;
+	}
+
+	private class ScriptStatusListener implements StatusListener {
+		StringBuilder errors = new StringBuilder();
+
+		@Override
+		public void setStatusText(String text) {
+			errors.append(text);
+			errors.append("\n");
+		}
+
+		@Override
+		public void setStatusText(String text, MessageType messageType) {
+			setStatusText(text);
+		}
+
+		@Override
+		public void setStatusText(String text, MessageType type, boolean alert) {
+			setStatusText(text);
+		}
+
+		@Override
+		public void clearStatusText() {
+			// not supported
+		}
+
+		@Override
+		public final String toString() {
+			return errors.toString();
+		}
 	}
 
 }

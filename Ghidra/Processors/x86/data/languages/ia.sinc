@@ -74,70 +74,72 @@ define register offset=0x740 size=8    [ BND0_LB BND0_UB BND1_LB BND1_UB BND2_LB
 # Control Flow Extensions
 define register offset=0x7c0 size=8    [ SSP IA32_PL2_SSP IA32_PL1_SSP IA32_PL0_SSP ];
 
-# Floating point registers - as they are in 32-bit protected mode
-# See MMx registers below
-define register offset=0x1106 size=10  [ ST0 ];
-define register offset=0x1116 size=10  [ ST1 ];
-define register offset=0x1126 size=10  [ ST2 ];
-define register offset=0x1136 size=10  [ ST3 ];
-define register offset=0x1146 size=10  [ ST4 ];
-define register offset=0x1156 size=10  [ ST5 ];
-define register offset=0x1166 size=10  [ ST6 ];
-define register offset=0x1176 size=10  [ ST7 ];
+# NOTE: ST registers moved with Ghidra 10.0.3 (v2.12) and previously occupied the offset range 0x1000-104f.
+#       Automated address re-mapping was not provided and requires use of FixOldSTVariableStorageScript
+#		to fixup uses within a program.  The range 0x1000-104f should remain reserved and unused.
+# define register offset=0x1000 size=80 [ OLD_ST_REGION ]; 
+
 define register offset=0x1090 size=1   [ C0 C1 C2 C3 ];
 define register offset=0x1094 size=4   [ MXCSR ];
 define register offset=0x10a0 size=2   [ FPUControlWord FPUStatusWord FPUTagWord
                                          FPULastInstructionOpcode ];
 define register offset=0x10a8 size=$(SIZE)   [ FPUDataPointer FPUInstructionPointer ];
 define register offset=0x10c8 size=2  [ FPUPointerSelector FPUDataSelector]; #FCS FDS
-                                         
-  # FCS is not modeled, deprecated as 0.
-  # FDS not modeled, deprecated as 0.
+# FCS is not modeled, deprecated as 0.
+# FDS is not modeled, deprecated as 0.
+  
+# Floating point registers - as they are in 32-bit protected mode
+# See overlapping MM registers below
+define register offset=0x1100 size=10  [ ST0 ];
+define register offset=0x1110 size=10  [ ST1 ];
+define register offset=0x1120 size=10  [ ST2 ];
+define register offset=0x1130 size=10  [ ST3 ];
+define register offset=0x1140 size=10  [ ST4 ];
+define register offset=0x1150 size=10  [ ST5 ];
+define register offset=0x1160 size=10  [ ST6 ];
+define register offset=0x1170 size=10  [ ST7 ];
+
+# NOTE: The upper 16-bits of the x87 ST registers go unused in MMX.
+# These upper 16-bits should be set to all ones by any MMX instruction, which correspond to the 
+# floating-point representation of NaNs or infinities.  
+# Although not currently modeled, the 2-byte ST0h..ST7h registers are provided for that purpose.
+                                                               
+define register offset=0x1100 size=8   [ MM0 _ MM1 _ MM2 _ MM3 _ MM4 _ MM5 _ MM6 _ MM7 _ ];
+define register offset=0x1100 size=4   [
+  MM0_Da MM0_Db _ _
+  MM1_Da MM1_Db _ _
+  MM2_Da MM2_Db _ _
+  MM3_Da MM3_Db _ _
+  MM4_Da MM4_Db _ _
+  MM5_Da MM5_Db _ _
+  MM6_Da MM6_Db _ _
+  MM7_Da MM7_Db _ _
+];
+define register offset=0x1100 size=2   [
+  MM0_Wa MM0_Wb MM0_Wc MM0_Wd ST0h _ _ _
+  MM1_Wa MM1_Wb MM1_Wc MM1_Wd ST1h _ _ _
+  MM2_Wa MM2_Wb MM2_Wc MM2_Wd ST2h _ _ _
+  MM3_Wa MM3_Wb MM3_Wc MM3_Wd ST3h _ _ _
+  MM4_Wa MM4_Wb MM4_Wc MM4_Wd ST4h _ _ _
+  MM5_Wa MM5_Wb MM5_Wc MM5_Wd ST5h _ _ _
+  MM6_Wa MM6_Wb MM6_Wc MM6_Wd ST6h _ _ _
+  MM7_Wa MM7_Wb MM7_Wc MM7_Wd ST7h _ _ _
+];
+define register offset=0x1100 size=1   [ 
+  MM0_Ba MM0_Bb MM0_Bc MM0_Bd MM0_Be MM0_Bf MM0_Bg MM0_Bh _ _ _ _ _ _ _ _ 
+  MM1_Ba MM1_Bb MM1_Bc MM1_Bd MM1_Be MM1_Bf MM1_Bg MM1_Bh _ _ _ _ _ _ _ _ 
+  MM2_Ba MM2_Bb MM2_Bc MM2_Bd MM2_Be MM2_Bf MM2_Bg MM2_Bh _ _ _ _ _ _ _ _ 
+  MM3_Ba MM3_Bb MM3_Bc MM3_Bd MM3_Be MM3_Bf MM3_Bg MM3_Bh _ _ _ _ _ _ _ _ 
+  MM4_Ba MM4_Bb MM4_Bc MM4_Bd MM4_Be MM4_Bf MM4_Bg MM4_Bh _ _ _ _ _ _ _ _ 
+  MM5_Ba MM5_Bb MM5_Bc MM5_Bd MM5_Be MM5_Bf MM5_Bg MM5_Bh _ _ _ _ _ _ _ _ 
+  MM6_Ba MM6_Bb MM6_Bc MM6_Bd MM6_Be MM6_Bf MM6_Bg MM6_Bh _ _ _ _ _ _ _ _ 
+  MM7_Ba MM7_Bb MM7_Bc MM7_Bd MM7_Be MM7_Bf MM7_Bg MM7_Bh _ _ _ _ _ _ _ _
+];
 
 #
 # YMM0 - YMM7    - available in 32 bit mode
 # YMM0 - YMM15   - available in 64 bit mode
-#                                      
-define register offset=0x1100 size=8   [ _ MM0 _ MM1 _ MM2 _ MM3 _ MM4 _ MM5 _ MM6 _ MM7 ];
-define register offset=0x1100 size=4   [
-  _ _ MM0_Da MM0_Db 
-  _ _ MM1_Da MM1_Db 
-  _ _ MM2_Da MM2_Db 
-  _ _ MM3_Da MM3_Db 
-  _ _ MM4_Da MM4_Db 
-  _ _ MM5_Da MM5_Db 
-  _ _ MM6_Da MM6_Db 
-  _ _ MM7_Da MM7_Db 
-];
-define register offset=0x1100 size=2   [
-  _ _ _ _ MM0_Wa MM0_Wb MM0_Wc MM0_Wd 
-  _ _ _ _ MM1_Wa MM1_Wb MM1_Wc MM1_Wd 
-  _ _ _ _ MM2_Wa MM2_Wb MM2_Wc MM2_Wd 
-  _ _ _ _ MM3_Wa MM3_Wb MM3_Wc MM3_Wd 
-  _ _ _ _ MM4_Wa MM4_Wb MM4_Wc MM4_Wd 
-  _ _ _ _ MM5_Wa MM5_Wb MM5_Wc MM5_Wd 
-  _ _ _ _ MM6_Wa MM6_Wb MM6_Wc MM6_Wd 
-  _ _ _ _ MM7_Wa MM7_Wb MM7_Wc MM7_Wd 
-];
-define register offset=0x1100 size=1   [
-  _ _ _ _ _ _ _ _ 
-  MM0_Ba MM0_Bb MM0_Bc MM0_Bd MM0_Be MM0_Bf MM0_Bg MM0_Bh 
-  _ _ _ _ _ _ _ _ 
-  MM1_Ba MM1_Bb MM1_Bc MM1_Bd MM1_Be MM1_Bf MM1_Bg MM1_Bh 
-  _ _ _ _ _ _ _ _ 
-  MM2_Ba MM2_Bb MM2_Bc MM2_Bd MM2_Be MM2_Bf MM2_Bg MM2_Bh 
-  _ _ _ _ _ _ _ _ 
-  MM3_Ba MM3_Bb MM3_Bc MM3_Bd MM3_Be MM3_Bf MM3_Bg MM3_Bh 
-  _ _ _ _ _ _ _ _ 
-  MM4_Ba MM4_Bb MM4_Bc MM4_Bd MM4_Be MM4_Bf MM4_Bg MM4_Bh 
-  _ _ _ _ _ _ _ _ 
-  MM5_Ba MM5_Bb MM5_Bc MM5_Bd MM5_Be MM5_Bf MM5_Bg MM5_Bh 
-  _ _ _ _ _ _ _ _ 
-  MM6_Ba MM6_Bb MM6_Bc MM6_Bd MM6_Be MM6_Bf MM6_Bg MM6_Bh 
-  _ _ _ _ _ _ _ _ 
-  MM7_Ba MM7_Bb MM7_Bc MM7_Bd MM7_Be MM7_Bf MM7_Bg MM7_Bh 
-];
-
+#  
 
 # YMMx_H is the formal name for the high double quadword of the YMMx register, XMMx is the overlay in the XMM register set
 define register offset=0x1200 size=16  [
@@ -3323,22 +3325,22 @@ define pcodeop swap_bytes;
 :PAUSE          is vexMode=0 & opsize=0 & $(PRE_F3) & byte=0x90     {  }
 :PAUSE          is vexMode=0 & opsize=1 & $(PRE_F3) & byte=0x90     {  }
 
-:POP rm16        is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=0 & byte=0x8f; rm16 & reg_opcode=0 ... { pop22(rm16); }
-:POP rm16        is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & byte=0x8f; rm16 & reg_opcode=0 ... { pop42(rm16); }
-:POP rm32        is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=1 & byte=0x8f; rm32 & reg_opcode=0 ... { pop24(rm32); }
-:POP rm32        is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=1 & byte=0x8f; rm32 & reg_opcode=0 ... { pop44(rm32); }
+:POP rm16        is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=0 & byte=0x8f; rm16 & reg_opcode=0 ... { local val:2 = 0; pop22(val); build rm16; rm16 = val; }
+:POP rm16        is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & byte=0x8f; rm16 & reg_opcode=0 ... { local val:2 = 0; pop42(val); build rm16; rm16 = val; }
+:POP rm32        is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=1 & byte=0x8f; rm32 & reg_opcode=0 ... { local val:4 = 0; pop24(val); build rm32; rm32 = val; }
+:POP rm32        is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=1 & byte=0x8f; rm32 & reg_opcode=0 ... { local val:4 = 0; pop44(val); build rm32; rm32 = val; }
 @ifdef IA64
-:POP rm16        is $(LONGMODE_ON) & vexMode=0 & opsize=0 & byte=0x8f; rm16 & reg_opcode=0 ... { pop82(rm16); }
-:POP rm64        is $(LONGMODE_ON) & vexMode=0 &            byte=0x8f; rm64 & reg_opcode=0 ... { pop88(rm64); }
+:POP rm16        is $(LONGMODE_ON) & vexMode=0 & opsize=0 & byte=0x8f; rm16 & reg_opcode=0 ... { local val:2 = 0; pop82(val); build rm16; rm16 = val; }
+:POP rm64        is $(LONGMODE_ON) & vexMode=0 &            byte=0x8f; rm64 & reg_opcode=0 ... { local val:8 = 0; pop88(val); build rm64; rm64 = val; }
 @endif
 
-:POP Rmr16      is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=0 & row=5 & page=1 & Rmr16       { pop22(Rmr16); }
-:POP Rmr16      is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & row=5 & page=1 & Rmr16       { pop42(Rmr16); }
-:POP Rmr32      is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=1 & row=5 & page=1 & Rmr32       { pop24(Rmr32); }
-:POP Rmr32      is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=1 & row=5 & page=1 & Rmr32       { pop44(Rmr32); }
+:POP Rmr16      is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=0 & row=5 & page=1 & Rmr16       { local val:2 = 0; pop22(val); Rmr16 = val; }
+:POP Rmr16      is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=0 & row=5 & page=1 & Rmr16       { local val:2 = 0; pop22(val); Rmr16 = val; }
+:POP Rmr32      is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & opsize=1 & row=5 & page=1 & Rmr32       { local val:4 = 0; pop44(val); Rmr32 = val; }
+:POP Rmr32      is $(LONGMODE_OFF) & vexMode=0 & addrsize=1 & opsize=1 & row=5 & page=1 & Rmr32       { local val:4 = 0; pop44(val); Rmr32 = val; }
 @ifdef IA64
-:POP Rmr16      is $(LONGMODE_ON) & vexMode=0 & opsize=0 & row=5 & page=1 & Rmr16       { pop82(Rmr16); }
-:POP Rmr64      is $(LONGMODE_ON) & vexMode=0 &            row=5 & page=1 & Rmr64       { pop88(Rmr64); }
+:POP Rmr16      is $(LONGMODE_ON) & vexMode=0 & opsize=0 & row=5 & page=1 & Rmr16       { local val:2 = 0; pop82(val); Rmr16 = val; }
+:POP Rmr64      is $(LONGMODE_ON) & vexMode=0 &            row=5 & page=1 & Rmr64       { local val:8 = 0; pop88(val); Rmr64 = val; }
 @endif
 
 :POP DS         is $(LONGMODE_OFF) & vexMode=0 & addrsize=0 & byte=0x1f & DS              { pop22(DS); }

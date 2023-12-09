@@ -228,8 +228,9 @@ public class SimpleDiffUtility {
 			return otherProgram.getAddressFactory().getStackSpace().getAddress(addr.getOffset());
 		}
 		else if (addr.isRegisterAddress()) {
-			if (program.getLanguage().getLanguageID().equals(
-				otherProgram.getLanguage().getLanguageID())) {
+			if (program.getLanguage()
+					.getLanguageID()
+					.equals(otherProgram.getLanguage().getLanguageID())) {
 				return addr;
 			}
 			// TODO: should we handle small varnodes within big endian registers
@@ -281,17 +282,12 @@ public class SimpleDiffUtility {
 		AddressSpace addrSpace = addr.getAddressSpace();
 		AddressSpace otherSpace = getCompatibleAddressSpace(addrSpace, otherProgram);
 		if (otherSpace != null) {
-			if (addrSpace.isOverlaySpace()) {
-				long offset = addr.getOffset();
-				if (offset < otherSpace.getMinAddress().getOffset()) {
-					return exactMatchOnly ? null : otherSpace.getMinAddress();
-				}
-				else if (offset > otherSpace.getMaxAddress().getOffset()) {
-					return exactMatchOnly ? null : otherSpace.getMaxAddress();
-				}
-				return otherSpace.getAddress(offset);
+			try {
+				return otherSpace.getAddressInThisSpaceOnly(addr.getOffset());
 			}
-			return otherSpace.getAddress(addr.getOffset());
+			catch (AddressOutOfBoundsException e) {
+				return null;
+			}
 		}
 		return null;
 	}
@@ -300,20 +296,15 @@ public class SimpleDiffUtility {
 			Program otherProgram) {
 		AddressSpace otherSpace =
 			otherProgram.getAddressFactory().getAddressSpace(addrSpace.getName());
-		if (otherSpace != null && otherSpace.getType() == addrSpace.getType()) {
+		if (otherSpace != null && otherSpace.getType() == addrSpace.getType() &&
+			otherSpace.isOverlaySpace() == addrSpace.isOverlaySpace()) {
 			int id = addrSpace.isOverlaySpace() ? ((OverlayAddressSpace) addrSpace).getBaseSpaceID()
 					: addrSpace.getSpaceID();
 			int otherid =
 				otherSpace.isOverlaySpace() ? ((OverlayAddressSpace) otherSpace).getBaseSpaceID()
 						: otherSpace.getSpaceID();
+			// NOTE: This only works for the same language
 			if (id == otherid) {
-				if (otherSpace.isOverlaySpace()) {
-					long addrOffset = addrSpace.getMinAddress().getOffset();
-					long otherOffset = otherSpace.getMinAddress().getOffset();
-					if (addrOffset != otherOffset) {
-						return null; // Overlays didn't begin at same address.
-					}
-				}
 				return otherSpace;
 			}
 		}

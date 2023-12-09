@@ -177,12 +177,9 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 		FileHeader fileHeader = ntHeader.getFileHeader();
 		List<OMFSrcModule> srcModules = dcvst.getOMFSrcModules();
 		for (OMFSrcModule module : srcModules) {
-			short[] segs = module.getSegments();
-			int segIndex = 0;
-
 			OMFSrcModuleFile[] files = module.getOMFSrcModuleFiles();
 			for (OMFSrcModuleFile file : files) {
-				processFiles(file, segs[segIndex++], fileHeader, sectionToAddress, monitor);
+				processFiles(file, module.getSegments(), fileHeader, sectionToAddress, monitor);
 				processLineNumbers(fileHeader, sectionToAddress, file.getOMFSrcModuleLines(),
 					options, monitor);
 
@@ -274,18 +271,18 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 		}
 	}
 
-	private void processFiles(OMFSrcModuleFile file, short segment, FileHeader fileHeader,
+	private void processFiles(OMFSrcModuleFile file, short[] segments, FileHeader fileHeader,
 			Map<SectionHeader, Address> sectionToAddress, TaskMonitor monitor) {
 
 		int[] starts = file.getStarts();
 		int[] ends = file.getEnds();
 
 		for (int k = 0; k < starts.length; ++k) {
-			if (starts[k] == 0 || ends[k] == 0) {
+			if (starts[k] == 0 || ends[k] == 0 || k >= segments.length) {
 				continue;
 			}
 
-			Address addr = sectionToAddress.get(fileHeader.getSectionHeader(segment - 1));
+			Address addr = sectionToAddress.get(fileHeader.getSectionHeader(segments[k] - 1));
 			if (addr == null) {
 				continue;
 			}
@@ -322,12 +319,6 @@ abstract class AbstractPeDebugLoader extends AbstractOrdinalSupportLoader {
 				for (int j = 0; j < offsets.length; j++) {
 					if (monitor.isCancelled()) {
 						return;
-					}
-					if (offsets[j] == 0) {
-						System.out.println("");
-					}
-					if (offsets[j] == 1) {
-						System.out.println("");
 					}
 					if (offsets[j] > 0) {
 						addLineComment(addr.add(Conv.intToLong(offsets[j])),

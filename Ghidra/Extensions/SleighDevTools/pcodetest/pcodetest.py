@@ -400,9 +400,10 @@ class PCodeBuildGCC(PCodeTestBuild):
         # can pass this if weak symbols aren't defined
         # f += ['-Xlinker', '--unresolved-symbols=ignore-all']
 
-        f += self.config.ccflags.split()
-        f += self.config.add_ccflags.split()
+        f +=[self.config.format(g) for g in self.config.ccflags.split()]
+        f += [self.config.format(g) for g in self.config.add_ccflags.split()]
 
+        self.log_info('Compiler flags: %s' % f)
         return f
 
     def compile(self, input_files, opt_cflag, output_base):

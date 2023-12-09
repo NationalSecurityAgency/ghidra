@@ -30,13 +30,13 @@ public class FlatDarkUiDefaultsMapper extends FlatUiDefaultsMapper {
 	}
 
 	@Override
-	protected void assignSystemColorValues() {
-		super.assignSystemColorValues();
+	protected void pickRepresentativeValueForColorGroups() {
+		super.pickRepresentativeValueForColorGroups();
 
 		// We don't think the FlatDark LaF's view background (Trees, Tables, Lists) is dark
 		// enough, so we are overriding the view group background and foreground colors
-		assignSystemColorDirect(BG_VIEW_ID, new Color(0x1c1d1e));
-		assignSystemColorDirect(FG_VIEW_ID, WebColors.LIGHT_GRAY);
+		setGroupColor(BG_VIEW_ID, new Color(0x1c1d1e));
+		setGroupColor(FG_VIEW_ID, WebColors.LIGHT_GRAY);
 	}
 
 	@Override

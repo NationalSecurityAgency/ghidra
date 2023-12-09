@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="Loongarch"
+            endian="little"
+            size="32"
+            variant="ilp32f"
+            version="1.0"
+            slafile="loongarch32_f32.sla"
+            processorspec="loongarch32.pspec"
+            manualindexfile="../manuals/loongarch.idx"
+            id="Loongarch:LE:32:ilp32f">
+    <description>Loongson 3 32-bit with 32-bit FP</description>
+    <compiler name="gnu" spec="ilp32f.cspec" id="default"/>
+    <external_name tool="gnu" name="Loongarch32"/>
+  </language>
+  
+  <language processor="Loongarch"
+            endian="little"
+            size="32"
+            variant="ilp32d"
+            version="1.0"
+            slafile="loongarch32_f64.sla"
+            processorspec="loongarch32.pspec"
+            manualindexfile="../manuals/loongarch.idx"
+            id="Loongarch:LE:32:ilp32d">
+    <description>Loongson 3 32-bit with 64-bit FP</description>
+    <compiler name="default" spec="ilp32d.cspec" id="default"/>
+    <external_name tool="gnu" name="Loongarch32"/>
+  </language>
+  
+  <language processor="Loongarch"
+            endian="little"
+            size="64"
+            variant="lp64f"
+            version="1.0"
+            slafile="loongarch64_f32.sla"
+            processorspec="loongarch64.pspec"
+            manualindexfile="../manuals/loongarch.idx"
+            id="Loongarch:LE:64:lp64f">
+    <description>Loongson 3 64-bit with 32-bit FP</description>
+    <compiler name="default" spec="lp64f.cspec" id="default"/>
+    <external_name tool="gnu" name="Loongarch64"/>
+  </language>
+  
+  <language processor="Loongarch"
+            endian="little"
+            size="64"
+            variant="lp64d"
+            version="1.0"
+            slafile="loongarch64_f64.sla"
+            processorspec="loongarch64.pspec"
+            manualindexfile="../manuals/loongarch.idx"
+            id="Loongarch:LE:64:lp64d">
+    <description>Loongson 3 64-bit with 64-bit FP</description>
+    <compiler name="default" spec="lp64d.cspec" id="default"/>
+    <external_name tool="gnu" name="Loongarch64"/>
+  </language>
+
+</language_definitions>

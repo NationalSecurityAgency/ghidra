@@ -23,7 +23,7 @@ package utility.function;
  * @param <E> the exception of your choice
  */
 @FunctionalInterface
-public interface ExceptionalSupplier<T, E extends Exception> {
+public interface ExceptionalSupplier<T, E extends Throwable> {
 
 	/**
 	 * The supplier method

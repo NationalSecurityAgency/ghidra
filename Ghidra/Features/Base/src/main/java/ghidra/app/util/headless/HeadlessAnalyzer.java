@@ -20,6 +20,8 @@ import java.net.*;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import org.apache.commons.io.FilenameUtils;
+
 import generic.jar.ResourceFile;
 import generic.stl.Pair;
 import generic.util.Path;
@@ -32,10 +34,12 @@ import ghidra.app.util.headless.HeadlessScript.HeadlessContinuationOption;
 import ghidra.app.util.importer.AutoImporter;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.*;
+import ghidra.formats.gfilesystem.*;
 import ghidra.framework.*;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.data.*;
+import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.*;
 import ghidra.framework.project.DefaultProject;
 import ghidra.framework.project.DefaultProjectManager;
@@ -77,6 +81,7 @@ public class HeadlessAnalyzer {
 	private DomainFolder saveDomainFolder;
 	private Map<String, Object> storage;
 	private URLClassLoader classLoaderForDotClassScripts;
+	private FileSystemService fsService;
 
 	/**
 	 * Gets a headless analyzer, initializing the application if necessary with the specified 
@@ -206,6 +211,9 @@ public class HeadlessAnalyzer {
 
 		// Put analyzer in its default state
 		reset();
+
+		// Initialize FileSytemService
+		fsService = FileSystemService.getInstance();
 	}
 
 	/**
@@ -417,6 +425,7 @@ public class HeadlessAnalyzer {
 
 			if (locator.getProjectDir().exists()) {
 				project = openProject(locator);
+				AppInfo.setActiveProject(project);
 			}
 			else {
 				if (options.runScriptsNoImport) {
@@ -433,6 +442,7 @@ public class HeadlessAnalyzer {
 				Msg.info(this, "Creating " + (options.deleteProject ? "temporary " : "") +
 					"project: " + locator);
 				project = getProjectManager().createProject(locator, null, false);
+				AppInfo.setActiveProject(project);
 			}
 
 			try {
@@ -450,6 +460,7 @@ public class HeadlessAnalyzer {
 			}
 			finally {
 				project.close();
+				AppInfo.setActiveProject(null);
 				if (!options.runScriptsNoImport && options.deleteProject) {
 					FileUtilities.deleteDir(locator.getProjectDir());
 					locator.getMarkerFile().delete();
@@ -580,10 +591,7 @@ public class HeadlessAnalyzer {
 			writer.flush();
 		}
 		catch (Exception exc) {
-			Program prog = scriptState.getCurrentProgram();
-			String path = (prog != null ? " ( " + prog.getExecutablePath() + " ) " : "");
-			String logErrorMsg =
-				"REPORT SCRIPT ERROR: " + path + " " + scriptName + " : " + exc.getMessage();
+			String logErrorMsg = "REPORT SCRIPT ERROR: ";
 			Msg.error(this, logErrorMsg, exc);
 			return false;
 		}
@@ -1504,9 +1512,9 @@ public class HeadlessAnalyzer {
 		}
 	}
 
-	private boolean processFileWithImport(File file, String folderPath) {
+	private boolean processFileWithImport(FSRL fsrl, String folderPath) {
 
-		Msg.info(this, "IMPORTING: " + file.getAbsolutePath());
+		Msg.info(this, "IMPORTING: " + fsrl);
 
 		LoadResults<Program> loadResults = null;
 		Loaded<Program> primary = null;
@@ -1514,7 +1522,7 @@ public class HeadlessAnalyzer {
 
 			// Perform the load.  Note that loading 1 file may result in more than 1 thing getting
 			// loaded. 
-			loadResults = loadPrograms(file, folderPath);
+			loadResults = loadPrograms(fsrl, folderPath);
 			Msg.info(this, "IMPORTING: Loaded " + (loadResults.size() - 1) + " additional files");
 
 			primary = loadResults.getPrimary();
@@ -1533,15 +1541,13 @@ public class HeadlessAnalyzer {
 			// Check if there are defined memory blocks in the primary program.
 			// Abort if not (there is nothing to work with!).
 			if (primaryProgram.getMemory().getAllInitializedAddressSet().isEmpty()) {
-				Msg.error(this, "REPORT: Error: No memory blocks were defined for file " +
-					file.getAbsolutePath());
+				Msg.error(this, "REPORT: Error: No memory blocks were defined for file " + fsrl);
 				return false;
 			}
 
 			// Analyze the primary program, and determine if we should save.
 			// TODO: Analyze non-primary programs (GP-2965).
-			boolean doSave =
-				analyzeProgram(file.getAbsolutePath(), primaryProgram) && !options.readOnly;
+			boolean doSave = analyzeProgram(fsrl.toString(), primaryProgram) && !options.readOnly;
 
 			// The act of marking the program as temporary by a script will signal 
 			// us to discard any changes
@@ -1602,8 +1608,7 @@ public class HeadlessAnalyzer {
 			return true;
 		}
 		catch (LoadException e) {
-			Msg.error(this, "The AutoImporter could not successfully load " +
-				file.getAbsolutePath() +
+			Msg.error(this, "The AutoImporter could not successfully load " + fsrl +
 				" with the provided import parameters. Please ensure that any specified" +
 				" processor/cspec arguments are compatible with the loader that is used during" +
 				" import and try again.");
@@ -1626,7 +1631,7 @@ public class HeadlessAnalyzer {
 		}
 	}
 
-	private LoadResults<Program> loadPrograms(File file, String folderPath)
+	private LoadResults<Program> loadPrograms(FSRL fsrl, String folderPath)
 			throws VersionException, InvalidNameException, DuplicateNameException,
 			CancelledException, IOException, LoadException {
 		MessageLog messageLog = new MessageLog();
@@ -1634,85 +1639,110 @@ public class HeadlessAnalyzer {
 		if (options.loaderClass == null) {
 			// User did not specify a loader
 			if (options.language == null) {
-				return AutoImporter.importByUsingBestGuess(file, project, folderPath, this,
+				return AutoImporter.importByUsingBestGuess(fsrl, project, folderPath, this,
 					messageLog, TaskMonitor.DUMMY);
 			}
-			return AutoImporter.importByLookingForLcs(file, project, folderPath, options.language,
+			return AutoImporter.importByLookingForLcs(fsrl, project, folderPath, options.language,
 				options.compilerSpec, this, messageLog, TaskMonitor.DUMMY);
 		}
 
 		// User specified a loader
 		if (options.language == null) {
-			return AutoImporter.importByUsingSpecificLoaderClass(file, project, folderPath,
+			return AutoImporter.importByUsingSpecificLoaderClass(fsrl, project, folderPath,
 				options.loaderClass, options.loaderArgs, this, messageLog, TaskMonitor.DUMMY);
 		}
-		return AutoImporter.importByUsingSpecificLoaderClassAndLcs(file, project, folderPath,
+		return AutoImporter.importByUsingSpecificLoaderClassAndLcs(fsrl, project, folderPath,
 			options.loaderClass, options.loaderArgs, options.language, options.compilerSpec, this,
 			messageLog, TaskMonitor.DUMMY);
 	}
 
-	private void processWithImport(File file, String folderPath, boolean isFirstTime)
+	private void processWithImport(FSRL fsrl, String folderPath, Integer depth, boolean isFirstTime)
 			throws IOException {
-
-		boolean importSucceeded;
-
-		if (file.isFile()) {
-
-			importSucceeded = processFileWithImport(file, folderPath);
-
-			// Check to see if there are transient programs lying around due
-			// to programs not being released during Importing
-			List<DomainFile> domainFileContainer = new ArrayList<>();
-			TransientDataManager.getTransients(domainFileContainer);
-			if (domainFileContainer.size() > 0) {
-				TransientDataManager.releaseFiles(this);
+		try (RefdFile refdFile = fsService.getRefdFile(fsrl, TaskMonitor.DUMMY)) {
+			GFile file = refdFile.file;
+			if (depth == null && isFirstTime) {
+				depth = file.isDirectory() ? 0 : 1; // set default depth
 			}
-
-			if (!importSucceeded) {
-				Msg.error(this, "REPORT: Import failed for file: " + file.getAbsolutePath());
+			if ((options.recursive || isFirstTime) && file.isDirectory()) {
+				processFS(file.getFilesystem(), file, folderPath, depth);
+				return;
 			}
-
-			return;
+			if (options.recursive && depth > 0 && processAsFS(fsrl, folderPath, depth)) {
+				return;
+			}
+			if (!file.isDirectory() && processWithLoader(fsrl, folderPath)) {
+				return;
+			}
 		}
+		catch (CancelledException e) {
+			Msg.info(this, "REPORT: Importing cancelled");
+		}
+	}
 
-		// Looks inside the folder if one of two situations is applicable:
-		//  - If user supplied a directory to import, and it is currently being
-		//    processed (if so, this will be the first time that this method is called)
-		//	- If -recursive is specified
-		if ((isFirstTime) || (!isFirstTime && options.recursive)) {
-			// Otherwise, is a directory
-			Msg.info(this, "REPORT: Importing all files from " + file.getName());
+	private void processFS(GFileSystem fs, GFile startDir, String folderPath, int depth)
+			throws CancelledException, IOException {
+		if (!folderPath.endsWith(DomainFolder.SEPARATOR)) {
+			folderPath += DomainFolder.SEPARATOR;
+		}
+		folderPath += startDir.getName();
 
-			File dirFile = file;
+		for (GFile file : fs.getListing(startDir)) {
+			String name = file.getName();
+			if (name.startsWith(".")) {
+				Msg.warn(this, "Ignoring file '" + name + "'.");
+				continue;
+			}
+			FSRL fqFSRL;
+			try {
+				fqFSRL = fsService.getFullyQualifiedFSRL(file.getFSRL(), TaskMonitor.DUMMY);
+			}
+			catch (IOException e) {
+				Msg.warn(this, "Error getting info for " + file.getFSRL());
+				continue;
+			}
+			try {
+				checkValidFilename(fqFSRL.getName());
+				processWithImport(fqFSRL, folderPath, depth, false);
+			}
+			catch (InvalidInputException e) {
+				// Just move on if not valid
+			}
+		}
+	}
 
+	private boolean processAsFS(FSRL fsrl, String folderPath, int depth) throws CancelledException {
+		try (FileSystemRef fsRef = fsService.probeFileForFilesystem(fsrl, TaskMonitor.DUMMY,
+			FileSystemProbeConflictResolver.CHOOSEFIRST)) {
+			if (fsRef == null) {
+				return false;
+			}
 			if (!folderPath.endsWith(DomainFolder.SEPARATOR)) {
 				folderPath += DomainFolder.SEPARATOR;
 			}
-
-			String subfolderPath = folderPath + file.getName();
-
-			String[] names = dirFile.list();
-			if (names != null) {
-				Collections.sort(Arrays.asList(names));
-				for (String name : names) {
-					if (name.charAt(0) == '.') {
-						Msg.warn(this, "Ignoring file '" + name + "'.");
-						continue;
-					}
-					file = new File(dirFile, name);
-
-					// Even a directory name has to have valid characters --
-					// can't create a folder if it's not valid
-					try {
-						checkValidFilename(file);
-						processWithImport(file, subfolderPath, false);
-					}
-					catch (InvalidInputException e) {
-						// Just move on if not valid
-					}
-				}
-			}
+			folderPath += fsrl.getName();
+			processWithImport(fsRef.getFilesystem().getFSRL(), folderPath, depth - 1, false);
+			return true;
 		}
+		catch (IOException e) {
+			return false;
+		}
+	}
+
+	private boolean processWithLoader(FSRL fsrl, String folderPath) {
+		boolean importSucceeded = processFileWithImport(fsrl, folderPath);
+
+		// Check to see if there are transient programs lying around due
+		// to programs not being released during Importing
+		List<DomainFile> domainFileContainer = new ArrayList<>();
+		TransientDataManager.getTransients(domainFileContainer);
+		if (domainFileContainer.size() > 0) {
+			TransientDataManager.releaseFiles(this);
+		}
+
+		if (!importSucceeded) {
+			Msg.error(this, "REPORT: Import failed for file: " + fsrl);
+		}
+		return importSucceeded;
 	}
 
 	private void processWithImport(String folderPath, List<File> inputDirFiles) throws IOException {
@@ -1722,8 +1752,9 @@ public class HeadlessAnalyzer {
 		if (inputDirFiles != null && !inputDirFiles.isEmpty()) {
 			Msg.info(this, "REPORT: Processing input files: ");
 			Msg.info(this, "     project: " + project.getProjectLocator());
-			for (File f : inputDirFiles) {
-				processWithImport(f, folderPath, true);
+			List<FSRL> fsrls = inputDirFiles.stream().map(f -> fsService.getLocalFSRL(f)).toList();
+			for (FSRL fsrl : fsrls) {
+				processWithImport(fsrl, folderPath, options.recursiveDepth, true);
 			}
 		}
 		else {
@@ -1779,27 +1810,18 @@ public class HeadlessAnalyzer {
 	/**
 	 * Checks to make sure the given file contains only valid characters in its name.
 	 * 
-	 * @param currFile The file to check.
-	 * @throws InvalidInputException if the given file contains invalid characters in it.
+	 * @param path The path of the file to check.
+	 * @throws InvalidInputException if the given file path contains invalid characters in it.
 	 */
-	static void checkValidFilename(File currFile) throws InvalidInputException {
-		boolean isDir = currFile.isDirectory();
-		String filename = currFile.getName();
+	static void checkValidFilename(String path) throws InvalidInputException {
+		String filename = FilenameUtils.getName(path);
 
 		for (int i = 0; i < filename.length(); i++) {
 			char c = filename.charAt(i);
 			if (!LocalFileSystem.isValidNameCharacter(c)) {
-				if (isDir) {
-					throw new InvalidInputException("The directory '" + filename +
-						"' contains the invalid characgter: \'" + c +
-						"\' and can not be created in the project (full path: " +
-						currFile.getAbsolutePath() +
-						"). To allow successful import of the directory and its contents, please rename the directory.");
-				}
 				throw new InvalidInputException(
-					"The file '" + filename + "' contains the invalid character: \'" + c +
-						"\' and can not be imported (full path: " + currFile.getAbsolutePath() +
-						"). Please rename the file.");
+					"'" + filename + "' contains the invalid character: \'" + c +
+						"\' and can not be imported (full path: " + path + "). Please rename.");
 			}
 		}
 	}

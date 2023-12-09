@@ -58,6 +58,9 @@ public interface PtyChild extends PtyEndpoint {
 	PtySession session(String[] args, Map<String, String> env, Collection<TermMode> mode)
 			throws IOException;
 
+	/**
+	 * @see #session(String[], Map, Collection)
+	 */
 	default PtySession session(String[] args, Map<String, String> env, TermMode... mode)
 			throws IOException {
 		return session(args, env, List.of(mode));
@@ -82,6 +85,9 @@ public interface PtyChild extends PtyEndpoint {
 	 */
 	String nullSession(Collection<TermMode> mode) throws IOException;
 
+	/**
+	 * @see #nullSession(Collection)
+	 */
 	default String nullSession(TermMode... mode) throws IOException {
 		return nullSession(List.of(mode));
 	}

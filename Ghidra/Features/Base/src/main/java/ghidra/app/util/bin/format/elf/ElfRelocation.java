@@ -100,8 +100,8 @@ public class ElfRelocation implements StructConverter {
 	 * @return ELF relocation object
 	 * @throws IOException if an IO or parse error occurs
 	 */
-	static ElfRelocation createElfRelocation(BinaryReader reader,
-			ElfHeader elfHeader, int relocationIndex, boolean withAddend) throws IOException {
+	static ElfRelocation createElfRelocation(BinaryReader reader, ElfHeader elfHeader,
+			int relocationIndex, boolean withAddend) throws IOException {
 		Class<? extends ElfRelocation> elfRelocationClazz = getElfRelocationClass(elfHeader);
 		ElfRelocation elfRelocation = getInstance(elfRelocationClazz);
 		elfRelocation.initElfRelocation(reader, elfHeader, relocationIndex, withAddend);
@@ -120,9 +120,8 @@ public class ElfRelocation implements StructConverter {
 	 * @return ELF relocation object
 	 * @throws IOException if an IO or parse error occurs
 	 */
-	static ElfRelocation createElfRelocation(ElfHeader elfHeader,
-			int relocationIndex, boolean withAddend, long r_offset, long r_info, long r_addend)
-			throws IOException {
+	static ElfRelocation createElfRelocation(ElfHeader elfHeader, int relocationIndex,
+			boolean withAddend, long r_offset, long r_info, long r_addend) throws IOException {
 		Class<? extends ElfRelocation> elfRelocationClazz = getElfRelocationClass(elfHeader);
 		ElfRelocation elfRelocation = getInstance(elfRelocationClazz);
 		elfRelocation.initElfRelocation(elfHeader, relocationIndex, withAddend, r_offset, r_info,
@@ -218,8 +217,8 @@ public class ElfRelocation implements StructConverter {
 
 	private void readEntryData(BinaryReader reader) throws IOException {
 		if (is32bit) {
-			this.r_offset = Integer.toUnsignedLong(reader.readNextInt());
-			this.r_info = Integer.toUnsignedLong(reader.readNextInt());
+			this.r_offset = reader.readNextUnsignedInt();
+			this.r_info = reader.readNextUnsignedInt();
 			if (hasAddend) {
 				r_addend = reader.readNextInt();
 			}
@@ -295,7 +294,7 @@ public class ElfRelocation implements StructConverter {
 		long mask = is32bit ? BYTE_MASK : INT_MASK;
 		r_info = (r_info & ~mask) + (type & mask);
 	}
-	
+
 	/**
 	 * Returns the r_info relocation entry field value
 	 * @return r_info value

@@ -23,7 +23,10 @@ import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.*;
-import ghidra.program.model.address.*;
+import ghidra.program.database.ProgramAddressFactory;
+import ghidra.program.database.ProgramOverlayAddressSpace;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceManager;
 import ghidra.trace.model.Trace.TraceOverlaySpaceChangeType;
@@ -118,8 +121,6 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 		static final String NAME_COLUMN_NAME = "Name";
 		static final String BASE_COLUMN_NAME = "Base";
 
-		// NOTE: I don't care to record min/max limit
-
 		@DBAnnotatedColumn(NAME_COLUMN_NAME)
 		static DBObjectColumn NAME_COLUMN;
 		@DBAnnotatedColumn(BASE_COLUMN_NAME)
@@ -147,8 +148,6 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 
 	protected final DBCachedObjectStore<DBTraceOverlaySpaceEntry> overlayStore;
 	protected final DBCachedObjectIndex<String, DBTraceOverlaySpaceEntry> overlaysByName;
-
-	private final Map<Long, AddressSpace> spacesByKey = new HashMap<>();
 
 	public DBTraceOverlaySpaceAdapter(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, DBTrace trace) throws VersionException, IOException {
@@ -183,61 +182,92 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 	}
 
 	protected void resyncAddressFactory(TraceAddressFactory factory) {
-		// Clean and rename existing overlays, first
+
+		// Perform reconciliation of overlay address spaces while attempting to preserve 
+		// address space instances associated with a given key
+
+		// Put all overlay records into key-based map
+		Map<Long, DBTraceOverlaySpaceEntry> keyToRecordMap = new HashMap<>(overlayStore.asMap());
+
+		// Examine existing overlay spaces for removals and renames
+		List<ProgramOverlayAddressSpace> renameList = new ArrayList<>();
 		for (AddressSpace space : factory.getAllAddressSpaces()) {
-			if (!(space instanceof OverlayAddressSpace)) {
-				continue;
-			}
-			OverlayAddressSpace os = (OverlayAddressSpace) space;
-			DBTraceOverlaySpaceEntry ent = overlayStore.getObjectAt(os.getDatabaseKey());
-			if (ent == null) {
-				spacesByKey.remove(os.getDatabaseKey());
-				factory.removeOverlaySpace(os.getName());
-			}
-			else if (!os.getName().equals(ent.name)) {
-				factory.removeOverlaySpace(os.getName());
-				os.setName(ent.name);
-				try {
-					factory.addOverlayAddressSpace(os);
+			if (space instanceof ProgramOverlayAddressSpace os) {
+				String name = os.getName();
+				DBTraceOverlaySpaceEntry ent = keyToRecordMap.get(os.getKey());
+				if (ent == null || !isCompatibleOverlay(os, ent, factory)) {
+					// Remove overlay if entry does not exist or base space differs
+					factory.removeOverlaySpace(name);
 				}
-				catch (DuplicateNameException e) {
-					throw new AssertionError(); // I just removed it
+				else if (name.equals(ent.name)) {
+					keyToRecordMap.remove(os.getKey());
+					continue; // no change to space
+				}
+				else {
+					// Add space to map of those that need to be renamed
+					renameList.add(os);
+					factory.removeOverlaySpace(name);
 				}
 			}
-			// else it's already in sync
 		}
-		// Add missing overlays
-		for (DBTraceOverlaySpaceEntry ent : overlayStore.asMap().values()) {
-			AddressSpace exists = factory.getAddressSpace(ent.name);
-			if (exists != null) {
-				// it's already in sync and/or its a physical space
-				continue;
+
+		try {
+			// Handle all renamed overlays which had been temporarily removed from factory
+			for (ProgramOverlayAddressSpace existingSpace : renameList) {
+				long key = existingSpace.getKey();
+				DBTraceOverlaySpaceEntry ent = keyToRecordMap.get(key);
+				existingSpace.setName(ent.name);
+				factory.addOverlaySpace(existingSpace); // re-add renamed space
+				keyToRecordMap.remove(key);
 			}
-			AddressSpace baseSpace = factory.getAddressSpace(ent.baseSpace);
-			try {
-				OverlayAddressSpace space = factory.addOverlayAddressSpace(ent.name, true,
-					baseSpace, baseSpace.getMinAddress().getOffset(),
-					baseSpace.getMaxAddress().getOffset());
-				space.setDatabaseKey(ent.getKey());
-				spacesByKey.put(space.getDatabaseKey(), space);
-			}
-			catch (IllegalArgumentException e) {
-				throw new AssertionError(); // Name should be validated already, no?
+
+			// Add any remaing overlay which are missing from factory
+			for (long key : keyToRecordMap.keySet()) {
+				DBTraceOverlaySpaceEntry ent = keyToRecordMap.get(key);
+				String spaceName = ent.name;
+				AddressSpace baseSpace = factory.getAddressSpace(ent.baseSpace);
+				factory.addOverlaySpace(key, spaceName, baseSpace);
 			}
 		}
+		catch (IllegalArgumentException | DuplicateNameException e) {
+			throw new AssertionError("Unexpected error updating overlay address spaces", e);
+		}
+
+		factory.refreshStaleOverlayStatus();
 	}
 
-	protected AddressSpace doCreateOverlaySpace(String name, AddressSpace base) {
+	private boolean isCompatibleOverlay(ProgramOverlayAddressSpace os, DBTraceOverlaySpaceEntry ent,
+			ProgramAddressFactory factory) {
+		AddressSpace baseSpace = factory.getAddressSpace(ent.baseSpace);
+		if (baseSpace == null) {
+			// Error condition should be handled better - language may have dropped original base space
+			throw new RuntimeException("Base space for overlay not found: " + ent.baseSpace);
+		}
+		return baseSpace == os.getOverlayedSpace();
+	}
+
+	protected AddressSpace doCreateOverlaySpace(String name, AddressSpace base)
+			throws DuplicateNameException {
 		TraceAddressFactory factory = trace.getInternalAddressFactory();
-		OverlayAddressSpace space =
-			factory.addOverlayAddressSpace(name, true, base, base.getMinAddress().getOffset(),
-				base.getMaxAddress().getOffset());
-		// Only if it succeeds do we store the record
+
+		if (!factory.isValidOverlayBaseSpace(base)) {
+			throw new IllegalArgumentException(
+				"Invalid address space for overlay: " + base.getName());
+		}
+
+		if (factory.getAddressSpace(name) != null) {
+			throw new DuplicateNameException(
+				"Overlay space '" + name + "' duplicates name of another address space");
+		}
+
 		DBTraceOverlaySpaceEntry ent = overlayStore.create();
+		ProgramOverlayAddressSpace space = factory.addOverlaySpace(ent.getKey(), name, base);
+
+		// Only if it succeeds do we store the record
 		ent.set(space.getName(), base.getName());
 		trace.updateViewsAddSpaceBlock(space);
-		trace.setChanged(new TraceChangeRecord<>(TraceOverlaySpaceChangeType.ADDED, null,
-			trace, null, space));
+		trace.setChanged(
+			new TraceChangeRecord<>(TraceOverlaySpaceChangeType.ADDED, null, trace, null, space));
 		return space;
 	}
 
@@ -261,7 +291,12 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 			if (space != null) {
 				return space.getPhysicalSpace() == base ? space : null;
 			}
-			return doCreateOverlaySpace(name, base);
+			try {
+				return doCreateOverlaySpace(name, base);
+			}
+			catch (DuplicateNameException e) {
+				throw new AssertionError(e);
+			}
 		}
 	}
 
@@ -280,6 +315,8 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 			trace.updateViewsDeleteSpaceBlock(space);
 			trace.setChanged(new TraceChangeRecord<>(TraceOverlaySpaceChangeType.DELETED, null,
 				trace, space, null));
+			invalidateCache(true);
 		}
 	}
+
 }

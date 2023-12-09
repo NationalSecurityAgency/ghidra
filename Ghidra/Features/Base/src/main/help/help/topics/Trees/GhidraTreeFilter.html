@@ -172,11 +172,44 @@
       <H3>Invert Filter</H3>
 
       <BLOCKQUOTE>
-        <P>Selecting the inverted checkbox will cause the filter to only include those tree nodes
+        <P>Selecting the Invert Filter checkbox will cause the filter to only include those tree nodes
         or table rows that <B>DO NOT</B> meet the filter text criteria. In other words, "contains"
         becomes "does not contain". This negation happens after all other filtering tests have been
         performed, including multi-term matching.</P>
       </BLOCKQUOTE>
+
+	  <H3>Use Path</H3>
+
+      <BLOCKQUOTE>
+        <P>Selecting the Use Path checkbox will cause the filter to prepend each node's path 
+        to its text being used to filter.  This allows users to filter on a node's path.  When 
+        this box is unselected, only the default node filter information is used, typically the
+        nodes name.</P>
+        
+        <BLOCKQUOTE>
+        <P><IMG border="0" src="help/shared/tip.png" alt="">The the format of a node path looks
+        similar to a filesystem path, for example: <CODE>Root/folder1/folder2/nodeName</CODE>.
+        In this example, with path filtering enabled, you can match this node with any of the
+        following filter strings:
+        	<UL>
+        		<LI>
+        			<CODE>nodeName</CODE>
+        		</LI>
+        		<LI>
+        			<CODE>*folder1*nodeName</CODE>
+        		</LI>
+        		<LI>
+        			<CODE>*folder1/nodeName</CODE>
+        		</LI>
+        		<LI>
+        			<CODE>Root/folder1/folder2/nodeName</CODE>
+        		</LI>
+        	</UL>
+        </P>
+        </BLOCKQUOTE>
+        
+      </BLOCKQUOTE>
+	
 
       <H3>Enable Multi-Term Filtering<A name="Multiple_Terms" id="Multiple_Terms"></A></H3>
 

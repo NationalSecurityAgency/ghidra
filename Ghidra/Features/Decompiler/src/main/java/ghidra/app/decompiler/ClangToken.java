@@ -19,6 +19,7 @@ import static ghidra.program.model.pcode.AttributeId.*;
 import static ghidra.program.model.pcode.ElementId.*;
 
 import java.awt.Color;
+import java.util.Iterator;
 import java.util.List;
 
 //import ghidra.app.plugin.core.decompile.*;
@@ -331,5 +332,15 @@ public class ClangToken implements ClangNode {
 	 */
 	public Scalar getScalar() {
 		return null;
+	}
+
+	/**
+	 * Get an iterator over tokens starting with this ClangToken.  Tokens are returned in normal
+	 * display order (forward=true) or in the reverse of normal display order (forward=false)
+	 * @param forward is true for forward iterator, false for a backward iterator
+	 * @return the Iterator object
+	 */
+	public Iterator<ClangToken> iterator(boolean forward) {
+		return new TokenIterator(this, forward);
 	}
 }

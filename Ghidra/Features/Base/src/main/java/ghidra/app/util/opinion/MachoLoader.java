@@ -60,7 +60,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 			MachHeader machHeader = new MachHeader(provider);
 			String magic =
 				CpuTypes.getMagicString(machHeader.getCpuType(), machHeader.getCpuSubType());
-			List<QueryResult> results = QueryOpinionService.query(getName(), magic, null);
+			List<QueryResult> results = QueryOpinionService.query(MACH_O_NAME, magic, null);
 			for (QueryResult result : results) {
 				loadSpecs.add(new LoadSpec(this, machHeader.getImageBase(), result));
 			}

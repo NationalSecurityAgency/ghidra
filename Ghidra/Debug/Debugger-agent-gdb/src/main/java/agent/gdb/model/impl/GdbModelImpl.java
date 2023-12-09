@@ -156,7 +156,7 @@ public class GdbModelImpl extends AbstractDebuggerObjectModel {
 			}
 		}).thenCompose(__ -> {
 			if (closed) {
-				return AsyncUtils.NIL;
+				return AsyncUtils.nil();
 			}
 			return gdb.runRC();
 		});
@@ -167,7 +167,7 @@ public class GdbModelImpl extends AbstractDebuggerObjectModel {
 	}
 
 	public void terminate() throws IOException {
-		listeners.fire.modelClosed(DebuggerModelClosedReason.NORMAL);
+		broadcast().modelClosed(DebuggerModelClosedReason.NORMAL);
 		session.invalidateSubtree(session, "GDB is terminating");
 		gdb.terminate();
 	}

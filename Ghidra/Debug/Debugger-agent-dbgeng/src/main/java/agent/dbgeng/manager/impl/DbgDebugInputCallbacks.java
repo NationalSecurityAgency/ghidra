@@ -29,7 +29,7 @@ public class DbgDebugInputCallbacks implements DebugInputCallbacks {
 
 	@Override
 	public void startInput(long bufsize) {
-		manager.getEventListeners().fire.promptChanged(">>>");
+		manager.getEventListeners().invoke().promptChanged(">>>");
 		CompletableFuture<String> cf = new CompletableFuture<String>();
 		try {
 			manager.setContinuation(cf);

@@ -26,10 +26,12 @@ import java.util.stream.Collectors;
 
 import javax.swing.event.ChangeListener;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import generic.jar.ResourceFile;
+import ghidra.GhidraClassLoader;
 import ghidra.framework.Application;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
@@ -277,15 +279,30 @@ public class ClassSearcher {
 	}
 
 	private static List<String> gatherSearchPaths() {
-		String cp = System.getProperty("java.class.path");
-		StringTokenizer st = new StringTokenizer(cp, File.pathSeparator);
+
+		//
+		// By default all classes are found on the standard classpath.  In the default mode, there
+		// are no values associated with the GhidraClassLoader.CP_EXT property.  Alternatively, 
+		// users can enable Extension classpath restriction.  In this mode, any Extension module's 
+		// jar files will *not* be on the standard classpath, but instead will be on CP_EXT.
+		//
 		List<String> rawPaths = new ArrayList<>();
-		while (st.hasMoreTokens()) {
-			rawPaths.add(st.nextToken());
+		getPropertyPaths(GhidraClassLoader.CP, rawPaths);
+		getPropertyPaths(GhidraClassLoader.CP_EXT, rawPaths);
+		return canonicalizePaths(rawPaths);
+	}
+
+	private static void getPropertyPaths(String property, List<String> results) {
+		String paths = System.getProperty(property);
+		Msg.trace(ClassSearcher.class, "Paths in " + property + ": " + paths);
+		if (StringUtils.isBlank(paths)) {
+			return;
 		}
 
-		List<String> canonicalPaths = canonicalizePaths(rawPaths);
-		return canonicalPaths;
+		StringTokenizer st = new StringTokenizer(paths, File.pathSeparator);
+		while (st.hasMoreTokens()) {
+			results.add(st.nextToken());
+		}
 	}
 
 	private static List<String> canonicalizePaths(Collection<String> paths) {

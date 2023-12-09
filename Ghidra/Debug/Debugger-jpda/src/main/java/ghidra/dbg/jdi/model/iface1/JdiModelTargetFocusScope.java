@@ -59,6 +59,6 @@ public interface JdiModelTargetFocusScope extends JdiModelTargetObject, TargetFo
 			}
 			cur = cur.getParent();
 		}
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 }

@@ -51,7 +51,7 @@ public final class LocalVersionInfoHandler
 	}
 
 	@Override
-	public void handle(PluginTool tool, DataTree dataTree, GTreeNode destinationNode,
+	public boolean handle(PluginTool tool, DataTree dataTree, GTreeNode destinationNode,
 			Object transferData, int dropAction) {
 		DomainFolder folder = getDomainFolder(destinationNode);
 
@@ -65,6 +65,7 @@ public final class LocalVersionInfoHandler
 			if (file != null) {
 				new TaskLauncher(new CopyFileVersionTask(file, info.getVersionNumber(), folder),
 					dataTree, 500);
+				return true;
 			}
 		}
 		catch (NotConnectedException exc) {
@@ -73,6 +74,7 @@ public final class LocalVersionInfoHandler
 		catch (IOException exc) {
 			ClientUtil.handleException(rep, exc, "Repository Connection", tool.getToolFrame());
 		}
+		return false;
 	}
 
 	private DomainFolder getDomainFolder(GTreeNode destinationNode) {

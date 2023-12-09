@@ -15,11 +15,10 @@
  */
 package docking.widgets.fieldpanel.internal;
 
-import ghidra.util.exception.AssertException;
-
 import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.*;
+import ghidra.util.exception.AssertException;
 
 /**
  * A LayoutLockedFieldPanelCoordinator is an extension of a LineLockedFieldPanelCoordinator that

@@ -31,7 +31,7 @@ public class AppInfo {
 		tool = t;
 	}
 
-	static void setActiveProject(Project p) {
+	public static void setActiveProject(Project p) {
 		activeProject = p;
 	}
 

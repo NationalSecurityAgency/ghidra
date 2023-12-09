@@ -24,16 +24,17 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import javax.swing.Icon;
 import javax.swing.JOptionPane;
 
 import org.jdom.Element;
 import org.jdom.JDOMException;
 
 import db.Transaction;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.objects.components.DebuggerMethodInvocationDialog;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
-import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
 import ghidra.async.*;
 import ghidra.dbg.*;
 import ghidra.dbg.target.*;
@@ -42,6 +43,10 @@ import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.target.TargetMethod.TargetParameterMap;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathUtils;
+import ghidra.debug.api.model.DebuggerProgramLaunchOffer;
+import ghidra.debug.api.model.TraceRecorder;
+import ghidra.debug.api.modules.*;
+import ghidra.debug.api.modules.ModuleMapProposal.ModuleMapEntry;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.AutoConfigState.ConfigStateField;
@@ -75,6 +80,11 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 		this.program = program;
 		this.tool = tool;
 		this.factory = factory;
+	}
+
+	@Override
+	public Icon getIcon() {
+		return DebuggerResources.ICON_DEBUGGER;
 	}
 
 	@Override

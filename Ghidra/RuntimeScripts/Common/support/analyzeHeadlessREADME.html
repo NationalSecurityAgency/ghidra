@@ -117,7 +117,7 @@ The Headless Analyzer uses the command-line parameters discussed below. See <a h
         [<a href="#scriptLog">-scriptlog &lt;path to script log file&gt;</a>]
         [<a href="#log">-log &lt;path to log file&gt;</a>]
         [<a href="#overwrite">-overwrite</a>]
-        [<a href="#recursive">-recursive</a>]
+        [<a href="#recursive">-recursive [&lt;depth&gt;]</a>]
         [<a href="#readOnly">-readOnly</a>]
         [<a href="#deleteProject">-deleteProject</a>]
         [<a href="#noanalysis">-noanalysis</a>]
@@ -216,10 +216,11 @@ The Headless Analyzer uses the command-line parameters discussed below. See <a h
     present in the parameters list.</i>
     <br><br>
     Specifies one or more executables (or directories of executables) to import. When importing a 
-    directory, a folder with the same name will be created in the Ghidra project. When using the 
-    <typewriter>-recursive</typewriter> parameter, each executable that is found in a recursive 
-    search through the given directory will be stored in the project in the same relative location 
-    (i.e., any directories found under the import directory will also be created in the project).
+    directory or supported container format, a folder with the same name will be created in the 
+    Ghidra project. When using the <typewriter>-recursive</typewriter> parameter, each executable 
+    that is found in a recursive search through the given directory or container file will be 
+    stored in the project in the same relative location (i.e., any directories found under the 
+    import directory will also be created in the project).
     <br><br>
     Operating system-specific wildcard characters can be used when importing files and/or directories. 
     Please see the <a href="#wildcards">Wildcards</a> section for more details.
@@ -395,10 +396,17 @@ The Headless Analyzer uses the command-line parameters discussed below. See <a h
     <br><br>
 
     <LI>
-    <a name="recursive"><typewriter>-recursive</typewriter></a><br>
+    <a name="recursive"><typewriter>-recursive [&lt;depth&gt;]</typewriter></a><br>
     If present, enables recursive descent into directories and project sub-folders when a directory/
     folder has been specified in <typewriter>-import</typewriter> or <typewriter>-process</typewriter> 
     modes.
+    <br><br>
+    Specifying a positive integer value for the optional <typewriter>&lt;depth&gt;</typewriter>
+    argument enables recursive descent into supported container files (e.g., zip, tar, .a, etc).
+    The depth value only applies to nested container files. Intermediate directories found within 
+    each nested container file are not affected by the specified depth value.  If a depth value is
+    not specified, it will default to 0 if importing a directory, and 1 if importing a file.  A
+    depth of 0 will prevent recursing into any container files.
     </LI>
 
     <br><br>

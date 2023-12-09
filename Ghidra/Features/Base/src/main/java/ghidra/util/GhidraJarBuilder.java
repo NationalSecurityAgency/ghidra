@@ -26,11 +26,11 @@ import generic.jar.*;
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
 import ghidra.framework.*;
-import ghidra.framework.project.extensions.ExtensionUtils;
 import ghidra.util.classfinder.ClassFinder;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.extensions.ExtensionUtils;
 import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
 import utility.application.ApplicationLayout;
@@ -717,9 +717,6 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			jarOut.close();
 		}
 
-		/**
-		 * Outputs an individual file to the jar.
-		 */
 		public void addFile(String jarPath, File file, ApplicationModule module)
 				throws IOException, CancelledException {
 			if (!file.exists()) {
@@ -834,7 +831,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			zipOut.close();
 		}
 
-		/**
+		/*
 		 * Outputs an individual file to the jar.
 		 */
 		public void addFile(String zipPath, File file) throws IOException, CancelledException {
@@ -930,7 +927,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 		System.exit(0);
 	}
 
-	/**
+	/*
 	 * Entry point for 'gradle buildGhidraJar'.
 	 */
 	public static void main(String[] args) throws IOException {

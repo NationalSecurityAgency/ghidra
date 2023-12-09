@@ -365,6 +365,10 @@ public class DBTraceObjectBreakpointLocation
 		return object;
 	}
 
+	public TraceObjectBreakpointSpec getOrCreateSpecification() {
+		return object.queryOrCreateCanonicalAncestorInterface(TraceObjectBreakpointSpec.class);
+	}
+
 	@Override
 	public TraceObjectBreakpointSpec getSpecification() {
 		try (LockHold hold = object.getTrace().lockRead()) {

@@ -35,7 +35,7 @@ import ghidra.util.Swing;
  * The plugin that provides {@link TerminalService}
  */
 @PluginInfo(
-	status = PluginStatus.UNSTABLE,
+	status = PluginStatus.STABLE,
 	category = PluginCategoryNames.COMMON,
 	packageName = CorePluginPackage.NAME,
 	description = "Provides VT100 Terminal Emulation",
@@ -52,14 +52,29 @@ public class TerminalPlugin extends Plugin implements TerminalService {
 		clipboardService = tool.getService(ClipboardService.class);
 	}
 
+	@Override
+	public void cleanTerminated() {
+		Swing.runIfSwingOrRunLater(this::doCleanTerminated);
+	}
+
+	protected void doCleanTerminated() {
+		for (TerminalProvider provider : List.copyOf(providers)) {
+			if (provider.isTerminated()) {
+				provider.removeFromTool();
+			}
+		}
+	}
+
 	public TerminalProvider createProvider(Charset charset, VtOutput outputCb) {
 		return Swing.runNow(() -> {
+			cleanTerminated();
 			TerminalProvider provider = new TerminalProvider(this, charset);
 			provider.setOutputCallback(outputCb);
 			provider.addToTool();
 			provider.setVisible(true);
 			providers.add(provider);
 			provider.setClipboardService(clipboardService);
+			provider.toFront();
 			return provider;
 		});
 	}
@@ -79,7 +94,7 @@ public class TerminalPlugin extends Plugin implements TerminalService {
 					channel.write(buf);
 				}
 				catch (IOException e) {
-					Msg.error(this, "Could not write terminal output", e);
+					Msg.error(this, "Could not write terminal output: " + e);
 				}
 			}
 		}), in);

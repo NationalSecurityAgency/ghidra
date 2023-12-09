@@ -15,10 +15,8 @@
  */
 package ghidra.pty.linux;
 
-import java.io.*;
-import java.net.URL;
-import java.net.URLDecoder;
-import java.nio.file.Paths;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 import ghidra.pty.PtyChild;
@@ -85,70 +83,12 @@ public class LinuxPtyChild extends LinuxPtyEndpoint implements PtyChild {
 		applyMode(mode);
 
 		try {
-			return new LocalProcessPtySession(builder.start());
+			return new LocalProcessPtySession(builder.start(), name);
 		}
 		catch (Exception e) {
 			Msg.error(this, "Could not start process with args " + Arrays.toString(args), e);
 			throw e;
 		}
-	}
-
-	protected PtySession sessionUsingPythonLeader(String[] args, Map<String, String> env)
-			throws IOException {
-		final List<String> argsList = new ArrayList<>();
-		argsList.add("python");
-		argsList.add("-m");
-		argsList.add("session");
-
-		argsList.add(name);
-		argsList.addAll(Arrays.asList(args));
-		ProcessBuilder builder = new ProcessBuilder(argsList);
-		if (env != null) {
-			builder.environment().putAll(env);
-		}
-		String sourceLoc = getSourceLocationForResource("session.py").getAbsolutePath();
-		//System.err.println("PYTHONPATH=" + sourceLoc);
-		builder.environment().put("PYTHONPATH", sourceLoc);
-		builder.inheritIO();
-
-		return new LocalProcessPtySession(builder.start());
-	}
-
-	public static File getSourceLocationForResource(String name) {
-		// TODO: Refactor this with SystemUtilities.getSourceLocationForClass()
-		URL url = LinuxPtyChild.class.getClassLoader().getResource(name);
-		String urlFile = url.getFile();
-		try {
-			urlFile = URLDecoder.decode(urlFile, "UTF-8");
-		}
-		catch (UnsupportedEncodingException e) {
-			// can't happen, since we know the encoding is correct
-			throw new AssertionError(e);
-		}
-
-		if ("file".equals(url.getProtocol())) {
-			int packageLevel = Paths.get(name).getNameCount();
-			File file = new File(urlFile);
-			for (int i = 0; i < packageLevel; i++) {
-				file = file.getParentFile();
-			}
-			return file;
-		}
-
-		if ("jar".equals(url.getProtocol())) {
-			// Running from Jar file
-			String jarPath = urlFile;
-			if (!jarPath.startsWith("file:")) {
-				return null;
-			}
-
-			// strip off the 'file:' prefix and the jar path suffix after the
-			// '!'
-			jarPath = jarPath.substring(5, jarPath.indexOf('!'));
-			return new File(jarPath);
-		}
-
-		return null;
 	}
 
 	private void applyMode(Collection<TermMode> mode) {

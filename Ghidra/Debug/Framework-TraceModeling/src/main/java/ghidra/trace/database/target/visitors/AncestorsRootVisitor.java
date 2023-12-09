@@ -58,6 +58,6 @@ public class AncestorsRootVisitor implements SpanIntersectingVisitor {
 		 * Can't really filter the parent values by predicates here, since the predicates are not
 		 * matching relative paths, but canonical paths.
 		 */
-		return object.getParents().stream().filter(v -> !path.contains(v));
+		return object.getParents(span).stream().filter(v -> !path.contains(v));
 	}
 }

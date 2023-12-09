@@ -137,15 +137,22 @@ class SelectProjectPanel extends AbstractWizardJPanel {
 		directoryField = new JTextField(25);
 		directoryField.setName("Project Directory");
 
-		String lastDirSelected = Preferences.getProperty(Preferences.LAST_NEW_PROJECT_DIRECTORY);
-		if (lastDirSelected != null) {
-			directoryField.setText(lastDirSelected);
+		File projectDirectory = null;
+		String projectDirPath = Preferences.getProperty(Preferences.LAST_NEW_PROJECT_DIRECTORY);
+		if (projectDirPath != null) {
+			// if it exists, use last directory where project was created
+			projectDirectory = new File(projectDirPath);
+			if (!projectDirectory.isDirectory()) {
+				projectDirectory = null;
+			}
 		}
-		else {
-			File projectDirectory = new File(GenericRunInfo.getProjectsDirPath());
-			directoryField.setText(projectDirectory.getAbsolutePath());
+		if (projectDirectory == null) {
+			// otherwise, use last project directory or default
+			projectDirectory = new File(GenericRunInfo.getProjectsDirPath());
 		}
-		directoryField.setCaretPosition(directoryField.getText().length() - 1);
+		projectDirPath = projectDirectory.getAbsolutePath();
+		directoryField.setText(projectDirPath);
+		directoryField.setCaretPosition(projectDirPath.length() - 1);
 		JLabel projectNameLabel = new GDLabel("Project Name:", SwingConstants.RIGHT);
 		projectNameField = new JTextField(25);
 		projectNameField.setName("Project Name");

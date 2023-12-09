@@ -52,7 +52,7 @@ public interface TraceMemoryManager extends TraceMemoryOperations {
 	 * <p>
 	 * NOTE: We are also moving away from (space, thread, frame) triples to uniquely identify
 	 * register storage. Instead, that will be encoded into the address space itself. Register
-	 * overlays will overlay register space as be named after the register container object, which
+	 * overlays will overlay register space and be named after the register container object, which
 	 * subsumes thread and frame when applicable.
 	 * 
 	 * @param name the name of the new address space

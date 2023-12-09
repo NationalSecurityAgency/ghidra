@@ -17,7 +17,8 @@ package ghidra.framework.model;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
 import ghidra.framework.options.Options;
 import ghidra.util.ReadOnlyException;
@@ -216,7 +217,7 @@ public interface DomainObject {
 	 * Returns the list of consumers on this domainObject
 	 * @return the list of consumers.
 	 */
-	public ArrayList<Object> getConsumerList();
+	public List<Object> getConsumerList();
 
 	/**
 	 * Returns true if the given consumer is using (has open) this domain object.

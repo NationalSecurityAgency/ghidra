@@ -139,11 +139,9 @@ public class SleighLanguageValidator {
 			throw new SleighException(
 				specFile + " is not properly case dependent: " + result.getMessage());
 		}
-		try {
-			InputStream in = specFile.getInputStream();
+		try (InputStream in = specFile.getInputStream()) {
 			verifier.setErrorHandler(new VerifierErrorHandler(specFile));
 			verifier.verify(new InputSource(in));
-			in.close();
 		}
 		catch (Exception e) {
 			throw new SleighException(
@@ -211,11 +209,9 @@ public class SleighLanguageValidator {
 		catch (Exception e) {
 			throw new SleighException("Error creating verifier", e);
 		}
-		try {
-			InputStream in = fileToValidate.getInputStream();
+		try (InputStream in = fileToValidate.getInputStream()) {
 			verifier.setErrorHandler(new VerifierErrorHandler(fileToValidate));
 			verifier.verify(new InputSource(in));
-			in.close();
 		}
 		catch (Exception e) {
 			throw new SleighException(

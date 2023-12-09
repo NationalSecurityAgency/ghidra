@@ -104,7 +104,6 @@ OptionDatabase::OptionDatabase(Architecture *g)
   registerOption(new OptionForLoops());
   registerOption(new OptionInline());
   registerOption(new OptionNoReturn());
-  registerOption(new OptionStructAlign());
   registerOption(new OptionProtoEval());
   registerOption(new OptionWarning());
   registerOption(new OptionNullPrinting());
@@ -362,23 +361,6 @@ string OptionNoReturn::apply(Architecture *glb,const string &p1,const string &p2
     prop = "false";
   string res = "No return property for function "+p1+" = "+prop;
   return res;
-}
-
-/// \class OptionStructAlign
-/// \brief Alter the "structure alignment" data organization setting
-///
-/// The first parameter must an integer value indicating the desired alignment
-string OptionStructAlign::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
-
-{
-  int4 val  = -1;
-  istringstream s(p1);
-  s >> dec >> val;
-  if (val == -1)
-    throw ParseError("Missing alignment value");
-
-  glb->types->setStructAlign(val);
-  return "Structure alignment set";
 }
 
 /// \class OptionWarning

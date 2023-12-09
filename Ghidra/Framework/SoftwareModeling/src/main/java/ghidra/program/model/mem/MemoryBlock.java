@@ -118,8 +118,7 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	 * @throws IllegalArgumentException if invalid name specified
 	 * @throws LockException renaming an Overlay block without exclusive access
 	 */
-	public void setName(String name)
-			throws IllegalArgumentException, LockException;
+	public void setName(String name) throws IllegalArgumentException, LockException;
 
 	/**
 	 * Get the comment associated with this block.
@@ -289,8 +288,11 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 
 	/**
 	 * Return whether this block has been initialized.
-	 * 
-	 * @return true if block is fully initialized else false
+	 * <p>
+	 * WARNING: A mapped memory block may have a mix of intialized, uninitialized, and undefined 
+	 * regions.  The value returned by this method for a mapped memory block is always false 
+	 * even if some regions are initialized.
+	 * @return true if block is fully initialized and not a memory-mapped-block, else false
 	 */
 	public boolean isInitialized();
 

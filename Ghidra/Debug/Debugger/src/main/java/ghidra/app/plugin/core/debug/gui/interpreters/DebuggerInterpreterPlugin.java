@@ -26,6 +26,7 @@ import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.interpreter.*;
 import ghidra.app.services.DebuggerInterpreterService;
 import ghidra.dbg.target.*;
+import ghidra.debug.api.interpreter.DebuggerInterpreterConnection;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;

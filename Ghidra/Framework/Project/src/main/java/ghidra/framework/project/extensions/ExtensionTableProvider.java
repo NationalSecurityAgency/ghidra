@@ -33,6 +33,7 @@ import ghidra.framework.Application;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
+import ghidra.util.extensions.ExtensionUtils;
 import ghidra.util.filechooser.GhidraFileChooserModel;
 import ghidra.util.filechooser.GhidraFileFilter;
 import resources.Icons;
@@ -105,7 +106,7 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 		super.dialogClosed();
 
 		if (extensionTablePanel.getTableModel().hasModelChanged() || requireRestart) {
-			Msg.showInfo(this, getComponent(), "Extensions Changed!",
+			Msg.showInfo(this, null, "Extensions Changed!",
 				"Please restart Ghidra for extension changes to take effect.");
 		}
 	}
@@ -166,7 +167,17 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 	private boolean installExtensions(List<File> files) {
 		boolean didInstall = false;
 		for (File file : files) {
-			boolean success = ExtensionUtils.install(file);
+
+			// A sanity check for users that try to install an extension from a source folder
+			// instead of a fully built extension.
+			if (new File(file, "build.gradle").isFile()) {
+				Msg.showWarn(this, null, "Invalid Extension", "The selected extension " +
+					"contains a 'build.gradle' file.\nGhidra does not support installing " +
+					"extensions in source form.\nPlease build the extension and try again.");
+				continue;
+			}
+
+			boolean success = ExtensionInstaller.install(file);
 			didInstall |= success;
 		}
 		return didInstall;
@@ -200,7 +211,7 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 	}
 
 	/**
-	 * Filter for a {@link GhidraFileChooser} that restricts selection to those files that are 
+	 * Filter for a {@link GhidraFileChooser} that restricts selection to those files that are
 	 * Ghidra Extensions (zip files with an extension.properties file) or folders.
 	 */
 	private class ExtensionFileFilter implements GhidraFileFilter {

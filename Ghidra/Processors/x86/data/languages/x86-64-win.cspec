@@ -210,7 +210,7 @@
     <target name="___chkstk_ms"/>
     <pcode>
      <body><![CDATA[
-       RSP = RSP + 0;
+       RSP = RSP + 8;
      ]]></body>
     </pcode>
   </callfixup>

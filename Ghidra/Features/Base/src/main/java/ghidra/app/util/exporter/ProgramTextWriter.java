@@ -17,10 +17,12 @@ package ghidra.app.util.exporter;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.List;
 
 import generic.theme.GThemeDefaults.Colors.Messages;
-import ghidra.app.util.DisplayableEol;
+import ghidra.app.util.EolComments;
 import ghidra.app.util.template.TemplateSimplifier;
+import ghidra.app.util.viewer.field.EolExtraCommentsOption;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
@@ -56,10 +58,6 @@ class ProgramTextWriter {
 			ProgramTextOptions options, ServiceProvider provider) throws FileNotFoundException {
 
 		this.options = options;
-		// Exit if options are INVALID
-		int len = options.getAddrWidth() + options.getBytesWidth() + options.getPreMnemonicWidth() +
-			options.getMnemonicWidth() + options.getOperandWidth() + options.getEolWidth();
-
 		this.program = program;
 		this.listing = program.getListing();
 		this.memory = program.getMemory();
@@ -293,29 +291,7 @@ class ProgramTextWriter {
 			//// End of Line Area //////////////////////////////////////////
 
 			if (options.isShowComments()) {
-				DisplayableEol displayableEol = new DisplayableEol(currentCodeUnit, false, false,
-					false, true, 6 /* arbitrary! */, true, true);
-				String[] eol = displayableEol.getComments();
-				if (eol != null && eol.length > 0) {
-					len = options.getAddrWidth() + options.getBytesWidth() +
-						options.getPreMnemonicWidth() + options.getMnemonicWidth() +
-						options.getOperandWidth();
-
-					String fill = genFill(len);
-
-					for (int i = 0; i < eol.length; ++i) {
-						if (i > 0) {
-							buffy.append(fill);
-						}
-						String eolcmt = options.getCommentPrefix() + eol[i];
-						if (eolcmt.length() > options.getEolWidth()) {
-							eolcmt = clip(eolcmt, options.getEolWidth(), true, true);
-						}
-						buffy.append(eolcmt);
-						writer.println(buffy.toString());
-						buffy = new StringBuilder();
-					}
-				}
+				addComments(currentCodeUnit);
 			}
 
 			if (buffy.length() > 0) {
@@ -367,6 +343,35 @@ class ProgramTextWriter {
 		}
 
 		writer.close();
+	}
+
+	private void addComments(CodeUnit currentCodeUnit) {
+
+		EolExtraCommentsOption eolOption = new EolExtraCommentsOption();
+		EolComments eolComments =
+			new EolComments(currentCodeUnit, true, 6 /* arbitrary */, eolOption);
+		List<String> comments = eolComments.getComments();
+		if (comments.isEmpty()) {
+			return;
+		}
+
+		int len = options.getAddrWidth() + options.getBytesWidth() +
+			options.getPreMnemonicWidth() + options.getMnemonicWidth() +
+			options.getOperandWidth();
+
+		String fill = genFill(len);
+		for (int i = 0; i < comments.size(); ++i) {
+			if (i > 0) {
+				buffy.append(fill);
+			}
+			String text = options.getCommentPrefix() + comments.get(i);
+			if (text.length() > options.getEolWidth()) {
+				text = clip(text, options.getEolWidth(), true, true);
+			}
+			buffy.append(text);
+			writer.println(buffy.toString());
+			buffy = new StringBuilder();
+		}
 	}
 
 	private void insertUndefinedBytesRemovedMarker(Address bytesRemovedRangeStart,

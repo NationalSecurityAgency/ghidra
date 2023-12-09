@@ -16,6 +16,7 @@
 package ghidra.framework.plugintool.util;
 
 import java.lang.reflect.*;
+import java.util.List;
 
 import ghidra.framework.plugintool.*;
 import ghidra.util.Msg;
@@ -76,6 +77,14 @@ public class PluginUtils {
 	 */
 	public static Class<? extends Plugin> forName(String pluginClassName) throws PluginException {
 		try {
+
+			List<Class<? extends Plugin>> classes = ClassSearcher.getClasses(Plugin.class);
+			for (Class<? extends Plugin> plug : classes) {
+				if (plug.getName().equals(pluginClassName)) {
+					return plug;
+				}
+			}
+
 			Class<?> tmpClass = Class.forName(pluginClassName);
 			if (!Plugin.class.isAssignableFrom(tmpClass)) {
 				throw new PluginException(
@@ -84,7 +93,7 @@ public class PluginUtils {
 			return tmpClass.asSubclass(Plugin.class);
 		}
 		catch (ClassNotFoundException e) {
-			throw new PluginException("Plugin class not found");
+			throw new PluginException("Plugin class not found: " + pluginClassName);
 		}
 	}
 

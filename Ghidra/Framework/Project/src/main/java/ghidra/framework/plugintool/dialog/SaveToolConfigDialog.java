@@ -394,7 +394,10 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 			new ExtensionFileFilter(new String[] { "gif", "jpg", "bmp", "png" }, "Image Files"));
 		String iconDir = Preferences.getProperty(LAST_ICON_DIRECTORY);
 		if (iconDir != null) {
-			chooser.setCurrentDirectory(new File(iconDir));
+			File dir = new File(iconDir);
+			if (dir.isDirectory()) {
+				chooser.setCurrentDirectory(dir);
+			}
 		}
 		File file = chooser.getSelectedFile();
 		chooser.dispose();

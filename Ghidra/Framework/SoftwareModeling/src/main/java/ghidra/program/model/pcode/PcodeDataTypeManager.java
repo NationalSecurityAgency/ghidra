@@ -33,6 +33,7 @@ import ghidra.program.model.lang.DecompilerLanguage;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.NameTransformer;
 import ghidra.util.UniversalID;
+import ghidra.xml.XmlParseException;
 
 /**
  *
@@ -50,6 +51,20 @@ public class PcodeDataTypeManager {
 
 	private static final long DEFAULT_DECOMPILER_ID = 0xC000000000000000L;	// ID for "undefined" (decompiler side)
 	private static final long CODE_DECOMPILER_ID = 0xE000000000000001L;		// ID for internal "code" data-type
+
+	public static final int TYPE_VOID = 14;		// Standard "void" type, absence of type
+	public static final int TYPE_UNKNOWN = 12;		// An unknown low-level type. Treated as an unsigned integer.
+	public static final int TYPE_INT = 11;		// Signed integer. Signed is considered less specific than unsigned in C
+	public static final int TYPE_UINT = 10;		// Unsigned integer
+	public static final int TYPE_BOOL = 9;		// Boolean
+	public static final int TYPE_CODE = 8;		// Data is actual executable code
+	public static final int TYPE_FLOAT = 7;		// Floating-point
+
+	public static final int TYPE_PTR = 6;		// Pointer data-type
+	public static final int TYPE_PTRREL = 5;	// Pointer relative to another data-type (specialization of TYPE_PTR)
+	public static final int TYPE_ARRAY = 4;		// Array data-type, made up of a sequence of "element" datatype
+	public static final int TYPE_STRUCT = 3;	// Structure data-type, made up of component datatypes
+	public static final int TYPE_UNION = 2;		// An overlapping union of multiple datatypes
 
 	/**
 	 * A mapping between a DataType and its (name,id) on the decompiler side
@@ -1215,7 +1230,7 @@ public class PcodeDataTypeManager {
 	}
 
 	/**
-	 * Encode the coretypes to the stream
+	 * Encode the core data-types to the stream
 	 * @param encoder is the stream encoder
 	 * @throws IOException for errors in the underlying stream
 	 */
@@ -1233,10 +1248,152 @@ public class PcodeDataTypeManager {
 			if (typeMap.isUtf) {
 				encoder.writeBool(ATTRIB_UTF, true);
 			}
-			// Encode special id ( <0 for builtins )
-			encoder.writeSignedInteger(ATTRIB_ID, typeMap.id);
+			encoder.writeUnsignedInteger(ATTRIB_ID, typeMap.id);
 			encoder.closeElement(ELEM_TYPE);
 		}
 		encoder.closeElement(ELEM_CORETYPES);
+	}
+
+	/**
+	 * Get the decompiler meta-type associated with a data-type.
+	 * @param tp is the data-type
+	 * @return the meta-type
+	 */
+	public static int getMetatype(DataType tp) {
+		if (tp instanceof TypeDef) {
+			tp = ((TypeDef) tp).getBaseDataType();
+		}
+		if (tp instanceof Undefined) {
+			return TYPE_UNKNOWN;
+		}
+		if (tp instanceof AbstractFloatDataType) {
+			return TYPE_FLOAT;
+		}
+		if (tp instanceof Pointer) {
+			return TYPE_PTR;
+		}
+		if (tp instanceof BooleanDataType) {
+			return TYPE_BOOL;
+		}
+		if (tp instanceof AbstractSignedIntegerDataType) {
+			return TYPE_INT;
+		}
+		if (tp instanceof AbstractUnsignedIntegerDataType) {
+			return TYPE_UINT;
+		}
+		if (tp instanceof Structure) {
+			return TYPE_STRUCT;
+		}
+		if (tp instanceof Union) {
+			return TYPE_UNION;
+		}
+		if (tp instanceof Array) {
+			return TYPE_ARRAY;
+		}
+		return TYPE_UNKNOWN;
+	}
+
+	/**
+	 * Convert an XML marshaling string to a metatype code
+	 * @param metaString is the string
+	 * @return the metatype code
+	 * @throws XmlParseException if the string does not represent a valid metatype
+	 */
+	public static int getMetatype(String metaString) throws XmlParseException {
+		switch (metaString.charAt(0)) {
+			case 'p':
+				if (metaString.equals("ptr")) {
+					return TYPE_PTR;
+				}
+				else if (metaString.equals("ptrrel")) {
+					return TYPE_PTRREL;
+				}
+				break;
+			case 'a':
+				if (metaString.equals("array")) {
+					return TYPE_ARRAY;
+				}
+				break;
+			case 's':
+				if (metaString.equals("struct")) {
+					return TYPE_STRUCT;
+				}
+				break;
+			case 'u':
+				if (metaString.equals("unknown")) {
+					return TYPE_UNKNOWN;
+				}
+				else if (metaString.equals("uint")) {
+					return TYPE_UINT;
+				}
+				else if (metaString.equals("union")) {
+					return TYPE_UNION;
+				}
+				break;
+			case 'i':
+				if (metaString.equals("int")) {
+					return TYPE_INT;
+				}
+				break;
+			case 'f':
+				if (metaString.equals("float")) {
+					return TYPE_FLOAT;
+				}
+				break;
+			case 'b':
+				if (metaString.equals("bool")) {
+					return TYPE_BOOL;
+				}
+				break;
+			case 'c':
+				if (metaString.equals("code")) {
+					return TYPE_CODE;
+				}
+				break;
+			case 'v':
+				if (metaString.equals("void")) {
+					return TYPE_VOID;
+				}
+				break;
+			default:
+				break;
+		}
+		throw new XmlParseException("Unknown metatype: " + metaString);
+	}
+
+	/**
+	 * Convert a decompiler metatype code to a string for XML marshaling
+	 * @param meta is the metatype
+	 * @return the marshaling string
+	 * @throws IOException is the metatype is invalid
+	 */
+	public static String getMetatypeString(int meta) throws IOException {
+		switch (meta) {
+			case TYPE_VOID:
+				return "void";
+			case TYPE_UNKNOWN:
+				return "unknown";
+			case TYPE_INT:
+				return "int";
+			case TYPE_UINT:
+				return "uint";
+			case TYPE_BOOL:
+				return "bool";
+			case TYPE_CODE:
+				return "code";
+			case TYPE_FLOAT:
+				return "float";
+			case TYPE_PTR:
+				return "ptr";
+			case TYPE_PTRREL:
+				return "ptrrel";
+			case TYPE_ARRAY:
+				return "array";
+			case TYPE_STRUCT:
+				return "struct";
+			case TYPE_UNION:
+				return "union";
+		}
+		throw new IOException("Unknown metatype");
 	}
 }

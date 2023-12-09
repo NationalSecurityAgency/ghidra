@@ -26,6 +26,7 @@ dependencies {
 	api project(':SystemEmulation')
 
 	// Oof. Apparently, this doesn't work transitively....
+	testImplementation project(path: ':Generic', configuration: 'testArtifacts')
 	testImplementation project(path: ':ProposedUtils', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')

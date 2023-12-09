@@ -27,7 +27,7 @@
   </default_symbols>
   
   <volatile outputop="cWrite" inputop="cRead">
-    <range space="register" first="0x1000" last="0x3fff"/>
+    <range space="register" first="0x1000" last="0x2fff"/>
   </volatile>
   
   <register_data>

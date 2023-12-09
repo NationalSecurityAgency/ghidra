@@ -23,7 +23,7 @@ import javax.swing.*;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
-import docking.action.DockingAction;
+import docking.action.*;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import docking.widgets.fieldpanel.support.FieldLocation;
@@ -67,6 +67,9 @@ public abstract class DecompilerCodeComparisonPanel<T extends DualDecompilerFiel
 	private String rightTitle = NO_FUNCTION_TITLE;
 	private ProgramLocationListener leftDecompilerLocationListener;
 	private ProgramLocationListener rightDecompilerLocationListener;
+	private DecompilerDiffViewFindAction diffViewFindAction;
+	private boolean isSideBySide = true;
+	private ToggleOrientationAction toggleOrientationAction;
 
 	/**
 	 * Creates a comparison panel with two decompilers
@@ -440,7 +443,10 @@ public abstract class DecompilerCodeComparisonPanel<T extends DualDecompilerFiel
 		}
 
 		// Kick the tool so action buttons will be updated
-		tool.getActiveComponentProvider().contextChanged();
+		ComponentProvider provider = tool.getWindowManager().getProvider(comp);
+		if (provider != null) {
+			provider.contextChanged();
+		}
 	}
 
 	private void setDualPanelFocus(int leftOrRight) {
@@ -523,18 +529,39 @@ public abstract class DecompilerCodeComparisonPanel<T extends DualDecompilerFiel
 	 */
 	protected void createActions() {
 		applyFunctionSignatureAction = new ApplyFunctionSignatureAction(owner);
+		diffViewFindAction = new DecompilerDiffViewFindAction(owner, tool);
+		toggleOrientationAction = new ToggleOrientationAction();
 	}
 
 	@Override
 	public DockingAction[] getActions() {
 		DockingAction[] codeCompActions = super.getActions();
-		DockingAction[] otherActions = new DockingAction[] { applyFunctionSignatureAction };
+		DockingAction[] otherActions = new DockingAction[] { applyFunctionSignatureAction,
+			diffViewFindAction, toggleOrientationAction };
 		int compCount = codeCompActions.length;
 		int otherCount = otherActions.length;
 		DockingAction[] actions = new DockingAction[compCount + otherCount];
 		System.arraycopy(codeCompActions, 0, actions, 0, compCount);
 		System.arraycopy(otherActions, 0, actions, compCount, otherCount);
 		return actions;
+	}
+
+	/**
+	 * Sets whether or not the decompilers are displayed side by side.
+	 * 
+	 * @param sideBySide if true, the decompilers are side by side, otherwise one is above 
+	 * the other.
+	 */
+	private void showSideBySide(boolean sideBySide) {
+		isSideBySide = sideBySide;
+		splitPane.setOrientation(
+			isSideBySide ? JSplitPane.HORIZONTAL_SPLIT : JSplitPane.VERTICAL_SPLIT);
+		splitPane.setDividerLocation(0.5);
+		toggleOrientationAction.setSelected(sideBySide);
+	}
+
+	private boolean isSideBySide() {
+		return isSideBySide;
 	}
 
 	@Override
@@ -636,6 +663,19 @@ public abstract class DecompilerCodeComparisonPanel<T extends DualDecompilerFiel
 		return (functions[RIGHT] != null) ? functions[RIGHT].getBody() : EMPTY_ADDRESS_SET;
 	}
 
+	@Override
+	public FieldPanel getLeftFieldPanel() {
+		return getLeftDecompilerPanel().getFieldPanel();
+	}
+
+	@Override
+	public FieldPanel getRightFieldPanel() {
+		return getRightDecompilerPanel().getFieldPanel();
+	}
+
+	@Override
+	protected abstract DualDecompilerFieldPanelCoordinator createFieldPanelCoordinator();
+
 	private class MyDecompileResultsListener implements DualDecompileResultsListener {
 
 		private FieldLocation leftCursorLocation;
@@ -691,16 +731,22 @@ public abstract class DecompilerCodeComparisonPanel<T extends DualDecompilerFiel
 		}
 	}
 
-	@Override
-	public FieldPanel getLeftFieldPanel() {
-		return getLeftDecompilerPanel().getFieldPanel();
-	}
+	private class ToggleOrientationAction extends ToggleDockingAction {
+		ToggleOrientationAction() {
+			super("Dual Decompiler Toggle Orientation", "FunctionComparison");
+			setDescription("<HTML>Toggle the layout of the decompiler " +
+				"<BR>between side-by-side and one above the other.");
+			setEnabled(true);
+			setSelected(isSideBySide);
+			MenuData menuData =
+				new MenuData(new String[] { "Show Decompilers Side-by-Side" }, "Dual Decompiler");
+			setMenuBarData(menuData);
+		}
 
-	@Override
-	public FieldPanel getRightFieldPanel() {
-		return getRightDecompilerPanel().getFieldPanel();
+		@Override
+		public void actionPerformed(ActionContext context) {
+			boolean sideBySide = !isSideBySide();
+			showSideBySide(sideBySide);
+		}
 	}
-
-	@Override
-	protected abstract DualDecompilerFieldPanelCoordinator createFieldPanelCoordinator();
 }

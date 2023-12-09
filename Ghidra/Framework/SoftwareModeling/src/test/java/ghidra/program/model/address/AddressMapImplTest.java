@@ -44,7 +44,7 @@ public class AddressMapImplTest extends AbstractGenericTest {
 		sp32 = new GenericAddressSpace("THREE", 32, AddressSpace.TYPE_RAM, 2);
 		sp64 = new GenericAddressSpace("FOUR", 64, AddressSpace.TYPE_RAM, 2);
 
-		ov64 = new OverlayAddressSpace("four", sp64, 100, 0x1000, 0x1fff);
+		ov64 = new SingleRangeOverlayAddressSpace("four", sp64, 100, 0x1000, 0x1FFF, "four");
 
 		segSpace1 = new SegmentedAddressSpace("SegSpaceOne", 3);
 		segSpace2 = new SegmentedAddressSpace("SegSpaceTwo", 4);

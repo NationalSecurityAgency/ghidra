@@ -118,7 +118,7 @@ public class DBTraceAddressSnapRangePropertyMapTree<T, DR extends AbstractDBTrac
 
 		@Override
 		protected NodeType getType() {
-			return NodeType.values()[(typeAndChildCount >> NODE_TYPE_SHIFT) & NODE_TYPE_MASK];
+			return NodeType.VALUES.get((typeAndChildCount >> NODE_TYPE_SHIFT) & NODE_TYPE_MASK);
 		}
 
 		@Override

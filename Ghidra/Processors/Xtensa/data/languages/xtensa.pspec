@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<processor_spec>
+  <programcounter register="pc"/>
+  
+  <properties>
+    <property key="emulateInstructionStateModifierClass" value="ghidra.program.emulation.XtensaEmulateInstructionStateModifier" />
+  </properties>
+  
+  <context_data>
+    <tracked_set space="ram">
+      <set name="PS" val="0"/>
+    </tracked_set>
+  </context_data>
+</processor_spec>

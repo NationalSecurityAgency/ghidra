@@ -21,8 +21,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import ghidra.app.script.GhidraScript;
-import ghidra.app.services.LogicalBreakpoint;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint;
 import ghidra.debug.flatapi.FlatDebuggerAPI;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;

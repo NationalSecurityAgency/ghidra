@@ -18,6 +18,8 @@ package generic.theme;
 import java.awt.Font;
 import java.text.ParseException;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.util.Msg;
 
 /**
@@ -27,9 +29,14 @@ import ghidra.util.Msg;
  * and if the class's refId is non-null, then the font value will be null.
  */
 public class FontValue extends ThemeValue<Font> {
+
+	public static final String LAF_ID_PREFIX = "laf.font.";
+	public static final String EXTERNAL_LAF_ID_PREFIX = "[laf.font]";
+
 	static final String FONT_ID_PREFIX = "font.";
-	public static final Font LAST_RESORT_DEFAULT = new Font("monospaced", Font.PLAIN, 12);
 	private static final String EXTERNAL_PREFIX = "[font]";
+
+	public static final Font LAST_RESORT_DEFAULT = new Font("monospaced", Font.PLAIN, 12);
 	private FontModifier modifier;
 
 	/**
@@ -97,13 +104,14 @@ public class FontValue extends ThemeValue<Font> {
 		return String.format("%s-%s-%s", font.getName(), getStyleString(font), font.getSize());
 	}
 
-	/** 
+	/**
 	 * Returns true if the given key string is a valid external key for a font value
 	 * @param key the key string to test
 	 * @return true if the given key string is a valid external key for a font value
 	 */
 	public static boolean isFontKey(String key) {
-		return key.startsWith(FONT_ID_PREFIX) || key.startsWith(EXTERNAL_PREFIX);
+		return StringUtils.startsWithAny(key, FONT_ID_PREFIX, EXTERNAL_PREFIX,
+			EXTERNAL_LAF_ID_PREFIX);
 	}
 
 	/**
@@ -112,7 +120,7 @@ public class FontValue extends ThemeValue<Font> {
 	 * @param key the key to associate the parsed value with
 	 * @param value the font value to parse
 	 * @return a FontValue with the given key and the parsed value
-	 * @throws ParseException if there is an exception parsing 
+	 * @throws ParseException if there is an exception parsing
 	 */
 	public static FontValue parse(String key, String value) throws ParseException {
 		String id = fromExternalId(key);
@@ -164,12 +172,21 @@ public class FontValue extends ThemeValue<Font> {
 		if (internalId.startsWith(FONT_ID_PREFIX)) {
 			return internalId;
 		}
+
+		if (internalId.startsWith(LAF_ID_PREFIX)) {
+			String baseId = internalId.substring(LAF_ID_PREFIX.length());
+			return EXTERNAL_LAF_ID_PREFIX + baseId;
+		}
+
 		return EXTERNAL_PREFIX + internalId;
 	}
 
 	private static String fromExternalId(String externalId) {
 		if (externalId.startsWith(EXTERNAL_PREFIX)) {
 			return externalId.substring(EXTERNAL_PREFIX.length());
+		}
+		if (externalId.startsWith(EXTERNAL_LAF_ID_PREFIX)) {
+			return LAF_ID_PREFIX + externalId.substring(EXTERNAL_LAF_ID_PREFIX.length());
 		}
 		return externalId;
 	}
@@ -198,9 +215,7 @@ public class FontValue extends ThemeValue<Font> {
 	}
 
 	private static FontValue getRefFontValue(String id, String value) throws ParseException {
-		if (value.startsWith(EXTERNAL_PREFIX)) {
-			value = value.substring(EXTERNAL_PREFIX.length());
-		}
+		value = fromExternalId(value);
 		int modIndex = value.indexOf("[");
 		if (modIndex < 0) {
 			return new FontValue(id, fromExternalId(value));

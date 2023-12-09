@@ -19,12 +19,12 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import ghidra.app.plugin.core.debug.service.model.RecorderPermanentTransaction;
-import ghidra.app.services.TraceRecorder;
 import ghidra.async.AsyncFence;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.target.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.dbg.util.TargetDataTypeConverter;
+import ghidra.debug.api.model.TraceRecorder;
 import ghidra.program.model.data.*;
 import ghidra.trace.model.Trace;
 import ghidra.util.task.TaskMonitor;

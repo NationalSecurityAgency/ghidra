@@ -20,9 +20,9 @@ import java.util.concurrent.CompletableFuture;
 
 import db.Transaction;
 import ghidra.async.AsyncUtils;
-import ghidra.dbg.target.TargetBreakpointSpec;
-import ghidra.dbg.target.TargetBreakpointSpecContainer;
+import ghidra.dbg.target.*;
 import ghidra.dbg.util.PathMatcher;
+import ghidra.dbg.util.PathPattern;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
@@ -88,11 +88,21 @@ public record PlaceEmuBreakpointActionItem(Trace trace, long snap, Address addre
 		if (specMatcher == null) {
 			throw new IllegalArgumentException("Cannot find path to breakpoint specifications");
 		}
-		List<String> relPath = specMatcher.applyKeys(name).getSingletonPath();
-		if (relPath == null) {
+		List<String> specRelPath = specMatcher.applyKeys(name).getSingletonPath();
+		if (specRelPath == null) {
 			throw new IllegalArgumentException("Too many wildcards to breakpoint specification");
 		}
-		return container.getCanonicalPath().extend(relPath).toString();
+		PathMatcher locMatcher = container.getTargetSchema()
+				.getSuccessorSchema(specRelPath)
+				.searchFor(TargetBreakpointLocation.class, true);
+		if (locMatcher == null) {
+			throw new IllegalArgumentException("Cannot find path to breakpoint locations");
+		}
+		List<String> locRelPath = locMatcher.applyIntKeys(0).getSingletonPath();
+		if (locRelPath == null) {
+			throw new IllegalArgumentException("Too many wildcards to breakpoint location");
+		}
+		return container.getCanonicalPath().extend(specRelPath).extend(locRelPath).toString();
 	}
 
 	@Override
@@ -100,11 +110,11 @@ public record PlaceEmuBreakpointActionItem(Trace trace, long snap, Address addre
 		try (Transaction tx = trace.openTransaction("Place Emulated Breakpoint")) {
 			// Defaults with emuEnable=true
 			TraceBreakpoint bpt = trace.getBreakpointManager()
-					.addBreakpoint(computePath(), Lifespan.at(snap), range(address, length),
-						Set.of(), kinds, false, null);
+					.addBreakpoint(computePath(), Lifespan.at(snap),
+						BreakpointActionItem.range(address, length), Set.of(), kinds, false, null);
 			bpt.setName(createName(address));
 			bpt.setEmuSleigh(emuSleigh);
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		catch (DuplicateNameException e) {
 			throw new AssertionError(e);

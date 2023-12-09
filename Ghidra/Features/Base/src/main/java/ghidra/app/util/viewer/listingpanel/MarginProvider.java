@@ -28,11 +28,13 @@ public interface MarginProvider {
 
 	/**
 	 * Get the component to show the margin markers.
+	 * @return the component
 	 */
 	JComponent getComponent();
 
 	/**
-	 * Return whether the component can be resized.
+	 * Return true if can be resized.
+	 * @return true if can be resized.
 	 */
 	boolean isResizeable();
 
@@ -51,6 +53,7 @@ public interface MarginProvider {
 	 * 
 	 * @param x the horizontal coordinate.
 	 * @param y the vertical coordinate.
+	 * @return the location
 	 */
 	public MarkerLocation getMarkerLocation(int x, int y);
 

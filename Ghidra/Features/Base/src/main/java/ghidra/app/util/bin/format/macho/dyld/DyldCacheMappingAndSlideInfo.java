@@ -118,6 +118,14 @@ public class DyldCacheMappingAndSlideInfo implements StructConverter {
 		return flags;
 	}
 	
+	public int getMaxProtection() {
+		return maxProt;
+	}
+
+	public int getInitialProtection() {
+		return initProt;
+	}
+
 	public boolean isAuthData() {
 		return (flags & DYLD_CACHE_MAPPING_AUTH_DATA) != 0;
 	}

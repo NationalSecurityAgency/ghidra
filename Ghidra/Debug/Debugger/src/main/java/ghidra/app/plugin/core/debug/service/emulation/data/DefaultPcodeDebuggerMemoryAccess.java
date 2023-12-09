@@ -21,7 +21,8 @@ import java.util.concurrent.CompletableFuture;
 import ghidra.app.plugin.core.debug.utils.AbstractMappedMemoryBytesVisitor;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
-import ghidra.app.services.TraceRecorder;
+import ghidra.debug.api.emulation.PcodeDebuggerMemoryAccess;
+import ghidra.debug.api.target.Target;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.generic.util.datastruct.SemisparseByteArray;
 import ghidra.pcode.exec.trace.data.DefaultPcodeTraceMemoryAccess;
@@ -42,22 +43,22 @@ public class DefaultPcodeDebuggerMemoryAccess extends DefaultPcodeTraceMemoryAcc
 		implements PcodeDebuggerMemoryAccess, InternalPcodeDebuggerDataAccess {
 
 	protected final PluginTool tool;
-	protected final TraceRecorder recorder;
+	protected final Target target;
 
 	/**
 	 * Construct a shim
 	 * 
 	 * @param tool the tool controlling the session
-	 * @param recorder the target's recorder
+	 * @param target the target
 	 * @param platform the associated platform, having the same trace as the recorder
 	 * @param snap the associated snap
 	 * @param viewport the viewport, set to the same snapshot
 	 */
-	protected DefaultPcodeDebuggerMemoryAccess(PluginTool tool, TraceRecorder recorder,
+	protected DefaultPcodeDebuggerMemoryAccess(PluginTool tool, Target target,
 			TracePlatform platform, long snap, TraceTimeViewport viewport) {
 		super(platform, snap, viewport);
 		this.tool = Objects.requireNonNull(tool);
-		this.recorder = recorder;
+		this.target = target;
 	}
 
 	@Override
@@ -71,8 +72,8 @@ public class DefaultPcodeDebuggerMemoryAccess extends DefaultPcodeTraceMemoryAcc
 	}
 
 	@Override
-	public TraceRecorder getRecorder() {
-		return recorder;
+	public Target getTarget() {
+		return target;
 	}
 
 	@Override
@@ -81,11 +82,7 @@ public class DefaultPcodeDebuggerMemoryAccess extends DefaultPcodeTraceMemoryAcc
 			return CompletableFuture.completedFuture(false);
 		}
 		AddressSetView hostView = platform.mapGuestToHost(guestView);
-		return recorder.readMemoryBlocks(hostView, TaskMonitor.DUMMY)
-				.thenCompose(__ -> recorder.getTarget().getModel().flushEvents())
-				.thenCompose(__ -> recorder.flushTransactions())
-				.thenAccept(__ -> platform.getTrace().flushEvents())
-				.thenApply(__ -> true);
+		return target.readMemoryAsync(hostView, TaskMonitor.DUMMY).thenApply(__ -> true);
 	}
 
 	@Override
@@ -93,11 +90,7 @@ public class DefaultPcodeDebuggerMemoryAccess extends DefaultPcodeTraceMemoryAcc
 		if (!isLive()) {
 			return CompletableFuture.completedFuture(false);
 		}
-		return recorder.writeMemory(address, data)
-				.thenCompose(__ -> recorder.getTarget().getModel().flushEvents())
-				.thenCompose(__ -> recorder.flushTransactions())
-				.thenAccept(__ -> platform.getTrace().flushEvents())
-				.thenApply(__ -> true);
+		return target.writeMemoryAsync(address, data).thenApply(__ -> true);
 	}
 
 	@Override

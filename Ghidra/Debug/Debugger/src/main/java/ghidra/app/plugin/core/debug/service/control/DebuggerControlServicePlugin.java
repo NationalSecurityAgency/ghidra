@@ -24,6 +24,8 @@ import ghidra.app.plugin.core.debug.*;
 import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
+import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -211,7 +213,7 @@ public class DebuggerControlServicePlugin extends AbstractDebuggerPlugin
 	private final Map<Trace, ControlMode> currentModes = new HashMap<>();
 
 	private final ListenerSet<ControlModeChangeListener> listeners =
-		new ListenerSet<>(ControlModeChangeListener.class);
+		new ListenerSet<>(ControlModeChangeListener.class, true);
 
 	@Override
 	public ControlMode getCurrentMode(Trace trace) {
@@ -230,7 +232,7 @@ public class DebuggerControlServicePlugin extends AbstractDebuggerPlugin
 			}
 		}
 		if (newMode != oldMode) {
-			listeners.fire.modeChanged(trace, newMode);
+			listeners.invoke().modeChanged(trace, newMode);
 			tool.contextChanged(null);
 		}
 	}
@@ -278,7 +280,7 @@ public class DebuggerControlServicePlugin extends AbstractDebuggerPlugin
 			}
 		}
 		if (newMode != oldMode) {
-			listeners.fire.modeChanged(trace, newMode);
+			listeners.invoke().modeChanged(trace, newMode);
 			tool.contextChanged(null);
 		}
 	}

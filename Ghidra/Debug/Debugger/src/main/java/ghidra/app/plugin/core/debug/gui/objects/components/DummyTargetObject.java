@@ -159,7 +159,7 @@ public class DummyTargetObject implements TargetObject {
 
 	@Override
 	public CompletableFuture<Void> resync(RefreshBehavior attributes, RefreshBehavior elements) {
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	@Override

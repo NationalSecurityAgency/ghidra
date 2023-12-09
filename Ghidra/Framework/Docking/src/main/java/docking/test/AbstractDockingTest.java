@@ -1742,8 +1742,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 		Objects.requireNonNull(c);
 		Objects.requireNonNull(consumer);
 
-		if (c instanceof JTextComponent) {
-			JTextComponent tf = (JTextComponent) c;
+		if (c instanceof JTextComponent tf) {
 			forceTextComponentFocus(tf);
 		}
 
@@ -2113,7 +2112,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 
 			if (waitTime >= DEFAULT_WAIT_TIMEOUT) {
 				createStackTraceForAllThreads(); // this may help debug indecent table models
-				throw new AssertException("Timed out waiting for table model to load");
+				throw new AssertException("Timed out waiting for tree to load");
 			}
 		}
 		waitForSwing();

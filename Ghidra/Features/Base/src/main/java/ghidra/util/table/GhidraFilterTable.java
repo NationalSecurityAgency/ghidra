@@ -18,6 +18,9 @@ package ghidra.util.table;
 import docking.widgets.table.*;
 import docking.widgets.table.threaded.GThreadedTablePanel;
 import docking.widgets.table.threaded.ThreadedTableModel;
+import ghidra.app.nav.Navigatable;
+import ghidra.app.services.GoToService;
+import ghidra.framework.plugintool.ServiceProvider;
 
 public class GhidraFilterTable<ROW_OBJECT> extends GFilterTable<ROW_OBJECT> {
 
@@ -33,15 +36,40 @@ public class GhidraFilterTable<ROW_OBJECT> extends GFilterTable<ROW_OBJECT> {
 
 	@Override
 	protected GTableFilterPanel<ROW_OBJECT> createTableFilterPanel(GTable gTable,
-			RowObjectTableModel<ROW_OBJECT> tableModel) {
+		RowObjectTableModel<ROW_OBJECT> tableModel) {
 		return new GhidraTableFilterPanel<ROW_OBJECT>(gTable, tableModel);
 	}
 
 	@Override
 	protected GThreadedTablePanel<ROW_OBJECT> createThreadedTablePanel(
-			ThreadedTableModel<ROW_OBJECT, ?> threadedModel) {
+		ThreadedTableModel<ROW_OBJECT, ?> threadedModel) {
 
 		return new GhidraThreadedTablePanel<ROW_OBJECT>(threadedModel);
+	}
+
+	@Override
+	public GhidraTable getTable() {
+		return (GhidraTable) super.getTable();
+	}
+
+	public void installNavigation(GoToService goToService, Navigatable nav) {
+		getTable().installNavigation(goToService, nav);
+	}
+
+	public void installNavigation(GoToService goToService) {
+		getTable().installNavigation(goToService, goToService.getDefaultNavigatable());
+	}
+
+	public void installNavigation(ServiceProvider provider) {
+		getTable().installNavigation(provider);
+	}
+
+	public void removeNavigation() {
+		getTable().removeNavigation();
+	}
+
+	public void setNavigateOnSelectionEnabled(boolean b) {
+		getTable().setNavigateOnSelectionEnabled(b);
 	}
 
 }

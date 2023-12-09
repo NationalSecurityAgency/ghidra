@@ -81,7 +81,7 @@ class SetLengthOverrideAction extends ListingContextAction {
 			}
 		}
 
-		if (maxLength == 1) {
+		if (maxLength == 0) {
 			// Assume we have an instruction whose length can't be changed
 			Msg.showError(this, null, "Length Override Error",
 				"Insufficient space to alter current length override of 1-byte");

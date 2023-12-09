@@ -101,6 +101,9 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 				return "";
 			}
 			AddressRange range = attr.getValue();
+			if (range == null) {
+				return "";
+			}
 
 			// TODO: Cache this? Would flush on:
 			//    1. Mapping changes

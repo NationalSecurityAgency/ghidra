@@ -17,8 +17,9 @@ package ghidra.app.plugin.core.debug.gui.model;
 
 import java.awt.Color;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.stream.*;
+
+import org.apache.commons.lang3.ArrayUtils;
 
 import docking.widgets.table.DynamicTableColumn;
 import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
@@ -38,6 +39,7 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.util.HTMLUtilities;
+import ghidra.util.NumericUtilities;
 
 public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 
@@ -61,7 +63,36 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 
 		default public String getDisplay() {
 			T value = getValue();
-			return value == null ? "" : value.toString();
+			if (value == null) {
+				return "";
+			}
+			if (value instanceof boolean[] bools) {
+				return Stream.of(ArrayUtils.toObject(bools))
+						.map(b -> b ? "T" : "F")
+						.collect(Collectors.joining(":"));
+			}
+			if (value instanceof byte[] bytes) {
+				return NumericUtilities.convertBytesToString(bytes, ":");
+			}
+			if (value instanceof char[] chars) {
+				return new String(chars);
+			}
+			if (value instanceof short[] shorts) {
+				return Stream.of(ArrayUtils.toObject(shorts))
+						.map(s -> "%04x".formatted(s))
+						.collect(Collectors.joining(":"));
+			}
+			if (value instanceof int[] ints) {
+				return IntStream.of(ints)
+						.mapToObj(i -> "%08x".formatted(i))
+						.collect(Collectors.joining(":"));
+			}
+			if (value instanceof long[] longs) {
+				return LongStream.of(longs)
+						.mapToObj(l -> "%016x".formatted(l))
+						.collect(Collectors.joining(":"));
+			}
+			return value.toString();
 		}
 
 		default public String getHtmlDisplay() {

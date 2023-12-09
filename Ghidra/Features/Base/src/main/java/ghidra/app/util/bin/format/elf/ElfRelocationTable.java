@@ -32,27 +32,27 @@ public class ElfRelocationTable implements ElfFileSection {
 		DEFAULT, ANDROID, RELR;
 	}
 
-	private TableFormat format;
+	private final TableFormat format;
 
-	private ElfSectionHeader sectionToBeRelocated;
+	private final ElfSectionHeader sectionToBeRelocated;
 
-	private ElfSymbolTable symbolTable;
+	private final ElfSymbolTable symbolTable;
 
-	private ElfSectionHeader relocTableSection; // may be null
-	private long fileOffset;
-	private long addrOffset;
-	private long length;
-	private long entrySize;
+	private final ElfSectionHeader relocTableSection; // may be null
+	private final long fileOffset;
+	private final long addrOffset;
+	private final long length;
+	private final long entrySize;
 
-	private boolean addendTypeReloc;
+	private final boolean addendTypeReloc;
 
-	private ElfHeader elfHeader;
+	private final ElfHeader elfHeader;
 
-	private ElfRelocation[] relocs;
+	private final ElfRelocation[] relocs;
 
 	/**
 	 * Construct an Elf Relocation Table
-	 * @param reader byte provider reader
+	 * @param reader byte provider reader (reader is not retained and position is unaffected)
 	 * @param header elf header
 	 * @param relocTableSection relocation table section header or null if associated with a dynamic table entry
 	 * @param fileOffset relocation table file offset
@@ -70,34 +70,30 @@ public class ElfRelocationTable implements ElfFileSection {
 			long entrySize, boolean addendTypeReloc, ElfSymbolTable symbolTable,
 			ElfSectionHeader sectionToBeRelocated, TableFormat format) throws IOException {
 
+		this.elfHeader = header;
 		this.relocTableSection = relocTableSection;
 		this.fileOffset = fileOffset;
 		this.addrOffset = addrOffset;
 		this.length = length;
-		this.entrySize = entrySize;
+		this.entrySize = (format == TableFormat.DEFAULT && entrySize <= 0)
+				? ElfRelocation.getStandardRelocationEntrySize(header.is64Bit(), addendTypeReloc)
+				: entrySize;
 		this.addendTypeReloc = addendTypeReloc;
-		this.elfHeader = header;
 		this.format = format;
-
 		this.sectionToBeRelocated = sectionToBeRelocated;
 		this.symbolTable = symbolTable;
 
-		long ptr = reader.getPointerIndex();
-		reader.setPointerIndex(fileOffset);
-
+		BinaryReader relocReader = reader.clone(fileOffset);
 		List<ElfRelocation> relocList;
 		if (format == TableFormat.RELR) {
-			relocList = parseRelrRelocations(reader);
+			relocList = parseRelrRelocations(relocReader);
 		}
 		else if (format == TableFormat.ANDROID) {
-			relocList = parseAndroidRelocations(reader);
+			relocList = parseAndroidRelocations(relocReader);
 		}
 		else {
-			relocList = parseStandardRelocations(reader);
+			relocList = parseStandardRelocations(relocReader);
 		}
-
-		reader.setPointerIndex(ptr);
-
 		relocs = new ElfRelocation[relocList.size()];
 		relocList.toArray(relocs);
 	}
@@ -117,13 +113,8 @@ public class ElfRelocationTable implements ElfFileSection {
 		return false;
 	}
 
-	private List<ElfRelocation> parseStandardRelocations(BinaryReader reader)
-			throws IOException {
-
+	private List<ElfRelocation> parseStandardRelocations(BinaryReader reader) throws IOException {
 		List<ElfRelocation> relocations = new ArrayList<>();
-		if (entrySize <= 0) {
-			entrySize = ElfRelocation.getStandardRelocationEntrySize(elfHeader.is64Bit(), addendTypeReloc);
-		}
 		int nRelocs = (int) (length / entrySize);
 		for (int relocationIndex = 0; relocationIndex < nRelocs; ++relocationIndex) {
 			relocations.add(ElfRelocation.createElfRelocation(reader, elfHeader, relocationIndex,
@@ -148,8 +139,8 @@ public class ElfRelocationTable implements ElfFileSection {
 		while (entry != 0) {
 			entry >>>= 1;
 			if ((entry & 1) != 0) {
-				relocList.add(ElfRelocation.createElfRelocation(elfHeader,
-					relocList.size(), addendTypeReloc, offset, 0, 0));
+				relocList.add(ElfRelocation.createElfRelocation(elfHeader, relocList.size(),
+					addendTypeReloc, offset, 0, 0));
 			}
 			offset += entrySize;
 		}
@@ -157,8 +148,7 @@ public class ElfRelocationTable implements ElfFileSection {
 		return baseOffset + (nBits * entrySize);
 	}
 
-	private List<ElfRelocation> parseRelrRelocations(BinaryReader reader)
-			throws IOException {
+	private List<ElfRelocation> parseRelrRelocations(BinaryReader reader) throws IOException {
 
 		// NOTE: Current implementation supports an entrySize of 8 or 4.  This could be 
 		// made more flexable if needed (applies to ElfRelrRelocationTableDataType as well)
@@ -183,8 +173,7 @@ public class ElfRelocationTable implements ElfFileSection {
 		return relocList;
 	}
 
-	private List<ElfRelocation> parseAndroidRelocations(BinaryReader reader)
-			throws IOException {
+	private List<ElfRelocation> parseAndroidRelocations(BinaryReader reader) throws IOException {
 
 		String identifier = reader.readNextAsciiString(4);
 		if (!"APS2".equals(identifier)) {

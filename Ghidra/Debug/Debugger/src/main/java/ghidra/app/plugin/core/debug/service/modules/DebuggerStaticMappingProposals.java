@@ -25,6 +25,7 @@ import java.util.stream.Stream;
 import ghidra.app.plugin.core.debug.service.modules.ProgramModuleIndexer.IndexEntry;
 import ghidra.app.services.*;
 import ghidra.dbg.util.PathUtils;
+import ghidra.debug.api.modules.*;
 import ghidra.framework.model.DomainFile;
 import ghidra.graph.*;
 import ghidra.graph.jung.JungDirectedGraph;

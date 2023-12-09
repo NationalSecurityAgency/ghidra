@@ -110,5 +110,7 @@ public interface DebugSystemObjects {
 	void setImplicitThreadDataOffset(long systemOffset);
 
 	void setImplicitProcessDataOffset(long systemOffset);
+	
+	String getCurrentProcessExecutableName();
 
 }

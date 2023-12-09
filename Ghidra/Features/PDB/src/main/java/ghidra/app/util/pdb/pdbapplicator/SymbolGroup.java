@@ -19,7 +19,11 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
 
+import ghidra.app.util.bin.format.pdb2.pdbreader.*;
+import ghidra.app.util.bin.format.pdb2.pdbreader.msf.MsfStream;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
+import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
 
 /**
  * This class represents a particular group of Symbols that came from the same PDB stream.  This
@@ -28,10 +32,24 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
  */
 public class SymbolGroup {
 
+	public static final int PUBLIC_GLOBAL_MODULE_NUMBER = 0;
+
+	private AbstractPdb pdb;
+
 	private Map<Long, AbstractMsSymbol> symbolsByOffset;
 	private int moduleNumber;
 	private List<Long> offsets;
 	private Map<Long, Integer> indexByOffset;
+
+	/**
+	 * Constructor
+	 * @param pdb the containing the symbols
+	 * @param moduleNumber The Module number (0 (PUBLIC_GLOBAL_MODULE_NUMBER) for public/global)
+	 */
+	public SymbolGroup(AbstractPdb pdb, int moduleNumber) {
+		this.pdb = pdb;
+		this.moduleNumber = moduleNumber;
+	}
 
 	/**
 	 * Constructor. The starting offset is set to zero.
@@ -47,7 +65,7 @@ public class SymbolGroup {
 	 * Constructor.
 	 * @param symbolsByOffset the Map used to initialize the constructor.
 	 * @param moduleNumber The Module number corresponding to the initializing Map
-	 * (0 for public/global Map).
+	 * (0 (PUBLIC_GLOBAL_MODULE_NUMBER) for public/global).
 	 * @param offset the offset location to start.
 	 */
 	public SymbolGroup(Map<Long, AbstractMsSymbol> symbolsByOffset, int moduleNumber, long offset) {
@@ -150,20 +168,46 @@ public class SymbolGroup {
 	 */
 	class AbstractMsSymbolIterator implements Iterator<AbstractMsSymbol> {
 
-		private int nextIndex;
-		private long currentOffset;
+		private SymbolRecords symbolRecords;
+		private int streamNumber;
+		private int lengthSymbols;
+		private int nextRetrieveOffset;
+		private SymbolRecords.SymLen symLen;
 
 		public AbstractMsSymbolIterator() {
-			nextIndex = 0;
-			currentOffset = -1L;
+			symbolRecords = pdb.getDebugInfo().getSymbolRecords();
+			try {
+				if (moduleNumber == 0) {
+					streamNumber = pdb.getDebugInfo().getSymbolRecordsStreamNumber();
+					lengthSymbols = Integer.MAX_VALUE;
+				}
+				else {
+					ModuleInformation moduleInfo =
+						pdb.getDebugInfo().getModuleInformation(moduleNumber);
+					streamNumber = moduleInfo.getStreamNumberDebugInformation();
+					lengthSymbols = moduleInfo.getSizeLocalSymbolsDebugInformation();
+
+				}
+				if (streamNumber == MsfStream.NIL_STREAM_NUMBER) {
+					int a = 1;
+					a = a + 1;
+					symLen = null;
+					nextRetrieveOffset = 0;
+				}
+				else {
+					initGet();
+				}
+			}
+			catch (PdbException e) {
+				symLen = null;
+				nextRetrieveOffset = 0;
+				Msg.warn(this, "Could not retrieve moduleInfo for module number: " + moduleNumber);
+			}
 		}
 
 		@Override
 		public boolean hasNext() {
-			if (nextIndex == offsets.size()) {
-				return false;
-			}
-			return true;
+			return (symLen != null);
 		}
 
 		/**
@@ -175,24 +219,38 @@ public class SymbolGroup {
 		 * @throws NoSuchElementException if there are no more elements
 		 */
 		public AbstractMsSymbol peek() throws NoSuchElementException {
-			if (nextIndex == offsets.size()) {
-				throw new NoSuchElementException("none left");
+			if (symLen == null) {
+				throw new NoSuchElementException();
 			}
-			long temporaryOffset = offsets.get(nextIndex);
-			AbstractMsSymbol symbol = symbolsByOffset.get(temporaryOffset);
-			if (symbol == null) {
-				throw new NoSuchElementException("No symbol");
-			}
-			return symbol;
+			return symLen.symbol();
 		}
 
 		@Override
 		public AbstractMsSymbol next() {
-			if (nextIndex == offsets.size()) {
-				throw new NoSuchElementException("none left");
+			if (symLen == null) {
+				throw new NoSuchElementException();
 			}
-			currentOffset = offsets.get(nextIndex++);
-			return symbolsByOffset.get(currentOffset);
+			SymbolRecords.SymLen offer = symLen;
+			symLen = retrieveRecord();
+			return offer.symbol();
+		}
+
+		private SymbolRecords.SymLen retrieveRecord() {
+			if (streamNumber == MsfStream.NIL_STREAM_NUMBER) {
+				return null;
+			}
+			if (nextRetrieveOffset >= lengthSymbols) {
+				return null;
+			}
+			try {
+				SymbolRecords.SymLen retrieved =
+					symbolRecords.getRandomAccessRecord(streamNumber, nextRetrieveOffset);
+				nextRetrieveOffset += retrieved.length();
+				return retrieved;
+			}
+			catch (PdbException | CancelledException e) {
+				return null;
+			}
 		}
 
 		/**
@@ -203,7 +261,10 @@ public class SymbolGroup {
 		 * @throws NoSuchElementException if there are no more elements
 		 */
 		long getCurrentOffset() {
-			return currentOffset;
+			if (symLen == null) {
+				throw new NoSuchElementException();
+			}
+			return nextRetrieveOffset - symLen.length();
 		}
 
 		/**
@@ -211,7 +272,17 @@ public class SymbolGroup {
 		 * @see #hasNext()
 		 */
 		void initGet() {
-			nextIndex = 0;
+			if (streamNumber == MsfStream.NIL_STREAM_NUMBER) {
+				return;
+			}
+			try {
+				nextRetrieveOffset = symbolRecords.getCvSigLength(streamNumber);
+				symLen = retrieveRecord();
+			}
+			catch (PdbException | CancelledException | IOException e) {
+				nextRetrieveOffset = 0;
+				symLen = null;
+			}
 		}
 
 		/**
@@ -220,15 +291,11 @@ public class SymbolGroup {
 		 * @see #hasNext()
 		 */
 		void initGetByOffset(long offset) {
-			int index = indexByOffset.get(offset);
-			if (index < 0) {
-				index = 0;
-			}
-			nextIndex = index;
-			currentOffset = offset;
+			Long l = offset;
+			nextRetrieveOffset = l.intValue();
+			symLen = retrieveRecord();
 		}
 
-		// TODO: might not need this
 		/**
 		 * Returns the module number.
 		 * @return the module number.

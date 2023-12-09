@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.debug.gui.model;
 
 import java.awt.Color;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -303,9 +304,17 @@ public abstract class AbstractQueryTableModel<T> extends ThreadedTableModel<T, T
 		if (trace == null || query == null || trace.getObjectManager().getRootSchema() == null) {
 			return;
 		}
+		ArrayList<T> batch = new ArrayList<>(100);
 		for (T t : (Iterable<T>) streamRows(trace, query, span)::iterator) {
-			accumulator.add(t);
-			monitor.checkCancelled();
+			batch.add(t);
+			if (batch.size() >= 100) {
+				accumulator.addAll(batch);
+				monitor.checkCancelled();
+				batch.clear();
+			}
+		}
+		if (batch.size() > 0) {
+			accumulator.addAll(batch);
 		}
 	}
 

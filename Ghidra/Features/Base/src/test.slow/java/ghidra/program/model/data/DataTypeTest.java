@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.listing.Program;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
@@ -145,6 +146,84 @@ public class DataTypeTest extends AbstractGhidraHeadedIntegrationTest {
 
 		program.endTransaction(txId, true);
 
+	}
+
+	@Test
+	public void testStructureReplace() {
+
+		try (Transaction tx = program.openTransaction("Test")) {
+
+			Structure struct1 = createStruct("abc", Undefined1DataType.dataType,
+				2 * dtm.getDataOrganization().getPointerSize());
+			struct1.setExplicitMinimumAlignment(
+				dtm.getDataOrganization().getDefaultPointerAlignment());
+
+			Structure resolvedStruct1 = (Structure) dtm.resolve(struct1, null);
+			assertEquals(0, resolvedStruct1.getParents().size());
+
+			Structure struct2 = createStruct("xyz", resolvedStruct1, 1);
+			struct2.setPackingEnabled(true);
+			Structure resolvedStruct2 = (Structure) dtm.resolve(struct2, null);
+
+			assertEquals(1, resolvedStruct1.getParents().size());
+
+			DataType dt =
+				new ArrayDataType(new PointerDataType(new IntegerDataType(dtm), dtm), 2, -1);
+
+			resolvedStruct2.replace(0, dt, -1);
+
+			assertEquals(0, resolvedStruct1.getParents().size());
+
+			//@formatter:off
+			assertEquals(
+				"/xyz\n" + 
+				"pack()\n" + 
+				"Structure xyz {\n" + 
+				"   0   int *[2]   8      \"\"\n" + 
+				"}\n" + 
+				"Size = 8   Actual Alignment = 4\n",
+				resolvedStruct2.toString());
+			//@formatter:on
+		}
+	}
+
+	@Test
+	public void testStructureReplace2() {
+
+		try (Transaction tx = program.openTransaction("Test")) {
+
+			Structure struct1 = new StructureDataType("abc", 0);
+			struct1.setPackingEnabled(true);
+			struct1.setExplicitMinimumAlignment(
+				dtm.getDataOrganization().getDefaultPointerAlignment());
+
+			Structure resolvedStruct1 = (Structure) dtm.resolve(struct1, null);
+			assertEquals(0, resolvedStruct1.getParents().size());
+
+			Structure struct2 = createStruct("xyz", resolvedStruct1, 1);
+			struct2.setPackingEnabled(true);
+			Structure resolvedStruct2 = (Structure) dtm.resolve(struct2, null);
+
+			assertEquals(1, resolvedStruct1.getParents().size());
+
+			DataType dt =
+				new ArrayDataType(new PointerDataType(new IntegerDataType(dtm), dtm), 0, -1);
+
+			resolvedStruct2.replace(0, dt, -1);
+
+			assertEquals(0, resolvedStruct1.getParents().size());
+
+			//@formatter:off
+			assertEquals(
+				"/xyz\n" + 
+				"pack()\n" + 
+				"Structure xyz {\n" + 
+				"   0   int *[0]   0      \"\"\n" + 
+				"}\n" + 
+				"Size = 1   Actual Alignment = 4\n",
+				resolvedStruct2.toString());
+			//@formatter:on
+		}
 	}
 
 	private StructureDataType createStruct(String name, DataType contentType, int count) {

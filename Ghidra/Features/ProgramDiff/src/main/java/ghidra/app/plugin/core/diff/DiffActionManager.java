@@ -439,7 +439,7 @@ class DiffActionManager {
 		}
 
 		private void closeDiff() {
-			int choice = OptionDialog.showYesNoCancelDialog(null, "Close Diff Session",
+			int choice = OptionDialog.showYesNoDialog(null, "Close Diff Session",
 				"Close the current diff session?");
 			if (choice == OptionDialog.YES_OPTION) {
 				plugin.closeProgram2();

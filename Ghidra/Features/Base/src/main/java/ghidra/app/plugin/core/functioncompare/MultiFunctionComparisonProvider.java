@@ -26,13 +26,15 @@ import ghidra.framework.plugintool.Plugin;
  */
 public class MultiFunctionComparisonProvider extends FunctionComparisonProvider {
 
+	private DockingAction openFunctionTableAction;
+
 	/**
 	 * Constructor
 	 * 
 	 * @param plugin the parent plugin
 	 */
-	public MultiFunctionComparisonProvider(Plugin plugin) {
-		super(plugin, "functioncomparisonprovider", plugin.getName());
+	protected MultiFunctionComparisonProvider(Plugin plugin) {
+		super(plugin, "Functions Comparison Provider", plugin.getName());
 	}
 
 	@Override
@@ -55,7 +57,7 @@ public class MultiFunctionComparisonProvider extends FunctionComparisonProvider 
 		DockingAction nextFunctionAction = new NextFunctionAction(this);
 		DockingAction previousFunctionAction = new PreviousFunctionAction(this);
 		DockingAction removeFunctionsAction = new RemoveFunctionsAction(this);
-		DockingAction openFunctionTableAction = getOpenFunctionTableAction();
+		openFunctionTableAction = getOpenFunctionTableAction();
 		DockingAction navigateToAction = new NavigateToFunctionAction(this);
 
 		addLocalAction(nextFunctionAction);
@@ -74,5 +76,10 @@ public class MultiFunctionComparisonProvider extends FunctionComparisonProvider 
 	 */
 	protected DockingAction getOpenFunctionTableAction() {
 		return new OpenFunctionTableAction(tool, this);
+	}
+
+	@Override
+	public void removeAddFunctionsAction() {
+		removeLocalAction(openFunctionTableAction);
 	}
 }

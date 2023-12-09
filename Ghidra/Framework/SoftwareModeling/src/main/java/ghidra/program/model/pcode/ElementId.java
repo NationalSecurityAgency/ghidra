@@ -424,5 +424,20 @@ public record ElementId(String name, int id) {
 	public static final ElementId ELEM_SPLITDATATYPE = new ElementId("splitdatatype", 270);
 	public static final ElementId ELEM_JUMPTABLEMAX = new ElementId("jumptablemax", 271);
 	public static final ElementId ELEM_NANIGNORE = new ElementId("nanignore", 272);
-	public static final ElementId ELEM_UNKNOWN = new ElementId("XMLunknown", 273);
+
+	// modelrules
+	public static final ElementId ELEM_DATATYPE = new ElementId("datatype", 273);
+	public static final ElementId ELEM_CONSUME = new ElementId("consume", 274);
+	public static final ElementId ELEM_CONSUME_EXTRA = new ElementId("consume_extra", 275);
+	public static final ElementId ELEM_CONVERT_TO_PTR = new ElementId("convert_to_ptr", 276);
+	public static final ElementId ELEM_GOTO_STACK = new ElementId("goto_stack", 277);
+	public static final ElementId ELEM_JOIN = new ElementId("join", 278);
+	public static final ElementId ELEM_DATATYPE_AT = new ElementId("datatype_at", 279);
+	public static final ElementId ELEM_POSITION = new ElementId("position", 280);
+	public static final ElementId ELEM_VARARGS = new ElementId("varargs", 281);
+	public static final ElementId ELEM_HIDDEN_RETURN = new ElementId("hidden_return", 282);
+	public static final ElementId ELEM_JOIN_PER_PRIMITIVE =
+		new ElementId("join_per_primitive", 283);
+
+	public static final ElementId ELEM_UNKNOWN = new ElementId("XMLunknown", 284);
 }

@@ -19,10 +19,10 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import ghidra.app.plugin.core.debug.service.model.RecorderPermanentTransaction;
-import ghidra.app.services.TraceRecorder;
 import ghidra.async.AsyncFence;
 import ghidra.dbg.target.*;
 import ghidra.dbg.util.PathUtils;
+import ghidra.debug.api.model.TraceRecorder;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.trace.model.Trace;

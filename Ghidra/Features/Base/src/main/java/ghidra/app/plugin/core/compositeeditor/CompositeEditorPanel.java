@@ -1031,9 +1031,6 @@ public abstract class CompositeEditorPanel extends JPanel
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.datamanager.editor.CompositeEditorModelListener#endFieldEditing()
-	 */
 	@Override
 	public void endFieldEditing() {
 		stopCellEditing();
@@ -1042,9 +1039,6 @@ public abstract class CompositeEditorPanel extends JPanel
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.compositeeditor.CompositeModelStatusListener#statusChanged(java.lang.String, boolean)
-	 */
 	@Override
 	public void statusChanged(String message, boolean beep) {
 		if ((message == null) || (message.length() == 0)) {
@@ -1068,8 +1062,10 @@ public abstract class CompositeEditorPanel extends JPanel
 
 	}
 
-	private Integer findForward(String searchText) {
-		int colCount = model.getColumnCount();
+	private Integer findForward(String text) {
+
+		String searchText = text.toLowerCase();
+		int colCount = table.getColumnCount();
 		int currentRow = Math.max(0, model.getRow());
 
 		// search  remaining lines
@@ -1081,7 +1077,7 @@ public abstract class CompositeEditorPanel extends JPanel
 				}
 			}
 		}
-		// wrap search search rows from beginning
+		// wrap search - search rows from beginning
 		for (int row = 0; row < currentRow; row++) {
 			for (int col = 0; col < colCount; col++) {
 				if (matchesSearch(searchText, row, col)) {
@@ -1094,7 +1090,9 @@ public abstract class CompositeEditorPanel extends JPanel
 		return null;
 	}
 
-	private Integer findBackward(String searchText) {
+	private Integer findBackward(String text) {
+
+		String searchText = text.toLowerCase();
 		int colCount = model.getColumnCount();
 		int currentRow = Math.max(0, model.getRow());
 
@@ -1106,7 +1104,7 @@ public abstract class CompositeEditorPanel extends JPanel
 				}
 			}
 		}
-		//wrap search - search from last row to current row
+		// wrap search - search from last row to current row
 		for (int row = model.getRowCount() - 1; row >= currentRow; row--) {
 			for (int col = colCount - 1; col >= 0; col--) {
 				if (matchesSearch(searchText, row, col)) {
@@ -1120,13 +1118,35 @@ public abstract class CompositeEditorPanel extends JPanel
 	}
 
 	private boolean matchesSearch(String searchText, int row, int col) {
-		Object valueAt = model.getValueAt(row, col);
+		int modelCol = table.convertColumnIndexToModel(col);
+		Object valueAt = model.getValueAt(row, modelCol);
 		if (valueAt == null) {
 			return false;
 		}
-		String value = getString(valueAt);
 
-		return value.toLowerCase().contains(searchText);
+		String value = getString(valueAt).toLowerCase();
+		if (modelCol == model.getNameColumn()) {
+			return nameMatchesSearch(searchText, row, value);
+		}
+
+		return value.contains(searchText);
+	}
+
+	private boolean nameMatchesSearch(String searchText, int row, String value) {
+
+		if (value.contains(searchText)) {
+			return true;
+		}
+
+		// see if the default name is a match
+		DataTypeComponent dtc = model.getComponent(row);
+		if (dtc != null) {
+			// this allows this to match a search even though it is not seen in the UI
+			String defaultName = dtc.getDefaultFieldName().toLowerCase();
+			return defaultName.contains(searchText);
+		}
+
+		return false;
 	}
 
 	private String getString(Object object) {

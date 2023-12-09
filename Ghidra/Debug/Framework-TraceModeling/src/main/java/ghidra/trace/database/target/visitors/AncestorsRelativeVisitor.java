@@ -59,7 +59,7 @@ public class AncestorsRelativeVisitor implements SpanIntersectingVisitor {
 			return Stream.empty();
 		}
 
-		return object.getParents()
+		return object.getParents(span)
 				.stream()
 				.filter(v -> PathPredicates.anyMatches(prevKeys, v.getEntryKey()));
 	}

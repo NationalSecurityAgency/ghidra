@@ -15,7 +15,8 @@
  */
 package agent.dbgeng.model.impl;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
@@ -27,30 +28,29 @@ import ghidra.dbg.target.TargetBreakpointSpec;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.dbg.util.PathUtils;
-import ghidra.util.datastruct.ListenerMap.ListenerEntry;
 import ghidra.util.datastruct.ListenerSet;
 
 @TargetObjectSchemaInfo(
 	name = "BreakpointSpec",
-	attributes = { //
-		@TargetAttributeType( //
-			name = TargetBreakpointSpec.CONTAINER_ATTRIBUTE_NAME, //
-			type = DbgModelTargetBreakpointContainerImpl.class), //
-		@TargetAttributeType( //
-			name = TargetBreakpointLocation.SPEC_ATTRIBUTE_NAME, //
-			type = DbgModelTargetBreakpointSpecImpl.class), //
+	attributes = {
 		@TargetAttributeType(
-			name = DbgModelTargetBreakpointSpecImpl.BPT_TYPE_ATTRIBUTE_NAME,
-			type = String.class), //
+			name = TargetBreakpointSpec.CONTAINER_ATTRIBUTE_NAME,
+			type = DbgModelTargetBreakpointContainerImpl.class),
 		@TargetAttributeType(
-			name = DbgModelTargetBreakpointSpecImpl.BPT_DISP_ATTRIBUTE_NAME,
-			type = String.class), //
+			name = TargetBreakpointLocation.SPEC_ATTRIBUTE_NAME,
+			type = DbgModelTargetBreakpointSpecImpl.class),
 		@TargetAttributeType(
-			name = DbgModelTargetBreakpointSpecImpl.BPT_PENDING_ATTRIBUTE_NAME,
-			type = String.class), //
+			name = DbgModelTargetBreakpointSpec.BPT_TYPE_ATTRIBUTE_NAME,
+			type = String.class),
 		@TargetAttributeType(
-			name = DbgModelTargetBreakpointSpecImpl.BPT_TIMES_ATTRIBUTE_NAME,
-			type = Integer.class), //
+			name = DbgModelTargetBreakpointSpec.BPT_DISP_ATTRIBUTE_NAME,
+			type = String.class),
+		@TargetAttributeType(
+			name = DbgModelTargetBreakpointSpec.BPT_PENDING_ATTRIBUTE_NAME,
+			type = String.class),
+		@TargetAttributeType(
+			name = DbgModelTargetBreakpointSpec.BPT_TIMES_ATTRIBUTE_NAME,
+			type = Integer.class),
 		@TargetAttributeType(type = Void.class) //
 	},
 	canonicalContainer = true)
@@ -69,28 +69,21 @@ public class DbgModelTargetBreakpointSpecImpl extends DbgModelTargetObjectImpl
 	protected boolean enabled;
 
 	public void changeAttributeSet(String reason) {
-		this.changeAttributes(List.of(), List.of(), Map.of(
-			DISPLAY_ATTRIBUTE_NAME, "[" + info.getNumber() + "] " + info.getExpression(),
-			RANGE_ATTRIBUTE_NAME, doGetRange(),
-			SPEC_ATTRIBUTE_NAME, this,
-			EXPRESSION_ATTRIBUTE_NAME, info.getExpression(),
-			KINDS_ATTRIBUTE_NAME, getKinds(),
+		this.changeAttributes(List.of(), List.of(),
+			Map.of(DISPLAY_ATTRIBUTE_NAME, "[" + info.getNumber() + "] " + info.getExpression(),
+				RANGE_ATTRIBUTE_NAME, doGetRange(), SPEC_ATTRIBUTE_NAME, this,
+				EXPRESSION_ATTRIBUTE_NAME, info.getExpression(), KINDS_ATTRIBUTE_NAME, getKinds(),
 
-			BPT_TYPE_ATTRIBUTE_NAME, info.getType().name(),
-			BPT_DISP_ATTRIBUTE_NAME, info.getDisp().name(),
-			BPT_PENDING_ATTRIBUTE_NAME, info.getPending(),
-			BPT_TIMES_ATTRIBUTE_NAME, info.getTimes()),
+				BPT_TYPE_ATTRIBUTE_NAME, info.getType().name(), BPT_DISP_ATTRIBUTE_NAME,
+				info.getDisp().name(), BPT_PENDING_ATTRIBUTE_NAME, info.getPending(),
+				BPT_TIMES_ATTRIBUTE_NAME, info.getTimes()),
 			reason);
 	}
 
+	// Use strong references on actions
+	// The values may be weak, but the keys, which are the same objects, are strong
 	private final ListenerSet<TargetBreakpointAction> actions =
-		new ListenerSet<>(TargetBreakpointAction.class) {
-			// Use strong references on actions
-			// The values may be weak, but the keys, which are the same objects, are strong
-			protected Map<TargetBreakpointAction, ListenerEntry<? extends TargetBreakpointAction>> createMap() {
-				return new LinkedHashMap<>();
-			}
-		};
+		new ListenerSet<>(TargetBreakpointAction.class, false);
 
 	public DbgModelTargetBreakpointSpecImpl(DbgModelTargetBreakpointContainer breakpoints,
 			DbgBreakpointInfo info) {
@@ -128,11 +121,11 @@ public class DbgModelTargetBreakpointSpecImpl extends DbgModelTargetObjectImpl
 
 	/**
 	 * Update the enabled field
-	 * 
+	 *
 	 * This does not actually toggle the breakpoint. It just updates the field and calls the proper
 	 * listeners. To actually toggle the breakpoint, use {@link #toggle(boolean)} instead, which if
 	 * effective, should eventually cause this method to be called.
-	 * 
+	 *
 	 * @param enabled true if enabled, false if disabled
 	 * @param reason a description of the cause (not really used, yet)
 	 */
