@@ -60,6 +60,7 @@ public class DebuggerLegacyStackPanel extends JPanel {
 		LEVEL("Level", Integer.class, StackFrameRow::getFrameLevel),
 		PC("PC", Address.class, StackFrameRow::getProgramCounter),
 		FUNCTION("Function", ghidra.program.model.listing.Function.class, StackFrameRow::getFunction),
+		MODULE("Module", String.class, StackFrameRow::getModule),
 		COMMENT("Comment", String.class, StackFrameRow::getComment, StackFrameRow::setComment, StackFrameRow::isCommentable);
 
 		private final String header;
@@ -292,6 +293,8 @@ public class DebuggerLegacyStackPanel extends JPanel {
 		pcCol.setCellRenderer(boldCurrentRenderer);
 		TableColumn funcCol = columnModel.getColumn(StackTableColumns.FUNCTION.ordinal());
 		funcCol.setCellRenderer(boldCurrentRenderer);
+		TableColumn modCol = columnModel.getColumn(StackTableColumns.MODULE.ordinal());
+		modCol.setCellRenderer(boldCurrentRenderer);
 		TableColumn commCol = columnModel.getColumn(StackTableColumns.COMMENT.ordinal());
 		commCol.setCellRenderer(boldCurrentRenderer);
 	}
