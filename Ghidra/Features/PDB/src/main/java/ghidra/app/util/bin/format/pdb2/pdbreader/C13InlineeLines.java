@@ -99,20 +99,22 @@ public class C13InlineeLines extends C13Section {
 
 	@Override
 	public String toString() {
-		return String.format(
-			"%s: num inlinee lines = %d", getClass().getSimpleName(), inlineeLines.size());
+		return String.format("%s: num inlinee lines = %d", getClass().getSimpleName(),
+			inlineeLines.size());
 	}
 
 	/**
 	 * Dumps this class to a Writer
 	 * @param writer {@link Writer} to which to dump the information
 	 * @throws IOException Upon IOException writing to the {@link Writer}
+	 * @throws CancelledException upon user cancellation
 	 */
 	@Override
-	void dump(Writer writer) throws IOException {
+	void dump(Writer writer, TaskMonitor monitor) throws IOException, CancelledException {
 		writer.write("C13InlineeLines---------------------------------------------\n");
 		writer.write(String.format("Signature: 0x%03x\n", signature));
 		for (InlineeSourceLine line : inlineeLines) {
+			monitor.checkCancelled();
 			writer.write(line.toString());
 			writer.write('\n');
 		}

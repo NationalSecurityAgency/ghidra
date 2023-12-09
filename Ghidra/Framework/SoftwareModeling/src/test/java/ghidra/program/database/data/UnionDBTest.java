@@ -449,7 +449,7 @@ public class UnionDBTest extends AbstractGenericTest {
 			"Size = 4   Actual Alignment = 1", union);
 		//@formatter:on
 
-		assertEquals("", union.getDescription()); // unchanged
+		assertEquals("testReplaceWith()", union.getDescription());
 	}
 
 	@Test

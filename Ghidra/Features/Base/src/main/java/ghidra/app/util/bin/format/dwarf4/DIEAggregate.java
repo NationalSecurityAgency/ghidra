@@ -28,6 +28,7 @@ import ghidra.app.util.bin.format.dwarf4.encoding.*;
 import ghidra.app.util.bin.format.dwarf4.expression.*;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFProgram;
 import ghidra.util.Msg;
+import ghidra.util.NumericUtilities;
 
 /**
  * DIEAggregate groups related {@link DebugInfoEntry} records together in a single interface
@@ -724,7 +725,8 @@ public class DIEAggregate {
 			}
 
 			// Check to see if this is a base address entry
-			if (beginning == -1) {
+			if (beginning == -1 ||
+				(pointerSize == 4 && beginning == NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG)) {
 				baseAddressOffset = ending;
 				continue;
 			}
@@ -913,7 +915,8 @@ public class DIEAggregate {
 			}
 
 			// Check to see if this is a base address entry
-			if (beginning == -1) {
+			if (beginning == -1 ||
+				(pointerSize == 4 && beginning == NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG)) {
 				baseAddress = ending;
 				continue;
 			}

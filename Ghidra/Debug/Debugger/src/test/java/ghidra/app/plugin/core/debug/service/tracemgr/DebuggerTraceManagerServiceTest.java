@@ -25,7 +25,6 @@ import org.junit.experimental.categories.Category;
 
 import db.Transaction;
 import generic.test.category.NightlyCategory;
-import generic.test.rule.Repeated;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.services.DebuggerControlService;

@@ -15,11 +15,12 @@
  */
 package docking.widgets.spinner;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
@@ -43,10 +44,20 @@ public class IntegerSpinner {
 	 * @param spinnerModel the spinner model to use in the JSpinner.
 	 */
 	public IntegerSpinner(SpinnerNumberModel spinnerModel) {
+		this(spinnerModel, 10);
+	}
+
+	/**
+	 * Creates a new IntegerSpinner using the given spinner model.
+	 *
+	 * @param spinnerModel the spinner model to use in the JSpinner.
+	 */
+	public IntegerSpinner(SpinnerNumberModel spinnerModel, int columns) {
 
 		spinner = new JSpinner(spinnerModel);
 
-		integerTextField = new IntegerTextField(10, ((Number) spinnerModel.getValue()).longValue());
+		integerTextField =
+			new IntegerTextField(columns, ((Number) spinnerModel.getValue()).longValue());
 		integerTextField.getComponent().setName("integer.spinner.editor");
 		Number maximum = (Number) spinnerModel.getMaximum();
 		integerTextField.setMaxValue(

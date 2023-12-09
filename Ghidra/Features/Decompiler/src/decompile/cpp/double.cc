@@ -693,6 +693,14 @@ PcodeOp *SplitVarnode::findOutExist(void)
   return findEarliestSplitPoint();
 }
 
+/// If the logical whole is a constant and is too big to be represented internally return \b true.
+/// \return \b true if \b this is a constant and too big
+bool SplitVarnode::exceedsConstPrecision(void) const
+
+{
+  return isConstant() && (wholesize > sizeof(uintb));
+}
+
 /// \brief Check if the values in the given Varnodes differ by the given size
 ///
 /// Return \b true, if the (possibly dynamic) value represented by the given \b vn1 plus \b size1
@@ -1543,6 +1551,8 @@ bool AddForm::applyRule(SplitVarnode &i,PcodeOp *op,bool workishi,Funcdata &data
     return false;
 
   indoub.initPartial(in.getSize(),lo2,hi2);
+  if (indoub.exceedsConstPrecision())
+    return false;
   outdoub.initPartial(in.getSize(),reslo,reshi);
   existop = SplitVarnode::prepareBinaryOp(outdoub,in,indoub);
   if (existop == (PcodeOp *)0)
@@ -1636,6 +1646,8 @@ bool SubForm::applyRule(SplitVarnode &i,PcodeOp *op,bool workishi,Funcdata &data
     return false;
 
   indoub.initPartial(in.getSize(),lo2,hi2);
+  if (indoub.exceedsConstPrecision())
+    return false;
   outdoub.initPartial(in.getSize(),reslo,reshi);
   existop = SplitVarnode::prepareBinaryOp(outdoub,in,indoub);
   if (existop == (PcodeOp *)0)
@@ -1757,6 +1769,8 @@ bool LogicalForm::applyRule(SplitVarnode &i,PcodeOp *lop,bool workishi,Funcdata 
 
   outdoub.initPartial(in.getSize(),loop->getOut(),hiop->getOut());
   indoub.initPartial(in.getSize(),lo2,hi2);
+  if (indoub.exceedsConstPrecision())
+    return false;
   existop = SplitVarnode::prepareBinaryOp(outdoub,in,indoub);
   if (existop == (PcodeOp *)0)
     return false;
@@ -1817,6 +1831,8 @@ bool Equal1Form::applyRule(SplitVarnode &i,PcodeOp *hop,bool workishi,Funcdata &
 	++iter3;
 
 	in2.initPartial(in1.getSize(),lo2,hi2);
+	if (in2.exceedsConstPrecision())
+	  continue;
 	
 	if ((hibool->code() == CPUI_CBRANCH)&&(lobool->code()==CPUI_CBRANCH)) {
 	  // Branching form of the equal operation
@@ -1958,8 +1974,10 @@ bool Equal2Form::applyRule(SplitVarnode &i,PcodeOp *op,bool workishi,Funcdata &d
     hixor = (PcodeOp *)0;
     hi2 = (Varnode *)0;
     if (fillOutFromOr(data)) {
-      SplitVarnode::replaceBoolOp(data,equalop,in,param2,equalop->code());
-      return true;
+      if (!param2.exceedsConstPrecision()) {
+	SplitVarnode::replaceBoolOp(data,equalop,in,param2,equalop->code());
+	return true;
+      }
     }
   }
   else {			// We see an XOR
@@ -1976,8 +1994,10 @@ bool Equal2Form::applyRule(SplitVarnode &i,PcodeOp *op,bool workishi,Funcdata &d
       if (orop->code() != CPUI_INT_OR) continue;
       orhislot = orop->getSlot(vn);
       if (fillOutFromOr(data)) {
-	SplitVarnode::replaceBoolOp(data,equalop,in,param2,equalop->code());
-	return true;
+	if (!param2.exceedsConstPrecision()) {
+	  SplitVarnode::replaceBoolOp(data,equalop,in,param2,equalop->code());
+	  return true;
+	}
       }
     }
   }
@@ -2020,6 +2040,8 @@ bool Equal3Form::applyRule(SplitVarnode &i,PcodeOp *op,bool workishi,Funcdata &d
     return false;
 
   SplitVarnode in2(in.getSize(),calc_mask(in.getSize()));	// Create the -1 value
+  if (in2.exceedsConstPrecision())
+    return false;
   if (!SplitVarnode::prepareBoolOp(in,in2,compareop)) return false;
   SplitVarnode::replaceBoolOp(data,compareop,in,in2,compareop->code());
   return true;
@@ -2483,6 +2505,8 @@ bool LessThreeWay::applyRule(SplitVarnode &i,PcodeOp *loop,bool workishi,Funcdat
   if (!mapFromLow(loop)) return false;
   bool res = testReplace();
   if (res) {
+    if (in2.exceedsConstPrecision())
+      return false;
     if (hislot==0)
       SplitVarnode::createBoolOp(data,hilessbool,in,in2,finalopc);
     else
@@ -2527,6 +2551,8 @@ bool LessConstForm::applyRule(SplitVarnode &i,PcodeOp *op,bool workishi,Funcdata
   if (desc->code() != CPUI_CBRANCH) return false;
 
   constin.initPartial(in.getSize(),val);
+  if (constin.exceedsConstPrecision())
+    return false;
 
   if (inslot==0) {
     if (SplitVarnode::prepareBoolOp(in,constin,op)) {
@@ -2967,6 +2993,8 @@ bool MultForm::replace(Funcdata &data)
 { // We have matched a double precision multiply, now transform to logical variables
   outdoub.initPartial(in.getSize(),reslo,reshi);
   in2.initPartial(in.getSize(),lo2,hi2);
+  if (in2.exceedsConstPrecision())
+    return false;
   existop = SplitVarnode::prepareBinaryOp(outdoub,in,in2);
   if (existop == (PcodeOp *)0)
     return false;
@@ -3147,6 +3175,10 @@ int4 RuleDoubleIn::attemptMarking(Funcdata &data,Varnode *vn,PcodeOp *subpieceOp
 
 {
   Varnode *whole = subpieceOp->getIn(0);
+  if (whole->isTypeLock()) {
+    if (!whole->getType()->isPrimitiveWhole())
+      return 0;		// Don't mark for double precision if not a primitive type
+  }
   int4 offset = (int4)subpieceOp->getIn(1)->getOffset();
   if (offset != vn->getSize()) return 0;
   if (offset * 2 != whole->getSize()) return 0;		// Truncate exactly half

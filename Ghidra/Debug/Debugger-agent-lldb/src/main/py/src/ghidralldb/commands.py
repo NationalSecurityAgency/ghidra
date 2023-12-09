@@ -191,7 +191,7 @@ def ghidra_trace_connect(debugger, command, result, internal_dict):
     try:
         c = socket.socket()
         c.connect((host, int(port)))
-        STATE.client = Client(c, methods.REGISTRY)
+        STATE.client = Client(c, "lldb-" + util.LLDB_VERSION.full, methods.REGISTRY)
     except ValueError:
         raise RuntimeError("port must be numeric")
 
@@ -228,7 +228,7 @@ def ghidra_trace_listen(debugger, command, result, internal_dict):
         c, (chost, cport) = s.accept()
         s.close()
         print("Connection from {}:{}\n".format(chost, cport))
-        STATE.client = Client(c, methods.REGISTRY)
+        STATE.client = Client(c, "lldb-" + util.LLDB_VERSION.full, methods.REGISTRY)
     except ValueError:
         raise RuntimeError("port must be numeric")
 

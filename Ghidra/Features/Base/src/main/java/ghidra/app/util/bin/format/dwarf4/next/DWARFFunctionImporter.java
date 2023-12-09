@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.util.bin.format.dwarf4.*;
 import ghidra.app.util.bin.format.dwarf4.expression.DWARFExpressionException;
-import ghidra.app.util.bin.format.dwarf4.funcfixup.DWARFFunctionFixup;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFFunction.CommitMode;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.Address;
@@ -33,7 +32,6 @@ import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
@@ -62,7 +60,6 @@ public class DWARFFunctionImporter {
 	private Set<Long> processedOffsets = new HashSet<>();
 	private Set<Address> functionsProcessed = new HashSet<>();
 	private Set<Address> variablesProcesesed = new HashSet<>();
-	private List<DWARFFunctionFixup> functionFixups = DWARFFunctionFixup.findFixups();
 
 	private TaskMonitor monitor;
 
@@ -142,6 +139,8 @@ public class DWARFFunctionImporter {
 			}
 		}
 		logImportErrorSummary();
+
+
 	}
 
 	private void logImportErrorSummary() {
@@ -181,7 +180,7 @@ public class DWARFFunctionImporter {
 			return;
 		}
 
-		FunctionDefinition origFuncDef = dfunc.asFuncDef(); // before any fixups
+		FunctionDefinition origFuncDef = dfunc.asFunctionDefinition(true); // before any fixups
 
 		if (functionsProcessed.contains(dfunc.address)) {
 			markAllChildrenAsProcessed(dfunc.diea.getHeadFragment());
@@ -199,38 +198,23 @@ public class DWARFFunctionImporter {
 		// location, we will get multiple side-effect output from processFuncChildren
 		processFuncChildren(diea, dfunc, 0);
 
-		Function gfunc = createFunction(dfunc, diea); // create empty func with no info
-		if (gfunc == null) {
+		if (!dfunc.syncWithExistingGhidraFunction(true)) {
+			// if false, the stub ghidra function could not be found or created
 			return;
 		}
 
-		if (gfunc.hasNoReturn() && !dfunc.noReturn) {
-			// preserve the noReturn flag if set by earlier analyzer
-			dfunc.noReturn = true;
-		}
+		dfunc.runFixups();
 
-		// Run all the DWARFFunctionFixup instances
-		for (DWARFFunctionFixup fixup : functionFixups) {
-			try {
-				fixup.fixupDWARFFunction(dfunc, gfunc);
-			}
-			catch (DWARFException e) {
-				dfunc.signatureCommitMode = CommitMode.SKIP;
-				break;
-			}
-		}
-
-		decorateFunctionWithDWARFInfo(dfunc, gfunc, origFuncDef);
+		decorateFunctionWithDWARFInfo(dfunc, origFuncDef);
 
 		if (dfunc.signatureCommitMode != CommitMode.SKIP) {
-			updateFunctionSignature(gfunc, dfunc);
+			dfunc.updateFunctionSignature();
 		}
 		else {
-			Msg.error(this,
-				String.format(
-					"Failed to get DWARF function signature information, leaving undefined: %s@%s",
-					gfunc.getName(), gfunc.getEntryPoint()));
-			Msg.debug(this, "DIE info: " + diea.toString());
+			Msg.warn(this,
+				"Failed to get DWARF function signature information, leaving undefined: %s@%s"
+						.formatted(dfunc.function.getName(), dfunc.function.getEntryPoint()));
+			//Msg.debug(this, "DIE info: " + diea.toString());
 		}
 
 		for (DWARFVariable localVar : dfunc.localVars) {
@@ -238,9 +222,23 @@ public class DWARFFunctionImporter {
 				outputGlobal(localVar); // static variable scoped to the function
 			}
 			else {
-				dfunc.commitLocalVariable(localVar, gfunc);
+				dfunc.commitLocalVariable(localVar);
 			}
 		}
+
+		if (importOptions.isCreateFuncSignatures()) {
+			DataType funcDefDT = dfunc.asFunctionDefinition(false);
+			funcDefDT = prog.getGhidraProgram()
+					.getDataTypeManager()
+					.addDataType(funcDefDT, DWARFDataTypeConflictHandler.INSTANCE);
+
+			// Look for the source info in the funcdef die and fall back to its
+			// parent's source info (handles auto-generated ctors and such)
+			dwarfDTM.addDataType(diea.getOffset(), funcDefDT,
+				DWARFSourceInfo.getSourceInfoWithFallbackToParent(diea));
+
+		}
+
 	}
 
 	private void decorateFunctionWithAlternateInfo(DWARFFunction dfunc, Function gfunc,
@@ -257,12 +255,12 @@ public class DWARFFunctionImporter {
 		}
 
 	}
-
-	private void decorateFunctionWithDWARFInfo(DWARFFunction dfunc, Function gfunc,
+	
+	private void decorateFunctionWithDWARFInfo(DWARFFunction dfunc,
 			FunctionDefinition origFuncDef) {
 		if (dfunc.sourceInfo != null) {
 			// Move the function into the program tree of the file
-			moveIntoFragment(gfunc.getName(), dfunc.address,
+			moveIntoFragment(dfunc.function.getName(), dfunc.address,
 				dfunc.highAddress != null ? dfunc.highAddress : dfunc.address.add(1),
 				dfunc.sourceInfo.getFilename());
 
@@ -281,7 +279,7 @@ public class DWARFFunctionImporter {
 				dfunc.name.getOriginalName());
 		}
 
-		FunctionDefinition newFuncDef = dfunc.asFuncDef();
+		FunctionDefinition newFuncDef = dfunc.asFunctionDefinition(true);
 		String origFuncDefStr = origFuncDef.getPrototypeString(true);
 		if (!newFuncDef.getPrototypeString(true).equals(origFuncDefStr)) {
 			// if the prototype of the function was modified during the fixup phase, append
@@ -290,39 +288,6 @@ public class DWARFFunctionImporter {
 		}
 
 
-	}
-
-	private void updateFunctionSignature(Function gfunc, DWARFFunction dfunc) {
-		try {
-			boolean includeStorageDetail = dfunc.signatureCommitMode == CommitMode.STORAGE;
-			FunctionUpdateType functionUpdateType = includeStorageDetail
-					? FunctionUpdateType.CUSTOM_STORAGE
-					: FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS;
-
-			Parameter returnVar = dfunc.retval.asReturnParameter(includeStorageDetail);
-			List<Parameter> parameters = dfunc.getParameters(includeStorageDetail);
-
-			if (includeStorageDetail && !dfunc.retval.isZeroByte() &&
-				dfunc.retval.isMissingStorage()) {
-				// Update return value in a separate step as its storage isn't typically specified
-				// in dwarf info.
-				// This will allow automagical storage assignment for return value by ghidra.
-				gfunc.updateFunction(dfunc.getCallingConventionName(), returnVar, List.of(),
-					FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.IMPORTED);
-				returnVar = null; // don't update it in the second call to updateFunction()
-			}
-
-			gfunc.updateFunction(dfunc.getCallingConventionName(), returnVar, parameters,
-				functionUpdateType, true, SourceType.IMPORTED);
-			gfunc.setVarArgs(dfunc.varArg);
-			gfunc.setNoReturn(dfunc.noReturn);
-		}
-		catch (InvalidInputException | DuplicateNameException e) {
-			Msg.error(this,
-				String.format("Error updating function %s@%s with params: %s",
-					gfunc.getName(), gfunc.getEntryPoint().toString(), e.getMessage()));
-			Msg.error(this, "DIE info: " + dfunc.diea.toString());
-		}
 	}
 
 	private void processFuncChildren(DIEAggregate diea, DWARFFunction dfunc,
@@ -339,7 +304,11 @@ public class DWARFFunctionImporter {
 						DWARFVariable localVar =
 							DWARFVariable.readLocalVariable(childDIEA, dfunc, offsetFromFuncStart);
 						if (localVar != null) {
-							dfunc.localVars.add(localVar);
+							if (prog.getImportOptions().isImportLocalVariables() ||
+								localVar.isRamStorage()) {
+								// only retain the local var if option is turned on, or global/static variable
+								dfunc.localVars.add(localVar);
+							}
 						}
 					}
 					break;
@@ -377,14 +346,21 @@ public class DWARFFunctionImporter {
 		SymbolTable symbolTable = currentProgram.getSymbolTable();
 		Symbol labelSym = null;
 
+		if (!currentProgram.getMemory().contains(address)) {
+			if (!globalVar.isZeroByte()) {
+				Msg.error(this, "Invalid location for global variable %s:%s @%s".formatted(name,
+					dataType.getName(), address));
+			}
+			return;
+		}
+
 		if (globalVar.isZeroByte() || !variablesProcesesed.contains(address)) {
 			try {
 				labelSym = symbolTable.createLabel(address, name, namespace, SourceType.IMPORTED);
 			}
 			catch (InvalidInputException e) {
-				Msg.error(this,
-					String.format("Error creating label for global variable %s/%s at %s",
-						namespace, name, address));
+				Msg.error(this, "Error creating label for global variable %s/%s at %s"
+						.formatted(namespace, name, address));
 				return;
 			}
 		}
@@ -393,8 +369,8 @@ public class DWARFFunctionImporter {
 			// because this is a zero-length data type (ie. array[0]),
 			// don't create a variable at the location since it will prevent other elements
 			// from occupying the same offset
-			appendComment(address, CodeUnit.PRE_COMMENT, String.format(
-				"Zero length variable: %s: %s", name, dataType.getDisplayName()), "\n");
+			appendComment(address, CodeUnit.PRE_COMMENT,
+				"Zero length variable: %s: %s".formatted(name, dataType.getDisplayName()), "\n");
 
 			return;
 		}
@@ -409,19 +385,20 @@ public class DWARFFunctionImporter {
 			setExternalEntryPoint(true, address);
 		}
 
-		try {
-			if (dataType instanceof Dynamic || dataType instanceof FactoryDataType) {
-				appendComment(address, CodeUnit.EOL_COMMENT,
-					"Unsupported dynamic data type: " + dataType, "\n");
-				dataType = Undefined.getUndefinedDataType(1);
-			}
-			DWARFDataInstanceHelper dih = new DWARFDataInstanceHelper(currentProgram);
-			if (!dih.isDataTypeCompatibleWithAddress(dataType, address)) {
-				appendComment(address, CodeUnit.EOL_COMMENT, String.format(
-					"Could not place DWARF static variable %s: %s @%s because existing data type conflicts.",
-					globalVar.name.getName(), dataType.getName(), address), "\n");
-			}
-			else {
+		if (dataType instanceof Dynamic || dataType instanceof FactoryDataType) {
+			appendComment(address, CodeUnit.EOL_COMMENT,
+				"Unsupported dynamic data type: " + dataType, "\n");
+			dataType = Undefined.getUndefinedDataType(1);
+		}
+		DWARFDataInstanceHelper dih = new DWARFDataInstanceHelper(currentProgram);
+		if (!dih.isDataTypeCompatibleWithAddress(dataType, address)) {
+			appendComment(address, CodeUnit.EOL_COMMENT,
+				"Could not place DWARF static variable %s: %s @%s because existing data type conflicts."
+						.formatted(name, dataType.getName(), address),
+				"\n");
+		}
+		else {
+			try {
 				Data varData = DataUtilities.createData(currentProgram, address, dataType, -1,
 					ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
 				if (varData != null && globalVar.sourceInfo != null) {
@@ -429,12 +406,13 @@ public class DWARFFunctionImporter {
 						globalVar.sourceInfo.getFilename());
 				}
 				variablesProcesesed.add(address);
+				importSummary.globalVarsAdded++;
+			}
+			catch (CodeUnitInsertionException e) {
+				Msg.error(this, "Error creating global variable %s:%s @%s: %s".formatted(name,
+					dataType.getName(), address, e.getMessage()));
 			}
 		}
-		catch (CodeUnitInsertionException e) {
-			Msg.error(this, "Error creating data object at " + address, e);
-		}
-		importSummary.globalVarsAdded++;
 
 		if (globalVar.sourceInfo != null) {
 			appendComment(address, CodeUnit.EOL_COMMENT, globalVar.sourceInfo.getDescriptionStr(),

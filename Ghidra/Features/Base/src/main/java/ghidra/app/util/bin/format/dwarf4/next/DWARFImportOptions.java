@@ -15,13 +15,94 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next;
 
+import ghidra.app.plugin.core.analysis.AnalysisOptionsUpdater;
 import ghidra.app.plugin.core.analysis.DWARFAnalyzer;
+import ghidra.app.services.Analyzer;
+import ghidra.framework.options.Options;
 
 /**
  * Import options exposed by the {@link DWARFAnalyzer}
  */
 public class DWARFImportOptions {
+	private static final String OPTION_IMPORT_DATATYPES = "Import Data Types";
+	private static final String OPTION_IMPORT_DATATYPES_DESC =
+		"Import data types defined in the DWARF debug info.";
+
+	private static final String OPTION_PRELOAD_ALL_DIES = "Preload All DIEs";
+	private static final String OPTION_PRELOAD_ALL_DIES_DESC =
+		"Preload all DIE records. Requires more memory, but necessary for some non-standard " +
+			"layouts.";
+
+	private static final String OPTION_IMPORT_FUNCS = "Import Functions";
+	private static final String OPTION_IMPORT_FUNCS_DESC =
+		"Import function information defined in the DWARF debug info\n" +
+			"(implies 'Import Data Types' is selected).";
+
+	private static final String OPTION_IMPORT_LIMIT_DIE_COUNT = "Debug Item Limit";
+	private static final String OPTION_IMPORT_LIMIT_DIE_COUNT_DESC =
+		"If the number of DWARF debug items are greater than this setting, DWARF analysis will " +
+			"be skipped.";
+
+	private static final String OPTION_OUTPUT_SOURCE_INFO = "Output Source Info";
+	private static final String OPTION_OUTPUT_SOURCE_INFO_DESC =
+		"Include source code location info (filename:linenumber) in comments attached to the " +
+			"Ghidra datatype or function or variable created.";
+
+	private static final String OPTION_OUTPUT_DWARF_DIE_INFO = "Output DWARF DIE Info";
+	private static final String OPTION_OUTPUT_DWARF_DIE_INFO_DESC =
+		"Include DWARF DIE offset info in comments attached to the Ghidra datatype or function " +
+			"or variable created.";
+
+	private static final String OPTION_NAME_LENGTH_CUTOFF = "Maximum Name Length";
+	private static final String OPTION_NAME_LENGTH_CUTOFF_DESC =
+		"Truncate symbol and type names longer than this limit.  Range 20..2000";
+
+	private static final String OPTION_OUTPUT_LEXICAL_BLOCK_COMMENTS = "Add Lexical Block Comments";
+	private static final String OPTION_OUTPUT_LEXICAL_BLOCK_COMMENTS_DESC =
+		"Add comments to the start of lexical blocks";
+
+	private static final String OPTION_OUTPUT_INLINE_FUNC_COMMENTS =
+		"Add Inlined Functions Comments";
+	private static final String OPTION_OUTPUT_INLINE_FUNC_COMMENTS_DESC =
+		"Add comments to the start of inlined functions";
+
+	private static final String OPTION_OUTPUT_FUNC_SIGS = "Create Function Signatures";
+	private static final String OPTION_OUTPUT_FUNC_SIGS_DESC =
+		"Create function signature data types for each function encountered in the DWARF debug " +
+			"data.";
+
+	private static final String OPTION_TRY_PACK_STRUCTS = "Try To Pack Structs";
+	private static final String OPTION_TRY_PACK_STRUCTS_DESC =
+		"Try to pack structure/union data types.";
+
+	private static final String OPTION_IMPORT_LOCAL_VARS = "Import Local Variable Info";
+	private static final String OPTION_IMPORT_LOCAL_VARS_DESC =
+		"Import local variable information from DWARF and attempt to create Ghidra local variables.";
+
+	//==================================================================================================
+	// Old Option Names - Should stick around for multiple major versions after 10.2
+	//==================================================================================================
+
+	private static final String OPTION_IMPORT_DATATYPES_OLD = "Import data types";
+	private static final String OPTION_PRELOAD_ALL_DIES_OLD = "Preload all DIEs";
+	private static final String OPTION_IMPORT_FUNCS_OLD = "Import functions";
+	private static final String OPTION_IMPORT_LIMIT_DIE_COUNT_OLD = "Debug item count limit";
+	private static final String OPTION_OUTPUT_SOURCE_INFO_OLD = "Output Source info";
+	private static final String OPTION_OUTPUT_DWARF_DIE_INFO_OLD = "Output DWARF DIE info";
+	private static final String OPTION_NAME_LENGTH_CUTOFF_OLD = "Name length cutoff";
+	private static final String OPTION_OUTPUT_LEXICAL_BLOCK_COMMENTS_OLD = "Lexical block comments";
+	private static final String OPTION_OUTPUT_INLINE_FUNC_COMMENTS_OLD =
+		"Inlined functions comments";
+	private static final String OPTION_OUTPUT_FUNC_SIGS_OLD = "Output function signatures";
+
+	//==================================================================================================
+	// End Old Option Names
+	//==================================================================================================	
+
 	private static final int DEFAULT_IMPORT_LIMIT_DIE_COUNT = 2_000_000;
+
+	private AnalysisOptionsUpdater optionsUpdater = new AnalysisOptionsUpdater();
+
 	private boolean outputDWARFLocationInfo = false;
 	private boolean outputDWARFDIEInfo = false;
 	private boolean elideTypedefsWithSameName = true;
@@ -37,9 +118,37 @@ public class DWARFImportOptions {
 	private boolean organizeTypesBySourceFile = true;
 	private boolean tryPackStructs = true;
 	private boolean specialCaseSizedBaseTypes = true;
+	private boolean importLocalVariables = true;
 
+	/**
+	 * Create new instance
+	 */
 	public DWARFImportOptions() {
-		// nada
+		optionsUpdater.registerReplacement(OPTION_IMPORT_DATATYPES, OPTION_IMPORT_DATATYPES_OLD);
+		optionsUpdater.registerReplacement(OPTION_PRELOAD_ALL_DIES, OPTION_PRELOAD_ALL_DIES_OLD);
+		optionsUpdater.registerReplacement(OPTION_IMPORT_FUNCS, OPTION_IMPORT_FUNCS_OLD);
+		optionsUpdater.registerReplacement(OPTION_IMPORT_LIMIT_DIE_COUNT,
+			OPTION_IMPORT_LIMIT_DIE_COUNT_OLD);
+		optionsUpdater.registerReplacement(OPTION_OUTPUT_SOURCE_INFO,
+			OPTION_OUTPUT_SOURCE_INFO_OLD);
+		optionsUpdater.registerReplacement(OPTION_OUTPUT_DWARF_DIE_INFO,
+			OPTION_OUTPUT_DWARF_DIE_INFO_OLD);
+		optionsUpdater.registerReplacement(OPTION_NAME_LENGTH_CUTOFF,
+			OPTION_NAME_LENGTH_CUTOFF_OLD);
+		optionsUpdater.registerReplacement(OPTION_OUTPUT_LEXICAL_BLOCK_COMMENTS,
+			OPTION_OUTPUT_LEXICAL_BLOCK_COMMENTS_OLD);
+		optionsUpdater.registerReplacement(OPTION_OUTPUT_INLINE_FUNC_COMMENTS,
+			OPTION_OUTPUT_INLINE_FUNC_COMMENTS_OLD);
+		optionsUpdater.registerReplacement(OPTION_OUTPUT_FUNC_SIGS, OPTION_OUTPUT_FUNC_SIGS_OLD);
+	}
+
+	/**
+	 * See {@link Analyzer#getOptionsUpdater()}
+	 * 
+	 * @return {@link AnalysisOptionsUpdater}
+	 */
+	public AnalysisOptionsUpdater getOptionsUpdater() {
+		return optionsUpdater;
 	}
 
 	/**
@@ -236,7 +345,7 @@ public class DWARFImportOptions {
 
 	/**
 	 * Option to control a feature that copies anonymous types into a structure's "namespace"
-	 * CategoryPath and giving that anonymous type a new name based on the structure's field's
+	 * CategoryPath and giving that anonymousfunction.getEntryPoint() type a new name based on the structure's field's
 	 * name.
 	 *
 	 * @param b boolean flag to set.
@@ -321,5 +430,83 @@ public class DWARFImportOptions {
 	 */
 	public void setSpecialCaseSizedBaseTypes(boolean b) {
 		this.specialCaseSizedBaseTypes = b;
+	}
+
+	public boolean isImportLocalVariables() {
+		return importLocalVariables;
+	}
+
+	public void setImportLocalVariables(boolean importLocalVariables) {
+		this.importLocalVariables = importLocalVariables;
+	}
+
+	/**
+	 * See {@link Analyzer#registerOptions(Options, ghidra.program.model.listing.Program)}
+	 * 
+	 * @param options {@link Options}
+	 */
+	public void registerOptions(Options options) {
+		options.registerOption(OPTION_IMPORT_DATATYPES, isImportDataTypes(), null,
+			OPTION_IMPORT_DATATYPES_DESC);
+
+		options.registerOption(OPTION_PRELOAD_ALL_DIES, isPreloadAllDIEs(), null,
+			OPTION_PRELOAD_ALL_DIES_DESC);
+
+		options.registerOption(OPTION_IMPORT_FUNCS, isImportFuncs(), null,
+			OPTION_IMPORT_FUNCS_DESC);
+
+		options.registerOption(OPTION_OUTPUT_DWARF_DIE_INFO, isOutputDIEInfo(), null,
+			OPTION_OUTPUT_DWARF_DIE_INFO_DESC);
+
+		options.registerOption(OPTION_OUTPUT_LEXICAL_BLOCK_COMMENTS, isOutputLexicalBlockComments(),
+			null, OPTION_OUTPUT_LEXICAL_BLOCK_COMMENTS_DESC);
+
+		options.registerOption(OPTION_OUTPUT_INLINE_FUNC_COMMENTS, isOutputInlineFuncComments(),
+			null, OPTION_OUTPUT_INLINE_FUNC_COMMENTS_DESC);
+
+		options.registerOption(OPTION_OUTPUT_SOURCE_INFO, isOutputSourceLocationInfo(), null,
+			OPTION_OUTPUT_SOURCE_INFO_DESC);
+
+		options.registerOption(OPTION_IMPORT_LIMIT_DIE_COUNT, getImportLimitDIECount(), null,
+			OPTION_IMPORT_LIMIT_DIE_COUNT_DESC);
+
+		options.registerOption(OPTION_NAME_LENGTH_CUTOFF, getNameLengthCutoff(), null,
+			OPTION_NAME_LENGTH_CUTOFF_DESC);
+
+		options.registerOption(OPTION_OUTPUT_FUNC_SIGS, isCreateFuncSignatures(), null,
+			OPTION_OUTPUT_FUNC_SIGS_DESC);
+
+		options.registerOption(OPTION_TRY_PACK_STRUCTS, isTryPackStructs(), null,
+			OPTION_TRY_PACK_STRUCTS_DESC);
+
+		options.registerOption(OPTION_IMPORT_LOCAL_VARS, isImportLocalVariables(), null,
+			OPTION_IMPORT_LOCAL_VARS_DESC);
+	}
+
+	/**
+	 * See {@link Analyzer#optionsChanged(Options, ghidra.program.model.listing.Program)}
+	 * 
+	 * @param options {@link Options}
+	 */
+	public void optionsChanged(Options options) {
+		setOutputDIEInfo(options.getBoolean(OPTION_OUTPUT_DWARF_DIE_INFO, isOutputDIEInfo()));
+		setPreloadAllDIEs(options.getBoolean(OPTION_PRELOAD_ALL_DIES, isPreloadAllDIEs()));
+		setOutputSourceLocationInfo(
+			options.getBoolean(OPTION_OUTPUT_SOURCE_INFO, isOutputSourceLocationInfo()));
+		setOutputLexicalBlockComments(options.getBoolean(OPTION_OUTPUT_LEXICAL_BLOCK_COMMENTS,
+			isOutputLexicalBlockComments()));
+		setOutputInlineFuncComments(
+			options.getBoolean(OPTION_OUTPUT_INLINE_FUNC_COMMENTS, isOutputInlineFuncComments()));
+		setImportDataTypes(options.getBoolean(OPTION_IMPORT_DATATYPES, isImportDataTypes()));
+		setImportFuncs(options.getBoolean(OPTION_IMPORT_FUNCS, isImportFuncs()));
+		setImportLimitDIECount(
+			options.getInt(OPTION_IMPORT_LIMIT_DIE_COUNT, getImportLimitDIECount()));
+		setNameLengthCutoff(options.getInt(OPTION_NAME_LENGTH_CUTOFF, getNameLengthCutoff()));
+		setCreateFuncSignatures(
+			options.getBoolean(OPTION_OUTPUT_FUNC_SIGS, isCreateFuncSignatures()));
+		setTryPackDataTypes(options.getBoolean(OPTION_TRY_PACK_STRUCTS, isTryPackStructs()));
+		setImportLocalVariables(
+			options.getBoolean(OPTION_IMPORT_LOCAL_VARS, isImportLocalVariables()));
+
 	}
 }

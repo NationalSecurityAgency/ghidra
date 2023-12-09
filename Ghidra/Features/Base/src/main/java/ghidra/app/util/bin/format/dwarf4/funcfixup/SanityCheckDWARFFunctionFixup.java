@@ -18,7 +18,6 @@ package ghidra.app.util.bin.format.dwarf4.funcfixup;
 import ghidra.app.util.bin.format.dwarf4.DWARFException;
 import ghidra.app.util.bin.format.dwarf4.attribs.DWARFAttributeValue;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFFunction;
-import ghidra.program.model.listing.Function;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ExtensionPointProperties;
 
@@ -29,15 +28,13 @@ import ghidra.util.classfinder.ExtensionPointProperties;
 public class SanityCheckDWARFFunctionFixup implements DWARFFunctionFixup, DWARFAttributeValue {
 
 	@Override
-	public void fixupDWARFFunction(DWARFFunction dfunc, Function gfunc) throws DWARFException {
+	public void fixupDWARFFunction(DWARFFunction dfunc) throws DWARFException {
 		// if there were no defined parameters and we had problems decoding local variables,
 		// don't force the method to have an empty param signature because there are other
 		// issues afoot.
 		if (dfunc.params.isEmpty() && dfunc.localVarErrors) {
-			Msg.error(this,
-				String.format(
-					"Inconsistent function signature information, leaving undefined: %s@%s",
-					gfunc.getName(), gfunc.getEntryPoint()));
+			Msg.error(this, "Inconsistent function signature information, leaving undefined: %s@%s"
+					.formatted(dfunc.name.getName(), dfunc.address));
 			throw new DWARFException("Failed sanity check");
 		}
 	}

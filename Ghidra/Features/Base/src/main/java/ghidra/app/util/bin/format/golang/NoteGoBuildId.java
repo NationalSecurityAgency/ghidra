@@ -28,6 +28,7 @@ import ghidra.program.model.listing.Program;
  */
 public class NoteGoBuildId extends ElfNote {
 	public static final String SECTION_NAME = ".note.go.buildid";
+	public static final String PROGRAM_INFO_KEY = "Golang BuildId";
 
 	/**
 	 * Reads a NoteGoBuildId from the specified BinaryReader, matching the signature of 
@@ -67,7 +68,7 @@ public class NoteGoBuildId extends ElfNote {
 
 	@Override
 	public String getProgramInfoKey() {
-		return "Golang BuildId";
+		return PROGRAM_INFO_KEY;
 	}
 
 	@Override

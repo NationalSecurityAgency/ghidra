@@ -33,8 +33,8 @@ import db.Transaction;
 import docking.widgets.OptionDialog;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.objects.components.DebuggerMethodInvocationDialog;
-import ghidra.app.plugin.core.debug.service.rmi.trace.DefaultTraceRmiAcceptor;
-import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiHandler;
+import ghidra.app.plugin.core.debug.service.tracermi.DefaultTraceRmiAcceptor;
+import ghidra.app.plugin.core.debug.service.tracermi.TraceRmiHandler;
 import ghidra.app.plugin.core.terminal.TerminalListener;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
@@ -420,8 +420,7 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 	}
 
 	protected PtyTerminalSession runInTerminal(List<String> commandLine, Map<String, String> env,
-			Collection<TerminalSession> subordinates)
-			throws IOException {
+			File workingDirectory, Collection<TerminalSession> subordinates) throws IOException {
 		PtyFactory factory = getPtyFactory();
 		Pty pty = factory.openpty();
 
@@ -432,13 +431,19 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 		TerminalListener resizeListener = new TerminalListener() {
 			@Override
 			public void resized(short cols, short rows) {
-				parent.setWindowSize(cols, rows);
+				try {
+					parent.setWindowSize(cols, rows);
+				}
+				catch (Exception e) {
+					Msg.error(this, "Could not resize pty: " + e);
+				}
 			}
 		};
 		terminal.addTerminalListener(resizeListener);
 
 		env.put("TERM", "xterm-256color");
-		PtySession session = pty.getChild().session(commandLine.toArray(String[]::new), env);
+		PtySession session =
+			pty.getChild().session(commandLine.toArray(String[]::new), env, workingDirectory);
 
 		Thread waiter = new Thread(() -> {
 			try {

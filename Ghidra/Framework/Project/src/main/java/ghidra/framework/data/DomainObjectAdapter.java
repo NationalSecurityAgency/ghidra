@@ -18,7 +18,6 @@ package ghidra.framework.data;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -28,6 +27,7 @@ import ghidra.framework.store.FileSystem;
 import ghidra.framework.store.LockException;
 import ghidra.util.Lock;
 import ghidra.util.classfinder.ClassSearcher;
+import ghidra.util.datastruct.ListenerSet;
 
 /**
  * An abstract class that provides default behavior for DomainObject(s), specifically it handles
@@ -54,7 +54,11 @@ public abstract class DomainObjectAdapter implements DomainObject {
 	protected Map<EventQueueID, DomainObjectChangeSupport> changeSupportMap =
 		new ConcurrentHashMap<EventQueueID, DomainObjectChangeSupport>();
 	private volatile boolean eventsEnabled = true;
-	private Set<DomainObjectClosedListener> closeListeners = new CopyOnWriteArraySet<>();
+
+	private ListenerSet<DomainObjectClosedListener> closeListeners =
+		new ListenerSet<>(DomainObjectClosedListener.class, false);
+	private ListenerSet<DomainObjectFileListener> fileChangeListeners =
+		new ListenerSet<>(DomainObjectFileListener.class, false);
 
 	private ArrayList<Object> consumers;
 	protected Map<String, String> metadata = new LinkedHashMap<String, String>();
@@ -185,10 +189,15 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		if (df == null) {
 			throw new IllegalArgumentException("DomainFile must not be null");
 		}
+		if (df == domainFile) {
+			return;
+		}
 		clearDomainObj();
 		DomainFile oldDf = domainFile;
 		domainFile = df;
 		fireEvent(new DomainObjectChangeRecord(DO_DOMAIN_FILE_CHANGED, oldDf, df));
+		fileChangeListeners.invoke().domainFileChanged(this);
+
 	}
 
 	protected void close() {
@@ -204,13 +213,7 @@ public abstract class DomainObjectAdapter implements DomainObject {
 			queue.dispose();
 		}
 
-		notifyCloseListeners();
-	}
-
-	private void notifyCloseListeners() {
-		for (DomainObjectClosedListener listener : closeListeners) {
-			listener.domainObjectClosed(this);
-		}
+		closeListeners.invoke().domainObjectClosed(this);
 		closeListeners.clear();
 	}
 
@@ -249,6 +252,16 @@ public abstract class DomainObjectAdapter implements DomainObject {
 	@Override
 	public void removeCloseListener(DomainObjectClosedListener listener) {
 		closeListeners.remove(listener);
+	}
+
+	@Override
+	public void addDomainFileListener(DomainObjectFileListener listener) {
+		fileChangeListeners.add(listener);
+	}
+
+	@Override
+	public void removeDomainFileListener(DomainObjectFileListener listener) {
+		fileChangeListeners.remove(listener);
 	}
 
 	@Override

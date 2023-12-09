@@ -19,9 +19,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.cmd.comments.SetCommentCmd;
+import ghidra.app.util.bin.format.pdb2.pdbreader.MsSymbolIterator;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.SeparatedCodeFromCompilerSupportMsSymbol;
-import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.util.Msg;
@@ -46,7 +46,7 @@ public class SeparatedCodeSymbolApplier extends MsSymbolApplier {
 
 	private List<MsSymbolApplier> allAppliers = new ArrayList<>();
 
-	private static AbstractMsSymbolIterator validateSymbol(AbstractMsSymbolIterator iter) {
+	private static MsSymbolIterator validateSymbol(MsSymbolIterator iter) {
 		if (!(iter.peek() instanceof SeparatedCodeFromCompilerSupportMsSymbol)) {
 			throw new IllegalArgumentException("Not a SeparatedCodeFromCompilerSupportMsSymbol");
 		}
@@ -60,7 +60,7 @@ public class SeparatedCodeSymbolApplier extends MsSymbolApplier {
 	 * @throws CancelledException upon user cancellation
 	 */
 	public SeparatedCodeSymbolApplier(DefaultPdbApplicator applicator,
-			AbstractMsSymbolIterator iter) throws CancelledException {
+			MsSymbolIterator iter) throws CancelledException {
 		super(applicator, validateSymbol(iter));
 
 		symbol = (SeparatedCodeFromCompilerSupportMsSymbol) iter.next();
@@ -111,8 +111,10 @@ public class SeparatedCodeSymbolApplier extends MsSymbolApplier {
 
 	private void setComments(boolean enabled) {
 		if (enabled) {
-			String existingComment = applicator.getProgram().getListing().getComment(
-				CodeUnit.PRE_COMMENT, specifiedAddress);
+			String existingComment = applicator.getProgram()
+					.getListing()
+					.getComment(
+						CodeUnit.PRE_COMMENT, specifiedAddress);
 			String p = "*************************************************************\n";
 			String newComment =
 				String.format(p + "* Separated code (from the compiler): %s - %s *\n" + p,

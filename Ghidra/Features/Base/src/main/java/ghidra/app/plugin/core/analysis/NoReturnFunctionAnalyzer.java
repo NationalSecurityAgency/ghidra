@@ -16,9 +16,7 @@
 package ghidra.app.plugin.core.analysis;
 
 import java.io.*;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import generic.jar.ResourceFile;
 import ghidra.app.cmd.function.CreateFunctionCmd;
@@ -47,6 +45,7 @@ public class NoReturnFunctionAnalyzer extends AbstractAnalyzer {
 	private boolean createBookmarksEnabled = OPTION_DEFAULT_CREATE_BOOKMARKS_ENABLED;
 
 	private Set<String> functionNames;
+	private Set<String> wildcardFunctionNames;
 
 	public NoReturnFunctionAnalyzer() {
 		super(NAME, DESCRIPTION, AnalyzerType.BYTE_ANALYZER);
@@ -91,67 +90,90 @@ public class NoReturnFunctionAnalyzer extends AbstractAnalyzer {
 				name = name.substring(startIndex);
 			}
 
-			if (!functionNames.contains(name)) {
+			// check for exact match
+			if (functionNames.contains(name)) {
+				makeNoReturnFunction(program, symbol, monitor, log);
 				continue;
 			}
 
-			// skip noreturn marking if its namespace is not global, library, or std
-			// it prevents class methods (e.g. Menu::_exit()) incorrectly marked as noreturn
-			Namespace parentNamespace = symbol.getParentNamespace();
-			if (parentNamespace != null && !parentNamespace.isGlobal() && !parentNamespace.isLibrary()) {
-				List<String> pathList = parentNamespace.getPathList(true);
-				if (!(pathList.size() == 1 && pathList.get(0) == "std")) {
-					continue;
+			// if any wildcarded names, check for prefix match
+			for (String functionName : wildcardFunctionNames) {
+				if (name.startsWith(functionName)) {
+					makeNoReturnFunction(program, symbol, monitor, log);
+					break;
 				}
-			}
-
-			// if this is an external entry place holder, create the function in the external entry location
-			symbol = checkForAssociatedExternalSymbol(symbol);
-
-			if (symbol.isExternal()) {
-				ExternalLocation externalLocation =
-					program.getExternalManager().getExternalLocation(symbol);
-				if (externalLocation != null) {
-					Function functionAt = externalLocation.createFunction();
-					//Msg.debug(this,
-					//	"Setting \"no return\" flag on external function " + symbol.getName(true));
-					functionAt.setNoReturn(true);
-				}
-				continue;
-			}
-
-			Address address = symbol.getAddress();
-			if (symbol.getSymbolType() == SymbolType.LABEL) {
-				if (!SymbolType.FUNCTION.isValidParent(program, parentNamespace, address, false)) {
-					continue; // skip if parent does not permit function creation
-				}
-				CreateFunctionCmd fCommand = new CreateFunctionCmd(address);
-				fCommand.applyTo(program, monitor);
-			}
-
-			Function functionAt = program.getFunctionManager().getFunctionAt(address);
-			if (functionAt == null) {
-				log.appendMsg("Failed to create \"no return\" function " + symbol.getName(true) +
-					" at " + address);
-				continue;
-			}
-
-			//Msg.debug(this, "Setting \"no return\" flag on function " + symbol.getName(true) +
-			//	" at " + address);
-
-			functionAt.setNoReturn(true);
-
-			// disassembled later after all bad functions have been marked
-
-			if (createBookmarksEnabled) {
-				program.getBookmarkManager().setBookmark(address, BookmarkType.ANALYSIS,
-					"Non-Returning Function", "Non-Returning Function Identified");
 			}
 		}
 
 		// now that all the functions are set, safe to disassemble
 		// should not disassemble here, could be just a pointer, disassemble later
 		return true;
+	}
+
+	/**
+	 * Make the symbol into a non-returning function
+	 * 
+	 * @param program program
+	 * @param symbol symbol for a function
+	 * @param monitor monitor
+	 * @param log log for errors
+	 */
+	private void makeNoReturnFunction(Program program, Symbol symbol, TaskMonitor monitor,
+			MessageLog log) {
+		// skip noreturn marking if its namespace is not global, library, or std
+		// it prevents class methods (e.g. Menu::_exit()) incorrectly marked as noreturn
+		Namespace parentNamespace = symbol.getParentNamespace();
+		if (parentNamespace != null && !parentNamespace.isGlobal() &&
+			!parentNamespace.isLibrary()) {
+			List<String> pathList = parentNamespace.getPathList(true);
+			if (!(pathList.size() == 1 && pathList.get(0) == "std")) {
+				return;
+			}
+		}
+
+		// if this is an external entry place holder, create the function in the external entry location
+		symbol = checkForAssociatedExternalSymbol(symbol);
+
+		if (symbol.isExternal()) {
+			ExternalLocation externalLocation =
+				program.getExternalManager().getExternalLocation(symbol);
+			if (externalLocation != null) {
+				Function functionAt = externalLocation.createFunction();
+				//Msg.debug(this,
+				//	"Setting \"no return\" flag on external function " + symbol.getName(true));
+				functionAt.setNoReturn(true);
+			}
+			return;
+		}
+
+		Address address = symbol.getAddress();
+		if (symbol.getSymbolType() == SymbolType.LABEL) {
+			if (!SymbolType.FUNCTION.isValidParent(program, parentNamespace, address, false)) {
+				return; // skip if parent does not permit function creation
+			}
+			CreateFunctionCmd fCommand = new CreateFunctionCmd(address);
+			fCommand.applyTo(program, monitor);
+		}
+
+		Function functionAt = program.getFunctionManager().getFunctionAt(address);
+		if (functionAt == null) {
+			log.appendMsg("Failed to create \"no return\" function " + symbol.getName(true) +
+				" at " + address);
+			return;
+		}
+
+		//Msg.debug(this, "Setting \"no return\" flag on function " + symbol.getName(true) +
+		//	" at " + address);
+
+		functionAt.setNoReturn(true);
+
+		// disassembled later after all bad functions have been marked
+
+		if (createBookmarksEnabled) {
+			program.getBookmarkManager()
+					.setBookmark(address, BookmarkType.ANALYSIS, "Non-Returning Function",
+						"Non-Returning Function Identified");
+		}
 	}
 
 	/**
@@ -192,6 +214,7 @@ public class NoReturnFunctionAnalyzer extends AbstractAnalyzer {
 		}
 
 		functionNames = new HashSet<>();
+		wildcardFunctionNames = new HashSet<>();
 
 		ResourceFile[] files = NonReturningFunctionNames.findDataFiles(program);
 		for (ResourceFile file : files) {
@@ -217,7 +240,16 @@ public class NoReturnFunctionAnalyzer extends AbstractAnalyzer {
 							"' specified in file: " + file.getAbsolutePath());
 						line = line.substring(startIndex);
 					}
-					functionNames.add(line.trim());
+
+					String funcName = line.trim();
+					if (funcName.endsWith("*")) {
+						// if funcName has a wildcard at the end, put on wildcard list
+						funcName = funcName.substring(0, funcName.length() - 1);
+						wildcardFunctionNames.add(funcName);
+					}
+					else {
+						functionNames.add(funcName);
+					}
 				}
 			}
 			finally {

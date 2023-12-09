@@ -16,7 +16,7 @@
 import java.util.Map;
 import java.util.Objects;
 
-import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiPlugin;
+import ghidra.app.plugin.core.debug.service.tracermi.TraceRmiPlugin;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.TraceRmiService;
 import ghidra.debug.api.tracermi.TraceRmiAcceptor;

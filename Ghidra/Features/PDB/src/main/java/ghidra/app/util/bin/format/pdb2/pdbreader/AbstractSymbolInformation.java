@@ -19,7 +19,8 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
 
-import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
+import ghidra.app.util.bin.format.pdb2.pdbreader.msf.MsfStream;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 
 /**
@@ -37,25 +38,31 @@ public abstract class AbstractSymbolInformation {
 
 	public static final int GSI70 = 0xeffe0000 + 19990810; // 0xf12f091a = -248575718
 
+	public static final int HASH_PRE70_HEADER_LENGTH = 0;
+	public static final int HASH_70_HEADER_LENGTH = 16;
+	public static final int HASH_HEADER_MIN_READ_LENGTH =
+		Integer.max(HASH_PRE70_HEADER_LENGTH, HASH_70_HEADER_LENGTH);
+
 	//==============================================================================================
 	// Internals
 	//==============================================================================================
 	protected AbstractPdb pdb;
-	protected int numHashRecords;
-	protected int numExtraBytes;
-	protected int hashRecordsBitMapLength;
+	protected int streamNumber;
 
+	protected int symbolHashLength;
+	protected int symbolHashOffset;
+
+	protected int hashHeaderLength;
 	protected int headerSignature;
 	protected int versionNumber;
 	protected int hashRecordsLength;
 	protected int bucketsLength;
+	protected int hashRecordsOffset;
+	protected int bucketsOffset;
 
-	// These are read from "buckets."
-	protected List<Integer> hashBucketOffsets = new ArrayList<>();
-	protected Set<SymbolHashRecord> hashRecords = new TreeSet<>();
-	protected List<Long> modifiedHashRecordSymbolOffsets = new ArrayList<>();
-
-	protected List<AbstractMsSymbol> symbols = new ArrayList<>();
+	protected int numHashRecords;
+	protected int numExtraBytes;
+	protected int hashRecordsBitMapLength;
 
 	//==============================================================================================
 	// API
@@ -63,41 +70,84 @@ public abstract class AbstractSymbolInformation {
 	/**
 	 * Constructor
 	 * @param pdbIn {@link AbstractPdb} that owns the Abstract Symbol Information to process
+	 * @param streamNumber the stream number containing the symbol information
 	 */
-	public AbstractSymbolInformation(AbstractPdb pdbIn) {
+	public AbstractSymbolInformation(AbstractPdb pdbIn, int streamNumber) {
 		pdb = pdbIn;
-	}
-
-	/**
-	 * Returns the list of symbols for this {@link AbstractSymbolInformation}
-	 * @return the symbols
-	 */
-	public List<AbstractMsSymbol> getSymbols() {
-		return symbols;
+		this.streamNumber = streamNumber;
 	}
 
 	/**
 	 * Returns the Offsets of symbols within the symbol table; these are gotten from the
 	 *  HashRecords and modified to point to the size field of the symbols in the symbol table
 	 * @return offsets
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
 	 */
-	public List<Long> getModifiedHashRecordSymbolOffsets() {
-		return modifiedHashRecordSymbolOffsets;
+	public List<Long> getModifiedHashRecordSymbolOffsets() throws CancelledException, PdbException {
+		return generateModifiedSymbolOffsets();
 	}
 
 	//==============================================================================================
 	// Package-Protected Internals
 	//==============================================================================================
 	/**
-	 * Deserialize the {@link AbstractSymbolInformation} from the appropriate stream in the Pdb
-	 * @param streamNumber the stream number containing the information to deserialize
+	 * Parses and returns the hash bucket offsets
+	 * @return the offsets
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
+	 */
+	List<Integer> getHashBucketOffsets() throws CancelledException, PdbException {
+		try {
+			PdbByteReader reader =
+				pdb.getReaderForStreamNumber(streamNumber, bucketsOffset, bucketsLength);
+			if (headerSignature == HEADER_SIGNATURE) {
+				return deserializedCompressedHashBuckets(reader);
+			}
+			return deserializedHashBuckets(reader);
+		}
+		catch (IOException e) {
+			Msg.error(this, String.format(
+				"PDB: Error creating hash buckets while reading stream %d offset %d and length %d",
+				streamNumber, bucketsOffset, bucketsLength));
+			return new ArrayList<>();
+		}
+	}
+
+	/**
+	 * Parses and returns the hash records
+	 * @return the hash records
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
+	 */
+	Set<SymbolHashRecord> getHashRecords() throws CancelledException, PdbException {
+		try {
+			PdbByteReader reader =
+				pdb.getReaderForStreamNumber(streamNumber, hashRecordsOffset, hashRecordsLength);
+			return deserializeHashRecords(reader);
+		}
+		catch (IOException e) {
+			Msg.error(this, String.format(
+				"PDB: Error creating hash records while reading stream %d offset %d and length %d",
+				streamNumber, hashRecordsOffset, hashRecordsLength));
+			return new TreeSet<>();
+		}
+	}
+
+	/**
+	 * Deserialize basic {@link AbstractSymbolInformation} from the appropriate stream in the Pdb
+	 * so that later queries can be made
 	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
 	 *  inability to read required bytes
 	 * @throws PdbException upon not enough data left to parse
 	 * @throws CancelledException upon user cancellation
 	 */
-	void deserialize(int streamNumber)
-			throws IOException, PdbException, CancelledException {
+	abstract void initialize() throws IOException, PdbException, CancelledException;
+
+	/**
+	 * Initializes values such as offset, lengths, and numbers
+	 */
+	void initializeValues() {
 		if (pdb.hasMinimalDebugInfo()) {
 			hashRecordsBitMapLength = 0x8000;
 			numExtraBytes = 0; // I believe;
@@ -113,10 +163,11 @@ public abstract class AbstractSymbolInformation {
 	/**
 	 * Debug method for dumping information from this {@link AbstractSymbolInformation}
 	 * @param writer {@link Writer} to which to dump the information
-	 * @throws IOException upon IOException writing to the {@link Writer}
+	 * @throws IOException issue reading PDB or upon issue writing to the {@link Writer}
 	 * @throws CancelledException upon user cancellation
+	 * @throws PdbException upon not enough data left to parse
 	 */
-	void dump(Writer writer) throws IOException, CancelledException {
+	void dump(Writer writer) throws IOException, CancelledException, PdbException {
 		StringBuilder builder = new StringBuilder();
 		builder.append("AbstractSymbolInformation-----------------------------------\n");
 		dumpHashHeader(builder);
@@ -160,35 +211,34 @@ public abstract class AbstractSymbolInformation {
 
 	/**
 	 * Generates a list of symbols from the information that we have
-	 * @throws PdbException upon PDB corruption
+	 * @return the offsets
+	 * @throws PdbException upon not enough data left to parse
 	 * @throws CancelledException upon user cancellation
 	 */
-	protected void generateSymbolsList()
-			throws PdbException, CancelledException {
-		symbols = new ArrayList<>();
+	protected List<Long> generateModifiedSymbolOffsets() throws PdbException, CancelledException {
+		List<Long> modifiedHashRecordSymbolOffsets = new ArrayList<>();
 		PdbDebugInfo debugInfo = pdb.getDebugInfo();
 		if (debugInfo == null) {
-			return;
+			return modifiedHashRecordSymbolOffsets;
 		}
-		Map<Long, AbstractMsSymbol> symbolsByOffset = debugInfo.getSymbolsByOffset();
+		Set<SymbolHashRecord> hashRecords = getHashRecords();
 		for (SymbolHashRecord record : hashRecords) {
 			pdb.checkCancelled();
 			long offset = record.getOffset() - 2; // Modified offset
-			AbstractMsSymbol symbol = symbolsByOffset.get(offset);
 			modifiedHashRecordSymbolOffsets.add(offset);
-			if (symbol == null) {
-				throw new PdbException("PDB corrupted");
-			}
-			symbols.add(symbol);
 		}
+		return modifiedHashRecordSymbolOffsets;
 	}
 
 	/**
 	 * Debug method for dumping hash records from this {@link AbstractSymbolInformation}
 	 * @param builder {@link StringBuilder} to which to dump the information
+	 * @throws PdbException upon not enough data left to parse
 	 * @throws CancelledException upon user cancellation
 	 */
-	protected void dumpHashRecords(StringBuilder builder) throws CancelledException {
+	protected void dumpHashRecords(StringBuilder builder)
+			throws CancelledException, PdbException {
+		Set<SymbolHashRecord> hashRecords = getHashRecords();
 		builder.append("HashRecords-------------------------------------------------\n");
 		builder.append("numHashRecords: " + hashRecords.size() + "\n");
 		for (SymbolHashRecord record : hashRecords) {
@@ -199,31 +249,12 @@ public abstract class AbstractSymbolInformation {
 		builder.append("\nEnd HashRecords---------------------------------------------\n");
 	}
 
-	/**
-	 * Deserializes the hash table for the symbols
-	 * @param reader {@link PdbByteReader} containing the data buffer to process
-	 * @throws PdbException upon not enough data left to parse
-	 * @throws CancelledException upon user cancellation
-	 */
-	protected void deserializeHashTable(PdbByteReader reader)
-			throws PdbException, CancelledException {
-
-		deserializeHashHeader(reader);
-
-		if (headerSignature == HEADER_SIGNATURE) {
-			switch (versionNumber) {
-				case GSI70:
-					deserializeGsi70HashTable(reader);
-					break;
-				default:
-					throw new PdbException("Unknown GSI Version Number");
-			}
-		}
-		else {
-			reader.reset(); // There was no header
-			deserializeGsiPre70HashTable(reader);
-		}
-
+	protected void deserializeHashHeader() throws PdbException, CancelledException, IOException {
+		MsfStream stream = pdb.getMsf().getStream(streamNumber);
+		PdbByteReader reader =
+			pdb.getReaderForStreamNumber(streamNumber, symbolHashOffset,
+				HASH_HEADER_MIN_READ_LENGTH);
+		deserializeHashHeader(reader, stream.getLength());
 	}
 
 	/**
@@ -231,81 +262,28 @@ public abstract class AbstractSymbolInformation {
 	 * @param reader {@link PdbByteReader} containing the data buffer to process
 	 * @throws PdbException upon not enough data left to parse
 	 */
-	private void deserializeHashHeader(PdbByteReader reader) throws PdbException {
+	private void deserializeHashHeader(PdbByteReader reader, int streamLength) throws PdbException {
 		headerSignature = reader.parseInt();
-		versionNumber = reader.parseInt();
-		hashRecordsLength = reader.parseInt();
-		bucketsLength = reader.parseInt();
-	}
-
-	/**
-	 * Deserialize the body of the {@link AbstractSymbolInformation} according to the GSI versions
-	 * prior to 7.00 specification
-	 * @param reader {@link PdbByteReader} containing the data buffer to process
-	 * @throws PdbException upon unexpected fields
-	 * @throws CancelledException upon user cancellation
-	 */
-	private void deserializeGsiPre70HashTable(PdbByteReader reader)
-			throws PdbException, CancelledException {
-
-		int numBucketsBytes = 4 * (numHashRecords + 1);
-		if (reader.numRemaining() < numBucketsBytes) {
-			throw new PdbException("Not enough data for GSI");
+		if (headerSignature == HEADER_SIGNATURE) {
+			hashHeaderLength = HASH_70_HEADER_LENGTH;
+			versionNumber = reader.parseInt();
+			hashRecordsLength = reader.parseInt();
+			bucketsLength = reader.parseInt();
+			hashRecordsOffset = symbolHashOffset + reader.getIndex();
+			bucketsOffset = hashRecordsOffset + hashRecordsLength;
 		}
-		int numRecordsBytes = (reader.numRemaining() - numBucketsBytes);
-
-		PdbByteReader hashRecordsReader = reader.getSubPdbByteReader(numRecordsBytes);
-		PdbByteReader bucketsReader = reader.getSubPdbByteReader(numBucketsBytes);
-		if (reader.hasMore()) {
-			throw new PdbException("Unexpected extra information at and of GSI stream");
+		else {
+			hashHeaderLength = HASH_PRE70_HEADER_LENGTH;
+			reader.reset(); // There was no header
+			// Calculate the values
+			bucketsLength = 4 * (numHashRecords + 1);
+			if (streamLength < bucketsLength) {
+				throw new PdbException("Not enough data for symbol hash buckets.");
+			}
+			hashRecordsLength = streamLength - bucketsLength;
+			hashRecordsOffset = symbolHashOffset + 0;
+			bucketsOffset = hashRecordsOffset + hashRecordsLength;
 		}
-
-		hashBucketOffsets = new ArrayList<>();
-		while (bucketsReader.hasMore()) {
-			pdb.checkCancelled();
-			hashBucketOffsets.add(bucketsReader.parseInt());
-		}
-
-		// Note: each offset value is into an array of structures that are 12 bytes in length, but
-		// whose on-disk size is 8 bytes.  These are the structures in the hashRecordsReader.  So
-		// take the offset and multiple by 2/3 to get the byte offset into the reader for the
-		// actual record.  Still need to deal with the collision logic after that.
-
-		deserializeHashRecords(hashRecordsReader);
-	}
-
-	/**
-	 * Deserialize the body of the {@link AbstractSymbolInformation} according to the GSI 7.00
-	 * specification
-	 * @param reader {@link PdbByteReader} containing the data buffer to process
-	 * @throws PdbException upon unexpected fields
-	 * @throws CancelledException upon user cancellation
-	 */
-	private void deserializeGsi70HashTable(PdbByteReader reader)
-			throws PdbException, CancelledException {
-
-		if (reader.numRemaining() != hashRecordsLength + bucketsLength) {
-			throw new PdbException("Data count mismatch in GSI stream");
-		}
-		if (hashRecordsLength == 0 || bucketsLength == 0) {
-			return;
-		}
-
-		PdbByteReader hashRecordsReader = reader.getSubPdbByteReader(hashRecordsLength);
-		PdbByteReader bucketsReader = reader.getSubPdbByteReader(bucketsLength);
-
-		deserializedCompressedHashBuckets(bucketsReader);
-
-//		int i = 0;
-//		for (int x : hashBucketOffsets) {
-//			System.out.println(String.format("0x%04x: 0x%08x", i++, x));
-//		}
-		// Note: each offset value is into an array of structures that are 12 bytes in length, but
-		// whose on-disk size is 8 bytes.  These are the structures in the hashRecordsReader.  So
-		// take the offset and multiple by 2/3 to get the byte offset into the reader for the
-		// actual record.  Still need to deal with the collision logic after that.
-
-		deserializeHashRecords(hashRecordsReader);
 	}
 
 	/**
@@ -316,8 +294,10 @@ public abstract class AbstractSymbolInformation {
 	 * @throws PdbException upon not enough data left to parse
 	 * @throws CancelledException upon user cancellation
 	 */
-	private void deserializedCompressedHashBuckets(PdbByteReader reader)
+	private List<Integer> deserializedCompressedHashBuckets(PdbByteReader reader)
 			throws PdbException, CancelledException {
+
+		List<Integer> hashBucketOffsets = new ArrayList<>();
 
 		PdbByteReader bitEncoderReader = reader.getSubPdbByteReader(hashRecordsBitMapLength);
 		// Throw away extra bytes between bit map and buckets.
@@ -349,24 +329,154 @@ public abstract class AbstractSymbolInformation {
 				throw new PdbException("Compressed GSI Hash Buckets corrupt");
 			}
 		}
+		return hashBucketOffsets;
 
 	}
 
 	/**
-	 * Deserializes the hash records
+	 * Deserializes a normal/non-compressed set of hash buckets from the {@link PdbByteReader}
+	 * provided.
 	 * @param reader {@link PdbByteReader} containing the data buffer to process
 	 * @throws PdbException upon not enough data left to parse
 	 * @throws CancelledException upon user cancellation
 	 */
-	private void deserializeHashRecords(PdbByteReader reader)
+	private List<Integer> deserializedHashBuckets(PdbByteReader reader)
 			throws PdbException, CancelledException {
-		hashRecords = new TreeSet<>();
+		List<Integer> hashBucketOffsets = new ArrayList<>();
+		while (reader.hasMore()) {
+			pdb.checkCancelled();
+			hashBucketOffsets.add(reader.parseInt());
+		}
+		return hashBucketOffsets;
+	}
+
+	// The following note is from previous incantation of this code (before changing to on-demand
+	//  reading of components).  It still might be applicable here or elsewhere.
+	//
+	// Note: each offset value is into an array of structures that are 12 bytes in length, but
+	// whose on-disk size is 8 bytes.  These are the structures in the hashRecordsReader.  So
+	// take the offset and multiple by 2/3 to get the byte offset into the reader for the
+	// actual record.  Still need to deal with the collision logic after that.
+	/**
+	 * Deserializes and returns the hash records
+	 * @param reader {@link PdbByteReader} containing the data buffer to process
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
+	 */
+	private Set<SymbolHashRecord> deserializeHashRecords(PdbByteReader reader)
+			throws PdbException, CancelledException {
+		Set<SymbolHashRecord> hashRecords = new TreeSet<>();
 		while (reader.hasMore()) {
 			pdb.checkCancelled();
 			SymbolHashRecord record = new SymbolHashRecord();
 			record.parse(reader);
 			hashRecords.add(record);
 		}
+		return hashRecords;
 	}
 
+	// NOTE Iterator below is not good at this point in time, as we had been working with
+	//  a TreeSet, which is ordered.  The iterator below is acting on hash bins which are
+	//  as random as the hash key makes them.  TODO: consider other options.  For now going back
+	//  to creating the whole TreeSet.
+
+//	public ModifiedOffsetIterator iterator() {
+//		return new ModifiedOffsetIterator();
+//	}
+//
+//	//==============================================================================================
+//	/**
+//	 * Iterator for {@link SymbolGroup} that iterates through {@link AbstractMsSymbol
+//	 * AbstractMsSymbols}
+//	 */
+//	public class ModifiedOffsetIterator implements Iterator<Long> {
+//
+//		private int streamOffset;
+//		private int streamOffsetLimit;
+//		private float factor;
+//
+//		private Long value;
+//
+//		public ModifiedOffsetIterator() {
+//			initGet();
+//		}
+//
+//		@Override
+//		public boolean hasNext() {
+//			return (value != null);
+//		}
+//
+//		/**
+//		 * Peeks at and returns the next symbol without incrementing to the next.  If none are
+//		 * left, then throws NoSuchElementException and reinitializes the state for a new
+//		 * iteration.
+//		 * @see #initGet()
+//		 * @return the next symbol
+//		 * @throws NoSuchElementException if there are no more elements
+//		 */
+//		public Long peek() throws NoSuchElementException {
+//			if (value == null) {
+//				throw new NoSuchElementException();
+//			}
+//			return value;
+//		}
+//
+//		@Override
+//		public Long next() {
+//			if (value == null) {
+//				throw new NoSuchElementException();
+//			}
+//			Long offer = value;
+//			value = retrieveNext();
+//			return offer;
+//		}
+//
+//		private Long retrieveNext() {
+//			if (streamNumber == MsfStream.NIL_STREAM_NUMBER) {
+//				return null;
+//			}
+//			if (streamOffset >= streamOffsetLimit) {
+//				return null;
+//			}
+//			try {
+//				PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, streamOffset,
+//					SymbolHashRecord.RECORD_SIZE);
+//				SymbolHashRecord record = new SymbolHashRecord();
+//				record.parse(reader);
+//				streamOffset += SymbolHashRecord.RECORD_SIZE;
+//				// Minus 2 for the "modified" offset points to the length field in the "other"
+//				//  stream
+//				return record.getOffset() - 2;
+//			}
+//			catch (CancelledException | PdbException | IOException e) {
+//				return null;
+//			}
+//		}
+//
+//		/**
+//		 * Initialized the mechanism for requesting the symbols in sequence.
+//		 * @see #hasNext()
+//		 */
+//		void initGet() {
+//			if (streamNumber == MsfStream.NIL_STREAM_NUMBER) {
+//				streamOffset = 0;
+//				streamOffsetLimit = 0;
+//				return;
+//			}
+//			streamOffset = hashRecordsOffset;
+//			streamOffsetLimit = hashRecordsLength;
+//			value = retrieveNext();
+//			long num = streamOffsetLimit - hashRecordsOffset;
+//			float factor = num <= 0 ? 0.0F : 1.0F / (num);
+//		}
+//
+//		/**
+//		 * Returns value from 0 to 100 as a rough percentage of having iterated through all records
+//		 * @return the percentage
+//		 */
+//		public long getPercentageDone() {
+//			long num = streamOffset - hashRecordsOffset;
+//			return (long) (factor * num);
+//		}
+//	}
 }

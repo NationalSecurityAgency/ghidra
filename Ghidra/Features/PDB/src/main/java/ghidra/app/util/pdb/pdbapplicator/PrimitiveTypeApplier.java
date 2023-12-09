@@ -15,39 +15,35 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.math.BigInteger;
-
+import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.PrimitiveMsType;
 import ghidra.program.model.data.DataType;
+import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link PrimitiveMsType} types.
  */
 public class PrimitiveTypeApplier extends MsTypeApplier {
 
+	// Intended for: PrimitiveMsType
 	/**
 	 * Constructor for primitive type applier, for transforming a primitive into a
 	 * Ghidra DataType.
 	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
-	 * @param msType {@link PrimitiveMsType} to process.
 	 */
-	public PrimitiveTypeApplier(DefaultPdbApplicator applicator, PrimitiveMsType msType) {
-		super(applicator, msType);
-		apply(); // Only apply in constructor for primitives
+	public PrimitiveTypeApplier(DefaultPdbApplicator applicator) {
+		super(applicator);
 	}
 
 	@Override
-	BigInteger getSize() {
-		return BigInteger.valueOf(((PrimitiveMsType) msType).getTypeSize());
+	DataType apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
+			throws PdbException, CancelledException {
+		return applyPrimitiveMsType((PrimitiveMsType) type);
 	}
 
-	@Override
-	void apply() {
-		dataType = applyPrimitiveMsType((PrimitiveMsType) msType);
-	}
-
-	boolean isNoType() {
-		return (((PrimitiveMsType) msType).getNumber() == 0);
+	boolean isNoType(AbstractMsType type) {
+		return (((PrimitiveMsType) type).getNumber() == 0);
 	}
 
 	private DataType applyPrimitiveMsType(PrimitiveMsType type) {
@@ -62,9 +58,15 @@ public class PrimitiveTypeApplier extends MsTypeApplier {
 //			return dataType.clone(applicatorDataTypeManager);
 //		}
 
+		int indexNumber = type.getNumber();
+		DataType existingDt = applicator.getDataType(indexNumber);
+		if (existingDt != null) {
+			return existingDt;
+		}
+
 		PdbPrimitiveTypeApplicator primitiveApplicator = applicator.getPdbPrimitiveTypeApplicator();
 
-		switch (type.getNumber()) {
+		switch (indexNumber) {
 			//=======================================
 			// Special types
 			//=======================================
@@ -211,7 +213,7 @@ public class PrimitiveTypeApplier extends MsTypeApplier {
 			//=======================================
 			// Unsigned Character types
 			//=======================================
-			// 8-bit unsigned 
+			// 8-bit unsigned
 			case 0x0020:
 				primitiveDataType = primitiveApplicator.getUnsignedCharType();
 				break;
@@ -344,7 +346,7 @@ public class PrimitiveTypeApplier extends MsTypeApplier {
 			case 0x007a:
 				primitiveDataType = primitiveApplicator.getUnicode16Type();
 				break;
-			// 16-bit pointer to a 16-bit unicode char 
+			// 16-bit pointer to a 16-bit unicode char
 			case 0x017a:
 				primitiveDataType = primitiveApplicator.get16NearPointerType(type,
 					primitiveApplicator.getUnicode16Type());
@@ -387,7 +389,7 @@ public class PrimitiveTypeApplier extends MsTypeApplier {
 			case 0x007b:
 				primitiveDataType = primitiveApplicator.getUnicode32Type();
 				break;
-			// 16-bit pointer to a 32-bit unicode char 
+			// 16-bit pointer to a 32-bit unicode char
 			case 0x017b:
 				primitiveDataType = primitiveApplicator.get16NearPointerType(type,
 					primitiveApplicator.getUnicode32Type());
@@ -2059,6 +2061,9 @@ public class PrimitiveTypeApplier extends MsTypeApplier {
 				break;
 
 		}
+
+		primitiveDataType = applicator.resolve(primitiveDataType);
+		applicator.putDataType(indexNumber, primitiveDataType);
 
 		return primitiveDataType;
 	}

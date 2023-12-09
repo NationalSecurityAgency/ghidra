@@ -1,0 +1,75 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Language" content="en-us">
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <META name="GENERATOR" content="Microsoft FrontPage 4.0">
+    <META name="ProgId" content="FrontPage.Editor.Document">
+
+    <TITLE>CaRT File Format</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY>
+    <H1><a name="HelpAnchor"></a>CaRT File Format</H1>
+
+    <P>Compressed and ARC4 Transport (CaRT) neutering format is a file format that is used to
+    neuter files for distribution. This is often used to neutralize malware in the malware
+    analyst community, but could be used for non-malware as well. Using Ghidra's file system
+    support the binary stored in the CaRT may be safely extracted and processed as normal
+    without ever needing to store the original binary to disk.</P>
+
+    <H2>About CaRT</H2>
+    <P>The CaRT format was developed by the Canadian government within their
+    <I>Canadian Centre for Cyber Security</I>. The documentation and
+    repository can be found on the <i>CaRT GitHub</i> page.
+    </P>
+
+    <P>The official <I>CaRT python library</I> is usually used
+    to create CaRT files via its command-line interface or within other python applications or
+    libraries.</P>
+
+    <H2>Supported CaRT Format Versions</H2>
+    <P>Currently CaRT only has a single format version, namely version <FONT face="Courier New">1
+    </FONT>. If/when new versions are released this file system will be updated to support them.</P>
+
+    <H2>Decryption Keys</H2>
+    <P>The CaRT format uses ARC4 encryption and supports two modes of keys: default and private.</P>
+    <UL>
+      <LI><B>Default</B> - In this mode a default key (the first 8 digits of PI, twice) will be used
+      without any further interaction from the user. Binary data is safely neutered without the need
+      to share and transmit passwords.</LI>
+      <LI><B>Private</B> - This mode is appropriate when the key for the encrypted data should be
+      transmitted and stored separately from the CaRT file itself. The key may be provided to
+      Ghidra in two ways, attempted in the following order:
+        <OL>
+          <LI>
+            <I>INI Configuration</I> - If the default CaRT configuration file exists (
+            <FONT face="Courier New">${USER_HOME}/.cart/cart.cfg</FONT>) the key stored there, if
+            any, will be attempted first. See the
+            <I>CaRT GitHub</I> for more
+            documentation on this configuration file.
+          </LI>
+          <LI>
+            <I>User Prompt</I> - If the key is not found through the configuration file then the
+            user will be prompted to input the key manually. The key may be entered as plaintext
+            or in base-64 format (thus supporting arbitrary binary keys). The user will be
+            repeatedly prompted until either the correct key is provided or they click 'Cancel'.
+          </LI>
+        </OL>
+      </LI>
+    </UL>
+    <P>See the <I>CaRT GitHub</I> page for more
+    documentation on keys, requirements, and formats.</P>
+
+    <H2>Metadata (and Hashes)</H2>
+    <P>The CaRT format supports a number of metadata fields including MD5, SHA-1, and SHA-256
+    hashes, and additional user-specified metadata. These hashes will be verified when Ghidra
+    imports the binary for analysis. Warnings will be displayed if any of these hashes are missing
+    and processing will be halted if any of them are present but do not match the binary contents.
+    Additional metadata fields are visible via the "Get Info" context menu option.<P>
+  </BODY>
+</HTML>

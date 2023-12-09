@@ -24,7 +24,7 @@ import org.junit.experimental.categories.Category;
 
 import db.Transaction;
 import generic.test.category.NightlyCategory;
-import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiTarget;
+import ghidra.app.plugin.core.debug.service.tracermi.TraceRmiTarget;
 import ghidra.trace.database.target.DBTraceObjectManager;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;

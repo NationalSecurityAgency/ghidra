@@ -18,10 +18,10 @@ package ghidra.app.util.pdb.pdbapplicator;
 import java.util.regex.Matcher;
 
 import ghidra.app.util.NamespaceUtils;
+import ghidra.app.util.bin.format.pdb2.pdbreader.MsSymbolIterator;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractLabelMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
-import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.symbol.SourceType;
@@ -42,7 +42,7 @@ public class LabelSymbolApplier extends MsSymbolApplier implements DeferrableFun
 	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
 	 * @param iter the Iterator containing the symbol sequence being processed
 	 */
-	public LabelSymbolApplier(DefaultPdbApplicator applicator, AbstractMsSymbolIterator iter) {
+	public LabelSymbolApplier(DefaultPdbApplicator applicator, MsSymbolIterator iter) {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
 		if (!(abstractSymbol instanceof AbstractLabelMsSymbol)) {

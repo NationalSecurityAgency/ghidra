@@ -15,16 +15,14 @@
  */
 package ghidra.app.util.bin.format.golang;
 
-import static ghidra.app.util.bin.StructConverter.ASCII;
-import static ghidra.app.util.bin.StructConverter.BYTE;
+import static ghidra.app.util.bin.StructConverter.*;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.MemoryByteProvider;
+import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.elf.info.ElfInfoItem;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.Address;
@@ -33,8 +31,7 @@ import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.lang.Endian;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.util.Msg;
-import ghidra.util.NumericUtilities;
+import ghidra.util.*;
 
 /**
  * A program section that contains Go build information strings, namely go module package names,
@@ -109,7 +106,14 @@ public class GoBuildInfo implements ElfInfoItem {
 			throw new IOException("Mixed endian-ness");
 		}
 
-		return readStringInfo(reader, inlineStr, program, pointerSize);
+		DataTypeManager dtm = program.getDataTypeManager();
+		StructureDataType struct =
+			new StructureDataType(GoConstants.GOLANG_CATEGORYPATH, "GoBuildInfo", 0, dtm);
+		struct.add(new ArrayDataType(ASCII, 14, -1, dtm), "magic", "\\xff Go buildinf:");
+		struct.add(BYTE, "ptrSize", null);
+		struct.add(BYTE, "flags", null);
+
+		return readStringInfo(reader, inlineStr, program, pointerSize, struct);
 	}
 
 	/**
@@ -139,10 +143,11 @@ public class GoBuildInfo implements ElfInfoItem {
 	private final GoModuleInfo moduleInfo;	// info about the module that contains the main package.  version typically will be "(devel)" 
 	private final List<GoModuleInfo> dependencies;
 	private final List<GoBuildSettings> buildSettings; // compile/linker flags used during build process
+	private final StructureDataType struct;
 
 	private GoBuildInfo(int pointerSize, Endian endian, String version, String path,
 			GoModuleInfo moduleInfo, List<GoModuleInfo> dependencies,
-			List<GoBuildSettings> buildSettings) {
+			List<GoBuildSettings> buildSettings, StructureDataType struct) {
 		this.pointerSize = pointerSize;
 		this.endian = endian;
 		this.version = version;
@@ -150,6 +155,7 @@ public class GoBuildInfo implements ElfInfoItem {
 		this.moduleInfo = moduleInfo;
 		this.dependencies = dependencies;
 		this.buildSettings = buildSettings;
+		this.struct = struct;
 	}
 
 	public int getPointerSize() {
@@ -189,7 +195,6 @@ public class GoBuildInfo implements ElfInfoItem {
 		decorateProgramInfo(program.getOptions(Program.PROGRAM_INFO));
 
 		try {
-			StructureDataType struct = toStructure(program.getDataTypeManager());
 			if (struct != null) {
 				DataUtilities.createData(program, address, struct, -1, false,
 					ClearDataMode.CLEAR_ALL_DEFAULT_CONFLICT_DATA);
@@ -204,8 +209,7 @@ public class GoBuildInfo implements ElfInfoItem {
 		GoVer.setProgramPropertiesWithOriginalVersionString(props, getVersion());
 		props.setString("Golang app path", getPath());
 		if (getModuleInfo() != null) {
-			getModuleInfo()
-					.asKeyValuePairs("Golang main package ")
+			getModuleInfo().asKeyValuePairs("Golang main package ")
 					.entrySet()
 					.stream()
 					.forEach(entry -> props.setString(entry.getKey(), entry.getValue()));
@@ -222,13 +226,7 @@ public class GoBuildInfo implements ElfInfoItem {
 	}
 
 	StructureDataType toStructure(DataTypeManager dtm) {
-		StructureDataType result =
-			new StructureDataType(GoConstants.GOLANG_CATEGORYPATH, "GoBuildInfo", 0, dtm);
-		result.add(new ArrayDataType(ASCII, 14, -1, dtm), "magic", "\\xff Go buildinf:");
-		result.add(BYTE, "ptrSize", null);
-		result.add(BYTE, "flags", null);
-
-		return result;
+		return struct.clone(dtm);
 	}
 
 	@Override
@@ -240,18 +238,37 @@ public class GoBuildInfo implements ElfInfoItem {
 	//---------------------------------------------------------------------------------------------
 
 	private static GoBuildInfo readStringInfo(BinaryReader reader, boolean inlineStr,
-			Program program, int ptrSize) throws IOException {
+			Program program, int ptrSize, StructureDataType struct) throws IOException {
 
+		DataTypeManager dtm = program.getDataTypeManager();
 		String moduleString;
 		String versionString;
 
 		if (inlineStr) {
 			reader.setPointerIndex(32 /* static start of inline strings */);
 
-			versionString = reader.readNext(GoBuildInfo::varlenString);
-			byte[] moduleStringBytes = reader.readNext(GoBuildInfo::varlenBytes);
+			LEB128Info verStrLen = reader.readNext(LEB128Info::unsigned);
+			byte[] versionStringBytes = reader.readNextByteArray(verStrLen.asInt32());
+			versionString = new String(versionStringBytes, StandardCharsets.UTF_8);
 
-			moduleString = extractModuleString(moduleStringBytes);
+			LEB128Info modStrLen = reader.readNext(LEB128Info::unsigned);
+			byte[] moduleStringBytes = reader.readNextByteArray(modStrLen.asInt32());
+
+			struct.add(new ArrayDataType(BYTE, 16, -1, dtm), -1, "padding", null);
+			struct.add(new UnsignedLeb128DataType(dtm), verStrLen.getLength(), "versionlen", null);
+			struct.add(new ArrayDataType(ASCII, verStrLen.asInt32(), -1, dtm), -1, "version", null);
+			struct.add(new UnsignedLeb128DataType(dtm), modStrLen.getLength(), "modulelen", null);
+
+			moduleString = extractModuleString(moduleStringBytes, struct);
+
+			try {
+				String structNameSuffix = "_inline_%d_%d_%d_%d".formatted(verStrLen.getLength(),
+					verStrLen.asInt32(), modStrLen.getLength(), modStrLen.asInt32());
+				struct.setName(struct.getName() + structNameSuffix);
+			}
+			catch (InvalidNameException e) {
+				// ignore
+			}
 		}
 		else {
 			reader.setPointerIndex(16 /* static start of 2 string pointers */);
@@ -267,15 +284,19 @@ public class GoBuildInfo implements ElfInfoItem {
 
 			fullReader.setPointerIndex(moduleStrOffset);
 			byte[] moduleStrBytes = readRawGoString(fullReader, ptrSize);
-			moduleString = extractModuleString(moduleStrBytes);
+			moduleString = extractModuleString(moduleStrBytes, null);
+
+			DataType ofsDT = AbstractIntegerDataType.getUnsignedDataType(ptrSize, dtm);
+			struct.add(ofsDT, -1, "versionofs", null);
+			struct.add(ofsDT, -1, "moduleofs", null);
 		}
 
 		return parseBuildInfo(ptrSize, reader.isBigEndian() ? Endian.BIG : Endian.LITTLE,
-			versionString, moduleString);
+			versionString, moduleString, struct);
 	}
 
 	private static GoBuildInfo parseBuildInfo(int pointerSize, Endian endian, String versionString,
-			String moduleString) throws IOException {
+			String moduleString, StructureDataType struct) throws IOException {
 		String path = null;
 		GoModuleInfo module = null;
 		List<GoModuleInfo> deps = new ArrayList<>();
@@ -303,9 +324,8 @@ public class GoBuildInfo implements ElfInfoItem {
 					path = lineParts[1];
 					break;
 				case "mod": {
-					GoModuleInfo replace = replaceInfo != null
-							? GoModuleInfo.fromString(replaceInfo, null)
-							: null;
+					GoModuleInfo replace =
+						replaceInfo != null ? GoModuleInfo.fromString(replaceInfo, null) : null;
 					module = GoModuleInfo.fromString(lineParts[1], replace);
 					break;
 				}
@@ -326,10 +346,11 @@ public class GoBuildInfo implements ElfInfoItem {
 		}
 
 		return new GoBuildInfo(pointerSize, endian, versionString, path, module, deps,
-			buildSettings);
+			buildSettings, struct);
 	}
 
-	private static String extractModuleString(byte[] bytes) throws IOException {
+	private static String extractModuleString(byte[] bytes, StructureDataType struct)
+			throws IOException {
 		int sentLen = INFOSTART_SENTINEL.length; // both are same len
 		if (bytes.length < sentLen * 2) {
 			return "";
@@ -340,36 +361,19 @@ public class GoBuildInfo implements ElfInfoItem {
 			!Arrays.equals(INFOEND_SENTINEL, 0, sentLen, bytes, sentEndStart, bytes.length)) {
 			throw new IOException("bad sentinel");
 		}
-		return new String(bytes, sentLen, bytes.length - (sentLen * 2), StandardCharsets.UTF_8);
 
-	}
+		int moduleStrLen = bytes.length - (sentLen * 2);
+		if (struct != null) {
+			struct.add(new ArrayDataType(BYTE, sentLen, -1, struct.getDataTypeManager()), -1,
+				"sentinelstart", null);
+			struct.add(new ArrayDataType(ASCII, moduleStrLen, -1, struct.getDataTypeManager()), -1,
+				"moduleinfo", null);
+			struct.add(new ArrayDataType(BYTE, sentLen, -1, struct.getDataTypeManager()), -1,
+				"sentinelend", null);
+		}
 
-	/**
-	 * Reads a pascal-ish string used by go in lower level file format.
-	 * <p>
-	 * Not to be confused with a real golang string produced when strings are created in 
-	 * a golang program. 
-	 * 
-	 * @param reader BinaryReader
-	 * @return string at the current index of the BinaryReader
-	 * @throws IOException if error
-	 */
-	private static String varlenString(BinaryReader reader) throws IOException {
-		byte[] bytes = varlenBytes(reader);
-		return new String(bytes, StandardCharsets.UTF_8);
-	}
+		return new String(bytes, sentLen, moduleStrLen, StandardCharsets.UTF_8);
 
-	/**
-	 * Reads a variable length byte array.
-	 * 
-	 * @param reader BinaryReader
-	 * @return variable length byte array at the current index of the BinaryReader
-	 * @throws IOException if error
-	 */
-	private static byte[] varlenBytes(BinaryReader reader) throws IOException {
-		int strLen = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
-		byte[] bytes = reader.readNextByteArray(strLen);
-		return bytes;
 	}
 
 	private static String readGoString(BinaryReader reader, int ptrSize) throws IOException {

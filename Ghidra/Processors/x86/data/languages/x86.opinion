@@ -34,9 +34,11 @@
         <constraint primary="334"   processor="x86"     endian="little" size="32" />
         <constraint primary="34404" processor="x86"     endian="little" size="64"	variant="default" />
     </constraint>
-    <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="gcc">
+    <constraint loader="Executable and Linking Format (ELF)">
+      <constraint compilerSpecID="gcc">
         <constraint primary="3"    processor="x86"      endian="little" size="32" />
         <constraint primary="62"   processor="x86"      endian="little" size="64"	variant="default" />
+      </constraint>
     </constraint>
     <constraint loader="Module Definition (DEF)" compilerSpecID="windows">
         <constraint primary="0" processor="x86" endian="little" size="32" />

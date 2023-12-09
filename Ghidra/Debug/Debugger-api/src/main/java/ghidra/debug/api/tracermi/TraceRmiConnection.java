@@ -17,9 +17,11 @@ package ghidra.debug.api.tracermi;
 
 import java.io.IOException;
 import java.net.SocketAddress;
+import java.util.Collection;
 import java.util.NoSuchElementException;
 import java.util.concurrent.TimeoutException;
 
+import ghidra.debug.api.target.Target;
 import ghidra.trace.model.Trace;
 
 /**
@@ -37,6 +39,16 @@ import ghidra.trace.model.Trace;
  * to both parent and child, then it should create and publish a second target.
  */
 public interface TraceRmiConnection extends AutoCloseable {
+	/**
+	 * Get the client-given description of this connection
+	 * 
+	 * <p>
+	 * If the connection is still being negotiated, this will return a string indicating that.
+	 * 
+	 * @return the description
+	 */
+	String getDescription();
+
 	/**
 	 * Get the address of the back end debugger
 	 * 
@@ -137,4 +149,11 @@ public interface TraceRmiConnection extends AutoCloseable {
 	 * @return true if the trace is a target, false otherwise.
 	 */
 	boolean isTarget(Trace trace);
+
+	/**
+	 * Get all the valid targets created by this connection
+	 * 
+	 * @return the collection of valid targets
+	 */
+	Collection<Target> getTargets();
 }

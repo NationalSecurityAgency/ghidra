@@ -15,8 +15,8 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
+import ghidra.app.util.bin.format.pdb2.pdbreader.MsSymbolIterator;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
-import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 import ghidra.util.exception.CancelledException;
 
 /**
@@ -36,7 +36,7 @@ public class SymbolApplierFactory {
 	//  the AbstractMsSymbol (do one for AbstractMsType as well)? Symbols are different in that
 	//  we are using SymbolGroup as a member instead of MsType.
 
-	MsSymbolApplier getSymbolApplier(AbstractMsSymbolIterator iter) throws CancelledException {
+	MsSymbolApplier getSymbolApplier(MsSymbolIterator iter) throws CancelledException {
 
 		AbstractMsSymbol symbol = iter.peek();
 		if (symbol == null) {

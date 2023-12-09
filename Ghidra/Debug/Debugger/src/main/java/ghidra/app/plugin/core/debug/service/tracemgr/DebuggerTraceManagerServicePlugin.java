@@ -1085,6 +1085,12 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	}
 
 	@Override
+	public DebuggerCoordinates resolveTarget(Target target) {
+		Trace trace = target == null ? null : target.getTrace();
+		return getCurrentFor(trace).target(target).snap(target.getSnap());
+	}
+
+	@Override
 	public DebuggerCoordinates resolvePlatform(TracePlatform platform) {
 		Trace trace = platform == null ? null : platform.getTrace();
 		return getCurrentFor(trace).platform(platform);

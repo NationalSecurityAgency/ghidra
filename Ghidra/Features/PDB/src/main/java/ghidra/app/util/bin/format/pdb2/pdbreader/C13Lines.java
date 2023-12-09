@@ -52,11 +52,12 @@ public class C13Lines extends AbstractC13Lines {
 	 * Dumps this class to a Writer
 	 * @param writer {@link Writer} to which to dump the information
 	 * @throws IOException Upon IOException writing to the {@link Writer}
+	 * @throws CancelledException upon user cancellation
 	 */
 	@Override
-	void dump(Writer writer) throws IOException {
+	void dump(Writer writer, TaskMonitor monitor) throws IOException, CancelledException {
 		writer.write("C13Lines----------------------------------------------------\n");
-		dumpInternal(writer);
+		dumpInternal(writer, monitor);
 		writer.write("End C13Lines------------------------------------------------\n");
 	}
 

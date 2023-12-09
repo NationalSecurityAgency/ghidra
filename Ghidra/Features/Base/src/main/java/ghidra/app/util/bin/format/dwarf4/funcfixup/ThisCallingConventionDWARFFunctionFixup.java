@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.dwarf4.funcfixup;
 
 import ghidra.app.util.bin.format.dwarf4.next.DWARFFunction;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFVariable;
-import ghidra.program.model.data.GenericCallingConvention;
+import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.listing.Function;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ExtensionPointProperties;
@@ -29,8 +29,8 @@ import ghidra.util.classfinder.ExtensionPointProperties;
 public class ThisCallingConventionDWARFFunctionFixup implements DWARFFunctionFixup {
 
 	@Override
-	public void fixupDWARFFunction(DWARFFunction dfunc, Function gfunc) {
-		if (dfunc.params.isEmpty() || dfunc.callingConvention != null) {
+	public void fixupDWARFFunction(DWARFFunction dfunc) {
+		if (dfunc.params.isEmpty() || dfunc.callingConventionName != null) {
 			// if someone else set calling convention, don't override it
 			return;
 		}
@@ -39,14 +39,13 @@ public class ThisCallingConventionDWARFFunctionFixup implements DWARFFunctionFix
 		if (firstParam.isThis) {
 			if (!firstParam.name.isAnon() &&
 				!Function.THIS_PARAM_NAME.equals(firstParam.name.getOriginalName())) {
-				Msg.error(this,
-					String.format("WARNING: Renaming %s to %s in function %s@%s",
-						firstParam.name.getName(), Function.THIS_PARAM_NAME, gfunc.getName(),
-						gfunc.getEntryPoint()));
+				Msg.warn(this, "Renaming %s to %s in function %s@%s".formatted(
+						firstParam.name.getName(), Function.THIS_PARAM_NAME, dfunc.name.getName(),
+						dfunc.address));
 			}
 			firstParam.name =
 				firstParam.name.replaceName(Function.THIS_PARAM_NAME, Function.THIS_PARAM_NAME);
-			dfunc.callingConvention = GenericCallingConvention.thiscall;
+			dfunc.callingConventionName = CompilerSpec.CALLING_CONVENTION_thiscall;
 		}
 	}
 

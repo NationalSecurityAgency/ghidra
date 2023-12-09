@@ -3,6 +3,7 @@
 Common/server/jaas.conf||GHIDRA||||END|
 Common/server/server.conf||GHIDRA||||END|
 Common/server/svrREADME.html||GHIDRA||||END|
+Common/support/GhidraGo/ghidraGoREADME.html||GHIDRA||||END|
 Common/support/analyzeHeadlessREADME.html||GHIDRA||||END|
 Common/support/buildGhidraJarREADME.txt||GHIDRA||||END|
 Common/support/debug.log4j.xml||GHIDRA||||END|
@@ -12,6 +13,7 @@ Linux/server/ghidraSvr||GHIDRA||||END|
 Linux/server/svrAdmin||GHIDRA||||END|
 Linux/server/svrInstall||GHIDRA||||END|
 Linux/server/svrUninstall||GHIDRA||||END|
+Linux/support/GhidraGo/ghidraGo||GHIDRA||||END|
 Linux/support/analyzeHeadless||GHIDRA||||END|
 Linux/support/buildGhidraJar||GHIDRA||||END|
 Linux/support/buildNatives||GHIDRA||||END|
@@ -25,6 +27,7 @@ Windows/server/ghidraSvr.bat||GHIDRA||||END|
 Windows/server/svrAdmin.bat||GHIDRA||||END|
 Windows/server/svrInstall.bat||GHIDRA||||END|
 Windows/server/svrUninstall.bat||GHIDRA||||END|
+Windows/support/GhidraGo/ghidraGo.bat||GHIDRA||||END|
 Windows/support/README_createPdbXmlFiles.txt||GHIDRA||||END|
 Windows/support/analyzeHeadless.bat||GHIDRA||||END|
 Windows/support/buildGhidraJar.bat||GHIDRA||||END|

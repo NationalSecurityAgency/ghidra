@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,8 +34,6 @@ import ghidra.util.exception.CancelledException;
 public class SymbolRecords {
 
 	private AbstractPdb pdb;
-	private Map<Long, AbstractMsSymbol> symbolsByOffset;
-	private List<Map<Long, AbstractMsSymbol>> moduleSymbolsByOffset = new ArrayList<>();
 
 	// Used for CvSig part of streams.  See methods below.
 	private boolean getSig = true;
@@ -59,9 +57,24 @@ public class SymbolRecords {
 	 * Returns the list of symbols
 	 * @return {@link Map}&lt;{@link Long},{@link AbstractMsSymbol}&gt; of buffer offsets to
 	 * symbols
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
 	 */
-	protected Map<Long, AbstractMsSymbol> getSymbolsByOffset() {
-		return symbolsByOffset;
+	@Deprecated
+	protected Map<Long, AbstractMsSymbol> getSymbolsByOffset()
+			throws CancelledException, PdbException, IOException {
+		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if (debugInfo == null) {
+			return new TreeMap<>();
+		}
+		int streamNumber = debugInfo.getSymbolRecordsStreamNumber();
+		if (streamNumber <= 0) {
+			return new TreeMap<>();
+		}
+		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber);
+		return deserializeSymbolRecords(pdb, reader);
 	}
 
 	/**
@@ -69,103 +82,41 @@ public class SymbolRecords {
 	 * @param moduleNumber the number ID of the module for which to return the list
 	 * @return {@link Map}&lt;{@link Long},{@link AbstractMsSymbol}&gt; of buffer offsets to
 	 * symbols for the specified module
-	 */
-	protected Map<Long, AbstractMsSymbol> getModuleSymbolsByOffset(int moduleNumber) {
-		return moduleSymbolsByOffset.get(moduleNumber);
-	}
-
-	/**
-	 * Deserializes the {@link SymbolRecords} from the stream noted in the DBI header
 	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
 	 *  inability to read required bytes
 	 * @throws PdbException upon not enough data left to parse
 	 * @throws CancelledException upon user cancellation
 	 */
-	void deserialize() throws IOException, PdbException, CancelledException {
-		initializeCache(0.001);
-		determineCvSigValues(); // new method for random-access symbol work
-		processSymbols();
-		processModuleSymbols();
-	}
-
-	private void processSymbols()
-			throws IOException, PdbException, CancelledException {
+	@Deprecated
+	protected Map<Long, AbstractMsSymbol> getModuleSymbolsByOffset(int moduleNumber)
+			throws CancelledException, IOException, PdbException {
 		PdbDebugInfo debugInfo = pdb.getDebugInfo();
 		if (debugInfo == null) {
-			return;
+			return new TreeMap<>();
 		}
-		int streamNumber = debugInfo.getSymbolRecordsStreamNumber();
-		if (streamNumber <= 0) {
-			return;
+		ModuleInformation moduleInfo = debugInfo.moduleInformationList.get(moduleNumber);
+		int streamNumber = moduleInfo.getStreamNumberDebugInformation();
+		if (streamNumber == MsfStream.NIL_STREAM_NUMBER) {
+			return new TreeMap<>();
 		}
 		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber);
-		symbolsByOffset = deserializeSymbolRecords(pdb, reader);
+		int sizeSymbolsSection = moduleInfo.getSizeLocalSymbolsDebugInformation();
+		PdbByteReader symbolsReader = reader.getSubPdbByteReader(sizeSymbolsSection);
+		symbolsReader.skip(getCvSigLength(streamNumber));
+		return deserializeSymbolRecords(pdb, symbolsReader);
 	}
 
-	// Could split this method up into separate methods: one for module symbols and the other for
-	// Lines processing.  Note: would be processing streams more than once; lines would need to
-	// skip over the symbols.
-	private void processModuleSymbols()
-			throws IOException, PdbException, CancelledException {
-		// cvSignature:
-		// >64K = C6
-		// 1 = C7
-		// 2 = C11 (vc5.x)
-		// 3 = ??? (not specified, and not marked as reserved)
-		// 4 = C13 (vc7.x)
-		// 5-64K = RESERVED
-		//
-		// Both cvdump (1660 and 1668) and mod.cpp (575) seem to indicate that the first module
-		// might have the cvSignature of C7 or C11 (when C7/C11), but modules thereafter will not
-		// or may not have the value.  C13 would always have the C13 signature.
-		boolean getSig = true;
-		int cvSignature = 0;
-		PdbDebugInfo debugInfo = pdb.getDebugInfo();
-		if (debugInfo == null) {
-			return;
-		}
-
-		for (ModuleInformation module : debugInfo.moduleInformationList) {
-			pdb.checkCancelled();
-			int streamNumber = module.getStreamNumberDebugInformation();
-			if (streamNumber == MsfStream.NIL_STREAM_NUMBER) {
-				moduleSymbolsByOffset.add(new TreeMap<>());
-				continue;
-			}
-
-			PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber);
-
-			int sizeSymbolsSection = module.getSizeLocalSymbolsDebugInformation();
-			PdbByteReader symbolsReader = reader.getSubPdbByteReader(sizeSymbolsSection);
-			// See comment above regarding getSig boolean
-			if (getSig) {
-				cvSignature = symbolsReader.parseInt();
-			}
-			switch (cvSignature) {
-				case 1:
-				case 2:
-					// We have no 1,2 examples to test this logic for cvSignature.  Confirming
-					// or rejecting this logic is important for simplifying/refactoring this
-					// method or writing new methods to allow for extraction of information from
-					// individual modules.  The current implementation has cross-module logic
-					// (setting state in the processing of the first and using this state in the
-					// processing of follow-on modules).
-					getSig = false;
-					break;
-				case 4:
-					break;
-				default:
-					if (cvSignature < 0x10000) {
-						throw new PdbException(
-							"Invalid module CV signature in stream " + streamNumber);
-					}
-					break;
-			}
-
-			Map<Long, AbstractMsSymbol> oneModuleSymbolsByOffset =
-				deserializeSymbolRecords(pdb, symbolsReader);
-			moduleSymbolsByOffset.add(oneModuleSymbolsByOffset);
-		}
+	/**
+	 * Deserializes and initializes basic {@link SymbolRecords} information from the stream noted
+	 * in the DBI header so that later symbol queries can be done
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
+	 */
+	void initialize() throws IOException, PdbException, CancelledException {
+		initializeCache(0.001);
+		determineCvSigValues(); // new method for random-access symbol work
 	}
 
 	// These methods are trying to adapt the logic of the previous method here (which attempted
@@ -189,7 +140,6 @@ public class SymbolRecords {
 		ModuleInformation moduleInfo = debugInfo.getModuleInformationList().get(0);
 		int streamNumber = moduleInfo.getStreamNumberDebugInformation();
 		if (streamNumber == MsfStream.NIL_STREAM_NUMBER) {
-			moduleSymbolsByOffset.add(new TreeMap<>());
 			return;
 		}
 		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber);
@@ -230,11 +180,8 @@ public class SymbolRecords {
 	 */
 	public int getCvSigLength(int streamNumber)
 			throws CancelledException, IOException, PdbException {
-		if (cvSignatureCase1and2Stream == MsfStream.NIL_STREAM_NUMBER) {
-			throw new PdbException("CvSignLength not initialized");
-		}
 		if (streamNumber == MsfStream.NIL_STREAM_NUMBER) {
-			throw new PdbException("Attempting to read unassigned stream");
+			return 0; // returning inconsequential value; fact of NIL will be dealt with elsewhere
 		}
 		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, 0, 4);
 		if (getSig) {
@@ -253,7 +200,7 @@ public class SymbolRecords {
 				size = 4;
 				break;
 			default:
-				throw new PdbException("PDB Error: Bad CvSsigLength state");
+				throw new PdbException("PDB Error: Bad CvSigLength state");
 		}
 		return size;
 	}
@@ -306,7 +253,7 @@ public class SymbolRecords {
 
 	// TODO: consider pre-storing the lengths with one build stream read.  However, that would
 	//  consume more memory, so only do this if willing to improve process performance at
-	//  cost of memroy.
+	//  cost of memory.
 	//Map<Long, Integer> recordLengths = new TreeMap<>();
 
 	/**
@@ -384,13 +331,19 @@ public class SymbolRecords {
 	 * @param writer {@link Writer} to which to dump the information
 	 * @throws IOException upon issue writing to the {@link Writer}
 	 * @throws CancelledException upon user cancellation
+	 * @throws PdbException upon not enough data to parse
 	 */
-	protected void dump(Writer writer) throws IOException, CancelledException {
+	protected void dump(Writer writer) throws IOException, CancelledException, PdbException {
 		writer.write("SymbolRecords-----------------------------------------------\n");
+		Map<Long, AbstractMsSymbol> symbolsByOffset = getSymbolsByOffset();
 		dumpSymbolMap(symbolsByOffset, writer);
-		for (int i = 0; i < moduleSymbolsByOffset.size(); i++) {
+		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if (debugInfo == null) {
+			return;
+		}
+		for (int i = 0; i < debugInfo.getNumModules(); i++) {
 			pdb.checkCancelled();
-			Map<Long, AbstractMsSymbol> map = moduleSymbolsByOffset.get(i);
+			Map<Long, AbstractMsSymbol> map = getModuleSymbolsByOffset(i);
 			if (map != null) {
 				writer.write("Module(" + i + ") List:\n");
 				dumpSymbolMap(map, writer);

@@ -38,6 +38,7 @@ public class DataTypeArchiveIDTest extends AbstractGenericTest {
 	private static final String GENERIC_CLIB_64_GDT_PATH = "typeinfo/generic/generic_clib_64.gdt";
 	private static final String MAC_OS_10_9_GDT_PATH = "typeinfo/mac_10.9/mac_osx.gdt";
 
+	//@formatter:off
 	private static final Map<String, String> archiveIdMap = Map.of(
 		WIN_VS12_32_GDT_PATH, "2644092282468053077",
 		WIN_VS12_64_GDT_PATH, "3193696833254024484",
@@ -47,7 +48,9 @@ public class DataTypeArchiveIDTest extends AbstractGenericTest {
 		"typeinfo/golang/golang_1.17_anybit_any.gdt", "3533627828569507753",
 		"typeinfo/golang/golang_1.18_anybit_any.gdt", "3528902399865061936",
 		"typeinfo/golang/golang_1.19_anybit_any.gdt", "3533812166493410774",
-		"typeinfo/golang/golang_1.20_anybit_any.gdt", "3533817003441909616");
+		"typeinfo/golang/golang_1.20_anybit_any.gdt", "3533817003441909616",
+		"typeinfo/rust/rust-common.gdt","3557867258392862055");
+	//@formatter:on
 
 	private Map<ResourceFile, String> getCurrentGdts() {
 		return Application.findFilesByExtensionInApplication(".gdt")
@@ -133,7 +136,6 @@ public class DataTypeArchiveIDTest extends AbstractGenericTest {
 			dtm.close();
 		}
 	}
-
 
 	@Test
 	public void spotCheckWindowsVS12_64() throws IOException {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,7 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 
@@ -33,11 +34,7 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.app.util.bin.format.pe.cli.tables.CliAbstractTableRow;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.pdb.PdbCategories;
-import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 import ghidra.framework.options.Options;
-import ghidra.graph.*;
-import ghidra.graph.algo.GraphNavigator;
-import ghidra.graph.jung.JungDirectedGraph;
 import ghidra.program.disassemble.DisassemblerContextImpl;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
@@ -77,36 +74,34 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	//==============================================================================================
 	/**
 	 * Returns integer value of BigInteger or Long.MAX_VALUE if does not fit
-	 * @param myApplicator PdbApplicator for which we are working
 	 * @param big BigInteger value to convert
 	 * @return the integer value
 	 */
-	static long bigIntegerToLong(DefaultPdbApplicator myApplicator, BigInteger big) {
+	long bigIntegerToLong(BigInteger big) {
 		try {
 			return big.longValueExact();
 		}
 		catch (ArithmeticException e) {
 			String msg = "BigInteger value greater than max Long: " + big;
 			PdbLog.message(msg);
-			myApplicator.appendLogMsg(msg);
+			appendLogMsg(msg);
 			return Long.MAX_VALUE;
 		}
 	}
 
 	/**
 	 * Returns integer value of BigInteger or Integer.MAX_VALUE if does not fit
-	 * @param myApplicator PdbApplicator for which we are working
 	 * @param big BigInteger value to convert
 	 * @return the integer value
 	 */
-	static int bigIntegerToInt(DefaultPdbApplicator myApplicator, BigInteger big) {
+	int bigIntegerToInt(BigInteger big) {
 		try {
 			return big.intValueExact();
 		}
 		catch (ArithmeticException e) {
 			String msg = "BigInteger value greater than max Integer: " + big;
 			PdbLog.message(msg);
-			myApplicator.appendLogMsg(msg);
+			appendLogMsg(msg);
 			return Integer.MAX_VALUE;
 		}
 	}
@@ -146,9 +141,10 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	private PdbCategories categoryUtils;
 	private PdbPrimitiveTypeApplicator pdbPrimitiveTypeApplicator;
 	private TypeApplierFactory typeApplierParser;
+	private Map<Integer, Long> dataTypeIdByMsTypeNum;
+	private Map<Integer, DataTypeImpl> dataTypeImplByMsTypeNum;
+	private Map<Integer, CppCompositeType> classTypeByMsTypeNum;
 	private ComplexTypeMapper complexTypeMapper;
-	private ComplexTypeApplierMapper complexApplierMapper;
-	private JungDirectedGraph<MsTypeApplier, GEdge<MsTypeApplier>> applierDependencyGraph;
 	/**
 	 * This namespace map documents as follows:
 	 * <PRE>
@@ -173,6 +169,9 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	List<DeferrableFunctionSymbolApplier> deferredFunctionWorkAppliers;
 
 	//==============================================================================================
+	private int currentModuleNumber = 0;
+
+	//==============================================================================================
 	public DefaultPdbApplicator(AbstractPdb pdb) {
 		Objects.requireNonNull(pdb, "pdb cannot be null");
 		this.pdb = pdb;
@@ -193,10 +192,12 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	 * @param logParam the MessageLog to which to output messages
 	 * @throws PdbException if there was a problem processing the data
 	 * @throws CancelledException upon user cancellation
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
 	 */
 	public void applyTo(Program programParam, DataTypeManager dataTypeManagerParam,
 			Address imageBaseParam, PdbApplicatorOptions applicatorOptionsParam,
-			MessageLog logParam) throws PdbException, CancelledException {
+			MessageLog logParam) throws PdbException, CancelledException, IOException {
 
 		// FIXME: should not support use of DataTypeManager-only since it will not have the correct
 		// data organization if it corresponds to a data type archive.  Need to evaluate archive
@@ -247,30 +248,39 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	 */
 	private void disassembleFunctions() throws CancelledException {
 
+		TaskMonitor monitor = getMonitor();
 		Listing listing = program.getListing();
 		DisassemblerContextImpl seedContext =
 			new DisassemblerContextImpl(program.getProgramContext());
 		AddressSet revisedSet = new AddressSet();
+		long num = disassembleAddresses.getNumAddresses();
+		monitor.initialize(num);
+		monitor.setMessage("PDB: Determining disassembly context for " + num + " addresses...");
 		for (Address address : disassembleAddresses.getAddresses(true)) {
-			cancelOnlyWrappingMonitor.checkCancelled();
+			monitor.checkCancelled();
 			address = PseudoDisassembler.setTargetContextForDisassembly(seedContext, address);
 			Function myFunction = listing.getFunctionAt(address);
 			// If no function or not a full function, add it to set for disassembly.
 			if (myFunction == null || myFunction.getBody().getNumAddresses() <= 1) {
 				revisedSet.add(address);
 			}
+			monitor.incrementProgress(1);
 		}
 		// Do disassembly and ensure functions are created appropriately.
+		num = revisedSet.getNumAddresses();
+		monitor.setMessage("PDB: Bulk disassembly at " + num + " addresses...");
 		DisassembleCommand cmd = new DisassembleCommand(revisedSet, null, true);
 		cmd.setSeedContext(seedContext);
-		cmd.applyTo(program, cancelOnlyWrappingMonitor);
-
+		cmd.applyTo(program, monitor);
+		monitor.initialize(num);
+		monitor.setMessage("PDB: Disassembly fix-up for " + num + " addresses...");
 		for (Address address : revisedSet.getAddresses(true)) {
-			cancelOnlyWrappingMonitor.checkCancelled();
+			monitor.checkCancelled();
 			Function function = listing.getFunctionAt(address);
 			if (function != null) {
 				CreateFunctionCmd.fixupFunctionBody(program, function, cancelOnlyWrappingMonitor);
 			}
+			monitor.incrementProgress(1);
 		}
 	}
 
@@ -301,20 +311,13 @@ public class DefaultPdbApplicator implements PdbApplicator {
 //		PdbResearch.studyCompositeFwdRefDef(pdb, monitor);
 //		PdbResearch.study1(pdb, monitor);
 
-//		complexApplierMapper.mapAppliers(monitor);
-
 		complexTypeMapper.mapTypes(this);
-		complexApplierMapper.mapAppliers(complexTypeMapper, monitor);
 
 		processSequentially();
 
 //		dumpSourceFileRecordNumbers();
 
 //		PdbResearch.developerDebugOrder(this, monitor);
-
-		processDeferred();
-
-		resolveSequentially();
 
 		Msg.info(this, "resolveCount: " + resolveCount);
 
@@ -397,9 +400,16 @@ public class DefaultPdbApplicator implements PdbApplicator {
 
 	//==============================================================================================
 	//==============================================================================================
+	/**
+	 * Initializes helper classes and data items used for applying the PDB
+	 * @throws CancelledException upon user cancellation
+	 * @throws PdbException upon error in processing components
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 */
 	private void initializeApplyTo(Program programParam, DataTypeManager dataTypeManagerParam,
 			Address imageBaseParam, PdbApplicatorOptions applicatorOptionsParam,
-			MessageLog logParam) throws PdbException, CancelledException {
+			MessageLog logParam) throws PdbException, CancelledException, IOException {
 
 		validateAndSetParameters(programParam, dataTypeManagerParam, imageBaseParam,
 			applicatorOptionsParam, logParam);
@@ -415,11 +425,13 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		pdbAddressManager = new PdbAddressManager(this, imageBase);
 
 		categoryUtils = setPdbCatogoryUtils(pdb.getFilename());
+		initializePlaceholders();
 		pdbPrimitiveTypeApplicator = new PdbPrimitiveTypeApplicator(dataTypeManager);
-		typeApplierParser = new TypeApplierFactory(this);
+		dataTypeIdByMsTypeNum = new HashMap<>();
+		dataTypeImplByMsTypeNum = new HashMap<>();
+		classTypeByMsTypeNum = new HashMap<>();
 		complexTypeMapper = new ComplexTypeMapper();
-		complexApplierMapper = new ComplexTypeApplierMapper(this);
-		applierDependencyGraph = new JungDirectedGraph<>();
+		typeApplierParser = new TypeApplierFactory(this);
 		isClassByNamespace = new TreeMap<>();
 
 		symbolApplierParser = new SymbolApplierFactory(this);
@@ -660,6 +672,14 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		return categoryUtils.getAnonymousTypesCategory();
 	}
 
+	/**
+	 * Returns the {@link CategoryPath} for Placeholder Types Category for the PDB
+	 * @return the {@link CategoryPath}
+	 */
+	CategoryPath getPlaceholderTypesCategory() {
+		return categoryUtils.getPlaceholderTypesCategory();
+	}
+
 //	/**
 //	 * Returns the name of what should be the next Anonymous Function (based on the count of
 //	 * the number of anonymous functions) so that there is a unique name for the function.
@@ -698,44 +718,8 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	}
 
 	//==============================================================================================
-	// Applier-based-DataType-dependency-related methods.
-	//==============================================================================================
-	void addApplierDependency(MsTypeApplier depender) {
-		Objects.requireNonNull(depender);
-		applierDependencyGraph.addVertex(depender.getDependencyApplier());
-	}
-
-	void addApplierDependency(MsTypeApplier depender, MsTypeApplier dependee) {
-		Objects.requireNonNull(depender);
-		Objects.requireNonNull(dependee);
-		// TODO: Possibly do checks on dependee and depender types for actual creation
-		//  of dependency--making this the one-stop-shop of this logic.  Then make calls to
-		//  this method from all possibly places.  (Perhaps, for example, if depender is a
-		//  pointer, then the logic would say "no.")
-		//
-		// Examples of where dependency should possibly be created (by not doing it, we are
-		//  getting .conflict data types) include:
-		//  structure or enum as a function return type or argument type.
-		//
-		applierDependencyGraph.addEdge(
-			new DefaultGEdge<>(depender.getDependencyApplier(), dependee.getDependencyApplier()));
-	}
-
-	List<MsTypeApplier> getVerticesInPostOrder() {
-		TaskMonitor monitor = getMonitor();
-		monitor.setMessage("PDB: Determining data type dependency order...");
-		return GraphAlgorithms.getVerticesInPostOrder(applierDependencyGraph,
-			GraphNavigator.topDownNavigator());
-	}
-
 	//==============================================================================================
 	//==============================================================================================
-	//==============================================================================================
-	MsTypeApplier getApplierSpec(RecordNumber recordNumber, Class<? extends MsTypeApplier> expected)
-			throws PdbException {
-		return typeApplierParser.getApplierSpec(recordNumber, expected);
-	}
-
 	MsTypeApplier getApplierOrNoTypeSpec(RecordNumber recordNumber,
 			Class<? extends MsTypeApplier> expected) throws PdbException {
 		return typeApplierParser.getApplierOrNoTypeSpec(recordNumber, expected);
@@ -750,6 +734,342 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		return typeApplierParser.getTypeApplier(type);
 	}
 
+	MsTypeApplier getTypeApplier(int pdbId) {
+		return typeApplierParser.getTypeApplier(pdbId);
+	}
+
+	//==============================================================================================
+	//==============================================================================================
+	//==============================================================================================
+
+	private Map<Integer, Pointer> placeholderPointers;
+	private Set<Long> pointerIDs;
+	// Structure used to mock placeholder array.
+	private Map<PlaceholderArrayKey, Structure> placeholderArrays;
+	private Set<Long> arrayIDs;
+
+	private void initializePlaceholders() {
+		placeholderPointers = new HashMap<>();
+		pointerIDs = new HashSet<>();
+		placeholderArrays = new HashMap<>();
+		arrayIDs = new HashSet<>();
+	}
+
+	private void cleanUpPlaceholders() throws CancelledException {
+
+		TaskMonitor monitor = getMonitor();
+		DataTypeManager dtm = getDataTypeManager();
+
+		// Remove placeholder arrays from DTM and from the Set
+		for (long id : arrayIDs) {
+			checkCancelled();
+			DataType dt = dtm.getDataType(id);
+			Collection<DataType> parents = dt.getParents();
+			if (parents.size() == 0) {
+				dtm.remove(dt, monitor);
+			}
+			else {
+				Msg.warn(this,
+					"PDB: Could not eliminate parented placeholder array: " + dt.getName());
+			}
+		}
+		arrayIDs.clear();
+		arrayIDs = null;
+
+		// Eliminate array placeholder map
+		placeholderArrays.clear();
+		placeholderArrays = null;
+
+		// Not removing placeholder pointers from DTM, but we are eliminating them from the Set
+		pointerIDs.clear();
+		pointerIDs = null;
+
+		// Eliminate pointer placeholder map
+		placeholderPointers.clear();
+		placeholderPointers = null;
+	}
+
+	Pointer getPlaceholderPointer(int size) throws PdbException {
+		Pointer pointer = placeholderPointers.get(size);
+		if (pointer != null) {
+			return pointer;
+		}
+		DataTypeManager dtm = getDataTypeManager();
+		pointer = new PointerDataType(null, size, dtm);
+		pointer = (Pointer) resolve(pointer);
+		long id = dtm.getID(pointer);
+		if (id == -1) {
+			throw new PdbException("Could not create placeholder pointer.");
+		}
+		placeholderPointers.put(size, pointer);
+		pointerIDs.add(id);
+		return pointer;
+	}
+
+	boolean isPlaceholderPointer(DataType pointer) {
+		// need this check for unresolved member types (such as primitives or bit-fields)
+		if (pointer instanceof DataTypeImpl || pointer instanceof BitFieldDataType) {
+			return false;
+		}
+		long id = getDataTypeManager().getID(pointer);
+		return pointerIDs.contains(id);
+	}
+
+	private record PlaceholderArrayKey(int arraySize, int alignment) {}
+
+	// Using a structure as a mock array because we can set both size and alignment, which
+	//  is what needs to be consistent with the final real array when used in a containing
+	//  composite.
+	DataType getPlaceholderArray(int arraySize, int alignment) throws PdbException {
+		PlaceholderArrayKey key = new PlaceholderArrayKey(arraySize, alignment);
+		Structure placeholderArray = placeholderArrays.get(key);
+		if (placeholderArray != null) {
+			return placeholderArray;
+		}
+
+		DataTypeManager dtm = getDataTypeManager();
+		String name = String.format("placeholder_array_%08x_%02x", arraySize, alignment);
+		placeholderArray =
+			new StructureDataType(getPlaceholderTypesCategory(), name, arraySize, dtm);
+		placeholderArray.align(alignment);
+		if (arraySize == 0) {
+			// For the zero-length, we need to enable packing to prevent the placeholder array
+			//  (actual structure) from reporting itself as "not yet defined."
+			placeholderArray.setPackingEnabled(true);
+		}
+		placeholderArray = (Structure) resolve(placeholderArray);
+
+		long id = dtm.getID(placeholderArray);
+		if (id == -1) {
+			throw new PdbException("Could not create array placeholder.");
+		}
+		placeholderArrays.put(key, placeholderArray);
+		arrayIDs.add(id);
+		return placeholderArray;
+	}
+
+	boolean isPlaceholderArray(DataType array) {
+		return array.getCategoryPath().equals(getPlaceholderTypesCategory());
+	}
+
+	boolean isPlaceholderType(DataType type) {
+		return isPlaceholderPointer(type) || isPlaceholderArray(type);
+	}
+
+	//==============================================================================================
+	//==============================================================================================
+	//==============================================================================================
+
+	/**
+	 * Returns the processed Ghidra class type associated with the PDB type record number.  Causes
+	 *  the type to be processed if it already has not been.
+	 * <p>
+	 * This method is intended to be used by "Consumers" that need the type after all type
+	 *  creation is complete.
+	 * @param recordNumber the record number of the type needed
+	 * @return the Ghidra data type
+	 * @throws CancelledException upon user cancellation
+	 * @throws PdbException upon processing error
+	 * @see #getDataType(AbstractMsType)
+	 * @see #getDataType(RecordNumber)
+	 */
+	DataType getCompletedDataType(RecordNumber recordNumber) //************************************************ 5 REFS
+			throws CancelledException, PdbException {
+		DataType dataType = getDataType(recordNumber);
+		if (dataType instanceof DataTypeImpl) {
+			if (!(dataType instanceof BuiltInDataType)) {
+				AbstractMsType type = getPdb().getTypeRecord(recordNumber);
+				Msg.info(this, "Type not resolved for record: " + recordNumber + "; " +
+					type.getClass().getSimpleName());
+			}
+		}
+		else if (dataType == null) {
+			AbstractMsType type = getPdb().getTypeRecord(recordNumber);
+			Msg.info(this, "Type not completed for record: " + recordNumber + "; " +
+				type.getClass().getSimpleName());
+			FixupContext fixupContext = new FixupContext();
+			fixupContext.addStagedRecord(recordNumber.getNumber());
+			dataType = getProcessedDataType(recordNumber, fixupContext, false);
+		}
+		return dataType;
+	}
+
+	/**
+	 * Stores the Ghidra data type associated with the PDB data type.
+	 * This method is intended to be used by appliers that work on this specific type, not by
+	 *  appliers that need the data type
+	 * @param msType the PdbReader type pertaining to the type
+	 * @param dataType the data type to store
+	 */
+	void putDataType(AbstractMsType msType, DataType dataType) {
+		Integer number = getNumber(msType);
+		putDataType(number, dataType);
+	}
+
+	/**
+	 * Stores the Ghidra data type associated with the PDB data type.
+	 * This method is intended to be used by appliers that work on this specific type, not by
+	 *  appliers that need the data type
+	 * @param number number of type record
+	 * @param dataType the data type to store
+	 */
+	void putDataType(Integer number, DataType dataType) {
+		DataType existing = getDataType(number); // could be null
+		if (existing == dataType) {
+			return;
+		}
+		if (existing != null) {
+			if (dataType.isEquivalent(existing)) {
+				if (!(existing instanceof DataTypeImpl) || dataType instanceof DataTypeImpl) {
+					return;
+				}
+			}
+			else if (isDefinedComposite(existing)) {
+				//TODO: Need to investigate how to deal with this.... we are only storing one, so
+				// how do we know we have the correct one... we should know by what the fwdref was...
+				// record-number-wise.
+				if (isDefinedComposite(dataType)) {
+					appendLogMsg("Existing and Replacement datatypes are both keepers:\n" +
+						existing + "\n" + dataType + "\n");
+				}
+				return;
+			}
+		}
+		putDataTypeInternal(number, dataType);
+	}
+
+	/**
+	 * Returns the Ghidra data type associated with the PDB data type.
+	 * This method is intended to be used by appliers that work on this specific type, not by
+	 *  appliers that need the data type
+	 * @param msType the PdbReader type pertaining to the type
+	 * @return the Ghidra data type
+	 */
+	DataType getDataType(AbstractMsType msType) {
+		Integer number = getNumber(msType);
+		if (number == null) {
+			return null;
+		}
+		return getDataType(number);
+	}
+
+	/**
+	 * Returns the Ghidra data type associated with the PDB type record number.
+	 * <p>
+	 * This method is intended to be used by appliers that work on this specific type, not by
+	 *  appliers that need the data type
+	 * @param recordNumber the record number of the type needed
+	 * @return the Ghidra data type
+	 * @see #getDataType(AbstractMsType)
+	 */
+	DataType getDataType(RecordNumber recordNumber) {
+		if (recordNumber.getCategory() != RecordCategory.TYPE) {
+			return null;
+		}
+		return getDataType(recordNumber.getNumber());
+	}
+
+	/**
+	 * Returns the Ghidra data type associated with the PDB data type number.
+	 * This method is intended to be used by appliers that work on this specific type, not by
+	 *  appliers that need the data type
+	 * @param number the PDB type record number
+	 * @return the Ghidra data type
+	 */
+	DataType getDataType(Integer number) {
+		Integer mappedNumber = getMappedComplexType(number);
+		Long ID = dataTypeIdByMsTypeNum.get(mappedNumber);
+		if (ID == null) {
+			return dataTypeImplByMsTypeNum.get(mappedNumber);
+		}
+		return dataTypeManager.getDataType(ID);
+	}
+
+	private boolean isDefinedComposite(DataType dt) {
+		return (dt instanceof Composite comp && comp.getNumDefinedComponents() > 0);
+	}
+
+	private void putDataTypeInternal(Integer number, DataType dataType) {
+		Integer mappedNumber = getMappedComplexType(number);
+		if (dataType instanceof DataTypeImpl impl) {
+			if (!(dataType instanceof BuiltInDataType)) {
+				Msg.warn(this, "PDB: Unexpected Impl storage: " + impl.getClass().getSimpleName());
+			}
+			dataTypeImplByMsTypeNum.put(mappedNumber, impl);
+		}
+		else {
+			long dataTypeID = dataTypeManager.getID(dataType);
+			if (dataTypeID == -1) {
+				// Error, such as DataType is not DB version
+				return;
+			}
+			dataTypeIdByMsTypeNum.put(mappedNumber, dataTypeID);
+		}
+	}
+
+	//==============================================================================================
+	/**
+	 * Stores the Ghidra class type associated with the PDB data type.
+	 * This method is intended to be used by appliers that work on this specific type, not by
+	 *  appliers that need the data type
+	 * @param msType the PdbReader type pertaining to the type
+	 * @param classType the class to store
+	 */
+	void putClassType(AbstractMsType msType, CppCompositeType classType) {
+		Integer number = getNumber(msType);
+		CppCompositeType existing = getClassType(number);
+		if (existing == classType) {
+			return;
+		}
+		if (existing != null) {
+			appendLogMsg(
+				"Existing class type; not replacing:\n" + existing + "\n" + classType + "\n");
+			return;
+		}
+		putClassType(number, classType);
+	}
+
+	/**
+	 * Returns the Ghidra class type associated with the PDB class type.
+	 * <p>
+	 * This method is intended to be used by appliers that work on this specific type, not by
+	 *  appliers that need the data type
+	 * @param msType the PdbReader type pertaining to the type
+	 * @return the Ghidra class type
+	 * @see #getDataType(RecordNumber)
+	 */
+	CppCompositeType getClassType(AbstractMsType msType) {
+		Integer number = getNumber(msType);
+		return getClassType(number);
+	}
+
+	private CppCompositeType getClassType(Integer number) {
+		return classTypeByMsTypeNum.get(getMappedComplexType(number));
+	}
+
+	private void putClassType(Integer number, CppCompositeType classType) {
+		Integer mappedNumber = getMappedComplexType(number);
+		classTypeByMsTypeNum.put(mappedNumber, classType);
+	}
+
+	//==============================================================================================
+	// Might change this to private if removed use from CompositeTypeApplier
+	Integer getNumber(AbstractMsType msType) {
+		if (msType == null) {
+			return null;
+		}
+		RecordNumber recordNumber = msType.getRecordNumber();
+		if (recordNumber == null || recordNumber.getCategory() != RecordCategory.TYPE) {
+			return null;
+		}
+		return recordNumber.getNumber();
+	}
+
+	// Might change this to private if removed use from CompositeTypeApplier
+	Integer getMappedComplexType(Integer input) {
+		return complexTypeMapper.getMapped(input);
+	}
+
 	//==============================================================================================
 	//==============================================================================================
 	//==============================================================================================
@@ -759,8 +1079,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			throw new PdbException("PDB: DebugInfo is null");
 		}
 
-		for (SectionContribution sectionContribution : debugInfo
-				.getSectionContributionList()) {
+		for (SectionContribution sectionContribution : debugInfo.getSectionContributionList()) {
 			int sectionContributionOffset = sectionContribution.getOffset();
 			int maxSectionContributionOffset =
 				sectionContributionOffset + sectionContribution.getLength();
@@ -772,7 +1091,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	}
 
 	//==============================================================================================
-	private void processDataTypesSequentially() throws CancelledException, PdbException {
+	private void processAndResolveDataTypesSequentially() throws CancelledException, PdbException {
 		TypeProgramInterface tpi = pdb.getTypeProgramInterface();
 		if (tpi == null) {
 			return;
@@ -781,14 +1100,101 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		TaskMonitor monitor = getMonitor();
 		monitor.initialize(num);
 		monitor.setMessage("PDB: Processing " + num + " data type components...");
-		for (int indexNumber =
-			tpi.getTypeIndexMin(); indexNumber < tpi.getTypeIndexMaxExclusive(); indexNumber++) {
+		for (int indexNumber = tpi.getTypeIndexMin(); indexNumber < tpi
+				.getTypeIndexMaxExclusive(); indexNumber++) {
 			monitor.checkCancelled();
-			//PdbResearch.checkBreak(indexNumber);
-			MsTypeApplier applier = getTypeApplier(RecordNumber.typeRecordNumber(indexNumber));
-			//PdbResearch.checkBreak(indexNumber, applier);
-			applier.apply();
+			processAndResolve(indexNumber);
 			monitor.incrementProgress(1);
+		}
+
+		// Might need to do this later (after typedefs and symbols)... TODO: figure this out
+		cleanUpPlaceholders();
+	}
+
+	private void processAndResolve(int indexNumber) throws CancelledException, PdbException {
+		DataType dt = getDataType(indexNumber);
+		if (dt != null && !(dt instanceof DataTypeImpl)) {
+			return;
+		}
+		RecordNumber recordNumber = RecordNumber.typeRecordNumber(indexNumber);
+		AbstractMsType msType = pdb.getTypeRecord(recordNumber);
+		MsTypeApplier applier = getTypeApplier(recordNumber);
+		if (applier instanceof CompositeTypeApplier) {
+			FixupContext fixupContext = new FixupContext();
+			int mappedNumber = getMappedComplexType(indexNumber);
+			fixupContext.moveToHeadProcessRecord(mappedNumber);
+			DataType dataType = applier.apply(msType, fixupContext, false);
+			fixupContext.moveProcessToFixupsRecord(mappedNumber, dataType);
+			fixUpTypes(fixupContext);
+		}
+		else {
+			DataType dataType = applier.apply(msType, null, true);
+		}
+	}
+
+	DataType getProcessedDataType(RecordNumber recordNumber, FixupContext fixupContext,
+			boolean breakCycle) throws CancelledException, PdbException {
+		int mappedNumber = getMappedComplexType(recordNumber.getNumber());
+		AbstractMsType type = pdb.getTypeRecord(RecordNumber.typeRecordNumber(mappedNumber));
+		MsTypeApplier applier = getTypeApplier(recordNumber);
+
+		if (fixupContext == null) {
+			return applier.apply(type, fixupContext, breakCycle);
+		}
+
+		if (!(applier instanceof CompositeTypeApplier) &&
+			!(applier instanceof ModifierTypeApplier)) {
+			return applier.apply(type, fixupContext, breakCycle);
+		}
+
+		DataType dataType = getDataType(mappedNumber);
+		if (dataType != null) {
+			return dataType;
+		}
+		dataType = fixupContext.getFixupDataType(mappedNumber);
+		if (dataType != null) {
+			return dataType;
+		}
+
+		fixupContext.ensureInContext(mappedNumber);
+		if (breakCycle) {
+			return null;
+		}
+
+		fixupContext.moveToHeadProcessRecord(mappedNumber);
+		dataType = applier.apply(type, fixupContext, breakCycle);
+		fixupContext.moveProcessToFixupsRecord(mappedNumber, dataType);
+
+		return dataType;
+	}
+
+	private void fixUpTypes(FixupContext fixupContext) throws PdbException, CancelledException {
+
+		Integer recordToProcess;
+		while ((recordToProcess = fixupContext.peekStagedRecord()) != null) {
+			checkCancelled();
+			RecordNumber recordNumber = RecordNumber.typeRecordNumber(recordToProcess);
+			AbstractMsType msType = pdb.getTypeRecord(recordNumber);
+			MsTypeApplier applier = getTypeApplier(recordNumber);
+			fixupContext.moveFromStagedToProcessRecord();
+			DataType dataType = applier.apply(msType, fixupContext, false);
+			fixupContext.moveProcessToFixupsRecord(recordToProcess, dataType);
+		}
+
+		while ((recordToProcess = fixupContext.peekFixupsRecord()) != null) {
+			checkCancelled();
+			RecordNumber recordNumber = RecordNumber.typeRecordNumber(recordToProcess);
+			AbstractMsType msType = pdb.getTypeRecord(recordNumber);
+			MsTypeApplier applier = getTypeApplier(recordNumber);
+			if (applier instanceof CompositeTypeApplier fixupApplier) {
+				DataType dataType = applier.apply(msType, fixupContext, false);
+				if (dataType instanceof DataTypeImpl) {
+					appendLogMsg("Unexpected resolve for: " + dataType.getClass().getSimpleName());
+					dataType = resolve(dataType);
+				}
+				fixupApplier.fixUp(fixupContext);
+			}
+			fixupContext.popFixupsRecord();
 		}
 	}
 
@@ -849,68 +1255,32 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		TaskMonitor monitor = getMonitor();
 		monitor.initialize(num);
 		monitor.setMessage("PDB: Processing " + num + " item type components...");
-		for (int indexNumber =
-			ipi.getTypeIndexMin(); indexNumber < ipi.getTypeIndexMaxExclusive(); indexNumber++) {
+		for (int indexNumber = ipi.getTypeIndexMin(); indexNumber < ipi
+				.getTypeIndexMaxExclusive(); indexNumber++) {
 			monitor.checkCancelled();
-			MsTypeApplier applier = getTypeApplier(RecordNumber.itemRecordNumber(indexNumber));
-			applier.apply();
+			RecordNumber recordNumber = RecordNumber.itemRecordNumber(indexNumber);
+			AbstractMsType msType = pdb.getTypeRecord(recordNumber);
+			MsTypeApplier applier = getTypeApplier(recordNumber);
+			FixupContext fixupContext = new FixupContext();
+			fixupContext.addStagedRecord(indexNumber);
+			applier.apply(msType, fixupContext, false); // fixupContext and breakCycle meaningless here?
 			monitor.incrementProgress(1);
 		}
 	}
 
 	//==============================================================================================
 	private void processSequentially() throws CancelledException, PdbException {
-		processDataTypesSequentially();
+		processAndResolveDataTypesSequentially();
 		processItemTypesSequentially();
-	}
-
-	//==============================================================================================
-	private void processDeferred() throws CancelledException, PdbException {
-		List<MsTypeApplier> verticesInPostOrder = getVerticesInPostOrder();
-		TaskMonitor monitor = getMonitor();
-		monitor.initialize(verticesInPostOrder.size());
-		monitor.setMessage("PDB: Processing " + verticesInPostOrder.size() +
-			" deferred data type dependencies...");
-		for (MsTypeApplier applier : verticesInPostOrder) {
-			monitor.checkCancelled();
-			//PdbResearch.checkBreak(applier.index);
-			//checkBreak(applier.index, applier);
-			if (applier.isDeferred()) {
-				applier.deferredApply();
-			}
-			monitor.incrementProgress(1);
-		}
-	}
-
-	//==============================================================================================
-	private void resolveSequentially() throws CancelledException {
-		TypeProgramInterface tpi = pdb.getTypeProgramInterface();
-		if (tpi == null) {
-			return;
-		}
-		int num = tpi.getTypeIndexMaxExclusive() - tpi.getTypeIndexMin();
-		TaskMonitor monitor = getMonitor();
-		monitor.initialize(num);
-		monitor.setMessage("PDB: Resolving " + num + " data type components...");
-		long longStart = System.currentTimeMillis();
-		for (int indexNumber =
-			tpi.getTypeIndexMin(); indexNumber < tpi.getTypeIndexMaxExclusive(); indexNumber++) {
-			monitor.checkCancelled();
-			//PdbResearch.checkBreak(indexNumber);
-			MsTypeApplier applier = getTypeApplier(RecordNumber.typeRecordNumber(indexNumber));
-			//PdbResearch.checkBreak(indexNumber, applier);
-			applier.resolve();
-			monitor.incrementProgress(1);
-		}
-		long longStop = System.currentTimeMillis();
-		long timeDiff = longStop - longStart;
-		Msg.info(this, "Resolve time: " + timeDiff + " mS");
 	}
 
 	//==============================================================================================
 	//==============================================================================================
 	//==============================================================================================
 	DataType resolve(DataType dataType) {
+		if (!(dataType instanceof DataTypeImpl)) {
+			return dataType;
+		}
 		DataType resolved = getDataTypeManager().resolve(dataType,
 			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
 		resolveCount++;
@@ -937,8 +1307,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		}
 
 		CreateFunctionCmd funCmd = new CreateFunctionCmd(null, normalizedAddress,
-			new AddressSet(normalizedAddress, normalizedAddress),
-			SourceType.DEFAULT);
+			new AddressSet(normalizedAddress, normalizedAddress), SourceType.DEFAULT);
 		if (!funCmd.applyTo(program, cancelOnlyWrappingMonitor)) {
 			appendLogMsg("Failed to apply function at address " + address.toString() +
 				"; attempting to use possible existing function");
@@ -1154,12 +1523,20 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		TaskMonitor monitor = getMonitor();
 		monitor.setMessage("PDB: Applying " + totalCount + " main symbol components...");
 		monitor.initialize(totalCount);
-		AbstractMsSymbolIterator iter = symbolGroup.iterator();
+		MsSymbolIterator iter = symbolGroup.getSymbolIterator();
 		processSymbolGroup(0, iter);
 	}
 
 	//==============================================================================================
-	private void processModuleSymbols() throws CancelledException {
+	int getCurrentModuleNumber() {
+		return currentModuleNumber;
+	}
+
+	private void setCurrentModuleNumber(int moduleNumber) {
+		currentModuleNumber = moduleNumber;
+	}
+
+	private void processModuleSymbols() throws CancelledException, PdbException {
 		PdbDebugInfo debugInfo = pdb.getDebugInfo();
 		if (debugInfo == null) {
 			return;
@@ -1184,12 +1561,13 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		// Process symbols list for each module
 		for (int moduleNumber = 1; moduleNumber <= num; moduleNumber++) {
 			monitor.checkCancelled();
+			setCurrentModuleNumber(moduleNumber);
 			// Process module symbols list
 			SymbolGroup symbolGroup = getSymbolGroupForModule(moduleNumber);
 			if (symbolGroup == null) {
 				continue; // should not happen
 			}
-			AbstractMsSymbolIterator iter = symbolGroup.iterator();
+			MsSymbolIterator iter = symbolGroup.getSymbolIterator();
 			processSymbolGroup(moduleNumber, iter);
 			monitor.increment();
 //			catelogSymbols(index, symbolGroup);
@@ -1212,7 +1590,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 //	}
 //
 	//==============================================================================================
-	private void processSymbolGroup(int moduleNumber, AbstractMsSymbolIterator iter)
+	private void processSymbolGroup(int moduleNumber, MsSymbolIterator iter)
 			throws CancelledException {
 		iter.initGet();
 		TaskMonitor monitor = getMonitor();
@@ -1244,12 +1622,12 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		}
 
 		PublicSymbolInformation publicSymbolInformation = debugInfo.getPublicSymbolInformation();
-		List<Long> offsets = publicSymbolInformation.getModifiedHashRecordSymbolOffsets();
 		TaskMonitor monitor = getMonitor();
-		monitor.setMessage("PDB: Applying " + offsets.size() + " public symbol components...");
-		monitor.initialize(offsets.size());
+		monitor.setMessage("PDB: Applying public symbols...");
+		MsSymbolIterator iter = symbolGroup.getSymbolIterator();
 
-		AbstractMsSymbolIterator iter = symbolGroup.iterator();
+		List<Long> offsets = publicSymbolInformation.getModifiedHashRecordSymbolOffsets();
+		monitor.initialize(offsets.size());
 		for (long offset : offsets) {
 			monitor.checkCancelled();
 			iter.initGetByOffset(offset);
@@ -1260,6 +1638,26 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			procSym(iter);
 			monitor.incrementProgress(1);
 		}
+
+//		AbstractSymbolInformation.ModifiedOffsetIterator publicsIter =
+//			publicSymbolInformation.iterator();
+//		monitor.initialize(100L);
+//		long percentDone = 0;
+//		while (publicsIter.hasNext()) {
+//			monitor.checkCancelled();
+//			Long offset = publicsIter.next();
+//			iter.initGetByOffset(offset);
+//			if (!iter.hasNext()) {
+//				break;
+//			}
+//			pdbApplicatorMetrics.witnessPublicSymbolType(iter.peek());
+//			procSym(iter);
+//			// Increment progress
+//			long delta = publicsIter.getPercentageDone() - percentDone;
+//			monitor.incrementProgress(delta);
+//			percentDone += delta;
+//		}
+//
 	}
 
 	/**
@@ -1281,13 +1679,13 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			return;
 		}
 
-		GlobalSymbolInformation globalSymbolInformation = debugInfo.getGlobalSymbolInformation();
-		List<Long> offsets = globalSymbolInformation.getModifiedHashRecordSymbolOffsets();
 		TaskMonitor monitor = getMonitor();
 		monitor.setMessage("PDB: Applying global symbols...");
-		monitor.initialize(offsets.size());
+		GlobalSymbolInformation globalSymbolInformation = debugInfo.getGlobalSymbolInformation();
+		MsSymbolIterator iter = symbolGroup.getSymbolIterator();
 
-		AbstractMsSymbolIterator iter = symbolGroup.iterator();
+		List<Long> offsets = globalSymbolInformation.getModifiedHashRecordSymbolOffsets();
+		monitor.initialize(offsets.size());
 		for (long offset : offsets) {
 			monitor.checkCancelled();
 			iter.initGetByOffset(offset);
@@ -1301,6 +1699,28 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			}
 			monitor.incrementProgress(1);
 		}
+
+//		AbstractSymbolInformation.ModifiedOffsetIterator globalsIter =
+//			globalSymbolInformation.iterator();
+//		monitor.initialize(100L);
+//		long percentDone = 0;
+//		while (globalsIter.hasNext()) {
+//			monitor.checkCancelled();
+//			Long offset = globalsIter.next();
+//			iter.initGetByOffset(offset);
+//			if (!iter.hasNext()) {
+//				break;
+//			}
+//			AbstractMsSymbol symbol = iter.peek();
+//			pdbApplicatorMetrics.witnessGlobalSymbolType(symbol);
+//			if (!(symbol instanceof AbstractUserDefinedTypeMsSymbol)) { // Not doing typedefs here
+//				procSym(iter);
+//			}
+//			// Increment progress
+//			long delta = globalsIter.getPercentageDone() - percentDone;
+//			monitor.incrementProgress(delta);
+//			percentDone += delta;
+//		}
 	}
 
 	/**
@@ -1320,13 +1740,13 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			return;
 		}
 
-		GlobalSymbolInformation globalSymbolInformation = debugInfo.getGlobalSymbolInformation();
-		List<Long> offsets = globalSymbolInformation.getModifiedHashRecordSymbolOffsets();
 		TaskMonitor monitor = getMonitor();
 		monitor.setMessage("PDB: Applying typedefs...");
-		monitor.initialize(offsets.size());
+		GlobalSymbolInformation globalSymbolInformation = debugInfo.getGlobalSymbolInformation();
+		MsSymbolIterator iter = symbolGroup.getSymbolIterator();
 
-		AbstractMsSymbolIterator iter = symbolGroup.iterator();
+		List<Long> offsets = globalSymbolInformation.getModifiedHashRecordSymbolOffsets();
+		monitor.initialize(offsets.size());
 		for (long offset : offsets) {
 			monitor.checkCancelled();
 			iter.initGetByOffset(offset);
@@ -1339,6 +1759,28 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			}
 			monitor.incrementProgress(1);
 		}
+
+//		AbstractSymbolInformation.ModifiedOffsetIterator globalsIter =
+//			globalSymbolInformation.iterator();
+//		monitor.initialize(100L);
+//		long percentDone = 0;
+//		while (globalsIter.hasNext()) {
+//			monitor.checkCancelled();
+//			Long offset = globalsIter.next();
+//			iter.initGetByOffset(offset);
+//			if (!iter.hasNext()) {
+//				break;
+//			}
+//			AbstractMsSymbol symbol = iter.peek();
+//			pdbApplicatorMetrics.witnessGlobalSymbolType(symbol);
+//			if (symbol instanceof AbstractUserDefinedTypeMsSymbol) { // Doing typedefs here
+//				procSym(iter);
+//			}
+//			// Increment progress
+//			long delta = globalsIter.getPercentageDone() - percentDone;
+//			monitor.incrementProgress(delta);
+//			percentDone += delta;
+//		}
 	}
 
 	/**
@@ -1378,7 +1820,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		monitor.initialize(offsetsRemaining.size());
 		//getCategoryUtils().setModuleTypedefsCategory(null);
 
-		AbstractMsSymbolIterator iter = symbolGroup.iterator();
+		MsSymbolIterator iter = symbolGroup.getSymbolIterator();
 		for (long offset : offsetsRemaining) {
 			monitor.checkCancelled();
 			iter.initGetByOffset(offset);
@@ -1414,7 +1856,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 
 	//==============================================================================================
 	@SuppressWarnings("unused") // for method not being called.
-	private boolean processLinkerSymbols() throws CancelledException {
+	private boolean processLinkerSymbols() throws CancelledException, PdbException {
 
 		SymbolGroup symbolGroup = getSymbolGroupForModule(linkerModuleNumber);
 		if (symbolGroup == null) {
@@ -1426,7 +1868,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		monitor.setMessage("PDB: Applying " + symbolGroup.size() + " linker symbol components...");
 		monitor.initialize(symbolGroup.size());
 
-		AbstractMsSymbolIterator iter = symbolGroup.iterator();
+		MsSymbolIterator iter = symbolGroup.getSymbolIterator();
 		while (iter.hasNext()) {
 			monitor.checkCancelled();
 			pdbApplicatorMetrics.witnessLinkerSymbolType(iter.peek());
@@ -1438,20 +1880,21 @@ public class DefaultPdbApplicator implements PdbApplicator {
 
 	//==============================================================================================
 	@Override
-	public List<PeCoffSectionMsSymbol> getLinkerPeCoffSectionSymbols() throws CancelledException {
+	public List<PeCoffSectionMsSymbol> getLinkerPeCoffSectionSymbols()
+			throws CancelledException, PdbException {
 		processLinkerModuleSpecialInformation();
 		return linkerPeCoffSectionSymbols;
 	}
 
 	//==============================================================================================
 	@Override
-	public AbstractMsSymbol getLinkerModuleCompileSymbol() throws CancelledException {
+	public AbstractMsSymbol getLinkerModuleCompileSymbol() throws CancelledException, PdbException {
 		processLinkerModuleSpecialInformation();
 		return compileSymbolForLinkerModule;
 	}
 
 	//==============================================================================================
-	private void processLinkerModuleSpecialInformation() throws CancelledException {
+	private void processLinkerModuleSpecialInformation() throws CancelledException, PdbException {
 
 		if (processedLinkerModule) {
 			return;
@@ -1465,7 +1908,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 
 			TaskMonitor monitor = getMonitor();
 			monitor.initialize(symbolGroup.size());
-			AbstractMsSymbolIterator iter = symbolGroup.iterator();
+			MsSymbolIterator iter = symbolGroup.getSymbolIterator();
 			int numCompileSymbols = 0;
 			int compileSymbolNumForCoffSymbols = -1;
 			while (iter.hasNext()) {
@@ -1511,7 +1954,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	}
 
 	//==============================================================================================
-	private void processThunkSymbolsFromNonLinkerModules() throws CancelledException {
+	private void processThunkSymbolsFromNonLinkerModules() throws CancelledException, PdbException {
 
 		PdbDebugInfo debugInfo = pdb.getDebugInfo();
 		if (debugInfo == null) {
@@ -1546,7 +1989,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			if (symbolGroup == null) {
 				continue; // should not happen
 			}
-			AbstractMsSymbolIterator iter = symbolGroup.iterator();
+			MsSymbolIterator iter = symbolGroup.getSymbolIterator();
 			while (iter.hasNext()) {
 				monitor.checkCancelled();
 				AbstractMsSymbol symbol = iter.peek();
@@ -1566,12 +2009,12 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	//==============================================================================================
 	//==============================================================================================
 	//==============================================================================================
-	MsSymbolApplier getSymbolApplier(AbstractMsSymbolIterator iter) throws CancelledException {
+	MsSymbolApplier getSymbolApplier(MsSymbolIterator iter) throws CancelledException {
 		return symbolApplierParser.getSymbolApplier(iter);
 	}
 
 	//==============================================================================================
-	void procSym(AbstractMsSymbolIterator iter) throws CancelledException {
+	void procSym(MsSymbolIterator iter) throws CancelledException {
 		try {
 			MsSymbolApplier applier = getSymbolApplier(iter);
 			applier.apply();
@@ -1616,6 +2059,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 				log.appendMsg(
 					"PDB Warning: Because parent namespace does not exist, failed to define " +
 						type + ": " + path);
+				monitor.incrementProgress(1);
 				continue;
 			}
 			defineNamespace(parentNamespace, path.getName(), isClass);

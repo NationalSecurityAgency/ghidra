@@ -35,6 +35,7 @@ public class PdbCategories {
 	private CategoryPath pdbUncategorizedCategory;
 	private CategoryPath anonymousFunctionsCategory;
 	private CategoryPath anonymousTypesCategory;
+	private CategoryPath placeholderTypesCategory;
 	private CategoryPath baseModuleTypedefsCategory;
 	private List<CategoryPath> typedefCategories = new ArrayList<>();
 
@@ -62,6 +63,8 @@ public class PdbCategories {
 //		anonymousFunctionCount = 0;
 
 		anonymousTypesCategory = new CategoryPath(pdbRootCategory, "!_anon_types_");
+
+		placeholderTypesCategory = new CategoryPath(pdbRootCategory, "!_placeholder_types_");
 	}
 
 	/**
@@ -188,6 +191,14 @@ public class PdbCategories {
 	 */
 	public CategoryPath getAnonymousTypesCategory() {
 		return anonymousTypesCategory;
+	}
+
+	/**
+	 * Returns the {@link CategoryPath} for Anonymous Types Category for the PDB.
+	 * @return the {@link CategoryPath}
+	 */
+	public CategoryPath getPlaceholderTypesCategory() {
+		return placeholderTypesCategory;
 	}
 
 //	/**

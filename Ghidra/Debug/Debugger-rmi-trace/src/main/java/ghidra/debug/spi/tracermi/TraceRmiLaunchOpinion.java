@@ -18,7 +18,7 @@ package ghidra.debug.spi.tracermi;
 import java.util.Collection;
 
 import ghidra.app.plugin.core.debug.gui.tracermi.launcher.TraceRmiLauncherServicePlugin;
-import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiHandler;
+import ghidra.app.plugin.core.debug.service.tracermi.TraceRmiHandler;
 import ghidra.app.services.InternalTraceRmiService;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
 import ghidra.framework.options.Options;

@@ -23,7 +23,7 @@ import org.junit.Before;
 
 import db.Transaction;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
-import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiTarget;
+import ghidra.app.plugin.core.debug.service.tracermi.TraceRmiTarget;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;

@@ -57,13 +57,13 @@ public class LinuxPtyChild extends LinuxPtyEndpoint implements PtyChild {
 	 *           program is active before sending special characters.
 	 */
 	@Override
-	public PtySession session(String[] args, Map<String, String> env, Collection<TermMode> mode)
-			throws IOException {
-		return sessionUsingJavaLeader(args, env, mode);
+	public PtySession session(String[] args, Map<String, String> env, File workingDirectory,
+			Collection<TermMode> mode) throws IOException {
+		return sessionUsingJavaLeader(args, env, workingDirectory, mode);
 	}
 
 	protected PtySession sessionUsingJavaLeader(String[] args, Map<String, String> env,
-			Collection<TermMode> mode) throws IOException {
+			File workingDirectory, Collection<TermMode> mode) throws IOException {
 		final List<String> argsList = new ArrayList<>();
 		String javaCommand =
 			System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
@@ -77,6 +77,9 @@ public class LinuxPtyChild extends LinuxPtyEndpoint implements PtyChild {
 		ProcessBuilder builder = new ProcessBuilder(argsList);
 		if (env != null) {
 			builder.environment().putAll(env);
+		}
+		if (workingDirectory != null) {
+			builder.directory(workingDirectory);
 		}
 		builder.inheritIO();
 

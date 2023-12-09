@@ -644,8 +644,10 @@ public class BinaryReader {
 	 * Reads an integer array of <code>nElements</code>
 	 * starting at the current index and then increments the current
 	 * index by <code>SIZEOF_INT * nElements</code>.
+	 * 
+	 * @param nElements number of elements to read
 	 * @return the integer array starting at the current index
-	 * @exception IOException if an I/O error occurs
+	 * @throws IOException if an I/O error occurs
 	 */
 	public int[] readNextIntArray(int nElements) throws IOException {
 		int[] i = readIntArray(currentIndex, nElements);
@@ -657,8 +659,10 @@ public class BinaryReader {
 	 * Reads a long array of <code>nElements</code>
 	 * starting at the current index and then increments the current
 	 * index by <code>SIZEOF_LONG * nElements</code>.
+	 * 
+	 * @param nElements number of elements to read
 	 * @return the long array starting at the current index
-	 * @exception IOException if an I/O error occurs
+	 * @throws IOException if an I/O error occurs
 	 */
 	public long[] readNextLongArray(int nElements) throws IOException {
 		long[] l = readLongArray(currentIndex, nElements);

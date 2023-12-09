@@ -20,63 +20,30 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import generic.jar.ResourceFile;
-import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
-import ghidra.debug.spi.tracermi.TraceRmiLaunchOpinion;
-import ghidra.framework.Application;
-import ghidra.framework.options.OptionType;
-import ghidra.framework.options.Options;
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.PluginUtils;
 import ghidra.program.model.listing.Program;
-import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 
-public class UnixShellScriptTraceRmiLaunchOpinion implements TraceRmiLaunchOpinion {
-
-	@Override
-	public void registerOptions(Options options) {
-		String pluginName = PluginUtils.getPluginNameFromClass(TraceRmiLauncherServicePlugin.class);
-		options.registerOption(TraceRmiLauncherServicePlugin.OPTION_NAME_SCRIPT_PATHS,
-			OptionType.STRING_TYPE, "", new HelpLocation(pluginName, "options"),
-			"Paths to search for user-created debugger launchers", new ScriptPathsPropertyEditor());
-	}
-
-	@Override
-	public boolean requiresRefresh(String optionName) {
-		return TraceRmiLauncherServicePlugin.OPTION_NAME_SCRIPT_PATHS.equals(optionName);
-	}
-
-	protected Stream<ResourceFile> getModuleScriptPaths() {
-		return Application.findModuleSubDirectories("data/debugger-launchers").stream();
-	}
-
-	protected Stream<ResourceFile> getUserScriptPaths(PluginTool tool) {
-		Options options = tool.getOptions(DebuggerPluginPackage.NAME);
-		String scriptPaths =
-			options.getString(TraceRmiLauncherServicePlugin.OPTION_NAME_SCRIPT_PATHS, "");
-		return scriptPaths.lines().filter(d -> !d.isBlank()).map(ResourceFile::new);
-	}
-
-	protected Stream<ResourceFile> getScriptPaths(PluginTool tool) {
-		return Stream.concat(getModuleScriptPaths(), getUserScriptPaths(tool));
-	}
+public class UnixShellScriptTraceRmiLaunchOpinion extends AbstractTraceRmiLaunchOpinion {
 
 	@Override
 	public Collection<TraceRmiLaunchOffer> getOffers(TraceRmiLauncherServicePlugin plugin,
 			Program program) {
 		return getScriptPaths(plugin.getTool())
 				.flatMap(rf -> Stream.of(rf.listFiles(crf -> crf.getName().endsWith(".sh"))))
-				.flatMap(sf -> {
-					try {
-						return Stream.of(UnixShellScriptTraceRmiLaunchOffer.create(plugin, program,
-							sf.getFile(false)));
-					}
-					catch (Exception e) {
-						Msg.error(this, "Could not offer " + sf + ":" + e.getMessage(), e);
-						return Stream.of();
-					}
-				})
+				.flatMap(sf -> createOffer(plugin, program, sf))
 				.collect(Collectors.toList());
+	}
+
+	protected Stream<TraceRmiLaunchOffer> createOffer(TraceRmiLauncherServicePlugin plugin,
+			Program program, ResourceFile scriptFile) {
+		try {
+			return Stream.of(UnixShellScriptTraceRmiLaunchOffer.create(plugin, program,
+				scriptFile.getFile(false)));
+		}
+		catch (Exception e) {
+			Msg.error(this, "Could not offer " + scriptFile + ": " + e.getMessage(), e);
+			return Stream.of();
+		}
 	}
 }

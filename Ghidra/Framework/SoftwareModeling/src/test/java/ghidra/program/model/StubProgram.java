@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.*;
 
 import db.Transaction;
+import ghidra.framework.data.DomainObjectFileListener;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.store.LockException;
@@ -146,6 +147,16 @@ public class StubProgram implements Program {
 
 	@Override
 	public void removeCloseListener(DomainObjectClosedListener listener) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void addDomainFileListener(DomainObjectFileListener listener) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void removeDomainFileListener(DomainObjectFileListener listener) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -386,7 +397,7 @@ public class StubProgram implements Program {
 
 	@Override
 	public String getCompiler() {
-		throw new UnsupportedOperationException();
+		return "unknown";
 	}
 
 	@Override

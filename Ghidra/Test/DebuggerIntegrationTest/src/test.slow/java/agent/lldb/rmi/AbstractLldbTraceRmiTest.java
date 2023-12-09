@@ -32,7 +32,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Before;
 
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
-import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiPlugin;
+import ghidra.app.plugin.core.debug.service.tracermi.TraceRmiPlugin;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
 import ghidra.app.services.TraceRmiService;
 import ghidra.dbg.testutil.DummyProc;

@@ -83,7 +83,9 @@ public class HandleInputStream extends InputStream {
 	public synchronized int read(byte[] b, int off, int len) throws IOException {
 		byte[] temp = new byte[len];
 		int read = read(temp);
-		System.arraycopy(temp, 0, b, off, read);
+		if (read > 0) {
+			System.arraycopy(temp, 0, b, off, read);
+		}
 		return read;
 	}
 

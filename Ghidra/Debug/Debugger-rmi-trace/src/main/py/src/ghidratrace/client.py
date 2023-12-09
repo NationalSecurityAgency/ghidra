@@ -720,7 +720,7 @@ class Client(object):
             return Client._read_obj_desc(msg.child_desc), sch.OBJECT
         raise ValueError("Could not read value: {}".format(msg))
 
-    def __init__(self, s, method_registry: MethodRegistry):
+    def __init__(self, s, description: str, method_registry: MethodRegistry):
         self._traces = {}
         self._next_trace_id = 1
         self.tlock = Lock()
@@ -732,7 +732,7 @@ class Client(object):
         self.slock = Lock()
         self.receiver.start()
         self._method_registry = method_registry
-        self._negotiate()
+        self.description = self._negotiate(description)
 
     def close(self):
         self.s.close()
@@ -1083,15 +1083,16 @@ class Client(object):
             return reply.length
         return self._batch_or_now(root, 'reply_disassemble', _handle)
 
-    def _negotiate(self):
+    def _negotiate(self, description: str):
         root = bufs.RootMessage()
         root.request_negotiate.version = VERSION
+        root.request_negotiate.description = description
         self._write_methods(root.request_negotiate.methods,
                             self._method_registry._methods.values())
 
         def _handle(reply):
-            pass
-        self._now(root, 'reply_negotiate', _handle)
+            return reply.description
+        return self._now(root, 'reply_negotiate', _handle)
 
     def _handle_invoke_method(self, request):
         if request.HasField('oid'):

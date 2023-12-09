@@ -337,7 +337,7 @@ void DatatypeMatchFilter::decode(Decoder &decoder)
 ///
 /// Allocate the action object corresponding to the element and configure it.
 /// If the next element is not an action, throw an exception.
-/// \param parser is the stream decoder
+/// \param decoder is the stream decoder
 /// \param res is the resource set for the new action
 /// \return the new action
 AssignAction *AssignAction::decodeAction(Decoder &decoder,const ParamListStandard *res)
@@ -377,7 +377,7 @@ AssignAction *AssignAction::decodeAction(Decoder &decoder,const ParamListStandar
 ///
 /// Allocate the sideeffect object corresponding to the element and configure it.
 /// If the next element is not a sideeffect, throw an exception.
-/// \param parser is the stream decoder
+/// \param decoder is the stream decoder
 /// \param res is the resource set for the new sideeffect
 /// \return the new sideeffect
 AssignAction *AssignAction::decodeSideeffect(Decoder &decoder,const ParamListStandard *res)

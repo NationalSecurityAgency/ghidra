@@ -20,6 +20,10 @@ import java.io.IOException;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.address.Address;
 
+/**
+ * A structure that golang generates that maps between a function's entry point and the
+ * location of the function's GoFuncData structure.
+ */
 @StructureMapping(structureName = "runtime.functab")
 public class GoFunctabEntry {
 	@ContextField
@@ -29,19 +33,26 @@ public class GoFunctabEntry {
 	private StructureContext<GoFunctabEntry> context;
 
 	@FieldMapping(optional = true)
-	@MarkupReference("funcAddress")
+	@MarkupReference("getFuncAddress")
 	private long entryoff;	// valid in >=1.18, relative offset of function
 
 	@FieldMapping(optional = true)
-	@MarkupReference("funcAddress")
+	@MarkupReference("getFuncAddress")
 	private long entry;	// valid in <=1.17, location of function
 
 	@FieldMapping
-	@MarkupReference("funcData")
+	@MarkupReference("getFuncData")
 	private long funcoff; // offset into pclntable -> _func
 
 	private Address funcAddress;
 
+	/**
+	 * Set the function's entry point using a relative offset.
+	 * <p>
+	 * Called via deserialization for entryoff fieldmapping annotation.
+	 * 
+	 * @param entryoff relative offset of the function's entry point
+	 */
 	public void setEntryoff(long entryoff) {
 		this.entryoff = entryoff;
 
@@ -49,15 +60,33 @@ public class GoFunctabEntry {
 		this.funcAddress = moduledata != null ? moduledata.getText().add(entryoff) : null;
 	}
 
+	/**
+	 * Set the function's entry point using the absolute address.
+	 * <p>
+	 * Called via deserialization for entry fieldmapping annotation.
+	 * 
+	 * @param entry address of the function's entry point
+	 */
 	public void setEntry(long entry) {
 		this.entry = entry;
 		this.funcAddress = programContext.getCodeAddress(entry);
 	}
 
+	/**
+	 * Returns the address of the function's entry point
+	 * 
+	 * @return address of the function's entry point
+	 */
 	public Address getFuncAddress() {
 		return funcAddress;
 	}
 
+	/**
+	 * Return the GoFuncData structure that contains metadata about the function.
+	 * 
+	 * @return {@link GoFuncData} structure that contains metadata about the function.
+	 * @throws IOException if error
+	 */
 	@Markup
 	public GoFuncData getFuncData() throws IOException {
 		GoModuledata moduledata = getModuledata();
@@ -66,6 +95,11 @@ public class GoFunctabEntry {
 				: null;
 	}
 
+	/**
+	 * Returns the offset of the GoFuncData structure.
+	 * 
+	 * @return offset of the GoFuncData structure.
+	 */
 	public long getFuncoff() {
 		return funcoff;
 	}

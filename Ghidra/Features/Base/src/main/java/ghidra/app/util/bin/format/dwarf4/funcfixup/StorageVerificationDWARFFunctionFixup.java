@@ -18,7 +18,6 @@ package ghidra.app.util.bin.format.dwarf4.funcfixup;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFFunction;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFFunction.CommitMode;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFVariable;
-import ghidra.program.model.listing.Function;
 import ghidra.util.classfinder.ExtensionPointProperties;
 
 /**
@@ -32,7 +31,7 @@ import ghidra.util.classfinder.ExtensionPointProperties;
 public class StorageVerificationDWARFFunctionFixup implements DWARFFunctionFixup {
 
 	@Override
-	public void fixupDWARFFunction(DWARFFunction dfunc, Function gfunc) {
+	public void fixupDWARFFunction(DWARFFunction dfunc) {
 		boolean storageIsGood = true;
 		for (DWARFVariable param : dfunc.params) {
 			if (param.isMissingStorage() && !param.isZeroByte()) {

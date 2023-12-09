@@ -18,14 +18,15 @@ package ghidra.program.model.data.ISF;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.FunctionDefinition;
 
-public class IsfFunctionPointer implements IsfObject {
+public class IsfFunctionPointer extends AbstractIsfObject {
 
 	public String kind;
 	public IsfObject subtype;
 
 	public IsfFunctionPointer(FunctionDefinition def, DataType dt) {
+		super(def);
 		kind = "pointer";
-		subtype = new IsfFunction();
+		subtype = new IsfFunction(def);
 		//TODO?
 	}
 

@@ -629,7 +629,7 @@ if, when all the variables are evaluated, the equation is true.
 </p>
 <div class="informalexample"><pre class="programlisting">
 :xor r1,r2 is opcode=0xcd &amp; r1 &amp; r2 { r1 = r1 ^ r2; }
-:clr r1    is opcode=0xcd &amp; r1 &amp; r2=r1 { r1 = 0; }
+:clr r1    is opcode=0xcd &amp; r1 &amp; r1=r2 { r1 = 0; }
 </pre></div>
 <p>
 </p>
@@ -645,10 +645,10 @@ feature of <span class="emphasis"><em>clr</em></span> from <span class="emphasis
 that the two fields, specifying the two register inputs
 to <span class="emphasis"><em>xor</em></span>, are equal. The easiest way to specify
 this special case is with the general constraint,
-“<span class="emphasis"><em>r2</em></span> = <span class="emphasis"><em>r1</em></span>”, as in the second
+“<span class="emphasis"><em>r1</em></span> = <span class="emphasis"><em>r2</em></span>”, as in the second
 line of the example. The SLEIGH compiler will implement this by
-enumerating all the cases where <span class="emphasis"><em>r2</em></span>
-equals <span class="emphasis"><em>r1</em></span>, creating as many states as there are
+enumerating all the cases where <span class="emphasis"><em>r1</em></span>
+equals <span class="emphasis"><em>r2</em></span>, creating as many states as there are
 registers. But the specification itself, at least, remains compact.
 </p>
 </div>

@@ -235,6 +235,12 @@ public:
   virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
 };
 
+class OptionBraceFormat : public ArchOption {
+public:
+  OptionBraceFormat(void) { name = "braceformat"; }	///< Constructor
+  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+};
+
 class OptionSetAction : public ArchOption {
 public:
   OptionSetAction(void) { name = "setaction"; }	///< Constructor

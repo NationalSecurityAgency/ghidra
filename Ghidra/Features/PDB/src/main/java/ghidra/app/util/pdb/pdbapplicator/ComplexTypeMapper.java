@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,13 +66,6 @@ public class ComplexTypeMapper {
 		return map.getOrDefault(recordNumber, recordNumber);
 	}
 
-	// Temporary method while switching over processing mechanisms and still using
-	//  ComplexTypeApplierMapper (vs. this ComplexTypeMapper).
-	@Deprecated
-	Map<Integer, Integer> getMap() {
-		return map;
-	}
-
 	// Storing type (isFwd or isDef) so that if we decide to parse Types on demand, we will not
 	// have to parse it again to see if it is a fwdref or def.
 	private record NumFwdRef(int number, boolean isFwd) {}
@@ -100,10 +93,9 @@ public class ComplexTypeMapper {
 		//  more definitions come in the input stream.  If the FIFO empties of forward references,
 		//  and another definition is found in the input stream, then the FIFO starts storing
 		//  definitions instead.
-		// Specifically using LinkedList in Map, as not all Queues are appropriate
-		//  (e.g., PriorityQueue).
-		Map<SymbolPath, LinkedList<NumFwdRef>> compositeFIFOsByPath = new HashMap<>();
-		Map<SymbolPath, LinkedList<NumFwdRef>> enumFIFOsByPath = new HashMap<>();
+		// All we need for the Deque is a simple FIFO.
+		Map<SymbolPath, Deque<NumFwdRef>> compositeFIFOsByPath = new HashMap<>();
+		Map<SymbolPath, Deque<NumFwdRef>> enumFIFOsByPath = new HashMap<>();
 
 		// Map is used for combo of Composites and Enums, but the FIFOs above had to be
 		//  separated (or get complicated in other ways by adding more to the FIFO values).
@@ -120,7 +112,7 @@ public class ComplexTypeMapper {
 			// to TYPE as we could get using applicator.getPdb().getTypeRecord(recordNumber)
 			// where recordNumber is a RecordNumber.  This is because we are not expecting
 			// a remap for Complex types.
-			AbstractMsType type = typeProgramInterface.getRecord(indexNumber);
+			AbstractMsType type = typeProgramInterface.getRandomAccessRecord(indexNumber);
 			if (type instanceof AbstractCompositeMsType compositeType) {
 				mapComplexTypesByPath(compositeFIFOsByPath, indexNumber, compositeType);
 			}
@@ -134,15 +126,15 @@ public class ComplexTypeMapper {
 
 	// Always mapping higher index to lower index, as we are assuming we will processing indices
 	// in an increasing order later.
-	private void mapComplexTypesByPath(Map<SymbolPath, LinkedList<NumFwdRef>> typeFIFOsByPath,
+	private void mapComplexTypesByPath(Map<SymbolPath, Deque<NumFwdRef>> typeFIFOsByPath,
 			int indexNumber, AbstractComplexMsType complexType) {
 
 		SymbolPath symbolPath = new SymbolPath(SymbolPathParser.parse(complexType.getName()));
 		boolean isFwdRef = complexType.getMsProperty().isForwardReference();
 
-		LinkedList<NumFwdRef> numTypeFIFO = typeFIFOsByPath.get(symbolPath);
+		Deque<NumFwdRef> numTypeFIFO = typeFIFOsByPath.get(symbolPath);
 		if (numTypeFIFO == null) {
-			numTypeFIFO = new LinkedList<>();
+			numTypeFIFO = new ArrayDeque<>();
 			typeFIFOsByPath.put(symbolPath, numTypeFIFO);
 
 			// Putting forward reference or definition (doesn't matter which it is)

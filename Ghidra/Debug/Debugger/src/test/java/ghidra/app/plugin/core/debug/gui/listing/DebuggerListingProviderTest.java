@@ -1598,7 +1598,8 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 		DebuggerOpenProgramActionContext ctx = new DebuggerOpenProgramActionContext(df);
 		waitForPass(() -> assertTrue(consolePlugin.logContains(ctx)));
-		assertTrue(consolePlugin.getLogRow(ctx).getMessage().contains("recovery"));
+		assertTrue(consolePlugin.getLogRow(ctx).getMessage() instanceof String message &&
+			message.contains("recovery"));
 	}
 
 	@Test
@@ -1626,7 +1627,8 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 		DebuggerOpenProgramActionContext ctx = new DebuggerOpenProgramActionContext(df);
 		waitForPass(() -> assertTrue(consolePlugin.logContains(ctx)));
-		assertTrue(consolePlugin.getLogRow(ctx).getMessage().contains("version"));
+		assertTrue(consolePlugin.getLogRow(ctx).getMessage() instanceof String message &&
+			message.contains("version"));
 	}
 
 	@Test
@@ -1643,7 +1645,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerTes
 		consolePlugin.log(DebuggerResources.ICON_MODULES, "Test resolution", ctx);
 		waitForSwing();
 
-		LogRow row = consolePlugin.getLogRow(ctx);
+		LogRow<?> row = consolePlugin.getLogRow(ctx);
 		assertEquals(1, row.getActions().size());
 		BoundAction boundAction = row.getActions().get(0);
 		assertEquals(listingProvider.actionOpenProgram, boundAction.action);

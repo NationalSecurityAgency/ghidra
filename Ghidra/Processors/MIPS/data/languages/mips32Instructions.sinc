@@ -701,6 +701,14 @@ define pcodeop SYNC;
     syscall(tmp); 
 }
 
+# 0000 0000 0000 0000 cccc cccc cc11 0100
+# trap always
+:teq RSsrc, RTsrc               is $(AMODE) & prime=0 & fct=0x34 & RSsrc & RTsrc & code & rs=0 & rt=0 {
+	tmp:2 = code;
+    local dest:$(ADDRSIZE) = trap(tmp);
+    goto [dest];
+}
+
 # 0000 00ss ssst tttt cccc cccc cc11 0100
 :teq RSsrc, RTsrc               is $(AMODE) & prime=0 & fct=0x34 & RSsrc & RTsrc & code {
     if (RSsrc != RTsrc) goto <done>; 
@@ -708,6 +716,7 @@ define pcodeop SYNC;
     trap(tmp);
     <done>
 }
+
 # 0000 00ss ssst tttt cccc cccc cc11 0000
 :tge RSsrc, RTsrc               is $(AMODE) & prime=0 & fct=0x30 & RSsrc & RTsrc & code {
     if (RSsrc < RTsrc) goto <done>; 

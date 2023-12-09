@@ -29,7 +29,7 @@
     <li><I>FileSystems</I>. Added cramfs support. (GP-3328)</li>
     <li><I>FileSystems</I>. The File System Browser now supports the <span class="gtitle">Add To Program</span> action. (GP-3730)</li>
     <li><I>Importer</I>. Created parsers and analyzers for Device Tree Blob (DTB) and Flattened Device Tree (FDT) binaries. (GP-1436)</li>
-    <li><I>Listing</I>. Added ability to reduce an instructions length to facilitate overlapping instructions.  This can now be accomplished by specifying an instruction length override on the first instruction and disassembling the bytes which follow it.  The need for this has been observed with x86 where there may be a flow around a <span class="gcode">LOCK</span> prefix byte. (GP-3256)</li>
+    <li><I>Listing</I>. Added ability to reduce an instruction's length to facilitate overlapping instructions.  This can now be accomplished by specifying an instruction length override on the first instruction and disassembling the bytes which follow it.  The need for this has been observed with x86 where there may be a flow around a <span class="gcode">LOCK</span> prefix byte. (GP-3256)</li>
 </ul>
 </blockquote>
 <blockquote><p><u><B>Improvements</B></u></p>
@@ -43,7 +43,7 @@
     <li><I>Build</I>. Fixed the <span class="gcode">buildHelp</span> gradle task to correctly check for up-to-date inputs. (GP-3430)</li>
     <li><I>Data Types</I>. Added ability to establish source archive association when non-sourced data type dependencies get copied into an archive during a commit operation. (GP-3796, Issue #5675)</li>
     <li><I>Debugger</I>. Fixed <span class="gtitle">Copy Into New Program</span> action to use Dynamic Listing for its default context. This means the Dynamic Listing does not have to have focus for those actions to be enabled. (GP-1528)</li>
-    <li><I>Debugger:Modules</I>. Changed mapper to use proper local <span class="gcode">ghidra://</span> URLs. No more "!" in them. (GP-3695)</li>
+    <li><I>Debugger:Modules</I>. Changed mapper to use proper local <span class="gcode">ghidra:&sol;&sol;</span> URLs. No more "!" in them. (GP-3695)</li>
     <li><I>Debugger:Trace</I>. Removed the <span class="gcode">TraceFunction</span> part of the Trace API. (GP-3351)</li>
     <li><I>Decompiler</I>. Removed the limitation preventing the Decompiler from analyzing functions where the <span class="gcode">this</span> parameter refers to a placeholder class structure. (GP-3590, Issue #5403, #5475)</li>
     <li><I>Decompiler</I>. Added Decompiler support for return value storage at an explicit stack offset relative to the callee's stack pointer. (GP-3613, Issue #1962)</li>

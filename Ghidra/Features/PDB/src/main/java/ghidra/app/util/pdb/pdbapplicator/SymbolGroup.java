@@ -20,7 +20,6 @@ import java.io.Writer;
 import java.util.*;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
-import ghidra.app.util.bin.format.pdb2.pdbreader.msf.MsfStream;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -157,152 +156,38 @@ public class SymbolGroup {
 		writer.write("\nEnd SymbolGroup---------------------------------------------\n");
 	}
 
-	AbstractMsSymbolIterator iterator() {
-		return new AbstractMsSymbolIterator();
+	//==============================================================================================
+	public MsSymbolIterator getSymbolIterator() throws PdbException {
+		int streamNumber;
+		int startingOffset;
+		int lengthSymbols;
+		if (moduleNumber == 0) {
+			streamNumber = pdb.getDebugInfo().getSymbolRecordsStreamNumber();
+			startingOffset = 0;
+			lengthSymbols = Integer.MAX_VALUE;
+		}
+		else {
+			ModuleInformation moduleInfo =
+				pdb.getDebugInfo().getModuleInformation(moduleNumber);
+			streamNumber = moduleInfo.getStreamNumberDebugInformation();
+			lengthSymbols = moduleInfo.getSizeLocalSymbolsDebugInformation();
+			try {
+				startingOffset = pdb.getDebugInfo().getSymbolRecords().getCvSigLength(streamNumber);
+			}
+			catch (IOException e) {
+				Msg.warn(this, "PDB issue reading stream when initializing iterator for stream " +
+					streamNumber);
+				startingOffset = 0;
+				lengthSymbols = 0; // essentially null out iterator with zero length
+			}
+			catch (CancelledException e) {
+				startingOffset = 0;
+				lengthSymbols = 0; // essentially null out iterator with zero length
+			}
+		}
+		return new MsSymbolIterator(pdb, streamNumber, startingOffset, lengthSymbols);
 	}
 
 	//==============================================================================================
-	/**
-	 * Iterator for {@link SymbolGroup} that iterates through {@link AbstractMsSymbol
-	 * AbstractMsSymbols}
-	 */
-	class AbstractMsSymbolIterator implements Iterator<AbstractMsSymbol> {
 
-		private SymbolRecords symbolRecords;
-		private int streamNumber;
-		private int lengthSymbols;
-		private int nextRetrieveOffset;
-		private SymbolRecords.SymLen symLen;
-
-		public AbstractMsSymbolIterator() {
-			symbolRecords = pdb.getDebugInfo().getSymbolRecords();
-			try {
-				if (moduleNumber == 0) {
-					streamNumber = pdb.getDebugInfo().getSymbolRecordsStreamNumber();
-					lengthSymbols = Integer.MAX_VALUE;
-				}
-				else {
-					ModuleInformation moduleInfo =
-						pdb.getDebugInfo().getModuleInformation(moduleNumber);
-					streamNumber = moduleInfo.getStreamNumberDebugInformation();
-					lengthSymbols = moduleInfo.getSizeLocalSymbolsDebugInformation();
-
-				}
-				if (streamNumber == MsfStream.NIL_STREAM_NUMBER) {
-					int a = 1;
-					a = a + 1;
-					symLen = null;
-					nextRetrieveOffset = 0;
-				}
-				else {
-					initGet();
-				}
-			}
-			catch (PdbException e) {
-				symLen = null;
-				nextRetrieveOffset = 0;
-				Msg.warn(this, "Could not retrieve moduleInfo for module number: " + moduleNumber);
-			}
-		}
-
-		@Override
-		public boolean hasNext() {
-			return (symLen != null);
-		}
-
-		/**
-		 * Peeks at and returns the next symbol without incrementing to the next.  If none are
-		 * left, then throws NoSuchElementException and reinitializes the state for a new
-		 * iteration.
-		 * @see #initGet()
-		 * @return the next symbol
-		 * @throws NoSuchElementException if there are no more elements
-		 */
-		public AbstractMsSymbol peek() throws NoSuchElementException {
-			if (symLen == null) {
-				throw new NoSuchElementException();
-			}
-			return symLen.symbol();
-		}
-
-		@Override
-		public AbstractMsSymbol next() {
-			if (symLen == null) {
-				throw new NoSuchElementException();
-			}
-			SymbolRecords.SymLen offer = symLen;
-			symLen = retrieveRecord();
-			return offer.symbol();
-		}
-
-		private SymbolRecords.SymLen retrieveRecord() {
-			if (streamNumber == MsfStream.NIL_STREAM_NUMBER) {
-				return null;
-			}
-			if (nextRetrieveOffset >= lengthSymbols) {
-				return null;
-			}
-			try {
-				SymbolRecords.SymLen retrieved =
-					symbolRecords.getRandomAccessRecord(streamNumber, nextRetrieveOffset);
-				nextRetrieveOffset += retrieved.length();
-				return retrieved;
-			}
-			catch (PdbException | CancelledException e) {
-				return null;
-			}
-		}
-
-		/**
-		 * Returns the next symbol.  If none are left, then throws NoSuchElementException and
-		 * reinitializes the state for a new iteration.
-		 * @see #initGet()
-		 * @return the next symbol
-		 * @throws NoSuchElementException if there are no more elements
-		 */
-		long getCurrentOffset() {
-			if (symLen == null) {
-				throw new NoSuchElementException();
-			}
-			return nextRetrieveOffset - symLen.length();
-		}
-
-		/**
-		 * Initialized the mechanism for requesting the symbols in sequence.
-		 * @see #hasNext()
-		 */
-		void initGet() {
-			if (streamNumber == MsfStream.NIL_STREAM_NUMBER) {
-				return;
-			}
-			try {
-				nextRetrieveOffset = symbolRecords.getCvSigLength(streamNumber);
-				symLen = retrieveRecord();
-			}
-			catch (PdbException | CancelledException | IOException e) {
-				nextRetrieveOffset = 0;
-				symLen = null;
-			}
-		}
-
-		/**
-		 * Initialized the mechanism for requesting the symbols in sequence.
-		 * @param offset the offset to which to initialize the mechanism.
-		 * @see #hasNext()
-		 */
-		void initGetByOffset(long offset) {
-			Long l = offset;
-			nextRetrieveOffset = l.intValue();
-			symLen = retrieveRecord();
-		}
-
-		/**
-		 * Returns the module number.
-		 * @return the module number.
-		 */
-		int getModuleNumber() {
-			return moduleNumber;
-		}
-
-	}
 }

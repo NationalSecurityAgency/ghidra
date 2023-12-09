@@ -1161,6 +1161,6 @@ ElementId ELEM_VAL = ElementId("val",8);
 ElementId ELEM_VALUE = ElementId("value",9);
 ElementId ELEM_VOID = ElementId("void",10);
 
-ElementId ELEM_UNKNOWN = ElementId("XMLunknown",284); // Number serves as next open index
+ElementId ELEM_UNKNOWN = ElementId("XMLunknown",285); // Number serves as next open index
 
 } // End namespace ghidra

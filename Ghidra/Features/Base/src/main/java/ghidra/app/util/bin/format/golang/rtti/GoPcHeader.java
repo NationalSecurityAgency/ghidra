@@ -148,8 +148,11 @@ public class GoPcHeader {
 	private StructureContext<GoPcHeader> context;
 
 	@FieldMapping
-	@EOLComment("goVersion")
+	@EOLComment("getGoVersion")
 	private int magic;
+
+	@FieldMapping
+	private byte minLC;
 
 	@FieldMapping
 	private byte ptrSize;
@@ -159,23 +162,23 @@ public class GoPcHeader {
 	private long textStart;	// should be same as offset of ".text"
 
 	@FieldMapping
-	@MarkupReference("funcnameAddress")
+	@MarkupReference("getFuncnameAddress")
 	private long funcnameOffset;
 
 	@FieldMapping
-	@MarkupReference("cuAddress")
+	@MarkupReference("getCuAddress")
 	private long cuOffset;
 
 	@FieldMapping
-	@MarkupReference("filetabAddress")
+	@MarkupReference("getFiletabAddress")
 	private long filetabOffset;
 
 	@FieldMapping
-	@MarkupReference("pctabAddress")
+	@MarkupReference("getPctabAddress")
 	private long pctabOffset;
 
 	@FieldMapping
-	@MarkupReference("pclnAddress")
+	@MarkupReference("getPclnAddress")
 	private long pclnOffset;
 
 	public GoVer getGoVersion() {
@@ -190,32 +193,77 @@ public class GoPcHeader {
 		return ver;
 	}
 
+	/**
+	 * Returns true if this pcln structure contains a textStart value (only present >= 1.18)
+	 * @return
+	 */
 	public boolean hasTextStart() {
 		return textStart != 0;
 	}
 
+	/**
+	 * Returns the address of where the text area starts.
+	 * 
+	 * @return address of text starts
+	 */
 	public Address getTextStart() {
 		return programContext.getDataAddress(textStart);
 	}
 
+	/**
+	 * Returns address of the func name slice
+	 * @return address of func name slice
+	 */
 	public Address getFuncnameAddress() {
 		return programContext.getDataAddress(context.getStructureStart() + funcnameOffset);
 	}
 
+	/**
+	 * Returns address of the cu tab slice, used by the cuOffset field's markup annotation.
+	 * @return address of the cu tab slice
+	 */
 	public Address getCuAddress() {
 		return programContext.getDataAddress(context.getStructureStart() + cuOffset);
 	}
 
+	/**
+	 * Returns the address of the filetab slice, used by the filetabOffset field's markup annotation
+	 * @return address of the filetab slice
+	 */
 	public Address getFiletabAddress() {
 		return programContext.getDataAddress(context.getStructureStart() + filetabOffset);
 	}
 
+	/**
+	 * Returns the address of the pctab slice, used by the pctabOffset field's markup annotation
+	 * @return address of the pctab slice
+	 */
 	public Address getPctabAddress() {
 		return programContext.getDataAddress(context.getStructureStart() + pctabOffset);
 	}
 
+	/**
+	 * Returns the address of the pcln slice, used by the pclnOffset field's markup annotation
+	 * @return address of the pcln slice
+	 */
 	public Address getPclnAddress() {
 		return programContext.getDataAddress(context.getStructureStart() + pclnOffset);
+	}
+
+	/**
+	 * Returns the min lc, used as the GoPcValueEvaluator's pcquantum
+	 * @return minLc
+	 */
+	public byte getMinLC() {
+		return minLC;
+	}
+
+	/**
+	 * Returns the pointer size
+	 * @return pointer size
+	 */
+	public byte getPtrSize() {
+		return ptrSize;
 	}
 
 	//--------------------------------------------------------------------------------------------
@@ -242,3 +290,22 @@ public class GoPcHeader {
 	}
 
 }
+/*
+struct runtime.pcHeader  
+Length: 40  Alignment: 4
+{ 
+  uint32    magic                   
+  uint8      pad1                     
+  uint8      pad2                     
+  uint8      minLC                   
+  uint8      ptrSize                  
+  int          nfunc                    
+  uint        nfiles                     
+  uintptr  textStart               
+  uintptr  funcnameOffset   
+  uintptr  cuOffset                
+  uintptr  filetabOffset          
+  uintptr  pctabOffset          
+  uintptr  pclnOffset             
+} pack()
+*/

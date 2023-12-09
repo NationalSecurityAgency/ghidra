@@ -18,8 +18,8 @@ package ghidra.app.services;
 import java.io.IOException;
 import java.net.SocketAddress;
 
-import ghidra.app.plugin.core.debug.service.rmi.trace.DefaultTraceRmiAcceptor;
-import ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiHandler;
+import ghidra.app.plugin.core.debug.service.tracermi.DefaultTraceRmiAcceptor;
+import ghidra.app.plugin.core.debug.service.tracermi.TraceRmiHandler;
 import ghidra.debug.spi.tracermi.TraceRmiLaunchOpinion;
 
 /**

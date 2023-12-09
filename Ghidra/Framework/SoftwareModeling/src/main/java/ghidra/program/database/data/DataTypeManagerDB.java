@@ -1372,25 +1372,23 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			SourceArchive sourceArchive) throws DataTypeDependencyException {
 
 		try {
-			if (existingDataType instanceof StructureDB) {
-				if (!(dataType instanceof StructureInternal)) {
+			if (existingDataType instanceof StructureDB existingStruct) {
+				if (!(dataType instanceof StructureInternal replacementStruct)) {
 					return false;
 				}
-				StructureDB existingStruct = (StructureDB) existingDataType;
-				existingStruct.doReplaceWith((StructureInternal) dataType, true);
+				existingStruct.doReplaceWith(replacementStruct, true);
 			}
-			else if (existingDataType instanceof UnionDB) {
-				if (!(dataType instanceof UnionInternal)) {
+			else if (existingDataType instanceof UnionDB existingUnion) {
+				if (!(dataType instanceof UnionInternal replacementUnion)) {
 					return false;
 				}
-				UnionDB existingUnion = (UnionDB) existingDataType;
-				existingUnion.doReplaceWith((UnionInternal) dataType, true);
+				existingUnion.doReplaceWith(replacementUnion, true);
 			}
-			else if (existingDataType instanceof FunctionDefinitionDB) {
-				if (!(dataType instanceof FunctionDefinition)) {
+			else if (existingDataType instanceof FunctionDefinitionDB existingFuncDef) {
+				if (!(dataType instanceof FunctionDefinition replacementFuncDef)) {
 					return false;
 				}
-				existingDataType.replaceWith(dataType);
+				existingFuncDef.doReplaceWith(replacementFuncDef, true);
 			}
 			else if (existingDataType instanceof EnumDB) {
 				if (!(dataType instanceof Enum)) {
@@ -3015,7 +3013,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			category.dataTypeAdded(structDB);
 
 			structDB.doReplaceWith(struct, false);
-			structDB.setDescription(struct.getDescription());
 
 			// doReplaceWith may have updated the last change time so set it back to what we want.
 			structDB.setLastChangeTime(struct.getLastChangeTime());
@@ -3079,7 +3076,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			category.dataTypeAdded(unionDB);
 
 			unionDB.doReplaceWith(union, false);
-			unionDB.setDescription(union.getDescription());
 
 			// doReplaceWith updated the last change time so set it back to what we want.
 			unionDB.setLastChangeTime(union.getLastChangeTime());
@@ -3326,8 +3322,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			// Make sure category knows about function definition before args/return resolved
 			cat.dataTypeAdded(funDefDb);
 
-			funDefDb.setArguments(funDef.getArguments());
-			funDefDb.setReturnType(funDef.getReturnType());
+			funDefDb.doReplaceWith(funDef, false);
 
 			// setArguments updated the last change time so set it back to what we want.
 			funDefDb.setLastChangeTime(funDef.getLastChangeTime());

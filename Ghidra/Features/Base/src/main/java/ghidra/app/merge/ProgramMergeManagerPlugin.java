@@ -15,6 +15,10 @@
  */
 package ghidra.app.merge;
 
+import java.net.URL;
+
+import javax.swing.JComponent;
+
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -24,11 +28,6 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
-
-import java.awt.Component;
-import java.net.URL;
-
-import javax.swing.JComponent;
 
 /**
  * Plugin that provides a merge component provider.
@@ -219,12 +218,17 @@ public class ProgramMergeManagerPlugin extends MergeManagerPlugin implements Pro
 	}
 
 	@Override
+	public Program openCachedProgram(URL ghidraURL, Object consumer) {
+		return null;
+	}
+
+	@Override
 	public Program openProgram(DomainFile domainFile) {
 		return null;
 	}
 
 	@Override
-	public Program openProgram(DomainFile domainFile, Component dialogParent) {
+	public Program openCachedProgram(DomainFile domainFile, Object consumer) {
 		return null;
 	}
 
@@ -240,38 +244,42 @@ public class ProgramMergeManagerPlugin extends MergeManagerPlugin implements Pro
 
 	@Override
 	public void openProgram(Program program) {
-	}
-
-	@Override
-	public void openProgram(Program program, boolean current) {
+		// not supported
 	}
 
 	@Override
 	public void openProgram(Program program, int state) {
+		// not supported
 	}
 
 	@Override
 	public void releaseProgram(Program program, Object persistentOwner) {
+		// not supported
 	}
 
 	@Override
 	public void saveProgram() {
+		// not supported
 	}
 
 	@Override
 	public void saveProgram(Program program) {
+		// not supported
 	}
 
 	@Override
 	public void saveProgramAs() {
+		// not supported
 	}
 
 	@Override
 	public void saveProgramAs(Program program) {
+		// not supported
 	}
 
 	@Override
 	public void setCurrentProgram(Program p) {
+		// not supported
 	}
 
 	@Override
@@ -280,14 +288,7 @@ public class ProgramMergeManagerPlugin extends MergeManagerPlugin implements Pro
 	}
 
 	public void setSearchPriority(Program p, int priority) {
+		// not supported
 	}
 
-	@Override
-	public boolean isLocked() {
-		return false;
-	}
-
-	@Override
-	public void lockDown(boolean state) {
-	}
 }

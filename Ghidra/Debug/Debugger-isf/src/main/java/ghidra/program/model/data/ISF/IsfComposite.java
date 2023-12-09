@@ -15,52 +15,50 @@
  */
 package ghidra.program.model.data.ISF;
 
-import java.util.*;
-
 import com.google.gson.JsonObject;
 
-import ghidra.program.model.data.*;
-import ghidra.program.model.data.ISF.IsfDataTypeWriter.Exclude;
+import ghidra.program.model.data.Composite;
+import ghidra.program.model.data.DataTypeComponent;
+import ghidra.program.model.data.Structure;
 import ghidra.util.task.TaskMonitor;
 
-public class IsfComposite implements IsfObject {
+public class IsfComposite extends AbstractIsfObject {
 
 	public String kind;
 	public Integer size;
 	public JsonObject fields;
-
-	@Exclude
-	public int alignment;
-
+	
 	public IsfComposite(Composite composite, IsfDataTypeWriter writer, TaskMonitor monitor) {
+		super(composite);
 		size = composite.getLength();
 		kind = composite instanceof Structure ? "struct" : "union";
-		alignment = composite.getAlignment();
 
 		DataTypeComponent[] components = composite.getComponents();
-		Map<String, DataTypeComponent> comps = new HashMap<>();
-		for (DataTypeComponent component : components) {
-			String key = component.getFieldName();
-			if (key == null) {
-				key = component.getDefaultFieldName();
-			}
-			comps.put(key, component);
+		if (components.length == 0) {
+			// NB: composite.getLength always returns > 0
+			size = 0;
 		}
-		ArrayList<String> keylist = new ArrayList<>(comps.keySet());
-		Collections.sort(keylist);
-
 		fields = new JsonObject();
-		for (String key : keylist) {
+		for (DataTypeComponent component : components) {
 			if (monitor.isCancelled()) {
 				break;
 			}
 
-			DataTypeComponent component = comps.get(key);
 			IsfObject type = writer.getObjectTypeDeclaration(component);
-			IsfComponent cobj = new IsfComponent(component, type);
+			IsfComponent cobj = getComponent(component, type);
+			String key = component.getFieldName();
+			if (key == null) {
+				key = DataTypeComponent.DEFAULT_FIELD_NAME_PREFIX + component.getOrdinal();
+				if (component.getParent() instanceof Structure) {
+					key += "_0x" + Integer.toHexString(component.getOffset());
+				}
+			}
 			fields.add(key, writer.getTree(cobj));
 		}
+	}
 
+	protected IsfComponent getComponent(DataTypeComponent component, IsfObject type) {
+		return new IsfComponent(component, type);
 	}
 
 }

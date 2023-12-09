@@ -213,7 +213,7 @@ public class GnuDemanglerParser {
 	 * 			{lambda(NS1::Class1 const&, int, int)#1} const&
 	 *          {lambda(auto:1&&)#1}<NS1::NS2>&&
 	 *
-	 * Pattern: [optional text] brace lambda([parameters])#digits brace [trailing text]
+	 * Pattern: [optional text] { lambda([parameters])#digits } [trailing text]
 	 *
 	 * Parts:
 	 * 			-full text without leading characters (capture group 1)
@@ -227,12 +227,23 @@ public class GnuDemanglerParser {
 	/*
 	 * Sample:  {unnamed type#1}
 	 *
-	 * Pattern: [optional text] brace unnamed type#digits brace
+	 * Pattern: [optional text] { unnamed type#digits }
 	 *
 	 * Parts:
 	 * 			-full text without leading characters (capture group 1)
 	 */
 	private static final Pattern UNNAMED_TYPE_PATTERN = Pattern.compile("(\\{unnamed type#\\d+})");
+
+	/**
+	 * Sample:	template parameter object for namespace::StringLiteral<38ul>{char [38]{(char)69, (char)101, ... }}
+	 * 
+	 * Pattern: (text) { (array type) [size] { array contents } }
+	 * 
+	 * Parts:
+	 * 			-non-array definition prefix, which is the type (capture group 1)
+	 */
+	private static final Pattern ARRAY_DATA_PATTERN =
+		Pattern.compile("(.+)\\{(.+)\\[\\d*\\]\\{.*\\}\\}");
 
 	/*
 	 * Sample:  covariant return thunk to Foo::Bar::copy(Foo::CoolStructure*) const
@@ -428,6 +439,11 @@ public class GnuDemanglerParser {
 
 			if (prefix.startsWith(TYPEINFO_NAME_FOR)) {
 				return new TypeInfoNameHandler(demangled, TYPEINFO_NAME_FOR);
+			}
+
+			Matcher arrayMatcher = ARRAY_DATA_PATTERN.matcher(type);
+			if (arrayMatcher.matches()) {
+				return new ArrayHandler(demangled, prefix, type);
 			}
 
 			return new ItemInNamespaceHandler(demangled, prefix, type);
@@ -779,6 +795,14 @@ public class GnuDemanglerParser {
 		boolean finishedName = false;
 		for (int i = 0; i < datatype.length(); ++i) {
 			char ch = datatype.charAt(i);
+
+			//
+			// Hack: Not sure what this is, but we have seen template parameter values that start
+			// with an '&'
+			//
+			if (ch == '&' && i == 0) {
+				continue; // for now, let the '&' through to be part of the name
+			}
 
 			if (!finishedName && isDataTypeNameCharacter(ch)) {
 				continue;
@@ -1514,6 +1538,52 @@ public class GnuDemanglerParser {
 		@Override
 		DemangledObject doBuild(Demangled namespace) {
 			DemangledObject demangledObject = parseItemInNamespace(type);
+			return demangledObject;
+		}
+	}
+
+	private class ArrayHandler extends SpecialPrefixHandler {
+
+		private String arrayType;
+
+		ArrayHandler(String demangled, String prefix, String item) {
+			super(demangled);
+			this.demangled = demangled;
+			this.prefix = prefix;
+			this.type = item;
+
+			//
+			// Handle array data definitions here for now.  If we see this in non-specialized prefix
+			// cases, then we can extract this code.
+			//
+			Matcher arrayMatcher = ARRAY_DATA_PATTERN.matcher(type);
+			if (arrayMatcher.matches()) {
+				// keep only the type information, dropping the array definition
+				type = arrayMatcher.group(1);
+				arrayType = arrayMatcher.group(2).trim();
+			}
+
+		}
+
+		@Override
+		DemangledObject doBuild(Demangled namespace) {
+			DemangledObject demangledObject = parseItemInNamespace(type);
+			if (demangledObject instanceof DemangledVariable variable) {
+
+				//
+				// Creating a DemangledString here will correctly create the string data when this
+				// demangled type is applied.
+				//
+				if ("char".equals(arrayType) && type.contains("StringLiteral")) {
+					// treat a char[] as a string
+					DemangledString ds =
+						new DemangledString(variable.getMangledString(), demangled, type, type,
+							-1 /*unknown length*/, false);
+					ds.setSpecialPrefix(prefix);
+					return ds;
+				}
+
+			}
 			return demangledObject;
 		}
 	}

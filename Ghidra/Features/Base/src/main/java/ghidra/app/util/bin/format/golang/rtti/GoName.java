@@ -15,10 +15,9 @@
  */
 package ghidra.app.util.bin.format.golang.rtti;
 
+import java.io.IOException;
 import java.util.EnumSet;
 import java.util.Set;
-
-import java.io.IOException;
 
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.data.DataType;
@@ -49,7 +48,7 @@ public class GoName implements StructureReader<GoName>, StructureMarkup<GoName> 
 
 		private final int flagValue;
 
-		private Flag(int flagValue) {
+		Flag(int flagValue) {
 			this.flagValue = flagValue;
 		}
 
@@ -80,14 +79,14 @@ public class GoName implements StructureReader<GoName>, StructureMarkup<GoName> 
 	int flags;
 
 	@FieldOutput(isVariableLength = true)
-	@EOLComment("fullNameString")
+	@EOLComment("getFullNameString")
 	GoVarlenString name;
 
 	@FieldOutput(isVariableLength = true)
 	GoVarlenString tag;
 
-	@FieldOutput(isVariableLength = true, getter = "pkgPathDataType")
-	@MarkupReference("pkgPath")
+	@FieldOutput(isVariableLength = true, getter = "getPkgPathDataType")
+	@MarkupReference("getPkgPath")
 	long pkgPath;	// uint32, nameoffset, only present if flags.HAS_PKGPATH
 
 	@Override
@@ -102,34 +101,78 @@ public class GoName implements StructureReader<GoName>, StructureMarkup<GoName> 
 				: 0;
 	}
 
+	/**
+	 * Returns the name value.
+	 * 
+	 * @return name string
+	 */
 	public String getName() {
 		return name.getString();
 	}
 
+	/**
+	 * Returns the tag string.
+	 * 
+	 * @return tag string
+	 */
 	public String getTag() {
 		return tag != null ? tag.getString() : "";
 	}
 
+	/**
+	 * Returns the package path string, or null if not present.
+	 * 
+	 * @return package path string, or null if not present
+	 * @throws IOException if error reading data
+	 */
 	@Markup
 	public GoName getPkgPath() throws IOException {
 		return programContext.resolveNameOff(context.getStructureStart(), pkgPath);
 	}
 
+	/**
+	 * Returns the data type needed to store the pkg path offset field, called by serialization
+	 * from the fieldoutput annotation.
+	 * 
+	 * @return Ghidra data type needed to store the pkg path offset field, or null if not present 
+	 */
 	public DataType getPkgPathDataType() {
 		return Flag.HAS_PKGPATH.isSet(flags)
 				? programContext.getInt32DT()
 				: null;
 	}
 
-	public String getFullNameString() throws IOException {
-		GoName pkgPathName = getPkgPath();
-		return (pkgPathName != null ? pkgPathName.getFullNameString() + "." : "") + getName();
+	/**
+	 * Returns a descriptive string containing the full name value.
+	 * 
+	 * @return descriptive string
+	 */
+	public String getFullNameString() {
+		String packagePathString = "";
+		try {
+			GoName pkgPathName = getPkgPath();
+			packagePathString = pkgPathName != null ? pkgPathName.getFullNameString() + "." : "";
+		}
+		catch (IOException e) {
+			// fall thru with empty package path
+		}
+		return packagePathString + getName();
 	}
 
+	/**
+	 * Returns the flags found in this structure.
+	 * 
+	 * @return flags, as an int
+	 */
 	public int getFlags() {
 		return flags;
 	}
 
+	/**
+	 * Returns the flags found in this structure.
+	 * 
+	 * @return flags, as a set of {@link Flag} enum values
+	 */
 	public Set<Flag> getFlagsSet() {
 		return Flag.parseFlags(flags);
 	}
@@ -142,6 +185,30 @@ public class GoName implements StructureReader<GoName>, StructureMarkup<GoName> 
 	@Override
 	public String getStructureName() throws IOException {
 		return getName();
+	}
+
+	@Override
+	public String toString() {
+		return String.format(
+			"GoName [context=%s, flags=%s, name=%s, tag=%s, pkgPath=%s, getFullNameString(): %s]",
+			context, flags, name, tag, pkgPath, getFullNameString());
+	}
+
+	//---------------------------------------------------------------------------------------------
+
+	/**
+	 * Create a GoName instance that supplies a specified name.
+	 * 
+	 * @param fakeName string name to return from the GoName's getName()
+	 * @return new GoName instance that can only be used to call getName() 
+	 */
+	public static GoName createFakeInstance(String fakeName) {
+		return new GoName() {
+			@Override
+			public String getName() {
+				return fakeName;
+			}
+		};
 	}
 
 }

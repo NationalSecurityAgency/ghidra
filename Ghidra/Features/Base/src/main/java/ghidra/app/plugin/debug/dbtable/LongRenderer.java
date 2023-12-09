@@ -20,11 +20,11 @@ import java.awt.Component;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 
-import docking.widgets.table.GTableCellRenderer;
 import docking.widgets.table.GTableCellRenderingData;
 import ghidra.docking.settings.Settings;
+import ghidra.util.table.column.AbstractGColumnRenderer;
 
-public class LongRenderer extends GTableCellRenderer {
+public class LongRenderer extends AbstractGColumnRenderer<Object> {
 
 	@Override
 	public Component getTableCellRendererComponent(GTableCellRenderingData data) {
@@ -38,11 +38,17 @@ public class LongRenderer extends GTableCellRenderer {
 
 	@Override
 	protected String getText(Object value) {
-		return value == null ? "" : "0x" + Long.toHexString((Long) value);
+		return value == null ? "" : "0x" + Long.toHexString(((Number) value).longValue());
 	}
 
 	@Override
 	protected String formatNumber(Number value, Settings settings) {
 		return getText(value);
+	}
+
+	@Override
+	public String getFilterString(Object t, Settings settings) {
+		// have the filter text match the display string
+		return getText(t);
 	}
 }

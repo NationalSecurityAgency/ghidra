@@ -74,13 +74,13 @@ public class StructureDBTest extends AbstractGenericTest {
 	}
 
 	private TypeDef createTypeDef(DataType dataType) {
-		return (TypeDef) dataMgr.resolve(
-			new TypedefDataType(dataType.getName() + "TypeDef", dataType), null);
+		return (TypeDef) dataMgr
+				.resolve(new TypedefDataType(dataType.getName() + "TypeDef", dataType), null);
 	}
 
 	private Array createArray(DataType dataType, int numElements) {
-		return (Array) dataMgr.resolve(
-			new ArrayDataType(dataType, numElements, dataType.getLength()), null);
+		return (Array) dataMgr
+				.resolve(new ArrayDataType(dataType, numElements, dataType.getLength()), null);
 	}
 
 	private Pointer createPointer(DataType dataType, int length) {
@@ -438,7 +438,7 @@ public class StructureDBTest extends AbstractGenericTest {
 		assertEquals(DWordDataType.class, comps[3].getDataType().getClass());
 
 	}
-	
+
 	@Test
 	public void testInsertWithZeroArrayAtOffset() {
 		struct.insertAtOffset(2, FloatDataType.dataType, -1);
@@ -457,7 +457,7 @@ public class StructureDBTest extends AbstractGenericTest {
 		assertEquals(2, comps[1].getOffset());
 		assertEquals(2, comps[1].getOrdinal());
 		assertTrue(zeroArray.isEquivalent(comps[1].getDataType()));
-		
+
 		assertEquals(2, comps[2].getOffset());
 		assertEquals(3, comps[2].getOrdinal());
 		assertEquals(FloatDataType.class, comps[2].getDataType().getClass());
@@ -471,7 +471,7 @@ public class StructureDBTest extends AbstractGenericTest {
 		assertEquals(DWordDataType.class, comps[4].getDataType().getClass());
 
 	}
-	
+
 	@Test
 	public void testInsertWithZeroArrayAtOffset2() {
 		Array zeroArray = new ArrayDataType(FloatDataType.dataType, 0, -1);
@@ -490,11 +490,11 @@ public class StructureDBTest extends AbstractGenericTest {
 		assertEquals(2, comps[1].getOffset());
 		assertEquals(2, comps[1].getOrdinal());
 		assertEquals(FloatDataType.class, comps[1].getDataType().getClass());
-		
+
 		assertEquals(6, comps[2].getOffset());
 		assertEquals(3, comps[2].getOrdinal());
 		assertTrue(zeroArray.isEquivalent(comps[2].getDataType()));
-		
+
 		assertEquals(6, comps[3].getOffset());
 		assertEquals(4, comps[3].getOrdinal());
 		assertEquals(WordDataType.class, comps[3].getDataType().getClass());
@@ -1305,7 +1305,7 @@ public class StructureDBTest extends AbstractGenericTest {
 		assertEquals(dtc1, dtcs[1]);
 		assertEquals(dtc2, dtcs[2]);
 		assertEquals("Test", struct.getName());
-		assertEquals("", struct.getDescription());
+		assertEquals("testReplaceWith()", struct.getDescription());
 	}
 
 	@Test
@@ -1681,14 +1681,14 @@ public class StructureDBTest extends AbstractGenericTest {
 
 	@Test
 	public void testDeleteAtOffset2() {
-		
+
 		assertEquals(8, struct.getLength());
-		
+
 		Array zeroArray = new ArrayDataType(CharDataType.dataType, 0, -1);
 		struct.insertAtOffset(1, zeroArray, -1);
-		
+
 		assertEquals(8, struct.getLength());
-		
+
 		DataTypeComponent[] comps = struct.getDefinedComponents();
 		assertEquals(5, comps.length);
 
@@ -1699,21 +1699,21 @@ public class StructureDBTest extends AbstractGenericTest {
 		assertEquals(1, comps[1].getOffset());
 		assertEquals(1, comps[1].getOrdinal());
 		assertTrue(zeroArray.isEquivalent(comps[1].getDataType()));
-		
+
 		assertEquals(1, comps[2].getOffset());
 		assertEquals(2, comps[2].getOrdinal());
 		assertEquals(WordDataType.class, comps[2].getDataType().getClass());
-		
+
 		struct.deleteAtOffset(1);
-		
+
 		assertEquals(6, struct.getLength());
 		assertEquals(3, struct.getNumComponents());
 		comps = struct.getDefinedComponents();
-		
+
 		assertEquals(DWordDataType.class, comps[1].getDataType().getClass());
 		assertEquals(1, comps[1].getOffset());
 	}
-	
+
 	@Test
 	public void testDeleteComponent() {
 		Structure s = new StructureDataType("test1", 0);
@@ -1981,9 +1981,9 @@ public class StructureDBTest extends AbstractGenericTest {
 
 	@Test
 	public void testReplaceAtVarLengthDataTypes() {
-		
+
 		// TODO: these tests are too simple since they only replace undefined components
-		
+
 		Structure s1 = new StructureDataType("Test1", 25);
 
 		s1.replaceAtOffset(0, new StringDataType(), 5, null, null);
@@ -2002,7 +2002,7 @@ public class StructureDBTest extends AbstractGenericTest {
 
 	@Test
 	public void testReplaceAtVarLengthDataTypes2() {
-		
+
 		// TODO: these tests are too simple since they only replace undefined components
 
 		Structure s1 = new StructureDataType("Test1", 0x60);

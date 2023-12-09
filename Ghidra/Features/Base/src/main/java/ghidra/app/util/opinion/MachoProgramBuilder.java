@@ -15,9 +15,12 @@
  */
 package ghidra.app.util.opinion;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 
+import ghidra.app.plugin.core.analysis.rust.RustConstants;
+import ghidra.app.plugin.core.analysis.rust.RustUtilities;
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.RelocationException;
@@ -149,6 +152,7 @@ public class MachoProgramBuilder {
 		// Perform additional actions
 		renameObjMsgSendRtpSymbol();
 		fixupProgramTree(null); // should be done last to account for new memory blocks
+		setCompiler();
 	}
 	
 	/**
@@ -1684,6 +1688,22 @@ public class MachoProgramBuilder {
 		for (int i = 0; i < frameworks.size(); ++i) {
 			props.setString("Mach-O Sub-framework " + i,
 				frameworks.get(i).getUmbrellaFrameworkName().getString());
+		}
+	}
+
+	protected void setCompiler() {
+		// Check for Rust
+		try {
+			if (RustUtilities.isRust(program,
+				SegmentNames.SEG_TEXT + "." + SectionNames.TEXT_CONST)) {
+				int extensionCount = RustUtilities.addExtensions(program, monitor,
+					RustConstants.RUST_EXTENSIONS_UNIX);
+				log.appendMsg("Installed " + extensionCount + " Rust cspec extensions");
+				program.setCompiler("rustc");
+			}
+		}
+		catch (IOException e) {
+			log.appendException(e);
 		}
 	}
 

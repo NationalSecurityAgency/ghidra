@@ -178,7 +178,7 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 		PdbLog.message(DESCRIPTION);
 		PdbLog.message("PDB Filename: " + pdbFile + "\n");
 
-		try (AbstractPdb pdb = PdbParser.parse(pdbFile.getPath(), pdbReaderOptions, monitor)) {
+		try (AbstractPdb pdb = PdbParser.parse(pdbFile, pdbReaderOptions, monitor)) {
 			monitor.setMessage("PDB: Parsing " + pdbFile + "...");
 			pdb.deserialize();
 			DefaultPdbApplicator applicator = new DefaultPdbApplicator(pdb);

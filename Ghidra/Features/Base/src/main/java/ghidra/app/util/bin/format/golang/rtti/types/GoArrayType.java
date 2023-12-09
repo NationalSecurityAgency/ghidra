@@ -15,34 +15,51 @@
  */
 package ghidra.app.util.bin.format.golang.rtti.types;
 
+import java.io.IOException;
 import java.util.Set;
 
-import java.io.IOException;
-
 import ghidra.app.util.bin.format.golang.structmapping.*;
+import ghidra.app.util.viewer.field.AddressAnnotatedStringHandler;
 import ghidra.program.model.data.ArrayDataType;
 import ghidra.program.model.data.DataType;
 
+/**
+ * {@link GoType} structure that defines an array.
+ */
 @StructureMapping(structureName = "runtime.arraytype")
 public class GoArrayType extends GoType {
 
 	@FieldMapping
+	@MarkupReference("getElement")
 	private long elem;  // pointer to element type
 
 	@FieldMapping
+	@MarkupReference("getSliceType")
 	private long slice;	// pointer to slice type
 
 	@FieldMapping
 	private long len;
 
 	public GoArrayType() {
+		// empty
 	}
 
+	/**
+	 * Returns a reference to the {@link GoType} of the elements of this array.
+	 *  
+	 * @return reference to the {@link GoType} of the elements of this array
+	 * @throws IOException if error reading data
+	 */
 	@Markup
 	public GoType getElement() throws IOException {
 		return programContext.getGoType(elem);
 	}
 
+	/**
+	 * Returns a reference to the {@link GoType} that defines the slice version of this array. 
+	 * @return reference to the {@link GoType} that defines the slice version of this array
+	 * @throws IOException if error reading data
+	 */
 	@Markup
 	public GoType getSliceType() throws IOException {
 		return programContext.getGoType(slice);
@@ -72,6 +89,32 @@ public class GoArrayType extends GoType {
 			sliceType.discoverGoTypes(discoveredTypes);
 		}
 		return true;
+	}
+
+	@Override
+	public String getStructureNamespace() throws IOException {
+		String packagePath = getPackagePathString();
+		if (packagePath != null && !packagePath.isEmpty()) {
+			return packagePath;
+		}
+		GoType elementType = getElement();
+		if (elementType != null) {
+			return elementType.getStructureNamespace();
+		}
+		return super.getStructureNamespace();
+	}
+
+	@Override
+	protected String getTypeDeclString() throws IOException {
+		// type CustomArraytype [elementcount]elementType
+		String selfName = typ.getName();
+		String elemName = programContext.getGoTypeName(elem);
+		String arrayDefStr = "[%d]%s".formatted(len, elemName);
+		String defStrWithLinks = "[%d]%s".formatted(len,
+			AddressAnnotatedStringHandler.createAddressAnnotationString(elem, elemName));
+		boolean hasName = !arrayDefStr.equals(selfName);
+
+		return "type %s%s".formatted(hasName ? selfName + " " : "", defStrWithLinks);
 	}
 
 }

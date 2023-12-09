@@ -19,8 +19,7 @@ import java.io.IOException;
 import java.net.SocketAddress;
 import java.util.Collection;
 
-import ghidra.debug.api.tracermi.TraceRmiAcceptor;
-import ghidra.debug.api.tracermi.TraceRmiConnection;
+import ghidra.debug.api.tracermi.*;
 import ghidra.framework.plugintool.ServiceInfo;
 
 /**
@@ -35,7 +34,7 @@ import ghidra.framework.plugintool.ServiceInfo;
  */
 @ServiceInfo(
 	description = "A service for accepting and creating Trace RMI connections",
-	defaultProviderName = "ghidra.app.plugin.core.debug.service.rmi.trace.TraceRmiPlugin")
+	defaultProviderName = "ghidra.app.plugin.core.debug.service.tracermi.TraceRmiPlugin")
 public interface TraceRmiService {
 	/**
 	 * Get the address (and port) of the Trace RMI TCP server
@@ -105,4 +104,26 @@ public interface TraceRmiService {
 	 * @return the connections
 	 */
 	Collection<TraceRmiConnection> getAllConnections();
+
+	/**
+	 * Get all of the acceptors currently listening for a connection
+	 * 
+	 * @return the acceptors
+	 */
+	Collection<TraceRmiAcceptor> getAllAcceptors();
+
+	/**
+	 * Add a listener for events on the Trace RMI service
+	 * 
+	 * @param listener the listener to add
+	 */
+	void addTraceServiceListener(TraceRmiServiceListener listener);
+
+	/**
+	 * Remove a listener for events on the Trace RMI service
+	 * 
+	 * @param listener the listener to remove
+	 */
+	void removeTraceServiceListener(TraceRmiServiceListener listener);
+
 }

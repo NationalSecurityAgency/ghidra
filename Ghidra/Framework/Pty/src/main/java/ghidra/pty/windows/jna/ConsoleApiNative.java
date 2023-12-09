@@ -57,7 +57,7 @@ public interface ConsoleApiNative extends StdCallLibrary {
 			WinBase.SECURITY_ATTRIBUTES lpThreadAttributes,
 			boolean bInheritHandles,
 			DWORD dwCreationFlags,
-			Pointer lpEnvironment,
+			WString lpEnvironment,
 			WString lpCurrentDirectory,
 			STARTUPINFOEX lpStartupInfo,
 			WinBase.PROCESS_INFORMATION lpProcessInformation);

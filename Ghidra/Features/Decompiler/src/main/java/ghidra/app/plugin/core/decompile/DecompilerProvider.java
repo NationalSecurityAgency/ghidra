@@ -53,6 +53,7 @@ import ghidra.util.Swing;
 import ghidra.util.bean.field.AnnotatedTextFieldElement;
 import ghidra.util.task.SwingUpdateManager;
 import resources.Icons;
+import resources.MultiIconBuilder;
 import utility.function.Callback;
 
 public class DecompilerProvider extends NavigatableComponentProviderAdapter
@@ -64,8 +65,25 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	private static final Icon REFRESH_ICON = Icons.REFRESH_ICON;
 	private static final Icon C_SOURCE_ICON = new GIcon("icon.decompiler.action.provider");
 
+	private static final Icon SLASH_ICON = new GIcon("icon.decompiler.action.slash");
+
+	private static final Icon TOGGLE_UNREACHABLE_CODE_ICON =
+		new GIcon("icon.decompiler.action.provider.unreachable");
+
+	private static final Icon TOGGLE_UNREACHABLE_CODE_DISABLED_ICON =
+		new MultiIconBuilder(TOGGLE_UNREACHABLE_CODE_ICON).addCenteredIcon(SLASH_ICON).build();
+
+	private static final Icon TOGGLE_READ_ONLY_ICON =
+		new GIcon("icon.decompiler.action.provider.readonly");
+
+	private static final Icon TOGGLE_READ_ONLY_DISABLED_ICON =
+		new MultiIconBuilder(TOGGLE_READ_ONLY_ICON).addCenteredIcon(SLASH_ICON).build();
+
 	private DockingAction pcodeGraphAction;
 	private DockingAction astGraphAction;
+
+	private ToggleDockingAction displayUnreachableCodeToggle;
+	private ToggleDockingAction respectReadOnlyFlags;
 
 	private final DecompilePlugin plugin;
 	private ClipboardService clipboardService;
@@ -142,7 +160,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "DecompilerIntro"));
 		addToTool();
 
-		redecompileUpdater = new SwingUpdateManager(500, 5000, () -> doRefresh());
+		redecompileUpdater = new SwingUpdateManager(500, 5000, () -> doRefresh(false));
 		followUpWorkUpdater = new SwingUpdateManager(() -> doFollowUpWork());
 
 		plugin.getTool().addServiceListener(serviceListener);
@@ -180,6 +198,9 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 			ToolOptions opt = tool.getOptions(OPTIONS_TITLE);
 			decompilerOptions.grabFromToolAndProgram(fieldOptions, opt, program);
 			controller.setOptions(decompilerOptions);
+
+			refreshToggleButtons();
+
 			controller.display(program, currentLocation, null);
 		}
 	}
@@ -320,14 +341,37 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		}
 	}
 
-	private void doRefresh() {
+	private void doRefresh(boolean optionsChanged) {
 		ToolOptions fieldOptions = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
 		ToolOptions opt = tool.getOptions(OPTIONS_TITLE);
+
+		// Current values of toggle buttons
+		boolean decompilerEliminatesUnreachable = decompilerOptions.isEliminateUnreachable();
+		boolean decompilerRespectsReadOnlyFlags = decompilerOptions.isRespectReadOnly();
+
 		decompilerOptions.grabFromToolAndProgram(fieldOptions, opt, program);
+
+		// If the tool options were not changed
+		if (!optionsChanged) {
+			// Keep these analysis options the same
+			decompilerOptions.setEliminateUnreachable(decompilerEliminatesUnreachable);
+			decompilerOptions.setRespectReadOnly(decompilerRespectsReadOnlyFlags);
+		}
+		else {
+			// Otherwise, keep the new analysis options and update the state of the toggle buttons
+			refreshToggleButtons();
+		}
+
 		controller.setOptions(decompilerOptions);
+
 		if (currentLocation != null) {
 			controller.refreshDisplay(program, currentLocation, null);
 		}
+	}
+
+	private void refreshToggleButtons() {
+		displayUnreachableCodeToggle.setSelected(!decompilerOptions.isEliminateUnreachable());
+		respectReadOnlyFlags.setSelected(!decompilerOptions.isRespectReadOnly());
 	}
 
 	private void doFollowUpWork() {
@@ -357,7 +401,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 		if (options.getName().equals(OPTIONS_TITLE) ||
 			options.getName().equals(GhidraOptions.CATEGORY_BROWSER_FIELDS)) {
-			doRefresh();
+			doRefresh(true);
 		}
 	}
 
@@ -463,6 +507,15 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	 */
 	void refresh() {
 		controller.refreshDisplay(program, currentLocation, null);
+	}
+
+	/**
+	 * Update the options from decompilerOptions
+	 */
+	void updateOptionsAndRefresh() {
+		controller.setOptions(decompilerOptions);
+
+		refresh();
 	}
 
 	@Override
@@ -771,6 +824,87 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		refreshAction
 				.setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ToolBarRedecompile")); // just use the default
 
+		displayUnreachableCodeToggle = new ToggleDockingAction("Toggle Unreachable Code", owner) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				boolean isSelected = this.isSelected();
+
+				// Set the option based on the button state
+				decompilerOptions.setEliminateUnreachable(!isSelected);
+
+				updateOptionsAndRefresh();
+			}
+
+			@Override
+			public void setSelected(boolean isSelected) {
+				super.setSelected(isSelected);
+
+				// Update the icon to have a slash or not
+				if (!isSelected) {
+					displayUnreachableCodeToggle
+							.setToolBarData(new ToolBarData(TOGGLE_UNREACHABLE_CODE_ICON, "A"));
+				}
+				else {
+					displayUnreachableCodeToggle.setToolBarData(
+						new ToolBarData(TOGGLE_UNREACHABLE_CODE_DISABLED_ICON, "A"));
+				}
+			}
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				DecompileData decompileData = controller.getDecompileData();
+				if (decompileData == null) {
+					return false;
+				}
+				return decompileData.hasDecompileResults();
+			}
+		};
+		displayUnreachableCodeToggle.setDescription("Toggle off to eliminate unreachable code");
+		displayUnreachableCodeToggle.setHelpLocation(
+			new HelpLocation(HelpTopics.DECOMPILER, "ToolBarEliminateUnreachableCode"));
+
+		respectReadOnlyFlags = new ToggleDockingAction("Toggle Respecting Read-only Flags", owner) {
+			@Override
+			public void actionPerformed(ActionContext context) {
+				boolean isSelected = this.isSelected();
+
+				// Set the option based on the button state
+				decompilerOptions.setRespectReadOnly(!isSelected);
+
+				updateOptionsAndRefresh();
+			}
+
+			@Override
+			public void setSelected(boolean isSelected) {
+				super.setSelected(isSelected);
+
+				// Update the icon to have a slash or not
+				if (!isSelected) {
+					respectReadOnlyFlags
+							.setToolBarData(new ToolBarData(TOGGLE_READ_ONLY_ICON, "A"));
+				}
+				else {
+					respectReadOnlyFlags
+							.setToolBarData(new ToolBarData(TOGGLE_READ_ONLY_DISABLED_ICON, "A"));
+				}
+			}
+
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				DecompileData decompileData = controller.getDecompileData();
+				if (decompileData == null) {
+					return false;
+				}
+				return decompileData.hasDecompileResults();
+			}
+		};
+		respectReadOnlyFlags.setDescription("Toggle off to respect readonly flags set on memory");
+		respectReadOnlyFlags
+				.setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ToolBarRespectReadOnly"));
+
+		// Set the selected state and icon for the above two toggle icons
+		refreshToggleButtons();
+
 		//
 		// Below are actions along with their groups and subgroup information.  The comments
 		// for each section indicates the logical group for the actions that follow.
@@ -999,6 +1133,8 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		GoToPreviousBraceAction goToPreviousBraceAction = new GoToPreviousBraceAction();
 
 		addLocalAction(refreshAction);
+		addLocalAction(displayUnreachableCodeToggle);
+		addLocalAction(respectReadOnlyFlags);
 		addLocalAction(selectAllAction);
 		addLocalAction(defUseHighlightAction);
 		addLocalAction(forwardSliceAction);

@@ -20,6 +20,7 @@ import java.lang.reflect.Array;
 import java.util.*;
 
 import ghidra.app.util.bin.format.dwarf4.DWARFUtil;
+import ghidra.app.util.bin.format.dwarf4.next.DWARFDataInstanceHelper;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
@@ -29,7 +30,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
-import ghidra.util.exception.InvalidInputException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -40,6 +41,7 @@ public class MarkupSession {
 	protected Program program;
 	protected DataTypeMapper mappingContext;
 	protected Set<Address> markedupStructs = new HashSet<>();
+	protected AddressSet markedupAddrs = new AddressSet();
 	protected TaskMonitor monitor;
 
 	/**
@@ -72,6 +74,10 @@ public class MarkupSession {
 		return mappingContext;
 	}
 
+	public AddressSet getMarkedupAddresses() {
+		return markedupAddrs;
+	}
+
 	/**
 	 * Decorates the specified object's memory using the various structure mapping tags that 
 	 * were applied the object's class definition.
@@ -85,12 +91,11 @@ public class MarkupSession {
 	 * who's data type has already been laid down in memory, removing the need for this object's
 	 * data type to be applied to memory 
 	 * @throws IOException if error or cancelled
+	 * @throws CancelledException if cancelled
 	 * @throws IllegalArgumentException if object instance is not a supported type
 	 */
-	public <T> void markup(T obj, boolean nested) throws IOException {
-		if (monitor.isCancelled()) {
-			throw new IOException("Markup canceled");
-		}
+	public <T> void markup(T obj, boolean nested) throws IOException, CancelledException {
+		monitor.checkCancelled();
 		if (obj == null) {
 			return;
 		}
@@ -112,11 +117,12 @@ public class MarkupSession {
 			}
 		}
 		else {
-			StructureContext<T> structureContext = mappingContext.getStructureContextOfInstance(obj);
+			StructureContext<T> structureContext =
+				mappingContext.getStructureContextOfInstance(obj);
 			if (structureContext == null) {
 				throw new IllegalArgumentException();
 			}
-			monitor.incrementProgress(1);
+			monitor.increment();
 			markupStructure(structureContext, nested);
 		}
 	}
@@ -141,14 +147,19 @@ public class MarkupSession {
 	 * @throws IOException if error marking up address
 	 */
 	public void markupAddress(Address addr, DataType dt, int length) throws IOException {
-		try {
-			DataUtilities.createData(program, addr, dt, length, false,
-				ClearDataMode.CLEAR_ALL_DEFAULT_CONFLICT_DATA);
-		}
-		catch (CodeUnitInsertionException e) {
-			throw new IOException(e);
-		}
 
+		DWARFDataInstanceHelper dihUtil =
+			new DWARFDataInstanceHelper(program).setAllowTruncating(false);
+		if (dihUtil.isDataTypeCompatibleWithAddress(dt, addr)) {
+			try {
+				Data data = DataUtilities.createData(program, addr, dt, length, false,
+					ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
+				markedupAddrs.add(data.getMinAddress(), data.getMaxAddress());
+			}
+			catch (CodeUnitInsertionException e) {
+				throw new IOException(e);
+			}
+		}
 	}
 
 	/**
@@ -171,11 +182,13 @@ public class MarkupSession {
 	 * @param <T> structure mapped object type
 	 * @param obj structure mapped object
 	 * @param symbolName name
+	 * @param namespaceName name of namespace to place the label symbol in, or null if root
 	 * @throws IOException if error
 	 */
-	public <T> void labelStructure(T obj, String symbolName) throws IOException {
+	public <T> void labelStructure(T obj, String symbolName, String namespaceName)
+			throws IOException {
 		Address addr = mappingContext.getAddressOfStructure(obj);
-		labelAddress(addr, symbolName);
+		labelAddress(addr, symbolName, namespaceName);
 	}
 
 	/**
@@ -186,13 +199,35 @@ public class MarkupSession {
 	 * @throws IOException if error
 	 */
 	public void labelAddress(Address addr, String symbolName) throws IOException {
+		labelAddress(addr, symbolName, null);
+	}
+
+	/**
+	 * Places a label at the specified address.
+	 * 
+	 * @param addr {@link Address}
+	 * @param symbolName name
+	 * @param namespaceName name of namespace to place the label symbol in, or null if root
+	 * @throws IOException if error
+	 */
+	public void labelAddress(Address addr, String symbolName, String namespaceName)
+			throws IOException {
 		try {
 			SymbolTable symbolTable = program.getSymbolTable();
-			Symbol[] symbols = symbolTable.getSymbols(addr);
-			if (symbols.length == 0 || symbols[0].isDynamic()) {
-				symbolName = SymbolUtilities.replaceInvalidChars(symbolName, true);
-				symbolTable.createLabel(addr, symbolName, SourceType.IMPORTED);
+			Namespace ns = null;
+			try {
+				ns = (namespaceName == null || namespaceName.isBlank())
+						? program.getGlobalNamespace()
+						: program.getSymbolTable()
+								.getOrCreateNameSpace(program.getGlobalNamespace(), namespaceName,
+									SourceType.IMPORTED);
 			}
+			catch (DuplicateNameException e) {
+				ns = program.getGlobalNamespace();
+			}
+			symbolName = SymbolUtilities.replaceInvalidChars(symbolName, true);
+			Symbol newLabelSym = symbolTable.createLabel(addr, symbolName, ns, SourceType.IMPORTED);
+			newLabelSym.setPrimary();
 		}
 		catch (InvalidInputException e) {
 			throw new IOException(e);
@@ -237,6 +272,13 @@ public class MarkupSession {
 			prefix, comment, sep);
 	}
 
+	public void appendComment(Function func, String prefix, String comment) {
+		if (func != null) {
+			DWARFUtil.appendComment(program, func.getEntryPoint(), CodeUnit.PLATE_COMMENT, prefix,
+				comment, "\n");
+		}
+	}
+
 	/**
 	 * Decorates a structure mapped structure, and everything it contains.
 	 * 
@@ -245,9 +287,10 @@ public class MarkupSession {
 	 * @param nested if true, it is assumed that the Ghidra data types have already been
 	 * placed and only markup needs to be performed.
 	 * @throws IOException if error marking up structure
+	 * @throws CancelledException if cancelled 
 	 */
 	public <T> void markupStructure(StructureContext<T> structureContext, boolean nested)
-			throws IOException {
+			throws IOException, CancelledException {
 		Address addr = structureContext.getStructureAddress();
 		if (!nested && !markedupStructs.add(addr)) {
 			return;
@@ -257,6 +300,9 @@ public class MarkupSession {
 		if (!nested) {
 			try {
 				Structure structDT = structureContext.getStructureDataType();
+				if (structDT.isDeleted()) {
+					throw new IOException("Structure mapping data type invalid: " + structDT);
+				}
 				markupAddress(addr, structDT);
 			}
 			catch (IOException e) {
@@ -268,8 +314,9 @@ public class MarkupSession {
 
 			if (instance instanceof StructureMarkup<?> sm) {
 				String structureLabel = sm.getStructureLabel();
+				String namespaceName = sm.getStructureNamespace();
 				if (structureLabel != null && !structureLabel.isBlank()) {
-					labelAddress(addr, structureLabel);
+					labelAddress(addr, structureLabel, namespaceName);
 				}
 			}
 		}
@@ -282,7 +329,8 @@ public class MarkupSession {
 
 	}
 
-	<T> void markupFields(StructureContext<T> structureContext) throws IOException {
+	<T> void markupFields(StructureContext<T> structureContext)
+			throws IOException, CancelledException {
 		T structureInstance = structureContext.getStructureInstance();
 		StructureMappingInfo<T> mappingInfo = structureContext.getMappingInfo();
 		for (FieldMappingInfo<T> fmi : mappingInfo.getFields()) {
@@ -330,31 +378,36 @@ public class MarkupSession {
 	 * Creates a default function at the specified address.
 	 * 
 	 * @param name name of the new function
+	 * @param ns namespace function should be in
 	 * @param addr address of the new function
 	 * @return {@link Function} that was created
 	 */
-	public Function createFunctionIfMissing(String name, Address addr) {
+	public Function createFunctionIfMissing(String name, Namespace ns, Address addr) {
 		Function function = program.getListing().getFunctionAt(addr);
 		if (function == null) {
-			try {
-				if (!program.getMemory()
-						.getLoadedAndInitializedAddressSet()
-						.contains(addr)) {
-					Msg.warn(this,
-						"Unable to create function not contained within loaded memory: %s@%s"
-								.formatted(name, addr));
-					return null;
-				}
-				function = program.getFunctionManager()
-						.createFunction(name, addr, new AddressSet(addr), SourceType.IMPORTED);
+			if (!program.getMemory().getLoadedAndInitializedAddressSet().contains(addr)) {
+				Msg.warn(this, "Unable to create function not contained within loaded memory: %s@%s"
+						.formatted(name, addr));
+				return null;
 			}
-			catch (OverlappingFunctionException | InvalidInputException e) {
+			try {
+				function = program.getFunctionManager()
+						.createFunction(name, ns, addr, new AddressSet(addr), SourceType.IMPORTED);
+			}
+			catch (OverlappingFunctionException | InvalidInputException
+					| IllegalArgumentException e) {
 				Msg.error(this, e);
+				return null;
 			}
 		}
 		else {
-			// TODO: this does nothing.  re-evalulate this logic
-			//mappingContext.labelAddress(addr, name);
+			try {
+				function.setName(name, SourceType.IMPORTED);
+				function.setParentNamespace(ns);
+			}
+			catch (InvalidInputException | DuplicateNameException | CircularDependencyException e) {
+				Msg.error(this, e);
+			}
 		}
 		return function;
 	}

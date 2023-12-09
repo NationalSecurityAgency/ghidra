@@ -15,19 +15,22 @@
  */
 package ghidra.app.util.opinion;
 
-import java.util.*;
-
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.*;
 
 import com.google.common.primitives.Bytes;
 
+import ghidra.app.plugin.core.analysis.rust.RustConstants;
+import ghidra.app.plugin.core.analysis.rust.RustUtilities;
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.format.elf.info.ElfInfoItem.ItemWithAddress;
 import ghidra.app.util.bin.format.golang.GoBuildInfo;
 import ghidra.app.util.bin.format.golang.PEGoBuildId;
+import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.bin.format.mz.DOSHeader;
 import ghidra.app.util.bin.format.pe.*;
 import ghidra.app.util.bin.format.pe.ImageCor20Header.ImageCor20Flags;
@@ -83,7 +86,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 		if (ntHeader != null && ntHeader.getOptionalHeader() != null) {
 			long imageBase = ntHeader.getOptionalHeader().getImageBase();
 			String machineName = ntHeader.getFileHeader().getMachineName();
-			String compilerFamily = CompilerOpinion.getOpinion(pe, provider).family;
+			String compilerFamily = CompilerOpinion.getOpinion(pe, provider, null,
+				TaskMonitor.DUMMY, new MessageLog()).family;
 			for (QueryResult result : QueryOpinionService.query(getName(), machineName,
 				compilerFamily)) {
 				loadSpecs.add(new LoadSpec(this, imageBase, result));
@@ -141,14 +145,14 @@ public class PeLoader extends AbstractPeDebugLoader {
 			processDelayImports(optionalHeader, program, monitor, log);
 			processRelocations(optionalHeader, program, monitor, log);
 			processDebug(optionalHeader, ntHeader, sectionToAddress, program, options, monitor);
-			processProperties(optionalHeader, program, monitor);
+			processProperties(optionalHeader, ntHeader, program, monitor);
 			processComments(program.getListing(), monitor);
 			processSymbols(ntHeader, sectionToAddress, program, monitor, log);
 
 			processEntryPoints(ntHeader, program, monitor);
-			String compiler = CompilerOpinion.getOpinion(pe, provider).toString();
+			String compiler =
+				CompilerOpinion.getOpinion(pe, provider, program, monitor, log).toString();
 			program.setCompiler(compiler);
-
 		}
 		catch (AddressOverflowException e) {
 			throw new IOException(e);
@@ -220,8 +224,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		return PARSE_CLI_HEADERS_OPTION_DEFAULT;
 	}
 
-	private void layoutHeaders(Program program, PortableExecutable pe,
-			NTHeader ntHeader,
+	private void layoutHeaders(Program program, PortableExecutable pe, NTHeader ntHeader,
 			DataDirectory[] datadirs) {
 		try {
 			DataType dt = pe.getDOSHeader().toDataType();
@@ -275,7 +278,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 		}
 	}
 
-	private void processProperties(OptionalHeader optionalHeader, Program prog,
+	private void processProperties(OptionalHeader optionalHeader, NTHeader ntHeader, Program prog,
 			TaskMonitor monitor) {
 		if (monitor.isCancelled()) {
 			return;
@@ -284,6 +287,24 @@ public class PeLoader extends AbstractPeDebugLoader {
 		props.setInt("SectionAlignment", optionalHeader.getSectionAlignment());
 		props.setBoolean(RelocationTable.RELOCATABLE_PROP_NAME,
 			prog.getRelocationTable().getSize() > 0);
+
+		if (GoRttiMapper.isGolangProgram(prog)) {
+			processGolangProperties(optionalHeader, ntHeader, prog, monitor);
+		}
+	}
+
+	private void processGolangProperties(OptionalHeader optionalHeader, NTHeader ntHeader,
+			Program prog, TaskMonitor monitor) {
+
+		ItemWithAddress<PEGoBuildId> buildId = PEGoBuildId.findBuildId(prog);
+		if (buildId != null) {
+			buildId.item().markupProgram(prog, buildId.address());
+		}
+		ItemWithAddress<GoBuildInfo> buildInfo = GoBuildInfo.findBuildInfo(prog);
+		if (buildInfo != null) {
+			buildInfo.item().markupProgram(prog, buildInfo.address());
+		}
+
 	}
 
 	private void processRelocations(OptionalHeader optionalHeader, Program prog,
@@ -379,8 +400,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 			try {
 				ReferenceManager refManager = pointerData.getProgram().getReferenceManager();
 				refManager.addExternalReference(pointerData.getAddress(),
-					importInfo.getDLL().toUpperCase(),
-					importInfo.getName(), extAddr, SourceType.IMPORTED, 0, RefType.DATA);
+					importInfo.getDLL().toUpperCase(), importInfo.getName(), extAddr,
+					SourceType.IMPORTED, 0, RefType.DATA);
 			}
 			catch (DuplicateNameException e) {
 				log.appendMsg("External location not created: " + e.getMessage());
@@ -868,9 +889,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 		static final byte[] asm16_Borland =
 			{ (byte) 0xBA, 0x10, 0x00, 0x0E, 0x1F, (byte) 0xB4, 0x09, (byte) 0xCD, 0x21,
 				(byte) 0xB8, 0x01, 0x4C, (byte) 0xCD, 0x21, (byte) 0x90, (byte) 0x90 };
-		static final byte[] asm16_GCC_VS_Clang =
-			{ 0x0e, 0x1f, (byte) 0xba, 0x0e, 0x00, (byte) 0xb4, 0x09, (byte) 0xcd, 0x21,
-				(byte) 0xb8, 0x01, 0x4c, (byte) 0xcd, 0x21 };
+		static final byte[] asm16_GCC_VS_Clang = { 0x0e, 0x1f, (byte) 0xba, 0x0e, 0x00, (byte) 0xb4,
+			0x09, (byte) 0xcd, 0x21, (byte) 0xb8, 0x01, 0x4c, (byte) 0xcd, 0x21 };
 		static final byte[] THIS_BYTES = "This".getBytes();
 
 		public enum CompilerEnum {
@@ -882,6 +902,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			BorlandCpp("borland:c++", "borlandcpp"),
 			BorlandUnk("borland:unknown", "borlandcpp"),
 			CLI("cli", "cli"),
+			Rustc("rustc", "rustc"),
 			GOLANG("golang", "golang"),
 			Unknown("unknown", "unknown"),
 
@@ -894,7 +915,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			public final String label; // value stored as ProgramInformation.Compiler property
 			public final String family; // used for Opinion secondary query param
 
-			private CompilerEnum(String label, String secondary) {
+			CompilerEnum(String label, String secondary) {
 				this.label = label;
 				this.family = secondary;
 			}
@@ -926,8 +947,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 			return (i == chararray.length);
 		}
 
-		public static CompilerEnum getOpinion(PortableExecutable pe, ByteProvider provider)
-				throws IOException {
+		public static CompilerEnum getOpinion(PortableExecutable pe, ByteProvider provider,
+				Program program, TaskMonitor monitor, MessageLog log) throws IOException {
 
 			CompilerEnum offsetChoice = CompilerEnum.Unknown;
 			CompilerEnum asmChoice = CompilerEnum.Unknown;
@@ -935,6 +956,19 @@ public class PeLoader extends AbstractPeDebugLoader {
 			BinaryReader br = new BinaryReader(provider, true);
 
 			DOSHeader dh = pe.getDOSHeader();
+
+			// Check for Rust.  Program object is required, which may be null.
+			try {
+				if (program != null && RustUtilities.isRust(program, ".rdata")) {
+					int extensionCount = RustUtilities.addExtensions(program, monitor,
+						RustConstants.RUST_EXTENSIONS_WINDOWS);
+					log.appendMsg("Installed " + extensionCount + " Rust cspec extensions");
+					return CompilerEnum.Rustc;
+				}
+			}
+			catch (IOException e) {
+				log.appendException(e);
+			}
 
 			// Check for managed code (.NET)
 			if (pe.getNTHeader().getOptionalHeader().isCLI()) {
@@ -1086,6 +1120,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 					// fail
 				}
 			}
+
 			SectionHeader dataSection = pe.getNTHeader().getFileHeader().getSectionHeader(".data");
 			if (dataSection != null) {
 				try (InputStream is = dataSection.getDataStream()) {

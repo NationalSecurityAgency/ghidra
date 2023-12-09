@@ -113,56 +113,57 @@ public class ViewStringsPlugin extends ProgramPlugin implements DomainObjectList
 
 		DockingAction editDataSettingsAction =
 			new DockingAction("Data Settings", getName(), KeyBindingType.SHARED) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				try {
-					DataSettingsDialog dialog = provider.getSelectedRowCount() == 1
-							? new DataSettingsDialog(provider.getSelectedData())
-							: new DataSettingsDialog(currentProgram, provider.getProgramSelection());
+				@Override
+				public void actionPerformed(ActionContext context) {
+					try {
+						DataSettingsDialog dialog = provider.getSelectedRowCount() == 1
+								? new DataSettingsDialog(provider.getSelectedData())
+								: new DataSettingsDialog(currentProgram,
+									provider.getProgramSelection());
 
-					tool.showDialog(dialog);
-					dialog.dispose();
+						tool.showDialog(dialog);
+						dialog.dispose();
+					}
+					catch (CancelledException e) {
+						// do nothing
+					}
 				}
-				catch (CancelledException e) {
-					// do nothing
-				}
-			}
 
-		};
+			};
 		editDataSettingsAction.setPopupMenuData(new MenuData(new String[] { "Settings..." }, "R"));
 		editDataSettingsAction.setHelpLocation(new HelpLocation("DataPlugin", "Data_Settings"));
 
 		DockingAction editDefaultSettingsAction =
 			new DockingAction("Default Settings", getName(), KeyBindingType.SHARED) {
-			@Override
-			public void actionPerformed(ActionContext context) {
-				DataType dt = getSelectedDataType();
-				if (dt == null) {
-					return;
+				@Override
+				public void actionPerformed(ActionContext context) {
+					DataType dt = getSelectedDataType();
+					if (dt == null) {
+						return;
+					}
+					DataTypeSettingsDialog dataSettingsDialog =
+						new DataTypeSettingsDialog(dt, dt.getSettingsDefinitions());
+					tool.showDialog(dataSettingsDialog);
+					dataSettingsDialog.dispose();
 				}
-				DataTypeSettingsDialog dataSettingsDialog =
-					new DataTypeSettingsDialog(dt, dt.getSettingsDefinitions());
-				tool.showDialog(dataSettingsDialog);
-				dataSettingsDialog.dispose();
-			}
 
-			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				if (provider.getSelectedRowCount() != 1) {
-					return false;
+				@Override
+				public boolean isEnabledForContext(ActionContext context) {
+					if (provider.getSelectedRowCount() != 1) {
+						return false;
+					}
+					DataType dt = getSelectedDataType();
+					if (dt == null) {
+						return false;
+					}
+					return dt.getSettingsDefinitions().length != 0;
 				}
-				DataType dt = getSelectedDataType();
-				if (dt == null) {
-					return false;
-				}
-				return dt.getSettingsDefinitions().length != 0;
-			}
 
-			private DataType getSelectedDataType() {
-				Data data = provider.getSelectedData();
-				return data != null ? data.getDataType() : null;
-			}
-		};
+				private DataType getSelectedDataType() {
+					Data data = provider.getSelectedData();
+					return data != null ? data.getDataType() : null;
+				}
+			};
 		editDefaultSettingsAction.setPopupMenuData(
 			new MenuData(new String[] { "Default Settings..." }, "R"));
 		editDefaultSettingsAction.setHelpLocation(

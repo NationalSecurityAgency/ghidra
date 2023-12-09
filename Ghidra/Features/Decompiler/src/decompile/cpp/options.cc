@@ -60,6 +60,7 @@ ElementId ELEM_TOGGLERULE = ElementId("togglerule",209);
 ElementId ELEM_WARNING = ElementId("warning",210);
 ElementId ELEM_JUMPTABLEMAX = ElementId("jumptablemax",271);
 ElementId ELEM_NANIGNORE = ElementId("nanignore",272);
+ElementId ELEM_BRACEFORMAT = ElementId("braceformat",284);
 
 /// If the parameter is "on" return \b true, if "off" return \b false.
 /// Any other value causes an exception.
@@ -117,6 +118,7 @@ OptionDatabase::OptionDatabase(Architecture *g)
   registerOption(new OptionCommentHeader());
   registerOption(new OptionCommentInstruction());
   registerOption(new OptionIntegerFormat());
+  registerOption(new OptionBraceFormat());
   registerOption(new OptionCurrentAction());
   registerOption(new OptionAllowContextSet());
   registerOption(new OptionSetAction());
@@ -576,6 +578,47 @@ string OptionIntegerFormat::apply(Architecture *glb,const string &p1,const strin
 {
   glb->print->setIntegerFormat(p1);
   return "Integer format set to "+p1;
+}
+
+/// \class OptionBraceFormat
+/// \brief Set the brace formatting strategy for various types of code block
+///
+/// The first parameter is the strategy name:
+///   - \b same  - For an opening brace on the same line
+///   - \b next  - For an opening brace on the next line
+///   - \b skip  - For an opening brace after a blank line
+///
+/// The second parameter is the type of code block:
+///   - \b function - For the main function body
+///   - \b ifelse   - For if/else blocks
+///   - \b loop     - For do/while/for loop blocks
+///   - \b switch   - For a switch block
+string OptionBraceFormat::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
+
+{
+  PrintC *lng = dynamic_cast<PrintC *>(glb->print);
+  if (lng == (PrintC *)0)
+    return "Can only set brace formatting for C language";
+  Emit::brace_style style;
+  if (p2 == "same")
+    style = Emit::same_line;
+  else if (p2 == "next")
+    style = Emit::next_line;
+  else if (p2 == "skip")
+    style = Emit::skip_line;
+  else
+    throw ParseError("Unknown brace style: "+p2);
+  if (p1 == "function")
+    lng->setBraceFormatFunction(style);
+  else if (p1 == "ifelse")
+    lng->setBraceFormatIfElse(style);
+  else if (p1 == "loop")
+    lng->setBraceFormatLoop(style);
+  else if (p1 == "switch")
+    lng->setBraceFormatSwitch(style);
+  else
+    throw ParseError("Unknown brace format category: "+p1);
+  return "Brace formatting for " + p1 + " set to " + p2;
 }
 
 /// \class OptionSetAction

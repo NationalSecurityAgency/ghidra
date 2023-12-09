@@ -32,6 +32,11 @@ public abstract class AbstractFieldListMsType extends AbstractMsType {
 	private List<MsTypeField> baseClassList = new ArrayList<>();
 	private List<MsTypeField> memberList = new ArrayList<>();
 	private List<MsTypeField> methodList = new ArrayList<>();
+	private List<AbstractMemberMsType> nonstaticMemberList = new ArrayList<>();
+	private List<AbstractStaticMemberMsType> staticMemberList = new ArrayList<>();
+	private List<AbstractVirtualFunctionTablePointerMsType> vftPtrList = new ArrayList<>();
+	private List<AbstractNestedTypeMsType> nestedTypeList = new ArrayList<>();
+	private List<AbstractEnumerateMsType> enumerateList = new ArrayList<>();
 	// This list contains AbstractIndexMsType instances.  It seems that one of these contains
 	//  the index to another AbstractFieldList.  We do not (yet) know that if a third list is
 	//  needed, whether there will be a daisy-chain (last entry in second list will designate
@@ -52,27 +57,34 @@ public abstract class AbstractFieldListMsType extends AbstractMsType {
 		super(pdb, reader);
 		while (reader.hasMore()) {
 			MsTypeField type = TypeParser.parseField(pdb, reader);
-			if ((type instanceof AbstractBaseClassMsType) ||
-				(type instanceof AbstractVirtualBaseClassMsType) ||
-				(type instanceof AbstractIndirectVirtualBaseClassMsType)) {
+			if (type instanceof AbstractBaseClassMsType ||
+				type instanceof AbstractVirtualBaseClassMsType ||
+				type instanceof AbstractIndirectVirtualBaseClassMsType) {
 				baseClassList.add(type);
 			}
-			else if ((type instanceof AbstractOverloadedMethodMsType) ||
-				(type instanceof AbstractOneMethodMsType)) {
+			else if (type instanceof AbstractOverloadedMethodMsType ||
+				type instanceof AbstractOneMethodMsType) {
 				methodList.add(type);
 			}
-			else if ((type instanceof AbstractMemberMsType) ||
-				(type instanceof AbstractNestedTypeMsType) ||
-				(type instanceof AbstractStaticMemberMsType) ||
-				(type instanceof AbstractVirtualFunctionTablePointerMsType) ||
-				(type instanceof AbstractEnumerateMsType)) {
-				// Known types:
-				//  AbstractMemberMsType
-				//  AbstractNestedTypeMsType
-				//  AbstractStaticMemberMsType
-				//  AbstractVirtualFunctionTablePointerMsType
-				//  AbstractEnumerateMsType
-				memberList.add(type);
+			else if (type instanceof AbstractMemberMsType member) {
+				nonstaticMemberList.add(member);
+				memberList.add(member);
+			}
+			else if (type instanceof AbstractStaticMemberMsType member) {
+				staticMemberList.add(member);
+				memberList.add(member);
+			}
+			else if (type instanceof AbstractVirtualFunctionTablePointerMsType vftPtr) {
+				vftPtrList.add(vftPtr);
+				memberList.add(vftPtr);
+			}
+			else if (type instanceof AbstractNestedTypeMsType member) {
+				nestedTypeList.add(member);
+				memberList.add(member);
+			}
+			else if (type instanceof AbstractEnumerateMsType enumerate) {
+				enumerateList.add(enumerate);
+				memberList.add(enumerate);
 			}
 			else if (type instanceof AbstractIndexMsType) {
 				indexList.add((AbstractIndexMsType) type);
@@ -107,6 +119,42 @@ public abstract class AbstractFieldListMsType extends AbstractMsType {
 	 */
 	public List<MsTypeField> getMethodList() {
 		return methodList;
+	}
+
+	/**
+	 * Returns the (ordered?) {@link List}&lt;{@link AbstractMsType}&gt; of non-static members
+	 *  from this field list
+	 * @return non-static members
+	 */
+	public List<AbstractMemberMsType> getNonStaticMembers() {
+		return nonstaticMemberList;
+	}
+
+	/**
+	 * Returns the (ordered?) {@link List}&lt;{@link AbstractMsType}&gt; of VFT pointer records
+	 *  from this field list
+	 * @return VFT pointer records
+	 */
+	public List<AbstractVirtualFunctionTablePointerMsType> getVftPointers() {
+		return vftPtrList;
+	}
+
+	/**
+	 * Returns the (ordered?) {@link List}&lt;{@link AbstractNestedTypeMsType}&gt; of enumerates
+	 *  from this field list
+	 * @return enumerates
+	 */
+	public List<AbstractNestedTypeMsType> getNestedTypes() {
+		return nestedTypeList;
+	}
+
+	/**
+	 * Returns the (ordered?) {@link List}&lt;{@link AbstractEnumerateMsType}&gt; of enumerates
+	 *  from this field list
+	 * @return enumerates
+	 */
+	public List<AbstractEnumerateMsType> getEnumerates() {
+		return enumerateList;
 	}
 
 	/**

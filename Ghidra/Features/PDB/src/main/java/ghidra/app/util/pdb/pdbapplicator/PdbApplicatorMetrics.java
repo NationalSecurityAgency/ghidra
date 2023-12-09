@@ -20,7 +20,7 @@ import java.util.Set;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbLog;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
@@ -28,7 +28,7 @@ import ghidra.util.Msg;
 /**
  * Metrics captured during the application of a PDB.  This is a Ghidra class separate from the
  * PDB API that we have crafted to help us quantify and qualify the ability apply the PDB
- * to a {@link DataTypeManager} and/or {@link Program}. 
+ * to a {@link DataTypeManager} and/or {@link Program}.
  */
 public class PdbApplicatorMetrics {
 
@@ -68,7 +68,7 @@ public class PdbApplicatorMetrics {
 		LocalThreadStorage3216MsSymbol.PDB_ID,
 		LocalThreadStorage32MsSymbol.PDB_ID,
 		LocalThreadStorage32StMsSymbol.PDB_ID,
-		
+
 		// AbstractUserDefinedTypeMsSymbol
 		CobolUserDefinedType16MsSymbol.PDB_ID,
 		CobolUserDefinedTypeMsSymbol.PDB_ID,
@@ -89,7 +89,7 @@ public class PdbApplicatorMetrics {
 	 * List of symbols seen (by their ID) as Public symbols.
 	 */
 	//@formatter:off
-	private static final Set<Integer> EXPECTED_LINKER_SYMBOLS = Set.of(	
+	private static final Set<Integer> EXPECTED_LINKER_SYMBOLS = Set.of(
 		PeCoffSectionMsSymbol.PDB_ID,
 		TrampolineMsSymbol.PDB_ID,
 		ObjectNameMsSymbol.PDB_ID,
@@ -167,36 +167,43 @@ public class PdbApplicatorMetrics {
 
 	/**
 	 * Method to capture unusual this pointer types.
-	 * @param applier The {@AbstractMsTypeApplier} for the supposed this pointer.
+	 * @param type the {@AbstractMsType} for the supposed this pointer
 	 */
-	void witnessMemberFunctionThisPointer(MsTypeApplier applier) {
+	void witnessMemberFunctionThisPointer(AbstractMsType type) {
 		// We know that we have seen PrimitiveMsTypes that are pointer types.
-		if (applier instanceof PointerTypeApplier) {
+		if (type == null) {
 			return;
 		}
-		unexpectedMemberFunctionThisPointerTypes.add(applier.getMsType().getClass());
+		if (type instanceof AbstractPointerMsType ptrType) {
+			witnessMemberFunctionThisPointerUnderlyingType(ptrType.getUnderlyingType());
+			return;
+		}
+		unexpectedMemberFunctionThisPointerTypes.add(type.getClass());
 	}
 
 	/**
 	 * Method to capture unusual underlying types for a normal pointer for this pointer.
-	 * @param applier The {@AbstractMsTypeApplier} for the supposed this pointer.
+	 * @param type the {@AbstractMsType} for the supposed this pointer
 	 */
-	void witnessMemberFunctionThisPointerUnderlyingType(MsTypeApplier applier) {
-		if (applier instanceof CompositeTypeApplier) {
+	void witnessMemberFunctionThisPointerUnderlyingType(AbstractMsType type) {
+		if (type == null || type instanceof AbstractCompositeMsType) {
 			return;
 		}
-		unexpectedMemberFunctionThisPointerUnderlyingTypes.add(applier.getMsType().getClass());
+		if (type instanceof AbstractModifierMsType) {
+			return;
+		}
+		unexpectedMemberFunctionThisPointerUnderlyingTypes.add(type.getClass());
 	}
 
 	/**
-	 * Method to capture unusual containing types for a member function.
-	 * @param applier The {@AbstractMsTypeApplier} for the supposed this pointer.
+	 * Method to capture unusual containing types for a member function
+	 * @param type the {@AbstractMsType} for the supposed this container
 	 */
-	void witnessMemberFunctionContainingType(MsTypeApplier applier) {
-		if (applier instanceof CompositeTypeApplier) {
+	void witnessMemberFunctionContainingType(AbstractMsType type) {
+		if (type == null || type instanceof AbstractCompositeMsType) {
 			return;
 		}
-		unexpectedMemberFunctionContainerTypes.add(applier.getMsType().getClass());
+		unexpectedMemberFunctionContainerTypes.add(type.getClass());
 	}
 
 	//==============================================================================================

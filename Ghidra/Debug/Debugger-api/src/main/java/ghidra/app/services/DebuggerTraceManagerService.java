@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 import ghidra.async.AsyncReference;
+import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.ServiceInfo;
@@ -328,6 +329,24 @@ public interface DebuggerTraceManagerService {
 	 */
 	default void activateTrace(Trace trace) {
 		activate(resolveTrace(trace));
+	}
+
+	/**
+	 * Resolve coordinates for the given target using the manager's "best judgment"
+	 * 
+	 * @see #resolveTrace(Trace)
+	 * @param target the target
+	 * @return the best coordinates
+	 */
+	DebuggerCoordinates resolveTarget(Target target);
+
+	/**
+	 * Activate the given target
+	 * 
+	 * @param target the desired target
+	 */
+	default void activateTarget(Target target) {
+		activate(resolveTarget(target));
 	}
 
 	/**
