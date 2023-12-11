@@ -43,7 +43,7 @@ public class DefaultEmuUnixFileHandle<T> implements EmuUnixFileDescriptor<T> {
 	/**
 	 * Construct a new handle on the given file
 	 * 
-	 * @see AbstractEmuUnixSyscallUseropLibrary#createHandle(int, EmuUnixFile, int)
+	 * @see AbstractEmuUnixSyscallUseropLibrary#createHandle(EmuUnixFile, int)
 	 * @param machine the machine emulating the hardware
 	 * @param cSpec the ABI of the target platform
 	 * @param file the file opened by this handle
