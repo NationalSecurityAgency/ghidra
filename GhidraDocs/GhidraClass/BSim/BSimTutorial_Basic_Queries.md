@@ -7,7 +7,7 @@ In this section, we demonstrate some applications of our BSim database.
 In order to query the database, you must register it with Ghidra: 
 
 1. From The Code Browser, Select **BSim -> Manage Servers**.
-1. In the BSim Server Manager dialog, click the green plus.
+1. In the BSim Server Manager dialog, click the green plus ![add server icon](images/Plus2.png).
 1. Select the **File** radio button and use the chooser to select ``example.mv.db``
 1. Click **OK**
 1. Click **Dismiss** to close the dialog.
@@ -27,7 +27,7 @@ There are a number of ways to initiate a BSim query, including:
 For these cases, the function(s) being queried depend on the current selection.
 If there is no selection, the function containing the current address is queried.
 If there is a selection, all functions whose entry points are within the selection are queried.
-For example, to query all functions in the program, first select all addresses in the program via ``Ctrl-A`` in the Listing window.
+An easy way to query all functions in a program is to select all addresses with ``Ctrl-A`` in the Listing window and then initiate a BSim query.
 
 It is also possible to initiate a BSim query from the Decompiler window. 
 Simply right-click on a function name token and select **BSim...** to query the corresponding function.
@@ -44,7 +44,7 @@ From the BSim Search Dialog, you can
 - Bound the number of results returned for each function.
 - Set query filters.
 
-![](images/bsim_search_dialog.png)
+![bsim search dialog icon](images/bsim_search_dialog.png)
 
 #### Selecting a BSim Database
 
@@ -86,7 +86,7 @@ Filters are discussed in [BSim Filters](BSimTutorial_Filters.md).
 Click the **Search** button in the dialog to perform a query.
     
 After successfully issuing a query, you will also see a **Search Function(s)** action (without the ellipsis) in certain contexts.
-This will perform a BSim query on the selected functions using the same parameters as the last query (skipping the BSim Seach Dialog).
+This will perform a BSim query on the selected functions using the same parameters as the last query (skipping the BSim Search Dialog).
 
 ## Exercises
 
@@ -96,7 +96,7 @@ We use these different versions to demonstrate some of the capabilities of BSim.
 
 **Note**: Use the default query settings and autoanalysis options for the exercises unless otherwise specified.
 
-### Exercise 1: Function Identification
+### Exercise: Function Identification
 
 1. Import and analyze the binary ``<ghidra_install_dir>/GPL/DemanglerGnu/os/win_x86_64/demangler_gnu_v2_41.exe``.  
     - This executable is based on the same source code as ``demangler_gnu_v2_41`` but compiled with Visual Studio instead of GCC.
@@ -104,42 +104,42 @@ We use these different versions to demonstrate some of the capabilities of BSim.
     - Note that the function names **are** present in ``demangler_gnu_v2_41``. 
 1. Using the default query options, query `example` for matches to the function at ``140006760``. 
 1. You should see the following search results:
-    ![results](images/basic_query.png)
+    ![search results](images/basic_query.png)
     - In this case, there is exactly one match, the similarity is 1.0, and the matching function has a non-default name (it won't always be this easy).
     - The results window has two tables: the function-level results (upper table) and the executable-level results (lower table). 
     The executable-level results are covered in [From Matching Functions to Matching Executables](BSimTutorial_Exe_Results.md).
-1. Right-click on the row of the match and select the **Compare Functions** action to bring up the side-by-side comparison. 
+1. Right-click on the row of the match and perform the **Compare Functions** action to bring up the side-by-side comparison. 
     - The **Listing View** tab shows the disassembly.
     - The **Decompiler Diff View** tab shows the decompiled code.
     - Differences in the code are automatically highlighted in blue.
     - Either view can be toggled between a horizontal split and a vertical split using the drop-down menu. 
 1. Examine the diff views to verify that the match is valid.
-1. Using the **Apply Name** action, apply the name from the search result to the queried function.
+1. Using the **Apply Name** action in the BSim Search Results table, apply the name from the search result to the queried function.
 
 **Note**: We cover the Decompiler Diff View in greater detail and discuss the various "Apply" actions in [Evaluating Matches and Applying Information](BSimTutorial_Evaluating_Matches.md).
 
-### Exercise 2: Changes to the Source Code
+### Exercise: Changes to the Source Code
 
 1. Import and analyze the executable ``<ghidra_install_dir>/GPL/DemanglerGnu/os/linux_x86_64/demangler_gnu_v2_24``.  
     - This executable is based on an earlier version of the source code than the executable in ``example``.
-1. Navigate to the function ``expandargv`` in ``demangler_gnu_v2_24`` and issue a BSim query.
-1. What differences do you see in the decompiled code?
+1. Navigate to the function ``expandargv`` in ``demangler_gnu_v2_24`` and issue a BSim query. 
+1. What differences do you see in the decompiled code of the single match?
     <details><summary>In demangler_gnu_v2_41...</summary> The main differences are that call to dupargv is now in an if clause (and decompiler creates a related local variable) and there are two additional calls to free. </details>
 1. The relevant source files are included with the Ghidra distribution:
     - ``<ghidra_install_dir>/GPL/DemanglerGnu/src/demangler_gnu_v2_24/c/argv.c``
-    - ``<ghidra_install_dir>/GPL/DemanglerGnu/src/demangler/gnu_v2_41/c/argv.c``
+    - ``<ghidra_install_dir>/GPL/DemanglerGnu/src/demangler_gnu_v2_41/c/argv.c``
 1. Verify that the differences you found are present in the source.
  
-### Exercise 3: Cross-architectural Matching
+### Exercise: Cross-architectural Matching
 
 1. Import and analyze the executable 
 ``<ghidra_install_dir>/GPL/DemanglerGnu/os/mac_arm_64/demangler_gnu_v2_41``.  
     - This executable is based on the same source code as the executable in `example` but compiled for a different architecture.
-    - **Note**: this file has the same name as the one used to populate the BSim database, so you will have to give the resulting Ghidra program a different name or import it into a different directory in your Ghidra project.
+    - **Note**: this file has the same name as the one we used to populate the BSim database, so you will have to give the resulting Ghidra program a different name or import it into a different directory in your Ghidra project.
 1. Navigate to ``_expandargv`` and issue a BSim query.
-In the decompiler diff view, what differences do you see regarding ``memmove`` and ``memcpy``?
+In the decompiler diff view of the single match, what differences do you see regarding ``memmove`` and ``memcpy``?
    <details><summary>In the arm64 version...</summary> In the arm64_version, the compiler replaced these functions with __memmove_chk and __memcpy_chk.  The __chk versions have an extra parameter related to preventing buffer overflows. Neither the names nor the bodies of callees are incorporated into BSim signatures, but the arguments of a call are, so this change partly explains why the BSim vectors are not identical.</details>
-1. Examine the **Listing View** tab and verify that the architectures are different.
+1. Examine the **Listing View** tab and verify that the architectures are indeed different.
 
 
 ## A Remark on Query Thresholds and Indices

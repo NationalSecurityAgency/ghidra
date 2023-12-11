@@ -16,7 +16,8 @@ all: \
 		B1-RemoteTargets.html \
 		B2-Emulation.html \
 		B3-Scripting.html \
-		B4-Modeling.html
+		B4-Modeling.html \
+		README.html
 
 clean:
 	-rm *.html

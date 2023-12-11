@@ -1997,8 +1997,10 @@ void PrintC::pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
     }
     else if (inslot >= 0) {
       Datatype *outtype = vn->getHigh()->getType();
-      if (castStrategy->isSubpieceCastEndian(outtype,ct,off,
-					     sym->getFirstWholeMap()->getAddr().getSpace()->isBigEndian())) {
+      AddrSpace *spc = sym->getFirstWholeMap()->getAddr().getSpace();
+      if (spc == (AddrSpace *)0)
+	spc = vn->getSpace();
+      if (castStrategy->isSubpieceCastEndian(outtype,ct,off,spc->isBigEndian())) {
 	// Treat truncation as SUBPIECE style cast
 	finalcast = outtype;
 	ct = (Datatype*)0;

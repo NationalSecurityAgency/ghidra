@@ -10,7 +10,7 @@ Running ``bsim`` with no arguments will print a detailed usage message.
 ## Generating Signature Files
 
 The first step is to create signature files from the binaries in the Ghidra project.
-Signature files are XML files which contain the BSim vectors and other metadata needed by the BSim server.
+Signature files are XML files which contain the BSim signatures and metadata needed by the BSim server.
 
 **Important**: It's simplest to exit Ghidra before performing the next steps, because:
 - The H2-backed database can only be accessed by one process at a time.
@@ -44,7 +44,7 @@ Once the signatures have been committed, start Ghidra again.
 
 We continue to use the database ``example``, so this step isn't necessary for the exercises.
 
-However, if we hadn't created ``example`` using a script, we could have used the following command:
+However, if we hadn't created ``example`` using ``CreateH2BSimDatabaseScript.java``, we could have used the following command:
 
 ```bash
 ./bsim createdatabase file:/<database_dir>/example medium_nosize
@@ -60,7 +60,7 @@ See the "BSim" entry in the Ghidra help for details.
 
 It's worth a brief note about Executable Categories and Function Tags, although they are not used in any of the following exercises.
 
-A BSim database can record user-defined metadata about an executable or about functions within an executable.
+A BSim database can record user-defined metadata about an executable (executable categories) or about a function (function tags).
 Categories and tags can then be used as filter elements in a BSim query.
 For example, you could restrict a BSim query to search only in executables of the category "OPEN_SOURCE" or to functions which have been tagged "COMPRESSION_FUNCTIONS".  
 
