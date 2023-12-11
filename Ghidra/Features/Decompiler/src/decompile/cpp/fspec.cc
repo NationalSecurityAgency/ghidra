@@ -5629,9 +5629,11 @@ bool FuncCallSpecs::setInputBytesConsumed(int4 slot,int4 val) const
   while(inputConsume.size() <= slot)
     inputConsume.push_back(0);
   int4 oldVal = inputConsume[slot];
-  if (oldVal == 0 || val < oldVal)
+  if (oldVal == 0 || val < oldVal) {	// Only let the value get smaller
     inputConsume[slot] = val;
-  return (oldVal != val);
+    return true;
+  }
+  return false;
 }
 
 /// \brief Prepend any extra parameters if a paramshift is required
