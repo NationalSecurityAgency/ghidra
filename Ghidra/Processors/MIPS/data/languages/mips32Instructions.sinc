@@ -162,7 +162,6 @@ define pcodeop special2;
 
 # 0100 0001 011t tttt 0110 0000 0000 0000
 :di                             is $(AMODE) & prime=0x10 & mfmc0=0x0B & rd=0x0C & fct2=0x0 & bit5=0x0 & zero3=0x0 & rt=0x0 {
-    zero = Status;
     Status = Status & -2;   # clearing last bit (ffff..fffe == -2 signed)
 }
 :di RT                          is $(AMODE) & prime=0x10 & mfmc0=0x0B & rd=0x0C & fct2=0x0 & bit5=0x0 & zero3=0x0 & RT {
@@ -176,7 +175,6 @@ define pcodeop special2;
 
 # 0100 0001 011t tttt 0110 0000 0010 0000
 :ei                             is $(AMODE) & prime=0x10 & mfmc0=0x0B & rd=0x0C & fct2=0x0 & bit5=0x01 & zero3=0x0 & rt=0x0 {
-    zero = Status;
     Status = Status | 1;
 }
 :ei RT                          is $(AMODE) & prime=0x10 & mfmc0=0x0B & rd=0x0C & fct2=0x0 & bit5=0x01 & zero3=0x0 & RT {
