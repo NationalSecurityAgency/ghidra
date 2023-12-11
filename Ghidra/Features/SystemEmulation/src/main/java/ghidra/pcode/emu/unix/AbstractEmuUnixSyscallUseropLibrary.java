@@ -347,7 +347,6 @@ public abstract class AbstractEmuUnixSyscallUseropLibrary<T>
 	 * This just throws an exception, which the overall simulator or script should catch.
 	 * 
 	 * @param status the status code
-	 * @return never
 	 * @throws EmuProcessExitedException always
 	 */
 	@PcodeUserop
