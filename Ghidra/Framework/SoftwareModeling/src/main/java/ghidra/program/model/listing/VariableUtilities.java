@@ -163,7 +163,7 @@ public class VariableUtilities {
 	/**
 	 * Determine the appropriate data type for an automatic parameter
 	 * @param function function whose auto param datatype is to be determined
-	 * @param returnDataType function's return datatype
+	 * @param returnDataType function's formal return datatype
 	 * @param storage variable storage for an auto-parameter (isAutoStorage should be true)
 	 * @return auto-parameter data type
 	 */

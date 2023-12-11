@@ -213,13 +213,13 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand {
 				returnDt = prepareDataType(returnDt, targetDtm, dtCleaner);
 			}
 
-			List<Parameter> params = createParameters(compilerSpec, conventionName, args);
+			ReturnParameterImpl returnParam = new ReturnParameterImpl(returnDt, program);
+			List<Parameter> params =
+				createParameters(compilerSpec, conventionName, args, returnParam);
 
 			SymbolTable symbolTable = program.getSymbolTable();
 
 			adjustParameterNamesToAvoidConflicts(symbolTable, func, params);
-
-			ReturnParameterImpl returnParam = new ReturnParameterImpl(returnDt, program);
 
 			func.updateFunction(conventionName, returnParam, params,
 				FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, false, source);
@@ -247,7 +247,9 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand {
 	}
 
 	private List<Parameter> createParameters(CompilerSpec compilerSpec, String conventionName,
-			ParameterDefinition[] args) throws InvalidInputException {
+			ParameterDefinition[] args, Parameter returnParam) throws InvalidInputException {
+
+		DataType returnDt = returnParam.getDataType();
 
 		int firstParamIndex = getIndexOfFirstParameter(conventionName, args);
 
@@ -256,11 +258,15 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand {
 		DataTypeManager dtm = program.getDataTypeManager();
 		for (int i = firstParamIndex; i < args.length; i++) {
 			String name = args[i].getName();
+			DataType type = args[i].getDataType().clone(dtm);
 			if (Function.RETURN_PTR_PARAM_NAME.equals(name)) {
-				continue; // discard what should be an auto-param
+				if ((type instanceof Pointer) &&
+					(type.isEquivalent(returnDt) || VoidDataType.dataType.isEquivalent(returnDt))) {
+					returnParam.setDataType(((Pointer) type).getDataType(), source);
+				}
+				continue; // remove what should be an auto-param
 			}
 
-			DataType type = args[i].getDataType().clone(dtm);
 			if (settleCTypes) {
 				type = settleCDataType(type, dtm);
 			}
@@ -269,6 +275,7 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand {
 			param.setComment(args[i].getComment());
 			params.add(param);
 		}
+
 		return params;
 	}
 

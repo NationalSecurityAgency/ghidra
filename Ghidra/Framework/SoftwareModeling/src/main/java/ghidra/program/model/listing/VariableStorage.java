@@ -294,8 +294,7 @@ public class VariableStorage implements Comparable<VariableStorage> {
 					"Variable storage incompatible with program, address space not found: " +
 						curSpace.getName());
 			}
-			newVarnodes[i] =
-				new Varnode(newSpace.getAddress(v[i].getOffset()), v[i].getSize());
+			newVarnodes[i] = new Varnode(newSpace.getAddress(v[i].getOffset()), v[i].getSize());
 		}
 		return new VariableStorage(newProgramArch, newVarnodes);
 	}
@@ -625,9 +624,9 @@ public class VariableStorage implements Comparable<VariableStorage> {
 		if (varnodes == null || otherVarnodes == null) {
 			return false;
 		}
-		for (int i = 0; i < varnodes.length; i++) {
-			for (int j = 0; j < otherVarnodes.length; j++) {
-				if (varnodes[i].intersects(otherVarnodes[j])) {
+		for (Varnode varnode : varnodes) {
+			for (Varnode otherVarnode : otherVarnodes) {
+				if (varnode.intersects(otherVarnode)) {
 					return true;
 				}
 			}
@@ -644,8 +643,8 @@ public class VariableStorage implements Comparable<VariableStorage> {
 		if (varnodes == null || set == null || set.isEmpty()) {
 			return false;
 		}
-		for (int i = 0; i < varnodes.length; i++) {
-			if (varnodes[i].intersects(set)) {
+		for (Varnode varnode : varnodes) {
+			if (varnode.intersects(set)) {
 				return true;
 			}
 		}
@@ -662,8 +661,8 @@ public class VariableStorage implements Comparable<VariableStorage> {
 			return false;
 		}
 		Varnode regVarnode = new Varnode(reg.getAddress(), reg.getMinimumByteSize());
-		for (int i = 0; i < varnodes.length; i++) {
-			if (varnodes[i].intersects(regVarnode)) {
+		for (Varnode varnode : varnodes) {
+			if (varnode.intersects(regVarnode)) {
 				return true;
 			}
 		}
@@ -679,8 +678,8 @@ public class VariableStorage implements Comparable<VariableStorage> {
 		if (varnodes == null) {
 			return false;
 		}
-		for (int i = 0; i < varnodes.length; i++) {
-			if (varnodes[i].contains(address)) {
+		for (Varnode varnode : varnodes) {
+			if (varnode.contains(address)) {
 				return true;
 			}
 		}
@@ -816,8 +815,8 @@ public class VariableStorage implements Comparable<VariableStorage> {
 			list = null;
 		}
 		if (list == null) {
-			throw new InvalidInputException("Invalid varnode serialization: '" + serialization +
-				"'");
+			throw new InvalidInputException(
+				"Invalid varnode serialization: '" + serialization + "'");
 		}
 		return list;
 	}
@@ -869,9 +868,10 @@ public class VariableStorage implements Comparable<VariableStorage> {
 					if (space.isRegisterSpace()) {
 						long offset = Long.parseUnsignedLong(offsetStr, 16);
 						int size = Integer.parseInt(sizeStr);
-						Address oldRegAddr =
-							translator.getOldLanguage().getAddressFactory().getRegisterSpace().getAddress(
-								offset);
+						Address oldRegAddr = translator.getOldLanguage()
+								.getAddressFactory()
+								.getRegisterSpace()
+								.getAddress(offset);
 						String newOffsetStr =
 							translateRegisterVarnodeOffset(oldRegAddr, size, translator);
 						if (newOffsetStr != null) {
@@ -895,8 +895,8 @@ public class VariableStorage implements Comparable<VariableStorage> {
 		}
 
 		if (strBuilder == null) {
-			throw new InvalidInputException("Invalid varnode serialization: '" + serialization +
-				"'");
+			throw new InvalidInputException(
+				"Invalid varnode serialization: '" + serialization + "'");
 		}
 
 		return strBuilder.toString();

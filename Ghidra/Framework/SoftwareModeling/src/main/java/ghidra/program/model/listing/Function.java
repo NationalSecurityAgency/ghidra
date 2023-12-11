@@ -36,9 +36,8 @@ import ghidra.util.task.TaskMonitor;
 public interface Function extends Namespace {
 
 	public static final String DEFAULT_PARAM_PREFIX = "param_";
-	public static final String THIS_PARAM_NAME = AutoParameterType.THIS.getDisplayName();
-	public static final String RETURN_PTR_PARAM_NAME =
-		AutoParameterType.RETURN_STORAGE_PTR.getDisplayName();
+	public static final String THIS_PARAM_NAME = "this";
+	public static final String RETURN_PTR_PARAM_NAME = "__return_storage_ptr__";
 	public static final int DEFAULT_PARAM_PREFIX_LEN = DEFAULT_PARAM_PREFIX.length();
 	public static final String DEFAULT_LOCAL_PREFIX = "local_";
 	public static final String DEFAULT_LOCAL_RESERVED_PREFIX = "local_res";
@@ -681,6 +680,7 @@ public interface Function extends Namespace {
 	 * a recursive search is generally needed (see {@link #getFunctionThunkAddresses(boolean)}).
 	 * This method form may be removed in a future release.
 	 */
+	@Deprecated
 	public default Address[] getFunctionThunkAddresses() {
 		return getFunctionThunkAddresses(false);
 	}

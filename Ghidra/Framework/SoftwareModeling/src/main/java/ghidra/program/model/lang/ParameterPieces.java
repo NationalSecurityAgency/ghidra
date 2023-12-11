@@ -66,6 +66,9 @@ public class ParameterPieces {
 			type = DataType.DEFAULT;
 		}
 		if (VoidDataType.isVoidDataType(type)) {
+			if (isIndirect) {
+				return DynamicVariableStorage.INDIRECT_VOID_STORAGE;
+			}
 			return VariableStorage.VOID_STORAGE;
 		}
 		int sz = type.getLength();
