@@ -87,6 +87,7 @@ GhidraClass/Debugger/B3-Scripting.md||GHIDRA||||END|
 GhidraClass/Debugger/B4-Modeling.html||GHIDRA||||END|
 GhidraClass/Debugger/B4-Modeling.md||GHIDRA||||END|
 GhidraClass/Debugger/Makefile||GHIDRA||||END|
+GhidraClass/Debugger/README.html||GHIDRA||||END|
 GhidraClass/Debugger/README.md||GHIDRA||||END|
 GhidraClass/Debugger/gdb_syntax.xml||GHIDRA||||END|
 GhidraClass/Debugger/images/Breakpoints_EmptyAfterLaunch.png||GHIDRA||||END|
