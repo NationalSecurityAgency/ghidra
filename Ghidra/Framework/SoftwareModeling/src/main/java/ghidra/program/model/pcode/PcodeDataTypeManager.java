@@ -478,6 +478,7 @@ public class PcodeDataTypeManager {
 		}
 		encoder.writeString(ATTRIB_METATYPE, "struct");
 		encoder.writeSignedInteger(ATTRIB_SIZE, sz);
+		encoder.writeSignedInteger(ATTRIB_ALIGNMENT, type.getAlignment());
 		DataTypeComponent[] comps = type.getDefinedComponents();
 		for (DataTypeComponent comp : comps) {
 			if (comp.isBitFieldComponent() || comp.getLength() == 0) {
@@ -509,6 +510,7 @@ public class PcodeDataTypeManager {
 		encodeNameIdAttributes(encoder, unionType);
 		encoder.writeString(ATTRIB_METATYPE, "union");
 		encoder.writeSignedInteger(ATTRIB_SIZE, unionType.getLength());
+		encoder.writeSignedInteger(ATTRIB_ALIGNMENT, unionType.getAlignment());
 		DataTypeComponent[] comps = unionType.getDefinedComponents();
 		for (DataTypeComponent comp : comps) {
 			if (comp.getLength() == 0) {
