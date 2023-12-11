@@ -43,6 +43,7 @@ import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.lifecycle.Unfinished;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.*;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
@@ -1026,5 +1027,33 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		assertEquals(threadsPath, modelProvider.getPath());
 		assertEquals(threadsPath.index(0),
 			modelProvider.elementsTablePanel.getSelectedItem().getValue().getCanonicalPath());
+	}
+
+	@Test
+	public void testSetValueAffectsTree() throws Throwable {
+		createTraceAndPopulateObjects();
+
+		TraceObjectKeyPath threadsPath = TraceObjectKeyPath.parse("Processes[0].Threads");
+		TraceObject threads = tb.trace.getObjectManager().getObjectByCanonicalPath(threadsPath);
+		TraceObject thread0 =
+			tb.trace.getObjectManager().getObjectByCanonicalPath(threadsPath.index(0));
+
+		traceManager.activateTrace(tb.trace);
+		traceManager.activateSnap(1);
+		waitForSwing();
+
+		modelProvider.setPath(threadsPath);
+		waitForTasks();
+
+		AbstractNode node =
+			waitForValue(() -> modelProvider.objectsTreePanel.treeModel.getNode(threadsPath));
+		assertEquals(10, node.getChildren().size());
+
+		try (Transaction tx = tb.startTransaction()) {
+			threads.setAttribute(Lifespan.nowOn(0), "Current", thread0);
+		}
+		waitForTasks();
+
+		assertEquals(11, node.getChildren().size());
 	}
 }
