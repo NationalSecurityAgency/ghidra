@@ -24,7 +24,8 @@ import java.util.List;
 
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
-import javax.swing.event.TableColumnModelEvent;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableColumnModel;
 
 import org.junit.*;
 
@@ -167,10 +168,9 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		assertEquals(3, panel.getNumberOfViews());
 
-		DataModelInfo info = panel.getDataModelInfo();
-		String[] names = info.getNames();
-		assertEquals(3, names.length);
-		Set<String> viewNames = new HashSet<>(Arrays.asList(names));
+		List<String> names = panel.getViewNamesInDisplayOrder();
+		assertEquals(3, names.size());
+		Set<String> viewNames = new HashSet<>(names);
 		assertTrue(viewNames.contains("Hex"));
 		assertTrue(viewNames.contains("Octal"));
 		assertTrue(viewNames.contains("Ascii"));
@@ -196,10 +196,9 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		assertEquals(1, panel.getNumberOfViews());
 
-		info = panel.getDataModelInfo();
-		names = info.getNames();
-		assertEquals(1, names.length);
-		assertEquals("Octal", names[0]);
+		names = panel.getViewNamesInDisplayOrder();
+		assertEquals(1, names.size());
+		assertEquals("Octal", names.get(0));
 
 	}
 
@@ -618,56 +617,73 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testReorderViews() throws Exception {
 		loadViews("Ascii", "Octal");
-		final ByteViewerHeader columnHeader =
-			(ByteViewerHeader) findContainer(panel, ByteViewerHeader.class);
+
+		List<String> names = panel.getViewNamesInDisplayOrder();
+		assertEquals("Hex", names.get(0));
+		assertEquals("Octal", names.get(1));
+		assertEquals("Ascii", names.get(2));
+
+		final JTableHeader columnHeader = (JTableHeader) findContainer(panel, JTableHeader.class);
 		// move column 3 to 2
 		runSwing(() -> {
-			TableColumnModelEvent ev =
-				new TableColumnModelEvent(columnHeader.getColumnModel(), 3, 2);
-			panel.columnMoved(ev);
+			TableColumnModel columnModel = columnHeader.getColumnModel();
+			columnModel.moveColumn(3, 2);
 		});
 
-		String[] names = panel.getDataModelInfo().getNames();
+		names = panel.getViewNamesInDisplayOrder();
+		assertEquals("Hex", names.get(0));
+		assertEquals("Ascii", names.get(1));
+		assertEquals("Octal", names.get(2));
 
-		// move column 1 to 0
+		// move column 2 to 1
 		runSwing(() -> {
-			TableColumnModelEvent ev =
-				new TableColumnModelEvent(columnHeader.getColumnModel(), 2, 1);
-			panel.columnMoved(ev);
+			TableColumnModel columnModel = columnHeader.getColumnModel();
+			columnModel.moveColumn(2, 1);
 		});
-		String[] newNames = panel.getDataModelInfo().getNames();
-		assertEquals(names[0], newNames[1]);
-		assertEquals(names[1], newNames[0]);
-		assertEquals(names[2], newNames[2]);
+		names = panel.getViewNamesInDisplayOrder();
+		assertEquals("Ascii", names.get(0));
+		assertEquals("Hex", names.get(1));
+		assertEquals("Octal", names.get(2));
 
+	}
+
+	@Test
+	public void testResizeViews() {
+		loadViews("Ascii", "Octal");
+		assertNotEquals(200, getViewWidth("Ascii"));
+
+		setViewWidth("Ascii", 200);
+
+		assertEquals(200, panel.getViewWidth("Ascii"));
+	}
+
+	@Test
+	public void testResizeViewsSaveState() {
+		loadViews("Ascii", "Octal");
+		assertNotEquals(200, getViewWidth("Ascii"));
+
+		setViewWidth("Ascii", 200);
+		env.saveRestoreToolState();
+
+		assertEquals(200, panel.getViewWidth("Ascii"));
 	}
 
 	@Test
 	public void testReorderViewsSaveState() throws Exception {
 
 		loadViews("Ascii", "Octal");
-		final ByteViewerHeader columnHeader =
-			(ByteViewerHeader) findContainer(panel, ByteViewerHeader.class);
-		// move column 3 to 2
-		runSwing(() -> {
-			TableColumnModelEvent ev =
-				new TableColumnModelEvent(columnHeader.getColumnModel(), 3, 2);
-			panel.columnMoved(ev);
-		});
 
+		final JTableHeader columnHeader = (JTableHeader) findContainer(panel, JTableHeader.class);
 		// move column 1 to 0
 		runSwing(() -> {
-			TableColumnModelEvent ev =
-				new TableColumnModelEvent(columnHeader.getColumnModel(), 1, 0);
-			panel.columnMoved(ev);
+			TableColumnModel columnModel = columnHeader.getColumnModel();
+			columnModel.moveColumn(3, 2);
 		});
-		String[] names = panel.getDataModelInfo().getNames();
+		List<String> names = panel.getViewNamesInDisplayOrder();
 
 		env.saveRestoreToolState();
-		String[] newNames = panel.getDataModelInfo().getNames();
-		for (int i = 0; i < names.length; i++) {
-			assertEquals(names[i], newNames[i]);
-		}
+		List<String> newNames = panel.getViewNamesInDisplayOrder();
+		assertEquals(names, newNames);
 	}
 
 	@Test
@@ -861,8 +877,8 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private Address convertToAddr(ByteBlockInfo info) {
-		return ((ProgramByteBlockSet) plugin.getProvider().getByteBlockSet()).getAddress(
-			info.getBlock(), info.getOffset());
+		return ((ProgramByteBlockSet) plugin.getProvider().getByteBlockSet())
+				.getAddress(info.getBlock(), info.getOffset());
 	}
 
 	private boolean byteBlockSelectionEquals(ByteBlockSelection b1, ByteBlockSelection b2) {
@@ -942,4 +958,15 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		return null;
 	}
 
+	private void setViewWidth(String name, int width) {
+		runSwing(() -> {
+			panel.setViewWidth(name, width);
+		});
+	}
+
+	private int getViewWidth(String name) {
+		return runSwing(() -> {
+			return panel.getViewWidth("Ascii");
+		});
+	}
 }
