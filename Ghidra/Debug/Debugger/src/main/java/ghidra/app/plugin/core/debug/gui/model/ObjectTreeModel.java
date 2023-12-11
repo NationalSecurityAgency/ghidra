@@ -195,6 +195,15 @@ public class ObjectTreeModel implements DisplaysModified {
 	public abstract class AbstractNode extends GTreeLazyNode {
 		public abstract TraceObjectValue getValue();
 
+		public synchronized void addNodeSorted(AbstractNode node) {
+			int i = Collections.binarySearch(getChildren(), node);
+			if (i >= 0) {
+				throw new AssertionError("Duplicate node name: " + node.getName());
+			}
+			i = -i - 1;
+			addNode(i, node);
+		}
+
 		@Override
 		public int compareTo(GTreeNode node) {
 			return TargetObjectKeyComparator.CHILD.compare(this.getName(), node.getName());
@@ -202,7 +211,7 @@ public class ObjectTreeModel implements DisplaysModified {
 
 		@Override
 		public String getName() {
-			return getValue().getEntryKey();
+			return getValue().getEntryKey() + "\n" + getValue().getMinSnap();
 		}
 
 		@Override
@@ -214,7 +223,7 @@ public class ObjectTreeModel implements DisplaysModified {
 			}
 			if (isValueVisible(value)) {
 				AbstractNode child = nodeCache.getOrCreateNode(value);
-				addNode(child);
+				addNodeSorted(child);
 			}
 		}
 
@@ -268,7 +277,7 @@ public class ObjectTreeModel implements DisplaysModified {
 
 		@Override
 		public String getName() {
-			return "Root";
+			return "<Root>";
 		}
 
 		@Override
