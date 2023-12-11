@@ -92,18 +92,15 @@ public class ParameterPieces {
 		VariableStorage store;
 		try {
 			if (joinPieces != null) {
-				store = new DynamicVariableStorage(program, false, joinPieces);
+				store = new DynamicVariableStorage(program, isIndirect, joinPieces);
 			}
 			else {
 				if (hiddenReturnPtr) {
 					store = new DynamicVariableStorage(program,
 						AutoParameterType.RETURN_STORAGE_PTR, address, sz);
 				}
-				else if (isIndirect) {
-					store = new DynamicVariableStorage(program, true, address, sz);
-				}
 				else {
-					store = new DynamicVariableStorage(program, false, address, sz);
+					store = new DynamicVariableStorage(program, isIndirect, address, sz);
 				}
 			}
 		}
