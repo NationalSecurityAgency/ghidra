@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.model;
 
-import java.awt.BorderLayout;
-import java.awt.KeyboardFocusManager;
+import java.awt.*;
 import java.awt.event.*;
 import java.lang.invoke.MethodHandles;
 import java.util.List;
@@ -65,7 +64,15 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 
 	private JPanel mainPanel = new JPanel(new BorderLayout());
 
-	protected JTextField pathField;
+	static class MyTextField extends JTextField {
+		// This one can be reflected for testing
+		@Override
+		protected void processEvent(AWTEvent e) {
+			super.processEvent(e);
+		}
+	}
+
+	protected MyTextField pathField;
 	protected JButton goButton;
 	protected ObjectsTreePanel objectsTreePanel;
 	protected ObjectsTablePanel elementsTablePanel;
@@ -150,7 +157,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 	}
 
 	protected void buildMainPanel() {
-		pathField = new JTextField();
+		pathField = new MyTextField();
 		pathField.setInputVerifier(new InputVerifier() {
 			@Override
 			public boolean verify(JComponent input) {

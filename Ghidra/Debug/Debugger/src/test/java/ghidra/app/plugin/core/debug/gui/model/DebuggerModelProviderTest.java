@@ -18,8 +18,8 @@ package ghidra.app.plugin.core.debug.gui.model;
 import static org.junit.Assert.*;
 
 import java.awt.event.MouseEvent;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.jdom.JDOMException;
 import org.junit.*;
@@ -410,7 +410,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		GTree tree = modelProvider.objectsTreePanel.tree;
 		GTreeNode node = waitForPass(() -> {
 			GTreeNode n = Unique.assertOne(tree.getSelectedNodes());
-			assertEquals("Processes", n.getName());
+			assertEquals("Processes\n0", n.getName());
 			return n;
 		});
 		clickTreeNode(tree, node, MouseEvent.BUTTON1);
@@ -1026,5 +1026,105 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		assertEquals(threadsPath, modelProvider.getPath());
 		assertEquals(threadsPath.index(0),
 			modelProvider.elementsTablePanel.getSelectedItem().getValue().getCanonicalPath());
+	}
+
+	@Test
+	public void testDuplicateNameInSameParentDoesntCorruptTree() throws Throwable {
+		createTraceAndPopulateObjects();
+		TraceObjectKeyPath threadsPath = TraceObjectKeyPath.parse("Processes[0].Threads");
+		TraceObject threads = tb.trace.getObjectManager().getObjectByCanonicalPath(threadsPath);
+		TraceObject thread0 =
+			tb.trace.getObjectManager().getObjectByCanonicalPath(threadsPath.index(0));
+
+		traceManager.activateTrace(tb.trace);
+		traceManager.activateSnap(1);
+		waitForSwing();
+
+		modelProvider.setPath(threadsPath);
+		modelProvider.setLimitToCurrentSnap(false);
+		waitForTasks();
+
+		AbstractNode node =
+			waitForValue(() -> modelProvider.objectsTreePanel.treeModel.getNode(threadsPath));
+
+		try (Transaction tx = tb.startTransaction()) {
+			threads.setAttribute(Lifespan.at(0), "CurrentA", thread0);
+			threads.setAttribute(Lifespan.at(2), "CurrentA", thread0);
+			threads.setAttribute(Lifespan.at(0), "CurrentB", thread0);
+			threads.setAttribute(Lifespan.at(2), "CurrentB", thread0);
+		}
+		waitForTasks();
+
+		node.unloadChildren();
+		node.expand();
+		waitForTasks();
+
+		assertEquals(14, node.getChildCount());
+		Map<String, List<GTreeNode>> byName =
+			node.getChildren().stream().collect(Collectors.groupingBy(n -> n.getName()));
+		assertTrue(byName.values().stream().allMatch(c -> c.size() == 1));
+	}
+
+	// @Test
+	public void testDuplicateNameInDifferentParentsDoesntCorruptTree() throws Throwable {
+		// Unfinished.TODO();
+		// This is already covered. Processes has a [0] and Threads also has a [0].
+	}
+
+	@Test
+	public void testDuplicateNameDifferentLifespanAppearInAttributesTable() throws Throwable {
+		createTraceAndPopulateObjects();
+		TraceObjectKeyPath threadsPath = TraceObjectKeyPath.parse("Processes[0].Threads");
+		TraceObject threads = tb.trace.getObjectManager().getObjectByCanonicalPath(threadsPath);
+		TraceObject thread0 =
+			tb.trace.getObjectManager().getObjectByCanonicalPath(threadsPath.index(0));
+
+		traceManager.activateTrace(tb.trace);
+		traceManager.activateSnap(1);
+		waitForSwing();
+
+		modelProvider.setPath(threadsPath);
+		modelProvider.setLimitToCurrentSnap(false);
+		waitForTasks();
+
+		try (Transaction tx = tb.startTransaction()) {
+			threads.setAttribute(Lifespan.at(0), "CurrentA", thread0);
+			threads.setAttribute(Lifespan.at(2), "CurrentA", thread0);
+			threads.setAttribute(Lifespan.at(0), "CurrentB", thread0);
+			threads.setAttribute(Lifespan.at(2), "CurrentB", thread0);
+		}
+		waitForTasks();
+
+		assertEquals(4, modelProvider.attributesTablePanel.tableModel.getModelData().size());
+	}
+
+	@Test
+	public void testDuplicateNameDifferentLifespanAppearInElementsTable() throws Throwable {
+		createTraceAndPopulateObjects();
+		TraceObjectKeyPath threadsPath = TraceObjectKeyPath.parse("Processes[0].Threads");
+		TraceObject threads = tb.trace.getObjectManager().getObjectByCanonicalPath(threadsPath);
+		TraceObject thread0 =
+			tb.trace.getObjectManager().getObjectByCanonicalPath(threadsPath.index(0));
+
+		traceManager.activateTrace(tb.trace);
+		traceManager.activateSnap(1);
+		waitForSwing();
+
+		modelProvider.setPath(threadsPath);
+		modelProvider.setLimitToCurrentSnap(false);
+		waitForTasks();
+
+		try (Transaction tx = tb.startTransaction()) {
+			threads.setElement(Lifespan.at(0), "CurrentA", thread0);
+			threads.setElement(Lifespan.at(2), "CurrentA", thread0);
+			threads.setElement(Lifespan.at(0), "CurrentB", thread0);
+			threads.setElement(Lifespan.at(2), "CurrentB", thread0);
+		}
+		waitForTasks();
+
+		// TODO: Should I collapse entries that are links to the same object?
+		//   Would use the "Life" column to display span for each included entry.
+		//   Neat, but not sure it's worth it
+		assertEquals(14, modelProvider.elementsTablePanel.tableModel.getModelData().size());
 	}
 }
