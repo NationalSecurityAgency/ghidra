@@ -376,7 +376,7 @@ def _continue(process: sch.Schema('Process')):
 
 
 @REGISTRY.method
-def interrupt():
+def interrupt(process: sch.Schema('Process')):
     """Interrupt the execution of the debugged program."""
     dbg()._control.SetInterrupt(DbgEng.DEBUG_INTERRUPT_ACTIVE)
 
