@@ -27,14 +27,15 @@ import java.sql.*;
  */
 public class OptionalTable {
 
-	private final String TABLE_EXISTS_STMT = "SELECT schemaname FROM pg_tables where tablename='#'";
-	private final String GRANT_STMT = "GRANT SELECT ON # TO PUBLIC";
-	private final String DELETE_ALL_STMT = "DELETE FROM #";
+	private String TABLE_EXISTS_STMT = "SELECT schemaname FROM pg_tables where tablename='#'";
+	private String GRANT_STMT = "GRANT SELECT ON # TO PUBLIC";
+	private String DELETE_ALL_STMT = "DELETE FROM #";
 
-	private final String INSERT_STMT = "INSERT INTO # (key,value) VALUES(?,?)";
-	private final String UPDATE_STMT = "UPDATE # SET value = ? WHERE key = ?";
-	private final String SELECT_STMT = "SELECT value FROM # WHERE key = ?";
-	private final String DELETE_STMT = "DELETE FROM # WHERE key = ?";
+	private String INSERT_STMT = "INSERT INTO # (key,value) VALUES(?,?)";
+	private String UPDATE_STMT = "UPDATE # SET value = ? WHERE key = ?";
+	private String SELECT_STMT = "SELECT value FROM # WHERE key = ?";
+	private String DELETE_STMT = "DELETE FROM # WHERE key = ?";
+	private String LOCK_STMT = "LOCK TABLE # IN SHARE ROW EXCLUSIVE MODE";
 
 	private Connection db = null;			// Connection to the database
 
@@ -43,7 +44,6 @@ public class OptionalTable {
 	private final CachedStatement<PreparedStatement> selectStatement = new CachedStatement<>();
 	private final CachedStatement<PreparedStatement> deleteStatement = new CachedStatement<>();
 	private final CachedStatement<Statement> reusableStatement = new CachedStatement<>();
-	private final String lockString;
 
 	private String name = null;		// name of the table
 	private int keyType = -1;		// Type of the key column
@@ -61,7 +61,14 @@ public class OptionalTable {
 		keyType = kType;
 		valueType = vType;
 		db = d;
-		lockString = "LOCK TABLE " + nm + " IN SHARE ROW EXCLUSIVE MODE";
+		TABLE_EXISTS_STMT = generateSQLCommand(TABLE_EXISTS_STMT, nm);
+		GRANT_STMT = generateSQLCommand(GRANT_STMT, nm);
+		DELETE_ALL_STMT = generateSQLCommand(DELETE_ALL_STMT, nm);
+		INSERT_STMT = generateSQLCommand(INSERT_STMT, nm);
+		UPDATE_STMT = generateSQLCommand(UPDATE_STMT, nm);
+		SELECT_STMT = generateSQLCommand(SELECT_STMT, nm);
+		DELETE_STMT = generateSQLCommand(DELETE_STMT, nm);
+		LOCK_STMT = generateSQLCommand(LOCK_STMT, nm);
 	}
 
 	private Statement getReusableStatement() throws SQLException {
@@ -73,7 +80,7 @@ public class OptionalTable {
 	 * @throws SQLException if the server reports an error
 	 */
 	public void lockForWrite() throws SQLException {
-		getReusableStatement().execute(lockString);
+		getReusableStatement().execute(LOCK_STMT);
 	}
 
 	/**
@@ -98,7 +105,7 @@ public class OptionalTable {
 	 * @param ptr is the string to be modified
 	 * @return the modified string
 	 */
-	private String generateSQLCommand(String ptr) {
+	private static String generateSQLCommand(String ptr, String name) {
 		int first = ptr.indexOf('#');
 		int second = ptr.indexOf('#', first + 1);
 		String res;
@@ -160,8 +167,7 @@ public class OptionalTable {
 		String sqlstring = buffer.toString();
 		Statement st = getReusableStatement();
 		st.executeUpdate(sqlstring);
-		sqlstring = generateSQLCommand(GRANT_STMT);
-		st.executeUpdate(sqlstring);
+		st.executeUpdate(GRANT_STMT);
 	}
 
 	/**
@@ -169,8 +175,7 @@ public class OptionalTable {
 	 * @throws SQLException for problems with the connection
 	 */
 	public void clearTable() throws SQLException {
-		String sqlString = generateSQLCommand(DELETE_ALL_STMT);
-		getReusableStatement().executeUpdate(sqlString);
+		getReusableStatement().executeUpdate(DELETE_ALL_STMT);
 	}
 
 	/**
@@ -179,9 +184,8 @@ public class OptionalTable {
 	 * @throws SQLException for problems with the connection
 	 */
 	public boolean exists() throws SQLException {
-		String sqlString = generateSQLCommand(TABLE_EXISTS_STMT);
 		boolean result = false;
-		try (ResultSet rs = getReusableStatement().executeQuery(sqlString)) {
+		try (ResultSet rs = getReusableStatement().executeQuery(TABLE_EXISTS_STMT)) {
 			if (rs.next()) {
 				result = rs.getString(1).equals("public");
 			}

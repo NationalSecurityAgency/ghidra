@@ -1512,13 +1512,12 @@ void ParamListStandardOut::assignMap(const PrototypePieces &proto,TypeFactory &t
     Datatype *pointertp = typefactory.getTypePointer(pointersize, proto.outtype, wordsize);
     if (responseCode == AssignAction::hiddenret_specialreg_void) {
       res.back().type = typefactory.getTypeVoid();
-      res.back().flags = 0;
     }
     else {
       if (assignAddressFallback(TYPECLASS_PTR,pointertp,false,status,res.back()) == AssignAction::fail)
 	throw ParamUnassignedError("Cannot assign return value as a pointer");
-      res.back().flags = ParameterPieces::indirectstorage;
     }
+    res.back().flags = ParameterPieces::indirectstorage;
 
     res.emplace_back();			// Add extra storage location in the input params
     res.back().type = pointertp;	// that holds a pointer to where the return value should be stored
