@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import generic.json.Json;
 import ghidra.app.util.SymbolPathParser;
 import ghidra.app.util.demangler.*;
+import ghidra.program.model.symbol.SourceType;
 
 /** Parses a demangled rust string */
 public class RustDemanglerParser {
@@ -67,10 +68,12 @@ public class RustDemanglerParser {
 
 	private DemangledObject parseNext(String demangled) {
 		String nameString = removeBadSpaces(demangled).trim();
-		DemangledFunction variable =
+		DemangledFunction demangledFunction =
 			new DemangledFunction(mangledSource, demangledSource, (String) null);
-		setNameAndNamespace(variable, nameString);
-		return variable;
+		setNameAndNamespace(demangledFunction, nameString);
+		// Restrict to applying name, namespace and calling-convention
+		demangledFunction.setSignatureSourceType(SourceType.DEFAULT);
+		return demangledFunction;
 	}
 
 	/**

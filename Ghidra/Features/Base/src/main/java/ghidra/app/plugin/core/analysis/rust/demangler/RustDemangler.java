@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.analysis.rust.demangler;
 
 import ghidra.app.util.demangler.*;
+import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.listing.Program;
 
 /**
@@ -68,8 +69,9 @@ public class RustDemangler implements Demangler {
 		RustDemanglerParser parser = new RustDemanglerParser();
 		DemangledObject demangledObject = parser.parse(mangled, demangled);
 
-		if (options.applyCallingConvention() && demangledObject instanceof DemangledFunction) {
-			((DemangledFunction) demangledObject).setCallingConvention("rustcall");
+		if (options.applyCallingConvention() &&
+			demangledObject instanceof DemangledFunction demangledFunction) {
+			demangledFunction.setCallingConvention(CompilerSpec.CALLING_CONVENTION_rustcall);
 		}
 
 		return demangledObject;
