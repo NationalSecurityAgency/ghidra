@@ -82,6 +82,9 @@ public interface DatatypeFilter {
 	 */
 	public static boolean extractPrimitives(DataType dt, int max, DataType filler,
 			ArrayList<DataType> res) {
+		if (dt instanceof TypeDef) {
+			dt = ((TypeDef) dt).getBaseDataType();
+		}
 		int metaType = PcodeDataTypeManager.getMetatype(dt);
 		switch (metaType) {
 			case PcodeDataTypeManager.TYPE_UNKNOWN:
