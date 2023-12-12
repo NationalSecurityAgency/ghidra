@@ -33,6 +33,24 @@ documentation) from the command-line by just running
 This will dump logging messages to the console, and you should see '[lsh]'
 listed among the loaded plug-ins as the node starts up.
 
+This will typically start the database with password authentication enabled.  An
+'elastic' user will be automatically created with a randomly generated password that
+gets printed to the console the first time the node is started.  To add additional
+users, use a curl command like
+
+curl -k -u elastic:XXXXXX -X POST "https://localhost:9200/_security/user/ghidrauser?pretty" -H 'Content-Type: application/json' -d'
+{
+  "password" : "changeme",
+  "roles" : [ "superuser" ],
+  "full_name" : "Ghidra User",
+  "email" : "ghidrauser@example.com"
+}
+'
+
+Replace XXXXXX with the generated password for the 'elastic' user.  This example
+creates a user 'ghidrauser', with administrator privileges. The built-in role
+'viewer' can be used to create users with read-only access to the database.
+
 Once the Elasticsearch node(s) are running, whether they are a toy or a full
 deployment, you can immediately proceed to the BSim 'bsim' command.
 The Ghidra/BSim client and 'bsim' command automatically assume an
@@ -60,7 +78,7 @@ documentation included with Ghidra for full details.
 
 Version:
 
-The current BSim plug-in was designed and tested with Elasticsearch version 7.17.4.
+The current BSim plug-in was tested with Elasticsearch version 8.8.1.
 A change to the Elasticsearch scripting interface, starting with version 7.15, makes the BSim
 plug-in incompatible with previous versions, but the lsh plug-in jars may work without change
 across later Elasticsearch versions.
@@ -75,7 +93,7 @@ the zip file. Within the zip archive, the version number is stored in a configur
   
 The file format is fairly simple: edit the line
 
-  elasticsearch.version=7.17.4
+  elasticsearch.version=8.8.1
 
 The plugin may work with other nearby versions, but proceed at your own risk.
 
