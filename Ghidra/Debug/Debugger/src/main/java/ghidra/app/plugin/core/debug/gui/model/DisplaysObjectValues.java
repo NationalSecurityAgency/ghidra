@@ -163,12 +163,13 @@ public interface DisplaysObjectValues {
 			return "";
 		}
 		if (!edge.isObject()) {
-			return "<html>" + HTMLUtilities.escapeHTML(getPrimitiveValueDisplay(edge.getValue()));
+			return "<html>" +
+				HTMLUtilities.escapeHTML(getPrimitiveValueDisplay(edge.getValue()), true);
 		}
 		if (edge.isCanonical()) {
-			return "<html>" + HTMLUtilities.escapeHTML(getObjectDisplay(edge));
+			return "<html>" + HTMLUtilities.escapeHTML(getObjectDisplay(edge), true);
 		}
-		return "<html><em>" + HTMLUtilities.escapeHTML(getObjectLinkDisplay(edge)) + "</em>";
+		return "<html><em>" + HTMLUtilities.escapeHTML(getObjectLinkDisplay(edge), true) + "</em>";
 	}
 
 	default String getEdgeToolTip(TraceObjectValue edge) {

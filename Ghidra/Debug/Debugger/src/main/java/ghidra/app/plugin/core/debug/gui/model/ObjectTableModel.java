@@ -320,7 +320,7 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		@Override
 		public String getHtmlDisplay() {
 			return "<html>" +
-				HTMLUtilities.escapeHTML(display.getPrimitiveValueDisplay(value.getValue()));
+				HTMLUtilities.escapeHTML(display.getPrimitiveValueDisplay(value.getValue()), true);
 		}
 
 		@Override
