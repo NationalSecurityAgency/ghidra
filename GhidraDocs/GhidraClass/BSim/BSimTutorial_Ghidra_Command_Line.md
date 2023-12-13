@@ -11,9 +11,6 @@ We do not run any PostgreSQL code, we simply analyze some files produced when bu
 Note that these files must be built on a machine running Linux.
 Windows users can build these files in a Linux virtual machine.
 
-First, download ``postgresql-15.3.tar.gz`` from the PostgreSQL web site.
-Put this file in ``<ghidra_install_dir>/Ghidra/Features/BSim``.
-
 To build the files, execute the following commands in a shell: [^1] 
 
 [^1]: You may need to install additional packages and/or change some build options in order for PostgreSQL to build successfully. The error messages are generally informative.  See the comments in ``make-postgres.sh``.
