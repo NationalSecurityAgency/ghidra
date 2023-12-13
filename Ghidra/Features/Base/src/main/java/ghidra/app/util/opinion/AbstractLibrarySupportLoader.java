@@ -1111,8 +1111,11 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		if (isLoadSystemLibraries(options) || shouldSearchAllPaths(options)) {
 			List<Path> searchPaths = new ArrayList<>();
 			for (String str : LibrarySearchPathManager.getLibraryPathsList()) {
+				if (str.isBlank()) {
+					continue;
+				}
 				try {
-					Path path = Path.of(str).normalize();
+					Path path = Path.of(str.trim()).normalize();
 					if (path.isAbsolute() && Files.exists(path)) {
 						searchPaths.add(path);
 					}
