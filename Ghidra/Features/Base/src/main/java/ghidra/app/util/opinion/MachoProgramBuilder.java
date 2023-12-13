@@ -1694,16 +1694,23 @@ public class MachoProgramBuilder {
 	protected void setCompiler() {
 		// Check for Rust
 		try {
-			if (RustUtilities.isRust(program,
-				SegmentNames.SEG_TEXT + "." + SectionNames.TEXT_CONST)) {
+			SegmentCommand segment = machoHeader.getSegment(SegmentNames.SEG_TEXT);
+			if (segment == null) {
+				return;
+			}
+			Section section = segment.getSectionByName(SectionNames.TEXT_CONST);
+			if (section == null) {
+				return;
+			}
+			if (RustUtilities.isRust(memory.getBlock(space.getAddress(section.getAddress())))) {
+				program.setCompiler(RustConstants.RUST_COMPILER);
 				int extensionCount = RustUtilities.addExtensions(program, monitor,
 					RustConstants.RUST_EXTENSIONS_UNIX);
 				log.appendMsg("Installed " + extensionCount + " Rust cspec extensions");
-				program.setCompiler("rustc");
 			}
 		}
 		catch (IOException e) {
-			log.appendException(e);
+			log.appendMsg("Rust error: " + e.getMessage());
 		}
 	}
 
