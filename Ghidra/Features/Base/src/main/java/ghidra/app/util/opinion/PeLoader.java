@@ -902,7 +902,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			BorlandCpp("borland:c++", "borlandcpp"),
 			BorlandUnk("borland:unknown", "borlandcpp"),
 			CLI("cli", "cli"),
-			Rustc("rustc", "rustc"),
+			Rustc(RustConstants.RUST_COMPILER, RustConstants.RUST_COMPILER),
 			GOLANG("golang", "golang"),
 			Unknown("unknown", "unknown"),
 
@@ -958,16 +958,16 @@ public class PeLoader extends AbstractPeDebugLoader {
 			DOSHeader dh = pe.getDOSHeader();
 
 			// Check for Rust.  Program object is required, which may be null.
-			try {
-				if (program != null && RustUtilities.isRust(program, ".rdata")) {
+			if (program != null && RustUtilities.isRust(program.getMemory().getBlock(".rdata"))) {
+				try {
 					int extensionCount = RustUtilities.addExtensions(program, monitor,
 						RustConstants.RUST_EXTENSIONS_WINDOWS);
 					log.appendMsg("Installed " + extensionCount + " Rust cspec extensions");
-					return CompilerEnum.Rustc;
 				}
-			}
-			catch (IOException e) {
-				log.appendException(e);
+				catch (IOException e) {
+					log.appendMsg("Rust error: " + e.getMessage());
+				}
+				return CompilerEnum.Rustc;
 			}
 
 			// Check for managed code (.NET)

@@ -44,7 +44,7 @@ public class RustStringAnalyzer extends AbstractAnalyzer {
 	@Override
 	public boolean canAnalyze(Program program) {
 		String name = program.getCompiler();
-		return name.contains("rustc");
+		return name.contains(RustConstants.RUST_COMPILER);
 	}
 
 	@Override
@@ -98,9 +98,9 @@ public class RustStringAnalyzer extends AbstractAnalyzer {
 
 	/**
 	 * Get the number of bytes to the next reference, or the max length
-	 * @param program
-	 * @param address
-	 * @param maxLen
+	 * @param program The {@link Program}
+	 * @param address The {@link Address}
+	 * @param maxLen The maximum length
 	 * @return maximum length to create the string
 	 */
 	private static int getMaxStringLength(Program program, Address address, int maxLen) {
