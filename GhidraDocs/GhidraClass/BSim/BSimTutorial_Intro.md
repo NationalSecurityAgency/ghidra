@@ -58,9 +58,7 @@ There are three supported database backends for BSim:
 
 1. PostgreSQL
  
-    - The Ghidra distribution includes the source for a PostgreSQL plugin for BSim along with a 
-    build script.
-    - Users must download the PostgreSQL source.
+    - The Ghidra distribution includes the source for PostgreSQL, a PostgreSQL plugin for BSim, and a build script.
     - Populated from shared Ghidra projects (i.e., requires a Ghidra server).
     - Server not supported on Windows (no restriction on clients).
 
