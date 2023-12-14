@@ -7,6 +7,7 @@ data/languages/SPEF_SCR.sinc||GHIDRA||||END|
 data/languages/SPE_APU.sinc||GHIDRA||||END|
 data/languages/SPE_EFSD.sinc||GHIDRA||||END|
 data/languages/SPE_EFV.sinc||GHIDRA||||END|
+data/languages/SPE_FloatMulAdd.sinc||GHIDRA||||END|
 data/languages/Scalar_SPFP.sinc||GHIDRA||||END|
 data/languages/altivec.sinc||GHIDRA||||END|
 data/languages/evx.sinc||GHIDRA||||END|
