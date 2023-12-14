@@ -44,7 +44,7 @@ public class AVR8_xmega_GCC_O3_EmulatorTest extends ProcessorEmulatorTestAdapter
 		testRunner.setRegister("SP", 0x0);
 		testRunner.setRegister("R1", 0x0);
 		testRunner.setRegister("Y", 0x0);
-		testRunner.setRegister("W", 0x0);
+		testRunner.setRegister("R25R24", 0x0);
 	}
 
 	@Override
