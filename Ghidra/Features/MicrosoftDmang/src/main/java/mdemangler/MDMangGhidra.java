@@ -19,6 +19,7 @@ import java.util.Iterator;
 
 import ghidra.app.util.demangler.*;
 import ghidra.program.model.lang.CompilerSpec;
+import ghidra.program.model.symbol.SourceType;
 import mdemangler.datatype.MDDataType;
 import mdemangler.datatype.MDVarArgsType;
 import mdemangler.datatype.complex.*;
@@ -216,6 +217,7 @@ public class MDMangGhidra extends MDMang {
 				else {
 					DemangledFunction function =
 						new DemangledFunction(mangledSource, demangledSource, objectCPP.getName());
+					function.setSignatureSourceType(SourceType.IMPORTED);
 					function.setNamespace(processNamespace(objectCPP.getQualification()));
 					resultObject = function;
 					objectResult = processFunction((MDFunctionInfo) typeinfo, function);

@@ -1,4 +1,4 @@
-<prototype name="rustcall" extrapop="8" stackshift="8">
+<prototype name="__rustcall" extrapop="8" stackshift="8">
     <input pointermax="8">
 	<pentry minsize="4" maxsize="8" metatype="float">
 	    <register name="XMM0_Qa"/>
