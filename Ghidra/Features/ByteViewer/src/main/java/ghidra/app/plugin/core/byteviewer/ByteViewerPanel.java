@@ -788,7 +788,8 @@ public class ByteViewerPanel extends JPanel implements LayoutModel, LayoutListen
 
 	@Override
 	public Dimension getPreferredViewSize() {
-		return new Dimension(500, 500);
+		// this is the preferred size of the address panel
+		return new Dimension(100, 500);
 	}
 
 	@Override
