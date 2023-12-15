@@ -49,7 +49,8 @@ public class AbstractGhidraHeadedDebuggerIntegrationTest
 			        <attribute name='Threads' schema='ThreadContainer' />
 			        <attribute name='Memory' schema='Memory' />
 			        <attribute name='Breakpoints' schema='BreakpointContainer' />
-			        <attribute name='_state' schema='EXECUTION_STATE' hidden='yes' />
+			        <attribute name='State' schema='EXECUTION_STATE' />
+			        <attribute-alias from="_state" to="State" />
 			    </schema>
 			    <schema name='ThreadContainer' canonical='yes' elementResync='NEVER'
 			            attributeResync='ONCE'>
@@ -86,10 +87,14 @@ public class AbstractGhidraHeadedDebuggerIntegrationTest
 			    </schema>
 			    <schema name='MemoryRegion' elementResync='NEVER' attributeResync='ONCE'>
 			        <interface name='MemoryRegion' />
-			        <attribute name='_range' schema='RANGE' hidden='yes' />
-			        <attribute name='_readable' schema='BOOL' hidden='yes' />
-			        <attribute name='_writable' schema='BOOL' hidden='yes' />
-			        <attribute name='_executable' schema='BOOL' hidden='yes' />
+			        <attribute name='Range' schema='RANGE' />
+			        <attribute-alias from='_range' to='Range' />
+			        <attribute name='R' schema='BOOL' />
+			        <attribute-alias from='_readable' to='R' />
+			        <attribute name='W' schema='BOOL' />
+			        <attribute-alias from='_writable' to='W' />
+			        <attribute name='X' schema='BOOL' />
+			        <attribute-alias from='_executable' to='X' />
 			    </schema>
 			    <schema name='BreakpointContainer' canonical='yes' elementResync='NEVER'
 			            attributeResync='ONCE'>
@@ -102,14 +107,18 @@ public class AbstractGhidraHeadedDebuggerIntegrationTest
 			        <interface name='BreakpointLocationContainer' />
 			        <interface name='Togglable' />
 			        <element schema='BreakpointLoc' />
-			        <attribute name='_kinds' schema='SET_BREAKPOINT_KIND' hidden='yes' />
-			        <attribute name='_expr' schema='STRING' hidden='yes' />
-			        <attribute name='_enabled' schema='BOOL' hidden='yes' />
+			        <attribute name='Kinds' schema='SET_BREAKPOINT_KIND' />
+			        <attribute-alias from='_kinds' to='Kinds' />
+			        <attribute name='Expression' schema='STRING' />
+			        <attribute-alias from='_expr' to='Expression' />
+			        <attribute name='Enabled' schema='BOOL' />
+			        <attribute-alias from='_enabled' to='Enabled' />
 			    </schema>
 			    <schema name='BreakpointLoc' canonical='yes' elementResync='NEVER'
 			            attributeResync='ONCE'>
 			        <interface name='BreakpointLocation' />
-			        <attribute name='_range' schema='RANGE' hidden='yes' />
+			        <attribute name='Range' schema='RANGE' />
+			        <attribute-alias from='_range' to='Range' />
 			    </schema>
 			</context>
 			""");

@@ -137,6 +137,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 
 	protected final DBTraceObjectManager manager;
 
+	private TargetObjectSchema targetSchema;
 	private Map<Class<? extends TraceObjectInterface>, TraceObjectInterface> ifaces;
 
 	private final Map<String, InternalTraceObjectValue> valueCache = new LinkedHashMap<>() {
@@ -461,29 +462,31 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	@Override
 	public Collection<? extends InternalTraceObjectValue> getValues(Lifespan span, String key) {
 		try (LockHold hold = manager.trace.lockRead()) {
-			return doGetValues(span, key, true);
+			String k = getTargetSchema().checkAliasedAttribute(key);
+			return doGetValues(span, k, true);
 		}
 	}
 
 	@Override
 	public InternalTraceObjectValue getValue(long snap, String key) {
 		try (LockHold hold = manager.trace.lockRead()) {
-			InternalTraceObjectValue cached = valueCache.get(key);
+			String k = getTargetSchema().checkAliasedAttribute(key);
+			InternalTraceObjectValue cached = valueCache.get(k);
 			if (cached != null && !cached.isDeleted() && cached.getLifespan().contains(snap)) {
 				return cached;
 			}
-			Long nullSnap = nullCache.get(key);
+			Long nullSnap = nullCache.get(k);
 			if (nullSnap != null && nullSnap.longValue() == snap) {
 				return null;
 			}
 			InternalTraceObjectValue found = manager.valueMap
-					.reduce(TraceObjectValueQuery.values(this, key, key, Lifespan.at(snap)))
+					.reduce(TraceObjectValueQuery.values(this, k, k, Lifespan.at(snap)))
 					.firstValue();
 			if (found == null) {
-				nullCache.put(key, snap);
+				nullCache.put(k, snap);
 			}
 			else {
-				valueCache.put(key, found);
+				valueCache.put(k, found);
 			}
 			return found;
 		}
@@ -493,7 +496,8 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 	public Stream<? extends InternalTraceObjectValue> getOrderedValues(Lifespan span, String key,
 			boolean forward) {
 		try (LockHold hold = manager.trace.lockRead()) {
-			return doGetValues(span, key, forward).stream();
+			String k = getTargetSchema().checkAliasedAttribute(key);
+			return doGetValues(span, k, forward).stream();
 		}
 	}
 
@@ -599,11 +603,12 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 			if (isDeleted()) {
 				throw new IllegalStateException("Cannot set value on deleted object.");
 			}
+			String k = getTargetSchema().checkAliasedAttribute(key);
 			if (resolution == ConflictResolution.DENY) {
-				doCheckConflicts(lifespan, key, value);
+				doCheckConflicts(lifespan, k, value);
 			}
 			else if (resolution == ConflictResolution.ADJUST) {
-				lifespan = doAdjust(lifespan, key, value);
+				lifespan = doAdjust(lifespan, k, value);
 			}
 			var setter = new ValueLifespanSetter(lifespan, value) {
 				DBTraceObject canonicalLifeChanged = null;
@@ -612,7 +617,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 				protected Iterable<InternalTraceObjectValue> getIntersecting(Long lower,
 						Long upper) {
 					return Collections.unmodifiableCollection(
-						doGetValues(Lifespan.span(lower, upper), key, true));
+						doGetValues(Lifespan.span(lower, upper), k, true));
 				}
 
 				@Override
@@ -634,7 +639,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 
 				@Override
 				protected InternalTraceObjectValue create(Lifespan range, Object value) {
-					return doCreateValue(range, key, value);
+					return doCreateValue(range, k, value);
 				}
 			};
 			InternalTraceObjectValue result = setter.set(lifespan, value);
@@ -673,7 +678,11 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 
 	@Override
 	public TargetObjectSchema getTargetSchema() {
-		return manager.rootSchema.getSuccessorSchema(path.getKeyList());
+		// NOTE: No need to synchronize. Schema is immutable.
+		if (targetSchema == null) {
+			targetSchema = manager.rootSchema.getSuccessorSchema(path.getKeyList());
+		}
+		return targetSchema;
 	}
 
 	@Override

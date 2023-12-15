@@ -70,12 +70,10 @@ public class DefaultSchemaContext implements SchemaContext {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj instanceof DefaultSchemaContext) {
-			DefaultSchemaContext that = (DefaultSchemaContext) obj;
+		if (obj instanceof DefaultSchemaContext that) {
 			return Objects.equals(this.schemas, that.schemas);
 		}
-		if (obj instanceof SchemaContext) {
-			SchemaContext that = (SchemaContext) obj;
+		if (obj instanceof SchemaContext that) {
 			return this.schemas.values().equals(that.getAllSchemas());
 		}
 		return false;

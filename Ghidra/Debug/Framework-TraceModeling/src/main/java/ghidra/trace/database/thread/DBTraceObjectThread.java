@@ -15,7 +15,10 @@
  */
 package ghidra.trace.database.thread;
 
+import java.util.*;
+
 import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectInterface;
 import ghidra.trace.model.Lifespan;
@@ -32,8 +35,19 @@ import ghidra.util.exception.DuplicateNameException;
 public class DBTraceObjectThread implements TraceObjectThread, DBTraceObjectInterface {
 
 	protected class ThreadChangeTranslator extends Translator<TraceThread> {
+		private static final Map<TargetObjectSchema, Set<String>> KEYS_BY_SCHEMA =
+			new WeakHashMap<>();
+
+		private final Set<String> keys;
+
 		protected ThreadChangeTranslator(DBTraceObject object, TraceThread iface) {
 			super(null, object, iface);
+			TargetObjectSchema schema = object.getTargetSchema();
+			synchronized (KEYS_BY_SCHEMA) {
+				keys = KEYS_BY_SCHEMA.computeIfAbsent(schema, s -> Set.of(
+					s.checkAliasedAttribute(KEY_COMMENT),
+					s.checkAliasedAttribute(TargetObject.DISPLAY_ATTRIBUTE_NAME)));
+			}
 		}
 
 		@Override
@@ -53,8 +67,7 @@ public class DBTraceObjectThread implements TraceObjectThread, DBTraceObjectInte
 
 		@Override
 		protected boolean appliesToKey(String key) {
-			return KEY_COMMENT.equals(key) ||
-				TargetObject.DISPLAY_ATTRIBUTE_NAME.equals(key);
+			return keys.contains(key);
 		}
 
 		@Override
