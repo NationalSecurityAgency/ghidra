@@ -28,7 +28,6 @@ import java.util.Map;
 
 import javax.accessibility.Accessible;
 import javax.swing.*;
-import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.MenuItemUI;
 
 import docking.util.GraphicsUtils;
@@ -57,7 +56,7 @@ public class DockingMenuItemUI extends MenuItemUI {
 
 	protected MenuItemUI ui;
 
-	public static ComponentUI createUI(JComponent c) {
+	public static DockingMenuItemUI createUI(JComponent c) {
 		DockingMenuItemUI result = new DockingMenuItemUI();
 		result.ui = (MenuItemUI) UIManager.getDefaults().getUI(c);
 		return result;
