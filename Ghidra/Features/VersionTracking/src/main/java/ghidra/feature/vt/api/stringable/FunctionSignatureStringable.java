@@ -15,68 +15,24 @@
  */
 package ghidra.feature.vt.api.stringable;
 
-import static ghidra.feature.vt.gui.util.VTOptionDefines.CALLING_CONVENTION;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.CALL_FIXUP;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_CALLING_CONVENTION;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_CALL_FIXUP;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_FUNCTION_RETURN_TYPE;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_FUNCTION_SIGNATURE;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_HIGHEST_NAME_PRIORITY;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_INLINE;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_NO_RETURN;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PARAMETER_COMMENTS;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PARAMETER_DATA_TYPES;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PARAMETER_NAMES;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PARAMETER_NAMES_REPLACE_IF_SAME_PRIORITY;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_VAR_ARGS;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.FUNCTION_RETURN_TYPE;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.INLINE;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.NO_RETURN;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.PARAMETER_COMMENTS;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.PARAMETER_NAMES_REPLACE_IF_SAME_PRIORITY;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.VAR_ARGS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.*;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.StringTokenizer;
+import java.util.*;
 
 import ghidra.feature.vt.api.util.Stringable;
 import ghidra.feature.vt.api.util.VersionTrackingApplyException;
 import ghidra.feature.vt.gui.util.VTMatchApplyChoices;
-import ghidra.feature.vt.gui.util.VTMatchApplyChoices.CallingConventionChoices;
-import ghidra.feature.vt.gui.util.VTMatchApplyChoices.CommentChoices;
-import ghidra.feature.vt.gui.util.VTMatchApplyChoices.FunctionSignatureChoices;
-import ghidra.feature.vt.gui.util.VTMatchApplyChoices.HighestSourcePriorityChoices;
-import ghidra.feature.vt.gui.util.VTMatchApplyChoices.ParameterDataTypeChoices;
-import ghidra.feature.vt.gui.util.VTMatchApplyChoices.ReplaceChoices;
+import ghidra.feature.vt.gui.util.VTMatchApplyChoices.*;
 import ghidra.feature.vt.gui.util.VTOptionDefines;
 import ghidra.framework.options.ToolOptions;
 import ghidra.program.database.data.DataTypeUtilities;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.data.Pointer;
-import ghidra.program.model.data.PointerDataType;
-import ghidra.program.model.data.Undefined;
-import ghidra.program.model.lang.CompilerSpec;
-import ghidra.program.model.lang.Language;
-import ghidra.program.model.lang.PrototypeModel;
-import ghidra.program.model.listing.Function;
+import ghidra.program.model.data.*;
+import ghidra.program.model.lang.*;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
-import ghidra.program.model.listing.FunctionSignature;
-import ghidra.program.model.listing.Parameter;
-import ghidra.program.model.listing.ParameterImpl;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.listing.ReturnParameterImpl;
-import ghidra.program.model.listing.VariableStorage;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.symbol.SymbolTable;
-import ghidra.program.model.symbol.SymbolUtilities;
+import ghidra.program.model.symbol.*;
 import ghidra.program.util.FunctionUtility;
-import ghidra.util.Msg;
-import ghidra.util.StringUtilities;
-import ghidra.util.SystemUtilities;
+import ghidra.util.*;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
@@ -544,9 +500,8 @@ public class FunctionSignatureStringable extends Stringable {
 	public boolean applyFunctionSignature(Function toFunction, ToolOptions markupOptions,
 			boolean forceApply) throws VersionTrackingApplyException {
 
-		VTMatchApplyChoices.FunctionSignatureChoices functionSignatureChoice =
-			markupOptions.getEnum(VTOptionDefines.FUNCTION_SIGNATURE,
-				DEFAULT_OPTION_FOR_FUNCTION_SIGNATURE);
+		VTMatchApplyChoices.FunctionSignatureChoices functionSignatureChoice = markupOptions
+				.getEnum(VTOptionDefines.FUNCTION_SIGNATURE, DEFAULT_OPTION_FOR_FUNCTION_SIGNATURE);
 
 		int toParamCount = toFunction.getParameterCount();
 
@@ -586,10 +541,11 @@ public class FunctionSignatureStringable extends Stringable {
 			List<Parameter> newParams =
 				getParameters(toFunction, markupOptions, forceApply, useCustomStorage);
 
-			toFunction.updateFunction(conventionName, returnParam, newParams,
-				useCustomStorage ? FunctionUpdateType.CUSTOM_STORAGE
-						: FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS,
-				true, signatureSource);
+			toFunction
+					.updateFunction(conventionName, returnParam, newParams,
+						useCustomStorage ? FunctionUpdateType.CUSTOM_STORAGE
+								: FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS,
+						true, signatureSource);
 			if (forceApply) {
 				// must force signatureSource if precedence has been lowered
 				// TODO: Should any manual change in function signature force source to be USER_DEFINED instead ??
@@ -723,8 +679,8 @@ public class FunctionSignatureStringable extends Stringable {
 	}
 
 	private String getCallingConvention(Function toFunction, ToolOptions markupOptions) {
-		boolean isFromUnknownCallingConvention = ((callingConventionName == null) ||
-			callingConventionName.equals(Function.UNKNOWN_CALLING_CONVENTION_STRING));
+		boolean isFromUnknownCallingConvention =
+			CompilerSpec.isUnknownCallingConvention(callingConventionName);
 		CallingConventionChoices callingConventionChoice =
 			markupOptions.getEnum(CALLING_CONVENTION, DEFAULT_OPTION_FOR_CALLING_CONVENTION);
 		String toCallingConventionName = toFunction.getCallingConventionName();
@@ -854,8 +810,8 @@ public class FunctionSignatureStringable extends Stringable {
 			throws VersionTrackingApplyException {
 
 		// See what options the user has specified when applying parameter names.
-		VTMatchApplyChoices.SourcePriorityChoices parameterNamesChoice = markupOptions.getEnum(
-			VTOptionDefines.PARAMETER_NAMES, DEFAULT_OPTION_FOR_PARAMETER_NAMES);
+		VTMatchApplyChoices.SourcePriorityChoices parameterNamesChoice = markupOptions
+				.getEnum(VTOptionDefines.PARAMETER_NAMES, DEFAULT_OPTION_FOR_PARAMETER_NAMES);
 		VTMatchApplyChoices.HighestSourcePriorityChoices highestPriorityChoice =
 			markupOptions.getEnum(VTOptionDefines.HIGHEST_NAME_PRIORITY,
 				DEFAULT_OPTION_FOR_HIGHEST_NAME_PRIORITY);

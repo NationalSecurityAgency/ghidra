@@ -145,15 +145,6 @@ public class RustDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 		try {
 			if (demangled instanceof DemangledFunction defunc) {
 				defunc.applyTo(program, address, options, monitor);
-				Function func = program.getFunctionManager().getFunctionAt(address);
-				if (func != null) {
-					// if has no return type and no parameters, don't trust that it is void and unlock
-					// the signature so the decompiler can figure it out
-					if (defunc.getReturnType() == null && defunc.getParameters().size() == 0) {
-						func.setSignatureSource(SourceType.DEFAULT);
-					}
-					return;
-				}
 			}
 		}
 		catch (Exception e) {

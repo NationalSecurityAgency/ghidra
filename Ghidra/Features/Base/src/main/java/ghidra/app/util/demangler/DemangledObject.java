@@ -363,6 +363,18 @@ public abstract class DemangledObject implements Demangled {
 		this.errorMessage = message;
 	}
 
+	/**
+	 * Apply this demangled object detail to the specified program.  
+	 * <br>
+	 * NOTE: An open Program transaction must be established prior to invoking this method.
+	 * 
+	 * @param program program to which demangled data should be applied.
+	 * @param address address which corresponds to this demangled object
+	 * @param options options which control how demangled data is applied
+	 * @param monitor task monitor
+	 * @return true if successfully applied, else false
+	 * @throws Exception if an error occurs during the apply operation
+	 */
 	public boolean applyTo(Program program, Address address, DemanglerOptions options,
 			TaskMonitor monitor) throws Exception {
 		return applyPlateCommentOnly(program, address);
