@@ -164,10 +164,10 @@ public class MultipleActionDockingToolbarButton extends EmptyBorderButton {
 		// 1) show a popup if it was not showing
 		// 2) hide the popup if it was showing
 		//
-		// Case 2 requires timestamps.  Java will close the popup as the button is clicked. This 
-		// means that when we are told to show the popup as the result of a click, the popup will 
-		// never be showing.  To work around this, we track the elapsed time since last click.  If 
-		// the period is too short, then we assume Java closed the popup when the click happened 
+		// Case 2 requires timestamps.  Java will close the popup as the button is clicked. This
+		// means that when we are told to show the popup as the result of a click, the popup will
+		// never be showing.  To work around this, we track the elapsed time since last click.  If
+		// the period is too short, then we assume Java closed the popup when the click happened
 		//and thus we should ignore it.
 		//
 		long elapsedTime = System.currentTimeMillis() - popupLastClosedTime;
@@ -197,7 +197,7 @@ public class MultipleActionDockingToolbarButton extends EmptyBorderButton {
 			}
 
 			// a custom Ghidra UI that handles alignment issues and allows for tabulating presentation
-			item.setUI((DockingMenuItemUI) DockingMenuItemUI.createUI(item));
+			item.setUI(DockingMenuItemUI.createUI(item));
 			final DockingActionIf delegateAction = dockingAction;
 			item.addActionListener(e -> {
 				ActionContext context = getActionContext();
