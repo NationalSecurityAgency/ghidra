@@ -165,28 +165,12 @@ public class ParamListStandard implements ParamList {
 		}
 
 		boolean hiddenParam = (addAutoParams && res.size() == 2);
-/*<<<<<<< HEAD
-		DataTypeManager dtm = prog.getDataTypeManager();
-		Pointer returnPtr = dtm.getPointer(proto[0], size);
-
-		if (hiddenParam && isRightToLeft) {	// Check for hidden parameters defined by the output list
-			VariableStorage store = assignAddress(prog, returnPtr, status, true, false);
-			res.set(1, store);
-		}
-		for (int i = 1; i < proto.length; ++i) {
-			VariableStorage store;
-			if ((pointermax != 0) && (proto[i] != null) && (proto[i].getLength() > pointermax)) {	// DataType is too big
-				// Assume datatype is stored elsewhere and only the pointer is passed
-				Pointer pointer = dtm.getPointer(proto[i], size);
-				store = assignAddress(prog, pointer, status, false, true);
-=======*/
+		
 		if (hiddenParam && proto.model.isRightToLeft()) {	// Check for hidden parameters defined by the output list
-//		if (addAutoParams && res.size() == 2) {	// Check for hidden parameters defined by the output list
-			ParameterPieces last = res.get(res.size() - 1);
+			ParameterPieces last = res.get(1);
 			StorageClass store;
 			if (last.hiddenReturnPtr) {
 				store = StorageClass.HIDDENRET;
-//>>>>>>> nsa/master
 			}
 			else {
 				store = ParamEntry.getBasicTypeClass(last.type);
@@ -200,9 +184,6 @@ public class ParamListStandard implements ParamList {
 			res.add(store);
 		}
 		if (hiddenParam && !proto.model.isRightToLeft()) {	// Check for hidden parameters defined by the output list
-//			VariableStorage store = assignAddress(prog, returnPtr, status, true, false);
-//			res.remove(1);	// res[1] already exists!
-//			res.add(store);
 			ParameterPieces last = res.get(1);
 			StorageClass store;
 			if (last.hiddenReturnPtr) {

@@ -15,6 +15,7 @@
  */
 package ghidra.program.model;
 
+import ghidra.program.model.data.AddressModel;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.ParameterDefinition;
 import ghidra.program.model.lang.PrototypeModel;
