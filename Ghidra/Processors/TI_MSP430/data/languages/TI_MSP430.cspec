@@ -1,6 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
+<!--Information from "MSP430 Embedded Application Binary Interface Rev A -->
 <compiler_spec>
+ <data_organization>
+     <machine_alignment value="2" />
+     <default_alignment value="1" />
+     <default_pointer_alignment value="2" />
+     <pointer_size value="2" />
+     <short_size value="2" />
+     <integer_size value="2" />
+     <wchar_size value="2" />
+     <long_size value="4" />
+     <long_long_size value="8" />
+     <float_size value="4" />
+     <double_size value="8" />
+     <long_double_size value="8" /> 
+     <size_alignment_map>
+          <entry size="1" alignment="1" />
+          <entry size="2" alignment="2" />
+          <entry size="4" alignment="2" />
+          <entry size="8" alignment="2" />
+     </size_alignment_map>
+  </data_organization>
   <global>
     <range space="RAM"/>
   </global>
