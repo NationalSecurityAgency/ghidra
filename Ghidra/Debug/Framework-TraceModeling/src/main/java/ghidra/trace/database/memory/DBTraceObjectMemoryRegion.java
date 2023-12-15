@@ -19,6 +19,7 @@ import java.util.*;
 
 import ghidra.dbg.target.TargetMemoryRegion;
 import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
@@ -38,9 +39,46 @@ import ghidra.util.exception.DuplicateNameException;
 
 public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTraceObjectInterface {
 
+	protected record Keys(Set<String> all, String range, String display,
+			Set<String> flags) {
+		static Keys fromSchema(TargetObjectSchema schema) {
+			String keyRange = schema.checkAliasedAttribute(TargetMemoryRegion.RANGE_ATTRIBUTE_NAME);
+			String keyDisplay = schema.checkAliasedAttribute(TargetObject.DISPLAY_ATTRIBUTE_NAME);
+			String keyReadable =
+				schema.checkAliasedAttribute(TargetMemoryRegion.READABLE_ATTRIBUTE_NAME);
+			String keyWritable =
+				schema.checkAliasedAttribute(TargetMemoryRegion.WRITABLE_ATTRIBUTE_NAME);
+			String keyExecutable =
+				schema.checkAliasedAttribute(TargetMemoryRegion.EXECUTABLE_ATTRIBUTE_NAME);
+			return new Keys(Set.of(keyRange, keyDisplay, keyReadable, keyWritable, keyExecutable),
+				keyRange, keyDisplay, Set.of(keyReadable, keyWritable, keyExecutable));
+		}
+
+		public boolean isRange(String key) {
+			return range.equals(key);
+		}
+
+		public boolean isDisplay(String key) {
+			return display.equals(key);
+		}
+
+		public boolean isFlag(String key) {
+			return flags.contains(key);
+		}
+	}
+
 	protected class RegionChangeTranslator extends Translator<TraceMemoryRegion> {
+		private static final Map<TargetObjectSchema, Keys> KEYS_BY_SCHEMA =
+			new WeakHashMap<>();
+
+		private final Keys keys;
+
 		protected RegionChangeTranslator(DBTraceObject object, TraceMemoryRegion iface) {
 			super(TargetMemoryRegion.RANGE_ATTRIBUTE_NAME, object, iface);
+			TargetObjectSchema schema = object.getTargetSchema();
+			synchronized (KEYS_BY_SCHEMA) {
+				keys = KEYS_BY_SCHEMA.computeIfAbsent(schema, Keys::fromSchema);
+			}
 		}
 
 		@Override
@@ -60,11 +98,7 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 
 		@Override
 		protected boolean appliesToKey(String key) {
-			return TargetMemoryRegion.RANGE_ATTRIBUTE_NAME.equals(key) ||
-				TargetObject.DISPLAY_ATTRIBUTE_NAME.equals(key) ||
-				TargetMemoryRegion.READABLE_ATTRIBUTE_NAME.equals(key) ||
-				TargetMemoryRegion.WRITABLE_ATTRIBUTE_NAME.equals(key) ||
-				TargetMemoryRegion.EXECUTABLE_ATTRIBUTE_NAME.equals(key);
+			return keys.all.contains(key);
 		}
 
 		@Override
@@ -375,19 +409,15 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 	protected void updateViewsValueChanged(Lifespan lifespan, String key, Object oldValue,
 			Object newValue) {
 		DBTrace trace = object.getTrace();
-		switch (key) {
-			case TargetMemoryRegion.RANGE_ATTRIBUTE_NAME:
-				// NB. old/newValue are null here. The CREATED event just has the new entry.
-				trace.updateViewsRefreshBlocks();
-				return;
-			case TargetObject.DISPLAY_ATTRIBUTE_NAME:
-				trace.updateViewsChangeRegionBlockName(this);
-				return;
-			case TargetMemoryRegion.READABLE_ATTRIBUTE_NAME:
-			case TargetMemoryRegion.WRITABLE_ATTRIBUTE_NAME:
-			case TargetMemoryRegion.EXECUTABLE_ATTRIBUTE_NAME:
-				trace.updateViewsChangeRegionBlockFlags(this, lifespan);
-				return;
+		if (translator.keys.isRange(key)) {
+			// NB. old/newValue are null here. The CREATED event just has the new entry.
+			trace.updateViewsRefreshBlocks();
+		}
+		else if (translator.keys.isDisplay(key)) {
+			trace.updateViewsChangeRegionBlockName(this);
+		}
+		else if (translator.keys.isFlag(key)) {
+			trace.updateViewsChangeRegionBlockFlags(this, lifespan);
 		}
 	}
 

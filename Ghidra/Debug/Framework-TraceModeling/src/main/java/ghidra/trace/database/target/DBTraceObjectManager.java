@@ -174,6 +174,8 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 				return size() > OBJECTS_CONTAINING_CACHE_SIZE;
 			}
 		};
+	protected final Map<Class<? extends TraceObjectInterface>, Set<TargetObjectSchema>> //
+	schemasByInterface = new HashMap<>();
 
 	public DBTraceObjectManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace)
@@ -221,6 +223,9 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 		valueTree.invalidateCache();
 		schemaStore.invalidateCache();
 		loadRootSchema();
+		objectsContainingCache.clear();
+		// Though rare, the root schema could change
+		schemasByInterface.clear();
 	}
 
 	@Internal
@@ -449,6 +454,8 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 			objectStore.deleteAll();
 			schemaStore.deleteAll();
 			rootSchema = null;
+			objectsContainingCache.clear();
+			schemasByInterface.clear();
 		}
 	}
 
@@ -515,13 +522,6 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 		}
 	}
 
-	protected <I extends TraceObjectInterface> Stream<I> doParentsHaving(
-			Stream<? extends TraceObjectValue> values, Class<I> iface) {
-		return values.map(v -> v.getParent())
-				.map(o -> o.queryInterface(iface))
-				.filter(i -> i != null);
-	}
-
 	protected void invalidateObjectsContainingCache() {
 		synchronized (objectsContainingCache) {
 			objectsContainingCache.clear();
@@ -530,8 +530,8 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 
 	protected Collection<? extends TraceObjectInterface> doGetObjectsContaining(
 			ObjectsContainingKey key) {
-		return doParentsHaving(getValuesAt(key.snap, key.address, key.key).stream(), key.iface)
-				.collect(Collectors.toSet());
+		return getObjectsIntersecting(Lifespan.at(key.snap),
+			new AddressRangeImpl(key.address, key.address), key.key, key.iface);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -555,11 +555,36 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 		return col.iterator().next();
 	}
 
+	protected Set<TargetObjectSchema> collectSchemasForInterface(
+			Class<? extends TraceObjectInterface> iface) {
+		if (rootSchema == null) {
+			return Set.of();
+		}
+		Class<? extends TargetObject> targetIf = TraceObjectInterfaceUtils.toTargetIf(iface);
+		Set<TargetObjectSchema> result = new HashSet<>();
+		for (TargetObjectSchema schema : rootSchema.getContext().getAllSchemas()) {
+			if (schema.getInterfaces().contains(targetIf)) {
+				result.add(schema);
+			}
+		}
+		return Set.copyOf(result);
+	}
+
 	public <I extends TraceObjectInterface> Collection<I> getObjectsIntersecting(
 			Lifespan lifespan, AddressRange range, String key, Class<I> iface) {
 		try (LockHold hold = trace.lockRead()) {
-			return doParentsHaving(getValuesIntersecting(lifespan, range, key).stream(), iface)
-					.collect(Collectors.toSet());
+			Set<TargetObjectSchema> schemas;
+			synchronized (schemasByInterface) {
+				schemas =
+					schemasByInterface.computeIfAbsent(iface, this::collectSchemasForInterface);
+			}
+			Map<String, List<TargetObjectSchema>> schemasByAliasTo =
+				schemas.stream().collect(Collectors.groupingBy(s -> s.checkAliasedAttribute(key)));
+			return schemasByAliasTo.entrySet().stream().flatMap(ent -> {
+				return getValuesIntersecting(lifespan, range, ent.getKey()).stream()
+						.map(v -> v.getParent())
+						.filter(o -> ent.getValue().contains(o.getTargetSchema()));
+			}).map(o -> o.queryInterface(iface)).collect(Collectors.toSet());
 		}
 	}
 
@@ -573,7 +598,7 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 	public <I extends TraceObjectInterface> AddressSetView getObjectsAddressSet(long snap,
 			String key, Class<I> ifaceCls, Predicate<? super I> predicate) {
 		return valueMap.getAddressSetView(Lifespan.at(snap), v -> {
-			if (!key.equals(v.getEntryKey())) {
+			if (!v.hasEntryKey(key)) {
 				return false;
 			}
 			TraceObject parent = v.getParent();

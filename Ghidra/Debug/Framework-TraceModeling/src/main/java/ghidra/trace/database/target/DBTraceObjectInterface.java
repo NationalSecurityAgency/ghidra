@@ -15,6 +15,7 @@
  */
 package ghidra.trace.database.target;
 
+import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.database.space.DBTraceSpaceKey.DefaultDBTraceSpaceKey;
@@ -38,7 +39,13 @@ public interface DBTraceObjectInterface extends TraceObjectInterface, TraceUniqu
 		private LifeSet life = new DefaultLifeSet();
 
 		public Translator(String spaceValueKey, DBTraceObject object, T iface) {
-			this.spaceValueKey = spaceValueKey;
+			if (spaceValueKey == null) {
+				this.spaceValueKey = null;
+			}
+			else {
+				TargetObjectSchema schema = object.getTargetSchema();
+				this.spaceValueKey = schema.checkAliasedAttribute(spaceValueKey);
+			}
 			this.object = object;
 			this.iface = iface;
 		}

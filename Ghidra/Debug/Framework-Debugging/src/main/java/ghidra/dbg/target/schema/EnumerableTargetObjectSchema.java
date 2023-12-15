@@ -192,6 +192,11 @@ public enum EnumerableTargetObjectSchema implements TargetObjectSchema {
 	}
 
 	@Override
+	public Map<String, String> getAttributeAliases() {
+		return Map.of();
+	}
+
+	@Override
 	public AttributeSchema getDefaultAttributeSchema() {
 		return AttributeSchema.DEFAULT_VOID;
 	}

@@ -40,9 +40,22 @@ import ghidra.util.exception.DuplicateNameException;
 public class DBTraceObjectBreakpointLocation
 		implements TraceObjectBreakpointLocation, DBTraceObjectInterface {
 
-	protected class BreakpointChangeTranslator extends Translator<TraceBreakpoint> {
+	protected static class BreakpointChangeTranslator extends Translator<TraceBreakpoint> {
+		private static final Map<TargetObjectSchema, Set<String>> KEYS_BY_SCHEMA =
+			new WeakHashMap<>();
+
+		private final Set<String> keys;
+
 		protected BreakpointChangeTranslator(DBTraceObject object, TraceBreakpoint iface) {
 			super(TargetBreakpointLocation.RANGE_ATTRIBUTE_NAME, object, iface);
+			TargetObjectSchema schema = object.getTargetSchema();
+			synchronized (KEYS_BY_SCHEMA) {
+				keys = KEYS_BY_SCHEMA.computeIfAbsent(schema, s -> Set.of(
+					schema.checkAliasedAttribute(TargetBreakpointLocation.RANGE_ATTRIBUTE_NAME),
+					schema.checkAliasedAttribute(TargetObject.DISPLAY_ATTRIBUTE_NAME),
+					schema.checkAliasedAttribute(TargetTogglable.ENABLED_ATTRIBUTE_NAME),
+					schema.checkAliasedAttribute(KEY_COMMENT)));
+			}
 		}
 
 		@Override
@@ -62,10 +75,7 @@ public class DBTraceObjectBreakpointLocation
 
 		@Override
 		protected boolean appliesToKey(String key) {
-			return TargetBreakpointLocation.RANGE_ATTRIBUTE_NAME.equals(key) ||
-				TargetObject.DISPLAY_ATTRIBUTE_NAME.equals(key) ||
-				TargetBreakpointSpec.ENABLED_ATTRIBUTE_NAME.equals(key) ||
-				KEY_COMMENT.equals(key);
+			return keys.contains(key);
 		}
 
 		@Override
