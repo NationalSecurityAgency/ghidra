@@ -15,10 +15,22 @@
  */
 package ghidra.feature.vt.gui.wizard;
 
-import java.awt.*;
-import java.util.*;
+import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSeparator;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -26,7 +38,9 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.button.BrowseButton;
 import docking.widgets.label.GDLabel;
-import docking.wizard.*;
+import docking.wizard.AbstractMageJPanel;
+import docking.wizard.WizardPanelDisplayability;
+import docking.wizard.WizardState;
 import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Ids.Fonts;
 import generic.theme.Gui;
@@ -39,6 +53,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.InvalidNameException;
+import ghidra.util.StringUtilities;
 import ghidra.util.task.TaskLauncher;
 
 /**
@@ -46,7 +61,12 @@ import ghidra.util.task.TaskLauncher;
  */
 public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 
-	private static final int MAX_LENGTH_FOR_VT_SESSION_NAME = 20;
+	// The maximum length to allow for each program's name portion of the session name.
+	// In the filesystem API, when saved, the session name is restricted to 60 characters.
+	// The default VTSession name combines the two program names so split the length between them, 
+	// minus text we add below.
+	private static final int VTSESSION_NAME_PROGRAM_NAME_MAX_LENGTH = 28;
+	private static final int TEXT_FIELD_LENGTH = 40;
 	private static final Icon SWAP_ICON = new GIcon("icon.version.tracking.new.session.swap");
 	private static final Icon INFO_ICON = new GIcon("icon.version.tracking.new.session.info");
 
@@ -86,7 +106,7 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 		newSessionLabel.setToolTipText("The name for the new Version Tracking Session");
 		newSessionLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 
-		sessionNameField = new JTextField(25);
+		sessionNameField = new JTextField(TEXT_FIELD_LENGTH);
 		sessionNameField.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
 			public void changedUpdate(DocumentEvent e) {
@@ -114,10 +134,10 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 		destinationLabel.setToolTipText("New program that receives the transferred markup");
 		destinationLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 
-		sourceField = new JTextField(25);
+		sourceField = new JTextField(TEXT_FIELD_LENGTH);
 		sourceField.setEditable(false);
 
-		destinationField = new JTextField(25);
+		destinationField = new JTextField(TEXT_FIELD_LENGTH);
 		destinationField.setEditable(false);
 
 		sourceBrowseButton = createSourceBrowseButton();
@@ -281,17 +301,38 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 			return;
 		}
 
-		String sourceName = sourceProgramInfo.getName();
-		String destinationName = destinationProgramInfo.getName();
-		if (sourceName.length() > MAX_LENGTH_FOR_VT_SESSION_NAME) {
-			sourceName = sourceName.substring(0, MAX_LENGTH_FOR_VT_SESSION_NAME);
-		}
-		if (destinationName.length() > MAX_LENGTH_FOR_VT_SESSION_NAME) {
-			destinationName = destinationName.substring(0, MAX_LENGTH_FOR_VT_SESSION_NAME);
+		String defaultSessionName =
+			createVTSessionName(sourceProgramInfo.getName(), destinationProgramInfo.getName());
+		sessionNameField.setText(defaultSessionName);
+	}
+
+	private String createVTSessionName(String sourceName, String destinationName) {
+
+		// if together they are within the bounds just return session name with both full names
+		if (sourceName.length() + destinationName.length() <= 2 * VTSESSION_NAME_PROGRAM_NAME_MAX_LENGTH) {
+			return "VT_" + sourceName + "_" + destinationName;
 		}
 
-		String defaultSessionName = "VT__" + sourceName + "__" + destinationName;
-		sessionNameField.setText(defaultSessionName);
+		// give destination name all space not used by source name 
+		if (sourceName.length() < VTSESSION_NAME_PROGRAM_NAME_MAX_LENGTH) {
+			int leftover = VTSESSION_NAME_PROGRAM_NAME_MAX_LENGTH - sourceName.length();
+			destinationName =
+				StringUtilities.trimMiddle(destinationName, VTSESSION_NAME_PROGRAM_NAME_MAX_LENGTH + leftover);
+			return "VT_" + sourceName + "_" + destinationName;
+		}
+
+		// give source name all space not used by destination name 
+		if (destinationName.length() < VTSESSION_NAME_PROGRAM_NAME_MAX_LENGTH) {
+			int leftover = VTSESSION_NAME_PROGRAM_NAME_MAX_LENGTH - destinationName.length();
+			sourceName = StringUtilities.trimMiddle(sourceName, VTSESSION_NAME_PROGRAM_NAME_MAX_LENGTH + leftover);
+			return "VT_" + sourceName + "_" + destinationName;
+		}
+
+		// if both too long, shorten both of them
+		sourceName = StringUtilities.trimMiddle(sourceName, VTSESSION_NAME_PROGRAM_NAME_MAX_LENGTH);
+		destinationName = StringUtilities.trimMiddle(destinationName, VTSESSION_NAME_PROGRAM_NAME_MAX_LENGTH);
+
+		return "VT_" + sourceName + "_" + destinationName;
 	}
 
 	private void setDestinationProgram(DomainFile programFile) {
