@@ -15,23 +15,35 @@
 #  limitations under the License.
 ##
 #
-# This script may be used to build the postgresql server within
-# a GHIDRA installation. The postgresql server configuration options
-# below (POSTGRES_CONFIG_OPTIONS) may be adjusted if required
-# (e.g., build without openssl use, etc.). 
+# This script builds the postgresql server and BSim extension within a
+# GHIDRA installation.
+#
+# The PostgreSQL source distribution file postgresql-15.3.tar.gz must
+# be placed in the BSim module directory prior to running this script.
+# This file can be downloaded directly from the PostgreSQL website at:
+#
+#   https://www.postgresql.org/ftp/source/v15.3
+#
+# Within development environments, this script will first check the
+# ghidra.bin repo for this source file.
+#
+# The postgresql server configuration options below
+# (POSTGRES_CONFIG_OPTIONS) may be adjusted if required (e.g., build
+# without openssl use, etc.). 
 #
 # See https://www.postgresql.org/docs/15/install-procedure.html
 # for supported postgresql config options.
 #
-# Additional packages may need to be installed include to perform the 
+# Additional software may need to be installed in order to perform the 
 # postgresql build.  Please refer to the following web page for 
-# package dependencies:
+# software dependencies:
+#
+#   https://www.postgresql.org/docs/current/install-requirements.html
+#
+# Or for Linux specific package dependencies, see:
 #
 #   https://wiki.postgresql.org/wiki/Compile_and_Install_from_source_code
 #
-# The postgresql source distribution should reside within the BSim module 
-# directory prior to running this script.  Within development environments
-# it will first check the ghidra.bin repo for this source file.
 #
 
 POSTGRES=postgresql-15.3
