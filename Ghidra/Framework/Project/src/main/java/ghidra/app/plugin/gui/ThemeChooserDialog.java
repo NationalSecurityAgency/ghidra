@@ -31,6 +31,7 @@ public class ThemeChooserDialog extends DialogComponentProvider {
 
 	private ThemeManager themeManager;
 	private ListPanel<GTheme> listPanel;
+	private GTheme initialTheme;
 
 	public ThemeChooserDialog(ThemeManager themeManager) {
 		super("Change Theme");
@@ -55,29 +56,31 @@ public class ThemeChooserDialog extends DialogComponentProvider {
 
 	@Override
 	protected void okCallback() {
-		applyTheme();
+		updateTheme(true);
 		close();
 	}
 
 	@Override
 	protected void applyCallback() {
-		applyTheme();
+		updateTheme(true);
 	}
 
-	private void applyTheme() {
+	private void updateTheme(boolean setTheme) {
 		GTheme selectedValue = listPanel.getSelectedValue();
 		if (selectedValue == null) {
 			return;
 		}
-		GTheme activeTheme = themeManager.getActiveTheme();
-		if (selectedValue != activeTheme) {
+		if (setTheme) {
 			Swing.runLater(() -> themeManager.setTheme(selectedValue));
+		} else if (selectedValue != initialTheme) {
+			Swing.runLater(() -> themeManager.setTheme(initialTheme));
 		}
-		setOkEnabled(false);
+		setOkEnabled(setTheme);
 		setApplyEnabled(false);
 	}
 
 	protected void cancelCallback() {
+		updateTheme(false);
 		close();
 	}
 
@@ -89,8 +92,8 @@ public class ThemeChooserDialog extends DialogComponentProvider {
 		listPanel = new ListPanel<>();
 		listPanel.setListModel(model);
 		listPanel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		GTheme activeTheme = themeManager.getActiveTheme();
-		listPanel.setSelectedValue(activeTheme);
+		initialTheme = themeManager.getActiveTheme();
+		listPanel.setSelectedValue(initialTheme);
 		listPanel.addListSelectionListener(e -> selectionChanged());
 		panel.add(listPanel);
 
