@@ -26,7 +26,7 @@ While doing this, we’ll showcase some of the features available in the decompi
 The corresponding function in <code>postgres</code> should have a default name.</li>
   <li>Examine this match in the side-by-side decompiler view.
 Note that the matching function has better data type information due to the debug information.</li>
-  <li>Q: Why does the placement of the <code>double</code> argument between the functions?
+  <li>Q: Why does the placement of the <code>double</code> argument differ between the functions?
     <details><summary>Answer</summary> Floating point values and integer/pointer values are passed in separate sets of registers.
 Neither ordering is wrong since both are consistent with the instructions of the function.
 The debug info records a specific signature (and ordering) for the function, which Ghidra applies.
@@ -44,7 +44,7 @@ Some terminology: if you click on a token in a decompiler panel, that token beco
 <p>The colors:</p>
 
 <ul>
-  <li>Blue is used to highlight differences between the two functions.</li>
+  <li>Cyan is used to highlight differences between the two functions.</li>
   <li>Pink is used to highlight the focused token and its match.</li>
   <li>Lavender is used to highlight the focused token when it does not have a match.</li>
   <li>Orange is used to highlight the focused token when it is ineligible for match.

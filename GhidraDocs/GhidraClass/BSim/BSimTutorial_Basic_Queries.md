@@ -111,7 +111,7 @@ We use these different versions to demonstrate some of the capabilities of BSim.
 1. Right-click on the row of the match and perform the **Compare Functions** action to bring up the side-by-side comparison. 
     - The **Listing View** tab shows the disassembly.
     - The **Decompiler Diff View** tab shows the decompiled code.
-    - Differences in the code are automatically highlighted in blue.
+    - Differences in the code are automatically highlighted in cyan.
     - Either view can be toggled between a horizontal split and a vertical split using the drop-down menu. 
 1. Examine the diff views to verify that the match is valid.
 1. Using the **Apply Name** action in the BSim Search Results table, apply the name from the search result to the queried function.
