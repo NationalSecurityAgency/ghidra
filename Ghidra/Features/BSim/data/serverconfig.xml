@@ -4,7 +4,7 @@
   <config key="checkpoint_timeout">30min</config>           <!-- Amount of time before all database records are flushed to disk -->
   <config key="listen_addresses">'*'</config>               <!-- '*' = all available, '0.0.0.0' just IPv4, 'localhost' -->
   <config key="ssl">on</config>                             <!-- Enable server to connect via SSL -->
-  <!--  <config key="ssl_ciphers">TLSv1.2</config>  -->
+  <!--  <config key="ssl_min_protocol_version">TLSv1.3</config>  -->
   <config key="password_encryption">scram-sha-256</config>
  
 <!--   <connect db="all" user="all"                     type="local"   method="trust"/> -->

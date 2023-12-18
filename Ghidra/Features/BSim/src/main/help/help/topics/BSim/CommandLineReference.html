@@ -56,11 +56,12 @@
         </DIV>
 
         <P><SPAN class="command"><STRONG>bsim_ctl</STRONG></SPAN> is a command-line utility for
-        starting and stopping a BSim server using the PostgreSQL back-end that is prepackaged with
-        the Ghidra distribution. All commands must be run on the machine hosting the server.
-        Optional parameters for a given command are indicated by square brackets '[' and ']'.
-        Options with an '=' character require a user specified value. If the value string requires
-        space characters, it should be enclosed in double quotes.</P>
+          starting and stopping a BSim server using the PostgreSQL back-end. The utility cannot be
+	  used with either an Elasticsearch server or a local H2 database.
+	  All commands must be run on the machine hosting the server.
+          Optional parameters for a given command are indicated by square brackets '[' and ']'.
+          Options with an '=' character require a user specified value. If the value string requires
+          space characters, it should be enclosed in double quotes.</P>
 
         <DIV class="informalexample">
           <DIV class="variablelist">
@@ -411,7 +412,7 @@
                 <P>Generates function signatures and metadata for all program files retrieved from
                 a Ghidra Server repository or project as specified by a Ghidra URL. The generated
                 signatures may be retained as XML "sigs_" files within a specified XML storage
-                directory and/or commited to a specified BSim database specified with the <SPAN
+                directory and/or committed to a specified BSim database specified with the <SPAN
                 class="command"><STRONG>bsim=</STRONG></SPAN><SPAN class=
                 "emphasis"><EM>bsimURL</EM></SPAN> option. If an XML storage directory is not
                 specified, a BSim URL must be specified to which the data will be committed.</P>
@@ -439,7 +440,7 @@
 
               <DD>
                 <P>Commit previously generated signatures and metadata (see
-                <STRONG>signaturerepo</STRONG>) to a BSim repository. A URL specifying the BSim
+                <STRONG>generatesigs</STRONG>) to a BSim repository. A URL specifying the BSim
                 repository and a path to a directory containing the "sigs_" XML files to commit are
                 required.</P>
 
@@ -459,7 +460,7 @@
                 and metadata generated (see <STRONG>generatesigs</STRONG>). Only metadata: names,
                 function tags, categories, etc. are changed. Signatures are not affected. The
                 generated updates may be retained as XML "update_" files within a specified XML
-                storage directory and/or commited to a specified BSim database specified with the
+                storage directory and/or committed to a specified BSim database specified with the
                 <SPAN class="command"><STRONG>bsim=</STRONG></SPAN><SPAN class=
                 "emphasis"><EM>bsimURL</EM></SPAN> option. If an XML storage directory is not
                 specified, a BSim URL must be specified to which the data will be committed.</P>
@@ -615,8 +616,8 @@
                 not enough to uniquely specify the executable.</P>
 
                 <P><SPAN class="command"><STRONG>--printselfsig</STRONG></SPAN> - If specified, each
-                function listed will be prefixed by a calculated self-significance score. This value is
-                expressed as a decimal value.</P>
+                function listed will be prefixed by a calculated self-significance score. This score is
+                expressed as a floating-point value.</P>
 
                 <P><SPAN class="command"><STRONG>--callgraph</STRONG></SPAN> - If specified, a list
                 of all library functions called by the identified executable will be listed after
@@ -751,7 +752,7 @@
         <EM>*.gpr</EM> locator file must be specified with the project name. The project name
         should exclude any <EM>.gpr/.rep</EM> suffix. Only the '/' character should be used as a
         directory separator. In addition, when running on Windows, the directory path should
-        include its drive desigation preceeded by a '/' (e.g., <CODE class=
+        include its drive designation preceded by a '/' (e.g., <CODE class=
         "computeroutput">ghidra:/C:/mydir/myproject?/folderA/folderB</CODE>).</P>
       </DIV>
 
@@ -812,7 +813,7 @@
         <P>For local <EM>file</EM> URLs, the absolute path the H2 database <EM>*.mv.db</EM> file
         must be specified without the <EM>*.mv.db</EM> extension. Only the '/' character should be
         used as a directory separator. In addition, when running on Windows, the directory path
-        should include its drive desigation preceeded by a '/' (e.g., <CODE class=
+        should include its drive designation preceded by a '/' (e.g., <CODE class=
         "computeroutput">file:/C:/mydir/mydb</CODE>).</P>
       </DIV>
     </DIV>

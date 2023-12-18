@@ -41,26 +41,35 @@
         and configuration however, the two servers are completely separate.</P>
 
         <P>There are two choices for deploying a shared server for the BSim Database: PostgreSQL or
-        Elasticsearch. In addition, a local file-based database may be employed which utilizes an
-        integrated H2 Database engine. This file-based database is intended for smaller datasets
-        and its use is limited to a single process.</P>
+          Elasticsearch. Both options support multiple users and allow multiple simultaneous connections
+	  to the remote server.  A single database can ingest large datasets, while
+	  still maintaining short query times.</P>
+	<P>
+	  Alternately, a single user can create a BSim database on their local file-system,
+	  without a server, by utilizing the H2 database engine integrated into Ghidra. This option
+	  is intended for querying against small datasets and does not require installation of
+	  additional server software.</P>
 
-        <P>PostgreSQL software, including the extension necessary for BSim signature indexing,
-        comes prepackaged with the Ghidra distribution. It runs on a single host and makes
-        efficient use of whatever CPU, memory, and disk resources are made available to it.
-        PostgreSQL is a highly robust and capable server that should perform well on minimally
-        configured workstations up to high-end production hardware.</P>
+        <P>A PostgreSQL server, which must be built with a BSim specific extension,
+          runs on a single host and makes efficient use of whatever CPU, memory, and disk resources
+	  are made available to it. PostgreSQL is a robust and capable server that should perform well
+	  on minimally configured workstations up to high-end production hardware. Source for the
+	  BSim extension to PostgreSQL is included as part of the Ghidra installation, but the
+	  PostgreSQL source may need to be obtained separately by the database administrator.
+	  See <A class="xref" href="DatabaseConfiguration.html#PostBuild">&ldquo;Building the Server&rdquo;</A>
+	</P>
 
-        <P>An Elasticsearch BSim plug-in is included with the Ghidra distribution, but the core
-        server software must be obtained separately by the database administrator. Elasticsearch is
-        a scalable text search and analytics database. It automatically distributes itself across
-        machines in a cluster, allowing individual database queries and requests to be serviced in
-        parallel. Support for BSim in Elasticsearch should still be considered in prototype, but
-        all major functionality has been implemented, and the BSim schema takes full advantage of
-        Elasticsearch as a distributed database.</P>
+        <P>An Elasticsearch server, which must have a BSim specific plug-in installed, runs
+          as a scalable database that automatically distributes itself across machines in a cluster,
+	  allowing individual database queries and requests to be serviced in parallel. The Elasticsearch
+	  BSim plug-in is included with the Ghidra installation, but the core server software must be obtained
+	  separately by the database administrator.
+	  See <A class="xref" href="DatabaseConfiguration.html#ElasticInstall">&ldquo;Installing the Plug-in&rdquo;</A>
+	</P>
 
         <P>BSim clients included in the base Ghidra distribution can interface to any of these
-        databases.</P>
+          databases. Users that just want to connect to an existing shared server via a BSim client do not need to
+	  install any server software themselves.</P>
       </DIV>
 
       <DIV class="section">
@@ -82,35 +91,104 @@
             </DIV>
           </DIV>
 
-          <P>The base Ghidra distribution comes with the PostgreSQL software and the extensions
-          necessary for supporting a BSim database. The PostgreSQL server is most easily managed
-          using the <SPAN class="bold"><STRONG>bsim_ctl</STRONG></SPAN> command-line script. When
-          <SPAN class="bold"><STRONG>bsim_ctl start</STRONG></SPAN> is run for the first time (see
-          below), the PostgreSQL software is unpacked, depending on the host OS, to either</P>
+          <DIV class="sect3">
+            <DIV class="titlepage">
+              <DIV>
+                <DIV>
+                  <H4 class="title"><A name="PostBuild"></A>Building the Server</H4>
+                </DIV>
+              </DIV>
+            </DIV>
 
-          <DIV class="informalexample">
-            <TABLE border="0" summary="Simple list" class="simplelist">
-              <TR>
-                <TD><CODE class="computeroutput">$(ROOT)/Ghidra/Features/BSim/os/linux64/postgresql
-                OR</CODE></TD>
-              </TR>
+            <P>In order to use PostgreSQL as a BSim server, it must be built with a BSim specific
+              extension, provided as part of the Ghidra installation. Prebuilt servers, like those
+              provided as OS distribution packages, will not work as is with BSim. For users on Linux
+              and macOS, the Ghidra installation provides a script, <CODE>make-postgres.sh</CODE>,
+              in the module directory <CODE>Ghidra/Features/BSim</CODE> that builds both the PostgreSQL
+              server and the BSim extension from source and prepares the installation for use with
+              Ghidra.  If not already included in the Ghidra installation, the source distribution
+              file, currently <CODE>postgresql-15.3.tar.gz</CODE>, can be obtained from the PostgreSQL
+              website at </P>
+	    
+            <DIV class="informalexample">
+              <TABLE border="0" summary="Simple list" class="simplelist">
+                <TR>
+                  <TD><CODE class="computeroutput">https://www.postgresql.org/ftp/source/v15.3
+		  </CODE></TD>
+                </TR>
+              </TABLE>
+            </DIV>
+	    
+	    <P>The steps to build the PostgreSQL server with the BSim extension then are:</P>
 
-              <TR>
-                <TD><CODE class=
-                "computeroutput">$(ROOT)/Ghidra/Features/BSim/os/osx64/postgresql</CODE></TD>
-              </TR>
-            </TABLE>
-          </DIV>
+	    <P>1) If not already present, place the PostgreSQL source distribution file
+	      <CODE>postgresql-15.3.tar.gz</CODE> in the Ghidra installation at</P>
 
-          <P>BSim will not operate with PostgreSQL without the Ghidra specific extensions, but
-          otherwise the provided installation is standard. It can be configured just like any other
-          stand-alone PostgreSQL server. PostgreSQL is highly configurable, and there are no direct
-          restrictions on modifying the configuration values. A default configuration is provided
-          with this installation that has been tuned specifically for the BSim Database
-          application, so in practice there may be little reason to modify it. But there are a few
-          standard configuration values for the server that might need adjusting. These do impact
-          important aspects of the server, like the amount of memory allocated to the server and
-          access restrictions.</P>
+            <DIV class="informalexample">
+              <TABLE border="0" summary="Simple list" class="simplelist">
+                <TR>
+                  <TD><CODE class="computeroutput">$(ROOT)/Ghidra/Features/BSim/postgresql-15.3.tar.gz
+		  </CODE></TD>
+                </TR>
+              </TABLE>
+            </DIV>
+
+	    <P>2) From the command-line, within the same directory, run the script <CODE>make-postgres.sh</CODE></P>
+
+            <DIV class="informalexample">
+              <TABLE border="0" summary="Simple list" class="simplelist">
+                <TR>
+                  <TD><CODE class="computeroutput">cd $(ROOT)/Ghidra/Features/BSim
+		  </CODE></TD>
+                </TR>
+                <TR>
+                  <TD><CODE class="computeroutput">./make-postgres.sh
+		  </CODE></TD>
+                </TR>
+              </TABLE>
+            </DIV>
+
+	    <P>Additional packages or software may need to be installed on the host OS in order for the
+	      build to complete successfully, OpenSSL in particular is required for BSim.  For the
+	      full list of PostgreSQL software dependencies, refer to:</P>
+	    
+            <DIV class="informalexample">
+              <TABLE border="0" summary="Simple list" class="simplelist">
+                <TR>
+                  <TD><CODE class="computeroutput">https://www.postgresql.org/docs/current/install-requirements.html
+		  </CODE></TD>
+                </TR>
+              </TABLE>
+            </DIV>
+
+            <P>Once the build has completed successfully, 
+              the <SPAN class="bold"><STRONG>bsim_ctl</STRONG></SPAN> command-line script is ready to use
+	      for starting a server (see
+	      <A class="xref" href="DatabaseConfiguration.html#PostStartStop">&ldquo;Starting and Stopping the Server&rdquo;</A>).
+	      The PostgreSQL server software will run out of the Ghidra installation at</P>
+	    
+            <DIV class="informalexample">
+              <TABLE border="0" summary="Simple list" class="simplelist">
+		<TR>
+                  <TD><CODE class="computeroutput">$(ROOT)/Ghidra/Features/BSim/build/os/linux64/postgresql
+                      OR</CODE></TD>
+		</TR>
+		
+		<TR>
+                  <TD><CODE class=
+			    "computeroutput">$(ROOT)/Ghidra/Features/BSim/build/os/osx64/postgresql</CODE></TD>
+		</TR>
+              </TABLE>
+            </DIV>
+	    
+            <P>Other than having the extension itself, a BSim enabled PostgreSQL server is completely standard,
+              and can be configured like any other stand-alone PostgreSQL server. There are no direct restrictions
+	      on modifying the configuration values. A default configuration is provided with this installation that
+	      has been tuned specifically for the BSim Database application, so in practice there may be little reason to
+	      modify it. But there are a few standard configuration values for the server that might need
+	      adjusting. See
+	      <A class="xref" href="DatabaseConfiguration.html#PostAdditionalConfig">&ldquo;Additional Configuration&rdquo;</A>.</P>
+	  </DIV>
 
           <DIV class="sect3">
             <DIV class="titlepage">
@@ -405,13 +483,11 @@
                   </DD>
 
                   <DT><SPAN class="term"><SPAN class=
-                  "bold"><STRONG>ssl_cipher</STRONG></SPAN></SPAN></DT>
+                  "bold"><STRONG>ssl_min_protocol_version</STRONG></SPAN></SPAN></DT>
 
                   <DD>
-                    <P>This controls which ciphers the server allows when negotiating a connection.
-                    The defaults are reasonable, but administrators may want more control. The
-                    setting 'TLSv1.2', for instance, can be used to be compliant with the latest
-                    TLS standard.</P>
+                    <P>This controls the minimum SSL/TLS protocol version used when the server negotiates a connection.
+		    The current default is 'TLSv1.2'</P>
                   </DD>
                 </DL>
               </DIV>
@@ -462,13 +538,18 @@
             </DIV>
           </DIV>
 
-          <P>A full description of how to configure an Elasticsearch cluster, including how to
-          start and stop the server, is beyond the scope of this document. In particular, the <SPAN
-          class="command"><STRONG>bsim_ctl</STRONG></SPAN> command-line, as described in <A class=
-          "xref" href="DatabaseConfiguration.html#PostConfig" title=
-          "PostgreSQL Configuration">&ldquo;PostgreSQL Configuration&rdquo;</A>, does not apply to
-          Elasticsearch. Complete documentation is available on-line from the Elasticsearch
-          website.</P>
+          <P>A full description of how to configure an Elasticsearch cluster is beyond the scope of
+            this document. In particular, the <SPAN class="command"><STRONG>bsim_ctl</STRONG></SPAN>
+            command-line, as described in <A class="xref" href="DatabaseConfiguration.html#PostConfig" title=
+            "PostgreSQL Configuration">&ldquo;PostgreSQL Configuration&rdquo;</A>, does not apply to
+            Elasticsearch. Complete documentation for administering a database is available on-line
+            from the Elasticsearch website.</P>
+
+          <P>The following discussion describes how to set up a toy, or single node, server, using the
+            free and open Elasticsearch distribution. This distribution includes a REST API for administering
+            a database, which can be accessed using <CODE>curl</CODE> commands or some other method
+            to send HTTP requests directly to the node.
+          </P>
 
           <DIV class="sect3">
             <DIV class="titlepage">
@@ -485,10 +566,9 @@
             class="emphasis"><EM>BSimElasticPlugin</EM></SPAN>, which unpacks into a standard
             Ghidra installation. The file <SPAN class="emphasis"><EM>lsh.zip</EM></SPAN> is a
             standard Elasticsearch plug-in that must be installed on every node of the cluster
-            before a BSim repository can be created. The Elasticsearch distribution typically comes
-            preconfigured for a single node deployment. The description below shows how to enable
-            BSim on such a toy deployment, but this will need to be extended to support an entire
-            cluster.</P>
+            before a BSim repository can be created. The description below shows how to enable
+            the BSim plug-in for a single node, but this will need to be repeated for any
+            additional nodes.</P>
 
             <P>Assuming the add-on has been unpacked, the plug-in can be installed to a single node
             using the <SPAN class="emphasis"><EM>elasticsearch-plugin</EM></SPAN> command in the
@@ -521,6 +601,44 @@
             up.</P>
           </DIV>
 
+          <DIV class="sect3">
+            <DIV class="titlepage">
+              <DIV>
+                <DIV>
+                  <H4 class="title"><A name="ElasticSecurity"></A>Elasticsearch Security</H4>
+                </DIV>
+              </DIV>
+            </DIV>
+
+            <P>The open Elasticsearch distribution starts with up with password authentication
+            enabled by default.  When a node is started up for the first time, as described above, an
+            <SPAN class="bold"><STRONG>elastic</STRONG></SPAN> user is created with a randomly
+            generated password that is reported, once, to the console. For a toy deployment, it may
+            be convenient to add additional users via <CODE>curl</CODE> commands. The
+            following example creates a user named <SPAN class="bold"><STRONG>ghidrauser</STRONG></SPAN>
+            with a default password "changeme", using the <STRONG>elastic</STRONG> users credentials.
+            The generated password for the <STRONG>elastic</STRONG> user must be substituted for the XXXXXX
+            at the beginning of the command.
+	    </P>
+	    
+            <DIV class="informalexample"><PRE class="programlisting">
+curl -k -u elastic:XXXXXX -X POST "https://localhost:9200/_security/user/ghidrauser?pretty" -H 'Content-Type: application/json' -d'
+{
+  "password" : "changeme",
+  "roles" : [ "viewer" ],
+  "full_name" : "Ghidra User",
+  "email" : "ghidrauser@example.com"
+}
+'
+	      </PRE>
+            </DIV>
+
+	    <P>Elasticsearch uses the concept of <EM>roles</EM> to grant access privileges to particular users. The
+	      built-in role <STRONG>viewer</STRONG>, as in the example above, can be used to grant users
+	      read-only access to a database.  The built-in <STRONG>superuser</STRONG> role grants
+	      administrator privileges.</P>
+          </DIV>
+	  
           <DIV class="sect3">
             <DIV class="titlepage">
               <DIV>
@@ -865,7 +983,7 @@
           </DIV>
 
           <P>It is possible to create tailored database configuration templates so that
-          implementors have a permanent and accessible record of a particular set-up and don't need
+          implementers have a permanent and accessible record of a particular set-up and don't need
           to repeatedly issue <SPAN class="command"><STRONG>bsim setmetadata</STRONG></SPAN> and
           <SPAN class="command"><STRONG>bsim addexecategory</STRONG></SPAN> when creating a
           database. Other aspects of a database can also be manipulated, like weighting schemes and

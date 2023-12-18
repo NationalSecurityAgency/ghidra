@@ -110,8 +110,8 @@
 
           <P>To generate features and metadata on an existing repository, use the <SPAN class=
           "command"><STRONG>bsim generatesigs</STRONG></SPAN> command. Signatures may be written as
-          XML files to a local directory and/or comitted directly to a specified BSim database. If
-          not immediately comitting to a database and only storing the XML files an appropriate
+          XML files to a local directory and/or committed directly to a specified BSim database. If
+          not immediately committing to a database and only storing the XML files an appropriate
           database <EM>config=</EM> may be specified in lieu of a BSim database URL
           (<EM>bsimURL</EM>) if database specific executable categories and function tags are not
           utilized. Use of the <EM>config=</EM> option does not require a running BSim server.</P>
@@ -170,13 +170,16 @@
           generated XML files by adding the explicit keyword <SPAN class=
           "bold"><STRONG>--overwrite</STRONG></SPAN> as another parameter.</P>
 
-          <P>Both the Ghidra Server and the BSim server must be running in order for this command
-          to succeed, as the BSim server provides configuration information that may be relevant to
-          the signature generation process, such as database specific executable categories or
-          function tags. Assuming this is the same template used to create the database, the BSim
-          server no longer needs to be running. As in the example above, configuration information
-          is pulled from the BSim server and signatures are generated from the Ghidra Server
-          executables.</P>
+          <P>In general, both the Ghidra Server and the BSim server must be running in order for
+            <SPAN class="command"><STRONG>bsim generatesigs</STRONG></SPAN> command to succeed,
+            as the BSim server provides configuration information that may be relevant to
+            the signature generation process, such as database specific executable categories or
+            function tags.  As in the example above, configuration information
+            is pulled from the BSim server and signatures are generated from the Ghidra Server
+            executables. If the <SPAN class="bold"><STRONG>config=</STRONG></SPAN>
+            option is used, assuming the template it specifies is the same one used to create the
+            database and there are no executable categories or function tags, the BSim server
+            does not need to be running.</P>
         </DIV>
 
         <DIV class="sect2">
@@ -202,11 +205,11 @@
           </DIV>
 
           <P>This command takes XML signature files in <CODE class="filename">/xmldirectory</CODE>
-          and writes the metadata in them to a BSim database. All the executable, function, and
-          feature vector records are committed to their appropriate tables and all the indexing is
-          updated if supported. The URL refers to the BSim database rather than the Ghidra Server.
-          The URL cannot be extended with a path. Any executable paths are already encoded within
-          the XML file data.</P>
+            and writes the metadata in them to a BSim database, specified by URL. All the executable,
+            function, and feature vector records are committed to their appropriate tables and all
+            the indexing is updated if supported. The URL refers to a BSim database rather than a
+            Ghidra Server and cannot be extended with a path. Any executable paths are already
+            encoded within the XML file data.</P>
 
           <P>Every executable described within the XML files has a <SPAN class=
           "emphasis"><EM>repository</EM></SPAN> and <SPAN class="emphasis"><EM>path</EM></SPAN>
@@ -495,15 +498,16 @@ public void adjustTags(Address myaddress) throws Exception {
             </DIV>
           </DIV>
 
-          <P>The BSim server currently has minimal maintenance functionality. Substantial changes
-          and additions may occur in the near term. It is possible currently to use the SQL command
-          line tool <SPAN class="command"><STRONG>psql</STRONG></SPAN> bundled with PostgreSQL in
-          order to make changes directly to the tables. But for very large modifications to the
-          database, the best option may be to recreate the database, which is slightly less onerous
-          than it sounds. The most CPU intensive part of the ingest process, Ghidra's
-          auto-analysis, typically does not need to be rerun across everything. Regenerating the
-          metadata files and reimporting takes much less time. Additional efficiency may be gained
-          by dropping and then regenerating the main index after (re)ingesting. (See below)</P>
+          <P>The <SPAN class="command"><STRONG>bsim</STRONG></SPAN> script provides a minimal number
+            of maintenance commands for a BSim server, described below. For a PostgreSQL server, it
+            is possible to use the bundled SQL command line tool
+            <SPAN class="command"><STRONG>psql</STRONG></SPAN> in order to make changes directly to
+            the tables. But for very large modifications to the database, the best option may be to
+            recreate the database, which is slightly less onerous than it sounds. The most CPU
+            intensive part of the ingest process, Ghidra's auto-analysis, typically does not need to
+            be rerun across everything. Regenerating the metadata files and reimporting takes much
+            less time. Additional efficiency may be gained by dropping and then regenerating the main
+            index after (re)ingesting. (See below)</P>
 
           <DIV class="sect2">
             <DIV class="titlepage">
@@ -597,7 +601,7 @@ public void adjustTags(Address myaddress) throws Exception {
             optional <SPAN class="bold"><STRONG>--overwrite</STRONG></SPAN> parameter, causing it
             to overwrite any previously generated XML files. If a
             <STRONG>bsim=<EM>bsimURL</EM></STRONG> is specified with the <STRONG>--commit</STRONG>
-            option updates will be commited directly to the database. A BSim database commit is
+            option updates will be committed directly to the database. A BSim database commit is
             always performed using the specified <EM>bsimURL</EM> if an <EM>xmldirectory</EM> is
             not specified.</P>
 
@@ -620,7 +624,7 @@ public void adjustTags(Address myaddress) throws Exception {
               </DIV>
             </DIV>
 
-            <P><STRONG>NOTE:</STRONG> Applies to PostgrSQL or Elasticsearch databases only</P>
+            <P><STRONG>NOTE:</STRONG> Applies to PostgreSQL or Elasticsearch databases only</P>
 
             <P>For those users performing large ingests or who find themselves rebuilding the
             database frequently, it is possible to drop the main index, ingest data, then recreate
@@ -649,8 +653,8 @@ public void adjustTags(Address myaddress) throws Exception {
 
             <P>The time it takes to rebuild depends directly on the number of functions that have
             been ingested. For very large collections, rebuilding can take hours or days. The
-            database can still be accessed while the index is dropped, but query times will likely
-            be too long for the database to be usable.</P>
+            database can still be accessed while the index is dropped, but queries may take
+            much longer to complete.</P>
           </DIV>
 
           <DIV class="sect2">
@@ -662,7 +666,7 @@ public void adjustTags(Address myaddress) throws Exception {
               </DIV>
             </DIV>
 
-            <P><STRONG>NOTE:</STRONG> Applies to PostgrSQL databases only</P>
+            <P><STRONG>NOTE:</STRONG> Applies to PostgreSQL databases only</P>
 
             <P>A maintainer can issue the <SPAN class="command"><STRONG>bsim
             prewarm</STRONG></SPAN> command to prepopulate RAM with commonly accessed portions of a
@@ -706,7 +710,7 @@ public void adjustTags(Address myaddress) throws Exception {
           existing BSim database will be incompatible with both the client and server from a new
           release.</P>
 
-          <P>Unfortunately, the only option to upgrade in these case is to reingest the executables
+          <P>Unfortunately, the only option to upgrade in these cases is to reingest the executables
           into a new BSim database. Frequently the first two stages of ingest (See <A class="xref"
           href="IngestProcess.html" title="Ingesting Executables"><I>Ingesting
           Executables</I></A>), importing executables to a Ghidra Server and running auto-analysis,
