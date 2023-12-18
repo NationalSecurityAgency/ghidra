@@ -87,7 +87,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 	private final AutoService.Wiring autoServiceWiring;
 
 	@AutoConfigStateField
-	private boolean limitToSnap = false;
+	private boolean limitToSnap = true;
 	@AutoConfigStateField
 	private boolean showHidden = false;
 	@AutoConfigStateField
