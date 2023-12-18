@@ -153,7 +153,7 @@ public class ObjectsTreePanel extends JPanel {
 			if (limitToSnap) {
 				treeModel.setSpan(Lifespan.at(current.getSnap()));
 			}
-			tree.filterChanged();
+			//tree.filterChanged();
 			// Repaint for bold current path is already going to happen
 		}
 	}
@@ -298,7 +298,6 @@ public class ObjectsTreePanel extends JPanel {
 			tree.expandPath(parentPath);
 		}
 	}
-	
 
 	public void setSelectedObject(TraceObject object) {
 		if (object == null) {

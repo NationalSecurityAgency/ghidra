@@ -410,7 +410,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		GTree tree = modelProvider.objectsTreePanel.tree;
 		GTreeNode node = waitForPass(() -> {
 			GTreeNode n = Unique.assertOne(tree.getSelectedNodes());
-			assertEquals("Processes\n0", n.getName());
+			assertEquals("Processes@0", n.getName());
 			return n;
 		});
 		clickTreeNode(tree, node, MouseEvent.BUTTON1);
