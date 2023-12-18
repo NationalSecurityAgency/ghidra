@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Command-line script for controlling (start/stop) the BSim database
 
