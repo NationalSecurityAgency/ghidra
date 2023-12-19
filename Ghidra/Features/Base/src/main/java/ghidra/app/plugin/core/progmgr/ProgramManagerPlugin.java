@@ -341,6 +341,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 
 	@Override
 	public void dispose() {
+		programCache.clear();
 		programMgr.dispose();
 		tool.clearLastEvents();
 	}
