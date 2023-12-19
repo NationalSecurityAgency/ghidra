@@ -58,6 +58,18 @@ public class RustUtilities {
 		return false;
 	}
 
+	/**
+	 * Returns true if the given program has earlier been tagged as having a Rust compiler by
+	 * the loader.
+	 *  
+	 * @param program {@link Program}
+	 * @return boolean true if program's compiler property includes rust
+	 */
+	public static boolean isRustProgram(Program program) {
+		String name = program.getCompiler();
+		return name != null && name.contains(RustConstants.RUST_COMPILER);
+	}
+
 	public static int addExtensions(Program program, TaskMonitor monitor, String subPath)
 			throws IOException {
 		Processor processor = program.getLanguageCompilerSpecPair().getLanguage().getProcessor();
