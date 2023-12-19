@@ -66,8 +66,7 @@ class ProgramSaveManager {
 	 * the user
 	 */
 	boolean canClose(Program program) {
-		if (program == null ||
-			(program.getDomainFile().getConsumers().size() > 1 && !tool.hasToolListeners())) {
+		if (!isOnlyToolConsumer(program)) {
 			return true;
 		}
 		if (acquireSaveLock(program, "Close")) {
@@ -105,9 +104,7 @@ class ProgramSaveManager {
 			return saveChangedPrograms(saveList);
 		}
 		finally {
-			Iterator<Program> it = lockList.iterator();
-			while (it.hasNext()) {
-				Program p = it.next();
+			for (Program p : lockList) {
 				p.unlock();
 			}
 		}
@@ -378,10 +375,9 @@ class ProgramSaveManager {
 				"The Program is currently being modified by the following actions/tasks:\n ");
 			TransactionInfo t = program.getCurrentTransactionInfo();
 			List<String> list = t.getOpenSubTransactions();
-			Iterator<String> it = list.iterator();
-			while (it.hasNext()) {
+			for (String element : list) {
 				buf.append("\n     ");
-				buf.append(it.next());
+				buf.append(element);
 			}
 			buf.append("\n \n");
 			buf.append("WARNING! The above task(s) should be cancelled before attempting a " +
@@ -412,10 +408,9 @@ class ProgramSaveManager {
 				"The Program is currently being modified by the following actions/tasks:\n ");
 			TransactionInfo t = program.getCurrentTransactionInfo();
 			List<String> list = t.getOpenSubTransactions();
-			Iterator<String> it = list.iterator();
-			while (it.hasNext()) {
+			for (String element : list) {
 				buf.append("\n     ");
-				buf.append(it.next());
+				buf.append(element);
 			}
 			buf.append("\n \n");
 			buf.append(
