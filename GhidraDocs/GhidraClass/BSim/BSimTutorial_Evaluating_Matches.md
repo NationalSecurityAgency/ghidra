@@ -22,7 +22,7 @@ Import and analyze the stripped `postgres` executable into the tutorial project,
 The corresponding function in `postgres` should have a default name. 
 1. Examine this match in the side-by-side decompiler view.
 Note that the matching function has better data type information due to the debug information.
-1. Q: Why does the placement of the `double` argument between the functions?
+1. Q: Why does the placement of the `double` argument differ between the functions?
    <details><summary>Answer</summary> Floating point values and integer/pointer values are passed in separate sets of registers.
    Neither ordering is wrong since both are consistent with the instructions of the function.
    The debug info records a specific signature (and ordering) for the function, which Ghidra applies.
@@ -37,7 +37,7 @@ Some terminology: if you click on a token in a decompiler panel, that token beco
 
 The colors:
 
-- Blue is used to highlight differences between the two functions.
+- Cyan is used to highlight differences between the two functions.
 - Pink is used to highlight the focused token and its match.
 - Lavender is used to highlight the focused token when it does not have a match.
 - Orange is used to highlight the focused token when it is ineligible for match.
