@@ -391,7 +391,7 @@ public class ApplicationUtilities {
 	 * the given {@code appName} can simply be used since it will live in a user-specific location. 
 	 * Otherwise, the user's name will get prepended to the {@code appName} so it does not collide 
 	 * with other users' directories in the shared directory space.
-	
+	 * 
 	 * @param parentDir The parent directory where we'd like to create a user-specific sub-directory
 	 * @param appName The application name
 	 * @return A directory name that can be used to create a user-specific sub-directory in 
