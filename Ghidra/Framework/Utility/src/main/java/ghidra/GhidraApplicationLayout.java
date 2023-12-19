@@ -15,7 +15,8 @@
  */
 package ghidra;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 import generic.jar.ResourceFile;
@@ -36,12 +37,10 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 	/**
 	 * Constructs a new Ghidra application layout object.
 	 *
-	 * @throws FileNotFoundException if there was a problem getting a user
-	 *             directory.
-	 * @throws IOException if there was a problem getting the application
-	 *             properties or modules.
+	 * @throws IOException if there was a problem getting a user directory or the application 
+	 *   properties or modules.
 	 */
-	public GhidraApplicationLayout() throws FileNotFoundException, IOException {
+	public GhidraApplicationLayout() throws IOException {
 
 		// Application root directories
 		applicationRootDirs = findGhidraApplicationRootDirs();
@@ -53,7 +52,8 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 		applicationInstallationDir = findGhidraApplicationInstallationDir();
 
 		// User directories
-		userTempDir = ApplicationUtilities.getDefaultUserTempDir(getApplicationProperties());
+		userTempDir = ApplicationUtilities
+				.getDefaultUserTempDir(getApplicationProperties().getApplicationName());
 		userCacheDir = ApplicationUtilities.getDefaultUserCacheDir(getApplicationProperties());
 		userSettingsDir = ApplicationUtilities.getDefaultUserSettingsDir(getApplicationProperties(),
 			getApplicationInstallationDir());
@@ -77,13 +77,10 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 	 * (like the Eclipse GhidraDevPlugin).
 	 *
 	 * @param applicationInstallationDir The application installation directory.
-	 * @throws FileNotFoundException if there was a problem getting a user
-	 *             directory.
-	 * @throws IOException if there was a problem getting the application
-	 *             properties.
+	 * @throws IOException if there was a problem getting a user directory or the application
+	 *   properties.
 	 */
-	public GhidraApplicationLayout(File applicationInstallationDir)
-			throws FileNotFoundException, IOException {
+	public GhidraApplicationLayout(File applicationInstallationDir) throws IOException {
 
 		// Application installation directory
 		this.applicationInstallationDir = new ResourceFile(applicationInstallationDir);
@@ -96,7 +93,8 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 		applicationProperties = new ApplicationProperties(applicationRootDirs);
 
 		// User directories
-		userTempDir = ApplicationUtilities.getDefaultUserTempDir(getApplicationProperties());
+		userTempDir = ApplicationUtilities
+				.getDefaultUserTempDir(getApplicationProperties().getApplicationName());
 		userCacheDir = ApplicationUtilities.getDefaultUserCacheDir(getApplicationProperties());
 		userSettingsDir = ApplicationUtilities.getDefaultUserSettingsDir(getApplicationProperties(),
 			getApplicationInstallationDir());

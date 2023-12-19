@@ -21,6 +21,7 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
+import ghidra.framework.Application;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 
 /**
@@ -67,7 +68,7 @@ public class ProjectLocator {
 		}
 		this.name = name;
 		if (StringUtils.isBlank(path)) {
-			path = System.getProperty("java.io.tmpdir");
+			path = Application.getUserTempDirectory().getAbsolutePath();
 		}
 		this.location = checkAbsolutePath(path);
 		url = GhidraURL.makeURL(location, name);

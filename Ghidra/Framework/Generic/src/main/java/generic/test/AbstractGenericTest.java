@@ -809,10 +809,10 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
-	 * Creates a file in the Java temp directory using the given name as a
+	 * Creates a file in the Application temp directory using the given name as a
 	 * prefix and the given suffix. The final filename will also include the
 	 * current test name, as well as any data added by
-	 * {@link File#createTempFile(String, String)}. The file suffix will be
+	 * {@link File#createTempFile(String, String, File)}. The file suffix will be
 	 * <code>.tmp</code>
 	 * <p>
 	 * The file will be marked to delete on JVM exit. This will not work if the
@@ -830,10 +830,10 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	}
 
 	/**
-	 * Creates a file in the Java temp directory using the given name as a
+	 * Creates a file in the Application temp directory using the given name as a
 	 * prefix and the given suffix. The final filename will also include the
 	 * current test name, as well as any data added by
-	 * {@link File#createTempFile(String, String)}.
+	 * {@link File#createTempFile(String, String, File)}.
 	 * <p>
 	 * The file will be marked to delete on JVM exit. This will not work if the
 	 * JVM is taken down the hard way, as when pressing the stop button in

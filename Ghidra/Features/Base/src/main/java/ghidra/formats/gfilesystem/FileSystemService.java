@@ -577,7 +577,7 @@ public class FileSystemService {
 	public File createPlaintextTempFile(ByteProvider provider, String filenamePrefix,
 			TaskMonitor monitor) throws IOException {
 		File tmpFile =
-			File.createTempFile(filenamePrefix, Long.toString(System.currentTimeMillis()));
+			Application.createTempFile(filenamePrefix, Long.toString(System.currentTimeMillis()));
 		monitor.setMessage("Copying " + provider.getName() + " to temp file");
 		monitor.initialize(provider.length());
 		try {

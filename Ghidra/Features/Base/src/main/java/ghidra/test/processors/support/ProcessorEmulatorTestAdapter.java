@@ -428,7 +428,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 //			return; // already enabled by batch test environment
 //		}
 //
-//		String tmpDir = System.getProperty("java.io.tmpdir");
+//		File tmpDir = Application.getUserTempDirectory();
 //		File cacheDir = new File(tmpDir, "EmulatorDBTestCache");
 //		if (cacheDir.exists() && !FileUtilities.deleteDir(cacheDir)) {
 //			Msg.warn(ProcessorEmulatorTestAdapter.class,

@@ -359,6 +359,23 @@ public class JavaConfig {
 	 */
 	private void initJavaHomeSaveFile(File installDir) throws FileNotFoundException {
 		boolean isDev = new File(installDir, "build.gradle").isFile();
+		String appName = applicationName.toLowerCase();
+
+		String userSettingsDirName = appName + "_" + applicationVersion + "_" +
+			applicationReleaseName.replaceAll("\\s", "").toUpperCase();
+		if (isDev) {
+			userSettingsDirName += "_location_" + installDir.getParentFile().getName();
+		}
+		
+		File userSettingsDir = null;
+
+		// Look for XDG environment variable
+		String xdgConfigHomeDirStr = System.getenv("XDG_CONFIG_HOME");
+		if (xdgConfigHomeDirStr != null && !xdgConfigHomeDirStr.isEmpty()) {
+			userSettingsDir = new File(xdgConfigHomeDirStr, appName + "/" + userSettingsDirName);
+			javaHomeSaveFile = new File(userSettingsDir, JAVA_HOME_SAVE_NAME);
+			return;
+		}
 
 		// Ensure there is a user home directory (there definitely should be)
 		String userHomeDirPath = System.getProperty("user.home");
@@ -370,18 +387,27 @@ public class JavaConfig {
 			throw new FileNotFoundException("User home directory does not exist: " + userHomeDir);
 		}
 
-		// Get the java home save file from user home directory (it might not exist yet).
-		File userSettingsParentDir =
-			new File(userHomeDir, "." + applicationName.replaceAll("\\s", "").toLowerCase());
-
-		String userSettingsDirName = userSettingsParentDir.getName() + "_" + applicationVersion +
-			"_" + applicationReleaseName.replaceAll("\\s", "").toUpperCase();
-
-		if (isDev) {
-			userSettingsDirName += "_location_" + installDir.getParentFile().getName();
+		switch (JavaFinder.getCurrentPlatform()) {
+			case WINDOWS:
+				String localAppDataDirPath = System.getenv("APPDATA");
+				if (localAppDataDirPath == null || localAppDataDirPath.trim().isEmpty()) {
+					throw new FileNotFoundException("\"APPDATA\" environment variable is not set");
+				}
+				userSettingsDir =
+					new File(localAppDataDirPath, appName + "/" + userSettingsDirName);
+				break;
+			case LINUX:
+				userSettingsDir =
+					new File(userHomeDir, ".config/" + appName + "/" + userSettingsDirName);
+				break;
+			case MACOS:
+				userSettingsDir =
+					new File(userHomeDir, "Library/" + appName + "/" + userSettingsDirName);
+				break;
+			default:
+				throw new FileNotFoundException(
+					"Failed to find the user settings directory: Unsupported operating system.");
 		}
-
-		File userSettingsDir = new File(userSettingsParentDir, userSettingsDirName);
 		javaHomeSaveFile = new File(userSettingsDir, JAVA_HOME_SAVE_NAME);
 	}
 

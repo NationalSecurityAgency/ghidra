@@ -140,7 +140,7 @@ public class SystemUtilities {
 	}
 
 	/**
-	 * Gets the boolean value of the  system property by the given name.  If the property is
+	 * Gets the boolean value of the system property by the given name.  If the property is
 	 * not set, the defaultValue is returned.   If the value is set, then it will be passed
 	 * into {@link Boolean#parseBoolean(String)}.
 	 *
