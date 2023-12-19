@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import ghidra.framework.data.DomainObjectFileListener;
-import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.timer.GTimerCache;
 
@@ -66,6 +66,7 @@ class ProgramCache extends GTimerCache<ProgramLocator, Program> {
 		program.addConsumer(this);
 		ProgramFileListener listener = new ProgramFileListener(key);
 		program.addDomainFileListener(listener);
+		program.addListener(listener);
 		listenerMap.put(program, listener);
 	}
 
@@ -73,9 +74,10 @@ class ProgramCache extends GTimerCache<ProgramLocator, Program> {
 	protected void valueRemoved(ProgramLocator locator, Program program) {
 		// whenever programs are removed from the cache, we need to remove the cache as a consumer 
 		// and remove the file changed listener
-		program.release(this);
 		ProgramFileListener listener = listenerMap.remove(program);
 		program.removeDomainFileListener(listener);
+		program.removeListener(listener);
+		program.release(this);
 	}
 
 	@Override
@@ -92,9 +94,11 @@ class ProgramCache extends GTimerCache<ProgramLocator, Program> {
 	 * DomainObjectFileListener for programs in the cache. If a program instance has its DomainFile 
 	 * changed (e.g., 'Save As' action), then the cache mapping is incorrect as it sill has the
 	 * program instance associated with its old DomainFile. So we need to add a listener to 
-	 * recognize when this occurs. If it does, we simply remove the entry from the cache.
+	 * recognize when this occurs. If it does, we simply remove the entry from the cache. Also,
+	 * we need to remove any programs from the cache if changes are made to avoid questions about
+	 * who is responsible for saving changed programs that only live in the cache.
 	 */
-	class ProgramFileListener implements DomainObjectFileListener {
+	class ProgramFileListener implements DomainObjectFileListener, DomainObjectListener {
 		private ProgramLocator key;
 
 		ProgramFileListener(ProgramLocator key) {
@@ -105,6 +109,10 @@ class ProgramCache extends GTimerCache<ProgramLocator, Program> {
 		public void domainFileChanged(DomainObject object) {
 			remove(key);
 		}
-	}
 
+		@Override
+		public void domainObjectChanged(DomainObjectChangedEvent ev) {
+			remove(key);
+		}
+	}
 }
