@@ -18,6 +18,7 @@ package db.buffers;
 import java.io.*;
 import java.util.*;
 
+import ghidra.framework.Application;
 import ghidra.util.BigEndianDataConverter;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.IntSet;
@@ -197,8 +198,7 @@ public class LocalBufferFile implements BufferFile {
 		this.blockSize = bufferSize + BUFFER_PREFIX_SIZE;
 		this.readOnly = false;
 		this.temporary = true;
-		file = File.createTempFile(tmpPrefix, tmpExtension);
-//		file.deleteOnExit();
+		file = Application.createTempFile(tmpPrefix, tmpExtension);
 		raf = new RandomAccessFile(file, "rw");
 	}
 

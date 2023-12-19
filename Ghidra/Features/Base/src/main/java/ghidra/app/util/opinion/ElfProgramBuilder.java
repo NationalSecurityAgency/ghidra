@@ -36,6 +36,7 @@ import ghidra.app.util.bin.format.elf.extend.ElfLoadAdapter;
 import ghidra.app.util.bin.format.elf.info.ElfInfoProducer;
 import ghidra.app.util.bin.format.elf.relocation.*;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.framework.Application;
 import ghidra.framework.options.Options;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.mem.FileBytes;
@@ -1606,7 +1607,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		Address debugDataAddr = findLoadAddress(debugDataSection, 0);
 		if (debugDataAddr != null) {
 			try {
-				File tmpFile = File.createTempFile("ghidra_gnu_debugdata", null);
+				File tmpFile = Application.createTempFile("ghidra_gnu_debugdata", null);
 				try (ByteProviderWrapper compressedDebugDataBP = new ByteProviderWrapper(
 					new MemoryByteProvider(memory, debugDataAddr), 0, debugDataSection.getSize());
 						XZCompressorInputStream xzIS =

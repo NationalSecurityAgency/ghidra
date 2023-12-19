@@ -18,6 +18,7 @@ package ghidra.framework.store.remote;
 import java.io.*;
 
 import db.buffers.*;
+import ghidra.framework.Application;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.remote.RepositoryItem;
 import ghidra.framework.store.DatabaseItem;
@@ -101,24 +102,16 @@ public class RemoteDatabaseItem extends RemoteFolderItem implements DatabaseItem
 
 		BufferFile bf = repository.openDatabase(parentPath, itemName, version, -1);
 		try {
-			File tmpFile = File.createTempFile("ghidra", LocalBufferFile.TEMP_FILE_EXT);
+			File tmpFile = Application.createTempFile("ghidra", LocalBufferFile.TEMP_FILE_EXT);
 			tmpFile.delete();
 			BufferFile tmpBf = new LocalBufferFile(tmpFile, bf.getBufferSize());
 			try {
 				LocalBufferFile.copyFile(bf, tmpBf, null, monitor);
 				tmpBf.close();
 
-				InputStream itemIn = new FileInputStream(tmpFile);
-				try {
+				try (InputStream itemIn = new FileInputStream(tmpFile)) {
 					ItemSerializer.outputItem(getName(), getContentType(), DATABASE_FILE_TYPE,
 						tmpFile.length(), itemIn, outputFile, monitor);
-				}
-				finally {
-					try {
-						itemIn.close();
-					}
-					catch (IOException e) {
-					}
 				}
 			}
 			finally {

@@ -24,6 +24,7 @@ import db.Database;
 import db.buffers.BufferFileManager;
 import db.buffers.LocalManagedBufferFile;
 import generic.jar.ResourceFile;
+import ghidra.framework.Application;
 import ghidra.framework.store.FolderItem;
 import ghidra.framework.store.db.PackedDatabaseCache.CachedDB;
 import ghidra.framework.store.local.*;
@@ -32,7 +33,6 @@ import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 import utilities.util.FileUtilities;
 
 /**
@@ -364,7 +364,7 @@ public class PackedDatabase extends Database {
 	 */
 	private static File createDBDir() throws IOException {
 
-		File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+		File tmpDir = Application.getUserTempDirectory();
 		int tries = 0;
 		while (tries++ < 10) {
 			File dir = new File(tmpDir, TEMPDB_DIR_PREFIX + getRandomString() + TEMPDB_DIR_EXT);
@@ -620,7 +620,7 @@ public class PackedDatabase extends Database {
 			InputStream itemIn = null;
 			File tmpFile = null;
 			try {
-				tmpFile = File.createTempFile("pack", ".tmp");
+				tmpFile = Application.createTempFile("pack", ".tmp");
 				tmpFile.delete();
 				dbh.saveAs(tmpFile, false, monitor);
 				itemIn = new BufferedInputStream(new FileInputStream(tmpFile));
@@ -838,7 +838,7 @@ public class PackedDatabase extends Database {
 	 */
 	public static void cleanupOldTempDatabases() {
 
-		File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+		File tmpDir = Application.getUserTempDirectory();
 		File[] tempDbs = tmpDir.listFiles((FileFilter) file -> {
 			String name = file.getName();
 			if (file.isDirectory()) {

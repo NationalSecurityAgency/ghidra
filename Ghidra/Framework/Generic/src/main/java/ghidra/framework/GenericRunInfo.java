@@ -15,8 +15,7 @@
  */
 package ghidra.framework;
 
-import java.io.File;
-import java.io.FileFilter;
+import java.io.*;
 import java.util.*;
 
 import org.apache.logging.log4j.LogManager;
@@ -24,6 +23,8 @@ import org.apache.logging.log4j.Logger;
 
 import ghidra.framework.preferences.Preferences;
 import util.CollectionUtils;
+import utility.application.ApplicationLayout;
+import utility.application.ApplicationUtilities;
 
 public class GenericRunInfo {
 
@@ -42,10 +43,23 @@ public class GenericRunInfo {
 	 * <b>Note: </b>This method ignores Test directories 
 	 */
 	private static List<File> getUserSettingsDirsByTime() {
-		File userDataDirectory = Application.getUserSettingsDirectory();
-		File userDataDirParentFile = userDataDirectory.getParentFile();
+		ApplicationLayout layout = Application.getApplicationLayout();
+		File userSettingsDirectory = Application.getUserSettingsDirectory();
 
-		List<File> appDirs = collectAllApplicationDirectories(userDataDirParentFile);
+		List<File> appDirs =
+			collectAllApplicationDirectories(userSettingsDirectory.getParentFile());
+
+		// Search "legacy" user setting directory locations in case the user has upgraded from an
+		// older version
+		try {
+			File legacyUserSettingsDirectory = ApplicationUtilities.getLegacyUserSettingsDir(
+				layout.getApplicationProperties(), layout.getApplicationInstallationDir());
+			appDirs.addAll(
+				collectAllApplicationDirectories(legacyUserSettingsDirectory.getParentFile()));
+		}
+		catch (FileNotFoundException e) {
+			// ignore
+		}
 
 		Comparator<File> modifyTimeComparator = (f1, f2) -> {
 
