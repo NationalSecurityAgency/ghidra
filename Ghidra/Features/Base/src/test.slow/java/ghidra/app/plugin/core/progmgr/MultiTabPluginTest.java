@@ -136,6 +136,13 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(iconLabel);
 		Point p = iconLabel.getLocationOnScreen();
 		clickMouse(iconLabel, MouseEvent.BUTTON1, p.x + 1, p.y + 1, 1, 0);
+
+		JDialog dlg = waitForJDialog("Program Changed");
+		JButton button = findButtonByText(dlg, "Continue");
+		pressButton(button);
+
+		waitForSwing();
+
 		assertEquals(2, panel.getTabCount());
 	}
 
@@ -160,9 +167,23 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 			JLabel iconLabel = (JLabel) findComponentByName(tab, "Close");
 			Point p = iconLabel.getLocationOnScreen();
 			clickMouse(iconLabel, MouseEvent.BUTTON1, p.x + 1, p.y + 1, 1, 0);
+
+			JDialog dlg = waitForJDialog("Program Changed");
+			JButton button = findButtonByText(dlg, "Continue");
+			pressButton(button);
 		}
 
-		runSwing(() -> panel.removeProgram(programs[programs.length - 1]));
+		// Last program does not have a tab
+		ProgramManagerPlugin programMgr = env.getPlugin(ProgramManagerPlugin.class);
+		runSwingLater(() -> programMgr.closeProgram());
+
+		waitForSwing();
+
+		JDialog dlg = waitForJDialog("Program Changed");
+		JButton button = findButtonByText(dlg, "Continue");
+		pressButton(button);
+
+		waitForSwing();
 
 		assertEquals(0, panel.getTabCount());
 	}

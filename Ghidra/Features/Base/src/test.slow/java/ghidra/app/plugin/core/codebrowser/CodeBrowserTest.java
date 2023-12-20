@@ -33,6 +33,7 @@ import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.*;
 import docking.widgets.table.GTable;
 import ghidra.app.cmd.data.CreateDataCmd;
+import ghidra.app.events.OpenProgramPluginEvent;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.core.codebrowser.SelectEndpointsAction.RangeEndpoint;
 import ghidra.app.plugin.core.navigation.NextPrevAddressPlugin;
@@ -381,6 +382,9 @@ public class CodeBrowserTest extends AbstractGhidraHeadedIntegrationTest {
 		CodeBrowserPlugin cb2 = getPlugin(tool2, CodeBrowserPlugin.class);
 
 		env.connectTools(tool, tool2);
+
+		// open same program in second tool - cannot rely on tool connection for this
+		tool2.firePluginEvent(new OpenProgramPluginEvent("Test", program));
 
 		cb.goToField(addr("0x1003a50"), "Bytes", 0, 4);
 		Point p1 = getCursorPoint();
