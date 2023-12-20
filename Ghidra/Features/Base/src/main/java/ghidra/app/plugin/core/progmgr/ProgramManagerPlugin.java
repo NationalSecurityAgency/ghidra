@@ -374,9 +374,11 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 		for (Program p : openPrograms) {
 			if (ignoreChanges) {
 				toRemove.add(p);
+				continue;
 			}
 			else if (p.isClosed()) {
 				toRemove.add(p);
+				continue;
 			}
 
 			if (!tool.canCloseDomainObject(p)) {

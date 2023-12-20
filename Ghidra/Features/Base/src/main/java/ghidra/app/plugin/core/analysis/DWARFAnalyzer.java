@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.analysis;
 
 import java.io.IOException;
 
+import ghidra.app.plugin.core.analysis.rust.RustUtilities;
 import ghidra.app.services.*;
 import ghidra.app.util.bin.format.dwarf4.DWARFException;
 import ghidra.app.util.bin.format.dwarf4.DWARFPreconditionException;
@@ -96,6 +97,11 @@ public class DWARFAnalyzer extends AbstractAnalyzer {
 
 		if (GoRttiMapper.isGolangProgram(program)) {
 			Msg.info(this, "DWARF: Enabling DIE preload for golang binary");
+			importOptions.setPreloadAllDIEs(true);
+		}
+
+		if (RustUtilities.isRustProgram(program)) {
+			Msg.info(this, "DWARF: Enabling DIE preload for Rust binary");
 			importOptions.setPreloadAllDIEs(true);
 		}
 
