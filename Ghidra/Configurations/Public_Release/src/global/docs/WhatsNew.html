@@ -49,30 +49,25 @@
     
     <H2>The not-so-fine print: Please Read!</H2>
     
+    <P>This release includes new features, enhancements, performance improvements, quite a few bug fixes, and many pull-request
+	contributions. Thanks to all those who have contributed their time, thoughts, and code. The Ghidra user community thanks you too!</P>
+
 	<P>Ghidra 11.0 is fully backward compatible with project data from previous releases.
 	However, programs and data type archives which are created or modified in 11.0 will not be useable by an earlier Ghidra version. </P>
 
-	<P>This release includes new features, enhancements, performance improvements, quite a few bug fixes, and many pull-request
-	contributions. Thanks to all those who have contributed their time, thoughts, and code. The Ghidra user community thanks you too!</P>
-	
-	<P>IMPORTANT: Ghidra requires Java 17 JDK to run.  A newer version of Java may be acceptable but has not been fully tested.  Please see the
+	<P>This distribution requires JDK 17 to run, and provides Linux x86-64, Windows x86-64, and macOS x86-64 native components.
+	If you have another platform or wish to use a newer JDK, please see the
 	<a href="InstallationGuide.html">Ghidra Installation Guide</a> for additional information.</P>
-	
-	<P>NOTE: Please note that any programs imported with a Ghidra beta version or code built directly from source code outside of a release tag may not be compatible,
-	and may have flaws that won't be corrected by using this new release.  Any programs analyzed from a beta or other local master source build should be considered
-	experimental and re-imported and analyzed with a release version. Programs imported with previous release versions should upgrade correctly through various
-	automatic upgrade mechanisms.  Any program you will continue to reverse engineer should be imported fresh with a release version or a build you trust with the
-	latest code fixes.</P>
 
 	<P>NOTE: Ghidra Server: The Ghidra 11.0 server is compatible with Ghidra 9.2 and later Ghidra clients.  Ghidra 11.0
 	clients are compatible with all 10.x and 9.x servers.  Although, due to potential Java version differences, it is recommended
 	that Ghidra Server installations older than 10.2 be upgraded.  Those using 10.2 and newer should not need a server upgrade.</P>
 	
-	<P>NOTE: Platform-specific native components can be built directly from a release distribution.
-	The distribution currently provides Linux x86-64, Windows x86-64, and macOS x86-64 native components.  If you have another platform,
-	for example a macOS aarch64 based system or a Linux ARM variant, the <span class="gcode">support/buildNatives</span> script can build the decompiler,
-	demangler, and legacy PDB executables for your platform.  Please see the "Building Ghidra Native Components" section in the
-	<a href="InstallationGuide.html#Build">Ghidra Installation Guide</a> for additional information.</P>
+	<P>NOTE: Any programs imported with a Ghidra beta version or code built directly from source code outside of a release tag may not be compatible,
+	and may have flaws that won't be corrected by using this new release.  Any programs analyzed from a beta or other local master source build should be considered
+	experimental and re-imported and analyzed with a release version. Programs imported with previous release versions should upgrade correctly through various
+	automatic upgrade mechanisms.  Any program you will continue to reverse engineer should be imported fresh with a release version or a build you trust with the
+	latest code fixes.</P>
 
 
 
@@ -103,7 +98,7 @@
 	to pre-ingested programs within a Ghidra multi-user repository.  Clicking on the hyperlink causes Ghidra to display the previously ingested program.
 	No data other than the Ghidra URL is transferred to Ghidra, and no socket is open within Ghidra listening for commands.  GhidraGo must be enabled by
 	installing a plugin in the Ghidra project manager, and must also be configured as a protocol handler in your web browser.  GhidraGo is not setup or enabled by default.
-	Please see the included <span class="gtitle">GhidraGoREADME.html</span>, or search for GhidraGo within help.
+	For details on setting up GhidraGo, please see the included <span class="gtitle">GhidraGoREADME.html</span> or search for GhidraGo within help.
 	</P>
 
 	<H2>Version Tracking </H2>
