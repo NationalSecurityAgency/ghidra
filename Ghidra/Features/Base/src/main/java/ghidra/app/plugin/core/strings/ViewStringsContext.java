@@ -15,32 +15,36 @@
  */
 package ghidra.app.plugin.core.strings;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
 import docking.DefaultActionContext;
 import ghidra.app.context.DataLocationListContext;
+import ghidra.program.model.data.DataUtilities;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
+import ghidra.program.util.ProgramSelection;
 import ghidra.util.table.GhidraTable;
 
 public class ViewStringsContext extends DefaultActionContext implements DataLocationListContext {
 
-	private ViewStringsProvider viewStringsProvider;
+	private final ViewStringsProvider viewStringsProvider;
+	private final GhidraTable table;
+	private final ViewStringsTableModel tableModel;
 
-	ViewStringsContext(ViewStringsProvider provider, GhidraTable stringsTable) {
-		super(provider, stringsTable);
-		viewStringsProvider = provider;
-	}
-
-	GhidraTable getStringsTable() {
-		return (GhidraTable) getContextObject();
+	ViewStringsContext(ViewStringsProvider provider, GhidraTable table,
+			ViewStringsTableModel tableModel) {
+		super(provider, table);
+		this.viewStringsProvider = provider;
+		this.table = table;
+		this.tableModel = tableModel;
 	}
 
 	@Override
 	public int getCount() {
-		return viewStringsProvider.getSelectedRowCount();
+		return table.getSelectedRowCount();
 	}
 
 	@Override
@@ -50,11 +54,48 @@ public class ViewStringsContext extends DefaultActionContext implements DataLoca
 
 	@Override
 	public List<ProgramLocation> getDataLocationList() {
-		return viewStringsProvider.getSelectedDataLocationList(null);
+		return getDataLocationList(null);
 	}
 
 	@Override
 	public List<ProgramLocation> getDataLocationList(Predicate<Data> filter) {
-		return viewStringsProvider.getSelectedDataLocationList(filter);
+		List<ProgramLocation> result = new ArrayList<>();
+		int[] selectedRows = table.getSelectedRows();
+		for (int row : selectedRows) {
+			ProgramLocation location = tableModel.getRowObject(row);
+			Data data = DataUtilities.getDataAtLocation(location);
+			if (passesFilter(data, filter)) {
+				result.add(location);
+			}
+		}
+		return result;
 	}
+
+	private boolean passesFilter(Data data, Predicate<Data> filter) {
+		if (data == null) {
+			return false;
+		}
+		if (filter == null) {
+			return true;
+		}
+		return filter.test(data);
+	}
+
+	ProgramSelection getProgramSelection() {
+		return table.getProgramSelection();
+	}
+
+	public int getSelectedRowCount() {
+		return table.getSelectedRowCount();
+	}
+
+	public Data getSelectedData() {
+		int selectedRow = table.getSelectedRow();
+		if (selectedRow < 0) {
+			return null;
+		}
+		ProgramLocation location = tableModel.getRowObject(selectedRow);
+		return DataUtilities.getDataAtLocation(location);
+	}
+
 }
