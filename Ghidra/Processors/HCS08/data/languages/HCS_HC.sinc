@@ -108,25 +108,26 @@ oprx16_8_SP:	imm16,SP is imm16 & SP { address:2 = SP  + imm16:2;      export *:1
 
 @if  defined(HCS08)
 opr16a_16:	    imm16    is imm16      { export *:2 imm16; }
-oprx8_16_SP:	imm8,SP  is imm8 & SP  { address:2 = SP  + zext(imm8:1); export *:2 address; }
+oprx8_16_SP:	imm8,SP  is imm8 & SP  { address:2 = SP  + imm8;  export *:2 address; }
 @endif
 
 # X or HIX addressing
 
 @if defined(HC05)
-oprx8_8_X:		imm8,X   is imm8 & X   { address:1 = X   + imm8:1;       export *:1 address; }
-comma_X:		","X     is X		   { address:1 = X;                  export *:1 address; }
+oprx8_8_X:		imm8,X   is imm8 & X   { address:2 = zext(X) + imm8;   export *:1 address; }
+oprx16_8_X:		imm16,X  is imm16 & X  { address:2 = zext(X) + imm16;  export *:1 address; }
+comma_X:		","X     is X		   { address:2 = zext(X);          export *:1 address; }
 @endif
 
 @if defined(HCS08) || defined(HC08)
-oprx8_8_X:		imm8,X   is imm8 & X   { address:2 = HIX + zext(imm8:1); export *:1 address; }
-oprx16_8_X:		imm16,X  is imm16 & X  { address:2 = HIX + imm16:2;      export *:1 address; }
-comma_X:		","X     is X		   { address:2 = HIX;                export *:1 address; }
+oprx8_8_X:		imm8,X   is imm8 & X   { address:2 = HIX + imm8;       export *:1 address; }
+oprx16_8_X:		imm16,X  is imm16 & X  { address:2 = HIX + imm16;      export *:1 address; }
+comma_X:		","X     is X		   { address:2 = HIX;              export *:1 address; }
 @endif
 
 @if  defined(HCS08)
-oprx8_16_X:		imm8,X   is imm8 & X   { address:2 = HIX + zext(imm8:1); export *:2 address; }
-oprx16_16_X:	imm16,X  is imm16 & X  { address:2 = HIX + imm16:2;      export *:2 address; }
+oprx8_16_X:		imm8,X   is imm8 & X   { address:2 = HIX + imm8;       export *:2 address; }
+oprx16_16_X:	imm16,X  is imm16 & X  { address:2 = HIX + imm16;      export *:2 address; }
 @endif
 
 
@@ -135,11 +136,7 @@ oprx16_16_X:	imm16,X  is imm16 & X  { address:2 = HIX + imm16:2;      export *:2
 OP1: iopr8i		is op4_6=2; iopr8i       { export iopr8i; }
 OP1: opr8a_8	is op4_6=3; opr8a_8      { export opr8a_8; }
 OP1: opr16a_8	is op4_6=4; opr16a_8     { export opr16a_8; }
-
-@if defined(HCS08) || defined(HC08)
 OP1: oprx16_8_X	is op4_6=5; oprx16_8_X   { export oprx16_8_X; }
-@endif
-
 OP1: oprx8_8_X	is op4_6=6; oprx8_8_X    { export oprx8_8_X; }
 OP1: comma_X	is op4_6=7 & comma_X     { export comma_X; }
 
@@ -151,10 +148,7 @@ op2_opr8a: imm8     is imm8       { export *:1 imm8; }
 ADDR: opr8a_8		is op4_6=3; opr8a_8		{ export opr8a_8; }
 ADDR: opr16a_8		is op4_6=4; opr16a_8	{ export opr16a_8; }
 
-@if defined(HCS08) || defined(HC08)
 ADDRI: oprx16_8_X	is op4_6=5; oprx16_8_X	{ export oprx16_8_X; }
-@endif
-
 ADDRI: oprx8_8_X	is op4_6=6; oprx8_8_X	{ export oprx8_8_X; }
 ADDRI: comma_X		is op4_6=7 & comma_X	{ export comma_X; }
 
@@ -1772,7 +1766,7 @@ macro Push2(operand) {
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
 :RSP                     is op = 0x9C
 {
-	SPL = 0xff;
+	SP = 0xff;
 }
 @endif
 
