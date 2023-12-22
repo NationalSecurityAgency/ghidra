@@ -30,10 +30,7 @@
  *
  *****************************************************************************************/
 configurations {
-	sleighConfig {
-		// The following line is needed so newer versions of guava can be resolved
-		attributes.attribute(TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE, objects.named(TargetJvmEnvironment.class, TargetJvmEnvironment.STANDARD_JVM))
-	}
+	sleighConfig
 }
 
 dependencies {
