@@ -16,7 +16,6 @@
 package generic.theme.laf;
 
 import javax.swing.UIDefaults;
-import javax.swing.UIManager;
 
 import generic.theme.ApplicationThemeManager;
 import generic.theme.LafType;
@@ -28,16 +27,7 @@ public class FlatLookAndFeelManager extends LookAndFeelManager {
 	}
 
 	@Override
-	protected void fixupLookAndFeelIssues() {
-		super.fixupLookAndFeelIssues();
-
-		// We have historically managed button focus-ability ourselves.  Allow this by default so
-		// features continue to work as expected, such as right-clicking on ToolButtons.
-		UIManager.put("ToolBar.focusableButtons", Boolean.TRUE);
-	}
-
-	@Override
-	protected UiDefaultsMapper getUiDefaultsMapper(UIDefaults defaults) {
+	protected UiDefaultsMapper createUiDefaultsMapper(UIDefaults defaults) {
 		if (getLookAndFeelType() == LafType.FLAT_DARK) {
 			return new FlatDarkUiDefaultsMapper(defaults);
 		}

@@ -329,8 +329,8 @@ public class VTControllerImpl
 			return;
 		}
 
-		currentMatchInfo = (match == null) ? null
-				: matchInfoFactory.getMatchInfo(this, match, addressCorrelatorManager);
+		currentMatchInfo =
+			(match == null) ? null : matchInfoFactory.getMatchInfo(match, addressCorrelatorManager);
 
 		fireMatchChanged(currentMatchInfo);
 	}
@@ -338,7 +338,7 @@ public class VTControllerImpl
 	@Override
 	public MatchInfo getMatchInfo(VTMatch match) {
 		return (match == null) ? null
-				: matchInfoFactory.getMatchInfo(this, match, addressCorrelatorManager);
+				: matchInfoFactory.getMatchInfo(match, addressCorrelatorManager);
 	}
 
 	private void fireSessionChanged() {

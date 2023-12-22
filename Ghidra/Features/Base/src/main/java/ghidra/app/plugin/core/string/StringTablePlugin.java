@@ -70,7 +70,8 @@ public class StringTablePlugin extends ProgramPlugin {
 			};
 		stringSearchAction.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, SEARCH_ACTION_NAME));
 		stringSearchAction.setMenuBarData(new MenuData(
-			new String[] { ToolConstants.MENU_SEARCH, "For &Strings..." }, null, "search for"));
+			new String[] { ToolConstants.MENU_SEARCH, "For &Strings..." }, null, "search for", -1,
+			"Strings1"));
 
 		stringSearchAction.setDescription(getPluginDescription().getDescription());
 		stringSearchAction.addToWindowWhen(NavigatableActionContext.class);

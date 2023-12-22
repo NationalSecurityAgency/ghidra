@@ -19,11 +19,11 @@ import org.junit.Before;
 import org.junit.Test;
 
 import db.Transaction;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.services.CodeViewerService;
 import ghidra.app.services.DebuggerStaticMappingService;
 
-public class DebuggerObjectsProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerObjectsProviderTest extends AbstractGhidraHeadedDebuggerTest {
 	protected DebuggerObjectsPlugin objectsPlugin;
 	protected DebuggerObjectsProvider objectsProvider;
 

@@ -74,20 +74,33 @@ public class DBTraceObjectValPath implements TraceObjectValPath {
 
 	@Override
 	public DBTraceObjectValPath prepend(TraceObjectValue entry) {
+		if (!entryList.isEmpty() && entry.getTrace() != entryList.get(0).getTrace()) {
+			throw new IllegalArgumentException("All values in path must be from the same trace");
+		}
+		if (!(entry instanceof InternalTraceObjectValue val)) {
+			throw new IllegalArgumentException("Value must be in the database");
+		}
 		InternalTraceObjectValue[] arr = new InternalTraceObjectValue[1 + entryList.size()];
-		arr[0] = (DBTraceObjectValue) entry;
+		arr[0] = val;
 		for (int i = 1; i < arr.length; i++) {
 			arr[i] = entryList.get(i - 1);
 		}
 		return new DBTraceObjectValPath(Collections.unmodifiableList(Arrays.asList(arr)));
 	}
 
+	@Override
 	public DBTraceObjectValPath append(TraceObjectValue entry) {
+		if (!entryList.isEmpty() && entry.getTrace() != entryList.get(0).getTrace()) {
+			throw new IllegalArgumentException("All values in path must be from the same trace");
+		}
+		if (!(entry instanceof InternalTraceObjectValue val)) {
+			throw new IllegalArgumentException("Value must be in the database");
+		}
 		InternalTraceObjectValue[] arr = new InternalTraceObjectValue[1 + entryList.size()];
 		for (int i = 0; i < arr.length - 1; i++) {
 			arr[i] = entryList.get(i);
 		}
-		arr[arr.length - 1] = (InternalTraceObjectValue) entry;
+		arr[arr.length - 1] = val;
 		return new DBTraceObjectValPath(Collections.unmodifiableList(Arrays.asList(arr)));
 	}
 

@@ -23,6 +23,7 @@ import javax.swing.text.SimpleAttributeSet;
 import docking.widgets.table.threaded.ThreadedTableModelListener;
 import generic.theme.GColor;
 import ghidra.framework.plugintool.dialog.AbstractDetailsPanel;
+import ghidra.util.extensions.ExtensionDetails;
 
 /**
  * Panel that shows information about the selected extension in the {@link ExtensionTablePanel}. This

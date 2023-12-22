@@ -17,7 +17,8 @@ package ghidra.app.plugin.core.debug.gui.action;
 
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
+import ghidra.debug.api.action.*;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;

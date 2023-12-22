@@ -15,11 +15,11 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.format.pdb2.pdbreader.*;
+import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
+import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.CancelledException;
@@ -30,27 +30,17 @@ import ghidra.util.exception.CancelledException;
  */
 public class FieldListTypeApplier extends MsTypeApplier {
 
-	private List<MsTypeApplier> baseClassList = new ArrayList<>();
-	private List<MsTypeApplier> memberList = new ArrayList<>();
-	private List<MsTypeApplier> methodList = new ArrayList<>();
-	private boolean isEmpty;
-
+	//TODO: evaluate the static method and multiple constructors... what can be cleaned up with
+	// regard to these and the possible NoType record???
 	static FieldListTypeApplier getFieldListApplierSpecial(DefaultPdbApplicator applicator,
 			RecordNumber recordNumber) throws PdbException {
-		MsTypeApplier applier =
-			applicator.getApplierOrNoTypeSpec(recordNumber, FieldListTypeApplier.class);
+		if (recordNumber.isNoType()) {
+			// We can use any Field List MS type, as they use the same applier
+			return (FieldListTypeApplier) applicator.getTypeApplier(FieldListMsType.PDB_ID);
+		}
+		MsTypeApplier applier = applicator.getTypeApplier(recordNumber);
 		if (applier instanceof FieldListTypeApplier fieldListApplier) {
 			return fieldListApplier;
-		}
-		// Only the NoType spec should fall through to here
-		if (recordNumber.getCategory() == RecordCategory.TYPE) {
-			try {
-				return new FieldListTypeApplier(applicator,
-					applicator.getPdb().getTypeRecord(recordNumber), true);
-			}
-			catch (IllegalArgumentException e) {
-				applicator.appendLogMsg(e.getMessage());
-			}
 		}
 		throw new PdbException("Problem creating field list");
 	}
@@ -58,120 +48,84 @@ public class FieldListTypeApplier extends MsTypeApplier {
 	/**
 	 * Constructor.
 	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
-	 * @param msType {@link AbstractFieldListMsType} or {@link PrimitiveMsType} of {@code NO_TYPE}
 	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public FieldListTypeApplier(DefaultPdbApplicator applicator, AbstractMsType msType)
-			throws IllegalArgumentException {
-		this(applicator, msType, false);
-	}
-
-	/**
-	 * Constructor with override for NO_TYPE Primitive.
-	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
-	 * @param msType {@link AbstractFieldListMsType} or {@link PrimitiveMsType} of {@code NO_TYPE}
-	 * @param noType {@code true} to specify that {@code msType} is NO_TYPE.
-	 * @throws IllegalArgumentException Upon invalid arguments.
-	 */
-	public FieldListTypeApplier(DefaultPdbApplicator applicator, AbstractMsType msType,
-			boolean noType) throws IllegalArgumentException {
-		super(applicator, msType);
-		if (noType && msType instanceof PrimitiveMsType && ((PrimitiveMsType) msType).isNoType()) {
-			this.isEmpty = true;
-		}
-		else {
-			if (!(msType instanceof AbstractFieldListMsType)) {
-				throw new IllegalArgumentException("PDB Incorrectly applying " +
-					msType.getClass().getSimpleName() + " to " + this.getClass().getSimpleName());
-			}
-			this.isEmpty = false;
-		}
-	}
-
-	/**
-	 * Indicates that the list is empty
-	 * @return {@code true} if list is empty.
-	 */
-	boolean isEmpty() {
-		return isEmpty;
+	public FieldListTypeApplier(DefaultPdbApplicator applicator) throws IllegalArgumentException {
+		super(applicator);
 	}
 
 	@Override
-	BigInteger getSize() {
-		return BigInteger.ZERO;
-	}
-
-	@Override
-	void apply() throws PdbException, CancelledException {
-		if (!isEmpty()) {
-			dataType = applyFieldListMsType((AbstractFieldListMsType) msType);
-		}
-	}
-
-	List<MsTypeApplier> getBaseClassList() {
-		return baseClassList;
-	}
-
-	List<MsTypeApplier> getMemberList() {
-		return memberList;
-	}
-
-	List<MsTypeApplier> getMethodList() {
-		return methodList;
-	}
-
-	private DataType applyFieldListMsType(AbstractFieldListMsType type)
+	DataType apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
 			throws PdbException, CancelledException {
+		// do nothing
+		return null;
+	}
 
-		applyBaseClasses(type.getBaseClassList());
-		applyMembers(type.getMemberList());
-		applyMethods(type.getMethodList());
+	//==============================================================================================
 
-		for (AbstractIndexMsType indexType : type.getIndexList()) {
+	record FieldLists(List<AbstractMsType> bases, List<AbstractMsType> members,
+			List<AbstractMemberMsType> nonstaticMembers,
+			List<AbstractVirtualFunctionTablePointerMsType> vftPtrs, List<AbstractMsType> methods,
+			List<AbstractNestedTypeMsType> nestedTypes, List<AbstractEnumerateMsType> enumerates) {}
+
+	//==============================================================================================
+
+	FieldLists getFieldLists(RecordNumber recordNumber) throws PdbException {
+		AbstractMsType type = applicator.getPdb().getTypeRecord(recordNumber);
+		if (type instanceof PrimitiveMsType primitive && primitive.isNoType()) {
+			return new FieldLists(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(),
+				new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+		}
+		else if (type instanceof AbstractFieldListMsType fieldListType) {
+			return getFieldLists(fieldListType);
+		}
+		throw new PdbException(type.getClass().getSimpleName() + " seen where " +
+			FieldListMsType.class.getSimpleName() + " expected for record number " + recordNumber);
+	}
+
+	FieldLists getFieldLists(AbstractFieldListMsType fieldListType) throws PdbException {
+		List<AbstractMsType> bases = new ArrayList<>();
+		List<AbstractMsType> members = new ArrayList<>();
+		List<AbstractMsType> methods = new ArrayList<>();
+		for (MsTypeField typeIterated : fieldListType.getBaseClassList()) {
+			bases.add((AbstractMsType) typeIterated);
+		}
+		for (MsTypeField typeIterated : fieldListType.getMemberList()) {
+			members.add((AbstractMsType) typeIterated);
+		}
+		for (MsTypeField typeIterated : fieldListType.getMethodList()) {
+			methods.add((AbstractMsType) typeIterated);
+		}
+		List<AbstractMemberMsType> nonstaticMembers =
+			new ArrayList<>(fieldListType.getNonStaticMembers());
+		List<AbstractVirtualFunctionTablePointerMsType> vftPtrs =
+			new ArrayList<>(fieldListType.getVftPointers());
+		List<AbstractNestedTypeMsType> nestedTypes =
+			new ArrayList<>(fieldListType.getNestedTypes());
+		List<AbstractEnumerateMsType> enumerates = new ArrayList<>(fieldListType.getEnumerates());
+
+		for (AbstractIndexMsType indexType : fieldListType.getIndexList()) {
+			RecordNumber subRecordNumber = indexType.getReferencedRecordNumber();
 			MsTypeApplier referencedTypeApplier =
 				applicator.getTypeApplier(indexType.getReferencedRecordNumber());
-			if (referencedTypeApplier instanceof FieldListTypeApplier) {
-				FieldListTypeApplier subApplier = (FieldListTypeApplier) referencedTypeApplier;
-				baseClassList.addAll(subApplier.getBaseClassList());
-				memberList.addAll(subApplier.getMemberList());
-				methodList.addAll(subApplier.getMethodList());
+			if (referencedTypeApplier instanceof FieldListTypeApplier fieldListApplier) {
+				FieldListTypeApplier.FieldLists lists =
+					fieldListApplier.getFieldLists(subRecordNumber);
+				bases.addAll(lists.bases());
+				members.addAll(lists.members());
+				methods.addAll(lists.methods());
+				nonstaticMembers.addAll(lists.nonstaticMembers());
+				vftPtrs.addAll(lists.vftPtrs());
+				nestedTypes.addAll(lists.nestedTypes());
+				enumerates.addAll(lists.enumerates());
 			}
 			else {
 				pdbLogAndInfoMessage(this, "referenceTypeApplier is not FieldListTypeApplier");
 			}
 		}
-		return null;
-	}
 
-	private void applyBaseClasses(List<MsTypeField> baseClasses)
-			throws CancelledException, PdbException {
-		for (MsTypeField typeIterated : baseClasses) {
-			// Use dummy index of zero.
-			MsTypeApplier applier = applicator.getTypeApplier((AbstractMsType) typeIterated);
-			applier.apply(); // Need to apply here, as these are embedded records
-			baseClassList.add(applier);
-		}
-	}
-
-	private void applyMembers(List<MsTypeField> members) throws CancelledException, PdbException {
-		for (MsTypeField typeIterated : members) {
-			// Use dummy index of zero.
-			MsTypeApplier applier = applicator.getTypeApplier((AbstractMsType) typeIterated);
-			applier.apply(); // Need to apply here, as these are embedded records
-			memberList.add(applier);
-		}
-	}
-
-	private void applyMethods(List<MsTypeField> methods) throws CancelledException, PdbException {
-		for (MsTypeField typeIterated : methods) {
-			// Use dummy index of zero.
-			MsTypeApplier applier = applicator.getTypeApplier((AbstractMsType) typeIterated);
-			// TODO: note that these are likely NoTypeAppliers at the moment, as we had not
-			// yet implemented appliers for AbstractOneMethodMsType and
-			//  AbstractOverloadedMethodMsType
-			applier.apply(); // Need to apply here, as these are embedded records
-			methodList.add(applier);
-		}
+		return new FieldLists(bases, members, nonstaticMembers, vftPtrs, methods, nestedTypes,
+			enumerates);
 	}
 
 }

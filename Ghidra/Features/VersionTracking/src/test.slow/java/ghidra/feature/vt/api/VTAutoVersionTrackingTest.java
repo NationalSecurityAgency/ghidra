@@ -15,29 +15,56 @@
  */
 package ghidra.feature.vt.api;
 
-import static ghidra.feature.vt.db.VTTestUtils.*;
-import static org.junit.Assert.*;
+import static ghidra.feature.vt.db.VTTestUtils.addr;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.feature.vt.api.db.VTSessionDB;
-import ghidra.feature.vt.api.main.*;
+import ghidra.feature.vt.api.main.VTAssociation;
+import ghidra.feature.vt.api.main.VTAssociationStatus;
+import ghidra.feature.vt.api.main.VTAssociationType;
+import ghidra.feature.vt.api.main.VTMatch;
+import ghidra.feature.vt.api.main.VTMatchInfo;
+import ghidra.feature.vt.api.main.VTMatchSet;
+import ghidra.feature.vt.api.main.VTProgramCorrelator;
+import ghidra.feature.vt.api.main.VTScore;
+import ghidra.feature.vt.api.main.VTSession;
 import ghidra.feature.vt.api.util.VTAssociationStatusException;
+import ghidra.feature.vt.api.util.VTOptions;
 import ghidra.feature.vt.db.VTTestUtils;
 import ghidra.feature.vt.gui.VTTestEnv;
 import ghidra.feature.vt.gui.actions.AutoVersionTrackingTask;
 import ghidra.feature.vt.gui.plugin.VTController;
+import ghidra.feature.vt.gui.util.VTOptionDefines;
 import ghidra.framework.options.Options;
+import ghidra.framework.options.ToolOptions;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CodeUnitIterator;
+import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.FunctionManager;
+import ghidra.program.model.listing.Listing;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.symbol.SourceType;
+import ghidra.program.model.symbol.Symbol;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.Msg;
 import ghidra.util.exception.InvalidInputException;
@@ -49,7 +76,6 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 	private static final String TEST_DESTINATION_PROGRAM_NAME = "VersionTracking/WallaceVersion2";
 
 	private VTTestEnv env;
-	private VTController controller;
 	private ProgramDB sourceProgram;
 	private ProgramDB destinationProgram;
 	private VTSessionDB session;
@@ -79,11 +105,15 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		session = env.createSession(sourceProgram, destinationProgram);
 
-		env.showTool();
-		controller = env.getVTController();
+		PluginTool tool = env.showTool();
 
 		// Score .999999 and confidence 10.0 (log10 confidence 2.0) and up
-		runAutoVTCommand(0.999999999, 10.0);
+		ToolOptions vtOptions = getVTToolOptions(tool);
+
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 0.999999999);
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
+
+		runAutoVTCommand(vtOptions);
 
 		// verify that the default options are what we expect
 		// if this assert fails then the follow-on tests will probably fail
@@ -139,12 +169,16 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		session = env.createSession(sourceProgram, destinationProgram);
 
-		env.showTool();
-		controller = env.getVTController();
+		PluginTool tool = env.showTool();
 
 		// Score 0.5 and conf threshold 1.0 allow similarity scores of higher than 0.5 for combined
 		// reference correlator and 1.0 and higher for the log 10 confidence score
-		runAutoVTCommand(0.5, 1.0);
+		ToolOptions vtOptions = getVTToolOptions(tool);
+
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 0.5);
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 1.0);
+
+		runAutoVTCommand(vtOptions);
 
 		// verify that the default options are what we expect
 		// if this assert fails then the follow-on tests will probably fail
@@ -190,8 +224,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		session = env.createSession(sourceProgram, destinationProgram);
 
-		env.showTool();
-		controller = env.getVTController();
+		PluginTool tool = env.showTool();
 
 		// This test is testing to make sure that previously blocked matches do not become
 		// accepted matches after running Auto VT
@@ -212,7 +245,12 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		assertEquals(status2, VTAssociationStatus.ACCEPTED);
 
 		// run auto VT which would normally accept the match we blocked
-		runAutoVTCommand(1.0, 10.0);
+		ToolOptions vtOptions = getVTToolOptions(tool);
+		
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 1.0);
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
+
+		runAutoVTCommand(vtOptions);
 
 		// Now test that the match we blocked is still blocked to verify that auto VT
 		// does not accept blocked matches
@@ -220,6 +258,15 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 			getMatchStatus(session, "Combined Function and Data Reference Match",
 				addr("0x00411860", sourceProgram), addr("0x00411830", destinationProgram)),
 			VTAssociationStatus.BLOCKED);
+	}
+
+	private ToolOptions getVTToolOptions(PluginTool tool) {
+		ToolOptions vtOptions = new VTOptions("Dummy");
+
+		if (tool != null) {
+			vtOptions = tool.getOptions(VTController.VERSION_TRACKING_OPTIONS_NAME);
+		}
+		return vtOptions;
 	}
 
 	@Test
@@ -247,11 +294,15 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		session = env.createSession(sourceProgram, destinationProgram);
 
-		env.showTool();
-		controller = env.getVTController();
+		PluginTool tool = env.showTool();
 
 		// run auto VT
-		runAutoVTCommand(1.0, 10.0);
+		ToolOptions vtOptions = getVTToolOptions(tool);
+		
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 1.0);
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
+		
+		runAutoVTCommand(vtOptions);
 
 		// Now test that the correct matches were created based on the duplicate functions we created
 		String correlator = "Duplicate Function Instructions Match";
@@ -293,11 +344,15 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		session = env.createSession(sourceProgram, destinationProgram);
 
-		env.showTool();
-		controller = env.getVTController();
+		PluginTool tool = env.showTool();
 
 		// run auto VT
-		runAutoVTCommand(1.0, 10.0);
+		ToolOptions vtOptions = getVTToolOptions(tool);
+		
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 1.0);
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
+		
+		runAutoVTCommand(vtOptions);
 
 		// Now test that the correct matches were created based on the duplicate functions we created
 		String correlator = "Duplicate Function Instructions Match";
@@ -329,11 +384,15 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		session = env.createSession(sourceProgram, destinationProgram);
 
-		env.showTool();
-		controller = env.getVTController();
+		PluginTool tool = env.showTool();
 
 		// run auto VT
-		runAutoVTCommand(1.0, 10.0);
+		ToolOptions vtOptions = getVTToolOptions(tool);
+		
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 1.0);
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
+		
+		runAutoVTCommand(vtOptions);
 
 		// Test to make sure that they weren't matched by something else first so we can
 		// be sure that we are testing just the duplicate test case
@@ -398,11 +457,15 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		session = env.createSession(sourceProgram, destinationProgram);
 
-		env.showTool();
-		controller = env.getVTController();
+		PluginTool tool = env.showTool();
 
 		// run auto VT
-		runAutoVTCommand(1.0, 10.0);
+		ToolOptions vtOptions = getVTToolOptions(tool);
+		
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 1.0);
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
+		
+		runAutoVTCommand(vtOptions);
 
 		// Test to make sure that they weren't matched by something else first so we can
 		// be sure that we are testing just duplicate correlator match case
@@ -552,11 +615,15 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		session = env.createSession(sourceProgram, destinationProgram);
 
-		env.showTool();
-		controller = env.getVTController();
+		PluginTool tool = env.showTool();
 
 		// run auto VT
-		runAutoVTCommand(1.0, 10.0);
+		ToolOptions vtOptions = getVTToolOptions(tool);
+		
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 1.0);
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
+		
+		runAutoVTCommand(vtOptions);
 
 		// Test to make sure that they weren't matched by something else first so we can
 		// be sure that we are testing just the duplicate test case
@@ -588,8 +655,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		session = env.createSession(sourceProgram, destinationProgram);
 
-		env.showTool();
-		controller = env.getVTController();
+		PluginTool tool = env.showTool();
 
 		// Put some markup in the tested source function EOL comments
 		Listing sourceListing = sourceProgram.getListing();
@@ -610,7 +676,12 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		sourceProgram.endTransaction(startTransaction, true);
 
 		// run Auto VT
-		runAutoVTCommand(1.0, 10.0);
+		ToolOptions vtOptions = getVTToolOptions(tool);
+		
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 1.0);
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
+		
+		runAutoVTCommand(vtOptions);
 
 		// Check that the match we are interested in got accepted
 		String correlator = "Combined Function and Data Reference Match";
@@ -644,8 +715,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		session = env.createSession(sourceProgram, destinationProgram);
 
-		env.showTool();
-		controller = env.getVTController();
+		PluginTool tool = env.showTool();
 
 		// Put some markup in the tested source function EOL comments
 		Listing sourceListing = sourceProgram.getListing();
@@ -666,7 +736,12 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		sourceProgram.endTransaction(startTransaction, true);
 
 		// run Auto VT
-		runAutoVTCommand(1.0, 10.0);
+		ToolOptions vtOptions = getVTToolOptions(tool);
+		
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 1.0);
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
+		
+		runAutoVTCommand(vtOptions);
 
 		// Check that the match we are interested in got accepted
 		String correlator = "Duplicate Function Instructions Match";
@@ -725,12 +800,16 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		session = env.createSession(sourceProgram, destinationProgram);
 
-		env.showTool();
-		controller = env.getVTController();
+		PluginTool tool = env.showTool();
 
 		// Now run the AutoVT command with lower confidence thresholds to allow the match we want to
 		// test in as a match
-		runAutoVTCommand(0.5, 1.0);
+		ToolOptions vtOptions = getVTToolOptions(tool);
+		
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 0.5);
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 1.0);
+
+		runAutoVTCommand(vtOptions);
 
 		// Check that the match we are interested in got accepted
 		String correlator = "Combined Function and Data Reference Match";
@@ -778,10 +857,277 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		}
 	}
 
+	/*
+	 * This tests auto version tracking with auto implied matches option set
+	 */
+	@Test
+	public void testRunAutoVT_impliedMatches() throws Exception {
+
+		sourceProgram = env.getProgram(TEST_SOURCE_PROGRAM_NAME);
+		destinationProgram = env.getProgram(TEST_DESTINATION_PROGRAM_NAME);
+
+		session = env.createSession(sourceProgram, destinationProgram);
+
+		PluginTool tool = env.showTool();
+
+		// Score .999999 and confidence 10.0 (log10 confidence 2.0) and up
+		ToolOptions vtOptions = getVTToolOptions(tool);
+		
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 0.999999999);
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
+		vtOptions.setBoolean(VTOptionDefines.CREATE_IMPLIED_MATCHES_OPTION, true);
+		vtOptions.setBoolean(VTOptionDefines.APPLY_IMPLIED_MATCHES_OPTION, true);
+		vtOptions.setInt(VTOptionDefines.MIN_VOTES_OPTION, 3);
+		vtOptions.setInt(VTOptionDefines.MAX_CONFLICTS_OPTION, 0);
+		
+
+		runAutoVTCommand(vtOptions);
+
+		VTMatchSet impliedMatchSet = session.getImpliedMatchSet();
+		assertTrue(impliedMatchSet.getMatchCount() > 0);
+
+		// test whether good implied matches were accepted
+		Collection<VTMatch> matches = impliedMatchSet.getMatches();
+		for (VTMatch match : matches) {
+
+			VTAssociationStatus matchStatus = getMatchStatus(session, "Implied Match",
+				match.getSourceAddress(), match.getDestinationAddress());
+
+			if (matchStatus == VTAssociationStatus.BLOCKED) {
+				continue;
+			}
+
+			VTAssociation association = match.getAssociation();
+			int numConflicts = association.getRelatedAssociations().size() - 1;
+
+
+			// if not min vote count or has conflicts - make sure not accepted match
+			if (association.getVoteCount() < 3 || numConflicts > 0) {
+				assertEquals(VTAssociationStatus.AVAILABLE, matchStatus);
+				continue;
+			}
+			// else make sure the match was accepted
+			assertEquals(VTAssociationStatus.ACCEPTED, matchStatus);
+		}
+	}
+
+	/*
+	 * This tests auto version tracking with auto implied matches option not set
+	 */
+	@Test
+	public void testRunAutoVT_noImpliedMatches() throws Exception {
+
+		sourceProgram = env.getProgram(TEST_SOURCE_PROGRAM_NAME);
+		destinationProgram = env.getProgram(TEST_DESTINATION_PROGRAM_NAME);
+
+		session = env.createSession(sourceProgram, destinationProgram);
+
+		PluginTool tool = env.showTool();
+
+		// Score .999999 and confidence 10.0 (log10 confidence 2.0) and up
+		ToolOptions vtOptions = getVTToolOptions(tool);
+		
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 0.999999999);
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
+		vtOptions.setBoolean(VTOptionDefines.CREATE_IMPLIED_MATCHES_OPTION, false);
+		
+		runAutoVTCommand(vtOptions);
+
+		assertTrue(session.getImpliedMatchSet().getMatchCount() == 0);
+	}
+
+	/*
+	 * This tests auto version tracking with some correlators not set to run
+	 */
+	@Test
+	public void testRunAutoVT_disableSomeCorrelators() throws Exception {
+
+		sourceProgram = env.getProgram(TEST_SOURCE_PROGRAM_NAME);
+		destinationProgram = env.getProgram(TEST_DESTINATION_PROGRAM_NAME);
+
+		session = env.createSession(sourceProgram, destinationProgram);
+
+		PluginTool tool = env.showTool();
+
+		// Score .999999 and confidence 10.0 (log10 confidence 2.0) and up
+		ToolOptions vtOptions = getVTToolOptions(tool);
+
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 0.999999999);
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
+		vtOptions.setBoolean(VTOptionDefines.RUN_EXACT_DATA_OPTION, false);
+		vtOptions.setBoolean(VTOptionDefines.RUN_DUPE_FUNCTION_OPTION, false);
+
+		runAutoVTCommand(vtOptions);
+
+		VTMatchSet dataMatchSet = getVTMatchSet(session, "Exact Data Match");
+		assertNull(dataMatchSet);
+
+		VTMatchSet dupMatchSet = getVTMatchSet(session, "Duplicate Function Instructions Match");
+		assertNull(dupMatchSet);
+
+	}
+
+	/*
+	 * This tests auto version tracking with higher min dupe function len
+	 */
+	@Test
+	public void testRunAutoVT_changeMinFunctionLength() throws Exception {
+
+		sourceProgram = env.getProgram(TEST_SOURCE_PROGRAM_NAME);
+		destinationProgram = env.getProgram(TEST_DESTINATION_PROGRAM_NAME);
+
+		session = env.createSession(sourceProgram, destinationProgram);
+
+		PluginTool tool = env.showTool();
+
+		// Score .999999 and confidence 10.0 (log10 confidence 2.0) and up
+		ToolOptions vtOptions = getVTToolOptions(tool);
+
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 0.999999999);
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
+		vtOptions.setInt(VTOptionDefines.DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION, 20);
+
+		runAutoVTCommand(vtOptions);
+
+		VTMatchSet dupMatchSet = getVTMatchSet(session, "Duplicate Function Instructions Match");
+		assertNotNull(dupMatchSet);
+
+		for (VTMatch match : dupMatchSet.getMatches()) {
+
+			VTAssociationStatus matchStatus =
+				getMatchStatus(session, "Duplicate Function Instructions Match",
+					match.getSourceAddress(), match.getDestinationAddress());
+
+			if (matchStatus == VTAssociationStatus.BLOCKED) {
+				continue;
+			}
+
+			int sourceLength = match.getSourceLength();
+			int destinationLength = match.getDestinationLength();
+
+			if (matchStatus == VTAssociationStatus.AVAILABLE) {
+				assertTrue(sourceLength < 20);
+				assertTrue(destinationLength < 20);
+				continue;
+			}
+			if (matchStatus == VTAssociationStatus.ACCEPTED) {
+				assertTrue(sourceLength >= 20);
+				assertTrue(destinationLength >= 20);
+			}
+		}
+
+	}
+
+	/*
+	 * This tests auto version tracking with higher min symbol len
+	 */
+	@Test
+	public void testRunAutoVT_changeMinSymbolLength() throws Exception {
+
+		sourceProgram = env.getProgram(TEST_SOURCE_PROGRAM_NAME);
+		destinationProgram = env.getProgram(TEST_DESTINATION_PROGRAM_NAME);
+
+		session = env.createSession(sourceProgram, destinationProgram);
+
+		PluginTool tool = env.showTool();
+
+		// Score .999999 and confidence 10.0 (log10 confidence 2.0) and up
+		ToolOptions vtOptions = getVTToolOptions(tool);
+
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 0.999999999);
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
+		vtOptions.setBoolean(VTOptionDefines.RUN_EXACT_DATA_OPTION, false);
+		vtOptions.setBoolean(VTOptionDefines.RUN_DUPE_FUNCTION_OPTION, false);
+		vtOptions.setBoolean(VTOptionDefines.RUN_EXACT_FUNCTION_BYTES_OPTION, false);
+		vtOptions.setBoolean(VTOptionDefines.RUN_REF_CORRELATORS_OPTION, false);
+
+		vtOptions.setInt(VTOptionDefines.SYMBOL_CORRELATOR_MIN_LEN_OPTION, 7);
+
+		runAutoVTCommand(vtOptions);
+
+		VTMatchSet matchSet = getVTMatchSet(session, "Exact Symbol Name Match");
+		assertNotNull(matchSet);
+
+		for (VTMatch match : matchSet.getMatches()) {
+
+			VTAssociationStatus matchStatus = getMatchStatus(session, "Exact Symbol Name Match",
+				match.getSourceAddress(), match.getDestinationAddress());
+
+			if (matchStatus == VTAssociationStatus.BLOCKED) {
+				continue;
+			}
+
+			Address sourceAddress = match.getSourceAddress();
+			Symbol primarySymbol = sourceProgram.getSymbolTable().getPrimarySymbol(sourceAddress);
+
+			int length = primarySymbol.getName().length();
+			if (matchStatus == VTAssociationStatus.AVAILABLE) {
+				assertTrue(length < 7);
+				continue;
+			}
+			if (matchStatus == VTAssociationStatus.ACCEPTED) {
+				assertTrue(length >= 7);
+			}
+		}
+
+	}
+
+	/*
+	 * This tests auto version tracking with higher min data len
+	 */
+	@Test
+	public void testRunAutoVT_changeMinDataLength() throws Exception {
+
+		sourceProgram = env.getProgram(TEST_SOURCE_PROGRAM_NAME);
+		destinationProgram = env.getProgram(TEST_DESTINATION_PROGRAM_NAME);
+
+		session = env.createSession(sourceProgram, destinationProgram);
+
+		PluginTool tool = env.showTool();
+
+		// Score .999999 and confidence 10.0 (log10 confidence 2.0) and up
+		ToolOptions vtOptions = getVTToolOptions(tool);
+
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION, 0.999999999);
+		vtOptions.setDouble(VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION, 10.0);
+		vtOptions.setInt(VTOptionDefines.DATA_CORRELATOR_MIN_LEN_OPTION, 10);
+
+		runAutoVTCommand(vtOptions);
+
+		VTMatchSet matchSet = getVTMatchSet(session, "Exact Data Match");
+		assertNotNull(matchSet);
+
+		for (VTMatch match : matchSet.getMatches()) {
+
+			VTAssociationStatus matchStatus = getMatchStatus(session, "Exact Data Match",
+				match.getSourceAddress(), match.getDestinationAddress());
+
+			if (matchStatus == VTAssociationStatus.BLOCKED) {
+				continue;
+			}
+
+			Address sourceAddress = match.getSourceAddress();
+			Data data = sourceProgram.getListing().getDataAt(sourceAddress);
+
+			assertNotNull(data);
+
+			int length = data.getLength();
+
+			if (matchStatus == VTAssociationStatus.AVAILABLE) {
+				assertTrue(length < 10);
+				continue;
+			}
+			if (matchStatus == VTAssociationStatus.ACCEPTED) {
+				assertTrue(length >= 10);
+			}
+		}
+
+	}
+
 	private VTMatch createMatch(Address sourceAddress, Address destinationAddress,
 			boolean setAccepted) throws VTAssociationStatusException {
 		VTProgramCorrelator correlator =
-			VTTestUtils.createProgramCorrelator(null, sourceProgram, destinationProgram);
+			VTTestUtils.createProgramCorrelator(sourceProgram, destinationProgram);
 
 		String transactionName = "Blocked Test";
 		int startTransaction = session.startTransaction(transactionName);
@@ -823,11 +1169,10 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		assertEquals(expectedAcceptedMatchCount, getNumAcceptedMatches(vtSession, correlatorName));
 	}
 
-	private void runAutoVTCommand(double minReferenceCorrelatorScore,
-			double minReferenceCorrelatorConfidence) {
+	private void runAutoVTCommand(ToolOptions options) {
 
-		AutoVersionTrackingTask task = new AutoVersionTrackingTask(controller, session,
-			minReferenceCorrelatorScore, minReferenceCorrelatorConfidence);
+		AutoVersionTrackingTask task =
+			new AutoVersionTrackingTask(session, options);
 		TaskLauncher.launch(task);
 		waitForSession();
 	}
@@ -847,8 +1192,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 			}
 		}
 
-		fail("Unable to find a match set for '" + correlatorName + "'");
-		return null; /// can't get here
+		return null;
 	}
 
 	private boolean assertCorrectScoreAndConfidenceValues(VTSession vtSession,

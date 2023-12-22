@@ -24,6 +24,8 @@ import javax.swing.Icon;
 import org.junit.Before;
 import org.junit.Test;
 
+import ghidra.util.Msg;
+import ghidra.util.SpyErrorLogger;
 import resources.MultiIcon;
 import resources.ResourceManager;
 import resources.icons.EmptyIcon;
@@ -35,6 +37,10 @@ public class IconValueTest {
 
 	@Before
 	public void setup() {
+
+		// disable warning messages when some test values cannot be found
+		Msg.setErrorLogger(new SpyErrorLogger());
+
 		values = new GThemeValueMap();
 	}
 
@@ -225,4 +231,37 @@ public class IconValueTest {
 		assertEquals("icon.test = EMPTY_ICON[size(22,13)]", value.getSerializationString());
 	}
 
+	@Test
+	public void testJavaIconValueRoundTrip() throws Exception {
+
+		IconValue value =
+			IconValue.parse("[laf.icon]FileChooser.homeFolderIcon", "images/go-home.png");
+		values.addIcon(value);
+
+		assertEquals("laf.icon.FileChooser.homeFolderIcon", value.getId());
+		assertEquals(ResourceManager.loadIcon("images/go-home.png"), value.get(values));
+
+		assertEquals("[laf.icon]FileChooser.homeFolderIcon = images/go-home.png",
+			value.getSerializationString());
+	}
+
+	@Test
+	public void testInheritsFrom_JavaValues() throws Exception {
+
+		IconValue parent =
+			IconValue.parse("[laf.icon]FileChooser.homeFolderIcon", "images/go-home.png");
+		values.addIcon(parent);
+
+		IconValue value =
+			IconValue.parse("[laf.icon]FileView.computerIcon",
+				"[laf.icon]FileChooser.homeFolderIcon");
+		values.addIcon(value);
+
+		//
+		// Note: IconValue.parse() works on external ids or normalized ids.
+		//
+		//       IconValue() constructor and inheritsFrom() only work on normalized ids
+		//
+		assertTrue(value.inheritsFrom("laf.icon.FileChooser.homeFolderIcon", values));
+	}
 }

@@ -18,6 +18,9 @@ package ghidra.app.util.bin.format.golang.rtti.types;
 import java.util.EnumSet;
 import java.util.Set;
 
+/**
+ * Enum defining the various bitflags held in a GoType's tflag
+ */
 public enum GoTypeFlag {
 	Uncommon(1 << 0),		// 1
 	ExtraStar(1 << 1),		// 2
@@ -26,7 +29,7 @@ public enum GoTypeFlag {
 
 	private final int value;
 
-	private GoTypeFlag(int i) {
+	GoTypeFlag(int i) {
 		this.value = i;
 	}
 

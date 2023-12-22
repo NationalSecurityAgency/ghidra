@@ -93,6 +93,7 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 				return validationErrorStr;
 			}
 		}
+
 		return super.validateOptions(provider, loadSpec, options, program);
 	}
 
@@ -102,7 +103,7 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 
 		try {
 			ElfHeader elf = new ElfHeader(provider, null);
-			// TODO: Why do we convey image base to loader ?  This will be managed by each loader !
+
 			List<QueryResult> results =
 				QueryOpinionService.query(getName(), elf.getMachineName(), elf.getFlags());
 			for (QueryResult result : results) {

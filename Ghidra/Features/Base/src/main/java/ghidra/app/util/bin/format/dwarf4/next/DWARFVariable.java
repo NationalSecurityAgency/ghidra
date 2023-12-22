@@ -38,8 +38,9 @@ import ghidra.util.exception.InvalidInputException;
  */
 public class DWARFVariable {
 	/**
-	 * Creates an unnamed, storage-less {@link DWARFVariable} from a DataType. 
-	 * 
+	 * Creates an unnamed, storage-less {@link DWARFVariable} from a DataType.
+	 *  
+	 * @param dfunc containing function 
 	 * @param dt {@link DataType} of the variable
 	 * @return new {@link DWARFVariable}, never null
 	 */
@@ -52,9 +53,8 @@ public class DWARFVariable {
 	 * 
 	 * @param diea {@link DIEAggregate} DW_TAG_formal_parameter
 	 * @param dfunc {@link DWARFFunction} that this parameter is attached to
-	 * @param paramOrdinal 
+	 * @param paramOrdinal ordinal in containing list
 	 * @return new parameter, never null, possibly without storage info 
-	 * @throws IOException if error
 	 */
 	public static DWARFVariable readParameter(DIEAggregate diea, DWARFFunction dfunc,
 			int paramOrdinal) {
@@ -72,6 +72,7 @@ public class DWARFVariable {
 	 * 
 	 * @param diea {@link DIEAggregate} DW_TAG_variable
 	 * @param dfunc {@link DWARFFunction} that this local var belongs to
+	 * @param offsetFromFuncStart offset from start of containing function
 	 * @return new DWARFVariable that represents a local var, or <strong>null</strong> if 
 	 * error reading storage info
 	 */
@@ -197,13 +198,6 @@ public class DWARFVariable {
 			throw new IllegalArgumentException();
 		}
 		return stackStorage.getOffset();
-	}
-
-	public String getToolTip() {
-		return """
-				<html>Built In Data Types<br>
-				&nbsp;&nbsp;%s
-				""".formatted("DEFAULT_DATA_ORG_DESCRIPTION");
 	}
 
 	/**
@@ -409,7 +403,7 @@ public class DWARFVariable {
 			}
 			else if (exprEvaluator.getRawLastRegister() == -1 && res != 0) {
 				// static global variable location
-				setRamStorage(res);
+				setRamStorage(res + prog.getProgramBaseAddressFixup());
 			}
 			else {
 				Msg.error(this,
@@ -482,8 +476,7 @@ public class DWARFVariable {
 		return result;
 	}
 
-	public Parameter asParameter(boolean includeStorageDetail, Program program)
-			throws InvalidInputException {
+	public Parameter asParameter(boolean includeStorageDetail) throws InvalidInputException {
 		VariableStorage paramStorage = !isMissingStorage() && includeStorageDetail
 				? getVariableStorage()
 				: VariableStorage.UNASSIGNED_STORAGE;
@@ -493,7 +486,7 @@ public class DWARFVariable {
 
 		ParameterImpl result =
 			new ParameterImpl(newName, Parameter.UNASSIGNED_ORDINAL, type, paramStorage, true,
-			program, SourceType.IMPORTED);
+				program.getGhidraProgram(), SourceType.IMPORTED);
 		result.setComment(getParamComment());
 
 		return result;
@@ -513,24 +506,14 @@ public class DWARFVariable {
 
 	public Parameter asReturnParameter(boolean includeStorageDetail)
 			throws InvalidInputException {
-		VariableStorage storage = isVoidType()
+		VariableStorage varStorage = isVoidType()
 				? VariableStorage.VOID_STORAGE
 				: !isMissingStorage() && includeStorageDetail
 						? getVariableStorage()
 						: VariableStorage.UNASSIGNED_STORAGE;
-		return new ReturnParameterImpl(type, storage, true, program.getGhidraProgram());
+		return new ReturnParameterImpl(type, varStorage, true, program.getGhidraProgram());
 	}
 
-	public void appendComment(String prefix, String comment, String sep) {
-		if (comment == null || comment.isEmpty()) {
-			comment = "";
-		}
-		else {
-			comment += sep;
-		}
-		this.comment += prefix + comment;
-	}
-	
 	public String getDeclInfoString() {
 		return "%s:%s".formatted(name.getName(), type.getDisplayName());
 	}

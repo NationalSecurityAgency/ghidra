@@ -16,9 +16,9 @@
 package ghidra.app.util.bin.format.pdb2.pdbreader.msf;
 
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.Arrays;
 
+import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -40,17 +40,15 @@ public class Msf700 extends AbstractMsf {
 	//==============================================================================================
 	/**
 	 * Constructor
-	 * @param file the {@link RandomAccessFile} to process as a {@link Msf700}
-	 * @param filename name of {@code #file}
+	 * @param byteProvider the ByteProvider providing bytes for the MSF
 	 * @param monitor the TaskMonitor
 	 * @param pdbOptions {@link PdbReaderOptions} used for processing the PDB
 	 * @throws IOException upon file IO seek/read issues
 	 * @throws PdbException upon unknown value for configuration
 	 */
-	public Msf700(RandomAccessFile file, String filename, TaskMonitor monitor,
-			PdbReaderOptions pdbOptions)
+	public Msf700(ByteProvider byteProvider, TaskMonitor monitor, PdbReaderOptions pdbOptions)
 			throws IOException, PdbException {
-		super(file, filename, monitor, pdbOptions);
+		super(byteProvider, monitor, pdbOptions);
 	}
 
 	//==============================================================================================
@@ -107,14 +105,12 @@ public class Msf700 extends AbstractMsf {
 	//==============================================================================================
 	/**
 	 * Static method used to detect the header that belongs to this class
-	 * @param file the RandomAccessFile to process as a {@link Msf700}
+	 * @param byteProvider the ByteProvider to process as a {@link Msf700}
 	 * @return {@code true} if the header for this class is positively identified
 	 * @throws IOException upon file IO seek/read issues
 	 */
-	static boolean detected(RandomAccessFile file) throws IOException {
-		byte[] bytes = new byte[IDENTIFICATION.length];
-		file.seek(0);
-		file.read(bytes, 0, IDENTIFICATION.length);
+	static boolean detected(ByteProvider byteProvider) throws IOException {
+		byte[] bytes = byteProvider.readBytes(0, IDENTIFICATION.length);
 		return Arrays.equals(bytes, IDENTIFICATION);
 	}
 

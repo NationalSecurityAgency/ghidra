@@ -91,10 +91,9 @@ class SymbolServerPanel extends JPanel {
 
 		SymbolServerService temporarySymbolServerService =
 			PdbPlugin.getSymbolServerService(symbolServerInstanceCreatorContext);
-		if (temporarySymbolServerService.getSymbolStore() instanceof LocalSymbolStore) {
-			setSymbolStorageLocation(
-				((LocalSymbolStore) temporarySymbolServerService.getSymbolStore()).getRootDir(),
-				false);
+		if (temporarySymbolServerService
+				.getSymbolStore() instanceof LocalSymbolStore tempLocalSymbolStore) {
+			setSymbolStorageLocation(tempLocalSymbolStore.getRootDir(), false);
 		}
 		tableModel.addSymbolServers(temporarySymbolServerService.getSymbolServers());
 		setConfigChanged(false);
@@ -368,8 +367,8 @@ class SymbolServerPanel extends JPanel {
 			SymbolServer symbolServer =
 				symbolServerInstanceCreatorContext.getSymbolServerInstanceCreatorRegistry()
 						.newSymbolServer(firstSearchPath, symbolServerInstanceCreatorContext);
-			if (symbolServer instanceof LocalSymbolStore &&
-				((LocalSymbolStore) symbolServer).isValid()) {
+			if (symbolServer instanceof LocalSymbolStore localSymbolStore &&
+				localSymbolStore.isValid()) {
 				int choice = OptionDialog.showYesNoCancelDialog(this, "Set Symbol Storage Location",
 					"Set symbol storage location to " + firstSearchPath + "?");
 				if (choice == OptionDialog.CANCEL_OPTION) {
@@ -378,7 +377,7 @@ class SymbolServerPanel extends JPanel {
 				if (choice == OptionDialog.YES_OPTION) {
 					symbolServerPaths.remove(0);
 					configChanged = true;
-					setSymbolStorageLocation(((LocalSymbolStore) symbolServer).getRootDir(), true);
+					setSymbolStorageLocation(localSymbolStore.getRootDir(), true);
 					symbolStorageLocationTextField.setText(symbolServer.getName());
 				}
 			}

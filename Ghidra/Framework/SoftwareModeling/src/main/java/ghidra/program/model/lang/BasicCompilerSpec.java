@@ -121,36 +121,41 @@ public class BasicCompilerSpec implements CompilerSpec {
 		Exception parseException = null;
 
 		ErrorHandler errHandler = getErrorHandler(cspecFile.toString());
-		InputStream stream;
+		XmlPullParser parser = null;
 		try {
 			SleighLanguageValidator.validateCspecFile(cspecFile);
 
-			stream = cspecFile.getInputStream();
-			XmlPullParser parser =
-				XmlPullParserFactory.create(stream, cspecFile.getAbsolutePath(), errHandler, false);
-			initialize(cspecFile.getAbsolutePath(), parser);
-			stream.close();
+			try (InputStream stream = cspecFile.getInputStream()) {
+				parser = XmlPullParserFactory.create(stream, cspecFile.getAbsolutePath(),
+					errHandler, false);
+				initialize(cspecFile.getAbsolutePath(), parser);
+			}
 
 			if (models == null || models.length == 0) {
 				throw new SAXException("No prototype models defined");
 			}
 		}
-		catch (SleighException e) {
+		catch (Exception e) {
 			parseException = e;
-			Throwable cause = e.getCause();		// Recover the cause (from the validator exception)
-			if (cause != null) {
-				if (cause instanceof SAXException || cause instanceof IOException) {
-					parseException = (Exception) cause;
+			if (e instanceof SleighException) {
+				Throwable cause = e.getCause();		// Recover the cause (from the validator exception)
+				if (cause != null) {
+					if (cause instanceof SAXException || cause instanceof IOException) {
+						parseException = (Exception) cause;
+					}
 				}
 			}
-		}
-		catch (IOException | SAXException | XmlParseException | DuplicateNameException e) {
-			parseException = e;
-		}
-
-		if (parseException != null) {
+			String lineInfo = "";
+			if (parser != null) {
+				lineInfo = ":" + parser.getLineNumber();
+			}
 			throw new CompilerSpecNotFoundException(language.getLanguageID(),
-				description.getCompilerSpecID(), cspecFile.getName(), parseException);
+				description.getCompilerSpecID(), cspecFile.getName() + lineInfo, parseException);
+		}
+		finally {
+			if (parser != null) {
+				parser.dispose();
+			}
 		}
 	}
 
@@ -1084,8 +1089,7 @@ public class BasicCompilerSpec implements CompilerSpec {
 
 	@Override
 	public PrototypeModel matchConvention(String conventionName) {
-		if (conventionName == null ||
-			CALLING_CONVENTION_unknown.equals(conventionName) ||
+		if (CompilerSpec.isUnknownCallingConvention(conventionName) ||
 			CALLING_CONVENTION_default.equals(conventionName)) {
 			return defaultModel;
 		}

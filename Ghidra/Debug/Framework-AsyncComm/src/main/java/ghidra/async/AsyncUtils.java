@@ -411,11 +411,15 @@ public interface AsyncUtils<T> {
 	ExecutorService FRAMEWORK_EXECUTOR = Executors.newWorkStealingPool();
 	ExecutorService SWING_EXECUTOR = SwingExecutorService.LATER;
 
-	CompletableFuture<Void> NIL = CompletableFuture.completedFuture(null);
+	// NB. This was a bad idea, because CFs may maintain refs to dependents.
+	//CompletableFuture<Void> NIL = CompletableFuture.completedFuture(null);
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static <T> CompletableFuture<T> nil() {
-		return (CompletableFuture) NIL;
+		return CompletableFuture.completedFuture(null);
+	}
+
+	public static <T> CompletableFuture<T> nil(Class<T> cls) {
+		return CompletableFuture.completedFuture(null);
 	}
 
 	/**
@@ -623,7 +627,7 @@ public interface AsyncUtils<T> {
 	 * @return an empty sequence ready to execute actions on the calling thread.
 	 */
 	public static <R> AsyncSequenceWithoutTemp<R> sequence(CompletableFuture<R> on) {
-		return new AsyncSequenceWithoutTemp<>(on, AsyncUtils.NIL);
+		return new AsyncSequenceWithoutTemp<>(on, AsyncUtils.nil());
 	}
 
 	/**

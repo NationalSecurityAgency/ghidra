@@ -146,16 +146,15 @@ public class PdbNewDebugInfo extends PdbDebugInfo {
 	}
 
 	@Override
-	protected void deserializeAdditionalSubstreams()
+	protected void initializeAdditionalComponentsForSubstreams()
 			throws IOException, PdbException, CancelledException {
 		// TODO: evaluate.  I don't think we need GlobalSymbolInformation (hash) or the
 		//  PublicSymbolInformation (hash), as they are both are search mechanisms.
-		symbolRecords.deserialize();
-		globalSymbolInformation.deserialize(getGlobalSymbolsHashMaybeStreamNumber());
-		publicSymbolInformation.deserialize(getPublicStaticSymbolsHashMaybeStreamNumber());
+		symbolRecords.initialize();
+		globalSymbolInformation.initialize();
+		publicSymbolInformation.initialize();
 		//TODO: Process further information that might be found from ProcessTypeServerMap,
 		// and processEditAndContinueInformation.
-		debugData.deserialize();
 	}
 
 	@Override
@@ -229,7 +228,8 @@ public class PdbNewDebugInfo extends PdbDebugInfo {
 	}
 
 	@Override
-	protected void dumpInternalSubstreams(Writer writer) throws IOException, CancelledException {
+	protected void dumpInternalSubstreams(Writer writer)
+			throws IOException, CancelledException, PdbException {
 		writer.write("ModuleInformationList---------------------------------------\n");
 		dumpModuleInformation(writer);
 		writer.write("\nEnd ModuleInformationList-----------------------------------\n");
@@ -313,8 +313,8 @@ public class PdbNewDebugInfo extends PdbDebugInfo {
 			pdb.checkCancelled();
 			int offset = substreamReader.parseInt();
 			bufferReader.setIndex(offset);
-			String name = bufferReader.parseNullTerminatedString(
-				pdb.getPdbReaderOptions().getOneByteCharset());
+			String name = bufferReader
+					.parseNullTerminatedString(pdb.getPdbReaderOptions().getOneByteCharset());
 			//if (name != null) {
 			if (name.length() != 0) {
 				realEntryCount++;
@@ -336,9 +336,12 @@ public class PdbNewDebugInfo extends PdbDebugInfo {
 	 * Dumps the EditAndContinueNameList.  This package-protected method is for debugging only.
 	 * @param writer {@link Writer} to which to write the debug dump
 	 * @throws IOException on issue writing to the {@link Writer}
+	 * @throws CancelledException upon user cancellation
 	 */
-	protected void dumpEditAndContinueNameList(Writer writer) throws IOException {
+	protected void dumpEditAndContinueNameList(Writer writer)
+			throws IOException, CancelledException {
 		for (String name : editAndContinueNameList) {
+			pdb.checkCancelled();
 			writer.write(String.format("Name: %s\n", name));
 		}
 	}

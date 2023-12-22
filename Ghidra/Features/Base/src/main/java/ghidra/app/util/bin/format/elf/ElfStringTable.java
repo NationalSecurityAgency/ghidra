@@ -23,12 +23,12 @@ import ghidra.util.exception.DuplicateNameException;
 
 public class ElfStringTable implements ElfFileSection {
 
-	private ElfHeader header;
+	private final ElfHeader header;
 
-	private ElfSectionHeader stringTableSection; // may be null
-	private long fileOffset;
-	private long addrOffset;
-	private long length;
+	private final ElfSectionHeader stringTableSection; // may be null
+	private final long fileOffset;
+	private final long addrOffset;
+	private final long length;
 
 	/**
 	 * Construct and parse an Elf string table
@@ -49,7 +49,7 @@ public class ElfStringTable implements ElfFileSection {
 
 	/**
 	 * Read string from table at specified relative table offset
-	 * @param reader byte reader
+	 * @param reader byte reader (position remains unchanged)
 	 * @param stringOffset table relative string offset
 	 * @return string or null on error
 	 */

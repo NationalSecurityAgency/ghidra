@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Objects;
 
+import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -134,18 +135,16 @@ public abstract class AbstractMsf implements Msf {
 	//==============================================================================================
 	/**
 	 * Constructor
-	 * @param file the {@link RandomAccessFile} to process for this class
-	 * @param filename name of {@code #file}
+	 * @param byteProvider the ByteProvider providing bytes for the MSF
 	 * @param monitor the TaskMonitor
 	 * @param pdbOptions {@link PdbReaderOptions} used for processing the PDB
 	 * @throws IOException upon file IO seek/read issues
 	 * @throws PdbException upon unknown value for configuration
 	 */
-	public AbstractMsf(RandomAccessFile file, String filename, TaskMonitor monitor,
-			PdbReaderOptions pdbOptions)
+	public AbstractMsf(ByteProvider byteProvider, TaskMonitor monitor, PdbReaderOptions pdbOptions)
 			throws IOException, PdbException {
-		Objects.requireNonNull(file, "file may not be null");
-		this.filename = Objects.requireNonNull(filename, "filename may not be null");
+		Objects.requireNonNull(byteProvider, "ByteProvider may not be null");
+		this.filename = byteProvider.getAbsolutePath();
 		this.monitor = TaskMonitor.dummyIfNull(monitor);
 		this.pdbOptions = Objects.requireNonNull(pdbOptions, "PdbOptions may not be null");
 		// Do initial configuration with largest possible page size.  ConfigureParameters will
@@ -159,7 +158,7 @@ public abstract class AbstractMsf implements Msf {
 		pageSize = 0x1000;
 		configureParameters();
 		// Create components.
-		fileReader = new MsfFileReader(this, file);
+		fileReader = new MsfFileReader(this, byteProvider);
 		create();
 	}
 
@@ -320,8 +319,7 @@ public abstract class AbstractMsf implements Msf {
 	 * @throws CancelledException upon user cancellation
 	 */
 	@Override
-	public void deserialize()
-			throws IOException, PdbException, CancelledException {
+	public void deserialize() throws IOException, PdbException, CancelledException {
 		byte[] bytes = new byte[getPageSize()];
 		fileReader.read(getHeaderPageNumber(), 0, getPageSize(), bytes, 0);
 

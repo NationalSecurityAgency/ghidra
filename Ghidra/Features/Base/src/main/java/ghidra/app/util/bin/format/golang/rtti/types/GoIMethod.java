@@ -17,9 +17,10 @@ package ghidra.app.util.bin.format.golang.rtti.types;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.format.golang.rtti.GoName;
-import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
+import ghidra.app.util.bin.format.golang.rtti.*;
 import ghidra.app.util.bin.format.golang.structmapping.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.data.FunctionDefinition;
 
 @StructureMapping(structureName = "runtime.imethod")
 public class GoIMethod implements StructureMarkup<GoIMethod> {
@@ -31,22 +32,22 @@ public class GoIMethod implements StructureMarkup<GoIMethod> {
 	private StructureContext<GoIMethod> context;
 
 	@FieldMapping
-	@MarkupReference
-	@EOLComment("nameString")
+	@MarkupReference("getGoName")
+	@EOLComment("getName")
 	private long name;
 
 	@FieldMapping
-	@MarkupReference("type")
+	@MarkupReference("getType")
 	private long ityp;
 
 	@Markup
-	public GoName getName() throws IOException {
+	public GoName getGoName() throws IOException {
 		return programContext.resolveNameOff(context.getStructureStart(), name);
 	}
 
-	public String getNameString() throws IOException {
-		GoName n = getName();
-		return n != null ? n.getName() : "_blank_";
+	public String getName() {
+		GoName n = programContext.getSafeName(this::getGoName, this, "unnamed_imethod");
+		return n.getName();
 	}
 
 	@Markup
@@ -61,9 +62,38 @@ public class GoIMethod implements StructureMarkup<GoIMethod> {
 
 	@Override
 	public String getStructureName() throws IOException {
-		return getNameString();
+		return getName();
 	}
 
+	@Override
+	public String toString() {
+		return String.format("GoIMethod [getName()=%s, getStructureContext()=%s]", getName(),
+			getStructureContext());
+	}
+
+	public static class GoIMethodInfo extends MethodInfo {
+		GoItab itab;
+		GoIMethod imethod;
+
+		public GoIMethodInfo(GoItab itab, GoIMethod imethod, Address address) {
+			super(address);
+			this.itab = itab;
+			this.imethod = imethod;
+		}
+
+		public GoItab getItab() {
+			return itab;
+		}
+
+		public GoIMethod getImethod() {
+			return imethod;
+		}
+
+		@Override
+		public FunctionDefinition getSignature() throws IOException {
+			return itab.getSignatureFor(imethod);
+		}
+	}
 }
 /*
 struct runtime.imethod // Length: 8  Alignment: 4

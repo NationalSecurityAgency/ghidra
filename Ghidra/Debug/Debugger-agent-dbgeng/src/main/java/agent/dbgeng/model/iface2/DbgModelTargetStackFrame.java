@@ -61,33 +61,33 @@ public interface DbgModelTargetStackFrame extends //
 		AddressSpace space = getModel().getAddressSpace("ram");
 		return requestNativeAttributes().thenCompose(attrs -> {
 			if (attrs == null) {
-				return AsyncUtils.NIL;
+				return AsyncUtils.nil();
 			}
 			map.putAll(attrs);
 			DbgModelTargetObject attributes = (DbgModelTargetObject) attrs.get("Attributes");
 			if (attributes == null) {
-				return AsyncUtils.NIL;
+				return AsyncUtils.nil();
 			}
 			return attributes.requestAugmentedAttributes().thenCompose(ax -> {
 				if (!isValid()) {
-					return AsyncUtils.NIL;
+					return AsyncUtils.nil();
 				}
 				Map<String, ?> subattrs = attributes.getCachedAttributes();
 				DbgModelTargetObject frameNumber =
 					(DbgModelTargetObject) subattrs.get("FrameNumber");
 				if (frameNumber == null) {
-					return AsyncUtils.NIL;
+					return AsyncUtils.nil();
 				}
 				return frameNumber.requestAugmentedAttributes().thenCompose(bx -> {
 					if (!isValid()) {
-						return AsyncUtils.NIL;
+						return AsyncUtils.nil();
 					}
 					Object noval = frameNumber.getCachedAttribute(VALUE_ATTRIBUTE_NAME);
 					String nostr = noval.toString();
 					DbgModelTargetObject instructionOffset =
 						(DbgModelTargetObject) subattrs.get("InstructionOffset");
 					if (instructionOffset == null) {
-						return AsyncUtils.NIL;
+						return AsyncUtils.nil();
 					}
 					return instructionOffset.requestAugmentedAttributes().thenAccept(cx -> {
 						if (!isValid()) {

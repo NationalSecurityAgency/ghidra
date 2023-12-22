@@ -15,7 +15,10 @@
  */
 package ghidra.app.plugin.core.functioncompare.actions;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import docking.ActionContext;
 import ghidra.app.plugin.core.functionwindow.FunctionRowObject;
@@ -55,6 +58,13 @@ public class CompareFunctionsFromFunctionTableAction extends CompareFunctionsAct
 	@Override
 	public boolean isValidContext(ActionContext context) {
 		return isModelSupported(context);
+	}
+
+	@Override
+	public boolean isEnabledForContext(ActionContext actionContext) {
+		GhidraTable table = (GhidraTable) actionContext.getContextObject();
+		int[] selectedRows = table.getSelectedRows();
+		return selectedRows.length > 1;
 	}
 
 	@Override

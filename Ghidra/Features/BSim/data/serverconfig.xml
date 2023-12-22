@@ -1,0 +1,14 @@
+<serverconfig>                                              <!-- Runtime parameters for the query server -->
+  <config key="shared_buffers">2GB</config>                 <!-- Amount of memory the server will use -->
+  <config key="work_mem">16MB</config>                      <!-- Max memory to use for hash tables and sorts -->
+  <config key="checkpoint_timeout">30min</config>           <!-- Amount of time before all database records are flushed to disk -->
+  <config key="listen_addresses">'*'</config>               <!-- '*' = all available, '0.0.0.0' just IPv4, 'localhost' -->
+  <config key="ssl">on</config>                             <!-- Enable server to connect via SSL -->
+  <!--  <config key="ssl_min_protocol_version">TLSv1.3</config>  -->
+  <config key="password_encryption">scram-sha-256</config>
+ 
+<!--   <connect db="all" user="all"                     type="local"   method="trust"/> -->
+  <connect db="all" user="all" addr="127.0.0.1/32" type="hostssl" method="trust"/>
+  <connect db="all" user="all" addr="::1/128"      type="hostssl" method="trust"/>
+  <connect db="all" user="all" addr="all"          type="hostssl" method="trust"/>
+</serverconfig>

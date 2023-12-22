@@ -27,8 +27,9 @@ import javax.swing.table.*;
 
 import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.services.*;
+import ghidra.debug.api.modules.DebuggerStaticMappingChangeListener;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.PluginTool;
@@ -41,6 +42,7 @@ import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceMemoryBytesChangeType;
 import ghidra.trace.model.Trace.TraceStackChangeType;
 import ghidra.trace.model.memory.TraceMemorySpace;
+import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
@@ -159,7 +161,11 @@ public class DebuggerLegacyStackPanel extends JPanel {
 			if (space.getThread() != curThread || space.getFrameLevel() != 0) {
 				return;
 			}
-			if (!current.getView().getViewport().containsAnyUpper(range.getLifespan())) {
+			TraceProgramView view = current.getView();
+			if (view == null) {
+				return;
+			}
+			if (!view.getViewport().containsAnyUpper(range.getLifespan())) {
 				return;
 			}
 			List<StackFrameRow> stackData = stackTableModel.getModelData();

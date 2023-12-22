@@ -16,7 +16,8 @@
 package agent.lldb.model.impl;
 
 import java.math.BigInteger;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import SWIG.SBBreakpoint;
@@ -27,31 +28,19 @@ import ghidra.dbg.target.TargetBreakpointLocation;
 import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
-import ghidra.util.datastruct.ListenerMap.ListenerEntry;
 import ghidra.util.datastruct.ListenerSet;
 
-@TargetObjectSchemaInfo(
-	name = "BreakpointSpec",
-	elements = { //
-		@TargetElementType(type = LldbModelTargetBreakpointLocationImpl.class)
-	},
-	attributes = {
+@TargetObjectSchemaInfo(name = "BreakpointSpec", elements = { //
+	@TargetElementType(type = LldbModelTargetBreakpointLocationImpl.class) }, attributes = {
 		@TargetAttributeType(name = "Type", type = String.class),
 		@TargetAttributeType(name = "Valid", type = Boolean.class),
 		@TargetAttributeType(name = "Enabled", type = Boolean.class),
 		@TargetAttributeType(name = "Count", type = Long.class),
-		@TargetAttributeType(type = Void.class)
-	},
-	canonicalContainer = true)
+		@TargetAttributeType(type = Void.class) }, canonicalContainer = true)
 public class LldbModelTargetBreakpointSpecImpl extends LldbModelTargetAbstractXpointSpec {
 
 	protected final ListenerSet<TargetBreakpointAction> actions =
-		new ListenerSet<>(TargetBreakpointAction.class) {
-			// Use strong references on actions
-			protected Map<TargetBreakpointAction, ListenerEntry<? extends TargetBreakpointAction>> createMap() {
-				return new LinkedHashMap<>();
-			};
-		};
+		new ListenerSet<>(TargetBreakpointAction.class, false);
 
 	public LldbModelTargetBreakpointSpecImpl(LldbModelTargetBreakpointContainer breakpoints,
 			Object info) {

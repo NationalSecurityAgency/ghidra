@@ -21,8 +21,6 @@ import java.util.concurrent.CompletableFuture;
 import org.junit.Ignore;
 
 import agent.gdb.manager.GdbManager;
-import agent.gdb.pty.PtyFactory;
-import agent.gdb.pty.windows.ConPtyFactory;
 
 @Ignore("Need compatible version on CI")
 public class SpawnedWindowsMi2GdbManagerTest extends AbstractGdbManagerTest {
@@ -35,11 +33,5 @@ public class SpawnedWindowsMi2GdbManagerTest extends AbstractGdbManagerTest {
 		catch (IOException e) {
 			throw new AssertionError(e);
 		}
-	}
-
-	@Override
-	protected PtyFactory getPtyFactory() {
-		// TODO: Choose by host OS
-		return new ConPtyFactory();
 	}
 }

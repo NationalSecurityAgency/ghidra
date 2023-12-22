@@ -15,8 +15,8 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
+import ghidra.app.util.bin.format.pdb2.pdbreader.MsSymbolIterator;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
-import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 
 /**
  * A dummy {@link MsSymbolApplier}, which, at a minimum, reads the symbol from the
@@ -32,7 +32,7 @@ public class NoSymbolApplier extends MsSymbolApplier {
 	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
 	 * @param iter the Iterator containing the symbol sequence being processed
 	 */
-	public NoSymbolApplier(DefaultPdbApplicator applicator, AbstractMsSymbolIterator iter) {
+	public NoSymbolApplier(DefaultPdbApplicator applicator, MsSymbolIterator iter) {
 		super(applicator, iter);
 		symbol = iter.next();
 	}

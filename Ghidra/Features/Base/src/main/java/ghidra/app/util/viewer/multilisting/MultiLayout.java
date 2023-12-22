@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,13 @@
  */
 package ghidra.app.util.viewer.multilisting;
 
-import ghidra.app.util.viewer.field.DummyFieldFactory;
-import ghidra.app.util.viewer.format.FormatManager;
-import ghidra.app.util.viewer.proxy.EmptyProxy;
 import docking.widgets.fieldpanel.Layout;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.MultiRowLayout;
 import docking.widgets.fieldpanel.support.RowLayout;
+import ghidra.app.util.viewer.field.DummyFieldFactory;
+import ghidra.app.util.viewer.format.FormatManager;
+import ghidra.app.util.viewer.proxy.EmptyProxy;
 
 class MultiLayout {
 	private Layout[] layouts;
@@ -30,10 +29,6 @@ class MultiLayout {
 	public MultiLayout() {
 	}
 
-	/**
-	 * @param index2
-	 * @param layouts
-	 */
 	public MultiLayout(Layout[] layouts, FormatManager formatMgr, DummyFieldFactory factory) {
 		this.layouts = layouts;
 		int[] rowHeights = new int[formatMgr.getMaxNumRows()];
@@ -41,17 +36,15 @@ class MultiLayout {
 		for (int i = 0; i < layouts.length; i++) {
 			MultiRowLayout layout = (MultiRowLayout) layouts[i];
 			if (layout == null) {
-				layout =
-					new MultiRowLayout(new RowLayout(new Field[] { factory.getField(
-						EmptyProxy.EMPTY_PROXY, 0) }, id), 1);
+				layout = new MultiRowLayout(
+					new RowLayout(new Field[] { factory.getField(EmptyProxy.EMPTY_PROXY, 0) }, id),
+					1);
 				layouts[i] = layout;
 			}
 			layout.fillHeights(rowHeights);
-
 		}
-		for (int i = 0; i < layouts.length; i++) {
-			MultiRowLayout layout = (MultiRowLayout) layouts[i];
-			layout.align(rowHeights);
+		for (Layout layout : layouts) {
+			((MultiRowLayout) layout).align(rowHeights);
 		}
 	}
 

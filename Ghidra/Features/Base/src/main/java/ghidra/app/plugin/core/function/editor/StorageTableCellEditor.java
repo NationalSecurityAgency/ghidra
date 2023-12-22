@@ -52,6 +52,8 @@ class StorageTableCellEditor extends AbstractCellEditor implements TableCellEdit
 	@Override
 	public Component getTableCellEditorComponent(final JTable table, Object value,
 			boolean isSelected, int row, int column) {
+
+		storage = null;
 		String stringValue = value == null ? "" : value.toString();
 		JTextField field = new JTextField(stringValue);
 		field.setBackground(getUneditableForegroundColor(isSelected));

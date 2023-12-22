@@ -1,0 +1,197 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
+apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
+apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
+
+apply plugin: 'eclipse'
+eclipse.project.name = 'Features BSim'
+
+import java.nio.file.Files
+import org.gradle.util.GUtil
+
+// NOTE: fetchDependencies.gradle must be updated if postgresql version changes
+def postgresql_distro = "postgresql-15.3.tar.gz"
+
+dependencies {
+	api project(":Decompiler")
+	api project(":CodeCompare")
+
+	api "org.postgresql:postgresql:42.6.0"
+    api "com.googlecode.json-simple:json-simple:1.1.1"
+    api "org.apache.commons:commons-dbcp2:2.9.0"
+    api "org.apache.commons:commons-pool2:2.11.1"
+    api "commons-logging:commons-logging:1.2"
+    api "org.apache.logging.log4j:log4j-jcl:2.16.0"
+    api "com.h2database:h2:2.2.220"
+}
+
+// Copy postgresql source distro, lshvector plugin source, and make-postgres.sh 
+// into common zip to allow for a rebuild of the postgres server if needed
+
+rootProject.assembleDistribution { 
+	
+	String postgresqlDepsFile = "${DEPS_DIR}/BSim/${postgresql_distro}"
+	String postgresqlBinRepoFile = "${BIN_REPO}/Ghidra/Features/BSim/${postgresql_distro}"
+		
+	def postgresqlFile = file(postgresqlDepsFile).exists() ? postgresqlDepsFile : postgresqlBinRepoFile
+	
+    into (getZipPath(this.project)) {
+		from file("make-postgres.sh")	
+	}
+	into (getZipPath(this.project)) {
+		from file(postgresqlFile)	
+	}
+	into (getZipPath(this.project)  + "/src/lshvector") {
+		from files("src/lshvector")	
+	}
+}
+
+// Relative to the 'workingDir' Exec task property.
+def installPoint = "../help/help"
+
+/**
+ * Build the pdf docs for BSim and place into the '$installPoint' directory.
+ * A build (ex: 'gradle buildLocalTSSI_Release') will place the pdf in the distribution.
+ * There is an associated, auto-generated clean task.
+ **/
+task buildBSimHelpPdf(type: Exec) {
+
+	workingDir 'src/main/doc'
+
+	def buildDir = "../../../build/BSimDocumentationPdf"
+
+	// Gradle will provide a cleanBuildBSimDocumentationPdf task that will remove these
+	// declared outputs.
+	outputs.dir  "$workingDir/$buildDir"
+	outputs.file "$workingDir/$buildDir/bsim.pdf"
+
+	// 'which' returns the number of failed arguments
+	// Using the 'which' command first will allow the task to fail if the required
+	// executables are not installed.
+	//
+	// The bash commands end with "2>&1" to redirect stderr to stdout and have all 
+	// messages print in sequence
+	//
+	// 'commandLine' takes one command, so wrap multiple commands in bash.
+	commandLine 'bash', '-e', '-c', """
+		echo '** Checking if required executables are installed. **'
+		which xsltproc
+		which fop
+
+		echo '** Preparing for xsltproc **'
+		mkdir -p $buildDir/images
+
+		cp $installPoint/topics/BSimDatabasePlugin/images/*.png $buildDir/images
+
+		echo '** Building bsim.fo **'
+		xsltproc --output $buildDir/bsim_withscaling.xml --stringparam profile.condition "withscaling" commonprofile.xsl bsim.xml 2>&1
+		xsltproc --output $buildDir/bsim.fo focustom.xsl $buildDir/bsim_withscaling.xml  2>&1
+
+		echo '** Building bsim.pdf **'
+		fop $buildDir/bsim.fo $buildDir/bsim.pdf  2>&1
+
+		echo '** Done. **'
+		"""
+
+	// Allows doLast block regardless of exit value.
+	ignoreExitValue true
+
+	// Store the output instead of printing to the console.
+	standardOutput = new ByteArrayOutputStream()
+	ext.output = { standardOutput.toString() }
+	ext.errorOutput = { standardOutput.toString() }
+
+	// Check the OS before executing command.
+	doFirst {
+		if (!getCurrentPlatformName().startsWith("linux")) {
+			throw new TaskExecutionException( it, new Exception("The '$it.name' task only works on Linux."))
+		}
+	}
+
+	// Print the output of the commands and check the return value.
+	doLast {
+		println output()
+		if (execResult.exitValue) {
+			logger.error("$it.name: An error occurred. Here is the output:\n" + output())
+			throw new TaskExecutionException( it, new Exception("'$it.name': The command: '${commandLine.join(' ')}'" +
+				" task \nfailed with exit code $execResult.exitValue; see task output for details."))
+		}
+	}
+}
+
+/**
+ * Build the html docs for BSim and place into the '$installPoint' directory.
+ * A build (ex: 'gradle buildLocalTSSI_Release') will place the html files in the distribution.
+ **/
+task buildBSimHelpHtml(type: Exec) {
+
+	workingDir 'src/main/doc'
+
+	def buildDir = "../../../build/html"
+
+	// 'which' returns the number of failed arguments
+	// Using the 'which' command first will allow the task to fail if the required
+	// executables are not installed.
+	//
+	// The bash commands end with "2>&1" to redirect stderr to stdout and have all 
+	// messages print in sequence
+	//
+	// 'commandLine' takes one command, so wrap multiple commands in bash.
+	commandLine 'bash', '-e', '-c', """
+	echo '** Checking if required executables are installed. **'
+	which xsltproc
+	which sed
+
+	echo '** Removing older html files installed under '$installPoint' **'
+	rm -f $installPoint/topics/BSimDatabasePlugin/*.html
+
+	echo '** Building html files **'
+	xsltproc --output $buildDir/bsim_noscaling.xml --stringparam profile.condition "noscaling" commonprofile.xsl bsim.xml 2>&1
+	xsltproc --stringparam base.dir ${installPoint}/topics/BSimDatabasePlugin/ htmlcustom.xsl $buildDir/bsim_noscaling.xml 2>&1
+	sed -i -e '/DefaultStyle.css/ { p; sQhref=".*"Qhref="../../shared/languages.css"Q; }' ${installPoint}/topics/BSimDatabasePlugin/*.html
+	rm $installPoint/topics/BSimDatabasePlugin/index.html
+
+	echo '** Done. **'
+	"""
+
+	// Allows doLast block regardless of exit value.
+	ignoreExitValue true
+
+	// Store the output instead of printing to the console.
+	standardOutput = new ByteArrayOutputStream()
+	ext.output = { standardOutput.toString() }
+	ext.errorOutput = { standardOutput.toString() }
+
+	// Check the OS before executing command.
+	doFirst {
+		if (!getCurrentPlatformName().startsWith("linux")) {
+			throw new TaskExecutionException( it, new Exception("The '$it.name' task only works on Linux."))
+		}
+	}
+
+	// Print the output of the commands and check the return value.
+	doLast {
+		println output()
+		if (execResult.exitValue) {
+			logger.error("$it.name: An error occurred. Here is the output:\n" + output())
+			throw new TaskExecutionException( it, new Exception("'$it.name': The command: '${commandLine.join(' ')}'" +
+				" task \nfailed with exit code $execResult.exitValue; see task output for details."))
+		}
+	}
+}

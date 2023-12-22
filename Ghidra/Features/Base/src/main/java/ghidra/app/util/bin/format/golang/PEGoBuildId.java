@@ -15,11 +15,10 @@
  */
 package ghidra.app.util.bin.format.golang;
 
-import java.util.Arrays;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteArrayProvider;
@@ -105,7 +104,8 @@ public class PEGoBuildId implements ElfInfoItem {
 
 	@Override
 	public void markupProgram(Program program, Address address) {
-		program.getOptions(Program.PROGRAM_INFO).setString("Golang BuildId", getBuildId());
+		program.getOptions(Program.PROGRAM_INFO)
+				.setString(NoteGoBuildId.PROGRAM_INFO_KEY, getBuildId());
 
 		try {
 			StructureDataType struct = toStructure(program.getDataTypeManager());

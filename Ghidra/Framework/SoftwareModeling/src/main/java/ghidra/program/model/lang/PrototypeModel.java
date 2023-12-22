@@ -27,7 +27,6 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.*;
 import ghidra.util.SystemUtilities;
-import ghidra.util.exception.InvalidInputException;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.*;
 
@@ -222,24 +221,23 @@ public class PrototypeModel {
 	}
 
 	/**
-	 * @deprecated
 	 * Get the preferred return location given the specified dataType.
-	 * In truth, there is no one location.  The routines that use this method tend
-	 * to want the default storage location for integer or pointer return values.
+	 * If the return value is passed back through a hidden input pointer,
+	 * i.e. {@link AutoParameterType#RETURN_STORAGE_PTR}, this routine will not pass back
+	 * the storage location of the pointer, but will typically pass
+	 * back the location of the normal return register which holds a copy of the pointer.
 	 * @param dataType first parameter dataType or null for an undefined type.
 	 * @param program is the Program
 	 * @return return location or {@link VariableStorage#UNASSIGNED_STORAGE} if
 	 * unable to determine suitable location
 	 */
-	@Deprecated
 	public VariableStorage getReturnLocation(DataType dataType, Program program) {
 		DataType clone = dataType.clone(program.getDataTypeManager());
-		DataType[] arr = new DataType[1];
-		arr[0] = clone;
-		ArrayList<VariableStorage> res = new ArrayList<>();
-		outputParams.assignMap(program, arr, res, false);
+		PrototypePieces proto = new PrototypePieces(this, clone);
+		ArrayList<ParameterPieces> res = new ArrayList<>();
+		outputParams.assignMap(proto, program.getDataTypeManager(), res, false);
 		if (res.size() > 0) {
-			return res.get(0);
+			return res.get(0).getVariableStorage(program);
 		}
 		return null;
 	}
@@ -301,12 +299,51 @@ public class PrototypeModel {
 	}
 
 	/**
-	 * Compute the variable storage for a given function and set of return/parameter datatypes 
-	 * defined by an array of data types.
+	 * Calculate input and output storage locations given a function prototype
+	 * 
+	 * The data-types of the function prototype are passed in. Based on this model, a
+	 * location is selected for each (input and output) parameter and passed back to the
+	 * caller.  The passed back storage locations are ordered with the output storage
+	 * as the first entry, followed by the input storage locations.  The model has the option
+	 * of inserting a hidden return value pointer in the input storage locations.
+	 * 
+	 * If the model cannot assign storage, the ParameterPieces will have a null Address.
+	 * @param proto is the function prototype parameter data-types
+	 * @param dtManager is the manager used to create indirect data-types
+	 * @param res will hold the storage addresses for each parameter
+	 * @param addAutoParams is true if auto parameters (like the this pointer) should be processed
+	 */
+	public void assignParameterStorage(PrototypePieces proto, DataTypeManager dtManager,
+			ArrayList<ParameterPieces> res, boolean addAutoParams) {
+		outputParams.assignMap(proto, dtManager, res, addAutoParams);
+		inputParams.assignMap(proto, dtManager, res, addAutoParams);
+
+		if (hasThis && addAutoParams && res.size() > 1) {
+			int thisIndex = 1;
+			if (res.get(1).hiddenReturnPtr && res.size() > 2) {
+				if (inputParams.isThisBeforeRetPointer()) {
+					// pointer has been bumped by auto-return-storage
+					res.get(1).swapMarkup(res.get(2));	// must swap storage and position for slots 1 and 2
+				}
+				else {
+					thisIndex = 2;
+				}
+			}
+			res.get(thisIndex).isThisPointer = true;
+		}
+	}
+
+	/**
+	 * Compute the variable storage for a given array of return/parameter datatypes.  The first array element
+	 * is the return datatype, which is followed by any input parameter datatypes in order.
+	 * If addAutoParams is true, pointer datatypes will automatically be inserted for "this" or "hidden return"
+	 * input parameters, if needed.  In this case, the dataTypes array should not include explicit entries for
+	 * these parameters.  If addAutoParams is false, the dataTypes array is assumed to already contain explicit
+	 * entries for any of these parameters.
 	 * @param program is the Program
 	 * @param dataTypes return/parameter datatypes (first element is always the return datatype, 
 	 * i.e., minimum array length is 1)
-	 * @param addAutoParams TODO
+	 * @param addAutoParams true if auto-parameter storage locations can be generated
 	 * @return dynamic storage locations orders by ordinal where first element corresponds to
 	 * return storage. The returned array may also include additional auto-parameter storage 
 	 * locations. 
@@ -314,61 +351,21 @@ public class PrototypeModel {
 	public VariableStorage[] getStorageLocations(Program program, DataType[] dataTypes,
 			boolean addAutoParams) {
 
-		boolean injectAutoThisParam = false;
+		DataType injectedThis = null;
 		if (addAutoParams && hasThis) {
 			// explicit support for auto 'this' parameter
 			// must inject pointer arg to obtain storage assignment
-			injectAutoThisParam = true;
-			DataType[] ammendedTypes = new DataType[dataTypes.length + 1];
-			ammendedTypes[0] = dataTypes[0];
-			ammendedTypes[1] = new PointerDataType(program.getDataTypeManager());
-			if (dataTypes.length > 1) {
-				System.arraycopy(dataTypes, 1, ammendedTypes, 2, dataTypes.length - 1);
-			}
-			dataTypes = ammendedTypes;
+			injectedThis = new PointerDataType(program.getDataTypeManager());
 		}
+		PrototypePieces proto = new PrototypePieces(this, dataTypes, injectedThis);
 
-		ArrayList<VariableStorage> res = new ArrayList<>();
-		outputParams.assignMap(program, dataTypes, res, addAutoParams);
-		inputParams.assignMap(program, dataTypes, res, addAutoParams);
+		ArrayList<ParameterPieces> res = new ArrayList<>();
+		assignParameterStorage(proto, program.getDataTypeManager(), res, addAutoParams);
 		VariableStorage[] finalres = new VariableStorage[res.size()];
-		res.toArray(finalres);
 
-		if (injectAutoThisParam) {
-
-			Varnode[] thisVarnodes = finalres[1].getVarnodes();
-
-			int thisIndex = 1;
-			try {
-				if (finalres[1].isAutoStorage()) {
-					if (inputParams.isThisBeforeRetPointer()) {
-						// pointer has been bumped by auto-return-storage
-						// must swap storage and position for slots 1 and 2 
-						finalres[2] = new DynamicVariableStorage(program,
-							finalres[1].getAutoParameterType(), finalres[2].getVarnodes());
-					}
-					else {
-						thisIndex = 2;
-						thisVarnodes = finalres[2].getVarnodes();
-					}
-				}
-
-				if (thisVarnodes.length != 0) {
-					finalres[thisIndex] =
-						new DynamicVariableStorage(program, AutoParameterType.THIS, thisVarnodes);
-				}
-				else {
-					finalres[thisIndex] =
-						DynamicVariableStorage.getUnassignedDynamicStorage(AutoParameterType.THIS);
-				}
-			}
-			catch (InvalidInputException e) {
-				finalres[thisIndex] =
-					DynamicVariableStorage.getUnassignedDynamicStorage(AutoParameterType.THIS);
-			}
-
+		for (int i = 0; i < finalres.length; ++i) {
+			finalres[i] = res.get(i).getVariableStorage(program);
 		}
-
 		return finalres;
 	}
 

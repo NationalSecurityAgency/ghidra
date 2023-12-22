@@ -140,7 +140,7 @@ public enum SleighProgramCompiler {
 	/**
 	 * Compile the given source into a p-code template
 	 * 
-	 * @see #compileProgram(SleighLanguage, String, List, PcodeUseropLibrary)
+	 * @see #compileProgram(SleighLanguage, String, String, PcodeUseropLibrary)
 	 * @param language the language
 	 * @param parser the parser
 	 * @param sourceName the name of the program, for error diagnostics
@@ -249,7 +249,7 @@ public enum SleighProgramCompiler {
 	 * scripting, or perhaps in a Sleigh repl. The library given during compilation must match the
 	 * library given for execution, at least in its binding of userop IDs to symbols.
 	 * 
-	 * @param the parser to use
+	 * @param parser the parser to use
 	 * @param language the language of the target p-code machine
 	 * @param sourceName a diagnostic name for the Sleigh source
 	 * @param source the Sleigh source

@@ -29,7 +29,7 @@ import db.Transaction;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
 import ghidra.framework.plugintool.util.PluginException;
@@ -43,7 +43,7 @@ import ghidra.trace.model.modules.TraceStaticMappingManager;
 import ghidra.util.task.TaskMonitor;
 
 @Category(NightlyCategory.class)
-public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebuggerTest {
 	protected DebuggerStaticMappingPlugin mappingsPlugin;
 	protected DebuggerStaticMappingProvider mappingsProvider;
 

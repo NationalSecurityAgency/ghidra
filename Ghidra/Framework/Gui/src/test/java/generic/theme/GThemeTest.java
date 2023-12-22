@@ -83,6 +83,8 @@ public class GThemeTest extends AbstractGenericTest {
 		theme.setColor("foo.bar", Color.GREEN);
 		theme.setColorRef("foo.bar.xyz", "foo.bar");
 
+		theme.setColor("laf.color.TextArea.background", Color.GREEN);
+
 		theme.setFont("font.a.1", COURIER);
 		theme.setFont("font.a.2", DIALOG);
 		theme.setFontRef("font.a.3", "font.a.1");
@@ -110,6 +112,7 @@ public class GThemeTest extends AbstractGenericTest {
 		assertEquals(Color.RED, theme.getColor("color.a.4").get(theme));
 		assertEquals(Color.GREEN, theme.getColor("foo.bar").get(theme));
 		assertEquals(Color.GREEN, theme.getColor("foo.bar.xyz").get(theme));
+		assertEquals(Color.GREEN, theme.getColor("laf.color.TextArea.background").get(theme));
 
 		assertEquals(COURIER, theme.getFont("font.a.1").get(theme));
 		assertEquals(DIALOG, theme.getFont("font.a.2").get(theme));

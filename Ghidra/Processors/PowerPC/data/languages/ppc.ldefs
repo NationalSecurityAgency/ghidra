@@ -209,6 +209,36 @@
   <language processor="PowerPC"
             endian="big"
             size="32"
+            variant="PowerQUICC-III-e500mc"
+            version="1.5"
+            slafile="ppc_32_be.sla"
+            processorspec="ppc_32.pspec"
+            manualindexfile="../manuals/PowerPC.idx"
+            id="PowerPC:BE:32:e500mc">
+    <description>PowerQUICC-III e500mc 32-bit big-endian family</description>
+    <compiler name="default" spec="ppc_32_e500mc_be.cspec" id="default"/>
+    <external_name tool="gnu" name="powerpc:e500mc"/>
+    <external_name tool="IDA-PRO" name="ppc"/>
+    <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
+  </language>
+  <language processor="PowerPC"
+            endian="little"
+            size="32"
+            variant="PowerQUICC-III-e500mc"
+            version="1.5"
+            slafile="ppc_32_le.sla"
+            processorspec="ppc_32.pspec"
+            manualindexfile="../manuals/PowerPC.idx"
+            id="PowerPC:LE:32:e500mc">
+    <description>PowerQUICC-III e500mc 32-bit little-endian family</description>
+    <compiler name="default" spec="ppc_32_e500mc_le.cspec" id="default"/>
+    <external_name tool="gnu" name="powerpc:e500mc"/>
+    <external_name tool="IDA-PRO" name="ppc"/>
+    <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
+  </language>
+  <language processor="PowerPC"
+            endian="big"
+            size="32"
             variant="PowerISA-64-32addr"
             version="1.5"
             slafile="ppc_64_isa_be.sla"

@@ -34,7 +34,7 @@ public interface SpiDebuggerObjectModel extends DebuggerObjectModel {
 
 	@Override
 	default CompletableFuture<Void> ping(String content) {
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	public static CompletableFuture<Object> fetchFreshChild(TargetObject obj, String key) {

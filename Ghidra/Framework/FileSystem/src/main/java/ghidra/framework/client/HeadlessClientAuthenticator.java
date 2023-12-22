@@ -17,11 +17,12 @@ package ghidra.framework.client;
 
 import java.awt.Component;
 import java.io.*;
-import java.net.Authenticator;
-import java.net.PasswordAuthentication;
+import java.net.*;
 import java.security.InvalidKeyException;
 
 import javax.security.auth.callback.*;
+
+import org.apache.commons.lang3.StringUtils;
 
 import ghidra.framework.remote.AnonymousCallback;
 import ghidra.framework.remote.SSHSignatureCallback;
@@ -45,12 +46,31 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 		@Override
 		protected PasswordAuthentication getPasswordAuthentication() {
 			Msg.debug(this, "PasswordAuthentication requested for " + getRequestingURL());
+			String usage = null;
 			String prompt = getRequestingPrompt();
+			if ("security".equals(prompt)) {
+				prompt = null; // squash generic "security" prompt
+			}
+			URL requestingURL = getRequestingURL();
+			if (requestingURL != null) {
+				URL minimalURL = null;
+				try {
+					minimalURL = new URL(requestingURL, "/");
+				}
+				catch (MalformedURLException e) {
+					// ignore
+				}
+				usage = "Access password requested for " +
+					(minimalURL != null ? minimalURL.toExternalForm()
+							: requestingURL.getAuthority());
+				prompt = "Password:";
+			}
 			if (prompt == null) {
+				// Assume Ghidra Server access
 				String host = getRequestingHost();
 				prompt = (host != null ? (host + " ") : "") + "(" + userID + ") Password:";
 			}
-			return new PasswordAuthentication(userID, getPassword(null, prompt));
+			return new PasswordAuthentication(userID, getPassword(usage, prompt));
 		}
 	};
 

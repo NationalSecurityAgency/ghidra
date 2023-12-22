@@ -326,7 +326,7 @@ public class AsyncReference<T, C> {
 			return CompletableFuture.failedFuture(disposalReason);
 		}
 		if (Objects.equals(this.val, t)) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		CompletableFuture<Void> waiter = waitsFor.get(t);
 		if (waiter == null) {

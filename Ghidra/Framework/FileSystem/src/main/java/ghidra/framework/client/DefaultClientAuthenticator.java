@@ -45,12 +45,17 @@ public class DefaultClientAuthenticator extends PopupKeyStorePasswordProvider
 				prompt = "Password:";
 			}
 			PasswordCallback passCb = new PasswordCallback(prompt, false);
-			ServerPasswordPrompt pp = new ServerPasswordPrompt("Connection Authentication",
-				"Server", getRequestingHost(), nameCb, passCb, null, null, null);
-			SystemUtilities.runSwingNow(pp);
-			if (pp.okWasPressed()) {
-				return new PasswordAuthentication(nameCb != null ? nameCb.getName() : null,
-					passCb.getPassword());
+			try {
+				ServerPasswordPrompt pp = new ServerPasswordPrompt("Connection Authentication",
+					"Server", getRequestingHost(), nameCb, passCb, null, null, null);
+				SystemUtilities.runSwingNow(pp);
+				if (pp.okWasPressed()) {
+					return new PasswordAuthentication(nameCb != null ? nameCb.getName() : null,
+						passCb.getPassword());
+				}
+			}
+			finally {
+				passCb.clearPassword();
 			}
 			return null;
 		}

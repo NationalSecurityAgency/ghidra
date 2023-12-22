@@ -629,7 +629,8 @@ AddrSpace *AddrSpaceManager::getNextSpaceInOrder(AddrSpace *spc) const
 }
 
 /// Given a list of memory locations, the \e pieces, either find a pre-existing JoinRecord or
-/// create a JoinRecord that represents the logical joining of the pieces.
+/// create a JoinRecord that represents the logical joining of the pieces.  The pieces must
+/// be in order from most significant to least significant.
 /// \param pieces if the list memory locations to be joined
 /// \param logicalsize of a \e single \e piece join, or zero
 /// \return a pointer to the JoinRecord

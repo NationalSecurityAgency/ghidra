@@ -17,9 +17,8 @@ package ghidra.app.util.bin.format.dwarf4.next;
 
 import static org.junit.Assert.*;
 
-import java.util.List;
-
 import java.io.IOException;
+import java.util.List;
 
 import org.junit.Test;
 
@@ -31,6 +30,7 @@ import ghidra.app.util.bin.format.dwarf4.expression.DWARFExpressionOpCodes;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.SourceType;
@@ -72,10 +72,8 @@ public class DWARFFunctionImporterTest extends DWARFTestBase {
 	}
 
 	@Test
-	public void testRustMethod_NoParamDefs()
+	public void testRustMethod_SetsRustCC()
 			throws CancelledException, IOException, DWARFException {
-		// test that Ghidra functions in a Rust compilation unit don't have their info set
-		// if they look like they are one of the stub DIE entries that Rust creates
 		cu = new MockDWARFCompilationUnit(dwarfProg, 0x1000, 0x2000, 0,
 			DWARFCompilationUnit.DWARF_32, (short) 4, 0, (byte) 8, 0,
 			DWARFSourceLanguage.DW_LANG_Rust);
@@ -91,34 +89,7 @@ public class DWARFFunctionImporterTest extends DWARFTestBase {
 		assertNotNull(fooFunc);
 
 		assertEquals("foo", fooFunc.getName());
-		DataType returnType = fooFunc.getReturnType();
-		assertNotNull(returnType);
-		assertEquals("undefined", returnType.getName());
-	}
-
-	@Test
-	public void testNotRustMethod_NoParamDefs()
-			throws CancelledException, IOException, DWARFException {
-		// test that Ghidra functions in a non-Rust compilation unit do have their info set
-		// even if their param info is empty.
-		cu = new MockDWARFCompilationUnit(dwarfProg, 0x1000, 0x2000, 0,
-			DWARFCompilationUnit.DWARF_32, (short) 4, 0, (byte) 8, 0,
-			DWARFSourceLanguage.DW_LANG_C);
-		cu2 = null;
-		setMockCompilationUnits(cu);
-
-		DebugInfoEntry intDIE = addInt(cu);
-		newSubprogram("foo", intDIE, 0x410, 10).create(cu);
-
-		importFunctions();
-
-		Function fooFunc = program.getListing().getFunctionAt(addr(0x410));
-		assertNotNull(fooFunc);
-
-		assertEquals("foo", fooFunc.getName());
-		DataType returnType = fooFunc.getReturnType();
-		assertNotNull(returnType);
-		assertEquals("int", returnType.getName());
+		assertEquals(CompilerSpec.CALLING_CONVENTION_rustcall, fooFunc.getCallingConventionName());
 	}
 
 	@Test

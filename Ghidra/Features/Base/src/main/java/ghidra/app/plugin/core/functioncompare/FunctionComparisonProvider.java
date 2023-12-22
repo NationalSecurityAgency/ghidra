@@ -31,10 +31,10 @@ import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.app.util.viewer.util.CodeComparisonPanel;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
-import ghidra.framework.plugintool.Plugin;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
+import utility.function.Callback;
 
 /**
  * Dockable provider that displays function comparisons  Clients create/modify
@@ -46,10 +46,11 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 
 	protected static final String HELP_TOPIC = "FunctionComparison";
 	protected FunctionComparisonPanel functionComparisonPanel;
-	protected Plugin plugin;
+	protected FunctionComparisonPlugin plugin;
 
 	/** Contains all the comparison data to be displayed by this provider */
 	protected FunctionComparisonModel model;
+	private Callback closeListener = Callback.dummy();
 
 	/**
 	 * Constructor
@@ -59,7 +60,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	 *        the same window
 	 * @param owner the provider owner, usually a plugin name
 	 */
-	public FunctionComparisonProvider(Plugin plugin, String name, String owner) {
+	public FunctionComparisonProvider(FunctionComparisonPlugin plugin, String name, String owner) {
 		this(plugin, name, owner, null);
 	}
 
@@ -72,10 +73,11 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	 * @param owner the provider owner, usually a plugin name
 	 * @param contextType the type of context supported by this provider; may be null
 	 */
-	public FunctionComparisonProvider(Plugin plugin, String name, String owner,
+	public FunctionComparisonProvider(FunctionComparisonPlugin plugin, String name, String owner,
 			Class<?> contextType) {
 		super(plugin.getTool(), name, owner, contextType);
 		this.plugin = plugin;
+		setTransient();
 		model = new FunctionComparisonModel();
 		model.addFunctionComparisonModelListener(this);
 		functionComparisonPanel = getComponent();
@@ -88,6 +90,13 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 			functionComparisonPanel = new FunctionComparisonPanel(this, tool, null, null);
 		}
 		return functionComparisonPanel;
+	}
+
+	@Override
+	public void closeComponent() {
+		super.closeComponent();
+		closeListener.call();
+		closeListener = Callback.dummy();
 	}
 
 	@Override
@@ -119,6 +128,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	public void removeFromTool() {
 		tool.removePopupActionProvider(this);
 		super.removeFromTool();
+		plugin.providerClosed(this);
 	}
 
 	@Override
@@ -189,7 +199,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	 * @param functions the functions to remove
 	 */
 	public void removeFunctions(Set<Function> functions) {
-		functions.stream().forEach(f -> model.removeFunction(f));
+		model.removeFunctions(functions);
 		closeIfEmpty();
 	}
 
@@ -229,7 +239,6 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	 * Perform initialization for this provider and its panel
 	 */
 	protected void initFunctionComparisonPanel() {
-		setTransient();
 		setTabText(functionComparisonPanel.getDescription());
 		addSpecificCodeComparisonActions();
 		tool.addPopupActionProvider(this);
@@ -263,5 +272,14 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 		for (DockingAction dockingAction : actions) {
 			addLocalAction(dockingAction);
 		}
+	}
+
+	public void removeAddFunctionsAction() {
+		//TODO merge multi and this into one
+
+	}
+
+	public void setCloseListener(Callback closeListener) {
+		this.closeListener = Callback.dummyIfNull(closeListener);
 	}
 }

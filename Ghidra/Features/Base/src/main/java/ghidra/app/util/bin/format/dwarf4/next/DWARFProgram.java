@@ -15,10 +15,9 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next;
 
-import java.util.*;
-
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.*;
 
 import org.apache.commons.collections4.ListValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
@@ -29,8 +28,11 @@ import ghidra.app.util.bin.format.dwarf4.attribs.DWARFAttributeFactory;
 import ghidra.app.util.bin.format.dwarf4.encoding.*;
 import ghidra.app.util.bin.format.dwarf4.expression.DWARFExpressionException;
 import ghidra.app.util.bin.format.dwarf4.external.ExternalDebugInfo;
+import ghidra.app.util.bin.format.dwarf4.funcfixup.DWARFFunctionFixup;
 import ghidra.app.util.bin.format.dwarf4.next.sectionprovider.*;
+import ghidra.app.util.bin.format.golang.rtti.GoSymbolName;
 import ghidra.app.util.opinion.*;
+import ghidra.formats.gfilesystem.FSUtilities;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.CategoryPath;
@@ -64,11 +66,12 @@ public class DWARFProgram implements Closeable {
 	 * all the work that querying all registered DWARFSectionProviders would take.
 	 * <p>
 	 * If the program is an Elf binary, it must have (at least) ".debug_info" and ".debug_abbr",
-	 * program sections, or their compressed "z" versions.
+	 * program sections, or their compressed "z" versions, or ExternalDebugInfo that would point
+	 * to an external DWARF file.
 	 * <p>
-	 * If the program is a MachO binary (ie. Mac), it must have a ".dSYM" directory co-located next to the
-	 * original binary file on the native filesystem.  (lie. outside of Ghidra).  See the DSymSectionProvider
-	 * for more info.
+	 * If the program is a MachO binary (Mac), it must have a ".dSYM" directory co-located 
+	 * next to the original binary file on the native filesystem (outside of Ghidra).  See the 
+	 * DSymSectionProvider for more info.
 	 * <p>
 	 * @param program {@link Program} to test
 	 * @return boolean true if program probably has DWARF info, false if not
@@ -182,7 +185,7 @@ public class DWARFProgram implements Closeable {
 
 	private final boolean stackGrowsNegative;
 
-	private final Map<Object, Object> opaqueProps = new HashMap<>();
+	private List<DWARFFunctionFixup> functionFixups;
 
 	/**
 	 * Main constructor for DWARFProgram.
@@ -272,6 +275,16 @@ public class DWARFProgram implements Closeable {
 		debugStrings.clear();
 		dniCache.clear();
 		clearDIEIndexes();
+
+		if (functionFixups != null) {
+			for (DWARFFunctionFixup funcFixup : functionFixups) {
+				if (funcFixup instanceof Closeable c) {
+					FSUtilities.uncheckedClose(c, null);
+				}
+			}
+			functionFixups.clear();
+			functionFixups = null;
+		}
 	}
 
 	public DWARFImportOptions getImportOptions() {
@@ -464,7 +477,15 @@ public class DWARFProgram implements Closeable {
 
 		String origName = isAnon ? null : name;
 		String workingName = ensureSafeNameLength(name);
-		workingName = fixupSpecialMeaningCharacters(workingName);
+		workingName = GoSymbolName.fixGolangSpecialSymbolnameChars(workingName);
+
+		if (diea.getCompilationUnit()
+				.getCompileUnit()
+				.getLanguage() == DWARFSourceLanguage.DW_LANG_Rust &&
+			workingName.startsWith("{impl#") && parentDNI != null) {
+			// if matches a Rust {impl#NN} name, skip it and re-use the parent name
+			return parentDNI;
+		}
 
 		DWARFNameInfo result =
 			parentDNI.createChild(origName, workingName, DWARFUtil.getSymbolTypeFromDIE(diea));
@@ -568,16 +589,6 @@ public class DWARFProgram implements Closeable {
 			strs.set(i, ensureSafeNameLength(strs.get(i)));
 		}
 		return strs;
-	}
-
-	private String fixupSpecialMeaningCharacters(String s) {
-		// golang specific hacks:
-		// "\u00B7" -> "."
-		// "\u2215" -> "/"
-		if (s.contains("\u00B7") || s.contains("\u2215")) {
-			s = s.replaceAll("\u00B7", ".").replaceAll("\u2215", "/");
-		}
-		return s;
 	}
 
 	public DWARFNameInfo getName(DIEAggregate diea) {
@@ -1064,12 +1075,10 @@ public class DWARFProgram implements Closeable {
 		return stackGrowsNegative;
 	}
 
-	public <T> T getOpaqueProperty(Object key, T defaultValue, Class<T> valueClass) {
-		Object obj = opaqueProps.get(key);
-		return obj != null && valueClass.isInstance(obj) ? valueClass.cast(obj) : defaultValue;
-	}
-
-	public void setOpaqueProperty(Object key, Object value) {
-		opaqueProps.put(key, value);
+	public List<DWARFFunctionFixup> getFunctionFixups() {
+		if (functionFixups == null) {
+			functionFixups = DWARFFunctionFixup.findFixups();
+		}
+		return functionFixups;
 	}
 }

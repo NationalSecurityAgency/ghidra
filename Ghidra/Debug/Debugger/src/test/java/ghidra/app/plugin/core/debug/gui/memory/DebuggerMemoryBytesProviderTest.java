@@ -43,8 +43,7 @@ import ghidra.GhidraOptions;
 import ghidra.app.plugin.core.byteviewer.ByteViewerComponent;
 import ghidra.app.plugin.core.byteviewer.ByteViewerPanel;
 import ghidra.app.plugin.core.clipboard.ClipboardPlugin;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.FollowsCurrentThreadAction;
 import ghidra.app.plugin.core.debug.gui.action.*;
@@ -52,6 +51,9 @@ import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.services.*;
 import ghidra.async.SwingExecutorService;
+import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.model.TraceRecorder;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
@@ -69,7 +71,7 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 
 @Category(NightlyCategory.class)
-public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebuggerTest {
 
 	protected DebuggerMemoryBytesPlugin memBytesPlugin;
 	protected DebuggerMemoryBytesProvider memBytesProvider;

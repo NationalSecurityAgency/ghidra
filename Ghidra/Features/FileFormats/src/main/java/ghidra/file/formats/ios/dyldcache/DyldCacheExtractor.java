@@ -19,6 +19,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import com.google.common.collect.Range;
+import com.google.common.collect.RangeSet;
+
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.commands.*;
@@ -37,7 +40,23 @@ import ghidra.util.task.TaskMonitor;
 public class DyldCacheExtractor {
 
 	/**
-	 * Gets an {@link ByteProvider} that reads a DYLIB from a {@link DyldCacheFileSystem}.  The
+	 * A footer that gets appended to the end of every extracted component so Ghidra can identify
+	 * them and treat them special when imported
+	 */
+	public static final byte[] FOOTER_V1 =
+		"Ghidra DYLD extraction v1".getBytes(StandardCharsets.US_ASCII);
+
+	/**
+	 * A {@link DyldCacheMappingAndSlideInfo} with a possibly reduced set of available addresses
+	 * within the mapping
+	 * 
+	 * @param mappingInfo A {@link DyldCacheMappingAndSlideInfo}
+	 * @param rangeSet A a possibly reduced set of available addresses within the mapping
+	 */
+	public record MappingRange(DyldCacheMappingAndSlideInfo mappingInfo, RangeSet<Long> rangeSet) {}
+
+	/**
+	 * Gets a {@link ByteProvider} that contains a DYLIB from a {@link DyldCacheFileSystem}.  The
 	 * DYLIB's header will be altered to account for its segment bytes being packed down.   
 	 * 
 	 * @param dylibOffset The offset of the DYLIB in the given provider
@@ -62,19 +81,97 @@ public class DyldCacheExtractor {
 	}
 
 	/**
-	 * Converts the given value to a byte array
+	 * Gets a {@link ByteProvider} that contains a byte mapping from a {@link DyldCacheFileSystem}
 	 * 
-	 * @param value The value to convert to a byte array
-	 * @param size The number of bytes to convert (must be 4 or 8)
-	 * @return The value as a byte array of the given size
-	 * @throws IllegalArgumentException if size is an unsupported value
+	 * @param mappingRange The {@link MappingRange}
+	 * @param segmentName The name of the segment in the resulting Mach-O
+	 * @param splitDyldCache The {@link SplitDyldCache}
+	 * @param index The mapping's {@link SplitDyldCache} index
+	 * @param slideFixupMap A {@link Map} of {@link DyldCacheSlideFixup}s to perform
+	 * @param fsrl {@link FSRL} to assign to the resulting {@link ByteProvider}
+	 * @param monitor {@link TaskMonitor}
+	 * @return {@link ByteProvider} containing the bytes of the mapping
+	 * @throws MachException If there was an error creating Mach-O headers
+	 * @throws IOException If there was an IO-related issue with extracting the mapping
+	 * @throws CancelledException If the user cancelled the operation
 	 */
-	private static byte[] toBytes(long value, int size) throws IllegalArgumentException {
-		if (size != 4 && size != 8) {
-			throw new IllegalArgumentException("Size must be 4 or 8 (got " + size + ")");
+	public static ByteProvider extractMapping(MappingRange mappingRange, String segmentName,
+			SplitDyldCache splitDyldCache, int index,
+			Map<DyldCacheSlideInfoCommon, List<DyldCacheSlideFixup>> slideFixupMap, FSRL fsrl,
+			TaskMonitor monitor) throws IOException, MachException, CancelledException {
+
+		int magic = MachConstants.MH_MAGIC_64;
+		List<Range<Long>> ranges = new ArrayList<>(mappingRange.rangeSet().asRanges());
+		DyldCacheMappingAndSlideInfo mappingInfo = mappingRange.mappingInfo();
+		int allSegmentsSize = SegmentCommand.size(magic) * ranges.size();
+
+		// Fix slide pointers
+		ByteProvider origProvider = splitDyldCache.getProvider(index);
+		byte[] fixedProviderBytes = origProvider.readBytes(0, origProvider.length());
+		DyldCacheSlideInfoCommon slideInfo = slideFixupMap.keySet()
+				.stream()
+				.filter(e -> e.getMappingAddress() == mappingInfo.getAddress())
+				.findFirst()
+				.orElse(null);
+		if (slideInfo != null) {
+			List<DyldCacheSlideFixup> slideFixups = slideFixupMap.get(slideInfo);
+			monitor.initialize(slideFixups.size(), "Fixing slide pointers...");
+			for (DyldCacheSlideFixup fixup : slideFixups) {
+				monitor.increment();
+				long fileOffset = slideInfo.getMappingFileOffset() + fixup.offset();
+				byte[] newBytes = toBytes(fixup.value(), fixup.size());
+				System.arraycopy(newBytes, 0, fixedProviderBytes, (int) fileOffset,
+					newBytes.length);
+			}
 		}
-		DataConverter converter = LittleEndianDataConverter.INSTANCE;
-		return size == 8 ? converter.getBytes(value) : converter.getBytes((int) value);
+
+		// Mach-O Header
+		byte[] header = MachHeader.create(magic, 0x100000c, 0x80000002, 6, ranges.size(),
+			allSegmentsSize, 0x42100085, 0);
+
+		// Segment commands and data
+		List<byte[]> segments = new ArrayList<>();
+		List<byte[]> data = new ArrayList<>();
+		int current = header.length + allSegmentsSize;
+		try (ByteProvider fixedProvider = new ByteArrayProvider(fixedProviderBytes)) {
+			for (int i = 0; i < ranges.size(); i++) {
+				Range<Long> range = ranges.get(i);
+
+				// Segment Command
+				long dataSize = range.upperEndpoint() - range.lowerEndpoint();
+				segments.add(
+					SegmentCommand.create(magic, "%s.%d.%d".formatted(segmentName, index, i),
+						range.lowerEndpoint(), dataSize, current, dataSize,
+						mappingInfo.getMaxProtection(), mappingInfo.getMaxProtection(), 0, 0));
+
+				// Data
+				data.add(fixedProvider.readBytes(
+					range.lowerEndpoint() - mappingInfo.getAddress() + mappingInfo.getFileOffset(),
+					dataSize));
+
+				current += dataSize;
+			}
+		}
+
+		// Combine pieces
+		int dataSize = data.stream().mapToInt(d -> d.length).sum();
+		int totalSize = header.length + allSegmentsSize + dataSize;
+		byte[] result = new byte[totalSize + FOOTER_V1.length];
+		System.arraycopy(header, 0, result, 0, header.length);
+		current = header.length;
+		for (byte[] segment : segments) {
+			System.arraycopy(segment, 0, result, current, segment.length);
+			current += segment.length;
+		}
+		for (byte[] d : data) {
+			System.arraycopy(d, 0, result, current, d.length);
+			current += d.length;
+		}
+
+		// Add footer
+		System.arraycopy(FOOTER_V1, 0, result, result.length - FOOTER_V1.length, FOOTER_V1.length);
+
+		return new ByteArrayProvider(result, fsrl);
 	}
 
 	/**
@@ -111,6 +208,22 @@ public class DyldCacheExtractor {
 		}
 
 		return slideFixupMap;
+	}
+
+	/**
+	 * Converts the given value to a byte array
+	 * 
+	 * @param value The value to convert to a byte array
+	 * @param size The number of bytes to convert (must be 4 or 8)
+	 * @return The value as a byte array of the given size
+	 * @throws IllegalArgumentException if size is an unsupported value
+	 */
+	private static byte[] toBytes(long value, int size) throws IllegalArgumentException {
+		if (size != 4 && size != 8) {
+			throw new IllegalArgumentException("Size must be 4 or 8 (got " + size + ")");
+		}
+		DataConverter converter = LittleEndianDataConverter.INSTANCE;
+		return size == 8 ? converter.getBytes(value) : converter.getBytes((int) value);
 	}
 
 	/**
@@ -198,6 +311,9 @@ public class DyldCacheExtractor {
 				}
 			}
 
+			// Account for the size of the footer
+			packedSize += FOOTER_V1.length;
+
 			packed = new byte[packedSize];
 			
 			// Copy each segment into the packed array (leaving no gaps)
@@ -217,8 +333,10 @@ public class DyldCacheExtractor {
 					// that might get extracted and added to the same program.  Rather than
 					// computing the optimal address it should go at (which will required looking
 					// at every other DYLIB in the cache which is slow), just make the address very
-					// far away from the other DYLIB's
-					segment.setVMaddress(textSegment.getVMaddress() << 4);
+					// far away from the other DYLIB's.  This should be safe for 64-bit binaries.
+					if (!machoHeader.is32bit()) {
+						segment.setVMaddress(textSegment.getVMaddress() << 4);
+					}
 				}
 				else {
 					bytes = segmentProvider.readBytes(segment.getFileOffset(), segmentSize);
@@ -230,6 +348,10 @@ public class DyldCacheExtractor {
 			fixupMachHeader();
 			fixupLoadCommands();
 			fixupSlidePointers();
+
+			// Add footer
+			System.arraycopy(FOOTER_V1, 0, packed, packed.length - FOOTER_V1.length,
+				FOOTER_V1.length);
 		}
 
 		/**
@@ -684,3 +806,4 @@ public class DyldCacheExtractor {
 		}
 	}
 }
+

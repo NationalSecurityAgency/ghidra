@@ -1,0 +1,8 @@
+<callfixup name="__rust_try">
+    <target name="__rust_try"/>
+    <pcode>
+	<body><![CDATA[
+	    call [RAX];
+	    ]]></body>
+    </pcode>
+</callfixup>

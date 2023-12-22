@@ -605,9 +605,6 @@ public class ObjectTreeModel implements DisplaysModified {
 		if (!showMethods && value.isObject() && value.getChild().isMethod(snap)) {
 			return false;
 		}
-		if (!value.getLifespan().intersects(span)) {
-			return false;
-		}
 		return true;
 	}
 
@@ -624,7 +621,7 @@ public class ObjectTreeModel implements DisplaysModified {
 
 	protected List<GTreeNode> generateObjectChildren(TraceObject object) {
 		List<GTreeNode> result = ObjectTableModel
-				.distinctCanonical(object.getValues().stream().filter(this::isValueVisible))
+				.distinctCanonical(object.getValues(span).stream().filter(this::isValueVisible))
 				.map(v -> nodeCache.getOrCreateNode(v))
 				.sorted()
 				.collect(Collectors.toList());

@@ -25,15 +25,18 @@ import org.junit.experimental.categories.Category;
 
 import db.Transaction;
 import generic.test.category.NightlyCategory;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
-import ghidra.app.services.*;
+import ghidra.app.services.DebuggerControlService;
 import ghidra.dbg.model.TestTargetStack;
 import ghidra.dbg.model.TestTargetStackFrameHasRegisterBank;
 import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.target.schema.XmlSchemaContext;
+import ghidra.debug.api.action.ActionSource;
+import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.model.TraceRecorder;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.DomainFile;
 import ghidra.trace.database.target.DBTraceObjectManager;
 import ghidra.trace.database.target.DBTraceObjectManagerTest;
@@ -45,7 +48,7 @@ import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 
 @Category(NightlyCategory.class) // this may actually be an @PortSensitive test
-public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebuggerTest {
 
 	protected DebuggerControlService editingService;
 
@@ -237,6 +240,8 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 			objThread0 =
 				objectManager.createObject(TraceObjectKeyPath.parse("Targets[0].Threads[0]"));
 		}
+		// Manager listens for the root-created event to activate it. Wait for it to clear.
+		waitForDomainObject(tb.trace);
 		TraceThread thread =
 			Objects.requireNonNull(objThread0.queryInterface(TraceObjectThread.class));
 

@@ -15,6 +15,10 @@
  */
 package ghidra.feature.vt.gui.provider.impliedmatches;
 
+import java.util.Set;
+
+import docking.widgets.table.DiscoverableTableUtils;
+import docking.widgets.table.TableColumnDescriptor;
 import ghidra.docking.settings.Settings;
 import ghidra.feature.vt.api.db.DeletedMatch;
 import ghidra.feature.vt.api.main.*;
@@ -22,7 +26,8 @@ import ghidra.feature.vt.api.util.EmptyVTSession;
 import ghidra.feature.vt.gui.plugin.AddressCorrelatorManager;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.util.AbstractVTMatchTableModel.*;
-import ghidra.feature.vt.gui.util.*;
+import ghidra.feature.vt.gui.util.ImpliedMatchUtils;
+import ghidra.feature.vt.gui.util.MatchInfo;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
@@ -32,13 +37,8 @@ import ghidra.util.table.AddressBasedTableModel;
 import ghidra.util.table.field.AbstractProgramBasedDynamicTableColumn;
 import ghidra.util.task.TaskMonitor;
 
-import java.util.Set;
-
-import docking.widgets.table.DiscoverableTableUtils;
-import docking.widgets.table.TableColumnDescriptor;
-
-public class VTImpliedMatchesTableModel extends
-		AddressBasedTableModel<ImpliedMatchWrapperRowObject> {
+public class VTImpliedMatchesTableModel
+		extends AddressBasedTableModel<ImpliedMatchWrapperRowObject> {
 	private static final String TITLE = "Implied Match Table Model";
 
 	protected VTSession session;
@@ -95,7 +95,7 @@ public class VTImpliedMatchesTableModel extends
 
 			if (deletedSourceAddress.equals(matchSourceAddres) &&
 				deletedDestinationAddress.equals(matchDestinationAddress)) {
-				// try to update the match contained by the row object				
+				// try to update the match contained by the row object
 				rowObject.setMatch(ImpliedMatchUtils.resolveImpliedMatch(rowObject, session));
 			}
 		}
@@ -114,42 +114,42 @@ public class VTImpliedMatchesTableModel extends
 
 		descriptor.addVisibleColumn(new SourceReferenceAddressTableColumn());
 		descriptor.addVisibleColumn(new DestinationReferenceAddressTableColumn());
-		descriptor.addHiddenColumn(DiscoverableTableUtils.adaptColumForModel(this,
-			new SessionNumberTableColumn()));
+		descriptor.addHiddenColumn(
+			DiscoverableTableUtils.adaptColumForModel(this, new SessionNumberTableColumn()));
 		descriptor.addVisibleColumn(
 			DiscoverableTableUtils.adaptColumForModel(this, new StatusTableColumn()), 1, true);
-		descriptor.addVisibleColumn(DiscoverableTableUtils.adaptColumForModel(this,
-			new MatchTypeTableColumn()));
-		descriptor.addVisibleColumn(DiscoverableTableUtils.adaptColumForModel(this,
-			new ScoreTableColumn()));
-		descriptor.addVisibleColumn(DiscoverableTableUtils.adaptColumForModel(this,
-			new ConfidenceScoreTableColumn()));
-		descriptor.addVisibleColumn(DiscoverableTableUtils.adaptColumForModel(this,
-			new ImpliedMatchCountColumn()));
-		descriptor.addVisibleColumn(DiscoverableTableUtils.adaptColumForModel(this,
-			new RelatedMatchCountColumn()));
-		descriptor.addHiddenColumn(DiscoverableTableUtils.adaptColumForModel(this,
-			new MultipleSourceLabelsTableColumn()));
-		descriptor.addVisibleColumn(DiscoverableTableUtils.adaptColumForModel(this,
-			new SourceLabelTableColumn()));
+		descriptor.addVisibleColumn(
+			DiscoverableTableUtils.adaptColumForModel(this, new MatchTypeTableColumn()));
+		descriptor.addVisibleColumn(
+			DiscoverableTableUtils.adaptColumForModel(this, new ScoreTableColumn()));
+		descriptor.addVisibleColumn(
+			DiscoverableTableUtils.adaptColumForModel(this, new ConfidenceScoreTableColumn()));
+		descriptor.addVisibleColumn(
+			DiscoverableTableUtils.adaptColumForModel(this, new ImpliedMatchCountColumn()));
+		descriptor.addVisibleColumn(
+			DiscoverableTableUtils.adaptColumForModel(this, new RelatedMatchCountColumn()));
+		descriptor.addHiddenColumn(
+			DiscoverableTableUtils.adaptColumForModel(this, new MultipleSourceLabelsTableColumn()));
+		descriptor.addVisibleColumn(
+			DiscoverableTableUtils.adaptColumForModel(this, new SourceLabelTableColumn()));
 		descriptor.addVisibleColumn(
 			DiscoverableTableUtils.adaptColumForModel(this, new SourceAddressTableColumn()), 2,
 			true);
 		descriptor.addHiddenColumn(DiscoverableTableUtils.adaptColumForModel(this,
 			new MultipleDestinationLabelsTableColumn()));
-		descriptor.addVisibleColumn(DiscoverableTableUtils.adaptColumForModel(this,
-			new DestinationLabelTableColumn()));
-		descriptor.addVisibleColumn(DiscoverableTableUtils.adaptColumForModel(this,
-			new DestinationAddressTableColumn()));
-		descriptor.addVisibleColumn(DiscoverableTableUtils.adaptColumForModel(this,
-			new AlgorithmTableColumn()));
+		descriptor.addVisibleColumn(
+			DiscoverableTableUtils.adaptColumForModel(this, new DestinationLabelTableColumn()));
+		descriptor.addVisibleColumn(
+			DiscoverableTableUtils.adaptColumForModel(this, new DestinationAddressTableColumn()));
+		descriptor.addVisibleColumn(
+			DiscoverableTableUtils.adaptColumForModel(this, new AlgorithmTableColumn()));
 
 		return descriptor;
 	}
 
 	@Override
-	protected void doLoad(Accumulator<ImpliedMatchWrapperRowObject> accumulator, TaskMonitor monitor)
-			throws CancelledException {
+	protected void doLoad(Accumulator<ImpliedMatchWrapperRowObject> accumulator,
+			TaskMonitor monitor) throws CancelledException {
 		MatchInfo matchInfo = controller.getMatchInfo();
 		if (matchInfo == null) {
 			return; // no match selected
@@ -165,9 +165,8 @@ public class VTImpliedMatchesTableModel extends
 		}
 
 		AddressCorrelatorManager correlator = controller.getCorrelator();
-		Set<VTImpliedMatchInfo> matches =
-			ImpliedMatchUtils.findImpliedMatches(controller, sourceFunction, destinationFunction,
-				session, correlator, monitor);
+		Set<VTImpliedMatchInfo> matches = ImpliedMatchUtils.findImpliedMatches(sourceFunction,
+			destinationFunction, session, correlator, monitor);
 
 		monitor.setMessage("Searching for existing matches...");
 		monitor.initialize(matches.size());
@@ -200,11 +199,11 @@ public class VTImpliedMatchesTableModel extends
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	// Source Ref Address
-	public static class SourceReferenceAddressTableColumn extends
-			AbstractProgramBasedDynamicTableColumn<ImpliedMatchWrapperRowObject, String> {
+	public static class SourceReferenceAddressTableColumn
+			extends AbstractProgramBasedDynamicTableColumn<ImpliedMatchWrapperRowObject, String> {
 
 		@Override
 		public String getColumnName() {
@@ -224,8 +223,8 @@ public class VTImpliedMatchesTableModel extends
 	}
 
 	// Destination Ref Address
-	public static class DestinationReferenceAddressTableColumn extends
-			AbstractProgramBasedDynamicTableColumn<ImpliedMatchWrapperRowObject, String> {
+	public static class DestinationReferenceAddressTableColumn
+			extends AbstractProgramBasedDynamicTableColumn<ImpliedMatchWrapperRowObject, String> {
 
 		@Override
 		public String getColumnName() {

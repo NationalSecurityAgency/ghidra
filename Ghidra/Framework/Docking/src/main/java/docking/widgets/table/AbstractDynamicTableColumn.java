@@ -50,10 +50,10 @@ public abstract class AbstractDynamicTableColumn<ROW_TYPE, COLUMN_TYPE, DATA_SOU
 	protected static final FloatingPointPrecisionSettingsDefinition FLOATING_POINT_PRECISION_SETTING =
 		FloatingPointPrecisionSettingsDefinition.DEF;
 
-	protected static SettingsDefinition[] INTEGER_SETTINGS_DEFINITIONS =
+	protected static final SettingsDefinition[] INTEGER_SETTINGS_DEFINITIONS =
 		new SettingsDefinition[] { INTEGER_RADIX_SETTING, INTEGER_SIGNEDNESS_MODE_SETTING };
 
-	protected static SettingsDefinition[] FLOATING_POINT_SETTINGS_DEFINITIONS =
+	protected static final SettingsDefinition[] FLOATING_POINT_SETTINGS_DEFINITIONS =
 		new SettingsDefinition[] { FLOATING_POINT_PRECISION_SETTING };
 
 	private boolean hasConfiguredDefaultSettings = false;

@@ -314,6 +314,8 @@ public record ElementId(String name, int id) {
 	public static final ElementId ELEM_TOGGLERULE = new ElementId("togglerule", 209);
 	public static final ElementId ELEM_WARNING = new ElementId("warning", 210);
 
+	public static final ElementId ELEM_BRACEFORMAT = new ElementId("braceformat", 284);
+
 	// jumptable
 	public static final ElementId ELEM_BASICOVERRIDE = new ElementId("basicoverride", 211);
 	public static final ElementId ELEM_DEST = new ElementId("dest", 212);
@@ -421,8 +423,37 @@ public record ElementId(String name, int id) {
 	public static final ElementId ELEM_COMMAND_GETUSEROPNAME =
 		new ElementId("command_getuseropname", COMMAND_GETUSEROPNAME);
 
+	// signature
+	public static final ElementId ELEM_BLOCKSIG = new ElementId("blocksig", 258);
+	public static final ElementId ELEM_CALL = new ElementId("call", 259);
+	public static final ElementId ELEM_GENSIG = new ElementId("gensig", 260);
+	public static final ElementId ELEM_MAJOR = new ElementId("major", 261);
+	public static final ElementId ELEM_MINOR = new ElementId("minor", 262);
+	public static final ElementId ELEM_COPYSIG = new ElementId("copysig", 263);
+	public static final ElementId ELEM_SETTINGS = new ElementId("settings", 264);
+	public static final ElementId ELEM_SIG = new ElementId("sig", 265);
+	public static final ElementId ELEM_SIGNATUREDESC = new ElementId("signaturedesc", 266);
+	public static final ElementId ELEM_SIGNATURES = new ElementId("signatures", 267);
+	public static final ElementId ELEM_SIGSETTINGS = new ElementId("sigsettings", 268);
+	public static final ElementId ELEM_VARSIG = new ElementId("varsig", 269);
+
 	public static final ElementId ELEM_SPLITDATATYPE = new ElementId("splitdatatype", 270);
 	public static final ElementId ELEM_JUMPTABLEMAX = new ElementId("jumptablemax", 271);
 	public static final ElementId ELEM_NANIGNORE = new ElementId("nanignore", 272);
-	public static final ElementId ELEM_UNKNOWN = new ElementId("XMLunknown", 273);
+
+	// modelrules
+	public static final ElementId ELEM_DATATYPE = new ElementId("datatype", 273);
+	public static final ElementId ELEM_CONSUME = new ElementId("consume", 274);
+	public static final ElementId ELEM_CONSUME_EXTRA = new ElementId("consume_extra", 275);
+	public static final ElementId ELEM_CONVERT_TO_PTR = new ElementId("convert_to_ptr", 276);
+	public static final ElementId ELEM_GOTO_STACK = new ElementId("goto_stack", 277);
+	public static final ElementId ELEM_JOIN = new ElementId("join", 278);
+	public static final ElementId ELEM_DATATYPE_AT = new ElementId("datatype_at", 279);
+	public static final ElementId ELEM_POSITION = new ElementId("position", 280);
+	public static final ElementId ELEM_VARARGS = new ElementId("varargs", 281);
+	public static final ElementId ELEM_HIDDEN_RETURN = new ElementId("hidden_return", 282);
+	public static final ElementId ELEM_JOIN_PER_PRIMITIVE =
+		new ElementId("join_per_primitive", 283);
+
+	public static final ElementId ELEM_UNKNOWN = new ElementId("XMLunknown", 285);
 }

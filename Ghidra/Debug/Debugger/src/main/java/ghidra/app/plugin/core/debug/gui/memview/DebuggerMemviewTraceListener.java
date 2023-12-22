@@ -17,10 +17,9 @@ package ghidra.app.plugin.core.debug.gui.memview;
 
 import java.util.*;
 
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
-import ghidra.app.services.TraceRecorder;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.*;
@@ -38,7 +37,6 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 	protected MemviewProvider provider;
 	DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
 	Trace currentTrace;
-	TraceRecorder currentRecorder;
 
 	private boolean trackTrace = false;
 	private boolean trackThreads = true;
@@ -230,6 +228,9 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 	private void processTrace(Trace trace) {
 		updateList.clear();
 		provider.reset();
+		if (!provider.isVisible()) {
+			return;
+		}
 		TraceThreadManager threadManager = trace.getThreadManager();
 		for (TraceThread thread : threadManager.getAllThreads()) {
 			threadChanged(thread);

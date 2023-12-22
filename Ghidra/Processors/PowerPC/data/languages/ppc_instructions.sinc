@@ -4516,7 +4516,7 @@ define pcodeop TLBSynchronize; # Outputs/affect TBD
 }
 
 #xor. r0,r0,r0	0x7c 00 02 79
-:xor. A,S,B		is $(NOTVLE) & OP=31 & S & A & B & XOP_1_10=316 & Rc=1
+:xor. A,S,B		is OP=31 & S & A & B & XOP_1_10=316 & Rc=1
 {
 	A = S ^ B;
 	cr0flags(A);

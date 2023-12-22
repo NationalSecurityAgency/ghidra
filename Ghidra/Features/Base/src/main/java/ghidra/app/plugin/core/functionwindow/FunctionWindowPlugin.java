@@ -15,14 +15,11 @@
  */
 package ghidra.app.plugin.core.functionwindow;
 
-import docking.ComponentProvider;
-import docking.ComponentProviderActivationListener;
 import docking.action.DockingAction;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramClosedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
-import ghidra.app.plugin.core.functioncompare.FunctionComparisonProvider;
 import ghidra.app.plugin.core.functioncompare.actions.CompareFunctionsFromFunctionTableAction;
 import ghidra.app.services.FunctionComparisonService;
 import ghidra.framework.model.*;
@@ -49,14 +46,12 @@ import ghidra.util.task.SwingUpdateManager;
 	eventsConsumed = { ProgramClosedPluginEvent.class }
 )
 //@formatter:on
-public class FunctionWindowPlugin extends ProgramPlugin implements DomainObjectListener,
-		ComponentProviderActivationListener {
+public class FunctionWindowPlugin extends ProgramPlugin implements DomainObjectListener {
 
 	private DockingAction selectAction;
 	private DockingAction compareFunctionsAction;
 	private FunctionWindowProvider provider;
 	private SwingUpdateManager swingMgr;
-	private FunctionComparisonService functionComparisonService;
 
 	public FunctionWindowPlugin(PluginTool tool) {
 		super(tool);
@@ -94,20 +89,17 @@ public class FunctionWindowPlugin extends ProgramPlugin implements DomainObjectL
 	@Override
 	public void serviceAdded(Class<?> interfaceClass, Object service) {
 		if (interfaceClass == FunctionComparisonService.class) {
-			functionComparisonService = (FunctionComparisonService) service;
-
-			// Listen for providers being opened/closed to we can disable 
-			// comparison actions if there are no comparison providers
-			// open
-			functionComparisonService.addFunctionComparisonProviderListener(this);
+			compareFunctionsAction = new CompareFunctionsFromFunctionTableAction(tool, getName());
+			tool.addLocalAction(provider, compareFunctionsAction);
+			tool.contextChanged(provider);
 		}
 	}
 
 	@Override
 	public void serviceRemoved(Class<?> interfaceClass, Object service) {
 		if (interfaceClass == FunctionComparisonService.class) {
-			functionComparisonService.removeFunctionComparisonProviderListener(this);
-			functionComparisonService = null;
+			tool.removeLocalAction(provider, compareFunctionsAction);
+			compareFunctionsAction = null;
 		}
 	}
 
@@ -207,25 +199,12 @@ public class FunctionWindowPlugin extends ProgramPlugin implements DomainObjectL
 		selectAction = new MakeProgramSelectionAction(this, provider.getTable());
 		tool.addLocalAction(provider, selectAction);
 
-		compareFunctionsAction = new CompareFunctionsFromFunctionTableAction(tool, getName());
-		tool.addLocalAction(provider, compareFunctionsAction);
+		// note that the compare functions action is only added when the compare functions service
+		// is added to the tool
 	}
 
 	void showFunctions() {
 		provider.showFunctions();
 	}
 
-	@Override
-	public void componentProviderActivated(ComponentProvider componentProvider) {
-		if (componentProvider instanceof FunctionComparisonProvider) {
-			tool.contextChanged(provider);
-		}
-	}
-
-	@Override
-	public void componentProviderDeactivated(ComponentProvider componentProvider) {
-		if (componentProvider instanceof FunctionComparisonProvider) {
-			tool.contextChanged(provider);
-		}
-	}
 }

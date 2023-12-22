@@ -18,8 +18,8 @@ package ghidra.app.plugin.core.debug.service.model.interfaces;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
-import ghidra.app.plugin.core.debug.mapping.DebuggerMemoryMapper;
 import ghidra.dbg.target.*;
+import ghidra.debug.api.model.DebuggerMemoryMapper;
 import ghidra.program.model.address.*;
 
 public interface AbstractRecorderMemory {

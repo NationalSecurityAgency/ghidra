@@ -1146,8 +1146,9 @@ AttributeId ATTRIB_TYPELOCK = AttributeId("typelock",23);
 AttributeId ATTRIB_VAL = AttributeId("val",24);
 AttributeId ATTRIB_VALUE = AttributeId("value",25);
 AttributeId ATTRIB_WORDSIZE = AttributeId("wordsize",26);
+AttributeId ATTRIB_STORAGE = AttributeId("storage",149);
 
-AttributeId ATTRIB_UNKNOWN = AttributeId("XMLunknown",149); // Number serves as next open index
+AttributeId ATTRIB_UNKNOWN = AttributeId("XMLunknown",150); // Number serves as next open index
 
 ElementId ELEM_DATA = ElementId("data",1);
 ElementId ELEM_INPUT = ElementId("input",2);
@@ -1160,6 +1161,6 @@ ElementId ELEM_VAL = ElementId("val",8);
 ElementId ELEM_VALUE = ElementId("value",9);
 ElementId ELEM_VOID = ElementId("void",10);
 
-ElementId ELEM_UNKNOWN = ElementId("XMLunknown",273); // Number serves as next open index
+ElementId ELEM_UNKNOWN = ElementId("XMLunknown",285); // Number serves as next open index
 
 } // End namespace ghidra

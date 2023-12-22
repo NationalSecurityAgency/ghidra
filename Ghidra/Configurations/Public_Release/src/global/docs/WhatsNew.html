@@ -23,7 +23,7 @@
   <BODY>
 
 <H1>Ghidra: NSA Reverse Engineering Software</H2>
-    
+
     <P>
     Ghidra is a software reverse engineering (SRE) framework developed by NSA's Research Directorate.
     This framework includes a suite of full-featured, high-end software analysis tools that enable
@@ -45,88 +45,150 @@
     </P>
     <hr>   
         
-    <H1>What's New in Ghidra 10.4</H1>
+    <H1>What's New in Ghidra 11.0</H1>
     
     <H2>The not-so-fine print: Please Read!</H2>
     
-	<P>Ghidra 10.4 is fully backward compatible with project data from previous releases.
-	However, programs and data type archives which are created or modified in 10.4 will not be useable by an earlier Ghidra version. </P>
-
-	<P>This release includes new features and capabilities, performance improvements, quite a few bug fixes, and many pull-request
+    <P>This release includes new features, enhancements, performance improvements, quite a few bug fixes, and many pull-request
 	contributions. Thanks to all those who have contributed their time, thoughts, and code. The Ghidra user community thanks you too!</P>
-	
-	<P>IMPORTANT: Ghidra requires Java 17 JDK to run.  A newer version of Java may be acceptable but has not been fully tested.  Please see the
-	<a href="InstallationGuide.html">Ghidra Installation Guide</a> for additional information.</P>
-	
-	<P>NOTE: Please note that any programs imported with a Ghidra beta version or code built directly from source outside of a release tag may not be compatible
-	and may have flaws that won't be corrected by using this new release.  Any programs analyzed from a beta or other local master source build should be considered
-	experimental and re-imported and analyzed with a release version.  As an example, Ghidra 10.1 beta had an import flaw affecting symbol demangling that was not
-	correctable. Programs imported with previous release versions should upgrade correctly through various automatic upgrade mechanisms.  Any program
-	you will continue to reverse engineer should be imported fresh with a release version or a build you trust with the latest code fixes.</P>
 
-	<P>NOTE: Ghidra Server: The Ghidra 10.4 server is compatible with Ghidra 9.2 and later Ghidra clients.  Ghidra 10.4
+	<P>Ghidra 11.0 is fully backward compatible with project data from previous releases.
+	However, programs and data type archives which are created or modified in 11.0 will not be useable by an earlier Ghidra version. </P>
+
+	<P>This distribution requires JDK 17 to run, and provides Linux x86-64, Windows x86-64, and macOS x86-64 native components.
+	If you have another platform or wish to use a newer JDK, please see the
+	<a href="InstallationGuide.html">Ghidra Installation Guide</a> for additional information.</P>
+
+	<P>NOTE: Ghidra Server: The Ghidra 11.0 server is compatible with Ghidra 9.2 and later Ghidra clients.  Ghidra 11.0
 	clients are compatible with all 10.x and 9.x servers.  Although, due to potential Java version differences, it is recommended
 	that Ghidra Server installations older than 10.2 be upgraded.  Those using 10.2 and newer should not need a server upgrade.</P>
 	
-	<P>NOTE: Platform-specific native components can be built directly from a release distribution.
-	The distribution currently provides Linux x86-64, Windows x86-64, and macOS x86-64 native components.  If you have another platform,
-	for example a macOS M1 based system or a Linux ARM variant, the <span class="gcode">support/buildNatives</span> script can build the Decompiler,
-	demangler, and legacy PDB executables for your plaform.  Please see the "Building Ghidra Native Components" section in the
-	<a href="InstallationGuide.html#Build">Ghidra Installation Guide</a> for additional information.</P>
-	
-	<H2>Mach-O Improvements</H2>
-	
-	<P>Support for the Mach-O binary file format has received many updates, including more complete markup of load command data and Swift type metadata.
-	Support has also been added for threaded binding (<span class="gcode">BIND_OPCODE_THREADED</span>).  Libraries extracted from the <span class="gcode">dyld_shared_cache</span>
-	GFileSystem now contain a packed down <span class="gcode">__LINKEDIT</span> segment, significantly reducing the size of the resulting binary.</P>
-	
-	<P>Local symbols within <span class="gcode">dyld_shared_cache</span> extracted libraries are now included in place of <span class="gcode">&lt;redacted&gt;</span> symbols.</P>
-	  
-	<P>In addition to searching local filesystem directories, library dependencies can now be loaded from the top-level of any GFileSystem-supported container file.  This is allowed for all Import file 
-	formats that support the loading of library dependencies. For example, this enables loading library dependencies directly from within a <span class="gcode">dyld_shared_cache</span> file without the 
-	need to export them first to the local filesystem.</P>
-	
-	<H2>Accessibility Improvements</H2>
-	
-	<P>Ghidra's Listing, Byte Viewer, and Decompiler components have been updated to provide initial support for screen readers. These are custom Ghidra components
-	and as such do not have the typical built-in Java Swing support for screen readers.  Other Ghidra components use standard Java Swing widgets and work
-	out of the box with screen readers.
-	</P>
-	
-	<H2>Instruction Length Override</H2>
-	
-	<P>Added the ability to reduce an instruction's effective code unit length to facilitate overlapping instructions when flows into the middle of
-    an instruction occur (i.e., offcut flow).  This length override does not impact the actual number of bytes parsed.  By reducing the first instruction's 
-    effective code unit length, disassembly of the offcut location may be performed utilizing trailing bytes shared with the first instruction.  
-    The first instruction will retain its original fallthrough, therefore overlapping instruction(s) which follow should generally be fully contained 
-    within the first instruction's parsed byte length. The need for this has been observed in the x86 Linux libc library
-    where there may be a flow around a <span class="gcode">LOCK</span> prefix byte.
-    </P>
-	
-	<H2>Analysis</H2>
+	<P>NOTE: Any programs imported with a Ghidra beta version or code built directly from source code outside of a release tag may not be compatible,
+	and may have flaws that won't be corrected by using this new release.  Any programs analyzed from a beta or other local master source build should be considered
+	experimental and re-imported and analyzed with a release version. Programs imported with previous release versions should upgrade correctly through various
+	automatic upgrade mechanisms.  Any program you will continue to reverse engineer should be imported fresh with a release version or a build you trust with the
+	latest code fixes.</P>
 
-	<P>Function body creation has been reworked, when code from multiple functions overlap, to favor contiguous functions.  There have been instances where compilers
-	share portions of another functions code, especially common return code.  Where previously the jump to the other function would have been turned into a call, and
-	a portion of the other function split into two, the shared code will now belong to the function that falls into the shared code if possible.
-	Previously there was also a potential for arbitrary function bodies depending on which function was analzyed first.
-	These changes could have an affect on version tracking in some instances where the original binary was analyzed with an older version of Ghidra.</P>
+
+
+	<H2>BSim </H2>
 	
-	<H2>Diff Improvement</H2>
+	<P>A major new feature called BSim has been added.  BSim can find structurally similar functions in (potentially large) collections of binaries or object files.
+    BSim is based on Ghidra's decompiler and can find matches across compilers used, architectures, and/or small changes to source code.</P>
+    <P>As you've reverse engineered software, you've likely asked the following questions:</P>
+
+    <UL style="padding-left:100px">
+    <LI>Which libraries were statically linked into this executable, and possibly what version of the library?</LI>
+    <LI>Does this executable share some code with another executable that I've analyzed?</LI>
+    <LI>What are the differences between version 1 and version 2 of a given executable?</LI>
+    <LI>Does this executable share code with another executable in a large collection of binaries?</LI>
+    <LI>Was this function pulled from an open-source library?</LI>
+    </UL>
+
+    <P>BSim is intended to help with these questions (and others) by providing a way to search collections of binaries for similar, but not necessarily identical, functions.</P>
+    
+    <P>BSim can compare functions within a binary, within a collection of binaries or object files in a project on a local system, or within a large collection of binaries
+    utilizing a PostgreSQL or an Elasticsearch server.  Using BSim locally does not require setting up a PostgreSQL or Elastic server or having administrator access.</P>
+    
+    <P>There is a BSim tutorial that walks through use of BSim locally.  Using BSim locally and the tutorial is the best way to try out BSim before deciding if you need to set up a server.</P>
 	
-	<P>Diff can now be performed between two open programs which may include files previously opened via a Ghidra-URL.  Previously, Diff only allowed
-	a file from the active project to be selected.</P>
+	<H2>GhidraGo </H2>
 	
-	<H2>GoLang Version Support</H2>
+	<P>GhidraGo is an experimental feature that adds integration support for Ghidra URL's and Ghidra Tools. The main use of GhidraGo is embedding hyperlinks within web pages
+	to pre-ingested programs within a Ghidra multi-user repository.  Clicking on the hyperlink causes Ghidra to display the previously ingested program.
+	No data other than the Ghidra URL is transferred to Ghidra, and no socket is open within Ghidra listening for commands.  GhidraGo must be enabled by
+	installing a plugin in the Ghidra project manager, and must also be configured as a protocol handler in your web browser.  GhidraGo is not setup or enabled by default.
+	For details on setting up GhidraGo, please see the included <span class="gtitle">GhidraGoREADME.html</span> or search for GhidraGo within help.
+	</P>
+
+	<H2>Version Tracking </H2>
 	
-	<P>GoLang versions 1.17, 1.19, and 1.20 have been added.  Previously only version 1.18 was supported.  A bug in the decompiler triggered
-	by GoLang binaries has also been fixed.</P>
+	<P>Auto Version Tracking has been sped up, made customizable, and improved to find more matches. The mechanism to identify good  matches from duplicate match
+	sets has been improved and sped up. Implied matches are now created and will be applied if the vote minimum and conflict maximum limits are met. In addition,
+	the ability to choose which correlators are run as well as setting the options of most correlators has been added. The Auto Version Tracking script has been
+	updated to prompt for all options in a single dialog. The script now works in headless mode and an example prescript to allow
+	setting of options in headless mode is included.</P>
 	
-	<H2>Undo/Redo Change List</H2>
-	<P>Undo and Redo now have lists of transactions that can be undone or redone.  This change makes it easy to choose a set of transactions to be undone/redone by choosing
-	an item further down the list instead of pressing undo/redo repeatedly</P>
+	<P>Version Tracking can also use the new BSim function matching capability in a new correlator called the BSim Correlator.  Auto Version Tracking does not use the new BSim Correlator yet.</P>
+
+    <H2>Function Comparison Window</H2>
+     <P>The function comparison window, used by Version Tracking and BSim, has been overhauled a bit:
+     
+     <UL style="padding-left:100px">
+     
+     <LI>A help topic for Function Comparison has been added.</LI>
+     <LI>Token matching, scrolling to matches, and difference highlighting is much improved using
+     an algorithm based on BSim function matching.  The colors used for the token matching highlights are configurable.</LI>
+     
+     <LI>From the comparison window, users can click on called functions that have corresponding matches to bring up a new function comparison window showing those functions.
+     The action is currently not available within version tracking.</LI>
+          
+     <LI>The functions can be displayed side by side vertically or horizontally.</LI>
+     
+     <LI>The function signature from a function in the function comparison window can be applied to include name only, a skeleton signature, or the entire signature
+     including all referenced data types.  Applying only the skeleton function signature can be useful if there is any question of differences in the
+     data structure composition used by the function signature between the two programs.</LI>
+     </UL>
+
+    <H2>Scripting</H2>
+    
+    <P>A new multi-option script dialog has been added to the scripting API that can present and get all user inputs a script needs in one dialog.
+    The <span class="gcode">askValues()</span> scripting method replaces the cumbersome process of prompting the user for each input separately.</P>
+   
+	<H2>Rust</H2>
+	
+	<P>Initial support for Rust compiled binaries, mainly demangling of Rust method names and Rust in DWARF information, has been added.  In addition, Rust strings are marked up so that the
+	decompiler will display Rust strings correctly.  There is more work to do, especially with mapping Rust parameter passing.  Custom storage may be required in some instances.</P>
+    
+    <H2>Golang</H2>
+    <P>Golang reverse engineering within Ghidra is much improved by:
+        <UL style="padding-left:100px">
+    <LI>A new <span class="gtitle">Golang String Analyzer</span> which finds and marks up Golang strings so they display correctly in the decompiler</LI>
+    <LI>Type and interface method markup improvements</LI>
+    <LI>Better function parameter recovery</LI>
+    <LI>Using package information to organize type and symbol elements into namespaces</LI>
+    <LI>Using run time type information to override the types of objects that are created by calls to malloc-like built-in functions</LI>
+    </UL>
+    </P>
+    
+ 	<H2>Search for Encoded Strings</H2>
+ 	
+    <P>A new action in the Search menu, <span class="gtitle">Search -> For Encoded Strings...</span>, can help find and create strings encoded in alternate character sets and alphabets.
+    Valid strings are based on runs of bytes that would be valid in a particular character set and alphabet.  There are currently no additional models for defining valid words within other languages.</P>
+
+    <H2>Import / Export</H2>
+    <P>The <span class="gtitle">CaRT</span> file format is now supported.  The <span class="gtitle">CaRT</span> format is used to store and transfer malware along with metadata about
+    the malware in a neutered form such that it cannot be executed.  It is encrypted so anti-virus software will not flag the file under analysis.</P>
+    
+    <P>Headless importing of binaries from container files, such as .zip files, with multiple embedded files is now possible.  This includes loading referenced .dll and .so files also
+    found within the container file.</P>
+    
+    <P>The Headless Analyzer can now recurse into supported GFileSystem container files when a recursion depth of one or more is specified on the command line.</P>
+    
+    <H2>Mach-O Improvements</H2>
+    
+    <P>Support for the Mach-O binary file format has continued to receive updates.  Improvements have been made to library linking and loading, as well as thunk creation.  Additionally, dyld_shared_cache
+    components extracted from Ghidra's DyldCacheFileSystem can now be added together on-demand with the Add To Program feature.  Broken references can be automatically resolved by right-clicking on them
+    and clicking <span class="gtitle">References -> Add To Program</span>.</P>
+
+	<H2>PDB</H2>
+	
+     <P>The PDB data types processing has been changed to use a resolve-as-you-go model.  The change eliminates the dependency graph and reduces the memory footprint required to load all
+     PDB types.  The change allows larger PDB's to load successfully and improves the accuracy of some data types.</P>
+     
+    <H2>Overlays with Multiple Memory Blocks</H2>
+    
+    <P> Overlay spaces now support multiple memory blocks in the same overlay.  After creating the initial memory
+    block as an overlay, the new overlay memory space will become available when adding new memory blocks. All overlay memory blocks can
+    be manipulated in the same way as normal memory blocks.  The new feature is useful when analyzing binaries
+    meant to run on multiple processors with tasks running on each processor in their own overlapped virtual memory space such as an RTOS.</P>
+
+    <H2>Processors</H2>
+    <P>Support for the Loongson processor architecture has been added.  All known instructions should disassemble. However semantics for a large number of instructions use pseudoOp calls currently.</P>
+
 	
     <H2>Additional Bug Fixes and Enhancements</H2>
-    <P> Numerous other bug fixes and improvements are fully listed in the <a href="ChangeHistory.html">ChangeHistory</a> file.</P>
+    <P> Numerous other new features, improvements, and bug fixes are fully listed in the <a href="ChangeHistory.html">ChangeHistory</a> file.</P>
     		   
     <BR>
     <P align="center">

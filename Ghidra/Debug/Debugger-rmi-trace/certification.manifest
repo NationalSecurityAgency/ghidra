@@ -1,6 +1,7 @@
 ##VERSION: 2.0
 DEVNOTES.txt||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
+data/ExtensionPoint.manifest||GHIDRA||||END|
 src/main/py/LICENSE||GHIDRA||||END|
 src/main/py/README.md||GHIDRA||||END|
 src/main/py/pyproject.toml||GHIDRA||||END|

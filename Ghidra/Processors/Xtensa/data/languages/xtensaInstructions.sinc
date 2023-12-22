@@ -1,0 +1,1921 @@
+
+
+# ABS - Absolute Value (RRR), pg. 246.
+:abs ar, at is op2 = 0b0110 & op1 = 0 & ar & as = 0b0001 & at & op0 = 0 {
+	ar = at;
+	if (ar s> 0)
+	  goto inst_next;
+	ar = -ar;
+}
+
+# ABS.S - Absolute Single Value (RRR), pg. 247.
+:abs.s fr, fs is op2 = 0b1111 & op1 = 0b1010 & fr & fs & at = 0b0001 & op0 = 0b0000 {
+	fr = abs(fs);
+}
+
+# ADD - Add (RRR), pg. 248.
+:add ar, as, at is op2 = 0b1000 & op1 = 0 & ar & as & at & op0 = 0 {
+	ar = as + at;
+}
+
+# ADD.N - Narrow Add (RRRN), pg. 249.
+:add.n n_ar, n_as, n_at is n_ar & n_as & n_at & n_op0 = 0b1010 {
+	n_ar = n_as + n_at;
+}
+
+# ADD.S - Add Single (RRR), pg. 250.
+:add.s fr, fs, ft is op2 = 0 & op1 = 0b1010 & fr & fs & ft & op0 = 0 {
+	fr = fs f+ ft;
+}
+
+# ADDI - Add Immediate (RRI8), pg. 251.
+:addi at, as, s8_16_23 is s8_16_23 & ar = 0b1100 & as & at & op0 = 0b0010 {
+	at = as + s8_16_23;
+}
+
+# ADDI.N - Narrow Add Immediate (RRRN), pg. 252.
+:addi.n n_ar, n_as, n_s4_4_7_nozero is n_ar & n_as & n_s4_4_7_nozero & n_op0 = 0b1011 {
+	n_ar = n_as + n_s4_4_7_nozero;
+}
+
+# ADDMI - Add Immediate with Shift by 8, pg. 253.
+:addmi at, as, s16_16_23_sb8 is s16_16_23_sb8 & ar = 0b1101 & as & at & op0 = 0b0010 {
+	at = as + s16_16_23_sb8;
+}
+
+# ADDX2 - Add with Shift by 1, pg. 254.
+:addx2 ar, as, at is op2 = 0b1001 & op1 = 0 & ar & as & at & op0 = 0 {
+	ar = (as << 1) + at;
+}
+
+# ADDX4 - Add with Shift by 2, pg. 255.
+:addx4 ar, as, at is op2 = 0b1010 & op1 = 0 & ar & as & at & op0 = 0 {
+	ar = (as << 2) + at;
+}
+
+# ADDX8 - Add with Shift by 4, pg. 256.
+:addx8 ar, as, at is op2 = 0b1011 & op1 = 0 & ar & as & at & op0 = 0 {
+	ar = (as << 3) + at;
+}
+
+# ALL4 - All 4 Booleans True, pg. 257.
+:all4 bt, bs is op2 = 0 & op1 = 0 & ar = 0b1001 & bs & bt & op0 = 0 {
+	local b = *[register]:1 &:4 bs+1;
+	local c = *[register]:1 &:4 bs+2;
+	local d = *[register]:1 &:4 bs+3;
+	bt = bs && b && c && d;
+}
+
+# ALL8 - All 8 Booleans True, pg. 258.
+:all8 bt, bs is op2 = 0 & op1 = 0 & ar = 0b1011 & bs & bt & op0 = 0 {
+	local b = *[register]:1 &:4 bs+1;
+	local c = *[register]:1 &:4 bs+2;
+	local d = *[register]:1 &:4 bs+3;
+	local e = *[register]:1 &:4 bs+4;
+	local f = *[register]:1 &:4 bs+5;
+	local g = *[register]:1 &:4 bs+6;
+	local h = *[register]:1 &:4 bs+7;
+	bt = bs && b && c && d && e && f && g && h;
+}
+
+# AND - Bitwise Logical And, pg. 259.
+:and ar, as, at is op2 = 0b0001 & op1 = 0 & ar & as & at & op0 = 0 {
+	ar = as & at;
+}
+
+# ANDB - Boolean And, pg. 260.
+:andb br, bs, bt is op2 = 0 & op1 = 0b0010 & br & bs & bt & op0 = 0 {
+	br = bs && bt;
+}
+
+# ANDBC - Boolean And with Complement, pg. 261.
+:andbc br, bs, bt is op2 = 0b0001 & op1 = 0b0010 & br & bs & bt & op0 = 0 {
+	br = bs && !bt;
+}
+
+# ANY4 - Any 4 Booleans True, pg. 262.
+:any4 bt, bs is op2 = 0 & op1 = 0 & ar = 0b1000 & bs & bt & op0 = 0 {
+	local b = *[register]:1 &:4 bs+1;
+	local c = *[register]:1 &:4 bs+2;
+	local d = *[register]:1 &:4 bs+3;
+	bt = bs || b || c || d;
+}
+
+# ANY8 - Any 8 Booleans True, pg. 263.
+:any8 bt, bs is op2 = 0 & op1 = 0 & ar = 0b1010 & bs & bt & op0 = 0 {
+	local b = *[register]:1 &:4 bs+1;
+	local c = *[register]:1 &:4 bs+2;
+	local d = *[register]:1 &:4 bs+3;
+	local e = *[register]:1 &:4 bs+4;
+	local f = *[register]:1 &:4 bs+5;
+	local g = *[register]:1 &:4 bs+6;
+	local h = *[register]:1 &:4 bs+7;
+	bt = bs || b || c || d || e || f || g || h;
+}
+
+# BALL - Branch if All Bits Set, pg. 264.
+:ball srel_16_23, as, at is srel_16_23 & ar = 0b0100 & as & at & op0 = 0b0111 {
+	local test:4 = ~as & at;
+	if (test == 0)	goto srel_16_23;
+}
+
+# BANY - Branch if Any Bit Set, pg. 265.
+:bany srel_16_23, as, at, is srel_16_23 & ar = 0b1000 & as & at & op0 = 0b0111 {
+	local test:4 = as & at;
+	if (test == 0)	goto srel_16_23;
+}
+
+macro extract_bit(bit, result) {
+@if ENDIAN == "big"
+	result = 0x80000000 >> bit;
+@else
+	result = 0x1 << bit;
+@endif
+}
+
+# BBC - Branch if Bit Clear, pg. 266.
+:bbc as, at, srel_16_23 is srel_16_23 & ar = 0b0101 & as & at & op0 = 0b0111 {
+	local bval:4 = 0;
+	extract_bit(at[0,5], bval);
+	bval = as & bval;
+	if (bval == 0)
+		goto srel_16_23;
+}
+
+# BBCI - Branch if Bit Clear immediate, pg. 267
+:bbci as, u5_4_7_12, srel_16_23 is srel_16_23 & u3_13_15 = 0b011 & as & u5_4_7_12 & op0 = 0b0111 {
+	local bval;
+	extract_bit(u5_4_7_12, bval);
+	bval = as & bval;
+	if (bval == 0)
+		goto srel_16_23;
+}
+
+# BBS - Branch if Bit Set, pg. 269.
+:bbs as, at, srel_16_23 is srel_16_23 & ar = 0b1101 & as & at & op0 = 0b0111 {
+	local bval;
+	extract_bit(at[0,5], bval);
+	bval = as & bval;
+	if (bval != 0)
+		goto srel_16_23;
+}
+
+# BBSI - Branch if Bit Set immediate, pg. 270.
+:bbsi as, u5_4_7_12, srel_16_23 is srel_16_23 & u3_13_15 = 0b111 & as & u5_4_7_12 & op0 = 0b0111 {
+	local bval;
+	extract_bit(u5_4_7_12, bval);
+	bval = as & bval;
+	if (bval != 0)
+		goto srel_16_23;
+}
+
+# BEQ - Branch if Equal, pg. 272.
+:beq as, at, srel_16_23 is srel_16_23 & ar = 0b0001 & as & at & op0 = 0b0111 {
+    if (as == at)
+        goto srel_16_23;
+}
+
+# BEQI - Branch if Equal Immediate, pg. 273.
+:beqi as, r_b4const, srel_16_23 is srel_16_23 & r_b4const & as & u2_6_7 = 0 & u2_4_5 = 0b10 & op0 = 0b0110 {
+    if (as == r_b4const)
+        goto srel_16_23;
+}
+
+# BEQZ - Branch if Equal Zero, pg. 274.
+:beqz as, srel_12_23 is srel_12_23 & as & u2_6_7 = 0 & u2_4_5 = 0b01 & op0 = 0b0110 {
+    if (as == 0)
+        goto srel_12_23;
+}
+
+# BEQZ.N - Narrow Branch if Equal Zero, pg. 275.
+:beqz.n n_as, urel_12_15_4_5 is urel_12_15_4_5 & n_as & n_u2_6_7 = 0b10 & n_op0 = 0b1100 {
+    if (n_as == 0)
+        goto urel_12_15_4_5;
+}
+
+# BF - Branch if False, pg. 276.
+:bf bs, srel_16_23 is srel_16_23 & ar = 0 & bs & at = 0b0111 & op0 = 0b0110 {
+    if (!bs)
+        goto srel_16_23;
+}
+
+# BGE - Branch if Greater Than or Equal, pg. 277.
+:bge as, at, srel_16_23 is srel_16_23 & ar = 0b1010 & as & at & op0 = 0b0111 {
+    if (as s>= at)
+        goto srel_16_23;
+}
+
+# BGEI - Branch if Greater Than or Equal Immediate, pg. 278.
+:bgei as, r_b4const, srel_16_23 is srel_16_23 & r_b4const & as & u2_6_7 = 0b11 & u2_4_5 = 0b10 & op0 = 0b0110 {
+    if (as s>= r_b4const)
+        goto srel_16_23;
+}
+
+# BGEU - Branch if Greater Than or Equal Unsigned, pg. 279.
+:bgeu as, at, srel_16_23 is srel_16_23 & ar = 0b1011 & as & at & op0 = 0b0111 {
+    if (as >= at)
+        goto srel_16_23;
+}
+
+# BGEUI - Branch if Greater Than or Equal Unsigned Immediate, pg. 280.
+:bgeui as, r_b4constu, srel_16_23 is srel_16_23 & r_b4constu & as & u2_6_7 = 0b11 & u2_4_5 = 0b11 & op0 = 0b0110 {
+    if (as >= r_b4constu)
+        goto srel_16_23;
+}
+
+# BGEZ - Branch if Greater Than or Equal Zero, pg. 281.
+:bgez as, srel_12_23 is srel_12_23 & as & u2_6_7 = 0b11 & u2_4_5 = 0b01 & op0 = 0b0110 {
+    if (as s>= 0)
+        goto srel_12_23;
+}
+
+# BLT - Branch if Less Than, pg. 282.
+:blt as, at, srel_16_23 is srel_16_23 & ar = 0b0010 & as & at & op0 = 0b0111 {
+    if (as s< at)
+        goto srel_16_23;
+}
+
+# BLTI - Branch if Less Than Immediate, pg. 283.
+:blti as, r_b4const, srel_16_23 is srel_16_23 & r_b4const & as & u2_6_7 = 0b10 & u2_4_5 = 0b10 & op0 = 0b0110 {
+    if (as s< r_b4const)
+        goto srel_16_23;
+}
+
+# BLTU - Branch if Less Than Unsigned, pg. 284.
+:bltu as, at, srel_16_23 is srel_16_23 & ar = 0b0011 & as & at & op0 = 0b0111 {
+    if (as < at)
+        goto srel_16_23;
+}
+
+# BLTUI - Branch if Less Than Unsigned Immediate, pg. 285.
+:bltui as, r_b4constu, srel_16_23 is srel_16_23 & r_b4constu & as & u2_6_7 = 0b10 & u2_4_5 = 0b11 & op0 = 0b0110 {
+    if (as < r_b4constu)
+        goto srel_16_23;
+}
+
+# BLTZ - Branch if Less Than Zero, pg. 286.
+:bltz as, srel_12_23 is srel_12_23 & as & u2_6_7 = 0b10 & u2_4_5 = 0b01 & op0 = 0b0110 {
+    if (as s< 0)
+        goto srel_12_23;
+}
+
+# BNALL - Branch if Not-All Bits Set, pg. 287.
+:bnall srel_16_23, as, at is srel_16_23 & ar = 0b1100 & as & at & op0 = 0b0111 {
+    if ((~as & at) != 0)
+        goto srel_16_23;
+}
+
+# BNE - Branch if Not Equal, pg. 288.
+:bne as, at, srel_16_23 is srel_16_23 & ar = 0b1001 & as & at & op0 = 0b0111 {
+    if (as != at)
+        goto srel_16_23;
+}
+
+# BNEI - Branch if Not EquaL Immediate, pg. 289.
+:bnei as, r_b4const, srel_16_23 is srel_16_23 & r_b4const & as & u2_6_7 = 0b01 & u2_4_5 = 0b10 & op0 = 0b0110 {
+    if (as != r_b4const)
+        goto srel_16_23;
+}
+
+# BNEZ - Branch if Not Equal Zero, pg. 290.
+:bnez as, srel_12_23 is srel_12_23 & as & u2_6_7 = 0b01 & u2_4_5 = 0b01 & op0 = 0b0110 {
+    if (as != 0)
+        goto srel_12_23;
+}
+
+# BNEZ.N - Narrow Branch if Not Equal Zero, pg. 291.
+:bnez.n n_as, urel_12_15_4_5 is urel_12_15_4_5 & n_as & n_u2_6_7 = 0b11 & n_op0 = 0b1100 {
+    if (n_as != 0)
+        goto urel_12_15_4_5;
+}
+
+# BNONE - Branch if No Bit Set, pg. 292.
+:bnone srel_16_23, as, at, is srel_16_23 & ar = 0 & as & at & op0 = 0b0111 {
+    if ((as & at) == 0)
+        goto srel_16_23;
+}
+
+# BREAK - Breakpoint, pg. 293.
+:break u4_8_11, u4_4_7 is op2 = 0 & op1 = 0 & ar = 0b0100 & u4_8_11 & u4_4_7 & op0 = 0 {
+	break_inst:4 = inst_start;
+	breakpoint(0x001000:4, break_inst, u4_8_11:1, u4_4_7:1);
+}
+
+# BREAK.N - Narrow Breakpoint, pg. 295.
+:break.n n_u4_8_11 is n_ar = 0b1111 & n_u4_8_11 & n_at = 0b0010 & n_op0 = 0b1101 {
+	break_inst:4 = inst_start;
+	breakpoint(0x010000:4, break_inst, n_u4_8_11:1, 0:1);
+}
+
+# BT - Branch if True, pg. 296.
+:bt bs, srel_16_23 is srel_16_23 & ar = 0b0001 & bs & at = 0b0111 & op0 = 0b0110 {
+    if (bs)
+        goto srel_16_23;
+}
+
+# CALL0 - Non-windowed Call, pg. 297.
+:call0 srel_6_23_sb2 is srel_6_23_sb2 & u2_4_5 = 0 & op0 = 0b0101 {
+	$(PS_CALLINC) = 0;
+	a0 = inst_next;
+	call srel_6_23_sb2;
+}
+
+# CALL4 - Call PC-relative, Rotate Window by 4, pg. 298.
+:call4 srel_6_23_sb2 is srel_6_23_sb2 & Ret4 & u2_4_5 = 0b01 & op0 = 0b0101 {
+	$(PS_CALLINC) = 1;
+	a4 = Ret4;
+	swap4();
+	call srel_6_23_sb2;
+	restore4();
+}
+
+# CALL8 - Call PC-relative, Rotate Window by 8, pg. 300.
+:call8 srel_6_23_sb2 is srel_6_23_sb2 & Ret8 & u2_4_5 = 0b10 & op0 = 0b0101 {
+	$(PS_CALLINC) = 2;
+	a8 = Ret8;
+	swap8();
+	call srel_6_23_sb2;
+	restore8();
+}
+
+# CALL12 - Call PC-relative, Rotate Window by 12, pg. 302.
+:call12 srel_6_23_sb2 is srel_6_23_sb2 & Ret12 & u2_4_5 = 0b11 & op0 = 0b0101 {
+	$(PS_CALLINC) = 3;
+	a12 = Ret12;
+	swap12();
+	call srel_6_23_sb2;
+	restore12();
+}
+
+# CALLX0 - Non-windowed Call Register, pg. 304.
+:callx0 as is op2 = 0 & op1 = 0 & ar = 0 & as & u2_6_7 = 0b11 & u2_4_5 = 0 & op0 = 0 {
+	$(PS_CALLINC) = 0;
+	local dst = as;
+	a0 = inst_next;
+	call [dst];
+}
+
+# CALLX4 - Call Register, Rotate Window by 4, pg. 305.
+:callx4 as is op2 = 0 & op1 = 0 & ar = 0 & as & Ret4 & u2_6_7 = 0b11 & u2_4_5 = 0b01 & op0 = 0 {
+	$(PS_CALLINC) = 1;
+	dest:4 = as;
+	a4 = Ret4;
+	swap4();
+	call [dest];
+	restore4();
+}
+
+# CALLX8 - Call Register, Rotate Window by 8, pg. 307.
+:callx8 as is op2 = 0 & op1 = 0 & ar = 0 & as & Ret8 & u2_6_7 = 0b11 & u2_4_5 = 0b10 & op0 = 0 {
+	$(PS_CALLINC) = 2;
+	dest:4 = as;
+	a8 = Ret8;
+	swap8();
+	call [dest];
+	restore8();
+}
+
+# CALLX12 - Call Register, Rotate Window by 12, pg. 308.
+:callx12 as is op2 = 0 & op1 = 0 & ar = 0 & as & Ret12 & u2_6_7 = 0b11 & u2_4_5 = 0b11 & op0 = 0 {
+	$(PS_CALLINC) = 3;
+	dest:4 = as;
+	a12 = Ret12;
+	swap12();
+	call [dest];
+	restore12();
+}
+
+# CEIL.S - Ceiling Single to Fixed, pg. 311.
+:ceil.s ar, fs, u4_4_7 is op2 = 0b1011 & op1 = 0b1010 & ar & fs & u4_4_7 & op0 = 0 {
+	local scale:4 = 1 << u4_4_7;
+	ar = ceil(fs f* int2float(scale));
+}
+
+# CLAMPS - Signed Clamp, pg. 312.
+:clamps ar, as, u5_4_7_plus7 is op2 = 0b0011 & op1 = 0b0011 & ar & as & u5_4_7_plus7 & op0 = 0 {
+	# ar  min(max(as, -2^{u5_4_7_plus7}), 2^{u5_4_7_plus7}-1)
+	local x:4 = as;
+	local clamp:4 = 1 << u5_4_7_plus7;
+	local mt:1 = (x s> (-clamp));
+	local max:4 = (zext(mt) * x) + (zext(!mt) * (-clamp));
+	mt = (x s< (clamp-1));
+	local y = (zext(mt) * max) + (zext(!mt) * (clamp-1));
+}
+
+# DHI - Data Cache Hit Invalidate, pg. 313.
+:dhi as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b0111 & as & at = 0b0110 & op0 = 0b0010 {
+	dhi(as + u10_16_23_sb2);
+}
+
+# DHU - Data Cache Hit Unlock, pg. 315.
+:dhu as, u8_20_23_sb4 is u8_20_23_sb4 & op1 = 0b0010 & ar = 0b0111 & as & at = 0b1000 & op0 = 0b0010 {
+	dhu(as + u8_20_23_sb4);
+}
+
+# DHWB - Data Cache Hit Writeback, pg. 317.
+:dhwb as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b0111 & as & at = 0b0100 & op0 = 0b0010 {
+	dhwb(as + u10_16_23_sb2);
+}
+
+# DHWBI - Data Cache Hit Writeback Invalidate, pg. 319.
+:dhwbi as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b0111 & as & at = 0b0101 & op0 = 0b0010 {
+	dhwbi(as + u10_16_23_sb2);
+}
+
+# DII - Data Cache Index Invalidate, pg. 321.
+:dii as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b0111 & as & at = 0b0111 & op0 = 0b0010 {
+	dii(as + u10_16_23_sb2);
+}
+
+# DIU - Data Cache Index Unlock, pg. 323.
+:diu as, u8_20_23_sb4 is u8_20_23_sb4 & op1 = 0b0011 & ar = 0b0111 & as & at = 0b1000 & op0 = 0b0010 {
+	diu(as + u8_20_23_sb4);
+}
+
+# DIWB - Data Cache Index Write Back, pg. 325.
+:diwb as, u8_20_23_sb4 is u8_20_23_sb4 & op1 = 0b0100 & ar = 0b0111 & as & at = 0b1000 & op0 = 0b0010 {
+	diwb(as + u8_20_23_sb4);
+}
+
+# DIWBI - Data Cache Index Write Back Invalidate, pg. 327.
+:diwbi as, u8_20_23_sb4 is u8_20_23_sb4 & op1 = 0b0101 & ar = 0b0111 & as & at = 0b1000 & op0 = 0b0010 {
+	diwbi(as + u8_20_23_sb4);
+}
+
+# DPFL - Data Cache Prefetch and Lock, pg. 329.
+:dpfl as, u8_20_23_sb4 is u8_20_23_sb4 & op1 = 0 & ar = 0b0111 & as & at = 0b1000 & op0 = 0b0010 {
+	dpfl(as + u8_20_23_sb4);
+}
+
+# DPFR - Data Cache Prefetch for Read, pg. 331.
+:dpfr as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b0111 & as & at = 0 & op0 = 0b0010 {
+    dpfr(as + u10_16_23_sb2);
+}
+
+# DPFRO - Data Cache Prefetch for Read Once, pg. 333.
+:dpfro as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b0111 & as & at = 0b0010 & op0 = 0b0010 {
+    dpfro(as + u10_16_23_sb2);
+}
+
+# DPFW - Data Cache Prefetch for Write, pg. 335.
+:dpfw as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b0111 & as & at = 0b0001 & op0 = 0b0010 {
+    dpfw(as + u10_16_23_sb2);
+}
+
+# DPFWO - Data Cache Prefetch for Write Once, pg. 337.
+:dpfwo as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b0111 & as & at = 0b0011 & op0 = 0b0010 {
+    dpfwo(as + u10_16_23_sb2);
+}
+
+# DSYNC - Load/Store Synchronize, pg. 339.
+:dsync is op2 = 0 & op1 = 0 & ar = 0b0010 & as = 0 & at = 0b0011 & op0 = 0 {
+	dsync();
+}
+
+# ENTRY - Subroutine Entry, pg. 340.
+:entry as, u15_12_23_sb3 is u15_12_23_sb3 & as & u2_6_7 = 0b00 & u2_4_5 = 0b11 & op0 = 0b0110 {
+	local callSP = a1;
+	callinc:1 = $(PS_CALLINC);
+	rotateRegWindow(callinc);
+	as = callSP - zext(u15_12_23_sb3);
+}
+
+# ESYNC - Execute Synchronize, pg. 342.
+:esync is op2 = 0 & op1 = 0 & ar = 0b0010 & as = 0 & at = 0b0010 & op0 = 0 {
+	esync();
+}
+
+# EXCW - Exception Wait, pg. 343.
+:excw is op2 = 0 & op1 = 0 & ar = 0b0010 & as = 0 & at = 0b1000 & op0 = 0 {
+	excw();
+}
+
+# EXTUI - Extract Unsigned Immediate, pg. 344.
+:extui ar, at, u5_8_11_16, u5_20_23_plus1 is u5_20_23_plus1 & u3_17_19 = 0b010 & u5_8_11_16 & ar & at & op0 = 0 {
+    local shifted:4 = at >> u5_8_11_16;
+    local mask:4 = (1:4 << (u5_20_23_plus1))-1;
+    ar = shifted & mask;
+}
+
+# EXTW - External Wait, pg. 345.
+:extw is op2 = 0 & op1 = 0 & ar = 0b0010 & as = 0 & at = 0b1101 & op0 = 0 {
+	extw();
+}
+
+# FLOAT.S - Convert Fixed to Single, pg. 346.
+:float.s fr, as, u4_4_7 is op2 = 0b1100 & op1 = 0b1010 & fr & as & u4_4_7 & op0 = 0 {
+	local scale:4 = 1 << u4_4_7;
+	fr = int2float(as) f/ int2float(scale);
+}
+
+# FLOOR.S - Floor Single to Fixed, pg. 347.
+:floor.s ar, fs, u4_4_7 is op2 = 0b1010 & op1 = 0b1010 & ar & fs & u4_4_7 & op0 = 0 {
+	local scale:4 = 1 << u4_4_7;
+	ar = floor(fs f* int2float(scale));
+}
+
+# IDTLB - Invalidate Data TLB Entry, pg. 348.
+:idtlb as is op2 = 0b0101 & op1 = 0 & ar = 0b1100 & as & at = 0 & op0 = 0 {
+	idtlb();
+}
+
+# IHI - Instruction Cache Hit Invalidate, pg. 349.
+:ihi as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b0111 & as & at = 0b1110 & op0 = 0b0010 {
+    ihi(as + u10_16_23_sb2);
+}
+
+# IHU - Instruction Cache Hit Unlock, pg. 351.
+:ihu as, u8_20_23_sb4 is u8_20_23_sb4 & op1 = 0b0010 & ar = 0b0111 & as & at = 0b1101 & op0 = 0b0010 {
+	ihu(as + u8_20_23_sb4);
+}
+
+# III - Instruction Cache Index Invalidate, pg. 353.
+:iii as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b0111 & as & at = 0b1111 & op0 = 0b0010 {
+    iii(as + u10_16_23_sb2);
+}
+
+# IITLB - Invalidate Instruction TLB Entry, pg. 355.
+:iitlb as is op2 = 0b0101 & op1 = 0 & ar = 0b0100 & as & at = 0 & op0 = 0 {
+	iitlb(as);
+}
+
+# IIU - Instruction Cache Index Unlock, pg. 356.
+:iiu as, u8_20_23_sb4 is u8_20_23_sb4 & op1 = 0b0011 & ar = 0b0111 & as & at = 0b1101 & op0 = 0b0010 {
+	iiu(as + u8_20_23_sb4);
+}
+
+# ILL - Illegal Instruction, pg. 358.
+:ill is op2 = 0 & op1 = 0 & ar = 0 & as = 0 & at = 0 & op0 = 0 {
+	ill();
+	goto inst_start;
+}
+
+# ILL.N - Narrow Illegal Instruction, pg. 359.
+:ill.n is n_ar = 0b1111 & n_as = 0 & n_at = 0b0110 & n_op0 = 0b1101 {
+	ill();
+	goto inst_start;
+}
+
+# IPF - Instruction Cache Prefetch, pg. 360.
+:ipf as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b0111 & as & at = 0b1100 & op0 = 0b0010 {
+    ipf(as + u10_16_23_sb2);
+}
+
+# IPFL - Instruction Cache Prefetch and Lock, pg. 362.
+:ipfl as, u8_20_23_sb4 is u8_20_23_sb4 & op1 = 0 & ar = 0b0111 & as & at = 0b1101 & op0 = 0b0010 {
+	ipfl(as + u8_20_23_sb4);
+}
+
+# ISYNC - Instruction Fetch Synchronize, pg. 364.
+:isync is op2 = 0 & op1 = 0 & ar = 0b0010 & as = 0 & at = 0 & op0 = 0 {
+	isync();
+}
+
+# J - Unconditional Jump, pg. 366.
+:j srel_6_23 is srel_6_23 & u2_4_5 = 0 & op0 = 0b0110 {
+    goto srel_6_23;
+}
+
+# J.L is a macro.
+
+# RET (JX A0) - Non-Windowed Return, pg. 478.
+:ret is op2 = 0 & op1 = 0 & ar = 0 & as = 0 & u2_6_7 = 0b10 & u2_4_5 = 0b10 & op0 = 0 {
+    return [a0];
+}
+
+# The manual suggests that RET is equivalent to JX A0, yet RET has bit 5 unset, JX doesn’t.
+:ret is op2 = 0 & op1 = 0 & ar = 0 & as = 0 & u2_6_7 = 0b10 & u2_4_5 = 0b00 & op0 = 0 {
+	return [a0];
+}
+
+# JX - Uncoditional Jump Register, pg. 368.
+:jx as is op2 = 0 & op1 = 0 & ar = 0 & as & u2_6_7 = 0b10 & u2_4_5 = 0b10 & op0 = 0 {
+    goto [as];
+}
+
+# L8UI - Load 8-bit Unsigned, pg. 369.
+:l8ui at, as, u8_16_23 is u8_16_23 & ar = 0 & as & at & op0 = 0b0010 {
+    local addr:4 = as + zext(u8_16_23:1);
+    at = zext(*:1 addr);
+}
+
+# L16SI - Load 16-bit Signed, pg. 370.
+:l16si at, as, u9_16_23_sb1 is u9_16_23_sb1 & ar = 0b1001 & as & at & op0 = 0b0010 {
+    local addr:4 = as + u9_16_23_sb1;
+    at = sext(*:2 addr);
+}
+
+# L16UI - Load 16-bit Unsigned, pg. 372.
+:l16ui at, as, u9_16_23_sb1 is u9_16_23_sb1 & ar = 0b001 & as & at & op0 = 0b0010 {
+    local addr:4 = as + u9_16_23_sb1;
+    at = zext(*:2 addr);
+}
+
+# L32AI - Load 32-bit Acquire, pg. 374.
+:l32ai at, as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b1011 & as & at & op0 = 0b0010 {
+	local addr:4 = as + u10_16_23_sb2;
+	at = *:4 addr;
+	acquire(addr);
+}
+
+# L32E - Load 32-bit for Window Exceptions, pg. 376.
+:l32e at, as, s5_12_15_oex is op2 = 0 & op1 = 0b1001 & s5_12_15_oex & as & at & op0 = 0 {
+	ptr:4 = as + sext(s5_12_15_oex);
+	at = *:4 ptr;
+}
+
+# L32I - Load 32-bit, pg. 378.
+:l32i at, as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b0010 & as & at & op0 = 0b0010 {
+    local addr:4 = as + u10_16_23_sb2;
+    at = *:4 addr;
+}
+
+# L32I.N - Narrow Load 32-bit, pg. 380.
+:l32i.n n_at, n_as, n_u6_12_15_sb2 is n_u6_12_15_sb2 & n_as & n_at & n_op0 = 0b1000 {
+    local addr:4 = n_as + n_u6_12_15_sb2;
+    n_at = *:4 addr;
+}
+
+# L32R - Load 32-bit PC-relative, pg. 382.
+:l32r at, srel_8_23_oex_sb2 is srel_8_23_oex_sb2 & at & op0 = 0b0001 {
+    at = srel_8_23_oex_sb2;
+}
+
+# LDCT - Load Data Cache Tag, pg. 384.
+:ldct at, as is op2 = 0b1111 & op1 = 0b0001 & ar = 0b1000 & as & at & op0 = 0 {
+	at = ldct(as);
+}
+
+# LICT - Load Instruction Cache Tag, pg. 388.
+:lict at, as is op2 = 0b1111 & op1 = 0b0001 & ar = 0 & as & at & op0 = 0 {
+	at = lict(as);
+}
+
+# LICW - Load Instruction Cache Word, pg. 390.
+:licw at, as is op2 = 0b1111 & op1 = 0b0010 & ar = 0 & as & at & op0 = 0 {
+	at = licw(as);
+}
+
+# LSI - Load Single Immediate, pg. 398.
+:lsi ft, as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0 & as & ft & op0 = 0b0011 {
+	local addr:4 = as + u10_16_23_sb2;
+	ft = *:4 addr;
+}
+
+# LSIU - Load Single Immediate with Update, pg. 400.
+:lsiu ft, as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b1000 & as & ft & op0 = 0b0011 {
+	local addr:4 = as + u10_16_23_sb2;
+	ft = *:4 addr;
+	as = addr;
+}
+
+# LSX - Load Single Indexed, pg. 402.
+:lsx fr, as, at is op2 = 0 & op1 = 0b1000 & fr & as & at & op0 = 0 {
+	local addr:4 = as+at;
+	fr = *:4 addr;
+}
+
+# LSXU - Load Single Indexed with Update, pg. 404.
+:lsxu fr, as, at is op2 = 0b0001 & op1 = 0b1000 & fr & as & at & op0 = 0 {
+	local addr:4 = as+at;
+	fr = *:4 addr;
+	as = addr;
+}
+
+# MADD.S - Multiply and Add Single, pg. 406.
+:madd.s fr, fs, ft is op2 = 0b0100 & op1 = 0b1010 & fr & fs & ft & op0 = 0 {
+	fr = fr f+ (fs f* ft);
+}
+
+# MAX - Maximum Value, pg. 407.
+:max ar, as, at is op2 = 0b0101 & op1 = 0b0011 & ar & as & at & op0 = 0 {
+	test:1 = as s< at;
+	ar = (zext(test) * at) + (zext(!test) * as);
+}
+
+# MAXU - Maximum Value Unsigned, pg. 408.
+:maxu ar, as, at is op2 = 0b0111 & op1 = 0b0011 & ar & as & at & op0 = 0 {
+	test:1 = as < at;
+	ar = (zext(test) * at) + (zext(!test) * as);
+}
+
+# MEMW - Memory Wait, pg. 409.
+:memw is op2 = 0 & op1 = 0 & ar = 0b0010 & as = 0 & at = 0b1100 & op0 = 0 {
+	memw();
+}
+
+# MIN - Minimum Value, pg. 410.
+:min ar, as, at is op2 = 0b0100 & op1 = 0b0011 & ar & as & at & op0 = 0 {
+	test:1 = as s< at;
+	ar = (zext(test) * as) + (zext(!test) * at);
+}
+
+# MINU - Minimum Value Unsigned, pg. 411.
+:minu ar, as, at is op2 = 0b0110 & op1 = 0b0011 & ar & as & at & op0 = 0 {
+	test:1 = as < at;
+	ar = (zext(test) * as) + (zext(!test) * at);
+}
+
+# MOV.N - Narrow Move, pg. 413.
+:mov.n n_at, n_as is n_ar = 0 & n_as & n_at & n_op0 = 0b1101 {
+	n_at = n_as;
+}
+
+# MOV.S - Move Single, pg. 414.
+:mov.s fr, fs is op2 = 0b1111 & op1 = 0b1010 & fr & fs & at = 0 & op0 = 0 {
+	fr = fs;
+}
+
+# MOVEQZ - Move if Equal to Zero, pg. 415.
+:moveqz ar, as, at is op2 = 0b1000 & op1 = 0b0011 & ar & as & at & op0 = 0 {
+	if (at != 0) goto <end>;
+	ar = as;
+	<end>
+}
+
+# MOVEQZ.S - Move Single if Equal to Zero, pg. 416.
+:moveqz.s fr, fs, at is op2 = 0b1000 & op1 = 0b1011 & fr & fs & at & op0 = 0 {
+	if (at != 0) goto <end>;
+	fr = fs;
+	<end>
+}
+
+# MOVF - Move if False, pg. 417.
+:movf ar, as, bt is op2 = 0b1100 & op1 = 0b0011 & ar & as & bt & op0 = 0 {
+	if (bt) goto <end>;
+	ar = as;
+	<end>
+}
+
+# MOVF.S - Move Single if False, pg. 418.
+:movf.s fr, fs, bt is op2 = 0b1100 & op1 = 0b1011 & fr & fs & bt & op0 = 0 {
+	if (bt)goto <end>;
+	fr = fs;
+	<end>
+}
+
+# MOVGEZ - Move if Greater Than or Equal to Zero, pg. 419.
+:movgez ar, as, at is op2 = 0b1011 & op1 = 0b0011 & ar & as & at & op0 = 0 {
+	if (at s< 0) goto <end>;
+	ar = as;
+	<end>
+}
+
+# MOVGEZ.S - Move Single if Greater Than or Equal to Zero, pg. 420.
+:movgez.s fr, fs, at is op2 = 0b1011 & op1 = 0b1011 & fr & fs & at & op0 = 0 {
+	if (at s< 0) goto <end>;
+	fr = fs;
+	<end>
+}
+
+# MOVI - Move Immediate, pg. 421.
+:movi at, s16_16_23_8_11 is s16_16_23_8_11 & ar = 0b1010 & at & op0 = 0b0010 {
+    local val:4 = sext(s16_16_23_8_11);
+    at = val;
+}
+
+# MOVI.N - Narrow Move Immediate, pg. 422.
+:movi.n n_as, n_s8_12_15_4_6_asymm is n_s8_12_15_4_6_asymm & n_as & n_u1_7 = 0 & n_op0 = 0b1100 {
+    local val:4 = sext(n_s8_12_15_4_6_asymm);
+    n_as = val;
+}
+
+# MOVLTZ - Move if Less Than Zero, pg. 423.
+:movltz ar, as, at is op2 = 0b1010 & op1 = 0b0011 & ar & as & at & op0 = 0 {
+	if (at s>= 0) goto <end>;
+	ar = as;
+	<end>
+}
+
+# MOVLTZ.S - Move Single if Less Than Zero, pg. 424.
+:movltz.s fr, fs, at is op2 = 0b1010 & op1 = 0b1011 & fr & fs & at & op0 = 0 {
+	if (at s>= 0) goto <end>;
+	fr = fs;
+	<end>
+}
+
+# MOVNEZ - Move if Not Equal to Zero, pg. 425.
+:movnez ar, as, at is op2 = 0b1001 & op1 = 0b0011 & ar & as & at & op0 = 0 {
+	if (at == 0) goto <end>;
+	ar = as;
+	<end>
+}
+
+# MOVNEZ.S - Move Single if Not Equal to Zero, pg. 426.
+:movnez.s fr, fs, at is op2 = 0b1001 & op1 = 0b1011 & fr & fs & at & op0 = 0 {
+	if (at == 0) goto <end>;
+	fr = fs;
+	<end>
+}
+
+# MOVSP - Move to Stack Pointer, pg. 427.
+:movsp at, as is op2 = 0 & op1 = 0 & ar = 0b0001 & as & at & op0 = 0 {
+	at = (zext(WindowStart == 0) * at) + (zext(WindowStart != 0) * as);
+}
+
+# MOVT - Move if True, pg. 428.
+:movt ar, as, bt is op2 = 0b1101 & op1 = 0b0011 & ar & as & bt & op0 = 0 {
+	if (!bt) goto <end>;
+	ar = as;
+	<end>
+}
+
+# MOVT.S - Move Single if True, pg. 429.
+:movt.s fr, fs, bt is op2 = 0b1101 & op1 = 0b1011 & fr & fs & bt & op0 = 0 {
+	if (!bt) goto <end>;
+	fr = fs;
+	<end>
+}
+
+# MSUB.S - Multiply and Subtract Single, pg. 430.
+:msub.s fr, fs, ft is op2 = 0b0101 & op1 = 0b1010 & fr & fs & ft & op0 = 0 {
+	fr = fr f- (fs f* ft);
+}
+
+# MUL.S - Multiply Single, pg. 435.
+:mul.s fr, fs, ft is op2 = 0b0010 & op1 = 0b1010 & fr & fs & ft & op0 = 0 {
+	fr = fs f* ft;
+}
+
+# MUL16S - Multiply 16-bit Signed, pg. 436.
+:mul16s ar, as, at is op2 = 0b1101 & op1 = 0b0001 & ar & as & at & op0 = 0 {
+	ar = sext(as:2) * sext(at:2);
+}
+
+# MUL16U - Multiply 16-bit Unsigned, pg. 437.
+:mul16u ar, as, at is op2 = 0b1100 & op1 = 0b0001 & ar & as & at & op0 = 0 {
+	ar = zext(as:2) * zext(at:2);
+}
+
+# MULL - Multiply Low, pg. 450.
+:mull ar, as, at is op2 = 0b1000 & op1 = 0b0010 & ar & as & at & op0 = 0 {
+	ar = as * at;
+}
+
+# MULSH - Multiply Signed High, pg. 455.
+:mulsh ar, as, at is op2 = 0b1011 & op1 = 0b0010 & ar & as & at & op0 = 0 {
+	local s64:8 = sext(as);
+	local t64:8 = sext(at);
+	local p:8 = (s64 * t64);
+	ar = p(4);
+}
+
+# MULUH - Multiply Unsigned High, pg. 456.
+:muluh ar, as, at is op2 = 0b1010 & op1 = 0b0010 & ar & as & at & op0 = 0 {
+	local s64:8 = zext(as);
+	local t64:8 = zext(at);
+	local p:8 = (s64 * t64);
+	ar = p(4);
+}
+
+# NEG - Negate, pg. 457.
+:neg ar, at is op2 = 0b0110 & op1 = 0 & ar & as = 0 & at & op0 = 0 {
+	ar = -at;
+}
+
+# NEG.S - Negate Single, pg. 458.
+:neg.s fr, fs is op2 = 0b1111 & op1 = 0b1010 & fr & fs & at = 0b0110 & op0 = 0 {
+	fr = 0 f- fs;
+}
+
+# NOP - No Operation, pg. 459.
+:nop is op2 = 0 & op1 = 0 & ar = 0b0010 & as = 0 & at = 0b1111 & op0 = 0 { }
+
+# NOP.N - Narrow No Operation, pg. 460.
+:nop.n is n_ar = 0b1111 & n_as = 0 & n_at = 0b0011 & n_op0 = 0b1101 { }
+
+# NSA - Normalization Shift Amount, pg. 461.
+:nsa at, as is op2 = 0b0100 & op1 = 0 & ar = 0b1110 & as & at & op0 = 0 {
+    at = lzcount(~as);
+}
+
+# NSAU - Normalization Shift Amount Unsigned, pg. 462. (Count leading zeros)
+:nsau at, as is op2 = 0b0100 & op1 = 0 & ar = 0b1111 & as & at & op0 = 0 {
+    at = lzcount(as);
+}
+
+# OEQ.S - Compare Single Equal, pg. 463.
+:oeq.s br, fs, ft is op2 = 0b0010 & op1 = 0b1011 & br & fs & ft & op0 = 0 {
+	br = !nan(fs) && !nan(ft) && fs f== ft;
+}
+
+# OLE.S - Compare Single Ordered and Less Than or Equal, pg. 464
+:ole.s br, fs, ft is op2 = 0b0110 & op1 = 0b1011 & br & fs & ft & op0 = 0 {
+	br = !nan(fs) && !nan(ft) && fs f<= ft;
+}
+
+# OLT.S - Compare Single Ordered and Less Than, pg. 465.
+:olt.s br, fs, ft is op2 = 0b0100 & op1 = 0b1011 & br & fs & ft & op0 = 0 {
+	br = !nan(fs) && !nan(ft) && fs f< ft;
+}
+
+# MOV - Move, pg. 412. Special case of OR as, at, at.
+:mov ar, as is op2 = 0b0010 & op1 = 0 & ar & as & as = at & op0 = 0 {
+	ar = as;
+}
+
+# OR - Bitwise Logical Or, pg. 466.
+:or ar, as, at is op2 = 0b0010 & op1 = 0 & ar & as & at & op0 = 0 {
+	ar = as | at;
+}
+
+# ORB - Boolean Or, pg. 467.
+:orb br, bs, bt is op2 = 0b0010 & op1 = 0b0010 & br & bs & bt & op0 = 0 {
+	br = bs || bt;
+}
+
+# ORBC - Boolean Or with Complement, pg. 468.
+:orbc br, bs, bt is op2 = 0b0011 & op1 = 0b0010 & br & bs & bt & op0 = 0 {
+	br = bs || !bt;
+}
+
+# PDTLB - Probe Data TLB, pg. 469.
+:pdtlb at, as is op2 = 0b0101 & op1 = 0 & ar = 0b1101 & as & at & op0 = 0 {
+	at = pdtlb(as);
+}
+
+# PITLB - Probe Instruction TLB, pg. 470.
+:pitlb at, as is op2 = 0b0101 & op1 = 0 & ar = 0b0101 & as & at & op0 = 0 {
+	at = pitlb(as);
+}
+
+# QUOS - Quotient Signed, pg. 471.
+:quos ar, as, at is op2 = 0b1101 & op1 = 0b0010 & ar & as & at & op0 = 0 {
+	ar = as s/ at;
+}
+
+# QUOU - Quotient Unsigned, pg. 472.
+:quou ar, as, at is op2 = 0b1100 & op1 = 0b0010 & ar & as & at & op0 = 0 {
+	ar = as / at;
+}
+
+# RDTLB0 - Read Data TLB Virtual Entry, pg. 473.
+:rdtlb0 at, as is op2 = 0b0101 & op1 = 0 & ar = 0b1011 & as & at & op0 = 0 {
+	at = rdtlb0(as);
+}
+
+# RDTLB1 - Read Data TLB Entry Translation, pg. 474.
+:rdtlb1 at, as is op2 = 0b0101 & op1 = 0 & ar = 0b1111 & as & at & op0 = 0 {
+	at = rdtlb1(as);
+}
+
+# REMS - Remainder Signed, pg. 475.
+:rems ar, as, at, is op2 = 0b1111 & op1 = 0b0010 & ar & as & at & op0 = 0 {
+	ar = as s% at;
+}
+
+# REMU - Remainder Unsigned, pg. 476.
+:remu ar, as, at, is op2 = 0b1110 & op1 = 0b0010 & ar & as & at & op0 = 0 {
+	ar = as % at;
+}
+
+# RER - Read External Register, pg. 477.
+:rer as, at is op2 = 0b0100 & op1 = 0 & ar = 0b0110 & as & at & op0 = 0 {
+	as = rer(at);
+}
+
+# RET.N - Narrow Non-Windowed Return, pg. 479.
+:ret.n is n_ar = 0b1111 & n_as = 0 & n_at = 0 & n_op0 = 0b1101 {
+    return [a0];
+}
+
+# RETW - Windowed Return, pg. 480.
+:retw is op2 = 0 & op1 = 0 & ar = 0 & as = 0 & u2_6_7 = 0b10 & u2_4_5 = 0b01 & op0 = 0 {
+	local addr:4 = (a0 & 0x3fffffff) | (inst_start & 0xc0000000);
+	restoreRegWindow();
+	return [addr];
+}
+
+# RETW.N - Narrow Windowed Return, pg. 482.
+:retw.n is n_ar = 0b1111 & n_as = 0 & n_at = 0b0001 & n_op0 = 0b1101 {
+	local addr:4 = (a0 & 0x3fffffff) | (inst_start & 0xc0000000);
+	restoreRegWindow();
+	return [addr];
+}
+
+# RFDD - Return from Debug and Dispatch, pg. 484.
+:rfdd is op2 = 0b1111 & op1 = 0b0001 & ar = 0b1110 & (as = 0b0000 | as = 0b0001) & at = 0b0001 & op0 = 0 {
+    local tmp:4 = rfdd();
+    return [tmp];
+}
+
+# RFDE _ Return From Double Exception, pg. 485.
+:rfde is op2 = 0 & op1 = 0 & ar = 0b0011 & as =0b0010 & at = 0 & op0 = 0 {
+    local tmp:4 = rfde();
+    return [tmp];
+}
+
+# RFDO - Return from Debug Operation, pg. 486.
+:rfdo is op2 = 0b1111 & op1 = 0b0001 & ar = 0b1110 & as = 0 & at = 0 & op0 = 0 {
+    local tmp:4 = rfdo();
+    return [tmp];
+}
+
+# RFE - Return From Exception, pg. 487.
+:rfe is op2 = 0 & op1 = 0 & ar = 0b0011 & as = 0 & at = 0 & op0 = 0 {
+    local tmp:4 = rfe();
+    return [tmp];
+}
+
+rfi_epc: ptr is u4_8_11	[ ptr = $(EPC_BASE) + (4 * u4_8_11); ] { export *[register]:4 ptr; }
+rfi_eps: ptr is u4_8_11	[ ptr = $(EPS_BASE) + (4 * u4_8_11); ] { export *[register]:4 ptr; }
+
+# RFI - Return from High-Priority Interrupt, pg. 488.
+:rfi u4_8_11 is op2 = 0 & op1 = 0 & ar = 0b0011 & u4_8_11 & at = 0b0001 & op0 = 0 & rfi_epc & rfi_eps {
+	PS = rfi_eps;
+	return [rfi_epc];
+}
+
+# RFME - Return from Memory Error, pg. 489.
+:rfme is op2 = 0 & op1 = 0 & ar = 0b0011 & as = 0 & at = 0b0010 & op0 = 0 {
+	PS = MEPS;
+	MESR[0,1] = 0;
+	return [MEPC];
+}
+
+# RFR - Move FR to AR, pg. 490.
+:rfr ar, fs is op2 = 0b1111 & op1 = 0b1010 & ar & fs & at = 0b0100 & op0 = 0 {
+	ar = fs;
+}
+
+# RFUE - Return from User-Mode Exception, pg. 491.
+:rfue is op2 = 0 & op1 = 0 & ar = 0b0011 & as = 0b0001 & at = 0 & op0 = 0 {
+    local tmp:4 = rfue();
+    return [tmp];
+}
+
+# RFWO - Return from Window Overflow, pg. 492.
+:rfwo is op2 = 0 & op1 = 0 & ar = 0b0011 & as = 0b0100 & at = 0 & op0 = 0 {
+	$(PS_EXCM) = 0;
+	rfwo();
+	return [EPC1];
+}
+
+# RFWU - Return from Window Underflow, pg. 493.
+:rfwu is op2 = 0 & op1 = 0 & ar = 0b0011 & as = 0b0101 & at = 0 & op0 = 0 {
+	$(PS_EXCM) = 0;
+	rfwu();
+	return [EPC1];
+}
+
+# RITLB0 - Read Instruction TLB Virtual Entry, pg. 494.
+:ritlb0 at, as is op2 = 0b0101 & op1 = 0 & ar = 0b0011 & as & at & op0 = 0 {
+	at = ritlb0(as);
+}
+
+# RITLB1 - Read Instruction TLB Entry Translation, pg. 495.
+:ritlb1 at, as is op2 = 0b0101 & op1 = 0 & ar = 0b0111 & as & at & op0 = 0 {
+	at = ritlb1(as);
+}
+
+# ROTW - Rotate Window, pg. 496.
+:rotw s4_4_7 is op2 = 0b0100 & op1 = 0 & ar = 0b1000 & as = 0 & s4_4_7 & op0 = 0 {
+    WindowBase = WindowBase + s4_4_7;
+}
+
+# ROUND.S - Round Single to Fixed, pg. 497.
+:round.s ar, fs, u4_4_7 is op2 = 0b1000 & op1 = 0b1010 & ar & fs & u4_4_7 & op0 = 0 {
+	local scale:4 = 1 << u4_4_7;
+	local result = fs f* int2float(scale);
+	isNan:1 = nan(result);
+	if (isNan) goto <bad>;
+	ar = round(fs f* scale);
+	goto <end>;
+	<bad>
+	ar = 0x80000000;
+	if (fs f< 0) goto <end>;
+	ar = 0x7fffffff;
+	<end>
+}
+
+# RSIL - Read and Set Interrupt Level, pg. 498.
+:rsil at, u4_8_11 is op2 = 0 & op1 = 0 & ar = 0b0110 & u4_8_11 & at & op0 = 0 {
+    at = rsil(u4_8_11:1);
+}
+
+# RSR - Read Special Register, pg. 500.
+:rsr at, sr is op0 = 0 & op1 = 0b0011 & sr & at & op0 = 0 {
+	at = rsr(sr:1);
+}
+
+# RSYNC - Register Read Synchronize, pg. 502.
+:rsync is op2 = 0 & op1 = 0 & ar = 0b0010 & as = 0 & at = 0b0001 & op0 = 0 {
+	rsync();
+}
+
+
+# RUR - Read User Register, pg. 503.
+:rur ar, u8_4_11 is op2 = 0b1110 & op1 = 0b0011 & ar & u8_4_11 & op0 = 0 {
+    ar = rur(u8_4_11:1);
+}
+# S8I - Store 8-bit, pg. 504.
+:s8i at, as, u8_16_23 is u8_16_23 & ar = 0b0100 & as & at & op0 = 0b0010 {
+    local addr:4 = as + zext(u8_16_23:1);
+    *:1 addr = at:1;
+}
+
+# S16I - Store 16-bit, pg. 505.
+:s16i at, as, u9_16_23_sb1 is u9_16_23_sb1 & ar = 0b0101 & as & at & op0 = 0b0010 {
+    local addr:4 = as + u9_16_23_sb1;
+    *:2 addr = at:2;
+}
+
+# S32C1I - Store 32-bit Compare Conditional, pg. 506
+:s32c1i at, as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b1110 & as & at & op0 = 0b0010 {
+	local addr:4 = as + u10_16_23_sb2;
+	old:4 = *:4 addr;
+	if (old != SCOMPARE1) goto <skip>;
+	*:4 addr = at;
+	<skip>
+	at = old;
+}
+
+# S32E - Store 32-bit for Window Exceptions, pg. 508.
+:s32e at, as, s5_12_15_oex is op2 = 0b0100 & op1 = 0b1001 & s5_12_15_oex & as & at & op0 = 0 {
+	ptr:4 = as + sext(s5_12_15_oex);
+	*:4 ptr = at;
+}
+
+# S32I - Store 32-bit, pg. 510.
+:s32i at, as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b0110 & as & at & op0 = 0b0010 {
+    local addr:4 = as + u10_16_23_sb2;
+    *:4 addr = at;
+}
+
+# S32I.N - Narrow Store 32-bit, pg. 512.
+:s32i.n n_at, n_as, n_u6_12_15_sb2 is n_u6_12_15_sb2 & n_as & n_at & n_op0 = 0b1001 {
+    local addr:4 = n_as + n_u6_12_15_sb2;
+    *:4 addr = n_at;
+}
+
+# S32RI - Store 32-bit Release, pg. 514.
+:s32ri at, as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b1111 & as & at & op0 = 0b0010 {
+	local addr:4 = as + u10_16_23_sb2;
+	release(addr);
+	*:4 addr = at;
+}
+
+# SDCT - Store Data Cache Tag, pg. 516.
+:sdct at, as is op2 = 0b1111 & op1 = 0b0001 & ar = 0b1001 & as & at & op0 = 0 {
+	sdct(as, at);
+}
+
+# SEXT - Sign Extend, pg. 518.
+:sext ar, as, u5_4_7_plus7 is op2 = 0b0010 & op1 = 0b0011 & ar & as & u5_4_7_plus7 & op0 = 0 {
+    local shift:4 = 31 - u5_4_7_plus7;
+	local tmp:4 = as << shift;
+	ar = tmp s>> shift;
+}
+
+# SICT - Store Instruction Cache Tag, pg. 519.
+:sict at, as is op2 = 0b1111 & op1 = 0b0001 & ar = 0b0001 & as & at & op0 = 0 {
+	sict(as, at);
+}
+
+# SICW - Store Instruction Cache word, pg. 521.
+:sicw at, as is op2 = 0b1111 & op1 = 0b0001 & ar = 0b0011 & as & at & op0 = 0 {
+	sicw(as, at);
+}
+
+# SIMCALL - Simulator Call, pg. 523.
+:simcall is op2 = 0 & op1 = 0 & ar = 0b0101 & as = 0b0001 & at = 0 & op0 = 0 {
+	simcall();
+}
+
+# SLL - Shift Left Logical, pg. 524.
+:sll ar, as is op2 = 0b1010 & op1 = 0b0001 & ar & as & at = 0 & op0 = 0 {
+	local sa:4 = 32 - SAR;
+	ar = as << sa;
+}
+
+# SLLI - Shift Left Logical Immediate, pg. 525.
+:slli ar, as, u5_4_7_20 is u3_21_23 = 0 & u5_4_7_20 & op1 = 0b0001 & ar & as & op0 = 0 {
+	ar = as << u5_4_7_20;
+}
+
+# SRA - Shift Right Arithmetic, pg. 526.
+:sra ar, at is op2 = 0b1011 & op1 = 0b0001 & ar & as = 0 & at & op0 = 0 {
+    ar = at s>> SAR;
+}
+
+# SRAI - Shift Right Arithmetic Immediate, pg. 527.
+:srai ar, at, u5_8_11_20 is u3_21_23 = 0b001 & u5_8_11_20 & op1 = 0b0001 & ar & at & op0 = 0 {
+    ar = at s>> u5_8_11_20;
+}
+
+# SRC - Shift Right Combined, pg. 528.
+:src ar, as, at is op2 = 0b1000 & op1 = 0b0001 & ar & as & at & op0 = 0 {
+    local s64:8 = zext(as);
+    local t64:8 = zext(at);
+    local combined:8 = (s64 << 32) | t64;
+    local shifted:8 = combined >> SAR;
+    ar = shifted:4;
+}
+
+# SRL - Shift Right Logical, pg. 529.
+:srl ar, at is op2 = 0b1001 & op1 = 0b0001 & ar & as = 0 & at & op0 = 0 {
+    ar = at >> SAR;
+}
+
+# SRLI - Shift Right Logical Immediate, pg. 530.
+:srli ar, at, u4_8_11 is op2 = 0b0100 & op1 = 0b0001 & ar & u4_8_11 & at & op0 = 0 {
+    ar = at >> u4_8_11;
+}
+
+# SSA8B - Set Shift Amount for BE Byte Shift, pg. 531.
+:ssa8b as is op2 = 0b0100 & op1 = 0 & ar = 0b0011 & as & at = 0 & op0 = 0 {
+    local lsa:4 = (as&3)*8;
+    SAR = 32 - lsa;
+}
+
+# SSA8L - Set Shift Amount for LE Byte Shift, pg. 532.
+:ssa8l as is op2 = 0b0100 & op1 = 0 & ar = 0b0010 & as & at = 0 & op0 = 0 {
+	local rsa:4 = (as & 3)*8;
+	SAR = rsa;
+}
+
+# SSAI - Set Shift Amount Immediate, pg. 533.
+:ssai u5_8_11_4 is op2 = 0b0100 & op1 = 0 & ar = 0b0100 & u5_8_11_4 & u3_5_7 = 0 & op0 = 0 {
+	SAR = u5_8_11_4;
+}
+
+# SSI - Store Single Immediate, pg. 534.
+:ssi ft, as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b0100 & as & ft & op0 = 0b0011 {
+	local addr:4 = as + u10_16_23_sb2;
+	*:4 addr = ft;
+}
+
+# SSIU - Store Single Immediate with Update, pg. 536.
+:ssiu ft, as, u10_16_23_sb2 is u10_16_23_sb2 & ar = 0b1100 & as & ft & op0 = 0b0011 {
+	local addr:4 = as + u10_16_23_sb2;
+	*:4 addr = ft;
+	as = addr;
+}
+
+# SSL - Set Shift Amount for Left Shift, pg. 538.
+:ssl as is op2 = 0b0100 & op1 = 0 & ar = 0b0001 & as & at = 0 & op0 = 0 {
+    SAR = 32 - (as & 0x1f);
+}
+
+# SSR - Set Shift Amount for Right Shift, pg. 539.
+:ssr as is op2 = 0b0100 & op1 = 0 & ar = 0 & as & at = 0 & op0 = 0 {
+    SAR = (as & 0x1f);
+}
+
+# SSX - Store Single Indexed, pg. 540.
+:ssx fr, as, at is op2 = 0b0100 & op1 = 0b1000 & fr & as & at & op0 = 0 {
+	local addr:4 = as+at;
+	*:4 addr = fr;
+}
+
+# SSXU - Store Single Indexed with Update, pg. 541.
+:ssxu fr, as, at is op2 = 0b0101 & op1 = 0b1000 & fr & as & at & op0 = 0 {
+	local addr:4 = as+at;
+	*:4 addr = fr;
+	as = addr;
+}
+
+# SUB - Subtract, pg. 542.
+:sub ar, as, at is op2 = 0b1100 & op1 = 0 & ar & as & at & op0 = 0 {
+	ar = as - at;
+}
+
+# SUB.S - Subtract Single, pg. 543.
+:sub.s fr, fs, ft is op2 = 0b0001 & op1 = 0b1010 & fr & fs & ft & op0 = 0 {
+	fr = fs f- ft;
+}
+
+# SUBX2 - Subtract with Shift by 1, pg. 544.
+:subx2 ar, as, at is op2 = 0b1101 & op1 = 0 & ar & as & at & op0 = 0 {
+	ar = (as << 1) - at;
+}
+
+# SUBX4 - Subtract with Shift by 2, pg. 545.
+:subx4 ar, as, at is op2 = 0b1110 & op1 = 0 & ar & as & at & op0 = 0 {
+	ar = (as << 2) - at;
+}
+
+# SUBX8 - Subtract with Shift by 3, pg. 546.
+:subx8 ar, as, at is op2 = 0b1111 & op1 = 0 & ar & as & at & op0 = 0 {
+	ar = (as << 3) - at;
+}
+
+# SYSCALL - System Call, pg. 547.
+:syscall is op2 = 0 & op1 = 0 & ar = 0b0101 & as = 0 & at = 0 & op0 = 0 {
+	syscall();
+}
+
+# TRUNC.S - Truncate Single to Fixed, pg. 548
+:trunc.s ar, fs, u4_4_7 is op2 = 0b1001 & op1 = 0b1010 & ar & fs & u4_4_7 & op0 = 0 {
+	local scale:4 = 1 << u4_4_7;
+	local result = fs f* int2float(scale);
+	isNan:1 = nan(result);
+	if (isNan) goto <bad>;
+	ar = trunc(fs f* scale);
+	goto <end>;
+	<bad>
+	ar = 0x80000000;
+	if (fs f< 0) goto <end>;
+	ar = 0x7fffffff;
+	<end>
+}
+
+# UEQ.S - Compare Single Unordered or Equal, pg. 549.
+:ueq.s br, fs, ft is op2 = 0b0011 & op1 = 0b1011 & br & fs & ft & op0 = 0 {
+	br = nan(fs) || nan(ft) || fs f== ft;
+}
+
+# UFLOAT.S - Convert Unsigned Fixed to Single, pg. 550.
+:ufloat.s fr, as, u4_4_7 is op2 = 0b1101 & op1 = 0b1010 & fr & as & u4_4_7 & op0 = 0 {
+	local tmp:8 = zext(as);
+	local scale:4 = 1 << u4_4_7;
+	fr = int2float(tmp) f/ int2float(scale);
+}
+
+# ULE.S - Compare Single Unordered or Less Than or Equal, pg. 551.
+:ule.s br, fs, ft is op2 = 0b0111 & op1 = 0b1011 & br & fs & ft & op0 = 0 {
+	br = nan(fs) || nan(ft) || fs f<= ft;
+}
+
+# ULT.S - Compare Single Unordered or Less Than, pg. 552.
+:ult.s br, fs, ft is op2 = 0b0101 & op1 = 0b1011 & br & fs & ft & op0 = 0 {
+	br = nan(fs) || nan(ft) || fs f< ft;
+}
+
+# UN.S - Compare Single Unordered, pg. 554.
+:un.s br, fs, ft is op2 = 0b0001 & op1 = 0b1011 & br & fs & ft & op0 = 0 {
+	br = nan(fs) || nan(ft);
+}
+
+# UTRUNC.S - Truncate Single to Fixed Unsigned, pg. 555.
+:utrunc.s ar, fs, u4_4_7 is op2 = 0b1110 & op1 = 0b1010 & ar & fs & u4_4_7 & op0 = 0 {
+    local scale:4 = int2float(1:2 << u4_4_7:2);
+    local tmp:8 = trunc(fs f* scale);
+    local posof = nan(fs) || (tmp >> 16) != 0;
+    local negof = tmp s< 0;
+    local noof  = !posof && !negof;
+    ar = zext(posof)*0xffffffff + zext(negof)*0x80000000 + zext(noof)*tmp:4;
+}
+
+# WAITI - Wait Interrupt, pg. 556.
+:waiti u4_8_11 is op2 = 0 & op1 = 0 & ar = 0b0111 & u4_8_11 & at = 0 & op0 = 0 {
+    waiti(u4_8_11:4);
+}
+
+# WDTLB - Write Data TLB Entry, pg. 557.
+:wdtlb at, as is op2 = 0b0101 & op1 = 0 & ar = 0b1110 & as & at & op0 = 0 {
+	wdtlb(as, at);
+}
+
+# WER - Write External Register, pg. 558.
+:wer as, at is op2 = 0b0100 & op1 = 0 & ar = 0b0111 & as & at & op0 = 0 {
+	wer(as, at);
+}
+
+# WFR - Move AR to FR, pg. 559.
+:wfr fr, as is op2 = 0b1111 & op1 = 0b1010 & fr & as & at = 0b0101 & op0 = 0 {
+	fr = as;
+}
+
+# WITLB - Write Instruction TLB Entry, pg. 560.
+:witlb at, as is op2 = 0b0101 & op1 = 0 & ar = 0b0110 & as & at & op0 = 0 {
+	witlb(as, at);
+}
+
+# WSR - Write Special Register, pg. 561.
+:wsr at, sr is op2 = 0b0001 & op1 = 0b0011 & sr & at & op0 = 0 {
+	wsr(sr:1, at);
+}
+
+# WUR - Write User Register, pg. 563.
+:wur at, sr is op2 = 0b1111 & op1 = 0b0011 & sr & at & op0 = 0 {
+    wur(sr:1, at);
+}
+
+# XOR - Bitwise Exclusive Or, pg. 564.
+:xor ar, as, at is op2 = 0b0011 & op1 = 0 & ar & as & at & op0 = 0 {
+	ar = as ^ at;
+}
+
+# XORB - Boolean Exclusive Or, pg. 565.
+:xorb br, bs, bt is op2 = 0b0100 & op1 = 0b0010 & br & bs & bt & op0 = 0 {
+	br = bs ^^ bt;
+}
+
+# XSR - Exchange Special Register, pg. 566.
+:xsr at, sr is op2 = 0b0110 & op1 = 0b0001 & sr & at & op0 = 0 {
+    at = xsr(sr:1, at);
+}
+
+## MAC16 option ##
+
+# LDDEC - Load with Autodecrement, pg. 386.
+:lddec "MAC16_REGS[" mw_12_13 "]", as is op2 = 0b1001 & op1 = 0 & u2_14_15 = 0 & mw_12_13 & as & at = 0 & op0 = 0b0100 {
+	local ptr:4 = as - 4;
+	mw_12_13 = *:4 ptr;
+	as = ptr;
+}
+
+# LDINC - Load with Autoincrement, pg. 387.
+:ldinc "MAC16_REGS[" mw_12_13 "]", as is op2 = 0b1000 & op1 = 0 & u2_14_15 = 0 & mw_12_13 & as & at = 0 & op0 = 0b0100 {
+	local ptr:4 = as + 4;
+	mw_12_13 = *:4 ptr;
+	as = ptr;
+}
+
+# MUL.AA.* - Signed Multiply, pg. 431.
+:mul.aa.ll as, at is op2 = 0x7 & op1 = 0x4 & ar = 0 & as & at & op0 = 0x4 {
+	tm1:2 = as:2;
+	tm2:2 = at:2;
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = sext(M1:2) * sext(M2:2);
+}
+:mul.aa.hl as, at is op2 = 0x7 & op1 = 0x5 & ar = 0 & as & at & op0 = 0x4 {
+	tm1:2 = as(2);
+	tm2:2 = at:2;
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = sext(M1:2) * sext(M2:2);
+}
+
+:mul.aa.lh as, at is op2 = 0x7 & op1 = 0x6 & ar = 0 & as & at & op0 = 0x4 {
+	tm1:2 = as:2;
+	tm2:2 = at(2);
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = sext(M1:2) * sext(M2:2);
+}
+
+:mul.aa.hh as, at is op2 = 0x7 & op1 = 0x7 & ar = 0 & as & at & op0 = 0x4 {
+	tm1:2 = as(2);
+	tm2:2 = at(2);
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = sext(M1:2) * sext(M2:2);
+}
+
+# MUL.AD.* - Signed Multiply, pg. 432.
+:mul.ad.ll as, m2m3_6_6 is op2 = 0x3 & op1 = 0x4 & ar = 0 & as & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+	tm1:2 = as:2;
+	tm2:2 = m2m3_6_6:2;
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = sext(M1:2) * sext(M2:2);
+}
+
+:mul.ad.hl as, m2m3_6_6 is op2 = 0x3 & op1 = 0x5 & ar = 0 & as & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+	tm1:2 = as(2);
+	tm2:2 = m2m3_6_6:2;
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = sext(M1:2) * sext(M2:2);
+}
+:mul.ad.lh as, m2m3_6_6 is op2 = 0x3 & op1 = 0x6 & ar = 0 & as & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+	tm1:2 = as:2;
+	tm2:2 = m2m3_6_6(2);
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = sext(M1:2) * sext(M2:2);
+}
+:mul.ad.hh as, m2m3_6_6 is op2 = 0x3 & op1 = 0x7 & ar = 0 & as & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+	tm1:2 = as(2);
+	tm2:2 = m2m3_6_6(2);
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = sext(M1:2) * sext(M2:2);
+}
+
+# MUL.AD.* - Signed Multiply, pg. 433.
+:mul.da.ll m0m1_14_14, at is op2 = 0x6 & at & op1 = 0x4 & as = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & op0 = 0x4 {
+	tm1:2 = m0m1_14_14:2;
+	tm2:2 = at:2;
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = sext(M1:2) * sext(M2:2);
+}
+
+:mul.da.hl m0m1_14_14, at is op2 = 0x6 & op1 = 0x5 & as = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & at & op0 = 0x4 {
+	tm1:2 = m0m1_14_14:2;
+	tm2:2 = at(2);
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = sext(M1:2) * sext(M2:2);
+}
+
+:mul.da.lh m0m1_14_14, at is op2 = 0x6 & op1 = 0x6 & as = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & at & op0 = 0x4 {
+	tm1:2 = m0m1_14_14(2);
+	tm2:2 = at:2;
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = sext(M1:2) * sext(M2:2);
+}
+
+:mul.da.hh m0m1_14_14, at is op2 = 0x6 & op1 = 0x7 & as = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & at & op0 = 0x4 {
+	tm1:2 = m0m1_14_14(2);
+	tm2:2 = at(2);
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = sext(M1:2) * sext(M2:2);
+}
+
+# MUL.AD.* - Signed Multiply, pg. 434.
+:mul.dd.ll m0m1_14_14, m2m3_6_6 is op2 = 0x2 & op1 = 0x4 & ar = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+	tm1:2 = m0m1_14_14:2;
+	tm2:2 = m2m3_6_6:2;
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = sext(M1:2) * sext(M2:2);
+}
+
+:mul.dd.hl m0m1_14_14, m2m3_6_6 is op2 = 0x2 & op1 = 0x5 & ar = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+	tm1:2 = m0m1_14_14(2);
+	tm2:2 = m2m3_6_6:2;
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = sext(M1:2) * sext(M2:2);
+}
+
+:mul.dd.lh m0m1_14_14, m2m3_6_6 is op2 = 0x2 & op1 = 0x6 & ar = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+	tm1:2 = m0m1_14_14:2;
+	tm2:2 = m2m3_6_6(2);
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = sext(M1:2) * sext(M2:2);
+}
+
+:mul.dd.hh m0m1_14_14, m2m3_6_6 is op2 = 0x2 & op1 = 0x7 & ar = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+	tm1:2 = m0m1_14_14(2);
+	tm2:2 = m2m3_6_6(2);
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = sext(M1:2) * sext(M2:2);
+}
+
+# MULA.AA.* - Signed Multiply, pg. 431.
+:mula.aa.ll as, at is op2 = 0x7 & op1 = 0x8 & ar = 0 & as & at & op0 = 0x4 {
+	tm1:2 = as:2;
+	tm2:2 = at:2;
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+}
+:mula.aa.hl as, at is op2 = 0x7 & op1 = 0x9 & ar = 0 & as & at & op0 = 0x4 {
+	tm1:2 = as(2);
+	tm2:2 = at:2;
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+}
+
+:mula.aa.lh as, at is op2 = 0x7 & op1 = 0xa & ar = 0 & as & at & op0 = 0x4 {
+	tm1:2 = as:2;
+	tm2:2 = at(2);
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+}
+
+:mula.aa.hh as, at is op2 = 0x7 & op1 = 0xb & ar = 0 & as & at & op0 = 0x4 {
+	tm1:2 = as(2);
+	tm2:2 = at(2);
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+}
+
+:mula.ad.ll as, m2m3_6_6 is op2 = 0x3 & op1 = 0x8 & ar = 0 & as & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+	tm1:2 = as:2;
+	tm2:2 = m2m3_6_6:2;
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+}
+
+:mula.ad.hl as, m2m3_6_6 is op2 = 0x3 & op1 = 0x9 & ar = 0 & as & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+	tm1:2 = as(2);
+	tm2:2 = m2m3_6_6:2;
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+}
+:mula.ad.lh as, m2m3_6_6 is op2 = 0x3 & op1 = 0xa & ar = 0 & as & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+	tm1:2 = as:2;
+	tm2:2 = m2m3_6_6(2);
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+}
+:mula.ad.hh as, m2m3_6_6 is op2 = 0x3 & op1 = 0xb & ar = 0 & as & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+	tm1:2 = as(2);
+	tm2:2 = m2m3_6_6(2);
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+}
+
+:mula.da.ll m0m1_14_14, at is op2 = 0x6 & at & op1 = 0x8 & as = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & op0 = 0x4 {
+	tm1:2 = m0m1_14_14:2;
+	tm2:2 = at:2;
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+}
+
+:mula.da.hl m0m1_14_14, at is op2 = 0x6 & op1 = 0x9 & as = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & at & op0 = 0x4 {
+	tm1:2 = m0m1_14_14:2;
+	tm2:2 = at(2);
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+}
+
+:mula.da.lh m0m1_14_14, at is op2 = 0x6 & op1 = 0xa & as = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & at & op0 = 0x4 {
+	tm1:2 = m0m1_14_14(2);
+	tm2:2 = at:2;
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+}
+
+:mula.da.hh m0m1_14_14, at is op2 = 0x6 & op1 = 0xb & as = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & at & op0 = 0x4 {
+	tm1:2 = m0m1_14_14(2);
+	tm2:2 = at(2);
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+}
+
+:mula.dd.ll m0m1_14_14, m2m3_6_6 is op2 = 0x2 & op1 = 0x8 & ar = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+	tm1:2 = m0m1_14_14:2;
+	tm2:2 = m2m3_6_6:2;
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+}
+
+:mula.dd.hl m0m1_14_14, m2m3_6_6 is op2 = 0x2 & op1 = 0x9 & ar = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+	tm1:2 = m0m1_14_14(2);
+	tm2:2 = m2m3_6_6:2;
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+}
+
+:mula.dd.lh m0m1_14_14, m2m3_6_6 is op2 = 0x2 & op1 = 0xa & ar = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+	tm1:2 = m0m1_14_14:2;
+	tm2:2 = m2m3_6_6(2);
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+}
+
+:mula.dd.hh m0m1_14_14, m2m3_6_6 is op2 = 0x2 & op1 = 0xb & ar = 0 & u1_15_15 = 0 & u2_12_13 = 0 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+	tm1:2 = m0m1_14_14(2);
+	tm2:2 = m2m3_6_6(2);
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+}
+
+# Signed Mult/Accum, Ld/Autodec MULA.DA.*.LDDEC, pg. 441.
+:mula.da.ll.lddec mw_12_13, as, m0m1_14_14, at is op2 = 0x5 & at & op1 = 0x8 & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & op0 = 0x4 {
+	local vaddr:4 = as - 4;
+	tm1:2 = m0m1_14_14:2;
+	tm2:2 = at:2;
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+	as = vaddr;
+	mw_12_13 = *:4 vaddr;
+}
+
+:mula.da.hl.lddec mw_12_13, as, m0m1_14_14, at is op2 = 0x5 & op1 = 0x9 & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & at & op0 = 0x4 {
+	local vaddr:4 = as - 4;
+	tm1:2 = m0m1_14_14:2;
+	tm2:2 = at(2);
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+	as = vaddr;
+	mw_12_13 = *:4 vaddr;
+}
+
+:mula.da.lh.lddec mw_12_13, as, m0m1_14_14, at is op2 = 0x5 & op1 = 0xa & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & at & op0 = 0x4 {
+	local vaddr:4 = as - 4;
+	tm1:2 = m0m1_14_14(2);
+	tm2:2 = at:2;
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+	as = vaddr;
+	mw_12_13 = *:4 vaddr;
+}
+
+:mula.da.hh.lddec mw_12_13, as, m0m1_14_14, at is op2 = 0x5 & op1 = 0xb & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & at & op0 = 0x4 {
+	local vaddr:4 = as - 4;
+	tm1:2 = m0m1_14_14(2);
+	tm2:2 = at(2);
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+	as = vaddr;
+	mw_12_13 = *:4 vaddr;
+}
+
+# Signed Mult/Accum, Ld/Autoinc MULA.DA.*.LDINC, pg. 443.
+:mula.da.ll.ldinc mw_12_13, as, m0m1_14_14, at is op2 = 0x4 & at & op1 = 0x8 & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & op0 = 0x4 {
+	local vaddr:4 = as + 4;
+	tm1:2 = m0m1_14_14:2;
+	tm2:2 = at:2;
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+	as = vaddr;
+	mw_12_13 = *:4 vaddr;
+}
+
+:mula.da.hl.ldinc mw_12_13, as, m0m1_14_14, at is op2 = 0x4 & op1 = 0x9 & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & at & op0 = 0x4 {
+	local vaddr:4 = as + 4;
+	tm1:2 = m0m1_14_14:2;
+	tm2:2 = at(2);
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+	as = vaddr;
+	mw_12_13 = *:4 vaddr;
+}
+
+:mula.da.lh.ldinc mw_12_13, as, m0m1_14_14, at is op2 = 0x4 & op1 = 0xa & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & at & op0 = 0x4 {
+	local vaddr:4 = as + 4;
+	tm1:2 = m0m1_14_14(2);
+	tm2:2 = at:2;
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+	as = vaddr;
+	mw_12_13 = *:4 vaddr;
+}
+
+:mula.da.hh.ldinc mw_12_13, as, m0m1_14_14, at is op2 = 0x4 & op1 = 0xb & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & at & op0 = 0x4 {
+	local vaddr:4 = as + 4;
+	tm1:2 = m0m1_14_14(2);
+	tm2:2 = at(2);
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+	as = vaddr;
+	mw_12_13 = *:4 vaddr;
+}
+
+# Signed Mult/Accum, Ld/Autodec MULA.DD.*.LDDEC, pg. 446.
+:mula.dd.ll.lddec mw_12_13, as, m0m1_14_14, m2m3_6_6 is op2 = 0x1 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op1 = 0x8 & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & op0 = 0x4 {
+	local vaddr:4 = as - 4;
+	tm1:2 = m0m1_14_14:2;
+	tm2:2 = m2m3_6_6:2;
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+	as = vaddr;
+	mw_12_13 = *:4 vaddr;
+}
+
+:mula.dd.hl.lddec mw_12_13, as, m0m1_14_14, m2m3_6_6 is op2 = 0x1 & op1 = 0x9 & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+	local vaddr:4 = as - 4;
+	tm1:2 = m0m1_14_14:2;
+	tm2:2 = m2m3_6_6(2);
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+	as = vaddr;
+	mw_12_13 = *:4 vaddr;
+}
+
+:mula.dd.lh.lddec mw_12_13, as, m0m1_14_14, m2m3_6_6 is op2 = 0x1 & op1 = 0xa & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+	local vaddr:4 = as - 4;
+	tm1:2 = m0m1_14_14(2);
+	tm2:2 = m2m3_6_6:2;
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+	as = vaddr;
+	mw_12_13 = *:4 vaddr;
+}
+
+:mula.dd.hh.lddec mw_12_13, as, m0m1_14_14, m2m3_6_6 is op2 = 0x1 & op1 = 0xb & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+	local vaddr:4 = as - 4;
+	tm1:2 = m0m1_14_14(2);
+	tm2:2 = m2m3_6_6(2);
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+	as = vaddr;
+	mw_12_13 = *:4 vaddr;
+}
+
+# Signed Mult/Accum, Ld/Autoinc MULA.DD.*.LDINC, pg. 448.
+:mula.da.ll.ldinc mw_12_13, as, m0m1_14_14, m2m3_6_6 is op2 = 0x0 & op1 = 0x8 & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+	local vaddr:4 = as + 4;
+	tm1:2 = m0m1_14_14:2;
+	tm2:2 = m2m3_6_6:2;
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+	as = vaddr;
+	mw_12_13 = *:4 vaddr;
+}
+
+:mula.da.hl.ldinc mw_12_13, as, m0m1_14_14, m2m3_6_6 is op2 = 0x0 & op1 = 0x9 & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+	local vaddr:4 = as + 4;
+	tm1:2 = m0m1_14_14:2;
+	tm2:2 = m2m3_6_6(2);
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+	as = vaddr;
+	mw_12_13 = *:4 vaddr;
+}
+
+:mula.da.lh.ldinc mw_12_13, as, m0m1_14_14, m2m3_6_6 is op2 = 0x0 & op1 = 0xa & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+	local vaddr:4 = as + 4;
+	tm1:2 = m0m1_14_14(2);
+	tm2:2 = m2m3_6_6:2;
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+	as = vaddr;
+	mw_12_13 = *:4 vaddr;
+}
+
+:mula.da.hh.ldinc mw_12_13, as, m0m1_14_14, m2m3_6_6 is op2 = 0x0 & op1 = 0xb & as & u1_15_15 = 0 & mw_12_13 & m0m1_14_14 & u1_7_7 = 0 & u2_4_5 = 0 & m2m3_6_6 & op0 = 0x4 {
+	local vaddr:4 = as + 4;
+	tm1:2 = m0m1_14_14(2);
+	tm2:2 = m2m3_6_6(2);
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = ACC + (sext(M1:2) * sext(M2:2));
+	as = vaddr;
+	mw_12_13 = *:4 vaddr;
+}
+
+# UMUL.AA.* - Unsigned Multiply, pg. 553.
+:umul.aa.ll as, at is op2 = 0x7 & op1 = 0x0 & ar = 0 & as & at & op0 = 0x4 {
+	tm1:2 = as:2;
+	tm2:2 = at:2;
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = zext(M1:2) * zext(M2:2);
+}
+:umul.aa.hl as, at is op2 = 0x7 & op1 = 0x1 & ar = 0 & as & at & op0 = 0x4 {
+	tm1:2 = as(2);
+	tm2:2 = at:2;
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = zext(M1:2) * zext(M2:2);
+}
+
+:umul.aa.lh as, at is op2 = 0x7 & op1 = 0x2 & ar = 0 & as & at & op0 = 0x4 {
+	tm1:2 = as:2;
+	tm2:2 = at(2);
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = zext(M1:2) * zext(M2:2);
+}
+
+:umul.aa.hh as, at is op2 = 0x7 & op1 = 0x3 & ar = 0 & as & at & op0 = 0x4 {
+	tm1:2 = as(2);
+	tm2:2 = at(2);
+	M1 = zext(tm1);
+	M2 = zext(tm2);
+	ACC = zext(M1:2) * zext(M2:2);
+}
+
+## Loop Option ##
+
+LoopOffset8: loc is u8_16_23 [ loc = inst_start + u8_16_23 + 4; ] { export *:4 loc; }
+
+# LOOP - Loop, pg. 392.
+:loop as, LoopOffset8 is LoopOffset8 & ar = 8 & as & at = 0b0111 & op0 = 6
+	[ loopMode=1; loopEnd = 1; globalset(LoopOffset8, loopEnd); ] {
+	LCOUNT = as - 1;
+	LBEG = inst_next;
+	LEND = &LoopOffset8;
+}
+
+# LOOPGTZ - Loop if Greater Than Zero, pg. 394.
+:loopgtz as, LoopOffset8 is LoopOffset8 & ar = 0b1010 & as & at = 0b0111 & op0 = 0b0110
+	[ loopMode=1; loopEnd = 1; globalset(LoopOffset8, loopEnd); ] {
+	LCOUNT = as - 1;
+	LBEG = inst_next;
+	LEND = &LoopOffset8;
+	if (as s<= 0) goto LoopOffset8;
+}
+
+# LOOPNEZ - Loop if Not Equal Zero, pg. 396.
+:loopnez as, LoopOffset8 is LoopOffset8 & ar = 0b1001 & as & at = 0b0111 & op0 = 0b0110
+	[ loopMode=1; loopEnd = 1; globalset(LoopOffset8, loopEnd); ] {
+	LCOUNT = as - 1;
+	LBEG = inst_next;
+	LEND = &LoopOffset8;
+	if (as == 0) goto LoopOffset8;
+}

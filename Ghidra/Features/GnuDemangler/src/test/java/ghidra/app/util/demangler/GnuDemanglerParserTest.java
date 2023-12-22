@@ -33,7 +33,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	@Before
 	public void setUp() throws Exception {
 		process = GnuDemanglerNativeProcess
-				.getDemanglerNativeProcess(GnuDemanglerOptions.GNU_DEMANGLER_V2_33_1);
+				.getDemanglerNativeProcess(GnuDemanglerOptions.GNU_DEMANGLER_V2_41);
 		parser = new GnuDemanglerParser();
 	}
 
@@ -1025,12 +1025,11 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		String demangled = process.demangle(mangled);
 
 		/*
-		 	typeinfo for
-		 		std::__ndk1::__function::__func<
-		 			dummy::it::other::Namespace::function(float)::$_2::operator()(dummy::it::other::Namespace*) const::{lambda(dummy::it::other::Namespace*)#1},
-		 			std::__ndk1::allocator<{lambda(dummy::it::other::Namespace*)#1}>,
-		 			int (dummy::it::other::Namespace*)
-		 		>
+			typeinfo for 
+				std::__ndk1::__function::__func<
+					dummy::it::other::Namespace::function(float)::$_2::operator()(dummy::it::other::Namespace*) const::{lambda(dummy::it::other::Namespace*)#1},
+					std::__ndk1::allocator<dummy::it::other::Namespace::function(float)::$_2::operator()(dummy::it::other::Namespace*) const::{lambda(dummy::it::other::Namespace*)#1}>,
+					int (dummy::it::other::Namespace*)>
 		
 		 	'__func' has 3 template parameters, the operator and the allocator
 		
@@ -1042,7 +1041,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		String lambdaOperator =
 			dummyNs + "::function(float)::$_2::operator()(" + dummyNsP + ")const::" + lambda;
-		String lambdaAllocator = "std::__ndk1::allocator<" + lambda + ">";
+		String lambdaAllocator = "std::__ndk1::allocator<" + lambdaOperator + ">";
 		String thirdParam = "int(" + dummyNsP + ")";
 
 		String infoNs = "std::__ndk1::__function::";
@@ -1092,7 +1091,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		String signature = object.getSignature(false);
 		assertEquals(
-			"undefined std::__array_traits<LayerDetails::RandomProviderT<LayerDetails::LayerBase::initRandom(long,long)const::{lambda(long&,unsigned_int)#1}>,4ul>::_S_ref(LayerDetails::LayerBase::initRandom(long,long) const::{lambda(long&, unsigned int)#1} const &[],unsigned long)",
+			"undefined std::__array_traits<LayerDetails::RandomProviderT<LayerDetails::LayerBase::initRandom(long,long)const::{lambda(long&,unsigned_int)#1}>,4ul>::_S_ref(LayerDetails::RandomProviderT<LayerDetails::LayerBase::initRandom(long, long) const::{lambda(long&, unsigned int)#1}> const &[],unsigned long)",
 			signature);
 	}
 
@@ -1163,6 +1162,8 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		
 		 lambda contents - lambdas in templates and as a parameter
 		
+		 Note: the demangled string makes use of the 'auto' parameter keyword
+		
 		 	bool (***
 		 			const* std::
 		 				__addressof<
@@ -1196,7 +1197,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		String signature = object.getSignature(false);
 		assertEquals(
-			"undefined Bedrock::Threading::TLSDetail::DefaultConstructor<bool(**)(AssertHandlerContext_const&),void>::create()::{lambda(bool(***const*std::__addressof<Bedrock::Threading::TLSDetail::DefaultConstructor<bool(**)(AssertHandlerContext_const&),void>::create()::{lambda(bool(***const)(AssertHandlerContext_const&))#1}>(Bedrock::Threading::TLSDetail::DefaultConstructor<bool(**)(AssertHandlerContext_const&),void>::create()::{lambda(bool(***const&)(AssertHandlerContext_const&))#1}))(AssertHandlerContext_const&))#1}",
+			"undefined Bedrock::Threading::TLSDetail::DefaultConstructor<bool(**)(AssertHandlerContext_const&),void>::create()::{lambda(bool(***const*std::__addressof<Bedrock::Threading::TLSDetail::DefaultConstructor<bool(**)(AssertHandlerContext_const&),void>::create()::{lambda(bool(***const)(AssertHandlerContext_const&))#1}>(auto:1&))(AssertHandlerContext_const&))#1}",
 			signature);
 	}
 
@@ -1997,7 +1998,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		String signature = object.getSignature(false);
 		assertEquals(
-			"int LayerDetails::RandomProviderT<LayerDetails::LayerBase::initRandom(long,long)const::{lambda(long&,unsigned_int)#1}>::operator()<int,2ul>(LayerDetails::RandomProviderT<LayerDetails::LayerBase::initRandom(long,long)const::{lambda(long&,unsigned_int)#1}>::operator() const &[])",
+			"int LayerDetails::RandomProviderT<LayerDetails::LayerBase::initRandom(long,long)const::{lambda(long&,unsigned_int)#1}>::operator()<int,2ul>(int const &[])",
 			signature);
 	}
 
@@ -2140,8 +2141,91 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 			new DemangledDataType("fake", "fake", DemangledDataType.LONG_LONG).getDataType(null));
 	}
 
+	@Test
+	public void testRustLegacyHashIsIgnored() throws Exception {
+
+		//
+		// Mangled: _ZN3std2io4Read11read_to_end17hb85a0f6802e14499E
+		//
+		// Demangled: std::io::Read::read_to_end::hb85a0f6802e14499
+		//
+		// Parsed: std::io::Read::read_to_end
+		//
+		// Legacy mangled rust symbols:
+		// - start with _ZN
+		// - end withe E or E.
+		// - have a 16 digit hash that starts with 17h
+		//
+		String mangled = "_ZN3std2io4Read11read_to_end17hb85a0f6802e14499E";
+		String demangled = process.demangle(mangled);
+
+		assertEquals(demangled, "std::io::Read::read_to_end::hb85a0f6802e14499");
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertNotNull(object);
+		assertType(object, DemangledVariable.class);
+
+		String signature = object.getSignature(false);
+		assertEquals("std::io::Read::read_to_end", signature);
+	}
+
+	@Test
+	public void testTemplateParameterObectWithArrayDefinition() throws Exception {
+
+		//
+		// mangled: _ZTAXtlN9envHelper13StringLiteralILm38EEEtlA38_cLc67ELc111ELc114ELc101ELc65ELc117ELc100ELc105ELc111ELc95ELc67ELc97ELc112ELc116ELc117ELc114ELc101ELc67ELc111ELc110ELc118ELc101ELc114ELc116ELc101ELc114ELc67ELc104ELc97ELc105ELc110ELc95ELc73ELc110ELc112ELc117ELc116EEEE
+		//
+		// demangled: template parameter object for envHelper::StringLiteral<38ul>{char [38]{(char)67, (char)111, (char)114, (char)101, (char)65, (char)117, (char)100, (char)105, (char)111, (char)95, (char)67, (char)97, (char)112, (char)116, (char)117, (char)114, (char)101, (char)67, (char)111, (char)110, (char)118, (char)101, (char)114, (char)116, (char)101, (char)114, (char)67, (char)104, (char)97, (char)105, (char)110, (char)95, (char)73, (char)110, (char)112, (char)117, (char)116}}
+		//
+		// Note: this object ends in a char array definition:
+		//
+		// 		...{char [38]{(char)67, .... }}
+		//
+
+		String mangled =
+			"_ZTAXtlN9envHelper13StringLiteralILm38EEEtlA38_cLc67ELc111ELc114ELc101ELc65ELc117ELc100ELc105ELc111ELc95ELc67ELc97ELc112ELc116ELc117ELc114ELc101ELc67ELc111ELc110ELc118ELc101ELc114ELc116ELc101ELc114ELc67ELc104ELc97ELc105ELc110ELc95ELc73ELc110ELc112ELc117ELc116EEEE";
+		String demangled = process.demangle(mangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertNotNull(object);
+		assertType(object, DemangledString.class);
+
+		String signature = object.getSignature(false);
+		assertEquals("template parameter object for envHelper::StringLiteral<38ul>", signature);
+	}
+
+	@Test
+	public void testAllocatorTraits_AlocateAtLeast() throws Exception {
+
+		//
+		// mangled: _ZNSt3__119__allocate_at_leastB7v160006INS_9allocatorINS_10unique_ptrIvN10applesauce4raii2v16detail23opaque_deletion_functorIPvXadL_Z27VPTimeFreqConverter_DisposeEEEEEEEEEENS_19__allocation_resultINS_16allocator_traitsIT_E7pointerEEERSE_m
+		//
+		// demangled: std::__1::__allocation_result<std::__1::allocator_traits<std::__1::allocator<std::__1::unique_ptr<void, applesauce::raii::v1::detail::opaque_deletion_functor<void*, &VPTimeFreqConverter_Dispose> > > >::pointer> std::__1::__allocate_at_least[abi:v160006]<std::__1::allocator<std::__1::unique_ptr<void, applesauce::raii::v1::detail::opaque_deletion_functor<void*, &VPTimeFreqConverter_Dispose> > > >(std::__1::allocator<std::__1::unique_ptr<void, applesauce::raii::v1::detail::opaque_deletion_functor<void*, &VPTimeFreqConverter_Dispose> > >&, unsigned long)
+		//
+		// Note: __allocate_at_least is a C++23 feature
+		//
+
+		String mangled =
+			"_ZNSt3__119__allocate_at_leastB7v160006INS_9allocatorINS_10unique_ptrIvN10applesauce4raii2v16detail23opaque_deletion_functorIPvXadL_Z27VPTimeFreqConverter_DisposeEEEEEEEEEENS_19__allocation_resultINS_16allocator_traitsIT_E7pointerEEERSE_m";
+		String demangled = process.demangle(mangled);
+
+		DemangledObject object = parser.parse(mangled, demangled);
+		assertNotNull(object);
+		assertType(object, DemangledFunction.class);
+
+		assertName(object,
+			"__allocate_at_least[abi:v160006]<std::__1::allocator<std::__1::unique_ptr<void,applesauce::raii::v1::detail::opaque_deletion_functor<void*,&VPTimeFreqConverter_Dispose>>>>",
+			"std",
+			"__1");
+
+		String signature = object.getSignature(false);
+		assertEquals(
+			"std::__1::__allocation_result<std::__1::allocator_traits<std::__1::allocator<std::__1::unique_ptr<void,applesauce::raii::v1::detail::opaque_deletion_functor<void*,&VPTimeFreqConverter_Dispose>>>>::pointer> std::__1::__allocate_at_least[abi:v160006]<std::__1::allocator<std::__1::unique_ptr<void,applesauce::raii::v1::detail::opaque_deletion_functor<void*,&VPTimeFreqConverter_Dispose>>>>(std::__1::allocator<std::__1::unique_ptr<void,applesauce::raii::v1::detail::opaque_deletion_functor<void *,&VPTimeFreqConverter_Dispose>>> &,unsigned long)",
+			signature);
+	}
+
 	private void assertType(Demangled o, Class<?> c) {
-		assertTrue("Wrong demangled type. " + "\nExpected " + c + "; " + "\nfound " + o.getClass(),
+		assertTrue("Wrong demangled type. \nExpected " + c + "; \nfound " + o.getClass(),
 			c.isInstance(o));
 	}
 

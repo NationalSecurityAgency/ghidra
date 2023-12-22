@@ -41,9 +41,9 @@ public class JdiManagerImpl implements JdiManager {
 	private final Map<String, VirtualMachine> unmodifiableVMs = Collections.unmodifiableMap(vms);
 
 	protected final ListenerSet<JdiTargetOutputListener> listenersTargetOutput =
-		new ListenerSet<>(JdiTargetOutputListener.class);
+		new ListenerSet<>(JdiTargetOutputListener.class, true);
 	protected final ListenerSet<JdiConsoleOutputListener> listenersConsoleOutput =
-		new ListenerSet<>(JdiConsoleOutputListener.class);
+		new ListenerSet<>(JdiConsoleOutputListener.class, true);
 	protected final ExecutorService eventThread = Executors.newSingleThreadExecutor();
 
 	protected JdiEventHandler globalEventHandler = new JdiEventHandler();

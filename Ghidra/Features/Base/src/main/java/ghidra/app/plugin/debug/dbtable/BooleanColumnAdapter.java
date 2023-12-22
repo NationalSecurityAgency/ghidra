@@ -17,8 +17,22 @@ package ghidra.app.plugin.debug.dbtable;
 
 import db.BooleanField;
 import db.DBRecord;
+import docking.widgets.table.GBooleanCellRenderer;
+import ghidra.docking.settings.Settings;
+import ghidra.util.table.column.GColumnRenderer;
 
 public class BooleanColumnAdapter extends AbstractColumnAdapter {
+
+	private BooleanRenderer renderer = new BooleanRenderer();
+
+	BooleanColumnAdapter(String columnName, int column) {
+		super(columnName, column);
+	}
+
+	@Override
+	public int getColumnPreferredWidth() {
+		return 75;
+	}
 
 	@Override
 	Class<?> getValueClass() {
@@ -31,8 +45,23 @@ public class BooleanColumnAdapter extends AbstractColumnAdapter {
 	}
 
 	@Override
-	Object getValue(DBRecord rec, int col) {
-		return Boolean.valueOf(rec.getBooleanValue(col));
+	Object getValue(DBRecord rec, int dbColumn) {
+		return Boolean.valueOf(rec.getBooleanValue(dbColumn));
 	}
 
+	@Override
+	public BooleanRenderer getColumnRenderer() {
+		return renderer;
+	}
+
+	private class BooleanRenderer extends GBooleanCellRenderer implements GColumnRenderer<Object> {
+		@Override
+		public String getFilterString(Object t, Settings settings) {
+			Boolean b = (Boolean) t;
+			if (b == null) {
+				return Boolean.FALSE.toString();
+			}
+			return b.toString();
+		}
+	}
 }

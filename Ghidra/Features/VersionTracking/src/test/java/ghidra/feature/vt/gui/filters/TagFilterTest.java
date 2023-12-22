@@ -459,7 +459,7 @@ public class TagFilterTest extends VTBaseTestCase {
 
 	public static VTProgramCorrelator createProgramCorrelator(ServiceProvider serviceProvider,
 			Program sourceProgram, Program destinationProgram) {
-		return new DummyTestProgramCorrelator(serviceProvider, sourceProgram, destinationProgram);
+		return new DummyTestProgramCorrelator(sourceProgram, destinationProgram);
 	}
 
 }

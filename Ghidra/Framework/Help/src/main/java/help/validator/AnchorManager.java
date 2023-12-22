@@ -112,7 +112,7 @@ public class AnchorManager {
 	}
 
 	private void cleanupDuplicateAnchors() {
-		Set<String> keySet = duplicateAnchorsById.keySet();
+		Set<String> keySet = new HashSet<>(duplicateAnchorsById.keySet());
 		for (String id : keySet) {
 			List<AnchorDefinition> list = duplicateAnchorsById.get(id);
 			for (Iterator<AnchorDefinition> iterator = list.iterator(); iterator.hasNext();) {

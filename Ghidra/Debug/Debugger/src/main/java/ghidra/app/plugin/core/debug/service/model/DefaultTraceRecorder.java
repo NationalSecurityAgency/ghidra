@@ -20,12 +20,10 @@ import java.util.concurrent.*;
 
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 
-import ghidra.app.plugin.core.debug.mapping.*;
+import ghidra.app.plugin.core.debug.mapping.DefaultDebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.service.model.interfaces.*;
 import ghidra.app.plugin.core.debug.service.model.record.DataTypeRecorder;
 import ghidra.app.plugin.core.debug.service.model.record.SymbolRecorder;
-import ghidra.app.services.TraceRecorder;
-import ghidra.app.services.TraceRecorderListener;
 import ghidra.async.AsyncLazyValue;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.AbstractDebuggerObjectModel;
@@ -34,6 +32,7 @@ import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.util.PathUtils;
+import ghidra.debug.api.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
@@ -48,6 +47,7 @@ import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.modules.TraceSection;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.Msg;
@@ -58,7 +58,6 @@ import ghidra.util.task.TaskMonitor;
 public class DefaultTraceRecorder implements TraceRecorder {
 	static final int POOL_SIZE = Math.min(16, Runtime.getRuntime().availableProcessors());
 
-	protected final DebuggerModelServicePlugin plugin;
 	protected final PluginTool tool;
 	protected final TargetObject target;
 	protected final Trace trace;
@@ -83,11 +82,10 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	protected final AsyncLazyValue<Void> lazyInit = new AsyncLazyValue<>(this::doInit);
 	private boolean valid = true;
 
-	public DefaultTraceRecorder(DebuggerModelServicePlugin plugin, Trace trace, TargetObject target,
+	public DefaultTraceRecorder(PluginTool tool, Trace trace, TargetObject target,
 			DefaultDebuggerTargetTraceMapper mapper) {
 		trace.addConsumer(this);
-		this.plugin = plugin;
-		this.tool = plugin.getTool();
+		this.tool = tool;
 		this.trace = trace;
 		this.target = target;
 
@@ -111,6 +109,11 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	@Override
 	public TargetObject getTargetObject(TraceObject obj) {
 		return null;
+	}
+
+	@Override
+	public TargetObject getTargetObject(TraceObjectKeyPath path) {
+		return target.getModel().getModelObject(path.getKeyList());
 	}
 
 	@Override
@@ -282,7 +285,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	@Override
 	public CompletableFuture<Void> readMemoryBlocks(AddressSetView set, TaskMonitor monitor) {
 		if (set.isEmpty()) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return memoryRecorder.captureProcessMemory(set, monitor);
 	}
@@ -291,7 +294,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	public CompletableFuture<Void> captureDataTypes(TargetDataTypeNamespace namespace,
 			TaskMonitor monitor) {
 		if (!valid) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return datatypeRecorder.captureDataTypes(namespace, monitor);
 	}
@@ -301,7 +304,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		TargetModule targetModule = getTargetModule(module);
 		if (targetModule == null) {
 			Msg.error(this, "Module " + module + " is not loaded");
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return datatypeRecorder.captureDataTypes(targetModule, monitor);
 	}
@@ -310,7 +313,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	public CompletableFuture<Void> captureSymbols(TargetSymbolNamespace namespace,
 			TaskMonitor monitor) {
 		if (!valid) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return symbolRecorder.captureSymbols(namespace, monitor);
 	}
@@ -320,7 +323,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		TargetModule targetModule = getTargetModule(module);
 		if (targetModule == null) {
 			Msg.error(this, "Module " + module + " is not loaded");
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return symbolRecorder.captureSymbols(targetModule, monitor);
 	}
@@ -364,7 +367,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	@Override
 	public void stopRecording() {
 		invalidate();
-		getListeners().fire.recordingStopped(this);
+		getListeners().invoke().recordingStopped(this);
 	}
 
 	protected void invalidate() {
@@ -453,7 +456,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		return focusScope.requestFocus(focus).thenApply(__ -> true).exceptionally(ex -> {
 			ex = AsyncUtils.unwrapThrowable(ex);
 			String msg = "Could not focus " + focus + ": " + ex.getMessage();
-			plugin.getTool().setStatusInfo(msg);
+			tool.setStatusInfo(msg);
 			if (ex instanceof DebuggerModelAccessException) {
 				Msg.info(this, msg);
 			}
@@ -483,7 +486,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		return activeScope.requestActivation(active).thenApply(__ -> true).exceptionally(ex -> {
 			ex = AsyncUtils.unwrapThrowable(ex);
 			String msg = "Could not activate " + active + ": " + ex.getMessage();
-			plugin.getTool().setStatusInfo(msg);
+			tool.setStatusInfo(msg);
 			if (ex instanceof DebuggerModelAccessException) {
 				Msg.info(this, msg);
 			}

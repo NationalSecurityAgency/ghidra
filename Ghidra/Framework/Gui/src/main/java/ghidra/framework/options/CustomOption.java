@@ -18,33 +18,28 @@ package ghidra.framework.options;
 public interface CustomOption {
 
 	/**
-	 * <code>SaveState</code> key which corresponds to custom option
-	 * implementation class.  The use of this key/value within the stored
-	 * state information is reserved for use by the option storage 
-	 * implementation and should be ignored by {@link #readState(SaveState)}
-	 * implementation
+	 * Key which corresponds to custom option implementation class.  The use of this key/value 
+	 * within the stored state information is reserved for use by the option storage implementation 
+	 * and should be ignored by {@link #readState(GProperties)} implementation.
 	 */
 	public final String CUSTOM_OPTION_CLASS_NAME_KEY = "CUSTOM_OPTION_CLASS";
 
 	/**
-	 * Concrete subclass of WrappedOption should read all of its
-	 * state from the given saveState object.
+	 * Read state from the given properties
 	 * @param properties container of state information
 	 */
 	public void readState(GProperties properties);
 
 	/**
-	 * Concrete subclass of WrappedOption should write all of its
-	 * state to the given saveState object.
+	 * Write state into the given properties
 	 * @param properties container of state information
 	 */
 	public void writeState(GProperties properties);
 
 	/**
-	 * CustomOption should implement this method to provide a formatted 
-	 * string value of this option value.  The returned value will 
-	 * be used in support of the {@link Options#getValueAsString(String)}
-	 * and {@link Options#getDefaultValueAsString(String)}.
+	 * Subclasses should implement this method to provide a formatted string value of this option 
+	 * value.  The returned value will be used in support of the 
+	 * {@link Options#getValueAsString(String)} and {@link Options#getDefaultValueAsString(String)}.
 	 * @return option value as string
 	 */
 	@Override

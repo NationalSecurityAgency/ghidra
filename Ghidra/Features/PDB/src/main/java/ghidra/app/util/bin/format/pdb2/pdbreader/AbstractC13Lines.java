@@ -88,19 +88,22 @@ public class AbstractC13Lines extends C13Section {
 	 * Dumps this class to a Writer
 	 * @param writer {@link Writer} to which to dump the information
 	 * @throws IOException Upon IOException writing to the {@link Writer}
+	 * @throws CancelledException upon user cancellation
 	 */
 	@Override
-	void dump(Writer writer) throws IOException {
+	void dump(Writer writer, TaskMonitor monitor) throws IOException, CancelledException {
 		writer.write("C13Lines----------------------------------------------------\n");
-		dumpInternal(writer);
+		dumpInternal(writer, monitor);
 		writer.write("End C13Lines------------------------------------------------\n");
 	}
 
-	protected void dumpInternal(Writer writer) throws IOException {
+	protected void dumpInternal(Writer writer, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		writer.write(String.format("offCon: 0x%08x segCon: %d flags: 0x%08x lenCon: 0x%08x\n",
 			offCon, segCon, flags, lenCon));
 
 		for (FileRecord record : fileRecords) {
+			monitor.checkCancelled();
 			record.dump(writer, offCon);
 		}
 	}
@@ -167,8 +170,8 @@ public class AbstractC13Lines extends C13Section {
 		}
 
 		void dump(Writer writer, long offCon) throws IOException {
-			writer.write(String.format("fileId: %06x, nLines: %d, lenFileBlock: %d\n",
-				getFileId(), getNLines(), getLenFileBlock()));
+			writer.write(String.format("fileId: %06x, nLines: %d, lenFileBlock: %d\n", getFileId(),
+				getNLines(), getLenFileBlock()));
 			for (int i = 0; i < getNLines(); i++) {
 				List<LineRecord> records = getLineRecords();
 				records.get(i).dump(writer, offCon);

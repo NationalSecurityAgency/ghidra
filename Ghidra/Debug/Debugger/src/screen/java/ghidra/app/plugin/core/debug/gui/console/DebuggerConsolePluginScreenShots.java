@@ -23,7 +23,7 @@ import org.junit.rules.TestName;
 import docking.ActionContext;
 import docking.DefaultActionContext;
 import docking.action.builder.ActionBuilder;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.util.Msg;
 import help.screenshot.GhidraScreenShotGenerator;
@@ -70,7 +70,7 @@ public class DebuggerConsolePluginScreenShots extends GhidraScreenShotGenerator 
 			"<html>You can take <b>action</b> to resolve this message</html>",
 			new ScreenShotActionContext());
 
-		AbstractGhidraHeadedDebuggerGUITest
+		AbstractGhidraHeadedDebuggerTest
 			.waitForPass(() -> assertEquals(3, consolePlugin.getRowCount(ActionContext.class)));
 
 		captureIsolatedProvider(consoleProvider, 600, 300);

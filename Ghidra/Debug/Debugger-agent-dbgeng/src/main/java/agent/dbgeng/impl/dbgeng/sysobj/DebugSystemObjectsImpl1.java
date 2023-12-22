@@ -24,6 +24,7 @@ import com.sun.jna.platform.win32.WinDef.ULONGByReference;
 import com.sun.jna.platform.win32.WinDef.ULONGLONG;
 import com.sun.jna.platform.win32.WinDef.ULONGLONGByReference;
 import com.sun.jna.platform.win32.WinNT.HRESULT;
+import com.sun.jna.Native;
 import com.sun.jna.platform.win32.COM.COMUtils;
 
 import agent.dbgeng.dbgeng.COMUtilsExtra;
@@ -261,6 +262,18 @@ public class DebugSystemObjectsImpl1 implements DebugSystemObjectsInternal {
 		return pulSysOffset.getValue().longValue();
 	}
 
+	@Override
+	public String getCurrentProcessExecutableName() {
+		ULONGByReference pulPathLength = new ULONGByReference();
+		COMUtils.checkRC(jnaSysobj.GetCurrentProcessExecutableName(null, new ULONG(0), pulPathLength));
+		byte[] aBuffer = new byte[pulPathLength.getValue().intValue()];
+		HRESULT hr = jnaSysobj.GetCurrentProcessExecutableName(aBuffer, pulPathLength.getValue(), null);
+		if (hr.equals(COMUtilsExtra.E_UNEXPECTED) || hr.equals(COMUtilsExtra.E_NOTIMPLEMENTED)) {
+			return null;
+		}
+		return Native.toString(aBuffer);
+	}
+	
 	@Override
 	public DebugSessionId getEventSystem() {
 		throw new UnsupportedOperationException("Not supported by this interface");

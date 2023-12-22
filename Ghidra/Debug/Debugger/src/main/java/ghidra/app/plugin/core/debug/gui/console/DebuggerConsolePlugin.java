@@ -86,15 +86,15 @@ public class DebuggerConsolePlugin extends Plugin implements DebuggerConsoleServ
 		provider = new DebuggerConsoleProvider(this);
 
 		rootLogger = (Logger) LogManager.getRootLogger();
-		appender.start();
-		rootLogger.addAppender(appender);
+		//appender.start();
+		//rootLogger.addAppender(appender);
 	}
 
 	@Override
 	protected void dispose() {
 		if (rootLogger != null) {
-			rootLogger.removeAppender(appender);
-			appender.stop();
+			//rootLogger.removeAppender(appender);
+			//appender.stop();
 
 			provider.dispose();
 			tool.removeComponentProvider(provider);
@@ -152,7 +152,7 @@ public class DebuggerConsolePlugin extends Plugin implements DebuggerConsoleServ
 	 * @param ctx the context
 	 * @return the the log entry
 	 */
-	public LogRow getLogRow(ActionContext ctx) {
+	public LogRow<?> getLogRow(ActionContext ctx) {
 		return provider.getLogRow(ctx);
 	}
 }

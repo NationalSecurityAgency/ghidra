@@ -17,12 +17,13 @@ package ghidra.app.plugin.core.debug.service.breakpoint;
 
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.dbg.target.TargetTogglable;
+import ghidra.debug.api.target.Target;
+import ghidra.trace.model.breakpoint.TraceBreakpoint;
 
-public record DisableTargetBreakpointActionItem(TargetTogglable togglable)
+public record DisableTargetBreakpointActionItem(Target target, TraceBreakpoint bpt)
 		implements BreakpointActionItem {
 	@Override
 	public CompletableFuture<Void> execute() {
-		return togglable.disable();
+		return target.toggleBreakpointAsync(bpt, false);
 	}
 }

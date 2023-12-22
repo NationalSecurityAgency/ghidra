@@ -60,7 +60,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 			MachHeader machHeader = new MachHeader(provider);
 			String magic =
 				CpuTypes.getMagicString(machHeader.getCpuType(), machHeader.getCpuSubType());
-			List<QueryResult> results = QueryOpinionService.query(getName(), magic, null);
+			List<QueryResult> results = QueryOpinionService.query(MACH_O_NAME, magic, null);
 			for (QueryResult result : results) {
 				loadSpecs.add(new LoadSpec(this, machHeader.getImageBase(), result));
 			}
@@ -91,8 +91,8 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 			}
 		}
 		catch (CancelledException e) {
- 			return;
- 		}
+			return;
+		}
 		catch (IOException e) {
 			throw e;
 		}
@@ -137,7 +137,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 			for (FatArch architecture : architectures) {
 				ByteProvider bp = new ByteProviderWrapper(provider, architecture.getOffset(),
 					architecture.getSize()) {
-					
+
 					@Override // Ensure the parent provider gets closed when the wrapper does
 					public void close() throws IOException {
 						super.provider.close();

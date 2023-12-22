@@ -1,7 +1,9 @@
 ##VERSION: 2.0
 ##MODULE IP: Creative Commons Attribution 2.5
+##MODULE IP: Crystal Clear Icons - LGPL 2.1
 ##MODULE IP: FAMFAMFAM Icons - CC 2.5
 ##MODULE IP: LGPL 2.1
+##MODULE IP: LGPL 3.0
 ##MODULE IP: Modified Nuvola Icons - LGPL 2.1
 ##MODULE IP: Nuvola Icons - LGPL 2.1
 ##MODULE IP: Public Domain
@@ -19,6 +21,47 @@ GhidraClass/AdvancedDevelopment/GhidraAdvancedDevelopment.html||GHIDRA|||This fi
 GhidraClass/AdvancedDevelopment/GhidraAdvancedDevelopment_withNotes.html||Public Domain|||Slight modification of code that is available for distribution, without restrictions, (original extremely permissive wtf license allows us to change IP to Public Domain),from https://github.com/paulrouget/dzslides.|END|
 GhidraClass/AdvancedDevelopment/Images/GhidraLogo64.png||GHIDRA||||END|
 GhidraClass/AdvancedDevelopment/Images/highLevelClasses.png||GHIDRA||||END|
+GhidraClass/BSim/BSimTutorial_BSim_Command_Line.html||GHIDRA||||END|
+GhidraClass/BSim/BSimTutorial_BSim_Command_Line.md||GHIDRA||||END|
+GhidraClass/BSim/BSimTutorial_Basic_Queries.html||GHIDRA||||END|
+GhidraClass/BSim/BSimTutorial_Basic_Queries.md||GHIDRA||||END|
+GhidraClass/BSim/BSimTutorial_Creating_Database_From_GUI.html||GHIDRA||||END|
+GhidraClass/BSim/BSimTutorial_Creating_Database_From_GUI.md||GHIDRA||||END|
+GhidraClass/BSim/BSimTutorial_Enabling.html||GHIDRA||||END|
+GhidraClass/BSim/BSimTutorial_Enabling.md||GHIDRA||||END|
+GhidraClass/BSim/BSimTutorial_Evaluating_Matches.html||GHIDRA||||END|
+GhidraClass/BSim/BSimTutorial_Evaluating_Matches.md||GHIDRA||||END|
+GhidraClass/BSim/BSimTutorial_Exe_Results.html||GHIDRA||||END|
+GhidraClass/BSim/BSimTutorial_Exe_Results.md||GHIDRA||||END|
+GhidraClass/BSim/BSimTutorial_Filters.html||GHIDRA||||END|
+GhidraClass/BSim/BSimTutorial_Filters.md||GHIDRA||||END|
+GhidraClass/BSim/BSimTutorial_Ghidra_Command_Line.html||GHIDRA||||END|
+GhidraClass/BSim/BSimTutorial_Ghidra_Command_Line.md||GHIDRA||||END|
+GhidraClass/BSim/BSimTutorial_Intro.html||GHIDRA||||END|
+GhidraClass/BSim/BSimTutorial_Intro.md||GHIDRA||||END|
+GhidraClass/BSim/BSimTutorial_Overview_Queries.html||GHIDRA||||END|
+GhidraClass/BSim/BSimTutorial_Overview_Queries.md||GHIDRA||||END|
+GhidraClass/BSim/BSimTutorial_Scripting.html||GHIDRA||||END|
+GhidraClass/BSim/BSimTutorial_Scripting.md||GHIDRA||||END|
+GhidraClass/BSim/README.html||GHIDRA||||END|
+GhidraClass/BSim/README.md||GHIDRA||||END|
+GhidraClass/BSim/images/Plus2.png||GHIDRA||||END|
+GhidraClass/BSim/images/actions.png||GHIDRA||||END|
+GhidraClass/BSim/images/basic_query.png||GHIDRA||||END|
+GhidraClass/BSim/images/bsim_search_dialog.png||GHIDRA||||END|
+GhidraClass/BSim/images/configure.png||GHIDRA||||END|
+GhidraClass/BSim/images/decomp_diff.png||GHIDRA||||END|
+GhidraClass/BSim/images/exe_results.png||GHIDRA||||END|
+GhidraClass/BSim/images/exe_results_actions.png||GHIDRA||||END|
+GhidraClass/BSim/images/exec.png||Crystal Clear Icons - LGPL 2.1||||END|
+GhidraClass/BSim/images/feature_visualizer.png||GHIDRA||||END|
+GhidraClass/BSim/images/information.png||FAMFAMFAM Icons - CC 2.5||||END|
+GhidraClass/BSim/images/lock.gif||GHIDRA||||END|
+GhidraClass/BSim/images/overview_window.png||GHIDRA||||END|
+GhidraClass/BSim/images/preferences-web-browser-shortcuts.png||LGPL 3.0||||END|
+GhidraClass/BSim/images/script_manager.png||GHIDRA||||END|
+GhidraClass/BSim/images/text_align_justify.png||FAMFAMFAM Icons - CC 2.5||||END|
+GhidraClass/BSim/images/unlock.gif||GHIDRA||||END|
 GhidraClass/Beginner/Images/GhidraLogo64.png||GHIDRA||||END|
 GhidraClass/Beginner/Introduction_to_Ghidra_Student_Guide.html||GHIDRA|||This file contains mostly Ghidra content, but also includes code that is available for distribution, without restrictions, from https://github.com/paulrouget/dzslides.|END|
 GhidraClass/Beginner/Introduction_to_Ghidra_Student_Guide_withNotes.html||Public Domain|||Slight modification of code that is available for distribution, without restrictions, (original extremely permissive wtf license allows us to change IP to Public Domain),from https://github.com/paulrouget/dzslides.|END|
@@ -44,6 +87,7 @@ GhidraClass/Debugger/B3-Scripting.md||GHIDRA||||END|
 GhidraClass/Debugger/B4-Modeling.html||GHIDRA||||END|
 GhidraClass/Debugger/B4-Modeling.md||GHIDRA||||END|
 GhidraClass/Debugger/Makefile||GHIDRA||||END|
+GhidraClass/Debugger/README.html||GHIDRA||||END|
 GhidraClass/Debugger/README.md||GHIDRA||||END|
 GhidraClass/Debugger/gdb_syntax.xml||GHIDRA||||END|
 GhidraClass/Debugger/images/Breakpoints_EmptyAfterLaunch.png||GHIDRA||||END|
@@ -154,6 +198,7 @@ GhidraClass/Intermediate/Scripting_withNotes.html||Public Domain|||Slight modifi
 GhidraClass/Intermediate/VersionTracking.html||GHIDRA|||This file contains mostly Ghidra content, but also includes code that is available for distribution, without restrictions, from https://github.com/paulrouget/dzslides.|END|
 GhidraClass/Intermediate/VersionTracking_withNotes.html||Public Domain|||Slight modification of code that is available for distribution, without restrictions, (original extremely permissive wtf license allows us to change IP to Public Domain),from https://github.com/paulrouget/dzslides.|END|
 GhidraCodingStandards.html||GHIDRA||||END|
+GhidraFilesystemStorage.html||GHIDRA||||END|
 InstallationGuide.html||GHIDRA||||END|
 images/B.gif||GHIDRA||||END|
 images/D.gif||GHIDRA||||END|

@@ -58,7 +58,7 @@ public class DbgModuleImpl implements DbgModule {
 	 */
 	public void add() {
 		process.addModule(this);
-		manager.getEventListeners().fire.moduleLoaded(process, info, Causes.UNCLAIMED);
+		manager.getEventListeners().invoke().moduleLoaded(process, info, Causes.UNCLAIMED);
 	}
 
 	/**
@@ -66,7 +66,7 @@ public class DbgModuleImpl implements DbgModule {
 	 */
 	public void remove() {
 		process.removeModule(name);
-		manager.getEventListeners().fire.moduleUnloaded(process, info, Causes.UNCLAIMED);
+		manager.getEventListeners().invoke().moduleUnloaded(process, info, Causes.UNCLAIMED);
 	}
 
 	@Override

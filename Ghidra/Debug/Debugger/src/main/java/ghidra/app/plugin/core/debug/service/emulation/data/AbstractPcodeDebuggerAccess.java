@@ -15,7 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.service.emulation.data;
 
-import ghidra.app.services.TraceRecorder;
+import ghidra.debug.api.emulation.*;
+import ghidra.debug.api.target.Target;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.trace.data.AbstractPcodeTraceAccess;
 import ghidra.trace.model.guest.TracePlatform;
@@ -31,7 +32,7 @@ public abstract class AbstractPcodeDebuggerAccess<S extends PcodeDebuggerMemoryA
 		implements PcodeDebuggerAccess {
 
 	protected final PluginTool tool;
-	protected final TraceRecorder recorder;
+	protected final Target target;
 
 	/**
 	 * Construct a shim
@@ -41,10 +42,10 @@ public abstract class AbstractPcodeDebuggerAccess<S extends PcodeDebuggerMemoryA
 	 * @param platform the associated platform, having the same trace as the recorder
 	 * @param snap the associated snap
 	 */
-	public AbstractPcodeDebuggerAccess(PluginTool tool, TraceRecorder recorder,
-			TracePlatform platform, long snap) {
+	public AbstractPcodeDebuggerAccess(PluginTool tool, Target target, TracePlatform platform,
+			long snap) {
 		super(platform, snap);
 		this.tool = tool;
-		this.recorder = recorder;
+		this.target = target;
 	}
 }

@@ -1,0 +1,26 @@
+##VERSION: 2.0
+Module.manifest||GHIDRA||||END|
+data/languages/ilp32d.cspec||GHIDRA||||END|
+data/languages/ilp32f.cspec||GHIDRA||||END|
+data/languages/lasx.sinc||GHIDRA||||END|
+data/languages/lbt.sinc||GHIDRA||||END|
+data/languages/loongarch.ldefs||GHIDRA||||END|
+data/languages/loongarch.opinion||GHIDRA||||END|
+data/languages/loongarch32.pspec||GHIDRA||||END|
+data/languages/loongarch32_f32.slaspec||GHIDRA||||END|
+data/languages/loongarch32_f64.slaspec||GHIDRA||||END|
+data/languages/loongarch32_instructions.sinc||GHIDRA||||END|
+data/languages/loongarch64.pspec||GHIDRA||||END|
+data/languages/loongarch64_f32.slaspec||GHIDRA||||END|
+data/languages/loongarch64_f64.slaspec||GHIDRA||||END|
+data/languages/loongarch64_instructions.sinc||GHIDRA||||END|
+data/languages/loongarch_double.sinc||GHIDRA||||END|
+data/languages/loongarch_float.sinc||GHIDRA||||END|
+data/languages/loongarch_main.sinc||GHIDRA||||END|
+data/languages/lp64d.cspec||GHIDRA||||END|
+data/languages/lp64f.cspec||GHIDRA||||END|
+data/languages/lsx.sinc||GHIDRA||||END|
+data/languages/lvz.sinc||GHIDRA||||END|
+data/manuals/loongarch.idx||GHIDRA||||END|
+data/patterns/loongarch_patterns.xml||GHIDRA||||END|
+data/patterns/patternconstraints.xml||GHIDRA||||END|

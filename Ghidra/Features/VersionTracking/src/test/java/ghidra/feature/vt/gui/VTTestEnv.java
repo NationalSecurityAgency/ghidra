@@ -16,6 +16,8 @@
 package ghidra.feature.vt.gui;
 
 import static docking.test.AbstractDockingTest.*;
+import static generic.test.AbstractGenericTest.*;
+import static generic.test.AbstractGuiTest.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -69,7 +71,7 @@ public class VTTestEnv extends TestEnv {
 
 		session = VTSessionDB.createVTSession("Test", sourceProgram, destinationProgram, getTool());
 
-		VTProgramCorrelator correlator = factory.createCorrelator(getTool(), sourceProgram,
+		VTProgramCorrelator correlator = factory.createCorrelator(sourceProgram,
 			sourceProgram.getMemory(), destinationProgram, destinationProgram.getMemory(), null);
 
 		int id = session.startTransaction("Correlate");
@@ -85,7 +87,7 @@ public class VTTestEnv extends TestEnv {
 			throw new AssertionFailedError("You must create the session before you can add items");
 		}
 
-		VTProgramCorrelator correlator = factory.createCorrelator(getTool(), sourceProgram,
+		VTProgramCorrelator correlator = factory.createCorrelator(sourceProgram,
 			sourceProgram.getMemory(), destinationProgram, destinationProgram.getMemory(), null);
 
 		int id = session.startTransaction("Correlate");
@@ -120,7 +122,7 @@ public class VTTestEnv extends TestEnv {
 
 	public VTProgramCorrelator correlate(VTProgramCorrelatorFactory factory, VTOptions options,
 			TaskMonitor monitor) throws CancelledException {
-		VTProgramCorrelator correlator = factory.createCorrelator(getTool(), sourceProgram,
+		VTProgramCorrelator correlator = factory.createCorrelator(sourceProgram,
 			sourceProgram.getMemory(), destinationProgram, destinationProgram.getMemory(), options);
 
 		int id = session.startTransaction("Correlate");

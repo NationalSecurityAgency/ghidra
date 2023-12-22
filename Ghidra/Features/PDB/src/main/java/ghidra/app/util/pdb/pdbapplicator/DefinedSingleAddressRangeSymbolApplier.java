@@ -15,9 +15,9 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
+import ghidra.app.util.bin.format.pdb2.pdbreader.MsSymbolIterator;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
-import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 
@@ -34,7 +34,7 @@ public class DefinedSingleAddressRangeSymbolApplier extends MsSymbolApplier {
 	 * @param iter the Iterator containing the symbol sequence being processed
 	 */
 	public DefinedSingleAddressRangeSymbolApplier(DefaultPdbApplicator applicator,
-			AbstractMsSymbolIterator iter) {
+			MsSymbolIterator iter) {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
 		if (!(abstractSymbol instanceof AbstractDefinedSingleAddressRangeMsSymbol)) {
@@ -53,7 +53,7 @@ public class DefinedSingleAddressRangeSymbolApplier extends MsSymbolApplier {
 	@Override
 	void applyTo(MsSymbolApplier applyToApplier) throws PdbException, CancelledException {
 		if (applyToApplier instanceof LocalOptimizedSymbolApplier) {
-// TODO: eventually apply.			
+// TODO: eventually apply.
 //			LocalOptimizedSymbolApplier localSymbolApplier =
 //				(LocalOptimizedSymbolApplier) applyToApplier;
 			symbol.getAddressRange();

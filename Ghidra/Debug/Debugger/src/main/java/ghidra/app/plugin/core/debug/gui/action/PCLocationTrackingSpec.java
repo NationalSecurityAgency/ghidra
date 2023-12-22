@@ -19,8 +19,9 @@ import java.util.concurrent.CompletableFuture;
 
 import javax.swing.Icon;
 
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.TrackLocationAction;
+import ghidra.debug.api.action.*;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
@@ -98,5 +99,10 @@ public enum PCLocationTrackingSpec implements LocationTrackingSpec, LocationTrac
 	public boolean affectedByBytesChange(TraceAddressSpace space, TraceAddressSnapRange range,
 			DebuggerCoordinates coordinates) {
 		return BY_REG.affectedByBytesChange(space, range, coordinates);
+	}
+
+	@Override
+	public boolean shouldDisassemble() {
+		return true;
 	}
 }

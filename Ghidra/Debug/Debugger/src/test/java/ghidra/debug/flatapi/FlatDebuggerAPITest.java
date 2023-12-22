@@ -33,26 +33,29 @@ import db.Transaction;
 import generic.Unique;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
+import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
 import ghidra.app.plugin.core.debug.service.breakpoint.DebuggerLogicalBreakpointServicePlugin;
 import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin;
 import ghidra.app.plugin.core.debug.service.model.TestDebuggerProgramLaunchOpinion.TestDebuggerProgramLaunchOffer;
 import ghidra.app.plugin.core.debug.service.model.launch.AbstractDebuggerProgramLaunchOffer;
-import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer;
-import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer.LaunchResult;
 import ghidra.app.script.GhidraState;
 import ghidra.app.services.*;
-import ghidra.app.services.LogicalBreakpoint.State;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
-import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.model.*;
 import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetSteppable.TargetStepKind;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint.State;
+import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.model.DebuggerProgramLaunchOffer;
+import ghidra.debug.api.model.DebuggerProgramLaunchOffer.LaunchResult;
+import ghidra.debug.api.model.TraceRecorder;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.*;
@@ -68,7 +71,7 @@ import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 
-public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
+public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerTest {
 
 	protected static class TestFactory implements DebuggerModelFactory {
 		private final DebuggerObjectModel model;
@@ -141,6 +144,9 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 		listingService = addPlugin(tool, DebuggerListingPlugin.class);
 		editingService = addPlugin(tool, DebuggerControlServicePlugin.class);
 		flat = new TestFlatAPI();
+
+		// TODO: This seems to hold up the task manager.
+		waitForComponentProvider(DebuggerListingProvider.class).setAutoDisassemble(false);
 	}
 
 	@Test

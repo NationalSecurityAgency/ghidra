@@ -263,6 +263,6 @@ public class TestDebuggerObjectModel extends EmptyDebuggerObjectModel {
 	}
 
 	public DebuggerModelListener fire() {
-		return listeners.fire;
+		return broadcast();
 	}
 }

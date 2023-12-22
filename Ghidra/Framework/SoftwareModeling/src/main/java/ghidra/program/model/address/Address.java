@@ -40,6 +40,7 @@ public interface Address extends Comparable<Address> {
 	 * Character used to separate space names from offsets.
 	 */
 	public final char SEPARATOR_CHAR = ':';
+	public final String SEPARATOR = ":";
 
 	/**
 	 * Creates a new Address by parsing a String representation of an address. The string may be 

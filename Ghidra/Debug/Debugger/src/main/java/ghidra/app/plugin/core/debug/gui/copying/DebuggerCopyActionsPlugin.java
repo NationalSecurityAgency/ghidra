@@ -69,7 +69,7 @@ public class DebuggerCopyActionsPlugin extends AbstractDebuggerPlugin {
 	@AutoServiceConsumed
 	private DebuggerStaticMappingService mappingService;
 	@AutoServiceConsumed
-	private DebuggerModelService modelService;
+	private DebuggerTargetService targetService;
 
 	public DebuggerCopyActionsPlugin(PluginTool tool) {
 		super(tool);
@@ -129,7 +129,7 @@ public class DebuggerCopyActionsPlugin extends AbstractDebuggerPlugin {
 		copyDialog.setSource(context.getProgram(), context.getSelection());
 		copyDialog.setProgramManager(programManager);
 		copyDialog.setStaticMappingService(mappingService);
-		copyDialog.setModelService(modelService);
+		copyDialog.setTargetService(targetService);
 		copyDialog.setDestination(programManager.getCurrentProgram());
 		copyDialog.reset();
 		copyDialog.setStatusText("");
@@ -143,7 +143,7 @@ public class DebuggerCopyActionsPlugin extends AbstractDebuggerPlugin {
 		copyDialog.setSource(context.getProgram(), context.getSelection());
 		copyDialog.setProgramManager(programManager);
 		copyDialog.setStaticMappingService(mappingService);
-		copyDialog.setModelService(modelService);
+		copyDialog.setTargetService(targetService);
 		copyDialog.setDestination(copyDialog.NEW_PROGRAM);
 		copyDialog.reset();
 		copyDialog.setStatusText("");

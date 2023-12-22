@@ -50,6 +50,8 @@ STACK_PATTERN = THREAD_PATTERN + '.Stack'
 FRAME_KEY_PATTERN = '[{level}]'
 FRAME_PATTERN = STACK_PATTERN + FRAME_KEY_PATTERN
 REGS_PATTERN = FRAME_PATTERN + '.Registers'
+REG_KEY_PATTERN = '[{regname}]'
+REG_PATTERN = REGS_PATTERN + REG_KEY_PATTERN
 MEMORY_PATTERN = INFERIOR_PATTERN + '.Memory'
 REGION_KEY_PATTERN = '[{start:08x}]'
 REGION_PATTERN = MEMORY_PATTERN + REGION_KEY_PATTERN
@@ -199,7 +201,9 @@ def ghidra_trace_connect(address, *, is_mi, **kwargs):
     try:
         c = socket.socket()
         c.connect((host, int(port)))
-        STATE.client = Client(c, methods.REGISTRY)
+        STATE.client = Client(
+            c, "gdb-" + util.GDB_VERSION.full, methods.REGISTRY)
+        print(f"Connected to {STATE.client.description} at {address}")
     except ValueError:
         raise gdb.GdbError("port must be numeric")
 
@@ -236,7 +240,8 @@ def ghidra_trace_listen(address=None, *, is_mi, **kwargs):
         c, (chost, cport) = s.accept()
         s.close()
         gdb.write("Connection from {}:{}\n".format(chost, cport))
-        STATE.client = Client(c, methods.REGISTRY)
+        STATE.client = Client(
+            c, "gdb-" + util.GDB_VERSION.full, methods.REGISTRY)
     except ValueError:
         raise gdb.GdbError("port must be numeric")
 
@@ -318,9 +323,11 @@ def ghidra_trace_info(*, is_mi, **kwargs):
         return
     host, port = STATE.client.s.getpeername()
     if is_mi:
-        result['connection'] = "{}:{}".format(host, port)
+        result['description'] = STATE.client.description
+        result['address'] = f"{host}:{port}"
     else:
-        gdb.write("Connected to Ghidra at {}:{}\n".format(host, port))
+        gdb.write(
+            f"Connected to {STATE.client.description} at {host}:{port}\n")
     if STATE.trace is None:
         if is_mi:
             result['tracing'] = False
@@ -564,15 +571,26 @@ def putreg(frame, reg_descs):
     space = REGS_PATTERN.format(infnum=inf.num, tnum=gdb.selected_thread().num,
                                 level=frame.level())
     STATE.trace.create_overlay_space('register', space)
-    robj = STATE.trace.create_object(space)
-    robj.insert()
+    cobj = STATE.trace.create_object(space)
+    cobj.insert()
     mapper = STATE.trace.register_mapper
+    keys = []
     values = []
     for desc in reg_descs:
         v = frame.read_register(desc)
-        values.append(mapper.map_value(inf, desc.name, v))
+        rv = mapper.map_value(inf, desc.name, v)
+        values.append(rv)
+        # TODO: Key by gdb's name or mapped name? I think gdb's.
+        rpath = REG_PATTERN.format(infnum=inf.num, tnum=gdb.selected_thread(
+        ).num, level=frame.level(), regname=desc.name)
+        keys.append(REG_KEY_PATTERN.format(regname=desc.name))
+        robj = STATE.trace.create_object(rpath)
+        robj.set_value('_value', rv.value)
+        robj.insert()
+    cobj.retain_values(keys)
     # TODO: Memorize registers that failed for this arch, and omit later.
-    return {'missing': STATE.trace.put_registers(space, values)}
+    missing = STATE.trace.put_registers(space, values)
+    return {'missing': missing}
 
 
 @cmd('ghidra trace putreg', '-ghidra-trace-putreg', gdb.COMMAND_DATA, True)
@@ -585,7 +603,8 @@ def ghidra_trace_putreg(group='all', *, is_mi, **kwargs):
 
     STATE.require_tx()
     frame = gdb.selected_frame()
-    return putreg(frame, frame.architecture().registers(group))
+    with STATE.client.batch() as b:
+        return putreg(frame, frame.architecture().registers(group))
 
 
 @cmd('ghidra trace delreg', '-ghidra-trace-delreg', gdb.COMMAND_DATA, True)
@@ -977,6 +996,17 @@ def compute_inf_state(inf):
     return 'STOPPED'
 
 
+def put_inferior_state(inf):
+    ipath = INFERIOR_PATTERN.format(infnum=inf.num)
+    infobj = STATE.trace.proxy_object_path(ipath)
+    istate = compute_inf_state(inf)
+    infobj.set_value('_state', istate)
+    for t in inf.threads():
+        tpath = THREAD_PATTERN.format(infnum=inf.num, tnum=t.num)
+        tobj = STATE.trace.proxy_object_path(tpath)
+        tobj.set_value('_state', convert_state(t))
+
+
 def put_inferiors():
     # TODO: Attributes like _exit_code, _state?
     #     _state would be derived from threads
@@ -1034,6 +1064,7 @@ def put_single_breakpoint(b, ibobj, inf, ikeys):
     mapper = STATE.trace.memory_mapper
     bpath = BREAKPOINT_PATTERN.format(breaknum=b.number)
     brkobj = STATE.trace.create_object(bpath)
+    brkobj.set_value('_enabled', b.enabled)
     if b.type == gdb.BP_BREAKPOINT:
         brkobj.set_value('_expression', b.location)
         brkobj.set_value('_kinds', 'SW_EXECUTE')
@@ -1073,6 +1104,7 @@ def put_single_breakpoint(b, ibobj, inf, ikeys):
         if inf.num not in l.thread_groups:
             continue
         locobj = STATE.trace.create_object(bpath + k)
+        locobj.set_value('_enabled', l.enabled)
         ik = INF_BREAK_KEY_PATTERN.format(breaknum=b.number, locnum=i+1)
         ikeys.append(ik)
         if b.location is not None:  # Implies execution break

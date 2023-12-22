@@ -578,29 +578,16 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 	@Test
 	public void testEOLCommentsOptions() throws Exception {
 
-		final int SHOW_AUTO = 0;
-		final int SHOW_REF_REPEAT = 1;
-		final int SHOW_REPEATABLE = 2;
-		final int WORD_WRAP = 3;
-		final int MAX_LINES = 4;
-		final int SHOW_REF_ADDR = 5;
-		//final int SHOW_FUNCTION_AUTO = 6;
-		final int SHOW_SEMICOLON = 7;
+		// for readability
+		String EXTRA_COMMENTS = EolCommentFieldFactory.EXTRA_COMMENT_KEY;
+		String WORD_WRAP = EolCommentFieldFactory.ENABLE_WORD_WRAP_KEY;
+		String MAX_LINES = EolCommentFieldFactory.MAX_DISPLAY_LINES_KEY;
+		String SHOW_REF_ADDR = EolCommentFieldFactory.ENABLE_PREPEND_REF_ADDRESS_KEY;
+		String SHOW_SEMICOLON = EolCommentFieldFactory.ENABLE_SHOW_SEMICOLON_KEY;
+
 		showTool(tool);
 		loadProgram();
 		Options options = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
-		List<String> names = getOptionNames(options, "EOL Comments Field");
-		assertEquals(9, names.size());
-		assertEquals(EolCommentFieldFactory.ENABLE_ALWAYS_SHOW_AUTOMATIC_MSG, names.get(0));
-		assertEquals(EolCommentFieldFactory.ENABLE_ALWAYS_SHOW_REF_REPEATABLE_MSG, names.get(1));
-		assertEquals(EolCommentFieldFactory.ENABLE_ALWAYS_SHOW_REPEATABLE_MSG, names.get(2));
-		assertEquals(EolCommentFieldFactory.ENABLE_WORD_WRAP_MSG, names.get(3));
-		assertEquals(EolCommentFieldFactory.MAX_DISPLAY_LINES_MSG, names.get(4));
-		assertEquals(EolCommentFieldFactory.ENABLE_PREPEND_REF_ADDRESS_MSG, names.get(5));
-		assertEquals(EolCommentFieldFactory.SHOW_FUNCTION_AUTOMITIC_COMMENT_MSG, names.get(6));
-		assertEquals(EolCommentFieldFactory.ENABLE_SHOW_SEMICOLON_MSG, names.get(7));
-		assertEquals(EolCommentFieldFactory.USE_ABBREVIATED_AUTOMITIC_COMMENT_MSG, names.get(8));
-
 		Address callAddress = addr("0x1003fcc");
 		Address callRefAddress = addr("0x1006642");
 		Address otherRefAddress = addr("0x1003fa1");
@@ -637,66 +624,77 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 			CodeUnit.REPEATABLE_COMMENT, "Mem ref line1.\n" + "");
 		tool.execute(commentRefCmd, program);
 
-		options.setBoolean(names.get(SHOW_AUTO), false);
-		options.setBoolean(names.get(SHOW_REF_REPEAT), false);
-		options.setBoolean(names.get(SHOW_REPEATABLE), false);
-		options.setBoolean(names.get(WORD_WRAP), false);
-		options.setInt(names.get(MAX_LINES), 20);
-		options.setBoolean(names.get(SHOW_REF_ADDR), false);
-		options.setBoolean(names.get(SHOW_SEMICOLON), false);
+		// these values are all DEFAULT, by default; set them in case that changes in the future
+		EolExtraCommentsOption extraCommentsOption = new EolExtraCommentsOption();
+		extraCommentsOption.setRepeatable(EolEnablement.DEFAULT);
+		extraCommentsOption.setRefRepeatable(EolEnablement.DEFAULT);
+		extraCommentsOption.setAutoData(EolEnablement.DEFAULT);
+		extraCommentsOption.setAutoFunction(EolEnablement.DEFAULT);
+
+		options.setCustomOption(EXTRA_COMMENTS, extraCommentsOption);
+		options.setBoolean(WORD_WRAP, false);
+		options.setInt(MAX_LINES, 20);
+		options.setBoolean(SHOW_REF_ADDR, false);
+		options.setBoolean(SHOW_SEMICOLON, false);
+
 		cb.updateNow();
 		cb.goToField(callAddress, "EOL Comment", 0, 0);
 		ListingTextField btf = (ListingTextField) cb.getCurrentField();
 		assertEquals(9, getNumberOfLines(btf));
 
-		options.setBoolean(names.get(WORD_WRAP), true);
+		options.setBoolean(WORD_WRAP, true);
 		cb.updateNow();
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals(18, getNumberOfLines(btf));
 
-		options.setBoolean(names.get(SHOW_SEMICOLON), true);
+		options.setBoolean(SHOW_SEMICOLON, true);
 		cb.updateNow();
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals(20, getNumberOfLines(btf));
 		assertEquals("; ", btf.getFieldElement(1, 0).getText());
 
-		options.setBoolean(names.get(SHOW_REPEATABLE), true);
+		extraCommentsOption.setRepeatable(EolEnablement.ALWAYS);
+		options.setCustomOption(EXTRA_COMMENTS, extraCommentsOption);
 		cb.updateNow();
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals(20, getNumberOfLines(btf));
 		assertEquals("; ", btf.getFieldElement(1, 0).getText());
 
-		options.setBoolean(names.get(SHOW_AUTO), true);
+		extraCommentsOption.setAutoData(EolEnablement.ALWAYS);
+		extraCommentsOption.setAutoFunction(EolEnablement.ALWAYS);
+		options.setCustomOption(EXTRA_COMMENTS, extraCommentsOption);
 		cb.updateNow();
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals(20, getNumberOfLines(btf));
 		assertEquals("; ", btf.getFieldElement(1, 0).getText());
 
-		options.setBoolean(names.get(SHOW_REF_REPEAT), true);
+		extraCommentsOption.setRefRepeatable(EolEnablement.ALWAYS);
+		options.setCustomOption(EXTRA_COMMENTS, extraCommentsOption);
 		cb.updateNow();
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals(20, getNumberOfLines(btf));
 		assertEquals("; ", btf.getFieldElement(1, 0).getText());
 
-		options.setBoolean(names.get(SHOW_REF_ADDR), true);
+		options.setBoolean(EolCommentFieldFactory.ENABLE_PREPEND_REF_ADDRESS_KEY, true);
 		cb.updateNow();
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals(20, getNumberOfLines(btf));
 		assertEquals("; ", btf.getFieldElement(1, 0).getText());
 
-		options.setBoolean(names.get(SHOW_REPEATABLE), false);
+		extraCommentsOption.setRepeatable(EolEnablement.DEFAULT);
+		options.setCustomOption(EXTRA_COMMENTS, extraCommentsOption);
 		cb.updateNow();
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals(20, getNumberOfLines(btf));
 		assertEquals("; ", btf.getFieldElement(1, 0).getText());
 
-		options.setBoolean(names.get(WORD_WRAP), false);
+		options.setBoolean(WORD_WRAP, false);
 		cb.updateNow();
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals(12, getNumberOfLines(btf));
 		assertTrue("; ".equals(btf.getFieldElement(5, 0).getText()));
 
-		options.setBoolean(names.get(SHOW_SEMICOLON), false);
+		options.setBoolean(SHOW_SEMICOLON, false);
 		cb.updateNow();
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals(12, getNumberOfLines(btf));
@@ -704,7 +702,7 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("01003fa1", btf.getFieldElement(11, 4).getText());
 		assertEquals("Mem ref line1.", btf.getFieldElement(11, 11).getText());
 
-		options.setBoolean(names.get(SHOW_REF_ADDR), false);
+		options.setBoolean(SHOW_REF_ADDR, false);
 		cb.updateNow();
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals(11, getNumberOfLines(btf));
@@ -1014,7 +1012,8 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 
 				// it has a help location; is it valid?
 				if (hl != null && !isValidHelpLocation(hl)) {
-					missing.add(name + "." + name);
+					isValidHelpLocation(hl);
+					missing.add(options.getName() + "." + name);
 				}
 			}
 		}

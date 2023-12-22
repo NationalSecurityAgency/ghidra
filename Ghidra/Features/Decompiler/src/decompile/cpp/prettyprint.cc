@@ -58,6 +58,38 @@ void Emit::spaces(int4 num,int4 bump)
   }
 }
 
+int4 Emit::openBraceIndent(const string &brace,brace_style style)
+
+{
+  if (style == same_line)
+    spaces(1);
+  else if (style == skip_line) {
+    tagLine();
+    tagLine();
+  }
+  else {
+    tagLine();
+  }
+  int4 id = startIndent();
+  print(brace);
+  return id;
+}
+
+void Emit::openBrace(const string &brace,brace_style style)
+
+{
+  if (style == same_line)
+    spaces(1);
+  else if (style == skip_line) {
+    tagLine();
+    tagLine();
+  }
+  else {
+    tagLine();
+  }
+  print(brace);
+}
+
 EmitMarkup::~EmitMarkup(void)
 
 {
@@ -244,6 +276,19 @@ void EmitMarkup::tagLabel(const string &name,syntax_highlight hl,const AddrSpace
   encoder->closeElement(ELEM_LABEL);
 }
 
+void EmitMarkup::tagCaseLabel(const string &name,syntax_highlight hl,const PcodeOp *op,uintb value)
+
+{
+  encoder->openElement(ELEM_VALUE);
+  if (hl != no_color)
+    encoder->writeUnsignedInteger(ATTRIB_COLOR,hl);
+  encoder->writeUnsignedInteger(ATTRIB_OFF, value);
+  if (op != (const PcodeOp *)0)
+    encoder->writeUnsignedInteger(ATTRIB_OPREF, op->getTime());
+  encoder->writeString(ATTRIB_CONTENT,name);
+  encoder->closeElement(ELEM_VALUE);
+}
+
 void EmitMarkup::print(const string &data,syntax_highlight hl)
 
 {
@@ -357,6 +402,9 @@ void TokenSplit::print(Emit *emit) const
   case label_t:	// tagLabel
     emit->tagLabel(tok,hl,ptr_second.spc,off);
     break;
+  case case_t:	// tagCaseLabel
+    emit->tagCaseLabel(tok, hl, op, off);
+    break;
   case synt_t:	// print
     emit->print(tok,hl);
     break;
@@ -447,6 +495,9 @@ void TokenSplit::printDebug(ostream &s) const
     break;
   case label_t:	// tagLabel
     s << "label_t";
+    break;
+  case case_t:	// tagCaseLabel
+    s << "case_t";
     break;
   case synt_t:	// print
     s << "synt_t";
@@ -1008,6 +1059,15 @@ void EmitPrettyPrint::tagLabel(const string &name,syntax_highlight hl,const Addr
   checkstring();
   TokenSplit &tok( tokqueue.push() );
   tok.tagLabel(name,hl,spc,off);
+  scan();
+}
+
+void EmitPrettyPrint::tagCaseLabel(const string &name,syntax_highlight hl,const PcodeOp *op,uintb value)
+
+{
+  checkstring();
+  TokenSplit &tok( tokqueue.push() );
+  tok.tagCaseLabel(name, hl, op, value);
   scan();
 }
 

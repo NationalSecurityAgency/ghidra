@@ -250,7 +250,7 @@ public class ByteViewerPanel extends JPanel
 				startField.setText(start);
 				ByteBlock lastBlock = blocks[blocks.length - 1];
 				endField.setText(lastBlock
-					.getLocationRepresentation(lastBlock.getLength().subtract(BigInteger.ONE)));
+						.getLocationRepresentation(lastBlock.getLength().subtract(BigInteger.ONE)));
 
 				indexPanelWidth = getIndexPanelWidth(blocks);
 				int center = indexPanelWidth / 2;
@@ -1170,6 +1170,11 @@ class CompositePanel extends JPanel implements IndexedScrollable, IndexScrollLis
 	@Override
 	public void indexModelDataChanged(BigInteger start, BigInteger end) {
 		// handled by indexPanel
+	}
+
+	@Override
+	public void mouseWheelMoved(double preciseWheelRotation, boolean isHorizontal) {
+		indexPanel.mouseWheelMoved(preciseWheelRotation, isHorizontal);
 	}
 
 	@Override

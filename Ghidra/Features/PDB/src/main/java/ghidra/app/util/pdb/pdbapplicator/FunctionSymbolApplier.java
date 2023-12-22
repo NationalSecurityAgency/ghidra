@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,10 +19,9 @@ import java.util.*;
 
 import ghidra.app.cmd.function.ApplyFunctionSignatureCmd;
 import ghidra.app.cmd.function.CallDepthChangeInfo;
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
-import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
+import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
-import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.DataType;
@@ -69,7 +68,7 @@ public class FunctionSymbolApplier extends MsSymbolApplier
 	 * @param iter the Iterator containing the symbol sequence being processed
 	 * @throws CancelledException upon user cancellation
 	 */
-	public FunctionSymbolApplier(DefaultPdbApplicator applicator, AbstractMsSymbolIterator iter)
+	public FunctionSymbolApplier(DefaultPdbApplicator applicator, MsSymbolIterator iter)
 			throws CancelledException {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
@@ -88,8 +87,8 @@ public class FunctionSymbolApplier extends MsSymbolApplier
 			procedureSymbol = (AbstractProcedureStartIa64MsSymbol) abstractSymbol;
 			specifiedAddress = applicator.getRawAddress(procedureSymbol);
 			address = applicator.getAddress(procedureSymbol);
-			isNonReturning = ((AbstractProcedureStartIa64MsSymbol) procedureSymbol).getFlags()
-					.doesNotReturn();
+			isNonReturning =
+				((AbstractProcedureStartIa64MsSymbol) procedureSymbol).getFlags().doesNotReturn();
 		}
 		else if (abstractSymbol instanceof AbstractProcedureStartMipsMsSymbol) {
 			procedureSymbol = (AbstractProcedureStartMipsMsSymbol) abstractSymbol;
@@ -262,7 +261,7 @@ public class FunctionSymbolApplier extends MsSymbolApplier
 		applicator.createSymbol(varAddress, varName, true, plateAddition);
 	}
 
-	private boolean applyFunction(TaskMonitor monitor) {
+	private boolean applyFunction(TaskMonitor monitor) throws CancelledException, PdbException {
 		function = applicator.getExistingOrCreateOneByteFunction(address);
 		if (function == null) {
 			return false;
@@ -287,11 +286,14 @@ public class FunctionSymbolApplier extends MsSymbolApplier
 	}
 
 	/**
-	 * returns true only if we set a function signature
+	 * Sets function signature
 	 * @param monitor monitor
 	 * @return true if function signature was set
+	 * @throws CancelledException upon user cancellation
+	 * @throws PdbException upon processing error
 	 */
-	private boolean setFunctionDefinition(TaskMonitor monitor) {
+	private boolean setFunctionDefinition(TaskMonitor monitor)
+			throws CancelledException, PdbException {
 		if (procedureSymbol == null) {
 			// TODO: is there anything we can do with thunkSymbol?
 			// long x = thunkSymbol.getParentPointer();
@@ -300,21 +302,16 @@ public class FunctionSymbolApplier extends MsSymbolApplier
 		// Rest presumes procedureSymbol.
 		RecordNumber typeRecordNumber = procedureSymbol.getTypeRecordNumber();
 		MsTypeApplier applier = applicator.getTypeApplier(typeRecordNumber);
-		if (applier == null) {
-			applicator.appendLogMsg("Error: Failed to resolve datatype RecordNumber " +
-				typeRecordNumber + " at " + address);
-			return false;
-		}
+		AbstractMsType fType = applicator.getPdb().getTypeRecord(typeRecordNumber);
 		if (!(applier instanceof AbstractFunctionTypeApplier)) {
-			if (!((applier instanceof PrimitiveTypeApplier) &&
-				((PrimitiveTypeApplier) applier).isNoType())) {
+			if (!((applier instanceof PrimitiveTypeApplier prim) && prim.isNoType(fType))) {
 				applicator.appendLogMsg("Error: Failed to resolve datatype RecordNumber " +
 					typeRecordNumber + " at " + address);
 			}
 			return false;
 		}
 
-		DataType dataType = applier.getDataType();
+		DataType dataType = applicator.getCompletedDataType(typeRecordNumber);
 		// Since we know the applier is an AbstractionFunctionTypeApplier, then dataType is either
 		//  FunctionDefinition or no type (typedef).
 		if (!(dataType instanceof FunctionDefinition)) {

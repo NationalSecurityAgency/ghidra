@@ -148,7 +148,8 @@ public class ScalarSearchPlugin extends ProgramPlugin implements DomainObjectLis
 
 		searchAction.setHelpLocation(new HelpLocation(this.getName(), "Scalar_Search"));
 		searchAction.setMenuBarData(new MenuData(
-			new String[] { ToolConstants.MENU_SEARCH, "For Scalars..." }, null, "search for"));
+			new String[] { ToolConstants.MENU_SEARCH, "For Scalars..." }, null, "search for", -1,
+			"Scalars"));
 		searchAction.setDescription("Search program for scalars");
 		searchAction.addToWindowWhen(NavigatableActionContext.class);
 		tool.addAction(searchAction);

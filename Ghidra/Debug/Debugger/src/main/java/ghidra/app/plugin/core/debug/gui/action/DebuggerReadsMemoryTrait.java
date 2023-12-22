@@ -16,9 +16,7 @@
 package ghidra.app.plugin.core.debug.gui.action;
 
 import java.lang.invoke.MethodHandles;
-import java.util.Collection;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
@@ -27,23 +25,18 @@ import docking.action.ToolBarData;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractRefreshSelectedMemoryAction;
 import ghidra.app.plugin.core.debug.gui.action.AutoReadMemorySpec.AutoReadMemorySpecConfigFieldCodec;
-import ghidra.app.plugin.core.debug.utils.BackgroundUtils;
-import ghidra.app.services.TraceRecorder;
-import ghidra.app.services.TraceRecorderListener;
 import ghidra.app.util.viewer.listingpanel.AddressSetDisplayListener;
-import ghidra.dbg.DebuggerObjectModel;
-import ghidra.dbg.target.TargetMemory;
-import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.util.PathMatcher;
+import ghidra.debug.api.target.Target;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.framework.cmd.BackgroundCommand;
+import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
-import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.address.*;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceMemoryStateChangeType;
 import ghidra.trace.model.Trace.TraceSnapshotChangeType;
@@ -51,7 +44,8 @@ import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.Msg;
-import ghidra.util.Swing;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 public abstract class DebuggerReadsMemoryTrait {
 	protected static final AutoConfigState.ClassHandler<DebuggerReadsMemoryTrait> CONFIG_STATE_HANDLER =
@@ -77,37 +71,26 @@ public abstract class DebuggerReadsMemoryTrait {
 			}
 			final AddressSetView sel = selection;
 			Trace trace = current.getTrace();
-			TraceRecorder recorder = current.getRecorder();
-			BackgroundUtils.async(tool, trace, NAME, true, true, false, (_t, monitor) -> {
-				TargetObject target = recorder.getTarget();
-				DebuggerObjectModel model = target.getModel();
-				model.invalidateAllLocalCaches();
-				PathMatcher memMatcher = target.getSchema().searchFor(TargetMemory.class, true);
-				Collection<TargetObject> memories = memMatcher.getCachedSuccessors(target).values();
-				CompletableFuture<?>[] requests = memories.stream()
-						.map(TargetObject::invalidateCaches)
-						.toArray(CompletableFuture[]::new);
-				return CompletableFuture.allOf(requests).thenCompose(_r -> {
-					return recorder.readMemoryBlocks(sel, monitor);
-				});
-			});
+			Target target = current.getTarget();
+			tool.executeBackgroundCommand(new BackgroundCommand(NAME, true, true, false) {
+				@Override
+				public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
+					target.invalidateMemoryCaches();
+					try {
+						target.readMemory(sel, monitor);
+						memoryWasRead(sel);
+					}
+					catch (CancelledException e) {
+						return false;
+					}
+					return true;
+				}
+			}, trace);
 		}
 
 		@Override
 		public boolean isEnabledForContext(ActionContext context) {
-			if (!current.isAliveAndReadsPresent()) {
-				return false;
-			}
-			AddressSetView selection = getSelection();
-			if (selection == null || selection.isEmpty()) {
-				selection = visible;
-			}
-			TraceRecorder recorder = current.getRecorder();
-			// TODO: Either allow partial, or provide action to intersect with accessible
-			if (!recorder.getAccessibleMemory().contains(selection)) {
-				return false;
-			}
-			return true;
+			return current.isAliveAndReadsPresent();
 		}
 
 		public void updateEnabled(ActionContext context) {
@@ -142,15 +125,6 @@ public abstract class DebuggerReadsMemoryTrait {
 		}
 	}
 
-	protected class ForAccessRecorderListener implements TraceRecorderListener {
-		@Override
-		public void processMemoryAccessibilityChanged(TraceRecorder recorder) {
-			Swing.runIfSwingOrRunLater(() -> {
-				actionRefreshSelected.updateEnabled(null);
-			});
-		}
-	}
-
 	protected class ForVisibilityListener implements AddressSetDisplayListener {
 		@Override
 		public void visibleAddressesChanged(AddressSetView visibleAddresses) {
@@ -177,7 +151,6 @@ public abstract class DebuggerReadsMemoryTrait {
 
 	protected final ForReadsTraceListener traceListener =
 		new ForReadsTraceListener();
-	protected final ForAccessRecorderListener recorderListener = new ForAccessRecorderListener();
 	protected final ForVisibilityListener displayListener = new ForVisibilityListener();
 
 	protected DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
@@ -196,7 +169,7 @@ public abstract class DebuggerReadsMemoryTrait {
 		if (!Objects.equals(a.getTime(), b.getTime())) {
 			return false;
 		}
-		if (!Objects.equals(a.getRecorder(), b.getRecorder())) {
+		if (!Objects.equals(a.getTarget(), b.getTarget())) {
 			return false;
 		}
 		return true;
@@ -214,37 +187,18 @@ public abstract class DebuggerReadsMemoryTrait {
 		}
 	}
 
-	protected void addNewRecorderListener() {
-		if (current.getRecorder() != null) {
-			current.getRecorder().addListener(recorderListener);
-		}
-	}
-
-	protected void removeOldRecorderListener() {
-		if (current.getRecorder() != null) {
-			current.getRecorder().removeListener(recorderListener);
-		}
-	}
-
 	public void goToCoordinates(DebuggerCoordinates coordinates) {
 		if (sameCoordinates(current, coordinates)) {
 			current = coordinates;
 			return;
 		}
 		boolean doTraceListener = !Objects.equals(current.getTrace(), coordinates.getTrace());
-		boolean doRecListener = !Objects.equals(current.getRecorder(), coordinates.getRecorder());
 		if (doTraceListener) {
 			removeOldTraceListener();
-		}
-		if (doRecListener) {
-			removeOldRecorderListener();
 		}
 		current = coordinates;
 		if (doTraceListener) {
 			addNewTraceListener();
-		}
-		if (doRecListener) {
-			addNewRecorderListener();
 		}
 
 		doAutoRead();
@@ -265,7 +219,12 @@ public abstract class DebuggerReadsMemoryTrait {
 		if (!isConsistent()) {
 			return;
 		}
-		autoSpec.readMemory(tool, current, visible).exceptionally(ex -> {
+		AddressSet visible = new AddressSet(this.visible);
+		autoSpec.readMemory(tool, current, visible).thenAccept(b -> {
+			if (b) {
+				memoryWasRead(visible);
+			}
+		}).exceptionally(ex -> {
 			Msg.error(this, "Could not auto-read memory: " + ex);
 			return null;
 		});
@@ -332,4 +291,8 @@ public abstract class DebuggerReadsMemoryTrait {
 	protected abstract AddressSetView getSelection();
 
 	protected abstract void repaintPanel();
+
+	protected void memoryWasRead(AddressSetView read) {
+		// Extension point
+	}
 }

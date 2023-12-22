@@ -155,7 +155,7 @@ public class JdiModelTargetVMContainer extends JdiModelTargetObjectImpl
 	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		if (!refresh.equals(RefreshBehavior.REFRESH_ALWAYS)) {
 			updateUsingVMs(impl.getManager().getKnownVMs());
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return impl.getManager().listVMs().thenAccept(this::updateUsingVMs);
 	}

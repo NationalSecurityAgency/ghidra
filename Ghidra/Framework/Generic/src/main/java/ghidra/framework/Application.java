@@ -215,6 +215,10 @@ public class Application {
 		return app.getModuleForClass(className);
 	}
 
+	public static ResourceFile getModuleContainingClass(Class<?> c) {
+		return app.getModuleForClass(c);
+	}
+
 	private void findJavaSourceDirectories(List<ResourceFile> list,
 			ResourceFile moduleRootDirectory) {
 		ResourceFile srcDir = new ResourceFile(moduleRootDirectory, "src");
@@ -254,6 +258,18 @@ public class Application {
 	}
 
 	private ResourceFile getModuleForClass(String className) {
+		try {
+			Class<?> callersClass = Class.forName(className);
+			return getModuleForClass(callersClass);
+		}
+		catch (ClassNotFoundException e) {
+			// This can happen when we are being called from a script, which is not in the
+			// classpath.  This file will not have a module anyway.
+			return null;
+		}
+	}
+
+	private String toPath(String className) {
 		// get rid of nested class name(s) if present
 		int dollar = className.indexOf('$');
 		if (dollar != -1) {
@@ -261,27 +277,22 @@ public class Application {
 		}
 
 		String path = className.replace('.', '/');
-		String sourcePath = path + ".java";
-		String classFilePath = path + ".class";
+		return path + ".class";
+	}
+
+	private ResourceFile getModuleForClass(Class<?> clazz) {
 
 		if (inSingleJarMode()) {
+			String classFilePath = toPath(clazz.getName());
 			GModule gModule = getModuleFromTreeMap(classFilePath);
 			return gModule == null ? null : gModule.getModuleRoot();
 		}
 
 		// we're running from a binary installation...so get our jar and go up one
-		Class<?> callersClass;
-		try {
-			callersClass = Class.forName(className);
-		}
-		catch (ClassNotFoundException e) {
-			// This can happen when we are being called from a script, which is not in the
-			// classpath.  This file will not have a module anyway
-			return null;
-		}
-
-		File sourceLocationForClass = SystemUtilities.getSourceLocationForClass(callersClass);
+		File sourceLocationForClass = SystemUtilities.getSourceLocationForClass(clazz);
 		if (sourceLocationForClass.isDirectory()) {
+			String classFilePath = toPath(clazz.getName());
+			String sourcePath = classFilePath.replace(".class", ".java");
 			return findModuleForJavaSource(sourcePath);
 		}
 

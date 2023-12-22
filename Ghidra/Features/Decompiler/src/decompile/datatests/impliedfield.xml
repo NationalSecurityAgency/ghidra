@@ -19,7 +19,6 @@ f8c30fafc7c3
 </binaryimage>
 <script>
   <com>option readonly on</com>
-  <com>option structalign 1</com>
   <com>parse line union myalt { int4 myint; float4 myfloat; };</com>
   <com>parse line struct packstruct { int4 a; myalt u; };</com>
   <com>parse line extern int4 getvalue(packstruct val,int4 sel);</com>

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,14 @@
  */
 package ghidra.feature.vt.api.main;
 
-import ghidra.framework.model.DomainObjectListener;
-import ghidra.framework.model.UndoableDomainObject;
-import ghidra.program.model.listing.Program;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
 import db.util.ErrorHandler;
+import ghidra.framework.model.DomainObjectListener;
+import ghidra.framework.model.UndoableDomainObject;
+import ghidra.program.model.listing.Program;
 
 /**
  * Main interface for a Version Tracking Session
@@ -39,7 +37,7 @@ public interface VTSession extends ErrorHandler, UndoableDomainObject {
 	public VTAssociationManager getAssociationManager();
 
 	/**
-	 * Creates a new VTMatchSet that will contain all the matches discovered by some 
+	 * Creates a new VTMatchSet that will contain all the matches discovered by some
 	 * ProgramCorrletor algorithm run.
 	 * @param correlator the VTProgramCorrelator used to generate this set of matches that will
 	 * be added to this VTMatchSet.
@@ -69,11 +67,12 @@ public interface VTSession extends ErrorHandler, UndoableDomainObject {
 	 * Returns the name of this VTSession
 	 * @return the name of this VTSession
 	 */
+	@Override
 	public String getName();
 
 	/**
 	 * Saves this VTSession.
-	 * @throws IOException
+	 * @throws IOException if there is an exception saving
 	 */
 	public void save() throws IOException;
 
@@ -81,12 +80,14 @@ public interface VTSession extends ErrorHandler, UndoableDomainObject {
 	 * Adds a DomainObjectListener to this VTSession.
 	 * @param domainObjectListener the listener to add.
 	 */
+	@Override
 	public void addListener(DomainObjectListener domainObjectListener);
 
 	/**
 	 * Removes a DomainObjectListener from this VTSession.
 	 * @param domainObjectListener the listener to remove.
 	 */
+	@Override
 	public void removeListener(DomainObjectListener domainObjectListener);
 
 	/**

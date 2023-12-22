@@ -15,21 +15,30 @@
  */
 package ghidra.program.model.data.ISF;
 
+import ghidra.program.model.data.Pointer;
 import ghidra.program.model.data.PointerDataType;
+import ghidra.program.model.data.TypeDef;
 
-public class IsfTypedefPointer implements IsfObject {
+public class IsfTypedefPointer extends AbstractIsfObject {
 
 	public Integer size;
-	public Boolean signed;
 	public String kind;
 	public String endian;
+	public IsfObject type;
 
-	public IsfTypedefPointer() {
-		PointerDataType ptr = new PointerDataType();
-		size = ptr.getLength();
-		signed = false; //IsfUtilities.getSigned(ptr);
-		kind = IsfUtilities.getBuiltInKind(ptr);
+	public IsfTypedefPointer(TypeDef typeDef) {
+		super(typeDef);
+		Pointer ptr;
+		if (typeDef != null) {
+			ptr = (Pointer) typeDef.getBaseDataType();
+		} 
+		else {
+			ptr = new PointerDataType();
+		}
+		size = ptr.hasLanguageDependantLength() ? -1 : ptr.getLength();
+		kind = "typedef";
 		endian = IsfUtilities.getEndianness(ptr);
+		type = new IsfPointer(ptr);
 	}
 
 }

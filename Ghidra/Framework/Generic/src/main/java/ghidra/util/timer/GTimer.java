@@ -80,8 +80,8 @@ public class GTimer {
 	static class GTimerTask extends TimerTask implements GTimerMonitor {
 
 		private final Runnable runnable;
-		private boolean wasCancelled;
-		private boolean wasRun;
+		private transient boolean wasCancelled;
+		private transient boolean wasRun;
 
 		GTimerTask(Runnable runnable) {
 			this.runnable = runnable;

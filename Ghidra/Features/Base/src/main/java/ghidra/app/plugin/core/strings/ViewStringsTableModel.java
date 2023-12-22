@@ -15,8 +15,9 @@
  */
 package ghidra.app.plugin.core.strings;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.lang.Character.UnicodeScript;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import docking.widgets.table.DynamicTableColumn;
 import docking.widgets.table.TableColumnDescriptor;
@@ -60,7 +61,8 @@ class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 		DATA_TYPE_COL,
 		IS_ASCII_COL,
 		CHARSET_COL,
-		HAS_ENCODING_ERROR
+		HAS_ENCODING_ERROR,
+		UNICODE_SCRIPT
 	}
 
 	ViewStringsTableModel(PluginTool tool) {
@@ -95,6 +97,7 @@ class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 		descriptor.addHiddenColumn(new IsAsciiColumn());
 		descriptor.addHiddenColumn(new CharsetColumn());
 		descriptor.addHiddenColumn(new HasEncodingErrorColumn());
+		descriptor.addHiddenColumn(new UnicodeScriptColumn());
 
 		return descriptor;
 	}
@@ -362,8 +365,9 @@ class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 			Data data = DataUtilities.getDataAtLocation(rowObject);
 			String s = StringDataInstance.getStringDataInstance(data).getStringValue();
 
-			return (s != null) && s.chars().anyMatch(
-				codePoint -> codePoint == StringUtilities.UNICODE_REPLACEMENT);
+			return (s != null) && s.codePoints()
+					.anyMatch(
+						codePoint -> codePoint == StringUtilities.UNICODE_REPLACEMENT);
 		}
 
 		@Override
@@ -398,4 +402,35 @@ class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 
 	}
 
+	private static class UnicodeScriptColumn
+			extends AbstractProgramLocationTableColumn<ProgramLocation, String> {
+
+		@Override
+		public String getColumnName() {
+			return "Unicode Script";
+		}
+
+		@Override
+		public String getValue(ProgramLocation rowObject, Settings settings, Program program,
+				ServiceProvider serviceProvider) throws IllegalArgumentException {
+
+			Data data = DataUtilities.getDataAtLocation(rowObject);
+			String s = StringDataInstance.getStringDataInstance(data).getStringValue();
+			s = Objects.requireNonNullElse(s, "");
+			StringInfo stringInfo = StringInfo.fromString(s);
+			Set<UnicodeScript> scripts = stringInfo.scripts();
+			scripts.removeAll(CharacterScriptUtils.IGNORED_SCRIPTS);
+			String formattedColStr =
+				scripts.stream().map(UnicodeScript::name).collect(Collectors.joining(","));
+
+			return formattedColStr;
+		}
+
+		@Override
+		public ProgramLocation getProgramLocation(ProgramLocation rowObject, Settings settings,
+				Program program, ServiceProvider serviceProvider) {
+			return rowObject;
+		}
+
+	}
 }

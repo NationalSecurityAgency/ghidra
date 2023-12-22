@@ -395,6 +395,12 @@ public sealed interface Lifespan extends Span<Long, Lifespan>, Iterable<Long> {
 	 * An interval tree implementing {@link MutableLifeSet}
 	 */
 	public class DefaultLifeSet extends DefaultSpanSet<Long, Lifespan> implements MutableLifeSet {
+		public static DefaultLifeSet copyOf(LifeSet set) {
+			DefaultLifeSet copy = new DefaultLifeSet();
+			copy.addAll(set);
+			return copy;
+		}
+
 		public DefaultLifeSet() {
 			super(Lifespan.DOMAIN);
 		}

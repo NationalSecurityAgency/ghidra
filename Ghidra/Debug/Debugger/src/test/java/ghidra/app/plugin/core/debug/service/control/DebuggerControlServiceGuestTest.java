@@ -19,11 +19,11 @@ import java.io.IOException;
 import java.util.Set;
 
 import db.Transaction;
-import ghidra.app.plugin.core.debug.mapping.DebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.mapping.ObjectBasedDebuggerTargetTraceMapper;
-import ghidra.app.plugin.core.debug.service.model.DebuggerModelServicePlugin;
-import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.target.TargetObject;
+import ghidra.debug.api.model.DebuggerTargetTraceMapper;
+import ghidra.debug.api.model.TraceRecorder;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.lang.CompilerSpecID;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.trace.model.Trace;
@@ -72,10 +72,9 @@ public class DebuggerControlServiceGuestTest extends DebuggerControlServiceTest 
 		return new ObjectBasedDebuggerTargetTraceMapper(target,
 			new LanguageID("DATA:BE:64:default"), new CompilerSpecID("pointer64"), Set.of()) {
 			@Override
-			public TraceRecorder startRecording(DebuggerModelServicePlugin service,
-					Trace trace) {
+			public TraceRecorder startRecording(PluginTool tool, Trace trace) {
 				useTrace(trace);
-				return super.startRecording(service, trace);
+				return super.startRecording(tool, trace);
 			}
 		};
 	}

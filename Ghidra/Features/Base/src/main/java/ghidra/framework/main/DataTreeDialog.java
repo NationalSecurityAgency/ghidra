@@ -91,10 +91,11 @@ public class DataTreeDialog extends DialogComponentProvider
 	private ProjectDataNewFolderAction<DialogProjectTreeContext> newFolderAction;
 
 	private Integer treeSelectionMode;
+	private final Project project;
 
 	/**
-	 * Construct a new DataTreeDialog.  This chooser will show all project files.  
-	 * Following linked-folders will only be allowed if a type of {@link #CHOOSE_FOLDER}
+	 * Construct a new DataTreeDialog for the active project.  This chooser will show all project
+	 * files.  Following linked-folders will only be allowed if a type of {@link #CHOOSE_FOLDER}
 	 * or {@link #OPEN} is specified.  If different behavior is required a filter should 
 	 * be specified using the other constructor. 
 	 *
@@ -104,11 +105,11 @@ public class DataTreeDialog extends DialogComponentProvider
 	 * @throws IllegalArgumentException if invalid type is specified
 	 */
 	public DataTreeDialog(Component parent, String title, int type) {
-		this(parent, title, type, getDefaultFilter(type));
+		this(parent, title, type, getDefaultFilter(type), AppInfo.getActiveProject());
 	}
 
 	/**
-	 * Construct a new DataTreeDialog.
+	 * Construct a new DataTreeDialog for the active project.
 	 *
 	 * @param parent dialog's parent
 	 * @param title title to use
@@ -117,7 +118,23 @@ public class DataTreeDialog extends DialogComponentProvider
 	 * @throws IllegalArgumentException if invalid type is specified
 	 */
 	public DataTreeDialog(Component parent, String title, int type, DomainFileFilter filter) {
+		this(parent, title, type, filter, AppInfo.getActiveProject());
+	}
+
+	/**
+	 * Construct a new DataTreeDialog for the given project.
+	 *
+	 * @param parent dialog's parent
+	 * @param title title to use
+	 * @param type specify OPEN, SAVE, CHOOSE_FOLDER, or CHOOSE_USER_FOLDER
+	 * @param filter filter used to control what is displayed in the data tree
+	 * @param project the project to browse
+	 * @throws IllegalArgumentException if invalid type is specified
+	 */
+	public DataTreeDialog(Component parent, String title, int type, DomainFileFilter filter,
+			Project project) {
 		super(title, true, true, true, false);
+		this.project = project;
 		this.parent = parent;
 		initDataTreeDialog(type, filter);
 	}
@@ -230,7 +247,6 @@ public class DataTreeDialog extends DialogComponentProvider
 
 		comboModelInitialized = true;
 		// repopulate the tree
-		Project project = AppInfo.getActiveProject();
 		ProjectData pd = project.getProjectData();
 		treePanel.setProjectData(project.getName(), pd);
 
@@ -373,7 +389,7 @@ public class DataTreeDialog extends DialogComponentProvider
 					nameField.setText(domainFolder.getName());
 				}
 				else {
-					domainFolder = AppInfo.getActiveProject().getProjectData().getRootFolder();
+					domainFolder = project.getProjectData().getRootFolder();
 					folderNameLabel.setText(domainFolder.getPathname());
 					nameField.setText(domainFolder.getName());
 				}
@@ -389,7 +405,7 @@ public class DataTreeDialog extends DialogComponentProvider
 			else {
 				domainFolder = treePanel.getSelectedDomainFolder();
 				if (domainFolder == null) {
-					domainFolder = AppInfo.getActiveProject().getProjectData().getRootFolder();
+					domainFolder = project.getProjectData().getRootFolder();
 				}
 
 				folderNameLabel.setText(domainFolder.getPathname());
@@ -415,7 +431,6 @@ public class DataTreeDialog extends DialogComponentProvider
 			return;
 		}
 
-		Project project = AppInfo.getActiveProject();
 		ProjectLocator projectLocator = projectLocators[index];
 		ProjectData pd = project.getProjectData(projectLocator);
 		String projectName = projectLocator.getName();
@@ -433,6 +448,14 @@ public class DataTreeDialog extends DialogComponentProvider
 	 */
 	public void selectRootDataFolder() {
 		Swing.runLater(() -> treePanel.selectRootDataFolder());
+	}
+
+	/**
+	 * Select a folder in the tree.
+	 * @param folder the folder to select
+	 */
+	public void selectFolder(DomainFolder folder) {
+		Swing.runLater(() -> treePanel.selectDomainFolder(folder));
 	}
 
 	/**
@@ -503,7 +526,6 @@ public class DataTreeDialog extends DialogComponentProvider
 
 		JPanel panel = new JPanel();
 		panel.setLayout(new BorderLayout());
-		Project project = AppInfo.getActiveProject();
 		ProjectData pd = project.getProjectData();
 
 		treePanel = new ProjectDataTreePanel(project.getName(), true, // is for the active project
@@ -638,7 +660,6 @@ public class DataTreeDialog extends DialogComponentProvider
 	}
 
 	private void populateProjectModel() {
-		Project project = AppInfo.getActiveProject();
 		ProjectLocator[] views = project.getProjectViews();
 
 		projectLocators = new ProjectLocator[views.length + 1];

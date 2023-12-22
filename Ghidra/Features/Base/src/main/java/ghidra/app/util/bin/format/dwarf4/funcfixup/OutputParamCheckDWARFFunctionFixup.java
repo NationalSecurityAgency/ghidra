@@ -17,7 +17,6 @@ package ghidra.app.util.bin.format.dwarf4.funcfixup;
 
 import ghidra.app.util.bin.format.dwarf4.next.DWARFFunction;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFVariable;
-import ghidra.program.model.listing.Function;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ExtensionPointProperties;
 
@@ -29,13 +28,13 @@ import ghidra.util.classfinder.ExtensionPointProperties;
 public class OutputParamCheckDWARFFunctionFixup implements DWARFFunctionFixup {
 
 	@Override
-	public void fixupDWARFFunction(DWARFFunction dfunc, Function gfunc) {
+	public void fixupDWARFFunction(DWARFFunction dfunc) {
 		// Complain about parameters that are marked as 'output' that haven't been handled by
 		// some other fixup, as we don't know what to do with them.
 		for (DWARFVariable dvar : dfunc.params) {
 			if (dvar.isOutputParameter && dvar.isMissingStorage()) {
-				Msg.warn(this, String.format("Unsupported output parameter for %s@%s: %s",
-					gfunc.getName(), gfunc.getEntryPoint(), dvar.name.getName()));
+				Msg.warn(this, "Unsupported output parameter for %s@%s"
+						.formatted(dfunc.name.getName(), dfunc.address));
 			}
 		}
 	}

@@ -16,6 +16,7 @@
 package docking.widgets.tree;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import docking.widgets.filter.MultitermEvaluationMode;
 import docking.widgets.filter.TextFilter;
@@ -42,19 +43,11 @@ public class MultiTextFilterTreeFilter implements GTreeFilter {
 		}
 
 		List<String> nodeData = transformer.transform(node);
+		Stream<TextFilter> stream = filters.stream();
 		if (evalMode == MultitermEvaluationMode.AND) {
-			// @formatter:off
-			return filters.parallelStream()
-					.map(f -> matches(f, nodeData))
-					.allMatch(m -> m == true);
-			// @formatter:on
+			return stream.allMatch(f -> matches(f, nodeData));
 		}
-
-		// @formatter:off
-		return filters.parallelStream()
-					.map(f -> matches(f, nodeData))
-					.anyMatch(m -> m == true);
-		// @formatter:on
+		return stream.anyMatch(f -> matches(f, nodeData));
 	}
 
 	@Override
@@ -63,11 +56,7 @@ public class MultiTextFilterTreeFilter implements GTreeFilter {
 	}
 
 	private static boolean matches(TextFilter filter, List<String> nodeData) {
-		// @formatter:off
-		return nodeData.parallelStream()
-			.map(data -> filter.matches(data))
-			.anyMatch(r -> r == true);
-		// @formatter:on
+		return nodeData.stream().anyMatch(data -> filter.matches(data));
 	}
 
 }

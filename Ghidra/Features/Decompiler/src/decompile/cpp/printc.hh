@@ -148,6 +148,10 @@ protected:
   bool option_nocasts;		///< Don't print a cast if \b true
   bool option_unplaced;		///< Set to \b true if we should display unplaced comments
   bool option_hide_exts;	///< Set to \b true if we should hide implied extension operations
+  Emit::brace_style option_brace_func;		///< How function declaration braces should be formatted
+  Emit::brace_style option_brace_ifelse;	///< How braces for if/else blocks are formatted
+  Emit::brace_style option_brace_loop;		///< How braces for loop blocks are formatted
+  Emit::brace_style option_brace_switch;	///< How braces for switch blocks are formatted
   string nullToken;		///< Token to use for 'null'
   string sizeSuffix;		///< Characters to print to indicate a \e long integer token
   CommentSorter commsorter;	///< Container/organizer for comments in the current function
@@ -159,12 +163,12 @@ protected:
   void emitSymbolScope(const Symbol *symbol);			///< Emit tokens resolving a symbol's scope
   virtual void pushTypeStart(const Datatype *ct,bool noident);	///< Push part of a data-type declaration onto the RPN stack, up to the identifier
   virtual void pushTypeEnd(const Datatype *ct);			///< Push the tail ends of a data-type declaration onto the RPN stack
-  void pushBoolConstant(uintb val,const TypeBase *ct,const Varnode *vn,
-			  const PcodeOp *op);
-  void pushCharConstant(uintb val,const Datatype *ct,const Varnode *vn,
-			  const PcodeOp *op);
-  void pushEnumConstant(uintb val,const TypeEnum *ct,const Varnode *vn,
-			  const PcodeOp *op);
+  void pushBoolConstant(uintb val,const TypeBase *ct,tagtype tag,const Varnode *vn,
+			const PcodeOp *op);
+  void pushCharConstant(uintb val,const Datatype *ct,tagtype tag,const Varnode *vn,
+			const PcodeOp *op);
+  void pushEnumConstant(uintb val,const TypeEnum *ct,tagtype tag,const Varnode *vn,
+			const PcodeOp *op);
   virtual bool pushPtrCharConstant(uintb val,const TypePointer *ct,const Varnode *vn,
 				   const PcodeOp *op);
   bool pushPtrCodeConstant(uintb val,const TypePointer *ct,const Varnode *vn,
@@ -172,6 +176,7 @@ protected:
   virtual bool doEmitWideCharPrefix(void) const;
   
   bool checkArrayDeref(const Varnode *vn) const;	///< Determine whether a LOAD/STORE expression requires pointer '*' syntax
+  bool checkAddressOfCast(const PcodeOp *op) const;	///< Check if CAST can be printed as an '&'
   void emitStructDefinition(const TypeStruct *ct);	///< Emit the definition of a \e structure data-type
   void emitEnumDefinition(const TypeEnum *ct);		///< Emit the definition of an \e enumeration data-type
   void emitPrototypeOutput(const FuncProto *proto,const Funcdata *fd);	///< Emit the output data-type of a function prototype
@@ -196,10 +201,10 @@ protected:
   bool printCharacterConstant(ostream &s,const Address &addr,Datatype *charType) const;
   int4 getHiddenThisSlot(const PcodeOp *op,FuncProto *fc);	///< Get position of "this" pointer needing to be hidden
   void resetDefaultsPrintC(void);			///< Set default values for options specific to PrintC
-  virtual void pushConstant(uintb val,const Datatype *ct,
+  virtual void pushConstant(uintb val,const Datatype *ct,tagtype tag,
 			    const Varnode *vn,const PcodeOp *op);
   virtual bool pushEquate(uintb val,int4 sz,const EquateSymbol *sym,
-			    const Varnode *vn,const PcodeOp *op);
+			  const Varnode *vn,const PcodeOp *op);
   virtual void pushAnnotation(const Varnode *vn,const PcodeOp *op);
   virtual void pushSymbol(const Symbol *sym,const Varnode *vn,const PcodeOp *op);
   virtual void pushUnnamedLocation(const Address &addr,
@@ -209,10 +214,10 @@ protected:
   virtual void pushMismatchSymbol(const Symbol *sym,int4 off,int4 sz,
 				  const Varnode *vn,const PcodeOp *op);
   virtual void pushImpliedField(const Varnode *vn,const PcodeOp *op);
-  virtual void push_integer(uintb val,int4 sz,bool sign,
+  virtual void push_integer(uintb val,int4 sz,bool sign,tagtype tag,
 			    const Varnode *vn,
 			    const PcodeOp *op);
-  virtual void push_float(uintb val,int4 sz,const Varnode *vn,
+  virtual void push_float(uintb val,int4 sz,tagtype tag,const Varnode *vn,
 			  const PcodeOp *op);
   virtual void printUnicode(ostream &s,int4 onechar) const;
   virtual void pushType(const Datatype *ct);
@@ -237,6 +242,10 @@ public:
   void setCPlusPlusStyleComments(void) { setCommentDelimeter("// ","",true); }	///< Set c++-style "//" comment delimiters
   void setDisplayUnplaced(bool val) { option_unplaced = val; }	///< Toggle whether \e unplaced comments are displayed in the header
   void setHideImpliedExts(bool val) { option_hide_exts = val; }	///< Toggle whether implied extensions are hidden
+  void setBraceFormatFunction(Emit::brace_style style) { option_brace_func = style; }	///< Set how function declarations are formatted
+  void setBraceFormatIfElse(Emit::brace_style style) { option_brace_ifelse = style; }	///< Set how if/else blocks are formatted
+  void setBraceFormatLoop(Emit::brace_style style) { option_brace_loop = style; }	///< Set how loop blocks are formatted
+  void setBraceFormatSwitch(Emit::brace_style style) { option_brace_switch = style; }	///< Set how switch blocks are formatted
   virtual ~PrintC(void) {}
   virtual void resetDefaults(void);
   virtual void initializeFromArchitecture(void);
@@ -340,8 +349,9 @@ public:
 /// The open brace can be canceled if the block decides it wants to use "else if" syntax.
 class PendingBrace : public PendPrint {
   int4 indentId;		///< Id associated with the new indent level
+  Emit::brace_style style;	///< Style to use for pending brace
 public:
-  PendingBrace(void) { indentId = -1; }			///< Constructor
+  PendingBrace(Emit::brace_style s) { indentId = -1; style = s; }			///< Constructor
   int4 getIndentId(void) const { return indentId; }	///< If commands have been issued, returns the new indent level id.
   virtual void callback(Emit *emit);
 };

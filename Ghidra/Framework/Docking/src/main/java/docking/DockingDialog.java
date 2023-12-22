@@ -320,10 +320,8 @@ public class DockingDialog extends JDialog implements HelpDescriptor {
 			return;
 		}
 
-		Rectangle r = getBounds();
 		Point p = WindowUtilities.centerOnComponent(c, this);
-		r.setLocation(p);
-		setBounds(r);
+		setLocation(p);
 	}
 
 	@Override

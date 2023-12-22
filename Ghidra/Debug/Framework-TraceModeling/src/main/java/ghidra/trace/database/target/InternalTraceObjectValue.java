@@ -98,6 +98,8 @@ interface InternalTraceObjectValue extends TraceObjectValue {
 		protected abstract InternalTraceObjectValue create(Lifespan range, Object value);
 	}
 
+	void doSetPrimitive(Object primitive);
+
 	DBTraceObjectManager getManager();
 
 	/**
@@ -143,7 +145,7 @@ interface InternalTraceObjectValue extends TraceObjectValue {
 				protected Iterable<InternalTraceObjectValue> getIntersecting(Long lower,
 						Long upper) {
 					Collection<InternalTraceObjectValue> col = Collections.unmodifiableCollection(
-						getParent().doGetValues(lower, upper, getEntryKey()));
+						getParent().doGetValues(Lifespan.span(lower, upper), getEntryKey(), true));
 					return IterableUtils.filteredIterable(col, v -> v != keep);
 				}
 

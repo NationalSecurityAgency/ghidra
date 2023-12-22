@@ -6,7 +6,7 @@ defaultTasks 'assemble'
 
 ext.supportedPlatforms = ['mac_x86_64', 'mac_arm_64', 'linux_x86_64', 'linux_arm_64']
 
-ext.binutilsResource = new File("${projectDir}/${binutils}.tar.bz2")
+ext.binutilsResource = new File("${binutilsLocation}/${binutils}.tar.bz2")
 
 def binutilsUnpackDir = file("${project.buildDir}/${binutils}/")
 
@@ -37,8 +37,8 @@ model {
 				all { 
 					def binutilsArtifactsDir = file("build/binutils/${targetPlatform.name}")
 					if ((toolChain in Gcc) || (toolChain in Clang)) {
-						cCompiler.args "-I${binutilsArtifactsDir}/include", "-I${binutilsArtifactsDir}/bfd"
-						linker.args "-L${binutilsArtifactsDir}/lib", "-lopcodes", "-lbfd", "-liberty", "-lz", "-ldl"
+						cCompiler.args "-I${binutilsArtifactsDir}/include", "-I${binutilsArtifactsDir}/bfd",  "-I${binutilsArtifactsDir}/libsframe"
+						linker.args "-L${binutilsArtifactsDir}/lib", "-lopcodes", "-lbfd", "-lsframe", "-liberty", "-lz", "-ldl"
 					}
 				}
 			}
@@ -151,9 +151,10 @@ supportedPlatforms.each { platform ->
 			include "**/*.h"
 		}
 		into("/lib") {
-			from "${configDir}/bfd/libbfd.a"
+			from "${configDir}/bfd/.libs/libbfd.a"
 			from "${configDir}/libiberty/libiberty.a"
 			from "${configDir}/opcodes/libopcodes.a"
+			from "${configDir}/libsframe/.libs/libsframe.a"
 		}
 	}
 

@@ -17,10 +17,13 @@ package docking.widgets.fieldpanel.support;
 
 import java.awt.Graphics;
 import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JComponent;
 
 import docking.widgets.fieldpanel.Layout;
+import docking.widgets.fieldpanel.field.EmptyTextField;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.internal.*;
 
@@ -54,9 +57,9 @@ public class MultiRowLayout implements Layout {
 		this.indexSize = indexSize;
 		this.layouts = layouts;
 		int height = 0;
-		for (int i = 0; i < layouts.length; i++) {
-			numFields += layouts[i].getNumFields();
-			height += layouts[i].getHeight();
+		for (RowLayout layout : layouts) {
+			numFields += layout.getNumFields();
+			height += layout.getHeight();
 		}
 		heightAbove = layouts[0].getHeightAbove();
 		heightBelow = height - heightAbove;
@@ -313,65 +316,6 @@ public class MultiRowLayout implements Layout {
 		return 0;
 	}
 
-	/**
-	  * <CODE>synchronize</CODE> adjusts this layout and the layout passed as a
-	  * parameter by adding and resizing rows as necessary to make their
-	  * vertical layouts match.
-	  *
-	  * @param layout the other multi-row layout that is to be synchronized with.
-	  * @param dummyField empty field used for spacing.
-	  */
-	public void align(MultiRowLayout layout, Field dummyField) {
-		int myNumRows = layouts.length;
-		int otherNumRows = layout.layouts.length;
-		int myRow = 0;
-		int otherRow = 0;
-		int myHeight = layouts[myRow].getHeight();
-		int otherHeight = layout.layouts[otherRow].getHeight();
-		primaryOffset = -1;
-
-		while (myRow < myNumRows && otherRow < otherNumRows) {
-			int myId = layouts[myRow].getRowID();
-			int otherId = layout.layouts[otherRow].getRowID();
-
-			if (myId < otherId) {
-				layout.layouts[otherRow].insertSpaceAbove(myHeight);
-				if (++myRow < myNumRows)
-					myHeight = layouts[myRow].getHeight();
-			}
-			else if (myId > otherId) {
-				layouts[myRow].insertSpaceAbove(otherHeight);
-				if (++otherRow < otherNumRows)
-					otherHeight = layout.layouts[otherRow].getHeight();
-			}
-			else {
-				int myEnd = layouts[myRow].getHeight();
-				int otherEnd = layout.layouts[otherRow].getHeight();
-				if (myEnd > otherEnd) {
-					layout.layouts[otherRow].insertSpaceBelow(myEnd - otherEnd);
-				}
-				else if (otherEnd > myEnd) {
-					layouts[myRow].insertSpaceBelow(otherEnd - myEnd);
-				}
-				if (++myRow < myNumRows)
-					myHeight = layouts[myRow].getHeight();
-				if (++otherRow < otherNumRows)
-					otherHeight = layout.layouts[otherRow].getHeight();
-			}
-		}
-		while (myRow < myNumRows) {
-			layout.layouts[otherNumRows - 1].insertSpaceBelow(myHeight);
-			if (++myRow < myNumRows)
-				myHeight = layouts[myRow].getHeight();
-		}
-
-		while (otherRow < otherNumRows) {
-			layouts[myNumRows - 1].insertSpaceBelow(otherHeight);
-			if (++otherRow < otherNumRows)
-				otherHeight = layout.layouts[otherRow].getHeight();
-		}
-	}
-
 	@Override
 	public int getPrimaryOffset() {
 		if (primaryOffset == -1) {
@@ -382,11 +326,11 @@ public class MultiRowLayout implements Layout {
 
 	private void findPrimaryOffset() {
 		primaryOffset = 0;
-		for (int i = 0; i < layouts.length; i++) {
-			if (layouts[i].isPrimary()) {
+		for (RowLayout layout : layouts) {
+			if (layout.isPrimary()) {
 				return;
 			}
-			primaryOffset += layouts[i].getHeight();
+			primaryOffset += layout.getHeight();
 		}
 		primaryOffset = 0;
 	}
@@ -426,21 +370,32 @@ public class MultiRowLayout implements Layout {
 	public void fillHeights(int[] rowHeights) {
 		int lastId = -1;
 		int height = 0;
-		for (int i = 0; i < layouts.length; i++) {
-			int id = layouts[i].getRowID();
+		for (RowLayout layout : layouts) {
+			int id = layout.getRowID();
 			if (id == lastId) {
-				height += layouts[i].getHeight();
+				height += layout.getHeight();
 			}
 			else {
 				if (lastId >= 0) {
 					rowHeights[lastId] = Math.max(rowHeights[lastId], height);
 				}
 				lastId = id;
-				height = layouts[i].getHeight();
+				height = layout.getHeight();
 			}
 		}
 		if (lastId >= 0) {
 			rowHeights[lastId] = Math.max(rowHeights[lastId], height);
+		}
+	}
+
+	private class EmptyRowLayout extends RowLayout {
+
+		public EmptyRowLayout(int rowId, int height) {
+			super(getEmptyFields(height), rowId);
+		}
+
+		private static Field[] getEmptyFields(int height) {
+			return new Field[] { new EmptyTextField(height, 0, 0, 0) };
 		}
 	}
 
@@ -451,36 +406,39 @@ public class MultiRowLayout implements Layout {
 	 */
 	public void align(int[] rowHeights) {
 		int row = 0;
-		int totalAbove = 0;
-		int lastId = -1;
-		for (int i = 0; i < layouts.length; i++) {
-			int id = layouts[i].getRowID();
-			if (id != lastId) {
-				for (; row < id; row++) {
-					totalAbove += rowHeights[row];
+		List<RowLayout> updatedRows = new ArrayList<>();
+		for (RowLayout layout : layouts) {
+			int id = layout.getRowID();
+			for (; row <= id; row++) {
+				if (rowHeights[row] == 0) {
+					continue;
 				}
-				int origHeight = layouts[i].getHeight();
-				layouts[i].insertSpaceAbove(totalAbove);
-				totalAbove = rowHeights[id] - origHeight;
-				lastId = id;
-				row++;
-			}
-			else {
-				totalAbove -= layouts[i].getHeight();
+				if (row == id) {
+					layout.insertSpaceBelow(rowHeights[id] - layout.getHeight());
+					updatedRows.add(layout);
+				}
+				else {
+					updatedRows.add(new EmptyRowLayout(row, rowHeights[row]));
+				}
 			}
 		}
-		int totalBelow = totalAbove;
+
 		for (; row < rowHeights.length; row++) {
-			totalBelow += rowHeights[row];
+			if (rowHeights[row] != 0) {
+				updatedRows.add(new EmptyRowLayout(row, rowHeights[row]));
+			}
 		}
-		insertSpaceBelow(totalBelow);
 
 		int height = 0;
+		layouts = new RowLayout[updatedRows.size()];
 		for (int i = 0; i < layouts.length; i++) {
+			layouts[i] = updatedRows.get(i);
 			height += layouts[i].getHeight();
 		}
+
 		heightAbove = layouts[0].getHeightAbove();
 		heightBelow = height - heightAbove;
+		buildOffsets();
 	}
 
 	@Override

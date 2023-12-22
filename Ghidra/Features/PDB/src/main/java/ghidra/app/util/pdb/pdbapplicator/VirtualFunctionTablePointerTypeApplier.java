@@ -15,8 +15,6 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.math.BigInteger;
-
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
@@ -30,63 +28,65 @@ import ghidra.util.exception.CancelledException;
  */
 public class VirtualFunctionTablePointerTypeApplier extends MsTypeApplier {
 
+	// Intended for: AbstractVirtualFunctionTablePointerMsType or
+	//  AbstractVirtualFunctionTablePointerWithOffsetMsType
 	/**
 	 * Constructor for enum type applier, for transforming a enum into a
 	 * Ghidra DataType.
 	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
-	 * @param msType {@link AbstractVirtualFunctionTablePointerMsType} or
-	 * {@link AbstractVirtualFunctionTablePointerWithOffsetMsType} to process.
 	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public VirtualFunctionTablePointerTypeApplier(DefaultPdbApplicator applicator,
-			AbstractMsType msType) throws IllegalArgumentException {
-		super(applicator, validateType(msType));
+	public VirtualFunctionTablePointerTypeApplier(DefaultPdbApplicator applicator) throws IllegalArgumentException {
+		super(applicator);
 	}
 
-	@Override
-	BigInteger getSize() {
-		return BigInteger.valueOf(applicator.getDataOrganization().getPointerSize());
-	}
-
-	/**
-	 * Returns the offset of the Virtual Function Table Pointer.
-	 * @return Name of the nested type.
-	 */
-	int getOffset() {
-		if (msType instanceof AbstractVirtualFunctionTablePointerWithOffsetMsType) {
-			return ((AbstractVirtualFunctionTablePointerWithOffsetMsType) msType).getOffset();
+	int getOffset(AbstractMsType type) {
+		if (type instanceof AbstractVirtualFunctionTablePointerWithOffsetMsType offType) {
+			return offType.getOffset();
 		}
 		return 0;
 	}
 
 	/**
 	 * Returns the name to use.
+	 * @param type the PDB type being inspected
 	 * @return Name of the pointer type.
 	 */
-	String getMemberName() {
-		return "VFTablePtr" + getOffset();
+	String getMemberName(AbstractMsType type) {
+		return "VFTablePtr" + getOffset(type);
 	}
 
 	@Override
-	void apply() throws PdbException, CancelledException {
-		if (msType instanceof AbstractVirtualFunctionTablePointerWithOffsetMsType vftPtrWOffset) {
-			dataType = applyPointer(
-				vftPtrWOffset.getPointerTypeRecordNumber());
+	DataType apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
+			throws PdbException, CancelledException {
+
+		// usually no record number, so cannot retrieve or store from/to applicator
+		DataType dataType;
+
+		if (type instanceof AbstractVirtualFunctionTablePointerWithOffsetMsType vftPtrWOffset) {
+			dataType =
+				applyPointer(vftPtrWOffset.getPointerTypeRecordNumber(), fixupContext, breakCycle);
 		}
-		else if (msType instanceof AbstractVirtualFunctionTablePointerMsType vftPtr) {
-			dataType = applyPointer(vftPtr.getPointerTypeRecordNumber());
+		else if (type instanceof AbstractVirtualFunctionTablePointerMsType vftPtr) {
+			dataType = applyPointer(vftPtr.getPointerTypeRecordNumber(), fixupContext, breakCycle);
 		}
 		else {
 			dataType = VoidDataType.dataType;
 			applicator.appendLogMsg(
-				"PDB Warning: Type not handled: " + msType.getClass().getSimpleName());
+				"PDB Warning: Type not handled: " + type.getClass().getSimpleName());
 		}
+
+		// unlike regular pointer, we are resolving vft pointer
+		dataType = applicator.resolve(dataType);
+		return dataType;
 	}
 
-	private DataType applyPointer(RecordNumber pointerTypeRecordNumber) {
+	private DataType applyPointer(RecordNumber pointerTypeRecordNumber, FixupContext fixupContext,
+			boolean breakCycle) throws CancelledException, PdbException {
 		MsTypeApplier rawApplier = applicator.getTypeApplier(pointerTypeRecordNumber);
 		if (rawApplier instanceof PointerTypeApplier pointerApplier) {
-			return pointerApplier.getDataType();
+			AbstractMsType type = applicator.getPdb().getTypeRecord(pointerTypeRecordNumber);
+			return pointerApplier.apply(type, fixupContext, breakCycle);
 		}
 		applicator.appendLogMsg("cannot process " + rawApplier.getClass().getSimpleName() + "for " +
 			getClass().getSimpleName());

@@ -60,8 +60,23 @@
         by importers.  At this point in time there is no capability provided by the Memory Map provider to create a
         new File Bytes instance.</P>
     
-    <P><A name="OverlayType"></A><B>Overlay</B> - Each of the above memory block types may optionally be specified as an <I>Overlay</I> at the 
-    time of creation.  If this option is selected, the block is created in a new
+    <P><A name="OverlayType"></A><B>Overlay</B> - Each of the above memory block types may 
+    optionally be created as an <I>Overlay</I> block.  One or more memory blocks may be defined
+    within the same overlay address space.     
+    
+    
+    An overlay memory block may be created in two ways:
+	 * <ul>
+	 * <li>Specifying a {@code start} address within an existing overlay address space 
+	 * ({@code overlay} parameter is ignored), or</li>
+	 * <li>Specifying a {@code start} address within a physical memory address space and passing
+	 * {@code overlay=true}.  This use case will force the creation of a new unique overlay 
+	 * address space.</li>
+	 * </ul>
+    
+    
+    
+    If this option is selected, the block is created in a new
       overlay address space.&nbsp; Overlay blocks can serve various 
       purposes where a memory range may contain different data/code or map to different areas of memory 
       at any given point in time or processor state.  &nbsp; Note that
@@ -86,30 +101,36 @@
 
     <P>Each row displays information about one of the memory blocks.&nbsp; The following summarizes
     the information about each block.</P>
+    
+    <P><IMG src="help/shared/note.png" border="0">Many of the Memory Map table fields may be 
+    modified to alter the memory block specification (such fields are marked with an '*').</P>
 
     <BLOCKQUOTE>
-      <P><B><I>Name</I></B> - Name of the memory block.&nbsp;</P>
+      <P><B><I>Name * </I></B> - Name of the memory block.&nbsp;</P>
 
-      <P><I><B>Start -</B></I> The starting address (in hex) of the memory block.</P>
+      <P><I><B>Start -</B></I> The starting address (in hex) of the memory block.  For overlay blocks
+      this will reflect an overlay address which includes the name of the overlay address space.</P>
 
-      <P><B><I>End -</I></B> The Ending address (in hex) of the memory block.</P>
+      <P><B><I>End -</I></B> The ending address (in hex) of the memory block.  For overlay blocks
+      this will reflect an overlay address which includes the name of the overlay address space.</P>
 
       <P><I><B>Length -</B></I> The length (in hex) of the memory block.</P>
 
-      <P><I><B>R -</B></I> Indicates read permission.</P>
+      <P><I><B>R * -</B></I> Indicates read permission.</P>
 
-      <P><I><B>W -</B></I> Indicates write permission.</P>
+      <P><I><B>W * -</B></I> Indicates write permission.</P>
 
-      <P><I><B>X -</B></I> Indicates execute permission.</P>
+      <P><I><B>X * -</B></I> Indicates execute permission.</P>
        
-      <P><B>Volatile</B> - Indicates a region of volatile I/O Memory.</P>
+      <P><B>Volatile * </B> - Indicates a region of volatile I/O Memory.</P>
 
-	  <P><I><B>Overlay -</B></I> Indicates if block is defined as a memory overlay.</P>
+	  <P><I><B>Overlayed Space -</B></I> If the block is an overlay block this column indicates the name
+	  of the overlayed physical memory space.  This field will be empty for non-overlay blocks.</P>
 
       <P><I><B>Type -</B></I> Indicates whether the block is a <A href="#DefaultType">Default</A>,
       <A href="#BitMappedType">Bit Mapped</A> or <A href="#ByteMappedType">Byte Mapped</A> type of block.</P>
 
-      <P><I><B>Initialized -</B></I> Indicates whether the block has been initialized with values;
+      <P><I><B>Initialized * -</B></I> Indicates whether the block has been initialized with values;
       this property applies to Default and Overlay blocks.</P>
       
       <P><I><B>Byte Source -</B></I> Provides information about the source of the bytes in this
@@ -121,11 +142,26 @@
 
       <P><I><B>Source -</B></I> Description of block origination.</P>
 
-      <P><I><B>Comment -</B></I> User added comment about this memory block.</P>
+      <P><I><B>Comment * -</B></I> User added comment about this memory block.</P>
 
       <P>&nbsp;</P>
     </BLOCKQUOTE>
 
+	<H2><A name="OverlaySpaceRename"></A>Rename Overlay Address Space</H2>
+	<BLOCKQUOTE>
+	<P>An overlay address space may be renamed by selecting an overlay block within the table.
+	Its current overlay address space name should appear as the prefix to its Start address
+	(e.g., OV1::00001000 where OV1 is the current name of the overlay space containing the 
+	overlay block).  The popup menu action <B>Rename Overlay Space</B> may be selected after
+	a right-click on the selected overlay block row.  This will popup a window from which the
+	overlay space may be renamed.</P>
+	
+	<P><IMG src="help/shared/note.png" border="0">An important consideration when renaming overlay memory spaces is that any Diff operation
+	between the affected Program and another Program may not behave as expected until after the
+	Program is closed and re-opened.  This is caused by address comparison and ordering which 
+	will continue to use the original overlay space name until the program is re-opened.</P>
+	</BLOCKQUOTE>
+	
     <H2><A name="MemoryBlockEdits"></A>Memory Block Edits</H2>
 
     <BLOCKQUOTE>
@@ -191,10 +227,8 @@
     <H3><A name="Add_Block"></A><B><IMG src="images/Plus.png" border="0">&nbsp; Add</B></H3>
 
     <BLOCKQUOTE>
-      <BLOCKQUOTE>
         <P>Select <B>Add</B> to bring up the <I>Add Memory Block</I> dialog.&nbsp; Fill in the
         requested information and select the <B>OK</B> button.</P>
-      </BLOCKQUOTE>
     </BLOCKQUOTE>
 
     <P>&nbsp;</P>
@@ -210,7 +244,6 @@
      
 
     <BLOCKQUOTE>
-      <BLOCKQUOTE>
         <P>&nbsp;</P>
 
         <P><B><I>Block Name</I></B> - Enter the name of the new memory block.</P>
@@ -218,8 +251,9 @@
         <P><B><I>Start Addr</I></B> - Enter the start address of the new memory block.&nbsp; If the
         program language defines multiple address spaces, the address space must also be
         specified.&nbsp; The address space selection will not appear if only one is defined.
-        Overlay spaces are not included in the list of spaces.&nbsp; Within the defaul address
-        space, a block may not span across the current Image Base Address.<BR>
+        If creating an overlay memory block within an existing overlay address space that 
+        space should be selected.  A block within the default address space may not span across 
+        the current Image Base Address.<BR>
         </P>
 
         <P><B><I>Length -</I></B> Enter the length of the new memory block.</P>
@@ -234,8 +268,16 @@
 
         <P><B>Volatile</B> - Marks this block as volatile I/O memory.</P>
         
-        <P><B>Overlay</B> - Creates the block as an overlay within a corresponding overlay address space.</P>
-
+        <P><B>Overlay</B> - Creates the block as an overlay block. An overlay memory block may be 
+        created in two ways:
+		<ul>
+			<li>Specifying a <B>Start Addr</B> within an existing overlay address space 
+			(this <B>Overlay</B> option is redudant and ignored), or</li>
+			<li>Specifying a <B>Start Addr</B> within a physical memory address space and enabling
+			this <B>Overlay</B> option.  This use case will force the creation of a new unique overlay 
+			address space.</li>
+		</ul> 
+ 
         <P><B><I>Block Types</I></B> - Select the block type from the combo box: <I><B>Default, Bit
         Mapped or Byte Mapped</B></I>.</P>
 
@@ -290,7 +332,6 @@
       to the left value (e.g., 2:4).</LI>
           </UL>
         </BLOCKQUOTE>
-      </BLOCKQUOTE>
     </BLOCKQUOTE>
 
     <DIV align="center">
@@ -308,11 +349,9 @@
     <H3><A name="Move_Block"></A><IMG src="images/move.png" border="0"> Move</H3>
 
     <BLOCKQUOTE>
-      <BLOCKQUOTE>
         <P>Select <B>Move</B> to bring up the <I>Move Memory Block</I> dialog. The <I>Move</I>
         action is enabled when exactly one memory block is selected.&nbsp; Enter either a new start
         or end address to cause the block to be moved.</P>
-      </BLOCKQUOTE>
     </BLOCKQUOTE>
 
     <P>&nbsp;</P>
@@ -328,7 +367,6 @@
      
 
     <BLOCKQUOTE>
-      <BLOCKQUOTE>
         <P>&nbsp;</P>
 
         <P><B><I>Name -</I></B> Name of the memory block to be moved (not editable).</P>
@@ -356,13 +394,11 @@
 
           <LI><I>The block is an <A href="#OverlayType">Overlay</A> block.</I></LI>
         </UL>
-      </BLOCKQUOTE>
     </BLOCKQUOTE>
 
     <H3><A name="Split_Block"></A><IMG src="images/verticalSplit.png" border="0">&nbsp; Split</H3>
 
     <BLOCKQUOTE>
-      <BLOCKQUOTE>
         <P>Select <B>Split</B> to bring up the <I>Split Block</I> Dialog. The <I>Split</I> action
         is enabled when exactly one memory block is selected.&nbsp; Use the <I>Split Block</I>
         Dialog to split a memory block into two smaller memory blocks.&nbsp;There are four ways to
@@ -377,7 +413,6 @@
 
           <LI>Enter a length for the second block (new block).</LI>
         </UL>
-      </BLOCKQUOTE>
     </BLOCKQUOTE>
 
     <P>&nbsp;</P>
@@ -395,7 +430,6 @@
     <H3>&nbsp;</H3>
 
     <BLOCKQUOTE>
-      <BLOCKQUOTE>
         <P><B><FONT color="#000080">Block to Split</FONT></B></P>
 
         <BLOCKQUOTE>
@@ -423,20 +457,17 @@
 
         <P><I><IMG src="help/shared/note.png" border="0&gt;&lt;a href=">Overlay type blocks cannot
         be split.&nbsp;</I></P>
-      </BLOCKQUOTE>
     </BLOCKQUOTE>
 
     <H3><A name="Expand_Block_Up"></A><IMG src="images/collapse.gif" border="0">&nbsp; Expand
     Up</H3>
 
     <BLOCKQUOTE>
-      <BLOCKQUOTE>
         <P>Select <B>Expand Up</B> to bring up the <I>Expand Block Up</I> Dialog. The <I>Expand
         Up</I> action is enabled when exactly one memory block is selected.&nbsp; Use the <I>Expand
         Block Up</I> Dialog to cause a memory block to grow by adding additional bytes BEFORE the
         memory block.&nbsp; The block can be expanded by either entering a new start address or a
         new length.</P>
-      </BLOCKQUOTE>
     </BLOCKQUOTE>
 
     <P>&nbsp;</P>
@@ -452,7 +483,6 @@
      
 
     <BLOCKQUOTE>
-      <BLOCKQUOTE>
         <P><B><I>New Start Address -</I></B> A new start address can be entered here.&nbsp; It must
         be before the current start address.</P>
 
@@ -463,20 +493,17 @@
 
         <P><I><IMG src="help/shared/note.png" border="0"><A href="#OverlayType">Overlay</A> type
         blocks cannot be expanded.&nbsp;</I></P>
-      </BLOCKQUOTE>
     </BLOCKQUOTE>
 
     <H3><A name="Expand_Block_Down"></A><IMG src="images/expand.gif" border="0">&nbsp; Expand
     Down</H3>
 
     <BLOCKQUOTE>
-      <BLOCKQUOTE>
         <P>Select <B>Expand Down</B> to bring up the <I>Expand Block Down</I> Dialog. The <I>Expand
         Down</I> action is enabled when exactly one memory block is selected.&nbsp; Use the
         <I>Expand Block Down</I> Dialog to cause a memory block to grow by adding additional bytes
         AFTER the memory block. The block can be expanded by either entering a new end address or a
         new length.</P>
-      </BLOCKQUOTE>
     </BLOCKQUOTE>
 
     <P>&nbsp;</P>
@@ -492,7 +519,6 @@
      
 
     <BLOCKQUOTE>
-      <BLOCKQUOTE>
         <P><I><B>Start Address -</B></I> Displays the start address of the block (not
         editable).</P>
 
@@ -504,13 +530,11 @@
 
         <P><I><IMG src="help/shared/note.png" border="0"><A href="#OverlayType">Overlay</A> type
         blocks cannot be expanded.&nbsp;</I></P>
-      </BLOCKQUOTE>
     </BLOCKQUOTE>
 
     <H3><A name="Merge_Blocks"></A><IMG src="images/Merge.png" border="0">&nbsp; Merge</H3>
 
     <BLOCKQUOTE>
-      <BLOCKQUOTE>
         <P>The <I>Merge</I> action is enabled when two or more memory blocks are selected.&nbsp; It
         attempts to merge all selected blocks into one block.&nbsp; Any "gaps" will be "filled in"
         with 0s.&nbsp;</P>
@@ -524,13 +548,11 @@
         <P><I><IMG src="help/shared/note.png" border="0"></I> Only adjacent <I>Default</I> blocks of the same 
         initialization state can be merged.</P>
         <P><I><IMG src="help/shared/note.png" border="0"></I>Overlay type blocks cannot be merged.</P>
-      </BLOCKQUOTE>
     </BLOCKQUOTE>
 
     <H3><A name="Delete_Block"></A><IMG src="images/edit-delete.png" border="0">&nbsp; Delete</H3>
 
     <BLOCKQUOTE>
-      <BLOCKQUOTE>
         <P>The <I>Delete</I> action is enabled when one or more memory blocks are selected.&nbsp;
         All selected blocks will be deleted. If the blocks contained defined data or instructions,
         a confirmation dialog is displayed; select "yes" on the dialog to delete the block. A
@@ -539,14 +561,16 @@
         <P><IMG src="help/shared/tip.png" border="0">For large blocks that may contain many
         symbols, references, instructions, etc., the delete operation may take a while to complete.
         You can cancel the delete operation at any time.</P>
-      </BLOCKQUOTE>
+        
+        <P><I><IMG src="help/shared/note.png" border="0">When removing an overlay memory block the
+        corresponding overlay address space will also be removed if no other overlay blocks
+        exist within that space.</P>
     </BLOCKQUOTE>
 
     <H3><A name="Set_Image_Base"></A><IMG src="images/house.png" border="0">&nbsp; Set Image
     Base</H3>
 
     <BLOCKQUOTE>
-      <BLOCKQUOTE>
         <P>The <I>Set Image Base</I> action allows you to change the base address of a
         program.&nbsp; This action is useful when working with relocatable code such as DLLs or
         shared objects.&nbsp; All addresses, code units, references, etc. will immediately be
@@ -559,7 +583,6 @@
         <P>To change the image base, enter a new image base in the text field and click on the
         <I>OK</I> button.<BR>
         </P>
-      </BLOCKQUOTE>
     </BLOCKQUOTE>
 
     <DIV align="left">

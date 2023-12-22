@@ -17,6 +17,8 @@ package ghidra.app.util.bin.format.golang.structmapping;
 
 import java.io.IOException;
 
+import ghidra.util.exception.CancelledException;
+
 /**
  * A function that decorates a field in a structure mapped class.
  * 
@@ -30,6 +32,8 @@ public interface FieldMarkupFunction<T> {
 	 * @param fieldContext information about the field
 	 * @param markupSession state and methods to assist marking up the program 
 	 * @throws IOException thrown if error performing the markup
+	 * @throws CancelledException if cancelled
 	 */
-	void markupField(FieldContext<T> fieldContext, MarkupSession markupSession) throws IOException;
+	void markupField(FieldContext<T> fieldContext, MarkupSession markupSession)
+			throws IOException, CancelledException;
 }

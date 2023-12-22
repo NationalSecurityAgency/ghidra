@@ -18,6 +18,8 @@ package ghidra.app.util.bin.format.pdb2.pdbreader.msf;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
+import ghidra.app.util.bin.ByteProvider;
+
 /**
  * This class is responsible for reading pages from a {@link RandomAccessFile} for the
  *  {@link Msf} class and its underlying classes.
@@ -27,7 +29,7 @@ class MsfFileReader implements AutoCloseable {
 	//==============================================================================================
 	// Internals
 	//==============================================================================================
-	private RandomAccessFile file;
+	private ByteProvider byteProvider;
 	private Msf msf;
 
 	//==============================================================================================
@@ -39,8 +41,8 @@ class MsfFileReader implements AutoCloseable {
 	 */
 	@Override
 	public void close() throws IOException {
-		if (file != null) {
-			file.close();
+		if (byteProvider != null) {
+			byteProvider.close();
 		}
 	}
 
@@ -50,11 +52,11 @@ class MsfFileReader implements AutoCloseable {
 	/**
 	 * Constructor
 	 * @param msf the {@link Msf} for which this class is to be associated
-	 * @param file {@link RandomAccessFile} underlying this class
+	 * @param byteProvider the ByteProvider providing bytes for the MSF
 	 */
-	MsfFileReader(Msf msf, RandomAccessFile file) {
+	MsfFileReader(Msf msf, ByteProvider byteProvider) {
 		this.msf = msf;
-		this.file = file;
+		this.byteProvider = byteProvider;
 	}
 
 	/**
@@ -95,18 +97,13 @@ class MsfFileReader implements AutoCloseable {
 
 		// Fail if file does not contain enough pages for the read--boundary case that assumes
 		//  everything beyond the offset in the file belongs to this read.
-		if (Msf.floorDivisionWithLog2Divisor(offset + numToRead,
-			msf.getLog2PageSize()) > msf.getNumPages()) {
+		if (Msf.floorDivisionWithLog2Divisor(offset + numToRead, msf.getLog2PageSize()) > msf
+				.getNumPages()) {
 			throw new IOException("Invalid MSF configuration");
 		}
 
-		int numBytesRead = 0;
-		file.seek(fileOffset);
-		numBytesRead = file.read(bytes, bytesOffset, numToRead);
-
-		if (numBytesRead != numToRead) {
-			throw new IOException("Could not read required bytes from MSF");
-		}
+		System.arraycopy(byteProvider.readBytes(fileOffset, numToRead), 0, bytes, bytesOffset,
+			numToRead);
 	}
 
 }

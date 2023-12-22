@@ -174,6 +174,18 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 		updateButtons();
 	}
 
+	private void resetSelectedLookAndFeel() {
+		Swing.runLater(() -> {
+			try {
+				combo.removeItemListener(comboListener);
+				combo.setSelectedItem(themeManager.getActiveTheme().getLookAndFeelType());
+			}
+			finally {
+				combo.addItemListener(comboListener);
+			}
+		});
+	}
+
 	private void themeComboChanged(ItemEvent e) {
 
 		if (e.getStateChange() != ItemEvent.SELECTED) {
@@ -181,24 +193,43 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 		}
 
 		LafType lafType = (LafType) e.getItem();
-		Swing.runLater(() -> {
+		if (!themeManager.hasThemeValueChanges()) {
+			setLookAndFeel(lafType);
+			return;
+		}
 
-			themeManager.setLookAndFeel(lafType, lafType.usesDarkDefaults());
-			if (lafType == LafType.GTK) {
-				setStatusText(
-					"Warning - Themes using the GTK LookAndFeel do not support changing java " +
-						"component colors, fonts or icons.",
-					MessageType.ERROR);
-			}
-			else {
-				setStatusText("");
-			}
-			colorTree.rebuild();
-			colorTable.reloadAll();
-			paletteTable.reloadAll();
-			fontTable.reloadAll();
-			iconTable.reloadAll();
-		});
+		//@formatter:off
+		int result = OptionDialog.showOptionDialog(null, "Discard Changes?",
+			"Changing the Look and Feel type will cause you to lose your changes.\n" +
+			"If you would like to keep your changes, cancel this dialog and then save the theme\n" +
+			"Would you like to continue?",
+			"Lose Changes");
+		//@formatter:on
+		if (result == OptionDialog.CANCEL_OPTION) {
+			resetSelectedLookAndFeel();
+			return;
+		}
+
+		setLookAndFeel(lafType);
+	}
+
+	private void setLookAndFeel(LafType lafType) {
+
+		themeManager.setLookAndFeel(lafType, lafType.usesDarkDefaults());
+		if (lafType == LafType.GTK) {
+			setStatusText(
+				"Warning - Themes using the GTK LookAndFeel do not support changing java " +
+					"component colors, fonts or icons.",
+				MessageType.WARNING);
+		}
+		else {
+			setStatusText("");
+		}
+		colorTree.rebuild();
+		colorTable.reloadAll();
+		paletteTable.reloadAll();
+		fontTable.reloadAll();
+		iconTable.reloadAll();
 	}
 
 	private void updateButtons() {

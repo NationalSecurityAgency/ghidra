@@ -149,7 +149,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 		if (debugInfo != null) {
 			try {
 				// dbiAge and targetProcessor set during deserialization of new DBI header
-				debugInfo.deserialize(true);
+				debugInfo.initialize(true);
 			}
 			catch (CancelledException e) {
 				throw new AssertException(e); // unexpected
@@ -328,9 +328,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 			Class<T> typeClass) {
 		recordNumber = fixupTypeIndex(recordNumber, typeClass);
 		AbstractMsType msType =
-			getTPI(recordNumber.getCategory()).getRecord(recordNumber.getNumber());
-//		AbstractMsType msType =
-//			getTPI(recordNumber.getCategory()).getRandomAccessRecord(recordNumber.getNumber());
+			getTPI(recordNumber.getCategory()).getRandomAccessRecord(recordNumber.getNumber());
 		if (!typeClass.isInstance(msType)) {
 			if (!recordNumber.isNoType()) {
 				PdbLog.logGetTypeClassMismatch(msType, typeClass);
@@ -505,7 +503,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 
 		typeProgramInterface = tpiParser.parse(this);
 		if (typeProgramInterface != null) {
-			typeProgramInterface.deserialize();
+			typeProgramInterface.initialize();
 		}
 
 		boolean ipiStreamHasNoName = ItemProgramInterfaceParser.hackCheckNoNameForStream(nameTable);
@@ -514,7 +512,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 			ItemProgramInterfaceParser ipiParser = new ItemProgramInterfaceParser();
 			itemProgramInterface = ipiParser.parse(this);
 			if (itemProgramInterface != null) {
-				itemProgramInterface.deserialize();
+				itemProgramInterface.initialize();
 			}
 			//processDependencyIndexPairList();
 			//dumpDependencyGraph();
@@ -522,7 +520,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 
 		parseDBI();
 		if (debugInfo != null) {
-			debugInfo.deserialize(false);
+			debugInfo.initialize(false);
 		}
 
 		substreamsDeserialized = true;
@@ -660,13 +658,13 @@ public abstract class AbstractPdb implements AutoCloseable {
 		nameTable.deserializeDirectory(reader);
 		// Read the parameters.
 		while (reader.hasMore()) {
-			getMonitor().checkCancelled();
+			checkCancelled();
 			int val = reader.parseInt();
 			parameters.add(val);
 		}
 		// Check the parameters for IDs
 		for (int param : parameters) {
-			getMonitor().checkCancelled();
+			checkCancelled();
 			if (param == MINIMAL_DEBUG_INFO_PARAM) {
 				minimalDebugInfo = true;
 			}

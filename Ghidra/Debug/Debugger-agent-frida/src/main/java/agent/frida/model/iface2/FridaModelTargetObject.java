@@ -52,7 +52,7 @@ public interface FridaModelTargetObject extends SpiTargetObject {
 	public CompletableFuture<? extends Map<String, ?>> requestNativeAttributes();
 
 	public default CompletableFuture<Void> requestAugmentedAttributes() {
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	public CompletableFuture<List<TargetObject>> requestNativeElements();

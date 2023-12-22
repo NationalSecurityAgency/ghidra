@@ -38,7 +38,7 @@ abstract class C13Section {
 		return ignore;
 	}
 
-	void dump(Writer writer) throws IOException {
+	void dump(Writer writer, TaskMonitor monitor) throws IOException, CancelledException {
 		String n = getClass().getSimpleName();
 		int len = n.length();
 		writer.write(n + dashes.substring(len));

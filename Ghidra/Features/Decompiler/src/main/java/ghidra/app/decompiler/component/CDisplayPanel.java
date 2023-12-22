@@ -175,4 +175,13 @@ public class CDisplayPanel extends JPanel implements DecompilerCallbackHandler {
 	public void dispose() {
 		controller.dispose();
 	}
+
+	public DecompilerController getController() {
+		return controller;
+
+	}
+
+	public void refresh(DecompileData data) {
+		controller.refreshDisplay(data.getProgram(), data.getLocation(), null);
+	}
 }

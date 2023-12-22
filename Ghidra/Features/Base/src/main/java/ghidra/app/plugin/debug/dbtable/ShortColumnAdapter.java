@@ -20,6 +20,10 @@ import db.ShortField;
 
 public class ShortColumnAdapter extends AbstractColumnAdapter {
 
+	ShortColumnAdapter(String columnName, int column) {
+		super(columnName, column);
+	}
+
 	@Override
 	Class<?> getValueClass() {
 		return Short.class;
@@ -35,4 +39,8 @@ public class ShortColumnAdapter extends AbstractColumnAdapter {
 		return Short.valueOf(rec.getShortValue(col));
 	}
 
+	@Override
+	public LongRenderer getColumnRenderer() {
+		return longRenderer;
+	}
 }

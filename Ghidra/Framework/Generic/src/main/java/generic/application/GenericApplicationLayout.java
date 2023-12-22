@@ -120,6 +120,8 @@ public class GenericApplicationLayout extends ApplicationLayout {
 		userTempDir = ApplicationUtilities.getDefaultUserTempDir(applicationProperties);
 		userSettingsDir = ApplicationUtilities.getDefaultUserSettingsDir(applicationProperties,
 			applicationInstallationDir);
+
+		extensionInstallationDirs = Collections.emptyList();
 	}
 
 	protected Collection<ResourceFile> getAdditionalApplicationRootDirs(

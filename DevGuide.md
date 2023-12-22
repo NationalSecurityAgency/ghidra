@@ -62,8 +62,14 @@ Build Javadoc:
 gradle createJavadocs
 ```
 
-Build Ghidra to `build/dist`.  This will be a distribution intended only to run on the platform on
-which it was built.
+Build Ghidra to `build/dist` in an uncompressed form.  This will be a distribution intended only to 
+run on the platform on which it was built.
+```
+gradle assembleAll
+```
+
+Build Ghidra to `build/dist` in a compressed form.  This will be a distribution intended only to run
+on the platform on which it was built.
 ```
 gradle buildGhidra
 ```

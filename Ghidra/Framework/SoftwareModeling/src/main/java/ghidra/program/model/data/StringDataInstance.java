@@ -15,20 +15,18 @@
  */
 package ghidra.program.model.data;
 
-import static ghidra.program.model.data.EndianSettingsDefinition.ENDIAN;
-import static ghidra.program.model.data.RenderUnicodeSettingsDefinition.RENDER;
+import static ghidra.program.model.data.EndianSettingsDefinition.*;
+import static ghidra.program.model.data.RenderUnicodeSettingsDefinition.*;
 import static ghidra.program.model.data.StringLayoutEnum.*;
-import static ghidra.program.model.data.TranslationSettingsDefinition.TRANSLATION;
-
-import java.util.*;
+import static ghidra.program.model.data.TranslationSettingsDefinition.*;
 
 import java.nio.*;
 import java.nio.charset.*;
+import java.util.*;
 
 import generic.stl.Pair;
 import ghidra.docking.settings.*;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressOutOfBoundsException;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.RenderUnicodeSettingsDefinition.RENDER_ENUM;
 import ghidra.program.model.data.StringRenderParser.StringParseException;
 import ghidra.program.model.lang.Endian;
@@ -206,6 +204,37 @@ public class StringDataInstance {
 		return NULL_INSTANCE;
 	}
 
+	/**
+	 * Formats a string value so that it is in the form of a symbol label.
+	 * 
+	 * @param prefixStr data type prefix, see {@link AbstractStringDataType#getDefaultLabelPrefix()}
+	 * @param str string value
+	 * @param options display options
+	 * @return string, suitable to be used as a label
+	 */
+	public static String makeStringLabel(String prefixStr, String str,
+			DataTypeDisplayOptions options) {
+		boolean needsUnderscore = false;
+		StringBuilder buffer = new StringBuilder();
+		for (int i = 0, strLength = str.length(); i < strLength &&
+			buffer.length() < options.getLabelStringLength();) {
+			int codePoint = str.codePointAt(i);
+			if (StringUtilities.isDisplayable(codePoint) && (codePoint != ' ')) {
+				if (needsUnderscore) {
+					buffer.append('_');
+					needsUnderscore = false;
+				}
+				buffer.appendCodePoint(codePoint);
+			}
+			else {
+				needsUnderscore = true;
+				// discard character
+			}
+			i += Character.charCount(codePoint);
+		}
+		return prefixStr + buffer.toString();
+	}
+
 	//-----------------------------------------------------------------------------
 	/**
 	 * A {@link StringDataInstance} that represents a non-existent string.
@@ -379,6 +408,19 @@ public class StringDataInstance {
 	 */
 	public Address getAddress() {
 		return buf.getAddress();
+	}
+
+	public Address getEndAddress() {
+		try {
+			return length > 0 ? buf.getAddress().addNoWrap(length - 1) : buf.getAddress();
+		}
+		catch (AddressOverflowException e) {
+			return buf.getAddress();
+		}
+	}
+
+	public AddressRange getAddressRange() {
+		return new AddressRangeImpl(getAddress(), getEndAddress());
 	}
 
 	private boolean isBadCharSize() {
@@ -759,20 +801,39 @@ public class StringDataInstance {
 	 * <p>
 	 * Example (quotes are part of result): {@code "Test\tstring",01,02,"Second\npart",00}
 	 *
-	 * @return formatted String
+	 * @return formatted String, or the translated value if present and the "show translated"
+	 * setting is enabled for this string's location
 	 */
 	public String getStringRepresentation() {
-		return getStringRep(StringRenderBuilder.DOUBLE_QUOTE, StringRenderBuilder.DOUBLE_QUOTE);
+		return showTranslation && translatedValue != null
+			? getTranslatedStringRepresentation(translatedValue)
+			: getStringRep(StringRenderBuilder.DOUBLE_QUOTE, StringRenderBuilder.DOUBLE_QUOTE);
+	}
+
+	/**
+	 * Returns a formatted version of the string returned by {@link #getStringValue()}.
+	 * <p>
+	 * The resulting string will be formatted with quotes around the parts that contain plain ASCII
+	 * alpha characters (and simple escape sequences), and out-of-range byte-ish values listed as
+	 * comma separated hex-encoded values:
+	 * <p>
+	 * Example (quotes are part of result): {@code "Test\tstring",01,02,"Second\npart",00}
+	 * 
+	 * @param originalOrTranslated boolean flag, if true returns the representation of the
+	 * string value, if false returns the representation of the translated value 
+	 * @return formatted String
+	 */
+	public String getStringRepresentation(boolean originalOrTranslated) {
+		return originalOrTranslated
+				? getStringRep(StringRenderBuilder.DOUBLE_QUOTE, StringRenderBuilder.DOUBLE_QUOTE)
+				: translatedValue != null ? getTranslatedStringRepresentation(translatedValue)
+				: UNKNOWN;
 	}
 
 	private String getStringRep(char quoteChar, char quoteCharMulti) {
 
 		if (isProbe() || isBadCharSize() || !buf.isInitializedMemory()) {
 			return UNKNOWN;
-		}
-
-		if (showTranslation && translatedValue != null) {
-			return getTranslatedStringRepresentation(translatedValue);
 		}
 
 		byte[] stringBytes = convertPaddedToUnpadded(getStringBytes());
@@ -912,6 +973,17 @@ public class StringDataInstance {
 	}
 
 	/**
+	 * Returns true if this string has a translated value that could
+	 * be displayed.
+	 * 
+	 * @return boolean true if translated value is present, false if no
+	 * value is present
+	 */
+	public boolean hasTranslatedValue() {
+		return translatedValue != null;
+	}
+
+	/**
 	 * Returns the value of the stored
 	 * {@link TranslationSettingsDefinition#getTranslatedValue(Data) translated settings}
 	 * string.
@@ -988,25 +1060,7 @@ public class StringDataInstance {
 			return prefixStr;
 		}
 
-		boolean needsUnderscore = false;
-		StringBuilder buffer = new StringBuilder();
-		for (int i = 0, strLength = str.length(); i < strLength &&
-			buffer.length() < options.getLabelStringLength();) {
-			int codePoint = str.codePointAt(i);
-			if (StringUtilities.isDisplayable(codePoint) && (codePoint != ' ')) {
-				if (needsUnderscore) {
-					buffer.append('_');
-					needsUnderscore = false;
-				}
-				buffer.appendCodePoint(codePoint);
-			}
-			else {
-				needsUnderscore = true;
-				// discard character
-			}
-			i += Character.charCount(codePoint);
-		}
-		return prefixStr + buffer.toString();
+		return makeStringLabel(prefixStr, str, options);
 	}
 
 	public String getOffcutLabelString(String prefixStr, String abbrevPrefixStr, String defaultStr,

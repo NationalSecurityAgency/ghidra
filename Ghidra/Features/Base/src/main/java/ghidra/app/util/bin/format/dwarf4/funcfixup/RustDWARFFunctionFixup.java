@@ -15,29 +15,51 @@
  */
 package ghidra.app.util.bin.format.dwarf4.funcfixup;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.format.dwarf4.DIEAggregate;
 import ghidra.app.util.bin.format.dwarf4.DWARFException;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFSourceLanguage;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFFunction;
-import ghidra.program.model.listing.Function;
+import ghidra.app.util.bin.format.dwarf4.next.DWARFFunction.CommitMode;
+import ghidra.program.database.data.ProgramBasedDataTypeManagerDB;
+import ghidra.program.model.lang.CompilerSpec;
+import ghidra.program.model.listing.Program;
 import ghidra.util.classfinder.ExtensionPointProperties;
+import ghidra.util.exception.InvalidInputException;
 
 /**
- * Prevent functions in a Rust compile unit from incorrectly being locked down to an empty signature. 
+ * Adjust functions in a Rust compile unit to use Rust calling convention, ignore any information
+ * about parameter storage locations.
  */
 @ExtensionPointProperties(priority = DWARFFunctionFixup.PRIORITY_NORMAL_EARLY)
 public class RustDWARFFunctionFixup implements DWARFFunctionFixup {
+	private String rustCC;
 
 	@Override
-	public void fixupDWARFFunction(DWARFFunction dfunc, Function gfunc) throws DWARFException {
+	public void fixupDWARFFunction(DWARFFunction dfunc) throws DWARFException {
 		DIEAggregate diea = dfunc.diea;
 		int cuLang = diea.getCompilationUnit().getCompileUnit().getLanguage();
-		if (cuLang == DWARFSourceLanguage.DW_LANG_Rust && dfunc.params.isEmpty()) {
-			// if there were no defined parameters and the language is Rust, don't force an
-			// empty param signature. Rust language emit dwarf info without types (signatures)
-			// when used without -g.
-			throw new DWARFException("Rust empty param list" /* string doesnt matter */);
+		if (cuLang == DWARFSourceLanguage.DW_LANG_Rust) {
+			dfunc.callingConventionName = getRustCC(dfunc.getProgram().getGhidraProgram());
+			dfunc.signatureCommitMode = CommitMode.FORMAL;
 		}
+
 	}
 
+	private String getRustCC(Program program) throws DWARFException {
+		if (rustCC == null) {
+			rustCC = CompilerSpec.CALLING_CONVENTION_rustcall;
+			try {
+				// NOTE: this has a side effect of ensuring the rust cc is present in the program
+				ProgramBasedDataTypeManagerDB dtm =
+					(ProgramBasedDataTypeManagerDB) program.getDataTypeManager();
+				dtm.getCallingConventionID(CompilerSpec.CALLING_CONVENTION_rustcall, false);
+			}
+			catch (InvalidInputException | IOException e) {
+				throw new DWARFException("Unable to get Rust calling convention");
+			}
+		}
+		return rustCC;
+	}
 }

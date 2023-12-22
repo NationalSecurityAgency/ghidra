@@ -15,7 +15,7 @@
  */
 package ghidra.app.util.bin.format.dwarf4;
 
-import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.DW_TAG_formal_parameter;
+import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -28,6 +28,7 @@ import ghidra.app.util.bin.format.dwarf4.encoding.*;
 import ghidra.app.util.bin.format.dwarf4.expression.*;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFProgram;
 import ghidra.util.Msg;
+import ghidra.util.NumericUtilities;
 
 /**
  * DIEAggregate groups related {@link DebugInfoEntry} records together in a single interface
@@ -724,7 +725,8 @@ public class DIEAggregate {
 			}
 
 			// Check to see if this is a base address entry
-			if (beginning == -1) {
+			if (beginning == -1 ||
+				(pointerSize == 4 && beginning == NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG)) {
 				baseAddressOffset = ending;
 				continue;
 			}
@@ -864,11 +866,29 @@ public class DIEAggregate {
 	 * Parses a range list from the debug_ranges section.
 	 * See DWARF4 Section 2.17.3 (Non-Contiguous Address Ranges).
 	 * <p>
+	 * The returned list of ranges is sorted.
+	 * 
+	 * @param attribute attribute ie. {@link DWARFAttribute#DW_AT_ranges}
+	 * @return list of ranges, in order
+	 * @throws IOException if an I/O error occurs
+	 */
+	public List<DWARFRange> parseDebugRange(int attribute) throws IOException {
+		List<DWARFRange> result = readRange(attribute);
+		Collections.sort(result);
+		return result;
+	}
+
+	/**
+	 * Parses a range list from the debug_ranges section.
+	 * See DWARF4 Section 2.17.3 (Non-Contiguous Address Ranges).
+	 * <p>
+	 * The returned list is not sorted.
+	 * 
 	 * @param attribute attribute ie. {@link DWARFAttribute#DW_AT_ranges}
 	 * @return list of ranges
 	 * @throws IOException if an I/O error occurs
 	 */
-	public List<DWARFRange> parseDebugRange(int attribute) throws IOException {
+	public List<DWARFRange> readRange(int attribute) throws IOException {
 		byte pointerSize = getCompilationUnit().getPointerSize();
 		BinaryReader reader = getCompilationUnit().getProgram().getDebugRanges();
 
@@ -895,7 +915,8 @@ public class DIEAggregate {
 			}
 
 			// Check to see if this is a base address entry
-			if (beginning == -1) {
+			if (beginning == -1 ||
+				(pointerSize == 4 && beginning == NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG)) {
 				baseAddress = ending;
 				continue;
 			}
@@ -903,7 +924,6 @@ public class DIEAggregate {
 			// Add the range to the list
 			ranges.add(new DWARFRange(baseAddress + beginning, baseAddress + ending));
 		}
-		Collections.sort(ranges);
 		return ranges;
 	}
 

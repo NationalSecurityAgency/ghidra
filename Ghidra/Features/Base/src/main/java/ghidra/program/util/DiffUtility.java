@@ -15,6 +15,10 @@
  */
 package ghidra.program.util;
 
+import java.util.Comparator;
+
+import org.apache.commons.lang3.Range;
+
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
@@ -55,80 +59,55 @@ public class DiffUtility extends SimpleDiffUtility {
 		AddressRangeIterator rangeIter = set.getAddressRanges();
 		while (rangeIter.hasNext()) {
 			AddressRange range = rangeIter.next();
-			AddressRange compatibleAddressRange = getCompatibleAddressRange(range, otherProgram);
-			if (compatibleAddressRange != null) {
-				otherSet.add(compatibleAddressRange);
+			AddressSet compatibleSet = getCompatibleAddressSet(range, otherProgram, false);
+			if (compatibleSet != null) {
+				otherSet.add(compatibleSet);
 			}
 		}
 		return otherSet;
 	}
 
-	/**
-	 * Reduce an address-set from one program to the set of addresses that are incompatible with
-	 * the specified otherProgram.
-	 * @param set address-set corresponding to one program
-	 * @param otherProgram the addresses are incompatible with this other program.
-	 * @return incompatible address-set
-	 */
-	public static AddressSet getNonCompatibleAddressSet(AddressSetView set, Program otherProgram) {
-		AddressSet nonCompatibleSet = new AddressSet();
-		AddressRangeIterator rangeIter = set.getAddressRanges();
-		while (rangeIter.hasNext()) {
-			AddressRange range = rangeIter.next();
-			AddressRange compatibleAddressRange = getCompatibleAddressRange(range, otherProgram);
-			if (compatibleAddressRange == null) {
-				nonCompatibleSet.add(range);
-			}
+	private static final Comparator<Long> unsignedLongComparator = new Comparator<>() {
+
+		@Override
+		public int compare(Long o1, Long o2) {
+			return Long.compareUnsigned(o1, o2);
 		}
-		return nonCompatibleSet;
-	}
+	};
 
 	/**
-	 * Convert an address range from one program to a compatible address range in the 
+	 * Convert an address range from one program to a compatible address set in the 
 	 * specified otherProgram.  Only memory addresses will be considered.
-	 * If the entire range cannot be converted then null is returned.
+	 * If none of the range can be converted then null is returned.
 	 * @param range address range to convert
 	 * @param otherProgram target program which corresponds to the returned address range.
-	 * @return translated address range or null if a compatible range could not be 
-	 * determined in the other program.
+	 * @param exactMatchOnly if true and a one-to-one address mapping cannot be identified null 
+	 * will be returned, otherwise a partial set may be returned or null if no valid translation
+	 * was found.
+	 * @return compatible address set or null
 	 */
-	public static AddressRange getCompatibleAddressRange(AddressRange range, Program otherProgram) {
-		Address nextMin = range.getMinAddress();
-		Address nextMax = range.getMaxAddress();
-		Address newMinAddress = translateMemoryAddress(nextMin, otherProgram, false);
-		Address newMaxAddress = translateMemoryAddress(nextMax, otherProgram, true);
-		try {
-//			while (newMinAddress == null) {
-//				nextMin = nextMin.add(1L);
-//				int compareMinToMax = nextMin.compareTo(nextMax);
-//				if (compareMinToMax > 0) {
-//					break;
-//				}
-//				newMinAddress = translateMemoryAddress(nextMin, otherProgram, true);
-//				if (compareMinToMax == 0) {
-//					break;
-//				}
-//			}
-			while (newMaxAddress == null && nextMin != null) {
-				nextMax = nextMax.subtract(1L);
-				int compareMaxToMin = nextMax.compareTo(nextMin);
-				if (compareMaxToMin < 0) {
-					break;
-				}
-				newMaxAddress = translateMemoryAddress(nextMax, otherProgram, true);
-				if (compareMaxToMin == 0) {
-					break;
-				}
-			}
-		}
-		catch (AddressOutOfBoundsException e) {
-			// Won't be able to add 1 at end of block or subtract 1 at start of block.
-		}
-		if (newMinAddress == null || newMaxAddress == null ||
-			newMinAddress.getOffset() > newMaxAddress.getOffset()) {
+	public static AddressSet getCompatibleAddressSet(AddressRange range, Program otherProgram,
+			boolean exactMatchOnly) {
+		AddressSpace addrSpace = range.getMinAddress().getAddressSpace();
+		AddressSpace otherSpace = getCompatibleAddressSpace(addrSpace, otherProgram);
+		if (otherSpace == null) {
 			return null;
 		}
-		return new AddressRangeImpl(newMinAddress, newMaxAddress);
+		Range<Long> r = Range.between(range.getMinAddress().getOffset(),
+			range.getMaxAddress().getOffset(), unsignedLongComparator);
+		Range<Long> otherSpaceRange = Range.between(otherSpace.getMinAddress().getOffset(),
+			otherSpace.getMaxAddress().getOffset(), unsignedLongComparator);
+		if (!r.isOverlappedBy(otherSpaceRange)) {
+			return null;
+		}
+		r = r.intersectionWith(otherSpaceRange);
+		Address min = otherSpace.getAddressInThisSpaceOnly(r.getMinimum());
+		Address max = otherSpace.getAddressInThisSpaceOnly(r.getMaximum());
+		AddressSet set = new AddressSet(min, max);
+		if (exactMatchOnly && set.getNumAddresses() != range.getLength()) {
+			return null;
+		}
+		return set;
 	}
 
 	/**
@@ -199,64 +178,6 @@ public class DiffUtility extends SimpleDiffUtility {
 		return otherProgram.getSymbolTable()
 				.createNameSpace(otherParentNamespace, namespace.getName(), source);
 	}
-
-//	/**
-//	 * Given a symbol for a specified program, get the corresponding symbol from the 
-//	 * specified otherProgram.
-//	 * @param program program which contains the specified symbol instance
-//	 * @param p2Symbol symbol to look for
-//	 * @param otherProgram other program
-//	 * @return corresponding symbol for otherProgram or null if no such symbol exists.
-//	 */
-//	public static Symbol getSymbol(AddressTranslator p2ToP1Translator, Symbol p2Symbol) {
-//		
-//		if (p2Symbol == null) {
-//			return null;
-//		}
-//		Program otherProgram = p2ToP1Translator.getDestinationProgram();
-//		SymbolType st = p2Symbol.getSymbolType();
-//		if (st == SymbolType.GLOBAL) {
-//			return otherProgram.getGlobalNamespace().getSymbol();
-//		}
-//		if (st == SymbolType.FUNCTION) {
-//			Function func = (Function) p2Symbol.getObject();
-//			Address p1Entry = p2ToP1Translator.getAddress(func.getEntryPoint());
-//			if (p1Entry == null) {
-//				return null;
-//			}
-//			func = otherProgram.getFunctionManager().getFunctionAt(p1Entry);
-//			return func != null ? func.getSymbol() : null;
-//		}
-//		
-//		SymbolTable otherSymTable = otherProgram.getSymbolTable();
-//		Address addr2 = p2Symbol.getAddress();
-//		if (addr2.isVariableAddress()) {
-//			Variable var2 = (Variable) p2Symbol.getObject();
-//			Symbol otherFuncSym = getSymbol(p2ToP1Translator, p2Symbol.getParentSymbol());
-//			Address storeAddr = p2ToP1Translator.getAddress(var2.getStorageAddress());
-//			return getVariableSymbol(otherSymTable, var2, otherFuncSym,	storeAddr);
-//		}
-//		
-//		Symbol parent1 = getSymbol(p2ToP1Translator, p2Symbol.getParentSymbol());
-//		if (parent1 == null) {
-//			return null;
-//		}
-//		Namespace namespace = (Namespace)parent1.getObject();
-//		String name2 = p2Symbol.getName();
-//		
-//		AddressSpace addrSpace = addr2.getAddressSpace();
-//		if (addrSpace.getType() == AddressSpace.TYPE_NONE || addr2.isExternalAddress()) {
-//			Symbol s = otherSymTable.getSymbol(name2, namespace);
-//			return (s != null && st == s.getSymbolType()) ? s : null;
-//		}
-//
-//		if (addr2.isMemoryAddress()) {
-//			Symbol s = otherSymTable.getSymbol(name2, addr2, namespace);
-//			return (s != null && st == s.getSymbolType()) ? s : null;
-//		}
-//
-//		return null;
-//	}
 
 	/**
 	 * Determine if the specified variables have overlapping storage.
@@ -341,10 +262,10 @@ public class DiffUtility extends SimpleDiffUtility {
 	}
 
 	/**
-	 * 
-	 * @param p2ToP1Translator
-	 * @param p2Ref
-	 * @return
+	 * Translate reference from program p2 to target program p1
+	 * @param p2ToP1Translator program address translater
+	 * @param p2Ref original reference to be copied
+	 * @return translated reference or null
 	 */
 	public static Reference getReference(AddressTranslator p2ToP1Translator, Reference p2Ref) {
 		Program program = p2ToP1Translator.getDestinationProgram();
@@ -374,7 +295,10 @@ public class DiffUtility extends SimpleDiffUtility {
 	 * @param extLoc existing external location to be copied
 	 * @param otherProgram target program
 	 * @return new external location
-	 * @throws InvalidInputException
+	 * @throws InvalidInputException if {@code libraryName} is invalid or null, or an invalid 
+	 * {@code extlabel} is specified.  Names with spaces or the empty string are not permitted.
+	 * Neither {@code extLabel} nor {@code extAddr} was specified properly.
+	 * @throws DuplicateNameException if another non-Library namespace has the same name
 	 */
 	public static ExternalLocation createExtLocation(Program program, ExternalLocation extLoc,
 			Program otherProgram) throws InvalidInputException, DuplicateNameException {

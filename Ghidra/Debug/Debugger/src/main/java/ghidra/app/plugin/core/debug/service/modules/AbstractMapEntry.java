@@ -17,7 +17,7 @@ package ghidra.app.plugin.core.debug.service.modules;
 
 import java.util.Objects;
 
-import ghidra.app.services.MapEntry;
+import ghidra.debug.api.modules.MapEntry;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;

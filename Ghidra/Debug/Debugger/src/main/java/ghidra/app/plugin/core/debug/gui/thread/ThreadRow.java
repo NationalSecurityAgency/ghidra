@@ -16,20 +16,19 @@
 package ghidra.app.plugin.core.debug.gui.thread;
 
 import db.Transaction;
-import ghidra.app.services.DebuggerModelService;
-import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
+import ghidra.debug.api.target.Target;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
 
 public class ThreadRow {
-	private final DebuggerModelService service;
+	private final DebuggerThreadsProvider provider;
 	private final TraceThread thread;
 
-	public ThreadRow(DebuggerModelService service, TraceThread thread) {
-		this.service = service;
+	public ThreadRow(DebuggerThreadsProvider provider, TraceThread thread) {
+		this.provider = provider;
 		this.thread = thread;
 	}
 
@@ -76,21 +75,22 @@ public class ThreadRow {
 	}
 
 	public ThreadState getState() {
+		// TODO: Once transition to TraceRmi is complete, this is all in TraceObjectManager
 		if (!thread.isAlive()) {
 			return ThreadState.TERMINATED;
 		}
-		if (service == null) {
+		if (provider.targetService == null) {
 			return ThreadState.ALIVE;
 		}
-		TraceRecorder recorder = service.getRecorder(thread.getTrace());
-		if (recorder == null) {
+		Target target = provider.targetService.getTarget(thread.getTrace());
+		if (target == null) {
 			return ThreadState.ALIVE;
 		}
-		TargetExecutionState targetState = recorder.getTargetThreadState(thread);
-		if (targetState == null) {
+		TargetExecutionState state = target.getThreadExecutionState(thread);
+		if (state == null) {
 			return ThreadState.UNKNOWN;
 		}
-		switch (targetState) {
+		switch (state) {
 			case ALIVE:
 				return ThreadState.ALIVE;
 			case INACTIVE:

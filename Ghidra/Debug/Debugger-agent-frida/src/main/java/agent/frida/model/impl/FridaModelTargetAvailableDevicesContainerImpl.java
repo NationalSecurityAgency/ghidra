@@ -96,7 +96,7 @@ public class FridaModelTargetAvailableDevicesContainerImpl extends FridaModelTar
 				}
 			default:
 		}
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 }

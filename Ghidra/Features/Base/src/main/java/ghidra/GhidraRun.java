@@ -31,11 +31,11 @@ import ghidra.framework.data.DomainObjectAdapter;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.model.*;
 import ghidra.framework.project.DefaultProjectManager;
-import ghidra.framework.project.extensions.ExtensionUtils;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.ProgramDB;
 import ghidra.util.*;
 import ghidra.util.exception.UsrException;
+import ghidra.util.extensions.ExtensionUtils;
 import ghidra.util.task.TaskLauncher;
 
 /**

@@ -15,11 +15,11 @@
  */
 package ghidra.app.util.bin.format.dwarf4.funcfixup;
 
+import java.io.Closeable;
 import java.util.List;
 
 import ghidra.app.util.bin.format.dwarf4.DWARFException;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFFunction;
-import ghidra.program.model.listing.Function;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.classfinder.ExtensionPoint;
 
@@ -32,6 +32,14 @@ import ghidra.util.classfinder.ExtensionPoint;
  * <p>
  * Fixups are found using {@link ClassSearcher}, and their class names must end
  * in "DWARFFunctionFixup" (see ExtensionPoint.manifest). 
+ * <p>
+ * Instance lifetime:
+ * <p>
+ * New instances are not shared between programs or analysis sessions, but will be re-used to
+ * handle the various functions found in a single binary.
+ * <p> 
+ * If the implementation also implements {@link Closeable}, it will be called when the fixup
+ * is no longer needed.
  */
 public interface DWARFFunctionFixup extends ExtensionPoint {
 	public static final int PRIORITY_NORMAL_EARLY = 4000;
@@ -46,9 +54,8 @@ public interface DWARFFunctionFixup extends ExtensionPoint {
 	 * a {@link DWARFException}.
 	 *  
 	 * @param dfunc {@link DWARFFunction} info read from DWARF about the function
-	 * @param gfunc the Ghidra {@link Function} that will receive the DWARF information
 	 */
-	void fixupDWARFFunction(DWARFFunction dfunc, Function gfunc) throws DWARFException;
+	void fixupDWARFFunction(DWARFFunction dfunc) throws DWARFException;
 
 	/**
 	 * Return a list of all current {@link DWARFFunctionFixup fixups} found in the classpath

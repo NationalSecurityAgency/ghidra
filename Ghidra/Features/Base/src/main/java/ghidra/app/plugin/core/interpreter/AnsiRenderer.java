@@ -36,9 +36,6 @@ import ghidra.util.ColorUtils;
 public class AnsiRenderer {
 
 	/**
-	 * These colors are taken from Terminal.app as documented on Wikipedia as of 26 April 2022.
-	 * 
-	 * <p>
 	 * See <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit">ANSI escape
 	 * code</a> on Wikipedia. They appear here in ANSI order.
 	 */

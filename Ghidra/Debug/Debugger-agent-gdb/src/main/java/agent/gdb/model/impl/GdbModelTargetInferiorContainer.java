@@ -135,7 +135,7 @@ public class GdbModelTargetInferiorContainer
 	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		if (!refresh.equals(RefreshBehavior.REFRESH_ALWAYS)) {
 			updateUsingInferiors(impl.gdb.getKnownInferiors());
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return impl.gdb.listInferiors().thenAccept(this::updateUsingInferiors);
 	}
@@ -186,7 +186,7 @@ public class GdbModelTargetInferiorContainer
 				}
 			default:
 		}
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 }

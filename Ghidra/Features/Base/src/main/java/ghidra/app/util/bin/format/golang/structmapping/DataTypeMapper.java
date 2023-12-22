@@ -88,9 +88,8 @@ public class DataTypeMapper implements AutoCloseable {
 	protected DataTypeMapper(Program program, ResourceFile archiveGDT) throws IOException {
 		this.program = program;
 		this.programDTM = program.getDataTypeManager();
-		this.archiveDTM = archiveGDT != null
-				? FileDataTypeManager.openFileArchive(archiveGDT, false)
-				: null;
+		this.archiveDTM =
+			archiveGDT != null ? FileDataTypeManager.openFileArchive(archiveGDT, false) : null;
 	}
 
 	@Override
@@ -180,8 +179,7 @@ public class DataTypeMapper implements AutoCloseable {
 				structName = "<missing>";
 			}
 			throw new IOException(
-				"Missing struct definition %s - %s".formatted(clazz.getSimpleName(),
-					structName));
+				"Missing struct definition %s - %s".formatted(clazz.getSimpleName(), structName));
 		}
 
 		StructureMappingInfo<T> structMappingInfo = StructureMappingInfo.fromClass(clazz, structDT);
@@ -320,9 +318,8 @@ public class DataTypeMapper implements AutoCloseable {
 	 * a structure mapped object 
 	 */
 	public <T> StructureContext<T> getStructureContextOfInstance(T structureInstance) {
-		StructureMappingInfo<T> smi = structureInstance != null
-				? getStructureMappingInfo(structureInstance)
-				: null;
+		StructureMappingInfo<T> smi =
+			structureInstance != null ? getStructureMappingInfo(structureInstance) : null;
 		return smi != null ? smi.recoverStructureContext(structureInstance) : null;
 	}
 
@@ -336,14 +333,30 @@ public class DataTypeMapper implements AutoCloseable {
 	 * @return {@link Address} of the object, or null if not found or not a supported object
 	 */
 	public <T> Address getAddressOfStructure(T structureInstance) {
-		StructureMappingInfo<T> smi = structureInstance != null
-				? getStructureMappingInfo(structureInstance)
-				: null;
-		StructureContext<T> structureContext = smi != null
-				? smi.recoverStructureContext(structureInstance)
-				: null;
+		StructureMappingInfo<T> smi =
+			structureInstance != null ? getStructureMappingInfo(structureInstance) : null;
+		StructureContext<T> structureContext =
+			smi != null ? smi.recoverStructureContext(structureInstance) : null;
+		return structureContext != null ? structureContext.getStructureAddress() : null;
+	}
+
+	/**
+	 * Returns the address of the last byte of a structure.
+	 * 
+	 * @param <T> type of object
+	 * @param structureInstance instance of an object that represents something in the program's
+	 * memory
+	 * @return {@link Address} of the last byte of the object, or null if not found 
+	 * or not a supported object
+	 */
+	public <T> Address getMaxAddressOfStructure(T structureInstance) {
+		StructureMappingInfo<T> smi =
+			structureInstance != null ? getStructureMappingInfo(structureInstance) : null;
+		StructureContext<T> structureContext =
+			smi != null ? smi.recoverStructureContext(structureInstance) : null;
 		return structureContext != null
 				? structureContext.getStructureAddress()
+						.add(structureContext.getStructureLength() - 1)
 				: null;
 	}
 
@@ -359,7 +372,26 @@ public class DataTypeMapper implements AutoCloseable {
 	 */
 	public <T> T readStructure(Class<T> structureClass, BinaryReader structReader)
 			throws IOException {
-		StructureContext<T> structureContext = createStructureContext(structureClass, structReader);
+		return readStructure(structureClass, null, structReader);
+	}
+
+	/**
+	 * Reads a structure mapped object from the current position of the specified BinaryReader.
+	 * 
+	 * @param <T> type of object
+	 * @param structureClass structure mapped object class
+	 * @param containingFieldDataType optional, data type of the structure field that contained the
+	 * object instance that is being read (may be different than the data type that was specified in
+	 * the matching {@link StructureMappingInfo})
+	 * @param structReader {@link BinaryReader} positioned at the start of an object
+	 * @return new object instance of type T
+	 * @throws IOException if error reading
+	 * @throws IllegalArgumentException if specified structureClass is not valid
+	 */
+	public <T> T readStructure(Class<T> structureClass, DataType containingFieldDataType,
+			BinaryReader structReader) throws IOException {
+		StructureContext<T> structureContext =
+			createStructureContext(structureClass, containingFieldDataType, structReader);
 
 		T result = structureContext.readNewInstance();
 		return result;
@@ -454,13 +486,29 @@ public class DataTypeMapper implements AutoCloseable {
 	}
 
 	private <T> StructureContext<T> createStructureContext(Class<T> structureClass,
-			BinaryReader reader) throws IllegalArgumentException {
+			DataType containingFieldDataType, BinaryReader reader) throws IllegalArgumentException {
 		StructureMappingInfo<T> smi = getStructureMappingInfo(structureClass);
 		if (smi == null) {
 			throw new IllegalArgumentException(
 				"Unknown structure mapped class: " + structureClass.getSimpleName());
 		}
-		return new StructureContext<>(this, smi, reader);
+		return new StructureContext<>(this, smi, containingFieldDataType, reader);
+	}
+
+	/**
+	 * Creates an artificial structure context to be used in some limited situations.
+	 * 
+	 * @param <T> type of structure mapped object
+	 * @param structureClass class of structure mapped object
+	 * @return new {@link StructureContext}
+	 */
+	public <T> StructureContext<T> createArtificialStructureContext(Class<T> structureClass) {
+		StructureMappingInfo<T> smi = getStructureMappingInfo(structureClass);
+		if (smi == null) {
+			throw new IllegalArgumentException(
+				"Unknown structure mapped class: " + structureClass.getSimpleName());
+		}
+		return new StructureContext<>(this, smi, null);
 	}
 
 }

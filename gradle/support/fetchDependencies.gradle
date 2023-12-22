@@ -70,6 +70,12 @@ ext.deps = [
 		}
 	],
 	[
+		name: "java-sarif-2.1-modified.jar",
+		url: "https://github.com/NationalSecurityAgency/ghidra-data/raw/Ghidra_${RELEASE_VERSION}/lib/java-sarif-2.1-modified.jar",
+		sha256: "7f736566494756d271aa5e4b1af6c89dc50d074ab1c6374a47df822264226b01",
+		destination: FLAT_REPO_DIR
+	],
+	[
 		name: "AXMLPrinter2.jar",
 		url: "https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/android4me/AXMLPrinter2.jar",
 		sha256: "00ed038eb6abaf6ddec8d202a3ed7a81b521458f4cd459948115cfd02ff59d6d",
@@ -80,6 +86,12 @@ ext.deps = [
 		url: "https://sourceforge.net/projects/yajsw/files/yajsw/yajsw-stable-13.09/yajsw-stable-13.09.zip",
 		sha256: "4dae732a535846ae5dfab753e82a4d5f93ad9a05a065e2172bb9774a1b15453a",
 		destination: file("${DEPS_DIR}/GhidraServer")
+	],
+	[
+		name: "postgresql-15.3.tar.gz",
+		url: "https://ftp.postgresql.org/pub/source/v15.3/postgresql-15.3.tar.gz",
+		sha256: "086d38533e28747966a4d5f1e78ea432e33a78f21dcb9133010ecb5189fad98c",
+		destination: file("${DEPS_DIR}/BSim")
 	],
 	[
 		name: "PyDev 6.3.1.zip",

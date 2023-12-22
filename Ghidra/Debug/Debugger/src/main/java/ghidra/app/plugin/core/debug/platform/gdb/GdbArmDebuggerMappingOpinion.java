@@ -18,8 +18,8 @@ package ghidra.app.plugin.core.debug.platform.gdb;
 import java.util.Collection;
 import java.util.Set;
 
-import ghidra.app.plugin.core.debug.mapping.DebuggerMappingOffer;
 import ghidra.dbg.target.TargetObject;
+import ghidra.debug.api.model.DebuggerMappingOffer;
 import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;
 

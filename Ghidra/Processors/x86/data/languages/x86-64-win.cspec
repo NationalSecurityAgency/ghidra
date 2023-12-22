@@ -35,6 +35,7 @@
   
   <global>
     <range space="ram"/>
+    <register name="MXCSR"/>
   </global>
   <stackpointer register="RSP" space="ram"/>
   <returnaddress>
@@ -210,7 +211,7 @@
     <target name="___chkstk_ms"/>
     <pcode>
      <body><![CDATA[
-       RSP = RSP + 0;
+       RSP = RSP + 8;
      ]]></body>
     </pcode>
   </callfixup>

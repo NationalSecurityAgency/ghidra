@@ -29,9 +29,9 @@ import docking.ActionContext;
 import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerSnapActionContext;
 import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.DomainObjectChangeRecord;
@@ -120,7 +120,7 @@ public class DebuggerLegacyThreadsPanel extends JPanel {
 
 		public ThreadTableModel(DebuggerThreadsProvider provider) {
 			super(provider.getTool(), "Threads", ThreadTableColumns.class,
-				TraceThread::getObjectKey, t -> new ThreadRow(provider.modelService, t),
+				TraceThread::getObjectKey, t -> new ThreadRow(provider, t),
 				ThreadRow::getThread);
 		}
 	}
@@ -344,7 +344,8 @@ public class DebuggerLegacyThreadsPanel extends JPanel {
 	}
 
 	protected void updateTimelineMax() {
-		long max = orZero(current.getTrace().getTimeManager().getMaxSnap());
+		Trace trace = current.getTrace();
+		long max = orZero(trace == null ? null : trace.getTimeManager().getMaxSnap());
 		Lifespan fullRange = Lifespan.span(0, max + 1);
 		spanRenderer.setFullRange(fullRange);
 		headerRenderer.setFullRange(fullRange);

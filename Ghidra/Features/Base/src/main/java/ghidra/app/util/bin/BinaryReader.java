@@ -292,7 +292,7 @@ public class BinaryReader {
 	 * For example, if current index was 123 and align value was 16, then current index would
 	 * be advanced to 128.
 	 * 
-	 * @param alignValue
+	 * @param alignValue position index alignment
 	 * @return the number of bytes required to align (0..alignValue-1)
 	 */
 	public int align(int alignValue) {
@@ -305,9 +305,11 @@ public class BinaryReader {
 	 * A convenience method for setting the index using a 32 bit integer.
 	 * 
 	 * @param index new index, treated as a 32 bit unsigned integer 
+	 * @return previous reader offset for use with {@link #setPointerIndex(long)} to restore 
+	 * previous position.
 	 */
-	public void setPointerIndex(int index) {
-		this.currentIndex = Integer.toUnsignedLong(index);
+	public long setPointerIndex(int index) {
+		return setPointerIndex(Integer.toUnsignedLong(index));
 	}
 
 	/**
@@ -316,9 +318,12 @@ public class BinaryReader {
 	 * to operate as a pseudo-iterator.
 	 *
 	 * @param index the byte provider index value
+	 * @return previous reader offset for use with this method to restore previous position.
 	 */
-	public void setPointerIndex(long index) {
-		this.currentIndex = index;
+	public long setPointerIndex(long index) {
+		long oldIndex = currentIndex;
+		currentIndex = index;
+		return oldIndex;
 	}
 
 	/**
@@ -639,8 +644,10 @@ public class BinaryReader {
 	 * Reads an integer array of <code>nElements</code>
 	 * starting at the current index and then increments the current
 	 * index by <code>SIZEOF_INT * nElements</code>.
+	 * 
+	 * @param nElements number of elements to read
 	 * @return the integer array starting at the current index
-	 * @exception IOException if an I/O error occurs
+	 * @throws IOException if an I/O error occurs
 	 */
 	public int[] readNextIntArray(int nElements) throws IOException {
 		int[] i = readIntArray(currentIndex, nElements);
@@ -652,8 +659,10 @@ public class BinaryReader {
 	 * Reads a long array of <code>nElements</code>
 	 * starting at the current index and then increments the current
 	 * index by <code>SIZEOF_LONG * nElements</code>.
+	 * 
+	 * @param nElements number of elements to read
 	 * @return the long array starting at the current index
-	 * @exception IOException if an I/O error occurs
+	 * @throws IOException if an I/O error occurs
 	 */
 	public long[] readNextLongArray(int nElements) throws IOException {
 		long[] l = readLongArray(currentIndex, nElements);

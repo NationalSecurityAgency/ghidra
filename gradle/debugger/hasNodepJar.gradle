@@ -25,9 +25,9 @@ def boolean filterJar(File jarfile) {
 }
 
 task configureNodepJar {
-	dependsOn(configurations.default)
+	dependsOn(configurations.runtimeClasspath)
 	doLast {
-		configurations.default.files.forEach { jar ->
+		configurations.runtimeClasspath.files.forEach { jar ->
 			if (filterJar(jar)) {
 				nodepJar.from(zipTree(jar)) {
 					// The real solution here is probably to sort out the dependency graph

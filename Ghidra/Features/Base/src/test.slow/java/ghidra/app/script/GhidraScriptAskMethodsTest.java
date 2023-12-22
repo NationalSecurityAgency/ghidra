@@ -130,10 +130,14 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 	public void testAskProgram_SCR8486() throws Exception {
 		createScript();
 
-		Program[] container = new Program[1];
+		AtomicReference<Program> container = new AtomicReference<>();
 		runSwing(() -> {
 			try {
-				container[0] = script.askProgram("Test - Pick Program");
+				Program p = script.askProgram("Test - Pick Program");
+				container.set(p);
+				if (p != null) {
+					p.release(this);
+				}
 			}
 			catch (Exception ioe) {
 				failWithException("Caught unexepected during askProgram()", ioe);
@@ -146,7 +150,7 @@ public class GhidraScriptAskMethodsTest extends AbstractGhidraHeadedIntegrationT
 		runSwing(() -> okButton.doClick());
 
 		// this test will fail if we encountered an exception
-		assertNull(container[0]);
+		assertNull(container.get());
 
 		runSwing(() -> dtd.close());
 	}

@@ -58,7 +58,7 @@ public class DbgModelTargetExceptionContainerImpl extends DbgModelTargetObjectIm
 		DbgProcessImpl currentProcess = getManager().getCurrentProcess();
 		if (!refresh.equals(RefreshBehavior.REFRESH_ALWAYS) ||
 			(currentProcess != null && !currentProcess.equals(targetProcess.getProcess()))) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return listExceptionFilters().thenAccept(byName -> {
 			List<TargetObject> excObjs;

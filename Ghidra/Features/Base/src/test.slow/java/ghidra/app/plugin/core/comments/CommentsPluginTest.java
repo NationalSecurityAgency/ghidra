@@ -31,6 +31,7 @@ import docking.widgets.table.threaded.GThreadedTablePanel;
 import generic.test.TestUtils;
 import ghidra.GhidraOptions;
 import ghidra.app.cmd.data.CreateDataCmd;
+import ghidra.app.events.OpenProgramPluginEvent;
 import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.navigation.GoToAddressLabelPlugin;
@@ -231,7 +232,10 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		env.connectTools(tool, tool2);
 		env.connectTools(tool2, tool);
-		env.open(program); // do this again now that the tools are in-sync
+		env.open(program);
+
+		// open same program in second tool - cannot rely on tool connection for this
+		tool2.firePluginEvent(new OpenProgramPluginEvent("Test", program));
 
 		Address addr = addr(0x01006420);
 		sendProgramLocation(addr, CodeUnit.EOL_COMMENT);
@@ -247,8 +251,8 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		setFieldWidth(browser, EolCommentFieldFactory.FIELD_NAME, 100);
 
 		Options options = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
-		options.setBoolean(EolCommentFieldFactory.ENABLE_WORD_WRAP_MSG, true);
-		options.setInt(EolCommentFieldFactory.MAX_DISPLAY_LINES_MSG, 100);
+		options.setBoolean(EolCommentFieldFactory.ENABLE_WORD_WRAP_KEY, true);
+		options.setInt(EolCommentFieldFactory.MAX_DISPLAY_LINES_KEY, 100);
 
 		runSwing(() -> tool.getToolFrame().setSize(800, 800));
 

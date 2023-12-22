@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
 
+import ghidra.app.util.bin.format.pdb2.pdbreader.msf.MsfStream;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 
 /**
@@ -32,10 +34,11 @@ import ghidra.util.exception.CancelledException;
  */
 public class PublicSymbolInformation extends AbstractSymbolInformation {
 
+	public static final int PUB_HEADER_SIZE = 28;
+
 	//==============================================================================================
 	// Internals
 	//==============================================================================================
-	private int symbolHashLength;
 	private int addressMapLength;
 	private int numThunks; // unsigned int
 	private int thunkSize;
@@ -46,10 +49,9 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 	private int thunkTableLength;
 	private int sectionMapLength;
 
-	// These should correspond with symbolOffsets that come from HashRecords.
-	private List<Long> addressMapSymbolOffsets = new ArrayList<>();
-	private Map<Integer, Integer> thunkTargetOffsetsByTableOffset = new HashMap<>();
-	private Map<Integer, Integer> absoluteOffsetsBySectionNumber = new HashMap<>();
+	private int addressMapOffset;
+	private int thunkMapOffset;
+	private int sectionMapOffset;
 
 	//==============================================================================================
 	// API
@@ -57,9 +59,10 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 	/**
 	 * Constructor
 	 * @param pdbIn {@link AbstractPdb} that owns the Public Symbol Information to process
+	 * @param streamNumber the stream number containing the symbol information
 	 */
-	public PublicSymbolInformation(AbstractPdb pdbIn) {
-		super(pdbIn);
+	public PublicSymbolInformation(AbstractPdb pdbIn, int streamNumber) {
+		super(pdbIn, streamNumber);
 	}
 
 	/**
@@ -114,65 +117,92 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 	 * Returns the Offsets of symbols within the symbol table gotten from the address map.  These
 	 *  offsets to point to the size field of the symbols in the symbol table
 	 * @return offsets
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
 	 */
-	public List<Long> getAddressMapSymbolOffsets() {
-		return addressMapSymbolOffsets;
+	public List<Long> getAddressMapSymbolOffsets() throws CancelledException, PdbException {
+		try {
+			PdbByteReader reader =
+				pdb.getReaderForStreamNumber(streamNumber, addressMapOffset, addressMapLength);
+			return deserializeAddressMap(reader);
+		}
+		catch (IOException e) {
+			Msg.error(this, String.format(
+				"PDB: Error creating address map symbol offsets while reading stream %d at offset %d and length %d",
+				streamNumber, addressMapOffset, addressMapLength));
+			return new ArrayList<>();
+		}
+	}
+
+	/**
+	 * Returns the Thunk Target Offsets by Table Offset
+	 * @return the map
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
+	 */
+	public Map<Integer, Integer> getThunkTargetOffsetsByTableOffset()
+			throws CancelledException, PdbException {
+		try {
+			PdbByteReader reader =
+				pdb.getReaderForStreamNumber(streamNumber, thunkMapOffset, thunkMapLength);
+			return deserializeThunkMap(reader);
+		}
+		catch (IOException e) {
+			Msg.error(this, String.format(
+				"PDB: Error creating thunk target offsets by table offset while reading stream %d offset %d and length %d",
+				streamNumber, thunkMapOffset, thunkMapLength));
+			return new HashMap<>();
+		}
+	}
+
+	/**
+	 * Returns the Absolute Offsets by Section Number map
+	 * @return the map
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
+	 */
+	public Map<Integer, Integer> getAbsoluteOffsetsBySectionNumber()
+			throws CancelledException, PdbException {
+		try {
+			PdbByteReader reader =
+				pdb.getReaderForStreamNumber(streamNumber, sectionMapOffset, sectionMapLength);
+			return deserializeSectionMap(reader);
+		}
+		catch (IOException e) {
+			Msg.error(this, String.format(
+				"PDB: Error creating absolute offsets by section number while reading stream %d offset %d and length %d",
+				streamNumber, sectionMapOffset, sectionMapLength));
+			return new HashMap<>();
+		}
 	}
 
 	//==============================================================================================
 	// Package-Protected Internals
 	//==============================================================================================
 	/**
-	 * Deserialize the {@link PublicSymbolInformation} from the appropriate stream in the Pdb
-	 * @param streamNumber the stream number containing the information to deserialize
+	 * Deserializes and intializes {@link PublicSymbolInformation} basic information from the
+	 * appropriate stream in the Pdb so that later queries can be made
 	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
 	 *  inability to read required bytes
 	 * @throws PdbException upon not enough data left to parse
 	 * @throws CancelledException upon user cancellation
 	 */
 	@Override
-	void deserialize(int streamNumber)
-			throws IOException, PdbException, CancelledException {
-		super.deserialize(streamNumber);
-
-		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber);
-
-		deserializePubHeader(reader);
-
-		PdbByteReader hashReader = reader.getSubPdbByteReader(symbolHashLength);
-		deserializeHashTable(hashReader);
-
-		PdbByteReader addressMapReader = reader.getSubPdbByteReader(addressMapLength);
-		deserializeAddressMap(addressMapReader);
-
-		PdbByteReader thunkMapReader = reader.getSubPdbByteReader(thunkMapLength);
-		deserializeThunkMap(thunkMapReader);
-
-		/*
-		 * See note in {@link #deserializePubHeader(PdbByteReader)} regarding spurious data
-		 * for numSections.  Because of this, we will assume the rest of the data in the
-		 * reader belongs to the section map and set the appropriate variable values here.
-		 */
-		sectionMapLength = reader.numRemaining();
-		if (sectionMapLength % 8 != 0) {
-			throw new PdbException("sectionMapLength size not multiple of 8");
-		}
-		numSections = sectionMapLength / 8;
-		PdbByteReader sectionMapReader = reader.getSubPdbByteReader(sectionMapLength);
-		deserializeSectionMap(sectionMapReader);
-
-		// Organize the information
-		generateSymbolsList();
+	void initialize() throws IOException, PdbException, CancelledException {
+		initializeValues();
+		deserializePubHeader();
+		deserializeHashHeader();
 	}
 
 	/**
 	 * Debug method for dumping information from this {@link PublicSymbolInformation}
 	 * @param writer {@link Writer} to which to dump the information
-	 * @throws IOException upon IOException writing to the {@link Writer}
+	 * @throws IOException issue reading PDBor upon issue writing to the {@link Writer}
 	 * @throws CancelledException upon user cancellation
+	 * @throws PdbException upon not enough data left to parse
 	 */
 	@Override
-	void dump(Writer writer) throws IOException, CancelledException {
+	void dump(Writer writer) throws IOException, CancelledException, PdbException {
 		StringBuilder builder = new StringBuilder();
 		builder.append("PublicSymbolInformation-------------------------------------\n");
 		dumpPubHeader(builder);
@@ -197,23 +227,32 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 	 * @throws PdbException upon not enough data left to parse
 	 * @throws CancelledException upon user cancellation
 	 */
-	private void deserializeAddressMap(PdbByteReader reader)
+	private List<Long> deserializeAddressMap(PdbByteReader reader)
 			throws PdbException, CancelledException {
+		List<Long> myAddressMapSymbolOffsets = new ArrayList<>();
 		while (reader.hasMore()) {
 			pdb.checkCancelled();
-			addressMapSymbolOffsets.add((long) reader.parseInt());
+			myAddressMapSymbolOffsets.add((long) reader.parseInt());
 		}
+		return myAddressMapSymbolOffsets;
 	}
 
 	/**
 	 * Debug method for dumping Address Map information from this {@link AbstractSymbolInformation}
 	 * @param builder {@link StringBuilder} to which to dump the information
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
 	 */
-	private void dumpAddressMap(StringBuilder builder) {
+	private void dumpAddressMap(StringBuilder builder)
+			throws CancelledException, IOException, PdbException {
 		builder.append("AddressMapSymbolOffsets-------------------------------------\n");
-		builder.append("numAddressMapSymbolOffsets: " + addressMapSymbolOffsets.size() + "\n");
+		List<Long> myAddressMapSymbolOffsets = getAddressMapSymbolOffsets();
+		builder.append("numAddressMapSymbolOffsets: " + myAddressMapSymbolOffsets.size() + "\n");
 		int num = 0;
-		for (Long val : addressMapSymbolOffsets) {
+		for (Long val : myAddressMapSymbolOffsets) {
+			pdb.checkCancelled();
 			builder.append(String.format("0X%08X: 0X%012X\n", num++, val));
 		}
 		builder.append("\nEnd AddressMapSymbolOffsets---------------------------------\n");
@@ -225,26 +264,36 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 	 * @throws PdbException upon not enough data left to parse
 	 * @throws CancelledException upon user cancellation
 	 */
-	private void deserializeThunkMap(PdbByteReader reader)
+	private Map<Integer, Integer> deserializeThunkMap(PdbByteReader reader)
 			throws PdbException, CancelledException {
 		int count = 0;
+		Map<Integer, Integer> myThunkTargetOffsetsByTableOffset = new HashMap<>();
 		while (reader.hasMore()) {
 			pdb.checkCancelled();
 			int targetOffset = reader.parseInt();
 			int mapTableOffset = count * thunkSize + offsetThunkTable;
-			thunkTargetOffsetsByTableOffset.put(mapTableOffset, targetOffset);
+			myThunkTargetOffsetsByTableOffset.put(mapTableOffset, targetOffset);
 		}
+		return myThunkTargetOffsetsByTableOffset;
 	}
 
 	/**
 	 * Debug method for dumping Thunk Map information from this {@link AbstractSymbolInformation}
 	 * @param builder {@link StringBuilder} to which to dump the information
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
 	 */
-	private void dumpThunkMap(StringBuilder builder) {
+	private void dumpThunkMap(StringBuilder builder)
+			throws CancelledException, IOException, PdbException {
+		Map<Integer, Integer> myThunkTargetOffsetsByTableOffset =
+			getThunkTargetOffsetsByTableOffset();
 		builder.append("ThunkMap----------------------------------------------------\n");
-		builder.append(
-			"numThunkTargetOffsetsByTableOffset: " + thunkTargetOffsetsByTableOffset.size() + "\n");
-		for (Map.Entry<Integer, Integer> entry : thunkTargetOffsetsByTableOffset.entrySet()) {
+		builder.append("numThunkTargetOffsetsByTableOffset: " +
+			myThunkTargetOffsetsByTableOffset.size() + "\n");
+		for (Map.Entry<Integer, Integer> entry : myThunkTargetOffsetsByTableOffset.entrySet()) {
+			pdb.checkCancelled();
 			builder.append(String.format("0X%08X  0X%08X\n", entry.getKey(), entry.getValue()));
 		}
 		builder.append("\nEnd ThunkMap------------------------------------------------\n");
@@ -256,27 +305,35 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 	 * @throws PdbException upon not enough data left to parse
 	 * @throws CancelledException upon user cancellation
 	 */
-	private void deserializeSectionMap(PdbByteReader reader)
+	private Map<Integer, Integer> deserializeSectionMap(PdbByteReader reader)
 			throws PdbException, CancelledException {
+		Map<Integer, Integer> myAbsoluteOffsetsBySectionNumber = new HashMap<>();
 		while (reader.hasMore()) {
 			pdb.checkCancelled();
 			int offset = reader.parseInt();
 			int section = reader.parseUnsignedShortVal();
 			reader.skip(2); // padding
-			absoluteOffsetsBySectionNumber.put(section, offset);
+			myAbsoluteOffsetsBySectionNumber.put(section, offset);
 		}
+		return myAbsoluteOffsetsBySectionNumber;
 	}
 
 	/**
 	 * Debug method for dumping Section Map information from this {@link AbstractSymbolInformation}
 	 * @param builder {@link StringBuilder} to which to dump the information
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 * @throws PdbException upon not enough data left to parse
 	 * @throws CancelledException upon user cancellation
 	 */
-	private void dumpSectionMap(StringBuilder builder) throws CancelledException {
+	private void dumpSectionMap(StringBuilder builder)
+			throws CancelledException, IOException, PdbException {
+		Map<Integer, Integer> myAbsoluteOffsetsBySectionNumber =
+			getAbsoluteOffsetsBySectionNumber();
 		builder.append("SectionMap--------------------------------------------------\n");
 		builder.append(
-			"numAbsoluteOffsetsBySectionNumber: " + absoluteOffsetsBySectionNumber.size() + "\n");
-		for (Map.Entry<Integer, Integer> entry : absoluteOffsetsBySectionNumber.entrySet()) {
+			"numAbsoluteOffsetsBySectionNumber: " + myAbsoluteOffsetsBySectionNumber.size() + "\n");
+		for (Map.Entry<Integer, Integer> entry : myAbsoluteOffsetsBySectionNumber.entrySet()) {
 			pdb.checkCancelled();
 			builder.append(String.format("0X%08X  0X%08X\n", entry.getKey(), entry.getValue()));
 		}
@@ -310,11 +367,17 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 		builder.append("\nEnd PublicSymbolInformationHeader---------------------------\n");
 	}
 
+	void deserializePubHeader() throws PdbException, CancelledException, IOException {
+		MsfStream stream = pdb.getMsf().getStream(streamNumber);
+		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, 0, PUB_HEADER_SIZE);
+		deserializePubHeader(reader, stream.getLength());
+	}
+
 	// Issue: MSFT does not initialize PSGSIHDR with nSects(0) (our numSections), so spurious
 	// data can be seen for this field.  We cannot do sanity checks on the value.  The only
 	// effective thing we can do is to check if any data is left in the reader.  Whatever amount
 	// is left is what we will use.
-	private void deserializePubHeader(PdbByteReader reader) throws PdbException {
+	private void deserializePubHeader(PdbByteReader reader, int streamLength) throws PdbException {
 		symbolHashLength = reader.parseInt();
 		addressMapLength = reader.parseInt();
 		long val = reader.parseUnsignedIntVal();
@@ -349,12 +412,21 @@ public class PublicSymbolInformation extends AbstractSymbolInformation {
 			throw new PdbException("Cannot support large unsigned integer for thunk table length");
 		}
 		thunkTableLength = (int) val;
-		// See note above regarding MSFT numSections issue
-		//val = 8 * numSections;
-		//if (val > Integer.MAX_VALUE) {
-		//	throw new PdbException("Cannot support long value for section map length");
-		//}
-		//sectionMapLength = (int) val;
+
+		// Do some additional calculations
+		symbolHashOffset = PUB_HEADER_SIZE; // reader.getIndex();
+		addressMapOffset = symbolHashOffset + symbolHashLength;
+		thunkMapOffset = addressMapOffset + addressMapLength;
+		sectionMapOffset = thunkMapOffset + thunkMapLength;
+		// Due to the possibility of spurious data for sections (noted above), we will assume
+		//  the rest of the data belongs to the section map and set the appropriate variable
+		//  values here.
+		sectionMapLength = streamLength - sectionMapOffset;
+		if (sectionMapLength % 8 != 0) {
+			throw new PdbException("sectionMapLength size not multiple of 8");
+		}
+		numSections = sectionMapLength / 8;
+
 	}
 
 }

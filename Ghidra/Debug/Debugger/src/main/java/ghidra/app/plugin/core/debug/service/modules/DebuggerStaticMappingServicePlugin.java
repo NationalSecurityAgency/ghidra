@@ -34,11 +34,12 @@ import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingProposals.ModuleMapProposalGenerator;
 import ghidra.app.plugin.core.debug.utils.*;
 import ghidra.app.services.*;
-import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
-import ghidra.app.services.RegionMapProposal.RegionMapEntry;
-import ghidra.app.services.SectionMapProposal.SectionMapEntry;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
+import ghidra.debug.api.modules.*;
+import ghidra.debug.api.modules.ModuleMapProposal.ModuleMapEntry;
+import ghidra.debug.api.modules.RegionMapProposal.RegionMapEntry;
+import ghidra.debug.api.modules.SectionMapProposal.SectionMapEntry;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
@@ -543,7 +544,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	private final AsyncDebouncer<Void> changeDebouncer =
 		new AsyncDebouncer<>(AsyncTimer.DEFAULT_TIMER, 100);
 	private final ListenerSet<DebuggerStaticMappingChangeListener> changeListeners =
-		new ListenerSet<>(DebuggerStaticMappingChangeListener.class);
+		new ListenerSet<>(DebuggerStaticMappingChangeListener.class, true);
 	private Set<Trace> affectedTraces = new HashSet<>();
 	private Set<Program> affectedPrograms = new HashSet<>();
 
@@ -575,7 +576,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			affectedTraces = new HashSet<>();
 			affectedPrograms = new HashSet<>();
 		}
-		changeListeners.fire.mappingsChanged(traces, programs);
+		changeListeners.invoke().mappingsChanged(traces, programs);
 	}
 
 	private void traceAffected(Trace trace) {

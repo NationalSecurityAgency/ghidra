@@ -22,6 +22,158 @@
 
 <BODY>
 
+<H1 align="center">Ghidra 11.0 Change History (December 2023)</H1>
+<blockquote><p><u><B>New Features</B></u></p>
+<ul>
+    <li><I>Analysis</I>. Added initial Rust support, including the handling of mangled names and calling conventions. (GP-2412)</li>
+    <li><I>BSim</I>. Introduced BSim support (see <span class="gcode">docs/GhidraClass/BSim/</span>). (GP-4009)</li>
+    <li><I>Calling Conventions</I>. Added support for the <span class="gcode">Indirect result location register</span> for ARM64 calling conventions. (GP-3938, Issue #951)</li>
+    <li><I>CodeBrowser</I>. Added a right-click <span class="gtitle">Copy</span> action in the CodeBrowser's Listing that copies a <em>Local</em> or <em>Shared</em> <span class="gcode">GhidraURL</span> to the program. The <span class="gcode">GhidraURL</span> points to the specific address at which the cursor is located within the program. (GP-3626)</li>
+    <li><I>Data Types</I>. Added <span class="gtitle">Search -> For Encoded Strings...</span> dialog that simplifies finding and creating strings with various charsets and alphabets. (GP-2628, Issue #1582, #2106)</li>
+    <li><I>Debugger:Breakpoints</I>. Added breakpoint indicators to Function Graph when active in Debugger. (GP-2737, Issue #5532)</li>
+    <li><I>Debugger:dbgeng.dll</I>. Implemented Trace RMI connector/plugin for the dbgeng.dll. (GP-3754)</li>
+    <li><I>Debugger:dbgeng.dll</I>. Introduced Trace RMI launch script for dbgeng.dll. (GP-3823)</li>
+    <li><I>Debugger:GDB</I>. Introduced launchers for Debugger targets using new Trace RMI framework.  Introduced Trace RMI launch script for GDB. (GP-3818)</li>
+    <li><I>Debugger:Targets</I>. API: Added <span class="gcode">Target</span> interface to abstract <span class="gcode">TraceRecorder</span> and <span class="gcode">TraceRmi</span>. (GP-2740)</li>
+    <li><I>Debugger:Targets</I>. Created <span class="gtitle">Connections</span> panel for Trace RMI. (GP-3836)</li>
+    <li><I>FileSystems</I>. Added a <span class="gcode">GFileSystem</span> supporting the CaRT file format. (GP-3748, Issue #5568)</li>
+    <li><I>GhidraGo</I>. Implemented GhidraGo, an experimental feature that, when enabled, causes Ghidra to listen for GhidraURLs. The only supported GhidraURLs for GhidraGo currently link to a Ghidra DomainFile handled by the CodeBrowser. The readme for GhidraGo includes instructions on setting up a protocol handler for GhidraURLs. GhidraGo will open Ghidra if a Ghidra is not already running, but Ghidra must be configured to listen (i.e., it has the GhidraGo plugin enabled). (GP-2774)</li>
+    <li><I>GUI</I>. Added <span class="gtitle">Select -> Create Table From Ranges</span> action to create a table based on the address ranges in a selection. (GP-2297)</li>
+    <li><I>GUI</I>. Added a new <span class="gcode">GTree</span> filter setting that allows users to filter on the node's path. (GP-2419)</li>
+    <li><I>Importer:Mach-O</I>. <span class="gcode">dyld_shared_cache</span> components extracted from Ghidra's <span class="gcode">DyldCacheFileSystem</span> can now be added together on-demand with the <span class="gtitle">Add To Program</span> feature.  Broken references can be automatically resolved by right-clicking on them and clicking <span class="gtitle">References -> Add To Program</span>. (GP-3753, Issue #5023)</li>
+    <li><I>Processors</I>. Added support for the Loongson processor architecture. (GP-3211, Issue #5083)</li>
+    <li><I>Version Tracking</I>. Added a new Version Tracking correlator based on BSim function similarity. (GP-4076)</li>
+</ul>
+</blockquote>
+<blockquote><p><u><B>Improvements</B></u></p>
+<ul>
+    <li><I>Analysis</I>. Golang improvements:  Added the <span class="gtitle">Golang String Analyzer</span> that finds and marks up Golang strings.  Improved Golang type and interface method markup.  Improved Golang function parameter recovery.  Using Golang package information to organize Golang type and symbol elements into namespaces. Using Golang run time type information to override the types of objects that are created by calls to malloc-like built-in functions. (GP-2109)</li>
+    <li><I>Analysis</I>. Made minor fixes to ARM aggressive instruction finder for stack trace and speed improvement. (GP-3855)</li>
+    <li><I>API</I>. Added a program caching system for use by clients that want to open programs, do some work, and then close them without them appearing in the tool. Prior to this, all programs that were opened were kept open by the tool until the user manually closed them. (GP-3979)</li>
+    <li><I>API</I>. Updated <span class="gcode">ApplyFunctionSignatureCmd</span> and <span class="gcode">FunctionUtility.updateFunction</span> to optionally allow all applied composites to be cleaned (i.e., force to not-yet-defined state) before being applied.  In addition, a datatype conflict handler may now be specified which can control how conflicts of applied datatypes should be handled. (GP-4051)</li>
+    <li><I>Basic Infrastructure</I>. Upgraded to FlatLaf 3.2.1. (GP-3645, Issue #5539)</li>
+    <li><I>Basic Infrastructure</I>. Upgraded Guava to 32.1.3. (GP-4053)</li>
+    <li><I>Build</I>. The Ghidra Software Bill of Materials (SBOM) now includes entries for Ghidra's module jars.  Jar descriptions are also now provided when available. (GP-3824, Issue #5513)</li>
+    <li><I>CodeCompare</I>. The Decompiler Diff View now supports searching via <span class="gcode">Ctrl-F</span>. (GP-4000)</li>
+    <li><I>CodeCompare</I>. Fixed Function Comparison Window to not initially show the same function in both windows. (GP-4005)</li>
+    <li><I>Debugger</I>. Introduced a plugin/service that supports proper Terminal Emulation (in contrast to the current Interpreter Panel plugin). (GP-1977)</li>
+    <li><I>Debugger</I>. Added process name to Objects display. (GP-3895, Issue #5817)</li>
+    <li><I>Debugger</I>. Added console display for exceptions. (GP-3896, Issue #5817)</li>
+    <li><I>Debugger:Emulator</I>. Fixed issue starting the Emulator when the PC is in an overlay space. (GP-3904)</li>
+    <li><I>Debugger:GDB</I>. Changed Trace RMI plugin for GDB to better obtain module base addresses. (GP-3725)</li>
+    <li><I>Debugger:Registers</I>. Go-To actions from <span class="gtitle">Registers</span> panel now honor <span class="gtitle">Force Full View</span> setting from <span class="gtitle">Regions</span> panel. (GP-3886, Issue #5817)</li>
+    <li><I>Decompiler</I>. Tokens labeling switch <span class="gcode">case</span> values in the Decompiler window now support navigation and hovering and can be used to rename or retype the switch variable. (GP-3680, Issue #5286)</li>
+    <li><I>Decompiler</I>. Added toggle buttons to quickly change the <span class="gtitle">Eliminate unreachable code</span> and <span class="gtitle">Respect readonly flags</span> Decompiler settings. These settings are local to the Decompiler view and will not persist in the tool. (GP-3919)</li>
+    <li><I>Decompiler</I>. Added formatting options for braces, <span class="gcode">&lbrace;</span> and <span class="gcode">&rbrace;</span>, in Decompiler output. (GP-3965, Issue #1240, #1937, #1938, #4914, #81)</li>
+    <li><I>Demangler</I>. Updated the GNU Demangler binary used by Ghidra to version 2.41. (GP-3577)</li>
+    <li><I>Demangler</I>. Revised signature source type applied by GNU demanglers to <span class="gcode">ANALYSIS</span> instead of <span class="gcode">IMPORTED</span>. (GP-4139)</li>
+    <li><I>Exporter</I>. The C/C++ exporter now includes equate definitions if data types are being emitted. (GP-3010, Issue #4878)</li>
+    <li><I>Extensions</I>. Added a classpath isolation option for Extensions (settable in <span class="gcode">launch.properties</span>). (GP-3623)</li>
+    <li><I>FileSystems</I>. The <span class="gcode">dyld_shared_cache</span> filesystem can now extract files for stubs and standalone data. (GP-3860)</li>
+    <li><I>GUI</I>. Updated the tool windows to remember when they are fully maximized. (GP-2840, Issue #293, #3788)</li>
+    <li><I>GUI</I>. Updated data type tooltips and previews to show size in hex as well as decimal. (GP-3763, Issue #5682)</li>
+    <li><I>GUI</I>. Added <span class="gtitle">Collapse</span> and <span class="gtitle">Expand</span> actions to trees. (GP-3812, Issue #5731)</li>
+    <li><I>GUI</I>. Added <span class="gcode">askValues()</span> method to <span class="gcode">GhidraScripts</span> which allows the script to show a dialog for entering multiple values with a single dialog. (GP-3924)</li>
+    <li><I>GUI</I>. Fixed issue with program graph issuing location events in response to receiving location events. (GP-4021)</li>
+    <li><I>Importer</I>. Improved library-import log messages. (GP-3910)</li>
+    <li><I>Importer:ELF</I>. Completed additional changes to ELF Header code to eliminate unsupported mutability. (GP-3620)</li>
+    <li><I>Importer:Mach-O</I>. When loading <span class="gtitle">System Libraries From Disk</span> on macOS, the dyld_shared_cache will be searched for in more default locations. (GP-3909)</li>
+    <li><I>Importer:Mach-O</I>. The MachoLoader now uses binding information (if present) to associate libraries with imported symbol name without the need for those libraries to be already present/loaded in the project. (GP-3912)</li>
+    <li><I>Importer:Mach-O</I>. The MachoLoader can now load binaries with obfuscated segment and section names. (GP-3926, Issue #3876)</li>
+    <li><I>Languages</I>. Removed use of PC as having a valid value in SuperH and M68000. (GP-4049, Issue #5891)</li>
+    <li><I>Listing</I>. Added options for disabling various EOL Auto-Comments. (GP-3531)</li>
+    <li><I>Listing</I>. Corrected operand markup of offcut instruction references which failed to respect the <span class="gtitle">Display Namespace</span> operand field option. (GP-3985, Issue #5886)</li>
+    <li><I>Memory</I>. Updated overlay address space support to allow multiple memory blocks to reside within a single overlay space. (GP-3903)</li>
+    <li><I>PDB</I>. Changed the PDB data types processing to use a resolve-as-you-go model, eliminating the dependency graph and the need for holding onto the PDB types within the processing model.  The benefits of this change are being made available by other improvements.  In addition, changes have been made to improve the accuracy of some data types. (GP-3715)</li>
+    <li><I>PDB</I>. In order to reduce memory consumption, modified PdbReader to load certain components and data structures only when needed and provided some iterators to consumers such as PDB Universal Analyzer. (GP-3995)</li>
+    <li><I>Processors</I>. Added language module for the Tensilica Xtensa processor. (GP-1062, Issue #1407, #5442)</li>
+    <li><I>SARIF</I>. Added support for SARIF data export/import. (GP-3832)</li>
+    <li><I>Version Tracking</I>. Updated <span class="gcode">AutoVersionTrackingScript</span> to create implied matches if option is chosen by the user. (GP-3765)</li>
+    <li><I>Version Tracking</I>. Improved and sped up the <span class="gcode">AutoVersionTracking</span> algorithm to determine and apply good matches from the possible matches returned from the <span class="gcode">DuplicateFunctionMatchCorrelator</span>. (GP-3854, Issue #5857)</li>
+    <li><I>Version Tracking</I>. Added numerous options to Auto Version Tracking that can change which correlators are used and control their individual options. (GP-3934)</li>
+    <li><I>Version Tracking</I>. Auto Version Tracking now applies implied matches if the minimum number of votes and maximum number of conflicts conditions are met, as determined by the chosen options. (GP-3953)</li>
+    <li><I>Version Tracking</I>. Updated Auto Version Tracking to check related associations for already-accepted matches before accepting new matches. (GP-4008, Issue #4875)</li>
+    <li><I>Version Tracking</I>. Improved default Version Tracking session name generated by new session wizard. (GP-4091)</li>
+</ul>
+</blockquote>
+<blockquote><p><u><B>Bugs</B></u></p>
+<ul>
+    <li><I>Analysis</I>. Fixed <span class="gcode">StackOverflowError</span> encountered when processing self-referencing Golang slices. (GP-3906, Issue #5847)</li>
+    <li><I>Analysis</I>. Fixed function body computation for functions with instructions that branch into delay slots; for example, the Fujitsu FR processor.  This affects both function creation and the computation of an Undefined Function for the Decompiler when no function is currently defined. (GP-3962, Issue #5866)</li>
+    <li><I>Analysis</I>. Fixed evaluator check before using it in constant analysis. (GP-3970)</li>
+    <li><I>Build</I>. Fixed <span class="gcode">nodepJar</span> task dependencies for Gradle 8. (GP-3977, Issue #5902)</li>
+    <li><I>Data Types</I>. Corrected self-referencing data type resolution issue for function definitions which could result in datatype errors. (GP-4078, Issue #5927)</li>
+    <li><I>Debugger</I>. Fixed when <span class="gtitle">Control Target</span> can be selected. (GP-4099)</li>
+    <li><I>Debugger:Agents</I>. Fixed GADP agent launch scripts to pass arguments through. (GP-4132, Issue #6016)</li>
+    <li><I>Debugger:dbgeng.dll</I>. Fixed an error that resulted in quotes being stripped from command-line arguments for dbgeng/dbgmodel. (GP-3846, Issue #5789)</li>
+    <li><I>Debugger:dbgeng.dll</I>. Created better updating strategy for dbgeng/model memory. (GP-3899, Issue #5817)</li>
+    <li><I>Debugger:Emulator</I>. Fixed issue with resuming after performing p-code steps in the Emulator. (GP-3706)</li>
+    <li><I>Debugger:GDB</I>. Made fixes in preparation for changes coming in gdb-14. (GP-3690)</li>
+    <li><I>Debugger:GDB</I>. Fixed line ending for Cygwin GDB. (GP-3825, Issue #5755)</li>
+    <li><I>Debugger:Objects</I>. Fixed Elements table in Model provider to display array contents. (GP-3932)</li>
+    <li><I>Debugger:Registers</I>. Fixed copied values from <span class="gtitle">Registers</span> panel to conform to display settings. (GP-3874, Issue #5820)</li>
+    <li><I>Decompiler</I>. Fixed bug in conditional constant propagation that could affect switch recovery. (GP-3840, Issue #5514)</li>
+    <li><I>Decompiler</I>. Fixed improper rendering of expressions involving pointer-to-array data-types in Decompiler output. (GP-3842, Issue #5591)</li>
+    <li><I>Decompiler</I>. Fixed bug causing <em>"Could not finish collapsing block structure"</em> exceptions. (GP-3911)</li>
+    <li><I>Decompiler</I>. Fixed <em>"&lt;unionfacetsymbol&gt; does not have a union type"</em> exception caused by deleting a union data-type. (GP-3942, Issue #5636)</li>
+    <li><I>Decompiler</I>. Fixed bug in the brace-highlighting action for the Decompiler window that could cause it not to be able to find matching braces. (GP-3945, Issue #5643)</li>
+    <li><I>Decompiler</I>. Fixed bug in Decompiler that could cause crashes when analyzing NaN operations. (GP-3981)</li>
+    <li><I>Decompiler</I>. Fixed a bug that causes the Decompiler to fail on some systems with a <em>"Datatype must have a valid id"</em> exception. (GP-4020)</li>
+    <li><I>Decompiler</I>. Fixed an infinite loop in the Decompiler caused by small parameters getting passed to subfunctions via larger registers containing stale values in their upper bytes. (GP-4102, Issue #5934)</li>
+    <li><I>Decompiler</I>. Fixed a bug that could cause the Decompiler to crash when printing pieces of a dynamic symbol. (GP-4119, Issue #6005)</li>
+    <li><I>Demangler</I>. Fixed GNU Demangler analysis live-lock issue. (GP-4071, Issue #5987)</li>
+    <li><I>Documentation</I>. Fixed field constraint example in the Sleigh documentation. (GP-4046, Issue #5933)</li>
+    <li><I>Eclipse Integration</I>. Ghidra can now launch Eclipse Ubuntu snap installations from the Script Manager. (GP-3473)</li>
+    <li><I>Eclipse Integration</I>. The GhidraDev Eclipse plugin now prevents unsupported versions of PyDev from being used.  Supported versions are 6.3.1 - 9.3.0.  PyDev 10.0 and later no longer support Python 2. (GP-4062, Issue #5980)</li>
+    <li><I>Eclipse Integration</I>. The GhidraDev Eclipse plugin no longer throws an <span class="gcode">IOException</span> when performing a <span class="gtitle">Link Ghidra</span> action on a Ghidra project whose original Ghidra installation moved. (GP-4063, Issue #5981)</li>
+    <li><I>Exporter</I>. Proper C-syntax is now used on structs exported to a header file when they contain a pointer to an array field. (GP-3608, Issue #5248)</li>
+    <li><I>GUI</I>. Fixed the Data Types <span class="gtitle">Exact Match</span> filter to not include the archive name. (GP-3764, Issue #5685)</li>
+    <li><I>GUI</I>. Updated <span class="gcode">GTableHeaderRenderer</span> to fix an incorrect cast to <span class="gcode">Component</span>. (GP-3819, Issue #5539)</li>
+    <li><I>GUI</I>. Fixed bug in the Find Dialog that caused incorrect text to be selected when pressing <span class="gcode">Enter</span> for a previous match. (GP-3856)</li>
+    <li><I>GUI</I>. Fixed <span class="gcode">JTextArea</span> not responding to theme font changes. (GP-3908)</li>
+    <li><I>GUI</I>. Fixed incorrect Version Tracking foreground color in the Markup Items Table. (GP-3933, Issue #5865)</li>
+    <li><I>GUI</I>. Updated how the tool saves window size information to allow better toggling between full-screen modes. (GP-3958, Issue #5879, #5890)</li>
+    <li><I>GUI</I>. Fixed the Listing's Auto Comment color for the CDE/Motif theme. (GP-3959, Issue #5903)</li>
+    <li><I>GUI</I>. Fixed Structure Editor bugs.  Also updated the search to use the default field name as part of the search-matching. (GP-3967, Issue #5715)</li>
+    <li><I>GUI</I>. Fixed an issue in the Function Editor dialog that caused incorrect parameter values to be assigned when cancelling an edit. (GP-4041)</li>
+    <li><I>GUI</I>. Updated the Note Bookmark dialog to allow users to press <span class="gcode">Enter</span> to close the dialog when the Category field is focused. (GP-4048, Issue #5962)</li>
+    <li><I>GUI</I>. Fixed an issue that caused importing a file via drag-and-drop to silently fail on some Linux distributions. (GP-4066)</li>
+    <li><I>GUI</I>. Fixed an <span class="gcode">IndexOutOfBoundsException</span> that sometimes occurred while adding new entries to the Bundle Manager table or while opening a CodeBrowser tool that included an open Bundle Manager window. (GP-4075, Issue #5956)</li>
+    <li><I>Headless</I>. The Headless Analyzer can now recurse into supported <span class="gcode">GFileSystem</span> container files when a recursion depth of one or more is specified on the command line. (GP-3273, Issue #5167)</li>
+    <li><I>Importer</I>. Importing libraries that are referenced by absolute path (such as with Mach-O) now get saved to the project with their folder structure intact.  This fixes a potential <span class="gcode">DuplicateKeyException</span> that could occur when using a <span class="gtitle">Recursive Library Load Depth</span> greater than <span class="gcode">1</span>, and removes any ambiguity that could occur when linking a program to its libraries. (GP-3922)</li>
+    <li><I>Importer</I>. Fixed an uncaught <span class="gcode">InvalidPathException</span> that could occur when loading libraries during import. (GP-4050, Issue #5894)</li>
+    <li><I>Importer:ELF</I>. Corrected ELF object module GOT allocation for x86-64 object modules during relocation processing. (GP-4118, Issue #5961)</li>
+    <li><I>Importer:Mach-O</I>. The <span class="gcode">MachoLoader</span> now creates thunks on stubs. (GP-3248, Issue #3146)</li>
+    <li><I>Importer:PE</I>. Fixed an exception that could sometimes occur when parsing PE files containing debug line number information. (GP-3963, Issue #5899)</li>
+    <li><I>Languages</I>. Corrected MIPS pcode for <span class="gcode">di</span> and <span class="gcode">ei</span> instructions. (GP-3875)</li>
+    <li><I>Languages</I>. Corrected stack pointer update in <span class="gcode">alloca_probe</span> x64 windows callfixup. (GP-3915, Issue #5844)</li>
+    <li><I>Languages</I>. Updated x86 register addressing for <span class="gcode">ST</span> and <span class="gcode">MM</span> registers to achieve proper overlap.  The upper 16-bits of the <span class="gcode">ST</span> registers still remain unaffected by MMX instructions which write to the <span class="gcode">MM</span> registers. (GP-3956)</li>
+    <li><I>Multi-User</I>. Corrected potential <span class="gcode">NullPointerException</span> in Ghidra Server command proceesor. (GP-4056, Issue #5974)</li>
+    <li><I>PDB</I>. Fixed memory performance issue created in 10.4. (GP-3890)</li>
+    <li><I>Processors</I>. Implemented x86 <span class="gcode">FINTRZ</span> instruction. (GP-3387, Issue #5205)</li>
+    <li><I>Processors</I>. Corrected x86 <span class="gcode">POP</span> instructions with operands that use the stack pointer. (GP-3677, Issue #4282)</li>
+    <li><I>Processors</I>. Fixed missing ARM <span class="gcode">cbz</span> instruction in the manual index file. (GP-3724)</li>
+    <li><I>Processors</I>. Added test-register support back into the x86 processor module. (GP-3784, Issue #5662)</li>
+    <li><I>Processors</I>. Fixed issue with 6x09 processor module <span class="gcode">STU</span> instruction storing the <span class="gcode">X</span> register instead of the <span class="gcode">U</span> register. (GP-3786, Issue #5671)</li>
+    <li><I>Processors</I>. Added ELF relocation support to Loongarch processor module (GP-3804)</li>
+    <li><I>Processors</I>. Replaced or implemented count-leading-zeroes and count-leading-ones instructions with proper pcode operator in several languages. (GP-3879, Issue #5790)</li>
+    <li><I>Processors</I>. Changed MIPS <span class="gcode">TEQ zero, zero</span> into a trap, always-goto flow. (GP-3948)</li>
+    <li><I>Processors</I>. Several fixes for some PowerPC VLE instructions (GP-3999, Issue #2843)</li>
+    <li><I>Processors</I>. Added the x86 MMX register <span class="gcode">MXCSR</span> to the compiler global list so that manipulations persist in the decompiled output. (GP-4018)</li>
+    <li><I>Processors</I>. Fixed RISC-V custom-0 instruction patterns. (GP-4047, Issue #5932)</li>
+    <li><I>Processors</I>. Fixed PIC24 <span class="gcode">DOEND</span> register offset (GP-4054, Issue #5213)</li>
+    <li><I>Processors</I>. Minor fix for the AVR8 <span class="gcode">DES</span> instruction semantics. (GP-4055, Issue #5235)</li>
+    <li><I>Project</I>. Corrected issue with <span class="gcode">ProjectLocator</span> when using projects located in root directory. (GP-3914, Issue #5802)</li>
+    <li><I>Scripting</I>. <span class="gcode">FixOldSTVariableStorageScript.java</span> Ghidra script has been made available for users to run against x86 Programs created prior to Ghidra 10.0.3.  This script will fixup <span class="gcode">ST0... ST7</span> variable storage addresses which were not properly migrated during an x86 language revision. (GP-3949, Issue #5640)</li>
+    <li><I>Search</I>. Fixed incorrect template implementation of <span class="gcode">GenericByteSequencePattern<span class="gcode">. (GP-4024)</li>
+    <li><I>Sleigh</I>. Fixed a bug in the Sleigh compiler preventing the declaration of bit-range symbols when their size was not a multiple of 8 bits. (GP-8, Issue #1144, #660)</li>
+    <li><I>Sleigh</I>. Added pure 32-bit PowerPC e500mc processor variant (GP-3068)</li>
+    <li><I>Sleigh</I>. Fixed stacktrace when a pcode pseudoOp has more than eight parameters. (GP-3986)</li>
+    <li><I>Version Tracking</I>. Fixed Version Tracking <span class="gtitle">Undo</span> issue where running a correlator and accepting matches then undoing the results and then rerunning the correlator resulted in incorrectly blocked matches. (GP-3827)</li>
+    <li><I>Version Tracking</I>. Fixed bug in Version Tracking matches table that prevented saved filters from being applied. (GP-3901)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 10.4 Change History (September 2023)</H1>
 <blockquote><p><u><B>New Features</B></u></p>
 <ul>
@@ -29,7 +181,7 @@
     <li><I>FileSystems</I>. Added cramfs support. (GP-3328)</li>
     <li><I>FileSystems</I>. The File System Browser now supports the <span class="gtitle">Add To Program</span> action. (GP-3730)</li>
     <li><I>Importer</I>. Created parsers and analyzers for Device Tree Blob (DTB) and Flattened Device Tree (FDT) binaries. (GP-1436)</li>
-    <li><I>Listing</I>. Added ability to reduce an instructions length to facilitate overlapping instructions.  This can now be accomplished by specifying an instruction length override on the first instruction and disassembling the bytes which follow it.  The need for this has been observed with x86 where there may be a flow around a <span class="gcode">LOCK</span> prefix byte. (GP-3256)</li>
+    <li><I>Listing</I>. Added ability to reduce an instruction's length to facilitate overlapping instructions.  This can now be accomplished by specifying an instruction length override on the first instruction and disassembling the bytes which follow it.  The need for this has been observed with x86 where there may be a flow around a <span class="gcode">LOCK</span> prefix byte. (GP-3256)</li>
 </ul>
 </blockquote>
 <blockquote><p><u><B>Improvements</B></u></p>
@@ -43,7 +195,7 @@
     <li><I>Build</I>. Fixed the <span class="gcode">buildHelp</span> gradle task to correctly check for up-to-date inputs. (GP-3430)</li>
     <li><I>Data Types</I>. Added ability to establish source archive association when non-sourced data type dependencies get copied into an archive during a commit operation. (GP-3796, Issue #5675)</li>
     <li><I>Debugger</I>. Fixed <span class="gtitle">Copy Into New Program</span> action to use Dynamic Listing for its default context. This means the Dynamic Listing does not have to have focus for those actions to be enabled. (GP-1528)</li>
-    <li><I>Debugger:Modules</I>. Changed mapper to use proper local <span class="gcode">ghidra://</span> URLs. No more "!" in them. (GP-3695)</li>
+    <li><I>Debugger:Modules</I>. Changed mapper to use proper local <span class="gcode">ghidra:&sol;&sol;</span> URLs. No more "!" in them. (GP-3695)</li>
     <li><I>Debugger:Trace</I>. Removed the <span class="gcode">TraceFunction</span> part of the Trace API. (GP-3351)</li>
     <li><I>Decompiler</I>. Removed the limitation preventing the Decompiler from analyzing functions where the <span class="gcode">this</span> parameter refers to a placeholder class structure. (GP-3590, Issue #5403, #5475)</li>
     <li><I>Decompiler</I>. Added Decompiler support for return value storage at an explicit stack offset relative to the callee's stack pointer. (GP-3613, Issue #1962)</li>

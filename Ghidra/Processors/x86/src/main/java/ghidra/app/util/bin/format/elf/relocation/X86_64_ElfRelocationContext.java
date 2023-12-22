@@ -87,7 +87,7 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 		// NOTE: GOT allocation calculation assumes all GOT entries correspond to a specific
 		// symbol and not a computed offset.  This assumption may need to be revised based upon 
 		// uses of getGotEntryAddress method
-		Set<Object> uniqueSymbolValues = new HashSet<>();
+		Set<Long> uniqueSymbolValues = new HashSet<>();
 		for (ElfRelocationTable rt : getElfHeader().getRelocationTables()) {
 			ElfSymbolTable st = rt.getAssociatedSymbolTable();
 			if (st == null) {
@@ -102,9 +102,11 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 				if (elfSymbol == null) {
 					continue;
 				}
-				long value = elfSymbol.getValue();
-				Object uniqueValue = value == 0 ? elfSymbol.getNameAsString() : Long.valueOf(value);
-				uniqueSymbolValues.add(uniqueValue);
+				long symbolValue = getSymbolValue(elfSymbol);
+				if (!uniqueSymbolValues.add(symbolValue)) {
+					System.out.println("Duplicate sym value 0x" + Long.toHexString(symbolValue) +
+						" for " + elfSymbol.getNameAsString());
+				}
 			}
 		}
 		return Math.max(8, uniqueSymbolValues.size() * 8);
@@ -113,13 +115,13 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 	private boolean requiresGotEntry(ElfRelocation r) {
 		switch (r.getType()) {
 			case X86_64_ElfRelocationConstants.R_X86_64_GOTPCREL:
-			case X86_64_ElfRelocationConstants.R_X86_64_GOTOFF64:
-			case X86_64_ElfRelocationConstants.R_X86_64_GOTPC32:
-			case X86_64_ElfRelocationConstants.R_X86_64_GOT64:
+//			case X86_64_ElfRelocationConstants.R_X86_64_GOTOFF64:
+//			case X86_64_ElfRelocationConstants.R_X86_64_GOTPC32:
+//			case X86_64_ElfRelocationConstants.R_X86_64_GOT64:
 			case X86_64_ElfRelocationConstants.R_X86_64_GOTPCREL64:
-			case X86_64_ElfRelocationConstants.R_X86_64_GOTPC64:
-			case X86_64_ElfRelocationConstants.R_X86_64_GOTPCRELX:
-			case X86_64_ElfRelocationConstants.R_X86_64_REX_GOTPCRELX:
+//			case X86_64_ElfRelocationConstants.R_X86_64_GOTPC64:
+//			case X86_64_ElfRelocationConstants.R_X86_64_GOTPCRELX:
+//			case X86_64_ElfRelocationConstants.R_X86_64_REX_GOTPCRELX:
 				return true;
 			default:
 				return false;
@@ -134,8 +136,8 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 		ElfSymbol gotElfSymbol = findGotElfSymbol();
 
 		if (gotElfSymbol == null && !getElfHeader().isRelocatable()) {
-			loadHelper.log(
-				"GOT allocatiom failed. " + ElfConstants.GOT_SYMBOL_NAME + " not defined");
+			loadHelper
+					.log("GOT allocatiom failed. " + ElfConstants.GOT_SYMBOL_NAME + " not defined");
 			return null;
 		}
 
@@ -144,9 +146,9 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 		}
 
 		int alignment = getLoadAdapter().getLinkageBlockAlignment();
-		allocatedGotLimits =
-			getLoadHelper().allocateLinkageBlock(alignment, computeRequiredGotSize(),
-				ElfRelocationHandler.GOT_BLOCK_NAME);
+		int gotSize = computeRequiredGotSize();
+		allocatedGotLimits = getLoadHelper().allocateLinkageBlock(alignment, gotSize,
+			ElfRelocationHandler.GOT_BLOCK_NAME);
 		if (allocatedGotLimits != null &&
 			allocatedGotLimits.getMinAddress().getOffset() < Integer.MAX_VALUE) {
 			// GOT must fall within first 32-bit segment
@@ -207,10 +209,11 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 	/**
 	 * Get or allocate a GOT entry for the specified symbolValue.
 	 * NOTE: This is restricted to object modules only which do not of a GOT.
-	 * @param symbolValue symbol value
+	 * @param elfSymbol ELF symbol
 	 * @return GOT entry address or null if unable to allocate
 	 */
-	public Address getGotEntryAddress(long symbolValue) {
+	public Address getGotEntryAddress(ElfSymbol elfSymbol) {
+		long symbolValue = getSymbolValue(elfSymbol);
 		Address addr = null;
 		if (gotMap != null) {
 			addr = gotMap.get(symbolValue);
@@ -242,13 +245,7 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 						: LittleEndianDataConverter.INSTANCE;
 			for (long symbolValue : gotMap.keySet()) {
 				Address addr = gotMap.get(symbolValue);
-				byte[] bytes;
-				if (program.getDefaultPointerSize() == 4) {
-					bytes = converter.getBytes((int) symbolValue);
-				}
-				else {
-					bytes = converter.getBytes(symbolValue);
-				}
+				byte[] bytes = converter.getBytes(symbolValue); // 8-byte pointer value
 				block.putBytes(addr, bytes);
 				loadHelper.createData(addr, PointerDataType.dataType);
 			}

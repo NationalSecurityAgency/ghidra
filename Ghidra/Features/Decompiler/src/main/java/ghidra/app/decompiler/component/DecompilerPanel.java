@@ -16,6 +16,8 @@
 package ghidra.app.decompiler.component;
 
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.math.BigInteger;
 import java.util.*;
@@ -43,6 +45,7 @@ import ghidra.app.decompiler.component.hover.DecompilerHoverService;
 import ghidra.app.decompiler.component.margin.*;
 import ghidra.app.plugin.core.decompile.DecompilerClipboardProvider;
 import ghidra.app.plugin.core.decompile.actions.FieldBasedSearchLocation;
+import ghidra.app.util.viewer.listingpanel.MarginProvider;
 import ghidra.app.util.viewer.util.ScrollpaneAlignedHorizontalLayout;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Function;
@@ -125,6 +128,16 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		fieldPanel.addFieldMouseListener(this);
 		fieldPanel.addFieldLocationListener(this);
 		fieldPanel.addLayoutListener(this);
+		
+		fieldPanel.addComponentListener(new ComponentAdapter() {
+			@Override
+			public void componentResized(ComponentEvent e) {
+				for (DecompilerMarginProvider provider : marginProviders) {
+					provider.getComponent().invalidate();
+				}
+				validate();
+			}
+		});
 
 		decompilerHoverProvider = new DecompilerHoverProvider();
 

@@ -712,7 +712,7 @@ public class MultiTabPanel extends JPanel {
 
 			Point centerPoint = WindowUtilities.centerOnComponent(getParent(), listWindow);
 			bounds.setLocation(centerPoint);
-			WindowUtilities.ensureOnScreen(getParent(), bounds);
+			WindowUtilities.ensureEntirelyOnScreen(getParent(), bounds);
 			listWindow.setBounds(bounds);
 			return;
 		}

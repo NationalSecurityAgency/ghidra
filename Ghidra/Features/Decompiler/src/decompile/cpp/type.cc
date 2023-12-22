@@ -349,6 +349,72 @@ type_metatype string2metatype(const string &metastring)
   throw LowlevelError("Unknown metatype: "+metastring);
 }
 
+/// Given a description of a data-type \e class, return the \b type_class.
+/// \param classstring is the description of the class
+/// \return the encoded type_class
+type_class string2typeclass(const string &classstring)
+
+{
+  switch(classstring[0]) {
+    case 'c':
+      if (classstring == "class1")
+	return TYPECLASS_CLASS1;
+      else if (classstring == "class2")
+	return TYPECLASS_CLASS2;
+      else if (classstring == "class3")
+	return TYPECLASS_CLASS3;
+      else if (classstring == "class4")
+	return TYPECLASS_CLASS4;
+      break;
+    case 'g':
+      if (classstring == "general")
+	return TYPECLASS_GENERAL;
+      break;
+    case 'h':
+      if (classstring == "hiddenret")
+	return TYPECLASS_HIDDENRET;
+      break;
+    case 'f':
+      if (classstring == "float")
+	return TYPECLASS_FLOAT;
+      break;
+    case 'p':
+      if (classstring == "ptr" || classstring == "pointer")
+	return TYPECLASS_PTR;
+      break;
+    case 'v':
+      if (classstring == "vector")
+	return TYPECLASS_VECTOR;
+      break;
+    case 'u':
+      if (classstring == "unknown")
+	return TYPECLASS_GENERAL;
+      break;
+  }
+  throw LowlevelError("Unknown data-type class: " + classstring);
+}
+
+/// Assign the basic storage class based on a metatype:
+///   - TYPE_FLOAT  ->  TYPECLASS_FLOAT
+///   - TYPE_PTR    ->  TYPECLASS_PTR
+///
+/// Everything else returns the general purpose TYPECLASS_GENERAL
+/// \param meta is the metatype
+/// \return the storage class
+type_class metatype2typeclass(type_metatype meta)
+
+{
+  switch(meta) {
+    case TYPE_FLOAT:
+      return TYPECLASS_FLOAT;
+    case TYPE_PTR:
+      return TYPECLASS_PTR;
+    default:
+      break;
+  }
+  return TYPECLASS_GENERAL;
+}
+
 /// Encode a formal description of the data-type as a \<type> element.
 /// For composite data-types, the description goes down one level, describing
 /// the component types only by reference.
@@ -357,15 +423,16 @@ void Datatype::encode(Encoder &encoder) const
 
 {
   encoder.openElement(ELEM_TYPE);
-  encodeBasic(metatype,encoder);
+  encodeBasic(metatype,-1,encoder);
   encoder.closeElement(ELEM_TYPE);
 }
 
 /// Encode basic data-type properties (name,size,id) as attributes.
 /// This routine presumes the initial element is already written to the stream.
-/// \param meta is the metatype attribute
+/// \param meta is the metatype attribute to encode
+/// \param align is the byte alignment to encode (-1 to not encode alignment)
 /// \param encoder is the stream encoder
-void Datatype::encodeBasic(type_metatype meta,Encoder &encoder) const
+void Datatype::encodeBasic(type_metatype meta,int4 align,Encoder &encoder) const
 
 {
   encoder.writeString(ATTRIB_NAME, name);
@@ -377,6 +444,8 @@ void Datatype::encodeBasic(type_metatype meta,Encoder &encoder) const
   string metastring;
   metatype2string(meta,metastring);
   encoder.writeString(ATTRIB_METATYPE,metastring);
+  if (align > 0)
+    encoder.writeSignedInteger(ATTRIB_ALIGNMENT, align);
   if ((flags & coretype)!=0)
     encoder.writeBool(ATTRIB_CORE,true);
   if (isVariableLength())
@@ -410,6 +479,23 @@ void Datatype::encodeRef(Encoder &encoder) const
     encode(encoder);
 }
 
+/// If \b this has no component data-types, return \b true.
+/// If \b this has only a single primitive component filling the whole data-type, also return \b true.
+/// \return \b true if \b this data-type is made up of a single primitive
+bool Datatype::isPrimitiveWhole(void) const
+
+{
+  if (!isPieceStructured()) return true;
+  if (metatype == TYPE_ARRAY || metatype == TYPE_STRUCT) {
+    if (numDepend() > 0) {
+      Datatype *component = getDepend(0);
+      if (component->getSize() == getSize())
+	return component->isPrimitiveWhole();
+    }
+  }
+  return false;
+}
+
 /// Called only if the \b typedefImm field is non-null.  Encode the data-type to the
 /// stream as a simple \<typedef> element including only the names and ids of \b this and
 /// the data-type it typedefs.
@@ -425,6 +511,18 @@ void Datatype::encodeTypedef(Encoder &encoder) const
     encoder.writeString(ATTRIB_FORMAT,Datatype::decodeIntegerFormat(format));
   typedefImm->encodeRef(encoder);
   encoder.closeElement(ELEM_DEF);
+}
+
+/// Calculate \b size rounded up to be a multiple of \b alignment.
+/// This value is returned by getAlignSize().
+void Datatype::calcAlignSize(void)
+
+{
+  int4 mod = size % alignment;
+  if (mod != 0)
+    alignSize = size + (alignment - mod);
+  else
+    alignSize = size;
 }
 
 /// A CPUI_PTRSUB must act on a pointer data-type where the given offset addresses a component.
@@ -532,6 +630,9 @@ void Datatype::decodeBasic(Decoder &decoder)
       if (decoder.readBool())
 	flags |= variable_length;
     }
+    else if (attrib == ATTRIB_ALIGNMENT) {
+      alignment = decoder.readSignedInteger();
+    }
     else if (attrib == ATTRIB_OPAQUESTRING) {
       if (decoder.readBool())
 	flags |= opaque_string;
@@ -546,6 +647,7 @@ void Datatype::decodeBasic(Decoder &decoder)
   }
   if (size < 0)
     throw LowlevelError("Bad size for type "+name);
+  alignSize = size;
   submeta = base2sub[metatype];
   if ((id==0)&&(name.size()>0))	// If there is a type name
     id = hashName(name);	// There must be some kind of id
@@ -702,7 +804,7 @@ void TypeChar::encode(Encoder &encoder) const
     return;
   }
   encoder.openElement(ELEM_TYPE);
-  encodeBasic(metatype,encoder);
+  encodeBasic(metatype,-1,encoder);
   encoder.writeBool(ATTRIB_CHAR, true);
   encoder.closeElement(ELEM_TYPE);
 }
@@ -749,7 +851,7 @@ void TypeUnicode::encode(Encoder &encoder) const
     return;
   }
   encoder.openElement(ELEM_TYPE);
-  encodeBasic(metatype,encoder);
+  encodeBasic(metatype,-1,encoder);
   encoder.writeBool(ATTRIB_UTF, true);
   encoder.closeElement(ELEM_TYPE);
 }
@@ -849,7 +951,7 @@ void TypePointer::encode(Encoder &encoder) const
     return;
   }
   encoder.openElement(ELEM_TYPE);
-  encodeBasic(metatype,encoder);
+  encodeBasic(metatype,-1,encoder);
   if (wordsize != 1)
     encoder.writeUnsignedInteger(ATTRIB_WORDSIZE, wordsize);
   if (spaceid != (AddrSpace *)0)
@@ -899,6 +1001,9 @@ void TypePointer::calcSubmeta(void)
   else if (ptrtoMeta == TYPE_UNION) {
     submeta = SUB_PTR_STRUCT;
   }
+  else if (ptrtoMeta == TYPE_ARRAY) {
+    flags |= pointer_to_array;
+  }
   if (ptrto->needsResolution() && ptrtoMeta != TYPE_PTR)
     flags |= needs_resolution;		// Inherit needs_resolution, but only if not a pointer
 }
@@ -935,7 +1040,7 @@ void TypePointer::calcTruncate(TypeFactory &typegrp)
 TypePointer *TypePointer::downChain(int8 &off,TypePointer *&par,int8 &parOff,bool allowArrayWrap,TypeFactory &typegrp)
 
 {
-  int4 ptrtoSize = ptrto->getSize();
+  int4 ptrtoSize = ptrto->getAlignSize();
   if (off < 0 || off >= ptrtoSize) {	// Check if we are wrapping
     if (ptrtoSize != 0 && !ptrto->isVariableLength()) {	// Check if pointed-to is wrappable
       if (!allowArrayWrap)
@@ -1049,14 +1154,14 @@ int4 TypeArray::compareDependency(const Datatype &op) const
 Datatype *TypeArray::getSubType(int8 off,int8 *newoff) const
 
 {				// Go down exactly one level, to type of element
-  *newoff = off % arrayof->getSize();
+  *newoff = off % arrayof->getAlignSize();
   return arrayof;
 }
 
 int4 TypeArray::getHoleSize(int4 off) const
 
 {
-  int4 newOff = off % arrayof->getSize();
+  int4 newOff = off % arrayof->getAlignSize();
   return arrayof->getHoleSize(newOff);
 }
 
@@ -1070,9 +1175,9 @@ int4 TypeArray::getHoleSize(int4 off) const
 Datatype *TypeArray::getSubEntry(int4 off,int4 sz,int4 *newoff,int4 *el) const
 
 {
-  int4 noff = off % arrayof->getSize();
-  int4 nel = off / arrayof->getSize();
-  if (noff+sz > arrayof->getSize()) // Requesting parts of more then one element
+  int4 noff = off % arrayof->getAlignSize();
+  int4 nel = off / arrayof->getAlignSize();
+  if (noff+sz > arrayof->getAlignSize()) // Requesting parts of more then one element
     return (Datatype *)0;
   *newoff = noff;
   *el = nel;
@@ -1087,7 +1192,7 @@ void TypeArray::encode(Encoder &encoder) const
     return;
   }
   encoder.openElement(ELEM_TYPE);
-  encodeBasic(metatype,encoder);
+  encodeBasic(metatype,-1,encoder);
   encoder.writeSignedInteger(ATTRIB_ARRAYSIZE, arraysize);
   arrayof->encodeRef(encoder);
   encoder.closeElement(ELEM_TYPE);
@@ -1148,8 +1253,9 @@ void TypeArray::decode(Decoder &decoder,TypeFactory &typegrp)
     }
   }
   arrayof = typegrp.decodeType(decoder);
-  if ((arraysize<=0)||(arraysize*arrayof->getSize()!=size))
+  if ((arraysize<=0)||(arraysize*arrayof->getAlignSize()!=size))
     throw LowlevelError("Bad size for array of type "+arrayof->getName());
+  alignment = arrayof->getAlignment();
   if (arraysize == 1)
     flags |= needs_resolution;		// Array of size 1 needs special treatment
 //  decoder.closeElement(elemId);
@@ -1309,7 +1415,7 @@ void TypeEnum::encode(Encoder &encoder) const
     return;
   }
   encoder.openElement(ELEM_TYPE);
-  encodeBasic(metatype,encoder);
+  encodeBasic(metatype,-1,encoder);
   encoder.writeString(ATTRIB_ENUM, "true");
   map<uintb,string>::const_iterator iter;
   for(iter=namemap.begin();iter!=namemap.end();++iter) {
@@ -1359,30 +1465,48 @@ void TypeEnum::decode(Decoder &decoder,TypeFactory &typegrp)
 TypeStruct::TypeStruct(const TypeStruct &op)
   : Datatype(op)
 {
-  setFields(op.field);
-  size = op.size;		// setFields might have changed the size
+  setFields(op.field,op.size,op.alignment);
+  alignSize = op.alignSize;
 }
 
 /// Copy a list of fields into this structure, establishing its size.
-/// Should only be called once when constructing the type
+/// Should only be called once when constructing the type.
+/// Size is calculated from the fields unless a \b fixedSize (>0) is passed in.
+/// Alignment is calculated from fields unless a \b fixedAlign (>0) is passed in.
 /// \param fd is the list of fields to copy in
-void TypeStruct::setFields(const vector<TypeField> &fd)
+/// \param fixedSize (if > 0) indicates an overriding size in bytes
+/// \param fixedAlign (if > 0) indicates an overriding alignment in bytes
+void TypeStruct::setFields(const vector<TypeField> &fd,int4 fixedSize,int4 fixedAlign)
 
 {
   vector<TypeField>::const_iterator iter;
   int4 end;
-				// Need to calculate size
-  size = 0;
+				// Need to calculate size and alignment
+  int4 calcSize = 0;
+  int4 calcAlign = 1;
   for(iter=fd.begin();iter!=fd.end();++iter) {
     field.push_back(*iter);
-    end = (*iter).offset + (*iter).type->getSize();
-    if (end > size)
-      size = end;
+    Datatype *fieldType = (*iter).type;
+    end = (*iter).offset + fieldType->getSize();
+    if (end > calcSize)
+      calcSize = end;
+    int4 curAlign = fieldType->getAlignment();
+    if (curAlign > calcAlign)
+      calcAlign = curAlign;
   }
   if (field.size() == 1) {			// A single field
-    if (field[0].type->getSize() == size)	// that fills the whole structure
+    if (field[0].type->getSize() == calcSize)	// that fills the whole structure
       flags |= needs_resolution;		// needs special attention
   }
+  if (fixedSize > 0) {		// Try to force a size
+    if (fixedSize < calcSize) // If the forced size is smaller, this is an error
+      throw LowlevelError("Trying to force too small a size on "+name);
+    size = fixedSize;
+  }
+  else
+    size = calcSize;
+  alignment = (fixedAlign < 1) ? calcAlign : fixedAlign;
+  calcAlignSize();
 }
 
 /// Find the proper subfield given an offset. Return the index of that field
@@ -1489,7 +1613,7 @@ Datatype *TypeStruct::nearestArrayedComponentBackward(int8 off,int8 *newoff,int8
     Datatype *subtype = subfield.type;
     if (subtype->getMetatype() == TYPE_ARRAY) {
       *newoff = diff;
-      *elSize = ((TypeArray *)subtype)->getBase()->getSize();
+      *elSize = ((TypeArray *)subtype)->getBase()->getAlignSize();
       return subtype;
     }
     else {
@@ -1517,7 +1641,7 @@ Datatype *TypeStruct::nearestArrayedComponentForward(int8 off,int8 *newoff,int8 
     Datatype *subtype = subfield.type;
     if (subtype->getMetatype() == TYPE_ARRAY) {
       *newoff = -diff;
-      *elSize = ((TypeArray *)subtype)->getBase()->getSize();
+      *elSize = ((TypeArray *)subtype)->getBase()->getAlignSize();
       return subtype;
     }
     else {
@@ -1608,7 +1732,7 @@ void TypeStruct::encode(Encoder &encoder) const
     return;
   }
   encoder.openElement(ELEM_TYPE);
-  encodeBasic(metatype,encoder);
+  encodeBasic(metatype,alignment,encoder);
   vector<TypeField>::const_iterator iter;
   for(iter=field.begin();iter!=field.end();++iter) {
     (*iter).encode(encoder);
@@ -1622,6 +1746,7 @@ void TypeStruct::encode(Encoder &encoder) const
 void TypeStruct::decodeFields(Decoder &decoder,TypeFactory &typegrp)
 
 {
+  int4 calcAlign = 1;
   int4 maxoffset = 0;
   while(decoder.peekElement() != 0) {
     field.emplace_back(decoder,typegrp);
@@ -1633,6 +1758,9 @@ void TypeStruct::decodeFields(Decoder &decoder,TypeFactory &typegrp)
       s << "Field " << field.back().name << " does not fit in structure " + name;
       throw LowlevelError(s.str());
     }
+    int4 curAlign = field.back().type->getAlignment();
+    if (curAlign > calcAlign)
+      calcAlign = curAlign;
   }
   if (size == 0)		// We can decode an incomplete structure, indicated by 0 size
     flags |=  type_incomplete;
@@ -1642,6 +1770,9 @@ void TypeStruct::decodeFields(Decoder &decoder,TypeFactory &typegrp)
     if (field[0].type->getSize() == size)	// that fills the whole structure
       flags |= needs_resolution;		// needs special resolution
   }
+  if (alignment < 1)
+    alignment = calcAlign;
+  calcAlignSize();
 }
 
 /// If this method is called, the given data-type has a single component that fills it entirely
@@ -1728,24 +1859,17 @@ int4 TypeStruct::findCompatibleResolve(Datatype *ct) const
 
 /// Assign an offset to fields in order so that each field starts at an aligned offset within the structure
 /// \param list is the list of fields
-/// \param align is the given alignment
-void TypeStruct::assignFieldOffsets(vector<TypeField> &list,int4 align)
+void TypeStruct::assignFieldOffsets(vector<TypeField> &list)
 
 {
   int4 offset = 0;
   vector<TypeField>::iterator iter;
   for(iter=list.begin();iter!=list.end();++iter) {
     if ((*iter).offset != -1) continue;
-    int4 cursize = (*iter).type->getSize();
-    int4 curalign = 0;
-    if (align > 1) {
-      curalign = align;
-      while((curalign>>1) >= cursize)
-	curalign >>= 1;
-      curalign -= 1;
-    }
-    if ((offset & curalign)!=0)
-      offset = (offset-(offset & curalign) + (curalign+1));
+    int4 cursize = (*iter).type->getAlignSize();
+    int4 align = (*iter).type->getAlignment() - 1;
+    if (align > 0 && (offset & align)!=0)
+      offset = (offset-(offset & align) + (align+1));
     (*iter).offset = offset;
     (*iter).ident = offset;
     offset += cursize;
@@ -1754,19 +1878,37 @@ void TypeStruct::assignFieldOffsets(vector<TypeField> &list,int4 align)
 
 /// Copy a list of fields into this union, establishing its size.
 /// Should only be called once when constructing the type.  TypeField \b offset is assumed to be 0.
+/// Size is calculated from the fields unless a \b fixedSize (>0) is passed in.
+/// Alignment is calculated from fields unless a \b fixedAlign (>0) is passed in.
 /// \param fd is the list of fields to copy in
-void TypeUnion::setFields(const vector<TypeField> &fd)
+/// \param fixedSize (if > 0) indicates an overriding size in bytes
+/// \param fixedAlign (if > 0) indicates an overriding alignment in bytes
+void TypeUnion::setFields(const vector<TypeField> &fd,int4 fixedSize,int4 fixedAlign)
 
 {
   vector<TypeField>::const_iterator iter;
- 				// Need to calculate size
-  size = 0;
+ 				// Need to calculate size and alignment
+  int4 calcSize = 0;
+  int4 calcAlign = 1;
   for(iter=fd.begin();iter!=fd.end();++iter) {
     field.push_back(*iter);
-    int4 end = field.back().type->getSize();
-    if (end > size)
-      size = end;
+    Datatype *fieldType = field.back().type;
+    int4 end = fieldType->getSize();
+    if (end > calcSize)
+      calcSize = end;
+    int4 curAlign = fieldType->getAlignment();
+    if (curAlign > calcAlign)
+      calcAlign = curAlign;
   }
+  if (fixedSize > 0) {		// If the caller is trying to force a size
+    if (fixedSize < calcSize)	// If the forced size is smaller, this is an error
+      throw LowlevelError("Trying to force too small a size on "+name);
+    size = fixedSize;
+  }
+  else
+    size = calcSize;
+  alignment = (fixedAlign < 1) ? calcAlign : fixedAlign;
+  calcAlignSize();
 }
 
 /// Parse children of the \<type> element describing each field.
@@ -1775,6 +1917,7 @@ void TypeUnion::setFields(const vector<TypeField> &fd)
 void TypeUnion::decodeFields(Decoder &decoder,TypeFactory &typegrp)
 
 {
+  int4 calcAlign = 1;
   while(decoder.peekElement() != 0) {
     field.emplace_back(decoder,typegrp);
     if (field.back().offset + field.back().type->getSize() > size) {
@@ -1782,18 +1925,24 @@ void TypeUnion::decodeFields(Decoder &decoder,TypeFactory &typegrp)
       s << "Field " << field.back().name << " does not fit in union " << name;
       throw LowlevelError(s.str());
     }
+    int4 curAlign = field.back().type->getAlignment();
+    if (curAlign > calcAlign)
+      calcAlign = curAlign;
   }
   if (size == 0)		// We can decode an incomplete structure, indicated by 0 size
     flags |=  type_incomplete;
   else
     markComplete();		// Otherwise the union is complete
+  if (alignment < 1)
+    alignment = calcAlign;
+  calcAlignSize();
 }
 
 TypeUnion::TypeUnion(const TypeUnion &op)
   : Datatype(op)
 {
-  setFields(op.field);
-  size = op.size;		// setFields might have changed the size
+  setFields(op.field,op.size,op.alignment);
+  alignSize = op.alignSize;
 }
 
 int4 TypeUnion::compare(const Datatype &op,int4 level) const
@@ -1868,7 +2017,7 @@ void TypeUnion::encode(Encoder &encoder) const
     return;
   }
   encoder.openElement(ELEM_TYPE);
-  encodeBasic(metatype,encoder);
+  encodeBasic(metatype,alignment,encoder);
   vector<TypeField>::const_iterator iter;
   for(iter=field.begin();iter!=field.end();++iter) {
     (*iter).encode(encoder);
@@ -1983,7 +2132,7 @@ TypePartialStruct::TypePartialStruct(const TypePartialStruct &op)
 }
 
 TypePartialStruct::TypePartialStruct(Datatype *contain,int4 off,int4 sz,Datatype *strip)
-  : Datatype(sz,TYPE_PARTIALSTRUCT)
+  : Datatype(sz,1,TYPE_PARTIALSTRUCT)
 {
 #ifdef CPUI_DEBUG
   if (contain->getMetatype() != TYPE_STRUCT && contain->getMetatype() != TYPE_ARRAY)
@@ -2064,7 +2213,7 @@ TypePartialUnion::TypePartialUnion(const TypePartialUnion &op)
 }
 
 TypePartialUnion::TypePartialUnion(TypeUnion *contain,int4 off,int4 sz,Datatype *strip)
-  : Datatype(sz,TYPE_PARTIALUNION)
+  : Datatype(sz,1,TYPE_PARTIALUNION)
 {
   flags |= (needs_resolution | has_stripped);
   stripped = strip;
@@ -2131,7 +2280,7 @@ void TypePartialUnion::encode(Encoder &encoder) const
 
 {
   encoder.openElement(ELEM_TYPE);
-  encodeBasic(metatype,encoder);
+  encodeBasic(metatype,-1,encoder);
   encoder.writeSignedInteger(ATTRIB_OFFSET, offset);
   container->encodeRef(encoder);
   encoder.closeElement(ELEM_TYPE);
@@ -2284,7 +2433,7 @@ void TypePointerRel::encode(Encoder &encoder) const
 
 {
   encoder.openElement(ELEM_TYPE);
-  encodeBasic(TYPE_PTRREL,encoder);	// Override the metatype for XML
+  encodeBasic(TYPE_PTRREL,-1,encoder);	// Override the metatype for XML
   if (wordsize != 1)
     encoder.writeUnsignedInteger(ATTRIB_WORDSIZE, wordsize);
   ptrto->encode(encoder);
@@ -2349,31 +2498,19 @@ Datatype *TypePointerRel::getPtrToFromParent(Datatype *base,int4 off,TypeFactory
 
 /// Turn on the data-type's function prototype
 /// \param tfact is the factory that owns \b this
-/// \param model is the prototype model
-/// \param outtype is the return type of the prototype
-/// \param intypes is the list of input parameters
-/// \param dotdotdot is true if the prototype takes variable arguments
+/// \param sig is the list of names and data-types making up the prototype
 /// \param voidtype is the reference "void" data-type
-void TypeCode::setPrototype(TypeFactory *tfact,ProtoModel *model,
-			    Datatype *outtype,const vector<Datatype *> &intypes,
-			    bool dotdotdot,Datatype *voidtype)
+void TypeCode::setPrototype(TypeFactory *tfact,const PrototypePieces &sig,Datatype *voidtype)
+
 {
   factory = tfact;
   flags |= variable_length;
   if (proto != (FuncProto *)0)
     delete proto;
   proto = new FuncProto();
-  proto->setInternal(model,voidtype);
-  vector<Datatype *> typelist;
-  vector<string> blanknames(intypes.size()+1);
-  if (outtype == (Datatype *)0)
-    typelist.push_back(voidtype);
-  else
-    typelist.push_back(outtype);
-  for(int4 i=0;i<intypes.size();++i)
-    typelist.push_back(intypes[i]);
+  proto->setInternal(sig.model,voidtype);
 
-  proto->updateAllTypes(blanknames,typelist,dotdotdot);
+  proto->updateAllTypes(sig);
   proto->setInputLock(true);
   proto->setOutputLock(true);
 }
@@ -2407,7 +2544,7 @@ TypeCode::TypeCode(const TypeCode &op) : Datatype(op)
   }
 }
 
-TypeCode::TypeCode(void) : Datatype(1,TYPE_CODE)
+TypeCode::TypeCode(void) : Datatype(1,1,TYPE_CODE)
 
 {
   proto = (FuncProto *)0;
@@ -2546,7 +2683,7 @@ void TypeCode::encode(Encoder &encoder) const
     return;
   }
   encoder.openElement(ELEM_TYPE);
-  encodeBasic(metatype,encoder);
+  encodeBasic(metatype,-1,encoder);
   if (proto != (FuncProto *)0)
     proto->encode(encoder);
   encoder.closeElement(ELEM_TYPE);
@@ -2658,7 +2795,7 @@ Datatype *TypeSpacebase::nearestArrayedComponentForward(int8 off,int8 *newoff,in
   symbolType = smallest->getSymbol()->getType();
   *newoff = addr.getOffset() - smallest->getAddr().getOffset();
   if (symbolType->getMetatype() == TYPE_ARRAY) {
-    *elSize = ((TypeArray *)symbolType)->getBase()->getSize();
+    *elSize = ((TypeArray *)symbolType)->getBase()->getAlignSize();
     return symbolType;
   }
   if (symbolType->getMetatype() == TYPE_STRUCT) {
@@ -2677,7 +2814,7 @@ Datatype *TypeSpacebase::nearestArrayedComponentBackward(int8 off,int8 *newoff,i
   if (subType == (Datatype *)0)
     return (Datatype *)0;
   if (subType->getMetatype() == TYPE_ARRAY) {
-    *elSize = ((TypeArray *)subType)->getBase()->getSize();
+    *elSize = ((TypeArray *)subType)->getBase()->getAlignSize();
     return subType;
   }
   if (subType->getMetatype() == TYPE_STRUCT) {
@@ -2731,7 +2868,7 @@ void TypeSpacebase::encode(Encoder &encoder) const
     return;
   }
   encoder.openElement(ELEM_TYPE);
-  encodeBasic(metatype,encoder);
+  encodeBasic(metatype,-1,encoder);
   encoder.writeSpace(ATTRIB_SPACE, spaceid);
   localframe.encode(encoder);
   encoder.closeElement(ELEM_TYPE);
@@ -2760,7 +2897,6 @@ TypeFactory::TypeFactory(Architecture *g)
   sizeOfLong = 0;
   sizeOfPointer = 0;
   sizeOfAltPointer = 0;
-  align = 0;
   enumsize = 0;
 
   clearCache();
@@ -2803,10 +2939,10 @@ void TypeFactory::setupSizes(void)
     sizeOfPointer = segOp->getInnerSize();
     sizeOfAltPointer = sizeOfPointer + segOp->getBaseSize();
   }
-  if (align == 0)
-    align = glb->getDefaultSize();
+  if (alignMap.empty())
+    setDefaultAlignmentMap();
   if (enumsize == 0) {
-    enumsize = align;
+    enumsize = glb->getDefaultSize();
     enumtype = TYPE_UINT;
   }
 }
@@ -2924,6 +3060,35 @@ TypeFactory::~TypeFactory(void)
   clear();
 }
 
+/// Return the alignment associated with a primitive data-type of the given size
+/// \param size is the aligned size in bytes of the primitive
+/// \return the expected alignment in bytes
+int4 TypeFactory::getAlignment(uint4 size) const
+
+{
+  if (size >= alignMap.size()) {
+    if (alignMap.empty())
+      throw LowlevelError("TypeFactory alignment map not initialized");
+    return alignMap[alignMap.size()-1];
+  }
+  return alignMap[size];
+}
+
+/// Return the amount of room a data-type takes up in memory, which may be larger than the
+/// raw number of bytes in the data-type.  This is the size consistent with the \b sizeof operator
+/// in C.
+/// \param size is the raw number of bytes in the data-type
+/// \return the aligned size
+int4 TypeFactory::getPrimitiveAlignSize(uint4 size) const
+
+{
+  int4 align = getAlignment(size);
+  uint4 mod = size % align;
+  if (mod != 0)
+    size += (align-mod);
+  return size;
+}
+
 /// Looking just within this container, find a Datatype by \b name and/or \b id.
 /// \param n is the name of the data-type
 /// \param id is the type id of the data-type
@@ -3021,7 +3186,7 @@ Datatype *TypeFactory::findAdd(Datatype &ct)
 
   if (ct.name.size()!=0) {	// If there is a name
     if (ct.id == 0)		// There must be an id
-      throw LowlevelError("Datatype must have a valid id");
+      throw LowlevelError("Datatype must have a valid id: "+ct.name);
     res = findByIdLocal(ct.name,ct.id); // Lookup type by it
     if (res != (Datatype *)0) { // If a type has this name
       if (0!=res->compareDependency( ct )) // Check if it is the same type
@@ -3035,6 +3200,10 @@ Datatype *TypeFactory::findAdd(Datatype &ct)
   }
 
   newtype = ct.clone();		// Add the new type to trees
+  if (newtype->alignment < 0) {
+    newtype->alignSize = getPrimitiveAlignSize(newtype->size);
+    newtype->alignment = getAlignment(newtype->alignSize);
+  }
   insert(newtype);
   return newtype;
 }
@@ -3075,10 +3244,11 @@ void TypeFactory::setDisplayFormat(Datatype *ct,uint4 format)
 /// This method should only be used on an incomplete structure. It will mark the structure as complete.
 /// \param fd is the list of fields to set
 /// \param ot is the TypeStruct object to modify
-/// \param fixedsize is 0 or the forced size of the structure
+/// \param fixedsize is -1 or the forced size of the structure
+/// \param fixedalign is -1 or the forced alignment for the structure
 /// \param flags are other flags to set on the structure
 /// \return true if modification was successful
-bool TypeFactory::setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,uint4 flags)
+bool TypeFactory::setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,int4 fixedalign,uint4 flags)
 
 {
   if (!ot->isIncomplete())
@@ -3105,15 +3275,9 @@ bool TypeFactory::setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,
   // We could check field overlapping here
 
   tree.erase(ot);
-  ot->setFields(fd);
+  ot->setFields(fd,fixedsize,fixedalign);
   ot->flags &= ~(uint4)Datatype::type_incomplete;
   ot->flags |= (flags & (Datatype::opaque_string | Datatype::variable_length | Datatype::type_incomplete));
-  if (fixedsize > 0) {		// If the caller is trying to force a size
-    if (fixedsize > ot->size)	// If the forced size is bigger than the size required for fields
-      ot->size = fixedsize;	//     Force the bigger size
-    else if (fixedsize < ot->size) // If the forced size is smaller, this is an error
-      throw LowlevelError("Trying to force too small a size on "+ot->getName());
-  }
   tree.insert(ot);
   recalcPointerSubmeta(ot, SUB_PTR);
   recalcPointerSubmeta(ot, SUB_PTR_STRUCT);
@@ -3124,10 +3288,11 @@ bool TypeFactory::setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,
 /// This method should only be used on an incomplete union. It will mark the union as complete.
 /// \param fd is the list of fields to set
 /// \param ot is the TypeUnion object to modify
-/// \param fixedsize is 0 or the forced size of the union
+/// \param fixedsize is -1 or the forced size of the union
+/// \param fixedalign is -1 or the forced alignment for the union
 /// \param flags are other flags to set on the union
 /// \return true if modification was successful
-bool TypeFactory::setFields(vector<TypeField> &fd,TypeUnion *ot,int4 fixedsize,uint4 flags)
+bool TypeFactory::setFields(vector<TypeField> &fd,TypeUnion *ot,int4 fixedsize,int4 fixedalign,uint4 flags)
 
 {
   if (!ot->isIncomplete())
@@ -3143,15 +3308,9 @@ bool TypeFactory::setFields(vector<TypeField> &fd,TypeUnion *ot,int4 fixedsize,u
   }
 
   tree.erase(ot);
-  ot->setFields(fd);
+  ot->setFields(fd,fixedsize,fixedalign);
   ot->flags &= ~(uint4)Datatype::type_incomplete;
   ot->flags |= (flags & (Datatype::variable_length | Datatype::type_incomplete));
-  if (fixedsize > 0) {		// If the caller is trying to force a size
-    if (fixedsize > ot->size)	// If the forced size is bigger than the size required for fields
-      ot->size = fixedsize;	//     Force the bigger size
-    else if (fixedsize < ot->size) // If the forced size is smaller, this is an error
-      throw LowlevelError("Trying to force too small a size on "+ot->getName());
-  }
   tree.insert(ot);
   return true;
 }
@@ -3600,17 +3759,12 @@ TypeSpacebase *TypeFactory::getTypeSpacebase(AddrSpace *id,const Address &addr)
 }
 
 /// Creates a TypeCode object and associates a specific function prototype with it.
-/// \param model is the prototype model associated with the function
-/// \param outtype is the return type of the function
-/// \param intypes is the array of input parameters of the function
-/// \param dotdotdot is true if the function takes variable arguments
+/// \param proto is the list of names, data-types, and other attributes of the prototype
 /// \return the TypeCode object
-TypeCode *TypeFactory::getTypeCode(ProtoModel *model,Datatype *outtype,
-				   const vector<Datatype *> &intypes,
-				   bool dotdotdot)
+TypeCode *TypeFactory::getTypeCode(const PrototypePieces &proto)
 {
   TypeCode tc;		// getFuncdata type with no name
-  tc.setPrototype(this,model,outtype,intypes,dotdotdot,getTypeVoid());
+  tc.setPrototype(this,proto,getTypeVoid());
   tc.markComplete();
   return (TypeCode *) findAdd(tc);
 }
@@ -3827,7 +3981,6 @@ void TypeFactory::encode(Encoder &encoder) const
   encoder.openElement(ELEM_TYPEGRP);
   encoder.writeSignedInteger(ATTRIB_INTSIZE, sizeOfInt);
   encoder.writeSignedInteger(ATTRIB_LONGSIZE, sizeOfLong);
-  encoder.writeSignedInteger(ATTRIB_STRUCTALIGN, align);
   encoder.writeSignedInteger(ATTRIB_ENUMSIZE, enumsize);
   encoder.writeBool(ATTRIB_ENUMSIGNED, (enumtype==TYPE_INT));
   for(iter=deporder.begin();iter!=deporder.end();++iter) {
@@ -3907,13 +4060,13 @@ Datatype *TypeFactory::decodeTypedef(Decoder &decoder)
 	TypeStruct *prevStruct = (TypeStruct *)prev;
 	TypeStruct *defedStruct = (TypeStruct *)defedType;
 	if (prevStruct->field.size() != defedStruct->field.size())
-	  setFields(defedStruct->field,prevStruct,defedStruct->size,defedStruct->flags);
+	  setFields(defedStruct->field,prevStruct,defedStruct->size,defedStruct->alignment,defedStruct->flags);
       }
       else {
 	TypeUnion *prevUnion = (TypeUnion *)prev;
 	TypeUnion *defedUnion = (TypeUnion *)defedType;
 	if (prevUnion->field.size() != defedUnion->field.size())
-	  setFields(defedUnion->field,prevUnion,defedUnion->size,defedUnion->flags);
+	  setFields(defedUnion->field,prevUnion,defedUnion->size,defedUnion->alignment,defedUnion->flags);
       }
       return prev;
     }
@@ -3945,7 +4098,7 @@ Datatype* TypeFactory::decodeStruct(Decoder &decoder,bool forcecore)
       throw LowlevelError("Redefinition of structure: " + ts.name);
   }
   else {		// If structure is a placeholder stub
-    if (!setFields(ts.field,(TypeStruct*)ct,ts.size,ts.flags)) // Define structure now by copying fields
+    if (!setFields(ts.field,(TypeStruct*)ct,ts.size,ts.alignment,ts.flags)) // Define structure now by copying fields
       throw LowlevelError("Bad structure definition");
   }
 //  decoder.closeElement(elemId);
@@ -3976,7 +4129,7 @@ Datatype* TypeFactory::decodeUnion(Decoder &decoder,bool forcecore)
       throw LowlevelError("Redefinition of union: " + tu.name);
   }
   else {		// If structure is a placeholder stub
-    if (!setFields(tu.field,(TypeUnion*)ct,tu.size,tu.flags)) // Define structure now by copying fields
+    if (!setFields(tu.field,(TypeUnion*)ct,tu.size,tu.alignment,tu.flags)) // Define structure now by copying fields
       throw LowlevelError("Bad union definition");
   }
 //  decoder.closeElement(elemId);
@@ -4154,7 +4307,6 @@ void TypeFactory::decode(Decoder &decoder)
 
   sizeOfInt = decoder.readSignedInteger(ATTRIB_INTSIZE);
   sizeOfLong = decoder.readSignedInteger(ATTRIB_LONGSIZE);
-  align = decoder.readSignedInteger(ATTRIB_STRUCTALIGN);
   enumsize = decoder.readSignedInteger(ATTRIB_ENUMSIZE);
   if (decoder.readBool(ATTRIB_ENUMSIGNED))
     enumtype = TYPE_INT;
@@ -4188,8 +4340,6 @@ void TypeFactory::decodeCoreTypes(Decoder &decoder)
 void TypeFactory::decodeDataOrganization(Decoder &decoder)
 
 {
-  uint4 defaultSize = glb->getDefaultSize();
-  align = 0;
   uint4 elemId = decoder.openElement(ELEM_DATA_ORGANIZATION);
   for(;;) {
     uint4 subId = decoder.openElement();
@@ -4204,15 +4354,7 @@ void TypeFactory::decodeDataOrganization(Decoder &decoder)
       sizeOfPointer = decoder.readSignedInteger(ATTRIB_VALUE);
     }
     else if (subId == ELEM_SIZE_ALIGNMENT_MAP) {
-      for(;;) {
-	uint4 mapId = decoder.openElement();
-	if (mapId != ELEM_ENTRY) break;
-	int4 sz = decoder.readSignedInteger(ATTRIB_SIZE);
-	int4 val = decoder.readSignedInteger(ATTRIB_ALIGNMENT);
-	if (sz <= defaultSize)
-	  align = val;
-	decoder.closeElement(mapId);
-      }
+      decodeAlignmentMap(decoder);
     }
     else {
       decoder.closeElementSkipping(subId);
@@ -4221,6 +4363,47 @@ void TypeFactory::decodeDataOrganization(Decoder &decoder)
     decoder.closeElement(subId);
   }
   decoder.closeElement(elemId);
+}
+
+/// Recover the map from data-type size to preferred alignment.
+/// \param decoder is the stream decoder
+void TypeFactory::decodeAlignmentMap(Decoder &decoder)
+
+{
+  alignMap.clear();
+  for(;;) {
+    uint4 mapId = decoder.openElement();
+    if (mapId != ELEM_ENTRY) break;
+    int4 sz = decoder.readSignedInteger(ATTRIB_SIZE);
+    int4 val = decoder.readSignedInteger(ATTRIB_ALIGNMENT);
+    while(alignMap.size() <= sz)
+      alignMap.push_back(-1);
+    alignMap[sz] = val;
+    decoder.closeElement(mapId);
+  }
+  int4 curAlign = 1;
+  for(int4 sz=1;sz < alignMap.size();++sz) {
+    int4 tmpAlign = alignMap[sz];
+    if (tmpAlign == -1)
+      alignMap[sz] = curAlign;	// Copy alignment from nearest explicitly set value
+    else
+      curAlign = tmpAlign;
+  }
+}
+
+/// The default is used if the compiler spec does not contain a \<size_alignment_map> element.
+void TypeFactory::setDefaultAlignmentMap(void)
+
+{
+  alignMap.resize(9,0);
+  alignMap[1] = 1;
+  alignMap[2] = 2;
+  alignMap[3] = 2;
+  alignMap[4] = 4;
+  alignMap[5] = 4;
+  alignMap[6] = 4;
+  alignMap[7] = 4;
+  alignMap[8] = 8;
 }
 
 /// Recover default enumeration properties (size and meta-type) from

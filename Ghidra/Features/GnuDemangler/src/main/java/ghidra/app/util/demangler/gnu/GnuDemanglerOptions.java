@@ -34,14 +34,15 @@ public class GnuDemanglerOptions extends DemanglerOptions {
 	public static final String GNU_DEMANGLER_V2_24 = "demangler_gnu_v2_24";
 
 	/**
-	 * Version 2.33.1 of the GNU demangler.  This version supports less formats than older versions.
+	 * Version 2.41 of the GNU demangler.  This version supports less formats than 
+	 * {@link #GNU_DEMANGLER_V2_24}.
 	 */
-	public static final String GNU_DEMANGLER_V2_33_1 = "demangler_gnu_v2_33_1";
+	public static final String GNU_DEMANGLER_V2_41 = "demangler_gnu_v2_41";
 
 	/**
 	 * The default version to use of the GNU demangler
 	 */
-	public static final String GNU_DEMANGLER_DEFAULT = GNU_DEMANGLER_V2_33_1;
+	public static final String GNU_DEMANGLER_DEFAULT = GNU_DEMANGLER_V2_41;
 
 	private final GnuDemanglerFormat format;
 	private final boolean isDeprecated;
@@ -112,7 +113,7 @@ public class GnuDemanglerOptions extends DemanglerOptions {
 	 * @return the name
 	 */
 	public String getDemanglerName() {
-		return isDeprecated ? GNU_DEMANGLER_V2_24 : GNU_DEMANGLER_V2_33_1;
+		return isDeprecated ? GNU_DEMANGLER_V2_24 : GNU_DEMANGLER_V2_41;
 	}
 
 	/**

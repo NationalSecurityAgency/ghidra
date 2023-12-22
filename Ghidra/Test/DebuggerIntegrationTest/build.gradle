@@ -1,0 +1,87 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
+apply plugin: 'eclipse'
+eclipse.project.name = '_Debugger Integration Test'
+
+
+/*********************************************************************************
+ * Build dependencies
+ *********************************************************************************/
+
+// There are tests in this module that require resources in Base:test. This
+// is a on-off type of situation so just add to the resources source set here.
+sourceSets {
+   integrationTest {
+     resources {
+       srcDirs += [project(':Base').sourceSets.test.resources]
+     }
+   }
+}
+
+processIntegrationTestResources {
+	duplicatesStrategy = 'exclude'
+}
+
+dependencies {
+	// integrationtest module may depend on other projects in this repo; add them
+	// here 
+	def ghidraPath = projectDir.getParentFile().getParentFile().path.replace(File.separator, "/") + "/";
+	
+	rootProject.subprojects { p ->
+		p.plugins.withType(JavaPlugin) {
+			def projectPath = p.projectDir.path.replace(File.separator, "/")
+			if (projectPath.startsWith(ghidraPath) && (
+				projectPath.contains("/Framework/") ||
+				projectPath.contains("/Features/") ||
+				projectPath.contains("/Debug/") ||
+				projectPath.contains("/Processors/"))) {
+
+				api p
+			}
+		}	
+	}
+
+	// some tests use classes in Base, FunctionGraph and PDB
+	testImplementation project(path: ':Base', configuration: 'testArtifacts')
+	testImplementation project(path: ':Base', configuration: 'integrationTestArtifacts')	
+	testImplementation project(path: ':FunctionGraph', configuration: 'testArtifacts')	
+	testImplementation project(path: ':PDB', configuration: 'testArtifacts')
+	testImplementation project(path: ':GnuDemangler', configuration: 'testArtifacts')
+
+	testImplementation project(path: ':Framework-TraceModeling', configuration: 'testArtifacts')
+	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
+	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
+	testImplementation project(path: ':Debugger', configuration: 'testArtifacts')
+	testImplementation project(path: ':Debugger-rmi-trace', configuration: 'testArtifacts')
+}
+
+// For Java 9, we must explicitly export references to the internal classes we are using.
+// We export them to all "unnamed" modules, which are modules that don't define themselves
+// as a new Java 9 style module.  Ghidra is currently using unnamed modules everywhere.
+ext.addExports([
+	'java.desktop/sun.awt=ALL-UNNAMED',
+	'java.desktop/sun.swing=ALL-UNNAMED',
+	'java.desktop/sun.java2d=ALL-UNNAMED'
+])
+
+integrationTest {
+	dependsOn { project(':Debugger-rmi-trace').assemblePyPackage }
+	dependsOn { project(':Debugger-agent-gdb').assemblePyPackage }
+	dependsOn { project(':Debugger-agent-lldb').assemblePyPackage }
+	dependsOn { project(':Debugger-agent-dbgeng').assemblePyPackage }
+}

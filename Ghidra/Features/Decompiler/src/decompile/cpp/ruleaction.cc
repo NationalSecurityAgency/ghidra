@@ -5313,6 +5313,7 @@ Varnode *RuleSLess2Zero::getHiBit(PcodeOp *op)
 ///  - `-1 s< (V & 0xf000)  =>  -1 s< V
 ///  - `CONCAT(V,W) s< 0    =>  V s< 0`
 ///  - `-1 s< CONCAT(V,W)   =>  -1 s> V`
+///  - `-1 s< (bool << #8*sz-1)   => !bool`
 ///
 /// There is a second set of forms where one side of the comparison is
 /// built out of a high and low piece, where the high piece determines the
@@ -5407,6 +5408,19 @@ int4 RuleSLess2Zero::applyOp(PcodeOp *op,Funcdata &data)
 	  return 0;
 	data.opSetInput(op, avn, 1);
 	data.opSetInput(op, data.newConstant(avn->getSize(),calc_mask(avn->getSize())), 0);
+	return 1;
+      }
+      else if (feedOpCode == CPUI_INT_LEFT) {
+	coeff = feedOp->getIn(1);
+	if (!coeff->isConstant() || coeff->getOffset() != lvn->getSize() * 8 - 1)
+	  return 0;
+	avn = feedOp->getIn(0);
+	if (!avn->isWritten() || !avn->getDef()->isBoolOutput())
+	  return 0;
+	// We have -1 s< (bool << #8*sz-1)
+	data.opSetOpcode(op, CPUI_BOOL_NEGATE);
+	data.opRemoveInput(op, 1);
+	data.opSetInput(op, avn, 0);
 	return 1;
       }
     }
@@ -5655,9 +5669,9 @@ bool AddTreeState::initAlternateForm(void)
   if (baseType->isVariableLength())
     size = 0;		// Open-ended size being pointed to, there will be no "multiples" component
   else
-    size = AddrSpace::byteToAddressInt(baseType->getSize(),ct->getWordSize());
+    size = AddrSpace::byteToAddressInt(baseType->getAlignSize(),ct->getWordSize());
   int4 unitsize = AddrSpace::addressToByteInt(1,ct->getWordSize());
-  isDegenerate = (baseType->getSize() <= unitsize && baseType->getSize() > 0);
+  isDegenerate = (baseType->getAlignSize() <= unitsize && baseType->getAlignSize() > 0);
   preventDistribution = false;
   clear();
   return true;
@@ -5685,7 +5699,7 @@ AddTreeState::AddTreeState(Funcdata &d,PcodeOp *op,int4 slot)
   if (baseType->isVariableLength())
     size = 0;		// Open-ended size being pointed to, there will be no "multiples" component
   else
-    size = AddrSpace::byteToAddressInt(baseType->getSize(),ct->getWordSize());
+    size = AddrSpace::byteToAddressInt(baseType->getAlignSize(),ct->getWordSize());
   correct = 0;
   offset = 0;
   valid = true;		// Valid until proven otherwise
@@ -5694,7 +5708,7 @@ AddTreeState::AddTreeState(Funcdata &d,PcodeOp *op,int4 slot)
   isSubtype = false;
   distributeOp = (PcodeOp *)0;
   int4 unitsize = AddrSpace::addressToByteInt(1,ct->getWordSize());
-  isDegenerate = (baseType->getSize() <= unitsize && baseType->getSize() > 0);
+  isDegenerate = (baseType->getAlignSize() <= unitsize && baseType->getAlignSize() > 0);
 }
 
 /// Even if the current base data-type is not an array, the pointer expression may incorporate
@@ -6075,7 +6089,7 @@ Varnode *AddTreeState::buildExtra(void)
 bool AddTreeState::buildDegenerate(void)
 
 {
-  if (baseType->getSize() < ct->getWordSize())
+  if (baseType->getAlignSize() < ct->getWordSize())
     // If the size is really less than scale, there is
     // probably some sort of padding going on
     return false;	// Don't transform at all
@@ -6549,7 +6563,7 @@ int4 RulePtraddUndo::applyOp(PcodeOp *op,Funcdata &data)
   basevn = op->getIn(0);
   tp = (TypePointer *)basevn->getTypeReadFacing(op);
   if (tp->getMetatype() == TYPE_PTR)								// Make sure we are still a pointer
-    if (tp->getPtrTo()->getSize()==AddrSpace::addressToByteInt(size,tp->getWordSize())) {	// of the correct size
+    if (tp->getPtrTo()->getAlignSize()==AddrSpace::addressToByteInt(size,tp->getWordSize())) {	// of the correct size
       Varnode *indVn = op->getIn(1);
       if ((!indVn->isConstant()) || (indVn->getOffset() != 0))					// and that index isn't zero
 	return 0;
@@ -9110,12 +9124,12 @@ bool RuleConditionalMove::BoolExpress::initialize(Varnode *vn)
   case CPUI_FLOAT_NOTEQUAL:
   case CPUI_FLOAT_LESS:
   case CPUI_FLOAT_LESSEQUAL:
-  case CPUI_FLOAT_NAN:
     in0 = op->getIn(0);
     in1 = op->getIn(1);
     optype = 2;
     break;
   case CPUI_BOOL_NEGATE:
+  case CPUI_FLOAT_NAN:
     in0 = op->getIn(0);
     optype = 1;
     break;

@@ -19,7 +19,10 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
 
+import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
+import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
 
 /**
  * This class represents a particular group of Symbols that came from the same PDB stream.  This
@@ -28,10 +31,24 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
  */
 public class SymbolGroup {
 
+	public static final int PUBLIC_GLOBAL_MODULE_NUMBER = 0;
+
+	private AbstractPdb pdb;
+
 	private Map<Long, AbstractMsSymbol> symbolsByOffset;
 	private int moduleNumber;
 	private List<Long> offsets;
 	private Map<Long, Integer> indexByOffset;
+
+	/**
+	 * Constructor
+	 * @param pdb the containing the symbols
+	 * @param moduleNumber The Module number (0 (PUBLIC_GLOBAL_MODULE_NUMBER) for public/global)
+	 */
+	public SymbolGroup(AbstractPdb pdb, int moduleNumber) {
+		this.pdb = pdb;
+		this.moduleNumber = moduleNumber;
+	}
 
 	/**
 	 * Constructor. The starting offset is set to zero.
@@ -47,7 +64,7 @@ public class SymbolGroup {
 	 * Constructor.
 	 * @param symbolsByOffset the Map used to initialize the constructor.
 	 * @param moduleNumber The Module number corresponding to the initializing Map
-	 * (0 for public/global Map).
+	 * (0 (PUBLIC_GLOBAL_MODULE_NUMBER) for public/global).
 	 * @param offset the offset location to start.
 	 */
 	public SymbolGroup(Map<Long, AbstractMsSymbol> symbolsByOffset, int moduleNumber, long offset) {
@@ -139,103 +156,38 @@ public class SymbolGroup {
 		writer.write("\nEnd SymbolGroup---------------------------------------------\n");
 	}
 
-	AbstractMsSymbolIterator iterator() {
-		return new AbstractMsSymbolIterator();
+	//==============================================================================================
+	public MsSymbolIterator getSymbolIterator() throws PdbException {
+		int streamNumber;
+		int startingOffset;
+		int lengthSymbols;
+		if (moduleNumber == 0) {
+			streamNumber = pdb.getDebugInfo().getSymbolRecordsStreamNumber();
+			startingOffset = 0;
+			lengthSymbols = Integer.MAX_VALUE;
+		}
+		else {
+			ModuleInformation moduleInfo =
+				pdb.getDebugInfo().getModuleInformation(moduleNumber);
+			streamNumber = moduleInfo.getStreamNumberDebugInformation();
+			lengthSymbols = moduleInfo.getSizeLocalSymbolsDebugInformation();
+			try {
+				startingOffset = pdb.getDebugInfo().getSymbolRecords().getCvSigLength(streamNumber);
+			}
+			catch (IOException e) {
+				Msg.warn(this, "PDB issue reading stream when initializing iterator for stream " +
+					streamNumber);
+				startingOffset = 0;
+				lengthSymbols = 0; // essentially null out iterator with zero length
+			}
+			catch (CancelledException e) {
+				startingOffset = 0;
+				lengthSymbols = 0; // essentially null out iterator with zero length
+			}
+		}
+		return new MsSymbolIterator(pdb, streamNumber, startingOffset, lengthSymbols);
 	}
 
 	//==============================================================================================
-	/**
-	 * Iterator for {@link SymbolGroup} that iterates through {@link AbstractMsSymbol
-	 * AbstractMsSymbols}
-	 */
-	class AbstractMsSymbolIterator implements Iterator<AbstractMsSymbol> {
 
-		private int nextIndex;
-		private long currentOffset;
-
-		public AbstractMsSymbolIterator() {
-			nextIndex = 0;
-			currentOffset = -1L;
-		}
-
-		@Override
-		public boolean hasNext() {
-			if (nextIndex == offsets.size()) {
-				return false;
-			}
-			return true;
-		}
-
-		/**
-		 * Peeks at and returns the next symbol without incrementing to the next.  If none are
-		 * left, then throws NoSuchElementException and reinitializes the state for a new
-		 * iteration.
-		 * @see #initGet()
-		 * @return the next symbol
-		 * @throws NoSuchElementException if there are no more elements
-		 */
-		public AbstractMsSymbol peek() throws NoSuchElementException {
-			if (nextIndex == offsets.size()) {
-				throw new NoSuchElementException("none left");
-			}
-			long temporaryOffset = offsets.get(nextIndex);
-			AbstractMsSymbol symbol = symbolsByOffset.get(temporaryOffset);
-			if (symbol == null) {
-				throw new NoSuchElementException("No symbol");
-			}
-			return symbol;
-		}
-
-		@Override
-		public AbstractMsSymbol next() {
-			if (nextIndex == offsets.size()) {
-				throw new NoSuchElementException("none left");
-			}
-			currentOffset = offsets.get(nextIndex++);
-			return symbolsByOffset.get(currentOffset);
-		}
-
-		/**
-		 * Returns the next symbol.  If none are left, then throws NoSuchElementException and
-		 * reinitializes the state for a new iteration.
-		 * @see #initGet()
-		 * @return the next symbol
-		 * @throws NoSuchElementException if there are no more elements
-		 */
-		long getCurrentOffset() {
-			return currentOffset;
-		}
-
-		/**
-		 * Initialized the mechanism for requesting the symbols in sequence.
-		 * @see #hasNext()
-		 */
-		void initGet() {
-			nextIndex = 0;
-		}
-
-		/**
-		 * Initialized the mechanism for requesting the symbols in sequence.
-		 * @param offset the offset to which to initialize the mechanism.
-		 * @see #hasNext()
-		 */
-		void initGetByOffset(long offset) {
-			int index = indexByOffset.get(offset);
-			if (index < 0) {
-				index = 0;
-			}
-			nextIndex = index;
-			currentOffset = offset;
-		}
-
-		// TODO: might not need this
-		/**
-		 * Returns the module number.
-		 * @return the module number.
-		 */
-		int getModuleNumber() {
-			return moduleNumber;
-		}
-
-	}
 }

@@ -48,15 +48,13 @@ public class AddressCorrelatorManager {
 		new FixedSizeMRUCachingFactory<Pair<Data, Data>, AddressCorrelation>(
 			key -> getDataCorrelator(key.first, key.second), DATA_CORRELATION_CACHE_SIZE);
 
-	public AddressCorrelatorManager(VTController controller) {
+	public AddressCorrelatorManager(VTSessionSupplier sessionSupplier) {
 		correlatorList = new ArrayList<AddressCorrelator>();
-		initializeAddressCorrelators(controller);
+		initializeAddressCorrelators(sessionSupplier);
 	}
 
-	private void initializeAddressCorrelators(VTController controller) {
-		// Put the CodeCompare address correlator that uses match info to handle exact matches
-		// so it is first in the list.
-		correlatorList.add(new ExactMatchAddressCorrelator(controller));
+	private void initializeAddressCorrelators(VTSessionSupplier sessionSupplier) {
+		correlatorList.add(new ExactMatchAddressCorrelator(sessionSupplier));
 		correlatorList.addAll(initializeAddressCorrelators());
 	}
 

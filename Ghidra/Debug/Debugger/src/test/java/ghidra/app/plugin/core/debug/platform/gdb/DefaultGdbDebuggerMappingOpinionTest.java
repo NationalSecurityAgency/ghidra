@@ -23,11 +23,11 @@ import java.util.stream.Collectors;
 
 import org.junit.Test;
 
-import ghidra.app.plugin.core.debug.mapping.DebuggerMappingOffer;
-import ghidra.app.plugin.core.debug.mapping.DebuggerMappingOpinion;
 import ghidra.app.plugin.core.debug.platform.gdb.DefaultGdbDebuggerMappingOpinion.GdbDefaultOffer;
 import ghidra.dbg.model.TestDebuggerObjectModel;
 import ghidra.dbg.model.TestTargetProcess;
+import ghidra.debug.api.model.DebuggerMappingOffer;
+import ghidra.debug.api.model.DebuggerMappingOpinion;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 

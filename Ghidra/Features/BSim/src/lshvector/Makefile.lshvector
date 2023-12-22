@@ -1,0 +1,25 @@
+# Locality Sensitive Hashing package
+# NOTE: This file cannot be executed in place. It is copied into a temporary
+#       directory with its source code and executed there.
+
+ifeq ($(PG_CONFIG),)
+default:
+	echo "You must specifiy PG_CONFIG"
+	false
+
+endif
+
+MODULE_big = lshvector
+OBJS= lsh.o weights.o binhash.o crc32.o
+
+EXTENSION = lshvector
+DATA = lshvector--1.0.sql
+
+REGRESS = lshvector
+
+EXTRA_CLEAN =
+
+SHLIB_LINK += $(filter -lm, $(LIBS))
+
+PGXS := $(shell $(PG_CONFIG) --pgxs)
+include $(PGXS)

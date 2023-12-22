@@ -449,7 +449,7 @@ void ScoreUnionFields::scoreTrialDown(const Trial &trial,bool lastLevel)
 		}
 	      }
 	      TypePointer *baseType = (TypePointer *)trial.fitType;
-	      if (baseType->getPtrTo()->getSize() == elSize) {
+	      if (baseType->getPtrTo()->getAlignSize() == elSize) {
 		score = 5;
 		resType = trial.fitType;
 	      }
@@ -601,7 +601,7 @@ void ScoreUnionFields::scoreTrialDown(const Trial &trial,bool lastLevel)
       if (meta == TYPE_PTR) {
 	if (trial.inslot == 0) {
 	  Datatype *ptrto = ((TypePointer *)trial.fitType)->getPtrTo();
-	  if (ptrto->getSize() == trial.op->getIn(2)->getOffset()) {
+	  if (ptrto->getAlignSize() == trial.op->getIn(2)->getOffset()) {
 	    score = 10;
 	    resType = trial.fitType;
 	  }
@@ -812,7 +812,7 @@ void ScoreUnionFields::scoreTrialUp(const Trial &trial,bool lastLevel)
     case CPUI_PTRADD:
       if (meta == TYPE_PTR) {
 	Datatype *ptrto = ((TypePointer *)trial.fitType)->getPtrTo();
-	if (ptrto->getSize() == def->getIn(2)->getOffset())
+	if (ptrto->getAlignSize() == def->getIn(2)->getOffset())
 	  score = 10;
 	else
 	  score = 2;
