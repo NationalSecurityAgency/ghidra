@@ -7,5 +7,5 @@ setlocal
 :: the physical memory available to the OS. Uncomment MAXMEM setting if non-default value is needed.
 ::set MAXMEM=2G
 
-call "%~dp0launch.bat" fg jdk DbgEngAgent "%MAXMEM%" "" agent.dbgeng.gadp.DbgEngGadpServerLaunchShim -H localhost -p 0
+call "%~dp0launch.bat" fg jdk DbgEngAgent "%MAXMEM%" "" agent.dbgeng.gadp.DbgEngGadpServerLaunchShim %*
 

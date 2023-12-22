@@ -150,6 +150,22 @@ public class FunctionComparisonModel {
 	 * @param function the function to remove
 	 */
 	public void removeFunction(Function function) {
+		doRemoveFunction(function);
+		fireModelChanged();
+	}
+
+	/**
+	 * Removes all the given functions from all comparisons in the model
+	 * @param functions the functions to remove
+	 */
+	public void removeFunctions(Collection<Function> functions) {
+		for (Function function : functions) {
+			doRemoveFunction(function);
+		}
+		fireModelChanged();
+	}
+
+	private void doRemoveFunction(Function function) {
 		List<FunctionComparison> comparisonsToRemove = new ArrayList<>();
 
 		Iterator<FunctionComparison> iter = comparisons.iterator();
@@ -167,8 +183,6 @@ public class FunctionComparisonModel {
 		}
 
 		comparisons.removeAll(comparisonsToRemove);
-
-		fireModelChanged();
 	}
 
 	/**
@@ -178,19 +192,14 @@ public class FunctionComparisonModel {
 	 * @param program the program to remove functions from
 	 */
 	public void removeFunctions(Program program) {
-		Set<Function> sources = getSourceFunctions();
-		Set<Function> targets = getTargetFunctions();
+		Set<Function> allFunctions = getSourceFunctions();
+		allFunctions.addAll(getTargetFunctions());
 
-		Set<Function> sourcesToRemove = sources.stream()
+		Set<Function> functionsToRemove = allFunctions.stream()
 				.filter(f -> f.getProgram().equals(program))
 				.collect(Collectors.toSet());
 
-		Set<Function> targetsToRemove = targets.stream()
-				.filter(f -> f.getProgram().equals(program))
-				.collect(Collectors.toSet());
-
-		sourcesToRemove.stream().forEach(f -> removeFunction(f));
-		targetsToRemove.stream().forEach(f -> removeFunction(f));
+		removeFunctions(functionsToRemove);
 	}
 
 	/**
@@ -280,8 +289,7 @@ public class FunctionComparisonModel {
 
 			// Remove any functions that already have an comparison in the 
 			// model; these will be ignored
-			functions.removeIf(f -> comparisons.stream()
-					.anyMatch(fc -> f.equals(fc.getSource())));
+			functions.removeIf(f -> comparisons.stream().anyMatch(fc -> f.equals(fc.getSource())));
 
 			monitor.setIndeterminate(false);
 			monitor.setMessage("Creating new comparisons");

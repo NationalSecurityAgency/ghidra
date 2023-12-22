@@ -66,8 +66,7 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 	 * @param provider the comparison provider associated with this panel
 	 * @param tool the active plugin tool
 	 */
-	public MultiFunctionComparisonPanel(MultiFunctionComparisonProvider provider,
-		PluginTool tool) {
+	public MultiFunctionComparisonPanel(MultiFunctionComparisonProvider provider, PluginTool tool) {
 		super(provider, tool, null, null);
 
 		JPanel choicePanel = new JPanel(new GridLayout(1, 2));
@@ -184,6 +183,21 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 		}
 
 		restoreSelection(targetFunctionsCB, selection);
+
+		// we don't want the initial target to match the source as that is a pointless comparison
+		fixupTargetSelectionToNotMatchSource(source);
+	}
+
+	private void fixupTargetSelectionToNotMatchSource(Function source) {
+		if (targetFunctionsCB.getSelectedItem() != source) {
+			return;
+		}
+		for (int i = 0; i < targetFunctionsCB.getItemCount(); i++) {
+			if (targetFunctionsCB.getItemAt(i) != source) {
+				targetFunctionsCB.setSelectedIndex(i);
+				return;
+			}
+		}
 	}
 
 	/**
@@ -312,7 +326,7 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 
 		@Override
 		public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-			boolean isSelected, boolean cellHasFocus) {
+				boolean isSelected, boolean cellHasFocus) {
 
 			if (value == null) {
 				// It's possible during a close program operation to have this 
@@ -329,9 +343,7 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 			String functionAddress = f.getBody().getMinAddress().toString();
 			String text = functionName + "@" + functionAddress + " (" + functionPathToProgram + ")";
 
-			return super.getListCellRendererComponent(list, text, index, isSelected,
-				cellHasFocus);
+			return super.getListCellRendererComponent(list, text, index, isSelected, cellHasFocus);
 		}
 	}
-
 }

@@ -1,0 +1,101 @@
+
+# Additional SPE Instructions for Devices that Support VLE
+# Freescale engineering bulletin EB689
+# https://www.nxp.com/docs/en/engineering-bulletin/EB689.pdf
+
+# additional SPE instructions that are implemented on devices with an e200z3 or e200z6 core that supports VLE
+# - Vector Floating-Point Single-Precision Multiply-Add
+# - Vector Floating-Point Single-Precision Multiply-Substract
+# - Vector Floating-Point Single-Precision Negative Multiply-Add
+# - Vector Floating-Point Single-Precision Negative Multiply-Substract
+# - Floating-Point Single-Precision Multiply-Add
+# - Floating-Point Single-Precision Multiply-Substract
+# - Floating-Point Single-Precision Negative Multiply-Add
+# - Floating-Point Single-Precision Negative Multiply-Substract
+
+
+
+# evfsmadd rD,rA,rB
+# Vector Floating-Point Single-Precision Multiply-Add
+:evfsmadd D,A,B is OP=4 & D & A & B & XOP_0_10=0x282
+{
+	local tmpAL:4 = A:4; local tmpAH:4 = A(4);
+	local tmpBL:4 = B:4; local tmpBH:4 = B(4);
+	local tmpDL:4 = D:4; local tmpDH:4 = D(4);
+
+	tmpDL = ((tmpAL f* tmpBL) f+ tmpDL);
+	tmpDH = ((tmpAH f* tmpBH) f+ tmpDH);
+	D = (zext(tmpDH) << 32) | zext(tmpDL);
+}
+
+# evfsmsub rD,rA,rB
+# Vector Floating-Point Single-Precision Multiply-Substract
+:evfsmsub D,A,B is OP=4 & D & A & B & XOP_0_10=0x283
+{
+	local tmpAL:4 = A:4; local tmpAH:4 = A(4);
+	local tmpBL:4 = B:4; local tmpBH:4 = B(4);
+	local tmpDL:4 = D:4; local tmpDH:4 = D(4);
+
+	tmpDL = ((tmpAL f* tmpBL) f- tmpDL);
+	tmpDH = ((tmpAH f* tmpBH) f- tmpDH);
+	D = (zext(tmpDH) << 32) | zext(tmpDL);
+}
+
+# evfsnmadd
+# Vector Floating-Point Single-Precision Negative Multiply-Add
+:evfsnmadd D,A,B is OP=4 & D & A & B & XOP_0_10=0x28A
+{
+	local tmpAL:4 = A:4; local tmpAH:4 = A(4);
+	local tmpBL:4 = B:4; local tmpBH:4 = B(4);
+	local tmpDL:4 = D:4; local tmpDH:4 = D(4);
+
+	tmpDL = f- ((tmpAL f* tmpBL) f+ tmpDL);
+	tmpDH = f- ((tmpAH f* tmpBH) f+ tmpDH);
+	D = (zext(tmpDH) << 32) | zext(tmpDL);
+}
+
+# evfsnmsub
+# Vector Floating-Point Single-Precision Negative Multiply-Substract
+:evfsnmsub D,A,B is OP=4 & D & A & B & XOP_0_10=0x28B
+{
+	local tmpAL:4 = A:4; local tmpAH:4 = A(4);
+	local tmpBL:4 = B:4; local tmpBH:4 = B(4);
+	local tmpDL:4 = D:4; local tmpDH:4 = D(4);
+
+	tmpDL = f- ((tmpAL f* tmpBL) f- tmpDL);
+	tmpDH = f- ((tmpAH f* tmpBH) f- tmpDH);
+	D = (zext(tmpDH) << 32) | zext(tmpDL);
+}
+
+# efsmadd rD,rA,rB
+# Floating-Point Single-Precision Multiply-Add
+:efsmadd D,A,B is OP=4 & D & A & B & XOP_0_10=0x2C2
+{
+	local lo:4 = (A:4 f* B:4) f+ D:4;
+	D = (D & 0xFFFFFFFF00000000) | zext(lo);
+}
+
+# efsmsub rD,rA,rB
+# Floating-Point Single-Precision Multiply-Substract
+:efsmsub D,A,B is OP=4 & D & A & B & XOP_0_10=0x2C3
+{
+	local lo:4 = (A:4 f* B:4) f- D:4;
+	D = (D & 0xFFFFFFFF00000000) | zext(lo);
+}
+
+# efsnmadd rD,rA,rB
+# Floating-Point Single-Precision Negative Multiply-Add
+:efsnmadd D,A,B is OP=4 & D & A & B & XOP_0_10=0x2CA
+{
+	local lo:4 = f- ((A:4 f* B:4) f+ D:4);
+	D = (D & 0xFFFFFFFF00000000) | zext(lo);
+}
+
+# efsnmsub rD,rA,rB
+# Floating-Point Single-Precision Negative Multiply-Substract
+:efsnmsub D,A,B is OP=4 & D & A & B & XOP_0_10=0x2CB
+{
+	local lo:4 = f- ((A:4 f* B:4) f- D:4);
+	D = (D & 0xFFFFFFFF00000000) | zext(lo);
+}
+

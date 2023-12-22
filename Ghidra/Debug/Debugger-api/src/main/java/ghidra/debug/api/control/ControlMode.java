@@ -91,8 +91,16 @@ public enum ControlMode {
 		}
 
 		@Override
+		public ControlMode modeOnChange(DebuggerCoordinates coordinates) {
+			if (coordinates.isAliveAndPresent()) {
+				return this;
+			}
+			return getAlternative(coordinates);
+		}
+
+		@Override
 		public boolean isSelectable(DebuggerCoordinates coordinates) {
-			return coordinates.isAliveAndPresent();
+			return coordinates.isAlive();
 		}
 
 		@Override
@@ -152,8 +160,16 @@ public enum ControlMode {
 		}
 
 		@Override
+		public ControlMode modeOnChange(DebuggerCoordinates coordinates) {
+			if (coordinates.isAliveAndPresent()) {
+				return this;
+			}
+			return getAlternative(coordinates);
+		}
+
+		@Override
 		public boolean isSelectable(DebuggerCoordinates coordinates) {
-			return coordinates.isAliveAndPresent();
+			return coordinates.isAlive();
 		}
 
 		@Override

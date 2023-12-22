@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+#
+# Command-line script for controlling (start/stop) the BSim database
+
+# maximum heap memory (may be increased)
+MAXMEM=768M
+
+# launch mode  (fg, bg, debug, debug-suspend)
+LAUNCH_MODE=fg
+
+VMARG_LIST="-Djava.awt.headless=true "
+
+# Resolve symbolic link if present and get the directory this script lives in.
+# NOTE: "readlink -f" is best but works on Linux only, "readlink" will only work if your PWD
+# contains the link you are calling (which is the best we can do on macOS), and the "echo" is the 
+# fallback, which doesn't attempt to do anything with links.
+SCRIPT_FILE="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
+SCRIPT_DIR="${SCRIPT_FILE%/*}"
+
+# Some JVM's with class data sharing enabled have issues with BSim starting with Ghidra's custom 
+# classloader, so we will disable sharing
+VMARG_LIST="-Xshare:off"
+
+${SCRIPT_DIR}/launch.sh $LAUNCH_MODE jdk "BSimControl" $MAXMEM "${VMARG_LIST}" ghidra.features.bsim.query.BSimControlLaunchable "$@"

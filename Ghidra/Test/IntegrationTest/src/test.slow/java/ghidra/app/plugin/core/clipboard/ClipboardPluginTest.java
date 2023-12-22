@@ -1401,8 +1401,8 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Point point = wrapper.getStartMouseDragLocation();
 		int startX = point.x;
 		int startY = point.y;
-
 		Point endPoint = wrapper.getEndMouseDragLocation();
+
 		int endX = endPoint.x;
 		int endY = endPoint.y;
 
@@ -1613,12 +1613,12 @@ public class ClipboardPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		@Override
 		public Point getStartMouseDragLocation() {
-			return new Point(100, 30);
+			return new Point(120, 30);
 		}
 
 		@Override
 		public Point getEndMouseDragLocation() {
-			return new Point(300, 30);
+			return new Point(320, 30);
 		}
 
 		@Override

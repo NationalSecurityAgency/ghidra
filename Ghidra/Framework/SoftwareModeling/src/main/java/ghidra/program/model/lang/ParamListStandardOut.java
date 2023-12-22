@@ -60,8 +60,8 @@ public class ParamListStandardOut extends ParamListStandard {
 			else {
 				assignAddressFallback(StorageClass.PTR, pointerType, false, status, store);
 				store.type = pointerType;
-				store.isIndirect = true;	// Signal that there is a hidden return
 			}
+			store.isIndirect = true;	// Signal that there is a hidden return
 			if (addAutoParams) {
 				ParameterPieces hiddenRet = new ParameterPieces();
 				hiddenRet.type = pointerType;

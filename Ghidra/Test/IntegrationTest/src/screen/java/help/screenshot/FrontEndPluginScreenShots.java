@@ -35,6 +35,7 @@ import docking.wizard.WizardManager;
 import docking.wizard.WizardPanel;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.archive.RestoreDialog;
+import ghidra.framework.Application;
 import ghidra.framework.data.DefaultProjectData;
 import ghidra.framework.data.GhidraFileData;
 import ghidra.framework.main.*;
@@ -56,7 +57,6 @@ import resources.MultiIcon;
 
 public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 	private static final String OTHER_PROJECT = "Other_Project";
-	private final static String TEMP_DIR = System.getProperty("java.io.tmpdir");
 	Icon icon = (Icon) getInstanceField("CONVERT_ICON", ProjectInfoDialog.class);
 
 	public FrontEndPluginScreenShots() {
@@ -659,6 +659,7 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 	@Test
 	public void testViewOtherProjects()
 			throws IOException, LockException, InvalidNameException, CancelledException {
+		String TEMP_DIR = Application.getUserTempDirectory().getAbsolutePath();
 
 		Project project = env.getProject();
 		program = env.getProgram("WinHelloCPP.exe");
@@ -692,6 +693,7 @@ public class FrontEndPluginScreenShots extends GhidraScreenShotGenerator {
 	@Test
 	public void testLinkOtherProject()
 			throws IOException, LockException, InvalidNameException, CancelledException {
+		String TEMP_DIR = Application.getUserTempDirectory().getAbsolutePath();
 
 		Project project = env.getProject();
 		program = env.getProgram("WinHelloCPP.exe");

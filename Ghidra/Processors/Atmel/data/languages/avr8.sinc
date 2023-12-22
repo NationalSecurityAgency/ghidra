@@ -739,11 +739,16 @@ define pcodeop decrypt;
 
 :des op4to7                      is phase=1 & ophi8=0x94 & oplow4=0xb & op4to7 {
 	val:1  = op4to7;
-	if (Hflg) goto <enc>;
-	R15R14R13R12R11R10R9R8 = decrypt(R7R6R5R4R3R2R1R0, val);
-	goto inst_next;
-  <enc>
-	R15R14R13R12R11R10R9R8 = encrypt(R7R6R5R4R3R2R1R0, val);
+	local key:8 = R15R14R13R12R11R10R9R8;
+	local result:16 = 0;
+	if (!Hflg) goto <enc>;
+	result = decrypt(R7R6R5R4R3R2R1R0, key, val);
+	goto <des_end>;
+<enc>
+	result = encrypt(R7R6R5R4R3R2R1R0, key, val);
+<des_end>
+	R7R6R5R4R3R2R1R0 = result(0);
+	R15R14R13R12R11R10R9R8 = result(8);
 }
 
 @if HASEIND == "1"

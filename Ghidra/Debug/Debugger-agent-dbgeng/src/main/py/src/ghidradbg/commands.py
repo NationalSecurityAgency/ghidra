@@ -494,7 +494,7 @@ def putreg():
         value = regs._get_register_by_index(i)
         try:
             values.append(mapper.map_value(nproc, name, value))
-            robj.set_value(name, value)
+            robj.set_value(name, hex(value))
         except Exception:
             pass
     return {'missing': STATE.trace.put_registers(space, values)}
@@ -867,6 +867,12 @@ def put_state(event_process):
     state = compute_proc_state(event_process)
     procobj.set_value('_state', state)
     procobj.insert()
+    tnum = util.selected_thread()
+    if tnum is not None:
+        ipath = THREAD_PATTERN.format(procnum=event_process, tnum=tnum)
+        threadobj = STATE.trace.create_object(ipath)
+        threadobj.set_value('_state', state)
+        threadobj.insert()
     STATE.require_tx().commit()
     STATE.reset_tx()
 
@@ -1334,7 +1340,7 @@ def repl():
             cmd = input().strip()
             if not cmd:
                 continue
-            dbg().cmd(cmd, quiet=False)
+            dbg().cmd(cmd, quiet=True)
             stat = dbg().exec_status()
             if stat != 'BREAK':
                 dbg().wait()

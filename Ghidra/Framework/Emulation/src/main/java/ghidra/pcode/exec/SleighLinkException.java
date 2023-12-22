@@ -19,7 +19,7 @@ import ghidra.program.model.pcode.PcodeOp;
 
 /**
  * An exception thrown by
- * {@link PcodeExecutor#executeCallother(PcodeOp, PcodeFrame, PcodeUseropLibrary) when a p-code
+ * {@link PcodeExecutor#executeCallother(PcodeOp, PcodeFrame, PcodeUseropLibrary)} when a p-code
  * userop turns up missing.
  */
 public class SleighLinkException extends RuntimeException {

@@ -110,7 +110,17 @@ public class FieldPanel extends JPanel
 		addKeyListener(new FieldPanelKeyAdapter());
 		addMouseListener(new FieldPanelMouseAdapter());
 		addMouseMotionListener(new FieldPanelMouseMotionAdapter());
-		addMouseWheelListener(new BigFieldPanelMouseWheelListener());
+
+		// This the default scroll wheel listener. Note: to work around a bug in the scroll pane,
+		// this component will not expand to entirely fill the parent scroll pane (See the
+		// IndexedScrollPane). This listener will handle scroll wheel events that happen over
+		// field panel. There is a similar listener to handle events that happen over the 
+		// IndexScrollPane
+		addMouseWheelListener(e -> {
+			mouseWheelMoved(e.getPreciseWheelRotation(), e.isShiftDown());
+			e.consume();
+		});
+
 		addFocusListener(new FieldPanelFocusListener());
 
 		setDoubleBuffered(false);
@@ -1387,6 +1397,46 @@ public class FieldPanel extends JPanel
 		return accessibleFieldPanel;
 	}
 
+	public void mouseWheelMoved(double preciseWheelRotation, boolean horizontal) {
+
+		Layout firstLayout = model.getLayout(BigInteger.ZERO);
+		if (firstLayout == null) {
+			return;	// nothing to scroll
+		}
+
+		int scrollUnit = firstLayout.getScrollableUnitIncrement(0, 1);
+		int scrollAmount = (int) (preciseWheelRotation * scrollUnit * MOUSEWHEEL_LINES_TO_SCROLL);
+
+		if (hoverHandler.isHoverShowing()) {
+			hoverHandler.scroll(scrollAmount);
+		}
+		else {
+			hoverHandler.stopHover();
+
+			if (horizontal && horizontalScrollingEnabled) {
+				scrollViewHorizontally(scrollAmount);
+			}
+			else {
+				scrollView(scrollAmount);
+			}
+		}
+	}
+
+	private void scrollViewHorizontally(int scrollAmount) {
+
+		JViewport vp = getViewport();
+		if (vp == null) {
+			// this will happen for Field Panels not placed inside of scroll panes
+			return;
+		}
+
+		Point pos = vp.getViewPosition();
+
+		// don't allow new x position to go negative or else you can scroll left past the beginning
+		int x = Math.max(0, pos.x + scrollAmount);
+		vp.setViewPosition(new Point(x, pos.y));
+	}
+
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
@@ -1750,50 +1800,6 @@ public class FieldPanel extends JPanel
 			// this prevents issues when some keybindings trigger new dialogs while selecting
 			selectionHandler.endSelectionSequence();
 			repaint();
-		}
-	}
-
-	private class BigFieldPanelMouseWheelListener implements MouseWheelListener {
-		@Override
-		public void mouseWheelMoved(MouseWheelEvent e) {
-			double wheelRotation = e.getPreciseWheelRotation();
-
-			Layout firstLayout = model.getLayout(BigInteger.ZERO);
-			int layoutScrollHt = firstLayout != null //
-					? firstLayout.getScrollableUnitIncrement(0, 1)
-					: 0;
-			int scrollAmount = (int) (wheelRotation * layoutScrollHt * MOUSEWHEEL_LINES_TO_SCROLL);
-			if (scrollAmount == 0) {
-				return;
-			}
-
-			if (hoverHandler.isHoverShowing()) {
-				hoverHandler.scroll(scrollAmount);
-			}
-			else {
-				hoverHandler.stopHover();
-
-				if (e.isShiftDown() && horizontalScrollingEnabled) {
-					scrollViewHorizontally(scrollAmount);
-				}
-				else {
-					scrollView(scrollAmount);
-				}
-			}
-			e.consume();
-		}
-
-		private void scrollViewHorizontally(int scrollAmount) {
-
-			JViewport vp = getViewport();
-			if (vp == null) {
-				// this will happen for Field Panels not placed inside of scroll panes
-				return;
-			}
-
-			// horizontal scroll (only move viewport)
-			Point pos = vp.getViewPosition();
-			vp.setViewPosition(new Point(Math.max(0, pos.x + scrollAmount), pos.y));
 		}
 	}
 

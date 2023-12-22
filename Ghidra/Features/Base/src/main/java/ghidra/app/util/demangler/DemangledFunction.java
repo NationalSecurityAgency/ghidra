@@ -24,9 +24,11 @@ import ghidra.app.cmd.function.*;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.PseudoDisassembler;
 import ghidra.program.database.data.DataTypeUtilities;
+import ghidra.program.database.data.ProgramBasedDataTypeManagerDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
@@ -55,6 +57,7 @@ public class DemangledFunction extends DemangledObject {
 	protected List<DemangledDataType> parameters = new ArrayList<>();
 	protected DemangledTemplate template;
 	protected boolean isOverloadedOperator = false;
+	protected SourceType signatureSourceType = SourceType.ANALYSIS;
 
 	/** Special constructor where it has a templated type before the parameter list */
 	private String templatedConstructorType;
@@ -67,9 +70,41 @@ public class DemangledFunction extends DemangledObject {
 	private boolean isTypeCast;
 	private String throwAttribute;
 
+	/**
+	 * Create a {@link DemangledFunction} instance which is marked with a 
+	 * signature {@link SourceType} of {@link SourceType#ANALYSIS} which will be used
+	 * when function signatures are applied to a program.  This source type may be changed
+	 * if needed using {@link #setSignatureSourceType(SourceType)}.  
+	 * The function name and namespace is always applied using a symbol source
+	 * of {@link SourceType#ANALYSIS}.
+	 * @param mangled original mangled symbol name
+	 * @param originalDemangled demangled function signature generally used when generating comments
+	 * @param name demangled function name
+	 */
 	public DemangledFunction(String mangled, String originalDemangled, String name) {
 		super(mangled, originalDemangled);
 		setName(name);
+	}
+
+	/**
+	 * Set signature {@link SourceType} of {@link SourceType#ANALYSIS} which will be used
+	 * when function signatures are applied to a program.  Specifying {@link SourceType#DEFAULT} 
+	 * will prevent function return and parameters from being applied but will still apply
+	 * calling convention name if specified.
+	 * @param signatureSourceType signature source type
+	 */
+	public void setSignatureSourceType(SourceType signatureSourceType) {
+		this.signatureSourceType = signatureSourceType;
+	}
+
+	/**
+	 * Get the signature source type which is used when applying the function signature
+	 * to a program. A value of {@link SourceType#DEFAULT} indicates that 
+	 * function return and parameters should not be applied.
+	 * @return signature source type
+	 */
+	public SourceType getSignatureSourceType() {
+		return signatureSourceType;
 	}
 
 	/**
@@ -433,6 +468,22 @@ public class DemangledFunction extends DemangledObject {
 			return true;
 		}
 
+		boolean hasCallingConvention = !CompilerSpec.isUnknownCallingConvention(callingConvention);
+		if (hasCallingConvention) {
+			// Ensure that calling convention name exists and can be used
+			ProgramBasedDataTypeManagerDB dtm =
+				(ProgramBasedDataTypeManagerDB) program.getDataTypeManager();
+			dtm.getCallingConventionID(callingConvention, false);
+		}
+
+		if (signatureSourceType == SourceType.DEFAULT) {
+			// Only apply calling convention if specified with DEFAULT source
+			if (hasCallingConvention) {
+				function.setCallingConvention(callingConvention);
+			}
+			return true;
+		}
+
 		Structure classStructure =
 			maybeUpdateCallingConventionAndCreateClass(program, function, options);
 
@@ -454,7 +505,8 @@ public class DemangledFunction extends DemangledObject {
 		}
 
 		ApplyFunctionSignatureCmd cmd = new ApplyFunctionSignatureCmd(function.getEntryPoint(),
-			signature, SourceType.IMPORTED, true, FunctionRenameOption.RENAME_IF_DEFAULT);
+			signature, signatureSourceType, true, false, DataTypeConflictHandler.DEFAULT_HANDLER,
+			FunctionRenameOption.RENAME_IF_DEFAULT);
 		cmd.applyTo(program);
 
 		return true;
@@ -594,8 +646,8 @@ public class DemangledFunction extends DemangledObject {
 		return null;
 	}
 
-	private Structure maybeUpdateCallingConventionAndCreateClass(Program program,
-			Function function, DemanglerOptions options) {
+	private Structure maybeUpdateCallingConventionAndCreateClass(Program program, Function function,
+			DemanglerOptions options) {
 
 		String convention = validateCallingConvention(program, function, options);
 		if (convention == null) {

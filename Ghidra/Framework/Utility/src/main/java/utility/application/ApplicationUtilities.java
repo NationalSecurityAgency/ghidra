@@ -23,11 +23,27 @@ import generic.jar.ResourceFile;
 import ghidra.framework.*;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
+import utilities.util.FileUtilities;
 
 /**
  * Utility class for default application things.
  */
 public class ApplicationUtilities {
+
+	/**
+	 * Name of system property used to override the location of the user temporary directory
+	 */
+	public static final String PROPERTY_TEMP_DIR = "application.tempdir";
+
+	/**
+	 * Name of system property used to override the location of the user cache directory
+	 */
+	public static final String PROPERTY_CACHE_DIR = "application.cachedir";
+
+	/**
+	 * Name of system property used to override the location of the user settings directory
+	 */
+	public static final String PROPERTY_SETTINGS_DIR = "application.settingsdir";
 
 	/**
 	 * Searches for default application root directories.
@@ -137,85 +153,145 @@ public class ApplicationUtilities {
 	}
 
 	/**
-	 * Gets the default application's user temp directory.
+	 * Gets the application's default user temp directory.
+	 * <p>
+	 * NOTE: This method does not create the directory.
 	 * 
-	 * @param applicationProperties The application properties.
-	 * @return The default application's user temp directory.
-	 * @throws FileNotFoundException if the user temp directory could not be determined.
+	 * @param applicationName The application name.
+	 * @return The application's default user temp directory. The returned {@link File} will 
+	 *   represent an absolute path.
+	 * @throws FileNotFoundException if the absolute path of the user temp directory could not be 
+	 *   determined.
 	 */
-	public static File getDefaultUserTempDir(ApplicationProperties applicationProperties)
-			throws FileNotFoundException {
-		String tmpdir = System.getProperty("java.io.tmpdir");
-		if (tmpdir == null || tmpdir.isEmpty()) {
-			throw new FileNotFoundException("System property \"java.io.tmpdir\" is not set!");
+	public static File getDefaultUserTempDir(String applicationName) throws FileNotFoundException {
+
+		String appName = applicationName.toLowerCase();
+
+		// Look for Ghidra-specific system property
+		File tempOverrideDir = getSystemPropertyFile(PROPERTY_TEMP_DIR, false);
+		if (tempOverrideDir != null) {
+			return new File(tempOverrideDir, getUserSpecificDirName(tempOverrideDir, appName));
 		}
-		return new File(tmpdir,
-			SystemUtilities.getUserName() + "-" + applicationProperties.getApplicationName());
+
+		// Look for XDG environment variable
+		File xdgRuntimeDir = getEnvFile(XdgUtils.XDG_RUNTIME_DIR, false);
+		if (xdgRuntimeDir != null) {
+			return new File(xdgRuntimeDir, getUserSpecificDirName(xdgRuntimeDir, appName));
+		}
+
+		File javaTmpDir = getJavaTmpDir();
+		return new File(javaTmpDir, getUserSpecificDirName(javaTmpDir, appName));
 	}
 
 	/**
-	 * Gets the default application's user cache directory.
+	 * Gets the application's default user cache directory.
+	 * <p>
+	 * NOTE: This method does not create the directory.
 	 * 
 	 * @param applicationProperties The application properties.
-	 * @return The default application's user cache directory.
-	 * @throws FileNotFoundException if the user cache directory could not be determined.
+	 * @return The application's default user cache directory. The returned {@link File} will 
+	 *   represent an absolute path.
+	 * @throws FileNotFoundException if the absolute path of the user cache directory could not be 
+	 *   determined.
 	 */
 	public static File getDefaultUserCacheDir(ApplicationProperties applicationProperties)
 			throws FileNotFoundException {
 
-		// Look for preset cache directory
-		String cachedir = System.getProperty("application.cachedir", "").trim();
-		if (!cachedir.isEmpty()) {
-			return new File(cachedir,
-				SystemUtilities.getUserName() + "-" + applicationProperties.getApplicationName());
+		String appName = applicationProperties.getApplicationName().toLowerCase();
+
+		// Look for Ghidra-specific system property
+		File cacheOverrideDir = getSystemPropertyFile(PROPERTY_CACHE_DIR, false);
+		if (cacheOverrideDir != null) {
+			return new File(cacheOverrideDir, getUserSpecificDirName(cacheOverrideDir, appName));
 		}
 
-		// Handle Windows specially
-		if (OperatingSystem.CURRENT_OPERATING_SYSTEM == OperatingSystem.WINDOWS) {
-			File localAppDataDir = null;
-			String localAppDataDirPath = System.getenv("LOCALAPPDATA"); // e.g., /Users/myname/AppData/Local
-			if (localAppDataDirPath != null && !localAppDataDirPath.isEmpty()) {
-				localAppDataDir = new File(localAppDataDirPath);
-			}
-			else {
-				String userHome = System.getProperty("user.home");
-				if (userHome != null) {
-					localAppDataDir = new File(userHome, "AppData\\Local");
-					if (!localAppDataDir.isDirectory()) {
-						localAppDataDir = new File(userHome, "Local Settings");
-					}
-				}
-			}
-			if (localAppDataDir != null && localAppDataDir.isDirectory()) {
-				return new File(localAppDataDir, applicationProperties.getApplicationName());
-			}
+		// Look for XDG environment variable
+		File xdgCacheHomeDir = getEnvFile(XdgUtils.XDG_CACHE_HOME, false);
+		if (xdgCacheHomeDir != null) {
+			return new File(xdgCacheHomeDir, getUserSpecificDirName(xdgCacheHomeDir, appName));
 		}
-
-		// Use user temp directory if platform specific scheme does not exist above or it failed
-		return getDefaultUserTempDir(applicationProperties);
+		
+		// Use platform-specific default location
+		String userDirName = SystemUtilities.getUserName() + "-" + appName;
+		return switch (OperatingSystem.CURRENT_OPERATING_SYSTEM) {
+			case WINDOWS -> new File(getEnvFile("LOCALAPPDATA", true), appName);
+			case LINUX -> new File("/var/tmp/" + userDirName);
+			case MAC_OS_X -> new File("/var/tmp/" + userDirName);
+			default -> throw new FileNotFoundException(
+				"Failed to find the user cache directory: Unsupported operating system.");
+		};
 	}
 
 	/**
-	 * Gets the default application's user settings directory.
+	 * Gets the application's default user settings directory.
+	 * <p>
+	 * NOTE: This method does not create the directory.
 	 * 
 	 * @param applicationProperties The application properties.
 	 * @param installationDirectory The application installation directory.
-	 * @return The application's user settings directory.
-	 * @throws FileNotFoundException if the user settings directory could not be determined.
+	 * @return The application's default user settings directory. The returned {@link File} will
+	 *   represent an absolute path.
+	 * @throws FileNotFoundException if the absolute path of the user settings directory could not 
+	 *   be determined.
 	 */
 	public static File getDefaultUserSettingsDir(ApplicationProperties applicationProperties,
 			ResourceFile installationDirectory) throws FileNotFoundException {
 
-		String homedir = System.getProperty("user.home");
-		if (homedir == null || homedir.isEmpty()) {
-			throw new FileNotFoundException("System property \"user.home\" is not set!");
+		String appName = applicationProperties.getApplicationName().toLowerCase();
+		ApplicationIdentifier applicationIdentifier =
+			new ApplicationIdentifier(applicationProperties);
+		String versionedName = applicationIdentifier.toString();
+		if (SystemUtilities.isInDevelopmentMode()) {
+			// Add the application's installation directory name to this variable, so that each 
+			// branch's project user directory is unique.
+			versionedName += "_location_" + installationDirectory.getName();
 		}
+
+		// Look for Ghidra-specific system property
+		File settingsOverrideDir = getSystemPropertyFile(PROPERTY_SETTINGS_DIR, false);
+		if (settingsOverrideDir != null) {
+			return new File(settingsOverrideDir,
+				getUserSpecificDirName(settingsOverrideDir, appName) + "/" + versionedName);
+		}
+
+		// Look for XDG environment variable
+		File xdgConfigHomeDir = getEnvFile(XdgUtils.XDG_CONFIG_HOME, false);
+		if (xdgConfigHomeDir != null) {
+			return new File(xdgConfigHomeDir,
+				getUserSpecificDirName(xdgConfigHomeDir, appName) + "/" + versionedName);
+		}
+
+		File userHomeDir = getJavaUserHomeDir();
+		String versionedSubdir = appName + "/" + versionedName;
+		return switch (OperatingSystem.CURRENT_OPERATING_SYSTEM) {
+			case WINDOWS -> new File(getEnvFile("APPDATA", true), versionedSubdir);
+			case LINUX -> new File(userHomeDir, ".config/" + versionedSubdir);
+			case MAC_OS_X -> new File(userHomeDir, "Library/" + versionedSubdir);
+			default -> throw new FileNotFoundException(
+				"Failed to find the user settings directory: Unsupported operating system.");
+		};
+	}
+
+	/**
+	 * Gets the application's legacy (pre-Ghida 11.1) user settings directory.
+	 * <p>
+	 * NOTE: This method does not create the directory.
+	 * 
+	 * @param applicationProperties The application properties.
+	 * @param installationDirectory The application installation directory.
+	 * @return The application's legacy user settings directory. The returned {@link File} will 
+	 *   represent an absolute path.
+	 * @throws FileNotFoundException if the absolute path of the legacy user settings directory 
+	 *   could not be determined.
+	 */
+	public static File getLegacyUserSettingsDir(ApplicationProperties applicationProperties,
+			ResourceFile installationDirectory) throws FileNotFoundException {
 
 		ApplicationIdentifier applicationIdentifier =
 			new ApplicationIdentifier(applicationProperties);
 
 		File userSettingsParentDir =
-			new File(homedir, "." + applicationIdentifier.getApplicationName());
+			new File(getJavaUserHomeDir(), "." + applicationIdentifier.getApplicationName());
 
 		String userSettingsDirName = "." + applicationIdentifier;
 
@@ -226,5 +302,109 @@ public class ApplicationUtilities {
 		}
 
 		return new File(userSettingsParentDir, userSettingsDirName);
+	}
+
+	/**
+	 * Gets Java's temporary directory in absolute form
+	 * 
+	 * @return Java's temporary directory in absolute form
+	 * @throws FileNotFoundException if Java's temporary directory is not defined or it is not an
+	 *   absolute path
+	 */
+	private static File getJavaTmpDir() throws FileNotFoundException {
+		return getSystemPropertyFile("java.io.tmpdir", true);
+	}
+
+	/**
+	 * Gets Java's user home directory in absolute form
+	 * 
+	 * @return Java's user home directory in absolute form
+	 * @throws FileNotFoundException if Java's user home directory is not defined or it is not an
+	 *   absolute path
+	 */
+	private static File getJavaUserHomeDir() throws FileNotFoundException {
+		return getSystemPropertyFile("user.home", true);
+	}
+
+	/**
+	 * Gets the absolute form {@link File} value of the system property by the given name
+	 * 
+	 * @param name The system property name
+	 * @param required True if given system property is required to be set; otherwise, false
+	 * @return The absolute form {@link File} value of the system property by the given name, or 
+	 *   null if it isn't set
+	 * @throws FileNotFoundException if the property value was not an absolute path, or if it is
+	 *   required and not set
+	 */
+	private static File getSystemPropertyFile(String name, boolean required)
+			throws FileNotFoundException {
+		String path = System.getProperty(name);
+		if (path == null || path.isBlank()) {
+			if (required) {
+				throw new FileNotFoundException(
+					"Required system property \"%s\" is not set!".formatted(name));
+			}
+			return null;
+		}
+		path = path.trim();
+		File file = new File(path);
+		if (!file.isAbsolute()) {
+			throw new FileNotFoundException(
+				"System property \"%s\" is not an absolute path: \"%s\"".formatted(name, path));
+		}
+		return file;
+	}
+
+	/**
+	 * Gets the absolute form {@link File} value of the environment variable by the given name
+	 * 
+	 * @param name The environment variable name
+	 * @param required True if the given environment variable is required to be set; otherwise,
+	 *   false
+	 * @return The absolute form {@link File} value of the environment variable by the given name,
+	 *   or null if it isn't set
+	 * @throws FileNotFoundException if the property value was not an absolute path, or if it is
+	 *   required and not set
+	 */
+	private static File getEnvFile(String name, boolean required) throws FileNotFoundException {
+		String path = System.getenv(name);
+		if (path == null || path.isBlank()) {
+			if (required) {
+				throw new FileNotFoundException(
+					"Required environment variable \"%s\" is not set!".formatted(name));
+			}
+			return null;
+		}
+		path = path.trim();
+		File file = new File(path);
+		if (!file.isAbsolute()) {
+			throw new FileNotFoundException(
+				"Environment variable \"%s\" is not an absolute path: \"%s\"".formatted(name,
+					path));
+		}
+		return file;
+	}
+
+	/**
+	 * Gets a directory name that can be used to create a user-specific sub-directory in 
+	 * {@code parentDir}. If the {@code parentDir} is contained within the user's home directory, 
+	 * the given {@code appName} can simply be used since it will live in a user-specific location. 
+	 * Otherwise, the user's name will get prepended to the {@code appName} so it does not collide 
+	 * with other users' directories in the shared directory space.
+	 * 
+	 * @param parentDir The parent directory where we'd like to create a user-specific sub-directory
+	 * @param appName The application name
+	 * @return A directory name that can be used to create a user-specific sub-directory in 
+	 *   {@code parentDir}.
+	 * @throws FileNotFoundException if Java's user home directory is not defined or it is not an 
+	 *   absolute path
+	 */
+	private static String getUserSpecificDirName(File parentDir, String appName)
+			throws FileNotFoundException {
+		String userSpecificDirName = appName;
+		if (!FileUtilities.isPathContainedWithin(getJavaUserHomeDir(), parentDir)) {
+			userSpecificDirName = SystemUtilities.getUserName() + "-" + appName;
+		}
+		return userSpecificDirName;
 	}
 }

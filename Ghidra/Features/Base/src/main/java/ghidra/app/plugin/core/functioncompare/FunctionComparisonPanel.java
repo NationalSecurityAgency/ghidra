@@ -688,43 +688,16 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	 */
 	private List<CodeComparisonPanel<? extends FieldPanelCoordinator>> getCodeComparisonPanels() {
 		if (codeComparisonPanels == null) {
-			codeComparisonPanels = new ArrayList<>();
-			Set<CodeComparisonPanel<? extends FieldPanelCoordinator>> instances =
-				createAllPossibleCodeComparisonPanels();
-
-			// Put all panels in CodeComparisonPanel list; at same time, get a
-			// list of superseded panels.
-			ArrayList<Class<? extends CodeComparisonPanel<? extends FieldPanelCoordinator>>> classesOfPanelsToSupersede =
-				new ArrayList<>();
-			for (CodeComparisonPanel<? extends FieldPanelCoordinator> codeComparisonPanel : instances) {
-				codeComparisonPanels.add(codeComparisonPanel);
-				Class<? extends CodeComparisonPanel<? extends FieldPanelCoordinator>> panelThisSupersedes =
-					codeComparisonPanel.getPanelThisSupersedes();
-				if (panelThisSupersedes != null) {
-					classesOfPanelsToSupersede.add(panelThisSupersedes);
-				}
-			}
-
-			// Now go back through the panels and remove those that another one wants to supersede.
-			Iterator<CodeComparisonPanel<? extends FieldPanelCoordinator>> iterator =
-				codeComparisonPanels.iterator();
-			while (iterator.hasNext()) {
-				CodeComparisonPanel<? extends FieldPanelCoordinator> codeComparisonPanel =
-					iterator.next();
-				if (classesOfPanelsToSupersede.contains(codeComparisonPanel.getClass())) {
-					// Remove the superseded panel.
-					iterator.remove();
-				}
-			}
-
+			codeComparisonPanels = createAllPossibleCodeComparisonPanels();
 			codeComparisonPanels.sort((p1, p2) -> p1.getTitle().compareTo(p2.getTitle()));
 		}
 		return codeComparisonPanels;
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private Set<CodeComparisonPanel<? extends FieldPanelCoordinator>> createAllPossibleCodeComparisonPanels() {
-		Set<CodeComparisonPanel<? extends FieldPanelCoordinator>> instances = new HashSet<>();
+	private ArrayList<CodeComparisonPanel<? extends FieldPanelCoordinator>> createAllPossibleCodeComparisonPanels() {
+		ArrayList<CodeComparisonPanel<? extends FieldPanelCoordinator>> instances =
+			new ArrayList<>();
 		List<Class<? extends CodeComparisonPanel>> classes =
 			ClassSearcher.getClasses(CodeComparisonPanel.class);
 		for (Class<? extends CodeComparisonPanel> panelClass : classes) {

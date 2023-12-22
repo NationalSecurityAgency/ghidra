@@ -101,7 +101,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		}
 		lastTxId = txId;
 
-		if (isAlreadyImported(program)) {
+		if (isAlreadyAnalyzed(program)) {
 			Msg.info(this, "Golang analysis already performed, skipping.");
 			return false;
 		}
@@ -796,12 +796,12 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 	}
 
 	/**
-	 * Returns true if DWARF has already been imported into the specified program.
+	 * Returns true if Golang analysis has already been performed for the specified program.
 	 * 
 	 * @param program {@link Program} to check
-	 * @return true if DWARF has already been imported, false if not yet
+	 * @return true if analysis has already been performed, false if not yet
 	 */
-	public static boolean isAlreadyImported(Program program) {
+	public static boolean isAlreadyAnalyzed(Program program) {
 		Options options = program.getOptions(Program.PROGRAM_INFO);
 		return options.getBoolean(ANALYZED_FLAG_OPTION_NAME, false);
 	}

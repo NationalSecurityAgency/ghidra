@@ -67,8 +67,8 @@ class CallingConventionDBAdapterV0 extends CallingConventionDBAdapter {
 		String tableName = tablePrefix + CALLING_CONVENTION_TABLE_NAME;
 		if (create) {
 			// No additional indexed fields.
-			callingConventionTable = handle.createTable(tableName,
-				V0_CALLING_CONVENTION_SCHEMA, new int[] {});
+			callingConventionTable =
+				handle.createTable(tableName, V0_CALLING_CONVENTION_SCHEMA, new int[] {});
 		}
 		else {
 			callingConventionTable = handle.getTable(tableName);
@@ -138,7 +138,7 @@ class CallingConventionDBAdapterV0 extends CallingConventionDBAdapter {
 
 	@Override
 	byte getCallingConventionId(String name, Consumer<String> conventionAdded) throws IOException {
-		if (name == null || name.equals(CompilerSpec.CALLING_CONVENTION_unknown)) {
+		if (CompilerSpec.isUnknownCallingConvention(name)) {
 			return UNKNOWN_CALLING_CONVENTION_ID;
 		}
 		else if (name.equals(CompilerSpec.CALLING_CONVENTION_default)) {

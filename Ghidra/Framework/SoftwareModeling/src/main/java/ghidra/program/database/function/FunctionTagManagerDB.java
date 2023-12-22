@@ -214,13 +214,13 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 
 	private void incrementCountCache(FunctionTag tag) {
 		if (tagCountCache != null) {
-			tagCountCache.get(tag).count++;
+			tagCountCache.get(tag).increment();
 		}
 	}
 
 	private void decrementCountCache(FunctionTag tag) {
 		if (tagCountCache != null) {
-			tagCountCache.get(tag).count--;
+			tagCountCache.get(tag).decrement();
 		}
 	}
 
@@ -383,8 +383,8 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 
 		while (functionRecords.hasNext()) {
 			DBRecord mappingRecord = functionRecords.next();
-			DBRecord tagRecord = functionTagAdapter.getRecord(
-				mappingRecord.getLongValue(FunctionTagMappingAdapter.TAG_ID_COL));
+			DBRecord tagRecord = functionTagAdapter
+					.getRecord(mappingRecord.getLongValue(FunctionTagMappingAdapter.TAG_ID_COL));
 			tags.add(getFunctionTagFromCache(tagRecord));
 		}
 		return tags;
@@ -403,7 +403,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 				buildTagCountCache();
 			}
 			Counter counter = tagCountCache.get(tag);
-			return counter.count;
+			return counter.count();
 		}
 		catch (IOException e) {
 			dbError(e);
@@ -421,7 +421,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 			DBRecord mappingRecord = records.next();
 			long tagId = mappingRecord.getLongValue(FunctionTagMappingAdapter.TAG_ID_COL);
 			FunctionTag tag = getFunctionTag(tagId);
-			map.get(tag).count++;
+			map.get(tag).increment();
 		}
 		tagCountCache = map;
 	}

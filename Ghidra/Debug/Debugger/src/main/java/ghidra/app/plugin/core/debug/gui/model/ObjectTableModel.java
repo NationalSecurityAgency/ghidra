@@ -21,9 +21,8 @@ import java.util.stream.*;
 
 import org.apache.commons.lang3.ArrayUtils;
 
-import docking.widgets.table.DynamicTableColumn;
+import docking.widgets.table.*;
 import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
-import docking.widgets.table.TableColumnDescriptor;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.columns.*;
 import ghidra.dbg.target.schema.SchemaContext;
@@ -321,7 +320,7 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		@Override
 		public String getHtmlDisplay() {
 			return "<html>" +
-				HTMLUtilities.escapeHTML(display.getPrimitiveValueDisplay(value.getValue()));
+				HTMLUtilities.escapeHTML(display.getPrimitiveValueDisplay(value.getValue()), true);
 		}
 
 		@Override
@@ -581,9 +580,9 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 	@Override
 	protected TableColumnDescriptor<ValueRow> createTableColumnDescriptor() {
 		TableColumnDescriptor<ValueRow> descriptor = new TableColumnDescriptor<>();
-		descriptor.addVisibleColumn(new TraceValueKeyColumn());
+		descriptor.addVisibleColumn(new TraceValueKeyColumn(), 1, true);
 		descriptor.addVisibleColumn(new TraceValueValColumn());
-		descriptor.addVisibleColumn(new TraceValueLifeColumn());
+		descriptor.addVisibleColumn(new TraceValueLifeColumn(), 2, true);
 		descriptor.addHiddenColumn(new TraceValueLifePlotColumn());
 		return descriptor;
 	}

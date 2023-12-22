@@ -479,6 +479,14 @@ public class DWARFProgram implements Closeable {
 		String workingName = ensureSafeNameLength(name);
 		workingName = GoSymbolName.fixGolangSpecialSymbolnameChars(workingName);
 
+		if (diea.getCompilationUnit()
+				.getCompileUnit()
+				.getLanguage() == DWARFSourceLanguage.DW_LANG_Rust &&
+			workingName.startsWith("{impl#") && parentDNI != null) {
+			// if matches a Rust {impl#NN} name, skip it and re-use the parent name
+			return parentDNI;
+		}
+
 		DWARFNameInfo result =
 			parentDNI.createChild(origName, workingName, DWARFUtil.getSymbolTypeFromDIE(diea));
 		return result;

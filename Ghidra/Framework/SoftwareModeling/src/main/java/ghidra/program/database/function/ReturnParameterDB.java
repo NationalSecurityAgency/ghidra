@@ -18,6 +18,7 @@ package ghidra.program.database.function;
 import java.io.IOException;
 
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.DynamicVariableStorage;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.ChangeManager;
@@ -45,8 +46,8 @@ public class ReturnParameterDB extends ParameterDB {
 	}
 
 	@Override
-	public void setName(String name, SourceType source) throws DuplicateNameException,
-			InvalidInputException {
+	public void setName(String name, SourceType source)
+			throws DuplicateNameException, InvalidInputException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -81,10 +82,9 @@ public class ReturnParameterDB extends ParameterDB {
 				newStorage = VariableStorage.UNASSIGNED_STORAGE;
 			}
 			Program program = function.getProgram();
-			type =
-				VariableUtilities.checkDataType(type,
-					newStorage.isVoidStorage() || newStorage.isUnassignedStorage(), getLength(),
-					program);
+			type = VariableUtilities.checkDataType(type,
+				newStorage.isVoidStorage() || newStorage.isUnassignedStorage(), getLength(),
+				program);
 			if (!newStorage.isUnassignedStorage()) {
 				newStorage = VariableUtilities.checkStorage(function, newStorage, type, force);
 			}
@@ -161,6 +161,19 @@ public class ReturnParameterDB extends ParameterDB {
 	@Override
 	public DataType getFormalDataType() {
 		return dataType;
+	}
+
+	@Override
+	public DataType getDataType() {
+		if (storage == DynamicVariableStorage.INDIRECT_VOID_STORAGE) {
+			return VoidDataType.dataType;
+		}
+		return super.getDataType();
+	}
+
+	@Override
+	public boolean isForcedIndirect() {
+		return storage.isForcedIndirect();
 	}
 
 	@Override

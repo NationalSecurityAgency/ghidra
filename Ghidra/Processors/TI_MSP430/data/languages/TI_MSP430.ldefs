@@ -12,7 +12,8 @@
             id="TI_MSP430:LE:16:default">
     <description>TI MSP430 16-Bit MicroController</description>
     <compiler name="default" spec="TI_MSP430.cspec" id="default"/>
-    <external_name tool="gnu" name="msp:430X"/>
+    <external_name tool="gnu" name="msp:14"/>
+    <external_name tool="DWARF.register.mapping.file" name="TI_MSP430.dwarf"/>
     <external_name tool="IDA-PRO" name="msp430"/>
   </language>
   <language processor="TI_MSP430X"
@@ -26,6 +27,8 @@
             id="TI_MSP430X:LE:32:default">
     <description>TI MSP430X 20-Bit MicroController</description>
     <compiler name="default" spec="TI_MSP430X.cspec" id="default"/>
+    <external_name tool="gnu" name="msp:14"/>
     <external_name tool="IDA-PRO" name="msp430"/>
+    <external_name tool="DWARF.register.mapping.file" name="TI_MSP430X.dwarf"/>
   </language>
 </language_definitions>

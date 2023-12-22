@@ -704,7 +704,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 		}
 
 		public void close() throws IOException {
-			File tempFile = File.createTempFile("jarBuilder", "treeIDX");
+			File tempFile = Application.createTempFile("jarBuilder", "treeIDX");
 			classTree.trim();
 			classTree.saveFile(tempFile);
 			try {

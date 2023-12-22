@@ -36,7 +36,7 @@ class HookState(object):
 
 
 class ProcessState(object):
-    __slots__ = ('first', 'regions', 'modules', 'threads', 'breaks', 'watches', 'visited')
+    __slots__ = ('first', 'regions', 'modules', 'threads', 'breaks', 'watches', 'visited', 'waiting')
 
     def __init__(self):
         self.first = True
@@ -48,8 +48,10 @@ class ProcessState(object):
         self.watches = False
         # For frames and threads that have already been synced since last stop
         self.visited = set()
+        self.waiting = True
 
     def record(self, description=None):
+        #print("RECORDING")
         first = self.first
         self.first = False
         if description is not None:
@@ -72,7 +74,7 @@ class ProcessState(object):
             hashable_frame = (thread, frame)
             if first or hashable_frame not in self.visited:
                 self.visited.add(hashable_frame)
-        if first or self.regions or self.threads or self.modules:
+        if first or self.regions:
             commands.put_regions()
             self.regions = False
         if first or self.modules:
@@ -122,7 +124,6 @@ PROC_STATE = {}
 
 def on_state_changed(*args):
     #print("ON_STATE_CHANGED")
-    #print(args[0])
     if args[0] == DbgEng.DEBUG_CES_CURRENT_THREAD:
         return on_thread_selected(args)
     elif args[0] == DbgEng.DEBUG_CES_BREAKPOINTS:
@@ -131,8 +132,12 @@ def on_state_changed(*args):
         util.set_convenience_variable('output-radix', args[1])
         return DbgEng.DEBUG_STATUS_GO
     elif args[0] == DbgEng.DEBUG_CES_EXECUTION_STATUS:
+        proc = util.selected_process()
         if args[1] & DbgEng.DEBUG_STATUS_INSIDE_WAIT:
+            PROC_STATE[proc].waiting = True
             return DbgEng.DEBUG_STATUS_GO
+        PROC_STATE[proc].waiting = False
+        commands.put_state(proc)
         if args[1] == DbgEng.DEBUG_STATUS_BREAK:
             return on_stop(args)
         else:
@@ -246,8 +251,13 @@ def on_thread_selected(*args):
         return
     with commands.STATE.client.batch():
         with trace.open_tx("Thread {}.{} selected".format(nproc, nthrd)):
-            PROC_STATE[nproc].record()
-            commands.activate()
+            commands.put_state(nproc)
+            state = PROC_STATE[nproc]
+            if state.waiting:
+                state.record_continued()
+            else:
+                state.record()
+                commands.activate()
 
 
 def on_register_changed(regnum):

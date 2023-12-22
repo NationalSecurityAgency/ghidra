@@ -176,10 +176,6 @@
 			<tocdef id="DebuggerPlatformPlugin" text="Platform Selection"
 			        sortgroup="p2"
 			        target="help/topics/DebuggerPlatformPlugin/DebuggerPlatformPlugin.html" />
-			
-			<tocdef id="DebuggerBots" text="Bots: Workflow Automation" 
-			        sortgroup="q" 
-			        target="help/topics/DebuggerBots/DebuggerBots.html" />
 		</tocdef>
 	</tocref>
 </tocroot>

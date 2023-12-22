@@ -27,6 +27,7 @@ import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.formats.gfilesystem.fileinfo.FileAttribute;
 import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
+import ghidra.framework.Application;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
@@ -76,7 +77,7 @@ public class JavaClassDecompilerFileSystem implements GFileSystem {
 			throws CancelledException, IOException {
 		File tempDir = null;
 		try {
-			tempDir = FileUtilities.createTempDirectory("JavaClassDecompilerFileSystem");
+			tempDir = new File(Application.getUserTempDirectory(), "JavaClassDecompilerFileSystem");
 
 			File tempClassFile = new File(tempDir, containerFSRL.getName());
 			FSUtilities.copyByteProviderToFile(provider, tempClassFile, monitor);

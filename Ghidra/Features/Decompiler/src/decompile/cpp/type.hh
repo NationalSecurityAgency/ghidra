@@ -192,7 +192,7 @@ protected:
   int4 alignment;		///< Byte alignment expected for \b this data-type in addressable memory
   int4 alignSize;		///< Size of data-type rounded up to a multiple of \b alignment
   void decodeBasic(Decoder &decoder);	///< Recover basic data-type properties
-  void encodeBasic(type_metatype meta,Encoder &encoder) const;	///< Encode basic data-type properties
+  void encodeBasic(type_metatype meta,int4 align,Encoder &encoder) const;	///< Encode basic data-type properties
   void encodeTypedef(Encoder &encoder) const;	///< Encode \b this as a \e typedef element to a stream
   void markComplete(void) { flags &= ~(uint4)type_incomplete; }		///< Mark \b this data-type as completely defined
   void setDisplayFormat(uint4 format);		///< Set a specific display format
@@ -491,7 +491,7 @@ class TypeStruct : public Datatype {
 protected:
   friend class TypeFactory;
   vector<TypeField> field;			///< The list of fields
-  void setFields(const vector<TypeField> &fd);	///< Establish fields for \b this
+  void setFields(const vector<TypeField> &fd,int4 fixedSize,int4 fixedAlign);	///< Establish fields for \b this
   int4 getFieldIter(int4 off) const;		///< Get index into field list
   int4 getLowerBoundField(int4 off) const;	///< Get index of last field before or equal to given offset
   void decodeFields(Decoder &decoder,TypeFactory &typegrp);	///< Restore fields from a stream
@@ -526,7 +526,7 @@ class TypeUnion : public Datatype {
 protected:
   friend class TypeFactory;
   vector<TypeField> field;			///< The list of fields
-  void setFields(const vector<TypeField> &fd);	///< Establish fields for \b this
+  void setFields(const vector<TypeField> &fd,int4 fixedSize,int4 fixedAlign);	///< Establish fields for \b this
   void decodeFields(Decoder &decoder,TypeFactory &typegrp);	///< Restore fields from a stream
 public:
   TypeUnion(const TypeUnion &op);	///< Construct from another TypeUnion
@@ -746,8 +746,8 @@ public:
   Datatype *findByName(const string &n);		///< Return type of given name
   Datatype *setName(Datatype *ct,const string &n); 	///< Set the given types name
   void setDisplayFormat(Datatype *ct,uint4 format);	///< Set the display format associated with the given data-type
-  bool setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,uint4 flags);	///< Set fields on a TypeStruct
-  bool setFields(vector<TypeField> &fd,TypeUnion *ot,int4 fixedsize,uint4 flags);	///< Set fields on a TypeUnion
+  bool setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,int4 fixedalign,uint4 flags);	///< Set fields on a TypeStruct
+  bool setFields(vector<TypeField> &fd,TypeUnion *ot,int4 fixedsize,int4 fixedalign,uint4 flags);	///< Set fields on a TypeUnion
   void setPrototype(const FuncProto *fp,TypeCode *newCode,uint4 flags);	///< Set the prototype on a TypeCode
   bool setEnumValues(const vector<string> &namelist,
 		      const vector<uintb> &vallist,

@@ -42,7 +42,7 @@ public abstract class AbstractEmuUnixFile<T> implements EmuUnixFile<T> {
 	 * TODO: Technically, a file can be hardlinked to several pathnames, but for simplicity, or for
 	 * diagnostics, we let the file know its own original name.
 	 * 
-	 * @see AbstractEmuUnixFileSystem#newFile(String)
+	 * @see AbstractEmuUnixFileSystem#newFile(String, int)
 	 * @param pathname the pathname of the file
 	 * @param mode the mode of the file
 	 */

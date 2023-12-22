@@ -32,6 +32,7 @@ import ghidra.dbg.target.TargetRegisterBank;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 import ghidra.dbg.util.ConversionUtils;
+import ghidra.docking.settings.FormatSettingsDefinition;
 
 @TargetObjectSchemaInfo(
 	name = "RegisterContainer",
@@ -170,7 +171,13 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 
 	private void changeAttrs(DbgModelTargetRegister reg, BigInteger value) {
 		String oldval = (String) reg.getCachedAttributes().get(VALUE_ATTRIBUTE_NAME);
-		String valstr = Long.toUnsignedString(value.longValue(), 16);  //value.toString(16);
+		int bitLength = reg.getBitLength();
+		boolean negative = value.signum() < 0;
+		if (negative) {
+			// force use of unsigned value
+			value = value.add(BigInteger.valueOf(2).pow(bitLength));
+		}
+		String valstr = value.toString(16);
 		String newval = (value.longValue() == 0) ? reg.getName()
 				: reg.getName() + " : " + valstr;
 		reg.changeAttributes(List.of(), Map.of( //

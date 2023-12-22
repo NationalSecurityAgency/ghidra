@@ -26,8 +26,8 @@ eclipse.project.name = 'Framework Generic'
 
 dependencies {
 	api project(':Utility')
-	api "com.google.guava:guava:31.1-jre"
-	api 'com.google.guava:failureaccess:1.0.1'
+	api "com.google.guava:guava:32.1.3-jre"
+	api "com.google.guava:failureaccess:1.0.1"
 	api "org.jdom:jdom-legacy:1.1.3"
 	api "org.apache.logging.log4j:log4j-api:2.17.1"
 	api "org.apache.logging.log4j:log4j-core:2.17.1"
@@ -37,12 +37,17 @@ dependencies {
 	api "org.apache.commons:commons-text:1.10.0"
 	api "commons-io:commons-io:2.11.0"	
 	api "com.google.code.gson:gson:2.9.0"
-	api 'org.bouncycastle:bcpkix-jdk15on:1.69' // requires bcutil and bcprov
-	api 'org.bouncycastle:bcprov-jdk15on:1.69'
-	api 'org.bouncycastle:bcutil-jdk15on:1.69'
+	api "org.bouncycastle:bcpkix-jdk15on:1.69" // requires bcutil and bcprov
+	api "org.bouncycastle:bcprov-jdk15on:1.69"
+	api "org.bouncycastle:bcutil-jdk15on:1.69"
 	
-
 	compileOnly "junit:junit:4.12"
+	
+	constraints {
+		api("com.google.guava:guava") {
+			attributes {
+				attribute(TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE, objects.named(TargetJvmEnvironment, TargetJvmEnvironment.STANDARD_JVM))
+			}
+		}
+	}
 }
-
-

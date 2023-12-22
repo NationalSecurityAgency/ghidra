@@ -138,8 +138,8 @@ public class HTMLUtilities {
 		"<!-- LINK " + LINK_PLACEHOLDER_CONTENT + " -->";
 	public static final String LINK_PLACEHOLDER_CLOSE = "<!-- /LINK -->";
 
-	public static String HTML_SPACE = "&nbsp;";
-	public static String HTML_NEW_LINE = BR;
+	public static final String HTML_SPACE = "&nbsp;";
+	public static final String HTML_NEW_LINE = BR;
 
 	/**
 	 * Marks the given text as HTML in order to be rendered thusly by Java widgets.
@@ -595,13 +595,17 @@ public class HTMLUtilities {
 	 * <p>
 	 *  
 	 * @param text plain-text that might have some characters that should NOT be interpreted as HTML
+	 * @param makeSpacesNonBreaking true to convert spaces into {@value #HTML_SPACE}
 	 * @return string with any html characters replaced with equivalents
 	 */
-	public static String escapeHTML(String text) {
+	public static String escapeHTML(String text, boolean makeSpacesNonBreaking) {
 
 		StringBuilder buffer = new StringBuilder(text.length());
 		text.codePoints().forEach(cp -> {
 			switch (cp) {
+				case ' ':
+					buffer.append(makeSpacesNonBreaking ? HTML_SPACE : " ");
+					break;
 				case '&':
 					buffer.append("&amp;");
 					break;
@@ -625,6 +629,17 @@ public class HTMLUtilities {
 		});
 
 		return buffer.toString();
+	}
+
+	/**
+	 * Escapes any HTML special characters in the specified text.
+	 * 
+	 * @param text plain-text that might have some characters that should NOT be interpreted as HTML
+	 * @return string with any html characters replaced with equivalents
+	 * @see #escapeHTML(String, boolean)
+	 */
+	public static String escapeHTML(String text) {
+		return escapeHTML(text, false);
 	}
 
 	/**

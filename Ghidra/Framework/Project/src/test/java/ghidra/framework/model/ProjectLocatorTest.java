@@ -25,6 +25,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
+import ghidra.framework.Application;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.protocol.ghidra.Handler;
 
@@ -120,7 +121,7 @@ public class ProjectLocatorTest extends AbstractGenericTest {
 	@Test
 	public void testTempPath() throws MalformedURLException {
 
-		String tmpPath = System.getProperty("java.io.tmpdir").replace("\\", "/");
+		String tmpPath = Application.getUserTempDirectory().getAbsolutePath().replace("\\", "/");
 		if (!tmpPath.startsWith("/")) {
 			tmpPath = "/" + tmpPath;
 		}

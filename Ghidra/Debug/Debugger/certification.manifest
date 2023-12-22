@@ -11,10 +11,10 @@ src/main/help/help/TOC_Source.xml||GHIDRA||||END|
 src/main/help/help/topics/Debugger/Debugger.html||GHIDRA||||END|
 src/main/help/help/topics/Debugger/GettingStarted.html||GHIDRA||||END|
 src/main/help/help/topics/Debugger/Troubleshooting.html||GHIDRA||||END|
-src/main/help/help/topics/DebuggerBots/DebuggerBots.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/DebuggerBreakpointMarkerPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/images/DebuggerBreakpointMarkerPlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/images/DebuggerDecompilerBreakpointMargin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/images/DebuggerFunctionGraphBreakpointMargin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/images/DebuggerPlaceBreakpointDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointsPlugin/DebuggerBreakpointsPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointsPlugin/images/DebuggerBreakpointsPlugin.png||GHIDRA||||END|
@@ -141,7 +141,6 @@ src/main/resources/images/stepover.png||GHIDRA||||END|
 src/main/resources/images/system-switch-user.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/thread.png||GHIDRA||||END|
 src/main/resources/images/time.png||FAMFAMFAM Icons - CC 2.5||||END|
-src/main/resources/images/write-disabled.png||GHIDRA||||END|
 src/main/resources/images/write-emulator.png||GHIDRA||||END|
 src/main/resources/images/write-target.png||GHIDRA||||END|
 src/main/resources/images/write-trace.png||Tango Icons - Public Domain||||END|

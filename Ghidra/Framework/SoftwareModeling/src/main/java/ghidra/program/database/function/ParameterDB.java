@@ -54,10 +54,10 @@ class ParameterDB extends VariableDB implements Parameter {
 	@Override
 	public DataType getDataType() {
 		DataType dt = getFormalDataType();
-		VariableStorage varStorage = getVariableStorage();
-		if (varStorage.isForcedIndirect()) {
+		if (isForcedIndirect()) {
 			Program program = function.getProgram();
 			DataTypeManager dtm = program.getDataTypeManager();
+			VariableStorage varStorage = getVariableStorage();
 			int ptrSize = varStorage.size();
 			if (ptrSize != dtm.getDataOrganization().getPointerSize()) {
 				dt = dtm.getPointer(dt, ptrSize);

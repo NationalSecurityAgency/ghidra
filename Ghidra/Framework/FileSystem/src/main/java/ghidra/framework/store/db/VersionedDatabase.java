@@ -23,6 +23,7 @@ import org.apache.logging.log4j.Logger;
 import db.DBHandle;
 import db.Database;
 import db.buffers.*;
+import ghidra.framework.Application;
 import ghidra.framework.store.local.ItemSerializer;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -417,7 +418,8 @@ public class VersionedDatabase extends Database {
 			else {
 				BufferFile bf = openBufferFile(version, -1);
 				try {
-					File tmpFile = File.createTempFile("ghidra", LocalBufferFile.TEMP_FILE_EXT);
+					File tmpFile =
+						Application.createTempFile("ghidra", LocalBufferFile.TEMP_FILE_EXT);
 					tmpFile.delete();
 					BufferFile tmpBf = new LocalBufferFile(tmpFile, bf.getBufferSize());
 					boolean success = false;
@@ -425,17 +427,9 @@ public class VersionedDatabase extends Database {
 						LocalBufferFile.copyFile(bf, tmpBf, null, monitor);
 						tmpBf.close();
 
-						InputStream itemIn = new FileInputStream(tmpFile);
-						try {
+						try (InputStream itemIn = new FileInputStream(tmpFile)) {
 							ItemSerializer.outputItem(name, contentType, filetype, tmpFile.length(),
 								itemIn, outputFile, monitor);
-						}
-						finally {
-							try {
-								itemIn.close();
-							}
-							catch (IOException e) {
-							}
 						}
 						success = true;
 					}

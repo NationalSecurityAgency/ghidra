@@ -7,6 +7,7 @@ data/languages/SPEF_SCR.sinc||GHIDRA||||END|
 data/languages/SPE_APU.sinc||GHIDRA||||END|
 data/languages/SPE_EFSD.sinc||GHIDRA||||END|
 data/languages/SPE_EFV.sinc||GHIDRA||||END|
+data/languages/SPE_FloatMulAdd.sinc||GHIDRA||||END|
 data/languages/Scalar_SPFP.sinc||GHIDRA||||END|
 data/languages/altivec.sinc||GHIDRA||||END|
 data/languages/evx.sinc||GHIDRA||||END|
@@ -27,6 +28,10 @@ data/languages/ppc_32_e500_be.cspec||GHIDRA||||END|
 data/languages/ppc_32_e500_be.slaspec||GHIDRA||||END|
 data/languages/ppc_32_e500_le.cspec||GHIDRA||||END|
 data/languages/ppc_32_e500_le.slaspec||GHIDRA||||END|
+data/languages/ppc_32_e500mc_be.cspec||GHIDRA||||END|
+data/languages/ppc_32_e500mc_be.slaspec||GHIDRA||||END|
+data/languages/ppc_32_e500mc_le.cspec||GHIDRA||||END|
+data/languages/ppc_32_e500mc_le.slaspec||GHIDRA||||END|
 data/languages/ppc_32_le.cspec||GHIDRA||||END|
 data/languages/ppc_32_le.slaspec||GHIDRA||||END|
 data/languages/ppc_32_mpc8270.pspec||GHIDRA||||END|

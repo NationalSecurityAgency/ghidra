@@ -21,7 +21,8 @@ public class RustConstants {
 	public static final CategoryPath RUST_CATEGORYPATH = new CategoryPath("/rust");
 	public static final byte[] RUST_SIGNATURE_1 = "RUST_BACKTRACE".getBytes();
 	public static final byte[] RUST_SIGNATURE_2 = "/rustc/".getBytes();
-	public static final String RUST_EXTENSIONS_PATH = "/extensions/rust/";
+	public static final String RUST_EXTENSIONS_PATH = "extensions/rust/";
 	public static final String RUST_EXTENSIONS_UNIX = "unix";
 	public static final String RUST_EXTENSIONS_WINDOWS = "windows";
+	public static final String RUST_COMPILER = "rustc";
 }

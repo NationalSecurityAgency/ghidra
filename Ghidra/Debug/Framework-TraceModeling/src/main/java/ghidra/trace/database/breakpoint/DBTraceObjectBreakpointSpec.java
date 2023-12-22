@@ -15,12 +15,11 @@
  */
 package ghidra.trace.database.breakpoint;
 
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import ghidra.dbg.target.TargetBreakpointSpec;
-import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.*;
+import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.database.target.DBTraceObject;
@@ -44,12 +43,21 @@ import ghidra.util.exception.DuplicateNameException;
 
 public class DBTraceObjectBreakpointSpec
 		implements TraceObjectBreakpointSpec, DBTraceObjectInterface {
+	private static final Map<TargetObjectSchema, Set<String>> KEYS_BY_SCHEMA = new WeakHashMap<>();
+
 	private final DBTraceObject object;
+	private final Set<String> keys;
 
 	private TraceBreakpointKindSet kinds = TraceBreakpointKindSet.of();
 
 	public DBTraceObjectBreakpointSpec(DBTraceObject object) {
 		this.object = object;
+		TargetObjectSchema schema = object.getTargetSchema();
+		synchronized (KEYS_BY_SCHEMA) {
+			keys = KEYS_BY_SCHEMA.computeIfAbsent(schema, s -> Set.of(
+				schema.checkAliasedAttribute(TargetBreakpointSpec.KINDS_ATTRIBUTE_NAME),
+				schema.checkAliasedAttribute(TargetTogglable.ENABLED_ATTRIBUTE_NAME)));
+		}
 	}
 
 	@Override
@@ -238,8 +246,7 @@ public class DBTraceObjectBreakpointSpec
 				TraceObjectChangeType.VALUE_CREATED.cast(rec);
 			TraceObjectValue affected = cast.getAffectedObject();
 			String key = affected.getEntryKey();
-			boolean applies = TargetBreakpointSpec.KINDS_ATTRIBUTE_NAME.equals(key) ||
-				TargetBreakpointSpec.ENABLED_ATTRIBUTE_NAME.equals(key);
+			boolean applies = keys.contains(key);
 			if (!applies) {
 				return null;
 			}

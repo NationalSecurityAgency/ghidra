@@ -88,6 +88,7 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 			    </schema>
 			    <schema name='Region' elementResync='NEVER' attributeResync='NEVER'>
 			        <interface name='MemoryRegion' />
+			        <attribute-alias from="_range" to="Range" />
 			    </schema>
 			</context>
 			""";
@@ -1174,5 +1175,31 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 		}
 
 		b.trace.getObjectManager().getValuesIntersecting(Lifespan.ALL, b.range(0, -1));
+	}
+
+	@Test
+	public void testAttributeAliasing() {
+		TraceObject regionText;
+		try (Transaction tx = b.startTransaction()) {
+			TraceObjectValue rootVal =
+				manager.createRootObject(ctx.getSchema(new SchemaName("Session")));
+			root = rootVal.getChild();
+
+			regionText =
+				manager.createObject(TraceObjectKeyPath.parse("Targets[0].Memory[bin:.text]"));
+			regionText.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
+			regionText.setAttribute(Lifespan.nowOn(0), "_range", b.range(0x00400000, 0x00401000));
+			regionText.setAttribute(Lifespan.nowOn(0), "Range", b.range(0x00400000, 0x00402000));
+		}
+
+		assertEquals(ctx.getSchema(new SchemaName("Region")), regionText.getTargetSchema());
+		assertEquals(Set.of(
+			regionText.getAttribute(0, "Range")),
+			Set.copyOf(regionText.getAttributes(Lifespan.ALL)));
+		assertEquals(b.range(0x00400000, 0x00402000),
+			regionText.getAttribute(0, "_range").getValue());
+		assertEquals(b.range(0x00400000, 0x00402000),
+			regionText.getAttribute(0, "Range").getValue());
+		assertEquals("Range", regionText.getAttribute(0, "_range").getEntryKey());
 	}
 }

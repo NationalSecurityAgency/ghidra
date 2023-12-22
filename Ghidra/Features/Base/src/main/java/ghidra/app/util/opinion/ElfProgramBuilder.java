@@ -36,6 +36,7 @@ import ghidra.app.util.bin.format.elf.extend.ElfLoadAdapter;
 import ghidra.app.util.bin.format.elf.info.ElfInfoProducer;
 import ghidra.app.util.bin.format.elf.relocation.*;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.framework.Application;
 import ghidra.framework.options.Options;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.mem.FileBytes;
@@ -1606,7 +1607,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		Address debugDataAddr = findLoadAddress(debugDataSection, 0);
 		if (debugDataAddr != null) {
 			try {
-				File tmpFile = File.createTempFile("ghidra_gnu_debugdata", null);
+				File tmpFile = Application.createTempFile("ghidra_gnu_debugdata", null);
 				try (ByteProviderWrapper compressedDebugDataBP = new ByteProviderWrapper(
 					new MemoryByteProvider(memory, debugDataAddr), 0, debugDataSection.getSize());
 						XZCompressorInputStream xzIS =
@@ -2443,15 +2444,15 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	private void setCompiler(TaskMonitor monitor) {
 		// Check for Rust
 		try {
-			if (RustUtilities.isRust(program, ElfSectionHeaderConstants.dot_rodata)) {
+			if (RustUtilities.isRust(memory.getBlock(ElfSectionHeaderConstants.dot_rodata))) {
+				program.setCompiler(RustConstants.RUST_COMPILER);
 				int extensionCount = RustUtilities.addExtensions(program, monitor,
 					RustConstants.RUST_EXTENSIONS_UNIX);
 				log.appendMsg("Installed " + extensionCount + " Rust cspec extensions");
-				program.setCompiler("rustc");
 			}
 		}
 		catch (IOException e) {
-			log.appendException(e);
+			log.appendMsg("Rust error: " + e.getMessage());
 		}
 	}
 

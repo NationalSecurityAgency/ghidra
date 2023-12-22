@@ -173,14 +173,6 @@ public abstract class CodeComparisonPanel<T extends FieldPanelCoordinator> exten
 	}
 
 	/**
-	 * Determines if this panel is intended to take the place of another and if so it returns 
-	 * the class of the panel to be superseded.
-	 * @return the class for the CodeComparisonPanel that this one supersedes 
-	 * or null if it doesn't supersede another panel.
-	 */
-	public abstract Class<? extends CodeComparisonPanel<T>> getPanelThisSupersedes();
-
-	/**
 	 * Returns the context object which corresponds to the area of focus within this provider's 
 	 * component. Null is returned when there is no context.
 	 * @param componentProvider the provider that includes this code comparison component.
@@ -354,7 +346,6 @@ public abstract class CodeComparisonPanel<T extends FieldPanelCoordinator> exten
 		}
 		this.syncScrolling = syncScrolling;
 
-
 		// Refresh the left panel.
 		FieldPanel leftPanel = getLeftFieldPanel();
 		leftPanel.validate();
@@ -363,7 +354,6 @@ public abstract class CodeComparisonPanel<T extends FieldPanelCoordinator> exten
 		FieldPanel rightPanel = getRightFieldPanel();
 		rightPanel.validate();
 		rightPanel.invalidate();
-
 
 		setFieldPanelCoordinator(syncScrolling ? createFieldPanelCoordinator() : null);
 	}

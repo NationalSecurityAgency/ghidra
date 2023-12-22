@@ -66,6 +66,9 @@ public class ParameterPieces {
 			type = DataType.DEFAULT;
 		}
 		if (VoidDataType.isVoidDataType(type)) {
+			if (isIndirect) {
+				return DynamicVariableStorage.INDIRECT_VOID_STORAGE;
+			}
 			return VariableStorage.VOID_STORAGE;
 		}
 		int sz = type.getLength();
@@ -96,11 +99,8 @@ public class ParameterPieces {
 					store = new DynamicVariableStorage(program,
 						AutoParameterType.RETURN_STORAGE_PTR, address, sz);
 				}
-				else if (isIndirect) {
-					store = new DynamicVariableStorage(program, true, address, sz);
-				}
 				else {
-					store = new DynamicVariableStorage(program, false, address, sz);
+					store = new DynamicVariableStorage(program, isIndirect, address, sz);
 				}
 			}
 		}

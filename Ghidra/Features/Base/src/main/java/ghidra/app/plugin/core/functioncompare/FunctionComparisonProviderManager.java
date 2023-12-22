@@ -37,14 +37,14 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 
 	private Set<FunctionComparisonProvider> providers = new CopyOnWriteArraySet<>();
 	private Set<ComponentProviderActivationListener> listeners = new HashSet<>();
-	private Plugin plugin;
+	private FunctionComparisonPlugin plugin;
 
 	/**
 	 * Constructor
 	 * 
 	 * @param plugin the parent plugin
 	 */
-	public FunctionComparisonProviderManager(Plugin plugin) {
+	public FunctionComparisonProviderManager(FunctionComparisonPlugin plugin) {
 		this.plugin = plugin;
 	}
 

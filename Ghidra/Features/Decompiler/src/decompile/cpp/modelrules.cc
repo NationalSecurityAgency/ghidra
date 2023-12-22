@@ -579,6 +579,8 @@ uint4 MultiSlotAssign::assignAddress(Datatype *dt,const PrototypePieces &proto,i
       return fail;
     int4 grp = stackEntry->getGroup();
     Address addr = stackEntry->getAddrBySlot(tmpStatus[grp],sizeLeft,1);	// Consume all the space we need
+    if (addr.isInvalid())
+      return fail;
     pieces.push_back(VarnodeData());
     pieces.back().space = addr.getSpace();
     pieces.back().offset = addr.getOffset();

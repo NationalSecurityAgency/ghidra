@@ -146,8 +146,7 @@ public interface PcodeArithmetic<T> {
 	 * @implNote {@link OpBehaviorFactory#getOpBehavior(int)} for the given opcode is guaranteed to
 	 *           return a derivative of {@link BinaryOpBehavior}.
 	 * 
-	 * @param op the operation
-	 * @param b the behavior of the operator
+	 * @param opcode the operation's opcode. See {@link PcodeOp}.
 	 * @param sizeout the size (in bytes) of the output variable
 	 * @param sizein1 the size (in bytes) of the first (left) input variable
 	 * @param in1 the first (left) input value
@@ -168,9 +167,9 @@ public interface PcodeArithmetic<T> {
 	 * @implNote {@link OpBehaviorFactory#getOpBehavior(int)} for the given opcode is guaranteed to
 	 *           return a derivative of {@link BinaryOpBehavior}.
 	 * 
-	 * @param op
-	 * @param in1
-	 * @param in2
+	 * @param op the operation
+	 * @param in1 the first (left) input value
+	 * @param in2 the second (right) input value
 	 * @return the output value
 	 */
 	default T binaryOp(PcodeOp op, T in1, T in2) {
@@ -216,7 +215,7 @@ public interface PcodeArithmetic<T> {
 	 * The "pointer subfield" op takes two operands: base, offset; and is used as a more specific
 	 * representation of structure field address computation. Its behavior is exactly equivalent to
 	 * {@link PcodeOp#INT_ADD}. Suppose {@code st} is a structure pointer with a field {@code f}
-	 * located {@link offset} bytes into the structure, and {@code st} has the value {@code base}.
+	 * located {@code inOffset} bytes into the structure, and {@code st} has the value {@code base}.
 	 * The decompiler would likely render the {@link PcodeOp#PTRSUB} op as {@code &st->f}. An
 	 * equivalent SLEIGH expression is {@code base + offset}.
 	 * 
@@ -327,8 +326,7 @@ public interface PcodeArithmetic<T> {
 	 * Convert, if possible, the given abstract value to a concrete byte array
 	 * 
 	 * @param value the abstract value
-	 * @param size the expected size (in bytes) of the array
-	 * @param the reason why the emulator needs a concrete value
+	 * @param purpose the purpose for which the emulator needs a concrete value
 	 * @return the array
 	 * @throws ConcretionError if the value cannot be made concrete
 	 */

@@ -36,7 +36,7 @@ public class ProgramFileValueTest extends AbstractValueIntegrationTest {
 		values.setProgram(NAME, programA);
 		assertTrue(values.hasValue(NAME));
 
-		assertEquals(programA, values.getProgram(NAME, this, null));
+		assertEquals(programA, values.getProgram(NAME, this, null, true));
 	}
 
 	@Test
@@ -46,12 +46,12 @@ public class ProgramFileValueTest extends AbstractValueIntegrationTest {
 
 		assertTrue(values.isDefined(NAME));
 		assertTrue(values.hasValue(NAME));
-		assertEquals(programA, values.getProgram(NAME, this, null));
+		assertEquals(programA, values.getProgram(NAME, this, null, true));
 
 		values.setProgram(NAME, programB);
 		assertTrue(values.hasValue(NAME));
 
-		assertEquals(programB, values.getProgram(NAME, this, null));
+		assertEquals(programB, values.getProgram(NAME, this, null, true));
 
 		values.setProgram(NAME, null);
 		assertFalse(values.hasValue(NAME));
@@ -96,7 +96,7 @@ public class ProgramFileValueTest extends AbstractValueIntegrationTest {
 		pressOk();
 
 		assertFalse(values.hasValue(NAME));
-		assertNull(values.getProgram(NAME, this, null));
+		assertNull(values.getProgram(NAME, this, null, true));
 	}
 
 	@Test
@@ -109,7 +109,7 @@ public class ProgramFileValueTest extends AbstractValueIntegrationTest {
 		pressOk();
 
 		assertTrue(values.hasValue(NAME));
-		assertEquals(programA, values.getProgram(NAME, this, null));
+		assertEquals(programA, values.getProgram(NAME, this, null, true));
 	}
 
 	@Test
@@ -121,7 +121,7 @@ public class ProgramFileValueTest extends AbstractValueIntegrationTest {
 		pressOk();
 
 		assertTrue(values.hasValue(NAME));
-		assertEquals(programA, values.getProgram(NAME, this, null));
+		assertEquals(programA, values.getProgram(NAME, this, null, true));
 	}
 
 	@Test
@@ -134,7 +134,7 @@ public class ProgramFileValueTest extends AbstractValueIntegrationTest {
 		pressOk();
 
 		assertTrue(values.hasValue(NAME));
-		assertEquals(programB, values.getProgram(NAME, this, null));
+		assertEquals(programB, values.getProgram(NAME, this, null, true));
 	}
 
 	@Test
@@ -149,7 +149,7 @@ public class ProgramFileValueTest extends AbstractValueIntegrationTest {
 		setProjectFileOnProjectTree(values.getAbstractValue(NAME), programA.getDomainFile());
 		pressOk();
 
-		Program p = values.getProgram(NAME, this, tool);
+		Program p = values.getProgram(NAME, this, tool, true);
 
 		allOpenPrograms = programManagerService.getAllOpenPrograms();
 		assertEquals(1, allOpenPrograms.length);
@@ -164,9 +164,9 @@ public class ProgramFileValueTest extends AbstractValueIntegrationTest {
 		setProjectFileOnProjectTree(values.getAbstractValue(NAME), programA.getDomainFile());
 		pressOk();
 
-		Program p1 = values.getProgram(NAME, this, null);
+		Program p1 = values.getProgram(NAME, this, null, true);
 		assertEquals(2, programA.getConsumerList().size());
-		Program p2 = values.getProgram(NAME, this, null);
+		Program p2 = values.getProgram(NAME, this, null, true);
 		assertEquals(p1, p2);
 		assertEquals(3, programA.getConsumerList().size());
 		p1.release(this);

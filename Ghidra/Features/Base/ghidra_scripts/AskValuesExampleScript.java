@@ -75,7 +75,7 @@ public class AskValuesExampleScript extends GhidraScript {
 		// show up in the tool and when you release the consumer, it will be closed.
 		// NOTE: if you call getProgram() more than once, the consumer will be added multiple times
 		// and you must release it multiple times
-		Program program = values.getProgram("Other Program", this, state.getTool());
+		Program program = values.getProgram("Other Program", this, state.getTool(), true);
 
 		println("Name = " + name);
 		println("Count = " + age);

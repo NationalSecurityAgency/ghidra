@@ -304,7 +304,13 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 		program = programMgr.getOpenProgram(locator);
 		if (program != null) {
 			program.addConsumer(consumer);
-			programCache.put(locator, program);
+			if (!program.isChanged()) {
+				// Don't put modified programs into the cache.
+				//   NOTE: This will prevent upgraded programs from being added to the cache
+				//   which are already open in the tool.  This could be improved if we could
+				//   distinguish between upgrade and non-upgrade changes.
+				programCache.put(locator, program);
+			}
 			return program;
 		}
 
@@ -341,6 +347,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 
 	@Override
 	public void dispose() {
+		programCache.clear();
 		programMgr.dispose();
 		tool.clearLastEvents();
 	}
@@ -367,9 +374,11 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 		for (Program p : openPrograms) {
 			if (ignoreChanges) {
 				toRemove.add(p);
+				continue;
 			}
 			else if (p.isClosed()) {
 				toRemove.add(p);
+				continue;
 			}
 
 			if (!tool.canCloseDomainObject(p)) {

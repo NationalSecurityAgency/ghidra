@@ -25,6 +25,7 @@ import db.DBHandle;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.framework.Application;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.Project;
 import ghidra.framework.store.db.PackedDatabase;
@@ -138,7 +139,7 @@ public class GdtLoader implements Loader {
 
 	private static File createTmpFile(ByteProvider provider, TaskMonitor monitor)
 			throws IOException {
-		File tmpFile = File.createTempFile("ghidra_gdt_loader", null);
+		File tmpFile = Application.createTempFile("ghidra_gdt_loader", null);
 		try (InputStream is = provider.getInputStream(0);
 				FileOutputStream fos = new FileOutputStream(tmpFile)) {
 			FileUtilities.copyStreamToStream(is, fos, monitor);

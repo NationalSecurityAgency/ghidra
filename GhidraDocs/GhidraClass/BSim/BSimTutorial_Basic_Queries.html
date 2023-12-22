@@ -1,0 +1,200 @@
+<h1 id="basic-bsim-queries">Basic BSim Queries</h1>
+
+<p>In this section, we demonstrate some applications of our BSim database.</p>
+
+<h2 id="registering-a-bsim-database">Registering a BSim Database</h2>
+
+<p>In order to query the database, you must register it with Ghidra:</p>
+
+<ol>
+  <li>From The Code Browser, Select <strong>BSim -&gt; Manage Servers</strong>.</li>
+  <li>In the BSim Server Manager dialog, click the green plus <img src="images/Plus2.png" alt="add server icon" />.</li>
+  <li>Select the <strong>File</strong> radio button and use the chooser to select <code>example.mv.db</code></li>
+  <li>Click <strong>OK</strong></li>
+  <li>Click <strong>Dismiss</strong> to close the dialog.</li>
+</ol>
+
+<h2 id="how-to-query-a-bsim-database">How to Query a BSim Database</h2>
+
+<p>Before presenting the exercises, we describe the general mechanics of querying a BSim database.</p>
+
+<h3 id="initiating-a-bsim-query">Initiating a BSim Query</h3>
+
+<p>There are a number of ways to initiate a BSim query, including:</p>
+
+<ul>
+  <li><strong>BSim -&gt; Search Functions…</strong> from the Code Browser.</li>
+  <li>Right-click in the Listing and select <strong>BSim -&gt; Search Functions…</strong></li>
+  <li>Click on the BSim icon <img src="images/preferences-web-browser-shortcuts.png" alt="BSim toolbar icon" /> in the Code Browser toolbar.</li>
+</ul>
+
+<p>For these cases, the function(s) being queried depend on the current selection.
+If there is no selection, the function containing the current address is queried.
+If there is a selection, all functions whose entry points are within the selection are queried.
+An easy way to query all functions in a program is to select all addresses with <code>Ctrl-A</code> in the Listing window and then initiate a BSim query.</p>
+
+<p>It is also possible to initiate a BSim query from the Decompiler window. 
+Simply right-click on a function name token and select <strong>BSim…</strong> to query the corresponding function.
+This action is available on the name token in the decompiled function’s signature as well as tokens corresponding to names of callees.</p>
+
+<p>All of these actions bring up the <em>BSim Search Dialog</em>.</p>
+
+<h3 id="the-bsim-search-dialog">The BSim Search Dialog</h3>
+
+<p>From the BSim Search Dialog, you can</p>
+
+<ul>
+  <li>Select which BSim database to query.</li>
+  <li>Set query thresholds.</li>
+  <li>Bound the number of results returned for each function.</li>
+  <li>Set query filters.</li>
+</ul>
+
+<p><img src="images/bsim_search_dialog.png" alt="bsim search dialog icon" /></p>
+
+<h4 id="selecting-a-bsim-database">Selecting a BSim Database</h4>
+
+<p>To query a registered BSim database, select that server from the <strong>BSim Server</strong> drop-down.</p>
+
+<h4 id="setting-query-options">Setting Query Options</h4>
+
+<p><strong>Similarity</strong> and <strong>confidence</strong> are scores used to evaluate the relationship between two vectors.
+The respective fields in the dialog set lower bounds for these values for the matches returned by BSim.</p>
+
+<ul>
+  <li>Similarity
+    <ul>
+      <li>Formally, the similarity of a match is the cosine of the angle between the vectors.</li>
+      <li>For BSim vectors, this value will always be between 0.0 and 1.0.</li>
+      <li>The higher the similarity score, the closer the vectors.</li>
+    </ul>
+  </li>
+  <li>Confidence
+    <ul>
+      <li>Intuitively, confidence quantifies the meatiness of a match.</li>
+      <li>Shared features increase this score and differing features decrease this score.</li>
+      <li>Sharing rare features contributes more to this score than sharing common features.</li>
+      <li>There is no upper bound for confidence when considered over all pairs of vectors.
+  However, if you fix a vector <em>v</em>, the greatest possible confidence score for a comparison involving <em>v</em> occurs when <em>v</em> is compared to itself.
+  The resulting confidence value is called the <strong>self-significance</strong> of <em>v</em>.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>Confidence is used to judge the significance of a match.
+For example, many executables contain a function which simply returns a constant value.
+Given two executables, each with such a function, the similarity score between the corresponding BSim vectors will be 1.0. 
+However, the confidence score of the match will be quite low, indicating that it is not very significant that the two executables “share” this code.</p>
+
+<p>In general, setting the thresholds involves a tradeoff: lower values mean that the database is more likely to return legitimate matches with significant differences, but also more likely to return matches which simply happen to share some features by chance.
+The results of a BSim query can be sorted by the similarity and/or confidence of each match, so a common practice is to set the thresholds relatively low and to examine the matches in descending sort order.</p>
+
+<p>The <strong>Matches per Function</strong> bound controls the number of results returned for a single function.
+Note that in large collections, certain small or common functions might have substantial numbers of identical matches.</p>
+
+<p>Filters are discussed in <a href="BSimTutorial_Filters.html">BSim Filters</a>.</p>
+
+<h4 id="performing-the-query">Performing the Query</h4>
+
+<p>Click the <strong>Search</strong> button in the dialog to perform a query.</p>
+
+<p>After successfully issuing a query, you will also see a <strong>Search Function(s)</strong> action (without the ellipsis) in certain contexts.
+This will perform a BSim query on the selected functions using the same parameters as the last query (skipping the BSim Search Dialog).</p>
+
+<h2 id="exercises">Exercises</h2>
+
+<p>The database <code>example</code> contains vectors from a Linux executable used by Ghidra’s GNU demangler.
+Ghidra ships with several other versions of this executable. 
+We use these different versions to demonstrate some of the capabilities of BSim.</p>
+
+<p><strong>Note</strong>: Use the default query settings and autoanalysis options for the exercises unless otherwise specified.</p>
+
+<h3 id="exercise-function-identification">Exercise: Function Identification</h3>
+
+<ol>
+  <li>Import and analyze the binary <code>&lt;ghidra_install_dir&gt;/GPL/DemanglerGnu/os/win_x86_64/demangler_gnu_v2_41.exe</code>.
+    <ul>
+      <li>This executable is based on the same source code as <code>demangler_gnu_v2_41</code> but compiled with Visual Studio instead of GCC.</li>
+    </ul>
+  </li>
+  <li>Examine this binary in Ghidra and verify that the original function names are not present.
+    <ul>
+      <li>Note that the function names <strong>are</strong> present in <code>demangler_gnu_v2_41</code>.</li>
+    </ul>
+  </li>
+  <li>Using the default query options, query <code>example</code> for matches to the function at <code>140006760</code>.</li>
+  <li>You should see the following search results:
+ <img src="images/basic_query.png" alt="search results" />
+    <ul>
+      <li>In this case, there is exactly one match, the similarity is 1.0, and the matching function has a non-default name (it won’t always be this easy).</li>
+      <li>The results window has two tables: the function-level results (upper table) and the executable-level results (lower table). 
+ The executable-level results are covered in <a href="BSimTutorial_Exe_Results.html">From Matching Functions to Matching Executables</a>.</li>
+    </ul>
+  </li>
+  <li>Right-click on the row of the match and perform the <strong>Compare Functions</strong> action to bring up the side-by-side comparison.
+    <ul>
+      <li>The <strong>Listing View</strong> tab shows the disassembly.</li>
+      <li>The <strong>Decompiler Diff View</strong> tab shows the decompiled code.</li>
+      <li>Differences in the code are automatically highlighted in cyan.</li>
+      <li>Either view can be toggled between a horizontal split and a vertical split using the drop-down menu.</li>
+    </ul>
+  </li>
+  <li>Examine the diff views to verify that the match is valid.</li>
+  <li>Using the <strong>Apply Name</strong> action in the BSim Search Results table, apply the name from the search result to the queried function.</li>
+</ol>
+
+<p><strong>Note</strong>: We cover the Decompiler Diff View in greater detail and discuss the various “Apply” actions in <a href="BSimTutorial_Evaluating_Matches.html">Evaluating Matches and Applying Information</a>.</p>
+
+<h3 id="exercise-changes-to-the-source-code">Exercise: Changes to the Source Code</h3>
+
+<ol>
+  <li>Import and analyze the executable <code>&lt;ghidra_install_dir&gt;/GPL/DemanglerGnu/os/linux_x86_64/demangler_gnu_v2_24</code>.
+    <ul>
+      <li>This executable is based on an earlier version of the source code than the executable in <code>example</code>.</li>
+    </ul>
+  </li>
+  <li>Navigate to the function <code>expandargv</code> in <code>demangler_gnu_v2_24</code> and issue a BSim query.</li>
+  <li>What differences do you see in the decompiled code of the single match?
+    <details><summary>In demangler_gnu_v2_41...</summary> The main differences are that call to dupargv is now in an if clause (and decompiler creates a related local variable) and there are two additional calls to free. </details>
+  </li>
+  <li>The relevant source files are included with the Ghidra distribution:
+    <ul>
+      <li><code>&lt;ghidra_install_dir&gt;/GPL/DemanglerGnu/src/demangler_gnu_v2_24/c/argv.c</code></li>
+      <li><code>&lt;ghidra_install_dir&gt;/GPL/DemanglerGnu/src/demangler_gnu_v2_41/c/argv.c</code></li>
+    </ul>
+  </li>
+  <li>Verify that the differences you found are present in the source.</li>
+</ol>
+
+<h3 id="exercise-cross-architectural-matching">Exercise: Cross-architectural Matching</h3>
+
+<ol>
+  <li>Import and analyze the executable 
+<code>&lt;ghidra_install_dir&gt;/GPL/DemanglerGnu/os/mac_arm_64/demangler_gnu_v2_41</code>.
+    <ul>
+      <li>This executable is based on the same source code as the executable in <code>example</code> but compiled for a different architecture.</li>
+      <li><strong>Note</strong>: this file has the same name as the one we used to populate the BSim database, so you will have to give the resulting Ghidra program a different name or import it into a different directory in your Ghidra project.</li>
+    </ul>
+  </li>
+  <li>Navigate to <code>_expandargv</code> and issue a BSim query.
+In the decompiler diff view of the single match, what differences do you see regarding <code>memmove</code> and <code>memcpy</code>?
+    <details><summary>In the arm64 version...</summary> In the arm64_version, the compiler replaced these functions with __memmove_chk and __memcpy_chk.  The __chk versions have an extra parameter related to preventing buffer overflows. Neither the names nor the bodies of callees are incorporated into BSim signatures, but the arguments of a call are, so this change partly explains why the BSim vectors are not identical.</details>
+  </li>
+  <li>Examine the <strong>Listing View</strong> tab and verify that the architectures are indeed different.</li>
+</ol>
+
+<h2 id="a-remark-on-query-thresholds-and-indices">A Remark on Query Thresholds and Indices</h2>
+
+<p>Q: If you set the similarity and confidence thresholds to 0.0, will a BSim query return all of the functions in the database?</p>
+
+<p>A: No, because</p>
+<ul>
+  <li>For indexed databases (i.e., PostgreSQL and Elasticsearch), the index is designed so that vector comparisons are only performed between vectors which are likely to be close. 
+Most vectors will not even be considered as potential matches for a given queried vector.</li>
+  <li>Regardless of database backed, matches are only shown if the confidence score is above the confidence threshold of the query.
+The interface will not allow you to set a negative confidence threshold, but confidence scores can be negative.</li>
+  <li>The <strong>Matches per Function</strong> parameter also controls how many functions are returned.</li>
+</ul>
+
+<p>Next Section: <a href="BSimTutorial_Ghidra_Command_Line.html">Ghidra from the Command Line</a></p>
+

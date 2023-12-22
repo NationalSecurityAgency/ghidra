@@ -4008,7 +4008,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	public byte getCallingConventionID(String name, boolean restrictive)
 			throws InvalidInputException, IOException {
 
-		if (name == null || CompilerSpec.CALLING_CONVENTION_unknown.equals(name)) {
+		if (CompilerSpec.isUnknownCallingConvention(name)) {
 			return UNKNOWN_CALLING_CONVENTION_ID;
 		}
 		if (CompilerSpec.CALLING_CONVENTION_default.equals(name)) {

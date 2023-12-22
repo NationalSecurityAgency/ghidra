@@ -88,6 +88,12 @@ ext.deps = [
 		destination: file("${DEPS_DIR}/GhidraServer")
 	],
 	[
+		name: "postgresql-15.3.tar.gz",
+		url: "https://ftp.postgresql.org/pub/source/v15.3/postgresql-15.3.tar.gz",
+		sha256: "086d38533e28747966a4d5f1e78ea432e33a78f21dcb9133010ecb5189fad98c",
+		destination: file("${DEPS_DIR}/BSim")
+	],
+	[
 		name: "PyDev 6.3.1.zip",
 		url: "https://sourceforge.net/projects/pydev/files/pydev/PyDev%206.3.1/PyDev%206.3.1.zip",
 		sha256: "4d81fe9d8afe7665b8ea20844d3f5107f446742927c59973eade4f29809b0699",

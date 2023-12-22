@@ -19,6 +19,8 @@ task assemblePyPackage(type: Copy) {
 	into "build/pypkg/"
 }
 
+rootProject.tasks.prepDev.dependsOn(assemblePyPackage)
+
 task buildPyPackage(type: Exec) {
 	ext.dist = { file("build/pypkg/dist") }
 	inputs.files(assemblePyPackage)

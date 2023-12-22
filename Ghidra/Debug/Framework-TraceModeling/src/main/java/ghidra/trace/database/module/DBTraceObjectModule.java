@@ -15,11 +15,11 @@
  */
 package ghidra.trace.database.module;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import ghidra.dbg.target.*;
+import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathMatcher;
 import ghidra.dbg.util.PathPredicates.Align;
 import ghidra.dbg.util.PathUtils;
@@ -40,8 +40,19 @@ import ghidra.util.exception.DuplicateNameException;
 public class DBTraceObjectModule implements TraceObjectModule, DBTraceObjectInterface {
 
 	protected class ModuleChangeTranslator extends Translator<TraceModule> {
+		private static final Map<TargetObjectSchema, Set<String>> KEYS_BY_SCHEMA =
+			new WeakHashMap<>();
+
+		private final Set<String> keys;
+
 		protected ModuleChangeTranslator(DBTraceObject object, TraceModule iface) {
 			super(TargetModule.RANGE_ATTRIBUTE_NAME, object, iface);
+			TargetObjectSchema schema = object.getTargetSchema();
+			synchronized (KEYS_BY_SCHEMA) {
+				keys = KEYS_BY_SCHEMA.computeIfAbsent(schema, s -> Set.of(
+					s.checkAliasedAttribute(TargetModule.RANGE_ATTRIBUTE_NAME),
+					s.checkAliasedAttribute(TargetObject.DISPLAY_ATTRIBUTE_NAME)));
+			}
 		}
 
 		@Override
@@ -61,8 +72,7 @@ public class DBTraceObjectModule implements TraceObjectModule, DBTraceObjectInte
 
 		@Override
 		protected boolean appliesToKey(String key) {
-			return TargetModule.RANGE_ATTRIBUTE_NAME.equals(key) ||
-				TargetObject.DISPLAY_ATTRIBUTE_NAME.equals(key);
+			return keys.contains(key);
 		}
 
 		@Override

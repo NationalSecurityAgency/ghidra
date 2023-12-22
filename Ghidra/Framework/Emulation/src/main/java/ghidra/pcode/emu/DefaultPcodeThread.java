@@ -157,9 +157,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		 * Construct the executor
 		 * 
 		 * @see DefaultPcodeThread#createExecutor()
-		 * @param language the language of the containing machine
-		 * @param arithmetic the arithmetic of the containing machine
-		 * @param state the composite state assigned to the thread
+		 * @param thread the thread this executor supports
 		 */
 		public PcodeThreadExecutor(DefaultPcodeThread<T> thread) {
 			// NB. The executor itself is not decoding. So reads are in fact data reads.

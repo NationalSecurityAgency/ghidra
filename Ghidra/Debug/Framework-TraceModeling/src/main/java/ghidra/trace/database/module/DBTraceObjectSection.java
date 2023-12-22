@@ -15,7 +15,10 @@
  */
 package ghidra.trace.database.module;
 
+import java.util.*;
+
 import ghidra.dbg.target.*;
+import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.database.target.DBTraceObject;
@@ -34,8 +37,19 @@ import ghidra.util.LockHold;
 public class DBTraceObjectSection implements TraceObjectSection, DBTraceObjectInterface {
 
 	protected class SectionTranslator extends Translator<TraceSection> {
+		private static final Map<TargetObjectSchema, Set<String>> KEYS_BY_SCHEMA =
+			new WeakHashMap<>();
+
+		private final Set<String> keys;
+
 		protected SectionTranslator(DBTraceObject object, TraceSection iface) {
 			super(TargetSection.RANGE_ATTRIBUTE_NAME, object, iface);
+			TargetObjectSchema schema = object.getTargetSchema();
+			synchronized (KEYS_BY_SCHEMA) {
+				keys = KEYS_BY_SCHEMA.computeIfAbsent(schema, s -> Set.of(
+					s.checkAliasedAttribute(TargetSection.RANGE_ATTRIBUTE_NAME),
+					s.checkAliasedAttribute(TargetObject.DISPLAY_ATTRIBUTE_NAME)));
+			}
 		}
 
 		@Override
@@ -55,8 +69,7 @@ public class DBTraceObjectSection implements TraceObjectSection, DBTraceObjectIn
 
 		@Override
 		protected boolean appliesToKey(String key) {
-			return TargetSection.RANGE_ATTRIBUTE_NAME.equals(key) ||
-				TargetObject.DISPLAY_ATTRIBUTE_NAME.equals(key);
+			return keys.contains(key);
 		}
 
 		@Override

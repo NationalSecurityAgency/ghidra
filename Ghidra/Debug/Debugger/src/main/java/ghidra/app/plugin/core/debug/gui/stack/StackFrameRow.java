@@ -87,6 +87,10 @@ public class StackFrameRow {
 		return panel.provider.getFunction(getProgramCounter());
 	}
 
+	public String getModule() {
+		return panel.provider.getModule(getProgramCounter());
+	}
+
 	protected void update() {
 		assert frame != null; // Should never update a synthetic stack
 		level = frame.getLevel();

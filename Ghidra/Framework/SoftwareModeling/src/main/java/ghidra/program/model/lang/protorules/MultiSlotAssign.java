@@ -20,7 +20,6 @@ import static ghidra.program.model.pcode.ElementId.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Map.Entry;
 
 import ghidra.program.model.address.Address;
@@ -199,7 +198,10 @@ public class MultiSlotAssign extends AssignAction {
 				return FAIL;
 			}
 			int grp = stackEntry.getGroup();
-			tmpStatus[grp] = stackEntry.getAddrBySlot(tmpStatus[grp], sizeLeft, 1, param);	// Consume all the space we need		
+			tmpStatus[grp] = stackEntry.getAddrBySlot(tmpStatus[grp], sizeLeft, 1, param);	// Consume all the space we need	
+			if (param.address == null) {
+				return FAIL;
+			}
 			Varnode vn = new Varnode(param.address, sizeLeft);
 			pieces.add(vn);
 		}
@@ -261,9 +263,7 @@ public class MultiSlotAssign extends AssignAction {
 	@Override
 	public void restoreXml(XmlPullParser parser) throws XmlParseException {
 		XmlElement elem = parser.start(ELEM_JOIN.name());
-		Iterator<Entry<String, String>> iter = elem.getAttributes().entrySet().iterator();
-		while (iter.hasNext()) {
-			Entry<String, String> attrib = iter.next();
+		for (Entry<String, String> attrib : elem.getAttributes().entrySet()) {
 			String name = attrib.getKey();
 			if (name.equals(ATTRIB_REVERSEJUSTIFY.name())) {
 				if (SpecXmlUtils.decodeBoolean(attrib.getValue())) {
