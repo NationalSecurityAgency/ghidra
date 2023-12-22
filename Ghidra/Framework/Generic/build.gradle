@@ -41,8 +41,13 @@ dependencies {
 	api "org.bouncycastle:bcprov-jdk15on:1.69"
 	api "org.bouncycastle:bcutil-jdk15on:1.69"
 	
-
 	compileOnly "junit:junit:4.12"
+	
+	constraints {
+		api("com.google.guava:guava") {
+			attributes {
+				attribute(TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE, objects.named(TargetJvmEnvironment, TargetJvmEnvironment.STANDARD_JVM))
+			}
+		}
+	}
 }
-
-
