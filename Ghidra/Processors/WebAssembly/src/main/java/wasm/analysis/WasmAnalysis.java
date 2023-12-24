@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,8 +22,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import ghidra.app.plugin.core.analysis.AnalysisState;
-import ghidra.app.plugin.core.analysis.AnalysisStateInfo;
+import ghidra.app.plugin.core.analysis.TransientProgramProperties;
+import ghidra.app.plugin.core.analysis.TransientProgramProperties.PropertyValueSupplier;
+import ghidra.app.plugin.core.analysis.TransientProgramProperties.SCOPE;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteArrayProvider;
 import ghidra.app.util.bin.ByteProvider;
@@ -38,17 +39,16 @@ import wasm.format.WasmModule;
 import wasm.format.sections.structures.WasmCodeEntry;
 import wasm.format.sections.structures.WasmFuncType;
 
-public class WasmAnalysis implements AnalysisState {
+public class WasmAnalysis {
 	/**
 	 * Return persistent <code>ClassFileAnalysisState</code> which corresponds to
 	 * the specified program instance.
-	 * 
+	 *
 	 * @param program
 	 * @return <code>ClassFileAnalysisState</code> for specified program instance
 	 */
 	public static synchronized WasmAnalysis getState(Program program) {
-		WasmAnalysis analysisState = AnalysisStateInfo.getAnalysisState(program, WasmAnalysis.class);
-		if (analysisState == null) {
+		return TransientProgramProperties.getProperty(program, WasmAnalysis.class, SCOPE.PROGRAM, WasmAnalysis.class, () -> {
 			Memory mem = program.getMemory();
 			Address moduleStart = WasmLoader.getModuleAddress(program.getAddressFactory());
 			ByteProvider memByteProvider = new MemoryByteProvider(mem, moduleStart);
@@ -60,10 +60,8 @@ public class WasmAnalysis implements AnalysisState {
 				throw new RuntimeException(e);
 			}
 
-			analysisState = new WasmAnalysis(program.getAddressFactory(), module);
-			AnalysisStateInfo.putAnalysisState(program, analysisState);
-		}
-		return analysisState;
+			return new WasmAnalysis(program.getAddressFactory(), module);
+		});
 	}
 
 	private WasmModule module = null;

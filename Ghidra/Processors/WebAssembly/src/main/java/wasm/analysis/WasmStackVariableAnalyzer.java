@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -82,7 +82,7 @@ public class WasmStackVariableAnalyzer extends AbstractAnalyzer {
 		monitor.initialize(program.getFunctionManager().getFunctionCount());
 
 		for (Function function : program.getListing().getFunctions(set, true)) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			monitor.setMessage("C Stack " + function.getName());
 			monitor.incrementProgress(1);
 
@@ -213,7 +213,7 @@ public class WasmStackVariableAnalyzer extends AbstractAnalyzer {
 
 		InstructionIterator iter = program.getListing().getInstructions(func.getBody(), true);
 		while (iter.hasNext()) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			Instruction instr = iter.next();
 
 			try {
