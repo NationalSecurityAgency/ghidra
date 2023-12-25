@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 
 import ghidra.app.plugin.core.analysis.TransientProgramProperties;
-import ghidra.app.plugin.core.analysis.TransientProgramProperties.PropertyValueSupplier;
 import ghidra.app.plugin.core.analysis.TransientProgramProperties.SCOPE;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteArrayProvider;
@@ -41,11 +40,11 @@ import wasm.format.sections.structures.WasmFuncType;
 
 public class WasmAnalysis {
 	/**
-	 * Return persistent <code>ClassFileAnalysisState</code> which corresponds to
+	 * Return persistent <code>WasmAnalysis</code> which corresponds to
 	 * the specified program instance.
 	 *
 	 * @param program
-	 * @return <code>ClassFileAnalysisState</code> for specified program instance
+	 * @return <code>WasmAnalysis</code> for specified program instance
 	 */
 	public static synchronized WasmAnalysis getState(Program program) {
 		return TransientProgramProperties.getProperty(program, WasmAnalysis.class, SCOPE.PROGRAM, WasmAnalysis.class, () -> {
