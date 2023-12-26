@@ -257,7 +257,7 @@ public class ImportDescriptor implements StructConverter, ByteArrayConverter {
 	}
 
 	/**
-	 * Sets the original first thunk to the specifed value. 
+	 * Sets the original first thunk to the specified value. 
 	 * @param i the new original first thunk value.
 	 * @see #getOriginalFirstThunk()
 	 */
@@ -266,7 +266,7 @@ public class ImportDescriptor implements StructConverter, ByteArrayConverter {
 	}
 
 	/**
-	 * Sets the time/date stamp to the specifed value. 
+	 * Sets the time/date stamp to the specified value. 
 	 * @param i the new time/date stamp value.
 	 * @see #getTimeDateStamp()
 	 */
@@ -275,7 +275,7 @@ public class ImportDescriptor implements StructConverter, ByteArrayConverter {
 	}
 
 	/**
-	 * Sets the forwarder to the specifed value. 
+	 * Sets the forwarder to the specified value. 
 	 * @param i the new forwarder value.
 	 * @see #getForwarderChain()
 	 */
@@ -284,7 +284,7 @@ public class ImportDescriptor implements StructConverter, ByteArrayConverter {
 	}
 
 	/**
-	 * Sets the name to the specifed value. 
+	 * Sets the name to the specified value. 
 	 * @param i the new name value.
 	 * @see #getName()
 	 */
@@ -293,7 +293,7 @@ public class ImportDescriptor implements StructConverter, ByteArrayConverter {
 	}
 
 	/**
-	 * Sets the first thunk to the specifed value. 
+	 * Sets the first thunk to the specified value. 
 	 * @param i the new first thunk value.
 	 * @see #getFirstThunk()
 	 */
