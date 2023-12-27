@@ -62,7 +62,7 @@ if [ ! -f "${POSTGRES_GZ_PATH}" ]; then
 fi
 
 OS=`uname -s`
-ARCH=`arch`
+ARCH=`uname -m`
 
 cd ${DIR}
 
