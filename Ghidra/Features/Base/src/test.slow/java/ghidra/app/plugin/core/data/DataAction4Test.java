@@ -816,7 +816,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 
 		d = getContextData();
 		assertEquals("ChooseFontW\0\u0015\0ReplaceTextW\0\0\u0004", d.getValue());
-		assertEquals("\"ChooseFontW\\0\",15h,\"\\0ReplaceTextW\\0\\0\",04h",
+		assertEquals("\"ChooseFontW\\0\",15h,00h,\"ReplaceTextW\\0\\0\",04h",
 			d.getDefaultValueRepresentation());
 
 	}
@@ -888,7 +888,7 @@ public class DataAction4Test extends AbstractDataActionTest {
 		checkOnDefined(null, UnicodeDataType.class);
 
 		d = getContextData();
-		assertEquals("01h,00h,\"\\0Sample\"", d.getDefaultValueRepresentation());
+		assertEquals("01h,00h,00h,00h,\"Sample\"", d.getDefaultValueRepresentation());
 		assertEquals("\1\0Sample", d.getValue());
 
 	}

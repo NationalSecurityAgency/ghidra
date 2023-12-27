@@ -37,19 +37,21 @@ public class StringRenderBuilder {
 	private static final int MAX_ASCII = 0x80;
 
 	private final StringBuilder sb = new StringBuilder();
+	private final Charset cs;
 	private final int charSize;
 	private final boolean utfCharset;
 	private final char quoteChar;
 	private boolean byteMode = true;
 
-	public StringRenderBuilder(boolean utfCharset, int charSize) {
-		this(utfCharset, charSize, DOUBLE_QUOTE);
+	public StringRenderBuilder(Charset cs, int charSize) {
+		this(cs, charSize, DOUBLE_QUOTE);
 	}
 
-	public StringRenderBuilder(boolean utfCharset, int charSize, char quoteChar) {
+	public StringRenderBuilder(Charset cs, int charSize, char quoteChar) {
+		this.cs = cs;
 		this.charSize = charSize;
-		this.utfCharset = utfCharset;
 		this.quoteChar = quoteChar;
+		this.utfCharset = cs.name().startsWith("UTF");
 	}
 
 	/**
@@ -87,12 +89,16 @@ public class StringRenderBuilder {
 	 * @param trimTrailingNulls boolean flag, if true trailing null bytes will not be included
 	 * in the rendered output
 	 */
-	public void decodeBytesUsingCharset(ByteBuffer bb, Charset cs, RENDER_ENUM renderSetting,
+	public void decodeBytesUsingCharset(ByteBuffer bb, RENDER_ENUM renderSetting,
 			boolean trimTrailingNulls) {
+		if (!bb.hasRemaining()) {
+			// early exit avoids problems trying to flush un-initialized codec later
+			return;
+		}
 		CharsetDecoder codec = cs.newDecoder()
 				.onMalformedInput(CodingErrorAction.REPORT)
 				.onUnmappableCharacter(CodingErrorAction.REPORT);
-		CharBuffer cb = CharBuffer.allocate(Math.min(10, bb.remaining()));
+		CharBuffer cb = CharBuffer.allocate(Math.max(10, bb.remaining() + (bb.remaining() / 2)));
 		while (bb.hasRemaining()) {
 			CoderResult cr = codec.decode(bb, cb, true);
 			if (!bb.hasRemaining() && trimTrailingNulls) {
@@ -143,6 +149,14 @@ public class StringRenderBuilder {
 		}
 	}
 
+	private void addByteSeq(int codePoint) {
+		// NOTE: this is a bit of a hack.  We assume we can run the codepoint back thru the
+		// charset and get the original bytes
+		CharBuffer cb = CharBuffer.wrap(new String(new int[] { codePoint }, 0, 1));
+		ByteBuffer bb = cs.encode(cb);
+		addByteSeq(bb, bb.limit());
+	}
+
 	private void trimTrailingNulls(CharBuffer cb) {
 		while (cb.position() > 0 && cb.get(cb.position() - 1) == 0) {
 			cb.position(cb.position() - 1);
@@ -159,26 +173,39 @@ public class StringRenderBuilder {
 		for (int i = 0, strLength = stringValue.length(); i < strLength;) {
 			int codePoint = Character.codePointAt(stringValue, i);
 
-			if (StringUtilities.isDisplayable(codePoint)) {
-				addCodePointChar(codePoint);
-			}
-			else if (codePoint == 0) {
-				// TODO: there is an opportunity to make this smarter by not switching from
-				// byte mode to string mode to add nulls.
-				addString("\\0");
-			}
-			else if (StringUtilities.isControlCharacterOrBackslash(codePoint)) {
+			if (StringUtilities.isControlCharacterOrBackslash(codePoint)) {
 				addString(StringUtilities.convertCodePointToEscapeSequence(codePoint));
 			}
-			else if (Character.isISOControl(codePoint) || !Character.isDefined(codePoint) ||
-				codePoint == StringUtilities.UNICODE_BE_BYTE_ORDER_MARK) {
-				addEscapedCodePoint(codePoint);
+			else if (codePoint == 0) {
+				if (byteMode) {
+					addByteSeq(0);
+				}
+				else {
+					addString("\\0");
+				}
 			}
-			else if (renderSetting == RENDER_ENUM.ALL) {
+			else if (Character.isISOControl(codePoint) || !Character.isDefined(codePoint)) {
+				addByteSeq(codePoint);
+			}
+			else if (StringUtilities.isDisplayable(codePoint)) {
 				addCodePointChar(codePoint);
 			}
-			else {
+			else if (codePoint == StringUtilities.UNICODE_BE_BYTE_ORDER_MARK) {
 				addEscapedCodePoint(codePoint);
+			}
+			else {
+				switch (renderSetting) {
+					default:
+					case ALL:
+						addCodePointChar(codePoint);
+						break;
+					case BYTE_SEQ:
+						addByteSeq(codePoint);
+						break;
+					case ESC_SEQ:
+						addEscapedCodePoint(codePoint);
+						break;
+				}
 			}
 
 			i += Character.charCount(codePoint);

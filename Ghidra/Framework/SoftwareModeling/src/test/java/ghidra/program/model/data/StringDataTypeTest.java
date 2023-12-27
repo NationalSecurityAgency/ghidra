@@ -457,8 +457,7 @@ public class StringDataTypeTest extends AbstractGTest {
 			newset().set(StandardCharsets.US_ASCII), buf.getLength());
 		//@formatter:off
 		String expected =
-			"\"\\0\"," +
-			"01h,02h,03h,04h,05h,06h,"+
+			"00h,01h,02h,03h,04h,05h,06h,"+
 			"\"\\a\\b\\t\\n\\v\\f\\r\",0Eh,0Fh,10h,11h,12h,13h,14h,15h,16h,17h,18h,19h,1Ah,1Bh,1Ch,1Dh,1Eh,1Fh,\""+
 			" !\\\"#$%&'()*+,-./0123456789:;<=>?@"+
 			"ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\\\]^_`"+
@@ -484,8 +483,7 @@ public class StringDataTypeTest extends AbstractGTest {
 			allAsciiChars[i] = (byte) i;
 		}
 		String repr = "" +
-			"\"\\0\"," +
-			"01h,02h,03h,04h,05h,06h," +
+			"00h,01h,02h,03h,04h,05h,06h," +
 			"\"\\a\\b\\t\\n\\v\\f\\r\",0Eh,0Fh,10h,11h,12h,13h,14h,15h,16h,17h,18h,19h,1Ah,1Bh,1Ch,1Dh,1Eh,1Fh,\"" +
 			" !\\\"#$%&'()*+,-./0123456789:;<=>?@" +
 			"ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\\\]^_`" +
