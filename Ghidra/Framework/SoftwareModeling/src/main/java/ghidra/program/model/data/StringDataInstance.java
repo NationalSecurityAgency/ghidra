@@ -579,14 +579,17 @@ public class StringDataInstance {
 		if (stringBytes == null) {
 			return UNKNOWN_DOT_DOT_DOT;
 		}
+
 		ByteBuffer bb = ByteBuffer.wrap(stringBytes);
-		String adjustedCharsetName = getAdjustedCharsetInfo(bb); // force BE or LE variants of UTF charsets
+
+		// force BE or LE variants of UTF charsets, consume any BOM
+		String adjustedCharsetName = getAdjustedCharsetInfo(bb);
 
 		if (!Charset.isSupported(adjustedCharsetName)) {
 			return UNKNOWN_DOT_DOT_DOT;
 		}
 		Charset cs = Charset.forName(adjustedCharsetName);
-		return new String(stringBytes, cs);
+		return new String(stringBytes, bb.position(), bb.remaining(), cs);
 	}
 
 	private byte[] getStringBytes() {
@@ -780,14 +783,17 @@ public class StringDataInstance {
 		bb.get(0, bytes);
 
 		int be_val = (int) BigEndianDataConverter.INSTANCE.getValue(bytes, charSize);
-		switch (be_val) {
-			case StringUtilities.UNICODE_BE_BYTE_ORDER_MARK:
-				return Endian.BIG;
-			case StringUtilities.UNICODE_LE16_BYTE_ORDER_MARK:
-			case StringUtilities.UNICODE_LE32_BYTE_ORDER_MARK:
-				return Endian.LITTLE;
+		Endian result = switch (be_val) {
+			case StringUtilities.UNICODE_BE_BYTE_ORDER_MARK -> Endian.BIG;
+			case StringUtilities.UNICODE_LE16_BYTE_ORDER_MARK, 
+				StringUtilities.UNICODE_LE32_BYTE_ORDER_MARK -> Endian.LITTLE;
+			default -> null;
+		};
+		if (result != null) {
+			// consume the BOM bytes
+			bb.position(charSize);
 		}
-		return null;
+		return result;
 	}
 
 	/**
@@ -842,17 +848,17 @@ public class StringDataInstance {
 		}
 
 		ByteBuffer bb = ByteBuffer.wrap(stringBytes);
-		String adjustedCharsetName = getAdjustedCharsetInfo(bb); // force BE or LE variants of UTF charsets
 
-		StringRenderBuilder renderer =
-			new StringRenderBuilder(adjustedCharsetName.startsWith("UTF"), charSize, quoteChar);
+		// force BE or LE variants of UTF charsets, consume any BOM
+		String adjustedCharsetName = getAdjustedCharsetInfo(bb);
 
 		if (!Charset.isSupported(adjustedCharsetName)) {
 			return UNKNOWN_DOT_DOT_DOT;
 		}
 		Charset cs = Charset.forName(adjustedCharsetName);
-		renderer.decodeBytesUsingCharset(bb, cs, renderSetting,
-			stringLayout.shouldTrimTrailingNulls());
+
+		StringRenderBuilder renderer = new StringRenderBuilder(cs, charSize, quoteChar);
+		renderer.decodeBytesUsingCharset(bb, renderSetting, stringLayout.shouldTrimTrailingNulls());
 		
 		String result = renderer.build();
 		return result;
@@ -917,12 +923,8 @@ public class StringDataInstance {
 			return UNKNOWN_DOT_DOT_DOT;
 		}
 
-		// if the charset's charsize is bigger than the number of bytes we have,
-		// discard the charset and fall back to US-ASCII
-		String newCSName = (length < charSize) ? DEFAULT_CHARSET_NAME : charsetName;
-
 		StringDataInstance charseqSDI =
-			new StringDataInstance(this, StringLayoutEnum.CHAR_SEQ, buf, length, newCSName);
+			new StringDataInstance(this, StringLayoutEnum.CHAR_SEQ, buf, length, charsetName);
 
 		char quoteChar = length == charSize
 				? StringRenderBuilder.SINGLE_QUOTE
