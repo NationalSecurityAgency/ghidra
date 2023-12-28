@@ -24,32 +24,28 @@ import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
 
 /**
- * Provides a definition of an Ascii byte in a program.
+ * Provides a definition of an Width-4 boolean in a program.
  */
-public class BooleanDataType extends AbstractUnsignedIntegerDataType {
+public class Bool4DataType extends BooleanDataType {
 
 	private static SettingsDefinition[] SETTINGS_DEFS = {};
 
-	public static final BooleanDataType dataType = new BooleanDataType();
+	public static final Bool4DataType dataType = new Bool4DataType();
 
 	/**
 	 * Constructs a new Boolean datatype.
 	 */
-	public BooleanDataType() {
+	public Bool4DataType() {
 		this(null);
 	}
 
-	public BooleanDataType(DataTypeManager dtm) {
-		super("bool", dtm);
-	}
-
-	public BooleanDataType(String name, DataTypeManager dtm) {
-		super(name, dtm);
+	public Bool4DataType(DataTypeManager dtm) {
+		super("bool4", dtm);
 	}
 
 	@Override
 	public String getMnemonic(Settings settings) {
-		return "bool";
+		return "bool4";
 	}
 
 	@Override
@@ -57,7 +53,7 @@ public class BooleanDataType extends AbstractUnsignedIntegerDataType {
 		if (language == DecompilerLanguage.JAVA_LANGUAGE) {
 			return "boolean";
 		}
-		return name;
+		return "bool4";
 	}
 
 	@Override
@@ -67,12 +63,12 @@ public class BooleanDataType extends AbstractUnsignedIntegerDataType {
 
 	@Override
 	public int getLength() {
-		return 1; // TODO: Size should probably be based upon data organization
+		return 4;
 	}
 
 	@Override
 	public String getDescription() {
-		return "Boolean";
+		return "Boolean4";
 	}
 
 	@Override
@@ -111,12 +107,12 @@ public class BooleanDataType extends AbstractUnsignedIntegerDataType {
 
 	@Override
 	public DataType clone(DataTypeManager dtm) {
-		return new BooleanDataType(dtm);
+		return new Bool4DataType(dtm);
 	}
 
 	@Override
 	public String getDefaultLabelPrefix() {
-		return "BOOL";
+		return "BOOL4";
 	}
 
 	@Override
