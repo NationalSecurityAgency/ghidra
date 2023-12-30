@@ -505,7 +505,7 @@ uintb JumpBasic::backup2Switch(Funcdata *fd,uintb output,Varnode *outvn,Varnode 
   return output;
 }
 
-/// If the Varnode has a restricted range due to masking via INT_AND, the maximum value of this range is returned.
+/// If the Varnode has a restricted range due to masking via INT_AND or by INT_REM with a constant, the maximum value of this range is returned.
 /// Otherwise, 0 is returned, indicating that the Varnode can take all possible values.
 /// \param vn is the given Varnode
 /// \return the maximum value or 0
@@ -522,6 +522,12 @@ uintb JumpBasic::getMaxValue(Varnode *vn)
       maxValue = coveringmask( constvn->getOffset() );
       maxValue = (maxValue + 1) & calc_mask(vn->getSize());
     }
+  }
+  else if (op->code() == CPUI_INT_REM) {
+    // The largest value INT_REM(v, N) can take is N-1. The -1 is done elsewhere, so no need to do that here.
+    Varnode *constvn = op->getIn(1);
+    if (constvn->isConstant())
+      maxValue = constvn->getOffset();
   }
   else if (op->code() == CPUI_MULTIEQUAL) {	// Its possible the AND is duplicated across multiple blocks
     int4 i;
