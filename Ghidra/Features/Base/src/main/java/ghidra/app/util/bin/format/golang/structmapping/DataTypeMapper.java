@@ -170,11 +170,16 @@ public class DataTypeMapper implements AutoCloseable {
 	 */
 	public <T> void registerStructure(Class<T> clazz) throws IOException {
 		Structure structDT = null;
-		String structName = StructureMappingInfo.getStructureDataTypeNameForClass(clazz);
-		if (structName != null && !structName.isBlank()) {
-			structDT = getType(structName, Structure.class);
+		for (String structName : StructureMappingInfo.getStructureDataTypeNameForClass(clazz)) {
+			if (structName != null && !structName.isBlank()) {
+				structDT = getType(structName, Structure.class);
+				if (structDT != null) {
+					break;
+				}
+			}
 		}
 		if (!StructureReader.class.isAssignableFrom(clazz) && structDT == null) {
+			String structName = StructureMappingInfo.getStructureDataTypeNameForClass(clazz)[0];
 			if (structName == null || structName.isBlank()) {
 				structName = "<missing>";
 			}

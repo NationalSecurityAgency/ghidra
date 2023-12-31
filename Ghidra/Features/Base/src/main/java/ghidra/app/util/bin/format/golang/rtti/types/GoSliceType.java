@@ -29,7 +29,7 @@ import ghidra.program.model.data.*;
  * See {@link GoRttiMapper#getGenericSliceDT()} or the "runtime.slice" type for the definition of
  * a instance of a slice variable in memory. 
 */
-@StructureMapping(structureName = "runtime.slicetype")
+@StructureMapping(structureName = {"runtime.slicetype", "internal/abi.SliceType"})
 public class GoSliceType extends GoType {
 
 	@FieldMapping

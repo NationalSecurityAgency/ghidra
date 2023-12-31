@@ -63,7 +63,7 @@ public @interface StructureMapping {
 	 * 
 	 * @return name of a Ghidra structure data type
 	 */
-	String structureName();
+	String[] structureName();
 
 	/**
 	 * Optional reference to a 'function' (implemented via a class) that will be called to do 

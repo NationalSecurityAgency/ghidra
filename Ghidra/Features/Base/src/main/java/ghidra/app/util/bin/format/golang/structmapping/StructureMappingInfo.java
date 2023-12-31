@@ -39,7 +39,7 @@ public class StructureMappingInfo<T> {
 	 * @param targetClass structure mapped class
 	 * @return the structure name
 	 */
-	public static String getStructureDataTypeNameForClass(Class<?> targetClass) {
+	public static String[] getStructureDataTypeNameForClass(Class<?> targetClass) {
 		StructureMapping sma = targetClass.getAnnotation(StructureMapping.class);
 		return sma != null ? sma.structureName() : null;
 	}
@@ -68,7 +68,7 @@ public class StructureMappingInfo<T> {
 	private final Class<T> targetClass;
 	private final ObjectInstanceCreator<T> instanceCreator;
 
-	private final String structureName;
+	private final String[] structureName;
 	private final Structure structureDataType;	// null if variable length fields
 
 	private final List<FieldMappingInfo<T>> fields = new ArrayList<>();
@@ -84,7 +84,7 @@ public class StructureMappingInfo<T> {
 		this.targetClass = targetClass;
 		this.structureDataType = structDataType;
 		this.structureName = structureDataType != null
-				? structureDataType.getName()
+				? new String[]{structureDataType.getName()}
 				: sma.structureName();
 		this.useFieldMappingInfo = !StructureReader.class.isAssignableFrom(targetClass);
 		this.instanceCreator = findInstanceCreator();
@@ -109,7 +109,7 @@ public class StructureMappingInfo<T> {
 	}
 
 	public String getDescription() {
-		return "%s-%s".formatted(targetClass.getSimpleName(), structureName);
+		return "%s-%s".formatted(targetClass.getSimpleName(), structureName[0]);
 	}
 
 	public Structure getStructureDataType() {
@@ -117,7 +117,7 @@ public class StructureMappingInfo<T> {
 	}
 
 	public String getStructureName() {
-		return structureName;
+		return structureName[0];
 	}
 
 	public int getStructureLength() {
@@ -187,7 +187,7 @@ public class StructureMappingInfo<T> {
 
 		Structure newStruct = new StructureDataType(
 			context.getDataTypeMapper().getDefaultVariableLengthStructCategoryPath(),
-			structureName,
+			structureName[0],
 			0,
 			context.getDataTypeMapper().getDTM());
 
@@ -204,7 +204,7 @@ public class StructureMappingInfo<T> {
 		}
 		if (!nameSuffix.isEmpty()) {
 			try {
-				newStruct.setName(structureName + nameSuffix);
+				newStruct.setName(structureName[0] + nameSuffix);
 			}
 			catch (InvalidNameException | DuplicateNameException e) {
 				throw new IOException(e);
@@ -264,7 +264,7 @@ public class StructureMappingInfo<T> {
 			return null;
 		}
 		for (DataTypeComponent dtc : structureDataType.getDefinedComponents()) {
-			if (name.equals(dtc.getFieldName())) {
+			if (name.equalsIgnoreCase(dtc.getFieldName())) {
 				return dtc;
 			}
 		}
