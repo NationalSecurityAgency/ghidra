@@ -1868,15 +1868,14 @@ public interface DebuggerResources {
 		String NAME = "Limit to Current Snap";
 		String DESCRIPTION = "Choose whether displayed objects must be alive at the current snap";
 		String GROUP = GROUP_GENERAL;
-		Icon ICON = ICON_TIME; // TODO
 		String HELP_ANCHOR = "limit_to_current_snap";
 
 		static ToggleActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
 			return new ToggleActionBuilder(NAME, ownerName)
 					.description(DESCRIPTION)
-					.toolBarGroup(GROUP)
-					.toolBarIcon(ICON)
+					.menuPath(NAME)
+					.menuGroup(GROUP)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
