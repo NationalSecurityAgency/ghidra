@@ -22,6 +22,8 @@ import java.util.stream.*;
 
 import javax.swing.JPanel;
 import javax.swing.JTree;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import javax.swing.tree.TreePath;
 
 import docking.widgets.tree.GTree;
@@ -95,10 +97,55 @@ public class ObjectsTreePanel extends JPanel {
 		}
 	}
 
+	protected class ListenerForShowing implements AncestorListener {
+		boolean showing = false;
+
+		@Override
+		public void ancestorRemoved(AncestorEvent event) {
+			updateShowing();
+		}
+
+		@Override
+		public void ancestorMoved(AncestorEvent event) {
+			updateShowing();
+		}
+
+		@Override
+		public void ancestorAdded(AncestorEvent event) {
+			updateShowing();
+		}
+
+		public void updateShowing() {
+			setShowing(ObjectsTreePanel.this.isShowing());
+		}
+
+		private void setShowing(boolean showing) {
+			if (this.showing == showing) {
+				return;
+			}
+			this.showing = showing;
+			showingChanged(showing);
+		}
+	}
+
+	protected class ListenerForShowingSuppressor implements ListenerSuppressor {
+		public ListenerForShowingSuppressor() {
+			removeAncestorListener(listenerForShowing);
+		}
+
+		@Override
+		public void close() {
+			addAncestorListener(listenerForShowing);
+			listenerForShowing.updateShowing();
+		}
+	}
+
 	protected final ObjectTreeModel treeModel;
 	protected final ObjectGTree tree;
 
+	protected boolean showing = false;
 	protected DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
+	protected DebuggerCoordinates previous = DebuggerCoordinates.NOWHERE;
 	protected boolean limitToSnap = true;
 	protected boolean showHidden = false;
 	protected boolean showPrimitives = false;
@@ -107,13 +154,22 @@ public class ObjectsTreePanel extends JPanel {
 	protected Color diffColor = DebuggerResources.COLOR_VALUE_CHANGED;
 	protected Color diffColorSel = DebuggerResources.COLOR_VALUE_CHANGED_SEL;
 
+	protected final ListenerForShowing listenerForShowing = new ListenerForShowing();
+
 	public ObjectsTreePanel() {
 		super(new BorderLayout());
+
+		addAncestorListener(listenerForShowing);
+
 		treeModel = createModel();
 		tree = new ObjectGTree(treeModel.getRoot());
 
 		tree.setCellRenderer(new ObjectsTreeRenderer());
 		add(tree, BorderLayout.CENTER);
+	}
+
+	public ListenerSuppressor suppressShowingListener() {
+		return new ListenerForShowingSuppressor();
 	}
 
 	protected ObjectTreeModel createModel() {
@@ -122,6 +178,20 @@ public class ObjectsTreePanel extends JPanel {
 
 	protected KeepTreeState keepTreeState() {
 		return new KeepTreeState(tree);
+	}
+
+	protected void showingChanged(boolean showing) {
+		this.showing = showing;
+		updateTreeModelForCoordinates();
+		updateTreeModelForSpan();
+		updateTreeModelForShowHidden();
+		updateTreeModelForShowPrimitives();
+		updateTreeModelForShowMethods();
+		if (showing) {
+			// Not going to restore the actual selection
+			selectCurrent();
+		}
+		// Restore expansion? Nah.
 	}
 
 	protected Trace computeDiffTrace(Trace current, Trace previous) {
@@ -138,11 +208,20 @@ public class ObjectsTreePanel extends JPanel {
 		if (DebuggerCoordinates.equalsIgnoreRecorderAndView(current, coords)) {
 			return;
 		}
-		DebuggerCoordinates previous = current;
-		this.current = coords;
+		previous = current;
+		current = coords;
 		if (previous.getSnap() == current.getSnap() &&
 			previous.getTrace() == current.getTrace() &&
 			previous.getObject() == current.getObject()) {
+			return;
+		}
+		updateTreeModelForCoordinates();
+	}
+
+	protected void updateTreeModelForCoordinates() {
+		if (!showing) {
+			// Clear it out and have it remove its listeners
+			treeModel.setTrace(null);
 			return;
 		}
 		try (KeepTreeState keep = keepTreeState()) {
@@ -163,6 +242,13 @@ public class ObjectsTreePanel extends JPanel {
 			return;
 		}
 		this.limitToSnap = limitToSnap;
+		updateTreeModelForSpan();
+	}
+
+	protected void updateTreeModelForSpan() {
+		if (!showing) {
+			return;
+		}
 		try (KeepTreeState keep = keepTreeState()) {
 			treeModel.setSpan(limitToSnap ? Lifespan.at(current.getSnap()) : Lifespan.ALL);
 		}
@@ -177,6 +263,13 @@ public class ObjectsTreePanel extends JPanel {
 			return;
 		}
 		this.showHidden = showHidden;
+		updateTreeModelForShowHidden();
+	}
+
+	protected void updateTreeModelForShowHidden() {
+		if (!showing) {
+			return;
+		}
 		try (KeepTreeState keep = keepTreeState()) {
 			treeModel.setShowHidden(showHidden);
 		}
@@ -191,6 +284,13 @@ public class ObjectsTreePanel extends JPanel {
 			return;
 		}
 		this.showPrimitives = showPrimitives;
+		updateTreeModelForShowPrimitives();
+	}
+
+	protected void updateTreeModelForShowPrimitives() {
+		if (!showing) {
+			return;
+		}
 		try (KeepTreeState keep = keepTreeState()) {
 			treeModel.setShowPrimitives(showPrimitives);
 		}
@@ -205,6 +305,13 @@ public class ObjectsTreePanel extends JPanel {
 			return;
 		}
 		this.showMethods = showMethods;
+		updateTreeModelForShowMethods();
+	}
+
+	protected void updateTreeModelForShowMethods() {
+		if (!showing) {
+			return;
+		}
 		try (KeepTreeState keep = keepTreeState()) {
 			treeModel.setShowMethods(showMethods);
 		}
