@@ -15,6 +15,8 @@
  */
 package docking;
 
+import java.awt.event.KeyEvent;
+
 /**
  * An enum that holds the values for order of keybinding precedence, in order from 
  * highest priority to lowest.  For a more detailed description of how Ghidra processes
