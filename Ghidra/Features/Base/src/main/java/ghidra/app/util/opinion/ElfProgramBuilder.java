@@ -1361,12 +1361,22 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	}
 
 	private void allocateUndefinedSymbolData(HashMap<Address, Integer> dataAllocationMap) {
+		if (!ElfLoaderOptionsFactory.applyUndefinedSymbolData(options)) {
+			return;
+		}
 		for (Address addr : dataAllocationMap.keySet()) {
+
+			MemoryBlock block = memory.getBlock(addr);
+			if (block == null) {
+				continue;
+			}
+
 			// Create undefined data for each data/object symbol
 			Integer symbolSize = dataAllocationMap.get(addr);
 			if (symbolSize != null) {
 				try {
-					createUndefined(addr, symbolSize);
+					DataType undefined = Undefined.getUndefinedDataType(symbolSize);
+					listing.createData(addr, undefined);
 				}
 				catch (CodeUnitInsertionException e) {
 					// ignore conflicts which can be caused by other markup
@@ -2311,6 +2321,9 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 	@Override
 	public Data createUndefinedData(Address address, int length) {
+		if (!ElfLoaderOptionsFactory.applyUndefinedSymbolData(options)) {
+			return null;
+		}
 		try {
 			// If it is bigger than 8, just let it go through and create a single undefined
 			// Otherwise this would create an array of undefined, might get in the way
@@ -3548,16 +3561,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 	private String pad(int value) {
 		return StringUtilities.pad("" + value, ' ', 4);
-	}
-
-	private Data createUndefined(Address addr, int size) throws CodeUnitInsertionException {
-
-		MemoryBlock block = memory.getBlock(addr);
-		if (block == null) {
-			return null;
-		}
-		DataType undefined = Undefined.getUndefinedDataType(size);
-		return listing.createData(addr, undefined);
 	}
 
 	@Override
