@@ -194,6 +194,16 @@ public abstract class SarifMgr {
 		}
 	}
 
+	/**
+	 * Read results from an SARIF file.
+	 * 
+	 * @param result       parsed SARIF results
+	 * @param options      for import/export
+	 * @param monitor      monitor that can be canceled
+	 * @throws AddressFormatException for bad locations
+	 * @throws CancelledException if cancelled
+	 */
+	
 	public abstract boolean read(Map<String, Object> result, SarifProgramOptions options, TaskMonitor monitor)
 			throws AddressFormatException, CancelledException;
 

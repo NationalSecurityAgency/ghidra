@@ -87,20 +87,14 @@ public class CommentsSarifMgr extends SarifMgr {
 	// SARIF READ CURRENT DTD //
 	////////////////////////////
 
-	/**
-	 * Process the entry point section of the SARIF file.
-	 * 
-	 * @param result  sarif reader
-	 * @param monitor monitor that can be canceled
-	 */
 	@Override
 	public boolean read(Map<String, Object> result, SarifProgramOptions options, TaskMonitor monitor)
 			throws AddressFormatException, CancelledException {
-		processComment(result, result);
+		processComment(result);
 		return true;
 	}
 
-	private void processComment(Map<String, Object> result, Map<String, Object> result2) throws AddressFormatException {
+	private void processComment(Map<String, Object> result) throws AddressFormatException {
 		try {
 			Address addr = getLocation(result);
 			String typeStr = (String) result.get("kind");

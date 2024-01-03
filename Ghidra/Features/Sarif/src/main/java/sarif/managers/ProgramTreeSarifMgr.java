@@ -26,10 +26,11 @@ import generic.stl.Pair;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFormatException;
+import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.AddressRangeIterator;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.DuplicateGroupException;
 import ghidra.program.model.listing.Group;
-import ghidra.program.model.listing.Listing;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramFragment;
 import ghidra.program.model.listing.ProgramModule;
@@ -69,29 +70,18 @@ public class ProgramTreeSarifMgr extends SarifMgr {
 	////////////////////////////
 	// SARIF READ CURRENT DTD //
 	////////////////////////////
-
-	/**
-	 * Read the Program tree section from an SARIF file.
-	 * 
-	 * @param result       parser for the SARIF
-	 * @param m            monitor that can be canceled
-	 * @param addToProgram true if we are adding trees to an existing program
-	 * @throws CancelledException if cancelled
-	 */
+	
 	@Override
 	public boolean read(Map<String, Object> result, SarifProgramOptions options, TaskMonitor m)
 			throws CancelledException {
 		this.monitor = m;
 
-		// remove the default tree that is created when a program is instantiated
-		listing.removeTree(Listing.DEFAULT_TREE_NAME);
-
-		processTree(result, result);
+		processTree(result);
 		return true;
 	}
 
 	@SuppressWarnings("unchecked")
-	private void processTree(Map<String, Object> result, Map<String, Object> result2) {
+	private void processTree(Map<String, Object> result) throws CancelledException {
 		treeName = (String) result.get("name");
 		fragmentNameList = new ArrayList<>();
 
@@ -125,6 +115,19 @@ public class ProgramTreeSarifMgr extends SarifMgr {
 				treeName = root.getTreeName();
 			}
 
+			Group[] orig = root.getChildren();
+			ProgramFragment depot = root.createFragment("depot");
+			for (Group g : orig) {
+				if (g instanceof ProgramFragment frag) {
+					AddressRangeIterator iter = frag.getAddressRanges(true);
+					while (iter.hasNext()) {
+						AddressRange next = iter.next();
+						depot.move(next.getMinAddress(), next.getMaxAddress());
+					}
+				}
+			}
+			removeEmptyFragments(root);
+
 			List<Map<String, Object>> modules = (List<Map<String, Object>>) result.get("modules");
 			for (Map<String, Object> m : modules) {
 				monitor.checkCancelled();
@@ -135,8 +138,8 @@ public class ProgramTreeSarifMgr extends SarifMgr {
 				monitor.checkCancelled();
 				processFragment(root, f);
 			}
-			removeEmptyFragments(root);
-		} catch (Exception e) {
+
+		} catch (NotFoundException | DuplicateNameException e) {
 			log.appendException(e);
 		}
 	}
