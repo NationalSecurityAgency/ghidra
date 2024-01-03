@@ -434,8 +434,8 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	 * is synchronized exactly with the other providers. "Main" on the other hand, does not
 	 * necessarily have that property, but it is still <em>not</em> a snapshot. It is the main
 	 * listing presented by this plugin, and so it has certain unique features. Calling
-	 * {@link DebuggerListingPlugin#getConnectedProvider()} will return the main dynamic listing,
-	 * despite it not really being "connected."
+	 * {@link DebuggerListingPlugin#getProvider()} will return the main dynamic listing, despite it
+	 * not really being "connected."
 	 * 
 	 * @return true if this is the main listing for the plugin.
 	 */
@@ -649,8 +649,12 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 	@Override
 	protected void doSetProgram(Program newProgram) {
+		// E.g., The "Navigate Previous" could cause a change in trace
 		if (newProgram != null && current.getView() != null && newProgram != current.getView()) {
-			throw new AssertionError();
+			if (!(newProgram instanceof TraceProgramView view)) {
+				throw new IllegalArgumentException("Dynamic Listings require trace views");
+			}
+			traceManager.activateTrace(view.getTrace());
 		}
 		if (getProgram() == newProgram) {
 			return;
