@@ -513,7 +513,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 			return null;
 		}
 	}
-	
+
 	protected static State computeState(LogicalBreakpoint breakpoint, Program programOrView) {
 		if (programOrView instanceof TraceProgramView view) {
 			return breakpoint.computeStateForTrace(view.getTrace());
@@ -809,7 +809,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 
 	BreakpointsDecompilerMarginProvider decompilerMarginProvider;
 	private MarginProviderSupplier functionGraphMarginSupplier =
-			new DefaultMarginProviderSupplier();
+		new DefaultMarginProviderSupplier();
 
 	public DebuggerBreakpointMarkerPlugin(PluginTool tool) {
 		super(tool);
@@ -973,7 +973,9 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 	protected void removeMarkers(Program program) {
 		synchronized (markersByProgram) {
 			BreakpointMarkerSets oldSets = markersByProgram.remove(program);
-			oldSets.dispose();
+			if (oldSets != null) {
+				oldSets.dispose();
+			}
 		}
 	}
 
@@ -1069,7 +1071,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 			this.functionGraphMarginService.addMarkerProviderSupplier(functionGraphMarginSupplier);
 		}
 	}
-	
+
 	protected void createActions() {
 		actionSetSoftwareBreakpoint =
 			new SetBreakpointAction(Set.of(TraceBreakpointKind.SW_EXECUTE));

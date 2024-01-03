@@ -225,6 +225,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 	 * <p>
 	 * Note it is common for this to be constructed by a TCP <em>client</em>.
 	 * 
+	 * @param plugin the Trace RMI plugin
 	 * @param socket the socket to the back-end debugger
 	 * @throws IOException if there is an issue with the I/O streams
 	 */
