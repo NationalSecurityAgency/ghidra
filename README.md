@@ -31,6 +31,9 @@ of how you might be impacted.
 To install an official pre-built multi-platform Ghidra release:  
 * Install [JDK 17 64-bit][jdk17]
 * Download a Ghidra [release file][releases]
+  - **NOTE:** The official multi-platform release file is named 
+    `ghidra_<version>_<release>_<date>.zip` which can be found under the "Assets" drop-down.
+    Downloading either of the files named "Source Code" is not correct for this step.
 * Extract the Ghidra release file
 * Launch Ghidra: `./ghidraRun` (or `ghidraRun.bat` for Windows)
 
