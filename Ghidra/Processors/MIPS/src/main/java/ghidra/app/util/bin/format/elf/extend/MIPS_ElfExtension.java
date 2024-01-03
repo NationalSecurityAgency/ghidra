@@ -37,7 +37,7 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 public class MIPS_ElfExtension extends ElfExtension {
-	
+
 	private static final String MIPS_STUBS_SECTION_NAME = ".MIPS.stubs";
 
 	// GP value reflected by symbol address
@@ -45,6 +45,9 @@ public class MIPS_ElfExtension extends ElfExtension {
 	public static final String MIPS_GP_GNU_LOCAL_SYMBOL_NAME = "__gnu_local_gp";
 	public static final String MIPS_GP_VALUE_SYMBOL = "_mips_gp_value";
 	public static final String MIPS_GP0_VALUE_SYMBOL = "_mips_gp0_value";
+
+	// Elf Header - File Type
+	public static final short ET_MIPS_PSP_PRX = (short) 0xffa0;
 
 	// Elf Program Header Extensions
 	public static final ElfProgramHeaderType PT_MIPS_REGINFO = new ElfProgramHeaderType(0x70000000,
@@ -55,6 +58,18 @@ public class MIPS_ElfExtension extends ElfExtension {
 		new ElfProgramHeaderType(0x70000002, "PT_MIPS_OPTIONS", ".MIPS.options section");
 	public static final ElfProgramHeaderType PT_MIPS_ABIFLAGS =
 		new ElfProgramHeaderType(0x70000003, "PT_MIPS_ABIFLAGS", "Records ABI related flags");
+
+	// PT_MIPS_PSPREL1 relocation format not supported (does not link to symbol table): 
+	//  type = r_info & 0xf, readwrite = (r_info >> 8) & 0xff, relative = (r_info >> 16) & 0xff
+	// Uses Elf32_Rel but relocation processing differs from standard MIPS relocation handler
+	// see https://github.com/hrydgard/ppsspp/blob/master/Core/ELF/ElfReader.cpp
+	public static final ElfProgramHeaderType PT_MIPS_PSPREL1 =
+		new ElfProgramHeaderType(0x700000a0, "PT_MIPS_PSPREL1", "PSP relocation table");
+
+	// PT_MIPS_PSPREL2 relocation format not supported (does not link to symbol table, non-standard format): 
+	// see https://github.com/hrydgard/ppsspp/blob/master/Core/ELF/ElfReader.cpp
+	public static final ElfProgramHeaderType PT_MIPS_PSPREL2 =
+		new ElfProgramHeaderType(0x700000a1, "PT_MIPS_PSPREL2", "PSP relocation table");
 
 	// Elf Section Header Extensions
 	public static final ElfSectionHeaderType SHT_MIPS_LIBLIST =
@@ -144,6 +159,12 @@ public class MIPS_ElfExtension extends ElfExtension {
 			"Runtime procedure descriptor table exception information");
 	public static final ElfSectionHeaderType SHT_MIPS_ABIFLAGS =
 		new ElfSectionHeaderType(0x7000002a, "SHT_MIPS_ABIFLAGS", "ABI related flags section");
+
+	// SHT_MIPS_PSPREL relocation format not supported (does not link to symbol table, uses Elf32_Rel): 
+	//   type = r_info & 0xf, readwrite = (r_info >> 8) & 0xff, relative = (r_info >> 16) & 0xff
+	// see https://github.com/hrydgard/ppsspp/blob/master/Core/ELF/ElfReader.cpp
+	public static final ElfSectionHeaderType SHT_MIPS_PSPREL =
+		new ElfSectionHeaderType(0x700000a0, "SHT_MIPS_PSPREL", "PSP relocation table"); // relocations not supported
 
 	// Elf Dynamic Type Extensions
 	public static final ElfDynamicType DT_MIPS_RLD_VERSION =
@@ -325,8 +346,9 @@ public class MIPS_ElfExtension extends ElfExtension {
 		if ((functionAddress.getOffset() & 1) != 0) {
 			functionAddress = functionAddress.previous(); // align address
 			try {
-				program.getProgramContext().setValue(isaModeRegister, functionAddress,
-					functionAddress, BigInteger.ONE);
+				program.getProgramContext()
+						.setValue(isaModeRegister, functionAddress, functionAddress,
+							BigInteger.ONE);
 			}
 			catch (ContextChangeException e) {
 				// ignore since should not be instructions at time of import
@@ -344,15 +366,17 @@ public class MIPS_ElfExtension extends ElfExtension {
 		}
 
 		short sectionIndex = elfSymbol.getSectionHeaderIndex();
-		if (sectionIndex == SHN_MIPS_ACOMMON || sectionIndex == SHN_MIPS_TEXT || sectionIndex == SHN_MIPS_DATA) {
+		if (sectionIndex == SHN_MIPS_ACOMMON || sectionIndex == SHN_MIPS_TEXT ||
+			sectionIndex == SHN_MIPS_DATA) {
 			// NOTE: logic assumes no memory conflict occured during section loading
-			AddressSpace defaultSpace = elfLoadHelper.getProgram().getAddressFactory().getDefaultAddressSpace();
-			return defaultSpace.getAddress(elfSymbol.getValue() + elfLoadHelper.getImageBaseWordAdjustmentOffset());
+			AddressSpace defaultSpace =
+				elfLoadHelper.getProgram().getAddressFactory().getDefaultAddressSpace();
+			return defaultSpace.getAddress(
+				elfSymbol.getValue() + elfLoadHelper.getImageBaseWordAdjustmentOffset());
 		}
 
 		return null;
 	}
-
 
 	@Override
 	public Address evaluateElfSymbol(ElfLoadHelper elfLoadHelper, ElfSymbol elfSymbol,
@@ -404,8 +428,8 @@ public class MIPS_ElfExtension extends ElfExtension {
 
 		if (enableISA) {
 			try {
-				program.getProgramContext().setValue(isaModeRegister, address, address,
-					BigInteger.ONE);
+				program.getProgramContext()
+						.setValue(isaModeRegister, address, address, BigInteger.ONE);
 			}
 			catch (ContextChangeException e) {
 				// ignore since should not be instructions at time of import
@@ -683,7 +707,6 @@ public class MIPS_ElfExtension extends ElfExtension {
 
 		// NOTES: assumes only one gp0 value
 
-
 		AtomicBoolean multipleGp0 = new AtomicBoolean(false);
 		Symbol gp0Sym = SymbolUtilities.getLabelOrFunctionSymbol(elfLoadHelper.getProgram(),
 			MIPS_GP0_VALUE_SYMBOL, msg -> multipleGp0.set(true));
@@ -703,16 +726,15 @@ public class MIPS_ElfExtension extends ElfExtension {
 				long gp0 = gp0Value.getUnsignedValue();
 				if (multipleGp0.get() || otherGp0Value != null) {
 					if (multipleGp0.get() || gp0 != otherGp0Value) {
-						elfLoadHelper.log(
-							"Multiple gp0 values defined (not supported): 0x" +
-								Long.toHexString(gp0));
+						elfLoadHelper.log("Multiple gp0 values defined (not supported): 0x" +
+							Long.toHexString(gp0));
 					}
 					return;
 				}
 
 				Address gpAddr = defaultSpace.getAddress(gp0);
-				elfLoadHelper.createSymbol(gpAddr, MIPS_GP0_VALUE_SYMBOL, false, false,
-					null).setPinned(true);
+				elfLoadHelper.createSymbol(gpAddr, MIPS_GP0_VALUE_SYMBOL, false, false, null)
+						.setPinned(true);
 				elfLoadHelper.log(MIPS_GP0_VALUE_SYMBOL + "=0x" + Long.toHexString(gp0));
 			}
 			catch (InvalidInputException e) {
@@ -822,7 +844,8 @@ public class MIPS_ElfExtension extends ElfExtension {
 		}
 	}
 
-	private void fixupMipsGot(ElfLoadHelper elfLoadHelper, TaskMonitor monitor) throws CancelledException {
+	private void fixupMipsGot(ElfLoadHelper elfLoadHelper, TaskMonitor monitor)
+			throws CancelledException {
 
 		ElfHeader elfHeader = elfLoadHelper.getElfHeader();
 		ElfDynamicTable dynamicTable = elfHeader.getDynamicTable();
@@ -877,8 +900,7 @@ public class MIPS_ElfExtension extends ElfExtension {
 	}
 
 	private Address adjustTableEntryIfNonZero(Address tableBaseAddr, int entryIndex,
-			long adjustment, ElfLoadHelper elfLoadHelper)
-			throws MemoryAccessException {
+			long adjustment, ElfLoadHelper elfLoadHelper) throws MemoryAccessException {
 		boolean is64Bit = elfLoadHelper.getElfHeader().is64Bit();
 		Memory memory = elfLoadHelper.getProgram().getMemory();
 		Address tableEntryAddr;
@@ -937,6 +959,21 @@ public class MIPS_ElfExtension extends ElfExtension {
 			return MIPS_Elf64Relocation.class;
 		}
 		return super.getRelocationClass(elfHeader);
+	}
+
+	@Override
+	public Long getSectionSymbolRelativeOffset(ElfSectionHeader symSection, Address symSectionBase,
+			ElfSymbol elfSymbol) {
+
+		// NOTE: PSP PRX files should really be wired to ElfHeader.isRelocatable(), however we do
+		// not support the associated relocation tables so we do offer the image base option
+		// during import.  If image base should be changed we leave that to a user script to change 
+		// the image base and process the relocation tables as needed.
+		if (symSection.getElfHeader().e_type() == ET_MIPS_PSP_PRX) {
+			return elfSymbol.getValue();
+		}
+
+		return super.getSectionSymbolRelativeOffset(symSection, symSectionBase, elfSymbol);
 	}
 
 }

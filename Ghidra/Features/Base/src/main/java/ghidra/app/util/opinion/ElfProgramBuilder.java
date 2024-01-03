@@ -1362,11 +1362,18 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 	private void allocateUndefinedSymbolData(HashMap<Address, Integer> dataAllocationMap) {
 		for (Address addr : dataAllocationMap.keySet()) {
+
+			MemoryBlock block = memory.getBlock(addr);
+			if (block == null) {
+				continue;
+			}
+
 			// Create undefined data for each data/object symbol
 			Integer symbolSize = dataAllocationMap.get(addr);
 			if (symbolSize != null) {
 				try {
-					createUndefined(addr, symbolSize);
+					DataType undefined = Undefined.getUndefinedDataType(symbolSize);
+					listing.createData(addr, undefined);
 				}
 				catch (CodeUnitInsertionException e) {
 					// ignore conflicts which can be caused by other markup
@@ -1793,13 +1800,22 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 				symbolSpace = symSectionBase.getAddressSpace();
 
-				if (elf.isRelocatable()) {
+				Long relOffset = loadAdapter.getSectionSymbolRelativeOffset(symSection,
+					symSectionBase, elfSymbol);
+				if (relOffset != null) {
 					// Section relative symbol - ensure that symbol remains in
 					// overlay space even if beyond bounds of associated block
-					// Note: don't use symOffset variable since it may have been
-					//   adjusted for image base
-					return symSectionBase.addWrapSpace(elfSymbol.getValue() *
-						symSectionBase.getAddressSpace().getAddressableUnitSize());
+					try {
+						return symSectionBase.addNoWrap(
+							relOffset * symSectionBase.getAddressSpace().getAddressableUnitSize());
+					}
+					catch (AddressOverflowException e) {
+						log("Unable to place symbol within section (address overflow): " +
+							elfSymbol.getFormattedName() + " - value=0x" +
+							Long.toHexString(elfSymbol.getValue()) + ", section=" +
+							symSection.getNameAsString());
+						return null;
+					}
 				}
 			}
 
@@ -3548,16 +3564,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 	private String pad(int value) {
 		return StringUtilities.pad("" + value, ' ', 4);
-	}
-
-	private Data createUndefined(Address addr, int size) throws CodeUnitInsertionException {
-
-		MemoryBlock block = memory.getBlock(addr);
-		if (block == null) {
-			return null;
-		}
-		DataType undefined = Undefined.getUndefinedDataType(size);
-		return listing.createData(addr, undefined);
 	}
 
 	@Override
