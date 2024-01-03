@@ -661,7 +661,9 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 	}
 
 	private void openProgramLocations(List<ProgramLocator> locators) {
-
+		if (locators.isEmpty()) {
+			return;
+		}
 		Set<ProgramLocator> toOpen = new LinkedHashSet<>(locators); 	// preserve order
 
 		// ensure already opened programs are visible in the tool
