@@ -112,7 +112,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 
 		goBinary = GoRttiMapper.getSharedGoBinary(program, monitor);
 		if (goBinary == null) {
-			Msg.error(this, "Golang analyzer error: unable to get GoRttiMapper");
+			Msg.error(this, "Golang symbol analyzer error: unable to get GoRttiMapper");
 			return false;
 		}
 
@@ -136,6 +136,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 			}
 
 			if (analyzerOptions.propagateRtti) {
+				Msg.info(this, "Golang symbol analyzer: scheduling RTTI propagation after reference analysis");
 				aam.schedule(new PropagateRttiBackgroundCommand(goBinary),
 					AnalysisPriority.REFERENCE_ANALYSIS.after().priority());
 			}

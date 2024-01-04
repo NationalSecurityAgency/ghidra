@@ -112,36 +112,37 @@ public class GoRttiMapper extends DataTypeMapper {
 					GoRttiMapper supplier_result = getGoBinary(program);
 					if (supplier_result != null) {
 						supplier_result.init(monitor);
+						return supplier_result;
 					}
-					return supplier_result;
 				}
-				catch (IllegalArgumentException | IOException e) {
-					TransientProgramProperties.getProperty(program, FAILED_FLAG,
-						TransientProgramProperties.SCOPE.PROGRAM, Boolean.class, () -> true); // also sets it
-
-					if (e instanceof IOException) {
-						// this is a more serious error, and the stack trace should be written
-						// to the application log
-						Msg.error(GoRttiMapper.class,
-							"Failed to read golang info for: " + program.getName(), e);
-
-					}
-					AutoAnalysisManager aam = AutoAnalysisManager.getAnalysisManager(program);
-					if (aam.isAnalyzing()) {
-						// should cause a modal popup at end of analysis that the go binary wasn't
-						// supported
-						MessageLog log = aam.getMessageLog();
-						log.appendMsg(e.getMessage());
-					}
-					else {
-						Msg.warn(GoRttiMapper.class, "Golang program: " + e.getMessage());
-					}
-
-					return null;
+				catch (BootstrapInfoException mbie) {
+					Msg.warn(GoRttiMapper.class, mbie.getMessage());
+					logAnalyzerMsg(program, mbie.getMessage());
 				}
+				catch (IOException e) {
+					// this is a more serious error, and the stack trace should be written
+					// to the application log
+					Msg.error(GoRttiMapper.class, "Failed to read golang info", e);
+					logAnalyzerMsg(program, e.getMessage());
+				}
+
+				// this sets the failed flag
+				TransientProgramProperties.getProperty(program, FAILED_FLAG,
+					TransientProgramProperties.SCOPE.PROGRAM, Boolean.class, () -> true);
+
+				return null;
 			});
 
 		return goBinary;
+	}
+
+	private static void logAnalyzerMsg(Program program, String msg) {
+		AutoAnalysisManager aam = AutoAnalysisManager.getAnalysisManager(program);
+		if (aam.isAnalyzing()) {
+			// should cause a modal popup at end of analysis that will show the message
+			MessageLog log = aam.getMessageLog();
+			log.appendMsg(msg);
+		}
 	}
 
 	/**
@@ -150,16 +151,24 @@ public class GoRttiMapper extends DataTypeMapper {
 	 * @param program {@link Program}
 	 * @return new {@link GoRttiMapper}, or null if basic golang information is not found in the
 	 * binary
-	 * @throws IllegalArgumentException if the golang binary is an unsupported version
+	 * @throws BootstrapInfoException if it is a golang binary and has an unsupported or
+	 * unparseable version number or if there was a missing golang bootstrap .gdt file
 	 * @throws IOException if there was an error in the Ghidra golang rtti reading logic 
 	 */
 	public static GoRttiMapper getGoBinary(Program program)
-			throws IllegalArgumentException, IOException {
+			throws BootstrapInfoException, IOException {
 		GoBuildInfo buildInfo = GoBuildInfo.fromProgram(program);
-		GoVer goVer;
-		if (buildInfo == null || (goVer = buildInfo.getVerEnum()) == GoVer.UNKNOWN) {
+		if (buildInfo == null) {
+			// probably not a golang binary
 			return null;
 		}
+
+		GoVer goVer = buildInfo.getVerEnum();
+		if (goVer == GoVer.UNKNOWN) {
+			throw new BootstrapInfoException(
+				"Unsupported Golang version, version info: '%s'".formatted(buildInfo.getVersion()));
+		}
+
 		ResourceFile gdtFile =
 			findGolangBootstrapGDT(goVer, buildInfo.getPointerSize(), getGolangOSString(program));
 		if (gdtFile == null) {
@@ -324,11 +333,11 @@ public class GoRttiMapper extends DataTypeMapper {
 	 * if not present and types recovered via DWARF should be used instead
 	 * @throws IOException if error linking a structure mapped structure to its matching
 	 * ghidra structure, which is a programming error or a corrupted bootstrap gdt
-	 * @throws IllegalArgumentException if there is no matching bootstrap gdt for this specific
+	 * @throws BootstrapInfoException if there is no matching bootstrap gdt for this specific
 	 * type of golang binary
 	 */
 	public GoRttiMapper(Program program, int ptrSize, Endian endian, GoVer goVersion,
-			ResourceFile archiveGDT) throws IOException, IllegalArgumentException {
+			ResourceFile archiveGDT) throws IOException, BootstrapInfoException {
 		super(program, archiveGDT);
 
 		this.goVersion = goVersion;
@@ -357,13 +366,15 @@ public class GoRttiMapper extends DataTypeMapper {
 			if (archiveGDT == null) {
 				// a normal'ish situation where there isn't a .gdt for this arch/binary and there
 				// isn't any DWARF.
-				throw new IllegalArgumentException(
-					"Missing golang .gdt archive for %s, no fallback DWARF info, unable to extract golang RTTI info."
+				throw new BootstrapInfoException(
+					"Missing golang .gdt archive for %s, no fallback DWARF info, unable to extract Golang RTTI info."
 							.formatted(goVersion));
 			}
-			// a bad situation where the data type info is corrupted 
-			throw new IOException("Invalid or missing Golang bootstrap GDT file: %s"
-					.formatted(archiveGDT.getAbsolutePath()));
+
+			// we have a .gdt, but something failed. 
+			throw new IOException("Invalid Golang bootstrap GDT file or struct mapping info: %s"
+					.formatted(archiveGDT.getAbsolutePath()),
+				e);
 		}
 	}
 

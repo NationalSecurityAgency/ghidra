@@ -33,18 +33,6 @@ import ghidra.util.exception.DuplicateNameException;
 public class StructureMappingInfo<T> {
 
 	/**
-	 * Returns the name of the structure data type that will define the binary layout 
-	 * of the mapped fields in the target class.
-	 * 
-	 * @param targetClass structure mapped class
-	 * @return the structure name
-	 */
-	public static String[] getStructureDataTypeNameForClass(Class<?> targetClass) {
-		StructureMapping sma = targetClass.getAnnotation(StructureMapping.class);
-		return sma != null ? sma.structureName() : null;
-	}
-
-	/**
 	 * Returns the mapping info for a class, using annotations found in that class.
 	 * 
 	 * @param <T> structure mapped class
@@ -68,8 +56,9 @@ public class StructureMappingInfo<T> {
 	private final Class<T> targetClass;
 	private final ObjectInstanceCreator<T> instanceCreator;
 
-	private final String[] structureName;
+	private final String structureName;
 	private final Structure structureDataType;	// null if variable length fields
+	private final Map<String, DataTypeComponent> fieldNameLookup; // case insensitive lookup
 
 	private final List<FieldMappingInfo<T>> fields = new ArrayList<>();
 	private final List<FieldOutputInfo<T>> outputFields = new ArrayList<>();
@@ -84,8 +73,9 @@ public class StructureMappingInfo<T> {
 		this.targetClass = targetClass;
 		this.structureDataType = structDataType;
 		this.structureName = structureDataType != null
-				? new String[]{structureDataType.getName()}
-				: sma.structureName();
+				? structureDataType.getName()
+				: sma.structureName()[0];
+		this.fieldNameLookup = indexStructFields(structDataType);
 		this.useFieldMappingInfo = !StructureReader.class.isAssignableFrom(targetClass);
 		this.instanceCreator = findInstanceCreator();
 
@@ -109,7 +99,7 @@ public class StructureMappingInfo<T> {
 	}
 
 	public String getDescription() {
-		return "%s-%s".formatted(targetClass.getSimpleName(), structureName[0]);
+		return "%s-%s".formatted(targetClass.getSimpleName(), structureName);
 	}
 
 	public Structure getStructureDataType() {
@@ -117,7 +107,7 @@ public class StructureMappingInfo<T> {
 	}
 
 	public String getStructureName() {
-		return structureName[0];
+		return structureName;
 	}
 
 	public int getStructureLength() {
@@ -187,7 +177,7 @@ public class StructureMappingInfo<T> {
 
 		Structure newStruct = new StructureDataType(
 			context.getDataTypeMapper().getDefaultVariableLengthStructCategoryPath(),
-			structureName[0],
+			structureName,
 			0,
 			context.getDataTypeMapper().getDTM());
 
@@ -204,7 +194,7 @@ public class StructureMappingInfo<T> {
 		}
 		if (!nameSuffix.isEmpty()) {
 			try {
-				newStruct.setName(structureName[0] + nameSuffix);
+				newStruct.setName(structureName + nameSuffix);
 			}
 			catch (InvalidNameException | DuplicateNameException e) {
 				throw new IOException(e);
@@ -259,18 +249,6 @@ public class StructureMappingInfo<T> {
 		}
 	}
 
-	private DataTypeComponent getField(String name) {
-		if (!useFieldMappingInfo || name == null || name.isBlank()) {
-			return null;
-		}
-		for (DataTypeComponent dtc : structureDataType.getDefinedComponents()) {
-			if (name.equalsIgnoreCase(dtc.getFieldName())) {
-				return dtc;
-			}
-		}
-		return null;
-	}
-
 	private void readFieldInfo(Class<?> clazz) {
 		Class<?> superclass = clazz.getSuperclass();
 		if (superclass != null) {
@@ -316,8 +294,9 @@ public class StructureMappingInfo<T> {
 			if (fma.optional()) {
 				return null;
 			}
-			throw new IllegalArgumentException("Missing structure field: %s in %s"
-					.formatted(Arrays.toString(fieldNames), targetClass.getSimpleName()));
+			throw new IllegalArgumentException(
+				"Missing structure field: %s.%s for %s.%s".formatted(structureName,
+					Arrays.toString(fieldNames), targetClass.getSimpleName(), field.getName()));
 		}
 
 		Signedness signedness = fma != null ? fma.signedness() : Signedness.Unspecified;
@@ -346,7 +325,7 @@ public class StructureMappingInfo<T> {
 
 	private DataTypeComponent getFirstMatchingField(String[] fieldNames) {
 		for (String fieldName : fieldNames) {
-			DataTypeComponent dtc = getField(fieldName);
+			DataTypeComponent dtc = fieldNameLookup.get(fieldName.toLowerCase());
 			if (dtc != null) {
 				return dtc;
 			}
@@ -398,6 +377,20 @@ public class StructureMappingInfo<T> {
 
 	private static int getStructLength(Structure struct) {
 		return struct.isZeroLength() ? 0 : struct.getLength();
+	}
+
+	private static Map<String, DataTypeComponent> indexStructFields(Structure struct) {
+		if (struct == null) {
+			return Map.of();
+		}
+		Map<String, DataTypeComponent> result = new HashMap<>();
+		for (DataTypeComponent dtc : struct.getDefinedComponents()) {
+			String fieldName = dtc.getFieldName();
+			if (fieldName != null) {
+				result.put(fieldName.toLowerCase(), dtc);
+			}
+		}
+		return result;
 	}
 
 	//---------------------------------------------------------------------------------------------

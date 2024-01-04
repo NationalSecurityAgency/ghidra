@@ -35,7 +35,7 @@ public enum GoVer {
 	private final int major;
 	private final int minor;
 
-	private GoVer(int major, int minor) {
+	GoVer(int major, int minor) {
 		this.major = major;
 		this.minor = minor;
 	}
@@ -91,7 +91,7 @@ public enum GoVer {
 			}
 		}
 		catch (NumberFormatException e) {
-			return UNKNOWN;
+			// fall thru, return unknown
 		}
 		return UNKNOWN;
 	}
