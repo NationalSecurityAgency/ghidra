@@ -3,7 +3,7 @@
 # Command-line script for interacting with a BSim database
 
 # maximum heap memory (may be increased)
-MAXMEM=1G
+MAXMEM=2G
 
 # launch mode  (fg, bg, debug, debug-suspend)
 LAUNCH_MODE=fg
