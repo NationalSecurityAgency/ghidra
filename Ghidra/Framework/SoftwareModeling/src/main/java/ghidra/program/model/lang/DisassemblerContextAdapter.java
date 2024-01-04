@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.pcode.emu;
+package ghidra.program.model.lang;
 
 import java.math.BigInteger;
 import java.util.List;
 
 import ghidra.program.model.address.Address;
-import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.ContextChangeException;
 
 public interface DisassemblerContextAdapter extends DisassemblerContext {
