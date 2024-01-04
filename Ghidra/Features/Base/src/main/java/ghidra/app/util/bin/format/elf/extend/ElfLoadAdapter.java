@@ -530,4 +530,29 @@ public class ElfLoadAdapter {
 		// no additional options
 	}
 
+	/**
+	 * Get the section-relative offset for the specified ELF symbol which is bound to
+	 * the specified section.  If the symbol has an absolute symbol value/offset this method
+	 * should return null.
+	 * <p>
+	 * For Harvard Architectures it may be necessary to adjust offset if section was mapped
+	 * to a non-default data space.
+	 * <p>
+	 * The default behavior is to return {@link ElfSymbol#getValue()} if {@link ElfHeader#isRelocatable()}
+	 * is true.
+	 * 
+	 * @param section ELF section header which is specified by the ELF symbol
+	 * @param sectionBase memory address where section has been loaded.  Could be within overlay
+	 * space if load conflict occured.
+	 * @param elfSymbol ELF symbol
+	 * @return section relative symbol offset or null if symbol value offset is absolute
+	 */
+	public Long getSectionSymbolRelativeOffset(ElfSectionHeader section, Address sectionBase,
+			ElfSymbol elfSymbol) {
+		if (section.getElfHeader().isRelocatable()) {
+			return elfSymbol.getValue();
+		}
+		return null;
+	}
+
 }

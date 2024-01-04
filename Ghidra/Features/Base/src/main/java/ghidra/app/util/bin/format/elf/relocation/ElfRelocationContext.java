@@ -99,8 +99,8 @@ public class ElfRelocationContext {
 		int symbolIndex = relocation.getSymbolIndex();
 		ElfSymbol sym = getSymbol(symbolIndex);
 		if (sym == null) {
-			ElfRelocationHandler.markAsUnhandled(program, relocationAddress, relocation.getType(),
-				symbolIndex, "index " + symbolIndex, getLog());
+			ElfRelocationHandler.markAsError(program, relocationAddress, relocation.getType(), null,
+				"invalid symbol index (" + symbolIndex + ")", getLog());
 			return RelocationResult.FAILURE;
 		}
 		if (sym.isTLS()) {
@@ -142,11 +142,12 @@ public class ElfRelocationContext {
 		if (!StringUtils.isBlank(symName)) {
 			nameMsg = " to: " + symName;
 		}
-		program.getBookmarkManager().setBookmark(relocationAddress, BookmarkType.ERROR,
-			"Relocation", "No handler to process ELF Relocation" + nameMsg);
+		program.getBookmarkManager()
+				.setBookmark(relocationAddress, BookmarkType.ERROR, "Relocation",
+					"No handler to process ELF Relocation" + nameMsg);
 
-		loadHelper.log("WARNING: At " + relocationAddress +
-			" no handler to process ELF Relocation" + nameMsg);
+		loadHelper.log(
+			"WARNING: At " + relocationAddress + " no handler to process ELF Relocation" + nameMsg);
 	}
 
 	/**
