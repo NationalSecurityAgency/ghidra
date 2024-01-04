@@ -214,7 +214,7 @@
 
                 <TR>
                   <TD><CODE class="computeroutput">$(ROOT)/support/bsim_ctl start /path/to/datadir
-                  port=8000</CODE></TD>
+                  --port&nbsp;8000</CODE></TD>
                 </TR>
 
                 <TR>
@@ -236,7 +236,7 @@
             be reused.</P>
 
             <P>The <SPAN class="bold"><STRONG>start</STRONG></SPAN> command can take an optional
-            <SPAN class="bold"><STRONG>port=</STRONG></SPAN> parameter. This can be used to specify
+            <SPAN class="bold"><STRONG>--port</STRONG></SPAN> parameter. This can be used to specify
             a non-standard port for the PostgreSQL server to listen on. In this case, any
             subsequent reference to the BSim server, in the Ghidra client, or with the <SPAN class=
             "command"><STRONG>bsim</STRONG></SPAN> command described below, must specify the port.
@@ -293,7 +293,7 @@
 
                   <DD>
                     <P><CODE class="computeroutput">bsim_ctl start /path/to/datadir
-                    auth=trust</CODE></P>
+                    --auth&nbsp;trust</CODE></P>
 
                     <P>This is currently the default. No authentication is performed and privilege
                     is granted based on the user name presented. Masquerading is possible.</P>
@@ -304,7 +304,7 @@
 
                   <DD>
                     <P><CODE class="computeroutput">bsim_ctl start /path/to/datadir
-                    auth=password</CODE></P>
+                    --auth&nbsp;password</CODE></P>
 
                     <P>Users are authenticated via password. A default password 'changeme' is
                     established when the new user is created. Passwords can be changed by the user
@@ -315,12 +315,12 @@
                   <DT><SPAN class="term"><SPAN class="bold"><STRONG>pki</STRONG></SPAN></SPAN></DT>
 
                   <DD>
-                    <P><CODE class="computeroutput">bsim_ctl start /path/to/datadir auth=pki
-                    ca=/path/to/rootcert</CODE></P>
+                    <P><CODE class="computeroutput">bsim_ctl start /path/to/datadir --auth&nbsp;pki
+                    --cafile&nbsp;"/path/to/rootcert"</CODE></P>
 
                     <P>Users are authenticated by PKI certificates. Upon initialization, the BSim
                     server must be provided (via the <SPAN class=
-                    "command"><STRONG>ca=</STRONG></SPAN> option) a file containing the public keys
+                    "command"><STRONG>--cafile</STRONG></SPAN> option) a file containing the public keys
                     for the certificate authorities used to issue user's certificates. The file
                     consists of the authoritative certificates in PEM format concatenated
                     together.</P>
@@ -338,7 +338,7 @@
                     <P>With PKI authentication enabled, at the time a new user role is established
                     with the server, the X.509 Distinguished Name, as bound to the user's
                     certificate, must be associated with the user name via the <SPAN class=
-                    "command"><STRONG>dn=</STRONG></SPAN> option. See <A class="xref" href=
+                    "command"><STRONG>--dn</STRONG></SPAN> option. See <A class="xref" href=
                     "#PostAddUser" title="Adding Users to the Database">&ldquo;Adding Users to the
                     Database&rdquo;</A>.</P>
                   </DD>
@@ -358,7 +358,7 @@
               <TABLE border="0" summary="Simple list" class="simplelist">
                 <TR>
                   <TD><CODE class="computeroutput">$(ROOT)/support/bsim_ctl changeauth
-                  /datadir/path auth=password</CODE></TD>
+                  /datadir/path --auth&nbsp;password</CODE></TD>
                 </TR>
               </TABLE>
             </DIV>
@@ -401,7 +401,7 @@
 
                 <TR>
                   <TD><CODE class="computeroutput">$(ROOT)/support/bsim_ctl adduser <SPAN class=
-                  "emphasis"><EM>username</EM></SPAN> dn="C=US,ST=MD,CN=Firstname User"</CODE></TD>
+                  "emphasis"><EM>username</EM></SPAN> --dn&nbsp;"C=US,ST=MD,CN=Firstname User"</CODE></TD>
                 </TR>
               </TABLE>
             </DIV>
@@ -410,7 +410,7 @@
             initially be set to 'changeme'. If PKI authentication has been set for the server, The
             Distinguished Name, as bound to the new user's certificated must be provided when
             issuing the <SPAN class="command"><STRONG>adduser</STRONG></SPAN> command, via the
-            <SPAN class="command"><STRONG>dn=</STRONG></SPAN> option. The Distinguished Name must
+            <SPAN class="command"><STRONG>--dn</STRONG></SPAN> option. The Distinguished Name must
             be presented as a string containing a comma separated sequence of attribute/value pairs
             that uniquely identifies a certificate. Currently, the Common Name (CN=) is the only
             attribute inspected by the PostgreSQL server, so other attributes can be omitted.</P>
@@ -836,17 +836,17 @@ curl -k -u elastic:XXXXXX -X POST "https://localhost:9200/_security/user/ghidrau
           <TABLE border="0" summary="Simple list" class="simplelist">
             <TR>
               <TD><CODE class="computeroutput">$(ROOT)/support/bsim setmetadata <SPAN class=
-              "emphasis"><EM>bsimURL</EM></SPAN> "name=BSim Database"</CODE></TD>
+              "emphasis"><EM>bsimURL</EM></SPAN> --name&nbsp;"BSim Database"</CODE></TD>
             </TR>
 
             <TR>
               <TD><CODE class="computeroutput">$(ROOT)/support/bsim setmetadata <SPAN class=
-              "emphasis"><EM>bsimURL</EM></SPAN> "owner=Administrators"</CODE></TD>
+              "emphasis"><EM>bsimURL</EM></SPAN> --owner&nbsp;"Administrators"</CODE></TD>
             </TR>
 
             <TR>
               <TD><CODE class="computeroutput">$(ROOT)/support/bsim setmetadata <SPAN class=
-              "emphasis"><EM>bsimURL</EM></SPAN> "description=Files of interest"</CODE></TD>
+              "emphasis"><EM>bsimURL</EM></SPAN> --description&nbsp;"Files of interest"</CODE></TD>
             </TR>
           </TABLE>
         </DIV>
@@ -855,8 +855,8 @@ curl -k -u elastic:XXXXXX -X POST "https://localhost:9200/_security/user/ghidrau
         changed at any time and do not otherwise affect the records contained in the database.
         Multiple command-line parameters can be fed to <SPAN class="command"><STRONG>bsim
         setmetadata</STRONG></SPAN> so long as each one starts with <SPAN class=
-        "bold"><STRONG>name=</STRONG></SPAN>, <SPAN class="bold"><STRONG>owner=</STRONG></SPAN>, or
-        <SPAN class="bold"><STRONG>description=</STRONG></SPAN> respectively. Quoting may be
+        "bold"><STRONG>--name</STRONG></SPAN>, <SPAN class="bold"><STRONG>--owner</STRONG></SPAN>, or
+        <SPAN class="bold"><STRONG>--description</STRONG></SPAN> respectively. Quoting of values may be
         necessary to get some strings to be interpreted as a single command-line parameter.</P>
 
         <DIV class="sect2">

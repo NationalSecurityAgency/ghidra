@@ -112,20 +112,20 @@
           "command"><STRONG>bsim generatesigs</STRONG></SPAN> command. Signatures may be written as
           XML files to a local directory and/or committed directly to a specified BSim database. If
           not immediately committing to a database and only storing the XML files an appropriate
-          database <EM>config=</EM> may be specified in lieu of a BSim database URL
-          (<EM>bsimURL</EM>) if database specific executable categories and function tags are not
-          utilized. Use of the <EM>config=</EM> option does not require a running BSim server.</P>
+          database configuration may be specified using the <EM>--config</EM> option in lieu of a BSim database URL
+          (--bsim <EM>&lt;bsimURL&gt;</EM>) if database specific executable categories and function tags are not
+          utilized. Use of the <EM>--config</EM> option does not require a running BSim server.</P>
 
           <DIV class="informalexample">
             <TABLE border="0" summary="Simple list" class="simplelist">
               <TR>
                 <TD><CODE class="computeroutput">$(ROOT)/support/bsim generatesigs
-                &lt;ghidraURL&gt; &lt;/xmldirectory&gt; config=&lt;config_template&gt;
+                &lt;ghidraURL&gt; &lt;/xmldirectory&gt; --config&nbsp;&lt;config_template&gt;
                 [--overwrite]<BR>
                  $(ROOT)/support/bsim generatesigs &lt;ghidraURL&gt; &lt;/xmldirectory&gt;
-                bsim=&lt;bsimURL&gt; [--commit] [--overwrite]<BR>
+                --bsim&nbsp;&lt;bsimURL&gt; [--commit] [--overwrite]<BR>
                  $(ROOT)/support/bsim generatesigs &lt;ghidraURL&gt;
-                bsim=&lt;bsimURL&gt;</CODE></TD>
+                --bsim&nbsp;&lt;bsimURL&gt;</CODE></TD>
               </TR>
             </TABLE>
           </DIV>
@@ -137,7 +137,7 @@
               <TR>
                 <TD><CODE class="computeroutput">$(ROOT)/support/bsim generatesigs
                 ghidra://localhost/repo/folder /xmldirectory
-                bsim=postgresql://localhost/repo</CODE></TD>
+                --bsim&nbsp;postgresql://localhost/repo</CODE></TD>
               </TR>
             </TABLE>
           </DIV>
@@ -148,7 +148,7 @@
             <TABLE border="0" summary="Simple list" class="simplelist">
               <TR>
                 <TD><CODE class="computeroutput">$(ROOT)/support/bsim generatesigs
-                ghidra://localhost/repo/folder /xmldirectory bsim=postgresql://localhost/repo
+                ghidra://localhost/repo/folder /xmldirectory --bsim&nbsp;postgresql://localhost/repo
                 --commit</CODE></TD>
               </TR>
             </TABLE>
@@ -176,7 +176,7 @@
             the signature generation process, such as database specific executable categories or
             function tags.  As in the example above, configuration information
             is pulled from the BSim server and signatures are generated from the Ghidra Server
-            executables. If the <SPAN class="bold"><STRONG>config=</STRONG></SPAN>
+            executables. If the <SPAN class="bold"><STRONG>--config</STRONG></SPAN>
             option is used, assuming the template it specifies is the same one used to create the
             database and there are no executable categories or function tags, the BSim server
             does not need to be running.</P>
@@ -199,7 +199,7 @@
             <TABLE border="0" summary="Simple list" class="simplelist">
               <TR>
                 <TD><CODE class="computeroutput">$(ROOT)/support/bsim commitsigs
-                postgresql://localhost/repo /xmldirectory [override=<EM>ghidraURL</EM>]</CODE></TD>
+                postgresql://localhost/repo /xmldirectory [--override&nbsp;<EM>&lt;ghidraURL&gt;</EM>]</CODE></TD>
               </TR>
             </TABLE>
           </DIV>
@@ -215,7 +215,7 @@
           "emphasis"><EM>repository</EM></SPAN> and <SPAN class="emphasis"><EM>path</EM></SPAN>
           associated with it in the form of a <SPAN class="emphasis"><EM>ghidra://</EM></SPAN> URL
           that was recorded when the XML files were generated. This path can be overridden with the
-          optional <SPAN class="bold"><STRONG>override=</STRONG></SPAN> parameter where a revised
+          optional <SPAN class="bold"><STRONG>--override</STRONG></SPAN> option where a revised
           Ghidra URL may be specified.</P>
 
           <P>The <SPAN class="command"><STRONG>bsim commitsigs</STRONG></SPAN> command can be
@@ -526,21 +526,21 @@ public void adjustTags(Address myaddress) throws Exception {
               <TABLE border="0" summary="Simple list" class="simplelist">
                 <TR>
                   <TD><CODE class="computeroutput">$(ROOT)/support/bsim delete <SPAN class=
-                  "emphasis"><EM>bsimURL</EM></SPAN> md5=<SPAN class=
+                  "emphasis"><EM>&lt;bsimURL&gt;</EM></SPAN> --md5&nbsp;<SPAN class=
                   "emphasis"><EM>7abf...</EM></SPAN></CODE></TD>
                 </TR>
 
                 <TR>
                   <TD><CODE class="computeroutput">$(ROOT)/support/bsim delete <SPAN class=
-                  "emphasis"><EM>bsimURL</EM></SPAN> name=<SPAN class=
+                  "emphasis"><EM>&lt;bsimURL&gt;</EM></SPAN> --name&nbsp;<SPAN class=
                   "emphasis"><EM>...</EM></SPAN></CODE></TD>
                 </TR>
               </TABLE>
             </DIV>
 
-            <P>In the <SPAN class="emphasis"><EM>md5</EM></SPAN> form, you specify the 32 character
+            <P>In the <SPAN class="emphasis"><EM>--md5</EM></SPAN> form, you specify the 32 character
             hex representation of the md5 hash of the executable, which should identify it
-            uniquely. Using the <SPAN class="emphasis"><EM>name</EM></SPAN> form, there is the
+            uniquely. Using the <SPAN class="emphasis"><EM>--name</EM></SPAN> form, there is the
             possibility that the name is not unique, in which case the command will fail.</P>
 
             <P>If a unique executable is identified, its metadata record will be removed, and the
@@ -580,11 +580,11 @@ public void adjustTags(Address myaddress) throws Exception {
               <TABLE border="0" summary="Simple list" class="simplelist">
                 <TR>
                   <TD><CODE class="computeroutput">$(ROOT)/support/bsim generateupdates
-                  &lt;ghidraURL&gt; &lt;/xmldirectory&gt; config=&lt;config_template&gt;
+                  &lt;ghidraURL&gt; &lt;/xmldirectory&gt; --config&nbsp;&lt;config_template&gt;
                   [--overwrite]<BR>
                    $(ROOT)/support/bsim generateupdates &lt;ghidraURL&gt; &lt;/xmldirectory&gt;
-                  bsim=&lt;bsimURL&gt; [--commit] [--overwrite]<BR>
-                   $(ROOT)/support/bsim generateupdates &lt;ghidraURL&gt; bsim=&lt;bsimURL&gt;<BR>
+                  --bsim&nbsp;&lt;bsimURL&gt; [--commit] [--overwrite]<BR>
+                   $(ROOT)/support/bsim generateupdates &lt;ghidraURL&gt; --bsim&nbsp;&lt;bsimURL&gt;<BR>
                   <BR>
                    $(ROOT)/support/bsim commitupdates &lt;bsimURL&gt;
                   &lt;/xmldirectory&gt;</CODE></TD>
@@ -596,11 +596,13 @@ public void adjustTags(Address myaddress) throws Exception {
             stripped down metadata XML files for every executable contained within the repository
             folder specified by the <EM>ghidraURL</EM>. Just like the <SPAN class=
             "bold"><STRONG>generatesigs</STRONG></SPAN> command, it can take an optional <SPAN
-            class="bold"><STRONG>config=<EM>config_template</EM></STRONG></SPAN> parameter, which
-            allows the command to execute without the BSim server running. It can also take an
+            class="bold"><STRONG>--config&nbsp;<EM>&lt;config_template&gt;</EM></STRONG></SPAN> parameter, which
+            allows the command to execute without the BSim server running, otherwise a <SPAN
+            class="bold"><STRONG>--bsim&nbsp;<EM>&lt;bsimURL&gt;</EM></STRONG></SPAN> 
+            parameter is required. It can also take an
             optional <SPAN class="bold"><STRONG>--overwrite</STRONG></SPAN> parameter, causing it
-            to overwrite any previously generated XML files. If a
-            <STRONG>bsim=<EM>bsimURL</EM></STRONG> is specified with the <STRONG>--commit</STRONG>
+            to overwrite any previously generated XML files. If the
+            <STRONG>--bsim</STRONG> option is specified with the <STRONG>--commit</STRONG>
             option updates will be committed directly to the database. A BSim database commit is
             always performed using the specified <EM>bsimURL</EM> if an <EM>xmldirectory</EM> is
             not specified.</P>
@@ -635,7 +637,7 @@ public void adjustTags(Address myaddress) throws Exception {
               <TABLE border="0" summary="Simple list" class="simplelist">
                 <TR>
                   <TD><CODE class="computeroutput">$(ROOT)/support/bsim dropindex <SPAN class=
-                  "emphasis"><EM>bsimURL</EM></SPAN></CODE></TD>
+                  "emphasis"><EM>&lt;bsimURL&gt;</EM></SPAN></CODE></TD>
                 </TR>
               </TABLE>
             </DIV>
@@ -646,7 +648,7 @@ public void adjustTags(Address myaddress) throws Exception {
               <TABLE border="0" summary="Simple list" class="simplelist">
                 <TR>
                   <TD><CODE class="computeroutput">$(ROOT)/support/bsim rebuildindex <SPAN class=
-                  "emphasis"><EM>bsimURL</EM></SPAN></CODE></TD>
+                  "emphasis"><EM>&lt;bsimURL&gt;</EM></SPAN></CODE></TD>
                 </TR>
               </TABLE>
             </DIV>

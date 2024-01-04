@@ -23,13 +23,13 @@ Non-shared projects are locked when open, and the lock will prevent the signatur
 
 <pre><code class="language-bash">cd &lt;ghidra_install_dir&gt;/support
 mkdir ~/bsim_sigs
-./bsim generatesigs ghidra:/&lt;ghidra_project_dir&gt;/postgres_object_files bsim=file:/&lt;database_dir&gt;/example ~/bsim_sigs
+./bsim generatesigs ghidra:/&lt;ghidra_project_dir&gt;/postgres_object_files --bsim file:/&lt;database_dir&gt;/example ~/bsim_sigs
 </code></pre>
 
 <ul>
   <li>The <code>ghidra:/</code> argument is the local project which holds the analyzed binaries.
 Note that there is only one forward slash in the URL for a local project.</li>
-  <li>The <code>bsim=</code> argument is the URL of the BSim database.
+  <li>The <code>--bsim</code> argument is the URL of the BSim database.
 This command does not add any signatures to the database, but it does query the database for its settings.</li>
 </ul>
 

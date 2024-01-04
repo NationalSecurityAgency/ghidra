@@ -69,7 +69,7 @@ This is equivalent to:
 Use a command-line like this to generate and commit signatures from a Ghidra Server
 repository to the Elasticsearch database created above:
 
-  bsim generatesigs ghidra://1.2.3.4/repo bsim=elastic://1.2.3.4:9200/repo
+  bsim generatesigs ghidra://1.2.3.4/repo --bsim elastic://1.2.3.4:9200/repo
 
 Within Ghidra's BSim client, enter the same URL into the database connection
 panel in order to place queries to your Elasticsearch deployment. See the BSim

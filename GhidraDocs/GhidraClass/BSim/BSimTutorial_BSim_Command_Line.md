@@ -22,12 +22,12 @@ To generate the signature files, execute the following commands in a shell (adju
 ```bash
 cd <ghidra_install_dir>/support
 mkdir ~/bsim_sigs
-./bsim generatesigs ghidra:/<ghidra_project_dir>/postgres_object_files bsim=file:/<database_dir>/example ~/bsim_sigs
+./bsim generatesigs ghidra:/<ghidra_project_dir>/postgres_object_files --bsim file:/<database_dir>/example ~/bsim_sigs
 ```
 
 -  The ``ghidra:/`` argument is the local project which holds the analyzed binaries.
 Note that there is only one forward slash in the URL for a local project.
--  The ``bsim=`` argument is the URL of the BSim database.
+-  The ``--bsim`` argument is the URL of the BSim database.
 This command does not add any signatures to the database, but it does query the database for its settings.
 
 ## Committing Signature Files
