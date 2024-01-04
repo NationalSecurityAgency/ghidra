@@ -1361,6 +1361,9 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	}
 
 	private void allocateUndefinedSymbolData(HashMap<Address, Integer> dataAllocationMap) {
+		if (!ElfLoaderOptionsFactory.applyUndefinedSymbolData(options)) {
+			return;
+		}
 		for (Address addr : dataAllocationMap.keySet()) {
 
 			MemoryBlock block = memory.getBlock(addr);
@@ -2327,6 +2330,9 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 	@Override
 	public Data createUndefinedData(Address address, int length) {
+		if (!ElfLoaderOptionsFactory.applyUndefinedSymbolData(options)) {
+			return null;
+		}
 		try {
 			// If it is bigger than 8, just let it go through and create a single undefined
 			// Otherwise this would create an array of undefined, might get in the way
