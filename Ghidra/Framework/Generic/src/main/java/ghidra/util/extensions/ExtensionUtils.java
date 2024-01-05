@@ -290,7 +290,7 @@ public class ExtensionUtils {
 
 			ExtensionDetails existingExtension = get(results, extension);
 			if (existingExtension == null) {
-				results.add(existingExtension);
+				results.add(extension);
 				continue;
 			}
 
