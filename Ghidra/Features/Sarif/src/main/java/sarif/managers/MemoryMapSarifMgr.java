@@ -75,7 +75,7 @@ public class MemoryMapSarifMgr extends SarifMgr {
 	public boolean read(Map<String, Object> result, SarifProgramOptions options, TaskMonitor monitor)
 			throws CancelledException {
 		try {
-			processMemoryBlock(result, result, programMgr.getDirectory(), program, monitor);
+			processMemoryBlock(result, programMgr.getDirectory(), program, monitor);
 			return true;
 		} catch (FileNotFoundException | AddressOverflowException e) {
 			log.appendException(e);
@@ -83,8 +83,8 @@ public class MemoryMapSarifMgr extends SarifMgr {
 		return false;
 	}
 
-	private void processMemoryBlock(Map<String, Object> result, Map<String, Object> result2, String directory,
-			Program program, TaskMonitor monitor) throws FileNotFoundException, AddressOverflowException {
+	private void processMemoryBlock(Map<String, Object> result, String directory, Program program, TaskMonitor monitor)
+			throws FileNotFoundException, AddressOverflowException {
 
 		String name = (String) result.get("name");
 		AddressSet set = getLocations(result, null);
