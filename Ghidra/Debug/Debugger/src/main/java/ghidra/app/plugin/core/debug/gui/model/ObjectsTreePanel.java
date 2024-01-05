@@ -37,6 +37,7 @@ import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.*;
+import ghidra.util.Swing;
 
 public class ObjectsTreePanel extends JPanel {
 
@@ -97,8 +98,33 @@ public class ObjectsTreePanel extends JPanel {
 		}
 	}
 
+	protected static class DelayedSwingHack implements Runnable {
+		public static void runWayLater(int delay, Runnable runnable) {
+			Swing.runLater(new DelayedSwingHack(delay, runnable));
+		}
+
+		private int delay;
+		private final Runnable runnable;
+
+		public DelayedSwingHack(int delay, Runnable runnable) {
+			this.delay = delay;
+			this.runnable = runnable;
+		}
+
+		@Override
+		public void run() {
+			if (--delay == 0) {
+				runnable.run();
+			}
+			else {
+				Swing.runLater(this);
+			}
+		}
+	}
+
 	protected class ListenerForShowing implements AncestorListener {
 		boolean showing = false;
+		int version = 0;
 
 		@Override
 		public void ancestorRemoved(AncestorEvent event) {
@@ -116,7 +142,22 @@ public class ObjectsTreePanel extends JPanel {
 		}
 
 		public void updateShowing() {
-			setShowing(ObjectsTreePanel.this.isShowing());
+			/**
+			 * There may be several changes to visibility throughout some routines running on the
+			 * Swing thread. To avoid processing such frantic changes, we aim to wait for the last
+			 * change. Thus, we increment a version counter and schedule a delayed lambda on the
+			 * Swing thread. That lambda will only actually do anything if the version number hasn't
+			 * been incremented, i.e., some additional change hasn't occurred. This should prevent
+			 * intermediate changes, e.g., when re-docking the window, from causing needless
+			 * updates.
+			 */
+			final int v = ++version;
+			DelayedSwingHack.runWayLater(2, () -> {
+				if (v == version) {
+					version = 0;
+					setShowing(ObjectsTreePanel.this.isShowing());
+				}
+			});
 		}
 
 		private void setShowing(boolean showing) {
@@ -128,22 +169,11 @@ public class ObjectsTreePanel extends JPanel {
 		}
 	}
 
-	protected class ListenerForShowingSuppressor implements ListenerSuppressor {
-		public ListenerForShowingSuppressor() {
-			removeAncestorListener(listenerForShowing);
-		}
-
-		@Override
-		public void close() {
-			addAncestorListener(listenerForShowing);
-			listenerForShowing.updateShowing();
-		}
-	}
-
 	protected final ObjectTreeModel treeModel;
 	protected final ObjectGTree tree;
 
 	protected boolean showing = false;
+	protected Set<TraceObjectKeyPath> savedSelection = null;
 	protected DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
 	protected DebuggerCoordinates previous = DebuggerCoordinates.NOWHERE;
 	protected boolean limitToSnap = true;
@@ -168,10 +198,6 @@ public class ObjectsTreePanel extends JPanel {
 		add(tree, BorderLayout.CENTER);
 	}
 
-	public ListenerSuppressor suppressShowingListener() {
-		return new ListenerForShowingSuppressor();
-	}
-
 	protected ObjectTreeModel createModel() {
 		return new ObjectTreeModel();
 	}
@@ -181,15 +207,17 @@ public class ObjectsTreePanel extends JPanel {
 	}
 
 	protected void showingChanged(boolean showing) {
+		if (!showing) {
+			savedSelection = getSelectedKeyPaths();
+		}
 		this.showing = showing;
 		updateTreeModelForCoordinates();
 		updateTreeModelForSpan();
 		updateTreeModelForShowHidden();
 		updateTreeModelForShowPrimitives();
 		updateTreeModelForShowMethods();
-		if (showing) {
-			// Not going to restore the actual selection
-			selectCurrent();
+		if (showing && savedSelection != null) {
+			setSelectedKeyPaths(savedSelection, EventOrigin.INTERNAL_GENERATED);
 		}
 		// Restore expansion? Nah.
 	}
@@ -380,6 +408,7 @@ public class ObjectsTreePanel extends JPanel {
 	}
 
 	public void setSelectedKeyPaths(Collection<TraceObjectKeyPath> keyPaths, EventOrigin origin) {
+		savedSelection = keyPaths instanceof Set<TraceObjectKeyPath> s ? s : Set.copyOf(keyPaths);
 		List<TreePath> treePaths = new ArrayList<>();
 		for (TraceObjectKeyPath path : keyPaths) {
 			AbstractNode node = getNode(path);
@@ -388,6 +417,20 @@ public class ObjectsTreePanel extends JPanel {
 			}
 		}
 		tree.setSelectionPaths(treePaths.toArray(TreePath[]::new), origin);
+	}
+
+	public Set<TraceObjectKeyPath> getSelectedKeyPaths() {
+		Set<TraceObjectKeyPath> result = new HashSet<>();
+		for (AbstractNode node : getSelectedItems()) {
+			TraceObjectValue value = node.getValue();
+			if (value == null) {
+				result.add(TraceObjectKeyPath.of());
+			}
+			else {
+				result.add(value.getCanonicalPath());
+			}
+		}
+		return result;
 	}
 
 	public void setSelectedKeyPaths(Collection<TraceObjectKeyPath> keyPaths) {
