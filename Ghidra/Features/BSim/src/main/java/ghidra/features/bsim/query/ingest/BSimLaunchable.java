@@ -930,9 +930,20 @@ public class BSimLaunchable implements GhidraLaunchable {
 		}
 	}
 
+	private static void printMaxMemory() {
+		long maxMemoryBytes = Runtime.getRuntime().maxMemory();
+		long maxMem = maxMemoryBytes >> 20; // MBytes
+		String units = " MBytes";
+		if (maxMem >= 1024) {
+			maxMem >>= 10;
+			units = " GBytes";
+		}
+		System.out.println("Max-Memory: " + maxMem + units);
+	}
+
 	private static void printUsage() {
 		//@formatter:off
-		System.err.println(
+		System.err.println("\n" +
 			"USAGE: bsim [command]       required-args... [OPTIONS...]\n" + 
 			"            createdatabase  <bsimURL> <config_template> [--name|-n \"<name>\"] [--owner|-o \"<owner>\"] [--description|-d \"<text>\"] [--nocallgraph]\n" + 
 			"            setmetadata     <bsimURL> [--name|-n \"<name>\"] [--owner|-o \"<owner>\"] [--description|-d \"<text>\"]\n" + 
@@ -978,6 +989,9 @@ public class BSimLaunchable implements GhidraLaunchable {
 
 	@Override
 	public void launch(GhidraApplicationLayout ghidraLayout, String[] params) {
+
+		printMaxMemory();
+
 		if (params.length == 0) {
 			printUsage();
 			return;

@@ -1426,27 +1426,31 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 		}
 	}
 
+	private static void printUsage() {
+		//@formatter:off
+		System.err.println("\n" + 
+			"USAGE: bsim_ctl [command]  required-args... [OPTIONS...}\n\n" +
+			"                start      </datadir-path> [--auth|-a pki|password|trust] [--noLocalAuth] [--cafile \"</cacert-path>\"] [--dn \"<distinguished-name>\"]\n" +
+			"                stop       </datadir-path> [--force]\n" +
+			"                adduser    </datadir-path> <username> [--dn \"<distinguished-name>\"]\n" +
+			"                dropuser   </datadir-path> <username>\n" +
+			"                changeauth </datadir-path> [--auth|-a pki|password|trust] [--noLocalAuth] [--cafile \"</cacert-path>\"]\n" +
+			"                resetpassword   <username>\n" +
+			"                changeprivilege <username> admin|user\n" + 
+			"\n" + 
+			"Global options:\n" +
+			"   --port|-p <portnum>\n" + 
+			"   --user|-u <username>\n" + 
+			"   --cert </certfile-path>\n" +
+			"\n" +
+			"NOTE: Options with values may also be specified using the form: --option=value\n");
+		//@formatter:on
+	}
+
 	@Override
 	public void launch(GhidraApplicationLayout ghidraLayout, String[] params) {
 		if (params.length <= 1) {
-			//@formatter:off
-			System.err.println("USAGE: bsim_ctl [command]  required-args... [OPTIONS...}\n");
-			System.err.println("                start      </datadir-path> [--auth|-a pki|password|trust] [--noLocalAuth] [--cafile \"</cacert-path>\"] [--dn \"<distinguished-name>\"]");
-			System.err.println("                stop       </datadir-path> [--force]");
-			System.err.println("                adduser    </datadir-path> <username> [--dn \"<distinguished-name>\"]");
-			System.err.println("                dropuser   </datadir-path> <username>");
-			System.err.println("                changeauth </datadir-path> [--auth|-a pki|password|trust] [--noLocalAuth] [--cafile \"</cacert-path>\"]");
-			System.err.println("                resetpassword   <username>");
-			System.err.println("                changeprivilege <username> admin|user");
-			System.err.println();
-			System.err.println("Global options:");
-			System.err.println("   --port|-p <portnum>");
-			System.err.println("   --user|-u <username>");
-			System.err.println("   --cert </certfile-path>");
-			System.err.println();
-			System.err.println("NOTE: Options with values may also be specified using the form: --option=value\n");
-			System.err.println();
-			//@formatter:on
+			printUsage();
 			return;
 		}
 		layout = ghidraLayout;		// Save layout for when we need to initialize application
