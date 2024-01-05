@@ -20,6 +20,7 @@ import java.awt.event.*;
 import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -368,52 +369,50 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			return;
 		}
 
-		try (ListenerSuppressor suppressor = objectsTreePanel.suppressShowingListener()) {
-			mainPanel.removeAll();
-			mainPanel.add(queryPanel, BorderLayout.NORTH);
+		mainPanel.removeAll();
+		mainPanel.add(queryPanel, BorderLayout.NORTH);
 
-			if (showObjectsTree && showElementsTable && showAttributesTable) {
-				JSplitPane lrSplit = createLrSplit();
-				mainPanel.add(lrSplit, BorderLayout.CENTER);
-				JSplitPane tbSplit = createTbSplit();
-				lrSplit.setRightComponent(tbSplit);
-				lrSplit.setLeftComponent(objectsTreePanel);
-				tbSplit.setLeftComponent(createLabeledElementsTable());
-				tbSplit.setRightComponent(createLabeledAttributesTable());
-			}
-			else if (showObjectsTree && showElementsTable) {
-				JSplitPane lrSplit = createLrSplit();
-				mainPanel.add(lrSplit, BorderLayout.CENTER);
-				lrSplit.setLeftComponent(objectsTreePanel);
-				lrSplit.setRightComponent(elementsTablePanel);
-			}
-			else if (showObjectsTree && showAttributesTable) {
-				JSplitPane lrSplit = createLrSplit();
-				mainPanel.add(lrSplit, BorderLayout.CENTER);
-				lrSplit.setLeftComponent(objectsTreePanel);
-				lrSplit.setRightComponent(attributesTablePanel);
-			}
-			else if (showElementsTable && showAttributesTable) {
-				JSplitPane tbSplit = createTbSplit();
-				tbSplit.setLeftComponent(createLabeledElementsTable());
-				tbSplit.setRightComponent(createLabeledAttributesTable());
-				mainPanel.add(tbSplit, BorderLayout.CENTER);
-			}
-			else if (showObjectsTree) {
-				mainPanel.add(objectsTreePanel);
-			}
-			else if (showElementsTable) {
-				mainPanel.add(elementsTablePanel);
-			}
-			else if (showAttributesTable) {
-				mainPanel.add(attributesTablePanel);
-			}
-			else {
-				// The actions should not allow this, but in case it happens, help the user out.
-				mainPanel.add(new JLabel("""
-						<html>Well, you should probably enable at least one panel.
-						Use the local toolbar buttons."""));
-			}
+		if (showObjectsTree && showElementsTable && showAttributesTable) {
+			JSplitPane lrSplit = createLrSplit();
+			mainPanel.add(lrSplit, BorderLayout.CENTER);
+			JSplitPane tbSplit = createTbSplit();
+			lrSplit.setRightComponent(tbSplit);
+			lrSplit.setLeftComponent(objectsTreePanel);
+			tbSplit.setLeftComponent(createLabeledElementsTable());
+			tbSplit.setRightComponent(createLabeledAttributesTable());
+		}
+		else if (showObjectsTree && showElementsTable) {
+			JSplitPane lrSplit = createLrSplit();
+			mainPanel.add(lrSplit, BorderLayout.CENTER);
+			lrSplit.setLeftComponent(objectsTreePanel);
+			lrSplit.setRightComponent(elementsTablePanel);
+		}
+		else if (showObjectsTree && showAttributesTable) {
+			JSplitPane lrSplit = createLrSplit();
+			mainPanel.add(lrSplit, BorderLayout.CENTER);
+			lrSplit.setLeftComponent(objectsTreePanel);
+			lrSplit.setRightComponent(attributesTablePanel);
+		}
+		else if (showElementsTable && showAttributesTable) {
+			JSplitPane tbSplit = createTbSplit();
+			tbSplit.setLeftComponent(createLabeledElementsTable());
+			tbSplit.setRightComponent(createLabeledAttributesTable());
+			mainPanel.add(tbSplit, BorderLayout.CENTER);
+		}
+		else if (showObjectsTree) {
+			mainPanel.add(objectsTreePanel);
+		}
+		else if (showElementsTable) {
+			mainPanel.add(elementsTablePanel);
+		}
+		else if (showAttributesTable) {
+			mainPanel.add(attributesTablePanel);
+		}
+		else {
+			// The actions should not allow this, but in case it happens, help the user out.
+			mainPanel.add(new JLabel("""
+					<html>Well, you should probably enable at least one panel.
+					Use the local toolbar buttons."""));
 		}
 		mainPanel.revalidate();
 	}
@@ -426,8 +425,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			public boolean verify(JComponent input) {
 				try {
 					TraceObjectKeyPath path = TraceObjectKeyPath.parse(pathField.getText());
-					setPath(path);
-					objectsTreePanel.setSelectedKeyPaths(List.of(path));
+					setPath(path, null, EventOrigin.USER_GENERATED);
 					return true;
 				}
 				catch (IllegalArgumentException e) {
@@ -501,7 +499,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			}
 			TraceObjectValue value = sel.get(0).getValue();
 			setPath(value == null ? TraceObjectKeyPath.of() : value.getCanonicalPath(),
-				objectsTreePanel);
+				objectsTreePanel, EventOrigin.INTERNAL_GENERATED);
 		});
 		objectsTreePanel.tree.addMouseListener(new MouseAdapter() {
 			@Override
@@ -661,10 +659,13 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		clone.readConfigState(configState);
 		SaveState dataState = new SaveState();
 		this.writeDataState(dataState);
+		// Selection is not saved to the tool state
+		Set<TraceObjectKeyPath> selection = this.objectsTreePanel.getSelectedKeyPaths();
 		// coords are omitted by main window
 		// also, cannot save unless trace is in a project
 		clone.coordinatesActivated(current);
 		clone.readDataState(dataState);
+		clone.objectsTreePanel.setSelectedKeyPaths(selection);
 		plugin.getTool().showComponentProvider(clone, true);
 	}
 
@@ -827,14 +828,14 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		}
 	}
 
-	protected void setPath(TraceObjectKeyPath path, JComponent source) {
+	protected void setPath(TraceObjectKeyPath path, JComponent source, EventOrigin origin) {
 		if (Objects.equals(this.path, path) && getTreeSelection() != null) {
 			return;
 		}
 		this.path = path;
 
 		if (source != objectsTreePanel) {
-			setTreeSelection(path);
+			setTreeSelection(path, origin);
 		}
 
 		pathField.setText(path.toString());
@@ -844,7 +845,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 	}
 
 	public void setPath(TraceObjectKeyPath path) {
-		setPath(path, null);
+		setPath(path, null, EventOrigin.API_GENERATED);
 	}
 
 	public TraceObjectKeyPath getPath() {

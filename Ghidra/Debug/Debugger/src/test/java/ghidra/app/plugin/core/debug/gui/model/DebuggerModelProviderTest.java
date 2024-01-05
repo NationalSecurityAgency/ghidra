@@ -647,6 +647,9 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		modelProvider.setPath(TraceObjectKeyPath.parse("Processes[0].Threads[2]"));
 		waitForTasks();
 
+		// Pre-check
+		assertEquals(TraceObjectKeyPath.parse("Processes[0].Threads[2]"), modelProvider.path);
+
 		performAction(modelProvider.actionCloneWindow);
 
 		DebuggerModelProvider clone = Unique.assertOne(modelPlugin.getDisconnectedProviders());
