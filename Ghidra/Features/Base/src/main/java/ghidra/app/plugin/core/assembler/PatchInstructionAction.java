@@ -34,6 +34,7 @@ import docking.widgets.autocomplete.*;
 import docking.widgets.fieldpanel.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import generic.theme.GThemeDefaults.Colors;
+import ghidra.app.cmd.disassemble.ReDisassembleCommand;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.core.assembler.AssemblyDualTextField.*;
@@ -301,7 +302,11 @@ public class PatchInstructionAction extends AbstractPatchAction {
 	}
 
 	protected void applyPatch(byte[] data) throws MemoryAccessException {
+		// NB. This will immediately re-disassembly the one command.
+		// We'll background the context repair, which may include more disassembly
 		assembler.patchProgram(data, getAddress());
+		ReDisassembleCommand cmd = new ReDisassembleCommand(getAddress());
+		tool.executeBackgroundCommand(cmd, getProgram());
 	}
 
 	/**
