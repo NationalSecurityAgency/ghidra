@@ -43,6 +43,49 @@ public class VtParser {
 		this.handler = handler;
 	}
 
+	protected static ByteBuffer copyDoubledCapacity(ByteBuffer oldBuf) {
+		ByteBuffer newBuf = ByteBuffer.allocate(oldBuf.capacity() * 2);
+		oldBuf.flip();
+		newBuf.put(oldBuf);
+		return newBuf;
+	}
+
+	/**
+	 * Append a byte to {@link #csiParam}, resizing if necessary
+	 * 
+	 * @param b the byte
+	 */
+	protected void putCsiParamByte(byte b) {
+		if (!csiParam.hasRemaining()) {
+			csiParam = copyDoubledCapacity(csiParam);
+		}
+		csiParam.put(b);
+	}
+
+	/**
+	 * Append a byte to {@link #csiInter}, resizing if necessary
+	 * 
+	 * @param b the byte
+	 */
+	protected void putCsiInterByte(byte b) {
+		if (!csiInter.hasRemaining()) {
+			csiInter = copyDoubledCapacity(csiInter);
+		}
+		csiInter.put(b);
+	}
+
+	/**
+	 * Append a byte to {@link #oscParam}, resizing if necessary
+	 * 
+	 * @param b the byte
+	 */
+	protected void putOscParamByte(byte b) {
+		if (!oscParam.hasRemaining()) {
+			oscParam = copyDoubledCapacity(oscParam);
+		}
+		oscParam.put(b);
+	}
+
 	/**
 	 * Create a copy of the CSI buffers, reconstructed as they were in the original stream.
 	 * 

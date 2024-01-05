@@ -333,10 +333,10 @@ macro Store(addr, value) {
 #
 
 macro pageCAddr(addr, shift, page, offset) {
-     addr = (page << shift) | offset;
+     addr = addr | ((page << shift) | offset);
 }
 macro pagePAddr(addr, shift, page, offset) {
-     addr = (zext(page) << shift) | offset;
+     addr = addr | ((zext(page) << shift) | offset);
 }
 
 @if defined(HCS12X)
@@ -400,7 +400,7 @@ page:		    imm8     is imm8       { export *[const]:1 imm8; }
 #PageDest: dest    is imm16p=0xd & imm16 & imm16pv ; imm8 [ dest = ($(MAXFLASHPage) << 16) | imm16; ] { 	 export *:1 dest; }
 #PageDest: dest    is imm16p=0xe & imm16 & imm16pv ; imm8 [ dest = ($(MAXFLASHPage) << 16) | imm16; ] { 	 export *:1 dest; }
 #PageDest: dest    is imm16p=0xf & imm16 & imm16pv ; imm8 [ dest = ($(MAXFLASHPage) << 16) | imm16; ] { 	 export *:1 dest; }
-PageDest: opr16a   is opr16a; page  { 	 export opr16a; }
+PageDest: opr16a   is opr16a; page  { export opr16a; }
 
 @else
 
@@ -2084,7 +2084,6 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 
 	local ppage_tmp:1 = PPAGE;
 	Push1( PPAGE );	
-
     build CallDest;
     
     local dest:$(SIZE) = CallDest;
