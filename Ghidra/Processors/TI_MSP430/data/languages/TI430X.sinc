@@ -3258,7 +3258,6 @@ macro wzero(full, word)
 	<top>
 	# Operation Flags...
 	build repeat_carry;
-	$(CARRY) = $(CARRY) * ctx_zc;
 	$(OVERFLOW) = ((XRREG_B_AS_DEST != 0x0) && ($(CARRY) == 0x1));	# V Flag
 	# Operation...
 	tmp:1 = $(CARRY);

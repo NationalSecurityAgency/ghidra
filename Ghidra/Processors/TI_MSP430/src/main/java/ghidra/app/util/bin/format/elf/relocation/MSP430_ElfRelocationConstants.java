@@ -18,7 +18,7 @@ package ghidra.app.util.bin.format.elf.relocation;
 /**
  * class for elf_msp430_reloc_type (from binutils source)
  */
-public class TI_MSP430_ElfRelocationConstants {
+public class MSP430_ElfRelocationConstants {
 	public static final int R_MSP430_NONE = 0;
 	public static final int R_MSP430_32 = 1;
 	public static final int R_MSP430_10_PCREL = 2;
