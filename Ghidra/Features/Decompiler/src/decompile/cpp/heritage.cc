@@ -331,20 +331,17 @@ bool Heritage::callOpIndirectEffect(const Address &addr,int4 size,PcodeOp *op) c
 /// of the address range currently being linked, create a Varnode of
 /// the correct size and define the original Varnode as a SUBPIECE.
 /// \param vn is the given too small Varnode
+/// \param op is the reading PcodeOp
 /// \param addr is the start of the (larger) range
 /// \param size is the number of bytes in the range
 /// \return the new larger Varnode
-Varnode *Heritage::normalizeReadSize(Varnode *vn,const Address &addr,int4 size)
+Varnode *Heritage::normalizeReadSize(Varnode *vn,PcodeOp *op,const Address &addr,int4 size)
 
 {
   int4 overlap;
   Varnode *vn1,*vn2;
-  PcodeOp *op,*newop;
+  PcodeOp *newop;
 
-  list<PcodeOp *>::const_iterator oiter = vn->beginDescend();
-  op = *oiter++;
-  if (oiter != vn->endDescend())
-    throw LowlevelError("Free varnode with multiple reads");
   newop = fd->newOp(2,op->getAddr());
   fd->opSetOpcode(newop,CPUI_SUBPIECE);
   vn1 = fd->newVarnode(size,addr);
@@ -1122,8 +1119,14 @@ void Heritage::guard(const Address &addr,int4 size,bool guardPerformed,
 
   for(iter=read.begin();iter!=read.end();++iter) {
     vn = *iter;
+    list<PcodeOp *>::const_iterator oiter = vn->beginDescend();
+    if (oiter == vn->endDescend())	// removeRevisitedMarkers may have eliminated descendant
+      continue;
+    PcodeOp *op = *oiter++;
+    if (oiter != vn->endDescend())
+      throw LowlevelError("Free varnode with multiple reads");
     if (vn->getSize() < size)
-      *iter = vn = normalizeReadSize(vn,addr,size);
+      *iter = vn = normalizeReadSize(vn,op,addr,size);
     vn->setActiveHeritage();
   }
 

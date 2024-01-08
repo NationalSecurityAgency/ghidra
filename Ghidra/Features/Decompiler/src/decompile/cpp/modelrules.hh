@@ -63,7 +63,7 @@ public:
   /// \param decoder is the given stream decoder
   virtual void decode(Decoder &decoder)=0;
 
-  static bool extractPrimitives(Datatype *dt,int4 max,Datatype *filler,vector<Datatype *> &res);
+  static bool extractPrimitives(Datatype *dt,int4 max,vector<Datatype *> &res);
   static DatatypeFilter *decodeFilter(Decoder &decoder);	///< Instantiate a filter from the given stream
 };
 
