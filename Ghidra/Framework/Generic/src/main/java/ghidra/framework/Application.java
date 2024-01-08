@@ -74,14 +74,6 @@ public class Application {
 
 	private void initialize() {
 
-		// Create application's user directories
-		try {
-			layout.createUserDirs();
-		}
-		catch (IOException e) {
-			throw new AssertException(e.getMessage());
-		}
-
 		// Set headless property
 		String isHeadless = Boolean.toString(configuration.isHeadless());
 		System.setProperty(SystemUtilities.HEADLESS_PROPERTY, isHeadless);
@@ -683,7 +675,7 @@ public class Application {
 			return app != null ? app.layout.getUserTempDir()
 					: ApplicationUtilities.getDefaultUserTempDir("ghidra");
 		}
-		catch (FileNotFoundException e) {
+		catch (IOException e) {
 			throw new AssertException(e);
 		}
 	}

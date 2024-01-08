@@ -155,77 +155,91 @@ public class ApplicationUtilities {
 	/**
 	 * Gets the application's default user temp directory.
 	 * <p>
-	 * NOTE: This method does not create the directory.
+	 * NOTE: This method creates the directory if it does not exist.
 	 * 
 	 * @param applicationName The application name.
 	 * @return The application's default user temp directory. The returned {@link File} will 
 	 *   represent an absolute path.
 	 * @throws FileNotFoundException if the absolute path of the user temp directory could not be 
 	 *   determined.
+	 * @throws IOException if the user temp directory could not be created.
 	 */
-	public static File getDefaultUserTempDir(String applicationName) throws FileNotFoundException {
+	public static File getDefaultUserTempDir(String applicationName)
+			throws FileNotFoundException, IOException {
 
 		String appName = applicationName.toLowerCase();
 
 		// Look for Ghidra-specific system property
 		File tempOverrideDir = getSystemPropertyFile(PROPERTY_TEMP_DIR, false);
 		if (tempOverrideDir != null) {
-			return new File(tempOverrideDir, getUserSpecificDirName(tempOverrideDir, appName));
+			return createDir(
+				new File(tempOverrideDir, getUserSpecificDirName(tempOverrideDir, appName)));
 		}
 
 		// Look for XDG environment variable
 		File xdgRuntimeDir = getEnvFile(XdgUtils.XDG_RUNTIME_DIR, false);
 		if (xdgRuntimeDir != null) {
-			return new File(xdgRuntimeDir, getUserSpecificDirName(xdgRuntimeDir, appName));
+			return createDir(
+				new File(xdgRuntimeDir, getUserSpecificDirName(xdgRuntimeDir, appName)));
 		}
 
 		File javaTmpDir = getJavaTmpDir();
-		return new File(javaTmpDir, getUserSpecificDirName(javaTmpDir, appName));
+		return createDir(new File(getJavaTmpDir(), getUserSpecificDirName(javaTmpDir, appName)));
 	}
 
 	/**
 	 * Gets the application's default user cache directory.
 	 * <p>
-	 * NOTE: This method does not create the directory.
+	 * NOTE: This method creates the directory if it does not exist.
 	 * 
 	 * @param applicationProperties The application properties.
 	 * @return The application's default user cache directory. The returned {@link File} will 
 	 *   represent an absolute path.
 	 * @throws FileNotFoundException if the absolute path of the user cache directory could not be 
 	 *   determined.
+	 * @throws IOException if the user cache directory could not be created.
 	 */
 	public static File getDefaultUserCacheDir(ApplicationProperties applicationProperties)
-			throws FileNotFoundException {
+			throws FileNotFoundException, IOException {
 
 		String appName = applicationProperties.getApplicationName().toLowerCase();
 
 		// Look for Ghidra-specific system property
 		File cacheOverrideDir = getSystemPropertyFile(PROPERTY_CACHE_DIR, false);
 		if (cacheOverrideDir != null) {
-			return new File(cacheOverrideDir, getUserSpecificDirName(cacheOverrideDir, appName));
+			return createDir(
+				new File(cacheOverrideDir, getUserSpecificDirName(cacheOverrideDir, appName)));
 		}
 
 		// Look for XDG environment variable
 		File xdgCacheHomeDir = getEnvFile(XdgUtils.XDG_CACHE_HOME, false);
 		if (xdgCacheHomeDir != null) {
-			return new File(xdgCacheHomeDir, getUserSpecificDirName(xdgCacheHomeDir, appName));
+			return createDir(
+				new File(xdgCacheHomeDir, getUserSpecificDirName(xdgCacheHomeDir, appName)));
 		}
 		
 		// Use platform-specific default location
 		String userDirName = SystemUtilities.getUserName() + "-" + appName;
-		return switch (OperatingSystem.CURRENT_OPERATING_SYSTEM) {
-			case WINDOWS -> new File(getEnvFile("LOCALAPPDATA", true), appName);
-			case LINUX -> new File("/var/tmp/" + userDirName);
-			case MAC_OS_X -> new File("/var/tmp/" + userDirName);
-			default -> throw new FileNotFoundException(
-				"Failed to find the user cache directory: Unsupported operating system.");
-		};
+
+		try {
+			return createDir(switch (OperatingSystem.CURRENT_OPERATING_SYSTEM) {
+				case WINDOWS -> new File(getEnvFile("LOCALAPPDATA", true), appName);
+				case LINUX -> new File("/var/tmp/" + userDirName);
+				case MAC_OS_X -> new File("/var/tmp/" + userDirName);
+				default -> throw new FileNotFoundException(
+					"Failed to find the user cache directory: Unsupported operating system.");
+			});
+		}
+		catch (IOException e) {
+			// Failed to create desired cache directory...use temp directory instead
+			return getDefaultUserTempDir(applicationProperties.getApplicationName());
+		}
 	}
 
 	/**
 	 * Gets the application's default user settings directory.
 	 * <p>
-	 * NOTE: This method does not create the directory.
+	 * NOTE: This method creates the directory if it does not exist.
 	 * 
 	 * @param applicationProperties The application properties.
 	 * @param installationDirectory The application installation directory.
@@ -233,9 +247,10 @@ public class ApplicationUtilities {
 	 *   represent an absolute path.
 	 * @throws FileNotFoundException if the absolute path of the user settings directory could not 
 	 *   be determined.
+	 * @throws IOException if the user settings directory could not be created.
 	 */
 	public static File getDefaultUserSettingsDir(ApplicationProperties applicationProperties,
-			ResourceFile installationDirectory) throws FileNotFoundException {
+			ResourceFile installationDirectory) throws FileNotFoundException, IOException {
 
 		String appName = applicationProperties.getApplicationName().toLowerCase();
 		ApplicationIdentifier applicationIdentifier =
@@ -250,26 +265,26 @@ public class ApplicationUtilities {
 		// Look for Ghidra-specific system property
 		File settingsOverrideDir = getSystemPropertyFile(PROPERTY_SETTINGS_DIR, false);
 		if (settingsOverrideDir != null) {
-			return new File(settingsOverrideDir,
-				getUserSpecificDirName(settingsOverrideDir, appName) + "/" + versionedName);
+			return createDir(new File(settingsOverrideDir,
+				getUserSpecificDirName(settingsOverrideDir, appName) + "/" + versionedName));
 		}
 
 		// Look for XDG environment variable
 		File xdgConfigHomeDir = getEnvFile(XdgUtils.XDG_CONFIG_HOME, false);
 		if (xdgConfigHomeDir != null) {
-			return new File(xdgConfigHomeDir,
-				getUserSpecificDirName(xdgConfigHomeDir, appName) + "/" + versionedName);
+			return createDir(new File(xdgConfigHomeDir,
+				getUserSpecificDirName(xdgConfigHomeDir, appName) + "/" + versionedName));
 		}
 
 		File userHomeDir = getJavaUserHomeDir();
 		String versionedSubdir = appName + "/" + versionedName;
-		return switch (OperatingSystem.CURRENT_OPERATING_SYSTEM) {
+		return createDir(switch (OperatingSystem.CURRENT_OPERATING_SYSTEM) {
 			case WINDOWS -> new File(getEnvFile("APPDATA", true), versionedSubdir);
 			case LINUX -> new File(userHomeDir, ".config/" + versionedSubdir);
 			case MAC_OS_X -> new File(userHomeDir, "Library/" + versionedSubdir);
 			default -> throw new FileNotFoundException(
 				"Failed to find the user settings directory: Unsupported operating system.");
-		};
+		});
 	}
 
 	/**
@@ -406,5 +421,23 @@ public class ApplicationUtilities {
 			userSpecificDirName = SystemUtilities.getUserName() + "-" + appName;
 		}
 		return userSpecificDirName;
+	}
+
+	/**
+	 * Creates the given {@link File directory} if it does not exist, and sets its permissions to
+	 * owner-only
+	 * 
+	 * @param dir The directory to create
+	 * @return The given directory
+	 * @throws IOException if the directory failed to be created
+	 */
+	private static File createDir(File dir) throws IOException {
+		if (dir != null) {
+			if (!FileUtilities.mkdirs(dir)) {
+				throw new IOException("Failed to create directory: " + dir);
+			}
+			FileUtilities.setOwnerOnlyPermissions(dir);
+		}
+		return dir;
 	}
 }
