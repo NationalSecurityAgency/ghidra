@@ -931,14 +931,20 @@ public class BSimLaunchable implements GhidraLaunchable {
 	}
 
 	private static void printMaxMemory() {
+		// division is used since default case may not use even multiples of 1024
 		long maxMemoryBytes = Runtime.getRuntime().maxMemory();
-		long maxMem = maxMemoryBytes >> 20; // MBytes
+		float maxMem = maxMemoryBytes / (1024 * 1024); // MBytes
 		String units = " MBytes";
 		if (maxMem >= 1024) {
-			maxMem >>= 10;
+			maxMem /= 1024;
 			units = " GBytes";
 		}
-		System.out.println("Max-Memory: " + maxMem + units);
+		String maxMemStr = String.format("%.1f", maxMem);
+		if (maxMemStr.endsWith(".0")) {
+			// don't show .0
+			maxMemStr = maxMemStr.substring(0, maxMemStr.length() - 2);
+		}
+		System.out.println("Max-Memory: " + maxMemStr + units);
 	}
 
 	private static void printUsage() {
