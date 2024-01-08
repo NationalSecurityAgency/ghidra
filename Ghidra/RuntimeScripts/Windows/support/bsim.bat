@@ -3,8 +3,9 @@
 @echo off
 setlocal
 
-:: maximum heap memory (may be increased)
-set MAXMEM=2G
+:: Maximum heap memory may be changed if default is inadequate. This will generally be up to 1/4 of 
+:: the physical memory available to the OS. Uncomment MAXMEM setting if non-default value is needed.
+::set MAXMEM=2G
 
 :: launch mode  (fg, bg, debug, debug-suspend)
 set LAUNCH_MODE=fg

@@ -2,8 +2,9 @@
 #
 # Command-line script for interacting with a BSim database
 
-# maximum heap memory (may be increased)
-MAXMEM=2G
+# Maximum heap memory may be changed if default is inadequate. This will generally be up to 1/4 of 
+# the physical memory available to the OS. Uncomment MAXMEM setting if non-default value is needed.
+#MAXMEM=2G
 
 # launch mode  (fg, bg, debug, debug-suspend)
 LAUNCH_MODE=fg
@@ -17,4 +18,4 @@ VMARG_LIST="-Djava.awt.headless=true "
 SCRIPT_FILE="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
 SCRIPT_DIR="${SCRIPT_FILE%/*}"
 
-${SCRIPT_DIR}/launch.sh $LAUNCH_MODE jdk "BSim" $MAXMEM "" ghidra.features.bsim.query.ingest.BSimLaunchable "$@"
+${SCRIPT_DIR}/launch.sh $LAUNCH_MODE jdk "BSim" "${MAXMEM}" "" ghidra.features.bsim.query.ingest.BSimLaunchable "$@"
