@@ -268,7 +268,6 @@ src/main/help/help/topics/FrontEndPlugin/Project_Info.htm||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/Re-opening_a_Project.htm||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/Restore_Project.htm||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/Saving_a_Ghidra_Project.htm||GHIDRA||||END|
-src/main/help/help/topics/FrontEndPlugin/ShowMemoryUsage.htm||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/ArchiveFileExists.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/ArchiveProject.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/ChangeAccessList.png||GHIDRA||||END|
@@ -285,7 +284,6 @@ src/main/help/help/topics/FrontEndPlugin/images/DeleteProject.png||GHIDRA||||END
 src/main/help/help/topics/FrontEndPlugin/images/EditPluginPath.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/EditProjectAccessList.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/LinkOtherProject.png||GHIDRA||||END|
-src/main/help/help/topics/FrontEndPlugin/images/MemoryUsage.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/NonSharedProjectInfo.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/OpenProject.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/PrivateFileIcon.png||GHIDRA||||END|
@@ -500,6 +498,8 @@ src/main/help/help/topics/Repository/images/SymbolRemoveVsChangeConflict.png||GH
 src/main/help/help/topics/Repository/images/SymbolRenameWithScopeConflict.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/Repository/images/UserDefinedUseForAllConflict.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/ResourceActionsPlugin/ResourceActions.html||GHIDRA||||END|
+src/main/help/help/topics/RuntimeInfoPlugin/InstalledProcessors.htm||GHIDRA||||END|
+src/main/help/help/topics/RuntimeInfoPlugin/RuntimeInfo.htm||GHIDRA||||END|
 src/main/help/help/topics/ScalarSearchPlugin/The_Scalar_Table.htm||GHIDRA||||END|
 src/main/help/help/topics/ScalarSearchPlugin/images/ScalarWindow.png||GHIDRA||||END|
 src/main/help/help/topics/ScalarSearchPlugin/images/SearchAllScalarsDialog.png||GHIDRA||||END|
