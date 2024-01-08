@@ -17,6 +17,7 @@ package ghidra.app.plugin.assembler.sleigh.grammars;
 
 import java.util.*;
 
+import ghidra.app.plugin.assembler.sleigh.sem.AbstractAssemblyResolutionFactory;
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyConstructorSemantic;
 import ghidra.app.plugin.assembler.sleigh.symbol.AssemblyNonTerminal;
 import ghidra.app.plugin.processors.sleigh.Constructor;
@@ -33,13 +34,18 @@ import ghidra.app.plugin.processors.sleigh.pattern.DisjointPattern;
  */
 public class AssemblyGrammar
 		extends AbstractAssemblyGrammar<AssemblyNonTerminal, AssemblyProduction> {
+	protected final AbstractAssemblyResolutionFactory<?, ?> factory;
 	// a nested map of semantics by production, by constructor
-	protected final Map<AssemblyProduction, Map<Constructor, AssemblyConstructorSemantic>> semanticsByProduction =
-		new TreeMap<>();
+	protected final Map<AssemblyProduction, //
+			Map<Constructor, AssemblyConstructorSemantic>> semanticsByProduction = new TreeMap<>();
 	protected final Map<Constructor, AssemblyConstructorSemantic> semanticsByConstructor =
 		new HashMap<>();
 	// a map of purely recursive, e.g., I => I, productions by name of LHS
 	protected final Map<String, AssemblyProduction> pureRecursive = new TreeMap<>();
+
+	public AssemblyGrammar(AbstractAssemblyResolutionFactory<?, ?> factory) {
+		this.factory = factory;
+	}
 
 	@Override
 	protected AssemblyProduction newProduction(AssemblyNonTerminal lhs,
@@ -73,7 +79,7 @@ public class AssemblyGrammar
 		Map<Constructor, AssemblyConstructorSemantic> map =
 			semanticsByProduction.computeIfAbsent(prod, p -> new TreeMap<>());
 		AssemblyConstructorSemantic sem =
-			map.computeIfAbsent(cons, c -> new AssemblyConstructorSemantic(cons, indices));
+			map.computeIfAbsent(cons, c -> new AssemblyConstructorSemantic(factory, cons, indices));
 		if (!indices.equals(sem.getOperandIndices())) {
 			throw new IllegalStateException(
 				"Productions of the same constructor must have same operand indices");

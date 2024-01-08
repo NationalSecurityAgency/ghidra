@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.assembler.sleigh;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 import java.util.*;
 
@@ -365,8 +365,8 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 			}
 
 			@Override
-			public AssemblyResolvedPatterns select(AssemblyResolutionResults rr,
-					AssemblyPatternBlock ctx) throws AssemblySemanticException {
+			public Selection select(AssemblyResolutionResults rr, AssemblyPatternBlock ctx)
+					throws AssemblySemanticException {
 				if (checkOneCompat) {
 					checkOneCompat(instr, rr);
 				}

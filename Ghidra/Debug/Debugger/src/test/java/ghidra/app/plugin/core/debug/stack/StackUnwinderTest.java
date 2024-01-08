@@ -85,8 +85,8 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 
 	public static final AssemblySelector NO_16BIT_CALLS = new AssemblySelector() {
 		@Override
-		public AssemblyResolvedPatterns select(AssemblyResolutionResults rr,
-				AssemblyPatternBlock ctx) throws AssemblySemanticException {
+		public Selection select(AssemblyResolutionResults rr, AssemblyPatternBlock ctx)
+				throws AssemblySemanticException {
 			for (AssemblyResolvedPatterns res : filterCompatibleAndSort(rr, ctx)) {
 				byte[] ins = res.getInstruction().getVals();
 				// HACK to avoid 16-bit CALL.... TODO: Why does this happen?
@@ -95,8 +95,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 						"Filtered 16-bit call " + NumericUtilities.convertBytesToString(ins));
 					continue;
 				}
-				return AssemblyResolution.resolved(res.getInstruction().fillMask(),
-					res.getContext(), "Selected", null, null, null);
+				return new Selection(res.getInstruction().fillMask(), res.getContext());
 			}
 			throw new AssemblySemanticException(semanticErrors);
 		}

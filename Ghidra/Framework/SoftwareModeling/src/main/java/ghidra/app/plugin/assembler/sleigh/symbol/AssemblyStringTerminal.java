@@ -15,25 +15,29 @@
  */
 package ghidra.app.plugin.assembler.sleigh.symbol;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
 
 import ghidra.app.plugin.assembler.sleigh.grammars.AssemblyGrammar;
 import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseToken;
+import ghidra.app.plugin.processors.sleigh.symbol.VarnodeSymbol;
 
 /**
  * A terminal that accepts only a particular string
  */
 public class AssemblyStringTerminal extends AssemblyTerminal {
 	protected final String str;
+	protected final VarnodeSymbol defsym;
 
 	/**
 	 * Construct a terminal that accepts only the given string
 	 * 
 	 * @param str the string to accept
 	 */
-	public AssemblyStringTerminal(String str) {
+	public AssemblyStringTerminal(String str, VarnodeSymbol defsym) {
 		super("\"" + str + "\"");
 		this.str = str;
+		this.defsym = defsym;
 	}
 
 	@Override
@@ -57,6 +61,18 @@ public class AssemblyStringTerminal extends AssemblyTerminal {
 
 	@Override
 	public boolean takesOperandIndex() {
+		return defsym != null;
+	}
+
+	public VarnodeSymbol getDefiningSymbol() {
+		return defsym;
+	}
+
+	public String getString() {
+		return str;
+	}
+
+	public boolean isWhiteSpace() {
 		return false;
 	}
 }

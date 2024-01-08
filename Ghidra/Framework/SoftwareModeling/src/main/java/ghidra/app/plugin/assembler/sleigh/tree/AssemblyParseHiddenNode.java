@@ -13,23 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.assembler.sleigh.grammars;
+package ghidra.app.plugin.assembler.sleigh.tree;
 
-import ghidra.app.plugin.assembler.sleigh.symbol.AssemblyNonTerminal;
+import java.io.PrintStream;
 
-/**
- * Defines a production for parsing mnemonic assembly
- * 
- * @see AssemblyGrammar
- */
-public class AssemblyProduction extends AbstractAssemblyProduction<AssemblyNonTerminal> {
+import ghidra.app.plugin.assembler.sleigh.grammars.AssemblyGrammar;
+import ghidra.app.plugin.assembler.sleigh.symbol.AssemblySymbol;
 
-	public AssemblyProduction(AssemblyNonTerminal lhs,
-			AssemblySentential<AssemblyNonTerminal> rhs) {
-		super(lhs, rhs);
+public class AssemblyParseHiddenNode extends AssemblyParseTreeNode {
+	public AssemblyParseHiddenNode(AssemblyGrammar grammar) {
+		super(grammar);
 	}
 
-	public boolean isConstructor() {
-		return true;
+	@Override
+	public AssemblySymbol getSym() {
+		return null;
+	}
+
+	@Override
+	protected void print(PrintStream out, String indent) {
+		out.print("<hidden>");
+	}
+
+	@Override
+	public String generateString() {
+		return "";
 	}
 }

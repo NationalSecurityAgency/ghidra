@@ -13,23 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.assembler.sleigh.grammars;
+package ghidra.app.plugin.assembler.sleigh.sem;
 
-import ghidra.app.plugin.assembler.sleigh.symbol.AssemblyNonTerminal;
+import static org.junit.Assert.assertArrayEquals;
 
-/**
- * Defines a production for parsing mnemonic assembly
- * 
- * @see AssemblyGrammar
- */
-public class AssemblyProduction extends AbstractAssemblyProduction<AssemblyNonTerminal> {
+import org.junit.Test;
 
-	public AssemblyProduction(AssemblyNonTerminal lhs,
-			AssemblySentential<AssemblyNonTerminal> rhs) {
-		super(lhs, rhs);
-	}
-
-	public boolean isConstructor() {
-		return true;
+public class AssemblyPatternBlockTest {
+	@Test
+	public void testBitShiftRightByteArray() {
+		assertArrayEquals(new byte[] { 1, 1, 1, 1 },
+			AssemblyPatternBlock.bitShiftRightByteArray(new byte[] { 2, 2, 2, 2 }, 1));
+		assertArrayEquals(new byte[] { 1, 7, (byte) 0x81, 1 },
+			AssemblyPatternBlock.bitShiftRightByteArray(new byte[] { 2, 0xf, 2, 2 }, 1));
 	}
 }

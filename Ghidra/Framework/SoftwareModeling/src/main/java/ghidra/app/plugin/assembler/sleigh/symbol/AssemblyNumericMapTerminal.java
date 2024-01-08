@@ -69,4 +69,8 @@ public class AssemblyNumericMapTerminal extends AssemblyNumericTerminal {
 		}
 		return result;
 	}
+
+	public Map<Long, Integer> getMap() {
+		return map;
+	}
 }

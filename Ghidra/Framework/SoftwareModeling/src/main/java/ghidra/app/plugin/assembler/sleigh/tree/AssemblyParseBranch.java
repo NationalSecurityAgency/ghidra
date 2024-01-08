@@ -166,9 +166,8 @@ public class AssemblyParseBranch extends AssemblyParseTreeNode
 		return substs.get(i);
 	}
 
-	@Override
 	public boolean isConstructor() {
-		return true;
+		return prod.isConstructor();
 	}
 
 	@Override

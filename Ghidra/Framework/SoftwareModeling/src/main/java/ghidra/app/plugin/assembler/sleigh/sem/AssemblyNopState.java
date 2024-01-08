@@ -22,25 +22,21 @@ import java.util.stream.Stream;
 import ghidra.app.plugin.processors.sleigh.symbol.OperandSymbol;
 
 public class AssemblyNopState extends AbstractAssemblyState {
-	public AssemblyNopState(AssemblyTreeResolver resolver, List<AssemblyConstructorSemantic> path,
-			int shift, OperandSymbol opSym) {
+
+	public AssemblyNopState(AbstractAssemblyTreeResolver<?> resolver,
+			List<AssemblyConstructorSemantic> path, int shift, OperandSymbol opSym) {
 		super(resolver, path, shift, opSym.getMinimumLength());
 	}
 
 	@Override
 	public int computeHash() {
-		return "NOP".hashCode();
+		int result = getClass().hashCode();
+		result *= 31;
+		result += Integer.hashCode(shift);
+		return result;
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (!(obj instanceof AssemblyNopState)) {
-			return false;
-		}
-		AssemblyNopState that = (AssemblyNopState) obj;
+	protected boolean partsEqual(AssemblyNopState that) {
 		if (this.resolver != that.resolver) {
 			return false;
 		}
@@ -48,6 +44,18 @@ public class AssemblyNopState extends AbstractAssemblyState {
 			return false;
 		}
 		return true;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (this.getClass() != obj.getClass()) {
+			return false;
+		}
+		AssemblyNopState that = (AssemblyNopState) obj;
+		return partsEqual(that);
 	}
 
 	@Override

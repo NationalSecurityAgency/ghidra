@@ -119,6 +119,16 @@ public class AssemblySelector {
 	}
 
 	/**
+	 * A resolved selection from the results given to
+	 * {@link AssemblySelector#select(AssemblyResolutionResults, AssemblyPatternBlock)}
+	 * 
+	 * @param ins the resolved instructions bytes, ideally with a full mask
+	 * @param ctx the resolved context bytes for compatibility checks
+	 */
+	public record Selection(AssemblyPatternBlock ins, AssemblyPatternBlock ctx) {
+	}
+
+	/**
 	 * Select an instruction from the possible results.
 	 * 
 	 * <p>
@@ -134,16 +144,15 @@ public class AssemblySelector {
 	 * @param rr the collection of resolved constructors
 	 * @param ctx the applicable context.
 	 * @return a single resolved constructor with a full instruction mask.
-	 * @throws AssemblySemanticException
+	 * @throws AssemblySemanticException if all the given results are semantic errors
 	 */
-	public AssemblyResolvedPatterns select(AssemblyResolutionResults rr,
-			AssemblyPatternBlock ctx) throws AssemblySemanticException {
+	public Selection select(AssemblyResolutionResults rr, AssemblyPatternBlock ctx)
+			throws AssemblySemanticException {
 		List<AssemblyResolvedPatterns> sorted = filterCompatibleAndSort(rr, ctx);
 
 		// Pick just the first
 		AssemblyResolvedPatterns res = sorted.get(0);
 		// Just set the mask to ffs (effectively choosing 0 for the omitted bits)
-		return AssemblyResolution.resolved(res.getInstruction().fillMask(), res.getContext(),
-			"Selected", null, null, null);
+		return new Selection(res.getInstruction().fillMask(), res.getContext());
 	}
 }
