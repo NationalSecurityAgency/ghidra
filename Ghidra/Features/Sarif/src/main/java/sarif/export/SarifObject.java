@@ -20,11 +20,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
-import ghidra.program.model.address.AddressRangeIterator;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.ISF.IsfObject;
+import sarif.SarifUtils;
 
 public class SarifObject implements IsfObject {
 
@@ -71,23 +69,8 @@ public class SarifObject implements IsfObject {
 
 	protected void writeLocations(Address min, Address max) {
 		if (SARIF) {
-			locations = new JsonArray();
-			JsonObject element = new JsonObject();
-			locations.add(element);
-			JsonObject ploc = new JsonObject();
-			element.add("physicalLocation", ploc);
-			JsonObject address = new JsonObject();
-			ploc.add("address", address);
-			address.addProperty("absoluteAddress", min.getOffset());
-			address.addProperty("length", max.subtract(min) + 1);
-			Address minAddress = min;
-			if (minAddress.getAddressSpace().getType() != AddressSpace.TYPE_RAM) {
-				JsonObject artifact = new JsonObject();
-				ploc.add("artifactLocation", artifact);
-				artifact.addProperty("uri", minAddress.toString());
-			}
-		}
-		else {
+			locations = SarifUtils.setLocations(min, max);
+		} else {
 			element.addProperty("startAddress", min.toString(true));
 			element.addProperty("stopAddress", max.toString(true));
 		}
@@ -95,27 +78,8 @@ public class SarifObject implements IsfObject {
 
 	protected void writeLocations(AddressSetView set) {
 		if (SARIF) {
-			locations = new JsonArray();
-			AddressRangeIterator addressRanges = set.getAddressRanges();
-			while (addressRanges.hasNext()) {
-				JsonObject element = new JsonObject();
-				locations.add(element);
-				AddressRange next = addressRanges.next();
-				JsonObject ploc = new JsonObject();
-				element.add("physicalLocation", ploc);
-				JsonObject address = new JsonObject();
-				ploc.add("address", address);
-				address.addProperty("absoluteAddress", next.getMinAddress().getOffset());
-				address.addProperty("length", next.getLength());
-				Address minAddress = next.getMinAddress();
-				if (minAddress.getAddressSpace().getType() != AddressSpace.TYPE_RAM) {
-					JsonObject artifact = new JsonObject();
-					ploc.add("artifactLocation", artifact);
-					artifact.addProperty("uri", minAddress.toString());
-				}
-			}
-		}
-		else {
+			locations = SarifUtils.setLocations(set);
+		} else {
 			element.addProperty("startAddress", set.getMinAddress().toString(true));
 			element.addProperty("stopAddress", set.getMaxAddress().toString(true));
 		}
