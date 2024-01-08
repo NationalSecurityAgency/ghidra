@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "graph.hh"
+#include "ghidra/graph.hh"
 
 namespace ghidra {
 

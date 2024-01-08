@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "raw_arch.hh"
+#include "ghidra/raw_arch.hh"
 
 namespace ghidra {
 

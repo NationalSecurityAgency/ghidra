@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "database.hh"
-#include "funcdata.hh"
-#include "crc32.hh"
+#include "ghidra/database.hh"
+#include "ghidra/funcdata.hh"
+#include "ghidra/crc32.hh"
 #include <ctype.h>
 
 namespace ghidra {

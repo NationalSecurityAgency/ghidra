@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "cast.hh"
-#include "op.hh"
+#include "ghidra/cast.hh"
+#include "ghidra/op.hh"
 
 namespace ghidra {
 

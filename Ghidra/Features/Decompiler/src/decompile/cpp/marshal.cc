@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "marshal.hh"
-#include "translate.hh"
+#include "ghidra/marshal.hh"
+#include "ghidra/translate.hh"
 
 namespace ghidra {
 

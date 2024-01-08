@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "dynamic.hh"
-#include "funcdata.hh"
-#include "crc32.hh"
+#include "ghidra/dynamic.hh"
+#include "ghidra/funcdata.hh"
+#include "ghidra/crc32.hh"
 
 namespace ghidra {
 

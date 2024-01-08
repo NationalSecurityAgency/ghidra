@@ -15,7 +15,7 @@
  */
 %define api.prefix {pcode}
 %{
-#include "pcodeparse.hh"
+#include "ghidra/pcodeparse.hh"
 
 //#define YYERROR_VERBOSE
 namespace ghidra {

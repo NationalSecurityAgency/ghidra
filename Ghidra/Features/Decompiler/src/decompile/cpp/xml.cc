@@ -88,7 +88,7 @@
 /* Copy the first part of user declarations.  */
 
 
-#include "xml.hh"
+#include "ghidra/xml.hh"
 // CharData mode   look for '<' '&' or "]]>"
 // Name mode       look for non-name char
 // CData mode      looking for "]]>"

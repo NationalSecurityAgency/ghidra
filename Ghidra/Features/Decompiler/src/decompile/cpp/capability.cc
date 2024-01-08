@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "capability.hh"
+#include "ghidra/capability.hh"
 
 namespace ghidra {
 

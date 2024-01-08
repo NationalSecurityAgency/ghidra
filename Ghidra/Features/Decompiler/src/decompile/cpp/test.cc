@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "test.hh"
-#include "libdecomp.hh"
+#include "ghidra/test.hh"
+#include "ghidra/libdecomp.hh"
 
 namespace ghidra {
 

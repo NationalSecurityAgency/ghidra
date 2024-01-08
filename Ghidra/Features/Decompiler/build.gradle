@@ -412,7 +412,7 @@ Task createBisonTask(String filename, String binaryName, boolean generateHeader)
 
 	def yaccFile = "${filename}.y"
 	def ccFile = "${filename}.cc"
-	def headerFile = "${filename}.hh"
+	def headerFile = "include/ghidra/${filename}.hh"
 
 	return task("bison_${binaryName}_$filename", type: Exec) {
 

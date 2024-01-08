@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ghidra_process.hh"
-#include "flow.hh"
-#include "blockaction.hh"
+#include "ghidra/ghidra_process.hh"
+#include "ghidra/flow.hh"
+#include "ghidra/blockaction.hh"
 
 #ifdef _WINDOWS
 #include <fcntl.h>
@@ -23,7 +23,7 @@
 #endif
 
 #ifdef __REMOTE_SOCKET__
-#include "ifacedecomp.hh"
+#include "ghidra/ifacedecomp.hh"
 #endif
 
 namespace ghidra {

@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "architecture.hh"
-#include "grammar.hh"
-#include "test.hh"
+#include "ghidra/architecture.hh"
+#include "ghidra/grammar.hh"
+#include "ghidra/test.hh"
 #include <iostream>
 
 namespace ghidra {

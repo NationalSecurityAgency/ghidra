@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "opcodes.hh"
-#include "types.h"
+#include "ghidra/opcodes.hh"
+#include "ghidra/types.h"
 
 namespace ghidra {
 

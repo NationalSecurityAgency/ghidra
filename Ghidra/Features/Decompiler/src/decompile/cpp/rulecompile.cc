@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #ifdef CPUI_RULECOMPILE
-#include "rulecompile.hh"
+#include "ghidra/rulecompile.hh"
 #include "ruleparse.hh"
 
 namespace ghidra {
@@ -893,7 +893,7 @@ RuleGeneric *RuleGeneric::build(const string &nm,const string &gp,const string &
 Here is the original flex parser
 
 %{
-#include "rulecompile.hh"
+#include "ghidra/rulecompile.hh"
 #include "ruleparse.hh"
 #define ruleparsewrap() 1
 #define YY_SKIP_YYWRAP

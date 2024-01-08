@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "typegrp_ghidra.hh"
+#include "ghidra/typegrp_ghidra.hh"
 
 namespace ghidra {
 

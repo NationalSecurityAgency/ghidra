@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "callgraph.hh"
-#include "funcdata.hh"
+#include "ghidra/callgraph.hh"
+#include "ghidra/funcdata.hh"
 
 namespace ghidra {
 

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "signature_ghidra.hh"
-#include "signature.hh"
+#include "ghidra/signature_ghidra.hh"
+#include "ghidra/signature.hh"
 
 namespace ghidra {
 

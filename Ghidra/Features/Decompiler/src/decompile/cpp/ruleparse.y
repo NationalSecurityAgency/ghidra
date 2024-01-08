@@ -15,7 +15,7 @@
  */
 %{
 #ifdef CPUI_RULECOMPILE
-#include "rulecompile.hh"
+#include "ghidra/rulecompile.hh"
 
 #define YYERROR_VERBOSE
 

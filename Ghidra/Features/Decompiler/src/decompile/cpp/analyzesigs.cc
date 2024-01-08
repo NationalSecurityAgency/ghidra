@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "analyzesigs.hh"
-#include "loadimage_bfd.hh"
+#include "ghidra/analyzesigs.hh"
+#include "ghidra/loadimage_bfd.hh"
 
 namespace ghidra {
 

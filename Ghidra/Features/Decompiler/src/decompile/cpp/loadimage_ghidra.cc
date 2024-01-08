@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "loadimage_ghidra.hh"
+#include "ghidra/loadimage_ghidra.hh"
 
 namespace ghidra {
 

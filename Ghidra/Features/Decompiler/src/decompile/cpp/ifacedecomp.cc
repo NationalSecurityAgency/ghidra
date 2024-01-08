@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ifacedecomp.hh"
+#include "ghidra/ifacedecomp.hh"
 extern "C" {
 #include <time.h>
 }
-#include "pcodeparse.hh"
-#include "blockaction.hh"
+#include "ghidra/pcodeparse.hh"
+#include "ghidra/blockaction.hh"
 
 namespace ghidra {
 

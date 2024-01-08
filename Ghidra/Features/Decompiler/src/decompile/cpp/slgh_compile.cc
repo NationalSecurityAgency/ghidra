@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "slgh_compile.hh"
-#include "filemanage.hh"
+#include "ghidra/slgh_compile.hh"
+#include "ghidra/filemanage.hh"
 #include <csignal>
 
 extern FILE *sleighin;		// Global pointer to file for lexer

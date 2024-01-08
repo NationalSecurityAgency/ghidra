@@ -436,7 +436,7 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 
-INPUT                  = .
+INPUT                  = . ./include/ghidra
 
 # If the value of the INPUT tag contains directories, you can use the 
 # FILE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp 
@@ -457,7 +457,7 @@ RECURSIVE              = NO
 # excluded from the INPUT source files. This way you can easily exclude a 
 # subdirectory from a directory tree whose root is specified with the INPUT tag.
 
-EXCLUDE                = unify.hh unify.cc rulecompile.hh rulecompile.cc slghparse.cc slghparse.hh slghscan.cc slghpattern.hh slghpattern.cc slghpatexpress.hh slghpatexpress.cc slghsymbol.hh slghsymbol.cc codedata.hh codedata.cc semantics.hh semantics.cc grammar.hh grammar.cc callgraph.hh callgraph.cc filemanage.hh filemanage.cc graph.hh graph.cc loadimage_bfd.hh loadimage_bfd.cc pcodecompile.cc pcodecompile.hh pcodeparse.hh pcodeparse.cc inject_sleigh.hh inject_sleigh.cc context.hh context.cc consolemain.cc sleighexample.cc xml.cc double.hh double.cc paramid.hh paramid.cc prefersplit.hh prefersplit.cc
+EXCLUDE                = include/ghidra/unify.hh unify.cc include/ghidra/rulecompile.hh rulecompile.cc slghparse.cc include/ghidra/slghparse.hh slghscan.cc include/ghidra/slghpattern.hh slghpattern.cc include/ghidra/slghpatexpress.hh slghpatexpress.cc include/ghidra/slghsymbol.hh slghsymbol.cc include/ghidra/codedata.hh codedata.cc include/ghidra/semantics.hh semantics.cc include/ghidra/grammar.hh grammar.cc include/ghidra/callgraph.hh callgraph.cc include/ghidra/filemanage.hh filemanage.cc include/ghidra/graph.hh graph.cc include/ghidra/loadimage_bfd.hh loadimage_bfd.cc pcodecompile.cc include/ghidra/pcodecompile.hh include/ghidra/pcodeparse.hh pcodeparse.cc include/ghidra/inject_sleigh.hh inject_sleigh.cc include/ghidra/context.hh context.cc consolemain.cc sleighexample.cc xml.cc include/ghidra/double.hh double.cc include/ghidra/paramid.hh paramid.cc include/ghidra/prefersplit.hh prefersplit.cc
 
 # The EXCLUDE_SYMLINKS tag can be used select whether or not files or 
 # directories that are symbolic links (a Unix filesystem feature) are excluded 

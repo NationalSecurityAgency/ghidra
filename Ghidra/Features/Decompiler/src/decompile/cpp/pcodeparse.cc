@@ -88,7 +88,7 @@
 /* Copy the first part of user declarations.  */
 
 
-#include "pcodeparse.hh"
+#include "ghidra/pcodeparse.hh"
 
 //#define YYERROR_VERBOSE
 namespace ghidra {

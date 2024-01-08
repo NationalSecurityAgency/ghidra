@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "bfd_arch.hh"
+#include "ghidra/bfd_arch.hh"
 
 namespace ghidra {
 

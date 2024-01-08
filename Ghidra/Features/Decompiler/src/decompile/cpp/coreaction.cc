@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "coreaction.hh"
-#include "condexe.hh"
-#include "double.hh"
-#include "subflow.hh"
+#include "ghidra/coreaction.hh"
+#include "ghidra/condexe.hh"
+#include "ghidra/double.hh"
+#include "ghidra/subflow.hh"
 
 namespace ghidra {
 

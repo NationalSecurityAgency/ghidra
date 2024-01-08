@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "heritage.hh"
-#include "funcdata.hh"
-#include "prefersplit.hh"
+#include "ghidra/heritage.hh"
+#include "ghidra/funcdata.hh"
+#include "ghidra/prefersplit.hh"
 
 namespace ghidra {
 

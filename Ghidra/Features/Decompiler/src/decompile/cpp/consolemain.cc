@@ -15,7 +15,7 @@
  */
 #include <iostream>
 #include <cstdlib>
-#include "libdecomp.hh"
+#include "ghidra/libdecomp.hh"
 
 namespace ghidra {
 
