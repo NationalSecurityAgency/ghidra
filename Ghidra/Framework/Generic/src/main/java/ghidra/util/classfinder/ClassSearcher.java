@@ -21,6 +21,7 @@ import java.lang.reflect.Constructor;
 import java.nio.file.*;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -278,6 +279,26 @@ public class ClassSearcher {
 		log.info(finishedMessage);
 	}
 
+	/**
+	 * Gets the given class's extension point name
+	 * 
+	 * @param className The name of the potential extension point class
+	 * @return The given class's extension point name, or null if it is not an extension point
+	 */
+	public static String getExtensionPointName(String className) {
+		if (className.indexOf("Test$") > 0 || className.endsWith("Test")) {
+			return null;
+		}
+		int packageIndex = className.lastIndexOf('.');
+		int innerClassIndex = className.lastIndexOf('$');
+		int maximumIndex = StrictMath.max(packageIndex, innerClassIndex);
+		if (maximumIndex > 0) {
+			className = className.substring(maximumIndex + 1);
+		}
+		Matcher m = extensionPointSuffixPattern.matcher(className);
+		return m.find() && m.groupCount() == 1 ? m.group(1) : null;
+	}
+
 	private static List<String> gatherSearchPaths() {
 
 		//
@@ -394,16 +415,7 @@ public class ClassSearcher {
 	}
 
 	static boolean isExtensionPointName(String name) {
-		if (name.indexOf("Test$") > 0 || name.endsWith("Test")) {
-			return false;
-		}
-		int packageIndex = name.lastIndexOf('.');
-		int innerClassIndex = name.lastIndexOf('$');
-		int maximumIndex = StrictMath.max(packageIndex, innerClassIndex);
-		if (maximumIndex > 0) {
-			name = name.substring(maximumIndex + 1);
-		}
-		return extensionPointSuffixPattern.matcher(name).matches();
+		return getExtensionPointName(name) != null;
 	}
 
 	private static void fireClassListChanged() {

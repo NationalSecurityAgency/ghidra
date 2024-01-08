@@ -27,14 +27,12 @@ import javax.swing.KeyStroke;
 import docking.action.DockingAction;
 import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
-import docking.widgets.dialogs.MultiLineMessageDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.*;
-import ghidra.app.util.opinion.LoaderService;
 import ghidra.formats.gfilesystem.*;
 import ghidra.framework.main.ApplicationLevelPlugin;
 import ghidra.framework.main.FrontEndService;
@@ -108,14 +106,6 @@ public class FileSystemBrowserPlugin extends Plugin
 				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK))
 				.onAction(ac -> doOpenFileSystem())
 				.buildAndInstall(tool);
-		showFileSystemImplsAction =
-			new ActionBuilder("Display Supported File Systems and Loaders", this.getName())
-					.description("Display Supported File Systems and Loaders")
-					.enabledWhen(ac -> true)
-					.menuPath(ToolConstants.MENU_HELP, "List File Systems")
-					.menuGroup("AAAZ")	// this "AAAZ" is from ProcessorListPlugin
-					.onAction(ac -> showSupportedFileSystems())
-					.buildAndInstall(tool);
 	}
 
 	@Override
@@ -326,29 +316,4 @@ public class FileSystemBrowserPlugin extends Plugin
 		}
 		return provider;
 	}
-
-	/**
-	 * Shows a list of supported file system types and loaders.
-	 */
-	private void showSupportedFileSystems() {
-		StringBuilder sb = new StringBuilder();
-
-		sb.append(
-			"<html><table><tr><td>Supported File Systems</td><td>Supported Loaders</td></tr>\n");
-		sb.append("<tr valign='top'><td><ul>");
-		for (String fileSystemName : fsService().getAllFilesystemNames()) {
-			sb.append("<li>" + fileSystemName + "\n");
-		}
-
-		sb.append("</ul></td><td><ul>");
-		for (String loaderName : LoaderService.getAllLoaderNames()) {
-			sb.append("<li>" + loaderName + "\n");
-		}
-		sb.append("</ul></td></tr></table>");
-
-		MultiLineMessageDialog.showModalMessageDialog(getTool().getActiveWindow(),
-			"Supported File Systems and Loaders", "", sb.toString(),
-			MultiLineMessageDialog.INFORMATION_MESSAGE);
-	}
-
 }
