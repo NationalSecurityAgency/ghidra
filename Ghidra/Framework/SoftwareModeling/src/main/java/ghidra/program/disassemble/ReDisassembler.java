@@ -102,7 +102,12 @@ public class ReDisassembler {
 		protected ReDisState addSeed(Address seed) {
 			RegisterValue seedCtx = programContext.getRegisterValue(ctxRegister, seed);
 			try {
-				tempContext.setRegisterValue(seed, seed, seedCtx);
+				if (seedCtx == null) {
+					tempContext.remove(seed, seed, ctxRegister);
+				}
+				else {
+					tempContext.setRegisterValue(seed, seed, seedCtx);
+				}
 			}
 			catch (ContextChangeException e) {
 				throw new AssertionError(e);
@@ -147,16 +152,18 @@ public class ReDisassembler {
 		public void writeContext() {
 			for (Address addr : ctxAddrs) {
 				RegisterValue curCtxVal = programContext.getRegisterValue(ctxRegister, addr);
-				System.err.println("Writing context at " + addr);
-				System.err.println("  Cur: " + curCtxVal);
 				RegisterValue newCtxVal = tempContext.getRegisterValue(ctxRegister, addr);
-				System.err.println("  New: " + newCtxVal);
 
-				if (curCtxVal.equals(newCtxVal)) {
+				if (Objects.equals(curCtxVal, newCtxVal)) {
 					continue;
 				}
 				try {
-					programContext.setRegisterValue(addr, addr, newCtxVal);
+					if (newCtxVal == null) {
+						programContext.remove(addr, addr, ctxRegister);
+					}
+					else {
+						programContext.setRegisterValue(addr, addr, newCtxVal);
+					}
 				}
 				catch (ContextChangeException e) {
 					Msg.error(this, "Cannot write context at " + addr + ": " + e);
@@ -181,9 +188,14 @@ public class ReDisassembler {
 		}
 
 		protected void recordContext(Address to) {
+			RegisterValue ctxValue = disassemblerContext.getRegisterValue(ctxRegister);
 			try {
-				state.tempContext.setRegisterValue(to, to,
-					disassemblerContext.getRegisterValue(ctxRegister));
+				if (ctxValue == null) {
+					state.tempContext.remove(to, to, ctxRegister);
+				}
+				else {
+					state.tempContext.setRegisterValue(to, to, ctxValue);
+				}
 				state.ctxAddrs.add(to);
 			}
 			catch (ContextChangeException e) {
@@ -197,8 +209,6 @@ public class ReDisassembler {
 			PseudoInstruction instruction = new PseudoInstruction(program, address, prototype,
 				memBuffer, ctx);
 			instruction.setInstructionBlock(block);
-			System.err.println(
-				"  " + instruction + " with " + instruction.getRegisterValue(ctxRegister));
 			return lastInstruction = instruction;
 		}
 
@@ -235,11 +245,10 @@ public class ReDisassembler {
 			MemBuffer buffer = state.createBuffer(flow.to);
 			RegisterValue newCtxVal = disassemblerContext.getRegisterValue(ctxRegister);
 			RegisterValue curCtxVal = programContext.getRegisterValue(ctxRegister, flow.to);
-			if (newCtxVal.equals(curCtxVal) && flow.type != FlowType.SEED) {
+			if (Objects.equals(newCtxVal, curCtxVal) && flow.type != FlowType.SEED) {
 				// No need to re-disassemble if context has not changed.
 				return null;
 			}
-			System.err.println("Re-disassembling " + flow + " with " + newCtxVal);
 			ReDisassemblerContext ctx = new ReDisassemblerContext(state, flow);
 			try {
 				InstructionPrototype prototype = language.parse(buffer, ctx, false);
