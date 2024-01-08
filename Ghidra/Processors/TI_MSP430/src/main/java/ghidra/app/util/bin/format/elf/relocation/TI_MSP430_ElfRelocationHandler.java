@@ -16,6 +16,7 @@
 package ghidra.app.util.bin.format.elf.relocation;
 
 import ghidra.app.util.bin.format.elf.*;
+import ghidra.app.util.bin.format.elf.extend.MSP430_ElfExtension;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
@@ -28,8 +29,8 @@ public class TI_MSP430_ElfRelocationHandler extends ElfRelocationHandler {
 
 	@Override
 	public boolean canRelocate(ElfHeader elf) {
-		return (elf.e_machine() == ElfConstants.EM_MSP430) &&
-			((elf.e_flags() & 0xff) != TI_MSP430X_ElfRelocationHandler.E_MSP430_MACH_MSP430X);
+		return (elf.e_machine() == ElfConstants.EM_MSP430) && ((elf.e_flags() &
+			MSP430_ElfExtension.E_MSP430_MACH) != MSP430_ElfExtension.E_MSP430_MACH_MSP430X);
 	}
 
 	@Override

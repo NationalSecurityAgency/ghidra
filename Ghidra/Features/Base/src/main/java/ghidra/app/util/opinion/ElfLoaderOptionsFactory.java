@@ -42,7 +42,8 @@ public class ElfLoaderOptionsFactory {
 	// an assumed virtual memory of 32-bits.
 
 	public static final String IMAGE_BASE_OPTION_NAME = "Image Base";
-	public static final long IMAGE_BASE_DEFAULT = 0x00010000;
+	public static final long IMAGE16_BASE_DEFAULT = 0x00001000;
+	public static final long IMAGE32_BASE_DEFAULT = 0x00010000;
 	public static final long IMAGE64_BASE_DEFAULT = 0x00100000L;
 
 	public static final String IMAGE_DATA_IMAGE_BASE_OPTION_NAME = "Data Image Base";
@@ -74,12 +75,20 @@ public class ElfLoaderOptionsFactory {
 				Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-applyUndefinedData"));
 
 		ElfHeader elf = new ElfHeader(provider, null);
+		ElfLoadAdapter extensionAdapter = ElfExtensionFactory.getLoadAdapter(elf);
+
+		Language language = loadSpec.getLanguageCompilerSpec().getLanguage();
 
 		long imageBase = elf.findImageBase();
 		if (imageBase == 0 && (elf.isRelocatable() || elf.isSharedObject())) {
-			imageBase = elf.is64Bit() ? IMAGE64_BASE_DEFAULT : IMAGE_BASE_DEFAULT;
+			if (extensionAdapter != null) {
+				imageBase = extensionAdapter.getDefaultImageBase(elf);
+			}
+			else {
+				imageBase = elf.is64Bit() ? IMAGE64_BASE_DEFAULT : IMAGE32_BASE_DEFAULT;
+			}
 		}
-		Language language = loadSpec.getLanguageCompilerSpec().getLanguage();
+
 		AddressSpace defaultSpace = language.getDefaultSpace();
 
 		String hexValueStr = getBaseAddressOffsetString(imageBase, defaultSpace);
@@ -101,7 +110,6 @@ public class ElfLoaderOptionsFactory {
 			new Option(DISCARDABLE_SEGMENT_SIZE_OPTION_NAME, DEFAULT_DISCARDABLE_SEGMENT_SIZE,
 				Integer.class, Loader.COMMAND_LINE_ARG_PREFIX + "-maxSegmentDiscardSize"));
 
-		ElfLoadAdapter extensionAdapter = ElfExtensionFactory.getLoadAdapter(elf);
 		if (extensionAdapter != null) {
 			extensionAdapter.addLoadOptions(elf, options);
 		}
