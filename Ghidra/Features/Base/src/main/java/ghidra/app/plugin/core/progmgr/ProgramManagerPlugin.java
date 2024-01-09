@@ -304,11 +304,9 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 		program = programMgr.getOpenProgram(locator);
 		if (program != null) {
 			program.addConsumer(consumer);
-			if (!program.isChanged()) {
-				// Don't put modified programs into the cache.
-				//   NOTE: This will prevent upgraded programs from being added to the cache
-				//   which are already open in the tool.  This could be improved if we could
-				//   distinguish between upgrade and non-upgrade changes.
+			if (!program.isChanged() || ProgramUtilities.isChangedWithUpgradeOnly(program)) {
+				// Don't put modified programs into the cache unless the only change
+				// corresponds to an upgrade during its instantiation.
 				programCache.put(locator, program);
 			}
 			return program;
