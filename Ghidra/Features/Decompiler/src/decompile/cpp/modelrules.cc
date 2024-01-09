@@ -356,7 +356,7 @@ AssignAction *AssignAction::decodeAction(Decoder &decoder,const ParamListStandar
     action = new ConvertToPointer(res);
   }
   else if (elemId == ELEM_HIDDEN_RETURN) {
-    action = new HiddenReturnAssign(res,false);
+    action = new HiddenReturnAssign(res,hiddenret_specialreg);
   }
   else if (elemId == ELEM_JOIN_PER_PRIMITIVE) {
     bool consumeMostSig = false;
@@ -721,10 +721,10 @@ void ConsumeAs::decode(Decoder &decoder)
   decoder.closeElement(elemId);
 }
 
-HiddenReturnAssign::HiddenReturnAssign(const ParamListStandard *res,bool voidLock)
+HiddenReturnAssign::HiddenReturnAssign(const ParamListStandard *res,uint4 code)
   : AssignAction(res)
 {
-  retCode = voidLock ? hiddenret_specialreg_void : hiddenret_specialreg;
+  retCode = code;
 }
 
 uint4 HiddenReturnAssign::assignAddress(Datatype *dt,const PrototypePieces &proto,int4 pos,TypeFactory &tlist,
@@ -736,12 +736,24 @@ uint4 HiddenReturnAssign::assignAddress(Datatype *dt,const PrototypePieces &prot
 void HiddenReturnAssign::decode(Decoder &decoder)
 
 {
+  retCode = hiddenret_specialreg;
   uint4 elemId = decoder.openElement(ELEM_HIDDEN_RETURN);
-  uint4 attribId = decoder.getNextAttributeId();
-  if (attribId == ATTRIB_VOIDLOCK)
-    retCode = hiddenret_specialreg_void;
-  else
-    retCode = hiddenret_specialreg;
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == ATTRIB_VOIDLOCK)
+      retCode = hiddenret_specialreg_void;
+    else if (attribId == ATTRIB_STRATEGY) {
+      string strategyString = decoder.readString();
+      if (strategyString == "normalparam")
+	retCode = hiddenret_ptrparam;
+      else if (strategyString == "special")
+	retCode = hiddenret_specialreg;
+      else
+	throw DecoderError("Bad <hidden_return> strategy: " + strategyString);
+    }
+    else
+      break;
+  }
   decoder.closeElement(elemId);
 }
 
