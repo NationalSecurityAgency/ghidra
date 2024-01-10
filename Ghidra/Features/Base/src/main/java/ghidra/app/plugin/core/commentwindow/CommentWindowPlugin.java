@@ -15,20 +15,24 @@
  */
 package ghidra.app.plugin.core.commentwindow;
 
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
+
 import docking.action.DockingAction;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.services.GoToService;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainObjectChangedEvent;
+import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.*;
+import ghidra.program.util.CommentChangeRecord;
+import ghidra.program.util.ProgramSelection;
 import ghidra.util.table.SelectionNavigationAction;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
 import ghidra.util.task.SwingUpdateManager;
@@ -78,81 +82,38 @@ public class CommentWindowPlugin extends ProgramPlugin implements DomainObjectLi
 		super.dispose();
 	}
 
-	private int getCommentType(int type) {
-		if (type == ChangeManager.DOCR_PRE_COMMENT_CHANGED) {
-			return CodeUnit.PRE_COMMENT;
-		}
-		if (type == ChangeManager.DOCR_POST_COMMENT_CHANGED) {
-			return CodeUnit.POST_COMMENT;
-		}
-		if (type == ChangeManager.DOCR_EOL_COMMENT_CHANGED) {
-			return CodeUnit.EOL_COMMENT;
-		}
-		if (type == ChangeManager.DOCR_PLATE_COMMENT_CHANGED) {
-			return CodeUnit.PLATE_COMMENT;
-		}
-		if ((type == ChangeManager.DOCR_REPEATABLE_COMMENT_CHANGED) ||
-			(type == ChangeManager.DOCR_REPEATABLE_COMMENT_ADDED) ||
-			(type == ChangeManager.DOCR_REPEATABLE_COMMENT_REMOVED) ||
-			(type == ChangeManager.DOCR_REPEATABLE_COMMENT_CREATED) ||
-			(type == ChangeManager.DOCR_REPEATABLE_COMMENT_DELETED)) {
-			return CodeUnit.REPEATABLE_COMMENT;
-		}
-		return -1;
-	}
-
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
 
 		// reload the table if an undo/redo or clear code with options event happens (it isn't the
 		// same as a delete comment)
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED) ||
-			ev.containsEvent(ChangeManager.DOCR_CODE_REMOVED)) {
+		if (ev.contains(RESTORED, CODE_REMOVED)) {
 			reload();
 			return;
 		}
 
-		// check for and handle commend added, comment deleted, and comment changed events
-		if (ev.containsEvent(ChangeManager.DOCR_PRE_COMMENT_CHANGED) ||
-			ev.containsEvent(ChangeManager.DOCR_POST_COMMENT_CHANGED) ||
-			ev.containsEvent(ChangeManager.DOCR_EOL_COMMENT_CHANGED) ||
-			ev.containsEvent(ChangeManager.DOCR_PLATE_COMMENT_CHANGED) ||
-			ev.containsEvent(ChangeManager.DOCR_REPEATABLE_COMMENT_CHANGED) ||
-			ev.containsEvent(ChangeManager.DOCR_REPEATABLE_COMMENT_ADDED) ||
-			ev.containsEvent(ChangeManager.DOCR_REPEATABLE_COMMENT_REMOVED) ||
-			ev.containsEvent(ChangeManager.DOCR_REPEATABLE_COMMENT_CREATED) ||
-			ev.containsEvent(ChangeManager.DOCR_REPEATABLE_COMMENT_ADDED) ||
-			ev.containsEvent(ChangeManager.DOCR_REPEATABLE_COMMENT_DELETED)) {
+		ev.forEach(COMMENT_CHANGED, r -> {
+			CommentChangeRecord ccr = (CommentChangeRecord) r;
+			int commentType = ccr.getCommentType();
+			String oldComment = ccr.getOldComment();
+			String newComment = ccr.getNewComment();
+			Address commentAddress = ccr.getStart();
 
-			for (DomainObjectChangeRecord record : ev) {
-
-				int type = record.getEventType();
-				int commentType = getCommentType(type);
-				if (commentType == -1) {
-					continue;
-				}
-
-				ProgramChangeRecord pRec = (ProgramChangeRecord) record;
-
-				String oldComment = (String) pRec.getOldValue();
-				String newComment = (String) pRec.getNewValue();
-				Address commentAddress = pRec.getStart();
-
-				// if old comment is null then the change is an add comment so add the comment to the table
-				if (oldComment == null) {
-					provider.commentAdded(commentAddress, getCommentType(type));
-				}
-
-				// if the new comment is null then the change is a delete comment so remove the comment from the table
-				else if (newComment == null) {
-					provider.commentRemoved(commentAddress, getCommentType(type));
-				}
-				// otherwise, the comment is changed so repaint the table
-				else {
-					provider.getComponent().repaint();
-				}
+			// if old comment is null then the change is an add comment so add the comment to the table
+			if (oldComment == null) {
+				provider.commentAdded(commentAddress, commentType);
 			}
-		}
+
+			// if the new comment is null then the change is a delete comment so remove the comment from the table
+			else if (newComment == null) {
+				provider.commentRemoved(commentAddress, commentType);
+			}
+			// otherwise, the comment is changed so repaint the table
+			else {
+				provider.getComponent().repaint();
+			}
+
+		});
 	}
 
 	private void reload() {

@@ -28,8 +28,8 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolType;
-import ghidra.program.util.ChangeManager;
 import ghidra.program.util.ProgramChangeRecord;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
 
@@ -185,50 +185,55 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 		int recordCount = event.numRecords();
 		for (int i = 0; i < recordCount; i++) {
 			DomainObjectChangeRecord rec = event.getChangeRecord(i);
-			int eventType = rec.getEventType();
-			switch (eventType) {
-				case DomainObject.DO_OBJECT_RESTORED:
-					Object source = event.getSource();
-					if (source instanceof Program) {
-						Program restoredProgram = (Program) source;
-						domainObjectRestored(restoredProgram);
-					}
-					return;
-				case ChangeManager.DOCR_FUNCTION_REMOVED:
-					Function func = (Function) ((ProgramChangeRecord) rec).getObject();
-					if (func == function) {
-						this.dispose();
-						tool.setStatusInfo("Stack Editor was closed for " + getName());
-					}
-					return;
-				case ChangeManager.DOCR_SYMBOL_RENAMED:
-				case ChangeManager.DOCR_SYMBOL_DATA_CHANGED:
-					Symbol sym = (Symbol) ((ProgramChangeRecord) rec).getObject();
-					SymbolType symType = sym.getSymbolType();
-					if (symType == SymbolType.LABEL) {
-						if (sym.isPrimary() && sym.getAddress().equals(function.getEntryPoint())) {
+			EventType eventType = rec.getEventType();
+			if (eventType == DomainObjectEvent.RESTORED) {
+				Object source = event.getSource();
+				if (source instanceof Program) {
+					Program restoredProgram = (Program) source;
+					domainObjectRestored(restoredProgram);
+				}
+				return;
+			}
+			if (eventType instanceof ProgramEvent type) {
+				switch (type) {
+					case FUNCTION_REMOVED:
+						Function func = (Function) ((ProgramChangeRecord) rec).getObject();
+						if (func == function) {
+							this.dispose();
+							tool.setStatusInfo("Stack Editor was closed for " + getName());
+						}
+						return;
+					case SYMBOL_RENAMED:
+					case SYMBOL_DATA_CHANGED:
+						Symbol sym = (Symbol) ((ProgramChangeRecord) rec).getObject();
+						SymbolType symType = sym.getSymbolType();
+						if (symType == SymbolType.LABEL) {
+							if (sym.isPrimary() &&
+								sym.getAddress().equals(function.getEntryPoint())) {
+								refreshName();
+							}
+						}
+						else if (inCurrentFunction(rec)) {
+							reloadFunction();
+						}
+						break;
+					case FUNCTION_CHANGED:
+					case SYMBOL_ADDED:
+					case SYMBOL_REMOVED:
+					case SYMBOL_ADDRESS_CHANGED:
+						if (inCurrentFunction(rec)) {
+							reloadFunction();
+						}
+						break;
+					case SYMBOL_PRIMARY_STATE_CHANGED:
+						sym = (Symbol) ((ProgramChangeRecord) rec).getObject();
+						symType = sym.getSymbolType();
+						if (symType == SymbolType.LABEL &&
+							sym.getAddress().equals(function.getEntryPoint())) {
 							refreshName();
 						}
-					}
-					else if (inCurrentFunction(rec)) {
-						reloadFunction();
-					}
-					break;
-				case ChangeManager.DOCR_FUNCTION_CHANGED:
-				case ChangeManager.DOCR_SYMBOL_ADDED:
-				case ChangeManager.DOCR_SYMBOL_REMOVED:
-				case ChangeManager.DOCR_SYMBOL_ADDRESS_CHANGED:
-					if (inCurrentFunction(rec)) {
-						reloadFunction();
-					}
-					break;
-				case ChangeManager.DOCR_SYMBOL_SET_AS_PRIMARY:
-					sym = (Symbol) ((ProgramChangeRecord) rec).getObject();
-					symType = sym.getSymbolType();
-					if (symType == SymbolType.LABEL &&
-						sym.getAddress().equals(function.getEntryPoint())) {
-						refreshName();
-					}
+					default:
+				}
 			}
 		}
 	}

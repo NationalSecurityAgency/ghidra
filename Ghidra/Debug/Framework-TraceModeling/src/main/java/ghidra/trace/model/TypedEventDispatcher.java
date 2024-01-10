@@ -19,8 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import ghidra.framework.model.DomainObject;
-import ghidra.framework.model.DomainObjectChangeRecord;
+import ghidra.framework.model.*;
 import ghidra.trace.util.*;
 
 public class TypedEventDispatcher {
@@ -103,7 +102,7 @@ public class TypedEventDispatcher {
 	}
 
 	private Map<TraceChangeType<?, ?>, EventRecordHandler<?, ?>> typedMap = new HashMap<>();
-	private Map<Integer, Consumer<DomainObjectChangeRecord>> untypedMap = new HashMap<>();
+	private Map<EventType, Consumer<DomainObjectChangeRecord>> untypedMap = new HashMap<>();
 	protected Consumer<DomainObjectChangeRecord> restoredHandler = null;
 
 	protected <T, U> void listenFor(TraceChangeType<T, U> type, EventRecordHandler<T, U> handler) {
@@ -156,8 +155,8 @@ public class TypedEventDispatcher {
 		typedMap.put(type, handler);
 	}
 
-	protected void listenForUntyped(int type, Consumer<DomainObjectChangeRecord> handler) {
-		if (type == DomainObject.DO_OBJECT_RESTORED) {
+	protected void listenForUntyped(EventType type, Consumer<DomainObjectChangeRecord> handler) {
+		if (type == DomainObjectEvent.RESTORED) {
 			restoredHandler = handler;
 		}
 		else {
@@ -168,7 +167,7 @@ public class TypedEventDispatcher {
 	public void handleChangeRecord(DomainObjectChangeRecord rec) {
 		//String typeName = DefaultTraceChangeType.getName(rec.getEventType());
 		//CountsByType.compute(typeName, (k, v) -> v == null ? 1 : v + 1);
-		if (rec.getEventType() == DomainObject.DO_OBJECT_RESTORED && restoredHandler != null) {
+		if (rec.getEventType() == DomainObjectEvent.RESTORED && restoredHandler != null) {
 			restoredHandler.accept(rec);
 			return;
 		}

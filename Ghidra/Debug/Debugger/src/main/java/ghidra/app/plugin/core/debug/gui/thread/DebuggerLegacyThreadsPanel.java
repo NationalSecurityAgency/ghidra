@@ -33,7 +33,7 @@ import ghidra.app.plugin.core.debug.gui.DebuggerSnapActionContext;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.docking.settings.Settings;
-import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.model.DomainObjectChangeRecord;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
@@ -120,14 +120,13 @@ public class DebuggerLegacyThreadsPanel extends JPanel {
 
 		public ThreadTableModel(DebuggerThreadsProvider provider) {
 			super(provider.getTool(), "Threads", ThreadTableColumns.class,
-				TraceThread::getObjectKey, t -> new ThreadRow(provider, t),
-				ThreadRow::getThread);
+				TraceThread::getObjectKey, t -> new ThreadRow(provider, t), ThreadRow::getThread);
 		}
 	}
 
 	private class ForThreadsListener extends TraceDomainObjectListener {
 		public ForThreadsListener() {
-			listenForUntyped(DomainObject.DO_OBJECT_RESTORED, this::objectRestored);
+			listenForUntyped(DomainObjectEvent.RESTORED, this::objectRestored);
 
 			listenFor(TraceThreadChangeType.ADDED, this::threadAdded);
 			listenFor(TraceThreadChangeType.CHANGED, this::threadChanged);

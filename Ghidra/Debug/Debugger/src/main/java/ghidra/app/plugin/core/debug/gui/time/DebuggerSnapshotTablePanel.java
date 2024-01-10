@@ -28,7 +28,7 @@ import javax.swing.table.*;
 import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.docking.settings.Settings;
-import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceSnapshotChangeType;
@@ -94,7 +94,7 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 
 	private class SnapshotListener extends TraceDomainObjectListener {
 		public SnapshotListener() {
-			listenForUntyped(DomainObject.DO_OBJECT_RESTORED, e -> objectRestored());
+			listenForUntyped(DomainObjectEvent.RESTORED, e -> objectRestored());
 
 			listenFor(TraceSnapshotChangeType.ADDED, this::snapAdded);
 			listenFor(TraceSnapshotChangeType.CHANGED, this::snapChanged);
@@ -234,9 +234,9 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 			return;
 		}
 		TraceTimeManager manager = currentTrace.getTimeManager();
-		Collection<? extends TraceSnapshot> snapshots = hideScratch
-				? manager.getSnapshots(0, true, Long.MAX_VALUE, true)
-				: manager.getAllSnapshots();
+		Collection<? extends TraceSnapshot> snapshots =
+			hideScratch ? manager.getSnapshots(0, true, Long.MAX_VALUE, true)
+					: manager.getAllSnapshots();
 		snapshotTableModel
 				.addAll(snapshots.stream().map(s -> new SnapshotRow(currentTrace, s)).toList());
 	}

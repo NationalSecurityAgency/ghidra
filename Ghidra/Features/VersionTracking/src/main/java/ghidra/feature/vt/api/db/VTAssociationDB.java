@@ -21,7 +21,7 @@ import java.util.Collection;
 
 import db.DBRecord;
 import ghidra.feature.vt.api.impl.MarkupItemManagerImpl;
-import ghidra.feature.vt.api.impl.VTChangeManager;
+import ghidra.feature.vt.api.impl.VTEvent;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.util.VTAssociationStatusException;
 import ghidra.program.database.DBObjectCache;
@@ -96,8 +96,8 @@ public class VTAssociationDB extends DatabaseObject implements VTAssociation {
 		associationDBM.lock.acquire();
 		try {
 			checkIsValid();
-			return associationDBM.getSourceAddressFromLong(
-				record.getLongValue(SOURCE_ADDRESS_COL.column()));
+			return associationDBM
+					.getSourceAddressFromLong(record.getLongValue(SOURCE_ADDRESS_COL.column()));
 		}
 		finally {
 			associationDBM.lock.release();
@@ -242,9 +242,9 @@ public class VTAssociationDB extends DatabaseObject implements VTAssociation {
 
 			record.setByteValue(APPLIED_STATUS_COL.column(), (byte) status.getStatusValue());
 			associationDBM.updateAssociationRecord(record);
-			associationDBM.getSession().setObjectChanged(
-				VTChangeManager.DOCR_VT_ASSOCIATION_MARKUP_STATUS_CHANGED, this, existingStatus,
-				status);
+			associationDBM.getSession()
+					.setObjectChanged(VTEvent.ASSOCIATION_MARKUP_STATUS_CHANGED, this,
+						existingStatus, status);
 		}
 		finally {
 			associationDBM.lock.release();
@@ -262,8 +262,9 @@ public class VTAssociationDB extends DatabaseObject implements VTAssociation {
 
 			record.setByteValue(STATUS_COL.column(), (byte) status.ordinal());
 			associationDBM.updateAssociationRecord(record);
-			associationDBM.getSession().setObjectChanged(
-				VTChangeManager.DOCR_VT_ASSOCIATION_STATUS_CHANGED, this, existingStatus, status);
+			associationDBM.getSession()
+					.setObjectChanged(VTEvent.ASSOCIATION_STATUS_CHANGED, this, existingStatus,
+						status);
 		}
 		finally {
 			associationDBM.lock.release();
@@ -278,8 +279,8 @@ public class VTAssociationDB extends DatabaseObject implements VTAssociation {
 			voteCount = Math.max(0, voteCount);
 			record.setIntValue(VOTE_COUNT_COL.column(), voteCount);
 			associationDBM.updateAssociationRecord(record);
-			associationDBM.getSession().setObjectChanged(VTChangeManager.DOCR_VT_VOTE_COUNT_CHANGED,
-				this, null, null);
+			associationDBM.getSession()
+					.setObjectChanged(VTEvent.VOTE_COUNT_CHANGED, this, null, null);
 		}
 		finally {
 			associationDBM.lock.release();

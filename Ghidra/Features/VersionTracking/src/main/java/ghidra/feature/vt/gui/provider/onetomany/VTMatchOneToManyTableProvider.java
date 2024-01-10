@@ -32,7 +32,7 @@ import docking.widgets.table.RowObjectTableModel;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import generic.theme.GColor;
 import generic.theme.GIcon;
-import ghidra.feature.vt.api.impl.VTChangeManager;
+import ghidra.feature.vt.api.impl.VTEvent;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.gui.actions.*;
 import ghidra.feature.vt.gui.filters.*;
@@ -435,20 +435,19 @@ public abstract class VTMatchOneToManyTableProvider extends ComponentProviderAda
 		boolean matchesContextChanged = false;
 		for (int i = 0; i < ev.numRecords(); i++) {
 			DomainObjectChangeRecord doRecord = ev.getChangeRecord(i);
-			int eventType = doRecord.getEventType();
+			EventType eventType = doRecord.getEventType();
 
-			if (eventType == VTChangeManager.DOCR_VT_ASSOCIATION_MARKUP_STATUS_CHANGED ||
-				eventType == VTChangeManager.DOCR_VT_ASSOCIATION_STATUS_CHANGED ||
-				eventType == VTChangeManager.DOCR_VT_MATCH_TAG_CHANGED) {
+			if (eventType == VTEvent.ASSOCIATION_MARKUP_STATUS_CHANGED ||
+				eventType == VTEvent.ASSOCIATION_STATUS_CHANGED ||
+				eventType == VTEvent.MATCH_TAG_CHANGED) {
 
 				oneToManyTableModel.refresh();
 				repaint();
 				matchesContextChanged = true;
 			}
-			else if (eventType == DomainObject.DO_OBJECT_RESTORED ||
-				eventType == VTChangeManager.DOCR_VT_MATCH_SET_ADDED ||
-				eventType == VTChangeManager.DOCR_VT_MATCH_ADDED ||
-				eventType == VTChangeManager.DOCR_VT_MATCH_DELETED) {
+			else if (eventType == DomainObjectEvent.RESTORED ||
+				eventType == VTEvent.MATCH_SET_ADDED || eventType == VTEvent.MATCH_ADDED ||
+				eventType == VTEvent.MATCH_DELETED) {
 
 				reload();
 				repaint();

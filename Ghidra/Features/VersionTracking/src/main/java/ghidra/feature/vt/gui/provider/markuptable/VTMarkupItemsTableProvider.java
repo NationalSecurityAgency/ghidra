@@ -15,7 +15,9 @@
  */
 package ghidra.feature.vt.gui.provider.markuptable;
 
+import static ghidra.feature.vt.api.impl.VTEvent.*;
 import static ghidra.feature.vt.gui.plugin.VTPlugin.*;
+import static ghidra.framework.model.DomainObjectEvent.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -40,7 +42,6 @@ import generic.theme.GIcon;
 import ghidra.app.plugin.core.functioncompare.FunctionComparisonPanel;
 import ghidra.app.util.viewer.listingpanel.*;
 import ghidra.app.util.viewer.util.CodeComparisonPanel;
-import ghidra.feature.vt.api.impl.VTChangeManager;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.markuptype.VTMarkupType;
 import ghidra.feature.vt.gui.actions.*;
@@ -51,7 +52,6 @@ import ghidra.feature.vt.gui.filters.Filter.FilterEditingStatus;
 import ghidra.feature.vt.gui.plugin.*;
 import ghidra.feature.vt.gui.provider.markuptable.VTMarkupItemsTableModel.AppliedDestinationAddressTableColumn;
 import ghidra.feature.vt.gui.util.*;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.SaveState;
@@ -785,9 +785,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 		if (!isVisible()) {
 			return;
 		}
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED) ||
-			ev.containsEvent(VTChangeManager.DOCR_VT_MARKUP_ITEM_DESTINATION_CHANGED) ||
-			ev.containsEvent(VTChangeManager.DOCR_VT_MARKUP_ITEM_STATUS_CHANGED)) {
+		if (ev.contains(RESTORED, MARKUP_ITEM_DESTINATION_CHANGED, MARKUP_ITEM_STATUS_CHANGED)) {
 
 			// FIXME The following block of code still doesn't clear the markup item cache when Reset Match occurs.
 			MatchInfo matchInfo = controller.getMatchInfo();

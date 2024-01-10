@@ -22,9 +22,9 @@ public class TraceDomainObjectListener extends TypedEventDispatcher
 
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (restoredHandler != null && ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
+		if (restoredHandler != null && ev.contains(DomainObjectEvent.RESTORED)) {
 			for (DomainObjectChangeRecord rec : ev) {
-				if (rec.getEventType() == DomainObject.DO_OBJECT_RESTORED) {
+				if (rec.getEventType() == DomainObjectEvent.RESTORED) {
 					restoredHandler.accept(rec);
 					return;
 				}

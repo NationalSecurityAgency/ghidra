@@ -16,7 +16,6 @@
 package ghidra.app.plugin.debug;
 
 import java.awt.Font;
-import java.lang.reflect.Field;
 import java.util.Date;
 
 import ghidra.app.DeveloperPluginPackage;
@@ -26,8 +25,6 @@ import ghidra.framework.model.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.*;
-import ghidra.util.datastruct.IntObjectHashtable;
 import help.Help;
 import help.HelpService;
 
@@ -50,7 +47,6 @@ public class DomainEventDisplayPlugin extends Plugin implements DomainObjectList
 
 	private Program currentProgram;
 	private DomainEventComponentProvider provider;
-	private IntObjectHashtable<String> eventHt;
 	private String padString;
 
 	/**
@@ -60,7 +56,6 @@ public class DomainEventDisplayPlugin extends Plugin implements DomainObjectList
 
 		super(tool);
 
-		eventHt = new IntObjectHashtable<>();
 		String dateStr = new Date() + ": ";
 		padString = dateStr.replaceAll(".", " ");
 
@@ -105,7 +100,7 @@ public class DomainEventDisplayPlugin extends Plugin implements DomainObjectList
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
 		if (tool != null && provider.isVisible()) {
-			update(ev);
+			outputEvent(ev);
 		}
 	}
 
@@ -128,99 +123,13 @@ public class DomainEventDisplayPlugin extends Plugin implements DomainObjectList
 	}
 
 	/**
-	 * Apply the updates that are in the change event.
+	 * Display the change event.
 	 */
-	private void update(DomainObjectChangedEvent event) {
+	private void outputEvent(DomainObjectChangedEvent event) {
 		for (int i = 0; i < event.numRecords(); i++) {
-			String s = null;
-			String start = null;
-			String end = null;
-			String oldValue = null;
-			String newValue = null;
-			String affectedObj = null;
+			DomainObjectChangeRecord changeRecord = event.getChangeRecord(i);
 			String dateStr = new Date() + ": ";
-			int eventType = 0;
-
-			DomainObjectChangeRecord docr = event.getChangeRecord(i);
-			eventType = docr.getEventType();
-			if (docr instanceof ProgramChangeRecord) {
-				ProgramChangeRecord record = (ProgramChangeRecord) docr;
-
-				try {
-					start = "" + record.getStart();
-					end = "" + record.getEnd();
-					oldValue = "" + record.getOldValue();
-					newValue = "" + record.getNewValue();
-					affectedObj = "" + record.getObject();
-				}
-				catch (Exception e) {
-					s = dateStr + getEventName(eventType) + " (" + eventType +
-						") => *** Event data is not available ***\n";
-				}
-			}
-			else if (docr instanceof CodeUnitPropertyChangeRecord) {
-				CodeUnitPropertyChangeRecord record = (CodeUnitPropertyChangeRecord) docr;
-				s = dateStr + getEventName(eventType) + " (" + eventType + ") ==> propertyName = " +
-					record.getPropertyName() + ", code unit address = " + record.getAddress() +
-					" old value = " + record.getOldValue() + ", new value = " +
-					record.getNewValue() + "\n";
-			}
-			else {
-				s = getEventName(eventType, DomainObject.class);
-				if (s != null) {
-					s = dateStr + "DomainObject Event (" + eventType + "): " + s + "\n";
-				}
-			}
-			if (s == null) {
-				s = dateStr + getEventName(eventType) + " (" + eventType + ") => start param = " +
-					start + ", end param = " + end + "\n" + padString + "old value = " + oldValue +
-					", new value = " + newValue + ", affected object = " + affectedObj +
-					", (source=" + event.getSource() + ")\n";
-			}
-			provider.displayEvent(s);
+			provider.displayEvent(dateStr + changeRecord + "\n");
 		}
 	}
-
-	/**
-	 * Use reflection to get the name of the given eventType.
-	 */
-	private String getEventName(int eventType) {
-
-		String eventName = eventHt.get(eventType);
-		if (eventName != null) {
-			return eventName;
-		}
-		eventName = getEventName(eventType, ChangeManager.class);
-
-		if (eventName == null) {
-			// could be from the DomainObject class...
-			eventName = getEventName(eventType, DomainObject.class);
-		}
-
-		eventHt.put(eventType, eventName);
-		return eventName;
-	}
-
-	private String getEventName(int eventType, Class<?> c) {
-		String eventName = null;
-		Field[] fields = c.getFields();
-		for (Field field : fields) {
-			try {
-				Object obj = field.get(null);
-				int value = field.getInt(obj);
-				if (eventType == value) {
-					eventName = field.getName();
-					break;
-				}
-			}
-			catch (IllegalArgumentException e) {
-				//ignore
-			}
-			catch (IllegalAccessException e) {
-				//ignore
-			}
-		}
-		return eventName;
-	}
-
 }

@@ -49,7 +49,7 @@ abstract class ExpandBlockModel implements DomainObjectListener {
 
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (!ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
+		if (!ev.contains(DomainObjectEvent.RESTORED)) {
 			return;
 		}
 

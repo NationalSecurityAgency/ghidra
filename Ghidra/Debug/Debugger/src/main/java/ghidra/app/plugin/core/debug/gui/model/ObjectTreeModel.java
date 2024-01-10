@@ -39,7 +39,7 @@ public class ObjectTreeModel implements DisplaysModified {
 	class ListenerForChanges extends TraceDomainObjectListener
 			implements DomainObjectClosedListener {
 		public ListenerForChanges() {
-			listenForUntyped(DomainObject.DO_OBJECT_RESTORED, this::domainObjectRestored);
+			listenForUntyped(DomainObjectEvent.RESTORED, this::domainObjectRestored);
 			listenFor(TraceObjectChangeType.CREATED, this::objectCreated);
 			listenFor(TraceObjectChangeType.VALUE_CREATED, this::valueCreated);
 			listenFor(TraceObjectChangeType.VALUE_DELETED, this::valueDeleted);

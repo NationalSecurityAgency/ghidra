@@ -32,7 +32,7 @@ import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableCo
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.utils.DebouncedRowWrappedEnumeratedColumnTableModel;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
-import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.*;
@@ -141,9 +141,8 @@ public class DebuggerLegacyModulesPanel extends JPanel {
 		}
 	}
 
-	protected static class ModuleTableModel
-			extends DebouncedRowWrappedEnumeratedColumnTableModel< //
-					ModuleTableColumns, ObjectKey, ModuleRow, TraceModule> {
+	protected static class ModuleTableModel extends DebouncedRowWrappedEnumeratedColumnTableModel< //
+			ModuleTableColumns, ObjectKey, ModuleRow, TraceModule> {
 
 		public ModuleTableModel(PluginTool tool, DebuggerModulesProvider provider) {
 			super(tool, "Modules", ModuleTableColumns.class, TraceModule::getObjectKey,
@@ -158,7 +157,7 @@ public class DebuggerLegacyModulesPanel extends JPanel {
 
 	private class ModulesListener extends TraceDomainObjectListener {
 		public ModulesListener() {
-			listenForUntyped(DomainObject.DO_OBJECT_RESTORED, e -> objectRestored());
+			listenForUntyped(DomainObjectEvent.RESTORED, e -> objectRestored());
 
 			listenFor(TraceModuleChangeType.ADDED, this::moduleAdded);
 			listenFor(TraceModuleChangeType.CHANGED, this::moduleChanged);

@@ -870,14 +870,14 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (ev.containsEvent(DomainObject.DO_DOMAIN_FILE_CHANGED)) {
+		if (ev.contains(DomainObjectEvent.FILE_CHANGED)) {
 			connectedProvider.updateTitle();
 		}
 
 		if (viewManager != null) {
 			return;
 		}
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
+		if (ev.contains(DomainObjectEvent.RESTORED)) {
 			viewChanged(currentProgram.getMemory());
 		}
 	}

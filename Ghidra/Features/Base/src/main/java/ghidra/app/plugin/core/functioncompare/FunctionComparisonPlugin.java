@@ -19,25 +19,20 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import ghidra.app.CorePluginPackage;
-import ghidra.app.events.ProgramActivatedPluginEvent;
-import ghidra.app.events.ProgramClosedPluginEvent;
-import ghidra.app.events.ProgramSelectionPluginEvent;
+import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.plugin.core.functioncompare.actions.CompareFunctionsAction;
 import ghidra.app.plugin.core.functioncompare.actions.CompareFunctionsFromListingAction;
 import ghidra.app.services.FunctionComparisonService;
-import ghidra.framework.model.DomainObject;
-import ghidra.framework.model.DomainObjectChangeRecord;
-import ghidra.framework.model.DomainObjectChangedEvent;
-import ghidra.framework.model.DomainObjectListener;
+import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ChangeManager;
 import ghidra.program.util.ProgramChangeRecord;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.Swing;
 
 /**
@@ -114,19 +109,16 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 		for (int i = 0; i < ev.numRecords(); ++i) {
 			DomainObjectChangeRecord doRecord = ev.getChangeRecord(i);
 
-			int eventType = doRecord.getEventType();
-
-			switch (eventType) {
-				case DomainObject.DO_OBJECT_RESTORED:
-					functionComparisonManager.domainObjectRestored(ev);
-					break;
-				case ChangeManager.DOCR_FUNCTION_REMOVED:
-					ProgramChangeRecord rec = (ProgramChangeRecord) ev.getChangeRecord(i);
-					Function function = (Function) rec.getObject();
-					if (function != null) {
-						removeFunction(function);
-					}
-					break;
+			EventType eventType = doRecord.getEventType();
+			if (eventType == DomainObjectEvent.RESTORED) {
+				functionComparisonManager.domainObjectRestored(ev);
+			}
+			else if (eventType == ProgramEvent.FUNCTION_REMOVED) {
+				ProgramChangeRecord rec = (ProgramChangeRecord) ev.getChangeRecord(i);
+				Function function = (Function) rec.getObject();
+				if (function != null) {
+					removeFunction(function);
+				}
 			}
 		}
 	}
@@ -168,8 +160,7 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 	}
 
 	@Override
-	public FunctionComparisonProvider compareFunctions(Function source,
-			Function target) {
+	public FunctionComparisonProvider compareFunctions(Function source, Function target) {
 		return getFromSwingBlocking(
 			() -> functionComparisonManager.compareFunctions(source, target));
 	}

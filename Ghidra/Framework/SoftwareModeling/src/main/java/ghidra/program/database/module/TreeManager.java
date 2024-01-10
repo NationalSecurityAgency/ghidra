@@ -28,7 +28,7 @@ import ghidra.program.model.listing.ProgramFragment;
 import ghidra.program.model.listing.ProgramModule;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.Lock;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -131,7 +131,7 @@ public class TreeManager implements ManagerDB {
 			addMemoryBlocks(m);
 			if (program != null) {
 				// no notification for initial default tree
-				program.programTreeAdded(record.getKey(), ChangeManager.DOCR_TREE_CREATED, null,
+				program.programTreeAdded(record.getKey(), ProgramEvent.PROGRAM_TREE_CREATED, null,
 					treeName);
 			}
 			return m.getRootModule();
@@ -236,8 +236,8 @@ public class TreeManager implements ManagerDB {
 
 			treeMap.remove(oldName);
 			treeMap.put(newName, moduleMgr);
-			program.programTreeChanged(moduleMgr.getTreeID(), ChangeManager.DOCR_TREE_RENAMED, null,
-				oldName, newName);
+			program.programTreeChanged(moduleMgr.getTreeID(), ProgramEvent.PROGRAM_TREE_RENAMED,
+				null, oldName, newName);
 
 		}
 		finally {
@@ -258,7 +258,7 @@ public class TreeManager implements ManagerDB {
 				treeAdapter.deleteRecord(rec.getKey());
 				ModuleManager mm = treeMap.remove(treeName);
 				mm.dispose();
-				program.programTreeChanged(rec.getKey(), ChangeManager.DOCR_TREE_REMOVED, null,
+				program.programTreeChanged(rec.getKey(), ProgramEvent.PROGRAM_TREE_REMOVED, null,
 					treeName, null);
 				return true;
 			}

@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.graph;
 
+import static ghidra.program.util.ProgramEvent.*;
+
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -189,9 +191,7 @@ public abstract class AddressBasedGraphDisplayListener
 
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (!(ev.containsEvent(ChangeManager.DOCR_SYMBOL_ADDED) ||
-			ev.containsEvent(ChangeManager.DOCR_SYMBOL_RENAMED) ||
-			ev.containsEvent(ChangeManager.DOCR_SYMBOL_REMOVED))) {
+		if (!(ev.contains(SYMBOL_ADDED, SYMBOL_RENAMED, SYMBOL_REMOVED))) {
 			return;
 		}
 
@@ -200,13 +200,13 @@ public abstract class AddressBasedGraphDisplayListener
 				ProgramChangeRecord programRecord = (ProgramChangeRecord) record;
 				Address address = programRecord.getStart();
 
-				if (record.getEventType() == ChangeManager.DOCR_SYMBOL_RENAMED) {
+				if (record.getEventType() == ProgramEvent.SYMBOL_RENAMED) {
 					handleSymbolAddedOrRenamed(address, (Symbol) programRecord.getObject());
 				}
-				else if (record.getEventType() == ChangeManager.DOCR_SYMBOL_ADDED) {
+				else if (record.getEventType() == ProgramEvent.SYMBOL_ADDED) {
 					handleSymbolAddedOrRenamed(address, (Symbol) programRecord.getNewValue());
 				}
-				else if (record.getEventType() == ChangeManager.DOCR_SYMBOL_REMOVED) {
+				else if (record.getEventType() == ProgramEvent.SYMBOL_REMOVED) {
 					handleSymbolRemoved(address);
 				}
 			}

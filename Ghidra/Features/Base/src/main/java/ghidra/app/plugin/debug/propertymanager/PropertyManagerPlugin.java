@@ -92,11 +92,11 @@ public class PropertyManagerPlugin extends ProgramPlugin implements DomainObject
 
 			DomainObjectChangeRecord record = ev.getChangeRecord(i);
 
-			int eventType = record.getEventType();
-			if (eventType == DomainObject.DO_OBJECT_RESTORED ||
-				eventType == ChangeManager.DOCR_MEMORY_BLOCK_MOVED ||
-				eventType == ChangeManager.DOCR_MEMORY_BLOCK_REMOVED ||
-				eventType == ChangeManager.DOCR_CODE_UNIT_PROPERTY_ALL_REMOVED) {
+			EventType eventType = record.getEventType();
+			if (eventType == DomainObjectEvent.RESTORED ||
+				eventType == ProgramEvent.MEMORY_BLOCK_MOVED ||
+				eventType == ProgramEvent.MEMORY_BLOCK_REMOVED ||
+				eventType == ProgramEvent.CODE_UNIT_PROPERTY_ALL_REMOVED) {
 				affectedByChange = true;
 				break;
 			}
@@ -110,20 +110,11 @@ public class PropertyManagerPlugin extends ProgramPlugin implements DomainObject
 			}
 
 			CodeUnitPropertyChangeRecord pcr = (CodeUnitPropertyChangeRecord) record;
-			Address addr = pcr.getAddress();
-			if (addr != null) {
-				if (currentSelection.contains(addr)) {
-					affectedByChange = true;
-					break;
-				}
-			}
-			else {
-				addr = pcr.getStartAddress();
-				Address endAddr = pcr.getEndAddress();
-				if (addr != null && endAddr != null && currentSelection.intersects(addr, endAddr)) {
-					affectedByChange = true;
-					break;
-				}
+			Address start = pcr.getStart();
+			Address end = pcr.getEnd();
+			if (start != null && end != null && currentSelection.intersects(start, end)) {
+				affectedByChange = true;
+				break;
 			}
 		}
 
