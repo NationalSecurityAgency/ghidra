@@ -44,16 +44,12 @@ public class DWARFFunctionImporterTest extends DWARFTestBase {
 		// test that Ghidra functions in a Rust compilation unit do have their info set
 		// if they look like they have normal param info
 
-		cu = new MockDWARFCompilationUnit(dwarfProg, 0x1000, 0x2000, 0,
-			DWARFCompilationUnit.DWARF_32, (short) 4, 0, (byte) 8, 0,
-			DWARFSourceLanguage.DW_LANG_Rust);
-		cu2 = null;
-		setMockCompilationUnits(cu);
+		addCompUnit(DWARFSourceLanguage.DW_LANG_Rust);
 
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry fooDIE = newSubprogram("foo", intDIE, 0x410, 10).create(cu);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry fooDIE = newSubprogram("foo", intDIE, 0x410, 10).create();
 		newFormalParam(fooDIE, "param1", intDIE, DWARFExpressionOpCodes.DW_OP_fbreg, 0x6c)
-				.create(cu);
+				.create();
 
 		importFunctions();
 
@@ -74,14 +70,10 @@ public class DWARFFunctionImporterTest extends DWARFTestBase {
 	@Test
 	public void testRustMethod_SetsRustCC()
 			throws CancelledException, IOException, DWARFException {
-		cu = new MockDWARFCompilationUnit(dwarfProg, 0x1000, 0x2000, 0,
-			DWARFCompilationUnit.DWARF_32, (short) 4, 0, (byte) 8, 0,
-			DWARFSourceLanguage.DW_LANG_Rust);
-		cu2 = null;
-		setMockCompilationUnits(cu);
+		addCompUnit(DWARFSourceLanguage.DW_LANG_Rust);
 
-		DebugInfoEntry intDIE = addInt(cu);
-		newSubprogram("foo", intDIE, 0x410, 10).create(cu);
+		DebugInfoEntry intDIE = addInt();
+		newSubprogram("foo", intDIE, 0x410, 10).create();
 
 		importFunctions();
 
@@ -99,21 +91,21 @@ public class DWARFFunctionImporterTest extends DWARFTestBase {
 		// that contains a namespace template argument (templateclass<ns1::ns2::argclass>)
 		// is encountered and a Ghidra namespace is created
 
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry floatDIE = addFloat(cu);
-		DebugInfoEntry struct1DIE = newStruct("mystruct::operator/()", 100).create(cu);
-		DebugInfoEntry nestedStructPtrDIE = addFwdPtr(cu, 1);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry floatDIE = addFloat();
+		DebugInfoEntry struct1DIE = newStruct("mystruct::operator/()", 100).create();
+		DebugInfoEntry nestedStructPtrDIE = addFwdPtr(1);
 		DebugInfoEntry nestedStructDIE =
-			newStruct("nested_struct", 10).setParent(struct1DIE).create(cu);
-		newMember(nestedStructDIE, "blah1", intDIE, 0).create(cu);
+			newStruct("nested_struct", 10).setParent(struct1DIE).create();
+		newMember(nestedStructDIE, "blah1", intDIE, 0).create();
 		DebugInfoEntry fooDIE =
-			newSubprogram("foo", intDIE, 0x410, 10).setParent(nestedStructDIE).create(cu);
+			newSubprogram("foo", intDIE, 0x410, 10).setParent(nestedStructDIE).create();
 		newFormalParam(fooDIE, "this", nestedStructPtrDIE, DWARFExpressionOpCodes.DW_OP_fbreg, 0x6c)
-				.create(cu);
+				.create();
 
-		newMember(struct1DIE, "f1", intDIE, 0).create(cu);
-		newMember(struct1DIE, "f2", floatDIE, 10).create(cu);
-		newMember(struct1DIE, "f3", nestedStructDIE, 20).create(cu);
+		newMember(struct1DIE, "f1", intDIE, 0).create();
+		newMember(struct1DIE, "f2", floatDIE, 10).create();
+		newMember(struct1DIE, "f3", nestedStructDIE, 20).create();
 
 		importFunctions();
 
@@ -123,7 +115,7 @@ public class DWARFFunctionImporterTest extends DWARFTestBase {
 		assertEquals("foo", fooFunc.getName());
 		assertEquals("nested_struct",
 			((Pointer) fooFunc.getParameter(0).getDataType()).getDataType().getName());
-		assertEquals("__thiscall", fooFunc.getCallingConventionName());
+		assertEquals(CompilerSpec.CALLING_CONVENTION_thiscall, fooFunc.getCallingConventionName());
 		assertEquals("nested_struct", nsParts.get(nsParts.size() - 1).getName());
 		assertEquals("mystruct::operator/()", nsParts.get(nsParts.size() - 2).getName());
 
@@ -136,10 +128,10 @@ public class DWARFFunctionImporterTest extends DWARFTestBase {
 
 	@Test
 	public void testNoReturnFlag_True() throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry intDIE = addInt(cu);
+		DebugInfoEntry intDIE = addInt();
 		DIECreator func = newSubprogram("foo", intDIE, 0x410, 10);
 		func.addBoolean(DWARFAttribute.DW_AT_noreturn, true);
-		func.create(cu);
+		func.create();
 
 		importFunctions();
 
@@ -150,9 +142,9 @@ public class DWARFFunctionImporterTest extends DWARFTestBase {
 
 	@Test
 	public void testNoReturnFlag_False() throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry intDIE = addInt(cu);
+		DebugInfoEntry intDIE = addInt();
 		DIECreator func = newSubprogram("foo", intDIE, 0x410, 10);
-		func.create(cu);
+		func.create();
 
 		importFunctions();
 
@@ -168,10 +160,10 @@ public class DWARFFunctionImporterTest extends DWARFTestBase {
 		// In this case, it refers to a location in the function's local variable area, so
 		// it should have been converted to a spill local variable.
 
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry fooDIE = newSubprogram("foo", intDIE, 0x410, 10).create(cu);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry fooDIE = newSubprogram("foo", intDIE, 0x410, 10).create();
 		newFormalParam(fooDIE, "param1", intDIE, DWARFExpressionOpCodes.DW_OP_fbreg, 0x6c) // fbreg -14, func local variable area
-				.create(cu);
+				.create();
 
 		importFunctions();
 
@@ -199,10 +191,10 @@ public class DWARFFunctionImporterTest extends DWARFTestBase {
 
 		// TODO: need to also test location info from a debug_loc sequence that specifies a lexical offset
 
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry fooDIE = newSubprogram("foo", intDIE, 0x410, 10).create(cu);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry fooDIE = newSubprogram("foo", intDIE, 0x410, 10).create();
 		newFormalParam(fooDIE, "param1", intDIE, DWARFExpressionOpCodes.DW_OP_fbreg, 0x8) // fbreg +8, caller stack area
-				.create(cu);
+				.create();
 
 		importFunctions();
 
@@ -226,99 +218,133 @@ public class DWARFFunctionImporterTest extends DWARFTestBase {
 	@Test
 	public void testThisParamDetect_NamedThis()
 			throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry floatDIE = addFloat(cu);
-		DebugInfoEntry struct1PtrDIE = addFwdPtr(cu, 1);
-		DebugInfoEntry struct1DIE = newStruct("mystruct", 100).create(cu);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry floatDIE = addFloat();
+		DebugInfoEntry struct1PtrDIE = addFwdPtr(1);
+		DebugInfoEntry struct1DIE = newStruct("mystruct", 100).create();
 		DebugInfoEntry fooDIE =
-			newSubprogram("foo", intDIE, 0x410, 10).setParent(struct1DIE).create(cu);
+			newSubprogram("foo", intDIE, 0x410, 10).setParent(struct1DIE).create();
 		newFormalParam(fooDIE, "this", struct1PtrDIE, DWARFExpressionOpCodes.DW_OP_fbreg, 0x6c)
-				.create(cu);
+				.create();
 
-		newMember(struct1DIE, "f1", intDIE, 0).create(cu);
-		newMember(struct1DIE, "f2", floatDIE, 10).create(cu);
+		newMember(struct1DIE, "f1", intDIE, 0).create();
+		newMember(struct1DIE, "f2", floatDIE, 10).create();
 
 		importFunctions();
 
 		Function fooFunc = program.getListing().getFunctionAt(addr(0x410));
 
 		assertEquals("foo", fooFunc.getName());
-		assertEquals("__thiscall", fooFunc.getCallingConventionName());
+		assertEquals(CompilerSpec.CALLING_CONVENTION_thiscall, fooFunc.getCallingConventionName());
 	}
 
 	@Test
 	public void testThisParamDetect_ArtificalUnNamed()
 			throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry floatDIE = addFloat(cu);
-		DebugInfoEntry struct1PtrDIE = addFwdPtr(cu, 1);
-		DebugInfoEntry struct1DIE = newStruct("mystruct", 100).create(cu);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry floatDIE = addFloat();
+		DebugInfoEntry struct1PtrDIE = addFwdPtr(1);
+		DebugInfoEntry struct1DIE = newStruct("mystruct", 100).create();
 		DebugInfoEntry fooDIE =
-			newSubprogram("foo", intDIE, 0x410, 10).setParent(struct1DIE).create(cu);
+			newSubprogram("foo", intDIE, 0x410, 10).setParent(struct1DIE).create();
 		newFormalParam(fooDIE, null, struct1PtrDIE, DWARFExpressionOpCodes.DW_OP_fbreg, 0x6c)
 				.addBoolean(DWARFAttribute.DW_AT_artificial, true)
-				.create(cu);
+				.create();
 
-		newMember(struct1DIE, "f1", intDIE, 0).create(cu);
-		newMember(struct1DIE, "f2", floatDIE, 10).create(cu);
+		newMember(struct1DIE, "f1", intDIE, 0).create();
+		newMember(struct1DIE, "f2", floatDIE, 10).create();
 
 		importFunctions();
 
 		Function fooFunc = program.getListing().getFunctionAt(addr(0x410));
 
 		assertEquals("foo", fooFunc.getName());
-		assertEquals("__thiscall", fooFunc.getCallingConventionName());
+		assertEquals(CompilerSpec.CALLING_CONVENTION_thiscall, fooFunc.getCallingConventionName());
 	}
 
 	@Test
 	public void testThisParamDetect_ObjectPointer()
 			throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry floatDIE = addFloat(cu);
-		DebugInfoEntry struct1PtrDIE = addFwdPtr(cu, 1);
-		DebugInfoEntry struct1DIE = newStruct("mystruct", 100).create(cu);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry floatDIE = addFloat();
+		DebugInfoEntry struct1PtrDIE = addFwdPtr(1);
+		DebugInfoEntry struct1DIE = newStruct("mystruct", 100).create();
+		long formalParamDIEOffset = dwarfProg.getRelativeDIEOffset(2);
 		DebugInfoEntry fooDIE =
 			newSubprogram("foo", intDIE, 0x410, 10)
-					.addRef(DWARFAttribute.DW_AT_object_pointer, getForwardOffset(cu, 1))
+					.addRef(DWARFAttribute.DW_AT_object_pointer, formalParamDIEOffset)
 					.setParent(struct1DIE)
-					.create(cu);
-		newFormalParam(fooDIE, null, struct1PtrDIE, DWARFExpressionOpCodes.DW_OP_fbreg, 0x6c)
-				.create(cu);
+					.create();
 
-		newMember(struct1DIE, "f1", intDIE, 0).create(cu);
-		newMember(struct1DIE, "f2", floatDIE, 10).create(cu);
+		// give the param a non-this name to defeat the logic in DWARFUtil.isThisParam()
+		newFormalParam(fooDIE, "not_the_normal_this_name", struct1PtrDIE,
+			DWARFExpressionOpCodes.DW_OP_fbreg, 0x6c).create();
+
+		newMember(struct1DIE, "f1", intDIE, 0).create();
+		newMember(struct1DIE, "f2", floatDIE, 10).create();
 
 		importFunctions();
 
 		Function fooFunc = program.getListing().getFunctionAt(addr(0x410));
 
 		assertEquals("foo", fooFunc.getName());
-		assertEquals("__thiscall", fooFunc.getCallingConventionName());
+		assertEquals(CompilerSpec.CALLING_CONVENTION_thiscall, fooFunc.getCallingConventionName());
+	}
+
+	@Test
+	public void testThisParamDetect_ObjectPointer_inverse()
+			throws CancelledException, IOException, DWARFException {
+		// Test that Ghidra doesn't mark foo()'s param as 'this' when we don't have a DW_AT_obj_ptr
+		// This is to ensure that testThisParamDetect_ObjectPointer() is a strong test
+		// The data in this test needs to mirror the data in testThisParamDetect_ObjectPointer(),
+		// minus the DW_AT_object_pointer attribute.
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry floatDIE = addFloat();
+		DebugInfoEntry struct1PtrDIE = addFwdPtr(1);
+		DebugInfoEntry struct1DIE = newStruct("mystruct", 100).create();
+		DebugInfoEntry fooDIE = newSubprogram("foo", intDIE, 0x410, 10)
+				//.addRef(DWARFAttribute.DW_AT_object_pointer, ??) don't add this attribute
+				.setParent(struct1DIE)
+				.create();
+
+		// give the param a non-this name to defeat the logic in DWARFUtil.isThisParam()
+		newFormalParam(fooDIE, "not_the_normal_this_name", struct1PtrDIE,
+			DWARFExpressionOpCodes.DW_OP_fbreg, 0x6c).create();
+
+		newMember(struct1DIE, "f1", intDIE, 0).create();
+		newMember(struct1DIE, "f2", floatDIE, 10).create();
+
+		importFunctions();
+
+		Function fooFunc = program.getListing().getFunctionAt(addr(0x410));
+
+		assertEquals("foo", fooFunc.getName());
+		assertNotEquals(CompilerSpec.CALLING_CONVENTION_thiscall,
+			fooFunc.getCallingConventionName());
 	}
 
 	@Test
 	public void testThisParamDetect_Unnamed()
 			throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry floatDIE = addFloat(cu);
-		DebugInfoEntry struct1PtrDIE = addFwdPtr(cu, 1);
-		DebugInfoEntry struct1DIE = newStruct("mystruct", 100).create(cu);
-		DebugInfoEntry fooDIE =
-			newSubprogram("foo", intDIE, 0x410, 10)
-					.setParent(struct1DIE)
-					.create(cu);
-		newFormalParam(fooDIE, null, struct1PtrDIE, DWARFExpressionOpCodes.DW_OP_fbreg, 0x6c)
-				.create(cu);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry floatDIE = addFloat();
+		DebugInfoEntry struct1PtrDIE = addFwdPtr(1);
+		DebugInfoEntry struct1DIE = newStruct("mystruct", 100).create();
 
-		newMember(struct1DIE, "f1", intDIE, 0).create(cu);
-		newMember(struct1DIE, "f2", floatDIE, 10).create(cu);
+		DebugInfoEntry fooDIE =
+			newSubprogram("foo", intDIE, 0x410, 10).setParent(struct1DIE).create();
+		newFormalParam(fooDIE, null, struct1PtrDIE, DWARFExpressionOpCodes.DW_OP_fbreg, 0x6c)
+				.create();
+
+		newMember(struct1DIE, "f1", intDIE, 0).create();
+		newMember(struct1DIE, "f2", floatDIE, 10).create();
 
 		importFunctions();
 
 		Function fooFunc = program.getListing().getFunctionAt(addr(0x410));
 
 		assertEquals("foo", fooFunc.getName());
-		assertEquals("__thiscall", fooFunc.getCallingConventionName());
+		assertEquals(CompilerSpec.CALLING_CONVENTION_thiscall, fooFunc.getCallingConventionName());
 	}
 
 	@Test
@@ -333,11 +359,11 @@ public class DWARFFunctionImporterTest extends DWARFTestBase {
 		initialFoo.addLocalVariable(new LocalVariableImpl("testxyz", intDT, -16, program),
 			SourceType.USER_DEFINED);
 		
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry fooDIE = newSubprogram("foo", intDIE, 0x410, 10).create(cu);
-		newFormalParam(fooDIE, "param1", intDIE).create(cu);
-		newFormalParam(fooDIE, "param2", intDIE).create(cu);
-		newFormalParam(fooDIE, "testxyz" /* should collide with local var */, intDIE).create(cu);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry fooDIE = newSubprogram("foo", intDIE, 0x410, 10).create();
+		newFormalParam(fooDIE, "param1", intDIE).create();
+		newFormalParam(fooDIE, "param2", intDIE).create();
+		newFormalParam(fooDIE, "testxyz" /* should collide with local var */, intDIE).create();
 
 		importFunctions();
 
@@ -351,13 +377,12 @@ public class DWARFFunctionImporterTest extends DWARFTestBase {
 
 	@Test
 	public void testParamNameBadChars()
-			throws CancelledException, IOException, DWARFException, InvalidInputException,
-			OverlappingFunctionException, DuplicateNameException {
+			throws CancelledException, IOException, DWARFException {
 
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry fooDIE = newSubprogram("foo", intDIE, 0x410, 10).create(cu);
-		newFormalParam(fooDIE, "param 1", intDIE).create(cu);
-		newFormalParam(fooDIE, "param\t2", intDIE).create(cu);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry fooDIE = newSubprogram("foo", intDIE, 0x410, 10).create();
+		newFormalParam(fooDIE, "param 1", intDIE).create();
+		newFormalParam(fooDIE, "param\t2", intDIE).create();
 
 		importFunctions();
 

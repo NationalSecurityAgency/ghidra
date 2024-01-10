@@ -17,8 +17,6 @@ package ghidra.app.util.bin.format.dwarf4;
 
 import java.util.*;
 
-import org.junit.Assert;
-
 import ghidra.app.util.bin.format.dwarf4.attribs.*;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFForm;
 
@@ -38,12 +36,13 @@ public class DIECreator {
 		}
 	}
 
+	private MockDWARFProgram dwarfProg;
 	private int tag;
 	private Map<Integer, AttrInfo> attributes = new HashMap<>();
-	private List<DebugInfoEntry> children = new ArrayList<>();
 	private DebugInfoEntry parent;
 
-	public DIECreator(int tag) {
+	public DIECreator(MockDWARFProgram dwarfProg, int tag) {
+		this.dwarfProg = dwarfProg;
 		this.tag = tag;
 	}
 
@@ -97,17 +96,15 @@ public class DIECreator {
 		return this;
 	}
 
-	DWARFAbbreviation createAbbreviation(MockDWARFCompilationUnit cu) {
+	DWARFAttributeSpecification[] makeAttrSpecArray() {
 		DWARFAttributeSpecification[] attrSpecs =
 			new DWARFAttributeSpecification[attributes.size()];
-		ArrayList<AttrInfo> attrInfoList = new ArrayList<>(attributes.values());
+		List<AttrInfo> attrInfoList = new ArrayList<>(attributes.values());
 		for (int i = 0; i < attrInfoList.size(); i++) {
 			AttrInfo attrInfo = attrInfoList.get(i);
 			attrSpecs[i] = new DWARFAttributeSpecification(attrInfo.attribute, attrInfo.form);
 		}
-		DWARFAbbreviation abbr = new DWARFAbbreviation(cu.getCodeToAbbreviationMap().size(), tag,
-			!children.isEmpty(), attrSpecs);
-		return abbr;
+		return attrSpecs;
 	}
 
 	public DIECreator setParent(DebugInfoEntry parent) {
@@ -115,31 +112,32 @@ public class DIECreator {
 		return this;
 	}
 
-	public DebugInfoEntry create(MockDWARFCompilationUnit cu) {
-		DWARFAbbreviation abbr = createAbbreviation(cu);
-		cu.getCodeToAbbreviationMap().put(abbr.getAbbreviationCode(), abbr);
-		DebugInfoEntry die =
-			new DebugInfoEntry(cu, cu.getStartOffset() + cu.getMockEntryCount(), abbr);
+	public DebugInfoEntry createRootDIE() {
+		MockDWARFCompilationUnit cu = dwarfProg.getCurrentCompUnit();
+		DWARFAbbreviation abbr = cu.createAbbreviation(makeAttrSpecArray(), tag);
+		DebugInfoEntry die = dwarfProg.addDIE(abbr, null);
 
 		int attrNum = 0;
 		for (AttrInfo attrInfo : attributes.values()) {
 			die.getAttributes()[attrNum++] = attrInfo.value;
 		}
 
-		for (DebugInfoEntry childDIE : children) {
-			Assert.assertTrue(childDIE.getCompilationUnit() == cu);
-			die.addChild(childDIE);
-		}
+		return die;
+	}
 
-		if (parent == null) {
-			parent = cu.getCompileUnitDIE();
+	public DebugInfoEntry create() {
+		MockDWARFCompilationUnit cu = dwarfProg.getCurrentCompUnit();
+		if (cu == null) {
+			cu = dwarfProg.addCompUnit();
 		}
-		if (parent != null) {
-			die.setParent(parent);
-			Assert.assertTrue(parent.getCompilationUnit() == cu);
-			parent.addChild(die);
+		DWARFAbbreviation abbr = cu.createAbbreviation(makeAttrSpecArray(), tag);
+		DebugInfoEntry die =
+			dwarfProg.addDIE(abbr, parent != null ? parent : cu.getCompileUnitDIE());
+
+		int attrNum = 0;
+		for (AttrInfo attrInfo : attributes.values()) {
+			die.getAttributes()[attrNum++] = attrInfo.value;
 		}
-		cu.addMockEntry(die);
 
 		return die;
 	}
