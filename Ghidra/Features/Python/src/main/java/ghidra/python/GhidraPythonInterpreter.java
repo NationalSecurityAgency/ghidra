@@ -338,6 +338,9 @@ public class GhidraPythonInterpreter extends InteractiveInterpreter {
 			return;
 		}
 
+		// Inject 'this'
+		setVariable("this", script);
+
 		// Loop though the script class hierarchy
 		for (Class<?> scriptClass = script.getClass(); scriptClass != Object.class; scriptClass =
 			scriptClass.getSuperclass()) {

@@ -245,7 +245,7 @@ public interface FunctionDatabase extends AutoCloseable {
 	public static boolean checkSettingsForInsert(DescriptionManager manage,
 			DatabaseInformation info) throws LSHException, DatabaseNonFatalException {
 		if (manage.numFunctions() == 0) {
-			throw new DatabaseNonFatalException("ls ~/junk" + "");
+			throw new DatabaseNonFatalException("Empty signature file");
 		}
 		int res = info.checkSignatureSettings(manage.getMajorVersion(), manage.getMinorVersion(),
 			manage.getSettings());

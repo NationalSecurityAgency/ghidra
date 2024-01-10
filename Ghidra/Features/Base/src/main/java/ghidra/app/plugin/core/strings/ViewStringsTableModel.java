@@ -62,7 +62,8 @@ class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 		IS_ASCII_COL,
 		CHARSET_COL,
 		HAS_ENCODING_ERROR,
-		UNICODE_SCRIPT
+		UNICODE_SCRIPT,
+		TRANSLATED_VALUE
 	}
 
 	ViewStringsTableModel(PluginTool tool) {
@@ -81,7 +82,10 @@ class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 		DynamicTableColumn<ProgramLocation, ?, ?> column = getColumn(columnIndex);
 		if (column instanceof StringRepColumn) {
 			ProgramLocation progLoc = getRowObject(rowIndex);
-			ManualStringTranslationService.setTranslatedValue(program, progLoc, aValue.toString());
+			if (progLoc != null) {
+				ManualStringTranslationService.setTranslatedValue(program, progLoc,
+					aValue.toString());
+			}
 		}
 	}
 
@@ -92,12 +96,13 @@ class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 		// These columns need to match the COLUMNS enum indexes
 		descriptor.addVisibleColumn(new DataLocationColumn(), 1, true);
 		descriptor.addVisibleColumn(new DataValueColumn());
-		descriptor.addVisibleColumn(new StringRepColumn());
+		descriptor.addVisibleColumn(new StringRepColumn()); // see StringRepCellEditor in ViewStringsProvider
 		descriptor.addVisibleColumn(new DataTypeColumn());
 		descriptor.addHiddenColumn(new IsAsciiColumn());
 		descriptor.addHiddenColumn(new CharsetColumn());
 		descriptor.addHiddenColumn(new HasEncodingErrorColumn());
 		descriptor.addHiddenColumn(new UnicodeScriptColumn());
+		descriptor.addHiddenColumn(new TranslatedValueColumn());
 
 		return descriptor;
 	}
@@ -119,8 +124,7 @@ class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 		Swing.allowSwingToProcessEvents();
 		for (Data stringInstance : DefinedDataIterator.definedStrings(localProgram)) {
 			accumulator.add(createIndexedStringInstanceLocation(localProgram, stringInstance));
-			monitor.checkCancelled();
-			monitor.incrementProgress(1);
+			monitor.increment();
 		}
 	}
 
@@ -143,7 +147,7 @@ class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 		return (pl != null) ? rowsIndexedByAddress.get(pl.getAddress()) : null;
 	}
 
-	public void addDataInstance(Program localProgram, Data data, TaskMonitor monitor) {
+	public void addDataInstance(Program localProgram, Data data) {
 		for (Data stringInstance : DefinedDataIterator.definedStrings(data)) {
 			addObject(createIndexedStringInstanceLocation(localProgram, stringInstance));
 		}
@@ -202,6 +206,9 @@ class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 	private static class DataValueColumn
 			extends AbstractProgramLocationTableColumn<ProgramLocation, StringDataInstance> {
 
+		// Also see ViewStringsColumnConstrainProvider for filtering constraints that operate
+		// on the value of this column
+
 		private DataValueCellRenderer renderer = new DataValueCellRenderer();
 
 		@Override
@@ -241,14 +248,19 @@ class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 			public String getFilterString(StringDataInstance t, Settings settings) {
 				return getText(t);
 			}
+
+			@Override
+			public ColumnConstraintFilterMode getColumnConstraintFilterMode() {
+				return ColumnConstraintFilterMode.ALLOW_ALL_FILTERS;
+			}
 		}
 
 	}
 
 	private static class StringRepColumn
-			extends AbstractProgramLocationTableColumn<ProgramLocation, StringDataInstance> {
+			extends AbstractProgramLocationTableColumn<ProgramLocation, String> {
 
-		private StringRepCellRenderer renderer = new StringRepCellRenderer();
+		// also see StringRepCellEditor in ViewStringsProvider
 
 		@Override
 		public String getColumnName() {
@@ -256,12 +268,12 @@ class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 		}
 
 		@Override
-		public StringDataInstance getValue(ProgramLocation rowObject, Settings settings,
+		public String getValue(ProgramLocation rowObject, Settings settings,
 				Program program, ServiceProvider serviceProvider) throws IllegalArgumentException {
 			Data data = DataUtilities.getDataAtLocation(rowObject);
 			if (StringDataInstance.isString(data)) {
 				StringDataInstance sdi = StringDataInstance.getStringDataInstance(data);
-				return sdi;
+				return sdi.getStringRepresentation();
 			}
 			return null;
 		}
@@ -270,27 +282,6 @@ class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 		public ProgramLocation getProgramLocation(ProgramLocation rowObject, Settings settings,
 				Program program, ServiceProvider serviceProvider) {
 			return rowObject;
-		}
-
-		@Override
-		public GColumnRenderer<StringDataInstance> getColumnRenderer() {
-			return renderer;
-		}
-
-		private class StringRepCellRenderer extends AbstractGColumnRenderer<StringDataInstance> {
-
-			@Override
-			protected String getText(Object value) {
-				if (value instanceof StringDataInstance) {
-					return ((StringDataInstance) value).getStringRepresentation();
-				}
-				return "";
-			}
-
-			@Override
-			public String getFilterString(StringDataInstance t, Settings settings) {
-				return getText(t);
-			}
 		}
 	}
 
@@ -392,6 +383,31 @@ class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 
 			Data data = DataUtilities.getDataAtLocation(rowObject);
 			return StringDataInstance.getStringDataInstance(data).getCharsetName();
+		}
+
+		@Override
+		public ProgramLocation getProgramLocation(ProgramLocation rowObject, Settings settings,
+				Program program, ServiceProvider serviceProvider) {
+			return rowObject;
+		}
+
+	}
+
+	private static class TranslatedValueColumn
+			extends AbstractProgramLocationTableColumn<ProgramLocation, String> {
+
+		@Override
+		public String getColumnName() {
+			return "Translated Value";
+		}
+
+		@Override
+		public String getValue(ProgramLocation rowObject, Settings settings, Program program,
+				ServiceProvider serviceProvider) throws IllegalArgumentException {
+
+			Data data = DataUtilities.getDataAtLocation(rowObject);
+			String s = TranslationSettingsDefinition.TRANSLATION.getTranslatedValue(data);
+			return s;
 		}
 
 		@Override

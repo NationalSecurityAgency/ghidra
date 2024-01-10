@@ -16,13 +16,11 @@
 package utility.application;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 import generic.jar.ResourceFile;
 import ghidra.framework.ApplicationProperties;
 import ghidra.framework.GModule;
-import utilities.util.FileUtilities;
 
 /**
  * The Application Layout base class defines the customizable elements of the application's
@@ -150,35 +148,6 @@ public abstract class ApplicationLayout {
 	 */
 	public final ResourceFile getPatchDir() {
 		return patchDir;
-	}
-
-	/**
-	 * Creates the application's user directories (or ensures they already exist).
-	 *
-	 * @throws IOException if there was a problem creating the application's user directories.
-	 */
-	public final void createUserDirs() throws IOException {
-		if (userTempDir != null) {
-			if (!FileUtilities.mkdirs(userTempDir)) {
-				throw new IOException("Failed to create user temp directory: " + userTempDir);
-			}
-			FileUtilities.setOwnerOnlyPermissions(userTempDir);
-		}
-
-		if (userCacheDir != null) {
-			if (!FileUtilities.mkdirs(userCacheDir)) {
-				throw new IOException("Failed to create user cache directory: " + userCacheDir);
-			}
-			FileUtilities.setOwnerOnlyPermissions(userCacheDir);
-		}
-
-		if (userSettingsDir != null) {
-			if (!FileUtilities.mkdirs(userSettingsDir)) {
-				throw new IOException(
-					"Failed to create user settings directory: " + userSettingsDir);
-			}
-			FileUtilities.setOwnerOnlyPermissions(userSettingsDir);
-		}
 	}
 
 	/**

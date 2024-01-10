@@ -28,12 +28,12 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import docking.*;
 import docking.action.*;
-import docking.action.builder.ActionBuilder;
-import docking.action.builder.MultiStateActionBuilder;
+import docking.action.builder.*;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
 import docking.widgets.filechooser.GhidraFileChooser;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerBlockChooserDialog;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
@@ -217,6 +217,58 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		}
 	}
 
+	interface ImportMissingModuleAction {
+		String NAME = "Import Missing Module";
+		String DESCRIPTION = "Import the missing module from disk";
+		Icon ICON = DebuggerResources.ICON_IMPORT;
+		String HELP_ANCHOR = "import_missing_module";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarIcon(ICON)
+					.popupMenuIcon(ICON)
+					.popupMenuPath(NAME)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface MapMissingModuleAction {
+		String NAME = "Map Missing Module";
+		String DESCRIPTION = "Map the missing module to an existing import";
+		Icon ICON = DebuggerResources.ICON_MAP_MODULES;
+		String HELP_ANCHOR = "map_missing_module";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarIcon(ICON)
+					.popupMenuIcon(ICON)
+					.popupMenuPath(NAME)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface ShowSectionsTableAction {
+		String NAME = "Show Sections Table";
+		Icon ICON = new GIcon("icon.debugger.modules.table.sections");
+		String DESCRIPTION = "Toggle display fo the Sections Table pane";
+		String GROUP = DebuggerResources.FilterAction.GROUP;
+		String ORDER = "1";
+		String HELP_ANCHOR = "show_sections_table";
+
+		static ToggleActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ToggleActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarIcon(ICON)
+					.toolBarGroup(GROUP, ORDER)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
 	protected class ForMappingTraceListener extends TraceDomainObjectListener {
 		public ForMappingTraceListener(AutoMapSpec spec) {
 			for (TraceChangeType<?, ?> type : spec.getChangeTypes()) {
@@ -369,6 +421,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	private final AutoService.Wiring autoServiceWiring;
 
 	private final JSplitPane mainPanel = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+	private final int defaultDividerSize = mainPanel.getDividerSize();
 
 	DebuggerModulesPanel modulesPanel;
 	DebuggerLegacyModulesPanel legacyModulesPanel;
@@ -397,8 +450,14 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	MultiStateDockingAction<AutoMapSpec> actionAutoMap;
 	private final AutoMapSpec defaultAutoMapSpec =
 		AutoMapSpec.fromConfigName(ByModuleAutoMapSpec.CONFIG_NAME);
+
 	@AutoConfigStateField(codec = AutoMapSpecConfigFieldCodec.class)
 	AutoMapSpec autoMapSpec = defaultAutoMapSpec;
+	@AutoConfigStateField
+	boolean showSectionsTable = true;
+	@AutoConfigStateField
+	boolean filterSectionsByModules = false;
+
 	boolean cueAutoMap;
 	private ForMappingTraceListener forMappingListener;
 
@@ -407,6 +466,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 
 	SelectAddressesAction actionSelectAddresses;
 	ImportFromFileSystemAction actionImportFromFileSystem;
+	ToggleDockingAction actionShowSectionsTable;
 	// TODO: Save the state of this toggle? Not really compelled.
 	ToggleDockingAction actionFilterSectionsByModules;
 	DockingAction actionSelectCurrent;
@@ -481,8 +541,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	}
 
 	protected boolean isFilterSectionsByModules() {
-		// TODO: Make this a proper field and save it to tool state
-		return actionFilterSectionsByModules.isSelected();
+		return filterSectionsByModules;
 	}
 
 	void modulesPanelContextChanged() {
@@ -576,6 +635,10 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 
 		actionSelectAddresses = new SelectAddressesAction();
 		actionImportFromFileSystem = new ImportFromFileSystemAction();
+		actionShowSectionsTable = ShowSectionsTableAction.builder(plugin)
+				.onAction(this::toggledShowSectionsTable)
+				.selected(showSectionsTable)
+				.buildAndInstallLocal(this);
 		actionFilterSectionsByModules = FilterAction.builder(plugin)
 				.description("Filter sections to those in selected modules")
 				.helpLocation(new HelpLocation(plugin.getName(), "filter_by_module"))
@@ -714,10 +777,42 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		mapModuleTo(context.getModule());
 	}
 
+	private void toggledShowSectionsTable(ActionContext ignored) {
+		setShowSectionsTable(actionShowSectionsTable.isSelected());
+	}
+
+	public void setShowSectionsTable(boolean showSectionsTable) {
+		if (this.showSectionsTable == showSectionsTable) {
+			return;
+		}
+		doSetShowSectionsTable(showSectionsTable);
+	}
+
+	protected void doSetShowSectionsTable(boolean showSectionsTable) {
+		this.showSectionsTable = showSectionsTable;
+		actionShowSectionsTable.setSelected(showSectionsTable);
+		mainPanel.setDividerSize(showSectionsTable ? defaultDividerSize : 0);
+		sectionsPanel.setVisible(showSectionsTable);
+		legacySectionsPanel.setVisible(showSectionsTable);
+		mainPanel.resetToPreferredSizes();
+	}
+
 	private void toggledFilter(ActionContext ignored) {
-		boolean filtered = isFilterSectionsByModules();
-		sectionsPanel.setFilteredBySelectedModules(filtered);
-		legacySectionsPanel.setFilteredBySelectedModules(filtered);
+		setFilterSectionsByModules(actionFilterSectionsByModules.isSelected());
+	}
+
+	public void setFilterSectionsByModules(boolean filterSectionsByModules) {
+		if (this.filterSectionsByModules == filterSectionsByModules) {
+			return;
+		}
+		doSetFilterSectionsByModules(filterSectionsByModules);
+	}
+
+	protected void doSetFilterSectionsByModules(boolean filterSectionsByModules) {
+		this.filterSectionsByModules = filterSectionsByModules;
+		actionFilterSectionsByModules.setSelected(filterSectionsByModules);
+		sectionsPanel.setFilteredBySelectedModules(filterSectionsByModules);
+		legacySectionsPanel.setFilteredBySelectedModules(filterSectionsByModules);
 	}
 
 	private void activatedSelectCurrent(ActionContext ignored) {
@@ -1111,5 +1206,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	public void readConfigState(SaveState saveState) {
 		CONFIG_STATE_HANDLER.readConfigState(this, saveState);
 		actionAutoMap.setCurrentActionStateByUserData(autoMapSpec);
+		doSetFilterSectionsByModules(filterSectionsByModules);
+		doSetShowSectionsTable(showSectionsTable);
 	}
 }

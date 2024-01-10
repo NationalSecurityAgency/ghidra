@@ -1355,7 +1355,7 @@ public class Disassembler implements DisassemblerConflictHandler {
 	 * @return true if the call also falls through to this instruction
 	 */
 	private boolean isNoReturnCall(Instruction instr, Address target) {
-		// if allready overriden, return
+		// if already overridden, return
 		// is this function a call fixup
 		if (program == null) {
 			return false; // can't tell without program

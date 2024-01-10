@@ -23,6 +23,7 @@ import java.util.*;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.utils.IOUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -287,13 +288,34 @@ public class ExtensionUtils {
 				continue;
 			}
 
-			if (results.contains(extension)) {
-				log.error("Skipping extension \"" + extension.getName() + "\" found at " +
-					extension.getInstallPath() +
-					".\nArchived extension by that name already found.");
+			ExtensionDetails existingExtension = get(results, extension);
+			if (existingExtension == null) {
+				results.add(extension);
+				continue;
 			}
-			results.add(extension);
+
+			//
+			// The extension was already found; report the conflict.  This situation can easily
+			// happen if users add multiple builds of the same extension to the extensions dir.
+			//
+			String name = extension.getName();
+			String newZip = FilenameUtils.getBaseName(extension.getArchivePath());
+			String existingZip = FilenameUtils.getBaseName(existingExtension.getArchivePath());
+			ResourceFile dir = file.getParentFile();
+
+			log.error("""
+					Skipping extension '%s' found in zip '%s'. \
+					Extension by that name already found in zip '%s'. \
+					Archive dir %s
+					""".formatted(name, newZip, existingZip, dir));
 		}
+	}
+
+	private static ExtensionDetails get(Set<ExtensionDetails> set, ExtensionDetails extension) {
+		if (set.contains(extension)) {
+			return set.stream().filter(e -> e.equals(extension)).findFirst().get();
+		}
+		return null;
 	}
 
 	private static void findExtensionsInFolder(File dir, Set<ExtensionDetails> results) {

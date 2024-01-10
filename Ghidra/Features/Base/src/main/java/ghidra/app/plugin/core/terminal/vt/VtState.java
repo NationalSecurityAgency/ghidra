@@ -226,11 +226,11 @@ public enum VtState {
 		@Override
 		protected VtState handleNext(byte b, VtParser parser, VtHandler handler) {
 			if (0x30 <= b && b <= 0x3f) {
-				parser.csiParam.put(b);
+				parser.putCsiParamByte(b);
 				return CSI_PARAM;
 			}
 			if (0x20 <= b && b <= 0x2f) {
-				parser.csiInter.put(b);
+				parser.putCsiInterByte(b);
 				return CSI_INTER;
 			}
 			if (0x40 <= b && b <= 0x7e) {
@@ -249,7 +249,7 @@ public enum VtState {
 		@Override
 		protected VtState handleNext(byte b, VtParser parser, VtHandler handler) {
 			if (0x20 <= b && b <= 0x2f) {
-				parser.csiInter.put(b);
+				parser.putCsiInterByte(b);
 				return CSI_INTER;
 			}
 			if (0x40 <= b && b <= 0x7e) {
@@ -269,7 +269,7 @@ public enum VtState {
 		protected VtState handleNext(byte b, VtParser parser, VtHandler handler) {
 			// For whatever reason, Windows includes the null terminator in titles
 			if (0x20 <= b && b <= 0x7f || b == 0) {
-				parser.oscParam.put(b);
+				parser.putOscParamByte(b);
 				return OSC_PARAM;
 			}
 			if (b == 0x07) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -348,7 +348,8 @@ public class NavigationHistoryPlugin extends Plugin
 		notifyHistoryChange();
 	}
 
-	private void clear(Program program) {
+	@Override
+	public void clear(Program program) {
 		for (HistoryList historyList : historyListMap.values()) {
 			clear(historyList, program);
 		}
@@ -657,7 +658,7 @@ public class NavigationHistoryPlugin extends Plugin
 				ProgramLocation location =
 					validateProgramLocation(activeNavigatable, memento.getProgramLocation());
 				if (location != null) {
-					// prefer the active natigatable's location
+					// prefer the active navigatable's location
 					return location;
 				}
 			}
@@ -683,11 +684,13 @@ public class NavigationHistoryPlugin extends Plugin
 			Program program = location.getProgram();
 			if (program.isClosed()) {
 
-				Msg.showError(this, null, "Closed Program",
-					"The Navigation History Plugin is using a closed program.\n" + "Program: " +
-						program.getName() + "Navigatable: " +
-						navigatable.getClass().getSimpleName() + "\n" + "Location: " +
-						location.getClass().getSimpleName() + " @ " + location.getAddress());
+				Msg.showError(this, null, "Closed Program", """
+						The Navigation History Plugin is using a closed program.
+						Program: %s
+						Navigatable: %s
+						Location: %s @ %s"""
+						.formatted(program.getName(), navigatable.getClass().getSimpleName(),
+							location.getClass().getSimpleName(), location.getAddress()));
 				return true;
 			}
 

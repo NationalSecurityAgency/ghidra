@@ -813,40 +813,6 @@ public interface DebuggerResources {
 		}
 	}
 
-	interface ImportMissingModuleAction {
-		String NAME = "Import Missing Module";
-		String DESCRIPTION = "Import the missing module from disk";
-		Icon ICON = ICON_IMPORT;
-		String HELP_ANCHOR = "import_missing_module";
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.toolBarIcon(ICON)
-					.popupMenuIcon(ICON)
-					.popupMenuPath(NAME)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface MapMissingModuleAction {
-		String NAME = "Map Missing Module";
-		String DESCRIPTION = "Map the missing module to an existing import";
-		Icon ICON = ICON_MAP_MODULES;
-		String HELP_ANCHOR = "map_missing_module";
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.toolBarIcon(ICON)
-					.popupMenuIcon(ICON)
-					.popupMenuPath(NAME)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
 	interface FollowsCurrentThreadAction {
 		String NAME = "Follows Selected Thread";
 		String DESCRIPTION = "Register tracking follows selected thread (and contents" +
@@ -1860,87 +1826,6 @@ public interface DebuggerResources {
 					.description(DESCRIPTION)
 					.toolBarGroup(GROUP)
 					.toolBarIcon(ICON)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface LimitToCurrentSnapAction {
-		String NAME = "Limit to Current Snap";
-		String DESCRIPTION = "Choose whether displayed objects must be alive at the current snap";
-		String GROUP = GROUP_GENERAL;
-		Icon ICON = ICON_TIME; // TODO
-		String HELP_ANCHOR = "limit_to_current_snap";
-
-		static ToggleActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ToggleActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.toolBarGroup(GROUP)
-					.toolBarIcon(ICON)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface ShowHiddenAction {
-		String NAME = "Show Hidden";
-		String DESCRIPTION = "Choose whether to display hidden children";
-		String GROUP = GROUP_GENERAL;
-		String HELP_ANCHOR = "show_hidden";
-
-		static ToggleActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ToggleActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.menuPath(NAME)
-					.menuGroup(GROUP)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface ShowPrimitivesInTreeAction {
-		String NAME = "Show Primitives in Tree";
-		String DESCRIPTION = "Choose whether to display primitive values in the tree";
-		String GROUP = GROUP_GENERAL;
-		String HELP_ANCHOR = "show_primitives";
-
-		static ToggleActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ToggleActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.menuPath(NAME)
-					.menuGroup(GROUP)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface ShowMethodsInTreeAction {
-		String NAME = "Show Methods in Tree";
-		String DESCRIPTION = "Choose whether to display methods in the tree";
-		String GROUP = GROUP_GENERAL;
-		String HELP_ANCHOR = "show_methods";
-
-		static ToggleActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ToggleActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.menuPath(NAME)
-					.menuGroup(GROUP)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface FollowLinkAction {
-		String NAME = "Follow Link";
-		String DESCRIPTION = "Navigate to the link target";
-		String GROUP = GROUP_GENERAL;
-		String HELP_ANCHOR = "follow_link";
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.popupMenuPath(NAME)
-					.popupMenuGroup(GROUP)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}

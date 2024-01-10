@@ -18,7 +18,7 @@ package generic.test;
 import static org.junit.Assert.*;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -116,7 +116,7 @@ public abstract class AbstractGTest {
 			return new File(ApplicationUtilities.getDefaultUserTempDir("ghidra"),
 				"test_" + UUID.randomUUID() + File.separator + "temp.data").getPath();
 		}
-		catch (FileNotFoundException e) {
+		catch (IOException e) {
 			throw new AssertException(e);
 		}
 	}

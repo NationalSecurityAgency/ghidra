@@ -35,15 +35,18 @@ public class TokenFieldSolver extends AbstractExpressionSolver<TokenField> {
 	}
 
 	@Override
-	public AssemblyResolution solve(TokenField tf, MaskedLong goal, Map<String, Long> vals,
-			AssemblyResolvedPatterns cur, Set<SolverHint> hints, String description) {
+	public AssemblyResolution solve(AbstractAssemblyResolutionFactory<?, ?> factory,
+			TokenField tf, MaskedLong goal, Map<String, Long> vals, AssemblyResolvedPatterns cur,
+			Set<SolverHint> hints, String description) {
 		assert tf.minValue() == 0; // In case someone decides to do signedness there.
 		if (!goal.isInRange(tf.maxValue(), tf.hasSignbit())) {
-			return AssemblyResolution.error("Value " + goal + " is not valid for " + tf,
-				description);
+			return factory.newErrorBuilder()
+					.error("Value " + goal + " is not valid for " + tf)
+					.description(description)
+					.build();
 		}
 		AssemblyPatternBlock block = AssemblyPatternBlock.fromTokenField(tf, goal);
-		return AssemblyResolution.instrOnly(block, description);
+		return factory.instrOnly(block, description);
 	}
 
 	@Override

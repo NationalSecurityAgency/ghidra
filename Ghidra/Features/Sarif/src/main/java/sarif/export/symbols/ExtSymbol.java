@@ -33,6 +33,7 @@ public class ExtSymbol implements IsfObject {
 	String type;
 	String sourceType;
 	boolean primary;
+	boolean pinned;
 
 	public ExtSymbol(Symbol symbol) {
 		name = symbol.getName();
@@ -40,6 +41,7 @@ public class ExtSymbol implements IsfObject {
 		kind = checkGlobal(symbol) ? "global" : "local";
 		sourceType = symbol.getSource().toString();
 		primary = symbol.isPrimary();
+		pinned = symbol.isPinned();
 		if (symbol instanceof ClassSymbol) {
 			type = "class";
 		} else if (symbol instanceof LibrarySymbol) {

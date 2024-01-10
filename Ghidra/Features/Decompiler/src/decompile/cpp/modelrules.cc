@@ -33,20 +33,20 @@ ElementId ELEM_JOIN_PER_PRIMITIVE = ElementId("join_per_primitive",283);
 /// \brief Extract an ordered list of primitive data-types making up the given data-type
 ///
 /// The primitive data-types are passed back in an array.  If the given data-type is already
-/// primitive, it is passed back as is. Otherwise if it is composite, its components are recursively
-/// listed. If a filler data-type is provided, it is used to fill \e holes in structures. If
-/// a maximum number of extracted primitives is exceeded, or if no filler is provided and a hole
-/// is encountered, or if a non-primitive non-composite data-type is encountered, \b false is returned.
+/// primitive, it is passed back as is. Otherwise if it is composite, its components are
+/// recursively listed. If a maximum number of extracted primitives is exceeded, or if the
+/// primitives are not properly aligned, or if a non-primitive non-composite data-type is
+/// encountered, false is returned.
 /// \param dt is the given data-type to extract primitives from
 /// \param max is the maximum number of primitives to extract before giving up
-/// \param filler is the data-type to use as filler (or null)
 /// \param res will hold the list of primitives
 /// \return \b true if all primitives were extracted
-bool DatatypeFilter::extractPrimitives(Datatype *dt,int4 max,Datatype *filler,vector<Datatype *> &res)
+bool DatatypeFilter::extractPrimitives(Datatype *dt,int4 max,vector<Datatype *> &res)
 
 {
   switch(dt->getMetatype()) {
     case TYPE_UNKNOWN:
+      return false;		// Do not consider undefined data-types as primitive
     case TYPE_INT:
     case TYPE_UINT:
     case TYPE_BOOL:
@@ -63,7 +63,7 @@ bool DatatypeFilter::extractPrimitives(Datatype *dt,int4 max,Datatype *filler,ve
       int4 numEls = ((TypeArray *)dt)->numElements();
       Datatype *base = ((TypeArray *)dt)->getBase();
       for(int4 i=0;i<numEls;++i) {
-	if (!extractPrimitives(base,max,filler,res))
+	if (!extractPrimitives(base,max,res))
 	  return false;
       }
       return true;
@@ -77,20 +77,19 @@ bool DatatypeFilter::extractPrimitives(Datatype *dt,int4 max,Datatype *filler,ve
   int4 curOff = 0;
   vector<TypeField>::const_iterator enditer = structPtr->endField();
   for(vector<TypeField>::const_iterator iter=structPtr->beginField();iter!=enditer;++iter) {
+    Datatype *compDt = (*iter).type;
     int4 nextOff = (*iter).offset;
-    if (nextOff > curOff) {
-      if (filler == (Datatype *)0)
-	return false;
-      while(curOff < nextOff) {
-	if (res.size() >= max)
-	  return false;
-	res.push_back(filler);
-	curOff += filler->getSize();
-      }
+    int4 align = dt->getAlignment();
+    int4 rem = curOff % align;
+    if (rem != 0) {
+      curOff += (align - rem);
     }
-    if (!extractPrimitives((*iter).type,max,filler,res))
+    if (curOff != nextOff) {
       return false;
-    curOff += (*iter).type->getSize();
+    }
+    curOff = nextOff + compDt->getAlignSize();
+    if (!extractPrimitives(compDt,max,res))
+      return false;
   }
   return true;
 }
@@ -198,7 +197,7 @@ bool HomogeneousAggregate::filter(Datatype *dt) const
   if (meta != TYPE_ARRAY && meta != TYPE_STRUCT)
     return false;
   vector<Datatype *> res;
-  if (!extractPrimitives(dt, 4, (Datatype *)0, res))
+  if (!extractPrimitives(dt, 4, res) || res.empty())
     return false;
   Datatype *base = res[0];
   if (base->getMetatype() != metaType)
@@ -357,7 +356,7 @@ AssignAction *AssignAction::decodeAction(Decoder &decoder,const ParamListStandar
     action = new ConvertToPointer(res);
   }
   else if (elemId == ELEM_HIDDEN_RETURN) {
-    action = new HiddenReturnAssign(res,false);
+    action = new HiddenReturnAssign(res,hiddenret_specialreg);
   }
   else if (elemId == ELEM_JOIN_PER_PRIMITIVE) {
     bool consumeMostSig = false;
@@ -657,7 +656,7 @@ uint4 MultiMemberAssign::assignAddress(Datatype *dt,const PrototypePieces &proto
   vector<int4> tmpStatus = status;
   vector<VarnodeData> pieces;
   vector<Datatype *> primitives;
-  if (!DatatypeFilter::extractPrimitives(dt,16,(Datatype *)0,primitives))
+  if (!DatatypeFilter::extractPrimitives(dt,16,primitives) || primitives.empty())
     return fail;
   ParameterPieces param;
   for(int4 i=0;i<primitives.size();++i) {
@@ -722,10 +721,10 @@ void ConsumeAs::decode(Decoder &decoder)
   decoder.closeElement(elemId);
 }
 
-HiddenReturnAssign::HiddenReturnAssign(const ParamListStandard *res,bool voidLock)
+HiddenReturnAssign::HiddenReturnAssign(const ParamListStandard *res,uint4 code)
   : AssignAction(res)
 {
-  retCode = voidLock ? hiddenret_specialreg_void : hiddenret_specialreg;
+  retCode = code;
 }
 
 uint4 HiddenReturnAssign::assignAddress(Datatype *dt,const PrototypePieces &proto,int4 pos,TypeFactory &tlist,
@@ -737,12 +736,24 @@ uint4 HiddenReturnAssign::assignAddress(Datatype *dt,const PrototypePieces &prot
 void HiddenReturnAssign::decode(Decoder &decoder)
 
 {
+  retCode = hiddenret_specialreg;
   uint4 elemId = decoder.openElement(ELEM_HIDDEN_RETURN);
-  uint4 attribId = decoder.getNextAttributeId();
-  if (attribId == ATTRIB_VOIDLOCK)
-    retCode = hiddenret_specialreg_void;
-  else
-    retCode = hiddenret_specialreg;
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == ATTRIB_VOIDLOCK)
+      retCode = hiddenret_specialreg_void;
+    else if (attribId == ATTRIB_STRATEGY) {
+      string strategyString = decoder.readString();
+      if (strategyString == "normalparam")
+	retCode = hiddenret_ptrparam;
+      else if (strategyString == "special")
+	retCode = hiddenret_specialreg;
+      else
+	throw DecoderError("Bad <hidden_return> strategy: " + strategyString);
+    }
+    else
+      break;
+  }
   decoder.closeElement(elemId);
 }
 

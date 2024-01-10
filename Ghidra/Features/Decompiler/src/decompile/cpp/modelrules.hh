@@ -63,7 +63,7 @@ public:
   /// \param decoder is the given stream decoder
   virtual void decode(Decoder &decoder)=0;
 
-  static bool extractPrimitives(Datatype *dt,int4 max,Datatype *filler,vector<Datatype *> &res);
+  static bool extractPrimitives(Datatype *dt,int4 max,vector<Datatype *> &res);
   static DatatypeFilter *decodeFilter(Decoder &decoder);	///< Instantiate a filter from the given stream
 };
 
@@ -200,7 +200,8 @@ class AssignAction {
 public:
   enum {
     success,			///< Data-type is fully assigned
-    fail,			///< Action could not be applied (not enough resources)
+    fail,			///< Action could not be applied
+    no_assignment,		///< Do not assign storage for this parameter
     hiddenret_ptrparam,		///< Hidden return pointer as first input parameter
     hiddenret_specialreg,	///< Hidden return pointer in dedicated input register
     hiddenret_specialreg_void	///< Hidden return pointer, but no normal return
@@ -327,19 +328,24 @@ public:
   virtual void decode(Decoder &decoder);
 };
 
-/// \brief Allocate the return value as special input register
+/// \brief Allocate the return value as an input parameter
 ///
-/// The assignAddress() method signals with \b hiddenret_specialreg, indicating that the
-/// input register assignMap() method should use storage class TYPECLASS_HIDDENRET to assign
-/// an additional input register to hold a pointer to the return value.  This is different than
-/// the default \e hiddenret action that assigns a location based TYPECLASS_PTR and generally
-/// consumes a general purpose input register.
+/// A pointer to where the return value is to be stored is passed in as an input parameter.
+/// This action signals this by returning one of
+///   - \b hiddenret_ptrparam         - indicating the pointer is allocated as a normal input parameter
+///   - \b hiddenret_specialreg       - indicating the pointer is passed in a dedicated register
+///   - \b hiddenret_specialreg_void
+///
+/// Usually, if a hidden return input is present, the normal register used for return
+/// will also hold the pointer at the point(s) where the function returns.  A signal of
+/// \b hiddenret_specialreg_void indicates the normal return register is not used to pass back
+/// the pointer.
 class HiddenReturnAssign : public AssignAction {
   uint4 retCode;		///< The specific signal to pass back
 public:
-  HiddenReturnAssign(const ParamListStandard *res,bool voidLock);	///< Constructor
+  HiddenReturnAssign(const ParamListStandard *res,uint4 code);	///< Constructor
   virtual AssignAction *clone(const ParamListStandard *newResource) const {
-    return new HiddenReturnAssign(newResource, retCode == hiddenret_specialreg_void); }
+    return new HiddenReturnAssign(newResource, retCode); }
   virtual uint4 assignAddress(Datatype *dt,const PrototypePieces &proto,int4 pos,TypeFactory &tlist,
 			      vector<int4> &status,ParameterPieces &res) const;
   virtual void decode(Decoder &decoder);

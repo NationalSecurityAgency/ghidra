@@ -16,7 +16,7 @@
 package ghidra.framework;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -156,7 +156,7 @@ public class TestApplicationUtils {
 			String name = reposContainer.getName();
 			return new File(tmpDir, name);
 		}
-		catch (FileNotFoundException e) {
+		catch (IOException e) {
 			throw new AssertException(e);
 		}
 	}

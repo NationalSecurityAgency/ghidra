@@ -18,8 +18,6 @@ package sarif.export.mm;
 import java.io.IOException;
 
 import ghidra.program.model.address.AddressRange;
-import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.address.OverlayAddressSpace;
 import ghidra.program.model.data.ISF.IsfObject;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.mem.MemoryBlockSourceInfo;
@@ -30,8 +28,6 @@ public class ExtMemoryMap implements IsfObject {
 
 	String name;
 	String kind;
-	String overlaySpace;
-	String overlayedSpace;
 	String comment;
 	boolean isVolatile;
 	String type;
@@ -52,12 +48,6 @@ public class ExtMemoryMap implements IsfObject {
 
 		name = block.getName();
 		kind = permissions;
-		AddressSpace space = range.getAddressSpace();
-		if (space instanceof OverlayAddressSpace) {
-			OverlayAddressSpace oSpace = (OverlayAddressSpace) space;
-			overlaySpace = oSpace.getName();
-			overlayedSpace = oSpace.getOverlayedSpace().getName();
-		}
 		if (block.getComment() != null) {
 			comment = block.getComment();
 		}

@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.strings;
+package ghidra.app.plugin.assembler.sleigh.sem;
 
-import docking.widgets.table.constraint.ColumnTypeMapper;
-import ghidra.program.model.data.StringDataInstance;
-
-public class StringDataInstanceColumnTypeMapper
-		extends ColumnTypeMapper<StringDataInstance, String> {
+public class DefaultAssemblyResolutionFactory extends
+		AbstractAssemblyResolutionFactory<AssemblyResolvedPatterns, AssemblyResolvedBackfill> {
 
 	@Override
-	public String convert(StringDataInstance value) {
-		return value.getStringValue();
+	public DefaultAssemblyResolvedPatternBuilder newPatternsBuilder() {
+		return new DefaultAssemblyResolvedPatternBuilder();
 	}
 
+	@Override
+	public DefaultAssemblyResolvedBackfillBuilder newBackfillBuilder() {
+		return new DefaultAssemblyResolvedBackfillBuilder();
+	}
 }

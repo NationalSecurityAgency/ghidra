@@ -17,8 +17,7 @@ package ghidra.app.plugin.assembler.sleigh.sem;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Iterator;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import ghidra.app.plugin.assembler.sleigh.expr.MaskedLong;
@@ -144,7 +143,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 		AtomicLong msk = new AtomicLong();
 		AtomicLong val = new AtomicLong();
 		int i = 0;
-		for (String hex : str.split(":")) {
+		for (String hex : str.substring(pos).split(":")) {
 			NumericUtilities.convertHexStringToMaskedValue(msk, val, hex, 2, 0, null);
 			mask[i] = (byte) msk.get();
 			vals[i] = (byte) val.get();
@@ -265,6 +264,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	/**
 	 * Convert a register value into a pattern block
 	 * 
+	 * <p>
 	 * This is used primarily to compute default context register values, and pass them into an
 	 * assembler.
 	 * 
@@ -605,7 +605,130 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	}
 
 	/**
+	 * Set all bits that are known (1 in mask) in {@code other} to unknown.
+	 * 
+	 * <p>
+	 * Other must have the same or shorter length than this.
+	 * 
+	 * @param other the other pattern block whose mask bits are examined
+	 * @return a copy of this pattern with mask bits set to unknown
+	 */
+	public AssemblyPatternBlock maskOut(AssemblyPatternBlock other) {
+		assert this.length() >= other.length();
+
+		byte[] newMask = Arrays.copyOf(this.mask, this.mask.length);
+		byte[] newVals = Arrays.copyOf(this.vals, this.vals.length);
+
+		for (int i = this.offset; i < Math.min(this.length(), other.length()); i++) {
+			if (i < this.offset || i < other.offset) {
+				continue;
+			}
+			newMask[i - this.offset] &= (~other.mask[i - other.offset] & 0xff);
+			newVals[i - this.offset] &= (~other.mask[i - other.offset] & 0xff);
+		}
+		return new AssemblyPatternBlock(offset, newMask, newVals);
+	}
+
+	/*test access*/
+	static byte[] bitShiftRightByteArray(byte[] input, int amount) {
+		byte[] newMask = new byte[input.length];
+		for (int i = input.length - 1; i >= 0; i--) {
+			// Add the lower bits of the next byte to the previously processed byte
+			if (i < input.length - 1) {
+				newMask[i + 1] = (byte) (newMask[i + 1] | ((input[i] << (8 - amount) & 0xff)));
+			}
+
+			// Shift down the bits of this byte
+			newMask[i] = (byte) (((input[i]) & 0xff) >> amount);
+		}
+		return newMask;
+	}
+
+	/**
+	 * Remove all unknown bits from both left and right
+	 * 
+	 * @return new value without any left or right unknown bits (but may have unknown bits in the
+	 *         middle)
+	 */
+	public AssemblyPatternBlock trim() {
+
+		var minNonZeroMask = Integer.MAX_VALUE;
+		var maxNonZeroMask = -1;
+		for (int i = 0; i < this.mask.length; i++) {
+			if (mask[i] != 0) {
+				minNonZeroMask = Math.min(minNonZeroMask, i);
+				maxNonZeroMask = i;
+			}
+		}
+		if (maxNonZeroMask == -1) {
+			return AssemblyPatternBlock.nop();
+		}
+
+		var bitShiftAmount = Integer.numberOfTrailingZeros(mask[maxNonZeroMask]);
+
+		var newMask = bitShiftRightByteArray(
+			Arrays.copyOfRange(mask, minNonZeroMask, maxNonZeroMask + 1), bitShiftAmount);
+		var newVals = bitShiftRightByteArray(
+			Arrays.copyOfRange(vals, minNonZeroMask, maxNonZeroMask + 1), bitShiftAmount);
+
+		if (newMask[0] == 0) {
+			newMask = Arrays.copyOfRange(newMask, 1, newMask.length);
+			newVals = Arrays.copyOfRange(newVals, 1, newVals.length);
+		}
+		return new AssemblyPatternBlock(0, newMask, newVals);
+	}
+
+	/**
+	 * Get an array representing the full value of the pattern
+	 * 
+	 * <p>
+	 * This is a copy of the {@link #getVals()} array, but with 0s prepended to apply the offset.
+	 * See {@link #getOffset()}.
+	 * 
+	 * @return the array
+	 */
+	public byte[] getValsAll() {
+		byte[] out = new byte[offset + vals.length];
+
+		for (int i = 0; i < offset; i++) {
+			out[i] = 0;
+		}
+
+		for (int i = 0; i < vals.length; i++) {
+			out[offset + i] = vals[i];
+		}
+		return out;
+	}
+
+	/**
+	 * Get an array representing the full mask of the pattern
+	 * 
+	 * <p>
+	 * This is a copy of the {@link #getMask()} array, but with 0s prepended to apply the offset.
+	 * See {@link #getOffset()}.
+	 * 
+	 * @return the array
+	 */
+	public byte[] getMaskAll() {
+		byte[] out = new byte[offset + mask.length];
+
+		for (int i = 0; i < offset; i++) {
+			out[i] = 0;
+		}
+
+		for (int i = 0; i < mask.length; i++) {
+			out[offset + i] = mask[i];
+		}
+		return out;
+	}
+
+	/**
 	 * Get the values array
+	 * 
+	 * <p>
+	 * Modifications to the returned array will affect the pattern block. It is <em>not</em> a copy.
+	 * Furthermore, the offset is not incorporated. See {@link #getOffset()}. For a copy of the
+	 * array with offset applied, use {@link #getValsAll()}.
 	 * 
 	 * @return the array
 	 */
@@ -616,10 +739,37 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	/**
 	 * Get the mask array
 	 * 
+	 * <p>
+	 * Modifications to the returned array will affect the pattern block. It is <em>not</em> a copy.
+	 * Furthermore, the offset is not incorporated. See {@link #getOffset()}. For a copy of the
+	 * array with offset applied, use {@link #getMaskAll()}.
+	 * 
+	 * 
 	 * @return the array
 	 */
 	public byte[] getMask() {
 		return mask;
+	}
+
+	/**
+	 * Mask the given {@code unmasked} value with the mask contained in this pattern block.
+	 * 
+	 * <p>
+	 * The returned {@link AssemblyPatternBlock} has an identical mask as {@code this} but with a 
+	 * value taken from the given {@code unmasked}.
+	 * 
+	 * @param unmasked the value to be masked into the result
+	 * @return a combination of the given unmasked value and this mask
+	 */
+	public AssemblyPatternBlock getMaskedValue(byte[] unmasked) {
+		assert offset + mask.length <= unmasked.length;
+		var newVals = Arrays.copyOfRange(unmasked, offset, offset + mask.length);
+
+		for (int i = 0; i < newVals.length; i++) {
+			newVals[i] = (byte) ((newVals[i] & mask[i]) & 0xff);
+		}
+
+		return new AssemblyPatternBlock(offset, mask, newVals);
 	}
 
 	/**

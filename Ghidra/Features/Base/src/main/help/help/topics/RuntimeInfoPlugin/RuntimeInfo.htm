@@ -1,0 +1,64 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <TITLE>Runtime Information</TITLE>
+    <META http-equiv="content-type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY>
+  
+    <A name="RuntimeInfo"></A>
+    <H1 align="center">Runtime Information</H1>
+    
+    <P>The Runtime Information feature pops up a dialog showing information about the internal 
+    settings of the active Ghidra installation. It is primarily a diagnostic tool to aid in 
+    debugging.</P>
+
+    <P>To display the Runtime Information dialog:</P>
+
+    <UL>
+      <LI>From the Project Window, Select <B>Help<IMG border="0" src="help/shared/arrow.gif">
+      Runtime Information</B> from the menu.</LI>
+    </UL>
+    
+    <P>Runtime Information categories are organized in tabs. The following categories are provided:
+    <UL>
+      <LI>
+        <B>Version</B> - Ghidra, Operating System, and Java version information. Clicking the
+        <B><I>Copy</I></B> button will copy this information to the clipboard for easy transfer into a bug report.
+      </LI>
+      <LI>
+        <B>Memory</B> - JVM memory usage.  Clicking the <B><I>Collect Garbage</I></B> button will 
+        suggest to the JVM that garbage collection should run.
+      </LI>
+      <LI>
+        <B>Application Layout</B> - Ghidra application layout information, including directory
+        locations.
+      </LI>
+      <LI>
+        <B>Properties</B> - Defined JVM system properties for the active Ghidra application.
+      </LI>
+      <LI>
+        <B>Environment</B> - Defined environment variables for the active Ghidra application.
+      </LI>
+      <LI>
+        <B>Modules</B> - A list of discovered Ghidra Modules.
+      </LI>
+      <LI>
+        <B>Extension Points</B> - A list of discovered Ghidra Extension Points.
+      </LI>
+      <LI>
+        <B>Classpath</B> - The ordered classpath for the active Ghidra application.
+      </LI>
+      <LI>
+        <B>Extensions Classpath</B> - The ordered extensions classpath, if the 
+        <B><I>ghidra.extensions.classpath.restricted</I></B> property is set (see 
+        <I>support/launch.properties</I>).
+      </LI>
+    </UL>
+
+    <P>&nbsp;</P>
+  </BODY>
+</HTML>

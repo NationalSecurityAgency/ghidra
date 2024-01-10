@@ -75,7 +75,10 @@ import ghidra.util.task.*;
 	packageName = DebuggerPluginPackage.NAME,
 	status = PluginStatus.RELEASED,
 	eventsProduced = {
+		TraceOpenedPluginEvent.class,
 		TraceActivatedPluginEvent.class,
+		TraceInactiveCoordinatesPluginEvent.class,
+		TraceClosedPluginEvent.class,
 	},
 	eventsConsumed = {
 		TraceActivatedPluginEvent.class,
@@ -284,6 +287,8 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	private DebuggerPlatformService platformService;
 	// @AutoServiceConsumed via method
 	private DebuggerControlService controlService;
+	@AutoServiceConsumed
+	private NavigationHistoryService navigationHistoryService;
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
@@ -959,6 +964,9 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	}
 
 	protected void doTraceClosed(Trace trace) {
+		if (navigationHistoryService != null) {
+			navigationHistoryService.clear(trace.getProgramView());
+		}
 		synchronized (listenersByTrace) {
 			trace.release(this);
 			lastCoordsByTrace.remove(trace);

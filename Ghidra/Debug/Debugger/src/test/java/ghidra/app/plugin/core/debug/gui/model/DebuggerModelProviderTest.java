@@ -117,6 +117,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 	public void setUpModelProviderTest() throws Exception {
 		modelPlugin = addPlugin(tool, DebuggerModelPlugin.class);
 		modelProvider = waitForComponentProvider(DebuggerModelProvider.class);
+		modelProvider.setLimitToCurrentSnap(false);
 	}
 
 	@After
@@ -343,12 +344,12 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 	}
 
 	@Test
-	public void testSetPathNoExist() throws Throwable {
+	public void testActivatePathNoExist() throws Throwable {
 		createTraceAndPopulateObjects();
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
-		modelProvider.setPath(TraceObjectKeyPath.parse("Processes[0].NoSuch"));
+		modelProvider.activatePath(TraceObjectKeyPath.parse("Processes[0].NoSuch"));
 		waitForTasks();
 
 		assertEquals("No such object at path Processes[0].NoSuch", tool.getStatusInfo());
@@ -645,6 +646,9 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		waitForSwing();
 		modelProvider.setPath(TraceObjectKeyPath.parse("Processes[0].Threads[2]"));
 		waitForTasks();
+
+		// Pre-check
+		assertEquals(TraceObjectKeyPath.parse("Processes[0].Threads[2]"), modelProvider.path);
 
 		performAction(modelProvider.actionCloneWindow);
 

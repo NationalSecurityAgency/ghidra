@@ -78,7 +78,7 @@ public class MultiMemberAssign extends AssignAction {
 		ArrayList<Varnode> pieces = new ArrayList<>();
 		ParameterPieces param = new ParameterPieces();
 		ArrayList<DataType> primitives = new ArrayList<>();
-		if (!DatatypeFilter.extractPrimitives(dt, 16, null, primitives)) {
+		if (!DatatypeFilter.extractPrimitives(dt, 16, primitives) || primitives.isEmpty()) {
 			return FAIL;
 		}
 		for (int i = 0; i < primitives.size(); ++i) {

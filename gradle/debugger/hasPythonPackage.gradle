@@ -27,5 +27,19 @@ task buildPyPackage(type: Exec) {
 	outputs.dir(dist)
 
 	workingDir { "build/pypkg" }
-	commandLine "python", "-m", "build"
+	commandLine "python3", "-m", "build"
+}
+
+// At the moment, any module with a python package also distributes it.
+// We can separate this into `distributePythonPackage` later, if necessary.
+
+rootProject.assembleDistribution {
+	def p = this.project
+	def zipPath = getZipPath(p)
+	from (p.assemblePyPackage) {
+		exclude '**/*.pyc'
+		exclude '**/*.pyo'
+		exclude '**/__pycache__/**'
+		into { zipPath + "/pypkg" }
+	}
 }

@@ -80,6 +80,7 @@ public class SymbolTableSarifMgr extends SarifMgr {
 			String type = (String) result.get("type");
 
 			boolean isPrimary = (boolean) result.get("primary");
+			boolean isPinned = (boolean) result.get("pinned");
 			String sourceTypeString = (String) result.get("sourceType");
 			SourceType sourceType = getSourceType(sourceTypeString);
 
@@ -133,6 +134,9 @@ public class SymbolTableSarifMgr extends SarifMgr {
 				Symbol s = SymbolUtilities.createPreferredLabelOrFunctionSymbol(program, addr, scope, name, sourceType);
 				if (s != null && isPrimary && overwritePrimary) {
 					s.setPrimary();
+				}
+				if (isPinned) {
+					s.setPinned(true);
 				}
 			}
 		} catch (Exception e) {

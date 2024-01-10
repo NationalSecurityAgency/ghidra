@@ -170,7 +170,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 		return getCurrentTextSelection();
 	}
 
-	private void setSelection(ProgramSelection selection, boolean notify) {
+	protected void setSelection(ProgramSelection selection, boolean notify) {
 		currentSelection = selection;
 		if (selection == null) {
 			return;

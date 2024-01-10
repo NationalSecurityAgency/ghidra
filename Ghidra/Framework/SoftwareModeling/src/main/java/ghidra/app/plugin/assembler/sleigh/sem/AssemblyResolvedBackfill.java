@@ -17,66 +17,9 @@ package ghidra.app.plugin.assembler.sleigh.sem;
 
 import java.util.Map;
 
-import ghidra.app.plugin.assembler.sleigh.expr.*;
-import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
+import ghidra.app.plugin.assembler.sleigh.expr.RecursiveDescentSolver;
 
-/**
- * A {@link AssemblyResolution} indicating the need to solve an expression in the future
- * 
- * <p>
- * Such records are collected within a {@link AssemblyResolvedPatterns} and then solved just before
- * the final result(s) are assembled. This is typically required by instructions that refer to the
- * {@code inst_next} symbol.
- * 
- * <p>
- * <b>NOTE:</b> These are used internally. The user ought never to see these from the assembly API.
- */
-public class AssemblyResolvedBackfill extends AssemblyResolution {
-	protected final PatternExpression exp;
-	protected final MaskedLong goal;
-	protected final int inslen;
-	protected final int offset;
-
-	@Override
-	protected int computeHash() {
-		int result = 0;
-		result += exp.hashCode();
-		result *= 31;
-		result += goal.hashCode();
-		result *= 31;
-		result += inslen;
-		result *= 31;
-		result += offset;
-		return result;
-	}
-
-	/**
-	 * @see {@link AssemblyResolution#backfill(PatternExpression, MaskedLong, Map, int, String)}
-	 */
-	AssemblyResolvedBackfill(String description, PatternExpression exp, MaskedLong goal, int inslen,
-			int offset) {
-		super(description, null, null);
-		this.exp = exp;
-		this.goal = goal;
-		this.inslen = inslen;
-		this.offset = offset;
-	}
-
-	/**
-	 * Duplicate this record
-	 * 
-	 * @return the duplicate
-	 */
-	AssemblyResolvedBackfill copy() {
-		AssemblyResolvedBackfill cp =
-			new AssemblyResolvedBackfill(description, exp, goal, inslen, offset);
-		return cp;
-	}
-
-	@Override
-	public AssemblyResolvedBackfill withRight(AssemblyResolution right) {
-		throw new AssertionError();
-	}
+public interface AssemblyResolvedBackfill extends AssemblyResolution {
 
 	/**
 	 * Get the expected length of the instruction portion of the future encoding
@@ -86,39 +29,15 @@ public class AssemblyResolvedBackfill extends AssemblyResolution {
 	 * 
 	 * @return the total expected length (including the offset)
 	 */
-	public int getInstructionLength() {
-		return offset + inslen;
-	}
+	int getInstructionLength();
 
 	@Override
-	public boolean isError() {
-		return false;
-	}
-
-	@Override
-	public boolean isBackfill() {
-		return true;
-	}
-
-	@Override
-	protected String lineToString() {
-		return "Backfill (len:" + inslen + ",off:" + offset + ") " + goal + " := " + exp + " (" +
-			description + ")";
-	}
-
-	@Override
-	public AssemblyResolvedBackfill shift(int amt) {
-		return new AssemblyResolvedBackfill(description, exp, goal, inslen, offset + amt);
-	}
-
-	@Override
-	public AssemblyResolution parent(String description, int opCount) {
-		throw new AssertionError();
-	}
+	AssemblyResolvedBackfill shift(int amt);
 
 	/**
 	 * Attempt (again) to solve the expression that generated this backfill record
 	 * 
+	 * <p>
 	 * This will attempt to solve the same expression and goal again, using the same parameters as
 	 * were given to the original attempt, except with additional defined symbols. Typically, the
 	 * symbol that required backfill is {@code inst_next}. This method will not throw
@@ -130,22 +49,6 @@ public class AssemblyResolvedBackfill extends AssemblyResolution {
 	 * @param vals the defined symbols, usually the same, but with the missing symbol(s).
 	 * @return the solution result
 	 */
-	public AssemblyResolution solve(RecursiveDescentSolver solver, Map<String, Long> vals,
-			AssemblyResolvedPatterns cur) {
-		try {
-			AssemblyResolution ar =
-				solver.solve(exp, goal, vals, cur.truncate(offset), description);
-			if (ar.isError()) {
-				return ar;
-			}
-			AssemblyResolvedPatterns rc = (AssemblyResolvedPatterns) ar;
-			return rc.shift(offset);
-		}
-		catch (NeedsBackfillException e) {
-			return AssemblyResolution.error("Solution still requires backfill", description);
-		}
-		catch (UnsupportedOperationException e) {
-			return AssemblyResolution.error("Unsupported: " + e.getMessage(), description);
-		}
-	}
+	AssemblyResolution solve(RecursiveDescentSolver solver, Map<String, Long> vals,
+			AssemblyResolvedPatterns cur);
 }

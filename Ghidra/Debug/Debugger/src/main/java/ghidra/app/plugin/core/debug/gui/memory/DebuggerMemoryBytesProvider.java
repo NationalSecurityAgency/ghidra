@@ -426,6 +426,9 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		current = coordinates;
 		addNewListeners();
 		doSetProgram(current.getView());
+		// NB. Also avoid a stale location being reported to the history service.
+		setLocation(null);
+		setSelection(null, false);
 		goToTrait.goToCoordinates(coordinates);
 		trackingTrait.goToCoordinates(coordinates);
 		readsMemTrait.goToCoordinates(coordinates);
