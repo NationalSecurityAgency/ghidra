@@ -19,82 +19,58 @@ import java.io.Serializable;
 
 /**
  * Information about a change that was made to a domain object. The
- * record is delivered as part of the change notification. The event
- * types correspond to the constants in
- * {@link ghidra.program.util.ChangeManager ChangeManager}.
- * @see ghidra.program.util.ChangeManager ChangeManager
+ * record is delivered as part of the change notification. The event types
+ * correspond to Enums defined in {@link DomainObjectEvent} and
+ * other Enums or objects that implement the {@link EventType} interface.
+ * 
+ * Each event record contains the event type and optionally an old value and a new value. 
+ * The old value and new value meaning are determined by the event type.
  */
 public class DomainObjectChangeRecord implements Serializable {
-	private final static long serialVersionUID = 1;
 
-	private int eventType;
-	private int subEventType;
+	private EventType eventType;
 	private Object oldValue;
 	private Object newValue;
 
 	/**
 	 * Construct a new DomainObjectChangeRecord.
+	 * @param eventType the type of event
 	 */
-	public DomainObjectChangeRecord() {
-		this(0, 0, null, null);
+	public DomainObjectChangeRecord(EventType eventType) {
+		this(eventType, null, null);
 	}
 
 	/**
 	 * Construct a new DomainObjectChangeRecord.
-	 * @param type event type
-	 */
-	public DomainObjectChangeRecord(int type) {
-		this(type, 0, null, null);
-	}
-
-	/**
-	 * Construct a new DomainObjectChangeRecord.
-	 * @param type event type
+	 * @param eventType the type of 
 	 * @param oldValue old value
 	 * @param newValue new value
 	 */
-	public DomainObjectChangeRecord(int type, Object oldValue, Object newValue) {
-		this(type, 0, oldValue, newValue);
-	}
-
-	/**
-	 * Construct a new DomainObjectChangeRecord.
-	 * @param type event type
-	 * @param subType sub-event type (use 0 if unspecified)
-	 * @param oldValue old value
-	 * @param newValue new value
-	 */
-	public DomainObjectChangeRecord(int type, int subType, Object oldValue, Object newValue) {
-		eventType = type;
-		subEventType = subType;
+	public DomainObjectChangeRecord(EventType eventType, Object oldValue, Object newValue) {
+		this.eventType = eventType;
 		this.oldValue = oldValue;
 		this.newValue = newValue;
 	}
 
 	/**
-	 * Return the event type for this change record.
+	 * Returns the event type for this change.
+	 * @return the event type for this change
 	 */
-	public int getEventType() {
+	public EventType getEventType() {
 		return eventType;
 	}
 
 	/**
-	 * Return the sub-event type for this change record.
-	 * A value of 0 is the default if unspecified.
-	 */
-	public int getSubEventType() {
-		return subEventType;
-	}
-
-	/**
-	 * Return the old value.
+	 * Return the old value for this event or null if not applicable.
+	 * @return the old value or null if not applicable
 	 */
 	public Object getOldValue() {
 		return oldValue;
 	}
 
 	/**
-	 * Return the new value.
+	 * Return the new value for this event or null if not applicable.
+	 * @return the old value or null if not applicable for this event. 
 	 */
 	public Object getNewValue() {
 		return newValue;
@@ -102,13 +78,18 @@ public class DomainObjectChangeRecord implements Serializable {
 
 	@Override
 	public String toString() {
-		//@formatter:off
-		return "{\n" +
-			"\tnewValue: " + newValue + ",\n" +
-			"\toldValue: " + oldValue + ",\n" +
-			"\teventType: " + eventType + ",\n" +
-			"\tsubEventType: " + subEventType + "\n" +
-			"\n}";
-		//@formatter:on
+		StringBuilder buf = new StringBuilder();
+		buf.append(getClass().getSimpleName());
+		buf.append(": event = ");
+		buf.append(eventType);
+		if (oldValue != null) {
+			buf.append(", old = ");
+			buf.append(oldValue);
+		}
+		if (newValue != null) {
+			buf.append(", new = ");
+			buf.append(newValue);
+		}
+		return buf.toString();
 	}
 }

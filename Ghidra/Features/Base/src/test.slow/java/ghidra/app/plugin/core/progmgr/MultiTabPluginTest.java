@@ -389,7 +389,7 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		renameProgramFile(p, newName);
 		ArrayList<DomainObjectChangeRecord> changeRecs = new ArrayList<>();
 		changeRecs.add(
-			new DomainObjectChangeRecord(DomainObject.DO_OBJECT_RENAMED, oldName, p.getName()));
+			new DomainObjectChangeRecord(DomainObjectEvent.RENAMED, oldName, p.getName()));
 		DomainObjectChangedEvent ev = new DomainObjectChangedEvent(p, changeRecs);
 		runSwing(() -> env.getPlugin(MultiTabPlugin.class).domainObjectChanged(ev));
 

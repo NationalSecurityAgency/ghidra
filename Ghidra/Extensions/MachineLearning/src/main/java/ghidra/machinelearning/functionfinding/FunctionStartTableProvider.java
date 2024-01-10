@@ -23,7 +23,7 @@ import ghidra.framework.model.*;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
 
@@ -84,26 +84,28 @@ public class FunctionStartTableProvider extends ProgramAssociatedComponentProvid
 		if (!isVisible()) {
 			return;
 		}
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
+		if (ev.contains(DomainObjectEvent.RESTORED)) {
 			model.reload();
 			contextChanged();
 		}
 		for (int i = 0; i < ev.numRecords(); ++i) {
 			DomainObjectChangeRecord doRecord = ev.getChangeRecord(i);
-			int eventType = doRecord.getEventType();
-			switch (eventType) {
-				case ChangeManager.DOCR_FUNCTION_ADDED:
-				case ChangeManager.DOCR_FUNCTION_REMOVED:
-				case ChangeManager.DOCR_CODE_ADDED:
-				case ChangeManager.DOCR_CODE_REMOVED:
-				case ChangeManager.DOCR_CODE_REPLACED:
-				case ChangeManager.DOCR_MEM_REF_TYPE_CHANGED:
-				case ChangeManager.DOCR_MEM_REFERENCE_ADDED:
-				case ChangeManager.DOCR_MEM_REFERENCE_REMOVED:
-					model.reload();
-					contextChanged();
-				default:
-					break;
+			EventType eventType = doRecord.getEventType();
+			if (eventType instanceof ProgramEvent type) {
+				switch (type) {
+					case FUNCTION_ADDED:
+					case FUNCTION_REMOVED:
+					case CODE_ADDED:
+					case CODE_REMOVED:
+					case CODE_REPLACED:
+					case REFERENCE_TYPE_CHANGED:
+					case REFERENCE_ADDED:
+					case REFERENCE_REMOVED:
+						model.reload();
+						contextChanged();
+					default:
+						break;
+				}
 			}
 		}
 	}

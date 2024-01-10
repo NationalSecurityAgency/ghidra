@@ -33,7 +33,7 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources.ToToggleSelectionListe
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerTraceManagerService.BooleanChangeAdapter;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
-import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.model.DomainObjectChangeRecord;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -65,7 +65,7 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		private Trace currentTrace;
 
 		public ForSnapsListener() {
-			listenForUntyped(DomainObject.DO_OBJECT_RESTORED, this::objectRestored);
+			listenForUntyped(DomainObjectEvent.RESTORED, this::objectRestored);
 
 			listenFor(TraceSnapshotChangeType.ADDED, this::snapAdded);
 			listenFor(TraceSnapshotChangeType.DELETED, this::snapDeleted);
@@ -210,7 +210,7 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 	void threadsPanelContextChanged() {
 		myActionContext = panel.getActionContext();
 	}
-	
+
 	void legacyThreadsPanelContextChanged() {
 		myActionContext = legacyPanel.getActionContext();
 	}
@@ -247,8 +247,8 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 				.enabledWhen(c -> traceManager != null)
 				.onAction(c -> toggleSyncFocus(actionSyncTarget.isSelected()))
 				.buildAndInstallLocal(this);
-		traceManager.addSynchronizeActiveChangeListener(toToggleSelectionListener =
-			new ToToggleSelectionListener(actionSyncTarget));
+		traceManager.addSynchronizeActiveChangeListener(
+			toToggleSelectionListener = new ToToggleSelectionListener(actionSyncTarget));
 	}
 
 	private void changedSynchronizeTarget(boolean value) {

@@ -15,12 +15,14 @@
  */
 package ghidra.app.decompiler.component;
 
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
+
 import java.util.Iterator;
 
 import ghidra.framework.model.*;
 import ghidra.program.database.SpecExtension;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ChangeManager;
 import ghidra.util.task.SwingUpdateManager;
 
 /**
@@ -58,16 +60,14 @@ public class DecompilerProgramListener implements DomainObjectListener {
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
 		// Check for events that signal that a decompiler process' data is stale
 		// and if so force a new process to be spawned
-		if (ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_ADDED) ||
-			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_REMOVED) ||
-			ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
+		if (ev.contains(MEMORY_BLOCK_ADDED, MEMORY_BLOCK_REMOVED, RESTORED)) {
 			controller.resetDecompiler();
 		}
-		else if (ev.containsEvent(DomainObject.DO_PROPERTY_CHANGED)) {
+		else if (ev.contains(DomainObjectEvent.PROPERTY_CHANGED)) {
 			Iterator<DomainObjectChangeRecord> iter = ev.iterator();
 			while (iter.hasNext()) {
 				DomainObjectChangeRecord record = iter.next();
-				if (record.getEventType() == DomainObject.DO_PROPERTY_CHANGED) {
+				if (record.getEventType() == DomainObjectEvent.PROPERTY_CHANGED) {
 					if (record.getOldValue() instanceof String) {
 						String value = (String) record.getOldValue();
 						if (value.startsWith(SpecExtension.SPEC_EXTENSION)) {

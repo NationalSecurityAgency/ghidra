@@ -413,7 +413,7 @@ public class VTControllerImpl
 		Object source = ev.getSource();
 
 		if (source == session) {
-			if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
+			if (ev.contains(DomainObjectEvent.RESTORED)) {
 				matchInfoFactory.clearMatchInfoInternalCache();
 			}
 		}
@@ -434,7 +434,7 @@ public class VTControllerImpl
 	}
 
 	private void checkForSave(DomainObjectChangedEvent ev) {
-		if (!ev.containsEvent(DomainObject.DO_OBJECT_SAVED)) {
+		if (!ev.contains(DomainObjectEvent.SAVED)) {
 			return;
 		}
 
@@ -628,7 +628,7 @@ public class VTControllerImpl
 				session.updateDestinationProgram(newProgram);
 			}
 //			List<DomainObjectChangeRecord> events = new ArrayList<DomainObjectChangeRecord>();
-//			events.add(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_RESTORED));
+//			events.add(new DomainObjectChangeRecord(DomainObjectEvent.RESTORED));
 //			domainObjectChanged(new DomainObjectChangedEvent(newProgram, events));
 			matchInfoFactory.clearCache();
 			fireSessionChanged();

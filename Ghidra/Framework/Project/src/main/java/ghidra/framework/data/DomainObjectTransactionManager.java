@@ -92,7 +92,7 @@ class DomainObjectTransactionManager extends AbstractTransactionManager {
 			domainObj.clearCache(false);
 		}
 
-		domainObj.fireEvent(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_RESTORED));
+		domainObj.fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.RESTORED));
 		if (notify) {
 			notifyEndTransaction();
 		}
@@ -182,7 +182,7 @@ class DomainObjectTransactionManager extends AbstractTransactionManager {
 				if (notify) {
 					notifyEndTransaction();
 				}
-				domainObj.fireEvent(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_RESTORED));
+				domainObj.fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.RESTORED));
 				transaction.restoreToolStates(true);
 				transaction = null;
 			}
@@ -272,7 +272,7 @@ class DomainObjectTransactionManager extends AbstractTransactionManager {
 			if (domainObj.changeSet != null) {
 				domainObj.changeSet.redo();
 			}
-			domainObj.fireEvent(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_RESTORED));
+			domainObj.fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.RESTORED));
 			undoList.addLast(t);
 			t.restoreToolStates(false);
 			if (notify) {
@@ -291,7 +291,7 @@ class DomainObjectTransactionManager extends AbstractTransactionManager {
 				domainObj.changeSet.undo();
 			}
 			domainObj.clearCache(false);
-			domainObj.fireEvent(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_RESTORED));
+			domainObj.fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.RESTORED));
 			redoList.addLast(t);
 			t.restoreToolStates(true);
 			if (notify) {

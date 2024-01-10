@@ -17,9 +17,10 @@ package ghidra.trace.database.stack;
 
 import java.util.*;
 
-import ghidra.dbg.target.*;
+import ghidra.dbg.target.TargetStackFrame;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathUtils;
+import ghidra.framework.model.EventType;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.trace.database.target.DBTraceObject;
@@ -52,8 +53,8 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 
 		TargetObjectSchema schema = object.getTargetSchema();
 		synchronized (KEYS_BY_SCHEMA) {
-			keys = KEYS_BY_SCHEMA.computeIfAbsent(schema, s -> Set.of(
-				schema.checkAliasedAttribute(TargetStackFrame.PC_ATTRIBUTE_NAME)));
+			keys = KEYS_BY_SCHEMA.computeIfAbsent(schema,
+				s -> Set.of(schema.checkAliasedAttribute(TargetStackFrame.PC_ATTRIBUTE_NAME)));
 		}
 	}
 
@@ -88,8 +89,8 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 
 	@Override
 	public Address getProgramCounter(long snap) {
-		return TraceObjectInterfaceUtils.getValue(object, snap,
-			TargetStackFrame.PC_ATTRIBUTE_NAME, Address.class, null);
+		return TraceObjectInterfaceUtils.getValue(object, snap, TargetStackFrame.PC_ATTRIBUTE_NAME,
+			Address.class, null);
 	}
 
 	@Override
@@ -128,8 +129,7 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 	public void setComment(long snap, String comment) {
 		/* See rant in getComment */
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			TraceObjectValue pcAttr =
-				object.getValue(snap, TargetStackFrame.PC_ATTRIBUTE_NAME);
+			TraceObjectValue pcAttr = object.getValue(snap, TargetStackFrame.PC_ATTRIBUTE_NAME);
 			object.getTrace()
 					.getCommentAdapter()
 					.setComment(pcAttr.getLifespan(), (Address) pcAttr.getValue(),
@@ -166,7 +166,7 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 	}
 
 	protected long snapFor(TraceChangeRecord<?, ?> rec) {
-		if (rec.getEventType() == TraceObjectChangeType.VALUE_CREATED.getType()) {
+		if (rec.getEventType() == TraceObjectChangeType.VALUE_CREATED.getEventType()) {
 			return TraceObjectChangeType.VALUE_CREATED.cast(rec).getAffectedObject().getMinSnap();
 		}
 		return computeMinSnap();
@@ -179,18 +179,18 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 
 	@Override
 	public TraceChangeRecord<?, ?> translateEvent(TraceChangeRecord<?, ?> rec) {
-		int type = rec.getEventType();
-		if (type == TraceObjectChangeType.LIFE_CHANGED.getType()) {
+		EventType type = rec.getEventType();
+		if (type == TraceObjectChangeType.LIFE_CHANGED.getEventType()) {
 			LifeSet newLife = object.getLife();
 			if (!newLife.isEmpty()) {
 				life = newLife;
 			}
 			return createChangeRecord();
 		}
-		else if (type == TraceObjectChangeType.VALUE_CREATED.getType() && changeApplies(rec)) {
+		else if (type == TraceObjectChangeType.VALUE_CREATED.getEventType() && changeApplies(rec)) {
 			return createChangeRecord();
 		}
-		else if (type == TraceObjectChangeType.DELETED.getType()) {
+		else if (type == TraceObjectChangeType.DELETED.getEventType()) {
 			if (life.isEmpty()) {
 				return null;
 			}

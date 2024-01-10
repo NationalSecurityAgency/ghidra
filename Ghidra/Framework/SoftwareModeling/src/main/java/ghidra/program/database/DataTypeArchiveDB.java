@@ -26,7 +26,8 @@ import ghidra.framework.options.Options;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.DataTypeArchive;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.*;
+import ghidra.program.util.ProgramChangeRecord;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -34,8 +35,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Database implementation for Data Type Archive. 
  */
-public class DataTypeArchiveDB extends DomainObjectAdapterDB
-		implements DataTypeArchive, DataTypeArchiveChangeManager {
+public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataTypeArchive {
 
 	/**
 	 * DB_VERSION should be incremented any time a change is made to the overall
@@ -287,98 +287,82 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 	/**
 	 * notification the a data type has changed
 	 * @param dataTypeID the id of the data type that changed.
-	 * @param type the type of the change (moved, renamed, etc.)
+	 * @param eventType the type of the change (moved, renamed, etc.)
 	 * @param isAutoResponseChange true if change is an auto-response change caused by 
 	 * another datatype's change (e.g., size, alignment), else false in which case this
 	 * change will be added to archive change-set to aid merge conflict detection.
 	 * @param oldValue the old data type.
 	 * @param newValue the new data type.
 	 */
-	public void dataTypeChanged(long dataTypeID, int type, boolean isAutoResponseChange,
-			Object oldValue, Object newValue) {
+	public void dataTypeChanged(long dataTypeID, ProgramEvent eventType,
+			boolean isAutoResponseChange, Object oldValue, Object newValue) {
 		if (recordChanges && !isAutoResponseChange) {
 			((DataTypeArchiveDBChangeSet) changeSet).dataTypeChanged(dataTypeID);
 		}
 		changed = true;
-		fireEvent(new ProgramChangeRecord(type, null, null, null, oldValue, newValue));
+		fireEvent(new ProgramChangeRecord(eventType, oldValue, newValue));
 	}
 
 	/**
 	 * Notification that a data type was added.
 	 * @param dataTypeID the id if the data type that was added.
-	 * @param type should always be DATATYPE_ADDED
+	 * @param eventType should always be DATATYPE_ADDED
 	 * @param oldValue always null
 	 * @param newValue the data type added.
 	 */
-	public void dataTypeAdded(long dataTypeID, int type, Object oldValue, Object newValue) {
+	public void dataTypeAdded(long dataTypeID, ProgramEvent eventType, Object oldValue,
+			Object newValue) {
 		if (recordChanges) {
 			((DataTypeArchiveDBChangeSet) changeSet).dataTypeAdded(dataTypeID);
 		}
 		changed = true;
-		fireEvent(new ProgramChangeRecord(type, null, null, null, oldValue, newValue));
+		fireEvent(new ProgramChangeRecord(eventType, oldValue, newValue));
 	}
 
 	/**
 	 * Notification that a category was changed.
 	 * @param categoryID the id of the data type that was added.
-	 * @param type the type of changed
+	 * @param eventType the type of change
 	 * @param oldValue old value depends on the type.
 	 * @param newValue new value depends on the type.
 	 */
-	public void categoryChanged(long categoryID, int type, Object oldValue, Object newValue) {
+	public void categoryChanged(long categoryID, ProgramEvent eventType, Object oldValue,
+			Object newValue) {
 		if (recordChanges) {
 			((DataTypeArchiveDBChangeSet) changeSet).categoryChanged(categoryID);
 		}
 		changed = true;
-		fireEvent(new ProgramChangeRecord(type, null, null, null, oldValue, newValue));
+		fireEvent(new ProgramChangeRecord(eventType, oldValue, newValue));
 	}
 
 	/**
 	 * Notification that a category was added.
 	 * @param categoryID the id of the data type that was added.
-	 * @param type the type of changed (should always be CATEGORY_ADDED)
+	 * @param eventType the type of change (should always be CATEGORY_ADDED)
 	 * @param oldValue always null
 	 * @param newValue new value depends on the type.
 	 */
-	public void categoryAdded(long categoryID, int type, Object oldValue, Object newValue) {
+	public void categoryAdded(long categoryID, ProgramEvent eventType, Object oldValue,
+			Object newValue) {
 		if (recordChanges) {
 			((DataTypeArchiveDBChangeSet) changeSet).categoryAdded(categoryID);
 		}
 		changed = true;
-		fireEvent(new ProgramChangeRecord(type, null, null, null, oldValue, newValue));
+		fireEvent(new ProgramChangeRecord(eventType, oldValue, newValue));
 	}
 
 	/**
 	 * Mark the state this Data Type Archive as having changed and generate
 	 * the event.  Any or all parameters may be null.
-	 * @param type event type
+	 * @param eventType event type
 	 * @param oldValue original value
 	 * @param newValue new value
 	 */
-	@Override
-	public void setChanged(int type, Object oldValue, Object newValue) {
+	public void setChanged(ProgramEvent eventType, Object oldValue, Object newValue) {
 
 		changed = true;
 
-		fireEvent(new DataTypeArchiveChangeRecord(type, null, oldValue, newValue));
-	}
-
-	/**
-	 * Mark the state of a Program as having changed and generate
-	 * the event.  Any or all parameters may be null.
-	 * NOTE: ChangeSet data will not be updated since this a very generic
-	 * change not related to a specific address.
-	 * @param type event type
-	 * @param affectedObj object that is the subject of the event
-	 * @param oldValue original value or an Object that is related to
-	 * the event
-	 * @param newValue new value or an Object that is related to the
-	 * the event
-	 */
-	@Override
-	public void setObjChanged(int type, Object affectedObj, Object oldValue, Object newValue) {
-		changed = true;
-		fireEvent(new DataTypeArchiveChangeRecord(type, affectedObj, oldValue, newValue));
+		fireEvent(new ProgramChangeRecord(eventType, oldValue, newValue));
 	}
 
 	@Override
@@ -531,7 +515,7 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 	@Override
 	public void invalidate() {
 		clearCache(false);
-		fireEvent(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_RESTORED));
+		fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.RESTORED));
 	}
 
 	@Override

@@ -115,7 +115,7 @@ public interface DBTraceObjectInterface extends TraceObjectInterface, TraceUniqu
 		}
 
 		public TraceChangeRecord<?, ?> translate(TraceChangeRecord<?, ?> rec) {
-			if (rec.getEventType() == TraceObjectChangeType.LIFE_CHANGED.getType()) {
+			if (rec.getEventType() == TraceObjectChangeType.LIFE_CHANGED.getEventType()) {
 				if (object.isDeleted()) {
 					return null;
 				}
@@ -137,7 +137,7 @@ public interface DBTraceObjectInterface extends TraceObjectInterface, TraceUniqu
 					throw new AssertionError("Life changed from empty to empty?");
 				}
 			}
-			if (rec.getEventType() == TraceObjectChangeType.VALUE_CREATED.getType()) {
+			if (rec.getEventType() == TraceObjectChangeType.VALUE_CREATED.getEventType()) {
 				if (object.isDeleted()) {
 					return null;
 				}
@@ -160,7 +160,7 @@ public interface DBTraceObjectInterface extends TraceObjectInterface, TraceUniqu
 					cast.getNewValue());
 				return new TraceChangeRecord<>(type, getSpace(life), iface, null, null);
 			}
-			if (rec.getEventType() == TraceObjectChangeType.DELETED.getType()) {
+			if (rec.getEventType() == TraceObjectChangeType.DELETED.getEventType()) {
 				return translateDeleted(life);
 			}
 			return null;

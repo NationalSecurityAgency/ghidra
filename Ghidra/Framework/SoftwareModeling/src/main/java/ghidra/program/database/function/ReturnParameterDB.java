@@ -15,13 +15,14 @@
  */
 package ghidra.program.database.function;
 
+import static ghidra.program.util.FunctionChangeRecord.FunctionChangeType.*;
+
 import java.io.IOException;
 
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.DynamicVariableStorage;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
-import ghidra.program.util.ChangeManager;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
@@ -98,7 +99,7 @@ public class ReturnParameterDB extends ParameterDB {
 				function.updateParametersAndReturn();
 			}
 			function.updateSignatureSourceAfterVariableChange(source, type);
-			functionMgr.functionChanged(function, ChangeManager.FUNCTION_CHANGED_RETURN);
+			functionMgr.functionChanged(function, RETURN_TYPE_CHANGED);
 		}
 		catch (IOException e) {
 			functionMgr.dbError(e);
@@ -148,7 +149,7 @@ public class ReturnParameterDB extends ParameterDB {
 				function.updateParametersAndReturn();
 			}
 			function.updateSignatureSourceAfterVariableChange(source, type);
-			functionMgr.functionChanged(function, ChangeManager.FUNCTION_CHANGED_RETURN);
+			functionMgr.functionChanged(function, RETURN_TYPE_CHANGED);
 		}
 		catch (IOException e) {
 			functionMgr.dbError(e);

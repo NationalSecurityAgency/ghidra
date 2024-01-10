@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,58 +20,48 @@ import ghidra.program.model.address.Address;
 
 public class CodeUnitUserDataChangeRecord extends DomainObjectChangeRecord {
 
-	private final static long serialVersionUID = 1;
-    private Object oldValue;
-    private Object newValue;
-    private String propertyName;
-    private Address addr;
-	
-    /**
-     * Constructor
-     * @param propertyName name of the property
-     * @param codeUnitAddr address of the code unit
-     * @param oldValue old value
-     * @param newValue new value
-     */
-    public CodeUnitUserDataChangeRecord(String propertyName,
-                                        Address codeUnitAddr,
-                                        Object oldValue,
-                                        Object newValue) { 
-        super(ChangeManager.DOCR_CODE_UNIT_USER_DATA_CHANGED);
-        this.propertyName = propertyName;
-        addr = codeUnitAddr;
-        this.oldValue = oldValue;
-        this.newValue = newValue;
-    }
-		
-    /**
-     * Get the name of the property being changed.
-     */
-    public String getPropertyName() {
-        return propertyName;
-    }
+	private String propertyName;
+	private Address address;
 
-    /**
-     * Get the address of the code unit for this property change.
-     */
-    public Address getAddress() {
-        return addr;
-    }
+	/**
+	 * Constructor
+	 * @param propertyName name of the property
+	 * @param codeUnitAddr address of the code unit
+	 * @param oldValue old value
+	 * @param newValue new value
+	 */
+	public CodeUnitUserDataChangeRecord(String propertyName, Address codeUnitAddr, Object oldValue,
+			Object newValue) {
+		super(ProgramEvent.CODE_UNIT_USER_DATA_CHANGED, oldValue, newValue);
+		this.propertyName = propertyName;
+		address = codeUnitAddr;
+	}
 
-    /**
-     * Get the original value.
-     */
-    @Override
-    public Object getOldValue() {
-        return oldValue;
-    }
+	/**
+	 * Get the name of the property being changed.
+	 * @return the name of the property being changed
+	 */
+	public String getPropertyName() {
+		return propertyName;
+	}
 
-    /**
-     * Get the new value.
-     */
-    @Override
-    public Object getNewValue() {
-        return newValue;
-    }
-    
+	/**
+	 * Get the address of the code unit for this property change.
+	 * @return the address of the code unit for this property change
+	 */
+	public Address getAddress() {
+		return address;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder(super.toString());
+		builder.append(", property = " + propertyName);
+		if (address != null) {
+			builder.append(", address = ");
+			builder.append(address);
+		}
+		return builder.toString();
+	}
+
 }

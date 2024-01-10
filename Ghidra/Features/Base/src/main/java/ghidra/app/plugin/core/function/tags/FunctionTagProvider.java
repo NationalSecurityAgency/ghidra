@@ -15,6 +15,9 @@
  */
 package ghidra.app.plugin.core.function.tags;
 
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
+
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.util.*;
@@ -31,12 +34,14 @@ import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.cmd.function.CreateFunctionTagCmd;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainObjectChangedEvent;
+import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.database.function.FunctionManagerDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
-import ghidra.program.util.*;
+import ghidra.program.util.FunctionLocation;
+import ghidra.program.util.ProgramLocation;
 import ghidra.util.*;
 import ghidra.util.task.SwingUpdateManager;
 import resources.ResourceManager;
@@ -160,16 +165,13 @@ public class FunctionTagProvider extends ComponentProviderAdapter implements Dom
 			return;
 		}
 
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED) ||
-			ev.containsEvent(ChangeManager.DOCR_FUNCTION_TAG_CREATED) ||
-			ev.containsEvent(ChangeManager.DOCR_FUNCTION_TAG_DELETED) ||
-			ev.containsEvent(ChangeManager.DOCR_TAG_REMOVED_FROM_FUNCTION) ||
-			ev.containsEvent(ChangeManager.DOCR_TAG_ADDED_TO_FUNCTION)) {
+		if (ev.contains(RESTORED, FUNCTION_TAG_CREATED, FUNCTION_TAG_DELETED, FUNCTION_TAG_APPLIED,
+			FUNCTION_TAG_UNAPPLIED)) {
 			updater.updateLater();
 			return;
 		}
 
-		if (ev.containsEvent(ChangeManager.DOCR_FUNCTION_TAG_CHANGED)) {
+		if (ev.contains(FUNCTION_TAG_CHANGED)) {
 			repaint();
 		}
 	}

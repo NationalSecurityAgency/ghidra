@@ -28,10 +28,8 @@ import ghidra.framework.model.DomainObjectChangeRecord;
  * @param <U> the type of the object's attribute that changed
  */
 public class DefaultTraceChangeType<T, U> implements TraceChangeType<T, U> {
-	private static int nextType = 0x3ACE; // Stay far away from manually-assigned types
-	// But not too far, since it makes the bit set for events gigantic.
 
-	private static final Map<Integer, String> TYPE_NAMES = new HashMap<>();
+	private static final Map<TraceEventType, String> TYPE_NAMES = new HashMap<>();
 	private static final Set<Field> FIELD_BACKLOG = new HashSet<>();
 
 	private static void procType(Field f, TraceChangeType<?, ?> type) {
@@ -42,7 +40,7 @@ public class DefaultTraceChangeType<T, U> implements TraceChangeType<T, U> {
 		if (kind.endsWith("ChangeType")) {
 			kind = kind.substring(0, kind.length() - "ChangeType".length());
 		}
-		TYPE_NAMES.put(type.getType(), kind + "." + f.getName());
+		TYPE_NAMES.put(type.getEventType(), kind + "." + f.getName());
 	}
 
 	private static <C extends TraceChangeType<?, ?>> void procField(Field f, Class<C> cls,
@@ -96,26 +94,17 @@ public class DefaultTraceChangeType<T, U> implements TraceChangeType<T, U> {
 		return "TYPE_0x" + Integer.toHexString(type);
 	}
 
-	private static int nextType() {
-		return nextType++;
-	}
-
-	private final int type;
+	private final TraceEventType eventType;
 
 	public DefaultTraceChangeType() {
-		this.type = nextType();
+		this.eventType = new TraceEventType(getClass().getSimpleName());
 
 		scanTypeNames(getClass());
 	}
 
 	@Override
-	public int getType() {
-		return type;
-	}
-
-	@Override
-	public int getSubType() {
-		return 0;
+	public TraceEventType getEventType() {
+		return eventType;
 	}
 
 	@SuppressWarnings("unchecked")

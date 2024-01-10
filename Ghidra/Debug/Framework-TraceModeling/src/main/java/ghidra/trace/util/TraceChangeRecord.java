@@ -27,7 +27,7 @@ public class TraceChangeRecord<T, U> extends DomainObjectChangeRecord {
 
 	public TraceChangeRecord(TraceChangeType<T, U> type, TraceAddressSpace space, T affectedObject,
 			U oldValue, U newValue) {
-		super(type.getType(), type.getSubType(), oldValue, newValue);
+		super(type.getEventType(), oldValue, newValue);
 		this.type = type;
 		this.space = space;
 		this.affectedObject = affectedObject;
@@ -36,7 +36,7 @@ public class TraceChangeRecord<T, U> extends DomainObjectChangeRecord {
 
 	public TraceChangeRecord(TraceChangeType<T, U> type, TraceAddressSpace space, T affectedObject,
 			U newValue) {
-		super(type.getType(), type.getSubType(), null, newValue);
+		super(type.getEventType(), null, newValue);
 		this.type = type;
 		this.space = space;
 		this.affectedObject = affectedObject;
@@ -45,7 +45,7 @@ public class TraceChangeRecord<T, U> extends DomainObjectChangeRecord {
 
 	public TraceChangeRecord(TraceChangeType<T, U> type, TraceAddressSpace space,
 			T affectedObject) {
-		super(type.getType(), type.getSubType(), null, null);
+		super(type.getEventType(), null, null);
 		this.type = type;
 		this.space = space;
 		this.affectedObject = affectedObject;
@@ -53,7 +53,7 @@ public class TraceChangeRecord<T, U> extends DomainObjectChangeRecord {
 	}
 
 	public TraceChangeRecord(TraceChangeType<T, U> type, TraceAddressSpace space) {
-		super(type.getType(), type.getSubType(), null, null);
+		super(type.getEventType(), null, null);
 		this.type = type;
 		this.space = space;
 		this.affectedObject = null;

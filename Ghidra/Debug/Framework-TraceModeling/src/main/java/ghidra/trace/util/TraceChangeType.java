@@ -16,7 +16,5 @@
 package ghidra.trace.util;
 
 public interface TraceChangeType<T, U> {
-	int getType();
-
-	int getSubType();
+	TraceEventType getEventType();
 }

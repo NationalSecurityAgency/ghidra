@@ -15,6 +15,9 @@
  */
 package ghidra.features.bsim.gui.search.results;
 
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
+
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.net.MalformedURLException;
@@ -44,13 +47,13 @@ import ghidra.features.bsim.query.description.*;
 import ghidra.features.bsim.query.facade.SFQueryInfo;
 import ghidra.features.bsim.query.facade.SFQueryResult;
 import ghidra.features.bsim.query.protocol.BSimFilter;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainObjectChangedEvent;
+import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.symbol.FunctionSymbol;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
-import ghidra.program.util.ChangeManager;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.Counter;
@@ -582,12 +585,9 @@ public class BSimSearchResultsProvider extends ComponentProviderAdapter {
 
 		@Override
 		public void domainObjectChanged(DomainObjectChangedEvent ev) {
-			if (ev.containsEvent(ChangeManager.DOCR_SYMBOL_RENAMED) ||
-				ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
+			if (ev.contains(SYMBOL_RENAMED, RESTORED)) {
 				matchesModel.fireTableDataChanged();
 			}
-
 		}
-
 	}
 }

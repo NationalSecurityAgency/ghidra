@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.symboltree;
 
+import static ghidra.program.util.ProgramEvent.*;
+
 import java.awt.BorderLayout;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.ClipboardOwner;
@@ -672,49 +674,52 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 				return;
 			}
 
-			if (event.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
+			if (event.contains(DomainObjectEvent.RESTORED)) {
 				rebuildTree();
+				return;
+			}
+			if (!event.contains(SYMBOL_RENAMED, SYMBOL_DATA_CHANGED, SYMBOL_SCOPE_CHANGED,
+				FUNCTION_CHANGED, SYMBOL_ADDED, SYMBOL_REMOVED, EXTERNAL_ENTRY_ADDED,
+				EXTERNAL_ENTRY_REMOVED)) {
 				return;
 			}
 
 			int recordCount = event.numRecords();
 			for (int i = 0; i < recordCount; i++) {
 				DomainObjectChangeRecord rec = event.getChangeRecord(i);
-				int eventType = rec.getEventType();
+				EventType eventType = rec.getEventType();
 
-				Object object = null;
+				Object affectedObject = null;
 				if (rec instanceof ProgramChangeRecord) {
-					object = ((ProgramChangeRecord) rec).getObject();
+					affectedObject = ((ProgramChangeRecord) rec).getObject();
 				}
 
-				if (eventType == ChangeManager.DOCR_SYMBOL_RENAMED) {
-					Symbol symbol = (Symbol) object;
+				if (eventType == SYMBOL_RENAMED) {
+					Symbol symbol = (Symbol) affectedObject;
 					symbolChanged(symbol, (String) rec.getOldValue());
 				}
-				else if (eventType == ChangeManager.DOCR_SYMBOL_DATA_CHANGED ||
-					eventType == ChangeManager.DOCR_SYMBOL_SCOPE_CHANGED ||
-					eventType == ChangeManager.DOCR_FUNCTION_CHANGED) {
+				else if (eventType == SYMBOL_DATA_CHANGED || eventType == SYMBOL_SCOPE_CHANGED ||
+					eventType == FUNCTION_CHANGED) {
 
 					Symbol symbol = null;
-					if (object instanceof Symbol) {
-						symbol = (Symbol) object;
+					if (affectedObject instanceof Symbol) {
+						symbol = (Symbol) affectedObject;
 					}
-					else if (object instanceof Namespace) {
-						symbol = ((Namespace) object).getSymbol();
+					else if (affectedObject instanceof Namespace) {
+						symbol = ((Namespace) affectedObject).getSymbol();
 					}
 
 					symbolChanged(symbol, symbol.getName());
 				}
-				else if (eventType == ChangeManager.DOCR_SYMBOL_ADDED) {
+				else if (eventType == SYMBOL_ADDED) {
 					Symbol symbol = (Symbol) rec.getNewValue();
 					symbolAdded(symbol);
 				}
-				else if (eventType == ChangeManager.DOCR_SYMBOL_REMOVED) {
-					Symbol symbol = (Symbol) object;
+				else if (eventType == SYMBOL_REMOVED) {
+					Symbol symbol = (Symbol) affectedObject;
 					symbolRemoved(symbol);
 				}
-				else if (eventType == ChangeManager.DOCR_EXTERNAL_ENTRY_POINT_ADDED ||
-					eventType == ChangeManager.DOCR_EXTERNAL_ENTRY_POINT_REMOVED) {
+				else if (eventType == EXTERNAL_ENTRY_ADDED || eventType == EXTERNAL_ENTRY_REMOVED) {
 					ProgramChangeRecord programChangeRecord = (ProgramChangeRecord) rec;
 					Address address = programChangeRecord.getStart();
 					SymbolTable symbolTable = program.getSymbolTable();

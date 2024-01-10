@@ -15,6 +15,9 @@
  */
 package ghidra.app.plugin.core.functionwindow;
 
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
+
 import docking.action.DockingAction;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramClosedPluginEvent;
@@ -30,8 +33,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
-import ghidra.program.util.ChangeManager;
 import ghidra.program.util.ProgramChangeRecord;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.table.SelectionNavigationAction;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
 import ghidra.util.task.SwingUpdateManager;
@@ -110,9 +113,7 @@ public class FunctionWindowPlugin extends ProgramPlugin implements DomainObjectL
 			return;
 		}
 
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED) ||
-			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_MOVED) ||
-			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_REMOVED)) {
+		if (ev.contains(RESTORED, MEMORY_BLOCK_MOVED, MEMORY_BLOCK_REMOVED)) {
 			provider.reload();
 			return;
 		}
@@ -120,58 +121,60 @@ public class FunctionWindowPlugin extends ProgramPlugin implements DomainObjectL
 		for (int i = 0; i < ev.numRecords(); ++i) {
 			DomainObjectChangeRecord doRecord = ev.getChangeRecord(i);
 
-			int eventType = doRecord.getEventType();
+			EventType eventType = doRecord.getEventType();
 
-			switch (eventType) {
-				case ChangeManager.DOCR_CODE_ADDED:
-				case ChangeManager.DOCR_CODE_REMOVED:
-					swingMgr.update();
-					break;
+			if (eventType instanceof ProgramEvent type) {
+				switch (type) {
+					case CODE_ADDED:
+					case CODE_REMOVED:
+						swingMgr.update();
+						break;
 
-				case ChangeManager.DOCR_FUNCTION_ADDED:
-					ProgramChangeRecord rec = (ProgramChangeRecord) ev.getChangeRecord(i);
-					Function function = (Function) rec.getObject();
-					provider.functionAdded(function);
-					break;
-				case ChangeManager.DOCR_FUNCTION_REMOVED:
-					rec = (ProgramChangeRecord) ev.getChangeRecord(i);
-					function = (Function) rec.getObject();
-					if (function != null) {
-						provider.functionRemoved(function);
-					}
-					break;
-				case ChangeManager.DOCR_FUNCTION_CHANGED:
-					rec = (ProgramChangeRecord) ev.getChangeRecord(i);
-					function = (Function) rec.getObject();
-					provider.update(function);
-					break;
-				case ChangeManager.DOCR_SYMBOL_ADDED:
-				case ChangeManager.DOCR_SYMBOL_SET_AS_PRIMARY:
-					rec = (ProgramChangeRecord) ev.getChangeRecord(i);
-					Symbol sym = (Symbol) rec.getNewValue();
-					Address addr = sym.getAddress();
-					function = currentProgram.getListing().getFunctionAt(addr);
-					if (function != null) {
+					case FUNCTION_ADDED:
+						ProgramChangeRecord rec = (ProgramChangeRecord) ev.getChangeRecord(i);
+						Function function = (Function) rec.getObject();
+						provider.functionAdded(function);
+						break;
+					case FUNCTION_REMOVED:
+						rec = (ProgramChangeRecord) ev.getChangeRecord(i);
+						function = (Function) rec.getObject();
+						if (function != null) {
+							provider.functionRemoved(function);
+						}
+						break;
+					case FUNCTION_CHANGED:
+						rec = (ProgramChangeRecord) ev.getChangeRecord(i);
+						function = (Function) rec.getObject();
 						provider.update(function);
-					}
-					break;
-				case ChangeManager.DOCR_SYMBOL_RENAMED:
-					rec = (ProgramChangeRecord) ev.getChangeRecord(i);
-					sym = (Symbol) rec.getObject();
-					addr = sym.getAddress();
-					function = currentProgram.getListing().getFunctionAt(addr);
-					if (function != null) {
-						provider.update(function);
-					}
-					break;
-				/*case ChangeManager.DOCR_SYMBOL_REMOVED:
-					rec = (ProgramChangeRecord)ev.getChangeRecord(i);
-					addr = (Address)rec.getObject();
-					function = currentProgram.getListing().getFunctionAt(addr);
-					if (function != null) {
-						provider.functionChanged(function);
-					}
-					break;*/
+						break;
+					case SYMBOL_ADDED:
+					case SYMBOL_PRIMARY_STATE_CHANGED:
+						rec = (ProgramChangeRecord) ev.getChangeRecord(i);
+						Symbol sym = (Symbol) rec.getNewValue();
+						Address addr = sym.getAddress();
+						function = currentProgram.getListing().getFunctionAt(addr);
+						if (function != null) {
+							provider.update(function);
+						}
+						break;
+					case SYMBOL_RENAMED:
+						rec = (ProgramChangeRecord) ev.getChangeRecord(i);
+						sym = (Symbol) rec.getObject();
+						addr = sym.getAddress();
+						function = currentProgram.getListing().getFunctionAt(addr);
+						if (function != null) {
+							provider.update(function);
+						}
+						break;
+					/*case SYMBOL_REMOVED:
+						rec = (ProgramChangeRecord)ev.getChangeRecord(i);
+						addr = (Address)rec.getObject();
+						function = currentProgram.getListing().getFunctionAt(addr);
+						if (function != null) {
+							provider.functionChanged(function);
+						}
+						break;*/
+				}
 			}
 		}
 	}

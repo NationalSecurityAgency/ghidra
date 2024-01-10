@@ -15,6 +15,9 @@
  */
 package ghidra.app.plugin.core.bookmark;
 
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
+
 import java.awt.event.KeyEvent;
 import java.util.*;
 
@@ -166,8 +169,8 @@ public class BookmarkPlugin extends ProgramPlugin
 			}
 		};
 		icon = new GIcon("icon.plugin.bookmark.select");
-		selectionAction.setPopupMenuData(
-			new MenuData(new String[] { "Select Bookmark Locations" }, icon));
+		selectionAction
+				.setPopupMenuData(new MenuData(new String[] { "Select Bookmark Locations" }, icon));
 		selectionAction.setToolBarData(new ToolBarData(icon));
 		selectionAction.setEnabled(true);
 		tool.addLocalAction(provider, selectionAction);
@@ -294,57 +297,45 @@ public class BookmarkPlugin extends ProgramPlugin
 	}
 
 	@Override
-	public synchronized void domainObjectChanged(DomainObjectChangedEvent ev) {
+	public synchronized void domainObjectChanged(DomainObjectChangedEvent event) {
 
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED) ||
-			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_MOVED) ||
-			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_REMOVED)) {
+		if (event.contains(RESTORED, MEMORY_BLOCK_MOVED, MEMORY_BLOCK_REMOVED)) {
 			scheduleUpdate(null);
 			provider.reload();
 			return;
 		}
+		if (!event.contains(BOOKMARK_REMOVED, BOOKMARK_ADDED, BOOKMARK_CHANGED, BOOKMARK_TYPE_ADDED,
+			BOOKMARK_TYPE_REMOVED)) {
+			return;
+		}
 
-		for (int i = 0; i < ev.numRecords(); i++) {
-			DomainObjectChangeRecord record = ev.getChangeRecord(i);
+		for (int i = 0; i < event.numRecords(); i++) {
+			DomainObjectChangeRecord record = event.getChangeRecord(i);
 
-			int eventType = record.getEventType();
-			if (!(record instanceof ProgramChangeRecord)) {
+			EventType eventType = record.getEventType();
+			if (!(record instanceof ProgramChangeRecord rec)) {
 				continue;
 			}
-			switch (eventType) {
-
-				case ChangeManager.DOCR_BOOKMARK_REMOVED: {
-					ProgramChangeRecord rec = (ProgramChangeRecord) ev.getChangeRecord(i);
-					Bookmark bookmark = (Bookmark) rec.getObject();
-					bookmarkRemoved(bookmark);
-					break;
+			if (eventType instanceof ProgramEvent ev) {
+				switch (ev) {
+					case BOOKMARK_REMOVED:
+						bookmarkRemoved((Bookmark) rec.getObject());
+						break;
+					case BOOKMARK_ADDED:
+						bookmarkAdded((Bookmark) rec.getObject());
+						break;
+					case BOOKMARK_CHANGED:
+						bookmarkChanged((Bookmark) rec.getObject());
+						break;
+					case BOOKMARK_TYPE_ADDED:
+						BookmarkType bookmarkType = (BookmarkType) rec.getObject();
+						if (bookmarkType != null) {
+							typeAdded(bookmarkType.getTypeString());
+						}
+						break;
+					default:
+						repaintMgr.update();
 				}
-
-				case ChangeManager.DOCR_BOOKMARK_ADDED: {
-					ProgramChangeRecord rec = (ProgramChangeRecord) ev.getChangeRecord(i);
-					Bookmark bookmark = (Bookmark) rec.getObject();
-					bookmarkAdded(bookmark);
-					break;
-				}
-
-				case ChangeManager.DOCR_BOOKMARK_CHANGED: {
-					ProgramChangeRecord rec = (ProgramChangeRecord) ev.getChangeRecord(i);
-					Bookmark bookmark = (Bookmark) rec.getObject();
-					bookmarkChanged(bookmark);
-					break;
-				}
-
-				case ChangeManager.DOCR_BOOKMARK_TYPE_ADDED: {
-					ProgramChangeRecord rec = (ProgramChangeRecord) ev.getChangeRecord(i);
-					BookmarkType bookmarkType = (BookmarkType) rec.getObject();
-					if (bookmarkType != null) {
-						typeAdded(bookmarkType.getTypeString());
-					}
-					break;
-				}
-				default:
-					repaintMgr.update();
-
 			}
 		}
 	}

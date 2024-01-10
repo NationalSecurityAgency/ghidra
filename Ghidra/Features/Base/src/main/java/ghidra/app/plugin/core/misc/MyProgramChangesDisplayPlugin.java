@@ -141,8 +141,7 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 		checkInAction = new DockingAction("CheckIn", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
-				AppInfo.getFrontEndTool()
-						.checkIn(tool, currentProgram.getDomainFile());
+				AppInfo.getFrontEndTool().checkIn(tool, currentProgram.getDomainFile());
 			}
 
 			@Override
@@ -266,8 +265,7 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 	 */
 	private void updateChangeMarkers() {
 
-		Swing.assertSwingThread(
-			"Change markers must be manipulated on the Swing thread");
+		Swing.assertSwingThread("Change markers must be manipulated on the Swing thread");
 
 		if (currentProgram == null) {
 			return;
@@ -276,30 +274,28 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 		ProgramChangeSet changeSet = currentProgram.getChanges();
 
 		if (programChangedLocally) {
-			currentMyChangeMarks.setAddressSetCollection(
-				changeSet.getAddressSetCollectionSinceLastSave());
+			currentMyChangeMarks
+					.setAddressSetCollection(changeSet.getAddressSetCollectionSinceLastSave());
 		}
 
 		if (isTrackingServerChanges()) {
 			if (programSaved) {
-				currentChangesSinceCheckoutMarks.setAddressSetCollection(
-					changeSet.getAddressSetCollectionSinceCheckout());
+				currentChangesSinceCheckoutMarks
+						.setAddressSetCollection(changeSet.getAddressSetCollectionSinceCheckout());
 			}
 
 			if (programChangedRemotely) {
-				currentOtherChangeMarks.setAddressSetCollection(
-					new SingleAddressSetCollection(otherChangeSet));
+				currentOtherChangeMarks
+						.setAddressSetCollection(new SingleAddressSetCollection(otherChangeSet));
 			}
 
 			// only update conflict markers when server changeSet changes or we end a transaction
 			if (programChangedRemotely || updateConflicts) {
-				AddressSet intersect =
-					changeSet.getAddressSetCollectionSinceCheckout()
-							.getCombinedAddressSet()
-							.intersect(
-								otherChangeSet);
-				currentConflictChangeMarks.setAddressSetCollection(
-					new SingleAddressSetCollection(intersect));
+				AddressSet intersect = changeSet.getAddressSetCollectionSinceCheckout()
+						.getCombinedAddressSet()
+						.intersect(otherChangeSet);
+				currentConflictChangeMarks
+						.setAddressSetCollection(new SingleAddressSetCollection(intersect));
 			}
 		}
 
@@ -355,7 +351,7 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
 		programChangedLocally = true;
-		if (ev.containsEvent(DomainObject.DO_OBJECT_SAVED)) {
+		if (ev.contains(DomainObjectEvent.SAVED)) {
 			programSaved = true;
 		}
 

@@ -54,9 +54,9 @@ public class DBTraceObjectBreakpointSpec
 		this.object = object;
 		TargetObjectSchema schema = object.getTargetSchema();
 		synchronized (KEYS_BY_SCHEMA) {
-			keys = KEYS_BY_SCHEMA.computeIfAbsent(schema, s -> Set.of(
-				schema.checkAliasedAttribute(TargetBreakpointSpec.KINDS_ATTRIBUTE_NAME),
-				schema.checkAliasedAttribute(TargetTogglable.ENABLED_ATTRIBUTE_NAME)));
+			keys = KEYS_BY_SCHEMA.computeIfAbsent(schema,
+				s -> Set.of(schema.checkAliasedAttribute(TargetBreakpointSpec.KINDS_ATTRIBUTE_NAME),
+					schema.checkAliasedAttribute(TargetTogglable.ENABLED_ATTRIBUTE_NAME)));
 		}
 	}
 
@@ -234,14 +234,16 @@ public class DBTraceObjectBreakpointSpec
 	@Override
 	public Collection<? extends TraceObjectBreakpointLocation> getLocations() {
 		try (LockHold hold = object.getTrace().lockRead()) {
-			return object.querySuccessorsInterface(getLifespan(),
-				TraceObjectBreakpointLocation.class, true).collect(Collectors.toSet());
+			return object
+					.querySuccessorsInterface(getLifespan(), TraceObjectBreakpointLocation.class,
+						true)
+					.collect(Collectors.toSet());
 		}
 	}
 
 	@Override
 	public TraceChangeRecord<?, ?> translateEvent(TraceChangeRecord<?, ?> rec) {
-		if (rec.getEventType() == TraceObjectChangeType.VALUE_CREATED.getType()) {
+		if (rec.getEventType() == TraceObjectChangeType.VALUE_CREATED.getEventType()) {
 			TraceChangeRecord<TraceObjectValue, Void> cast =
 				TraceObjectChangeType.VALUE_CREATED.cast(rec);
 			TraceObjectValue affected = cast.getAffectedObject();

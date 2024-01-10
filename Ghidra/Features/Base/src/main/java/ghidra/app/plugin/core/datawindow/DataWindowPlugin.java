@@ -15,6 +15,9 @@
  */
 package ghidra.app.plugin.core.datawindow;
 
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -26,7 +29,8 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.services.GoToService;
 import ghidra.app.services.ProgramTreeService;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainObjectChangedEvent;
+import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -36,7 +40,8 @@ import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.*;
+import ghidra.program.util.ProgramChangeRecord;
+import ghidra.program.util.ProgramSelection;
 import ghidra.util.table.SelectionNavigationAction;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
 import ghidra.util.task.SwingUpdateManager;
@@ -93,37 +98,27 @@ public class DataWindowPlugin extends ProgramPlugin implements DomainObjectListe
 
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
+		if (ev.contains(RESTORED)) {
 			resetTypes();
 			reload();
 			return;
 		}
-		if (ev.containsEvent(ChangeManager.DOCR_DATA_TYPE_ADDED) ||
-			ev.containsEvent(ChangeManager.DOCR_DATA_TYPE_CHANGED) ||
-			ev.containsEvent(ChangeManager.DOCR_DATA_TYPE_MOVED) ||
-			ev.containsEvent(ChangeManager.DOCR_DATA_TYPE_RENAMED) ||
-			ev.containsEvent(ChangeManager.DOCR_DATA_TYPE_REPLACED) ||
-			ev.containsEvent(ChangeManager.DOCR_DATA_TYPE_SETTING_CHANGED)) {
+
+		if (ev.contains(DATA_TYPE_ADDED, DATA_TYPE_CHANGED, DATA_TYPE_MOVED, DATA_TYPE_RENAMED,
+			DATA_TYPE_REPLACED, DATA_TYPE_SETTING_CHANGED)) {
 			resetTypes();
 		}
-		if (ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_MOVED) ||
-			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_REMOVED) ||
-			ev.containsEvent(ChangeManager.DOCR_CODE_REMOVED)) {
+
+		if (ev.contains(MEMORY_BLOCK_MOVED, MEMORY_BLOCK_REMOVED, CODE_REMOVED)) {
 			reload();
 			return;  // if we are going to reload, no need to check for data additions.
 		}
-		if (ev.containsEvent(ChangeManager.DOCR_CODE_ADDED)) {
-			for (int i = 0; i < ev.numRecords(); ++i) {
-				DomainObjectChangeRecord doRecord = ev.getChangeRecord(i);
-				int eventType = doRecord.getEventType();
-				if (eventType == ChangeManager.DOCR_CODE_ADDED) {
-					ProgramChangeRecord rec = (ProgramChangeRecord) doRecord;
-					if (rec.getNewValue() instanceof Data) {
-						provider.dataAdded(rec.getStart());
-					}
-				}
+
+		ev.forEach(CODE_ADDED, rec -> {
+			if (rec.getNewValue() instanceof Data) {
+				provider.dataAdded(((ProgramChangeRecord) rec).getStart());
 			}
-		}
+		});
 	}
 
 	void reload() {

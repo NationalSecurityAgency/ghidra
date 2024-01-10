@@ -289,48 +289,44 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (!(ev.getSource() instanceof Program)) {
+		if (!(ev.getSource() instanceof Program program)) {
 			return;
 		}
 
-		Program program = (Program) ev.getSource();
-		if (ev.containsEvent(DomainObject.DO_DOMAIN_FILE_CHANGED) ||
-			ev.containsEvent(DomainObject.DO_OBJECT_ERROR)) {
-			for (int i = 0; i < ev.numRecords(); i++) {
-				DomainObjectChangeRecord docr = ev.getChangeRecord(i);
-				int eventType = docr.getEventType();
-				if (eventType == DomainObject.DO_DOMAIN_FILE_CHANGED) {
-					ProgramInfo info = getInfo(program);
-					if (info != null) {
-						info.programSavedAs(); // updates info to new domain file
-					}
-					if (currentInfo != null && currentInfo.program == program) {
-						String name = program.getDomainFile().toString();
-						tool.setSubTitle(name);
-					}
-				}
-				else if (eventType == DomainObject.DO_OBJECT_ERROR) {
-					String msg;
-					Throwable t = (Throwable) docr.getNewValue();
-					if (t instanceof NoSuchObjectException) {
-						msg = program.getName() + " was closed due to an unrecoverable error!" +
-							"\nThis error could be the result of your computer becoming suspended" +
-							"\nor sleeping allowing the network connection with the Ghidra Server" +
-							"\nto fail.";
-					}
-					else {
-						msg = program.getName() + " was closed due to an unrecoverable error!" +
-							"\n \nSuch failures are generally due to an IO Error caused" +
-							"\nby the local filesystem or server.";
-					}
+		ev.forEach(DomainObjectEvent.FILE_CHANGED, r -> {
+			ProgramInfo info = getInfo(program);
+			if (info != null) {
+				info.programSavedAs(); // updates info to new domain file
+			}
+			if (currentInfo != null && currentInfo.program == program) {
+				String name = program.getDomainFile().toString();
+				tool.setSubTitle(name);
+			}
+		});
 
+		if (ev.contains(DomainObjectEvent.ERROR)) {
+			for (DomainObjectChangeRecord docr : ev) {
+				EventType eventType = docr.getEventType();
+				if (eventType == DomainObjectEvent.ERROR) {
+					String msg = getErrorMessage(program, (Throwable) docr.getNewValue());
 					Msg.showError(this, tool.getToolFrame(), "Severe Error Condition", msg);
 					removeProgram(program);
 					return;
 				}
-
 			}
 		}
+	}
+
+	private String getErrorMessage(Program program, Throwable t) {
+		if (t instanceof NoSuchObjectException) {
+			return program.getName() + " was closed due to an unrecoverable error!" +
+				"\nThis error could be the result of your computer becoming suspended" +
+				"\nor sleeping allowing the network connection with the Ghidra Server" +
+				"\nto fail.";
+		}
+		return program.getName() + " was closed due to an unrecoverable error!" +
+			"\n \nSuch failures are generally due to an IO Error caused" +
+			"\nby the local filesystem or server.";
 	}
 
 	public boolean isEmpty() {

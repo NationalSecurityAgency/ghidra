@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.calltree;
 
+import static ghidra.framework.model.DomainObjectEvent.*;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
@@ -1052,39 +1054,42 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 			return; // nothing to update
 		}
 
-		if (event.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
+		if (event.contains(RESTORED)) {
 			setStale(true);
 			return;
 		}
 
 		for (int i = 0; i < event.numRecords(); i++) {
 			DomainObjectChangeRecord domainObjectRecord = event.getChangeRecord(i);
-			int eventType = domainObjectRecord.getEventType();
-
-			switch (eventType) {
-				case ChangeManager.DOCR_MEMORY_BLOCK_MOVED:
-				case ChangeManager.DOCR_MEMORY_BLOCK_REMOVED:
-				case ChangeManager.DOCR_SYMBOL_ADDED:
-				case ChangeManager.DOCR_SYMBOL_REMOVED:
-				case ChangeManager.DOCR_MEM_REFERENCE_ADDED:
-				case ChangeManager.DOCR_MEM_REFERENCE_REMOVED:
-					setStale(true);
-					break;
-				case ChangeManager.DOCR_SYMBOL_RENAMED:
-					Symbol symbol = (Symbol) ((ProgramChangeRecord) domainObjectRecord).getObject();
-					if (!(symbol instanceof FunctionSymbol)) {
+			EventType eventType = domainObjectRecord.getEventType();
+			if (eventType instanceof ProgramEvent type) {
+				switch (type) {
+					case MEMORY_BLOCK_MOVED:
+					case MEMORY_BLOCK_REMOVED:
+					case SYMBOL_ADDED:
+					case SYMBOL_REMOVED:
+					case REFERENCE_ADDED:
+					case REFERENCE_REMOVED:
+						setStale(true);
 						break;
-					}
+					case SYMBOL_RENAMED:
+						Symbol symbol =
+							(Symbol) ((ProgramChangeRecord) domainObjectRecord).getObject();
+						if (!(symbol instanceof FunctionSymbol)) {
+							break;
+						}
 
-					FunctionSymbol functionSymbol = (FunctionSymbol) symbol;
-					Function function = (Function) functionSymbol.getObject();
-					if (updateRootNodes(function)) {
-						return; // the entire tree will be rebuilt
-					}
+						FunctionSymbol functionSymbol = (FunctionSymbol) symbol;
+						Function function = (Function) functionSymbol.getObject();
+						if (updateRootNodes(function)) {
+							return; // the entire tree will be rebuilt
+						}
 
-					incomingTree.runTask(new UpdateFunctionNodeTask(incomingTree, function));
-					outgoingTree.runTask(new UpdateFunctionNodeTask(outgoingTree, function));
-					break;
+						incomingTree.runTask(new UpdateFunctionNodeTask(incomingTree, function));
+						outgoingTree.runTask(new UpdateFunctionNodeTask(outgoingTree, function));
+						break;
+					default:
+				}
 			}
 		}
 	}

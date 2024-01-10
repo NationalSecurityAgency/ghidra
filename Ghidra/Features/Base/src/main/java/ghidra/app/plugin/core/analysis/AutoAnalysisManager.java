@@ -346,21 +346,6 @@ public class AutoAnalysisManager implements DomainObjectListener {
 		debugOn = b;
 	}
 
-	private boolean isFunctionModifierChange(ProgramChangeRecord functionChangeRecord) {
-		int subType = functionChangeRecord.getSubEventType();
-		return subType == ChangeManager.FUNCTION_CHANGED_THUNK ||
-			subType == ChangeManager.FUNCTION_CHANGED_INLINE ||
-			subType == ChangeManager.FUNCTION_CHANGED_NORETURN ||
-			subType == ChangeManager.FUNCTION_CHANGED_CALL_FIXUP ||
-			subType == ChangeManager.FUNCTION_CHANGED_PURGE;
-	}
-
-	private boolean isFunctionSignatureChange(ProgramChangeRecord functionChangeRecord) {
-		int subType = functionChangeRecord.getSubEventType();
-		return subType == ChangeManager.FUNCTION_CHANGED_PARAMETERS ||
-			subType == ChangeManager.FUNCTION_CHANGED_RETURN;
-	}
-
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
 		if (program == null) {
@@ -380,97 +365,97 @@ public class AutoAnalysisManager implements DomainObjectListener {
 		boolean optionsChanged = false;
 		for (int i = 0; i < eventCnt; ++i) {
 			DomainObjectChangeRecord doRecord = ev.getChangeRecord(i);
-			if (doRecord.getEventType() == ChangeManager.DOCR_LANGUAGE_CHANGED) {
+			if (doRecord.getEventType() == ProgramEvent.LANGUAGE_CHANGED) {
 				initializeAnalyzers();
 			}
-
-			int eventType = doRecord.getEventType();
-			ProgramChangeRecord pcr;
-
-			switch (eventType) {
-				case DomainObject.DO_OBJECT_RESTORED:
-				case DomainObject.DO_PROPERTY_CHANGED:
-					if (!optionsChanged) {
-						initializeOptions();
-						Preferences.store();
-						optionsChanged = true;
-					}
-					break;
-				// TODO: Add Symbol analyzer type
-//				case ChangeManager.DOCR_SYMBOL_ADDED:
-//				case ChangeManager.DOCR_SYMBOL_RENAMED:
-//					pcr = (ProgramChangeRecord) doRecord;
-//					// if a function is created using the current name, don't throw symbol added/renamed
-//					// split variable changed/added from SYMBOL added - change record is already different
-//					if (pcr.getObject() != null && pcr.getObject() instanceof VariableSymbolDB) {
+			EventType eventType = doRecord.getEventType();
+			if (eventType == DomainObjectEvent.RESTORED ||
+				eventType == DomainObjectEvent.PROPERTY_CHANGED) {
+				if (!optionsChanged) {
+					initializeOptions();
+					Preferences.store();
+					optionsChanged = true;
+				}
+			}
+			else if (eventType instanceof ProgramEvent pe) {
+				ProgramChangeRecord pcr = (ProgramChangeRecord) doRecord;
+				switch (pe) {
+					case FUNCTION_CHANGED:
+						FunctionChangeRecord fcr = (FunctionChangeRecord) doRecord;
+						Address entry = fcr.getFunction().getEntryPoint();
+						if (fcr.isFunctionSignatureChange()) {
+							functionSignatureChanged(entry);
+						}
+						else if (fcr.isFunctionModifierChange()) {
+							functionModifierChanged(entry);
+						}
+						break;
+					case FUNCTION_ADDED:
+					case FUNCTION_BODY_CHANGED:
+						Function func = (Function) pcr.getObject();
+						if (!func.isExternal()) {
+							functionDefined(func.getEntryPoint());
+						}
+						break;
+					case FUNCTION_REMOVED:
+						Address oldEntry = pcr.getStart();
+						functionTasks.notifyRemoved(oldEntry);
+						break;
+					case FALLTHROUGH_CHANGED:
+					case FLOW_OVERRIDE_CHANGED:
+					case LENGTH_OVERRIDE_CHANGED:
+						// TODO: not sure if this should be done this way or explicitly
+						// via the application commands (this is inconsistent with other
+						// codeDefined cases which do not rely on change events (e.g., disassembly)
+						codeDefined(new AddressSet(pcr.getStart()));
+						break;
+					// FIXME: must resolve cyclic issues before this can be done
+//					case MEM_REFERENCE_ADDED:
+//						// Allow high-priority reference-driven code analyzers a
+//						// shot at processing computed flows determined during
+//						// constant propagation.
+//						pcr = (ProgramChangeRecord) doRecord;
+//						Reference ref = (Reference) pcr.getNewValue();
+//						RefType refType = ref.getReferenceType();
+//						if (refType.isComputed()) {
+//							codeDefined(ref.getFromAddress());
+//						}
 //						break;
-//					}
-//					Symbol sym = null;
-//					Object newValue = pcr.getNewValue();
-//					if (newValue != null && newValue instanceof Symbol) {
-//						sym = (Symbol) newValue;
-//					} else if (pcr.getObject() != null && pcr.getObject() instanceof Symbol) {
-//						sym = (Symbol) pcr.getObject();
-//					}
-//					if (sym == null) {
-//						break;
-//					}
-//					SymbolType symbolType = sym.getSymbolType();
-//					if ((symbolType == SymbolType.CODE || symbolType == SymbolType.FUNCTION) && sym.getSource() != SourceType.DEFAULT) {
-//						symbolTasks.notifyAdded(sym.getAddress());
-//					}
-//					break;
-				case ChangeManager.DOCR_FUNCTION_CHANGED:
-					pcr = (ProgramChangeRecord) doRecord;
-					Function func = (Function) pcr.getObject();
-					if (isFunctionSignatureChange(pcr)) {
-						functionSignatureChanged(func.getEntryPoint());
-					}
-					else if (isFunctionModifierChange(pcr)) {
-						functionModifierChanged(func.getEntryPoint());
-					}
-					break;
-				case ChangeManager.DOCR_FUNCTION_ADDED:
-				case ChangeManager.DOCR_FUNCTION_BODY_CHANGED:
-					pcr = (ProgramChangeRecord) doRecord;
-					func = (Function) pcr.getObject();
-					if (!func.isExternal()) {
-						functionDefined(func.getEntryPoint());
-					}
-					break;
-				case ChangeManager.DOCR_FUNCTION_REMOVED:
-					pcr = (ProgramChangeRecord) doRecord;
-					Address oldEntry = pcr.getStart();
-					functionTasks.notifyRemoved(oldEntry);
-					break;
-				case ChangeManager.DOCR_FALLTHROUGH_CHANGED:
-				case ChangeManager.DOCR_FLOWOVERRIDE_CHANGED:
-				case ChangeManager.DOCR_LENGTH_OVERRIDE_CHANGED:
-					// TODO: not sure if this should be done this way or explicitly
-					// via the application commands (this is inconsistent with other
-					// codeDefined cases which do not rely on change events (e.g., disassembly)
-					pcr = (ProgramChangeRecord) doRecord;
-					codeDefined(new AddressSet(pcr.getStart()));
-					break;
-// FIXME: must resolve cyclic issues before this can be done
-//				case ChangeManager.DOCR_MEM_REFERENCE_ADDED:
-//					// Allow high-priority reference-driven code analyzers a
-//					// shot at processing computed flows determined during
-//					// constant propagation.
-//					pcr = (ProgramChangeRecord) doRecord;
-//					Reference ref = (Reference) pcr.getNewValue();
-//					RefType refType = ref.getReferenceType();
-//					if (refType.isComputed()) {
-//						codeDefined(ref.getFromAddress());
-//					}
-//					break;
-				case ChangeManager.DOCR_CODE_ADDED:
-					pcr = (ProgramChangeRecord) doRecord;
-					if (pcr.getNewValue() instanceof Data) {
-						AddressSet addressSet = new AddressSet(pcr.getStart(), pcr.getEnd());
-						dataDefined(addressSet);
-					}
-					break;
+					case CODE_ADDED:
+						if (pcr.getNewValue() instanceof Data) {
+							AddressSet addressSet = new AddressSet(pcr.getStart(), pcr.getEnd());
+							dataDefined(addressSet);
+						}
+						break;
+					// TODO: Add Symbol analyzer type
+//						case SYMBOL_ADDED:
+//						case SYMBOL_RENAMED:
+//							pcr = (ProgramChangeRecord) doRecord;
+//							// if a function is created using the current name, don't throw symbol added/renamed
+//							// split variable changed/added from SYMBOL added - change record is already different
+//							if (pcr.getObject() != null &&
+//								pcr.getObject() instanceof VariableSymbolDB) {
+//								break;
+//							}
+//							Symbol sym = null;
+//							Object newValue = pcr.getNewValue();
+//							if (newValue != null && newValue instanceof Symbol) {
+//								sym = (Symbol) newValue;
+//							}
+//							else if (pcr.getObject() != null && pcr.getObject() instanceof Symbol) {
+//								sym = (Symbol) pcr.getObject();
+//							}
+//							if (sym == null) {
+//								break;
+//							}
+//							SymbolType symbolType = sym.getSymbolType();
+//							if ((symbolType == SymbolType.CODE || symbolType == SymbolType.FUNCTION) &&
+//								sym.getSource() != SourceType.DEFAULT) {
+//								symbolTasks.notifyAdded(sym.getAddress());
+//							}
+//							break;
+					default:
+				}
 			}
 		}
 	}

@@ -156,7 +156,7 @@ public abstract class DomainObjectAdapter implements DomainObject {
 			name = newName;
 			changed = true;
 		}
-		fireEvent(new DomainObjectChangeRecord(DO_OBJECT_RENAMED));
+		fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.RENAMED));
 	}
 
 	private void clearDomainObj() {
@@ -195,7 +195,7 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		clearDomainObj();
 		DomainFile oldDf = domainFile;
 		domainFile = df;
-		fireEvent(new DomainObjectChangeRecord(DO_DOMAIN_FILE_CHANGED, oldDf, df));
+		fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.FILE_CHANGED, oldDf, df));
 		fileChangeListeners.invoke().domainFileChanged(this);
 
 	}
@@ -314,7 +314,8 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		if (eventsEnabled != v) {
 			eventsEnabled = v;
 			if (eventsEnabled) {
-				DomainObjectChangeRecord docr = new DomainObjectChangeRecord(DO_OBJECT_RESTORED);
+				DomainObjectChangeRecord docr =
+					new DomainObjectChangeRecord(DomainObjectEvent.RESTORED);
 				docs.fireEvent(docr);
 				for (DomainObjectChangeSupport queue : changeSupportMap.values()) {
 					queue.fireEvent(docr);

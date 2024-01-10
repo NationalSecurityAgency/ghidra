@@ -15,6 +15,9 @@
  */
 package ghidra.app.plugin.core.symtable;
 
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
+
 import java.awt.Cursor;
 import java.awt.event.KeyEvent;
 
@@ -39,8 +42,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
-import ghidra.program.util.ChangeManager;
 import ghidra.program.util.ProgramChangeRecord;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.SelectionNavigationAction;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
@@ -209,10 +212,7 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 			return;
 		}
 
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED) ||
-			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_ADDED) ||
-			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_REMOVED)) {
-
+		if (ev.contains(RESTORED, MEMORY_BLOCK_ADDED, MEMORY_BLOCK_REMOVED)) {
 			reload();
 			return;
 		}
@@ -221,81 +221,82 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 		for (int i = 0; i < eventCnt; ++i) {
 			DomainObjectChangeRecord doRecord = ev.getChangeRecord(i);
 
-			int eventType = doRecord.getEventType();
-			if (!(doRecord instanceof ProgramChangeRecord)) {
+			EventType eventType = doRecord.getEventType();
+			if (!(doRecord instanceof ProgramChangeRecord rec)) {
 				continue;
 			}
+			if (eventType instanceof ProgramEvent type) {
+				switch (type) {
+					case CODE_ADDED:
+					case CODE_REMOVED:
+						if (rec.getNewValue() instanceof Data) {
+							domainObjectWorker.schedule(
+								new CodeAddedRemoveJob(currentProgram, rec.getStart()));
+						}
+						break;
 
-			ProgramChangeRecord rec = (ProgramChangeRecord) doRecord;
-			switch (eventType) {
-				case ChangeManager.DOCR_CODE_ADDED:
-				case ChangeManager.DOCR_CODE_REMOVED:
-					if (rec.getNewValue() instanceof Data) {
+					case SYMBOL_ADDED:
+						// NOTE: DOCR_SYMBOL_ADDED events are never generated for reference-based 
+						// dynamic label symbols.  Reference events must be used to check for existence 
+						// of a dynamic label symbol.
+						Symbol symbol = (Symbol) rec.getNewValue();
+						domainObjectWorker.schedule(new SymbolAddedJob(currentProgram, symbol));
+						break;
+
+					case SYMBOL_REMOVED:
+
+						Address removeAddr = rec.getStart();
+						Long symbolID = (Long) rec.getNewValue();
+						domainObjectWorker.schedule(
+							new SymbolRemovedJob(currentProgram, removeAddr, symbolID));
+						break;
+
+					case SYMBOL_RENAMED:
+					case SYMBOL_SCOPE_CHANGED:
+					case SYMBOL_DATA_CHANGED:
+
+						symbol = (Symbol) rec.getObject();
+						domainObjectWorker.schedule(new SymbolChangedJob(currentProgram, symbol));
+						break;
+
+					case SYMBOL_SOURCE_CHANGED:
+
+						symbol = (Symbol) rec.getObject();
 						domainObjectWorker
-								.schedule(new CodeAddedRemoveJob(currentProgram, rec.getStart()));
-					}
-					break;
+								.schedule(new SymbolSourceChangedJob(currentProgram, symbol));
+						break;
 
-				case ChangeManager.DOCR_SYMBOL_ADDED:
-					// NOTE: DOCR_SYMBOL_ADDED events are never generated for reference-based 
-					// dynamic label symbols.  Reference events must be used to check for existence 
-					// of a dynamic label symbol.
-					Symbol symbol = (Symbol) rec.getNewValue();
-					domainObjectWorker.schedule(new SymbolAddedJob(currentProgram, symbol));
-					break;
+					case SYMBOL_PRIMARY_STATE_CHANGED:
 
-				case ChangeManager.DOCR_SYMBOL_REMOVED:
+						symbol = (Symbol) rec.getNewValue();
+						Symbol oldPrimarySymbol = (Symbol) rec.getOldValue();
+						domainObjectWorker.schedule(
+							new SymbolSetAsPrimaryJob(currentProgram, symbol, oldPrimarySymbol));
+						break;
 
-					Address removeAddr = rec.getStart();
-					Long symbolID = (Long) rec.getNewValue();
-					domainObjectWorker
-							.schedule(new SymbolRemovedJob(currentProgram, removeAddr, symbolID));
-					break;
+					case SYMBOL_ASSOCIATION_ADDED:
+					case SYMBOL_ASSOCIATION_REMOVED:
+						break;
+					case REFERENCE_ADDED:
 
-				case ChangeManager.DOCR_SYMBOL_RENAMED:
-				case ChangeManager.DOCR_SYMBOL_SCOPE_CHANGED:
-				case ChangeManager.DOCR_SYMBOL_DATA_CHANGED:
+						Reference ref = (Reference) rec.getObject();
+						domainObjectWorker.schedule(new ReferenceAddedJob(currentProgram, ref));
+						break;
 
-					symbol = (Symbol) rec.getObject();
-					domainObjectWorker.schedule(new SymbolChangedJob(currentProgram, symbol));
-					break;
+					case REFERENCE_REMOVED:
 
-				case ChangeManager.DOCR_SYMBOL_SOURCE_CHANGED:
+						ref = (Reference) rec.getObject();
+						domainObjectWorker.schedule(new ReferenceRemovedJob(currentProgram, ref));
+						break;
 
-					symbol = (Symbol) rec.getObject();
-					domainObjectWorker.schedule(new SymbolSourceChangedJob(currentProgram, symbol));
-					break;
+					case EXTERNAL_ENTRY_ADDED:
+					case EXTERNAL_ENTRY_REMOVED:
 
-				case ChangeManager.DOCR_SYMBOL_SET_AS_PRIMARY:
-
-					symbol = (Symbol) rec.getNewValue();
-					Symbol oldPrimarySymbol = (Symbol) rec.getOldValue();
-					domainObjectWorker.schedule(
-						new SymbolSetAsPrimaryJob(currentProgram, symbol, oldPrimarySymbol));
-					break;
-
-				case ChangeManager.DOCR_SYMBOL_ASSOCIATION_ADDED:
-				case ChangeManager.DOCR_SYMBOL_ASSOCIATION_REMOVED:
-					break;
-				case ChangeManager.DOCR_MEM_REFERENCE_ADDED:
-
-					Reference ref = (Reference) rec.getObject();
-					domainObjectWorker.schedule(new ReferenceAddedJob(currentProgram, ref));
-					break;
-
-				case ChangeManager.DOCR_MEM_REFERENCE_REMOVED:
-
-					ref = (Reference) rec.getObject();
-					domainObjectWorker.schedule(new ReferenceRemovedJob(currentProgram, ref));
-					break;
-
-				case ChangeManager.DOCR_EXTERNAL_ENTRY_POINT_ADDED:
-				case ChangeManager.DOCR_EXTERNAL_ENTRY_POINT_REMOVED:
-
-					Address address = rec.getStart();
-					domainObjectWorker
-							.schedule(new ExternalEntryChangedJob(currentProgram, address));
-					break;
+						Address address = rec.getStart();
+						domainObjectWorker
+								.schedule(new ExternalEntryChangedJob(currentProgram, address));
+						break;
+				}
 			}
 		}
 	}
@@ -466,9 +467,8 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 		};
 		instructionsFromAction.setDescription("Instructions From");
 		instructionsFromAction.setSelected(false);
-		instructionsFromAction
-				.setToolBarData(
-					new ToolBarData(new GIcon("icon.plugin.symboltable.instructions.from"), null));
+		instructionsFromAction.setToolBarData(
+			new ToolBarData(new GIcon("icon.plugin.symboltable.instructions.from"), null));
 
 		tool.addLocalAction(refProvider, instructionsFromAction);
 
@@ -490,9 +490,8 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 		};
 		dataFromAction.setDescription("Data From");
 		dataFromAction.setSelected(false);
-		dataFromAction
-				.setToolBarData(
-					new ToolBarData(new GIcon("icon.plugin.symboltable.data.from"), null));
+		dataFromAction.setToolBarData(
+			new ToolBarData(new GIcon("icon.plugin.symboltable.data.from"), null));
 
 		tool.addLocalAction(refProvider, dataFromAction);
 	}

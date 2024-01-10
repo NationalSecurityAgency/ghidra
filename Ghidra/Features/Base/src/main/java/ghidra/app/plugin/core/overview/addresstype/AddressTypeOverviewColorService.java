@@ -33,8 +33,8 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.Reference;
-import ghidra.program.util.ChangeManager;
 import ghidra.program.util.ProgramChangeRecord;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.HelpLocation;
 
@@ -280,8 +280,7 @@ public class AddressTypeOverviewColorService
 		HelpLocation help = new HelpLocation(OverviewColorPlugin.HELP_TOPIC, "OverviewOptions");
 
 		options.registerThemeColorBinding("Instruction Color", DEFAULT_INSTRUCTION_COLOR.getId(),
-			help,
-			"Color for instructions");
+			help, "Color for instructions");
 		options.registerThemeColorBinding("Data Color", DEFAULT_DATA_COLOR.getId(), help,
 			"Color for data");
 		options.registerThemeColorBinding("Function Color", DEFAULT_FUNCTION_COLOR.getId(), help,
@@ -289,11 +288,9 @@ public class AddressTypeOverviewColorService
 		options.registerThemeColorBinding("Undefined Color", DEFAULT_UNDEFINED_COLOR.getId(), help,
 			"Color for undefined bytes");
 		options.registerThemeColorBinding("Uninitialized Color",
-			DEFAULT_UNINITIALIZED_COLOR.getId(), help,
-			"Color for uninitialize memory");
+			DEFAULT_UNINITIALIZED_COLOR.getId(), help, "Color for uninitialize memory");
 		options.registerThemeColorBinding("External Reference Color",
-			DEFAULT_EXTERNAL_REF_COLOR.getId(), help,
-			"Color for external references");
+			DEFAULT_EXTERNAL_REF_COLOR.getId(), help, "Color for external references");
 	}
 
 	@Override
@@ -312,16 +309,16 @@ public class AddressTypeOverviewColorService
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
 		for (int i = 0; i < ev.numRecords(); i++) {
 			DomainObjectChangeRecord doRecord = ev.getChangeRecord(i);
-			int eventType = doRecord.getEventType();
+			EventType eventType = doRecord.getEventType();
 
-			if (eventType == ChangeManager.DOCR_FUNCTION_ADDED) {
+			if (eventType == ProgramEvent.FUNCTION_ADDED) {
 				ProgramChangeRecord record = (ProgramChangeRecord) doRecord;
 				Function function = (Function) record.getObject();
 				AddressSetView addresses = function.getBody();
 				overviewComponent.refresh(addresses.getMinAddress(), addresses.getMaxAddress());
 			}
 
-			else if (eventType == ChangeManager.DOCR_FUNCTION_REMOVED) {
+			else if (eventType == ProgramEvent.FUNCTION_REMOVED) {
 				AddressSetView addresses = (AddressSetView) doRecord.getOldValue();
 				overviewComponent.refresh(addresses.getMinAddress(), addresses.getMaxAddress());
 			}

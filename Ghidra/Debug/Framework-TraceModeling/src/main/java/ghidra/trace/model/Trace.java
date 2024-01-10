@@ -74,8 +74,7 @@ public interface Trace extends DataTypeManagerDomainObject {
 		return trace != null && trace.getObjectManager().getRootSchema() == null;
 	}
 
-	public static final class TraceObjectChangeType<T, U>
-			extends DefaultTraceChangeType<T, U> {
+	public static final class TraceObjectChangeType<T, U> extends DefaultTraceChangeType<T, U> {
 		/**
 		 * An object was created, but not yet inserted.
 		 * 
