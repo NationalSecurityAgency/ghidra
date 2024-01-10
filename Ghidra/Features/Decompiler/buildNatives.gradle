@@ -26,7 +26,6 @@ if (findProject(':Generic') == null) {
  * Define the "native build model" for building the decompiler executables.
  */
 model {
-	
 	// Define the source files that are compiled and linked to become the decompiler.
 	// The decompiler source is a bit weird in that all the cpp and headers all live in
 	// the same directory with other files that are not used by the decompiler.
@@ -174,6 +173,8 @@ model {
 						include "slghpattern.cc"
 						include "semantics.cc"
 						include "context.cc"
+						include "slaformat.cc"
+						include "compression.cc"
 						include "filemanage.cc"
 						include "slgh_compile.cc"
 						
@@ -188,7 +189,27 @@ model {
 						srcDir "src/decompile/cpp"
 					}
 				} // end cpp
+				
+				if (isCurrentWindows()) {
+					c {
+						source {
+							srcDir "src/decompile/zlib"
+							include "*.c"
+						}
+					}
+				}
 			} // end sources (sleigh)
+			
+			binaries {
+				all{ b ->
+					if (b.toolChain in Gcc || b.toolChain in Clang) {
+						b.linker.args "-lz"
+					}
+					else {
+						b.cppCompiler.define "LOCAL_ZLIB"
+					}
+				}
+			} // end binaries.all (sleigh)
 		} // end sleigh
 		
 	}  // end components
@@ -223,7 +244,15 @@ model {
 						b.cppCompiler.define "WIN64"
 						b.cppCompiler.define "_WIN64"
 					}	
-				}	
+				}
+				b.cCompiler.args "/W3"
+				b.cCompiler.args "/O2"
+				b.cCompiler.args "/Oy"			// Omit frame pointer
+				b.cCompiler.define "_CRT_SECURE_NO_DEPRECATE"
+				b.cCompiler.define "_CRT_NONSTDC_NO_DEPRECATE"
+				b.cCompiler.define "WIN64"
+				b.cCompiler.define "ZLIB_WINAPI"
+				b.cCompiler.define "NO_GZIP"
 			}
 			else if (b.toolChain in Clang) {
 				b.cppCompiler.args "-std=c++11"

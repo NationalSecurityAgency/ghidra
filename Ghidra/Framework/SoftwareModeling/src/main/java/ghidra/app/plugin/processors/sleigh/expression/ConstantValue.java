@@ -19,19 +19,17 @@
  */
 package ghidra.app.plugin.processors.sleigh.expression;
 
+import static ghidra.pcode.utils.SlaFormat.*;
+
 import ghidra.app.plugin.processors.sleigh.ParserWalker;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 /**
- * 
- *
  * A constant value associated with an alwaysTrue pattern
  */
-
 public class ConstantValue extends PatternValue {
 
 	private long val;			// The constant value
@@ -61,25 +59,16 @@ public class ConstantValue extends PatternValue {
 		val = b;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.expression.PatternValue#minValue()
-	 */
 	@Override
 	public long minValue() {
 		return val;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.expression.PatternValue#maxValue()
-	 */
 	@Override
 	public long maxValue() {
 		return val;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.expression.PatternExpression#getValue(ghidra.app.plugin.processors.sleigh.ParserWalker)
-	 */
 	@Override
 	public long getValue(ParserWalker walker) throws MemoryAccessException {
 		return val;
@@ -89,14 +78,11 @@ public class ConstantValue extends PatternValue {
 		return val;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.PatternExpression#restoreXml(org.jdom.Element)
-	 */
 	@Override
-	public void restoreXml(XmlPullParser parser, SleighLanguage lang) {
-		XmlElement el = parser.start("intb");
-		val = SpecXmlUtils.decodeLong(el.getAttribute("val"));
-		parser.end(el);
+	public void decode(Decoder decoder, SleighLanguage lang) throws DecoderException {
+		int el = decoder.openElement(ELEM_INTB);
+		val = decoder.readSignedInteger(ATTRIB_VAL);
+		decoder.closeElement(el);
 	}
 
 	@Override

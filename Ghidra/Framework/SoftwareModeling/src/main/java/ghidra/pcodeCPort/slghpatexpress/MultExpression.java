@@ -15,17 +15,20 @@
  */
 package ghidra.pcodeCPort.slghpatexpress;
 
-import java.io.PrintStream;
+import static ghidra.pcode.utils.SlaFormat.*;
+
+import java.io.IOException;
 
 import generic.stl.VectorSTL;
 import ghidra.pcodeCPort.utils.MutableInt;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.Location;
 
 public class MultExpression extends BinaryExpression {
 
 	public MultExpression(Location location) {
 		super(location);
-	}	// For use with restoreXml
+	}
 
 	public MultExpression(Location location, PatternExpression l, PatternExpression r) {
 		super(location, l, r);
@@ -39,10 +42,10 @@ public class MultExpression extends BinaryExpression {
 	}
 
 	@Override
-	public void saveXml(PrintStream s) {
-		s.append("<mult_exp>\n");
-		super.saveXml(s);
-		s.append("</mult_exp>\n");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_MULT_EXP);
+		super.encode(encoder);
+		encoder.closeElement(ELEM_MULT_EXP);
 	}
 
 }

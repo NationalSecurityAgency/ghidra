@@ -290,39 +290,6 @@ void ConstTpl::transfer(const vector<HandleTpl *> &params)
   }
 }
 
-void ConstTpl::printHandleSelector(ostream &s,v_field val)
-
-{
-  switch(val) {
-  case v_space:
-    s << "space";
-    break;
-  case v_offset:
-    s << "offset";
-    break;
-  case v_size:
-    s << "size";
-    break;
-  case v_offset_plus:
-    s << "offset_plus";
-    break;
-  }
-}
-
-ConstTpl::v_field ConstTpl::readHandleSelector(const string &name)
-
-{
-  if (name == "space")
-    return v_space;
-  if (name == "offset")
-    return v_offset;
-  if (name == "size")
-    return v_size;
-  if (name == "offset_plus")
-    return v_offset_plus;
-  throw LowlevelError("Bad handle selector");
-}
-
 void ConstTpl::changeHandleIndex(const vector<int4> &handmap)
 
 {
@@ -330,120 +297,129 @@ void ConstTpl::changeHandleIndex(const vector<int4> &handmap)
     value.handle_index = handmap[value.handle_index];
 }
 
-void ConstTpl::saveXml(ostream &s) const
+void ConstTpl::encode(Encoder &encoder) const
 
 {
-  s << "<const_tpl type=\"";
   switch(type) {
   case real:
-    s << "real\" val=\"0x" << hex << value_real << "\"/>";
+    encoder.openElement(sla::ELEM_CONST_REAL);
+    encoder.writeUnsignedInteger(sla::ATTRIB_VAL, value_real);
+    encoder.closeElement(sla::ELEM_CONST_REAL);
     break;
   case handle:
-    s << "handle\" val=\"" << dec << value.handle_index << "\" ";
-    s << "s=\"";
-    printHandleSelector(s,select);
-    s << "\"";
+    encoder.openElement(sla::ELEM_CONST_HANDLE);
+    encoder.writeSignedInteger(sla::ATTRIB_VAL, value.handle_index);
+    encoder.writeSignedInteger(sla::ATTRIB_S, select);
     if (select == v_offset_plus)
-      s << " plus=\"0x" << hex << value_real << "\"";
-    s << "/>";
+      encoder.writeUnsignedInteger(sla::ATTRIB_PLUS, value_real);
+    encoder.closeElement(sla::ELEM_CONST_HANDLE);
     break;
   case j_start:
-    s << "start\"/>";
+    encoder.openElement(sla::ELEM_CONST_START);
+    encoder.closeElement(sla::ELEM_CONST_START);
     break;
   case j_next:
-    s << "next\"/>";
+    encoder.openElement(sla::ELEM_CONST_NEXT);
+    encoder.closeElement(sla::ELEM_CONST_NEXT);
     break;
   case j_next2:
-    s << "next2\"/>";
+    encoder.openElement(sla::ELEM_CONST_NEXT2);
+    encoder.closeElement(sla::ELEM_CONST_NEXT2);
     break;
   case j_curspace:
-    s << "curspace\"/>";
+    encoder.openElement(sla::ELEM_CONST_CURSPACE);
+    encoder.closeElement(sla::ELEM_CONST_CURSPACE);
     break;
   case j_curspace_size:
-    s << "curspace_size\"/>";
+    encoder.openElement(sla::ELEM_CONST_CURSPACE_SIZE);
+    encoder.closeElement(sla::ELEM_CONST_CURSPACE_SIZE);
     break;
   case spaceid:
-    s << "spaceid\" name=\"" << value.spaceid->getName() << "\"/>";
+    encoder.openElement(sla::ELEM_CONST_SPACEID);
+    encoder.writeSpace(sla::ATTRIB_SPACE, value.spaceid);
+    encoder.closeElement(sla::ELEM_CONST_SPACEID);
     break;
   case j_relative:
-    s << "relative\" val=\"0x" << hex << value_real << "\"/>";
+    encoder.openElement(sla::ELEM_CONST_RELATIVE);
+    encoder.writeUnsignedInteger(sla::ATTRIB_VAL, value_real);
+    encoder.closeElement(sla::ELEM_CONST_RELATIVE);
     break;
   case j_flowref:
-    s << "flowref\"/>";
+    encoder.openElement(sla::ELEM_CONST_FLOWREF);
+    encoder.closeElement(sla::ELEM_CONST_FLOWREF);
     break;
   case j_flowref_size:
-    s << "flowref_size\"/>";
+    encoder.openElement(sla::ELEM_CONST_FLOWREF_SIZE);
+    encoder.closeElement(sla::ELEM_CONST_FLOWREF_SIZE);
     break;
   case j_flowdest:
-    s << "flowdest\"/>";
+    encoder.openElement(sla::ELEM_CONST_FLOWDEST);
+    encoder.closeElement(sla::ELEM_CONST_FLOWDEST);
     break;
   case j_flowdest_size:
-    s << "flowdest_size\"/>";
+    encoder.openElement(sla::ELEM_CONST_FLOWDEST_SIZE);
+    encoder.closeElement(sla::ELEM_CONST_FLOWDEST_SIZE);
     break;
   }
 }
 
-void ConstTpl::restoreXml(const Element *el,const AddrSpaceManager *manage)
+void ConstTpl::decode(Decoder &decoder)
 
 {
-  const string &typestring(el->getAttributeValue("type"));
-  if (typestring == "real") {
+  uint4 el = decoder.openElement();
+  if (el == sla::ELEM_CONST_REAL) {
     type = real;
-    istringstream s(el->getAttributeValue("val"));
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    s >> value_real;
+    value_real = decoder.readUnsignedInteger(sla::ATTRIB_VAL);
   }
-  else if (typestring=="handle") {
+  else if (el == sla::ELEM_CONST_HANDLE) {
     type = handle;
-    istringstream s(el->getAttributeValue("val"));
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    s >> value.handle_index;
-    select = readHandleSelector(el->getAttributeValue("s"));
+    value.handle_index = decoder.readSignedInteger(sla::ATTRIB_VAL);
+    uint4 selectInt = decoder.readSignedInteger(sla::ATTRIB_S);
+    if (selectInt > v_offset_plus)
+      throw DecoderError("Bad handle selector encoding");
+    select = (v_field)selectInt;
     if (select == v_offset_plus) {
-      istringstream s2(el->getAttributeValue("plus"));
-      s2.unsetf(ios::dec | ios::hex | ios::oct);
-      s2 >> value_real;
+      value_real = decoder.readUnsignedInteger(sla::ATTRIB_PLUS);
     }
   }
-  else if (typestring=="start") {
+  else if (el == sla::ELEM_CONST_START) {
     type = j_start;
   }
-  else if (typestring=="next") {
+  else if (el == sla::ELEM_CONST_NEXT) {
     type = j_next;
   }
-  else if (typestring=="next2") {
+  else if (el == sla::ELEM_CONST_NEXT2) {
     type = j_next2;
   }
-  else if (typestring=="curspace") {
+  else if (el == sla::ELEM_CONST_CURSPACE) {
     type = j_curspace;
   }
-  else if (typestring=="curspace_size") {
+  else if (el == sla::ELEM_CONST_CURSPACE_SIZE) {
     type = j_curspace_size;
   }
-  else if (typestring=="spaceid") {
+  else if (el == sla::ELEM_CONST_SPACEID) {
     type = spaceid;
-    value.spaceid = manage->getSpaceByName(el->getAttributeValue("name"));
+    value.spaceid = decoder.readSpace(sla::ATTRIB_SPACE);
   }
-  else if (typestring=="relative") {
+  else if (el == sla::ELEM_CONST_RELATIVE) {
     type = j_relative;
-    istringstream s(el->getAttributeValue("val"));
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    s >> value_real;
+    value_real = decoder.readUnsignedInteger(sla::ATTRIB_VAL);
   }
-  else if (typestring == "flowref") {
+  else if (el == sla::ELEM_CONST_FLOWREF) {
     type = j_flowref;
   }
-  else if (typestring == "flowref_size") {
+  else if (el == sla::ELEM_CONST_FLOWREF_SIZE) {
     type = j_flowref_size;
   }
-  else if (typestring == "flowdest") {
+  else if (el == sla::ELEM_CONST_FLOWDEST) {
     type = j_flowdest;
   }
-  else if (typestring == "flowdest_size") {
+  else if (el == sla::ELEM_CONST_FLOWDEST_SIZE) {
     type = j_flowdest_size;
   }
   else
     throw LowlevelError("Bad constant type");
+  decoder.closeElement(el);
 }
 
 VarnodeTpl::VarnodeTpl(int4 hand,bool zerosize) :
@@ -544,27 +520,24 @@ bool VarnodeTpl::adjustTruncation(int4 sz,bool isbigendian)
   return true;
 }
 
-void VarnodeTpl::saveXml(ostream &s) const
+void VarnodeTpl::encode(Encoder &encoder) const
 
 {
-  s << "<varnode_tpl>";
-  space.saveXml(s);
-  offset.saveXml(s);
-  size.saveXml(s);
-  s << "</varnode_tpl>\n";
+  encoder.openElement(sla::ELEM_VARNODE_TPL);
+  space.encode(encoder);
+  offset.encode(encoder);
+  size.encode(encoder);
+  encoder.closeElement(sla::ELEM_VARNODE_TPL);
 }
 
-void VarnodeTpl::restoreXml(const Element *el,const AddrSpaceManager *manage)
+void VarnodeTpl::decode(Decoder &decoder)
 
 {
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  iter = list.begin();
-  space.restoreXml(*iter,manage);
-  ++iter;
-  offset.restoreXml(*iter,manage);
-  ++iter;
-  size.restoreXml(*iter,manage);
+  uint4 el = decoder.openElement(sla::ELEM_VARNODE_TPL);
+  space.decode(decoder);
+  offset.decode(decoder);
+  size.decode(decoder);
+  decoder.closeElement(el);
 }
 
 bool VarnodeTpl::operator<(const VarnodeTpl &op2) const
@@ -633,39 +606,32 @@ void HandleTpl::changeHandleIndex(const vector<int4> &handmap)
   temp_offset.changeHandleIndex(handmap);
 }
 
-void HandleTpl::saveXml(ostream &s) const
+void HandleTpl::encode(Encoder &encoder) const
 
 {
-  s << "<handle_tpl>";
-  space.saveXml(s);
-  size.saveXml(s);
-  ptrspace.saveXml(s);
-  ptroffset.saveXml(s);
-  ptrsize.saveXml(s);
-  temp_space.saveXml(s);
-  temp_offset.saveXml(s);
-  s << "</handle_tpl>\n";
+  encoder.openElement(sla::ELEM_HANDLE_TPL);
+  space.encode(encoder);
+  size.encode(encoder);
+  ptrspace.encode(encoder);
+  ptroffset.encode(encoder);
+  ptrsize.encode(encoder);
+  temp_space.encode(encoder);
+  temp_offset.encode(encoder);
+  encoder.closeElement(sla::ELEM_HANDLE_TPL);
 }
 
-void HandleTpl::restoreXml(const Element *el,const AddrSpaceManager *manage)
+void HandleTpl::decode(Decoder &decoder)
 
 {
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  iter = list.begin();
-  space.restoreXml(*iter,manage);
-  ++iter;
-  size.restoreXml(*iter,manage);
-  ++iter;
-  ptrspace.restoreXml(*iter,manage);
-  ++iter;
-  ptroffset.restoreXml(*iter,manage);
-  ++iter;
-  ptrsize.restoreXml(*iter,manage);
-  ++iter;
-  temp_space.restoreXml(*iter,manage);
-  ++iter;
-  temp_offset.restoreXml(*iter,manage);
+  uint4 el = decoder.openElement(sla::ELEM_HANDLE_TPL);
+  space.decode(decoder);
+  size.decode(decoder);
+  ptrspace.decode(decoder);
+  ptroffset.decode(decoder);
+  ptrsize.decode(decoder);
+  temp_space.decode(decoder);
+  temp_offset.decode(decoder);
+  decoder.closeElement(el);
 }
 
 OpTpl::~OpTpl(void)
@@ -710,39 +676,43 @@ void OpTpl::changeHandleIndex(const vector<int4> &handmap)
     (*iter)->changeHandleIndex(handmap);
 }
 
-void OpTpl::saveXml(ostream &s) const
+void OpTpl::encode(Encoder &encoder) const
 
 {
-  s << "<op_tpl code=\"" << get_opname(opc) << "\">";
-  if (output == (VarnodeTpl *)0)
-    s << "<null/>\n";
+  encoder.openElement(sla::ELEM_OP_TPL);
+  encoder.writeOpcode(sla::ATTRIB_CODE, opc);
+  if (output == (VarnodeTpl *)0) {
+    encoder.openElement(sla::ELEM_NULL);
+    encoder.closeElement(sla::ELEM_NULL);
+  }
   else
-    output->saveXml(s);
+    output->encode(encoder);
   for(int4 i=0;i<input.size();++i)
-    input[i]->saveXml(s);
-  s << "</op_tpl>\n";
+    input[i]->encode(encoder);
+  encoder.closeElement(sla::ELEM_OP_TPL);
 }
 
-void OpTpl::restoreXml(const Element *el,const AddrSpaceManager *manage)
+void OpTpl::decode(Decoder &decoder)
 
 {
-  opc = get_opcode(el->getAttributeValue("code"));
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  iter = list.begin();
-  if ((*iter)->getName() == "null")
+  uint4 el = decoder.openElement(sla::ELEM_OP_TPL);
+  opc = decoder.readOpcode(sla::ATTRIB_CODE);
+  uint4 subel = decoder.peekElement();
+  if (subel == sla::ELEM_NULL) {
+    decoder.openElement();
+    decoder.closeElement(subel);
     output = (VarnodeTpl *)0;
+  }
   else {
     output = new VarnodeTpl();
-    output->restoreXml(*iter,manage);
+    output->decode(decoder);
   }
-  ++iter;
-  while(iter != list.end()) {
+  while(decoder.peekElement() != 0) {
     VarnodeTpl *vn = new VarnodeTpl();
-    vn->restoreXml(*iter,manage);
+    vn->decode(decoder);
     input.push_back(vn);
-    ++iter;
   }
+  decoder.closeElement(el);
 }
 
 ConstructTpl::~ConstructTpl(void)
@@ -882,63 +852,61 @@ void ConstructTpl::deleteOps(const vector<int4> &indices)
     vec.pop_back();
 }
 
-void ConstructTpl::saveXml(ostream &s,int4 sectionid) const
+void ConstructTpl::encode(Encoder &encoder,int4 sectionid) const
 
 {
-  s << "<construct_tpl";
+  encoder.openElement(sla::ELEM_CONSTRUCT_TPL);
   if (sectionid >=0 )
-    s << " section=\"" << dec << sectionid << "\"";
+    encoder.writeSignedInteger(sla::ATTRIB_SECTION, sectionid);
   if (delayslot != 0)
-    s << " delay=\"" << dec << delayslot << "\"";
+    encoder.writeSignedInteger(sla::ATTRIB_DELAY, delayslot);
   if (numlabels != 0)
-    s << " labels=\"" << dec << numlabels << "\"";
-  s << ">\n";
+    encoder.writeSignedInteger(sla::ATTRIB_LABELS, numlabels);
   if (result != (HandleTpl *)0)
-    result->saveXml(s);
-  else
-    s << "<null/>";
+    result->encode(encoder);
+  else {
+    encoder.openElement(sla::ELEM_NULL);
+    encoder.closeElement(sla::ELEM_NULL);
+  }
   for(int4 i=0;i<vec.size();++i)
-    vec[i]->saveXml(s);
-  s << "</construct_tpl>\n";
+    vec[i]->encode(encoder);
+  encoder.closeElement(sla::ELEM_CONSTRUCT_TPL);
 }
 
-int4 ConstructTpl::restoreXml(const Element *el,const AddrSpaceManager *manage)
+int4 ConstructTpl::decode(Decoder &decoder)
 
 {
+  uint4 el = decoder.openElement(sla::ELEM_CONSTRUCT_TPL);
   int4 sectionid = -1;
-  for(int4 i=0;i<el->getNumAttributes();++i) {
-    if (el->getAttributeName(i)=="delay") {
-      istringstream s(el->getAttributeValue(i));
-      s.unsetf(ios::dec | ios::hex | ios::oct);
-      s >> delayslot;
+  uint4 attrib = decoder.getNextAttributeId();
+  while(attrib != 0) {
+    if (attrib == sla::ATTRIB_DELAY) {
+      delayslot = decoder.readSignedInteger();
     }
-    else if (el->getAttributeName(i)=="labels") {
-      istringstream s(el->getAttributeValue(i));
-      s.unsetf(ios::dec | ios::hex | ios::oct);
-      s >> numlabels;
+    else if (attrib == sla::ATTRIB_LABELS) {
+      numlabels = decoder.readSignedInteger();
     }
-    else if (el->getAttributeName(i)=="section") {
-      istringstream s(el->getAttributeValue(i));
-      s.unsetf(ios::dec | ios::hex | ios::oct);
-      s >> sectionid;
+    else if (attrib == sla::ATTRIB_SECTION) {
+      sectionid = decoder.readSignedInteger();
     }
+    attrib = decoder.getNextAttributeId();
   }
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  iter = list.begin();
-  if ((*iter)->getName() == "null")
+  uint4 subel = decoder.peekElement();
+  if (subel == sla::ELEM_NULL) {
+    decoder.openElement();
+    decoder.closeElement(subel);
     result = (HandleTpl *)0;
+  }
   else {
     result = new HandleTpl();
-    result->restoreXml(*iter,manage);
+    result->decode(decoder);
   }
-  ++iter;
-  while(iter != list.end()) {
+  while(decoder.peekElement() != 0) {
     OpTpl *op = new OpTpl();
-    op->restoreXml(*iter,manage);
+    op->decode(decoder);
     vec.push_back(op);
-    ++iter;
   }
+  decoder.closeElement(el);
   return sectionid;
 }
 

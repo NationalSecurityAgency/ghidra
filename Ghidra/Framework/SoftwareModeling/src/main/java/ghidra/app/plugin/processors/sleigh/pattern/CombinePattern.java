@@ -19,15 +19,15 @@
  */
 package ghidra.app.plugin.processors.sleigh.pattern;
 
+import static ghidra.pcode.utils.SlaFormat.*;
+
 import ghidra.app.plugin.processors.sleigh.ParserWalker;
 import ghidra.app.plugin.processors.sleigh.SleighDebugLogger;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 /**
- * 
- *
  * A pattern that has both an instruction part and non-instruction part
  */
 public class CombinePattern extends DisjointPattern {
@@ -35,9 +35,6 @@ public class CombinePattern extends DisjointPattern {
 	private ContextPattern context;		// Context piece
 	private InstructionPattern instr;	// Instruction piece
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.DisjointPattern#getBlock(boolean)
-	 */
 	@Override
 	public PatternBlock getBlock(boolean cont) {
 		return cont ? context.getBlock() : instr.getBlock();
@@ -53,55 +50,50 @@ public class CombinePattern extends DisjointPattern {
 		instr = in;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.Pattern#simplifyClone()
-	 */
 	@Override
 	public Pattern simplifyClone() {
-		if (context.alwaysTrue())
+		if (context.alwaysTrue()) {
 			return instr.simplifyClone();
-		if (instr.alwaysTrue())
+		}
+		if (instr.alwaysTrue()) {
 			return context.simplifyClone();
-		if (context.alwaysFalse() || instr.alwaysFalse())
+		}
+		if (context.alwaysFalse() || instr.alwaysFalse()) {
 			return new InstructionPattern(false);
+		}
 
 		return new CombinePattern((ContextPattern) context.simplifyClone(),
 			(InstructionPattern) instr.simplifyClone());
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.Pattern#shiftInstruction(int)
-	 */
 	@Override
 	public void shiftInstruction(int sa) {
 		instr.shiftInstruction(sa);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.Pattern#doOr(ghidra.app.plugin.processors.sleigh.Pattern, int)
-	 */
 	@Override
 	public Pattern doOr(Pattern b, int sa) {
-		if (b.numDisjoint() != 0)
+		if (b.numDisjoint() != 0) {
 			return b.doOr(this, -sa);
+		}
 
 		DisjointPattern res1 = (DisjointPattern) simplifyClone();
 		DisjointPattern res2 = (DisjointPattern) b.simplifyClone();
-		if (sa < 0)
+		if (sa < 0) {
 			res1.shiftInstruction(-sa);
-		else
+		}
+		else {
 			res2.shiftInstruction(sa);
+		}
 		OrPattern tmp = new OrPattern(res1, res2);
 		return tmp;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.Pattern#doAnd(ghidra.app.plugin.processors.sleigh.Pattern, int)
-	 */
 	@Override
 	public Pattern doAnd(Pattern b, int sa) {
-		if (b.numDisjoint() != 0)
+		if (b.numDisjoint() != 0) {
 			return b.doAnd(this, -sa);
+		}
 
 		CombinePattern tmp;
 		if (b instanceof CombinePattern) {
@@ -117,17 +109,15 @@ public class CombinePattern extends DisjointPattern {
 			else {		// Must be a ContextPattern
 				ContextPattern c = (ContextPattern) context.doAnd(b, 0);
 				InstructionPattern newpat = (InstructionPattern) instr.simplifyClone();
-				if (sa < 0)
+				if (sa < 0) {
 					newpat.shiftInstruction(-sa);
+				}
 				tmp = new CombinePattern(c, newpat);
 			}
 		}
 		return tmp;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.pattern.Pattern#isMatch(ghidra.app.plugin.processors.sleigh.ParserWalker, ghidra.app.plugin.processors.sleigh.SleighDebugLogger)
-	 */
 	@Override
 	public boolean isMatch(ParserWalker walker, SleighDebugLogger debug)
 			throws MemoryAccessException {
@@ -167,41 +157,29 @@ public class CombinePattern extends DisjointPattern {
 		debug.indent();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.Pattern#alwaysTrue()
-	 */
 	@Override
 	public boolean alwaysTrue() {
 		return (context.alwaysTrue() && instr.alwaysTrue());
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.Pattern#alwaysFalse()
-	 */
 	@Override
 	public boolean alwaysFalse() {
 		return (context.alwaysFalse() || instr.alwaysFalse());
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.Pattern#alwaysInstructionTrue()
-	 */
 	@Override
 	public boolean alwaysInstructionTrue() {
 		return instr.alwaysInstructionTrue();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.Pattern#restoreXml(org.jdom.Element)
-	 */
 	@Override
-	public void restoreXml(XmlPullParser parser) {
-		XmlElement el = parser.start("combine_pat");
+	public void decode(Decoder decoder) throws DecoderException {
+		int el = decoder.openElement(ELEM_COMBINE_PAT);
 		context = new ContextPattern();
-		context.restoreXml(parser);
+		context.decode(decoder);
 		instr = new InstructionPattern();
-		instr.restoreXml(parser);
-		parser.end(el);
+		instr.decode(decoder);
+		decoder.closeElement(el);
 	}
 
 	@Override

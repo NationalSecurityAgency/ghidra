@@ -15,10 +15,13 @@
  */
 package ghidra.pcodeCPort.space;
 
-import java.io.PrintStream;
+import static ghidra.pcode.utils.SlaFormat.*;
+
+import java.io.IOException;
 
 import ghidra.pcodeCPort.translate.Translate;
 import ghidra.program.model.lang.SpaceNames;
+import ghidra.program.model.pcode.Encoder;
 
 public class UniqueSpace extends AddrSpace {
 	public UniqueSpace(Translate t, int ind, int fl) {
@@ -35,10 +38,10 @@ public class UniqueSpace extends AddrSpace {
 	}
 
 	@Override
-	public void saveXml(PrintStream s) {
-		s.print("<space_unique");
-		save_basic_attributes(s);
-		s.println("/>");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_SPACE_UNIQUE);
+		encode_basic_attributes(encoder);
+		encoder.closeElement(ELEM_SPACE_UNIQUE);
 	}
 
 }

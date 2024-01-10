@@ -208,7 +208,7 @@ public class DecompileCallback {
 	 * @param addr is the given address
 	 * @param resultEncoder will contain the generated p-code ops
 	 */
-	public void getPcode(Address addr, PackedEncode resultEncoder) {
+	public void getPcode(Address addr, PatchEncoder resultEncoder) {
 		try {
 			Instruction instr = getInstruction(addr);
 			if (instr == null) {

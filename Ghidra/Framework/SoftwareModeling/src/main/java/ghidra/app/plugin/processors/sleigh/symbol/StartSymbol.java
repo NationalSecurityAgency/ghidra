@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,63 +19,54 @@
  */
 package ghidra.app.plugin.processors.sleigh.symbol;
 
-import ghidra.app.plugin.processors.sleigh.*;
-import ghidra.app.plugin.processors.sleigh.expression.*;
-import ghidra.program.model.mem.*;
-import ghidra.xml.*;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import java.util.*;
+import java.util.ArrayList;
+
+import ghidra.app.plugin.processors.sleigh.*;
+import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
+import ghidra.app.plugin.processors.sleigh.expression.StartInstructionValue;
+import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 /**
- * 
- *
  * TripleSymbol with semantic value equal to offset of instruction's
  * current address
  */
 public class StartSymbol extends SpecificSymbol {
 
 	private PatternExpression patexp;
-	
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.symbol.TripleSymbol#getPatternExpression()
-	 */
+
 	@Override
-    public PatternExpression getPatternExpression() {
+	public PatternExpression getPatternExpression() {
 		return patexp;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.symbol.TripleSymbol#getFixedHandle(ghidra.app.plugin.processors.sleigh.FixedHandle, ghidra.app.plugin.processors.sleigh.ParserWalker)
-	 */
 	@Override
-    public void getFixedHandle(FixedHandle hand, ParserWalker walker) {
+	public void getFixedHandle(FixedHandle hand, ParserWalker walker) {
 		hand.space = walker.getCurSpace();
 		hand.offset_space = null;
 		hand.offset_offset = walker.getAddr().getOffset();
 		hand.size = hand.space.getPointerSize();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.symbol.TripleSymbol#print(ghidra.app.plugin.processors.sleigh.ParserWalker)
-	 */
 	@Override
-    public String print(ParserWalker walker) throws MemoryAccessException {
+	public String print(ParserWalker walker) throws MemoryAccessException {
 		long val = walker.getAddr().getOffset();
 		return "0x" + Long.toHexString(val);
 	}
 
 	@Override
-    public void printList(ParserWalker walker, ArrayList<Object> list) {
+	public void printList(ParserWalker walker, ArrayList<Object> list) {
 		list.add(walker.getParentHandle());
 	}
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.symbol.Symbol#restoreXml(org.jdom.Element, ghidra.app.plugin.processors.sleigh.SleighLanguage)
-	 */
+
 	@Override
-    public void restoreXml(XmlPullParser parser, SleighLanguage sleigh) {
-	    XmlElement element = parser.start("start_sym");
+	public void decode(Decoder decoder, SleighLanguage sleigh) throws DecoderException {
+//		int element = decoder.openElement(ELEM_START_SYM);
 		patexp = new StartInstructionValue();
-		parser.end(element);
+		decoder.closeElement(ELEM_START_SYM.id());
 	}
 
 }

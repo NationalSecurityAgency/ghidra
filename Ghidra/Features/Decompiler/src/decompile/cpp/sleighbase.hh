@@ -19,6 +19,7 @@
 #define __SLEIGHBASE_HH__
 
 #include "translate.hh"
+#include "slaformat.hh"
 #include "slghsymbol.hh"
 
 namespace ghidra {
@@ -41,8 +42,8 @@ public:
   int4 index(const string filename);
   int4 getIndex(const string);	///< get the index of a file.  Error if the file is not in the index.
   string getFilename(int4);	///< get the filename corresponding to an index
-  void restoreXml(const Element *el);	///< read a stored index mapping from an XML file
-  void saveXml(ostream&) const;		///< save the index mapping to an XML file
+  void decode(Decoder &decoder);	///< decode a stored index mapping from a stream
+  void encode(Encoder &encoder) const;	///< Encode the index mapping to stream
 
 private:
   int4 leastUnusedIndex;  ///< one-up count for assigning indices to files
@@ -57,7 +58,6 @@ private:
 ///   - Reading the various SLEIGH specification files
 ///   - Building and writing out SLEIGH specification files
 class SleighBase : public Translate {
-  static const int4 SLA_FORMAT_VERSION;	///< Current version of the .sla file read/written by SleighBash
   vector<string> userop;		///< Names of user-define p-code ops for \b this Translate object
   map<VarnodeData,string> varnode_xref;	///< A map from Varnodes in the \e register space to register names
 protected:
@@ -69,7 +69,9 @@ protected:
   SourceFileIndexer indexer;    ///< source file index used when generating SLEIGH constructor debug info
   void buildXrefs(vector<string> &errorPairs);	///< Build register map. Collect user-ops and context-fields.
   void reregisterContext(void);	///< Reregister context fields for a new executable
-  void restoreXml(const Element *el);	///< Read a SLEIGH specification from XML
+  AddrSpace *decodeSlaSpace(Decoder &decoder,const Translate *trans); ///< Add a space parsed from a .sla file
+  void decodeSlaSpaces(Decoder &decoder,const Translate *trans); ///< Restore address spaces from a .sla file
+  void decode(Decoder &decoder);	/// Decode a SELIGH specification from a stream
 public:
   static const uint4 MAX_UNIQUE_SIZE;    ///< Maximum size of a varnode in the unique space (should match value in SleighBase.java)
   SleighBase(void);		///< Construct an uninitialized translator
@@ -83,7 +85,8 @@ public:
   SleighSymbol *findSymbol(const string &nm) const { return symtab.findSymbol(nm); }	///< Find a specific SLEIGH symbol by name in the current scope
   SleighSymbol *findSymbol(uintm id) const { return symtab.findSymbol(id); }	///< Find a specific SLEIGH symbol by id
   SleighSymbol *findGlobalSymbol(const string &nm) const { return symtab.findGlobalSymbol(nm); }	///< Find a specific global SLEIGH symbol by name
-  void saveXml(ostream &s) const;	///< Write out the SLEIGH specification as an XML \<sleigh> tag.
+  void encodeSlaSpace(Encoder &encoder,AddrSpace *spc) const;	///< Write the details of given space in .sla format
+  void encode(Encoder &encoder) const;	///< Write out the SLEIGH specification as a \<sleigh> tag.
 };
 
 } // End namespace ghidra

@@ -1789,6 +1789,7 @@ SleighCompile::SleighCompile(void)
   warnalllocalcollisions = false;
   warnallnops = false;
   failinsensitivedups = true;
+  debugoutput = false;
   root = (SubtableSymbol *)0;
   curmacro = (MacroSymbol *)0;
   curct = (Constructor *)0;
@@ -2301,7 +2302,7 @@ uint4 SleighCompile::getUniqueAddr(void)
 /// A number of checks are also performed, which may generate errors or warnings, including
 /// size restriction checks, pattern conflict checks, NOP constructor checks, and
 /// local collision checks.  Once this method is run, \b this SleighCompile is ready for the
-/// saveXml method.
+/// encode method.
 void SleighCompile::process(void)
 
 {
@@ -2546,7 +2547,8 @@ void SleighCompile::newSpace(SpaceQuality *qual)
   }
 
   int4 delay = (qual->type == SpaceQuality::registertype) ? 0 : 1;
-  AddrSpace *spc = new AddrSpace(this,this,IPTR_PROCESSOR,qual->name,qual->size,qual->wordsize,numSpaces(),AddrSpace::hasphysical,delay);
+  AddrSpace *spc = new AddrSpace(this,this,IPTR_PROCESSOR,qual->name,isBigEndian(),
+				 qual->size,qual->wordsize,numSpaces(),AddrSpace::hasphysical,delay,delay);
   insertSpace(spc);
   if (qual->isdefault) {
     if (getDefaultCodeSpace() != (AddrSpace *)0)
@@ -3594,13 +3596,23 @@ int4 SleighCompile::run_compilation(const string &filein,const string &fileout)
     if (parseres==0)
       process();	// Do all the post-processing
     if ((parseres==0)&&(numErrors()==0)) { // If no errors
-      ofstream s(fileout);
+      ofstream s(fileout,ios::binary);
       if (!s) {
 	ostringstream errs;
 	errs << "Unable to open output file: " << fileout;
 	throw SleighError(errs.str());
       }
-      saveXml(s);	// Dump output xml
+      if (debugoutput) {
+	// If the debug output format was requested, use the XML encoder
+	XmlEncode encoder(s);
+	encode(encoder);
+      }
+      else {
+	// Use the standard .sla format encoder
+	sla::FormatEncode encoder(s,-1);
+	encode(encoder);
+	encoder.flush();
+      }
       s.close();
     }
     else {
@@ -3697,7 +3709,7 @@ static void findSlaSpecs(vector<string> &res, const string &dir, const string &s
 void SleighCompile::setAllOptions(const map<string,string> &defines, bool unnecessaryPcodeWarning,
 				  bool lenientConflict, bool allCollisionWarning,
 				  bool allNopWarning,bool deadTempWarning,bool enforceLocalKeyWord,
-				  bool largeTemporaryWarning, bool caseSensitiveRegisterNames)
+				  bool largeTemporaryWarning, bool caseSensitiveRegisterNames,bool debugOutput)
 {
   map<string,string>::const_iterator iter = defines.begin();
   for (iter = defines.begin(); iter != defines.end(); iter++) {
@@ -3711,6 +3723,7 @@ void SleighCompile::setAllOptions(const map<string,string> &defines, bool unnece
   setEnforceLocalKeyWord(enforceLocalKeyWord);
   setLargeTemporaryWarning(largeTemporaryWarning);
   setInsensitiveDuplicateError(!caseSensitiveRegisterNames);
+  setDebugOutput(debugOutput);
 }
 
 static void segvHandler(int sig) {
@@ -3736,6 +3749,7 @@ int main(int argc,char **argv)
     cerr << "USAGE: sleigh [-x] [-dNAME=VALUE] inputfile [outputfile]" << endl;
     cerr << "   -a              scan for all slaspec files recursively where inputfile is a directory" << endl;
     cerr << "   -x              turns on parser debugging" << endl;
+    cerr << "   -y              write .sla using XML debug format" << endl;
     cerr << "   -u              print warnings for unnecessary pcode instructions" << endl;
     cerr << "   -l              report pattern conflicts" << endl;
     cerr << "   -n              print warnings for all NOP constructors" << endl;
@@ -3759,6 +3773,7 @@ int main(int argc,char **argv)
   bool enforceLocalKeyWord = false;
   bool largeTemporaryWarning = false;
   bool caseSensitiveRegisterNames = false;
+  bool debugOutput = false;
   
   bool compileAll = false;
   
@@ -3794,6 +3809,8 @@ int main(int argc,char **argv)
       largeTemporaryWarning = true;
     else if (argv[i][1] == 's')
       caseSensitiveRegisterNames = true;
+    else if (argv[i][1] == 'y')
+      debugOutput = true;
 #ifdef YYDEBUG
     else if (argv[i][1] == 'x')
       sleighdebug = 1;		// Debug option
@@ -3825,7 +3842,8 @@ int main(int argc,char **argv)
       sla.replace(slaspec.length() - slaspecExtLen, slaspecExtLen, SLAEXT);
       SleighCompile compiler;
       compiler.setAllOptions(defines, unnecessaryPcodeWarning, lenientConflict, allCollisionWarning, allNopWarning,
-			     deadTempWarning, enforceLocalKeyWord,largeTemporaryWarning, caseSensitiveRegisterNames);
+			     deadTempWarning, enforceLocalKeyWord,largeTemporaryWarning, caseSensitiveRegisterNames,
+			     debugOutput);
       retval = compiler.run_compilation(slaspec,sla);
       if (retval != 0) {
 	return retval; // stop on first error
@@ -3861,7 +3879,8 @@ int main(int argc,char **argv)
     
     SleighCompile compiler;
     compiler.setAllOptions(defines, unnecessaryPcodeWarning, lenientConflict, allCollisionWarning, allNopWarning,
-			   deadTempWarning, enforceLocalKeyWord,largeTemporaryWarning,caseSensitiveRegisterNames);
+			   deadTempWarning, enforceLocalKeyWord,largeTemporaryWarning,caseSensitiveRegisterNames,
+			   debugOutput);
     
     if (i < argc - 1) {
       string fileoutExamine(argv[i+1]);
