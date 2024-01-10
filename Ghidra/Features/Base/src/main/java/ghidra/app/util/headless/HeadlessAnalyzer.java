@@ -206,9 +206,6 @@ public class HeadlessAnalyzer {
 		System.setProperty("java.awt.headless", "true");
 		System.setProperty(SystemUtilities.HEADLESS_PROPERTY, Boolean.TRUE.toString());
 
-		// Allows handling of old content which did not have a content type property
-		DomainObjectAdapter.setDefaultContentClass(ProgramDB.class);
-
 		// Put analyzer in its default state
 		reset();
 
