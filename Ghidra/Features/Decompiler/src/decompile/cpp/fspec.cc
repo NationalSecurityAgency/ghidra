@@ -731,7 +731,8 @@ void ParamListStandard::assignMap(const PrototypePieces &proto,TypeFactory &type
   for(int4 i=0;i<proto.intypes.size();++i) {
     res.emplace_back();
     Datatype *dt = proto.intypes[i];
-    if (assignAddress(dt,proto,i,typefactory,status,res.back()) == AssignAction::fail)
+    uint4 responseCode = assignAddress(dt,proto,i,typefactory,status,res.back());
+    if (responseCode == AssignAction::fail || responseCode == AssignAction::no_assignment)
       throw ParamUnassignedError("Cannot assign parameter address for " + dt->getName());
   }
 }
@@ -1503,7 +1504,12 @@ void ParamListStandardOut::assignMap(const PrototypePieces &proto,TypeFactory &t
     return;			// Leave the address as invalid
   }
   uint4 responseCode = assignAddress(proto.outtype,proto,-1,typefactory,status,res.back());
-  if (responseCode != AssignAction::success) { // Could not assign an address (too big)
+
+  if (responseCode == AssignAction::fail)
+    responseCode = AssignAction::hiddenret_ptrparam;	// Invoke default hidden return input assignment action
+
+  if (responseCode == AssignAction::hiddenret_ptrparam || responseCode == AssignAction::hiddenret_specialreg ||
+      responseCode == AssignAction::hiddenret_specialreg_void) { // Could not assign an address (too big)
     AddrSpace *spc = spacebase;
     if (spc == (AddrSpace *)0)
       spc = typefactory.getArch()->getDefaultDataSpace();
