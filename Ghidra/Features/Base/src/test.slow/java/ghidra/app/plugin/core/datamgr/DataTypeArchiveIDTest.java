@@ -39,17 +39,18 @@ public class DataTypeArchiveIDTest extends AbstractGenericTest {
 	private static final String MAC_OS_10_9_GDT_PATH = "typeinfo/mac_10.9/mac_osx.gdt";
 
 	//@formatter:off
-	private static final Map<String, String> archiveIdMap = Map.of(
-		WIN_VS12_32_GDT_PATH, "2644092282468053077",
-		WIN_VS12_64_GDT_PATH, "3193696833254024484",
-		GENERIC_CLIB_32_GDT_PATH, "2644097909188870631",
-		GENERIC_CLIB_64_GDT_PATH, "3193699959493190971",
-		MAC_OS_10_9_GDT_PATH, "2650667045259492112",
-		"typeinfo/golang/golang_1.17_anybit_any.gdt", "3533627828569507753",
-		"typeinfo/golang/golang_1.18_anybit_any.gdt", "3528902399865061936",
-		"typeinfo/golang/golang_1.19_anybit_any.gdt", "3533812166493410774",
-		"typeinfo/golang/golang_1.20_anybit_any.gdt", "3533817003441909616",
-		"typeinfo/rust/rust-common.gdt","3557867258392862055");
+	private static final Map<String, String> archiveIdMap = Map.ofEntries(
+			Map.entry(WIN_VS12_32_GDT_PATH, "2644092282468053077"),
+			Map.entry(WIN_VS12_64_GDT_PATH, "3193696833254024484"),
+			Map.entry(GENERIC_CLIB_32_GDT_PATH, "2644097909188870631"),
+			Map.entry(GENERIC_CLIB_64_GDT_PATH, "3193699959493190971"),
+			Map.entry(MAC_OS_10_9_GDT_PATH, "2650667045259492112"),
+			Map.entry("typeinfo/golang/golang_1.17_anybit_any.gdt", "3533627828569507753"),
+			Map.entry("typeinfo/golang/golang_1.18_anybit_any.gdt", "3528902399865061936"),
+			Map.entry("typeinfo/golang/golang_1.19_anybit_any.gdt", "3533812166493410774"),
+			Map.entry("typeinfo/golang/golang_1.20_anybit_any.gdt", "3533817003441909616"),
+			Map.entry("typeinfo/golang/golang_1.21_anybit_any.gdt", "3574190573109087960"),
+			Map.entry("typeinfo/rust/rust-common.gdt", "3557867258392862055"));
 	//@formatter:on
 
 	private Map<ResourceFile, String> getCurrentGdts() {

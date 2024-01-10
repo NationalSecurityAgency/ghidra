@@ -99,7 +99,7 @@ public class GolangStringAnalyzer extends AbstractAnalyzer {
 
 		goBinary = GoRttiMapper.getSharedGoBinary(program, monitor);
 		if (goBinary == null) {
-			Msg.error(this, "Golang analyzer error: unable to get GoRttiMapper");
+			Msg.error(this, "Golang string analyzer error: unable to get GoRttiMapper");
 			return false;
 		}
 		markupSession = goBinary.createMarkupSession(monitor);

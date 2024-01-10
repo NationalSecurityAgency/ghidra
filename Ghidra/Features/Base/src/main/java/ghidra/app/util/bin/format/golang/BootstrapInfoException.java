@@ -13,21 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.bin.format.golang.rtti.types;
+package ghidra.app.util.bin.format.golang;
 
-import ghidra.app.util.bin.format.golang.structmapping.FieldMapping;
-import ghidra.app.util.bin.format.golang.structmapping.StructureMapping;
+import java.io.IOException;
 
-/**
- * Small stub that is only used to fetch the "kind" field so that the real gotype can be detected
- */
-@StructureMapping(structureName = {"runtime._type", "internal/abi.Type"})
-public class GoTypeDetector {
-	@FieldMapping(fieldName = {"kind", "Kind_"})
-	private int kind;
+public class BootstrapInfoException extends IOException {
 
-	public GoKind getKind() {
-		return GoKind.parseByte(kind);
+	public BootstrapInfoException() {
+		// empty
+	}
+
+	public BootstrapInfoException(String message) {
+		super(message);
+	}
+
+	public BootstrapInfoException(Throwable cause) {
+		super(cause);
+	}
+
+	public BootstrapInfoException(String message, Throwable cause) {
+		super(message, cause);
 	}
 
 }

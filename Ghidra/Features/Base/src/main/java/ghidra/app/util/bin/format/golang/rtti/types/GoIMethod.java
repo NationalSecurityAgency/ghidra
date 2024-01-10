@@ -22,7 +22,7 @@ import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.FunctionDefinition;
 
-@StructureMapping(structureName = "runtime.imethod")
+@StructureMapping(structureName = {"runtime.imethod", "internal/abi.Imethod"})
 public class GoIMethod implements StructureMarkup<GoIMethod> {
 
 	@ContextField
@@ -36,7 +36,7 @@ public class GoIMethod implements StructureMarkup<GoIMethod> {
 	@EOLComment("getName")
 	private long name;
 
-	@FieldMapping
+	@FieldMapping(fieldName = {"ityp", "Typ"})
 	@MarkupReference("getType")
 	private long ityp;
 
