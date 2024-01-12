@@ -23,7 +23,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import docking.widgets.EventTrigger;
 import ghidra.app.events.*;
 import ghidra.app.nav.NavigationUtils;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainObjectListener;
+import ghidra.framework.model.DomainObjectListenerBuilder;
 import ghidra.framework.plugintool.PluginEvent;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginEventListener;
@@ -38,13 +39,14 @@ import ghidra.util.Swing;
  * Base class for GraphDisplay listeners whose nodes represent addresses.
  */
 public abstract class AddressBasedGraphDisplayListener
-		implements GraphDisplayListener, PluginEventListener, DomainObjectListener {
+		implements GraphDisplayListener, PluginEventListener {
 
 	protected PluginTool tool;
 	protected GraphDisplay graphDisplay;
 	protected Program program;
 	private SymbolTable symbolTable;
 	private String name;
+	private DomainObjectListener domainObjectListener;
 	private static AtomicInteger instanceCount = new AtomicInteger(1);
 
 	public AddressBasedGraphDisplayListener(PluginTool tool, Program program,
@@ -55,7 +57,46 @@ public abstract class AddressBasedGraphDisplayListener
 		this.graphDisplay = display;
 		name = getClass().getSimpleName() + instanceCount.getAndAdd(1);
 		tool.addListenerForAllPluginEvents(this);
-		program.addListener(this);
+		domainObjectListener = createDomainObjectListener();
+		program.addListener(domainObjectListener);
+	}
+
+	private DomainObjectListener createDomainObjectListener() {
+		// @formatter:off
+		return new DomainObjectListenerBuilder(this)
+				.with(ProgramChangeRecord.class)
+					.each(SYMBOL_ADDED).call(this::handleSymbolAdded)
+					.each(SYMBOL_RENAMED).call(this::handleSymbolRenamed)
+					.each(SYMBOL_REMOVED).call(this::handleSymbolRemoved)
+				.build();
+		// @formatter:on
+	}
+
+	private void handleSymbolAdded(ProgramChangeRecord rec) {
+		Symbol symbol = (Symbol) rec.getNewValue();
+		AttributedVertex vertex = getVertex(rec.getStart());
+		if (vertex != null) {
+			graphDisplay.updateVertexName(vertex, symbol.getName());
+		}
+	}
+
+	private void handleSymbolRenamed(ProgramChangeRecord rec) {
+		Symbol symbol = (Symbol) rec.getObject();
+		AttributedVertex vertex = getVertex(rec.getStart());
+		if (vertex != null) {
+			graphDisplay.updateVertexName(vertex, symbol.getName());
+		}
+	}
+
+	private void handleSymbolRemoved(ProgramChangeRecord rec) {
+		Address address = rec.getStart();
+		AttributedVertex vertex = getVertex(address);
+		if (vertex == null) {
+			return;
+		}
+		Symbol symbol = program.getSymbolTable().getPrimarySymbol(address);
+		String displayName = symbol == null ? address.toString() : symbol.getName();
+		graphDisplay.updateVertexName(vertex, displayName);
 	}
 
 	@Override
@@ -190,51 +231,9 @@ public abstract class AddressBasedGraphDisplayListener
 	}
 
 	@Override
-	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (!(ev.contains(SYMBOL_ADDED, SYMBOL_RENAMED, SYMBOL_REMOVED))) {
-			return;
-		}
-
-		for (DomainObjectChangeRecord record : ev) {
-			if (record instanceof ProgramChangeRecord) {
-				ProgramChangeRecord programRecord = (ProgramChangeRecord) record;
-				Address address = programRecord.getStart();
-
-				if (record.getEventType() == ProgramEvent.SYMBOL_RENAMED) {
-					handleSymbolAddedOrRenamed(address, (Symbol) programRecord.getObject());
-				}
-				else if (record.getEventType() == ProgramEvent.SYMBOL_ADDED) {
-					handleSymbolAddedOrRenamed(address, (Symbol) programRecord.getNewValue());
-				}
-				else if (record.getEventType() == ProgramEvent.SYMBOL_REMOVED) {
-					handleSymbolRemoved(address);
-				}
-			}
-		}
-	}
-
-	private void handleSymbolAddedOrRenamed(Address address, Symbol symbol) {
-		AttributedVertex vertex = getVertex(address);
-		if (vertex == null) {
-			return;
-		}
-		graphDisplay.updateVertexName(vertex, symbol.getName());
-	}
-
-	private void handleSymbolRemoved(Address address) {
-		AttributedVertex vertex = getVertex(address);
-		if (vertex == null) {
-			return;
-		}
-		Symbol symbol = program.getSymbolTable().getPrimarySymbol(address);
-		String displayName = symbol == null ? address.toString() : symbol.getName();
-		graphDisplay.updateVertexName(vertex, displayName);
-	}
-
-	@Override
 	public void dispose() {
 		Swing.runLater(() -> tool.removeListenerForAllPluginEvents(this));
-		program.removeListener(this);
+		program.removeListener(domainObjectListener);
 	}
 
 }

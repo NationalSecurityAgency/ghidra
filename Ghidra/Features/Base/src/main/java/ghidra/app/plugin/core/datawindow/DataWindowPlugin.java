@@ -29,8 +29,8 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.services.GoToService;
 import ghidra.app.services.ProgramTreeService;
-import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.model.DomainObjectListener;
+import ghidra.framework.model.DomainObjectListenerBuilder;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -59,7 +59,7 @@ import ghidra.util.task.SwingUpdateManager;
 	eventsConsumed = { ViewChangedPluginEvent.class }
 )
 //@formatter:on
-public class DataWindowPlugin extends ProgramPlugin implements DomainObjectListener {
+public class DataWindowPlugin extends ProgramPlugin {
 
 	private DockingAction selectAction;
 	private FilterAction filterAction;
@@ -68,6 +68,7 @@ public class DataWindowPlugin extends ProgramPlugin implements DomainObjectListe
 	private SwingUpdateManager resetUpdateMgr;
 	private SwingUpdateManager reloadUpdateMgr;
 	private boolean resetTypesNeeded;
+	private DomainObjectListener domainObjectListener = createDomainObjectListener();
 
 	public DataWindowPlugin(PluginTool tool) {
 		super(tool);
@@ -90,35 +91,32 @@ public class DataWindowPlugin extends ProgramPlugin implements DomainObjectListe
 		reloadUpdateMgr.dispose();
 		resetUpdateMgr.dispose();
 		if (currentProgram != null) {
-			currentProgram.removeListener(this);
+			currentProgram.removeListener(domainObjectListener);
 		}
 		provider.dispose();
 		super.dispose();
 	}
 
-	@Override
-	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (ev.contains(RESTORED)) {
-			resetTypes();
-			reload();
-			return;
-		}
+	DomainObjectListener createDomainObjectListener() {
+		// @formatter:off
+		return new DomainObjectListenerBuilder(this)
+			.any(RESTORED)
+				.terminate(() -> resetTypes())
+			.any(MEMORY_BLOCK_ADDED, MEMORY_BLOCK_REMOVED, CODE_REMOVED)
+				.terminate(e -> reload())
+			.any(DATA_TYPE_ADDED,DATA_TYPE_CHANGED, DATA_TYPE_MOVED, DATA_TYPE_RENAMED, 
+				   DATA_TYPE_REPLACED, DATA_TYPE_SETTING_CHANGED)
+				.terminate(() -> resetTypes())
+			.with(ProgramChangeRecord.class)
+				.each(CODE_ADDED).call(r -> codeAdded(r))
+			.build();
+		// @formatter:on
+	}
 
-		if (ev.contains(DATA_TYPE_ADDED, DATA_TYPE_CHANGED, DATA_TYPE_MOVED, DATA_TYPE_RENAMED,
-			DATA_TYPE_REPLACED, DATA_TYPE_SETTING_CHANGED)) {
-			resetTypes();
+	private void codeAdded(ProgramChangeRecord rec) {
+		if (rec.getNewValue() instanceof Data) {
+			provider.dataAdded(rec.getStart());
 		}
-
-		if (ev.contains(MEMORY_BLOCK_MOVED, MEMORY_BLOCK_REMOVED, CODE_REMOVED)) {
-			reload();
-			return;  // if we are going to reload, no need to check for data additions.
-		}
-
-		ev.forEach(CODE_ADDED, rec -> {
-			if (rec.getNewValue() instanceof Data) {
-				provider.dataAdded(((ProgramChangeRecord) rec).getStart());
-			}
-		});
 	}
 
 	void reload() {
@@ -143,7 +141,7 @@ public class DataWindowPlugin extends ProgramPlugin implements DomainObjectListe
 
 	@Override
 	protected void programActivated(Program program) {
-		program.addListener(this);
+		program.addListener(domainObjectListener);
 		provider.programOpened(program);
 		filterAction.programOpened(program);
 		resetTypes();
@@ -151,7 +149,7 @@ public class DataWindowPlugin extends ProgramPlugin implements DomainObjectListe
 
 	@Override
 	protected void programDeactivated(Program program) {
-		program.removeListener(this);
+		program.removeListener(domainObjectListener);
 		provider.programClosed();
 		filterAction.programClosed();
 	}

@@ -127,4 +127,18 @@ public class DomainObjectChangedEvent extends EventObject
 			}
 		}
 	}
+
+	/**
+	 * Finds the first record with the given event type.
+	 * @param eventType the event type to search for
+	 * @return the first record with the given event type
+	 */
+	public DomainObjectChangeRecord findFirst(EventType eventType) {
+		for (DomainObjectChangeRecord docr : subEvents) {
+			if (docr.getEventType() == eventType) {
+				return docr;
+			}
+		}
+		return null;
+	}
 }

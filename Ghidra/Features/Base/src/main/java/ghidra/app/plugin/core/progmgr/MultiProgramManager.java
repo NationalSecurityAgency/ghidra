@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.progmgr;
 
+import static ghidra.framework.model.DomainObjectEvent.*;
+
 import java.rmi.NoSuchObjectException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,7 +43,7 @@ import ghidra.util.task.TaskLauncher;
 /**
  * Class for tracking open programs in the tool.
  */
-class MultiProgramManager implements DomainObjectListener, TransactionListener {
+class MultiProgramManager implements TransactionListener {
 
 	private ProgramManagerPlugin plugin;
 	private PluginTool tool;
@@ -60,6 +62,7 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 	// result in a second copy of that program being opened.  This is safe because program opens
 	// and closes are all done from the Swing thread.
 	private Map<Program, ProgramInfo> programMap = new ConcurrentHashMap<>();
+	private DomainObjectListener domainObjectListener = createDomainObjectListener();
 
 	MultiProgramManager(ProgramManagerPlugin programManagerPlugin) {
 		this.plugin = programManagerPlugin;
@@ -95,7 +98,7 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 
 			fireOpenEvents(p);
 
-			p.addListener(this);
+			p.addListener(domainObjectListener);
 			p.addTransactionListener(this);
 		}
 		else if (!oldInfo.visible && state != ProgramManager.OPEN_HIDDEN) {
@@ -112,7 +115,7 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 		fireActivatedEvent(null);
 
 		for (Program p : programMap.keySet()) {
-			p.removeListener(this);
+			p.removeListener(domainObjectListener);
 			p.removeTransactionListener(this);
 			fireCloseEvents(p);
 			p.release(tool);
@@ -141,7 +144,7 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 		else {
 			p.removeTransactionListener(this);
 			programMap.remove(p);
-			p.removeListener(this);
+			p.removeListener(domainObjectListener);
 			if (info == currentInfo) {
 				ProgramInfo newCurrent = findNextCurrent();
 				setCurrentProgram(newCurrent);
@@ -287,13 +290,26 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 			new ProgramVisibilityChangePluginEvent(pluginName, program, isVisible));
 	}
 
-	@Override
-	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (!(ev.getSource() instanceof Program program)) {
-			return;
-		}
+	DomainObjectListener createDomainObjectListener() {
+		// @formatter:off
+		return new DomainObjectListenerBuilder(this)
+			.any(ERROR).terminate(this::handleError)
+			.each(FILE_CHANGED).call(this::handleFileChanged)
+			.build();
+		// @formatter:on
+	}
 
-		ev.forEach(DomainObjectEvent.FILE_CHANGED, r -> {
+	private void handleError(DomainObjectChangedEvent event) {
+		DomainObjectChangeRecord rec = event.findFirst(ERROR);
+		if (event.getSource() instanceof Program program) {
+			String msg = getErrorMessage(program, (Throwable) rec.getNewValue());
+			Msg.showError(this, tool.getToolFrame(), "Severe Error Condition", msg);
+			removeProgram(program);
+		}
+	}
+
+	private void handleFileChanged(DomainObjectChangedEvent event, DomainObjectChangeRecord rec) {
+		if (event.getSource() instanceof Program program) {
 			ProgramInfo info = getInfo(program);
 			if (info != null) {
 				info.programSavedAs(); // updates info to new domain file
@@ -301,18 +317,6 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 			if (currentInfo != null && currentInfo.program == program) {
 				String name = program.getDomainFile().toString();
 				tool.setSubTitle(name);
-			}
-		});
-
-		if (ev.contains(DomainObjectEvent.ERROR)) {
-			for (DomainObjectChangeRecord docr : ev) {
-				EventType eventType = docr.getEventType();
-				if (eventType == DomainObjectEvent.ERROR) {
-					String msg = getErrorMessage(program, (Throwable) docr.getNewValue());
-					Msg.showError(this, tool.getToolFrame(), "Severe Error Condition", msg);
-					removeProgram(program);
-					return;
-				}
 			}
 		}
 	}
