@@ -399,7 +399,7 @@ macro extract_bit(bit, result) {
 	local mt:1 = (x s> (-clamp));
 	local max:4 = (zext(mt) * x) + (zext(!mt) * (-clamp));
 	mt = (x s< (clamp-1));
-	local y = (zext(mt) * max) + (zext(!mt) * (clamp-1));
+	ar = (zext(mt) * max) + (zext(!mt) * (clamp-1));
 }
 
 # DHI - Data Cache Hit Invalidate, pg. 313.
