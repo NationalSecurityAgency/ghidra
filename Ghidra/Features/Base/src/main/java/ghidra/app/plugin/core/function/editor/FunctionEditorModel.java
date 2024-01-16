@@ -588,6 +588,9 @@ public class FunctionEditorModel {
 			VariableStorage returnStorage = returnInfo.getStorage();
 			if (returnStorage.isForcedIndirect()) {
 				DataType returnType = returnInfo.getDataType();
+				if (returnStorage.isVoidStorage()) {
+					returnType = VoidDataType.dataType;
+				}
 				returnInfo.setFormalDataType(returnType);
 				returnInfo.setStorage(returnStorage.clone(program));
 				signatureTransformed = true;
@@ -650,8 +653,8 @@ public class FunctionEditorModel {
 				try {
 					if (autoParamCount < oldAutoCount) {
 						if (oldParams.get(autoParamCount)
-							.getStorage()
-							.getAutoParameterType() != storage.getAutoParameterType()) {
+								.getStorage()
+								.getAutoParameterType() != storage.getAutoParameterType()) {
 							adjustSelectionForRowRemoved(i);
 						}
 					}
@@ -901,25 +904,18 @@ public class FunctionEditorModel {
 		return -1;
 	}
 
-	private boolean removeExplicitReturnStoragePtrParameter() {
+	private DataType removeExplicitReturnStoragePtrParameter() {
 		int index = findExplicitReturnStoragePtrParameter();
 		if (index >= 0) {
-			parameters.remove(index); // remove explicit '__return_storage_ptr__' parameter
+			// remove explicit '__return_storage_ptr__' parameter - should always be a pointer
+			ParamInfo returnStoragePtrParameter = parameters.remove(index);
+			DataType dt = returnStoragePtrParameter.getDataType();
 			adjustSelectionForRowRemoved(index);
-			return true;
+			if (dt instanceof Pointer ptr) {
+				return ptr.getDataType();
+			}
 		}
-		return false;
-	}
-
-	private void revertIndirectParameter(ParamInfo param) {
-		if (allowCustomStorage) {
-			throw new AssertException(); // auto-storage mode only
-		}
-		DataType dt = param.getDataType();
-		if (dt instanceof Pointer) {
-			param.setFormalDataType(((Pointer) dt).getDataType());
-			param.setStorage(VariableStorage.UNASSIGNED_STORAGE);
-		}
+		return null;
 	}
 
 	/**
@@ -933,8 +929,10 @@ public class FunctionEditorModel {
 		allowCustomStorage = b;
 		if (!allowCustomStorage) {
 			removeExplicitThisParameter();
-			if (removeExplicitReturnStoragePtrParameter()) {
-				revertIndirectParameter(returnInfo);
+			DataType returnDt = removeExplicitReturnStoragePtrParameter();
+			if (returnDt != null) {
+				returnInfo.setFormalDataType(returnDt);
+				returnInfo.setStorage(VariableStorage.UNASSIGNED_STORAGE);
 			}
 			updateParameterAndReturnStorage();
 		}
@@ -1093,7 +1091,7 @@ public class FunctionEditorModel {
 	}
 
 	public void setFunctionData(FunctionDefinitionDataType functionDefinition) {
-		
+
 		name = functionDefinition.getName();
 
 		setCallingConventionName(functionDefinition.getCallingConventionName());
