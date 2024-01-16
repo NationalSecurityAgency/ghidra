@@ -66,6 +66,11 @@ public enum Platform {
 	MAC_ARM_64(OperatingSystem.MAC_OS_X, Architecture.ARM_64, "mac_arm_64", ".dylib", ""),
 
 	/**
+	 * Identifies a FreeBSD x86 64-bit OS.
+	 */
+	FREEBSD_X86_64(OperatingSystem.FREE_BSD, Architecture.X86_64, "freebsd_x86_64", ".so", ""),
+
+	/**
 	 * Identifies an unsupported OS.
 	 */
 	UNSUPPORTED(OperatingSystem.UNSUPPORTED, Architecture.UNKNOWN, null, null, ""),
@@ -199,7 +204,8 @@ public enum Platform {
 	 */
 	public List<String> getAdditionalLibraryPaths() {
 		List<String> paths = new ArrayList<String>();
-		if (operatingSystem == OperatingSystem.LINUX) {
+		if (operatingSystem == OperatingSystem.LINUX ||
+			operatingSystem == OperatingSystem.FREE_BSD) {
 			paths.add("/bin");
 			paths.add("/lib");
 			paths.add("/lib64");

@@ -43,6 +43,7 @@ model {
 			targetPlatform "linux_arm_64"
 			targetPlatform "mac_x86_64"
 			targetPlatform "mac_arm_64"
+			targetPlatform "freebsd_x86_64"
 			sources {
 				cpp {
 					// NOTE: The bison/flex generated files are assumed to be up-to-date.
@@ -148,6 +149,7 @@ model {
 			targetPlatform "linux_arm_64"
 			targetPlatform "mac_x86_64"
 			targetPlatform "mac_arm_64"
+			targetPlatform "freebsd_x86_64"
 			sources {
 				cpp {
 					// NOTE: The bison/flex generated files are assumed to be up-to-date.
