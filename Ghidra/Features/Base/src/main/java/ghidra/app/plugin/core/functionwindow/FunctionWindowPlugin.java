@@ -55,7 +55,7 @@ public class FunctionWindowPlugin extends ProgramPlugin {
 	private DockingAction compareFunctionsAction;
 	private FunctionWindowProvider provider;
 	private SwingUpdateManager swingMgr;
-	private DomainObjectListener domainObjectListener = createDomainObjectListener();
+	private DomainObjectListener domainObjectListener;
 
 	public FunctionWindowPlugin(PluginTool tool) {
 		super(tool);
@@ -67,6 +67,7 @@ public class FunctionWindowPlugin extends ProgramPlugin {
 	public void init() {
 		super.init();
 		provider = new FunctionWindowProvider(this);
+		domainObjectListener = createDomainObjectListener();
 		createActions();
 
 		/**
