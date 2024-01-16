@@ -1364,8 +1364,9 @@ public class FunctionDB extends DatabaseObject implements Function {
 				newParams = new ArrayList<Variable>(newParams); // copy for edit
 				boolean thisParamRemoved =
 					removeExplicitThisParameter(newParams, callingConvention);
-				if (removeExplicitReturnStorageParameter(newParams)) {
-					returnVar = revertIndirectParameter(returnVar, true);
+				DataType dt = removeExplicitReturnStoragePtrParameter(newParams);
+				if (dt != null) {
+					returnVar = revertIndirectParameter(returnVar, dt, true);
 				}
 				if (returnVar instanceof Parameter) {
 					returnType = ((Parameter) returnVar).getFormalDataType();
@@ -2255,7 +2256,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 		return false;
 	}
 
-	private static int findExplicitReturnStorageParameter(List<? extends Variable> params) {
+	private static int findExplicitReturnStoragePtrParameter(List<? extends Variable> params) {
 		for (int i = 0; i < params.size(); i++) {
 			Variable p = params.get(i);
 			if (RETURN_PTR_PARAM_NAME.equals(p.getName()) && (p.getDataType() instanceof Pointer)) {
@@ -2265,49 +2266,53 @@ public class FunctionDB extends DatabaseObject implements Function {
 		return -1;
 	}
 
-	private static boolean removeExplicitReturnStorageParameter(List<? extends Variable> params) {
-		int paramIndex = findExplicitReturnStorageParameter(params);
+	private static DataType removeExplicitReturnStoragePtrParameter(
+			List<? extends Variable> params) {
+		int paramIndex = findExplicitReturnStoragePtrParameter(params);
 		if (paramIndex >= 0) {
-			params.remove(paramIndex); // remove return storage parameter
-			return true;
+			Variable returnStoragePtrParameter = params.remove(paramIndex); // remove return storage parameter
+			DataType dt = returnStoragePtrParameter.getDataType();
+			if (dt instanceof Pointer ptr) {
+				return ptr.getDataType();
+			}
 		}
-		return false;
+		return null;
 	}
 
-	private boolean removeExplicitReturnStorageParameter() {
-		int paramIndex = findExplicitReturnStorageParameter(params);
+	private DataType removeExplicitReturnStoragePtrParameter() {
+		int paramIndex = findExplicitReturnStoragePtrParameter(params);
 		if (paramIndex >= 0) {
+			ParameterDB returnStoragePtrParameter = params.get(paramIndex);
+			DataType dt = returnStoragePtrParameter.getDataType();
 			removeParameter(paramIndex); // remove return storage parameter
-			return true;
+			if (dt instanceof Pointer ptr) {
+				return ptr.getDataType();
+			}
 		}
-		return false;
+		return null;
 	}
 
 	/**
 	 * Strip indirect pointer data type from a parameter.
 	 * @param param parameter to be examined and optionally modified
+	 * @param dt return datatype to be applied
 	 * @param create if true the specified param will not be affected and a new parameter
 	 * instance will be returned if strip performed, otherwise orginal param will be changed
 	 * if possible and returned.
 	 * @return parameter with pointer stripped or original param if pointer not used.
 	 * Returned parameter will have unassigned storage if affected.
 	 */
-	private static Variable revertIndirectParameter(Variable param, boolean create) {
-		DataType dt = param.getDataType();
-		if (dt instanceof Pointer) {
-			try {
-				dt = ((Pointer) dt).getDataType();
-				if (create) {
-					param = new ParameterImpl(param.getName(), dt, param.getProgram());
-				}
-				else {
-					param.setDataType(dt, VariableStorage.UNASSIGNED_STORAGE, false,
-						param.getSource());
-				}
+	private static Variable revertIndirectParameter(Variable param, DataType dt, boolean create) {
+		try {
+			if (create) {
+				param = new ParameterImpl(param.getName(), dt, param.getProgram());
 			}
-			catch (InvalidInputException e) {
-				throw new AssertException(e); // unexpected
+			else {
+				param.setDataType(dt, VariableStorage.UNASSIGNED_STORAGE, false, param.getSource());
 			}
+		}
+		catch (InvalidInputException e) {
+			throw new AssertException(e); // unexpected
 		}
 		return param;
 	}
@@ -2330,8 +2335,9 @@ public class FunctionDB extends DatabaseObject implements Function {
 			if (!hasCustomVariableStorage) {
 				// remove explicit 'this' param and return storage use if switching to dynamic storage
 				removeExplicitThisParameter();
-				if (removeExplicitReturnStorageParameter()) {
-					revertIndirectParameter(returnParam, false);
+				DataType returnDt = removeExplicitReturnStoragePtrParameter();
+				if (returnDt != null) {
+					revertIndirectParameter(returnParam, returnDt, false);
 				}
 			}
 
