@@ -24,8 +24,8 @@ import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.services.GoToService;
-import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.model.DomainObjectListener;
+import ghidra.framework.model.DomainObjectListenerBuilder;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -52,11 +52,12 @@ import ghidra.util.task.SwingUpdateManager;
 	servicesRequired = { GoToService.class }
 )
 //@formatter:on
-public class CommentWindowPlugin extends ProgramPlugin implements DomainObjectListener {
+public class CommentWindowPlugin extends ProgramPlugin {
 
 	private DockingAction selectAction;
 	private CommentWindowProvider provider;
 	private SwingUpdateManager reloadUpdateMgr;
+	private DomainObjectListener domainObjectListener = createDomainObjectListener();
 
 	public CommentWindowPlugin(PluginTool tool) {
 		super(tool);
@@ -76,44 +77,42 @@ public class CommentWindowPlugin extends ProgramPlugin implements DomainObjectLi
 	public void dispose() {
 		reloadUpdateMgr.dispose();
 		if (currentProgram != null) {
-			currentProgram.removeListener(this);
+			currentProgram.removeListener(domainObjectListener);
 		}
 		provider.dispose();
 		super.dispose();
 	}
 
-	@Override
-	public void domainObjectChanged(DomainObjectChangedEvent ev) {
+	private DomainObjectListener createDomainObjectListener() {
+		// @formatter:off
+		return new DomainObjectListenerBuilder(this)
+			.any(RESTORED, CODE_REMOVED).terminate(this::reload)
+			.with(CommentChangeRecord.class)
+				.each(COMMENT_CHANGED).call(this::handleCommentChanged)
+			.build();
+		// @formatter:on
+	}
 
-		// reload the table if an undo/redo or clear code with options event happens (it isn't the
-		// same as a delete comment)
-		if (ev.contains(RESTORED, CODE_REMOVED)) {
-			reload();
-			return;
+	private void handleCommentChanged(CommentChangeRecord ccr) {
+		int commentType = ccr.getCommentType();
+		String oldComment = ccr.getOldComment();
+		String newComment = ccr.getNewComment();
+		Address commentAddress = ccr.getStart();
+
+		// if old comment is null then the change is an add comment so add the comment to the table
+		if (oldComment == null) {
+			provider.commentAdded(commentAddress, commentType);
 		}
 
-		ev.forEach(COMMENT_CHANGED, r -> {
-			CommentChangeRecord ccr = (CommentChangeRecord) r;
-			int commentType = ccr.getCommentType();
-			String oldComment = ccr.getOldComment();
-			String newComment = ccr.getNewComment();
-			Address commentAddress = ccr.getStart();
+		// if the new comment is null then the change is a delete comment so remove the comment from the table
+		else if (newComment == null) {
+			provider.commentRemoved(commentAddress, commentType);
+		}
+		// otherwise, the comment is changed so repaint the table
+		else {
+			provider.getComponent().repaint();
+		}
 
-			// if old comment is null then the change is an add comment so add the comment to the table
-			if (oldComment == null) {
-				provider.commentAdded(commentAddress, commentType);
-			}
-
-			// if the new comment is null then the change is a delete comment so remove the comment from the table
-			else if (newComment == null) {
-				provider.commentRemoved(commentAddress, commentType);
-			}
-			// otherwise, the comment is changed so repaint the table
-			else {
-				provider.getComponent().repaint();
-			}
-
-		});
 	}
 
 	private void reload() {
@@ -126,13 +125,13 @@ public class CommentWindowPlugin extends ProgramPlugin implements DomainObjectLi
 
 	@Override
 	protected void programActivated(Program program) {
-		program.addListener(this);
+		program.addListener(domainObjectListener);
 		provider.programOpened(program);
 	}
 
 	@Override
 	protected void programDeactivated(Program program) {
-		program.removeListener(this);
+		program.removeListener(domainObjectListener);
 		provider.programClosed();
 	}
 

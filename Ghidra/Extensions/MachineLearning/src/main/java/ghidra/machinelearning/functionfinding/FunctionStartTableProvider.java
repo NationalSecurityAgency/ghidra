@@ -15,15 +15,18 @@
  */
 package ghidra.machinelearning.functionfinding;
 
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
+
 import java.awt.*;
 
 import javax.swing.*;
 
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainObjectChangedEvent;
+import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ProgramEvent;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
 
@@ -84,29 +87,10 @@ public class FunctionStartTableProvider extends ProgramAssociatedComponentProvid
 		if (!isVisible()) {
 			return;
 		}
-		if (ev.contains(DomainObjectEvent.RESTORED)) {
+		if (ev.contains(RESTORED, FUNCTION_ADDED, FUNCTION_REMOVED, CODE_ADDED, CODE_REMOVED,
+			CODE_REPLACED, REFERENCE_TYPE_CHANGED, REFERENCE_ADDED, REFERENCE_REMOVED)) {
 			model.reload();
 			contextChanged();
-		}
-		for (int i = 0; i < ev.numRecords(); ++i) {
-			DomainObjectChangeRecord doRecord = ev.getChangeRecord(i);
-			EventType eventType = doRecord.getEventType();
-			if (eventType instanceof ProgramEvent type) {
-				switch (type) {
-					case FUNCTION_ADDED:
-					case FUNCTION_REMOVED:
-					case CODE_ADDED:
-					case CODE_REMOVED:
-					case CODE_REPLACED:
-					case REFERENCE_TYPE_CHANGED:
-					case REFERENCE_ADDED:
-					case REFERENCE_REMOVED:
-						model.reload();
-						contextChanged();
-					default:
-						break;
-				}
-			}
 		}
 	}
 
