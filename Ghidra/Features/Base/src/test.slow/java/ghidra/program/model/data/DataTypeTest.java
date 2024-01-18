@@ -181,7 +181,7 @@ public class DataTypeTest extends AbstractGhidraHeadedIntegrationTest {
 				"Structure xyz {\n" + 
 				"   0   int *[2]   8      \"\"\n" + 
 				"}\n" + 
-				"Size = 8   Actual Alignment = 4\n",
+				"Length: 8 Alignment: 4\n",
 				resolvedStruct2.toString());
 			//@formatter:on
 		}
@@ -220,7 +220,7 @@ public class DataTypeTest extends AbstractGhidraHeadedIntegrationTest {
 				"Structure xyz {\n" + 
 				"   0   int *[0]   0      \"\"\n" + 
 				"}\n" + 
-				"Size = 1   Actual Alignment = 4\n",
+				"Length: 0 Alignment: 4\n",
 				resolvedStruct2.toString());
 			//@formatter:on
 		}
