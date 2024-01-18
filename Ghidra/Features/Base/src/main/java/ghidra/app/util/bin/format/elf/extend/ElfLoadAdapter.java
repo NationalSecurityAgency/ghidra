@@ -24,6 +24,7 @@ import java.util.*;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.format.MemoryLoadable;
 import ghidra.app.util.bin.format.elf.*;
+import ghidra.app.util.opinion.ElfLoaderOptionsFactory;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.Program;
@@ -528,6 +529,16 @@ public class ElfLoadAdapter {
 	 */
 	public void addLoadOptions(ElfHeader elf, List<Option> options) {
 		// no additional options
+	}
+
+	/**
+	 * Get the default image base to be used when one cannot be determined.
+	 * @param elfHeader ELF header
+	 * @return default image base
+	 */
+	public long getDefaultImageBase(ElfHeader elfHeader) {
+		return elfHeader.is64Bit() ? ElfLoaderOptionsFactory.IMAGE64_BASE_DEFAULT
+				: ElfLoaderOptionsFactory.IMAGE32_BASE_DEFAULT;
 	}
 
 	/**

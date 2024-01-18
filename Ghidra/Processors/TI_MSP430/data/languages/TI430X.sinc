@@ -5,7 +5,8 @@
 # The original way of using sub-tables to breakout the addressing modes does not
 # work for these instructions
 
-:^instruction							is opext_11_5=0x3 & ctx_haveext=0 & dest_0_4 & src_ext & al & zc & ad; instruction [ ctx_haveext=1; ctx_ctregdest=dest_0_4; ctx_regsrc=src_ext; ctx_al=al; ctx_num=ad; ] {$(CARRY)=$(CARRY) * (zc:1 == 0);  build instruction;}
+#constructor recognizing the presence of an extension word
+:^instruction							is opext_11_5=0x3 & ctx_haveext=0 & dest_0_4 & src_ext & al & zc & ad; instruction [ ctx_haveext=1; ctx_ctregdest=dest_0_4; ctx_regsrc=src_ext; ctx_al=al; ctx_num=ad; ctx_zc=zc;] { build instruction;}
 
 
 #:^instruction							is ctx_haveext=1 & instruction & as=1 & src_8_4=3 [ctx_haveext=2;] {build instruction;}
@@ -291,6 +292,17 @@ XDEST_A_AD: "&"^val   				  is dest=0x2 & ad=0x1 & bow=0x1 & as=0x1 & ((src16_8_
 XDEST_A_AD: "&"^val   				  is dest=0x2 & ad=0x1 & bow=0x1 & as=0x3 & src16_8_4=0x0 ; indexExtWord16_0_16 ; indexExt2Word16_0_16 [val=(ctx_ctregdest << 16) | indexExt2Word16_0_16; ]
      {export *:$(REG_SIZE) val; } # Absolute
 
+#Use repeat_carry with a build directive at the beginning of a RPT loop
+
+#use existing value of carry bit
+repeat_carry: is ctx_zc = 0 {} 
+
+#in this case the repeated instruction uses 0 as the value of the carry bit
+#after repeated instruction executes, value of carry bit is defined by the result of
+#last operation, so building this constructor at the beginning of RPT loop can accurately
+#model the semantics
+repeat_carry: is ctx_zc = 1 {$(CARRY) = 0;} 
+
 macro setaddflags(ans, in1, in2)
 {
 	tmp1:$(REG_SIZE) = zext(in1[0,20]);
@@ -310,7 +322,6 @@ macro setsubflags(ans, in1, in2)
 	$(OVERFLOW) = ((in1 s< 0) & (in2 s>= 0) & (ans s< 0)) | ((in1 s>= 0) & (in2 s< 0) & (ans s>= 0));
 	$(SIGN) = (ans s< 0);
 	$(ZERO) = (ans == 0);
-	
 }
 
 #################
@@ -1115,7 +1126,7 @@ POPWR0:						is ctx_mreg=0x0 & POPWR1 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+
 	call [PC];
 }
 
-:CALLA imms_0_16^"(PC)"					is ctx_haveext=0 & op16_8_8=0x13 & op16_4_4=0x9 & imms_0_16 {
+:CALLA imms_0_16^"(PC)"					is ctx_haveext=0 & op16_8_8=0x13 & op16_4_4=0x9 ; imms_0_16 {
 	SP = SP - 0x4;
 	*:4 SP = inst_next;
 	tmp:$(REG_SIZE) = inst_start + sext(imms_0_16:2);
@@ -1275,8 +1286,9 @@ macro wzero(full, word)
 #
 #############################
 # Repeat enabled
-:ADCX.B DST8_0_4							is ctx_haveext=4 & op16_12_4=0x6 & src16_8_4=0x3 & as=0x0 & bow=1 & ctx_al=1 & postIncrementStore & DST8_0_4 & reg_Direct16_0_4 {
+:ADCX.B DST8_0_4							is ctx_haveext=4 & op16_12_4=0x6 & src16_8_4=0x3 & as=0x0 & bow=1 & ctx_al=1 & postIncrementStore & DST8_0_4 & reg_Direct16_0_4 & repeat_carry {
 	<top>
+	build repeat_carry;
 	# Operation Flags...
 	tmp_carry:1 = carry(DST8_0_4,$(CARRY));		 #C Flag
  	$(OVERFLOW) = scarry(DST8_0_4,$(CARRY)); #V Flag
@@ -1293,8 +1305,9 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:ADCX.W DST16_0_4							is ctx_haveext=4 & op16_12_4=0x6 & src16_8_4=0x3 & as=0x0 & bow=0 & ctx_al=1 & postIncrementStore & DST16_0_4 & reg_Direct16_0_4 {
+:ADCX.W DST16_0_4							is ctx_haveext=4 & op16_12_4=0x6 & src16_8_4=0x3 & as=0x0 & bow=0 & ctx_al=1 & postIncrementStore & DST16_0_4 & reg_Direct16_0_4 & repeat_carry {
 	<top>
+	build repeat_carry;
 	# Operation Flags...
 	tmp_carry:1 = carry(DST16_0_4,zext($(CARRY)));		 #C Flag
  	$(OVERFLOW) = scarry(DST16_0_4,zext($(CARRY))); #V Flag
@@ -1311,8 +1324,9 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:ADCX.A dest_0_4							is ctx_haveext=4 & op16_12_4=0x6 & src16_8_4=0x3 & as=0x0 & bow=1 & ctx_al=0 & postIncrementStore & dest_0_4 {
+:ADCX.A dest_0_4							is ctx_haveext=4 & op16_12_4=0x6 & src16_8_4=0x3 & as=0x0 & bow=1 & ctx_al=0 & postIncrementStore & dest_0_4 & repeat_carry {
 	<top>
+	build repeat_carry;
 	tmpd:$(REG_SIZE) = dest_0_4;
 	tmpc:$(REG_SIZE) = zext($(CARRY));
 	tmp:$(REG_SIZE) = tmpc + dest_0_4;
@@ -1372,8 +1386,9 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:ADDCX.B XRSRC_B_AS, DST8_0_4				is ctx_haveext=4 & op16_12_4=0x6 & bow=1 & ctx_al=1 & postIncrementStore & XRSRC_B_AS & DST8_0_4 & reg_Direct16_0_4 {
+:ADDCX.B XRSRC_B_AS, DST8_0_4				is ctx_haveext=4 & op16_12_4=0x6 & bow=1 & ctx_al=1 & postIncrementStore & XRSRC_B_AS & DST8_0_4 & reg_Direct16_0_4 & repeat_carry {
 	<top>
+	build repeat_carry;
 	# Operation Flags...
 	tmp_carry:1 = (carry(XRSRC_B_AS, $(CARRY)) || carry(DST8_0_4,XRSRC_B_AS + $(CARRY)));		 #C Flag
  	$(OVERFLOW) = (scarry(XRSRC_B_AS, $(CARRY)) || scarry(DST8_0_4,XRSRC_B_AS + $(CARRY))); #V Flag
@@ -1390,8 +1405,9 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:ADDCX.W XRSRC_W_AS, DST16_0_4			is ctx_haveext=4 & op16_12_4=0x6 & bow=0 & ctx_al=1 & postIncrementStore & XRSRC_W_AS & DST16_0_4 & reg_Direct16_0_4 {
+:ADDCX.W XRSRC_W_AS, DST16_0_4			is ctx_haveext=4 & op16_12_4=0x6 & bow=0 & ctx_al=1 & postIncrementStore & XRSRC_W_AS & DST16_0_4 & reg_Direct16_0_4 & repeat_carry {
 	<top>
+	build repeat_carry;
 	# Operation Flags...
 	tmp_carry:1 = (carry(XRSRC_W_AS,zext($(CARRY))) || carry(DST16_0_4,XRSRC_W_AS + zext($(CARRY))));		 #C Flag
  	$(OVERFLOW) = (scarry(XRSRC_W_AS,zext($(CARRY))) || scarry(DST16_0_4,XRSRC_W_AS + zext($(CARRY)))); #V Flag
@@ -1408,8 +1424,9 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:ADDCX.A XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0x6 & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & dest_0_4 {
+:ADDCX.A XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0x6 & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & dest_0_4 & repeat_carry {
 	<top>
+	build repeat_carry;
 	tmpd:$(REG_SIZE) = dest_0_4;
 	tmps:$(REG_SIZE) = XRSRC_A_AS + zext($(CARRY));
 	tmp:$(REG_SIZE) = tmps + dest_0_4;
@@ -1661,12 +1678,12 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:DADCX.B DST8_0_4						is ctx_haveext=4 & op16_12_4=0xA & src16_8_4=0x3 & as=0x0 & bow=1 & ctx_al=1 & postIncrementStore & DST8_0_4 & reg_Direct16_0_4 {
+:DADCX.B DST8_0_4						is ctx_haveext=4 & op16_12_4=0xA & src16_8_4=0x3 & as=0x0 & bow=1 & ctx_al=1 & postIncrementStore & DST8_0_4 & reg_Direct16_0_4 & repeat_carry {
 	<top>
-	# Operation Flags...
-	$(CARRY) = 0;				# This should be overflow
-	# Operation...
-	DST8_0_4 = bcd_add(DST8_0_4);
+	build repeat_carry;
+	local temp:4 = zext(DST8_0_4);
+	DST8_0_4 = bcd_add(temp, $(CARRY));
+	$(CARRY) = temp >= 0x99;
 	bzero(reg_Direct16_0_4,DST8_0_4);
 	# Result Flags...
 	$(SIGN) = (DST8_0_4 s< 0x0);		# S Flag
@@ -1677,12 +1694,12 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:DADCX.W DST16_0_4						is ctx_haveext=4 & op16_12_4=0xA & src16_8_4=0x3 & as=0x0 & bow=0 & ctx_al=1 & postIncrementStore & DST16_0_4 & reg_Direct16_0_4 {
+:DADCX.W DST16_0_4						is ctx_haveext=4 & op16_12_4=0xA & src16_8_4=0x3 & as=0x0 & bow=0 & ctx_al=1 & postIncrementStore & DST16_0_4 & reg_Direct16_0_4 & repeat_carry {
 	<top>
-	# Operation Flags...
-	$(CARRY) = 0;					# Don't currently have BCD overflow op
-	# Operation...
-	DST16_0_4 = bcd_add(DST16_0_4);
+	build repeat_carry;
+	local temp:4 = zext(DST16_0_4);
+	DST16_0_4 = bcd_add(temp, $(CARRY));
+	$(CARRY) = temp >= 0x9999;
 	wzero(reg_Direct16_0_4,DST16_0_4);
 	# Result Flags...
 	$(SIGN) = (DST16_0_4 s< 0x0);			# S Flag
@@ -1693,12 +1710,12 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:DADCX.A dest_0_4						is ctx_haveext=4 & op16_12_4=0xA & src16_8_4=0x3 & as=0x0 & bow=1 & ctx_al=0 & postIncrementStore & dest_0_4 {
+:DADCX.A dest_0_4						is ctx_haveext=4 & op16_12_4=0xA & src16_8_4=0x3 & as=0x0 & bow=1 & ctx_al=0 & postIncrementStore & dest_0_4 & repeat_carry {
 	<top>
-	# Operation Flags...
-	$(CARRY) = 0;					# Don't currently have BCD overflow op
-	# Operation...
-	dest_0_4 = bcd_add(dest_0_4);
+	build repeat_carry;
+	local temp:4 = zext(dest_0_4);
+	dest_0_4 = bcd_add(temp, $(CARRY));
+	$(CARRY) = temp >= 0x99999;
 	dest_0_4 = sext(dest_0_4[0,20]);
 	# Result Flags...
 	$(SIGN) = (dest_0_4 s< 0x0);			# S Flag
@@ -1709,48 +1726,54 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:DADDX.B XRSRC_B_AS, DST8_0_4				is ctx_haveext=4 & op16_12_4=0xA & bow=1 & ctx_al=1 & postIncrementStore & XRSRC_B_AS & DST8_0_4 & reg_Direct16_0_4 {
+:DADDX.B XRSRC_B_AS, DST8_0_4				is ctx_haveext=4 & op16_12_4=0xA & bow=1 & ctx_al=1 & postIncrementStore & XRSRC_B_AS & DST8_0_4 & reg_Direct16_0_4 & repeat_carry {
 	<top>
-	# Operation Flags...
-	$(CARRY) = 0;				# This should be overflow
-	# Operation...
-	DST8_0_4 = bcd_add(XRSRC_B_AS,DST8_0_4);
+	build repeat_carry;
+	local temp_src:4 = zext(XRSRC_B_AS);
+	local temp_dest:4 = zext(DST8_0_4);
+	local temp_carry:4 = zext($(CARRY));
+	DST8_0_4 = bcd_add(temp_src,temp_dest, temp_carry);
 	bzero(reg_Direct16_0_4,DST8_0_4);
 	# Result Flags...
 	$(SIGN) = (DST8_0_4 s< 0x0);		# S Flag
 	$(ZERO) = (DST8_0_4 == 0x0);		# Z Flag
+	$(CARRY) = (temp_src + temp_dest + temp_carry) > 0x99;
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
 	goto <top>;
 }
 
-:DADDX.W XRSRC_W_AS, DST16_0_4			is ctx_haveext=4 & op16_12_4=0xA & bow=0 & ctx_al=1 & postIncrementStore & XRSRC_W_AS & DST16_0_4 & reg_Direct16_0_4 {
+:DADDX.W XRSRC_W_AS, DST16_0_4			is ctx_haveext=4 & op16_12_4=0xA & bow=0 & ctx_al=1 & postIncrementStore & XRSRC_W_AS & DST16_0_4 & reg_Direct16_0_4 & repeat_carry {
 	<top>
-	# Operation Flags...
-	$(CARRY) = 0;					# Don't currently have BCD overflow op
-	# Operation...
-	DST16_0_4 = bcd_add(XRSRC_W_AS ,DST16_0_4);
+	build repeat_carry;
+	local temp_src:4 = zext(XRSRC_W_AS);
+	local temp_dest:4 = zext(DST16_0_4);
+	local temp_carry:4 = zext($(CARRY));
+	DST16_0_4 = bcd_add(temp_src, temp_dest, temp_carry);
 	wzero(reg_Direct16_0_4,DST16_0_4);
 	# Result Flags...
 	$(SIGN) = (DST16_0_4 s< 0x0);			# S Flag
 	$(ZERO) = (DST16_0_4 == 0x0);			# Z Flag
+	$(CARRY) = (temp_src + temp_dest + temp_carry) > 0x9999;
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
 	goto <top>;
 }
 
-:DADDX.A XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0xA & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & dest_0_4 {
+:DADDX.A XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0xA & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & dest_0_4 & repeat_carry {
 	<top>
-	# Operation Flags...
-	$(CARRY) = 0;					# Don't currently have BCD overflow op
-	# Operation...
-	dest_0_4 = bcd_add(XRSRC_A_AS ,dest_0_4);
+	build repeat_carry;
+	local temp_src:4 = zext(XRSRC_A_AS);
+	local temp_dest:4 = zext(dest_0_4);
+	local temp_carry:4 = zext($(CARRY));
+	dest_0_4 = bcd_add(temp_src, temp_dest, temp_carry);
 	dest_0_4 = sext(dest_0_4[0,20]);
 	# Result Flags...
 	$(SIGN) = (dest_0_4 s< 0x0);			# S Flag
 	$(ZERO) = (dest_0_4 == 0x0);			# Z Flag
+	$(CARRY) = (temp_src + temp_dest + temp_carry) > 0x99999;
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
@@ -2103,8 +2126,9 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:RLCX.B DST8_0_4						is ctx_haveext=4 & op16_12_4=0x6 & bow=1 & ctx_al=1 & src_Direct16_8_4=dest_Direct16_0_4 & postIncrementStore & XRSRC_B_AS & DST8_0_4 & reg_Direct16_0_4 {
+:RLCX.B DST8_0_4						is ctx_haveext=4 & op16_12_4=0x6 & bow=1 & ctx_al=1 & src_Direct16_8_4=dest_Direct16_0_4 & postIncrementStore & XRSRC_B_AS & DST8_0_4 & reg_Direct16_0_4 & repeat_carry {
 	<top>
+	build repeat_carry;
 	# Operation Flags...
 	tmp_carry:1 = (carry(DST8_0_4, $(CARRY)) || carry(DST8_0_4,DST8_0_4 + $(CARRY)));		 #C Flag
  	$(OVERFLOW) = (scarry(DST8_0_4, $(CARRY)) || scarry(DST8_0_4,DST8_0_4 + $(CARRY))); #V Flag
@@ -2121,8 +2145,9 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:RLCX.W DST16_0_4						is ctx_haveext=4 & op16_12_4=0x6 & bow=0 & ctx_al=1 & src_Direct16_8_4=dest_Direct16_0_4 & postIncrementStore & XRSRC_W_AS & DST16_0_4 & reg_Direct16_0_4 {
+:RLCX.W DST16_0_4						is ctx_haveext=4 & op16_12_4=0x6 & bow=0 & ctx_al=1 & src_Direct16_8_4=dest_Direct16_0_4 & postIncrementStore & XRSRC_W_AS & DST16_0_4 & reg_Direct16_0_4 & repeat_carry {
 	<top>
+	build repeat_carry;
 	# Operation Flags...
 	tmp_carry:1 = (carry(DST16_0_4,zext($(CARRY))) || carry(DST16_0_4,DST16_0_4 + zext($(CARRY))));		 #C Flag
  	$(OVERFLOW) = (scarry(DST16_0_4,zext($(CARRY))) || scarry(DST16_0_4,DST16_0_4 + zext($(CARRY)))); #V Flag
@@ -2139,8 +2164,9 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:RLCX.A dest_0_4						is ctx_haveext=4 & op16_12_4=0x6 & bow=1 & ctx_al=0 & src_Direct16_8_4=dest_Direct16_0_4 & postIncrementStore & XRSRC_A_AS & dest_0_4 {
+:RLCX.A dest_0_4						is ctx_haveext=4 & op16_12_4=0x6 & bow=1 & ctx_al=0 & src_Direct16_8_4=dest_Direct16_0_4 & postIncrementStore & XRSRC_A_AS & dest_0_4 & repeat_carry {
 	<top>
+	build repeat_carry;
 	tmpd:$(REG_SIZE) = dest_0_4;
 	tmps:$(REG_SIZE) = dest_0_4 + zext($(CARRY));
 	tmp:$(REG_SIZE) = tmps + dest_0_4;
@@ -2153,8 +2179,9 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:SBCX.B DST8_0_4				is ctx_haveext=4 & op16_12_4=0x7 & bow=1 & ctx_al=1 & src16_8_4=0x3 & as=0x0 & postIncrementStore & DST8_0_4 & reg_Direct16_0_4 {
+:SBCX.B DST8_0_4				is ctx_haveext=4 & op16_12_4=0x7 & bow=1 & ctx_al=1 & src16_8_4=0x3 & as=0x0 & postIncrementStore & DST8_0_4 & reg_Direct16_0_4 & repeat_carry {
 	<top>
+	build repeat_carry;
 	# Operation Flags...
 	brw:1 = 1 - $(CARRY);
     $(CARRY) = (brw <= DST8_0_4);             # Carry flag is NOT set if there is a borrow
@@ -2171,8 +2198,9 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:SBCX.W DST16_0_4				is ctx_haveext=4 & op16_12_4=0x7 & bow=0 & ctx_al=1 & src16_8_4=0x3 & as=0x0 & postIncrementStore & DST16_0_4 & reg_Direct16_0_4 {
+:SBCX.W DST16_0_4				is ctx_haveext=4 & op16_12_4=0x7 & bow=0 & ctx_al=1 & src16_8_4=0x3 & as=0x0 & postIncrementStore & DST16_0_4 & reg_Direct16_0_4 & repeat_carry {
 	<top>
+	build repeat_carry;
 	# Operation Flags...
 	brw:2 = 1 - zext( $(CARRY) );
 	$(CARRY) = (brw  <= DST16_0_4);		# Carry flag is NOT set if there is a borrow
@@ -2189,8 +2217,9 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:SBCX.A dest_0_4				is ctx_haveext=4 & op16_12_4=0x7 & bow=1 & ctx_al=0 & src16_8_4=0x3 & as=0x0 & postIncrementStore & dest_0_4 {
+:SBCX.A dest_0_4				is ctx_haveext=4 & op16_12_4=0x7 & bow=1 & ctx_al=0 & src16_8_4=0x3 & as=0x0 & postIncrementStore & dest_0_4 & repeat_carry {
 	<top>
+	build repeat_carry;
 	brw:$(REG_SIZE) = 1 - zext( $(CARRY) );
 	tmpd:$(REG_SIZE) = dest_0_4;
 	tmp:$(REG_SIZE) = dest_0_4 - brw;
@@ -2203,8 +2232,9 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:SUBCX.B XRSRC_B_AS, DST8_0_4				is ctx_haveext=4 & op16_12_4=0x7 & bow=1 & ctx_al=1 & postIncrementStore & XRSRC_B_AS & DST8_0_4 & reg_Direct16_0_4 {
+:SUBCX.B XRSRC_B_AS, DST8_0_4				is ctx_haveext=4 & op16_12_4=0x7 & bow=1 & ctx_al=1 & postIncrementStore & XRSRC_B_AS & DST8_0_4 & reg_Direct16_0_4 & repeat_carry {
 	<top>
+	build repeat_carry;
 	# Operation Flags...
 	brw:1 = 1 - $(CARRY);
     $(CARRY) = ((brw + XRSRC_B_AS) <= DST8_0_4);             # Carry flag is NOT set if there is a borrow
@@ -2221,8 +2251,9 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:SUBCX.W XRSRC_W_AS, DST16_0_4				is ctx_haveext=4 & op16_12_4=0x7 & bow=0 & ctx_al=1 & postIncrementStore & XRSRC_W_AS & DST16_0_4 & reg_Direct16_0_4 {
+:SUBCX.W XRSRC_W_AS, DST16_0_4				is ctx_haveext=4 & op16_12_4=0x7 & bow=0 & ctx_al=1 & postIncrementStore & XRSRC_W_AS & DST16_0_4 & reg_Direct16_0_4 & repeat_carry {
 	<top>
+	build repeat_carry;
 	# Operation Flags...
 	brw:2 = 1 - zext( $(CARRY) );
 	$(CARRY) = ((brw + XRSRC_W_AS) <= DST16_0_4);		# Carry flag is NOT set if there is a borrow
@@ -2239,8 +2270,9 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:SUBCX.A XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0x7 & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & dest_0_4 {
+:SUBCX.A XRSRC_A_AS, dest_0_4				is ctx_haveext=4 & op16_12_4=0x7 & bow=1 & ctx_al=0 & postIncrementStore & XRSRC_A_AS & dest_0_4 & repeat_carry {
 	<top>
+	build repeat_carry;
 	brw:$(REG_SIZE) = 1 - zext( $(CARRY) );
 	tmpd:$(REG_SIZE) = dest_0_4;
 	tmps:$(REG_SIZE) = XRSRC_A_AS + brw;
@@ -3222,9 +3254,10 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:RRCX.B XRREG_B_AS_DEST 		is ctx_haveext=4 & ctx_al=1 & op16_12_4=0x1 & op16_8_4=0x0 & bow=0x1 & postRegIncrement & XRREG_B_AS_DEST {
+:RRCX.B XRREG_B_AS_DEST 		is ctx_haveext=4 & ctx_al=1 & ctx_zc & op16_12_4=0x1 & op16_8_4=0x0 & bow=0x1 & postRegIncrement & XRREG_B_AS_DEST & repeat_carry {
 	<top>
 	# Operation Flags...
+	build repeat_carry;
 	$(OVERFLOW) = ((XRREG_B_AS_DEST != 0x0) && ($(CARRY) == 0x1));	# V Flag
 	# Operation...
 	tmp:1 = $(CARRY);
@@ -3239,8 +3272,9 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:RRCX.W XRREG_W_AS_DEST 		is ctx_haveext=4 & ctx_al=1 & op16_12_4=0x1 & op16_8_4=0x0 & bow=0x0 & postRegIncrement & XRREG_W_AS_DEST {
+:RRCX.W XRREG_W_AS_DEST 		is ctx_haveext=4 & ctx_al=1 & op16_12_4=0x1 & op16_8_4=0x0 & bow=0x0 & postRegIncrement & XRREG_W_AS_DEST & repeat_carry {
 	<top>
+	build repeat_carry;
 	# Operation Flags...
 	$(OVERFLOW) = ((XRREG_W_AS_DEST != 0x0) && ($(CARRY) == 0x1));	# V Flag
 	# Operation...
@@ -3256,8 +3290,9 @@ macro wzero(full, word)
 	goto <top>;
 }
 
-:RRCX.A XRREG_A_AS_DEST 		is ctx_haveext=4 & ctx_al=0 & op16_12_4=0x1 & op16_8_4=0x0 & bow=0x1 & postRegIncrement & XRREG_A_AS_DEST {
+:RRCX.A XRREG_A_AS_DEST 		is ctx_haveext=4 & ctx_al=0 & op16_12_4=0x1 & op16_8_4=0x0 & bow=0x1 & postRegIncrement & XRREG_A_AS_DEST & repeat_carry {
 	<top>
+	build repeat_carry;
 	# Operation Flags...
 	$(OVERFLOW) = ((XRREG_A_AS_DEST != 0x0) && ($(CARRY) == 0x1));	# V Flag
 	# Operation...
