@@ -14,6 +14,7 @@ data/languages/evx.sinc||GHIDRA||||END|
 data/languages/g2.sinc||GHIDRA||||END|
 data/languages/lmwInstructions.sinc||GHIDRA||||END|
 data/languages/lswInstructions.sinc||GHIDRA||||END|
+data/languages/mulhwInstructions.sinc||GHIDRA||||END|
 data/languages/old/oldPPC.lang||GHIDRA||||END|
 data/languages/old/oldPPC.trans||GHIDRA||||END|
 data/languages/ppc.dwarf||GHIDRA||||END|
