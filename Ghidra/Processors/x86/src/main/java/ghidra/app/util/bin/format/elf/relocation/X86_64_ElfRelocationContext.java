@@ -113,6 +113,7 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 	}
 
 	private boolean requiresGotEntry(ElfRelocation r) {
+
 		switch (r.getType()) {
 			case X86_64_ElfRelocationConstants.R_X86_64_GOTPCREL:
 //			case X86_64_ElfRelocationConstants.R_X86_64_GOTOFF64:
@@ -120,8 +121,11 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 //			case X86_64_ElfRelocationConstants.R_X86_64_GOT64:
 			case X86_64_ElfRelocationConstants.R_X86_64_GOTPCREL64:
 //			case X86_64_ElfRelocationConstants.R_X86_64_GOTPC64:
-//			case X86_64_ElfRelocationConstants.R_X86_64_GOTPCRELX:
-//			case X86_64_ElfRelocationConstants.R_X86_64_REX_GOTPCRELX:
+				return true;
+			case X86_64_ElfRelocationConstants.R_X86_64_GOTPCRELX:
+			case X86_64_ElfRelocationConstants.R_X86_64_REX_GOTPCRELX:
+				// NOTE: Relocation may not actually require GOT entry in which case %got 
+				// may be over-allocated, but is required in some cases.
 				return true;
 			default:
 				return false;
