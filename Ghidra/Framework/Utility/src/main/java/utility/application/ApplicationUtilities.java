@@ -225,6 +225,7 @@ public class ApplicationUtilities {
 			return createDir(switch (OperatingSystem.CURRENT_OPERATING_SYSTEM) {
 				case WINDOWS -> new File(getEnvFile("LOCALAPPDATA", true), appName);
 				case LINUX -> new File("/var/tmp/" + userDirName);
+				case FREE_BSD -> new File("/var/tmp/" + userDirName);
 				case MAC_OS_X -> new File("/var/tmp/" + userDirName);
 				default -> throw new FileNotFoundException(
 					"Failed to find the user cache directory: Unsupported operating system.");
@@ -281,6 +282,7 @@ public class ApplicationUtilities {
 		return createDir(switch (OperatingSystem.CURRENT_OPERATING_SYSTEM) {
 			case WINDOWS -> new File(getEnvFile("APPDATA", true), versionedSubdir);
 			case LINUX -> new File(userHomeDir, ".config/" + versionedSubdir);
+			case FREE_BSD -> new File(userHomeDir, ".config/" + versionedSubdir);
 			case MAC_OS_X -> new File(userHomeDir, "Library/" + versionedSubdir);
 			default -> throw new FileNotFoundException(
 				"Failed to find the user settings directory: Unsupported operating system.");
