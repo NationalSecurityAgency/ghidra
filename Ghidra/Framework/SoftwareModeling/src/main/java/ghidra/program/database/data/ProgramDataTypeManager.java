@@ -16,7 +16,6 @@
 package ghidra.program.database.data;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.LinkedList;
 
 import db.*;
@@ -252,18 +251,21 @@ public class ProgramDataTypeManager extends ProgramBasedDataTypeManagerDB implem
 	}
 
 	@Override
-	protected void deleteDataTypeIDs(LinkedList<Long> deletedIds, TaskMonitor monitor)
-			throws CancelledException {
+	protected void deleteDataTypeIDs(LinkedList<Long> deletedIds) {
 		// TODO: SymbolManager/FunctionManager do not appear to handle datatype removal update.
 		// Suspect it handles indirectly through detection of deleted datatype.  Old deleted ID
 		// use could be an issue.
 		long[] ids = new long[deletedIds.size()];
-		Iterator<Long> it = deletedIds.iterator();
 		int i = 0;
-		while (it.hasNext()) {
-			ids[i++] = it.next().longValue();
+		for (Long deletedId : deletedIds) {
+			ids[i++] = deletedId.longValue();
 		}
-		program.getCodeManager().clearData(ids, monitor);
+		try {
+			program.getCodeManager().clearData(ids, TaskMonitor.DUMMY);
+		}
+		catch (CancelledException e) {
+			// won't happen
+		}
 		program.getFunctionManager().invalidateCache(false);
 	}
 

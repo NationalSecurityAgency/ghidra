@@ -16,7 +16,7 @@
 package ghidra.program.database.data;
 
 import java.util.*;
-import java.util.regex.Pattern;
+import java.util.regex.*;
 
 import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.SymbolPathParser;
@@ -306,7 +306,49 @@ public class DataTypeUtilities {
 	 */
 	public static String getNameWithoutConflict(DataType dataType, boolean includeCategoryPath) {
 		String name = includeCategoryPath ? dataType.getPathName() : dataType.getName();
-		return DATATYPE_CONFLICT_PATTERN.matcher(name).replaceAll("");
+		return getNameWithoutConflict(name);
+	}
+
+	/**
+	 * Get the name of a data type with all conflict naming patterns removed.
+	 * 
+	 * @param dataTypeName data type name with optional category path included
+	 * @return name with optional category path included
+	 */
+	public static String getNameWithoutConflict(String dataTypeName) {
+		return DATATYPE_CONFLICT_PATTERN.matcher(dataTypeName).replaceAll("");
+	}
+
+	/**
+	 * Get the conflict value string associated with a conflict datatype name.
+	 * 
+	 * @param dataType datatype to be checked
+	 * @return conflict value string.  Will be null if name is not a conflict name, or
+	 * empty string if conflict has no number.  Otherwise a decimal value string will be returned.
+	 */
+	public static String getConflictString(DataType dataType) {
+		return getConflictString(dataType.getName());
+	}
+
+	/**
+	 * Get the conflict value string associated with a conflict datatype name.
+	 * 
+	 * @param dataTypeName datatype name to be checked
+	 * @return conflict value string.  Will be one of the following:
+	 * <ol>
+	 * <li>A null value if not a conflict name,</li>
+	 * <li>an empty string if conflict name without a number, or</li>
+	 * <li>a decimal string value which corresponds to the conflict number in the name.</li>
+	 * </ol>
+	 */
+	public static String getConflictString(String dataTypeName) {
+		Matcher matcher = DATATYPE_CONFLICT_PATTERN.matcher(dataTypeName);
+		if (matcher.find()) {
+			MatchResult matchResult = matcher.toMatchResult();
+			return dataTypeName.substring(matchResult.start() + DataType.CONFLICT_SUFFIX.length(),
+				matchResult.end());
+		}
+		return null;
 	}
 
 	/**

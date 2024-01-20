@@ -123,4 +123,8 @@ class TypedefDBAdapterV0 extends TypedefDBAdapter implements RecordTranslator {
 		return null;
 	}
 
+	@Override
+	public int getRecordCount() {
+		return table.getRecordCount();
+	}
 }

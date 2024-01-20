@@ -875,7 +875,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 	}
 
 	@Override
-	protected void deleteDataTypeIDs(LinkedList<Long> deletedIds, TaskMonitor monitor) {
+	protected void deleteDataTypeIDs(LinkedList<Long> deletedIds) {
 		// do nothing
 	}
 

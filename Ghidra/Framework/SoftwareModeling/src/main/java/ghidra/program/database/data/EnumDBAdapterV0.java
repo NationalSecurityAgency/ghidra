@@ -128,4 +128,9 @@ class EnumDBAdapterV0 extends EnumDBAdapter implements RecordTranslator {
 		return null;
 	}
 
+	@Override
+	public int getRecordCount() {
+		return enumTable.getRecordCount();
+	}
+
 }

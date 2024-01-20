@@ -46,8 +46,7 @@ abstract class ArrayDBAdapter {
 	 * @throws CancelledException task cancelled
 	 */
 	static ArrayDBAdapter getAdapter(DBHandle handle, int openMode, String tablePrefix,
-			TaskMonitor monitor)
-			throws VersionException, IOException, CancelledException {
+			TaskMonitor monitor) throws VersionException, IOException, CancelledException {
 		if (openMode == DBConstants.CREATE) {
 			return new ArrayDBAdapterV1(handle, tablePrefix, true);
 		}
@@ -71,8 +70,8 @@ abstract class ArrayDBAdapter {
 	}
 
 	private static ArrayDBAdapter upgrade(DBHandle handle, ArrayDBAdapter oldAdapter,
-			String tablePrefix,
-			TaskMonitor monitor) throws VersionException, IOException, CancelledException {
+			String tablePrefix, TaskMonitor monitor)
+			throws VersionException, IOException, CancelledException {
 
 		DBHandle tmpHandle = new DBHandle();
 		long id = tmpHandle.startTransaction();
@@ -115,5 +114,11 @@ abstract class ArrayDBAdapter {
 	abstract void deleteTable(DBHandle handle) throws IOException;
 
 	abstract Field[] getRecordIdsInCategory(long categoryID) throws IOException;
+
+	/**
+	 * Get the number of array datatype records
+	 * @return total number of composite records
+	 */
+	public abstract int getRecordCount();
 
 }

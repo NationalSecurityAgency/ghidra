@@ -304,8 +304,8 @@ public class UnionEditorCellEditTest extends AbstractUnionEditorTest {
 		init(simpleUnion, pgmBbCat, false);
 
 		startTransaction("addExternal");
-		ExternalLocation extLoc = program.getExternalManager().addExtFunction(Library.UNKNOWN,
-			"extLabel", null, SourceType.USER_DEFINED);
+		ExternalLocation extLoc = program.getExternalManager()
+				.addExtFunction(Library.UNKNOWN, "extLabel", null, SourceType.USER_DEFINED);
 		Function function = extLoc.createFunction();
 		endTransaction(true);
 
@@ -726,9 +726,9 @@ public class UnionEditorCellEditTest extends AbstractUnionEditorTest {
 		assertNotEditingField();
 		DataType newDt = getDataType(rowNum);
 		assertEquals("simpleStructure", newDt.getName());
-		assertEquals(29, newDt.getLength());
-		assertEquals(29, getLength(rowNum));
-		assertEquals(29, model.getLength());
+		assertEquals(12, newDt.getLength());
+		assertEquals(12, getLength(rowNum));
+		assertEquals(12, model.getLength());
 	}
 
 	@Test
