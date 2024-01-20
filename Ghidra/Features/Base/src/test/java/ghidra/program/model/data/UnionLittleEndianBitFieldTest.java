@@ -45,7 +45,7 @@ public class UnionLittleEndianBitFieldTest extends AbstractCompositeBitFieldTest
 			"   0   int:4(0)   1   a   \"\"\n" + 
 			"   0   int:2(0)   1   b   \"\"\n" + 
 			"}\n" + 
-			"Size = 4   Actual Alignment = 4", struct);
+			"Length: 4 Alignment: 4", struct);
 		//@formatter:on
 	}
 
@@ -60,7 +60,7 @@ public class UnionLittleEndianBitFieldTest extends AbstractCompositeBitFieldTest
 				"   0   longlong:0(0)   0      \"\"\n" + // has no impact
 				"   0   int:2(0)   1   b   \"\"\n" + 
 				"}\n" + 
-				"Size = 4   Actual Alignment = 4", struct);
+				"Length: 4 Alignment: 4", struct);
 		//@formatter:on
 	}
 
@@ -74,7 +74,7 @@ public class UnionLittleEndianBitFieldTest extends AbstractCompositeBitFieldTest
 			"   0   int:4(0)   1   a   \"\"\n" + 
 			"   0   int:2(0)   1   b   \"\"\n" + 
 			"}\n" + 
-			"Size = 1   Actual Alignment = 1", struct);
+			"Length: 1 Alignment: 1", struct);
 		//@formatter:on
 	}
 
@@ -89,7 +89,7 @@ public class UnionLittleEndianBitFieldTest extends AbstractCompositeBitFieldTest
 			"   0   longlong:0(0)   0      \"\"\n" + // has no impact
 			"   0   int:2(0)   1   b   \"\"\n" + 
 			"}\n" + 
-			"Size = 1   Actual Alignment = 1", struct);
+			"Length: 1 Alignment: 1", struct);
 		//@formatter:on
 	}
 
@@ -103,7 +103,7 @@ public class UnionLittleEndianBitFieldTest extends AbstractCompositeBitFieldTest
 			"   0   int:4(0)   1   a   \"\"\n" + 
 			"   0   int:2(0)   1   b   \"\"\n" + 
 			"}\n" + 
-			"Size = 2   Actual Alignment = 2", struct);
+			"Length: 2 Alignment: 2", struct);
 		//@formatter:on
 	}
 }

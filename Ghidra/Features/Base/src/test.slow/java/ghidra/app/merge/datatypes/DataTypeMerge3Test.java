@@ -653,8 +653,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 					new CategoryPath("/Category1/Category2/Category5"), "my_s1", 0);
 				mys1.add(s);
 
-				mys1 =
-					(Structure) dtm.addDataType(mys1, DataTypeConflictHandler.DEFAULT_HANDLER);
+				mys1 = (Structure) dtm.addDataType(mys1, DataTypeConflictHandler.DEFAULT_HANDLER);
 				// edit FloatStruct
 				fs.add(mys1);
 
@@ -680,9 +679,8 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			dtm.getDataType(new CategoryPath("/Category1/Category2/Category5"), "FloatStruct"));
 
 		waitForCompletion();
-		Structure fs =
-			(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2/Category5"),
-				"FloatStruct");
+		Structure fs = (Structure) dtm
+				.getDataType(new CategoryPath("/Category1/Category2/Category5"), "FloatStruct");
 		assertNull(fs);
 
 		// MyStruct should have a FloatDataType and a Word
@@ -796,8 +794,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 				DataTypeManager dtm = program.getDataTypeManager();
 				// add new BF not compatible with BitFields
 				dtm.addDataType(
-					new StructureDataType(new CategoryPath("/Category1/Category2"), "BF", 0),
-					null);
+					new StructureDataType(new CategoryPath("/Category1/Category2"), "BF", 0), null);
 			}
 
 			@Override
@@ -877,18 +874,16 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				DataTypeManager dtm = program.getDataTypeManager();
-				Structure s1 =
-					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"),
-						"Structure_1");
+				Structure s1 = (Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"),
+					"Structure_1");
 				s1.add(new ArrayDataType(td, 0, -1), 0, null, null);
 			}
 
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				DataTypeManager dtm = program.getDataTypeManager();
-				Structure s1 =
-					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"),
-						"Structure_1");
+				Structure s1 = (Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"),
+					"Structure_1");
 				s1.add(new ArrayDataType(IntegerDataType.dataType, 0, -1), "flex1", "cmt1");
 			}
 		});
@@ -931,18 +926,16 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			@Override
 			public void modifyOriginal(ProgramDB program) throws Exception {
 				DataTypeManager dtm = program.getDataTypeManager();
-				Structure s1 =
-					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"),
-						"Structure_1");
+				Structure s1 = (Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"),
+					"Structure_1");
 				s1.add(new ArrayDataType(IntegerDataType.dataType, 0, -1), 0, null, null);
 			}
 
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				DataTypeManager dtm = program.getDataTypeManager();
-				Structure s1 =
-					(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"),
-						"Structure_1");
+				Structure s1 = (Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"),
+					"Structure_1");
 				// last component is flex array to be replaced
 				s1.replace(s1.getNumComponents() - 1, new ArrayDataType(td, 0, -1), 0, "flex1",
 					"cmt1");
@@ -952,9 +945,8 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			public void modifyPrivate(ProgramDB program) {
 				DataTypeManager dtm = program.getDataTypeManager();
 				try {
-					Structure s1 =
-						(Structure) dtm.getDataType(new CategoryPath("/Category1/Category2"),
-							"Structure_1");
+					Structure s1 = (Structure) dtm
+							.getDataType(new CategoryPath("/Category1/Category2"), "Structure_1");
 					s1.deleteAtOffset(s1.getLength());
 					s1.insertBitFieldAt(3, 2, 6, td, 2, "bf1", "my bf1");
 					s1.insertBitFieldAt(3, 2, 4, td, 2, "bf2", "my bf2");
@@ -1739,8 +1731,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 				enumm.add("two", 2);
 				enumm.add("three", 3);
 				dtm.addDataType(
-					new TypedefDataType(new CategoryPath("/Category1"), "TD_MyEnum", enumm),
-					null);
+					new TypedefDataType(new CategoryPath("/Category1"), "TD_MyEnum", enumm), null);
 			}
 
 			@Override
@@ -1806,7 +1797,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 			"   0   DLL_Table   96      \"\"\n" + 
 			"   0   DLL_Table *32   4      \"\"\n" + 
 			"}\n" + 
-			"Size = 96   Actual Alignment = 1\n", union.toString());
+			"Length: 96 Alignment: 1\n", union.toString());
 		//@formatter:on
 	}
 
