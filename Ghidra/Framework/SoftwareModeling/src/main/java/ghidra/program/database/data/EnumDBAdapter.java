@@ -54,8 +54,7 @@ abstract class EnumDBAdapter {
 	 * @throws CancelledException if task cancelled
 	 */
 	static EnumDBAdapter getAdapter(DBHandle handle, int openMode, String tablePrefix,
-			TaskMonitor monitor)
-			throws VersionException, IOException, CancelledException {
+			TaskMonitor monitor) throws VersionException, IOException, CancelledException {
 		if (openMode == DBConstants.CREATE) {
 			return new EnumDBAdapterV1(handle, tablePrefix, true);
 		}
@@ -103,8 +102,7 @@ abstract class EnumDBAdapter {
 	 * @throws CancelledException if task cancelled
 	 */
 	private static EnumDBAdapter upgrade(DBHandle handle, EnumDBAdapter oldAdapter,
-			String tablePrefix,
-			TaskMonitor monitor)
+			String tablePrefix, TaskMonitor monitor)
 			throws VersionException, IOException, CancelledException {
 
 		DBHandle tmpHandle = new DBHandle();
@@ -215,5 +213,11 @@ abstract class EnumDBAdapter {
 	 */
 	abstract DBRecord getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID)
 			throws IOException;
+
+	/**
+	 * Get the number of enum datatype records
+	 * @return total number of composite records
+	 */
+	public abstract int getRecordCount();
 
 }

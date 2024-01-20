@@ -139,13 +139,18 @@ class EnumDBAdapterV1 extends EnumDBAdapter {
 		Field[] keys = enumTable.findRecords(new LongField(datatypeID.getValue()),
 			V1_ENUM_UNIVERSAL_DT_ID_COL);
 
-		for (int i = 0; i < keys.length; i++) {
-			DBRecord record = enumTable.getRecord(keys[i]);
+		for (Field key : keys) {
+			DBRecord record = enumTable.getRecord(key);
 			if (record.getLongValue(V1_ENUM_SOURCE_ARCHIVE_ID_COL) == sourceID.getValue()) {
 				return record;
 			}
 		}
 		return null;
+	}
+
+	@Override
+	public int getRecordCount() {
+		return enumTable.getRecordCount();
 	}
 
 }

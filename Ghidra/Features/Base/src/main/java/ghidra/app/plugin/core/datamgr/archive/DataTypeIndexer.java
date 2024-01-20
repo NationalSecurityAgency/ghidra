@@ -19,7 +19,6 @@ import java.util.*;
 
 import javax.swing.SwingUtilities;
 
-import ghidra.app.plugin.core.datamgr.util.DataTypeComparator;
 import ghidra.program.model.data.*;
 import ghidra.util.task.*;
 
@@ -32,7 +31,6 @@ import ghidra.util.task.*;
 public class DataTypeIndexer {
 	private List<DataTypeManager> dataTypeManagers = new ArrayList<>();
 	private List<DataType> dataTypeList = Collections.emptyList();
-	private Comparator<DataType> dataTypeComparator = new DataTypeComparator();
 	private DataTypeIndexUpdateListener listener = new DataTypeIndexUpdateListener();
 
 	private volatile boolean isStale = true;
@@ -59,7 +57,8 @@ public class DataTypeIndexer {
 
 	/**
 	 * Returns a sorted list of the data types open in the current tool.  The sorting of the list
-	 * is done using the {@link DataTypeComparator}.
+	 * is done using the {@link DataTypeComparator} whose primary sort is based upon the 
+	 * {@link DataTypeNameComparator}.
 	 *
 	 * @return a sorted list of the data types open in the current tool.
 	 */
@@ -128,16 +127,13 @@ public class DataTypeIndexer {
 			monitor.initialize(dataTypeManagers.size());
 			monitor.setMessage("Preparing to index data types...");
 
-			Iterator<DataTypeManager> iterator = dataTypeManagers.iterator();
-			while (iterator.hasNext()) {
-				DataTypeManager dataTypeManager = iterator.next();
-
+			for (DataTypeManager dataTypeManager : dataTypeManagers) {
 				monitor.setMessage("Searching " + dataTypeManager.getName());
 				dataTypeManager.getAllDataTypes(list);
 				monitor.incrementProgress(1);
 			}
 
-			Collections.sort(list, dataTypeComparator);
+			Collections.sort(list, DataTypeComparator.INSTANCE);
 		}
 
 		List<DataType> getList() {

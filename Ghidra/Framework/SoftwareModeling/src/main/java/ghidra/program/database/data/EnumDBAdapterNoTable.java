@@ -79,4 +79,8 @@ class EnumDBAdapterNoTable extends EnumDBAdapter {
 		return null;
 	}
 
+	@Override
+	public int getRecordCount() {
+		return 0;
+	}
 }

@@ -191,7 +191,7 @@ public class ProjectDataTypeManager extends StandAloneDataTypeManager
 	}
 
 	@Override
-	protected void deleteDataTypeIDs(LinkedList<Long> deletedIds, TaskMonitor monitor) {
+	protected void deleteDataTypeIDs(LinkedList<Long> deletedIds) {
 		// do nothing
 	}
 

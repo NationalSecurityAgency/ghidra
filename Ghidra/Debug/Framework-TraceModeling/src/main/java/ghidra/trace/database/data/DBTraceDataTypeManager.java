@@ -193,9 +193,8 @@ public class DBTraceDataTypeManager extends ProgramBasedDataTypeManagerDB
 	}
 
 	@Override
-	protected void deleteDataTypeIDs(LinkedList<Long> deletedIds, TaskMonitor monitor)
-			throws CancelledException {
-		trace.getCodeManager().clearData(deletedIds, monitor);
+	protected void deleteDataTypeIDs(LinkedList<Long> deletedIds) {
+		trace.getCodeManager().clearData(deletedIds, TaskMonitor.DUMMY);
 		trace.getSymbolManager().invalidateCache(false);
 	}
 

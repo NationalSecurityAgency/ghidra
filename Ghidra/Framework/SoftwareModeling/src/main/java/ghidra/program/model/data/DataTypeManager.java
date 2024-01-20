@@ -167,15 +167,19 @@ public interface DataTypeManager {
 	/**
 	 * Begin searching at the root category for all data types with the
 	 * given name. Places all the data types in this data type manager
-	 * with the given name into the list.
-	 * @param name name of the data type
+	 * with the given name into the list.  Presence of {@code .conflict}
+	 * extension will be ignored for both specified name and returned
+	 * results.
+	 * @param name name of the data type (wildcards are not supported and will be treated
+	 * as explicit search characters)
 	 * @param list list that will be populated with matching DataType objects
 	 */
 	public void findDataTypes(String name, List<DataType> list);
 
 	/**
 	 * Begin searching at the root category for all data types with names
-	 * that match the given name that may contain wildcards.
+	 * that match the given name that may contain wildcards using familiar globbing 
+	 * characters '*' and '?'.
 	 * @param name name to match; may contain wildcards
 	 * @param list list that will be populated with matching DataType objects
 	 * @param caseSensitive true if the match is case sensitive

@@ -163,4 +163,10 @@ abstract class PointerDBAdapter implements RecordTranslator {
 	 * @throws IOException if the database can't be accessed.
 	 */
 	abstract Field[] getRecordIdsInCategory(long categoryID) throws IOException;
+
+	/**
+	 * Get the number of pointer datatype records
+	 * @return total number of composite records
+	 */
+	public abstract int getRecordCount();
 }
