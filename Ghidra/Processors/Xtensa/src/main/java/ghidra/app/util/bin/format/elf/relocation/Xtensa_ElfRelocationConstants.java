@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,7 @@ package ghidra.app.util.bin.format.elf.relocation;
 public class Xtensa_ElfRelocationConstants {
 	/* Xtensa processor ELF architecture-magic number */
 
-	// EM_XTENSA is already definded
+	// EM_XTENSA is already defined
 	public static final int EM_XTENSA_OLD =	0xABC7;
 
 	/* Xtensa relocations defined by the ABIs */
@@ -35,6 +35,7 @@ public class Xtensa_ElfRelocationConstants {
 	public static final int R_XTENSA_OP2 = 10;
 	public static final int R_XTENSA_ASM_EXPAND = 11;
 	public static final int R_XTENSA_ASM_SIMPLIFY = 12;
+	public static final int R_XTENSA_32_PCREL = 14;
 	public static final int R_XTENSA_GNU_VTINHERIT = 15;
 	public static final int R_XTENSA_GNU_VTENTRY = 16;
 	public static final int R_XTENSA_DIFF8 = 17;
@@ -70,4 +71,17 @@ public class Xtensa_ElfRelocationConstants {
 	public static final int R_XTENSA_SLOT12_ALT = 47;
 	public static final int R_XTENSA_SLOT13_ALT = 48;
 	public static final int R_XTENSA_SLOT14_ALT = 49;
+	public static final int R_XTENSA_TLSDESC_FN = 50;
+	public static final int R_XTENSA_TLSDESC_ARG = 51;
+	public static final int R_XTENSA_TLS_DTPOFF = 52;
+	public static final int R_XTENSA_TLS_TPOFF = 53;
+	public static final int R_XTENSA_TLS_FUNC = 54;
+	public static final int R_XTENSA_TLS_ARG = 55;
+	public static final int R_XTENSA_TLS_CALL = 56;
+	public static final int R_XTENSA_PDIFF8 = 57;
+	public static final int R_XTENSA_PDIFF16 = 58;
+	public static final int R_XTENSA_PDIFF32 = 59;
+	public static final int R_XTENSA_NDIFF8 = 60;
+	public static final int R_XTENSA_NDIFF16 = 61;
+	public static final int R_XTENSA_NDIFF32 = 62;
 }
