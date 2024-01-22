@@ -2673,11 +2673,11 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 
 	/**
 	 * Removes any data objects that have dataTypes matching the given dataType ids.
-	 * @param dataTypeIDs the list of ids of dataTypes that have been deleted.
+	 * @param dataTypeIDs the set of {@link DataType} IDs that have been deleted.
 	 * @param monitor the task monitor.
 	 * @throws CancelledException if cancelled
 	 */
-	public void clearData(long[] dataTypeIDs, TaskMonitor monitor) throws CancelledException {
+	public void clearData(Set<Long> dataTypeIDs, TaskMonitor monitor) throws CancelledException {
 		lock.acquire();
 		try {
 			List<Address> addrs = new ArrayList<>();
@@ -3434,15 +3434,16 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		return "";
 	}
 
-	public void replaceDataTypes(long oldDataTypeID, long newDataTypeID) {
+	public void replaceDataTypes(Map<Long, Long> dataTypeReplacementMap) {
 		lock.acquire();
 		try {
 			RecordIterator it = dataAdapter.getRecords();
 			while (it.hasNext()) {
 				DBRecord rec = it.next();
 				long id = rec.getLongValue(DataDBAdapter.DATA_TYPE_ID_COL);
-				if (id == oldDataTypeID) {
-					rec.setLongValue(DataDBAdapter.DATA_TYPE_ID_COL, newDataTypeID);
+				Long replacementId = dataTypeReplacementMap.get(id);
+				if (replacementId != null) {
+					rec.setLongValue(DataDBAdapter.DATA_TYPE_ID_COL, replacementId);
 					dataAdapter.putRecord(rec);
 					Address addr = addrMap.decodeAddress(rec.getKey());
 					program.setChanged(ProgramEvent.CODE_REPLACED, addr, addr, null, null);
