@@ -672,9 +672,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		while (symIt.hasNext()) {
 			list.add(symIt.next());
 		}
-		Iterator<Symbol> it = list.iterator();
-		while (it.hasNext()) {
-			Symbol s = it.next();
+		for (Symbol s : list) {
 			s.delete();
 		}
 	}
@@ -1524,9 +1522,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 					DBRecord rec = iter.next();
 					symbols.add(getSymbol(rec));
 				}
-				Iterator<SymbolDB> it = symbols.iterator();
-				while (it.hasNext()) {
-					SymbolDB s = it.next();
+				for (SymbolDB s : symbols) {
 					s.delete();
 				}
 			}
@@ -2209,7 +2205,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		variableStorageMgr.setLanguage(translator, monitor);
 	}
 
-	public void replaceDataTypes(long oldDataTypeID, long newDataTypeID) {
+	public void replaceDataTypes(Map<Long, Long> dataTypeReplacementMap) {
 		lock.acquire();
 		try {
 			RecordIterator it = adapter.getSymbols();
@@ -2238,8 +2234,9 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 					}
 				}
 				long id = rec.getLongValue(SymbolDatabaseAdapter.SYMBOL_DATATYPE_COL);
-				if (id == oldDataTypeID) {
-					rec.setLongValue(SymbolDatabaseAdapter.SYMBOL_DATATYPE_COL, newDataTypeID);
+				Long replacementId = dataTypeReplacementMap.get(id);
+				if (replacementId != null) {
+					rec.setLongValue(SymbolDatabaseAdapter.SYMBOL_DATATYPE_COL, replacementId);
 					adapter.updateSymbolRecord(rec);
 					symbolDataChanged(getSymbol(rec));
 				}

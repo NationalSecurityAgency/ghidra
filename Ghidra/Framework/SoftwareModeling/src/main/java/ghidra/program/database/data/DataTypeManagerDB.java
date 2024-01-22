@@ -154,6 +154,10 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	private LinkedList<Long> idsToDelete = new LinkedList<>();
 	private LinkedList<Pair<DataType, DataType>> typesToReplace = new LinkedList<>();
 	private List<DataType> favoritesList = new ArrayList<>();
+
+	// TODO: idsToDataTypeMap may have issue since there could be a one to many mapping
+	// (e.g., type with same UniversalID could be in multiple categories unless specifically 
+	// prevented during resolve)
 	private IdsToDataTypeMap idsToDataTypeMap = new IdsToDataTypeMap();
 
 	private ThreadLocal<EquivalenceCache> equivalenceCache = new ThreadLocal<>();
@@ -1907,14 +1911,35 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	private void replaceQueuedDataTypes() {
 
-		// collect all datatypes to be replaced and notify children which may also get queued
+		// Collect all datatypes to be replaced and notify children which may also get queued
 		// for removal.
-		LinkedList<Pair<DataType, DataType>> dataTypeReplacements = new LinkedList<>();
+		Map<Long, Long> dataTypeReplacementMap = new HashMap<>();
+		List<Pair<DataType, DataType>> dataTypeReplacements = new LinkedList<>();
 		while (!typesToReplace.isEmpty()) {
 			Pair<DataType, DataType> dataTypeReplacement = typesToReplace.removeFirst();
-			replaceUsesInOtherDataTypes(dataTypeReplacement.first, dataTypeReplacement.second);
-			dataTypeReplacements.addFirst(dataTypeReplacement);
+			DataType replacedDt = dataTypeReplacement.first;
+			DataType replacementDt = dataTypeReplacement.second;
+
+			long replacedId = getID(replacedDt);
+			if (replacedId <= 0) {
+				Msg.error(this, "Unexpected ID for replaced datatype (" + replacedId + "): " +
+					replacedDt.getPathName());
+				continue; // ignore attempt to replace special type
+			}
+			long replacementId = getID(dataTypeReplacement.second);
+			if (replacementId < 0) {
+				Msg.error(this, "Unexpected ID for replacement datatype (" + replacementId + "): " +
+					replacementDt.getPathName());
+			}
+
+			replaceUsesInOtherDataTypes(replacedDt, replacementDt);
+
+			dataTypeReplacements.add(dataTypeReplacement);
+			dataTypeReplacementMap.put(replacedId, replacementId);
 		}
+
+		// perform any neccessary external use replacements
+		replaceDataTypesUsed(dataTypeReplacementMap);
 
 		// perform actual database updates (e.g., record updates, change notifications, etc.)
 		for (Pair<DataType, DataType> dataTypeReplacement : dataTypeReplacements) {
@@ -1922,16 +1947,21 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 	}
 
-	private void replaceDataType(DataType existingDt, DataType replacementDt) {
+	/**
+	 * Allow extensions to perform any neccessary fixups to address all datatype replacements.
+	 * @param dataTypeReplacementMap map of datatype replacements (oldID maps to replacementID).
+	 */
+	abstract protected void replaceDataTypesUsed(Map<Long, Long> dataTypeReplacementMap);
 
-		DataTypePath replacedDtPath = existingDt.getDataTypePath();
-		long replacedId = getID(existingDt);
+	private void replaceDataType(DataType replacedDt, DataType replacementDt) {
 
-		UniversalID id = existingDt.getUniversalID();
-		idsToDataTypeMap.removeDataType(existingDt.getSourceArchive(), id);
+		DataTypePath replacedDtPath = replacedDt.getDataTypePath();
+		long replacedId = getID(replacedDt);
+
+		UniversalID id = replacedDt.getUniversalID();
+		idsToDataTypeMap.removeDataType(replacedDt.getSourceArchive(), id);
 
 		try {
-			replaceDataTypeIDs(replacedId, getID(replacementDt));
 			parentChildAdapter.removeAllRecordsForParent(replacedId);
 		}
 		catch (IOException e) {
@@ -1963,13 +1993,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			}
 		}
 	}
-
-	/**
-	 * Replace all datatype uses external to the datatype manager if applicable.
-	 * @param oldID old datatype ID
-	 * @param newID new datatype ID
-	 */
-	abstract protected void replaceDataTypeIDs(long oldID, long newID);
 
 	/**
 	 * Replace one source archive (oldDTM) with another (newDTM). Any data types
@@ -2177,11 +2200,11 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		if (dt == DataType.DEFAULT) {
 			return DEFAULT_DATATYPE_ID;
 		}
-		if (dt instanceof BitFieldDataType) {
-			return createKey(BITFIELD, BitFieldDBDataType.getId((BitFieldDataType) dt));
-		}
 		if (dt instanceof BadDataType) {
 			return BAD_DATATYPE_ID;
+		}
+		if (dt instanceof BitFieldDataType) {
+			return createKey(BITFIELD, BitFieldDBDataType.getId((BitFieldDataType) dt));
 		}
 		if (dt instanceof DataTypeDB) {
 			// NOTE: Implementation DOES NOT check or guarantee that datatype or its returned ID 
@@ -2235,39 +2258,47 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * Remove the given datatype from this manager (assumes the lock has already been acquired).
 	 * 
 	 * @param dataType the dataType to be removed
+	 * @return true if datatype removal was successful, else false
 	 */
-	private void removeInternal(DataType dataType) {
+	private boolean removeInternal(DataType dataType) {
 		if (!contains(dataType)) {
-			return;
+			return false;
 		}
 
 		long id = getID(dataType);
-		if (id < 0) {
-			return;
+		if (id <= 0) { // removal of certain special types not permitted
+			return false;
 		}
 		idsToDelete.add(Long.valueOf(id));
 		removeQueuedDataTypes();
+		return true;
 	}
 
 	private void removeQueuedDataTypes() {
 
 		// collect all datatype to be removed and notify children which may also get queued
 		// for removal.
-		LinkedList<Long> deletedIds = new LinkedList<>();
+		Set<Long> deletedIds = new HashSet<>();
 		while (!idsToDelete.isEmpty()) {
 			long id = idsToDelete.removeFirst();
 			removeUseOfDataType(id);
-			deletedIds.addFirst(id);
+			deletedIds.add(id);
 		}
+
+		// perform any neccessary external use removals
+		deleteDataTypesUsed(deletedIds);
 
 		// perform actual database updates (e.g., record removal, change notifications, etc.)
 		for (long id : deletedIds) {
 			deleteDataType(id);
 		}
-
-		// Remove all uses of datatypes external to datatype manager
-		deleteDataTypeIDs(deletedIds);
 	}
+
+	/**
+	 * Allow extensions to perform any neccessary fixups for all datatype removals listed.
+	 * @param deletedIds list of IDs for all datatypes which are getting removed.
+	 */
+	protected abstract void deleteDataTypesUsed(Set<Long> deletedIds);
 
 	private void removeUseOfDataType(long id) {
 
@@ -2292,8 +2323,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		lock.acquire();
 		try {
 			if (contains(dataType)) {
-				removeInternal(dataType);
-				return true;
+				return removeInternal(dataType);
 			}
 		}
 		finally {
@@ -2403,12 +2433,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	protected void addDataTypeToReplace(DataType oldDataType, DataType replacementDataType) {
 		typesToReplace.add(new Pair<>(oldDataType, replacementDataType));
 	}
-
-	/**
-	 * Delete all datatype uses external to the datatype manager if applicable.
-	 * @param deletedIds old datatype IDs which were deleted
-	 */
-	abstract protected void deleteDataTypeIDs(LinkedList<Long> deletedIds);
 
 	private void notifyDeleted(long dataTypeID) {
 		DataType dataType = getDataType(dataTypeID);
