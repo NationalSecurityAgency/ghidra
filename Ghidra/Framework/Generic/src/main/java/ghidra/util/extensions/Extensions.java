@@ -155,10 +155,9 @@ public class Extensions {
 			return "<no extensions installed>";
 		}
 
-		if (!buffy.isEmpty()) {
-			// remove trailing newline to keep logging consistent
-			buffy.deleteCharAt(buffy.length() - 1);
-		}
+		// Remove trailing newline to keep logging consistent
+		buffy.deleteCharAt(buffy.length() - 1);
+
 		return buffy.toString();
 	}
 
