@@ -109,7 +109,7 @@ public class DataTypeDBReplaceTest extends AbstractGenericTest {
 			"   3   MyStruct2[2]   4      \"\"\n" + 
 			"   7   MyStruct2[2][3]   12      \"\"\n" + 
 			"}\n" + 
-			"Size = 19   Actual Alignment = 1\n", sDb3.toString());
+			"Length: 19 Alignment: 1\n", sDb3.toString());
 		//@formatter:on
 
 		assertTrue(sDb3.isEquivalent(s3));
@@ -154,7 +154,7 @@ public class DataTypeDBReplaceTest extends AbstractGenericTest {
 			"   3   MyStruct1[2]   2      \"\"\n" + 
 			"   7   MyStruct1[2][3]   6      \"\"\n" + 
 			"}\n" + 
-			"Size = 19   Actual Alignment = 1\n", sDb3.toString());
+			"Length: 19 Alignment: 1\n", sDb3.toString());
 		//@formatter:on
 
 		assertEquals(7, getDataTypeCount()); // include "undefined" type used during resolve
@@ -194,7 +194,7 @@ public class DataTypeDBReplaceTest extends AbstractGenericTest {
 			"   4   MyStruct2[2]   4      \"\"\n" + 
 			"   8   MyStruct2[2][3]   12      \"\"\n" + 
 			"}\n" + 
-			"Size = 20   Actual Alignment = 2\n", sDb3.toString());
+			"Length: 20 Alignment: 2\n", sDb3.toString());
 		//@formatter:on
 
 		assertTrue(sDb3.isEquivalent(s3));
@@ -237,7 +237,7 @@ public class DataTypeDBReplaceTest extends AbstractGenericTest {
 			"   3   MyStruct1[2]   2      \"\"\n" + 
 			"   5   MyStruct1[2][3]   6      \"\"\n" + 
 			"}\n" + 
-			"Size = 11   Actual Alignment = 1\n", sDb3.toString());
+			"Length: 11 Alignment: 1\n", sDb3.toString());
 		//@formatter:on
 
 		assertEquals(7, getDataTypeCount()); // include "undefined" type used during resolve
