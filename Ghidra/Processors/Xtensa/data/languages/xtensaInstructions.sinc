@@ -1172,9 +1172,6 @@ rfi_eps: ptr is u4_8_11	[ ptr = $(EPS_BASE) + (4 * u4_8_11); ] { export *[regist
 :sext ar, as, 15 is op2 = 0b0010 & op1 = 0b0011 & ar & as & u4_4_7 = 8 & op0 = 0 {
     ar = sext(as:2);
 }
-:sext ar, as, 23 is op2 = 0b0010 & op1 = 0b0011 & ar & as & u4_4_7 = 12 & op0 = 0 {
-    ar = sext(as:3);
-}
 
 # SICT - Store Instruction Cache Tag, pg. 519.
 :sict at, as is op2 = 0b1111 & op1 = 0b0001 & ar = 0b0001 & as & at & op0 = 0 {
