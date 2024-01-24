@@ -49,6 +49,11 @@
 
 
 <tocroot>
-
-
+	<tocref id="Ghidra Functionality">
+	
+		<tocdef id="Wildcard Assembler"
+				text="Wildcard Assembler"
+				target="help/topics/WildcardAssemblerPlugin/Wildcard_Assembler.html" >
+		</tocdef>
+	</tocref>
 </tocroot>                  

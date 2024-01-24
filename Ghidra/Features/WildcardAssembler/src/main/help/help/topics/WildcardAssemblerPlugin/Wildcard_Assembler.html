@@ -13,6 +13,10 @@
     <H1><A name="Wildcard_Assembler_Plugin"></A>Wildcard Assembler Plugin</H1>
 
     <BLOCKQUOTE>
+
+      <P><B>This feature is currently only available as an API for Ghidra
+        scripts and plugins.</B></P>
+        
       <P>The <I>Wildcard Assembler</I> extends Ghidra's assembler to enable
       assembling instructions with specific tokens replaced with wildcards.</P>
 
@@ -28,7 +32,7 @@
       <CODE>`Q1`</CODE> where Q1 is an arbitrary wildcard name) and passing the
       entire instruction to the Wildcard Assembler.</P>
 
-      <P>By default the Wildcard Assembler will return metadata about all
+      <P>By default, the Wildcard Assembler will return metadata about all
       possible values that a wildcarded token could take and all the encodings
       of all these values. This behavior can be limited by filtering the
       wildcard by appending specific syntax after the wildcard name:</P>
@@ -61,7 +65,7 @@
           </LI>
       </UL>
 
-      <P>Normally, a wildcard will only match a single token. To allow a single
+      <P>Normally a wildcard will only match a single token. To allow a single
       wildcard to match multiple related tokens: precede the wildcard name with a
       <CODE>!</CODE> character. For example, in a x86:LE:32:default binary:</P>
       <BLOCKQUOTE>
