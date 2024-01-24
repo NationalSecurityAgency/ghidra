@@ -167,7 +167,7 @@ public class ApplicationUtilities {
 	public static File getDefaultUserTempDir(String applicationName)
 			throws FileNotFoundException, IOException {
 
-		String appName = applicationName.toLowerCase();
+		String appName = normalizeApplicationName(applicationName);
 
 		// Look for Ghidra-specific system property
 		File tempOverrideDir = getSystemPropertyFile(PROPERTY_TEMP_DIR, false);
@@ -202,7 +202,7 @@ public class ApplicationUtilities {
 	public static File getDefaultUserCacheDir(ApplicationProperties applicationProperties)
 			throws FileNotFoundException, IOException {
 
-		String appName = applicationProperties.getApplicationName().toLowerCase();
+		String appName = normalizeApplicationName(applicationProperties.getApplicationName());
 
 		// Look for Ghidra-specific system property
 		File cacheOverrideDir = getSystemPropertyFile(PROPERTY_CACHE_DIR, false);
@@ -253,9 +253,9 @@ public class ApplicationUtilities {
 	public static File getDefaultUserSettingsDir(ApplicationProperties applicationProperties,
 			ResourceFile installationDirectory) throws FileNotFoundException, IOException {
 
-		String appName = applicationProperties.getApplicationName().toLowerCase();
 		ApplicationIdentifier applicationIdentifier =
 			new ApplicationIdentifier(applicationProperties);
+		String appName = applicationIdentifier.getApplicationName();
 		String versionedName = applicationIdentifier.toString();
 		if (SystemUtilities.isInDevelopmentMode()) {
 			// Add the application's installation directory name to this variable, so that each 
@@ -319,6 +319,16 @@ public class ApplicationUtilities {
 		}
 
 		return new File(userSettingsParentDir, userSettingsDirName);
+	}
+
+	/**
+	 * Normalizes the application name by removing spaces and converting to lower case
+	 * 
+	 * @param applicationName The application name
+	 * @return The normalized application name
+	 */
+	public static String normalizeApplicationName(String applicationName) {
+		return applicationName.replaceAll("\\s", "").toLowerCase();
 	}
 
 	/**
