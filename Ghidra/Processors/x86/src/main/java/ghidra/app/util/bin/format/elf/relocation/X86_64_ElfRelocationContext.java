@@ -24,8 +24,7 @@ import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.util.*;
-import ghidra.util.exception.AssertException;
-import ghidra.util.exception.NotFoundException;
+import ghidra.util.exception.*;
 
 /**
  * <code>X86_64_ElfRelocationContext</code> provides ability to generate a
@@ -50,7 +49,10 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 	public long getSymbolValue(ElfSymbol symbol) {
 		long symbolValue = super.getSymbolValue(symbol);
 		if (symbolValue == 0 && ElfConstants.GOT_SYMBOL_NAME.equals(symbol.getNameAsString())) {
-			Address gotAddr = allocateGot();
+			Address gotAddr = symbolMap.get(symbol);
+			if (gotAddr == null) {
+				gotAddr = allocateGot();
+			}
 			if (gotAddr != null) {
 				return gotAddr.getOffset();
 			}
@@ -145,7 +147,7 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 			return null;
 		}
 
-		if (gotElfSymbol != null && getSymbolAddress(gotElfSymbol) != null) {
+		if (gotElfSymbol != null && gotElfSymbol.getValue() != 0) {
 			throw new AssertException(ElfConstants.GOT_SYMBOL_NAME + " already allocated");
 		}
 
@@ -155,8 +157,16 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 			ElfRelocationHandler.GOT_BLOCK_NAME);
 		if (allocatedGotLimits != null &&
 			allocatedGotLimits.getMinAddress().getOffset() < Integer.MAX_VALUE) {
-			// GOT must fall within first 32-bit segment
+			// NOTE: GOT must fall within first 32-bit segment
 			if (gotElfSymbol != null) {
+				// remember where GOT was allocated
+				try {
+					loadHelper.createSymbol(allocatedGotLimits.getMinAddress(),
+						ElfConstants.GOT_SYMBOL_NAME, true, false, null);
+				}
+				catch (InvalidInputException e) {
+					throw new AssertionError("Unexpected exception", e);
+				}
 				symbolMap.put(gotElfSymbol, allocatedGotLimits.getMinAddress());
 			}
 			allocatedGotAddress = allocatedGotLimits.getMinAddress();
