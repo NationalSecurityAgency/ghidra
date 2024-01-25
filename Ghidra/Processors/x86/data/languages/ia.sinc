@@ -3834,7 +3834,9 @@ define pcodeop skinit;
 
 :STR rm16       is vexMode=0 & opsize=0 & byte=0xf; byte=0x0; rm16 & reg_opcode=1 ... { rm16 = TaskRegister(); }
 :STR rm32       is vexMode=0 & opsize=1 & byte=0xf; byte=0x0; rm32 & reg_opcode=1 ... { rm32 = TaskRegister(); }
-:STR rm64       is vexMode=0 & opsize=2 & byte=0xf; byte=0x0; rm64 & reg_opcode=1 ... { rm64 = TaskRegister(); }
+@ifdef IA64
+:STR rm64       is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0x0; rm64 & reg_opcode=1 ... { rm64 = TaskRegister(); }
+@endif
 
 # See 'lockable.sinc' for memory destination, lockable variants
 :SUB  AL,imm8      is vexMode=0 & byte=0x2c; AL & imm8                          { subflags(   AL,imm8 );    AL =    AL -  imm8; resultflags(   AL); }
