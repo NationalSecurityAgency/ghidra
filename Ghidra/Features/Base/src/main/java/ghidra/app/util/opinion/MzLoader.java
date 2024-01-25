@@ -188,6 +188,11 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		}
 		// Allocate an initialized memory block for each segment we know about
 		int endOffset = pagesToBytes(header.e_cp() - 1) + header.e_cblp();
+		if (endOffset > reader.length()) {
+			log.appendMsg(
+				"File is 0x%x bytes but header reports 0x%x".formatted(reader.length(), endOffset));
+			endOffset = (int) reader.length();
+		}
 		MemoryBlock lastBlock = null;
 		List<SegmentedAddress> orderedSegments = new ArrayList<>(knownSegments);
 		for (int i = 0; i < orderedSegments.size(); i++) {
