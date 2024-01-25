@@ -40,28 +40,52 @@
 		<prototype name="abi-internal" extrapop="8" stackshift="8">
 			<input>
 				<pentry minsize="4" maxsize="8" metatype="float">
-					<register name="XMM0_Qa"/>
+					<register name="F0"/>
 				</pentry>
 				<pentry minsize="4" maxsize="8" metatype="float">
-					<register name="XMM1_Qa"/>
+					<register name="F1"/>
 				</pentry>
 				<pentry minsize="4" maxsize="8" metatype="float">
-					<register name="XMM2_Qa"/>
+					<register name="F2"/>
 				</pentry>
 				<pentry minsize="4" maxsize="8" metatype="float">
-					<register name="XMM3_Qa"/>
+					<register name="F3"/>
 				</pentry>
 				<pentry minsize="4" maxsize="8" metatype="float">
-					<register name="XMM4_Qa"/>
+					<register name="F4"/>
 				</pentry>
 				<pentry minsize="4" maxsize="8" metatype="float">
-					<register name="XMM5_Qa"/>
+					<register name="F5"/>
 				</pentry>
 				<pentry minsize="4" maxsize="8" metatype="float">
-					<register name="XMM6_Qa"/>
+					<register name="F6"/>
 				</pentry>
 				<pentry minsize="4" maxsize="8" metatype="float">
-					<register name="XMM7_Qa"/>
+					<register name="F7"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="F8"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="F9"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="F10"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="F11"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="F12"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="F13"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="F14"/>
+				</pentry>
+				<pentry minsize="4" maxsize="8" metatype="float">
+					<register name="F15"/>
 				</pentry>
 		        
 				<pentry minsize="1" maxsize="8">
@@ -113,42 +137,42 @@
 					<register name="R15"/>
 				</pentry>
 		        
-				<pentry minsize="1" maxsize="500" align="8">
+				<pentry minsize="1" maxsize="500" align="16">
 					<addr offset="8" space="stack"/>
 				</pentry>
 			</input>
 	      
 			<output>
 				<pentry minsize="4" maxsize="8" metatype="float">
-					<register name="XMM0_Qa"/>
+					<register name="F0"/>
 				</pentry>
 		        
 				<pentry minsize="1" maxsize="8">
-					<register name="RAX"/>
+					<register name="R0"/>
 				</pentry>
 				<pentry minsize="9" maxsize="16">
-					<addr space="join" piece2="RAX" piece1="RBX"/>
+					<addr space="join" piece2="R0" piece1="R1"/>
 				</pentry>
 				<pentry minsize="17" maxsize="24">
-					<addr space="join" piece3="RAX" piece2="RBX" piece1="RCX"/>
+					<addr space="join" piece3="R0" piece2="R1" piece1="R2"/>
 				</pentry>
 				<pentry minsize="25" maxsize="32">
-					<addr space="join" piece4="RAX" piece3="RBX" piece2="RCX" piece1="RDI"/>
+					<addr space="join" piece4="R0" piece3="R1" piece2="R2" piece1="R3"/>
 				</pentry>
 				<pentry minsize="33" maxsize="40">
-					<addr space="join" piece5="RAX" piece4="RBX" piece3="RCX" piece2="RDI" piece1="RSI"/>
+					<addr space="join" piece5="R0" piece4="R1" piece3="R2" piece2="R3" piece1="R4"/>
 				</pentry>
 				<pentry minsize="41" maxsize="48">
-					<addr space="join" piece6="RAX" piece5="RBX" piece4="RCX" piece3="RDI" piece2="RSI" piece1="R8"/>
+					<addr space="join" piece6="R0" piece5="R1" piece4="R2" piece3="R3" piece2="R4" piece1="R5"/>
 				</pentry>
 				<pentry minsize="49" maxsize="56">
-					<addr space="join" piece7="RAX" piece6="RBX" piece5="RCX" piece4="RDI" piece3="RSI" piece2="R8" piece1="R9"/>
+					<addr space="join" piece7="R0" piece6="R1" piece5="R2" piece4="R3" piece3="R4" piece2="R5" piece1="R6"/>
 				</pentry>
 				<pentry minsize="57" maxsize="64">
-					<addr space="join" piece8="RAX" piece7="RBX" piece6="RCX" piece5="RDI" piece4="RSI" piece3="R8" piece2="R9" piece1="R10"/>
+					<addr space="join" piece8="R0" piece7="R1" piece6="R2" piece5="R3" piece4="R4" piece3="R5" piece2="R6" piece1="R7"/>
 				</pentry>
 				<pentry minsize="65" maxsize="72">
-					<addr space="join" piece9="RAX" piece8="RBX" piece7="RCX" piece6="RDI" piece5="RSI" piece4="R8" piece3="R9" piece2="R10" piece1="R11"/>
+					<addr space="join" piece9="R0" piece8="R1" piece7="R2" piece6="R3" piece5="R4" piece4="R5" piece3="R6" piece2="R7" piece1="R8"/>
 				</pentry>
 			</output>
 	      
