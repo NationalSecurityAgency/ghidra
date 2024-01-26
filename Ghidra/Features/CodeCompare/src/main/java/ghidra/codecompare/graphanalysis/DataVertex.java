@@ -98,11 +98,14 @@ public class DataVertex {
 	}
 
 	/**
-	 * Clear any incoming or outgoing edges to/from this node
+	 * Mark this node as disconnected from its graph.
+	 * Clear any incoming or outgoing edges to/from this node.
+	 * Clear the ngrams
 	 */
-	void clearEdges() {
+	void collapse() {
 		sinks.clear();
 		sources.clear();
+		ngrams.clear();
 	}
 
 	@Override
@@ -186,6 +189,13 @@ public class DataVertex {
 	 */
 	public boolean isOp() {
 		return (op != null);
+	}
+
+	/**
+	 * @return true if this node has been removed from its DataGraph
+	 */
+	public boolean isCollapsed() {
+		return (ngrams.size() == 0);
 	}
 
 	/**

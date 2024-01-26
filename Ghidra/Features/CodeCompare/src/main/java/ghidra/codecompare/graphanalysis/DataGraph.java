@@ -201,9 +201,9 @@ public class DataGraph {
 				DataVertex outNode = subop.sinks.get(0);
 				in1Node.sinks.clear();
 				replaceNodeInOutEdges(outNode, in1Node);
-				in0Node.clearEdges();
-				subop.clearEdges();
-				outNode.clearEdges();
+				in0Node.collapse();
+				subop.collapse();
+				outNode.collapse();
 				makeAssociation(subop, outNode, in1Node, 0);	// Attach subop and outNode -> in1Node
 			}
 		}
@@ -245,7 +245,7 @@ public class DataGraph {
 				out.sources.clear();
 				topOp.sinks.add(out);
 				out.sources.add(topOp);
-				in.clearEdges();
+				in.collapse();
 				if (assoc == null) {
 					assoc = out;
 				}
@@ -256,13 +256,13 @@ public class DataGraph {
 				// output is isolated
 				removeInEdge(castNode, 0);
 				replaceNodeInOutEdges(out, in);
-				out.clearEdges();
+				out.collapse();
 				if (assoc == null) {
 					assoc = in;
 				}
 				makeAssociation(castNode, out, assoc, assocSlot);
 			}
-			castNode.clearEdges();
+			castNode.collapse();
 		}
 	}
 
@@ -273,6 +273,9 @@ public class DataGraph {
 	public void makeNGrams(int numNGrams) {
 		for (int i = 0; i < numNGrams - 1; ++i) {
 			for (DataVertex node : nodeList) {
+				if (node.isCollapsed()) {
+					continue;					// Don't hash if disconnected from graph
+				}
 				node.nextNGramSource(i);		// Construct (n+1)-gram from existing n-gram
 			}
 		}
