@@ -89,52 +89,52 @@
 				</pentry>
 		        
 				<pentry minsize="1" maxsize="8">
-					<register name="R0"/>
+					<register name="x0"/>
 				</pentry>
 				<pentry minsize="1" maxsize="8">
-					<register name="R1"/>
+					<register name="x1"/>
 				</pentry>
 				<pentry minsize="1" maxsize="8">
-					<register name="R2"/>
+					<register name="x2"/>
 				</pentry>
 				<pentry minsize="1" maxsize="8">
-					<register name="R3"/>
+					<register name="x3"/>
 				</pentry>
 				<pentry minsize="1" maxsize="8">
-					<register name="R4"/>
+					<register name="x4"/>
 				</pentry>
 				<pentry minsize="1" maxsize="8">
-					<register name="R5"/>
+					<register name="x5"/>
 				</pentry>
 				<pentry minsize="1" maxsize="8">
-					<register name="R6"/>
+					<register name="x6"/>
 				</pentry>
 				<pentry minsize="1" maxsize="8">
-					<register name="R7"/>
+					<register name="x7"/>
 				</pentry>
 				<pentry minsize="1" maxsize="8">
-					<register name="R8"/>
+					<register name="x8"/>
 				</pentry>
                 <pentry minsize="1" maxsize="8">
-					<register name="R9"/>
+					<register name="x9"/>
 				</pentry>
                 <pentry minsize="1" maxsize="8">
-					<register name="R10"/>
+					<register name="x10"/>
 				</pentry>
                 <pentry minsize="1" maxsize="8">
-					<register name="R11"/>
+					<register name="x11"/>
 				</pentry>
                 <pentry minsize="1" maxsize="8">
-					<register name="R12"/>
+					<register name="x12"/>
 				</pentry>
                 <pentry minsize="1" maxsize="8">
-					<register name="R13"/>
+					<register name="x13"/>
 				</pentry>
                 <pentry minsize="1" maxsize="8">
-					<register name="R14"/>
+					<register name="x14"/>
 				</pentry>
                 <pentry minsize="1" maxsize="8">
-					<register name="R15"/>
+					<register name="x15"/>
 				</pentry>
 		        
 				<pentry minsize="1" maxsize="500" align="16">
@@ -148,55 +148,55 @@
 				</pentry>
 		        
 				<pentry minsize="1" maxsize="8">
-					<register name="R0"/>
+					<register name="x0"/>
 				</pentry>
 				<pentry minsize="9" maxsize="16">
-					<addr space="join" piece2="R0" piece1="R1"/>
+					<addr space="join" piece2="x0" piece1="x1"/>
 				</pentry>
 				<pentry minsize="17" maxsize="24">
-					<addr space="join" piece3="R0" piece2="R1" piece1="R2"/>
+					<addr space="join" piece3="x0" piece2="x1" piece1="x2"/>
 				</pentry>
 				<pentry minsize="25" maxsize="32">
-					<addr space="join" piece4="R0" piece3="R1" piece2="R2" piece1="R3"/>
+					<addr space="join" piece4="x0" piece3="x1" piece2="x2" piece1="x3"/>
 				</pentry>
 				<pentry minsize="33" maxsize="40">
-					<addr space="join" piece5="R0" piece4="R1" piece3="R2" piece2="R3" piece1="R4"/>
+					<addr space="join" piece5="x0" piece4="x1" piece3="x2" piece2="x3" piece1="x4"/>
 				</pentry>
 				<pentry minsize="41" maxsize="48">
-					<addr space="join" piece6="R0" piece5="R1" piece4="R2" piece3="R3" piece2="R4" piece1="R5"/>
+					<addr space="join" piece6="x0" piece5="x1" piece4="x2" piece3="x3" piece2="x4" piece1="x5"/>
 				</pentry>
 				<pentry minsize="49" maxsize="56">
-					<addr space="join" piece7="R0" piece6="R1" piece5="R2" piece4="R3" piece3="R4" piece2="R5" piece1="R6"/>
+					<addr space="join" piece7="x0" piece6="x1" piece5="x2" piece4="x3" piece3="x4" piece2="x5" piece1="x6"/>
 				</pentry>
 				<pentry minsize="57" maxsize="64">
-					<addr space="join" piece8="R0" piece7="R1" piece6="R2" piece5="R3" piece4="R4" piece3="R5" piece2="R6" piece1="R7"/>
+					<addr space="join" piece8="x0" piece7="x1" piece6="x2" piece5="x3" piece4="x4" piece3="x5" piece2="x6" piece1="x7"/>
 				</pentry>
 				<pentry minsize="65" maxsize="72">
-					<addr space="join" piece9="R0" piece8="R1" piece7="R2" piece6="R3" piece5="R4" piece4="R5" piece3="R6" piece2="R7" piece1="R8"/>
+					<addr space="join" piece9="x0" piece8="x1" piece7="x2" piece6="x3" piece5="x4" piece4="x5" piece3="x6" piece2="x7" piece1="x8"/>
 				</pentry>
 			</output>
 	      
 			<killedbycall>
-				<register name="R0"/>
-				<register name="R1"/>
-				<register name="R2"/>
-				<register name="R3"/>
-				<register name="R4"/>
-				<register name="R5"/>
-				<register name="R6"/>
-                <register name="R7"/>
-				<register name="R8"/>
-				<register name="R9"/>
-				<register name="R10"/>
-				<register name="R11"/>
-				<register name="R12"/>
-				<register name="R13"/>
-				<register name="R14"/>
-                <register name="R15"/>
+				<register name="x0"/>
+				<register name="x1"/>
+				<register name="x2"/>
+				<register name="x3"/>
+				<register name="x4"/>
+				<register name="x5"/>
+				<register name="x6"/>
+                <register name="x7"/>
+				<register name="x8"/>
+				<register name="x9"/>
+				<register name="x10"/>
+				<register name="x11"/>
+				<register name="x12"/>
+				<register name="x13"/>
+				<register name="x14"/>
+                <register name="x15"/>
 			</killedbycall>
 			<unaffected>
-				<register name="R16"/>
-				<register name="R17"/>
+				<register name="x16"/>
+				<register name="x17"/>
 			</unaffected>
 		</prototype>
 	</default_proto>
