@@ -33,7 +33,6 @@ public class ListSelectionDialog<T> extends DialogComponentProvider {
 
 	private DropDownSelectionTextField<T> field;
 	protected boolean cancelled;
-	private RowObjectTableModel<T> userTableModel;
 	private DataToStringConverter<T> searchConverter;
 	private DataToStringConverter<T> descriptionConverter;
 	private List<T> data;
@@ -61,8 +60,12 @@ public class ListSelectionDialog<T> extends DialogComponentProvider {
 		this.data = data;
 		this.searchConverter = searchConverter;
 		this.descriptionConverter = descriptionConverter;
+
+		// Use a separate list for the drop down widget, since it needs to sort its data and we do
+		// not want to change the client data sort.
+		List<T> dropDownData = new ArrayList<>(data);
 		DefaultDropDownSelectionDataModel<T> model = new DefaultDropDownSelectionDataModel<>(
-			new ArrayList<>(data), searchConverter, descriptionConverter) {
+			dropDownData, searchConverter, descriptionConverter) {
 
 			// overridden to return all data for an empty search; this lets the down-arrow
 			// show the full list
@@ -151,14 +154,18 @@ public class ListSelectionDialog<T> extends DialogComponentProvider {
 	}
 
 	private RowObjectTableModel<T> getTableModel() {
-		if (userTableModel != null) {
-			return userTableModel;
-		}
-
-		return new DefaultTableModel();
+		return new DefaultTableModel(data);
 	}
 
 	private class DefaultTableModel extends AbstractGTableModel<T> {
+
+		private List<T> modelData;
+
+		DefaultTableModel(List<T> modelData) {
+			// copy the data so that a call to dispose() will not clear the data in the outer class
+			this.modelData = new ArrayList<>(modelData);
+		}
+
 		@Override
 		public String getColumnName(int columnIndex) {
 			if (columnIndex == 0) {
@@ -184,7 +191,7 @@ public class ListSelectionDialog<T> extends DialogComponentProvider {
 
 		@Override
 		public List<T> getModelData() {
-			return data;
+			return modelData;
 		}
 
 		@Override

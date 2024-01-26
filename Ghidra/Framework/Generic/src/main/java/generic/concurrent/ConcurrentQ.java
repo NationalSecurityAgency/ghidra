@@ -41,14 +41,14 @@ import ghidra.util.task.TaskMonitor;
  *         // do work here...
  *     }
  * };
- * 
+ *
  * ConcurrentQBuilder<ITEM, RESULT> builder = new ConcurrentQBuilder<ITEM, RESULT>();
  * builder.setThreadPoolName("Thread Pool Name");
  * concurrentQ = builder.getQueue(callback);
  * ...
  * ...
  * concurrentQ.add(item); // where item is one of the instances of ITEM
- * 
+ *
  * }</pre>
  * <hr>
  * <p>
@@ -59,14 +59,14 @@ import ghidra.util.task.TaskMonitor;
  *         // do work here...
  *     }
  * };
- * 
+ *
  * {@literal QItemListener<ITEM, RESULT> itemListener = new QItemListener<ITEM, RESULT>()} {
  *     {@literal public void itemProcessed(QResult<ITEM, RESULT> result)} {
  *         RESULT result = result.getResult();
  *             <span style="color:blue"><b>// work on my result...</b></span>
  *         }
  * };
- * 
+ *
  * {@literal ConcurrentQBuilder<ITEM, RESULT> builder = new ConcurrentQBuilder<ITEM, RESULT>()};
  * builder.setThreadPoolName("Thread Pool Name");
  * <span style="color:blue"><b>builder.setListener(itemListener);</b></span>
@@ -76,9 +76,9 @@ import ghidra.util.task.TaskMonitor;
  * concurrentQ.add(item); // where item is one of the instances of ITEM
  * concurrentQ.add(item);
  * concurrentQ.add(item);
- * 
+ *
  * </pre>
- * 
+ *
  * <hr>
  * <p>
  * <u>Put Items and Handle Results When All Items Have Been Processed:</u>
@@ -99,10 +99,10 @@ import ghidra.util.task.TaskMonitor;
  * concurrentQ.add(item);
  * concurrentQ.add(item);
  * ...
- * 
+ *
  * <span style="color:blue"><b>{@literal List<QResult<I, R>> results = concurrentQ.waitForResults();}</b></span>{@literal
  * // process the results...
- * 
+ *
  * }</pre>
  * <hr>
  * <p>
@@ -120,7 +120,7 @@ import ghidra.util.task.TaskMonitor;
  *             // work on my result...
  *         }
  * };
- * 
+ *
  * {@literal ConcurrentQBuilder<ITEM, RESULT> builder = new ConcurrentQBuilder<ITEM, RESULT>()};
  * builder.setThreadPoolName("Thread Pool Name");
  * <span style="color:blue"><b>builder.setQueue(new LinkedBlockingQueue(100));</b></span>
@@ -129,10 +129,10 @@ import ghidra.util.task.TaskMonitor;
  * ...
  * {@literal Iterator<ITEM> iterator = <get an iterator for 1000s of items somewhere>}
  * <span style="color:blue"><b>{@code concurrentQ.offer(iterator); // this call will block when the queue fills up (100 items or more)}</b></span>
- * 
+ *
  * </pre>
  * <hr>
- * 
+ *
  * @param <I> The type of the items to be processed.
  * @param <R> The type of objects resulting from processing an item; if you don't care about the
  *            return value, then make this value whatever you want, like <code>Object</code> or the
@@ -162,7 +162,7 @@ public class ConcurrentQ<I, R> {
 	/**
 	 * Creates a ConcurrentQ that will process as many items as the given threadPool can handle
 	 * at one time.
-	 * 
+	 *
 	 * @param name The name of the thread pool that will be created by this constructor.
 	 * @param callback the QWorker object that will be used to process items concurrently.
 	 */
@@ -174,7 +174,7 @@ public class ConcurrentQ<I, R> {
 	/**
 	 * Creates a ConcurrentQ that will process at most maxInProgress items at a time, regardless of
 	 * how many threads are available in the GThreadPool.
-	 * 
+	 *
 	 * @param callback the QWorker object that will be used to process items concurrently.
 	 * @param queue the internal storage queue to use in this concurrent queue.
 	 * @param threadPool the GThreadPool to used for providing the threads for concurrent processing.
@@ -210,7 +210,7 @@ public class ConcurrentQ<I, R> {
 	/**
 	 * Adds a progress listener for this queue.  All the progress and messages reported by a
 	 * QWorker will be routed to these listener.
-	 * 
+	 *
 	 * @param listener the listener for receiving progress and message notifications.
 	 */
 	public synchronized void addProgressListener(QProgressListener<I> listener) {
@@ -239,7 +239,7 @@ public class ConcurrentQ<I, R> {
 
 	/**
 	 * Sets the monitor to use with this queue.
-	 * 
+	 *
 	 * @param monitor the monitor to attache to this queue
 	 * @param cancelClearsAllItems if true, cancelling the monitor will cancel all items currently
 	 * 								being processed by a thread and clear the scheduled
@@ -299,7 +299,7 @@ public class ConcurrentQ<I, R> {
 	 * <p>
 	 * To enable blocking on the queue when it is full, construct this <code>ConcurrentQ</code>
 	 * with an instance of {@link BlockingQueue}.
-	 * 
+	 *
 	 * @param iterator An iterator from which items will be taken.
 	 * @throws InterruptedException if this queue is interrupted while waiting to add more items
 	 */
@@ -355,7 +355,7 @@ public class ConcurrentQ<I, R> {
 	 * <P>
 	 * You can still call this method to wait for items to be processed, even if you did not
 	 * specify to collect results.  In that case, the list returned will be empty.
-	 * 
+	 *
 	 * @return the list of QResult objects that have all the results of the completed jobs.
 	 * @throws InterruptedException if this call was interrupted--Note:  this interruption only
 	 *             happens if the calling thread cannot acquire the lock.  If the thread is
@@ -376,7 +376,7 @@ public class ConcurrentQ<I, R> {
 
 	/**
 	 * Wait until at least one result is available and then return the first result.
-	 * 
+	 *
 	 * @return the first available result
 	 * @throws InterruptedException if interrupted while waiting for a result
 	 * @throws IllegalStateException if this queue has been set to not collect results
@@ -416,7 +416,7 @@ public class ConcurrentQ<I, R> {
 	 * all results, both with and without exceptions, which you can then process, including
 	 * checking for exceptions.  Note that to use {@link #waitForResults()} to examine exceptions,
 	 * you must have created this queue with <code>collectResults</code> as true.
-	 * 
+	 *
 	 * @throws InterruptedException if interrupted while waiting for a result
 	 * @throws Exception any exception encountered while processing an item (this will cancel all
 	 *         items in the queue).
@@ -451,7 +451,7 @@ public class ConcurrentQ<I, R> {
 	 * <P>
 	 * You can still call this method to wait for items to be processed, even if you did not
 	 * specify to collect results.  In that case, the list returned will be empty.
-	 * 
+	 *
 	 * @param timeout the timeout
 	 * @param unit the timeout unit
 	 * @return the list of QResult objects that have all the results of the completed jobs.
@@ -481,7 +481,7 @@ public class ConcurrentQ<I, R> {
 	 * they check the isCancelled() state of their QMonitor, it will be true.  Setting the
 	 * interruptRunningTasks to true, will result in a thread interrupt to any currently running
 	 * task which might be useful if the task perform waiting operations like I/O.
-	 * 
+	 *
 	 * @param interruptRunningTasks if true, an attempt will be made to interrupt any currently
 	 * processing thread.
 	 * @return a list of all items that have not yet been queued to the threadPool.
@@ -540,6 +540,14 @@ public class ConcurrentQ<I, R> {
 		cancelAllTasks(true);
 		if (threadPool.isPrivate()) {
 			threadPool.shutdownNow();
+		}
+
+		lock.lock();
+		try {
+			resultList.clear();
+		}
+		finally {
+			lock.unlock();
 		}
 	}
 
