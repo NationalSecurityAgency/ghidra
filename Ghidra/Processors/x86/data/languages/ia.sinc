@@ -3832,10 +3832,17 @@ define pcodeop skinit;
 :STOSQ^rep^reptail eseDI8   is $(LONGMODE_ON) & vexMode=0 & rep & reptail & opsize=2 & byte=0xab & eseDI8    { build rep; build eseDI8; eseDI8=RAX; build reptail; }
 @endif
 
-:STR rm16       is vexMode=0 & opsize=0 & byte=0xf; byte=0x0; rm16 & reg_opcode=1 ... { rm16 = TaskRegister(); }
-:STR rm32       is vexMode=0 & opsize=1 & byte=0xf; byte=0x0; rm32 & reg_opcode=1 ... { rm32 = TaskRegister(); }
+:STR rm16       is vexMode=0 & byte=0xf; byte=0x0; rm16 & reg_opcode=1 ... { rm16 = TaskRegister(); }
+:STR Rmr32      is vexMode=0 & opsize=1 & byte=0xf; byte=0x0; Rmr32 & mod=3 & reg_opcode=1 & check_Rmr32_dest {
+	local tmp:2 = TaskRegister();
+	Rmr32 = zext(tmp);
+	build check_Rmr32_dest;
+}
 @ifdef IA64
-:STR rm64       is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0x0; rm64 & reg_opcode=1 ... { rm64 = TaskRegister(); }
+:STR Rmr64       is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0x0; Rmr64 & mod=3 & reg_opcode=1 {
+	local tmp:2 = TaskRegister();
+	Rmr64 = zext(tmp);
+}
 @endif
 
 # See 'lockable.sinc' for memory destination, lockable variants
