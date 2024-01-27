@@ -40,7 +40,7 @@ import ghidra.util.Swing;
 @PluginInfo(
 	status = PluginStatus.STABLE,
 	packageName = DeveloperPluginPackage.NAME,
-	category = PluginCategoryNames.SUPPORT,
+	category = PluginCategoryNames.DIAGNOSTIC,
 	shortDescription = WindowLocationPlugin.NAME,
 	description = "Shows all known window and screen geometry"
 )

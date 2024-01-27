@@ -19,7 +19,6 @@ import java.util.Iterator;
 
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.*;
-import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -27,20 +26,33 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.SystemUtilities;
 
+//@formatter:off
+@PluginInfo(
+	status = PluginStatus.RELEASED, 
+	packageName = CorePluginPackage.NAME, 
+	category = "Byte Viewer", 
+	shortDescription = "Displays bytes in memory", 
+	description = "Provides a component for showing the bytes in memory. Additional plugins " +
+		"provide capabilites for this plugin to show the bytes in various formats (e.g., hex, " +
+		"octal, decimal). The hex format plugin is loaded by default when this plugin is loaded.", 
+	servicesRequired = { 
+		ProgramManager.class, GoToService.class, NavigationHistoryService.class, 
+		ClipboardService.class
+	}, 
+	eventsConsumed = { 
+		ProgramLocationPluginEvent.class, ProgramActivatedPluginEvent.class, 
+		ProgramSelectionPluginEvent.class, ProgramHighlightPluginEvent.class, 
+		ProgramClosedPluginEvent.class,	ByteBlockChangePluginEvent.class
+	}, 
+	eventsProduced = {
+		ProgramLocationPluginEvent.class, ProgramSelectionPluginEvent.class,
+		ByteBlockChangePluginEvent.class
+	}
+)
+//@formatter:on
 /**
- * Visible Plugin to show ByteBlock data in various formats.
+ * Plugin to show ByteBlock data in various formats.
  */
-@PluginInfo(status = PluginStatus.RELEASED, packageName = CorePluginPackage.NAME, category = PluginCategoryNames.BYTE_VIEWER, shortDescription = "Displays bytes in memory", description = "Provides a component for showing the bytes in memory.  " +
-	"Additional plugins provide capabilites for this plugin" +
-	" to show the bytes in various formats (e.g., hex, octal, decimal)." +
-	"  The hex format plugin is loaded by default when this plugin is loaded.", servicesRequired = {
-		ProgramManager.class, GoToService.class, NavigationHistoryService.class,
-		ClipboardService.class, }, eventsConsumed = { ProgramLocationPluginEvent.class,
-			ProgramActivatedPluginEvent.class, ProgramSelectionPluginEvent.class,
-			ProgramHighlightPluginEvent.class, ProgramClosedPluginEvent.class,
-			ByteBlockChangePluginEvent.class, }, eventsProduced = {
-				ProgramLocationPluginEvent.class, ProgramSelectionPluginEvent.class,
-				ByteBlockChangePluginEvent.class, })
 public class ByteViewerPlugin extends AbstractByteViewerPlugin<ProgramByteViewerComponentProvider> {
 
 	public ByteViewerPlugin(PluginTool tool) {

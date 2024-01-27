@@ -49,7 +49,7 @@ import ghidra.util.bean.opteditor.OptionsVetoException;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.SUPPORT,
+	category = PluginCategoryNames.COMMON,
 	shortDescription = "Tool State History",
 	description = "This plugin maintains a history of tool states. "
 			+ "It is used in conjunction with other plugins "

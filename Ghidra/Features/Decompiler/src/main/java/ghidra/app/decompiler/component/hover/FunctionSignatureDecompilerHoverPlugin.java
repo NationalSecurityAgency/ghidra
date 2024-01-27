@@ -29,7 +29,7 @@ import ghidra.framework.plugintool.util.PluginStatus;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.DECOMPILER,
+	category = PluginCategoryNames.ANALYSIS,
 	shortDescription = "Function Name Hover",
 	description = "Pop-up display of the function prototype of the hovered-over function name in the decompiler",
 	servicesProvided = { DecompilerHoverService.class }

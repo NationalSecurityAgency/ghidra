@@ -47,7 +47,7 @@ import ghidra.util.Swing;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.DIFF,
+	category = PluginCategoryNames.CODE_VIEWER,
 	shortDescription = "Compare Functions",
 	description = "Allows users to compare two or more functions",
 	servicesProvided = { FunctionComparisonService.class },

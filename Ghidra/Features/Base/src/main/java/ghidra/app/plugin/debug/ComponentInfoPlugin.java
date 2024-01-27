@@ -33,10 +33,10 @@ import help.HelpService;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = DeveloperPluginPackage.NAME,
-	category = PluginCategoryNames.TESTING,
+	category = PluginCategoryNames.DIAGNOSTIC,
 	shortDescription = "Show component information",
-	description = "This plugin is a debug aid that displays " +
-			"a table of information about the components in the application."
+	description = "A debug aid that displays a table of information about the components in the " +
+		"application."
 )
 //@formatter:on
 public class ComponentInfoPlugin extends Plugin {
