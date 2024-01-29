@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,14 +20,18 @@ import ghidra.framework.plugintool.ServiceProvider;
 
 /**
  * This class is meant to be used by DynamicTableColumn implementations that do not care about
- * the DATA_SOURCE parameter of DynamicTableColumn.  This class will stub the default 
+ * the DATA_SOURCE parameter of DynamicTableColumn.  This class will stub the default
  * {@link #getValue(Object, Settings, Object, ServiceProvider)} method and
  * call a version of the method that does not have the DATA_SOURCE parameter.
+ * <p>
+ * Subclasses are not discoverable.  To create discoverable columns for the framework, you must
+ * extends {@link DynamicTableColumnExtensionPoint}.
+ *
  * @param <ROW_TYPE> the row type
  * @param <COLUMN_TYPE> the column type
  */
-public abstract class AbstractDynamicTableColumnStub<ROW_TYPE, COLUMN_TYPE> extends
-		AbstractDynamicTableColumn<ROW_TYPE, COLUMN_TYPE, Object> {
+public abstract class AbstractDynamicTableColumnStub<ROW_TYPE, COLUMN_TYPE>
+		extends AbstractDynamicTableColumn<ROW_TYPE, COLUMN_TYPE, Object> {
 
 	@Override
 	public COLUMN_TYPE getValue(ROW_TYPE rowObject, Settings settings, Object data,

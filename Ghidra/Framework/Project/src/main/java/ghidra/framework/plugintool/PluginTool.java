@@ -633,7 +633,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 		}
 
 		winMgr.restoreWindowDataFromXml(root);
-		winMgr.setToolName(fullName);
+		updateTitle();
 		return hasErrors;
 	}
 
