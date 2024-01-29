@@ -151,7 +151,8 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		if (result == null) {
 			searchDialog.setStatusText("Not found");
 		}
-		else if (result.programLocation().equals(currentLocation)) {
+		else if (result.programLocation()
+				.equals(currentLocation)) {
 			searchNext(searchTask.getProgram(), searchNavigatable, textSearcher);
 		}
 		else {
@@ -379,34 +380,33 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		String subGroup = getClass().getName();
 
 		new ActionBuilder("Search Text", getName())
-			.menuPath("&Search", "Program &Text...")
-			.menuGroup("search", subGroup)
-			.keyBinding("ctrl shift E")
-			.description(DESCRIPTION)
-			.helpLocation(new HelpLocation(HelpTopics.SEARCH, "Search Text"))
-			.withContext(NavigatableActionContext.class, true)
-			.validContextWhen(c -> !(c instanceof RestrictedAddressSetContext))
-			.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
-			.onAction(c -> {
-				setNavigatable(c.getNavigatable());
-				displayDialog(c);
-			})
-			.buildAndInstall(tool);
+				.menuPath("&Search", "Program &Text...")
+				.menuGroup("search", subGroup)
+				.keyBinding("ctrl shift E")
+				.description(DESCRIPTION)
+				.helpLocation(new HelpLocation(HelpTopics.SEARCH, "Search Text"))
+				.withContext(NavigatableActionContext.class, true)
+				.validContextWhen(c -> !(c instanceof RestrictedAddressSetContext))
+				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
+				.onAction(c -> {
+					setNavigatable(c.getNavigatable());
+					displayDialog(c);
+				})
+				.buildAndInstall(tool);
 
 		new ActionBuilder("Repeat Text Search", getName())
-			.menuPath("&Search", "Repeat Text Search")
-			.menuGroup("search", subGroup)
-			.keyBinding("ctrl shift F3")
-			.description(DESCRIPTION)
-			.helpLocation(new HelpLocation(HelpTopics.SEARCH, "Repeat Text Search"))
-			.withContext(NavigatableActionContext.class, true)
-			.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
-			.enabledWhen(c -> searchedOnce)
-			.onAction(c -> {
-				setNavigatable(c.getNavigatable());
-				searchDialog.repeatSearch();
-			})
-			.buildAndInstall(tool);
+				.menuPath("&Search", "Repeat Text Search")
+				.menuGroup("search", subGroup)
+				.description(DESCRIPTION)
+				.helpLocation(new HelpLocation(HelpTopics.SEARCH, "Repeat Text Search"))
+				.withContext(NavigatableActionContext.class, true)
+				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
+				.enabledWhen(c -> searchedOnce)
+				.onAction(c -> {
+					setNavigatable(c.getNavigatable());
+					searchDialog.repeatSearch();
+				})
+				.buildAndInstall(tool);
 	}
 
 	protected void updateNavigatable(ActionContext context) {
@@ -468,7 +468,8 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		String textSelection = navigatable.getTextSelection();
 		ProgramLocation location = navigatable.getLocation();
 		Address address = location.getAddress();
-		Listing listing = context.getProgram().getListing();
+		Listing listing = context.getProgram()
+				.getListing();
 		CodeUnit codeUnit = listing.getCodeUnitAt(address);
 		boolean isInstruction = false;
 		if (textSelection != null) {
@@ -582,7 +583,8 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 
 			// must have completed too fast for the provider to be set; try something cute
 			Component focusOwner =
-				KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+				KeyboardFocusManager.getCurrentKeyboardFocusManager()
+						.getFocusOwner();
 			return focusOwner; // assume this IS the provider
 		}
 
@@ -627,7 +629,8 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		@Override
 		public Highlight[] createHighlights(String text, ListingField field, int cursorTextOffset) {
 
-			Class<? extends FieldFactory> fieldFactoryClass = field.getFieldFactory().getClass();
+			Class<? extends FieldFactory> fieldFactoryClass = field.getFieldFactory()
+					.getClass();
 
 			if (!doHighlight) {
 				return NO_HIGHLIGHTS;
@@ -650,7 +653,8 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 				return getAllHighlights(text, cursorTextOffset);
 			}
 
-			Address address = searchResult.programLocation().getAddress();
+			Address address = searchResult.programLocation()
+					.getAddress();
 			ProxyObj<?> proxy = field.getProxy();
 			if (proxy.contains(address)) {
 				return getSingleSearchHighlight(text, field, cursorTextOffset);
@@ -742,7 +746,8 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 				return true;
 			}
 
-			Class<? extends FieldFactory> factoryClass = field.getFieldFactory().getClass();
+			Class<? extends FieldFactory> factoryClass = field.getFieldFactory()
+					.getClass();
 			if (searchOptions.searchComments()) {
 				if (factoryClass == PreCommentFieldFactory.class ||
 					factoryClass == PlateFieldFactory.class ||

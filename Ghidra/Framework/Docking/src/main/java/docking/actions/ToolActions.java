@@ -89,12 +89,23 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 
 		keyBindingsManager.addReservedAction(new HelpAction(false, ReservedKeyBindings.HELP_KEY1));
 		keyBindingsManager.addReservedAction(new HelpAction(false, ReservedKeyBindings.HELP_KEY2));
-		keyBindingsManager.addReservedAction(
-			new HelpAction(true, ReservedKeyBindings.HELP_INFO_KEY));
+		keyBindingsManager
+				.addReservedAction(new HelpAction(true, ReservedKeyBindings.HELP_INFO_KEY));
 		keyBindingsManager.addReservedAction(
 			new ShowContextMenuAction(ReservedKeyBindings.CONTEXT_MENU_KEY1));
 		keyBindingsManager.addReservedAction(
 			new ShowContextMenuAction(ReservedKeyBindings.CONTEXT_MENU_KEY2));
+
+		keyBindingsManager.addReservedAction(
+			new NextPreviousWindowAction(ReservedKeyBindings.FOCUS_NEXT_WINDOW_KEY, true));
+		keyBindingsManager.addReservedAction(
+			new NextPreviousWindowAction(ReservedKeyBindings.FOCUS_PREVIOUS_WINDOW_KEY, false));
+
+		keyBindingsManager.addReservedAction(
+			new GlobalFocusTraversalAction(ReservedKeyBindings.FOCUS_NEXT_COMPONENT_KEY, true));
+		keyBindingsManager.addReservedAction(
+			new GlobalFocusTraversalAction(ReservedKeyBindings.FOCUS_PREVIOUS_COMPONENT_KEY,
+				false));
 
 		// helpful debugging actions
 		keyBindingsManager.addReservedAction(new ShowFocusInfoAction());
@@ -283,12 +294,16 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 	private Iterator<DockingActionIf> getAllActionsIterator() {
 		// chain all items together, rather than copy the data
 		// Note: do not use Apache's IteratorUtils.chainedIterator. It degrades exponentially
-		return Stream.concat(
-			actionsByNameByOwner.values()
-					.stream()
-					.flatMap(actionsByName -> actionsByName.values().stream())
-					.flatMap(actions -> actions.stream()),
-			sharedActionMap.values().stream()).iterator();
+		return Stream
+				.concat(
+					actionsByNameByOwner.values()
+							.stream()
+							.flatMap(actionsByName -> actionsByName.values()
+									.stream())
+							.flatMap(actions -> actions.stream()),
+					sharedActionMap.values()
+							.stream())
+				.iterator();
 	}
 
 	/**
@@ -344,7 +359,8 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 		keyBindingsManager.removeAction(action);
 
 		getActionStorage(action).remove(action);
-		if (!action.getKeyBindingType().isShared()) {
+		if (!action.getKeyBindingType()
+				.isShared()) {
 			return;
 		}
 
@@ -357,7 +373,8 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 	private Set<DockingActionIf> getActionStorage(DockingActionIf action) {
 		String owner = action.getOwner();
 		String name = action.getName();
-		return actionsByNameByOwner.get(owner).get(name);
+		return actionsByNameByOwner.get(owner)
+				.get(name);
 	}
 
 	private void updateKeyBindingsFromOptions(ToolOptions options, String optionName,
@@ -370,7 +387,8 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 		String name = matcher.group(1);
 		String owner = matcher.group(2);
 
-		Set<DockingActionIf> actions = actionsByNameByOwner.get(owner).get(name);
+		Set<DockingActionIf> actions = actionsByNameByOwner.get(owner)
+				.get(name);
 		for (DockingActionIf action : actions) {
 			KeyStroke oldKs = action.getKeyBinding();
 			if (Objects.equals(oldKs, newKs)) {
@@ -382,12 +400,14 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
-		if (!evt.getPropertyName().equals(DockingActionIf.KEYBINDING_DATA_PROPERTY)) {
+		if (!evt.getPropertyName()
+				.equals(DockingActionIf.KEYBINDING_DATA_PROPERTY)) {
 			return;
 		}
 
 		DockingActionIf action = (DockingActionIf) evt.getSource();
-		if (!action.getKeyBindingType().isManaged()) {
+		if (!action.getKeyBindingType()
+				.isManaged()) {
 			// this reads unusually, but we need to notify the tool to rebuild its 'Window' menu
 			// in the case that this action is one of the tool's special actions
 			keyBindingsChanged();
@@ -419,7 +439,8 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 		Iterator<DockingActionIf> it = actionGuiHelper.getComponentActions(provider);
 		while (it.hasNext()) {
 			DockingActionIf action = it.next();
-			if (action.getName().equals(actionName)) {
+			if (action.getName()
+					.equals(actionName)) {
 				return action;
 			}
 		}
