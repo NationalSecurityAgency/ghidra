@@ -14,21 +14,22 @@
 #  limitations under the License.
 ##
 from concurrent.futures import Future, ThreadPoolExecutor
+from contextlib import redirect_stdout
+from io import StringIO
 import re
 import sys
+
+from pybag import pydbg
+from pybag.dbgeng import core as DbgEng, exception
 
 from ghidratrace import sch
 from ghidratrace.client import MethodRegistry, ParamDesc, Address, AddressRange
 
-from pybag import pydbg
-from pybag.dbgeng import core as DbgEng
-
 from . import util, commands
-from contextlib import redirect_stdout
-from io import StringIO
 
 
-REGISTRY = MethodRegistry(ThreadPoolExecutor(max_workers=1))
+REGISTRY = MethodRegistry(ThreadPoolExecutor(
+    max_workers=1, thread_name_prefix='MethodRegistry'))
 
 
 def extre(base, ext):
@@ -85,11 +86,12 @@ def find_proc_by_obj(object):
 
 def find_proc_by_procbreak_obj(object):
     return find_proc_by_pattern(object, PROC_BREAKS_PATTERN,
-                               "a BreakpointLocationContainer")
+                                "a BreakpointLocationContainer")
+
 
 def find_proc_by_procwatch_obj(object):
     return find_proc_by_pattern(object, PROC_WATCHES_PATTERN,
-                               "a WatchpointContainer")
+                                "a WatchpointContainer")
 
 
 def find_proc_by_env_obj(object):
@@ -178,25 +180,28 @@ def find_bpt_by_obj(object):
 
 shared_globals = dict()
 
+
 @REGISTRY.method
+# @util.dbg.eng_thread
 def execute(cmd: str, to_string: bool=False):
-    """Execute a CLI command."""
-    #print("***{}***".format(cmd))
-    #sys.stderr.flush()
-    #sys.stdout.flush()
+    """Execute a Python3 command or script."""
+    # print("***{}***".format(cmd))
+    # sys.stderr.flush()
+    # sys.stdout.flush()
     if to_string:
         data = StringIO()
         with redirect_stdout(data):
-            exec("{}".format(cmd), shared_globals)
+            exec(cmd, shared_globals)
         return data.getvalue()
     else:
-        exec("{}".format(cmd), shared_globals)
+        exec(cmd, shared_globals)
 
 
 @REGISTRY.method
+# @util.dbg.eng_thread
 def evaluate(expr: str):
-    """Execute a CLI command."""
-    return str(eval("{}".format(expr), shared_globals))
+    """Evaluate a Python3 expression."""
+    return str(eval(expr, shared_globals))
 
 
 @REGISTRY.method(action='refresh')
@@ -240,6 +245,7 @@ def refresh_environment(node: sch.Schema('Environment')):
     """Refresh the environment descriptors (arch, os, endian)."""
     with commands.open_tracked_tx('Refresh Environment'):
         commands.ghidra_trace_put_environment()
+
 
 @REGISTRY.method(action='refresh')
 def refresh_threads(node: sch.Schema('ThreadContainer')):
@@ -287,6 +293,7 @@ def activate_process(process: sch.Schema('Process')):
     """Switch to the process."""
     find_proc_by_obj(process)
 
+
 @REGISTRY.method(action='activate')
 def activate_thread(thread: sch.Schema('Thread')):
     """Switch to the thread."""
@@ -300,46 +307,54 @@ def activate_frame(frame: sch.Schema('StackFrame')):
 
 
 @REGISTRY.method(action='delete')
+@util.dbg.eng_thread
 def remove_process(process: sch.Schema('Process')):
     """Remove the process."""
     find_proc_by_obj(process)
-    dbg().detach()
+    dbg().detach_proc()
 
 
 @REGISTRY.method(action='connect')
+@util.dbg.eng_thread
 def target(process: sch.Schema('Process'), spec: str):
     """Connect to a target machine or process."""
     find_proc_by_obj(process)
-    dbg().attach(spec)
+    dbg().attach_kernel(spec)
 
 
 @REGISTRY.method(action='attach')
+@util.dbg.eng_thread
 def attach_obj(target: sch.Schema('Attachable')):
     """Attach the process to the given target."""
     pid = find_availpid_by_obj(target)
-    dbg().attach(pid)
+    dbg().attach_proc(pid)
+
 
 @REGISTRY.method(action='attach')
+@util.dbg.eng_thread
 def attach_pid(pid: int):
     """Attach the process to the given target."""
-    dbg().attach(pid)
+    dbg().attach_proc(pid)
+
 
 @REGISTRY.method(action='attach')
+@util.dbg.eng_thread
 def attach_name(process: sch.Schema('Process'), name: str):
     """Attach the process to the given target."""
-    dbg().atach(name)
+    dbg().attach_proc(name)
 
 
 @REGISTRY.method
+@util.dbg.eng_thread
 def detach(process: sch.Schema('Process')):
     """Detach the process's target."""
-    dbg().detach()
+    dbg().detach_proc()
 
 
 @REGISTRY.method(action='launch')
 def launch_loader(
-          file: ParamDesc(str, display='File'),
-          args: ParamDesc(str, display='Arguments')=''):
+        file: ParamDesc(str, display='File'),
+        args: ParamDesc(str, display='Arguments')=''):
     """
     Start a native process with the given command line, stopping at the ntdll initial breakpoint.
     """
@@ -351,65 +366,72 @@ def launch_loader(
 
 @REGISTRY.method(action='launch')
 def launch(
-        timeout: ParamDesc(int, display='Timeout'),
         file: ParamDesc(str, display='File'),
-        args: ParamDesc(str, display='Arguments')=''):
+        args: ParamDesc(str, display='Arguments')='',
+        initial_break: ParamDesc(bool, display='Initial Break')=True,
+        timeout: ParamDesc(int, display='Timeout')=-1):
     """
     Run a native process with the given command line.
     """
     command = file
     if args != None:
         command += " "+args
-    commands.ghidra_trace_create(command, initial_break=False, timeout=timeout, start_trace=False)
+    commands.ghidra_trace_create(
+        command, initial_break=initial_break, timeout=timeout, start_trace=False)
 
 
 @REGISTRY.method
+@util.dbg.eng_thread
 def kill(process: sch.Schema('Process')):
     """Kill execution of the process."""
-    dbg().terminate()
+    commands.ghidra_trace_kill()
 
 
-@REGISTRY.method(name='continue', action='resume')
-def _continue(process: sch.Schema('Process')):
+@REGISTRY.method(action='resume')
+def go(process: sch.Schema('Process')):
     """Continue execution of the process."""
-    dbg().go()
+    util.dbg.run_async(lambda: dbg().go())
 
 
 @REGISTRY.method
 def interrupt(process: sch.Schema('Process')):
     """Interrupt the execution of the debugged program."""
-    dbg()._control.SetInterrupt(DbgEng.DEBUG_INTERRUPT_ACTIVE)
+    # SetInterrupt is reentrant, so bypass the thread checks
+    util.dbg._protected_base._control.SetInterrupt(
+        DbgEng.DEBUG_INTERRUPT_ACTIVE)
 
 
 @REGISTRY.method(action='step_into')
 def step_into(thread: sch.Schema('Thread'), n: ParamDesc(int, display='N')=1):
     """Step one instruction exactly."""
     find_thread_by_obj(thread)
-    dbg().stepi(n)
+    util.dbg.run_async(lambda: dbg().stepi(n))
 
 
 @REGISTRY.method(action='step_over')
 def step_over(thread: sch.Schema('Thread'), n: ParamDesc(int, display='N')=1):
     """Step one instruction, but proceed through subroutine calls."""
     find_thread_by_obj(thread)
-    dbg().stepo(n)
+    util.dbg.run_async(lambda: dbg().stepo(n))
 
 
 @REGISTRY.method(action='step_out')
 def step_out(thread: sch.Schema('Thread')):
     """Execute until the current stack frame returns."""
     find_thread_by_obj(thread)
-    dbg().stepout()
+    util.dbg.run_async(lambda: dbg().stepout())
 
 
 @REGISTRY.method(action='step_to')
 def step_to(thread: sch.Schema('Thread'), address: Address, max=None):
     """Continue execution up to the given address."""
     find_thread_by_obj(thread)
-    return dbg().stepto(address.offset, max)
+    # TODO: The address may need mapping.
+    util.dbg.run_async(lambda: dbg().stepto(address.offset, max))
 
 
 @REGISTRY.method(action='break_sw_execute')
+@util.dbg.eng_thread
 def break_address(process: sch.Schema('Process'), address: Address):
     """Set a breakpoint."""
     find_proc_by_obj(process)
@@ -417,6 +439,7 @@ def break_address(process: sch.Schema('Process'), address: Address):
 
 
 @REGISTRY.method(action='break_sw_execute')
+@util.dbg.eng_thread
 def break_expression(expression: str):
     """Set a breakpoint."""
     # TODO: Escape?
@@ -424,6 +447,7 @@ def break_expression(expression: str):
 
 
 @REGISTRY.method(action='break_hw_execute')
+@util.dbg.eng_thread
 def break_hw_address(process: sch.Schema('Process'), address: Address):
     """Set a hardware-assisted breakpoint."""
     find_proc_by_obj(process)
@@ -431,12 +455,14 @@ def break_hw_address(process: sch.Schema('Process'), address: Address):
 
 
 @REGISTRY.method(action='break_hw_execute')
+@util.dbg.eng_thread
 def break_hw_expression(expression: str):
     """Set a hardware-assisted breakpoint."""
     dbg().ba(expr=expression)
 
 
 @REGISTRY.method(action='break_read')
+@util.dbg.eng_thread
 def break_read_range(process: sch.Schema('Process'), range: AddressRange):
     """Set a read watchpoint."""
     find_proc_by_obj(process)
@@ -444,12 +470,14 @@ def break_read_range(process: sch.Schema('Process'), range: AddressRange):
 
 
 @REGISTRY.method(action='break_read')
+@util.dbg.eng_thread
 def break_read_expression(expression: str):
     """Set a read watchpoint."""
     dbg().ba(expr=expression, access=DbgEng.DEBUG_BREAK_READ)
 
 
 @REGISTRY.method(action='break_write')
+@util.dbg.eng_thread
 def break_write_range(process: sch.Schema('Process'), range: AddressRange):
     """Set a watchpoint."""
     find_proc_by_obj(process)
@@ -457,25 +485,30 @@ def break_write_range(process: sch.Schema('Process'), range: AddressRange):
 
 
 @REGISTRY.method(action='break_write')
+@util.dbg.eng_thread
 def break_write_expression(expression: str):
     """Set a watchpoint."""
     dbg().ba(expr=expression, access=DbgEng.DEBUG_BREAK_WRITE)
 
 
 @REGISTRY.method(action='break_access')
+@util.dbg.eng_thread
 def break_access_range(process: sch.Schema('Process'), range: AddressRange):
     """Set an access watchpoint."""
     find_proc_by_obj(process)
-    dbg().ba(expr=range.min, size=range.length(), access=DbgEng.DEBUG_BREAK_READ|DbgEng.DEBUG_BREAK_WRITE)
+    dbg().ba(expr=range.min, size=range.length(),
+             access=DbgEng.DEBUG_BREAK_READ | DbgEng.DEBUG_BREAK_WRITE)
 
 
 @REGISTRY.method(action='break_access')
+@util.dbg.eng_thread
 def break_access_expression(expression: str):
     """Set an access watchpoint."""
-    dbg().ba(expr=expression, access=DbgEng.DEBUG_BREAK_READ|DbgEng.DEBUG_BREAK_WRITE)
+    dbg().ba(expr=expression, access=DbgEng.DEBUG_BREAK_READ | DbgEng.DEBUG_BREAK_WRITE)
 
 
 @REGISTRY.method(action='toggle')
+@util.dbg.eng_thread
 def toggle_breakpoint(breakpoint: sch.Schema('BreakpointSpec'), enabled: bool):
     """Toggle a breakpoint."""
     bpt = find_bpt_by_obj(breakpoint)
@@ -486,6 +519,7 @@ def toggle_breakpoint(breakpoint: sch.Schema('BreakpointSpec'), enabled: bool):
 
 
 @REGISTRY.method(action='delete')
+@util.dbg.eng_thread
 def delete_breakpoint(breakpoint: sch.Schema('BreakpointSpec')):
     """Delete a breakpoint."""
     bpt = find_bpt_by_obj(breakpoint)
@@ -495,14 +529,20 @@ def delete_breakpoint(breakpoint: sch.Schema('BreakpointSpec')):
 @REGISTRY.method
 def read_mem(process: sch.Schema('Process'), range: AddressRange):
     """Read memory."""
+    # print("READ_MEM: process={}, range={}".format(process, range))
     nproc = find_proc_by_obj(process)
     offset_start = process.trace.memory_mapper.map_back(
         nproc, Address(range.space, range.min))
     with commands.open_tracked_tx('Read Memory'):
-        dbg().read(range.min, range.length())
+        result = commands.put_bytes(
+            offset_start, offset_start + range.length() - 1, pages=True, display_result=False)
+        if result['count'] == 0:
+            commands.putmem_state(
+                offset_start, offset_start+range.length() - 1, 'error')
 
 
 @REGISTRY.method
+@util.dbg.eng_thread
 def write_mem(process: sch.Schema('Process'), address: Address, data: bytes):
     """Write memory."""
     nproc = find_proc_by_obj(process)
@@ -511,12 +551,13 @@ def write_mem(process: sch.Schema('Process'), address: Address, data: bytes):
 
 
 @REGISTRY.method
+@util.dbg.eng_thread
 def write_reg(frame: sch.Schema('StackFrame'), name: str, value: bytes):
     """Write a register."""
     util.select_frame()
     nproc = pydbg.selected_process()
     dbg().reg._set_register(name, value)
-    
-    
+
+
 def dbg():
-    return util.get_debugger()
+    return util.dbg._base

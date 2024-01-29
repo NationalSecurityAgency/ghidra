@@ -503,22 +503,29 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		}
 
 		default String toString(RootMessage req) {
-			return switch (req.getMsgCase()) {
-				case REQUEST_ACTIVATE -> "activate(%d, %d, %s)".formatted(
-					req.getRequestActivate().getOid().getId(),
-					req.getRequestActivate().getObject().getId(),
-					req.getRequestActivate().getObject().getPath().getPath());
-				case REQUEST_END_TX -> "endTx(%d)".formatted(
-					req.getRequestEndTx().getTxid().getId());
-				case REQUEST_START_TX -> "startTx(%d,%s)".formatted(
-					req.getRequestStartTx().getTxid().getId(),
-					req.getRequestStartTx().getDescription());
-				case REQUEST_SET_VALUE -> "setValue(%d,%s,%s)".formatted(
-					req.getRequestSetValue().getValue().getParent().getId(),
-					req.getRequestSetValue().getValue().getParent().getPath().getPath(),
-					req.getRequestSetValue().getValue().getKey());
-				default -> null;
-			};
+			try {
+				return switch (req.getMsgCase()) {
+					case REQUEST_ACTIVATE -> "activate(%d, %d, %s)".formatted(
+						req.getRequestActivate().getOid().getId(),
+						req.getRequestActivate().getObject().getId(),
+						req.getRequestActivate().getObject().getPath().getPath());
+					case REQUEST_END_TX -> "endTx(%d)".formatted(
+						req.getRequestEndTx().getTxid().getId());
+					case REQUEST_START_TX -> "startTx(%d,%s)".formatted(
+						req.getRequestStartTx().getTxid().getId(),
+						req.getRequestStartTx().getDescription());
+					case REQUEST_SET_VALUE -> "setValue(%d,%s,%s,=%s)".formatted(
+						req.getRequestSetValue().getValue().getParent().getId(),
+						req.getRequestSetValue().getValue().getParent().getPath().getPath(),
+						req.getRequestSetValue().getValue().getKey(),
+						ValueDecoder.DISPLAY
+								.toValue(req.getRequestSetValue().getValue().getValue()));
+					default -> null;
+				};
+			}
+			catch (Throwable e) {
+				return "ERROR toStringing request: " + e;
+			}
 		}
 	}
 

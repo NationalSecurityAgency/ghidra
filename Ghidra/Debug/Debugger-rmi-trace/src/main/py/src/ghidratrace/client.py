@@ -61,7 +61,7 @@ class Receiver(Thread):
             result = self.client._handle_invoke_method(request)
             Client._write_value(
                 reply.xreply_invoke_method.return_value, result)
-        except Exception as e:
+        except BaseException as e:
             reply.xreply_invoke_method.error = ''.join(
                 traceback.format_exc())
         self.client._send(reply)
@@ -79,7 +79,7 @@ class Receiver(Thread):
                 result = request.handler(
                     getattr(reply, request.field_name))
                 request.set_result(result)
-            except Exception as e:
+            except BaseException as e:
                 request.set_exception(e)
 
     def _recv(self, field_name, handler):

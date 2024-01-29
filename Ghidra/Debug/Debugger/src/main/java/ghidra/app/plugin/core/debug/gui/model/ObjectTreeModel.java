@@ -210,7 +210,7 @@ public class ObjectTreeModel implements DisplaysModified {
 			/**
 			 * Our nodes are re-usable. They're cached so that as an item comes and goes, its
 			 * corresponding node can also come and go without being re-instantiated each time.
-			 * Furthermore, it's like to have all the same children as before, too. For now, we'll
+			 * Furthermore, it's likely to have all the same children as before, too. For now, we'll
 			 * just ignore dispose. If there's too many unexpected behaviors resulting from this,
 			 * then perhaps we should just have dispose also remove itself from the node cache.
 			 */
@@ -219,12 +219,25 @@ public class ObjectTreeModel implements DisplaysModified {
 
 		@Override
 		public int compareTo(GTreeNode node) {
-			return TargetObjectKeyComparator.CHILD.compare(this.getName(), node.getName());
+			if (!(node instanceof AbstractNode that)) {
+				return -1;
+			}
+			int c;
+			c = TargetObjectKeyComparator.CHILD.compare(this.getValue().getEntryKey(),
+				that.getValue().getEntryKey());
+			if (c != 0) {
+				return c;
+			}
+			c = Lifespan.DOMAIN.compare(this.getValue().getMinSnap(), that.getValue().getMinSnap());
+			if (c != 0) {
+				return c;
+			}
+			return 0;
 		}
 
 		@Override
 		public String getName() {
-			return getValue().getEntryKey() + "@" + getValue().getMinSnap();
+			return getValue().getEntryKey() + "@" + System.identityHashCode(getValue());
 		}
 
 		@Override
@@ -340,14 +353,14 @@ public class ObjectTreeModel implements DisplaysModified {
 		@Override
 		public String getDisplayText() {
 			if (trace == null) {
-				return "<html><em>No trace is active</em>";
+				return "<html><em>No&nbsp;trace&nbsp;is&nbsp;active</em>";
 			}
 			TraceObject root = trace.getObjectManager().getRootObject();
 			if (root == null) {
-				return "<html><em>Trace has no model</em>";
+				return "<html><em>Trace&nbsp;has&nbsp;no&nbsp;model</em>";
 			}
-			return "<html>" +
-				HTMLUtilities.escapeHTML(display.getObjectDisplay(root.getCanonicalParent(0)));
+			return "<html>" + HTMLUtilities
+					.escapeHTML(display.getObjectDisplay(root.getCanonicalParent(0)), true);
 		}
 
 		@Override
@@ -424,7 +437,8 @@ public class ObjectTreeModel implements DisplaysModified {
 		@Override
 		public String getDisplayText() {
 			String html = HTMLUtilities.escapeHTML(
-				value.getEntryKey() + ": " + display.getPrimitiveValueDisplay(value.getValue()));
+				value.getEntryKey() + ": " + display.getPrimitiveValueDisplay(value.getValue()),
+				true);
 			return "<html>" + html;
 		}
 
@@ -471,8 +485,8 @@ public class ObjectTreeModel implements DisplaysModified {
 
 		@Override
 		public String getDisplayText() {
-			return "<html>" + HTMLUtilities.escapeHTML(value.getEntryKey()) + ": <em>" +
-				HTMLUtilities.escapeHTML(display.getObjectLinkDisplay(value)) + "</em>";
+			return "<html>" + HTMLUtilities.escapeHTML(value.getEntryKey(), true) + ":&nbsp;<em>" +
+				HTMLUtilities.escapeHTML(display.getObjectLinkDisplay(value), true) + "</em>";
 		}
 
 		@Override
@@ -513,7 +527,7 @@ public class ObjectTreeModel implements DisplaysModified {
 
 		@Override
 		public String getDisplayText() {
-			return "<html>" + HTMLUtilities.escapeHTML(display.getObjectDisplay(value));
+			return "<html>" + HTMLUtilities.escapeHTML(display.getObjectDisplay(value), true);
 		}
 
 		@Override

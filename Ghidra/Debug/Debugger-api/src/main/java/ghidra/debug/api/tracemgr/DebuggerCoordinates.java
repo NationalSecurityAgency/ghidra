@@ -391,7 +391,8 @@ public class DebuggerCoordinates {
 			return NOWHERE;
 		}
 		long snap = newTime.getSnap();
-		TraceThread newThread = thread != null && thread.getLifespan().contains(snap) ? thread
+		Lifespan threadLifespan = thread == null ? null : thread.getLifespan();
+		TraceThread newThread = threadLifespan != null && threadLifespan.contains(snap) ? thread
 				: resolveThread(trace, target, newTime);
 		// This will cause the frame to reset to 0 on every snap change. That's fair....
 		Integer newFrame = resolveFrame(newThread, newTime);
