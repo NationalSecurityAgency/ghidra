@@ -15,60 +15,26 @@
  */
 package ghidra.feature.vt.gui.actions;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import javax.swing.SwingConstants;
 
-import ghidra.feature.vt.api.correlator.program.CombinedFunctionAndDataReferenceProgramCorrelatorFactory;
-import ghidra.feature.vt.api.correlator.program.DataReferenceProgramCorrelatorFactory;
-import ghidra.feature.vt.api.correlator.program.DuplicateFunctionMatchProgramCorrelatorFactory;
-import ghidra.feature.vt.api.correlator.program.ExactDataMatchProgramCorrelatorFactory;
-import ghidra.feature.vt.api.correlator.program.ExactMatchBytesProgramCorrelatorFactory;
-import ghidra.feature.vt.api.correlator.program.ExactMatchInstructionsProgramCorrelatorFactory;
-import ghidra.feature.vt.api.correlator.program.ExactMatchMnemonicsProgramCorrelatorFactory;
-import ghidra.feature.vt.api.correlator.program.FunctionReferenceProgramCorrelatorFactory;
-import ghidra.feature.vt.api.correlator.program.SymbolNameProgramCorrelatorFactory;
-import ghidra.feature.vt.api.correlator.program.VTAbstractReferenceProgramCorrelatorFactory;
-import ghidra.feature.vt.api.main.VTAssociation;
-import ghidra.feature.vt.api.main.VTAssociationManager;
-import ghidra.feature.vt.api.main.VTAssociationStatus;
-import ghidra.feature.vt.api.main.VTAssociationType;
-import ghidra.feature.vt.api.main.VTMarkupItem;
-import ghidra.feature.vt.api.main.VTMatch;
-import ghidra.feature.vt.api.main.VTMatchSet;
-import ghidra.feature.vt.api.main.VTProgramCorrelator;
-import ghidra.feature.vt.api.main.VTProgramCorrelatorFactory;
-import ghidra.feature.vt.api.main.VTSession;
+import ghidra.feature.vt.api.correlator.program.*;
+import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.util.VTAssociationStatusException;
 import ghidra.feature.vt.api.util.VTOptions;
 import ghidra.feature.vt.gui.plugin.AddressCorrelatorManager;
 import ghidra.feature.vt.gui.task.ApplyMarkupItemTask;
-import ghidra.feature.vt.gui.util.ImpliedMatchUtils;
-import ghidra.feature.vt.gui.util.MatchInfo;
-import ghidra.feature.vt.gui.util.MatchInfoFactory;
-import ghidra.feature.vt.gui.util.VTOptionDefines;
+import ghidra.feature.vt.gui.util.*;
 import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.lang.OperandType;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Instruction;
-import ghidra.program.model.listing.InstructionIterator;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.Task;
-import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.WrappingTaskMonitor;
+import ghidra.util.task.*;
 
 /**
  *  If their options are set, this command runs all of the 
@@ -502,6 +468,11 @@ public class AutoVersionTrackingTask extends Task {
 			}
 
 			MatchInfo matchInfo = matchInfoFactory.getMatchInfo(match, addressCorrelator);
+
+			if (matchInfo.getSourceFunction() == null ||
+				matchInfo.getDestinationFunction() == null) {
+				continue;
+			}
 
 			ImpliedMatchUtils.updateImpliedMatchForAcceptedAssocation(
 				matchInfo.getSourceFunction(),
