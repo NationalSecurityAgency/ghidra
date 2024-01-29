@@ -1232,6 +1232,7 @@ public class AddressSet implements AddressSetView {
 	private class AddressRangeIteratorAdapter implements AddressRangeIterator {
 
 		private Iterator<RedBlackEntry<Address, Address>> iterator;
+		private AddressRange lastReturnedRange;
 
 		public AddressRangeIteratorAdapter(Iterator<RedBlackEntry<Address, Address>> iterator) {
 			this.iterator = iterator;
@@ -1248,12 +1249,14 @@ public class AddressSet implements AddressSetView {
 			if (next == null) {
 				throw new NoSuchElementException();
 			}
-			return new AddressRangeImpl(next.getKey(), next.getValue());
+			lastReturnedRange = new AddressRangeImpl(next.getKey(), next.getValue());
+			return lastReturnedRange;
 		}
 
 		@Override
 		public void remove() {
 			iterator.remove();
+			addressCount -= lastReturnedRange.getLength();
 		}
 
 		@Override

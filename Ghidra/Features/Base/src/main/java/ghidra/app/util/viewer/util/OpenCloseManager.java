@@ -19,8 +19,7 @@ import java.util.*;
 
 import javax.swing.event.ChangeListener;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
@@ -254,11 +253,13 @@ public class OpenCloseManager {
 
 	private void toggleAllDataInAddresses(boolean open, Program program, AddressSetView addresses,
 			TaskMonitor monitor) {
+
+		AddressSet unprocessed = new AddressSet(addresses);
+
 		monitor.initialize(addresses.getNumAddresses());
-		Address start = addresses.getMinAddress();
 
 		Listing listing = program.getListing();
-		DataIterator iterator = listing.getData(addresses, true);
+		DataIterator iterator = listing.getDefinedData(addresses, true);
 		while (iterator.hasNext()) {
 			if (monitor.isCancelled()) {
 				return;
@@ -268,9 +269,11 @@ public class OpenCloseManager {
 
 			toggleDataRecursively(data, open, monitor);
 
-			Address max = data.getMaxAddress();
-			long progress = max.subtract(start);
+			Address min = data.getMinAddress();
 
+			unprocessed.deleteFromMin(min);
+
+			long progress = addresses.getNumAddresses() - unprocessed.getNumAddresses();
 			monitor.setProgress(progress);
 		}
 
