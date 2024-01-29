@@ -375,6 +375,7 @@
 
 	</tocdef> <!-- End Ghidra Support -->
 
+	<tocdef id="Keyboard Navigation" sortgroup="gg" text="Keyboard Navigation" target="help/topics/KeyboardNavigation/KeyboardNavigation.htm"/>
     <tocdef id="Undo/Redo" sortgroup="h" text="Undo/Redo"  target="help/topics/Tool/Undo_Redo.htm" />
     <tocdef id="Glossary" sortgroup="i" text="Glossary"  target="help/topics/Glossary/glossary.htm" />
     <tocdef id="What's New" sortgroup="j" text="What's New" target="docs/WhatsNew.html" />

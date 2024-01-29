@@ -24,7 +24,8 @@ import javax.swing.KeyStroke;
 public class ReservedKeyBindings {
 
 	private static final int CONTROL_KEY_MODIFIER_MASK =
-		Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+		Toolkit.getDefaultToolkit()
+				.getMenuShortcutKeyMaskEx();
 
 	private ReservedKeyBindings() {
 		// utils class
@@ -40,6 +41,18 @@ public class ReservedKeyBindings {
 	public static final KeyStroke CONTEXT_MENU_KEY2 =
 		KeyStroke.getKeyStroke(KeyEvent.VK_CONTEXT_MENU, 0);
 
+	public static final KeyStroke FOCUS_NEXT_WINDOW_KEY =
+		KeyStroke.getKeyStroke(KeyEvent.VK_F3, InputEvent.CTRL_DOWN_MASK);
+	public static final KeyStroke FOCUS_PREVIOUS_WINDOW_KEY =
+		KeyStroke.getKeyStroke(KeyEvent.VK_F3,
+			InputEvent.SHIFT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK);
+
+	public static final KeyStroke FOCUS_NEXT_COMPONENT_KEY =
+		KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.CTRL_DOWN_MASK);
+	public static final KeyStroke FOCUS_PREVIOUS_COMPONENT_KEY =
+		KeyStroke.getKeyStroke(KeyEvent.VK_TAB,
+			InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK);
+
 	public static final KeyStroke FOCUS_INFO_KEY = KeyStroke.getKeyStroke(KeyEvent.VK_F2,
 		CONTROL_KEY_MODIFIER_MASK | InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK);
 	public static final KeyStroke FOCUS_CYCLE_INFO_KEY = KeyStroke.getKeyStroke(KeyEvent.VK_F3,
@@ -51,17 +64,30 @@ public class ReservedKeyBindings {
 	public static final KeyStroke COMPONENT_THEME_INFO_KEY = KeyStroke.getKeyStroke(KeyEvent.VK_F9,
 		CONTROL_KEY_MODIFIER_MASK | InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK);
 
+	// @formatter:off
 	public static boolean isReservedKeystroke(KeyStroke keyStroke) {
 		int code = keyStroke.getKeyCode();
-		if (code == KeyEvent.VK_SHIFT || code == KeyEvent.VK_ALT || code == KeyEvent.VK_CONTROL ||
-			code == KeyEvent.VK_CAPS_LOCK || code == KeyEvent.VK_TAB ||
-			HELP_KEY1.equals(keyStroke) || HELP_KEY2.equals(keyStroke) ||
-			HELP_INFO_KEY.equals(keyStroke) || UPDATE_KEY_BINDINGS_KEY.equals(keyStroke) ||
-			FOCUS_INFO_KEY.equals(keyStroke) || FOCUS_CYCLE_INFO_KEY.equals(keyStroke) ||
-			COMPONENT_THEME_INFO_KEY.equals(keyStroke) || CONTEXT_MENU_KEY1.equals(keyStroke) ||
-			CONTEXT_MENU_KEY2.equals(keyStroke)) {
+		if (code == KeyEvent.VK_SHIFT ||
+			code == KeyEvent.VK_ALT ||
+			code == KeyEvent.VK_CONTROL ||
+			code == KeyEvent.VK_CAPS_LOCK ||
+			code == KeyEvent.VK_TAB ||
+			HELP_KEY1.equals(keyStroke) ||
+			HELP_KEY2.equals(keyStroke) ||
+			HELP_INFO_KEY.equals(keyStroke) ||
+			UPDATE_KEY_BINDINGS_KEY.equals(keyStroke) ||
+			FOCUS_INFO_KEY.equals(keyStroke) ||
+			FOCUS_CYCLE_INFO_KEY.equals(keyStroke) ||
+			COMPONENT_THEME_INFO_KEY.equals(keyStroke) ||
+			CONTEXT_MENU_KEY1.equals(keyStroke) ||
+			CONTEXT_MENU_KEY2.equals(keyStroke) ||
+			FOCUS_NEXT_WINDOW_KEY.equals(keyStroke) ||
+			FOCUS_PREVIOUS_WINDOW_KEY.equals(keyStroke) ||
+			FOCUS_NEXT_COMPONENT_KEY.equals(keyStroke) ||
+			FOCUS_PREVIOUS_COMPONENT_KEY.equals(keyStroke)) {
 			return true;
 		}
+		// @formatter:on
 
 		return false;
 	}

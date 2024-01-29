@@ -26,6 +26,7 @@ public interface PluginCategoryNames {
 	String SEARCH = "Search";
 	String TREE = "Program Tree";
 	String TESTING = GenericPluginCategoryNames.TESTING;
+	String DIAGNOSTIC = "Diagnostic";
 	String DIFF = "Code Difference";
 	String MISC = GenericPluginCategoryNames.MISC;
 	String USER_ANNOTATION = "User Annotation";
