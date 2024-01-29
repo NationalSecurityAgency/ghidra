@@ -18,67 +18,37 @@ package ghidra.app.plugin.core.debug.disassemble;
 import docking.ActionContext;
 import docking.action.*;
 import ghidra.app.context.ListingActionContext;
-import ghidra.app.plugin.core.debug.disassemble.DebuggerDisassemblerPlugin.Reqs;
-import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingActionContext;
-import ghidra.debug.api.platform.DebuggerPlatformMapper;
-import ghidra.debug.api.platform.DisassemblyResult;
-import ghidra.debug.api.tracemgr.DebuggerCoordinates;
-import ghidra.framework.cmd.TypedBackgroundCommand;
+import ghidra.app.plugin.core.debug.disassemble.CurrentPlatformTraceDisassembleCommand.Reqs;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.util.ProgramSelection;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.program.TraceProgramView;
-import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.HelpLocation;
-import ghidra.util.task.TaskMonitor;
 
 public class CurrentPlatformTraceDisassembleAction extends DockingAction {
 	private static final String NAME = "Disassemble";
 	private static final String MENU_GROUP = "Disassembly";
 	private static final KeyBindingData KEY_BINDING = new KeyBindingData("D");
 
-	private final DebuggerDisassemblerPlugin plugin;
+	private final PluginTool tool;
 
 	public CurrentPlatformTraceDisassembleAction(DebuggerDisassemblerPlugin plugin) {
 		super(NAME, plugin.getName());
-		this.plugin = plugin;
+		this.tool = plugin.getTool();
 
 		setPopupMenuData(new MenuData(new String[] { NAME }, MENU_GROUP));
 		setKeyBindingData(KEY_BINDING);
 		setHelpLocation(new HelpLocation(plugin.getName(), "disassemble"));
 	}
 
-	protected Reqs getReqs(ActionContext context) {
-		if (plugin.platformService == null) {
-			return null;
-		}
-		if (!(context instanceof DebuggerListingActionContext lac)) {
-			return null;
-		}
-		TraceProgramView view = lac.getProgram();
-		Trace trace = view.getTrace();
-		DebuggerCoordinates current = plugin.traceManager == null ? DebuggerCoordinates.NOWHERE
-				: plugin.traceManager.getCurrentFor(trace);
-		TraceThread thread = current.getThread();
-		TraceObject object = current.getObject();
-		DebuggerPlatformMapper mapper =
-			plugin.platformService.getMapper(trace, object, view.getSnap());
-		if (mapper == null) {
-			return null;
-		}
-		return new Reqs(mapper, thread, object, view);
-	}
-
 	@Override
 	public boolean isAddToPopup(ActionContext context) {
-		Reqs reqs = getReqs(context);
+		Reqs reqs = Reqs.fromContext(tool, context);
 		return reqs != null;
 	}
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
-		Reqs reqs = getReqs(context);
+		Reqs reqs = Reqs.fromContext(tool, context);
 		if (reqs == null) {
 			return false;
 		}
@@ -87,7 +57,7 @@ public class CurrentPlatformTraceDisassembleAction extends DockingAction {
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		Reqs reqs = getReqs(context);
+		Reqs reqs = Reqs.fromContext(tool, context);
 		if (reqs == null) {
 			return;
 		}
@@ -100,21 +70,12 @@ public class CurrentPlatformTraceDisassembleAction extends DockingAction {
 			set = selection;
 		}
 		else {
-			set = reqs.view.getAddressFactory()
+			set = reqs.view()
+					.getAddressFactory()
 					.getAddressSet(space.getMinAddress(), space.getMaxAddress());
 		}
-		TypedBackgroundCommand<TraceProgramView> cmd =
-			new TypedBackgroundCommand<>(NAME, true, true, false) {
-				@Override
-				public boolean applyToTyped(TraceProgramView view, TaskMonitor monitor) {
-					DisassemblyResult result = reqs.mapper.disassemble(
-						reqs.thread, reqs.object, address, set, view.getSnap(), monitor);
-					if (!result.isSuccess()) {
-						plugin.getTool().setStatusInfo(result.getErrorMessage(), true);
-					}
-					return true;
-				}
-			};
-		cmd.run(plugin.getTool(), reqs.view);
+		CurrentPlatformTraceDisassembleCommand cmd =
+			new CurrentPlatformTraceDisassembleCommand(tool, set, reqs, address);
+		cmd.run(tool, reqs.view());
 	}
 }

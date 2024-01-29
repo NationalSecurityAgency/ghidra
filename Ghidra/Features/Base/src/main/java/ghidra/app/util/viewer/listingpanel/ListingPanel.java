@@ -609,10 +609,16 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/** 
 	 * Scroll the view of the listing to the given location.
+	 * 
+	 * <p>
+	 * If the given location is not displayed, this has no effect.
 	 * @param location the location
 	 */
 	public void scrollTo(ProgramLocation location) {
 		FieldLocation fieldLocation = getFieldLocation(location);
+		if (fieldLocation == null) {
+			return;
+		}
 		fieldPanel.scrollTo(fieldLocation);
 	}
 

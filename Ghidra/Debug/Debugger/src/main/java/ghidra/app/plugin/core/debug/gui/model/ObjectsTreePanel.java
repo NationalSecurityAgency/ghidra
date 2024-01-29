@@ -262,6 +262,20 @@ public class ObjectsTreePanel extends JPanel {
 			}
 			//tree.filterChanged();
 			// Repaint for bold current path is already going to happen
+
+			// Repaint is not enough, as node sizes may change
+			for (TraceObjectKeyPath path = current.getPath(); path != null; path = path.parent()) {
+				AbstractNode node = treeModel.getNode(path);
+				if (node != null) {
+					node.fireNodeChanged();
+				}
+			}
+			for (TraceObjectKeyPath path = previous.getPath(); path != null; path = path.parent()) {
+				AbstractNode node = treeModel.getNode(path);
+				if (node != null) {
+					node.fireNodeChanged();
+				}
+			}
 		}
 	}
 
