@@ -79,6 +79,9 @@ public class TraceDisassembleCommand extends TypedBackgroundCommand<TraceProgram
 	public boolean applyToTyped(TraceProgramView view, TaskMonitor monitor) {
 		Disassembler disassembler = getDisassembler(view, monitor);
 		MemBuffer buffer = getBuffer(view);
+		if (buffer == null) {
+			return true; // Memory space does not exist. Just go silently.
+		}
 		int limit = computeLimit();
 		// TODO: limit is actually instruction count, not byte count :'(
 		InstructionBlock block = disassembler.pseudoDisassembleBlock(buffer, initialContext, limit);
