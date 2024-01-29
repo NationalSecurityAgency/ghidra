@@ -49,3 +49,4 @@ mvn gpg:sign-and-deploy-file -Durl=$SONATYPE_URL -DrepositoryId=$REPO_ID -DpomFi
 
 echo "artifacts are now published to sonatype staging. next step: log into https://s01.oss.sonatype.org -> staging repositories -> select the right one -> close -> release"
 echo "once it's synchronised to maven central, then, update the ghidra version in `joern/joern-cli/frontends/ghidra2cpg/build.sbt`"
+echo "don't forget to commit and push the local changes in this repo to https://github.com/joernio/ghidra"
