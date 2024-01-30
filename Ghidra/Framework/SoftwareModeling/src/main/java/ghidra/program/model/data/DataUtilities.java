@@ -166,6 +166,10 @@ public final class DataUtilities {
 		Reference extRef = null;
 		if (!isParentData(data, addr)) {
 
+			if (!stackPointers && isDataClearingDenied(existingType, clearMode)) {
+				throw new CodeUnitInsertionException("Could not create Data at address " + addr);
+			}
+
 			existingLength = data.getLength();
 
 			if (data.isDefined()) {
@@ -183,10 +187,6 @@ public final class DataUtilities {
 				if (newType.isEquivalent(existingType)) {
 					return data;
 				}
-			}
-
-			if (!stackPointers && isDataClearingDenied(existingType, clearMode)) {
-				throw new CodeUnitInsertionException("Could not create Data at address " + addr);
 			}
 
 			// TODO: This can probably be eliminated
