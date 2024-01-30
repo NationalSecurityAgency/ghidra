@@ -19,6 +19,7 @@ import ghidra.app.util.SymbolPath;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractPointerMsType.PointerMode;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.CancelledException;
 
@@ -158,6 +159,9 @@ public class PointerTypeApplier extends MsTypeApplier {
 			throws CancelledException, PdbException {
 		DataType underlyingType = getUnderlyingType(type, fixupContext);
 		int size = type.getSize().intValueExact();
+		if (size > PointerDataType.MAX_POINTER_SIZE_BYTES) {
+			return getStubPointer(type);
+		}
 		if (size == applicator.getDataOrganization().getPointerSize()) {
 			size = -1; // Use default
 		}
@@ -165,6 +169,19 @@ public class PointerTypeApplier extends MsTypeApplier {
 			return applicator.getPlaceholderPointer(size);
 		}
 		return new PointerDataType(underlyingType, size, applicator.getDataTypeManager());
+	}
+
+	private DataType getStubPointer(AbstractPointerMsType type) {
+		int size = type.getSize().intValueExact();
+		AbstractMsType under = applicator.getPdb().getTypeRecord(type.getUnderlyingRecordNumber());
+		CategoryPath categoryPath = applicator.getAnonymousTypesCategory();
+		PointerMode mode = type.getPointerMode();
+		AbstractPointerMsType.PointerType pt = type.getPointerType();
+		String name =
+			String.format("StubPtr%d_%s%s_To_%s", 8 * size, pt.toString(), mode.toString(),
+				under.getName());
+		DataType stubPtr = new StructureDataType(categoryPath, name, size);
+		return stubPtr;
 	}
 
 //	private DataType processMemberPointerFuture(AbstractPointerMsType type) {
