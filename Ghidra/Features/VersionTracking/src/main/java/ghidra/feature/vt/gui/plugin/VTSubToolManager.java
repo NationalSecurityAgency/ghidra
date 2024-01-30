@@ -658,7 +658,7 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 	 * 
 	 * @return The source tool from the VT session.
 	 */
-	PluginTool getSourceTool() {
+	public PluginTool getSourceTool() {
 		return sourceTool;
 	}
 

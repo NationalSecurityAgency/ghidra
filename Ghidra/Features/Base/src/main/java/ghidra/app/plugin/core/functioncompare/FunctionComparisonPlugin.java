@@ -19,13 +19,19 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import ghidra.app.CorePluginPackage;
-import ghidra.app.events.*;
+import ghidra.app.events.ProgramActivatedPluginEvent;
+import ghidra.app.events.ProgramClosedPluginEvent;
+import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.plugin.core.functioncompare.actions.CompareFunctionsAction;
 import ghidra.app.plugin.core.functioncompare.actions.CompareFunctionsFromListingAction;
 import ghidra.app.services.FunctionComparisonService;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainObjectChangeRecord;
+import ghidra.framework.model.DomainObjectChangedEvent;
+import ghidra.framework.model.DomainObjectEvent;
+import ghidra.framework.model.DomainObjectListener;
+import ghidra.framework.model.EventType;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -168,6 +174,13 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 	@Override
 	public FunctionComparisonProvider compareFunctions(Set<Function> functions) {
 		return getFromSwingBlocking(() -> functionComparisonManager.compareFunctions(functions));
+	}
+
+	@Override
+	public FunctionComparisonProvider compareFunctions(Set<Function> sourceFunctions,
+			Set<Function> destinationFunctions) {
+		return getFromSwingBlocking(() -> functionComparisonManager
+				.compareFunctions(sourceFunctions, destinationFunctions));
 	}
 
 	@Override

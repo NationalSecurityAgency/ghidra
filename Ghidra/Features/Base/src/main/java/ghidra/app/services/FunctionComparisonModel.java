@@ -18,12 +18,20 @@
  */
 package ghidra.app.services;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
 
-import ghidra.app.plugin.core.functioncompare.*;
+import ghidra.app.plugin.core.functioncompare.FunctionComparison;
+import ghidra.app.plugin.core.functioncompare.FunctionComparisonModelListener;
+import ghidra.app.plugin.core.functioncompare.FunctionComparisonProvider;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
@@ -125,6 +133,35 @@ public class FunctionComparisonModel {
 		addToExistingComparisons(functions);
 		createNewComparisons(functions);
 
+		fireModelChanged();
+	}
+
+	/**
+	 * Updates the model with two sets of functions to compare. This will add the
+	 * functions to any existing {@link FunctionComparison comparisons} in the 
+	 * model and create new comparisons for functions not represented.
+	 * <p>
+	 * Note: It is assumed that when using this method, all source functions can be
+	 * compared to all destination functions; meaning all functions in the source function set will 
+	 * be added as sources, and all functions in the destination function set will be added as targets. 
+	 * 
+	 * @param sourceFunctions
+	 * @param destinationFunctions
+	 */
+	public void compareFunctions(Set<Function> sourceFunctions,
+			Set<Function> destinationFunctions) {
+		if (CollectionUtils.isEmpty(sourceFunctions) ||
+			CollectionUtils.isEmpty(destinationFunctions)) {
+			return; // not an error, just return
+		}
+
+		for (Function f : sourceFunctions) {
+			FunctionComparison comparison = new FunctionComparison();
+
+			comparison.setSource(f);
+			comparison.addTargets(destinationFunctions);
+			comparisons.add(comparison);
+		}
 		fireModelChanged();
 	}
 

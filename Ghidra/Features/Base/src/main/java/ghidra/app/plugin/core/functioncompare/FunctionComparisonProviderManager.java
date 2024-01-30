@@ -20,7 +20,10 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import docking.ComponentProviderActivationListener;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainObjectChangeRecord;
+import ghidra.framework.model.DomainObjectChangedEvent;
+import ghidra.framework.model.DomainObjectEvent;
+import ghidra.framework.model.EventType;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 
@@ -78,6 +81,23 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 		}
 		FunctionComparisonProvider provider = createProvider();
 		provider.getModel().compareFunctions(functions);
+		return provider;
+	}
+
+	/**
+	 * Create a new comparison between two given sets of functions
+	 * 
+	 * @param sourceFunctions
+	 * @param destinationFunctions
+	 * @return the new comparison provider
+	 */
+	public FunctionComparisonProvider compareFunctions(Set<Function> sourceFunctions,
+			Set<Function> destinationFunctions) {
+		if (sourceFunctions.isEmpty() || destinationFunctions.isEmpty()) {
+			return null;
+		}
+		FunctionComparisonProvider provider = createProvider();
+		provider.getModel().compareFunctions(sourceFunctions, destinationFunctions);
 		return provider;
 	}
 
