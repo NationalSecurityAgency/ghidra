@@ -4483,13 +4483,14 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
 
 :strex^ItCond    Rd0811,Rt1215,[Rn0003,Immed8_4]   is TMode=1 & ItCond & op4=0xe84 & Rn0003; Rt1215 & Rd0811 & Immed8_4
 {
-   build ItCond;
+  build ItCond;
   local tmp = Rn0003 + Immed8_4;
+  local tmpRt = Rt1215;
   access:1 = hasExclusiveAccess(tmp);
   Rd0811 = 1;
   if (!access) goto inst_next;
   Rd0811 = 0;
-  *tmp = Rt1215;
+  *tmp = tmpRt;
 }
 
 @endif # VERSION_6T2 || VERSION_7
@@ -4498,39 +4499,41 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
 
 :strexb^ItCond    Rd0003,Rt1215,[Rn0003]   is TMode=1 & ItCond & op4=0xe8c & Rn0003; Rt1215 & thc0811=15 & thc0407=4 & Rd0003
 {
-   build ItCond;
+  build ItCond;
   local tmp = Rn0003;
+  local tmpRt = Rt1215;
   access:1 = hasExclusiveAccess(tmp);
   Rd0003 = 1;
   if (!access) goto inst_next;
   Rd0003 = 0;
-  local tmpRt1215 = Rt1215;
-  *tmp = tmpRt1215:1;
+  *tmp = tmpRt:1;
 }
 
 :strexh^ItCond    Rd0003,Rt1215,[Rn0003]   is TMode=1 & ItCond & op4=0xe8c & Rn0003; Rt1215 & thc0811=15 & thc0407=5 & Rd0003
 {
-   build ItCond;
+  build ItCond;
   local tmp = Rn0003;
+  local tmpRt = Rt1215;
   access:1 = hasExclusiveAccess(tmp);
   Rd0003 = 1;
   if (!access) goto inst_next;
   Rd0003 = 0;
-  local tmpRt1215 = Rt1215;
-  *tmp = tmpRt1215:1;
+  *tmp = tmpRt:2;
 }
 
 :strexd^ItCond    Rd0003,Rt1215,Rt0811,[Rn0003]   is TMode=1 & ItCond & op4=0xe8c & Rn0003; Rt1215 & Rt0811 & thc0407=7 & Rd0003
 {
    build ItCond;
   local tmp = Rn0003;
+  local tmpRt = Rt1215;
+  local tmpRt2 = Rt0811;
   access:1 = hasExclusiveAccess(tmp);
   Rd0003 = 1;
   if (!access) goto inst_next;
   Rd0003 = 0;
-  *tmp = Rt1215;
+  *tmp = tmpRt;
   tmp = tmp + 4;
-  *tmp = Rt0811;
+  *tmp = tmpRt2;
 }
 
 @endif # VERSION_7
