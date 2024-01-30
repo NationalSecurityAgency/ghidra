@@ -29,9 +29,9 @@ public class CharacterScriptUtils {
 
 	/**
 	 * The {@link UnicodeScript} value that represents the "ANY" choice.  This is a bit of a hack
-	 * and re-uses the INHERITED enum value for this purpose.
+	 * and re-uses the enum value for this purpose.
 	 */
-	public static final UnicodeScript ANY_SCRIPT_ALIAS = UnicodeScript.INHERITED;
+	public static final UnicodeScript ANY_SCRIPT_ALIAS = UnicodeScript.UNKNOWN;
 
 	/**
 	 * Premade examples of characters from each specified script, using info from

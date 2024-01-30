@@ -130,6 +130,9 @@ public class ParamListStandard implements ParamList {
 			int[] status, ParameterPieces res)
 
 	{
+		if (dt.isZeroLength()) {
+			return AssignAction.NO_ASSIGNMENT;
+		}
 		for (ModelRule modelRule : modelRules) {
 			int responseCode = modelRule.assignAddress(dt, proto, pos, dtManager, status, res);
 			if (responseCode != AssignAction.FAIL) {
@@ -178,8 +181,18 @@ public class ParamListStandard implements ParamList {
 		}
 		for (int i = 0; i < proto.intypes.size(); ++i) {
 			ParameterPieces store = new ParameterPieces();
-			assignAddress(proto.intypes.get(i), proto, i, dtManager, status, store);
 			res.add(store);
+			int resCode = assignAddress(proto.intypes.get(i), proto, i, dtManager, status, store);
+			if (resCode == AssignAction.FAIL || resCode == AssignAction.NO_ASSIGNMENT) {
+				// Do not continue to assign after first failure
+				++i;
+				while (i < proto.intypes.size()) {
+					store = new ParameterPieces();		// Fill out with UNASSIGNED pieces
+					res.add(store);
+					++i;
+				}
+				return;
+			}
 		}
 	}
 

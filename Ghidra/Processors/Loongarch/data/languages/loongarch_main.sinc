@@ -143,7 +143,7 @@ define register offset=$(CSR_OFFSET) size=$(REGSIZE) [
 	save0     save1     save2     save3     save4     save5     save6     save7
 	save8     save9     save10    save11    save12    save13    save14    save15
 	tid       tcfg      tval      cntc      ticlr     csr69     csr70     csr71
-	csr72     csr73     csr74     csr75     csr76     csr78     csr79
+	csr72     csr73     csr74     csr75     csr76     csr77	    csr78     csr79
 	csr80     csr81     csr82     csr83     csr84     csr85     csr86     csr87
 	csr88     csr89     csr90     csr91     csr92     csr93     csr94     csr95
 	llbctl    csr97     csr98     csr99     csr100    csr101    csr102    csr103

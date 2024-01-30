@@ -86,8 +86,8 @@ public class ThreadedTerminal extends DefaultTerminal {
 	}
 
 	protected void pump() {
-		try {
-			while (!closed) {
+		while (!closed) {
+			try {
 				if (-1 == in.read(buffer) || closed) {
 					return;
 				}
@@ -98,10 +98,15 @@ public class ThreadedTerminal extends DefaultTerminal {
 				}
 				buffer.clear();
 			}
-		}
-		catch (IOException e) {
-			Msg.error(this, "Console input closed unexpectedly: " + e);
-			closed = true;
+			catch (IOException e) {
+				Msg.error(this, "Console input closed unexpectedly: " + e);
+				closed = true;
+				return;
+			}
+			catch (Exception e) {
+				Msg.error(this, "Unexpected error processing terminal input", e);
+				continue;
+			}
 		}
 	}
 

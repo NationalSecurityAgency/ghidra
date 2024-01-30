@@ -29,6 +29,7 @@ import javax.naming.ldap.LdapName;
 import javax.naming.ldap.Rdn;
 import javax.security.auth.DestroyFailedException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 
@@ -40,7 +41,7 @@ import ghidra.framework.client.ClientUtil;
 import ghidra.net.ApplicationKeyManagerUtils;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
-import ghidra.util.task.TaskMonitor;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.NonThreadedXmlPullParserImpl;
 import ghidra.xml.XmlPullParser;
@@ -48,22 +49,68 @@ import utilities.util.FileUtilities;
 
 public class BSimControlLaunchable implements GhidraLaunchable {
 
-	public static final String PORT_OPTION = "port=";
-	public static final String CAFILE_OPTION = "cafile=";
-	public static final String AUTH_OPTION = "auth=";
-	public static final String DN_OPTION = "dn=";
-	public static final String CERT_OPTION = "cert=";
+	// bsim_ctl commands
+	public final static String COMMAND_START = "start";
+	public final static String COMMAND_STOP = "stop";
+	public final static String COMMAND_RESET_PASSWORD = "resetpassword";
+	public final static String COMMAND_CHANGE_PRIVILEGE = "changeprivilege";
+	public final static String COMMAND_ADDUSER = "adduser";
+	public final static String COMMAND_DROPUSER = "dropuser";
+	public final static String COMMAND_CHANGEAUTH = "changeauth";
+
+	// Options that require a value argument
+	public static final String CAFILE_OPTION = "--cafile";
+	public static final String AUTH_OPTION = "--auth";
+	public static final String DN_OPTION = "--dn";
+
+	// Global options that require a value argument
+	public static final String PORT_OPTION = "--port";
+	public static final String USER_OPTION = "--user";
+	public static final String CERT_OPTION = "--cert";
+
+	// Define set of options that require a second value argument
+	private static final Set<String> VALUE_OPTIONS =
+		Set.of(PORT_OPTION, USER_OPTION, CERT_OPTION, CAFILE_OPTION, AUTH_OPTION, DN_OPTION);
+
+	private static final Set<String> GLOBAL_OPTIONS = Set.of(PORT_OPTION, USER_OPTION, CERT_OPTION);
+
+	// Boolean options
 	public static final String NO_LOCAL_AUTH_OPTION = "--noLocalAuth";
-	public static final String USER_OPTION = "user=";
 	public static final String FORCE_OPTION = "--force";
 
-	private final static String START_COMMAND = "start";
-	private final static String STOP_COMMAND = "stop";
-	private final static String PASSWORD_COMMAND = "resetpassword";
-	private final static String PRIVILEGE_COMMAND = "changeprivilege";
-	private final static String ADDUSER_COMMAND = "adduser";
-	private final static String DROPUSER_COMMAND = "dropuser";
-	private final static String RESET_COMMAND = "changeauth";
+	private static final Map<String, String> SHORTCUT_OPTION_MAP = new HashMap<>();
+	static {
+		SHORTCUT_OPTION_MAP.put("-a", AUTH_OPTION);
+		SHORTCUT_OPTION_MAP.put("-p", PORT_OPTION);
+		SHORTCUT_OPTION_MAP.put("-u", USER_OPTION);
+	}
+
+	//@formatter:off
+	// Populate ALLOWED_OPTION_MAP for each command
+	private static final Set<String> START_OPTIONS = 
+			Set.of(AUTH_OPTION, DN_OPTION, NO_LOCAL_AUTH_OPTION, CAFILE_OPTION);
+	private static final Set<String> STOP_OPTIONS = 
+			Set.of(FORCE_OPTION);
+	private static final Set<String> RESET_PASSWORD_OPTIONS = Set.of();
+	private static final Set<String> CHANGE_PRIVILEGE_OPTIONS = Set.of();
+	private static final Set<String> ADDUSER_OPTIONS = 
+			Set.of(DN_OPTION);
+	private static final Set<String> DROPUSER_OPTIONS = Set.of();
+	private static final Set<String> CHANGEAUTH_OPTIONS = Set.of(
+		AUTH_OPTION, NO_LOCAL_AUTH_OPTION, CAFILE_OPTION);
+	
+	//@formatter:on
+	private static final Map<String, Set<String>> ALLOWED_OPTION_MAP = new HashMap<>();
+	static {
+		ALLOWED_OPTION_MAP.put(COMMAND_START, START_OPTIONS);
+		ALLOWED_OPTION_MAP.put(COMMAND_STOP, STOP_OPTIONS);
+		ALLOWED_OPTION_MAP.put(COMMAND_RESET_PASSWORD, RESET_PASSWORD_OPTIONS);
+		ALLOWED_OPTION_MAP.put(COMMAND_CHANGE_PRIVILEGE, CHANGE_PRIVILEGE_OPTIONS);
+		ALLOWED_OPTION_MAP.put(COMMAND_ADDUSER, ADDUSER_OPTIONS);
+		ALLOWED_OPTION_MAP.put(COMMAND_DROPUSER, DROPUSER_OPTIONS);
+		ALLOWED_OPTION_MAP.put(COMMAND_CHANGEAUTH, CHANGEAUTH_OPTIONS);
+	}
+
 	private final static String POSTGRES = "postgresql";
 	private final static String POSTGRES_BUILD_SCRIPT = "Ghidra/Features/BSim/make-postgres.sh";
 	private final static String POSTGRES_CONFIGFILE = "postgresql.conf";
@@ -80,73 +127,245 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	private final static int AUTHENTICATION_NONE = 0;
 	private final static int AUTHENTICATION_PASSWORD = 1;
 	private final static int AUTHENTICATION_PKI = 2;
-	private GhidraApplicationLayout layout = null;			// For holding on to JDBC logger so we can filter messages
-	private File dataDirectory;					// Directory containing postgres datafiles
-	private File postgresRoot;					// Directory containing postgres software
-	private File postgresControl;				// "pg_ctl" utility within postgres software
-	private File certAuthorityFile = null;		// Certificate authority file provided by the user
-	private String certParameter = null;		// Path to certificate provided by user
-	private String distinguishedName = null;	// Certificate distinguished name provided by the user
-	private String commonName = null;			// Common name extracted from distinguishedName
-	private String connectingUserName = null;	// User-name used to establish connection
-	private String specifiedUserName = null;	// -username- (add/drop) operation is being performed on
-	private boolean adminPrivilegeRequested = false;	// true is attempting to give user admin privileges
-	private boolean forceShutdown = false;		// Whether or not to force a shutdown (--force)
-	private String loadLibraryVar = null;		// Environment variable pointing to postgres shared libraries
-	private String loadLibraryValue = null;		// Directory containing shared libraries within postgres software
-	private int port = -1;						// Port over which to connect to postgres server, (-1 indicates default port is used)
-	private int localAuthentication = AUTHENTICATION_NONE;	// Type of authentication required for local connections
-	private int hostAuthentication = AUTHENTICATION_NONE;	// Type of authentication for remote connections
-	private boolean authConfigPresent = false;	// True if the [auth=..] option or the [--noLocalAuth] is present
-	private File passwordFile = null;			// File containing newly established password
-	private char[] adminPasswordData = null;	// Password data being sent to postgres server for authentication
+
+	private GhidraApplicationLayout layout;
+
+	private File dataDirectory;			// Directory containing postgres datafiles
+	private File postgresRoot;			// Directory containing postgres software
+	private File postgresControl;		// "pg_ctl" utility within postgres software
+	private File certAuthorityFile;		// Certificate authority file provided by the user
+	private String certParameter;		// Path to certificate provided by user
+	private String distinguishedName;	// Certificate distinguished name provided by the user
+	private String commonName;			// Common name extracted from distinguishedName
+	private String connectingUserName;	// User-name used to establish connection
+	private String specifiedUserName;	// -username- (add/drop) operation is being performed on
+	private boolean adminPrivilegeRequested;	// true is attempting to give user admin privileges
+	private boolean forceShutdown;		// Whether or not to force a shutdown (--force)
+	private String loadLibraryVar;		// Environment variable pointing to postgres shared libraries
+	private String loadLibraryValue;	// Directory containing shared libraries within postgres software
+	private int port;					// Port over which to connect to postgres server, (-1 indicates default port is used)
+	private int localAuthentication;	// Type of authentication required for local connections
+	private int hostAuthentication;		// Type of authentication for remote connections
+	private boolean authConfigPresent;	// True if the [auth=..] option or the [--noLocalAuth] is present
+	private File passwordFile;			// File containing newly established password
+	private char[] adminPasswordData;	// Password data being sent to postgres server for authentication
 
 	// Database connection that can be persisted so we don't need to recreate one
 	// for every call.
 	private Connection localConnection;
 
 	/**
-	 * Exception triggered by missing, unknown, or improperly formatted command-line arguments
+	 * Constructor for launching from the console
 	 */
-	public static class ArgumentException extends Exception {
-		public ArgumentException(String message) {
-			super(message);
-		}
+	public BSimControlLaunchable() {
+	}
+
+	private void clearParams() {
+		dataDirectory = null;
+		postgresRoot = null;
+		postgresControl = null;
+		certAuthorityFile = null;
+		certParameter = null;
+		distinguishedName = null;
+		commonName = null;
+		connectingUserName = null;
+		specifiedUserName = null;
+		adminPrivilegeRequested = false;
+		forceShutdown = false;
+		loadLibraryVar = null;
+		loadLibraryValue = null;
+		port = -1;
+		localAuthentication = AUTHENTICATION_NONE;
+		hostAuthentication = AUTHENTICATION_NONE;
+		authConfigPresent = false;
+		passwordFile = null;
+		adminPasswordData = null;
 	}
 
 	/**
-	 * Class for processing standard output or standard error for processes invoked by BSimControl
-	 * The streams can be optionally suppressed or dumped to System.out
+	 * Read required parameters followed by optional parameters
+	 * @param params is the original array of command line parameters
 	 */
-	private class IOThread extends Thread {
-		private BufferedReader shellOutput;		// Reader for the particular output stream
-		private boolean suppressOutput;			// If false, shell output is printed on the console
+	private String readCommandLine(String[] params) throws IllegalArgumentException, IOException {
 
-		public IOThread(InputStream input, boolean suppressOut) {
-			shellOutput = new BufferedReader(new InputStreamReader(input));
-			suppressOutput = suppressOut;
+		int slot = 0;
+
+		checkRequiredParam(params, slot, "command");
+		String command = params[slot++];
+
+		switch (command) {
+			case COMMAND_START:
+				scanDataDirectory(params, slot++);
+				break;
+			case COMMAND_STOP:
+				scanDataDirectory(params, slot++);
+				break;
+			case COMMAND_ADDUSER:
+				scanDataDirectory(params, slot++);
+				scanUsername(params, slot++);
+				break;
+			case COMMAND_DROPUSER:
+				scanDataDirectory(params, slot++);
+				scanUsername(params, slot++);
+				break;
+			case COMMAND_RESET_PASSWORD:
+				scanUsername(params, slot++);
+				break;
+			case COMMAND_CHANGEAUTH:
+				scanDataDirectory(params, slot++);
+				break;
+			case COMMAND_CHANGE_PRIVILEGE:
+				scanUsername(params, slot++);
+				scanPrivilege(params, slot++);
+				break;
+			default:
+				throw new IllegalArgumentException("Unknown command: " + command);
 		}
 
-		@Override
-		public void run() {
-			String line = null;
-			try {
-				while ((line = shellOutput.readLine()) != null) {
-					if (!suppressOutput) {
-						System.out.println(line);
-					}
+		readOptions(command, params, slot);
+
+		return command;
+	}
+
+	/**
+	 * Read in any optional parameters, strip them from the parameter stream
+	 * @param command command name
+	 * @param params is the original array of command line parameters
+	 * @param discard number of params already consumed
+	 */
+	private void readOptions(String command, String[] params, int discard) {
+
+		boolean sawNoLocalAuth = false;
+
+		Set<String> allowedParams = ALLOWED_OPTION_MAP.get(command);
+		if (allowedParams == null) {
+			throw new IllegalArgumentException("Unsupported command: " + command);
+		}
+
+		for (int i = discard; i < params.length; ++i) {
+			String optionName = params[i];
+			String value = null;
+
+			if (optionName.startsWith("-")) {
+				// although not prefered, allow option value to be specified as --option=value
+				int ix = optionName.indexOf("=");
+				if (ix > 1) {
+					value = optionName.substring(ix + 1);
+					optionName = optionName.substring(0, ix);
 				}
 			}
-			catch (Exception e) {
-				// DO NOT USE LOGGING HERE (class loader)
-				System.err.println("Unexpected Exception: " + e.getMessage());
-				e.printStackTrace(System.err);
+
+			String option = optionName;
+
+			if (optionName.startsWith("-") && !optionName.startsWith("--")) {
+				option = SHORTCUT_OPTION_MAP.get(optionName); // map option to -- long form
+				if (option == null) {
+					throw new IllegalArgumentException("Unsupported option use: " + optionName);
+				}
 			}
+
+			if (!option.startsWith("--")) {
+				throw new IllegalArgumentException("Unexpected argument: " + option);
+			}
+
+			if (!GLOBAL_OPTIONS.contains(option) && !allowedParams.contains(option)) {
+				throw new IllegalArgumentException("Unsupported option use: " + optionName);
+			}
+
+			if (!VALUE_OPTIONS.contains(option)) {
+				// option without value arg
+				if (value != null) {
+					throw new IllegalArgumentException(
+						"Unsupported option specification: " + optionName + "=");
+				}
+			}
+			else if (StringUtils.isBlank(value)) {
+				// consume next param as option value
+				if (++i == params.length) {
+					throw new IllegalArgumentException("Missing option value: " + optionName);
+				}
+				value = params[i];
+			}
+
+			switch (option) {
+				case PORT_OPTION:
+					port = parsePositiveIntegerOption(optionName, value);
+					break;
+				case USER_OPTION:
+					connectingUserName = value;
+					break;
+				case CERT_OPTION:
+					certParameter = value;
+					break;
+				case CAFILE_OPTION:
+					certAuthorityFile = new File(value);
+					break;
+				case AUTH_OPTION:
+					authConfigPresent = true;
+					String type = value;
+					if (type.equals("pki")) {
+						hostAuthentication = AUTHENTICATION_PKI;
+						localAuthentication = AUTHENTICATION_PKI;
+					}
+					else if (type.equals("password")) {
+						hostAuthentication = AUTHENTICATION_PASSWORD;
+						localAuthentication = AUTHENTICATION_PASSWORD;
+					}
+					else if (type.equals("trust") || type.equals("none")) {
+						hostAuthentication = AUTHENTICATION_NONE;
+						localAuthentication = AUTHENTICATION_NONE;
+					}
+					else {
+						throw new IllegalArgumentException("Unknown authentication method: " +
+							type + " : options are trust, password or pki");
+					}
+					break;
+				case DN_OPTION:
+					distinguishedName = value;
+					validateDistinguishedName();
+					break;
+				case NO_LOCAL_AUTH_OPTION:
+					sawNoLocalAuth = true;
+					break;
+				case FORCE_OPTION:
+					forceShutdown = true;
+					break;
+				default:
+					throw new AssertionError("Missing option handling: " + option);
+			}
+		}
+
+		if (sawNoLocalAuth) {	// Turn off authentication for local connections
+			authConfigPresent = true;
+			localAuthentication = AUTHENTICATION_NONE;
+		}
+		if (connectingUserName == null) {
+			connectingUserName = ClientUtil.getUserName();
 		}
 	}
 
-	public BSimControlLaunchable() {
-		// Constructor for main launcher
+	private void checkRequiredParam(String[] params, int index, String name) {
+		if (params.length <= index) {
+			throw new IllegalArgumentException("Missing required parameter: " + name);
+		}
+		String p = params[index];
+		if (p.startsWith("--")) {
+			throw new IllegalArgumentException(
+				"Missing required parameter (" + name + ") before specified option: " + p);
+		}
+	}
+
+	private int parsePositiveIntegerOption(String option, String optionValue) {
+		try {
+			int value = Integer.valueOf(optionValue);
+			if (value < 0) {
+				throw new IllegalArgumentException("Negative value not permitted for " + option);
+			}
+			return value;
+		}
+		catch (NumberFormatException e) {
+			throw new IllegalArgumentException("Invalid integer value specified for " + option);
+		}
 	}
 
 	/**
@@ -179,9 +398,12 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	 * Parse the -distinguishedName- String, verifying it is has the correct format for a
 	 * X509 certificate distinguished name. Try to extract the common name portion of the
 	 * distinguished name and assign it to -commonName- 
-	 * @throws ArgumentException if the distinguished name is improperly formatted or the common name is missing
+	 * @throws IllegalArgumentException if the distinguished name is improperly formatted or the common name is missing
 	 */
-	private void validateDistinguishedName() throws ArgumentException {
+	private void validateDistinguishedName() throws IllegalArgumentException {
+		if (distinguishedName == null) {
+			return;
+		}
 		commonName = null;
 		try {
 			LdapName ldapName = new LdapName(distinguishedName);
@@ -192,11 +414,11 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 				}
 			}
 			if (commonName == null) {
-				throw new ArgumentException("Missing common name attribute");
+				throw new IllegalArgumentException("Missing common name attribute");
 			}
 		}
 		catch (Exception e) {
-			throw new ArgumentException("Improperly formatted distinguished name");
+			throw new IllegalArgumentException("Improperly formatted distinguished name");
 		}
 	}
 
@@ -297,6 +519,10 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	 * @throws IOException if the password file cannot be deleted
 	 */
 	private void cleanupPasswordData() throws IOException {
+
+		clearPasswordData(adminPasswordData);
+		adminPasswordData = null;
+
 		if (passwordFile != null) {
 			if (!passwordFile.delete()) {
 				throw new IOException(
@@ -304,8 +530,6 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 			}
 			passwordFile = null;
 		}
-		clearPasswordData(adminPasswordData);
-		adminPasswordData = null;
 	}
 
 	/**
@@ -364,18 +588,6 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 			catch (DestroyFailedException e) {
 				throw new AssertException(e); // unexpected for simple password clearing
 			}
-		}
-	}
-
-	/**
-	 * Initialize enough of Ghidra to allow navigation of configuration files and to allow SSL connections
-	 * @throws IOException if the headless authenticator cannot be initialized
-	 * @throws ClassNotFoundException if the postgres driver class cannot be found
-	 */
-	private void initializeApplication() throws IOException, ClassNotFoundException {
-		if (layout != null) {
-			// Initialize application environment consistent with bsim command
-			BSimLaunchable.initializeApplication(layout, 0, connectingUserName, certParameter);
 		}
 	}
 
@@ -678,7 +890,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 		else if (hostAuthentication == AUTHENTICATION_PKI) {
 			if (commonName == null) {
 				throw new GeneralSecurityException(
-					"Distinguished name required for " + connectingUserName + " (dn=\"..\")");
+					"Distinguished name option (--dn) required for " + connectingUserName);
 			}
 			checkCertAuthorityFile();
 		}
@@ -717,19 +929,19 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	/**
 	 * Scan the PostgreSQL data directory from the command-line
 	 * Make sure the directory exists and establish the File object -dataDirectory-
-	 * @param params are the command-line options
-	 * @param slot is the position to retrieve the data directory
-	 * @throws ArgumentException if the data directory is invalid
+	 * @param params are the command-line arguments
+	 * @param slot is the position to retrieve the data directory argument
+	 * @throws IllegalArgumentException if the data directory is invalid
 	 * @throws IOException if the canonical file cannot be retrieved
 	 */
 	private void scanDataDirectory(String[] params, int slot)
-			throws ArgumentException, IOException {
+			throws IllegalArgumentException, IOException {
 		if (params.length <= slot) {
-			throw new ArgumentException("Missing data directory");
+			throw new IllegalArgumentException("Missing data directory");
 		}
 		dataDirectory = new File(params[slot]);
 		if (!dataDirectory.isDirectory()) {
-			throw new ArgumentException(
+			throw new IllegalArgumentException(
 				"Data directory " + dataDirectory.getAbsolutePath() + " does not exist");
 		}
 		dataDirectory = dataDirectory.getCanonicalFile();
@@ -737,13 +949,13 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 
 	/**
 	 * Scan the username from the command-line
-	 * @param params are the command-line options
-	 * @param slot is the position to retrieve the username
-	 * @throws ArgumentException if the user name is not in the given params
+	 * @param params are the command-line arguments
+	 * @param slot is the position to retrieve the username argument
+	 * @throws IllegalArgumentException if the user name is not in the given params
 	 */
-	private void scanUsername(String[] params, int slot) throws ArgumentException {
+	private void scanUsername(String[] params, int slot) throws IllegalArgumentException {
 		if (params.length <= slot) {
-			throw new ArgumentException("Missing username");
+			throw new IllegalArgumentException("Missing username");
 		}
 		specifiedUserName = params[slot];
 	}
@@ -751,13 +963,13 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	/**
 	 * Scan command-line for a particular privilege level. Administrator privileges are
 	 * requested with the exact String "admin", anything is a request for a read-only user 
-	 * @param params are the command-line options
-	 * @param slot is the position to retrieve the user name
-	 * @throws ArgumentException the privilege parameter is missing
+	 * @param params are the command-line arguments
+	 * @param slot is the position to retrieve the user name argument
+	 * @throws IllegalArgumentException the privilege parameter is missing
 	 */
-	private void scanPrivilege(String[] params, int slot) throws ArgumentException {
+	private void scanPrivilege(String[] params, int slot) throws IllegalArgumentException {
 		if (params.length <= slot) {
-			throw new ArgumentException("Missing desired privilege (admin or user)");
+			throw new IllegalArgumentException("Missing desired privilege (admin or user)");
 		}
 		if (params[slot].equals("admin")) {
 			adminPrivilegeRequested = true;
@@ -766,7 +978,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 			adminPrivilegeRequested = false;
 		}
 		else {
-			throw new ArgumentException("Expecting privilege option (admin or user)");
+			throw new IllegalArgumentException("Expecting privilege option (admin or user)");
 		}
 	}
 
@@ -789,7 +1001,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 
 		if (localAuthentication == AUTHENTICATION_PKI && certParameter == null) {
 			throw new GeneralSecurityException(
-				"Path to certificate necessary to start server (cert=/path/to/cert)");
+				"Path to certificate necessary to start server (--cert /path/to/cert)");
 		}
 		File logFile = new File(dataDirectory, "logfile");
 		List<String> command = new ArrayList<String>();
@@ -881,58 +1093,6 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 		ServerConfig.patchIdent(identFile, copyFile, POSTGRES_MAP_IDENTIFIER, commonName, username,
 			true);
 		FileUtilities.copyFile(copyFile, identFile, false, null);
-	}
-
-	/**
-	 * Returns a list of all users registered with the BSim server. 
-	 * 
-	 * Note: This will return all users minus those created by Postgres (those that
-	 * start with 'pg_'.
-	 * 
-	 * @param dataDirectory the location of the Postgres database files
-	 * @return map of database users and their admin status
-	 * @throws Exception if there's a problem initializing the Application or searching for Postgres
-	 */
-	public Map<String, Boolean> getUserRolesCommand(String dataDirectory) throws Exception {
-
-		String[] params = { dataDirectory };
-		scanDataDirectory(params, 0);
-		initializeApplication();
-		discoverPostgresInstall();
-
-		if (connectingUserName == null) {
-			connectingUserName = ClientUtil.getUserName();
-		}
-
-		adminPasswordData = null;
-
-		localConnection = getOrCreateLocalConnection();
-
-		StringBuilder buffer = new StringBuilder();
-		buffer.append("SELECT rolname, rolsuper from pg_roles");
-		try (Statement st = localConnection.createStatement()) {
-			Map<String, Boolean> userToAdminMap = new HashMap<>();
-			try (ResultSet rs = st.executeQuery(buffer.toString())) {
-				while (rs.next()) {
-					String user = rs.getString(1);
-
-					if (user.startsWith("pg_")) {	// default postgres role - ignore
-						continue;
-					}
-					Boolean isAdmin = rs.getBoolean(2);
-					userToAdminMap.put(user, isAdmin);
-				}
-				return userToAdminMap;
-			}
-		}
-		catch (SQLException e) {
-			Msg.error(this, "Error retrieving user roles from the Postgres database", e);
-		}
-		finally {
-			localConnection.close();
-		}
-
-		return Collections.emptyMap();
 	}
 
 	/**
@@ -1073,7 +1233,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	 * @throws SAXException if the {@link #tuneConfig(File, File, File, File, File)} call fails
 	 * @throws GeneralSecurityException if there is no Distinguished Name supplied
 	 */
-	private void resetCommand()
+	private void changeAuthCommand()
 			throws IOException, InterruptedException, SAXException, GeneralSecurityException {
 		discoverPostgresInstall();
 		File configFile = new File(dataDirectory, POSTGRES_CONFIGFILE);
@@ -1195,7 +1355,7 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 		}
 	}
 
-	private void privilegeCommand() throws Exception {
+	private void changePrivilegeCommand() throws Exception {
 		localConnection = getOrCreateLocalConnection();
 		try {
 			if (adminPrivilegeRequested) {
@@ -1215,230 +1375,161 @@ public class BSimControlLaunchable implements GhidraLaunchable {
 	}
 
 	/**
-	 * Parse the command-line.  First argument is always a command, which may
-	 * require additional arguments.  Additional optional arguments may follow
-	 * @param params is the array of command-line arguments
-	 * @throws ArgumentException  if the data directory cannot be scanned or the authentication method is invalid
-	 * @throws IOException if the data directory cannot be scanned
-	 */
-	private void readCommandLine(String[] params) throws ArgumentException, IOException {
-		String command = params[0];
-		int slot = 1;
-		if (command.equals(START_COMMAND)) {
-			scanDataDirectory(params, slot);
-			slot += 1;
-		}
-		else if (command.equals(STOP_COMMAND)) {
-			scanDataDirectory(params, slot);
-			slot += 1;
-		}
-		else if (command.equals(ADDUSER_COMMAND)) {
-			scanDataDirectory(params, slot);
-			slot += 1;
-			scanUsername(params, slot);
-			slot += 1;
-		}
-		else if (command.equals(DROPUSER_COMMAND)) {
-			scanDataDirectory(params, slot);
-			slot += 1;
-			scanUsername(params, slot);
-			slot += 1;
-		}
-		else if (command.equals(PASSWORD_COMMAND)) {
-			scanUsername(params, slot);
-			slot += 1;
-		}
-		else if (command.equals(RESET_COMMAND)) {
-			scanDataDirectory(params, slot);
-			slot += 1;
-		}
-		else if (command.equals(PRIVILEGE_COMMAND)) {
-			scanUsername(params, slot);
-			slot += 1;
-			scanPrivilege(params, slot);
-			slot += 1;
-		}
-		else {
-			throw new ArgumentException("Unknown command: " + command);
-		}
-
-		// Scan for optional arguments
-		boolean sawNoLocalAuth = false;
-		for (int i = slot; i < params.length; ++i) {
-			String option = params[i];
-			if (option.startsWith(PORT_OPTION)) {
-				port = Integer.parseInt(option.substring(PORT_OPTION.length()));
-			}
-			else if (option.startsWith(CAFILE_OPTION)) {
-				certAuthorityFile = new File(option.substring(CAFILE_OPTION.length()));
-			}
-			else if (option.startsWith(AUTH_OPTION)) {
-				authConfigPresent = true;
-				String type = option.substring(AUTH_OPTION.length());
-				if (type.equals("pki")) {
-					hostAuthentication = AUTHENTICATION_PKI;
-					localAuthentication = AUTHENTICATION_PKI;
-				}
-				else if (type.equals("password")) {
-					hostAuthentication = AUTHENTICATION_PASSWORD;
-					localAuthentication = AUTHENTICATION_PASSWORD;
-				}
-				else if (type.equals("trust") || type.equals("none")) {
-					hostAuthentication = AUTHENTICATION_NONE;
-					localAuthentication = AUTHENTICATION_NONE;
-				}
-				else {
-					throw new ArgumentException(
-						"Unknown authentication method: " + type + " : options are trust, pki");
-				}
-			}
-			else if (option.startsWith(DN_OPTION)) {
-				distinguishedName = option.substring(DN_OPTION.length());
-				validateDistinguishedName();
-			}
-			else if (option.startsWith(CERT_OPTION)) {
-				certParameter = option.substring(CERT_OPTION.length());
-			}
-			else if (option.startsWith(NO_LOCAL_AUTH_OPTION)) {
-				sawNoLocalAuth = true;
-			}
-			else if (option.equals(FORCE_OPTION)) {
-				forceShutdown = true;
-			}
-			else if (option.startsWith(USER_OPTION)) {
-				connectingUserName = option.substring(USER_OPTION.length());
-			}
-			else {
-				throw new ArgumentException("Unknown option: " + option);
-			}
-		}
-		if (sawNoLocalAuth) {	// Turn off authentication for local connections
-			authConfigPresent = true;
-			localAuthentication = AUTHENTICATION_NONE;
-		}
-		if (connectingUserName == null) {
-			connectingUserName = ClientUtil.getUserName();
-		}
-	}
-
-	/**
 	 * Runs the command specified by the given set of params.
 	 * 
-	 * @param params the command parameters
-	 * @param monitor the task monitor
-	 * @throws Exception if there is a problem executing the command
-	 */
-	public void run(String[] params, TaskMonitor monitor) throws Exception {
-		String command = params[0];
-		try {
-			readCommandLine(params);
-			initializeApplication();
-			if (command.equals(START_COMMAND)) {
-				startCommand();
-			}
-			else if (command.equals(STOP_COMMAND)) {
-				stopCommand();
-			}
-			else if (command.equals(ADDUSER_COMMAND)) {
-				addUserCommand();
-			}
-			else if (command.equals(DROPUSER_COMMAND)) {
-				dropUserCommand();
-			}
-			else if (command.equals(RESET_COMMAND)) {
-				resetCommand();
-			}
-			else if (command.equals(PASSWORD_COMMAND)) {
-				passwordCommand();
-			}
-			else if (command.equals(PRIVILEGE_COMMAND)) {
-				privilegeCommand();
-			}
-		}
-		catch (SAXException e1) {
-			System.err.println("Error in server configuation data");
-			System.err.println(e1.getMessage());
-			throw e1;
-		}
-		catch (IOException e1) {
-			System.err.println("Error configuring PostgreSQL for BSim");
-			System.err.println(e1.getMessage());
-			throw e1;
-		}
-		catch (InterruptedException e) {
-			System.err.println("Command was interrupted");
-			System.err.println(e.getMessage());
-			throw e;
-		}
-		catch (SQLException e) {
-			System.err.println("Error connecting to the database");
-			System.err.println(e.getMessage());
-			throw e;
-		}
-		catch (GeneralSecurityException e) {
-			System.err.println("Error establishing server certificate");
-			System.err.println(e.getMessage());
-			throw e;
-		}
-		catch (ArgumentException e) {
-			System.err.println("Error in command line arguments");
-			System.err.println(e.getMessage());
-			throw e;
-		}
-		catch (ClassNotFoundException e) {
-			System.err.println("Could not find PostgreSQL JDBC driver");
-			System.err.println(e.getMessage());
-			throw e;
-		}
-		try {
-			cleanupPasswordData();
-		}
-		catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * Runs the command specified by the given set of params.
-	 * 
-	 * @param params the command parameters
-	 * @throws Exception if there is a problem executing the command
+	 * @param params the parameters specifying the command
+	 * @throws IllegalArgumentException if invalid params have been specified
+	 * @throws Exception if there's an error during the operation
+	 * @throws CancelledException if processing is cancelled
 	 */
 	public void run(String[] params) throws Exception {
-		run(params, TaskMonitor.DUMMY);
+		try {
+			clearParams();
+
+			String command = readCommandLine(params);
+
+			initializeApplication();
+
+			switch (command) {
+				case COMMAND_START:
+					startCommand();
+					break;
+				case COMMAND_STOP:
+					stopCommand();
+					break;
+				case COMMAND_ADDUSER:
+					addUserCommand();
+					break;
+				case COMMAND_DROPUSER:
+					dropUserCommand();
+					break;
+				case COMMAND_CHANGEAUTH:
+					changeAuthCommand();
+					break;
+				case COMMAND_RESET_PASSWORD:
+					passwordCommand();
+					break;
+				case COMMAND_CHANGE_PRIVILEGE:
+					changePrivilegeCommand();
+					break;
+				default:
+					throw new IllegalArgumentException("Unknown command: " + command);
+			}
+		}
+		finally {
+			try {
+				cleanupPasswordData();
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private static void printUsage() {
+		//@formatter:off
+		System.err.println("\n" + 
+			"USAGE: bsim_ctl [command]  required-args... [OPTIONS...}\n\n" +
+			"                start      </datadir-path> [--auth|-a pki|password|trust] [--noLocalAuth] [--cafile \"</cacert-path>\"] [--dn \"<distinguished-name>\"]\n" +
+			"                stop       </datadir-path> [--force]\n" +
+			"                adduser    </datadir-path> <username> [--dn \"<distinguished-name>\"]\n" +
+			"                dropuser   </datadir-path> <username>\n" +
+			"                changeauth </datadir-path> [--auth|-a pki|password|trust] [--noLocalAuth] [--cafile \"</cacert-path>\"]\n" +
+			"                resetpassword   <username>\n" +
+			"                changeprivilege <username> admin|user\n" + 
+			"\n" + 
+			"Global options:\n" +
+			"   --port|-p <portnum>\n" + 
+			"   --user|-u <username>\n" + 
+			"   --cert </certfile-path>\n" +
+			"\n" +
+			"NOTE: Options with values may also be specified using the form: --option=value\n");
+		//@formatter:on
 	}
 
 	@Override
 	public void launch(GhidraApplicationLayout ghidraLayout, String[] params) {
 		if (params.length <= 1) {
-			//@formatter:off
-			System.err.println("USAGE:");
-			System.err.println("   bsim_ctl start           </datadir-path> [auth=pki|password|trust] [--noLocalAuth] [cafile=</cacert-path>] [dn=\"..\"]");
-			System.err.println("            stop            </datadir-path> [--force]");
-			System.err.println("            adduser         </datadir-path> <username> [dn=\"..\"]");
-			System.err.println("            dropuser        </datadir-path> <username>");
-			System.err.println("            changeauth      </datadir-path> [auth=pki|password|trust] [--noLocalAuth] [cafile=</cacert-path>]");
-			System.err.println("            resetpassword   <username>");
-			System.err.println("            changeprivilege <username> admin|user");
-			System.err.println();
-			System.err.println("Global options:");
-			System.err.println("   port=<portnum>");
-			System.err.println("   user=<username>");
-			System.err.println("   cert=</certfile-path>");
-			System.err.println();
-			//@formatter:on
+			printUsage();
 			return;
 		}
 		layout = ghidraLayout;		// Save layout for when we need to initialize application
+		boolean success = false;
 		try {
 			run(params);
+			success = true;
 		}
-		catch (RuntimeException e) {
-			e.printStackTrace();
-			System.exit(1);
+		catch (SAXException e1) {
+			System.err.println("Error in server configuation data");
+			System.err.println(e1.getMessage());
+		}
+		catch (InterruptedException e) {
+			System.err.println("Command was interrupted");
+			System.err.println(e.getMessage());
+		}
+		catch (SQLException e) {
+			System.err.println("Error connecting to the database");
+			System.err.println(e.getMessage());
+		}
+		catch (GeneralSecurityException e) {
+			System.err.println("Error establishing server certificate");
+			System.err.println(e.getMessage());
+		}
+		catch (IllegalArgumentException e) {
+			System.err.println("Error in command line arguments");
+			System.err.println(e.getMessage());
 		}
 		catch (Exception e) {
+			System.err.println("Unexpected error");
+			e.printStackTrace();
+		}
+
+		if (!success) {
 			System.exit(1);
 		}
 	}
+
+	/**
+	 * Initialize enough of Ghidra to allow navigation of configuration files and to allow SSL connections
+	 * @throws IOException if the headless authenticator cannot be initialized
+	 * @throws ClassNotFoundException if the postgres driver class cannot be found
+	 */
+	private void initializeApplication() throws IOException, ClassNotFoundException {
+		if (layout != null) {
+			// Initialize application environment consistent with bsim command
+			BSimLaunchable.initializeApplication(layout, 0, connectingUserName, certParameter);
+		}
+	}
+
+	/**
+	 * Class for processing standard output or standard error for processes invoked by BSimControl
+	 * The streams can be optionally suppressed or dumped to System.out
+	 */
+	private class IOThread extends Thread {
+		private BufferedReader shellOutput;		// Reader for the particular output stream
+		private boolean suppressOutput;			// If false, shell output is printed on the console
+
+		public IOThread(InputStream input, boolean suppressOut) {
+			shellOutput = new BufferedReader(new InputStreamReader(input));
+			suppressOutput = suppressOut;
+		}
+
+		@Override
+		public void run() {
+			String line = null;
+			try {
+				while ((line = shellOutput.readLine()) != null) {
+					if (!suppressOutput) {
+						System.out.println(line);
+					}
+				}
+			}
+			catch (Exception e) {
+				// DO NOT USE LOGGING HERE (class loader)
+				System.err.println("Unexpected Exception: " + e.getMessage());
+				e.printStackTrace(System.err);
+			}
+		}
+	}
+
 }

@@ -18,14 +18,17 @@
 @echo off
 
 if exist "%GHIDRA_HOME%\ghidra\.git\" (
-  set PYTHONPATH=%GHIDRA_HOME%\ghidra\Ghidra\Debug\Debugger-agent-dbgeng\build\pypkg\src;%GHIDRA_HOME%\ghidra\Ghidra\Debug\Debugger-rmi-trace\build\pypkg\src;%PYTHONPATH%
+  set PYTHONPATH=%GHIDRA_HOME%\ghidra\Ghidra\Debug\Debugger-agent-dbgeng\build\pypkg\src;%PYTHONPATH%
+  set PYTHONPATH=%GHIDRA_HOME%\ghidra\Ghidra\Debug\Debugger-rmi-trace\build\pypkg\src;%PYTHONPATH%
 ) else if exist "%GHIDRA_HOME%\.git\" (
-  set PYTHONPATH=%GHIDRA_HOME%\Ghidra\Debug\Debugger-agent-dbgeng\build\pypkg\src;%GHIDRA_HOME%\Ghidra\Debug\Debugger-rmi-trace\build\pypkg\src;%PYTHONPATH%
+  set PYTHONPATH=%GHIDRA_HOME%\Ghidra\Debug\Debugger-agent-dbgeng\build\pypkg\src;%PYTHONPATH%
+  set PYTHONPATH=%GHIDRA_HOME%\Ghidra\Debug\Debugger-rmi-trace\build\pypkg\src;%PYTHONPATH%
 ) else (
-  set PYTHONPATH=%GHIDRA_HOME%\Ghidra\Debug\Debugger-agent-dbgeng\pypkg\src;%GHIDRA_HOME%\Ghidra\Debug\Debugger-rmi-trace\pypkg\src;%PYTHONPATH%
+  set PYTHONPATH=%GHIDRA_HOME%\Ghidra\Debug\Debugger-agent-dbgeng\pypkg\src;%PYTHONPATH%
+  set PYTHONPATH=%GHIDRA_HOME%\Ghidra\Debug\Debugger-rmi-trace\pypkg\src;%PYTHONPATH%
 )
 
 echo PYTHONPATH is %PYTHONPATH%
-echo bat OPT_TARGET_IMG is [%OPT_TARGET_IMG%]
+echo OPT_TARGET_IMG is [%OPT_TARGET_IMG%]
 
 "%OPT_PYTHON_EXE%" -i ..\support\local-dbgeng.py

@@ -68,7 +68,7 @@ public class HomogeneousAggregate extends SizeRestrictedFilter {
 			return false;
 		}
 		ArrayList<DataType> res = new ArrayList<>();
-		if (!DatatypeFilter.extractPrimitives(dt, MAX_PRIMITIVES, null, res)) {
+		if (!DatatypeFilter.extractPrimitives(dt, MAX_PRIMITIVES, res) || res.isEmpty()) {
 			return false;
 		}
 		DataType base = res.get(0);

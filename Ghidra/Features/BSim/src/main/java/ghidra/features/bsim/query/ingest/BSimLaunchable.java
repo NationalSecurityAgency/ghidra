@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.net.*;
 import java.util.*;
 
+import org.apache.commons.lang3.StringUtils;
 import org.xml.sax.SAXException;
 
 import ghidra.GhidraApplicationLayout;
@@ -77,27 +78,29 @@ public class BSimLaunchable implements GhidraLaunchable {
 	private static Set<String> COMMANDS_WITH_REPO_ACCESS =
 		Set.of(COMMAND_GENERATE_SIGS, COMMAND_GENERATE_UPDATES);
 
-	/** 
-	 * Constants for the option parameters that can be set in the various commands. 
-	 */
-	private static final String BSIM_URL_OPTION = "bsim=";
-	private static final String GHIDRA_URL_OPTION = "ghidra=";
-	private static final String NAME_OPTION = "name=";
-	private static final String OWNER_OPTION = "owner=";
-	private static final String DESCRIPTION_OPTION = "description=";
-	private static final String OVERRIDE_OPTION = "override=";
-	private static final String CONFIG_OPTION = "config=";
-	private static final String MD5_OPTION = "md5=";
-	private static final String MAX_FUNC_OPTION = "maxfunc=";
-	private static final String FILTER_OPTION = "filter=";
-	private static final String ARCH_OPTION = "arch=";
-	private static final String COMPILER_OPTION = "compiler=";
-	private static final String LIMIT_OPTION = "limit=";
-	private static final String SORT_COL_OPTION = "sortcol=";
+	// Options that require a value argument
+	private static final String BSIM_URL_OPTION = "--bsim";
+	private static final String NAME_OPTION = "--name";
+	private static final String OWNER_OPTION = "--owner";
+	private static final String DESCRIPTION_OPTION = "--description";
+	private static final String OVERRIDE_OPTION = "--override";
+	private static final String CONFIG_OPTION = "--config";
+	private static final String MD5_OPTION = "--md5";
+	private static final String MAX_FUNC_OPTION = "--maxfunc";
+	private static final String ARCH_OPTION = "--arch";
+	private static final String COMPILER_OPTION = "--compiler";
+	private static final String LIMIT_OPTION = "--limit";
+	private static final String SORT_COL_OPTION = "--sortcol";
 
-	// Global options
-	private static final String USER_OPTION = "user=";
-	private static final String CERT_OPTION = "cert=";
+	// Global options that require a value argument
+	private static final String USER_OPTION = "--user";
+	private static final String CERT_OPTION = "--cert";
+
+	// Define set of options that require a second value argument
+	private static final Set<String> VALUE_OPTIONS =
+		Set.of(USER_OPTION, CERT_OPTION, BSIM_URL_OPTION, NAME_OPTION, OWNER_OPTION,
+			DESCRIPTION_OPTION, OVERRIDE_OPTION, CONFIG_OPTION, MD5_OPTION, MAX_FUNC_OPTION,
+			ARCH_OPTION, COMPILER_OPTION, LIMIT_OPTION, SORT_COL_OPTION);
 
 	private static final Set<String> GLOBAL_OPTIONS = Set.of(CERT_OPTION, USER_OPTION);
 
@@ -111,12 +114,30 @@ public class BSimLaunchable implements GhidraLaunchable {
 	private static final String CALL_GRAPH_OPTION = "--callgraph";
 	private static final String PRINT_JUST_EXE_OPTION = "--printjustexe";
 
+	private static final Map<String, String> SHORTCUT_OPTION_MAP = new HashMap<>();
+	static {
+		SHORTCUT_OPTION_MAP.put("-a", ARCH_OPTION);
+		SHORTCUT_OPTION_MAP.put("-b", BSIM_URL_OPTION);
+		SHORTCUT_OPTION_MAP.put("-c", CONFIG_OPTION);
+		SHORTCUT_OPTION_MAP.put("-d", DESCRIPTION_OPTION);
+		SHORTCUT_OPTION_MAP.put("-l", LIMIT_OPTION);
+		SHORTCUT_OPTION_MAP.put("-m", MD5_OPTION);
+		SHORTCUT_OPTION_MAP.put("-n", NAME_OPTION);
+		SHORTCUT_OPTION_MAP.put("-o", OWNER_OPTION);
+		SHORTCUT_OPTION_MAP.put("-s", SORT_COL_OPTION);
+		SHORTCUT_OPTION_MAP.put("-u", USER_OPTION);
+		//SHORTCUT_OPTION_MAP.put("", OVERRIDE_OPTION);
+		//SHORTCUT_OPTION_MAP.put("", MAX_FUNC_OPTION);
+		//SHORTCUT_OPTION_MAP.put("", COMPILER_OPTION);
+		//SHORTCUT_OPTION_MAP.put("", CERT_OPTION);
+	}
+
 	//@formatter:off
 	// Populate ALLOWED_OPTION_MAP for each command
 	private static final Set<String> CREATE_DATABASE_OPTIONS = 
 			Set.of(NAME_OPTION, OWNER_OPTION, DESCRIPTION_OPTION, NO_CALLGRAPH_OPTION);
 	private static final Set<String> COMMIT_SIGS_OPTIONS = 
-			Set.of(OVERRIDE_OPTION, GHIDRA_URL_OPTION); // url requires override param
+			Set.of(OVERRIDE_OPTION, MD5_OPTION); // url requires override param
 	private static final Set<String> COMMIT_UPDATES_OPTIONS = Set.of();
 	private static final Set<String> DELETE_OPTIONS = 
 			Set.of(MD5_OPTION, NAME_OPTION, ARCH_OPTION, COMPILER_OPTION); // one or more params required
@@ -164,23 +185,7 @@ public class BSimLaunchable implements GhidraLaunchable {
 	private URL ghidraURL;
 	private URL bsimURL;
 
-	private String bsimURLOption;			// Command-line option: bsim=..
-	private String ghidraURLOption;			// Command-line option: ghidra=..
-	private String nameOption;				// Command-line option: name=..
-	private String ownerOption;				// Command-line option: owner=..
-	private String archOption;				// Command-line option: arch=..
-	private String compOption;				// Command-line option: compiler=..
-	private String descOption;				// Command-line option: description=
-	private String filterOption; 			// Command-line option: filter=
-	private String configOption;			// Command-line option: config=..
-	private String md5Option;				// Command-line option: md5=..
-	private Integer maxFunc;				// Command-line option: maxfunc=..
-	private String certOption;				// Command-line option: cert=..
-	private String connectingUserName;		// Command-line option: user=..
-	private Integer limitOption;			// Command-line option: limit=..
-	private String sortColumn;				// Command-line option: sortcol=..
-	private boolean overrideOption;			// Command-line option: override=
-
+	private Map<String, String> optionValueMap = new HashMap<>();
 	private Set<String> booleanOptions = new HashSet<>();
 
 	private GhidraApplicationLayout layout;
@@ -199,22 +204,8 @@ public class BSimLaunchable implements GhidraLaunchable {
 	private void clearParams() {
 		ghidraURL = null;
 		bsimURL = null;
-		bsimURLOption = null;
-		ghidraURLOption = null;
-		connectingUserName = null;
-		nameOption = null;
-		ownerOption = null;
-		archOption = null;
-		compOption = null;
-		descOption = null;
-		filterOption = null;
-		configOption = null;
-		md5Option = null;
-		certOption = null;
-		limitOption = null;
-		sortColumn = null;
-		overrideOption = false;
 		booleanOptions.clear();
+		optionValueMap.clear();
 	}
 
 	private BulkSignatures getBulkSignatures()
@@ -223,6 +214,7 @@ public class BSimLaunchable implements GhidraLaunchable {
 		if (bsimURL != null) {
 			serverInfo = new BSimServerInfo(bsimURL);
 		}
+		String connectingUserName = optionValueMap.get(USER_OPTION);
 		return new BulkSignatures(serverInfo, connectingUserName);
 	}
 
@@ -281,6 +273,8 @@ public class BSimLaunchable implements GhidraLaunchable {
 	 */
 	private List<String> readOptions(String command, String[] params, int discard) {
 
+		boolean sawOptions = false;
+
 		Set<String> allowedParams = ALLOWED_OPTION_MAP.get(command);
 		if (allowedParams == null) {
 			throw new IllegalArgumentException("Unsupported command: " + command);
@@ -288,101 +282,61 @@ public class BSimLaunchable implements GhidraLaunchable {
 
 		List<String> subParams = new ArrayList<String>();
 		for (int i = discard; i < params.length; ++i) {
-			String option = params[i];
+			String optionName = params[i];
+			String value = null;
 
-			int ix = option.indexOf('=');
-			if (ix > 0) {
-				String checkOption = option.substring(0, ix + 1); // include '=' in option name
-				if (!GLOBAL_OPTIONS.contains(checkOption) && !allowedParams.contains(checkOption)) {
-					throw new IllegalArgumentException("Unsupported option use: " + checkOption);
+			if (optionName.startsWith("-")) {
+				// although not prefered, allow option value to be specified as --option=value
+				int ix = optionName.indexOf("=");
+				if (ix > 1) {
+					value = optionName.substring(ix + 1);
+					optionName = optionName.substring(0, ix);
 				}
 			}
-			else if (option.startsWith("--")) {
-				if (!GLOBAL_OPTIONS.contains(option) && !allowedParams.contains(option)) {
-					throw new IllegalArgumentException("Unsupported option use: " + option);
+
+			String option = optionName;
+
+			if (optionName.startsWith("-") && !optionName.startsWith("--")) {
+				option = SHORTCUT_OPTION_MAP.get(optionName); // map option to -- long form
+				if (option == null) {
+					throw new IllegalArgumentException("Unsupported option use: " + optionName);
 				}
-				booleanOptions.add(option);
+			}
+
+			if (!option.startsWith("--")) {
+				if (sawOptions) {
+					throw new IllegalArgumentException("Unexpected argument: " + option);
+				}
+				subParams.add(params[i]);
 				continue;
 			}
 
-			if (option.startsWith(BSIM_URL_OPTION)) {
-				bsimURLOption = option.substring(BSIM_URL_OPTION.length());
+			sawOptions = true;
+			if (!GLOBAL_OPTIONS.contains(option) && !allowedParams.contains(option)) {
+				throw new IllegalArgumentException("Unsupported option use: " + optionName);
 			}
-			else if (option.startsWith(GHIDRA_URL_OPTION)) {
-				ghidraURLOption = option.substring(GHIDRA_URL_OPTION.length());
-			}
-			else if (option.startsWith(NAME_OPTION)) {
-				nameOption = option.substring(NAME_OPTION.length());
-			}
-			else if (option.startsWith(OWNER_OPTION)) {
-				ownerOption = option.substring(OWNER_OPTION.length());
-			}
-			else if (option.startsWith(DESCRIPTION_OPTION)) {
-				descOption = option.substring(DESCRIPTION_OPTION.length());
-			}
-			else if (option.startsWith(OVERRIDE_OPTION)) {
-				overrideOption = true;
-				ghidraURLOption = option.substring(OVERRIDE_OPTION.length());
-			}
-			else if (option.startsWith(CONFIG_OPTION)) {
-				configOption = option.substring(CONFIG_OPTION.length());
-			}
-			else if (option.startsWith(MD5_OPTION)) {
-				md5Option = option.substring(MD5_OPTION.length());
-			}
-			else if (option.startsWith(MAX_FUNC_OPTION)) {
-				String val = option.substring(MAX_FUNC_OPTION.length());
-				try {
-					maxFunc = Integer.valueOf(val);
-					if (maxFunc < 0) {
-						throw new IllegalArgumentException(
-							"Negative value not permitted for maxfunc");
-					}
+			if (!VALUE_OPTIONS.contains(option)) {
+				// consume option without value arg as a boolean option
+				if (value != null) {
+					throw new IllegalArgumentException(
+						"Unsupported option specification: " + optionName + "=");
 				}
-				catch (NumberFormatException e) {
-					throw new IllegalArgumentException("Invalid decimal value for maxfunc: " + val);
-				}
+				booleanOptions.add(option);
 			}
-			else if (option.startsWith(FILTER_OPTION)) {
-				filterOption = option.substring(FILTER_OPTION.length());
-			}
-			else if (option.startsWith(CERT_OPTION)) { // global option
-				certOption = option.substring(CERT_OPTION.length());
-			}
-			else if (option.startsWith(USER_OPTION)) { // global option
-				connectingUserName = option.substring(USER_OPTION.length());
-			}
-			else if (option.startsWith(ARCH_OPTION)) {
-				archOption = option.substring(ARCH_OPTION.length());
-			}
-			else if (option.startsWith(COMPILER_OPTION)) {
-				compOption = option.substring(COMPILER_OPTION.length());
-			}
-			else if (option.startsWith(LIMIT_OPTION)) {
-				String val = option.substring(LIMIT_OPTION.length());
-				try {
-					limitOption = Integer.valueOf(val);
-					if (limitOption < 0) {
-						throw new IllegalArgumentException(
-							"Negative value not permitted for limit");
-					}
-				}
-				catch (NumberFormatException e) {
-					throw new IllegalArgumentException("Invalid decimal value for limit: " + val);
-				}
-			}
-			else if (option.startsWith(SORT_COL_OPTION)) {
-				sortColumn = option.substring(SORT_COL_OPTION.length());
-			}
-			else if (params[i].startsWith("--") || params[i].contains("=")) {
-				throw new IllegalArgumentException("Unknown option: " + params[i]);
+			else if (!StringUtils.isBlank(value)) {
+				optionValueMap.put(option, value);
 			}
 			else {
-				subParams.add(params[i]);
+				// consume next param as option value
+				if (++i == params.length) {
+					throw new IllegalArgumentException("Missing option value: " + optionName);
+				}
+				optionValueMap.put(option, params[i]);
 			}
 		}
+		String connectingUserName = optionValueMap.get(USER_OPTION);
 		if (connectingUserName == null) {
-			connectingUserName = ClientUtil.getUserName();
+			connectingUserName = optionValueMap.put(USER_OPTION, ClientUtil.getUserName());
 		}
 		return subParams;
 	}
@@ -398,6 +352,23 @@ public class BSimLaunchable implements GhidraLaunchable {
 		}
 	}
 
+	private Integer parsePositiveIntegerOption(String option) {
+		String optionValue = optionValueMap.get(option);
+		if (optionValue == null) {
+			return null;
+		}
+		try {
+			int value = Integer.valueOf(optionValue);
+			if (value < 0) {
+				throw new IllegalArgumentException("Negative value not permitted for " + option);
+			}
+			return value;
+		}
+		catch (NumberFormatException e) {
+			throw new IllegalArgumentException("Invalid integer value specified for " + option);
+		}
+	}
+
 	/**
 	 * Runs the command specified by the given set of params.
 	 * 
@@ -408,6 +379,8 @@ public class BSimLaunchable implements GhidraLaunchable {
 	 * @throws CancelledException if processing is cancelled
 	 */
 	public void run(String[] params, TaskMonitor monitor) throws Exception, CancelledException {
+
+		clearParams();
 
 		checkRequiredParam(params, 0, "command");
 		String command = params[0];
@@ -420,7 +393,6 @@ public class BSimLaunchable implements GhidraLaunchable {
 
 		monitor.setCancelEnabled(true);
 
-		clearParams();
 		List<String> subParams = readOptions(command, params, 2);
 
 		initializeApplication(command);
@@ -458,8 +430,10 @@ public class BSimLaunchable implements GhidraLaunchable {
 			doGenerateSigs(subParams, monitor);
 		}
 		else if (COMMAND_COMMIT_SIGS.equals(command)) {
-			if (overrideOption) {
-				setupURLs(ghidraURLOption, urlstring);
+			// --override option specified ghidra URL
+			String ghidraURLOverride = optionValueMap.get(OVERRIDE_OPTION);
+			if (ghidraURLOverride != null) {
+				setupURLs(ghidraURLOverride, urlstring);
 			}
 			else {
 				bsimURL = BSimClientFactory.deriveBSimURL(urlstring);
@@ -500,10 +474,12 @@ public class BSimLaunchable implements GhidraLaunchable {
 	}
 
 	private void processSigAndUpdateOptions(String urlstring) throws MalformedURLException {
+		String bsimURLOption = optionValueMap.get(BSIM_URL_OPTION);
+		String configOption = optionValueMap.get(CONFIG_OPTION);
 		if (configOption != null) {
 			if (bsimURLOption != null) {
 				throw new IllegalArgumentException(
-					"bsim= and config= parameters may not both be present");
+					BSIM_URL_OPTION + " and " + CONFIG_OPTION + " options may not both be present");
 			}
 			setupGhidraURL(urlstring);
 		}
@@ -512,7 +488,7 @@ public class BSimLaunchable implements GhidraLaunchable {
 		}
 		else {
 			throw new IllegalArgumentException(
-				"Must specify either \"bsim=\" or \"config=\" option is required");
+				"Must specify either " + BSIM_URL_OPTION + " or " + CONFIG_OPTION + " option");
 		}
 	}
 
@@ -543,6 +519,10 @@ public class BSimLaunchable implements GhidraLaunchable {
 		String configTemplate = params.get(0);
 		boolean noTrackCallGraph = booleanOptions.contains(NO_CALLGRAPH_OPTION);
 
+		String nameOption = optionValueMap.get(NAME_OPTION);
+		String ownerOption = optionValueMap.get(OWNER_OPTION);
+		String descOption = optionValueMap.get(DESCRIPTION_OPTION);
+
 		try (BulkSignatures bsim = getBulkSignatures()) {
 			bsim.createDatabase(configTemplate, nameOption, ownerOption, descOption,
 				!noTrackCallGraph);
@@ -551,19 +531,20 @@ public class BSimLaunchable implements GhidraLaunchable {
 
 	private void doGenerateSigs(List<String> params, TaskMonitor monitor)
 			throws Exception, CancelledException {
-		// concurrent bsim= and config= option use already checked
+		// concurrent --bsim and --config option use already checked
 		if (params.size() > 1) {
 			throw new IllegalArgumentException("Invalid generatesigs parameter use!");
 		}
 		boolean commitOption = booleanOptions.contains(COMMIT_OPTION);
 		boolean overwriteOption = booleanOptions.contains(OVERWRITE_OPTION);
+		String configOption = optionValueMap.get(CONFIG_OPTION);
 
 		String xmlDirectory = null;
 		if (params.size() == 1) {
 			xmlDirectory = params.get(0);
 			if (configOption != null && commitOption) {
 				throw new IllegalArgumentException(
-					"Invalid option use with config= option: " + COMMIT_OPTION);
+					"Invalid option use with " + CONFIG_OPTION + " option: " + COMMIT_OPTION);
 			}
 		}
 		else {
@@ -588,19 +569,20 @@ public class BSimLaunchable implements GhidraLaunchable {
 
 	private void doGenerateUpdates(List<String> params, TaskMonitor monitor)
 			throws Exception, CancelledException {
-		// concurrent bsim= and config= option use already checked
+		// concurrent --bsim and --config option use already checked
 		if (params.size() > 1) {
 			throw new IllegalArgumentException("Invalid generateupdates parameter use!");
 		}
 		boolean commitOption = booleanOptions.contains(COMMIT_OPTION);
 		boolean overwriteOption = booleanOptions.contains(OVERWRITE_OPTION);
+		String configOption = optionValueMap.get(CONFIG_OPTION);
 
 		String xmlDirectory = null;
 		if (params.size() == 1) {
 			xmlDirectory = params.get(0);
 			if (configOption != null && commitOption) {
 				throw new IllegalArgumentException(
-					"Invalid option use with config= option: " + COMMIT_OPTION);
+					"Invalid option use with " + CONFIG_OPTION + " option: " + COMMIT_OPTION);
 			}
 
 		}
@@ -640,17 +622,16 @@ public class BSimLaunchable implements GhidraLaunchable {
 		if (params.size() < 1) {
 			throw new IllegalArgumentException("Missing directory containing signature files");
 		}
-		if (!overrideOption && ghidraURLOption != null) {
-			throw new IllegalArgumentException(
-				"The \"ghidra=\" option use requires \"override\" option");
-		}
+
 		String xmlDirectory = params.get(0);
 
 		File dir = checkDirectory(xmlDirectory);
 
+		boolean hasOverride = optionValueMap.containsKey(OVERRIDE_OPTION);
+		String md5Filter = optionValueMap.get(MD5_OPTION);
+
 		try (BulkSignatures bsim = getBulkSignatures()) {
-			bsim.sendXmlToQueryServer(dir, overrideOption ? ghidraURL : null, filterOption,
-				monitor);
+			bsim.sendXmlToQueryServer(dir, hasOverride ? ghidraURL : null, md5Filter, monitor);
 		}
 	}
 
@@ -678,10 +659,17 @@ public class BSimLaunchable implements GhidraLaunchable {
 	}
 
 	private void fillinSingleExeSpecifier(ExeSpecifier spec) throws IllegalArgumentException {
+
+		String md5Option = optionValueMap.get(MD5_OPTION);
+		String nameOption = optionValueMap.get(NAME_OPTION);
+		String archOption = optionValueMap.get(ARCH_OPTION);
+		String compOption = optionValueMap.get(COMPILER_OPTION);
+
 		if (md5Option != null) {
 			if (!isAllNull(nameOption, archOption, compOption)) {
 				throw new IllegalArgumentException(
-					"The name=, arch= and compiler= options are not valid when md5= option is specified.");
+					"The " + NAME_OPTION + ", " + ARCH_OPTION + ", " + COMPILER_OPTION +
+						" options are not valid when " + MD5_OPTION + " option is specified.");
 			}
 			spec.exemd5 = md5Option;
 		}
@@ -691,14 +679,18 @@ public class BSimLaunchable implements GhidraLaunchable {
 			spec.execompname = compOption;
 		}
 		else {
-			throw new IllegalArgumentException("Must specify either \"md5=\" or \"name=\" option");
+			throw new IllegalArgumentException(
+				"Must specify either " + MD5_OPTION + " or " + NAME_OPTION + " option");
 		}
 	}
 
 	private void doListFunctions(List<String> params) throws IOException, LSHException {
 
+		Integer maxFunc = parsePositiveIntegerOption(MAX_FUNC_OPTION);
+
 		QueryName query = new QueryName();
 		fillinSingleExeSpecifier(query.spec);
+
 		if (maxFunc != null) {
 			query.maxfunc = maxFunc;
 		}
@@ -792,17 +784,28 @@ public class BSimLaunchable implements GhidraLaunchable {
 	private void doListExes(List<String> params) throws IOException, LSHException {
 
 		int limit = DEFAULT_LIST_EXE_LIMIT;
+		Integer limitOption = parsePositiveIntegerOption(LIMIT_OPTION);
 		if (limitOption != null) {
 			limit = limitOption;
 		}
 		boolean includeLibs = booleanOptions.contains(INCLUDE_LIBS_OPTION);
+		String md5Option = optionValueMap.get(MD5_OPTION);
+		String nameOption = optionValueMap.get(NAME_OPTION);
+		String archOption = optionValueMap.get(ARCH_OPTION);
+		String compOption = optionValueMap.get(COMPILER_OPTION);
+		String sortColumnOption = optionValueMap.get(SORT_COL_OPTION);
 
 		try (BulkSignatures bsim = getBulkSignatures()) {
 			List<ExecutableRecord> exeList = bsim.getExes(limit, md5Option, nameOption, archOption,
-				compOption, sortColumn, includeLibs);
+				compOption, sortColumnOption, includeLibs);
 			for (ExecutableRecord exeRec : exeList) {
 				Msg.info(this, exeRec.printRaw());
 			}
+			String summary = exeList.size() + " executables found";
+			if (limit > 0 && limit == exeList.size()) {
+				summary += " (results limit reached)";
+			}
+			Msg.info(this, summary);
 		}
 	}
 
@@ -814,7 +817,13 @@ public class BSimLaunchable implements GhidraLaunchable {
 	 * @throws LSHException if there's an error issuing the query
 	 */
 	private void doGetCount(List<String> params) throws IOException, LSHException {
+
 		boolean includeFakes = booleanOptions.contains(INCLUDE_LIBS_OPTION);
+		String md5Option = optionValueMap.get(MD5_OPTION);
+		String nameOption = optionValueMap.get(NAME_OPTION);
+		String archOption = optionValueMap.get(ARCH_OPTION);
+		String compOption = optionValueMap.get(COMPILER_OPTION);
+
 		try (BulkSignatures bsim = getBulkSignatures()) {
 			int count = bsim.getCount(md5Option, nameOption, archOption, compOption, includeFakes);
 			System.out.println("Matching executable count: " + count);
@@ -832,9 +841,14 @@ public class BSimLaunchable implements GhidraLaunchable {
 	 * @throws LSHException if there's an error issuing the query
 	 */
 	private void doInstallMetadata(List<String> params) throws IOException, LSHException {
+
+		String nameOption = optionValueMap.get(NAME_OPTION);
+		String ownerOption = optionValueMap.get(OWNER_OPTION);
+		String descOption = optionValueMap.get(DESCRIPTION_OPTION);
+
 		if (isAllNull(nameOption, ownerOption, descOption)) {
-			throw new IllegalArgumentException(
-				"Missing one or more metadata options: [name=..] [owner=..] [description=..]");
+			throw new IllegalArgumentException("Missing one or more metadata options: " +
+				NAME_OPTION + ", " + OWNER_OPTION + ", " + DESCRIPTION_OPTION);
 		}
 
 		try (BulkSignatures bsim = getBulkSignatures()) {
@@ -916,34 +930,51 @@ public class BSimLaunchable implements GhidraLaunchable {
 		}
 	}
 
+	private static void printMaxMemory() {
+		// division is used since default case may not use even multiples of 1024
+		long maxMemoryBytes = Runtime.getRuntime().maxMemory();
+		float maxMem = maxMemoryBytes / (1024 * 1024); // MBytes
+		String units = " MBytes";
+		if (maxMem >= 1024) {
+			maxMem /= 1024;
+			units = " GBytes";
+		}
+		String maxMemStr = String.format("%.1f", maxMem);
+		if (maxMemStr.endsWith(".0")) {
+			// don't show .0
+			maxMemStr = maxMemStr.substring(0, maxMemStr.length() - 2);
+		}
+		System.out.println("Max-Memory: " + maxMemStr + units);
+	}
+
 	private static void printUsage() {
 		//@formatter:off
-		System.err.println(
+		System.err.println("\n" +
 			"USAGE: bsim [command]       required-args... [OPTIONS...]\n" + 
-			"            createdatabase  <bsimURL> <config_template> [name=\"<name>\"] [owner=\"<owner>\"] [description=\"<text>\"] [--nocallgraph]\n" + 
-			"            setmetadata     <bsimURL> [name=\"<name>\"] [owner=\"<owner>\"] [description=\"<text>\"]\n" + 
+			"            createdatabase  <bsimURL> <config_template> [--name|-n \"<name>\"] [--owner|-o \"<owner>\"] [--description|-d \"<text>\"] [--nocallgraph]\n" + 
+			"            setmetadata     <bsimURL> [--name|-n \"<name>\"] [--owner|-o \"<owner>\"] [--description|-d \"<text>\"]\n" + 
 			"            addexecategory  <bsimURL> <category_name> [--date]\n" + 
 			"            addfunctiontag  <bsimURL> <tag_name>\n" +  
 			"            dropindex       <bsimURL>\n" + 
 			"            rebuildindex    <bsimURL>\n" + 
 			"            prewarm         <bsimURL>\n" + 
-			"            generatesigs    <ghidraURL> </xmldirectory> config=<config_template> [--overwrite]\n" + 
-			"            generatesigs    <ghidraURL> </xmldirectory> bsim=<bsimURL> [--commit] [--overwrite]\n" + 
-			"            generatesigs    <ghidraURL> bsim=<bsimURL>\n" + 
-			"            commitsigs      <bsimURL> </xmldirectory> [md5=<hash>] [override=<ghidraURL>]\n" + 
-			"            generateupdates <ghidraURL> </xmldirectory> config=<config_template> [--overwrite]\n" + 
-			"            generateupdates <ghidraURL> </xmldirectory> bsim=<bsimURL> [--commit] [--overwrite]\n" + 
-			"            generateupdates <ghidraURL> bsim=<bsimURL>\n" +  
+			"            generatesigs    <ghidraURL> </xmldirectory> --config|-c <config_template> [--overwrite]\n" + 
+			"            generatesigs    <ghidraURL> </xmldirectory> --bsim|-b <bsimURL> [--commit] [--overwrite]\n" + 
+			"            generatesigs    <ghidraURL> --bsim|-b <bsimURL>\n" + 
+			"            commitsigs      <bsimURL> </xmldirectory> [--md5|-m <hash>] [--override <ghidraURL>]\n" + 
+			"            generateupdates <ghidraURL> </xmldirectory> --config|-c <config_template> [--overwrite]\n" + 
+			"            generateupdates <ghidraURL> </xmldirectory> --bsim|-b <bsimURL> [--commit] [--overwrite]\n" + 
+			"            generateupdates <ghidraURL> --bsim|-b <bsimURL>\n" +  
 			"            commitupdates   <bsimURL> </xmldirectory>\n" + 
-			"            listexes        <bsimURL> [md5=<hash>] [name=<exe_name>] [arch=<languageID>] [compiler=<cspecID>] [sortcol=<column_name>] [limit=<exe_count>] [--includelibs]\n" + 
-			"            getexecount     <bsimURL> [md5=<hash>] [name=<exe_name>] [arch=<languageID>] [compiler=<cspecID>] [--includelibs]\n" + 
-			"            delete          <bsimURL> [md5=<hash>] [name=<exe_name> [arch=<languageID>] [compiler=<cspecID>]]\n" + 
-			"            listfuncs       <bsimURL> [md5=<hash>] [name=<exe_name> [arch=<languageID>] [compiler=<cspecID>]] [--printselfsig] [--callgraph] [--printjustexe] [maxfunc=<max_count>]\n" + 
-			"            dumpsigs        <bsimURL> </xmldirectory> [md5=<hash>] [name=<exe_name> [arch=<languageID>] [compiler=<cspecID>]]\n" + 
+			"            listexes        <bsimURL> [--md5|-m <hash>] [--name|-n <exe_name>] [--arch|-a <languageID>] [--compiler <cspecID>] [--sortcol|-s md5|name] [--limit|-l <exe_count>] [--includelibs]\n" + 
+			"            getexecount     <bsimURL> [--md5|-m <hash>] [--name|-n <exe_name>] [--arch|-a <languageID>] [--compiler <cspecID>] [--includelibs]\n" + 
+			"            delete          <bsimURL> [--md5|-m <hash>] [--name|-n <exe_name> [--arch|-a <languageID>] [--compiler <cspecID>]]\n" + 
+			"            listfuncs       <bsimURL> [--md5|-m <hash>] [--name|-n <exe_name> [--arch|-a <languageID>] [--compiler <cspecID>]] [--printselfsig] [--callgraph] [--printjustexe] [--maxfunc <max_count>]\n" + 
+			"            dumpsigs        <bsimURL> </xmldirectory> [--md5|-m <hash>] [--name|-n <exe_name> [--arch|-a <languageID>] [--compiler <cspecID>]]\n" + 
 			"\n" +
 			"Global options:\n" +
-			"    user=<username>\n" +
-			"    cert=</certfile-path>\n" +
+			"    --user|-u <username>\n" +
+			"    --cert </certfile-path>\n" +
 			"\n" +
 			"Enumerated Options:\n" +
 			"    <config_template> - large_32 | medium_32 | medium_64 | medium_cpool | medium_nosize \n" +
@@ -957,12 +988,16 @@ public class BSimLaunchable implements GhidraLaunchable {
 			"Ghidra URL Forms (ghidraURL):\n" +
 			"    ghidra://<hostname>[:<port>]/<repo-name>[/<folder-path>]\n" +
 			"    ghidra:/[<local-dirpath>/]<project-name>[?/<folder-path>]\n" +
-			"\n");
+			"\n" +
+			"NOTE: Options with values may also be specified using the form: --option=value\n");
 		//@formatter:on
 	}
 
 	@Override
 	public void launch(GhidraApplicationLayout ghidraLayout, String[] params) {
+
+		printMaxMemory();
+
 		if (params.length == 0) {
 			printUsage();
 			return;
@@ -991,6 +1026,10 @@ public class BSimLaunchable implements GhidraLaunchable {
 	private void initializeApplication(String command) throws IOException {
 		int initType = COMMANDS_WITH_REPO_ACCESS.contains(command) ? 2 : 1;
 		if (layout != null) {
+
+			String connectingUserName = optionValueMap.get(USER_OPTION);
+			String certOption = optionValueMap.get(CERT_OPTION);
+
 			initializeApplication(layout, initType, connectingUserName, certOption);
 		}
 	}

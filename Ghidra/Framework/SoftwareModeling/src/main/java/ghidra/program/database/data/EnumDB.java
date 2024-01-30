@@ -895,6 +895,8 @@ class EnumDB extends DataTypeDB implements Enum {
 	public int getMinimumPossibleLength() {
 		lock.acquire();
 		try {
+			checkIsValid();
+			initializeIfNeeded();
 			if (valueMap.isEmpty()) {
 				return 1;
 			}

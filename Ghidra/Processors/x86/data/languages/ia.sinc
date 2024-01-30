@@ -809,6 +809,7 @@ m64:  "qword ptr" Mem  	is Mem      { export *:8 Mem; }
 # m80: Mem    is Mem      { export *:10 Mem; }
 m128: "xmmword ptr" Mem	is Mem      { export *:16 Mem; }
 m256: "ymmword ptr" Mem	is Mem      { export *:32 Mem; }
+m512: "64b ptr" Mem	    is Mem      { export *:64 Mem; }
 
 # spec versions of the m8/m16/m32/... tables explicitly print the operand size
 spec_m8: "byte ptr "^Mem     is Mem      { export *:1 Mem; }
@@ -4136,10 +4137,10 @@ define pcodeop f2xm1;
 :FIADD spec_m32     is vexMode=0 & byte=0xDA; reg_opcode=0 ... & spec_m32            { ST0 = ST0 f+ int2float(spec_m32); }   
 :FIADD spec_m16     is vexMode=0 & byte=0xDE; reg_opcode=0 ... & spec_m16            { ST0 = ST0 f+ int2float(spec_m16); }   
 
-define pcodeop convert_bcd;
-:FBLD  spec_m80     is vexMode=0 & byte=0xDF; reg_opcode=4 ... & spec_m80            { fdec(); ST0 = convert_bcd(spec_m80); }
-
-:FBSTP spec_m80     is vexMode=0 & byte=0xDF; reg_opcode=6 ... & spec_m80            { spec_m80 = convert_bcd(ST0); fpop(); }
+define pcodeop from_bcd;
+:FBLD  spec_m80     is vexMode=0 & byte=0xDF; reg_opcode=4 ... & spec_m80            { fdec(); ST0 = from_bcd(spec_m80); }
+define pcodeop to_bcd;
+:FBSTP spec_m80     is vexMode=0 & byte=0xDF; reg_opcode=6 ... & spec_m80            { spec_m80 = to_bcd(ST0); fpop(); }
 
 :FCHS           is vexMode=0 & byte=0xD9; byte=0xE0                 { ST0 = f- ST0; }
 
@@ -5572,6 +5573,30 @@ define pcodeop minps;
 :MOVQ         rm64, mmxreg   is $(LONGMODE_ON) & vexMode=0 &  opsize=2 & mandover=0 & byte=0x0F; byte=0x7E; rm64 & mmxreg ...         { rm64 = mmxreg; }
 :MOVQ         XmmReg, rm64   is $(LONGMODE_ON) & vexMode=0 &  opsize=2 & $(PRE_66) & byte=0x0F; byte=0x6E; rm64 & XmmReg ...         { XmmReg = zext(rm64); }
 :MOVQ         rm64, XmmReg   is $(LONGMODE_ON) & vexMode=0 &  opsize=2 & $(PRE_66) & byte=0x0F; byte=0x7E; rm64 & XmmReg ...         { rm64 = XmmReg(0); }
+@endif
+
+
+:MOVDIRI Mem,Reg32        is $(LONGMODE_OFF) & vexMode=0 & $(PRE_NO)  & byte=0x0F; byte=0x38; byte=0xF9; Mem & Reg32 ...     { *Mem = Reg32; }
+@ifdef IA64
+:MOVDIRI Mem,Reg64        is  vexMode=0 & $(PRE_NO)        & $(REX_W) & byte=0x0F; byte=0x38; byte=0xF9; Mem & Reg64 ...     { *Mem = Reg64; }
+@endif
+
+define pcodeop movdir64b;
+:MOVDIR64B    Reg16, m512 is $(LONGMODE_OFF) & vexMode=0 & $(PRE_66) & addrsize=0 & byte=0x0F; byte=0x38; byte=0xF8; Reg16 ... & m512 {
+	movdir64b(Reg16, m512);
+}
+:MOVDIR64B    Reg32, m512 is $(LONGMODE_OFF) & vexMode=0 & $(PRE_66) & addrsize=1 & byte=0x0F; byte=0x38; byte=0xF8; Reg32 ... & m512 {
+	movdir64b(Reg32, m512);
+}
+
+@ifdef IA64
+:MOVDIR64B    Reg32, m512 is $(LONGMODE_ON) & vexMode=0 & $(PRE_66) & addrsize=1 & byte=0x0F; byte=0x38; byte=0xF8; Reg32 ... & m512 {
+	movdir64b(Reg32, m512);
+}
+
+:MOVDIR64B    Reg64, m512 is $(LONGMODE_ON) & vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x38; byte=0xF8; Reg64 ... & m512 {
+	movdir64b(Reg64, m512);
+}
 @endif
 
 :MOVDDUP      XmmReg, m64         is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x12; m64 & XmmReg ...

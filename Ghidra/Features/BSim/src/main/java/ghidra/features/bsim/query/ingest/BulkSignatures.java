@@ -37,6 +37,7 @@ import ghidra.features.bsim.query.client.tables.ExeTable.ExeTableOrderColumn;
 import ghidra.features.bsim.query.description.*;
 import ghidra.features.bsim.query.protocol.*;
 import ghidra.features.bsim.query.protocol.ResponseDelete.DeleteResult;
+import ghidra.framework.Application;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.program.model.listing.*;
@@ -184,6 +185,10 @@ public class BulkSignatures implements AutoCloseable {
 				insertreq.path_override = GhidraURL.getProjectPathname(ghidraOverrideURL);
 			}
 			loadSignatureXml(file, insertreq.manage);
+			if (insertreq.manage.numFunctions() == 0) {
+				Msg.warn(this, file.getName() + ": does not define any functions");
+				continue;
+			}
 			if (insertreq.execute(querydb) == null) {
 				Error lastError = querydb.getLastError();
 				if ((lastError.category == ErrorCategory.Format) ||
@@ -646,7 +651,7 @@ public class BulkSignatures implements AutoCloseable {
 		establishQueryServerConnection(false);
 		ExeTableOrderColumn sortEnum;
 		if (sortCol != null) {
-			sortEnum = ExeTableOrderColumn.valueOf(sortCol);
+			sortEnum = ExeTableOrderColumn.valueOf(sortCol.toUpperCase());
 		}
 		else {
 			sortEnum = ExeTableOrderColumn.MD5;
@@ -961,11 +966,12 @@ public class BulkSignatures implements AutoCloseable {
 	protected File establishTemporaryDirectory(String xmldir) throws IOException {
 		File dir;
 		if (xmldir == null) {
-			String tempDirString = System.getProperty("java.io.tmpdir");
-			if (tempDirString == null) {
+			File tmpDir = Application.getUserTempDirectory();
+			if (tmpDir == null) {
 				throw new IOException("Could not find temporary directory");
 			}
-			dir = new File(tempDirString, "bulkinsert_xml");
+			dir = new File(tmpDir, "bulkinsert_xml");
+			deleteTemporaryDirectory(dir);
 		}
 		else {
 			dir = new File(xmldir);
@@ -983,6 +989,9 @@ public class BulkSignatures implements AutoCloseable {
 	}
 
 	private void deleteTemporaryDirectory(File tempDir) throws IOException {
+		if (!tempDir.exists()) {
+			return;
+		}
 		File[] listFiles = tempDir.listFiles();
 		if (listFiles == null) {
 			throw new IOException(
@@ -1106,6 +1115,7 @@ public class BulkSignatures implements AutoCloseable {
 				if (manager.numFunctions() == 0) {
 					Msg.warn(this, program.getDomainFile().getName() +
 						" contains no functions with signatures");
+					return;
 				}
 				FileWriter fwrite = new FileWriter(file);
 				manager.saveXml(fwrite);
