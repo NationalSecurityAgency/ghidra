@@ -1206,6 +1206,9 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		AddressSet set = new AddressSet(space.getMinAddress(), space.getMaxAddress());
 
 		Reqs reqs = Reqs.fromView(tool, view);
+		if (reqs == null) {
+			return;
+		}
 		CurrentPlatformTraceDisassembleCommand dis =
 			new CurrentPlatformTraceDisassembleCommand(tool, set, reqs, start);
 		dis.run(tool, view);
