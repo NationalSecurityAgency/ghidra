@@ -22,6 +22,39 @@
 
 <BODY>
 
+<H1 align="center">Ghidra 11.0.1 Change History (January 2024)</H1>
+<blockquote><p><u><B>Improvements</B></u></p>
+<ul>
+    <li><I>BSim</I>. The <span class="gcode">make-postgresql.sh</span> script now uses the <span class="gcode">uname</span> command instead of the <span class="gcode">arch</span> command to increase system compatibility. (GP-4174, Issue #6051)</li>
+    <li><I>Decompiler</I>. The Decompiler has been improved to recognize a broader class of boolean expressions when identifying and collapsing duplicate predicates.  An emphasis was given to ARM executables for this change. (GP-3941, Issue #5611)</li>
+</ul>
+</blockquote>
+<blockquote><p><u><B>Bugs</B></u></p>
+<ul>
+    <li><I>Analysis</I>. Fixed <span class="gcode">IndexOutOfBoundsException</span> when decompiling AARCH64 functions with empty structure parameters. (GP-4169, Issue #6047, #6068, #6120)</li>
+    <li><I>BSim</I>. Modified <span class="gcode">bsim</span> and <span class="gcode">bsim_ctl</span> command line option specification to use the form <span class="gcode">--option value</span> or <span class="gcode">--option=value</span> instead of <span class="gcode">option=value</span>.  Also corrected some bugs associated with command processing. (GP-4173, Issue #6054)</li>
+    <li><I>Data</I>. Corrected default reference creation for pointers added to byte-mapped memory blocks when a valid address can be produced. (GP-4203, Issue #6081)</li>
+    <li><I>Debugger:Agents</I>. Trace RMI clients are now included in the distribution. (GP-4198)</li>
+    <li><I>Debugger:Listing</I>. Fixed <span class="gcode">NullPointerException</span> in <span class="gcode">TraceDisassembleCommand</span>. (GP-4257)</li>
+    <li><I>Decompiler</I>. Fixed rare bug that could cause the Decompiler to crash during construction of Static Single Assignment (SSA) form. (GP-4201, Issue #6034)</li>
+    <li><I>Function</I>. Corrected issues related to Function custom storage transition when auto-void-return-storage is used.  This situation can occur when the Rust calling convention spec-extension is used. (GP-4234)</li>
+    <li><I>Function Compare</I>. Fixed bug causing an <span class="gcode">IndexOutOfBoundsException</span> in the <span class="gtitle">Decompiler Diff View</span> panel when comparing functions. (GP-4253)</li>
+    <li><I>Importer:ELF</I>. Corrected x86-64 ELF GOT allocation for object module import for <span class="gcode">R_X86_64_GOTPCRELX</span> and <span class="gcode">R_X86_64_REX_GOTPCRELX</span> relocations. (GP-4228)</li>
+    <li><I>Importer:ELF</I>. Corrected ELF x86-64 import error affecting <span class="gcode">*.o</span> files with the reported error <em>"GLOBAL_OFFSET_TABLE already allocated"</em>. (GP-4265)</li>
+    <li><I>Importer:PE</I>. The PE loader can now loader PE files with an <span class="gcode">OptionalHeader.Magic</span> value of 0. (GP-4215, Issue #6093)</li>
+    <li><I>Processors</I>. Fixed issues with HC05/HC08 processors including invalid registers and addressing modes. (GP-3181, Issue #4444)</li>
+    <li><I>Processors</I>. Fixed issue with PowerPC VLE branch instructions not displaying the <span class="gcode">cr</span> register used. (GP-3787, Issue #5246)</li>
+    <li><I>Processors</I>. Fixed issue with PowerPC VLE load/store instructions showing incorrect index. (GP-3788, Issue #5245)</li>
+    <li><I>Processors</I>. Moved several PowerPC 4xx instructions to 4xx-only processor module. (GP-3789, Issue #5243)</li>
+    <li><I>Processors</I>. Corrected address calculation for HCS12 <span class="gcode">call</span> instructions referencing the <span class="gcode">PPAGE</span> register. (GP-4104)</li>
+    <li><I>Processors</I>. Added support for the x86 <span class="gcode">MOVDIR64B</span> instruction. (GP-4105, Issue #5997)</li>
+    <li><I>Processors</I>. Corrected Loongarch CSR register list and added <span class="gcode">csr77</span>. (GP-4163, Issue #6033)</li>
+    <li><I>Processors</I>. Fixed addresses for Tricore TC176x <span class="gcode">CAN_MO</span> registers. (GP-4204, Issue #5712)</li>
+    <li><I>Processors</I>. Renamed pcodeops for x86 <span class="gcode">fbstp</span> and <span class="gcode">fbld</span> instructions. (GP-4249, Issue #2426)</li>
+    <li><I>Version Tracking</I>. Fixed <span class="gcode">NullPointerException</span> in Auto Version Tracking implied-match creation. (GP-4268)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 11.0 Change History (December 2023)</H1>
 <blockquote><p><u><B>New Features</B></u></p>
 <ul>
