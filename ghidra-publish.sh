@@ -30,6 +30,10 @@ cd byteviewer
 zip -r ../ghidra.jar *
 cd ..
 
+# hack: remove h2 database from the fat jar - only because we need to use it together with overflowdb which has it's own dependency on a different version of h2... jar hell ftw
+# can be removed once joern is migrated to flatgraph
+zip ghidra.jar -d '*/org/h2/*'
+
 # install into local maven repo, mostly to generate a pom
 mvn install:install-file -DgroupId=io.joern -DartifactId=ghidra -Dpackaging=jar -Dversion=$VERSION -Dfile=ghidra.jar -DgeneratePom=true
 cp ~/.m2/repository/io/joern/ghidra/$VERSION/ghidra-$VERSION.pom pom.xml
