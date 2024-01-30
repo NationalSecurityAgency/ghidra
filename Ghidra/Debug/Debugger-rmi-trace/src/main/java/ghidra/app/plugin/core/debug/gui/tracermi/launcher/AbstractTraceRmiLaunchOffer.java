@@ -394,11 +394,11 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 	 * Obtain the launcher args
 	 * 
 	 * <p>
-	 * This should either call {@link #promptLauncherArgs(Map))} or
-	 * {@link #loadLastLauncherArgs(Map, boolean))}. Note if choosing the latter, the user will not
-	 * be prompted to confirm.
+	 * This should either call {@link #promptLauncherArgs(LaunchConfigurator, Throwable)} or
+	 * {@link #loadLastLauncherArgs(boolean)}. Note if choosing the latter, the user will not be
+	 * prompted to confirm.
 	 * 
-	 * @param params the parameters of the model's launcher
+	 * @param prompt true to prompt the user, false to use saved arguments
 	 * @param configurator the rules for configuring the launcher
 	 * @param lastExc if retrying, the last exception to display as an error message
 	 * @return the chosen arguments, or null if the user cancels at the prompt
@@ -543,19 +543,24 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 
 			try {
 				monitor.setMessage("Listening for connection");
+				monitor.increment();
 				acceptor = service.acceptOne(new InetSocketAddress("127.0.0.1", 0));
 				monitor.setMessage("Launching back-end");
+				monitor.increment();
 				launchBackEnd(monitor, sessions, args, acceptor.getAddress());
 				monitor.setMessage("Waiting for connection");
+				monitor.increment();
 				acceptor.setTimeout(getTimeoutMillis());
 				connection = acceptor.accept();
 				connection.registerTerminals(sessions.values());
 				monitor.setMessage("Waiting for trace");
+				monitor.increment();
 				trace = connection.waitForTrace(getTimeoutMillis());
 				traceManager.openTrace(trace);
 				traceManager.activate(traceManager.resolveTrace(trace),
 					ActivationCause.START_RECORDING);
 				monitor.setMessage("Waiting for module mapping");
+				monitor.increment();
 				try {
 					listenForMapping(mappingService, connection, trace).get(getTimeoutMillis(),
 						TimeUnit.MILLISECONDS);

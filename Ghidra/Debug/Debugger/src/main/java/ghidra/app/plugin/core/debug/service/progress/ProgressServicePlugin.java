@@ -36,7 +36,7 @@ import ghidra.util.datastruct.ListenerSet;
 			""",
 	servicesProvided = { ProgressService.class },
 	packageName = DebuggerPluginPackage.NAME,
-	status = PluginStatus.STABLE)
+	status = PluginStatus.RELEASED)
 public class ProgressServicePlugin extends Plugin implements ProgressService {
 	ListenerSet<ProgressListener> listeners = new ListenerSet<>(ProgressListener.class, true);
 

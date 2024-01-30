@@ -15,7 +15,13 @@
  */
 package ghidra.debug.api.progress;
 
+/**
+ * A listener for events on the progress service, including updates to task progress
+ */
 public interface ProgressListener {
+	/**
+	 * Describes how or why a task monitor was disposed
+	 */
 	enum Disposal {
 		/**
 		 * The monitor was properly closed
@@ -27,12 +33,52 @@ public interface ProgressListener {
 		CLEANED;
 	}
 
+	/**
+	 * A new task monitor has been created
+	 * 
+	 * <p>
+	 * The subscriber ought to display the monitor as soon as is reasonable. Optionally, a
+	 * subscriber may apply a grace period, e.g., half a second, before displaying it, in case it is
+	 * quickly disposed.
+	 * 
+	 * @param monitor a means of retrieving messages and progress about the task
+	 */
 	void monitorCreated(MonitorReceiver monitor);
 
+	/**
+	 * A task monitor has been disposed
+	 * 
+	 * @param monitor the receiver for the disposed monitor
+	 * @param disposal why it was disposed
+	 */
 	void monitorDisposed(MonitorReceiver monitor, Disposal disposal);
 
+	/**
+	 * A task has updated a monitor's message
+	 * 
+	 * @param monitor the receiver whose monitor's message changed
+	 * @param message the new message
+	 */
 	void messageUpdated(MonitorReceiver monitor, String message);
 
+	/**
+	 * A task has reported an error
+	 * 
+	 * @param monitor the receiver for the task reporting the error
+	 * @param error the exception representing the error
+	 */
+	void errorReported(MonitorReceiver monitor, Throwable error);
+
+	/**
+	 * A task's progress has updated
+	 * 
+	 * <p>
+	 * Note the subscriber may need to use {@link MonitorReceiver#getMaximum()} to properly update
+	 * the display.
+	 * 
+	 * @param monitor the receiver whose monitor's progress changed
+	 * @param progress the new progress value
+	 */
 	void progressUpdated(MonitorReceiver monitor, long progress);
 
 	/**
@@ -46,7 +92,7 @@ public interface ProgressListener {
 	 * <li>show progress value in percent string</li>
 	 * </ul>
 	 * 
-	 * @param monitor the monitor
+	 * @param monitor the receiver whose monitor's attribute(s) changed
 	 */
 	void attributeUpdated(MonitorReceiver monitor);
 }
