@@ -10,6 +10,7 @@ set -o pipefail
 VERSION=11.0_PUBLIC_20231222
 VERSION_SHORTER=11.0
 VERSION_SHORT=${VERSION_SHORTER}_PUBLIC
+CUSTOM_RELEASE_VERSION=$VERSION+1
 
 SONATYPE_URL=https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/
 # the server id from your local ~/.m2/settings.xml
@@ -35,8 +36,8 @@ cd ..
 zip ghidra.jar -d '*/org/h2/*'
 
 # install into local maven repo, mostly to generate a pom
-mvn install:install-file -DgroupId=io.joern -DartifactId=ghidra -Dpackaging=jar -Dversion=$VERSION -Dfile=ghidra.jar -DgeneratePom=true
-cp ~/.m2/repository/io/joern/ghidra/$VERSION/ghidra-$VERSION.pom pom.xml
+mvn install:install-file -DgroupId=io.joern -DartifactId=ghidra -Dpackaging=jar -Dversion=$CUSTOM_RELEASE_VERSION -Dfile=ghidra.jar -DgeneratePom=true
+cp ~/.m2/repository/io/joern/ghidra/$CUSTOM_RELEASE_VERSION/ghidra-$CUSTOM_RELEASE_VERSION.pom pom.xml
 
 # add pom-extra to pom.xml, to make sonatype happy
 head -n -1 pom.xml > pom.tmp
