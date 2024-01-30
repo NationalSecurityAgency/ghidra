@@ -99,6 +99,8 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 		addSystemAction(new GlobalFocusTraversalAction(FOCUS_NEXT_COMPONENT_KEY, true));
 		addSystemAction(new GlobalFocusTraversalAction(FOCUS_PREVIOUS_COMPONENT_KEY, false));
 
+		addSystemAction(new ShowActionChooserDialogAction());
+
 		// helpful debugging actions
 		addSystemAction(new ShowFocusInfoAction());
 		addSystemAction(new ShowFocusCycleAction());
@@ -260,6 +262,11 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 	}
 
 	@Override
+	public Set<DockingActionIf> getLocalActions(ComponentProvider provider) {
+		return actionGuiHelper.getLocalActions(provider);
+	}
+
+	@Override
 	public synchronized Set<DockingActionIf> getActions(String owner) {
 
 		Set<DockingActionIf> result = new HashSet<>();
@@ -277,6 +284,11 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 		}
 
 		return result;
+	}
+
+	@Override
+	public synchronized Set<DockingActionIf> getGlobalActions() {
+		return actionGuiHelper.getGlobalActions();
 	}
 
 	@Override

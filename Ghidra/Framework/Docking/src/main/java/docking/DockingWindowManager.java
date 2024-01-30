@@ -2483,6 +2483,14 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		return new DefaultActionContext(provider, null);
 	}
 
+	/**
+	 * Returns the set of global tool actions
+	 * @return the set of global tool actions
+	 */
+	public Set<DockingActionIf> getGlobalActions() {
+		return new HashSet<>(actionToGuiMapper.getGlobalActions());
+	}
+
 	private ActionContext getDefaultContext(Class<? extends ActionContext> contextType) {
 		ActionContextProvider contextProvider = defaultContextProviderMap.get(contextType);
 		if (contextProvider != null) {

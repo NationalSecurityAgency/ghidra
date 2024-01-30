@@ -92,6 +92,9 @@ class MenuItemManager implements ManagedMenuItem, PropertyChangeListener, Action
 			};
 		}
 		return e -> {
+			if (!menuItem.isShowing()) {
+				return;	// model changed, but the user is not moving the mouse
+			}
 			boolean isArmed = menuItem.isArmed();
 			if (isArmed) {
 				menuHandler.menuItemEntered(action);
