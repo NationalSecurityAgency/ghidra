@@ -17,7 +17,17 @@ package ghidra.debug.api.progress;
 
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * A task monitor that can be used in a try-with-resources block.
+ */
 public interface CloseableTaskMonitor extends TaskMonitor, AutoCloseable {
 	@Override
 	void close();
+
+	/**
+	 * Report an error while working on this task
+	 * 
+	 * @param error the error
+	 */
+	void reportError(Throwable error);
 }

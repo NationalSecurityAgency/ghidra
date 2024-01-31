@@ -75,6 +75,10 @@ public class DefaultMonitorReceiver implements MonitorReceiver {
 		plugin.listeners.invoke().messageUpdated(this, message);
 	}
 
+	void reportError(Throwable error) {
+		plugin.listeners.invoke().errorReported(this, error);
+	}
+
 	@Override
 	public String getMessage() {
 		synchronized (lock) {
@@ -158,6 +162,7 @@ public class DefaultMonitorReceiver implements MonitorReceiver {
 		return cancelEnabled;
 	}
 
+	@Override
 	public boolean isShowProgressValue() {
 		return showProgressValue;
 	}

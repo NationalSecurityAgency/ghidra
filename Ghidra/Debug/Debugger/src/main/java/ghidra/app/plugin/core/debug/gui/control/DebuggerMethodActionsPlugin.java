@@ -64,7 +64,7 @@ public class DebuggerMethodActionsPlugin extends Plugin implements PopupActionPr
 
 		@Override
 		public void actionPerformed(ActionContext context) {
-			tool.execute(new TargetActionTask(entry.display(), entry));
+			tool.execute(new TargetActionTask(tool, entry.display(), entry));
 		}
 	}
 

@@ -187,6 +187,8 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 	 * 
 	 * <p>
 	 * This class is public for access by test cases only.
+	 * 
+	 * @param <T> the type of the message
 	 */
 	public interface LogRow<T> {
 		Icon getIcon();
@@ -317,6 +319,11 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 		public void messageUpdated(MonitorReceiver monitor, String message) {
 			LogRow<?> logRow = logTableModel.getMap().get(contextFor(monitor));
 			logTableModel.updateItem(logRow);
+		}
+
+		@Override
+		public void errorReported(MonitorReceiver monitor, Throwable error) {
+			log(DebuggerResources.ICON_LOG_ERROR, error.getMessage());
 		}
 
 		@Override
