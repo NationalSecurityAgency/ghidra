@@ -49,6 +49,21 @@
     <external_name tool="gnu" name="avr:6"/>
     <external_name tool="IDA-PRO" name="avr"/>
   </language>
+
+  <language processor="AVR8"
+            endian="little"
+            size="24"
+            variant="atmega1284p"
+            version="1.0"
+            slafile="avr8eind.sla"
+            processorspec="atmega1284p.pspec"
+            manualindexfile="../manuals/AVR8.idx"
+            id="avr8:LE:16:atmega1284p">
+    <description>AVR8 for an Atmega 1248p</description>
+    <compiler name="gcc"        spec="avr8egcc.cspec"        id="gcc"/>
+    <external_name tool="gnu" name="avr:6"/>
+    <external_name tool="IDA-PRO" name="avr"/>
+  </language>
  
   <language processor="AVR8"
             endian="little"
