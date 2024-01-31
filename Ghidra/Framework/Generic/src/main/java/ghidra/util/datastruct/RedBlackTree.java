@@ -15,14 +15,12 @@
  */
 package ghidra.util.datastruct;
 
-import static ghidra.util.datastruct.RedBlackEntry.NodeColor.BLACK;
-import static ghidra.util.datastruct.RedBlackEntry.NodeColor.RED;
+import static ghidra.util.datastruct.RedBlackEntry.NodeColor.*;
 
 import java.util.ConcurrentModificationException;
 import java.util.ListIterator;
 
 import org.apache.commons.collections4.iterators.EmptyListIterator;
-
 
 /**
  * A RedBlack Tree implementation with K type keys and place to store V type values.
@@ -206,7 +204,8 @@ public class RedBlackTree<K extends Comparable<K>, V> implements Iterable<RedBla
 
 	private RedBlackEntry<K, V> getNode(K key) {
 		RedBlackEntry<K, V> node = getEntryLessThanEqual(key);
-		if (node != null && node.getKey().equals(key)) {
+		if (node != null && node.getKey()
+				.equals(key)) {
 			return node;
 		}
 		return null;
@@ -709,6 +708,10 @@ public class RedBlackTree<K extends Comparable<K>, V> implements Iterable<RedBla
 				previousNode = forward ? getLast() : getFirst();
 			}
 			lastReturnedNode = null;
+
+			// Update the iterator modCount to match the modCount of the main class, since deletes
+			// made via the iterator should not cause a concurrent modification exception.
+			this.expectedModCount = modCount;
 		}
 
 		@Override
