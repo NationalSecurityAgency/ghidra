@@ -5,17 +5,19 @@
     <META http-equiv="Content-Language" content="en-us">
     <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
 
-    <TITLE>Wildcard Assembler Plugin</TITLE>
+    <TITLE>Wildcard Assembler Module</TITLE>
     <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
 
   <BODY>
-    <H1><A name="Wildcard_Assembler_Plugin"></A>Wildcard Assembler Plugin</H1>
+    <H1><A name="Wildcard_Assembler_Module"></A>Wildcard Assembler Module</H1>
 
     <BLOCKQUOTE>
 
       <P><B>This feature is currently only available as an API for Ghidra
-        scripts and plugins.</B></P>
+      scripts and plugins. For an example of how to use the API, see the
+      FindInstructionWithWildcard and WildSleighAssemblerInfo scripts in the
+      Script Manager.</B></P>
         
       <P>The <I>Wildcard Assembler</I> extends Ghidra's assembler to enable
       assembling instructions with specific tokens replaced with wildcards.</P>
@@ -70,24 +72,24 @@
       <CODE>!</CODE> character. For example, in a x86:LE:32:default binary:</P>
       <BLOCKQUOTE>
         <DL>
-          <DT>Assembles (no wildcard):</DT>
+          <DT>No wildcard:</DT>
           <DD><CODE>MOVSD.REP ES:EDI,ESI</CODE></DD>
 
-          <DT>Assembles (single token):</DT>
+          <DT>Single token:</DT>
           <DD><CODE>MOVSD.REP `Q1`:EDI,ESI</CODE></DD>
 
-          <DT>Assembles (single token):</DT>
+          <DT>Single token:</DT>
           <DD><CODE>MOVSD.REP ES:`Q2`,ESI</CODE></DD>
 
-          <DT>Does <I>NOT</I> assemble (single token):</DT>
+          <DT>Single token (Does <I>NOT</I> assemble):</DT>
           <DD><CODE>MOVSD.REP `Q3`,ESI</CODE></DD>
 
-          <DT>Assembles (multi-token):</DT>
+          <DT>Multi-token:</DT>
           <DD><CODE>MOVSD.REP `!Q4`,ESI</CODE></DD>
         </DL>
       </BLOCKQUOTE>
 
-      <P class="providedbyplugin">Provided by: <I>Wildcard Assembler Plugin</I></P>
+      <P class="providedbyplugin">Provided by: <I>Wildcard Assembler Module</I></P>
 
     </BLOCKQUOTE>
   </BODY>

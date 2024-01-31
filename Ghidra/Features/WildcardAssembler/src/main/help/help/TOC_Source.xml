@@ -53,7 +53,7 @@
 	
 		<tocdef id="Wildcard Assembler"
 				text="Wildcard Assembler"
-				target="help/topics/WildcardAssemblerPlugin/Wildcard_Assembler.html" >
+				target="help/topics/WildcardAssemblerModule/Wildcard_Assembler.html" >
 		</tocdef>
 	</tocref>
 </tocroot>                  

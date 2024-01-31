@@ -26,7 +26,6 @@
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -60,9 +59,10 @@ public class WildSleighAssemblerInfo extends GhidraScript {
 	}
 
 	/**
-	 * Use a WildSleighAssembler to assemble the given {@code wildcardedInstruction}
+	 * Use a {@link WildSleighAssembler} to assemble the given {@code wildcardedInstruction}
 	 * 
 	 * @param wildcardedInstruction
+	 *            String of the instruction to assemble, possibly including a wildcard
 	 * @return All AssemblyParseResult produced from the given input
 	 */
 	private List<AssemblyResolution> getAllAssemblyResolutions(
@@ -75,9 +75,9 @@ public class WildSleighAssemblerInfo extends GhidraScript {
 		if (sampleInstructions.contains(wildcardedInstruction) &&
 			!language.getLanguageID().toString().equals("x86:LE:64:default")) {
 			popup(
-				"The current program must be a \"x86:LE:64:default\" binary for the example " +
-					"instructions to work. Retry with a custom instruction in your architecture!");
-			return Collections.emptyList();
+				"The current program is not a \"x86:LE:64:default\" binary that the example was " +
+					"designed for. This script will continue and try anyway, but the results might " +
+					"not be as expected. Retry with a custom instruction in your architecture!");
 		}
 
 		// Create a WildSleighAssembler that we'll use to assemble our wildcard-included instruction
@@ -103,7 +103,7 @@ public class WildSleighAssemblerInfo extends GhidraScript {
 	}
 
 	/**
-	 * Print information about the WildAssemblyResolvedPatterns in the given list.
+	 * Print information about the {@link WildAssemblyResolvedPatterns} in the given list.
 	 * 
 	 * @param resolutionResults
 	 */
@@ -131,7 +131,7 @@ public class WildSleighAssemblerInfo extends GhidraScript {
 	}
 
 	/**
-	 * Print information about a single {@code WildAssemblyResolvedPatterns}, including information
+	 * Print information about a single {@link WildAssemblyResolvedPatterns}, including information
 	 * about each of its wildcards.
 	 * 
 	 * @param x

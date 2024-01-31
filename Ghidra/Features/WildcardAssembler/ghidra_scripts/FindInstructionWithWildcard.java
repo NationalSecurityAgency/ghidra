@@ -34,6 +34,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import ghidra.app.plugin.assembler.AssemblySelector;
 import ghidra.app.plugin.assembler.sleigh.parse.AssemblyParseResult;
@@ -47,19 +49,16 @@ import ghidra.asm.wild.WildSleighAssembler;
 import ghidra.asm.wild.WildSleighAssemblerBuilder;
 import ghidra.asm.wild.sem.WildAssemblyResolvedPatterns;
 import ghidra.program.model.mem.*;
-import ghidra.program.model.listing.*;
-import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.*;
 
 public class FindInstructionWithWildcard extends GhidraScript {
 
 	public void run() throws Exception {
 
-		// The wildcard here specifies that the second operand of this instruction is
-		// either "R12D" or "R13D". The instruction and/or wildcard here can be modified
-		// to an instruction found in your x86_64 binary, or patch your binary to have
-		// the bytes "0x45 0x31 0xed" somewhere.
-		var allValidResults = getAllResolvedPatterns("XOR R13D,`Q1/R1(2|3)D`");
+		var instruction = askString("Instruction to search",
+			"Instruction to search for with wildcard (example is for x86_64, adjust if you are using a different architecture):",
+			"XOR R13D,`Q1/R1(2|3)D`");
+		var allValidResults = getAllResolvedPatterns(instruction);
 
 		var encodings = getMapOfUniqueInstructionEncodings(allValidResults);
 
@@ -67,58 +66,39 @@ public class FindInstructionWithWildcard extends GhidraScript {
 	}
 
 	/**
-	 * Use an x86_64 WildSleighAssembler to assemble the given {@code wildcardedInstruction}
+	 * Use a {@link WildSleighAssembler} to assemble the given {@code wildcardedInstruction}
 	 * 
 	 * @param wildcardedInstruction
-	 * @return All WildAssemblyResolvedPatterns produced from the given input (e.g. All VALID
-	 *         results of assembling the given input)
+	 * @return All {@link WildAssemblyResolvedPatterns} produced from the given input (e.g. All
+	 *         VALID results of assembling the given input)
 	 */
-	private ArrayList<WildAssemblyResolvedPatterns> getAllResolvedPatterns(
+	private List<WildAssemblyResolvedPatterns> getAllResolvedPatterns(
 			String wildcardedInstruction) {
 		var allValidResults = new ArrayList<WildAssemblyResolvedPatterns>();
 
-		// Get our current program or build a new program if our current binary isn't x86_64
-		Program baseProgram = currentProgram;
-		if (!baseProgram.getLanguageCompilerSpecPair().languageID.getIdAsString()
-				.equals("x86:LE:64:default")) {
-			println(
-				"WARNING: Current program is not 'x86:LE:64:default' so using a builder instead!");
+		SleighLanguage currentLanguage = (SleighLanguage) currentProgram.getLanguage();
 
-			ProgramBuilder baseProgramBuilder;
-			try {
-				baseProgramBuilder = new ProgramBuilder("x86_64_test", "x86:LE:64:default");
-			}
-			catch (Exception e) {
-				println(
-					"Couldn't create ProgramBuilder with hardcoded languageName! Something is very wrong!");
-				e.printStackTrace();
-				return allValidResults;
-			}
-
-			baseProgram = baseProgramBuilder.getProgram();
-		}
-
-		SleighLanguage x8664Language = (SleighLanguage) baseProgram.getLanguage();
-
-		// Create a WildSleighAssembler that we'll use to assemble our wildcard-included instruction
-		WildSleighAssemblerBuilder builderX8664 = new WildSleighAssemblerBuilder(x8664Language);
-		WildSleighAssembler asmX8664 =
-			builderX8664.getAssembler(new AssemblySelector(), baseProgram);
+		// Create a WildSleighAssembler that we'll use to assemble our wildcard-included
+		// instruction
+		WildSleighAssemblerBuilder assemblerBuilder =
+			new WildSleighAssemblerBuilder(currentLanguage);
+		WildSleighAssembler assembler =
+			assemblerBuilder.getAssembler(new AssemblySelector(), currentProgram);
 
 		// Parse a single line of assembly which includes a wildcard.
-		Collection<AssemblyParseResult> parses = asmX8664.parseLine(wildcardedInstruction);
+		Collection<AssemblyParseResult> parses = assembler.parseLine(wildcardedInstruction);
 
 		// Remove all the AssemblyParseResults that represent parse errors
-		AssemblyParseResult[] allResults = parses.stream()
+		List<AssemblyParseResult> allResults = parses.stream()
 				.filter(p -> !p.isError())
-				.toArray(AssemblyParseResult[]::new);
+				.toList();
 
-		// Try to resolve each AssemblyParseResult at address 0 and collect all the
-		// results which are valid
-		Address addr0 = x8664Language.getAddressFactory().getDefaultAddressSpace().getAddress(0);
+		// Try to resolve each AssemblyParseResult at address 0 and collect all the results which
+		// are valid
+		Address addr0 = currentLanguage.getAddressFactory().getDefaultAddressSpace().getAddress(0);
 
 		for (AssemblyParseResult r : allResults) {
-			AssemblyResolutionResults results = asmX8664.resolveTree(r, addr0);
+			AssemblyResolutionResults results = assembler.resolveTree(r, addr0);
 
 			allValidResults.addAll(getValidResults(results));
 		}
@@ -133,23 +113,22 @@ public class FindInstructionWithWildcard extends GhidraScript {
 	 * @param allValidResolvedPatterns
 	 * @return
 	 */
-	private HashMap<AssemblyPatternBlock, HashSet<WildOperandInfo>> getMapOfUniqueInstructionEncodings(
-			ArrayList<WildAssemblyResolvedPatterns> allValidResolvedPatterns) {
+	private Map<AssemblyPatternBlock, Set<WildOperandInfo>> getMapOfUniqueInstructionEncodings(
+			List<WildAssemblyResolvedPatterns> allValidResolvedPatterns) {
 
 		// Bail out early if we were not able to find any results (should only happen if the hard
 		// coded instruction in this example script is changed)
-		if (allValidResolvedPatterns.size() < 1) {
+		if (allValidResolvedPatterns.isEmpty()) {
 			println("No assembly results for given assembly with wildcard!");
-			return new HashMap<AssemblyPatternBlock, HashSet<WildOperandInfo>>();
+			return Map.of();
 		}
 
 		// 'allValidResolvedPatterns' has one entry for each encoding/wildcard value pair. We're
 		// going to reduce that down to a map where each:
-		// * Key is a single encoding of an instruction WITHOUT the wildcard operand
-		// bits specified
-		// * Value is a set of WildOperandInfo instances containing each valid wildcard
-		// completion
-		var encodings = new HashMap<AssemblyPatternBlock, HashSet<WildOperandInfo>>();
+		// * Key is a single encoding of an instruction WITHOUT the wildcard operand bits specified
+		// * Value is a set of WildOperandInfo instances containing each valid wildcard completion
+		Map<AssemblyPatternBlock, Set<WildOperandInfo>> encodings =
+			new HashMap<AssemblyPatternBlock, Set<WildOperandInfo>>();
 		for (WildAssemblyResolvedPatterns x : allValidResolvedPatterns) {
 			var y = new ReducedWildcardAssemblyResolvedPattern(x);
 			var existing = encodings.get(y.maskedInstruction);
@@ -170,7 +149,7 @@ public class FindInstructionWithWildcard extends GhidraScript {
 	 * correspond to the {@code WildOperandInfo} values found in the
 	 * {@code WildAssemblyResolvedPatterns}.
 	 */
-	class ReducedWildcardAssemblyResolvedPattern {
+	static class ReducedWildcardAssemblyResolvedPattern {
 		/**
 		 * The original WildAssemblyResolvedPatterns that this is based on
 		 */
@@ -183,8 +162,8 @@ public class FindInstructionWithWildcard extends GhidraScript {
 		ReducedWildcardAssemblyResolvedPattern(WildAssemblyResolvedPatterns input) {
 			parent = input;
 
-			// Remove all the bits which correspond to wildcarded opcodes from the instruction and
-			// save the result as maskedInstruction
+			// Remove all the bits which correspond to wildcarded opcodes from the instruction save
+			// the result as maskedInstruction
 			var reducedInstruction = input.getInstruction();
 			for (WildOperandInfo info : input.getOperandInfo()) {
 				reducedInstruction = reducedInstruction.maskOut(info.location());
@@ -201,22 +180,32 @@ public class FindInstructionWithWildcard extends GhidraScript {
 		 * @return True if both values share the same maskedInstruction and wildcard(s)
 		 */
 		boolean sameBaseEncoding(ReducedWildcardAssemblyResolvedPattern other) {
-			if (this.maskedInstruction.compareTo(other.maskedInstruction) != 0) {
+			if (!this.maskedInstruction.equals(other.maskedInstruction)) {
 				return false;
 			}
 
+			// Loop over each WildOperandInfo in this to ensure that there is a matching one in
+			// other which shares the same wildcard (name) and location. Remember that there might
+			// be more than one wildcard in an instruction with the same name so we can't assume
+			// there's not a match if a matching name doesn't have the same location.
 			for (WildOperandInfo info : this.parent.getOperandInfo()) {
 				var foundMatch = false;
+
+				// Check all of other's WildOperandInfo
 				for (WildOperandInfo otherInfo : other.parent.getOperandInfo()) {
-					if (info.wildcard().equals(otherInfo.wildcard())) {
-						if (!info.equals(otherInfo)) {
-							return false;
-						}
+					// Check if we have matching wildcards (names), expressions, and locations.
+					// Notice that we're *NOT* checking choice here, as we expect those to be different.
+					if (info.wildcard().equals(otherInfo.wildcard()) &&
+						info.expression().equals(otherInfo.expression()) &&
+						info.location().equals(otherInfo.location())) {
 						foundMatch = true;
 						break;
 					}
 				}
+
 				if (!foundMatch) {
+					// We were unable to find a wildcard that matched so we declare that these
+					// encodings don't have the same base encoding
 					return false;
 				}
 			}
@@ -227,9 +216,9 @@ public class FindInstructionWithWildcard extends GhidraScript {
 	/**
 	 * Searches for at most 10 matches for each given encoding, starting at {@code currentAddress}
 	 * and prints results to the console.
-	 * 
+	 * <p>
 	 * This searches encoding by encoding, restarting back at the start of memory for each.
-	 * 
+	 * <p>
 	 * Does not currently print wildcard information about the search results, but this could be
 	 * added.
 	 * 
@@ -239,14 +228,13 @@ public class FindInstructionWithWildcard extends GhidraScript {
 	 *             If we find bytes but can't read them
 	 */
 	private void searchMemoryForEncodings(
-			HashMap<AssemblyPatternBlock, HashSet<WildOperandInfo>> encodings,
-			ArrayList<WildAssemblyResolvedPatterns> allValidResolvedPatterns)
+			Map<AssemblyPatternBlock, Set<WildOperandInfo>> encodings,
+			List<WildAssemblyResolvedPatterns> allValidResolvedPatterns)
 			throws MemoryAccessException {
 
 		Memory memory = currentProgram.getMemory();
 
-		for (var entry : encodings.entrySet()) {
-			var encoding = entry.getKey();
+		for (var encoding : encodings.keySet()) {
 			println("Searching for encoding: " + encoding.toString());
 
 			// Start/restart back at currentAddress for each new encoding search
@@ -282,7 +270,7 @@ public class FindInstructionWithWildcard extends GhidraScript {
 
 	/**
 	 * Print information about a specific search hit to the console
-	 * 
+	 * <p>
 	 * NOTE: This is certainly not the highest performance way to do this, but it is reasonably
 	 * simple and shows what is possible.
 	 * 
@@ -294,25 +282,28 @@ public class FindInstructionWithWildcard extends GhidraScript {
 	 *            All resolved patterns which were searched from (used to find wildcard information)
 	 */
 	private void printSearchHitInfo(Address matchAddress, byte[] matchData,
-			ArrayList<WildAssemblyResolvedPatterns> allValidResolvedPatterns) {
+			List<WildAssemblyResolvedPatterns> allValidResolvedPatterns) {
 
 		println("Hit at address: " + matchAddress.toString());
 
-		// Search over all the resolutions we were searching for and find the one which matches and
-		// use it determine what the wildcard values are for the given hit.
+		// Check all the resolutions we were searching for and find the one which matches the found
+		// bytes and use that resolution to determine what the wildcard values are for the given
+		// hit.
 		//
-		// It'd likely be much faster the deduplicate similar WildAssemblyResolvedPatterns based on
+		// It'd likely be much faster to deduplicate similar WildAssemblyResolvedPatterns based on
 		// their instruction with wildcards masked out (similar to what is done in
 		// ReducedWildcardAssemblyResolvedPattern) and create a lookup table for wildcard values but
 		// that's beyond this basic example script.
 		for (WildAssemblyResolvedPatterns resolved : allValidResolvedPatterns) {
 			var resolvedInstruction = resolved.getInstruction();
 			if (resolvedInstruction.length() > matchData.length) {
-				// It can't be this resolution because we were not given enough bytes of matchData
+				// It can't be this resolution because we were not given enough bytes of
+				// matchData
 				continue;
 			}
 
-			// Mask out the matchData with the mask of our candidate resolvedInstruction and see if
+			// Mask out the matchData with the mask of our candidate resolvedInstruction and
+			// see if
 			// the results match. If they do, then this is the WildAssemblyResolvedPatterns
 			var matchMasked = resolvedInstruction.getMaskedValue(matchData);
 			if (matchMasked.equals(resolvedInstruction)) {
@@ -328,10 +319,11 @@ public class FindInstructionWithWildcard extends GhidraScript {
 
 	/**
 	 * Return all items from {@code results} which are instances of
-	 * {@code WildAssemblyResolvedPatterns}
+	 * {@link WildAssemblyResolvedPatterns}
 	 * 
 	 * @param results
-	 * @return
+	 *            The results to return {@link WildAssemblyResolvePatterns} from
+	 * @return All {@link WildAssemblyResolvedPatterns} which were found in the input
 	 */
 	private List<WildAssemblyResolvedPatterns> getValidResults(AssemblyResolutionResults results) {
 		var out = new ArrayList<WildAssemblyResolvedPatterns>();
