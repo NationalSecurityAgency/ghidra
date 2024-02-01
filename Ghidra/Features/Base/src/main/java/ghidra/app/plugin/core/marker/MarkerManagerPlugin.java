@@ -29,7 +29,7 @@ import ghidra.util.HelpLocation;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.SUPPORT,
+	category = PluginCategoryNames.COMMON,
 	shortDescription = "Provides the marker display",
 	description = "This plugin extends the code browser to include left and right marker" +
 		"components.  The left margin shows marks related to the address being shown at " +

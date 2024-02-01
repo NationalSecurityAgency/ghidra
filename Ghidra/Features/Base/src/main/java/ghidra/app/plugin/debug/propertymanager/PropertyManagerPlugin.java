@@ -41,7 +41,7 @@ import ghidra.program.util.*;
 @PluginInfo(
 	status = PluginStatus.STABLE,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.TESTING,
+	category = PluginCategoryNames.COMMON,
 	shortDescription = "Show Markers for Properties",
 	description = "This plugin shows a list of properties in the program."+
 			" For each property selected, navigation markers are displayed to indicate "+

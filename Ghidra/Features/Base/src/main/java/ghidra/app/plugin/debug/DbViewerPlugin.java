@@ -33,7 +33,7 @@ import resources.Icons;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = DeveloperPluginPackage.NAME,
-	category = PluginCategoryNames.TESTING,
+	category = PluginCategoryNames.DIAGNOSTIC,
 	shortDescription = "Show database tables",
 	description = "This plugin is a debug aid that allows the user to browse database tables.",
 	eventsConsumed = { ProgramActivatedPluginEvent.class }

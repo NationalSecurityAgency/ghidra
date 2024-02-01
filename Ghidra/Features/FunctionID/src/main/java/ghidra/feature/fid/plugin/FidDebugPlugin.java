@@ -63,7 +63,7 @@ import ghidra.util.task.TaskMonitor;
 @PluginInfo(
 	status = PluginStatus.STABLE,
 	packageName = DeveloperPluginPackage.NAME,
-	category = PluginCategoryNames.SUPPORT,
+	category = PluginCategoryNames.DIAGNOSTIC,
 	shortDescription = "Function ID Debug",
 	description = "This plugin is for debugging function identification libraries."
 )

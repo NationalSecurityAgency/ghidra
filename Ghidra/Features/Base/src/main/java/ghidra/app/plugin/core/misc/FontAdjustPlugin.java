@@ -18,8 +18,8 @@ package ghidra.app.plugin.core.misc;
 import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.builder.ActionBuilder;
-import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
+import ghidra.framework.main.UtilityPluginPackage;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 
@@ -28,8 +28,8 @@ import ghidra.framework.plugintool.util.PluginStatus;
  */
 @PluginInfo( //@formatter:off
 	status = PluginStatus.RELEASED,
-	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.MISC,
+	packageName = UtilityPluginPackage.NAME,
+	category = PluginCategoryNames.FRAMEWORK,
 	shortDescription = "Provides generic actions for increasing/decreasing fonts.",
 	description = "This plugin provides actions for increasing fonts used by component providers. "+
 	"ComponentProviders can either override the \"changeFontSize()\" method or register a" +

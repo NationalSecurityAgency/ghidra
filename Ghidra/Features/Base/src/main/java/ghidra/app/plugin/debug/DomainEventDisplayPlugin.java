@@ -35,7 +35,7 @@ import help.HelpService;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = DeveloperPluginPackage.NAME,
-	category = PluginCategoryNames.TESTING,
+	category = PluginCategoryNames.DIAGNOSTIC,
 	shortDescription = "Displays domain object events",
 	description = "This plugin provides a component to display domain object event " +
 			"as they are generated. The maximum number of messages shown is " +

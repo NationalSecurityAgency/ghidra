@@ -688,8 +688,8 @@ public class FrontEndPlugin extends Plugin
 		connectionButton.setContentAreaFilled(false);
 		connectionButton.setSelected(isConnected);
 		connectionButton
-			.setBorder(isConnected ? BorderFactory.createBevelBorder(BevelBorder.LOWERED)
-					: BorderFactory.createBevelBorder(BevelBorder.RAISED));
+				.setBorder(isConnected ? BorderFactory.createBevelBorder(BevelBorder.LOWERED)
+						: BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		connectionIconPanel.add(connectionButton);
 		if (isConnected) {
 
@@ -701,7 +701,7 @@ public class FrontEndPlugin extends Plugin
 			}
 		}
 		repositoryLabel
-			.setText("Project Repository:   " + repository.getName() + getAccessString(user));
+				.setText("Project Repository:   " + repository.getName() + getAccessString(user));
 
 		String serverName = repository.getServerInfo().getServerName();
 		connectionButton.setToolTipText(
@@ -973,7 +973,7 @@ public class FrontEndPlugin extends Plugin
 		};
 		renameToolAction.setPopupMenuData(new MenuData(new String[] { "Rename..." }, "tool"));
 		renameToolAction
-			.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Rename Tool"));
+				.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Rename Tool"));
 
 		propertiesAction = new ToolButtonAction(PROPERTIES_ACTION_NAME) {
 			@Override
@@ -997,7 +997,7 @@ public class FrontEndPlugin extends Plugin
 			new MenuData(new String[] { "Configure Plugins..." }, "zproperties"));
 
 		propertiesAction
-			.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Configure_Tool"));
+				.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Configure_Tool"));
 
 		tool.addLocalAction(frontEndProvider, exportToolAction);
 		tool.addLocalAction(frontEndProvider, renameToolAction);
