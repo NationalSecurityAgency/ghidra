@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.debug.gui.control;
 
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.services.DebuggerConsoleService;
+import ghidra.app.services.ProgressService;
 import ghidra.debug.api.target.Target.ActionEntry;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
@@ -24,7 +25,22 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
 
-class TargetActionTask extends Task {
+public class TargetActionTask extends Task {
+
+	public static void executeTask(PluginTool tool, Task task) {
+		ProgressService progressService = tool.getService(ProgressService.class);
+		if (progressService != null) {
+			progressService.execute(task);
+		}
+		else {
+			tool.execute(task);
+		}
+	}
+
+	public static void runAction(PluginTool tool, String title, ActionEntry entry) {
+		executeTask(tool, new TargetActionTask(tool, title, entry));
+	}
+
 	private final PluginTool tool;
 	private final ActionEntry entry;
 
