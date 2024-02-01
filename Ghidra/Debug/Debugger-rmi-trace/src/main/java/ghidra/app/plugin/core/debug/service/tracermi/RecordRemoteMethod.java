@@ -23,8 +23,8 @@ import ghidra.debug.api.tracermi.*;
 import ghidra.trace.model.Trace;
 
 public record RecordRemoteMethod(TraceRmiHandler handler, String name, ActionName action,
-		String description, Map<String, RemoteParameter> parameters, SchemaName retType)
-		implements RemoteMethod {
+		String display, String description, Map<String, RemoteParameter> parameters,
+		SchemaName retType) implements RemoteMethod {
 	@Override
 	public DefaultRemoteAsyncResult invokeAsync(Map<String, Object> arguments) {
 		Trace trace = validate(arguments);

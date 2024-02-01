@@ -57,6 +57,13 @@ public interface RemoteMethod {
 	ActionName action();
 
 	/**
+	 * A title to display in the UI for this action.
+	 * 
+	 * @return the title
+	 */
+	String display();
+
+	/**
 	 * A description of the method.
 	 * 
 	 * <p>

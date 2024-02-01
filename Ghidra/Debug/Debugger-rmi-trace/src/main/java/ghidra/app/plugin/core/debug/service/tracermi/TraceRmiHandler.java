@@ -484,10 +484,10 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		RootMessage.Builder dispatch(RootMessage req, RootMessage.Builder rep) throws Exception;
 
 		default RootMessage handle(RootMessage req) {
-			String desc = toString(req);
+			/*String desc = toString(req);
 			if (desc != null) {
 				TimedMsg.debug(this, "HANDLING: " + desc);
-			}
+			}*/
 			RootMessage.Builder rep = RootMessage.newBuilder();
 			try {
 				rep = dispatch(req, rep);
@@ -814,7 +814,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 
 	protected ReplyActivate handleActivate(RequestActivate req) {
 		OpenTrace open = requireOpenTrace(req.getOid());
-		TraceObject object = open.getObject(req.getObject(), true);
+		TraceObject object = open.getObject(req.getObject(), false);
 		DebuggerCoordinates coords = traceManager.getCurrent();
 		if (coords.getTrace() != open.trace) {
 			coords = DebuggerCoordinates.NOWHERE;
@@ -822,7 +822,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		if (open.lastSnapshot != null && followsPresent(open.trace)) {
 			coords = coords.snap(open.lastSnapshot.getKey());
 		}
-		DebuggerCoordinates finalCoords = coords.object(object);
+		DebuggerCoordinates finalCoords = object == null ? coords : coords.object(object);
 		Swing.runLater(() -> {
 			if (!traceManager.getOpenTraces().contains(open.trace)) {
 				traceManager.openTrace(open.trace);
@@ -1031,7 +1031,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		}
 		for (Method m : req.getMethodsList()) {
 			RemoteMethod rm = new RecordRemoteMethod(this, m.getName(),
-				ActionName.name(m.getAction()),
+				ActionName.name(m.getAction()), m.getDisplay(),
 				m.getDescription(), m.getParametersList()
 						.stream()
 						.collect(Collectors.toMap(MethodParameter::getName, this::makeParameter)),

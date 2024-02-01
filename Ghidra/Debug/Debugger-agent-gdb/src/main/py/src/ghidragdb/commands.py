@@ -467,11 +467,14 @@ def ghidra_trace_set_snap(snap, *, is_mi, **kwargs):
     STATE.require_trace().set_snap(int(gdb.parse_and_eval(snap)))
 
 
+def quantize_pages(start, end):
+    return (start // PAGE_SIZE * PAGE_SIZE, (end+PAGE_SIZE-1) // PAGE_SIZE*PAGE_SIZE)
+
+
 def put_bytes(start, end, pages, is_mi, from_tty):
     trace = STATE.require_trace()
     if pages:
-        start = start // PAGE_SIZE * PAGE_SIZE
-        end = (end + PAGE_SIZE - 1) // PAGE_SIZE * PAGE_SIZE
+        start, end = quantize_pages(start, end)
     inf = gdb.selected_inferior()
     buf = bytes(inf.read_memory(start, end - start))
 
@@ -486,6 +489,8 @@ def put_bytes(start, end, pages, is_mi, from_tty):
 
 
 def eval_address(address):
+    if isinstance(address, int):
+        return address
     try:
         return int(gdb.parse_and_eval(address))
     except gdb.error as e:
@@ -494,10 +499,13 @@ def eval_address(address):
 
 def eval_range(address, length):
     start = eval_address(address)
-    try:
-        end = start + int(gdb.parse_and_eval(length))
-    except gdb.error as e:
-        raise gdb.GdbError("Cannot convert '{}' to length".format(length))
+    if isinstance(length, int):
+        end = start + length
+    else:
+        try:
+            end = start + int(gdb.parse_and_eval(length))
+        except gdb.error as e:
+            raise gdb.GdbError("Cannot convert '{}' to length".format(length))
     return start, end
 
 
@@ -532,6 +540,18 @@ def ghidra_trace_putval(value, pages=True, *, is_mi, from_tty=True, **kwargs):
     return put_bytes(start, end, pages, is_mi, from_tty)
 
 
+def putmem_state(address, length, state, pages=True):
+    STATE.trace.validate_state(state)
+    start, end = eval_range(address, length)
+    if pages:
+        start, end = quantize_pages(start, end)
+    inf = gdb.selected_inferior()
+    base, addr = STATE.trace.memory_mapper.map(inf, start)
+    if base != addr.space:
+        trace.create_overlay_space(base, addr.space)
+    STATE.trace.set_memory_state(addr.extend(end - start), state)
+
+
 @cmd('ghidra trace putmem-state', '-ghidra-trace-putmem-state', gdb.COMMAND_DATA, True)
 def ghidra_trace_putmem_state(address, length, state, *, is_mi, **kwargs):
     """
@@ -539,13 +559,7 @@ def ghidra_trace_putmem_state(address, length, state, *, is_mi, **kwargs):
     """
 
     STATE.require_tx()
-    STATE.trace.validate_state(state)
-    start, end = eval_range(address, length)
-    inf = gdb.selected_inferior()
-    base, addr = STATE.trace.memory_mapper.map(inf, start)
-    if base != addr.space:
-        trace.create_overlay_space(base, addr.space)
-    STATE.trace.set_memory_state(addr.extend(end - start), state)
+    putmem_state(address, length, state, True)
 
 
 @cmd('ghidra trace delmem', '-ghidra-trace-delmem', gdb.COMMAND_DATA, True)
@@ -1223,9 +1237,10 @@ def ghidra_trace_put_regions(*, is_mi, **kwargs):
         put_regions()
 
 
-def put_modules():
+def put_modules(modules=None, sections=False):
     inf = gdb.selected_inferior()
-    modules = util.MODULE_INFO_READER.get_modules()
+    if modules is None:
+        modules = util.MODULE_INFO_READER.get_modules()
     mapper = STATE.trace.memory_mapper
     mod_keys = []
     for mk, m in modules.items():
@@ -1237,29 +1252,32 @@ def put_modules():
         if base_base != base_addr.space:
             STATE.trace.create_overlay_space(base_base, base_addr.space)
         modobj.set_value('_range', base_addr.extend(m.max - m.base))
-        sec_keys = []
-        for sk, s in m.sections.items():
-            spath = mpath + SECTION_ADD_PATTERN.format(secname=sk)
-            secobj = STATE.trace.create_object(spath)
-            sec_keys.append(SECTION_KEY_PATTERN.format(secname=sk))
-            start_base, start_addr = mapper.map(inf, s.start)
-            if start_base != start_addr.space:
-                STATE.trace.create_overlay_space(
-                    start_base, start_addr.space)
-            secobj.set_value('_range', start_addr.extend(s.end - s.start))
-            secobj.set_value('_offset', s.offset)
-            secobj.set_value('_attrs', s.attrs, schema=sch.STRING_ARR)
-            secobj.insert()
-        # In case there are no sections, we must still insert the module
-        modobj.insert()
-        STATE.trace.proxy_object_path(
-            mpath + SECTIONS_ADD_PATTERN).retain_values(sec_keys)
-    STATE.trace.proxy_object_path(MODULES_PATTERN.format(
-        infnum=inf.num)).retain_values(mod_keys)
+        if sections:
+            sec_keys = []
+            for sk, s in m.sections.items():
+                spath = mpath + SECTION_ADD_PATTERN.format(secname=sk)
+                secobj = STATE.trace.create_object(spath)
+                sec_keys.append(SECTION_KEY_PATTERN.format(secname=sk))
+                start_base, start_addr = mapper.map(inf, s.start)
+                if start_base != start_addr.space:
+                    STATE.trace.create_overlay_space(
+                        start_base, start_addr.space)
+                secobj.set_value('_range', start_addr.extend(s.end - s.start))
+                secobj.set_value('_offset', s.offset)
+                secobj.set_value('_attrs', s.attrs, schema=sch.STRING_ARR)
+                secobj.insert()
+            STATE.trace.proxy_object_path(
+                mpath + SECTIONS_ADD_PATTERN).retain_values(sec_keys)
+
+        scpath = mpath + SECTIONS_ADD_PATTERN
+        sec_container_obj = STATE.trace.create_object(scpath)
+        sec_container_obj.insert()
+    if not sections:
+        STATE.trace.proxy_object_path(MODULES_PATTERN.format(
+            infnum=inf.num)).retain_values(mod_keys)
 
 
-@cmd('ghidra trace put-modules', '-ghidra-trace-put-modules', gdb.COMMAND_DATA,
-     True)
+@cmd('ghidra trace put-modules', '-ghidra-trace-put-modules', gdb.COMMAND_DATA, True)
 def ghidra_trace_put_modules(*, is_mi, **kwargs):
     """
     Gather object files, if applicable, and write to the trace's Modules.
@@ -1268,6 +1286,25 @@ def ghidra_trace_put_modules(*, is_mi, **kwargs):
     STATE.require_tx()
     with STATE.client.batch() as b:
         put_modules()
+
+
+@cmd('ghidra trace put-sections', '-ghidra-trace-put-sections', gdb.COMMAND_DATA, True)
+def ghidra_trace_put_sections(module_name, *, is_mi, **kwargs):
+    """
+    Write the sections of the given module or all modules
+    """
+
+    modules = None
+    if module_name != '-all-objects':
+        modules = {mk: m for mk, m in util.MODULE_INFO_READER.get_modules(
+        ).items() if mk == module_name}
+        if len(modules) == 0:
+            raise gdb.GdbError(
+                "No module / object named {}".format(module_name))
+
+    STATE.require_tx()
+    with STATE.client.batch() as b:
+        put_modules(modules, True)
 
 
 def convert_state(t):
@@ -1405,8 +1442,8 @@ def ghidra_trace_put_all(*, is_mi, **kwargs):
         ghidra_trace_putmem("$sp", "1", is_mi=is_mi)
         put_inferiors()
         put_environment()
-        put_regions()
         put_modules()
+        put_regions()
         put_threads()
         put_frames()
         put_breakpoints()

@@ -197,7 +197,8 @@ public abstract class AbstractTarget implements Target {
 			collectStepIntoActions(context),
 			collectStepOverActions(context),
 			collectStepOutActions(context),
-			collectStepExtActions(context))
+			collectStepExtActions(context),
+			collectRefreshActions(context))
 				.flatMap(m -> m.entrySet().stream())
 				.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 	}
@@ -215,6 +216,8 @@ public abstract class AbstractTarget implements Target {
 	protected abstract Map<String, ActionEntry> collectStepOutActions(ActionContext context);
 
 	protected abstract Map<String, ActionEntry> collectStepExtActions(ActionContext context);
+
+	protected abstract Map<String, ActionEntry> collectRefreshActions(ActionContext context);
 
 	@Override
 	public Map<String, ActionEntry> collectActions(ActionName name, ActionContext context) {
@@ -244,6 +247,9 @@ public abstract class AbstractTarget implements Target {
 		}
 		else if (ActionName.STEP_EXT.equals(name)) {
 			return collectStepExtActions(context);
+		}
+		else if (ActionName.REFRESH.equals(name)) {
+			return collectRefreshActions(context);
 		}
 		Msg.warn(this, "Unrecognized action name: " + name);
 		return Map.of();

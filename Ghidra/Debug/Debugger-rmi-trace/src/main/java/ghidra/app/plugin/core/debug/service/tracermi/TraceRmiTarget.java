@@ -240,6 +240,16 @@ public class TraceRmiTarget extends AbstractTarget {
 		}
 	}
 
+	protected long computeSpecificity(Map<String, Object> args) {
+		long score = 0;
+		for (Object o : args.values()) {
+			if (o instanceof TraceObject obj) {
+				score += obj.getCanonicalPath().getKeyList().size();
+			}
+		}
+		return score;
+	}
+
 	protected BooleanSupplier chooseEnabler(RemoteMethod method, Map<String, Object> args) {
 		ActionName name = method.action();
 		SchemaContext ctx = getSchemaContext();
@@ -282,7 +292,7 @@ public class TraceRmiTarget extends AbstractTarget {
 	private Map<String, Object> promptArgs(RemoteMethod method, Map<String, Object> defaults) {
 		SchemaContext ctx = getSchemaContext();
 		RemoteMethodInvocationDialog dialog = new RemoteMethodInvocationDialog(tool,
-			method.name(), method.name(), null);
+			method.display(), method.display(), null);
 		while (true) {
 			for (RemoteParameter param : method.parameters().values()) {
 				Object val = defaults.get(param.name());
@@ -325,8 +335,9 @@ public class TraceRmiTarget extends AbstractTarget {
 		Map<String, Object> args = collectArguments(method, context, allowContextObject,
 			allowCoordsObject, allowSuitableObject);
 		boolean requiresPrompt = args.values().contains(Missing.MISSING);
-		return new ActionEntry(method.name(), method.action(), method.description(), requiresPrompt,
-			chooseEnabler(method, args), prompt -> invokeMethod(prompt, method, args));
+		return new ActionEntry(method.display(), method.action(), method.description(),
+			requiresPrompt, computeSpecificity(args), chooseEnabler(method, args),
+			prompt -> invokeMethod(prompt, method, args));
 	}
 
 	protected Map<String, ActionEntry> collectFromMethods(Collection<RemoteMethod> methods,
@@ -413,6 +424,11 @@ public class TraceRmiTarget extends AbstractTarget {
 	@Override
 	protected Map<String, ActionEntry> collectStepExtActions(ActionContext context) {
 		return collectByName(ActionName.STEP_EXT, context);
+	}
+
+	@Override
+	protected Map<String, ActionEntry> collectRefreshActions(ActionContext context) {
+		return collectByName(ActionName.REFRESH, context);
 	}
 
 	@Override

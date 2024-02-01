@@ -22,6 +22,7 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import ghidra.program.model.address.*;
 import ghidra.rmi.trace.TraceRmi.*;
+import ghidra.util.NumericUtilities;
 
 public interface ValueDecoder {
 	ValueDecoder DEFAULT = new ValueDecoder() {};
@@ -104,7 +105,8 @@ public interface ValueDecoder {
 			case STRING_VALUE -> value.getStringValue();
 			case BOOL_ARR_VALUE -> ArrayUtils.toPrimitive(
 				value.getBoolArrValue().getArrList().stream().toArray(Boolean[]::new));
-			case BYTES_VALUE -> value.getBytesValue().toByteArray();
+			case BYTES_VALUE -> NumericUtilities
+					.convertBytesToString(value.getBytesValue().toByteArray(), ":");
 			case CHAR_ARR_VALUE -> value.getCharArrValue().toCharArray();
 			case SHORT_ARR_VALUE -> ArrayUtils.toPrimitive(
 				value.getShortArrValue()
