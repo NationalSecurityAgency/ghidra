@@ -15,7 +15,7 @@
  */
 /*
  * EntryPointAnalyzer.java
- * 
+ *
  * Created on Aug 27, 2003
  */
 package ghidra.app.plugin.core.disassembler;
@@ -41,7 +41,7 @@ import ghidra.util.task.TaskMonitor;
 
 public class EntryPointAnalyzer extends AbstractAnalyzer {
 
-	private final static String NAME = "Disassemble Entry Points";
+	public final static String NAME = "Disassemble Entry Points";
 	private static final String DESCRIPTION = "Disassembles entry points in newly added memory.";
 
 	private final static String OPTION_NAME_RESPECT_EXECUTE_FLAG = "Respect Execute Flag";
@@ -138,7 +138,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 	/**
 	 * Process the items on the do later set.  If doing block analysis, then this is the initial
 	 * analysis of the program, so schedule the do later set after some analysis has occurred.
-	 * 
+	 *
 	 * @param program - this program
 	 * @param monitor - monitor
 	 * @param doLaterSet - set of functions that were put off until later
@@ -164,11 +164,11 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 
 	/**
 	 * Check for a single external entry point.
-	 * 
+	 *
 	 * @param program - program to check
 	 * @param externalCount - count of external entry points found
 	 * @param doNowSet - set of functions that are to be done now
-	 * 
+	 *
 	 * @return true if this program has only one external entry point
 	 */
 	private boolean isSingleExternalEntryPoint(Program program, int externalCount,
