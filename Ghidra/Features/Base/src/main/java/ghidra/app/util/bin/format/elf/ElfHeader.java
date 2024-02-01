@@ -702,15 +702,17 @@ public class ElfHeader implements StructConverter {
 			}
 
 			ElfProgramHeader loadHeader = getProgramLoadHeaderContaining(vaddr);
-			if (loadHeader != null) {
-				long dynamicTableOffset = loadHeader.getOffset() +
-					(dynamicHeaders[0].getVirtualAddress() - loadHeader.getVirtualAddress());
-				dynamicTable = new ElfDynamicTable(reader, this, dynamicTableOffset,
-					dynamicHeaders[0].getVirtualAddress());
-				return;
+			if (loadHeader == null) {
+				// Assume p_offset can be used reliably if no corresponding PT_LOAD
+				loadHeader = dynamicHeaders[0];
 			}
+			long dynamicTableOffset = loadHeader.getOffset() +
+				(dynamicHeaders[0].getVirtualAddress() - loadHeader.getVirtualAddress());
+			dynamicTable = new ElfDynamicTable(reader, this, dynamicTableOffset,
+				dynamicHeaders[0].getVirtualAddress());
+			return;
 		}
-		else if (dynamicHeaders.length > 1) {
+		if (dynamicHeaders.length > 1) {
 			errorConsumer.accept("Multiple ELF Dynamic table program headers found");
 		}
 
