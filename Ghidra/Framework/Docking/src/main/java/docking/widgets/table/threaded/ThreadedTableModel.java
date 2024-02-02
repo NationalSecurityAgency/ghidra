@@ -145,6 +145,10 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 			updateManager.addThreadedTableListener(new NonIncrementalUpdateManagerListener());
 		}
 
+		startInitialLoad();
+	}
+
+	protected void startInitialLoad() {
 		// We are expecting to be in the swing thread.  We want the reload to happen after our
 		// constructor is fully completed since the reload will cause our initialize method to
 		// be called in another thread, thereby creating a possible race condition.

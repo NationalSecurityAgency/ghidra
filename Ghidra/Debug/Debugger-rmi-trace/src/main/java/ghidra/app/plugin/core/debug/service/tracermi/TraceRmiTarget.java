@@ -70,7 +70,7 @@ public class TraceRmiTarget extends AbstractTarget {
 	private final Trace trace;
 
 	private final Matches matches = new Matches();
-	private final RequestCaches requestCaches = new RequestCaches();
+	private final RequestCaches requestCaches = new DorkedRequestCaches();
 	private final Set<TraceBreakpointKind> supportedBreakpointKinds;
 
 	public TraceRmiTarget(PluginTool tool, TraceRmiConnection connection, Trace trace) {
@@ -240,6 +240,16 @@ public class TraceRmiTarget extends AbstractTarget {
 		}
 	}
 
+	protected long computeSpecificity(Map<String, Object> args) {
+		long score = 0;
+		for (Object o : args.values()) {
+			if (o instanceof TraceObject obj) {
+				score += obj.getCanonicalPath().getKeyList().size();
+			}
+		}
+		return score;
+	}
+
 	protected BooleanSupplier chooseEnabler(RemoteMethod method, Map<String, Object> args) {
 		ActionName name = method.action();
 		SchemaContext ctx = getSchemaContext();
@@ -282,7 +292,7 @@ public class TraceRmiTarget extends AbstractTarget {
 	private Map<String, Object> promptArgs(RemoteMethod method, Map<String, Object> defaults) {
 		SchemaContext ctx = getSchemaContext();
 		RemoteMethodInvocationDialog dialog = new RemoteMethodInvocationDialog(tool,
-			method.name(), method.name(), null);
+			method.display(), method.display(), null);
 		while (true) {
 			for (RemoteParameter param : method.parameters().values()) {
 				Object val = defaults.get(param.name());
@@ -325,8 +335,9 @@ public class TraceRmiTarget extends AbstractTarget {
 		Map<String, Object> args = collectArguments(method, context, allowContextObject,
 			allowCoordsObject, allowSuitableObject);
 		boolean requiresPrompt = args.values().contains(Missing.MISSING);
-		return new ActionEntry(method.name(), method.action(), method.description(), requiresPrompt,
-			chooseEnabler(method, args), prompt -> invokeMethod(prompt, method, args));
+		return new ActionEntry(method.display(), method.action(), method.description(),
+			requiresPrompt, computeSpecificity(args), chooseEnabler(method, args),
+			prompt -> invokeMethod(prompt, method, args));
 	}
 
 	protected Map<String, ActionEntry> collectFromMethods(Collection<RemoteMethod> methods,
@@ -413,6 +424,11 @@ public class TraceRmiTarget extends AbstractTarget {
 	@Override
 	protected Map<String, ActionEntry> collectStepExtActions(ActionContext context) {
 		return collectByName(ActionName.STEP_EXT, context);
+	}
+
+	@Override
+	protected Map<String, ActionEntry> collectRefreshActions(ActionContext context) {
+		return collectByName(ActionName.REFRESH, context);
 	}
 
 	@Override
@@ -760,25 +776,67 @@ public class TraceRmiTarget extends AbstractTarget {
 		}
 	}
 
-	protected static class RequestCaches {
+	interface RequestCaches {
+		void invalidate();
+
+		void invalidateMemory();
+
+		CompletableFuture<Void> readBlock(Address min, RemoteMethod method,
+				Map<String, Object> args);
+
+		CompletableFuture<Void> readRegs(TraceObject obj, RemoteMethod method,
+				Map<String, Object> args);
+	}
+
+	protected static class DefaultRequestCaches implements RequestCaches {
 		final Map<TraceObject, CompletableFuture<Void>> readRegs = new HashMap<>();
 		final Map<Address, CompletableFuture<Void>> readBlock = new HashMap<>();
 
+		@Override
+		public synchronized void invalidateMemory() {
+			readBlock.clear();
+		}
+
+		@Override
 		public synchronized void invalidate() {
 			readRegs.clear();
 			readBlock.clear();
 		}
 
+		@Override
 		public synchronized CompletableFuture<Void> readRegs(TraceObject obj, RemoteMethod method,
 				Map<String, Object> args) {
 			return readRegs.computeIfAbsent(obj,
 				o -> method.invokeAsync(args).toCompletableFuture().thenApply(__ -> null));
 		}
 
+		@Override
 		public synchronized CompletableFuture<Void> readBlock(Address min, RemoteMethod method,
 				Map<String, Object> args) {
 			return readBlock.computeIfAbsent(min,
 				m -> method.invokeAsync(args).toCompletableFuture().thenApply(__ -> null));
+		}
+	}
+
+	protected static class DorkedRequestCaches implements RequestCaches {
+		@Override
+		public void invalidate() {
+		}
+
+		@Override
+		public void invalidateMemory() {
+		}
+
+		@Override
+		public CompletableFuture<Void> readBlock(Address min, RemoteMethod method,
+				Map<String, Object> args) {
+			return method.invokeAsync(args).toCompletableFuture().thenApply(__ -> null);
+		}
+
+		@Override
+		public CompletableFuture<Void> readRegs(TraceObject obj, RemoteMethod method,
+				Map<String, Object> args) {
+			return method.invokeAsync(args).toCompletableFuture().thenApply(__ -> null);
 		}
 	}
 
@@ -818,6 +876,7 @@ public class TraceRmiTarget extends AbstractTarget {
 
 	@Override
 	public CompletableFuture<Void> invalidateMemoryCachesAsync() {
+		requestCaches.invalidateMemory();
 		return AsyncUtils.nil();
 	}
 

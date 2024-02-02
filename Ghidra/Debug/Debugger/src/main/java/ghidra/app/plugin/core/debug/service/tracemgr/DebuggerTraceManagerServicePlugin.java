@@ -545,7 +545,21 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		return coordinates.platform(platform);
 	}
 
-	protected DebuggerCoordinates doSetCurrent(DebuggerCoordinates newCurrent,
+	protected boolean doSetCurrent(DebuggerCoordinates newCurrent) {
+		synchronized (listenersByTrace) {
+			if (current.equals(newCurrent)) {
+				return false;
+			}
+			current = newCurrent;
+			if (newCurrent.getTrace() != null) {
+				lastCoordsByTrace.put(newCurrent.getTrace(), newCurrent);
+			}
+		}
+		contextChanged();
+		return true;
+	}
+
+	protected DebuggerCoordinates fixAndSetCurrent(DebuggerCoordinates newCurrent,
 			ActivationCause cause) {
 		newCurrent = newCurrent == null ? DebuggerCoordinates.NOWHERE : newCurrent;
 		newCurrent = fillInTarget(newCurrent.getTrace(), newCurrent);
@@ -556,16 +570,9 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 				newCurrent = newCurrent.snap(target.getSnap());
 			}
 		}
-		synchronized (listenersByTrace) {
-			if (current.equals(newCurrent)) {
-				return null;
-			}
-			current = newCurrent;
-			if (newCurrent.getTrace() != null) {
-				lastCoordsByTrace.put(newCurrent.getTrace(), newCurrent);
-			}
+		if (!doSetCurrent(newCurrent)) {
+			return null;
 		}
-		contextChanged();
 		return newCurrent;
 	}
 
@@ -632,7 +639,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	public void processEvent(PluginEvent event) {
 		super.processEvent(event);
 		if (event instanceof TraceActivatedPluginEvent ev) {
-			doSetCurrent(ev.getActiveCoordinates(), ev.getCause());
+			fixAndSetCurrent(ev.getActiveCoordinates(), ev.getCause());
 		}
 		else if (event instanceof TraceClosedPluginEvent ev) {
 			doTraceClosed(ev.getTrace());
@@ -1065,11 +1072,16 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		DebuggerCoordinates resolved;
 
 		prev = current;
-		resolved = doSetCurrent(coordinates, cause);
+		resolved = fixAndSetCurrent(coordinates, cause);
 		if (resolved == null) {
 			return AsyncUtils.nil();
 		}
-		CompletableFuture<Void> future = prepareViewAndFireEvent(resolved, cause);
+		CompletableFuture<Void> future =
+			prepareViewAndFireEvent(resolved, cause).exceptionally(ex -> {
+				// Emulation service will already display error
+				doSetCurrent(prev);
+				return null;
+			});
 
 		if (!synchronizeActive.get() || cause != ActivationCause.USER) {
 			return future;

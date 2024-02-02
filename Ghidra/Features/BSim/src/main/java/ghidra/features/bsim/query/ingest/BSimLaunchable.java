@@ -1066,9 +1066,6 @@ public class BSimLaunchable implements GhidraLaunchable {
 			System.err.println("ERROR: " + e.getMessage());
 		}
 
-		// Allows handling of old content which did not have a content type property
-		DomainObjectAdapter.setDefaultContentClass(ProgramDB.class);
-
 		ApplicationConfiguration config;
 		switch (type) {
 			case 2:

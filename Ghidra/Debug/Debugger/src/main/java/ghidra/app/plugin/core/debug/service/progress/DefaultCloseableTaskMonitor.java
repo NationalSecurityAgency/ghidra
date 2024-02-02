@@ -70,6 +70,11 @@ public class DefaultCloseableTaskMonitor implements CloseableTaskMonitor {
 	}
 
 	@Override
+	public void reportError(Throwable error) {
+		receiver.reportError(error);
+	}
+
+	@Override
 	public String getMessage() {
 		return receiver.getMessage();
 	}

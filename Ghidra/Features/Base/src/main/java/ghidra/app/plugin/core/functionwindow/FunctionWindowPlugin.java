@@ -25,7 +25,8 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.plugin.core.functioncompare.actions.CompareFunctionsFromFunctionTableAction;
 import ghidra.app.services.FunctionComparisonService;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainObjectListener;
+import ghidra.framework.model.DomainObjectListenerBuilder;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -34,7 +35,6 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.ProgramChangeRecord;
-import ghidra.program.util.ProgramEvent;
 import ghidra.util.table.SelectionNavigationAction;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
 import ghidra.util.task.SwingUpdateManager;
@@ -49,12 +49,13 @@ import ghidra.util.task.SwingUpdateManager;
 	eventsConsumed = { ProgramClosedPluginEvent.class }
 )
 //@formatter:on
-public class FunctionWindowPlugin extends ProgramPlugin implements DomainObjectListener {
+public class FunctionWindowPlugin extends ProgramPlugin {
 
 	private DockingAction selectAction;
 	private DockingAction compareFunctionsAction;
 	private FunctionWindowProvider provider;
 	private SwingUpdateManager swingMgr;
+	private DomainObjectListener domainObjectListener;
 
 	public FunctionWindowPlugin(PluginTool tool) {
 		super(tool);
@@ -66,6 +67,7 @@ public class FunctionWindowPlugin extends ProgramPlugin implements DomainObjectL
 	public void init() {
 		super.init();
 		provider = new FunctionWindowProvider(this);
+		domainObjectListener = createDomainObjectListener();
 		createActions();
 
 		/**
@@ -80,7 +82,7 @@ public class FunctionWindowPlugin extends ProgramPlugin implements DomainObjectL
 	@Override
 	public void dispose() {
 		if (currentProgram != null) {
-			currentProgram.removeListener(this);
+			currentProgram.removeListener(domainObjectListener);
 		}
 		swingMgr.dispose();
 		if (provider != null) {
@@ -106,88 +108,66 @@ public class FunctionWindowPlugin extends ProgramPlugin implements DomainObjectL
 		}
 	}
 
-	@Override
-	public void domainObjectChanged(DomainObjectChangedEvent ev) {
+	private DomainObjectListener createDomainObjectListener() {
+		// @formatter:off
+		return new DomainObjectListenerBuilder(this)
+			.ignoreWhen(() -> !provider.isVisible())
+			.any(RESTORED, MEMORY_BLOCK_MOVED, MEMORY_BLOCK_REMOVED).terminate(provider::reload)
+			.any(CODE_ADDED, CODE_REMOVED).call(swingMgr::update)
+			.with(ProgramChangeRecord.class)
+				.each(FUNCTION_ADDED).call(this::functionAdded)
+				.each(FUNCTION_REMOVED).call(this::functionRemoved)
+				.each(FUNCTION_CHANGED).call(this::functionChanged)
+				.each(SYMBOL_ADDED, SYMBOL_PRIMARY_STATE_CHANGED).call(this::symbolChanged)
+				.each(SYMBOL_RENAMED).call(this::symbolRenamed)
+			.build();
+		// @formatter:on
+	}
 
-		if (!provider.isVisible()) {
-			return;
+	private void functionAdded(ProgramChangeRecord rec) {
+		Function function = (Function) rec.getObject();
+		provider.functionAdded(function);
+	}
+
+	private void functionRemoved(ProgramChangeRecord rec) {
+		Function function = (Function) rec.getObject();
+		if (function != null) {
+			provider.functionRemoved(function);
 		}
+	}
 
-		if (ev.contains(RESTORED, MEMORY_BLOCK_MOVED, MEMORY_BLOCK_REMOVED)) {
-			provider.reload();
-			return;
+	private void functionChanged(ProgramChangeRecord rec) {
+		Function function = (Function) rec.getObject();
+		provider.update(function);
+	}
+
+	private void symbolChanged(ProgramChangeRecord rec) {
+		Symbol sym = (Symbol) rec.getNewValue();
+		Address addr = sym.getAddress();
+		Function function = currentProgram.getListing().getFunctionAt(addr);
+		if (function != null) {
+			provider.update(function);
 		}
+	}
 
-		for (int i = 0; i < ev.numRecords(); ++i) {
-			DomainObjectChangeRecord doRecord = ev.getChangeRecord(i);
-
-			EventType eventType = doRecord.getEventType();
-
-			if (eventType instanceof ProgramEvent type) {
-				switch (type) {
-					case CODE_ADDED:
-					case CODE_REMOVED:
-						swingMgr.update();
-						break;
-
-					case FUNCTION_ADDED:
-						ProgramChangeRecord rec = (ProgramChangeRecord) ev.getChangeRecord(i);
-						Function function = (Function) rec.getObject();
-						provider.functionAdded(function);
-						break;
-					case FUNCTION_REMOVED:
-						rec = (ProgramChangeRecord) ev.getChangeRecord(i);
-						function = (Function) rec.getObject();
-						if (function != null) {
-							provider.functionRemoved(function);
-						}
-						break;
-					case FUNCTION_CHANGED:
-						rec = (ProgramChangeRecord) ev.getChangeRecord(i);
-						function = (Function) rec.getObject();
-						provider.update(function);
-						break;
-					case SYMBOL_ADDED:
-					case SYMBOL_PRIMARY_STATE_CHANGED:
-						rec = (ProgramChangeRecord) ev.getChangeRecord(i);
-						Symbol sym = (Symbol) rec.getNewValue();
-						Address addr = sym.getAddress();
-						function = currentProgram.getListing().getFunctionAt(addr);
-						if (function != null) {
-							provider.update(function);
-						}
-						break;
-					case SYMBOL_RENAMED:
-						rec = (ProgramChangeRecord) ev.getChangeRecord(i);
-						sym = (Symbol) rec.getObject();
-						addr = sym.getAddress();
-						function = currentProgram.getListing().getFunctionAt(addr);
-						if (function != null) {
-							provider.update(function);
-						}
-						break;
-					/*case SYMBOL_REMOVED:
-						rec = (ProgramChangeRecord)ev.getChangeRecord(i);
-						addr = (Address)rec.getObject();
-						function = currentProgram.getListing().getFunctionAt(addr);
-						if (function != null) {
-							provider.functionChanged(function);
-						}
-						break;*/
-				}
-			}
+	private void symbolRenamed(ProgramChangeRecord rec) {
+		Symbol sym = (Symbol) rec.getObject();
+		Address addr = sym.getAddress();
+		Function function = currentProgram.getListing().getFunctionAt(addr);
+		if (function != null) {
+			provider.update(function);
 		}
 	}
 
 	@Override
 	protected void programActivated(Program program) {
-		program.addListener(this);
+		program.addListener(domainObjectListener);
 		provider.programOpened(program);
 	}
 
 	@Override
 	protected void programDeactivated(Program program) {
-		program.removeListener(this);
+		program.removeListener(domainObjectListener);
 		provider.programClosed();
 	}
 

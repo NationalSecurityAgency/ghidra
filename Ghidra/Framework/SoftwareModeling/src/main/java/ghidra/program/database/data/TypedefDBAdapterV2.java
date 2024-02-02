@@ -138,13 +138,18 @@ class TypedefDBAdapterV2 extends TypedefDBAdapter {
 		Field[] keys =
 			table.findRecords(new LongField(datatypeID.getValue()), V2_TYPEDEF_UNIVERSAL_DT_ID_COL);
 
-		for (int i = 0; i < keys.length; i++) {
-			DBRecord record = table.getRecord(keys[i]);
+		for (Field key : keys) {
+			DBRecord record = table.getRecord(key);
 			if (record.getLongValue(V2_TYPEDEF_SOURCE_ARCHIVE_ID_COL) == sourceID.getValue()) {
 				return record;
 			}
 		}
 		return null;
+	}
+
+	@Override
+	public int getRecordCount() {
+		return table.getRecordCount();
 	}
 
 }

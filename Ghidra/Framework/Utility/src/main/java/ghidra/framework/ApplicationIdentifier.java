@@ -15,6 +15,8 @@
  */
 package ghidra.framework;
 
+import utility.application.ApplicationUtilities;
+
 /**
  * Class to represent an application's unique identifier.  An application identifier is made up
  * of an application name, an application version, and an application release name.
@@ -46,8 +48,8 @@ public class ApplicationIdentifier {
 	 */
 	public ApplicationIdentifier(ApplicationProperties applicationProperties)
 			throws IllegalArgumentException {
-		applicationName =
-			applicationProperties.getApplicationName().replaceAll("\\s", "").toLowerCase();
+		applicationName = ApplicationUtilities
+				.normalizeApplicationName(applicationProperties.getApplicationName());
 		if (applicationName.isEmpty()) {
 			throw new IllegalArgumentException("Application name is undefined.");
 		}

@@ -24,6 +24,7 @@ import ghidra.docking.settings.Settings;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.AlignedStructurePacker.StructurePackResult;
+import ghidra.program.model.data.DataTypeConflictHandler.ConflictResult;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
@@ -1584,7 +1585,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		}
 		finally {
 			if (isResolveCacheOwner) {
-				dataMgr.flushResolveQueue(true);
+				dataMgr.processResolveQueue(true);
 			}
 			lock.release();
 		}
@@ -1941,11 +1942,11 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	}
 
 	@Override
-	public boolean isEquivalent(DataType dataType) {
+	protected boolean isEquivalent(DataType dataType, DataTypeConflictHandler handler) {
 		if (dataType == this) {
 			return true;
 		}
-		if (!(dataType instanceof StructureInternal)) {
+		if (!(dataType instanceof StructureInternal struct)) {
 			return false;
 		}
 
@@ -1964,7 +1965,14 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 		try {
 			isEquivalent = false;
-			StructureInternal struct = (StructureInternal) dataType;
+
+			if (handler != null &&
+				ConflictResult.USE_EXISTING == handler.resolveConflict(struct, this)) {
+				// treat this type as equivalent if existing type will be used
+				isEquivalent = true;
+				return true;
+			}
+
 			int otherLength = struct.isZeroLength() ? 0 : struct.getLength();
 			int packing = getStoredPackingValue();
 			if (packing != struct.getStoredPackingValue() ||
@@ -1982,10 +1990,14 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			if (otherDefinedComponents.length != myNumComps) { // safety check
 				return false;
 			}
+			if (handler != null) {
+				handler = handler.getSubsequentHandler();
+				//dataMgr.getPostResolve(this);
+			}
 			for (int i = 0; i < myNumComps; i++) {
 				DataTypeComponent myDtc = components.get(i);
 				DataTypeComponent otherDtc = otherDefinedComponents[i];
-				if (!myDtc.isEquivalent(otherDtc)) {
+				if (!DataTypeComponentDB.isEquivalent(myDtc, otherDtc, handler)) {
 					return false;
 				}
 			}
@@ -1995,6 +2007,11 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			dataMgr.putCachedEquivalence(this, dataType, isEquivalent);
 		}
 		return true;
+	}
+
+	@Override
+	public boolean isEquivalent(DataType dt) {
+		return isEquivalent(dt, null);
 	}
 
 	/**

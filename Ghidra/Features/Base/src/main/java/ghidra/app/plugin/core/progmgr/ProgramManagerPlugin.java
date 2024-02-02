@@ -57,7 +57,7 @@ import ghidra.util.task.TaskLauncher;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.SUPPORT,
+	category = PluginCategoryNames.COMMON,
 	shortDescription = "Manage open programs",
 	description = "This plugin provides actions for opening and closing programs.  It also " +
 			"provides a service to allow plugins to open/close programs.  This plugin is " +

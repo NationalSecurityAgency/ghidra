@@ -17,7 +17,7 @@ package ghidra.program.model.data;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.LinkedList;
+import java.util.*;
 
 import javax.help.UnsupportedOperationException;
 
@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableList;
 import db.*;
 import db.util.ErrorHandler;
 import generic.jar.ResourceFile;
+import generic.stl.Pair;
 import ghidra.framework.model.RuntimeIOException;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.DBStringMapAdapter;
@@ -870,12 +871,12 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB implements Clos
 	}
 
 	@Override
-	protected void replaceDataTypeIDs(long oldID, long newID) {
+	protected void replaceDataTypesUsed(Map<Long, Long> dataTypeReplacementMap) {
 		// do nothing
 	}
 
 	@Override
-	protected void deleteDataTypeIDs(LinkedList<Long> deletedIds, TaskMonitor monitor) {
+	protected void deleteDataTypesUsed(Set<Long> deletedIds) {
 		// do nothing
 	}
 

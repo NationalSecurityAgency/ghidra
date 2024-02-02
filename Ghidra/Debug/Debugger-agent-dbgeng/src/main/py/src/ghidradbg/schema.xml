@@ -96,7 +96,8 @@
 		<attribute name="_spec" schema="BreakpointSpec" />
 		<attribute name="_range" schema="RANGE" hidden="yes" />
 		<attribute name="_modified" schema="BOOL" hidden="yes" />
-		<attribute name="_enabled" schema="BOOL" required="yes" hidden="yes" />
+		<attribute name="Enabled" schema="BOOL" required="yes" />
+		<attribute-alias from="_enabled" to="Enabled" />
 		<attribute name="Commands" schema="STRING" />
 		<attribute name="Condition" schema="STRING" />
 		<attribute name="Hit Count" schema="INT" />

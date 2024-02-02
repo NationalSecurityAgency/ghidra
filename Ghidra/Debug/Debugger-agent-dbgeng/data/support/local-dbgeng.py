@@ -14,6 +14,7 @@
 #  limitations under the License.
 ##
 import os
+from ghidradbg.util import *
 from ghidradbg.commands import *
 
 ghidra_trace_connect(os.getenv('GHIDRA_TRACE_RMI_ADDR'))
@@ -25,6 +26,6 @@ ghidra_trace_start(os.getenv('OPT_TARGET_IMG'))
 ghidra_trace_sync_enable()
 
 # TODO: HACK
-dbg().wait()
+dbg.wait()
 
 repl()

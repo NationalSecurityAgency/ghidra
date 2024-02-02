@@ -433,8 +433,7 @@ public class DBTraceCodeManager extends AbstractDBTraceSpaceBasedManager<DBTrace
 	}
 
 	@Override
-	public DBTraceCodeSpace getCodeRegisterSpace(TraceThread thread,
-			boolean createIfAbsent) {
+	public DBTraceCodeSpace getCodeRegisterSpace(TraceThread thread, boolean createIfAbsent) {
 		return getForRegisterSpace(thread, 0, createIfAbsent);
 	}
 
@@ -445,26 +444,24 @@ public class DBTraceCodeManager extends AbstractDBTraceSpaceBasedManager<DBTrace
 	}
 
 	@Override
-	public DBTraceCodeSpace getCodeRegisterSpace(TraceStackFrame frame,
-			boolean createIfAbsent) {
+	public DBTraceCodeSpace getCodeRegisterSpace(TraceStackFrame frame, boolean createIfAbsent) {
 		return getForRegisterSpace(frame, createIfAbsent);
 	}
 
 	@Internal
-	public void replaceDataTypes(long oldID, long newID) {
+	public void replaceDataTypes(Map<Long, Long> dataTypeReplacementMap) {
 		TODO();
 	}
 
 	@Internal
-	public void clearData(LinkedList<Long> deletedDataTypeIds, TaskMonitor monitor) {
+	public void clearData(Set<Long> deletedDataTypeIds, TaskMonitor monitor) {
 		TODO();
 	}
 
 	@Internal
 	public void clearPlatform(Lifespan span, AddressRange range, DBTraceGuestPlatform guest,
 			TaskMonitor monitor) throws CancelledException {
-		delegateDeleteV(range.getAddressSpace(),
-			m -> m.clearPlatform(span, range, guest, monitor));
+		delegateDeleteV(range.getAddressSpace(), m -> m.clearPlatform(span, range, guest, monitor));
 	}
 
 	@Internal

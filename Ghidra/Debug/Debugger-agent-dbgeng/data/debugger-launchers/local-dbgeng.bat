@@ -28,7 +28,4 @@ if exist "%GHIDRA_HOME%\ghidra\.git\" (
   set PYTHONPATH=%GHIDRA_HOME%\Ghidra\Debug\Debugger-rmi-trace\pypkg\src;%PYTHONPATH%
 )
 
-echo PYTHONPATH is %PYTHONPATH%
-echo OPT_TARGET_IMG is [%OPT_TARGET_IMG%]
-
 "%OPT_PYTHON_EXE%" -i ..\support\local-dbgeng.py

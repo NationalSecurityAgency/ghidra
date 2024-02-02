@@ -51,8 +51,7 @@ public class MemSearchRegExTest extends AbstractMemSearchTest {
 		builder.createMemory(".debug_data", Long.toHexString(0xF0001300), 0x1C);
 
 		//create and disassemble a function
-		builder.setBytes(
-			"0x01002cf5",
+		builder.setBytes("0x01002cf5",
 			"55 8b ec 83 7d 14 00 56 8b 35 e0 10 00 01 57 74 09 ff 75 14 ff d6 8b f8 eb 02 " +
 				"33 ff ff 75 10 ff d6 03 c7 8d 44 00 02 50 6a 40 ff 15 dc 10 00 01 8b f0 85 f6 " +
 				"74 27 56 ff 75 14 ff 75 10 e8 5c ff ff ff ff 75 18 ff 75 0c 56 ff 75 08 ff 15 " +
@@ -83,9 +82,9 @@ public class MemSearchRegExTest extends AbstractMemSearchTest {
 		builder.setBytes("0x1001004", "85 4f dc 77");
 		builder.applyDataType("0x1001004", new Pointer32DataType(), 1);
 		builder.setBytes("0x1001040", "e3 b3 f4 77");
-		builder.applyDataType("0x1001004", new Pointer32DataType(), 1);
+		builder.applyDataType("0x1001040", new Pointer32DataType(), 1);
 		builder.setBytes("0x1001044", "3d b6 f4 77");
-		builder.applyDataType("0x1001004", new Pointer32DataType(), 1);
+		builder.applyDataType("0x1001044", new Pointer32DataType(), 1);
 
 		builder.createEncodedString("0x01001708", "Notepad", StandardCharsets.US_ASCII, false);
 		builder.createEncodedString("0x01001740", "something else", StandardCharsets.US_ASCII,

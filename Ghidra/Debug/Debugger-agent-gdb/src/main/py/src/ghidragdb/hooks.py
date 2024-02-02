@@ -96,9 +96,11 @@ class InferiorState(object):
                 self.visited.add(hashable_frame)
         if first or self.regions or self.threads or self.modules:
             # Sections, memory syscalls, or stack allocations
+            commands.put_modules()
+            self.modules = False
             commands.put_regions()
             self.regions = False
-        if first or self.modules:
+        elif first or self.modules:
             commands.put_modules()
             self.modules = False
         if first or self.breaks:

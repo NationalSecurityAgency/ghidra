@@ -36,7 +36,7 @@ public interface Structure extends Composite {
 	/**
 	 * Returns the component of this structure with the indicated ordinal.
 	 * 
-	 * @param ordinal the ordinal of the component requested.
+	 * @param ordinal the ordinal of the component requested (numbering starts at 0).
 	 * @return the data type component.
 	 * @throws IndexOutOfBoundsException if the ordinal is out of bounds
 	 */
@@ -71,7 +71,7 @@ public interface Structure extends Composite {
 	 * or null if not found.
 	 */
 	public DataTypeComponent getComponentContaining(int offset);
-	
+
 	/**
 	 * Gets the first non-zero-length component that starts at the specified offset. 
 	 * Note that one or more components may share the same offset when a bit-field or zero-length
@@ -102,7 +102,7 @@ public interface Structure extends Composite {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Get an ordered list of components that contain the byte at the specified offset.
 	 * Unlike {@link #getComponentAt(int)} and {@link #getComponentContaining(int)} this method will
@@ -151,7 +151,7 @@ public interface Structure extends Composite {
 	 * with bit-7 (msb) of the first byte for big-endian. This is the default behavior for most
 	 * compilers. Insertion behavior may not work as expected if packing rules differ from this.
 	 * 
-	 * @param ordinal the ordinal of the component to be inserted.
+	 * @param ordinal the ordinal of the component to be inserted (numbering starts at 0).
 	 * @param byteWidth the storage allocation unit width which contains the bitfield. Must be large
 	 *            enough to contain the "effective bit size" and corresponding bitOffset. The actual
 	 *            component size used will be recomputed during insertion.
@@ -305,7 +305,7 @@ public interface Structure extends Composite {
 	 * which may not result in such undefined components.  In the case of a packed structure 
 	 * clearing is always completed without backfill. 
 	 * 
-	 * @param ordinal the ordinal of the component to clear.
+	 * @param ordinal the ordinal of the component to clear (numbering starts at 0).
 	 * @throws IndexOutOfBoundsException if component ordinal is out of bounds
 	 */
 	public void clearComponent(int ordinal) throws IndexOutOfBoundsException;
@@ -331,7 +331,7 @@ public interface Structure extends Composite {
 	 * NOTE: In general, it is not recommended that this method be used with non-packed 
 	 * structures where the replaced component is a bit-field.
 	 * 
-	 * @param ordinal the ordinal of the component to be replaced.
+	 * @param ordinal the ordinal of the component to be replaced (numbering starts at 0).
 	 * @param dataType the datatype to insert. If {@link DataType#DEFAULT} is specified for a packed 
 	 *             structure an {@link Undefined1DataType} will be used in its place.  If {@link DataType#DEFAULT} 
 	 *             is specified for a non-packed structure this is equivelant to {@link #clearComponent(int)}, ignoring
@@ -368,7 +368,7 @@ public interface Structure extends Composite {
 	 * NOTE: In general, it is not recommended that this method be used with non-packed 
 	 * structures where the replaced component is a bit-field.
 	 * 
-	 * @param ordinal the ordinal of the component to be replaced.
+	 * @param ordinal the ordinal of the component to be replaced (numbering starts at 0).
 	 * @param dataType the datatype to insert.  If {@link DataType#DEFAULT} is specified for a packed 
 	 *             structure an {@link Undefined1DataType} will be used in its place.  If {@link DataType#DEFAULT} 
 	 *             is specified for a non-packed structure this is equivelant to {@link #clearComponent(int)}, ignoring

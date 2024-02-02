@@ -33,6 +33,7 @@ import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.DomainObjectChangeRecord;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
@@ -100,8 +101,14 @@ public abstract class DebuggerReadsMemoryTrait {
 
 	protected class ForReadsTraceListener extends TraceDomainObjectListener {
 		public ForReadsTraceListener() {
+			listenForUntyped(DomainObject.DO_OBJECT_RESTORED, this::objectRestored);
 			listenFor(TraceSnapshotChangeType.ADDED, this::snapshotAdded);
 			listenFor(TraceMemoryStateChangeType.CHANGED, this::memStateChanged);
+		}
+
+		private void objectRestored(DomainObjectChangeRecord rec) {
+			actionRefreshSelected.updateEnabled(null);
+			doAutoRead();
 		}
 
 		private void snapshotAdded(TraceSnapshot snapshot) {

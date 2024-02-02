@@ -91,7 +91,7 @@ public class SymbolRowObject implements Comparable<SymbolRowObject> {
 
 	/**
 	 * The <code>AbstractSortedTableModel.EndOfChainComparator</code> makes it 
-	 * neccessary to implement this method to avoid use of identity hash equality
+	 * necessary to implement this method to avoid use of identity hash equality
 	 * when two instances are otherwise equal.
 	 */
 	@Override

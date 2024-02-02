@@ -52,6 +52,11 @@ model {
 				}
 			}
 		}
+		if (isCurrentFreeBSD()) {
+			gcc(Gcc) {
+				target("freebsd_x86_64")
+			}
+		}
 		if (isCurrentWindows() && VISUAL_STUDIO_INSTALL_DIR) {
 			// specify installDir because Gradle doesn't find VS Build Tools.
 			// See https://github.com/gradle/gradle-native/issues/617#issuecomment-575735288

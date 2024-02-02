@@ -146,6 +146,8 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 	private DebuggerControlService controlService;
 	// @AutoServiceConsumed // via method
 	private DebuggerEmulationService emulationService;
+	@AutoServiceConsumed
+	private ProgressService progressService;
 
 	public DebuggerControlPlugin(PluginTool tool) {
 		super(tool);
@@ -282,10 +284,6 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		updateActions();
 	}
 
-	protected void runTask(String title, ActionEntry entry) {
-		tool.execute(new TargetActionTask(title, entry));
-	}
-
 	protected void addTargetStepExtActions(Target target) {
 		for (ActionEntry entry : target.collectActions(ActionName.STEP_EXT, context).values()) {
 			if (entry.requiresPrompt()) {
@@ -294,7 +292,7 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 			actionsTargetStepExt.add(TargetStepExtAction.builder(entry.display(), this)
 					.description(entry.details())
 					.enabledWhen(ctx -> entry.isEnabled())
-					.onAction(ctx -> runTask(entry.display(), entry))
+					.onAction(ctx -> TargetActionTask.runAction(tool, entry.display(), entry))
 					.build());
 		}
 	}
@@ -359,7 +357,7 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		if (target == null) {
 			return;
 		}
-		tool.execute(new Task("Disconnect", false, false, false) {
+		TargetActionTask.executeTask(tool, new Task("Disconnect", false, false, false) {
 			@Override
 			public void run(TaskMonitor monitor) throws CancelledException {
 				try {

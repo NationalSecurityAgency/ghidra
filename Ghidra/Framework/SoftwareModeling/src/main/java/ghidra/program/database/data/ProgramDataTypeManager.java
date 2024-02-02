@@ -16,8 +16,8 @@
 package ghidra.program.database.data;
 
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.Map;
+import java.util.Set;
 
 import db.*;
 import db.util.ErrorHandler;
@@ -242,28 +242,25 @@ public class ProgramDataTypeManager extends ProgramBasedDataTypeManagerDB implem
 	}
 
 	@Override
-	protected void replaceDataTypeIDs(long oldDataTypeID, long newDataTypeID) {
-		if (oldDataTypeID == newDataTypeID) {
-			return;
-		}
-		program.getCodeManager().replaceDataTypes(oldDataTypeID, newDataTypeID);
-		program.getSymbolTable().replaceDataTypes(oldDataTypeID, newDataTypeID);
-		program.getFunctionManager().replaceDataTypes(oldDataTypeID, newDataTypeID);
+	protected void replaceDataTypesUsed(Map<Long, Long> dataTypeReplacementMap) {
+		program.getCodeManager().replaceDataTypes(dataTypeReplacementMap);
+		program.getSymbolTable().replaceDataTypes(dataTypeReplacementMap);
+		program.getFunctionManager().replaceDataTypes(dataTypeReplacementMap);
 	}
 
 	@Override
-	protected void deleteDataTypeIDs(LinkedList<Long> deletedIds, TaskMonitor monitor)
-			throws CancelledException {
+	protected void deleteDataTypesUsed(Set<Long> deletedIds) {
 		// TODO: SymbolManager/FunctionManager do not appear to handle datatype removal update.
 		// Suspect it handles indirectly through detection of deleted datatype.  Old deleted ID
 		// use could be an issue.
-		long[] ids = new long[deletedIds.size()];
-		Iterator<Long> it = deletedIds.iterator();
-		int i = 0;
-		while (it.hasNext()) {
-			ids[i++] = it.next().longValue();
+		try {
+			// TODO: Should use replacement type instead of clearing
+			program.getCodeManager().clearData(deletedIds, TaskMonitor.DUMMY);
 		}
-		program.getCodeManager().clearData(ids, monitor);
+		catch (CancelledException e) {
+			// won't happen
+		}
+		program.getSymbolTable().invalidateCache(false);
 		program.getFunctionManager().invalidateCache(false);
 	}
 

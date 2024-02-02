@@ -17,23 +17,12 @@ package agent.dbgeng.model.iface2;
 
 import java.util.concurrent.CompletableFuture;
 
-import agent.dbgeng.dbgeng.DebugThreadId;
-import agent.dbgeng.dbgeng.DebugThreadRecord;
-import agent.dbgeng.manager.DbgEventsListenerAdapter;
-import agent.dbgeng.manager.DbgReason;
-import agent.dbgeng.manager.DbgState;
-import agent.dbgeng.manager.DbgThread;
-import agent.dbgeng.manager.impl.DbgManagerImpl;
-import agent.dbgeng.manager.impl.DbgProcessImpl;
-import agent.dbgeng.manager.impl.DbgThreadImpl;
-import agent.dbgeng.model.iface1.DbgModelSelectableObject;
-import agent.dbgeng.model.iface1.DbgModelTargetAccessConditioned;
-import agent.dbgeng.model.iface1.DbgModelTargetExecutionStateful;
-import agent.dbgeng.model.iface1.DbgModelTargetSteppable;
+import agent.dbgeng.dbgeng.*;
+import agent.dbgeng.manager.*;
+import agent.dbgeng.manager.impl.*;
+import agent.dbgeng.model.iface1.*;
 import agent.dbgeng.model.impl.DbgModelTargetStackImpl;
-import ghidra.dbg.target.TargetAggregate;
-import ghidra.dbg.target.TargetMethod;
-import ghidra.dbg.target.TargetThread;
+import ghidra.dbg.target.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.Address;
 
@@ -57,7 +46,12 @@ public interface DbgModelTargetThread extends //
 			DbgProcessImpl process = parentProcess == null ? null : (DbgProcessImpl) parentProcess.getProcess();
 			String index = PathUtils.parseIndex(getName());
 			Long tid = Long.decode(index);
-			DebugThreadId id = new DebugThreadRecord(tid);
+			
+			DebugSystemObjects so = manager.getSystemObjects();
+			DebugThreadId id = so.getThreadIdBySystemId(tid.intValue());
+			if (id == null) {
+				id = so.getCurrentThreadId();
+			}
 			DbgThreadImpl thread = manager.getThreadComputeIfAbsent(id, process, tid, fire);
 			return thread;
 		}

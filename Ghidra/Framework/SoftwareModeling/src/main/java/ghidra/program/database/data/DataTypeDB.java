@@ -585,4 +585,33 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 		throw new DataTypeEncodeException("Encoding not supported", repr, this);
 	}
 
+	/**
+	 * Perform equivalence check while resolving the specified dataType.  If the specified conflict 
+	 * handler under a conflict situation indicates that the existing data type (i.e., this type)
+	 * be used in place of the specified dataType this method will return true.
+	 * @param dataType datatype being resolved
+	 * @param handler resolve conflict handler (if null perform normal {@link #isEquivalent(DataType)}
+	 * @return true if the specified dataType should be considered equivalent to this datatype.
+	 */
+	protected abstract boolean isEquivalent(DataType dataType, DataTypeConflictHandler handler);
+
+	/**
+	 * If possible, perform equivalence check while resolving the specified dataType if the 
+	 * existingDataType is an instance of DataTypeDB.  Otherwise, perform a normal 
+	 * isEquivalent operation.  If the specified conflict 
+	 * handler under a conflict situation indicates that the existing data type (i.e., this type)
+	 * be used in place of the specified dataType this method will return true.
+	 * @param existingDataType existing datatype
+	 * @param otherDataType datatype being resolved
+	 * @param handler resolve conflict handler (if null perform normal {@link #isEquivalent(DataType)}
+	 * @return true if the specified dataType should be considered equivalent to this datatype.
+	 */
+	static boolean isEquivalent(DataType existingDataType, DataType otherDataType,
+			DataTypeConflictHandler handler) {
+		if (existingDataType instanceof DataTypeDB existingDataTypeDB) {
+			return existingDataTypeDB.isEquivalent(otherDataType, handler);
+		}
+		return existingDataType.isEquivalent(otherDataType);
+	}
+
 }

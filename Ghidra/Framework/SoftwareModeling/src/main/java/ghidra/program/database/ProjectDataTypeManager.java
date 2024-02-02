@@ -16,12 +16,13 @@
 package ghidra.program.database;
 
 import java.io.IOException;
-import java.util.LinkedList;
+import java.util.*;
 
 import javax.help.UnsupportedOperationException;
 
 import db.*;
 import db.util.ErrorHandler;
+import generic.stl.Pair;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.store.LockException;
 import ghidra.program.model.data.*;
@@ -104,7 +105,6 @@ public class ProjectDataTypeManager extends StandAloneDataTypeManager
 		super.setProgramArchitecture(language, compilerSpecId, updateOption, monitor);
 	}
 
-	////////////////////
 	@Override
 	public void dataTypeChanged(DataType dt, boolean isAutoChange) {
 		super.dataTypeChanged(dt, isAutoChange);
@@ -184,14 +184,13 @@ public class ProjectDataTypeManager extends StandAloneDataTypeManager
 		super.favoritesChanged(dataType, isFavorite);
 	}
 
-	///////////////////
 	@Override
-	protected void replaceDataTypeIDs(long oldDataTypeID, long newDataTypeID) {
+	protected void replaceDataTypesUsed(Map<Long, Long> dataTypeReplacementMap) {
 		// do nothing
 	}
 
 	@Override
-	protected void deleteDataTypeIDs(LinkedList<Long> deletedIds, TaskMonitor monitor) {
+	protected void deleteDataTypesUsed(Set<Long> deletedIds) {
 		// do nothing
 	}
 

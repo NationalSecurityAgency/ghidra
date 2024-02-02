@@ -16,7 +16,6 @@
 package ghidra.program.util;
 
 import ghidra.framework.model.DomainObjectChangeRecord;
-import ghidra.framework.model.EventType;
 import ghidra.program.model.address.Address;
 
 /**

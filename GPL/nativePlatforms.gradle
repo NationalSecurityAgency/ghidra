@@ -24,7 +24,8 @@ project.ext.PLATFORMS = [
 	[name: "linux_x86_64", os: "linux", arch: "x86_64"],
 	[name: "linux_arm_64", os: "linux", arch: "arm64"],
 	[name: "mac_x86_64", os: "osx", arch: "x86_64"],
-	[name: "mac_arm_64", os: "osx", arch: "arm64"]
+	[name: "mac_arm_64", os: "osx", arch: "arm64"],
+	[name: "freebsd_x86_64", os: "freebsd", arch: "x86_64"]
 ]
 
 /*********************************************************************************
@@ -50,6 +51,9 @@ ext.getCurrentPlatformName = {
 			break
 		case ~/Mac OS X.*/:
 			os = "mac"
+			break
+		case ~/FreeBSD.*/:
+			os = "freebsd"
 			break
 		default:
 			throw new GradleException("Unrecognized platform operating system: $os")
@@ -110,6 +114,20 @@ ext.isMac = { platform_name ->
  *********************************************************************************/
 ext.isCurrentMac = {
 	return isMac(getCurrentPlatformName())
+}
+
+/*********************************************************************************
+ * Returns true if the given platform is FreeBSD.
+ *********************************************************************************/
+ext.isFreeBSD = { platform_name ->
+	return platform_name.startsWith("freebsd")
+}
+
+/*********************************************************************************
+ * Returns true if the current platform is FreeBSD.
+ *********************************************************************************/
+ext.isCurrentFreeBSD = {
+	return isFreeBSD(getCurrentPlatformName())
 }
 
 /*********************************************************************************

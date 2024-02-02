@@ -86,9 +86,6 @@ public class GhidraRun implements GhidraLaunchable {
 
 			ExtensionUtils.initializeExtensions();
 
-			// Allows handling of old content which did not have a content type property
-			DomainObjectAdapter.setDefaultContentClass(ProgramDB.class);
-
 			updateSplashScreenStatusMessage("Checking for previous project...");
 			SystemUtilities.runSwingLater(() -> {
 				String projectPath = processArguments(args);

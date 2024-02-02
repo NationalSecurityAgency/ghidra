@@ -484,10 +484,10 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		RootMessage.Builder dispatch(RootMessage req, RootMessage.Builder rep) throws Exception;
 
 		default RootMessage handle(RootMessage req) {
-			String desc = toString(req);
+			/*String desc = toString(req);
 			if (desc != null) {
 				TimedMsg.debug(this, "HANDLING: " + desc);
-			}
+			}*/
 			RootMessage.Builder rep = RootMessage.newBuilder();
 			try {
 				rep = dispatch(req, rep);
@@ -503,22 +503,29 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		}
 
 		default String toString(RootMessage req) {
-			return switch (req.getMsgCase()) {
-				case REQUEST_ACTIVATE -> "activate(%d, %d, %s)".formatted(
-					req.getRequestActivate().getOid().getId(),
-					req.getRequestActivate().getObject().getId(),
-					req.getRequestActivate().getObject().getPath().getPath());
-				case REQUEST_END_TX -> "endTx(%d)".formatted(
-					req.getRequestEndTx().getTxid().getId());
-				case REQUEST_START_TX -> "startTx(%d,%s)".formatted(
-					req.getRequestStartTx().getTxid().getId(),
-					req.getRequestStartTx().getDescription());
-				case REQUEST_SET_VALUE -> "setValue(%d,%s,%s)".formatted(
-					req.getRequestSetValue().getValue().getParent().getId(),
-					req.getRequestSetValue().getValue().getParent().getPath().getPath(),
-					req.getRequestSetValue().getValue().getKey());
-				default -> null;
-			};
+			try {
+				return switch (req.getMsgCase()) {
+					case REQUEST_ACTIVATE -> "activate(%d, %d, %s)".formatted(
+						req.getRequestActivate().getOid().getId(),
+						req.getRequestActivate().getObject().getId(),
+						req.getRequestActivate().getObject().getPath().getPath());
+					case REQUEST_END_TX -> "endTx(%d)".formatted(
+						req.getRequestEndTx().getTxid().getId());
+					case REQUEST_START_TX -> "startTx(%d,%s)".formatted(
+						req.getRequestStartTx().getTxid().getId(),
+						req.getRequestStartTx().getDescription());
+					case REQUEST_SET_VALUE -> "setValue(%d,%s,%s,=%s)".formatted(
+						req.getRequestSetValue().getValue().getParent().getId(),
+						req.getRequestSetValue().getValue().getParent().getPath().getPath(),
+						req.getRequestSetValue().getValue().getKey(),
+						ValueDecoder.DISPLAY
+								.toValue(req.getRequestSetValue().getValue().getValue()));
+					default -> null;
+				};
+			}
+			catch (Throwable e) {
+				return "ERROR toStringing request: " + e;
+			}
 		}
 	}
 
@@ -807,7 +814,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 
 	protected ReplyActivate handleActivate(RequestActivate req) {
 		OpenTrace open = requireOpenTrace(req.getOid());
-		TraceObject object = open.getObject(req.getObject(), true);
+		TraceObject object = open.getObject(req.getObject(), false);
 		DebuggerCoordinates coords = traceManager.getCurrent();
 		if (coords.getTrace() != open.trace) {
 			coords = DebuggerCoordinates.NOWHERE;
@@ -815,7 +822,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		if (open.lastSnapshot != null && followsPresent(open.trace)) {
 			coords = coords.snap(open.lastSnapshot.getKey());
 		}
-		DebuggerCoordinates finalCoords = coords.object(object);
+		DebuggerCoordinates finalCoords = object == null ? coords : coords.object(object);
 		Swing.runLater(() -> {
 			if (!traceManager.getOpenTraces().contains(open.trace)) {
 				traceManager.openTrace(open.trace);
@@ -1024,7 +1031,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		}
 		for (Method m : req.getMethodsList()) {
 			RemoteMethod rm = new RecordRemoteMethod(this, m.getName(),
-				ActionName.name(m.getAction()),
+				ActionName.name(m.getAction()), m.getDisplay(),
 				m.getDescription(), m.getParametersList()
 						.stream()
 						.collect(Collectors.toMap(MethodParameter::getName, this::makeParameter)),

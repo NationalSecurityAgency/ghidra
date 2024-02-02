@@ -43,7 +43,7 @@ import docking.util.image.ToolIconURL;
 import docking.widgets.OptionDialog;
 import generic.jar.ResourceFile;
 import generic.util.WindowUtilities;
-import ghidra.app.plugin.GenericPluginCategoryNames;
+import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.Application;
 import ghidra.framework.LoggingInitialization;
@@ -279,7 +279,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 	/**
 	 * Add those plugins that implement the ApplicationLevelPlugin interface and have a
-	 * RELEASED status and not (example || testing) category.
+	 * RELEASED status and not example category.
 	 */
 	private void installDefaultApplicationLevelPlugins() {
 		List<String> classNames = new ArrayList<>();
@@ -288,8 +288,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 			PluginDescription pd = PluginDescription.getPluginDescription(pluginClass);
 			String category = pd.getCategory();
-			boolean isBadCategory = category.equals(GenericPluginCategoryNames.EXAMPLES) ||
-				category.equals(GenericPluginCategoryNames.TESTING);
+			boolean isBadCategory = category.equals(PluginCategoryNames.EXAMPLES);
 			if (pd.getStatus() == PluginStatus.RELEASED && !isBadCategory) {
 				classNames.add(pluginClass.getName());
 			}

@@ -21,15 +21,15 @@ CC32: "dnz"		is BO_VLE=2 {CTR = CTR-1; tmp:1 = (CTR != 0); export tmp; }
 CC32: "dz"		is BO_VLE=3 {CTR = CTR-1; tmp:1 = (CTR == 0); export tmp; }
 
 addrBD8: reloc	is BD8_VLE 		[ reloc = inst_start + (BD8_VLE << 1);] 	{ export *[ram]:4 reloc; }
-addrBD15: reloc	is BD15_VLE 	[ reloc = inst_start + (BD15_VLE << 1);] 	{ export *[ram]:4 reloc; }
+addrBD15: reloc	is BD15_VLE		[ reloc = inst_start + (BD15_VLE << 1);] 	{ export *[ram]:4 reloc; }
 addrBD24: reloc	is BD24_VLE 	[ reloc = inst_start + (BD24_VLE << 1);] 	{ export *[ram]:4 reloc; }
 
 d8PlusRaAddress: S8IMM(A)					is S8IMM & A			{tmp:$(REGISTER_SIZE) = A+S8IMM; export tmp;  }
 d8PlusRaOrZeroAddress: S8IMM(RA_OR_ZERO)	is S8IMM & RA_OR_ZERO	{tmp:$(REGISTER_SIZE) = RA_OR_ZERO+S8IMM; export tmp; }
 
 sd4PlusRxAddr: SD4_VLE(RX_VLE)	is SD4_VLE & RX_VLE				{tmp:$(REGISTER_SIZE) = RX_VLE+SD4_VLE; export tmp;  }
-sd4HPlusRxAddr: SD4_VLE(RX_VLE)	is SD4_VLE & RX_VLE				{tmp:$(REGISTER_SIZE) = RX_VLE+(SD4_VLE << 1); export tmp;  }
-sd4WPlusRxAddr: SD4_VLE(RX_VLE)	is SD4_VLE & RX_VLE				{tmp:$(REGISTER_SIZE) = RX_VLE+(SD4_VLE << 2); export tmp;  }
+sd4HPlusRxAddr: SD4_OFF(RX_VLE)	is SD4_VLE & RX_VLE		[SD4_OFF = SD4_VLE << 1;] {tmp:$(REGISTER_SIZE) = RX_VLE+SD4_OFF; export tmp;  }
+sd4WPlusRxAddr: SD4_OFF(RX_VLE)	is SD4_VLE & RX_VLE		[SD4_OFF = SD4_VLE << 2;] {tmp:$(REGISTER_SIZE) = RX_VLE+SD4_OFF; export tmp;  }
 
 OIMM: val						is UI5_VLE [ val = UI5_VLE+1; ] { export *[const]:$(REGISTER_SIZE) val; }
 
@@ -70,18 +70,29 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 # NOTE: For the conditional branches, the "official" mnemonics have just bc and bcl.
 # We use extended mnemonics so the display is understandable without having to cross-
 # reference multiple tables.
-:e_b^CC32 addrBD15				is $(ISVLE) & OP=30 & XOP_VLE=8 & LK=0 & addrBD15 & CC32 {
+:e_b^CC32 BI_CR_VLE, addrBD15				is $(ISVLE) & OP=30 & XOP_VLE=8 & LK=0 & addrBD15 & BIT_L=0 & BI_CR_VLE & CC32 {
 	if (CC32 == 0) goto inst_next;
 	goto addrBD15;
 }
 
-:e_b^CC32^"l" addrBD15			is $(ISVLE) & OP=30 & XOP_VLE=8 & LK=1 & addrBD15 & CC32 {
+:e_b^CC32^"l" BI_CR_VLE, addrBD15			is $(ISVLE) & OP=30 & XOP_VLE=8 & LK=1 & addrBD15 & BIT_L=0 & BI_CR_VLE & CC32 {
 	if (CC32 == 0) goto inst_next;
 	LR= inst_next;
 	call [addrBD15];
 }
 
-:se_b^CC16 addrBD8				is $(ISVLE) & OP5_VLE=28 & addrBD8 & CC16 {
+:e_b^CC32 addrBD15				is $(ISVLE) & OP=30 & XOP_VLE=8 & LK=0 & addrBD15 & BIT_L=1 & CC32 {
+	if (CC32 == 0) goto inst_next;
+	goto addrBD15;
+}
+
+:e_b^CC32^"l" addrBD15			is $(ISVLE) & OP=30 & XOP_VLE=8 & LK=1 & addrBD15 & BIT_L=1 & CC32 {
+	if (CC32 == 0) goto inst_next;
+	LR= inst_next;
+	call [addrBD15];
+}
+
+:se_b^CC16 cr0, addrBD8				is $(ISVLE) & OP5_VLE=28 & addrBD8 & cr0 & CC16 {
 	if (CC16 == 0) goto inst_next;
 	goto addrBD8;
 }

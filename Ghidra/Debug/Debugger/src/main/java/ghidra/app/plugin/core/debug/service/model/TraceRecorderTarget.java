@@ -267,8 +267,8 @@ public class TraceRecorderTarget extends AbstractTarget {
 
 	private ActionEntry makeEntry(boolean requiresPrompt, TargetMethod method,
 			Map<String, ?> arguments) {
-		return new ActionEntry(method.getDisplay(), null, null, requiresPrompt, () -> true,
-			prompt -> invokeMethod(prompt, method, arguments));
+		return new ActionEntry(method.getDisplay(), null, null, requiresPrompt,
+			method.getPath().size(), () -> true, prompt -> invokeMethod(prompt, method, arguments));
 	}
 
 	@Override
@@ -289,7 +289,7 @@ public class TraceRecorderTarget extends AbstractTarget {
 			return Map.of();
 		}
 		return Map.of(display, new ActionEntry(display, name, description, false,
-			() -> enabled.test(object), prompt -> action.apply(object)));
+			object.getPath().size(), () -> enabled.test(object), prompt -> action.apply(object)));
 	}
 
 	private TargetExecutionState getStateOf(TargetObject object) {
@@ -356,6 +356,12 @@ public class TraceRecorderTarget extends AbstractTarget {
 			ActionName.STEP_EXT, "Step the target in a target-defined way",
 			stateNullOr(TargetExecutionState::isStopped),
 			steppable -> steppable.step(TargetStepKind.EXTENDED));
+	}
+
+	@Override
+	protected Map<String, ActionEntry> collectRefreshActions(ActionContext context) {
+		// Not necessary to support this here
+		return Map.of();
 	}
 
 	@Override

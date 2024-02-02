@@ -27,7 +27,7 @@ import ghidra.util.HelpLocation;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = UtilityPluginPackage.NAME,
-	category = PluginCategoryNames.SUPPORT,
+	category = PluginCategoryNames.DIAGNOSTIC,
 	shortDescription = "Runtime Information",
 	description = "Plugin for displaying runtime information"
 )

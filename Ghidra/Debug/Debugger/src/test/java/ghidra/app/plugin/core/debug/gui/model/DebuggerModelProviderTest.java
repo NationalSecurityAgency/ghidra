@@ -411,7 +411,9 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		GTree tree = modelProvider.objectsTreePanel.tree;
 		GTreeNode node = waitForPass(() -> {
 			GTreeNode n = Unique.assertOne(tree.getSelectedNodes());
-			assertEquals("Processes@0", n.getName());
+			assertEquals(
+				"Processes@%d".formatted(System.identityHashCode(processes.getCanonicalParent(0))),
+				n.getName());
 			return n;
 		});
 		clickTreeNode(tree, node, MouseEvent.BUTTON1);
@@ -822,7 +824,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		}
 		waitForTasks();
 
-		waitForPass(() -> assertEquals("<html>Renamed Thread", node.getDisplayText()));
+		waitForPass(() -> assertEquals("<html>Renamed&nbsp;Thread", node.getDisplayText()));
 	}
 
 	@Test

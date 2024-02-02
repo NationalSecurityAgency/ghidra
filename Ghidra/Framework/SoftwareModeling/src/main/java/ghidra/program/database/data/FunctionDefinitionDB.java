@@ -25,6 +25,7 @@ import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataTypeConflictHandler.ConflictResult;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.FunctionSignature;
@@ -198,7 +199,7 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 		}
 		finally {
 			if (isResolveCacheOwner) {
-				dataMgr.flushResolveQueue(true);
+				dataMgr.processResolveQueue(true);
 			}
 			lock.release();
 		}
@@ -429,12 +430,12 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 	}
 
 	@Override
-	public boolean isEquivalent(DataType dataType) {
+	protected boolean isEquivalent(DataType dataType, DataTypeConflictHandler handler) {
 
 		if (dataType == this) {
 			return true;
 		}
-		if (!(dataType instanceof FunctionDefinition)) {
+		if (!(dataType instanceof FunctionDefinition sig)) {
 			return false;
 		}
 
@@ -452,7 +453,18 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 		}
 
 		try {
-			isEquivalent = isEquivalentSignature((FunctionSignature) dataType);
+
+			if (handler != null &&
+				ConflictResult.USE_EXISTING == handler.resolveConflict(sig, this)) {
+				// treat this type as equivalent if existing type will be used
+				isEquivalent = true;
+			}
+			else {
+				if (handler != null) {
+					handler = handler.getSubsequentHandler();
+				}
+				isEquivalent = isEquivalentSignature(sig, handler);
+			}
 		}
 		finally {
 			dataMgr.putCachedEquivalence(this, dataType, isEquivalent);
@@ -461,7 +473,12 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 	}
 
 	@Override
-	public boolean isEquivalentSignature(FunctionSignature signature) {
+	public boolean isEquivalent(DataType dt) {
+		return isEquivalent(dt, null);
+	}
+
+	private boolean isEquivalentSignature(FunctionSignature signature,
+			DataTypeConflictHandler handler) {
 		if (signature == this) {
 			return true;
 		}
@@ -476,10 +493,10 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 			(hasVarArgs() == signature.hasVarArgs()) &&
 			(hasNoReturn() == signature.hasNoReturn())) {
 			ParameterDefinition[] args = signature.getArguments();
-			ParameterDefinition[] thisArgs = this.getArguments();
+			ParameterDefinitionDB[] thisArgs = this.getArguments();
 			if (args.length == thisArgs.length) {
 				for (int i = 0; i < args.length; i++) {
-					if (!thisArgs[i].isEquivalent(args[i])) {
+					if (!thisArgs[i].isEquivalent(args[i], handler)) {
 						return false;
 					}
 				}
@@ -487,6 +504,11 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 			}
 		}
 		return false;
+	}
+
+	@Override
+	public boolean isEquivalentSignature(FunctionSignature signature) {
+		return isEquivalentSignature(signature, null);
 	}
 
 	@Override

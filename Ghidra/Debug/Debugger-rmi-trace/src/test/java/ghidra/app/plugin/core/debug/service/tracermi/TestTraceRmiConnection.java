@@ -48,19 +48,19 @@ public class TestTraceRmiConnection implements TraceRmiConnection {
 		}
 	}
 
-	public record TestRemoteMethod(String name, ActionName action, String description,
-			Map<String, RemoteParameter> parameters, SchemaName retType,
+	public record TestRemoteMethod(String name, ActionName action, String display,
+			String description, Map<String, RemoteParameter> parameters, SchemaName retType,
 			AsyncPairingQueue<Map<String, Object>> argQueue, AsyncPairingQueue<Object> retQueue)
 			implements RemoteMethod {
-		public TestRemoteMethod(String name, ActionName action, String description,
+		public TestRemoteMethod(String name, ActionName action, String display, String description,
 				Map<String, RemoteParameter> parameters, SchemaName retType) {
-			this(name, action, description, parameters, retType, new AsyncPairingQueue<>(),
+			this(name, action, display, description, parameters, retType, new AsyncPairingQueue<>(),
 				new AsyncPairingQueue<>());
 		}
 
-		public TestRemoteMethod(String name, ActionName action, String description,
+		public TestRemoteMethod(String name, ActionName action, String display, String description,
 				SchemaName retType, RemoteParameter... parameters) {
-			this(name, action, description, Stream.of(parameters)
+			this(name, action, display, description, Stream.of(parameters)
 					.collect(Collectors.toMap(RemoteParameter::name, p -> p)),
 				retType);
 		}

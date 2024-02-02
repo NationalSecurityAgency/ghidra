@@ -76,7 +76,6 @@ public class GFilterTable<ROW_OBJECT> extends JPanel {
 	}
 
 	private void buildThreadedTable() {
-		@SuppressWarnings("unchecked")
 		GThreadedTablePanel<ROW_OBJECT> tablePanel =
 			createThreadedTablePanel((ThreadedTableModel<ROW_OBJECT, ?>) model);
 		table = tablePanel.getTable();

@@ -40,6 +40,8 @@ import ghidra.util.exception.InvalidInputException;
  */
 public class HighFunction extends PcodeSyntaxTree {
 	public final static String DECOMPILER_TAG_MAP = "decompiler_tags";
+	public final static String OVERRIDE_NAMESPACE_NAME = "override";
+
 	private Function func; // The traditional function object
 	private Language language;
 	private CompilerSpec compilerSpec;
@@ -485,14 +487,22 @@ public class HighFunction extends PcodeSyntaxTree {
 		}
 	}
 
+	public static boolean isOverrideNamespace(Namespace namespace) {
+		if (!OVERRIDE_NAMESPACE_NAME.equals(namespace.getName())) {
+			return false;
+		}
+		Namespace parent = namespace.getParentNamespace();
+		return (parent instanceof Function);
+	}
+
 	public static Namespace findOverrideSpace(Function func) {
 		SymbolTable symtab = func.getProgram().getSymbolTable();
-		return findNamespace(symtab, func, "override");
+		return findNamespace(symtab, func, OVERRIDE_NAMESPACE_NAME);
 	}
 
 	public static Namespace findCreateOverrideSpace(Function func) {
 		SymbolTable symtab = func.getProgram().getSymbolTable();
-		return findCreateNamespace(symtab, func, "override");
+		return findCreateNamespace(symtab, func, OVERRIDE_NAMESPACE_NAME);
 	}
 
 	public static Namespace findNamespace(SymbolTable symtab, Namespace parent, String name) {

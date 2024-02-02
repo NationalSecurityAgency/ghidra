@@ -63,11 +63,14 @@ public interface Target {
 	 * @param name the name of a common debugger command this action implements
 	 * @param details text providing more details, usually displayed in a tool tip
 	 * @param requiresPrompt true if invoking the action requires further user interaction
+	 * @param specificity a relative score of specificity. These are only meaningful when compared
+	 *            among entries returned in the same collection.
 	 * @param enabled a supplier to determine whether an associated action in the UI is enabled.
 	 * @param action a function for invoking this action asynchronously
 	 */
 	record ActionEntry(String display, ActionName name, String details, boolean requiresPrompt,
-			BooleanSupplier enabled, Function<Boolean, CompletableFuture<?>> action) {
+			long specificity, BooleanSupplier enabled,
+			Function<Boolean, CompletableFuture<?>> action) {
 
 		/**
 		 * Check if this action is currently enabled

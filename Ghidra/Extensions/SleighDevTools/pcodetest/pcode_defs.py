@@ -460,16 +460,30 @@ PCodeTest({
 PCodeTest({
     'name': 'msp430x',
     'build_all': 1,
-    'toolchain': 'TI/msp430-elf',
-    'ccflags': '-g -mmcu=msp430x -mlarge -mhwmult=none -fno-builtin -Wl,-T,msp430x.ld -L %(toolchain_dir)s/lib/gcc/msp430-elf/%(gcc_version)s/large/ -lgcc -lmul_none',
+    'toolchain': 'TI/msp430-gcc-9.3.1.11_linux64',
+    'ccflags': '-g -mcpu=msp430x -mlarge -mhwmult=none -fno-builtin -Wl,-T,msp430x.ld -L %(toolchain_dir)s/lib/gcc/msp430-elf/%(gcc_version)s/large/ -lgcc -lmul_none',
     'language_id': 'TI_MSP430X:LE:32:default',
     'processor': 'TI',
     'architecture_test': 'MSP430X',
-    'has_float': 0,
-    'has_double': 0,
+    'has_float': 1,
+    'has_double': 1,
     'has_longlong': 0,
     'small_build': 1,
-    'skip_files': ['PointerManipulation.test', 'misc.test'],
+    'skip_files': ['PointerManipulation.test', 'misc.out'],
+})
+
+PCodeTest({
+    'name': 'msp430',
+    'build_all': 1,
+    'toolchain': 'TI/msp430-gcc-9.3.1.11_linux64',
+    'ccflags': '-g -mcpu=msp430 -fno-builtin -mhwmult=none -lgcc -lmul_none',
+    'language_id': 'TI_MSP430:LE:16:default',
+    'processor': 'TI',
+    'architecture_test': 'MSP430',
+    'has_float': 1,
+    'has_double': 1,
+    'has_longlong': 0,
+    'small_build': 1,
 })
 
 PCodeTest({

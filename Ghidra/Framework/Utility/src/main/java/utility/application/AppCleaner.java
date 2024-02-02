@@ -128,7 +128,7 @@ public class AppCleaner implements GhidraLaunchable {
 	 */
 	private Set<File> findSettingsDirs(String appName, ApplicationLayout layout) {
 		Set<File> discoveredDirs = new LinkedHashSet<>();
-		appName = appName.toLowerCase();
+		appName = ApplicationUtilities.normalizeApplicationName(appName);
 		String userNameAndAppName = SystemUtilities.getUserName() + "-" + appName;
 
 		// Legacy default settings directory
@@ -191,7 +191,7 @@ public class AppCleaner implements GhidraLaunchable {
 		}
 
 		// Newer cache directories always use a lowercase application name
-		appName = appName.toLowerCase();
+		appName = ApplicationUtilities.normalizeApplicationName(appName);
 		String userNameAndAppName = SystemUtilities.getUserName() + "-" + appName;
 
 		// Current cache directories
@@ -233,7 +233,7 @@ public class AppCleaner implements GhidraLaunchable {
 		}
 
 		// Newer temp directories always use a lowercase application name
-		appName = appName.toLowerCase();
+		appName = ApplicationUtilities.normalizeApplicationName(appName);
 		String userNameAndAppName = SystemUtilities.getUserName() + "-" + appName;
 
 		// Current temp directories

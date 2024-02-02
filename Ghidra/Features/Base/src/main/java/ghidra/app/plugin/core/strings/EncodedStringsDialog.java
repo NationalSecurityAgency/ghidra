@@ -1063,7 +1063,11 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 
 	private ComboBoxModel<UnicodeScript> getScriptListModel(EncodedStringsFilterStats stats) {
 		List<UnicodeScript> scripts = new ArrayList<>(stats.foundScriptCounts.keySet());
-		Collections.sort(scripts, (us1, us2) -> us1.name().compareTo(us2.name()));
+		Collections.sort(scripts, (us1, us2) -> {
+			int us1Count = stats.foundScriptCounts.get(us1);
+			int us2Count = stats.foundScriptCounts.get(us2);
+			return Integer.compare(us2Count, us1Count); // descending
+		});
 		scripts.add(0, CharacterScriptUtils.ANY_SCRIPT_ALIAS);
 
 		return new DefaultComboBoxModel<>(new Vector<>(scripts));
