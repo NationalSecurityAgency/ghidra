@@ -1911,6 +1911,7 @@ public class BufferMgr {
 		int bufCount = 0;
 		for (int id = 0; id < indexCnt; id++) {
 			monitor.checkCancelled();
+			monitor.setProgress(id);
 			BufferNode node = getCachedBufferNode(id);
 			if (node != null) {
 				// check nod which resides in cache
@@ -1928,6 +1929,8 @@ public class BufferMgr {
 				}
 			}
 		}
+
+		monitor.initialize(indexCnt);
 
 		// write/update all non-empty buffers
 		try (OutputBlockStream out = LocalBufferFile.getOutputBlockStream(outFile, bufCount)) {
