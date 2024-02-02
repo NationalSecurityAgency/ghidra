@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,24 @@
  */
 package ghidra.app.util.bin.format.dwarf4;
 
-public class DWARFException extends Exception
-{
+import java.io.IOException;
+
+public class DWARFException extends IOException {
+
+	public DWARFException() {
+		// empty
+	}
+
 	/**
 	 * Constructs a DWARFException with the specified message.
 	 * @param message the detail message
 	 */
-	public DWARFException(String message)
-	{
+	public DWARFException(String message) {
 		super(message);
 	}
+
+	public DWARFException(String message, Throwable cause) {
+		super(message, cause);
+	}
+
 }

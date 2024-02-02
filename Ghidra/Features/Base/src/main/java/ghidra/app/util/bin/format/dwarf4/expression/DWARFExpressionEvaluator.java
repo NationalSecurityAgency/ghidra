@@ -91,7 +91,7 @@ public class DWARFExpressionEvaluator {
 
 	public static DWARFExpressionEvaluator create(DebugInfoEntry die) {
 		DWARFCompilationUnit compUnit = die.getCompilationUnit();
-		DWARFProgram prog = die.getCompilationUnit().getProgram();
+		DWARFProgram prog = die.getProgram();
 		DWARFExpressionEvaluator evaluator = new DWARFExpressionEvaluator(compUnit.getPointerSize(),
 			!prog.isBigEndian(), compUnit.getFormat(), prog.getRegisterMappings());
 

@@ -16,8 +16,7 @@
 package ghidra.app.util.bin.format.dwarf4;
 
 import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute.*;
-import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFEncoding.DW_ATE_float;
-import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFEncoding.DW_ATE_signed;
+import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFEncoding.*;
 import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.*;
 import static org.junit.Assert.*;
 
@@ -28,7 +27,6 @@ import org.junit.Before;
 
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.services.DataTypeManagerService;
-import ghidra.app.util.bin.format.dwarf4.encoding.DWARFSourceLanguage;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag;
 import ghidra.app.util.bin.format.dwarf4.next.*;
 import ghidra.app.util.bin.format.dwarf4.next.sectionprovider.NullSectionProvider;
@@ -58,9 +56,8 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 	protected TaskMonitor monitor = TaskMonitor.DUMMY;
 
 	protected DWARFImportOptions importOptions;
-	protected DWARFProgram dwarfProg;
-	protected MockDWARFCompilationUnit cu;
-	protected MockDWARFCompilationUnit cu2;
+	protected MockDWARFProgram dwarfProg;
+	protected MockDWARFCompilationUnit currentCU;
 	protected DWARFDataTypeManager dwarfDTM;
 	protected CategoryPath uncatCP;
 	protected CategoryPath dwarfRootCP;
@@ -82,20 +79,11 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 		builtInDTM = dtms.getBuiltInDataTypesManager();
 
 		importOptions = new DWARFImportOptions();
-		dwarfProg =
-			new DWARFProgram(program, importOptions, TaskMonitor.DUMMY, new NullSectionProvider());
+		dwarfProg = new MockDWARFProgram(program, importOptions, TaskMonitor.DUMMY,
+			new NullSectionProvider());
 		dwarfDTM = dwarfProg.getDwarfDTM();
 		dwarfRootCP = dwarfProg.getRootDNI().asCategoryPath();
 		uncatCP = dwarfProg.getUncategorizedRootDNI().asCategoryPath();
-
-		cu = new MockDWARFCompilationUnit(dwarfProg, 0x1000, 0x2000, 0,
-			DWARFCompilationUnit.DWARF_32, (short) 4, 0, (byte) 8, 0,
-			DWARFSourceLanguage.DW_LANG_C);
-		cu2 = new MockDWARFCompilationUnit(dwarfProg, 0x3000, 0x4000, 0,
-			DWARFCompilationUnit.DWARF_32, (short) 4, 0, (byte) 8, 1,
-			DWARFSourceLanguage.DW_LANG_C);
-
-		setMockCompilationUnits(cu, cu2);
 	}
 
 	@After
@@ -103,13 +91,6 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 		endTransaction();
 		dwarfProg.close();
 		program.release(this);
-	}
-
-	protected void setMockCompilationUnits(DWARFCompilationUnit... compilationUnits) {
-		dwarfProg.getCompilationUnits().clear();
-		for (DWARFCompilationUnit compilationUnit : compilationUnits) {
-			dwarfProg.getCompilationUnits().add(compilationUnit);
-		}
 	}
 
 	protected void startTransaction() {
@@ -120,113 +101,125 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 		program.endTransaction(transactionID, true);
 	}
 
-	protected void checkPreconditions() throws CancelledException, DWARFException, IOException {
-		dwarfProg.checkPreconditions(monitor);
+	protected void buildMockDIEIndexes() throws CancelledException, DWARFException {
+		dwarfProg.buildMockDIEIndexes();
 	}
 
 	protected void importAllDataTypes() throws CancelledException, IOException, DWARFException {
-		dwarfProg.checkPreconditions(monitor);
+		buildMockDIEIndexes();
 		dwarfDTM.importAllDataTypes(monitor);
 	}
 
 	protected void importFunctions() throws CancelledException, IOException, DWARFException {
-		dwarfProg.checkPreconditions(monitor);
+		buildMockDIEIndexes();
 		dwarfDTM.importAllDataTypes(monitor);
 
 		DWARFFunctionImporter dfi = new DWARFFunctionImporter(dwarfProg, monitor);
 		dfi.importFunctions();
 	}
 
-	protected DIEAggregate getAggregate(DebugInfoEntry die)
-			throws CancelledException, IOException, DWARFException {
-		dwarfProg.setCurrentCompilationUnit(die.getCompilationUnit(), monitor);
+	protected DIEAggregate getAggregate(DebugInfoEntry die) {
 		return dwarfProg.getAggregate(die);
 	}
 
-	protected DebugInfoEntry addBaseType(String name, int size, int encoding,
-			MockDWARFCompilationUnit dcu) {
-		DIECreator tmp = new DIECreator(DW_TAG_base_type)
+	protected void ensureCompUnit() {
+		if (dwarfProg.getCurrentCompUnit() == null) {
+			dwarfProg.addCompUnit();
+		}
+	}
+
+	protected MockDWARFCompilationUnit addCompUnit() {
+		return dwarfProg.addCompUnit();
+	}
+
+	protected MockDWARFCompilationUnit addCompUnit(int cuLang) {
+		return dwarfProg.addCompUnit(cuLang);
+	}
+
+	protected DebugInfoEntry addBaseType(String name, int size, int encoding) {
+		ensureCompUnit();
+		DIECreator tmp = new DIECreator(dwarfProg, DW_TAG_base_type) //
 				.addInt(DW_AT_byte_size, size)
 				.addInt(DW_AT_encoding, encoding);
 		if (name != null) {
 			tmp.addString(DW_AT_name, name);
 		}
-		return tmp.create(dcu);
+		return tmp.create();
 	}
 
-	protected DebugInfoEntry addInt(MockDWARFCompilationUnit dcu) {
-		return addBaseType("int", 4, DW_ATE_signed, dcu);
+	protected DebugInfoEntry addInt() {
+		ensureCompUnit();
+		return addBaseType("int", 4, DW_ATE_signed);
 	}
 
-	protected DebugInfoEntry addFloat(MockDWARFCompilationUnit dcu) {
-		return addBaseType("float", 4, DW_ATE_float, dcu);
+	protected DebugInfoEntry addFloat() {
+		ensureCompUnit();
+		return addBaseType("float", 4, DW_ATE_float);
 	}
 
-	protected DebugInfoEntry addDouble(MockDWARFCompilationUnit dcu) {
-		return addBaseType("double", 8, DW_ATE_float, dcu);
+	protected DebugInfoEntry addDouble() {
+		ensureCompUnit();
+		return addBaseType("double", 8, DW_ATE_float);
 	}
 
-	protected DebugInfoEntry addTypedef(String name, DebugInfoEntry die,
-			MockDWARFCompilationUnit dcu) {
-		assertTrue(die.getCompilationUnit() == dcu);
-		return new DIECreator(DW_TAG_typedef)
-				.addString(DW_AT_name, name)
+	protected DebugInfoEntry addTypedef(String name, DebugInfoEntry die) {
+		ensureCompUnit();
+		return new DIECreator(dwarfProg, DW_TAG_typedef).addString(DW_AT_name, name)
 				.addRef(DW_AT_type, die)
-				.create(dcu);
+				.create();
 	}
 
-	protected DebugInfoEntry addSubprogram(String name, DebugInfoEntry returnTypeDIE,
-			MockDWARFCompilationUnit dcu) {
-		assertTrue(returnTypeDIE == null || returnTypeDIE.getCompilationUnit() == dcu);
-		DIECreator tmp = new DIECreator(DW_TAG_subprogram);
+	protected DebugInfoEntry addSubprogram(String name, DebugInfoEntry returnTypeDIE) {
+		ensureCompUnit();
+		DIECreator tmp = new DIECreator(dwarfProg, DW_TAG_subprogram);
 		if (name != null) {
 			tmp.addString(DW_AT_name, name);
 		}
 		if (returnTypeDIE != null) {
 			tmp.addRef(DW_AT_type, returnTypeDIE);
 		}
-		return tmp.create(dcu);
+		return tmp.create();
 	}
 
-	protected DebugInfoEntry addSubroutineType(String name, DebugInfoEntry returnTypeDIE,
-			MockDWARFCompilationUnit dcu) {
-		assertTrue(returnTypeDIE == null || returnTypeDIE.getCompilationUnit() == dcu);
-		DIECreator tmp = new DIECreator(DW_TAG_subroutine_type);
+	protected DebugInfoEntry addSubroutineType(String name, DebugInfoEntry returnTypeDIE) {
+		ensureCompUnit();
+		DIECreator tmp = new DIECreator(dwarfProg, DW_TAG_subroutine_type);
 		if (name != null) {
 			tmp.addString(DW_AT_name, name);
 		}
 		if (returnTypeDIE != null) {
 			tmp.addRef(DW_AT_type, returnTypeDIE);
 		}
-		return tmp.create(dcu);
+		return tmp.create();
 	}
 
-	protected DebugInfoEntry addParam(DebugInfoEntry parent, String name, DebugInfoEntry typeDIE,
-			MockDWARFCompilationUnit dcu) {
-		assertTrue(typeDIE == null || typeDIE.getCompilationUnit() == dcu);
-		assertTrue(parent.getCompilationUnit() == dcu);
-		return new DIECreator(DW_TAG_formal_parameter)
+	protected DebugInfoEntry addParam(DebugInfoEntry parent, String name, DebugInfoEntry typeDIE) {
+		ensureCompUnit();
+		return new DIECreator(dwarfProg, DW_TAG_formal_parameter) //
 				.addRef(DW_AT_type, typeDIE)
 				.setParent(parent)
-				.create(dcu);
+				.create();
 	}
 
 	protected DIECreator newSpecStruct(DebugInfoEntry declDIE, int size) {
-		DIECreator struct = new DIECreator(DW_TAG_structure_type)
+		ensureCompUnit();
+		DIECreator struct = new DIECreator(dwarfProg, DW_TAG_structure_type) //
 				.addRef(DW_AT_specification, declDIE)
 				.addInt(DW_AT_byte_size, size);
 		return struct;
 	}
 
 	protected DIECreator newDeclStruct(String name) {
-		DIECreator struct = new DIECreator(DW_TAG_structure_type)
+		ensureCompUnit();
+		DIECreator struct = new DIECreator(dwarfProg, DW_TAG_structure_type) //
 				.addBoolean(DW_AT_declaration, true)
 				.addString(DW_AT_name, name);
 		return struct;
 	}
 
 	protected DIECreator newStruct(String name, int size) {
-		DIECreator struct = new DIECreator(DW_TAG_structure_type);
+		ensureCompUnit();
+		DIECreator struct = new DIECreator(dwarfProg, DW_TAG_structure_type);
 		if (name != null) {
 			struct.addString(DW_AT_name, name);
 		}
@@ -234,52 +227,56 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 		return struct;
 	}
 
-	protected DebugInfoEntry createEnum(String name, int size, MockDWARFCompilationUnit dcu) {
-		DIECreator resultEnum = new DIECreator(DW_TAG_enumeration_type);
+	protected DebugInfoEntry createEnum(String name, int size) {
+		ensureCompUnit();
+		DIECreator resultEnum = new DIECreator(dwarfProg, DW_TAG_enumeration_type);
 		if (name != null) {
 			resultEnum.addString(DW_AT_name, name);
 		}
 		resultEnum.addInt(DW_AT_byte_size, size);
-		return resultEnum.create(dcu);
+		return resultEnum.create();
 	}
 
 	protected DebugInfoEntry addEnumValue(DebugInfoEntry parentEnum, String valueName,
-			long valueValue, MockDWARFCompilationUnit dcu) {
-		assertTrue(parentEnum.getCompilationUnit() == dcu);
-		DIECreator enumValue = new DIECreator(DW_TAG_enumerator)
+			long valueValue) {
+		ensureCompUnit();
+		DIECreator enumValue = new DIECreator(dwarfProg, DW_TAG_enumerator) //
 				.addString(DW_AT_name, valueName)
 				.addInt(DW_AT_const_value, valueValue)
 				.setParent(parentEnum);
-		return enumValue.create(dcu);
+		return enumValue.create();
 	}
 
-	protected DebugInfoEntry addPtr(DebugInfoEntry targetDIE, MockDWARFCompilationUnit dcu) {
-		assertTrue(targetDIE.getCompilationUnit() == dcu);
-		return new DIECreator(DW_TAG_pointer_type).addRef(DW_AT_type, targetDIE).create(dcu);
+	protected DebugInfoEntry addPtr(DebugInfoEntry targetDIE) {
+		ensureCompUnit();
+		return new DIECreator(dwarfProg, DW_TAG_pointer_type) //
+				.addRef(DW_AT_type, targetDIE)
+				.create();
 	}
 
-	protected DebugInfoEntry addFwdPtr(MockDWARFCompilationUnit dcu, int fwdRecordOffset) {
-		return new DIECreator(DW_TAG_pointer_type)
-				.addRef(DW_AT_type, getForwardOffset(dcu, fwdRecordOffset))
-				.create(dcu);
-	}
-
-	protected long getForwardOffset(MockDWARFCompilationUnit dcu, int count) {
-		return dcu.getStartOffset() + dcu.getMockEntryCount() + count;
+	protected DebugInfoEntry addFwdPtr(int fwdRecordOffset) {
+		ensureCompUnit();
+		long absOffset =
+			dwarfProg.getRelativeDIEOffset(fwdRecordOffset + /* the ptr die we are about to add */ 1);
+		return new DIECreator(dwarfProg, DW_TAG_pointer_type)
+				.addRef(DW_AT_type, absOffset)
+				.create();
 	}
 
 	protected DIECreator newMember(DebugInfoEntry parentStruct, String fieldName,
 			DebugInfoEntry dataType, int offset) {
 		assertTrue(
 			dataType == null || dataType.getCompilationUnit() == parentStruct.getCompilationUnit());
+		ensureCompUnit();
 		return newMember(parentStruct, fieldName, dataType.getOffset(), offset);
 	}
 
 	protected DIECreator newMember(DebugInfoEntry parentStruct, String fieldName,
-			long memberDIEOffset, int offset) {
-		DIECreator field = new DIECreator(DWARFTag.DW_TAG_member)
+			long typeDIEOffset, int offset) {
+		ensureCompUnit();
+		DIECreator field = new DIECreator(dwarfProg, DWARFTag.DW_TAG_member) //
 				.addString(DW_AT_name, fieldName)
-				.addRef(DW_AT_type, memberDIEOffset)
+				.addRef(DW_AT_type, typeDIEOffset)
 				.setParent(parentStruct);
 		if (offset != -1) {
 			field.addInt(DW_AT_data_member_location, offset);
@@ -291,44 +288,48 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 			int offset) {
 		assertTrue(
 			dataType == null || dataType.getCompilationUnit() == parentStruct.getCompilationUnit());
-		DIECreator field = new DIECreator(DW_TAG_inheritance)
+		ensureCompUnit();
+		DIECreator field = new DIECreator(dwarfProg, DW_TAG_inheritance) //
 				.addRef(DW_AT_type, dataType)
 				.addInt(DW_AT_data_member_location, offset)
 				.setParent(parentStruct);
 		return field;
 	}
 
-	protected DebugInfoEntry newArray(MockDWARFCompilationUnit dcu, DebugInfoEntry baseTypeDIE,
-			boolean elideEmptyDimRangeValue, int... dimensions) {
-		DebugInfoEntry arrayType = new DIECreator(DW_TAG_array_type)
+	protected DebugInfoEntry newArray(DebugInfoEntry baseTypeDIE, boolean elideEmptyDimRangeValue,
+			int... dimensions) {
+		ensureCompUnit();
+		DebugInfoEntry arrayType = new DIECreator(dwarfProg, DW_TAG_array_type) //
 				.addRef(DW_AT_type, baseTypeDIE)
-				.create(dcu);
+				.create();
 		for (int dimIndex = 0; dimIndex < dimensions.length; dimIndex++) {
 			int dim = dimensions[dimIndex];
-			DIECreator dimDIE = new DIECreator(DW_TAG_subrange_type).setParent(arrayType);
+			DIECreator dimDIE = new DIECreator(dwarfProg, DW_TAG_subrange_type) //
+					.setParent(arrayType);
 			if (dim != -1 || !elideEmptyDimRangeValue) {
 				dimDIE.addInt(DW_AT_upper_bound, dimensions[dimIndex]);
 			}
-			dimDIE.create(dcu);
+			dimDIE.create();
 		}
 		return arrayType;
 	}
 
-	protected DebugInfoEntry newArrayUsingCount(MockDWARFCompilationUnit dcu,
-			DebugInfoEntry baseTypeDIE, int count) {
-		DebugInfoEntry arrayType = new DIECreator(DW_TAG_array_type)
+	protected DebugInfoEntry newArrayUsingCount(DebugInfoEntry baseTypeDIE, int count) {
+		ensureCompUnit();
+		DebugInfoEntry arrayType = new DIECreator(dwarfProg, DW_TAG_array_type) //
 				.addRef(DW_AT_type, baseTypeDIE)
-				.create(dcu);
-		DIECreator dimDIE = new DIECreator(DW_TAG_subrange_type)
-				.setParent(arrayType);
-		dimDIE.addInt(DW_AT_count, count);
-		dimDIE.create(dcu);
+				.create();
+		new DIECreator(dwarfProg, DW_TAG_subrange_type) //
+				.setParent(arrayType)
+				.addInt(DW_AT_count, count)
+				.create();
 		return arrayType;
 	}
 
 	protected DIECreator newSubprogram(String name, DebugInfoEntry returnType, long startAddress,
 			long length) {
-		return new DIECreator(DW_TAG_subprogram)
+		ensureCompUnit();
+		return new DIECreator(dwarfProg, DW_TAG_subprogram) //
 				.addString(DW_AT_name, name)
 				.addRef(DW_AT_type, returnType)
 				.addUInt(DW_AT_low_pc, startAddress)
@@ -337,7 +338,8 @@ public class DWARFTestBase extends AbstractGhidraHeadedIntegrationTest {
 
 	protected DIECreator newFormalParam(DebugInfoEntry subprogram, String paramName,
 			DebugInfoEntry paramDataType, int... locationExpr) {
-		DIECreator param = new DIECreator(DW_TAG_formal_parameter)
+		ensureCompUnit();
+		DIECreator param = new DIECreator(dwarfProg, DW_TAG_formal_parameter) //
 				.addRef(DW_AT_type, paramDataType)
 				.setParent(subprogram);
 		if (locationExpr.length > 0) {

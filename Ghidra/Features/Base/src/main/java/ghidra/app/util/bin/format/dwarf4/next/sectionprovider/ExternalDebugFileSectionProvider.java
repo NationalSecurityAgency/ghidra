@@ -15,10 +15,9 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next.sectionprovider;
 
-import java.util.List;
-
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.util.List;
 
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.dwarf4.external.*;
@@ -52,7 +51,7 @@ public class ExternalDebugFileSectionProvider extends BaseSectionProvider {
 			if (extDebugInfo == null) {
 				return null;
 			}
-			Msg.info(ExternalDebugFilesService.class,
+			Msg.info(ExternalDebugFileSectionProvider.class,
 				"DWARF external debug information found: " + extDebugInfo);
 			ExternalDebugFilesService edfs =
 				DWARFExternalDebugFilesPlugin.getExternalDebugFilesService(
@@ -61,7 +60,7 @@ public class ExternalDebugFileSectionProvider extends BaseSectionProvider {
 			if (extDebugFile == null) {
 				return null;
 			}
-			Msg.info(ExternalDebugFilesService.class,
+			Msg.info(ExternalDebugFileSectionProvider.class,
 				"DWARF External Debug File: found: " + extDebugFile);
 			FileSystemService fsService = FileSystemService.getInstance();
 			try (

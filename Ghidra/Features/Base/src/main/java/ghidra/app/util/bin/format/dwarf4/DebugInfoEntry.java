@@ -15,15 +15,16 @@
  */
 package ghidra.app.util.bin.format.dwarf4;
 
-import java.util.*;
-
 import java.io.IOException;
+import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf4.attribs.*;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag;
+import ghidra.app.util.bin.format.dwarf4.next.DWARFProgram;
 import ghidra.program.model.data.LEB128;
+import ghidra.util.datastruct.IntArrayList;
 
 /**
  * A DWARF Debug Info Entry is a collection of {@link DWARFAttributeValue attributes}
@@ -44,29 +45,30 @@ public class DebugInfoEntry {
 		Set.of(DWARFAttribute.DW_AT_sibling, DWARFAttribute.DW_AT_accessibility);
 
 	private final DWARFCompilationUnit compilationUnit;
-	private final long offset;
 	private final DWARFAbbreviation abbreviation;
 	private final DWARFAttributeValue[] attributes;
-	private long parentOffset = -1;
-	private List<DebugInfoEntry> children;
+	private final long offset;
+	private final int dieIndex;
 
 	/**
 	 * Read a DIE record.
 	 *
-	 * @param reader
-	 * @param unit
-	 * @param attributeFactory
-	 * @return
-	 * @throws IOException
+	 * @param reader {@link BinaryReader} positioned at the start of a DIE record
+	 * @param unit the compunit that contains the DIE
+	 * @param dieIndex the index of the DIE
+	 * @param attributeFactory the {@link DWARFAttributeFactory} to use to deserialize attribute
+	 * values
+	 * @return new DIE instance
+	 * @throws IOException if error reading data, or bad DWARF
 	 */
 	public static DebugInfoEntry read(BinaryReader reader, DWARFCompilationUnit unit,
-			DWARFAttributeFactory attributeFactory) throws IOException {
+			int dieIndex, DWARFAttributeFactory attributeFactory) throws IOException {
 		long offset = reader.getPointerIndex();
 		int abbreviationCode = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 
 		// Check for terminator DIE
 		if (abbreviationCode == 0) {
-			return new DebugInfoEntry(unit, offset, null);
+			return new DebugInfoEntry(unit, offset, -1, null);
 		}
 
 		DWARFAbbreviation abbreviation = unit.getCodeToAbbreviationMap().get(abbreviationCode);
@@ -75,7 +77,7 @@ public class DebugInfoEntry {
 				" not found in the abbreviation map for compunit " + unit);
 		}
 
-		DebugInfoEntry result = new DebugInfoEntry(unit, offset, abbreviation);
+		DebugInfoEntry result = new DebugInfoEntry(unit, offset, dieIndex, abbreviation);
 		// Read in all of the attribute values based on the attribute specification
 		DWARFAttributeSpecification[] attributeSpecs = result.abbreviation.getAttributes();
 		for (int i = 0; i < attributeSpecs.length; i++) {
@@ -95,46 +97,49 @@ public class DebugInfoEntry {
 	}
 
 	/**
-	 * Creates an empty DIE.  Used by {@link #read(BinaryReader, DWARFCompilationUnit, DWARFAttributeFactory) static read()}
-	 * and junit tests.
-	 * <p>
-	 * @param unit
-	 * @param offset
-	 * @param abbreviation
+	 * Creates a DIE.  Used by 
+	 * {@link #read(BinaryReader, DWARFCompilationUnit, DWARFAttributeFactory) static read()} and 
+	 * junit tests.
+	 * 
+	 * @param unit compunit containing the DIE
+	 * @param offset offset of the DIE
+	 * @param dieIndex index of the DIE
+	 * @param abbreviation that defines the schema of this DIE record
 	 */
-	public DebugInfoEntry(DWARFCompilationUnit unit, long offset, DWARFAbbreviation abbreviation) {
+	public DebugInfoEntry(DWARFCompilationUnit unit, long offset, int dieIndex,
+			DWARFAbbreviation abbreviation) {
 		this.compilationUnit = unit;
 		this.offset = offset;
+		this.dieIndex = dieIndex;
 		this.abbreviation = abbreviation;
-		this.attributes =
-			(abbreviation != null) ? new DWARFAttributeValue[abbreviation.getAttributeCount()]
-					: null;
+		this.attributes = abbreviation != null
+				? new DWARFAttributeValue[abbreviation.getAttributeCount()]
+				: null;
 	}
 
 	/**
-	 * Add a child DIE to this DIE.
-	 * @param child DIE of the child
+	 * Returns the index of this DIE (in the entire dwarf program)
+	 * 
+	 * @return index of this DIE
 	 */
-	public void addChild(DebugInfoEntry child) {
-		if (children == null) {
-			children = new ArrayList<>(5);
-		}
-		this.children.add(child);
+	public int getIndex() {
+		return dieIndex;
 	}
 
 	/**
-	 * Return a live list of the child DIE's.
+	 * Return a list of the child DIE's.
+	 * 
 	 * @return list of child DIE's
 	 */
 	public List<DebugInfoEntry> getChildren() {
-		return children != null ? children : Collections.EMPTY_LIST;
+		return getProgram().getChildrenOf(dieIndex);
 	}
 
 	/**
 	 * Return a list of children that are of a specific DWARF type.
 	 * <p>
-	 * @param childTag
-	 * @return
+	 * @param childTag DIE tag used to filter the child DIEs
+	 * @return list of matching child DIE records
 	 */
 	public List<DebugInfoEntry> getChildren(int childTag) {
 		List<DebugInfoEntry> result = new ArrayList<>();
@@ -147,29 +152,12 @@ public class DebugInfoEntry {
 	}
 
 	/**
-	 * Check to see if this DIE has any child DIE's.
-	 * @return true if there are child DIE's and false otherwise
-	 */
-	public boolean hasChildren() {
-		return !this.children.isEmpty();
-	}
-
-	/**
-	 * Set the parent DIE of this DIE.
-	 * @param parent the parent DIE
-	 */
-	public void setParent(DebugInfoEntry parent) {
-		parentOffset = (parent != null) ? parent.getOffset() : -1;
-	}
-
-	/**
 	 * Get the parent DIE of this DIE.
-	 * @return the parent DIE
+	 * 
+	 * @return the parent DIE, or null if this DIE is the root of the compunit
 	 */
 	public DebugInfoEntry getParent() {
-		return (parentOffset != -1)
-				? compilationUnit.getProgram().getEntryAtByteOffsetUnchecked(parentOffset)
-				: null;
+		return getProgram().getParentOf(dieIndex);
 	}
 
 	/**
@@ -226,48 +214,42 @@ public class DebugInfoEntry {
 		return abbreviation == null;
 	}
 
-	@Override
-	public String toString() {
-		StringBuilder buffer = new StringBuilder(getClass().getSimpleName());
-		buffer.append(" - Offset: 0x").append(Long.toHexString(this.offset)).append("\n");
-		buffer.append("AbbreviationCode: 0x").append(
-			Long.toHexString(abbreviation != null ? abbreviation.getAbbreviationCode() : 0));
-
-		if (isTerminator()) {
-			return buffer.toString();
+	/**
+	 * Returns the ordinal position of this DIE record in its parent's list of children.
+	 * 
+	 * @return index of ourself in our parent, or -1 if root DIE
+	 */
+	public int getPositionInParent() {
+		DWARFProgram dprog = getProgram();
+		int parentIndex = dprog.getParentIndex(dieIndex);
+		if (parentIndex < 0) {
+			return -1;
 		}
-
-		buffer.append(" ").append(
-			DWARFUtil.toString(DWARFTag.class, this.abbreviation.getTag())).append("\n");
-
-		DWARFAttributeSpecification[] attributeSpecs = abbreviation.getAttributes();
-		for (int i = 0; i < attributeSpecs.length; i++) {
-			DWARFAttributeSpecification attributeSpec = attributeSpecs[i];
-			buffer.append("\tAttribute: ");
-			buffer.append(DWARFUtil.toString(DWARFAttribute.class, attributeSpec.getAttribute()));
-			buffer.append(" ");
-			buffer.append(attributes[i]);
-			buffer.append(" ");
-			buffer.append(attributeSpec.getAttributeForm().toString());
-			buffer.append("\n");
+		IntArrayList childIndexes = dprog.getDIEChildIndexes(parentIndex);
+		for (int i = 0; i < childIndexes.size(); i++) {
+			if (childIndexes.get(i) == dieIndex) {
+				return i;
+			}
 		}
-		if (children != null && !children.isEmpty()) {
-			buffer.append("\tChild count: ").append(children.size()).append("\n");
-		}
-
-		return buffer.toString();
+		// only way to get here is if our in-memory indexes are corrupt / incorrect
+		throw new RuntimeException("DWARF DIE index failure.");
 	}
 
 	public DWARFCompilationUnit getCompilationUnit() {
 		return compilationUnit;
 	}
 
+	public DWARFProgram getProgram() {
+		return getCompilationUnit().getProgram();
+	}
+
+	public int getDepth() {
+		return getProgram().getParentDepth(dieIndex);
+	}
+
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (int) (offset ^ (offset >>> 32));
-		return result;
+		return Objects.hash(compilationUnit, dieIndex, offset);
 	}
 
 	@Override
@@ -275,17 +257,38 @@ public class DebugInfoEntry {
 		if (this == obj) {
 			return true;
 		}
-		if (obj == null) {
-			return false;
-		}
 		if (!(obj instanceof DebugInfoEntry)) {
 			return false;
 		}
 		DebugInfoEntry other = (DebugInfoEntry) obj;
-		if (offset != other.offset) {
-			return false;
+		return Objects.equals(compilationUnit, other.compilationUnit) &&
+			dieIndex == other.dieIndex && offset == other.offset;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder buffer = new StringBuilder();
+		int tag = getTag();
+		int abbrNum = abbreviation != null ? abbreviation.getAbbreviationCode() : 0;
+		int childCount = getProgram().getDIEChildIndexes(dieIndex).size();
+
+		buffer.append("<%d><%x>: %s [abbrev %d, tag %d, index %d, children %d]\n".formatted(
+			getDepth(), offset, DWARFUtil.toString(DWARFTag.class, tag), abbrNum, tag, dieIndex,
+			childCount));
+
+		if (isTerminator()) {
+			return buffer.toString();
 		}
-		return true;
+
+		DWARFAttributeSpecification[] attributeSpecs = abbreviation.getAttributes();
+		for (int i = 0; i < attributeSpecs.length; i++) {
+			DWARFAttributeSpecification attributeSpec = attributeSpecs[i];
+			buffer.append("\t\tAttribute: %s %s %s\n".formatted(
+				DWARFUtil.toString(DWARFAttribute.class, attributeSpec.getAttribute()),
+				attributes[i], attributeSpec.getAttributeForm().toString()));
+		}
+
+		return buffer.toString();
 	}
 
 }
