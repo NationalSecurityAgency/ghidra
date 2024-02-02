@@ -63,6 +63,15 @@ public interface ValueDecoder {
 				default -> "<ERROR: default>";
 			};
 		}
+
+		@Override
+		public Object toValue(Value value) {
+			Object obj = ValueDecoder.super.toValue(value);
+			if (obj instanceof byte[] va) {
+				return NumericUtilities.convertBytesToString(va, ":");
+			}
+			return obj;
+		}
 	};
 
 	default Address toAddress(Addr addr, boolean required) {
@@ -105,8 +114,7 @@ public interface ValueDecoder {
 			case STRING_VALUE -> value.getStringValue();
 			case BOOL_ARR_VALUE -> ArrayUtils.toPrimitive(
 				value.getBoolArrValue().getArrList().stream().toArray(Boolean[]::new));
-			case BYTES_VALUE -> NumericUtilities
-					.convertBytesToString(value.getBytesValue().toByteArray(), ":");
+			case BYTES_VALUE -> value.getBytesValue().toByteArray();
 			case CHAR_ARR_VALUE -> value.getCharArrValue().toCharArray();
 			case SHORT_ARR_VALUE -> ArrayUtils.toPrimitive(
 				value.getShortArrValue()
