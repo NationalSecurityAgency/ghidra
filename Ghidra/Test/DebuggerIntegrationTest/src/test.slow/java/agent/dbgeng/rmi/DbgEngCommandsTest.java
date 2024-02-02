@@ -369,7 +369,7 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 			Entry<TraceAddressSnapRange, TraceMemoryState> entry =
 				tb.trace.getMemoryManager().getMostRecentStateEntry(snap, addr);
 			assertEquals(Map.entry(new ImmutableTraceAddressSnapRange(
-				new AddressRangeImpl(addr, 16), Lifespan.at(0)), TraceMemoryState.ERROR), entry);
+				rng(addr, 16), Lifespan.at(0)), TraceMemoryState.ERROR), entry);
 		}
 	}
 
