@@ -986,6 +986,10 @@ public class DWARFProgram implements Closeable {
 		return debugStrings;
 	}
 
+	public void setDebugStrings(StringTable debugStrings) {
+		this.debugStrings = debugStrings;
+	}
+
 	public AddressSpace getStackSpace() {
 		return program.getAddressFactory().getStackSpace();
 	}
@@ -1109,5 +1113,4 @@ public class DWARFProgram implements Closeable {
 		}
 
 	}
-
 }
