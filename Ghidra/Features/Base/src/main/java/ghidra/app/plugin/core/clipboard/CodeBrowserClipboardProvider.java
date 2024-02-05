@@ -394,10 +394,9 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		AddressSetView addrs = getSelectedAddresses();
 		Memory currentMemory = currentProgram.getMemory();
 		List<String> strings = new ArrayList<>();
-		AddressIterator ranges = addrs.getAddresses(true);
-		while (ranges.hasNext() && !monitor.isCancelled()) {
-			Address nextAddress = ranges.next();
-			AddressSourceInfo addressSourceInfo = currentMemory.getAddressSourceInfo(nextAddress);
+		AddressIterator addresses = addrs.getAddresses(true);
+		while (addresses.hasNext() && !monitor.isCancelled()) {
+			AddressSourceInfo addressSourceInfo = currentMemory.getAddressSourceInfo(addresses.next());
 			if (addressSourceInfo != null) {
 				strings.add(String.format("%x", addressSourceInfo.getFileOffset()));
 			}
