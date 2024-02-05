@@ -162,34 +162,27 @@ public class MyHeadlessToolkit extends Toolkit {
 	}
 
 	private void getRealToolkit() {
+
+		Class<?> cls = null;
 		try {
-            // We disable the JIT during toolkit initialization.  This
-            // tends to touch lots of classes that aren't needed again
-            // later and therefore JITing is counter-productiive.
-            java.lang.Compiler.disable();
-            
-			Class<?> cls = null;
-            try {
-            	try {
-                	cls = Class.forName(preferredToolkit);
-                } catch (ClassNotFoundException ee) {
-                    throw new AWTError("Toolkit not found: " + preferredToolkit);
-                }
-                if (cls != null) {
-                    localToolKit = (Toolkit)cls.newInstance();
-                    if (GraphicsEnvironment.isHeadless()) {
-                    	localToolKit = new HeadlessToolkit(localToolKit);
-                    }
-                }
-            } catch (InstantiationException e) {
-                throw new AWTError("Could not instantiate Toolkit: " + preferredToolkit);
-            } catch (IllegalAccessException e) {
-                throw new AWTError("Could not access Toolkit: " + preferredToolkit);
-            }
-            
-        } finally {
-            // Make sure to always re-enable the JIT.
-            java.lang.Compiler.enable();
-        }
+			try {
+				cls = Class.forName(preferredToolkit);
+			}
+			catch (ClassNotFoundException ee) {
+				throw new AWTError("Toolkit not found: " + preferredToolkit);
+			}
+			if (cls != null) {
+				localToolKit = (Toolkit) cls.newInstance();
+				if (GraphicsEnvironment.isHeadless()) {
+					localToolKit = new HeadlessToolkit(localToolKit);
+				}
+			}
+		}
+		catch (InstantiationException e) {
+			throw new AWTError("Could not instantiate Toolkit: " + preferredToolkit);
+		}
+		catch (IllegalAccessException e) {
+			throw new AWTError("Could not access Toolkit: " + preferredToolkit);
+		}
 	}
 }
