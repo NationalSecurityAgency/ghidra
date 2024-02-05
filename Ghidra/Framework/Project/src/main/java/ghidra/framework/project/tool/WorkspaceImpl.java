@@ -18,6 +18,8 @@ package ghidra.framework.project.tool;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import org.jdom.Element;
 
@@ -25,7 +27,9 @@ import ghidra.framework.model.ToolTemplate;
 import ghidra.framework.model.Workspace;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.PluginToolAccessUtils;
+import ghidra.util.Swing;
 import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.task.*;
 
 /**
  * WorkspaceImpl
@@ -76,16 +80,42 @@ class WorkspaceImpl implements Workspace {
 	@Override
 	public PluginTool runTool(ToolTemplate template) {
 
-		PluginTool tool = toolManager.getTool(this, template);
-		if (tool != null) {
-			tool.setVisible(true);
-			runningTools.add(tool);
+		//
+		// Clients that launch a tool would like to have it ready to use when returned from this
+		// method.  For the tool to be ready, it must be created, made visible and fully 
+		// initialized.  That process needs to happen on the Swing thread and can be slow.  Since 
+		// we may be called on the Swing thread, we use a TaskLauncher, which will show a modal 
+		// dialog.  This allows any pending Swing events, including any buffered events (like 
+		// painting and attaching to a parent hierarchy) to be processed by the dialog's secondary
+		// Swing queue before returning control back to the caller of this method.
+		//
+		return launchSwing("Launching Tool", () -> {
+			PluginTool tool = toolManager.getTool(this, template);
+			if (tool != null) {
+				tool.setVisible(true);
+				runningTools.add(tool);
 
-			// alert the tool manager that we have changed
-			toolManager.setWorkspaceChanged(this);
-			toolManager.fireToolAddedEvent(this, tool);
-		}
-		return tool;
+				toolManager.setWorkspaceChanged(this);
+				toolManager.fireToolAddedEvent(this, tool);
+			}
+			return tool;
+		});
+	}
+
+	// This method could instead become TaskLauncher.launchSwing().  It seems too niche for general
+	// use though.
+	private <T> T launchSwing(String title, Supplier<T> supplier) {
+		AtomicReference<T> ref = new AtomicReference<>();
+		Task t = new Task(title, false, false, true) {
+			@Override
+			public void run(TaskMonitor monitor) {
+				ref.set(Swing.runNow(supplier));
+			}
+		};
+
+		int delay = 0;
+		new TaskLauncher(t, null, delay);
+		return ref.get();
 	}
 
 	@Override

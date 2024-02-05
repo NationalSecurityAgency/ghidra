@@ -584,7 +584,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	 *            the screen. In that case, when this parameter is true, then the given location
 	 *            will be placed in the center of the screen; when the parameter is false, then the
 	 *            screen will be scrolled only enough to show the cursor.
-	 * @return true if succussful
+	 * @return true if successful
 	 */
 	public boolean goTo(ProgramLocation loc, boolean centerWhenNotVisible) {
 

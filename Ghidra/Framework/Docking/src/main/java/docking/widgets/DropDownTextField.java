@@ -654,6 +654,7 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 	 * signalling to use the clicked item.  When pressing Enter, they may have been typing and
 	 * ignoring the list, so we have to do some validation.
 	 */
+	@SuppressWarnings("unchecked")  // for the cast to T
 	private void setTextFromListOnEnterPress() {
 		Object selectedItem = list.getSelectedValue();
 		if (selectedItem == null) {

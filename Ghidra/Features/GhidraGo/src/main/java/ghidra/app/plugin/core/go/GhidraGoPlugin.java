@@ -21,14 +21,13 @@ import java.net.URL;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.go.ipc.GhidraGoListener;
-import ghidra.framework.main.AppInfo;
-import ghidra.framework.main.ApplicationLevelOnlyPlugin;
+import ghidra.framework.main.*;
 import ghidra.framework.model.ToolServices;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
+import ghidra.util.Swing;
 
 //@formatter:off
 @PluginInfo(
@@ -88,18 +87,19 @@ public class GhidraGoPlugin extends Plugin implements ApplicationLevelOnlyPlugin
 	 */
 	private void processGhidraURL(URL ghidraURL) {
 
-		Msg.info(GhidraGoPlugin.class, "GhidraGo processing " + ghidraURL);
+		Msg.info(this, "GhidraGo processing " + ghidraURL);
 
 		try {
-			Msg.info(GhidraGoPlugin.class,
+			Msg.info(this,
 				"Accepting the resource at " + GhidraURL.getProjectURL(ghidraURL));
-			SystemUtilities.runSwingNow(() -> {
-				AppInfo.getFrontEndTool().toFront();
-				AppInfo.getFrontEndTool().getToolServices().launchDefaultToolWithURL(ghidraURL);
+			Swing.runNow(() -> {
+				FrontEndTool frontEnd = AppInfo.getFrontEndTool();
+				frontEnd.toFront();
+				frontEnd.getToolServices().launchDefaultToolWithURL(ghidraURL);
 			});
 		}
 		catch (IllegalArgumentException e) {
-			Msg.showError(GhidraGoPlugin.class, null, "GhidraGo Unable to process GhidraURL",
+			Msg.showError(this, null, "GhidraGo Unable to process GhidraURL",
 				"GhidraGo could not process " + ghidraURL, e);
 		}
 	}

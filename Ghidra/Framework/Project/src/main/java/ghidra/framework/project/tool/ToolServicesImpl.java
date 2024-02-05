@@ -266,7 +266,6 @@ class ToolServicesImpl implements ToolServices {
 		Workspace workspace = toolManager.getActiveWorkspace();
 		PluginTool tool = workspace.runTool(template);
 		if (tool != null) {
-			tool.setVisible(true);
 			tool.accept(ghidraUrl);
 		}
 		return tool;
