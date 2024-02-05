@@ -51,7 +51,7 @@ import ghidra.trace.model.thread.TraceThread;
 
 public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest {
 
-	protected static final SchemaContext CTX;
+	public static final SchemaContext CTX;
 
 	static {
 		try {
