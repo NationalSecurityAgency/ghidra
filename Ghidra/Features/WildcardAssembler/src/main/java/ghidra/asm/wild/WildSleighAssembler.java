@@ -26,6 +26,12 @@ import ghidra.asm.wild.sem.WildAssemblyTreeResolver;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 
+/**
+ * An assembler implementation that allows for wildcard operands
+ * 
+ * <p>
+ * Construct these using {@link WildSleighAssemblerBuilder}. 
+ */
 public class WildSleighAssembler extends AbstractSleighAssembler<WildAssemblyResolvedPatterns> {
 
 	protected WildSleighAssembler(

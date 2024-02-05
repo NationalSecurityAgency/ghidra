@@ -24,7 +24,6 @@
 // See the "FindInstructionWithWildcard" script for another example of using the WildSleighAssembler
 // @category Examples
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -34,16 +33,17 @@ import ghidra.app.plugin.assembler.sleigh.parse.AssemblyParseResult;
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolution;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.script.GhidraScript;
-import ghidra.asm.wild.WildOperandInfo;
-import ghidra.asm.wild.WildSleighAssembler;
-import ghidra.asm.wild.WildSleighAssemblerBuilder;
+import ghidra.asm.wild.*;
 import ghidra.asm.wild.sem.WildAssemblyResolvedPatterns;
 
 public class WildSleighAssemblerInfo extends GhidraScript {
 
-	List<String> sampleInstructions =
-		Arrays.asList("MOV EAX,`Q1`", "MOV RDI,qword ptr [`Q1` + -0x30]", "Custom");
+	List<String> sampleInstructions = List.of(
+		"MOV EAX,`Q1`",
+		"MOV RDI,qword ptr [`Q1` + -0x30]",
+		"Custom");
 
+	@Override
 	public void run() throws Exception {
 
 		String instruction = askChoice("Instruction to assemble", "Assemble this instruction:",
@@ -61,8 +61,8 @@ public class WildSleighAssemblerInfo extends GhidraScript {
 	/**
 	 * Use a {@link WildSleighAssembler} to assemble the given {@code wildcardedInstruction}
 	 * 
-	 * @param wildcardedInstruction
-	 *            String of the instruction to assemble, possibly including a wildcard
+	 * @param wildcardedInstruction String of the instruction to assemble, possibly including a
+	 *            wildcard
 	 * @return All AssemblyParseResult produced from the given input
 	 */
 	private List<AssemblyResolution> getAllAssemblyResolutions(
@@ -74,10 +74,10 @@ public class WildSleighAssemblerInfo extends GhidraScript {
 		// correct architecture.
 		if (sampleInstructions.contains(wildcardedInstruction) &&
 			!language.getLanguageID().toString().equals("x86:LE:64:default")) {
-			popup(
-				"The current program is not a \"x86:LE:64:default\" binary that the example was " +
-					"designed for. This script will continue and try anyway, but the results might " +
-					"not be as expected. Retry with a custom instruction in your architecture!");
+			popup("""
+					The current program is not a \"x86:LE:64:default\" binary that the example was \
+					designed for. This script will continue and try anyway, but the results might \
+					not be as expected. Retry with a custom instruction in your architecture!""");
 		}
 
 		// Create a WildSleighAssembler that we'll use to assemble our wildcard-included instruction
@@ -123,9 +123,8 @@ public class WildSleighAssemblerInfo extends GhidraScript {
 		}
 
 		if (errorCount > 0) {
-			println(
-				"Additionally " + errorCount +
-					" non-WildAssemblyResolvedPatterns were not printed");
+			println("Additionally, " + errorCount +
+				" non-WildAssemblyResolvedPatterns were not printed");
 
 		}
 	}
@@ -134,8 +133,7 @@ public class WildSleighAssemblerInfo extends GhidraScript {
 	 * Print information about a single {@link WildAssemblyResolvedPatterns}, including information
 	 * about each of its wildcards.
 	 * 
-	 * @param x
-	 *            The value to print information about.
+	 * @param x The value to print information about.
 	 */
 	private void printWildAssemblyResolvedPatterns(WildAssemblyResolvedPatterns x) {
 		println("Instruction bits (including wildcard values): " + x.getInstruction());

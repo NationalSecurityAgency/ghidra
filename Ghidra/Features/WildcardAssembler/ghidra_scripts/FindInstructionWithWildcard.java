@@ -29,35 +29,28 @@
 // See the "WildSleighAssemblerInfo" script for a simpler use of the WildSleighAssembler.
 // @category Examples
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import ghidra.app.plugin.assembler.AssemblySelector;
 import ghidra.app.plugin.assembler.sleigh.parse.AssemblyParseResult;
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyPatternBlock;
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolution;
-import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolutionResults;
+import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.script.GhidraScript;
-import ghidra.asm.wild.WildOperandInfo;
-import ghidra.asm.wild.WildSleighAssembler;
-import ghidra.asm.wild.WildSleighAssemblerBuilder;
+import ghidra.asm.wild.*;
 import ghidra.asm.wild.sem.WildAssemblyResolvedPatterns;
-import ghidra.program.model.mem.*;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.mem.Memory;
+import ghidra.program.model.mem.MemoryAccessException;
 
 public class FindInstructionWithWildcard extends GhidraScript {
 
+	@Override
 	public void run() throws Exception {
 
-		var instruction = askString("Instruction to search",
-			"Instruction to search for with wildcard (example is for x86_64, adjust if you are using a different architecture):",
-			"XOR R13D,`Q1/R1(2|3)D`");
+		var instruction = askString("Instruction to search", """
+				Instruction to search for with wildcard (example is for x86_64, adjust if you are \
+				using a different architecture): \
+				XOR R13D,`Q1/R1(2|3)D`""");
 		var allValidResults = getAllResolvedPatterns(instruction);
 
 		var encodings = getMapOfUniqueInstructionEncodings(allValidResults);
@@ -175,8 +168,7 @@ public class FindInstructionWithWildcard extends GhidraScript {
 		 * Returns true of the given value shares the same {@code maskedInstruction} and wildcard(s)
 		 * as this instance.
 		 * 
-		 * @param other
-		 *            Value to compare against
+		 * @param other Value to compare against
 		 * @return True if both values share the same maskedInstruction and wildcard(s)
 		 */
 		boolean sameBaseEncoding(ReducedWildcardAssemblyResolvedPattern other) {
@@ -194,7 +186,7 @@ public class FindInstructionWithWildcard extends GhidraScript {
 				// Check all of other's WildOperandInfo
 				for (WildOperandInfo otherInfo : other.parent.getOperandInfo()) {
 					// Check if we have matching wildcards (names), expressions, and locations.
-					// Notice that we're *NOT* checking choice here, as we expect those to be different.
+					// We're *NOT* checking choice here, as we expect those to be different.
 					if (info.wildcard().equals(otherInfo.wildcard()) &&
 						info.expression().equals(otherInfo.expression()) &&
 						info.location().equals(otherInfo.location())) {
@@ -222,10 +214,8 @@ public class FindInstructionWithWildcard extends GhidraScript {
 	 * Does not currently print wildcard information about the search results, but this could be
 	 * added.
 	 * 
-	 * @param encodings
-	 *            HashMap of encodings to that encoding's possible WildOperandInfo values.
-	 * @throws MemoryAccessException
-	 *             If we find bytes but can't read them
+	 * @param encodings Map of encodings to that encoding's possible WildOperandInfo values.
+	 * @throws MemoryAccessException If we find bytes but can't read them
 	 */
 	private void searchMemoryForEncodings(
 			Map<AssemblyPatternBlock, Set<WildOperandInfo>> encodings,
@@ -274,12 +264,11 @@ public class FindInstructionWithWildcard extends GhidraScript {
 	 * NOTE: This is certainly not the highest performance way to do this, but it is reasonably
 	 * simple and shows what is possible.
 	 * 
-	 * @param matchAddress
-	 *            The address where our search hit occurred
-	 * @param matchData
-	 *            The bytes found at matchAddress. Must include the entire matching instruction!
-	 * @param allValidResolvedPatterns
-	 *            All resolved patterns which were searched from (used to find wildcard information)
+	 * @param matchAddress The address where our search hit occurred
+	 * @param matchData The bytes found at matchAddress. Must include the entire matching
+	 *            instruction!
+	 * @param allValidResolvedPatterns All resolved patterns which were searched from (used to find
+	 *            wildcard information)
 	 */
 	private void printSearchHitInfo(Address matchAddress, byte[] matchData,
 			List<WildAssemblyResolvedPatterns> allValidResolvedPatterns) {
@@ -321,8 +310,7 @@ public class FindInstructionWithWildcard extends GhidraScript {
 	 * Return all items from {@code results} which are instances of
 	 * {@link WildAssemblyResolvedPatterns}
 	 * 
-	 * @param results
-	 *            The results to return {@link WildAssemblyResolvePatterns} from
+	 * @param results The results to return {@link WildAssemblyResolvePatterns} from
 	 * @return All {@link WildAssemblyResolvedPatterns} which were found in the input
 	 */
 	private List<WildAssemblyResolvedPatterns> getValidResults(AssemblyResolutionResults results) {

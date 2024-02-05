@@ -20,7 +20,6 @@ import java.util.stream.Stream;
 import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.processors.sleigh.symbol.OperandSymbol;
 import ghidra.asm.wild.tree.WildAssemblyParseToken;
-import ghidra.asm.wild.tree.WildAssemblyParseToken.RegexWildcard;
 
 public class WildAssemblyFixedNumericStateGenerator
 		extends AbstractAssemblyStateGenerator<WildAssemblyParseToken> {

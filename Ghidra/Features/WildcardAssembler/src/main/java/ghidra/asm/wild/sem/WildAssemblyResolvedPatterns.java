@@ -22,10 +22,28 @@ import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
 import ghidra.asm.wild.WildOperandInfo;
 
+/**
+ * The result of assembling an instruction with the wildcard assembler
+ */
 public interface WildAssemblyResolvedPatterns extends AssemblyResolvedPatterns {
 
+	/**
+	 * The information for wildcarded operands in this instruction
+	 * 
+	 * @return the set of information
+	 */
 	Set<WildOperandInfo> getOperandInfo();
 
+	/**
+	 * Create a copy of this result with added wilcard information
+	 * 
+	 * @param wildcard see {@link WildOperandInfo}
+	 * @param path see {@link WildOperandInfo}
+	 * @param location see {@link WildOperandInfo}
+	 * @param expression see {@link WildOperandInfo}
+	 * @param choice see {@link WildOperandInfo}
+	 * @return the copy
+	 */
 	WildAssemblyResolvedPatterns withWildInfo(String wildcard,
 			List<AssemblyConstructorSemantic> path, AssemblyPatternBlock location,
 			PatternExpression expression, Object choice);

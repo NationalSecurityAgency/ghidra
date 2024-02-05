@@ -19,6 +19,7 @@ import java.util.*;
 
 import ghidra.app.plugin.assembler.AssemblySelector;
 import ghidra.app.plugin.assembler.sleigh.AbstractSleighAssemblerBuilder;
+import ghidra.app.plugin.assembler.sleigh.SleighAssemblerBuilder;
 import ghidra.app.plugin.assembler.sleigh.grammars.AssemblyGrammar;
 import ghidra.app.plugin.assembler.sleigh.grammars.AssemblySentential;
 import ghidra.app.plugin.assembler.sleigh.sem.AbstractAssemblyResolutionFactory;
@@ -33,11 +34,32 @@ import ghidra.asm.wild.sem.WildAssemblyResolvedPatterns;
 import ghidra.asm.wild.symbol.*;
 import ghidra.program.model.listing.Program;
 
+/**
+ * The builder for wildcard-enabled assemblers.
+ * 
+ * <p>
+ * Ideally, only one of these is created and cached per language, to save on the cost of building
+ * the assembler. However, if heap space needs to be freed up, then the builder must be disposed.
+ * 
+ * <p>
+ * This is based on the same abstract class as {@link SleighAssemblerBuilder}. See its documentation
+ * for more information.
+ */
 public class WildSleighAssemblerBuilder
 		extends AbstractSleighAssemblerBuilder<WildAssemblyResolvedPatterns, WildSleighAssembler> {
 
 	protected final Map<AssemblySymbol, AssemblyNonTerminal> wildNTs = new HashMap<>();
 
+	/**
+	 * Construct a builder for the given language
+	 * 
+	 * <p>
+	 * Once a builder is prepared for the given language, it can be used to build an assembler for
+	 * any number of programs using that same language. Clients should take advantage of this to
+	 * avoid re-incurring the steep cost of constructing an assembler for the same language.
+	 * 
+	 * @param lang the language
+	 */
 	public WildSleighAssemblerBuilder(SleighLanguage lang) {
 		super(lang);
 	}
