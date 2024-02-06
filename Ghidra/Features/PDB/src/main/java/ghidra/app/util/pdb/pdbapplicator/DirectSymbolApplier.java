@@ -17,34 +17,21 @@ package ghidra.app.util.pdb.pdbapplicator;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.MsSymbolIterator;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
-import ghidra.program.model.address.Address;
+import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.util.exception.CancelledException;
 
 /**
  * Interface class for MsSymbolApplier that has deferrable function work.
  */
-interface DeferrableFunctionSymbolApplier extends DirectSymbolApplier {
+interface DirectSymbolApplier {
 
 	/**
-	 * Deferred work for the MsSymbolApplier that can only be applied after all functions
-	 *  have been created and disassembled.  Examples would be setting local variables and
-	 *  parameters
+	 * Apply the next and any desired subsequent {@link AbstractMsSymbol AbstractMsSymbols} from
+	 * the {@link SymbolGroup} to a program.
 	 * @param iter the Iterator containing the symbol sequence being processed
-	 * @throws PdbException if there was a problem processing the data
+	 * @throws PdbException if there was a problem processing the data.
 	 * @throws CancelledException upon user cancellation
 	 */
-	public void deferredApply(MsSymbolIterator iter) throws PdbException, CancelledException;
+	public void apply(MsSymbolIterator iter) throws PdbException, CancelledException;
 
-	/**
-	 * Method to call to begin a block
-	 * @param startAddress start address of block
-	 * @param name name of the block
-	 * @param length byte length of the block
-	 */
-	public void beginBlock(Address startAddress, String name, long length);
-
-	/**
-	 * Method to call to end a block
-	 */
-	public void endBlock();
 }

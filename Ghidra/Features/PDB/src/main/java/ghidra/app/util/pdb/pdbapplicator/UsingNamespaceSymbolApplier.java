@@ -17,47 +17,57 @@ package ghidra.app.util.pdb.pdbapplicator;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.MsSymbolIterator;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
-import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractBlockMsSymbol;
-import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
-import ghidra.program.model.address.Address;
+import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 
 /**
- * Applier for {@link AbstractBlockMsSymbol} symbols.
+ * Applier for {@link AbstractManagedSymbolWithSlotIndexFieldMsSymbol} symbols.
  */
-public class BlockSymbolApplier extends MsSymbolApplier
-		implements BlockNestingSymbolApplier, NestableSymbolApplier {
+public class UsingNamespaceSymbolApplier extends MsSymbolApplier
+		implements NestableSymbolApplier {
 
-	private AbstractBlockMsSymbol symbol;
+	private AbstractUsingNamespaceMsSymbol symbol;
 
 	/**
 	 * Constructor
 	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
 	 * @param symbol the symbol for this applier
 	 */
-	public BlockSymbolApplier(DefaultPdbApplicator applicator, AbstractBlockMsSymbol symbol) {
+	public UsingNamespaceSymbolApplier(DefaultPdbApplicator applicator,
+			AbstractUsingNamespaceMsSymbol symbol) {
 		super(applicator);
 		this.symbol = symbol;
 	}
 
+	//==============================================================================================
+	//TODO: wondering if this can be seen in direct (non-nested use), like file-static.  Need
+	//  to study data.  If so, make sure has DirectSymbolApplier interface above
+//	@Override
+//	void apply(MsSymbolIterator iter) throws PdbException, CancelledException {
+//		// Pealing the symbol off again, as the iterator is coming in fresh, and we need the symbol
+//		getValidatedSymbol(iter, true);
+//	}
+
+	//==============================================================================================
 	@Override
 	public void applyTo(NestingSymbolApplier applyToApplier, MsSymbolIterator iter)
 			throws PdbException, CancelledException {
+		// Pealing the symbol off again, as the iterator is coming in fresh, and we need the symbol
 		getValidatedSymbol(iter, true);
 		if (applyToApplier instanceof AbstractBlockContextApplier applier) {
-			Address address = applicator.getAddress(symbol);
-			applier.beginBlock(address, symbol.getName(), symbol.getLength());
+			// TODO: figure out what needs to be done.
 		}
 	}
 
-	private AbstractBlockMsSymbol getValidatedSymbol(MsSymbolIterator iter, boolean iterate) {
+	private AbstractUsingNamespaceMsSymbol getValidatedSymbol(
+			MsSymbolIterator iter, boolean iterate) {
 		AbstractMsSymbol abstractSymbol = iterate ? iter.next() : iter.peek();
-		if (!(abstractSymbol instanceof AbstractBlockMsSymbol blockSymbol)) {
+		if (!(abstractSymbol instanceof AbstractUsingNamespaceMsSymbol usingNamespaceSymbol)) {
 			throw new AssertException(
 				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
 		}
-		return blockSymbol;
+		return usingNamespaceSymbol;
 	}
 
 }

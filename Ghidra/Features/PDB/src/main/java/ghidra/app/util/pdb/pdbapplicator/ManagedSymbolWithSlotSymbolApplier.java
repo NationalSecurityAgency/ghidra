@@ -17,47 +17,49 @@ package ghidra.app.util.pdb.pdbapplicator;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.MsSymbolIterator;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
-import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractBlockMsSymbol;
+import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractManagedSymbolWithSlotIndexFieldMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
-import ghidra.program.model.address.Address;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 
 /**
- * Applier for {@link AbstractBlockMsSymbol} symbols.
+ * Applier for {@link AbstractManagedSymbolWithSlotIndexFieldMsSymbol} symbols.
  */
-public class BlockSymbolApplier extends MsSymbolApplier
-		implements BlockNestingSymbolApplier, NestableSymbolApplier {
+public class ManagedSymbolWithSlotSymbolApplier extends MsSymbolApplier
+		implements NestableSymbolApplier {
 
-	private AbstractBlockMsSymbol symbol;
+	private AbstractManagedSymbolWithSlotIndexFieldMsSymbol symbol;
 
 	/**
 	 * Constructor
 	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
 	 * @param symbol the symbol for this applier
 	 */
-	public BlockSymbolApplier(DefaultPdbApplicator applicator, AbstractBlockMsSymbol symbol) {
+	public ManagedSymbolWithSlotSymbolApplier(DefaultPdbApplicator applicator,
+			AbstractManagedSymbolWithSlotIndexFieldMsSymbol symbol) {
 		super(applicator);
 		this.symbol = symbol;
 	}
 
+	//==============================================================================================
 	@Override
 	public void applyTo(NestingSymbolApplier applyToApplier, MsSymbolIterator iter)
 			throws PdbException, CancelledException {
+		// Pealing the symbol off again, as the iterator is coming in fresh, and we need the symbol
 		getValidatedSymbol(iter, true);
 		if (applyToApplier instanceof AbstractBlockContextApplier applier) {
-			Address address = applicator.getAddress(symbol);
-			applier.beginBlock(address, symbol.getName(), symbol.getLength());
+			// TODO: figure out what needs to be done.
 		}
 	}
 
-	private AbstractBlockMsSymbol getValidatedSymbol(MsSymbolIterator iter, boolean iterate) {
+	private AbstractManagedSymbolWithSlotIndexFieldMsSymbol getValidatedSymbol(
+			MsSymbolIterator iter, boolean iterate) {
 		AbstractMsSymbol abstractSymbol = iterate ? iter.next() : iter.peek();
-		if (!(abstractSymbol instanceof AbstractBlockMsSymbol blockSymbol)) {
+		if (!(abstractSymbol instanceof AbstractManagedSymbolWithSlotIndexFieldMsSymbol slotSymbol)) {
 			throw new AssertException(
 				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
 		}
-		return blockSymbol;
+		return slotSymbol;
 	}
 
 }

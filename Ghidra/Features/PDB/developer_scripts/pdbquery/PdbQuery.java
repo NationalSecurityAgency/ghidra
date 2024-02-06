@@ -200,7 +200,7 @@ public class PdbQuery {
 		TaskMonitor monitor = script.getMonitor();
 
 		monitor.initialize(numModules);
-		println(script, "Searching " + numModules + "PDB modules' symbol components...");
+		println(script, "Searching " + numModules + " PDB modules' symbol components...");
 		for (int module = 0; module <= numModules; module++) {
 			monitor.checkCancelled();
 			SymbolGroup symbolGroup = new SymbolGroup(pdb, module);

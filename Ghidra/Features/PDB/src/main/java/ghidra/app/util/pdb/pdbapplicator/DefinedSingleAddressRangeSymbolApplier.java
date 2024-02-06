@@ -24,38 +24,30 @@ import ghidra.util.exception.CancelledException;
 /**
  * Applier for {@link AbstractDefinedSingleAddressRangeMsSymbol} symbols.
  */
-public class DefinedSingleAddressRangeSymbolApplier extends MsSymbolApplier {
+public class DefinedSingleAddressRangeSymbolApplier extends MsSymbolApplier
+		implements NestableSymbolApplier {
 
 	private AbstractDefinedSingleAddressRangeMsSymbol symbol;
 
 	/**
 	 * Constructor
 	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
-	 * @param iter the Iterator containing the symbol sequence being processed
+	 * @param symbol the symbol for this applier
 	 */
 	public DefinedSingleAddressRangeSymbolApplier(DefaultPdbApplicator applicator,
-			MsSymbolIterator iter) {
-		super(applicator, iter);
-		AbstractMsSymbol abstractSymbol = iter.next();
-		if (!(abstractSymbol instanceof AbstractDefinedSingleAddressRangeMsSymbol)) {
-			throw new AssertException(
-				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
-		}
-		symbol = (AbstractDefinedSingleAddressRangeMsSymbol) abstractSymbol;
+			AbstractDefinedSingleAddressRangeMsSymbol symbol) {
+		super(applicator);
+		this.symbol = symbol;
 	}
 
 	@Override
-	void apply() throws PdbException, CancelledException {
-		pdbLogAndInfoMessage(this,
-			"Cannot apply " + this.getClass().getSimpleName() + " directly to program");
-	}
-
-	@Override
-	void applyTo(MsSymbolApplier applyToApplier) throws PdbException, CancelledException {
+	public void applyTo(NestingSymbolApplier applyToApplier, MsSymbolIterator iter)
+			throws PdbException, CancelledException {
+		getValidatedSymbol(iter, true);
 		if (applyToApplier instanceof LocalOptimizedSymbolApplier) {
-// TODO: eventually apply.
-//			LocalOptimizedSymbolApplier localSymbolApplier =
-//				(LocalOptimizedSymbolApplier) applyToApplier;
+			// TODO: eventually apply.
+//						LocalOptimizedSymbolApplier localSymbolApplier =
+//							(LocalOptimizedSymbolApplier) applyToApplier;
 			symbol.getAddressRange();
 			symbol.getAddressGapList();
 			if (symbol instanceof EnregisteredSymbolDARMsSymbol) {
@@ -71,6 +63,16 @@ public class DefinedSingleAddressRangeSymbolApplier extends MsSymbolApplier {
 				sym1.getRegister();
 			}
 		}
+	}
+
+	private AbstractDefinedSingleAddressRangeMsSymbol getValidatedSymbol(MsSymbolIterator iter,
+			boolean iterate) {
+		AbstractMsSymbol abstractSymbol = iterate ? iter.next() : iter.peek();
+		if (!(abstractSymbol instanceof AbstractDefinedSingleAddressRangeMsSymbol rangeSymbol)) {
+			throw new AssertException(
+				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
+		}
+		return rangeSymbol;
 	}
 
 }

@@ -18,9 +18,8 @@ package ghidra.app.util.pdb.pdbapplicator;
 import java.util.Objects;
 
 import ghidra.app.plugin.processors.sleigh.symbol.Symbol;
-import ghidra.app.util.bin.format.pdb2.pdbreader.*;
+import ghidra.app.util.bin.format.pdb2.pdbreader.PdbLog;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
-import ghidra.util.exception.CancelledException;
 
 /**
  * Abstract class representing the applier for a specific {@link AbstractMsSymbol}.  The
@@ -31,20 +30,14 @@ import ghidra.util.exception.CancelledException;
  */
 public abstract class MsSymbolApplier {
 	protected DefaultPdbApplicator applicator;
-	protected MsSymbolIterator iter;
-	protected long currentOffset;
 
 	/**
 	 * Constructor
 	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
-	 * @param iter the Iterator containing the symbol sequence being processed
 	 */
-	public MsSymbolApplier(DefaultPdbApplicator applicator, MsSymbolIterator iter) {
+	public MsSymbolApplier(DefaultPdbApplicator applicator) {
 		Objects.requireNonNull(applicator, "applicator cannot be null");
-		Objects.requireNonNull(iter, "iter cannot be null");
 		this.applicator = applicator;
-		this.iter = iter;
-		currentOffset = iter.getCurrentOffset();
 	}
 
 	/**
@@ -54,42 +47,6 @@ public abstract class MsSymbolApplier {
 	 */
 	protected void pdbLogAndInfoMessage(Object originator, String message) {
 		applicator.pdbLogAndInfoMessage(originator, message);
-	}
-
-	/**
-	 * Sets the offset of the {@link SymbolGroup} back to the state when this applicator was
-	 * created.
-	 */
-	protected void resetOffset() {
-		iter.initGetByOffset(currentOffset);
-	}
-
-	/**
-	 * Apply the next and any desired subsequent {@link AbstractMsSymbol AbstractMsSymbols} from
-	 * the {@link SymbolGroup} to a program.
-	 * @throws PdbException if there was a problem processing the data.
-	 * @throws CancelledException upon user cancellation
-	 */
-	abstract void apply() throws PdbException, CancelledException;
-
-	/**
-	 * Applies logic of this class to another {@link MsSymbolApplier} instead of to
-	 * the program.
-	 * @param applyToApplier the applier to which the logic of this class is applied.
-	 * @throws PdbException if there was a problem processing the data.
-	 * @throws CancelledException upon user cancellation.
-	 */
-	abstract void applyTo(MsSymbolApplier applyToApplier) throws PdbException, CancelledException;
-
-	/**
-	 * Manages block nesting for symbols/appliers that represent the beginning or end of blocks.
-	 * The default is to do nothing.  Otherwise the appliers should implement the appropriate
-	 * logic.
-	 * @param applierParam the applier which is managing blocks, which is typically
-	 * {@link FunctionSymbolApplier}.
-	 */
-	void manageBlockNesting(MsSymbolApplier applierParam) {
-		// Do nothing by default.
 	}
 
 }

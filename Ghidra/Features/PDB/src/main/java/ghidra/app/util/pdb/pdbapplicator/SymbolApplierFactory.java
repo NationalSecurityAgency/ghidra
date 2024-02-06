@@ -17,11 +17,10 @@ package ghidra.app.util.pdb.pdbapplicator;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.MsSymbolIterator;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
-import ghidra.util.exception.CancelledException;
 
 /**
  * Pseudo-factory for creating the {@link MsSymbolApplier} for the {@link AbstractMsSymbol}
- * indicated by the {@link AbstractMsSymbolIterator}.
+ * indicated by the {@link MsSymbolIterator}.
  */
 public class SymbolApplierFactory {
 
@@ -31,21 +30,29 @@ public class SymbolApplierFactory {
 		this.applicator = applicator;
 	}
 
-	// TODO: 20191120... Do we need a SymbolApplier cache for Symbols like we have the TypeApplier
-	//  cache (by index) for Types/Items? Would we use a record number (index) from within
-	//  the AbstractMsSymbol (do one for AbstractMsType as well)? Symbols are different in that
-	//  we are using SymbolGroup as a member instead of MsType.
-
-	MsSymbolApplier getSymbolApplier(MsSymbolIterator iter) throws CancelledException {
-
+	MsSymbolApplier getSymbolApplier(MsSymbolIterator iter) {
 		AbstractMsSymbol symbol = iter.peek();
 		if (symbol == null) {
 			applicator.appendLogMsg("PDB Warning: No AbstractMsSymbol");
 			return null;
 		}
+		return getSymbolApplier(symbol, iter);
+	}
+
+	MsSymbolApplier getSymbolApplier(AbstractMsSymbol symbol, MsSymbolIterator iter) {
+		MsSymbolApplier applier = getSymbolApplierInternal(symbol, iter);
+		if (!(applier instanceof NoSymbolApplier)) {
+			applicator.getPdbApplicatorMetrics().witnessCannotApplySymbolType(symbol);
+		}
+		return applier;
+	}
+
+	private MsSymbolApplier getSymbolApplierInternal(AbstractMsSymbol symbol,
+			MsSymbolIterator iter) {
 		MsSymbolApplier applier = null;
 
-		switch (symbol.getPdbId()) {
+		int pdbId = symbol.getPdbId();
+		switch (pdbId) {
 //				// 0x0000 block
 //				case CompileFlagsMsSymbol.PDB_ID:
 //					symbol = new CompileFlagsMsSymbol(pdb, reader);
@@ -57,13 +64,14 @@ public class SymbolApplierFactory {
 //					symbol = new Constant16MsSymbol(pdb, reader);
 //					break;
 			case UserDefinedType16MsSymbol.PDB_ID:
-				applier = new TypedefSymbolApplier(applicator, iter);
+				applier =
+					new TypedefSymbolApplier(applicator, (AbstractUserDefinedTypeMsSymbol) symbol);
 				break;
 //				case StartSearchMsSymbol.PDB_ID:
 //					symbol = new StartSearchMsSymbol(pdb, reader);
 //					break;
 			case EndMsSymbol.PDB_ID:
-				applier = new EndSymbolApplier(applicator, iter);
+				applier = new EndSymbolApplier(applicator, (EndMsSymbol) symbol);
 				break;
 //				case SkipMsSymbol.PDB_ID:
 //					symbol = new SkipMsSymbol(pdb, reader);
@@ -78,7 +86,8 @@ public class SymbolApplierFactory {
 //					symbol = new EndArgumentsListMsSymbol(pdb, reader);
 //					break;
 			case CobolUserDefinedType16MsSymbol.PDB_ID:
-				applier = new TypedefSymbolApplier(applicator, iter);
+				applier =
+					new TypedefSymbolApplier(applicator, (AbstractUserDefinedTypeMsSymbol) symbol);
 				break;
 //				case ManyRegisterVariable16MsSymbol.PDB_ID:
 //					symbol = new ManyRegisterVariable16MsSymbol(pdb, reader);
@@ -95,31 +104,31 @@ public class SymbolApplierFactory {
 //					symbol = new BasePointerRelative16MsSymbol(pdb, reader);
 //					break;
 			case LocalData16MsSymbol.PDB_ID:
-				applier = new DataSymbolApplier(applicator, iter);
+				applier = new DataSymbolApplier(applicator, (AbstractDataMsSymbol) symbol);
 				break;
 			case GlobalData16MsSymbol.PDB_ID:
-				applier = new DataSymbolApplier(applicator, iter);
+				applier = new DataSymbolApplier(applicator, (AbstractDataMsSymbol) symbol);
 				break;
 			case Public16MsSymbol.PDB_ID:
-				applier = new PublicSymbolApplier(applicator, iter);
+				applier = new PublicSymbolApplier(applicator, (AbstractPublicMsSymbol) symbol);
 				break;
 			case LocalProcedureStart16MsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 			case GlobalProcedureStart16MsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 			case Thunk16MsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 			case Block16MsSymbol.PDB_ID:
-				applier = new BlockSymbolApplier(applicator, iter);
+				applier = new BlockSymbolApplier(applicator, (AbstractBlockMsSymbol) symbol);
 				break;
 			case With16MsSymbol.PDB_ID:
-				applier = new WithSymbolApplier(applicator, iter);
+				applier = new WithSymbolApplier(applicator, (AbstractWithMsSymbol) symbol);
 				break;
 			case Label16MsSymbol.PDB_ID:
-				applier = new LabelSymbolApplier(applicator, iter);
+				applier = new LabelSymbolApplier(applicator, (AbstractLabelMsSymbol) symbol);
 				break;
 //				case ChangeExecutionModel16MsSymbol.PDB_ID:
 //					symbol = new ChangeExecutionModel16MsSymbol(pdb, reader);
@@ -128,7 +137,8 @@ public class SymbolApplierFactory {
 //					symbol = new VirtualFunctionTable16MsSymbol(pdb, reader);
 //					break;
 			case RegisterRelativeAddress16MsSymbol.PDB_ID:
-				applier = new RegisterRelativeSymbolApplier(applicator, iter);
+				applier = new RegisterRelativeSymbolApplier(applicator,
+					(AbstractRegisterRelativeAddressMsSymbol) symbol);
 				break;
 //
 //				// 0x0200 block
@@ -136,31 +146,31 @@ public class SymbolApplierFactory {
 //					symbol = new BasePointerRelative3216MsSymbol(pdb, reader);
 //					break;
 			case LocalData3216MsSymbol.PDB_ID:
-				applier = new DataSymbolApplier(applicator, iter);
+				applier = new DataSymbolApplier(applicator, (AbstractDataMsSymbol) symbol);
 				break;
 			case GlobalData3216MsSymbol.PDB_ID:
-				applier = new DataSymbolApplier(applicator, iter);
+				applier = new DataSymbolApplier(applicator, (AbstractDataMsSymbol) symbol);
 				break;
 			case Public3216MsSymbol.PDB_ID:
-				applier = new PublicSymbolApplier(applicator, iter);
+				applier = new PublicSymbolApplier(applicator, (AbstractPublicMsSymbol) symbol);
 				break;
 			case LocalProcedureStart3216MsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 			case GlobalProcedureStart3216MsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 			case Thunk32StMsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 			case Block32StMsSymbol.PDB_ID:
-				applier = new BlockSymbolApplier(applicator, iter);
+				applier = new BlockSymbolApplier(applicator, (AbstractBlockMsSymbol) symbol);
 				break;
 			case With32StMsSymbol.PDB_ID:
-				applier = new WithSymbolApplier(applicator, iter);
+				applier = new WithSymbolApplier(applicator, (AbstractWithMsSymbol) symbol);
 				break;
 			case Label32StMsSymbol.PDB_ID:
-				applier = new LabelSymbolApplier(applicator, iter);
+				applier = new LabelSymbolApplier(applicator, (AbstractLabelMsSymbol) symbol);
 				break;
 //				case ChangeExecutionModel32MsSymbol.PDB_ID:
 //					symbol = new ChangeExecutionModel32MsSymbol(pdb, reader);
@@ -169,7 +179,8 @@ public class SymbolApplierFactory {
 //					symbol = new VirtualFunctionTable3216MsSymbol(pdb, reader);
 //					break;
 			case RegisterRelativeAddress3216MsSymbol.PDB_ID:
-				applier = new RegisterRelativeSymbolApplier(applicator, iter);
+				applier = new RegisterRelativeSymbolApplier(applicator,
+					(AbstractRegisterRelativeAddressMsSymbol) symbol);
 				break;
 //				case LocalThreadStorage3216MsSymbol.PDB_ID:
 //					symbol = new LocalThreadStorage3216MsSymbol(pdb, reader);
@@ -183,28 +194,31 @@ public class SymbolApplierFactory {
 
 			// 0x0300 block
 			case LocalProcedureStartMips16MsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 			case GlobalProcedureStartMips16MsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 
 			// 0x0400 block
 			case ProcedureReferenceStMsSymbol.PDB_ID:
-				applier = new ReferenceSymbolApplier(applicator, iter);
+				applier =
+					new ReferenceSymbolApplier(applicator, (AbstractReferenceMsSymbol) symbol);
 				break;
 			case DataReferenceStMsSymbol.PDB_ID:
-				applier = new ReferenceSymbolApplier(applicator, iter);
+				applier =
+					new ReferenceSymbolApplier(applicator, (AbstractReferenceMsSymbol) symbol);
 				break;
 //				case AlignMsSymbol.PDB_ID:
 //					symbol = new AlignMsSymbol(pdb, reader);
 //					break;
 			case LocalProcedureReferenceStMsSymbol.PDB_ID:
-				applier = new ReferenceSymbolApplier(applicator, iter);
+				applier =
+					new ReferenceSymbolApplier(applicator, (AbstractReferenceMsSymbol) symbol);
 				break;
-//				case OemDefinedMsSymbol.PDB_ID:
-//					symbol = new OemDefinedMsSymbol(pdb, reader);
-//					break;
+			case OemDefinedMsSymbol.PDB_ID:
+				applier = new OemDefinedSymbolApplier(applicator, (OemDefinedMsSymbol) symbol);
+				break;
 //
 //				// 0x1000 block
 //				case RegisterStMsSymbol.PDB_ID:
@@ -214,10 +228,12 @@ public class SymbolApplierFactory {
 //					symbol = new ConstantStMsSymbol(pdb, reader);
 //					break;
 			case UserDefinedTypeStMsSymbol.PDB_ID:
-				applier = new TypedefSymbolApplier(applicator, iter);
+				applier =
+					new TypedefSymbolApplier(applicator, (AbstractUserDefinedTypeMsSymbol) symbol);
 				break;
 			case CobolUserDefinedTypeStMsSymbol.PDB_ID:
-				applier = new TypedefSymbolApplier(applicator, iter);
+				applier =
+					new TypedefSymbolApplier(applicator, (AbstractUserDefinedTypeMsSymbol) symbol);
 				break;
 //				case ManyRegisterVariableStMsSymbol.PDB_ID:
 //					symbol = new ManyRegisterVariableStMsSymbol(pdb, reader);
@@ -226,25 +242,26 @@ public class SymbolApplierFactory {
 //					symbol = new BasePointerRelative32StMsSymbol(pdb, reader);
 //					break;
 			case LocalData32StMsSymbol.PDB_ID:
-				applier = new DataSymbolApplier(applicator, iter);
+				applier = new DataSymbolApplier(applicator, (AbstractDataMsSymbol) symbol);
 				break;
 			case GlobalData32StMsSymbol.PDB_ID:
-				applier = new DataSymbolApplier(applicator, iter);
+				applier = new DataSymbolApplier(applicator, (AbstractDataMsSymbol) symbol);
 				break;
 			case Public32StMsSymbol.PDB_ID:
-				applier = new PublicSymbolApplier(applicator, iter);
+				applier = new PublicSymbolApplier(applicator, (AbstractPublicMsSymbol) symbol);
 				break;
 			case LocalProcedureStart32StMsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 			case GlobalProcedureStart32StMsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 //				case VirtualFunctionTable32MsSymbol.PDB_ID:
 //					symbol = new VirtualFunctionTable32MsSymbol(pdb, reader);
 //					break;
 			case RegisterRelativeAddress32StMsSymbol.PDB_ID:
-				applier = new RegisterRelativeSymbolApplier(applicator, iter);
+				applier = new RegisterRelativeSymbolApplier(applicator,
+					(AbstractRegisterRelativeAddressMsSymbol) symbol);
 				break;
 //				case LocalThreadStorage32StMsSymbol.PDB_ID:
 //					symbol = new LocalThreadStorage32StMsSymbol(pdb, reader);
@@ -253,13 +270,14 @@ public class SymbolApplierFactory {
 //					symbol = new GlobalThreadStorage32StMsSymbol(pdb, reader);
 //					break;
 			case LocalProcedureStartMipsStMsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 			case GlobalProcedureStartMipsStMsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 			case ExtraFrameAndProcedureInformationMsSymbol.PDB_ID:
-				applier = new FrameAndProcedureInformationSymbolApplier(applicator, iter);
+				applier = new FrameAndProcedureInformationSymbolApplier(applicator,
+					(ExtraFrameAndProcedureInformationMsSymbol) symbol);
 				break;
 //				case Compile2StMsSymbol.PDB_ID:
 //					symbol = new Compile2StMsSymbol(pdb, reader);
@@ -268,10 +286,10 @@ public class SymbolApplierFactory {
 //					symbol = new ManyRegisterVariable2StMsSymbol(pdb, reader);
 //					break;
 			case LocalProcedureStartIa64StMsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 			case GlobalProcedureStartIa64StMsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 //				case LocalSlotIndexFieldedLILStMsSymbol.PDB_ID:
 //					symbol = new LocalSlotIndexFieldedLILStMsSymbol(pdb, reader);
@@ -283,10 +301,12 @@ public class SymbolApplierFactory {
 //					symbol = new AnnotationMsSymbol(pdb, reader);
 //					break;
 			case GlobalManagedProcedureStMsSymbol.PDB_ID:
-				applier = new ManagedProcedureSymbolApplier(applicator, iter);
+				applier = new ManagedProcedureSymbolApplier(applicator,
+					(AbstractManagedProcedureMsSymbol) symbol);
 				break;
 			case LocalManagedProcedureStMsSymbol.PDB_ID:
-				applier = new ManagedProcedureSymbolApplier(applicator, iter);
+				applier = new ManagedProcedureSymbolApplier(applicator,
+					(AbstractManagedProcedureMsSymbol) symbol);
 				break;
 //				case Reserved1MsSymbol.PDB_ID:
 //					symbol = new Reserved1MsSymbol(pdb, reader);
@@ -301,10 +321,10 @@ public class SymbolApplierFactory {
 //					symbol = new Reserved4MsSymbol(pdb, reader);
 //					break;
 			case LocalManagedDataStMsSymbol.PDB_ID:
-				applier = new DataSymbolApplier(applicator, iter);
+				applier = new DataSymbolApplier(applicator, (AbstractDataMsSymbol) symbol);
 				break;
 			case GlobalManagedDataStMsSymbol.PDB_ID:
-				applier = new DataSymbolApplier(applicator, iter);
+				applier = new DataSymbolApplier(applicator, (AbstractDataMsSymbol) symbol);
 				break;
 //				case ManLocOrParamReltoVFPStMsSymbol.PDB_ID:
 //					symbol = new ManLocOrParamReltoVFPStMsSymbol(pdb, reader);
@@ -312,9 +332,10 @@ public class SymbolApplierFactory {
 //				case ManagedLocalOrParameterSIRStMsSymbol.PDB_ID:
 //					symbol = new ManagedLocalOrParameterSIRStMsSymbol(pdb, reader);
 //					break;
-//				case ManagedSymbolWithSlotIndexFieldStMsSymbol.PDB_ID:
-//					symbol = new ManagedSymbolWithSlotIndexFieldStMsSymbol(pdb, reader);
-//					break;
+			case ManagedSymbolWithSlotIndexFieldStMsSymbol.PDB_ID:
+				applier = new ManagedSymbolWithSlotSymbolApplier(applicator,
+					(AbstractManagedSymbolWithSlotIndexFieldMsSymbol) symbol);
+				break;
 //				case ManagedLocalOrParameterSIMRStMsSymbol.PDB_ID:
 //					symbol = new ManagedLocalOrParameterSIMRStMsSymbol(pdb, reader);
 //					break;
@@ -327,25 +348,26 @@ public class SymbolApplierFactory {
 //				case IndexForTypeReferencedByNameFromMetadataMsSymbol.PDB_ID:
 //					symbol = new IndexForTypeReferencedByNameFromMetadataMsSymbol(pdb, reader);
 //					break;
-//				case UsingNamespaceStMsSymbol.PDB_ID:
-//					symbol = new UsingNamespaceStMsSymbol(pdb, reader);
-//					break;
+			case UsingNamespaceStMsSymbol.PDB_ID:
+				applier = new UsingNamespaceSymbolApplier(applicator,
+					(AbstractUsingNamespaceMsSymbol) symbol);
+				break;
 //
 //				// 0x1100 block
 //				case ObjectNameMsSymbol.PDB_ID:
 //					symbol = new ObjectNameMsSymbol(pdb, reader);
 //					break;
 			case Thunk32MsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 			case Block32MsSymbol.PDB_ID:
-				applier = new BlockSymbolApplier(applicator, iter);
+				applier = new BlockSymbolApplier(applicator, (AbstractBlockMsSymbol) symbol);
 				break;
 			case With32MsSymbol.PDB_ID:
-				applier = new WithSymbolApplier(applicator, iter);
+				applier = new WithSymbolApplier(applicator, (AbstractWithMsSymbol) symbol);
 				break;
 			case Label32MsSymbol.PDB_ID:
-				applier = new LabelSymbolApplier(applicator, iter);
+				applier = new LabelSymbolApplier(applicator, (AbstractLabelMsSymbol) symbol);
 				break;
 //				case RegisterMsSymbol.PDB_ID:
 //					symbol = new RegisterMsSymbol(pdb, reader);
@@ -354,10 +376,12 @@ public class SymbolApplierFactory {
 //					symbol = new ConstantMsSymbol(pdb, reader);
 //					break;
 			case UserDefinedTypeMsSymbol.PDB_ID:
-				applier = new TypedefSymbolApplier(applicator, iter);
+				applier =
+					new TypedefSymbolApplier(applicator, (AbstractUserDefinedTypeMsSymbol) symbol);
 				break;
 			case CobolUserDefinedTypeMsSymbol.PDB_ID:
-				applier = new TypedefSymbolApplier(applicator, iter);
+				applier =
+					new TypedefSymbolApplier(applicator, (AbstractUserDefinedTypeMsSymbol) symbol);
 				break;
 //				case ManyRegisterVariableMsSymbol.PDB_ID:
 //					symbol = new ManyRegisterVariableMsSymbol(pdb, reader);
@@ -366,22 +390,23 @@ public class SymbolApplierFactory {
 //					symbol = new BasePointerRelative32MsSymbol(pdb, reader);
 //					break;
 			case LocalData32MsSymbol.PDB_ID:
-				applier = new DataSymbolApplier(applicator, iter);
+				applier = new DataSymbolApplier(applicator, (AbstractDataMsSymbol) symbol);
 				break;
 			case GlobalData32MsSymbol.PDB_ID:
-				applier = new DataSymbolApplier(applicator, iter);
+				applier = new DataSymbolApplier(applicator, (AbstractDataMsSymbol) symbol);
 				break;
 			case Public32MsSymbol.PDB_ID:
-				applier = new PublicSymbolApplier(applicator, iter);
+				applier = new PublicSymbolApplier(applicator, (AbstractPublicMsSymbol) symbol);
 				break;
 			case LocalProcedureStart32MsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 			case GlobalProcedureStart32MsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 			case RegisterRelativeAddress32MsSymbol.PDB_ID:
-				applier = new RegisterRelativeSymbolApplier(applicator, iter);
+				applier = new RegisterRelativeSymbolApplier(applicator,
+					(AbstractRegisterRelativeAddressMsSymbol) symbol);
 				break;
 //				case LocalThreadStorage32MsSymbol.PDB_ID:
 //					symbol = new LocalThreadStorage32MsSymbol(pdb, reader);
@@ -390,10 +415,10 @@ public class SymbolApplierFactory {
 //					symbol = new GlobalThreadStorage32MsSymbol(pdb, reader);
 //					break;
 			case LocalProcedureStartMipsMsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 			case GlobalProcedureStartMipsMsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 //				case Compile2MsSymbol.PDB_ID:
 //					symbol = new Compile2MsSymbol(pdb, reader);
@@ -402,10 +427,10 @@ public class SymbolApplierFactory {
 //					symbol = new ManyRegisterVariable2MsSymbol(pdb, reader);
 //					break;
 			case LocalProcedureStartIa64MsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 			case GlobalProcedureStartIa64MsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 //				case LocalSlotIndexFieldedLILMsSymbol.PDB_ID:
 //					symbol = new LocalSlotIndexFieldedLILMsSymbol(pdb, reader);
@@ -414,10 +439,10 @@ public class SymbolApplierFactory {
 //					symbol = new ParameterSlotIndexFieldedLILMsSymbol(pdb, reader);
 //					break;
 			case LocalManagedDataMsSymbol.PDB_ID:
-				applier = new DataSymbolApplier(applicator, iter);
+				applier = new DataSymbolApplier(applicator, (AbstractDataMsSymbol) symbol);
 				break;
 			case GlobalManagedDataMsSymbol.PDB_ID:
-				applier = new DataSymbolApplier(applicator, iter);
+				applier = new DataSymbolApplier(applicator, (AbstractDataMsSymbol) symbol);
 				break;
 //				case ManLocOrParamReltoVFPMsSymbol.PDB_ID:
 //					symbol = new ManLocOrParamReltoVFPMsSymbol(pdb, reader);
@@ -425,9 +450,10 @@ public class SymbolApplierFactory {
 //				case ManagedLocalOrParameterSIRMsSymbol.PDB_ID:
 //					symbol = new ManagedLocalOrParameterSIRMsSymbol(pdb, reader);
 //					break;
-//				case ManagedSymbolWithSlotIndexFieldMsSymbol.PDB_ID:
-//					symbol = new ManagedSymbolWithSlotIndexFieldMsSymbol(pdb, reader);
-//					break;
+			case ManagedSymbolWithSlotIndexFieldMsSymbol.PDB_ID:
+				applier = new ManagedSymbolWithSlotSymbolApplier(applicator,
+					(AbstractManagedSymbolWithSlotIndexFieldMsSymbol) symbol);
+				break;
 //				case ManagedLocalOrParameterSIMRMsSymbol.PDB_ID:
 //					symbol = new ManagedLocalOrParameterSIMRMsSymbol(pdb, reader);
 //					break;
@@ -437,32 +463,40 @@ public class SymbolApplierFactory {
 //				case ManagedLocalOrParameterSIMR2MsSymbol.PDB_ID:
 //					symbol = new ManagedLocalOrParameterSIMR2MsSymbol(pdb, reader);
 //					break;
-//				case UsingNamespaceMsSymbol.PDB_ID:
-//					symbol = new UsingNamespaceMsSymbol(pdb, reader);
-//					break;
+			case UsingNamespaceMsSymbol.PDB_ID:
+				applier = new UsingNamespaceSymbolApplier(applicator,
+					(AbstractUsingNamespaceMsSymbol) symbol);
+				break;
 			case ProcedureReferenceMsSymbol.PDB_ID:
-				applier = new ReferenceSymbolApplier(applicator, iter);
+				applier =
+					new ReferenceSymbolApplier(applicator, (AbstractReferenceMsSymbol) symbol);
 				break;
 			case DataReferenceMsSymbol.PDB_ID:
-				applier = new ReferenceSymbolApplier(applicator, iter);
+				applier =
+					new ReferenceSymbolApplier(applicator, (AbstractReferenceMsSymbol) symbol);
 				break;
 			case LocalProcedureReferenceMsSymbol.PDB_ID:
-				applier = new ReferenceSymbolApplier(applicator, iter);
+				applier =
+					new ReferenceSymbolApplier(applicator, (AbstractReferenceMsSymbol) symbol);
 				break;
 			case AnnotationReferenceMsSymbol.PDB_ID:
-				applier = new ReferenceSymbolApplier(applicator, iter);
+				applier =
+					new ReferenceSymbolApplier(applicator, (AbstractReferenceMsSymbol) symbol);
 				break;
 			case TokenReferenceToManagedProcedureMsSymbol.PDB_ID:
-				applier = new ReferenceSymbolApplier(applicator, iter);
+				applier =
+					new ReferenceSymbolApplier(applicator, (AbstractReferenceMsSymbol) symbol);
 				break;
 			case GlobalManagedProcedureMsSymbol.PDB_ID:
-				applier = new ManagedProcedureSymbolApplier(applicator, iter);
+				applier = new ManagedProcedureSymbolApplier(applicator,
+					(AbstractManagedProcedureMsSymbol) symbol);
 				break;
 			case LocalManagedProcedureMsSymbol.PDB_ID:
-				applier = new ManagedProcedureSymbolApplier(applicator, iter);
+				applier = new ManagedProcedureSymbolApplier(applicator,
+					(AbstractManagedProcedureMsSymbol) symbol);
 				break;
 			case TrampolineMsSymbol.PDB_ID:
-				applier = new TrampolineSymbolApplier(applicator, iter);
+				applier = new TrampolineSymbolApplier(applicator, (TrampolineMsSymbol) symbol);
 				break;
 //				case ManagedConstantMsSymbol.PDB_ID:
 //					symbol = new ManagedConstantMsSymbol(pdb, reader);
@@ -480,10 +514,12 @@ public class SymbolApplierFactory {
 //					symbol = new AttributedLocalOrParameterSIMRMsSymbol(pdb, reader);
 //					break;
 			case SeparatedCodeFromCompilerSupportMsSymbol.PDB_ID:
-				applier = new SeparatedCodeSymbolApplier(applicator, iter);
+				applier = new SeparatedCodeSymbolApplier(applicator,
+					(SeparatedCodeFromCompilerSupportMsSymbol) symbol);
 				break;
 			case LocalSymbolInOptimizedCode2005MsSymbol.PDB_ID:
-				applier = new LocalOptimizedSymbolApplier(applicator, iter);
+				applier = new LocalOptimizedSymbolApplier(applicator,
+					(AbstractLocalSymbolInOptimizedCodeMsSymbol) symbol);
 				break;
 //				case DefinedSingleAddressRange2005MsSymbol.PDB_ID:
 //					symbol = new DefinedSingleAddressRange2005MsSymbol(pdb, reader);
@@ -492,10 +528,11 @@ public class SymbolApplierFactory {
 //					symbol = new DefinedMultipleAddressRanges2005MsSymbol(pdb, reader);
 //					break;
 			case PeCoffSectionMsSymbol.PDB_ID:
-				applier = new PeCoffSectionSymbolApplier(applicator, iter);
+				applier =
+					new PeCoffSectionSymbolApplier(applicator, (PeCoffSectionMsSymbol) symbol);
 				break;
 			case PeCoffGroupMsSymbol.PDB_ID:
-				applier = new PeCoffGroupSymbolApplier(applicator, iter);
+				applier = new PeCoffGroupSymbolApplier(applicator, (PeCoffGroupMsSymbol) symbol);
 				break;
 //				case ExportMsSymbol.PDB_ID:
 //					symbol = new ExportMsSymbol(pdb, reader);
@@ -516,46 +553,54 @@ public class SymbolApplierFactory {
 //					symbol = new EnvironmentBlockMsSymbol(pdb, reader);
 //					break;
 			case LocalSymbolInOptimizedCodeMsSymbol.PDB_ID:
-				applier = new LocalOptimizedSymbolApplier(applicator, iter);
+				applier = new LocalOptimizedSymbolApplier(applicator,
+					(AbstractLocalSymbolInOptimizedCodeMsSymbol) symbol);
 				break;
 			case DefinedSingleAddressRangeMsSymbol.PDB_ID:
-				applier = new DefinedSingleAddressRangeSymbolApplier(applicator, iter);
+				applier = new DefinedSingleAddressRangeSymbolApplier(applicator,
+					(AbstractDefinedSingleAddressRangeMsSymbol) symbol);
 				break;
 			case SubfieldDARMsSymbol.PDB_ID:
-				applier = new DefinedSingleAddressRangeSymbolApplier(applicator, iter);
+				applier = new DefinedSingleAddressRangeSymbolApplier(applicator,
+					(AbstractDefinedSingleAddressRangeMsSymbol) symbol);
 				break;
 			case EnregisteredSymbolDARMsSymbol.PDB_ID:
-				applier = new DefinedSingleAddressRangeSymbolApplier(applicator, iter);
+				applier = new DefinedSingleAddressRangeSymbolApplier(applicator,
+					(AbstractDefinedSingleAddressRangeMsSymbol) symbol);
 				break;
 			case FramePointerRelativeDARMsSymbol.PDB_ID:
-				applier = new DefinedSingleAddressRangeSymbolApplier(applicator, iter);
+				applier = new DefinedSingleAddressRangeSymbolApplier(applicator,
+					(AbstractDefinedSingleAddressRangeMsSymbol) symbol);
 				break;
 			case EnregisteredFieldOfSymbolDARMsSymbol.PDB_ID:
-				applier = new DefinedSingleAddressRangeSymbolApplier(applicator, iter);
+				applier = new DefinedSingleAddressRangeSymbolApplier(applicator,
+					(AbstractDefinedSingleAddressRangeMsSymbol) symbol);
 				break;
 			case FramePointerRelativeFullScopeDARMsSymbol.PDB_ID:
-				applier = new DefinedSingleAddressRangeSymbolApplier(applicator, iter);
+				applier = new DefinedSingleAddressRangeSymbolApplier(applicator,
+					(AbstractDefinedSingleAddressRangeMsSymbol) symbol);
 				break;
 			case EnregisteredSymbolRelativeDARMsSymbol.PDB_ID:
-				applier = new DefinedSingleAddressRangeSymbolApplier(applicator, iter);
+				applier = new DefinedSingleAddressRangeSymbolApplier(applicator,
+					(AbstractDefinedSingleAddressRangeMsSymbol) symbol);
 				break;
 			case LocalProcedure32IdMsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 			case GlobalProcedure32IdMsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 			case LocalProcedureMipsIdMsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 			case GlobalProcedureMipsIdMsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 			case LocalProcedureIa64IdMsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 			case GlobalProcedureIa64IdMsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 //				case BuildInformationMsSymbol.PDB_ID:
 //					symbol = new BuildInformationMsSymbol(pdb, reader);
@@ -567,10 +612,12 @@ public class SymbolApplierFactory {
 //					symbol = new InlinedFunctionEndMsSymbol(pdb, reader);
 //					break;
 			case ProcedureIdEndMsSymbol.PDB_ID:
-				applier = new EndSymbolApplier(applicator, iter);
+				applier =
+					new ProcedureIdEndSymbolApplier(applicator, (ProcedureIdEndMsSymbol) symbol);
 				break;
 			case HighLevelShaderLanguageRegDimDARMsSymbol.PDB_ID:
-				applier = new DefinedSingleAddressRangeSymbolApplier(applicator, iter);
+				applier = new DefinedSingleAddressRangeSymbolApplier(applicator,
+					(AbstractDefinedSingleAddressRangeMsSymbol) symbol);
 				break;
 //				case GlobalDataHLSLMsSymbol.PDB_ID:
 //					symbol = new GlobalDataHLSLMsSymbol(pdb, reader);
@@ -585,13 +632,14 @@ public class SymbolApplierFactory {
 //					symbol = new LocalDeferredProcedureCallGroupSharedMsSymbol(pdb, reader);
 //					break;
 			case LocalProcedureStart32DeferredProcedureCallMsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 			case LocalProcedure32DeferredProcedureCallIdMsSymbol.PDB_ID:
-				applier = new FunctionSymbolApplier(applicator, iter);
+				applier = new FunctionSymbolApplier(applicator, (AbstractProcedureMsSymbol) symbol);
 				break;
 			case DeferredProcedureCallPointerTagRegDimDARMsSymbol.PDB_ID:
-				applier = new DefinedSingleAddressRangeSymbolApplier(applicator, iter);
+				applier = new DefinedSingleAddressRangeSymbolApplier(applicator,
+					(AbstractDefinedSingleAddressRangeMsSymbol) symbol);
 				break;
 //				case DeferredProcedureCallPointerTagToSymbolRecordMapMsSymbol.PDB_ID:
 //					symbol = new DeferredProcedureCallPointerTagToSymbolRecordMapMsSymbol(pdb, reader);
@@ -650,8 +698,7 @@ public class SymbolApplierFactory {
 			default:
 				// This should never happen (unless we missed something
 				// or MSFT has added new in a version we do not handle.
-				applicator.getPdbApplicatorMetrics().witnessCannotApplySymbolType(symbol);
-				applier = new NoSymbolApplier(applicator, iter);
+				applier = new NoSymbolApplier(applicator, symbol);
 				break;
 		}
 		return applier;
