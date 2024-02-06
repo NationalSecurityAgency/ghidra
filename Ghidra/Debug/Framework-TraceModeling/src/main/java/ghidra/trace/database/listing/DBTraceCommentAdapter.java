@@ -36,8 +36,8 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAdd
 import ghidra.trace.database.space.DBTraceSpaceKey;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceCommentChangeType;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
@@ -155,7 +155,7 @@ public class DBTraceCommentAdapter
 			}
 		}
 		trace.setChanged(new TraceChangeRecord<TraceAddressSnapRange, String>(
-			TraceCommentChangeType.byType(commentType),
+			TraceEvents.byCommentType(commentType),
 			DBTraceSpaceKey.create(address.getAddressSpace(), null, 0),
 			new ImmutableTraceAddressSnapRange(address, lifespan),
 			oldValue, comment));

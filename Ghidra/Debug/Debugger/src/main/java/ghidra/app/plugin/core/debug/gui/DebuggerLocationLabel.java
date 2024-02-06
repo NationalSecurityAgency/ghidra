@@ -26,12 +26,12 @@ import ghidra.async.AsyncTimer;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.address.Address;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.*;
 import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.modules.TraceSection;
 import ghidra.trace.model.program.TraceProgramView;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.Swing;
 
 public class DebuggerLocationLabel extends JLabel {
@@ -44,19 +44,19 @@ public class DebuggerLocationLabel extends JLabel {
 			updateLabelDebouncer
 					.addListener(__ -> Swing.runIfSwingOrRunLater(() -> doUpdateLabel()));
 
-			listenFor(TraceMemoryRegionChangeType.ADDED, this::regionChanged);
-			listenFor(TraceMemoryRegionChangeType.CHANGED, this::regionChanged);
-			listenFor(TraceMemoryRegionChangeType.LIFESPAN_CHANGED, this::regionChanged);
-			listenFor(TraceMemoryRegionChangeType.DELETED, this::regionChanged);
+			listenFor(TraceEvents.REGION_ADDED, this::regionChanged);
+			listenFor(TraceEvents.REGION_CHANGED, this::regionChanged);
+			listenFor(TraceEvents.REGION_LIFESPAN_CHANGED, this::regionChanged);
+			listenFor(TraceEvents.REGION_DELETED, this::regionChanged);
 
-			listenFor(TraceModuleChangeType.ADDED, this::moduleChanged);
-			listenFor(TraceModuleChangeType.CHANGED, this::moduleChanged);
-			listenFor(TraceModuleChangeType.LIFESPAN_CHANGED, this::moduleChanged);
-			listenFor(TraceModuleChangeType.DELETED, this::moduleChanged);
+			listenFor(TraceEvents.MODULE_ADDED, this::moduleChanged);
+			listenFor(TraceEvents.MODULE_CHANGED, this::moduleChanged);
+			listenFor(TraceEvents.MODULE_LIFESPAN_CHANGED, this::moduleChanged);
+			listenFor(TraceEvents.MODULE_DELETED, this::moduleChanged);
 
-			listenFor(TraceSectionChangeType.ADDED, this::sectionChanged);
-			listenFor(TraceSectionChangeType.CHANGED, this::sectionChanged);
-			listenFor(TraceSectionChangeType.DELETED, this::sectionChanged);
+			listenFor(TraceEvents.SECTION_ADDED, this::sectionChanged);
+			listenFor(TraceEvents.SECTION_CHANGED, this::sectionChanged);
+			listenFor(TraceEvents.SECTION_DELETED, this::sectionChanged);
 		}
 
 		private void doUpdateLabel() {

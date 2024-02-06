@@ -56,8 +56,8 @@ import ghidra.base.widgets.table.DataTypeTableCellEditor;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.debug.api.watch.WatchRow;
 import ghidra.docking.settings.*;
-import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.model.DomainObjectChangeRecord;
+import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
@@ -75,12 +75,11 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceMemoryBytesChangeType;
-import ghidra.trace.model.Trace.TraceMemoryStateChangeType;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.trace.util.TraceAddressSpace;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -247,8 +246,8 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 	class ForDepsListener extends TraceDomainObjectListener {
 		public ForDepsListener() {
 			listenForUntyped(DomainObjectEvent.RESTORED, this::objectRestored);
-			listenFor(TraceMemoryBytesChangeType.CHANGED, this::bytesChanged);
-			listenFor(TraceMemoryStateChangeType.CHANGED, this::stateChanged);
+			listenFor(TraceEvents.BYTES_CHANGED, this::bytesChanged);
+			listenFor(TraceEvents.BYTES_STATE_CHANGED, this::stateChanged);
 		}
 
 		private void objectRestored(DomainObjectChangeRecord rec) {

@@ -26,8 +26,6 @@ import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectInterface;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TraceBreakpointChangeType;
-import ghidra.trace.model.Trace.TraceObjectChangeType;
 import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
 import ghidra.trace.model.target.TraceObject;
@@ -35,8 +33,7 @@ import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.annot.TraceObjectInterfaceUtils;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceAddressSpace;
-import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.*;
 import ghidra.util.LockHold;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
@@ -243,9 +240,8 @@ public class DBTraceObjectBreakpointSpec
 
 	@Override
 	public TraceChangeRecord<?, ?> translateEvent(TraceChangeRecord<?, ?> rec) {
-		if (rec.getEventType() == TraceObjectChangeType.VALUE_CREATED.getEventType()) {
-			TraceChangeRecord<TraceObjectValue, Void> cast =
-				TraceObjectChangeType.VALUE_CREATED.cast(rec);
+		if (rec.getEventType() == TraceEvents.VALUE_CREATED) {
+			TraceChangeRecord<TraceObjectValue, Void> cast = TraceEvents.VALUE_CREATED.cast(rec);
 			TraceObjectValue affected = cast.getAffectedObject();
 			String key = affected.getEntryKey();
 			boolean applies = keys.contains(key);
@@ -259,8 +255,8 @@ public class DBTraceObjectBreakpointSpec
 			for (TraceObjectBreakpointLocation loc : getLocations()) {
 				DBTraceObjectBreakpointLocation dbLoc = (DBTraceObjectBreakpointLocation) loc;
 				TraceAddressSpace space = dbLoc.getTraceAddressSpace();
-				TraceChangeRecord<?, ?> evt = new TraceChangeRecord<>(
-					TraceBreakpointChangeType.CHANGED, space, loc, null, null);
+				TraceChangeRecord<?, ?> evt =
+					new TraceChangeRecord<>(TraceEvents.BREAKPOINT_CHANGED, space, loc, null, null);
 				object.getTrace().setChanged(evt);
 			}
 			return null;

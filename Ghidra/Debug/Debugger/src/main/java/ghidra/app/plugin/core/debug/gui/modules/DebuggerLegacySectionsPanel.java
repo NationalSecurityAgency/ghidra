@@ -37,10 +37,9 @@ import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TraceModuleChangeType;
-import ghidra.trace.model.Trace.TraceSectionChangeType;
 import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.modules.*;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.database.ObjectKey;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
@@ -146,13 +145,13 @@ public class DebuggerLegacySectionsPanel extends JPanel {
 			 * NOTE: No need for Module.ADDED here. A TraceModule is created empty, so when each
 			 * section is added, we'll get the call.
 			 */
-			listenFor(TraceModuleChangeType.CHANGED, this::moduleChanged);
-			listenFor(TraceModuleChangeType.LIFESPAN_CHANGED, this::moduleChanged);
-			listenFor(TraceModuleChangeType.DELETED, this::moduleDeleted);
+			listenFor(TraceEvents.MODULE_CHANGED, this::moduleChanged);
+			listenFor(TraceEvents.MODULE_LIFESPAN_CHANGED, this::moduleChanged);
+			listenFor(TraceEvents.MODULE_DELETED, this::moduleDeleted);
 
-			listenFor(TraceSectionChangeType.ADDED, this::sectionAdded);
-			listenFor(TraceSectionChangeType.CHANGED, this::sectionChanged);
-			listenFor(TraceSectionChangeType.DELETED, this::sectionDeleted);
+			listenFor(TraceEvents.SECTION_ADDED, this::sectionAdded);
+			listenFor(TraceEvents.SECTION_CHANGED, this::sectionChanged);
+			listenFor(TraceEvents.SECTION_DELETED, this::sectionDeleted);
 		}
 
 		private void objectRestored() {

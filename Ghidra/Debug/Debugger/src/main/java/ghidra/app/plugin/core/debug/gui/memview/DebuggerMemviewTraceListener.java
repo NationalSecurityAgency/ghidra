@@ -22,7 +22,6 @@ import ghidra.async.AsyncTimer;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.*;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointManager;
 import ghidra.trace.model.memory.TraceMemoryManager;
@@ -30,6 +29,7 @@ import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.thread.TraceThreadManager;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.Swing;
 
 public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
@@ -55,31 +55,31 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 
 		updateLabelDebouncer.addListener(__ -> Swing.runIfSwingOrRunLater(() -> doUpdate()));
 
-		listenFor(TraceThreadChangeType.ADDED, this::threadChanged);
-		listenFor(TraceThreadChangeType.CHANGED, this::threadChanged);
-		listenFor(TraceThreadChangeType.LIFESPAN_CHANGED, this::threadChanged);
-		listenFor(TraceThreadChangeType.DELETED, this::threadChanged);
+		listenFor(TraceEvents.THREAD_ADDED, this::threadChanged);
+		listenFor(TraceEvents.THREAD_CHANGED, this::threadChanged);
+		listenFor(TraceEvents.THREAD_LIFESPAN_CHANGED, this::threadChanged);
+		listenFor(TraceEvents.THREAD_DELETED, this::threadChanged);
 
-		listenFor(TraceMemoryRegionChangeType.ADDED, this::regionChanged);
-		listenFor(TraceMemoryRegionChangeType.CHANGED, this::regionChanged);
-		listenFor(TraceMemoryRegionChangeType.LIFESPAN_CHANGED, this::regionChanged);
-		listenFor(TraceMemoryRegionChangeType.DELETED, this::regionChanged);
+		listenFor(TraceEvents.REGION_ADDED, this::regionChanged);
+		listenFor(TraceEvents.REGION_CHANGED, this::regionChanged);
+		listenFor(TraceEvents.REGION_LIFESPAN_CHANGED, this::regionChanged);
+		listenFor(TraceEvents.REGION_DELETED, this::regionChanged);
 
-		listenFor(TraceModuleChangeType.ADDED, this::moduleChanged);
-		listenFor(TraceModuleChangeType.CHANGED, this::moduleChanged);
-		listenFor(TraceModuleChangeType.LIFESPAN_CHANGED, this::moduleChanged);
-		listenFor(TraceModuleChangeType.DELETED, this::moduleChanged);
+		listenFor(TraceEvents.MODULE_ADDED, this::moduleChanged);
+		listenFor(TraceEvents.MODULE_CHANGED, this::moduleChanged);
+		listenFor(TraceEvents.MODULE_LIFESPAN_CHANGED, this::moduleChanged);
+		listenFor(TraceEvents.MODULE_DELETED, this::moduleChanged);
 
-		listenFor(TraceSectionChangeType.ADDED, this::sectionChanged);
-		listenFor(TraceSectionChangeType.CHANGED, this::sectionChanged);
-		listenFor(TraceSectionChangeType.DELETED, this::sectionChanged);
+		listenFor(TraceEvents.SECTION_ADDED, this::sectionChanged);
+		listenFor(TraceEvents.SECTION_CHANGED, this::sectionChanged);
+		listenFor(TraceEvents.SECTION_DELETED, this::sectionChanged);
 
-		listenFor(TraceBreakpointChangeType.ADDED, this::breakpointChanged);
-		listenFor(TraceBreakpointChangeType.CHANGED, this::breakpointChanged);
-		listenFor(TraceBreakpointChangeType.LIFESPAN_CHANGED, this::breakpointChanged);
-		listenFor(TraceBreakpointChangeType.DELETED, this::breakpointChanged);
+		listenFor(TraceEvents.BREAKPOINT_ADDED, this::breakpointChanged);
+		listenFor(TraceEvents.BREAKPOINT_CHANGED, this::breakpointChanged);
+		listenFor(TraceEvents.BREAKPOINT_LIFESPAN_CHANGED, this::breakpointChanged);
+		listenFor(TraceEvents.BREAKPOINT_DELETED, this::breakpointChanged);
 
-		listenFor(TraceMemoryBytesChangeType.CHANGED, this::bytesChanged);
+		listenFor(TraceEvents.BYTES_CHANGED, this::bytesChanged);
 	}
 
 	public MemviewProvider getProvider() {

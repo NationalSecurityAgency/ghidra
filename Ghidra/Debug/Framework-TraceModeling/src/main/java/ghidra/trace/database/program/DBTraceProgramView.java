@@ -49,7 +49,6 @@ import ghidra.trace.database.listing.DBTraceCodeSpace;
 import ghidra.trace.database.listing.DBTraceDefinedUnitsView;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.*;
 import ghidra.trace.model.TraceTimeViewport.Occlusion;
 import ghidra.trace.model.TraceTimeViewport.RangeQueryOcclusion;
 import ghidra.trace.model.bookmark.TraceBookmark;
@@ -61,7 +60,7 @@ import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.symbol.*;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceAddressSpace;
+import ghidra.trace.util.*;
 import ghidra.util.*;
 import ghidra.util.datastruct.WeakValueHashMap;
 import ghidra.util.exception.*;
@@ -92,71 +91,68 @@ public class DBTraceProgramView implements TraceProgramView {
 			listenForUntyped(DomainObjectEvent.CLOSED, this::eventPassthrough);
 			listenForUntyped(DomainObjectEvent.ERROR, this::eventPassthrough);
 
-			listenFor(TraceBookmarkChangeType.TYPE_ADDED, this::bookmarkTypeAdded);
-			listenFor(TraceBookmarkChangeType.ADDED, this::bookmarkAdded);
-			listenFor(TraceBookmarkChangeType.CHANGED, this::bookmarkChanged);
-			listenFor(TraceBookmarkChangeType.LIFESPAN_CHANGED, this::bookmarkLifespanChanged);
-			listenFor(TraceBookmarkChangeType.DELETED, this::bookmarkDeleted);
+			listenFor(TraceEvents.BOOKMARK_TYPE_ADDED, this::bookmarkTypeAdded);
+			listenFor(TraceEvents.BOOKMARK_ADDED, this::bookmarkAdded);
+			listenFor(TraceEvents.BOOKMARK_CHANGED, this::bookmarkChanged);
+			listenFor(TraceEvents.BOOKMARK_LIFESPAN_CHANGED, this::bookmarkLifespanChanged);
+			listenFor(TraceEvents.BOOKMARK_DELETED, this::bookmarkDeleted);
 
-			listenFor(TraceCategoryChangeType.ADDED, this::categoryAdded);
-			listenFor(TraceCategoryChangeType.MOVED, this::categoryMoved);
-			listenFor(TraceCategoryChangeType.RENAMED, this::categoryRenamed);
-			listenFor(TraceCategoryChangeType.DELETED, this::categoryDeleted);
+			listenFor(TraceEvents.TYPE_CATEGORY_ADDED, this::categoryAdded);
+			listenFor(TraceEvents.TYPE_CATEGORY_MOVED, this::categoryMoved);
+			listenFor(TraceEvents.TYPE_CATEGORY_RENAMED, this::categoryRenamed);
+			listenFor(TraceEvents.TYPE_CATEGORY_DELETED, this::categoryDeleted);
 
-			listenFor(TraceCodeChangeType.ADDED, this::codeAdded);
-			listenFor(TraceCodeChangeType.LIFESPAN_CHANGED, this::codeLifespanChanged);
-			listenFor(TraceCodeChangeType.REMOVED, this::codeRemoved);
-			listenFor(TraceCodeChangeType.FRAGMENT_CHANGED, this::codeFragmentChanged);
-			listenFor(TraceCodeChangeType.DATA_TYPE_REPLACED, this::codeDataTypeReplaced);
-			listenFor(TraceCodeChangeType.DATA_TYPE_SETTINGS_CHANGED,
-				this::codeDataTypeSettingsChanged);
+			listenFor(TraceEvents.CODE_ADDED, this::codeAdded);
+			listenFor(TraceEvents.CODE_LIFESPAN_CHANGED, this::codeLifespanChanged);
+			listenFor(TraceEvents.CODE_REMOVED, this::codeRemoved);
+			listenFor(TraceEvents.CODE_FRAGMENT_CHANGED, this::codeFragmentChanged);
+			listenFor(TraceEvents.CODE_DATA_TYPE_REPLACED, this::codeDataTypeReplaced);
+			listenFor(TraceEvents.CODE_DATA_SETTINGS_CHANGED, this::codeDataTypeSettingsChanged);
 
-			listenFor(TraceCommentChangeType.EOL_CHANGED, this::commentEolChanged);
-			listenFor(TraceCommentChangeType.PLATE_CHANGED, this::commentPlateChanged);
-			listenFor(TraceCommentChangeType.POST_CHANGED, this::commentPostChanged);
-			listenFor(TraceCommentChangeType.PRE_CHANGED, this::commentPreChanged);
-			listenFor(TraceCommentChangeType.REPEATABLE_CHANGED, this::commentRepeatableChanged);
+			listenFor(TraceEvents.EOL_COMMENT_CHANGED, this::commentEolChanged);
+			listenFor(TraceEvents.PLATE_COMMENT_CHANGED, this::commentPlateChanged);
+			listenFor(TraceEvents.POST_COMMENT_CHANGED, this::commentPostChanged);
+			listenFor(TraceEvents.PRE_COMMENT_CHANGED, this::commentPreChanged);
+			listenFor(TraceEvents.REPEATABLE_COMMENT_CHANGED, this::commentRepeatableChanged);
 
-			listenFor(TraceCompositeDataChangeType.ADDED, this::compositeDataAdded);
-			listenFor(TraceCompositeDataChangeType.LIFESPAN_CHANGED,
-				this::compositeLifespanChanged);
-			listenFor(TraceCompositeDataChangeType.REMOVED, this::compositeDataRemoved);
+			listenFor(TraceEvents.COMPOSITE_DATA_ADDED, this::compositeDataAdded);
+			listenFor(TraceEvents.COMPOSITE_DATA_LIFESPAN_CHANGED, this::compositeLifespanChanged);
+			listenFor(TraceEvents.COMPOSITE_DATA_REMOVED, this::compositeDataRemoved);
 
-			listenFor(TraceDataTypeChangeType.ADDED, this::dataTypeAdded);
-			listenFor(TraceDataTypeChangeType.CHANGED, this::dataTypeChanged);
-			listenFor(TraceDataTypeChangeType.REPLACED, this::dataTypeReplaced);
-			listenFor(TraceDataTypeChangeType.MOVED, this::dataTypeMoved);
-			listenFor(TraceDataTypeChangeType.RENAMED, this::dataTypeRenamed);
-			listenFor(TraceDataTypeChangeType.DELETED, this::dataTypeDeleted);
+			listenFor(TraceEvents.DATA_TYPE_ADDED, this::dataTypeAdded);
+			listenFor(TraceEvents.DATA_TYPE_CHANGED, this::dataTypeChanged);
+			listenFor(TraceEvents.DATA_TYPE_REPLACED, this::dataTypeReplaced);
+			listenFor(TraceEvents.DATA_TYPE_MOVED, this::dataTypeMoved);
+			listenFor(TraceEvents.DATA_TYPE_RENAMED, this::dataTypeRenamed);
+			listenFor(TraceEvents.DATA_TYPE_DELETED, this::dataTypeDeleted);
 
-			listenFor(TraceInstructionChangeType.LENGTH_OVERRIDE_CHANGED,
+			listenFor(TraceEvents.INSTRUCTION_LENGTH_OVERRIDE_CHANGED,
 				this::instructionLengthOverrideChanged);
-			listenFor(TraceInstructionChangeType.FLOW_OVERRIDE_CHANGED,
+			listenFor(TraceEvents.INSTRUCTION_FLOW_OVERRIDE_CHANGED,
 				this::instructionFlowOverrideChanged);
-			listenFor(TraceInstructionChangeType.FALL_THROUGH_OVERRIDE_CHANGED,
+			listenFor(TraceEvents.INSTRUCTION_FALL_THROUGH_OVERRIDE_CHANGED,
 				this::instructionFallThroughChanged);
 
-			listenFor(TraceMemoryBytesChangeType.CHANGED, this::memoryBytesChanged);
+			listenFor(TraceEvents.BYTES_CHANGED, this::memoryBytesChanged);
 
-			listenFor(TraceMemoryRegionChangeType.ADDED, this::memoryRegionAdded);
-			listenFor(TraceMemoryRegionChangeType.CHANGED, this::memoryRegionChanged);
-			listenFor(TraceMemoryRegionChangeType.LIFESPAN_CHANGED,
-				this::memoryRegionLifespanChanged);
-			listenFor(TraceMemoryRegionChangeType.DELETED, this::memoryRegionDeleted);
+			listenFor(TraceEvents.REGION_ADDED, this::memoryRegionAdded);
+			listenFor(TraceEvents.REGION_CHANGED, this::memoryRegionChanged);
+			listenFor(TraceEvents.REGION_LIFESPAN_CHANGED, this::memoryRegionLifespanChanged);
+			listenFor(TraceEvents.REGION_DELETED, this::memoryRegionDeleted);
 
-			listenFor(TraceSourceArchiveChangeType.ADDED, this::sourceArchiveAdded);
-			listenFor(TraceSourceArchiveChangeType.CHANGED, this::sourceArchiveChanged);
+			listenFor(TraceEvents.SOURCE_TYPE_ARCHIVE_ADDED, this::sourceArchiveAdded);
+			listenFor(TraceEvents.SOURCE_TYPE_ARCHIVE_CHANGED, this::sourceArchiveChanged);
 
-			listenFor(TraceSymbolChangeType.ADDED, this::symbolAdded);
-			listenFor(TraceSymbolChangeType.SOURCE_CHANGED, this::symbolSourceChanged);
-			listenFor(TraceSymbolChangeType.SET_AS_PRIMARY, this::symbolSetAsPrimary);
-			listenFor(TraceSymbolChangeType.RENAMED, this::symbolRenamed);
-			listenFor(TraceSymbolChangeType.PARENT_CHANGED, this::symbolParentChanged);
-			listenFor(TraceSymbolChangeType.ASSOCIATION_ADDED, this::symbolAssociationAdded);
-			listenFor(TraceSymbolChangeType.ASSOCIATION_REMOVED, this::symbolAssociationRemoved);
-			listenFor(TraceSymbolChangeType.ADDRESS_CHANGED, this::symbolAddressChanged);
-			listenFor(TraceSymbolChangeType.LIFESPAN_CHANGED, this::symbolLifespanChanged);
-			listenFor(TraceSymbolChangeType.DELETED, this::symbolDeleted);
+			listenFor(TraceEvents.SYMBOL_ADDED, this::symbolAdded);
+			listenFor(TraceEvents.SYMBOL_SOURCE_CHANGED, this::symbolSourceChanged);
+			listenFor(TraceEvents.SYMBOL_PRIMARY_CHANGED, this::symbolSetAsPrimary);
+			listenFor(TraceEvents.SYMBOL_RENAMED, this::symbolRenamed);
+			listenFor(TraceEvents.SYMBOL_PARENT_CHANGED, this::symbolParentChanged);
+			listenFor(TraceEvents.SYMBOL_ASSOCIATION_ADDED, this::symbolAssociationAdded);
+			listenFor(TraceEvents.SYMBOL_ASSOCIATION_REMOVED, this::symbolAssociationRemoved);
+			listenFor(TraceEvents.SYMBOL_ADDRESS_CHANGED, this::symbolAddressChanged);
+			listenFor(TraceEvents.SYMBOL_LIFESPAN_CHANGED, this::symbolLifespanChanged);
+			listenFor(TraceEvents.SYMBOL_DELETED, this::symbolDeleted);
 		}
 
 		@Override

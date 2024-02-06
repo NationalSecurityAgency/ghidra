@@ -27,13 +27,11 @@ import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectInterface;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TraceMemoryRegionChangeType;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.annot.TraceObjectInterfaceUtils;
-import ghidra.trace.util.TraceChangeRecord;
-import ghidra.trace.util.TraceChangeType;
+import ghidra.trace.util.*;
 import ghidra.util.LockHold;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -82,18 +80,18 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 		}
 
 		@Override
-		protected TraceChangeType<TraceMemoryRegion, Void> getAddedType() {
-			return TraceMemoryRegionChangeType.ADDED;
+		protected TraceEvent<TraceMemoryRegion, Void> getAddedType() {
+			return TraceEvents.REGION_ADDED;
 		}
 
 		@Override
-		protected TraceChangeType<TraceMemoryRegion, Lifespan> getLifespanChangedType() {
-			return TraceMemoryRegionChangeType.LIFESPAN_CHANGED;
+		protected TraceEvent<TraceMemoryRegion, Lifespan> getLifespanChangedType() {
+			return TraceEvents.REGION_LIFESPAN_CHANGED;
 		}
 
 		@Override
-		protected TraceChangeType<TraceMemoryRegion, Void> getChangedType() {
-			return TraceMemoryRegionChangeType.CHANGED;
+		protected TraceEvent<TraceMemoryRegion, Void> getChangedType() {
+			return TraceEvents.REGION_CHANGED;
 		}
 
 		@Override
@@ -102,8 +100,8 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 		}
 
 		@Override
-		protected TraceChangeType<TraceMemoryRegion, Void> getDeletedType() {
-			return TraceMemoryRegionChangeType.DELETED;
+		protected TraceEvent<TraceMemoryRegion, Void> getDeletedType() {
+			return TraceEvents.REGION_DELETED;
 		}
 
 		@Override

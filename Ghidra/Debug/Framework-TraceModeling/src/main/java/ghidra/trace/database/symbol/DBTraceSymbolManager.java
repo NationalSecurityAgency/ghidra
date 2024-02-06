@@ -39,10 +39,10 @@ import ghidra.trace.database.space.DBTraceSpaceKey;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TraceSymbolChangeType;
 import ghidra.trace.model.symbol.*;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.DBCachedObjectStoreFactory.AbstractDBFieldCodec;
@@ -138,7 +138,10 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		@DBAnnotatedColumn(STORAGE_COLUMN_NAME)
 		static DBObjectColumn STORAGE_COLUMN;
 
-		@DBAnnotatedField(column = STORAGE_COLUMN_NAME, indexed = true, codec = VariableStorageDBFieldCodec.class)
+		@DBAnnotatedField(
+			column = STORAGE_COLUMN_NAME,
+			indexed = true,
+			codec = VariableStorageDBFieldCodec.class)
 		private VariableStorage storage;
 
 		protected final DBTraceSymbolManager manager;
@@ -516,7 +519,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 			delID(thread, symbol.getAddress().getAddressSpace(), symbol.getID());
 		}
 		// TODO: Remove from other space maps, once implemented.
-		trace.setChanged(new TraceChangeRecord<>(TraceSymbolChangeType.DELETED, symbol.getSpace(),
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.SYMBOL_DELETED, symbol.getSpace(),
 			symbol, null, null));
 		return true;
 	}

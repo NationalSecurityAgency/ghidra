@@ -48,9 +48,9 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceStaticMappingChangeType;
 import ghidra.trace.model.modules.TraceStaticMapping;
 import ghidra.trace.model.modules.TraceStaticMappingManager;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.MathUtilities;
 import ghidra.util.Msg;
 import ghidra.util.database.ObjectKey;
@@ -107,8 +107,8 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 	protected class ListenerForStaticMappingDisplay extends TraceDomainObjectListener {
 		public ListenerForStaticMappingDisplay() {
 			listenForUntyped(DomainObjectEvent.RESTORED, e -> objectRestored());
-			listenFor(TraceStaticMappingChangeType.ADDED, this::staticMappingAdded);
-			listenFor(TraceStaticMappingChangeType.DELETED, this::staticMappingDeleted);
+			listenFor(TraceEvents.MAPPING_ADDED, this::staticMappingAdded);
+			listenFor(TraceEvents.MAPPING_DELETED, this::staticMappingDeleted);
 		}
 
 		private void objectRestored() {

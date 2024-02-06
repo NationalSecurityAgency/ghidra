@@ -39,7 +39,6 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.database.symbol.DBTraceReference;
 import ghidra.trace.database.symbol.DBTraceReferenceSpace;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceInstructionChangeType;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.TraceInstruction;
 import ghidra.trace.model.symbol.TraceReference;
@@ -571,7 +570,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 			}
 		}
 		space.trace.setChanged(
-			new TraceChangeRecord<>(TraceInstructionChangeType.FLOW_OVERRIDE_CHANGED, space, this,
+			new TraceChangeRecord<>(TraceEvents.INSTRUCTION_FLOW_OVERRIDE_CHANGED, space, this,
 				oldFlowOverride, flowOverride));
 	}
 
@@ -604,7 +603,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 			updateLengthOverride(length);
 		}
 		space.trace.setChanged(
-			new TraceChangeRecord<>(TraceInstructionChangeType.LENGTH_OVERRIDE_CHANGED, space, this,
+			new TraceChangeRecord<>(TraceEvents.INSTRUCTION_LENGTH_OVERRIDE_CHANGED, space, this,
 				oldLengthOverride, length));
 	}
 
@@ -731,7 +730,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 		}
 		update(FLAGS_COLUMN);
 		space.trace.setChanged(
-			new TraceChangeRecord<>(TraceInstructionChangeType.FALL_THROUGH_OVERRIDE_CHANGED, space,
+			new TraceChangeRecord<>(TraceEvents.INSTRUCTION_FALL_THROUGH_OVERRIDE_CHANGED, space,
 				this, !overridden, overridden));
 	}
 

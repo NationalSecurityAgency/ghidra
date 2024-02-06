@@ -51,25 +51,25 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceStaticMappingChangeType;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.program.TraceProgramView;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 @PluginInfo(
-		shortDescription = "Debugger static mapping manager",
-		description = "Track and manage static mappings (program-trace relocations)",
-		category = PluginCategoryNames.DEBUGGER,
-		packageName = DebuggerPluginPackage.NAME,
-		status = PluginStatus.RELEASED,
-		eventsConsumed = { ProgramOpenedPluginEvent.class, ProgramClosedPluginEvent.class,
-			TraceOpenedPluginEvent.class, TraceClosedPluginEvent.class, },
-		servicesRequired = { ProgramManager.class, DebuggerTraceManagerService.class, },
-		servicesProvided = { DebuggerStaticMappingService.class, })
+	shortDescription = "Debugger static mapping manager",
+	description = "Track and manage static mappings (program-trace relocations)",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
+	eventsConsumed = { ProgramOpenedPluginEvent.class, ProgramClosedPluginEvent.class,
+		TraceOpenedPluginEvent.class, TraceClosedPluginEvent.class, },
+	servicesRequired = { ProgramManager.class, DebuggerTraceManagerService.class, },
+	servicesProvided = { DebuggerStaticMappingService.class, })
 public class DebuggerStaticMappingServicePlugin extends Plugin
 		implements DebuggerStaticMappingService, DomainFolderChangeAdapter {
 
@@ -222,8 +222,8 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			this.trace = trace;
 
 			listenForUntyped(DomainObjectEvent.RESTORED, e -> objectRestored());
-			listenFor(TraceStaticMappingChangeType.ADDED, this::staticMappingAdded);
-			listenFor(TraceStaticMappingChangeType.DELETED, this::staticMappingDeleted);
+			listenFor(TraceEvents.MAPPING_ADDED, this::staticMappingAdded);
+			listenFor(TraceEvents.MAPPING_DELETED, this::staticMappingDeleted);
 
 			trace.addListener(this);
 

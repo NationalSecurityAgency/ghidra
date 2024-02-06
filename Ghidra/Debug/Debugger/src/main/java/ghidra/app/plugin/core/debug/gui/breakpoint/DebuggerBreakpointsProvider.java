@@ -52,9 +52,9 @@ import ghidra.program.model.address.AddressRange;
 import ghidra.program.util.MarkerLocation;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceBreakpointChangeType;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.*;
 import ghidra.util.database.ObjectKey;
 import ghidra.util.table.GhidraTable;
@@ -602,10 +602,10 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		public ForBreakpointLocationsTraceListener(Trace trace) {
 			this.trace = trace;
 			listenForUntyped(DomainObjectEvent.RESTORED, e -> objectRestored());
-			listenFor(TraceBreakpointChangeType.ADDED, this::locationAdded);
-			listenFor(TraceBreakpointChangeType.CHANGED, this::locationChanged);
-			listenFor(TraceBreakpointChangeType.LIFESPAN_CHANGED, this::locationLifespanChanged);
-			listenFor(TraceBreakpointChangeType.DELETED, this::locationDeleted);
+			listenFor(TraceEvents.BREAKPOINT_ADDED, this::locationAdded);
+			listenFor(TraceEvents.BREAKPOINT_CHANGED, this::locationChanged);
+			listenFor(TraceEvents.BREAKPOINT_LIFESPAN_CHANGED, this::locationLifespanChanged);
+			listenFor(TraceEvents.BREAKPOINT_DELETED, this::locationDeleted);
 
 			trace.addListener(this);
 		}

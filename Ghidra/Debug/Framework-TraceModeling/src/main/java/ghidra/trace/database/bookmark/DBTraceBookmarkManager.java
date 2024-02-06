@@ -31,12 +31,12 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAdd
 import ghidra.trace.database.space.*;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace.TraceBookmarkChangeType;
 import ghidra.trace.model.bookmark.TraceBookmarkManager;
 import ghidra.trace.model.bookmark.TraceBookmarkType;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.Msg;
 import ghidra.util.database.DBOpenMode;
@@ -231,7 +231,7 @@ public class DBTraceBookmarkManager extends AbstractDBTraceSpaceBasedManager<DBT
 			type = new DBTraceBookmarkType(this, typeName);
 			typesByName.put(typeName, type);
 		}
-		trace.setChanged(new TraceChangeRecord<>(TraceBookmarkChangeType.TYPE_ADDED, null, type));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.BOOKMARK_TYPE_ADDED, null, type));
 		return type;
 	}
 
@@ -250,7 +250,7 @@ public class DBTraceBookmarkManager extends AbstractDBTraceSpaceBasedManager<DBT
 			type = new DBTraceBookmarkType(this, typeName, icon, color, priority);
 			typesByName.put(typeName, type);
 		}
-		trace.setChanged(new TraceChangeRecord<>(TraceBookmarkChangeType.TYPE_ADDED, null, type));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.BOOKMARK_TYPE_ADDED, null, type));
 		return type;
 	}
 

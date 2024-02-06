@@ -29,10 +29,10 @@ import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager;
 import ghidra.trace.database.space.DBTraceDelegatingManager;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace.TraceModuleChangeType;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBOpenMode;
 import ghidra.util.exception.DuplicateNameException;
@@ -298,6 +298,6 @@ public class DBTraceModuleManager extends AbstractDBTraceSpaceBasedManager<DBTra
 			}
 			module.space.moduleMapSpace.deleteData(module);
 		}
-		trace.setChanged(new TraceChangeRecord<>(TraceModuleChangeType.DELETED, null, module));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.MODULE_DELETED, null, module));
 	}
 }

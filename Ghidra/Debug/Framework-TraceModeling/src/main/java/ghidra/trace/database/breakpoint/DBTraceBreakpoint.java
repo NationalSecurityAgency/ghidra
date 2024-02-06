@@ -27,11 +27,11 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace.TraceBreakpointChangeType;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.Msg;
 import ghidra.util.database.DBCachedObjectStore;
@@ -193,8 +193,8 @@ public class DBTraceBreakpoint
 			this.name = name;
 			update(NAME_COLUMN);
 		}
-		space.trace.setChanged(new TraceChangeRecord<>(TraceBreakpointChangeType.CHANGED,
-			space, this));
+		space.trace
+				.setChanged(new TraceChangeRecord<>(TraceEvents.BREAKPOINT_CHANGED, space, this));
 
 	}
 
@@ -261,7 +261,7 @@ public class DBTraceBreakpoint
 			oldLifespan = lifespan;
 			doSetLifespan(newLifespan);
 		}
-		space.trace.setChanged(new TraceChangeRecord<>(TraceBreakpointChangeType.LIFESPAN_CHANGED,
+		space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.BREAKPOINT_LIFESPAN_CHANGED,
 			space, this, oldLifespan, newLifespan));
 	}
 
@@ -325,16 +325,15 @@ public class DBTraceBreakpoint
 		}
 		if (that == this) {
 			space.trace.setChanged(
-				new TraceChangeRecord<>(TraceBreakpointChangeType.CHANGED, space, this));
+				new TraceChangeRecord<>(TraceEvents.BREAKPOINT_CHANGED, space, this));
 		}
 		else {
 			// Yes, issue ADDED, before LIFESPAN_CHANGED, as noted in docs
+			space.trace
+					.setChanged(new TraceChangeRecord<>(TraceEvents.BREAKPOINT_ADDED, space, that));
 			space.trace.setChanged(
-				new TraceChangeRecord<>(TraceBreakpointChangeType.ADDED, space, that));
-			space.trace.setChanged(
-				new TraceChangeRecord<>(TraceBreakpointChangeType.LIFESPAN_CHANGED,
-					space, this, Objects.requireNonNull(oldLifespan),
-					Objects.requireNonNull(newLifespan)));
+				new TraceChangeRecord<>(TraceEvents.BREAKPOINT_LIFESPAN_CHANGED, space, this,
+					Objects.requireNonNull(oldLifespan), Objects.requireNonNull(newLifespan)));
 		}
 		return that;
 	}
@@ -403,8 +402,8 @@ public class DBTraceBreakpoint
 		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
 			doSetEnabled(enabled);
 		}
-		space.trace.setChanged(new TraceChangeRecord<>(TraceBreakpointChangeType.CHANGED,
-			space, this));
+		space.trace
+				.setChanged(new TraceChangeRecord<>(TraceEvents.BREAKPOINT_CHANGED, space, this));
 	}
 
 	@Override
@@ -420,8 +419,8 @@ public class DBTraceBreakpoint
 		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
 			doSetEmuEnabled(enabled);
 		}
-		space.trace.setChanged(new TraceChangeRecord<>(TraceBreakpointChangeType.CHANGED,
-			space, this));
+		space.trace
+				.setChanged(new TraceChangeRecord<>(TraceEvents.BREAKPOINT_CHANGED, space, this));
 	}
 
 	@Override
@@ -437,8 +436,8 @@ public class DBTraceBreakpoint
 		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
 			doSetKinds(kinds);
 		}
-		space.trace.setChanged(
-			new TraceChangeRecord<>(TraceBreakpointChangeType.CHANGED, space, this));
+		space.trace
+				.setChanged(new TraceChangeRecord<>(TraceEvents.BREAKPOINT_CHANGED, space, this));
 	}
 
 	@Override
@@ -454,8 +453,8 @@ public class DBTraceBreakpoint
 			this.comment = comment;
 			update(COMMENT_COLUMN);
 		}
-		space.trace.setChanged(new TraceChangeRecord<>(TraceBreakpointChangeType.CHANGED,
-			space, this));
+		space.trace
+				.setChanged(new TraceChangeRecord<>(TraceEvents.BREAKPOINT_CHANGED, space, this));
 	}
 
 	@Override
@@ -476,8 +475,8 @@ public class DBTraceBreakpoint
 			}
 			update(SLEIGH_COLUMN);
 		}
-		space.trace.setChanged(new TraceChangeRecord<>(TraceBreakpointChangeType.CHANGED,
-			space, this));
+		space.trace
+				.setChanged(new TraceChangeRecord<>(TraceEvents.BREAKPOINT_CHANGED, space, this));
 	}
 
 	@Override

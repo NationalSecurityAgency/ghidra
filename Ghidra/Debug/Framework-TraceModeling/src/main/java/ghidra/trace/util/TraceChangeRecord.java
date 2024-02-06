@@ -20,48 +20,39 @@ import ghidra.framework.model.DomainObjectChangeRecord;
 public class TraceChangeRecord<T, U> extends DomainObjectChangeRecord {
 	private static final long serialVersionUID = 1;
 
-	private final TraceChangeType<T, U> type;
 	private final TraceAddressSpace space;
 	private final T affectedObject;
 	private final boolean oldKnown;
 
-	public TraceChangeRecord(TraceChangeType<T, U> type, TraceAddressSpace space, T affectedObject,
+	public TraceChangeRecord(TraceEvent<T, U> type, TraceAddressSpace space, T affectedObject,
 			U oldValue, U newValue) {
-		super(type.getEventType(), oldValue, newValue);
-		this.type = type;
+		super(type, oldValue, newValue);
 		this.space = space;
 		this.affectedObject = affectedObject;
 		this.oldKnown = true;
 	}
 
-	public TraceChangeRecord(TraceChangeType<T, U> type, TraceAddressSpace space, T affectedObject,
+	public TraceChangeRecord(TraceEvent<T, U> type, TraceAddressSpace space, T affectedObject,
 			U newValue) {
-		super(type.getEventType(), null, newValue);
-		this.type = type;
+		super(type, null, newValue);
 		this.space = space;
 		this.affectedObject = affectedObject;
 		this.oldKnown = false;
 	}
 
-	public TraceChangeRecord(TraceChangeType<T, U> type, TraceAddressSpace space,
+	public TraceChangeRecord(TraceEvent<T, U> type, TraceAddressSpace space,
 			T affectedObject) {
-		super(type.getEventType(), null, null);
-		this.type = type;
+		super(type, null, null);
 		this.space = space;
 		this.affectedObject = affectedObject;
 		this.oldKnown = false;
 	}
 
-	public TraceChangeRecord(TraceChangeType<T, U> type, TraceAddressSpace space) {
-		super(type.getEventType(), null, null);
-		this.type = type;
+	public TraceChangeRecord(TraceEvent<T, U> type, TraceAddressSpace space) {
+		super(type, null, null);
 		this.space = space;
 		this.affectedObject = null;
 		this.oldKnown = false;
-	}
-
-	public TraceChangeType<T, U> getType() {
-		return type;
 	}
 
 	public TraceAddressSpace getSpace() {

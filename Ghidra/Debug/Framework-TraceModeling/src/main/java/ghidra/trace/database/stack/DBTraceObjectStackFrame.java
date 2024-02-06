@@ -28,14 +28,13 @@ import ghidra.trace.database.target.DBTraceObjectInterface;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Lifespan.DefaultLifeSet;
 import ghidra.trace.model.Lifespan.LifeSet;
-import ghidra.trace.model.Trace.TraceObjectChangeType;
-import ghidra.trace.model.Trace.TraceStackChangeType;
 import ghidra.trace.model.stack.TraceObjectStack;
 import ghidra.trace.model.stack.TraceObjectStackFrame;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.target.annot.TraceObjectInterfaceUtils;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 
 public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceObjectInterface {
@@ -143,8 +142,7 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 	}
 
 	protected boolean changeApplies(TraceChangeRecord<?, ?> rec) {
-		TraceChangeRecord<TraceObjectValue, Void> cast =
-			TraceObjectChangeType.VALUE_CREATED.cast(rec);
+		TraceChangeRecord<TraceObjectValue, Void> cast = TraceEvents.VALUE_CREATED.cast(rec);
 		TraceObjectValue affected = cast.getAffectedObject();
 		assert affected.getParent() == object;
 		if (!keys.contains(affected.getEntryKey())) {
@@ -166,31 +164,31 @@ public class DBTraceObjectStackFrame implements TraceObjectStackFrame, DBTraceOb
 	}
 
 	protected long snapFor(TraceChangeRecord<?, ?> rec) {
-		if (rec.getEventType() == TraceObjectChangeType.VALUE_CREATED.getEventType()) {
-			return TraceObjectChangeType.VALUE_CREATED.cast(rec).getAffectedObject().getMinSnap();
+		if (rec.getEventType() == TraceEvents.VALUE_CREATED) {
+			return TraceEvents.VALUE_CREATED.cast(rec).getAffectedObject().getMinSnap();
 		}
 		return computeMinSnap();
 	}
 
 	protected TraceChangeRecord<?, ?> createChangeRecord() {
-		return new TraceChangeRecord<>(TraceStackChangeType.CHANGED, null, getStack(), 0L,
+		return new TraceChangeRecord<>(TraceEvents.STACK_CHANGED, null, getStack(), 0L,
 			life.bound().lmin());
 	}
 
 	@Override
 	public TraceChangeRecord<?, ?> translateEvent(TraceChangeRecord<?, ?> rec) {
 		EventType type = rec.getEventType();
-		if (type == TraceObjectChangeType.LIFE_CHANGED.getEventType()) {
+		if (type == TraceEvents.OBJECT_LIFE_CHANGED) {
 			LifeSet newLife = object.getLife();
 			if (!newLife.isEmpty()) {
 				life = newLife;
 			}
 			return createChangeRecord();
 		}
-		else if (type == TraceObjectChangeType.VALUE_CREATED.getEventType() && changeApplies(rec)) {
+		else if (type == TraceEvents.VALUE_CREATED && changeApplies(rec)) {
 			return createChangeRecord();
 		}
-		else if (type == TraceObjectChangeType.DELETED.getEventType()) {
+		else if (type == TraceEvents.OBJECT_DELETED) {
 			if (life.isEmpty()) {
 				return null;
 			}

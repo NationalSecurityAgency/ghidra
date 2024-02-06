@@ -52,8 +52,8 @@ import ghidra.dbg.error.DebuggerModelAccessException;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.docking.settings.*;
-import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.model.DomainObjectChangeRecord;
+import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.options.AutoOptions;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
@@ -64,15 +64,13 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.*;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceAddressSpace;
-import ghidra.trace.util.TraceRegisterUtils;
+import ghidra.trace.util.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
@@ -274,14 +272,14 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	class TraceChangeListener extends TraceDomainObjectListener {
 		public TraceChangeListener() {
 			listenForUntyped(DomainObjectEvent.RESTORED, e -> objectRestored(e));
-			listenFor(TraceMemoryBytesChangeType.CHANGED, this::registerValueChanged);
-			listenFor(TraceMemoryStateChangeType.CHANGED, this::registerStateChanged);
-			listenFor(TraceCodeChangeType.ADDED, this::registerTypeAdded);
-			listenFor(TraceCodeChangeType.DATA_TYPE_REPLACED, this::registerTypeReplaced);
-			listenFor(TraceCodeChangeType.LIFESPAN_CHANGED, this::registerTypeLifespanChanged);
-			listenFor(TraceCodeChangeType.REMOVED, this::registerTypeRemoved);
-			listenFor(TraceThreadChangeType.DELETED, this::threadDeleted);
-			listenFor(TraceThreadChangeType.LIFESPAN_CHANGED, this::threadDestroyed);
+			listenFor(TraceEvents.BYTES_CHANGED, this::registerValueChanged);
+			listenFor(TraceEvents.BYTES_STATE_CHANGED, this::registerStateChanged);
+			listenFor(TraceEvents.CODE_ADDED, this::registerTypeAdded);
+			listenFor(TraceEvents.CODE_DATA_TYPE_REPLACED, this::registerTypeReplaced);
+			listenFor(TraceEvents.CODE_LIFESPAN_CHANGED, this::registerTypeLifespanChanged);
+			listenFor(TraceEvents.CODE_REMOVED, this::registerTypeRemoved);
+			listenFor(TraceEvents.THREAD_DELETED, this::threadDeleted);
+			listenFor(TraceEvents.THREAD_LIFESPAN_CHANGED, this::threadDestroyed);
 		}
 
 		private boolean isVisibleObjectsMode(AddressSpace space) {

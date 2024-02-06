@@ -21,10 +21,10 @@ import org.apache.commons.collections4.IterableUtils;
 
 import ghidra.trace.database.DBTraceUtils.LifespanMapSetter;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace.TraceObjectChangeType;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 
 interface InternalTraceObjectValue extends TraceObjectValue {
@@ -119,8 +119,8 @@ interface InternalTraceObjectValue extends TraceObjectValue {
 	default void doSetLifespanAndEmit(Lifespan lifespan) {
 		Lifespan oldLifespan = getLifespan();
 		doSetLifespan(lifespan);
-		getParent().emitEvents(new TraceChangeRecord<>(
-			TraceObjectChangeType.VALUE_LIFESPAN_CHANGED, null, this, oldLifespan, lifespan));
+		getParent().emitEvents(new TraceChangeRecord<>(TraceEvents.VALUE_LIFESPAN_CHANGED, null,
+			this, oldLifespan, lifespan));
 	}
 
 	@Override
@@ -157,7 +157,7 @@ interface InternalTraceObjectValue extends TraceObjectValue {
 			if (isObject()) {
 				DBTraceObject child = getChild();
 				child.emitEvents(
-					new TraceChangeRecord<>(TraceObjectChangeType.LIFE_CHANGED, null, child));
+					new TraceChangeRecord<>(TraceEvents.OBJECT_LIFE_CHANGED, null, child));
 			}
 		}
 	}
@@ -167,7 +167,7 @@ interface InternalTraceObjectValue extends TraceObjectValue {
 	default void doDeleteAndEmit() {
 		DBTraceObject parent = getParent();
 		doDelete();
-		parent.emitEvents(new TraceChangeRecord<>(TraceObjectChangeType.VALUE_DELETED, null, this));
+		parent.emitEvents(new TraceChangeRecord<>(TraceEvents.VALUE_DELETED, null, this));
 	}
 
 	@Override
@@ -179,7 +179,7 @@ interface InternalTraceObjectValue extends TraceObjectValue {
 		}
 		DBTraceObject child = getChildOrNull();
 		InternalTraceObjectValue result = doTruncateOrDelete(span);
-		child.emitEvents(new TraceChangeRecord<>(TraceObjectChangeType.LIFE_CHANGED, null, child));
+		child.emitEvents(new TraceChangeRecord<>(TraceEvents.OBJECT_LIFE_CHANGED, null, child));
 		return result;
 	}
 

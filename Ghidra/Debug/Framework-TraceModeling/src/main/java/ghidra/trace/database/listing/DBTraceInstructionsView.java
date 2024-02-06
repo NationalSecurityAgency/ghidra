@@ -30,11 +30,9 @@ import ghidra.trace.database.context.DBTraceRegisterContextManager;
 import ghidra.trace.database.context.DBTraceRegisterContextSpace;
 import ghidra.trace.database.guest.InternalTracePlatform;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceCodeChangeType;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.*;
-import ghidra.trace.util.OverlappingObjectIterator;
-import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.*;
 import ghidra.util.LockHold;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -343,14 +341,15 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 	 * @param platform the platform (language, compiler) for the instruction
 	 * @param prototype the instruction's prototype
 	 * @param context the initial context for parsing the instruction
-	 * @param length instruction byte-length (must be in the range 0..prototype.getLength()).
-	 * If smaller than the prototype length it must have a value no greater than 7, otherwise
-	 * an error will be thrown.  A value of 0 or greater-than-or-equal the prototype length
-	 * will be ignored and not impose and override length.  The length value must be a multiple 
-	 * of the {@link Language#getInstructionAlignment() instruction alignment} .
-	 * @return the newly created instruction.  
-	 * @throws CodeUnitInsertionException thrown if the new Instruction would overlap and 
-	 * existing {@link CodeUnit} or the specified {@code length} is unsupported.
+	 * @param length instruction byte-length (must be in the range 0..prototype.getLength()). If
+	 *            smaller than the prototype length it must have a value no greater than 7,
+	 *            otherwise an error will be thrown. A value of 0 or greater-than-or-equal the
+	 *            prototype length will be ignored and not impose and override length. The length
+	 *            value must be a multiple of the {@link Language#getInstructionAlignment()
+	 *            instruction alignment} .
+	 * @return the newly created instruction.
+	 * @throws CodeUnitInsertionException thrown if the new Instruction would overlap and existing
+	 *             {@link CodeUnit} or the specified {@code length} is unsupported.
 	 * @throws IllegalArgumentException if a negative {@code length} is specified.
 	 * @throws AddressOverflowException if the instruction would fall off the address space
 	 */
@@ -403,7 +402,7 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 			DBTraceInstruction created =
 				doCreate(lifespan, address, dbPlatform, prototype, context, forcedLengthOverride);
 			space.trace.setChanged(
-				new TraceChangeRecord<>(TraceCodeChangeType.ADDED, space, created, created));
+				new TraceChangeRecord<>(TraceEvents.CODE_ADDED, space, created, created));
 			return created;
 		}
 		catch (AddressOverflowException e) {
@@ -584,7 +583,7 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 				if (lastInstruction != null) {
 					Address maxAddress = DBTraceCodeManager.instructionMax(lastInstruction, true);
 					result.addRange(block.getStartAddress(), maxAddress);
-					space.trace.setChanged(new TraceChangeRecord<>(TraceCodeChangeType.ADDED, space,
+					space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.CODE_ADDED, space,
 						new ImmutableTraceAddressSnapRange(block.getStartAddress(), maxAddress,
 							lifespan)));
 				}

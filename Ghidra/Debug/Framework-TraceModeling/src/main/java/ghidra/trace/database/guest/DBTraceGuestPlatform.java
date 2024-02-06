@@ -34,12 +34,10 @@ import ghidra.trace.database.DBTraceUtils.CompilerSpecIDDBFieldCodec;
 import ghidra.trace.database.DBTraceUtils.LanguageIDDBFieldCodec;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TracePlatformChangeType;
 import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.guest.TraceGuestPlatformMappedRange;
-import ghidra.trace.util.OverlappingObjectIterator;
+import ghidra.trace.util.*;
 import ghidra.trace.util.OverlappingObjectIterator.Ranger;
-import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
@@ -217,8 +215,8 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 			hostAddressSet.delete(hostRange);
 			guestAddressSet.delete(guestRange);
 		}
-		manager.trace.setChanged(new TraceChangeRecord<>(TracePlatformChangeType.MAPPING_DELETED,
-			null, this, range, null));
+		manager.trace.setChanged(
+			new TraceChangeRecord<>(TraceEvents.PLATFORM_MAPPING_DELETED, null, this, range, null));
 	}
 
 	@Override
@@ -265,8 +263,8 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 			hostAddressSet.add(mappedRange.getHostRange());
 			guestAddressSet.add(mappedRange.getGuestRange());
 		}
-		manager.trace.setChanged(new TraceChangeRecord<>(TracePlatformChangeType.MAPPING_ADDED,
-			null, this, null, mappedRange));
+		manager.trace.setChanged(new TraceChangeRecord<>(TraceEvents.PLATFORM_MAPPING_ADDED, null,
+			this, null, mappedRange));
 		return mappedRange;
 	}
 
