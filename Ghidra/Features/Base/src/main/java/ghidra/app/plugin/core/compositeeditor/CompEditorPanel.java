@@ -394,10 +394,10 @@ public class CompEditorPanel extends CompositeEditorPanel {
 				new HelpLocation(provider.getHelpTopic(), provider.getHelpName() + "_" + "Align"));
 		}
 		String alignmentToolTip =
-			"<HTML>The <B>align</B> control allows the overall minimum alignment of this<BR>" +
+			"<html>The <B>align</B> control allows the overall minimum alignment of this<BR>" +
 				"data type to be specified.  The actual computed alignment<BR>" +
 				"may be any multiple of this value.   " + "<font color=\"" +
-				Palette.BLUE.toHexString() + "\" size=\"-2\">(&lt;F1&gt; for help)</HTML>";
+				Palette.BLUE.toHexString() + "\" size=\"-2\">(&lt;F1&gt; for help)</html>";
 		alignPanel.setToolTipText(alignmentToolTip);
 
 		addMinimumAlignmentComponents();
@@ -449,10 +449,10 @@ public class CompEditorPanel extends CompositeEditorPanel {
 
 	private void setupDefaultMinAlignButton() {
 		defaultAlignButton.setName("Default Alignment");
-		String alignmentToolTip = "<HTML>Sets this data type to use <B>default</B> alignment.<BR>" +
+		String alignmentToolTip = "<html>Sets this data type to use <B>default</B> alignment.<BR>" +
 			"If packing is disabled, the default will be 1 byte.  If packing<BR>" +
 			"is enabled, the alignment is computed based upon the pack<BR>" +
-			"setting and the alignment of each component data type.</HTML>";
+			"setting and the alignment of each component data type.</html>";
 
 		defaultAlignButton.addActionListener(e -> {
 			((CompEditorModel) model).setAlignmentType(AlignmentType.DEFAULT, -1);
@@ -468,10 +468,10 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	private void setupMachineMinAlignButton() {
 		machineAlignButton.setName("Machine Alignment");
 		String alignmentToolTip =
-			"<HTML>Sets this data type to use the <B>machine</B> alignment<BR>" +
+			"<html>Sets this data type to use the <B>machine</B> alignment<BR>" +
 				"as specified by the compiler specification.  If packing is<BR>" +
 				"enabled, the computed alignment of this composite should be<BR>" +
-				"the machine alignment value.</HTML>";
+				"the machine alignment value.</html>";
 		machineAlignButton.setToolTipText(alignmentToolTip);
 
 		machineAlignButton.addActionListener(e -> {
@@ -487,9 +487,9 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	private void setupExplicitAlignButton() {
 		explicitAlignButton.setName("Explicit Alignment");
 		String alignmentToolTip =
-			"<HTML>Sets this data type to use the <B>explicit</B> alignment value<BR>" +
+			"<html>Sets this data type to use the <B>explicit</B> alignment value<BR>" +
 				"specified.  If packing is enabled, the computed alignment of<BR>" +
-				"this composite may be any multiple of this value.</HTML>";
+				"this composite may be any multiple of this value.</html>";
 		explicitAlignButton.setToolTipText(alignmentToolTip);
 
 		explicitAlignButton.addActionListener(e -> {
@@ -555,10 +555,10 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	private void setupActualAlignment() {
 		GridBagConstraints gridBagConstraints = new GridBagConstraints();
 		String actualAlignmentToolTip =
-			"<HTML>The actual alignment to be used for this data type.<BR>" +
+			"<html>The actual alignment to be used for this data type.<BR>" +
 				"A combination of the pack and alignment settings made to this datatype<BR>" +
 				"combined with alignments of the individual components are used to<BR>" +
-				"to compute the actual alignment of this datatype.</HTML>";
+				"to compute the actual alignment of this datatype.</html>";
 
 		JPanel actualAlignmentPanel = new JPanel(new BorderLayout());
 		actualAlignmentLabel = new GDLabel("Alignment:");
@@ -672,10 +672,10 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	private void setupPackingEnablementButton() {
 		packingEnablementButton.setName("Packing Enablement");
 		String packingToolTipText =
-			"<HTML>Enable packing when details of all components are known (including sizing and" +
+			"<html>Enable packing when details of all components are known (including sizing and" +
 				" alignment).<BR>" + "Disable packing when Reverse Engineering composite.   " +
 				"<font color=\"" + Palette.BLUE.toHexString() +
-				"\" size=\"-2\">(&lt;F1&gt; for help)</font></HTML>";
+				"\" size=\"-2\">(&lt;F1&gt; for help)</font></html>";
 		packingEnablementButton.addActionListener(e -> {
 			((CompEditorModel) model).setPackingType(
 				packingEnablementButton.isSelected() ? PackingType.DEFAULT : PackingType.DISABLED,
@@ -692,7 +692,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	private void setupDefaultPackingButton() {
 		defaultPackingButton.setName("Default Packing");
 		String packingToolTipText =
-			"<HTML>Indicates <B>default</B> compiler packing rules should be applied.</HTML>";
+			"<html>Indicates <B>default</B> compiler packing rules should be applied.</html>";
 
 		defaultPackingButton.addActionListener(e -> {
 			((CompEditorModel) model).setPackingType(PackingType.DEFAULT, -1);
@@ -708,7 +708,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	private void setupExplicitPackingButton() {
 		explicitPackingButton.setName("Explicit Packing");
 		String packingToolTipText =
-			"<HTML>Indicates an explicit pack size should be applied.</HTML>";
+			"<html>Indicates an explicit pack size should be applied.</html>";
 
 		explicitPackingButton.addActionListener(e -> chooseByValuePacking());
 		explicitPackingButton.setToolTipText(packingToolTipText);

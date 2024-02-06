@@ -33,7 +33,7 @@ import ghidra.service.graph.*;
 import ghidra.util.HTMLUtilities;
 
 /**
- * Generates tool tips for an {@link AttributedVertex} or {@link AttributedEdge} in 
+ * Generates tool tips for an {@link AttributedVertex} or {@link AttributedEdge} in
  * an {@link AttributedGraph}
  */
 public class AttributedToolTipInfo extends ToolTipInfo<Attributed> {
@@ -79,7 +79,7 @@ public class AttributedToolTipInfo extends ToolTipInfo<Attributed> {
 		}
 
 		StringBuilder buf = new StringBuilder();
-		buf.append("<HTML>");
+		buf.append("<html>");
 
 		if (graphObject instanceof AttributedVertex) {
 			addToolTipTextForVertex(buf, (AttributedVertex) graphObject);

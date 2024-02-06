@@ -125,7 +125,7 @@ public class ProcessorListPlugin extends Plugin implements ApplicationLevelPlugi
 	private String getProcessorList(boolean asHtml) {
 		StringBuilder strBuilder = new StringBuilder();
 		if (asHtml) {
-			strBuilder.append("<HTML><BODY>\n");
+			strBuilder.append("<html><BODY>\n");
 			strBuilder.append("<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\">\n<tr>");
 		}
 
@@ -152,7 +152,7 @@ public class ProcessorListPlugin extends Plugin implements ApplicationLevelPlugi
 		}
 		if (asHtml) {
 			strBuilder.append("</ul>\n</td></tr>\n</table>");
-			strBuilder.append("</BODY></HTML>");
+			strBuilder.append("</BODY></html>");
 		}
 		return strBuilder.toString();
 	}

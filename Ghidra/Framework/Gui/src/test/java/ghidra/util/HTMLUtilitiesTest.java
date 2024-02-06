@@ -107,7 +107,7 @@ public class HTMLUtilitiesTest {
 
 	@Test
 	public void testToLiteralHTML_AlreadyStartingWithHTML() {
-		String s = "<HTML>Wrap<BR>here";
+		String s = "<html>Wrap<BR>here";
 		String html = HTMLUtilities.toLiteralHTML(s, 4);
 		assertEquals(HTML + "&lt;HTM<BR>\nL&gt;Wr<BR>\nap&lt;B<BR>\nR&gt;he<BR>\nre", html);
 	}
@@ -121,7 +121,7 @@ public class HTMLUtilitiesTest {
 
 	@Test
 	public void testFromHTML() {
-		String s = "<HTML><b>Bold</b>, <i>italics</i>, <font size='3'>sized font!</font>";
+		String s = "<html><b>Bold</b>, <i>italics</i>, <font size='3'>sized font!</font>";
 		String text = Swing.runNow(() -> HTMLUtilities.fromHTML(s));
 		assertEquals("Bold, italics, sized font!", text);
 	}

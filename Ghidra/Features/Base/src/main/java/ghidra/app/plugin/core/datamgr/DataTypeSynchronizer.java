@@ -117,7 +117,7 @@ public class DataTypeSynchronizer {
 
 	public static void commitAssumingTransactionsOpen(DataTypeManager sourceDTM, DataType refDT) {
 
-		// Must refresh associations of refDt and its dependencies to ensure that any 
+		// Must refresh associations of refDt and its dependencies to ensure that any
 		// non-sourced datatype is properly associated to the sourceDTM
 		DataTypeManager refDTM = refDT.getDataTypeManager();
 		SourceArchive sourceArchive = refDTM.getSourceArchive(sourceDTM.getUniversalID());
@@ -359,7 +359,7 @@ public class DataTypeSynchronizer {
 		// aesthetically pleasing
 		String spacerString = createHTMLSpacerString(htmlContent, otherContent);
 		StringBuilder buffy = new StringBuilder();
-		buffy.append("<HTML>");
+		buffy.append("<html>");
 
 		// -we use CELLPADDING here to allow us to create a narrow column within the table
 		// -the CELLSPACING gives us some space around the narrow column
@@ -412,8 +412,8 @@ public class DataTypeSynchronizer {
 	private static String createHTMLSpacerString(String htmlContent, String otherHTMLContent) {
 		// unfortunately, to get the displayed widths, we have to have rendered content, which
 		// is what the JLabels below are doing for us
-		JLabel label1 = new GDHtmlLabel("<HTML>" + htmlContent);
-		JLabel label2 = new GDHtmlLabel("<HTML>" + otherHTMLContent);
+		JLabel label1 = new GDHtmlLabel("<html>" + htmlContent);
+		JLabel label2 = new GDHtmlLabel("<html>" + otherHTMLContent);
 
 		int maxPixelWidth =
 			Math.max(label1.getPreferredSize().width, label2.getPreferredSize().width);
