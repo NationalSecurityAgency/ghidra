@@ -25,9 +25,9 @@ import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace.TraceMemoryRegionChangeType;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectStore;
 import ghidra.util.database.DBObjectColumn;
@@ -151,8 +151,7 @@ public class DBTraceMemoryRegion
 			update(NAME_COLUMN);
 			space.trace.updateViewsChangeRegionBlockName(this);
 		}
-		space.trace.setChanged(
-			new TraceChangeRecord<>(TraceMemoryRegionChangeType.CHANGED, space, this));
+		space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.REGION_CHANGED, space, this));
 	}
 
 	@Override
@@ -171,9 +170,8 @@ public class DBTraceMemoryRegion
 			Lifespan oldLifespan = getLifespan();
 			doSetLifespan(newLifespan);
 			space.trace.updateViewsChangeRegionBlockLifespan(this, oldLifespan, newLifespan);
-			space.trace.setChanged(
-				new TraceChangeRecord<>(TraceMemoryRegionChangeType.LIFESPAN_CHANGED,
-					space, this, oldLifespan, newLifespan));
+			space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.REGION_LIFESPAN_CHANGED,
+				space, this, oldLifespan, newLifespan));
 		}
 	}
 
@@ -215,8 +213,7 @@ public class DBTraceMemoryRegion
 			doSetRange(newRange);
 			space.trace.updateViewsChangeRegionBlockRange(this, oldRange, newRange);
 		}
-		space.trace.setChanged(
-			new TraceChangeRecord<>(TraceMemoryRegionChangeType.CHANGED, space, this));
+		space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.REGION_CHANGED, space, this));
 	}
 
 	@Override
@@ -272,8 +269,7 @@ public class DBTraceMemoryRegion
 			update(FLAGS_COLUMN);
 			space.trace.updateViewsChangeRegionBlockFlags(this, lifespan);
 		}
-		space.trace.setChanged(
-			new TraceChangeRecord<>(TraceMemoryRegionChangeType.CHANGED, space, this));
+		space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.REGION_CHANGED, space, this));
 	}
 
 	@SuppressWarnings("hiding")
@@ -285,8 +281,7 @@ public class DBTraceMemoryRegion
 			update(FLAGS_COLUMN);
 			space.trace.updateViewsChangeRegionBlockFlags(this, lifespan);
 		}
-		space.trace.setChanged(
-			new TraceChangeRecord<>(TraceMemoryRegionChangeType.CHANGED, space, this));
+		space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.REGION_CHANGED, space, this));
 	}
 
 	@SuppressWarnings("hiding")
@@ -298,8 +293,7 @@ public class DBTraceMemoryRegion
 			update(FLAGS_COLUMN);
 			space.trace.updateViewsChangeRegionBlockFlags(this, lifespan);
 		}
-		space.trace.setChanged(
-			new TraceChangeRecord<>(TraceMemoryRegionChangeType.CHANGED, space, this));
+		space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.REGION_CHANGED, space, this));
 	}
 
 	@Override

@@ -44,7 +44,6 @@ import ghidra.trace.database.target.visitors.SuccessorsRelativeVisitor;
 import ghidra.trace.database.thread.DBTraceObjectThread;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TraceObjectChangeType;
 import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceObjectModule;
@@ -57,6 +56,7 @@ import ghidra.trace.model.target.annot.TraceObjectInterfaceUtils;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.Msg;
 import ghidra.util.database.*;
@@ -272,8 +272,7 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 			// Don't need event for root value created
 			return;
 		}
-		parent.emitEvents(
-			new TraceChangeRecord<>(TraceObjectChangeType.VALUE_CREATED, null, entry));
+		parent.emitEvents(new TraceChangeRecord<>(TraceEvents.VALUE_CREATED, null, entry));
 	}
 
 	protected InternalTraceObjectValue doCreateValue(Lifespan lifespan,
@@ -305,7 +304,7 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 		}
 		obj = objectStore.create();
 		obj.set(path);
-		obj.emitEvents(new TraceChangeRecord<>(TraceObjectChangeType.CREATED, null, obj));
+		obj.emitEvents(new TraceChangeRecord<>(TraceEvents.OBJECT_CREATED, null, obj));
 		return obj;
 	}
 
@@ -461,7 +460,7 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 
 	protected void doDeleteObject(DBTraceObject object) {
 		objectStore.delete(object);
-		object.emitEvents(new TraceChangeRecord<>(TraceObjectChangeType.DELETED, null, object));
+		object.emitEvents(new TraceChangeRecord<>(TraceEvents.OBJECT_DELETED, null, object));
 	}
 
 	protected void doDeleteEdge(DBTraceObjectValueData edge) {

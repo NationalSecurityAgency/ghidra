@@ -28,9 +28,9 @@ import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceManager;
 import ghidra.trace.database.guest.DBTraceGuestPlatform.DBTraceGuestLanguage;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TracePlatformChangeType;
 import ghidra.trace.model.guest.*;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.exception.CancelledException;
@@ -282,7 +282,7 @@ public class DBTracePlatformManager implements DBTraceManager, TracePlatformMana
 			platformsByCompiler.remove(platform.getCompilerSpec());
 			platformStore.delete(platform);
 		}
-		trace.setChanged(new TraceChangeRecord<>(TracePlatformChangeType.DELETED, null, platform));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.PLATFORM_DELETED, null, platform));
 	}
 
 	@Override
@@ -307,7 +307,7 @@ public class DBTracePlatformManager implements DBTraceManager, TracePlatformMana
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			platform = doAddGuestPlatform(compilerSpec);
 		}
-		trace.setChanged(new TraceChangeRecord<>(TracePlatformChangeType.ADDED, null, platform));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.PLATFORM_ADDED, null, platform));
 		return platform;
 	}
 
@@ -335,7 +335,7 @@ public class DBTracePlatformManager implements DBTraceManager, TracePlatformMana
 			}
 			platform = doAddGuestPlatform(compilerSpec);
 		}
-		trace.setChanged(new TraceChangeRecord<>(TracePlatformChangeType.ADDED, null, platform));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.PLATFORM_ADDED, null, platform));
 		return platform;
 	}
 

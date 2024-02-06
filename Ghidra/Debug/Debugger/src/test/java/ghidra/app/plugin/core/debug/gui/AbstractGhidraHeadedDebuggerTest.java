@@ -77,10 +77,10 @@ import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceMemoryBytesChangeType;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceAddressSpace;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.InvalidNameException;
 import ghidra.util.datastruct.TestDataStructureErrorHandlerInstaller;
 import ghidra.util.exception.CancelledException;
@@ -820,7 +820,7 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 
 		TraceDomainObjectListener listener = new TraceDomainObjectListener() {
 			{
-				listenFor(TraceMemoryBytesChangeType.CHANGED, this::bytesChanged);
+				listenFor(TraceEvents.BYTES_CHANGED, this::bytesChanged);
 			}
 
 			void bytesChanged(TraceAddressSpace space, TraceAddressSnapRange range, byte[] oldValue,

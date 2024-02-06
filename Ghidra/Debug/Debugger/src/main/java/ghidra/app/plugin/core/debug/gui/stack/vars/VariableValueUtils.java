@@ -40,7 +40,6 @@ import ghidra.program.model.mem.ByteMemBufferImpl;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.pcode.*;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceMemoryBytesChangeType;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.model.memory.*;
@@ -48,6 +47,7 @@ import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceAddressSpace;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.MathUtilities;
 import ghidra.util.Msg;
 import ghidra.util.exception.InvalidInputException;
@@ -650,7 +650,7 @@ public enum VariableValueUtils {
 		 */
 		private class ListenerForChanges extends TraceDomainObjectListener {
 			public ListenerForChanges() {
-				listenFor(TraceMemoryBytesChangeType.CHANGED, this::bytesChanged);
+				listenFor(TraceEvents.BYTES_CHANGED, this::bytesChanged);
 			}
 
 			private void bytesChanged(TraceAddressSpace space, TraceAddressSnapRange range) {
@@ -826,8 +826,8 @@ public enum VariableValueUtils {
 		 * data unit using {@link #getRegisterUnit(Register)}. Fall back to this method only if that
 		 * one fails.
 		 * 
-		 * @param register
-		 * @return
+		 * @param register the register
+		 * @return the "raw" value of the register
 		 */
 		public WatchValue getRawRegisterValue(Register register) {
 			WatchValuePcodeExecutorState state =

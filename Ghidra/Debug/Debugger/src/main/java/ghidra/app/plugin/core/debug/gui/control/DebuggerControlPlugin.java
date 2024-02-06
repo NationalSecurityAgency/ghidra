@@ -49,10 +49,10 @@ import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceObjectChangeType;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.time.schedule.Scheduler;
 import ghidra.trace.model.time.schedule.TraceSchedule;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
@@ -78,9 +78,9 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 
 	private final TraceDomainObjectListener listenerForObjects = new TraceDomainObjectListener() {
 		{
-			listenFor(TraceObjectChangeType.VALUE_CREATED, this::valueChanged);
-			listenFor(TraceObjectChangeType.VALUE_DELETED, this::valueChanged);
-			listenFor(TraceObjectChangeType.VALUE_LIFESPAN_CHANGED, this::valueLifespanChanged);
+			listenFor(TraceEvents.VALUE_CREATED, this::valueChanged);
+			listenFor(TraceEvents.VALUE_DELETED, this::valueChanged);
+			listenFor(TraceEvents.VALUE_LIFESPAN_CHANGED, this::valueLifespanChanged);
 		}
 
 		private void valueChanged(TraceObjectValue value) {

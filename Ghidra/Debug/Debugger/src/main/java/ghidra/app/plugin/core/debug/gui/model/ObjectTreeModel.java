@@ -27,8 +27,8 @@ import ghidra.dbg.target.*;
 import ghidra.dbg.util.PathUtils.TargetObjectKeyComparator;
 import ghidra.framework.model.*;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceObjectChangeType;
 import ghidra.trace.model.target.*;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.LockHold;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -40,10 +40,10 @@ public class ObjectTreeModel implements DisplaysModified {
 			implements DomainObjectClosedListener {
 		public ListenerForChanges() {
 			listenForUntyped(DomainObjectEvent.RESTORED, this::domainObjectRestored);
-			listenFor(TraceObjectChangeType.CREATED, this::objectCreated);
-			listenFor(TraceObjectChangeType.VALUE_CREATED, this::valueCreated);
-			listenFor(TraceObjectChangeType.VALUE_DELETED, this::valueDeleted);
-			listenFor(TraceObjectChangeType.VALUE_LIFESPAN_CHANGED, this::valueLifespanChanged);
+			listenFor(TraceEvents.OBJECT_CREATED, this::objectCreated);
+			listenFor(TraceEvents.VALUE_CREATED, this::valueCreated);
+			listenFor(TraceEvents.VALUE_DELETED, this::valueDeleted);
+			listenFor(TraceEvents.VALUE_LIFESPAN_CHANGED, this::valueLifespanChanged);
 		}
 
 		@Override

@@ -43,11 +43,10 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceMemoryBytesChangeType;
-import ghidra.trace.model.Trace.TraceStackChangeType;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceAddressSpace;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.Msg;
 
 public class DebuggerTrackLocationTrait {
@@ -57,8 +56,8 @@ public class DebuggerTrackLocationTrait {
 	protected class ForTrackingListener extends TraceDomainObjectListener {
 
 		public ForTrackingListener() {
-			listenFor(TraceMemoryBytesChangeType.CHANGED, this::registersChanged);
-			listenFor(TraceStackChangeType.CHANGED, this::stackChanged);
+			listenFor(TraceEvents.BYTES_CHANGED, this::registersChanged);
+			listenFor(TraceEvents.STACK_CHANGED, this::stackChanged);
 		}
 
 		private void registersChanged(TraceAddressSpace space, TraceAddressSnapRange range,

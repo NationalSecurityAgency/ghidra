@@ -170,7 +170,7 @@ public class RegisterRow {
 	/**
 	 * Check if the register's value can be set via its data type's representation
 	 * 
-	 * @return
+	 * @return true if the representation cell is editable
 	 */
 	public boolean isRepresentationEditable() {
 		return provider.canWriteRegisterRepresentation(register);

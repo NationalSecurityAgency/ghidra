@@ -25,9 +25,9 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TraceSectionChangeType;
 import ghidra.trace.model.modules.TraceSection;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectStore;
 import ghidra.util.database.DBObjectColumn;
@@ -140,8 +140,8 @@ public class DBTraceSection extends AbstractDBTraceAddressSnapRangePropertyMapDa
 			}
 			this.name = name;
 			update(NAME_COLUMN);
-			module.space.trace.setChanged(
-				new TraceChangeRecord<>(TraceSectionChangeType.CHANGED, null, this));
+			module.space.trace
+					.setChanged(new TraceChangeRecord<>(TraceEvents.SECTION_CHANGED, null, this));
 		}
 	}
 
@@ -155,6 +155,6 @@ public class DBTraceSection extends AbstractDBTraceAddressSnapRangePropertyMapDa
 	@Override
 	public void delete() {
 		space.sectionMapSpace.deleteData(this);
-		space.trace.setChanged(new TraceChangeRecord<>(TraceSectionChangeType.DELETED, null, this));
+		space.trace.setChanged(new TraceChangeRecord<>(TraceEvents.SECTION_DELETED, null, this));
 	}
 }

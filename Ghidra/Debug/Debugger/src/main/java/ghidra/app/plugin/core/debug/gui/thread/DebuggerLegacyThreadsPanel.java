@@ -33,16 +33,15 @@ import ghidra.app.plugin.core.debug.gui.DebuggerSnapActionContext;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.docking.settings.Settings;
-import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.model.DomainObjectChangeRecord;
+import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceSnapshotChangeType;
-import ghidra.trace.model.Trace.TraceThreadChangeType;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.thread.TraceThreadManager;
 import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.database.ObjectKey;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
@@ -128,13 +127,13 @@ public class DebuggerLegacyThreadsPanel extends JPanel {
 		public ForThreadsListener() {
 			listenForUntyped(DomainObjectEvent.RESTORED, this::objectRestored);
 
-			listenFor(TraceThreadChangeType.ADDED, this::threadAdded);
-			listenFor(TraceThreadChangeType.CHANGED, this::threadChanged);
-			listenFor(TraceThreadChangeType.LIFESPAN_CHANGED, this::threadChanged);
-			listenFor(TraceThreadChangeType.DELETED, this::threadDeleted);
+			listenFor(TraceEvents.THREAD_ADDED, this::threadAdded);
+			listenFor(TraceEvents.THREAD_CHANGED, this::threadChanged);
+			listenFor(TraceEvents.THREAD_LIFESPAN_CHANGED, this::threadChanged);
+			listenFor(TraceEvents.THREAD_DELETED, this::threadDeleted);
 
-			listenFor(TraceSnapshotChangeType.ADDED, this::snapAdded);
-			listenFor(TraceSnapshotChangeType.DELETED, this::snapDeleted);
+			listenFor(TraceEvents.SNAPSHOT_ADDED, this::snapAdded);
+			listenFor(TraceEvents.SNAPSHOT_DELETED, this::snapDeleted);
 		}
 
 		private void objectRestored(DomainObjectChangeRecord rec) {

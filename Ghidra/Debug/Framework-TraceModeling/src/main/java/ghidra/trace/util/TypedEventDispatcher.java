@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.trace.model;
+package ghidra.trace.util;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
 import ghidra.framework.model.*;
-import ghidra.trace.util.*;
 
 public class TypedEventDispatcher {
 
@@ -101,25 +100,25 @@ public class TypedEventDispatcher {
 		}
 	}
 
-	private Map<TraceChangeType<?, ?>, EventRecordHandler<?, ?>> typedMap = new HashMap<>();
+	private Map<TraceEvent<?, ?>, EventRecordHandler<?, ?>> typedMap = new HashMap<>();
 	private Map<EventType, Consumer<DomainObjectChangeRecord>> untypedMap = new HashMap<>();
 	protected Consumer<DomainObjectChangeRecord> restoredHandler = null;
 
-	protected <T, U> void listenFor(TraceChangeType<T, U> type, EventRecordHandler<T, U> handler) {
+	protected <T, U> void listenFor(TraceEvent<T, U> type, EventRecordHandler<T, U> handler) {
 		typedMap.put(type, handler);
 	}
 
-	protected <T, U> void listenFor(TraceChangeType<T, U> type,
+	protected <T, U> void listenFor(TraceEvent<T, U> type,
 			FullEventRecordHandler<? super T, ? super U> handler) {
 		typedMap.put(type, handler);
 	}
 
-	protected <T, U> void listenFor(TraceChangeType<T, U> type,
+	protected <T, U> void listenFor(TraceEvent<T, U> type,
 			AffectedObjectHandler<? super T> handler) {
 		typedMap.put(type, handler);
 	}
 
-	protected <T, U> void listenFor(TraceChangeType<T, U> type,
+	protected <T, U> void listenFor(TraceEvent<T, U> type,
 			AffectedObjectOnlyHandler<? super T> handler) {
 		typedMap.put(type, handler);
 	}
@@ -132,26 +131,26 @@ public class TypedEventDispatcher {
 	 * @param type the event type
 	 * @param handler the handler
 	 */
-	protected <T, U> void listenFor(TraceChangeType<T, U> type,
+	protected <T, U> void listenFor(TraceEvent<T, U> type,
 			AffectedAndValuesOnlyHandler<? super T, ? super U> handler) {
 		typedMap.put(type, handler);
 	}
 
-	protected <T, U> void listenFor(TraceChangeType<T, U> type,
+	protected <T, U> void listenFor(TraceEvent<T, U> type,
 			ValuesOnlyHandler<? super U> handler) {
 		typedMap.put(type, handler);
 	}
 
-	protected <T, U> void listenFor(TraceChangeType<T, U> type,
+	protected <T, U> void listenFor(TraceEvent<T, U> type,
 			SpaceValuesHandler<? super U> handler) {
 		typedMap.put(type, handler);
 	}
 
-	protected void listenFor(TraceChangeType<?, ?> type, IgnoreValuesHandler handler) {
+	protected void listenFor(TraceEvent<?, ?> type, IgnoreValuesHandler handler) {
 		typedMap.put(type, handler);
 	}
 
-	protected void listenFor(TraceChangeType<?, ?> type, IgnoreAllHandler handler) {
+	protected void listenFor(TraceEvent<?, ?> type, IgnoreAllHandler handler) {
 		typedMap.put(type, handler);
 	}
 
@@ -186,7 +185,7 @@ public class TypedEventDispatcher {
 	@SuppressWarnings("unchecked")
 	public void handleTraceChangeRecord(TraceChangeRecord<?, ?> rec) {
 		@SuppressWarnings("rawtypes")
-		EventRecordHandler handler = typedMap.get(rec.getType());
+		EventRecordHandler handler = typedMap.get(rec.getEventType());
 		if (handler != null) {
 			handler.handle(rec);
 		}

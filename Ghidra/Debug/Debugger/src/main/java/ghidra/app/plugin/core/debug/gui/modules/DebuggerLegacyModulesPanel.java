@@ -36,8 +36,8 @@ import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceModuleChangeType;
 import ghidra.trace.model.modules.*;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.database.ObjectKey;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
@@ -159,10 +159,10 @@ public class DebuggerLegacyModulesPanel extends JPanel {
 		public ModulesListener() {
 			listenForUntyped(DomainObjectEvent.RESTORED, e -> objectRestored());
 
-			listenFor(TraceModuleChangeType.ADDED, this::moduleAdded);
-			listenFor(TraceModuleChangeType.CHANGED, this::moduleChanged);
-			listenFor(TraceModuleChangeType.LIFESPAN_CHANGED, this::moduleChanged);
-			listenFor(TraceModuleChangeType.DELETED, this::moduleDeleted);
+			listenFor(TraceEvents.MODULE_ADDED, this::moduleAdded);
+			listenFor(TraceEvents.MODULE_CHANGED, this::moduleChanged);
+			listenFor(TraceEvents.MODULE_LIFESPAN_CHANGED, this::moduleChanged);
+			listenFor(TraceEvents.MODULE_DELETED, this::moduleDeleted);
 		}
 
 		private void objectRestored() {

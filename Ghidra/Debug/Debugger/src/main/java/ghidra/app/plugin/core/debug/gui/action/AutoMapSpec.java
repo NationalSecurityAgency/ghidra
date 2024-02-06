@@ -31,7 +31,7 @@ import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.AutoConfigState.ConfigFieldCodec;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.trace.model.Trace;
-import ghidra.trace.util.TraceChangeType;
+import ghidra.trace.util.TraceEvent;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.classfinder.ExtensionPoint;
 import ghidra.util.exception.CancelledException;
@@ -91,7 +91,7 @@ public interface AutoMapSpec extends ExtensionPoint {
 		return DebuggerResources.ICON_CONFIG;
 	}
 
-	Collection<TraceChangeType<?, ?>> getChangeTypes();
+	Collection<TraceEvent<?, ?>> getChangeTypes();
 
 	default String getTaskTitle() {
 		return getMenuName();

@@ -16,6 +16,7 @@
 package ghidra.trace.model;
 
 import ghidra.framework.model.*;
+import ghidra.trace.util.TypedEventDispatcher;
 
 public class TraceDomainObjectListener extends TypedEventDispatcher
 		implements DomainObjectListener {

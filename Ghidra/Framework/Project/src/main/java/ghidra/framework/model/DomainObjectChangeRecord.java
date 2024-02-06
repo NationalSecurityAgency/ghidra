@@ -16,15 +16,16 @@
 package ghidra.framework.model;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
- * Information about a change that was made to a domain object. The
- * record is delivered as part of the change notification. The event types
- * correspond to Enums defined in {@link DomainObjectEvent} and
- * other Enums or objects that implement the {@link EventType} interface.
+ * Information about a change that was made to a domain object. The record is delivered as part of
+ * the change notification. The event types correspond to Enums defined in {@link DomainObjectEvent}
+ * and other Enums or objects that implement the {@link EventType} interface.
  * 
- * Each event record contains the event type and optionally an old value and a new value. 
- * The old value and new value meaning are determined by the event type.
+ * <p>
+ * Each event record contains the event type and optionally an old value and a new value. The old
+ * value and new value meaning are determined by the event type.
  */
 public class DomainObjectChangeRecord implements Serializable {
 
@@ -34,6 +35,7 @@ public class DomainObjectChangeRecord implements Serializable {
 
 	/**
 	 * Construct a new DomainObjectChangeRecord.
+	 * 
 	 * @param eventType the type of event
 	 */
 	public DomainObjectChangeRecord(EventType eventType) {
@@ -42,18 +44,20 @@ public class DomainObjectChangeRecord implements Serializable {
 
 	/**
 	 * Construct a new DomainObjectChangeRecord.
-	 * @param eventType the type of 
+	 * 
+	 * @param eventType the type of
 	 * @param oldValue old value
 	 * @param newValue new value
 	 */
 	public DomainObjectChangeRecord(EventType eventType, Object oldValue, Object newValue) {
-		this.eventType = eventType;
+		this.eventType = Objects.requireNonNull(eventType);
 		this.oldValue = oldValue;
 		this.newValue = newValue;
 	}
 
 	/**
 	 * Returns the event type for this change.
+	 * 
 	 * @return the event type for this change
 	 */
 	public EventType getEventType() {
@@ -62,6 +66,7 @@ public class DomainObjectChangeRecord implements Serializable {
 
 	/**
 	 * Return the old value for this event or null if not applicable.
+	 * 
 	 * @return the old value or null if not applicable
 	 */
 	public Object getOldValue() {
@@ -70,7 +75,8 @@ public class DomainObjectChangeRecord implements Serializable {
 
 	/**
 	 * Return the new value for this event or null if not applicable.
-	 * @return the old value or null if not applicable for this event. 
+	 * 
+	 * @return the old value or null if not applicable for this event.
 	 */
 	public Object getNewValue() {
 		return newValue;

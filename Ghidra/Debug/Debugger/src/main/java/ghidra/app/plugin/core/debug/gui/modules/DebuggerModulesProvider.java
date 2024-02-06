@@ -64,9 +64,9 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceMemoryBytesChangeType;
 import ghidra.trace.model.modules.*;
-import ghidra.trace.util.TraceChangeType;
+import ghidra.trace.util.TraceEvent;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 
@@ -271,12 +271,12 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 
 	protected class ForMappingTraceListener extends TraceDomainObjectListener {
 		public ForMappingTraceListener(AutoMapSpec spec) {
-			for (TraceChangeType<?, ?> type : spec.getChangeTypes()) {
+			for (TraceEvent<?, ?> type : spec.getChangeTypes()) {
 				listenFor(type, this::changed);
 			}
 
-			// TODO: Delete this if/when TraceRecorderTarget is removed
-			listenFor(TraceMemoryBytesChangeType.CHANGED, this::memoryChanged);
+			// Delete this if/when TraceRecorderTarget is removed
+			listenFor(TraceEvents.BYTES_CHANGED, this::memoryChanged);
 		}
 
 		private void changed() {
