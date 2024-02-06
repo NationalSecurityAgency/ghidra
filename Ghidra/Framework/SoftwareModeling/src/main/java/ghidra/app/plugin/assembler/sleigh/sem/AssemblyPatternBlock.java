@@ -157,6 +157,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	 * Convert a block from a disjoint pattern into an assembly pattern block
 	 * 
 	 * @param pat the pattern to convert
+	 * @param minLen the minimum byte length of the block
 	 * @param context true to select the context block, false to select the instruction block
 	 * @return the converted pattern block
 	 */
