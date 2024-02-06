@@ -4,7 +4,6 @@
 ##MODULE IP: Modified Nuvola Icons - LGPL 2.1
 ##MODULE IP: Oxygen Icons - LGPL 3.0
 ##MODULE IP: Tango Icons - Public Domain
-.gitignore||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
 data/decompiler.theme.properties||GHIDRA||||END|
 src/decompile/.cproject||GHIDRA||||END|
@@ -62,6 +61,7 @@ src/decompile/datatests/skipnext2.xml||GHIDRA||||END|
 src/decompile/datatests/stackreturn.xml||GHIDRA||||END|
 src/decompile/datatests/statuscmp.xml||GHIDRA||||END|
 src/decompile/datatests/switchind.xml||GHIDRA||||END|
+src/decompile/datatests/switchreturn.xml||GHIDRA||||END|
 src/decompile/datatests/threedim.xml||GHIDRA||||END|
 src/decompile/datatests/twodim.xml||GHIDRA||||END|
 src/decompile/datatests/union_datatype.xml||GHIDRA||||END|
