@@ -477,18 +477,15 @@ JumpTable *Funcdata::installJumpTable(const Address &addr)
 /// A partial function (copy) is built using the flow info. Simplification is performed on the
 /// partial function (using the "jumptable" strategy), then destination addresses of the
 /// branch are recovered by examining the simplified data-flow. The jump-table object
-/// is populated with the recovered addresses.  An integer value is returned:
-///   - 0 = success
-///   - 1 = normal could-not-recover failure
-///   - 2 = \b likely \b thunk failure
-///   - 3 = no legal flows to the BRANCHIND failure
+/// is populated with the recovered addresses.  A code indicating success or the type of
+/// failure is returned.
 ///
 /// \param partial is a function object for caching analysis
 /// \param jt is the jump-table object to populate
 /// \param op is the BRANCHIND p-code op to analyze
 /// \param flow is the existing flow information
 /// \return the success/failure code
-int4 Funcdata::stageJumpTable(Funcdata &partial,JumpTable *jt,PcodeOp *op,FlowInfo *flow)
+JumpTable::RecoveryMode Funcdata::stageJumpTable(Funcdata &partial,JumpTable *jt,PcodeOp *op,FlowInfo *flow)
 
 {
   if (!partial.isJumptableRecoveryOn()) {
@@ -514,7 +511,7 @@ int4 Funcdata::stageJumpTable(Funcdata &partial,JumpTable *jt,PcodeOp *op,FlowIn
     catch(LowlevelError &err) {
       glb->allacts.setCurrent(oldactname);
       warning(err.explain,op->getAddr());
-      return 1;
+      return JumpTable::fail_normal;
     }
   }
   PcodeOp *partop = partial.findOp(op->getSeqNum());
@@ -522,7 +519,11 @@ int4 Funcdata::stageJumpTable(Funcdata &partial,JumpTable *jt,PcodeOp *op,FlowIn
   if (partop==(PcodeOp *)0 || partop->code() != CPUI_BRANCHIND || partop->getAddr() != op->getAddr())
     throw LowlevelError("Error recovering jumptable: Bad partial clone");
   if (partop->isDead())	// Indirectop we were trying to recover was eliminated as dead code (unreachable)
-    return 0;			// Return jumptable as
+    return JumpTable::success;			// Return jumptable as
+
+  // Test if the branch target is copied from the return address.
+  if (testForReturnAddress(partop->getIn(0)))
+    return JumpTable::fail_return;		// Return special failure code.  Switch would not recover anyway.
 
   try {
     jt->setLoadCollect(flow->doesJumpRecord());
@@ -533,16 +534,16 @@ int4 Funcdata::stageJumpTable(Funcdata &partial,JumpTable *jt,PcodeOp *op,FlowIn
       jt->recoverAddresses(&partial); // Analyze partial to recover jumptable addresses
   }
   catch(JumptableNotReachableError &err) {	// Thrown by recoverAddresses
-    return 3;
+    return JumpTable::fail_noflow;
   }
   catch(JumptableThunkError &err) {		// Thrown by recoverAddresses
-    return 2;
+    return JumpTable::fail_thunk;
   }
   catch(LowlevelError &err) {
     warning(err.explain,op->getAddr());
-    return 1;
+    return JumpTable::fail_normal;
   }
-  return 0;
+  return JumpTable::success;
 }
 
 /// Backtrack from the BRANCHIND, looking for ops that might affect the destination.
@@ -633,22 +634,22 @@ bool Funcdata::earlyJumpTableFail(PcodeOp *op)
 /// \param partial is the Funcdata copy to perform analysis on if necessary
 /// \param op is the given BRANCHIND PcodeOp
 /// \param flow is current flow information for \b this function
-/// \param failuremode will hold the final success/failure code (0=success)
+/// \param mode will hold the final success/failure code
 /// \return the recovered JumpTable or NULL if there was no success
-JumpTable *Funcdata::recoverJumpTable(Funcdata &partial,PcodeOp *op,FlowInfo *flow,int4 &failuremode)
+JumpTable *Funcdata::recoverJumpTable(Funcdata &partial,PcodeOp *op,FlowInfo *flow,JumpTable::RecoveryMode &mode)
 
 {
   JumpTable *jt;
 
-  failuremode = 0;
+  mode = JumpTable::success;
   jt = linkJumpTable(op);		// Search for pre-existing jumptable
   if (jt != (JumpTable *)0) {
     if (!jt->isOverride()) {
       if (jt->getStage() != 1)
 	return jt;		// Previously calculated jumptable (NOT an override and NOT incomplete)
     }
-    failuremode = stageJumpTable(partial,jt,op,flow); // Recover based on override information
-    if (failuremode != 0)
+    mode = stageJumpTable(partial,jt,op,flow); // Recover based on override information
+    if (mode != JumpTable::success)
       return (JumpTable *)0;
     jt->setIndirectOp(op);	// Relink table back to original op
     return jt;
@@ -659,8 +660,8 @@ JumpTable *Funcdata::recoverJumpTable(Funcdata &partial,PcodeOp *op,FlowInfo *fl
   if (earlyJumpTableFail(op))
     return (JumpTable *)0;
   JumpTable trialjt(glb);
-  failuremode = stageJumpTable(partial,&trialjt,op,flow);
-  if (failuremode != 0)
+  mode = stageJumpTable(partial,&trialjt,op,flow);
+  if (mode != JumpTable::success)
     return (JumpTable *)0;
   //  if (trialjt.is_twostage())
   //    warning("Jumptable maybe incomplete. Second-stage recovery not implemented",trialjt.Opaddress());
