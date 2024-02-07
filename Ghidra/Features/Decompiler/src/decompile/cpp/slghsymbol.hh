@@ -28,7 +28,7 @@ public:
   enum symbol_type { space_symbol, token_symbol, userop_symbol, value_symbol, valuemap_symbol,
 		     name_symbol, varnode_symbol, varnodelist_symbol, operand_symbol,
 		     start_symbol, end_symbol, next2_symbol, subtable_symbol, macro_symbol, section_symbol,
-                     bitrange_symbol, context_symbol, epsilon_symbol, label_symbol,
+                     bitrange_symbol, context_symbol, epsilon_symbol, label_symbol, flowdest_symbol, flowref_symbol,
 		     dummy_symbol };
 private:
   string name;
@@ -416,7 +416,7 @@ public:
   virtual PatternExpression *getPatternExpression(void) const { throw SleighError("Cannot use symbol in pattern"); }
   virtual void getFixedHandle(FixedHandle &hand,ParserWalker &walker) const;
   virtual void print(ostream &s,ParserWalker &walker) const;
-  virtual symbol_type getType(void) const { return start_symbol; }
+  virtual symbol_type getType(void) const { return flowdest_symbol; }
 };
 
 class FlowRefSymbol : public SpecificSymbol {
@@ -428,7 +428,7 @@ public:
   virtual PatternExpression *getPatternExpression(void) const { throw SleighError("Cannot use symbol in pattern"); }
   virtual void getFixedHandle(FixedHandle &hand,ParserWalker &walker) const;
   virtual void print(ostream &s,ParserWalker &walker) const;
-  virtual symbol_type getType(void) const { return start_symbol; }
+  virtual symbol_type getType(void) const { return flowref_symbol; }
 };
 
 class ContextChange {		// Change to context command
