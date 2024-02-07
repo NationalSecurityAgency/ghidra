@@ -48,13 +48,13 @@ import ghidra.util.*;
 import ghidra.util.exception.UsrException;
 
 /**
- * A plugin to disassemble the address at the current ProgramLocation and to 
+ * A plugin to disassemble the address at the current ProgramLocation and to
  * display the Instruction.  This work of this plugin is temporary in that it
  * will not change the state of the program.
  * 
  * 
  * 
- *  TODO Change the PseudoCodeUnit's getComment(int) method or change its 
+ *  TODO Change the PseudoCodeUnit's getComment(int) method or change its
  *       getPreview(int) method not to call getComment(int) and then change
  *       this class to not handle the UnsupportedOperationException.
  *  TODO are the category and names correct?
@@ -82,7 +82,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		new GColor("color.fg.plugin.disassembledview.address");
 
 	/**
-	 * The number of addresses that should be disassembled, including the 
+	 * The number of addresses that should be disassembled, including the
 	 * address of the current {@link ProgramLocation}.
 	 */
 	private static final int LOOK_AHEAD_COUNT = 5;
@@ -94,7 +94,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		new DisassembledViewComponentProvider();
 
 	/**
-	 * The last program location received from the 
+	 * The last program location received from the
 	 * {@link #locationChanged(ProgramLocation)} method.
 	 */
 	private ProgramLocation lastUpdatedLocation;
@@ -113,7 +113,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 	public DisassembledViewPlugin(PluginTool plugintool) {
 		// We want to know about program activated events, location changed
 		// events and selection changed events.  The first type we get from
-		// our parent, the other two we get by passing true to our parent's 
+		// our parent, the other two we get by passing true to our parent's
 		// constructor
 		super(plugintool);
 	}
@@ -153,8 +153,8 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 	}
 
 	/**
-	 * We want to make sure that we no longer have any contents when the 
-	 * program is deactivated so that we do not make any more calls to the 
+	 * We want to make sure that we no longer have any contents when the
+	 * program is deactivated so that we do not make any more calls to the
 	 * program or its plugins.
 	 * 
 	 * @param program The program being deactivated.
@@ -189,7 +189,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		// we only want to update if:
 		// 1) we have a valid location,
 		// 2) the location is different than the last location we processed, and
-		//    TODO: **Note: this step is believed to be a bug--we should only be 
+		//    TODO: **Note: this step is believed to be a bug--we should only be
 		//            getting one location change at a time, not two
 		// 3) the display is visible.
 		if (loc == null || loc.equals(lastUpdatedLocation) || !displayComponent.isVisible()) {
@@ -211,7 +211,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 	/**
 	 * Called when we receive program selection events.
 	 * 
-	 * @param selection The ProgramSelection object that is the current 
+	 * @param selection The ProgramSelection object that is the current
 	 *        selection.
 	 * @see ProgramPlugin#selectionChanged(ProgramSelection)
 	 */
@@ -222,19 +222,19 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		}
 
 		// TODO:
-		// if there are multiple lines selected then we need to update the 
+		// if there are multiple lines selected then we need to update the
 		// display.  Should we:
-		// 1) Show each line selected with some sort of visual delimiter 
+		// 1) Show each line selected with some sort of visual delimiter
 		//    between each value?
 		// 2) Clear the display when there are multiple values selected?
 		// 3) Do nothing and allow selections, while showing only the current
 		//    location as determined by the cursor?
-		// 
-		// Currently solution 3) is used        
+		//
+		// Currently solution 3) is used
 		if (selection != null) {
 			if (containsMultipleSelection()) {
 				disassembleLocation(currentLocation);
-// changed in SCR 6875                
+// changed in SCR 6875
 //                displayComponent.clearContents();
 			}
 			else if (selection.isEmpty()) {
@@ -250,7 +250,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 
 	/**
 	 * Gets the pseudo disassembler used by this class.  This method will lazy
-	 * load the disassembler to prevent wasting of resources.  If the 
+	 * load the disassembler to prevent wasting of resources.  If the
 	 * program location changes, then the disassembler will be recreated.
 	 * 
 	 * @return the pseudo disassembler used by this class.
@@ -263,8 +263,8 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 	}
 
 	/**
-	 * Gets the {@link DisassembledAddressInfo}s for the given address.  
-	 * This method will disassamble {@link #LOOK_AHEAD_COUNT a few} addresses 
+	 * Gets the {@link DisassembledAddressInfo}s for the given address.
+	 * This method will disassamble {@link #LOOK_AHEAD_COUNT a few} addresses
 	 * after the one that is passed in.
 	 * 
 	 * @param  address The address for which an info object will be obtained.
@@ -278,7 +278,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 			try {
 				DisassembledAddressInfo addressInfo = new DisassembledAddressInfo(address);
 
-				// Now get some follow-on addresses to provide a small level of 
+				// Now get some follow-on addresses to provide a small level of
 				// context.  This loop will stop if we cannot find an Address
 				// or a CodeUnit for a given address.
 				for (int i = 0; (i < LOOK_AHEAD_COUNT) && (address != null) &&
@@ -304,7 +304,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 	}
 
 	/**
-	 * Takes the provided program location object and locates a 
+	 * Takes the provided program location object and locates a
 	 * {@link CodeUnit} for it's address that is used to display a disassembled
 	 * preview of the location.
 	 * 
@@ -317,7 +317,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 			DisassembledAddressInfo[] addressInfos =
 				getAddressInformation(newLocation.getAddress());
 
-			// add our preview content to our display (this will be empty if we 
+			// add our preview content to our display (this will be empty if we
 			// did not get a valid address or any valid code unit previews)
 			displayComponent.setContents(addressInfos);
 		}
@@ -329,14 +329,14 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 	private class DisassembledViewComponentProvider extends ComponentProviderAdapter {
 		/**
 		 * The constant part of the tooltip text for the list cells.  This
-		 * string is prepended to the currently selected address in the 
+		 * string is prepended to the currently selected address in the
 		 * program.
 		 * <p>
 		 * Note: This value was just set on the list, but when that was done
 		 * the help key triggers (Ctrl-F1) did not work correctly.
 		 */
 		private static final String TOOLTIP_TEXT_PREPEND =
-			"<HTML>Currently selected<br> Code Browser program location<br>" + "address: ";
+			"<html>Currently selected<br> Code Browser program location<br>address: ";
 
 		/**
 		 * The component that will house our view.
@@ -481,10 +481,10 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		}
 
 		/**
-		 * Notifies the provider that the user pressed the "close" button.  
-		 * The provider should take appropriate action.  Usually the 
-		 * appropriate action is to hide the component or remove the 
-		 * component.  If the provider does nothing in this method, 
+		 * Notifies the provider that the user pressed the "close" button.
+		 * The provider should take appropriate action.  Usually the
+		 * appropriate action is to hide the component or remove the
+		 * component.  If the provider does nothing in this method,
 		 * then the close button will appear broken.
 		 */
 		@Override
@@ -521,7 +521,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 	}
 
 	/**
-	 * An object that provides information about the address that it wraps.  The info knows how to 
+	 * An object that provides information about the address that it wraps.  The info knows how to
 	 * locate an info object for the address and can generate a string preview of the address.
 	 */
 	private class DisassembledAddressInfo {
@@ -531,7 +531,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		private Address wrappedAddress;
 
 		/**
-		 * The code unit for the address of this info.  This will be null 
+		 * The code unit for the address of this info.  This will be null
 		 * after construction if not code unit exists for the address.
 		 */
 		private CodeUnit addressCodeUnit;
@@ -558,7 +558,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		/**
 		 * Returns the address described by this info.
 		 * 
-		 * @return Returns the address described by this info. 
+		 * @return Returns the address described by this info.
 		 */
 		private Address getAddress() {
 
@@ -566,10 +566,10 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		}
 
 		/**
-		 * Returns true if there is a {@link CodeUnit} for the address 
+		 * Returns true if there is a {@link CodeUnit} for the address
 		 * wrapped by this info.  If not, then we do not have a valid addreess.
 		 * 
-		 * @return true if there is a {@link CodeUnit} for the address 
+		 * @return true if there is a {@link CodeUnit} for the address
 		 *         wrapped by this info.
 		 */
 		public boolean isValidAddress() {
@@ -577,14 +577,14 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		}
 
 		/**
-		 * Gets the length of the {@link CodeUnit} for the address wrapped 
-		 * by this info.  
+		 * Gets the length of the {@link CodeUnit} for the address wrapped
+		 * by this info.
 		 * <p>
 		 * Note: If {@link #isValidAddress()} returns false, then this method
 		 * will return <code>-1</code>.
 		 * 
-		 * @return the length of the code unit for the address wrapped by this 
-		 *         info. 
+		 * @return the length of the code unit for the address wrapped by this
+		 *         info.
 		 */
 		public int getCodeUnitLength() {
 			if (isValidAddress()) {
@@ -607,7 +607,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 				Listing listing = currentProgram.getListing();
 				codeUnit = listing.getCodeUnitAt(address);
 
-				// if the CodeUnit is Data and is not defined, then we need to try to virtually 
+				// if the CodeUnit is Data and is not defined, then we need to try to virtually
 				// disassemble it
 				if (codeUnit instanceof Data) {
 					if (!((Data) codeUnit).isDefined()) {
@@ -624,8 +624,8 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		}
 
 		/**
-		 * Attempts to disassemble the provided address virtually 
-		 * (without changing the state of the program) by making use of the 
+		 * Attempts to disassemble the provided address virtually
+		 * (without changing the state of the program) by making use of the
 		 * {@link PseudoDisassembler}.
 		 * 
 		 * @param  address The address that will be disassembled.
@@ -641,8 +641,8 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 					codeUnit = disassembler.disassemble(address);
 				}
 				catch (UsrException ue) {
-					// these exceptions happen if there is insufficient data from the program: 
-					// InsufficientBytesException, UnknownInstructionException, 
+					// these exceptions happen if there is insufficient data from the program:
+					// InsufficientBytesException, UnknownInstructionException,
 					// UnknownContextException
 				}
 			}

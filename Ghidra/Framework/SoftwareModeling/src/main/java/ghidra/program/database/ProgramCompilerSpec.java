@@ -244,7 +244,7 @@ public class ProgramCompilerSpec extends BasicCompilerSpec {
 			return;
 		}
 		StringBuilder buffer = new StringBuilder();
-		buffer.append("<HTML>User-defined extensions failed to parse: ");
+		buffer.append("<html>User-defined extensions failed to parse: ");
 		buffer.append("<ul>");
 		for (String line : errorList) {
 			buffer.append("<li>").append(line).append("</li>");

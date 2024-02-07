@@ -26,7 +26,6 @@ import docking.ComponentProvider;
 import docking.action.*;
 import docking.options.OptionsService;
 import docking.widgets.fieldpanel.FieldPanel;
-import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.label.GDHtmlLabel;
 import ghidra.GhidraOptions;
@@ -40,7 +39,8 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.FunctionUtility;
 import ghidra.program.util.ProgramLocation;
-import ghidra.util.*;
+import ghidra.util.HTMLUtilities;
+import ghidra.util.HelpLocation;
 
 /**
  * Panel that displays two decompilers for comparison
@@ -133,7 +133,7 @@ public abstract class DecompilerCodeComparisonPanel<T extends DualDecompilerFiel
 		if (!titlePrefix.isEmpty()) {
 			titlePrefix += " "; // Add a space between prefix and title.
 		}
-		String htmlPrefix = "<HTML>";
+		String htmlPrefix = "<html>";
 		if (title.startsWith(htmlPrefix)) {
 			titlePanel.setTitleName(htmlPrefix + HTMLUtilities.friendlyEncodeHTML(titlePrefix) +
 				title.substring(htmlPrefix.length()));
@@ -285,7 +285,7 @@ public abstract class DecompilerCodeComparisonPanel<T extends DualDecompilerFiel
 		titlePanels[LEFT] = new TitledPanel(leftTitleLabel, cPanels[LEFT], 5);
 		titlePanels[RIGHT] = new TitledPanel(rightTitleLabel, cPanels[RIGHT], 5);
 
-		// Set the MINIMUM_PANEL_WIDTH for the left and right panel to prevent the split pane's 
+		// Set the MINIMUM_PANEL_WIDTH for the left and right panel to prevent the split pane's
 		// divider from becoming locked (can't be moved) due to extra long title names.
 		titlePanels[LEFT].setMinimumSize(
 			new Dimension(MINIMUM_PANEL_WIDTH, titlePanels[LEFT].getMinimumSize().height));
@@ -341,7 +341,7 @@ public abstract class DecompilerCodeComparisonPanel<T extends DualDecompilerFiel
 	}
 
 	/**
-	 * Sets the coordinator for the two decompiler panels within this code comparison panel. 
+	 * Sets the coordinator for the two decompiler panels within this code comparison panel.
 	 * It coordinates their scrolling and location synchronization.
 	 * @param fieldPanelCoordinator the coordinator for the two decompiler panels
 	 */
@@ -589,7 +589,7 @@ public abstract class DecompilerCodeComparisonPanel<T extends DualDecompilerFiel
 	/**
 	 * Sets whether or not the decompilers are displayed side by side.
 	 * 
-	 * @param sideBySide if true, the decompilers are side by side, otherwise one is above 
+	 * @param sideBySide if true, the decompilers are side by side, otherwise one is above
 	 * the other.
 	 */
 	private void showSideBySide(boolean sideBySide) {
@@ -648,7 +648,7 @@ public abstract class DecompilerCodeComparisonPanel<T extends DualDecompilerFiel
 			new MyDecompileResultsListener(leftCursorLocation, rightCursorLocation);
 
 		//TEMP FIX - correct when refactoring
-		// Clear any previous MyDecompileResultsListener that is for a decompiler load 
+		// Clear any previous MyDecompileResultsListener that is for a decompiler load
 		//that hasn't finished.
 		Set<MyDecompileResultsListener> toRemove = new HashSet<>();
 		for (DualDecompileResultsListener l : dualDecompileResultsListenerList) {
@@ -780,7 +780,7 @@ public abstract class DecompilerCodeComparisonPanel<T extends DualDecompilerFiel
 
 		ToggleOrientationAction() {
 			super("Dual Decompiler Toggle Orientation", "FunctionComparison");
-			setDescription("<HTML>Toggle the layout of the decompiler " +
+			setDescription("<html>Toggle the layout of the decompiler " +
 				"<BR>between side-by-side and one above the other.");
 			setEnabled(true);
 			setSelected(isSideBySide);

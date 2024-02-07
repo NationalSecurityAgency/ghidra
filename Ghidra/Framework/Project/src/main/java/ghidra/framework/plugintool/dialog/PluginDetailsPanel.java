@@ -68,7 +68,7 @@ class PluginDetailsPanel extends AbstractDetailsPanel {
 		List<PluginDescription> dependencies = model.getDependencies(descriptor);
 		Collections.sort(dependencies, (pd1, pd2) -> pd1.getName().compareTo(pd2.getName()));
 
-		StringBuilder buffer = new StringBuilder("<HTML>");
+		StringBuilder buffer = new StringBuilder("<html>");
 
 		buffer.append("<TABLE cellpadding=2>");
 

@@ -39,7 +39,7 @@ import ghidra.util.StringUtilities;
  * The tool tip text shows relationships to key topological elements of the program relative to
  * the address -- offset from image base, offset from current memory block; if the address is
  * within the bounds of a function, the offset from function entry point; if the address is within
- * the bounds of defined data, the offset from the start of the data. 
+ * the bounds of defined data, the offset from the start of the data.
  */
 public class ProgramAddressRelationshipListingHover extends AbstractConfigurableHover
 		implements ListingHoverService {
@@ -84,7 +84,7 @@ public class ProgramAddressRelationshipListingHover extends AbstractConfigurable
 			return null;
 		}
 
-		StringBuilder sb = new StringBuilder("<HTML><table>");
+		StringBuilder sb = new StringBuilder("<html><table>");
 
 		Address loc = programLocation.getAddress();
 		if (isInDefaultSpace(program, loc)) {

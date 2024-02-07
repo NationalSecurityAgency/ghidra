@@ -522,7 +522,7 @@ public class ListingCodeComparisonPanel
 	class ToggleOrientationAction extends ToggleDockingAction {
 		ToggleOrientationAction() {
 			super("Dual Listing Toggle Orientation", owner);
-			setDescription("<HTML>Toggle the layout of the listings " +
+			setDescription("<html>Toggle the layout of the listings " +
 				"<BR>between side-by-side and one above the other.</HTML>");
 			setEnabled(true);
 			setSelected(isSideBySide);
@@ -1071,7 +1071,7 @@ public class ListingCodeComparisonPanel
 		saveState.remove("_BYTE_ADDR");
 		Address desiredByteAddress = null;
 		if (byteAddress != null) {
-			// Try to get the indicated side's byte address using one of the address 
+			// Try to get the indicated side's byte address using one of the address
 			// correlators or by inferring it.
 			desiredByteAddress = inferDesiredByteAddress(address, desiredAddress, byteAddress,
 				programLocation.getProgram(), programs[leftOrRight]);
@@ -1852,7 +1852,7 @@ public class ListingCodeComparisonPanel
 		titlePanels[LEFT] = new TitledPanel(leftProgramName, listingPanels[LEFT], 5);
 		titlePanels[RIGHT] = new TitledPanel(rightProgramName, listingPanels[RIGHT], 5);
 
-		// Set the MINIMUM_PANEL_WIDTH for the left and right panel to prevent the split pane's 
+		// Set the MINIMUM_PANEL_WIDTH for the left and right panel to prevent the split pane's
 		// divider from becoming locked (can't be moved) due to extra long title names.
 		titlePanels[LEFT].setMinimumSize(
 			new Dimension(MINIMUM_PANEL_WIDTH, titlePanels[LEFT].getMinimumSize().height));
@@ -1871,7 +1871,7 @@ public class ListingCodeComparisonPanel
 		if (!titlePrefix.isEmpty()) {
 			titlePrefix += " "; // Add a space between prefix and title.
 		}
-		String htmlPrefix = "<HTML>";
+		String htmlPrefix = "<html>";
 		if (title.startsWith(htmlPrefix)) {
 			titlePanel.setTitleName(htmlPrefix + HTMLUtilities.friendlyEncodeHTML(titlePrefix) +
 				title.substring(htmlPrefix.length()));
@@ -2187,7 +2187,7 @@ public class ListingCodeComparisonPanel
 	 * @return the matching address in the indicated program or null.
 	 */
 	private Address getFunctionAddress(int leftOrRight, Address otherSidesAddress) {
-		// Try to get the address using the correlator. 
+		// Try to get the address using the correlator.
 		// If the correlator couldn't determine it, then try to infer it.
 		int otherSide = (leftOrRight == RIGHT) ? LEFT : RIGHT;
 		// Finding desired side's address.
@@ -2215,7 +2215,7 @@ public class ListingCodeComparisonPanel
 	}
 
 	private Address getDataAddress(int leftOrRight, Address otherSidesAddress) {
-		// Correlator doesn't handle data compare, so associate beginning of data and 
+		// Correlator doesn't handle data compare, so associate beginning of data and
 		// infer the others based on relative position.
 		Address leftDataAddress = getLeftDataAddress();
 		Address rightDataAddress = getRightDataAddress();
