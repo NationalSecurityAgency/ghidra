@@ -68,6 +68,6 @@ public class BuildGhidraJarScript extends GhidraScript {
 		// uncomment the following line to create a src zip for debugging.
 		// builder.buildSrcZip(new File(installDir, "GhidraSrc.zip"), monitor);
 
-		println("Finsished writing jar: " + file);
+		println("Finished writing jar: " + file);
 	}
 }
