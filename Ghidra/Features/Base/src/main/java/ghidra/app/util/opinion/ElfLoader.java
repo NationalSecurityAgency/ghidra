@@ -158,8 +158,16 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 			throws CancelledException, IOException {
 		super.postLoadProgramFixups(loadedPrograms, project, options, messageLog, monitor);
 
-		ExternalSymbolResolver.fixUnresolvedExternalSymbols(loadedPrograms, true, messageLog,
-			monitor);
+		try (ExternalSymbolResolver esr =
+			new ExternalSymbolResolver(project.getProjectData(), monitor)) {
+			for (Loaded<Program> loadedProgram : loadedPrograms) {
+				esr.addProgramToFixup(
+					loadedProgram.getProjectFolderPath() + loadedProgram.getName(),
+					loadedProgram.getDomainObject());
+			}
+			esr.fixUnresolvedExternalSymbols();
+			esr.logInfo(messageLog::appendMsg, true);
+		}
 	}
 
 	@Override
