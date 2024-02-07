@@ -123,11 +123,13 @@ public class HTMLUtilities {
 	private static final int MAX_TOOLTIP_LENGTH = 2000; // arbitrary
 	private static final int TAB_SIZE = 4;
 
-	public static final String HTML = "<HTML>";
-	public static final String HTML_CLOSE = "</HTML>";
-	public static final String BR = "<BR>";
-	public static final String PRE = "<PRE>";
-	public static final String PRE_CLOSE = "</PRE>";
+	// Intentionally lower-case to match external checks for isHtml(), some of which check
+	// case-sensitive for "<html>"
+	public static final String HTML = "<html>";
+	public static final String HTML_CLOSE = "</html>";
+	public static final String BR = "<br>";
+	public static final String PRE = "<pre>";
+	public static final String PRE_CLOSE = "</pre>";
 
 	/**
 	 * A tag to mark code that could be made into a hyperlink.   This allows you to mark
@@ -171,35 +173,35 @@ public class HTMLUtilities {
 	 */
 	public static String colorString(Color color, String text) {
 		String rgb = toHexString(color);
-		return "<FONT COLOR=\"" + rgb + "\">" + text + "</FONT>";
+		return "<font color=\"" + rgb + "\">" + text + "</font>";
 	}
 
 	/**
 	 * Surrounds the indicated text with HTML font coloring tags so that the
 	 * text will display in color within HTML.
-	 * @param rgbColor (eg. "#8c0000") a string indicating the RGB hexadecimal color
+	 * @param rgbColor (e.g., "#8c0000") a string indicating the RGB hexadecimal color
 	 * @param text the original text
 	 * @return the string for HTML colored text
 	 */
 	public static String colorString(String rgbColor, String text) {
-		return "<FONT COLOR=\"" + rgbColor + "\">" + text + "</FONT>";
+		return "<font color=\"" + rgbColor + "\">" + text + "</font>";
 	}
 
 	/**
 	 * Surrounds the indicated numeric value with HTML font coloring tags so that the
 	 * numeric value will display in color within HTML.
-	 * @param rgbColor (eg. "#8c0000") a string indicating the RGB hexadecimal color
+	 * @param rgbColor (e.g., "#8c0000") a string indicating the RGB hexadecimal color
 	 * @param value the numeric value to be converted to text and wrapped with color tags.
 	 * @return the string for the HTML colored number
 	 */
 	public static String colorString(String rgbColor, int value) {
-		return "<FONT COLOR=\"" + rgbColor + "\">" + value + "</FONT>";
+		return "<font color=\"" + rgbColor + "\">" + value + "</font>";
 	}
 
 	/**
 	 * Creates a string with the indicated number of HTML space characters (<code>&#x26;nbsp;</code>).
 	 * @param num the number of HTML spaces
-	 * @return the string o HTML spaces
+	 * @return the string of HTML spaces
 	 */
 	public static String spaces(int num) {
 		StringBuilder buf = new StringBuilder(HTML_SPACE.length() * num);
@@ -289,7 +291,7 @@ public class HTMLUtilities {
 	}
 
 	/**
-	 * Sets the font size of the given text by wrapping it in &lt;font&gt; tags.
+	 * Sets the font size of the given text by wrapping it in &lt;span&gt; tags.
 	 *
 	 * @param text the text to size
 	 * @param ptSize the point size of the text
@@ -303,19 +305,19 @@ public class HTMLUtilities {
 		}
 
 		StringBuilder buffy = new StringBuilder(text);
-		buffy.insert(start, "<SPAN STYLE=\"font-size: " + ptSize + "pt\">");
+		buffy.insert(start, "<span style=\"font-size: " + ptSize + "pt\">");
 
 		int end = buffy.length();
 		if (StringUtilities.endsWithIgnoreCase(text, HTML_CLOSE)) {
 			end = end - HTML_CLOSE.length();
 		}
 
-		buffy.insert(end, "</SPAN>");
+		buffy.insert(end, "</span>");
 		return buffy.toString();
 	}
 
 	/**
-	 * Sets the font size and color of the given text by wrapping it in &lt;font&gt; tags.
+	 * Sets the font size and color of the given text by wrapping it in &lt;span&gt; tags.
 	 *
 	 * @param text the text to size
 	 * @param color the color of the text
@@ -330,14 +332,14 @@ public class HTMLUtilities {
 		}
 
 		StringBuilder buffy = new StringBuilder(text);
-		buffy.insert(start, "<SPAN STYLE=\"font-size: " + ptSize + "pt; color: " + rgb + "\">");
+		buffy.insert(start, "<span style=\"font-size: " + ptSize + "pt; color: " + rgb + "\">");
 
 		int end = buffy.length();
 		if (StringUtilities.endsWithIgnoreCase(text, HTML_CLOSE)) {
 			end = end - HTML_CLOSE.length();
 		}
 
-		buffy.insert(end, "</SPAN>");
+		buffy.insert(end, "</span>");
 		return buffy.toString();
 	}
 
@@ -363,8 +365,8 @@ public class HTMLUtilities {
 
 	/**
 	 * Takes HTML text wrapped by {@link #wrapWithLinkPlaceholder(String, String)} and replaces
-	 * the custom link comment tags with HTML anchor (<code>A</code>) tags, where the <code>HREF</code>
-	 * value is the value that was in the <code>CONTENT</code> attribute.
+	 * the custom link comment tags with HTML anchor (<code>A</code>) tags, where the
+	 * <code>HREF</code> value is the value that was in the <code>CONTENT</code> attribute.
 	 *
 	 * @param text the text for which to replace the markup
 	 * @return the updated text
@@ -378,14 +380,14 @@ public class HTMLUtilities {
 		while (matcher.find()) {
 			String content = matcher.group(1);
 			String escaped = content.replace("$", "\\$");
-			String updated = "<A HREF=\"" + escaped + "\">";
+			String updated = "<a href=\"" + escaped + "\">";
 			matcher.appendReplacement(buffy, updated);
 		}
 
 		matcher.appendTail(buffy);
 
 		String pass1 = buffy.toString();
-		String pass2 = pass1.replaceAll(LINK_PLACEHOLDER_CLOSE, "</A>");
+		String pass2 = pass1.replaceAll(LINK_PLACEHOLDER_CLOSE, "</a>");
 		return pass2;
 	}
 
@@ -398,8 +400,7 @@ public class HTMLUtilities {
 	 */
 	public static String toHTML(String text) {
 		int noMax = 0;
-		String html = toWrappedHTML(text, noMax);
-		return html;
+		return toWrappedHTML(text, noMax);
 	}
 
 	/**
@@ -593,7 +594,7 @@ public class HTMLUtilities {
 	 * <p>
 	 * See also <code>StringEscapeUtils#escapeHtml3(String)</code> if you need quote-safe html encoding.
 	 * <p>
-	 *  
+	 * 
 	 * @param text plain-text that might have some characters that should NOT be interpreted as HTML
 	 * @param makeSpacesNonBreaking true to convert spaces into {@value #HTML_SPACE}
 	 * @return string with any html characters replaced with equivalents
@@ -643,8 +644,8 @@ public class HTMLUtilities {
 	}
 
 	/**
-	 * Tests a unicode code point (i.e., 32 bit character) to see if it needs to be escaped before 
-	 * being added to a HTML document because it is non-printable or a non-standard control 
+	 * Tests a unicode code point (i.e., 32 bit character) to see if it needs to be escaped before
+	 * being added to a HTML document because it is non-printable or a non-standard control
 	 * character
 	 * 
 	 * @param codePoint character to test
@@ -802,8 +803,8 @@ public class HTMLUtilities {
 		// formatting tags (like <B>, <FONT>, etc).   So, just normalize the text, not
 		// preserving any of the line breaks.
 		//
-		// Note: Calling this method here causes unwanted removal of newlines.  If the original 
-		//       need for this call is found, this can be revisited. 
+		// Note: Calling this method here causes unwanted removal of newlines.  If the original
+		//       need for this call is found, this can be revisited.
 		//       (see history for condense() code)
 		// String condensed = condense(updated);
 		return updated;

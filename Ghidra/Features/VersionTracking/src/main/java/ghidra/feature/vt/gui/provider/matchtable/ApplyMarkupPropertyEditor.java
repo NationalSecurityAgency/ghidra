@@ -44,75 +44,75 @@ import ghidra.util.layout.*;
 import help.HelpService;
 
 /**
- * The ApplyMarkupPropertyEditor provides a custom GUI layout for the options that are used when 
+ * The ApplyMarkupPropertyEditor provides a custom GUI layout for the options that are used when
  * applying version tracking markup.
  */
 public class ApplyMarkupPropertyEditor implements OptionsEditor {
 
 	// help tooltips
 	private static final String DATA_MATCH_DATA_TYPE_TOOLTIP =
-		"<HTML>The apply action for the <b>data type on a data match</b> when performing bulk apply operations</HTML>";
+		"<html>The apply action for the <b>data type on a data match</b> when performing bulk apply operations</html>";
 	private static final String LABELS_TOOLTIP =
-		"<HTML>The apply action for <b>labels</b> when performing bulk apply operations</HTML>";
+		"<html>The apply action for <b>labels</b> when performing bulk apply operations</html>";
 	private static final String FUNCTION_NAME_TOOLTIP =
-		"<HTML>The apply action for <b>function name</b> when performing bulk apply operations</HTML>";
+		"<html>The apply action for <b>function name</b> when performing bulk apply operations</html>";
 	private static final String FUNCTION_SIGNATURE_TOOLTIP =
-		"<HTML>The apply action for the <b>function signature</b> " +
-			"when performing bulk apply operations</HTML>";
+		"<html>The apply action for the <b>function signature</b> " +
+			"when performing bulk apply operations</html>";
 	private static final String PLATE_COMMENT_TOOLTIP =
-		"<HTML>The apply action for <b>plate comments</b> when performing bulk apply operations</HTML>";
+		"<html>The apply action for <b>plate comments</b> when performing bulk apply operations</html>";
 	private static final String PRE_COMMENT_TOOLTIP =
-		"<HTML>The apply action for <b>pre comments</b> when performing bulk apply operations</HTML>";
+		"<html>The apply action for <b>pre comments</b> when performing bulk apply operations</html>";
 	private static final String END_OF_LINE_COMMENT_TOOLTIP =
-		"<HTML>The apply action for <b>end of line comments</b> when performing bulk apply operations</HTML>";
+		"<html>The apply action for <b>end of line comments</b> when performing bulk apply operations</html>";
 	private static final String REPEATABLE_COMMENT_TOOLTIP =
-		"<HTML>The apply action for <b>repeatable comments</b> when performing bulk apply operations</HTML>";
+		"<html>The apply action for <b>repeatable comments</b> when performing bulk apply operations</html>";
 	private static final String POST_COMMENT_TOOLTIP =
-		"<HTML>The apply action for <b>post comments</b> when performing bulk apply operations</HTML>";
+		"<html>The apply action for <b>post comments</b> when performing bulk apply operations</html>";
 	private static final String FUNCTION_RETURN_TYPE_TOOLTIP =
-		"<HTML>The apply action for <b>function return type</b> when the function signature is applied</HTML>";
+		"<html>The apply action for <b>function return type</b> when the function signature is applied</html>";
 	private static final String INLINE_TOOLTIP =
-		"<HTML>The apply action to use for the <b>function inline flag</b> " +
-			"when applying the function signature</HTML>";
+		"<html>The apply action to use for the <b>function inline flag</b> " +
+			"when applying the function signature</html>";
 	private static final String NO_RETURN_TOOLTIP =
-		"<HTML>The apply action to use for the <b>function no return flag</b> " +
-			"when applying the function signature</HTML>";
+		"<html>The apply action to use for the <b>function no return flag</b> " +
+			"when applying the function signature</html>";
 	private static final String CALLING_CONVENTION_TOOLTIP =
-		"<HTML>The apply action to use for the <b>function calling convention</b> " +
-			"when applying the function signature</HTML>";
+		"<html>The apply action to use for the <b>function calling convention</b> " +
+			"when applying the function signature</html>";
 	private static final String CALL_FIXUP_TOOLTIP =
-		"<HTML>The apply action for <b>whether or not to apply call fixup</b> " +
-			"when applying the function signature</HTML>";
+		"<html>The apply action for <b>whether or not to apply call fixup</b> " +
+			"when applying the function signature</html>";
 	private static final String VAR_ARGS_TOOLTIP =
-		"<HTML>The apply action to use for the <b>var args flag</b> " +
-			"when applying the function signature</HTML>";
+		"<html>The apply action to use for the <b>var args flag</b> " +
+			"when applying the function signature</html>";
 	private static final String PARAMETER_DATA_TYPES_TOOLTIP =
-		"<HTML>The apply action for <b>function parameter data types</b> when applying the function signature</HTML>";
+		"<html>The apply action for <b>function parameter data types</b> when applying the function signature</html>";
 	private static final String PARAMETER_NAMES_TOOLTIP =
-		"<HTML>The apply action for <b>function parameter names</b> when applying the function signature</HTML>";
+		"<html>The apply action for <b>function parameter names</b> when applying the function signature</html>";
 	private static final String PARAMETER_NAME_PRIORITY_TOOTIP =
-		"<HTML>Choose whether a parameter name with a User source type or Import source type is highest " +
-			"priority when determining whether to replace the name or not when using the priority.</HTML>";
+		"<html>Choose whether a parameter name with a User source type or Import source type is highest " +
+			"priority when determining whether to replace the name or not when using the priority.</html>";
 	private static final String HIGHEST_NAME_PRIORITY_TOOLTIP =
-		"<HTML>The apply action for <b>which source type is the highest priority</b> " +
-			"when applying parameter names using a priority replace</HTML>";
+		"<html>The apply action for <b>which source type is the highest priority</b> " +
+			"when applying parameter names using a priority replace</html>";
 	private static final String USER_PRIORITY_TOOLTIP =
-		"<HTML>Parameter Name Source Type Priority <br>from highest to lowest:<br>" +
-			"<blockquote>User Defined<br>Imported<br>Analysis<br>default (i.e. param_...)</blockquote></HTML>";
+		"<html>Parameter Name Source Type Priority <br>from highest to lowest:<br>" +
+			"<blockquote>User Defined<br>Imported<br>Analysis<br>default (i.e. param_...)</blockquote></html>";
 	private static final String IMPORT_PRIORITY_TOOLTIP =
-		"<HTML>Parameter Name Source Type Priority <br>from highest to lowest:<br>" +
-			"<blockquote>Imported<br>User Defined<br>Analysis<br>default (i.e. param_...)</blockquote></HTML>";
+		"<html>Parameter Name Source Type Priority <br>from highest to lowest:<br>" +
+			"<blockquote>Imported<br>User Defined<br>Analysis<br>default (i.e. param_...)</blockquote></html>";
 	private static final String PARAMETER_NAMES_REPLACE_IF_SAME_PRIORITY_TOOLTIP =
-		"<HTML>When function signature parameter names are being replaced based on source type priority, " +
-			"replace the destination name with the source name if their source types are the same.</HTML>";
+		"<html>When function signature parameter names are being replaced based on source type priority, " +
+			"replace the destination name with the source name if their source types are the same.</html>";
 	private static final String PARAMETER_COMMENTS_TOOLTIP =
-		"<HTML>The apply action for <b>parameter comments</b> when applying the function signature</HTML>";
+		"<html>The apply action for <b>parameter comments</b> when applying the function signature</html>";
 	private static final String IGNORE_EXCLUDED_TOOLTIP =
-		"<HTML>Markup items whose \"apply option\" is set to <b>Do Not Apply</b> should be" +
-			" changed to a status of <b>Ignored</b> by applying a match.</HTML>";
+		"<html>Markup items whose \"apply option\" is set to <b>Do Not Apply</b> should be" +
+			" changed to a status of <b>Ignored</b> by applying a match.</html>";
 	private static final String IGNORE_INCOMPLETE_TOOLTIP =
-		"<HTML>Markup items that are <b>incomplete</b> (for example, no destination address is specified) " +
-			"should be changed to a status of <b>Ignored</b> by applying a match.</HTML>";
+		"<html>Markup items that are <b>incomplete</b> (for example, no destination address is specified) " +
+			"should be changed to a status of <b>Ignored</b> by applying a match.</html>";
 
 	private JComponent editorComponent;
 

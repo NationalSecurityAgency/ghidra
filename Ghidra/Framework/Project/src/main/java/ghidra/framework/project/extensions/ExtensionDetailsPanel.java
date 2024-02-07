@@ -57,7 +57,7 @@ class ExtensionDetailsPanel extends AbstractDetailsPanel {
 		createFieldAttributes();
 		createMainPanel();
 
-		// Any time the table is reloaded or a new selection is made, we want to reload this 
+		// Any time the table is reloaded or a new selection is made, we want to reload this
 		// panel. This ensures we are always viewing data for the currently-selected item.
 		tablePanel.getTableModel().addThreadedTableModelListener(new ThreadedTableModelListener() {
 
@@ -94,7 +94,7 @@ class ExtensionDetailsPanel extends AbstractDetailsPanel {
 			return;
 		}
 
-		StringBuilder buffer = new StringBuilder("<HTML>");
+		StringBuilder buffer = new StringBuilder("<html>");
 		buffer.append("<TABLE cellpadding=2>");
 
 		insertRowTitle(buffer, "Name");

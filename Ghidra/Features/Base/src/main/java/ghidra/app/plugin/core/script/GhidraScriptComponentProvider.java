@@ -93,12 +93,12 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	private TaskListener cleanupTaskSetListener = new TaskListener() {
 		@Override
 		public void taskCompleted(Task task) {
-			runningScriptTaskSet.remove((RunScriptTask) task);
+			runningScriptTaskSet.remove(task);
 		}
 
 		@Override
 		public void taskCancelled(Task task) {
-			runningScriptTaskSet.remove((RunScriptTask) task);
+			runningScriptTaskSet.remove(task);
 		}
 	};
 
@@ -176,7 +176,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		});
 
 		scriptCategoryTree.getSelectionModel()
-			.setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+				.setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 	}
 
 	private void build() {
@@ -475,11 +475,11 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	 */
 	public List<ResourceFile> getScriptDirectories() {
 		return bundleHost.getGhidraBundles()
-			.stream()
-			.filter(GhidraSourceBundle.class::isInstance)
-			.filter(GhidraBundle::isEnabled)
-			.map(GhidraBundle::getFile)
-			.collect(Collectors.toList());
+				.stream()
+				.filter(GhidraSourceBundle.class::isInstance)
+				.filter(GhidraBundle::isEnabled)
+				.map(GhidraBundle::getFile)
+				.collect(Collectors.toList());
 	}
 
 	/**
@@ -487,12 +487,12 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	 */
 	public List<ResourceFile> getWritableScriptDirectories() {
 		return bundleHost.getGhidraBundles()
-			.stream()
-			.filter(GhidraSourceBundle.class::isInstance)
-			.filter(Predicate.not(GhidraBundle::isSystemBundle))
-			.filter(GhidraBundle::isEnabled)
-			.map(GhidraBundle::getFile)
-			.collect(Collectors.toList());
+				.stream()
+				.filter(GhidraSourceBundle.class::isInstance)
+				.filter(Predicate.not(GhidraBundle::isSystemBundle))
+				.filter(GhidraBundle::isEnabled)
+				.map(GhidraBundle::getFile)
+				.collect(Collectors.toList());
 	}
 
 	boolean isEditorOpen(ResourceFile script) {
@@ -647,9 +647,9 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 		AtomicReference<GhidraScript> ref = new AtomicReference<>();
 		TaskBuilder.withRunnable(monitor -> ref.set(scriptSupplier.get()))
-			.setTitle("Compiling Script Directory")
-			.setLaunchDelay(1000)
-			.launchModal();
+				.setTitle("Compiling Script Directory")
+				.setLaunchDelay(1000)
+				.launchModal();
 
 		return ref.get();
 	}
@@ -1012,7 +1012,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 				return list;
 			}
 		});
-		tableFilterPanel.setToolTipText("<HTML>Include scripts with <b>Names</b> or " +
+		tableFilterPanel.setToolTipText("<html>Include scripts with <b>Names</b> or " +
 			"<b>Descriptions</b> containing this text.");
 		tableFilterPanel.setFocusComponent(scriptCategoryTree);
 	}

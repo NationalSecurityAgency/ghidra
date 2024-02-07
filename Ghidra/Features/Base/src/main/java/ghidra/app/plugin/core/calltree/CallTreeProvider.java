@@ -49,7 +49,6 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.*;
-import ghidra.util.HTMLUtilities;
 import ghidra.util.HelpLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.SwingUpdateManager;
@@ -448,10 +447,10 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 		navigateIncomingToggleAction.setSelected(isPrimary);
 		navigateIncomingToggleAction.setToolBarData(new ToolBarData(
 			Icons.NAVIGATE_ON_INCOMING_EVENT_ICON, navigationOptionsToolbarGroup, "2"));
-		navigateIncomingToggleAction.setDescription(HTMLUtilities.toHTML("Incoming Navigation" +
+		navigateIncomingToggleAction.setDescription("<html>Incoming Navigation" +
 			"<br><br>Toggle <b>On</b>  - change the displayed " +
 			"function on Listing navigation events" +
-			"<br>Toggled <b>Off</b> - don't change the displayed function on Listing navigation events"));
+			"<br>Toggled <b>Off</b> - don't change the displayed function on Listing navigation events");
 		navigateIncomingToggleAction.setHelpLocation(
 			new HelpLocation(plugin.getName(), "Call_Tree_Action_Incoming_Navigation"));
 		tool.addLocalAction(this, navigateIncomingToggleAction);

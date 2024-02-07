@@ -57,9 +57,9 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 
 	private void setupDescription() {
 		JLabel label = new GHtmlLabel(
-			"<HTML>Specify the files for converting a new data type archive (.gdt)<BR>" +
+			"<html>Specify the files for converting a new data type archive (.gdt)<BR>" +
 				"to match the IDs of data types in an old data type archive.<BR>" +
-				"The result will be saved to the destination archive.</HTML>");
+				"The result will be saved to the destination archive.</html>");
 		label.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
 		label.setHorizontalAlignment(SwingConstants.CENTER);
 		add(label, BorderLayout.NORTH);

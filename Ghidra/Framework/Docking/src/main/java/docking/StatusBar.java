@@ -190,7 +190,7 @@ public class StatusBar extends JPanel {
 	 */
 	public void setStatusText(String text) {
 		// Run this later in case we are in the midst of a Java focus transition, such as when a
-		// dialog is closing.  If we don't let the focus transition finish, then we will not 
+		// dialog is closing.  If we don't let the focus transition finish, then we will not
 		// correctly locate the active window.
 		Swing.runLater(() -> doSetStatusText(text));
 	}
@@ -287,7 +287,7 @@ public class StatusBar extends JPanel {
 	@Override
 	public String getToolTipText() {
 		if (messageQueue.size() > 0) {
-			StringBuffer buffer = new StringBuffer("<HTML>");
+			StringBuffer buffer = new StringBuffer("<html>");
 
 			Iterator<String> iter = messageQueue.iterator();
 			for (int i = 0; iter.hasNext(); i++) {

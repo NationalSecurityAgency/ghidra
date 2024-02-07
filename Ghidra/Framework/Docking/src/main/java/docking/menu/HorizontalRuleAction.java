@@ -56,13 +56,13 @@ public class HorizontalRuleAction extends DockingAction {
 		String topHtml = HTMLUtilities.escapeHTML(topName);
 		String bottomHtml = HTMLUtilities.escapeHTML(bottomName);
 		menuData.setMenuItemNamePlain(String.format("""
-				<HTML><CENTER><FONT SIZE=2 COLOR="%s">%s<BR>%s</FONT></CENTER>
+				<html><CENTER><FONT SIZE=2 COLOR="%s">%s<BR>%s</FONT></CENTER>
 				""", Palette.SILVER, topHtml, bottomHtml));
 		setMenuBarData(menuData);
 
 		// the description is meant to be used for the tooltip and is larger
 		setDescription(String.format("""
-				<HTML><CENTER><B>%s</B><HR><B>%s</B></CENTER>
+				<html><CENTER><B>%s</B><HR><B>%s</B></CENTER>
 				""", PADDING + topHtml + PADDING, PADDING + bottomHtml + PADDING));
 	}
 

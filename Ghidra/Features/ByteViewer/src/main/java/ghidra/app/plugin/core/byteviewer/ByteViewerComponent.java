@@ -102,11 +102,20 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		ByteBlockInfo info = indexMap.getBlockInfo(fieldLoc.getIndex(), fieldLoc.getFieldNum());
 		if (info != null) {
 			String modelName = model.getName();
-			return modelName + " format at " +
-				info.getBlock().getLocationRepresentation(info.getOffset()) + ", value = " +
-				field.getText();
+			String location = getAccessibleLocationInfo(info.getBlock(), info.getOffset());
+			return modelName + " format at " + location;
 		}
 		return null;
+	}
+
+	private String getAccessibleLocationInfo(ByteBlock block, BigInteger offset) {
+		if (block instanceof MemoryByteBlock memBlock) {
+			// location represents an address, remove leading zeros to make screen reading concise
+			Address address = memBlock.getAddress(offset);
+			return address.toString(address.getAddressSpace().showSpaceName(), 1);
+		}
+		// otherwise use generic location representation
+		return block.getLocationRepresentation(offset);
 	}
 
 	@Override

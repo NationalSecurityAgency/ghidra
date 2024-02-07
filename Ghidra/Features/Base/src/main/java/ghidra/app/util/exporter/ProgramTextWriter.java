@@ -81,7 +81,7 @@ class ProgramTextWriter {
 
 		//boolean sk = false;
 		if (options.isHTML()) {
-			writer.print("<HTML><BODY BGCOLOR=#ffffe0>");
+			writer.print("<html><BODY BGCOLOR=#ffffe0>");
 			writer.println("<FONT FACE=COURIER SIZE=3><STRONG><PRE>");
 		}
 		TemplateSimplifier simplifier = new TemplateSimplifier();
@@ -339,7 +339,7 @@ class ProgramTextWriter {
 		}
 
 		if (options.isHTML()) {
-			writer.println("</PRE></STRONG></FONT></BODY></HTML>");
+			writer.println("</PRE></STRONG></FONT></BODY></html>");
 		}
 
 		writer.close();
