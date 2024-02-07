@@ -17,26 +17,26 @@ package ghidra.app.util.pdb.pdbapplicator;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.MsSymbolIterator;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
-import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractBlockMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
-import ghidra.program.model.address.Address;
+import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.ProcedureIdEndMsSymbol;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
 
 /**
- * Applier for {@link AbstractBlockMsSymbol} symbols.
+ * Applier for {@link ProcedureIdEndMsSymbol} symbols.
  */
-public class BlockSymbolApplier extends MsSymbolApplier
+public class ProcedureIdEndSymbolApplier extends MsSymbolApplier
 		implements BlockNestingSymbolApplier, NestableSymbolApplier {
 
-	private AbstractBlockMsSymbol symbol;
+	private ProcedureIdEndMsSymbol symbol;
 
 	/**
 	 * Constructor
 	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
 	 * @param symbol the symbol for this applier
 	 */
-	public BlockSymbolApplier(DefaultPdbApplicator applicator, AbstractBlockMsSymbol symbol) {
+	public ProcedureIdEndSymbolApplier(DefaultPdbApplicator applicator,
+			ProcedureIdEndMsSymbol symbol) {
 		super(applicator);
 		this.symbol = symbol;
 	}
@@ -46,18 +46,17 @@ public class BlockSymbolApplier extends MsSymbolApplier
 			throws PdbException, CancelledException {
 		getValidatedSymbol(iter, true);
 		if (applyToApplier instanceof AbstractBlockContextApplier applier) {
-			Address address = applicator.getAddress(symbol);
-			applier.beginBlock(address, symbol.getName(), symbol.getLength());
+			applier.endBlock();
 		}
 	}
 
-	private AbstractBlockMsSymbol getValidatedSymbol(MsSymbolIterator iter, boolean iterate) {
+	private ProcedureIdEndMsSymbol getValidatedSymbol(MsSymbolIterator iter, boolean iterate) {
 		AbstractMsSymbol abstractSymbol = iterate ? iter.next() : iter.peek();
-		if (!(abstractSymbol instanceof AbstractBlockMsSymbol blockSymbol)) {
+		if (!(abstractSymbol instanceof ProcedureIdEndMsSymbol endSymbol)) {
 			throw new AssertException(
 				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
 		}
-		return blockSymbol;
+		return endSymbol;
 	}
 
 }

@@ -21,7 +21,6 @@ import java.util.*;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
-import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 
 /**
@@ -173,12 +172,6 @@ public class SymbolGroup {
 			lengthSymbols = moduleInfo.getSizeLocalSymbolsDebugInformation();
 			try {
 				startingOffset = pdb.getDebugInfo().getSymbolRecords().getCvSigLength(streamNumber);
-			}
-			catch (IOException e) {
-				Msg.warn(this, "PDB issue reading stream when initializing iterator for stream " +
-					streamNumber);
-				startingOffset = 0;
-				lengthSymbols = 0; // essentially null out iterator with zero length
 			}
 			catch (CancelledException e) {
 				startingOffset = 0;
