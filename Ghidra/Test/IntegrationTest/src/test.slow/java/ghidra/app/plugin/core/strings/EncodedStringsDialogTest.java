@@ -22,37 +22,36 @@ import java.nio.charset.StandardCharsets;
 
 import org.junit.*;
 
+import docking.ActionContext;
 import docking.action.DockingActionIf;
-import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramDB;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.AddressRangeImpl;
 import ghidra.program.model.data.AbstractStringDataType;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.test.*;
+import ghidra.test.AbstractProgramBasedTest;
+import ghidra.test.ToyProgramBuilder;
 import ghidra.util.Swing;
 
-public class EncodedStringsDialogTest extends AbstractGhidraHeadedIntegrationTest {
-	private TestEnv env;
-	private ProgramDB program;
-	private PluginTool tool;
+public class EncodedStringsDialogTest extends AbstractProgramBasedTest {
 	private MemoryBlock ram;
 	private DockingActionIf encodedStringsAction;
 	private EncodedStringsDialog dialog;
 	private EncodedStringsTableModel tableModel;
 	private EncodedStringsPlugin plugin;
 
+
 	@Before
 	public void setUp() throws Exception {
-		env = new TestEnv();
-		program = buildProgram();
+		initialize();
 		ram = program.getMemory().getBlock("RAM");
-		tool = env.launchDefaultTool(program);
 		plugin = env.addPlugin(EncodedStringsPlugin.class);
 		encodedStringsAction = plugin.getSearchForEncodedStringsAction();
 	}
 
-	private ProgramDB buildProgram() throws Exception {
+	@Override
+	protected ProgramDB getProgram() throws Exception {
 		ToyProgramBuilder builder = new ToyProgramBuilder("String Examples", false);
 		builder.createMemory("RAM", "0x0", 0x500);
 
@@ -78,10 +77,13 @@ public class EncodedStringsDialogTest extends AbstractGhidraHeadedIntegrationTes
 		return builder.getProgram();
 	}
 
-	private Address addr(long offset) {
-		return ram.getStart().getNewAddress(offset);
+	private ActionContext getCBAC() {
+		return runSwing(() -> {
+			return codeBrowser.getProvider().getActionContext(null);
+		});
 	}
 
+	@Override
 	@After
 	public void tearDown() throws Exception {
 		closeDialog();
@@ -99,7 +101,7 @@ public class EncodedStringsDialogTest extends AbstractGhidraHeadedIntegrationTes
 	private void showDialog(AddressRange range) {
 		closeDialog();
 		makeSelection(tool, program, range.getMinAddress(), range.getMaxAddress());
-		performAction(encodedStringsAction, false);
+		performAction(encodedStringsAction, getCBAC(), false);
 		dialog = waitForDialogComponent(EncodedStringsDialog.class);
 		tableModel = dialog.getStringModel();
 		waitForTableModel(tableModel);
