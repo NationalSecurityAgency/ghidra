@@ -28,7 +28,6 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.*;
 import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.exception.NotYetImplementedException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -157,21 +156,7 @@ public class OptionalHeaderImpl implements OptionalHeader {
 
 	@Override
 	public boolean is64bit() {
-		switch (magic) {
-			case Constants.IMAGE_NT_OPTIONAL_HDR32_MAGIC:
-				return false;
-
-			case Constants.IMAGE_NT_OPTIONAL_HDR64_MAGIC:
-				return true;
-		}
-		int characteristics = ntHeader.getFileHeader().getCharacteristics();
-		if ((characteristics & FileHeader.IMAGE_FILE_DLL) == FileHeader.IMAGE_FILE_DLL &&
-			(characteristics & FileHeader.IMAGE_FILE_EXECUTABLE_IMAGE) == 0) {
-			Msg.warn(this, "Invalid magic " + magic + " but potentially data-only DLL");
-			return false;
-		}
-		throw new NotYetImplementedException(
-			"Optional header of type [" + Integer.toHexString(magic) + "] is not supported");
+		return magic == Constants.IMAGE_NT_OPTIONAL_HDR64_MAGIC;
 	}
 
 	@Override
@@ -486,6 +471,11 @@ public class OptionalHeaderImpl implements OptionalHeader {
 		reader.setPointerIndex(startIndex);
 
 		magic = reader.readNextShort();
+		if (magic != Constants.IMAGE_ROM_OPTIONAL_HDR_MAGIC &&
+			magic != Constants.IMAGE_NT_OPTIONAL_HDR32_MAGIC &&
+			magic != Constants.IMAGE_NT_OPTIONAL_HDR64_MAGIC) {
+			Msg.warn(this, "Unsupported magic value: 0x%x. Assuming 32-bit.".formatted(magic));
+		}
 		majorLinkerVersion = reader.readNextByte();
 		minorLinkerVersion = reader.readNextByte();
 		sizeOfCode = reader.readNextInt();

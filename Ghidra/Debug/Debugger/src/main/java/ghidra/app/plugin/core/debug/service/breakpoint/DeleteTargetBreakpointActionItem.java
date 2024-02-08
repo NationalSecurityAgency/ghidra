@@ -17,12 +17,13 @@ package ghidra.app.plugin.core.debug.service.breakpoint;
 
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.dbg.target.TargetDeletable;
+import ghidra.debug.api.target.Target;
+import ghidra.trace.model.breakpoint.TraceBreakpoint;
 
-public record DeleteTargetBreakpointActionItem(TargetDeletable deletable)
+public record DeleteTargetBreakpointActionItem(Target target, TraceBreakpoint bpt)
 		implements BreakpointActionItem {
 	@Override
 	public CompletableFuture<Void> execute() {
-		return deletable.delete();
+		return target.deleteBreakpointAsync(bpt);
 	}
 }

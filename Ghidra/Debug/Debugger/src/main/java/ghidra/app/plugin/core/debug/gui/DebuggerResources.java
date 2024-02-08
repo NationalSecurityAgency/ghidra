@@ -49,9 +49,9 @@ import ghidra.app.plugin.core.debug.gui.target.DebuggerTargetsPlugin;
 import ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsPlugin;
 import ghidra.app.plugin.core.debug.gui.time.DebuggerTimePlugin;
 import ghidra.app.plugin.core.debug.gui.watch.DebuggerWatchesPlugin;
-import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer;
 import ghidra.app.services.DebuggerTraceManagerService.BooleanChangeAdapter;
 import ghidra.async.AsyncUtils;
+import ghidra.debug.api.model.DebuggerProgramLaunchOffer;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.util.PluginUtils;
 import ghidra.program.database.ProgramContentHandler;
@@ -68,6 +68,8 @@ public interface DebuggerResources {
 	Icon ICON_DEBUGGER = new GIcon("icon.debugger");
 
 	Icon ICON_CONNECTION = new GIcon("icon.debugger.connect");
+	Icon ICON_CONNECT_ACCEPT = new GIcon("icon.debugger.connect.accept");
+	Icon ICON_CONNECT_OUTBOUND = new GIcon("icon.debugger.connect.outbound");
 	Icon ICON_DISCONNECT = new GIcon("icon.debugger.disconnect");
 
 	Icon ICON_PROCESS = new GIcon("icon.debugger.process");
@@ -275,37 +277,6 @@ public interface DebuggerResources {
 	Color COLOR_VALUE_CHANGED_SEL =
 		new GColor("color.debugger.plugin.resources.value.changed.selected");
 
-	String NAME_BREAKPOINT_MARKER_ENABLED = "Enabled Breakpoint";
-	String NAME_BREAKPOINT_MARKER_DISABLED = "Disabled Breakpoint";
-	String NAME_BREAKPOINT_MARKER_MIXED = "Mixed Breakpoint";
-	String NAME_BREAKPOINT_MARKER_INEFF_EN = "Ineffective Enabled Breakpoint";
-	String NAME_BREAKPOINT_MARKER_INEFF_DIS = "Ineffective Disabled Breakpoint";
-	String NAME_BREAKPOINT_MARKER_INEFF_MIX = "Ineffective Mixed Breakpoint";
-	String NAME_BREAKPOINT_MARKER_INCON_EN = "Inconsistent Enabled Breakpoint";
-	String NAME_BREAKPOINT_MARKER_INCON_DIS = "Inconsistent Disabled Breakpoint";
-	String NAME_BREAKPOINT_MARKER_INCON_MIX = "Inconsistent Mixed Breakpoint";
-
-	Icon ICON_BREAKPOINT_OVERLAY_INCONSISTENT =
-		new GIcon("icon.debugger.breakpoint.overlay.inconsistent");
-	Icon ICON_BREAKPOINT_MARKER_ENABLED = new GIcon("icon.debugger.breakpoint.marker.enabled");
-	Icon ICON_BREAKPOINT_MARKER_DISABLED = new GIcon("icon.debugger.breakpoint.marker.disabled");
-	Icon ICON_BREAKPOINT_MARKER_MIXED =
-		new GIcon("icon.debugger.breakpoint.marker.mixed");
-
-	Icon ICON_BREAKPOINT_MARKER_INEFF_EN =
-		new GIcon("icon.debugger.breakpoint.marker.ineffective.enabled");
-	Icon ICON_BREAKPOINT_MARKER_INEFF_DIS =
-		new GIcon("icon.debugger.breakpoint.marker.ineffective.disabled");
-	Icon ICON_BREAKPOINT_MARKER_INEFF_MIX =
-		new GIcon("icon.debugger.breakpoint.marker.ineffective.mixed");
-
-	Icon ICON_BREAKPOINT_MARKER_INCON_EN =
-		new MultiIcon(ICON_BREAKPOINT_MARKER_ENABLED, ICON_BREAKPOINT_OVERLAY_INCONSISTENT);
-	Icon ICON_BREAKPOINT_MARKER_INCON_DIS =
-		new MultiIcon(ICON_BREAKPOINT_MARKER_DISABLED, ICON_BREAKPOINT_OVERLAY_INCONSISTENT);
-	Icon ICON_BREAKPOINT_MARKER_INCON_MIX =
-		new MultiIcon(ICON_BREAKPOINT_MARKER_MIXED, ICON_BREAKPOINT_OVERLAY_INCONSISTENT);
-
 	Icon ICON_UNIQUE_REF_READ = new GIcon("icon.debugger.unique.ref.read"); // TODO
 	Icon ICON_UNIQUE_REF_WRITE = new GIcon("icon.debugger.unique.ref.write"); // TODO
 	Icon ICON_UNIQUE_REF_RW = new MultiIcon(ICON_UNIQUE_REF_READ, ICON_UNIQUE_REF_WRITE); // TODO
@@ -327,7 +298,7 @@ public interface DebuggerResources {
 	boolean DEFAULT_COLOR_INEFF_DIS_BREAKPOINT_COLORING_BACKGROUND = false;
 
 	String OPTION_NAME_LOG_BUFFER_LIMIT = "Log Buffer Size";
-	int DEFAULT_LOG_BUFFER_LIMIT = 100;
+	int DEFAULT_LOG_BUFFER_LIMIT = 20;
 
 	// TODO: Re-assign/name groups
 	String GROUP_GENERAL = "Dbg1. General";
@@ -842,40 +813,6 @@ public interface DebuggerResources {
 		}
 	}
 
-	interface ImportMissingModuleAction {
-		String NAME = "Import Missing Module";
-		String DESCRIPTION = "Import the missing module from disk";
-		Icon ICON = ICON_IMPORT;
-		String HELP_ANCHOR = "import_missing_module";
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.toolBarIcon(ICON)
-					.popupMenuIcon(ICON)
-					.popupMenuPath(NAME)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface MapMissingModuleAction {
-		String NAME = "Map Missing Module";
-		String DESCRIPTION = "Map the missing module to an existing import";
-		Icon ICON = ICON_MAP_MODULES;
-		String HELP_ANCHOR = "map_missing_module";
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.toolBarIcon(ICON)
-					.popupMenuIcon(ICON)
-					.popupMenuPath(NAME)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
 	interface FollowsCurrentThreadAction {
 		String NAME = "Follows Selected Thread";
 		String DESCRIPTION = "Register tracking follows selected thread (and contents" +
@@ -909,7 +846,8 @@ public interface DebuggerResources {
 
 		static <T> MultiStateActionBuilder<T> builder(Plugin owner) {
 			String ownerName = owner.getName();
-			return new MultiStateActionBuilder<T>(NAME, ownerName).description(DESCRIPTION)
+			return new MultiStateActionBuilder<T>(NAME, ownerName)
+					.description(DESCRIPTION)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
@@ -1147,19 +1085,6 @@ public interface DebuggerResources {
 		}
 	}
 
-	abstract class AbstractToggleBreakpointAction extends DockingAction {
-		public static final String NAME = "Toggle Breakpoint";
-		// TODO: A "toggle breakpoint" icon
-		public static final Icon ICON = ICON_BREAKPOINT_MARKER_MIXED;
-		public static final String HELP_ANCHOR = "toggle_breakpoint";
-
-		public AbstractToggleBreakpointAction(Plugin owner) {
-			super(NAME, owner.getName());
-			setDescription("Set, enable, or disable a breakpoint");
-			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
-		}
-	}
-
 	abstract class AbstractSetBreakpointAction extends DockingAction {
 		public static final String NAME = "Set Breakpoint";
 		public static final Icon ICON = ICON_SET_BREAKPOINT;
@@ -1379,30 +1304,6 @@ public interface DebuggerResources {
 
 		public AbstractSelectAddressesAction(Plugin owner) {
 			super(NAME, owner.getName());
-			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
-		}
-	}
-
-	abstract class AbstractCaptureTypesAction extends DockingAction {
-		public static final String NAME = "Capture Data Types";
-		public static final Icon ICON = ICON_DATA_TYPES;
-		public static final String HELP_ANCHOR = "capture_types";
-
-		public AbstractCaptureTypesAction(Plugin owner) {
-			super(NAME, owner.getName());
-			setDescription("Capture data types from selected modules");
-			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
-		}
-	}
-
-	abstract class AbstractCaptureSymbolsAction extends DockingAction {
-		public static final String NAME = "Capture Symbols";
-		public static final Icon ICON = ICON_CAPTURE_SYMBOLS;
-		public static final String HELP_ANCHOR = "capture_symbols";
-
-		public AbstractCaptureSymbolsAction(Plugin owner) {
-			super(NAME, owner.getName());
-			setDescription("Capture symbols from selected modules");
 			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
 		}
 	}
@@ -1925,87 +1826,6 @@ public interface DebuggerResources {
 					.description(DESCRIPTION)
 					.toolBarGroup(GROUP)
 					.toolBarIcon(ICON)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface LimitToCurrentSnapAction {
-		String NAME = "Limit to Current Snap";
-		String DESCRIPTION = "Choose whether displayed objects must be alive at the current snap";
-		String GROUP = GROUP_GENERAL;
-		Icon ICON = ICON_TIME; // TODO
-		String HELP_ANCHOR = "limit_to_current_snap";
-
-		static ToggleActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ToggleActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.toolBarGroup(GROUP)
-					.toolBarIcon(ICON)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface ShowHiddenAction {
-		String NAME = "Show Hidden";
-		String DESCRIPTION = "Choose whether to display hidden children";
-		String GROUP = GROUP_GENERAL;
-		String HELP_ANCHOR = "show_hidden";
-
-		static ToggleActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ToggleActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.menuPath(NAME)
-					.menuGroup(GROUP)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface ShowPrimitivesInTreeAction {
-		String NAME = "Show Primitives in Tree";
-		String DESCRIPTION = "Choose whether to display primitive values in the tree";
-		String GROUP = GROUP_GENERAL;
-		String HELP_ANCHOR = "show_primitives";
-
-		static ToggleActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ToggleActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.menuPath(NAME)
-					.menuGroup(GROUP)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface ShowMethodsInTreeAction {
-		String NAME = "Show Methods in Tree";
-		String DESCRIPTION = "Choose whether to display methods in the tree";
-		String GROUP = GROUP_GENERAL;
-		String HELP_ANCHOR = "show_methods";
-
-		static ToggleActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ToggleActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.menuPath(NAME)
-					.menuGroup(GROUP)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface FollowLinkAction {
-		String NAME = "Follow Link";
-		String DESCRIPTION = "Navigate to the link target";
-		String GROUP = GROUP_GENERAL;
-		String HELP_ANCHOR = "follow_link";
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.popupMenuPath(NAME)
-					.popupMenuGroup(GROUP)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}

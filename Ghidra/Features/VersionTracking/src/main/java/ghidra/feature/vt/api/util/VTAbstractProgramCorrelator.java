@@ -17,7 +17,6 @@ package ghidra.feature.vt.api.util;
 
 import ghidra.feature.vt.api.main.*;
 import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.util.SystemUtilities;
@@ -25,8 +24,8 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Interface for Algorithms that correlate items (primarily functions) from one program to another, 
- * typically for purposes of version tracking. 
+ * Interface for Algorithms that correlate items (primarily functions) from one program to another,
+ * typically for purposes of version tracking.
  *
  */
 public abstract class VTAbstractProgramCorrelator implements VTProgramCorrelator {
@@ -37,8 +36,6 @@ public abstract class VTAbstractProgramCorrelator implements VTProgramCorrelator
 	private final AddressSetView destinationAddressSet;
 	private final ToolOptions options;
 
-	protected final ServiceProvider serviceProvider;
-
 	/**
 	 * Constructor
 	 * @param sourceProgram The program that contains functions that are to be looked for in the
@@ -46,15 +43,14 @@ public abstract class VTAbstractProgramCorrelator implements VTProgramCorrelator
 	 * to the destination program.
 	 * @param sourceAddressSet The set of addresses to use in the correlation.
 	 * @param destinationProgram The program to search, looking for functions that match functions
-	 * in the source program.  Typically, this is the program that markup is to be applied. 
+	 * in the source program.  Typically, this is the program that markup is to be applied.
 	 * @param destinationAddressSet The set of addresses to search within the destination program.
-	 * @param options An Options object that contains the set of options to be used by the 
+	 * @param options An Options object that contains the set of options to be used by the
 	 * correlating algorithm.
 	 */
-	public VTAbstractProgramCorrelator(ServiceProvider serviceProvider, Program sourceProgram,
-			AddressSetView sourceAddressSet, Program destinationProgram,
-			AddressSetView destinationAddressSet, ToolOptions options) {
-		this.serviceProvider = serviceProvider;
+	public VTAbstractProgramCorrelator(Program sourceProgram, AddressSetView sourceAddressSet,
+			Program destinationProgram, AddressSetView destinationAddressSet,
+			ToolOptions options) {
 		this.sourceProgram = sourceProgram;
 		this.sourceAddressSet = sourceAddressSet;
 		this.destinationProgram = destinationProgram;
@@ -65,7 +61,7 @@ public abstract class VTAbstractProgramCorrelator implements VTProgramCorrelator
 	/**
 	 * Performs the correlation between two programs looking for how well functions in one program
 	 * correlate to functions in another program.
-	 * @param session An existing manager that may contain previous results that may 
+	 * @param session An existing manager that may contain previous results that may
 	 *        influence this correlation.
 	 * @param monitor a task monitor for reporting progress during the correlation.
 	 * @throws CancelledException if the user cancels the correlation via the task monitor.

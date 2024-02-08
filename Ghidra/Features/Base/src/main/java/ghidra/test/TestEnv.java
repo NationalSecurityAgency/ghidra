@@ -882,7 +882,7 @@ public class TestEnv {
 		AbstractGuiTest.runSwing(() -> {
 			PluginTool newTool = doLaunchTool(toolName);
 			ref.set(newTool);
-			if (newTool != null) {
+			if (newTool != null && domainFile != null) {
 				newTool.acceptDomainFiles(new DomainFile[] { domainFile });
 			}
 		});
@@ -1007,9 +1007,8 @@ public class TestEnv {
 	private void cleanupAutoAnalysisManagers(PluginTool t) {
 
 		@SuppressWarnings("unchecked")
-		Map<Program, AutoAnalysisManager> map =
-			(Map<Program, AutoAnalysisManager>) TestUtils.getInstanceField("managerMap",
-				AutoAnalysisManager.class);
+		Map<Program, AutoAnalysisManager> map = (Map<Program, AutoAnalysisManager>) TestUtils
+				.getInstanceField("managerMap", AutoAnalysisManager.class);
 		Collection<AutoAnalysisManager> managers = map.values();
 		for (AutoAnalysisManager manager : managers) {
 			@SuppressWarnings("unchecked")
@@ -1103,8 +1102,8 @@ public class TestEnv {
 	}
 
 	private void deleteTestProject(String projectName) {
-		boolean deletedProject = AbstractGhidraHeadlessIntegrationTest.deleteProject(
-			AbstractGTest.getTestDirectoryPath(), projectName);
+		boolean deletedProject = AbstractGhidraHeadlessIntegrationTest
+				.deleteProject(AbstractGTest.getTestDirectoryPath(), projectName);
 
 		if (!deletedProject) {
 			Msg.error(TestEnv.class, "dispose() - Open programs after disposing project: ");
@@ -1131,9 +1130,8 @@ public class TestEnv {
 		// Note: background tool tasks are disposed by the tool
 
 		@SuppressWarnings("unchecked")
-		Map<Task, TaskMonitor> tasks =
-			(Map<Task, TaskMonitor>) TestUtils.getInstanceField("runningTasks",
-				TaskUtilities.class);
+		Map<Task, TaskMonitor> tasks = (Map<Task, TaskMonitor>) TestUtils
+				.getInstanceField("runningTasks", TaskUtilities.class);
 		for (TaskMonitor tm : tasks.values()) {
 			tm.cancel();
 		}
@@ -1193,9 +1191,8 @@ public class TestEnv {
 		// the managers will dispose the managers.
 		//
 		@SuppressWarnings("unchecked")
-		WeakSet<SwingUpdateManager> s =
-			(WeakSet<SwingUpdateManager>) TestUtils.getInstanceField("instances",
-				SwingUpdateManager.class);
+		WeakSet<SwingUpdateManager> s = (WeakSet<SwingUpdateManager>) TestUtils
+				.getInstanceField("instances", SwingUpdateManager.class);
 
 		/* Debug for undisposed SwingUpdateManagers
 			Msg.out("complete update manager list: ");

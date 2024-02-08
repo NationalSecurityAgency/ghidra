@@ -99,7 +99,7 @@ public class GnuDemanglerParser {
 	 *
 	 * Pattern: <space>[optional const with optional '[',']', number, '*', '&' <space>]
 	 * 			(*|&)[optional spaces]brackets with optional characters inside
-	 * 
+	 *
 	 * Parts:
 	 * 				-optional const text (e.g., const[8])   (non-capture group)
 	 * 				-followed by '()' that contain a '&' or a '*' (capture group 1)
@@ -118,8 +118,7 @@ public class GnuDemanglerParser {
 	 *
 	 */
 	private static final Pattern ARRAY_POINTER_REFERENCE_PATTERN =
-		Pattern.compile(
-			"\\s(?:const[\\[\\]\\d\\*&]{0,4}\\s)*\\(([&*])\\)\\s*((?:\\[.*?\\])+)");
+		Pattern.compile("\\s(?:const[\\[\\]\\d\\*&]{0,4}\\s)*\\(([&*])\\)\\s*((?:\\[.*?\\])+)");
 
 	/*
 	 * Sample:  bob(short (&)[7])
@@ -214,7 +213,7 @@ public class GnuDemanglerParser {
 	 * 			{lambda(NS1::Class1 const&, int, int)#1} const&
 	 *          {lambda(auto:1&&)#1}<NS1::NS2>&&
 	 *
-	 * Pattern: [optional text] brace lambda([parameters])#digits brace [trailing text]
+	 * Pattern: [optional text] { lambda([parameters])#digits } [trailing text]
 	 *
 	 * Parts:
 	 * 			-full text without leading characters (capture group 1)
@@ -228,12 +227,23 @@ public class GnuDemanglerParser {
 	/*
 	 * Sample:  {unnamed type#1}
 	 *
-	 * Pattern: [optional text] brace unnamed type#digits brace
+	 * Pattern: [optional text] { unnamed type#digits }
 	 *
 	 * Parts:
 	 * 			-full text without leading characters (capture group 1)
 	 */
 	private static final Pattern UNNAMED_TYPE_PATTERN = Pattern.compile("(\\{unnamed type#\\d+})");
+
+	/**
+	 * Sample:	template parameter object for namespace::StringLiteral<38ul>{char [38]{(char)69, (char)101, ... }}
+	 * 
+	 * Pattern: (text) { (array type) [size] { array contents } }
+	 * 
+	 * Parts:
+	 * 			-non-array definition prefix, which is the type (capture group 1)
+	 */
+	private static final Pattern ARRAY_DATA_PATTERN =
+		Pattern.compile("(.+)\\{(.+)\\[\\d*\\]\\{.*\\}\\}");
 
 	/*
 	 * Sample:  covariant return thunk to Foo::Bar::copy(Foo::CoolStructure*) const
@@ -245,9 +255,9 @@ public class GnuDemanglerParser {
 	 * 			-'for' or 'to' (capture group 3)  |  (capture group 1)
 	 * 			-a space                         -+
 	 * 			-optional text (capture group 4)
-	 * 
+	 *
 	 * Note:    capture group 1 is the combination of groups 2 and 3 with trailing space
-	 * 
+	 *
 	 * Examples:
 	 *		construction vtable for
 	 *		vtable for
@@ -313,13 +323,29 @@ public class GnuDemanglerParser {
 
 	/**
 	 * Pattern to catch literal strings of the form:
-	 * 
+	 *
 	 * 		-1l
 	 * 		2l
 	 * 		0u
 	 * 		4294967295u
 	 */
 	private static final Pattern LITERAL_NUMBER_PATTERN = Pattern.compile("-*\\d+[ul]{0,1}");
+
+	/**
+	 * Pattern to identify a legacy rust string that contains its hash id suffix and capture the
+	 * non-hash portion.
+	 * 
+	 * Legacy mangled rust symbols:
+	 * - start with _ZN
+	 * - end withe E or E.
+	 * - have a 16 digit hash that starts with 17h
+	 * 
+	 * The demangled string has the leading '17' and trailing 'E|E.' removed.
+	 * 
+	 * Sample: std::io::Read::read_to_end::hb85a0f6802e14499
+	 */
+	private static final Pattern RUST_LEGACY_SUFFIX_PATTERN =
+		Pattern.compile("(.*)::h[0-9a-f]{16}");
 
 	private String mangledSource;
 	private String demangledSource;
@@ -333,6 +359,8 @@ public class GnuDemanglerParser {
 	 * @throws DemanglerParseException if there is an unexpected error parsing
 	 */
 	public DemangledObject parse(String mangled, String demangled) throws DemanglerParseException {
+
+		demangled = cleanupRustLegacySymbol(demangled);
 
 		this.mangledSource = mangled;
 		this.demangledSource = demangled;
@@ -355,7 +383,7 @@ public class GnuDemanglerParser {
 		//       operator text.   Since the 'special handlers' perform more specific checks, it is
 		//       safe to do those first.
 		//
-		DemangledObjectBuilder handler = getSpecialPrefixHandler(mangledSource, demangled);
+		DemangledObjectBuilder handler = getSpecialPrefixHandler(demangled);
 		if (handler != null) {
 			return handler;
 		}
@@ -368,7 +396,7 @@ public class GnuDemanglerParser {
 		// Note: this really is a 'special handler' check that used to be handled above.  However,
 		//       some demangled operator strings begin with this text.  If we do this check above,
 		//       then we will not correctly handle those operators.
-		if (mangledSource.startsWith("_ZZ")) {
+		if (mangledSource.startsWith("_ZZ") || mangledSource.startsWith("__ZZ")) {
 			return new ItemInNamespaceHandler(demangled);
 		}
 
@@ -395,7 +423,7 @@ public class GnuDemanglerParser {
 		return null;
 	}
 
-	private SpecialPrefixHandler getSpecialPrefixHandler(String mangled, String demangled) {
+	private SpecialPrefixHandler getSpecialPrefixHandler(String demangled) {
 
 		Matcher matcher = DESCRIPTIVE_PREFIX_PATTERN.matcher(demangled);
 		if (matcher.matches()) {
@@ -411,6 +439,11 @@ public class GnuDemanglerParser {
 
 			if (prefix.startsWith(TYPEINFO_NAME_FOR)) {
 				return new TypeInfoNameHandler(demangled, TYPEINFO_NAME_FOR);
+			}
+
+			Matcher arrayMatcher = ARRAY_DATA_PATTERN.matcher(type);
+			if (arrayMatcher.matches()) {
+				return new ArrayHandler(demangled, prefix, type);
 			}
 
 			return new ItemInNamespaceHandler(demangled, prefix, type);
@@ -464,6 +497,14 @@ public class GnuDemanglerParser {
 		}
 
 		return function;
+	}
+
+	private String cleanupRustLegacySymbol(String demangled) {
+		Matcher m = RUST_LEGACY_SUFFIX_PATTERN.matcher(demangled);
+		if (m.matches()) {
+			return m.group(1);
+		}
+		return demangled;
 	}
 
 	private void setReturnType(String demangled, DemangledFunction function, String returnType) {
@@ -755,6 +796,14 @@ public class GnuDemanglerParser {
 		for (int i = 0; i < datatype.length(); ++i) {
 			char ch = datatype.charAt(i);
 
+			//
+			// Hack: Not sure what this is, but we have seen template parameter values that start
+			// with an '&'
+			//
+			if (ch == '&' && i == 0) {
+				continue; // for now, let the '&' through to be part of the name
+			}
+
 			if (!finishedName && isDataTypeNameCharacter(ch)) {
 				continue;
 			}
@@ -836,16 +885,15 @@ public class GnuDemanglerParser {
 					if (hasPointerParens) {
 						Demangled namespace = dt.getNamespace();
 						DemangledFunctionPointer dfp = parseFunctionPointer(datatype);
-						int firstParenEnd = datatype.indexOf(')', i + 1);
-						int secondParenEnd = datatype.indexOf(')', firstParenEnd + 1);
-						if (secondParenEnd == -1) {
+						int paramParenEnd = datatype.lastIndexOf(')');
+						if (paramParenEnd == -1) {
 							throw new DemanglerParseException(
 								"Did not find ending to closure: " + datatype);
 						}
 
 						dfp.getReturnType().setNamespace(namespace);
 						dt = dfp;
-						i = secondParenEnd + 1; // two sets of parens (normal case)
+						i = paramParenEnd + 1; // two sets of parens (normal case)
 					}
 					else {
 
@@ -870,7 +918,7 @@ public class GnuDemanglerParser {
 			}
 			else if (ch == '&') {
 				if (!dt.isReference()) {
-					dt.setReference();
+					dt.setLValueReference();
 				}
 				else {
 					dt.setRValueReference();
@@ -970,8 +1018,8 @@ public class GnuDemanglerParser {
 
 		Demangled namespace = dt.getNamespace();
 		String name = leading;
-		DemangledDataType newDt = parseArrayPointerOrReference(datatype, name, lambdaString,
-			matcher);
+		DemangledDataType newDt =
+			parseArrayPointerOrReference(datatype, name, lambdaString, matcher);
 		newDt.setNamespace(namespace);
 		return newDt;
 	}
@@ -993,8 +1041,8 @@ public class GnuDemanglerParser {
 
 		Demangled namespace = dt.getNamespace();
 		String name = leading;
-		DemangledDataType newDt = parseArrayPointerOrReference(datatype, name, templatedString,
-			matcher);
+		DemangledDataType newDt =
+			parseArrayPointerOrReference(datatype, name, templatedString, matcher);
 		newDt.setNamespace(namespace);
 		return newDt;
 	}
@@ -1286,7 +1334,7 @@ public class GnuDemanglerParser {
 			dt.incrementPointerLevels();
 		}
 		else if (type.equals("&")) {
-			dt.setReference();
+			dt.setLValueReference();
 		}
 		else {
 			throw new DemanglerParseException("Unexpected charater inside of parens: " + type);
@@ -1490,6 +1538,52 @@ public class GnuDemanglerParser {
 		@Override
 		DemangledObject doBuild(Demangled namespace) {
 			DemangledObject demangledObject = parseItemInNamespace(type);
+			return demangledObject;
+		}
+	}
+
+	private class ArrayHandler extends SpecialPrefixHandler {
+
+		private String arrayType;
+
+		ArrayHandler(String demangled, String prefix, String item) {
+			super(demangled);
+			this.demangled = demangled;
+			this.prefix = prefix;
+			this.type = item;
+
+			//
+			// Handle array data definitions here for now.  If we see this in non-specialized prefix
+			// cases, then we can extract this code.
+			//
+			Matcher arrayMatcher = ARRAY_DATA_PATTERN.matcher(type);
+			if (arrayMatcher.matches()) {
+				// keep only the type information, dropping the array definition
+				type = arrayMatcher.group(1);
+				arrayType = arrayMatcher.group(2).trim();
+			}
+
+		}
+
+		@Override
+		DemangledObject doBuild(Demangled namespace) {
+			DemangledObject demangledObject = parseItemInNamespace(type);
+			if (demangledObject instanceof DemangledVariable variable) {
+
+				//
+				// Creating a DemangledString here will correctly create the string data when this
+				// demangled type is applied.
+				//
+				if ("char".equals(arrayType) && type.contains("StringLiteral")) {
+					// treat a char[] as a string
+					DemangledString ds =
+						new DemangledString(variable.getMangledString(), demangled, type, type,
+							-1 /*unknown length*/, false);
+					ds.setSpecialPrefix(prefix);
+					return ds;
+				}
+
+			}
 			return demangledObject;
 		}
 	}

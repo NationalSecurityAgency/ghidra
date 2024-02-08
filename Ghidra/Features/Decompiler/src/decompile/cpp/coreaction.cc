@@ -1023,6 +1023,28 @@ AddrSpace *ActionConstantPtr::selectInferSpace(Varnode *vn,PcodeOp *op,const vec
   return resSpace;
 }
 
+/// \brief Check if we need to try to infer a constant pointer from the input of the given COPY
+///
+/// In general, we do want try, but there is a special case where the COPY feeds into a RETURN and
+/// the function does \e not return a pointer.  We also consider the \b infer_pointers boolean.
+/// \param op is the given COPY op
+/// \param data is the function
+/// \return \b true if we should try to infer
+bool ActionConstantPtr::checkCopy(PcodeOp *op,Funcdata &data)
+
+{
+  Varnode *vn = op->getOut();
+  PcodeOp *retOp = vn->loneDescend();
+  if (retOp != (PcodeOp *)0 && retOp->code() == CPUI_RETURN && data.getFuncProto().isOutputLocked()) {
+    type_metatype meta = data.getFuncProto().getOutput()->getType()->getMetatype();
+    if (meta != TYPE_PTR && meta != TYPE_UNKNOWN) {
+      return false;		// Do NOT infer, we know the constant can't be pointer
+    }
+    return true;		// Try to infer, regardless of infer_pointers config, because we KNOW it is a pointer
+  }
+  return data.getArch()->infer_pointers;
+}
+
 /// \brief Determine if given Varnode might be a pointer constant.
 ///
 /// If it is a pointer, return the symbol it points to, or NULL otherwise. If it is determined
@@ -1054,23 +1076,36 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
     // Check if the constant is involved in a potential pointer expression
     // as the base
     switch(op->code()) {
-    case CPUI_RETURN:
     case CPUI_CALL:
     case CPUI_CALLIND:
-      // A constant parameter or return value could be a pointer
-      if (!glb->infer_pointers)
-	return (SymbolEntry *)0;
+    {
       if (slot==0)
+	return (SymbolEntry *)0;
+      // A constant parameter could be a pointer
+      FuncCallSpecs *fc = data.getCallSpecs(op);
+      if (fc != (FuncCallSpecs *)0 && fc->isInputLocked() && fc->numParams() > slot-1) {
+	type_metatype meta = fc->getParam(slot-1)->getType()->getMetatype();
+	if (meta != TYPE_PTR && meta != TYPE_UNKNOWN) {
+	  return (SymbolEntry *)0;	// Definitely not passing a pointer
+	}
+      }
+      else if (!glb->infer_pointers)
+	return (SymbolEntry *)0;
+      break;
+    }
+    case CPUI_COPY:
+      if (!checkCopy(op, data))
 	return (SymbolEntry *)0;
       break;
     case CPUI_PIECE:
       // Pointers get concatenated in structures
-    case CPUI_COPY:
     case CPUI_INT_EQUAL:
     case CPUI_INT_NOTEQUAL:
     case CPUI_INT_LESS:
     case CPUI_INT_LESSEQUAL:
       // A comparison with a constant could be a pointer
+      if (!glb->infer_pointers)
+	return (SymbolEntry *)0;
       break;
     case CPUI_INT_ADD:
       outvn = op->getOut();
@@ -1501,6 +1536,11 @@ void ActionFuncLink::funcLinkOutput(FuncCallSpecs *fc,Funcdata &data)
       if (sz == 1 && outtype->getMetatype() == TYPE_BOOL && data.isTypeRecoveryOn())
 	data.opMarkCalculatedBool(callop);
       Address addr = outparam->getAddress();
+      if (addr.getSpace()->getType() == IPTR_SPACEBASE) {
+	// Delay creating output Varnode until heritage of the stack, when we know relative value of the stack pointer
+	fc->setStackOutputLock(true);
+	return;
+      }
       data.newVarnodeOut(sz,addr,callop);
       VarnodeData vdata;
       OpCode res = fc->assumedOutputExtension(addr,sz,vdata);
@@ -1627,8 +1667,8 @@ int4 ActionParamDouble::apply(Funcdata &data)
     for(int4 i=0;i<numparams;++i) {
       ProtoParameter *param = fp.getParam(i);
       Datatype *tp = param->getType();
-      type_metatype mt = tp->getMetatype();
-      if ((mt==TYPE_ARRAY)||(mt==TYPE_STRUCT)) continue; // Not double precision objects
+      if (!tp->isPrimitiveWhole())
+	continue;		// Not double precision objects
       Varnode *vn = data.findVarnodeInput(tp->getSize(),param->getAddress());
       if (vn == (Varnode *)0) continue;
       if (vn->getSize() < minDoubleSize) continue;
@@ -2285,34 +2325,43 @@ void ActionSetCasts::checkPointerIssues(PcodeOp *op,Varnode *vn,Funcdata &data)
   }
 }
 
-/// \brief Test if the given cast conflict can be resolved by passing to the first structure field
+/// \brief Test if the given cast conflict can be resolved by passing to the first structure/array field
 ///
-/// Test if the given Varnode data-type is a pointer to a structure and if interpreting
+/// Test if the current data-type is a pointer to a structure and if interpreting
 /// the data-type as a pointer to the structure's first field will get it to match the
-/// desired data-type.
-/// \param vn is the given Varnode
-/// \param op is the PcodeOp reading the Varnode
-/// \param ct is the desired data-type
+/// required data-type.
+/// \param reqtype is the required data-type
+/// \param curtype is the current data-type
 /// \param castStrategy is used to determine if the data-types are compatible
 /// \return \b true if a pointer to the first field makes sense
-bool ActionSetCasts::testStructOffset0(Varnode *vn,PcodeOp *op,Datatype *ct,CastStrategy *castStrategy)
+bool ActionSetCasts::testStructOffset0(Datatype *reqtype,Datatype *curtype,CastStrategy *castStrategy)
 
 {
-  if (ct->getMetatype() != TYPE_PTR) return false;
-  Datatype *highType = vn->getHighTypeReadFacing(op);
-  if (highType->getMetatype() != TYPE_PTR) return false;
-  Datatype *highPtrTo = ((TypePointer *)highType)->getPtrTo();
-  if (highPtrTo->getMetatype() != TYPE_STRUCT) return false;
-  TypeStruct *highStruct = (TypeStruct *)highPtrTo;
-  if (highStruct->numDepend() == 0) return false;
-  vector<TypeField>::const_iterator iter = highStruct->beginField();
-  if ((*iter).offset != 0) return false;
-  Datatype *reqtype = ((TypePointer *)ct)->getPtrTo();
-  Datatype *curtype = (*iter).type;
-  if (reqtype->getMetatype() == TYPE_ARRAY)
-    reqtype = ((TypeArray *)reqtype)->getBase();
-  if (curtype->getMetatype() == TYPE_ARRAY)
-    curtype = ((TypeArray *)curtype)->getBase();
+  if (curtype->getMetatype() != TYPE_PTR) return false;
+  Datatype *highPtrTo = ((TypePointer *)curtype)->getPtrTo();
+  if (highPtrTo->getMetatype() == TYPE_STRUCT) {
+    TypeStruct *highStruct = (TypeStruct *)highPtrTo;
+    if (highStruct->numDepend() == 0) return false;
+    vector<TypeField>::const_iterator iter = highStruct->beginField();
+    if ((*iter).offset != 0) return false;
+    reqtype = ((TypePointer *)reqtype)->getPtrTo();
+    curtype = (*iter).type;
+    if (reqtype->getMetatype() == TYPE_ARRAY)
+      reqtype = ((TypeArray *)reqtype)->getBase();
+    if (curtype->getMetatype() == TYPE_ARRAY)
+      curtype = ((TypeArray *)curtype)->getBase();
+  }
+  else if (highPtrTo->getMetatype() == TYPE_ARRAY) {
+    TypeArray *highArray = (TypeArray *)highPtrTo;
+    reqtype = ((TypePointer *)reqtype)->getPtrTo();
+    curtype = highArray->getBase();
+  }
+  else {
+    return false;
+  }
+  if (reqtype->getMetatype() == TYPE_VOID) {
+    return false;		// Don't induce PTRSUB for "void *"
+  }
   return (castStrategy->castStandard(reqtype, curtype, true, true) == (Datatype *)0);
 }
 
@@ -2479,22 +2528,31 @@ int4 ActionSetCasts::castOutput(PcodeOp *op,Funcdata &data,CastStrategy *castStr
       }
     }
   }
+  OpCode opc = CPUI_CAST;
   if (!force) {
     outct = outHighResolve;	// Type of result
-    ct = castStrategy->castStandard(outct,tokenct,false,true);
-    if (ct == (Datatype *)0) return 0;
+    if (outct->getMetatype() == TYPE_PTR && testStructOffset0(outct, tokenct, castStrategy)) {
+      opc = CPUI_PTRSUB;
+    }
+    else {
+      ct = castStrategy->castStandard(outct,tokenct,false,true);
+      if (ct == (Datatype *)0) return 0;
+    }
   }
 				// Generate the cast op
   vn = data.newUnique(outvn->getSize());
   vn->updateType(tokenct,false,false);
   vn->setImplied();
-  newop = data.newOp(1,op->getAddr());
+  newop = data.newOp((opc != CPUI_CAST) ? 2 : 1,op->getAddr());
 #ifdef CPUI_STATISTICS
   data.getArch()->stats->countCast();
 #endif
-  data.opSetOpcode(newop,CPUI_CAST);
+  data.opSetOpcode(newop,opc);
   data.opSetOutput(newop,outvn);
   data.opSetInput(newop,vn,0);
+  if (opc != CPUI_CAST) {
+    data.opSetInput(newop,data.newConstant(4, 0),1);
+  }
   data.opSetOutput(op,vn);
   data.opInsertAfter(newop,op); // Cast comes AFTER this operation
   if (tokenct->needsResolution())
@@ -2572,7 +2630,7 @@ int4 ActionSetCasts::castInput(PcodeOp *op,int4 slot,Funcdata &data,CastStrategy
     if (vn->getType() == ct)
       return 1;
   }
-  else if (testStructOffset0(vn, op, ct, castStrategy)) {
+  else if (ct->getMetatype() == TYPE_PTR && testStructOffset0(ct, vn->getHighTypeReadFacing(op), castStrategy)) {
     // Insert a PTRSUB(vn,#0) instead of a CAST
     newop = insertPtrsubZero(op, slot, ct, data);
     if (vn->getHigh()->getType()->needsResolution())
@@ -2623,7 +2681,7 @@ int4 ActionSetCasts::apply(Funcdata &data)
       if (opc == CPUI_PTRADD) {	// Check for PTRADD that no longer fits its pointer
 	int4 sz = (int4)op->getIn(2)->getOffset();
 	TypePointer *ct = (TypePointer *)op->getIn(0)->getHighTypeReadFacing(op);
-	if ((ct->getMetatype() != TYPE_PTR)||(ct->getPtrTo()->getSize() != AddrSpace::addressToByteInt(sz, ct->getWordSize())))
+	if ((ct->getMetatype() != TYPE_PTR)||(ct->getPtrTo()->getAlignSize() != AddrSpace::addressToByteInt(sz, ct->getWordSize())))
 	  data.opUndoPtradd(op,true);
       }
       else if (opc == CPUI_PTRSUB) {	// Check for PTRSUB that no longer fits pointer
@@ -2917,20 +2975,9 @@ int4 ActionMarkExplicit::baseExplicit(Varnode *vn,int4 maxref)
       Varnode *rootVn = PieceNode::findRoot(vn);
       if (vn == rootVn) return -1;
       if (rootVn->getDef()->isPartialRoot()) {
-	// Getting PIECEd into a structured thing.  Unless vn is a leaf, it should be implicit
-	if (def->code() != CPUI_PIECE) return -1;
-	if (vn->loneDescend() == (PcodeOp *)0) return -1;
-	Varnode *vn0 = def->getIn(0);
-	Varnode *vn1 = def->getIn(1);
-	Address addr = vn->getAddr();
-	if (!addr.getSpace()->isBigEndian())
-	  addr = addr + vn1->getSize();
-	if (addr != vn0->getAddr()) return -1;
-	addr = vn->getAddr();
-	if (addr.getSpace()->isBigEndian())
-	  addr = addr + vn0->getSize();
-	if (addr != vn1->getAddr()) return -1;
-	// If we reach here vn is a non-leaf in a CONCAT tree and should be implicit
+	// Varnode is getting PIECEd into a structure.  All such PIECE operations should be explicit.
+	// Internal PIECE operations will be hidden.
+	return -1;
       }
     }
     else {
@@ -2942,12 +2989,13 @@ int4 ActionMarkExplicit::baseExplicit(Varnode *vn,int4 maxref)
     // or a dynamic mapping causing the bit to be set. In either case, it should probably be explicit
     return -1;
   }
-  else if (vn->isProtoPartial() && def->code() != CPUI_PIECE) {
-    // Varnode is part of structure. Write to structure should be an explicit statement
+  else if (vn->isProtoPartial()) {
+    // Varnode is getting PIECEd into a structure.  All such PIECE operations should be explicit.
+    // Internal PIECE operations will be hidden.
     return -1;
   }
-  else if (def->code() == CPUI_PIECE && def->getIn(0)->isProtoPartial() && !vn->isProtoPartial()) {
-    // The base of PIECE operations building a structure
+  else if (def->code() == CPUI_PIECE && def->getIn(0)->isProtoPartial()) {
+    // The base of PIECE operations building a structure should be explicit.
     return -1;
   }
   if (vn->hasNoDescend()) return -1;	// Must have at least one descendant

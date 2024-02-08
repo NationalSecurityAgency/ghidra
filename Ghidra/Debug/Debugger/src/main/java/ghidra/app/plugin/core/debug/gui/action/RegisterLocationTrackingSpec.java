@@ -17,7 +17,8 @@ package ghidra.app.plugin.core.debug.gui.action;
 
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
+import ghidra.debug.api.action.*;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
@@ -65,8 +66,9 @@ public interface RegisterLocationTrackingSpec extends LocationTrackingSpec, Loca
 		if (!thread.getLifespan().contains(snap)) {
 			return null;
 		}
-		TraceMemorySpace regs =
-			trace.getMemoryManager().getMemoryRegisterSpace(thread, frame, false);
+		TraceMemorySpace regs = reg.getAddressSpace().isRegisterSpace()
+				? trace.getMemoryManager().getMemoryRegisterSpace(thread, frame, false)
+				: trace.getMemoryManager().getMemorySpace(reg.getAddressSpace(), false);
 		if (regs == null) {
 			return null;
 		}
@@ -106,10 +108,10 @@ public interface RegisterLocationTrackingSpec extends LocationTrackingSpec, Loca
 			return false;
 		}
 		Register register = computeRegister(coordinates);
-		if (register == null) {
+		AddressSpace as = space.getAddressSpace();
+		if (register == null || register.getAddressSpace() != as) {
 			return false;
 		}
-		AddressSpace as = space.getAddressSpace();
 		AddressRange regRng = coordinates.getPlatform()
 				.getConventionalRegisterRange(as.isRegisterSpace() ? as : null, register);
 		return range.getRange().intersects(regRng);

@@ -18,13 +18,13 @@ package ghidra.app.plugin.core.decompile.actions;
 import java.util.*;
 import java.util.Map.Entry;
 
+import docking.options.OptionsService;
 import ghidra.app.cmd.label.RenameLabelCmd;
 import ghidra.app.decompiler.*;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.*;

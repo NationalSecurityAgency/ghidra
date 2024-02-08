@@ -133,7 +133,7 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"   4   uint:4(0)   1   e   \"\"\n" + 
 			"   8   ushort   2   f   \"\"\n" + 
 			"}\n" + 
-			"Size = 12   Actual Alignment = 4", struct);
+			"Length: 12 Alignment: 4", struct);
 		//@formatter:on
 	}
 
@@ -171,7 +171,7 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"   4   uint:4(0)   1   e   \"\"\n" + 
 			"   8   ushort   2   f   \"\"\n" + 
 			"}\n" + 
-			"Size = 12   Actual Alignment = 4", struct, true);
+			"Length: 12 Alignment: 4", struct, true);
 		//@formatter:on
 	}
 
@@ -226,14 +226,14 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"Structure struct {\n" + 
 			"   0   struct_u_0   1      \"\"\n" + 
 			"}\n" + 
-			"Size = 1   Actual Alignment = 1\n" + 
+			"Length: 1 Alignment: 1\n" + 
 			"/struct/struct_u_0\n" + 
 			"pack()\n" + 
 			"Union struct_u_0 {\n" + 
 			"   0   struct_u_0_s_0   1   _s_0   \"\"\n" + 
 			"   0   struct_u_0_s_1   1   _s_1   \"\"\n" + 
 			"}\n" + 
-			"Size = 1   Actual Alignment = 1\n" + 
+			"Length: 1 Alignment: 1\n" + 
 			"/struct/struct_u_0/struct_u_0_s_0\n" + 
 			"pack()\n" + 
 			"Structure struct_u_0_s_0 {\n" + 
@@ -243,7 +243,7 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"   0   char:1(3)   1   padding   \"\"\n" + 
 			"   0   char:1(4)   1   a4   \"\"\n" + 
 			"}\n" + 
-			"Size = 1   Actual Alignment = 1\n" + 
+			"Length: 1 Alignment: 1\n" + 
 			"/struct/struct_u_0/struct_u_0_s_1\n" + 
 			"pack()\n" + 
 			"Structure struct_u_0_s_1 {\n" + 
@@ -254,7 +254,7 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"   0   char:1(4)   1   padding   \"\"\n" + 
 			"   0   char:1(5)   1   a5   \"\"\n" + 
 			"}\n" + 
-			"Size = 1   Actual Alignment = 1", struct, true);
+			"Length: 1 Alignment: 1", struct, true);
 		//@formatter:on
 	}
 
@@ -292,21 +292,21 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"   0   union_s_2   1   _s_2   \"\"\n" + 
 			"   0   ushort   2   f   \"\"\n" + 
 			"}\n" + 
-			"Size = 2   Actual Alignment = 2\n" + 
+			"Length: 2 Alignment: 2\n" + 
 			"/union/union_s_1\n" + 
 			"pack()\n" + 
 			"Structure union_s_1 {\n" + 
 			"   0   uchar:4(0)   1   b   \"\"\n" + 
 			"   0   uchar:4(4)   1   c   \"\"\n" + 
 			"}\n" + 
-			"Size = 1   Actual Alignment = 1\n" + 
+			"Length: 1 Alignment: 1\n" + 
 			"/union/union_s_2\n" + 
 			"pack()\n" + 
 			"Structure union_s_2 {\n" + 
 			"   0   uchar:4(0)   1   d   \"\"\n" + 
 			"   0   uchar:4(4)   1   e   \"\"\n" + 
 			"}\n" + 
-			"Size = 1   Actual Alignment = 1", union, true);
+			"Length: 1 Alignment: 1", union, true);
 			//@formatter:on
 	}
 
@@ -333,7 +333,7 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"   0   char   1   a   \"\"\n" + 
 			"   1   char[0]   0   e   \"\"\n" + 
 			"}\n" + 
-			"Size = 1   Actual Alignment = 1", struct, true);
+			"Length: 1 Alignment: 1", struct, true);
 		//@formatter:on
 	}
 
@@ -364,7 +364,7 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"   0   union_s_0   12   _s_0   \"\"\n" + 
 			"   0   union_s_1   8   _s_1   \"\"\n" + 
 			"}\n" + 
-			"Size = 16   Actual Alignment = 8\n" + 
+			"Length: 16 Alignment: 8\n" + 
 			"/union/union_s_0\n" + 
 			"pack()\n" + 
 			"Structure union_s_0 {\n" + 
@@ -373,14 +373,14 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"   8   int   4   c   \"\"\n" + 
 			"   12   char[0]   0   d   \"\"\n" + 
 			"}\n" + 
-			"Size = 12   Actual Alignment = 4\n" + 
+			"Length: 12 Alignment: 4\n" + 
 			"/union/union_s_1\n" + 
 			"pack()\n" + 
 			"Structure union_s_1 {\n" + 
 			"   0   longlong   8   e   \"\"\n" + 
 			"   8   char[0]   0   f   \"\"\n" + 
 			"}\n" + 
-			"Size = 8   Actual Alignment = 8\n", struct, true);
+			"Length: 8 Alignment: 8\n", struct, true);
 		//@formatter:on
 	}
 
@@ -410,7 +410,7 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"   0   union_s_0   12   _s_0   \"\"\n" + 
 			"   0   union_s_1   0   _s_1   \"\"\n" + 
 			"}\n" + 
-			"Size = 12   Actual Alignment = 4\n" + 
+			"Length: 12 Alignment: 4\n" + 
 			"/union/union_s_0\n" + 
 			"pack()\n" + 
 			"Structure union_s_0 {\n" + 
@@ -419,13 +419,13 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"   8   int   4   c   \"\"\n" + 
 			"   12   char[0]   0   d   \"\"\n" + 
 			"}\n" + 
-			"Size = 12   Actual Alignment = 4\n" + 
+			"Length: 12 Alignment: 4\n" + 
 			"/union/union_s_1\n" + 
 			"pack()\n" + 
 			"Structure union_s_1 {\n" + 
 			"   0   char[0]   0   f   \"\"\n" + 
 			"}\n" + 
-			"Size = 1   Actual Alignment = 1\n", struct, true);
+			"Length: 0 Alignment: 1\n", struct, true);
 		//@formatter:on
 	}
 
@@ -454,21 +454,21 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"   0   union_s_0   1   _s_0   \"\"\n" + 
 			"   0   union_s_1   2   _s_1   \"\"\n" + 
 			"}\n" + 
-			"Size = 2   Actual Alignment = 1\n" + 
+			"Length: 2 Alignment: 1\n" + 
 			"/union/union_s_0\n" + 
 			"pack()\n" + 
 			"Structure union_s_0 {\n" + 
 			"   0   char   1   a   \"\"\n" + 
 			"   1   char[0]   0   flex   \"\"\n" + 
 			"}\n" + 
-			"Size = 1   Actual Alignment = 1\n" + 
+			"Length: 1 Alignment: 1\n" + 
 			"/union/union_s_1\n" + 
 			"pack()\n" + 
 			"Structure union_s_1 {\n" + 
 			"   0   char   1   b   \"\"\n" + 
 			"   1   char   1   c   \"\"\n" + 
 			"}\n" + 
-			"Size = 2   Actual Alignment = 1", struct, true);
+			"Length: 2 Alignment: 1", struct, true);
 		//@formatter:on
 	}
 
@@ -511,14 +511,14 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"   0   struct_u_0   1      \"\"\n" + 
 			"   8   struct_u_8   8      \"\"\n" + 
 			"}\n" + 
-			"Size = 16   Actual Alignment = 8\n" + 
+			"Length: 16 Alignment: 8\n" + 
 			"/struct/struct_u_0\n" + 
 			"pack()\n" + 
 			"Union struct_u_0 {\n" + 
 			"   0   struct_u_0_s_0   1   _s_0   \"\"\n" + 
 			"   0   struct_u_0_s_1   1   _s_1   \"\"\n" + 
 			"}\n" + 
-			"Size = 1   Actual Alignment = 1\n" + 
+			"Length: 1 Alignment: 1\n" + 
 			"/struct/struct_u_0/struct_u_0_s_0\n" + 
 			"pack()\n" + 
 			"Structure struct_u_0_s_0 {\n" + 
@@ -531,7 +531,7 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"   0   char:1(6)   1   s6   \"\"\n" + 
 			"   0   char:1(7)   1   s7   \"\"\n" + 
 			"}\n" + 
-			"Size = 1   Actual Alignment = 1\n" + 
+			"Length: 1 Alignment: 1\n" + 
 			"/struct/struct_u_0/struct_u_0_s_1\n" + 
 			"pack()\n" + 
 			"Structure struct_u_0_s_1 {\n" + 
@@ -544,14 +544,14 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"   0   uchar:1(6)   1   u6   \"\"\n" + 
 			"   0   uchar:1(7)   1   u7   \"\"\n" + 
 			"}\n" + 
-			"Size = 1   Actual Alignment = 1\n" + 
+			"Length: 1 Alignment: 1\n" + 
 			"/struct/struct_u_8\n" + 
 			"pack()\n" + 
 			"Union struct_u_8 {\n" + 
 			"   0   ulong   4   a   \"\"\n" + 
 			"   0   longlong   8   b   \"\"\n" + 
 			"}\n" + 
-			"Size = 8   Actual Alignment = 8\n", struct, true);
+			"Length: 8 Alignment: 8\n", struct, true);
 		//@formatter:on
 	}
 
@@ -596,7 +596,7 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"   0   longlong   8   b   \"\"\n" + 
 			"   0   union_s_2   2   _s_2   \"\"\n" + 
 			"}\n" + 
-			"Size = 8   Actual Alignment = 1\n" + 
+			"Length: 8 Alignment: 1\n" + 
 			"/union/union_s_2\n" + 
 			"pack()\n" + 
 			"Structure union_s_2 {\n" + 
@@ -617,7 +617,7 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"   1   uchar:1(6)   1   u6   \"\"\n" + 
 			"   1   uchar:1(7)   1   u7   \"\"\n" + 
 			"}\n" + 
-			"Size = 2   Actual Alignment = 1", struct, true);
+			"Length: 2 Alignment: 1", struct, true);
 		//@formatter:on
 	}
 
@@ -708,14 +708,14 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"   32   char[10]   10   beef   \"\"\n" + 
 			"   44   MoreComplicated_s_u_44   12      \"\"\n" + 
 			"}\n" + 
-			"Size = 56   Actual Alignment = 8\n" + 
+			"Length: 56 Alignment: 8\n" + 
 			"/MoreComplicated_s/MoreComplicated_s_u_0\n" + 
 			"pack()\n" + 
 			"Union MoreComplicated_s_u_0 {\n" + 
 			"   0   MoreComplicated_s_u_0_s_0   1   _s_0   \"\"\n" + 
 			"   0   MoreComplicated_s_u_0_s_1   1   _s_1   \"\"\n" + 
 			"}\n" + 
-			"Size = 1   Actual Alignment = 1\n" + 
+			"Length: 1 Alignment: 1\n" + 
 			"/MoreComplicated_s/MoreComplicated_s_u_0/MoreComplicated_s_u_0_s_0\n" + 
 			"pack()\n" + 
 			"Structure MoreComplicated_s_u_0_s_0 {\n" + 
@@ -728,7 +728,7 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"   0   char:1(6)   1   s6   \"\"\n" + 
 			"   0   char:1(7)   1   s7   \"\"\n" + 
 			"}\n" + 
-			"Size = 1   Actual Alignment = 1\n" + 
+			"Length: 1 Alignment: 1\n" + 
 			"/MoreComplicated_s/MoreComplicated_s_u_0/MoreComplicated_s_u_0_s_1\n" + 
 			"pack()\n" + 
 			"Structure MoreComplicated_s_u_0_s_1 {\n" + 
@@ -741,35 +741,35 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"   0   uchar:1(6)   1   u6   \"\"\n" + 
 			"   0   uchar:1(7)   1   u7   \"\"\n" + 
 			"}\n" + 
-			"Size = 1   Actual Alignment = 1\n" + 
+			"Length: 1 Alignment: 1\n" + 
 			"/MoreComplicated_s/MoreComplicated_s_u_16\n" + 
 			"pack()\n" + 
 			"Union MoreComplicated_s_u_16 {\n" + 
 			"   0   MoreComplicated_s_u_16_s_0   16   _s_0   \"\"\n" + 
 			"   0   MoreComplicated_s_u_16_s_1   16   _s_1   \"\"\n" + 
 			"}\n" + 
-			"Size = 16   Actual Alignment = 8\n" + 
+			"Length: 16 Alignment: 8\n" + 
 			"/MoreComplicated_s/MoreComplicated_s_u_16/MoreComplicated_s_u_16_s_0\n" + 
 			"pack()\n" + 
 			"Structure MoreComplicated_s_u_16_s_0 {\n" + 
 			"   0   double   8   da   \"\"\n" + 
 			"   8   char[8]   8   ca   \"\"\n" + 
 			"}\n" + 
-			"Size = 16   Actual Alignment = 8\n" + 
+			"Length: 16 Alignment: 8\n" + 
 			"/MoreComplicated_s/MoreComplicated_s_u_16/MoreComplicated_s_u_16_s_1\n" + 
 			"pack()\n" + 
 			"Structure MoreComplicated_s_u_16_s_1 {\n" + 
 			"   0   char[8]   8   cb   \"\"\n" + 
 			"   8   double   8   db   \"\"\n" + 
 			"}\n" + 
-			"Size = 16   Actual Alignment = 8\n" + 
+			"Length: 16 Alignment: 8\n" + 
 			"/MoreComplicated_s/MoreComplicated_s_u_44\n" + 
 			"pack()\n" + 
 			"Union MoreComplicated_s_u_44 {\n" + 
 			"   0   MoreComplicated_s_u_44_s_0   12   _s_0   \"\"\n" + 
 			"   0   MoreComplicated_s_u_44_s_1   0   _s_1   \"\"\n" + 
 			"}\n" + 
-			"Size = 12   Actual Alignment = 4\n" + 
+			"Length: 12 Alignment: 4\n" + 
 			"/MoreComplicated_s/MoreComplicated_s_u_44/MoreComplicated_s_u_44_s_0\n" + 
 			"pack()\n" + 
 			"Structure MoreComplicated_s_u_44_s_0 {\n" + 
@@ -778,13 +778,13 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"   8   int   4   seqNum   \"\"\n" + 
 			"   12   char[0]   0   data   \"\"\n" + 
 			"}\n" + 
-			"Size = 12   Actual Alignment = 4\n" + 
+			"Length: 12 Alignment: 4\n" + 
 			"/MoreComplicated_s/MoreComplicated_s_u_44/MoreComplicated_s_u_44_s_1\n" + 
 			"pack()\n" + 
 			"Structure MoreComplicated_s_u_44_s_1 {\n" + 
 			"   0   char[0]   0   buf   \"\"\n" + 
 			"}\n" + 
-			"Size = 1   Actual Alignment = 1\n" + 
+			"Length: 0 Alignment: 1\n" + 
 			"/MoreComplicated_s/MoreComplicated_s_u_8\n" + 
 			"pack()\n" + 
 			"Union MoreComplicated_s_u_8 {\n" + 
@@ -794,7 +794,7 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"   0   MoreComplicated_s_u_8_s_3   8   _s_3   \"\"\n" + 
 			"   0   MoreComplicated_s_u_8_s_4   8   _s_4   \"\"\n" + 
 			"}\n" + 
-			"Size = 8   Actual Alignment = 8\n" + 
+			"Length: 8 Alignment: 8\n" + 
 			"/MoreComplicated_s/MoreComplicated_s_u_8/MoreComplicated_s_u_8_s_2\n" + 
 			"pack()\n" + 
 			"Structure MoreComplicated_s_u_8_s_2 {\n" + 
@@ -815,7 +815,7 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"   7   ulong:4(0)   1   n14   \"\"\n" + 
 			"   7   ulong:4(4)   1   n15   \"\"\n" + 
 			"}\n" + 
-			"Size = 8   Actual Alignment = 4\n" + 
+			"Length: 8 Alignment: 4\n" + 
 			"/MoreComplicated_s/MoreComplicated_s_u_8/MoreComplicated_s_u_8_s_3\n" + 
 			"pack()\n" + 
 			"Structure MoreComplicated_s_u_8_s_3 {\n" + 
@@ -830,7 +830,7 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"   5   ulong:9(0)   2   x9   \"\"\n" + 
 			"   6   ulong:10(1)   2   x10   \"\"\n" + 
 			"}\n" + 
-			"Size = 8   Actual Alignment = 4\n" + 
+			"Length: 8 Alignment: 4\n" + 
 			"/MoreComplicated_s/MoreComplicated_s_u_8/MoreComplicated_s_u_8_s_4\n" + 
 			"pack()\n" + 
 			"Structure MoreComplicated_s_u_8_s_4 {\n" + 
@@ -844,7 +844,7 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"   5   uchar:8(0)   1   y8   \"\"\n" + 
 			"   6   ushort:9(0)   2   y9   \"\"\n" + 
 			"}\n" + 
-			"Size = 8   Actual Alignment = 2", struct, true);
+			"Length: 8 Alignment: 2", struct, true);
 		//@formatter:on
 	}
 

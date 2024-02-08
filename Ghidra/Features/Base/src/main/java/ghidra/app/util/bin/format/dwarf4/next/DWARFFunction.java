@@ -16,31 +16,33 @@
 package ghidra.app.util.bin.format.dwarf4.next;
 
 import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute.*;
-import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.DW_TAG_unspecified_parameters;
+import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.*;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.util.bin.format.dwarf4.*;
 import ghidra.app.util.bin.format.dwarf4.attribs.DWARFNumericAttribute;
 import ghidra.app.util.bin.format.dwarf4.expression.DWARFExpressionException;
+import ghidra.app.util.bin.format.dwarf4.funcfixup.DWARFFunctionFixup;
+import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.*;
-import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.symbol.*;
-import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.exception.InvalidInputException;
+import ghidra.util.Msg;
+import ghidra.util.exception.*;
 
 /**
  * Represents a function that was read from DWARF information.
  */
 public class DWARFFunction {
-	public enum CommitMode {
-		SKIP, FORMAL, STORAGE,
-	}
+	public enum CommitMode { SKIP, FORMAL, STORAGE, }
 
 	public DIEAggregate diea;
 	public DWARFNameInfo name;
@@ -48,9 +50,9 @@ public class DWARFFunction {
 	public Address address;
 	public Address highAddress;
 	public long frameBase;	// TODO: change this to preserve the func's frameBase expr instead of value
+	public Function function;	// ghidra function
 
-	public GenericCallingConvention callingConvention;
-	public PrototypeModel prototypeModel;
+	public String callingConventionName;
 
 	public DWARFVariable retval;
 	public List<DWARFVariable> params = new ArrayList<>();
@@ -75,14 +77,17 @@ public class DWARFFunction {
 	 */
 	public static DWARFFunction read(DIEAggregate diea)
 			throws IOException, DWARFExpressionException {
-		if (isBadSubprogramDef(diea)) {
+		if (diea.isDanglingDeclaration()) {
+			return null;
+		}
+		Address funcAddr = getFuncEntry(diea);
+		if (funcAddr == null) {
 			return null;
 		}
 
 		DWARFProgram prog = diea.getProgram();
 		DWARFDataTypeManager dwarfDTM = prog.getDwarfDTM();
 
-		Address funcAddr = prog.getCodeAddress(diea.getLowPC(0));
 		DWARFFunction dfunc = new DWARFFunction(diea, prog.getName(diea), funcAddr);
 
 		dfunc.namespace = dfunc.name.getParentNamespace(prog.getGhidraProgram());
@@ -135,11 +140,7 @@ public class DWARFFunction {
 	}
 
 	public String getCallingConventionName() {
-		return prototypeModel != null
-				? prototypeModel.getName()
-				: callingConvention != null
-						? callingConvention.getDeclarationName()
-						: null;
+		return callingConventionName;
 	}
 
 	/**
@@ -184,10 +185,10 @@ public class DWARFFunction {
 		return false;
 	}
 
-	public boolean hasConflictWithExistingLocalVariableStorage(DWARFVariable dvar, Function gfunc)
+	public boolean hasConflictWithExistingLocalVariableStorage(DWARFVariable dvar)
 			throws InvalidInputException {
 		VariableStorage newVarStorage = dvar.getVariableStorage();
-		for (Variable existingVar : gfunc.getAllVariables()) {
+		for (Variable existingVar : function.getAllVariables()) {
 			if (existingVar.getFirstUseOffset() == dvar.lexicalOffset &&
 				existingVar.getVariableStorage().intersects(newVarStorage)) {
 				if ((existingVar instanceof LocalVariable) &&
@@ -214,20 +215,20 @@ public class DWARFFunction {
 				.collect(Collectors.toList());
 	}
 
-	public List<String> getExistingLocalVariableNames(Function gfunc) {
-		return Arrays.stream(gfunc.getLocalVariables())
+	public List<String> getExistingLocalVariableNames() {
+		return Arrays.stream(function.getLocalVariables())
 				.filter(var -> var.getName() != null && !Undefined.isUndefined(var.getDataType()))
 				.map(var -> var.getName())
 				.collect(Collectors.toList());
 	}
-	
-	public List<String> getNonParamSymbolNames(Function gfunc) {
-		SymbolIterator symbols = gfunc.getProgram().getSymbolTable().getSymbols(gfunc);
+
+	public List<String> getNonParamSymbolNames() {
+		SymbolIterator symbols = function.getProgram().getSymbolTable().getSymbols(function);
 		return StreamSupport.stream(symbols.spliterator(), false)
 				.filter(symbol -> symbol.getSymbolType() != SymbolType.PARAMETER)
 				.map(Symbol::getName)
 				.collect(Collectors.toList());
-	}	
+	}
 
 	/**
 	 * Returns this function's parameters as a list of {@link Parameter} instances.
@@ -235,63 +236,45 @@ public class DWARFFunction {
 	 * @param includeStorageDetail boolean flag, if true storage information will be included, if
 	 * false, VariableStorage.UNASSIGNED_STORAGE will be used
 	 * @return list of Parameters
-	 * @throws InvalidInputException
+	 * @throws InvalidInputException if bad information in param storage
 	 */
 	public List<Parameter> getParameters(boolean includeStorageDetail)
 			throws InvalidInputException {
 		List<Parameter> result = new ArrayList<>();
 		for (DWARFVariable dvar : params) {
-			result.add(dvar.asParameter(includeStorageDetail, getProgram().getGhidraProgram()));
+			result.add(dvar.asParameter(includeStorageDetail));
 		}
 		return result;
 	}
 
 	/**
-	 * Returns a {@link FunctionDefinition} that reflects this function's information.
-	 *  
-	 * @return {@link FunctionDefinition} that reflects this function's information
+	 * Returns the parameters of this function as {@link ParameterDefinition}s.
+	 * 
+	 * @return array of {@link ParameterDefinition}s
 	 */
-	public FunctionDefinition asFuncDef() {
-		List<ParameterDefinition> funcDefParams = new ArrayList<>();
-		for (DWARFVariable param : params) {
-			funcDefParams.add(param.asParameterDef());
-		}
-
-		FunctionDefinitionDataType funcDef =
-			new FunctionDefinitionDataType(name.getParentCP(), name.getName(),
-				getProgram().getGhidraProgram().getDataTypeManager());
-		funcDef.setReturnType(retval.type);
-		funcDef.setArguments(funcDefParams.toArray(ParameterDefinition[]::new));
-		funcDef.setGenericCallingConvention(
-			Objects.requireNonNullElse(callingConvention, GenericCallingConvention.unknown));
-		funcDef.setVarArgs(varArg);
-
-		DWARFSourceInfo sourceInfo = null;
-		if (getProgram().getImportOptions().isOutputSourceLocationInfo() &&
-			(sourceInfo = DWARFSourceInfo.create(diea)) != null) {
-			funcDef.setComment(sourceInfo.getDescriptionStr());
-		}
-
-		return funcDef;
+	public ParameterDefinition[] getParameterDefinitions() {
+		return params.stream()
+				.map(dvar -> new ParameterDefinitionImpl(dvar.name.getName(), dvar.type, null))
+				.toArray(ParameterDefinition[]::new);
 	}
 
-	public void commitLocalVariable(DWARFVariable dvar, Function gfunc) {
-		
+	public void commitLocalVariable(DWARFVariable dvar) {
+
 		VariableStorage varStorage = null;
 		try {
 			varStorage = dvar.getVariableStorage();
 			if (hasConflictWithParamStorage(dvar)) {
-				appendComment(gfunc.getEntryPoint(), CodeUnit.PLATE_COMMENT,
-					"Local variable %s[%s] conflicts with parameter, skipped.".formatted(
-						dvar.getDeclInfoString(), varStorage),
+				appendComment(function.getEntryPoint(), CodeUnit.PLATE_COMMENT,
+					"Local variable %s[%s] conflicts with parameter, skipped."
+							.formatted(dvar.getDeclInfoString(), varStorage),
 					"\n");
 				return;
 			}
 
-			if (hasConflictWithExistingLocalVariableStorage(dvar, gfunc)) {
-				appendComment(gfunc.getEntryPoint().add(dvar.lexicalOffset), CodeUnit.EOL_COMMENT,
-					"Local omitted variable %s[%s] scope starts here".formatted(
-						dvar.getDeclInfoString(), varStorage),
+			if (hasConflictWithExistingLocalVariableStorage(dvar)) {
+				appendComment(function.getEntryPoint().add(dvar.lexicalOffset),
+					CodeUnit.EOL_COMMENT, "Local omitted variable %s[%s] scope starts here"
+							.formatted(dvar.getDeclInfoString(), varStorage),
 					"; ");
 				return;
 			}
@@ -299,7 +282,7 @@ public class DWARFFunction {
 			NameDeduper nameDeduper = new NameDeduper();
 			nameDeduper.addReservedNames(getAllLocalVariableNames());
 			nameDeduper.addUsedNames(getAllParamNames());
-			nameDeduper.addUsedNames(getExistingLocalVariableNames(gfunc));
+			nameDeduper.addUsedNames(getExistingLocalVariableNames());
 
 			Variable var = dvar.asLocalVariable();
 			String origName = var.getName();
@@ -314,24 +297,17 @@ public class DWARFFunction {
 				var.setComment("Original name: " + origName);
 			}
 
-			VariableUtilities.checkVariableConflict(gfunc, var, varStorage, true);
-			gfunc.addLocalVariable(var, SourceType.IMPORTED);
+			VariableUtilities.checkVariableConflict(function, var, varStorage, true);
+			function.addLocalVariable(var, SourceType.IMPORTED);
 		}
 		catch (InvalidInputException | DuplicateNameException e) {
-			appendComment(gfunc.getEntryPoint().add(dvar.lexicalOffset), CodeUnit.EOL_COMMENT,
+			appendComment(function.getEntryPoint().add(dvar.lexicalOffset), CodeUnit.EOL_COMMENT,
 				"Local omitted variable %s[%s] scope starts here".formatted(
 					dvar.getDeclInfoString(),
 					varStorage != null ? varStorage.toString() : "UNKNOWN"),
 				"; ");
 
 		}
-	}
-
-	@Override
-	public String toString() {
-		return String.format(
-			"DWARFFunction [\n\tdni=%s,\n\taddress=%s,\n\tparams=%s,\n\tsourceInfo=%s,\n\tlocalVarErrors=%s,\n\tretval=%s\n]",
-			name, address, params, sourceInfo, localVarErrors, retval);
 	}
 
 	private static boolean isBadSubprogramDef(DIEAggregate diea) {
@@ -341,8 +317,7 @@ public class DWARFFunction {
 
 		// fetch the low_pc attribute directly instead of calling diea.getLowPc() to avoid
 		// any fixups applied by lower level code
-		DWARFNumericAttribute attr =
-			diea.getAttribute(DW_AT_low_pc, DWARFNumericAttribute.class);
+		DWARFNumericAttribute attr = diea.getAttribute(DW_AT_low_pc, DWARFNumericAttribute.class);
 		if (attr != null && attr.getUnsignedValue() == 0) {
 			return true;
 		}
@@ -353,6 +328,174 @@ public class DWARFFunction {
 	private void appendComment(Address address, int commentType, String comment, String sep) {
 		DWARFUtil.appendComment(getProgram().getGhidraProgram(), address, commentType, "", comment,
 			sep);
+	}
+
+	//---------------------------------------------------------------------------------------------
+
+	private static Address getFuncEntry(DIEAggregate diea) throws IOException {
+		// TODO: dw_at_entry_pc is also sometimes available, typically in things like inlined_subroutines 
+		DWARFProgram dprog = diea.getProgram();
+		DWARFNumericAttribute lowpcAttr =
+			diea.getAttribute(DW_AT_low_pc, DWARFNumericAttribute.class);
+		if (lowpcAttr != null && lowpcAttr.getUnsignedValue() != 0) {
+			return dprog.getCodeAddress(
+				lowpcAttr.getUnsignedValue() + dprog.getProgramBaseAddressFixup());
+		}
+		if (diea.hasAttribute(DW_AT_ranges)) {
+			List<DWARFRange> bodyRanges = diea.readRange(DW_AT_ranges);
+			if (!bodyRanges.isEmpty()) {
+				return dprog.getCodeAddress(bodyRanges.get(0).getFrom());
+			}
+		}
+		return null;
+	}
+
+	public boolean syncWithExistingGhidraFunction(boolean createIfMissing) {
+		try {
+			Program currentProgram = getProgram().getGhidraProgram();
+			function = currentProgram.getListing().getFunctionAt(address);
+			if (function != null) {
+				if (function.hasNoReturn() && !noReturn) {
+					// preserve the noReturn flag if set by earlier analyzer
+					noReturn = true;
+				}
+			}
+
+			if (!createIfMissing && function == null) {
+				return false;
+			}
+
+			// create a new symbol if one does not exist (symbol table will figure this out)
+			SymbolTable symbolTable = currentProgram.getSymbolTable();
+			symbolTable.createLabel(address, name.getName(), namespace, SourceType.IMPORTED);
+
+			// force new label to become primary (if already a function it will become function name)
+			SetLabelPrimaryCmd cmd = new SetLabelPrimaryCmd(address, name.getName(), namespace);
+			cmd.applyTo(currentProgram);
+
+			if (isExternal) {
+				currentProgram.getSymbolTable().addExternalEntryPoint(address);
+			}
+			else {
+				currentProgram.getSymbolTable().removeExternalEntryPoint(address);
+			}
+
+			function = currentProgram.getListing().getFunctionAt(address);
+			if (function == null) {
+
+				// TODO: If not contained within program memory should they be considered external?
+				if (!currentProgram.getMemory()
+						.getLoadedAndInitializedAddressSet()
+						.contains(address)) {
+					Msg.warn(this,
+						"DWARF: unable to create function not contained within loaded memory: %s@%s"
+								.formatted(name, address));
+					return false;
+				}
+
+				// create 1-byte function if one does not exist - primary label will become function names
+				function = currentProgram.getFunctionManager()
+						.createFunction(null, address, new AddressSet(address),
+							SourceType.IMPORTED);
+			}
+
+			return true;
+		}
+		catch (OverlappingFunctionException e) {
+			throw new AssertException(e);
+		}
+		catch (InvalidInputException e) {
+			Msg.error(this, "Failed to create function " + namespace + "/" + name.getName() + ": " +
+				e.getMessage());
+		}
+		return false;
+	}
+
+	public void runFixups() {
+		// Run all the DWARFFunctionFixup instances
+		for (DWARFFunctionFixup fixup : getProgram().getFunctionFixups()) {
+			try {
+				fixup.fixupDWARFFunction(this);
+			}
+			catch (DWARFException e) {
+				signatureCommitMode = CommitMode.SKIP;
+			}
+			if (signatureCommitMode == CommitMode.SKIP) {
+				break;
+			}
+		}
+	}
+
+	public void updateFunctionSignature() {
+		try {
+			boolean includeStorageDetail = signatureCommitMode == CommitMode.STORAGE;
+			FunctionUpdateType functionUpdateType = includeStorageDetail
+					? FunctionUpdateType.CUSTOM_STORAGE
+					: FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS;
+
+			Parameter returnVar = retval.asReturnParameter(includeStorageDetail);
+			List<Parameter> parameters = getParameters(includeStorageDetail);
+
+			if (includeStorageDetail && !retval.isZeroByte() && retval.isMissingStorage()) {
+				// TODO: this logic is faulty and borks the auto _return_storage_ptr_ when present
+				// Update return value in a separate step as its storage isn't typically specified
+				// in dwarf info.
+				// This will allow automagical storage assignment for return value by ghidra.
+				function.updateFunction(callingConventionName, returnVar, List.of(),
+					FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.IMPORTED);
+				returnVar = null; // don't update it in the second call to updateFunction()
+			}
+
+			function.updateFunction(callingConventionName, returnVar, parameters,
+				functionUpdateType, true, SourceType.IMPORTED);
+			function.setVarArgs(varArg);
+			function.setNoReturn(noReturn);
+		}
+		catch (InvalidInputException | DuplicateNameException e) {
+			Msg.error(this, "Error updating function %s@%s with params: %s".formatted(
+				function.getName(), function.getEntryPoint().toString(), e.getMessage()));
+			Msg.error(this, "DIE info: " + diea.toString());
+		}
+	}
+
+	/**
+	 * Returns a {@link FunctionDefinition} that reflects this function's information.
+	 *  
+	 * @param includeCC boolean flag, if true the returned funcdef will include calling convention 
+	 * @return {@link FunctionDefinition} that reflects this function's information
+	 */
+	public FunctionDefinition asFunctionDefinition(boolean includeCC) {
+		ProgramBasedDataTypeManager dtm = getProgram().getGhidraProgram().getDataTypeManager();
+
+		FunctionDefinitionDataType funcDef =
+			new FunctionDefinitionDataType(name.getParentCP(), name.getName(), dtm);
+		funcDef.setReturnType(retval.type);
+		funcDef.setNoReturn(noReturn);
+		funcDef.setArguments(getParameterDefinitions());
+		if (varArg) {
+			funcDef.setVarArgs(true);
+		}
+		if (getProgram().getImportOptions().isOutputSourceLocationInfo() && sourceInfo != null) {
+			funcDef.setComment(sourceInfo.getDescriptionStr());
+		}
+		if (includeCC && callingConventionName != null) {
+			try {
+				funcDef.setCallingConvention(callingConventionName);
+			}
+			catch (InvalidInputException e) {
+				Msg.warn(this, "Unable to set calling convention name to %s for function def: %s"
+						.formatted(callingConventionName, funcDef));
+			}
+		}
+
+		return funcDef;
+	}
+
+	@Override
+	public String toString() {
+		return String.format(
+			"DWARFFunction [name=%s, address=%s, sourceInfo=%s, retval=%s, params=%s, function=%s, diea=%s, signatureCommitMode=%s]",
+			name, address, sourceInfo, retval, params, function, diea, signatureCommitMode);
 	}
 
 }

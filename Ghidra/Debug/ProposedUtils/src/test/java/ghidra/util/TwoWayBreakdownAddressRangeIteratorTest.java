@@ -44,8 +44,16 @@ public class TwoWayBreakdownAddressRangeIteratorTest extends AbstractGhidraHeadl
 		return toy.getAddressFactory().getDefaultAddressSpace().getAddress(offset);
 	}
 
+	protected Address dAddr(long offset) {
+		return toy.getAddressFactory().getAddressSpace("data").getAddress(offset);
+	}
+
 	protected AddressRange rng(long min, long max) {
 		return new AddressRangeImpl(addr(min), addr(max));
+	}
+
+	protected AddressRange dRng(long min, long max) {
+		return new AddressRangeImpl(dAddr(min), dAddr(max));
 	}
 
 	protected AddressSet set(AddressRange... ranges) {
@@ -57,7 +65,11 @@ public class TwoWayBreakdownAddressRangeIteratorTest extends AbstractGhidraHeadl
 	}
 
 	protected Pair<AddressRange, Which> pair(long min, long max, Which which) {
-		return new ImmutablePair<>(rng(min, max), which);
+		return Pair.of(rng(min, max), which);
+	}
+
+	protected Pair<AddressRange, Which> dPair(long min, long max, Which which) {
+		return Pair.of(dRng(min, max), which);
 	}
 
 	/**
@@ -77,8 +89,8 @@ public class TwoWayBreakdownAddressRangeIteratorTest extends AbstractGhidraHeadl
 
 	@Before
 	public void setUpIteratorTest() throws LanguageNotFoundException {
-		toy = DefaultLanguageService.getLanguageService().getLanguage(
-			new LanguageID("Toy:BE:64:default"));
+		toy = DefaultLanguageService.getLanguageService()
+				.getLanguage(new LanguageID("Toy:BE:64:harvard"));
 	}
 
 	@Test
@@ -282,6 +294,56 @@ public class TwoWayBreakdownAddressRangeIteratorTest extends AbstractGhidraHeadl
 	}
 
 	@Test
+	public void testAcrossSpaces() {
+		AddressSet a = set(rng(0x1000, 0x2000));
+		AddressSet b = set(dRng(0x1000, 0x2000));
+
+		List<Entry<AddressRange, Which>> expected;
+		List<Entry<AddressRange, Which>> actual;
+
+		expected = List.of(pair(0x1000, 0x2000, Which.LEFT), dPair(0x1000, 0x2000, Which.RIGHT));
+		actual = toList(makeIterator(a, b, true));
+		assertEquals(expected, actual);
+
+		expected = List.of(pair(0x1000, 0x2000, Which.RIGHT), dPair(0x1000, 0x2000, Which.LEFT));
+		actual = toList(makeIterator(b, a, true));
+		assertEquals(expected, actual);
+
+		expected = List.of(dPair(0x1000, 0x2000, Which.RIGHT), pair(0x1000, 0x2000, Which.LEFT));
+		actual = toList(makeIterator(a, b, false));
+		assertEquals(expected, actual);
+
+		expected = List.of(dPair(0x1000, 0x2000, Which.LEFT), pair(0x1000, 0x2000, Which.RIGHT));
+		actual = toList(makeIterator(b, a, false));
+		assertEquals(expected, actual);
+	}
+
+	@Test
+	public void testAcrossSpacesExtremes() {
+		AddressSet a = set(rng(0x1000, -1L));
+		AddressSet b = set(dRng(0x0, 0xfff));
+
+		List<Entry<AddressRange, Which>> expected;
+		List<Entry<AddressRange, Which>> actual;
+
+		expected = List.of(pair(0x1000, -1L, Which.LEFT), dPair(0x0, 0xfff, Which.RIGHT));
+		actual = toList(makeIterator(a, b, true));
+		assertEquals(expected, actual);
+
+		expected = List.of(pair(0x1000, -1L, Which.RIGHT), dPair(0x0, 0xfff, Which.LEFT));
+		actual = toList(makeIterator(b, a, true));
+		assertEquals(expected, actual);
+
+		expected = List.of(dPair(0x0, 0xfff, Which.RIGHT), pair(0x1000, -1L, Which.LEFT));
+		actual = toList(makeIterator(a, b, false));
+		assertEquals(expected, actual);
+
+		expected = List.of(dPair(0x0, 0xfff, Which.LEFT), pair(0x1000, -1L, Which.RIGHT));
+		actual = toList(makeIterator(b, a, false));
+		assertEquals(expected, actual);
+	}
+
+	@Test
 	public void testRandom() {
 		AddressSet a = randomSet();
 		AddressSet b = randomSet();
@@ -298,7 +360,12 @@ public class TwoWayBreakdownAddressRangeIteratorTest extends AbstractGhidraHeadl
 		for (int i = 0; i < 20; i++) {
 			int len = r.nextInt(0x7ff) + 1;
 			int off = r.nextInt(0x10000 - len);
-			result.add(rng(off, off + len - 1));
+			if (r.nextBoolean()) {
+				result.add(rng(off, off + len - 1));
+			}
+			else {
+				result.add(dRng(off, off + len - 1));
+			}
 		}
 		return result;
 	}

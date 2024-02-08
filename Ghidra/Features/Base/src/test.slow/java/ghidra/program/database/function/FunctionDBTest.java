@@ -15,6 +15,8 @@
  */
 package ghidra.program.database.function;
 
+import static ghidra.program.util.FunctionChangeRecord.FunctionChangeType.*;
+import static ghidra.program.util.ProgramEvent.*;
 import static org.junit.Assert.*;
 
 import java.util.ArrayList;
@@ -35,11 +37,11 @@ import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
-import ghidra.program.util.ChangeManager;
-import ghidra.program.util.ProgramChangeRecord;
+import ghidra.program.util.*;
+import ghidra.program.util.FunctionChangeRecord.FunctionChangeType;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
-import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
@@ -58,8 +60,8 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 	private ArrayList<ProgramChangeRecord> captureRecords = new ArrayList<>();
 
 	private String captureFuncName;
-	private int captureEventType;
-	private int captureSubEvent;// not used if -1
+	private EventType captureEventType;
+	private FunctionChangeType captureChangeType;
 
 	public FunctionDBTest() {
 		super();
@@ -74,8 +76,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		space = program.getAddressFactory().getDefaultAddressSpace();
 		transactionID = program.startTransaction("Test");
 		program.getMemory()
-				.createInitializedBlock("test", addr(100), 500, (byte) 0,
-					TaskMonitor.DUMMY, false);
+				.createInitializedBlock("test", addr(100), 500, (byte) 0, TaskMonitor.DUMMY, false);
 		functionManager = program.getFunctionManager();
 	}
 
@@ -93,31 +94,38 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
 		for (int i = 0; i < ev.numRecords(); i++) {
 			DomainObjectChangeRecord rec = ev.getChangeRecord(i);
-			if (!(rec instanceof ProgramChangeRecord)) {
+			if (!(rec instanceof ProgramChangeRecord pcRec)) {
 				continue;
 			}
-			ProgramChangeRecord pcRec = (ProgramChangeRecord) rec;
-			if (captureFuncName != null &&
-				rec.getEventType() == ChangeManager.DOCR_FUNCTION_CHANGED &&
-				!captureFuncName.equals(((Function) pcRec.getObject()).getName())) {
+			EventType eventType = rec.getEventType();
+			if (eventType != captureEventType) {
 				continue;
 			}
-			if (rec.getEventType() == captureEventType &&
-				(captureSubEvent == -1 || rec.getSubEventType() == captureSubEvent)) {
-				captureRecords.add(pcRec);
-				lastCaptureRecord = pcRec;
+
+			if (eventType == FUNCTION_CHANGED) {
+				FunctionChangeRecord funRecord = (FunctionChangeRecord) rec;
+				Function function = funRecord.getFunction();
+				if (captureChangeType != null &&
+					funRecord.getSpecificChangeType() != captureChangeType) {
+					continue;
+				}
+				if (captureFuncName != null && !captureFuncName.equals(function.getName())) {
+					continue;
+				}
 			}
+			captureRecords.add(pcRec);
+			lastCaptureRecord = pcRec;
 		}
 	}
 
-	private void captureFunctionChangeEvent(String funcName, int subEvent) {
-		captureChangeEvent(ChangeManager.DOCR_FUNCTION_CHANGED, subEvent);
+	private void captureFunctionChangeEvent(String funcName, FunctionChangeType changeType) {
+		captureChangeEvent(FUNCTION_CHANGED, changeType);
 		captureFuncName = funcName;
 	}
 
-	private void captureChangeEvent(int eventType, int subEvent) {
+	private void captureChangeEvent(EventType eventType, FunctionChangeType changeType) {
 		captureEventType = eventType;
-		captureSubEvent = subEvent;
+		captureChangeType = changeType;
 		program.flushEvents();
 		captureRecords.clear();
 		lastCaptureRecord = null;
@@ -129,13 +137,37 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 	}
 
 	private Function createFunction(String name, Address entryPt, AddressSetView body)
-			throws DuplicateNameException, InvalidInputException, OverlappingFunctionException {
+			throws InvalidInputException, OverlappingFunctionException {
 
-		functionManager.createFunction(name, entryPt, body, SourceType.USER_DEFINED);
-		Function f = functionManager.getFunctionAt(entryPt);
+		Function f = functionManager.createFunction(name, entryPt, body, SourceType.USER_DEFINED);
+		assertNotNull(f);
+		assertEquals(f, functionManager.getFunctionAt(entryPt));
 		assertEquals(entryPt, f.getEntryPoint());
 		assertEquals(body, f.getBody());
 		return f;
+	}
+
+	@Test
+	public void testCreateFunctionBodyRestrictions() throws Exception {
+		MemoryBlock ovBlock =
+			program.getMemory().createUninitializedBlock("OV", addr(200), 100, true);
+		try {
+			AddressSet set = new AddressSet(addr(100), addr(200));
+			set.add(ovBlock.getAddressRange());
+			createFunction("foo", addr(100), set);
+			fail("Expected body must contain single address space only");
+		}
+		catch (IllegalArgumentException e) {
+			assertTrue(e.getMessage().contains("body must contain single address space only"));
+		}
+
+		try {
+			createFunction("foo", addr(100), new AddressSet(addr(150), addr(200)));
+			fail("Expected body must contain entry point exception");
+		}
+		catch (IllegalArgumentException e) {
+			assertTrue(e.getMessage().contains("body must contain the entrypoint"));
+		}
 	}
 
 	@Test
@@ -149,7 +181,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 	public void testSetNameUser() throws Exception {
 		Function f = createFunction("foo", addr(100), new AddressSet(addr(100), addr(200)));
 
-		captureChangeEvent(ChangeManager.DOCR_SYMBOL_RENAMED, -1);
+		captureChangeEvent(ProgramEvent.SYMBOL_RENAMED, null);
 
 		String name = "MyFunction";
 		f.setName(name, SourceType.USER_DEFINED);
@@ -231,7 +263,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		asv.addRange(addr(400), addr(450));
 		asv.addRange(addr(500), addr(550));
 
-		captureChangeEvent(ChangeManager.DOCR_FUNCTION_ADDED, -1);
+		captureChangeEvent(ProgramEvent.FUNCTION_ADDED, null);
 
 		Function f = createFunction("foo", addr(100), asv);
 
@@ -263,7 +295,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		asv.addRange(addr(300), addr(400));
 		asv.addRange(addr(10), addr(20));
 
-		captureChangeEvent(ChangeManager.DOCR_FUNCTION_BODY_CHANGED, -1);
+		captureChangeEvent(ProgramEvent.FUNCTION_BODY_CHANGED, null);
 
 		f.setBody(asv);
 		functionManager.invalidateCache(false);
@@ -397,7 +429,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 	}
 
 	@Test
-	public void testSetBodyInvalidEntryPoint() throws Exception {
+	public void testSetInvalidBody() throws Exception {
 
 		AddressSet asv = new AddressSet();
 		asv.addRange(addr(100), addr(350));
@@ -407,17 +439,27 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		Function f = createFunction("foo", addr(100), asv);
 		functionManager.invalidateCache(false);
 		f = functionManager.getFunctionAt(addr(100));
-		asv = new AddressSet();
-		asv.addRange(addr(110), addr(120));
-		asv.addRange(addr(300), addr(400));
-		asv.addRange(addr(10), addr(20));
 
 		try {
+			asv = new AddressSet();
+			asv.addRange(addr(110), addr(120));
 			f.setBody(asv);
-			Assert.fail(
-				"Should have gotten illegal argument exception: original entry point not in new body");
+			fail("Expected exception: body must contain entry point");
 		}
 		catch (IllegalArgumentException e) {
+			assertTrue(e.getMessage().contains("body must contain the entry point"));
+		}
+
+		MemoryBlock ovBlock =
+			program.getMemory().createUninitializedBlock("OV", addr(200), 100, true);
+		try {
+			asv = new AddressSet(addr(100), addr(200));
+			asv.add(ovBlock.getAddressRange());
+			f.setBody(asv);
+			fail("Expected exception: body must contain single address space only");
+		}
+		catch (IllegalArgumentException e) {
+			assertTrue(e.getMessage().contains("body must contain single address space only"));
 		}
 
 	}
@@ -561,8 +603,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		assertTrue(return1 instanceof ReturnParameterDB);
 		assertTrue(Undefined.isUndefined(return1.getDataType()));
 
-		captureChangeEvent(ChangeManager.DOCR_FUNCTION_CHANGED,
-			ChangeManager.FUNCTION_CHANGED_RETURN);
+		captureChangeEvent(FUNCTION_CHANGED, RETURN_TYPE_CHANGED);
 
 		f.setReturnType(dt, SourceType.ANALYSIS);
 
@@ -1227,18 +1268,15 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		ByteDataType bdt = new ByteDataType();
 		TypeDef td = null;
 
-		captureChangeEvent(ChangeManager.DOCR_FUNCTION_CHANGED,
-			ChangeManager.FUNCTION_CHANGED_PARAMETERS);
+		captureChangeEvent(FUNCTION_CHANGED, PARAMETERS_CHANGED);
 
 		int localTransactionID = program.startTransaction("test");
 		try {
 			bdt = (ByteDataType) program.getDataTypeManager()
-					.addDataType(bdt,
-						DataTypeConflictHandler.DEFAULT_HANDLER);
+					.addDataType(bdt, DataTypeConflictHandler.DEFAULT_HANDLER);
 			td = new TypedefDataType("byteTD", bdt);
 			td = (TypeDef) program.getDataTypeManager()
-					.addDataType(td,
-						DataTypeConflictHandler.DEFAULT_HANDLER);
+					.addDataType(td, DataTypeConflictHandler.DEFAULT_HANDLER);
 			AddRegisterParameterCommand cmd = new AddRegisterParameterCommand(f, reg, "reg_param_0",
 				td, 0, SourceType.USER_DEFINED);
 			cmd.applyTo(program);
@@ -1278,7 +1316,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 	public void testSetStackDepthChange() throws Exception {
 		Function f = createFunction("foo", addr(100), new AddressSet(addr(100), addr(200)));
 
-		captureChangeEvent(ChangeManager.DOCR_FUNCTION_CHANGED, -1);// TODO: no sub-event
+		captureChangeEvent(FUNCTION_CHANGED, null);
 
 		f.setStackPurgeSize(20);
 		functionManager.invalidateCache(false);
@@ -1302,8 +1340,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		LocalVariableImpl stackVar = new LocalVariableImpl("TestStack0", dt[0], 4, program);
 		stackVar.setComment("My Comment0");
 
-		captureChangeEvent(ChangeManager.DOCR_FUNCTION_CHANGED,
-			ChangeManager.FUNCTION_CHANGED_PARAMETERS);
+		captureChangeEvent(FUNCTION_CHANGED, PARAMETERS_CHANGED);
 
 		assertTrue(f.addParameter(stackVar, SourceType.USER_DEFINED) instanceof ParameterDB);// causes both symbol created and function change events
 
@@ -1314,7 +1351,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		stackVar = new LocalVariableImpl("TestStack1", dt[1], 8, program);
 		stackVar.setComment("My Comment1");
 
-		captureChangeEvent(ChangeManager.DOCR_SYMBOL_ADDED, -1);
+		captureChangeEvent(ProgramEvent.SYMBOL_ADDED, null);
 
 		assertTrue(f.addParameter(stackVar, SourceType.USER_DEFINED) instanceof ParameterDB);// causes both symbol created and function change events
 
@@ -1786,8 +1823,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		Function f = createFunction("foo", addr(100), new AddressSet(addr(100), addr(200)));
 		assertTrue(!f.isInline());
 
-		captureChangeEvent(ChangeManager.DOCR_FUNCTION_CHANGED,
-			ChangeManager.FUNCTION_CHANGED_INLINE);
+		captureChangeEvent(FUNCTION_CHANGED, INLINE_CHANGED);
 
 		f.setInline(true);
 
@@ -1819,8 +1855,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		Function f = createFunction("foo", addr(100), new AddressSet(addr(100), addr(200)));
 		assertTrue(!f.hasNoReturn());
 
-		captureChangeEvent(ChangeManager.DOCR_FUNCTION_CHANGED,
-			ChangeManager.FUNCTION_CHANGED_NORETURN);
+		captureChangeEvent(FUNCTION_CHANGED, NO_RETURN_CHANGED);
 
 		f.setNoReturn(true);
 
@@ -1851,8 +1886,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		Function f = createFunction("foo", addr(100), new AddressSet(addr(100), addr(200)));
 		assertNull(f.getCallFixup());
 
-		captureChangeEvent(ChangeManager.DOCR_FUNCTION_CHANGED,
-			ChangeManager.FUNCTION_CHANGED_CALL_FIXUP);
+		captureChangeEvent(FUNCTION_CHANGED, CALL_FIXUP_CHANGED);
 
 		f.setCallFixup("TEST");
 
@@ -1896,7 +1930,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		f1.setReturn(ByteDataType.dataType, VariableStorage.UNASSIGNED_STORAGE,
 			SourceType.USER_DEFINED);
 
-		captureFunctionChangeEvent("foo1", ChangeManager.FUNCTION_CHANGED_PARAMETERS);
+		captureFunctionChangeEvent("foo1", PARAMETERS_CHANGED);
 
 		f1.addParameter(new ParameterImpl("p1", IntegerDataType.dataType, program),
 			SourceType.USER_DEFINED);
@@ -1906,7 +1940,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		assertNotNull(lastCaptureRecord);
 		assertEquals(1, captureRecords.size());
 
-		captureFunctionChangeEvent("FUN_00000300", -1);
+		captureFunctionChangeEvent("FUN_00000300", null);
 
 		f1.addParameter(new ParameterImpl("p2", IntegerDataType.dataType, program),
 			SourceType.USER_DEFINED);
@@ -1921,7 +1955,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		assertEquals("byte foo1(int p1, int p2)", f1.getPrototypeString(false, false));
 		assertEquals("undefined FUN_00000300()", f2.getPrototypeString(false, false));
 
-		captureFunctionChangeEvent("foo1", ChangeManager.FUNCTION_CHANGED_THUNK);
+		captureFunctionChangeEvent("foo1", THUNK_CHANGED);
 
 		f2.setThunkedFunction(f1);
 
@@ -1944,7 +1978,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		assertEquals("byte foo1(int p1, int p2)", f1.getPrototypeString(false, false));
 		assertEquals("byte foo1(int p1, int p2)", f2.getPrototypeString(false, false));// TODO: Not sure what the correct behavior should be?
 
-		captureChangeEvent(ChangeManager.DOCR_SYMBOL_RENAMED, -1);// two events (both functions)
+		captureChangeEvent(ProgramEvent.SYMBOL_RENAMED, null);// two events (both functions)
 
 		f1.setName("fum", SourceType.USER_DEFINED);
 
@@ -1965,8 +1999,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		assertEquals("foo1", pcRec.getOldValue());
 		assertEquals("fum", pcRec.getNewValue());
 
-		captureChangeEvent(ChangeManager.DOCR_FUNCTION_CHANGED,
-			ChangeManager.FUNCTION_CHANGED_PARAMETERS);// two events (both functions)
+		captureChangeEvent(FUNCTION_CHANGED, PARAMETERS_CHANGED);
 
 		f1.addParameter(new ParameterImpl("p3", IntegerDataType.dataType, program),
 			SourceType.USER_DEFINED);// add to "thunked" func
@@ -1987,8 +2020,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		assertEquals("fum", f.getName());
 		assertEquals(addr(0x300), f.getEntryPoint());
 
-		captureChangeEvent(ChangeManager.DOCR_FUNCTION_CHANGED,
-			ChangeManager.FUNCTION_CHANGED_PARAMETERS);// two events (both functions)
+		captureChangeEvent(FUNCTION_CHANGED, PARAMETERS_CHANGED);
 
 		f2.addParameter(new ParameterImpl("p4", IntegerDataType.dataType, program),
 			SourceType.USER_DEFINED);// add to thunk
@@ -2009,7 +2041,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		assertEquals("fum", f.getName());
 		assertEquals(addr(0x300), f.getEntryPoint());
 
-		captureChangeEvent(ChangeManager.DOCR_SYMBOL_RENAMED, -1);
+		captureChangeEvent(ProgramEvent.SYMBOL_RENAMED, null);
 
 		// Change thunk name (hides thunked function name)
 		f2.setName("test", SourceType.USER_DEFINED);
@@ -2118,8 +2150,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		assertNotNull(symbolTable.getGlobalSymbol("LAB_Test", addr(224)));
 
 		assertTrue(program.getSymbolTable()
-				.getPrimarySymbol(
-					addr(201))
+				.getPrimarySymbol(addr(201))
 				.getSymbolType() != SymbolType.FUNCTION);
 	}
 

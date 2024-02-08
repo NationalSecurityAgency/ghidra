@@ -19,8 +19,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.TreeMap;
 
-import ghidra.app.plugin.core.analysis.AnalysisState;
-import ghidra.app.plugin.core.analysis.AnalysisStateInfo;
+import ghidra.app.plugin.core.analysis.TransientProgramProperties;
+import ghidra.app.plugin.core.analysis.TransientProgramProperties.PropertyValueSupplier;
+import ghidra.app.plugin.core.analysis.TransientProgramProperties.SCOPE;
 import ghidra.file.formats.android.dex.DexHeaderFactory;
 import ghidra.file.formats.android.dex.format.*;
 import ghidra.file.formats.android.dex.util.DexUtil;
@@ -31,10 +32,10 @@ import ghidra.util.SystemUtilities;
 
 /**
  * This class is used to cache the {@link DexHeader} which holds constant pool and method information.
- * These do not change for a given .dex Program and can be shared (by this {@link AnalysisState})
- * between plug-ins that need to do analysis.
+ * These do not change for a given .dex Program and can be shared between plug-ins that need to 
+ * do analysis.
  */
-final public class DexAnalysisState implements AnalysisState {
+final public class DexAnalysisState {
 
 	private Program program;
 	private DexHeader header;								// Collection of raw records parsed from .dex file
@@ -100,33 +101,39 @@ final public class DexAnalysisState implements AnalysisState {
 	}
 
 	/**
-	 * Return persistent <code>DexAnalysisState</code> which corresponds to the specified program instance.
+	 * Return shared/persistent {@link DexAnalysisState} which corresponds to the 
+	 * specified program instance.
+	 * 
 	 * @param program is the specified program instance
 	 * @return <code>DexAnalysisState</code> for specified program instance
 	 * @throws IOException if there are problems during construction of the state object
 	 */
 	public synchronized static DexAnalysisState getState(Program program) throws IOException {
-		DexAnalysisState analysisState =
-			AnalysisStateInfo.getAnalysisState(program, DexAnalysisState.class);
-		if (analysisState == null) {
-			DexHeader dexHeader = DexHeaderFactory.getDexHeader(program);
-			analysisState = new DexAnalysisState(program, dexHeader);
-			AnalysisStateInfo.putAnalysisState(program, analysisState);
-		}
-		return analysisState;
+		return TransientProgramProperties.getProperty(program, DexAnalysisState.class,
+			SCOPE.PROGRAM, DexAnalysisState.class, () -> {
+				DexHeader dexHeader = DexHeaderFactory.getDexHeader(program);
+				return new DexAnalysisState(program, dexHeader);
+			});
 	}
 
+	/**
+	 * Return shared/persistent {@link DexAnalysisState} which corresponds to the 
+	 * specified program instance.
+	 * 
+	 * @param program is the specified program instance
+	 * @param address address of the dex header
+	 * @return <code>DexAnalysisState</code> for specified program instance
+	 * @throws IOException if there are problems during construction of the state object
+	 */
 	public static DexAnalysisState getState(Program program, Address address) throws IOException {
-		DexAnalysisState analysisState =
-			AnalysisStateInfo.getAnalysisState(program, DexAnalysisState.class);
-		if (SystemUtilities.isInDevelopmentMode()) {
-			analysisState = null; //always generate when in debug mode
-		}
-		if (analysisState == null) {
+		PropertyValueSupplier<DexAnalysisState, IOException> supplier = () -> {
 			DexHeader dexHeader = DexHeaderFactory.getDexHeader(program, address);
-			analysisState = new DexAnalysisState(program, dexHeader);
-			AnalysisStateInfo.putAnalysisState(program, analysisState);
-		}
-		return analysisState;
+			return new DexAnalysisState(program, dexHeader);
+		};
+		return !SystemUtilities.isInDevelopmentMode()
+				? TransientProgramProperties.getProperty(program, DexAnalysisState.class,
+					SCOPE.PROGRAM, DexAnalysisState.class, supplier)
+				: supplier.get();
+
 	}
 }

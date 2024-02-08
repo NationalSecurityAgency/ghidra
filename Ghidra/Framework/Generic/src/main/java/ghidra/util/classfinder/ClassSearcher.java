@@ -21,15 +21,18 @@ import java.lang.reflect.Constructor;
 import java.nio.file.*;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.swing.event.ChangeListener;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import generic.jar.ResourceFile;
+import ghidra.GhidraClassLoader;
 import ghidra.framework.Application;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
@@ -276,16 +279,51 @@ public class ClassSearcher {
 		log.info(finishedMessage);
 	}
 
+	/**
+	 * Gets the given class's extension point name
+	 * 
+	 * @param className The name of the potential extension point class
+	 * @return The given class's extension point name, or null if it is not an extension point
+	 */
+	public static String getExtensionPointName(String className) {
+		if (className.indexOf("Test$") > 0 || className.endsWith("Test")) {
+			return null;
+		}
+		int packageIndex = className.lastIndexOf('.');
+		int innerClassIndex = className.lastIndexOf('$');
+		int maximumIndex = StrictMath.max(packageIndex, innerClassIndex);
+		if (maximumIndex > 0) {
+			className = className.substring(maximumIndex + 1);
+		}
+		Matcher m = extensionPointSuffixPattern.matcher(className);
+		return m.find() && m.groupCount() == 1 ? m.group(1) : null;
+	}
+
 	private static List<String> gatherSearchPaths() {
-		String cp = System.getProperty("java.class.path");
-		StringTokenizer st = new StringTokenizer(cp, File.pathSeparator);
+
+		//
+		// By default all classes are found on the standard classpath.  In the default mode, there
+		// are no values associated with the GhidraClassLoader.CP_EXT property.  Alternatively, 
+		// users can enable Extension classpath restriction.  In this mode, any Extension module's 
+		// jar files will *not* be on the standard classpath, but instead will be on CP_EXT.
+		//
 		List<String> rawPaths = new ArrayList<>();
-		while (st.hasMoreTokens()) {
-			rawPaths.add(st.nextToken());
+		getPropertyPaths(GhidraClassLoader.CP, rawPaths);
+		getPropertyPaths(GhidraClassLoader.CP_EXT, rawPaths);
+		return canonicalizePaths(rawPaths);
+	}
+
+	private static void getPropertyPaths(String property, List<String> results) {
+		String paths = System.getProperty(property);
+		Msg.trace(ClassSearcher.class, "Paths in " + property + ": " + paths);
+		if (StringUtils.isBlank(paths)) {
+			return;
 		}
 
-		List<String> canonicalPaths = canonicalizePaths(rawPaths);
-		return canonicalPaths;
+		StringTokenizer st = new StringTokenizer(paths, File.pathSeparator);
+		while (st.hasMoreTokens()) {
+			results.add(st.nextToken());
+		}
 	}
 
 	private static List<String> canonicalizePaths(Collection<String> paths) {
@@ -371,22 +409,13 @@ public class ClassSearcher {
 			buffy.append(suffix);
 			between = "|";
 		}
-		buffy.append(')');
+		buffy.append(")$");
 		extensionPointSuffixPattern = Pattern.compile(buffy.toString());
 		log.trace("Using extension point pattern: {}", extensionPointSuffixPattern);
 	}
 
 	static boolean isExtensionPointName(String name) {
-		if (name.indexOf("Test$") > 0 || name.endsWith("Test")) {
-			return false;
-		}
-		int packageIndex = name.lastIndexOf('.');
-		int innerClassIndex = name.lastIndexOf('$');
-		int maximumIndex = StrictMath.max(packageIndex, innerClassIndex);
-		if (maximumIndex > 0) {
-			name = name.substring(maximumIndex + 1);
-		}
-		return extensionPointSuffixPattern.matcher(name).matches();
+		return getExtensionPointName(name) != null;
 	}
 
 	private static void fireClassListChanged() {

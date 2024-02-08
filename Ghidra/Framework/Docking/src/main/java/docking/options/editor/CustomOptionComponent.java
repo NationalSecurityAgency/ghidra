@@ -27,7 +27,6 @@ import ghidra.util.layout.HorizontalLayout;
 public class CustomOptionComponent extends GenericOptionsComponent {
 
 	protected CustomOptionComponent(EditorState editorState) {
-		super(editorState);
 
 		// this layout allows us to easily left-align the single component in this container
 		setLayout(new HorizontalLayout(0));

@@ -36,8 +36,7 @@ public class DataTypeNamingUtil {
 	 * @throws IllegalArgumentException if generated name contains unsupported characters
 	 */
 	public static String setMangledAnonymousFunctionName(
-			FunctionDefinitionDataType functionDefinition)
-			throws IllegalArgumentException {
+			FunctionDefinitionDataType functionDefinition) throws IllegalArgumentException {
 
 		DataType returnType = functionDefinition.getReturnType();
 		ParameterDefinition[] parameters = functionDefinition.getArguments();
@@ -49,7 +48,7 @@ public class DataTypeNamingUtil {
 		}
 
 		String convention = functionDefinition.getCallingConventionName();
-		if (convention != null && !Function.UNKNOWN_CALLING_CONVENTION_STRING.equals(convention)) {
+		if (!Function.UNKNOWN_CALLING_CONVENTION_STRING.equals(convention)) {
 			sb.append("_").append(convention);
 		}
 

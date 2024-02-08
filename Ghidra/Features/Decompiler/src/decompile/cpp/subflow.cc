@@ -2017,7 +2017,7 @@ bool SplitDatatype::testCopyConstraints(PcodeOp *copyOp)
 
 /// \brief If the given Varnode is an extended precision constant, create split constants
 ///
-/// Look for ZEXT(#c) and CONCAT(#c1,#c2) forms. Try to split into single precision Varnodes.
+/// Look for ZEXT(c) and CONCAT(c1,c2) forms. Try to split into single precision Varnodes.
 /// \param vn is the given Varnode
 /// \param inVarnodes will contain the split constant Varnodes
 /// \return \b true if the Varnode is an extended precision constant and the split is successful
@@ -2085,11 +2085,11 @@ bool SplitDatatype::generateConstants(Varnode *vn,vector<Varnode *> &inVarnodes)
 /// based on the input offsets in \b dataTypePieces.
 /// \param rootVn is the given root constant
 /// \param inVarnodes is the container for the new Varnodes
-void SplitDatatype::buildInConstants(Varnode *rootVn,vector<Varnode *> &inVarnodes)
+/// \param bigEndian is \b true if the output address space is big endian
+void SplitDatatype::buildInConstants(Varnode *rootVn,vector<Varnode *> &inVarnodes,bool bigEndian)
 
 {
   uintb baseVal = rootVn->getOffset();
-  bool bigEndian = rootVn->getSpace()->isBigEndian();
   for(int4 i=0;i<dataTypePieces.size();++i) {
     Datatype *dt = dataTypePieces[i].inType;
     int4 off = dataTypePieces[i].offset;
@@ -2138,7 +2138,7 @@ void SplitDatatype::buildInSubpieces(Varnode *rootVn,PcodeOp *followOp,vector<Va
 /// Extract different pieces from the given root based on the offsets and
 /// output data-types in \b dataTypePieces.
 /// \param rootVn is the given root Varnode
-/// \param inVarnodes is the container for the new Varnodes
+/// \param outVarnodes is the container for the new Varnodes
 void SplitDatatype::buildOutVarnodes(Varnode *rootVn,vector<Varnode *> &outVarnodes)
 
 {
@@ -2344,7 +2344,7 @@ bool SplitDatatype::splitCopy(PcodeOp *copyOp,Datatype *inType,Datatype *outType
   vector<Varnode *> inVarnodes;
   vector<Varnode *> outVarnodes;
   if (inVn->isConstant())
-    buildInConstants(inVn,inVarnodes);
+    buildInConstants(inVn,inVarnodes,outVn->getSpace()->isBigEndian());
   else
     buildInSubpieces(inVn,copyOp,inVarnodes);
   buildOutVarnodes(outVn,outVarnodes);
@@ -2459,9 +2459,10 @@ bool SplitDatatype::splitStore(PcodeOp *storeOp,Datatype *outType)
       return false;
   }
 
+  AddrSpace *storeSpace = storeOp->getIn(0)->getSpaceFromConst();
   vector<Varnode *> inVarnodes;
   if (inVn->isConstant())
-    buildInConstants(inVn,inVarnodes);
+    buildInConstants(inVn,inVarnodes,storeSpace->isBigEndian());
   else if (loadOp != (PcodeOp *)0) {
     vector<Varnode *> loadPtrs;
     buildPointers(loadRoot.pointer, loadRoot.ptrType, loadRoot.baseOffset, loadOp, loadPtrs, true);
@@ -2483,7 +2484,6 @@ bool SplitDatatype::splitStore(PcodeOp *storeOp,Datatype *outType)
 
   vector<Varnode *> storePtrs;
   buildPointers(storeRoot.pointer, storeRoot.ptrType, storeRoot.baseOffset, storeOp, storePtrs, false);
-  AddrSpace *storeSpace = storeOp->getIn(0)->getSpaceFromConst();
   // Preserve original STORE object, so that INDIRECT references are still valid
   // but convert it into the first of the smaller STOREs
   data.opSetInput(storeOp,storePtrs[0],1);

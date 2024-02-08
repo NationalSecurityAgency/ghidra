@@ -35,7 +35,7 @@ public interface DbgModelTargetResumable extends DbgModelTargetObject, TargetRes
 	public default CompletableFuture<Void> resume() {
 		DbgProcess process = getManager().getCurrentProcess();
 		if (process == null) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return getModel().gateFuture(process.cont());
 	}

@@ -16,7 +16,7 @@
 package generic.application;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
@@ -59,9 +59,9 @@ public class GenericApplicationLayout extends ApplicationLayout {
 	 *
 	 * @param name The name of the application.
 	 * @param version The version of the application.
-	 * @throws FileNotFoundException if there was a problem getting a user directory.
+	 * @throws IOException if there was a problem getting a user directory.
 	 */
-	public GenericApplicationLayout(String name, String version) throws FileNotFoundException {
+	public GenericApplicationLayout(String name, String version) throws IOException {
 		this(new ApplicationProperties(name, version, NO_RELEASE_NAME));
 	}
 
@@ -70,10 +70,10 @@ public class GenericApplicationLayout extends ApplicationLayout {
 	 * properties.  The default Ghidra application root directory(s) will be used.
 	 *
 	 * @param applicationProperties The properties object that will be read system properties.
-	 * @throws FileNotFoundException if there was a problem getting a user directory.
+	 * @throws IOException if there was a problem getting a user directory.
 	 */
 	public GenericApplicationLayout(ApplicationProperties applicationProperties)
-			throws FileNotFoundException {
+			throws IOException {
 		this(getDefaultApplicationRootDirs(), applicationProperties);
 	}
 
@@ -85,10 +85,10 @@ public class GenericApplicationLayout extends ApplicationLayout {
 	 * used to identify modules and resources.  The first entry will be treated as the
 	 * installation root.
 	 * @param applicationProperties The properties object that will be read system properties.
-	 * @throws FileNotFoundException if there was a problem getting a user directory.
+	 * @throws IOException if there was a problem getting a user directory.
 	 */
 	public GenericApplicationLayout(Collection<ResourceFile> applicationRootDirs,
-			ApplicationProperties applicationProperties) throws FileNotFoundException {
+			ApplicationProperties applicationProperties) throws IOException {
 
 		this.applicationProperties = Objects.requireNonNull(applicationProperties);
 		this.applicationRootDirs = applicationRootDirs;
@@ -117,9 +117,12 @@ public class GenericApplicationLayout extends ApplicationLayout {
 		modules = Collections.unmodifiableMap(allModules);
 
 		// User directories
-		userTempDir = ApplicationUtilities.getDefaultUserTempDir(applicationProperties);
+		userTempDir =
+			ApplicationUtilities.getDefaultUserTempDir(applicationProperties.getApplicationName());
 		userSettingsDir = ApplicationUtilities.getDefaultUserSettingsDir(applicationProperties,
 			applicationInstallationDir);
+
+		extensionInstallationDirs = Collections.emptyList();
 	}
 
 	protected Collection<ResourceFile> getAdditionalApplicationRootDirs(

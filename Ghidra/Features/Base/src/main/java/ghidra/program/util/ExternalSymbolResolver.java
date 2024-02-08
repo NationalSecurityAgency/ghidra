@@ -67,9 +67,9 @@ public class ExternalSymbolResolver {
 	public static void fixUnresolvedExternalSymbols(List<Loaded<Program>> loadedPrograms,
 			boolean fixAll, MessageLog messageLog, TaskMonitor monitor)
 			throws CancelledException, IOException {
-		Map<String, Loaded<Program>> loadedByName = loadedPrograms.stream()
-				.collect(
-					Collectors.toMap(loaded -> loaded.getName(), loaded -> loaded));
+		Map<String, Loaded<Program>> loadedByPath = loadedPrograms.stream()
+				.collect(Collectors.toMap(
+					loaded -> loaded.getProjectFolderPath() + loaded.getName(), loaded -> loaded));
 
 		List<Loaded<Program>> fixupList =
 			loadedPrograms.subList(0, fixAll ? loadedPrograms.size() : 1);
@@ -101,8 +101,8 @@ public class ExternalSymbolResolver {
 					if (libPath == null) {
 						continue;
 					}
-
-					Loaded<Program> loadedLib = loadedByName.get(libName);
+					
+					Loaded<Program> loadedLib = loadedByPath.get(libPath);
 					if (loadedLib == null) {
 						messageLog.appendMsg("Referenced external program not found: " + libName);
 						continue;

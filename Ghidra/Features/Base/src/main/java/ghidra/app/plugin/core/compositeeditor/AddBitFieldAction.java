@@ -35,7 +35,7 @@ public class AddBitFieldAction extends CompositeEditorTableAction {
 	private static String[] POPUP_PATH = new String[] { ACTION_NAME };
 
 	public AddBitFieldAction(CompositeEditorProvider provider) {
-		super(provider, EDIT_ACTION_PREFIX + ACTION_NAME, GROUP_NAME, POPUP_PATH, null, null);
+		super(provider, ACTION_NAME, GROUP_NAME, POPUP_PATH, null, null);
 		setDescription(DESCRIPTION);
 		if (!(model instanceof CompEditorModel)) {
 			throw new AssertException("unsupported use");

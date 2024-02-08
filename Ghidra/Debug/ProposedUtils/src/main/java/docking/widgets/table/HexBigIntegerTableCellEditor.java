@@ -52,6 +52,7 @@ public class HexBigIntegerTableCellEditor extends AbstractCellEditor implements 
 		input.setHexMode();
 		input.setAllowsHexPrefix(false);
 		input.setShowNumberMode(true);
+		input.setHorizontalAlignment(JTextField.RIGHT);
 
 		if (value != null) {
 			input.setValue((BigInteger) value);

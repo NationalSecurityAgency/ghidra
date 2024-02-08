@@ -318,6 +318,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 		return dwm.getActiveWindow();
 	}
 
+	@Override
 	public List<DockingActionIf> getActions() {
 		List<DockingActionIf> list = new ArrayList<>(actions.size());
 		for (ActionData actionData : actions) {

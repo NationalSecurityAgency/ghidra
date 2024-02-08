@@ -15,9 +15,11 @@
  */
 package ghidra.feature.vt.gui.provider.matchtable;
 
+import static ghidra.feature.vt.api.impl.VTEvent.*;
 import static ghidra.feature.vt.gui.actions.TableSelectionTrackingState.*;
 import static ghidra.feature.vt.gui.plugin.VTPlugin.*;
 import static ghidra.feature.vt.gui.util.VTOptionDefines.*;
+import static ghidra.framework.model.DomainObjectEvent.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -32,7 +34,7 @@ import javax.swing.table.*;
 import docking.*;
 import docking.widgets.table.*;
 import docking.widgets.table.threaded.ThreadedTableModel;
-import ghidra.feature.vt.api.impl.VTChangeManager;
+import ghidra.feature.vt.api.impl.VTEvent;
 import ghidra.feature.vt.api.impl.VersionTrackingChangeRecord;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.gui.actions.*;
@@ -146,6 +148,8 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		updateFilterDisplay();
 
 		setTableSelecionState(saveState);
+
+		refilter();
 	}
 
 	private void setTableSelecionState(SaveState saveState) {
@@ -229,6 +233,10 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 	private VTMatchTableModel createTableModel() {
 		matchesTableModel = new VTMatchTableModel(controller);
 		matchesTableModel.addTableModelListener(e -> {
+			if (matchesTable == null) {
+				return; // we've been disposed
+			}
+
 			int filteredCount = matchesTableModel.getRowCount();
 			int unfilteredCount = matchesTableModel.getUnfilteredRowCount();
 
@@ -483,8 +491,7 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 			return;
 		}
 
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED) ||
-			ev.containsEvent(VTChangeManager.DOCR_VT_MATCH_SET_ADDED)) {// save some work
+		if (ev.contains(RESTORED, MATCH_SET_ADDED)) {// save some work
 			saveComplexSelectionUpdate();
 			reload();
 			return;
@@ -493,25 +500,25 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		boolean matchesContextChanged = false;
 		for (int i = 0; i < ev.numRecords(); i++) {
 			DomainObjectChangeRecord doRecord = ev.getChangeRecord(i);
-			int eventType = doRecord.getEventType();
+			EventType eventType = doRecord.getEventType();
 
-			if (eventType == VTChangeManager.DOCR_VT_ASSOCIATION_STATUS_CHANGED ||
-				eventType == VTChangeManager.DOCR_VT_ASSOCIATION_MARKUP_STATUS_CHANGED) {
+			if (eventType == ASSOCIATION_STATUS_CHANGED ||
+				eventType == VTEvent.ASSOCIATION_MARKUP_STATUS_CHANGED) {
 
 				updateWithoutFullReload();
 				matchesContextChanged = true;
 				saveComplexSelectionUpdate();
 			}
-			else if (eventType == VTChangeManager.DOCR_VT_MATCH_TAG_CHANGED) {
+			else if (eventType == VTEvent.MATCH_TAG_CHANGED) {
 				updateWithoutFullReload();
 				matchesContextChanged = true;
 			}
-			else if (eventType == VTChangeManager.DOCR_VT_MATCH_ADDED) {
+			else if (eventType == VTEvent.MATCH_ADDED) {
 				VersionTrackingChangeRecord vtRecord = (VersionTrackingChangeRecord) doRecord;
 				matchesTableModel.addObject((VTMatch) vtRecord.getNewValue());
 				matchesContextChanged = true;
 			}
-			else if (eventType == VTChangeManager.DOCR_VT_MATCH_DELETED) {
+			else if (eventType == VTEvent.MATCH_DELETED) {
 				VersionTrackingChangeRecord vtRecord = (VersionTrackingChangeRecord) doRecord;
 				matchesTableModel.removeObject((VTMatch) vtRecord.getObject());
 				matchesContextChanged = true;
@@ -702,10 +709,101 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 				.setOptionsHelpLocation(
 					new HelpLocation("VersionTracking", "Apply Markup Options"));
 
+		// Auto VT options
+
+		// put checkboxes to determine which correlators to run during auto VT
+		vtOptions.registerOption(CREATE_IMPLIED_MATCHES_OPTION, true, null,
+			"Create Implied Matches when AutoVT correlators apply function matches.");
+		vtOptions.registerOption(RUN_EXACT_DATA_OPTION, true, null,
+			"Run the Exact Data Correlator");
+		vtOptions.registerOption(RUN_EXACT_SYMBOL_OPTION, true, null,
+			"Run the Exact Symbol Correlator");
+		vtOptions.registerOption(RUN_EXACT_FUNCTION_BYTES_OPTION, true, null,
+			"Run the Exact Function Bytes Correlator");
+		vtOptions.registerOption(RUN_EXACT_FUNCTION_INST_OPTION, true, null,
+			"Run the Exact Function Instruction Bytes and Mnemonics Correlators");
+		vtOptions.registerOption(RUN_DUPE_FUNCTION_OPTION, true, null,
+			"Run the Duplicate Function Instruction Correlator");
+		vtOptions.registerOption(RUN_REF_CORRELATORS_OPTION, true, null,
+			"Run the Reference Correlators");
+
+		// set help for the sub categories
+
+		vtOptions.getOptions(AUTO_VT_OPTIONS_NAME + "." + AUTO_VT_IMPLIED_MATCH_CORRELATOR)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.getOptions(AUTO_VT_OPTIONS_NAME + "." + AUTO_VT_SYMBOL_CORRELATOR)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.getOptions(AUTO_VT_OPTIONS_NAME + "." + AUTO_VT_DATA_CORRELATOR)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.getOptions(AUTO_VT_OPTIONS_NAME + "." + AUTO_VT_EXACT_FUNCTION_CORRELATORS)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.getOptions(AUTO_VT_OPTIONS_NAME + "." + AUTO_VT_DUPLICATE_FUNCTION_CORRELATOR)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.getOptions(AUTO_VT_OPTIONS_NAME + "." + AUTO_VT_REFERENCE_CORRELATORS)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		// create sub options for each auto VT correlator
+		vtOptions.registerOption(APPLY_IMPLIED_MATCHES_OPTION, true, null,
+			"Apply implied matches if minimum vote count is met and maximum conflict count is not exceeded.");
+		vtOptions.registerOption(MIN_VOTES_OPTION, 2, null,
+			"The minimum number of votes needed to apply an implied match.");
+		vtOptions.registerOption(MAX_CONFLICTS_OPTION, 0, null,
+			"The maximum number of conflicts allowed to apply an implied match.");
+
+		vtOptions.registerOption(SYMBOL_CORRELATOR_MIN_LEN_OPTION, 3, null,
+			"Minimum Symbol Name Length of Auto Version Tracking Symbol Correlator");
+		vtOptions.getOptions(SYMBOL_CORRELATOR_MIN_LEN_OPTION)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.registerOption(DATA_CORRELATOR_MIN_LEN_OPTION, 5, null,
+			"Minimum Data Length of Auto Version Tracking Data Correlator");
+		vtOptions.getOptions(DATA_CORRELATOR_MIN_LEN_OPTION)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.registerOption(FUNCTION_CORRELATOR_MIN_LEN_OPTION, 10, null,
+			"Minimum Function Length of Auto Version Tracking Duplicate Function Correlator");
+		vtOptions.getOptions(FUNCTION_CORRELATOR_MIN_LEN_OPTION)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.registerOption(DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION, 10, null,
+			"Minimum Function Length of Auto Version Tracking Duplicate Function Correlator");
+		vtOptions.getOptions(DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.registerOption(REF_CORRELATOR_MIN_SCORE_OPTION, 0.95, null,
+			"Minimum Score of all Auto Version Tracking Reference Function Correlators (Data, Function, and Combined Function and Data)");
+		vtOptions.getOptions(REF_CORRELATOR_MIN_SCORE_OPTION)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
+		vtOptions.registerOption(REF_CORRELATOR_MIN_CONF_OPTION, 10.0, null,
+			"Minimum Confidence of all Auto Version Tracking Reference Function Correlator (Data, Function, and Combined Function and Data)");
+		vtOptions.getOptions(REF_CORRELATOR_MIN_CONF_OPTION)
+				.setOptionsHelpLocation(
+					new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options"));
+
 		HelpLocation applyOptionsHelpLocation =
 			new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Version_Tracking_Apply_Options");
 		HelpLocation applyMatchOptionsHelpLocation =
 			new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Match_Apply_Options");
+
+		HelpLocation autoVTHelpLocation =
+			new HelpLocation(VTPlugin.HELP_TOPIC_NAME, "Auto_Version_Tracking_Options");
 
 		vtOptions.setOptionsHelpLocation(applyOptionsHelpLocation);
 
@@ -714,6 +812,9 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 
 		vtOptions.getOptions(APPLY_MARKUP_OPTIONS_NAME)
 				.setOptionsHelpLocation(applyMatchOptionsHelpLocation);
+
+		vtOptions.setOptionsHelpLocation(autoVTHelpLocation);
+		vtOptions.getOptions(AUTO_VT_OPTIONS_NAME).setOptionsHelpLocation(autoVTHelpLocation);
 	}
 
 //==================================================================================================

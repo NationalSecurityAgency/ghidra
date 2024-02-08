@@ -15,7 +15,8 @@
  */
 package ghidra.app.plugin.core.string.translate;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import docking.action.DockingAction;
 import ghidra.app.CorePluginPackage;
@@ -41,6 +42,7 @@ import ghidra.program.model.listing.Data;
 //@formatter:on
 
 public class TranslateStringsPlugin extends Plugin {
+
 	private List<DockingAction> translationActions = new ArrayList<>();
 	private List<StringTranslationService> translationServices = new ArrayList<>();
 
@@ -51,7 +53,7 @@ public class TranslateStringsPlugin extends Plugin {
 
 	@Override
 	protected void init() {
-		createTranslateActions();
+		createTranslateActions(StringTranslationService.getCurrentStringTranslationServices(tool));
 		createTranslateMetaActions();
 	}
 
@@ -67,25 +69,23 @@ public class TranslateStringsPlugin extends Plugin {
 
 	private void createTranslateActionsIfNeeded() {
 		List<StringTranslationService> newServices =
-			new ArrayList<>(Arrays.asList(tool.getServices(StringTranslationService.class)));
+			StringTranslationService.getCurrentStringTranslationServices(tool);
 		boolean isSame = newServices.containsAll(translationServices) &&
 			translationServices.containsAll(newServices);
 
 		if (!isSame) {
-			createTranslateActions();
+			createTranslateActions(newServices);
 		}
 	}
 
-	private void createTranslateActions() {
+	private void createTranslateActions(List<StringTranslationService> newServices) {
 		for (DockingAction prevAction : translationActions) {
 			tool.removeAction(prevAction);
 		}
 		translationActions.clear();
 		translationServices.clear();
 
-		translationServices.addAll(Arrays.asList(tool.getServices(StringTranslationService.class)));
-		Collections.sort(translationServices,
-			(s1, s2) -> s1.getTranslationServiceName().compareTo(s2.getTranslationServiceName()));
+		translationServices.addAll(newServices);
 
 		for (StringTranslationService service : translationServices) {
 			DockingAction action = new TranslateAction(getName(), service);

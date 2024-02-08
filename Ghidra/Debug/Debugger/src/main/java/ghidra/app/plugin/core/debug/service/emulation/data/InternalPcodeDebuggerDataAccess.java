@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.service.emulation.data;
 
-import ghidra.app.services.TraceRecorder;
+import ghidra.debug.api.target.Target;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.lifecycle.Internal;
 import ghidra.pcode.exec.trace.data.InternalPcodeTraceDataAccess;
@@ -25,16 +25,16 @@ import ghidra.trace.model.TraceTimeViewport;
 public interface InternalPcodeDebuggerDataAccess extends InternalPcodeTraceDataAccess {
 	PluginTool getTool();
 
-	TraceRecorder getRecorder();
+	Target getTarget();
 
 	default boolean isLive() {
-		TraceRecorder recorder = getRecorder();
-		if (recorder == null || !recorder.isRecording()) {
+		Target target = getTarget();
+		if (target == null || !target.isValid()) {
 			return false;
 		}
 		TraceTimeViewport viewport = getViewport();
 		for (long s : viewport.getReversedSnaps()) {
-			if (recorder.getSnap() == s) {
+			if (target.getSnap() == s) {
 				return true;
 			}
 		}

@@ -32,13 +32,13 @@ import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.*;
 import ghidra.trace.model.guest.*;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.symbol.*;
 import ghidra.trace.model.target.*;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.Msg;
 
 public enum DBTraceObjectRegisterSupport {
@@ -47,10 +47,10 @@ public enum DBTraceObjectRegisterSupport {
 
 	private static final TraceDomainObjectListener HANDLER = new TraceDomainObjectListener() {
 		{
-			listenFor(TraceObjectChangeType.VALUE_CREATED, INSTANCE::objectValueCreated);
-			listenFor(TraceSymbolChangeType.ADDED, INSTANCE::symbolAdded);
-			listenFor(TraceOverlaySpaceChangeType.ADDED, INSTANCE::spaceAdded);
-			listenFor(TracePlatformChangeType.MAPPING_ADDED, INSTANCE::guestMappingAdded);
+			listenFor(TraceEvents.VALUE_CREATED, INSTANCE::objectValueCreated);
+			listenFor(TraceEvents.SYMBOL_ADDED, INSTANCE::symbolAdded);
+			listenFor(TraceEvents.OVERLAY_ADDED, INSTANCE::spaceAdded);
+			listenFor(TraceEvents.PLATFORM_MAPPING_ADDED, INSTANCE::guestMappingAdded);
 		}
 	};
 

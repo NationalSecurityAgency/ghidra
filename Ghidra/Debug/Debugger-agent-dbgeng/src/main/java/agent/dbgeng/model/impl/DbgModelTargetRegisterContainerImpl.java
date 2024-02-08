@@ -32,6 +32,7 @@ import ghidra.dbg.target.TargetRegisterBank;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 import ghidra.dbg.util.ConversionUtils;
+import ghidra.docking.settings.FormatSettingsDefinition;
 
 @TargetObjectSchemaInfo(
 	name = "RegisterContainer",
@@ -112,7 +113,7 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 			if (regs.size() != registersByName.size() || getCachedElements().isEmpty()) {
 				return requestElements(RefreshBehavior.REFRESH_NEVER);
 			}
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}).thenCompose(__ -> {
 			Set<DbgRegister> toRead = new LinkedHashSet<>();
 			for (String regname : names) {
@@ -162,7 +163,7 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 			return thread.writeRegisters(toWrite);
 			// TODO: Should probably filter only effective and normalized writes in the callback
 		}).thenAccept(__ -> {
-			manager.getEventListeners().fire.threadStateChanged(thread, thread.getState(),
+			manager.getEventListeners().invoke().threadStateChanged(thread, thread.getState(),
 				DbgCause.Causes.UNCLAIMED, DbgReason.Reasons.NONE);
 			broadcast().registersUpdated(getProxy(), values);
 		}));
@@ -170,7 +171,13 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 
 	private void changeAttrs(DbgModelTargetRegister reg, BigInteger value) {
 		String oldval = (String) reg.getCachedAttributes().get(VALUE_ATTRIBUTE_NAME);
-		String valstr = Long.toUnsignedString(value.longValue(), 16);  //value.toString(16);
+		int bitLength = reg.getBitLength();
+		boolean negative = value.signum() < 0;
+		if (negative) {
+			// force use of unsigned value
+			value = value.add(BigInteger.valueOf(2).pow(bitLength));
+		}
+		String valstr = value.toString(16);
 		String newval = (value.longValue() == 0) ? reg.getName()
 				: reg.getName() + " : " + valstr;
 		reg.changeAttributes(List.of(), Map.of( //

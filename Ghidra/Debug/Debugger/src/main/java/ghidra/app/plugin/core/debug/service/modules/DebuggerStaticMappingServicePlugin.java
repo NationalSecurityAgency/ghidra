@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.service.modules;
 
+import java.io.FileNotFoundException;
 import java.net.URL;
 import java.util.*;
 import java.util.Map.Entry;
@@ -33,11 +34,12 @@ import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingProposals.ModuleMapProposalGenerator;
 import ghidra.app.plugin.core.debug.utils.*;
 import ghidra.app.services.*;
-import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
-import ghidra.app.services.RegionMapProposal.RegionMapEntry;
-import ghidra.app.services.SectionMapProposal.SectionMapEntry;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
+import ghidra.debug.api.modules.*;
+import ghidra.debug.api.modules.ModuleMapProposal.ModuleMapEntry;
+import ghidra.debug.api.modules.RegionMapProposal.RegionMapEntry;
+import ghidra.debug.api.modules.SectionMapProposal.SectionMapEntry;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
@@ -49,10 +51,10 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceStaticMappingChangeType;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.program.TraceProgramView;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.exception.CancelledException;
@@ -64,19 +66,10 @@ import ghidra.util.task.TaskMonitor;
 	category = PluginCategoryNames.DEBUGGER,
 	packageName = DebuggerPluginPackage.NAME,
 	status = PluginStatus.RELEASED,
-	eventsConsumed = {
-		ProgramOpenedPluginEvent.class,
-		ProgramClosedPluginEvent.class,
-		TraceOpenedPluginEvent.class,
-		TraceClosedPluginEvent.class,
-	},
-	servicesRequired = {
-		ProgramManager.class,
-		DebuggerTraceManagerService.class,
-	},
-	servicesProvided = {
-		DebuggerStaticMappingService.class,
-	})
+	eventsConsumed = { ProgramOpenedPluginEvent.class, ProgramClosedPluginEvent.class,
+		TraceOpenedPluginEvent.class, TraceClosedPluginEvent.class, },
+	servicesRequired = { ProgramManager.class, DebuggerTraceManagerService.class, },
+	servicesProvided = { DebuggerStaticMappingService.class, })
 public class DebuggerStaticMappingServicePlugin extends Plugin
 		implements DebuggerStaticMappingService, DomainFolderChangeAdapter {
 
@@ -228,9 +221,9 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		public InfoPerTrace(Trace trace) {
 			this.trace = trace;
 
-			listenForUntyped(DomainObject.DO_OBJECT_RESTORED, e -> objectRestored());
-			listenFor(TraceStaticMappingChangeType.ADDED, this::staticMappingAdded);
-			listenFor(TraceStaticMappingChangeType.DELETED, this::staticMappingDeleted);
+			listenForUntyped(DomainObjectEvent.RESTORED, e -> objectRestored());
+			listenFor(TraceEvents.MAPPING_ADDED, this::staticMappingAdded);
+			listenFor(TraceEvents.MAPPING_DELETED, this::staticMappingDeleted);
 
 			trace.addListener(this);
 
@@ -418,7 +411,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 
 		@Override
 		public void domainObjectChanged(DomainObjectChangedEvent ev) {
-			if (ev.containsEvent(DomainObject.DO_DOMAIN_FILE_CHANGED)) {
+			if (ev.contains(DomainObjectEvent.FILE_CHANGED)) {
 				// TODO: This seems like overkill
 				programClosed(program);
 				programOpened(program);
@@ -459,8 +452,8 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 
 		public Set<TraceLocation> getOpenMappedTraceLocations(Address address) {
 			Set<TraceLocation> result = new HashSet<>();
-			for (Entry<MappingEntry, Address> inPreceding : inbound.headMapByValue(address,
-				true).entrySet()) {
+			for (Entry<MappingEntry, Address> inPreceding : inbound.headMapByValue(address, true)
+					.entrySet()) {
 				Address start = inPreceding.getValue();
 				if (start == null) {
 					continue;
@@ -476,8 +469,8 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 
 		public TraceLocation getOpenMappedTraceLocation(Trace trace, Address address, long snap) {
 			// TODO: Map by trace?
-			for (Entry<MappingEntry, Address> inPreceding : inbound.headMapByValue(address,
-				true).entrySet()) {
+			for (Entry<MappingEntry, Address> inPreceding : inbound.headMapByValue(address, true)
+					.entrySet()) {
 				Address start = inPreceding.getValue();
 				if (start == null) {
 					continue;
@@ -499,8 +492,9 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 
 		protected void collectOpenMappedViews(AddressRange rng,
 				Map<TraceSpan, Collection<MappedAddressRange>> result) {
-			for (Entry<MappingEntry, Address> inPreceeding : inbound.headMapByValue(
-				rng.getMaxAddress(), true).entrySet()) {
+			for (Entry<MappingEntry, Address> inPreceeding : inbound
+					.headMapByValue(rng.getMaxAddress(), true)
+					.entrySet()) {
 				Address start = inPreceeding.getValue();
 				if (start == null) {
 					continue;
@@ -542,7 +536,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	private final AsyncDebouncer<Void> changeDebouncer =
 		new AsyncDebouncer<>(AsyncTimer.DEFAULT_TIMER, 100);
 	private final ListenerSet<DebuggerStaticMappingChangeListener> changeListeners =
-		new ListenerSet<>(DebuggerStaticMappingChangeListener.class);
+		new ListenerSet<>(DebuggerStaticMappingChangeListener.class, true);
 	private Set<Trace> affectedTraces = new HashSet<>();
 	private Set<Program> affectedPrograms = new HashSet<>();
 
@@ -574,7 +568,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			affectedTraces = new HashSet<>();
 			affectedPrograms = new HashSet<>();
 		}
-		changeListeners.fire.mappingsChanged(traces, programs);
+		changeListeners.invoke().mappingsChanged(traces, programs);
 	}
 
 	private void traceAffected(Trace trace) {
@@ -656,8 +650,8 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 				return;
 			}
 			// NB. The URL may have changed, so can't use that as key
-			for (Iterator<InfoPerProgram> it =
-				trackedProgramInfo.values().iterator(); it.hasNext();) {
+			for (Iterator<InfoPerProgram> it = trackedProgramInfo.values().iterator(); it
+					.hasNext();) {
 				InfoPerProgram info = it.next();
 				if (info.program == program) {
 					it.remove();
@@ -795,8 +789,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			}
 		}
 		for (Map.Entry<Program, List<ModuleMapEntry>> ent : entriesByProgram.entrySet()) {
-			try (Transaction tx =
-				ent.getKey().openTransaction("Memorize module mapping")) {
+			try (Transaction tx = ent.getKey().openTransaction("Memorize module mapping")) {
 				for (ModuleMapEntry entry : ent.getValue()) {
 					ProgramModuleIndexer.addModulePaths(entry.getToProgram(),
 						List.of(entry.getModule().getName()));
@@ -969,8 +962,11 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 		Set<Program> result = new HashSet<>();
 		for (URL url : urls) {
 			try {
-				Program program = ProgramURLUtils.openHackedUpGhidraURL(programManager,
+				Program program = ProgramURLUtils.openDomainFileFromOpenProject(programManager,
 					tool.getProject(), url, ProgramManager.OPEN_VISIBLE);
+				if (program == null) {
+					failures.add(new FileNotFoundException(url.toString()));
+				}
 				result.add(program);
 			}
 			catch (Exception e) {

@@ -18,7 +18,6 @@ package ghidra.framework.data;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -27,7 +26,9 @@ import ghidra.framework.model.*;
 import ghidra.framework.store.FileSystem;
 import ghidra.framework.store.LockException;
 import ghidra.util.Lock;
+import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
+import ghidra.util.datastruct.ListenerSet;
 
 /**
  * An abstract class that provides default behavior for DomainObject(s), specifically it handles
@@ -37,13 +38,12 @@ public abstract class DomainObjectAdapter implements DomainObject {
 
 	protected final static String DEFAULT_NAME = "untitled";
 
-	private static Class<?> defaultDomainObjClass; // Domain object implementation mapped to unknown content type
 	private static HashMap<String, ContentHandler<?>> contentHandlerTypeMap; // maps content-type string to handler
 	private static HashMap<Class<?>, ContentHandler<?>> contentHandlerClassMap; // maps domain object class to handler
 	private static ChangeListener contentHandlerUpdateListener = new ChangeListener() {
 		@Override
 		public void stateChanged(ChangeEvent e) {
-			getContentHandlers();
+			initContentHandlerMaps();
 		}
 	};
 
@@ -54,8 +54,11 @@ public abstract class DomainObjectAdapter implements DomainObject {
 	protected Map<EventQueueID, DomainObjectChangeSupport> changeSupportMap =
 		new ConcurrentHashMap<EventQueueID, DomainObjectChangeSupport>();
 	private volatile boolean eventsEnabled = true;
-	private Set<DomainObjectClosedListener> closeListeners =
-		new CopyOnWriteArraySet<DomainObjectClosedListener>();
+
+	private ListenerSet<DomainObjectClosedListener> closeListeners =
+		new ListenerSet<>(DomainObjectClosedListener.class, false);
+	private ListenerSet<DomainObjectFileListener> fileChangeListeners =
+		new ListenerSet<>(DomainObjectFileListener.class, false);
 
 	private ArrayList<Object> consumers;
 	protected Map<String, String> metadata = new LinkedHashMap<String, String>();
@@ -153,7 +156,7 @@ public abstract class DomainObjectAdapter implements DomainObject {
 			name = newName;
 			changed = true;
 		}
-		fireEvent(new DomainObjectChangeRecord(DO_OBJECT_RENAMED));
+		fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.RENAMED));
 	}
 
 	private void clearDomainObj() {
@@ -186,10 +189,15 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		if (df == null) {
 			throw new IllegalArgumentException("DomainFile must not be null");
 		}
+		if (df == domainFile) {
+			return;
+		}
 		clearDomainObj();
 		DomainFile oldDf = domainFile;
 		domainFile = df;
-		fireEvent(new DomainObjectChangeRecord(DO_DOMAIN_FILE_CHANGED, oldDf, df));
+		fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.FILE_CHANGED, oldDf, df));
+		fileChangeListeners.invoke().domainFileChanged(this);
+
 	}
 
 	protected void close() {
@@ -205,13 +213,7 @@ public abstract class DomainObjectAdapter implements DomainObject {
 			queue.dispose();
 		}
 
-		notifyCloseListeners();
-	}
-
-	private void notifyCloseListeners() {
-		for (DomainObjectClosedListener listener : closeListeners) {
-			listener.domainObjectClosed();
-		}
+		closeListeners.invoke().domainObjectClosed(this);
 		closeListeners.clear();
 	}
 
@@ -250,6 +252,16 @@ public abstract class DomainObjectAdapter implements DomainObject {
 	@Override
 	public void removeCloseListener(DomainObjectClosedListener listener) {
 		closeListeners.remove(listener);
+	}
+
+	@Override
+	public void addDomainFileListener(DomainObjectFileListener listener) {
+		fileChangeListeners.add(listener);
+	}
+
+	@Override
+	public void removeDomainFileListener(DomainObjectFileListener listener) {
+		fileChangeListeners.remove(listener);
 	}
 
 	@Override
@@ -302,7 +314,8 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		if (eventsEnabled != v) {
 			eventsEnabled = v;
 			if (eventsEnabled) {
-				DomainObjectChangeRecord docr = new DomainObjectChangeRecord(DO_OBJECT_RESTORED);
+				DomainObjectChangeRecord docr =
+					new DomainObjectChangeRecord(DomainObjectEvent.RESTORED);
 				docs.fireEvent(docr);
 				for (DomainObjectChangeSupport queue : changeSupportMap.values()) {
 					queue.fireEvent(docr);
@@ -334,18 +347,11 @@ public abstract class DomainObjectAdapter implements DomainObject {
 
 	@Override
 	public boolean addConsumer(Object consumer) {
-		if (consumer == null) {
-			throw new IllegalArgumentException("Consumer must not be null");
-		}
+		Objects.requireNonNull(consumer);
 
 		synchronized (consumers) {
 			if (isClosed()) {
 				return false;
-			}
-
-			if (consumers.contains(consumer)) {
-				throw new IllegalArgumentException("Attempted to acquire the " +
-					"domain object more than once by the same consumer: " + consumer);
 			}
 			consumers.add(consumer);
 		}
@@ -360,18 +366,7 @@ public abstract class DomainObjectAdapter implements DomainObject {
 	}
 
 	/**
-	 * Returns true if the this file is used only by the given consumer
-	 * @param consumer the consumer
-	 * @return true if the this file is used only by the given consumer
-	 */
-	boolean isUsedExclusivelyBy(Object consumer) {
-		synchronized (consumers) {
-			return (consumers.size() == 1) && (consumers.contains(consumer));
-		}
-	}
-
-	/**
-	 * Returns true if the given tool is using this object.
+	 * Returns true if the given consumer is using this object.
 	 */
 	@Override
 	public boolean isUsedBy(Object consumer) {
@@ -388,33 +383,14 @@ public abstract class DomainObjectAdapter implements DomainObject {
 	}
 
 	/**
-	 * Set default content type
-	 *
-	 * @param doClass default domain object implementation
-	 */
-	public static synchronized void setDefaultContentClass(Class<?> doClass) {
-		defaultDomainObjClass = doClass;
-		if (contentHandlerTypeMap != null) {
-			if (doClass == null) {
-				contentHandlerTypeMap.remove(null);
-			}
-			else {
-				ContentHandler<?> ch = contentHandlerClassMap.get(doClass);
-				if (ch != null) {
-					contentHandlerTypeMap.put(null, ch);
-				}
-			}
-		}
-	}
-
-	/**
-	 * Get the ContentHandler associated with the specified content-type.
+	 * Get the {@link ContentHandler} associated with the specified content-type.
 	 *
 	 * @param contentType domain object content type
 	 * @return content handler
 	 * @throws IOException if no content handler can be found
 	 */
-	static synchronized ContentHandler<?> getContentHandler(String contentType) throws IOException {
+	public static synchronized ContentHandler<?> getContentHandler(String contentType)
+			throws IOException {
 		checkContentHandlerMaps();
 		ContentHandler<?> ch = contentHandlerTypeMap.get(contentType);
 		if (ch == null) {
@@ -424,20 +400,40 @@ public abstract class DomainObjectAdapter implements DomainObject {
 	}
 
 	/**
-	 * Get the ContentHandler associated with the specified domain object
+	 * Get the {@link ContentHandler} associated with the specified domain object class
+	 *
+	 * @param dobjClass domain object class
+	 * @return content handler
+	 * @throws IOException if no content handler can be found
+	 */
+	public static synchronized ContentHandler<?> getContentHandler(
+			Class<? extends DomainObject> dobjClass) throws IOException {
+		checkContentHandlerMaps();
+		ContentHandler<?> ch = contentHandlerClassMap.get(dobjClass);
+		if (ch == null) {
+			throw new IOException("Content handler not found for " + dobjClass.getName());
+		}
+		return ch;
+	}
+
+	/**
+	 * Get the {@link ContentHandler} associated with the specified domain object
 	 *
 	 * @param dobj domain object
 	 * @return content handler
 	 * @throws IOException if no content handler can be found
 	 */
-	public static synchronized ContentHandler<?> getContentHandler(DomainObject dobj)
-			throws IOException {
+	public static ContentHandler<?> getContentHandler(DomainObject dobj) throws IOException {
+		return getContentHandler(dobj.getClass());
+	}
+
+	/**
+	 * Get all {@link ContentHandler}s
+	 * @return collection of content handlers
+	 */
+	public static Set<ContentHandler<?>> getContentHandlers() {
 		checkContentHandlerMaps();
-		ContentHandler<?> ch = contentHandlerClassMap.get(dobj.getClass());
-		if (ch == null) {
-			throw new IOException("Content handler not found for " + dobj.getClass().getName());
-		}
-		return ch;
+		return new HashSet<>(contentHandlerTypeMap.values());
 	}
 
 	private static void checkContentHandlerMaps() {
@@ -445,23 +441,34 @@ public abstract class DomainObjectAdapter implements DomainObject {
 			return;
 		}
 
-		getContentHandlers();
+		initContentHandlerMaps();
 		ClassSearcher.addChangeListener(contentHandlerUpdateListener);
 	}
 
-	private synchronized static void getContentHandlers() {
-		contentHandlerClassMap = new HashMap<Class<?>, ContentHandler<?>>();
-		contentHandlerTypeMap = new HashMap<String, ContentHandler<?>>();
+	private synchronized static void initContentHandlerMaps() {
+		HashMap<Class<?>, ContentHandler<?>> classMap = new HashMap<>();
+		HashMap<String, ContentHandler<?>> typeMap = new HashMap<>();
 
 		@SuppressWarnings("rawtypes")
 		List<ContentHandler> handlers = ClassSearcher.getInstances(ContentHandler.class);
 		for (ContentHandler<?> ch : handlers) {
-			contentHandlerTypeMap.put(ch.getContentType(), ch);
+			String contentType = ch.getContentType();
+			if (typeMap.put(contentType, ch) != null) {
+				Msg.error(DomainObjectAdapter.class,
+					"Multiple content handlers discovered for content type: " + contentType);
+			}
 			if (!(ch instanceof LinkHandler<?>)) {
-				contentHandlerClassMap.put(ch.getDomainObjectClass(), ch);
+				Class<? extends DomainObjectAdapter> contentClass = ch.getDomainObjectClass();
+				if (classMap.put(contentClass, ch) != null) {
+					Msg.error(DomainObjectAdapter.class,
+						"Multiple content handlers discovered for content class: " +
+							contentClass.getSimpleName());
+				}
 			}
 		}
-		setDefaultContentClass(defaultDomainObjClass);
+
+		contentHandlerClassMap = classMap;
+		contentHandlerTypeMap = typeMap;
 	}
 
 	@Override

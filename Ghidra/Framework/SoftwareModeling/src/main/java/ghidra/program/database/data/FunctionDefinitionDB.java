@@ -16,7 +16,8 @@
 package ghidra.program.database.data;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 
 import db.DBRecord;
 import db.Field;
@@ -24,6 +25,7 @@ import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataTypeConflictHandler.ConflictResult;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.FunctionSignature;
@@ -153,10 +155,10 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 	}
 
 	@Override
-	public ParameterDefinition[] getArguments() {
+	public ParameterDefinitionDB[] getArguments() {
 		lock.acquire();
 		try {
-			ParameterDefinition[] vars = new ParameterDefinition[parameters.size()];
+			ParameterDefinitionDB[] vars = new ParameterDefinitionDB[parameters.size()];
 			return parameters.toArray(vars);
 		}
 		finally {
@@ -183,38 +185,74 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 
 	@Override
 	public void replaceWith(DataType dataType) {
-		if (!(dataType instanceof FunctionDefinition)) {
+		if (!(dataType instanceof FunctionDefinition functionDefinition)) {
 			throw new IllegalArgumentException();
 		}
-		doReplaceWith((FunctionDefinition) dataType);
-	}
-
-	private void doReplaceWith(FunctionDefinition functionDefinition) {
-
 		lock.acquire();
+		boolean isResolveCacheOwner = dataMgr.activateResolveCache();
 		try {
 			checkDeleted();
-			setArguments(functionDefinition.getArguments());
-			try {
-				setReturnType(functionDefinition.getReturnType());
-			}
-			catch (IllegalArgumentException e) {
-				setReturnType(DEFAULT);
-			}
-			setVarArgs(functionDefinition.hasVarArgs());
-			setNoReturn(functionDefinition.hasNoReturn());
-			try {
-				setCallingConvention(functionDefinition.getCallingConventionName(), false);
-			}
-			catch (InvalidInputException e) {
-				// will not happen
-			}
+			doReplaceWith(functionDefinition, true);
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
 		}
 		finally {
+			if (isResolveCacheOwner) {
+				dataMgr.processResolveQueue(true);
+			}
 			lock.release();
+		}
+	}
+
+	void doReplaceWith(FunctionDefinition functionDefinition, boolean notify) throws IOException {
+		doSetArguments(functionDefinition.getArguments(), true, false);
+		try {
+			doSetReturnType(functionDefinition.getReturnType(), true, false);
+		}
+		catch (IllegalArgumentException e) {
+			setReturnType(DEFAULT);
+		}
+		doSetVarArgs(functionDefinition.hasVarArgs(), false);
+		doSetNoReturn(functionDefinition.hasNoReturn(), false);
+		try {
+			doSetCallingConvention(functionDefinition.getCallingConventionName(), false, false);
+		}
+		catch (InvalidInputException e) {
+			// will not happen
+		}
+
+		record.setString(FunctionDefinitionDBAdapter.FUNCTION_DEF_COMMENT_COL,
+			functionDefinition.getComment());
+		funDefAdapter.updateRecord(record, false);
+
+		if (notify) {
+			dataMgr.dataTypeChanged(this, false);
+		}
+
+		if (pointerPostResolveRequired) {
+			dataMgr.queuePostResolve(this, functionDefinition);
+		}
+	}
+
+	@Override
+	protected void postPointerResolve(DataType definitionDt, DataTypeConflictHandler handler) {
+		FunctionDefinition funcDef = (FunctionDefinition) definitionDt;
+		ParameterDefinition[] definedArguments = funcDef.getArguments();
+		ParameterDefinitionDB[] myArguments = getArguments();
+		if (definedArguments.length != myArguments.length) {
+			throw new IllegalArgumentException("mismatched definition datatype");
+		}
+		for (int i = 0; i < definedArguments.length; i++) {
+			ParameterDefinition arg = definedArguments[i];
+			DataType dt = arg.getDataType();
+			if (dt instanceof Pointer) {
+				myArguments[i].doSetDataType(dt, false);
+			}
+		}
+		DataType dt = funcDef.getReturnType();
+		if (dt instanceof Pointer) {
+			doSetReturnType(dt, false, false);
 		}
 	}
 
@@ -274,29 +312,20 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 		return getPrototypeString();
 	}
 
+	private DataType doCheckedResolve(DataType dt) {
+		if (dt instanceof Pointer) {
+			pointerPostResolveRequired = true;
+			return resolve(((Pointer) dt).newPointer(DataType.DEFAULT));
+		}
+		return resolve(dt);
+	}
+
 	@Override
 	public void setArguments(ParameterDefinition[] args) {
 		lock.acquire();
 		try {
 			checkDeleted();
-			Iterator<ParameterDefinitionDB> it = parameters.iterator();
-			while (it.hasNext()) {
-				ParameterDefinitionDB param = it.next();
-				param.getDataType().removeParent(this);
-				paramAdapter.removeRecord(param.getKey());
-			}
-			parameters.clear();
-			for (int i = 0; i < args.length; i++) {
-				DataType type =
-					ParameterDefinitionImpl.validateDataType(args[i].getDataType(), dataMgr, false);
-				DataType resolvedDt = resolve(type);
-				paramAdapter.createRecord(dataMgr.getID(resolvedDt), key, i, args[i].getName(),
-					args[i].getComment(), args[i].getLength());
-				resolvedDt.addParent(this);
-			}
-			loadParameters();
-			funDefAdapter.updateRecord(record, true); // update last change time
-			dataMgr.dataTypeChanged(this, false);
+			doSetArguments(args, false, true);
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
@@ -306,28 +335,59 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 		}
 	}
 
+	private void doSetArguments(ParameterDefinition[] args, boolean checkedResolveReqd,
+			boolean notify) throws IOException {
+
+		for (ParameterDefinitionDB param : parameters) {
+			param.getDataType().removeParent(this);
+			paramAdapter.removeRecord(param.getKey());
+		}
+		parameters.clear();
+		for (int i = 0; i < args.length; i++) {
+			DataType type =
+				ParameterDefinitionImpl.validateDataType(args[i].getDataType(), dataMgr, false);
+			DataType resolvedDt = checkedResolveReqd ? doCheckedResolve(type) : resolve(type);
+			paramAdapter.createRecord(dataMgr.getID(resolvedDt), key, i, args[i].getName(),
+				args[i].getComment(), args[i].getLength());
+			resolvedDt.addParent(this);
+		}
+		loadParameters();
+		funDefAdapter.updateRecord(record, true); // update last change time
+		if (notify) {
+			dataMgr.dataTypeChanged(this, false);
+		}
+	}
+
 	@Override
 	public void setReturnType(DataType type) {
 		type = ParameterDefinitionImpl.validateDataType(type, dataMgr, true);
 		lock.acquire();
 		try {
 			checkDeleted();
+			doSetReturnType(type, false, true);
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	private void doSetReturnType(DataType type, boolean checkedResolveReqd, boolean notify) {
+		try {
 			getReturnType().removeParent(this);
 			if (type == null) {
 				type = DataType.DEFAULT;
 			}
-			DataType resolvedDt = resolve(type);
+			DataType resolvedDt = checkedResolveReqd ? doCheckedResolve(type) : resolve(type);
 			record.setLongValue(FunctionDefinitionDBAdapter.FUNCTION_DEF_RETURN_ID_COL,
 				dataMgr.getID(resolvedDt));
 			funDefAdapter.updateRecord(record, true);
 			resolvedDt.addParent(this);
-			dataMgr.dataTypeChanged(this, false);
+			if (notify) {
+				dataMgr.dataTypeChanged(this, false);
+			}
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
-		}
-		finally {
-			lock.release();
 		}
 	}
 
@@ -370,12 +430,12 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 	}
 
 	@Override
-	public boolean isEquivalent(DataType dataType) {
+	protected boolean isEquivalent(DataType dataType, DataTypeConflictHandler handler) {
 
 		if (dataType == this) {
 			return true;
 		}
-		if (!(dataType instanceof FunctionDefinition)) {
+		if (!(dataType instanceof FunctionDefinition sig)) {
 			return false;
 		}
 
@@ -393,7 +453,18 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 		}
 
 		try {
-			isEquivalent = isEquivalentSignature((FunctionSignature) dataType);
+
+			if (handler != null &&
+				ConflictResult.USE_EXISTING == handler.resolveConflict(sig, this)) {
+				// treat this type as equivalent if existing type will be used
+				isEquivalent = true;
+			}
+			else {
+				if (handler != null) {
+					handler = handler.getSubsequentHandler();
+				}
+				isEquivalent = isEquivalentSignature(sig, handler);
+			}
 		}
 		finally {
 			dataMgr.putCachedEquivalence(this, dataType, isEquivalent);
@@ -402,7 +473,12 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 	}
 
 	@Override
-	public boolean isEquivalentSignature(FunctionSignature signature) {
+	public boolean isEquivalent(DataType dt) {
+		return isEquivalent(dt, null);
+	}
+
+	private boolean isEquivalentSignature(FunctionSignature signature,
+			DataTypeConflictHandler handler) {
 		if (signature == this) {
 			return true;
 		}
@@ -417,10 +493,10 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 			(hasVarArgs() == signature.hasVarArgs()) &&
 			(hasNoReturn() == signature.hasNoReturn())) {
 			ParameterDefinition[] args = signature.getArguments();
-			ParameterDefinition[] thisArgs = this.getArguments();
+			ParameterDefinitionDB[] thisArgs = this.getArguments();
 			if (args.length == thisArgs.length) {
 				for (int i = 0; i < args.length; i++) {
-					if (!thisArgs[i].isEquivalent(args[i])) {
+					if (!thisArgs[i].isEquivalent(args[i], handler)) {
 						return false;
 					}
 				}
@@ -428,6 +504,11 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 			}
 		}
 		return false;
+	}
+
+	@Override
+	public boolean isEquivalentSignature(FunctionSignature signature) {
+		return isEquivalentSignature(signature, null);
 	}
 
 	@Override
@@ -558,24 +639,34 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 		lock.acquire();
 		try {
 			checkDeleted();
-			byte flags = record.getByteValue(FunctionDefinitionDBAdapter.FUNCTION_DEF_FLAGS_COL);
-			if (hasVarArgs) {
-				flags |= FunctionDefinitionDBAdapter.FUNCTION_DEF_VARARG_FLAG;
-			}
-			else {
-				flags &= ~FunctionDefinitionDBAdapter.FUNCTION_DEF_VARARG_FLAG;
-			}
-			record.setByteValue(FunctionDefinitionDBAdapter.FUNCTION_DEF_FLAGS_COL, flags);
-			try {
-				funDefAdapter.updateRecord(record, true);
-				dataMgr.dataTypeChanged(this, false);
-			}
-			catch (IOException e) {
-				dataMgr.dbError(e);
-			}
+			doSetVarArgs(hasVarArgs, true);
+		}
+		catch (IOException e) {
+			dataMgr.dbError(e);
 		}
 		finally {
 			lock.release();
+		}
+	}
+
+	private void doSetVarArgs(boolean hasVarArgs, boolean notify) throws IOException {
+
+		if (hasVarArgs == hasVarArgs()) {
+			return;
+		}
+
+		byte flags = record.getByteValue(FunctionDefinitionDBAdapter.FUNCTION_DEF_FLAGS_COL);
+		if (hasVarArgs) {
+			flags |= FunctionDefinitionDBAdapter.FUNCTION_DEF_VARARG_FLAG;
+		}
+		else {
+			flags &= ~FunctionDefinitionDBAdapter.FUNCTION_DEF_VARARG_FLAG;
+		}
+		record.setByteValue(FunctionDefinitionDBAdapter.FUNCTION_DEF_FLAGS_COL, flags);
+		funDefAdapter.updateRecord(record, true);
+
+		if (notify) {
+			dataMgr.dataTypeChanged(this, false);
 		}
 	}
 
@@ -584,24 +675,34 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 		lock.acquire();
 		try {
 			checkDeleted();
-			byte flags = record.getByteValue(FunctionDefinitionDBAdapter.FUNCTION_DEF_FLAGS_COL);
-			if (hasNoReturn) {
-				flags |= FunctionDefinitionDBAdapter.FUNCTION_DEF_NORETURN_FLAG;
-			}
-			else {
-				flags &= ~FunctionDefinitionDBAdapter.FUNCTION_DEF_NORETURN_FLAG;
-			}
-			record.setByteValue(FunctionDefinitionDBAdapter.FUNCTION_DEF_FLAGS_COL, flags);
-			try {
-				funDefAdapter.updateRecord(record, true);
-				dataMgr.dataTypeChanged(this, false);
-			}
-			catch (IOException e) {
-				dataMgr.dbError(e);
-			}
+			doSetNoReturn(hasNoReturn, true);
+		}
+		catch (IOException e) {
+			dataMgr.dbError(e);
 		}
 		finally {
 			lock.release();
+		}
+	}
+
+	private void doSetNoReturn(boolean hasNoReturn, boolean notify) throws IOException {
+
+		if (hasNoReturn == hasNoReturn()) {
+			return;
+		}
+
+		byte flags = record.getByteValue(FunctionDefinitionDBAdapter.FUNCTION_DEF_FLAGS_COL);
+		if (hasNoReturn) {
+			flags |= FunctionDefinitionDBAdapter.FUNCTION_DEF_NORETURN_FLAG;
+		}
+		else {
+			flags &= ~FunctionDefinitionDBAdapter.FUNCTION_DEF_NORETURN_FLAG;
+		}
+		record.setByteValue(FunctionDefinitionDBAdapter.FUNCTION_DEF_FLAGS_COL, flags);
+		funDefAdapter.updateRecord(record, true);
+
+		if (notify) {
+			dataMgr.dataTypeChanged(this, false);
 		}
 	}
 
@@ -610,7 +711,7 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 		lock.acquire();
 		try {
 			checkDeleted();
-			setCallingConvention(genericCallingConvention.name(), false);
+			doSetCallingConvention(genericCallingConvention.name(), false, true);
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
@@ -628,7 +729,7 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 		lock.acquire();
 		try {
 			checkDeleted();
-			setCallingConvention(conventionName, true);
+			doSetCallingConvention(conventionName, true, true);
 		}
 		catch (IOException e) {
 			dataMgr.dbError(e);
@@ -638,12 +739,14 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 		}
 	}
 
-	private void setCallingConvention(String conventionName, boolean restrictive)
+	private void doSetCallingConvention(String conventionName, boolean restrictive, boolean notify)
 			throws InvalidInputException, IOException {
 		byte id = dataMgr.getCallingConventionID(conventionName, restrictive);
 		record.setByteValue(FunctionDefinitionDBAdapter.FUNCTION_DEF_CALLCONV_COL, id);
 		funDefAdapter.updateRecord(record, true);
-		dataMgr.dataTypeChanged(this, false);
+		if (notify) {
+			dataMgr.dataTypeChanged(this, false);
+		}
 	}
 
 	@Override

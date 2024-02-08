@@ -25,6 +25,7 @@ import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
 import org.xml.sax.helpers.ParserAdapter;
 
+import ghidra.framework.Application;
 import ghidra.util.xml.XmlUtilities;
 
 /**
@@ -174,7 +175,7 @@ public class TOCConverter {
 	 * @throws IOException
 	 */
 	private File createTempTOCFile() throws IOException {
-		File tempFile = File.createTempFile("toc", ".xml");
+		File tempFile = Application.createTempFile("toc", ".xml");
 
 		PrintWriter out = new PrintWriter(new FileOutputStream(tempFile));
 		BufferedReader reader = new BufferedReader(new FileReader(sourceFilename));

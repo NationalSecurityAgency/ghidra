@@ -15,13 +15,15 @@
 		th { font-family:times new roman; font-size:14pt; font-weight:bold; padding-left:10px; padding-right:10px; text-align:left; }
 		code { color:black; font-family:courier new; font-size: 12pt; }
 		span.code { font-family:courier new font-size: 14pt; color:#000000; }
+		.gcode { font-family: courier new; font-weight: bold; font-size: 85%; }
+		.gtitle { font-style: italic; font-weight: bold; font-size: 95%; }
 	 </STYLE>
   </HEAD>
 
   <BODY>
 
-	<H1>Ghidra: NSA Reverse Engineering Software</H2>
-    
+<H1>Ghidra: NSA Reverse Engineering Software</H2>
+
     <P>
     Ghidra is a software reverse engineering (SRE) framework developed by NSA's Research Directorate.
     This framework includes a suite of full-featured, high-end software analysis tools that enable
@@ -43,206 +45,150 @@
     </P>
     <hr>   
         
-    <H1>What's New in Ghidra 10.3</H1>
+    <H1>What's New in Ghidra 11.0</H1>
     
     <H2>The not-so-fine print: Please Read!</H2>
     
-	<P>Ghidra 10.3 is fully backward compatible with project data from previous releases.
-	However, programs and data type archives which are created or modified in 10.3 will not be useable by an earlier Ghidra version. </P>
-
-	<P>This release includes many new features and capabilities, performance improvements, quite a few bug fixes, and many pull-request
+    <P>This release includes new features, enhancements, performance improvements, quite a few bug fixes, and many pull-request
 	contributions. Thanks to all those who have contributed their time, thoughts, and code. The Ghidra user community thanks you too!</P>
-	
-	<P>IMPORTANT: Ghidra requires Java 17 JDK to run.  A newer version of Java may be acceptable but has not been fully tested.  Please see the
-	<a href="InstallationGuide.html">Ghidra Installation Guide</a> for additional information.</P>
-	
-	<P>NOTE: Please note that any programs imported with a Ghidra beta versions or code built directly from source outside of a release tag may not be compatible
-	and may have flaws that won't be corrected by using this new release.  Any programs analyzed from a beta or other local master source build should be considered
-	experimental and re-imported and analyzed with a release version.  As an example, Ghidra 10.1 beta had an import flaw affecting symbol demangling that was not
-	correctable. Programs imported with previous release versions should upgrade correctly through various automatic upgrade mechanisms.  Any program
-	you will continue to reverse engineer should be imported fresh with a release version or a build you trust with the latest code fixes.</P>
 
-	<P>NOTE: Ghidra Server: The Ghidra 10.3 server is compatible with Ghidra 9.2 and later Ghidra clients.  Ghidra 10.3
+	<P>Ghidra 11.0 is fully backward compatible with project data from previous releases.
+	However, programs and data type archives which are created or modified in 11.0 will not be useable by an earlier Ghidra version. </P>
+
+	<P>This distribution requires JDK 17 to run, and provides Linux x86-64, Windows x86-64, and macOS x86-64 native components.
+	If you have another platform or wish to use a newer JDK, please see the
+	<a href="InstallationGuide.html">Ghidra Installation Guide</a> for additional information.</P>
+
+	<P>NOTE: Ghidra Server: The Ghidra 11.0 server is compatible with Ghidra 9.2 and later Ghidra clients.  Ghidra 11.0
 	clients are compatible with all 10.x and 9.x servers.  Although, due to potential Java version differences, it is recommended
 	that Ghidra Server installations older than 10.2 be upgraded.  Those using 10.2 and newer should not need a server upgrade.</P>
 	
-	<P>NOTE: Platform-specific native executables can be built directly from a release distribution.
-	The distribution currently provides Linux 64-bit, Windows 64-bit, and MacOS x86 binaries.  If you have another platform,
-	for example a MacOS M1 based system or a Linux variant, the support/buildNatives script can build the Decompiler,
-	demangler, and legacy PDB executables for your plaform.  Please see "Building Ghidra Native Components" section in the
-	the <a href="InstallationGuide.html#Build">Ghidra Installation Guide</a> for additional information.</P>
-	
-	<H2>Dark Mode / Theming </H2>
-	
-	<P>Ghidra now supports UI theming, which allows for full customization of colors, fonts, and icons used consistently throughout the application.
-	Ghidra themes are built on top of the various Java Look and Feel classes.  Included are standard themes for all the supported
-	Look and Feels. The most notable is the Flat Dark theme, which is built using the FlatLaf, a modern open-source flat Look and Feel
-	library. Additionally, Ghidra includes various tools for editing and creating custom themes.</P>
-	
-	<P>Also, all the main display windows (Listing, Decompiler, and Bytes Viewer) support quickly changing the font size via <B>&lt;Ctrl&gt;+</B> or <B>&lt;Ctrl&gt;-</B>.</P>
+	<P>NOTE: Any programs imported with a Ghidra beta version or code built directly from source code outside of a release tag may not be compatible,
+	and may have flaws that won't be corrected by using this new release.  Any programs analyzed from a beta or other local master source build should be considered
+	experimental and re-imported and analyzed with a release version. Programs imported with previous release versions should upgrade correctly through various
+	automatic upgrade mechanisms.  Any program you will continue to reverse engineer should be imported fresh with a release version or a build you trust with the
+	latest code fixes.</P>
 
-    <P>See the Ghidra Help pages for full details on the theming feature.</P>
-	
-	<H2>Debugger</H2>
-	
-	<P>Perhaps the most exciting debugger change is the addition of new training course materials for the Debugger. The materials are written in
-	Markdown so they display right on GitHub, but they can also be rendered to nice HTML pages by Pandoc for offline viewing. They are suitable
-	both for self-paced learning and classroom environments. Even if you have used our Debugger before, we highly recommend reading these materials.
-	They are in the <b>docs/GhidraClass</b> directory with the other course materials.</P>
-	<P>There are several changes to improve the user experience with the Emulator:</P>
-	<blockquote>
-	<ul>
-	<li>There is a dedicated Emulator tool. Previously, it was not apparent an Emulator GUI even existed in the Debugger tool. Most only
-	accessed it via scripting. The Emulator tool is the same as the Debugger tool, but without the back-end debugger management plugins.
-	This both showcases the Emulator and makes it safer to access, e.g., when examining malware. The launch buttons are removed, nearly
-	eliminating the risk of accidental detonation.</li>
-	<li>The control actions (step, suspend, resume, etc.) have been moved to the main toolbar. When toggled to control the emulator, it is now
-	possible to emulate to the next breakpoint. Before, it was only possible to step. If you were savvy, you could use the <b>Go To Time</b>
-	action to run many steps, but you had to predict precisely how many steps. These controls present the Emulator as a more traditional
-	trap-and-trace debugger and retain support for time travel.</li>
-	<li>Breakpoints are now applied to the Emulator. They also support injecting custom Sleigh semantics into the Emulator. This makes
-	it possible, e.g., to stub out external function calls. Breakpoints are now displayed in the <b>Decompiler</b> margin, too. </li>
-	<li>Regarding uninitialized/undefined memory, the Emulator will still treat undefined bytes as zeros. When decoding an
-	instruction; however, it will now interrupt if when encounters undefined bytes. Previously, it would just decode them as if
-	zeros, which was never useful. </li>
-	<li>Nascent support for stack unwinding has been added. Up to now, we have relied on the back-end debugger to unwind the stack,
-	which ruled out displaying accurate stack frames during emulation. There is still more work for full UI integration, but you can
-	unwind a stack (whether on target or emulated) using the <b>Debugger -> Analysis</b> menu and view the results by navigating the
-	<b>Dynamic Listing</b> to stack space. Please understand it may not work in most situations, yet.</li>
-	<li>Several miscellaneous actions have been added: To invalidate the Emulator cache, use the Debugger -> Configure Emulator menu.
-	Use this whenever the Emulator seems to be ignoring configuration changes, especially when modifying custom Sleigh breakpoints.
-	To display all bytes (not just changed ones) in the Dynamic Listing, choose Load Bytes from Emulator in the Auto-Read drop-down.
-	To manually add or remove memory regions, e.g., to create and initialize a heap for emulation, use the new actions in the Regions window</li>
-	</ul>
-	</blockquote>
-	<P>There are several Debugger UI improvements: </P>
-    <blockquote>
-	<ul>
-	<li>The control actions are duplicated in the main toolbar. Previously, these were only in the Objects window. (They remain there for
-	back-end connector/model development, troubleshooting, and diagnostics.) The actions in the main toolbar can be toggled to control a
-	live target or the Emulator. The Emulator stepping actions have been removed from the <b>Threads</b> panel. (They never really made sense there.)
-	Toggling these actions to the Emulator effectively forks an emulator from the target's live state, i.e., for extrapolation, just as the old
-	emulator stepping actions did.</li>
-	<li>The current program counter is now displayed in the top right corner of the <b>Dynamic Listing</b> (or whatever the listing is configured to
-	track). It will display in red if the address cannot be shown in the listing, e.g., because it is not mapped in memory. This provides better
-	feedback when the listings seem to be out of sync.</li>
-	<li>GDB's advance command has been added to the Listing context menus as well as the equivalent actions for other debuggers. (More generally,
-	any command provided by a back-end connector that takes a single address parameter is presented in context menus where an address is
-	available.)</li>
-	<li>The <b>Go To dialog</b> in the <b>Dynamic Listing</b> can now take simple addresses in hexadecimal. Previously, it only took Sleigh expressions,
-	which are powerful, but made the common case too complicated. It still accepts Sleigh expressions, and those expressions can now refer
-	to labels (symbols) from any mapped program database (static image).</li>
-	<li>A new kind of hover has been added for displayed variables. If there is a debugger target (live or emulated) mapped to the current program,
-	the hover will display the variable's current value. This applies to Listings and the Decompiler window. </li>
-	<li>You can now select a different thread, frame, or snapshot without activating it. Single-click to select. Double-click to activate.</li>
-	</ul>
-	</blockquote>
-	<P>There are a few small improvements to back-end debugger integration: </P>
-    <blockquote>
-	<ul>
-	<li>You can now set the working directory when launching a Windows target. </li>
-	<li>GADP agents now accept a single connection and automatically terminate when Ghidra disconnects. </li>
-	<li>Launch scripts have been added for starting a GADP agent from the command line.</li>
-	<li>There is now a script to build the Java bindings needed for the LLDB connector. </li>
-	</ul>
-	</blockquote>
-		
-	<H2>Decompiler</H2>
-	<P>Support has been added for expanding assignment statements on structures or arrays, where multiple fields or elements are moved as a
-	group by a single instruction. This is especially helpful for analyzing structure initialization code and stack strings. </P>
-	
-	<P>Support continues to improve for structures that are either stored across multiple registers or in a single register that is
-	accessed in pieces.  Data types associated with the component fields are propagated more fully throughout the function, and assignments
-	to fields are displayed simply.</P>
-	
-	<H2>Data Types</H2>
-	
-	<P>Data Type Archives may now optionally target a specific architecture as specified by a processor and associated compiler specification
-	such as data organization.  This has the advantage of better conveying datatype details for a desired architecture and preserving aspects
-	which may change when resolved into a program.  In the future, this will also allow function definitions to retain architecture-specific
-	details.</P> 
 
-    <P>Function definition data types have been improved to preserve calling convention names which may differ from the predefined generic
-    calling convention names to include those which may have originated from an extended compiler specification.   In addition, function
-    definitions now support the noreturn attribute. </P>
 
-    <P>Enum handling has been improved in the data type manager when creating new enums from an existing set of enum values,
-    for example <b>define_</b> enums parsed from header files.  Enum values will be automatically sized to fit all the values contained
-    in the enum.  Setting the size of an Enum will check if the values will fit within the new size.  In addition, <b>define_</b> values
-    created as enums with a single value are sized to the minimum size to fit the value.  Parsed enums from header files are sized based
-    on the declared size of an int from the data organization used to parse.  A future version will have a setting to size all parsed enums
-    to the smallest size that will fit all the values. </P>
+	<H2>BSim </H2>
+	
+	<P>A major new feature called BSim has been added.  BSim can find structurally similar functions in (potentially large) collections of binaries or object files.
+    BSim is based on Ghidra's decompiler and can find matches across compilers used, architectures, and/or small changes to source code.</P>
+    <P>As you've reverse engineered software, you've likely asked the following questions:</P>
+
+    <UL style="padding-left:100px">
+    <LI>Which libraries were statically linked into this executable, and possibly what version of the library?</LI>
+    <LI>Does this executable share some code with another executable that I've analyzed?</LI>
+    <LI>What are the differences between version 1 and version 2 of a given executable?</LI>
+    <LI>Does this executable share code with another executable in a large collection of binaries?</LI>
+    <LI>Was this function pulled from an open-source library?</LI>
+    </UL>
+
+    <P>BSim is intended to help with these questions (and others) by providing a way to search collections of binaries for similar, but not necessarily identical, functions.</P>
     
-	<H2>C Header File Parsing </H2>
-	<P>The C-Parser GUI has been refactored to remove include paths from the Options section done as <b>-D</b> define lines, to a new Include section.
-	This should make it easier to configure paths to the include files and has the added benefit of coloring the include file entries red if
-	they are not found within any include path.  You may find creating and using a Ghidra Script instead of the GUI an easier repeatable process.
-	There are several included examples scripts, including ones to parse AVR8 header files, and Visual Studio version 22 files. </P>
-	
-	<P>All supplied data type archive GDT files, except macOS, have been re-parsed to include the new processor architecture. </P>
-	
-	<H2>Mach-O Binary Import</H2>
-	<P>Mach-O binary analysis continues to improve. Support has been added for new file formats introduced in iOS 16 and macOS 13.
-	Improvements have also been made to function identification, symbol detection, and Objective-C support. </P>
-	
-	<H2>Analysis</H2>
-
-	<P>New <b>ApplyDataArchives</b> analyzer settings enable use of locally created GDT data type archive files or project archives in the
-	analysis pipeline.  Used in conjunction with analysis options settings saved to a named analysis configuration you can easily switch to using a new
-	GDT file and associated analysis options for a given type of binary.  For example, if you are working with AVR8 binaries and have
-	an associated AVR8.gdt file, create an AVR8 configuration and it will be used as the default analysis options configuration until
-	you change to a new configuration. </P>
-	
-	<P>Constant Propagation now deals with constants passed as stack parameters.  In addition, there are several new settings which can better
-	control when a constant is considered to be an address.  For example, processors with small memory spaces, the setting <b>Require pointer param
-	data type</b>, will only create a reference if the parameter is declared with a data type that would be a pointer.  This can be useful for Harvard
-	architectures with multiple address spaces used in conjunction with the PointerTypedef to specify the address space of the pointer.  Currently,
-	once you change the parameter of a called function to be a pointer, you will need to re-run analysis to get the constants passed to the function
-	to be turned into a reference.  This will be automated in the near future. </P>
-	
-	<P>By default, pointer-to-pointer analysis is turned off for ARM binaries in the Operand and Data Reference analyzers. This can result in fewer
-	references created and can be turned back on if your ARM binaries use pointers data stored in memory instead of offset values from the current PC
-	to calculate all references.</P>
-	
-	<P>Added support for PE MinGW pseudo-relocation processing. </P>
-
-    <H2>Shared Projects</H2>
-    <P>Folder and file links to contents of another shared project repository may now be added to a Ghidra Project.  This could allow a team to
-    include a program or subfolder that resides in another project rather than copying the program into your project for easy access.  The linked
-    files are opened for read-only viewing. </P>
+    <P>BSim can compare functions within a binary, within a collection of binaries or object files in a project on a local system, or within a large collection of binaries
+    utilizing a PostgreSQL or an Elasticsearch server.  Using BSim locally does not require setting up a PostgreSQL or Elastic server or having administrator access.</P>
     
-	<H2>Processors</H2>
-	<P>Improvements and bug fixes have been made to many processors since 10.2 to include:
-	<code>AARCH64, ARM, Coldfire, HCS12 MIPS X86, PowerPC, RISCV SPARC, SuperH, TriCore, V850, Z80, 6x09, 68K, and 8051</code>.</P>
+    <P>There is a BSim tutorial that walks through use of BSim locally.  Using BSim locally and the tutorial is the best way to try out BSim before deciding if you need to set up a server.</P>
 	
-	<P>Two new user-submitted processors, <code>eBPF</code> and <code>BPF</code>, add support for two variants of Berkeley Packet Filter binaries.</P>
+	<H2>GhidraGo </H2>
 	
-	<P>A user-submitted refactoring of X86 <code>LOCK/UNLOCK</code> decoding and semantics has been committed. There are currently some issues with the
-	Decompiler re-arranging code outside of the <code>LOCK/UNLOCK</code> which will be addressed with an upcoming patch. If your analysis depends on
-	the LOCK/UNLOCK semantics, please be aware of the issue. </P>
+	<P>GhidraGo is an experimental feature that adds integration support for Ghidra URL's and Ghidra Tools. The main use of GhidraGo is embedding hyperlinks within web pages
+	to pre-ingested programs within a Ghidra multi-user repository.  Clicking on the hyperlink causes Ghidra to display the previously ingested program.
+	No data other than the Ghidra URL is transferred to Ghidra, and no socket is open within Ghidra listening for commands.  GhidraGo must be enabled by
+	installing a plugin in the Ghidra project manager, and must also be configured as a protocol handler in your web browser.  GhidraGo is not setup or enabled by default.
+	For details on setting up GhidraGo, please see the included <span class="gtitle">GhidraGoREADME.html</span> or search for GhidraGo within help.
+	</P>
+
+	<H2>Version Tracking </H2>
 	
-	<P> A new leading zeroes count operator, called <code>lzcount</code>, has been added to p-code, and it can now be used by SLEIGH developers
-	to model processor instructions.  The Decompiler can simplify common code idioms using these instructions, and emulation is supported.</P>
+	<P>Auto Version Tracking has been sped up, made customizable, and improved to find more matches. The mechanism to identify good  matches from duplicate match
+	sets has been improved and sped up. Implied matches are now created and will be applied if the vote minimum and conflict maximum limits are met. In addition,
+	the ability to choose which correlators are run as well as setting the options of most correlators has been added. The Auto Version Tracking script has been
+	updated to prompt for all options in a single dialog. The script now works in headless mode and an example prescript to allow
+	setting of options in headless mode is included.</P>
 	
-	<H2>User Interface Improvements</H2>
-	<P>Diff can now be performed between two open programs which may include remote files previously opened via a Ghidra-URL. </P>
+	<P>Version Tracking can also use the new BSim function matching capability in a new correlator called the BSim Correlator.  Auto Version Tracking does not use the new BSim Correlator yet.</P>
+
+    <H2>Function Comparison Window</H2>
+     <P>The function comparison window, used by Version Tracking and BSim, has been overhauled a bit:
+     
+     <UL style="padding-left:100px">
+     
+     <LI>A help topic for Function Comparison has been added.</LI>
+     <LI>Token matching, scrolling to matches, and difference highlighting is much improved using
+     an algorithm based on BSim function matching.  The colors used for the token matching highlights are configurable.</LI>
+     
+     <LI>From the comparison window, users can click on called functions that have corresponding matches to bring up a new function comparison window showing those functions.
+     The action is currently not available within version tracking.</LI>
+          
+     <LI>The functions can be displayed side by side vertically or horizontally.</LI>
+     
+     <LI>The function signature from a function in the function comparison window can be applied to include name only, a skeleton signature, or the entire signature
+     including all referenced data types.  Applying only the skeleton function signature can be useful if there is any question of differences in the
+     data structure composition used by the function signature between the two programs.</LI>
+     </UL>
+
+    <H2>Scripting</H2>
+    
+    <P>A new multi-option script dialog has been added to the scripting API that can present and get all user inputs a script needs in one dialog.
+    The <span class="gcode">askValues()</span> scripting method replaces the cumbersome process of prompting the user for each input separately.</P>
+   
+	<H2>Rust</H2>
 	
-	<H2>GoLang 1.18 Support</H2>
-	<P>An importer, Analyzer, and Internal changes have been made to support GoLang.  Currently, only version 1.18 is supported; however slightly older or newer versions may work.
-	There are still some Decompiler issues with multiple return parameters to be worked out, however the implementation was thought complete enough
-	for initial real use.  Please consider the feature an evolving initial implementation.</P>
+	<P>Initial support for Rust compiled binaries, mainly demangling of Rust method names and Rust in DWARF information, has been added.  In addition, Rust strings are marked up so that the
+	decompiler will display Rust strings correctly.  There is more work to do, especially with mapping Rust parameter passing.  Custom storage may be required in some instances.</P>
+    
+    <H2>Golang</H2>
+    <P>Golang reverse engineering within Ghidra is much improved by:
+        <UL style="padding-left:100px">
+    <LI>A new <span class="gtitle">Golang String Analyzer</span> which finds and marks up Golang strings so they display correctly in the decompiler</LI>
+    <LI>Type and interface method markup improvements</LI>
+    <LI>Better function parameter recovery</LI>
+    <LI>Using package information to organize type and symbol elements into namespaces</LI>
+    <LI>Using run time type information to override the types of objects that are created by calls to malloc-like built-in functions</LI>
+    </UL>
+    </P>
+    
+ 	<H2>Search for Encoded Strings</H2>
+ 	
+    <P>A new action in the Search menu, <span class="gtitle">Search -> For Encoded Strings...</span>, can help find and create strings encoded in alternate character sets and alphabets.
+    Valid strings are based on runs of bytes that would be valid in a particular character set and alphabet.  There are currently no additional models for defining valid words within other languages.</P>
+
+    <H2>Import / Export</H2>
+    <P>The <span class="gtitle">CaRT</span> file format is now supported.  The <span class="gtitle">CaRT</span> format is used to store and transfer malware along with metadata about
+    the malware in a neutered form such that it cannot be executed.  It is encrypted so anti-virus software will not flag the file under analysis.</P>
+    
+    <P>Headless importing of binaries from container files, such as .zip files, with multiple embedded files is now possible.  This includes loading referenced .dll and .so files also
+    found within the container file.</P>
+    
+    <P>The Headless Analyzer can now recurse into supported GFileSystem container files when a recursion depth of one or more is specified on the command line.</P>
+    
+    <H2>Mach-O Improvements</H2>
+    
+    <P>Support for the Mach-O binary file format has continued to receive updates.  Improvements have been made to library linking and loading, as well as thunk creation.  Additionally, dyld_shared_cache
+    components extracted from Ghidra's DyldCacheFileSystem can now be added together on-demand with the Add To Program feature.  Broken references can be automatically resolved by right-clicking on them
+    and clicking <span class="gtitle">References -> Add To Program</span>.</P>
+
+	<H2>PDB</H2>
 	
-	<H2>Ghidra Startup</H2>
-	<P>Ghidra now remembers the last location of a program when it is closed. When that program is later re-opened, Ghidra will position the
-	program to that location.  Also, there are options for where Ghidra should start for new programs and optionally when Ghidra completes
-	the initial analysis. </P>
-	
-	<H2>Template Simplification </H2>
-	<P>Ghidra now has options for simplifying the display of symbol names, in both the Listing and Decompiler, with complex template information
-	embedded in them.  The simplification should result in a much less busy display when dealing with templates. </P>
+     <P>The PDB data types processing has been changed to use a resolve-as-you-go model.  The change eliminates the dependency graph and reduces the memory footprint required to load all
+     PDB types.  The change allows larger PDB's to load successfully and improves the accuracy of some data types.</P>
+     
+    <H2>Overlays with Multiple Memory Blocks</H2>
+    
+    <P> Overlay spaces now support multiple memory blocks in the same overlay.  After creating the initial memory
+    block as an overlay, the new overlay memory space will become available when adding new memory blocks. All overlay memory blocks can
+    be manipulated in the same way as normal memory blocks.  The new feature is useful when analyzing binaries
+    meant to run on multiple processors with tasks running on each processor in their own overlapped virtual memory space such as an RTOS.</P>
+
+    <H2>Processors</H2>
+    <P>Support for the Loongson processor architecture has been added.  All known instructions should disassemble. However semantics for a large number of instructions use pseudoOp calls currently.</P>
+
 	
     <H2>Additional Bug Fixes and Enhancements</H2>
-    <P> Numerous other bug fixes and improvements are fully listed in the <a href="ChangeHistory.html">ChangeHistory</a> file.</P>
+    <P> Numerous other new features, improvements, and bug fixes are fully listed in the <a href="ChangeHistory.html">ChangeHistory</a> file.</P>
     		   
     <BR>
     <P align="center">

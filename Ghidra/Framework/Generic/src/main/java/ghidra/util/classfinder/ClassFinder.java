@@ -22,9 +22,12 @@ import java.util.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import generic.json.Json;
+import ghidra.GhidraClassLoader;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.extensions.*;
 import ghidra.util.task.TaskMonitor;
 import utility.module.ModuleUtilities;
 
@@ -33,6 +36,9 @@ import utility.module.ModuleUtilities;
  */
 public class ClassFinder {
 	static final Logger log = LogManager.getLogger(ClassFinder.class);
+
+	private static final boolean IS_USING_RESTRICTED_EXTENSIONS =
+		Boolean.getBoolean(GhidraClassLoader.ENABLE_RESTRICTED_EXTENSIONS_PROPERTY);
 
 	private static List<Class<?>> FILTER_CLASSES =
 		Collections.unmodifiableList(Arrays.asList(ExtensionPoint.class));
@@ -47,8 +53,10 @@ public class ClassFinder {
 	private void initialize(List<String> searchPaths, TaskMonitor monitor)
 			throws CancelledException {
 
-		Set<String> pathSet = new LinkedHashSet<>(searchPaths);
+		Msg.trace(this,
+			"Using restricted extension class loader? " + IS_USING_RESTRICTED_EXTENSIONS);
 
+		Set<String> pathSet = new LinkedHashSet<>(searchPaths);
 		Iterator<String> pathIterator = pathSet.iterator();
 		while (pathIterator.hasNext()) {
 			monitor.checkCancelled();
@@ -110,24 +118,56 @@ public class ClassFinder {
 		return classList;
 	}
 
-	/*package*/ static Class<?> loadExtensionPoint(String path, String fullName) {
+	/**
+	 * If the given class name matches the known extension name patterns, then this method will try
+	 * to load that class using the provided path.   Extensions may be loaded using their own 
+	 * class loader, depending on the system property 
+	 * {@link GhidraClassLoader#ENABLE_RESTRICTED_EXTENSIONS_PROPERTY}.
+	 * <p>
+	 * Examples: 
+	 * <pre>
+	 * /foo/bar/baz/file.jar fully.qualified.ClassName
+	 * /foo/bar/baz/bin fully.qualified.ClassName
+	 * </pre>
+	 * 
+	 * @param path the jar or dir path
+	 * @param className the fully qualified class name
+	 * @return the class if it is an extension point
+	 */
+	/*package*/ static Class<?> loadExtensionPoint(String path, String className) {
 
-		if (!ClassSearcher.isExtensionPointName(fullName)) {
+		if (!ClassSearcher.isExtensionPointName(className)) {
 			return null;
 		}
 
-		ClassLoader classLoader = ClassSearcher.class.getClassLoader();
+		ClassLoader classLoader = getClassLoader(path);
+
 		try {
-			Class<?> c = Class.forName(fullName, true, classLoader);
+			Class<?> c = Class.forName(className, true, classLoader);
 			if (isClassOfInterest(c)) {
 				return c;
 			}
 		}
 		catch (Throwable t) {
-			processClassLoadError(path, fullName, t);
+			processClassLoadError(path, className, t);
 		}
 
 		return null;
+	}
+
+	private static ClassLoader getClassLoader(String path) {
+		ClassLoader classLoader = ClassSearcher.class.getClassLoader();
+		if (!IS_USING_RESTRICTED_EXTENSIONS) {
+			return classLoader; // custom extension class loader is disabled
+		}
+
+		ExtensionDetails extension = ExtensionUtils.getExtension(path);
+		if (extension != null) {
+			Msg.trace(ClassFinder.class,
+				"Installing custom extension class loader for: " + Json.toStringFlat(extension));
+			classLoader = new ExtensionModuleClassLoader(extension);
+		}
+		return classLoader;
 	}
 
 	private static void processClassLoadError(String path, String name, Throwable t) {

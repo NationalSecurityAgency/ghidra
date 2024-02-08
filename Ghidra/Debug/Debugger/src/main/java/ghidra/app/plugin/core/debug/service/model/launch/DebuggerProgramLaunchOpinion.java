@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.debug.service.model.launch;
 import java.util.Collection;
 
 import ghidra.app.services.DebuggerModelService;
+import ghidra.debug.api.model.DebuggerProgramLaunchOffer;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
 import ghidra.util.classfinder.ExtensionPoint;

@@ -17,20 +17,19 @@ package ghidra.app.util.opinion;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.AccessMode;
+import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.ObjectUtils;
 
 import ghidra.app.util.Option;
 import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.FileByteProvider;
 import ghidra.app.util.importer.LibrarySearchPathManager;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.formats.gfilesystem.FSRL;
-import ghidra.formats.gfilesystem.FileSystemService;
+import ghidra.formats.gfilesystem.*;
 import ghidra.framework.model.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
@@ -41,7 +40,6 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
-import utilities.util.FileUtilities;
 
 /**
  * An abstract {@link Loader} that provides a framework to conveniently load {@link Program}s with
@@ -100,6 +98,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			Program program = doLoad(provider, loadedName, loadSpec, libraryNameList, options,
 				consumer, log, monitor);
 			loadedProgramList.add(new Loaded<>(program, loadedName, projectFolderPath));
+			log.appendMsg("------------------------------------------------\n");
 
 			// Load the libraries
 			List<Loaded<Program>> libraries = loadLibraries(provider, program, project,
@@ -130,8 +129,9 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			log.appendMsg(message);
 			throw new LoadException(message);
 		}
-		log.appendMsg("----- Loading " + provider.getAbsolutePath() + " -----");
+		log.appendMsg("Loading " + provider.getAbsolutePath() + "...");
 		load(provider, loadSpec, options, program, monitor, log);
+		log.appendMsg("--------------------------------------------------------------------\n");
 	}
 
 	@Override
@@ -389,19 +389,20 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	}
 
 	/**
-	 * Creates a {@link ByteProvider} for the given library file
+	 * Creates a {@link ByteProvider} for the given library {@link FSRL}
 	 * 
-	 * @param libFile The library file to get a {@link ByteProvider} for
+	 * @param libFsrl The library {@link FSRL} to get a {@link ByteProvider} for
 	 * @param loadSpec An optional {@link LoadSpec} the {@link ByteProvider} should conform to
 	 * @param log The log
-	 * @return A {@link ByteProvider} for the given library file, or null if one could not be
-	 *   created that matches the given {@link LoadSpec}
+	 * @param monitor A cancellable monitor
+	 * @return A {@link ByteProvider} for the given library {@link FSRL}, or null if one could not 
+	 *   be created that matches the given {@link LoadSpec}
 	 * @throws IOException If there was an IO-related issue
+	 * @throws CancelledException If the user cancelled the operation
 	 */
-	protected ByteProvider createLibraryByteProvider(File libFile, LoadSpec loadSpec,
-			MessageLog log) throws IOException {
-		return new FileByteProvider(libFile, FileSystemService.getInstance().getLocalFSRL(libFile),
-			AccessMode.READ);
+	protected ByteProvider createLibraryByteProvider(FSRL libFsrl, LoadSpec loadSpec,
+			MessageLog log, TaskMonitor monitor) throws IOException, CancelledException {
+		return FileSystemService.getInstance().getByteProvider(libFsrl, true, monitor);
 	}
 
 	/**
@@ -410,19 +411,15 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * It may be appropriate to not load a specific library after examining its bytes.
 	 * 
 	 * @param libraryName The name of the library
-	 * @param libraryFile The library {@link File}
+	 * @param libraryFsrl The library {@link FSRL}
 	 * @param provider The library bytes
 	 * @param desiredLoadSpec The desired {@link LoadSpec}
 	 * @param log The log
 	 * @return True if the given library should be loaded; otherwise, false
 	 * @throws IOException If an IO-related error occurred
 	 */
-	protected boolean shouldLoadLibrary(String libraryName, File libraryFile, ByteProvider provider,
-			LoadSpec desiredLoadSpec, MessageLog log) throws IOException {
-		if (matchSupportedLoadSpec(desiredLoadSpec, provider) == null) {
-			log.appendMsg("Skipping library which is the wrong architecture: " + libraryFile);
-			return false;
-		}
+	protected boolean shouldLoadLibrary(String libraryName, FSRL libraryFsrl,
+			ByteProvider provider, LoadSpec desiredLoadSpec, MessageLog log) throws IOException {
 		return true;
 	}
 
@@ -431,7 +428,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * 
 	 * @param library The loaded library {@link Program}
 	 * @param libraryName The name of the library
-	 * @param libraryFile The library {@link File}
+	 * @param libraryFsrl The library {@link FSRL}
 	 * @param provider The library bytes
 	 * @param loadSpec The {@link LoadSpec} used for the load
 	 * @param options The options
@@ -440,7 +437,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @throws IOException If an IO-related error occurred
 	 * @throws CancelledException If the user cancelled the action
 	 */
-	protected void processLibrary(Program library, String libraryName, File libraryFile,
+	protected void processLibrary(Program library, String libraryName, FSRL libraryFsrl,
 			ByteProvider provider, LoadSpec loadSpec, List<Option> options, MessageLog log,
 			TaskMonitor monitor) throws IOException, CancelledException {
 		// Default behavior is to do nothing
@@ -475,8 +472,12 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			createUnprocessedQueue(libraryNameList, getLibraryLoadDepth(options));
 		boolean loadLocalLibraries = isLoadLocalLibraries(options);
 		boolean loadSystemLibraries = isLoadSystemLibraries(options);
-		List<String> localSearchPaths = getLocalLibrarySearchPaths(provider, options);
-		List<String> systemSearchPaths = getSystemLibrarySearchPaths(provider, options);
+		List<FileSystemSearchPath> customSearchPaths =
+			getCustomLibrarySearchPaths(provider, options, log, monitor);
+		List<FileSystemSearchPath> localSearchPaths =
+			getLocalLibrarySearchPaths(provider, options, log, monitor);
+		List<FileSystemSearchPath> systemSearchPaths =
+			getSystemLibrarySearchPaths(options, log, monitor);
 		DomainFolder linkSearchFolder = getLinkSearchFolder(project, projectFolderPath, options);
 		String libraryDestFolderPath =
 			getLibraryDestinationFolderPath(project, projectFolderPath, options);
@@ -496,38 +497,64 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 				processed.add(libraryName);
 				if (libraryDestFolder != null &&
 					findLibrary(libraryName, libraryDestFolder) != null) {
-					log.appendMsg("Library " + libraryName + ": Already loaded ");
+					log.appendMsg("Found %s in %s...".formatted(libraryName, libraryDestFolder));
+					log.appendMsg("------------------------------------------------\n");
 				}
 				else if (linkSearchFolder != null &&
 					findLibrary(libraryName, linkSearchFolder) != null) {
-					log.appendMsg("Library " + libraryName + ": Already loaded ");
+					log.appendMsg("Found %s in %s...".formatted(libraryName, linkSearchFolder));
+					log.appendMsg("------------------------------------------------\n");
 				}
-				else {
+				else if (!customSearchPaths.isEmpty() || !localSearchPaths.isEmpty() ||
+					!systemSearchPaths.isEmpty()) {
 					// Note that it is possible to have local (or system) search paths with those
 					// options turned off (if shouldSearchAllPaths() is overridden to return true).
 					// In this case, we still want to process those libraries, but we 
 					// do not want to save them, so they can be released.
-					boolean loadedLocal = false;
-					if (!localSearchPaths.isEmpty()) {
-						Loaded<Program> loadedLibrary = loadLibraryFromSearchPaths(
-							libraryName, provider, localSearchPaths, libraryDestFolderPath,
-							unprocessed, depth, desiredLoadSpec, options, log, consumer, monitor);
+					boolean found = false;
+					boolean loaded = false;
+					if (!customSearchPaths.isEmpty()) {
+						log.appendMsg("Searching %d custom path%s for library %s...".formatted(
+							customSearchPaths.size(), customSearchPaths.size() > 1 ? "s" : "",
+							libraryName));
+						Loaded<Program> loadedLibrary = loadLibraryFromSearchPaths(libraryName,
+							provider, customSearchPaths, libraryDestFolderPath, unprocessed, depth,
+							desiredLoadSpec, options, log, consumer, monitor);
 						if (loadedLibrary != null) {
+							found = true;
+							loaded = true;
+							loadedPrograms.add(loadedLibrary);
+						}
+					}
+					if (!loaded && !localSearchPaths.isEmpty()) {
+						log.appendMsg("Searching %d local path%s for library %s...".formatted(
+							localSearchPaths.size(), localSearchPaths.size() > 1 ? "s" : "",
+							libraryName));
+						Loaded<Program> loadedLibrary = loadLibraryFromSearchPaths(libraryName,
+							provider, localSearchPaths, libraryDestFolderPath, unprocessed, depth,
+							desiredLoadSpec, options, log, consumer, monitor);
+						if (loadedLibrary != null) {
+							found = true;
 							if (loadLocalLibraries) {
+								loaded = true;
 								loadedPrograms.add(loadedLibrary);
-								loadedLocal = true;
 							}
 							else {
 								loadedLibrary.release(consumer);
 							}
 						}
 					}
-					if (!loadedLocal && !systemSearchPaths.isEmpty()) {
-						Loaded<Program> loadedLibrary = loadLibraryFromSearchPaths(
-							libraryName, provider, systemSearchPaths, libraryDestFolderPath,
-							unprocessed, depth, desiredLoadSpec, options, log, consumer, monitor);
+					if (!loaded && !systemSearchPaths.isEmpty()) {
+						log.appendMsg("Searching %d system path%s for library %s...".formatted(
+							systemSearchPaths.size(), systemSearchPaths.size() > 1 ? "s" : "",
+							libraryName));
+						Loaded<Program> loadedLibrary = loadLibraryFromSearchPaths(libraryName,
+							provider, systemSearchPaths, libraryDestFolderPath, unprocessed, depth,
+							desiredLoadSpec, options, log, consumer, monitor);
 						if (loadedLibrary != null) {
+							found = true;
 							if (loadSystemLibraries) {
+								loaded = true;
 								loadedPrograms.add(loadedLibrary);
 							}
 							else {
@@ -535,6 +562,19 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 							}
 						}
 					}
+					if (!found) {
+						log.appendMsg("Library not found.");
+					}
+					else {
+						if (loaded) {
+							log.appendMsg("Saving library to: " +
+								loadedPrograms.get(loadedPrograms.size() - 1).toString());
+						}
+						else {
+							log.appendMsg("Library not saved to project.");
+						}
+					}
+					log.appendMsg("------------------------------------------------\n");
 				}
 			}
 			success = true;
@@ -543,6 +583,16 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		finally {
 			if (!success) {
 				release(loadedPrograms, consumer);
+			}
+			for (FileSystemSearchPath fsSearchPath : localSearchPaths) {
+				if (!fsSearchPath.fsRef().isClosed()) {
+					fsSearchPath.fsRef().close();
+				}
+			}
+			for (FileSystemSearchPath fsSearchPath : systemSearchPaths) {
+				if (!fsSearchPath.fsRef().isClosed()) {
+					fsSearchPath.fsRef().close();
+				}
 			}
 		}
 	}
@@ -553,7 +603,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 *
 	 * @param libraryName The name of the library to load
 	 * @param provider The {@link ByteProvider} of the program being loaded
-	 * @param searchPaths The {@link List} of search paths
+	 * @param fsSearchPaths A {@link List} of {@link FileSystemSearchPath}s that will be searched
 	 * @param libraryDestFolderPath The path of the project folder to load the libraries into. 
 	 *   Could be null if the specified project is null or a destination folder path could not be 
 	 *   determined.
@@ -570,22 +620,31 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @throws CancelledException if the user cancelled the load
 	 */
 	private Loaded<Program> loadLibraryFromSearchPaths(String libraryName,
-			ByteProvider provider, List<String> searchPaths, String libraryDestFolderPath,
-			Queue<UnprocessedLibrary> unprocessed, int depth, LoadSpec desiredLoadSpec,
-			List<Option> options, MessageLog log, Object consumer, TaskMonitor monitor)
-			throws CancelledException, IOException {
+			ByteProvider provider, List<FileSystemSearchPath> fsSearchPaths,
+			String libraryDestFolderPath, Queue<UnprocessedLibrary> unprocessed, int depth,
+			LoadSpec desiredLoadSpec, List<Option> options, MessageLog log, Object consumer,
+			TaskMonitor monitor) throws CancelledException, IOException {
 
 		Program library = null;
+		if (libraryDestFolderPath != null) {
+			String libraryPath = FilenameUtils.getPath(libraryName);
+			if (libraryPath != null && !libraryPath.isEmpty()) {
+				if (!libraryDestFolderPath.endsWith("/")) {
+					libraryDestFolderPath += "/";
+				}
+				libraryDestFolderPath += libraryPath;
+			}
+		}
 		String simpleLibraryName = FilenameUtils.getName(libraryName);
-		List<File> candidateLibraryFiles =
-			findLibrary(FilenameUtils.separatorsToUnix(libraryName), searchPaths);
+		List<FSRL> candidateLibraryFsrls =
+			findLibrary(Path.of(libraryName), fsSearchPaths, log, monitor);
 
 		boolean success = false;
 		try {
-			for (File candidateLibraryFile : candidateLibraryFiles) {
+			for (FSRL candidateLibraryFsrl : candidateLibraryFsrls) {
 				monitor.checkCancelled();
 				List<String> newLibraryList = new ArrayList<>();
-				library = loadLibrary(simpleLibraryName, candidateLibraryFile,
+				library = loadLibrary(simpleLibraryName, candidateLibraryFsrl,
 					desiredLoadSpec, newLibraryList, options, consumer, log, monitor);
 				for (String newLibraryName : newLibraryList) {
 					unprocessed.add(new UnprocessedLibrary(newLibraryName, depth - 1));
@@ -593,13 +652,11 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 				if (library == null) {
 					continue;
 				}
-				log.appendMsg("Library " + libraryName + ": Examining " + candidateLibraryFile);
-				processLibrary(library, libraryName, candidateLibraryFile, provider,
+				processLibrary(library, libraryName, candidateLibraryFsrl, provider,
 					desiredLoadSpec, options, log, monitor);
 				success = true;
 				return new Loaded<Program>(library, simpleLibraryName, libraryDestFolderPath);
 			}
-			log.appendMsg("Library " + libraryName + ": Not found");
 			return null;
 		}
 		finally {
@@ -667,7 +724,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	}
 
 	/**
-	 * Find the library on the filesystem, returning a {@link List} of possible candidate files.
+	 * Find the library in a {@link GFileSystem}, returning a {@link List} of possible candidate 
+	 * {@link GFile files}.
 	 * <p>
 	 * Each search path directory will be searched for the library file in order.
 	 * <p>
@@ -678,49 +736,69 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * If the library specifies an absolute path, its native path is searched on the local 
 	 * filesystem.
 	 * <p>
-	 * @param libraryPath Either a path_and_filename, or just a filename of a library
-	 *   that should be searched for
-	 * @param searchPaths A {@link List} of filesystem paths on the local filesystem that will be
-	 *   searched
-	 * @return A {@link List} of files that match the requested library path
+	 * @param libraryPath The library {@link Path}.  This will be either an absolute path, a
+	 *   relative path, or just a filename.
+	 * @param fsSearchPaths A {@link List} of {@link FileSystemSearchPath}s that will be searched
+	 * @param log The log
+	 * @param monitor A cancelable task monitor
+	 * @return A {@link List} of {@link GFile files} that match the requested library path
+	 * @throws CancelledException if the user cancelled the operation
 	 */
-	private List<File> findLibrary(String libraryPath, List<String> searchPaths) {
+	private List<FSRL> findLibrary(Path libraryPath, List<FileSystemSearchPath> fsSearchPaths,
+			MessageLog log, TaskMonitor monitor) throws CancelledException {
+		
+		List<FSRL> results = new ArrayList<>();
+		FileSystemService fsService = FileSystemService.getInstance();
 
-		String libraryName = FilenameUtils.getName(libraryPath);
-		List<File> results = new ArrayList<>();
+		Path libraryParentPath = libraryPath.getParent();
+		String libraryName = libraryPath.getFileName().toString();
 
-		for (String searchPath : searchPaths) {
+		for (FileSystemSearchPath fsSearchPath : fsSearchPaths) {
+			monitor.checkCancelled();
 
-			// ignore garbage entries: relative, non-existent, not directory
-			searchPath = FilenameUtils.normalizeNoEndSeparator(searchPath);
-			if (searchPath == null || searchPath.isEmpty()) {
+			try {
+				// Handle 3 different library-lookup cases:
+
+				// 1) libraryPath is library name, relative path, or absolute path from the root
+				//    of the searchPath.  We need to join our fsSearchPath with our 
+				//    libraryParentPath
+				Path combinedParentPath =
+					ObjectUtils.allNotNull(fsSearchPath.fsPath(), libraryParentPath)
+							? fsSearchPath.fsPath().resolve(libraryParentPath)
+							: ObjectUtils.firstNonNull(fsSearchPath.fsPath(), libraryParentPath);
+				FSRL resolvedFsrl = resolveLibraryFile(fsSearchPath.fsRef().getFilesystem(),
+					combinedParentPath, libraryName);
+				if (resolvedFsrl != null) {
+					results.add(resolvedFsrl);
+					continue;
+				}
+
+				// 2) libraryPath is an absolute path and should be looked up as-is on the
+				//    LocalFileSystem.  Note that the root of the LocalFileSystem should not be
+				//    assumed to be in searchPaths for this case (otherwise case 1 would find it)
+				if (libraryParentPath != null && libraryParentPath.isAbsolute()) {
+					resolvedFsrl = resolveLibraryFile(fsService.getLocalFS(), libraryParentPath,
+						libraryName);
+					if (resolvedFsrl != null) {
+						results.add(resolvedFsrl);
+						continue;
+					}
+				}
+
+				// 3) libraryPath is some kind of path that we haven't found yet, so handle a
+				//    flat-directory structure by just appending filename part of the path to the
+				//    searchPath.  Not sure if this case is still necessary but supporting for
+				//    legacy support.
+				resolvedFsrl = resolveLibraryFile(fsSearchPath.fsRef().getFilesystem(),
+					fsSearchPath.fsPath(), libraryName);
+				if (resolvedFsrl != null) {
+					results.add(resolvedFsrl);
+					continue;
+				}
+			}
+			catch (IOException e) {
+				log.appendException(e);
 				continue;
-			}
-			File searchDir = new File(searchPath);
-			if (!searchDir.isAbsolute() || !searchDir.isDirectory()) {
-				continue;
-			}
-
-			// 1) Try as possible subpath under the search path
-			String candidatePath =
-				FilenameUtils.separatorsToSystem(concatenatePaths(searchPath, libraryPath));
-			File f = resolveLibraryFile(new File(candidatePath));
-			if (f == null || !f.isFile()) {
-				// 2) Fall back to looking for the library in the user specified search path, sans
-				//    any subpath built into the library string
-				f = resolveLibraryFile(new File(searchDir, libraryName));
-			}
-			if (f != null && f.isFile() && !results.contains(f)) {
-				results.add(f);
-			}
-		}
-
-		if (FilenameUtils.getPrefixLength(libraryPath) > 0) {
-			// 3) Search the local filesystem (as if the importPath list contained "/")
-			// if the specified library string specifies an absolute path
-			File f = resolveLibraryFile(new File(libraryPath));
-			if (f != null && f.isAbsolute() && f.isFile() && !results.contains(f)) {
-				results.add(f);
 			}
 		}
 
@@ -732,7 +810,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * a {@link ByteProvider} available.
 	 * 
 	 * @param libraryName The name of the library to load
-	 * @param libraryFile The library file to load
+	 * @param libraryFsrl The library {@link FSRL} to load
 	 * @param desiredLoadSpec The desired {@link LoadSpec}
 	 * @param libraryNameList A {@link List} to be populated with the given library's dependent
 	 *   library names
@@ -744,30 +822,24 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @throws CancelledException if the user cancelled the load operation
 	 * @throws IOException if there was an IO-related error during the load
 	 */
-	private Program loadLibrary(String libraryName, File libraryFile, LoadSpec desiredLoadSpec,
+	private Program loadLibrary(String libraryName, FSRL libraryFsrl, LoadSpec desiredLoadSpec,
 			List<String> libraryNameList, List<Option> options, Object consumer, MessageLog log,
 			TaskMonitor monitor) throws CancelledException, IOException {
 
-		try (ByteProvider provider = createLibraryByteProvider(libraryFile, desiredLoadSpec, log)) {
-			if (!shouldLoadLibrary(libraryName, libraryFile, provider, desiredLoadSpec, log)) {
+		try (ByteProvider provider =
+			createLibraryByteProvider(libraryFsrl, desiredLoadSpec, log, monitor)) {
+			if (!shouldLoadLibrary(libraryName, libraryFsrl, provider, desiredLoadSpec, log)) {
 				return null;
 			}
 
 			LoadSpec libLoadSpec = matchSupportedLoadSpec(desiredLoadSpec, provider);
 			if (libLoadSpec == null) {
-				log.appendMsg("Skipping library which is the wrong architecture: " + libraryFile);
+				log.appendMsg("Skipping library which is the wrong architecture: " + libraryFsrl);
 				return null;
 			}
 
-			Program library = doLoad(provider, libraryName, libLoadSpec, libraryNameList, options,
-				consumer, log, monitor);
-
-			if (library == null) {
-				log.appendMsg("Library " + libraryFile + " failed to load for some reason");
-				return null;
-			}
-
-			return library;
+			return doLoad(provider, libraryName, libLoadSpec, libraryNameList,
+				options, consumer, log, monitor);
 		}
 	}
 
@@ -807,7 +879,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		int transactionID = program.startTransaction("Loading");
 		boolean success = false;
 		try {
-			log.appendMsg("----- Loading " + provider.getAbsolutePath() + " -----");
+			log.appendMsg("Loading %s...".formatted(provider.getFSRL()));
 			load(provider, loadSpec, options, program, monitor, log);
 
 			createDefaultMemoryBlocks(program, language, log);
@@ -833,7 +905,6 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			program.endTransaction(transactionID, true); // More efficient to commit when program will be discarded
 			if (!success) {
 				program.release(consumer);
-				program = null;
 			}
 		}
 	}
@@ -858,14 +929,9 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			List<DomainFolder> searchFolders, MessageLog messageLog, TaskMonitor monitor)
 			throws CancelledException, IOException {
 
-		Map<String, Loaded<Program>> loadedByName = loadedPrograms.stream()
-				.collect(
-					Collectors.toMap(loaded -> loaded.getName(), loaded -> loaded));
-
-		monitor.initialize(loadedByName.size());
-		for (Loaded<Program> loadedProgram : loadedByName.values()) {
-			monitor.incrementProgress(1);
-			monitor.checkCancelled();
+		monitor.initialize(loadedPrograms.size());
+		for (Loaded<Program> loadedProgram : loadedPrograms) {
+			monitor.increment();
 
 			Program program = loadedProgram.getDomainObject();
 			ExternalManager extManager = program.getExternalManager();
@@ -878,7 +944,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			monitor.setMessage("Resolving..." + program.getName());
 			int id = program.startTransaction("Resolving external references");
 			try {
-				resolveExternalLibraries(program, loadedByName, searchFolders, monitor, messageLog);
+				resolveExternalLibraries(program, loadedPrograms, searchFolders, monitor,
+					messageLog);
 			}
 			finally {
 				program.endTransaction(id, true);
@@ -894,9 +961,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 *
 	 * @param program the program whose Library entries are to be resolved.  An open 
 	 *   transaction on program is required.
-	 * @param loadedByName map of recently loaded things to be considered
-	 *   first when resolving external Libraries.  Programs not saved to the project
-	 *   will be ignored.
+	 * @param loadedPrograms the list of {@link Loaded} {@link Program}s
 	 * @param searchFolders an order list of {@link DomainFolder}s which imported libraries will be
 	 *   searched. These folders will be searched if a library is not found within the list of 
 	 *   programs supplied.
@@ -905,19 +970,20 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @throws CancelledException if the user cancelled the load.
 	 */
 	private void resolveExternalLibraries(Program program,
-			Map<String, Loaded<Program>> loadedByName, List<DomainFolder> searchFolders,
+			List<Loaded<Program>> loadedPrograms, List<DomainFolder> searchFolders,
 			TaskMonitor monitor, MessageLog messageLog) throws CancelledException {
 		ExternalManager extManager = program.getExternalManager();
 		String[] extLibNames = extManager.getExternalLibraryNames();
-		messageLog.appendMsg("Linking external programs to " + program.getName() + "...");
+		messageLog.appendMsg(
+			"Linking the External Programs of '%s' to imported libraries..."
+					.formatted(program.getName()));
 		for (String externalLibName : extLibNames) {
 			if (Library.UNKNOWN.equals(externalLibName)) {
 				continue;
 			}
 			monitor.checkCancelled();
 			try {
-				String externalFileName = FilenameUtils.getName(externalLibName);
-				Loaded<Program> matchingExtProgram = findLibrary(loadedByName, externalFileName);
+				Loaded<Program> matchingExtProgram = findLibrary(loadedPrograms, externalLibName);
 				if (matchingExtProgram != null) {
 					String path =
 						matchingExtProgram.getProjectFolderPath() + matchingExtProgram.getName();
@@ -938,7 +1004,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 						}
 					}
 					if (!found) {
-						messageLog.appendMsg("  [" + externalLibName + "] -> not found");
+						messageLog.appendMsg("  [" + externalLibName + "] -> not found in project");
 					}
 				}
 			}
@@ -946,6 +1012,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 				Msg.error(this, "Bad library name: " + externalLibName, e);
 			}
 		}
+		messageLog.appendMsg("------------------------------------------------\n");
 	}
 
 	/**
@@ -972,56 +1039,134 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	}
 
 	/**
-	 * Gets a {@link List} of priority-ordered local paths used to search for libraries
+	 * A file system search path
+	 * 
+	 * @param fsRef A {@link FileSystemRef}
+	 * @param fsPath A {@link Path} relative to the root of the file system, or null for the root
+	 */
+	protected record FileSystemSearchPath(FileSystemRef fsRef, Path fsPath) {}
+
+	/**
+	 * Gets a {@link List} of priority-ordered custom {@link FileSystemSearchPath}s used to search 
+	 * for libraries.  The default implementation of this method returns an empty {@link List}.
+	 * Subclasses can override it as needed.
 	 * 
 	 * @param provider The {@link ByteProvider} of the program being loaded
 	 * @param options The options
-	 * @return A {@link List} of priority-ordered local paths used to search for libraries
+	 * @param log The log
+	 * @param monitor A cancelable task monitor
+	 * @return A {@link List} of priority-ordered custom {@link FileSystemSearchPath}s used to
+	 *   search for libraries
 	 */
-	private List<String> getLocalLibrarySearchPaths(ByteProvider provider, List<Option> options) {
-		List<String> paths = new ArrayList<>();
-		if (isLoadLocalLibraries(options) || shouldSearchAllPaths(options)) {
-			String parent = getProviderFilePath(provider);
-			if (parent != null) {
-				paths.add(parent);
-			}
-		}
-		return paths;
+	protected List<FileSystemSearchPath> getCustomLibrarySearchPaths(ByteProvider provider,
+			List<Option> options, MessageLog log, TaskMonitor monitor) {
+		return List.of();
 	}
 
 	/**
-	 * Gets a {@link List} of priority-ordered system paths used to search for libraries
+	 * Gets a {@link List} of priority-ordered local {@link FileSystemSearchPath}s used to search 
+	 * for libraries
 	 * 
 	 * @param provider The {@link ByteProvider} of the program being loaded
 	 * @param options The options
-	 * @return A {@link List} of priority-ordered system paths used to search for libraries
+	 * @param log The log
+	 * @param monitor A cancelable task monitor
+	 * @return A {@link List} of priority-ordered local {@link FileSystemSearchPath}s used to
+	 *   search for libraries
 	 */
-	private List<String> getSystemLibrarySearchPaths(ByteProvider provider, List<Option> options) {
-		List<String> paths = new ArrayList<>();
-		if (isLoadSystemLibraries(options) || shouldSearchAllPaths(options)) {
-			paths.addAll(LibrarySearchPathManager.getLibraryPathsList());
+	private List<FileSystemSearchPath> getLocalLibrarySearchPaths(ByteProvider provider,
+			List<Option> options, MessageLog log, TaskMonitor monitor) {
+		List<FileSystemSearchPath> result = new ArrayList<>();
+		FileSystemService fsService = FileSystemService.getInstance();
+		if (isLoadLocalLibraries(options) || shouldSearchAllPaths(options)) {
+			FSRL providerFsrl = provider.getFSRL();
+			if (providerFsrl != null) {
+				try (RefdFile fileRef = fsService.getRefdFile(providerFsrl, monitor)) {
+					GFile parentFile = fileRef.file.getParentFile();
+					File f = new File(parentFile.getPath()); // File API will sanitize Windows-style paths
+					result.add(new FileSystemSearchPath(fileRef.fsRef, f.toPath()));
+				}
+				catch (IOException | CancelledException e) {
+					log.appendException(e);
+				}
+			}
 		}
-		return paths;
+		return result;
+	}
+
+	/**
+	 * Gets a {@link List} of priority-ordered system {@link FileSystemSearchPath}s used to search 
+	 * for libraries
+	 * 
+	 * @param options The options
+	 * @param log The log
+	 * @param monitor A cancelable task monitor
+	 * @return A {@link List} of priority-ordered system {@link FileSystemSearchPath}s used to 
+	 *   search for libraries
+	 */
+	private List<FileSystemSearchPath> getSystemLibrarySearchPaths(List<Option> options,
+			MessageLog log, TaskMonitor monitor) {
+		List<FileSystemSearchPath> result = new ArrayList<>();
+		FileSystemService fsService = FileSystemService.getInstance();
+		if (isLoadSystemLibraries(options) || shouldSearchAllPaths(options)) {
+			List<Path> searchPaths = new ArrayList<>();
+			for (String str : LibrarySearchPathManager.getLibraryPathsList()) {
+				if (str.isBlank()) {
+					continue;
+				}
+				try {
+					Path path = Path.of(str.trim()).normalize();
+					if (path.isAbsolute() && Files.exists(path)) {
+						searchPaths.add(path);
+					}
+				}
+				catch (InvalidPathException e) {
+					log.appendMsg("Skipping invalid system library search path: \"" + str + "\"");
+				}
+			}
+			for (Path searchPath : searchPaths) {
+				try {
+					FSRL searchFSRL =
+						fsService.getLocalFSRL(searchPath.toFile().getCanonicalFile());
+					FileSystemRef fsRef =
+						fsService.probeFileForFilesystem(searchFSRL, monitor, null);
+					if (fsRef != null) {
+						result.add(new FileSystemSearchPath(fsRef, null));
+					}
+				}
+				catch (IOException | CancelledException e) {
+					log.appendException(e);
+				}
+			}
+		}
+		return result;
 	}
 	
 	/**
 	 * Find the library within the given {@link Map} of {@link Program}s
 	 * 
-	 * @param loadedByName The map to search
-	 * @param libraryName The library name to lookup
+	 * @param loadedPrograms the list of {@link Loaded} {@link Program}s
+	 * @param libraryName The library name to lookup.  Depending on the type of library, this could
+	 *   be a simple filename or an absolute path.
 	 * @return The found {@link Loaded} {@link Program} or null if not found
 	 */
-	private Loaded<Program> findLibrary(Map<String, Loaded<Program>> loadedByName,
-			String libraryName) {
+	private Loaded<Program> findLibrary(List<Loaded<Program>> loadedPrograms, String libraryName) {
 		Comparator<String> comparator = getLibraryNameComparator();
 		boolean noExtension = FilenameUtils.getExtension(libraryName).equals("");
-		for (String key : loadedByName.keySet()) {
-			String candidateName = key;
+		boolean absolute = libraryName.startsWith("/");
+		for (Loaded<Program> loadedProgram : loadedPrograms) {
+			String candidateName = loadedProgram.getName();
 			if (isOptionalLibraryFilenameExtensions() && noExtension) {
 				candidateName = FilenameUtils.getBaseName(candidateName);
 			}
-			if (comparator.compare(candidateName, libraryName) == 0) {
-				return loadedByName.get(key);
+			if (absolute) {
+				String loadedProgramPath = loadedProgram.getProjectFolderPath() + candidateName;
+				if (loadedProgramPath.endsWith(libraryName)) {
+					return loadedProgram;
+				}
+			}
+			else if (comparator.compare(candidateName, libraryName) == 0) {
+				return loadedProgram;
 			}
 		}
 		return null;
@@ -1050,54 +1195,40 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	}
 
 	/**
-	 * Resolves the given library path to an existing {@link File} on disk.  Some {@link Loader}s
+	 * Resolves the given library path to an existing {@link FSRL}.  Some {@link Loader}s
 	 * have relaxed requirements on what counts as a valid library filename match.  For example, 
 	 * case-insensitive lookup may be allowed, and filename extensions may be optional.
 	 * 
-	 * @param libraryFile The library file to resolve
-	 * @return The library file resolved to an existing {@link File} on disk, or null if it did not
-	 *   resolve
+	 * @param fs The {@link GFileSystem file system} to resolve in
+	 * @param libraryParentPath The {@link Path} of the libraries parent directory, relative to the
+	 *   given file system (could be null)
+	 * @param libraryName The library name
+	 * @return The library resolved to an existing {@link FSRL}, or null if it did not resolve
+	 * @throws IOException If an IO-related problem occurred
 	 */
-	private File resolveLibraryFile(File libraryFile) {
-		File ret = libraryFile;
-		if (isCaseInsensitiveLibraryFilenames()) {
-			ret = FileUtilities.resolveFileCaseInsensitive(libraryFile);
-		}
-		if (ret.exists()) {
-			return ret;
-		}
-		if (isOptionalLibraryFilenameExtensions() &&
-			FilenameUtils.getExtension(libraryFile.toString()).equals("")) {
-			File[] files = libraryFile.getParentFile().listFiles();
-			if (files != null) {
-				Comparator<String> libNameComparator = getLibraryNameComparator();
-				for (File file : files) {
-					String baseName = FilenameUtils.getBaseName(file.toString());
-					if (libNameComparator.compare(libraryFile.getName(), baseName) == 0) {
-						return file;
-					}
+	protected FSRL resolveLibraryFile(GFileSystem fs, Path libraryParentPath, String libraryName)
+			throws IOException {
+		GFile libraryParentDir = fs.lookup(
+			libraryParentPath != null ? FilenameUtils.separatorsToUnix(libraryParentPath.toString())
+					: null);
+		boolean compareWithoutExtension = isOptionalLibraryFilenameExtensions() &&
+			FilenameUtils.getExtension(libraryName).equals("");
+		if (libraryParentDir != null) {
+			Comparator<String> libNameComparator = getLibraryNameComparator();
+			for (GFile file : fs.getListing(libraryParentDir)) {
+				if (file.isDirectory()) {
+					continue;
+				}
+				String compareName = file.getName();
+				if (compareWithoutExtension) {
+					compareName = FilenameUtils.getBaseName(compareName);
+				}
+				if (libNameComparator.compare(libraryName, compareName) == 0) {
+					return file.getFSRL();
 				}
 			}
 		}
 		return null;
-	}
-
-	/**
-	 * Returns the path the loaded {@link ByteProvider} is located in.
-	 * <p>
-	 * Special case when the ByteProvider specifies a {@link FSRL}, try to get the 'real'
-	 * path on the local filesystem, otherwise return null.
-	 *
-	 * @param provider The {@link ByteProvider}.
-	 * @return The path the loaded {@link ByteProvider} is located in.
-	 */
-	private String getProviderFilePath(ByteProvider provider) {
-		FSRL fsrl = provider.getFSRL();
-		if ((fsrl != null) && !fsrl.getFS().hasContainer()) {
-			return FilenameUtils.getFullPathNoEndSeparator(fsrl.getPath());
-		}
-		File f = provider.getFile();
-		return (f != null) ? f.getParent() : null;
 	}
 
 	/**

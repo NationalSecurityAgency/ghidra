@@ -76,8 +76,9 @@ public class HintTextField extends JTextField {
 		this.hint = hint;
 		this.required = required;
 		this.verifier = verifier;
+
 		addListeners();
-		setAttributes();
+		setFont(getFont().deriveFont(Font.PLAIN));
 		validateField();
 	}
 
@@ -129,6 +130,7 @@ public class HintTextField extends JTextField {
 
 		Graphics2D g2 = (Graphics2D) g;
 		g2.setColor(Messages.HINT);
+		g2.setFont(g2.getFont().deriveFont(Font.ITALIC));
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
 		Dimension size = getSize();
@@ -174,14 +176,6 @@ public class HintTextField extends JTextField {
 		}
 
 		return true;
-	}
-
-	/**
-	 * Sets font/color attributes for the field.
-	 */
-	private void setAttributes() {
-		setFont(getFont().deriveFont(Font.PLAIN));
-		setForeground(new GColor("color.fg.textfield.hint"));
 	}
 
 	/**

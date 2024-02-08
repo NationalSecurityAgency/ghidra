@@ -289,4 +289,8 @@ public class AssemblyNumericTerminal extends AssemblyTerminal {
 	public int getBitSize() {
 		return bitsize;
 	}
+
+	public AddressSpace getSpace() {
+		return space;
+	}
 }

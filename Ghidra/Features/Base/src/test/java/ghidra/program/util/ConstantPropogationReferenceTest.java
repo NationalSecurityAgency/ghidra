@@ -15,13 +15,11 @@
  */
 package ghidra.program.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.math.BigInteger;
 
-import org.junit.*;
+import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
 import ghidra.app.plugin.core.analysis.ConstantPropagationAnalyzer;
@@ -34,6 +32,7 @@ import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.Reference;
+import ghidra.program.model.symbol.ReferenceIterator;
 import ghidra.program.util.SymbolicPropogator.Value;
 import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
@@ -306,6 +305,53 @@ public class ConstantPropogationReferenceTest extends AbstractGenericTest {
 		Instruction instr = listing.getInstructionAt(addr("0x00040004"));
 		assertNoOperandReference(0, instr);
 		assertOperandReferenceTo(1, instr, addr("0x00040100"));
+	}
+	
+	@Test
+    public void testPIC_Call_X86_64() throws Exception {
+		
+		builder = new ProgramBuilder("PICCode", ProgramBuilder._X64, "gcc", this);
+
+        // entry
+        // 48 83 ec 28                   SUB      RSP,0x28
+		// e8 00 00 00 00                CALL     LAB_140020119
+		// LAB_140020119
+        // 8f c3                         POP      RBX
+        // 48 8d 43 e0                   LEA      RAX,[RBX + -0x20]
+		// ff d0                         CALL     RAX
+        // 48 83 c4 28                   ADD      RSP,0x28
+        // c3                            RET
+
+		builder.setBytes("0x140020110",
+			"48 83 ec 28 e8 00 00 00 00 8f c3 48 8d 43 e0 ff d0 48 83 c4 28 c3");		
+		
+		builder.setBytes("0x1400200f9",
+				"15 02 2f 00 00 89 05 e8 b9 00 00 48 83 c4 38");	
+
+		builder.disassemble("0x140020110", 21);
+
+		analyzer = new ConstantPropagationAnalyzer();
+
+		program = builder.getProgram();
+		program.startTransaction("Test");
+		
+		Address codeStart = addr("140020110");
+		Listing listing = program.getListing();
+		assertNotNull("Bad instruction disassembly", listing.getInstructionAt(codeStart));
+
+		AddressSet addressSet = new AddressSet(codeStart, codeStart.add(21));
+		analyze(addressSet);
+
+		Instruction instr = listing.getInstructionAt(addr("0x140020114"));
+		assertOperandReferenceTo(0, instr, addr("0x140020119"));
+		instr = listing.getInstructionAt(addr("0x140020119"));
+		ReferenceIterator referenceIteratorTo = instr.getReferenceIteratorTo();
+		Reference ref = referenceIteratorTo.next();
+		assertTrue(ref.getReferenceType().isJump());
+		instr = listing.getInstructionAt(addr("0x14002011f"));
+		Reference[] referencesFrom = instr.getReferencesFrom();
+		assertTrue(referencesFrom[0].getReferenceType().isFlow());
+		assertEquals("1400200f9", referencesFrom[0].getToAddress().toString());
 	}
 
 	private void assertNoOperandReference(int opIndex, Instruction instr) {

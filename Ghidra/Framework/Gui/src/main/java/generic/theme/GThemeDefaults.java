@@ -19,6 +19,9 @@ import static generic.theme.SystemThemeIds.*;
 
 import java.awt.Color;
 
+import javax.swing.JPanel;
+import javax.swing.JViewport;
+
 /**
  * This class contains many suitable default values for commonly used concepts.  See each static
  * class below.
@@ -88,6 +91,19 @@ public class GThemeDefaults {
 			//@formatter:on
 		}
 
+		public static class Viewport {
+			//@formatter:off
+			/**
+			 * By default the system {@link JViewport}s use BACKGROUND for their background, which
+			 * is the primary background color (typically white on light themes).  Some clients
+			 * would like the background color to match the uneditable background color used by
+			 * {@link JPanel}.   This color allows the empty space in the viewport to  match the
+			 * parent panel color.
+			 */
+			public static final GColor UNEDITABLE_BACKGROUND = new GColor("laf.color.Panel.background");
+			//@formatter:on
+		}
+
 		/**
 		 * Color values to use with tooltips
 		 */
@@ -139,6 +155,7 @@ public class GThemeDefaults {
 			public static final GColor PURPLE = getColor("purple");
 			public static final GColor RED = getColor("red");
 			public static final GColor SILVER = getColor("silver");
+			public static final GColor TEAL = getColor("teal");
 			public static final GColor WHITE = getColor("white");
 			public static final GColor YELLOW = getColor("yellow");
 

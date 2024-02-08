@@ -1,0 +1,81 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Static Analysis Results Interchange Format (SARIF)</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="Using_SARIF_Files"></A>Using SARIF Files</H1>
+
+    <P>SARIF is an OASIS standard for exchanging the results of static analysis performed against
+    a target executable.  While not a perfect match for exchanging Ghidra program analysis results,
+    it has at least some level of community acceptance and support within the reverse engineering
+    communities at large.  SARIF can be created in any number of ways, but, within Ghidra, SARIF
+    creation is done by means of any exporter. As with all of our exporters, a dialog appears when
+    you request an export, with an options panel for selecting which features you would like to export.
+    Currently, we support bookmarks, code, comments, data types, defined data, entry points, equates,
+    external libraries, functions, memory maps, properties, references, registers, relocations,
+    symbols, and program trees. </P>
+
+    <P>SARIF files can be re-ingested in two ways. A matching importer uses the same options to
+    create a new program or add features to an existing one.  The process is probably lossy, 
+    although efforts have been made to re-create exported programs with some fidelity.  Known issues
+    are documented in the DEVNOTES file.  The second way to ingest SARIF files is to configure a tool
+    with the SarifPlugin. The plugin provides a single "Read File" toolbar action.  After selecting
+    a file, the SARIF results are displayed in table format, with associated ingest actions applicable
+    to a table selection. The features provide by the SARIF importer and exporter all share the action
+    "Add To Program".</P>
+
+    <H1><A name="Custom_SARIF_Handlers"></A>Writing Custom SARIF Handlers</H1>
+
+    <P>While the main SarifProgramResultHandler class handles the majority of program-derived
+    information used on import/export, there are many occasions where you might want to apply the
+    results of some external analysis to a Ghidra program. The "Features Sarif" project contains
+    templates (in the form of abstract classes) for custom handlers:  SarifResultHandler.java and 
+    SarifRunHandler.java. Both handler types extend ExtensionPoint and are discovered automatically
+    when the a file is read by the SarifPlugin.</P>
+    
+    <P>Per-result handlers are used to populate a table displayed to the user and to associate
+    actions with a column in the table.  The "getKey" method returns the name for a column, and the 
+    "getActionName" a name for the action to be taken. When the user selects that action (in this case,
+    "Commit"), the table provider executes the program task specified by "getTask".  In this example,
+    the task grabs the selected rows from the table and, for each row, applies the return type in the
+    column "return_type" to the address in the column "address".</P>
+    
+    <P>A more complicated use case might involve the "parse" method, which is called for every result.
+    The default "handle" method takes anything returned by the "parse" method, creates key-value pairs 
+    (stored as a map, but...) using "getKey" and the value returned, and adds them to a list of results
+    stored in the data frame.  These can be retrieved programmatically later or processed immediately.
+    For example, the SarifPropertyResultHandler looks for results with "AdditionalProperties" labelled
+    either "viewer/table/xxx" or "listing/[comment, highlight, bookmark]".  Items in the second category
+    are applied immediately to the current program.  Items in the first category are added to the table
+    under column "xxx".</P>
+    
+    <P> A third and significantly more complicated example is the ProgramResultHandler, which overrides
+    the "handle" method.  This handler converts the set of "AdditionalProperties" into a key-value map.
+    The map is added to a list of results for the data frame, but also converted to a map of lists based
+    on the result's "RuleId".  The frame ultimately accrues a map of list of maps, keyed on "RuleId". 
+    Its "Add to Program" task takes each per-rule list and applies them to the program using the values
+    stored in the per-result maps.</P>
+    
+    <P>A final example, the SarifGraphRunHandler, is a per-run handler and is generally called only once
+    (unless the SARIF files contains multiple runs).  This example retrieves a SARIF Graph from the run,
+    converts it to a Ghidra graph object, and displays it.  Controls for how and when SARIF graphs are 
+    displayed are stored under Edit->Tool Options->Graph->Sarif.</P>
+    
+
+    <P class="relatedtopic">Related Topics:</P>
+
+    <UL>
+      <LI><A href="help/topics/ImporterPlugin/importer.htm">Importers</A></LI>
+      <LI><A href="help/topics/ExporterPlugin/importer.htm">Exporters</A></LI>
+    </UL>
+
+    <P>&nbsp;</P>
+  </BODY>
+</HTML>

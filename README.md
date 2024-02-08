@@ -31,6 +31,9 @@ of how you might be impacted.
 To install an official pre-built multi-platform Ghidra release:  
 * Install [JDK 17 64-bit][jdk17]
 * Download a Ghidra [release file][releases]
+  - **NOTE:** The official multi-platform release file is named 
+    `ghidra_<version>_<release>_<date>.zip` which can be found under the "Assets" drop-down.
+    Downloading either of the files named "Source Code" is not correct for this step.
 * Extract the Ghidra release file
 * Launch Ghidra: `./ghidraRun` (or `ghidraRun.bat` for Windows)
 
@@ -81,7 +84,10 @@ For issues building, please check the [Known Issues][known-issues] section for p
 ### User Scripts and Extensions
 Ghidra installations support users writing custom scripts and extensions via the *GhidraDev* plugin 
 for Eclipse.  The plugin and its corresponding instructions can be found within a Ghidra release at
-`Extensions/Eclipse/GhidraDev/`.
+`Extensions/Eclipse/GhidraDev/` or at [this link][ghidradev].
+
+**NOTE:** The *GhidraDev* plugin for Eclipse only supports developing against fully built
+Ghidra installations which can be downloaded from the [Releases][releases] page.
 
 ### Advanced Development
 To develop the Ghidra tool itself, it is highly recommended to use Eclipse, which the Ghidra 
@@ -127,3 +133,4 @@ source project.
 [eclipse]: https://www.eclipse.org/downloads/packages/
 [master]: https://github.com/NationalSecurityAgency/ghidra/archive/refs/heads/master.zip
 [security]: https://github.com/NationalSecurityAgency/ghidra/security/advisories
+[ghidradev]: https://htmlpreview.github.io/?https://github.com/NationalSecurityAgency/ghidra/blob/master/GhidraBuild/EclipsePlugins/GhidraDev/GhidraDevPlugin/GhidraDev_README.html

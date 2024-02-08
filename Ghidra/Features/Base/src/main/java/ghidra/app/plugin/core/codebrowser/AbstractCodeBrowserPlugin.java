@@ -734,8 +734,9 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 
 		int instanceNum = 0;
 		for (int i = 0; i < layout.getNumFields(); i++) {
-			ListingField bf = (ListingField) layout.getField(i);
-			if (bf.getFieldFactory().getFieldName().equals(fieldName)) {
+			Field f = layout.getField(i);
+			if ((f instanceof ListingField bf) &&
+				bf.getFieldFactory().getFieldName().equals(fieldName)) {
 				if (instanceNum++ == occurrence) {
 					fieldNum = i;
 					break;
@@ -774,7 +775,7 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 	public boolean goTo(ProgramLocation location, boolean centerOnScreen) {
 
 		return Swing
-			.runNow(() -> connectedProvider.getListingPanel().goTo(location, centerOnScreen));
+				.runNow(() -> connectedProvider.getListingPanel().goTo(location, centerOnScreen));
 	}
 
 	@Override
@@ -869,14 +870,14 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (ev.containsEvent(DomainObject.DO_DOMAIN_FILE_CHANGED)) {
+		if (ev.contains(DomainObjectEvent.FILE_CHANGED)) {
 			connectedProvider.updateTitle();
 		}
 
 		if (viewManager != null) {
 			return;
 		}
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
+		if (ev.contains(DomainObjectEvent.RESTORED)) {
 			viewChanged(currentProgram.getMemory());
 		}
 	}

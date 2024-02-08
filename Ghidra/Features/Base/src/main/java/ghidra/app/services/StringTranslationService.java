@@ -15,9 +15,10 @@
  */
 package ghidra.app.services;
 
-import java.util.List;
+import java.util.*;
 
 import ghidra.framework.plugintool.Plugin;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginDescription;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
@@ -30,6 +31,21 @@ import ghidra.util.HelpLocation;
  * and then registered via {@link Plugin}'s registerServiceProvided().
  */
 public interface StringTranslationService {
+	/**
+	 * Returns a sorted list of the currently enabled StringTranslationService service providers.
+	 *  
+	 * @param tool {@link PluginTool}
+	 * @return sorted list of currently enabled StringTranslationServices
+	 */
+	public static List<StringTranslationService> getCurrentStringTranslationServices(
+			PluginTool tool) {
+		List<StringTranslationService> translationServices =
+			new ArrayList<>(Arrays.asList(tool.getServices(StringTranslationService.class)));
+		Collections.sort(translationServices,
+			(s1, s2) -> s1.getTranslationServiceName().compareTo(s2.getTranslationServiceName()));
+		return translationServices;
+	}
+
 	/**
 	 * Returns the name of this translation service.  Used when building menus to allow
 	 * the user to pick a translation service.
@@ -56,7 +72,12 @@ public interface StringTranslationService {
 	 * @param program the program containing the data instances.
 	 * @param stringLocations {@link List} of string locations.
 	 */
-	public void translate(Program program, List<ProgramLocation> stringLocations);
+	public void translate(Program program, List<ProgramLocation> stringLocations,
+			TranslateOptions options);
+
+	public record TranslateOptions(boolean autoTranslate) {
+		public static TranslateOptions NONE = new TranslateOptions(false);
+	};
 
 	/**
 	 * Helper that creates a {@link HelpLocation} based on the plugin and sts.

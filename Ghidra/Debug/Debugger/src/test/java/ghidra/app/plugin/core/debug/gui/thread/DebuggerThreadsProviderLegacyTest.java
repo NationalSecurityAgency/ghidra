@@ -27,7 +27,7 @@ import org.junit.experimental.categories.Category;
 
 import db.Transaction;
 import generic.test.category.NightlyCategory;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.thread.DebuggerLegacyThreadsPanel.ThreadTableColumns;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
@@ -36,7 +36,7 @@ import ghidra.trace.model.thread.TraceThreadManager;
 import ghidra.trace.model.time.TraceTimeManager;
 
 @Category(NightlyCategory.class) // this may actually be an @PortSensitive test
-public class DebuggerThreadsProviderLegacyTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerThreadsProviderLegacyTest extends AbstractGhidraHeadedDebuggerTest {
 
 	protected DebuggerThreadsPlugin threadsPlugin;
 	protected DebuggerThreadsProvider threadsProvider;

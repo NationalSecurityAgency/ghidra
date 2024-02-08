@@ -20,6 +20,8 @@ import java.util.*;
 
 import ghidra.app.emulator.Emulator;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.app.plugin.processors.sleigh.SleighParserContext;
+import ghidra.app.util.PseudoInstruction;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
@@ -27,6 +29,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.util.ProgramContextImpl;
 import ghidra.util.Msg;
@@ -154,9 +157,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		 * Construct the executor
 		 * 
 		 * @see DefaultPcodeThread#createExecutor()
-		 * @param language the language of the containing machine
-		 * @param arithmetic the arithmetic of the containing machine
-		 * @param state the composite state assigned to the thread
+		 * @param thread the thread this executor supports
 		 */
 		public PcodeThreadExecutor(DefaultPcodeThread<T> thread) {
 			// NB. The executor itself is not decoding. So reads are in fact data reads.
@@ -441,6 +442,12 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		}
 	}
 
+	@Override
+	public void stepPatch(String sleigh) {
+		PcodeProgram prog = getMachine().compileSleigh("patch", sleigh + ";");
+		executor.execute(prog, library);
+	}
+
 	/**
 	 * Start execution of the instruction or inject at the program counter
 	 */
@@ -457,6 +464,33 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		}
 	}
 
+	protected RegisterValue getContextAfterCommits() {
+		PseudoInstruction pins = (PseudoInstruction) instruction;
+		try {
+			SleighParserContext parserCtx = (SleighParserContext) pins.getParserContext();
+			var procCtx = new DisassemblerContextAdapter() {
+				RegisterValue ctxVal = new RegisterValue(language.getContextBaseRegister());
+
+				@Override
+				public void setFutureRegisterValue(Address address, RegisterValue value) {
+					if (!value.getRegister().isProcessorContext()) {
+						return;
+					}
+					if (!address.equals(counter)) {
+						Msg.warn(this, "Context applied somewhere other than the counter.");
+						return;
+					}
+					ctxVal = ctxVal.assign(value.getRegister(), value);
+				}
+			};
+			parserCtx.applyCommits(procCtx);
+			return procCtx.ctxVal;
+		}
+		catch (MemoryAccessException e) {
+			throw new AssertionError(e);
+		}
+	}
+
 	/**
 	 * Resolve a finished instruction, advancing the program counter if necessary
 	 */
@@ -469,7 +503,11 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 			overrideCounter(counter.addWrap(decoder.getLastLengthWithDelays()));
 		}
 		if (contextreg != Register.NO_CONTEXT) {
-			overrideContext(defaultContext.getFlowValue(instruction.getRegisterValue(contextreg)));
+			RegisterValue ctx = new RegisterValue(contextreg, BigInteger.ZERO)
+					.combineValues(defaultContext.getDefaultValue(contextreg, counter))
+					.combineValues(defaultContext.getFlowValue(context))
+					.combineValues(getContextAfterCommits());
+			overrideContext(ctx);
 		}
 		postExecuteInstruction();
 		frame = null;

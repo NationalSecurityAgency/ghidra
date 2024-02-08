@@ -45,7 +45,7 @@ import utility.function.Callback;
  * all the gui elements to appear in the dialog, then use tool.showDialog() to display your dialog.
  */
 public class DialogComponentProvider
-		implements ActionContextProvider, StatusListener, TaskListener {
+	implements ActionContextProvider, StatusListener, TaskListener {
 
 	private static final Color FG_COLOR_ALERT = new GColor("color.fg.dialog.status.alert");
 	private static final Color FG_COLOR_ERROR = new GColor("color.fg.dialog.status.error");
@@ -134,7 +134,7 @@ public class DialogComponentProvider
 	 *        doing so.
 	 */
 	protected DialogComponentProvider(String title, boolean modal, boolean includeStatus,
-			boolean includeButtons, boolean canRunTasks) {
+		boolean includeButtons, boolean canRunTasks) {
 		this.modal = modal;
 		this.title = title;
 		rootPanel = new JPanel(new BorderLayout()) {
@@ -736,7 +736,7 @@ public class DialogComponentProvider
 	}
 
 	protected void showProgressBar(String localTitle, boolean hasProgress, boolean canCancel,
-			int delay) {
+		int delay) {
 		taskMonitorComponent.reset();
 		Runnable r = () -> {
 			if (delay <= 0) {
@@ -852,7 +852,7 @@ public class DialogComponentProvider
 	 * @see #hideTaskMonitorComponent()
 	 */
 	public TaskMonitor showTaskMonitorComponent(String localTitle, boolean hasProgress,
-			boolean canCancel) {
+		boolean canCancel) {
 		showProgressBar(localTitle, hasProgress, canCancel, DEFAULT_DELAY);
 		return taskMonitorComponent;
 	}

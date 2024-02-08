@@ -18,8 +18,8 @@ package ghidra.app.util.bin.format.golang;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.plugin.core.analysis.GolangSymbolAnalyzer;
 import ghidra.app.util.bin.format.dwarf4.DWARFUtil;
+import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
@@ -191,14 +191,12 @@ public class GoFunctionFixup {
 			long stackOffset = storageAllocator.getStackAllocation(dt);
 			return new ParameterImpl(oldParam.getName(), dt, (int) stackOffset, program);
 		}
-		else {
-			if (DWARFUtil.isEmptyArray(dt)) {
-				dt = makeEmptyArrayDataType(dt);
-			}
-			Address zerobaseAddress = GolangSymbolAnalyzer.getZerobaseAddress(program);
-			return new ParameterImpl(oldParam.getName(), dt, zerobaseAddress, program,
-				SourceType.USER_DEFINED);
+		if (DWARFUtil.isEmptyArray(dt)) {
+			dt = makeEmptyArrayDataType(dt);
 		}
+		Address zerobaseAddress = GoRttiMapper.getZerobaseAddress(program);
+		return new ParameterImpl(oldParam.getName(), dt, zerobaseAddress, program,
+			SourceType.USER_DEFINED);
 
 	}
 
@@ -214,10 +212,6 @@ public class GoFunctionFixup {
 		if (returnDT == null || Undefined.isUndefined(returnDT) || DWARFUtil.isVoid(returnDT)) {
 			return null;
 		}
-
-//		status refactoring return result storage calc to use new GoFunctionMultiReturn
-//		class to embed ordinal order in data type so that original data type and calc info
-//		can be recreated.
 		
 		GoFunctionMultiReturn multiReturn;
 		if ((multiReturn =
@@ -246,7 +240,7 @@ public class GoFunctionFixup {
 			if (DWARFUtil.isEmptyArray(returnDT)) {
 				returnDT = makeEmptyArrayDataType(returnDT);
 			}
-			varnodes.add(new Varnode(GolangSymbolAnalyzer.getZerobaseAddress(program), 1));
+			varnodes.add(new Varnode(GoRttiMapper.getZerobaseAddress(program), 1));
 		}
 		else {
 			allocateReturnStorage(program, "return-value-alias-variable", returnDT,
@@ -273,9 +267,20 @@ public class GoFunctionFixup {
 		else {
 			if (!DWARFUtil.isZeroByteDataType(dt)) {
 				long stackOffset = storageAllocator.getStackAllocation(dt);
-				varnodes.add(
-					new Varnode(program.getAddressFactory().getStackSpace().getAddress(stackOffset),
+				Varnode prev = !varnodes.isEmpty() ? varnodes.get(varnodes.size() - 1) : null;
+				if (prev != null && prev.getAddress().isStackAddress()) {
+//					if ( prev.getAddress().getOffset() + prev.getSize() != stackOffset ) {
+//						throw new InvalidInputException("Non-adjacent stack storage");
+//					}
+					Varnode updatedVN =
+						new Varnode(prev.getAddress(), prev.getSize() + dt.getLength());
+					varnodes.set(varnodes.size() - 1, updatedVN);
+				}
+				else {
+					varnodes.add(new Varnode(
+						program.getAddressFactory().getStackSpace().getAddress(stackOffset),
 						dt.getLength()));
+				}
 
 				// when the return value is on the stack, the decompiler's output is improved
 				// when the function has something at the stack location
@@ -289,7 +294,8 @@ public class GoFunctionFixup {
 	public static boolean isGolangAbi0Func(Function func) {
 		Address funcAddr = func.getEntryPoint();
 		for (Symbol symbol : func.getProgram().getSymbolTable().getSymbolsAsIterator(funcAddr)) {
-			if (symbol.getSymbolType() == SymbolType.LABEL) {
+			if (symbol.getSymbolType() == SymbolType.LABEL ||
+				symbol.getSymbolType() == SymbolType.FUNCTION) {
 				String labelName = symbol.getName();
 				if (labelName.endsWith("abi0")) {
 					return true;

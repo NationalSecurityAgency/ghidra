@@ -58,7 +58,7 @@ public class DbgModelTargetEventContainerImpl extends DbgModelTargetObjectImpl
 		DbgProcessImpl currentProcess = getManager().getCurrentProcess();
 		if (!refresh.equals(RefreshBehavior.REFRESH_ALWAYS) ||
 			(currentProcess != null && !currentProcess.equals(targetProcess.getProcess()))) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return listEventFilters().thenAccept(byName -> {
 			List<TargetObject> eventObjs;

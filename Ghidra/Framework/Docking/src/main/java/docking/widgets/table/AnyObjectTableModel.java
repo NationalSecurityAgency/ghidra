@@ -156,7 +156,7 @@ public class AnyObjectTableModel<T> extends GDynamicColumnTableModel<T, Object> 
 	}
 
 	private class MethodColumn extends AbstractDynamicTableColumn<T, Object, Object> {
-		private String name;
+		private String methodName;
 		private Method method;
 		private Class<?> returnType;
 
@@ -166,7 +166,7 @@ public class AnyObjectTableModel<T> extends GDynamicColumnTableModel<T, Object> 
 				init(m);
 			}
 			catch (NoSuchMethodException | SecurityException e) {
-				name = "No method: " + methodName;
+				this.methodName = "No method: " + methodName;
 			}
 		}
 
@@ -181,12 +181,12 @@ public class AnyObjectTableModel<T> extends GDynamicColumnTableModel<T, Object> 
 
 		private void init(Method m) {
 			this.method = m;
-			name = method.getName();
-			if (name.startsWith("get")) {
-				name = name.substring(3);
+			methodName = method.getName();
+			if (methodName.startsWith("get")) {
+				methodName = methodName.substring(3);
 			}
 
-			name = fromCamelCase(name);
+			methodName = fromCamelCase(methodName);
 			returnType = method.getReturnType();
 		}
 
@@ -198,15 +198,15 @@ public class AnyObjectTableModel<T> extends GDynamicColumnTableModel<T, Object> 
 
 		@Override
 		public String getColumnName() {
-			return name;
+			return methodName;
 		}
 
 		@Override
 		public Object getValue(T rowObject, Settings settings, Object dataSource,
 				ServiceProvider sp) throws IllegalArgumentException {
 			if (method == null) {
-				Msg.error(this,
-					"No method '" + name + "' on class" + rowObject.getClass().getSimpleName());
+				Msg.error(this, "No method '" + methodName + "' on class " +
+					rowObject.getClass().getSimpleName());
 				return null;
 			}
 			try {

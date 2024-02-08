@@ -28,17 +28,17 @@ import db.Transaction;
 import docking.action.DockingActionIf;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.action.AutoReadMemorySpec;
 import ghidra.app.plugin.core.debug.gui.action.NoneAutoReadMemorySpec;
 import ghidra.app.plugin.core.debug.gui.copying.DebuggerCopyIntoProgramDialog.RangeEntry;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
-import ghidra.app.services.ActionSource;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.dbg.DebuggerModelListener;
 import ghidra.dbg.target.TargetObject;
+import ghidra.debug.api.action.ActionSource;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
@@ -49,7 +49,7 @@ import ghidra.trace.model.*;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 
 @Category(NightlyCategory.class)
-public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerTest {
 
 	DebuggerCopyActionsPlugin copyActionsPlugin;
 	DebuggerListingPlugin listingPlugin;

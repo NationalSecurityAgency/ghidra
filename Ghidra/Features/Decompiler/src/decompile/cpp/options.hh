@@ -65,6 +65,7 @@ extern ElementId ELEM_STRUCTALIGN;		///< Marshaling element \<structalign>
 extern ElementId ELEM_TOGGLERULE;		///< Marshaling element \<togglerule>
 extern ElementId ELEM_WARNING;			///< Marshaling element \<warning>
 extern ElementId ELEM_JUMPTABLEMAX;		///< Marshaling element \<jumptablemax>
+extern ElementId ELEM_NANIGNORE;		///< Marshaling element \<nanignore>
 
 /// \brief Base class for options classes that affect the configuration of the Architecture object
 ///
@@ -156,12 +157,6 @@ public:
   virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
 };
 
-class OptionStructAlign : public ArchOption {
-public:
-  OptionStructAlign(void) { name = "structalign"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
-};
-
 class OptionWarning : public ArchOption {
 public:
   OptionWarning(void) { name = "warning"; }	///< Constructor
@@ -237,6 +232,12 @@ public:
 class OptionIntegerFormat : public ArchOption {
 public:
   OptionIntegerFormat(void) { name = "integerformat"; }	///< Constructor
+  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+};
+
+class OptionBraceFormat : public ArchOption {
+public:
+  OptionBraceFormat(void) { name = "braceformat"; }	///< Constructor
   virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
 };
 
@@ -340,6 +341,12 @@ public:
   static uint4 getOptionBit(const string &val);		///< Translate option string to a configuration bit
 public:
   OptionSplitDatatypes(void) { name = "splitdatatype"; }	///< Constructor
+  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+};
+
+class OptionNanIgnore : public ArchOption {
+public:
+  OptionNanIgnore(void) { name = "nanignore"; }		///< Constructor
   virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
 };
 

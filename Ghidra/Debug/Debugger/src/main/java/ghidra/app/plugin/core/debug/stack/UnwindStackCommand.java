@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.stack;
 
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.cmd.TypedBackgroundCommand;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.DebuggerPcodeUtils.WatchValue;
@@ -46,7 +46,7 @@ public class UnwindStackCommand extends TypedBackgroundCommand<Trace> {
 			for (AnalysisUnwoundFrame<WatchValue> frame : unwinder.frames(where.frame(0),
 				monitor)) {
 				UnwindInfo info = frame.getUnwindInfo();
-				if (info != null) {
+				if (info != null && info.error() == null) {
 					frame.applyToListing(prevParamSize, monitor);
 					prevParamSize = info.computeParamSize();
 				}

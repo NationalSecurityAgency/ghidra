@@ -98,7 +98,7 @@ public class GdbModelTargetStack extends
 			if (innermost != null) {
 				return innermost.stateChanged(sco);
 			}
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}).exceptionally(e -> {
 			impl.reportError(this, "Could not update stack " + this + " on STOPPED", e);
 			return null;

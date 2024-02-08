@@ -22,9 +22,11 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.data.EndianSettingsDefinition;
 import ghidra.program.model.listing.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -86,14 +88,23 @@ public abstract class LoadCommand implements StructConverter {
 	public abstract String getCommandName();
 
 	/**
-	 * Gets the {@link Address} of this load command's "data"
+	 * Gets the file offset of this load command's "linker data".  Not all load commands with data
+	 * will have linker data.  Linker data typically resides in the __LINKEDIT segment.
 	 * 
-	 * @param header The Mach-O header
-	 * @param space The {@link AddressSpace}
-	 * @return The {@link Address} of this load command's "data", or null if it has no data
+	 * @return The file offset of this load command's "linker data", or 0 if it has no linker data
 	 */
-	public Address getDataAddress(MachHeader header, AddressSpace space) {
-		return null;
+	public int getLinkerDataOffset() {
+		return 0;
+	}
+
+	/**
+	 * Gets the file size of this load command's "linker data". Not all load commands with data
+	 * will have linker data.  Linker data typically resides in the __LINKEDIT segment.
+	 * 
+	 * @return The file size of this load command's "linker data", or 0 if it has no linker data
+	 */
+	public int getLinkerDataSize() {
+		return 0;
 	}
 
 	/**
@@ -102,16 +113,76 @@ public abstract class LoadCommand implements StructConverter {
 	 * 
 	 * @param program The {@link Program} to mark up
 	 * @param header The Mach-O header
-	 * @param addr The {@link Address} of the start of load command data (could be null if no data)
 	 * @param source A name that represents where the header came from (could be null)
 	 * @param monitor A cancellable task monitor
 	 * @param log The log
 	 * @throws CancelledException if the user cancelled the operation
 	 */
-	public void markup(Program program, MachHeader header, Address addr, String source,
-			TaskMonitor monitor, MessageLog log) throws CancelledException {
+	public void markup(Program program, MachHeader header, String source, TaskMonitor monitor,
+			MessageLog log) throws CancelledException {
 		// Default is no markup
 		return;
+	}
+
+	/**
+	 * Creates a plate comment at the given {@link Address} based on this {@link LoadCommand}'s
+	 * name
+	 * 
+	 * @param program The {@link Program} to mark up
+	 * @param address The {@link Address} to put the comment at
+	 * @param source An optional string representing the source of the {@link LoadCommand}. Could
+	 *   be empty or null.
+	 * @param additionalDescription An optional string representing a sub-description of this
+	 *   {@link LoadCommand}.  Could be empty or null.
+	 */
+	protected void markupPlateComment(Program program, Address address, String source,
+			String additionalDescription) {
+		if (address == null) {
+			return;
+		}
+		String comment = getContextualName(source, additionalDescription);
+		program.getListing().setComment(address, CodeUnit.PLATE_COMMENT, comment);
+	}
+
+	/**
+	 * Gets the name of this {@link LoadCommand} which includes contextual information
+	 * 
+	 * @param source The source of this {@link LoadCommand} (could be null or empty)
+	 * @param additionalDescription Additional information to associate with the {@link LoadCommand}
+	 *   name
+	 * @return The name of this {@link LoadCommand} which includes contextual information
+	 */
+	protected String getContextualName(String source, String additionalDescription) {
+		String markupName = LoadCommandTypes.getLoadCommandName(getCommandType());
+		if (additionalDescription != null && !additionalDescription.isBlank()) {
+			markupName += " (" + additionalDescription + ")";
+		}
+		if (source != null && !source.isBlank()) {
+			markupName += " - " + source;
+		}
+		return markupName;
+	}
+
+	/**
+	 * Converts the given Mach-O file offset to an {@link Address}
+	 * 
+	 * @param program The {@link Program}
+	 * @param header The Mach-O header
+	 * @param fileOffset The file offset of the data (0 indicates no data)
+	 * @param size The size (actual size not important, but 0 will cause null to be returned)
+	 * @return The converted {@link Address}, or null if there is no corresponding {@link Address}
+	 */
+	protected Address fileOffsetToAddress(Program program, MachHeader header, int fileOffset,
+			int size) {
+		if (fileOffset != 0 && size != 0) {
+			AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
+			SegmentCommand segment = getContainingSegment(header, fileOffset);
+			if (segment != null) {
+				return space.getAddress(
+					segment.getVMaddress() + (fileOffset - segment.getFileOffset()));
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -122,7 +193,7 @@ public abstract class LoadCommand implements StructConverter {
 	 * @return The {@link SegmentCommand segment} that contains the give file offset, or null if
 	 *   one was not found
 	 */
-	protected SegmentCommand getContainingSegment(MachHeader header, long fileOffset) {
+	private SegmentCommand getContainingSegment(MachHeader header, long fileOffset) {
 		for (SegmentCommand segment : header.getAllSegments()) {
 			if (fileOffset >= segment.getFileOffset() &&
 				fileOffset < segment.getFileOffset() + segment.getFileSize()) {
@@ -130,6 +201,28 @@ public abstract class LoadCommand implements StructConverter {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Recursively sets the given {@link Data} and its components to big/little endian
+	 * 
+	 * @param data The {@link Data}
+	 * @param bigEndian True to set to big endian; false to set to little endian
+	 * @throws Exception if there was a problem setting the endianness
+	 */
+	public static void setEndian(Data data, boolean bigEndian) throws Exception {
+		for (int i = 0; i < data.getNumComponents(); i++) {
+			Data component = data.getComponent(i);
+			SettingsDefinition[] settings = component.getDataType().getSettingsDefinitions();
+			for (int j = 0; j < settings.length; j++) {
+				if (settings[j] instanceof EndianSettingsDefinition endianSetting) {
+					endianSetting.setBigEndian(component, true);
+				}
+			}
+			for (int j = 0; j < component.getNumComponents(); j++) {
+				setEndian(component.getComponent(j), bigEndian);
+			}
+		}
 	}
 
 	//-------------------Legacy code to support Raw Binary markup----------------------------------

@@ -48,7 +48,7 @@ public class CompositeZeroArrayTest extends AbstractCompositeZeroArrayTest {
 			"   8   int[0]   0   y   \"\"\n" + 
 			"   8   int   4   b   \"\"\n" + 
 			"}\n" + 
-			"Size = 12   Actual Alignment = 4", struct);
+			"Length: 12 Alignment: 4", struct);
 		//@formatter:on
 	}
 
@@ -64,7 +64,7 @@ public class CompositeZeroArrayTest extends AbstractCompositeZeroArrayTest {
 			"   6   char[0]   0   x   \"\"\n" + 
 			"   8   int[0]   0   y   \"\"\n" + 
 			"}\n" + 
-			"Size = 8   Actual Alignment = 4", struct);
+			"Length: 8 Alignment: 4", struct);
 		//@formatter:on
 	}
 
@@ -78,7 +78,7 @@ public class CompositeZeroArrayTest extends AbstractCompositeZeroArrayTest {
 			"   0   int   4   a   \"\"\n" + 
 			"   4   zeroArrayStruct2   8   s   \"\"\n" + 
 			"}\n" + 
-			"Size = 12   Actual Alignment = 4", struct);
+			"Length: 12 Alignment: 4", struct);
 		//@formatter:on
 	}
 
@@ -95,7 +95,7 @@ public class CompositeZeroArrayTest extends AbstractCompositeZeroArrayTest {
 			"   0   int[0]   0   y   \"\"\n" + 
 			"   0   int   4   b   \"\"\n" + 
 			"}\n" + 
-			"Size = 4   Actual Alignment = 4", union);
+			"Length: 4 Alignment: 4", union);
 		//@formatter:on
 	}
 
@@ -111,7 +111,7 @@ public class CompositeZeroArrayTest extends AbstractCompositeZeroArrayTest {
 			"   0   char[0]   0   x   \"\"\n" + 
 			"   0   int[0]   0   y   \"\"\n" + 
 			"}\n" + 
-			"Size = 4   Actual Alignment = 4", union);
+			"Length: 4 Alignment: 4", union);
 		//@formatter:on
 	}
 
@@ -125,7 +125,7 @@ public class CompositeZeroArrayTest extends AbstractCompositeZeroArrayTest {
 			"   0   int   4   a   \"\"\n" + 
 			"   0   zeroArrayStruct2   8   s   \"\"\n" + 
 			"}\n" + 
-			"Size = 8   Actual Alignment = 4", union);
+			"Length: 8 Alignment: 4", union);
 		//@formatter:on
 	}
 }

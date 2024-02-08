@@ -91,7 +91,7 @@ define ram offset=0x34 size=1 [ PSVPAG ];  # Program Memory Visibility Page Addr
 define ram offset=0x36 size=2 [ RCOUNT ];  # Repeat counter
 define ram offset=0x38 size=2 [ DCOUNT ];  # 13 bits long                    DO Loop counter
 define ram offset=0x3A size=3 [ DOSTART ];
-define ram offset=0x3C size=3 [ DOEND ];
+define ram offset=0x3E size=3 [ DOEND ];
 @endif  
 
 define ram offset=0x44 size=2 [ CORCON ];  # Core Control Register

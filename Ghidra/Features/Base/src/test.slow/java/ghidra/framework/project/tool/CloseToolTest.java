@@ -25,6 +25,7 @@ import docking.action.DockingActionIf;
 import docking.widgets.OptionDialog;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
+import ghidra.app.services.ProgramManager;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.PluginTool;
@@ -76,9 +77,9 @@ public class CloseToolTest extends AbstractGhidraHeadedIntegrationTest {
 		ProgramDB program2 =
 			new ProgramBuilder("WinHelloCPP.exe", ProgramBuilder._TOY).getProgram();
 		ProgramDB program3 = new ProgramBuilder("DiffTestPgm1", ProgramBuilder._TOY).getProgram();
-		pm.openProgram(program1, true);
-		pm.openProgram(program2, true);
-		pm.openProgram(program3, true);
+		pm.openProgram(program1, ProgramManager.OPEN_CURRENT);
+		pm.openProgram(program2, ProgramManager.OPEN_CURRENT);
+		pm.openProgram(program3, ProgramManager.OPEN_CURRENT);
 		Program[] allOpenPrograms = pm.getAllOpenPrograms();
 		assertEquals(3, allOpenPrograms.length);
 

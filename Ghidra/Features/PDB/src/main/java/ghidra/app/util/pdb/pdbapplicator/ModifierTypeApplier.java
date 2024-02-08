@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +15,10 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.math.BigInteger;
-
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
+import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractModifierMsType;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.CancelledException;
 
@@ -27,84 +27,59 @@ import ghidra.util.exception.CancelledException;
  */
 public class ModifierTypeApplier extends MsTypeApplier {
 
-	private MsTypeApplier modifiedTypeApplier = null;
-
+	// Intended for: AbstractModifierMsType
 	/**
 	 * Constructor for modifier type applier.
 	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
-	 * @param msType {@link AbstractModifierMsType} to processes.
 	 */
-	public ModifierTypeApplier(DefaultPdbApplicator applicator, AbstractModifierMsType msType) {
-		super(applicator, msType);
+	public ModifierTypeApplier(DefaultPdbApplicator applicator) {
+		super(applicator);
 	}
 
-	//==============================================================================================
-	@Override
-	void deferredApply() throws PdbException, CancelledException {
-		// Do nothing.  Already applied.  Just needs late resolve
+	RecordNumber getUnderlyingNonModifierRecordNumber(RecordNumber underlyingRecord) {
+		return getUnderlyingNonModifierRecordNumber(applicator, underlyingRecord);
 	}
 
-	//==============================================================================================
-	@Override
-	BigInteger getSize() {
-		if (modifiedTypeApplier == null) {
-			return BigInteger.ZERO;
+	static RecordNumber getUnderlyingNonModifierRecordNumber(DefaultPdbApplicator applicator,
+			RecordNumber underlyingRecord) {
+		AbstractMsType underlyingType = applicator.getPdb().getTypeRecord(underlyingRecord);
+		while (underlyingType instanceof AbstractModifierMsType modifierType) {
+			RecordNumber modifiedRecord = modifierType.getModifiedRecordNumber();
+			underlyingType = applicator.getPdb().getTypeRecord(modifiedRecord);
 		}
-		return modifiedTypeApplier.getSize();
+		return underlyingType.getRecordNumber();
 	}
 
 	@Override
-	void apply() throws PdbException, CancelledException {
-//		dataType = applyModifierMsType((AbstractModifierMsType) msType);
-		applyOrDeferForDependencies();
-	}
+	DataType apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
+			throws PdbException, CancelledException {
+		AbstractModifierMsType modifierType = (AbstractModifierMsType) type;
+		RecordNumber modifiedRecord = modifierType.getModifiedRecordNumber();
 
-	private void applyOrDeferForDependencies() {
-		AbstractModifierMsType type = (AbstractModifierMsType) msType;
-		applyModifierMsType(type);
-		MsTypeApplier modifiedApplier = applicator.getTypeApplier(type.getModifiedRecordNumber());
-		if (modifiedApplier.isDeferred()) {
-			applicator.addApplierDependency(this, modifiedApplier);
-			setDeferred();
+		DataType modifiedType =
+			applicator.getProcessedDataType(modifiedRecord, fixupContext, false);
+
+		// If Ghidra eventually has a modified type (const, volatile) in its model, then we can
+		//  perform the applicator.getDataType(modifierType) here, and the
+		//  applicator.put(modifierType,dataType) before the return.
+		// Obviously, we would also need to process and apply the modifier attributes.
+
+		// If ghidra has modified types in the future, we will likely not perform a pass-through
+		//  of the underlying type.  We might actually need to do a fixup or be able to pass the
+		//  cycle-break information to a pointer or handle cycle-break information information
+		//  in this modifier type.  Lots of things to consider.  Would we want to create a typedef
+		//  for modifier type as a short-gap solution??? Not sure.
+
+		// Note:
+		// Pointers normally have their own modifiers, so would not necessarily expect to see
+		//  the underlying type of a Modifier to be a pointer.  However, MSFT primitives include
+		//  pointers to primitives, so in these cases we could see a const pointer to primitive
+		//  where the const comes from the Modifier type.
+
+//		if (modifiedType != null && !applicator.isPlaceholderType(modifiedType)) {
+		if (modifiedType != null) {
+			applicator.putDataType(modifierType, modifiedType);
 		}
-		else {
-//			applyModifierMsType(type);
-//			defer(false);
-		}
-	}
-
-	@Override
-	DataType getDataType() {
-		return modifiedTypeApplier.getDataType();
-	}
-
-	private DataType applyModifierMsType(AbstractModifierMsType type) {
-		modifiedTypeApplier = applicator.getTypeApplier(type.getModifiedRecordNumber());
-
-		return modifiedTypeApplier.getDataType();
-	}
-
-//	ghDataTypeDB = applicator.resolve(dataType);
-
-//	boolean underlyingIsCycleBreakable() {
-//		// TODO: need to deal with InterfaceTypeApplier (will it be incorporated into
-//		// CompostieTypeapplier?) Is it in this list of places to break (i.e., can it contain)?
-//		return (modifiedTypeApplier != null &&
-//			(modifiedTypeApplier instanceof CompositeTypeApplier ||
-//				modifiedTypeApplier instanceof EnumTypeApplier));
-//	}
-
-	@Override
-	DataType getCycleBreakType() {
-		// hope to eliminate the null check if/when modifierTypeApplier is created at time of
-		// construction
-		if (modifiedTypeApplier == null) {
-			return null;
-		}
-		return modifiedTypeApplier.getCycleBreakType();
-	}
-
-	MsTypeApplier getModifiedTypeApplier() {
-		return modifiedTypeApplier;
+		return modifiedType;
 	}
 }

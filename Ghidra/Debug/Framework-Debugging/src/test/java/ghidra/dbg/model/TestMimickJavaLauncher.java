@@ -60,6 +60,6 @@ public class TestMimickJavaLauncher
 
 	@Override
 	public CompletableFuture<Void> launch(Map<String, ?> args) {
-		return AsyncUtils.NIL; // TODO: Queue and allow test to complete it?
+		return AsyncUtils.nil(); // TODO: Queue and allow test to complete it?
 	}
 }

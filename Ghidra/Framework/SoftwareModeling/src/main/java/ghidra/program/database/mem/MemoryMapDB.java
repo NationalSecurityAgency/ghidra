@@ -21,11 +21,10 @@ import java.util.*;
 
 import db.DBConstants;
 import db.DBHandle;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.DomainObjectChangeRecord;
+import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.store.LockException;
-import ghidra.program.database.ManagerDB;
-import ghidra.program.database.ProgramDB;
+import ghidra.program.database.*;
 import ghidra.program.database.code.CodeManager;
 import ghidra.program.database.map.AddressMapDB;
 import ghidra.program.model.address.*;
@@ -33,7 +32,7 @@ import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
-import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -201,7 +200,8 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			}
 			AddressSet mappedSet = getMappedIntersection(block, addrSetView.initialized);
 			addrSetView.initialized.add(mappedSet);
-			addrSetView.initializedAndLoaded.add(getMappedIntersection(block, addrSetView.initializedAndLoaded));
+			addrSetView.initializedAndLoaded
+					.add(getMappedIntersection(block, addrSetView.initializedAndLoaded));
 		}
 		else if (block.isInitialized()) {
 			addrSetView.initialized.add(block.getStart(), block.getEnd());
@@ -231,6 +231,9 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		nameBlockMap = new HashMap<>();
 		addrSetView = null; // signal stale view
 		addrMap.memoryMapChanged(this);
+		if (program != null) {
+			program.getAddressFactory().invalidateOverlayCache();
+		}
 	}
 
 	void blockExecuteChanged(MemoryBlockDB block) {
@@ -370,8 +373,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	private void checkMemoryWriteMappedBlock(MemoryBlockDB mappedBlock, Address start,
-			Address endAddr)
-			throws AddressOverflowException, MemoryAccessException {
+			Address endAddr) throws AddressOverflowException, MemoryAccessException {
 		long startOffset = start.subtract(mappedBlock.getStart());
 		long endOffset = endAddr.subtract(mappedBlock.getStart());
 
@@ -401,8 +403,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	private void checkMemoryWriteNonMappedBlock(MemoryBlockDB nonMappedBlock, Address start,
-			Address endAddr)
-			throws MemoryAccessException {
+			Address endAddr) throws MemoryAccessException {
 		// TODO: could contain uninitialized region which is illegal to write to although block.isInitialized
 		// may not be of much help since it reflects the first sub-block only - seems like mixing is a bad idea
 
@@ -484,23 +485,23 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	void fireBlockAdded(MemoryBlock newBlock) {
 		AddressRange range = new AddressRangeImpl(newBlock.getStart(), newBlock.getEnd());
 		program.getTreeManager().addMemoryBlock(newBlock.getName(), range);
-		program.setChanged(ChangeManager.DOCR_MEMORY_BLOCK_ADDED, newBlock.getStart(),
-			newBlock.getEnd(), null, null);
-		program.fireEvent(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_RESTORED));
+		program.setChanged(ProgramEvent.MEMORY_BLOCK_ADDED, newBlock.getStart(), newBlock.getEnd(),
+			null, null);
+		program.fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.RESTORED));
 	}
 
 	void fireBlockSplit() {
-		program.fireEvent(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_RESTORED));
+		program.fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.RESTORED));
 	}
 
 	void fireBlockRemoved(Address blockStartAddr) {
-		program.setChanged(ChangeManager.DOCR_MEMORY_BLOCK_REMOVED, blockStartAddr, null);
-		program.fireEvent(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_RESTORED));
+		program.setChanged(ProgramEvent.MEMORY_BLOCK_REMOVED, blockStartAddr, null);
+		program.fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.RESTORED));
 	}
 
 	void fireBlockMoved(MemoryBlockDB block, Address oldStartAddr) {
-		program.setChanged(ChangeManager.DOCR_MEMORY_BLOCKS_JOINED, oldStartAddr, block);
-		program.fireEvent(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_RESTORED));
+		program.setChanged(ProgramEvent.MEMORY_BLOCKS_JOINED, oldStartAddr, block);
+		program.fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.RESTORED));
 	}
 
 	/**
@@ -511,17 +512,16 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	 * @param oldBlockStartAddr original start address of affected block
 	 */
 	void fireBlocksJoined(MemoryBlock newBlock, Address oldBlockStartAddr) {
-		program.setChanged(ChangeManager.DOCR_MEMORY_BLOCKS_JOINED, oldBlockStartAddr, newBlock);
+		program.setChanged(ProgramEvent.MEMORY_BLOCKS_JOINED, oldBlockStartAddr, newBlock);
 	}
 
 	void fireBlockSplit(MemoryBlockDB originalBlock, MemoryBlockDB newBlock) {
-		program.setChanged(ChangeManager.DOCR_MEMORY_BLOCK_SPLIT, null, null, originalBlock,
-			newBlock);
+		program.setChanged(ProgramEvent.MEMORY_BLOCK_SPLIT, null, null, originalBlock, newBlock);
 	}
 
 	void fireBlockChanged(MemoryBlock block) {
 		if (program != null) {
-			program.setChanged(ChangeManager.DOCR_MEMORY_BLOCK_CHANGED, block, null);
+			program.setChanged(ProgramEvent.MEMORY_BLOCK_CHANGED, block, null);
 		}
 
 		// name could have changed
@@ -534,7 +534,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			Address end = addr.addNoWrap(count - 1);
 
 			program.getCodeManager().memoryChanged(addr, end);
-			program.setChanged(ChangeManager.DOCR_MEMORY_BYTES_CHANGED, addr, end, null, null);
+			program.setChanged(ProgramEvent.MEMORY_BYTES_CHANGED, addr, end, null, null);
 
 		}
 		catch (AddressOverflowException e) {
@@ -576,9 +576,8 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	@Override
 	public MemoryBlock createInitializedBlock(String name, Address start, long size,
-			byte initialValue, TaskMonitor monitor, boolean overlay)
-			throws LockException, MemoryConflictException, AddressOverflowException,
-			CancelledException {
+			byte initialValue, TaskMonitor monitor, boolean overlay) throws LockException,
+			MemoryConflictException, AddressOverflowException, CancelledException {
 
 		InputStream fillStream = null;
 		if (initialValue != 0) {
@@ -594,15 +593,65 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	private Address createOverlaySpace(String name, Address start, long dataLength)
-			throws MemoryConflictException, AddressOverflowException, LockException {
+			throws IllegalStateException, AddressOverflowException, LockException {
 
 		start.addNoWrap(dataLength - 1);// just tests the AddressOverflow condition.
 
-		AddressSpace ovSpace = program.addOverlaySpace(name, start.getAddressSpace(),
-			start.getOffset(), start.getOffset() + (dataLength - 1));
+		ProgramOverlayAddressSpace ovSpace =
+			createUniqueOverlaySpace(name, start.getAddressSpace());
 
-		Address ovAddr = ovSpace.getAddress(start.getOffset());
+		Address ovAddr = ovSpace.getAddressInThisSpaceOnly(start.getOffset());
 		return ovAddr;
+	}
+
+	/**
+	 * Create a new overlay space based upon the given base AddressSpace.
+	 * The specified overlaySpaceName may be modified to ensure name validity and uniqueness.
+	 * @param overlaySpaceName the name of the new overlay space.
+	 * @param baseSpace the base AddressSpace to overlay (i.e., overlayed-space)
+	 * @return the new overlay space
+	 * @throws LockException if the program is shared and not checked out exclusively.
+	 * @throws IllegalStateException if image base override is active
+	 */
+	private ProgramOverlayAddressSpace createUniqueOverlaySpace(String overlaySpaceName,
+			AddressSpace baseSpace) throws IllegalStateException, LockException {
+
+		ProgramAddressFactory addressFactory = program.getAddressFactory();
+		overlaySpaceName = fixupOverlaySpaceName(overlaySpaceName);
+		String spaceName = overlaySpaceName;
+		int index = 1;
+		while (addressFactory.getAddressSpace(spaceName) != null) {
+			spaceName = overlaySpaceName + "." + index++;
+		}
+		try {
+			return program.createOverlaySpace(spaceName, baseSpace);
+		}
+		catch (DuplicateNameException | InvalidNameException e) {
+			throw new AssertionError(e);
+		}
+	}
+
+	/**
+	 * Generate an allowed address space name from a block name. Use of unsupported characters will
+	 * be converted to underscore (includes colon and all whitespace chars). double-underscore to
+	 * ensure uniqueness.
+	 * 
+	 * @param blockName corresponding memory block name
+	 * @return overlay space name
+	 */
+	private String fixupOverlaySpaceName(String blockName) {
+		int len = blockName.length();
+		StringBuffer buf = new StringBuffer(len);
+		for (int i = 0; i < len; i++) {
+			char c = blockName.charAt(i);
+			if (c == ':' || c <= 0x20) {
+				buf.append('_');
+			}
+			else {
+				buf.append(c);
+			}
+		}
+		return buf.toString();
 	}
 
 	@Override
@@ -618,8 +667,10 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			if (monitor != null && is != null) {
 				is = new MonitoredInputStream(is, monitor);
 			}
-			if (overlay) {
+			boolean createdOverlaySpace = false;
+			if (overlay && !start.getAddressSpace().isOverlaySpace()) {
 				start = createOverlaySpace(name, start, length);
+				createdOverlaySpace = true;
 			}
 			else {
 				checkRange(start, length);
@@ -634,8 +685,8 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			}
 			catch (IOCancelledException e) {
 				// this assumes the adapter has already cleaned up any partially created buffers.
-				if (overlay) {
-					checkRemoveAddressSpace(start.getAddressSpace());
+				if (createdOverlaySpace) {
+					attemptOverlaySpaceRemoval((OverlayAddressSpace) start.getAddressSpace());
 				}
 				throw new CancelledException();
 			}
@@ -662,7 +713,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			program.checkExclusiveAccess();
 			checkFileBytesRange(fileBytes, offset, length);
 
-			if (overlay) {
+			if (overlay && !start.getAddressSpace().isOverlaySpace()) {
 				start = createOverlaySpace(name, start, length);
 			}
 			else {
@@ -705,8 +756,8 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	@Override
 	public MemoryBlock createUninitializedBlock(String name, Address start, long size,
-			boolean overlay) throws MemoryConflictException, AddressOverflowException,
-			LockException {
+			boolean overlay)
+			throws MemoryConflictException, AddressOverflowException, LockException {
 
 		checkBlockName(name);
 		lock.acquire();
@@ -715,7 +766,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 			program.checkExclusiveAccess();
 
-			if (overlay) {
+			if (overlay && !start.getAddressSpace().isOverlaySpace()) {
 				start = createOverlaySpace(name, start, size);
 			}
 			else {
@@ -750,7 +801,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			checkBlockSize(length, false);
 			program.checkExclusiveAccess();
 			mappedAddress.addNoWrap((length - 1) / 8);// just to check if length fits in address space
-			if (overlay) {
+			if (overlay && !start.getAddressSpace().isOverlaySpace()) {
 				start = createOverlaySpace(name, start, length);
 			}
 			else {
@@ -794,7 +845,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			checkBlockSize(length, false);
 			program.checkExclusiveAccess();
 			byteMappingScheme.getMappedSourceAddress(mappedAddress, length - 1); // source fit check
-			if (overlay) {
+			if (overlay && !start.getAddressSpace().isOverlaySpace()) {
 				start = createOverlaySpace(name, start, length);
 			}
 			else {
@@ -904,13 +955,10 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			MemoryBlockDB memBlock = (MemoryBlockDB) block;
 
 			Address oldStartAddr = block.getStart();
-			if (block.isOverlay()) {
-				throw new IllegalArgumentException("Overlay blocks cannot be moved");
+			if (block.isOverlay() && block.getStart().isNonLoadedMemoryAddress()) {
+				// impose convention-based restriction
+				throw new IllegalArgumentException("OTHER overlay blocks cannot be moved");
 			}
-			if (newStartAddr.getAddressSpace().isOverlaySpace()) {
-				throw new IllegalArgumentException("Can not move a block into an overlay space.");
-			}
-
 			program.setEventsEnabled(false);// ensure that no domain object change
 			// events go out that would cause screen updates;
 			// the code manager will be locked until the remove is done
@@ -920,7 +968,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 				set.delete(block.getStart(), block.getEnd());
 				if (set.intersects(newStartAddr, newEndAddr)) {
 					throw new MemoryConflictException(
-						"Block move conflicts with other existing memory block");
+						"Block move conflicts with another existing memory block");
 				}
 				try {
 					memBlock.setStartAddress(newStartAddr);
@@ -961,8 +1009,10 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			if (addr.equals(memBlock.getStart())) {
 				throw new IllegalArgumentException("Split cannot be done on block start address");
 			}
-			if (memBlock.isOverlay()) {
-				throw new IllegalArgumentException("Split cannot be done on an overlay block");
+			if (memBlock.isOverlay() && memBlock.getStart().isNonLoadedMemoryAddress()) {
+				// impose convention-based restriction
+				throw new IllegalArgumentException(
+					"Split cannot be done on an OTHER overlay block");
 			}
 			if (memBlock.isMapped()) {
 				if (memBlock.getType() == MemoryBlockType.BIT_MAPPED) {
@@ -1057,9 +1107,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	private void checkBlockForJoining(MemoryBlock block) {
 		checkBlock(block);
-		if (block.isOverlay()) {
-			throw new IllegalArgumentException("Cannot join overlay blocks");
-		}
 		if (block.isMapped()) {
 			throw new IllegalArgumentException("Cannot join mapped blocks");
 		}
@@ -1909,8 +1956,8 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			}
 
 			fireBlockRemoved(startAddress);
-			if (startAddress.getAddressSpace().isOverlaySpace()) {
-				checkRemoveAddressSpace(startAddress.getAddressSpace());
+			if (startAddress.getAddressSpace() instanceof OverlayAddressSpace os) {
+				attemptOverlaySpaceRemoval(os);
 			}
 		}
 		finally {
@@ -1919,17 +1966,17 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	/**
-	 * Tests if the given addressSpace (overlay space) is used by any blocks. If not, it removes the
-	 * space.
+	 * Attempts to remove the the given overlay address space.  Removal will only succeed if no
+	 * memory blocks currently reside within the space.
 	 * 
 	 * @param addressSpace overlay address space to be removed
 	 */
-	private void checkRemoveAddressSpace(AddressSpace addressSpace) {
+	private void attemptOverlaySpaceRemoval(OverlayAddressSpace addressSpace) {
 		lock.acquire();
 		try {
-			program.removeOverlaySpace(addressSpace);
+			program.removeOverlaySpace(addressSpace.getName());
 		}
-		catch (LockException e) {
+		catch (LockException | NotFoundException e) {
 			throw new AssertException();
 		}
 		finally {
@@ -1949,9 +1996,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		if (mySpace == null || !mySpace.equals(space)) {
 			throw new IllegalArgumentException(
 				"Block may not be created with unrecognized address space");
-		}
-		if (space.isOverlaySpace()) {
-			throw new IllegalArgumentException("Block may not be created with an Overlay space");
 		}
 		if (size == 0) {
 			throw new IllegalArgumentException("Block must have a non-zero length");
@@ -2027,8 +2071,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			}
 			else { // Byte mapped
 				ByteMappingScheme byteMappingScheme = info.getByteMappingScheme().get();
-				start =
-					byteMappingScheme.getMappedAddress(mappedBlock, startOffset, false);
+				start = byteMappingScheme.getMappedAddress(mappedBlock, startOffset, false);
 				long endOffset = startOffset + sourceRangeLength - 1;
 				end = byteMappingScheme.getMappedAddress(mappedBlock, endOffset, true);
 				if (start == null || start.compareTo(end) > 0) {
@@ -2074,11 +2117,6 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		finally {
 			lock.release();
 		}
-	}
-
-	public void overlayBlockRenamed(String oldOverlaySpaceName, String name)
-			throws LockException {
-		program.renameOverlaySpace(oldOverlaySpaceName, name);
 	}
 
 	@Override
@@ -2297,7 +2335,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	void checkRangeForInstructions(Address start, Address end) throws MemoryAccessException {
 		CodeManager codeManager = program.getCodeManager();
-		Instruction instr = codeManager.getInstructionContaining(start);
+		Instruction instr = codeManager.getInstructionContaining(start, true);
 		if (instr != null) {
 			throw new MemoryAccessException(
 				"Memory change conflicts with instruction at " + instr.getMinAddress());

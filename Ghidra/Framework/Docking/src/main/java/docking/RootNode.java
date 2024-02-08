@@ -28,6 +28,7 @@ import org.jdom.Element;
 import generic.util.WindowUtilities;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
+import ghidra.util.Swing;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
@@ -55,6 +56,8 @@ class RootNode extends WindowNode {
 	 * 
 	 * @param mgr the DockingWindowsManager
 	 * @param toolName the name of the tool to be displayed in all the top-level windows.
+	 * @param images the frame icons
+	 * @param isModal true if modal
 	 * @param factory a factory for creating drop targets for this nodes windows; may be null
 	 */
 	RootNode(DockingWindowManager mgr, String toolName, List<Image> images, boolean isModal,
@@ -198,7 +201,10 @@ class RootNode extends WindowNode {
 	void setVisible(boolean state) {
 		Window mainWindow = getMainWindow();
 		mainWindow.setVisible(state);
-		WindowUtilities.ensureOnScreen(mainWindow);
+
+		if (state) {
+			WindowUtilities.ensureOnScreen(mainWindow);
+		}
 
 		Iterator<DetachedWindowNode> it = detachedWindows.iterator();
 		while (it.hasNext()) {
@@ -232,11 +238,6 @@ class RootNode extends WindowNode {
 		notifyWindowAdded(windowNode);
 	}
 
-	/**
-	 * Adds the component to the main window.
-	 * 
-	 * @param info the component to be added.
-	 */
 	void add(ComponentPlaceholder info, WindowPosition initialPosition) {
 		if (initialPosition == WindowPosition.WINDOW) {
 			add(info);
@@ -373,9 +374,6 @@ class RootNode extends WindowNode {
 		node.parent = null;
 	}
 
-	/**
-	 * Returns the main frame of the tool.
-	 */
 	public JFrame getFrame() {
 		return windowWrapper.getParentFrame();
 	}
@@ -398,10 +396,7 @@ class RootNode extends WindowNode {
 		return toolName;
 	}
 
-	/**
-	 * Returns list of detached windows (WindowNode objects).
-	 */
-	public List<DetachedWindowNode> getDetachedWindows() {
+	List<DetachedWindowNode> getDetachedWindows() {
 		return detachedWindows;
 	}
 
@@ -433,12 +428,13 @@ class RootNode extends WindowNode {
 	Element saveToXML() {
 		Element root = new Element(ROOT_NODE_ELEMENT_NAME);
 		JFrame frame = windowWrapper.getParentFrame();
-		Rectangle r = frame.getBounds();
+		Rectangle r = getSaveableBounds();
 		root.setAttribute("X_POS", "" + r.x);
 		root.setAttribute("Y_POS", "" + r.y);
 		root.setAttribute("WIDTH", "" + r.width);
 		root.setAttribute("HEIGHT", "" + r.height);
 		root.setAttribute("EX_STATE", "" + frame.getExtendedState());
+
 		if (child != null) {
 			root.addContent(child.saveToXML());
 		}
@@ -448,6 +444,29 @@ class RootNode extends WindowNode {
 			root.addContent(windowNode.saveToXML());
 		}
 		return root;
+	}
+
+	private Rectangle getSaveableBounds() {
+
+		//
+		// The goal of this method is to get the correct window bounds to save.  When not maximized,
+		// this is simply the window's bounds.  However, when maximized, we wish to save the last
+		// non-maximized bounds so that toggle in and out of the maximized state will use the 
+		// correct non-maximized bounds.
+		//
+		JFrame frame = windowWrapper.getParentFrame();
+		int state = frame.getExtendedState();
+		if (state != Frame.MAXIMIZED_BOTH) {
+			return frame.getBounds();
+		}
+
+		Rectangle bounds = windowWrapper.getLastBounds();
+		if (bounds != null) {
+			return bounds;
+		}
+
+		// This implies the user has never maximized the window; just use the window bounds.
+		return frame.getBounds();
 	}
 
 	/**
@@ -475,10 +494,20 @@ class RootNode extends WindowNode {
 		int y = Integer.parseInt(rootNodeElement.getAttributeValue("Y_POS"));
 		int width = Integer.parseInt(rootNodeElement.getAttributeValue("WIDTH"));
 		int height = Integer.parseInt(rootNodeElement.getAttributeValue("HEIGHT"));
+		int extendedState = Integer.parseInt(rootNodeElement.getAttributeValue("EX_STATE"));
 		JFrame frame = windowWrapper.getParentFrame();
 		Rectangle bounds = new Rectangle(x, y, width, height);
 		WindowUtilities.ensureOnScreen(frame, bounds);
 		frame.setBounds(bounds);
+		windowWrapper.setLastBounds(bounds);
+
+		Swing.runLater(() -> {
+			// On some systems setting the bounds will interfere with setting the extended state. 
+			// Run this later to ensure the extended state is applied after setting the bounds.  
+			// Executing in this order allows the bounds we set above to be used when the user
+			// transitions out of the maximized state.
+			frame.setExtendedState(extendedState);
+		});
 
 		List<ComponentPlaceholder> restoredPlaceholders = new ArrayList<>();
 		Iterator<?> elementIterator = rootNodeElement.getChildren().iterator();
@@ -611,29 +640,63 @@ class RootNode extends WindowNode {
 //==================================================================================================
 
 	/** Interface to wrap JDialog and JFrame so that they can be used by one handle */
-	private interface SwingWindowWrapper {
-		boolean isVisible();
+	private abstract class SwingWindowWrapper {
 
-		boolean isModal();
+		/**
+		 * The last known non-maximized window bounds
+		 */
+		private Rectangle lastBounds;
 
-		void validate();
+		abstract boolean isVisible();
 
-		Container getContentPane();
+		abstract boolean isModal();
 
-		void setJMenuBar(JMenuBar menuBar);
+		abstract void validate();
 
-		void dispose();
+		abstract Container getContentPane();
 
-		Window getWindow();
+		abstract void setJMenuBar(JMenuBar menuBar);
 
-		JFrame getParentFrame();
+		abstract void dispose();
 
-		void setTitle(String title);
+		abstract Window getWindow();
 
-		String getTitle();
+		abstract JFrame getParentFrame();
+
+		abstract void setTitle(String title);
+
+		abstract String getTitle();
+
+		/**
+		 * Stores the given bounds if they are not the maximized bounds
+		 * @param bounds the bounds
+		 */
+		public void setLastBounds(Rectangle bounds) {
+			Rectangle screenBounds = WindowUtilities.getScreenBounds(getWindow());
+			if (screenBounds == null) {
+				return;
+			}
+
+			Rectangle boundsSize = new Rectangle(bounds.getSize());
+			Rectangle screenSize = new Rectangle(screenBounds.getSize());
+			if (boundsSize.contains(screenSize)) {
+				// This can happen when the bounds being set are the full screen bounds.  We only 
+				// wish to save the non-maximized bounds.
+				return;
+			}
+			this.lastBounds = bounds;
+		}
+
+		/**
+		 * Returns the last non-maximized frame bounds
+		 * @return the bounds
+		 */
+		public Rectangle getLastBounds() {
+			return lastBounds;
+		}
 	}
 
-	private class JDialogWindowWrapper implements SwingWindowWrapper {
+	private class JDialogWindowWrapper extends SwingWindowWrapper {
 
 		private final JDialog wrappedDialog;
 		private final SwingWindowWrapper parentFrame;
@@ -663,9 +726,16 @@ class RootNode extends WindowNode {
 				public void windowActivated(WindowEvent e) {
 					winMgr.setActive(wrappedDialog, true);
 				}
+
+				@Override
+				public void windowStateChanged(WindowEvent e) {
+					// this is called when transitioning in and out of the full-screen state
+					setLastBounds(wrappedDialog.getBounds());
+				}
 			};
 
 			dialog.addWindowListener(windowListener);
+			dialog.addWindowStateListener(windowListener);
 		}
 
 		@Override
@@ -687,6 +757,11 @@ class RootNode extends WindowNode {
 		}
 
 		@Override
+		public JFrame getParentFrame() {
+			return parentFrame.getParentFrame();
+		}
+
+		@Override
 		public boolean isVisible() {
 			return wrappedDialog.isVisible();
 		}
@@ -699,11 +774,6 @@ class RootNode extends WindowNode {
 		@Override
 		public void validate() {
 			wrappedDialog.validate();
-		}
-
-		@Override
-		public JFrame getParentFrame() {
-			return parentFrame.getParentFrame();
 		}
 
 		@Override
@@ -722,7 +792,7 @@ class RootNode extends WindowNode {
 		}
 	}
 
-	private class JFrameWindowWrapper implements SwingWindowWrapper {
+	private class JFrameWindowWrapper extends SwingWindowWrapper {
 
 		private final JFrame wrappedFrame;
 		private WindowAdapter windowListener;
@@ -763,8 +833,16 @@ class RootNode extends WindowNode {
 				public void windowDeiconified(WindowEvent e) {
 					winMgr.deIconify();
 				}
+
+				@Override
+				public void windowStateChanged(WindowEvent e) {
+					// this is called when transitioning in and out of the full-screen state
+					setLastBounds(wrappedFrame.getBounds());
+				}
 			};
+
 			wrappedFrame.addWindowListener(windowListener);
+			wrappedFrame.addWindowStateListener(windowListener);
 
 			wrappedFrame.setSize(800, 400);
 		}
@@ -787,6 +865,11 @@ class RootNode extends WindowNode {
 		}
 
 		@Override
+		public JFrame getParentFrame() {
+			return wrappedFrame;
+		}
+
+		@Override
 		public boolean isVisible() {
 			return wrappedFrame.isVisible();
 		}
@@ -799,11 +882,6 @@ class RootNode extends WindowNode {
 		@Override
 		public void validate() {
 			wrappedFrame.validate();
-		}
-
-		@Override
-		public JFrame getParentFrame() {
-			return wrappedFrame;
 		}
 
 		@Override
@@ -820,7 +898,6 @@ class RootNode extends WindowNode {
 		public boolean isModal() {
 			return false;
 		}
-
 	}
 
 	public void addDockingWindowListener(DockingWindowListener listener) {

@@ -15,30 +15,33 @@
  */
 package ghidra.app.plugin.core.memory;
 
+import java.awt.Cursor;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.swing.JTable;
-import javax.swing.SwingUtilities;
 import javax.swing.table.TableCellEditor;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.NumberInputDialog;
 import docking.widgets.table.AbstractSortedTableModel;
-
-/**
- * Table Model for a Table where each entry represents a MemoryBlock
- * from a Program's Memory.
- */
-
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.store.LockException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
+import ghidra.program.util.ProgramLocation;
+import ghidra.program.util.ProgramSelection;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
+import ghidra.util.table.ProgramTableModel;
 
-class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
+/**
+ * Table Model for a Table where each entry represents a MemoryBlock from a Program's Memory.
+ */
+class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> implements ProgramTableModel {
 
 	final static byte NAME = 0;
 	final static byte START = 1;
@@ -63,16 +66,18 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 	final static String WRITE_COL = "W";
 	final static String EXECUTE_COL = "X";
 	final static String VOLATILE_COL = "Volatile";
-	final static String OVERLAY_COL = "Overlay";
+	final static String OVERLAY_COL = "Overlayed Space";
 	final static String BLOCK_TYPE_COL = "Type";
 	final static String INIT_COL = "Initialized";
 	final static String BYTE_SOURCE_COL = "Byte Source";
 	final static String SOURCE_COL = "Source";
 	final static String COMMENT_COL = "Comment";
 
-	private Program program;
+	private final static Cursor WAIT_CURSOR = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR);
+	private final static Cursor DEFAULT_CURSOR = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
 
-	private ArrayList<MemoryBlock> memList;
+	private Program program;
+	private List<MemoryBlock> memList;
 	private MemoryMapProvider provider;
 
 	private final static String COLUMN_NAMES[] =
@@ -81,9 +86,12 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 
 	MemoryMapModel(MemoryMapProvider provider, Program program) {
 		super(START);
-		this.program = program;
 		this.provider = provider;
+		setProgram(program);
+	}
 
+	void setProgram(Program program) {
+		this.program = program;
 		populateMap();
 	}
 
@@ -91,6 +99,7 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 		memList = new ArrayList<>();
 
 		if (program == null) {
+			fireTableDataChanged();
 			return;
 		}
 
@@ -115,7 +124,7 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 	@Override
 	public boolean isSortable(int columnIndex) {
 		if (columnIndex == READ || columnIndex == WRITE || columnIndex == EXECUTE ||
-			columnIndex == VOLATILE || columnIndex == OVERLAY || columnIndex == INIT) {
+			columnIndex == VOLATILE || columnIndex == INIT) {
 			return false;
 		}
 		return true;
@@ -141,12 +150,6 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 		return COLUMN_NAMES[column];
 	}
 
-	/**
-	 * Convenience method for locating columns by name.
-	 * Implementation is naive so this should be overridden if
-	 * this method is to be called often. This method is not
-	 * in the TableModel interface and is not used by the JTable.
-	 */
 	@Override
 	public int findColumn(String columnName) {
 		for (int i = 0; i < COLUMN_NAMES.length; i++) {
@@ -157,21 +160,15 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 		return 0;
 	}
 
-	/**
-	 *  Returns Object.class by default
-	 */
 	@Override
 	public Class<?> getColumnClass(int columnIndex) {
 		if (columnIndex == READ || columnIndex == WRITE || columnIndex == EXECUTE ||
-			columnIndex == VOLATILE || columnIndex == OVERLAY || columnIndex == INIT) {
+			columnIndex == VOLATILE || columnIndex == INIT) {
 			return Boolean.class;
 		}
 		return String.class;
 	}
 
-	/**
-	 *  Return whether this column is editable.
-	 */
 	@Override
 	public boolean isCellEditable(int rowIndex, int columnIndex) {
 
@@ -195,27 +192,12 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 		}
 	}
 
-	/**
-	 * Returns the number of records managed by the data source object. A
-	 * <B>JTable</B> uses this method to determine how many rows it
-	 * should create and display.  This method should be quick, as it
-	 * is call by <B>JTable</B> quite frequently.
-	 *
-	 * @return the number or rows in the model
-	 * @see #getColumnCount
-	 */
 	@Override
 	public int getRowCount() {
 		return memList.size();
 	}
 
 	private String getAddressString(Address address) {
-		AddressSpace space = address.getAddressSpace();
-		if (space.isOverlaySpace()) {
-			OverlayAddressSpace ovSpace = (OverlayAddressSpace) space;
-			AddressSpace baseSpace = ovSpace.getOverlayedSpace();
-			address = baseSpace.getAddress(address.getOffset());
-		}
 		return address.toString();
 	}
 
@@ -226,169 +208,134 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 		if (rowIndex < 0 || rowIndex >= memList.size()) {
 			return null;
 		}
-		MemoryBlock block = memList.get(rowIndex);
-		try {
-			// make sure block is still valid
-			block.getStart();
-		}
-		catch (ConcurrentModificationException e) {
-			update();
-		}
 		return memList.get(rowIndex);
 	}
 
-	/**
-	 *  This empty implementation is provided so users don't have to implement
-	 *  this method if their data model is not editable.
-	 */
 	@Override
-	public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-		provider.setCursor(MemoryMapPlugin.WAIT_CURSOR);
+	public void setValueAt(Object aValue, int row, int column) {
+		provider.setCursor(WAIT_CURSOR);
 		try {
 
-			MemoryBlock block = getBlockAt(rowIndex);
+			MemoryBlock block = getBlockAt(row);
 			if (block == null) {
 				// this can happen when the tool is closing while an edit is open
 				return;
 			}
 
-			switch (columnIndex) {
-				case NAME:
-					String name = ((String) aValue).trim();
-					if (!verifyRenameAllowed(block, name)) {
-						return;
-					}
-					if (name.length() == 0) {
-						Msg.showError(this, provider.getComponent(), "Enter Block Label",
-							"Please enter a label name.");
-						break;
-					}
-					if (name.equals(block.getName())) {
-						break;
-					}
-					if (!Memory.isValidMemoryBlockName(name)) {
-						Msg.showError(this, provider.getComponent(), "Invalid Name",
-							"Invalid Memory Block Name: " + name);
-						break;
-					}
-					if (!name.equals(block.getName())) {
-						int id = program.startTransaction("Rename Memory Block");
-						try {
-							block.setName(name);
-							program.endTransaction(id, true);
-						}
-						catch (LockException e) {
-							program.endTransaction(id, false);
-							this.provider.setStatusText(e.getMessage());
-							return;
-						}
-						catch (RuntimeException e1) {
-							program.endTransaction(id, false);
-							throw e1;
-						}
-					}
-					break;
-				case READ: {
-					int id = program.startTransaction("Set Read State");
-					try {
-						boolean value = ((Boolean) aValue).booleanValue();
-						block.setRead(value);
-						provider.setStatusText("");
-						program.endTransaction(id, true);
-					}
-					catch (RuntimeException e) {
-						program.endTransaction(id, false);
-						throw e;
-					}
-					break;
-				}
-				case WRITE: {
-					int id = program.startTransaction("Set Write State");
-					try {
-						boolean value = ((Boolean) aValue).booleanValue();
-						block.setWrite(value);
-						provider.setStatusText("");
-						program.endTransaction(id, true);
-					}
-					catch (RuntimeException e) {
-						program.endTransaction(id, false);
-						throw e;
-					}
-					break;
-				}
-				case EXECUTE: {
-					int id = program.startTransaction("Set Execute State");
-					try {
-						boolean value = ((Boolean) aValue).booleanValue();
-						block.setExecute(value);
-						provider.setStatusText("");
-						program.endTransaction(id, true);
-					}
-					catch (RuntimeException e) {
-						program.endTransaction(id, false);
-						throw e;
-					}
-					break;
-				}
-				case VOLATILE: {
-					int id = program.startTransaction("Set Volatile State");
-					try {
-						boolean value = ((Boolean) aValue).booleanValue();
-						block.setVolatile(value);
-						provider.setStatusText("");
-						program.endTransaction(id, true);
-					}
-					catch (RuntimeException e) {
-						program.endTransaction(id, false);
-						throw e;
-					}
-					break;
-				}
-				case INIT:
-					MemoryBlockType blockType = block.getType();
-					if (blockType == MemoryBlockType.BIT_MAPPED ||
-						blockType == MemoryBlockType.BYTE_MAPPED) {
-
-						showMessage("Cannot change intialized memory state of a mapped Block");
-						return;
-					}
-					provider.setStatusText("");
-					boolean booleanValue = ((Boolean) aValue).booleanValue();
-					if (booleanValue) {
-						initializeBlock(block);
-					}
-					else {
-						revertBlockToUninitialized(block);
-					}
-					return;
-
-				case SOURCE:
-					break;
-				case COMMENT:
-					String cmt = block.getComment();
-					if (cmt == null || !cmt.equals(aValue)) {
-						String value = (String) aValue;
-						if (value.length() == 0) {
-							value = null;
-						}
-						int id = program.startTransaction("Set Comment State");
-						try {
-							block.setComment(value);
-							program.endTransaction(id, true);
-						}
-						catch (RuntimeException e) {
-							program.endTransaction(id, false);
-							throw e;
-						}
-					}
-					break;
-				default:
-					break;
-			}
-			fireTableRowsUpdated(rowIndex, rowIndex);
+			doSetValueAt(aValue, row, column, block);
 		}
 		finally {
-			provider.setCursor(MemoryMapPlugin.NORM_CURSOR);
+			provider.setCursor(DEFAULT_CURSOR);
+		}
+	}
+
+	private void doSetValueAt(Object aValue, int row, int column, MemoryBlock block) {
+
+		switch (column) {
+			case NAME:
+				setName(block, (String) aValue);
+				break;
+			case READ: {
+				program.withTransaction("Set Read State", () -> {
+					boolean value = ((Boolean) aValue).booleanValue();
+					block.setRead(value);
+					provider.setStatusText("");
+				});
+				break;
+			}
+			case WRITE: {
+				program.withTransaction("Set Write State", () -> {
+					boolean value = ((Boolean) aValue).booleanValue();
+					block.setWrite(value);
+					provider.setStatusText("");
+				});
+				break;
+			}
+			case EXECUTE: {
+				program.withTransaction("Set Execute State", () -> {
+					boolean value = ((Boolean) aValue).booleanValue();
+					block.setExecute(value);
+					provider.setStatusText("");
+				});
+				break;
+			}
+			case VOLATILE: {
+				program.withTransaction("Set Volatile State", () -> {
+					boolean value = ((Boolean) aValue).booleanValue();
+					block.setVolatile(value);
+					provider.setStatusText("");
+				});
+				break;
+			}
+			case INIT:
+				MemoryBlockType blockType = block.getType();
+				if (blockType == MemoryBlockType.BIT_MAPPED ||
+					blockType == MemoryBlockType.BYTE_MAPPED) {
+					showMessage("Cannot change intialized memory state of a mapped Block");
+					break;
+				}
+				provider.setStatusText("");
+				boolean booleanValue = ((Boolean) aValue).booleanValue();
+				if (booleanValue) {
+					initializeBlock(block);
+				}
+				else {
+					revertBlockToUninitialized(block);
+				}
+				break;
+			case SOURCE:
+				break;
+			case COMMENT:
+				setComment(block, (String) aValue);
+				break;
+			default:
+				break;
+		}
+		fireTableRowsUpdated(row, column);
+	}
+
+	private void setComment(MemoryBlock block, String aValue) {
+
+		String cmt = block.getComment();
+		if (cmt == null || !cmt.equals(aValue)) {
+			if (aValue.length() == 0) {
+				aValue = null;
+			}
+
+			String newValue = aValue;
+			program.withTransaction("Set Comment", () -> {
+				block.setComment(newValue);
+			});
+		}
+	}
+
+	private void setName(MemoryBlock block, String name) {
+		name = name.trim();
+		if (!verifyRenameAllowed(block, name)) {
+			return;
+		}
+		if (name.length() == 0) {
+			Msg.showError(this, provider.getComponent(), "Enter Block Label",
+				"Please enter a label name.");
+			return;
+		}
+		if (name.equals(block.getName())) {
+			return;
+		}
+		if (!Memory.isValidMemoryBlockName(name)) {
+			Msg.showError(this, provider.getComponent(), "Invalid Name",
+				"Invalid Memory Block Name: " + name);
+			return;
+		}
+
+		try {
+			String newName = name;
+			program.withTransaction("Rename Memory Block", () -> {
+				block.setName(newName);
+			});
+		}
+		catch (LockException e) {
+			this.provider.setStatusText(e.getMessage());
 		}
 	}
 
@@ -450,15 +397,14 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 		}
 		catch (Throwable t) {
 			program.endTransaction(id, false);
-			String msg = t.getMessage();
-			msg = msg == null ? t.toString() : msg;
+			String msg = ExceptionUtils.getMessage(t);
 			Msg.showError(this, provider.getComponent(), "Block Initialization Failed", msg, t);
 		}
 	}
 
-	private void showMessage(final String msg) {
+	private void showMessage(String msg) {
 		// mouse listeners wipe out the message so show it later...
-		SwingUtilities.invokeLater(() -> provider.setStatusText(msg));
+		Swing.runLater(() -> provider.setStatusText(msg));
 	}
 
 	@Override
@@ -483,7 +429,7 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 				case VOLATILE:
 					return block.isVolatile() ? Boolean.TRUE : Boolean.FALSE;
 				case OVERLAY:
-					return block.isOverlay() ? Boolean.TRUE : Boolean.FALSE;
+					return getOverlayBaseSpaceName(block);
 				case INIT:
 					MemoryBlockType blockType = block.getType();
 					if (blockType == MemoryBlockType.BIT_MAPPED) {
@@ -514,8 +460,9 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 	}
 
 	private String getByteSourceDescription(List<MemoryBlockSourceInfo> sourceInfos) {
-		List<MemoryBlockSourceInfo> limited = sourceInfos.size() < 5 ? sourceInfos : sourceInfos.subList(0, 4);
-		
+		List<MemoryBlockSourceInfo> limited =
+			sourceInfos.size() < 5 ? sourceInfos : sourceInfos.subList(0, 4);
+
 		//@formatter:off
 		String description = limited
 							.stream()
@@ -539,6 +486,52 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 			return super.createSortComparator(columnIndex);
 		}
 		return new MemoryMapComparator(columnIndex);
+	}
+
+	@Override
+	public ProgramLocation getProgramLocation(int row, int column) {
+
+		MemoryBlock block = getRowObject(row);
+		Address address = block.getStart();
+		if (column == END) {
+			address = block.getEnd();
+		}
+
+		return new ProgramLocation(program, address);
+	}
+
+	@Override
+	public ProgramSelection getProgramSelection(int[] rows) {
+
+		if (rows.length == 0) {
+			return null;
+		}
+
+		AddressSet addressSet = new AddressSet();
+		for (int row : rows) {
+
+			MemoryBlock block = getRowObject(row);
+			Address start = block.getStart();
+			Address end = block.getEnd();
+
+			if (start.isMemoryAddress() && end.isMemoryAddress()) {
+				addressSet.addRange(start, end);
+			}
+		}
+		return new ProgramSelection(addressSet);
+	}
+
+	@Override
+	public Program getProgram() {
+		return program;
+	}
+
+	private String getOverlayBaseSpaceName(MemoryBlock block) {
+		AddressSpace space = block.getStart().getAddressSpace();
+		if (space instanceof OverlayAddressSpace ovSpace) {
+			return ovSpace.getOverlayedSpace().getName();
+		}
+		return "";
 	}
 
 	private class MemoryMapComparator implements Comparator<MemoryBlock> {
@@ -577,9 +570,9 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 					int b2v = (b2.isVolatile() ? 1 : -1);
 					return (b1v - b2v);
 				case OVERLAY:
-					int b1o = (b1.isOverlay() ? 1 : -1);
-					int b2o = (b2.isOverlay() ? 1 : -1);
-					return (b1o - b2o);
+					String ov1 = getOverlayBaseSpaceName(b1);
+					String ov2 = getOverlayBaseSpaceName(b2);
+					return ov1.compareTo(ov2);
 				case INIT:
 					int b1init = (b1.isInitialized() ? 1 : -1);
 					int b2init = (b2.isInitialized() ? 1 : -1);
@@ -618,4 +611,5 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 			}
 		}
 	}
+
 }

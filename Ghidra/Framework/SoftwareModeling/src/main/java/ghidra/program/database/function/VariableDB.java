@@ -182,7 +182,7 @@ public abstract class VariableDB implements Variable {
 	@Override
 	public void setComment(String comment) {
 		symbol.setSymbolStringData(comment);
-		functionMgr.functionChanged(function, 0);
+		functionMgr.functionChanged(function, null);
 	}
 
 	@Override

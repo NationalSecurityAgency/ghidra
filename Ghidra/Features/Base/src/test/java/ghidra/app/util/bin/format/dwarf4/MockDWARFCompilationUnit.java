@@ -15,47 +15,46 @@
  */
 package ghidra.app.util.bin.format.dwarf4;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import ghidra.app.util.bin.format.dwarf4.encoding.*;
-import ghidra.app.util.bin.format.dwarf4.next.DWARFProgram;
-import ghidra.util.task.TaskMonitor;
-
 public class MockDWARFCompilationUnit extends DWARFCompilationUnit {
 
-	private List<DebugInfoEntry> mockEntries = new ArrayList<>();
 	private DebugInfoEntry compUnitDIE;
+	private MockDWARFProgram dwarfProgram;
+	private int dieCount;
 
-	public MockDWARFCompilationUnit(DWARFProgram dwarfProgram, long startOffset, long endOffset,
+	public MockDWARFCompilationUnit(MockDWARFProgram dwarfProgram, long startOffset, long endOffset,
 			long length, int format, short version, long abbreviationOffset, byte pointerSize,
 			int compUnitNumber, int language) {
 		super(dwarfProgram, startOffset, endOffset, length, format, version, abbreviationOffset,
 			pointerSize, compUnitNumber, startOffset, null);
+		this.dwarfProgram = dwarfProgram;
 
-		setCompileUnit(
-			new DWARFCompileUnit("Mock Comp Unit", "Mock Comp Unit Producer", "Mock Comp Unit Dir",
-				0, 0, language, DWARFIdentifierCase.DW_ID_case_insensitive, false, null));
-		compUnitDIE = new DIECreator(DWARFTag.DW_TAG_compile_unit)
-				.addString(DWARFAttribute.DW_AT_name, "MockCompUnit" + compUnitNumber)
-				.create(this);
+		this.compUnit = new DWARFCompileUnit("Mock Comp Unit", "Mock Comp Unit Producer",
+			"Mock Comp Unit Dir", 0, 0, language, false, null);
 	}
 
-	@Override
-	public void readDIEs(List<DebugInfoEntry> dies, TaskMonitor unused_monitor) {
-		dies.addAll(mockEntries);
+	public void setCompUnitDIE(DebugInfoEntry compUnitDIE) {
+		this.compUnitDIE = compUnitDIE;
 	}
 
 	public DebugInfoEntry getCompileUnitDIE() {
 		return compUnitDIE;
 	}
 
-	public void addMockEntry(DebugInfoEntry die) {
-		mockEntries.add(die);
+	public int incDIECount() {
+		return dieCount++;
 	}
 
-	public int getMockEntryCount() {
-		return mockEntries.size();
+	@Override
+	public MockDWARFProgram getProgram() {
+		return dwarfProgram;
+	}
+
+	public DWARFAbbreviation createAbbreviation(DWARFAttributeSpecification[] attrSpecs, int tag) {
+		DWARFAbbreviation abbr =
+			new DWARFAbbreviation(getCodeToAbbreviationMap().size(), tag, true /*??*/, attrSpecs);
+		getCodeToAbbreviationMap().put(abbr.getAbbreviationCode(), abbr);
+
+		return abbr;
 	}
 
 }

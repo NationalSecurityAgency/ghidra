@@ -111,7 +111,12 @@ public class DefaultMemoryRecorder implements ManagedMemoryRecorder {
 					Msg.warn(this, "Could not find region " + path + " in trace to remove");
 					return;
 				}
-				traceRegion.setDestructionSnap(snap - 1);
+				if (traceRegion.getCreationSnap() >= snap) {
+					traceRegion.delete();
+				}
+				else {
+					traceRegion.setDestructionSnap(snap - 1);
+				}
 			}
 			catch (DuplicateNameException | TraceOverlappedRegionException e) {
 				// Region is shrinking in time

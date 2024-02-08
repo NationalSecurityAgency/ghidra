@@ -15,8 +15,8 @@
     functions in a simple side-by-side panel. </P>
 
     <P>To begin, select a function (or multiple functions) from the listing or
-    the <A HREF="help/topics/FunctionWindowPlugin/function_window.htm">function table</a>. Then right-click and select the <b>Compare Selected
-    Functions</b> option.</P>
+    the <A HREF="help/topics/FunctionWindowPlugin/function_window.htm">function table</a>. 
+    Then right-click and select the <b>Compare Selected Functions</b> option.</P>
 
     <P><A name="Dual_Listing"></A>A new function comparison window will appear (subsequent
     invocations of this option will create a new tab in the existing window).</P>
@@ -33,9 +33,9 @@
       <P>The <B><I>Listing View</I></B> shows a pair of listings side by side so the functions can
       be compared. The highlights in the two listings indicate where there are possible differences
       in the bytes and instructions between the functions. The background highlights that have a 
-      default color of <SPAN style="background:#b9b9b9">gray</SPAN> are where bytes or instructions differ
-      wherever the instructions could be matched up between the two functions. The code units with
-      white background also have a matching code unit in the other function but do not have any
+      default color of <SPAN style="background:#b9b9b9">gray</SPAN> are where bytes or instructions
+      differ wherever the instructions could be matched up between the two functions. The code units
+      with white background also have a matching code unit in the other function but do not have any
       differences based on the current difference settings. Any instructions that couldn't be
       automatically matched up are highlighted with a default background color of
       <SPAN style="background:#69cde1">blue</SPAN>. 
@@ -176,8 +176,7 @@
           Header</A>.</P>
         </BLOCKQUOTE>
 
-        <H4><A name="Dual_Listing_Toggle_Orientation"></A>Show Listings Side-by-Side</H4>
-
+        <H4><A name="Dual_Listing_Toggle_Orientation"></A>Show Listings Side-by-Side</H4> 
         <BLOCKQUOTE>
           <P>The two listings which display each of the functions can be displayed side by side or
           one above the other. To change how the two listings are positioned relative to each
@@ -379,7 +378,8 @@
       <H3><A name="Listing_Code_Comparison_Options"></A>Listing Code Comparison Options</H3>
 
       <BLOCKQUOTE>
-        <P>These are the tool options that can be adjusted for the dual listing view of a Function Comparison.</P>
+        <P>These are the tool options that can be adjusted for the dual listing view of a Function 
+           Comparison.</P>
         <BR>
 
         <CENTER>
@@ -406,6 +406,98 @@
 	
 	</BLOCKQUOTE>
 
+    <H2><A name="Decompiler_Diff_View"></A>Decompiler Diff View</H2>
+
+    <BLOCKQUOTE>
+      <P>The <B><I> Decompiler Diff View</I></B> shows a pair of decompilers side by side. 
+      Individual tokens can be highlighted in various colors to show differences and matches between
+      the two functions. The default colors are described in the following table; users can change 
+      these colors from the <B>Properties</B> action in the popup menu of the Decompiler Diff View 
+      or from the <I>Decompiler Code Comparison</I> entry in the Tool Options.</P>
+      <BR><BR>
+
+    <H3><A name="Decompiler_Code_Comparison_Options"></A>&nbsp;Decompiler Code Comparison Options
+    </H3>
+      <BLOCKQUOTE>
+        <CENTER>
+          <TABLE border="1">
+            <TR>
+              <TH>Indicator</TH>
+
+              <TH>Default Color</TH>
+
+              <TH>Description</TH>
+            </TR>
+
+            <TR>
+              <TD>Differing Tokens</TD>
+            
+              <TD bgcolor="#00FFFF" width="20">&nbsp;</TD>
+
+              <TD> Highlights (eligible) tokens in each decompiled views which do not have matches 
+              in the other function. </TD>  
+            </TR>
+
+            <TR>
+               <TD>Ineligible Tokens</TD>
+            
+              <TD bgcolor="#FFA500" width="20">&nbsp;</TD>
+
+              <TD> This color is used to highlight a focused token when it is not eligible for a 
+                   match via the matching algorithm. For example, whitespace tokens and variable 
+                   declarations are never assigned matches. </TD>
+            </TR>
+
+            <TR>
+              <TD>Matched Tokens</TD>
+            
+              <TD bgcolor="#FFC0CB" width="20">&nbsp;</TD>
+
+              <TD> If the focused token has a match in the other function, all tokens involved in 
+                   the match are highlighted in this color. </TD>
+            </TR>
+
+            <TR>
+              <TD>Unmatched Tokens</TD>
+            
+              <TD bgcolor="#E6E6FA" width="20">&nbsp;</TD>
+
+              <TD> This color is used to highlight the focused token when it is eligible for a match
+               but does not have one.</TD>
+            </TR>
+          </TABLE>
+
+          <CENTER>
+            <BR>
+            <BR>
+          </CENTER>
+        </CENTER>
+      </BLOCKQUOTE>
+
+      <P> Synchronized scrolling works by matching a line in one decompiled function with a line in 
+          the other decompiled function.  The two functions are aligned relative to the matched 
+          line; scrolling up or down will then move each decompiled function by the same amount. 
+          Whenever you click on a token, the functions are re-aligned.  If the token you clicked on
+          has a match, the functions will be re-aligned using the corresponding line.  If the token 
+          does not have a match, a search is performed for the nearest token in the same function
+          which does have a match, and the functions are re-aligned using the search result.  
+      </P>
+  
+
+     <H3><A name="Decompiler_Code_Comparison_Actions"></A>Decompiler Code Comparison Actions</H3>
+
+     <H4><A name="Compare_Matching_Callees"></A>Compare Matching Callees</H4>
+     <BLOCKQUOTE>
+      <P> This action is available on matched tokens corresponding to function calls.  It will open 
+          a new function comparison window populated with the called functions. </P>
+     </BLOCKQUOTE>
+
+     <H4><A name="Dual_Decompiler_Toggle_Orientation"></A>Show Decompilers Side-by-Side</H4> 
+     <BLOCKQUOTE>
+      <P>This toggles the decompiler panels between a vertical split and a horizontal split. </P>
+     </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
     <H2><A name="Compare Multiple Functions"></A>Comparing Multiple Functions</H2>
 
     <BLOCKQUOTE>
@@ -416,7 +508,8 @@
       <P>The following toolbar options are available:</P>
 
 	<blockquote>
-		<h3><IMG src="images/AddToComparisonIcon.png" border="0">  <a name="Add_To_Comparison"></a>Add To Existing Comparison</h3>
+		<h3><IMG src="images/AddToComparisonIcon.png" border="0">  
+		<a name="Add_To_Comparison"></a>Add To Existing Comparison</h3>
 		<p>Allows the user to add functions to the current comparison window. When
 		selected, the following table containing all functions in the current program is
 		displayed:</p>
@@ -428,17 +521,21 @@
 		sides of the comparison window. 
 		</p>
 		
-		<h3><IMG src="images/RemoveFromComparisonIcon.png" border="0">  <a name="Remove_From_Comparison"></a>&nbsp;Remove Function From Comparison</h3>
+		<h3><IMG src="images/RemoveFromComparisonIcon.png" border="0">  
+		<a name="Remove_From_Comparison"></a>&nbsp;Remove Function From Comparison</h3>
 		<p>Removes the function in the focused panel from the comparison. This
 		will remove the function from both the source and target selection pulldowns.</p>
 		
-		<h3><IMG src="images/NavNextIcon.png" border="0">  <a name="Navigate_Next"></a>&nbsp;Go To Next Function</h3>
+		<h3><IMG src="images/NavNextIcon.png" border="0">  
+		<a name="Navigate_Next"></a>&nbsp;Go To Next Function</h3>
 		<p>Navigates to the next available function in the selection pulldown</p>
 		
-		<h3><IMG src="images/NavPreviousIcon.png" border="0">  <a name="Navigate_Previous"></a>&nbsp;Go To Previous Function</h3>
+		<h3><IMG src="images/NavPreviousIcon.png" border="0">  
+		<a name="Navigate_Previous"></a>&nbsp;Go To Previous Function</h3>
 		<p>Navigates to the previous available function in the selection pulldown</p>
 		
-		<h3><IMG src="Icons.NAVIGATE_ON_INCOMING_EVENT_ICON" border="0">  <a name="Navigate_To_Function"></a>&nbsp;Navigate To Selected Function</h3>
+		<h3><IMG src="Icons.NAVIGATE_ON_INCOMING_EVENT_ICON" border="0">  
+		<a name="Navigate_To_Function"></a>&nbsp;Navigate To Selected Function</h3>
 		<p>When toggled <b>on</b>, the function comparison panels become navigable,
 		meaning a mouse click on the panel or change in the function being viewed
 		will result in a GoTo event being generated. This allows other panels 
@@ -448,7 +545,7 @@
 		above will operate on the comparison panel that has focus, identified by the
 		pink border.</p>
 	</blockquote>
-       
+
       <H3>Other Function Comparison Actions</H3>
 
       <P>The following are additional actions that are available in the Function Comparison
@@ -497,35 +594,27 @@
           </OL>
         </BLOCKQUOTE>
 
-        <H4><A name="Apply_Function_Signature_To_Other_Side"></A>Apply Function Signature To Other
-        Side</H4>
+        <H4>Apply Actions</H4>
+        <P> These actions apply information from the other function to this function. Currently,
+        the following apply actions are provided:</P>
+        <UL>
+        	<A name="Function_Comparison_Apply_Name">
+        	<LI><B>Apply Function Name</B> - This will apply the function name and namespace of the
+        	other function to this function.</LI>
+        	<A name="Function_Comparison_Apply_Signature">
+        	<LI><B>Apply Function Signature</B> - This will apply the function name, namespace, and
+        	the function signature. Note that this action copies a limited form of the signature
+        	where structures and unions are not copied, but instead empty placeholders are created.
+        	</LI>
+        	<A name="Function_Comparison_Apply_Signature_And_Datatypes">
+        	<LI><B>Apply Function Signature and Data Types</B> - This will apply the function name, 
+        	namespace and full signature, including any complex data types and referenced types. Use
+        	this action with caution as it can potentially add many inappropriate and conflicting
+        	data types, especially if the source function is from a program with a different 
+        	architecture or compiler.
+        </UL>
 
-        <BLOCKQUOTE>
-          <P>The <B>Apply Function Signature To Other Side</B> action is available in the Function
-          Comparison window from the popup menu. This will apply the function signature from the
-          side of the panel that has focus (the one with the pink border around it) to the function
-          in the other side.</P>
-
-          <P>When you apply the signature it updates the other side's function so its signature
-          will match the function's signature in the side with focus as closely as possible. This
-          will try to create conflict names if necessary for the function and its parameters.</P>
-
-          <P>To apply the signature from one function to the other:</P>
-
-          <OL>
-            <LI>Right mouse click in the side of the Function Comparison Window that has the
-            function signature that you want to apply.</LI>
-
-            <LI>Choose the <B>Apply Function Signature To Other Side</B> option from the menu.</LI>
-          </OL>
-
-          <P>The function signature in the non-focused side of the Function Comparison window
-          should update if the apply succeeded.</P>
-        </BLOCKQUOTE>
-
-    </BLOCKQUOTE><BR>
-     
-    <P class="providedbyplugin">Provided By:&nbsp; <I>FunctionComparisonPlugin</I></P>
+      <P class="providedbyplugin">Provided By:&nbsp; <I>FunctionComparisonPlugin</I></P>
 
     <P class="relatedtopic">Related Topics:</P>
 

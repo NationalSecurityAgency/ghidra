@@ -69,15 +69,14 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 
 	@After
 	public void tearDown() throws Exception {
-		env.release(program);
 		env.dispose();
 	}
 
 	@Test
 	public void testEnumFields() throws Exception {
 		Category c = program.getListing()
-			.getDataTypeManager()
-			.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+				.getDataTypeManager()
+				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		Enum enumm = createEnum(c, "TestEnum", 1);
 		edit(enumm);
 
@@ -100,7 +99,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		JTextField catField = getTextField(panel, "Category");
 		assertNotNull(catField);
 		assertEquals("notepad/Category1", catField.getText());
-		assertTrue(!catField.isEditable());
+		assertFalse(catField.isEditable());
 
 		// size should be "1"
 		@SuppressWarnings("unchecked")
@@ -114,12 +113,12 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		// add action should be enabled
 		// apply action should be disabled
 		// delete action should be disabled
-		DockingActionIf addAction = getAction(plugin, "Add Enum Value");
+		DockingActionIf addAction = getAddAction();
 		assertTrue(addAction.isEnabled());
-		DockingActionIf applyAction = getAction(plugin, "Apply Enum Changes");
-		assertTrue(!applyAction.isEnabled());
-		DockingActionIf deleteAction = getAction(plugin, "Delete Enum Value");
-		assertTrue(!deleteAction.isEnabled());
+		DockingActionIf applyAction = getApplyAction();
+		assertFalse(applyAction.isEnabled());
+		DockingActionIf deleteAction = getDeleteAction();
+		assertFalse(deleteAction.isEnabled());
 
 		// sort column should be on the value column
 		JTable table = (JTable) findContainer(panel, JTable.class);
@@ -130,8 +129,8 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testEnumSize1() throws Exception {
 		Category category = program.getListing()
-			.getDataTypeManager()
-			.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+				.getDataTypeManager()
+				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		Enum enumm = createEnum(category, "TestEnum", 1);
 		edit(enumm);
 
@@ -141,7 +140,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		addEnumValue();
 
 		waitForSwing();
-		DockingActionIf applyAction = getAction(plugin, "Apply Enum Changes");
+		DockingActionIf applyAction = getApplyAction();
 		assertTrue(applyAction.isEnabled());
 		assertTrue(panel.needsSave());
 
@@ -181,8 +180,8 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 	public void testEnumSize1BadInput() throws Exception {
 		// test entering too large a value
 		Category category = program.getListing()
-			.getDataTypeManager()
-			.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+				.getDataTypeManager()
+				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		Enum enumm = createEnum(category, "TestEnum", 1);
 		edit(enumm);
 
@@ -192,7 +191,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		addEnumValue();
 
 		waitForSwing();
-		DockingActionIf applyAction = getAction(plugin, "Apply Enum Changes");
+		DockingActionIf applyAction = getApplyAction();
 		assertTrue(applyAction.isEnabled());
 		assertTrue(panel.needsSave());
 
@@ -224,8 +223,8 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testEnumSize4BadInput() throws Exception {
 		Category category = program.getListing()
-			.getDataTypeManager()
-			.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+				.getDataTypeManager()
+				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		Enum enumm = createEnum(category, "MyTestEnum", 4);
 		edit(enumm);
 
@@ -243,12 +242,12 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		addEnumValue();
 		waitForSwing();
-		DockingActionIf applyAction = getAction(plugin, "Apply Enum Changes");
+		DockingActionIf applyAction = getApplyAction();
 		assertTrue(applyAction.isEnabled());
 		assertTrue(panel.needsSave());
 
-		final JTable table = panel.getTable();
-		final EnumTableModel model = (EnumTableModel) table.getModel();
+		JTable table = panel.getTable();
+		EnumTableModel model = (EnumTableModel) table.getModel();
 
 		assertEquals("New_Name", model.getValueAt(0, NAME_COL));
 		assertEquals(0L, model.getValueAt(0, VALUE_COL));
@@ -275,14 +274,14 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testBadInputForValue() throws Exception {
 		Category cat = program.getListing()
-			.getDataTypeManager()
-			.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+				.getDataTypeManager()
+				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		Enum enumm = createEnum(cat, "TestEnum", 1);
 		edit(enumm);
 
 		EnumEditorPanel panel = findEditorPanel(tool.getToolFrame());
-		final JTable table = panel.getTable();
-		final EnumTableModel model = (EnumTableModel) table.getModel();
+		JTable table = panel.getTable();
+		EnumTableModel model = (EnumTableModel) table.getModel();
 
 		addEnumValue();
 		waitForSwing();
@@ -304,8 +303,8 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 	public void testEditExistingEnum1() throws Exception {
 
 		Category cat = program.getListing()
-			.getDataTypeManager()
-			.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+				.getDataTypeManager()
+				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		final Enum enumm = new EnumDataType("Colors", 1);
 		enumm.add("Red", 0);
 		enumm.add("Green", 1);
@@ -368,8 +367,8 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testValueForNewEntry() throws Exception {
 		Category cat = program.getListing()
-			.getDataTypeManager()
-			.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+				.getDataTypeManager()
+				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		final Enum enumm = new EnumDataType("Colors", 1);
 		enumm.add("Red", 0x10);
 		enumm.add("Green", 0x20);
@@ -389,7 +388,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		runSwing(() -> {
 			int lastRow = model.getRowCount() - 1;
 			table.addRowSelectionInterval(lastRow, lastRow);
-			DockingActionIf addAction = getAction(plugin, "Add Enum Value");
+			DockingActionIf addAction = getAddAction();
 			addAction.actionPerformed(new DefaultActionContext());
 		});
 		waitForSwing();
@@ -762,12 +761,11 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 	public void testChangeEnumSizeAndInStructure() throws Exception {
 
 		Category category = program.getListing()
-			.getDataTypeManager()
-			.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+				.getDataTypeManager()
+				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		Enum enumm = createEnum(category, "EnumX", 2);
 
-		int transactionID = program.startTransaction("Test");
-		try {
+		tx(program, () -> {
 			enumm.add("Zero", 0);
 			enumm.add("One", 1);
 
@@ -783,10 +781,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 			structY.add(new ByteDataType());
 			structY.add(enumm);
 			category.addDataType(structY, DataTypeConflictHandler.DEFAULT_HANDLER);
-		}
-		finally {
-			program.endTransaction(transactionID, true);
-		}
+		});
 
 		edit(enumm);
 
@@ -832,12 +827,11 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 	public void testChangeEnumDescriptionEtcAndInStructure() throws Exception {
 
 		Category category = program.getListing()
-			.getDataTypeManager()
-			.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+				.getDataTypeManager()
+				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		Enum enumm = createEnum(category, "EnumX", 2);
 
-		int transactionID = program.startTransaction("Test");
-		try {
+		tx(program, () -> {
 			enumm.add("Zero", 0);
 			enumm.add("One", 1);
 			enumm.setDescription("ABCD");
@@ -854,10 +848,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 			structY.add(new ByteDataType());
 			structY.add(enumm);
 			category.addDataType(structY, DataTypeConflictHandler.DEFAULT_HANDLER);
-		}
-		finally {
-			program.endTransaction(transactionID, true);
-		}
+		});
 
 		edit(enumm);
 
@@ -1140,8 +1131,8 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 
 	private Enum createRedGreenBlueEnum() {
 		Category cat = program.getListing()
-			.getDataTypeManager()
-			.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+				.getDataTypeManager()
+				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		final Enum enumm = new EnumDataType("Colors", 1);
 		enumm.add("Red", 0);
 		enumm.add("Green", 1);
@@ -1165,7 +1156,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 
 	private void apply() {
 		runSwing(() -> {
-			DockingActionIf applyAction = getAction(plugin, "Apply Enum Changes");
+			DockingActionIf applyAction = getApplyAction();
 			applyAction.actionPerformed(new DefaultActionContext());
 		}, false);
 		program.flushEvents();
@@ -1290,12 +1281,10 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void editValueInTable(int row, String newValue) {
-
 		editCellInTable(row, VALUE_COL, newValue);
 	}
 
 	private void editNameInTable(int row, String newValue) {
-
 		editCellInTable(row, NAME_COL, newValue);
 	}
 
@@ -1331,9 +1320,21 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 
 	private void addEnumValue() {
 		runSwing(() -> {
-			DockingActionIf addAction = getAction(plugin, "Add Enum Value");
+			DockingActionIf addAction = getAddAction();
 			addAction.actionPerformed(new DefaultActionContext());
 		});
+	}
+
+	private DockingActionIf getAddAction() {
+		return getAction(plugin, DataTypeEditorManager.EDIT_ACTION_PREFIX + "Add Enum Value");
+	}
+
+	private DockingActionIf getApplyAction() {
+		return getAction(plugin, DataTypeEditorManager.EDIT_ACTION_PREFIX + "Apply Enum Changes");
+	}
+
+	private DockingActionIf getDeleteAction() {
+		return getAction(plugin, DataTypeEditorManager.EDIT_ACTION_PREFIX + "Delete Enum Value");
 	}
 
 	private int getRowFor(String theName) {

@@ -419,6 +419,13 @@ public class KeyBindingUtils {
 
 		KeyStroke keyStroke = null;
 		KeyStroke[] keys = inputMap.allKeys();
+		if (keys == null) {
+			Msg.debug(KeyBindingUtils.class,
+				"Cannot remove action by name; does not exist: '" + actionName + "' " +
+					"on component: " + component.getClass().getSimpleName());
+			return;
+		}
+
 		for (KeyStroke ks : keys) {
 			Object object = inputMap.get(ks);
 			if (actionName.equals(object)) {
@@ -925,9 +932,11 @@ public class KeyBindingUtils {
 	private static File getStartingDir() {
 		String lastDirectoryPath = Preferences.getProperty(LAST_KEY_BINDING_EXPORT_DIRECTORY);
 		if (lastDirectoryPath != null) {
-			return new File(lastDirectoryPath);
+			File dir = new File(lastDirectoryPath);
+			if (dir.isDirectory()) {
+				return dir;
+			}
 		}
-
 		return new File(System.getProperty("user.home"));
 	}
 

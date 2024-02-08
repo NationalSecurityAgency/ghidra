@@ -65,6 +65,7 @@ public class PopupWindow {
 	private Rectangle mouseMovementArea;
 	private JWindow popup;
 	private Component sourceComponent;
+	private PopupWindowPlacer popupWindowPlacer = DEFAULT_WINDOW_PLACER;
 
 	private MouseMotionListener sourceMouseMotionListener;
 	private MouseListener sourceMouseListener;
@@ -227,9 +228,18 @@ public class PopupWindow {
 		closeTimer.setRepeats(false);
 	}
 
+	/**
+	 * Sets the object that decides where to place the popup window. 
+	 * @param popupWindowPlacer the placer
+	 */
+	public void setPopupPlacer(PopupWindowPlacer popupWindowPlacer) {
+		this.popupWindowPlacer =
+			popupWindowPlacer == null ? DEFAULT_WINDOW_PLACER : popupWindowPlacer;
+	}
+
 	public void showOffsetPopup(MouseEvent e, Rectangle keepVisibleSize, boolean forceShow) {
 		if (forceShow || DockingUtils.isTipWindowEnabled()) {
-			doShowPopup(e, keepVisibleSize, DEFAULT_WINDOW_PLACER);
+			doShowPopup(e, keepVisibleSize, popupWindowPlacer);
 		}
 	}
 
@@ -251,7 +261,7 @@ public class PopupWindow {
 	 */
 	public void showPopup(MouseEvent e, boolean forceShow) {
 		if (forceShow || DockingUtils.isTipWindowEnabled()) {
-			doShowPopup(e, null, DEFAULT_WINDOW_PLACER);
+			doShowPopup(e, null, popupWindowPlacer);
 		}
 	}
 

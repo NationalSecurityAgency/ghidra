@@ -31,8 +31,23 @@ import ghidra.util.Msg;
  * 
  */
 public class GhidraClassLoader extends URLClassLoader {
-	
-	private static final String CP = "java.class.path";
+
+	/**
+	 * When 'true', this property will trigger the system to put each Extension module's lib jar 
+	 * files into the {@link #CP_EXT} property.
+	 */
+	public static final String ENABLE_RESTRICTED_EXTENSIONS_PROPERTY =
+		"ghidra.extensions.classpath.restricted";
+
+	/**
+	 * The classpath system property: {@code java.class.path}
+	 */
+	public static final String CP = "java.class.path";
+
+	/**
+	 * The extensions classpath system property: {@code java.class.path.ext}
+	 */
+	public static final String CP_EXT = "java.class.path.ext";
 
 	/**
 	 * This one-argument constructor is required for the JVM to successfully use this class loader
@@ -45,7 +60,7 @@ public class GhidraClassLoader extends URLClassLoader {
 	}
 
 	@Override
-    public void addURL(URL url) {
+	public void addURL(URL url) {
 		super.addURL(url);
 		try {
 			System.setProperty(CP,

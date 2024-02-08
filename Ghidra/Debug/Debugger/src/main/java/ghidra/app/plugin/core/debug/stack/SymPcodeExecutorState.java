@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.stack;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import ghidra.app.plugin.core.debug.stack.Sym.*;
 import ghidra.app.plugin.core.debug.stack.SymStateSpace.SymEntry;
@@ -49,6 +48,8 @@ public class SymPcodeExecutorState implements PcodeExecutorState<Sym> {
 	private final SymStateSpace stackSpace;
 	private final SymStateSpace registerSpace;
 	private final SymStateSpace uniqueSpace;
+
+	final Set<StackUnwindWarning> warnings = new LinkedHashSet<>();
 
 	/**
 	 * Construct a new state for the given program

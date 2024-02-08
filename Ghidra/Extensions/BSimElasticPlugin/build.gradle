@@ -1,0 +1,99 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+apply from: "$rootProject.projectDir/gradle/distributableGhidraExtension.gradle"
+apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply plugin: 'eclipse'
+eclipse.project.name = 'Xtra BSimElasticPlugin'
+// This module is very different from other Ghidra modules. It is creating a stand-alone jar
+// file for an elastic database plugin. It is copying files from other modules into this module
+// before building a jar file from the files in this module and the cherry-picked files from
+// other modules (This is very brittle and will break if any of the files are renamed or moved.)
+project.ext.includeExtensionInInstallation = true
+
+apply plugin: 'java'
+
+sourceSets {
+	elasticPlugin {
+		java {
+			srcDirs = [ 'src', 'srcdummy', 'build/genericSrc', 'build/utilitySrc', 'build/bsimSrc' ]
+		}
+	}
+}
+// this dependency block is needed for this code to compile in our eclipse environment. It is not needed
+// for the gradle build
+dependencies {
+
+	implementation project(':BSim')
+}
+libsDirName='ziplayout'
+
+task copyGenericTask(type: Copy) {
+	from project(':Generic').file('src/main/java')
+	into 'build/genericSrc'
+	include 'generic/lsh/vector/*.java'
+	include 'generic/hash/SimpleCRC32.java'
+	include 'ghidra/util/xml/SpecXmlUtils.java'
+}
+
+task copyUtilityTask(type: Copy) {
+	from project(':Utility').file('src/main/java')
+	into 'build/utilitySrc'
+	include 'ghidra/xml/XmlPullParser.java'
+	include 'ghidra/xml/XmlElement.java'
+}
+
+task copyBSimTask(type: Copy) {
+	from project(':BSim').file('src/main/java')
+	into 'build/bsimSrc'
+	include 'ghidra/features/bsim/query/elastic/ElasticUtilities.java'
+	include 'ghidra/features/bsim/query/elastic/Base64Lite.java'
+	include 'ghidra/features/bsim/query/elastic/Base64VectorFactory.java'
+}
+
+task copyPropertiesFile(type: Copy) {
+	from 'contribZipExclude/plugin-descriptor.properties'
+	into 'build/ziplayout'
+}
+
+task elasticPluginJar(type: Jar) {
+	from sourceSets.elasticPlugin.output
+	archiveBaseName = 'lsh'
+	excludes = [
+				'**/org/apache',
+				'**/org/elasticsearch/common',
+				'**/org/elasticsearch/env',
+				'**/org/elasticsearch/index',
+				'**/org/elasticsearch/indices',
+				'**/org/elasticsearch/plugins',
+				'**/org/elasticsearch/script',
+				'**/org/elasticsearch/search'
+				]
+}
+
+task elasticPluginZip(type: Zip) {
+	from 'build/ziplayout'
+	archiveBaseName = 'lsh'
+	destinationDirectory =  file("build/data")	
+}
+
+compileElasticPluginJava.dependsOn copyGenericTask
+compileElasticPluginJava.dependsOn copyUtilityTask
+compileElasticPluginJava.dependsOn copyBSimTask
+
+elasticPluginZip.dependsOn elasticPluginJar
+elasticPluginZip.dependsOn copyPropertiesFile
+
+jar.dependsOn elasticPluginZip

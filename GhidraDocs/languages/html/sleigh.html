@@ -1,21 +1,21 @@
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <title>SLEIGH</title>
 <link rel="stylesheet" type="text/css" href="DefaultStyle.css">
 <link rel="stylesheet" type="text/css" href="languages.css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="sleigh.html" title="SLEIGH">
-<link rel="next" href="sleigh_layout.html" title="2. Basic Specification Layout">
+<link rel="next" href="sleigh_layout.html" title="2.Â Basic Specification Layout">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <div class="navheader">
 <table width="100%" summary="Navigation header">
 <tr><th colspan="3" align="center">SLEIGH</th></tr>
 <tr>
-<td width="20%" align="left"> </td>
-<th width="60%" align="center"> </th>
-<td width="20%" align="right"> <a accesskey="n" href="sleigh_layout.html">Next</a>
+<td width="20%" align="left">Â </td>
+<th width="60%" align="center">Â </th>
+<td width="20%" align="right">Â <a accesskey="n" href="sleigh_layout.html">Next</a>
 </td>
 </tr>
 </table>
@@ -27,7 +27,7 @@
 <div><h1 class="title">
 <a name="sleigh_title"></a>SLEIGH</h1></div>
 <div><h3 class="subtitle"><i>A Language for Rapid Processor Specification</i></h3></div>
-<div><p class="releaseinfo">Last updated March 2, 2023</p></div>
+<div><p class="releaseinfo">Last updated October 31, 2023</p></div>
 <div><p class="pubdate">Originally published December 16, 2005</p></div>
 </div>
 <hr>
@@ -108,8 +108,9 @@
   project. The language that is now called SLEIGH has undergone
   several redesign iterations, but it can still trace its heritage
   from the language SLED, from whom its name is derived. SLED, the
-  &#8220;Specification Language for Encoding and Decoding&#8221;, was defined by
-  Norman Ramsey and Mary F. Fernandez as a concise way to define the
+  â€œSpecification Language for Encoding and Decodingâ€, was defined by
+  Norman Ramsey and Mary F. FernaÌndez in <a class="xref" href="sleigh.html#Ramsey97">[3]</a>
+  as a concise way to define the
   translation, in both directions, between machine instructions and
   their corresponding assembly statements. This facilitated the
   development of architecture independent disassemblers and
@@ -119,13 +120,51 @@
   The direct predecessor of SLEIGH was an implementation of SLED for
   GHIDRA, which concentrated on its reverse-engineering
   capabilities. The main addition of SLEIGH is the ability to provide
-  semantic descriptions of instructions for data-flow and
-  decompilation analysis. This piece of SLEIGH was originally a
-  separate language, the Semantic Syntax Language (SSL), very loosely
-  based on concepts and a language of the same name developed by
-  Cristina Cifuentes, Mike Van Emmerik and Norman Ramsey, for the
-  University of Queensland Binary Translator (UQBT) project.
+  semantic descriptions of instructions for data-flow and decompilation
+  analysis. This piece of SLEIGH borrowed ideas from the Semantic Syntax Language (SSL),
+  a specification language developed in <a class="xref" href="sleigh.html#Cifuentes00">[2]</a> for the
+  University of Queensland Binary Translator (UQBT) project by
+  Cristina Cifuentes, Mike Van Emmerik and Norman Ramsey.
 </p>
+<p>
+  Dr. Cristina Cifuentes' work, in general, was an important starting point for the GHIDRA decompiler.
+  Its design follows the basic structure layed out in her 1994 thesis "Reverse Compilation Techniques":
+  </p>
+<div class="informalexample"><div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; ">
+<li class="listitem" style="list-style-type: disc">
+      Disassembly of machine instructions and translation to an intermediate representation (IR).
+    </li>
+<li class="listitem" style="list-style-type: disc">
+      Transformation toward a high-level representation via
+      <div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: circle; ">
+<li class="listitem" style="list-style-type: circle">
+          Data-flow analysis, including dead code analysis and copy propagation.
+	    </li>
+<li class="listitem" style="list-style-type: circle">
+          Control-flow analysis, using graph reducibility to achieve a structured representation.
+	    </li>
+</ul></div>
+</li>
+<li class="listitem" style="list-style-type: disc">
+      Back-end code generation from the transformed representation.
+    </li>
+</ul></div></div>
+<p>
+  In keeping with her philosophy of decompilation, SLEIGH is GHIDRA's implementation of the first step.
+  It efficiently couples disassembly of machine instructions with the initial translation into an IR.
+</p>
+<div class="bibliolist">
+<p class="title"><b>References</b></p>
+<div class="biblioentry">
+<a name="Cifuentes94"></a><p>[1] <span class="authorgroup"><span class="firstname">Cristina</span> <span class="surname">Cifuentes</span>. </span><span class="title"><i>Reverse Compilation Techniques</i>. </span><span class="pubdate">1994. </span><span class="publisher"><span class="publishername">Ph.D. Dissertation. Queensland University of Technology. </span><span class="address"><span class="city">Brisbane City</span>, <span class="state">QLD</span>, <span class="country">Australia</span>. </span></span></p>
+</div>
+<div class="biblioentry">
+<a name="Cifuentes00"></a><p>[2] <span class="biblioset"><span class="authorgroup"><span class="firstname">Cristina</span> <span class="surname">Cifuentes</span> and <span class="firstname">Mike</span> <span class="surname">Van Emmerik</span>. </span>â€œUQBT: Adaptable Binary Translation at Low Costâ€. </span><span class="biblioset"><i>Computer</i>. <span class="date">(Mar. 2000). </span><span class="pagenums">pp. 60-66. </span></span></p>
+</div>
+<div class="biblioentry">
+<a name="Ramsey97"></a><p>[3] <span class="biblioset"><span class="authorgroup"><span class="firstname">Norman</span> <span class="surname">Ramsey</span> and <span class="firstname">Mary F.</span> <span class="surname">FernaÌndez</span>. </span>â€œSpecifying Representations of Machine Instructionsâ€. </span><span class="biblioset"><i>ACM Trans. Programming Languages and Systems</i>. <span class="date">(May 1997). </span><span class="pagenums">pp. 492-524. </span></span></p>
+</div>
+</div>
 </div>
 <div class="simplesect">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
@@ -162,13 +201,13 @@ Italics are used when defining terms and for named entities. Bold is used for SL
 </div>
 <div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="sleigh_introduction"></a>1. Introduction to P-Code</h2></div></div></div>
+<a name="sleigh_introduction"></a>1.Â Introduction to P-Code</h2></div></div></div>
 <p>
 Although p-code is a distinct language from SLEIGH, because a major
 purpose of SLEIGH is to specify the translation from machine code to
 p-code, this document serves as a primer for p-code. The key concepts
 and terminology are presented in this section, and more detail is
-given in <a class="xref" href="sleigh_constructors.html#sleigh_semantic_section" title="7.7. The Semantic Section">Section 7.7, &#8220;The Semantic Section&#8221;</a>. There is also a complete set
+given in <a class="xref" href="sleigh_constructors.html#sleigh_semantic_section" title="7.7.Â The Semantic Section">SectionÂ 7.7, â€œThe Semantic Sectionâ€</a>. There is also a complete set
 of tables which list syntax and descriptions for p-code operations in
 the Appendix.
 </p>
@@ -179,9 +218,9 @@ general purpose processor. Code for different processors can be
 translated in a straightforward manner into p-code, and then a single
 suite of analysis software can be used to do data-flow analysis and
 decompilation. In this way, the analysis software
-becomes <span class="emphasis"><em>retargetable</em></span>, and it isn&#8217;t necessary to
+becomes <span class="emphasis"><em>retargetable</em></span>, and it isnâ€™t necessary to
 redesign it for each new processor being analyzed. It is only
-necessary to specify the translation of the processor&#8217;s instruction
+necessary to specify the translation of the processorâ€™s instruction
 set into p-code.
 </p>
 <p>
@@ -221,7 +260,7 @@ respectively.
 </p>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_address_spaces"></a>1.1. Address Spaces</h3></div></div></div>
+<a name="sleigh_address_spaces"></a>1.1.Â Address Spaces</h3></div></div></div>
 <p>
 An <span class="emphasis"><em>address</em></span> space for p-code is a generalization of
 the indexed memory (RAM) that a typical processor has access to, and
@@ -261,7 +300,7 @@ Typically, a processor can be modeled with only two spaces,
 a <span class="emphasis"><em>ram</em></span> address space that represents the main
 memory accessible to the processor via its data-bus, and
 a <span class="emphasis"><em>register</em></span> address space that is used to
-implement the processor&#8217;s registers. However, the specification
+implement the processorâ€™s registers. However, the specification
 designer can define as many address spaces as needed.
 </p>
 <p>
@@ -272,14 +311,14 @@ semantics into individual p-code operations. It is called
 the <span class="emphasis"><em>unique</em></span> space. There is also a special address
 space, called the <span class="emphasis"><em>const</em></span> space, used as a
 placeholder for constant operands of p-code instructions. For the most
-part, a SLEIGH specification doesn&#8217;t need to be aware of this space,
+part, a SLEIGH specification doesnâ€™t need to be aware of this space,
 but it can be used in certain situations to force values to be
 interpreted as constants.
 </p>
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_varnodes"></a>1.2. Varnodes</h3></div></div></div>
+<a name="sleigh_varnodes"></a>1.2.Â Varnodes</h3></div></div></div>
 <p>
 A <span class="emphasis"><em>varnode</em></span> is the unit of data manipulated by
 p-code. It is simply a contiguous sequence of bytes in some address
@@ -305,7 +344,7 @@ forces an interpretation on each varnode that it uses, as either an
 integer, a floating-point number, or a boolean value. In the case of
 an integer, the varnode is interpreted as having a big endian or
 little endian encoding, depending on the specification (see
-<a class="xref" href="sleigh_definitions.html#sleigh_endianess_definition" title="4.1. Endianess Definition">Section 4.1, &#8220;Endianess Definition&#8221;</a>). Certain instructions
+<a class="xref" href="sleigh_definitions.html#sleigh_endianess_definition" title="4.1.Â Endianess Definition">SectionÂ 4.1, â€œEndianess Definitionâ€</a>). Certain instructions
 also distinguish between signed and unsigned interpretations. For a
 signed integer, the varnode is considered to have a standard twos
 complement encoding. For a boolean interpretation, the varnode must be
@@ -322,7 +361,7 @@ must be provided and enforced by the specification designer.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_operations"></a>1.3. Operations</h3></div></div></div>
+<a name="sleigh_operations"></a>1.3.Â Operations</h3></div></div></div>
 <p>
 P-code is intended to emulate a target processor by substituting a
 sequence of p-code operations for each machine instruction. Thus every
@@ -352,7 +391,7 @@ general purpose processor instruction sets. They break up into groups.
 </p>
 <div class="informalexample">
 <div class="table">
-<a name="ops.htmltable"></a><p class="title"><b>Table 1. P-code Operations</b></p>
+<a name="ops.htmltable"></a><p class="title"><b>TableÂ 1.Â P-code Operations</b></p>
 <div class="table-contents"><table xml:id="ops.htmltable" width="70%" frame="box" rules="all">
 <col width="40%">
 <col width="60%">
@@ -414,7 +453,7 @@ general purpose processor instruction sets. They break up into groups.
 <br class="table-break">
 </div>
 <p>
-We postpone a full discussion of the individual operations until <a class="xref" href="sleigh_constructors.html#sleigh_semantic_section" title="7.7. The Semantic Section">Section 7.7, &#8220;The Semantic Section&#8221;</a>.
+We postpone a full discussion of the individual operations until <a class="xref" href="sleigh_constructors.html#sleigh_semantic_section" title="7.7.Â The Semantic Section">SectionÂ 7.7, â€œThe Semantic Sectionâ€</a>.
 </p>
 </div>
 </div>
@@ -423,15 +462,15 @@ We postpone a full discussion of the individual operations until <a class="xref"
 <hr>
 <table width="100%" summary="Navigation footer">
 <tr>
-<td width="40%" align="left"> </td>
-<td width="20%" align="center"> </td>
-<td width="40%" align="right"> <a accesskey="n" href="sleigh_layout.html">Next</a>
+<td width="40%" align="left">Â </td>
+<td width="20%" align="center">Â </td>
+<td width="40%" align="right">Â <a accesskey="n" href="sleigh_layout.html">Next</a>
 </td>
 </tr>
 <tr>
-<td width="40%" align="left" valign="top"> </td>
-<td width="20%" align="center"> </td>
-<td width="40%" align="right" valign="top"> 2. Basic Specification Layout</td>
+<td width="40%" align="left" valign="top">Â </td>
+<td width="20%" align="center">Â </td>
+<td width="40%" align="right" valign="top">Â 2.Â Basic Specification Layout</td>
 </tr>
 </table>
 </div>

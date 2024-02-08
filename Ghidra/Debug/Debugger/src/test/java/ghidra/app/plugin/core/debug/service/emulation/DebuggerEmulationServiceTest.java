@@ -31,14 +31,14 @@ import generic.Unique;
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
-import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformMapper;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformOpinion;
 import ghidra.app.plugin.core.debug.service.platform.DebuggerPlatformServicePlugin;
 import ghidra.app.services.DebuggerEmulationService.EmulationResult;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
+import ghidra.debug.api.platform.DebuggerPlatformMapper;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.pcode.exec.DecodePcodeExecutionException;
 import ghidra.pcode.exec.InterruptPcodeExecutionException;
 import ghidra.pcode.utils.Utils;
@@ -62,7 +62,7 @@ import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.task.TaskMonitor;
 
 @Category(NightlyCategory.class) // this may actually be an @PortSensitive test
-public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTest {
 	protected DebuggerEmulationServicePlugin emulationPlugin;
 	protected CodeBrowserPlugin codeBrowser;
 
@@ -381,7 +381,8 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGU
 		assertTrue(result.error() instanceof DecodePcodeExecutionException);
 
 		long scratch = result.snapshot();
-		assertEquals(new BigInteger("003ffffe", 16), regs.getViewValue(scratch, regPC).getUnsignedValue());
+		assertEquals(new BigInteger("003ffffe", 16),
+			regs.getViewValue(scratch, regPC).getUnsignedValue());
 	}
 
 	@Test
@@ -675,10 +676,10 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGU
 
 		// Step as written to fill the cache
 		waitOn(traceManager.activateAndNotify(current.time(TraceSchedule.parse("0:t0-1")),
-			ActivationCause.USER, false));
+			ActivationCause.USER));
 		waitForSwing();
 		waitOn(traceManager.activateAndNotify(current.time(TraceSchedule.parse("0:t0-2")),
-			ActivationCause.USER, false));
+			ActivationCause.USER));
 		waitForSwing();
 		long scratch = traceManager.getCurrentView().getSnap();
 
@@ -699,10 +700,10 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGU
 
 		// Check the cache is still valid
 		waitOn(traceManager.activateAndNotify(current.time(TraceSchedule.parse("0:t0-1")),
-			ActivationCause.USER, false));
+			ActivationCause.USER));
 		waitForSwing();
 		waitOn(traceManager.activateAndNotify(current.time(TraceSchedule.parse("0:t0-2")),
-			ActivationCause.USER, false));
+			ActivationCause.USER));
 		waitForSwing();
 		assertEquals(scratch, traceManager.getCurrentView().getSnap());
 		assertEquals(new BigInteger("1234", 16),
@@ -714,5 +715,35 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGU
 		waitForTasks();
 		assertEquals(new BigInteger("5678", 16),
 			regs.getViewValue(scratch, regR2).getUnsignedValue());
+	}
+
+	@Test
+	public void testCustomStack() throws Exception {
+		createProgram();
+		intoProject(program);
+		Memory memory = program.getMemory();
+		Address addrText = addr(program, 0x00400000);
+		Register regSP = program.getRegister("sp");
+		try (Transaction tx = program.openTransaction("Initialize")) {
+			MemoryBlock blockText = memory.createInitializedBlock(".text", addrText, 0x1000,
+				(byte) 0, TaskMonitor.DUMMY, false);
+			blockText.setExecute(true);
+			memory.createUninitializedBlock("STACK", addr(program, 0x00001234), 0x1000, false);
+		}
+
+		programManager.openProgram(program);
+		waitForSwing();
+		codeBrowser.goTo(new ProgramLocation(program, addrText));
+		waitForSwing();
+
+		assertTrue(emulationPlugin.actionEmulateProgram.isEnabled());
+		performAction(emulationPlugin.actionEmulateProgram);
+
+		Trace trace = traceManager.getCurrentTrace();
+		assertNotNull(trace);
+
+		TraceThread thread = Unique.assertOne(trace.getThreadManager().getAllThreads());
+		TraceMemorySpace regs = trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
+		assertEquals(new BigInteger("2234", 16), regs.getViewValue(0, regSP).getUnsignedValue());
 	}
 }

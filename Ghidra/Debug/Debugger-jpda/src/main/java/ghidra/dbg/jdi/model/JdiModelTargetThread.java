@@ -274,7 +274,7 @@ public class JdiModelTargetThread extends JdiModelTargetObjectReference implemen
 		}
 		targetVM.vmStateChanged(targetState, reason);
 		JdiEventHandler eventHandler = getManager().getEventHandler(targetVM.vm);
-		eventHandler.listenersEvent.fire.threadStateChanged(thread, state,
+		eventHandler.listenersEvent.invoke().threadStateChanged(thread, state,
 			JdiCause.Causes.UNCLAIMED, reason);
 	}
 

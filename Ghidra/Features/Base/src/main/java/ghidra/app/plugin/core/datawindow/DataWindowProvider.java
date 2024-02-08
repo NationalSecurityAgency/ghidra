@@ -24,7 +24,6 @@ import javax.swing.table.JTableHeader;
 
 import docking.ActionContext;
 import generic.theme.GIcon;
-import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
@@ -132,8 +131,7 @@ class DataWindowProvider extends ComponentProviderAdapter {
 			setSubTitle(buffy.toString());
 		});
 
-		GoToService goToService = tool.getService(GoToService.class);
-		dataTable.installNavigation(goToService, goToService.getDefaultNavigatable());
+		dataTable.installNavigation(tool);
 
 		JTableHeader dataHeader = dataTable.getTableHeader();
 		dataHeader.setUpdateTableInRealTime(true);

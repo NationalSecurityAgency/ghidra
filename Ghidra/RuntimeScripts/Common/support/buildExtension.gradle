@@ -124,6 +124,7 @@ task buildExtension (type: Zip) {
 		exclude '.gradle/**'
 		exclude '.classpath'
 		exclude '.project'
+		exclude '.pydevproject'
 		exclude '.settings/**'
 		exclude 'developer_scripts'
 		exclude '.antProperties.xml'
@@ -167,7 +168,7 @@ task buildExtension (type: Zip) {
 	}
 
 	doLast {
-		println "\nCreated " + archiveBaseName + "." + archiveExtension + " in " + destinationDirectory
+		println "\nCreated ${archiveBaseName.get()}.${archiveExtension.get()} in ${destinationDirectory.get()}"
 	}
 }
 
@@ -505,7 +506,7 @@ def checkGradleVersion() {
 	GradleVersion min = null;
 	GradleVersion max = null;
 	try {
-		min = GradleVersion.version("${rootProject.GRADLE_MIN}")
+		min = GradleVersion.version("${GRADLE_MIN}")
 	}
 	catch (IllegalArgumentException e) {
 		String defaultMin = "1.0"
@@ -513,8 +514,8 @@ def checkGradleVersion() {
 		min = GradleVersion.version(defaultMin)
 	}
 	try {
-		if (rootProject.GRADLE_MAX) {
-			max = GradleVersion.version("${rootProject.GRADLE_MAX}")
+		if (GRADLE_MAX) {
+			max = GradleVersion.version("${GRADLE_MAX}")
 		}
 	}
 	catch (IllegalArgumentException e) {

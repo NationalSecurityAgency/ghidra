@@ -19,6 +19,9 @@ import java.io.IOException;
 
 import ghidra.app.util.bin.format.golang.structmapping.*;
 
+/**
+ * A structure that golang generates that maps between a interface and its data
+ */
 @StructureMapping(structureName = "runtime.iface")
 public class GoIface {
 	@ContextField
@@ -28,7 +31,7 @@ public class GoIface {
 	private StructureContext<GoIface> context;
 
 	@FieldMapping
-	@MarkupReference("itab")
+	@MarkupReference("getItab")
 	long tab;	// runtime.itab * 
 
 	@FieldMapping
@@ -37,6 +40,17 @@ public class GoIface {
 	@Markup
 	public GoItab getItab() throws IOException {
 		return programContext.readStructure(GoItab.class, tab);
+	}
+
+	@Override
+	public String toString() {
+		try {
+			return "GoIface { offset: %x, type: %s }"
+					.formatted(context != null ? context.getStructureStart() : 0, getItab());
+		}
+		catch (IOException e) {
+			return "GoIface { %x, %x }".formatted(tab, data);
+		}
 	}
 
 }

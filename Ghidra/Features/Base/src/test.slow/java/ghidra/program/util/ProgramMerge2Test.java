@@ -29,8 +29,7 @@ import org.junit.*;
 
 import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.program.database.*;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.listing.*;
@@ -3221,6 +3220,8 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 						SourceType.USER_DEFINED);
 					st.createLabel(addr(program, "Foo:0x01000180"), "Other0180", globalNamespace,
 						SourceType.USER_DEFINED);
+					// TODO: No CodeUnit at Foo:0x01000200 - outside memory block
+					// Should symbols be handled by Diff/Merge outside of memory blocks?
 					st.createLabel(addr(program, "Foo:0x01000200"), "Other0200", globalNamespace,
 						SourceType.USER_DEFINED);
 				}
@@ -3238,16 +3239,32 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			programMerge = new ProgramMergeManager(p1, p2, null, TaskMonitor.DUMMY);
 
-			programMerge.setDiffFilter(new ProgramDiffFilter(
-				ProgramDiffFilter.SYMBOL_DIFFS | ProgramDiffFilter.FUNCTION_DIFFS));
-			programMerge.setMergeFilter(
-				new ProgramMergeFilter(ProgramMergeFilter.FUNCTIONS, ProgramMergeFilter.REPLACE));
-			// Only program1's symbol Diffs are found since program2's overlay is not compatible with program1.
+			programMerge.setDiffFilter(new ProgramDiffFilter(ProgramDiffFilter.SYMBOL_DIFFS));
+
+			AddressSetView diffSet = programMerge.getFilteredDifferences();
+
 			AddressSet expectedDiffs = new AddressSet();
 			expectedDiffs.addRange(addr(p1, "Foo:0x01000030"), addr(p1, "Foo:0x01000030"));
 			expectedDiffs.addRange(addr(p1, "Foo:0x01000079"), addr(p1, "Foo:0x01000079"));
-			expectedDiffs.addRange(addr(p1, "Foo:0x0100017f"), addr(p1, "Foo:0x0100017f"));
-			assertEquals(expectedDiffs, programMerge.getFilteredDifferences());
+			expectedDiffs.addRange(addr(p1, "Foo:0x01000080"), addr(p1, "Foo:0x01000080"));
+			expectedDiffs.addRange(addr(p1, "Foo:0x0100017f"), addr(p1, "Foo:0x01000180"));
+			assertEquals(expectedDiffs, diffSet);
+
+			programMerge.setMergeFilter(new ProgramMergeFilter(
+				ProgramMergeFilter.SYMBOLS | ProgramMergeFilter.PRIMARY_SYMBOL,
+				ProgramMergeFilter.REPLACE));
+
+			// must intersect diff set with p1 memory to avoid skipping merge
+			programMerge.merge(expectedDiffs.intersect(p1.getMemory()), TaskMonitor.DUMMY);
+
+			diffSet = programMerge.getFilteredDifferences();
+			expectedDiffs = new AddressSet();
+			expectedDiffs.addRange(addr(p1, "Foo:0x01000030"), addr(p1, "Foo:0x01000030"));
+			expectedDiffs.addRange(addr(p1, "Foo:0x01000079"), addr(p1, "Foo:0x01000079"));
+			// Foo:0x01000180 not applied to p1 since outside defined memory block
+			expectedDiffs.addRange(addr(p1, "Foo:0x01000180"), addr(p1, "Foo:0x01000180"));
+			assertEquals(expectedDiffs, diffSet);
+
 			commit = true;
 		}
 		finally {
@@ -4395,6 +4412,8 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 			AddressSet expectedDiffs = new AddressSet();
 			expectedDiffs.addRange(addr(p1, "SomeOverlay::01001630"),
 				addr(p1, "SomeOverlay::01001630"));
+			expectedDiffs.addRange(addr(p1, "SomeOverlay::01001889"),
+				addr(p1, "SomeOverlay::01001889"));
 			expectedDiffs.addRange(addr(p1, "OtherOverlay::01001646"),
 				addr(p1, "OtherOverlay::01001646"));
 			expectedDiffs.addRange(addr(p1, "OtherOverlay::01001866"),
@@ -4426,7 +4445,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("OVL1630", symbols[0].getName());
 
 		symbols = resultSymTab.getSymbols(addr(p1, "SomeOverlay::01001889"));
-		assertEquals(0, symbols.length); // Not part of the merge set.
+		assertEquals(1, symbols.length);
 
 		symbols = resultSymTab.getSymbols(addr(p1, "OtherOverlay::01001646"));
 		assertEquals(1, symbols.length);
@@ -4502,6 +4521,8 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 			AddressSet expectedDiffs = new AddressSet();
 			expectedDiffs.addRange(addr(p1, "SomeOverlay::01001630"),
 				addr(p1, "SomeOverlay::01001630"));
+			expectedDiffs.addRange(addr(p1, "SomeOverlay::01001889"),
+				addr(p1, "SomeOverlay::01001889"));
 			expectedDiffs.addRange(addr(p1, "OtherOverlay::01001646"),
 				addr(p1, "OtherOverlay::01001646"));
 			expectedDiffs.addRange(addr(p1, "OtherOverlay::01001866"),
@@ -4530,7 +4551,7 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(0, symbols.length);
 
 		symbols = resultSymTab.getSymbols(addr(p1, "SomeOverlay::01001889"));
-		assertEquals(0, symbols.length); // Not part of the merge set.
+		assertEquals(1, symbols.length);
 
 		symbols = resultSymTab.getSymbols(addr(p1, "OtherOverlay::01001646"));
 		assertEquals(1, symbols.length);
@@ -4649,9 +4670,11 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 				// P1 program
 				SymbolTable st = program.getSymbolTable();
 				try {
+					// SomeOverlay 0x01001630 - 0x0100182f
 					program.getMemory()
 							.createInitializedBlock("SomeOverlay", addr(program, "0x01001630"),
 								0x200, (byte) 0, TaskMonitor.DUMMY, true);
+					// OtherOverlay 0x01001630 - 0x0100192f
 					program.getMemory()
 							.createInitializedBlock("OtherOverlay", addr(program, "0x01001630"),
 								0x300, (byte) 0, TaskMonitor.DUMMY, true);
@@ -4712,13 +4735,30 @@ public class ProgramMerge2Test extends AbstractGhidraHeadedIntegrationTest {
 				addr(p1, "OtherOverlay::01001646"));
 			assertEquals(expectedDiffs, programMerge.getFilteredDifferences());
 
+			SymbolTable st1 = p1.getSymbolTable();
+			Address a1 = addr(p1, "SomeOverlay::01001630");
+			Address a2 = addr(p1, "OtherOverlay::01001646");
+			System.out.println("Before:");
+			for (Symbol s : st1.getSymbols(a1)) {
+				System.out.println(a1 + " " + s.getName());
+			}
+			for (Symbol s : st1.getSymbols(a2)) {
+				System.out.println(a2 + " " + s.getName());
+			}
+
 			programMerge.setMergeFilter(
 				new ProgramMergeFilter(ProgramMergeFilter.SYMBOLS, ProgramMergeFilter.REPLACE));
 			programMerge.merge(expectedDiffs, TaskMonitor.DUMMY);
 
-			AddressSet expectedPostMergeDiffs = new AddressSet();
-			assertEquals(expectedPostMergeDiffs, programMerge.getFilteredDifferences());
+			System.out.println("After:");
+			for (Symbol s : st1.getSymbols(a1)) {
+				System.out.println(a1 + " " + s.getName());
+			}
+			for (Symbol s : st1.getSymbols(a2)) {
+				System.out.println(a2 + " " + s.getName());
+			}
 
+			AddressSet expectedPostMergeDiffs = new AddressSet();
 			assertEquals(expectedPostMergeDiffs, programMerge.getFilteredDifferences());
 			commit = true;
 		}

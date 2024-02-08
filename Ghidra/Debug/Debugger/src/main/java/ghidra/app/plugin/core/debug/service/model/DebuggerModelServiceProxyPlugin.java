@@ -23,6 +23,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.swing.Icon;
+
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import db.Transaction;
@@ -36,29 +38,36 @@ import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.events.ProgramClosedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.DebugProgramAction;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.DisconnectAllAction;
-import ghidra.app.plugin.core.debug.mapping.DebuggerTargetTraceMapper;
-import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer;
-import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer.PromptMode;
 import ghidra.app.plugin.core.debug.utils.BackgroundUtils;
 import ghidra.app.services.*;
+import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetThread;
+import ghidra.debug.api.action.ActionSource;
+import ghidra.debug.api.model.*;
+import ghidra.debug.api.model.DebuggerProgramLaunchOffer.PromptMode;
+import ghidra.debug.api.progress.CloseableTaskMonitor;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.ProgramUserData;
 import ghidra.program.model.util.StringPropertyMap;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
+import ghidra.util.Swing;
 import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.exception.CancelledException;
@@ -71,15 +80,11 @@ import ghidra.util.task.TaskMonitor;
 	packageName = DebuggerPluginPackage.NAME,
 	status = PluginStatus.RELEASED,
 	eventsConsumed = {
-		ProgramActivatedPluginEvent.class,
-		ProgramClosedPluginEvent.class,
-	},
+		ProgramActivatedPluginEvent.class, ProgramClosedPluginEvent.class, },
 	servicesRequired = {
-		DebuggerTraceManagerService.class,
-	},
-	servicesProvided = {
-		DebuggerModelService.class,
-	})
+		DebuggerTargetService.class,
+		DebuggerTraceManagerService.class, },
+	servicesProvided = { DebuggerModelService.class, })
 public class DebuggerModelServiceProxyPlugin extends Plugin
 		implements DebuggerModelServiceInternal {
 
@@ -96,6 +101,11 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 			@Override
 			public String getConfigName() {
 				return "DUMMY";
+			}
+
+			@Override
+			public Icon getIcon() {
+				return DebuggerResources.ICON_DEBUGGER;
 			}
 
 			@Override
@@ -144,17 +154,17 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 			implements CollectionChangeListener<DebuggerModelFactory> {
 		@Override
 		public void elementAdded(DebuggerModelFactory element) {
-			factoryListeners.fire.elementAdded(element);
+			factoryListeners.invoke().elementAdded(element);
 		}
 
 		@Override
 		public void elementRemoved(DebuggerModelFactory element) {
-			factoryListeners.fire.elementRemoved(element);
+			factoryListeners.invoke().elementRemoved(element);
 		}
 
 		@Override
 		public void elementModified(DebuggerModelFactory element) {
-			factoryListeners.fire.elementModified(element);
+			factoryListeners.invoke().elementModified(element);
 		}
 	}
 
@@ -162,7 +172,7 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 			implements CollectionChangeListener<DebuggerObjectModel> {
 		@Override
 		public void elementAdded(DebuggerObjectModel element) {
-			modelListeners.fire.elementAdded(element);
+			modelListeners.invoke().elementAdded(element);
 			if (currentModel == null) {
 				activateModel(element);
 			}
@@ -173,12 +183,12 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 			if (currentModel == element) {
 				activateModel(null);
 			}
-			modelListeners.fire.elementRemoved(element);
+			modelListeners.invoke().elementRemoved(element);
 		}
 
 		@Override
 		public void elementModified(DebuggerObjectModel element) {
-			modelListeners.fire.elementModified(element);
+			modelListeners.invoke().elementModified(element);
 		}
 	}
 
@@ -186,26 +196,45 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 			implements CollectionChangeListener<TraceRecorder> {
 		@Override
 		public void elementAdded(TraceRecorder element) {
-			recorderListeners.fire.elementAdded(element);
+			recorderListeners.invoke().elementAdded(element);
+			Swing.runLater(() -> {
+				TraceRecorderTarget target = new TraceRecorderTarget(tool, element);
+				if (targets.put(element, target) == target) {
+					return;
+				}
+				targetService.publishTarget(target);
+			});
 		}
 
 		@Override
 		public void elementRemoved(TraceRecorder element) {
-			recorderListeners.fire.elementRemoved(element);
+			recorderListeners.invoke().elementRemoved(element);
+			Swing.runLater(() -> {
+				TraceRecorderTarget target = targets.remove(element);
+				if (target == null) {
+					return;
+				}
+				targetService.withdrawTarget(target);
+			});
+
 		}
 
 		@Override
 		public void elementModified(TraceRecorder element) {
-			recorderListeners.fire.elementModified(element);
+			recorderListeners.invoke().elementModified(element);
 		}
 	}
 
 	protected DebuggerModelServicePlugin delegate;
 
-	/*@AutoServiceConsumed
-	private ProgramManager programManager;
-	@SuppressWarnings("unused") // need strong obj
-	private AutoService.Wiring autoServiceWiring;*/
+	@AutoServiceConsumed
+	private DebuggerTraceManagerService traceManager;
+	@AutoServiceConsumed
+	private DebuggerTargetService targetService;
+	@AutoServiceConsumed
+	private ProgressService progressService;
+	@SuppressWarnings("unused")
+	private final AutoService.Wiring autoServiceWiring;
 
 	// This is not delegated. Each tool can have its own active model.
 	protected DebuggerObjectModel currentModel;
@@ -225,14 +254,17 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 	DockingAction actionDisconnectAll;
 
 	protected final ListenerSet<CollectionChangeListener<DebuggerModelFactory>> factoryListeners =
-		new ListenerSet<>(CollectionChangeListener.of(DebuggerModelFactory.class));
+		new ListenerSet<>(CollectionChangeListener.of(DebuggerModelFactory.class), true);
 	protected final ListenerSet<CollectionChangeListener<DebuggerObjectModel>> modelListeners =
-		new ListenerSet<>(CollectionChangeListener.of(DebuggerObjectModel.class));
+		new ListenerSet<>(CollectionChangeListener.of(DebuggerObjectModel.class), true);
 	protected final ListenerSet<CollectionChangeListener<TraceRecorder>> recorderListeners =
-		new ListenerSet<>(CollectionChangeListener.of(TraceRecorder.class));
+		new ListenerSet<>(CollectionChangeListener.of(TraceRecorder.class), true);
+
+	protected final Map<TraceRecorder, TraceRecorderTarget> targets = new HashMap<>();
 
 	public DebuggerModelServiceProxyPlugin(PluginTool tool) {
 		super(tool);
+		autoServiceWiring = AutoService.wireServicesProvidedAndConsumed(this);
 	}
 
 	@Override
@@ -251,8 +283,7 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 		// Note, I have to give an enabledWhen, otherwise any context change re-enables it
 		MultiStateActionBuilder<DebuggerProgramLaunchOffer> builderDebugProgram =
 			DebugProgramAction.buttonBuilder(this, delegate);
-		actionDebugProgram = builderDebugProgram
-				.enabledWhen(ctx -> currentProgram != null)
+		actionDebugProgram = builderDebugProgram.enabledWhen(ctx -> currentProgram != null)
 				.onAction(this::debugProgramButtonActivated)
 				.onActionStateChanged(this::debugProgramStateActivated)
 				.addState(DUMMY_LAUNCH_STATE)
@@ -306,8 +337,8 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 	protected void writeMostRecentLaunches(Program program, List<String> mrl) {
 		ProgramUserData userData = program.getProgramUserData();
 		try (Transaction tid = userData.openTransaction()) {
-			StringPropertyMap prop = userData
-					.getStringProperty(getName(), KEY_MOST_RECENT_LAUNCHES, true);
+			StringPropertyMap prop =
+				userData.getStringProperty(getName(), KEY_MOST_RECENT_LAUNCHES, true);
 			Address min = program.getAddressFactory().getDefaultAddressSpace().getMinAddress();
 			prop.add(min, mrl.stream().collect(Collectors.joining(";")));
 		}
@@ -343,27 +374,41 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 
 	private void debugProgram(DebuggerProgramLaunchOffer offer, Program program,
 			PromptMode prompt) {
-		BackgroundUtils.asyncModal(tool, offer.getButtonTitle(), true, true, m -> {
-			List<String> recent = new ArrayList<>(readMostRecentLaunches(program));
-			recent.remove(offer.getConfigName());
-			recent.add(offer.getConfigName());
-			writeMostRecentLaunches(program, recent);
-			CompletableFuture.runAsync(() -> {
-				updateActionDebugProgram();
-			}, AsyncUtils.SWING_EXECUTOR).exceptionally(ex -> {
-				Msg.error(this, "Trouble writing recent launches to program user data");
-				return null;
+
+		List<String> recent = new ArrayList<>(readMostRecentLaunches(program));
+		recent.remove(offer.getConfigName());
+		recent.add(offer.getConfigName());
+		writeMostRecentLaunches(program, recent);
+		updateActionDebugProgram();
+
+		if (progressService == null) {
+			BackgroundUtils.asyncModal(tool, offer.getButtonTitle(), true, true, m -> {
+				return offer.launchProgram(m, prompt).exceptionally(ex -> {
+					Throwable t = AsyncUtils.unwrapThrowable(ex);
+					if (t instanceof CancellationException || t instanceof CancelledException) {
+						return null;
+					}
+					return ExceptionUtils.rethrow(ex);
+				}).whenCompleteAsync((v, e) -> {
+					updateActionDebugProgram();
+				}, AsyncUtils.SWING_EXECUTOR);
 			});
-			return offer.launchProgram(m, prompt).exceptionally(ex -> {
+		}
+		else {
+			@SuppressWarnings("resource")
+			CloseableTaskMonitor monitor = progressService.publishTask();
+			offer.launchProgram(monitor, prompt).exceptionally(ex -> {
 				Throwable t = AsyncUtils.unwrapThrowable(ex);
 				if (t instanceof CancellationException || t instanceof CancelledException) {
 					return null;
 				}
+				monitor.reportError(t);
 				return ExceptionUtils.rethrow(ex);
 			}).whenCompleteAsync((v, e) -> {
+				monitor.close();
 				updateActionDebugProgram();
 			}, AsyncUtils.SWING_EXECUTOR);
-		});
+		}
 	}
 
 	private void debugProgramButtonActivated(ActionContext ctx) {
@@ -398,8 +443,7 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 		List<DebuggerProgramLaunchOffer> offers = program == null ? List.of()
 				: getProgramLaunchOffers(program).collect(Collectors.toList());
 		List<ActionState<DebuggerProgramLaunchOffer>> states = offers.stream()
-				.map(o -> new ActionState<>(o.getButtonTitle(),
-					o.getIcon(), o))
+				.map(o -> new ActionState<>(o.getButtonTitle(), o.getIcon(), o))
 				.collect(Collectors.toList());
 		if (!states.isEmpty()) {
 			actionDebugProgram.setActionStates(states);
@@ -464,16 +508,47 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 	}
 
 	@Override
+	public void fireFocusEvent(TargetObject focused) {
+		if (focused == null) {
+			return;
+		}
+		TraceRecorder recorder = getRecorderForSuccessor(focused);
+		if (recorder == null) {
+			return;
+		}
+		Trace trace = recorder.getTrace();
+		if (trace == null) {
+			return;
+		}
+		Trace curTrace = traceManager.getCurrentTrace();
+		if (curTrace != null && curTrace != trace) {
+			return;
+		}
+		DebuggerCoordinates focusedCoords =
+			traceManager.getCurrent().trace(trace).path(TraceObjectKeyPath.of(focused.getPath()));
+		traceManager.activate(focusedCoords, ActivationCause.SYNC_MODEL);
+	}
+
+	@Override
+	public void fireSnapEvent(TraceRecorder recorder, long snap) {
+		Trace trace = recorder.getTrace();
+		DebuggerCoordinates current = traceManager.getCurrentFor(trace);
+		if (current.getTrace() == null) {
+			return;
+		}
+		DebuggerCoordinates snapCoords = current.snapNoResolve(snap);
+		traceManager.activate(snapCoords, ActivationCause.FOLLOW_PRESENT);
+	}
+
+	@Override
 	public void processEvent(PluginEvent event) {
 		super.processEvent(event);
-		if (event instanceof ProgramActivatedPluginEvent) {
-			ProgramActivatedPluginEvent evt = (ProgramActivatedPluginEvent) event;
+		if (event instanceof ProgramActivatedPluginEvent evt) {
 			currentProgram = evt.getActiveProgram();
 			currentProgramPath = getProgramPath(currentProgram);
 			updateActionDebugProgram();
 		}
-		if (event instanceof ProgramClosedPluginEvent) {
-			ProgramClosedPluginEvent evt = (ProgramClosedPluginEvent) event;
+		if (event instanceof ProgramClosedPluginEvent evt) {
 			if (currentProgram == evt.getProgram()) {
 				currentProgram = null;
 				currentProgramPath = null;
@@ -588,16 +663,14 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 
 	@Override
 	public TraceRecorder recordTargetAndActivateTrace(TargetObject target,
-			DebuggerTargetTraceMapper mapper, DebuggerTraceManagerService traceManager)
+			DebuggerTargetTraceMapper mapper, DebuggerTraceManagerService altTraceManager)
 			throws IOException {
-		return delegate.recordTargetAndActivateTrace(target, mapper, traceManager);
+		return delegate.recordTargetAndActivateTrace(target, mapper, altTraceManager);
 	}
 
 	@Override
 	public TraceRecorder recordTargetAndActivateTrace(TargetObject target,
 			DebuggerTargetTraceMapper mapper) throws IOException {
-		DebuggerTraceManagerService traceManager =
-			tool.getService(DebuggerTraceManagerService.class);
 		return delegate.recordTargetAndActivateTrace(target, mapper, traceManager);
 	}
 

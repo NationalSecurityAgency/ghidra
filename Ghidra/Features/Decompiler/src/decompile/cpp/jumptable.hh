@@ -323,9 +323,19 @@ public:
   virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable)=0;
 
   virtual JumpModel *clone(JumpTable *jt) const=0;	///< Clone \b this model
-  virtual void clear(void) {}				///< Clear any non-permanent aspects of the model
-  virtual void encode(Encoder &encoder) const {} 	///< Encode this model to a stream
-  virtual void decode(Decoder &decoder) {}		///< Decode \b this model from a stream
+
+  /// \brief Clear any non-permanent aspects of the model
+  virtual void clear(void) {}
+
+  /// \brief Encode \b this model to a stream
+  ///
+  /// \param encoder is the stream encoder
+  virtual void encode(Encoder &encoder) const {}
+
+  /// \brief Decode \b this model from a stream
+  ///
+  /// \param decoder is the stream decoder
+  virtual void decode(Decoder &decoder) {}
 };
 
 /// \brief A trivial jump-table model, where the BRANCHIND input Varnode is the switch variable
@@ -515,6 +525,16 @@ public:
 /// It knows how to map from specific switch variable values to the destination
 /// \e case block and how to label the value.
 class JumpTable {
+public:
+  /// \brief Recovery status for a specific JumpTable
+  enum RecoveryMode {
+    success = 0,			///< JumpTable is fully recovered
+    fail_normal = 1,		///< Normal failure to recover
+    fail_thunk = 2,		///< Likely \b thunk
+    fail_noflow = 3,		///< No legal flow to BRANCHIND
+    fail_return = 4  		///< Likely \b return operation
+  };
+private:
   /// \brief An address table index and its corresponding out-edge
   struct IndexPair {
     int4 blockPosition;				///< Out-edge index for the basic-block

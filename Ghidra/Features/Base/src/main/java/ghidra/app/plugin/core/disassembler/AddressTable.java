@@ -671,9 +671,8 @@ public class AddressTable {
 					func.setBody(funcBody);
 				}
 				catch (OverlappingFunctionException e2) {
+					// do nothing
 				}
-			}
-			catch (CancelledException e3) {
 			}
 		}
 	}

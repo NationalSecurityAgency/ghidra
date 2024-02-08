@@ -37,7 +37,6 @@ import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.guest.InternalTracePlatform;
 import ghidra.trace.database.listing.UndefinedDBTraceData;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
-import ghidra.trace.database.symbol.DBTraceFunctionSymbol;
 import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.*;
 import ghidra.trace.model.listing.*;
@@ -45,7 +44,6 @@ import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceProgramViewListing;
 import ghidra.trace.model.property.TracePropertyMapOperations;
-import ghidra.trace.model.symbol.TraceFunctionSymbol;
 import ghidra.trace.util.*;
 import ghidra.util.*;
 import ghidra.util.AddressIteratorAdapter;
@@ -710,18 +708,19 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	}
 
 	@Override
-	@SuppressWarnings("rawtypes")
-	public PropertyMap getPropertyMap(String propertyName) {
+	public PropertyMap<?> getPropertyMap(String propertyName) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public Instruction createInstruction(Address addr, InstructionPrototype prototype,
-			MemBuffer memBuf, ProcessorContextView context) throws CodeUnitInsertionException {
+			MemBuffer memBuf, ProcessorContextView context, int forcedLengthOverride)
+			throws CodeUnitInsertionException {
 		// TODO: Why memBuf? Can it vary from program memory?
 		return codeOperations.instructions()
-				.create(Lifespan.nowOn(program.snap), addr, platform, prototype, context);
+				.create(Lifespan.nowOn(program.snap), addr, platform, prototype, context,
+					forcedLengthOverride);
 	}
 
 	@Override
@@ -867,13 +866,13 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	}
 
 	@Override
-	public TraceFunctionSymbol createFunction(String name, Address entryPoint, AddressSetView body,
+	public Function createFunction(String name, Address entryPoint, AddressSetView body,
 			SourceType source) throws InvalidInputException, OverlappingFunctionException {
 		return program.functionManager.createFunction(name, entryPoint, body, source);
 	}
 
 	@Override
-	public TraceFunctionSymbol createFunction(String name, Namespace nameSpace, Address entryPoint,
+	public Function createFunction(String name, Namespace nameSpace, Address entryPoint,
 			AddressSetView body, SourceType source)
 			throws InvalidInputException, OverlappingFunctionException {
 		return program.functionManager.createFunction(name, nameSpace, entryPoint, body, source);
@@ -891,22 +890,12 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 	@Override
 	public List<Function> getGlobalFunctions(String name) {
-		return new ArrayList<>(program.trace.getSymbolManager().functions().getGlobalsNamed(name));
+		return List.of();
 	}
 
 	@Override
 	public List<Function> getFunctions(String namespace, String name) {
-		// NOTE: This implementation allows namespaces to contain the separator symbol
-		List<Function> result = new ArrayList<>();
-		for (DBTraceFunctionSymbol func : program.trace.getSymbolManager()
-				.functions()
-				.getNamed(
-					name)) {
-			if (namespace.equals(func.getParentNamespace().getName(true))) {
-				result.add(func);
-			}
-		}
-		return result;
+		return List.of();
 	}
 
 	@Override
@@ -916,7 +905,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 	@Override
 	public FunctionIterator getExternalFunctions() {
-		return program.functionManager.getExternalFunctions();
+		return EmptyFunctionIterator.INSTANCE;
 	}
 
 	@Override

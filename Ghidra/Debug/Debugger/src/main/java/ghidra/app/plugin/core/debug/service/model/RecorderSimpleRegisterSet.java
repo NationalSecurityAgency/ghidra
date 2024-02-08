@@ -15,8 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.service.model;
 
-import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.target.TargetRegisterBank;
+import ghidra.debug.api.model.TraceRecorder;
 
 public class RecorderSimpleRegisterSet {
 

@@ -1,0 +1,20 @@
+<decompilertest>
+  <!--
+     Function accessing a boolean test through the high-bit of a status register via INT_SRIGHT.
+  -->
+<binaryimage arch="8051:BE:16:default:default">
+<bytechunk space="CODE" offset="0xa000">
+e5
+52b40b005002740122
+</bytechunk>
+<symbol space="CODE" offset="0xa000" name="boolless"/>
+</binaryimage>
+<script>
+  <com>lo fu boolless</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Boolean thru Less-than #1" min="1" max="1">if \(uINTMEM52 &lt; 0xb\)</stringmatch>
+<stringmatch name="Boolean thru Less-than #2" min="0" max="0">&lt;&lt; 7</stringmatch>
+</decompilertest>

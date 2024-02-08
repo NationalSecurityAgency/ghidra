@@ -31,6 +31,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.BookmarkManager;
 import ghidra.program.model.util.*;
 import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.map.TypeMismatchException;
@@ -170,10 +171,10 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 						case OBJECT_PROPERTY_TYPE:
 							String className = rec.getString(OBJECT_CLASS_COL);
 							//boolean upgrade = (openMode == ProgramDB.UPGRADE);
-							if (BookmarkManager.OLD_BOOKMARK_PROPERTY_OBJECT_CLASS1.equals(
-								className) ||
-								BookmarkManager.OLD_BOOKMARK_PROPERTY_OBJECT_CLASS2.equals(
-									className)) {
+							if (BookmarkManager.OLD_BOOKMARK_PROPERTY_OBJECT_CLASS1
+									.equals(className) ||
+								BookmarkManager.OLD_BOOKMARK_PROPERTY_OBJECT_CLASS2
+										.equals(className)) {
 								// Upgrade handled by new BookmarkManager
 								if (openMode == DBConstants.UPDATE) {
 									throw new VersionException(VersionException.OLDER_VERSION,
@@ -544,8 +545,8 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 				pm.delete();
 				propertiesDBAdapter.removeRecord(propertyName);
 				propertyMapCache.remove(propertyName);
-				changeMgr.setObjChanged(ChangeManager.DOCR_CODE_UNIT_PROPERTY_ALL_REMOVED,
-					propertyName, null, null);
+				changeMgr.setObjChanged(ProgramEvent.CODE_UNIT_PROPERTY_ALL_REMOVED, propertyName,
+					null, null);
 				return true;
 			}
 		}

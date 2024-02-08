@@ -98,7 +98,7 @@ public class FridaModelImpl extends AbstractFridaModel implements DebuggerObject
 
 	@Override
 	public void terminate() throws IOException {
-		listeners.fire.modelClosed(DebuggerModelClosedReason.NORMAL);
+		broadcast().modelClosed(DebuggerModelClosedReason.NORMAL);
 		root.invalidateSubtree(root, "Frida is terminating");
 		manager.terminate();
 	}
@@ -126,7 +126,7 @@ public class FridaModelImpl extends AbstractFridaModel implements DebuggerObject
 		}
 		catch (RejectedExecutionException e) {
 			reportError(this, "Model is already closing", e);
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		catch (Throwable t) {
 			return CompletableFuture.failedFuture(t);

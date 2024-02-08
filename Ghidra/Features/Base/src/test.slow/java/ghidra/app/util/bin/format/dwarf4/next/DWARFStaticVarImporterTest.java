@@ -18,10 +18,9 @@ package ghidra.app.util.bin.format.dwarf4.next;
 import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute.*;
 import static org.junit.Assert.*;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
-
-import java.io.IOException;
 
 import org.junit.Test;
 
@@ -39,13 +38,13 @@ public class DWARFStaticVarImporterTest extends DWARFTestBase {
 
 	@Test
 	public void testIntStaticVar() throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry intDIE = addInt(cu);
-		new DIECreator(DWARFTag.DW_TAG_variable)
+		DebugInfoEntry intDIE = addInt();
+		new DIECreator(dwarfProg, DWARFTag.DW_TAG_variable)
 				.addString(DW_AT_name, "static_var1")
 				.addRef(DW_AT_type, intDIE)
 				.addBlock(DW_AT_location, DWARFExpressionOpCodes.DW_OP_addr, 0x10, 0x4, 0, 0, 0, 0,
 					0, 0)
-				.create(cu);
+				.create();
 
 		importFunctions();
 
@@ -58,13 +57,13 @@ public class DWARFStaticVarImporterTest extends DWARFTestBase {
 
 	@Test
 	public void testZeroLenGlobalVar() throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry emptyStructDIE = newStruct("emptystruct", 0).create(cu);
-		new DIECreator(DWARFTag.DW_TAG_variable)
+		DebugInfoEntry emptyStructDIE = newStruct("emptystruct", 0).create();
+		new DIECreator(dwarfProg, DWARFTag.DW_TAG_variable)
 				.addString(DW_AT_name, "static_var1")
 				.addRef(DW_AT_type, emptyStructDIE)
 				.addBlock(DW_AT_location, DWARFExpressionOpCodes.DW_OP_addr, 0x10, 0x4, 0, 0, 0, 0,
 					0, 0)
-				.create(cu);
+				.create();
 
 		importFunctions();
 
@@ -78,19 +77,19 @@ public class DWARFStaticVarImporterTest extends DWARFTestBase {
 
 	@Test
 	public void test2ZeroLenGlobalVar() throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry emptyStructDIE = newStruct("emptystruct", 0).create(cu);
-		new DIECreator(DWARFTag.DW_TAG_variable)
+		DebugInfoEntry emptyStructDIE = newStruct("emptystruct", 0).create();
+		new DIECreator(dwarfProg, DWARFTag.DW_TAG_variable)
 				.addString(DW_AT_name, "static_var1")
 				.addRef(DW_AT_type, emptyStructDIE)
 				.addBlock(DW_AT_location, DWARFExpressionOpCodes.DW_OP_addr, 0x10, 0x4, 0, 0, 0, 0,
 					0, 0)
-				.create(cu);
-		new DIECreator(DWARFTag.DW_TAG_variable)
+				.create();
+		new DIECreator(dwarfProg, DWARFTag.DW_TAG_variable)
 				.addString(DW_AT_name, "static_var2")
 				.addRef(DW_AT_type, emptyStructDIE)
 				.addBlock(DW_AT_location, DWARFExpressionOpCodes.DW_OP_addr, 0x10, 0x4, 0, 0, 0, 0,
 					0, 0)
-				.create(cu);
+				.create();
 
 		importFunctions();
 
@@ -102,20 +101,20 @@ public class DWARFStaticVarImporterTest extends DWARFTestBase {
 	@Test
 	public void testZeroLenGlobalVarOnTopOfNormalVar()
 			throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry emptyStructDIE = newStruct("emptystruct", 0).create(cu);
-		DebugInfoEntry intDIE = addInt(cu);
-		new DIECreator(DWARFTag.DW_TAG_variable)
+		DebugInfoEntry emptyStructDIE = newStruct("emptystruct", 0).create();
+		DebugInfoEntry intDIE = addInt();
+		new DIECreator(dwarfProg, DWARFTag.DW_TAG_variable)
 				.addString(DW_AT_name, "static_var1")
 				.addRef(DW_AT_type, intDIE)
 				.addBlock(DW_AT_location, DWARFExpressionOpCodes.DW_OP_addr, 0x10, 0x4, 0, 0, 0, 0,
 					0, 0)
-				.create(cu);
-		new DIECreator(DWARFTag.DW_TAG_variable)
+				.create();
+		new DIECreator(dwarfProg, DWARFTag.DW_TAG_variable)
 				.addString(DW_AT_name, "static_var2")
 				.addRef(DW_AT_type, emptyStructDIE)
 				.addBlock(DW_AT_location, DWARFExpressionOpCodes.DW_OP_addr, 0x10, 0x4, 0, 0, 0, 0,
 					0, 0)
-				.create(cu);
+				.create();
 
 		importFunctions();
 

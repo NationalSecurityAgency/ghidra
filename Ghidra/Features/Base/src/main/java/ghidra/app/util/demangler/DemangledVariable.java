@@ -260,7 +260,7 @@ public class DemangledVariable extends DemangledObject {
 	@Override
 	public String getName() {
 		String myName = super.getName();
-		if (!myName.isEmpty()) {
+		if (myName != null && !myName.isEmpty()) {
 			return myName;
 		}
 

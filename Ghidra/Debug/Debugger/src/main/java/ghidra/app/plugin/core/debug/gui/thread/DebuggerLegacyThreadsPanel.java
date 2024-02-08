@@ -29,20 +29,19 @@ import docking.ActionContext;
 import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerSnapActionContext;
 import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.docking.settings.Settings;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.DomainObjectChangeRecord;
+import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceSnapshotChangeType;
-import ghidra.trace.model.Trace.TraceThreadChangeType;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.thread.TraceThreadManager;
 import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.database.ObjectKey;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
@@ -120,22 +119,21 @@ public class DebuggerLegacyThreadsPanel extends JPanel {
 
 		public ThreadTableModel(DebuggerThreadsProvider provider) {
 			super(provider.getTool(), "Threads", ThreadTableColumns.class,
-				TraceThread::getObjectKey, t -> new ThreadRow(provider.modelService, t),
-				ThreadRow::getThread);
+				TraceThread::getObjectKey, t -> new ThreadRow(provider, t), ThreadRow::getThread);
 		}
 	}
 
 	private class ForThreadsListener extends TraceDomainObjectListener {
 		public ForThreadsListener() {
-			listenForUntyped(DomainObject.DO_OBJECT_RESTORED, this::objectRestored);
+			listenForUntyped(DomainObjectEvent.RESTORED, this::objectRestored);
 
-			listenFor(TraceThreadChangeType.ADDED, this::threadAdded);
-			listenFor(TraceThreadChangeType.CHANGED, this::threadChanged);
-			listenFor(TraceThreadChangeType.LIFESPAN_CHANGED, this::threadChanged);
-			listenFor(TraceThreadChangeType.DELETED, this::threadDeleted);
+			listenFor(TraceEvents.THREAD_ADDED, this::threadAdded);
+			listenFor(TraceEvents.THREAD_CHANGED, this::threadChanged);
+			listenFor(TraceEvents.THREAD_LIFESPAN_CHANGED, this::threadChanged);
+			listenFor(TraceEvents.THREAD_DELETED, this::threadDeleted);
 
-			listenFor(TraceSnapshotChangeType.ADDED, this::snapAdded);
-			listenFor(TraceSnapshotChangeType.DELETED, this::snapDeleted);
+			listenFor(TraceEvents.SNAPSHOT_ADDED, this::snapAdded);
+			listenFor(TraceEvents.SNAPSHOT_DELETED, this::snapDeleted);
 		}
 
 		private void objectRestored(DomainObjectChangeRecord rec) {
@@ -344,7 +342,8 @@ public class DebuggerLegacyThreadsPanel extends JPanel {
 	}
 
 	protected void updateTimelineMax() {
-		long max = orZero(current.getTrace().getTimeManager().getMaxSnap());
+		Trace trace = current.getTrace();
+		long max = orZero(trace == null ? null : trace.getTimeManager().getMaxSnap());
 		Lifespan fullRange = Lifespan.span(0, max + 1);
 		spanRenderer.setFullRange(fullRange);
 		headerRenderer.setFullRange(fullRange);

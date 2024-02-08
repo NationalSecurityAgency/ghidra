@@ -42,7 +42,7 @@ else
 fi
 
 # Identify server process owner if set within server.conf
-OWNER="$(grep '^wrapper.app.account=' "${CONFIG}" | sed -e 's/^.*=\(.*\)\s*.*$/\1/')"
+OWNER="$(grep '^wrapper.app.account=' "${CONFIG}" | cut -d '=' -f 2)"
 
 if [ -z "${OWNER}" -o "${OWNER}" = "$(whoami)" ]; then
 	VMARGS="-DUserAdmin.invocation=$(basename "${SCRIPT_FILE}")"

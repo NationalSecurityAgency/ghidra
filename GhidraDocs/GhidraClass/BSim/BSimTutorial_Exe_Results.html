@@ -1,0 +1,46 @@
+<h1 id="from-matching-functions-to-matching-executables">From Matching Functions to Matching Executables</h1>
+
+<p>In this section, we discuss the Executable Results table.
+Each row of this table corresponds to one executable in the database.
+The information in one row is an aggregation of all of the function-level matches into that row’s executable.
+Your Executable Results table from the previous query should look similar to the following:</p>
+
+<p><img src="images/exe_results.png" alt="executable results" /></p>
+
+<p>If you select a single row in the table and right-click on it, you will see the following actions:</p>
+
+<ul>
+  <li><strong>Load Executable</strong> 
+Opens a read-only copy of the program in the Code Browser.</li>
+  <li><strong>Filter on this Executable</strong> 
+Applies a filter which restricts the matches shown in the Function Matches table to matches which occur in the given executable.</li>
+</ul>
+
+<h2 id="exercise">Exercise</h2>
+
+<ol>
+  <li>Sort the Executable results by descending <strong>Function Count</strong>. 
+An entry in this column shows the number of queried functions which have at least one match in the row’s executable (if <code>foo</code> has 2 or more matches into a given executable, it still only contributes 1 to the function count).
+What position is <code>demangler_gnu_v2_41</code>?
+    <details><summary>In this table...</summary> It's in the first position.</details>
+  </li>
+  <li>An entry in the <strong>Confidence</strong> column shows the sum of the confidence scores of all matches into the corresponding executable.
+If <code>foo</code> has more than one match into a given executable, only the one with the highest (function-level) confidence contributes to the (executable-level) confidence score.
+Sort the Executable results by descending confidence and observe that <code>demangler_gnu_v2_41</code> is now much further down the list.
+    <details><summary>What could explain this?</summary> If there are many function matches but the sum of all the confidences is relatively low, it is likely that many of the matches involve small functions with common BSim signatures.</details>
+  </li>
+  <li>In the Executable match table, right click on <code>demangler_gnu_v2_41</code> and apply the filter action.
+Sort the filtered function matches by descending confidence.
+Starting at the top, examine some of the matches and convince yourself that the given explanation is correct.
+    <ul>
+      <li><strong>Note</strong>: You can remove the filter using the <strong>Filter Results</strong> icon <img src="images/exec.png" alt="Filter Results" /> in the toolbar.
+  We’ll discuss this further in <a href="BSimTutorial_Filters.html">BSim Filters</a></li>
+    </ul>
+  </li>
+</ol>
+
+<p>From this exercise, we see that unrelated functions can be duplicates of each other, either because they are small or because they perform a common generic action.
+Keep in mind that such functions can “pollute” the results of a blanket query.
+In the next section, we demonstrate a technique to restrict queries to functions which are more likely to have meaningful matches.</p>
+
+<p>Next Section: <a href="BSimTutorial_Overview_Queries.html">Overview Queries</a></p>

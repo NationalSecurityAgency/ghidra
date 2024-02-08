@@ -33,7 +33,6 @@ import docking.menu.MultiStateDockingAction;
 import docking.widgets.fieldpanel.support.ViewerPosition;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.byteviewer.*;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerLocationLabel;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.FollowsCurrentThreadAction;
@@ -41,6 +40,9 @@ import ghidra.app.plugin.core.debug.gui.action.*;
 import ghidra.app.plugin.core.debug.gui.action.AutoReadMemorySpec.AutoReadMemorySpecConfigFieldCodec;
 import ghidra.app.plugin.core.format.ByteBlock;
 import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.debug.api.action.GoToInput;
+import ghidra.debug.api.action.LocationTrackingSpec;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
@@ -53,10 +55,10 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TraceMemoryBytesChangeType;
 import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.util.TraceAddressSpace;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.Swing;
 
 public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvider {
@@ -69,7 +71,7 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		if (!Objects.equals(a.getView(), b.getView())) {
 			return false; // Subsumes trace
 		}
-		if (!Objects.equals(a.getRecorder(), b.getRecorder())) {
+		if (!Objects.equals(a.getTarget(), b.getTarget())) {
 			return false; // For capture memory action
 		}
 		if (!Objects.equals(a.getTime(), b.getTime())) {
@@ -86,7 +88,7 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 
 	protected class ListenerForChanges extends TraceDomainObjectListener {
 		public ListenerForChanges() {
-			listenFor(TraceMemoryBytesChangeType.CHANGED, this::bytesChanged);
+			listenFor(TraceEvents.BYTES_CHANGED, this::bytesChanged);
 		}
 
 		private void bytesChanged(TraceAddressSpace space) {
@@ -133,6 +135,7 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		protected void specChanged(LocationTrackingSpec spec) {
 			updateTitle();
 			trackingLabel.setText("");
+			trackingLabel.setToolTipText("");
 			trackingLabel.setForeground(Colors.FOREGROUND);
 		}
 	}
@@ -207,7 +210,7 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		addDisplayListener(readsMemTrait.getDisplayListener());
 
 		JPanel northPanel = new JPanel(new BorderLayout());
-		northPanel.add(locationLabel, BorderLayout.WEST);
+		northPanel.add(locationLabel);
 		northPanel.add(trackingLabel, BorderLayout.EAST);
 		decorationComponent.add(northPanel, BorderLayout.NORTH);
 
@@ -423,6 +426,9 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		current = coordinates;
 		addNewListeners();
 		doSetProgram(current.getView());
+		// NB. Also avoid a stale location being reported to the history service.
+		setLocation(null);
+		setSelection(null, false);
 		goToTrait.goToCoordinates(coordinates);
 		trackingTrait.goToCoordinates(coordinates);
 		readsMemTrait.goToCoordinates(coordinates);
@@ -479,7 +485,9 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 	}
 
 	protected void goToAndUpdateTrackingLabel(TraceProgramView curView, ProgramLocation loc) {
-		trackingLabel.setText(trackingTrait.computeLabelText());
+		String labelText = trackingTrait.computeLabelText();
+		trackingLabel.setText(labelText);
+		trackingLabel.setToolTipText(labelText);
 		if (goTo(curView, loc)) {
 			trackingLabel.setForeground(Colors.FOREGROUND);
 		}

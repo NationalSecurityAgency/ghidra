@@ -3,10 +3,12 @@ Module.manifest||GHIDRA||||END|
 data/languages/TI430Common.sinc||GHIDRA||||END|
 data/languages/TI430X.sinc||GHIDRA||||END|
 data/languages/TI_MSP430.cspec||GHIDRA||||END|
+data/languages/TI_MSP430.dwarf||GHIDRA||||END|
 data/languages/TI_MSP430.ldefs||GHIDRA||||END|
 data/languages/TI_MSP430.pspec||GHIDRA||||END|
 data/languages/TI_MSP430.slaspec||GHIDRA||||END|
 data/languages/TI_MSP430X.cspec||GHIDRA||||END|
+data/languages/TI_MSP430X.dwarf||GHIDRA||||END|
 data/languages/TI_MSP430X.slaspec||GHIDRA||||END|
 data/languages/ti_msp430.opinion||GHIDRA||||END|
 data/manuals/MSP430.idx||GHIDRA||reviewed||END|

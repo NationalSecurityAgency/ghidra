@@ -156,6 +156,13 @@ import ghidra.lifecycle.Internal;
  * object or throw an exception. In those cases, unless otherwise noted, this actually means the
  * future will complete with that object, or complete exceptionally. Specifying this in every
  * instance is just pedantic.
+ * 
+ * <p>
+ * Assuming Trace RMI is successful, this interface will face a serious identity crisis. It will no
+ * longer serve its purpose as a proper Java interface, and instead will only serve as a type name
+ * in the object-model schema, which survives in the trace database. For some of the interfaces, we
+ * already have defined equivalent interfaces in the trace object manager. We will probably port
+ * additional interfaces over and eventually remove all of these.
  */
 public interface TargetObject extends Comparable<TargetObject> {
 
@@ -528,7 +535,8 @@ public interface TargetObject extends Comparable<TargetObject> {
 	 * @param refresh true to invalidate all caches involved in handling this request
 	 * @return a future which completes with a name-value map of attributes
 	 */
-	public default CompletableFuture<? extends Map<String, ?>> fetchAttributes(RefreshBehavior refresh) {
+	public default CompletableFuture<? extends Map<String, ?>> fetchAttributes(
+			RefreshBehavior refresh) {
 		return getModel().fetchObjectAttributes(getPath(), refresh);
 	}
 
@@ -654,7 +662,8 @@ public interface TargetObject extends Comparable<TargetObject> {
 	 * @param refresh true to invalidate all caches involved in handling this request
 	 * @return a future which completes with a name-value map of children
 	 */
-	public default CompletableFuture<? extends Map<String, ?>> fetchChildren(RefreshBehavior refresh) {
+	public default CompletableFuture<? extends Map<String, ?>> fetchChildren(
+			RefreshBehavior refresh) {
 		AsyncFence fence = new AsyncFence();
 		Map<String, Object> children = new TreeMap<>(TargetObjectKeyComparator.CHILD);
 		fence.include(fetchElements(refresh).thenAccept(elements -> {
@@ -952,7 +961,8 @@ public interface TargetObject extends Comparable<TargetObject> {
 	 * @param refreshElements as the model to refresh elements, querying the debugger if needed
 	 * @return a future which completes when the children are updated.
 	 */
-	CompletableFuture<Void> resync(RefreshBehavior refreshAttributes, RefreshBehavior refreshElements);
+	CompletableFuture<Void> resync(RefreshBehavior refreshAttributes,
+			RefreshBehavior refreshElements);
 
 	/**
 	 * Refresh the elements of this object
@@ -1060,6 +1070,9 @@ public interface TargetObject extends Comparable<TargetObject> {
 	 * @return the found object, or null
 	 */
 	public default <T extends TargetObject> T getCachedSuitable(Class<T> cls) {
+		if (cls == TargetObject.class) {
+			return cls.cast(this);
+		}
 		List<String> found = getModel().getRootSchema().searchForSuitable(cls, getPath());
 		if (found == null) {
 			return null;
@@ -1083,6 +1096,6 @@ public interface TargetObject extends Comparable<TargetObject> {
 	 * @return a future which completes when the caches are invalidated
 	 */
 	public default CompletableFuture<Void> invalidateCaches() {
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 }

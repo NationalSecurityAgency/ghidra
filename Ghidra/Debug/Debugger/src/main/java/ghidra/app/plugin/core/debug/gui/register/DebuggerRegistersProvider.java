@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.*;
-import java.util.stream.Collectors;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
@@ -41,22 +40,20 @@ import docking.widgets.table.ColumnSortState.SortDirection;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import generic.theme.GColor;
 import ghidra.app.plugin.core.data.DataSettingsDialog;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerProvider;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.mapping.DebuggerRegisterMapper;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerControlService.StateEditor;
 import ghidra.async.AsyncLazyValue;
 import ghidra.async.AsyncUtils;
 import ghidra.base.widgets.table.DataTypeTableCellEditor;
 import ghidra.dbg.error.DebuggerModelAccessException;
-import ghidra.dbg.target.TargetRegisterBank;
-import ghidra.dbg.target.TargetThread;
-import ghidra.docking.settings.Settings;
-import ghidra.framework.model.DomainObject;
+import ghidra.debug.api.target.Target;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.docking.settings.*;
 import ghidra.framework.model.DomainObjectChangeRecord;
+import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.options.AutoOptions;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
@@ -67,21 +64,21 @@ import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.*;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceAddressSpace;
-import ghidra.trace.util.TraceRegisterUtils;
-import ghidra.util.*;
+import ghidra.trace.util.*;
+import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
+import ghidra.util.table.column.GColumnRenderer;
 import ghidra.util.task.TaskMonitor;
 
 public class DebuggerRegistersProvider extends ComponentProviderAdapter
@@ -105,8 +102,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 		static ActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION);
+			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION);
 		}
 	}
 
@@ -117,8 +113,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 		static ActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
+			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
 					.popupMenuPath(NAME)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
@@ -145,33 +140,51 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	protected enum RegisterTableColumns
 		implements EnumeratedTableColumn<RegisterTableColumns, RegisterRow> {
-		FAV("Fav", Boolean.class, RegisterRow::isFavorite, RegisterRow::setFavorite, //
+		FAV("Fav", 1, Boolean.class, RegisterRow::isFavorite, RegisterRow::setFavorite, //
 				r -> true, SortDirection.DESCENDING),
-		NUMBER("#", Integer.class, RegisterRow::getNumber),
-		NAME("Name", String.class, RegisterRow::getName),
-		VALUE("Value", BigInteger.class, RegisterRow::getValue, RegisterRow::setValue, //
-				RegisterRow::isValueEditable, SortDirection.ASCENDING),
-		TYPE("Type", DataType.class, RegisterRow::getDataType, RegisterRow::setDataType, //
+		NUMBER("#", 1, Integer.class, RegisterRow::getNumber),
+		NAME("Name", 40, String.class, RegisterRow::getName),
+		VALUE("Value", 100, BigInteger.class, RegisterRow::getValue, RegisterRow::setValue, //
+				RegisterRow::isValueEditable, SortDirection.ASCENDING) {
+			private static final RegisterValueCellRenderer RENDERER =
+				new RegisterValueCellRenderer();
+			private static final SettingsDefinition[] DEFS =
+				new SettingsDefinition[] { FormatSettingsDefinition.DEF_HEX, };
+
+			@Override
+			public GColumnRenderer<BigInteger> getRenderer() {
+				return RENDERER;
+			}
+
+			@Override
+			public SettingsDefinition[] getSettingsDefinitions() {
+				return DEFS;
+			}
+		},
+		TYPE("Type", 40, DataType.class, RegisterRow::getDataType, RegisterRow::setDataType, //
 				r -> true, SortDirection.ASCENDING),
-		REPR("Repr", String.class, RegisterRow::getRepresentation, RegisterRow::setRepresentation, //
+		REPR("Repr", 100, String.class, RegisterRow::getRepresentation, RegisterRow::setRepresentation, //
 				RegisterRow::isRepresentationEditable, SortDirection.ASCENDING);
 
 		private final String header;
+		private final int width;
 		private final Function<RegisterRow, ?> getter;
 		private final BiConsumer<RegisterRow, Object> setter;
 		private final Predicate<RegisterRow> editable;
 		private final Class<?> cls;
 		private final SortDirection direction;
 
-		<T> RegisterTableColumns(String header, Class<T> cls, Function<RegisterRow, T> getter) {
-			this(header, cls, getter, null, null, SortDirection.ASCENDING);
+		<T> RegisterTableColumns(String header, int width, Class<T> cls,
+				Function<RegisterRow, T> getter) {
+			this(header, width, cls, getter, null, null, SortDirection.ASCENDING);
 		}
 
 		@SuppressWarnings("unchecked")
-		<T> RegisterTableColumns(String header, Class<T> cls, Function<RegisterRow, T> getter,
-				BiConsumer<RegisterRow, T> setter, Predicate<RegisterRow> editable,
-				SortDirection direction) {
+		<T> RegisterTableColumns(String header, int width, Class<T> cls,
+				Function<RegisterRow, T> getter, BiConsumer<RegisterRow, T> setter,
+				Predicate<RegisterRow> editable, SortDirection direction) {
 			this.header = header;
+			this.width = width;
 			this.cls = cls;
 			this.getter = getter;
 			this.setter = (BiConsumer<RegisterRow, Object>) setter;
@@ -208,6 +221,11 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		public SortDirection defaultSortDirection() {
 			return direction;
 		}
+
+		@Override
+		public int getPreferredWidth() {
+			return width;
+		}
 	}
 
 	protected static class RegistersTableModel
@@ -236,7 +254,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		if (!Objects.equals(a.getPlatform(), b.getPlatform())) {
 			return false; // subsumes trace
 		}
-		if (!Objects.equals(a.getRecorder(), b.getRecorder())) {
+		if (!Objects.equals(a.getTarget(), b.getTarget())) {
 			return false; // For live read/writes
 		}
 		if (!Objects.equals(a.getThread(), b.getThread())) {
@@ -253,15 +271,15 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	class TraceChangeListener extends TraceDomainObjectListener {
 		public TraceChangeListener() {
-			listenForUntyped(DomainObject.DO_OBJECT_RESTORED, e -> objectRestored(e));
-			listenFor(TraceMemoryBytesChangeType.CHANGED, this::registerValueChanged);
-			listenFor(TraceMemoryStateChangeType.CHANGED, this::registerStateChanged);
-			listenFor(TraceCodeChangeType.ADDED, this::registerTypeAdded);
-			listenFor(TraceCodeChangeType.DATA_TYPE_REPLACED, this::registerTypeReplaced);
-			listenFor(TraceCodeChangeType.LIFESPAN_CHANGED, this::registerTypeLifespanChanged);
-			listenFor(TraceCodeChangeType.REMOVED, this::registerTypeRemoved);
-			listenFor(TraceThreadChangeType.DELETED, this::threadDeleted);
-			listenFor(TraceThreadChangeType.LIFESPAN_CHANGED, this::threadDestroyed);
+			listenForUntyped(DomainObjectEvent.RESTORED, e -> objectRestored(e));
+			listenFor(TraceEvents.BYTES_CHANGED, this::registerValueChanged);
+			listenFor(TraceEvents.BYTES_STATE_CHANGED, this::registerStateChanged);
+			listenFor(TraceEvents.CODE_ADDED, this::registerTypeAdded);
+			listenFor(TraceEvents.CODE_DATA_TYPE_REPLACED, this::registerTypeReplaced);
+			listenFor(TraceEvents.CODE_LIFESPAN_CHANGED, this::registerTypeLifespanChanged);
+			listenFor(TraceEvents.CODE_REMOVED, this::registerTypeRemoved);
+			listenFor(TraceEvents.THREAD_DELETED, this::threadDeleted);
+			listenFor(TraceEvents.THREAD_LIFESPAN_CHANGED, this::threadDestroyed);
 		}
 
 		private boolean isVisibleObjectsMode(AddressSpace space) {
@@ -309,9 +327,9 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		}
 
 		private void refreshRange(AddressRange range) {
-			TraceMemorySpace space = getRegisterMemorySpace(false);
+			TraceMemorySpace mem = getRegisterMemorySpace(range.getAddressSpace(), false);
 			// ...   If I got an event for it, it ought to exist.
-			assert space != null;
+			assert mem != null;
 
 			// TODO: Just certain rows?
 			regsTableModel.fireTableDataChanged();
@@ -389,19 +407,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		}
 	}
 
-	class RegAccessListener implements TraceRecorderListener {
-		@Override
-		public void registerBankMapped(TraceRecorder recorder) {
-			Swing.runIfSwingOrRunLater(() -> loadValues());
-		}
-
-		@Override
-		public void registerAccessibilityChanged(TraceRecorder recorder) {
-			Swing.runIfSwingOrRunLater(() -> loadValues());
-		}
-	}
-
-	class RegisterValueCellRenderer extends HexBigIntegerTableCellRenderer {
+	static class RegisterValueCellRenderer extends HexDefaultGColumnRenderer<BigInteger> {
 		@Override
 		public final Component getTableCellRendererComponent(GTableCellRenderingData data) {
 			super.getTableCellRendererComponent(data);
@@ -466,7 +472,6 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	private AsyncLazyValue<Void> readTheseCoords =
 		new AsyncLazyValue<>(this::readRegistersIfLiveAndAccessible); /* "read" past tense */
 	private Trace currentTrace; // Copy for transition
-	private TraceRecorder currentRecorder; // Copy for transition
 
 	@AutoServiceConsumed
 	private DebuggerTraceManagerService traceManager;
@@ -483,7 +488,6 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	private final AutoOptions.Wiring autoOptionsWiring;
 
 	private final TraceChangeListener traceChangeListener = new TraceChangeListener();
-	private final RegAccessListener regAccessListener = new RegAccessListener();
 
 	private JPanel mainPanel = new JPanel(new BorderLayout());
 
@@ -590,21 +594,10 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		});
 
 		TableColumnModel columnModel = regsTable.getColumnModel();
-		TableColumn favCol = columnModel.getColumn(RegisterTableColumns.FAV.ordinal());
-		favCol.setPreferredWidth(1);
-		TableColumn numCol = columnModel.getColumn(RegisterTableColumns.NUMBER.ordinal());
-		numCol.setPreferredWidth(1);
-		TableColumn nameCol = columnModel.getColumn(RegisterTableColumns.NAME.ordinal());
-		nameCol.setPreferredWidth(40);
 		TableColumn valCol = columnModel.getColumn(RegisterTableColumns.VALUE.ordinal());
-		valCol.setCellRenderer(new RegisterValueCellRenderer());
 		valCol.setCellEditor(new HexBigIntegerTableCellEditor());
-		valCol.setPreferredWidth(100);
 		TableColumn typeCol = columnModel.getColumn(RegisterTableColumns.TYPE.ordinal());
 		typeCol.setCellEditor(new RegisterDataTypeEditor());
-		typeCol.setPreferredWidth(50);
-		TableColumn reprCol = columnModel.getColumn(RegisterTableColumns.REPR.ordinal());
-		reprCol.setPreferredWidth(100);
 	}
 
 	@Override
@@ -631,8 +624,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			catch (AddressOutOfBoundsException e) {
 				continue;
 			}
-			if (currentTrace.getMemoryManager()
-					.getRegionContaining(current.getSnap(), address) == null) {
+			// Use program view, not memory manager, so that "Force Full View" is respected.
+			if (!currentTrace.getProgramView().getMemory().contains(address)) {
 				continue;
 			}
 			String name = "Goto " + address.toString(true);
@@ -787,29 +780,6 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		addNewTraceListener();
 	}
 
-	private void removeOldRecorderListener() {
-		if (currentRecorder == null) {
-			return;
-		}
-		currentRecorder.removeListener(regAccessListener);
-	}
-
-	private void addNewRecorderListener() {
-		if (currentRecorder == null) {
-			return;
-		}
-		currentRecorder.addListener(regAccessListener);
-	}
-
-	private void doSetRecorder(TraceRecorder recorder) {
-		if (currentRecorder == recorder) {
-			return;
-		}
-		removeOldRecorderListener();
-		this.currentRecorder = recorder;
-		addNewRecorderListener();
-	}
-
 	public void coordinatesActivated(DebuggerCoordinates coordinates) {
 		if (sameCoordinates(current, coordinates)) {
 			current = coordinates;
@@ -819,16 +789,14 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		previous = current;
 		current = coordinates;
 
-		readTheseCoords = new AsyncLazyValue<>(this::readRegistersIfLiveAndAccessible);
+		readTheseCoords.forget();
 		doSetTrace(current.getTrace());
-		doSetRecorder(current.getRecorder());
 		updateSubTitle();
 
 		prepareRegisterSpace();
 		recomputeViewKnown();
 		loadRegistersAndValues();
 		contextChanged();
-		//checkEditsEnabled();
 	}
 
 	protected void traceClosed(Trace trace) {
@@ -852,7 +820,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	}
 
 	BigInteger getRegisterValue(Register register) {
-		TraceMemorySpace regs = getRegisterMemorySpace(false);
+		TraceMemorySpace regs = getRegisterMemorySpace(register.getAddressSpace(), false);
 		if (regs == null) {
 			return BigInteger.ZERO;
 		}
@@ -921,13 +889,13 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 				dataType = new PointerTypedef(null, ptrType.getDataType(), ptrType.getLength(),
 					ptrType.getDataTypeManager(), space);
 			}
-			TraceCodeSpace space = getRegisterMemorySpace(true).getCodeSpace(true);
+			TraceCodeSpace code =
+				getRegisterMemorySpace(register.getAddressSpace(), true).getCodeSpace(true);
 			long snap = current.getViewSnap();
 			TracePlatform platform = current.getPlatform();
-			space.definedUnits()
-					.clear(platform, Lifespan.at(snap), register, TaskMonitor.DUMMY);
+			code.definedUnits().clear(platform, Lifespan.at(snap), register, TaskMonitor.DUMMY);
 			if (dataType != null) {
-				space.definedData().create(platform, Lifespan.nowOn(snap), register, dataType);
+				code.definedData().create(platform, Lifespan.nowOn(snap), register, dataType);
 			}
 		}
 		catch (CodeUnitInsertionException | CancelledException e) {
@@ -936,7 +904,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	}
 
 	TraceData getRegisterData(Register register) {
-		TraceCodeSpace space = getRegisterCodeSpace(false);
+		TraceCodeSpace space = getRegisterCodeSpace(register.getAddressSpace(), false);
 		if (space == null) {
 			return null;
 		}
@@ -961,8 +929,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			return;
 		}
 		try {
-			RegisterValue rv = TraceRegisterUtils.encodeValueRepresentationHackPointer(
-				register, data, representation);
+			RegisterValue rv = TraceRegisterUtils.encodeValueRepresentationHackPointer(register,
+				data, representation);
 			writeRegisterValue(rv);
 		}
 		catch (DataTypeEncodeException e) {
@@ -998,11 +966,13 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	 * values are populated.
 	 */
 	void prepareRegisterSpace() {
-		if (current.getThread() != null &&
-			current.getTrace().getObjectManager().getRootSchema() != null) {
-			try (Transaction tx =
-				current.getTrace().openTransaction("Create/initialize register space")) {
-				getRegisterMemorySpace(true);
+		Trace trace = current.getTrace();
+		if (current.getThread() != null && trace.getObjectManager().getRootSchema() != null) {
+			AddressSpace regSpace = current.getPlatform().getAddressFactory().getRegisterSpace();
+			if (regSpace != null) {
+				try (Transaction tx = trace.openTransaction("Create/initialize register space")) {
+					getRegisterMemorySpace(regSpace, true);
+				}
 			}
 		}
 	}
@@ -1019,17 +989,21 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			return;
 		}
 		TraceMemoryManager mem = current.getTrace().getMemoryManager();
+		AddressSetView guestRegs = platform.getLanguage().getRegisterAddresses();
+		AddressSetView hostRegs = platform.mapGuestToHost(guestRegs);
 		AddressSetView viewKnownMem = view.getViewport()
-				.unionedAddresses(snap -> mem.getAddressesWithState(snap,
-					platform.mapGuestToHost(platform.getLanguage().getRegisterAddresses()),
+				.unionedAddresses(snap -> mem.getAddressesWithState(snap, hostRegs,
 					state -> state == TraceMemoryState.KNOWN));
-		TraceMemorySpace regs = getRegisterMemorySpace(false);
+		AddressSpace regSpace = platform.getAddressFactory().getRegisterSpace();
+		if (regSpace == null) {
+			viewKnown = new AddressSet(viewKnownMem);
+			return;
+		}
+		TraceMemorySpace regs = getRegisterMemorySpace(current, regSpace, false);
 		if (regs == null) {
 			viewKnown = new AddressSet(viewKnownMem);
 			return;
 		}
-		AddressSetView hostRegs =
-			platform.mapGuestToHost(platform.getLanguage().getRegisterAddresses());
 		AddressSetView overlayRegs =
 			TraceRegisterUtils.getOverlaySet(regs.getAddressSpace(), hostRegs);
 		AddressSetView viewKnownRegs = view.getViewport()
@@ -1042,7 +1016,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		if (viewKnown == null) {
 			return false;
 		}
-		TraceMemorySpace regs = getRegisterMemorySpace(false);
+		TraceMemorySpace regs = getRegisterMemorySpace(current, register.getAddressSpace(), false);
 		if (regs == null && register.getAddressSpace().isRegisterSpace()) {
 			return false;
 		}
@@ -1061,8 +1035,10 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		if (!isRegisterKnown(register)) {
 			return false;
 		}
-		TraceMemorySpace curSpace = getRegisterMemorySpace(current, false);
-		TraceMemorySpace prevSpace = getRegisterMemorySpace(previous, false);
+		TraceMemorySpace curSpace =
+			getRegisterMemorySpace(current, register.getAddressSpace(), false);
+		TraceMemorySpace prevSpace =
+			getRegisterMemorySpace(previous, register.getAddressSpace(), false);
 		if (prevSpace == null) {
 			return false;
 		}
@@ -1124,7 +1100,10 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	}
 
 	protected static TraceMemorySpace getRegisterMemorySpace(DebuggerCoordinates coords,
-			boolean createIfAbsent) {
+			AddressSpace space, boolean createIfAbsent) {
+		if (!space.isRegisterSpace()) {
+			return coords.getTrace().getMemoryManager().getMemorySpace(space, createIfAbsent);
+		}
 		TraceThread thread = coords.getThread();
 		if (thread == null) {
 			return null;
@@ -1134,18 +1113,26 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 				.getMemoryRegisterSpace(thread, coords.getFrame(), createIfAbsent);
 	}
 
-	protected TraceMemorySpace getRegisterMemorySpace(boolean createIfAbsent) {
-		return getRegisterMemorySpace(current, createIfAbsent);
+	protected TraceMemorySpace getRegisterMemorySpace(AddressSpace space, boolean createIfAbsent) {
+		return getRegisterMemorySpace(current, space, createIfAbsent);
 	}
 
-	protected TraceCodeSpace getRegisterCodeSpace(boolean createIfAbsent) {
-		TraceThread curThread = current.getThread();
-		if (curThread == null) {
+	protected static TraceCodeSpace getRegisterCodeSpace(DebuggerCoordinates coords,
+			AddressSpace space, boolean createIfAbsent) {
+		if (!space.isRegisterSpace()) {
+			return coords.getTrace().getCodeManager().getCodeSpace(space, createIfAbsent);
+		}
+		TraceThread thread = coords.getThread();
+		if (thread == null) {
 			return null;
 		}
-		return current.getTrace()
+		return coords.getTrace()
 				.getCodeManager()
-				.getCodeRegisterSpace(curThread, current.getFrame(), createIfAbsent);
+				.getCodeRegisterSpace(thread, coords.getFrame(), createIfAbsent);
+	}
+
+	protected TraceCodeSpace getRegisterCodeSpace(AddressSpace space, boolean createIfAbsent) {
+		return getRegisterCodeSpace(current, space, createIfAbsent);
 	}
 
 	protected Set<Register> collectBaseRegistersWithKnownValues(TraceThread thread) {
@@ -1264,7 +1251,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		if (current.getThread() == null) {
 			regsTableModel.clear();
 			regMap.clear();
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		Set<Register> selected = getSelectionFor(current.getPlatform());
 		displaySelectedRegisters(selected);
@@ -1274,70 +1261,21 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	protected CompletableFuture<Void> loadValues() {
 		TraceThread curThread = current.getThread();
 		if (curThread == null) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		regsTableModel.fireTableDataChanged();
-		//return AsyncUtils.NIL;
-		// In case we need to read a non-zero frame
 		return readTheseCoords.request();
 	}
 
-	private Set<Register> baseRegisters(Set<Register> regs) {
-		return regs.stream().filter(Register::isBaseRegister).collect(Collectors.toSet());
-	}
-
-	protected CompletableFuture<?> readRegistersLegacy(TraceRecorder recorder,
-			TraceThread traceThread, Set<Register> toRead) {
-		DebuggerRegisterMapper regMapper = recorder.getRegisterMapper(traceThread);
-		if (regMapper == null) {
-			Msg.error(this, "Target is live, but we haven't got a register mapper, yet");
-			return AsyncUtils.NIL;
-		}
-		toRead.retainAll(regMapper.getRegistersOnTarget());
-		Set<TargetRegisterBank> banks =
-			recorder.getTargetRegisterBanks(traceThread, current.getFrame());
-		if (banks == null || banks.isEmpty()) {
-			Msg.error(this, "Current frame's bank does not exist");
-			return AsyncUtils.NIL;
-		}
-		// TODO: Should probably always be the host platform. I suspect it's ignored anyway.
-		return recorder.captureThreadRegisters(current.getPlatform(), traceThread,
-			current.getFrame(), toRead);
-	}
-
-	protected CompletableFuture<?> readRegistersObjectMode(TraceRecorder recorder,
-			TraceThread traceThread, Set<Register> toRead) {
-		return recorder.captureThreadRegisters(current.getPlatform(), traceThread,
-			current.getFrame(), toRead);
-	}
-
 	protected CompletableFuture<Void> readRegistersIfLiveAndAccessible() {
-		TraceRecorder recorder = current.getRecorder();
-		if (recorder == null) {
-			return AsyncUtils.NIL;
-		}
-		if (recorder.getSnap() != current.getSnap()) {
-			return AsyncUtils.NIL;
-		}
-//		if (current.getFrame() == 0) {
-//			// Should have been pushed by model. non-zero frames are poll-only
-//			return AsyncUtils.NIL;
-//		}
-		TraceThread traceThread = current.getThread();
-		TargetThread targetThread = recorder.getTargetThread(traceThread);
-		if (targetThread == null) {
-			return AsyncUtils.NIL;
+		Target target = current.getTarget();
+		if (!current.isAliveAndReadsPresent()) {
+			return AsyncUtils.nil();
 		}
 
-		Set<Register> toRead = new HashSet<>(baseRegisters(getSelectionFor(current.getPlatform())));
-
-		CompletableFuture<?> future;
-		if (current.getTrace().getObjectManager().getRootSchema() == null) {
-			future = readRegistersLegacy(recorder, traceThread, toRead);
-		}
-		else {
-			future = readRegistersObjectMode(recorder, traceThread, toRead);
-		}
+		Set<Register> registers = getSelectionFor(current.getPlatform());
+		CompletableFuture<Void> future = target.readRegistersAsync(current.getPlatform(),
+			current.getThread(), current.getFrame(), registers);
 		return future.exceptionally(ex -> {
 			ex = AsyncUtils.unwrapThrowable(ex);
 			String msg = "Could not read target registers for selected thread: " + ex.getMessage();
@@ -1345,50 +1283,6 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			plugin.getTool().setStatusInfo(msg);
 			return ExceptionUtils.rethrow(ex);
 		}).thenApply(__ -> null);
-	}
-
-	protected String formatAddressInfo(Address address) {
-		return address.toString(); // TODO;
-		// TODO: Examine static mapped programs, too
-		/*Memory mem = program.getMemoryManager();
-		MemoryBlock addrBlock = mem.getBlock(address);
-		if (addrBlock == null) {
-			return "<INVALID>";
-		}
-		Function function = program.getFunctionManager().getFunctionContaining(address);
-		if (function != null) {
-			Address entry = function.getEntryPoint();
-			long diff = address.subtract(entry);
-			if (diff < 0) {
-				return function.getName() + "-" + (-diff);
-			}
-			if (diff > 0) {
-				return function.getName() + "+" + diff;
-			}
-			return function.getName();
-		}
-		Data defData = program.getListing().getDefinedDataContaining(address);
-		if (defData != null) {
-			// Use existing mechanism
-			return SymbolUtilities.getDynamicName(program, address);
-		}
-		// It is either undefined or an instruction outside a function
-		SymbolTable table = program.getSymbolTable();
-		Symbol primary = table.getPrimarySymbol(address);
-		if (primary != null) {
-			return primary.getName();
-		}
-		Symbol before = table.getSymbolIterator(address, false).next();
-		if (before != null) {
-			MemoryBlock symBlock = mem.getBlock(before.getAddress());
-			if (addrBlock == symBlock) {
-				long diff = address.subtract(before.getAddress());
-				return before.getName() + "+" + diff;
-			}
-		}
-		// TODO: Making an assumption about block name here. Generally true, but user can fuddle.
-		String moduleName = addrBlock.getName().split(":")[0];
-		return address.toString(moduleName + ":");*/
 	}
 
 	public void writeDataState(SaveState saveState) {

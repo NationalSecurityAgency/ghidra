@@ -134,7 +134,7 @@ public class VersionControlCheckOutAction extends VersionControlAction {
 			if (n == 0) {
 				Msg.showError(this, tool.getToolFrame(), "Checkout Failed",
 					"The specified files do not contain any versioned files available for " +
-						"checkeout");
+						"checkout");
 				return false;
 			}
 
@@ -193,7 +193,7 @@ public class VersionControlCheckOutAction extends VersionControlAction {
 				};
 
 				List<DomainFile> failedCheckouts = new ArrayList<>();
-				int progress = 0;
+				int progress = 1;
 				for (DomainFile df : versionedFiles) {
 
 					monitor.checkCancelled();

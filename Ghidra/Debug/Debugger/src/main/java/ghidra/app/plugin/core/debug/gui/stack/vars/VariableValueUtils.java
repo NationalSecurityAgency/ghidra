@@ -19,8 +19,9 @@ import java.util.*;
 
 import ghidra.app.decompiler.ClangLine;
 import ghidra.app.decompiler.ClangToken;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.stack.*;
+import ghidra.app.plugin.core.debug.stack.StackUnwindWarning.CustomStackUnwindWarning;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.framework.plugintool.PluginTool;
@@ -39,7 +40,6 @@ import ghidra.program.model.mem.ByteMemBufferImpl;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.pcode.*;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceMemoryBytesChangeType;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.model.memory.*;
@@ -47,6 +47,7 @@ import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceAddressSpace;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.MathUtilities;
 import ghidra.util.Msg;
 import ghidra.util.exception.InvalidInputException;
@@ -71,6 +72,9 @@ public enum VariableValueUtils {
 
 		@Override
 		protected boolean isLeaf(Varnode vn) {
+			if (vn.getDef() == null && (vn.isRegister() || vn.isAddress())) {
+				return true;
+			}
 			return vn.isConstant() ||
 				symbolStorage.contains(vn.getAddress(), vn.getAddress().add(vn.getSize() - 1));
 		}
@@ -516,7 +520,7 @@ public enum VariableValueUtils {
 	 * Collect the addresses used for storage by any symbol in the given line of decompiled C code
 	 * 
 	 * <p>
-	 * It's not the greatest, but an variable to be evaluated should only be expressed in terms of
+	 * It's not the greatest, but any variable to be evaluated should only be expressed in terms of
 	 * symbols on the same line (at least by the decompiler's definition, wrapping shouldn't count
 	 * against us). This can be used to determine where evaluation should cease descending into
 	 * defining p-code ops. See {@link #requiresFrame(PcodeOp, AddressSetView)}, and
@@ -528,16 +532,24 @@ public enum VariableValueUtils {
 	public static AddressSet collectSymbolStorage(ClangLine line) {
 		AddressSet storage = new AddressSet();
 		for (ClangToken tok : line.getAllTokens()) {
+			Varnode vn = tok.getVarnode();
+			if (vn != null) {
+				storage.add(rangeFromVarnode(vn));
+			}
 			HighVariable hVar = tok.getHighVariable();
 			if (hVar == null) {
 				continue;
+			}
+			Varnode rep = hVar.getRepresentative();
+			if (rep != null) {
+				storage.add(rangeFromVarnode(rep));
 			}
 			HighSymbol hSym = hVar.getSymbol();
 			if (hSym == null) {
 				continue;
 			}
-			for (Varnode vn : hSym.getStorage().getVarnodes()) {
-				storage.add(rangeFromVarnode(vn));
+			for (Varnode stVn : hSym.getStorage().getVarnodes()) {
+				storage.add(rangeFromVarnode(stVn));
 			}
 		}
 		return storage;
@@ -638,7 +650,7 @@ public enum VariableValueUtils {
 		 */
 		private class ListenerForChanges extends TraceDomainObjectListener {
 			public ListenerForChanges() {
-				listenFor(TraceMemoryBytesChangeType.CHANGED, this::bytesChanged);
+				listenFor(TraceEvents.BYTES_CHANGED, this::bytesChanged);
 			}
 
 			private void bytesChanged(TraceAddressSpace space, TraceAddressSnapRange range) {
@@ -725,25 +737,54 @@ public enum VariableValueUtils {
 		 * @param function the desired function
 		 * @param warnings a place to emit warnings
 		 * @param monitor a monitor for cancellation
+		 * @param required whether to throw an exception or register a warning
 		 * @return the frame if found, or null
 		 */
-		public UnwoundFrame<WatchValue> getStackFrame(Function function, List<String> warnings,
-				TaskMonitor monitor) {
+		public UnwoundFrame<WatchValue> getStackFrame(Function function,
+				StackUnwindWarningSet warnings, TaskMonitor monitor, boolean required) {
 			synchronized (lock) {
 				if (unwound == null) {
-					doUnwind(monitor);
+					try {
+						doUnwind(monitor);
+					}
+					catch (Exception e) {
+						/**
+						 * Most exceptions should be caught and wrapped by the unwind analysis. If
+						 * one gets here, something bad has happened, and for debugging purposes, we
+						 * should invalidate, so that the error will repeat next time the frame is
+						 * requested.
+						 */
+						unwound = null;
+						throw e;
+					}
 				}
 
 				for (UnwoundFrame<WatchValue> frame : unwound.subList(coordinates.getFrame(),
 					unwound.size())) {
 					if (frame.getFunction() == function) {
-						String unwindWarnings = frame.getWarnings();
-						if (unwindWarnings != null && !unwindWarnings.isBlank()) {
-							warnings.add(unwindWarnings);
+						StackUnwindWarningSet unwindWarnings = frame.getWarnings();
+						if (unwindWarnings != null) {
+							warnings.addAll(unwindWarnings);
 						}
 						return frame;
 					}
 				}
+				String message;
+				if (unwound.isEmpty()) {
+					message = "Could not recover the innermost frame!";
+				}
+				else {
+					message = "There is no frame for %s among the %d frames unwound."
+							.formatted(function, unwound.size());
+					Exception error = unwound.get(unwound.size() - 1).getError();
+					if (error != null) {
+						message += "\nTerminating error: %s".formatted(error.getMessage());
+					}
+				}
+				if (required) {
+					throw new UnwindException(message);
+				}
+				warnings.add(new CustomStackUnwindWarning(message));
 				return null;
 			}
 		}
@@ -785,8 +826,8 @@ public enum VariableValueUtils {
 		 * data unit using {@link #getRegisterUnit(Register)}. Fall back to this method only if that
 		 * one fails.
 		 * 
-		 * @param register
-		 * @return
+		 * @param register the register
+		 * @return the "raw" value of the register
 		 */
 		public WatchValue getRawRegisterValue(Register register) {
 			WatchValuePcodeExecutorState state =

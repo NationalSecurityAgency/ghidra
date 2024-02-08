@@ -65,17 +65,6 @@ public interface TargetEventScope extends TargetObject {
 		 */
 		THREAD_EXITED(false),
 		/**
-		 * A new module has been loaded by this session
-		 * 
-		 * <p>
-		 * The new module must be passed as a parameter.
-		 */
-		MODULE_LOADED(false),
-		/**
-		 * A module has been unloaded by this session
-		 */
-		MODULE_UNLOADED(false),
-		/**
 		 * The session has stopped, because one if its targets was trapped by a breakpoint
 		 * 
 		 * <p>

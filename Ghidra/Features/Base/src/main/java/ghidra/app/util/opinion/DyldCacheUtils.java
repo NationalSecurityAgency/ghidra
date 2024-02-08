@@ -218,6 +218,30 @@ public class DyldCacheUtils {
 		public int size() {
 			return providers.size();
 		}
+		
+		/**
+		 * Gets the base address of the split DYLD cache.  This is where the cache should be loaded 
+		 * in memory.
+		 * 
+		 * @return The base address of the split DYLD cache
+		 */
+		public long getBaseAddress() {
+			return headers.get(0).getBaseAddress();
+		}
+
+		/**
+		 * Gets the {@link DyldCacheLocalSymbolsInfo} from the split DYLD Cache files
+		 * 
+		 * @return The {@link DyldCacheLocalSymbolsInfo} from the split DYLD Cache files, or null 
+		 *   if no local symbols are defined
+		 */
+		public DyldCacheLocalSymbolsInfo getLocalSymbolInfo() {
+			return headers.stream()
+					.map(h -> h.getLocalSymbolsInfo())
+					.filter(info -> info != null)
+					.findAny()
+					.orElse(null);
+		}
 
 		@Override
 		public void close() throws IOException {

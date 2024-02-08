@@ -52,7 +52,8 @@ public abstract class BuiltinDBAdapter {
 	 * @return new record
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	abstract DBRecord createRecord(String name, String className, long categoryID) throws IOException;
+	abstract DBRecord createRecord(String name, String className, long categoryID)
+			throws IOException;
 
 	/**
 	 * Gets the Built-in data type record with the indicated ID.
@@ -92,4 +93,10 @@ public abstract class BuiltinDBAdapter {
 	 * @throws IOException if IO error occurs
 	 */
 	abstract RecordIterator getRecords() throws IOException;
+
+	/**
+	 * Get the number of built-in datatype records
+	 * @return total number of composite records
+	 */
+	public abstract int getRecordCount();
 }

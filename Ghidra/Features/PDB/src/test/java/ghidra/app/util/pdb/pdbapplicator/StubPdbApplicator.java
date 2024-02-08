@@ -21,6 +21,7 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.AbstractPdb;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.PeCoffSectionMsSymbol;
 import ghidra.program.model.listing.Program;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Stub PDB Applicator for testing.
@@ -44,6 +45,11 @@ public class StubPdbApplicator implements PdbApplicator {
 	@Override
 	public Program getProgram() {
 		return program;
+	}
+
+	@Override
+	public TaskMonitor getMonitor() {
+		return TaskMonitor.DUMMY;
 	}
 
 	@Override

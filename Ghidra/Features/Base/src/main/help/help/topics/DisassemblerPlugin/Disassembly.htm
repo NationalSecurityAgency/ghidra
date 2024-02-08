@@ -24,7 +24,15 @@
       <LI><A href="#Disassemble_Static">Static Disassembly</A></LI>
 
       <LI><A href="#Disassemble_Restricted">Restricted Disassembly</A></LI>
+
+      <LI><A href="#Disassemble_Arm">Disassemble ARM / Thumb</A></LI>
       
+      <LI><A href="#ProcessorOptions">Processor Options</A></LI>
+      
+      <LI><A href="#Modify_Instruction_Flow">Modify Instruction Flow</A></LI>
+      
+      <LI><A href="#Modify_Instruction_Length">Modify Instruction Length</A></LI>
+
     </UL>
 
     <H2><A name="Disassemble"></A>Disassembly</H2>
@@ -131,7 +139,7 @@
       undefined bytes.</I></P>
     </BLOCKQUOTE>
 
-    <H2><A name="Disassemble_Restricted"></A>Disassembly (Restricted)</H2>
+    <H2><A name="Disassemble_Restricted"></A>Restricted Disassembly</H2>
 
     <BLOCKQUOTE>
       <P><I>Restricted Disassembly</I> is similar to <I>Disassembly</I>, except that only bytes in
@@ -157,13 +165,11 @@
       undefined bytes.</I></P>
     </BLOCKQUOTE>
 
-    <P class="providedbyplugin">&nbsp;</P>
-
-    <H2><A name="Disassemble_Arm"></A>Disassemble ARM / Disassemble Thumb<A name=
+    <H2><A name="Disassemble_Arm"></A>Disassemble ARM / Thumb<A name=
     "Disassemble_Thumb"></A></H2>
 
     <BLOCKQUOTE>
-      <P><I>Disassemble ARM and Disassemble Thumb</I> will only be available if the program you are
+      <P><I>Disassemble ARM and Disassemble Thumb actions</I> will only be available if the program you are
       working with is an ARM based processor.&nbsp; ARM processors have two states, ARM and Thumb
       mode.&nbsp; The instructions available in ARM mode are 4 bytes long.&nbsp; In Thumb mode, the
       instructions are "generally" 2 bytes long.&nbsp; ARM and Thumb mode are mutually exclusive,
@@ -199,38 +205,6 @@
       undefined bytes.</I></P>
     </BLOCKQUOTE>
     
-    <H2><A name="Modify_Instruction_Flow"></A>Modify Instruction Flow</H2>
-    
-    <BLOCKQUOTE>
-    	<P>With certain processors and situations it may be desirable to modify the default 
-    	flow of an instruction to better reflect the nature of its flow.  For example a jump may 
-    	actually be performing a call type operation, a call may be performing a long-jump.  
-    	This distinction primarily affects the subroutine models and flow analysis performed 
-    	within Ghidra.</P>
-    	<P>The following basic flow types may be imposed upon the default flow of an instruction:</P>
-    	<UL>
-    		<LI>BRANCH</LI> 
-    		<LI>CALL</LI>
-    		<LI>CALL_RETURN</LI>
-    		<LI>RETURN</LI>
-    	</UL>
-    	<P>In all situations the conditional nature of the original flow is perserved.</P>
-    	<P>To Modify Instruction Flow:</P>
-    	<OL>
-    		<LI>Place the cursor on an instruction within the Code Browser.  Note that
-    		instructions which are purely fall-through can not be modified.</LI>
-    		<LI>Right-mouse-click</LI>
-    		<LI>Select <I>Modify Instruction Flow...</I> menu item.
-    		<LI>Within the <I>Modify Instruction Flow</I> dialog select the desired basic flow
-    		behavior.</LI>
-    		<LI>Click OK in the dialog</LI>
-    	</OL>
-    	<P align="left"><I><IMG src="help/shared/tip.png">An instruction whose flow has been
-    	modified will have its' mnemonic color modified.</I></P>
-    	
-    </BLOCKQUOTE>
-    
-
     <H2><A name="ProcessorOptions"></A>Processor Options</H2>
 
     <BLOCKQUOTE>
@@ -244,11 +218,6 @@
       <DIV align="center">
         <IMG src="images/ProcessorOptions.png"><BR>
         <BR>
-         
-
-        <DIV align="left">
-          <BR>
-        </DIV>
       </DIV>
 
       <P>The options are
@@ -282,8 +251,90 @@
 
       <LI><A href="help/topics/LanguageProviderPlugin/Languages.htm">Languages</A></LI>
     </UL>
-
-    <P>&nbsp;</P>
     <BR>
+    
+    <H2><A name="Modify_Instruction_Flow"></A>Modify Instruction Flow</H2>
+    
+    <BLOCKQUOTE>
+    	<P>With certain processors and situations it may be desirable to modify the default 
+    	flow of an instruction to better reflect the nature of its flow.  For example a jump may 
+    	actually be performing a call type operation, a call may be performing a long-jump.  
+    	This distinction primarily affects the subroutine models and flow analysis performed 
+    	within Ghidra.</P>
+    	<P>The following basic flow types may be imposed upon the default flow of an instruction:</P>
+    	<UL>
+    		<LI>BRANCH</LI> 
+    		<LI>CALL</LI>
+    		<LI>CALL_RETURN</LI>
+    		<LI>RETURN</LI>
+    	</UL>
+    	<P>In all situations the conditional nature of the original flow is perserved.</P>
+    	<P>To Modify Instruction Flow:</P>
+    	<OL>
+    		<LI>Place the cursor on an instruction within the Code Browser.  Note that
+    		instructions which are purely fall-through can not be modified.</LI>
+    		<LI>Right-mouse-click</LI>
+    		<LI>Select <I>Modify Instruction Flow...</I> menu item.
+    		<LI>Within the <I>Modify Instruction Flow</I> dialog select the desired basic flow
+    		behavior.</LI>
+    		<LI>Click OK in the dialog</LI>
+    	</OL>
+    	<P align="left"><I><IMG src="help/shared/tip.png">An instruction whose flow has been
+    	modified will have its' mnemonic color modified.</I></P>
+    	
+    </BLOCKQUOTE>
+    
+    <H2><A name="Modify_Instruction_Length"></A>Modify Instruction Length</H2>
+    
+    <BLOCKQUOTE>
+    	<P>There are certain situations where code may flow into an offcut location within the
+    	middle of another instruction where the bytes happen to form a different instruction.  
+    	While this generally indicates a bad flow, this can also be a legitimate situation
+    	of an overlapping instruction.  For example, with x86 instructions where a flow 
+    	may bypass a LOCK prefix byte.  Depending on which flow disassembles first, the situation 
+    	may manifest differently.  Below is an example of the x86 LOCK prefix case.  This situation can be 
+    	quickly identified by the error bookmark along with the offcut reference.  In this case the 
+    	<code>JZ</code> instruction has two flows: 1) one falls-through and 2) conditionally jumps
+    	around the LOCK prefix byte resulting in an offcut flow and disassembly conflict.</P> 
+    	<BR>
+    	
+    	<DIV align="center">
+          <IMG src="images/LengthOverrideLockPrefixExample.png"><BR>
+          <BR>
+        </DIV>
+        
+        <P>The above case can be resolved by overriding the code-unit length of the first 
+        instruction to 1-byte allowing the incomplete disassembly of the offcut instruction 
+        to be repaired.</P>
+        
+        <OL>
+    		<LI>Place the cursor on an instruction within the Code Browser (e.g., 
+    		<code>CMPXCHG</code> instruction).</LI>
+    		<LI>Right-mouse-click</LI>
+    		<LI>Select <I>Modify Instruction Length...</I> menu item.
+    		<LI>Within the <I>Modify Instruction Length</I> dialog enter the reduced instruction
+    		length (e.g., 1 in this case).  Note that this does not impact the number of bytes
+    		actually parsed, but only the affective code unit length.</LI>
+    		<LI>Click OK in the dialog</LI>
+    		<LI>This should result in the subsequent locations becoming undefined code units
+    		which can know be disassembled.  Click on the first undefined location and disassemble
+    		(i.e., <B>D</B> key binding).</LI>
+    		<LI>You may also delete the error bookmark which should no longer be relavent.
+    	</OL>
+    	
+    	<P>The image below shows this same code after these length override steps have been 
+    	performed.  The fallthrough of the first instruction, whose length was overriden from four 
+    	to one, is preserved and both instructions fallthrough to the same <code>JNZ</code> 
+    	instruction.
+    	</P>
+    	<BR>
+    	
+    	<DIV align="center">
+          <IMG src="images/LengthOverrideLockPrefixExample2.png"><BR>
+          <BR>
+        </DIV>
+
+    </BLOCKQUOTE>
+
   </BODY>
 </HTML>

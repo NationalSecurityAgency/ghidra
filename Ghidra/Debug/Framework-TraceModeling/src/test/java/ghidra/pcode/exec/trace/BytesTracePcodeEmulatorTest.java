@@ -940,8 +940,91 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 
 			assertEquals(BigInteger.valueOf(0x0010fff8),
 				regs.getValue(x64, 1, tb.reg(x64, "RSP")).getUnsignedValue());
-			assertEquals(new BigInteger("efbeed0d00000000",16), // Guest is LE, host is BE
+			assertEquals(new BigInteger("efbeed0d00000000", 16), // Guest is LE, host is BE
 				TraceSleighUtils.evaluate(changedExpr, tb.trace, 1, thread, 0));
+		}
+	}
+
+	@Test
+	public void testIT_ContextFlow() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "ARM:LE:32:v8T")) {
+			TraceThread thread = initTrace(tb, """
+					pc = 0x00400000;
+					sp = 0x00110000;
+					r0 = 0x12341234;
+					r1 = 0x43214321;
+					r7 = 0xbeef;
+					CY = 1;
+					""",
+				List.of(
+					"it cc",
+					"mov r0,r7", // Assembler doesn't handle context flow
+					"mov r1,r7"));
+
+			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
+			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
+			emuThread.stepInstruction();
+			emuThread.stepPcodeOp(); // decode second
+			assertEquals("mov.cc r0,r7", emuThread.getInstruction().toString());
+			emuThread.finishInstruction();
+			emuThread.stepPcodeOp(); // decode third
+			assertEquals("mov r1,r7", emuThread.getInstruction().toString());
+			emuThread.finishInstruction();
+
+			try (Transaction tx = tb.startTransaction()) {
+				emu.writeDown(tb.host, 1, 1);
+			}
+
+			assertEquals(BigInteger.valueOf(0x00400006),
+				TraceSleighUtils.evaluate("pc", tb.trace, 1, thread, 0));
+			assertEquals(BigInteger.valueOf(0x12341234), // r0 Unaffected
+				TraceSleighUtils.evaluate("r0", tb.trace, 1, thread, 0));
+			assertEquals(BigInteger.valueOf(0xbeef), // r1 Affected
+				TraceSleighUtils.evaluate("r1", tb.trace, 1, thread, 0));
+		}
+	}
+	@Test
+	public void testITE_ContextFlow() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "ARM:LE:32:v8T")) {
+			TraceThread thread = initTrace(tb, """
+					pc = 0x00400000;
+					sp = 0x00110000;
+					r0 = 0x12341234;
+					r1 = 0x43214321;
+					r7 = 0xbeef;
+					CY = 1;
+					""",
+				List.of(
+					"ite cc",
+					"mov r0,r7", // Assembler doesn't handle context flow
+					"mov r1,r7", // "
+					"mov r2,r7"));
+
+			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
+			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
+			emuThread.stepInstruction();
+			emuThread.stepPcodeOp(); // decode second
+			assertEquals("mov.cc r0,r7", emuThread.getInstruction().toString());
+			emuThread.finishInstruction();
+			emuThread.stepPcodeOp(); // decode third
+			assertEquals("mov.cs r1,r7", emuThread.getInstruction().toString());
+			emuThread.finishInstruction();
+			emuThread.stepPcodeOp(); // decode fourth
+			assertEquals("mov r2,r7", emuThread.getInstruction().toString());
+			emuThread.finishInstruction();
+
+			try (Transaction tx = tb.startTransaction()) {
+				emu.writeDown(tb.host, 1, 1);
+			}
+
+			assertEquals(BigInteger.valueOf(0x00400008),
+				TraceSleighUtils.evaluate("pc", tb.trace, 1, thread, 0));
+			assertEquals(BigInteger.valueOf(0x12341234), // r0 Unaffected
+				TraceSleighUtils.evaluate("r0", tb.trace, 1, thread, 0));
+			assertEquals(BigInteger.valueOf(0xbeef), // r1 Affected
+				TraceSleighUtils.evaluate("r1", tb.trace, 1, thread, 0));
+			assertEquals(BigInteger.valueOf(0xbeef), // r2 Affected
+				TraceSleighUtils.evaluate("r2", tb.trace, 1, thread, 0));
 		}
 	}
 }

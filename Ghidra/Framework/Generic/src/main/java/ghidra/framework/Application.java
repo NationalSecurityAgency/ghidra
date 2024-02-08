@@ -23,9 +23,13 @@ import generic.jar.ResourceFile;
 import ghidra.util.*;
 import ghidra.util.datastruct.LRUMap;
 import ghidra.util.exception.AssertException;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
+import util.CollectionUtils;
+import utilities.util.FileUtilities;
 import utilities.util.reflection.ReflectionUtilities;
 import utility.application.ApplicationLayout;
+import utility.application.ApplicationUtilities;
 import utility.module.ModuleUtilities;
 
 /**
@@ -69,14 +73,6 @@ public class Application {
 	}
 
 	private void initialize() {
-
-		// Create application's user directories
-		try {
-			layout.createUserDirs();
-		}
-		catch (IOException e) {
-			throw new AssertException(e.getMessage());
-		}
 
 		// Set headless property
 		String isHeadless = Boolean.toString(configuration.isHeadless());
@@ -212,6 +208,10 @@ public class Application {
 		return app.getModuleForClass(className);
 	}
 
+	public static ResourceFile getModuleContainingClass(Class<?> c) {
+		return app.getModuleForClass(c);
+	}
+
 	private void findJavaSourceDirectories(List<ResourceFile> list,
 			ResourceFile moduleRootDirectory) {
 		ResourceFile srcDir = new ResourceFile(moduleRootDirectory, "src");
@@ -251,6 +251,18 @@ public class Application {
 	}
 
 	private ResourceFile getModuleForClass(String className) {
+		try {
+			Class<?> callersClass = Class.forName(className);
+			return getModuleForClass(callersClass);
+		}
+		catch (ClassNotFoundException e) {
+			// This can happen when we are being called from a script, which is not in the
+			// classpath.  This file will not have a module anyway.
+			return null;
+		}
+	}
+
+	private String toPath(String className) {
 		// get rid of nested class name(s) if present
 		int dollar = className.indexOf('$');
 		if (dollar != -1) {
@@ -258,27 +270,22 @@ public class Application {
 		}
 
 		String path = className.replace('.', '/');
-		String sourcePath = path + ".java";
-		String classFilePath = path + ".class";
+		return path + ".class";
+	}
+
+	private ResourceFile getModuleForClass(Class<?> clazz) {
 
 		if (inSingleJarMode()) {
+			String classFilePath = toPath(clazz.getName());
 			GModule gModule = getModuleFromTreeMap(classFilePath);
 			return gModule == null ? null : gModule.getModuleRoot();
 		}
 
 		// we're running from a binary installation...so get our jar and go up one
-		Class<?> callersClass;
-		try {
-			callersClass = Class.forName(className);
-		}
-		catch (ClassNotFoundException e) {
-			// This can happen when we are being called from a script, which is not in the
-			// classpath.  This file will not have a module anyway
-			return null;
-		}
-
-		File sourceLocationForClass = SystemUtilities.getSourceLocationForClass(callersClass);
+		File sourceLocationForClass = SystemUtilities.getSourceLocationForClass(clazz);
 		if (sourceLocationForClass.isDirectory()) {
+			String classFilePath = toPath(clazz.getName());
+			String sourcePath = classFilePath.replace(".class", ".java");
 			return findModuleForJavaSource(sourcePath);
 		}
 
@@ -619,8 +626,40 @@ public class Application {
 	}
 
 	/**
+	 * Returns a list of files in a setting subdirectory that have the given file extension,
+	 * copying files from older versions of Ghidra if the settings dir is not yet established.
+	 * @param dirName the name of the settings subdirectory.
+	 * @param fileExtension the file name suffix
+	 * @return a list of files in a setting sub directory that have the given file extension
+	 */
+	public static List<File> getUserSettingsFiles(String dirName, String fileExtension) {
+		File userSettingsDir = getUserSettingsDirectory();
+		File subSettingsDir = new File(userSettingsDir, dirName);
+		FileFilter filter = f -> f.getName().endsWith(fileExtension);
+
+		if (!subSettingsDir.exists()) {
+			subSettingsDir.mkdir();
+			copyFilesFromPreviousVersion(subSettingsDir, dirName, filter);
+		}
+		File[] files = subSettingsDir.listFiles(filter);
+		return CollectionUtils.asList(files);
+	}
+
+	private static void copyFilesFromPreviousVersion(File subSettingsDir, String dirName,
+			FileFilter filter) {
+		File previousDir = GenericRunInfo.getPreviousApplicationSettingsDir(dirName, filter);
+		if (previousDir != null) {
+			try {
+				FileUtilities.copyDir(previousDir, subSettingsDir, filter, TaskMonitor.DUMMY);
+			}
+			catch (CancelledException | IOException e) {
+				// don't care - just means we couldn't copy old files to new ghidra version
+			}
+		}
+	}
+
+	/**
 	 * Returns the temporary directory specific to the user and the application.
-	 * Directory has name of &lt;username&gt;-&lt;appname&gt;
 	 * This directory may be removed at system reboot or during periodic
 	 * system cleanup of unused temp files.
 	 * This directory is specific to the application name but not the version.
@@ -630,15 +669,22 @@ public class Application {
 	 * @return temp directory
 	 */
 	public static File getUserTempDirectory() {
-		checkAppInitialized();
-		return app.layout.getUserTempDir();
+		try {
+			// 'app' will be null when the application has not been initialized yet.  In this case,
+			// we provide the default user temp directory.
+			return app != null ? app.layout.getUserTempDir()
+					: ApplicationUtilities.getDefaultUserTempDir("ghidra");
+		}
+		catch (IOException e) {
+			throw new AssertException(e);
+		}
 	}
 
 	/**
 	 * Returns the cache directory specific to the user and the application.
 	 * The intention is for directory contents to be preserved, however the
 	 * specific location is platform specific and contents may be removed when
-	 * not in use and may in fact be the same directory the user temp directory.
+	 * not in use.
 	 * This directory is specific to the application name but not the version.
 	 * Resources stored within this directory should utilize some
 	 * form of access locking and/or unique naming.
@@ -647,6 +693,24 @@ public class Application {
 	public static File getUserCacheDirectory() {
 		checkAppInitialized();
 		return app.layout.getUserCacheDir();
+	}
+
+	/**
+	 * Creates a new empty file in the Application's temp directory, using the given prefix and 
+	 * suffix strings to generate its name.  
+	 * 
+	 * @param prefix The prefix string to be used in generating the file's name; must be at least 
+	 *   three characters long
+	 * @param suffix The suffix string to be used in generating the file's name; may be 
+	 *   {@code null}, in which case the suffix {@code ".tmp"} will be used
+	 * @return A {@link File} denoting a newly-created empty file
+	 * @throws IllegalArgumentException If the {@code prefix} argument contains fewer than three 
+	 *   characters
+	 * @throws IOException If a file could not be created
+	 * @see File#createTempFile(String, String, File)
+	 */
+	public static File createTempFile(String prefix, String suffix) throws IOException {
+		return File.createTempFile(prefix, suffix, getUserTempDirectory());
 	}
 
 	/**
@@ -769,7 +833,7 @@ public class Application {
 	 */
 	public static Collection<ResourceFile> getLibraryDirectories() {
 		checkAppInitialized();
-		return ModuleUtilities.getModuleLibDirectories(app.layout.getModules());
+		return ModuleUtilities.getModuleLibDirectories(app.layout.getModules().values());
 	}
 
 	/**

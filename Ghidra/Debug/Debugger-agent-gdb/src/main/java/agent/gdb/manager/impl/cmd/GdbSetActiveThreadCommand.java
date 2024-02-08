@@ -15,38 +15,31 @@
  */
 package agent.gdb.manager.impl.cmd;
 
-import agent.gdb.manager.evt.*;
+import agent.gdb.manager.evt.GdbCommandDoneEvent;
+import agent.gdb.manager.evt.GdbThreadSelectedEvent;
 import agent.gdb.manager.impl.*;
-import agent.gdb.manager.parsing.GdbMiParser.GdbMiFieldList;
 
-public class GdbSetActiveThreadCommand extends AbstractGdbCommandWithThreadAndFrameId<Void> {
+public class GdbSetActiveThreadCommand extends AbstractGdbCommand<Void> {
+	private final int threadId;
 	private final boolean internal;
 
 	/**
-	 * Select the given thread and frame level
-	 * 
-	 * <p>
-	 * To simply select a thread, you should use frame 0 as the default.
+	 * Select the given thread
 	 * 
 	 * @param manager the manager to execute the command
 	 * @param threadId the desired thread Id
 	 * @param frameId the desired frame level
 	 * @param internal true to prevent announcement of the change
 	 */
-	public GdbSetActiveThreadCommand(GdbManagerImpl manager, int threadId, Integer frameId,
-			boolean internal) {
-		super(manager, threadId, frameId);
+	public GdbSetActiveThreadCommand(GdbManagerImpl manager, int threadId, boolean internal) {
+		super(manager);
+		this.threadId = threadId;
 		this.internal = internal;
 	}
 
 	@Override
-	public String encode(String threadPart, String framePart) {
-		/**
-		 * Yes, it's a bit redundant to use {@code --thread} here, but this allows frame selection
-		 * via {@code --frame} as well. Granted {@code -stack-select-frame} may be available, it
-		 * doesn't appear to produce notifications, and so I've opted not to use it.
-		 */
-		return "-thread-select" + threadPart + framePart + " " + threadId;
+	public String encode() {
+		return "-thread-select " + threadId;
 	}
 
 	@Override
@@ -62,19 +55,7 @@ public class GdbSetActiveThreadCommand extends AbstractGdbCommandWithThreadAndFr
 
 	@Override
 	public Void complete(GdbPendingCommand<?> pending) {
-		GdbCommandDoneEvent done = pending.checkCompletion(GdbCommandDoneEvent.class);
-		GdbThreadSelectedEvent already = pending.getFirstOf(GdbThreadSelectedEvent.class);
-		if (already != null) {
-			return null;
-		}
-		// Otherwise, we just changed frames within a thread. Fire the event ourselves.
-		GdbThreadImpl thread = manager.getThread(threadId);
-		GdbMiFieldList fields = done.getInfo().getFieldList("frame");
-		if (fields == null) { // Uhhh... I guess we'll have to do without
-			return null;
-		}
-		GdbStackFrameImpl frame = GdbStackFrameImpl.fromFieldList(thread, fields);
-		manager.doThreadSelected(thread, frame, done.getCause());
+		pending.checkCompletion(GdbCommandDoneEvent.class);
 		return null;
 	}
 

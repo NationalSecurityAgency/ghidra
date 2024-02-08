@@ -54,7 +54,7 @@ public enum TraceObjectInterfaceUtils {
 	public static void setLifespan(Class<? extends TraceObjectInterface> traceIf,
 			TraceObject object, Lifespan lifespan) throws DuplicateNameException {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			for (TraceObjectValue val : object.getParents()) {
+			for (TraceObjectValue val : object.getParents(Lifespan.ALL)) {
 				if (val.isCanonical() && !val.isDeleted()) {
 					val.setLifespan(lifespan, ConflictResolution.DENY);
 				}

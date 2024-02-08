@@ -439,7 +439,7 @@ public class GadpClientServerTest implements AsyncTestUtils {
 			TestGadpTargetProcess process = new TestGadpTargetProcess(this, pid, base);
 			changeElements(List.of(), List.of(process), Map.of(), "Launched");
 			parent.setFocus(process);
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 
 		@Override
@@ -459,7 +459,7 @@ public class GadpClientServerTest implements AsyncTestUtils {
 			else {
 				throw new DebuggerIllegalArgumentException("unrecognized option: '" + key + "'");
 			}
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 
 		public void setBase(int base) {

@@ -19,8 +19,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import db.Transaction;
-import ghidra.app.services.LogicalBreakpoint;
-import ghidra.app.services.LogicalBreakpoint.State;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint.State;
 import ghidra.pcode.exec.SleighUtils;
 import ghidra.program.model.address.Address;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;

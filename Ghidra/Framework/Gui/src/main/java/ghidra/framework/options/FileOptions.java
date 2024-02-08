@@ -48,12 +48,12 @@ public class FileOptions extends AbstractOptions {
 		return file;
 	}
 
-	public CustomOption readCustomOption(SaveState saveState) {
-		String customOptionClassName = saveState.getString("CUSTOM_OPTION_CLASS", null);
+	public CustomOption readCustomOption(GProperties properties) {
+		String customOptionClassName = properties.getString("CUSTOM_OPTION_CLASS", null);
 		try {
 			Class<?> c = Class.forName(customOptionClassName);
 			CustomOption customOption = (CustomOption) c.getDeclaredConstructor().newInstance();
-			customOption.readState(saveState);
+			customOption.readState(properties);
 			return customOption;
 		}
 		catch (Exception e) {
@@ -63,11 +63,10 @@ public class FileOptions extends AbstractOptions {
 	}
 
 	private void loadFromFile() throws IOException {
-		SaveState saveState = SaveState.readJsonFile(file);
-		for (String optionName : saveState.getNames()) {
-			Object object = saveState.getObject(optionName);
-			if (object instanceof SaveState) {
-				SaveState customState = (SaveState) object;
+		GProperties properties = new JSonProperties(file);
+		for (String optionName : properties.getNames()) {
+			Object object = properties.getObject(optionName);
+			if (object instanceof GProperties customState) {
 				object = readCustomOption(customState);
 			}
 			Option option =

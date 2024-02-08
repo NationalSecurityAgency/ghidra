@@ -43,7 +43,7 @@ import docking.util.image.ToolIconURL;
 import docking.widgets.OptionDialog;
 import generic.jar.ResourceFile;
 import generic.util.WindowUtilities;
-import ghidra.app.plugin.GenericPluginCategoryNames;
+import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.Application;
 import ghidra.framework.LoggingInitialization;
@@ -59,8 +59,7 @@ import ghidra.framework.main.logviewer.ui.FileViewer;
 import ghidra.framework.main.logviewer.ui.FileWatcher;
 import ghidra.framework.model.*;
 import ghidra.framework.options.*;
-import ghidra.framework.plugintool.Plugin;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.*;
 import ghidra.framework.preferences.Preferences;
 import ghidra.framework.project.tool.GhidraTool;
@@ -131,7 +130,6 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 	private WindowListener windowListener;
 	private DockingAction configureToolAction;
-	private PluginClassManager pluginClassManager;
 
 	/**
 	 * Construct a new Ghidra Project Window.
@@ -190,11 +188,8 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	}
 
 	@Override
-	public PluginClassManager getPluginClassManager() {
-		if (pluginClassManager == null) {
-			pluginClassManager = new PluginClassManager(ApplicationLevelPlugin.class, null);
-		}
-		return pluginClassManager;
+	protected PluginsConfiguration createPluginsConfigurations() {
+		return new ApplicationLevelPluginsConfiguration();
 	}
 
 	public void selectFiles(Set<DomainFile> files) {
@@ -284,7 +279,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 	/**
 	 * Add those plugins that implement the ApplicationLevelPlugin interface and have a
-	 * RELEASED status and not (example || testing) category.
+	 * RELEASED status and not example category.
 	 */
 	private void installDefaultApplicationLevelPlugins() {
 		List<String> classNames = new ArrayList<>();
@@ -293,8 +288,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 			PluginDescription pd = PluginDescription.getPluginDescription(pluginClass);
 			String category = pd.getCategory();
-			boolean isBadCategory = category.equals(GenericPluginCategoryNames.EXAMPLES) ||
-				category.equals(GenericPluginCategoryNames.TESTING);
+			boolean isBadCategory = category.equals(PluginCategoryNames.EXAMPLES);
 			if (pd.getStatus() == PluginStatus.RELEASED && !isBadCategory) {
 				classNames.add(pluginClass.getName());
 			}
@@ -416,6 +410,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		setProject(project);
 		AppInfo.setActiveProject(project);
 		plugin.setActiveProject(project);
+		firePluginEvent(new ProjectPluginEvent(getClass().getSimpleName(), project));
 	}
 
 	/**
@@ -651,7 +646,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 			}
 		};
 		MenuData menuData =
-			new MenuData(new String[] { ToolConstants.MENU_FILE, "Install Extensions..." }, null,
+			new MenuData(new String[] { ToolConstants.MENU_FILE, "Install Extensions" }, null,
 				CONFIGURE_GROUP);
 		menuData.setMenuSubGroup(CONFIGURE_GROUP + 2);
 		installExtensionsAction.setMenuBarData(menuData);
@@ -678,7 +673,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 			}
 		};
 
-		MenuData menuData = new MenuData(new String[] { ToolConstants.MENU_FILE, "Configure..." },
+		MenuData menuData = new MenuData(new String[] { ToolConstants.MENU_FILE, "Configure" },
 			null, CONFIGURE_GROUP);
 		menuData.setMenuSubGroup(CONFIGURE_GROUP + 1);
 		configureToolAction.setMenuBarData(menuData);

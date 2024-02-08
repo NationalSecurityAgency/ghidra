@@ -139,34 +139,23 @@ public class SpecifyCPrototypeAction extends AbstractDecompilerAction {
 		return fsig;
 	}
 
-	/**
-	 * Get function affected by specified action context
-	 * 
-	 * @param function is the current decompiled function which will be the default if no other 
-	 * function identified by context token.
-	 * @param context decompiler action context
-	 * @return the function associated with the current context token.  If no function corresponds
-	 * to context token the decompiled function will be returned.
-	 */
-	private Function getFunction(Function function, DecompilerActionContext context) {
-		// try to look up the function that is at the current cursor location
-		//   If there isn't one, just use the function we are in.
-		Function tokenFunction = getFunction(context);
-		return tokenFunction != null ? tokenFunction : function;
-	}
-
 	@Override
 	protected boolean isEnabledForDecompilerContext(DecompilerActionContext context) {
-		Function function = context.getFunction();
-		if (function instanceof UndefinedFunction) {
+		Function decompiledFunction = context.getFunction();
+		Function func = getFunction(context);
+		if (func == null || (func instanceof UndefinedFunction)) {
 			return false;
 		}
-		return getFunction(function, context) != null;
+		if (func != decompiledFunction && OverridePrototypeAction.getSymbol(decompiledFunction,
+			context.getTokenAtCursor()) != null) {
+			return false; // disable action for sub-function call w/ override
+		}
+		return true;
 	}
 
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
-		Function function = getFunction(context.getFunction(), context);
+		Function function = getFunction(context);
 		PluginTool tool = context.getTool();
 		DataTypeManagerService service = tool.getService(DataTypeManagerService.class);
 

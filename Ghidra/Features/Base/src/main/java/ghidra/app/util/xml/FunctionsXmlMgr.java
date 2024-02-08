@@ -121,15 +121,14 @@ class FunctionsXmlMgr {
 					AddressSet body = new AddressSet(entryPoint, entryPoint);
 
 					if (functionElement.hasAttribute("LIBRARY_FUNCTION")) {
-						boolean isLibFunc = XmlUtilities.parseBoolean(
-							functionElement.getAttribute("LIBRARY_FUNCTION"));
+						boolean isLibFunc = XmlUtilities
+								.parseBoolean(functionElement.getAttribute("LIBRARY_FUNCTION"));
 						if (isLibFunc) {
 							BookmarkManager bm = program.getBookmarkManager();
 							BookmarkType bt = bm.getBookmarkType("IMPORTED");
 							if (bt == null) {
 								Icon icon = new GIcon("icon.base.util.xml.functions.bookmark");
-								bt = bm.defineType("IMPORTED", icon, Palette.DARK_GRAY,
-									0);
+								bt = bm.defineType("IMPORTED", icon, Palette.DARK_GRAY, 0);
 							}
 							bm.setBookmark(entryPoint, "IMPORTED", LIB_BOOKMARK_CATEGORY,
 								"Library function");
@@ -152,9 +151,8 @@ class FunctionsXmlMgr {
 						program.getAddressFactory())) {
 						try {
 							Symbol symbol = func.getSymbol();
-							Namespace namespace =
-								NamespaceUtils.getFunctionNamespaceAt(program, namespacePath,
-									entryPoint);
+							Namespace namespace = NamespaceUtils.getFunctionNamespaceAt(program,
+								namespacePath, entryPoint);
 							if (namespace == null) {
 								namespace = program.getGlobalNamespace();
 							}
@@ -237,15 +235,16 @@ class FunctionsXmlMgr {
 	private void tryToParseTypeInfoComment(TaskMonitor monitor, Function func,
 			String typeInfoComment) {
 		try {
-			FunctionDefinitionDataType funcDef = CParserUtils.parseSignature(
-				(DataTypeManagerService) null, program, typeInfoComment, false);
+			FunctionDefinitionDataType funcDef = CParserUtils
+					.parseSignature((DataTypeManagerService) null, program, typeInfoComment, false);
 			if (funcDef == null) {
 				log.appendMsg("Unable to parse function definition: " + typeInfoComment);
 				return;
 			}
 
 			ApplyFunctionSignatureCmd afsCmd = new ApplyFunctionSignatureCmd(func.getEntryPoint(),
-				funcDef, SourceType.IMPORTED, false, FunctionRenameOption.RENAME_IF_DEFAULT);
+				funcDef, SourceType.IMPORTED, false, false, DataTypeConflictHandler.DEFAULT_HANDLER,
+				FunctionRenameOption.RENAME_IF_DEFAULT);
 			if (!afsCmd.applyTo(program, monitor)) {
 				// TODO: continue trying to add local vars after failing to update the function signature?
 				log.appendMsg("Failed to update function " + funcDesc(func) + " with signature \"" +
@@ -269,8 +268,7 @@ class FunctionsXmlMgr {
 				String name = v.getName();
 				boolean isDefaultVariableName = (name == null) ||
 					SymbolUtilities.getDefaultLocalName(program, v.getStackOffset(), 0)
-							.equals(
-								name);
+							.equals(name);
 
 				SourceType sourceType =
 					isDefaultVariableName ? SourceType.DEFAULT : SourceType.USER_DEFINED;

@@ -20,7 +20,7 @@ import java.util.Set;
 import org.junit.*;
 
 import db.Transaction;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest.TestDebuggerTargetTraceMapper;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest.TestDebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
 import ghidra.app.plugin.core.debug.service.model.DebuggerModelServicePlugin;
@@ -29,6 +29,8 @@ import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerService
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.services.*;
 import ghidra.dbg.model.TestDebuggerModelBuilder;
+import ghidra.debug.api.action.ActionSource;
+import ghidra.debug.api.model.TraceRecorder;
 import ghidra.framework.model.DomainFolder;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.mem.Memory;

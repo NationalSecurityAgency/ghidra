@@ -15,6 +15,9 @@
  */
 package ghidra.app.plugin.core.function.tags;
 
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
+
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.util.*;
@@ -31,12 +34,14 @@ import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.cmd.function.CreateFunctionTagCmd;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainObjectChangedEvent;
+import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.database.function.FunctionManagerDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
-import ghidra.program.util.*;
+import ghidra.program.util.FunctionLocation;
+import ghidra.program.util.ProgramLocation;
 import ghidra.util.*;
 import ghidra.util.task.SwingUpdateManager;
 import resources.ResourceManager;
@@ -50,14 +55,13 @@ import resources.ResourceManager;
  * 	<LI>Edit tags (both name and comment)</LI>
  * 	<LI>Delete tags</LI>
  * 	<LI>Assign tags to the currently selected function</LI>
- * 	<LI>Remove tags from the currently selected function</LI> 
+ * 	<LI>Remove tags from the currently selected function</LI>
  * </UL>
- * This provider can be shown by right-clicking on a function and selecting the 
+ * This provider can be shown by right-clicking on a function and selecting the
  * "Edit Tags" option, or by selecting the "Edit Function Tags" option from the
  * "Window" menu.
  */
-public class FunctionTagProvider extends ComponentProviderAdapter
-		implements DomainObjectListener {
+public class FunctionTagProvider extends ComponentProviderAdapter implements DomainObjectListener {
 
 	private SourceTagsPanel sourcePanel;
 	private TargetTagsPanel targetPanel;
@@ -75,37 +79,37 @@ public class FunctionTagProvider extends ComponentProviderAdapter
 
 	private SwingUpdateManager updater = new SwingUpdateManager(this::doUpdate);
 
-	// The current program location selected in the listing. 
+	// The current program location selected in the listing.
 	private ProgramLocation currentLocation = null;
 
 	// Character used as a separator when entering multiple tags in
 	// the create tag entry field.
 	private static final String INPUT_DELIMITER = ",";
 
-	/** 
-	 * Optional! If there is a file with this name which can be found by the 
-	 * {@link ResourceManager}, and it contains a valid list of tag names, 
+	/**
+	 * Optional! If there is a file with this name which can be found by the
+	 * {@link ResourceManager}, and it contains a valid list of tag names,
 	 * they will be loaded. The file must be XML with the following
 	 * structure:
-	 * 
+	 *
 	 * <tags>
 	 *	<tag>
 	 *		<name>TAG1</name>
 	 *  	<comment>tag comment</comment>
 	 *	</tag>
-	 * </tags> 
-	 * 
+	 * </tags>
+	 *
 	 */
 	private static String TAG_FILE = "functionTags.xml";
 
-	// Keeps a list of the original tags as loaded from file. This is necessary when switching 
-	// between programs where we need to know the original state of the disabled tags. Without 
+	// Keeps a list of the original tags as loaded from file. This is necessary when switching
+	// between programs where we need to know the original state of the disabled tags. Without
 	// this we would need to reload from file on each new program activation.
 	private Set<FunctionTag> tagsFromFile;
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param plugin the function tag plugin
 	 * @param program the current program
 	 */
@@ -118,10 +122,6 @@ public class FunctionTagProvider extends ComponentProviderAdapter
 		addToTool();
 	}
 
-	/******************************************************************************
-	 * PUBLIC METHODS
-	 ******************************************************************************/
-
 	@Override
 	public void componentShown() {
 		updateView();
@@ -133,10 +133,10 @@ public class FunctionTagProvider extends ComponentProviderAdapter
 	}
 
 	/**
-	 * Invoked when a new location has been detected in the listing. When 
+	 * Invoked when a new location has been detected in the listing. When
 	 * this happens we need to update the tag list to show what tags are assigned
 	 * at the current location.
-	 * 
+	 *
 	 * @param loc the address selected in the listing
 	 */
 	public void locationChanged(ProgramLocation loc) {
@@ -158,12 +158,6 @@ public class FunctionTagProvider extends ComponentProviderAdapter
 		this.program = null;
 	}
 
-	/**
-	 * This class needs to listen for changes to the domain object (tag create, delete, etc...)
-	 * so it can update the display accordingly. 
-	 * 
-	 * @param ev the change event
-	 */
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
 
@@ -171,16 +165,13 @@ public class FunctionTagProvider extends ComponentProviderAdapter
 			return;
 		}
 
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED) ||
-			ev.containsEvent(ChangeManager.DOCR_FUNCTION_TAG_CREATED) ||
-			ev.containsEvent(ChangeManager.DOCR_FUNCTION_TAG_DELETED) ||
-			ev.containsEvent(ChangeManager.DOCR_TAG_REMOVED_FROM_FUNCTION) ||
-			ev.containsEvent(ChangeManager.DOCR_TAG_ADDED_TO_FUNCTION)) {
+		if (ev.contains(RESTORED, FUNCTION_TAG_CREATED, FUNCTION_TAG_DELETED, FUNCTION_TAG_APPLIED,
+			FUNCTION_TAG_UNAPPLIED)) {
 			updater.updateLater();
 			return;
 		}
 
-		if (ev.containsEvent(ChangeManager.DOCR_FUNCTION_TAG_CHANGED)) {
+		if (ev.contains(FUNCTION_TAG_CHANGED)) {
 			repaint();
 		}
 	}
@@ -244,8 +235,8 @@ public class FunctionTagProvider extends ComponentProviderAdapter
 		allFunctionsPanel.setBorder(BorderFactory.createLineBorder(Colors.BORDER));
 
 		// If we don't set this, then the splitter won't be able to shrink the
-		// target panels below the size required by its header, which can be large 
-		// because of the amount of text displayed. Keep the minimum size setting on 
+		// target panels below the size required by its header, which can be large
+		// because of the amount of text displayed. Keep the minimum size setting on
 		// the source panel, however. That is generally small.
 		targetPanel.setMinimumSize(new Dimension(0, 0));
 
@@ -270,7 +261,7 @@ public class FunctionTagProvider extends ComponentProviderAdapter
 	 * Updates the button panel depending on the selection state of the
 	 * tag lists. Also updates the {@link AllFunctionsPanel} so it can update
 	 * its list.
-	 * 
+	 *
 	 * @param panel the panel that generated the selection event
 	 */
 	public void selectionChanged(TagListPanel panel) {
@@ -330,7 +321,7 @@ public class FunctionTagProvider extends ComponentProviderAdapter
 
 	/**
 	 * Loads tags from the external file specified.
-	 * 
+	 *
 	 * @return the loaded tags
 	 */
 	private Set<FunctionTag> getFileTags() {
@@ -342,7 +333,7 @@ public class FunctionTagProvider extends ComponentProviderAdapter
 
 	/**
 	 * Returns an array of all tags stored in the database.
-	 * 
+	 *
 	 * @return list of tags
 	 */
 	private List<? extends FunctionTag> getAllTagsFromDatabase() {
@@ -355,7 +346,7 @@ public class FunctionTagProvider extends ComponentProviderAdapter
 
 	/**
 	 * Returns the {@link Function} for the given program location
-	 * 
+	 *
 	 * @param loc the program location
 	 * @return function containing the location, or null if not applicable
 	 */
@@ -371,7 +362,7 @@ public class FunctionTagProvider extends ComponentProviderAdapter
 
 	/**
 	 * Retrieves the address of the function associated with the given program location.
-	 * 
+	 *
 	 * @param loc the program location
 	 * @return the entry point of the function, or null if not valid
 	 */
@@ -408,7 +399,7 @@ public class FunctionTagProvider extends ComponentProviderAdapter
 		targetPanel.setProgram(program);
 		allFunctionsPanel.setProgram(program);
 
-		// Get the currently selected tags and use them to update the all functions panel. If 
+		// Get the currently selected tags and use them to update the all functions panel. If
 		// there is no current selection, leave the table as-is.
 		Set<FunctionTag> sTags = sourcePanel.getSelectedTags();
 		Set<FunctionTag> tTags = targetPanel.getSelectedTags();
@@ -423,7 +414,7 @@ public class FunctionTagProvider extends ComponentProviderAdapter
 	}
 
 	/**
-	 * Parses all items in the text input field and adds them as new tags. 
+	 * Parses all items in the text input field and adds them as new tags.
 	 */
 	private void processCreates() {
 
@@ -462,7 +453,7 @@ public class FunctionTagProvider extends ComponentProviderAdapter
 	/**
 	 * Returns a list of tag names the user has entered in the input` field.
 	 * Note: This assumes that multiple entries are comma-delimited.
-	 * 
+	 *
 	 * @return the list of tag names to create
 	 */
 	private List<String> getInputNames() {
@@ -470,7 +461,7 @@ public class FunctionTagProvider extends ComponentProviderAdapter
 		// first split the string on the delimiter to get all the entries
 		String[] names = tagInputField.getText().split(INPUT_DELIMITER);
 
-		// trim each item to remove any leading/trailing whitespace and add to the return list 
+		// trim each item to remove any leading/trailing whitespace and add to the return list
 		List<String> nameList = new ArrayList<>();
 		for (String name : names) {
 			if (!StringUtils.isBlank(name)) {
@@ -483,7 +474,7 @@ public class FunctionTagProvider extends ComponentProviderAdapter
 
 	/**
 	 * Creates the text-entry panel for adding new tag names.
-	 * 
+	 *
 	 * @return the new text input panel
 	 */
 	private JPanel createInputPanel() {

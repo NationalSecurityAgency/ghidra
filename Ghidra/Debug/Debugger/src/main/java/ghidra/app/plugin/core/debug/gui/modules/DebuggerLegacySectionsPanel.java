@@ -30,17 +30,16 @@ import javax.swing.table.TableColumnModel;
 import docking.widgets.table.CustomToStringCellRenderer;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import docking.widgets.table.TableFilter;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.utils.DebouncedRowWrappedEnumeratedColumnTableModel;
-import ghidra.framework.model.DomainObject;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TraceModuleChangeType;
-import ghidra.trace.model.Trace.TraceSectionChangeType;
 import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.modules.*;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.database.ObjectKey;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
@@ -124,9 +123,8 @@ public class DebuggerLegacySectionsPanel extends JPanel {
 		}
 	}
 
-	protected static class SectionTableModel
-			extends DebouncedRowWrappedEnumeratedColumnTableModel< //
-					SectionTableColumns, ObjectKey, SectionRow, TraceSection> {
+	protected static class SectionTableModel extends DebouncedRowWrappedEnumeratedColumnTableModel< //
+			SectionTableColumns, ObjectKey, SectionRow, TraceSection> {
 
 		public SectionTableModel(PluginTool tool) {
 			super(tool, "Sections", SectionTableColumns.class, TraceSection::getObjectKey,
@@ -141,19 +139,19 @@ public class DebuggerLegacySectionsPanel extends JPanel {
 
 	private class SectionsListener extends TraceDomainObjectListener {
 		public SectionsListener() {
-			listenForUntyped(DomainObject.DO_OBJECT_RESTORED, e -> objectRestored());
+			listenForUntyped(DomainObjectEvent.RESTORED, e -> objectRestored());
 
 			/**
 			 * NOTE: No need for Module.ADDED here. A TraceModule is created empty, so when each
 			 * section is added, we'll get the call.
 			 */
-			listenFor(TraceModuleChangeType.CHANGED, this::moduleChanged);
-			listenFor(TraceModuleChangeType.LIFESPAN_CHANGED, this::moduleChanged);
-			listenFor(TraceModuleChangeType.DELETED, this::moduleDeleted);
+			listenFor(TraceEvents.MODULE_CHANGED, this::moduleChanged);
+			listenFor(TraceEvents.MODULE_LIFESPAN_CHANGED, this::moduleChanged);
+			listenFor(TraceEvents.MODULE_DELETED, this::moduleDeleted);
 
-			listenFor(TraceSectionChangeType.ADDED, this::sectionAdded);
-			listenFor(TraceSectionChangeType.CHANGED, this::sectionChanged);
-			listenFor(TraceSectionChangeType.DELETED, this::sectionDeleted);
+			listenFor(TraceEvents.SECTION_ADDED, this::sectionAdded);
+			listenFor(TraceEvents.SECTION_CHANGED, this::sectionChanged);
+			listenFor(TraceEvents.SECTION_DELETED, this::sectionDeleted);
 		}
 
 		private void objectRestored() {

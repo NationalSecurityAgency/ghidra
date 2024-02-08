@@ -52,7 +52,8 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.test.*;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.*;
-import ghidra.util.task.*;
+import ghidra.util.task.Task;
+import ghidra.util.task.TaskMonitor;
 
 public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -540,8 +541,8 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		VTMatch match = createMatchSetWithOneDataMatch(session, sourceAddress, destinationAddress);
 
 		// data type choices
-		controller.getOptions().setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE,
-			ReplaceDataChoices.EXCLUDE);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE, ReplaceDataChoices.EXCLUDE);
 
 		List<VTMatch> matches = new ArrayList<>();
 		matches.add(match);
@@ -573,8 +574,9 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		VTMatch match = createMatchSetWithOneDataMatch(session, sourceAddress, destinationAddress);
 
 		// data type choice
-		controller.getOptions().setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE,
-			ReplaceDataChoices.REPLACE_UNDEFINED_DATA_ONLY);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE,
+					ReplaceDataChoices.REPLACE_UNDEFINED_DATA_ONLY);
 
 		List<VTMatch> matches = new ArrayList<>();
 		matches.add(match);
@@ -602,8 +604,9 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		VTMatch match = createMatchSetWithOneDataMatch(session, sourceAddress, destinationAddress);
 
 		// data type choice
-		controller.getOptions().setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE,
-			ReplaceDataChoices.REPLACE_UNDEFINED_DATA_ONLY);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE,
+					ReplaceDataChoices.REPLACE_UNDEFINED_DATA_ONLY);
 
 		List<VTMatch> matches = new ArrayList<>();
 		matches.add(match);
@@ -644,8 +647,9 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		VTMatch match = createMatchSetWithOneDataMatch(session, sourceAddress, destinationAddress);
 
 		// data type choice
-		controller.getOptions().setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE,
-			ReplaceDataChoices.REPLACE_FIRST_DATA_ONLY);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE,
+					ReplaceDataChoices.REPLACE_FIRST_DATA_ONLY);
 
 		List<VTMatch> matches = new ArrayList<>();
 		matches.add(match);
@@ -666,7 +670,7 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		Address destinationAddress = addr("0x0100808c", destinationProgram);
 		Listing destinationListing = destinationProgram.getListing();
 
-		// force known values for the test 
+		// force known values for the test
 		DataType sourceDataType = new DWordDataType();
 		DataType destinationDataType1 = new StringDataType();
 		setData(sourceDataType, 4, sourceAddress, sourceProgram);
@@ -674,9 +678,10 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 
 		VTMatch match = createMatchSetWithOneDataMatch(session, sourceAddress, destinationAddress);
 
-		// data type choice 
-		controller.getOptions().setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE,
-			ReplaceDataChoices.REPLACE_FIRST_DATA_ONLY);
+		// data type choice
+		controller.getOptions()
+				.setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE,
+					ReplaceDataChoices.REPLACE_FIRST_DATA_ONLY);
 
 		List<VTMatch> matches = new ArrayList<>();
 		matches.add(match);
@@ -687,9 +692,9 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(VTAssociationStatus.ACCEPTED, status);
 		checkDataMatchDataType(sourceDataType, 4, destinationAddress, destinationListing);
 
-		// 
-		// Now test the unapply 
-		// 
+		//
+		// Now test the unapply
+		//
 		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
 		runTask(unapplyTask);
 
@@ -706,7 +711,7 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		Address destinationAddress = addr("0x0100808c", destinationProgram);
 		Listing destinationListing = destinationProgram.getListing();
 
-		// force known values for the test 
+		// force known values for the test
 		DataType sourceDataType = new DWordDataType();
 		DataType destinationDataType1 = new StringDataType();
 		setData(sourceDataType, 4, sourceAddress, sourceProgram);
@@ -715,9 +720,9 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 
 		VTMatch match = createMatchSetWithOneDataMatch(session, sourceAddress, destinationAddress);
 
-		// data type choice 
-		controller.getOptions().setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE,
-			ReplaceDataChoices.REPLACE_ALL_DATA);
+		// data type choice
+		controller.getOptions()
+				.setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE, ReplaceDataChoices.REPLACE_ALL_DATA);
 
 		List<VTMatch> matches = new ArrayList<>();
 		matches.add(match);
@@ -733,7 +738,7 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		int txID = program.startTransaction("Creating instruction");
 		boolean commit = false;
 		try {
-			// Create instruction here. 
+			// Create instruction here.
 			DisassembleCommand cmd = new DisassembleCommand(address,
 				new AddressSet(address, address.add(length)), false);
 			cmd.applyTo(program);
@@ -761,8 +766,8 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		VTMatch match = createMatchSetWithOneDataMatch(session, sourceAddress, destinationAddress);
 
 		// data type choice
-		controller.getOptions().setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE,
-			ReplaceDataChoices.REPLACE_ALL_DATA);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE, ReplaceDataChoices.REPLACE_ALL_DATA);
 
 		List<VTMatch> matches = new ArrayList<>();
 		matches.add(match);
@@ -830,8 +835,8 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("FUN_01003f9e", destinationFunction.getName());
 
 		// function name choices
-		controller.getOptions().setEnum(VTOptionDefines.FUNCTION_NAME,
-			FunctionNameChoices.REPLACE_DEFAULT_ONLY);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.FUNCTION_NAME, FunctionNameChoices.REPLACE_DEFAULT_ONLY);
 
 		List<VTMatch> matches = new ArrayList<>();
 		matches.add(match);
@@ -868,8 +873,8 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("Bar", destinationFunction.getName());
 
 		// function name choices
-		controller.getOptions().setEnum(VTOptionDefines.FUNCTION_NAME,
-			FunctionNameChoices.REPLACE_DEFAULT_ONLY);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.FUNCTION_NAME, FunctionNameChoices.REPLACE_DEFAULT_ONLY);
 
 		List<VTMatch> matches = new ArrayList<>();
 		matches.add(match);
@@ -897,8 +902,8 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("FUN_01003f9e", destinationFunction.getName());
 
 		// function name choices
-		controller.getOptions().setEnum(VTOptionDefines.FUNCTION_NAME,
-			FunctionNameChoices.REPLACE_ALWAYS);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.FUNCTION_NAME, FunctionNameChoices.REPLACE_ALWAYS);
 
 		List<VTMatch> matches = new ArrayList<>();
 		matches.add(match);
@@ -935,8 +940,8 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("Bar", destinationFunction.getName());
 
 		// function name choices
-		controller.getOptions().setEnum(VTOptionDefines.FUNCTION_NAME,
-			FunctionNameChoices.REPLACE_ALWAYS);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.FUNCTION_NAME, FunctionNameChoices.REPLACE_ALWAYS);
 
 		List<VTMatch> matches = new ArrayList<>();
 		matches.add(match);
@@ -1063,8 +1068,7 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		setComment(destinationProgram, commentAddress, CodeUnit.EOL_COMMENT, destinationComment);
 
 		MatchInfo matchInfo = controller.getMatchInfo(match);
-		Collection<VTMarkupItem> markupItems =
-			matchInfo.getAppliableMarkupItems(TaskMonitor.DUMMY);
+		Collection<VTMarkupItem> markupItems = matchInfo.getAppliableMarkupItems(TaskMonitor.DUMMY);
 
 		List<VTMarkupItem> itemsToApply = new ArrayList<>();
 		for (VTMarkupItem item : markupItems) {
@@ -1142,8 +1146,8 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		checkReturnType(dWordDataType, destinationFunction);
 
 		// function name choices
-		controller.getOptions().setEnum(VTOptionDefines.FUNCTION_SIGNATURE,
-			FunctionSignatureChoices.EXCLUDE);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.FUNCTION_SIGNATURE, FunctionSignatureChoices.EXCLUDE);
 
 		List<VTMatch> matches = new ArrayList<>();
 		matches.add(match);
@@ -1173,10 +1177,10 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		checkReturnType(dWordDataType, destinationFunction);
 
 		// function name choices
-		controller.getOptions().setEnum(VTOptionDefines.FUNCTION_SIGNATURE,
-			FunctionSignatureChoices.REPLACE);
-		controller.getOptions().setEnum(VTOptionDefines.FUNCTION_RETURN_TYPE,
-			ParameterDataTypeChoices.REPLACE);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.FUNCTION_SIGNATURE, FunctionSignatureChoices.REPLACE);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
 
 		List<VTMatch> matches = new ArrayList<>();
 		matches.add(match);
@@ -1211,10 +1215,10 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		setupParameters(sourceFunction, destinationFunction);
 
 		// function name choices
-		controller.getOptions().setEnum(VTOptionDefines.FUNCTION_SIGNATURE,
-			FunctionSignatureChoices.EXCLUDE);
-		controller.getOptions().setEnum(VTOptionDefines.PARAMETER_NAMES,
-			SourcePriorityChoices.EXCLUDE);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.FUNCTION_SIGNATURE, FunctionSignatureChoices.EXCLUDE);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.PARAMETER_NAMES, SourcePriorityChoices.EXCLUDE);
 		controller.getOptions().setEnum(VTOptionDefines.PARAMETER_COMMENTS, CommentChoices.EXCLUDE);
 
 		List<VTMatch> matches = new ArrayList<>();
@@ -1266,14 +1270,14 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		setupParameters(sourceFunction, destinationFunction);
 
 		// function name choices
-		controller.getOptions().setEnum(VTOptionDefines.FUNCTION_SIGNATURE,
-			FunctionSignatureChoices.REPLACE);
-		controller.getOptions().setEnum(VTOptionDefines.FUNCTION_RETURN_TYPE,
-			ParameterDataTypeChoices.REPLACE);
-		controller.getOptions().setEnum(VTOptionDefines.PARAMETER_DATA_TYPES,
-			ParameterDataTypeChoices.REPLACE);
-		controller.getOptions().setEnum(VTOptionDefines.PARAMETER_NAMES,
-			SourcePriorityChoices.EXCLUDE);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.FUNCTION_SIGNATURE, FunctionSignatureChoices.REPLACE);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.FUNCTION_RETURN_TYPE, ParameterDataTypeChoices.REPLACE);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.PARAMETER_DATA_TYPES, ParameterDataTypeChoices.REPLACE);
+		controller.getOptions()
+				.setEnum(VTOptionDefines.PARAMETER_NAMES, SourcePriorityChoices.EXCLUDE);
 		controller.getOptions().setEnum(VTOptionDefines.PARAMETER_COMMENTS, CommentChoices.EXCLUDE);
 
 		List<VTMatch> matches = new ArrayList<>();
@@ -2102,7 +2106,7 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			testTransactionID = db.startTransaction("Test Match Set Setup");
 			VTMatchSet matchSet = db.createMatchSet(
-				createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
+				createProgramCorrelator(db.getSourceProgram(), db.getDestinationProgram()));
 			for (AssociationPair associationPair : list) {
 				VTMatchInfo info = createRandomMatch(associationPair.getSourceAddress(),
 					associationPair.getDestinationAddress(), db);

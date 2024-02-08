@@ -26,10 +26,16 @@ import ghidra.program.model.listing.*;
 public class DWARFDataInstanceHelper {
 	private Program program;
 	private Listing listing;
+	private boolean allowTruncating = true;
 
 	public DWARFDataInstanceHelper(Program program) {
 		this.program = program;
 		this.listing = program.getListing();
+	}
+
+	public DWARFDataInstanceHelper setAllowTruncating(boolean b) {
+		this.allowTruncating = b;
+		return this;
 	}
 
 	private boolean isArrayDataTypeCompatibleWithExistingData(Array arrayDT, Data existingData) {
@@ -60,9 +66,12 @@ public class DWARFDataInstanceHelper {
 				return false;
 			}
 
-			if (arrayDT.getLength() <= existingData.getLength()) {
-				// if proposed array is smaller than in-memory array: ok
+			if (arrayDT.getLength() == existingData.getLength()) {
 				return true;
+			}
+			if (arrayDT.getLength() < existingData.getLength()) {
+				// if proposed array is smaller than in-memory array
+				return allowTruncating;
 			}
 
 			// if proposed array is longer than in-memory array, check if there is only 
@@ -105,7 +114,8 @@ public class DWARFDataInstanceHelper {
 				return false;
 			}
 		}
-		return true;
+		boolean isTruncating = structDT.getLength() < existingData.getLength();
+		return !isTruncating || allowTruncating;
 	}
 
 	private boolean isPointerDataTypeCompatibleWithExistingData(Pointer pdt, Data existingData) {
@@ -119,22 +129,27 @@ public class DWARFDataInstanceHelper {
 
 	private boolean isSimpleDataTypeCompatibleWithExistingData(DataType simpleDT,
 			Data existingData) {
-		// dataType will only be a base data type, not a typedef
-
+		// simpleDT will be int, char, float, or string data types
+		
+		boolean isSameLen = isSameLen(simpleDT, existingData);
 		DataType existingDT = existingData.getBaseDataType();
+
 		if (simpleDT instanceof CharDataType && existingDT instanceof StringDataType) {
 			// char overwriting a string
+			return isSameLen || allowTruncating;
+		}
+
+		if (Undefined.isUndefined(existingDT) && isSameLen) {
+			// some type overwriting an undefined
 			return true;
 		}
 
-		if (!simpleDT.getClass().isInstance(existingDT)) {
-			return false;
-		}
-		int dataTypeLen = simpleDT.getLength();
-		if (dataTypeLen > 0 && dataTypeLen != existingData.getLength()) {
-			return false;
-		}
-		return true;
+		return simpleDT.getClass().isInstance(existingDT) && isSameLen;
+	}
+
+	private boolean isSameLen(DataType dt, Data existingData) {
+		return existingData.getLength() == dt.getLength() ||
+			(dt instanceof Dynamic dyDT && dyDT.canSpecifyLength());
 	}
 
 	private boolean isEnumDataTypeCompatibleWithExistingData(Enum enumDT, Data existingData) {
@@ -192,8 +207,14 @@ public class DWARFDataInstanceHelper {
 			return true;
 		}
 
-		Data data = listing.getDataAt(address);
-		return data == null || isDataTypeCompatibleWithExistingData(dataType, data);
+		Data data = listing.getDataContaining(address);
+		if (data == null) {
+			return false; 	// will only get null if something is really screwed up
+		}
+		if (!data.getMinAddress().equals(address)) {
+			return false;  // was pointing to something in the middle of an existing data instance
+		}
+		return isDataTypeCompatibleWithExistingData(dataType, data);
 	}
 
 }

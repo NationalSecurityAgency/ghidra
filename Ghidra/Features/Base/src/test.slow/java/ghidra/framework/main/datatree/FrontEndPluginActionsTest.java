@@ -903,8 +903,8 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 		//
 
 		//@formatter:off
-		Object projectFileManager = getInstanceField("fileManager", df);
-		invokeInstanceMethod("setDomainObject", projectFileManager,
+		Object projectData = getInstanceField("projectData", df);
+		invokeInstanceMethod("setDomainObject", projectData,
 			new Class[] { String.class, 	DomainObjectAdapter.class },
 			new Object[] { path, program }
 				);
@@ -962,8 +962,7 @@ public class FrontEndPluginActionsTest extends AbstractGhidraHeadedIntegrationTe
 			}
 		}
 
-		return new FrontEndProjectTreeContext(null, null, paths, folderList, fileList, tree,
-			true);
+		return new FrontEndProjectTreeContext(null, null, paths, folderList, fileList, tree, true);
 	}
 
 }

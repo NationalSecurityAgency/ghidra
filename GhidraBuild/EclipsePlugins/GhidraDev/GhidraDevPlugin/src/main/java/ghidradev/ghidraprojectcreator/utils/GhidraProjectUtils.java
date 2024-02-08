@@ -357,9 +357,17 @@ public class GhidraProjectUtils {
 		// Get the project's existing linked Ghidra installation folder and path (it may not exist)
 		IFolder ghidraFolder =
 			javaProject.getProject().getFolder(GhidraProjectUtils.GHIDRA_FOLDER_NAME);
-		GhidraApplicationLayout oldGhidraLayout = ghidraFolder.exists()
-				? new GhidraApplicationLayout(ghidraFolder.getLocation().toFile())
-				: null;
+		IPath oldGhidraPath = null;
+		GhidraApplicationLayout oldGhidraLayout = null;
+		if (ghidraFolder.exists() ) {
+			oldGhidraPath = ghidraFolder.getLocation();
+			if (oldGhidraPath != null) {
+				File oldGhidraDir = oldGhidraPath.toFile();
+				if (oldGhidraDir.exists()) {
+					oldGhidraLayout = new GhidraApplicationLayout(oldGhidraDir);
+				}
+			}
+		}
 
 		// Loop through the project's existing classpath to decide what to keep (things that aren't
 		// related to Ghidra), and things to not keep (things that will be added fresh from the new
@@ -372,7 +380,7 @@ public class GhidraProjectUtils {
 			// We'll decide whether or not to keep it later.
 			if (entry.getEntryKind() == IClasspathEntry.CPE_CONTAINER &&
 				entry.getPath().toString().startsWith(JavaRuntime.JRE_CONTAINER)) {
-				if (oldGhidraLayout == null) {
+				if (oldGhidraPath == null) {
 					vmEntryCandidate = entry;
 				}
 			}
@@ -394,19 +402,17 @@ public class GhidraProjectUtils {
 					entryFolder = ResourcesPlugin.getWorkspace().getRoot().getFolder(entry.getPath());
 				}
 				if (entryFolder != null && entryFolder.isLinked() &&
-					inGhidraInstallation(oldGhidraLayout, entryFolder.getLocation())) {
-					String oldGhidraInstallPath =
-						oldGhidraLayout.getApplicationInstallationDir().getAbsolutePath();
+					inGhidraInstallation(oldGhidraPath, entryFolder.getLocation())) {
 					String origPath = entryFolder.getLocation().toString();
 					String newPath = ghidraInstallDir.getAbsolutePath() +
-						origPath.substring(oldGhidraInstallPath.length());
+						origPath.substring(oldGhidraPath.toString().length());
 					entryFolder.createLink(new Path(newPath), IResource.REPLACE, monitor);
 					classpathEntriesToKeep.add(JavaCore.newSourceEntry(entryFolder.getFullPath()));
 				}
 				// If it's anything else that doesn't live in the old Ghidra installation, keep it.
 				// Note that installed Ghidra extensions can live in the user settings directory
 				// which is outside the installation directory.  We don't want to keep these.
-				else if (!inGhidraInstallation(oldGhidraLayout, entry.getPath()) &&
+				else if (!inGhidraInstallation(oldGhidraPath, entry.getPath()) &&
 					!isGhidraExtension(oldGhidraLayout, entry.getPath())) {
 					classpathEntriesToKeep.add(entry);
 					ghidraLayout.getExtensionInstallationDirs();
@@ -459,18 +465,15 @@ public class GhidraProjectUtils {
 	}
 
 	/**
-	 * Checks to see if the given path is contained within the given Ghidra layout's installation 
-	 * directory.
+	 * Checks to see if the given path is contained within the given Ghidra installation path.
 	 * 
-	 * @param ghidraLayout A Ghidra layout that contains the installation directory to check.
+	 * @param ghidraInstallPath A Ghidra installation path.
 	 * @param path The path to check.
-	 * @return True if the given path is contained within the given Ghidra layout's installation 
-	 *   directory.
+	 * @return True if the given path is contained within the given Ghidra installation directory
+	 *   path.
 	 */
-	private static boolean inGhidraInstallation(GhidraApplicationLayout ghidraLayout, IPath path) {
-		return ghidraLayout != null &&
-			new Path(ghidraLayout.getApplicationInstallationDir().getAbsolutePath())
-					.isPrefixOf(path);
+	private static boolean inGhidraInstallation(IPath ghidraInstallPath, IPath path) {
+		return ghidraInstallPath != null && ghidraInstallPath.isPrefixOf(path);
 	}
 
 	/**

@@ -1,0 +1,21 @@
+<h1 id="bsim-filters">BSim Filters</h1>
+
+<p>There are a number of filters that can be applied to BSim queries, involving names, architectures, compilers, ingest dates, user-defined executable categories, and other attributes.</p>
+
+<p>Filters be can applied <em>server-side</em> or <em>client-side</em>.
+Server-side filters affect the query results sent to Ghidra from a BSim server and can be applied using the <strong>Filters</strong> drop-down in the BSim Search dialog.
+Client-side filters apply to the BSim Search results table and can be added and removed at will using the <strong>Filter Results</strong> icon <img src="images/exec.png" alt="Filter Results" />.
+However, to “undo” a server-side filter, you have to issue another BSim query without the filter.</p>
+
+<h2 id="exercise-filters">Exercise: Filters</h2>
+
+<ol>
+  <li>Select all functions in <code>postgres</code> and bring up the BSim Search dialog.</li>
+  <li>Apply an <strong>Executable name does not equal</strong> filter with <code>demangler_gnu_v2_41</code> as the name to exclude.</li>
+  <li>Perform the query and verify <code>demangler_gnu_v2_41</code> is not in the list of executables with matches.</li>
+  <li>Using the <strong>Search Info</strong> icon <img src="images/information.png" alt="Search Info" /> in the BSim Search Results toolbar, you can see the server-side filters applied to the query.
+Verify that this information is correct.</li>
+  <li>Using the <strong>Filter Results</strong> icon <img src="images/exec.png" alt="Filter Results" />, you can apply client-side filters to the query results. Experiment with applying and removing some client-side filters.</li>
+</ol>
+
+<p>Next Section: <a href="BSimTutorial_Scripting.html">Scripting and Visualization</a></p>

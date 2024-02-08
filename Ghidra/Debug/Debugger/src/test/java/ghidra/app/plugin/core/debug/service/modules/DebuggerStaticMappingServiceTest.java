@@ -24,7 +24,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import db.Transaction;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
 import ghidra.framework.model.DomainFile;
@@ -40,7 +40,7 @@ import ghidra.trace.model.modules.*;
 import ghidra.util.Msg;
 
 // Not technically a GUI test, but must be carried out in the context of a plugin tool
-public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebuggerTest {
 	// TODO: Make change listener more detailed, and test it, too!
 
 	protected DebuggerStaticMappingService mappingService;

@@ -81,20 +81,15 @@
     <P>This action is available from a module's or section's pop-up menu. It prompts the user to
     import the module from the local file system into Ghidra as a static image.</P>
 
-    <H3><A name="capture_symbols"></A>Capture Symbols</H3>
+    <H3><A name="auto_map"></A>Auto-Map</H3>
 
-    <P>This action is available when the current trace is associated with a live target and "at the
-    present," and at least one module is selected. It commands the recorder to copy all symbols
-    (that the debugger knows about) for the selected modules into the trace. These are often the
-    same symbols that Ghidra imports from the static image, anyway.</P>
-
-    <H3><A name="capture_types"></A>Capture Types</H3>
-
-    <P>This action is available when the current trace is associated with a live target and "at the
-    present," the target presents type information, and at least one module is selected. It
-    commands the recorder to copy and convert all types (that the debugger knows about) for the
-    selected modules to Ghidra data types in the trace. These are often the same types that Ghidra
-    imports from the static image, anyway.</P>
+    <P>This action is always available. It automatically maps trace memory to static images, using
+    Module, Section, or Region information. See the <A href="#map_modules">Map Modules</A>, <A
+    href="#map_sections">Map Sections</A>, and <A href=
+    "help/topics/DebuggerRegionsPlugin/DebuggerRegionsPlugin.html#map_regions">Map Regions</A>
+    actions for more information. When enabled, this action will automatically perform the
+    corresponding action whenever the relevant table is updated. By default, it automatically maps
+    using Modules.</P>
 
     <H3><A name="map_identically"></A>Map Identically</H3>
 
@@ -115,10 +110,9 @@
     <P>This action is available from the modules' or sections' pop-up menu. It searches the tool's
     open programs for the selected modules and proposes new mappings. The user can examine and
     tweak the proposal before confirming or canceling it. Typically, this is done automatically by
-    the <A href="help/topics/DebuggerBots/DebuggerBots.html#map_modules">Map Modules</A> debugger
-    bot. By selecting "Memorize" and confirming the dialog, the user can cause the mapper to re-use
-    the memorized mapping in future sessions. The memorized module name is saved to the program
-    database.</P>
+    the <A href="#auto_map">Auto-Map</A> action. By selecting "Memorize" and confirming the dialog,
+    the user can cause the mapper to re-use the memorized mapping in future sessions. The memorized
+    module name is saved to the program database.</P>
 
     <TABLE width="100%">
       <TBODY>
@@ -140,8 +134,7 @@
 
     <P>This action is analogous to the Map Modules action. It searches the tool's open programs for
     blocks matching the selected sections and proposes new mappings. Users who prefer this to Map
-    Modules should also consider using the <A href=
-    "help/topics/DebuggerBots/DebuggerBots.html#map_sections">Map Sections</A> debugger bot.</P>
+    Modules should also consider setting <A href="#auto_map">Auto-Map</A> to use Sections.</P>
 
     <TABLE width="100%">
       <TBODY>
@@ -173,6 +166,12 @@
 
     <P>This action is offered to resolve a "missing module" console message. It is equivalent to <A
     href="#map_module_to">Map Module To</A> on the missing module.</P>
+
+    <H3><A name="show_sections_table"></A>Show Sections Table</H3>
+
+    <P>This actions is always available. By default the sections table (bottom) is showing. Some
+    debuggers do not offer section information, and even for those that do, it can be expensive to
+    retrieve it. The visibility of the section table is controlled by toggling this action.</P>
 
     <H3><A name="filter_by_module"></A>Filter Sections by Module</H3>
 

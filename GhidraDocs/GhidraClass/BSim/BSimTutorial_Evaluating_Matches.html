@@ -1,0 +1,135 @@
+<h1 id="evaluating-matches-and-applying-information">Evaluating Matches and Applying Information</h1>
+
+<p>Summarizing what we’ve created over the last few sections, we now have:</p>
+<ol>
+  <li>A stripped executable (<code>postgres</code>).</li>
+  <li>A Ghidra project containing some object files <em>with debug information</em><sup id="fnref:1" role="doc-noteref"><a href="#fn:1" class="footnote" rel="footnote">1</a></sup> used to build that executable.</li>
+  <li>A BSim database containing the BSim signatures of the object files.</li>
+</ol>
+
+<p>We now demonstrate using BSim to help reverse engineer <code>postgres</code>.
+While doing this, we’ll showcase some of the features available in the decompiler diff view.</p>
+
+<h2 id="exercise-exploring-the-highlights">Exercise: Exploring the Highlights</h2>
+
+<p>Import and analyze the stripped <code>postgres</code> executable into the tutorial project, then perform the following steps:</p>
+
+<ol>
+  <li>Select all functions in <code>postgres</code> via <code>Ctrl-A</code> in the Listing.</li>
+  <li>Perform a BSim query of the database <code>example</code>.
+    <ul>
+      <li><strong>Note:</strong> We use the results of this query in the following few exercises. 
+ If you don’t close the BSim search results window, you won’t have to issue the query again.</li>
+    </ul>
+  </li>
+  <li>Sort the rows by confidence and find the row with <code>grouping_planner</code> as the matching function.
+The corresponding function in <code>postgres</code> should have a default name.</li>
+  <li>Examine this match in the side-by-side decompiler view.
+Note that the matching function has better data type information due to the debug information.</li>
+  <li>Q: Why does the placement of the <code>double</code> argument differ between the functions?
+    <details><summary>Answer</summary> Floating point values and integer/pointer values are passed in separate sets of registers.
+Neither ordering is wrong since both are consistent with the instructions of the function.
+The debug info records a specific signature (and ordering) for the function, which Ghidra applies.
+In the version without debug information, the decompiler used heuristics to determine the function's signature.</details>
+  </li>
+</ol>
+
+<p>For matches with a fair number of differences, the decompiler diff panel can get pretty colorful.
+Furthermore, as you click around, tokens will gain and lose highlights of various colors.
+It’s worth giving a brief explanation of when highlighting happens and what the different colors mean.
+Some terminology: if you click on a token in a decompiler panel, that token becomes the <em>focused token</em>.</p>
+
+<p><img src="images/decomp_diff.png" alt="Decomp Diff Window" /></p>
+
+<p>The colors:</p>
+
+<ul>
+  <li>Cyan is used to highlight differences between the two functions.</li>
+  <li>Pink is used to highlight the focused token and its match.</li>
+  <li>Lavender is used to highlight the focused token when it does not have a match.</li>
+  <li>Orange is used to highlight the focused token when it is ineligible for match.
+Certain tokens, such as whitespace tokens or tokens used in variable declarations, are never assigned matching tokens.</li>
+</ul>
+
+<h2 id="exercise-locking-and-unlocking-scrolling">Exercise: Locking and Unlocking Scrolling</h2>
+
+<p>By default, scrolling in the diff window is synchronized.
+This means that scrolling within one window will also scroll within the other window.
+In the decompiler diff window, scrolling works by matching one line in the left function with one line in the right function. 
+The two functions are aligned using those lines.
+Initially, the functions are aligned using the functions’ signatures.</p>
+
+<p>As you click around in either function, the “aligning lines” will change.
+If the focused token has a match, the scrolling is re-centered based on the lines containing the matched tokens.
+If the focused token does not have a match, the functions will be aligned using the closest token to the focused token which does have a match.</p>
+
+<p>Synchronized scrolling can be toggled using the <img src="images/lock.gif" alt="lock icon" /> and <img src="images/unlock.gif" alt="unlock icon" /> icons in the toolbar.</p>
+
+<ol>
+  <li>Experiment with locking and unlocking synchronized scrolling.</li>
+</ol>
+
+<h2 id="exercise-applying-signatures">Exercise: Applying Signatures</h2>
+
+<p>If you are satisfied with a given match, you might want to apply information about the matching function to the queried function.
+For example, you might want to apply the name or signature of the function.
+There are some subtleties which determine how much information is safe to apply.
+Hence there are three actions available under the <strong>Apply From Other</strong> menu when you right-click in the left panel:</p>
+
+<ol>
+  <li><strong>Function Name</strong> will apply the right function’s name and namespace to the function on the left.</li>
+  <li><strong>Function Signature</strong> will apply the name, namespace, and “skeleton” data types.
+ Structure and union data types are not transferred.
+ Instead, empty placeholder structures are created.</li>
+  <li><strong>Function Signature and Data Types</strong> will apply the name and signature with full data types.
+This may result in many data types being imported into the program (consider structures which refer to other structures).</li>
+</ol>
+
+<p><strong>Warning</strong>: You should be absolutely certain that the datatypes are the exactly the same before applying signatures and data types.
+If there have been any changes to a datatype’s definition, you could end up bringing incorrect datatypes into a program, even using BSim matches with 1.0 similarity.
+Applying full data types is also problematic for cross-architecture matches.</p>
+
+<ol>
+  <li>Since we know it’s safe, apply the function signature and data types to the left function.</li>
+</ol>
+
+<p>There are similarly-named actions available on rows of the Function Matches table in the BSim Search Results window.
+The <strong>Status</strong> column contains information about which rows have had their matches applied.</p>
+
+<h2 id="exercise-comparing-callees">Exercise: Comparing Callees</h2>
+
+<p>The token matching algorithm matches a function call in one program to a function call in another by considering the data flow into and out of the <code>CALL</code> instruction, but it does not do anything with the bodies of the callees.
+However, given a matched pair of calls, you can bring up a new comparison window for the callees with the <strong>Compare Matching Callees</strong> action.</p>
+
+<ol>
+  <li>Click in the left panel of the decompile diff window and press <code>Ctrl-F</code>.</li>
+  <li>Enter <code>FUN_</code> and search for matched function calls where the callee in the left window has a default name and the callee in the right window has a non-default name.</li>
+  <li>Right-click on one of the matched tokens and perform the <strong>Compare Matching Callees</strong> action.</li>
+  <li>In the comparison of the callees, apply the function signature and data types from the right function to the left function.
+Verify that the update is reflected in the decompiler diff view of the callers.</li>
+</ol>
+
+<h2 id="exercise-multiple-comparisons">Exercise: Multiple Comparisons</h2>
+
+<p>The function shown in a panel is controlled by a drop-down menu at the top of the panel.
+This can be useful when you’d like to evaluate multiple matches to a single function.</p>
+
+<p>Exercise:</p>
+
+<ol>
+  <li>In the BSim Search Results window, right-click on a table column name, select <strong>Add/Remove Columns</strong>, and enable the <strong>Matches</strong> column.</li>
+  <li>Find two functions in <code>postgres</code>, each of which has exactly two matches.
+Select the corresponding four rows in the matches table and perform the <strong>Compare Functions</strong> action.</li>
+  <li>Experiment with the drop-downs in each panel.</li>
+</ol>
+
+<p>In the next section, we discuss the Executable Results table.</p>
+
+<p>Next Section: <a href="BSimTutorial_Exe_Results.html">From Matching Functions to Matching Executables</a></p>
+<div class="footnotes" role="doc-endnotes">
+  <ol>
+    <li id="fn:1" role="doc-endnote">
+      <p>Having debug information isn’t necessary to use BSim (as we’ve seen in a previous exercise), but it is convenient. Note that applying debug information can change BSim signatures, which can negatively impact matching between functions with debug information and functions without it. <a href="#fnref:1" class="reversefootnote" role="doc-backlink">&#8617;</a></p>
+    </li>
+  </ol>
+</div>

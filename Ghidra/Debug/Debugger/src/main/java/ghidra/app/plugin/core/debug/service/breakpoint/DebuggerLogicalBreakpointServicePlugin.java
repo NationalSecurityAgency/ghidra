@@ -27,16 +27,19 @@ import generic.CatenatedCollection;
 import ghidra.app.events.ProgramClosedPluginEvent;
 import ghidra.app.events.ProgramOpenedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerControlService.ControlModeChangeListener;
-import ghidra.app.services.LogicalBreakpoint.State;
 import ghidra.async.SwingExecutorService;
-import ghidra.dbg.target.TargetBreakpointLocation;
-import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.util.PathUtils;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint.State;
+import ghidra.debug.api.breakpoint.LogicalBreakpointsChangeListener;
+import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.modules.DebuggerStaticMappingChangeListener;
+import ghidra.debug.api.target.Target;
+import ghidra.debug.api.target.TargetPublicationListener;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
@@ -46,13 +49,12 @@ import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceBreakpointChangeType;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.util.TraceAddressSpace;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.Msg;
-import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.datastruct.ListenerSet;
 
 @PluginInfo(
@@ -61,21 +63,12 @@ import ghidra.util.datastruct.ListenerSet;
 	category = PluginCategoryNames.DEBUGGER,
 	packageName = DebuggerPluginPackage.NAME,
 	status = PluginStatus.RELEASED,
-	eventsConsumed = {
-		ProgramOpenedPluginEvent.class,
-		ProgramClosedPluginEvent.class,
-		TraceOpenedPluginEvent.class,
-		TraceActivatedPluginEvent.class,
-		TraceInactiveCoordinatesPluginEvent.class,
-		TraceClosedPluginEvent.class,
-	},
-	servicesRequired = {
-		DebuggerTraceManagerService.class,
-		DebuggerStaticMappingService.class,
-	},
-	servicesProvided = {
-		DebuggerLogicalBreakpointService.class,
-	})
+	eventsConsumed = { ProgramOpenedPluginEvent.class, ProgramClosedPluginEvent.class,
+		TraceOpenedPluginEvent.class, TraceActivatedPluginEvent.class,
+		TraceInactiveCoordinatesPluginEvent.class, TraceClosedPluginEvent.class, },
+	servicesRequired = { DebuggerTraceManagerService.class,
+		DebuggerStaticMappingService.class, },
+	servicesProvided = { DebuggerLogicalBreakpointService.class, })
 public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		implements DebuggerLogicalBreakpointService {
 
@@ -167,15 +160,15 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		}
 	}
 
-	protected class TrackRecordersListener implements CollectionChangeListener<TraceRecorder> {
+	protected class TrackRecordersListener implements TargetPublicationListener {
 		@Override
-		public void elementAdded(TraceRecorder element) {
-			processChange(c -> evtTraceRecordingStarted(c, element), "recordingStarted");
+		public void targetPublished(Target target) {
+			processChange(c -> evtTraceTargetPublished(c, target), "targetPublished");
 		}
 
 		@Override
-		public void elementRemoved(TraceRecorder element) {
-			processChange(c -> evtTraceRecordingStopped(c, element), "recordingStopped");
+		public void targetWithdrawn(Target target) {
+			processChange(c -> evtTraceTargetWithdrawn(c, target), "targetWithdrawn");
 		}
 	}
 
@@ -204,11 +197,11 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 			// (Same in break provider for locations)
 			this.info = info;
 
-			listenForUntyped(DomainObject.DO_OBJECT_RESTORED, e -> objectRestored());
-			listenFor(TraceBreakpointChangeType.ADDED, this::breakpointAdded);
-			listenFor(TraceBreakpointChangeType.CHANGED, this::breakpointChanged);
-			listenFor(TraceBreakpointChangeType.LIFESPAN_CHANGED, this::breakpointLifespanChanged);
-			listenFor(TraceBreakpointChangeType.DELETED, this::breakpointDeleted);
+			listenForUntyped(DomainObjectEvent.RESTORED, e -> objectRestored());
+			listenFor(TraceEvents.BREAKPOINT_ADDED, this::breakpointAdded);
+			listenFor(TraceEvents.BREAKPOINT_CHANGED, this::breakpointChanged);
+			listenFor(TraceEvents.BREAKPOINT_LIFESPAN_CHANGED, this::breakpointLifespanChanged);
+			listenFor(TraceEvents.BREAKPOINT_DELETED, this::breakpointDeleted);
 		}
 
 		@Override
@@ -226,7 +219,8 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		}
 
 		private void breakpointAdded(TraceBreakpoint tb) {
-			if (!tb.getLifespan().contains(info.snap)) {
+			Lifespan span = tb.getLifespan();
+			if (span == null || !span.contains(info.snap)) {
 				return;
 			}
 			try {
@@ -251,13 +245,12 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 			}
 			catch (NoSuchElementException e) {
 				// TODO: This catch clause should not be necessary.
-				Msg.error(this,
-					"!!!! Object-based breakpoint emitted event without a spec: " + tb);
+				Msg.error(this, "!!!! Object-based breakpoint emitted event without a spec: " + tb);
 			}
 		}
 
-		private void breakpointLifespanChanged(TraceAddressSpace spaceIsNull,
-				TraceBreakpoint tb, Lifespan oldSpan, Lifespan newSpan) {
+		private void breakpointLifespanChanged(TraceAddressSpace spaceIsNull, TraceBreakpoint tb,
+				Lifespan oldSpan, Lifespan newSpan) {
 			// NOTE: User/script probably modified historical breakpoint
 			boolean isInOld = oldSpan.contains(info.snap);
 			boolean isInNew = newSpan.contains(info.snap);
@@ -291,12 +284,12 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		public ProgramBreakpointsListener(InfoPerProgram info) {
 			this.info = info;
 
-			listenForUntyped(DomainObject.DO_OBJECT_RESTORED, e -> objectRestored());
-			listenForUntyped(ChangeManager.DOCR_BOOKMARK_ADDED,
+			listenForUntyped(DomainObjectEvent.RESTORED, e -> objectRestored());
+			listenForUntyped(ProgramEvent.BOOKMARK_ADDED,
 				onBreakpoint(this::breakpointBookmarkAdded));
-			listenForUntyped(ChangeManager.DOCR_BOOKMARK_CHANGED,
+			listenForUntyped(ProgramEvent.BOOKMARK_CHANGED,
 				onBreakpoint(this::breakpointBookmarkChanged));
-			listenForUntyped(ChangeManager.DOCR_BOOKMARK_REMOVED,
+			listenForUntyped(ProgramEvent.BOOKMARK_REMOVED,
 				onBreakpoint(this::breakpointBookmarkDeleted));
 		}
 
@@ -320,8 +313,8 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 				ProgramChangeRecord pcrec = (ProgramChangeRecord) rec; // Eww
 				Bookmark pb = (Bookmark) pcrec.getObject(); // So gross
 				String bmType = pb.getTypeString();
-				if (LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE.equals(bmType) ||
-					LogicalBreakpoint.BREAKPOINT_DISABLED_BOOKMARK_TYPE.equals(bmType)) {
+				if (LogicalBreakpoint.ENABLED_BOOKMARK_TYPE.equals(bmType) ||
+					LogicalBreakpoint.DISABLED_BOOKMARK_TYPE.equals(bmType)) {
 					handler.accept(pb);
 				}
 			};
@@ -453,7 +446,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		final Trace trace;
 		final TraceBreakpointsListener breakpointListener;
 
-		TraceRecorder recorder;
+		Target target;
 		long snap = -1;
 
 		public InfoPerTrace(Trace trace) {
@@ -463,11 +456,11 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 			trace.addListener(breakpointListener);
 		}
 
-		protected void setRecorderAndSnap(TraceRecorder recorder, long snap, ChangeCollector c) {
-			if (this.recorder == recorder && this.snap == snap) {
+		protected void setTargetAndSnap(Target target, long snap, ChangeCollector c) {
+			if (this.target == target && this.snap == snap) {
 				return;
 			}
-			this.recorder = recorder;
+			this.target = target;
 			this.snap = snap;
 
 			for (InfoPerProgram info : programInfos.values()) {
@@ -483,7 +476,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 				Collection<TraceBreakpointKind> kinds) {
 			LoneLogicalBreakpoint lb =
 				new LoneLogicalBreakpoint(tool, trace, address, length, kinds);
-			lb.setRecorder(trace, recorder);
+			lb.setTarget(trace, target);
 			return lb;
 		}
 
@@ -501,9 +494,8 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		protected void forgetAllBreakpoints(RemoveCollector r) {
 			Collection<TraceBreakpoint> toForget = new ArrayList<>();
 			for (AddressRange range : trace.getBaseAddressFactory().getAddressSet()) {
-				toForget.addAll(trace
-						.getBreakpointManager()
-						.getBreakpointsIntersecting(Lifespan.ALL, range));
+				toForget.addAll(
+					trace.getBreakpointManager().getBreakpointsIntersecting(Lifespan.ALL, range));
 			}
 			for (TraceBreakpoint tb : toForget) {
 				forgetTraceBreakpoint(r, tb);
@@ -517,12 +509,11 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 			 * has changed or become invalid, or because it has no live breakpoint in target mode.
 			 */
 			ControlMode mode = getMode(trace);
-			for (Set<LogicalBreakpointInternal> set : List
-					.copyOf(breakpointsByAddress.values())) {
+			for (Set<LogicalBreakpointInternal> set : List.copyOf(breakpointsByAddress.values())) {
 				for (LogicalBreakpointInternal lb : Set.copyOf(set)) {
 					for (TraceBreakpoint tb : Set.copyOf(lb.getTraceBreakpoints(trace))) {
 						if (!mode.useEmulatedBreakpoints() &&
-							(recorder == null || recorder.getTargetBreakpoint(tb) == null)) {
+							(target == null || !target.isBreakpointValid(tb))) {
 							forgetTraceBreakpoint(r, tb);
 							continue;
 						}
@@ -548,7 +539,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 
 		protected void trackTraceBreakpoints(AddCollector a) {
 			ControlMode mode = getMode(trace);
-			if (!mode.useEmulatedBreakpoints() && recorder == null) {
+			if (!mode.useEmulatedBreakpoints() && target == null) {
 				return;
 			}
 			Collection<TraceBreakpoint> visible = new ArrayList<>();
@@ -573,8 +564,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		}
 
 		protected ProgramLocation computeStaticLocation(TraceBreakpoint tb) {
-			if (traceManager == null ||
-				!traceManager.getOpenTraces().contains(tb.getTrace())) {
+			if (traceManager == null || !traceManager.getOpenTraces().contains(tb.getTrace())) {
 				/**
 				 * Mapping service will throw an exception otherwise. NB: When trace is opened,
 				 * mapping service will fire events causing this service to coalesce affected
@@ -582,18 +572,24 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 				 */
 				return null;
 			}
+			Address minAddress = tb.getMinAddress();
+			if (minAddress == null) {
+				return null;
+			}
 			return mappingService.getOpenMappedLocation(
-				new DefaultTraceLocation(trace, null, Lifespan.at(snap), tb.getMinAddress()));
+				new DefaultTraceLocation(trace, null, Lifespan.at(snap), minAddress));
 		}
 
-		protected void trackTraceBreakpoint(AddCollector a, TraceBreakpoint tb,
-				ControlMode mode, boolean forceUpdate)
-				throws TrackedTooSoonException {
+		protected void trackTraceBreakpoint(AddCollector a, TraceBreakpoint tb, ControlMode mode,
+				boolean forceUpdate) throws TrackedTooSoonException {
 			if (!mode.useEmulatedBreakpoints() &&
-				(recorder == null || recorder.getTargetBreakpoint(tb) == null)) {
+				(target == null || !target.isBreakpointValid(tb))) {
 				return;
 			}
 			Address traceAddr = tb.getMinAddress();
+			if (traceAddr == null) {
+				return; // Will update via breakpointChanged when address is set
+			}
 			ProgramLocation progLoc = computeStaticLocation(tb);
 			LogicalBreakpointInternal lb;
 			if (progLoc != null) {
@@ -645,7 +641,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 					continue;
 				}
 				lb.setTraceAddress(ti.trace, loc.getAddress());
-				lb.setRecorder(ti.trace, ti.recorder);
+				lb.setTarget(ti.trace, ti.target);
 				ti.breakpointsByAddress.computeIfAbsent(loc.getAddress(), __ -> new HashSet<>())
 						.add(lb);
 			}
@@ -671,9 +667,8 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 				}
 			}
 
-			LogicalBreakpointInternal lb =
-				createLogicalBreakpoint(address, ProgramBreakpoint.lengthFromBookmark(pb),
-					ProgramBreakpoint.kindsFromBookmark(pb));
+			LogicalBreakpointInternal lb = createLogicalBreakpoint(address,
+				ProgramBreakpoint.lengthFromBookmark(pb), ProgramBreakpoint.kindsFromBookmark(pb));
 			set.add(lb);
 			a.added(lb);
 			return lb;
@@ -719,10 +714,10 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		protected void forgetAllBreakpoints(RemoveCollector r) {
 			Collection<Bookmark> marks = new ArrayList<>();
 			program.getBookmarkManager()
-					.getBookmarksIterator(LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE)
+					.getBookmarksIterator(LogicalBreakpoint.ENABLED_BOOKMARK_TYPE)
 					.forEachRemaining(marks::add);
 			program.getBookmarkManager()
-					.getBookmarksIterator(LogicalBreakpoint.BREAKPOINT_DISABLED_BOOKMARK_TYPE)
+					.getBookmarksIterator(LogicalBreakpoint.DISABLED_BOOKMARK_TYPE)
 					.forEachRemaining(marks::add);
 			for (Bookmark pb : marks) {
 				forgetProgramBreakpoint(r, pb, false);
@@ -737,8 +732,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 			 * NOTE: A change in the program (other than bookmark address), should not affect the
 			 * mapped trace addresses. That would require a change in the trace.
 			 */
-			for (Set<LogicalBreakpointInternal> set : List
-					.copyOf(breakpointsByAddress.values())) {
+			for (Set<LogicalBreakpointInternal> set : List.copyOf(breakpointsByAddress.values())) {
 				for (LogicalBreakpointInternal lb : Set.copyOf(set)) {
 					Bookmark pb = lb.getProgramBookmark();
 					if (pb == null) {
@@ -758,10 +752,10 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 
 		protected void trackAllProgramBreakpoints(AddCollector a) {
 			BookmarkManager bookmarks = program.getBookmarkManager();
-			trackProgramBreakpoints(a, IteratorUtils.asIterable(bookmarks
-					.getBookmarksIterator(LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE)));
-			trackProgramBreakpoints(a, IteratorUtils.asIterable(bookmarks
-					.getBookmarksIterator(LogicalBreakpoint.BREAKPOINT_DISABLED_BOOKMARK_TYPE)));
+			trackProgramBreakpoints(a, IteratorUtils.asIterable(
+				bookmarks.getBookmarksIterator(LogicalBreakpoint.ENABLED_BOOKMARK_TYPE)));
+			trackProgramBreakpoints(a, IteratorUtils.asIterable(
+				bookmarks.getBookmarksIterator(LogicalBreakpoint.DISABLED_BOOKMARK_TYPE)));
 		}
 
 		protected void trackProgramBreakpoints(AddCollector a, Iterable<Bookmark> bptMarks) {
@@ -788,8 +782,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 
 		private boolean isConsistentAfterRemoval(Bookmark pb, LogicalBreakpointInternal lb,
 				boolean forChange) {
-			Set<LogicalBreakpointInternal> present =
-				breakpointsByAddress.get(pb.getAddress());
+			Set<LogicalBreakpointInternal> present = breakpointsByAddress.get(pb.getAddress());
 			boolean shouldBeAbsent = lb.isEmpty() && !forChange;
 			boolean isAbsent = present == null || !present.contains(lb);
 			return shouldBeAbsent == isAbsent;
@@ -797,7 +790,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 	}
 
 	// @AutoServiceConsumed via method
-	private DebuggerModelService modelService;
+	private DebuggerTargetService targetService;
 	@AutoServiceConsumed
 	private DebuggerTraceManagerService traceManager;
 	// @AutoServiceConsumed via method
@@ -809,9 +802,9 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 
 	private final Object lock = new Object();
 	private final ListenerSet<LogicalBreakpointsChangeListener> changeListeners =
-		new ListenerSet<>(LogicalBreakpointsChangeListener.class);
+		new ListenerSet<>(LogicalBreakpointsChangeListener.class, true);
 
-	private final TrackRecordersListener recorderListener = new TrackRecordersListener();
+	private final TrackRecordersListener targetsListener = new TrackRecordersListener();
 	private final TrackMappingsListener mappingListener = new TrackMappingsListener();
 	private final TrackModesListener modeListener = new TrackModesListener();
 
@@ -829,7 +822,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 	protected void processChange(Consumer<ChangeCollector> processor, String description) {
 		executor.submit(() -> {
 			// Invoke change callbacks without the lock! (try must surround sync)
-			try (ChangeCollector c = new ChangeCollector(changeListeners.fire)) {
+			try (ChangeCollector c = new ChangeCollector(changeListeners.invoke())) {
 				synchronized (lock) {
 					processor.accept(c);
 				}
@@ -849,15 +842,13 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		for (Trace t : affectedTraces) {
 			InfoPerTrace info = traceInfos.get(t);
 			if (info != null) {
-				info.forgetMismappedBreakpoints(c.r, additionalTraces,
-					additionalPrograms);
+				info.forgetMismappedBreakpoints(c.r, additionalTraces, additionalPrograms);
 			}
 		}
 		for (Program p : affectedPrograms) {
 			InfoPerProgram info = programInfos.get(p);
 			if (info != null) {
-				info.forgetMismappedBreakpoints(c.r, additionalTraces,
-					additionalPrograms);
+				info.forgetMismappedBreakpoints(c.r, additionalTraces, additionalPrograms);
 			}
 		}
 		for (Trace t : additionalTraces) {
@@ -899,13 +890,13 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 	}
 
 	@AutoServiceConsumed
-	private void setModelService(DebuggerModelService modelService) {
-		if (this.modelService != null) {
-			this.modelService.removeTraceRecordersChangedListener(recorderListener);
+	private void setModelService(DebuggerTargetService targetService) {
+		if (this.targetService != null) {
+			this.targetService.removeTargetPublicationListener(targetsListener);
 		}
-		this.modelService = modelService;
-		if (this.modelService != null) {
-			this.modelService.addTraceRecordersChangedListener(recorderListener);
+		this.targetService = targetService;
+		if (this.targetService != null) {
+			this.targetService.addTargetPublicationListener(targetsListener);
 		}
 	}
 
@@ -959,13 +950,13 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		// The mapping removals, if any, will clean up related traces
 	}
 
-	private void doTrackTrace(ChangeCollector c, Trace trace, TraceRecorder recorder, long snap) {
+	private void doTrackTrace(ChangeCollector c, Trace trace, Target target, long snap) {
 		InfoPerTrace info = traceInfos.get(trace);
 		if (info == null) {
 			info = new InfoPerTrace(trace);
 			traceInfos.put(trace, info);
 		}
-		info.setRecorderAndSnap(recorder, snap, c);
+		info.setTargetAndSnap(target, snap, c);
 	}
 
 	private void doUntrackTrace(ChangeCollector c, Trace trace) {
@@ -986,17 +977,17 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		}
 	}
 
-	private void evtTraceRecordingStarted(ChangeCollector c, TraceRecorder recorder) {
-		Trace trace = recorder.getTrace();
+	private void evtTraceTargetPublished(ChangeCollector c, Target target) {
+		Trace trace = target.getTrace();
 		if (!traceManager.getOpenTraces().contains(trace)) {
 			return;
 		}
 		long snap = traceManager.getCurrentFor(trace).getSnap();
-		doTrackTrace(c, trace, recorder, snap);
+		doTrackTrace(c, trace, target, snap);
 	}
 
-	private void evtTraceRecordingStopped(ChangeCollector c, TraceRecorder recorder) {
-		Trace trace = recorder.getTrace();
+	private void evtTraceTargetWithdrawn(ChangeCollector c, Target target) {
+		Trace trace = target.getTrace();
 		if (!traceManager.getOpenTraces().contains(trace)) {
 			return;
 		}
@@ -1006,9 +997,9 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 
 	private void traceOpened(Trace trace) {
 		processChange(c -> {
-			TraceRecorder recorder = modelService == null ? null : modelService.getRecorder(trace);
+			Target target = targetService == null ? null : targetService.getTarget(trace);
 			long snap = traceManager.getCurrentFor(trace).getSnap();
-			doTrackTrace(c, trace, recorder, snap);
+			doTrackTrace(c, trace, target, snap);
 		}, "traceOpened");
 	}
 
@@ -1016,7 +1007,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		if (coordinates.getTrace() == null) {
 			return;
 		}
-		processChange(c -> doTrackTrace(c, coordinates.getTrace(), coordinates.getRecorder(),
+		processChange(c -> doTrackTrace(c, coordinates.getTrace(), coordinates.getTarget(),
 			coordinates.getSnap()), "coordinatesActivated");
 	}
 
@@ -1106,7 +1097,11 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 	public LogicalBreakpoint getBreakpoint(TraceBreakpoint bpt) {
 		Trace trace = bpt.getTrace();
 		synchronized (lock) {
-			for (LogicalBreakpoint lb : getBreakpointsAt(trace, bpt.getMinAddress())) {
+			Address address = bpt.getMinAddress();
+			if (address == null) {
+				return null;
+			}
+			for (LogicalBreakpoint lb : getBreakpointsAt(trace, address)) {
 				if (lb.getTraceBreakpoints(trace).contains(bpt)) {
 					return lb;
 				}
@@ -1117,8 +1112,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 
 	@Override
 	public Set<LogicalBreakpoint> getBreakpointsAt(ProgramLocation loc) {
-		return DebuggerLogicalBreakpointService.programOrTrace(loc,
-			this::getBreakpointsAt,
+		return DebuggerLogicalBreakpointService.programOrTrace(loc, this::getBreakpointsAt,
 			this::getBreakpointsAt);
 	}
 
@@ -1154,7 +1148,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 					continue;
 				}
 				lb.setTraceAddress(ti.trace, loc.getAddress());
-				lb.setRecorder(ti.trace, ti.recorder);
+				lb.setTarget(ti.trace, ti.target);
 			}
 		}
 		return lb;
@@ -1171,21 +1165,21 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 	public CompletableFuture<Void> placeBreakpointAt(Trace trace, Address address, long length,
 			Collection<TraceBreakpointKind> kinds, String name) {
 		long snap = traceManager.getCurrentFor(trace).getSnap();
-		TraceRecorder recorder = modelService == null ? null : modelService.getRecorder(trace);
+		Target target = targetService == null ? null : targetService.getTarget(trace);
 
 		ProgramLocation staticLocation = mappingService.getOpenMappedLocation(
 			new DefaultTraceLocation(trace, null, Lifespan.at(snap), address));
 		if (staticLocation == null) {
 			LoneLogicalBreakpoint lb =
 				new LoneLogicalBreakpoint(tool, trace, address, length, kinds);
-			lb.setRecorder(trace, recorder);
+			lb.setTarget(trace, target);
 			return lb.enableForTrace(trace);
 		}
 
 		MappedLogicalBreakpoint lb = new MappedLogicalBreakpoint(tool, staticLocation.getProgram(),
 			staticLocation.getByteAddress(), length, kinds);
 		lb.setTraceAddress(trace, address);
-		lb.setRecorder(trace, recorder);
+		lb.setTarget(trace, target);
 		lb.enableForProgramWithName(name);
 		return lb.enableForTrace(trace);
 	}
@@ -1249,38 +1243,32 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 	}
 
 	private ControlMode getMode(Trace trace) {
-		return controlService == null
-				? ControlMode.DEFAULT
-				: controlService.getCurrentMode(trace);
+		return controlService == null ? ControlMode.DEFAULT : controlService.getCurrentMode(trace);
+	}
+
+	interface TargetBreakpointConsumer {
+		void accept(BreakpointActionSet actions, Target target, TraceBreakpoint tb);
 	}
 
 	private void planActOnLoc(BreakpointActionSet actions, TraceBreakpoint tb,
-			BiConsumer<BreakpointActionSet, TargetBreakpointLocation> targetLocConsumer,
+			TargetBreakpointConsumer targetBptConsumer,
 			BiConsumer<BreakpointActionSet, TraceBreakpoint> emuLocConsumer) {
 		ControlMode mode = getMode(tb.getTrace());
 		if (mode.useEmulatedBreakpoints()) {
 			planActOnLocEmu(actions, tb, emuLocConsumer);
 		}
 		else {
-			planActOnLocTarget(actions, tb, targetLocConsumer);
+			planActOnLocTarget(actions, tb, targetBptConsumer);
 		}
 	}
 
 	private void planActOnLocTarget(BreakpointActionSet actions, TraceBreakpoint tb,
-			BiConsumer<BreakpointActionSet, TargetBreakpointLocation> targetLocConsumer) {
-		TraceRecorder recorder =
-			modelService == null ? null : modelService.getRecorder(tb.getTrace());
-		if (recorder == null) {
+			TargetBreakpointConsumer targetBptConsumer) {
+		Target target = targetService == null ? null : targetService.getTarget(tb.getTrace());
+		if (target == null) {
 			return;
 		}
-		List<String> path = PathUtils.parse(tb.getPath());
-		TargetObject object = recorder.getTarget().getModel().getModelObject(path);
-		if (!(object instanceof TargetBreakpointLocation)) {
-			Msg.error(this, tb.getPath() + " is not a target breakpoint location");
-			return;
-		}
-		TargetBreakpointLocation loc = (TargetBreakpointLocation) object;
-		targetLocConsumer.accept(actions, loc);
+		targetBptConsumer.accept(actions, target, tb);
 	}
 
 	private void planActOnLocEmu(BreakpointActionSet actions, TraceBreakpoint tb,
@@ -1289,7 +1277,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 	}
 
 	protected CompletableFuture<Void> actOnLocs(Collection<TraceBreakpoint> col,
-			BiConsumer<BreakpointActionSet, TargetBreakpointLocation> targetLocConsumer,
+			TargetBreakpointConsumer targetBptConsumer,
 			BiConsumer<BreakpointActionSet, TraceBreakpoint> emuLocConsumer,
 			Consumer<LogicalBreakpoint> progConsumer) {
 		BreakpointActionSet actions = new BreakpointActionSet();
@@ -1298,33 +1286,27 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 			if (col.containsAll(lb.getTraceBreakpoints())) {
 				progConsumer.accept(lb);
 			}
-			planActOnLoc(actions, tb, targetLocConsumer, emuLocConsumer);
+			planActOnLoc(actions, tb, targetBptConsumer, emuLocConsumer);
 		}
 		return actions.execute();
 	}
 
 	@Override
 	public CompletableFuture<Void> enableLocs(Collection<TraceBreakpoint> col) {
-		return actOnLocs(col,
-			BreakpointActionSet::planEnableTarget,
-			BreakpointActionSet::planEnableEmu,
-			LogicalBreakpoint::enableForProgram);
+		return actOnLocs(col, BreakpointActionSet::planEnableTarget,
+			BreakpointActionSet::planEnableEmu, LogicalBreakpoint::enableForProgram);
 	}
 
 	@Override
 	public CompletableFuture<Void> disableLocs(Collection<TraceBreakpoint> col) {
-		return actOnLocs(col,
-			BreakpointActionSet::planDisableTarget,
-			BreakpointActionSet::planDisableEmu,
-			LogicalBreakpoint::disableForProgram);
+		return actOnLocs(col, BreakpointActionSet::planDisableTarget,
+			BreakpointActionSet::planDisableEmu, LogicalBreakpoint::disableForProgram);
 	}
 
 	@Override
 	public CompletableFuture<Void> deleteLocs(Collection<TraceBreakpoint> col) {
-		return actOnLocs(col,
-			BreakpointActionSet::planDeleteTarget,
-			BreakpointActionSet::planDeleteEmu,
-			lb -> {
+		return actOnLocs(col, BreakpointActionSet::planDeleteTarget,
+			BreakpointActionSet::planDeleteEmu, lb -> {
 				// Never delete bookmark when user requests deleting locations
 			});
 	}

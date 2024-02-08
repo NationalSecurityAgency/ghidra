@@ -189,7 +189,10 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 		GdbModelTargetInferior inf = inferiors.getTargetInferior(thread.getInferior());
 		GdbModelTargetThread t = inf.threads.getTargetThread(thread);
 		if (frame == null) {
-			setFocus(t);
+			GdbModelSelectableObject curFocus = getFocus();
+			if (curFocus != null && !PathUtils.isAncestor(t.getPath(), curFocus.getPath())) {
+				setFocus(t);
+			}
 			return;
 		}
 		GdbModelTargetStackFrame f = t.stack.getTargetFrame(frame);
@@ -242,7 +245,7 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 		catch (IOException e) {
 			Msg.error(this, "Could not interrupt", e);
 		}
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	@Override
@@ -275,7 +278,7 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 			}
 			cur = cur.getParent();
 		}
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 
 	}
 
@@ -294,11 +297,11 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 			if (cur instanceof GdbModelSelectableObject) {
 				GdbModelSelectableObject sel = (GdbModelSelectableObject) cur;
 				setFocus(sel);
-				return AsyncUtils.NIL;
+				return AsyncUtils.nil();
 			}
 			cur = cur.getParent();
 		}
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	protected void invalidateMemoryAndRegisterCaches() {

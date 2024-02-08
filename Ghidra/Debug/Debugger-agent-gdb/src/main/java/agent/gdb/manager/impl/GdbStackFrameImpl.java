@@ -106,8 +106,41 @@ public class GdbStackFrameImpl implements GdbStackFrame {
 
 	@Override
 	public CompletableFuture<Void> setActive(boolean internal) {
-		return manager
-				.execute(new GdbSetActiveThreadCommand(manager, thread.getId(), level, internal));
+		/**
+		 * Since gdb-13.1, it seems there is no longer a way to select the thread and frame in a
+		 * single command. I think it's a bug, but it's hard to tell what their intended behavior
+		 * is. Take the following example MI command:
+		 * 
+		 * <pre>
+		 * -interpreter-exec --thread 1 console "frame 2"
+		 * </pre>
+		 * 
+		 * This will produce console output and an MI event indicating a frame context change:
+		 * 
+		 * <pre>
+		 * ~"#2 0x... in ... ()\n"
+		 * =thread-selected,id="1",frame={level="2",...}
+		 * </pre>
+		 * 
+		 * However, the console has not actually changed context. If we then issue the {@code frame}
+		 * command, we get:
+		 * 
+		 * <pre>
+		 * &"frame\n" ~"#0 0x... in read () from /.../libc.so.6\n"
+		 * ^done
+		 * (gdb)
+		 * </pre>
+		 * 
+		 * I'd expect either the context change to persist, or there not to be an event reported.
+		 * Until or unless this is fixed, we will have to select the thread using
+		 * {@code -thread-select}, then the frame using {@code -interpreter exec console "frame"}.
+		 * Even if it is fixed, because we code to the least common denominator, we'll probably
+		 * leave the two-command approach in place.
+		 */
+		return thread.setActive(true).thenCompose(__ -> {
+			return manager.execute(
+				new GdbSetActiveFrameCommand(manager, null, level, internal));
+		});
 	}
 
 	@Override

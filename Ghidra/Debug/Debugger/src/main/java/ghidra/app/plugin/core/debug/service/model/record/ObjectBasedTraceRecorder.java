@@ -22,11 +22,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import db.Transaction;
-import ghidra.app.plugin.core.debug.mapping.*;
-import ghidra.app.plugin.core.debug.service.model.DebuggerModelServicePlugin;
+import ghidra.app.plugin.core.debug.mapping.ObjectBasedDebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.service.model.PermanentTransactionExecutor;
-import ghidra.app.services.TraceRecorder;
-import ghidra.app.services.TraceRecorderListener;
 import ghidra.async.AsyncFence;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.AnnotatedDebuggerAttributeListener;
@@ -38,6 +35,8 @@ import ghidra.dbg.target.TargetEventScope.TargetEventType;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.util.PathMatcher;
 import ghidra.dbg.util.PathUtils;
+import ghidra.debug.api.model.*;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
@@ -53,6 +52,7 @@ import ghidra.trace.model.modules.*;
 import ghidra.trace.model.stack.TraceObjectStackFrame;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
@@ -81,7 +81,7 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	protected final ListenerForRecord listenerForRecord;
 
 	protected final ListenerSet<TraceRecorderListener> listeners =
-		new ListenerSet<>(TraceRecorderListener.class);
+		new ListenerSet<>(TraceRecorderListener.class, true);
 
 	// TODO: I don't like this here. Should ask the model, not the recorder.
 	protected TargetObject curFocus;
@@ -270,8 +270,8 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 		}
 	}
 
-	public ObjectBasedTraceRecorder(DebuggerModelServicePlugin service, Trace trace,
-			TargetObject target, ObjectBasedDebuggerTargetTraceMapper mapper) {
+	public ObjectBasedTraceRecorder(PluginTool tool, Trace trace, TargetObject target,
+			ObjectBasedDebuggerTargetTraceMapper mapper) {
 		trace.addConsumer(this);
 		this.trace = trace;
 		this.target = target;
@@ -295,7 +295,7 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 		// TODO: Make this method synchronous?
 		timeRecorder.createSnapshot("Started recording " + target.getModel(), null, null);
 		target.getModel().addModelListener(listenerForRecord, true);
-		return AsyncUtils.NIL;
+		return AsyncUtils.nil();
 	}
 
 	@Override
@@ -358,6 +358,11 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	@Override
 	public TraceObject getTraceObject(TargetObject obj) {
 		return objectRecorder.toTrace(obj);
+	}
+
+	@Override
+	public TargetObject getTargetObject(TraceObjectKeyPath path) {
+		return target.getModel().getModelObject(path.getKeyList());
 	}
 
 	@Override
@@ -533,7 +538,7 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 		 * what communicates that convention?
 		 */
 		if (regContainer == null) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return regContainer.resync();
 	}
@@ -593,7 +598,7 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 			int frameLevel, Map<Register, RegisterValue> values) {
 		TargetRegisterContainer regContainer = getTargetRegisterContainer(thread, frameLevel);
 		if (regContainer == null) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		Map<TargetRegisterBank, Map<TargetRegister, byte[]>> writesByBank = new HashMap<>();
 		for (RegisterValue rv : values.values()) {
@@ -800,11 +805,11 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	}
 
 	protected void fireSnapAdvanced(long key) {
-		listeners.fire.snapAdvanced(this, key);
+		listeners.invoke().snapAdvanced(this, key);
 	}
 
 	protected void fireRecordingStopped() {
-		listeners.fire.recordingStopped(this);
+		listeners.invoke().recordingStopped(this);
 	}
 
 	// TODO: Deprecate/remove the other callbacks: registerBankMapped, *accessibilityChanged

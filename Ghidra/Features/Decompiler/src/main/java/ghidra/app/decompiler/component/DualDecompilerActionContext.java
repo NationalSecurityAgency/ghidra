@@ -18,17 +18,17 @@ package ghidra.app.decompiler.component;
 import java.awt.Component;
 
 import docking.ComponentProvider;
-import docking.DefaultActionContext;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import ghidra.app.context.RestrictedAddressSetContext;
+import ghidra.app.util.viewer.util.CodeComparisonActionContext;
 import ghidra.app.util.viewer.util.CodeComparisonPanel;
-import ghidra.app.util.viewer.util.CodeComparisonPanelActionContext;
+import ghidra.program.model.listing.Function;
 
 /**
  * Action context for a dual decompiler panel.
  */
-public class DualDecompilerActionContext extends DefaultActionContext
-		implements RestrictedAddressSetContext, CodeComparisonPanelActionContext {
+public class DualDecompilerActionContext extends CodeComparisonActionContext
+		implements RestrictedAddressSetContext {
 
 	private CodeComparisonPanel<? extends FieldPanelCoordinator> codeComparisonPanel = null;
 
@@ -55,5 +55,21 @@ public class DualDecompilerActionContext extends DefaultActionContext
 	@Override
 	public CodeComparisonPanel<? extends FieldPanelCoordinator> getCodeComparisonPanel() {
 		return codeComparisonPanel;
+	}
+
+	@Override
+	public Function getSourceFunction() {
+		boolean leftHasFocus = codeComparisonPanel.leftPanelHasFocus();
+
+		return leftHasFocus ? codeComparisonPanel.getRightFunction()
+				: codeComparisonPanel.getLeftFunction();
+	}
+
+	@Override
+	public Function getTargetFunction() {
+		boolean leftHasFocus = codeComparisonPanel.leftPanelHasFocus();
+
+		return leftHasFocus ? codeComparisonPanel.getLeftFunction()
+				: codeComparisonPanel.getRightFunction();
 	}
 }

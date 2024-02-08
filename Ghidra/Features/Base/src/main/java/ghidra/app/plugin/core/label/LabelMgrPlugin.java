@@ -62,6 +62,7 @@ public class LabelMgrPlugin extends Plugin {
 		setupActions();
 
 		addEditDialog = new AddEditDialog("", tool);
+		addEditDialog.setReusable(true);
 	}
 
 	private void setupActions() {

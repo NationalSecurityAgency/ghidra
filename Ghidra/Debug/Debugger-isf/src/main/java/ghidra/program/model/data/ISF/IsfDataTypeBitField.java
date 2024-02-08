@@ -16,9 +16,9 @@
 package ghidra.program.model.data.ISF;
 
 import ghidra.program.model.data.BitFieldDataType;
-import ghidra.program.model.data.ISF.IsfDataTypeWriter.Exclude;
+import ghidra.program.model.data.ISF.AbstractIsfWriter.Exclude;
 
-public class IsfDataTypeBitField implements IsfObject {
+public class IsfDataTypeBitField extends AbstractIsfObject {
 
 	public String kind;
 	public Integer bit_length;
@@ -31,6 +31,7 @@ public class IsfDataTypeBitField implements IsfObject {
 	private int storage_size;
 
 	public IsfDataTypeBitField(BitFieldDataType bf, int componentOffset, IsfObject typeObj) {
+		super(bf);
 		kind = IsfUtilities.getKind(bf);
 		bit_length = bf.getBitSize();
 		bit_offset = bf.getBitOffset();

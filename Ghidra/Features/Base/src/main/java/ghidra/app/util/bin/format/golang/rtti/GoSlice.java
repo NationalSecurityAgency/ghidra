@@ -21,14 +21,26 @@ import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.BinaryReader.ReaderFunction;
+import ghidra.app.util.bin.format.golang.rtti.types.GoSliceType;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
 
+/**
+ * A structure that represents a golang slice instance (similar to a java ArrayList).  Not to be
+ * confused with a {@link GoSliceType}, which is RTTI info about a slice type.
+ * <p>
+ * An initialized static image of a slice found in a go binary will tend to have len==cap (full).
+ * <p>
+ * Like java's type erasure for generics, a golang slice instance does not have type information 
+ * about the elements found in the array blob (nor the size of the blob).
+ * <p>
+ */
 @StructureMapping(structureName = "runtime.slice")
-public class GoSlice {
+public class GoSlice implements StructureMarkup<GoSlice> {
 
 	@ContextField
 	private GoRttiMapper programContext;
@@ -37,25 +49,50 @@ public class GoSlice {
 	private StructureContext<GoSlice> context;
 
 	@FieldMapping
-	private long array;
+	private long array;	// pointer to data
 	@FieldMapping
-	private long len;
+	private long len;	// number of active elements
 	@FieldMapping
-	private long cap;
+	private long cap;	// number of elements that can be stored in the array
 
 	public GoSlice() {
 		// emtpy
 	}
 
-	public GoSlice(long array, long len, long cap) {
-		this(array, len, cap, null);
-	}
-
+	/**
+	 * Creates an artificial slice instance using the supplied values.
+	 * 
+	 * @param array offset of the slice's data
+	 * @param len number of initialized elements in the slice
+	 * @param cap total number of elements in the data array
+	 * @param programContext the go binary that contains the slice
+	 */
 	public GoSlice(long array, long len, long cap, GoRttiMapper programContext) {
 		this.array = array;
 		this.len = len;
 		this.cap = cap;
 		this.programContext = programContext;
+	}
+
+	/**
+	 * Returns the {@link DataType} of elements of this slice, as detected by the type information
+	 * contained in the struct field that contains this slice.
+	 * <p>
+	 * Returns null if this slice instance was not nested (contained) in a structure.  If the
+	 * slice data type wasn't a specialized slice data type (it was "runtime.slice" instead of
+	 * "[]element"), void data type will be returned.
+	 * 
+	 * @return data type of the elements of this slice, if possible, or null
+	 */
+	public DataType getElementDataType() {
+		DataType dt = context != null ? context.getContainingFieldDataType() : null;
+		if (dt != null && dt instanceof Structure struct && struct.getNumDefinedComponents() > 0) {
+			int elementPtrFieldOrdinal = 0;	// hacky hard coded knowledge that the pointer to the data is the first element of the slice struct
+			DataTypeComponent elementPtrDTC = struct.getComponent(elementPtrFieldOrdinal);
+			DataType elementPtrDT = elementPtrDTC.getDataType();
+			return elementPtrDT instanceof Pointer ptrDT ? ptrDT.getDataType() : null;
+		}
+		return null;
 	}
 
 	/**
@@ -67,13 +104,25 @@ public class GoSlice {
 	 * @return new {@link GoSlice} instance that is limited to a portion of this slice
 	 */
 	public GoSlice getSubSlice(long startElement, long elementCount, long elementSize) {
-		return new GoSlice(array + (startElement * elementSize), elementCount, elementCount, programContext);
+		return new GoSlice(array + (startElement * elementSize), elementCount, elementCount,
+			programContext);
 	}
 
+	/**
+	 * Returns true if this slice seems valid.
+	 * 
+	 * @return boolean true if array blob is a valid memory location
+	 */
 	public boolean isValid() {
 		return array != 0 && isValid(1);
 	}
 
+	/**
+	 * Returns true if this slice seems valid.
+	 * 
+	 * @param elementSize size of elements in this slice 
+	 * @return boolean true if array blob is a valid memory location
+	 */
 	public boolean isValid(int elementSize) {
 		try {
 			Memory memory = programContext.getProgram().getMemory();
@@ -86,35 +135,83 @@ public class GoSlice {
 		}
 	}
 
+	/**
+	 * Returns address of the array blob.
+	 * 
+	 * @return location of the array blob
+	 */
 	public long getArrayOffset() {
 		return array;
 	}
 
+	/**
+	 * Returns the address of the array blob
+	 * @return address of the array blob
+	 */
 	public Address getArrayAddress() {
 		return programContext.getDataAddress(array);
 	}
 
+	/**
+	 * Returns the address of the end of the array.
+	 * 
+	 * @param elementClass structure mapped class
+	 * @return location of the end of the array blob
+	 */
 	public long getArrayEnd(Class<?> elementClass) {
 		StructureMappingInfo<?> elementSMI =
 			context.getDataTypeMapper().getStructureMappingInfo(elementClass);
-		int elementLength = elementSMI.getStructureLength();
-		return array + len * elementLength;
+		return getElementOffset(elementSMI.getStructureLength(), len);
 	}
 
+	/**
+	 * Returns the number of initialized elements 
+	 * 
+	 * @return number of initialized elements
+	 */
 	public long getLen() {
 		return len;
 	}
 
+	/**
+	 * Returns the number of elements allocated in the array blob. (capacity)
+	 * 
+	 * @return number of allocated elements in the array blob
+	 */
 	public long getCap() {
 		return cap;
 	}
 
+	/**
+	 * Returns true if this slice's element count is equal to the slice's capacity.  This is
+	 * typically true for all slices that are static.
+	 * 
+	 * @return boolean true if this slice's element count is equal to capacity
+	 */
 	public boolean isFull() {
 		return len == cap;
 	}
 
-	public boolean isOffsetWithinData(long offset, int sizeofElement) {
-		return array <= offset && offset < array + (cap * sizeofElement);
+	/**
+	 * Returns true if this slice contains the specified offset.
+	 * 
+	 * @param offset memory offset in question
+	 * @param sizeofElement size of elements in this slice
+	 * @return true if this slice contains the specified offset
+	 */
+	public boolean containsOffset(long offset, int sizeofElement) {
+		return array <= offset && offset < getElementOffset(sizeofElement, cap);
+	}
+
+	/**
+	 * Returns the offset of the specified element
+	 * 
+	 * @param elementSize size of elements in this slice
+	 * @param elementIndex index of desired element
+	 * @return offset of element
+	 */
+	public long getElementOffset(long elementSize, long elementIndex) {
+		return array + elementSize * elementIndex;
 	}
 
 	/**
@@ -152,7 +249,8 @@ public class GoSlice {
 			}
 			else {
 				// ensure that the reader func is doing correct thing
-				if (elementSize > 0 && reader.getPointerIndex() != array + (i + 1) * elementSize) {
+				if (elementSize > 0 &&
+					reader.getPointerIndex() != getElementOffset(elementSize, i + 1)) {
 					Msg.warn(this, "Bad element size when reading slice element (size: %d) at %d"
 							.formatted(elementSize, reader.getPointerIndex()));
 					elementSize = 0;
@@ -175,37 +273,64 @@ public class GoSlice {
 	}
 
 	/**
+	 * Reads an unsigned int element from this slice.
+	 * 
+	 * @param intSize size of ints
+	 * @param elementIndex index of element
+	 * @return unsigned int value
+	 * @throws IOException if error reading element
+	 */
+	public long readUIntElement(int intSize, int elementIndex) throws IOException {
+		return getElementReader(intSize, elementIndex).readNextUnsignedValue(intSize);
+	}
+
+	/**
+	 * Returns a {@link BinaryReader} positioned at the specified slice element.
+	 * 
+	 * @param elementSize size of elements in this slice
+	 * @param elementIndex index of desired element
+	 * @return {@link BinaryReader} positioned at specified element
+	 */
+	public BinaryReader getElementReader(int elementSize, int elementIndex) {
+		BinaryReader reader = programContext.getReader(getElementOffset(elementSize, elementIndex));
+		return reader;
+	}
+
+	/**
 	 * Marks up the memory occupied by the array elements with a name and a Ghidra ArrayDataType,
 	 * which has elements who's type is determined by the specified structure class. 
 	 * 
 	 * @param sliceName used to label the memory location
+	 * @param namespaceName namespace the label symbol should be placed in
 	 * @param elementClazz structure mapped class of the element of the array  
 	 * @param ptr boolean flag, if true the element type is really a pointer to the supplied
 	 * data type
 	 * @param session state and methods to assist marking up the program
 	 * @throws IOException if error
 	 */
-	public void markupArray(String sliceName, Class<?> elementClazz, boolean ptr,
-			MarkupSession session) throws IOException {
+	public void markupArray(String sliceName, String namespaceName, Class<?> elementClazz,
+			boolean ptr, MarkupSession session) throws IOException {
 		DataType dt = programContext.getStructureDataType(elementClazz);
-		markupArray(sliceName, dt, ptr, session);
+		markupArray(sliceName, namespaceName, dt, ptr, session);
 	}
 
 	/**
 	 * Marks up the memory occupied by the array elements with a name and a Ghidra ArrayDataType.
 	 * 
 	 * @param sliceName used to label the memory location
+	 * @param namespaceName namespace the label symbol should be placed in
 	 * @param elementType Ghidra datatype of the array elements, null ok if ptr == true 
 	 * @param ptr boolean flag, if true the element type is really a pointer to the supplied
 	 * data type
 	 * @param session state and methods to assist marking up the program
 	 * @throws IOException if error
 	 */
-	public void markupArray(String sliceName, DataType elementType, boolean ptr,
-			MarkupSession session) throws IOException {
+	public void markupArray(String sliceName, String namespaceName, DataType elementType,
+			boolean ptr, MarkupSession session) throws IOException {
 		if (len == 0 || !isValid()) {
 			return;
 		}
+
 		DataTypeManager dtm = programContext.getDTM();
 		if (ptr) {
 			elementType = new PointerDataType(elementType, programContext.getPtrSize(), dtm);
@@ -215,7 +340,7 @@ public class GoSlice {
 		Address addr = programContext.getDataAddress(array);
 		session.markupAddress(addr, arrayDT);
 		if (sliceName != null) {
-			session.labelAddress(addr, sliceName);
+			session.labelAddress(addr, sliceName, namespaceName);
 		}
 	}
 
@@ -227,9 +352,10 @@ public class GoSlice {
 	 * @param session state and methods to assist marking up the program
 	 * @return list of element instances
 	 * @throws IOException if error reading
+	 * @throws CancelledException if cancelled 
 	 */
 	public <T> List<T> markupArrayElements(Class<T> clazz, MarkupSession session)
-			throws IOException {
+			throws IOException, CancelledException {
 		if (len == 0) {
 			return List.of();
 		}
@@ -272,4 +398,13 @@ public class GoSlice {
 		return result;
 	}
 
+	@Override
+	public String getStructureLabel() throws IOException {
+		return "slice[%d]_%s".formatted(len, context.getStructureAddress());
+	}
+
+	@Override
+	public StructureContext<GoSlice> getStructureContext() {
+		return context;
+	}
 }

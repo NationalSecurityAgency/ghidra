@@ -35,9 +35,8 @@ import ghidra.app.decompiler.component.*;
 import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.stack.vars.*;
 import ghidra.app.plugin.core.debug.gui.stack.vars.VariableValueRow.*;
@@ -54,6 +53,8 @@ import ghidra.app.services.DebuggerEmulationService.EmulationResult;
 import ghidra.app.util.viewer.field.FieldFactory;
 import ghidra.app.util.viewer.field.ListingField;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
+import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.lifecycle.Unfinished;
 import ghidra.pcode.exec.DebuggerPcodeUtils.WatchValue;
 import ghidra.pcode.exec.DebuggerPcodeUtils.WatchValuePcodeArithmetic;
@@ -80,12 +81,12 @@ import ghidra.trace.model.time.schedule.Scheduler;
 import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
 
-public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 
 	public static final AssemblySelector NO_16BIT_CALLS = new AssemblySelector() {
 		@Override
-		public AssemblyResolvedPatterns select(AssemblyResolutionResults rr,
-				AssemblyPatternBlock ctx) throws AssemblySemanticException {
+		public Selection select(AssemblyResolutionResults rr, AssemblyPatternBlock ctx)
+				throws AssemblySemanticException {
 			for (AssemblyResolvedPatterns res : filterCompatibleAndSort(rr, ctx)) {
 				byte[] ins = res.getInstruction().getVals();
 				// HACK to avoid 16-bit CALL.... TODO: Why does this happen?
@@ -94,8 +95,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 						"Filtered 16-bit call " + NumericUtilities.convertBytesToString(ins));
 					continue;
 				}
-				return AssemblyResolution.resolved(res.getInstruction().fillMask(),
-					res.getContext(), "Selected", null, null, null);
+				return new Selection(res.getInstruction().fillMask(), res.getContext());
 			}
 			throw new AssemblySemanticException(semanticErrors);
 		}
@@ -602,14 +602,14 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 
 		UnwindInfo infoAtEntry = ua.computeUnwindInfo(entry, monitor);
 		assertEquals(
-			new UnwindInfo(function, 0, 4, stack(0), Map.of(), new StackUnwindWarningSet()),
+			new UnwindInfo(function, 0L, 4L, stack(0), Map.of(), new StackUnwindWarningSet(), null),
 			infoAtEntry);
 
 		UnwindInfo infoAtBody = ua.computeUnwindInfo(bodyInstr, monitor);
-		assertEquals(new UnwindInfo(function, -20, 4, stack(0),
+		assertEquals(new UnwindInfo(function, -20L, 4L, stack(0),
 			Map.of(
 				register("EBP"), stack(-4)),
-			new StackUnwindWarningSet()),
+			new StackUnwindWarningSet(), null),
 			infoAtBody);
 	}
 
@@ -629,16 +629,17 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 
 		UnwindInfo infoAtEntry = ua.computeUnwindInfo(entry, monitor);
 		assertEquals(
-			new UnwindInfo(function, 0, 4, stack(0), Map.of(), new StackUnwindWarningSet()),
+			new UnwindInfo(function, 0L, 4L, stack(0), Map.of(), new StackUnwindWarningSet(), null),
 			infoAtEntry);
 
 		UnwindInfo infoAtBody = ua.computeUnwindInfo(bodyInstr, monitor);
-		assertEquals(new UnwindInfo(function, -20, 4, stack(0),
+		assertEquals(new UnwindInfo(function, -20L, 4L, stack(0),
 			Map.of(
 				register("EBP"), stack(-4)),
 			new StackUnwindWarningSet(
 				new UnspecifiedConventionStackUnwindWarning(myExtern),
-				new UnknownPurgeStackUnwindWarning(myExtern))),
+				new UnknownPurgeStackUnwindWarning(myExtern)),
+			null),
 			infoAtBody);
 	}
 
@@ -656,16 +657,17 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 
 		UnwindInfo infoAtEntry = ua.computeUnwindInfo(entry, monitor);
 		assertEquals(
-			new UnwindInfo(function, 0, 4, stack(0), Map.of(), new StackUnwindWarningSet()),
+			new UnwindInfo(function, 0L, 4L, stack(0), Map.of(), new StackUnwindWarningSet(), null),
 			infoAtEntry);
 
 		UnwindInfo infoAtBody = ua.computeUnwindInfo(bodyInstr, monitor);
 		DataType ptr2Undef = new PointerDataType(DataType.DEFAULT, program.getDataTypeManager());
-		assertEquals(new UnwindInfo(function, -20, 4, stack(0),
+		assertEquals(new UnwindInfo(function, -20L, 4L, stack(0),
 			Map.of(
 				register("EBP"), stack(-4)),
 			new StackUnwindWarningSet(
-				new UnexpectedTargetTypeStackUnwindWarning(ptr2Undef))),
+				new UnexpectedTargetTypeStackUnwindWarning(ptr2Undef)),
+			null),
 			infoAtBody);
 	}
 
@@ -1163,7 +1165,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 			ProgramLocation programLocation, DebuggerCoordinates current,
 			FieldLocation fieldLocation, Field field) throws Throwable {
 		VariableValueTable table = new VariableValueTable();
-		List<String> warnings = new ArrayList<>();
+		StackUnwindWarningSet warnings = new StackUnwindWarningSet();
 		waitOn(valuesService.fillVariableValueTable(table, programLocation, current,
 			fieldLocation, field, warnings));
 		table.add(new WarningsRow(warnings));
@@ -1386,7 +1388,22 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 	public static HoverLocation findTokenLocation(DecompilerPanel decompilerPanel,
 			Function function, String tokText, String fieldText) {
 		DecompileResults results = waitForValue(() -> {
-			ProgramLocation pLoc = decompilerPanel.getCurrentLocation();
+			ProgramLocation pLoc;
+			try {
+				pLoc = decompilerPanel.getCurrentLocation();
+			}
+			catch (NullPointerException e) {
+				/**
+				 * HACK: There's an unlikely race condition where the layout controller has created
+				 * the array of layouts but not fully populated it by the time we ask for the
+				 * current location. This may cause a line we inspect to still have null in it and
+				 * throw an NPE. Whatever. Just catch the thing and return null so that we try
+				 * again. As far as I can tell, this is not indicative of a problem in production,
+				 * because the controller won't issue an updated event until that array is fully
+				 * populated.
+				 */
+				return null;
+			}
 			if (!(pLoc instanceof DecompilerLocation dLoc)) {
 				return null;
 			}

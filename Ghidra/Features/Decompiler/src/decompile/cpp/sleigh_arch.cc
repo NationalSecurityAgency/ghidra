@@ -199,8 +199,14 @@ PcodeInjectLibrary *SleighArchitecture::buildPcodeInjectLibrary(void)
 void SleighArchitecture::buildTypegrp(DocumentStorage &store)
 
 {
-  const Element *el = store.getTag("coretypes");
   types = new TypeFactory(this); // Initialize the object
+}
+
+void SleighArchitecture::buildCoreTypes(DocumentStorage &store)
+
+{
+  const Element *el = store.getTag("coretypes");
+
   if (el != (const Element *)0) {
     XmlDecode decoder(this,el);
     types->decodeCoreTypes(decoder);

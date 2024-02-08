@@ -372,8 +372,6 @@ public interface DbgManager extends AutoCloseable, DbgBreakpointInsertions {
 	 */
 	CompletableFuture<Void> deleteBreakpoints(long... numbers);
 
-	CompletableFuture<?> launch(List<String> args);
-
 	CompletableFuture<Void> launch(Map<String, ?> args);
 
 	/********** NEEDED FOR TESTING ************/

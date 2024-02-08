@@ -26,6 +26,7 @@ import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.Lock;
 import ghidra.util.datastruct.Counter;
 import ghidra.util.exception.CancelledException;
@@ -162,7 +163,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 
 			DBRecord record = functionTagAdapter.createTagRecord(name, comment);
 			tag = getFunctionTagFromCache(record);
-			fireTagCreatedNotification(ChangeManager.DOCR_FUNCTION_TAG_CREATED, tag);
+			fireTagCreatedNotification(ProgramEvent.FUNCTION_TAG_CREATED, tag);
 
 			return tag;
 		}
@@ -214,13 +215,13 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 
 	private void incrementCountCache(FunctionTag tag) {
 		if (tagCountCache != null) {
-			tagCountCache.get(tag).count++;
+			tagCountCache.get(tag).increment();
 		}
 	}
 
 	private void decrementCountCache(FunctionTag tag) {
 		if (tagCountCache != null) {
-			tagCountCache.get(tag).count--;
+			tagCountCache.get(tag).decrement();
 		}
 	}
 
@@ -254,8 +255,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 		functionTagAdapter.updateRecord(tag.getRecord());
 
 		// Notify subscribers of the change.
-		fireTagChangedNotification(ChangeManager.DOCR_FUNCTION_TAG_CHANGED, tag, oldValue,
-			newValue);
+		fireTagChangedNotification(ProgramEvent.FUNCTION_TAG_CHANGED, tag, oldValue, newValue);
 		invalidateFunctions();
 	}
 
@@ -299,29 +299,29 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 	 * @param oldValue the old value
 	 * @param newValue the new value
 	 */
-	private void fireTagChangedNotification(int type, FunctionTag tag, String oldValue,
-			String newValue) {
-		program.tagChanged(tag, type, oldValue, newValue);
+	private void fireTagChangedNotification(ProgramEvent eventType, FunctionTag tag,
+			String oldValue, String newValue) {
+		program.tagChanged(tag, eventType, oldValue, newValue);
 	}
 
 	/**
 	 * Fires off a notification indicating that a new tag has been created.
 	 *
-	 * @param type {@link ChangeManager} change type
+	 * @param eventType {@link ChangeManager} change type
 	 * @param tag the tag that was created
 	 */
-	private void fireTagCreatedNotification(int type, FunctionTag tag) {
-		program.tagCreated(tag, type);
+	private void fireTagCreatedNotification(ProgramEvent eventType, FunctionTag tag) {
+		program.tagCreated(tag, eventType);
 	}
 
 	/**
 	 * Fires off a notification indicating that the given tag has been deleted.
 	 *
-	 * @param type the type of change
+	 * @param eventType the type of change
 	 * @param tag the tag that was deleted
 	 */
-	private void fireTagDeletedNotification(int type, FunctionTag tag) {
-		program.tagChanged(tag, type, tag, null);
+	private void fireTagDeletedNotification(ProgramEvent eventType, FunctionTag tag) {
+		program.tagChanged(tag, eventType, tag, null);
 	}
 
 	/**
@@ -354,7 +354,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 		// Removing an object invalidates the db cache.
 		cache.delete(tag.getId());
 
-		fireTagDeletedNotification(ChangeManager.DOCR_FUNCTION_TAG_DELETED, tag);
+		fireTagDeletedNotification(ProgramEvent.FUNCTION_TAG_DELETED, tag);
 		invalidateFunctions();
 	}
 
@@ -383,8 +383,8 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 
 		while (functionRecords.hasNext()) {
 			DBRecord mappingRecord = functionRecords.next();
-			DBRecord tagRecord = functionTagAdapter.getRecord(
-				mappingRecord.getLongValue(FunctionTagMappingAdapter.TAG_ID_COL));
+			DBRecord tagRecord = functionTagAdapter
+					.getRecord(mappingRecord.getLongValue(FunctionTagMappingAdapter.TAG_ID_COL));
 			tags.add(getFunctionTagFromCache(tagRecord));
 		}
 		return tags;
@@ -403,7 +403,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 				buildTagCountCache();
 			}
 			Counter counter = tagCountCache.get(tag);
-			return counter.count;
+			return counter.count();
 		}
 		catch (IOException e) {
 			dbError(e);
@@ -421,7 +421,7 @@ public class FunctionTagManagerDB implements FunctionTagManager, ErrorHandler {
 			DBRecord mappingRecord = records.next();
 			long tagId = mappingRecord.getLongValue(FunctionTagMappingAdapter.TAG_ID_COL);
 			FunctionTag tag = getFunctionTag(tagId);
-			map.get(tag).count++;
+			map.get(tag).increment();
 		}
 		tagCountCache = map;
 	}

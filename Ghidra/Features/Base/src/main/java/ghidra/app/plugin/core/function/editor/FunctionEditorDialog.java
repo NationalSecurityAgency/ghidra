@@ -39,7 +39,6 @@ import docking.widgets.label.GLabel;
 import docking.widgets.table.*;
 import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
-import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.util.WindowUtilities;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.ToolTipUtils;
@@ -228,9 +227,6 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		scroll = new JScrollPane(verticalScrollPanel);
 		scroll.setBorder(null);
 		scroll.setOpaque(true);
-		scroll.setBackground(Colors.BACKGROUND);
-		scroll.getViewport().setBackground(Palette.NO_COLOR); // transparent
-		scroll.getViewport().setBackground(Colors.BACKGROUND);
 		previewPanel.add(scroll, BorderLayout.CENTER);
 		previewPanel.setBorder(BorderFactory.createLoweredBevelBorder());
 		scroll.getViewport().addMouseListener(new MouseAdapter() {

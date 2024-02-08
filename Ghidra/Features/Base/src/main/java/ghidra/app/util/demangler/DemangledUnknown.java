@@ -40,7 +40,7 @@ public class DemangledUnknown extends DemangledObject {
 	public String getName() {
 		//These items likely do not have names or data types, so return the signature.
 		String myName = super.getName();
-		if (!myName.isEmpty()) {
+		if (myName != null && !myName.isEmpty()) {
 			return myName;
 		}
 

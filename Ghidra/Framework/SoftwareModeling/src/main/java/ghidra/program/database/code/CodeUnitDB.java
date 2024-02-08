@@ -23,6 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import db.DBRecord;
 import ghidra.program.database.*;
+import ghidra.program.database.references.ReferenceDBManager;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOutOfBoundsException;
 import ghidra.program.model.lang.*;
@@ -48,7 +49,7 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 	protected long addr;
 	protected Address endAddr;
 	protected int length;
-	protected ReferenceManager refMgr;
+	protected ReferenceDBManager refMgr;
 	protected ProgramDB program;
 
 	private DBRecord commentRec;
@@ -405,13 +406,6 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 			}
 		}
 		return false;
-	}
-
-	@Override
-	public boolean isSuccessor(CodeUnit codeUnit) {
-		Address min = codeUnit.getMinAddress();
-
-		return this.getMaxAddress().isSuccessor(min);
 	}
 
 	@Override

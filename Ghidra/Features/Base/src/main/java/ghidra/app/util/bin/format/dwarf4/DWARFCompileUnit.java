@@ -31,7 +31,6 @@ public class DWARFCompileUnit {
 	private final Number high_pc;
 	private final Number low_pc;
 	private final Number language;
-	private final DWARFIdentifierCase identifier_case;
 	private final boolean hasDWO;
 
 	private DWARFLine line = null;
@@ -62,34 +61,26 @@ public class DWARFCompileUnit {
 			language = diea.getUnsignedLong(DWARFAttribute.DW_AT_language, -1);
 		}
 
-		DWARFIdentifierCase identifier_case = null;
-		if (diea.hasAttribute(DWARFAttribute.DW_AT_identifier_case)) {
-			identifier_case = DWARFIdentifierCase.find(
-				diea.getUnsignedLong(DWARFAttribute.DW_AT_identifier_case, -1));
-		}
-
 		boolean hasDWO = diea.hasAttribute(DWARFAttribute.DW_AT_GNU_dwo_id) &&
 			diea.hasAttribute(DWARFAttribute.DW_AT_GNU_dwo_name);
 
 		DWARFLine line = DWARFLine.read(diea);
 
-		return new DWARFCompileUnit(name, producer, comp_dir, low_pc, high_pc, language,
-			identifier_case, hasDWO, line);
+		return new DWARFCompileUnit(name, producer, comp_dir, low_pc, high_pc, language, hasDWO,
+			line);
 	}
 
 	/*
 	 * Construct a DWARF compile unit with the given values.
 	 */
 	public DWARFCompileUnit(String name, String producer, String comp_dir, Number low_pc,
-			Number high_pc, Number language, DWARFIdentifierCase identifier_case, boolean hasDWO,
-			DWARFLine line) {
+			Number high_pc, Number language, boolean hasDWO, DWARFLine line) {
 		this.name = name;
 		this.producer = producer;
 		this.comp_dir = comp_dir;
 		this.low_pc = low_pc;
 		this.high_pc = high_pc;
 		this.language = language;
-		this.identifier_case = identifier_case;
 		this.hasDWO = hasDWO;
 		this.line = line;
 	}
@@ -197,22 +188,15 @@ public class DWARFCompileUnit {
 		return this.language == null ? -1 : this.language.intValue();
 	}
 
-	/**
-	 * Get the identifier case of the compile unit
-	 * @return the identifier case of the compile unit
-	 */
-	public DWARFIdentifierCase getIdentifierCase() {
-		return this.identifier_case;
-	}
-
 	public boolean hasDWO() {
 		return hasDWO;
 	}
 
 	@Override
 	public String toString() {
-		return "DWARFCompileUnit [name=" + name + ", producer=" + producer + ", comp_dir=" +
-			comp_dir + ", high_pc=" + high_pc + ", low_pc=" + low_pc + ", language=" + language +
-			", identifier_case=" + identifier_case + ", hasDWO=" + hasDWO + ", line=" + line + "]";
+		return String.format(
+			"DWARFCompileUnit [name=%s, producer=%s, comp_dir=%s, high_pc=%s, low_pc=%s, language=%s, hasDWO=%s, line=%s]",
+			name, producer, comp_dir, high_pc, low_pc, language, hasDWO, line);
 	}
+
 }

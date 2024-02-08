@@ -23,13 +23,13 @@ import java.util.Map.Entry;
 import org.junit.Test;
 
 import db.Transaction;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
-import ghidra.app.plugin.core.debug.mapping.DebuggerRegisterMapper;
-import ghidra.app.services.ActionSource;
-import ghidra.app.services.TraceRecorder;
+import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.dbg.model.TestTargetMemoryRegion;
 import ghidra.dbg.model.TestTargetRegisterBankInThread;
 import ghidra.dbg.util.PathUtils;
+import ghidra.debug.api.action.ActionSource;
+import ghidra.debug.api.model.DebuggerRegisterMapper;
+import ghidra.debug.api.model.TraceRecorder;
 import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
@@ -38,7 +38,7 @@ import ghidra.trace.model.listing.TraceCodeSpace;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.thread.TraceThread;
 
-public class DefaultTraceRecorderTest extends AbstractGhidraHeadedDebuggerGUITest {
+public class DefaultTraceRecorderTest extends AbstractGhidraHeadedDebuggerTest {
 
 	@Test
 	public void testThreadsRecorded() throws Exception {

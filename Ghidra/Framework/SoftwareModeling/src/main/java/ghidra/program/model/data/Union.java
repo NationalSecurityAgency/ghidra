@@ -33,7 +33,7 @@ public interface Union extends Composite {
 	 * for little-endian, and with bit-7 (msb) of the first byte for big-endian.  This is the 
 	 * default behavior for most compilers.  Insertion behavior may not work as expected if 
 	 * packing rules differ from this.
-	 * @param ordinal the ordinal where the new datatype is to be inserted.
+	 * @param ordinal the ordinal where the new datatype is to be inserted (numbering starts at 0).
 	 * @param baseDataType the bitfield base datatype (certain restrictions apply).
 	 * @param bitSize the declared bitfield size in bits.  The effective bit size may be
 	 * adjusted based upon the specified baseDataType.

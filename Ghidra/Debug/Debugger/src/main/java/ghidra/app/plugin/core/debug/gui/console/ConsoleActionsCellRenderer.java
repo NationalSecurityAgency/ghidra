@@ -84,6 +84,7 @@ public class ConsoleActionsCellRenderer extends AbstractGhidraColumnRenderer<Act
 	public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 		super.getTableCellRendererComponent(data); // A bit of a waste, but sets the background
 		box.setBackground(getBackground());
+		box.setBorder(getBorder());
 
 		ActionList value = (ActionList) data.getValue();
 		populateBox(box, buttonCache, value, button -> {

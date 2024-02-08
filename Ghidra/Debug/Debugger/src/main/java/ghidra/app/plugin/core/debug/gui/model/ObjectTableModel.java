@@ -17,12 +17,12 @@ package ghidra.app.plugin.core.debug.gui.model;
 
 import java.awt.Color;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.stream.*;
 
-import docking.widgets.table.DynamicTableColumn;
+import org.apache.commons.lang3.ArrayUtils;
+
+import docking.widgets.table.*;
 import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
-import docking.widgets.table.TableColumnDescriptor;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.columns.*;
 import ghidra.dbg.target.schema.SchemaContext;
@@ -38,6 +38,7 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.util.HTMLUtilities;
+import ghidra.util.NumericUtilities;
 
 public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 
@@ -61,7 +62,36 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 
 		default public String getDisplay() {
 			T value = getValue();
-			return value == null ? "" : value.toString();
+			if (value == null) {
+				return "";
+			}
+			if (value instanceof boolean[] bools) {
+				return Stream.of(ArrayUtils.toObject(bools))
+						.map(b -> b ? "T" : "F")
+						.collect(Collectors.joining(":"));
+			}
+			if (value instanceof byte[] bytes) {
+				return NumericUtilities.convertBytesToString(bytes, ":");
+			}
+			if (value instanceof char[] chars) {
+				return new String(chars);
+			}
+			if (value instanceof short[] shorts) {
+				return Stream.of(ArrayUtils.toObject(shorts))
+						.map(s -> "%04x".formatted(s))
+						.collect(Collectors.joining(":"));
+			}
+			if (value instanceof int[] ints) {
+				return IntStream.of(ints)
+						.mapToObj(i -> "%08x".formatted(i))
+						.collect(Collectors.joining(":"));
+			}
+			if (value instanceof long[] longs) {
+				return LongStream.of(longs)
+						.mapToObj(l -> "%016x".formatted(l))
+						.collect(Collectors.joining(":"));
+			}
+			return value.toString();
 		}
 
 		default public String getHtmlDisplay() {
@@ -290,7 +320,7 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		@Override
 		public String getHtmlDisplay() {
 			return "<html>" +
-				HTMLUtilities.escapeHTML(display.getPrimitiveValueDisplay(value.getValue()));
+				HTMLUtilities.escapeHTML(display.getPrimitiveValueDisplay(value.getValue()), true);
 		}
 
 		@Override
@@ -550,9 +580,9 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 	@Override
 	protected TableColumnDescriptor<ValueRow> createTableColumnDescriptor() {
 		TableColumnDescriptor<ValueRow> descriptor = new TableColumnDescriptor<>();
-		descriptor.addVisibleColumn(new TraceValueKeyColumn());
+		descriptor.addVisibleColumn(new TraceValueKeyColumn(), 1, true);
 		descriptor.addVisibleColumn(new TraceValueValColumn());
-		descriptor.addVisibleColumn(new TraceValueLifeColumn());
+		descriptor.addVisibleColumn(new TraceValueLifeColumn(), 2, true);
 		descriptor.addHiddenColumn(new TraceValueLifePlotColumn());
 		return descriptor;
 	}

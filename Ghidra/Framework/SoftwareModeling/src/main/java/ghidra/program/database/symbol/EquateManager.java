@@ -25,8 +25,8 @@ import ghidra.program.database.map.AddressKeyAddressIterator;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.*;
 import ghidra.program.model.symbol.*;
-import ghidra.program.util.ChangeManager;
 import ghidra.program.util.EquateInfo;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.Lock;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.*;
@@ -119,8 +119,8 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 			validateName(name);
 			DBRecord record = equateAdapter.createEquate(name, value);
 			EquateDB equate = new EquateDB(this, equateCache, record);
-			program.setChanged(ChangeManager.DOCR_EQUATE_ADDED,
-				new EquateInfo(name, value, null, 0, 0), null);
+			program.setChanged(ProgramEvent.EQUATE_ADDED, new EquateInfo(name, value, null, 0, 0),
+				null);
 			return equate;
 
 		}
@@ -384,7 +384,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 			equateAdapter.removeRecord(equateID);
 			equateCache.delete(equateID);
 			// fire event: oldValue = equate name, newValue=null
-			program.setChanged(ChangeManager.DOCR_EQUATE_REMOVED, name, null);
+			program.setChanged(ProgramEvent.EQUATE_REMOVED, name, null);
 		}
 		finally {
 			lock.release();
@@ -431,7 +431,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 			new EquateRefDB(this, refCache, record);
 
 			// fire event: oldValue=EquateInfo, newValue = null
-			program.setChanged(ChangeManager.DOCR_EQUATE_REFERENCE_ADDED, address, address,
+			program.setChanged(ProgramEvent.EQUATE_REFERENCE_ADDED, address, address,
 				new EquateInfo(name, value, address, opIndex, dynamicHash), null);
 		}
 		finally {
@@ -508,7 +508,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 	 * @param newName new name
 	 */
 	void equateNameChanged(String oldName, String newName) {
-		program.setChanged(ChangeManager.DOCR_EQUATE_RENAMED, oldName, newName);
+		program.setChanged(ProgramEvent.EQUATE_RENAMED, oldName, newName);
 	}
 
 	DBRecord getEquateRecord(long equateID) {
@@ -589,7 +589,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 
 	private void referenceRemoved(EquateDB equateDB, Address refAddr, short opIndex,
 			long dynamichash) {
-		program.setChanged(ChangeManager.DOCR_EQUATE_REFERENCE_REMOVED, refAddr, refAddr,
+		program.setChanged(ProgramEvent.EQUATE_REFERENCE_REMOVED, refAddr, refAddr,
 			new EquateInfo(equateDB.getName(), equateDB.getValue(), refAddr, opIndex, dynamichash),
 			null);
 	}

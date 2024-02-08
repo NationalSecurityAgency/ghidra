@@ -69,23 +69,23 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 	private HelpLocation helpLoc = new HelpLocation(HelpTopics.SEARCH, "Query_Results");
 
 	TableComponentProvider(TableServicePlugin plugin, String title, String name,
-			GhidraProgramTableModel<T> model, String programName, GoToService gotoService,
+			GhidraProgramTableModel<T> model, Program program, GoToService gotoService,
 			String windowSubMenu, Navigatable navigatable) {
-		this(plugin, title, name, model, programName, gotoService, null, null, null, windowSubMenu,
+		this(plugin, title, name, model, program, gotoService, null, null, null, windowSubMenu,
 			navigatable);
 	}
 
 	TableComponentProvider(TableServicePlugin plugin, String title, String name,
-			GhidraProgramTableModel<T> model, String programName, GoToService gotoService,
+			GhidraProgramTableModel<T> model, Program program, GoToService gotoService,
 			MarkerService markerService, Color markerColor, Icon markerIcon, String windowSubMenu,
 			Navigatable navigatable) {
 		super(plugin.getTool(), name, plugin.getName());
 
 		this.tableServicePlugin = plugin;
 		this.navigatable = navigatable;
-		this.program = navigatable.getProgram();
+		this.program = program;
 		this.model = model;
-		this.programName = programName;
+		this.programName = program.getDomainFile().getName();
 		this.markerService = markerService;
 		this.windowSubMenu = windowSubMenu;
 		setIcon(new GIcon("icon.plugin.table.service"));
@@ -130,14 +130,19 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 			tool.contextChanged(TableComponentProvider.this);
 		});
 
-		// only allow global actions through if we are derived from the connect/primary navigatable
-		table.setActionsEnabled(navigatable.isConnected());
-
-		if (gotoService != null) {
-			if (navigatable != null) {
-				navigatable.addNavigatableListener(this);
-			}
-			table.installNavigation(gotoService, navigatable);
+		if (navigatable != null) {
+			// Only allow global actions if we are derived from the connect/primary navigatable.  
+			// This allows the the primary navigatable to process key events without the user having
+			// to focus first focus the primary navigatable.
+			table.setActionsEnabled(navigatable.isConnected());
+			navigatable.addNavigatableListener(this);
+			table.installNavigation(tool, navigatable);
+		}
+		else {
+			// allow the table to use the default navigation behavior.  If the GoToService later 
+			// becomes available, then navigation will work.
+			table.setActionsEnabled(true); // default navigatable will be used
+			table.installNavigation(tool);
 		}
 
 		panel.add(threadedPanel, BorderLayout.CENTER);
@@ -146,16 +151,23 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		return panel;
 	}
 
-	private void createActions(final Plugin plugin) {
+	private void createActions(Plugin plugin) {
 
 		GhidraTable table = threadedPanel.getTable();
-		selectAction =
-			new MakeProgramSelectionAction(navigatable, tableServicePlugin.getName(), table);
+		if (navigatable != null) {
+			selectAction =
+				new MakeProgramSelectionAction(navigatable, tableServicePlugin.getName(), table);
+		}
+		else {
+			selectAction =
+				new MakeProgramSelectionAction(tableServicePlugin, table);
+		}
+
 		selectAction.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Make_Selection"));
 
 		selectionNavigationAction = new SelectionNavigationAction(plugin, table);
 		selectionNavigationAction
-			.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Selection_Navigation"));
+				.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Selection_Navigation"));
 
 		DockingAction externalGotoAction = new DockingAction("Go to External Location", getName()) {
 			@Override

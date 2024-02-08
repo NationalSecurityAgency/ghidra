@@ -18,6 +18,7 @@ package generic.test;
 import static org.junit.Assert.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -35,6 +36,7 @@ import ghidra.util.SystemUtilities;
 import ghidra.util.UniversalIdGenerator;
 import ghidra.util.exception.AssertException;
 import junit.framework.AssertionFailedError;
+import utility.application.ApplicationUtilities;
 
 /**
  * A root for system tests that provides known system information.
@@ -110,16 +112,21 @@ public abstract class AbstractGTest {
 		// In batch mode we rely on the fact that the test environment has been setup with a
 		// custom temp directory.
 		//
-		return System.getProperty("java.io.tmpdir") + File.separator + "Ghidra_test_" +
-			UUID.randomUUID() + File.separator + "temp.data";
+		try {
+			return new File(ApplicationUtilities.getDefaultUserTempDir("ghidra"),
+				"test_" + UUID.randomUUID() + File.separator + "temp.data").getPath();
+		}
+		catch (IOException e) {
+			throw new AssertException(e);
+		}
 	}
 
 	private static String buildDevelopmentDirectoryPath() {
 		//
 		// Create a unique name based upon the repo from which we are running.
 		//
-		File tempDir = TestApplicationUtils.getUniqueTempFolder();
-		return tempDir.getAbsolutePath();
+		File tempDir = TestApplicationUtils.getUniqueTempDir();
+		return tempDir.getPath();
 	}
 
 	public static String getTestDirectoryPath() {

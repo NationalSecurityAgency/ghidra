@@ -26,7 +26,6 @@ import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
@@ -74,12 +73,12 @@ public class SymbolTableCommand extends LoadCommand {
 		List<NList> sortedList =
 			nlistList.stream().sorted((o1, o2) -> Integer.compare(o1.getStringTableIndex(),
 				o2.getStringTableIndex())).collect(Collectors.toList());
-
+		
 		// initialize the sorted NList strings from string table
 		for (NList nList : sortedList) {
 			nList.initString(dataReader, stroff);
 		}
-
+		
 		// the symbol table should be in the original order.
 		// The table is indexed by other tables in the MachO headers
 		symbols = nlistList;
@@ -124,6 +123,22 @@ public class SymbolTableCommand extends LoadCommand {
 		return symbols;
 	}
 
+	/**
+	 * Adds the given {@link List} of {@link NList}s to this symbol/string table, and adjusts the
+	 * affected symbol table load command fields appropriately
+	 * 
+	 * @param list The {@link List} of {@link NList}s to add
+	 */
+	public void addSymbols(List<NList> list) {
+		if (list.isEmpty()) {
+			return;
+		}
+		symbols.addAll(list);
+		nsyms += list.size();
+		stroff += list.size() * list.get(0).getSize();
+		strsize = symbols.stream().mapToInt(e -> e.getString().length() + 1).sum();
+	}
+
 	public NList getSymbolAt(int index) {
 		if ((index & DynamicSymbolTableConstants.INDIRECT_SYMBOL_LOCAL) != 0 ||
 			(index & DynamicSymbolTableConstants.INDIRECT_SYMBOL_ABS) != 0) {
@@ -154,33 +169,30 @@ public class SymbolTableCommand extends LoadCommand {
 	}
 
 	@Override
-	public Address getDataAddress(MachHeader header, AddressSpace space) {
-		if (symoff != 0 && nsyms != 0) {
-			SegmentCommand segment = getContainingSegment(header, symoff);
-			if (segment != null) {
-				return space
-						.getAddress(segment.getVMaddress() + (symoff - segment.getFileOffset()));
-			}
-		}
-		return null;
+	public int getLinkerDataOffset() {
+		return symoff;
 	}
 
 	@Override
-	public void markup(Program program, MachHeader header, Address symbolTableAddr,
-			String source, TaskMonitor monitor, MessageLog log) throws CancelledException {
+	public int getLinkerDataSize() {
+		return NList.getSize(symbols);
+	}
+
+	@Override
+	public void markup(Program program, MachHeader header, String source, TaskMonitor monitor,
+			MessageLog log) throws CancelledException {
+
+		Address symbolTableAddr = fileOffsetToAddress(program, header, symoff, nsyms);
 		if (symbolTableAddr == null) {
 			return;
 		}
-		Address stringTableAddr = stroff != 0 ? symbolTableAddr.add(stroff - symoff) : null;
+		Address stringTableAddr = fileOffsetToAddress(program, header, stroff, strsize);
 
-		Listing listing = program.getListing();
+		markupPlateComment(program, symbolTableAddr, source, "symbols");
+		markupPlateComment(program, stringTableAddr, source, "strings");
+
 		ReferenceManager referenceManager = program.getReferenceManager();
-		String name = LoadCommandTypes.getLoadCommandName(getCommandType());
-		if (source != null) {
-			name += " - " + source;
-		}
 		try {
-			listing.setComment(symbolTableAddr, CodeUnit.PLATE_COMMENT, name);
 			for (int i = 0; i < nsyms; i++) {
 				NList nlist = symbols.get(i);
 				DataType dt = nlist.toDataType();
@@ -197,10 +209,11 @@ public class SymbolTableCommand extends LoadCommand {
 					referenceManager.setPrimary(ref, true);
 				}
 			}
+
 		}
 		catch (Exception e) {
 			log.appendMsg(SymbolTableCommand.class.getSimpleName(),
-				"Failed to markup %s.".formatted(name));
+				"Failed to markup: " + getContextualName(source, "symbols"));
 		}
 	}
 

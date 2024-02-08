@@ -61,10 +61,9 @@ public class DefaultTargetObjectSchema
 		 */
 		@Override
 		public boolean equals(Object obj) {
-			if (!(obj instanceof DefaultAttributeSchema)) {
+			if (!(obj instanceof DefaultAttributeSchema that)) {
 				return false;
 			}
-			DefaultAttributeSchema that = (DefaultAttributeSchema) obj;
 			if (!Objects.equals(this.name, that.name)) {
 				return false;
 			}
@@ -119,6 +118,64 @@ public class DefaultTargetObjectSchema
 		}
 	}
 
+	protected static class AliasResolver {
+		private final Map<String, AttributeSchema> schemas;
+		private final Map<String, String> aliases;
+		private final AttributeSchema defaultSchema;
+		private Map<String, String> resolvedAliases;
+
+		public AliasResolver(Map<String, AttributeSchema> schemas, Map<String, String> aliases,
+				AttributeSchema defaultSchema) {
+			this.schemas = schemas;
+			this.aliases = aliases;
+			this.defaultSchema = defaultSchema;
+		}
+
+		public Map<String, String> resolveAliases() {
+			this.resolvedAliases = new LinkedHashMap<>();
+			for (String alias : aliases.keySet()) {
+				if (alias.equals("")) {
+					throw new IllegalArgumentException("Key '' cannot be an alias");
+				}
+				if (schemas.containsKey(alias)) {
+					throw new IllegalArgumentException(
+						"Key '%s' cannot be both an attribute and an alias".formatted(alias));
+				}
+				resolveAlias(alias, new LinkedHashSet<>());
+			}
+			return resolvedAliases;
+		}
+
+		protected String resolveAlias(String alias, LinkedHashSet<String> visited) {
+			String already = resolvedAliases.get(alias);
+			if (already != null) {
+				return already;
+			}
+			if (!visited.add(alias)) {
+				throw new IllegalArgumentException("Cycle of aliases: " + visited);
+			}
+			String to = aliases.get(alias);
+			if (to == null) {
+				return alias;
+			}
+			if (to.equals("")) {
+				throw new IllegalArgumentException(
+					"Cannot alias to key '' (from %s)".formatted(alias));
+			}
+			String result = resolveAlias(to, visited);
+			resolvedAliases.put(alias, result);
+			return result;
+		}
+
+		public Map<String, AttributeSchema> resolveSchemas() {
+			Map<String, AttributeSchema> resolved = new LinkedHashMap<>(schemas);
+			for (Map.Entry<String, String> ent : resolvedAliases.entrySet()) {
+				resolved.put(ent.getKey(), schemas.getOrDefault(ent.getValue(), defaultSchema));
+			}
+			return resolved;
+		}
+	}
+
 	private final SchemaContext context;
 	private final SchemaName name;
 	private final Class<?> type;
@@ -130,6 +187,7 @@ public class DefaultTargetObjectSchema
 	private final ResyncMode elementResync;
 
 	private final Map<String, AttributeSchema> attributeSchemas;
+	private final Map<String, String> attributeAliases;
 	private final AttributeSchema defaultAttributeSchema;
 	private final ResyncMode attributeResync;
 
@@ -137,7 +195,8 @@ public class DefaultTargetObjectSchema
 			Set<Class<? extends TargetObject>> interfaces, boolean isCanonicalContainer,
 			Map<String, SchemaName> elementSchemas, SchemaName defaultElementSchema,
 			ResyncMode elementResync,
-			Map<String, AttributeSchema> attributeSchemas, AttributeSchema defaultAttributeSchema,
+			Map<String, AttributeSchema> attributeSchemas, Map<String, String> attributeAliases,
+			AttributeSchema defaultAttributeSchema,
 			ResyncMode attributeResync) {
 		this.context = context;
 		this.name = name;
@@ -149,7 +208,10 @@ public class DefaultTargetObjectSchema
 		this.defaultElementSchema = defaultElementSchema;
 		this.elementResync = elementResync;
 
-		this.attributeSchemas = Collections.unmodifiableMap(new LinkedHashMap<>(attributeSchemas));
+		AliasResolver resolver =
+			new AliasResolver(attributeSchemas, attributeAliases, defaultAttributeSchema);
+		this.attributeAliases = Collections.unmodifiableMap(resolver.resolveAliases());
+		this.attributeSchemas = Collections.unmodifiableMap(resolver.resolveSchemas());
 		this.defaultAttributeSchema = defaultAttributeSchema;
 		this.attributeResync = attributeResync;
 	}
@@ -200,6 +262,11 @@ public class DefaultTargetObjectSchema
 	}
 
 	@Override
+	public Map<String, String> getAttributeAliases() {
+		return attributeAliases;
+	}
+
+	@Override
 	public AttributeSchema getDefaultAttributeSchema() {
 		return defaultAttributeSchema;
 	}
@@ -236,6 +303,7 @@ public class DefaultTargetObjectSchema
 		sb.append("attributes(resync " + attributeResync + ") = ");
 		sb.append(attributeSchemas);
 		sb.append(" default " + defaultAttributeSchema);
+		sb.append(" aliases " + attributeAliases);
 		sb.append("\n}");
 	}
 
@@ -255,10 +323,9 @@ public class DefaultTargetObjectSchema
 	 */
 	@Override
 	public boolean equals(Object obj) {
-		if (!(obj instanceof DefaultTargetObjectSchema)) {
+		if (!(obj instanceof DefaultTargetObjectSchema that)) {
 			return false;
 		}
-		DefaultTargetObjectSchema that = (DefaultTargetObjectSchema) obj;
 		if (!Objects.equals(this.name, that.name)) {
 			return false;
 		}
@@ -281,6 +348,9 @@ public class DefaultTargetObjectSchema
 			return false;
 		}
 		if (!Objects.equals(this.attributeSchemas, that.attributeSchemas)) {
+			return false;
+		}
+		if (!Objects.equals(this.attributeAliases, that.attributeAliases)) {
 			return false;
 		}
 		if (!Objects.equals(this.defaultAttributeSchema, that.defaultAttributeSchema)) {

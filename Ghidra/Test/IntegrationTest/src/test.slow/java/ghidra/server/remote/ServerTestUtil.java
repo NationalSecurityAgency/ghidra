@@ -30,6 +30,7 @@ import javax.rmi.ssl.SslRMIClientSocketFactory;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import generic.test.*;
+import ghidra.framework.Application;
 import ghidra.framework.client.*;
 import ghidra.framework.data.ContentHandler;
 import ghidra.framework.data.DomainObjectAdapter;
@@ -347,7 +348,7 @@ public class ServerTestUtil {
 
 	private static synchronized File getPkiTestDirectory() {
 		if (testPkiDirectory == null) {
-			testPkiDirectory = new File(System.getProperty("java.io.tmpdir"), "test-pki");
+			testPkiDirectory = new File(Application.getUserTempDirectory(), "test-pki");
 			FileUtilities.deleteDir(testPkiDirectory);
 			testPkiDirectory.mkdirs();
 
@@ -802,9 +803,9 @@ public class ServerTestUtil {
 	public static void createRepositoryItem(LocalFileSystem repoFilesystem, String name,
 			String folderPath, Program program) throws Exception {
 
-		ContentHandler contentHandler = DomainObjectAdapter.getContentHandler(program);
-		long checkoutId = contentHandler.createFile(repoFilesystem, null, folderPath, name,
-			program, TaskMonitor.DUMMY);
+		ContentHandler<?> contentHandler = DomainObjectAdapter.getContentHandler(program);
+		long checkoutId = contentHandler.createFile(repoFilesystem, null, folderPath, name, program,
+			TaskMonitor.DUMMY);
 		LocalFolderItem item = repoFilesystem.getItem(folderPath, name);
 		if (item == null) {
 			throw new IOException("Item not found: " + FileSystem.SEPARATOR + name);

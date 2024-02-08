@@ -46,6 +46,11 @@ public enum EnumerableTargetObjectSchema implements TargetObjectSchema {
 		public AttributeSchema getDefaultAttributeSchema() {
 			return AttributeSchema.DEFAULT_ANY;
 		}
+
+		@Override
+		public boolean isAssignableFrom(TargetObjectSchema that) {
+			return true;
+		}
 	},
 	/**
 	 * The least restrictive, but least informative object schema.
@@ -62,6 +67,12 @@ public enum EnumerableTargetObjectSchema implements TargetObjectSchema {
 		@Override
 		public AttributeSchema getDefaultAttributeSchema() {
 			return AttributeSchema.DEFAULT_ANY;
+		}
+
+		@Override
+		public boolean isAssignableFrom(TargetObjectSchema that) {
+			// That is has as schema implies it's a TargetObject
+			return true;
 		}
 	},
 	TYPE(Class.class),
@@ -89,7 +100,16 @@ public enum EnumerableTargetObjectSchema implements TargetObjectSchema {
 	SET_ATTACH_KIND(TargetAttachKindSet.class),
 	SET_BREAKPOINT_KIND(TargetBreakpointKindSet.class),
 	SET_STEP_KIND(TargetStepKindSet.class),
-	EXECUTION_STATE(TargetExecutionState.class);
+	EXECUTION_STATE(TargetExecutionState.class),
+	// Additional types supported by the Trace database
+	CHAR(Character.class, char.class),
+	BOOL_ARR(boolean[].class),
+	BYTE_ARR(byte[].class),
+	CHAR_ARR(char[].class),
+	SHORT_ARR(short[].class),
+	INT_ARR(int[].class),
+	LONG_ARR(long[].class),
+	STRING_ARR(String[].class);
 
 	public static final class MinimalSchemaContext extends DefaultSchemaContext {
 		public static final SchemaContext INSTANCE = new MinimalSchemaContext();
@@ -179,6 +199,11 @@ public enum EnumerableTargetObjectSchema implements TargetObjectSchema {
 
 	@Override
 	public Map<String, AttributeSchema> getAttributeSchemas() {
+		return Map.of();
+	}
+
+	@Override
+	public Map<String, String> getAttributeAliases() {
 		return Map.of();
 	}
 

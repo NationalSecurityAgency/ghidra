@@ -64,45 +64,22 @@ public class DyldChainedFixupsCommand extends LinkEditDataCommand {
 	}
 
 	@Override
-	public void markup(Program program, MachHeader header, Address addr, String source,
-			TaskMonitor monitor, MessageLog log) throws CancelledException {
-
-		if (addr == null || datasize == 0) {
+	public void markup(Program program, MachHeader header, String source, TaskMonitor monitor,
+			MessageLog log) throws CancelledException {
+		Address addr = fileOffsetToAddress(program, header, dataoff, datasize);
+		if (addr == null) {
 			return;
 		}
-
-		super.markup(program, header, addr, source, monitor, log);
+		super.markup(program, header, source, monitor, log);
 
 		try {
 			DataUtilities.createData(program, addr, chainHeader.toDataType(), -1,
 				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
-
-			Address segsAddr = addr.add(chainHeader.getStartsOffset());
-			DyldChainedStartsInImage chainedStartsInImage = chainHeader.getChainedStartsInImage();
-			DataUtilities.createData(program, segsAddr, chainedStartsInImage.toDataType(), -1,
-				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
-
-			int[] segInfoOffset = chainedStartsInImage.getSegInfoOffset();
-			List<DyldChainedStartsInSegment> chainedStarts =
-				chainedStartsInImage.getChainedStarts();
-			int skipCount = 0;
-			for (int i = 0; i < segInfoOffset.length; i++) {
-				if (segInfoOffset[i] == 0) {
-					// The chainStarts list doesn't have entries for 0 offsets, so we must keep
-					// track of the index differences between the 2 entities
-					skipCount++;
-					continue;
-				}
-				DyldChainedStartsInSegment startsInSeg = chainedStarts.get(i - skipCount);
-				if (startsInSeg != null) {
-					DataUtilities.createData(program, segsAddr.add(segInfoOffset[i]),
-						startsInSeg.toDataType(), -1, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
-				}
-			}
+			chainHeader.markup(program, addr, header, monitor, log);
 		}
 		catch (Exception e) {
-			log.appendMsg(DyldChainedFixupsCommand.class.getSimpleName(), "Failed to markup %s."
-					.formatted(LoadCommandTypes.getLoadCommandName(getCommandType())));
+			log.appendMsg(DyldChainedFixupsCommand.class.getSimpleName(),
+				"Failed to markup: " + getContextualName(source, null));
 		}
 	}
 
@@ -112,8 +89,9 @@ public class DyldChainedFixupsCommand extends LinkEditDataCommand {
 		try {
 			super.markupRawBinary(header, api, baseAddress, parentModule, monitor, log);
 
-			List<Address> addrs =
-				api.getCurrentProgram().getMemory().locateAddressesForFileOffset(getDataOffset());
+			List<Address> addrs = api.getCurrentProgram()
+					.getMemory()
+					.locateAddressesForFileOffset(getLinkerDataOffset());
 			if (addrs.size() <= 0) {
 				throw new Exception("Chain Header does not exist in program");
 			}

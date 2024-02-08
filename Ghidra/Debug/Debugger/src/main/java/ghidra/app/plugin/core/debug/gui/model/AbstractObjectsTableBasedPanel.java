@@ -25,11 +25,11 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import docking.ComponentProvider;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.model.AbstractQueryTablePanel.CellActivationListener;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueProperty;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.services.DebuggerListingService;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
@@ -115,7 +115,7 @@ public abstract class AbstractObjectsTableBasedPanel<U extends TraceObjectInterf
 		List<ValueRow> sel = getSelectedItems();
 		if (!sel.isEmpty()) {
 			myActionContext = new DebuggerObjectActionContext(
-				sel.stream().map(r -> r.getValue()).collect(Collectors.toList()), provider, this);
+				sel.stream().map(r -> r.getValue()).collect(Collectors.toList()), provider, table);
 		}
 	}
 

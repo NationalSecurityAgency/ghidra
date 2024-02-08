@@ -15,7 +15,6 @@
  */
 package ghidra.feature.vt.gui.provider.functionassociation;
 
-import static ghidra.feature.vt.api.impl.VTChangeManager.*;
 import static ghidra.feature.vt.gui.provider.functionassociation.FilterSettings.*;
 
 import java.awt.*;
@@ -40,10 +39,10 @@ import docking.widgets.table.threaded.ThreadedTableModel;
 import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.functioncompare.FunctionComparisonPanel;
-import ghidra.app.services.GoToService;
 import ghidra.app.util.viewer.listingpanel.ListingCodeComparisonPanel;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.feature.vt.api.db.DeletedMatch;
+import ghidra.feature.vt.api.impl.VTEvent;
 import ghidra.feature.vt.api.impl.VersionTrackingChangeRecord;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.gui.actions.*;
@@ -159,8 +158,8 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		Icon allFunctionsIcon = new GIcon("icon.version.tracking.function.filter.all");
 		ActionState<FilterSettings> allFunctionsActionState =
 			new ActionState<>("Show All Functions", allFunctionsIcon, SHOW_ALL);
-		allFunctionsActionState.setHelpLocation(
-			new HelpLocation("VersionTrackingPlugin", "Show_All_Functions"));
+		allFunctionsActionState
+				.setHelpLocation(new HelpLocation("VersionTrackingPlugin", "Show_All_Functions"));
 
 		Icon unmatchedIcon = new GIcon("icon.version.tracking.function.filter.unmatched");
 		ActionState<FilterSettings> unmatchedOnlyActionState =
@@ -168,9 +167,8 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		unmatchedOnlyActionState.setHelpLocation(
 			new HelpLocation("VersionTrackingPlugin", "Show_Unmatched_Functions"));
 
-		ActionState<FilterSettings> unacceptedOnlyActionState =
-			new ActionState<>("Show Only Unaccepted Match Functions",
-				FILTER_NOT_ACCEPTED_ICON, SHOW_UNACCEPTED);
+		ActionState<FilterSettings> unacceptedOnlyActionState = new ActionState<>(
+			"Show Only Unaccepted Match Functions", FILTER_NOT_ACCEPTED_ICON, SHOW_UNACCEPTED);
 		unacceptedOnlyActionState.setHelpLocation(
 			new HelpLocation("VersionTrackingPlugin", "Show_Unaccepted_Functions"));
 
@@ -443,20 +441,15 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 
 	private JComponent createSourceFunctionPanel() {
 
-		GoToService goToService = tool.getService(GoToService.class);
-
 		Program sourceProgram = controller.getSourceProgram();
 		sourceFunctionsModel =
 			new VTFunctionAssociationTableModel(tool, controller, sourceProgram, true);
 		sourceThreadedTablePanel = new GhidraThreadedTablePanel<>(sourceFunctionsModel, 1000);
 		sourceFunctionsTable = sourceThreadedTablePanel.getTable();
 		sourceFunctionsTable.setName("SourceFunctionTable");
-		sourceFunctionsTable.setPreferenceKey(
-			"VTFunctionAssociationTableModel - Source Function Table");
-		if (goToService != null) {
-			sourceFunctionsTable.installNavigation(goToService,
-				goToService.getDefaultNavigatable());
-		}
+		sourceFunctionsTable
+				.setPreferenceKey("VTFunctionAssociationTableModel - Source Function Table");
+		sourceFunctionsTable.installNavigation(tool);
 		sourceFunctionsTable.setAutoLookupColumn(VTFunctionAssociationTableModel.NAME_COL);
 		sourceFunctionsTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
 		sourceFunctionsTable.setPreferredScrollableViewportSize(new Dimension(350, 150));
@@ -476,10 +469,8 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		sourceFunctionsModel.addTableModelListener(new TitleUpdateListener());
 
 		sourceFunctionsTable.getColumnModel()
-				.getColumn(
-					VTFunctionAssociationTableModel.ADDRESS_COL)
-				.setPreferredWidth(
-					VTFunctionAssociationTableModel.ADDRESS_COL_WIDTH);
+				.getColumn(VTFunctionAssociationTableModel.ADDRESS_COL)
+				.setPreferredWidth(VTFunctionAssociationTableModel.ADDRESS_COL_WIDTH);
 
 		sourceTableFilterPanel =
 			new GhidraTableFilterPanel<>(sourceFunctionsTable, sourceFunctionsModel);
@@ -498,8 +489,6 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 
 	private JComponent createDestinationFunctionPanel() {
 
-		GoToService goToService = tool.getService(GoToService.class);
-
 		Program destinationProgram = controller.getDestinationProgram();
 		destinationFunctionsModel =
 			new VTFunctionAssociationTableModel(tool, controller, destinationProgram, false);
@@ -509,10 +498,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		destinationFunctionsTable.setName("DestinationFunctionTable");
 		destinationFunctionsTable.setPreferenceKey(
 			"VTFunctionAssociationTableModel - " + "Destination Function Table");
-		if (goToService != null) {
-			destinationFunctionsTable.installNavigation(goToService,
-				goToService.getDefaultNavigatable());
-		}
+		destinationFunctionsTable.installNavigation(tool);
 		destinationFunctionsTable.setAutoLookupColumn(VTFunctionAssociationTableModel.NAME_COL);
 		destinationFunctionsTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
 		destinationFunctionsTable.setPreferredScrollableViewportSize(new Dimension(350, 150));
@@ -535,10 +521,8 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		functionHeader.setUpdateTableInRealTime(true);
 
 		destinationFunctionsTable.getColumnModel()
-				.getColumn(
-					VTFunctionAssociationTableModel.ADDRESS_COL)
-				.setPreferredWidth(
-					VTFunctionAssociationTableModel.ADDRESS_COL_WIDTH);
+				.getColumn(VTFunctionAssociationTableModel.ADDRESS_COL)
+				.setPreferredWidth(VTFunctionAssociationTableModel.ADDRESS_COL_WIDTH);
 
 		destinationTableFilterPanel =
 			new GhidraTableFilterPanel<>(destinationFunctionsTable, destinationFunctionsModel);
@@ -693,7 +677,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 			return;
 		}
 
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
+		if (ev.contains(DomainObjectEvent.RESTORED)) {
 			reload();
 			return;
 		}
@@ -701,33 +685,33 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		boolean contextChanged = false;
 		for (int i = 0; i < ev.numRecords(); i++) {
 			DomainObjectChangeRecord doRecord = ev.getChangeRecord(i);
-			int eventType = doRecord.getEventType();
-			if (eventType == DOCR_VT_MATCH_ADDED) {
+			EventType eventType = doRecord.getEventType();
+			if (eventType == VTEvent.MATCH_ADDED) {
 				VersionTrackingChangeRecord vtRecord = (VersionTrackingChangeRecord) doRecord;
 				VTMatch match = (VTMatch) vtRecord.getNewValue();
 				sourceFunctionsModel.matchAdded(match);
 				destinationFunctionsModel.matchAdded(match);
 				contextChanged = true;
 			}
-			else if (eventType == DOCR_VT_MATCH_DELETED) {
+			else if (eventType == VTEvent.MATCH_DELETED) {
 				VersionTrackingChangeRecord vtRecord = (VersionTrackingChangeRecord) doRecord;
 				DeletedMatch deletedMatch = (DeletedMatch) vtRecord.getOldValue();
 				sourceFunctionsModel.matchRemoved(deletedMatch);
 				destinationFunctionsModel.matchRemoved(deletedMatch);
 				contextChanged = true;
 			}
-			else if (eventType == DOCR_VT_ASSOCIATION_STATUS_CHANGED) {
+			else if (eventType == VTEvent.ASSOCIATION_STATUS_CHANGED) {
 				VersionTrackingChangeRecord vtRecord = (VersionTrackingChangeRecord) doRecord;
 				VTAssociation association = (VTAssociation) vtRecord.getObject();
 				sourceFunctionsModel.associationChanged(association);
 				destinationFunctionsModel.associationChanged(association);
 				contextChanged = true;
 			}
-			else if (eventType == ChangeManager.DOCR_FUNCTION_ADDED) {
+			else if (eventType == ProgramEvent.FUNCTION_ADDED) {
 				functionAdded((ProgramChangeRecord) doRecord);
 				contextChanged = true;
 			}
-			else if (eventType == ChangeManager.DOCR_FUNCTION_REMOVED) {
+			else if (eventType == ProgramEvent.FUNCTION_REMOVED) {
 				functionRemoved((ProgramChangeRecord) doRecord);
 				contextChanged = true;
 			}

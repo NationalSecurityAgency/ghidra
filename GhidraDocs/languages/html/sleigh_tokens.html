@@ -1,24 +1,24 @@
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-<title>6. Tokens and Fields</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>6.Â Tokens and Fields</title>
 <link rel="stylesheet" type="text/css" href="DefaultStyle.css">
 <link rel="stylesheet" type="text/css" href="languages.css">
-<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<meta name="generator" content="DocBook XSL Stylesheets Vsnapshot">
 <link rel="home" href="sleigh.html" title="SLEIGH">
 <link rel="up" href="sleigh.html" title="SLEIGH">
-<link rel="prev" href="sleigh_symbols.html" title="5. Introduction to Symbols">
-<link rel="next" href="sleigh_constructors.html" title="7. Constructors">
+<link rel="prev" href="sleigh_symbols.html" title="5.Â Introduction to Symbols">
+<link rel="next" href="sleigh_constructors.html" title="7.Â Constructors">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <div class="navheader">
 <table width="100%" summary="Navigation header">
-<tr><th colspan="3" align="center">6. Tokens and Fields</th></tr>
+<tr><th colspan="3" align="center">6.Â Tokens and Fields</th></tr>
 <tr>
 <td width="20%" align="left">
-<a accesskey="p" href="sleigh_symbols.html">Prev</a> </td>
-<th width="60%" align="center"> </th>
-<td width="20%" align="right"> <a accesskey="n" href="sleigh_constructors.html">Next</a>
+<a accesskey="p" href="sleigh_symbols.html">Prev</a>Â </td>
+<th width="60%" align="center">Â </th>
+<td width="20%" align="right">Â <a accesskey="n" href="sleigh_constructors.html">Next</a>
 </td>
 </tr>
 </table>
@@ -26,10 +26,10 @@
 </div>
 <div class="sect1">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="sleigh_tokens"></a>6. Tokens and Fields</h2></div></div></div>
+<a name="sleigh_tokens"></a>6.Â Tokens and Fields</h2></div></div></div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_defining_tokens"></a>6.1. Defining Tokens and Fields</h3></div></div></div>
+<a name="sleigh_defining_tokens"></a>6.1.Â Defining Tokens and Fields</h3></div></div></div>
 <p>
 A <span class="emphasis"><em>token</em></span> is one of the byte-sized pieces that make
 up the machine code instructions being modeled.
@@ -57,7 +57,7 @@ field and the range of bits within the token making up the field. The
 size of a field does <span class="emphasis"><em>not</em></span> need to be a multiple of
 8. The range is inclusive where the least significant bit in the token
 is labeled 0. When defining tokens that are bigger than 1 byte, the
-global endianess setting (See <a class="xref" href="sleigh_definitions.html#sleigh_endianess_definition" title="4.1. Endianess Definition">Section 4.1, &#8220;Endianess Definition&#8221;</a>)
+global endianess setting (See <a class="xref" href="sleigh_definitions.html#sleigh_endianess_definition" title="4.1.Â Endianess Definition">SectionÂ 4.1, â€œEndianess Definitionâ€</a>)
 will affect this labeling. Although it is rarely required, it is possible to override
 the global endianess setting for a specific token by appending either the qualifier
 <span class="bold"><strong>endian=little</strong></span> or <span class="bold"><strong>endian=big</strong></span>
@@ -88,11 +88,11 @@ different names.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_fields_family"></a>6.2. Fields as Family Symbols</h3></div></div></div>
+<a name="sleigh_fields_family"></a>6.2.Â Fields as Family Symbols</h3></div></div></div>
 <p>
 Fields are the most basic form of family symbol; they define a natural
 map from instruction bits to a specific symbol as follows. We take the
-set of bits within the instruction as given by the field&#8217;s defining
+set of bits within the instruction as given by the fieldâ€™s defining
 range and treat them as an integer encoding. The resulting integer is
 both the display portion and the semantic meaning of the specific
 symbol. The display string is obtained by converting the integer into
@@ -113,7 +113,7 @@ the <span class="bold"><strong>dec</strong></span> attribute is not supported]
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_alternate_meanings"></a>6.3. Attaching Alternate Meanings to Fields</h3></div></div></div>
+<a name="sleigh_alternate_meanings"></a>6.3.Â Attaching Alternate Meanings to Fields</h3></div></div></div>
 <p>
 The default interpretation of a field is probably the most natural but
 of course processors interpret fields within an instruction in a wide
@@ -124,7 +124,7 @@ interpretations must be built up out of tables.
 </p>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="sleigh_attaching_registers"></a>6.3.1. Attaching Registers</h4></div></div></div>
+<a name="sleigh_attaching_registers"></a>6.3.1.Â Attaching Registers</h4></div></div></div>
 <p>
 Probably <span class="emphasis"><em>the</em></span> most common processor interpretation
 of a field is as an encoding of a particular register. In SLEIGH this
@@ -140,7 +140,7 @@ space separated list of field identifiers surrounded by square
 brackets. A <span class="emphasis"><em>registerlist</em></span> must be a square bracket
 surrounded and space separated list of register identifiers as created
 with <span class="bold"><strong>define</strong></span> statements (see Section
-<a class="xref" href="sleigh_definitions.html#sleigh_naming_registers" title="4.4. Naming Registers">Section 4.4, &#8220;Naming Registers&#8221;</a>). For each field in
+<a class="xref" href="sleigh_definitions.html#sleigh_naming_registers" title="4.4.Â Naming Registers">SectionÂ 4.4, â€œNaming Registersâ€</a>). For each field in
 the <span class="emphasis"><em>fieldlist</em></span>, instead of having the display and
 semantic meaning of an integer, the field becomes a look-up table for
 the given list of registers. The original integer interpretation is
@@ -152,7 +152,7 @@ display and semantic meaning of the field are now taken from the new
 register.
 </p>
 <p>
-A particular integer can remain unspecified by putting a &#8216;_&#8217; character
+A particular integer can remain unspecified by putting a â€˜_â€™ character
 in the appropriate position of the register list or also if the length
 of the register list is less than the integer. A specific integer
 encoding of the field that is unspecified like this
@@ -163,7 +163,7 @@ of the instruction.
 </div>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="sleigh_attaching_integers"></a>6.3.2. Attaching Other Integers</h4></div></div></div>
+<a name="sleigh_attaching_integers"></a>6.3.2.Â Attaching Other Integers</h4></div></div></div>
 <p>
 Sometimes a processor interprets a field as an integer but not the
 integer given by the default interpretation. A different integer
@@ -180,12 +180,12 @@ register interpretation is assigned to fields with
 an <span class="bold"><strong>attach variables</strong></span> statement, the
 integers in the list are assigned to each field specified in
 the <span class="emphasis"><em>fieldlist</em></span>. [Currently SLEIGH does not support
-unspecified positions in the list using a &#8216;_&#8217;]
+unspecified positions in the list using a â€˜_â€™]
 </p>
 </div>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="sleigh_attaching_names"></a>6.3.3. Attaching Names</h4></div></div></div>
+<a name="sleigh_attaching_names"></a>6.3.3.Â Attaching Names</h4></div></div></div>
 <p>
 It is possible to just modify the display characteristics of a field
 without changing the semantic meaning. The need for this is rare, but
@@ -196,7 +196,7 @@ appropriate to define overlapping fields, one of which is defined to
 have no semantic meaning. The most convenient way to break down the
 required disassembly may not be the most convenient way to break down
 the semantics. It is also possible to have symbols with semantic
-meaning but no display meaning (see <a class="xref" href="sleigh_constructors.html#sleigh_invisible_operands" title="7.4.5. Invisible Operands">Section 7.4.5, &#8220;Invisible Operands&#8221;</a>).
+meaning but no display meaning (see <a class="xref" href="sleigh_constructors.html#sleigh_invisible_operands" title="7.4.5.Â Invisible Operands">SectionÂ 7.4.5, â€œInvisible Operandsâ€</a>).
 </p>
 <p>
 At any rate we can list the display interpretation of a field directly
@@ -218,7 +218,7 @@ encodings.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_context_variables"></a>6.4. Context Variables</h3></div></div></div>
+<a name="sleigh_context_variables"></a>6.4.Â Context Variables</h3></div></div></div>
 <p>
 SLEIGH supports the concept of <span class="emphasis"><em>context
 variables</em></span>. For the most part processor instructions can be
@@ -254,12 +254,12 @@ By default, globally setting a context variable affects instruction decoding
 from the point of the change, forward,
 following the flow of the instructions, but if the variable is labeled as
 <span class="bold"><strong>noflow</strong></span>, any change is limited to a
-single instruction. (See <a class="xref" href="sleigh_context.html#sleigh_contextflow" title="8.3.1. Context Flow">Section 8.3.1, &#8220;Context Flow&#8221;</a>)
+single instruction. (See <a class="xref" href="sleigh_context.html#sleigh_contextflow" title="8.3.1.Â Context Flow">SectionÂ 8.3.1, â€œContext Flowâ€</a>)
 </p>
 <p>
 Once the context variable is defined, in terms of the specification
 syntax, it can be treated as if it were just another field. See
-<a class="xref" href="sleigh_context.html" title="8. Using Context">Section 8, &#8220;Using Context&#8221;</a>, for a complete discussion of how to
+<a class="xref" href="sleigh_context.html" title="8.Â Using Context">SectionÂ 8, â€œUsing Contextâ€</a>, for a complete discussion of how to
 use context variables.
 </p>
 </div>
@@ -269,15 +269,15 @@ use context variables.
 <table width="100%" summary="Navigation footer">
 <tr>
 <td width="40%" align="left">
-<a accesskey="p" href="sleigh_symbols.html">Prev</a> </td>
-<td width="20%" align="center"> </td>
-<td width="40%" align="right"> <a accesskey="n" href="sleigh_constructors.html">Next</a>
+<a accesskey="p" href="sleigh_symbols.html">Prev</a>Â </td>
+<td width="20%" align="center">Â </td>
+<td width="40%" align="right">Â <a accesskey="n" href="sleigh_constructors.html">Next</a>
 </td>
 </tr>
 <tr>
-<td width="40%" align="left" valign="top">5. Introduction to Symbols </td>
+<td width="40%" align="left" valign="top">5.Â Introduction to SymbolsÂ </td>
 <td width="20%" align="center"><a accesskey="h" href="sleigh.html">Home</a></td>
-<td width="40%" align="right" valign="top"> 7. Constructors</td>
+<td width="40%" align="right" valign="top">Â 7.Â Constructors</td>
 </tr>
 </table>
 </div>

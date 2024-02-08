@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +28,10 @@ import java.util.HashMap;
  */
 class DomainFileIndex implements DomainFolderChangeListener {
 
-	private ProjectFileManager projectData;
+	private DefaultProjectData projectData;
 	private HashMap<String, String> fileIdToPathIndex = new HashMap<String, String>();
 
-	DomainFileIndex(ProjectFileManager projectData) {
+	DomainFileIndex(DefaultProjectData projectData) {
 		this.projectData = projectData;
 	}
 

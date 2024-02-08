@@ -24,8 +24,7 @@ import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.util.*;
-import ghidra.util.exception.AssertException;
-import ghidra.util.exception.NotFoundException;
+import ghidra.util.exception.*;
 
 /**
  * <code>X86_64_ElfRelocationContext</code> provides ability to generate a
@@ -50,7 +49,10 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 	public long getSymbolValue(ElfSymbol symbol) {
 		long symbolValue = super.getSymbolValue(symbol);
 		if (symbolValue == 0 && ElfConstants.GOT_SYMBOL_NAME.equals(symbol.getNameAsString())) {
-			Address gotAddr = allocateGot();
+			Address gotAddr = symbolMap.get(symbol);
+			if (gotAddr == null) {
+				gotAddr = allocateGot();
+			}
 			if (gotAddr != null) {
 				return gotAddr.getOffset();
 			}
@@ -102,22 +104,30 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 				if (elfSymbol == null) {
 					continue;
 				}
-				uniqueSymbolValues.add(elfSymbol.getValue());
+				long symbolValue = getSymbolValue(elfSymbol);
+				if (!uniqueSymbolValues.add(symbolValue)) {
+					System.out.println("Duplicate sym value 0x" + Long.toHexString(symbolValue) +
+						" for " + elfSymbol.getNameAsString());
+				}
 			}
 		}
 		return Math.max(8, uniqueSymbolValues.size() * 8);
 	}
 
 	private boolean requiresGotEntry(ElfRelocation r) {
+
 		switch (r.getType()) {
 			case X86_64_ElfRelocationConstants.R_X86_64_GOTPCREL:
-			case X86_64_ElfRelocationConstants.R_X86_64_GOTOFF64:
-			case X86_64_ElfRelocationConstants.R_X86_64_GOTPC32:
-			case X86_64_ElfRelocationConstants.R_X86_64_GOT64:
+//			case X86_64_ElfRelocationConstants.R_X86_64_GOTOFF64:
+//			case X86_64_ElfRelocationConstants.R_X86_64_GOTPC32:
+//			case X86_64_ElfRelocationConstants.R_X86_64_GOT64:
 			case X86_64_ElfRelocationConstants.R_X86_64_GOTPCREL64:
-			case X86_64_ElfRelocationConstants.R_X86_64_GOTPC64:
+//			case X86_64_ElfRelocationConstants.R_X86_64_GOTPC64:
+				return true;
 			case X86_64_ElfRelocationConstants.R_X86_64_GOTPCRELX:
 			case X86_64_ElfRelocationConstants.R_X86_64_REX_GOTPCRELX:
+				// NOTE: Relocation may not actually require GOT entry in which case %got 
+				// may be over-allocated, but is required in some cases.
 				return true;
 			default:
 				return false;
@@ -130,24 +140,35 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 		nextAllocatedGotEntryAddress = Address.NO_ADDRESS;
 
 		ElfSymbol gotElfSymbol = findGotElfSymbol();
-		if (gotElfSymbol == null) {
-			// TODO: may need to support cases where GOT symbol not defined
-			loadHelper.log(
-				"GOT allocatiom failed. " + ElfConstants.GOT_SYMBOL_NAME + " not defined");
+
+		if (gotElfSymbol == null && !getElfHeader().isRelocatable()) {
+			loadHelper
+					.log("GOT allocatiom failed. " + ElfConstants.GOT_SYMBOL_NAME + " not defined");
 			return null;
 		}
-		if (getSymbolAddress(gotElfSymbol) != null) {
+
+		if (gotElfSymbol != null && gotElfSymbol.getValue() != 0) {
 			throw new AssertException(ElfConstants.GOT_SYMBOL_NAME + " already allocated");
 		}
 
 		int alignment = getLoadAdapter().getLinkageBlockAlignment();
-		allocatedGotLimits =
-			getLoadHelper().allocateLinkageBlock(alignment, computeRequiredGotSize(),
-				ElfRelocationHandler.GOT_BLOCK_NAME);
+		int gotSize = computeRequiredGotSize();
+		allocatedGotLimits = getLoadHelper().allocateLinkageBlock(alignment, gotSize,
+			ElfRelocationHandler.GOT_BLOCK_NAME);
 		if (allocatedGotLimits != null &&
 			allocatedGotLimits.getMinAddress().getOffset() < Integer.MAX_VALUE) {
-			// GOT must fall within first 32-bit segment
-			symbolMap.put(gotElfSymbol, allocatedGotLimits.getMinAddress());
+			// NOTE: GOT must fall within first 32-bit segment
+			if (gotElfSymbol != null) {
+				// remember where GOT was allocated
+				try {
+					loadHelper.createSymbol(allocatedGotLimits.getMinAddress(),
+						ElfConstants.GOT_SYMBOL_NAME, true, false, null);
+				}
+				catch (InvalidInputException e) {
+					throw new AssertionError("Unexpected exception", e);
+				}
+				symbolMap.put(gotElfSymbol, allocatedGotLimits.getMinAddress());
+			}
 			allocatedGotAddress = allocatedGotLimits.getMinAddress();
 			nextAllocatedGotEntryAddress = allocatedGotAddress;
 			gotMap = new HashMap<>();
@@ -156,8 +177,7 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 			return allocatedGotAddress;
 		}
 
-		loadHelper.log("Failed to allocate " + ElfRelocationHandler.GOT_BLOCK_NAME +
-			" block required for relocation processing");
+		loadHelper.log("Failed to allocate GOT block required for relocation processing");
 		return null;
 	}
 
@@ -203,17 +223,20 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 	/**
 	 * Get or allocate a GOT entry for the specified symbolValue.
 	 * NOTE: This is restricted to object modules only which do not of a GOT.
-	 * @param symbolValue symbol value
+	 * @param elfSymbol ELF symbol
 	 * @return GOT entry address or null if unable to allocate
 	 */
-	public Address getGotEntryAddress(long symbolValue) {
+	public Address getGotEntryAddress(ElfSymbol elfSymbol) {
+		long symbolValue = getSymbolValue(elfSymbol);
 		Address addr = null;
 		if (gotMap != null) {
 			addr = gotMap.get(symbolValue);
 		}
 		if (addr == null) {
 			addr = getNextAllocatedGotEntryAddress();
-			gotMap.put(symbolValue, addr);
+			if (gotMap != null) {
+				gotMap.put(symbolValue, addr);
+			}
 		}
 		return addr == Address.NO_ADDRESS ? null : addr;
 	}
@@ -236,13 +259,7 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 						: LittleEndianDataConverter.INSTANCE;
 			for (long symbolValue : gotMap.keySet()) {
 				Address addr = gotMap.get(symbolValue);
-				byte[] bytes;
-				if (program.getDefaultPointerSize() == 4) {
-					bytes = converter.getBytes((int) symbolValue);
-				}
-				else {
-					bytes = converter.getBytes(symbolValue);
-				}
+				byte[] bytes = converter.getBytes(symbolValue); // 8-byte pointer value
 				block.putBytes(addr, bytes);
 				loadHelper.createData(addr, PointerDataType.dataType);
 			}

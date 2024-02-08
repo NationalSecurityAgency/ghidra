@@ -25,6 +25,7 @@ public interface Point2D<X, Y> {
 	default double computeDistance(Point2D<X, Y> point) {
 		double distX = getSpace().distX(getX(), point.getX());
 		double distY = getSpace().distY(getY(), point.getY());
+		// NB. Square root is unnecessary, if this is just for comparison
 		return distX * distX + distY * distY;
 	}
 }

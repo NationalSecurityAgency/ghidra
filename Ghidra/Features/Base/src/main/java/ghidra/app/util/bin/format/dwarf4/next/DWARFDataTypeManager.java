@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next;
 
+import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.*;
+
 import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -38,6 +40,12 @@ import utility.function.Dummy;
  * Manages mappings between DWARF DIEs and Ghidra DataTypes.
  */
 public class DWARFDataTypeManager {
+
+	private static final Set<Integer> TYPE_TAGS = Set.of(DW_TAG_base_type, DW_TAG_array_type,
+		DW_TAG_typedef, DW_TAG_class_type, DW_TAG_interface_type, DW_TAG_structure_type,
+		DW_TAG_union_type, DW_TAG_enumeration_type, DW_TAG_pointer_type, DW_TAG_reference_type,
+		DW_TAG_rvalue_reference_type, DW_TAG_const_type, DW_TAG_volatile_type,
+		DW_TAG_ptr_to_member_type, DW_TAG_unspecified_type, DW_TAG_subroutine_type);
 
 	private final DataTypeManager dataTypeManager;
 	private final DataTypeManager builtInDTM;
@@ -330,15 +338,6 @@ public class DWARFDataTypeManager {
 	}
 
 	/**
-	 * Returns datatype to hold a 1 byte undefined value.
-	 *
-	 * @return undefined 1 byte {@link DataType}.
-	 */
-	public DataType getUndefined1Type() {
-		return baseDataTypeUndefined1;
-	}
-
-	/**
 	 * Returns a DWARF base data type based on its name, or null if it does not exist.
 	 *
 	 * @param name base type name
@@ -458,14 +457,10 @@ public class DWARFDataTypeManager {
 		return usedFixedSizeType ? null : dataTypeManager;
 	}
 
-	/**
+	/*
 	 * Create a string with the data type's size and type info so that
 	 * the data type can be stored in the same map as the regular named base types without
 	 * conflicting.
-	 * <p>
-	 * @param dwarfLength
-	 * @param dwarfEncoding
-	 * @return
 	 */
 	private String mangleDataTypeInfo(int dwarfLength, int dwarfEncoding) {
 		return String.format("%s_%d_%d", BASETYPE_MANGLE_PREFIX, dwarfLength, dwarfEncoding);
@@ -558,29 +553,29 @@ public class DWARFDataTypeManager {
 			throws IOException, DWARFException, CancelledException {
 		int dtCountBefore = dataTypeManager.getDataTypeCount(true);
 
-		for (DIEAggregate diea : DIEAMonitoredIterator.iterable(prog, "DWARF Import Types",
-			monitor)) {
-			monitor.checkCancelled();
+		monitor.initialize(prog.getTotalAggregateCount(), "DWARF Import Types");
+		for (DIEAggregate diea : prog.allAggregates()) {
+			monitor.increment();
 
 			try {
-				if (isDataType(diea)) {
+				if (TYPE_TAGS.contains(diea.getTag())) {
 					doGetDataType(diea);
 				}
 			}
 			catch (IllegalArgumentException iae) {
 				// squelch full stack trace for data type errors where structure is defined to
 				// have itself inside itself.
-				Msg.error(this,
-					"Failed to process DWARF DIE " + diea.getHexOffset() + ": " + iae.getMessage());
+				Msg.error(this, "Failed to process DWARF DIE %x: %s".formatted(diea.getOffset(),
+					iae.getMessage()));
 			}
 			catch (OutOfMemoryError oom) {
 				throw oom;
 			}
 			catch (Throwable th) {
-				// Aggressively catch pretty much everything to allow the import to
-				// try to continue with the next compunit.
-				Msg.error(this,
-					"Error when processing DWARF information for DIE " + diea.getHexOffset(), th);
+				// Aggressively catch pretty much everything to allow the import to continue
+				Msg.error(this, "Error when processing DWARF information for DIE %x"
+						.formatted(diea.getOffset()),
+					th);
 				Msg.info(this, "DIE info:\n" + diea.toString());
 			}
 		}
@@ -588,10 +583,6 @@ public class DWARFDataTypeManager {
 		int dtCountAfter = dataTypeManager.getDataTypeCount(true);
 
 		importSummary.dataTypesAdded = (dtCountAfter - dtCountBefore);
-
-		if (prog.getImportOptions().isCreateFuncSignatures()) {
-			importFuncSignatures(monitor);
-		}
 	}
 
 	private DIEAggregate getFuncDIEA(DIEAggregate diea) {
@@ -632,88 +623,12 @@ public class DWARFDataTypeManager {
 		return null;
 	}
 
-	private void importFuncSignatures(TaskMonitor monitor) throws CancelledException {
-
-		int dtCountBefore = dataTypeManager.getDataTypeCount(true);
-
-		for (DIEAggregate diea : DIEAMonitoredIterator.iterable(prog,
-			"DWARF Import Function Signatures", monitor)) {
-			monitor.checkCancelled();
-			try {
-				diea = getFuncDIEA(diea);
-				if (diea != null) {
-					DWARFNameInfo dni = prog.getName(diea);
-					DataType funcDefDT = createFunctionDefinitionDataType(diea, dni);
-					if (funcDefDT != null) {
-						// submit the temp 'impl' funcdef datatype to the DTM and get back a permanent
-						// db instance.
-						funcDefDT = dataTypeManager.addDataType(funcDefDT,
-							DataTypeConflictHandler.DEFAULT_HANDLER);
-
-						// Look for the source info in the funcdef die and fall back to its
-						// parent's source info (handles auto-generated ctors and such)
-						addDataType(diea.getOffset(), funcDefDT,
-							DWARFSourceInfo.getSourceInfoWithFallbackToParent(diea));
-
-						Swing.runNow(Dummy.runnable());
-					}
-				}
-			}
-			catch (OutOfMemoryError oom) {
-				throw oom;
-			}
-			catch (Throwable th) {
-				// Aggressively catch pretty much everything to allow the import to
-				// try to continue with the next compunit.
-				Msg.error(this,
-					"Error when processing DWARF information for DIE " + diea.getHexOffset(), th);
-				Msg.info(this, "DIE info:\n" + diea.toString());
-			}
-		}
-
-		int dtCountAfter = dataTypeManager.getDataTypeCount(true);
-		importSummary.funcSignaturesAdded = (dtCountAfter - dtCountBefore);
-	}
-
-	private boolean isDataType(DIEAggregate diea) {
-		switch (diea.getTag()) {
-			case DWARFTag.DW_TAG_base_type:
-			case DWARFTag.DW_TAG_array_type:
-			case DWARFTag.DW_TAG_typedef:
-			case DWARFTag.DW_TAG_class_type:
-			case DWARFTag.DW_TAG_interface_type:
-			case DWARFTag.DW_TAG_structure_type:
-			case DWARFTag.DW_TAG_union_type:
-			case DWARFTag.DW_TAG_enumeration_type:
-			case DWARFTag.DW_TAG_pointer_type:
-			case DWARFTag.DW_TAG_reference_type:
-			case DWARFTag.DW_TAG_rvalue_reference_type:
-			case DWARFTag.DW_TAG_const_type:
-			case DWARFTag.DW_TAG_volatile_type:
-			case DWARFTag.DW_TAG_ptr_to_member_type:
-			case DWARFTag.DW_TAG_unspecified_type:
-			case DWARFTag.DW_TAG_subroutine_type:
-				return true;
-
-			default:
-				return false;
-		}
-	}
-
 	/**
 	 * Creates a new {@link FunctionDefinitionDataType} from the specified {@link DIEAggregate}
 	 * using already known datatypes.
 	 * <p>
-	 * The logic of this impl is the same as {@link DWARFDataTypeImporter#makeDataTypeForFunctionDefinition(DIEAggregate, boolean)}
-	 * but the impls can't be shared without excessive over-engineering.
-	 * <p>
 	 * This impl uses DataType's that have already been resolved and committed to the DTM, and
 	 * a cache mapping entry of the DWARF die -&gt; DataType has been registered via {@link #addDataType(long, DataType, DWARFSourceInfo)}.
-	 * <p>
-	 * This approach is necessary because of speed issues that arise if the referred datatypes
-	 * are created from scratch from the DWARF information and then have to go through a
-	 * resolve() before being used in the FunctionDefinition.
-	 *
 	 *
 	 * @param diea DWARF {@link DIEAggregate} that points to a subprogram or subroutine_type.
 	 * @param dni DWARF name info for the new function def

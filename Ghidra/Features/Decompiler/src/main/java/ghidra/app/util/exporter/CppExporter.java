@@ -20,6 +20,7 @@ import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 
+import docking.options.OptionsService;
 import generic.cache.CachingPool;
 import generic.cache.CountingBasicFactory;
 import generic.concurrent.QCallback;
@@ -31,15 +32,16 @@ import ghidra.app.decompiler.parallel.ParallelDecompiler;
 import ghidra.app.util.*;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.Equate;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
+import util.CollectionUtils;
 
 public class CppExporter extends Exporter {
 
@@ -121,6 +123,7 @@ public class CppExporter extends Exporter {
 
 		try {
 			if (emitDataTypeDefinitions) {
+				writeEquates(program, header, headerWriter, cFileWriter, chunkingMonitor);
 				writeProgramDataTypes(program, header, headerWriter, cFileWriter, chunkingMonitor);
 			}
 			chunkingMonitor.checkCancelled();
@@ -311,6 +314,31 @@ public class CppExporter extends Exporter {
 			cFileWriter.println("");
 		}
 
+	}
+
+	private void writeEquates(Program program, File header, PrintWriter headerWriter,
+			PrintWriter cFileWriter, TaskMonitor monitor) throws CancelledException {
+		boolean equatesPresent = false;
+		for (Equate equate : CollectionUtils.asIterable(program.getEquateTable().getEquates())) {
+			monitor.checkCancelled();
+			equatesPresent = true;
+			String define =
+				"#define %s %s".formatted(equate.getDisplayName(), equate.getDisplayValue());
+			if (headerWriter != null) {
+				headerWriter.println(define);
+			}
+			else if (cFileWriter != null) {
+				cFileWriter.println(define);
+			}
+		}
+		if (equatesPresent) {
+			if (headerWriter != null) {
+				headerWriter.println();
+			}
+			else if (cFileWriter != null) {
+				cFileWriter.println();
+			}
+		}
 	}
 
 	private File getHeaderFile(File file) {

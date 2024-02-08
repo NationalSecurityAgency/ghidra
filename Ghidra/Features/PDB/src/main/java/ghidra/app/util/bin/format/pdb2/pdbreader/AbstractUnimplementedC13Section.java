@@ -40,7 +40,7 @@ abstract class AbstractUnimplementedC13Section extends C13Section {
 	}
 
 	@Override
-	void dump(Writer writer) throws IOException {
+	void dump(Writer writer, TaskMonitor monitor) throws IOException {
 		String n = getClass().getSimpleName();
 		int len = n.length();
 		writer.write(n + dashes.substring(len));

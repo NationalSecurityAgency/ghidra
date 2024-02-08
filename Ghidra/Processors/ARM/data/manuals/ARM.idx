@@ -20,6 +20,7 @@ blx,	7198
 bx,	7200
 bxj,	7202
 cbnz,	7203
+cbz,	7203
 clrex,	7204
 clz,	7205
 cmn,	7212

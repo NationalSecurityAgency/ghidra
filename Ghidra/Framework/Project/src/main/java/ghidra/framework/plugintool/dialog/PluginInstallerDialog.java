@@ -149,7 +149,6 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 		tableFilterPanel = new GTableFilterPanel<>(table, tableModel);
 
 		JScrollPane sp = new JScrollPane(table);
-		sp.getViewport().setBackground(table.getBackground());
 
 		pluginTablePanel.add(sp, BorderLayout.CENTER);
 		pluginTablePanel.add(tableFilterPanel, BorderLayout.SOUTH);
@@ -203,7 +202,6 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 	private class StatusCellRenderer extends GTableCellRenderer {
 
 		public StatusCellRenderer() {
-			super();
 			setHorizontalAlignment(SwingConstants.CENTER);
 		}
 

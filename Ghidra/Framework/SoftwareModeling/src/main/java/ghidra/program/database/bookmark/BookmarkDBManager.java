@@ -33,7 +33,7 @@ import ghidra.program.database.util.DatabaseTableUtils;
 import ghidra.program.database.util.EmptyRecordIterator;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
-import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.Lock;
 import ghidra.util.datastruct.ObjectArray;
 import ghidra.util.exception.*;
@@ -161,7 +161,7 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 			if (rec != null) {
 				bookmarkAdapter.updateRecord(rec);
 				Address addr = bm.getAddress();
-				program.setObjChanged(ChangeManager.DOCR_BOOKMARK_CHANGED, addr, bm, null, null);
+				program.setObjChanged(ProgramEvent.BOOKMARK_CHANGED, addr, bm, null, null);
 
 			}
 		}
@@ -211,7 +211,7 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 			bookmarkAdapter.addType(bmt.getTypeId());
 
 			// fire event
-			program.setObjChanged(ChangeManager.DOCR_BOOKMARK_TYPE_ADDED, bmt, null, null);
+			program.setObjChanged(ProgramEvent.BOOKMARK_TYPE_ADDED, bmt, null, null);
 
 		}
 		return bmt;
@@ -301,7 +301,7 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 				bm = new BookmarkDB(this, cache, rec);
 
 				// fire event
-				program.setObjChanged(ChangeManager.DOCR_BOOKMARK_ADDED, addr, bm, null, null);
+				program.setObjChanged(ProgramEvent.BOOKMARK_ADDED, addr, bm, null, null);
 			}
 			return bm;
 		}
@@ -375,7 +375,7 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 		try {
 			bookmarkAdapter.deleteRecord(bm.getId());
 			// fire event
-			program.setObjChanged(ChangeManager.DOCR_BOOKMARK_REMOVED, addr, bm, null, null);
+			program.setObjChanged(ProgramEvent.BOOKMARK_REMOVED, addr, bm, null, null);
 		}
 		catch (IOException e) {
 			dbError(e);
@@ -395,8 +395,7 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 					bookmarkAdapter.deleteType(typeId);
 					bookmarkTypeAdapter.deleteRecord(typeId);
 					bmt.setHasBookmarks(false);
-					program.setObjChanged(ChangeManager.DOCR_BOOKMARK_TYPE_REMOVED, bmt, null,
-						null);
+					program.setObjChanged(ProgramEvent.BOOKMARK_TYPE_REMOVED, bmt, null, null);
 				}
 			}
 			catch (IOException e) {

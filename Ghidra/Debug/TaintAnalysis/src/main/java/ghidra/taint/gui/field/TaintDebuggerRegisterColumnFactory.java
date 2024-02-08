@@ -17,9 +17,9 @@ package ghidra.taint.gui.field;
 
 import docking.widgets.table.AbstractDynamicTableColumn;
 import docking.widgets.table.DynamicTableColumn;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.register.DebuggerRegisterColumnFactory;
 import ghidra.app.plugin.core.debug.gui.register.RegisterRow;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.pcode.emu.taint.trace.TaintTracePcodeExecutorStatePiece;

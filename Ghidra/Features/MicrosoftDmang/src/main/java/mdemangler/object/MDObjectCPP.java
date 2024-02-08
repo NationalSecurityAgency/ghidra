@@ -72,7 +72,7 @@ public class MDObjectCPP extends MDObject {
 	 * Returns the {@link MDQualification} component that represents the namespace.
 	 * @return the namespace information.
 	 */
-	public MDQualification getQualfication() {
+	public MDQualification getQualification() {
 		if (hashedObjectFlag) {
 			return hashedObject.getQualification();
 		}

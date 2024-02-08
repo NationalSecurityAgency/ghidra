@@ -711,20 +711,26 @@ bool FlowInfo::setupCallindSpecs(PcodeOp *op,FuncCallSpecs *fc)
 }
 
 /// \param op is the BRANCHIND operation to convert
-/// \param failuremode is a code indicating the type of failure when trying to recover the jump table
-void FlowInfo::truncateIndirectJump(PcodeOp *op,int4 failuremode)
+/// \param mode indicates the type of failure when trying to recover the jump table
+void FlowInfo::truncateIndirectJump(PcodeOp *op,JumpTable::RecoveryMode mode)
 
 {
-  data.opSetOpcode(op,CPUI_CALLIND); // Turn jump into call
-  setupCallindSpecs(op,(FuncCallSpecs *)0);
-  if (failuremode != 2)					// Unless the switch was a thunk mechanism
-    data.getCallSpecs(op)->setBadJumpTable(true);	// Consider using special name for switch variable
+  if (mode == JumpTable::fail_return) {
+    data.opSetOpcode(op,CPUI_RETURN);	// Turn jump into return
+    data.warning("Treating indirect jump as return",op->getAddr());
+  }
+  else {
+    data.opSetOpcode(op,CPUI_CALLIND); // Turn jump into call
+    setupCallindSpecs(op,(FuncCallSpecs *)0);
+    if (mode != JumpTable::fail_thunk)			// Unless the switch was a thunk mechanism
+      data.getCallSpecs(op)->setBadJumpTable(true);	// Consider using special name for switch variable
 
-  // Create an artificial return
-  PcodeOp *truncop = artificialHalt(op->getAddr(),0);
-  data.opDeadInsertAfter(truncop,op);
+    // Create an artificial return
+    PcodeOp *truncop = artificialHalt(op->getAddr(),0);
+    data.opDeadInsertAfter(truncop,op);
 
-  data.warning("Treating indirect jump as call",op->getAddr());
+    data.warning("Treating indirect jump as call",op->getAddr());
+  }
 }
 
 /// \brief Test if the given p-code op is a member of an array
@@ -1404,16 +1410,16 @@ void FlowInfo::recoverJumpTables(vector<JumpTable *> &newTables,vector<PcodeOp *
 
   for(int4 i=0;i<tablelist.size();++i) {
     op = tablelist[i];
-    int4 failuremode;
-    JumpTable *jt = data.recoverJumpTable(partial,op,this,failuremode); // Recover it
+    JumpTable::RecoveryMode mode;
+    JumpTable *jt = data.recoverJumpTable(partial,op,this,mode); // Recover it
     if (jt == (JumpTable *)0) { // Could not recover jumptable
-      if ((failuremode == 3) && (tablelist.size() > 1) && (!isInArray(notreached,op))) {
+      if ((mode == JumpTable::fail_noflow) && (tablelist.size() > 1) && (!isInArray(notreached,op))) {
 	// If the indirect op was not reachable with current flow AND there is more flow to generate,
 	//     AND we haven't tried to recover this table before
 	notreached.push_back(op); // Save this op so we can try to recovery table again later
       }
       else if (!isFlowForInline())	// Unless this flow is being inlined for something else
-	truncateIndirectJump(op,failuremode); // Treat the indirect jump as a call
+	truncateIndirectJump(op,mode); // Treat the indirect jump as a call
     }
     newTables.push_back(jt);
   }

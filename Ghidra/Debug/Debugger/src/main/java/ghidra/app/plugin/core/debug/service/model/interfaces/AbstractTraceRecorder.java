@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.service.model.interfaces;
 
-import ghidra.app.plugin.core.debug.mapping.DebuggerMemoryMapper;
+import ghidra.debug.api.model.DebuggerMemoryMapper;
 import ghidra.trace.model.Trace;
 
 public interface AbstractTraceRecorder {

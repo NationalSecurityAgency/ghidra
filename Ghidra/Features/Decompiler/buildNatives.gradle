@@ -43,6 +43,7 @@ model {
 			targetPlatform "linux_arm_64"
 			targetPlatform "mac_x86_64"
 			targetPlatform "mac_arm_64"
+			targetPlatform "freebsd_x86_64"
 			sources {
 				cpp {
 					// NOTE: The bison/flex generated files are assumed to be up-to-date.
@@ -71,6 +72,7 @@ model {
 		                include "cpool.cc"
 		                include "comment.cc"
 						include "stringmanage.cc"
+						include "modelrules.cc"
 		                include "fspec.cc"
 		                include "action.cc"
 		                include "loadimage.cc"
@@ -122,6 +124,8 @@ model {
 		                include "ghidra_process.cc"
 		                include "comment_ghidra.cc"
 						include "string_ghidra.cc"
+						include "signature.cc"
+						include "signature_ghidra.cc"
 		         //       include "callgraph.cc"			// uncomment for debug
 		         //       include "ifacedecomp.cc"			// uncomment for debug
 		         //       include "ifaceterm.cc"			// uncomment for debug
@@ -145,6 +149,7 @@ model {
 			targetPlatform "linux_arm_64"
 			targetPlatform "mac_x86_64"
 			targetPlatform "mac_arm_64"
+			targetPlatform "freebsd_x86_64"
 			sources {
 				cpp {
 					// NOTE: The bison/flex generated files are assumed to be up-to-date.

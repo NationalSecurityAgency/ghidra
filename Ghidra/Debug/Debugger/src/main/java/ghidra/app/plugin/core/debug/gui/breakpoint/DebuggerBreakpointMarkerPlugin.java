@@ -41,11 +41,18 @@ import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.app.plugin.core.functiongraph.FunctionGraphMarginService;
+import ghidra.app.plugin.core.marker.MarginProviderSupplier;
+import ghidra.app.plugin.core.marker.MarkerMarginProvider;
 import ghidra.app.services.*;
-import ghidra.app.services.LogicalBreakpoint.State;
 import ghidra.app.util.viewer.listingpanel.MarkerClickedListener;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint;
+import ghidra.debug.api.breakpoint.LogicalBreakpoint.State;
+import ghidra.debug.api.breakpoint.LogicalBreakpointsChangeListener;
+import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.target.Target;
 import ghidra.framework.options.AutoOptions;
 import ghidra.framework.options.annotation.*;
 import ghidra.framework.plugintool.*;
@@ -62,6 +69,7 @@ import ghidra.trace.model.TraceLocation;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
 import ghidra.trace.model.program.TraceProgramView;
+import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 
 @PluginInfo(
@@ -385,10 +393,10 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 			// Prevent default bookmark icons from obscuring breakpoints
 			if (!(program instanceof TraceProgramView)) {
 				BookmarkManager manager = program.getBookmarkManager();
-				manager.defineType(LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE,
+				manager.defineType(LogicalBreakpoint.ENABLED_BOOKMARK_TYPE,
 					DebuggerResources.ICON_BLANK, COLOR_BREAKPOINT_ENABLED_MARKER,
 					MarkerService.BREAKPOINT_PRIORITY - 1);
-				manager.defineType(LogicalBreakpoint.BREAKPOINT_DISABLED_BOOKMARK_TYPE,
+				manager.defineType(LogicalBreakpoint.DISABLED_BOOKMARK_TYPE,
 					DebuggerResources.ICON_BLANK, COLOR_BREAKPOINT_DISABLED_MARKER,
 					MarkerService.BREAKPOINT_PRIORITY - 1);
 			}
@@ -496,6 +504,16 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		}
 	}
 
+	private class DefaultMarginProviderSupplier implements MarginProviderSupplier {
+		@Override
+		public MarkerMarginProvider createMarginProvider() {
+			if (markerService != null) {
+				return markerService.createMarginProvider();
+			}
+			return null;
+		}
+	}
+
 	protected static State computeState(LogicalBreakpoint breakpoint, Program programOrView) {
 		if (programOrView instanceof TraceProgramView view) {
 			return breakpoint.computeStateForTrace(view.getTrace());
@@ -517,6 +535,19 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		}
 		Set<LogicalBreakpoint> col = collectBreakpoints(locs);
 		return breakpointService.computeState(col, locs.get(0));
+	}
+
+	public abstract class AbstractToggleBreakpointAction extends DockingAction {
+		public static final String NAME = "Toggle Breakpoint";
+		// TODO: A "toggle breakpoint" icon
+		public static final Icon ICON = LogicalBreakpoint.ICON_MARKER_MIXED;
+		public static final String HELP_ANCHOR = "toggle_breakpoint";
+
+		public AbstractToggleBreakpointAction(Plugin owner) {
+			super(NAME, owner.getName());
+			setDescription("Set, enable, or disable a breakpoint");
+			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
+		}
 	}
 
 	protected class ToggleBreakpointAction extends AbstractToggleBreakpointAction {
@@ -706,7 +737,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 	// @AutoServiceConsumed via method
 	DebuggerLogicalBreakpointService breakpointService;
 	@AutoServiceConsumed
-	private DebuggerModelService modelService;
+	private DebuggerTargetService targetService;
 	@AutoServiceConsumed
 	private DebuggerStaticMappingService mappingService;
 	@AutoServiceConsumed
@@ -717,33 +748,35 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 	private DebuggerControlService controlService;
 	// @AutoServiceConsumed via method
 	DecompilerMarginService decompilerMarginService;
+	// @AutoServiceConsumed via method
+	private FunctionGraphMarginService functionGraphMarginService;
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
 	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_COLORS_ENABLED_BREAKPOINT_COLORING_BACKGROUND, //
-		description = "Whether or not to color background for memory at an enabled breakpoint", //
+		name = DebuggerResources.OPTION_NAME_COLORS_ENABLED_BREAKPOINT_COLORING_BACKGROUND,
+		description = "Whether or not to color background for memory at an enabled breakpoint",
 		help = @HelpInfo(anchor = "colors"))
 	private boolean breakpointEnabledColoringBackground =
 		DebuggerResources.DEFAULT_COLOR_ENABLED_BREAKPOINT_COLORING_BACKGROUND;
 
 	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_COLORS_DISABLED_BREAKPOINT_COLORING_BACKGROUND, //
-		description = "Whether or not to color background for memory at a disabled breakpoint", //
+		name = DebuggerResources.OPTION_NAME_COLORS_DISABLED_BREAKPOINT_COLORING_BACKGROUND,
+		description = "Whether or not to color background for memory at a disabled breakpoint",
 		help = @HelpInfo(anchor = "colors"))
 	private boolean breakpointDisabledColoringBackground =
 		DebuggerResources.DEFAULT_COLOR_DISABLED_BREAKPOINT_COLORING_BACKGROUND;
 
 	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_EN_BREAKPOINT_COLORING_BACKGROUND, //
-		description = "Whether or not to color background for memory at an enabled, but ineffective, breakpoint", //
+		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_EN_BREAKPOINT_COLORING_BACKGROUND,
+		description = "Whether or not to color background for memory at an enabled, but ineffective, breakpoint",
 		help = @HelpInfo(anchor = "colors"))
 	private boolean breakpointIneffEnColoringBackground =
 		DebuggerResources.DEFAULT_COLOR_INEFF_EN_BREAKPOINT_COLORING_BACKGROUND;
 
 	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_DIS_BREAKPOINT_COLORING_BACKGROUND, //
-		description = "Whether or not to color background for memory at an disabled, but ineffective, breakpoint", //
+		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_DIS_BREAKPOINT_COLORING_BACKGROUND,
+		description = "Whether or not to color background for memory at an disabled, but ineffective, breakpoint",
 		help = @HelpInfo(anchor = "colors"))
 	private boolean breakpointIneffDisColoringBackground =
 		DebuggerResources.DEFAULT_COLOR_INEFF_DIS_BREAKPOINT_COLORING_BACKGROUND;
@@ -775,6 +808,8 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 	DebuggerPlaceBreakpointDialog placeBreakpointDialog = new DebuggerPlaceBreakpointDialog();
 
 	BreakpointsDecompilerMarginProvider decompilerMarginProvider;
+	private MarginProviderSupplier functionGraphMarginSupplier =
+		new DefaultMarginProviderSupplier();
 
 	public DebuggerBreakpointMarkerPlugin(PluginTool tool) {
 		super(tool);
@@ -862,14 +897,14 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		if (mode.useEmulatedBreakpoints()) {
 			return EnumSet.allOf(TraceBreakpointKind.class);
 		}
-		if (modelService == null) {
+		if (targetService == null) {
 			return Set.of();
 		}
-		TraceRecorder recorder = modelService.getRecorder(trace);
-		if (recorder == null) {
+		Target target = targetService.getTarget(trace);
+		if (target == null) {
 			return Set.of();
 		}
-		return recorder.getSupportedBreakpointKinds();
+		return target.getSupportedBreakpointKinds();
 	}
 
 	protected Set<TraceBreakpointKind> getSupportedKindsFromContext(ActionContext context) {
@@ -938,7 +973,9 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 	protected void removeMarkers(Program program) {
 		synchronized (markersByProgram) {
 			BreakpointMarkerSets oldSets = markersByProgram.remove(program);
-			oldSets.dispose();
+			if (oldSets != null) {
+				oldSets.dispose();
+			}
 		}
 	}
 
@@ -1017,6 +1054,21 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		this.decompilerMarginService = decompilerMarginService;
 		if (this.decompilerMarginService != null) {
 			this.decompilerMarginService.addMarginProvider(decompilerMarginProvider);
+		}
+	}
+
+	@AutoServiceConsumed
+	private void setFunctionGraphMarginService(
+			FunctionGraphMarginService functionGraphMarginService) {
+
+		if (this.functionGraphMarginService != null) {
+			this.functionGraphMarginService
+					.removeMarkerProviderSupplier(functionGraphMarginSupplier);
+		}
+
+		this.functionGraphMarginService = functionGraphMarginService;
+		if (this.functionGraphMarginService != null) {
+			this.functionGraphMarginService.addMarkerProviderSupplier(functionGraphMarginSupplier);
 		}
 	}
 

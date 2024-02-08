@@ -323,10 +323,10 @@ public class GadpClient extends AbstractDebuggerObjectModel
 	protected void channelStateChanged(ChannelState old, ChannelState set,
 			DebuggerModelClosedReason reason) {
 		if (old == ChannelState.NEGOTIATING && set == ChannelState.ACTIVE) {
-			listeners.fire.modelOpened();
+			broadcast().modelOpened();
 		}
 		else if (old == ChannelState.ACTIVE && set == ChannelState.CLOSED) {
-			listeners.fire.modelClosed(reason);
+			broadcast().modelClosed(reason);
 			root.invalidateSubtree(root, "GADP Client disconnected");
 			messageMatcher.flush(new DebuggerModelTerminatingException("GADP Client disconnected"));
 		}
@@ -504,7 +504,7 @@ public class GadpClient extends AbstractDebuggerObjectModel
 		}
 		catch (RejectedExecutionException e) {
 			reportError(this, "Client already closed", e);
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		catch (IOException e) {
 			return CompletableFuture.failedFuture(e);

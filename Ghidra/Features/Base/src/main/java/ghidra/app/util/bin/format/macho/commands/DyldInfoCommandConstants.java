@@ -52,20 +52,23 @@ public final class DyldInfoCommandConstants {
 
 	public final static int BIND_OPCODE_MASK                                   = 0xF0;
 	public final static int BIND_IMMEDIATE_MASK                                = 0x0F;
-	public final static int BIND_OPCODE_DONE                                   = 0x00;
-	public final static int BIND_OPCODE_SET_DYLIB_ORDINAL_IMM                  = 0x10;
-	public final static int BIND_OPCODE_SET_DYLIB_ORDINAL_ULEB                 = 0x20;
-	public final static int BIND_OPCODE_SET_DYLIB_SPECIAL_IMM                  = 0x30;
-	public final static int BIND_OPCODE_SET_SYMBOL_TRAILING_FLAGS_IMM          = 0x40;
-	public final static int BIND_OPCODE_SET_TYPE_IMM                           = 0x50;
-	public final static int BIND_OPCODE_SET_ADDEND_SLEB                        = 0x60;
-	public final static int BIND_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB            = 0x70;
-	public final static int BIND_OPCODE_ADD_ADDR_ULEB                          = 0x80;
-	public final static int BIND_OPCODE_DO_BIND                                = 0x90;
-	public final static int BIND_OPCODE_DO_BIND_ADD_ADDR_ULEB                  = 0xA0;
-	public final static int BIND_OPCODE_DO_BIND_ADD_ADDR_IMM_SCALED            = 0xB0;
-	public final static int BIND_OPCODE_DO_BIND_ULEB_TIMES_SKIPPING_ULEB       = 0xC0;
-	public final static int BIND_OPCODE_THREADED                               = 0xD0;
+	public final static int BIND_OPCODE_DONE = 0x00;
+	public final static int BIND_OPCODE_SET_DYLIB_ORDINAL_IMM = 0x10;
+	public final static int BIND_OPCODE_SET_DYLIB_ORDINAL_ULEB = 0x20;
+	public final static int BIND_OPCODE_SET_DYLIB_SPECIAL_IMM = 0x30;
+	public final static int BIND_OPCODE_SET_SYMBOL_TRAILING_FLAGS_IMM = 0x40;
+	public final static int BIND_OPCODE_SET_TYPE_IMM = 0x50;
+	public final static int BIND_OPCODE_SET_ADDEND_SLEB = 0x60;
+	public final static int BIND_OPCODE_SET_SEGMENT_AND_OFFSET_ULEB = 0x70;
+	public final static int BIND_OPCODE_ADD_ADDR_ULEB = 0x80;
+	public final static int BIND_OPCODE_DO_BIND = 0x90;
+	public final static int BIND_OPCODE_DO_BIND_ADD_ADDR_ULEB = 0xA0;
+	public final static int BIND_OPCODE_DO_BIND_ADD_ADDR_IMM_SCALED = 0xB0;
+	public final static int BIND_OPCODE_DO_BIND_ULEB_TIMES_SKIPPING_ULEB = 0xC0;
+	public final static int BIND_OPCODE_THREADED = 0xD0;
+
+	public final static int BIND_SUBOPCODE_THREADED_SET_BIND_ORDINAL_TABLE_SIZE_ULEB = 0x00;
+	public final static int BIND_SUBOPCODE_THREADED_APPLY = 0x01;
 
 	/*
 	 * The following are used on the flags byte of a terminal node

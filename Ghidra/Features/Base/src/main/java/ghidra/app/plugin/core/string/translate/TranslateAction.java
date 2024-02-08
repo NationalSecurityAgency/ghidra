@@ -19,6 +19,7 @@ import java.util.List;
 
 import docking.action.MenuData;
 import ghidra.app.services.StringTranslationService;
+import ghidra.app.services.StringTranslationService.TranslateOptions;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
@@ -52,6 +53,6 @@ public class TranslateAction extends AbstractTranslateAction {
 
 	@Override
 	public void actionPerformed(Program program, List<ProgramLocation> dataLocations) {
-		service.translate(program, dataLocations);
+		service.translate(program, dataLocations, TranslateOptions.NONE);
 	}
 }

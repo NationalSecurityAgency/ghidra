@@ -146,7 +146,8 @@ public class DataTypeHelper {
 			throw new InvalidDataTypeException(
 				"Data type " + dt.getDisplayName() + " has no size and is not allowed.");
 		}
-		return DataTypeInstance.getDataTypeInstance(dt, dtLen, true);
+		return DataTypeInstance.getDataTypeInstance(dt, dtLen,
+			provider.editorModel.usesAlignedLengthComponents());
 	}
 
 	public static int requestDtSize(CompositeEditorProvider provider, String dtName,
@@ -177,12 +178,14 @@ public class DataTypeHelper {
 	 *
 	 * @param index the component index of where to add the data type.
 	 * @param dt the data type to add
-	 *
+	 * @param useAlignedLength if true a fixed-length primitive data type will use its 
+	 * {@link DataType#getAlignedLength() aligned-length}, otherwise it will use its
+	 * {@link DataType#getLength() raw length}.
 	 * @return the data type and its size or null if the user canceled when 
 	 * prompted for a size.
 	 */
 	public static DataTypeInstance getFixedLength(CompositeEditorModel model, int index,
-			DataType dt) {
+			DataType dt, boolean useAlignedLength) {
 		if (dt instanceof FactoryDataType) {
 			model.setStatus("Factory data types are not allowed in a composite data type.");
 			return null;
@@ -203,7 +206,7 @@ public class DataTypeHelper {
 			int maxBytes = model.getMaxReplaceLength(index);
 			return requestBytes(model, dt, maxBytes);
 		}
-		return DataTypeInstance.getDataTypeInstance(dt, length, true);
+		return DataTypeInstance.getDataTypeInstance(dt, length, useAlignedLength);
 	}
 
 	public static DataTypeInstance requestBytes(CompositeEditorModel model, DataType dt,
@@ -228,7 +231,8 @@ public class DataTypeHelper {
 
 		if (size >= 1) {
 			model.setLastNumBytes(size);
-			return DataTypeInstance.getDataTypeInstance(dt, size, true);
+			return DataTypeInstance.getDataTypeInstance(dt, size,
+				model.usesAlignedLengthComponents());
 		}
 		return null;
 	}

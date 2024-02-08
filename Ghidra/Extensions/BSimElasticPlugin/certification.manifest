@@ -1,0 +1,6 @@
+##VERSION: 2.0
+##MODULE IP: Apache License 2.0
+INSTALL.txt||GHIDRA||||END|
+Module.manifest||GHIDRA||reviewed||END|
+contribZipExclude/plugin-descriptor.properties||GHIDRA||||END|
+extension.properties||GHIDRA||||END|

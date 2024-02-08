@@ -575,43 +575,48 @@
 :CMPXCHG^lockx m8,Reg8  is vexMode=0 & lockx & unlock & byte=0xf; byte=0xb0; m8 & Reg8 ...           
 {
     build lockx;
-    build m8;
-    subflags(AL,m8);
-    local tmp=AL-m8;
-    resultflags(tmp);
-    local diff = m8^Reg8;
-    m8 = m8 ^ (ZF*diff);
-    diff = AL ^ m8; AL = AL ^ ((ZF==0)*diff);
-    build unlock; 
+    local dest = m8;
+    subflags(AL,dest); 
+    local diff = AL-dest; 
+    resultflags(diff);
+    if (ZF) goto <equal>;
+    AL = dest;
+    goto <inst_end>;
+<equal>
+    m8 = Reg8;
+<inst_end>
+    build unlock;
 }
 
 :CMPXCHG^lockx m16,Reg16    is vexMode=0 & lockx & unlock & opsize=0 & byte=0xf; byte=0xb1; m16 & Reg16 ...  
 {
     build lockx;
-    build m16;
-    subflags(AX,m16);
-    local tmp=AX-m16;
-    resultflags(tmp);
-    local diff = m16^Reg16;
-    m16 = m16 ^ (zext(ZF) * diff);
-    diff = AX ^ m16;
-    AX = AX ^ (zext(ZF==0) * diff);
+    local dest = m16;
+    subflags(AX,dest); 
+    local diff = AX-dest; 
+    resultflags(diff);
+    if (ZF) goto <equal>;
+    AX = dest;
+    goto <inst_end>;
+<equal>
+    m16 = Reg16;
+<inst_end>
     build unlock; 
 }
 
 :CMPXCHG^lockx m32,Reg32    is vexMode=0 & lockx & unlock & opsize=1 & byte=0xf; byte=0xb1; m32 & Reg32 ... & check_EAX_dest ...
 {
     build lockx;
-    build m32;
-	#this instruction writes to either EAX or m32
-	#in 64-bit mode, a 32-bit register that is written to
-	#(and only the register that is written to)
+    #this instruction writes to either EAX or Rmr32
+	#in 64-bit mode, a 32-bit register that is written to 
+	#(and only the register that is written to) 
 	#must be zero-extended to 64 bits
-	subflags(EAX,m32);
-	local tmp=EAX-m32;
-	resultflags(tmp);
-    if (ZF==1) goto <equal>;
-    EAX = m32;
+    local dest = m32;
+    subflags(EAX,dest); 
+    local diff = EAX-dest; 
+    resultflags(diff);
+    if (ZF) goto <equal>;
+    EAX = dest;
     build check_EAX_dest;
     goto <inst_end>;
 <equal>
@@ -624,26 +629,28 @@
 :CMPXCHG^lockx m64,Reg64    is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0xf; byte=0xb1; m64 & Reg64 ...  
 {
     build lockx;
-    build m64;
-    subflags(RAX,m64);
-    local tmp=RAX-m64;
-    resultflags(tmp);
-    local diff = m64^Reg64;
-    m64 = m64 ^ (zext(ZF) * diff);
-    diff = RAX ^ m64;
-    RAX = RAX ^ (zext(ZF==0) * diff);
-    build unlock; 
+    local dest = m64;
+    subflags(RAX,dest); 
+    local diff = RAX-dest; 
+    resultflags(diff);
+    if (ZF) goto <equal>;
+    RAX = dest;
+    goto <inst_end>;
+<equal>
+    m64 = Reg64;
+<inst_end>
+    build unlock;
 }
 @endif
 
 :CMPXCHG8B^lockx  m64        is vexMode=0 & lockx & unlock & byte=0xf; byte=0xc7; ( mod != 0b11 & reg_opcode=1 ) ... & m64 
 {
     build lockx;
-    build m64;
-    ZF = ((zext(EDX) << 32) | zext(EAX)) == m64;
+    local dest = m64;
+    ZF = ((zext(EDX) << 32) | zext(EAX)) == dest;
     if (ZF == 1) goto <equal>;
-    EDX = m64(4);
-    EAX = m64:4;
+    EDX = dest(4);
+    EAX = dest:4;
     goto <done>;
 <equal>
     m64 = (zext(ECX) << 32) | zext(EBX);
@@ -654,11 +661,11 @@
 @ifdef IA64
 :CMPXCHG16B^lockx  m128	is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0xf; byte=0xc7; ( mod != 0b11 & reg_opcode=1 ) ... & ( m128 ) {
     build lockx;
-    build m128;
-    ZF = ((zext(RDX) << 64) | zext(RAX)) == m128;
+    local dest = m128;
+    ZF = ((zext(RDX) << 64) | zext(RAX)) == dest;
     if (ZF == 1) goto <equal>;
-    RDX = m128(8);
-    RAX = m128:8;
+    RDX = dest(8);
+    RAX = dest:8;
     goto <done>;
 <equal>
     m128 = ((zext(RCX) << 64) | zext(RBX));

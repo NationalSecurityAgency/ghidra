@@ -15,6 +15,9 @@
  */
 package ghidra.app.plugin.core.programtree;
 
+import docking.ActionContext;
+import docking.action.DockingAction;
+import docking.action.MenuData;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.cmd.module.ComplexityDepthModularizationCmd;
 import ghidra.app.cmd.module.DominanceModularizationCmd;
@@ -25,35 +28,30 @@ import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.util.HelpLocation;
-import docking.ActionContext;
-import docking.action.DockingAction;
-import docking.action.MenuData;
 
-/**
- *
- * Provides actions for organizing the program tree based on various algorithms.  Currently, there
- * are two algorithms:
- * 
- * Dominance: organizes the functions in a program such that a function is in a subtree of another
- * function if all call paths to that function must past through the parent funciton.
- * 
- * Complexity Depth: organizes the functions into "levels" from the bottom up.  All leaf functions are
- * in the same lowest level (highest number, call it level N).  All functions that only call leaf functions
- * are in the next higher level, N-1.  Functions in the highest level (labeled level 0) are those furthest
- * from the leaves. 
- * 
- */
 //@formatter:off
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.TREE,
+	category = PluginCategoryNames.PROGRAM_ORGANIZATION,
 	shortDescription = "Program Tree Modularization Plugin",
 	description = "Provides actions for orgainizing a program tree into modules or fragments.  " +
 			"Currently there are two organizations, dominance and complexity depth",
 	servicesRequired = { BlockModelService.class }
 )
 //@formatter:on
+/**
+ * Provides actions for organizing the program tree based on various algorithms.  Currently, there
+ * are two algorithms:
+ * <p>
+ * Dominance: organizes the functions in a program such that a function is in a subtree of another
+ * function if all call paths to that function must past through the parent function.
+ * <p>
+ * Complexity Depth: organizes the functions into "levels" from the bottom up.  All leaf functions 
+ * are in the same lowest level (highest number, call it level N).  All functions that only call 
+ * leaf functions are in the next higher level, N-1.  Functions in the highest level (labeled level
+ * 0) are those furthest from the leaves. 
+ */
 public class ProgramTreeModularizationPlugin extends ProgramPlugin {
 
 	public ProgramTreeModularizationPlugin(PluginTool tool) {

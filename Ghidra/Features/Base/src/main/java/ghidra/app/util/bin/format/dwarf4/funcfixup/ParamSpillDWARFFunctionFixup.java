@@ -17,7 +17,6 @@ package ghidra.app.util.bin.format.dwarf4.funcfixup;
 
 import ghidra.app.util.bin.format.dwarf4.next.DWARFFunction;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFVariable;
-import ghidra.program.model.listing.Function;
 import ghidra.util.classfinder.ExtensionPointProperties;
 
 /**
@@ -31,7 +30,7 @@ import ghidra.util.classfinder.ExtensionPointProperties;
 public class ParamSpillDWARFFunctionFixup implements DWARFFunctionFixup {
 
 	@Override
-	public void fixupDWARFFunction(DWARFFunction dfunc, Function gfunc) {
+	public void fixupDWARFFunction(DWARFFunction dfunc) {
 		for (DWARFVariable param : dfunc.params) {
 			if (!param.isStackStorage()) {
 				continue;
@@ -43,7 +42,7 @@ public class ParamSpillDWARFFunctionFixup implements DWARFFunctionFixup {
 				DWARFVariable paramSpill = DWARFVariable.fromDataType(dfunc, param.type);
 				String paramName = param.name.getName();
 				paramSpill.name =
-					param.name.replaceName(paramName + "-local", paramName + "-local");
+					param.name.replaceName(paramName + "_local", paramName + "_local");
 				paramSpill.setStackStorage(paramStackOffset);
 				dfunc.localVars.add(paramSpill);
 				param.clearStorage();

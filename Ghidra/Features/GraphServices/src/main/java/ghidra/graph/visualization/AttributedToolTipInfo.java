@@ -93,30 +93,31 @@ public class AttributedToolTipInfo extends ToolTipInfo<Attributed> {
 	private void addToolTipTextForVertex(StringBuilder buf, AttributedVertex vertex) {
 		String vertexType = vertex.getVertexType();
 
-		buf.append("<H4>");
+		buf.append("<H3>");
 		String escapedText = HTMLUtilities.toLiteralHTML(vertex.getName(), 80);
 		buf.append(escapedText);
+		buf.append("</H3><TABLE>");
 		if (vertexType != null) {
-			buf.append("<br>");
-			buf.append("Type: &nbsp;" + vertexType);
+			appendAttribute(buf, "Type", vertexType);
 		}
-		buf.append("</H4>");
-
 		addAttributes(buf, AttributedVertex.NAME_KEY, AttributedVertex.VERTEX_TYPE_KEY);
+		appendAttribute(buf, "Id", vertex.getId());
+		buf.append("</TABLE>");
 	}
 
 	private void addToolTipTextForEdge(StringBuilder buf, AttributedEdge edge) {
 		String edgeType = edge.getEdgeType();
+		buf.append("<TABLE>");
 		if (edgeType != null) {
-			buf.append("<H4>");
-			buf.append("Type: &nbsp;" + edgeType);
-			buf.append("</H4>");
+			appendAttribute(buf, "Type", edgeType);
 		}
 		addAttributes(buf, AttributedEdge.EDGE_TYPE_KEY);
+		appendAttribute(buf, "Id", edge.getId());
+		buf.append("</TABLE>");
 	}
 
-	private void addAttributes(StringBuilder buf, String...excludedKeys) {
-		
+	private void addAttributes(StringBuilder buf, String... excludedKeys) {
+
 		Set<Entry<String, String>> entries = graphObject.entrySet();
 
 		for (Map.Entry<String, String> entry : entries) {
@@ -124,14 +125,18 @@ public class AttributedToolTipInfo extends ToolTipInfo<Attributed> {
 			if (ArrayUtils.contains(excludedKeys, key)) {
 				continue; // skip keys handled in header
 			}
-			buf.append(key);
-			buf.append(": ");
-			String escapedText = HTMLUtilities.toLiteralHTML(entry.getValue(), 80);
-			String split = String.join("<br>", Splitter.on('\n').split(escapedText));
-			split = split.replaceAll("\\s", "&nbsp;");
-			buf.append(split);
-			buf.append("<br>");
+			appendAttribute(buf, key, entry.getValue());
 		}
 	}
 
+	private void appendAttribute(StringBuilder buf, String key, String value) {
+		buf.append("<TR><TD>");
+		buf.append(key);
+		buf.append(":</TD><TD>");
+		String escapedText = HTMLUtilities.toLiteralHTML(value, 80);
+		String split = String.join("<BR>", Splitter.on('\n').split(escapedText));
+		split = split.replaceAll("\\s", "&nbsp;");
+		buf.append(split);
+		buf.append("</TD></TR>");
+	}
 }

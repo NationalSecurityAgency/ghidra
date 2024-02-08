@@ -25,6 +25,8 @@ import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
+import ghidra.app.plugin.core.analysis.rust.RustConstants;
+import ghidra.app.plugin.core.analysis.rust.RustUtilities;
 import ghidra.app.util.*;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.MemoryLoadable;
@@ -34,6 +36,7 @@ import ghidra.app.util.bin.format.elf.extend.ElfLoadAdapter;
 import ghidra.app.util.bin.format.elf.info.ElfInfoProducer;
 import ghidra.app.util.bin.format.elf.relocation.*;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.framework.Application;
 import ghidra.framework.options.Options;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.mem.FileBytes;
@@ -185,6 +188,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			adjustReadOnlyMemoryRegions(monitor);
 
 			markupElfInfoProducers(monitor);
+
+			setCompiler(monitor);
 
 			success = true;
 		}
@@ -649,8 +654,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 		long entry = elf.e_entry(); // already adjusted for pre-link
 		if (entry != 0 && (elf.isExecutable() || elf.isSharedObject())) {
-			Address entryAddr =
-				createEntryFunction(ElfLoader.ELF_ENTRY_FUNCTION_NAME, entry);
+			Address entryAddr = createEntryFunction(ElfLoader.ELF_ENTRY_FUNCTION_NAME, entry);
 			if (entryAddr != null) {
 				addElfHeaderReferenceMarkup(elf.getEntryComponentOrdinal(), entryAddr);
 				Function entryFunc = program.getFunctionManager().getFunctionAt(entryAddr);
@@ -765,7 +769,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		createEntryFunction(name, entryAddress);
 		return entryAddress;
 	}
-	
+
 	/**
 	 * Attempt to create an entry point function.
 	 * Note: entries in the dynamic table appear to have any pre-link adjustment already applied.
@@ -778,7 +782,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 		MemoryBlock block = memory.getBlock(entryAddress);
 		if (block == null || !block.isExecute()) {
-			return; 
+			return;
 		}
 
 		entryAddress = elf.getLoadAdapter().creatingFunction(this, entryAddress);
@@ -996,6 +1000,9 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			int symbolIndex = reloc.getSymbolIndex();
 			String symbolName = symbolTable != null ? symbolTable.getSymbolName(symbolIndex) : "";
+			if (symbolName != null && SymbolUtilities.containsInvalidChars(symbolName)) {
+				symbolName = getEscapedSymbolName(symbolName);
+			}
 
 			Address baseAddress = relocationSpace.getTruncatedAddress(baseWordOffset, true);
 
@@ -1116,9 +1123,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				hasConflict = nextRelocAddr != null && nextRelocAddr.compareTo(maxAddr) <= 0;
 			}
 			if (hasConflict) {
-				Msg.warn(this,
-					"Artificial relocation for " + address +
-						" conflicts with a previous relocation");
+				Msg.warn(this, "Artificial relocation for " + address +
+					" conflicts with a previous relocation");
 			}
 			relocationTable.add(address, Status.APPLIED_OTHER, 0, null, length, null);
 			return true;
@@ -1355,12 +1361,22 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	}
 
 	private void allocateUndefinedSymbolData(HashMap<Address, Integer> dataAllocationMap) {
+		if (!ElfLoaderOptionsFactory.applyUndefinedSymbolData(options)) {
+			return;
+		}
 		for (Address addr : dataAllocationMap.keySet()) {
+
+			MemoryBlock block = memory.getBlock(addr);
+			if (block == null) {
+				continue;
+			}
+
 			// Create undefined data for each data/object symbol
 			Integer symbolSize = dataAllocationMap.get(addr);
 			if (symbolSize != null) {
 				try {
-					createUndefined(addr, symbolSize);
+					DataType undefined = Undefined.getUndefinedDataType(symbolSize);
+					listing.createData(addr, undefined);
 				}
 				catch (CodeUnitInsertionException e) {
 					// ignore conflicts which can be caused by other markup
@@ -1601,7 +1617,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		Address debugDataAddr = findLoadAddress(debugDataSection, 0);
 		if (debugDataAddr != null) {
 			try {
-				File tmpFile = File.createTempFile("ghidra_gnu_debugdata", null);
+				File tmpFile = Application.createTempFile("ghidra_gnu_debugdata", null);
 				try (ByteProviderWrapper compressedDebugDataBP = new ByteProviderWrapper(
 					new MemoryByteProvider(memory, debugDataAddr), 0, debugDataSection.getSize());
 						XZCompressorInputStream xzIS =
@@ -1787,13 +1803,22 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 				symbolSpace = symSectionBase.getAddressSpace();
 
-				if (elf.isRelocatable()) {
+				Long relOffset = loadAdapter.getSectionSymbolRelativeOffset(symSection,
+					symSectionBase, elfSymbol);
+				if (relOffset != null) {
 					// Section relative symbol - ensure that symbol remains in
 					// overlay space even if beyond bounds of associated block
-					// Note: don't use symOffset variable since it may have been
-					//   adjusted for image base
-					return symSectionBase.addWrapSpace(elfSymbol.getValue() *
-						symSectionBase.getAddressSpace().getAddressableUnitSize());
+					try {
+						return symSectionBase.addNoWrap(
+							relOffset * symSectionBase.getAddressSpace().getAddressableUnitSize());
+					}
+					catch (AddressOverflowException e) {
+						log("Unable to place symbol within section (address overflow): " +
+							elfSymbol.getFormattedName() + " - value=0x" +
+							Long.toHexString(elfSymbol.getValue()) + ", section=" +
+							symSection.getNameAsString());
+						return null;
+					}
 				}
 			}
 
@@ -2093,6 +2118,12 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					isPrimary = (existingSym == null);
 				}
 
+				if (SymbolUtilities.containsInvalidChars(name)) {
+					String escapedName = getEscapedSymbolName(name);
+					log("Unsupported symbol name has been escaped: \"" + escapedName + "\"");
+					name = escapedName;
+				}
+
 				createSymbol(address, name, isPrimary, elfSymbol.isAbsolute(), null);
 
 				// NOTE: treat weak symbols as global so that other programs may link to them.
@@ -2125,6 +2156,28 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				throw new RuntimeException("Unexpected Exception", e);
 			}
 		}
+	}
+
+	private String getEscapedSymbolName(String name) {
+		// Do not preclude use of UTF8 strings
+		StringBuilder escapedBuf = new StringBuilder();
+		name.codePoints().forEach(cp -> {
+			if (cp < 0x20) {
+				// Format as ^Control character for consistency with readelf
+				cp += 0x40; // get ASCII control character, starts with ^@
+				escapedBuf.append('^');
+				escapedBuf.appendCodePoint(cp);
+			}
+			else if (cp == 0x7F) {
+				// Format as ^? character for consistency with readelf
+				escapedBuf.append("^?");
+			}
+			else {
+				// Assume valid code point
+				escapedBuf.appendCodePoint(cp);
+			}
+		});
+		return escapedBuf.toString();
 	}
 
 	@Override
@@ -2277,6 +2330,9 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 	@Override
 	public Data createUndefinedData(Address address, int length) {
+		if (!ElfLoaderOptionsFactory.applyUndefinedSymbolData(options)) {
+			return null;
+		}
 		try {
 			// If it is bigger than 8, just let it go through and create a single undefined
 			// Otherwise this would create an array of undefined, might get in the way
@@ -2404,6 +2460,21 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			monitor.checkCancelled();
 
 			elfInfoProducer.markupElfInfo(monitor);
+		}
+	}
+
+	private void setCompiler(TaskMonitor monitor) {
+		// Check for Rust
+		try {
+			if (RustUtilities.isRust(memory.getBlock(ElfSectionHeaderConstants.dot_rodata))) {
+				program.setCompiler(RustConstants.RUST_COMPILER);
+				int extensionCount = RustUtilities.addExtensions(program, monitor,
+					RustConstants.RUST_EXTENSIONS_UNIX);
+				log.appendMsg("Installed " + extensionCount + " Rust cspec extensions");
+			}
+		}
+		catch (IOException e) {
+			log.appendMsg("Rust error: " + e.getMessage());
 		}
 	}
 
@@ -2801,8 +2872,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 	private int createString(Address address) throws CodeUnitInsertionException {
 		Data d = listing.getDataAt(address);
-		if (d == null || !TerminatedStringDataType.dataType.isEquivalent(d.getDataType())) {
-			d = listing.createData(address, TerminatedStringDataType.dataType, -1);
+		if (d == null || !StringUTF8DataType.dataType.isEquivalent(d.getDataType())) {
+			d = listing.createData(address, StringUTF8DataType.dataType, -1);
 		}
 		return d.getLength();
 	}
@@ -3501,16 +3572,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		return StringUtilities.pad("" + value, ' ', 4);
 	}
 
-	private Data createUndefined(Address addr, int size) throws CodeUnitInsertionException {
-
-		MemoryBlock block = memory.getBlock(addr);
-		if (block == null) {
-			return null;
-		}
-		DataType undefined = Undefined.getUndefinedDataType(size);
-		return listing.createData(addr, undefined);
-	}
-
 	@Override
 	public Symbol createSymbol(Address addr, String name, boolean isPrimary, boolean pinAbsolute,
 			Namespace namespace) throws InvalidInputException {
@@ -3627,14 +3688,13 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 //		Msg.debug(this,
 //			"Loading block " + name + " at " + start + " from file offset " + fileOffset);
 
-		long compSectOrigSize = loadable instanceof ElfSectionHeader header && header.isCompressed()
-				? header.getSize()
-				: -1;
+		long compSectOrigSize =
+			loadable instanceof ElfSectionHeader header && header.isCompressed() ? header.getSize()
+					: -1;
 
 		String blockComment = comment;
 		if (compSectOrigSize >= 0) {
-			blockComment +=
-				" (decompressed, original length: 0x%x)".formatted(compSectOrigSize);
+			blockComment += " (decompressed, original length: 0x%x)".formatted(compSectOrigSize);
 		}
 		else if ((fileOffset + revisedLength - 1) >= fileBytes.getSize()) {
 			// ensure valid length for non-compressed items
@@ -3650,15 +3710,13 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		try {
 			if (loadable != null && loadable.hasFilteredLoadInputStream(this, start)) {
 				// block is unable to map directly to file bytes - load from input stream
-				try (InputStream is =
-					loadable.getFilteredLoadInputStream(this, start, revisedLength,
-						(errorMsg, th) -> {
-							String loadableTypeStr =
-								compSectOrigSize >= 0 ? "compressed section " : "";
-							log.appendMsg("Error when reading %s[%s]: %s".formatted(loadableTypeStr,
-								name, errorMsg));
-							Msg.error(this, errorMsg, th);
-						})) {
+				try (InputStream is = loadable.getFilteredLoadInputStream(this, start,
+					revisedLength, (errorMsg, th) -> {
+						String loadableTypeStr = compSectOrigSize >= 0 ? "compressed section " : "";
+						log.appendMsg("Error when reading %s[%s]: %s".formatted(loadableTypeStr,
+							name, errorMsg));
+						Msg.error(this, errorMsg, th);
+					})) {
 					block = MemoryBlockUtils.createInitializedBlock(program, isOverlay, name, start,
 						is, revisedLength, blockComment, BLOCK_SOURCE_NAME, r, w, x, log, monitor);
 				}
@@ -3673,8 +3731,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		finally {
 			if (block == null) {
 				Address end = start.addNoWrap(revisedLength - 1);
-				log("Unexpected ELF memory block load conflict when creating '" + name +
-					"' at " + start.toString(true) + "-" + end.toString(true));
+				log("Unexpected ELF memory block load conflict when creating '" + name + "' at " +
+					start.toString(true) + "-" + end.toString(true));
 			}
 		}
 		return block;

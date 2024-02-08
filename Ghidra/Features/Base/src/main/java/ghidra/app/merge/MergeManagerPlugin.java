@@ -15,21 +15,21 @@
  */
 package ghidra.app.merge;
 
+import java.rmi.NoSuchObjectException;
+
+import javax.swing.JComponent;
+
 import ghidra.framework.main.ProgramaticUseOnly;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 
-import java.rmi.NoSuchObjectException;
-
-import javax.swing.JComponent;
-
 /**
  * Plugin that provides a merge component provider.
  */
-public abstract class MergeManagerPlugin extends Plugin implements ProgramaticUseOnly,
-		DomainObjectListener {
+public abstract class MergeManagerPlugin extends Plugin
+		implements ProgramaticUseOnly, DomainObjectListener {
 
 	protected MergeManager mergeManager;
 	protected MergeManagerProvider provider;
@@ -180,21 +180,19 @@ public abstract class MergeManagerPlugin extends Plugin implements ProgramaticUs
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
 		// Only concerned about error which will be the only change record
 		DomainObjectChangeRecord docr = ev.getChangeRecord(0);
-		if (!domainFileErrorOccurred && docr.getEventType() == DomainObject.DO_OBJECT_ERROR) {
+		if (!domainFileErrorOccurred && docr.getEventType() == DomainObjectEvent.ERROR) {
 			domainFileErrorOccurred = true;
 			String msg;
 			Throwable t = (Throwable) docr.getNewValue();
 			if (t instanceof NoSuchObjectException) {
-				msg =
-					"Merge is closing due to an unrecoverable error!"
-						+ "\nThis error can be caused when your system becomes"
-						+ "\nsuspended or due to a server/network problem.";
+				msg = "Merge is closing due to an unrecoverable error!" +
+					"\nThis error can be caused when your system becomes" +
+					"\nsuspended or due to a server/network problem.";
 			}
 			else {
-				msg =
-					"Merge is closing due to an unrecoverable error!"
-						+ "\n \nSuch failures are generally due to an IO Error caused"
-						+ "\nby the local filesystem or server.";
+				msg = "Merge is closing due to an unrecoverable error!" +
+					"\n \nSuch failures are generally due to an IO Error caused" +
+					"\nby the local filesystem or server.";
 			}
 
 			//abort();

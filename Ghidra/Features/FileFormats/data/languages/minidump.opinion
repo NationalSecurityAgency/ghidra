@@ -9,7 +9,7 @@
         	<!-- constraint primary="6"     processor="IA64"      endian="little" size="32" -->
         	<!-- constraint primary="7"     processor="ALPHA64"   endian="little" size="32" -->
         	<!-- constraint primary="8"     processor="MSIL"      endian="little" size="32" -->
-        	<constraint primary="9"     processor="x86"     endian="little" size="64" />
+        	<constraint primary="9"     processor="x86"     endian="little" size="64"	variant="default" />
         	<!-- constraint primary="10"    processor="IA32/64"   endian="little" size="32" -->
         	<!-- constraint primary="11"    processor="NEUTRAL"     endian="little" size="32" -->
         	<constraint primary="12"    processor="ARM"     endian="little" size="64" />

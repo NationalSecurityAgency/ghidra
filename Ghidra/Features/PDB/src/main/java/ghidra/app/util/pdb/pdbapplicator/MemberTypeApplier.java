@@ -15,11 +15,9 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.math.BigInteger;
-
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMemberMsType;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.ClassFieldMsAttributes;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.CancelledException;
 
@@ -28,60 +26,19 @@ import ghidra.util.exception.CancelledException;
  */
 public class MemberTypeApplier extends MsTypeApplier {
 
+	// Intended for: AbstractMemberMsType
 	/**
 	 * Constructor for member type applier.
 	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
-	 * @param msType {@link AbstractMemberMsType} to process.
 	 */
-	public MemberTypeApplier(DefaultPdbApplicator applicator, AbstractMemberMsType msType) {
-		super(applicator, msType);
+	public MemberTypeApplier(DefaultPdbApplicator applicator) {
+		super(applicator);
 	}
 
 	@Override
-	BigInteger getSize() {
-		return BigInteger.ZERO;
-	}
-
-	@Override
-	void apply() throws PdbException, CancelledException {
-		dataType = applyMemberMsType((AbstractMemberMsType) msType);
-//		DataType dataType = applyMemberMsType((AbstractMemberMsType) msType);
-//		ghDataType = dataType; // temporary while below is commented-out
-		// TODO: uncomment when above method not returning null
-//		ghDataTypeDB = applicator.resolve(dataType);
-	}
-
-	String getName() {
-		return ((AbstractMemberMsType) msType).getName();
-	}
-
-	BigInteger getOffset() {
-		return ((AbstractMemberMsType) msType).getOffset();
-	}
-
-	ClassFieldMsAttributes getAttribute() {
-		return ((AbstractMemberMsType) msType).getAttribute();
-	}
-
-	MsTypeApplier getFieldTypeApplier() {
-		return applicator.getTypeApplier(
-			((AbstractMemberMsType) msType).getFieldTypeRecordNumber());
-	}
-
-	private DataType applyMemberMsType(AbstractMemberMsType type) {
-
-//		String memberName = type.getName();
-//		BigInteger memberOffset = type.getOffset();
-//		ClassFieldMsAttributes memberAttributes = type.getAttribute();
-//		int fieldTypeIndex = type.getFieldTypeRecordIndex();
-//
-//		AbstractMsTypeApplier fieldTypeApplier = applicator.getTypeApplier(fieldTypeIndex);
-//
-//		DataType fieldDataType = fieldTypeApplier.getDataType();
-//
-////		DataType fieldDataType = getConvertedDataType(applicator, fieldTypeIndex);
-
+	DataType apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
+			throws PdbException, CancelledException {
+		// do nothing
 		return null;
 	}
-
 }

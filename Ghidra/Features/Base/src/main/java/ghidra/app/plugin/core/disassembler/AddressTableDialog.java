@@ -29,7 +29,6 @@ import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import docking.widgets.textfield.HintTextField;
-import ghidra.app.services.GoToService;
 import ghidra.app.util.HelpTopics;
 import ghidra.app.util.PseudoDisassembler;
 import ghidra.program.model.listing.Program;
@@ -93,8 +92,7 @@ public class AddressTableDialog extends ReusableDialogComponentProvider {
 		// create right side query results table with three columns
 		resultsTablePanel = new GhidraThreadedTablePanel<>(plugin.getModel());
 		resultsTable = resultsTablePanel.getTable();
-		GoToService goToService = plugin.getTool().getService(GoToService.class);
-		resultsTable.installNavigation(goToService, goToService.getDefaultNavigatable());
+		resultsTable.installNavigation(plugin.getTool());
 
 		ListSelectionModel selModel = resultsTable.getSelectionModel();
 		selModel.addListSelectionListener(e -> {

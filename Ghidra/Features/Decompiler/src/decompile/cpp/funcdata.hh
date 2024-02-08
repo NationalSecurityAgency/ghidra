@@ -118,7 +118,7 @@ class Funcdata {
   void pushMultiequals(BlockBasic *bb);		///< Push MULTIEQUAL Varnodes of the given block into the output block
   void clearBlocks(void);			///< Clear all basic blocks
   void structureReset(void);			///< Calculate initial basic block structures (after a control-flow change)
-  int4 stageJumpTable(Funcdata &partial,JumpTable *jt,PcodeOp *op,FlowInfo *flow);
+  JumpTable::RecoveryMode stageJumpTable(Funcdata &partial,JumpTable *jt,PcodeOp *op,FlowInfo *flow);
   void switchOverJumpTables(const FlowInfo &flow);	///< Convert jump-table addresses to basic block indices
   void clearJumpTables(void);			///< Clear any jump-table information
 
@@ -423,6 +423,7 @@ public:
   Varnode *findLinkedVarnode(SymbolEntry *entry) const;	///< Find a Varnode matching the given Symbol mapping
   void findLinkedVarnodes(SymbolEntry *entry,vector<Varnode *> &res) const;	///< Find Varnodes that map to the given SymbolEntry
   void buildDynamicSymbol(Varnode *vn);				///< Build a \e dynamic Symbol associated with the given Varnode
+  bool testForReturnAddress(Varnode *vn);	///< Test if the given Varnode is (derived from) the return address
   bool attemptDynamicMapping(SymbolEntry *entry,DynamicHash &dhash);
   bool attemptDynamicMappingLate(SymbolEntry *entry,DynamicHash &dhash);
   Merge &getMerge(void) { return covermerge; }			///< Get the Merge object for \b this function
@@ -519,7 +520,7 @@ public:
   JumpTable *linkJumpTable(PcodeOp *op);		///< Link jump-table with a given BRANCHIND
   JumpTable *findJumpTable(const PcodeOp *op) const;	///< Find a jump-table associated with a given BRANCHIND
   JumpTable *installJumpTable(const Address &addr);	///< Install a new jump-table for the given Address
-  JumpTable *recoverJumpTable(Funcdata &partial,PcodeOp *op,FlowInfo *flow,int4 &failuremode);
+  JumpTable *recoverJumpTable(Funcdata &partial,PcodeOp *op,FlowInfo *flow,JumpTable::RecoveryMode &mode);
   bool earlyJumpTableFail(PcodeOp *op);	///< Try to determine, early, if jump-table analysis will fail
   int4 numJumpTables(void) const { return jumpvec.size(); }	///< Get the number of jump-tables for \b this function
   JumpTable *getJumpTable(int4 i) { return jumpvec[i]; }	///< Get the i-th jump-table

@@ -18,3 +18,4 @@ data/languages/minidump.opinion||GHIDRA||||END|
 data/languages/pagedump.opinion||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
 src/main/help/help/topics/FileFormatsPlugin/FileFormats.html||GHIDRA||||END|
+src/main/help/help/topics/cart/CartFileSystem.html||GHIDRA||||END|

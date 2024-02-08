@@ -17,8 +17,10 @@ package ghidra.framework.model;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
+import ghidra.framework.data.DomainObjectFileListener;
 import ghidra.framework.options.Options;
 import ghidra.util.ReadOnlyException;
 import ghidra.util.exception.CancelledException;
@@ -29,48 +31,69 @@ import ghidra.util.task.TaskMonitor;
  * data objects that are persistent. <CODE>DomainObject</CODE>s maintain an
  * association with a <CODE>DomainFile</CODE>. A <CODE>DomainObject</CODE> that
  * has never been saved will have a null <CODE>DomainFile</CODE>.
+ * <P>
+ * Note: Previously (before 11.1), domain object change event types were defined in this file as
+ * integer constants. Event ids have since been converted to enum types. The defines in this file  
+ * have been converted to point to the new enum values to make it easier to convert to this new way  
+ * and to clearly see how the old values map to the new enums. In future releases, these defines 
+ * will be removed.
  */
 public interface DomainObject {
+
+	/**
+	 * Event type generated when the domain object is saved.
+	 * @deprecated Event type numeric constants have been changed to enums. Use the enum directly.
+	 */
+	@Deprecated
+	public final static EventType DO_OBJECT_SAVED = DomainObjectEvent.SAVED;
+
+	/**
+	 * Event type generated when the domain file associated with
+	 * the domain object changes.
+	 * @deprecated Event type numeric constants have been changed to enums. Use the enum directly.
+	 */
+	@Deprecated
+	public final static EventType DO_DOMAIN_FILE_CHANGED = DomainObjectEvent.FILE_CHANGED;
+
+	/**
+	 * Event type generated when the object name changes.
+	 * @deprecated Event type numeric constants have been changed to enums. Use the enum directly.
+	 */
+	@Deprecated
+	public final static EventType DO_OBJECT_RENAMED = DomainObjectEvent.RENAMED;
+
+	/**
+	 * Event type generated when domain object is restored.
+	 * @deprecated Event type numeric constants have been changed to enums. Use the enum directly.
+	 */
+	@Deprecated
+	public static final EventType DO_OBJECT_RESTORED = DomainObjectEvent.RESTORED;
+
+	/**
+	 * Event type generated when a property on this DomainObject is changed.
+	 * @deprecated Event type numeric constants have been changed to enums. Use the enum directly.
+	 */
+	@Deprecated
+	public static final EventType DO_PROPERTY_CHANGED = DomainObjectEvent.PROPERTY_CHANGED;
+
+	/**
+	 * Event type generated when this domain object is closed.
+	 * @deprecated Event type numeric constants have been changed to enums. Use the enum directly.
+	 */
+	@Deprecated
+	public static final EventType DO_OBJECT_CLOSED = DomainObjectEvent.CLOSED;
+
+	/**
+	 * Event type generated when a fatal error occurs which renders the domain object invalid.
+	 * @deprecated Event type numeric constants have been changed to enums. Use the enum directly.
+	 */
+	@Deprecated
+	public static final EventType DO_OBJECT_ERROR = DomainObjectEvent.ERROR;
 
 	/**
 	 * Object to synchronize on for undo/redo operations.
 	 */
 	public final static Object undoLock = new Object();
-	/**
-	 * Event type generated when the domain object is saved.
-	 */
-	public final static int DO_OBJECT_SAVED = 1;
-
-	/**
-	 * Event type generated when the domain file associated with
-	 * the domain object changes.
-	 */
-	public final static int DO_DOMAIN_FILE_CHANGED = 2;
-
-	/**
-	 * Event type generated when the object name changes.
-	 */
-	public final static int DO_OBJECT_RENAMED = 3;
-
-	/**
-	 * Event type generated when domain object is restored.
-	 */
-	public static final int DO_OBJECT_RESTORED = 4;
-
-	/**
-	 * Event type generated when a property on this DomainObject is changed.
-	 */
-	public static final int DO_PROPERTY_CHANGED = 5;
-
-	/**
-	 * Event type generated when this domain object is closed.
-	 */
-	public static final int DO_OBJECT_CLOSED = 6;
-
-	/**
-	 * Event type generated when a fatal error occurs which renders the domain object invalid.
-	 */
-	public static final int DO_OBJECT_ERROR = 8;
 
 	/**
 	 * Returns whether the object has changed.
@@ -165,6 +188,22 @@ public interface DomainObject {
 	public void removeCloseListener(DomainObjectClosedListener listener);
 
 	/**
+	 * Adds a listener that will be notified when this DomainFile associated with this
+	 * DomainObject changes, such as when a 'Save As' action occurs. Unlike DomainObject events,
+	 * these notifications are not buffered and happen immediately when the DomainFile is changed.
+	 *
+	 * @param listener the listener to be notified when the associated DomainFile changes
+	 */
+	public void addDomainFileListener(DomainObjectFileListener listener);
+
+	/**
+	 * Removes the given DomainObjectFileListener listener.
+	 *
+	 * @param listener the listener to remove.
+	 */
+	public void removeDomainFileListener(DomainObjectFileListener listener);
+
+	/**
 	 * Creates a private event queue that can be flushed independently from the main event queue.
 	 * @param listener the listener to be notified of domain object events.
 	 * @param maxDelay the time interval (in milliseconds) used to buffer events.
@@ -216,7 +255,7 @@ public interface DomainObject {
 	 * Returns the list of consumers on this domainObject
 	 * @return the list of consumers.
 	 */
-	public ArrayList<Object> getConsumerList();
+	public List<Object> getConsumerList();
 
 	/**
 	 * Returns true if the given consumer is using (has open) this domain object.

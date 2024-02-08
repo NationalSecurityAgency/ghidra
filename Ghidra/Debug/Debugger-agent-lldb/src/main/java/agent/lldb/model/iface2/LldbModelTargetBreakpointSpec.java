@@ -88,7 +88,7 @@ public interface LldbModelTargetBreakpointSpec extends //
 	public default void breakpointHit() {
 		LldbModelTargetThread targetThread =
 			getParentProcess().getThreads().getTargetThread(getManager().getEventThread());
-		getActions().fire.breakpointHit((LldbModelTargetBreakpointSpec) getProxy(), targetThread,
+		getActions().invoke().breakpointHit((LldbModelTargetBreakpointSpec) getProxy(), targetThread,
 			null, findLocation(targetThread));
 	}
 

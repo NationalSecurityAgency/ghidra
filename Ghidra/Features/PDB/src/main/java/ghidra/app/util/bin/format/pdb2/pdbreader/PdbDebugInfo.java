@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.*;
 
+import ghidra.app.util.bin.format.pdb2.pdbreader.msf.MsfStream;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.util.exception.CancelledException;
 
@@ -68,14 +69,10 @@ public abstract class PdbDebugInfo {
 	protected List<SectionContribution> sectionContributionList = new ArrayList<>();
 	protected List<SegmentMapDescription> segmentMapList = new ArrayList<>();
 
-	protected SymbolRecords symbolRecords;
-	protected GlobalSymbolInformation globalSymbolInformation;
-	protected PublicSymbolInformation publicSymbolInformation;
+	protected SymbolRecords symbolRecords = null;
+	protected GlobalSymbolInformation globalSymbolInformation = null;
+	protected PublicSymbolInformation publicSymbolInformation = null;
 
-	//==============================================================================================
-	// NEW STUFF FROM REFACTOR/REWORK (can be duplicative with other stuff)... might be turned off
-	// during development.
-	private boolean doNewStuff = false;
 	private List<Module> modules = new ArrayList<>();
 
 	//==============================================================================================
@@ -90,9 +87,6 @@ public abstract class PdbDebugInfo {
 		Objects.requireNonNull(pdb, "pdb cannot be null");
 		this.pdb = pdb;
 		this.streamNumber = streamNumber;
-		globalSymbolInformation = new GlobalSymbolInformation(pdb);
-		publicSymbolInformation = new PublicSymbolInformation(pdb);
-		symbolRecords = new SymbolRecords(pdb);
 	}
 
 	/**
@@ -104,7 +98,7 @@ public abstract class PdbDebugInfo {
 	}
 
 	/**
-	 * Deserializes the {@link PdbDebugInfo}-based instance.
+	 * Deserializes and initializes some basic {@link PdbDebugInfo}-based information
 	 * The PDB is updated with dbiAge and targetProcessor during deserialization
 	 * of new DBI header.
 	 * @param headerOnly if true only the DBI header fields will be parsed
@@ -114,24 +108,24 @@ public abstract class PdbDebugInfo {
 	 * @throws PdbException upon error parsing a field
 	 * @throws CancelledException upon user cancellation
 	 */
-	public long deserialize(boolean headerOnly)
+	public long initialize(boolean headerOnly)
 			throws IOException, PdbException, CancelledException {
 		if (headerOnly) {
-			PdbByteReader reader =
-				pdb.getReaderForStreamNumber(streamNumber, 0, getHeaderLength());
+			PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, 0, getHeaderLength());
 			deserializeHeader(reader);
 		}
 		else {
 			PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber);
 			deserializeHeader(reader);
 			deserializeInternalSubstreams(reader);
-			deserializeAdditionalSubstreams();
-			// BELOW: NEW STUFF FROM REFACTOR/REWORK (can be duplicative with other stuff)
-			if (doNewStuff) {
-				parseModules();
-				compareSymbols(); //temporary to ensure same results with previous work.
-			}
-			// ABOVE: NEW STUFF FROM REFACTOR/REWORK (can be duplicative with other stuff)
+			globalSymbolInformation =
+				new GlobalSymbolInformation(pdb, getGlobalSymbolsHashMaybeStreamNumber());
+			publicSymbolInformation =
+				new PublicSymbolInformation(pdb, getPublicStaticSymbolsHashMaybeStreamNumber());
+			symbolRecords = new SymbolRecords(pdb);
+			initializeAdditionalComponentsForSubstreams();
+			initializeModules();
+			//compareSymbols(); //temporary to ensure same results with previous work.
 		}
 		return versionNumber;
 	}
@@ -167,63 +161,6 @@ public abstract class PdbDebugInfo {
 			throw new PdbException("Null AbstractModuleInformation");
 		}
 		return moduleInfo;
-	}
-
-	/**
-	 * Returns the list of combined global/public symbols
-	 * @return {@link Map}&lt;{@link Long},{@link AbstractMsSymbol}&gt; of buffer offsets to
-	 * symbols
-	 */
-	public Map<Long, AbstractMsSymbol> getSymbolsByOffset() {
-		return symbolRecords.getSymbolsByOffset();
-	}
-
-	/**
-	 * Returns the buffer-offset-to-symbol map for the module as specified by moduleNumber
-	 * @param moduleNumber the number ID of the module for which to return the list
-	 * @return {@link Map}&lt;{@link Long},{@link AbstractMsSymbol}&gt; of buffer offsets to
-	 * symbols for the specified module
-	 * @throws PdbException upon moduleNumber out of range or no module information
-	 */
-	public Map<Long, AbstractMsSymbol> getModuleSymbolsByOffset(int moduleNumber)
-			throws PdbException {
-		if (moduleNumber < 0 || moduleNumber > moduleInformationList.size()) {
-			throw new PdbException("ModuleNumber out of range: " + moduleNumber);
-		}
-		if (moduleNumber == 0) {
-			return getSymbolsByOffset();
-		}
-		return symbolRecords.getModuleSymbolsByOffset(moduleNumber - 1);
-	}
-
-	/**
-	 * Returns the {@link AbstractMsSymbol} from the main symbols for the
-	 *  actual symbol record offset (which is past the length and symbol type fields)
-	 * @param offset the offset of the symbol (beyond length and symbol type fields); this is the
-	 *  offset value specified by many symbol type records
-	 * @return the symbol group for the module or null if not found
-	 */
-	public AbstractMsSymbol getSymbolForOffsetOfRecord(long offset) {
-		return getSymbolsByOffset().get(offset - 4);
-	}
-
-	/**
-	 * Returns the {@link AbstractMsSymbol} for the module as specified by moduleNumber and
-	 *  actual symbol record offset (which is past the length and symbol type fields)
-	 * @param moduleNumber the number ID of the module (1 to {@link #getNumModules()}) for
-	 *  which to return the list
-	 * @param offset the offset of the symbol (beyond length and symbol type fields); this is the
-	 *  offset value specified by many symbol type records
-	 * @return the symbol group for the module or null if not found
-	 * @throws PdbException upon moduleNumber out of range or no module information
-	 */
-	public AbstractMsSymbol getSymbolForModuleAndOffsetOfRecord(int moduleNumber, long offset)
-			throws PdbException {
-		Map<Long, AbstractMsSymbol> symbols = getModuleSymbolsByOffset(moduleNumber);
-		if (symbols == null) {
-			return null;
-		}
-		return symbols.get(offset - 4);
 	}
 
 	/**
@@ -266,9 +203,23 @@ public abstract class PdbDebugInfo {
 		return publicSymbolInformation;
 	}
 
+	/**
+	 * Returns the stream number for {@link SymbolRecords} component
+	 * @return stream number
+	 */
+	public int getSymbolRecordsStreamNumber() {
+		return streamNumberSymbolRecords;
+	}
+
 	//==============================================================================================
 	// Package-Protected Internals
 	//==============================================================================================
+
+	void deserializeHeaderOnly() throws CancelledException, IOException, PdbException {
+		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumber, 0, getHeaderLength());
+		deserializeHeader(reader);
+	}
+
 	/**
 	 * Returns the stream number for the GlobalSymbols component
 	 * @return stream number
@@ -283,14 +234,6 @@ public abstract class PdbDebugInfo {
 	 */
 	int getPublicStaticSymbolsHashMaybeStreamNumber() {
 		return streamNumberPublicStaticSymbolsHashMaybe;
-	}
-
-	/**
-	 * Returns the stream number for {@link SymbolRecords} component
-	 * @return stream number
-	 */
-	int getSymbolRecordsStreamNumber() {
-		return streamNumberSymbolRecords;
 	}
 
 	//==============================================================================================
@@ -325,7 +268,7 @@ public abstract class PdbDebugInfo {
 	 * @throws PdbException upon error parsing a field
 	 * @throws CancelledException upon user cancellation
 	 */
-	protected abstract void deserializeAdditionalSubstreams()
+	protected abstract void initializeAdditionalComponentsForSubstreams()
 			throws IOException, PdbException, CancelledException;
 
 	/**
@@ -350,9 +293,10 @@ public abstract class PdbDebugInfo {
 	 * @param writer {@link Writer} to which to write the debug dump
 	 * @throws IOException on issue writing to the {@link Writer}
 	 * @throws CancelledException upon user cancellation
+	 * @throws PdbException upon not enough data left to parse
 	 */
 	protected abstract void dumpInternalSubstreams(Writer writer)
-			throws IOException, CancelledException;
+			throws IOException, CancelledException, PdbException;
 
 	//==============================================================================================
 	// Internal Data Methods
@@ -555,12 +499,10 @@ public abstract class PdbDebugInfo {
 		globalSymbolInformation.dump(writer);
 		writer.write("\n");
 		publicSymbolInformation.dump(writer);
-		if (doNewStuff) {
-			dumpSymbols(writer);
-			for (Module module : modules) {
-				pdb.checkCancelled();
-				module.dump(writer);
-			}
+		dumpSymbols(writer);
+		for (Module module : modules) {
+			pdb.checkCancelled();
+			module.dump(writer);
 		}
 	}
 
@@ -610,9 +552,11 @@ public abstract class PdbDebugInfo {
 	}
 
 	//==============================================================================================
-	// NEW STUFF FROM REFACTOR/REWORK (can be duplicative with other stuff)... might be turned off
-	// during development.
-	private void parseModules() throws CancelledException {
+	/**
+	 * Initializes modules with some basic information, enabling later queries of the modules
+	 * @throws CancelledException upon user cancellation
+	 */
+	private void initializeModules() throws CancelledException {
 		for (ModuleInformation moduleInformation : moduleInformationList) {
 			pdb.checkCancelled();
 			Module module = new Module(pdb, moduleInformation);
@@ -633,21 +577,14 @@ public abstract class PdbDebugInfo {
 		return modules.get(moduleNum);
 	}
 
-	// NOTE: Designs are not done regarding possibly iterators for iterating only globals or publics
 	/**
-	 * Returns the symbol iterator for general (public and global symbols
+	 * Returns the symbol iterator for main symbols
 	 * @return an iterator over all symbols of the module
 	 * @throws CancelledException upon user cancellation
-	 * @throws IOException upon issue reading the stream
+	 * @throws PdbException upon not enough data left to parse
 	 */
-	public MsSymbolIterator getSymbolIterator()
-			throws CancelledException, IOException {
-		if (streamNumberSymbolRecords == 0xffff) {
-			return null;
-		}
-		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNumberSymbolRecords);
-		MsSymbolIterator iterator = new MsSymbolIterator(pdb, reader);
-		return iterator;
+	MsSymbolIterator getSymbolIterator() throws CancelledException, PdbException {
+		return new MsSymbolIterator(pdb, streamNumberSymbolRecords, 0, MsfStream.MAX_STREAM_LENGTH);
 	}
 
 	/**
@@ -656,13 +593,15 @@ public abstract class PdbDebugInfo {
 	 * @return an iterator over all symbols of the module
 	 * @throws CancelledException upon user cancellation
 	 * @throws PdbException upon not enough data left to parse
+	 * @throws IOException upon issue reading the stream
 	 */
-	MsSymbolIterator getSymbolIterator(int moduleNum) throws CancelledException, PdbException {
+	MsSymbolIterator getSymbolIterator(int moduleNum)
+			throws CancelledException, PdbException, IOException {
 		Module module = modules.get(moduleNum);
-		return module.getSymbolIterator();
+		return module.iterator();
 	}
 
-	private void dumpSymbols(Writer writer) throws CancelledException, IOException {
+	private void dumpSymbols(Writer writer) throws CancelledException, IOException, PdbException {
 		MsSymbolIterator iterator = getSymbolIterator();
 		List<AbstractMsSymbol> symbols = new ArrayList<>();
 		while (iterator.hasNext()) {
@@ -673,8 +612,7 @@ public abstract class PdbDebugInfo {
 
 	// This method is temporary.  It only exists for ensuring results as we transition processing
 	// mechanisms.
-	private void compareSymbols()
-			throws CancelledException, PdbException, IOException {
+	private void compareSymbols() throws CancelledException, PdbException, IOException {
 		PdbDebugInfo debugInfo = pdb.getDebugInfo();
 		if (debugInfo == null) {
 			return;
@@ -712,7 +650,7 @@ public abstract class PdbDebugInfo {
 		for (int modnum = 0; modnum < numModules(); modnum++) {
 			pdb.checkCancelled();
 			Module module = modules.get(modnum);
-			MsSymbolIterator moduleSymbolsIterator = module.getSymbolIterator();
+			MsSymbolIterator moduleSymbolsIterator = getSymbolIterator(modnum);
 			cnt = 0;
 			Map<Long, AbstractMsSymbol> map = symbolRecords.getModuleSymbolsByOffset(modnum);
 			List<Long> keys = new ArrayList<>();

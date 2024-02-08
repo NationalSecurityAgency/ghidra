@@ -43,13 +43,10 @@ public class ClearMatchTask extends VtTask {
 		this.controller = controller;
 		this.matches = matches;
 
-		VTSession session = controller.getSession();
-
 		if (!(session instanceof VTSessionDB)) {
 			throw new IllegalArgumentException(
 				"Unexpected condition - VTSession is not a DB object!");
 		}
-
 	}
 
 	@Override

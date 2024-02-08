@@ -28,6 +28,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.*;
+import ghidra.program.util.DataTypeCleaner;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
@@ -43,57 +44,118 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand {
 	private SourceType source;
 	private FunctionRenameOption functionRenameOption;
 	private boolean preserveCallingConvention;
+	private boolean applyEmptyComposites;
+	private DataTypeConflictHandler conflictHandler;
 	private FunctionSignature signature;
 	private Program program;
 
 	/**
-	 * Constructs a new command for creating a function.
+	 * Constructs a new command for applying a signature to an existing function.
+	 * <br>
 	 * Only a function with a default name will be renamed to the function signature's name
 	 * (see {@link FunctionRenameOption#RENAME_IF_DEFAULT}).
-	 * @param entry entry point address for the function to be created.
+	 * <br>
+	 * All datatypes will be resolved using the 
+	 * {@link DataTypeConflictHandler#DEFAULT_HANDLER default conflict handler}.
+	 * 
+	 * @param entry     entry point address for the function to be created.
 	 * @param signature function signature to apply
-	 * @param source the source of this function signature
+	 * @param source    the source of this function signature
 	 */
 	public ApplyFunctionSignatureCmd(Address entry, FunctionSignature signature,
 			SourceType source) {
-		this(entry, signature, source, false, FunctionRenameOption.RENAME_IF_DEFAULT);
+		this(entry, signature, source, false, false, DataTypeConflictHandler.DEFAULT_HANDLER,
+			FunctionRenameOption.RENAME_IF_DEFAULT);
 	}
 
 	/**
-	 * Constructs a new command for creating a function.
-	 * @param entry entry point address for the function to be created.
+	 * Constructs a new command for applying a signature to an existing function.
+	 * <br>
+	 * All datatypes will be resolved using the 
+	 * {@link DataTypeConflictHandler#DEFAULT_HANDLER default conflict handler}.
+	 * 
+	 * @param entry     entry point address for the function to be created.
 	 * @param signature function signature to apply
-	 * @param source the source of this function signature
+	 * @param source    the source of this function signature
 	 * @param preserveCallingConvention if true the function calling convention will not be changed
 	 * @param forceSetName true if name of the function should be set to the name, otherwise name
-	 * will only be set name if currently default (e.g., FUN_1234). A value of true is equivalent to
-	 * {@link FunctionRenameOption#RENAME}, while a value of false is equivalent to
-	 * {@link FunctionRenameOption#RENAME_IF_DEFAULT}.
+	 *                     will only be set name if currently default (e.g., FUN_1234). A value of 
+	 *                     true is equivalent to {@link FunctionRenameOption#RENAME}, while a value
+	 *                     of false is equivalent to {@link FunctionRenameOption#RENAME_IF_DEFAULT}.
 	 */
 	@Deprecated(since = "10.3", forRemoval = true)
 	public ApplyFunctionSignatureCmd(Address entry, FunctionSignature signature, SourceType source,
 			boolean preserveCallingConvention, boolean forceSetName) {
-		this(entry, signature, source, preserveCallingConvention,
+		this(entry, signature, source, preserveCallingConvention, false,
+			DataTypeConflictHandler.DEFAULT_HANDLER,
 			forceSetName ? FunctionRenameOption.RENAME : FunctionRenameOption.RENAME_IF_DEFAULT);
 	}
 
 	/**
-	 * Constructs a new command for creating a function.
-	 * @param entry entry point address for the function to be created.
+	 * Constructs a new command for applying a signature to an existing function.
+	 * <br>
+	 * All datatypes will be resolved using the 
+	 * {@link DataTypeConflictHandler#DEFAULT_HANDLER default conflict handler}.
+	 * 
+	 * @param entry     entry point address for the function to be created.
 	 * @param signature function signature to apply
-	 * @param source the source of this function signature
+	 * @param source    the source of this function signature
 	 * @param preserveCallingConvention if true the function calling convention will not be changed
 	 * @param functionRenameOption controls renaming of the function using the name from the 
-	 * specified function signature.
+	 *                       specified function signature.
 	 */
+	@Deprecated(since = "11.0", forRemoval = true)
 	public ApplyFunctionSignatureCmd(Address entry, FunctionSignature signature, SourceType source,
 			boolean preserveCallingConvention, FunctionRenameOption functionRenameOption) {
+		this(entry, signature, source, preserveCallingConvention, false,
+			DataTypeConflictHandler.DEFAULT_HANDLER, functionRenameOption);
+	}
+
+	/**
+	 * Constructs a new command for applying a signature to an existing function.
+	 * 
+	 * @param entry     entry point address for the function to be created.
+	 * @param signature function signature to apply
+	 * @param source    the source of this function signature
+	 * @param preserveCallingConvention if true the function calling convention will not be changed
+	 * @param applyEmptyComposites If true, applied composites will be resolved without their
+	 *                        respective components if the type does not already exist in the 
+	 *                        destination datatype manager.  If false, normal type resolution 
+	 *                        will occur.
+	 * @param conflictHandler conflict handler to be used when applying datatypes to the
+	 *                        destination program.  If this value is not null or 
+	 *                        {@link DataTypeConflictHandler#DEFAULT_HANDLER} the datatypes will be 
+	 *                        resolved prior to updating the destinationFunction.  This handler
+	 *                        will provide some control over how applied datatype are handled when 
+	 *                        they conflict with existing datatypes. 
+	 *                        See {@link DataTypeConflictHandler} which provides some predefined
+	 *                        handlers.
+	 * @param functionRenameOption controls renaming of the function using the name from the 
+	 *                        specified function signature.
+	 */
+	public ApplyFunctionSignatureCmd(Address entry, FunctionSignature signature, SourceType source,
+			boolean preserveCallingConvention, boolean applyEmptyComposites,
+			DataTypeConflictHandler conflictHandler, FunctionRenameOption functionRenameOption) {
 		super("Create Function", true, false, false);
 		this.entryPt = entry;
 		this.signature = signature;
 		this.source = source;
 		this.preserveCallingConvention = preserveCallingConvention;
+		this.applyEmptyComposites = applyEmptyComposites;
+		this.conflictHandler =
+			(conflictHandler == null) ? DataTypeConflictHandler.DEFAULT_HANDLER : conflictHandler;
 		this.functionRenameOption = functionRenameOption;
+	}
+
+	private DataType prepareDataType(DataType dt, DataTypeManager destinationDtm,
+			DataTypeCleaner dtCleaner) {
+		if (dtCleaner != null) {
+			dt = dtCleaner.clean(dt);
+		}
+		if (conflictHandler != DataTypeConflictHandler.DEFAULT_HANDLER) {
+			dt = destinationDtm.resolve(dt, conflictHandler);
+		}
+		return dt;
 	}
 
 	@Override
@@ -137,22 +199,32 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand {
 
 		CompilerSpec compilerSpec = program.getCompilerSpec();
 		String conventionName = getCallingConvention(func, compilerSpec);
-
+		DataType returnDt = signature.getReturnType();
 		ParameterDefinition[] args = signature.getArguments();
-		List<Parameter> params = createParameters(compilerSpec, conventionName, args);
 
-		SymbolTable symbolTable = program.getSymbolTable();
+		ProgramBasedDataTypeManager targetDtm = func.getProgram().getDataTypeManager();
+		DataTypeCleaner dtCleaner =
+			applyEmptyComposites ? new DataTypeCleaner(targetDtm, true) : null;
 		try {
+			if (dtCleaner != null || conflictHandler != DataTypeConflictHandler.DEFAULT_HANDLER) {
+				for (ParameterDefinition arg : args) {
+					arg.setDataType(prepareDataType(arg.getDataType(), targetDtm, dtCleaner));
+				}
+				returnDt = prepareDataType(returnDt, targetDtm, dtCleaner);
+			}
+
+			ReturnParameterImpl returnParam = new ReturnParameterImpl(returnDt, program);
+			List<Parameter> params =
+				createParameters(compilerSpec, conventionName, args, returnParam);
+
+			SymbolTable symbolTable = program.getSymbolTable();
 
 			adjustParameterNamesToAvoidConflicts(symbolTable, func, params);
-
-			ReturnParameterImpl returnParam =
-				new ReturnParameterImpl(signature.getReturnType(), program);
 
 			func.updateFunction(conventionName, returnParam, params,
 				FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, false, source);
 			func.setVarArgs(signature.hasVarArgs());
-			
+
 			// Only apply noreturn if signature has it set
 			if (signature.hasNoReturn()) {
 				func.setNoReturn(signature.hasNoReturn());
@@ -163,6 +235,11 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand {
 			throw new InvalidInputException(
 				"Parameter name conflict, likely due to concurrent operation");
 		}
+		finally {
+			if (dtCleaner != null) {
+				dtCleaner.close();
+			}
+		}
 
 		updateStackPurgeSize(func, program);
 
@@ -170,7 +247,9 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand {
 	}
 
 	private List<Parameter> createParameters(CompilerSpec compilerSpec, String conventionName,
-			ParameterDefinition[] args) throws InvalidInputException {
+			ParameterDefinition[] args, Parameter returnParam) throws InvalidInputException {
+
+		DataType returnDt = returnParam.getDataType();
 
 		int firstParamIndex = getIndexOfFirstParameter(conventionName, args);
 
@@ -179,11 +258,15 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand {
 		DataTypeManager dtm = program.getDataTypeManager();
 		for (int i = firstParamIndex; i < args.length; i++) {
 			String name = args[i].getName();
+			DataType type = args[i].getDataType().clone(dtm);
 			if (Function.RETURN_PTR_PARAM_NAME.equals(name)) {
-				continue; // discard what should be an auto-param
+				if ((type instanceof Pointer) &&
+					(type.isEquivalent(returnDt) || VoidDataType.dataType.isEquivalent(returnDt))) {
+					returnParam.setDataType(((Pointer) type).getDataType(), source);
+				}
+				continue; // remove what should be an auto-param
 			}
 
-			DataType type = args[i].getDataType().clone(dtm);
 			if (settleCTypes) {
 				type = settleCDataType(type, dtm);
 			}
@@ -192,14 +275,14 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand {
 			param.setComment(args[i].getComment());
 			params.add(param);
 		}
+
 		return params;
 	}
 
 	private void adjustParameterNamesToAvoidConflicts(SymbolTable symbolTable, Function function,
 			List<Parameter> params) throws DuplicateNameException, InvalidInputException {
 
-		for (int i = 0; i < params.size(); i++) {
-			Parameter param = params.get(i);
+		for (Parameter param : params) {
 			String name = param.getName();
 			if (name == null || SymbolUtilities.isDefaultParameterName(name)) {
 				continue;

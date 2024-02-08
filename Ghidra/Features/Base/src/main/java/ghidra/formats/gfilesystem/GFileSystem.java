@@ -119,7 +119,8 @@ public interface GFileSystem extends Closeable, ExtensionPoint {
 	}
 
 	/**
-	 * Retrieves a {@link GFile} from this filesystem based on its full path and filename.
+	 * Retrieves a {@link GFile} from this filesystem based on its full path and filename, using
+	 * this filesystem's default name comparison logic (eg. case sensitive vs insensitive).
 	 * <p>
 	 * @param path string path and filename of a file located in this filesystem.  Use 
 	 * {@code null} or "/" to retrieve the root directory 

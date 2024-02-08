@@ -16,7 +16,7 @@
 package ghidra.app.util.viewer.field;
 
 import ghidra.framework.options.CustomOption;
-import ghidra.framework.options.SaveState;
+import ghidra.framework.options.GProperties;
 
 /**
 * An option class that allows the user to edit a related group of options pertaining to
@@ -102,14 +102,14 @@ public class FileOffsetFieldOptionsWrappedOption implements CustomOption {
 //Persistence
 //==================================================================================================
 	@Override
-	public void readState(SaveState saveState) {
-		showFilename = saveState.getBoolean(SHOW_FILENAME, showFilename);
-		useHex = saveState.getBoolean(USE_HEX, useHex);
+	public void readState(GProperties properties) {
+		showFilename = properties.getBoolean(SHOW_FILENAME, showFilename);
+		useHex = properties.getBoolean(USE_HEX, useHex);
 	}
 
 	@Override
-	public void writeState(SaveState saveState) {
-		saveState.putBoolean(SHOW_FILENAME, showFilename);
-		saveState.putBoolean(USE_HEX, useHex);
+	public void writeState(GProperties properties) {
+		properties.putBoolean(SHOW_FILENAME, showFilename);
+		properties.putBoolean(USE_HEX, useHex);
 	}
 }

@@ -15,6 +15,8 @@
  */
 package ghidra.program.database.function;
 
+import static ghidra.program.util.FunctionChangeRecord.FunctionChangeType.*;
+
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Predicate;
@@ -38,8 +40,8 @@ import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.PropertyMapManager;
 import ghidra.program.model.util.StringPropertyMap;
-import ghidra.program.util.ChangeManager;
-import ghidra.program.util.LanguageTranslator;
+import ghidra.program.util.*;
+import ghidra.program.util.FunctionChangeRecord.FunctionChangeType;
 import ghidra.util.Lock;
 import ghidra.util.Msg;
 import ghidra.util.exception.*;
@@ -166,8 +168,7 @@ public class FunctionManagerDB implements FunctionManager {
 	 * @throws InvalidInputException if the name is invalid
 	 */
 	public Function createExternalFunction(Address extSpaceAddr, String name, Namespace nameSpace,
-			String extData, SourceType source)
-			throws InvalidInputException {
+			String extData, SourceType source) throws InvalidInputException {
 		lock.acquire();
 		try {
 			Symbol symbol =
@@ -180,7 +181,7 @@ public class FunctionManagerDB implements FunctionManager {
 
 				FunctionDB funcDB = new FunctionDB(this, cache, addrMap, rec);
 
-				program.setObjChanged(ChangeManager.DOCR_FUNCTION_ADDED, extSpaceAddr, funcDB, null,
+				program.setObjChanged(ProgramEvent.FUNCTION_ADDED, extSpaceAddr, funcDB, null,
 					null);
 				return funcDB;
 			}
@@ -219,6 +220,13 @@ public class FunctionManagerDB implements FunctionManager {
 		}
 	}
 
+	static void checkSingleAddressSpaceOnly(AddressSetView set) {
+		if (set.getMinAddress().getAddressSpace() != set.getMaxAddress().getAddressSpace()) {
+			throw new IllegalArgumentException(
+				"Function body must contain single address space only");
+		}
+	}
+
 	private Function createFunction(String name, Namespace nameSpace, Address entryPoint,
 			AddressSetView body, Function thunkedFunction, SourceType source)
 			throws InvalidInputException, OverlappingFunctionException {
@@ -231,11 +239,15 @@ public class FunctionManagerDB implements FunctionManager {
 			if (body == null || !body.contains(entryPoint)) {
 				throw new IllegalArgumentException("Function body must contain the entrypoint");
 			}
+			if (body.getNumAddresses() > Integer.MAX_VALUE) {
+				throw new IllegalArgumentException(
+					"Function body size must be <= 0x7fffffff byte addresses");
+			}
 			if (codeMgr.getDefinedDataAt(entryPoint) != null) {
 				throw new IllegalArgumentException(
 					"Function entryPoint may not be created on defined data");
 			}
-
+			checkSingleAddressSpaceOnly(body);
 			if (namespaceMgr.overlapsNamespace(body) != null) {
 				throw new OverlappingFunctionException(entryPoint);
 			}
@@ -281,8 +293,8 @@ public class FunctionManagerDB implements FunctionManager {
 					thunkAdapter.createThunkRecord(symbol.getID(), refFunc.getID());
 
 					// Default thunk function name changes dynamically as a result of becoming a thunk
-					program.symbolChanged(symbol, ChangeManager.DOCR_SYMBOL_RENAMED, entryPoint,
-						symbol, oldName, symbol.getName());
+					program.symbolChanged(symbol, ProgramEvent.SYMBOL_RENAMED, entryPoint, symbol,
+						oldName, symbol.getName());
 				}
 
 				DBRecord rec = adapter.createFunctionRecord(symbol.getID(), returnDataTypeId);
@@ -290,8 +302,7 @@ public class FunctionManagerDB implements FunctionManager {
 				FunctionDB funcDB = new FunctionDB(this, cache, addrMap, rec);
 				namespaceMgr.setBody(funcDB, body);
 
-				program.setObjChanged(ChangeManager.DOCR_FUNCTION_ADDED, entryPoint, funcDB, null,
-					null);
+				program.setObjChanged(ProgramEvent.FUNCTION_ADDED, entryPoint, funcDB, null, null);
 				return funcDB;
 			}
 			catch (IOException e) {
@@ -346,14 +357,11 @@ public class FunctionManagerDB implements FunctionManager {
 
 				// Default thunk function name changes dynamically as a result of becoming a thunk
 				if (s.getSource() == SourceType.DEFAULT) {
-					program.symbolChanged(s, ChangeManager.DOCR_SYMBOL_RENAMED,
-						function.getEntryPoint(), s, oldName, s.getName());
+					program.symbolChanged(s, ProgramEvent.SYMBOL_RENAMED, function.getEntryPoint(),
+						s, oldName, s.getName());
 				}
 			}
-
-			program.setObjChanged(ChangeManager.DOCR_FUNCTION_CHANGED,
-				ChangeManager.FUNCTION_CHANGED_THUNK, function.getEntryPoint(), function, null,
-				null);
+			program.setChanged(new FunctionChangeRecord(function, THUNK_CHANGED));
 		}
 		catch (IOException e) {
 			dbError(e);
@@ -442,8 +450,7 @@ public class FunctionManagerDB implements FunctionManager {
 			adapter.removeFunctionRecord(functionID);
 			cache.delete(functionID);
 
-			program.setObjChanged(ChangeManager.DOCR_FUNCTION_REMOVED, entryPoint, function, body,
-				null);
+			program.setObjChanged(ProgramEvent.FUNCTION_REMOVED, entryPoint, function, body, null);
 			return true;
 		}
 		catch (IOException e) {
@@ -845,17 +852,15 @@ public class FunctionManagerDB implements FunctionManager {
 		return callFixupMap;
 	}
 
-	void functionChanged(FunctionDB func, int subEventType) {
-		program.setObjChanged(ChangeManager.DOCR_FUNCTION_CHANGED, subEventType,
-			func.getEntryPoint(), func, null, null);
+	void functionChanged(FunctionDB func, FunctionChangeType changeType) {
+		program.setChanged(new FunctionChangeRecord(func, changeType));
 
 		List<Long> thunkFunctionIds = getThunkFunctionIds(func.getKey());
 		if (thunkFunctionIds != null) {
 			for (long key : thunkFunctionIds) {
 				Function thunk = getFunction(key);
 				if (thunk != null) {
-					program.setObjChanged(ChangeManager.DOCR_FUNCTION_CHANGED, subEventType,
-						thunk.getEntryPoint(), thunk, null, null);
+					program.setChanged(new FunctionChangeRecord(thunk, changeType));
 				}
 			}
 		}
@@ -990,6 +995,7 @@ public class FunctionManagerDB implements FunctionManager {
 			throw new IllegalArgumentException(
 				"Function body size must be <= 0x7fffffff byte addresses");
 		}
+		checkSingleAddressSpaceOnly(newBody);
 		AddressSetView oldBody = function.getBody();
 
 		try {
@@ -1005,7 +1011,7 @@ public class FunctionManagerDB implements FunctionManager {
 // TODO: DON'T THINK THIS SHOULD BE DONE ANYMORE!
 //			function.setStackPurgeSize(Function.UNKNOWN_STACK_DEPTH_CHANGE);
 
-		program.setObjChanged(ChangeManager.DOCR_FUNCTION_BODY_CHANGED, function.getEntryPoint(),
+		program.setObjChanged(ProgramEvent.FUNCTION_BODY_CHANGED, function.getEntryPoint(),
 			function, null, null);
 	}
 
@@ -1196,7 +1202,7 @@ public class FunctionManagerDB implements FunctionManager {
 		}
 	}
 
-	public void replaceDataTypes(long oldDataTypeID, long newDataTypeID) {
+	public void replaceDataTypes(Map<Long, Long> dataTypeReplacementMap) {
 		lock.acquire();
 		try {
 			RecordIterator it = adapter.iterateFunctionRecords();
@@ -1207,14 +1213,16 @@ public class FunctionManagerDB implements FunctionManager {
 					continue; // skip thunks
 				}
 
-				if (rec.getLongValue(FunctionAdapter.RETURN_DATA_TYPE_ID_COL) == oldDataTypeID) {
-					rec.setLongValue(FunctionAdapter.RETURN_DATA_TYPE_ID_COL, newDataTypeID);
+				long id = rec.getLongValue(FunctionAdapter.RETURN_DATA_TYPE_ID_COL);
+				Long replacementId = dataTypeReplacementMap.get(id);
+				if (replacementId != null) {
+					rec.setLongValue(FunctionAdapter.RETURN_DATA_TYPE_ID_COL, replacementId);
 					adapter.updateFunctionRecord(rec);
 					FunctionDB functionDB = cache.get(rec);
 					if (functionDB == null) {
 						functionDB = new FunctionDB(this, cache, addrMap, rec);
 					}
-					functionChanged(functionDB, ChangeManager.FUNCTION_CHANGED_RETURN);
+					functionChanged(functionDB, RETURN_TYPE_CHANGED);
 				}
 			}
 		}

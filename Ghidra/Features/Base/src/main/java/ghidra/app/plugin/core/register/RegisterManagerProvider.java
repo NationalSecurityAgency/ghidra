@@ -15,6 +15,9 @@
  */
 package ghidra.app.plugin.core.register;
 
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
+
 import java.awt.event.MouseEvent;
 
 import javax.swing.*;
@@ -24,13 +27,13 @@ import docking.WindowPosition;
 import docking.action.*;
 import generic.theme.GIcon;
 import ghidra.app.context.ProgramActionContext;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainObjectChangedEvent;
+import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ChangeManager;
 import ghidra.util.HelpLocation;
 import ghidra.util.task.SwingUpdateManager;
 import resources.Icons;
@@ -100,8 +103,8 @@ public class RegisterManagerProvider extends ComponentProviderAdapter {
 		};
 		deleteRegisterValuesAction.setEnabled(false);
 		deleteRegisterValuesAction.setToolBarData(new ToolBarData(DELETE_REGISTER_VALUES_ICON));
-		deleteRegisterValuesAction.setPopupMenuData(
-			new MenuData(new String[] { "Delete Register Value Ranges" }));
+		deleteRegisterValuesAction
+				.setPopupMenuData(new MenuData(new String[] { "Delete Register Value Ranges" }));
 		deleteRegisterValuesAction.setDescription("Delete Register Value Ranges");
 		deleteRegisterValuesAction.setHelpLocation(helpLocation);
 		tool.addLocalAction(this, deleteRegisterValuesAction);
@@ -114,8 +117,8 @@ public class RegisterManagerProvider extends ComponentProviderAdapter {
 		};
 		selectRegisterValuesAction.setEnabled(false);
 		selectRegisterValuesAction.setToolBarData(new ToolBarData(SELECT_REGISTER_VALUES_ICON));
-		selectRegisterValuesAction.setPopupMenuData(
-			new MenuData(new String[] { "Select Register Value Ranges" }));
+		selectRegisterValuesAction
+				.setPopupMenuData(new MenuData(new String[] { "Select Register Value Ranges" }));
 		selectRegisterValuesAction.setDescription("Select Register Value Ranges");
 		selectRegisterValuesAction.setHelpLocation(helpLocation);
 		tool.addLocalAction(this, selectRegisterValuesAction);
@@ -128,12 +131,12 @@ public class RegisterManagerProvider extends ComponentProviderAdapter {
 				}
 			};
 		showDefaultRegisterValuesAction.setSelected(false);
-		showDefaultRegisterValuesAction.setDescription(
-			"Toggles showing of default register values");
-		showDefaultRegisterValuesAction.setMenuBarData(
-			new MenuData(new String[] { "Show Default Values" }));
-		showDefaultRegisterValuesAction.setHelpLocation(
-			new HelpLocation("RegisterPlugin", "menu_actions"));
+		showDefaultRegisterValuesAction
+				.setDescription("Toggles showing of default register values");
+		showDefaultRegisterValuesAction
+				.setMenuBarData(new MenuData(new String[] { "Show Default Values" }));
+		showDefaultRegisterValuesAction
+				.setHelpLocation(new HelpLocation("RegisterPlugin", "menu_actions"));
 		tool.addLocalAction(this, showDefaultRegisterValuesAction);
 
 		filterRegistersAction = new ToggleDockingAction("Filter Registers", getName()) {
@@ -221,10 +224,8 @@ public class RegisterManagerProvider extends ComponentProviderAdapter {
 	class MyDomainObjectListener implements DomainObjectListener {
 		@Override
 		public void domainObjectChanged(DomainObjectChangedEvent ev) {
-			if (ev.containsEvent(ChangeManager.DOCR_REGISTER_VALUES_CHANGED) ||
-				ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
+			if (ev.contains(REGISTER_VALUES_CHANGED, RESTORED)) {
 				updateMgr.update();
-
 			}
 		}
 	}

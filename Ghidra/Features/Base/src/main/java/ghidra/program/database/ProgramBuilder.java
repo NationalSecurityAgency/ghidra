@@ -146,8 +146,7 @@ public class ProgramBuilder {
 	 * @param language Language object
 	 * @throws Exception if there is an exception creating the program
 	 */
-	public ProgramBuilder(String name, Language language)
-			throws Exception {
+	public ProgramBuilder(String name, Language language) throws Exception {
 		CompilerSpec compilerSpec = language.getDefaultCompilerSpec();
 		program = new ProgramDB(name, language, compilerSpec, this);
 		setAnalyzed();
@@ -320,8 +319,8 @@ public class ProgramBuilder {
 
 		return tx(() -> {
 			return program.getMemory()
-				.createInitializedBlock(name, addr(address), size, (byte) 0, TaskMonitor.DUMMY,
-					true);
+					.createInitializedBlock(name, addr(address), size, (byte) 0, TaskMonitor.DUMMY,
+						true);
 		});
 	}
 
@@ -653,6 +652,7 @@ public class ProgramBuilder {
 
 	/**
 	 * Creates a data instance at the specified address, repeated {@code N} times.
+	 * Any conflicting Data will be overwritten.
 	 *
 	 * @param addressString address.
 	 * @param dt {@link DataType} to place at address, {@link Dynamic} length datatype not supported.
@@ -662,7 +662,7 @@ public class ProgramBuilder {
 		tx(() -> {
 			Address address = addr(addressString);
 			for (int i = 0; i < n; i++) {
-				CreateDataCmd cmd = new CreateDataCmd(address, dt);
+				CreateDataCmd cmd = new CreateDataCmd(address, true, dt);
 				if (!cmd.applyTo(program)) {
 					throw new AssertException(
 						"Could not apply data at address " + address + ". " + cmd.getStatusMsg());

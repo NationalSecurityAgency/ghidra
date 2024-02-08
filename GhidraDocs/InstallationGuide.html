@@ -18,7 +18,7 @@
 
 <h1>Ghidra Installation Guide</h1>
 <p>
-The installation information provided is effective as of Ghidra 10.2 and is subject to change with
+The installation information provided is effective as of Ghidra 11.1 and is subject to change with
 future releases.
 </p>
 
@@ -310,20 +310,20 @@ Ghidra release includes native binaries for the following platforms:</p>
   <li>Windows x86 64-bit</li>
   <li>Linux x86 64-bit</li>
   <li>macOS x86 64-bit</li>
-  <li>macOS ARM 64-bit (x86 using Rosetta translation)</li>
+  <li>macOS ARM 64-bit</li>
 </ul>
 <p>Ghidra supports running on the following additional platforms with user-built native binaries:
 </p>
 <ul>
   <li>Linux ARM 64-bit</li>
-  <li>macOS ARM 64-bit (Apple silicon)</li>
+  <li>FreeBSD x86 64-bit (no debugger support)</li>
 </ul>
 <p>In order to build native binaries for your platform, you will need the following installed on your
 system:</p>
 <ul>
   <li>A <a href="#Requirements">supported</a> version of a Java Development Kit</li>
   <li><a href="https://gradle.org/releases/">Gradle 7.3+</a></li>
-  <li>make, gcc, and g++ (Linux/macOS-only)</li>
+  <li>make, gcc, and g++ (Linux/macOS/FreeBSD-only)</li>
   <li>
     <a href="https://visualstudio.microsoft.com/vs/community/">Microsoft Visual Studio</a>
     2017 or later, or <a href="https://visualstudio.microsoft.com/visual-cpp-build-tools/">
@@ -409,7 +409,7 @@ can be found in the <i>&lt;GhidraInstallDir&gt;</i>/Extensions directory.</p>
     <p>Ghidra extensions are designed to be installed and uninstalled from the Ghidra front-end GUI:
     </p>
     <ol>
-      <li>Click <b>File &#8594; Install Extensions...</b></li>
+      <li>Click <b>File &#8594; Install Extensions</b></li>
       <li>Check boxes to install extensions; uncheck boxes to uninstall extensions</li>
       <li>Restart Ghidra for the changes to take effect</li>
     </ol>
@@ -610,6 +610,11 @@ be installed in a pre-existing Eclipse installation.</p>
     Some users have reported Ghidra GUI rendering issues on multi-monitor thin client setups.  
     These problems are attributed to reported bugs in Java, which will hopefully be fixed in the 
     future.  Disabling the 2nd or 3rd monitor may be necessary to work around the issue.
+  </li>
+  <li>
+    GUI icons may not render correctly in some configurations of Linux. Setting 
+    <i>VMARGS=-Dsun.java2d.opengl</i> to <b>true</b> in 
+    <i>&lt;GhidraInstallDir&gt;</i>/support/launch.properties may fix this issue.
   </li>
 </ul>
 <h3><a name="MacOSIssues"></a>macOS (OS X)</h3>

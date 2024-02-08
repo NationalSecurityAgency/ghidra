@@ -219,6 +219,32 @@ PCodeTest({
     'architecture_test': 'PARISC',
 })
 
+PCodeTest({
+    'name': 'Loongarch64',
+    'build_all': 1,
+    'build_exe': 0,
+    'gcc_version': '12.3.0',
+    'qemu_command': 'qemu-loongarch64',
+    'target': 'loongson-linux',
+    'toolchain': '%(name)s/%(target)s', #%(toolchain_dir)s/lib/gcc/loongarch64-linux/%(gcc_version)s
+    'ccflags': '-march=loongarch64 -mabi=lp64d -L /local/cross/lib/gcc/loongarch64-linux/12.3.0/ -lgcc',
+    'language_id': 'Loongarch:LE:64:default',
+    #'has_longlong': 0,
+})
+
+PCodeTest({
+    'name': 'Loongarch64f',
+    'build_all': 1,
+    'build_exe': 0,
+    'gcc_version': '12.3.0',
+    'qemu_command': 'qemu-loongarch64',
+    'target': 'loongson-linux',
+    'toolchain': 'Loongarch64/%(target)s', #%(toolchain_dir)s/lib/gcc/loongarch64-linux/%(gcc_version)s
+    'ccflags': '-march=loongarch64 -mabi=lp64f -mfpu=32 -L /local/cross/lib/gcc/loongarch64-linux/12.3.0/ -lgcc',
+    'language_id': 'Loongarch:LE:64:lp64f',
+    'has_double': 0,
+})
+
 
 # Note that libgcc.a was built for m68020 which has a different function calling convention from pre-68020
 
@@ -434,16 +460,30 @@ PCodeTest({
 PCodeTest({
     'name': 'msp430x',
     'build_all': 1,
-    'toolchain': 'TI/msp430-elf',
-    'ccflags': '-g -mmcu=msp430x -mlarge -mhwmult=none -fno-builtin -Wl,-T,msp430x.ld -L %(toolchain_dir)s/lib/gcc/msp430-elf/%(gcc_version)s/large/ -lgcc -lmul_none',
+    'toolchain': 'TI/msp430-gcc-9.3.1.11_linux64',
+    'ccflags': '-g -mcpu=msp430x -mlarge -mhwmult=none -fno-builtin -Wl,-T,msp430x.ld -L %(toolchain_dir)s/lib/gcc/msp430-elf/%(gcc_version)s/large/ -lgcc -lmul_none',
     'language_id': 'TI_MSP430X:LE:32:default',
     'processor': 'TI',
     'architecture_test': 'MSP430X',
-    'has_float': 0,
-    'has_double': 0,
+    'has_float': 1,
+    'has_double': 1,
     'has_longlong': 0,
     'small_build': 1,
-    'skip_files': ['PointerManipulation.test', 'misc.test'],
+    'skip_files': ['PointerManipulation.test', 'misc.out'],
+})
+
+PCodeTest({
+    'name': 'msp430',
+    'build_all': 1,
+    'toolchain': 'TI/msp430-gcc-9.3.1.11_linux64',
+    'ccflags': '-g -mcpu=msp430 -fno-builtin -mhwmult=none -lgcc -lmul_none',
+    'language_id': 'TI_MSP430:LE:16:default',
+    'processor': 'TI',
+    'architecture_test': 'MSP430',
+    'has_float': 1,
+    'has_double': 1,
+    'has_longlong': 0,
+    'small_build': 1,
 })
 
 PCodeTest({
@@ -662,4 +702,23 @@ PCodeTest({
     'has_float': 0,
     'has_double': 0,
     'has_longlong': 0,
+})
+
+PCodeTest({
+    'name': 'Xtensa_LE',
+    'build_all': 1,
+    'build_exe': 1,
+    'toolchain': 'Xtensa/xtensa-esp32-elf',
+    'language_id': 'Xtensa:LE:32:default',
+    'gcc_version' : '8.4.0',
+    'ccflags': '-L %(toolchain_dir)s/lib/gcc/xtensa-esp32-elf/%(gcc_version)s',
+})
+
+PCodeTest({
+    'name': 'Xtensa_BE',
+    'build_all': 1,
+    'build_exe': 1,
+    'toolchain': 'Xtensa/xtensa-elf',
+    'language_id': 'Xtensa:BE:32:default',
+    'ccflags': '-L %(toolchain_dir)s/lib/gcc/xtensa-elf/%(gcc_version)s',
 })

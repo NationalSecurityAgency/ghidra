@@ -55,6 +55,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramSelection;
 import ghidra.test.*;
+import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
 public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
@@ -354,6 +355,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		Function func = createThunk(addr("0x10030d2"), "comdlg32.dll::CommDlgExtendedError", true);
 
 		assertTrue(cb.goToField(addr("0x10030d2"), "Function Signature", 0, 0));
+		assertTrue(func.isThunk());
 
 		performAction(revertThunk, cb.getProvider(), false);
 
@@ -368,6 +370,19 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("FUN_010030d2", func.getName());
 
 		undo(program);// undo changed function
+
+		if (!func.isThunk()) {
+
+			Msg.debug(this, "\n\t>>> test will fail...waiting a bit to see if it is timing");
+			waitForValueWithoutFailing(() -> {
+
+				Msg.debug(this, "\tchecking again...");
+				if (!func.isThunk()) {
+					return null; // not ready
+				}
+				return true;
+			});
+		}
 
 		assertTrue(func.isThunk());
 		assertEquals("CommDlgExtendedError", func.getName());
@@ -886,8 +901,8 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		Variable[] vars = function.getLocalVariables(VariableFilter.STACK_VARIABLE_FILTER);
 		tx(program, () -> {
 			DataType byteDT = program.getDataTypeManager()
-				.addDataType(new ByteDataType(),
-					DataTypeConflictHandler.DEFAULT_HANDLER);
+					.addDataType(new ByteDataType(),
+						DataTypeConflictHandler.DEFAULT_HANDLER);
 			vars[1].setDataType(byteDT, SourceType.ANALYSIS);
 		});
 
@@ -1278,6 +1293,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		// the following text (this is only a part of the status message, but is enough
 		// to verify the test):
 		assertTrue(dialog.getStatusText().contains("doesn't fit within"));
+		close(dialog);
 	}
 
 //==================================================================================================

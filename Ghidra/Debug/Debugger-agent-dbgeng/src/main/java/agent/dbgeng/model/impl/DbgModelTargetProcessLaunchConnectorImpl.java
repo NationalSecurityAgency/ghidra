@@ -60,12 +60,12 @@ public class DbgModelTargetProcessLaunchConnectorImpl extends DbgModelTargetObje
 		HashMap<String, ParameterDescription<?>> map =
 			new HashMap<String, ParameterDescription<?>>();
 		ParameterDescription<String> param = ParameterDescription.create(String.class, "args", true,
-			null, "Cmd", "executable to be launched");
+			"", "Cmd", "executable to be launched");
 		ParameterDescription<String> initDir =
 			ParameterDescription.create(String.class, "dir", false,
-				null, "Dir", "initial directory");
+				"", "Dir", "initial directory");
 		ParameterDescription<String> env = ParameterDescription.create(String.class, "env", false,
-			null, "Env (sep=/0)", "environment block");
+			"", "Env (sep=/0)", "environment block");
 		ParameterDescription<Integer> cf = ParameterDescription.create(Integer.class, "cf", true,
 			1, "Create Flags", "creation flags");
 		ParameterDescription<Integer> ef = ParameterDescription.create(Integer.class, "ef", false,

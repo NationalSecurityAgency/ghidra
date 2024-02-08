@@ -573,9 +573,12 @@ public class VarnodeContext implements ProcessorContext {
 					value = (value << 8 * (8 - size)) >> 8 * (8 - size);
 				}
 
-				//  constants pulled from memory are suspec
+				// constants pulled from memory are suspect
 				// unless memory is readonly, or given access from evaluator (trustWriteAccess)
-				int spaceId = (isReadOnly || evaluator.allowAccess(this, addr)) ? 0 : SUSPECT_OFFSET_SPACEID;
+				int spaceId = SUSPECT_OFFSET_SPACEID;
+				if (isReadOnly || (evaluator != null && evaluator.allowAccess(this, addr))) {
+					spaceId = 0;
+				}
 				return createVarnode(value, spaceId, size);
 
 			}
@@ -1383,15 +1386,9 @@ public class VarnodeContext implements ProcessorContext {
 		return result;
 	}
 
-	// This is bad since registers could have multiple associated spaces 
-//	private int getSymbolSpaceID(Varnode val) {
-//		Register reg = trans.getRegister(val);
-//		if (reg == null) {
-//			return -1;
-//		}
-//		return getAddressSpace(reg.getName());
-//	}
-
+	// flag running out of address spaces, so error only printed once
+	private boolean hitMaxAddressSpaces = false;
+	
 	public int getAddressSpace(String name) {
 		int spaceID;
 		AddressSpace regSpace = addrFactory.getAddressSpace(name);
@@ -1399,7 +1396,10 @@ public class VarnodeContext implements ProcessorContext {
 			regSpace = ((OffsetAddressFactory) addrFactory).createNewOffsetSpace(name);
 		}
 		if (regSpace == null) {
-			Msg.error(this,  "VarnodeContext: out of address spaces for: " + name);
+			if (!hitMaxAddressSpaces) {
+				Msg.error(this,  "VarnodeContext: out of address spaces at @" + currentAddress +" for: " + name);
+				hitMaxAddressSpaces = true;
+			}
 			return BAD_SPACE_ID_VALUE;
 		}
 		spaceID = regSpace.getSpaceID();
@@ -1762,13 +1762,18 @@ class OffsetAddressFactory extends DefaultAddressFactory {
 		}
 	}
 
+	// Maximum space ID used to create spaces
+	private int curMaxID = 0;
+	
 	private int getNextUniqueID() {
-		int maxID = 0;
-		AddressSpace[] spaces = getAllAddressSpaces();
-		for (AddressSpace space : spaces) {
-			maxID = Math.max(maxID, space.getUnique());
+		if (curMaxID == 0) {
+			AddressSpace[] spaces = getAllAddressSpaces();
+			for (AddressSpace space : spaces) {
+				curMaxID = Math.max(curMaxID, space.getUnique());
+			}
 		}
-		return maxID + 1;
+		curMaxID += 1;
+		return curMaxID;
 	}
 
 	/**

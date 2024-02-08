@@ -17,6 +17,11 @@ package pdb.symbolserver;
 
 import java.io.File;
 
+import org.apache.commons.io.FilenameUtils;
+
+import ghidra.formats.gfilesystem.FSRL;
+import ghidra.program.model.listing.Program;
+
 /**
  * Context for the {@link SymbolServerInstanceCreatorRegistry} when creating new
  * {@link SymbolServer} instances.
@@ -30,6 +35,7 @@ import java.io.File;
  */
 public class SymbolServerInstanceCreatorContext {
 	private final File rootDir;
+	private final FSRL programFSRL;
 	private final SymbolServerInstanceCreatorRegistry symbolServerInstanceCreatorRegistry;
 
 	SymbolServerInstanceCreatorContext(
@@ -37,9 +43,16 @@ public class SymbolServerInstanceCreatorContext {
 		this(null, symbolServerInstanceCreatorRegistry);
 	}
 
-	SymbolServerInstanceCreatorContext(File rootDir,
+	SymbolServerInstanceCreatorContext(Program program,
 			SymbolServerInstanceCreatorRegistry symbolServerInstanceCreatorRegistry) {
-		this.rootDir = rootDir;
+		if (program != null) {
+			this.programFSRL = FSRL.fromProgram(program);
+			this.rootDir = new File(FilenameUtils.getFullPath(program.getExecutablePath()));
+		}
+		else {
+			this.programFSRL = null;
+			this.rootDir = null;
+		}
 		this.symbolServerInstanceCreatorRegistry = symbolServerInstanceCreatorRegistry;
 	}
 
@@ -59,6 +72,15 @@ public class SymbolServerInstanceCreatorContext {
 	 */
 	public File getRootDir() {
 		return rootDir;
+	}
+
+	/**
+	 * Returns the FSRL of imported binary.
+	 * 
+	 * @return {@link FSRL} of the imported binary, or null if not present
+	 */
+	public FSRL getProgramFSRL() {
+		return programFSRL;
 	}
 
 }

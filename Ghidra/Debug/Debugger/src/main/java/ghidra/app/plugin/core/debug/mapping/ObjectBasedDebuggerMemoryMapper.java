@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import db.Transaction;
+import ghidra.debug.api.model.DebuggerMemoryMapper;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.Trace;
 import ghidra.util.exception.DuplicateNameException;

@@ -1048,6 +1048,29 @@ void HighIntersectTest::purgeHigh(HighVariable *high)
   highedgemap.erase(iterfirst,iterlast);
 }
 
+/// \brief Test if a given HighVariable might intersect an address tied HighVariable during a call
+///
+/// If an address tied Varnode has aliases, we need to consider it as \e in \e scope during
+/// calls, even if the value is never read after the call.  In particular, another Varnode
+/// that \e crosses the call is considered to be intersecting with the address tied Varnode.
+/// This method tests whether the address tied HighVariable has aliases, then if so,
+/// it tests if the given HighVariable intersects a call site.
+/// \param tied is the address tied HighVariable
+/// \param untied is the given HighVariable to consider for intersection
+/// \return \b true if we consider the HighVariables to be intersecting
+bool HighIntersectTest::testUntiedCallIntersection(HighVariable *tied,HighVariable *untied)
+
+{
+  // If the address tied part is global, we do not need to test for crossings, as the
+  // address forcing mechanism should act as a placeholder across calls
+  if (tied->isPersist()) return false;
+  Varnode *vn = tied->getTiedVarnode();
+  if (vn->hasNoLocalAlias()) return false;	// A local variable is only in scope if it has aliases
+  if (!affectingOps.isPopulated())
+    affectingOps.populate();
+  return untied->getCover().intersect(affectingOps,vn);
+}
+
 /// \brief Translate any intersection tests for \e high2 into tests for \e high1
 ///
 /// The two variables will be merged and \e high2, as an object, will be freed.
@@ -1149,6 +1172,16 @@ bool HighIntersectTest::intersection(HighVariable *a,HighVariable *b)
     if (blockIntersection(a,b,blockisect[blk])) {
       res = true;
       break;
+    }
+  }
+  if (!res) {
+    bool aTied = a->isAddrTied();
+    bool bTied = b->isAddrTied();
+    if (aTied != bTied) {			// If one variable is address tied and the other isn't
+      if (aTied)
+	res = testUntiedCallIntersection(a,b);		// Test if the non-tied variable crosses any calls
+      else
+	res = testUntiedCallIntersection(b,a);
     }
   }
   highedgemap[ HighEdge(a,b) ] = res; // Cache the result

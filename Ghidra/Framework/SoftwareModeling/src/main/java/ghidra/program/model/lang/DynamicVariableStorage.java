@@ -22,11 +22,28 @@ import ghidra.program.model.pcode.Varnode;
 import ghidra.util.exception.InvalidInputException;
 
 public class DynamicVariableStorage extends VariableStorage {
-	
+
+	/**
+	 * <code>INDIRECT_VOID_STORAGE</code> used to identify return storage which is "mapped"
+	 * with a data-type of void but was forced indirect with the corresponding use of a
+	 * hidden return-storage-parameter.
+	 */
+	public static final DynamicVariableStorage INDIRECT_VOID_STORAGE = new DynamicVariableStorage();
+
 	private AutoParameterType autoParamType;
 	private boolean forcedIndirect;
 	private boolean isUnassigned = false;
-	
+	private boolean isVoid = false;
+
+	/**
+	 * Construct void return storage with forced-indirect flag.
+	 */
+	private DynamicVariableStorage() {
+		super();
+		forcedIndirect = true;
+		isVoid = true;
+	}
+
 	/**
 	 * Construct Unassigned dynamic variable storage with an optional auto-parameter type
 	 * @param autoParamType auto-parameter type or null if not applicable
@@ -36,7 +53,7 @@ public class DynamicVariableStorage extends VariableStorage {
 		this.autoParamType = autoParamType;
 		isUnassigned = true;
 	}
-	
+
 	/**
 	 * Construct dynamic variable storage
 	 * @param program
@@ -48,7 +65,7 @@ public class DynamicVariableStorage extends VariableStorage {
 		this.forcedIndirect = forcedIndirect;
 		isUnassigned = true;
 	}
-	
+
 	/**
 	 * Construct dynamic variable storage with an optional auto-parameter type
 	 * @param program
@@ -58,8 +75,7 @@ public class DynamicVariableStorage extends VariableStorage {
 	 * @throws InvalidInputException
 	 */
 	public DynamicVariableStorage(ProgramArchitecture program, AutoParameterType autoParamType,
-			Address address,
-			int size) throws InvalidInputException {
+			Address address, int size) throws InvalidInputException {
 		super(program, address, size);
 		this.autoParamType = autoParamType;
 	}
@@ -72,8 +88,7 @@ public class DynamicVariableStorage extends VariableStorage {
 	 * @throws InvalidInputException if specified varnodes violate storage restrictions
 	 */
 	public DynamicVariableStorage(ProgramArchitecture program, AutoParameterType autoParamType,
-			Varnode... varnodes)
-			throws InvalidInputException {
+			Varnode... varnodes) throws InvalidInputException {
 		super(program, varnodes);
 		this.autoParamType = autoParamType;
 	}
@@ -88,8 +103,7 @@ public class DynamicVariableStorage extends VariableStorage {
 	 * @throws InvalidInputException
 	 */
 	public DynamicVariableStorage(ProgramArchitecture program, boolean forcedIndirect,
-			Address address, int size)
-			throws InvalidInputException {
+			Address address, int size) throws InvalidInputException {
 		super(program, address, size);
 		this.forcedIndirect = forcedIndirect;
 	}
@@ -103,8 +117,7 @@ public class DynamicVariableStorage extends VariableStorage {
 	 * @throws InvalidInputException if specified varnodes violate storage restrictions
 	 */
 	public DynamicVariableStorage(ProgramArchitecture program, boolean forcedIndirect,
-			Varnode... varnodes)
-			throws InvalidInputException {
+			Varnode... varnodes) throws InvalidInputException {
 		super(program, varnodes);
 		this.forcedIndirect = forcedIndirect;
 	}
@@ -125,6 +138,11 @@ public class DynamicVariableStorage extends VariableStorage {
 	}
 
 	@Override
+	public boolean isVoidStorage() {
+		return isVoid;
+	}
+
+	@Override
 	public AutoParameterType getAutoParameterType() {
 		return autoParamType;
 	}
@@ -132,7 +150,7 @@ public class DynamicVariableStorage extends VariableStorage {
 	@Override
 	public String toString() {
 		String str = super.toString();
-		if (forcedIndirect) {
+		if (forcedIndirect && varnodes != null) {
 			str = str + " (ptr)";
 		}
 		if (autoParamType != null) {
@@ -140,23 +158,26 @@ public class DynamicVariableStorage extends VariableStorage {
 		}
 		return str;
 	}
-	
+
 	/**
 	 * Construct Unassigned dynamic variable storage with an optional auto-parameter type.
 	 * NOTE: The {@link #isUnassignedStorage()} method should be used to
 	 * detect this type of storage.
 	 * @param autoParamType auto-parameter type or null if not applicable
+	 * @return Unassigned dynamic variable storage
 	 */
-	public static DynamicVariableStorage getUnassignedDynamicStorage(AutoParameterType autoParamType) {
+	public static DynamicVariableStorage getUnassignedDynamicStorage(
+			AutoParameterType autoParamType) {
 		return new DynamicVariableStorage(autoParamType);
 	}
-	
+
 	/**
 	 * Construct Unassigned dynamic variable storage.
 	 * NOTE: The {@link #isUnassignedStorage()} method should be used to
 	 * detect this type of storage.
 	 * @param forcedIndirect if true indicates that the parameter has been forced to pass 
 	 * as a pointer instead of its raw type
+	 * @return Unassigned dynamic variable storage
 	 */
 	public static DynamicVariableStorage getUnassignedDynamicStorage(boolean forcedIndirect) {
 		return new DynamicVariableStorage(forcedIndirect);

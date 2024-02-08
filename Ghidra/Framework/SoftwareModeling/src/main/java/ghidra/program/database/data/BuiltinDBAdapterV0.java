@@ -52,8 +52,7 @@ class BuiltinDBAdapterV0 extends BuiltinDBAdapter {
 
 		String tableName = tablePrefix + BUILT_IN_TABLE_NAME;
 		if (create) {
-			table = handle.createTable(tableName, V0_SCHEMA,
-				new int[] { V0_BUILT_IN_CAT_COL });
+			table = handle.createTable(tableName, V0_SCHEMA, new int[] { V0_BUILT_IN_CAT_COL });
 		}
 		else {
 			table = handle.getTable(tableName);
@@ -87,7 +86,8 @@ class BuiltinDBAdapterV0 extends BuiltinDBAdapter {
 	}
 
 	@Override
-	public DBRecord createRecord(String name, String className, long categoryID) throws IOException {
+	public DBRecord createRecord(String name, String className, long categoryID)
+			throws IOException {
 
 		long tableKey = table.getKey();
 		if (tableKey <= 100) {
@@ -106,6 +106,11 @@ class BuiltinDBAdapterV0 extends BuiltinDBAdapter {
 	@Override
 	public RecordIterator getRecords() throws IOException {
 		return table.iterator();
+	}
+
+	@Override
+	public int getRecordCount() {
+		return table.getRecordCount();
 	}
 
 }

@@ -1,7 +1,7 @@
 <opinions>
     <constraint loader="Dump File Loader">
         <constraint compilerSpecID="linux">
-        	<constraint primary="amd64" processor="x86" endian="little" size="64" />
+        	<constraint primary="amd64" processor="x86" endian="little" size="64"	variant="default" />
         </constraint>
     </constraint>
 </opinions>

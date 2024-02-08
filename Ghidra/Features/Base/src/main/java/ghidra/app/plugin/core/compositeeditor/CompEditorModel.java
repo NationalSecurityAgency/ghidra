@@ -663,7 +663,8 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 * @throws UsrException if add fails
 	 */
 	public DataTypeComponent replace(int rowIndex, DataType dt) throws UsrException {
-		DataTypeInstance dti = DataTypeHelper.getFixedLength(this, rowIndex, dt);
+		DataTypeInstance dti =
+			DataTypeHelper.getFixedLength(this, rowIndex, dt, usesAlignedLengthComponents());
 		if (dti == null) {
 			return null; // User cancelled from size dialog.
 		}
@@ -1254,13 +1255,19 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	}
 
 	@Override
-	public void setComponentName(int rowIndex, String name)
-			throws InvalidInputException, InvalidNameException, DuplicateNameException {
+	public boolean setComponentName(int rowIndex, String name) throws InvalidNameException {
+
+		String oldName = getComponent(rowIndex).getFieldName();
+		if (Objects.equals(oldName, name)) {
+			return false;
+		}
+
 		if (nameExistsElsewhere(name, rowIndex)) {
 			throw new InvalidNameException("Name \"" + name + "\" already exists.");
 		}
 		try {
 			getComponent(rowIndex).setFieldName(name); // setFieldName handles trimming
+			return true;
 		}
 		catch (DuplicateNameException exc) {
 			throw new InvalidNameException(exc.getMessage());
@@ -1268,13 +1275,22 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	}
 
 	@Override
-	public void setComponentComment(int rowIndex, String comment) throws InvalidInputException {
-		if (comment.equals("")) {
-			comment = null;
+	public boolean setComponentComment(int rowIndex, String comment) {
+
+		String oldComment = getComponent(rowIndex).getComment();
+		String newComment = comment;
+		if (newComment.equals("")) {
+			newComment = null;
 		}
-		getComponent(rowIndex).setComment(comment);
+
+		if (Objects.equals(oldComment, newComment)) {
+			return false;
+		}
+
+		getComponent(rowIndex).setComment(newComment);
 		fireTableCellUpdated(rowIndex, getCommentColumn());
 		componentDataChanged();
+		return true;
 	}
 
 	/**

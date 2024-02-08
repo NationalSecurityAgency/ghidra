@@ -192,7 +192,7 @@ public class DefaultProjectManager implements ProjectManager {
 	 */
 	@Override
 	public ProjectLocator getLastOpenedProject() {
-		String projectPath = Preferences.getProperty(LAST_OPENED_PROJECT);
+		String projectPath = Preferences.getProperty(LAST_OPENED_PROJECT, null, true);
 		if (projectPath == null || projectPath.trim().length() == 0) {
 			return null;
 		}

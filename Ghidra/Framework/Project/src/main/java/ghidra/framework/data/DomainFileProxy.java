@@ -23,10 +23,11 @@ import java.util.*;
 
 import javax.swing.Icon;
 
+import ghidra.framework.client.*;
 import ghidra.framework.model.*;
 import ghidra.framework.protocol.ghidra.GhidraURL;
-import ghidra.framework.store.ItemCheckoutStatus;
-import ghidra.framework.store.Version;
+import ghidra.framework.remote.RepositoryItem;
+import ghidra.framework.store.*;
 import ghidra.framework.store.db.PackedDatabase;
 import ghidra.util.InvalidNameException;
 import ghidra.util.ReadOnlyException;
@@ -114,25 +115,91 @@ public class DomainFileProxy implements DomainFile {
 		return parentPath + DomainFolder.SEPARATOR + getName();
 	}
 
+	private URL getSharedFileURL(URL sharedProjectURL, String ref) {
+		try {
+			// Direct URL construction done so that ghidra protocol extension may be supported
+			String urlStr = sharedProjectURL.toExternalForm();
+			if (urlStr.endsWith(FileSystem.SEPARATOR)) {
+				urlStr = urlStr.substring(0, urlStr.length() - 1);
+			}
+			urlStr += getPathname();
+			return new URL(urlStr);
+		}
+		catch (MalformedURLException e) {
+			// ignore
+		}
+		return null;
+	}
+
+	private URL getSharedFileURL(Properties properties, String ref) {
+		if (properties == null) {
+			return null;
+		}
+		String serverName = properties.getProperty(DefaultProjectData.SERVER_NAME);
+		String repoName = properties.getProperty(DefaultProjectData.REPOSITORY_NAME);
+		if (serverName == null || repoName == null) {
+			return null;
+		}
+		int port = Integer.parseInt(properties.getProperty(DefaultProjectData.PORT_NUMBER, "0"));
+
+		if (!ClientUtil.isConnected(serverName, port)) {
+			return null; // avoid initiating a server connection. 
+		}
+
+		RepositoryAdapter repository = null;
+		try {
+			RepositoryServerAdapter repositoryServer =
+				ClientUtil.getRepositoryServer(serverName, port);
+			Set<String> repoNames = Set.of(repositoryServer.getRepositoryNames());
+			if (!repoNames.contains(repoName)) {
+				return null; // only consider repos which user has access to
+			}
+			repository = repositoryServer.getRepository(repoName);
+			if (repository == null) {
+				return null;
+			}
+			repository.connect();
+			RepositoryItem item = repository.getItem(parentPath, name);
+			if (item == null || !Objects.equals(item.getFileID(), fileID)) {
+				return null;
+			}
+			ServerInfo serverInfo = repository.getServerInfo();
+			return GhidraURL.makeURL(serverInfo.getServerName(), serverInfo.getPortNumber(),
+				repository.getName(), item.getPathName(), ref);
+		}
+		catch (IOException e) {
+			// ignore
+		}
+		finally {
+			if (repository != null) {
+				repository.disconnect();
+			}
+		}
+		return null;
+	}
+
 	@Override
-	public URL getSharedProjectURL() {
+	public URL getSharedProjectURL(String ref) {
 		if (projectLocation != null && version == DomainFile.DEFAULT_VERSION) {
 			URL projectURL = projectLocation.getURL();
 			if (GhidraURL.isServerRepositoryURL(projectURL)) {
-				try {
-					// Direct URL construction done so that ghidra protocol 
-					// extension may be supported
-					String urlStr = projectURL.toExternalForm();
-					if (urlStr.endsWith("/")) {
-						urlStr = urlStr.substring(0, urlStr.length() - 1);
-					}
-					urlStr += getPathname();
-					return new URL(urlStr);
-				}
-				catch (MalformedURLException e) {
-					// ignore
-				}
+				return getSharedFileURL(projectURL, ref);
 			}
+			Properties properties =
+				DefaultProjectData.readProjectProperties(projectLocation.getProjectDir());
+			return getSharedFileURL(properties, ref);
+		}
+		return null;
+	}
+
+	@Override
+	public URL getLocalProjectURL(String ref) {
+		if (projectLocation != null && version == DomainFile.DEFAULT_VERSION) {
+			URL projectURL = projectLocation.getURL();
+			if (GhidraURL.isServerRepositoryURL(projectURL)) {
+				return null;
+			}
+			return GhidraURL.makeURL(projectLocation, getPathname(), ref);
 		}
 		return null;
 	}
@@ -244,11 +311,6 @@ public class DomainFileProxy implements DomainFile {
 
 	public boolean isInUse() {
 		return true;
-	}
-
-	public boolean isUsedExclusivelyBy(Object consumer) {
-		DomainObjectAdapter dobj = getDomainObject();
-		return dobj != null ? dobj.isUsedExclusivelyBy(consumer) : false;
 	}
 
 	@Override

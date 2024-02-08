@@ -20,6 +20,8 @@ import java.util.Set;
 
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.PathUtils;
+import ghidra.debug.api.model.DebuggerMappingOffer;
+import ghidra.debug.api.model.DebuggerTargetTraceMapper;
 import ghidra.program.model.lang.*;
 
 public class DefaultDebuggerMappingOffer implements DebuggerMappingOffer {

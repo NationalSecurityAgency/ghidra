@@ -37,6 +37,7 @@ import docking.actions.PopupActionProvider;
 import docking.actions.ToolActions;
 import docking.framework.AboutDialog;
 import docking.framework.ApplicationInformationDisplayFactory;
+import docking.options.OptionsService;
 import docking.tool.ToolConstants;
 import docking.tool.util.DockingToolConstants;
 import docking.util.image.ToolIconURL;
@@ -45,14 +46,15 @@ import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.cmd.Command;
-import ghidra.framework.main.*;
+import ghidra.framework.main.AppInfo;
+import ghidra.framework.main.UserAgreementDialog;
 import ghidra.framework.model.*;
 import ghidra.framework.options.*;
-import ghidra.framework.plugintool.dialog.ExtensionTableProvider;
 import ghidra.framework.plugintool.dialog.ManagePluginsDialog;
 import ghidra.framework.plugintool.mgr.*;
 import ghidra.framework.plugintool.util.*;
 import ghidra.framework.project.ProjectDataService;
+import ghidra.framework.project.extensions.ExtensionTableProvider;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
@@ -175,7 +177,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 		eventMgr = new EventManager(this);
 		serviceMgr = new ServiceManager();
 		installServices();
-		pluginMgr = new PluginManager(this, serviceMgr);
+		pluginMgr = new PluginManager(this, serviceMgr, createPluginsConfigurations());
 		dialogMgr = new DialogManager(this);
 		initActions();
 		initOptions();
@@ -192,7 +194,13 @@ public abstract class PluginTool extends AbstractDockingTool {
 		// non-public constructor for stub subclasses
 	}
 
-	public abstract PluginClassManager getPluginClassManager();
+	protected PluginsConfiguration createPluginsConfigurations() {
+		return new DefaultPluginsConfiguration();
+	}
+
+	public PluginsConfiguration getPluginsConfiguration() {
+		return pluginMgr.getPluginsConfiguration();
+	}
 
 	/**
 	 * This method exists here, as opposed to inline in the constructor, so that subclasses can
@@ -233,21 +241,15 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 */
 	protected void installUtilityPlugins() {
 
-		PluginClassManager classManager = getPluginClassManager();
-		PluginPackage utilityPackage = PluginPackage.getPluginPackage(UtilityPluginPackage.NAME);
-		List<PluginDescription> descriptions = classManager.getPluginDescriptions(utilityPackage);
-
-		Set<String> classNames = new HashSet<>();
-		if (descriptions == null) {
-			return;
-		}
-		for (PluginDescription description : descriptions) {
-			String pluginClass = description.getPluginClass().getName();
-			classNames.add(pluginClass);
-		}
-
 		try {
-			addPlugins(classNames);
+			checkedRunSwingNow(() -> {
+				try {
+					pluginMgr.installUtilityPlugins();
+				}
+				finally {
+					setConfigChanged(true);
+				}
+			}, PluginException.class);
 		}
 		catch (PluginException e) {
 			Msg.showError(this, null, "Error Adding Utility Plugins",
@@ -499,7 +501,8 @@ public abstract class PluginTool extends AbstractDockingTool {
 		pluginMgr.close();
 		if (project != null) {
 			if (project.getToolManager() != null) {
-				project.getToolManager().disconnectTool(this);
+				project.getToolManager()
+						.disconnectTool(this);
 			}
 		}
 
@@ -631,7 +634,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 		}
 
 		winMgr.restoreWindowDataFromXml(root);
-		winMgr.setToolName(fullName);
+		updateTitle();
 		return hasErrors;
 	}
 
@@ -718,7 +721,8 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 */
 	public boolean threadIsBackgroundTaskThread() {
 		ThreadGroup taskGroup = taskMgr.getTaskThreadGroup();
-		ThreadGroup group = Thread.currentThread().getThreadGroup();
+		ThreadGroup group = Thread.currentThread()
+				.getThreadGroup();
 		while (group != null && group != taskGroup) {
 			group = group.getParent();
 		}
@@ -1048,8 +1052,28 @@ public abstract class PluginTool extends AbstractDockingTool {
 		addAction(saveAsAction);
 	}
 
-	protected void addExportToolAction() {
+	/**
+	 * Adds actions to the tool for transferring focus to the first component in the next
+	 * or previous dockable component provider.
+	 */
+	protected void addNextPreviousProviderActions() {
+		// @formatter:off
+		new ActionBuilder("Jump to Next Dockable Provider", ToolConstants.TOOL_OWNER)
+			.keyBinding(KeyStroke.getKeyStroke("control J"))
+			.description("Transfer focus to the next major component in this windows")
+			.onAction(e -> nextDockableComponent(true))
+			.buildAndInstall(this);
 
+		new ActionBuilder("Jump to Previous Dockable Provider", ToolConstants.TOOL_OWNER)
+			.keyBinding("shift control J")
+			.description("Transfer focus to the previous major component in this windows")
+			.onAction(e -> nextDockableComponent(false))
+			.buildAndInstall(this);
+		// @formatter:on
+
+	}
+
+	protected void addExportToolAction() {
 		String menuGroup = "Tool";
 		String exportPullright = "Export";
 		setMenuGroup(new String[] { ToolConstants.MENU_FILE, exportPullright }, menuGroup);
@@ -1308,7 +1332,8 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * @param height height in pixels
 	 */
 	public void setSize(int width, int height) {
-		winMgr.getMainWindow().setSize(new Dimension(width, height));
+		winMgr.getMainWindow()
+				.setSize(new Dimension(width, height));
 	}
 
 	/**
@@ -1316,7 +1341,8 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * @return dimension of this tool's frame
 	 */
 	public Dimension getSize() {
-		return winMgr.getMainWindow().getSize();
+		return winMgr.getMainWindow()
+				.getSize();
 	}
 
 	/**
@@ -1325,7 +1351,8 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * @param y screen y coordinate
 	 */
 	public void setLocation(int x, int y) {
-		winMgr.getMainWindow().setLocation(x, y);
+		winMgr.getMainWindow()
+				.setLocation(x, y);
 	}
 
 	/**
@@ -1333,7 +1360,8 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * @return location of this tool's frame
 	 */
 	public Point getLocation() {
-		return winMgr.getMainWindow().getLocation();
+		return winMgr.getMainWindow()
+				.getLocation();
 	}
 
 	private void updateTitle() {
@@ -1523,6 +1551,63 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 	public boolean isRestoringDataState() {
 		return restoringDataState;
+	}
+
+	/**
+	 * Transfers focus to the first component in the next/previous dockable component provider.
+	 * @param forward true to go to next provider, false to go to previous provider
+	 */
+	private void nextDockableComponent(boolean forward) {
+		KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		Component focusOwner = focusManager.getPermanentFocusOwner();
+		Component next = findNextProviderComponent(focusOwner, forward);
+
+		// If going backwards, go back one more provider, then go forward to get the first
+		// component in the resulting provider. This makes it so that when going backwards, you
+		// still get the first component in the component provider and not the last.
+		if (!forward) {
+			next = findNextProviderComponent(next, false);
+			next = findNextProviderComponent(next, true);
+		}
+		if (next != null) {
+			next.requestFocus();
+		}
+	}
+
+	private Component findNextProviderComponent(Component component, boolean forward) {
+		if (component == null) {
+			return null;
+		}
+
+		DockingWindowManager windowManager = getWindowManager();
+		ComponentProvider startingProvider = windowManager.getComponentProvider(component);
+
+		Component next = getNext(component, forward);
+		while (next != null && next != component) {
+			// Skip JTabbedPanes. Assume the user prefers that the component inside the tabbed
+			// pane gets focus, not the tabbed pane itself so the user does not have to navigate
+			// twice to get the internal component.
+			if (next instanceof JTabbedPane) {
+				next = getNext(next, forward);
+				continue;
+			}
+			ComponentProvider nextProvider = windowManager.getComponentProvider(next);
+			if (nextProvider != startingProvider) {
+				return next;
+			}
+			next = getNext(next, forward);
+		}
+		return null;
+	}
+
+	private Component getNext(Component component, boolean forward) {
+		KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		Window window = focusManager.getFocusedWindow();
+		FocusTraversalPolicy policy = window.getFocusTraversalPolicy();
+		if (forward) {
+			return policy.getComponentAfter(window, component);
+		}
+		return policy.getComponentBefore(window, component);
 	}
 
 //==================================================================================================

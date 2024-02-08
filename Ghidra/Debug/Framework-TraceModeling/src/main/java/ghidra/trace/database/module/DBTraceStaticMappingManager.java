@@ -27,10 +27,10 @@ import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceManager;
 import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace.TraceStaticMappingChangeType;
 import ghidra.trace.model.modules.TraceConflictedMappingException;
 import ghidra.trace.model.modules.TraceStaticMappingManager;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.exception.VersionException;
@@ -106,8 +106,7 @@ public class DBTraceStaticMappingManager implements TraceStaticMappingManager, D
 			}
 			DBTraceStaticMapping mapping = mappingStore.create();
 			mapping.set(range, lifespan, toProgramURL, toAddress);
-			trace.setChanged(
-				new TraceChangeRecord<>(TraceStaticMappingChangeType.ADDED, null, mapping));
+			trace.setChanged(new TraceChangeRecord<>(TraceEvents.MAPPING_ADDED, null, mapping));
 			return mapping;
 		}
 	}
@@ -173,7 +172,6 @@ public class DBTraceStaticMappingManager implements TraceStaticMappingManager, D
 
 	public void delete(DBTraceStaticMapping mapping) {
 		mappingStore.delete(mapping);
-		trace.setChanged(
-			new TraceChangeRecord<>(TraceStaticMappingChangeType.DELETED, null, mapping));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.MAPPING_DELETED, null, mapping));
 	}
 }

@@ -15,11 +15,10 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.math.BigInteger;
-
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
+import ghidra.program.model.data.DataType;
 import ghidra.util.exception.CancelledException;
 
 /**
@@ -28,108 +27,38 @@ import ghidra.util.exception.CancelledException;
  */
 public class BaseClassTypeApplier extends MsTypeApplier {
 
+	// Intended for: AbstractBaseClassMsType, AbstractVirtualBaseClassMsType, or
+	//  AbstractIndirectVirtualBaseClassMsType
 	/**
 	 * Constructor for base class applier.
 	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
-	 * @param msType {@link AbstractBaseClassMsType}, {@link AbstractVirtualBaseClassMsType}, or
-	 * {@link AbstractIndirectVirtualBaseClassMsType} to processes.
 	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public BaseClassTypeApplier(DefaultPdbApplicator applicator, AbstractMsType msType)
+	public BaseClassTypeApplier(DefaultPdbApplicator applicator)
 			throws IllegalArgumentException {
-		super(applicator, validateType(msType));
-	}
-
-	// The MsTypes for which we are working do not have a size in and of themselves, but the
-	//  classes/structures to which they refer have a size, even if zero.
-	// For here, we are only reporting what "we" have, not what the underlying sizes are.
-	// ...and a value of zero is our "don't know" and "not represented" value.
-	@Override
-	BigInteger getSize() {
-		return BigInteger.ZERO;
+		super(applicator);
 	}
 
 	/**
-	 * Returns the offset of the Base Class within the inheriting class.
-	 * @return the offset.
-	 * @throws PdbException if field is not available.
+	 * Returns the record number of the base class
+	 * @param type the PDB type being inspected
+	 * @return the record number
 	 */
-	BigInteger getOffset() throws PdbException {
-		if (msType instanceof AbstractBaseClassMsType) {
-			return ((AbstractBaseClassMsType) msType).getOffset();
+	RecordNumber getBaseClassRecordNumber(AbstractMsType type) {
+		if (type instanceof AbstractBaseClassMsType baseType) {
+			return baseType.getBaseClassRecordNumber();
 		}
-		throw new PdbException("Offset is not a valid field");
-	}
-
-	/**
-	 * Returns the offset of the base base pointer within the class.
-	 * @return the offset.
-	 * @throws PdbException if field is not available.
-	 */
-	BigInteger getBasePointerOffset() throws PdbException {
-		if (msType instanceof AbstractBaseClassMsType) {
-			throw new PdbException("Base Pointer Offset is not valid field");
+		else if (type instanceof AbstractVirtualBaseClassMsType virtualType) {
+			return virtualType.getBaseClassRecordNumber();
 		}
-		else if (msType instanceof AbstractVirtualBaseClassMsType) {
-			return ((AbstractVirtualBaseClassMsType) msType).getBasePointerOffset();
-		}
-		return ((AbstractIndirectVirtualBaseClassMsType) msType).getBasePointerOffset();
-	}
-
-	/**
-	 * Returns the attributes of the base class within the inheriting class.
-	 * @return the attributes;
-	 */
-	ClassFieldMsAttributes getAttributes() {
-		if (msType instanceof AbstractBaseClassMsType) {
-			return ((AbstractBaseClassMsType) msType).getAttributes();
-		}
-		else if (msType instanceof AbstractVirtualBaseClassMsType) {
-			return ((AbstractVirtualBaseClassMsType) msType).getAttributes();
-		}
-		return ((AbstractIndirectVirtualBaseClassMsType) msType).getAttributes();
-	}
-
-	/**
-	 * Returns the record number of the base class.
-	 * @return the record number;
-	 */
-	RecordNumber getBaseClassRecordNumber() {
-		if (msType instanceof AbstractBaseClassMsType) {
-			return ((AbstractBaseClassMsType) msType).getBaseClassRecordNumber();
-		}
-		else if (msType instanceof AbstractVirtualBaseClassMsType) {
-			return ((AbstractVirtualBaseClassMsType) msType).getBaseClassRecordNumber();
-		}
-		return ((AbstractIndirectVirtualBaseClassMsType) msType).getBaseClassRecordNumber();
-	}
-
-	/**
-	 * Returns whether there is a Virtual Base Pointer type index available.
-	 * @return {@code true} if available.
-	 */
-	boolean hasVirtualBasePointerTypeIndex() {
-		return (!(msType instanceof AbstractBaseClassMsType));
-	}
-
-	/**
-	 * Returns the record number of the virtual base pointer.
-	 * @return the record number;
-	 * @throws PdbException if not a virtual base class.
-	 */
-	RecordNumber getVirtualBasePointerRecordNumber() throws PdbException {
-		if (msType instanceof AbstractVirtualBaseClassMsType) {
-			return ((AbstractVirtualBaseClassMsType) msType).getVirtualBasePointerRecordNumber();
-		}
-		else if (msType instanceof AbstractIndirectVirtualBaseClassMsType) {
-			return ((AbstractIndirectVirtualBaseClassMsType) msType).getVirtualBasePointerRecordNumber();
-		}
-		throw new PdbException("Not a virtual base class");
+		return ((AbstractIndirectVirtualBaseClassMsType) type).getBaseClassRecordNumber();
 	}
 
 	@Override
-	void apply() throws PdbException, CancelledException {
-		// do nothing at the moment.
+	DataType apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
+			throws PdbException, CancelledException {
+		// do nothing
+		return null;
 	}
 
 	private static AbstractMsType validateType(AbstractMsType type)

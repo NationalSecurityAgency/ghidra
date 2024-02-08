@@ -23,8 +23,8 @@ import javax.swing.Icon;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.utils.MiscellaneousUtils;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.AutoConfigState.ConfigFieldCodec;
 import ghidra.framework.plugintool.PluginTool;
@@ -32,6 +32,9 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.classfinder.ExtensionPoint;
 
+/**
+ * An interface for specifying how to automatically read target memory.
+ */
 public interface AutoReadMemorySpec extends ExtensionPoint {
 	class Private {
 		private final Map<String, AutoReadMemorySpec> specsByName = new TreeMap<>();
@@ -72,7 +75,7 @@ public interface AutoReadMemorySpec extends ExtensionPoint {
 
 	static Map<String, AutoReadMemorySpec> allSpecs() {
 		synchronized (PRIVATE) {
-			return Map.copyOf(PRIVATE.specsByName);
+			return new TreeMap<>(PRIVATE.specsByName);
 		}
 	}
 
@@ -87,13 +90,14 @@ public interface AutoReadMemorySpec extends ExtensionPoint {
 	 * 
 	 * <p>
 	 * Note, the implementation should perform all the error handling. The returned future is for
-	 * follow-up purposes only, and should always complete normally.
+	 * follow-up purposes only, and should always complete normally. It should complete with true if
+	 * any memory was actually loaded. Otherwise, it should complete with false.
 	 * 
 	 * @param tool the tool containing the provider
 	 * @param coordinates the provider's current coordinates
 	 * @param visible the provider's visible addresses
 	 * @return a future that completes when the memory has been read
 	 */
-	CompletableFuture<?> readMemory(PluginTool tool, DebuggerCoordinates coordinates,
+	CompletableFuture<Boolean> readMemory(PluginTool tool, DebuggerCoordinates coordinates,
 			AddressSetView visible);
 }

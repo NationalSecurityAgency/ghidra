@@ -15,10 +15,15 @@
  */
 package ghidra.app.plugin.core.debug.gui.model;
 
+import java.util.stream.*;
+
+import org.apache.commons.lang3.ArrayUtils;
+
 import ghidra.dbg.target.TargetObject;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.util.HTMLUtilities;
+import ghidra.util.NumericUtilities;
 
 public interface DisplaysObjectValues {
 	long getSnap();
@@ -27,12 +32,62 @@ public interface DisplaysObjectValues {
 		return "";
 	}
 
+	default String getBoolsDisplay(boolean[] bools) {
+		return Stream.of(ArrayUtils.toObject(bools))
+				.map(b -> b ? "T" : "F")
+				.collect(Collectors.joining(":"));
+	}
+
+	default String getBytesDisplay(byte[] bytes) {
+		return NumericUtilities.convertBytesToString(bytes, ":");
+	}
+
+	default String getCharsDisplay(char[] chars) {
+		return new String(chars);
+	}
+
+	default String getShortsDisplay(short[] shorts) {
+		return Stream.of(ArrayUtils.toObject(shorts))
+				.map(s -> "%04x".formatted(s))
+				.collect(Collectors.joining(":"));
+	}
+
+	default String getIntsDisplay(int[] ints) {
+		return IntStream.of(ints)
+				.mapToObj(i -> "%08x".formatted(i))
+				.collect(Collectors.joining(":"));
+	}
+
+	default String getLongsDisplay(long[] longs) {
+		return LongStream.of(longs)
+				.mapToObj(l -> "%016x".formatted(l))
+				.collect(Collectors.joining(":"));
+	}
+
 	default String getPrimitiveValueDisplay(Object value) {
 		assert !(value instanceof TraceObject);
 		assert !(value instanceof TraceObjectValue);
 		// TODO: Choose decimal or hex for integral types?
 		if (value == null) {
 			return getNullDisplay();
+		}
+		if (value instanceof boolean[] bools) {
+			return getBoolsDisplay(bools);
+		}
+		if (value instanceof byte[] bytes) {
+			return getBytesDisplay(bytes);
+		}
+		if (value instanceof char[] chars) {
+			return getCharsDisplay(chars);
+		}
+		if (value instanceof short[] shorts) {
+			return getShortsDisplay(shorts);
+		}
+		if (value instanceof int[] ints) {
+			return getIntsDisplay(ints);
+		}
+		if (value instanceof long[] longs) {
+			return getLongsDisplay(longs);
 		}
 		return value.toString();
 	}
@@ -108,12 +163,13 @@ public interface DisplaysObjectValues {
 			return "";
 		}
 		if (!edge.isObject()) {
-			return "<html>" + HTMLUtilities.escapeHTML(getPrimitiveValueDisplay(edge.getValue()));
+			return "<html>" +
+				HTMLUtilities.escapeHTML(getPrimitiveValueDisplay(edge.getValue()), true);
 		}
 		if (edge.isCanonical()) {
-			return "<html>" + HTMLUtilities.escapeHTML(getObjectDisplay(edge));
+			return "<html>" + HTMLUtilities.escapeHTML(getObjectDisplay(edge), true);
 		}
-		return "<html><em>" + HTMLUtilities.escapeHTML(getObjectLinkDisplay(edge)) + "</em>";
+		return "<html><em>" + HTMLUtilities.escapeHTML(getObjectLinkDisplay(edge), true) + "</em>";
 	}
 
 	default String getEdgeToolTip(TraceObjectValue edge) {

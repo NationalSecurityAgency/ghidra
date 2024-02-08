@@ -25,8 +25,7 @@ import org.junit.Test;
 import ghidra.dbg.DebugModelConventions.AsyncAccess;
 import ghidra.dbg.error.DebuggerModelTerminatingException;
 import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.schema.EnumerableTargetObjectSchema;
-import ghidra.dbg.target.schema.TargetObjectSchema;
+import ghidra.dbg.target.schema.*;
 import ghidra.util.Msg;
 
 public abstract class AbstractDebuggerModelFactoryTest extends AbstractDebuggerModelTest {
@@ -78,6 +77,7 @@ public abstract class AbstractDebuggerModelFactoryTest extends AbstractDebuggerM
 
 		TargetObjectSchema rootSchema = m.getModel().getRootSchema();
 		Msg.info(this, rootSchema.getContext());
+		Msg.info(this, XmlSchemaContext.serialize(rootSchema.getContext()));
 		assertFalse(rootSchema instanceof EnumerableTargetObjectSchema);
 	}
 

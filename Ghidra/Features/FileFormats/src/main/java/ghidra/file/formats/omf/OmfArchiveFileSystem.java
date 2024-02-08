@@ -19,7 +19,6 @@ import static ghidra.formats.gfilesystem.fileinfo.FileAttributeType.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.omf.OmfFileHeader;
@@ -30,18 +29,13 @@ import ghidra.formats.gfilesystem.fileinfo.FileAttributes;
 import ghidra.util.task.TaskMonitor;
 
 @FileSystemInfo(type = "omf", description = "OMF Archive", factory = OmfArchiveFileSystemFactory.class)
-public class OmfArchiveFileSystem implements GFileSystem {
-
-	private final FSRLRoot fsFSRL;
-	private FileSystemIndexHelper<OmfLibraryRecord.MemberHeader> fsih;
-	private FileSystemRefManager refManager = new FileSystemRefManager(this);
+public class OmfArchiveFileSystem extends AbstractFileSystem<OmfLibraryRecord.MemberHeader> {
 
 	private ByteProvider provider;
 
 	public OmfArchiveFileSystem(FSRLRoot fsFSRL, ByteProvider provider) {
-		this.fsFSRL = fsFSRL;
+		super(fsFSRL, FileSystemService.getInstance());
 		this.provider = provider;
-		this.fsih = new FileSystemIndexHelper<>(this, fsFSRL);
 	}
 
 	public void mount(TaskMonitor monitor) throws IOException {
@@ -52,7 +46,7 @@ public class OmfArchiveFileSystem implements GFileSystem {
 		for (OmfLibraryRecord.MemberHeader member : memberHeaders) {
 			String name = member.name;
 			monitor.setMessage(name);
-			fsih.storeFile(name, fsih.getFileCount(), false, member.size, member);
+			fsIndex.storeFile(name, fsIndex.getFileCount(), false, member.size, member);
 		}
 	}
 
@@ -63,17 +57,7 @@ public class OmfArchiveFileSystem implements GFileSystem {
 			provider.close();
 			provider = null;
 		}
-		fsih.clear();
-	}
-
-	@Override
-	public String getName() {
-		return fsFSRL.getContainer().getName();
-	}
-
-	@Override
-	public FSRLRoot getFSRL() {
-		return fsFSRL;
+		fsIndex.clear();
 	}
 
 	@Override
@@ -82,23 +66,8 @@ public class OmfArchiveFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public int getFileCount() {
-		return fsih.getFileCount();
-	}
-
-	@Override
-	public FileSystemRefManager getRefManager() {
-		return refManager;
-	}
-
-	@Override
-	public GFile lookup(String path) throws IOException {
-		return fsih.lookup(path);
-	}
-
-	@Override
 	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor) {
-		OmfLibraryRecord.MemberHeader member = fsih.getMetadata(file);
+		OmfLibraryRecord.MemberHeader member = fsIndex.getMetadata(file);
 		return (member != null)
 				? new ByteProviderWrapper(provider, member.payloadOffset, member.size,
 					file.getFSRL())
@@ -106,15 +75,10 @@ public class OmfArchiveFileSystem implements GFileSystem {
 	}
 
 	@Override
-	public List<GFile> getListing(GFile directory) throws IOException {
-		return fsih.getListing(directory);
-	}
-
-	@Override
 	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
 		FileAttributes result = new FileAttributes();
 
-		OmfLibraryRecord.MemberHeader entry = fsih.getMetadata(file);
+		OmfLibraryRecord.MemberHeader entry = fsIndex.getMetadata(file);
 		if (entry != null) {
 			result.add(NAME_ATTR, entry.name);
 			result.add(SIZE_ATTR, entry.size);

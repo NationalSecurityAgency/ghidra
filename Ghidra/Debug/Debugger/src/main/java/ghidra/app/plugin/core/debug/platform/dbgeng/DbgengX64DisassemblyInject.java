@@ -19,17 +19,16 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Set;
-import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
-import ghidra.app.plugin.core.debug.workflow.*;
-import ghidra.app.services.DebuggerModelService;
-import ghidra.app.services.TraceRecorder;
+import ghidra.app.plugin.core.debug.disassemble.*;
+import ghidra.app.plugin.core.debug.disassemble.DisassemblyInjectInfo.CompilerInfo;
+import ghidra.app.services.DebuggerTargetService;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.MemBufferByteProvider;
 import ghidra.app.util.bin.format.pe.*;
 import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
+import ghidra.debug.api.target.Target;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
@@ -39,10 +38,14 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-@DisassemblyInjectInfo(langIDs = { "x86:LE:64:default" })
-// TODO: Filter / selector on debugger. This is running for GDB, too....
+@DisassemblyInjectInfo(
+	compilers = {
+		@CompilerInfo(langID = "x86:LE:64:default", compilerID = "windows"),
+		@CompilerInfo(langID = "x86:LE:64:default", compilerID = "clangwindows"),
+	})
 public class DbgengX64DisassemblyInject implements DisassemblyInject {
 
 	enum Mode {
@@ -57,54 +60,55 @@ public class DbgengX64DisassemblyInject implements DisassemblyInject {
 		if (first == null) {
 			return;
 		}
-		DebuggerModelService modelService = tool.getService(DebuggerModelService.class);
-		TraceRecorder recorder = modelService == null ? null : modelService.getRecorder(trace);
+		DebuggerTargetService targetService = tool.getService(DebuggerTargetService.class);
+		Target target = targetService == null ? null : targetService.getTarget(trace);
 		Collection<? extends TraceModule> modules =
 			trace.getModuleManager().getModulesAt(snap, first.getMinAddress());
+		Msg.debug(this, "Disassembling in modules: " +
+			modules.stream().map(TraceModule::getName).collect(Collectors.joining(",")));
 		Set<Mode> modes = modules.stream()
-				.map(m -> modeForModule(recorder, trace, snap, m))
+				.map(m -> modeForModule(target, trace, snap, m))
 				.filter(m -> m != Mode.UNK)
 				.collect(Collectors.toSet());
+		Msg.debug(this, "Disassembling in mode(s): " + modes);
 		if (modes.size() != 1) {
 			return;
 		}
 		Mode mode = modes.iterator().next();
+		Register longModeReg = language.getRegister("longMode");
 		Register addrsizeReg = language.getRegister("addrsize");
 		Register opsizeReg = language.getRegister("opsize");
 		ProgramContextImpl context = new ProgramContextImpl(language);
 		language.applyContextSettings(context);
 		RegisterValue ctxVal = context.getDisassemblyContext(first.getMinAddress());
-		if (mode == Mode.X64) {
-			command.setInitialContext(ctxVal
+		command.setInitialContext(switch (mode) {
+			case X64 -> ctxVal
+					.assign(longModeReg, BigInteger.ONE)
 					.assign(addrsizeReg, BigInteger.TWO)
-					.assign(opsizeReg, BigInteger.TWO));
-		}
-		else if (mode == Mode.X86) {
-			command.setInitialContext(ctxVal
+					.assign(opsizeReg, BigInteger.ONE);
+			case X86 -> ctxVal
+					.assign(longModeReg, BigInteger.ZERO)
 					.assign(addrsizeReg, BigInteger.ONE)
-					.assign(opsizeReg, BigInteger.ONE));
-		}
-		// Shouldn't ever get anything else.
+					.assign(opsizeReg, BigInteger.ONE);
+			default -> throw new AssertionError();
+		});
 	}
 
-	protected Mode modeForModule(TraceRecorder recorder, Trace trace, long snap,
+	protected Mode modeForModule(Target target, Trace trace, long snap,
 			TraceModule module) {
-		if (recorder != null && recorder.getSnap() == snap) {
+		if (target != null && target.getSnap() == snap) {
 			AddressSet set = new AddressSet();
 			set.add(module.getBase(), module.getBase()); // Recorder should read page
 			try {
-				// This is on its own task thread, so whatever.
-				// Just don't hang it indefinitely.
-				recorder.readMemoryBlocks(set, TaskMonitor.DUMMY).get(1000, TimeUnit.MILLISECONDS);
+				target.readMemory(set, TaskMonitor.DUMMY);
+				trace.flushEvents();
 			}
-			catch (InterruptedException | ExecutionException | TimeoutException e) {
-				Msg.error("Could not read module header from target", e);
-				// Try to parse whatever's there. If 0s, it'll come UNK.
+			catch (CancelledException e) {
+				throw new AssertionError(e);
 			}
 		}
 		MemBuffer bufferAt = trace.getMemoryManager().getBufferAt(snap, module.getBase());
-		ByteProvider bp = new MemBufferByteProvider(bufferAt);
-		try {
+		try (ByteProvider bp = new MemBufferByteProvider(bufferAt)) {
 			PortableExecutable pe = new PortableExecutable(bp, SectionLayout.MEMORY, false, false);
 			NTHeader ntHeader = pe.getNTHeader();
 			if (ntHeader == null) {

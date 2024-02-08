@@ -318,8 +318,13 @@ Scope *ArchitectureGhidra::buildDatabase(DocumentStorage &store)
 void ArchitectureGhidra::buildTypegrp(DocumentStorage &store)
 
 {
-  const Element *el = store.getTag("coretypes");
   types = new TypeFactoryGhidra(this);
+}
+
+void ArchitectureGhidra::buildCoreTypes(DocumentStorage &store)
+
+{
+  const Element *el = store.getTag("coretypes");
   if (el != (const Element *)0) {
     XmlDecode decoder(this,el);
     types->decodeCoreTypes(decoder);
@@ -339,6 +344,7 @@ void ArchitectureGhidra::buildTypegrp(DocumentStorage &store)
     types->setCoreType("sqword",8,TYPE_INT,false);
     types->setCoreType("float",4,TYPE_FLOAT,false);
     types->setCoreType("float8",8,TYPE_FLOAT,false);
+    types->setCoreType("float10",10,TYPE_FLOAT,false);
     types->setCoreType("float16",16,TYPE_FLOAT,false);
     types->setCoreType("undefined",1,TYPE_UNKNOWN,false);
     types->setCoreType("undefined2",2,TYPE_UNKNOWN,false);
@@ -771,7 +777,7 @@ void ArchitectureGhidra::getStringData(vector<uint1> &buffer,const Address &addr
   encoder.openElement(ELEM_COMMAND_GETSTRINGDATA);
   encoder.writeSignedInteger(ATTRIB_MAXSIZE, maxBytes);
   encoder.writeString(ATTRIB_TYPE,ct->getName());
-  encoder.writeUnsignedInteger(ATTRIB_ID, ct->getId());
+  encoder.writeUnsignedInteger(ATTRIB_ID, ct->getUnsizedId());
   addr.encode(encoder);
   encoder.closeElement(ELEM_COMMAND_GETSTRINGDATA);
   sout.write("\000\000\001\017",4);

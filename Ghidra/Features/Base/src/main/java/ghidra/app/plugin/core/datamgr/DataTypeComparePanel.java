@@ -116,9 +116,9 @@ class DataTypeComparePanel extends JPanel {
 		HTMLDataTypeRepresentation[] diffs = representation1.diff(representation2);
 
 		// Display the data types.
-		String dt1Text = (dataType1 != null) ? diffs[0].getHTMLString() : "";
-		String dt2Text =
-			(dataType2 != null) ? diffs[1].getHTMLString() : (dataType1 != null) ? "<Removed>" : "";
+		String dt1Text = (dataType1 != null) ? diffs[0].getFullHTMLString() : "";
+		String dt2Text = (dataType2 != null) ? diffs[1].getFullHTMLString()
+				: (dataType1 != null) ? "<Removed>" : "";
 		dtLabel1.setText(dt1Text);
 		dtLabel2.setText(dt2Text);
 	}

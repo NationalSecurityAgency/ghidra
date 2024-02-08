@@ -27,6 +27,8 @@ import ghidra.async.AsyncUtils;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.util.PathUtils;
+import ghidra.debug.api.model.DebuggerMemoryMapper;
+import ghidra.debug.api.model.DebuggerRegisterMapper;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.Pointer;
 import ghidra.program.model.lang.*;
@@ -149,10 +151,10 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 		TargetRegisterContainer descs = bank.getDescriptions();
 		if (descs == null) {
 			Msg.error(this, "Cannot create mapper, yet: Descriptions is null.");
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		return initRegMapper(descs).thenAccept(__ -> {
-			recorder.getListeners().fire.registerBankMapped(recorder);
+			recorder.getListeners().invoke().registerBankMapped(recorder);
 		}).exceptionally(ex -> {
 			Msg.error(this, "Could not intialize register mapper", ex);
 			return null;
@@ -377,7 +379,7 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 				"All given registers must be recognized by the target");
 		}
 		if (values.isEmpty()) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		Map<String, byte[]> tVals = values.entrySet().stream().map(ent -> {
 			if (ent.getKey() != ent.getValue().getRegister()) {
@@ -407,18 +409,18 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 
 	protected CompletableFuture<?> readAlignedConditionally(String name, Address targetAddress) {
 		if (targetAddress == null) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		Address traceAddress = objectManager.getMemoryMapper().targetToTrace(targetAddress);
 		if (traceAddress == null) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		if (!checkReadCondition(traceAddress)) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		AddressRange targetRange = threadMemory.alignAndLimitToFloor(targetAddress, 1);
 		if (targetRange == null) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		TimedMsg.debug(this,
 			"  Reading memory at " + name + " (" + targetAddress + " -> " + targetRange + ")");
@@ -533,7 +535,7 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 		Set<TargetRegister> toRead = new LinkedHashSet<>();
 		synchronized (recorder) {
 			if (regMapper == null) {
-				return AsyncUtils.NIL;
+				return AsyncUtils.nil();
 			}
 			bank = regs.get(0);
 			pc = pcReg;
@@ -543,18 +545,18 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 			toRead.add(pc);
 		}
 		if (bank == null || pc == null || sp == null) {
-			return AsyncUtils.NIL;
+			return AsyncUtils.nil();
 		}
 		System.err.println("URM:" + getTargetThread());
 		TimedMsg.info(this, "Reading " + toRead + " of " + getTargetThread());
 		return bank.readRegisters(toRead).thenCompose(vals -> {
 			synchronized (recorder) {
 				if (memoryManager == null) {
-					return AsyncUtils.NIL;
+					return AsyncUtils.nil();
 				}
 			}
 			if (threadMemory == null) {
-				return AsyncUtils.NIL;
+				return AsyncUtils.nil();
 			}
 			AsyncFence fence = new AsyncFence();
 	

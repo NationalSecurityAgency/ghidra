@@ -15,6 +15,8 @@
  */
 package ghidra.program.util;
 
+import java.util.*;
+
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -22,8 +24,6 @@ import ghidra.program.model.symbol.*;
 import ghidra.util.*;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
-
-import java.util.*;
 
 /**
  * General utility class that provides convenience methods
@@ -172,5 +172,19 @@ public class ProgramUtilities {
 		catch (DuplicateNameException e) {
 			Msg.error(ProgramUtilities.class, "Unexpected Exception", e);
 		}
+	}
+
+	/**
+	 * Determine if a program has a single unsaved change which corresponds to an
+	 * upgrade which occured during instantiation.
+	 * @param program the program to be checked for an unsaved upgrade condition.
+	 * @return true if program upgraded and has not been saved, else false
+	 */
+	public static boolean isChangedWithUpgradeOnly(Program program) {
+		// The only non-undoable change is an upgrade that occurs during instantiation
+		if (!program.isChanged()) {
+			return false;
+		}
+		return !program.canUndo();
 	}
 }

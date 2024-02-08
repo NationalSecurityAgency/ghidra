@@ -16,8 +16,6 @@
 package docking.widgets.filter;
 
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,6 +51,7 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 	private FilterStrategyPanel filterStrategyPanel;
 	private BooleanPanel booleanPanel;
 	private InvertPanel invertPanel;
+	private PathPanel pathPanel;
 	private MultiTermPanel multiTermPanel;
 	private JLayer<?> multiTermDisabledPanel;
 
@@ -82,8 +81,8 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 
 		resultFilterOptions = new FilterOptions(filterStrategyPanel.getFilterStrategy(),
 			booleanPanel.isGlobbing(), booleanPanel.isCaseSensitive(), invertPanel.isInverted(),
-			multiTermPanel.isMultitermEnabled(), multiTermPanel.getDelimiter(),
-			multiTermPanel.getEvalMode());
+			pathPanel.shouldUsePath(), multiTermPanel.isMultitermEnabled(),
+			multiTermPanel.getDelimiter(), multiTermPanel.getEvalMode());
 
 		close();
 	}
@@ -104,6 +103,9 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 
 		invertPanel = new InvertPanel();
 		panel.add(invertPanel);
+
+		pathPanel = new PathPanel();
+		panel.add(pathPanel);
 
 		multiTermPanel = new MultiTermPanel();
 		panel.add(multiTermPanel);
@@ -168,34 +170,22 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 			buttonGroup.add(matchesExactlyButton);
 			buttonGroup.add(regularExpressionButton);
 
-			startsWithButton.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent ev) {
-					filterStrategy = TextFilterStrategy.STARTS_WITH;
-					updatedEnablementForNonRegularExpressionOptions(true);
-				}
+			startsWithButton.addActionListener(ev -> {
+				filterStrategy = TextFilterStrategy.STARTS_WITH;
+				updatedEnablementForNonRegularExpressionOptions(true);
 			});
 
-			containsButton.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent ev) {
-					filterStrategy = TextFilterStrategy.CONTAINS;
-					updatedEnablementForNonRegularExpressionOptions(true);
-				}
+			containsButton.addActionListener(ev -> {
+				filterStrategy = TextFilterStrategy.CONTAINS;
+				updatedEnablementForNonRegularExpressionOptions(true);
 			});
-			matchesExactlyButton.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent ev) {
-					filterStrategy = TextFilterStrategy.MATCHES_EXACTLY;
-					updatedEnablementForNonRegularExpressionOptions(true);
-				}
+			matchesExactlyButton.addActionListener(ev -> {
+				filterStrategy = TextFilterStrategy.MATCHES_EXACTLY;
+				updatedEnablementForNonRegularExpressionOptions(true);
 			});
-			regularExpressionButton.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent ev) {
-					filterStrategy = TextFilterStrategy.REGULAR_EXPRESSION;
-					updatedEnablementForNonRegularExpressionOptions(false);
-				}
+			regularExpressionButton.addActionListener(ev -> {
+				filterStrategy = TextFilterStrategy.REGULAR_EXPRESSION;
+				updatedEnablementForNonRegularExpressionOptions(false);
 			});
 
 			switch (initialFilterOptions.getTextFilterStrategy()) {
@@ -270,7 +260,8 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 
 			caseSensitiveCheckbox = new GCheckBox("Case Sensitive");
 			caseSensitiveCheckbox.setToolTipText(
-				"Toggles whether the case of the filter text matters in the match.  NOTE: does not apply to regular expressons.");
+				"Toggles whether the case of the filter text matters in the match.  NOTE: does " +
+					"not apply to regular expressons.");
 			if (initialFilterOptions.isCaseSensitive()) {
 				caseSensitiveCheckbox.setSelected(true);
 			}
@@ -281,7 +272,8 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 			if (initialFilterOptions.isGlobbingAllowed()) {
 				globbingCheckbox.setSelected(true);
 			}
-			if (initialFilterOptions.getTextFilterStrategy() == TextFilterStrategy.REGULAR_EXPRESSION) {
+			if (initialFilterOptions
+					.getTextFilterStrategy() == TextFilterStrategy.REGULAR_EXPRESSION) {
 				caseSensitiveCheckbox.setEnabled(false);
 				globbingCheckbox.setEnabled(false);
 			}
@@ -308,7 +300,7 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 
 		private void createPanel() {
 			this.setLayout(new HorizontalLayout(6));
-			setBorder(BorderFactory.createEmptyBorder(10, 4, 10, 4));
+			setBorder(BorderFactory.createEmptyBorder(10, 4, 5, 4));
 
 			invertCheckbox = new GCheckBox("Invert Filter");
 			invertCheckbox.setToolTipText("<html>" +
@@ -318,6 +310,34 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 			}
 
 			add(invertCheckbox);
+		}
+	}
+
+	private class PathPanel extends JPanel {
+
+		private JCheckBox pathCheckbox;
+
+		public PathPanel() {
+			createPanel();
+		}
+
+		public boolean shouldUsePath() {
+			return pathCheckbox.isSelected();
+		}
+
+		private void createPanel() {
+			this.setLayout(new HorizontalLayout(6));
+			setBorder(BorderFactory.createEmptyBorder(5, 4, 10, 4));
+
+			pathCheckbox = new GCheckBox("Use Path");
+			pathCheckbox.setToolTipText("<html>" +
+				"Allows filtering on node paths, for example '*/folder/node' or " +
+				"'*folder1*folder2*node'");
+			if (initialFilterOptions.shouldUsePath()) {
+				pathCheckbox.setSelected(true);
+			}
+
+			add(pathCheckbox);
 		}
 	}
 
@@ -353,10 +373,10 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 		}
 
 		/**
-		 * Sets the eval mode to what is given. This is done by activating the
+		 * Sets the evaluation mode to what is given. This is done by activating the
 		 * appropriate radio button associated with that mode.
 		 * 
-		 * @param evalMode
+		 * @param evalMode the mode
 		 */
 		public void setEvalMode(MultitermEvaluationMode evalMode) {
 			this.evalMode = evalMode;

@@ -724,9 +724,7 @@ public class AddressSet implements AddressSetView {
 			entry = rbTree.getFirst();
 		}
 
-		Iterator<AddressRange> iterator = addrSet.iterator();
-		while (iterator.hasNext()) {
-			AddressRange range = iterator.next();
+		for (AddressRange range : addrSet) {
 			while (range.compareTo(entry.getValue()) > 0) {
 				entry = entry.getSuccessor();
 				if (entry == null) {
@@ -746,9 +744,7 @@ public class AddressSet implements AddressSetView {
 		if (entry == null) {
 			return false;
 		}
-		Iterator<AddressRange> iterator = addrSet.iterator();
-		while (iterator.hasNext()) {
-			AddressRange range = iterator.next();
+		for (AddressRange range : addrSet) {
 			while (range.compareTo(entry.getValue()) > 0) {
 				entry = entry.getSuccessor();
 				if (entry == null) {
@@ -1236,6 +1232,7 @@ public class AddressSet implements AddressSetView {
 	private class AddressRangeIteratorAdapter implements AddressRangeIterator {
 
 		private Iterator<RedBlackEntry<Address, Address>> iterator;
+		private AddressRange lastReturnedRange;
 
 		public AddressRangeIteratorAdapter(Iterator<RedBlackEntry<Address, Address>> iterator) {
 			this.iterator = iterator;
@@ -1252,12 +1249,14 @@ public class AddressSet implements AddressSetView {
 			if (next == null) {
 				throw new NoSuchElementException();
 			}
-			return new AddressRangeImpl(next.getKey(), next.getValue());
+			lastReturnedRange = new AddressRangeImpl(next.getKey(), next.getValue());
+			return lastReturnedRange;
 		}
 
 		@Override
 		public void remove() {
 			iterator.remove();
+			addressCount -= lastReturnedRange.getLength();
 		}
 
 		@Override

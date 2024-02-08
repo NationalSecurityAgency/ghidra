@@ -18,11 +18,11 @@ package ghidra.app.plugin.core.debug.service.model;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import ghidra.app.plugin.core.debug.mapping.DebuggerMemoryMapper;
 import ghidra.app.plugin.core.debug.service.model.interfaces.ManagedStackRecorder;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetStackFrame;
 import ghidra.dbg.util.PathUtils;
+import ghidra.debug.api.model.DebuggerMemoryMapper;
 import ghidra.program.model.address.Address;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.stack.*;

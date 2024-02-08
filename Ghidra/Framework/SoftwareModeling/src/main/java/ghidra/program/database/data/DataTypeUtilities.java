@@ -16,7 +16,7 @@
 package ghidra.program.database.data;
 
 import java.util.*;
-import java.util.regex.Pattern;
+import java.util.regex.*;
 
 import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.SymbolPathParser;
@@ -300,12 +300,55 @@ public class DataTypeUtilities {
 	 * Get the name of a data type with all conflict naming patterns removed.
 	 * 
 	 * @param dataType data type
-	 * @param includeCategoryPath if true the category path will be included with its
-	 * @return name with without conflict patterns
+	 * @param includeCategoryPath if true the category path will be included with the
+	 * returned name (e.g., /mypath/mydt)
+	 * @return name with optional category path included
 	 */
 	public static String getNameWithoutConflict(DataType dataType, boolean includeCategoryPath) {
 		String name = includeCategoryPath ? dataType.getPathName() : dataType.getName();
-		return DATATYPE_CONFLICT_PATTERN.matcher(name).replaceAll("");
+		return getNameWithoutConflict(name);
+	}
+
+	/**
+	 * Get the name of a data type with all conflict naming patterns removed.
+	 * 
+	 * @param dataTypeName data type name with optional category path included
+	 * @return name with optional category path included
+	 */
+	public static String getNameWithoutConflict(String dataTypeName) {
+		return DATATYPE_CONFLICT_PATTERN.matcher(dataTypeName).replaceAll("");
+	}
+
+	/**
+	 * Get the conflict value string associated with a conflict datatype name.
+	 * 
+	 * @param dataType datatype to be checked
+	 * @return conflict value string.  Will be null if name is not a conflict name, or
+	 * empty string if conflict has no number.  Otherwise a decimal value string will be returned.
+	 */
+	public static String getConflictString(DataType dataType) {
+		return getConflictString(dataType.getName());
+	}
+
+	/**
+	 * Get the conflict value string associated with a conflict datatype name.
+	 * 
+	 * @param dataTypeName datatype name to be checked
+	 * @return conflict value string.  Will be one of the following:
+	 * <ol>
+	 * <li>A null value if not a conflict name,</li>
+	 * <li>an empty string if conflict name without a number, or</li>
+	 * <li>a decimal string value which corresponds to the conflict number in the name.</li>
+	 * </ol>
+	 */
+	public static String getConflictString(String dataTypeName) {
+		Matcher matcher = DATATYPE_CONFLICT_PATTERN.matcher(dataTypeName);
+		if (matcher.find()) {
+			MatchResult matchResult = matcher.toMatchResult();
+			return dataTypeName.substring(matchResult.start() + DataType.CONFLICT_SUFFIX.length(),
+				matchResult.end());
+		}
+		return null;
 	}
 
 	/**
@@ -422,8 +465,7 @@ public class DataTypeUtilities {
 			}
 			categoryPathParts.add(ns.getName());
 		}
-		return categoryPathParts.isEmpty()
-				? baseCategory
+		return categoryPathParts.isEmpty() ? baseCategory
 				: new CategoryPath(baseCategory, categoryPathParts);
 	}
 
@@ -439,7 +481,8 @@ public class DataTypeUtilities {
 	 * @param classNamespace class namespace
 	 * @return existing structure which resides within matching category.
 	 */
-	public static Structure findExistingClassStruct(DataTypeManager dataTypeManager, GhidraClass classNamespace) {
+	public static Structure findExistingClassStruct(DataTypeManager dataTypeManager,
+			GhidraClass classNamespace) {
 
 		Structure dt = findPreferredDataType(dataTypeManager, classNamespace,
 			classNamespace.getName(), Structure.class, true);
@@ -468,8 +511,7 @@ public class DataTypeUtilities {
 	public static <T extends DataType> T findDataType(DataTypeManager dataTypeManager,
 			Namespace namespace, String dtName, Class<T> classConstraint) {
 
-		T dt =
-			findPreferredDataType(dataTypeManager, namespace, dtName, classConstraint, false);
+		T dt = findPreferredDataType(dataTypeManager, namespace, dtName, classConstraint, false);
 		if (dt != null) {
 			return dt;
 		}
@@ -493,8 +535,7 @@ public class DataTypeUtilities {
 	 * @return best matching data type
 	 */
 	public static <T extends DataType> T findNamespaceQualifiedDataType(
-			DataTypeManager dataTypeManager,
-			String dtNameWithNamespace, Class<T> classConstraint) {
+			DataTypeManager dataTypeManager, String dtNameWithNamespace, Class<T> classConstraint) {
 
 		List<String> pathList = SymbolPathParser.parse(dtNameWithNamespace);
 		int nameIndex = pathList.size() - 1;
@@ -586,7 +627,8 @@ public class DataTypeUtilities {
 			String namespacePath) {
 		if (namespacePath.length() == 0) {
 			// root or unspecified namespace - prefer root category
-			return categoryPath.isRoot() ? CategoryMatchType.PREFERRED : CategoryMatchType.SECONDARY;
+			return categoryPath.isRoot() ? CategoryMatchType.PREFERRED
+					: CategoryMatchType.SECONDARY;
 		}
 		String path = categoryPath.getPath();
 		return path.endsWith(namespacePath) ? CategoryMatchType.PREFERRED : CategoryMatchType.NONE;
@@ -610,7 +652,8 @@ public class DataTypeUtilities {
 			String[] namespacePaths, boolean parentNamespacePreferred) {
 		if (namespacePaths == null) {
 			// root or unspecified namespace - prefer root category
-			return categoryPath.isRoot() ? CategoryMatchType.PREFERRED : CategoryMatchType.SECONDARY;
+			return categoryPath.isRoot() ? CategoryMatchType.PREFERRED
+					: CategoryMatchType.SECONDARY;
 		}
 
 		String path = categoryPath.getPath();
@@ -757,7 +800,7 @@ public class DataTypeUtilities {
 				cmp = catPath1.compareTo(catPath2);
 			}
 			return cmp;
-	};
+		};
 
 	/**
 	 * Perform a namespace qualified datatype search.  

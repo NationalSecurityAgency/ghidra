@@ -38,7 +38,7 @@ import ghidra.app.plugin.core.colorizer.ColorizingService;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.app.util.viewer.util.AddressIndexMap;
-import ghidra.feature.vt.api.impl.VTChangeManager;
+import ghidra.feature.vt.api.impl.VTEvent;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.gui.actions.*;
 import ghidra.feature.vt.gui.duallisting.VTDualListingHighlightProvider;
@@ -84,7 +84,7 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 			destinationTool = createTool(DESTINATION_TOOL_NAME, false);
 		}
 		ProgramManager service = destinationTool.getService(ProgramManager.class);
-		return service.openProgram(domainFile, parent);
+		return service.openProgram(domainFile);
 	}
 
 	Program openSourceProgram(DomainFile domainFile, Component parent) {
@@ -92,7 +92,7 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 			sourceTool = createTool(SOURCE_TOOL_NAME, true);
 		}
 		ProgramManager service = sourceTool.getService(ProgramManager.class);
-		return service.openProgram(domainFile, parent);
+		return service.openProgram(domainFile);
 	}
 
 	void closeSourceProgram(Program source) {
@@ -352,7 +352,7 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 
 	@Override
 	public void sessionUpdated(DomainObjectChangedEvent ev) {
-		if (ev.containsEvent(VTChangeManager.DOCR_VT_MARKUP_ITEM_STATUS_CHANGED)) {
+		if (ev.contains(VTEvent.MARKUP_ITEM_STATUS_CHANGED)) {
 			CodeViewerService service = sourceTool.getService(CodeViewerService.class);
 			if (service == null) {
 				return;
@@ -363,7 +363,7 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 			ListingPanel listingPanel = service.getListingPanel();
 			listingPanel.repaint();
 		}
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
+		if (ev.contains(DomainObjectEvent.RESTORED)) {
 			// This kicks the sub-tool highlight providers so each gets fresh
 			// markup item information.
 			for (VersionTrackingSubordinatePluginX pluginX : pluginList) {

@@ -17,29 +17,34 @@ package ghidra.app.util.bin.format.macho.commands.chained;
 
 import static ghidra.app.util.bin.format.macho.dyld.DyldChainedPtr.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-import ghidra.app.util.bin.format.macho.MachHeader;
-import ghidra.app.util.bin.format.macho.Section;
-import ghidra.app.util.bin.format.macho.commands.*;
+import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.format.macho.*;
+import ghidra.app.util.bin.format.macho.commands.DyldChainedFixupsCommand;
+import ghidra.app.util.bin.format.macho.commands.SegmentNames;
 import ghidra.app.util.bin.format.macho.dyld.DyldChainedPtr;
 import ghidra.app.util.bin.format.macho.dyld.DyldChainedPtr.DyldChainType;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.listing.Library;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.reloc.RelocationResult;
-import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.*;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 public class DyldChainedFixups {
 
 	private MachHeader machoHeader;
 	private Program program;
+	private List<String> libraryPaths;
 	private MessageLog log;
 	private TaskMonitor monitor;
 	private Memory memory;
@@ -50,13 +55,15 @@ public class DyldChainedFixups {
 	 * 
 	 * @param program The {@link Program}
 	 * @param header The Mach-O header
+	 * @param libraryPaths A {@link List} of the library paths
 	 * @param log The log
 	 * @param monitor A cancelable task monitor.
 	 */
-	public DyldChainedFixups(Program program, MachHeader header, MessageLog log,
-			TaskMonitor monitor) {
+	public DyldChainedFixups(Program program, MachHeader header, List<String> libraryPaths,
+			MessageLog log, TaskMonitor monitor) {
 		this.program = program;
 		this.machoHeader = header;
+		this.libraryPaths = libraryPaths;
 		this.log = log;
 		this.monitor = monitor;
 		this.memory = program.getMemory();
@@ -70,19 +77,16 @@ public class DyldChainedFixups {
 	 * @throws Exception if there was a problem reading/writing memory.
 	 */
 	public List<Address> processChainedFixups() throws Exception {
+		monitor.setMessage("Fixing up chained pointers...");
 
 		List<Address> fixedAddresses = new ArrayList<>();
 
-		// if has Chained Fixups load command, use it
+		// First look for a DyldChainedFixupsCommand
 		List<DyldChainedFixupsCommand> loadCommands =
 			machoHeader.getLoadCommands(DyldChainedFixupsCommand.class);
-		for (LoadCommand loadCommand : loadCommands) {
-			DyldChainedFixupsCommand linkCmd = (DyldChainedFixupsCommand) loadCommand;
-
-			DyldChainedFixupHeader chainHeader = linkCmd.getChainHeader();
-
+		for (DyldChainedFixupsCommand loadCommand : loadCommands) {
+			DyldChainedFixupHeader chainHeader = loadCommand.getChainHeader();
 			DyldChainedStartsInImage chainedStartsInImage = chainHeader.getChainedStartsInImage();
-
 			List<DyldChainedStartsInSegment> chainedStarts =
 				chainedStartsInImage.getChainedStarts();
 			for (DyldChainedStartsInSegment chainStart : chainedStarts) {
@@ -90,40 +94,44 @@ public class DyldChainedFixups {
 			}
 			log.appendMsg("Fixed up " + fixedAddresses.size() + " chained pointers.");
 		}
-
-		// if pointer chains fixed by DyldChainedFixupsCommands, then all finished
-		if (loadCommands.size() > 0) {
+		if (!loadCommands.isEmpty()) {
 			return fixedAddresses;
 		}
 
-		// if has thread_starts use to fixup chained pointers
-		Section threadStarts = machoHeader.getSection(SegmentNames.SEG_TEXT, "__thread_starts");
-		if (threadStarts == null) {
-			return Collections.emptyList();
-		}
+		// Didn't find a DyldChainedFixupsCommand, so look for the sections with fixup info
+		Section chainStartsSection =
+			machoHeader.getSection(SegmentNames.SEG_TEXT, SectionNames.CHAIN_STARTS);
+		Section threadStartsSection =
+			machoHeader.getSection(SegmentNames.SEG_TEXT, SectionNames.THREAD_STARTS);
 
-		Address threadSectionStart = null;
-		Address threadSectionEnd = null;
-		threadSectionStart = space.getAddress(threadStarts.getAddress());
-		threadSectionEnd = threadSectionStart.add(threadStarts.getSize() - 1);
-
-		monitor.setMessage("Fixing up chained pointers...");
-
-		long nextOffSize = (memory.getInt(threadSectionStart) & 1) * 4 + 4;
-		Address chainHead = threadSectionStart.add(4);
-
-		while (chainHead.compareTo(threadSectionEnd) < 0 && !monitor.isCancelled()) {
-			int headStartOffset = memory.getInt(chainHead);
-			if (headStartOffset == 0xFFFFFFFF || headStartOffset == 0) {
-				break;
+		if (chainStartsSection != null) {
+			Address sectionStart = space.getAddress(chainStartsSection.getAddress());
+			ByteProvider provider = new MemoryByteProvider(memory, sectionStart);
+			BinaryReader reader = new BinaryReader(provider, machoHeader.isLittleEndian());
+			DyldChainedStartsOffsets chainedStartsOffsets = new DyldChainedStartsOffsets(reader);
+			for (int offset : chainedStartsOffsets.getChainStartOffsets()) {
+				processPointerChain(null, fixedAddresses, chainedStartsOffsets.getPointerFormat(),
+					program.getImageBase().add(offset).getOffset(), 0, 0);
 			}
-
-			Address chainStart = program.getImageBase().add(headStartOffset & 0xffffffffL);
-			fixedAddresses.addAll(processPointerChain(chainStart, nextOffSize));
-			chainHead = chainHead.add(4);
+			log.appendMsg("Fixed up " + fixedAddresses.size() + " chained pointers.");
+		}
+		else if (threadStartsSection != null) {
+			Address threadSectionStart = space.getAddress(threadStartsSection.getAddress());
+			Address threadSectionEnd = threadSectionStart.add(threadStartsSection.getSize() - 1);
+			long nextOffSize = (memory.getInt(threadSectionStart) & 1) * 4 + 4;
+			Address chainHead = threadSectionStart.add(4);
+			while (chainHead.compareTo(threadSectionEnd) < 0 && !monitor.isCancelled()) {
+				int headStartOffset = memory.getInt(chainHead);
+				if (headStartOffset == 0xFFFFFFFF || headStartOffset == 0) {
+					break;
+				}
+				Address chainStart = program.getImageBase().add(headStartOffset & 0xffffffffL);
+				fixedAddresses.addAll(processPointerChain(chainStart, nextOffSize));
+				chainHead = chainHead.add(4);
+			}
+			log.appendMsg("Fixed up " + fixedAddresses.size() + " chained pointers.");
 		}
 
-		log.appendMsg("Fixed up " + fixedAddresses.size() + " chained pointers.");
 		return fixedAddresses;
 	}
 
@@ -174,8 +182,8 @@ public class DyldChainedFixups {
 				case DYLD_CHAINED_PTR_ARM64E_KERNEL:
 				case DYLD_CHAINED_PTR_ARM64E_USERLAND:
 				case DYLD_CHAINED_PTR_ARM64E_USERLAND24:
-					processPointerChain(chainHeader, unchainedLocList, ptrFormat, page, pageOffset,
-						authValueAdd);
+					processPointerChain(chainHeader.getChainedImports(), unchainedLocList,
+						ptrFormat, page, pageOffset, authValueAdd);
 					break;
 
 				// These might work, but have not been fully tested!
@@ -186,8 +194,8 @@ public class DyldChainedFixups {
 				case DYLD_CHAINED_PTR_32_CACHE:
 				case DYLD_CHAINED_PTR_32_FIRMWARE:
 				case DYLD_CHAINED_PTR_X86_64_KERNEL_CACHE:
-					processPointerChain(chainHeader, unchainedLocList, ptrFormat, page, pageOffset,
-						authValueAdd);
+					processPointerChain(chainHeader.getChainedImports(), unchainedLocList,
+						ptrFormat, page, pageOffset, authValueAdd);
 					break;
 
 				case DYLD_CHAINED_PTR_ARM64E_FIRMWARE:
@@ -211,7 +219,7 @@ public class DyldChainedFixups {
 	/**
 	 * Fixes up any chained pointers, starting at the given address.
 	 * 
-	 * @param chainHeader fixup header chains
+	 * @param chainedImports chained imports (could be null)
 	 * @param unchainedLocList list of locations that were unchained
 	 * @param pointerFormat format of pointers within this chain
 	 * @param page within data pages that has pointers to be unchained
@@ -221,12 +229,12 @@ public class DyldChainedFixups {
 	 * @throws MemoryAccessException IO problem reading file
 	 * @throws CancelledException user cancels
 	 */
-	private void processPointerChain(DyldChainedFixupHeader chainHeader,
+	public void processPointerChain(DyldChainedImports chainedImports,
 			List<Address> unchainedLocList, DyldChainType pointerFormat, long page, long nextOff,
 			long auth_value_add) throws MemoryAccessException, CancelledException {
 
 		long imageBaseOffset = program.getImageBase().getOffset();
-		Address chainStart = memory.getProgram().getLanguage().getDefaultSpace().getAddress(page);
+		Address chainStart = space.getAddress(page);
 
 		long next = -1;
 		boolean start = true;
@@ -239,6 +247,13 @@ public class DyldChainedFixups {
 
 			boolean isAuthenticated = DyldChainedPtr.isAuthenticated(pointerFormat, chainValue);
 			boolean isBound = DyldChainedPtr.isBound(pointerFormat, chainValue);
+
+			if (isBound && chainedImports == null) {
+				log.appendMsg(
+					"Error: dyld_chained_import array required to process bound chain fixup at " +
+						chainLoc);
+				return;
+			}
 
 			String symName = null;
 
@@ -254,14 +269,14 @@ public class DyldChainedFixups {
 			else if (!isAuthenticated && isBound) {
 				int chainOrdinal = (int) DyldChainedPtr.getOrdinal(pointerFormat, chainValue);
 				long addend = DyldChainedPtr.getAddend(pointerFormat, chainValue);
-				DyldChainedImports chainedImports = chainHeader.getChainedImports();
 				DyldChainedImport chainedImport = chainedImports.getChainedImport(chainOrdinal);
-				//int libOrdinal = chainedImport.getLibOrdinal();
 				symName = chainedImport.getName();
 				// lookup the symbol, and then add addend
 				List<Symbol> globalSymbols = program.getSymbolTable().getGlobalSymbols(symName);
-				if (globalSymbols.size() == 1) {
-					newChainValue = globalSymbols.get(0).getAddress().getOffset();
+				if (globalSymbols.size() > 0) {
+					Symbol symbol = globalSymbols.get(0);
+					newChainValue = symbol.getAddress().getOffset();
+					fixupExternalLibrary(chainedImport.getLibOrdinal(), symbol);
 				}
 				newChainValue += addend;
 			}
@@ -273,14 +288,15 @@ public class DyldChainedFixups {
 				//	DyldChainedPtr.hasAddrDiversity(pointerFormat, chainValue);
 				//long key = DyldChainedPtr.getKey(pointerFormat, chainValue);
 
-				DyldChainedImports chainedImports = chainHeader.getChainedImports();
 				DyldChainedImport chainedImport = chainedImports.getChainedImport(chainOrdinal);
 				symName = chainedImport.getName();
 
 				// lookup the symbol, and then add addend
 				List<Symbol> globalSymbols = program.getSymbolTable().getGlobalSymbols(symName);
-				if (globalSymbols.size() == 1) {
-					newChainValue = globalSymbols.get(0).getAddress().getOffset();
+				if (globalSymbols.size() > 0) {
+					Symbol symbol = globalSymbols.get(0);
+					newChainValue = symbol.getAddress().getOffset();
+					fixupExternalLibrary(chainedImport.getLibOrdinal(), symbol);
 				}
 				newChainValue = newChainValue + auth_value_add;
 			}
@@ -315,6 +331,24 @@ public class DyldChainedFixups {
 			start = false;
 			next = DyldChainedPtr.getNext(pointerFormat, chainValue);
 			nextOff += next * DyldChainedPtr.getStride(pointerFormat);
+		}
+	}
+
+	private void fixupExternalLibrary(int libraryOrdinal, Symbol symbol) {
+		ExternalManager extManager = program.getExternalManager();
+		int libraryIndex = libraryOrdinal - 1;
+		if (libraryIndex >= 0 && libraryIndex < libraryPaths.size()) {
+			Library library = extManager.getExternalLibrary(libraryPaths.get(libraryIndex));
+			ExternalLocation loc =
+				extManager.getUniqueExternalLocation(Library.UNKNOWN, symbol.getName());
+			if (loc != null) {
+				try {
+					loc.setName(library, symbol.getName(), SourceType.IMPORTED);
+				}
+				catch (InvalidInputException e) {
+					log.appendException(e);
+				}
+			}
 		}
 	}
 

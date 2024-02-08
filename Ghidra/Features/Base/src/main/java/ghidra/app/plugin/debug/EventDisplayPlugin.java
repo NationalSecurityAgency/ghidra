@@ -31,7 +31,7 @@ import help.HelpService;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = DeveloperPluginPackage.NAME,
-	category = PluginCategoryNames.TESTING,
+	category = PluginCategoryNames.DIAGNOSTIC,
 	shortDescription = "Show plugin events",
 	description = "This plugin is a debug aid that prints " +
 			"plugin event information. It can also be used as a sample " +

@@ -197,6 +197,13 @@ public interface PcodeThread<T> {
 	void skipPcodeOp();
 
 	/**
+	 * Apply a patch to the emulator
+	 * 
+	 * @param sleigh a line of sleigh semantic source to execute (excluding the final semicolon)
+	 */
+	void stepPatch(String sleigh);
+
+	/**
 	 * Get the current frame, if present
 	 * 
 	 * <p>
@@ -341,7 +348,7 @@ public interface PcodeThread<T> {
 	 * Override the p-code at the given address with the given Sleigh source for only this thread
 	 * 
 	 * <p>
-	 * This works the same {@link PcodeMachine#inject(Address, List)} but on a per-thread basis.
+	 * This works the same {@link PcodeMachine#inject(Address, String)} but on a per-thread basis.
 	 * Where there is both a machine-level and thread-level inject the thread inject takes
 	 * precedence. Furthermore, the machine-level inject cannot be accessed by the thread-level
 	 * inject.

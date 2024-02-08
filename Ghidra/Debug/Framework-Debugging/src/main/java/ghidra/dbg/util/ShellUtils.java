@@ -15,8 +15,8 @@
  */
 package ghidra.dbg.util;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ShellUtils {
 	enum State {
@@ -138,5 +138,12 @@ public class ShellUtils {
 			line.append(a);
 		}
 		return line.toString();
+	}
+
+	public static String generateEnvBlock(Map<String, String> env) {
+		return env.entrySet()
+				.stream()
+				.map(e -> e.getKey() + "=" + e.getValue() + "\0")
+				.collect(Collectors.joining()); // NB. JNA adds final terminator
 	}
 }

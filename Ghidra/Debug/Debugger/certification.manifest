@@ -11,10 +11,10 @@ src/main/help/help/TOC_Source.xml||GHIDRA||||END|
 src/main/help/help/topics/Debugger/Debugger.html||GHIDRA||||END|
 src/main/help/help/topics/Debugger/GettingStarted.html||GHIDRA||||END|
 src/main/help/help/topics/Debugger/Troubleshooting.html||GHIDRA||||END|
-src/main/help/help/topics/DebuggerBots/DebuggerBots.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/DebuggerBreakpointMarkerPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/images/DebuggerBreakpointMarkerPlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/images/DebuggerDecompilerBreakpointMargin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/images/DebuggerFunctionGraphBreakpointMargin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/images/DebuggerPlaceBreakpointDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointsPlugin/DebuggerBreakpointsPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointsPlugin/images/DebuggerBreakpointsPlugin.png||GHIDRA||||END|
@@ -107,6 +107,8 @@ src/main/resources/images/breakpoints-disable-all.png||GHIDRA||||END|
 src/main/resources/images/breakpoints-enable-all.png||GHIDRA||||END|
 src/main/resources/images/breakpoints-make-effective.png||GHIDRA||||END|
 src/main/resources/images/conf.png||GHIDRA||||END|
+src/main/resources/images/connect-accept.png||GHIDRA||||END|
+src/main/resources/images/connect-outbound.png||GHIDRA||||END|
 src/main/resources/images/connect.png||GHIDRA||||END|
 src/main/resources/images/console.png||GHIDRA||||END|
 src/main/resources/images/debugger.png||GHIDRA||||END|
@@ -137,9 +139,11 @@ src/main/resources/images/steplast.png||GHIDRA||||END|
 src/main/resources/images/stepout.png||GHIDRA||||END|
 src/main/resources/images/stepover.png||GHIDRA||||END|
 src/main/resources/images/system-switch-user.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/table-a.png||FAMFAMFAM Icons - CC 2.5||||END|
+src/main/resources/images/table-e.png||FAMFAMFAM Icons - CC 2.5||||END|
+src/main/resources/images/table-s.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/thread.png||GHIDRA||||END|
 src/main/resources/images/time.png||FAMFAMFAM Icons - CC 2.5||||END|
-src/main/resources/images/write-disabled.png||GHIDRA||||END|
 src/main/resources/images/write-emulator.png||GHIDRA||||END|
 src/main/resources/images/write-target.png||GHIDRA||||END|
 src/main/resources/images/write-trace.png||Tango Icons - Public Domain||||END|
@@ -157,6 +161,8 @@ src/main/svg/breakpoints-clear-all.svg||GHIDRA||||END|
 src/main/svg/breakpoints-disable-all.svg||GHIDRA||||END|
 src/main/svg/breakpoints-enable-all.svg||GHIDRA||||END|
 src/main/svg/breakpoints-make-effective.svg||GHIDRA||||END|
+src/main/svg/connect-accept.svg||GHIDRA||||END|
+src/main/svg/connect-outbound.svg||GHIDRA||||END|
 src/main/svg/connect.svg||GHIDRA||||END|
 src/main/svg/console.svg||GHIDRA||||END|
 src/main/svg/debugger.svg||GHIDRA||||END|
@@ -186,6 +192,9 @@ src/main/svg/stepinto.svg||GHIDRA||||END|
 src/main/svg/steplast.svg||GHIDRA||||END|
 src/main/svg/stepout.svg||GHIDRA||||END|
 src/main/svg/stepover.svg||GHIDRA||||END|
+src/main/svg/table-a.svg||FAMFAMFAM Icons - CC 2.5||||END|
+src/main/svg/table-e.svg||FAMFAMFAM Icons - CC 2.5||||END|
+src/main/svg/table-s.svg||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/svg/thread.svg||GHIDRA||||END|
 src/main/svg/write-disabled.svg||GHIDRA||||END|
 src/main/svg/write-emulator.svg||GHIDRA||||END|

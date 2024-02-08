@@ -22,8 +22,7 @@ import java.awt.Rectangle;
 import java.util.*;
 
 import javax.swing.*;
-import javax.swing.table.JTableHeader;
-import javax.swing.table.TableCellEditor;
+import javax.swing.table.*;
 
 import org.junit.*;
 
@@ -55,7 +54,7 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 	private Program program;
 	private Memory memory;
 	private JTable table;
-	private MemoryMapModel model;
+	private TableModel model;
 
 	private Program buildProgram(String programName) throws Exception {
 		ProgramBuilder builder = new ProgramBuilder(programName, ProgramBuilder._TOY);
@@ -114,11 +113,13 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 		table.addRowSelectionInterval(0, 0);
 		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
 		for (DockingActionIf action : actions) {
-			if (action.getName().equals("Merge Blocks") || action.getName().equals("Local Menu")) {
+			if (action.getName().equals("Merge Blocks") || action.getName().equals("Local Menu") ||
+				action.getName().equals("Rename Overlay Space")) {
 				assertFalse(action.isEnabled());
 			}
 			else {
-				assertTrue(action.isEnabled());
+				assertTrue("Action not enabled when it should be: " + action.getName(),
+					action.isEnabled());
 			}
 		}
 	}
@@ -133,7 +134,8 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 			String name = action.getName();
 			if (name.equals("Add Block") || name.equals("Merge Blocks") ||
 				name.equals("Delete Block") || name.equals("Set Image Base") ||
-				name.equals("Memory Map") || name.equals("Close Window")) {
+				name.equals("Memory Map") || name.equals("Close Window") ||
+				name.equals("Make Selection")) {
 				assertTrue("Action should be enabled for  a multi-row selection - '" + name + "'",
 					action.isEnabled());
 			}
@@ -673,8 +675,7 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 		waitForSwing();
 		provider = plugin.getMemoryMapProvider();
 		table = provider.getTable();
-		model = (MemoryMapModel) table.getModel();
-
+		model = table.getModel();
 	}
 
 	private Address getAddr(long offset) {

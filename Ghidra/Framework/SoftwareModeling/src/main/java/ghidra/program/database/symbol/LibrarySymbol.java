@@ -21,7 +21,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CircularDependencyException;
 import ghidra.program.model.listing.Library;
 import ghidra.program.model.symbol.*;
-import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ProgramEvent;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
@@ -52,8 +52,8 @@ public class LibrarySymbol extends SymbolDB {
 	}
 
 	@Override
-	public void setName(String newName, SourceType source) throws DuplicateNameException,
-			InvalidInputException {
+	public void setName(String newName, SourceType source)
+			throws DuplicateNameException, InvalidInputException {
 		String oldName = getName();
 		if (Library.UNKNOWN.equals(oldName)) {
 			Msg.warn(this, "Unable to change name of " + Library.UNKNOWN + " Library");
@@ -64,8 +64,8 @@ public class LibrarySymbol extends SymbolDB {
 
 		if (!oldName.equals(getName())) {
 			symbolMgr.getProgram()
-					.setObjChanged(ChangeManager.DOCR_EXTERNAL_NAME_CHANGED,
-						(Address) null, null, oldName, newName);
+					.setObjChanged(ProgramEvent.EXTERNAL_NAME_CHANGED, (Address) null, null,
+						oldName, newName);
 		}
 	}
 
@@ -78,8 +78,8 @@ public class LibrarySymbol extends SymbolDB {
 
 		if (!oldName.equals(getName())) {
 			symbolMgr.getProgram()
-					.setObjChanged(ChangeManager.DOCR_EXTERNAL_NAME_CHANGED,
-						(Address) null, null, oldName, newName);
+					.setObjChanged(ProgramEvent.EXTERNAL_NAME_CHANGED, (Address) null, null,
+						oldName, newName);
 		}
 	}
 
@@ -90,8 +90,7 @@ public class LibrarySymbol extends SymbolDB {
 		super.setSymbolStringData(newPath);
 
 		symbolMgr.getProgram()
-				.setObjChanged(ChangeManager.DOCR_EXTERNAL_PATH_CHANGED, getName(),
-					oldPath, newPath);
+				.setObjChanged(ProgramEvent.EXTERNAL_PATH_CHANGED, getName(), oldPath, newPath);
 	}
 
 	public SymbolType getSymbolType() {

@@ -15,12 +15,13 @@
  */
 package ghidra.app.plugin.core.debug.gui.model;
 
-import java.awt.BorderLayout;
-import java.awt.KeyboardFocusManager;
+import java.awt.*;
 import java.awt.event.*;
 import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
@@ -28,13 +29,15 @@ import javax.swing.*;
 import docking.*;
 import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
+import docking.action.builder.ActionBuilder;
+import docking.action.builder.ToggleActionBuilder;
 import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import generic.theme.GColor;
-import ghidra.app.plugin.core.debug.DebuggerCoordinates;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources.CloneWindowAction;
 import ghidra.app.plugin.core.debug.gui.MultiProviderSaveBehavior.SaveableProvider;
 import ghidra.app.plugin.core.debug.gui.model.AbstractQueryTablePanel.CellActivationListener;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ObjectRow;
@@ -42,14 +45,15 @@ import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTreeModel.AbstractNode;
 import ghidra.app.plugin.core.debug.gui.model.PathTableModel.PathRow;
 import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.plugintool.AutoConfigState;
-import ghidra.framework.plugintool.AutoService;
+import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.*;
+import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 
 public class DebuggerModelProvider extends ComponentProvider implements SaveableProvider {
@@ -60,13 +64,156 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 	private static final String KEY_DEBUGGER_COORDINATES = "DebuggerCoordinates";
 	private static final String KEY_PATH = "Path";
 
+	interface ShowObjectsTreeAction {
+		String NAME = "Show Objects Tree";
+		Icon ICON = new GIcon("icon.debugger.model.tree.objects");
+		String DESCRIPTION = "Toggle display of the Objects Tree pane";
+		String GROUP = DebuggerResources.GROUP_VIEWS;
+		String ORDER = "1";
+		String HELP_ANCHOR = "show_objects_tree";
+
+		static ToggleActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ToggleActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarIcon(ICON)
+					.toolBarGroup(GROUP, ORDER)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface ShowElementsTableAction {
+		String NAME = "Show Elements Table";
+		Icon ICON = new GIcon("icon.debugger.model.table.elements");
+		String DESCRIPTION = "Toggle display of the Elements Table pane";
+		String GROUP = DebuggerResources.GROUP_VIEWS;
+		String ORDER = "2";
+		String HELP_ANCHOR = "show_elements_table";
+
+		static ToggleActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ToggleActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarIcon(ICON)
+					.toolBarGroup(GROUP, ORDER)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface ShowAttributesTableAction {
+		String NAME = "Show Attributes Table";
+		Icon ICON = new GIcon("icon.debugger.model.table.attributes");
+		String DESCRIPTION = "Toggle display of the Attributes Table pane";
+		String GROUP = DebuggerResources.GROUP_VIEWS;
+		String ORDER = "3";
+		String HELP_ANCHOR = "show_attributes_table";
+
+		static ToggleActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ToggleActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarIcon(ICON)
+					.toolBarGroup(GROUP, ORDER)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface LimitToCurrentSnapAction {
+		String NAME = "Limit to Current Snap";
+		String DESCRIPTION = "Choose whether displayed objects must be alive at the current snap";
+		String GROUP = DebuggerResources.GROUP_GENERAL;
+		String HELP_ANCHOR = "limit_to_current_snap";
+
+		static ToggleActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ToggleActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuPath(NAME)
+					.menuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface ShowHiddenAction {
+		String NAME = "Show Hidden";
+		String DESCRIPTION = "Choose whether to display hidden children";
+		String GROUP = DebuggerResources.GROUP_GENERAL;
+		String HELP_ANCHOR = "show_hidden";
+
+		static ToggleActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ToggleActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuPath(NAME)
+					.menuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface ShowPrimitivesInTreeAction {
+		String NAME = "Show Primitives in Tree";
+		String DESCRIPTION = "Choose whether to display primitive values in the tree";
+		String GROUP = DebuggerResources.GROUP_GENERAL;
+		String HELP_ANCHOR = "show_primitives";
+
+		static ToggleActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ToggleActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuPath(NAME)
+					.menuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface ShowMethodsInTreeAction {
+		String NAME = "Show Methods in Tree";
+		String DESCRIPTION = "Choose whether to display methods in the tree";
+		String GROUP = DebuggerResources.GROUP_GENERAL;
+		String HELP_ANCHOR = "show_methods";
+
+		static ToggleActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ToggleActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuPath(NAME)
+					.menuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface FollowLinkAction {
+		String NAME = "Follow Link";
+		String DESCRIPTION = "Navigate to the link target";
+		String GROUP = DebuggerResources.GROUP_GENERAL;
+		String HELP_ANCHOR = "follow_link";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.popupMenuPath(NAME)
+					.popupMenuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
 	private final DebuggerModelPlugin plugin;
 	private final boolean isClone;
 
-	private JPanel mainPanel = new JPanel(new BorderLayout());
+	private JPanel mainPanel;
 
-	protected JTextField pathField;
+	static class MyTextField extends JTextField {
+		// This one can be reflected for testing
+		@Override
+		protected void processEvent(AWTEvent e) {
+			super.processEvent(e);
+		}
+	}
+
+	protected MyTextField pathField;
 	protected JButton goButton;
+	protected JPanel queryPanel;
 	protected ObjectsTreePanel objectsTreePanel;
 	protected ObjectsTablePanel elementsTablePanel;
 	protected PathsTablePanel attributesTablePanel;
@@ -80,7 +227,18 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 	private final AutoService.Wiring autoServiceWiring;
 
 	@AutoConfigStateField
-	private boolean limitToSnap = false;
+	private boolean showObjectsTree = true;
+	@AutoConfigStateField
+	private boolean showElementsTable = true;
+	@AutoConfigStateField
+	private boolean showAttributesTable = true;
+	@AutoConfigStateField
+	private double lrResizeWeight = 0.2;
+	@AutoConfigStateField
+	private double tbResizeWeight = 0.7;
+
+	@AutoConfigStateField
+	private boolean limitToSnap = true;
 	@AutoConfigStateField
 	private boolean showHidden = false;
 	@AutoConfigStateField
@@ -89,6 +247,9 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 	private boolean showMethodsInTree = false;
 
 	DockingAction actionCloneWindow;
+	ToggleDockingAction actionShowObjectsTree;
+	ToggleDockingAction actionShowElementsTable;
+	ToggleDockingAction actionShowAttributesTable;
 	ToggleDockingAction actionLimitToCurrentSnap;
 	ToggleDockingAction actionShowHidden;
 	ToggleDockingAction actionShowPrimitivesInTree;
@@ -149,15 +310,122 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		super.removeFromTool();
 	}
 
+	protected static double computeResizeWeight(JSplitPane split) {
+		Function<Dimension, Integer> axis = switch (split.getOrientation()) {
+			case JSplitPane.HORIZONTAL_SPLIT -> (dim -> dim.width);
+			case JSplitPane.VERTICAL_SPLIT -> (dim -> dim.height);
+			default -> throw new AssertionError();
+		};
+
+		// This method is off by a little, and I don't know why, but I don't care.
+
+		Component lComp = split.getLeftComponent();
+		int lMin = axis.apply(lComp.getMinimumSize());
+		int lSize = axis.apply(lComp.getSize());
+		Component rComp = split.getRightComponent();
+		int rMin = axis.apply(rComp.getMinimumSize());
+		int rSize = axis.apply(rComp.getSize());
+
+		int totalExtra = lSize + rSize - lMin - rMin;
+		int lExtra = lSize - lMin;
+
+		return (double) lExtra / totalExtra;
+	}
+
+	protected JSplitPane createLrSplit() {
+		JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+		split.setResizeWeight(lrResizeWeight);
+		split.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, pce -> {
+			lrResizeWeight = computeResizeWeight(split);
+		});
+		return split;
+	}
+
+	protected JSplitPane createTbSplit() {
+		JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+		split.setResizeWeight(tbResizeWeight);
+		split.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, pce -> {
+			tbResizeWeight = computeResizeWeight(split);
+		});
+		return split;
+	}
+
+	protected JPanel createLabeledElementsTable() {
+		JPanel panel = new JPanel(new BorderLayout());
+		panel.add(elementsTablePanel);
+		panel.add(new JLabel("Elements"), BorderLayout.NORTH);
+		return panel;
+	}
+
+	protected JPanel createLabeledAttributesTable() {
+		JPanel panel = new JPanel(new BorderLayout());
+		panel.add(attributesTablePanel);
+		panel.add(new JLabel("Attributes"), BorderLayout.NORTH);
+		return panel;
+	}
+
+	protected void rebuildPanels() {
+		if (mainPanel == null) {
+			return;
+		}
+
+		mainPanel.removeAll();
+		mainPanel.add(queryPanel, BorderLayout.NORTH);
+
+		if (showObjectsTree && showElementsTable && showAttributesTable) {
+			JSplitPane lrSplit = createLrSplit();
+			mainPanel.add(lrSplit, BorderLayout.CENTER);
+			JSplitPane tbSplit = createTbSplit();
+			lrSplit.setRightComponent(tbSplit);
+			lrSplit.setLeftComponent(objectsTreePanel);
+			tbSplit.setLeftComponent(createLabeledElementsTable());
+			tbSplit.setRightComponent(createLabeledAttributesTable());
+		}
+		else if (showObjectsTree && showElementsTable) {
+			JSplitPane lrSplit = createLrSplit();
+			mainPanel.add(lrSplit, BorderLayout.CENTER);
+			lrSplit.setLeftComponent(objectsTreePanel);
+			lrSplit.setRightComponent(elementsTablePanel);
+		}
+		else if (showObjectsTree && showAttributesTable) {
+			JSplitPane lrSplit = createLrSplit();
+			mainPanel.add(lrSplit, BorderLayout.CENTER);
+			lrSplit.setLeftComponent(objectsTreePanel);
+			lrSplit.setRightComponent(attributesTablePanel);
+		}
+		else if (showElementsTable && showAttributesTable) {
+			JSplitPane tbSplit = createTbSplit();
+			tbSplit.setLeftComponent(createLabeledElementsTable());
+			tbSplit.setRightComponent(createLabeledAttributesTable());
+			mainPanel.add(tbSplit, BorderLayout.CENTER);
+		}
+		else if (showObjectsTree) {
+			mainPanel.add(objectsTreePanel);
+		}
+		else if (showElementsTable) {
+			mainPanel.add(elementsTablePanel);
+		}
+		else if (showAttributesTable) {
+			mainPanel.add(attributesTablePanel);
+		}
+		else {
+			// The actions should not allow this, but in case it happens, help the user out.
+			mainPanel.add(new JLabel("""
+					<html>Well, you should probably enable at least one panel.
+					Use the local toolbar buttons."""));
+		}
+		mainPanel.revalidate();
+	}
+
 	protected void buildMainPanel() {
-		pathField = new JTextField();
+		mainPanel = new JPanel(new BorderLayout());
+		pathField = new MyTextField();
 		pathField.setInputVerifier(new InputVerifier() {
 			@Override
 			public boolean verify(JComponent input) {
 				try {
 					TraceObjectKeyPath path = TraceObjectKeyPath.parse(pathField.getText());
-					setPath(path);
-					objectsTreePanel.setSelectedKeyPaths(List.of(path));
+					setPath(path, null, EventOrigin.USER_GENERATED);
 					return true;
 				}
 				catch (IllegalArgumentException e) {
@@ -200,26 +468,11 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		tbSplit.setResizeWeight(0.7);
 		lrSplit.setRightComponent(tbSplit);
 
-		JPanel queryPanel = new JPanel(new BorderLayout());
+		queryPanel = new JPanel(new BorderLayout());
 
 		queryPanel.add(new JLabel("Path: "), BorderLayout.WEST);
 		queryPanel.add(pathField, BorderLayout.CENTER);
 		queryPanel.add(goButton, BorderLayout.EAST);
-
-		JPanel labeledElementsTablePanel = new JPanel(new BorderLayout());
-		labeledElementsTablePanel.add(elementsTablePanel);
-		labeledElementsTablePanel.add(new JLabel("Elements"), BorderLayout.NORTH);
-
-		JPanel labeledAttributesTablePanel = new JPanel(new BorderLayout());
-		labeledAttributesTablePanel.add(attributesTablePanel);
-		labeledAttributesTablePanel.add(new JLabel("Attributes"), BorderLayout.NORTH);
-
-		lrSplit.setLeftComponent(objectsTreePanel);
-		tbSplit.setLeftComponent(labeledElementsTablePanel);
-		tbSplit.setRightComponent(labeledAttributesTablePanel);
-
-		mainPanel.add(queryPanel, BorderLayout.NORTH);
-		mainPanel.add(lrSplit, BorderLayout.CENTER);
 
 		objectsTreePanel.addTreeSelectionListener(evt -> {
 			Trace trace = current.getTrace();
@@ -233,6 +486,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			if (!sel.isEmpty()) {
 				myActionContext = new DebuggerObjectActionContext(sel.stream()
 						.map(n -> n.getValue())
+						.filter(o -> o != null) // Root for no trace would return null
 						.collect(Collectors.toList()),
 					this, objectsTreePanel);
 			}
@@ -244,7 +498,8 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 				return;
 			}
 			TraceObjectValue value = sel.get(0).getValue();
-			setPath(value.getCanonicalPath(), objectsTreePanel);
+			setPath(value == null ? TraceObjectKeyPath.of() : value.getCanonicalPath(),
+				objectsTreePanel, EventOrigin.INTERNAL_GENERATED);
 		});
 		objectsTreePanel.tree.addMouseListener(new MouseAdapter() {
 			@Override
@@ -313,6 +568,8 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 
 		elementsTablePanel.addSeekListener(seekListener);
 		attributesTablePanel.addSeekListener(seekListener);
+
+		rebuildPanels();
 	}
 
 	private void activateObjectSelectedInTree() {
@@ -340,6 +597,18 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		actionCloneWindow = CloneWindowAction.builder(plugin)
 				.enabledWhen(c -> current.getTrace() != null)
 				.onAction(c -> activatedCloneWindow())
+				.buildAndInstallLocal(this);
+		actionShowObjectsTree = ShowObjectsTreeAction.builder(plugin)
+				.onAction(this::toggledShowObjectsTree)
+				.selected(showObjectsTree)
+				.buildAndInstallLocal(this);
+		actionShowElementsTable = ShowElementsTableAction.builder(plugin)
+				.onAction(this::toggledShowElementsTable)
+				.selected(showElementsTable)
+				.buildAndInstallLocal(this);
+		actionShowAttributesTable = ShowAttributesTableAction.builder(plugin)
+				.onAction(this::toggledShowAttributesTable)
+				.selected(showAttributesTable)
 				.buildAndInstallLocal(this);
 		actionLimitToCurrentSnap = LimitToCurrentSnapAction.builder(plugin)
 				.onAction(this::toggledLimitToCurrentSnap)
@@ -390,11 +659,26 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		clone.readConfigState(configState);
 		SaveState dataState = new SaveState();
 		this.writeDataState(dataState);
+		// Selection is not saved to the tool state
+		Set<TraceObjectKeyPath> selection = this.objectsTreePanel.getSelectedKeyPaths();
 		// coords are omitted by main window
 		// also, cannot save unless trace is in a project
 		clone.coordinatesActivated(current);
 		clone.readDataState(dataState);
+		clone.objectsTreePanel.setSelectedKeyPaths(selection);
 		plugin.getTool().showComponentProvider(clone, true);
+	}
+
+	private void toggledShowObjectsTree(ActionContext ctx) {
+		setShowObjectsTree(actionShowObjectsTree.isSelected());
+	}
+
+	private void toggledShowElementsTable(ActionContext ctx) {
+		setShowElementsTable(actionShowElementsTable.isSelected());
+	}
+
+	private void toggledShowAttributesTable(ActionContext ctx) {
+		setShowAttributesTable(actionShowAttributesTable.isSelected());
 	}
 
 	private void toggledLimitToCurrentSnap(ActionContext ctx) {
@@ -453,7 +737,8 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		if (parent == null) {
 			return null;
 		}
-		for (TraceObjectValue value : parent.getValues()) {
+		for (TraceObjectValue value : parent.getValues(
+			isLimitToCurrentSnap() ? Lifespan.at(current.getSnap()) : Lifespan.ALL)) {
 			if (Objects.equals(object, value.getValue())) {
 				return value.getCanonicalPath();
 			}
@@ -487,8 +772,6 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		objectsTreePanel.goToCoordinates(coords);
 		elementsTablePanel.goToCoordinates(coords);
 		attributesTablePanel.goToCoordinates(coords);
-
-		checkPath();
 
 		if (isClone) {
 			return;
@@ -541,39 +824,71 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 				traceManager.activateObject(object);
 				return;
 			}
+			plugin.getTool().setStatusInfo("No such object at path " + path, true);
 		}
 	}
 
-	protected void setPath(TraceObjectKeyPath path, JComponent source) {
+	protected void setPath(TraceObjectKeyPath path, JComponent source, EventOrigin origin) {
 		if (Objects.equals(this.path, path) && getTreeSelection() != null) {
 			return;
 		}
 		this.path = path;
 
 		if (source != objectsTreePanel) {
-			setTreeSelection(path);
+			setTreeSelection(path, origin);
 		}
 
 		pathField.setText(path.toString());
 		objectsTreePanel.repaint();
 		elementsTablePanel.setQuery(ModelQuery.elementsOf(path));
 		attributesTablePanel.setQuery(ModelQuery.attributesOf(path));
-
-		checkPath();
 	}
 
 	public void setPath(TraceObjectKeyPath path) {
-		setPath(path, null);
-	}
-
-	protected void checkPath() {
-		if (objectsTreePanel.getNode(path) == null) {
-			plugin.getTool().setStatusInfo("No such object at path " + path, true);
-		}
+		setPath(path, null, EventOrigin.API_GENERATED);
 	}
 
 	public TraceObjectKeyPath getPath() {
 		return path;
+	}
+
+	protected void doSetShowObjectsTree(boolean showObjectsTree) {
+		this.showObjectsTree = showObjectsTree;
+		actionShowObjectsTree.setSelected(showObjectsTree);
+		rebuildPanels();
+	}
+
+	protected void doSetShowElementsTable(boolean showElementsTable) {
+		this.showElementsTable = showElementsTable;
+		actionShowElementsTable.setSelected(showElementsTable);
+		rebuildPanels();
+	}
+
+	protected void doSetShowAttributesTable(boolean showAttributesTable) {
+		this.showAttributesTable = showAttributesTable;
+		actionShowAttributesTable.setSelected(showAttributesTable);
+		rebuildPanels();
+	}
+
+	public void setShowObjectsTree(boolean showObjectsTree) {
+		if (this.showObjectsTree == showObjectsTree) {
+			return;
+		}
+		doSetShowObjectsTree(showObjectsTree);
+	}
+
+	public void setShowElementsTable(boolean showElementsTable) {
+		if (this.showElementsTable == showElementsTable) {
+			return;
+		}
+		doSetShowElementsTable(showElementsTable);
+	}
+
+	public void setShowAttributesTable(boolean showAttributesTable) {
+		if (this.showAttributesTable == showAttributesTable) {
+			return;
+		}
+		doSetShowAttributesTable(showAttributesTable);
 	}
 
 	protected void doSetLimitToCurrentSnap(boolean limitToSnap) {
@@ -669,6 +984,12 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 	@Override
 	public void readConfigState(SaveState saveState) {
 		CONFIG_STATE_HANDLER.readConfigState(this, saveState);
+
+		actionShowObjectsTree.setSelected(showObjectsTree);
+		actionShowElementsTable.setSelected(showElementsTable);
+		actionShowAttributesTable.setSelected(showAttributesTable);
+		rebuildPanels();
+
 		doSetLimitToCurrentSnap(limitToSnap);
 		doSetShowHidden(showHidden);
 		doSetShowPrimitivesInTree(showPrimitivesInTree);

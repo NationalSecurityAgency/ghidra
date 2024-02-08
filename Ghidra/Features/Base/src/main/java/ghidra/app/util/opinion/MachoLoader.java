@@ -15,18 +15,18 @@
  */
 package ghidra.app.util.opinion;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.AccessMode;
+import java.nio.file.Path;
 import java.util.*;
 
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
-import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.ByteProviderWrapper;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.ubi.*;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.formats.gfilesystem.FileSystemService;
+import ghidra.formats.gfilesystem.*;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.listing.Program;
 import ghidra.util.LittleEndianDataConverter;
@@ -60,7 +60,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 			MachHeader machHeader = new MachHeader(provider);
 			String magic =
 				CpuTypes.getMagicString(machHeader.getCpuType(), machHeader.getCpuSubType());
-			List<QueryResult> results = QueryOpinionService.query(getName(), magic, null);
+			List<QueryResult> results = QueryOpinionService.query(MACH_O_NAME, magic, null);
 			for (QueryResult result : results) {
 				loadSpecs.add(new LoadSpec(this, machHeader.getImageBase(), result));
 			}
@@ -91,8 +91,8 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 			}
 		}
 		catch (CancelledException e) {
- 			return;
- 		}
+			return;
+		}
 		catch (IOException e) {
 			throw e;
 		}
@@ -115,31 +115,29 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	 * found that is successful (meaning it matches the correct architecture). Only one file
 	 * in the UBI will ever be imported. If the provided file is NOT a UBI, default 
 	 * import method will be invoked. 
+	 * <hr>
+	 * {@inheritDoc}
 	 */
 	@Override
-	protected ByteProvider createLibraryByteProvider(File libFile, LoadSpec loadSpec, MessageLog log)
-			throws IOException {
+	protected ByteProvider createLibraryByteProvider(FSRL libFsrl, LoadSpec loadSpec,
+			MessageLog log, TaskMonitor monitor) throws IOException, CancelledException {
 
-		if (!libFile.isFile()) {
-			return null;
-		}
 
-		ByteProvider provider = new FileByteProvider(libFile,
-			FileSystemService.getInstance().getLocalFSRL(libFile), AccessMode.READ);
+		ByteProvider provider = super.createLibraryByteProvider(libFsrl, loadSpec, log, monitor);
 
 		try {
 			FatHeader header = new FatHeader(provider);
 			List<FatArch> architectures = header.getArchitectures();
 
 			if (architectures.isEmpty()) {
-				log.appendMsg("WARNING! No archives found in the UBI: " + libFile);
+				log.appendMsg("WARNING! No archives found in the UBI: " + libFsrl);
 				return null;
 			}
 
 			for (FatArch architecture : architectures) {
 				ByteProvider bp = new ByteProviderWrapper(provider, architecture.getOffset(),
 					architecture.getSize()) {
-					
+
 					@Override // Ensure the parent provider gets closed when the wrapper does
 					public void close() throws IOException {
 						super.provider.close();
@@ -157,5 +155,46 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 		}
 
 		return provider;
+	}
+
+	/**
+	 * Special Mach-O library file resolver to account for a "Versions" subdirectory being inserted
+	 * in the library lookup path.  For example, a reference to:
+	 * <p>
+	 * {@code /System/Library/Frameworks/Foundation.framework/Foundation}
+	 * <p>
+	 * might be found at:
+	 * <p>
+	 * {@code /System/Library/Frameworks/Foundation.framework//Versions/C/Foundation}
+	 * <hr>
+	 * {@inheritDoc}
+	 */
+	@Override
+	protected FSRL resolveLibraryFile(GFileSystem fs, Path libraryParentPath, String libraryName)
+			throws IOException {
+		GFile libraryParentDir =
+			fs.lookup(libraryParentPath != null ? libraryParentPath.toString() : null);
+		if (libraryParentDir != null) {
+			for (GFile file : fs.getListing(libraryParentDir)) {
+				if (file.isDirectory() && file.getName().equals("Versions")) {
+					Path versionsPath = libraryParentPath.resolve(file.getName());
+					List<GFile> versionListion = fs.getListing(file);
+					if (!versionListion.isEmpty()) {
+						GFile specificVersionDir = versionListion.get(0);
+						if (specificVersionDir.isDirectory()) {
+							return resolveLibraryFile(fs,
+								versionsPath.resolve(specificVersionDir.getName()), libraryName);
+						}
+					}
+				}
+				else if (file.isDirectory()) {
+					continue;
+				}
+				if (file.getName().equals(libraryName)) {
+					return file.getFSRL();
+				}
+			}
+		}
+		return null;
 	}
 }

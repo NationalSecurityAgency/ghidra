@@ -29,7 +29,25 @@ import ghidra.util.Msg;
 import ghidra.util.xml.XmlUtilities;
 
 public class XmlSchemaContext extends DefaultSchemaContext {
-	protected static final Set<String> TRUES = Set.of("true", "yes", "y", "1");
+	protected static final String ELEM_CONTEXT = "context";
+	protected static final String ATTR_CANONICAL = "canonical";
+	protected static final String ELEM_SCHEMA = "schema";
+	protected static final String ATTR_ELEMENT_RESYNC = "elementResync";
+	protected static final String ATTR_ATTRIBUTE_RESYNC = "attributeResync";
+	protected static final String ELEM_INTERFACE = "interface";
+	protected static final String ELEM_ELEMENT = "element";
+	protected static final String ATTR_INDEX = "index";
+	protected static final String ELEM_ATTRIBUTE = "attribute";
+	protected static final String ATTR_NAME = "name";
+	protected static final String ATTR_SCHEMA = "schema";
+	protected static final String ATTR_REQUIRED = "required";
+	protected static final String ATTR_FIXED = "fixed";
+	protected static final String ATTR_HIDDEN = "hidden";
+	protected static final String ELEM_ATTRIBUTE_ALIAS = "attribute-alias";
+	protected static final String ATTR_FROM = "from";
+	protected static final String ATTR_TO = "to";
+	protected static final String YES = "yes";
+	protected static final Set<String> TRUES = Set.of("true", YES, "y", "1");
 
 	protected static boolean parseBoolean(Element ele, String attrName) {
 		return TRUES.contains(ele.getAttributeValue(attrName, "no").toLowerCase());
@@ -40,7 +58,7 @@ public class XmlSchemaContext extends DefaultSchemaContext {
 	}
 
 	public static Element contextToXml(SchemaContext ctx) {
-		Element result = new Element("context");
+		Element result = new Element(ELEM_CONTEXT);
 		for (TargetObjectSchema schema : ctx.getAllSchemas()) {
 			Element schemaElem = schemaToXml(schema);
 			if (schemaElem != null) {
@@ -51,21 +69,28 @@ public class XmlSchemaContext extends DefaultSchemaContext {
 	}
 
 	public static Element attributeSchemaToXml(AttributeSchema as) {
-		Element attrElem = new Element("attribute");
+		Element attrElem = new Element(ELEM_ATTRIBUTE);
 		if (!as.getName().equals("")) {
-			XmlUtilities.setStringAttr(attrElem, "name", as.getName());
+			XmlUtilities.setStringAttr(attrElem, ATTR_NAME, as.getName());
 		}
-		XmlUtilities.setStringAttr(attrElem, "schema", as.getSchema().toString());
+		XmlUtilities.setStringAttr(attrElem, ATTR_SCHEMA, as.getSchema().toString());
 		if (as.isRequired()) {
-			XmlUtilities.setStringAttr(attrElem, "required", "yes");
+			XmlUtilities.setStringAttr(attrElem, ATTR_REQUIRED, YES);
 		}
 		if (as.isFixed()) {
-			XmlUtilities.setStringAttr(attrElem, "fixed", "yes");
+			XmlUtilities.setStringAttr(attrElem, ATTR_FIXED, YES);
 		}
 		if (as.isHidden()) {
-			XmlUtilities.setStringAttr(attrElem, "hidden", "yes");
+			XmlUtilities.setStringAttr(attrElem, ATTR_HIDDEN, YES);
 		}
 		return attrElem;
+	}
+
+	public static Element aliasToXml(Map.Entry<String, String> alias) {
+		Element aliasElem = new Element(ELEM_ATTRIBUTE_ALIAS);
+		XmlUtilities.setStringAttr(aliasElem, ATTR_FROM, alias.getKey());
+		XmlUtilities.setStringAttr(aliasElem, ATTR_TO, alias.getValue());
+		return aliasElem;
 	}
 
 	public static Element schemaToXml(TargetObjectSchema schema) {
@@ -76,39 +101,52 @@ public class XmlSchemaContext extends DefaultSchemaContext {
 			return null;
 		}
 
-		Element result = new Element("schema");
-		XmlUtilities.setStringAttr(result, "name", schema.getName().toString());
+		Element result = new Element(ELEM_SCHEMA);
+		XmlUtilities.setStringAttr(result, ATTR_NAME, schema.getName().toString());
 		for (Class<? extends TargetObject> iface : schema.getInterfaces()) {
-			Element ifElem = new Element("interface");
-			XmlUtilities.setStringAttr(ifElem, "name", DebuggerObjectModel.requireIfaceName(iface));
+			Element ifElem = new Element(ELEM_INTERFACE);
+			XmlUtilities.setStringAttr(ifElem, ATTR_NAME,
+				DebuggerObjectModel.requireIfaceName(iface));
 			result.addContent(ifElem);
 		}
 
 		if (schema.isCanonicalContainer()) {
-			XmlUtilities.setStringAttr(result, "canonical", "yes");
+			XmlUtilities.setStringAttr(result, ATTR_CANONICAL, YES);
 		}
-		XmlUtilities.setStringAttr(result, "elementResync",
+		XmlUtilities.setStringAttr(result, ATTR_ELEMENT_RESYNC,
 			schema.getElementResyncMode().name());
-		XmlUtilities.setStringAttr(result, "attributeResync",
+		XmlUtilities.setStringAttr(result, ATTR_ATTRIBUTE_RESYNC,
 			schema.getAttributeResyncMode().name());
 
 		for (Map.Entry<String, SchemaName> ent : schema.getElementSchemas().entrySet()) {
-			Element elemElem = new Element("element");
-			XmlUtilities.setStringAttr(elemElem, "index", ent.getKey());
-			XmlUtilities.setStringAttr(elemElem, "schema", ent.getValue().toString());
+			Element elemElem = new Element(ELEM_ELEMENT);
+			XmlUtilities.setStringAttr(elemElem, ATTR_INDEX, ent.getKey());
+			XmlUtilities.setStringAttr(elemElem, ATTR_SCHEMA, ent.getValue().toString());
 			result.addContent(elemElem);
 		}
-		Element deElem = new Element("element");
-		XmlUtilities.setStringAttr(deElem, "schema", schema.getDefaultElementSchema().toString());
+		Element deElem = new Element(ELEM_ELEMENT);
+		XmlUtilities.setStringAttr(deElem, ATTR_SCHEMA,
+			schema.getDefaultElementSchema().toString());
 		result.addContent(deElem);
 
-		for (AttributeSchema as : schema.getAttributeSchemas().values()) {
+		for (Map.Entry<String, AttributeSchema> ent : schema.getAttributeSchemas().entrySet()) {
+			AttributeSchema as = ent.getValue();
+			if (!ent.getKey().equals(as.getName())) {
+				// Exclude aliases here
+				continue;
+			}
 			Element attrElem = attributeSchemaToXml(as);
 			result.addContent(attrElem);
 		}
 		AttributeSchema das = schema.getDefaultAttributeSchema();
 		Element daElem = attributeSchemaToXml(das);
 		result.addContent(daElem);
+
+		// Yes, these will be the "resolved" aliases, but I think that's okay.
+		for (Map.Entry<String, String> alias : schema.getAttributeAliases().entrySet()) {
+			Element aliasElem = aliasToXml(alias);
+			result.addContent(aliasElem);
+		}
 
 		return result;
 	}
@@ -138,7 +176,7 @@ public class XmlSchemaContext extends DefaultSchemaContext {
 
 	public static XmlSchemaContext contextFromXml(Element contextElem) {
 		XmlSchemaContext ctx = new XmlSchemaContext();
-		for (Element schemaElem : XmlUtilities.getChildren(contextElem, "schema")) {
+		for (Element schemaElem : XmlUtilities.getChildren(contextElem, ELEM_SCHEMA)) {
 			ctx.schemaFromXml(schemaElem);
 		}
 		return ctx;
@@ -150,11 +188,20 @@ public class XmlSchemaContext extends DefaultSchemaContext {
 		return names.computeIfAbsent(name, SchemaName::new);
 	}
 
-	public TargetObjectSchema schemaFromXml(Element schemaElem) {
-		SchemaBuilder builder = builder(name(schemaElem.getAttributeValue("name", "")));
+	private String requireAttributeValue(Element elem, String name) {
+		String value = elem.getAttributeValue(name);
+		if (value == null) {
+			throw new IllegalArgumentException(
+				"Missing attribute '%s' in %s".formatted(name, elem));
+		}
+		return value;
+	}
 
-		for (Element ifaceElem : XmlUtilities.getChildren(schemaElem, "interface")) {
-			String ifaceName = ifaceElem.getAttributeValue("name");
+	public TargetObjectSchema schemaFromXml(Element schemaElem) {
+		SchemaBuilder builder = builder(name(schemaElem.getAttributeValue(ATTR_NAME, "")));
+
+		for (Element ifaceElem : XmlUtilities.getChildren(schemaElem, ELEM_INTERFACE)) {
+			String ifaceName = requireAttributeValue(ifaceElem, ATTR_NAME);
 			Class<? extends TargetObject> iface = TargetObject.INTERFACES_BY_NAME.get(ifaceName);
 			if (iface == null) {
 				Msg.warn(this, "Unknown interface name: '" + ifaceName + "'");
@@ -164,27 +211,33 @@ public class XmlSchemaContext extends DefaultSchemaContext {
 			}
 		}
 
-		builder.setCanonicalContainer(parseBoolean(schemaElem, "canonical"));
+		builder.setCanonicalContainer(parseBoolean(schemaElem, ATTR_CANONICAL));
 		builder.setElementResyncMode(
-			ResyncMode.valueOf(schemaElem.getAttributeValue("elementResync")));
+			ResyncMode.valueOf(requireAttributeValue(schemaElem, ATTR_ELEMENT_RESYNC)));
 		builder.setAttributeResyncMode(
-			ResyncMode.valueOf(schemaElem.getAttributeValue("attributeResync")));
+			ResyncMode.valueOf(requireAttributeValue(schemaElem, ATTR_ATTRIBUTE_RESYNC)));
 
-		for (Element elemElem : XmlUtilities.getChildren(schemaElem, "element")) {
-			SchemaName schema = name(elemElem.getAttributeValue("schema"));
-			String index = elemElem.getAttributeValue("index", "");
+		for (Element elemElem : XmlUtilities.getChildren(schemaElem, ELEM_ELEMENT)) {
+			SchemaName schema = name(requireAttributeValue(elemElem, ATTR_SCHEMA));
+			String index = elemElem.getAttributeValue(ATTR_INDEX, "");
 			builder.addElementSchema(index, schema, elemElem);
 		}
 
-		for (Element attrElem : XmlUtilities.getChildren(schemaElem, "attribute")) {
-			SchemaName schema = name(attrElem.getAttributeValue("schema"));
-			boolean required = parseBoolean(attrElem, "required");
-			boolean fixed = parseBoolean(attrElem, "fixed");
-			boolean hidden = parseBoolean(attrElem, "hidden");
+		for (Element attrElem : XmlUtilities.getChildren(schemaElem, ELEM_ATTRIBUTE)) {
+			SchemaName schema = name(requireAttributeValue(attrElem, ATTR_SCHEMA));
+			boolean required = parseBoolean(attrElem, ATTR_REQUIRED);
+			boolean fixed = parseBoolean(attrElem, ATTR_FIXED);
+			boolean hidden = parseBoolean(attrElem, ATTR_HIDDEN);
 
-			String name = attrElem.getAttributeValue("name", "");
+			String name = attrElem.getAttributeValue(ATTR_NAME, "");
 			builder.addAttributeSchema(
 				new DefaultAttributeSchema(name, schema, required, fixed, hidden), attrElem);
+		}
+
+		for (Element aliasElem : XmlUtilities.getChildren(schemaElem, ELEM_ATTRIBUTE_ALIAS)) {
+			String from = requireAttributeValue(aliasElem, ATTR_FROM);
+			String to = requireAttributeValue(aliasElem, ATTR_TO);
+			builder.addAttributeAlias(from, to, aliasElem);
 		}
 
 		return builder.buildAndAdd();

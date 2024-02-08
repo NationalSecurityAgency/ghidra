@@ -23,12 +23,11 @@ import docking.action.*;
 import docking.tool.ToolConstants;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
-import ghidra.framework.plugintool.util.PluginClassManager;
 import ghidra.util.HelpLocation;
 
 public class StandAlonePluginTool extends PluginTool {
 
-	private PluginClassManager pluginClassManager;
+	private PluginsConfiguration pluginClassManager;
 	private DockingAction configureToolAction;
 	private final GenericStandAloneApplication app;
 	private final String name;
@@ -37,14 +36,6 @@ public class StandAlonePluginTool extends PluginTool {
 		super(null, null, app.getToolServices(), name, true, hasStatus, false);
 		this.app = app;
 		this.name = name;
-	}
-
-	@Override
-	public PluginClassManager getPluginClassManager() {
-		if (pluginClassManager == null) {
-			pluginClassManager = new PluginClassManager(Plugin.class, null);
-		}
-		return pluginClassManager;
 	}
 
 	@Override

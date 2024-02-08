@@ -49,8 +49,7 @@ abstract class CompositeDBAdapter implements DBRecordAdapter {
 		CompositeDBAdapterV5V6.V5V6_COMPOSITE_SOURCE_SYNC_TIME_COL;
 	static final int COMPOSITE_LAST_CHANGE_TIME_COL =
 		CompositeDBAdapterV5V6.V5V6_COMPOSITE_LAST_CHANGE_TIME_COL;
-	static final int COMPOSITE_PACKING_COL =
-		CompositeDBAdapterV5V6.V5V6_COMPOSITE_PACK_COL;
+	static final int COMPOSITE_PACKING_COL = CompositeDBAdapterV5V6.V5V6_COMPOSITE_PACK_COL;
 	static final int COMPOSITE_MIN_ALIGN_COL = CompositeDBAdapterV5V6.V5V6_COMPOSITE_MIN_ALIGN_COL;
 
 	// Stored Packing and Minimum Alignment values are consistent with CompositeInternal
@@ -217,6 +216,7 @@ abstract class CompositeDBAdapter implements DBRecordAdapter {
 	 * @return the composite data type record iterator.
 	 * @throws IOException if the database can't be accessed.
 	 */
+	@Override
 	public abstract RecordIterator getRecords() throws IOException;
 
 	/**
@@ -272,9 +272,10 @@ abstract class CompositeDBAdapter implements DBRecordAdapter {
 			throws IOException;
 
 	/**
-	 * Get the number of composite records
+	 * Get the number of composite datatype records
 	 * @return total number of composite records
 	 */
+	@Override
 	public abstract int getRecordCount();
 
 }

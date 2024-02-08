@@ -25,6 +25,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import generic.util.image.ImageUtils;
+import ghidra.framework.Application;
 import ghidra.util.Msg;
 
 /**
@@ -94,7 +95,7 @@ public class IconProvider {
 		}
 
 		try {
-			File imageFile = File.createTempFile("temp.help.icon", null);
+			File imageFile = Application.createTempFile("temp.help.icon", null);
 			imageFile.deleteOnExit(); // don't let this linger
 			ImageIcon imageIcon = ResourceManager.getImageIcon(icon);
 			ImageUtils.writeFile(imageIcon.getImage(), imageFile);

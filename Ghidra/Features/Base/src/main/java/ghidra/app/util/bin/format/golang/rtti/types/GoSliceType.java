@@ -20,6 +20,7 @@ import java.util.Set;
 
 import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.bin.format.golang.structmapping.*;
+import ghidra.app.util.viewer.field.AddressAnnotatedStringHandler;
 import ghidra.program.model.data.*;
 
 /**
@@ -28,16 +29,22 @@ import ghidra.program.model.data.*;
  * See {@link GoRttiMapper#getGenericSliceDT()} or the "runtime.slice" type for the definition of
  * a instance of a slice variable in memory. 
 */
-@StructureMapping(structureName = "runtime.slicetype")
+@StructureMapping(structureName = {"runtime.slicetype", "internal/abi.SliceType"})
 public class GoSliceType extends GoType {
 
 	@FieldMapping
-	@MarkupReference("element")
+	@MarkupReference("getElement")
 	private long elem;
 
 	public GoSliceType() {
+		// empty
 	}
 
+	/**
+	 * Returns a reference to the element's type.
+	 * @return reference to the element's type
+	 * @throws IOException if error reading data
+	 */
 	@Markup
 	public GoType getElement() throws IOException {
 		return programContext.getGoType(elem);
@@ -45,18 +52,26 @@ public class GoSliceType extends GoType {
 
 	@Override
 	public DataType recoverDataType() throws IOException {
-		int arrayPtrComponentIndex = 0; /* HACK, field ordinal of void* data field in slice type */
 		Structure genericSliceDT = programContext.getGenericSliceDT();
-		DataTypeComponent arrayDTC = genericSliceDT.getComponent(arrayPtrComponentIndex);
-
-		GoType elementType = getElement();
-		DataType elementDT = elementType.recoverDataType();
-		Pointer elementPtrDT = programContext.getDTM().getPointer(elementDT);
 
 		StructureDataType sliceDT =
-			new StructureDataType(programContext.getRecoveredTypesCp(), typ.getNameString(), 0,
-				programContext.getDTM());
+			new StructureDataType(programContext.getRecoveredTypesCp(getPackagePathString()),
+				getUniqueTypename(), genericSliceDT.getLength(), programContext.getDTM());
+
+		// ensure the sliceDT is filled out before getting the element's data type to ensure
+		// any other data types pulled in that ref this slice don't change size when trying to
+		// enable packing
 		sliceDT.replaceWith(genericSliceDT);
+
+		programContext.cacheRecoveredDataType(this, sliceDT);
+
+		// fixup the generic void* field with the specific element* type
+		GoType elementType = getElement();
+		DataType elementDT = programContext.getRecoveredType(elementType);
+		Pointer elementPtrDT = programContext.getDTM().getPointer(elementDT);
+
+		int arrayPtrComponentIndex = 0; /* HACK, field ordinal of void* data field in slice type */
+		DataTypeComponent arrayDTC = genericSliceDT.getComponent(arrayPtrComponentIndex);
 		sliceDT.replace(arrayPtrComponentIndex, elementPtrDT, -1, arrayDTC.getFieldName(),
 			arrayDTC.getComment());
 
@@ -73,6 +88,31 @@ public class GoSliceType extends GoType {
 			elementType.discoverGoTypes(discoveredTypes);
 		}
 		return true;
+	}
+
+	@Override
+	public String getStructureNamespace() throws IOException {
+		String packagePath = getPackagePathString();
+		if (packagePath != null) {
+			return packagePath;
+		}
+		GoType elementType = getElement();
+		return elementType != null
+				? elementType.getStructureNamespace()
+				: super.getStructureNamespace();
+	}
+
+	@Override
+	protected String getTypeDeclString() throws IOException {
+		// type CustomSliceType []elementType
+		String selfName = typ.getName();
+		String elemName = programContext.getGoTypeName(elem);
+		String defStr = "[]%s".formatted(elemName);
+		String defStrWithLinks = "[]%s".formatted(
+			AddressAnnotatedStringHandler.createAddressAnnotationString(elem, elemName));
+		boolean hasName = !defStr.equals(selfName);
+
+		return "type %s%s".formatted(hasName ? selfName + " " : "", defStrWithLinks);
 	}
 
 }

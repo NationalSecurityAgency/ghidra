@@ -27,7 +27,7 @@ import ghidra.framework.plugintool.util.PluginStatus;
 @PluginInfo(
 	status = PluginStatus.STABLE,
 	packageName = DeveloperPluginPackage.NAME,
-	category = PluginCategoryNames.TESTING,
+	category = PluginCategoryNames.DIAGNOSTIC,
 	shortDescription = "Show Domain Folder change notifications",
 	description = "Displays active project domain folder change notifications",
 	servicesRequired = { FrontEndService.class }

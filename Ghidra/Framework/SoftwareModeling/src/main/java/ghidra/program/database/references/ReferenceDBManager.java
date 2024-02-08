@@ -33,7 +33,7 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.*;
-import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.Lock;
 import ghidra.util.Msg;
 import ghidra.util.exception.*;
@@ -303,6 +303,17 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 	 * @return combined reference type, or the newType if unable to combine
 	 */
 	private RefType combineReferenceType(RefType newType, RefType oldType) {
+		// check if types are the same, if same no use doing work replacing reference
+		if (newType == oldType) {
+			return oldType;
+		}
+		// any flow reference should be used over the existing ref to the same location
+		if (newType.isFlow()) {
+			return newType;  // allow any new flow ref to replace old type
+		}
+		if (oldType.isFlow()) {
+			return oldType; // always keep flow over new data ref
+		}
 		if (newType == RefType.DATA) {
 			if (oldType.isData()) {
 				return oldType;
@@ -438,6 +449,9 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		if (!fromAddr.isMemoryAddress()) {
 			throw new IllegalArgumentException("From address must be memory address");
 		}
+		if (!type.isData()) {
+			throw new IllegalArgumentException("Invalid stack reference type: " + type);
+		}
 		Function function = program.getFunctionManager().getFunctionContaining(fromAddr);
 		if (function == null) {
 			throw new IllegalArgumentException(
@@ -476,6 +490,9 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 			RefType type, SourceType sourceType) {
 		if (!fromAddr.isMemoryAddress()) {
 			throw new IllegalArgumentException("From address must be memory address");
+		}
+		if (!type.isData()) {
+			throw new IllegalArgumentException("Invalid register reference type: " + type);
 		}
 		removeAllFrom(fromAddr, opIndex);
 		try {
@@ -526,8 +543,8 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		}
 
 		if (badOffsetReference) {
-			Msg.warn(this, "Offset Reference from " + fromAddr +
-				" produces bad Xref into EXTERNAL block");
+			Msg.warn(this,
+				"Offset Reference from " + fromAddr + " produces bad Xref into EXTERNAL block");
 		}
 
 		try {
@@ -562,9 +579,9 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		if (!fromAddr.isMemoryAddress()) {
 			throw new IllegalArgumentException("From address must be memory addresses");
 		}
-		removeAllFrom(fromAddr, opIndex);
 		try {
 			if (symbolMgr.getPrimarySymbol(location.getExternalSpaceAddress()) != null) {
+				removeAllFrom(fromAddr, opIndex);
 				return addRef(fromAddr, location.getExternalSpaceAddress(), type, sourceType,
 					opIndex, false, false, 0);
 			}
@@ -587,24 +604,17 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 	public Reference addExternalReference(Address fromAddr, String libraryName, String extLabel,
 			Address extAddr, SourceType sourceType, int opIndex, RefType type)
 			throws InvalidInputException, DuplicateNameException {
-		if (libraryName == null || libraryName.length() == 0) {
-			throw new InvalidInputException("A valid library name must be specified.");
+
+		if (!fromAddr.isMemoryAddress()) {
+			throw new IllegalArgumentException("From addresses must be memory addresses");
 		}
-		if (extLabel != null && extLabel.length() == 0) {
-			extLabel = null;
-		}
-		if (extLabel == null && extAddr == null) {
-			throw new InvalidInputException("Either an external label or address is required");
-		}
-		if (!fromAddr.isMemoryAddress() || (extAddr != null && !extAddr.isMemoryAddress())) {
-			throw new IllegalArgumentException(
-				"From and extAddr addresses must be memory addresses");
-		}
-		removeAllFrom(fromAddr, opIndex);
 		try {
-			ExternalManagerDB extMgr = (ExternalManagerDB) program.getExternalManager();
+			ExternalManagerDB extMgr = program.getExternalManager();
 			ExternalLocation extLoc =
 				extMgr.addExtLocation(libraryName, extLabel, extAddr, sourceType);
+
+			removeAllFrom(fromAddr, opIndex);
+
 			Address toAddr = extLoc.getExternalSpaceAddress();
 
 			return addRef(fromAddr, toAddr, type, sourceType, opIndex, false, false, 0);
@@ -619,24 +629,16 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 	public Reference addExternalReference(Address fromAddr, Namespace extNamespace, String extLabel,
 			Address extAddr, SourceType sourceType, int opIndex, RefType type)
 			throws InvalidInputException, DuplicateNameException {
-		if (extNamespace == null || !extNamespace.isExternal()) {
-			throw new InvalidInputException("The namespace must be an external namespace.");
+		if (!fromAddr.isMemoryAddress()) {
+			throw new IllegalArgumentException("From addresses must be memory addresses");
 		}
-		if (extLabel != null && extLabel.length() == 0) {
-			extLabel = null;
-		}
-		if (extLabel == null && extAddr == null) {
-			throw new InvalidInputException("Either an external label or address is required");
-		}
-		if (!fromAddr.isMemoryAddress() || (extAddr != null && !extAddr.isMemoryAddress())) {
-			throw new IllegalArgumentException(
-				"From and extAddr addresses must be memory addresses");
-		}
-		removeAllFrom(fromAddr, opIndex);
 		try {
-			ExternalManagerDB extMgr = (ExternalManagerDB) program.getExternalManager();
+			ExternalManagerDB extMgr = program.getExternalManager();
 			ExternalLocation extLoc =
 				extMgr.addExtLocation(extNamespace, extLabel, extAddr, sourceType);
+
+			removeAllFrom(fromAddr, opIndex);
+
 			Address toAddr = extLoc.getExternalSpaceAddress();
 			return addRef(fromAddr, toAddr, type, sourceType, opIndex, false, false, 0);
 		}
@@ -657,8 +659,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 	public Variable getReferencedVariable(Reference reference) {
 		RefType refType = reference.getReferenceType();
 		return program.getFunctionManager()
-				.getReferencedVariable(reference.getFromAddress(),
-					reference.getToAddress(), 0,
+				.getReferencedVariable(reference.getFromAddress(), reference.getToAddress(), 0,
 					!refType.isWrite() && (refType.isRead() || refType.isIndirect()));
 	}
 
@@ -740,8 +741,8 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		return new Scope(var.getFirstUseOffset(), outOfScopeOffset);
 	}
 
-	private List<Reference> getScopedVariableReferences(VariableStorage storage,
-			Function function, Scope scope) {
+	private List<Reference> getScopedVariableReferences(VariableStorage storage, Function function,
+			Scope scope) {
 
 		SortedMap<Address, List<Reference>> dataReferences =
 			functionCacher.getFunctionDataReferences();
@@ -1263,8 +1264,8 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 			catch (IOException e) {
 				program.dbError(e);
 			}
-			program.setObjChanged(ChangeManager.DOCR_SYMBOL_ASSOCIATION_ADDED, ref.getFromAddress(),
-				ref, null, s);
+			program.setObjChanged(ProgramEvent.SYMBOL_ASSOCIATION_ADDED, ref.getFromAddress(), ref,
+				null, s);
 		}
 		finally {
 			lock.release();
@@ -1276,8 +1277,8 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		lock.acquire();
 		try {
 			setSymbolID(ref, -1);
-			program.setObjChanged(ChangeManager.DOCR_SYMBOL_ASSOCIATION_REMOVED,
-				ref.getFromAddress(), ref, null, null);
+			program.setObjChanged(ProgramEvent.SYMBOL_ASSOCIATION_REMOVED, ref.getFromAddress(),
+				ref, null, null);
 		}
 		catch (IOException e) {
 			program.dbError(e);
@@ -1602,11 +1603,11 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 	}
 
 	private void externalEntryPointAdded(Address addr) {
-		program.setChanged(ChangeManager.DOCR_EXTERNAL_ENTRY_POINT_ADDED, addr, addr, null, null);
+		program.setChanged(ProgramEvent.EXTERNAL_ENTRY_ADDED, addr, addr, null, null);
 	}
 
 	private void externalEntryPointRemoved(Address addr) {
-		program.setChanged(ChangeManager.DOCR_EXTERNAL_ENTRY_POINT_REMOVED, addr, addr, null, null);
+		program.setChanged(ProgramEvent.EXTERNAL_ENTRY_REMOVED, addr, addr, null, null);
 	}
 
 	private RefList getFromRefs(Address from) {
@@ -1717,7 +1718,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 			addr = null;
 		}
 		functionCacher.clearCache();
-		program.setObjChanged(ChangeManager.DOCR_MEM_REFERENCE_ADDED, addr, ref, null, ref);
+		program.setObjChanged(ProgramEvent.REFERENCE_ADDED, addr, ref, null, ref);
 		if (ref.getReferenceType() == RefType.FALL_THROUGH) {
 			program.getCodeManager().fallThroughChanged(ref.getFromAddress(), ref);
 		}
@@ -1725,8 +1726,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 
 	private void referenceRemoved(Reference ref) {
 		functionCacher.clearCache();
-		program.setObjChanged(ChangeManager.DOCR_MEM_REFERENCE_REMOVED, ref.getFromAddress(), ref,
-			ref, null);
+		program.setObjChanged(ProgramEvent.REFERENCE_REMOVED, ref.getFromAddress(), ref, ref, null);
 		if (ref.getReferenceType() == RefType.FALL_THROUGH) {
 			program.getCodeManager().fallThroughChanged(ref.getFromAddress(), null);
 		}
@@ -1734,7 +1734,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 
 	private void referenceTypeChanged(Reference ref, RefType oldType, RefType newType) {
 		functionCacher.clearCache();
-		program.setObjChanged(ChangeManager.DOCR_MEM_REF_TYPE_CHANGED, ref.getFromAddress(), ref,
+		program.setObjChanged(ProgramEvent.REFERENCE_TYPE_CHANGED, ref.getFromAddress(), ref,
 			oldType, newType);
 		if (oldType == RefType.FALL_THROUGH) {
 			program.getCodeManager().fallThroughChanged(ref.getFromAddress(), null);
@@ -1743,12 +1743,12 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 
 	private void referencePrimaryChanged(Reference ref) {
 		if (ref.isPrimary()) {
-			program.setObjChanged(ChangeManager.DOCR_MEM_REF_PRIMARY_SET, ref.getFromAddress(), ref,
+			program.setObjChanged(ProgramEvent.REFERNCE_PRIMARY_SET, ref.getFromAddress(), ref,
 				null, ref);
 		}
 		else {
-			program.setObjChanged(ChangeManager.DOCR_MEM_REF_PRIMARY_REMOVED, ref.getFromAddress(),
-				ref, ref, null);
+			program.setObjChanged(ProgramEvent.REFERENCE_PRIMARY_REMOVED, ref.getFromAddress(), ref,
+				ref, null);
 		}
 	}
 
@@ -1914,9 +1914,8 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		Reference memRef;
 		if (ref.isOffsetReference()) {
 			OffsetReference offRef = (OffsetReference) ref;
-			memRef =
-				addOffsetMemReference(from, offRef.getBaseAddress(), true, offRef.getOffset(), type,
-				sourceType, opIndex);
+			memRef = addOffsetMemReference(from, offRef.getBaseAddress(), true, offRef.getOffset(),
+				type, sourceType, opIndex);
 		}
 		else if (ref.isShiftedReference()) {
 			ShiftedReference shiftRef = (ShiftedReference) ref;

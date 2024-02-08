@@ -15,12 +15,10 @@
  */
 package ghidra.app.util.bin.format.pdb2.pdbreader;
 
-import java.io.IOException;
 import java.util.NoSuchElementException;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.msf.MsfStream;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
-import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 
 /**
@@ -54,7 +52,7 @@ class GlobalReferenceIterator implements ParsingIterator<MsSymbolIterator> {
 				"Cannot create " + getClass() + " because PDB Debug Info is null");
 		}
 		symbolsStreamNumber = debugInfo.getSymbolRecordsStreamNumber();
-		if (symbolsStreamNumber == 0xffff) {
+		if (symbolsStreamNumber == MsfStream.NIL_STREAM_NUMBER) {
 			throw new PdbException(
 				"Cannot create " + getClass() + " because there is no symbol stream");
 		}
@@ -93,17 +91,10 @@ class GlobalReferenceIterator implements ParsingIterator<MsSymbolIterator> {
 			currentGlobalSymbolIterator = null;
 			return;
 		}
-		try {
-			Long offset = offsetIterator.next();
-			PdbByteReader reader =
-				pdb.getReaderForStreamNumber(symbolsStreamNumber, offset.intValue(),
-					MsfStream.MAX_STREAM_LENGTH);
-			currentGlobalSymbolIterator = new MsSymbolIterator(pdb, reader);
-		}
-		catch (IOException e) {
-			Msg.error(this, "Problem seen in find()", e);
-			currentGlobalSymbolIterator = null;
-		}
+		Long offset = offsetIterator.next();
+		currentGlobalSymbolIterator =
+			new MsSymbolIterator(pdb, symbolsStreamNumber, offset.intValue(),
+				MsfStream.MAX_STREAM_LENGTH);
 	}
 
 }
