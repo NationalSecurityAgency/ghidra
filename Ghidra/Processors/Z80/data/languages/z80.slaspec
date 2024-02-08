@@ -111,6 +111,14 @@ macro additionFlags(operand1, operand2) {
 	$(C_flag) = carry(operand1, operand2);
 }
 
+macro additionFlagsNoC(operand1, operand2) {
+	local AFmask = -1 >> 4;
+	$(H_flag) = (((operand1 & AFmask) + (operand2 & AFmask)) & (AFmask + 1)) != 0;
+	$(PV_flag) = scarry(operand1, operand2);
+	$(N_flag) = 0;
+#	$(C_flag) is not affected
+}
+
 macro additionFlagsNoPV(operand1, operand2) {
 	local AFmask = -1 >> 4;
 	$(H_flag) = (((operand1 & AFmask) + (operand2 & AFmask)) & (AFmask + 1)) != 0;
@@ -1021,7 +1029,7 @@ cc2: "C"   is bits3_3=0x7   { c:1 = $(C_flag); export c; }
 
 	reg3_3 = reg3_3 + 1;
 	setResultFlags(reg3_3);
-	additionFlags(r_temp, 1);
+	additionFlagsNoC(r_temp, 1);
 }
 
 :INC (HL)           is op0_8=0x34 & HL {
@@ -1032,7 +1040,7 @@ cc2: "C"   is bits3_3=0x7   { c:1 = $(C_flag); export c; }
 	val = val + 1;
 	MemStore(HL,val);
 	setResultFlags(val);
-	additionFlags(val_temp, 1);
+	additionFlagsNoC(val_temp, 1);
 }
 
 :INC ixMem8         is op0_8=0xdd; op0_8=0x34; ixMem8 {
@@ -1042,7 +1050,7 @@ cc2: "C"   is bits3_3=0x7   { c:1 = $(C_flag); export c; }
 	val = val + 1;
 	ixMem8 = val;
 	setResultFlags(val);
-	additionFlags(val_temp, 1);
+	additionFlagsNoC(val_temp, 1);
 }
 
 :INC iyMem8         is op0_8=0xfd; op0_8=0x34; iyMem8 {
@@ -1052,7 +1060,7 @@ cc2: "C"   is bits3_3=0x7   { c:1 = $(C_flag); export c; }
 	val = val + 1;
 	iyMem8 = val;
 	setResultFlags(val);
-	additionFlags(val_temp, 1);
+	additionFlagsNoC(val_temp, 1);
 }
 
 :DEC reg3_3         is op6_2=0x0 & reg3_3 & bits0_3=0x5 {
