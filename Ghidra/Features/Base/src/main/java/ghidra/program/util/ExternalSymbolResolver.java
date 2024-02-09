@@ -160,7 +160,7 @@ public class ExternalSymbolResolver implements Closeable {
 	 */
 	protected Program getLibraryProgram(String libPath) throws CancelledException {
 		Program result = loadedPrograms.get(libPath);
-		if (result == null && !problemLibraries.containsKey(libPath)) {
+		if (result == null && projectData != null && !problemLibraries.containsKey(libPath)) {
 			result = openLibraryFile(projectData.getFile(libPath), libPath);
 
 			if (result != null) {
