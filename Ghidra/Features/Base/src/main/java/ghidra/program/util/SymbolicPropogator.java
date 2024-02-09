@@ -1465,7 +1465,10 @@ public class SymbolicPropogator {
 		if (ptype == PcodeOp.BRANCH || ptype == PcodeOp.RETURN || ptype == PcodeOp.BRANCHIND) {
 			// if says this is branch, but has a fallthru, then really isn't a fallthru
 			//   assume the future flow will have flowed the correct info.
-			nextAddr = fallthru;
+			// only assign for branch if it isn't a degenerate fallthru to itself
+			if (!minInstrAddress.equals(fallthru)) {
+				nextAddr = fallthru;
+			}
 		}
 
 		return nextAddr;
