@@ -43,6 +43,31 @@ public abstract class AbstractMethodRecordMs extends AbstractParsableItem {
 		this.pdb = pdb;
 	}
 
+	/**
+	 * Returns the attributes of this procedure
+	 * @return the attributes
+	 */
+	public ClassFieldMsAttributes getAttributes() {
+		return attributes;
+	}
+
+	/**
+	 * Returns the record number of the data type (?) for this procedure
+	 * @return the record number
+	 */
+	public RecordNumber getProcedureTypeRecordNumber() {
+		return procedureRecordNumber;
+	}
+
+	/**
+	 * Returns the offset of the procedure in the VFTable if intro/virtual. Value of -1 means
+	 *  there was not a value
+	 * @return the offset
+	 */
+	public long getOptionalOffset() {
+		return optionalOffset;
+	}
+
 	@Override
 	public void emit(StringBuilder builder) {
 		// Making this up; no API for output.
