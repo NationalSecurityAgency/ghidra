@@ -67,7 +67,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		new ClipboardType(DataFlavor.stringFlavor, "Address");
 	public static final ClipboardType ADDRESS_TEXT_WITH_OFFSET_TYPE =
 		new ClipboardType(DataFlavor.stringFlavor, "Address w/ Offset");
-	public static final ClipboardType BYTE_SOURCE_OFFSET =
+	public static final ClipboardType BYTE_SOURCE_OFFSET_TYPE =
 		new ClipboardType(DataFlavor.stringFlavor, "Byte Source Offset");
 	public static final ClipboardType CODE_TEXT_TYPE =
 		new ClipboardType(DataFlavor.stringFlavor, "Formatted Code");
@@ -98,7 +98,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		list.add(CPP_BYTE_ARRAY_TYPE);
 		list.add(ADDRESS_TEXT_TYPE);
 		list.add(ADDRESS_TEXT_WITH_OFFSET_TYPE);
-		list.add(BYTE_SOURCE_OFFSET);
+		list.add(BYTE_SOURCE_OFFSET_TYPE);
 
 		return list;
 	}
@@ -226,7 +226,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		else if (copyType == ADDRESS_TEXT_WITH_OFFSET_TYPE) {
 			return copySymbolString(monitor);
 		}
-		else if (copyType == BYTE_SOURCE_OFFSET) {
+		else if (copyType == BYTE_SOURCE_OFFSET_TYPE) {
 			return copyByteSourceOffset(monitor);
 		}
 		else if (copyType == CODE_TEXT_TYPE) {
