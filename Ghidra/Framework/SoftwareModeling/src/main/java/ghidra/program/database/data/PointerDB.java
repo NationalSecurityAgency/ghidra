@@ -367,7 +367,7 @@ class PointerDB extends DataTypeDB implements Pointer {
 					hasLanguageDependantLength() ? -1 : getLength(), dataMgr);
 				DataType existingPtr =
 					dataMgr.getDataType(newDt.getCategoryPath(), newPtr.getName());
-				if (existingPtr != null) {
+				if (existingPtr != null && existingPtr != this) {
 					// avoid duplicate pointer - replace this pointer with existing one
 					dataMgr.addDataTypeToReplace(this, existingPtr);
 					return;
