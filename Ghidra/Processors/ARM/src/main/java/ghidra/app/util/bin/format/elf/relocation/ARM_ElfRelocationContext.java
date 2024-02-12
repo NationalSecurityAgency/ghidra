@@ -22,11 +22,11 @@ import ghidra.app.util.bin.format.elf.ElfSymbol;
 import ghidra.app.util.bin.format.elf.extend.ARM_ElfExtension;
 import ghidra.program.model.address.Address;
 
-class ARM_ElfRelocationContext extends ElfRelocationContext {
+class ARM_ElfRelocationContext extends ElfRelocationContext<ARM_ElfRelocationHandler> {
 
 	private final boolean applyPcBiasToRelativeRelocations;
 
-	protected ARM_ElfRelocationContext(ElfRelocationHandler handler, ElfLoadHelper loadHelper,
+	protected ARM_ElfRelocationContext(ARM_ElfRelocationHandler handler, ElfLoadHelper loadHelper,
 			Map<ElfSymbol, Address> symbolMap) {
 		super(handler, loadHelper, symbolMap);
 

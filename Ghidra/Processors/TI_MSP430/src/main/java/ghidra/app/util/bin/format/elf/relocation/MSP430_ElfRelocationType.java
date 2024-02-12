@@ -18,18 +18,30 @@ package ghidra.app.util.bin.format.elf.relocation;
 /**
  * class for elf_msp430_reloc_type (from binutils source)
  */
-public class MSP430_ElfRelocationConstants {
-	public static final int R_MSP430_NONE = 0;
-	public static final int R_MSP430_32 = 1;
-	public static final int R_MSP430_10_PCREL = 2;
-	public static final int R_MSP430_16 = 3;
-	public static final int R_MSP430_16_PCREL = 4;
-	public static final int R_MSP430_16_BYTE = 5;
-	public static final int R_MSP430_16_PCREL_BYTE = 6;
-	public static final int R_MSP430_2X_PCREL = 7;
-	public static final int R_MSP430_RL_PCREL = 8;
-	public static final int R_MSP430_8 = 9;
-	public static final int R_MSP430_SYM_DIFF = 10;
-	public static final int R_MSP430_SET_ULEB128 = 11; // GNU only.  
-	public static final int R_MSP430_SUB_ULEB128 = 12; // GNU only 
+public enum MSP430_ElfRelocationType implements ElfRelocationType {
+
+	R_MSP430_NONE(0),
+	R_MSP430_32(1),
+	R_MSP430_10_PCREL(2),
+	R_MSP430_16(3),
+	R_MSP430_16_PCREL(4),
+	R_MSP430_16_BYTE(5),
+	R_MSP430_16_PCREL_BYTE(6),
+	R_MSP430_2X_PCREL(7),
+	R_MSP430_RL_PCREL(8),
+	R_MSP430_8(9),
+	R_MSP430_SYM_DIFF(10),
+	R_MSP430_SET_ULEB128(11), // GNU only.  
+	R_MSP430_SUB_ULEB128(12); // GNU only 
+
+	public final int typeId;
+
+	private MSP430_ElfRelocationType(int typeId) {
+		this.typeId = typeId;
+	}
+
+	@Override
+	public int typeId() {
+		return typeId;
+	}
 }

@@ -23,9 +23,16 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.reloc.RelocationResult;
-import ghidra.util.exception.NotFoundException;
 
-public class MSP430_ElfRelocationHandler extends ElfRelocationHandler {
+public class MSP430_ElfRelocationHandler
+		extends AbstractElfRelocationHandler<MSP430_ElfRelocationType, ElfRelocationContext<?>> {
+
+	/**
+	 * Constructor
+	 */
+	public MSP430_ElfRelocationHandler() {
+		super(MSP430_ElfRelocationType.class);
+	}
 
 	@Override
 	public boolean canRelocate(ElfHeader elf) {
@@ -34,32 +41,25 @@ public class MSP430_ElfRelocationHandler extends ElfRelocationHandler {
 	}
 
 	@Override
-	public RelocationResult relocate(ElfRelocationContext elfRelocationContext,
-			ElfRelocation relocation, Address relocationAddress)
-			throws MemoryAccessException, NotFoundException {
-		int type = relocation.getType();
-		if (type == MSP430_ElfRelocationConstants.R_MSP430_NONE) {
-			return RelocationResult.SKIPPED;
-		}
+	protected RelocationResult relocate(ElfRelocationContext<?> elfRelocationContext,
+			ElfRelocation relocation, MSP430_ElfRelocationType type, Address relocationAddress,
+			ElfSymbol sym, Address symbolAddr, long symbolValue, String symbolName)
+			throws MemoryAccessException {
 
 		Program program = elfRelocationContext.getProgram();
 		Memory memory = program.getMemory();
 		int symbolIndex = relocation.getSymbolIndex();
 		long addend = relocation.getAddend(); // will be 0 for REL case
 		long offset = relocationAddress.getOffset();
-		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex); // may be null
-		String symbolName = elfRelocationContext.getSymbolName(symbolIndex);
-		long symbolValue = elfRelocationContext.getSymbolValue(sym);
-
-		int byteLength = 0;
+		int byteLength;
 
 		switch (type) {
-			case MSP430_ElfRelocationConstants.R_MSP430_32:
+			case R_MSP430_32:
 				int newIntValue = (int) (symbolValue + addend);
 				memory.setInt(relocationAddress, newIntValue);
 				byteLength = 4;
 				break;
-			case MSP430_ElfRelocationConstants.R_MSP430_10_PCREL:
+			case R_MSP430_10_PCREL:
 				short oldShortValue = memory.getShort(relocationAddress);
 				oldShortValue &= 0xfc00;
 				short newShortValue = (short) (symbolValue + addend - offset - 2);
@@ -69,32 +69,32 @@ public class MSP430_ElfRelocationHandler extends ElfRelocationHandler {
 				memory.setShort(relocationAddress, newShortValue);
 				byteLength = 2;
 				break;
-			case MSP430_ElfRelocationConstants.R_MSP430_16:
+			case R_MSP430_16:
 				newShortValue = (short) (symbolValue + addend);
 				memory.setShort(relocationAddress, newShortValue);
 				byteLength = 2;
 				break;
-			//case TI_MSP430_ElfRelocationConstants.R_MSP430_16_PCREL:
-			case MSP430_ElfRelocationConstants.R_MSP430_16_BYTE:
+			//case TI_R_MSP430_16_PCREL:
+			case R_MSP430_16_BYTE:
 				newShortValue = (short) (symbolValue + addend);
 				memory.setShort(relocationAddress, newShortValue);
 				byteLength = 2;
 				break;
-			case MSP430_ElfRelocationConstants.R_MSP430_16_PCREL_BYTE:
+			case R_MSP430_16_PCREL_BYTE:
 				newShortValue = (short) (symbolValue + addend - offset);
 				memory.setShort(relocationAddress, newShortValue);
 				byteLength = 2;
 				break;
-			//case TI_MSP430_ElfRelocationConstants.R_MSP430_2X_PCREL:
-			//case TI_MSP430_ElfRelocationConstants.R_MSP430_RL_PCREL:
-			case MSP430_ElfRelocationConstants.R_MSP430_8:
+			//case TI_R_MSP430_2X_PCREL:
+			//case TI_R_MSP430_RL_PCREL:
+			case R_MSP430_8:
 				byte newByteValue = (byte) (symbolValue + addend);
 				memory.setByte(relocationAddress, newByteValue);
 				byteLength = 1;
 				break;
-			//case TI_MSP430_ElfRelocationConstants.R_MSP430_SYM_DIFF:
-			//case TI_MSP430_ElfRelocationConstants.R_MSP430_SET_ULEB128:
-			//case TI_MSP430_ElfRelocationConstants.R_MSP430_SUB_ULEB128:
+			//case TI_R_MSP430_SYM_DIFF:
+			//case TI_R_MSP430_SET_ULEB128:
+			//case TI_R_MSP430_SUB_ULEB128:
 			default:
 				markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName,
 					elfRelocationContext.getLog());
