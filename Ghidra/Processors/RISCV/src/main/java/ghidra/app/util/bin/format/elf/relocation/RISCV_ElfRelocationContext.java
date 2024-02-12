@@ -20,10 +20,10 @@ import java.util.*;
 import ghidra.app.util.bin.format.elf.*;
 import ghidra.program.model.address.Address;
 
-class RISCV_ElfRelocationContext extends ElfRelocationContext {
+class RISCV_ElfRelocationContext extends ElfRelocationContext<RISCV_ElfRelocationHandler> {
 
-	protected RISCV_ElfRelocationContext(ElfRelocationHandler handler, ElfLoadHelper loadHelper,
-			Map<ElfSymbol, Address> symbolMap) {
+	protected RISCV_ElfRelocationContext(RISCV_ElfRelocationHandler handler,
+			ElfLoadHelper loadHelper, Map<ElfSymbol, Address> symbolMap) {
 		super(handler, loadHelper, symbolMap);
 	}
 
@@ -72,9 +72,9 @@ class RISCV_ElfRelocationContext extends ElfRelocationContext {
 		}
 		// look for hi20 relocation
 		while (relIndex < relocations.length && relocations[relIndex].getOffset() == symValue) {
-			int type = relocations[relIndex].getType();
-			if ((type == RISCV_ElfRelocationConstants.R_RISCV_PCREL_HI20) ||
-				(type == RISCV_ElfRelocationConstants.R_RISCV_GOT_HI20)) {
+			int typeId = relocations[relIndex].getType();
+			if ((typeId == RISCV_ElfRelocationType.R_RISCV_PCREL_HI20.typeId) ||
+				(typeId == RISCV_ElfRelocationType.R_RISCV_GOT_HI20.typeId)) {
 				return relocations[relIndex];
 			}
 			++relIndex;

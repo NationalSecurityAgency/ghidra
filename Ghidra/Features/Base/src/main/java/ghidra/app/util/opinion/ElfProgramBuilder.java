@@ -879,10 +879,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 		monitor.initialize(totalCount);
 
-		ElfRelocationContext context = null;
-		if (processRelocations) {
-			context = ElfRelocationContext.getRelocationContext(this, symbolMap);
-		}
+		ElfRelocationContext context = ElfRelocationContext.getRelocationContext(this, symbolMap);
 		try {
 			for (ElfRelocationTable relocationTable : relocationTables) {
 				monitor.checkCancelled();
@@ -979,7 +976,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 
 		boolean relrTypeUnknown = false;
-		long relrRelocationType = 0;
+		int relrRelocationType = 0;
 		if (relocationTable.isRelrTable() && context != null) {
 			relrRelocationType = context.getRelrRelocationType();
 			if (relrRelocationType == 0) {
@@ -993,7 +990,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 
-			long type = reloc.getType();
+			int type = reloc.getType();
 			if (type == 0) {
 				continue; // ignore relocation type 0 (i.e., ..._NONE)
 			}
@@ -1023,8 +1020,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			try {
 				if (unableToApplyRelocs) {
 					status = Status.FAILURE;
-					ElfRelocationHandler.markAsError(program, relocAddr, type, symbolName,
-						"missing symbol table", log);
+					context.markRelocationError(relocAddr, type, symbolIndex, symbolName,
+						"Missing symbol table");
 					continue;
 				}
 
@@ -1039,9 +1036,10 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					catch (Exception e) {
 						status = Status.FAILURE;
 						Msg.error(this,
-							"Unexpected exception while converting block to initialized", e);
-						ElfRelocationHandler.markAsUninitializedMemory(program, relocAddr, type,
-							reloc.getSymbolIndex(), symbolName, log);
+							"Unexpected exception while converting block to initialized for relocations",
+							e);
+						context.markRelocationError(relocAddr, type, symbolIndex, symbolName,
+							"Uninitialized memory");
 						continue;
 					}
 				}
@@ -1049,7 +1047,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				if (context != null) {
 					if (relrTypeUnknown) {
 						status = Status.UNSUPPORTED;
-						ElfRelocationHandler.markAsUnsupportedRelr(program, relocAddr);
+						ElfRelocationHandler.bookmarkUnsupportedRelr(program, relocAddr,
+							symbolIndex, symbolName);
 					}
 					else {
 						RelocationResult result = context.processRelocation(reloc, relocAddr);

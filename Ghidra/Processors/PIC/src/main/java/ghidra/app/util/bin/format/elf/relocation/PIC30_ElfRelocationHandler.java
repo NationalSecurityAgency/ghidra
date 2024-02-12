@@ -23,81 +23,18 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.reloc.RelocationResult;
 import ghidra.program.model.reloc.Relocation.Status;
-import ghidra.util.exception.NotFoundException;
+import ghidra.program.model.reloc.RelocationResult;
 
-public class PIC30_ElfRelocationHandler extends ElfRelocationHandler {
+public class PIC30_ElfRelocationHandler
+		extends AbstractElfRelocationHandler<PIC30_ElfRelocationType, PIC30_ElfRelocationContext> {
 
-	/* PIC30 Relocation Types */
-
-	// Numbers found in ./include/elf/pic30.h:
-	public static final int R_PIC30_NONE = 0;
-	public static final int R_PIC30_8 = 1;
-	public static final int R_PIC30_16 = 2;
-	public static final int R_PIC30_32 = 3;
-	public static final int R_PIC30_FILE_REG_BYTE = 4;
-	public static final int R_PIC30_FILE_REG = 5;
-	public static final int R_PIC30_FILE_REG_WORD = 6;
-	public static final int R_PIC30_FILE_REG_WORD_WITH_DST = 7;
-	public static final int R_PIC30_WORD = 8;
-	public static final int R_PIC30_PBYTE = 9;
-	public static final int R_PIC30_PWORD = 10;
-	public static final int R_PIC30_HANDLE = 11;
-	public static final int R_PIC30_PADDR = 12;
-	public static final int R_PIC30_P_PADDR = 13;
-	public static final int R_PIC30_PSVOFFSET = 14;
-	public static final int R_PIC30_TBLOFFSET = 15;
-	public static final int R_PIC30_WORD_HANDLE = 16;
-	public static final int R_PIC30_WORD_PSVOFFSET = 17;
-	public static final int R_PIC30_PSVPAGE = 18;
-	public static final int R_PIC30_P_PSVPAGE = 19;
-	public static final int R_PIC30_WORD_PSVPAGE = 20;
-	public static final int R_PIC30_WORD_TBLOFFSET = 21;
-	public static final int R_PIC30_TBLPAGE = 22;
-	public static final int R_PIC30_P_TBLPAGE = 23;
-	public static final int R_PIC30_WORD_TBLPAGE = 24;
-	public static final int R_PIC30_P_HANDLE = 25;
-	public static final int R_PIC30_P_PSVOFFSET = 26;
-	public static final int R_PIC30_P_TBLOFFSET = 27;
-	public static final int R_PIC30_PCREL_BRANCH = 28;
-	public static final int R_PIC30_BRANCH_ABSOLUTE = 29;
-	public static final int R_PIC30_PCREL_DO = 30;
-	public static final int R_PIC30_DO_ABSOLUTE = 31;
-	public static final int R_PIC30_PGM_ADDR_LSB = 32;
-	public static final int R_PIC30_PGM_ADDR_MSB = 33;
-	public static final int R_PIC30_UNSIGNED_4 = 34;
-	public static final int R_PIC30_UNSIGNED_5 = 35;
-	public static final int R_PIC30_BIT_SELECT_3 = 36;
-	public static final int R_PIC30_BIT_SELECT_4_BYTE = 37;
-	public static final int R_PIC30_BIT_SELECT_4 = 38;
-	public static final int R_PIC30_DSP_6 = 39;
-	public static final int R_PIC30_DSP_PRESHIFT = 40;
-	public static final int R_PIC30_SIGNED_10_BYTE = 41;
-	public static final int R_PIC30_UNSIGNED_10 = 42;
-	public static final int R_PIC30_UNSIGNED_14 = 43;
-	public static final int R_PIC30_FRAME_SIZE = 44;
-	public static final int R_PIC30_PWRSAV_MODE = 45;
-	public static final int R_PIC30_DMAOFFSET = 46;
-	public static final int R_PIC30_P_DMAOFFSET = 47;
-	public static final int R_PIC30_WORD_DMAOFFSET = 48;
-	public static final int R_PIC30_PSVPTR = 49;
-	public static final int R_PIC30_P_PSVPTR = 50;
-	public static final int R_PIC30_L_PSVPTR = 51;
-	public static final int R_PIC30_WORD_PSVPTR = 52;
-	public static final int R_PIC30_CALL_ACCESS = 53;
-	public static final int R_PIC30_PCREL_ACCESS = 54;
-	public static final int R_PIC30_ACCESS = 55;
-	public static final int R_PIC30_P_ACCESS = 56;
-	public static final int R_PIC30_L_ACCESS = 57;
-	public static final int R_PIC30_WORD_ACCESS = 58;
-	public static final int R_PIC30_EDSPAGE = 59;
-	public static final int R_PIC30_P_EDSPAGE = 60;
-	public static final int R_PIC30_WORD_EDSPAGE = 61;
-	public static final int R_PIC30_EDSOFFSET = 62;
-	public static final int R_PIC30_P_EDSOFFSET = 63;
-	public static final int R_PIC30_WORD_EDSOFFSET = 64;
-	public static final int R_PIC30_UNSIGNED_8 = 65;
+	/**
+	 * Constructor
+	 */
+	public PIC30_ElfRelocationHandler() {
+		super(PIC30_ElfRelocationType.class);
+	}
 
 	// cached state assumes new instance created for each import use
 	private Boolean isEDSVariant = null;
@@ -112,8 +49,8 @@ public class PIC30_ElfRelocationHandler extends ElfRelocationHandler {
 			Map<ElfSymbol, Address> symbolMap) {
 		return new PIC30_ElfRelocationContext(this, loadHelper, symbolMap);
 	}
-	
-	private boolean isEDSVariant(ElfRelocationContext elfRelocationContext) {
+
+	private boolean isEDSVariant(PIC30_ElfRelocationContext elfRelocationContext) {
 		if (isEDSVariant == null) {
 			// NOTE: non-EDS variants may improperly define DSRPAG 
 			// in register space which should be corrected
@@ -124,50 +61,37 @@ public class PIC30_ElfRelocationHandler extends ElfRelocationHandler {
 	}
 
 	@Override
-	public RelocationResult relocate(ElfRelocationContext elfRelocationContext,
-			ElfRelocation relocation, Address relocationAddress)
-			throws MemoryAccessException, NotFoundException {
-
-		int type = relocation.getType();
-		if (type == R_PIC30_NONE) {
-			return RelocationResult.SKIPPED;
-		}
+	protected RelocationResult relocate(PIC30_ElfRelocationContext elfRelocationContext,
+			ElfRelocation relocation, PIC30_ElfRelocationType type, Address relocationAddress,
+			ElfSymbol elfSymbol, Address symbolAddr, long symbolValue, String symbolName)
+			throws MemoryAccessException {
 
 		Program program = elfRelocationContext.getProgram();
 		Memory memory = program.getMemory();
-
-		int symbolIndex = relocation.getSymbolIndex();
 
 		int addend = (int) relocation.getAddend();
 
 		long relocWordOffset = (int) relocationAddress.getAddressableWordOffset();
 
-		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex); // may be null
-		int symbolValue = (int) elfRelocationContext.getSymbolValue(sym); // word offset
-
 		int oldValue = memory.getInt(relocationAddress);
 		short oldShortValue = memory.getShort(relocationAddress);
-
 		int newValue;
 		int byteLength = 2; // most relocations affect 2-bytes (change if different)
 
-
-		ElfHeader elf = elfRelocationContext.getElfHeader();
-		if (elf.e_machine() == ElfConstants.EM_DSPIC30F) {
-			switch (type) {
+		switch (type) {
 			case R_PIC30_16: // 2
 			case R_PIC30_FILE_REG_WORD: // 6
-				newValue = (symbolValue + addend + oldShortValue);
+				newValue = ((int) symbolValue + addend + oldShortValue);
 				memory.setShort(relocationAddress, (short) newValue);
 				break;
 			case R_PIC30_32: // 3
-				newValue = symbolValue + addend + oldValue;
+				newValue = (int) symbolValue + addend + oldValue;
 				memory.setInt(relocationAddress, newValue);
 				byteLength = 4;
 				break;
 			case R_PIC30_FILE_REG_BYTE: // 4 short
 			case R_PIC30_FILE_REG: // 5 short
-				int reloc = symbolValue;
+				int reloc = (int) symbolValue;
 				reloc += addend;
 				reloc += oldShortValue;
 				reloc &= 0x1fff;
@@ -175,7 +99,7 @@ public class PIC30_ElfRelocationHandler extends ElfRelocationHandler {
 				memory.setShort(relocationAddress, (short) newValue);
 				break;
 			case R_PIC30_FILE_REG_WORD_WITH_DST: // 7
-				reloc = symbolValue >> 1;
+				reloc = (int) symbolValue >> 1;
 				reloc += addend;
 				reloc += oldValue >> 4;
 				reloc &= 0x7fff;
@@ -185,7 +109,7 @@ public class PIC30_ElfRelocationHandler extends ElfRelocationHandler {
 				break;
 			case R_PIC30_WORD: // 8
 			case R_PIC30_WORD_TBLOFFSET: // 0x15
-				reloc = symbolValue;
+				reloc = (int) symbolValue;
 				reloc += addend;
 				reloc += oldValue >> 4;
 				reloc &= 0xffff;
@@ -194,7 +118,7 @@ public class PIC30_ElfRelocationHandler extends ElfRelocationHandler {
 				byteLength = 4;
 				break;
 			case R_PIC30_WORD_TBLPAGE: // 0x18
-				reloc = symbolValue >> 16;
+				reloc = (int) symbolValue >> 16;
 				reloc += addend;
 				reloc += oldValue >> 4;
 				reloc &= 0xffff;
@@ -211,11 +135,9 @@ public class PIC30_ElfRelocationHandler extends ElfRelocationHandler {
 				memory.setShort(relocationAddress, (short) (newValue & 0xffff));
 				break;
 			default:
-				String symbolName = elfRelocationContext.getSymbolName(symbolIndex);
-				markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName,
-						elfRelocationContext.getLog());
+				markAsUnhandled(program, relocationAddress, type, relocation.getSymbolIndex(),
+					symbolName, elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
-			}
 		}
 		return new RelocationResult(Status.APPLIED, byteLength);
 	}

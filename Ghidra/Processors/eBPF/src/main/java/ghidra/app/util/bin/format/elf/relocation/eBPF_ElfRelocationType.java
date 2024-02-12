@@ -15,25 +15,23 @@
  */
 package ghidra.app.util.bin.format.elf.relocation;
 
-import java.util.ArrayList;
-import java.util.List;
+public enum eBPF_ElfRelocationType implements ElfRelocationType {
 
-import ghidra.app.util.bin.format.elf.ElfHeader;
-import ghidra.util.classfinder.ClassSearcher;
+	R_BPF_NONE(0),			// No operation needed
+	R_BPF_64_64(1),			// S + A
+	R_BPF_64_ABS64(2),		// S + A
+	R_BPF_64_ABS32(3),		// S + A
+	R_BPF_64_NODYLD32(4),	// S + A
+	R_BPF_64_32(10);		// (S + A) / 8 - 1
 
-public final class ElfRelocationHandlerFactory {
+	public final int typeId;
 
-	public final static List<ElfRelocationHandler> getHandlers() {
-		return new ArrayList<ElfRelocationHandler>(
-			ClassSearcher.getInstances(ElfRelocationHandler.class));
+	private eBPF_ElfRelocationType(int typeId) {
+		this.typeId = typeId;
 	}
 
-	public final static ElfRelocationHandler getHandler(ElfHeader elf) {
-		for (ElfRelocationHandler handler : getHandlers()) {
-			if (handler.canRelocate(elf)) {
-				return handler;
-			}
-		}
-		return null;
+	@Override
+	public int typeId() {
+		return typeId;
 	}
 }
