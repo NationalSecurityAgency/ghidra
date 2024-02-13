@@ -19,6 +19,7 @@ import java.math.BigInteger;
 import java.util.*;
 import java.util.Map.Entry;
 
+import ghidra.app.nav.NavigationUtils;
 import ghidra.app.plugin.core.debug.service.emulation.*;
 import ghidra.app.plugin.core.debug.service.emulation.data.DefaultPcodeDebuggerAccess;
 import ghidra.app.plugin.processors.sleigh.SleighException;
@@ -38,6 +39,7 @@ import ghidra.pcodeCPort.slghsymbol.SleighSymbol;
 import ghidra.pcodeCPort.slghsymbol.VarnodeSymbol;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
+import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.symbol.Symbol;
@@ -102,13 +104,49 @@ public enum DebuggerPcodeUtils {
 				 * TODO: This may break things that check for the absence of a symbol
 				 * 
 				 * I don't think it'll affect expressions, but it could later affect user Sleigh
-				 * libraries than an expression might like to use. The better approach would be to
+				 * libraries that an expression might like to use. The better approach would be to
 				 * incorporate a better error message into the Sleigh compiler, but it won't always
 				 * know the use case for a clear message.
 				 */
 				throw new SleighException("Unknown register or label: '" + nm + "'");
 			}
 			return symbol;
+		}
+
+		protected SleighSymbol tryMap(String nm, Trace trace, long snap, Program program,
+				Symbol symbol, Address addr, List<SleighSymbol> externals) {
+			TraceLocation tloc =
+				mappings.getOpenMappedLocation(trace, new ProgramLocation(program, addr), snap);
+			if (tloc == null) {
+				return null;
+			}
+			SleighSymbol mapped = createSleighConstant(program.getName(), nm, tloc.getAddress());
+			if (!symbol.isExternal()) {
+				return mapped;
+			}
+			// Most externals will not map, but if one does, use it as a fallback
+			externals.add(mapped);
+			return null;
+		}
+
+		protected SleighSymbol tryExternalLinkage(String nm, Trace trace, long snap,
+				Program program, Symbol symbol, List<SleighSymbol> externals) {
+			if (!(symbol.getObject() instanceof Function func)) {
+				return null;
+			}
+			// This covers refs and thunks
+			Address[] extAddresses =
+				NavigationUtils.getExternalLinkageAddresses(program, symbol.getAddress());
+			if (extAddresses == null) {
+				return null;
+			}
+			for (Address addr : extAddresses) {
+				SleighSymbol mapped = tryMap(nm, trace, snap, program, symbol, addr, externals);
+				if (mapped != null) {
+					return mapped;
+				}
+			}
+			return null;
 		}
 
 		protected SleighSymbol findUserSymbol(String nm) {
@@ -121,22 +159,27 @@ public enum DebuggerPcodeUtils {
 				}
 				return createSleighConstant(trace.getName(), nm, symbol.getAddress());
 			}
+			List<SleighSymbol> externals = new ArrayList<>();
 			for (Program program : mappings.getOpenMappedProgramsAtSnap(trace, snap)) {
 				for (Symbol symbol : program.getSymbolTable().getSymbols(nm)) {
-					if (symbol.isDynamic() || symbol.isExternal()) {
-						continue;
-					}
 					if (symbol.getSymbolType() != SymbolType.FUNCTION &&
 						symbol.getSymbolType() != SymbolType.LABEL) {
 						continue;
 					}
-					TraceLocation tloc = mappings.getOpenMappedLocation(trace,
-						new ProgramLocation(program, symbol.getAddress()), snap);
-					if (tloc == null) {
-						return null;
+					SleighSymbol mapped =
+						tryMap(nm, trace, snap, program, symbol, symbol.getAddress(), externals);
+					if (mapped != null) {
+						return mapped;
 					}
-					return createSleighConstant(program.getName(), nm, tloc.getAddress());
+					mapped = tryExternalLinkage(nm, trace, snap, program, symbol, externals);
+					if (mapped != null) {
+						return mapped;
+					}
 				}
+			}
+			// TODO: Some way to prioritize among these?
+			for (SleighSymbol ext : externals) {
+				return ext;
 			}
 			return null;
 		}
