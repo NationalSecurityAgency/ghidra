@@ -1,0 +1,416 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Note: This file is a copy of BinExport's original protobuf definition. The
+ *       authoritative version is always in the upstream GitHub repository at:
+ *       https://github.com/google/binexport/blob/main/binexport2.proto
+ */
+// Copyright 2011-2024 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     https://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// This file describes a compact representation for disassembled binaries. It is
+// loosely based on the PostgreSQL database schema used by BinNavi's
+// postgresql_tables.sql (https://git.io/vzlYw).
+// It is the output format for the BinExport IDA plugin and the BinDetego
+// disassembler and consumed by the BinDiff comparison engine.
+
+// The representation is generic to accommodate various source architectures.
+// In particular 32 and 64 bit versions of x86, ARM, PowerPC and MIPS have been
+// tested.
+//
+// Multiple levels of deduping have been applied to make the format more compact
+// and avoid redundant data duplication. Some of this due to hard-earned
+// experience trying to cope with intentionally obfuscated malicious binaries.
+// Note in particular that the same instruction may occur in multiple basic
+// blocks and the same basic block in multiple functions (instruction and basic
+// block sharing). Implemented naively, malware can use this to cause
+// combinatorial explosion in memory usage, DOSing the analyst. This format
+// should store every unique expression, mnemonic, operand, instruction and
+// basic block only once instead of duplicating the information for every
+// instance of it.
+//
+// This format does _not_ try to be 100% backwards compatible with the old
+// version. In particular, we do not store IDA's comment types, making lossless
+// porting of IDA comments impossible. We do however, store comments and
+// expression substitutions, so porting the actual data is possible, just not
+// the exact IDA type.
+//
+// While it would be more natural to use addresses when defining call graph and
+// flow graph edges and other such references, it is more efficient to employ
+// one more level of indirection and use indices into the basic block or
+// function arrays instead. This is because addresses will usually use most of
+// the available 64 bit space while indices will be much smaller and compress
+// much better (less randomly distributed).
+//
+// We omit all fields that are set to their default value anyways. Note that
+// this has two side effects:
+//   - changing the defaults in this proto file will, in effect, change what's
+//     read from disk
+//   - the generated code has_* methods are somewhat less useful
+// WARNING: We omit the defaults manually in the code writing the data. Do not
+//          change the defaults here without changing the code!
+//
+// TODO(cblichmann): Link flow graphs to call graph nodes. The connection is
+//                   there via the address, but tricky to extract.
+
+syntax = "proto2";
+
+option java_package = "com.google.security.zynamics";
+option java_outer_classname = "BinExport";
+
+message BinExport2 {
+  message Meta {
+    reserved 5;  // Pre-BinDiff 4.3 padding
+
+    // Input binary filename including file extension but excluding file path.
+    // example: "insider_gcc.exe"
+    optional string executable_name = 1;
+
+    // Application defined executable id. Often the SHA256 hash of the input
+    // binary.
+    optional string executable_id = 2;
+
+    // Input architecture name, e.g. x86-32.
+    optional string architecture_name = 3;
+
+    // When did this file get created? Unix time. This may be used for some
+    // primitive versioning in case the file format ever changes.
+    optional int64 timestamp = 4;
+  }
+
+  message CallGraph {
+    message Vertex {
+      enum Type {
+        // Regular function with full disassembly.
+        NORMAL = 0;
+
+        // This function is a well known library function.
+        LIBRARY = 1;
+
+        // Imported from a dynamic link library (e.g. dll).
+        IMPORTED = 2;
+
+        // A thunk function, forwarding its work via an unconditional jump.
+        THUNK = 3;
+
+        // An invalid function (a function that contained invalid code or was
+        // considered invalid by some heuristics).
+        INVALID = 4;
+      }
+
+      // The function's entry point address.
+      optional uint64 address = 1;
+      optional Type type = 2 [default = NORMAL];
+
+      // If the function has a user defined, real name it will be given here.
+      // main() is a proper name, sub_BAADF00D is not (auto generated dummy
+      // name).
+      optional string mangled_name = 3;
+
+      // Demangled name if the function is a mangled C++ function and we could
+      // demangle it.
+      optional string demangled_name = 4;
+
+      // If this is a library function, what is its index in library arrays.
+      optional int32 library_index = 5;
+
+      // If module name, such as class name for DEX files, is present - index in
+      // module table.
+      optional int32 module_index = 6;
+    }
+
+    message Edge {
+      // source and target index into the vertex repeated field.
+      optional int32 source_vertex_index = 1;
+      optional int32 target_vertex_index = 2;
+    }
+
+    // vertices == functions in the call graph.
+    repeated Vertex vertex = 1;
+
+    // edges == calls in the call graph.
+    repeated Edge edge = 2;
+  }
+
+  // An operand consists of 1 or more expressions, linked together as a tree.
+  message Expression {
+    enum Type {
+      SYMBOL = 1;
+      IMMEDIATE_INT = 2;
+      IMMEDIATE_FLOAT = 3;
+      OPERATOR = 4;
+      REGISTER = 5;
+      SIZE_PREFIX = 6;
+      DEREFERENCE = 7;
+    }
+
+    // IMMEDIATE_INT is by far the most common type and thus we can save some
+    // space by omitting it as the default.
+    optional Type type = 1 [default = IMMEDIATE_INT];
+
+    // Symbol for this expression. Interpretation depends on type. Examples
+    // include: "eax", "[", "+"
+    optional string symbol = 2;
+
+    // If the expression can be interpreted as an integer value (IMMEDIATE_INT)
+    // the value is given here.
+    optional uint64 immediate = 3;
+
+    // The parent expression. Example expression tree for the second operand of:
+    // mov eax, b4 [ebx + 12]
+    // "b4" --- "[" --- "+" --- "ebx"
+    //                       \  "12"
+    optional int32 parent_index = 4;
+
+    // true if the expression has entry in relocation table
+    optional bool is_relocation = 5;
+  }
+
+  // An instruction may have 0 or more operands.
+  message Operand {
+    // Contains all expressions constituting this operand. All expressions
+    // should be linked into a single tree, i.e. there should only be one
+    // expression in this list with parent_index == NULL and all others should
+    // descend from that. Rendering order for expressions on the same tree level
+    // (siblings) is implicitly given by the order they are referenced in this
+    // repeated field.
+    // Implicit: expression sequence
+    repeated int32 expression_index = 1;
+  }
+
+  // An instruction has exactly 1 mnemonic.
+  message Mnemonic {
+    // Literal representation of the mnemonic, e.g.: "mov".
+    optional string name = 1;
+  }
+
+  message Instruction {
+    // This will only be filled for instructions that do not just flow from the
+    // immediately preceding instruction. Regular instructions will have to
+    // calculate their own address by adding raw_bytes.size() to the previous
+    // instruction's address.
+    optional uint64 address = 1;
+
+    // If this is a call instruction and call targets could be determined
+    // they'll be given here. Note that we may or may not have a flow graph for
+    // the target and thus cannot use an index into the flow graph table here.
+    // We could potentially use call graph nodes, but linking instructions to
+    // the call graph directly does not seem a good choice.
+    repeated uint64 call_target = 2;
+
+    // Index into the mnemonic array of strings. Used for de-duping the data.
+    // The default value is used for the most common mnemonic in the executable.
+    optional int32 mnemonic_index = 3 [default = 0];
+
+    // Indices into the operand tree. On X86 this can be 0, 1 or 2 elements
+    // long, 3 elements with VEX/EVEX.
+    // Implicit: operand sequence
+    repeated int32 operand_index = 4;
+
+    // The unmodified input bytes corresponding to this instruction.
+    optional bytes raw_bytes = 5;
+
+    // Implicit: comment sequence
+    repeated int32 comment_index = 6;
+  }
+
+  message BasicBlock {
+    // This is a space optimization. The instructions for an individual basic
+    // block will usually be in a continuous index range. Thus it is more
+    // efficient to store the range instead of individual indices. However, this
+    // does not hold true for all basic blocks, so we need to be able to store
+    // multiple index ranges per block.
+    message IndexRange {
+      // These work like begin and end iterators, i.e. the sequence is
+      // [begin_index, end_index). If the sequence only contains a single
+      // element end_index will be omitted.
+      optional int32 begin_index = 1;
+      optional int32 end_index = 2;
+    }
+
+    // Implicit: instruction sequence
+    repeated IndexRange instruction_index = 1;
+  }
+
+  message FlowGraph {
+    message Edge {
+      enum Type {
+        CONDITION_TRUE = 1;
+        CONDITION_FALSE = 2;
+        UNCONDITIONAL = 3;
+        SWITCH = 4;
+      }
+
+      // Source instruction will always be the last instruction of the source
+      // basic block, target instruction the first instruction of the target
+      // basic block.
+      optional int32 source_basic_block_index = 1;
+      optional int32 target_basic_block_index = 2;
+      optional Type type = 3 [default = UNCONDITIONAL];
+
+      // Indicates whether this is a loop edge as determined by Lengauer-Tarjan.
+      optional bool is_back_edge = 4 [default = false];
+    }
+
+    // Basic blocks are sorted by address.
+    repeated int32 basic_block_index = 1;
+
+    // The flow graph's entry point address is the first instruction of the
+    // entry_basic_block.
+    optional int32 entry_basic_block_index = 3;
+
+    repeated Edge edge = 2;
+  }
+
+  // Generic reference class used for address comments (deprecated), string
+  // references and expression substitutions. It allows referencing from an
+  // instruction, operand, expression subtree tuple to a de-duped string in the
+  // string table.
+  message Reference {
+    // Index into the global instruction table.
+    optional int32 instruction_index = 1;
+
+    // Index into the operand array local to an instruction.
+    optional int32 instruction_operand_index = 2 [default = 0];
+
+    // Index into the expression array local to an operand.
+    optional int32 operand_expression_index = 3 [default = 0];
+
+    // Index into the global string table.
+    optional int32 string_table_index = 4;
+  }
+
+  message DataReference {
+    // Index into the global instruction table.
+    optional int32 instruction_index = 1;
+
+    // Address being referred.
+    optional uint64 address = 2;
+  }
+
+  message Comment {
+    enum Type {
+      // A regular instruction comment. Typically displayed next to the
+      // instruction disassembly.
+      DEFAULT = 0;
+
+      // A comment line that is typically displayed before (above) the
+      // instruction it refers to.
+      ANTERIOR = 1;
+
+      // Like ANTERIOR, but a typically displayed after (below).
+      POSTERIOR = 2;
+
+      // Similar to an ANTERIOR comment, but applies to the beginning of an
+      // identified function. Programs displaying the proto may choose to render
+      // these differently (e.g. above an inferred function signature).
+      FUNCTION = 3;
+
+      // Named constants, bitfields and similar.
+      ENUM = 4;
+
+      // Named locations, usually the target of a jump.
+      LOCATION = 5;
+
+      // Data cross references.
+      GLOBAL_REFERENCE = 6;
+
+      // Local/stack variables.
+      LOCAL_REFERENCE = 7;
+    }
+
+    // Index into the global instruction table. This is here to enable
+    // comment processing without having to iterate over all instructions.
+    // There is an N:M mapping of instructions to comments.
+    optional int32 instruction_index = 1;
+
+    // Index into the operand array local to an instruction.
+    optional int32 instruction_operand_index = 2 [default = 0];
+
+    // Index into the expression array local to an operand, like in Reference.
+    // This is not currently used, but allows to implement expression
+    // substitutions.
+    optional int32 operand_expression_index = 3 [default = 0];
+
+    // Index into the global string table.
+    optional int32 string_table_index = 4;
+
+    // Comment is propagated to all locations that reference the original
+    // location.
+    optional bool repeatable = 5;
+
+    optional Type type = 6 [default = DEFAULT];
+  }
+
+  message Section {
+    // Section start address.
+    optional uint64 address = 1;
+
+    // Section size.
+    optional uint64 size = 2;
+
+    // Read flag of the section, True when section is readable.
+    optional bool flag_r = 3;
+
+    // Write flag of the section, True when section is writable.
+    optional bool flag_w = 4;
+
+    // Execute flag of the section, True when section is executable.
+    optional bool flag_x = 5;
+  }
+
+  message Library {
+    // If this library is statically linked.
+    optional bool is_static = 1;
+
+    // Address where this library was loaded, 0 if unknown.
+    optional uint64 load_address = 2 [default = 0];
+
+    // Name of the library (format is platform-dependent).
+    optional string name = 3;
+  }
+
+  message Module {
+    // Name, such as Java class name. Platform-dependent.
+    optional string name = 1;
+  }
+
+  optional Meta meta_information = 1;
+  repeated Expression expression = 2;
+  repeated Operand operand = 3;
+  repeated Mnemonic mnemonic = 4;
+  repeated Instruction instruction = 5;
+  repeated BasicBlock basic_block = 6;
+  repeated FlowGraph flow_graph = 7;
+  optional CallGraph call_graph = 8;
+
+  repeated string string_table = 9;
+
+  // No longer written. This is here so that BinDiff can work with older
+  // BinExport files.
+  repeated Reference address_comment = 10 [deprecated = true];
+
+  // Rich comment index used for BinDiff's comment porting.
+  repeated Comment comment = 17;
+  repeated Reference string_reference = 11;
+  repeated Reference expression_substitution = 12;
+  repeated Section section = 13;
+
+  repeated Library library = 14;
+  repeated DataReference data_reference = 15;
+  repeated Module module = 16;
+
+  // Allow for future extensions.
+  extensions 100000000 to max;
+}
