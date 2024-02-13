@@ -390,27 +390,22 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		return createStringTransferable(StringUtils.join(strings, "\n"));
 	}
 
-	private	Transferable copyByteSourceOffset(TaskMonitor monitor) {
+	private Transferable copyByteSourceOffset(TaskMonitor monitor) {
 		AddressSetView addrs = getSelectedAddresses();
 		Memory currentMemory = currentProgram.getMemory();
 		List<String> strings = new ArrayList<>();
-		AddressIterator	addresses = addrs.getAddresses(true);
+		AddressIterator addresses = addrs.getAddresses(true);
 		while (addresses.hasNext() && !monitor.isCancelled()) {
-			AddressSourceInfo addressSourceInfo = currentMemory.getAddressSourceInfo(addresses.next());
+			AddressSourceInfo addressSourceInfo =
+				currentMemory.getAddressSourceInfo(addresses.next());
 			if (addressSourceInfo != null) {
-				long fileOffset	= addressSourceInfo.getFileOffset();
-				String fileOffsetString;
-
-				if (fileOffset == -1) {
-					fileOffsetString = "<NO_OFFSET>";
-				} else {
-					fileOffsetString = String.format("%x", addressSourceInfo.getFileOffset());
-				}
-
+				long fileOffset = addressSourceInfo.getFileOffset();
+				String fileOffsetString =
+					fileOffset != -1 ? "%x".formatted(fileOffset) : "<NO_OFFSET>";
 				strings.add(fileOffsetString);
 			}
 		}
-		return createStringTransferable(StringUtils.join(strings, "\n"));
+		return createStringTransferable(String.join("\n", strings));
 	}
 
 	protected Transferable copyCode(TaskMonitor monitor) {
