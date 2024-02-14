@@ -15,12 +15,9 @@
  */
 package ghidra.app.plugin.core.debug.gui.action;
 
-import java.util.concurrent.CompletableFuture;
-
 import javax.swing.Icon;
 
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.TrackLocationAction;
-import ghidra.async.AsyncUtils;
 import ghidra.debug.api.action.*;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
@@ -66,9 +63,8 @@ public enum NoneLocationTrackingSpec implements LocationTrackingSpec, LocationTr
 	}
 
 	@Override
-	public CompletableFuture<Address> computeTraceAddress(PluginTool tool,
-			DebuggerCoordinates coordinates) {
-		return AsyncUtils.nil();
+	public Address computeTraceAddress(PluginTool tool, DebuggerCoordinates coordinates) {
+		return null;
 	}
 
 	@Override

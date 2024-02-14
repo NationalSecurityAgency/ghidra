@@ -77,10 +77,9 @@ public class DBTraceThreadManager implements TraceThreadManager, DBTraceManager 
 		if (objectManager.hasSchema()) {
 			return objectManager.assertMyThread(thread);
 		}
-		if (!(thread instanceof DBTraceThread)) {
+		if (!(thread instanceof DBTraceThread dbThread)) {
 			throw new IllegalArgumentException("Thread " + thread + " is not part of this trace");
 		}
-		DBTraceThread dbThread = (DBTraceThread) thread;
 		if (dbThread.manager != this) {
 			throw new IllegalArgumentException("Thread " + thread + " is not part of this trace");
 		}

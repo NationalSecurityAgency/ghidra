@@ -83,6 +83,24 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			this.mapping = mapping;
 		}
 
+		@Override
+		public boolean equals(Object o) {
+			if (!(o instanceof MappingEntry that)) {
+				return false;
+			}
+			// Yes, use identity, since it should be the same trace db records
+			if (this.mapping != that.mapping) {
+				return false;
+			}
+			if (this.program != that.program) {
+				return false;
+			}
+			if (!Objects.equals(this.staticRange, that.staticRange)) {
+				return false;
+			}
+			return true;
+		}
+
 		public Trace getTrace() {
 			return mapping.getTrace();
 		}
@@ -232,11 +250,14 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 
 		private void objectRestored() {
 			synchronized (lock) {
-				doAffectedByTraceClosed(trace);
+				var old = Map.copyOf(outbound);
 				outbound.clear();
 				loadOutboundEntries(); // Also places/updates corresponding inbound entries
-				// TODO: What about removed corresponding inbound entries?
-				doAffectedByTraceOpened(trace);
+				if (!old.equals(outbound)) {
+					// TODO: What about removed corresponding inbound entries? 
+					doAffectedByTraceClosed(trace);
+					doAffectedByTraceOpened(trace);
+				}
 			}
 		}
 
@@ -811,13 +832,13 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	}
 
 	protected <T> T noTraceInfo() {
-		Msg.warn(this, "The given trace is not open in this tool " +
+		Msg.debug(this, "The given trace is not open in this tool " +
 			"(or the service hasn't received and processed the open-trace event, yet)");
 		return null;
 	}
 
 	protected <T> T noProgramInfo() {
-		Msg.warn(this, "The given program is not open in this tool " +
+		Msg.debug(this, "The given program is not open in this tool " +
 			"(or the service hasn't received and processed the open-program event, yet)");
 		return null;
 	}

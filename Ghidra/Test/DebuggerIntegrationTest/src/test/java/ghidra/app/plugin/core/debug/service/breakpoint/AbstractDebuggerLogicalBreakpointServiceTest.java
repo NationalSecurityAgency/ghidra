@@ -1051,7 +1051,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		waitForPass(() -> assertLogicalBreakpointForMappedBookmarkAnd1TraceBreakpoint(trace1));
 	}
 
-	@Test
+	@Test // Mappings are not write-behind cached
 	public void testAbortAddMapping() throws Throwable {
 		createTarget1();
 		Trace trace = getTrace(target1);
@@ -1092,7 +1092,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		});
 	}
 
-	@Test
+	// @Test // Not gonna with write-behind cache
 	public void testAbortAddBreakpointAndMapping() throws Throwable {
 		createTarget1();
 		Trace trace = getTrace(target1);
@@ -1124,7 +1124,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		assertTrue(one.getTraceBreakpoints().isEmpty());
 	}
 
-	@Test
+	@Test // Abort is on program, not trace
 	public void testAbortAddBookmarks() throws Throwable {
 		createTarget1();
 		Trace trace = getTrace(target1);
@@ -1152,7 +1152,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		assertTrue(breakpointService.getAllBreakpoints().isEmpty());
 	}
 
-	@Test
+	// @Test // Not gonna with write-behind cache
 	public void testUndoRedoAddBreakpointAndMapping() throws Throwable {
 		createTarget1();
 		Trace trace = getTrace(target1);
@@ -1563,8 +1563,11 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 	/**
 	 * With the addition of emulated breakpoints (which are stored in the trace), this test is now
 	 * sane.
+	 * 
+	 * <p>
+	 * With the addition of the write-behind cache, this test is no longer sane.
 	 */
-	@Test
+	// @Test
 	public void testAbortAddBreakpointSetSleigh() throws Throwable {
 		DebuggerControlService controlService =
 			addPlugin(tool, DebuggerControlServicePlugin.class);

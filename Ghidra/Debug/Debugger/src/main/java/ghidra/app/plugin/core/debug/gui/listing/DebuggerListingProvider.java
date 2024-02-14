@@ -1159,24 +1159,22 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	}
 
 	protected void doGoToTracked() {
-		ProgramLocation loc = trackingTrait.getTrackedLocation();
-		ProgramLocation trackedStatic = doMarkTrackedLocation();
-		if (loc == null) {
-			return;
-		}
-		TraceProgramView curView = current.getView();
-		if (!syncTrait.isAutoSyncCursorWithStaticListing() || trackedStatic == null) {
-			Swing.runIfSwingOrRunLater(() -> {
+		Swing.runIfSwingOrRunLater(() -> {
+			ProgramLocation loc = trackingTrait.getTrackedLocation();
+			ProgramLocation trackedStatic = doMarkTrackedLocation();
+			if (loc == null) {
+				return;
+			}
+			TraceProgramView curView = current.getView();
+			if (!syncTrait.isAutoSyncCursorWithStaticListing() || trackedStatic == null) {
 				if (curView != current.getView()) {
 					// Trace changed before Swing scheduled us
 					return;
 				}
 				goToAndUpdateTrackingLabel(curView, loc);
 				doCheckCurrentModuleMissing();
-			});
-		}
-		else {
-			Swing.runIfSwingOrRunLater(() -> {
+			}
+			else {
 				if (curView != current.getView()) {
 					// Trace changed before Swing scheduled us
 					return;
@@ -1184,8 +1182,8 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 				goToAndUpdateTrackingLabel(curView, loc);
 				doCheckCurrentModuleMissing();
 				plugin.fireStaticLocationEvent(trackedStatic);
-			});
-		}
+			}
+		});
 	}
 
 	protected void doAutoDisassemble(Address start) {

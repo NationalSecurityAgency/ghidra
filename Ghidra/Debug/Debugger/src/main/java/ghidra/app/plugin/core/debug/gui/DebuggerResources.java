@@ -62,6 +62,7 @@ import ghidra.util.exception.CancelledException;
 import resources.MultiIcon;
 
 public interface DebuggerResources {
+
 	String OPTIONS_CATEGORY_DEBUGGER = "Debugger";
 	String OPTIONS_CATEGORY_WORKFLOW = "Workflow";
 

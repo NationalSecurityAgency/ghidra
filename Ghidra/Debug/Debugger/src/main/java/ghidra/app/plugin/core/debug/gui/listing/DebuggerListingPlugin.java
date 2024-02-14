@@ -259,48 +259,40 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 
 	@Override
 	public void processEvent(PluginEvent event) {
-		if (event instanceof ProgramLocationPluginEvent) {
+		if (event instanceof ProgramLocationPluginEvent ev) {
 			cbProgramLocationEvents.invoke(() -> {
-				ProgramLocationPluginEvent ev = (ProgramLocationPluginEvent) event;
 				if (heedLocationEvent(ev)) {
 					connectedProvider.staticProgramLocationChanged(ev.getLocation());
 				}
 			});
 		}
-		if (event instanceof ProgramSelectionPluginEvent) {
+		if (event instanceof ProgramSelectionPluginEvent ev) {
 			cbProgramSelectionEvents.invoke(() -> {
-				ProgramSelectionPluginEvent ev = (ProgramSelectionPluginEvent) event;
 				if (heedSelectionEvent(ev)) {
 					connectedProvider.staticProgramSelectionChanged(ev.getProgram(),
 						ev.getSelection());
 				}
 			});
 		}
-		if (event instanceof ProgramOpenedPluginEvent) {
-			ProgramOpenedPluginEvent ev = (ProgramOpenedPluginEvent) event;
+		if (event instanceof ProgramOpenedPluginEvent ev) {
 			allProviders(p -> p.programOpened(ev.getProgram()));
 		}
-		if (event instanceof ProgramClosedPluginEvent) {
-			ProgramClosedPluginEvent ev = (ProgramClosedPluginEvent) event;
+		if (event instanceof ProgramClosedPluginEvent ev) {
 			allProviders(p -> p.programClosed(ev.getProgram()));
 		}
-		if (event instanceof ProgramActivatedPluginEvent) {
-			ProgramActivatedPluginEvent ev = (ProgramActivatedPluginEvent) event;
+		if (event instanceof ProgramActivatedPluginEvent ev) {
 			allProviders(p -> p.staticProgramActivated(ev.getActiveProgram()));
 		}
-		if (event instanceof TraceActivatedPluginEvent) {
-			TraceActivatedPluginEvent ev = (TraceActivatedPluginEvent) event;
+		if (event instanceof TraceActivatedPluginEvent ev) {
 			current = ev.getActiveCoordinates();
 			allProviders(p -> p.coordinatesActivated(current));
 		}
-		if (event instanceof TraceClosedPluginEvent) {
-			TraceClosedPluginEvent ev = (TraceClosedPluginEvent) event;
+		if (event instanceof TraceClosedPluginEvent ev) {
 			if (current.getTrace() == ev.getTrace()) {
 				current = DebuggerCoordinates.NOWHERE;
 			}
 			allProviders(p -> p.traceClosed(ev.getTrace()));
 		}
-		// TODO: Sync selection and highlights?
 	}
 
 	void fireStaticLocationEvent(ProgramLocation staticLoc) {

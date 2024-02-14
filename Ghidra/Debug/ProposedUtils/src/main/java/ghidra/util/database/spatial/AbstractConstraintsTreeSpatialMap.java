@@ -18,12 +18,12 @@ package ghidra.util.database.spatial;
 import java.lang.reflect.Array;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.Consumer;
 
 import org.apache.commons.collections4.IteratorUtils;
 
 import ghidra.util.LockHold;
+import ghidra.util.database.DBSynchronizedIterator;
 import ghidra.util.database.spatial.DBTreeDataRecord.RecordEntry;
 
 public abstract class AbstractConstraintsTreeSpatialMap< //
@@ -98,37 +98,6 @@ public abstract class AbstractConstraintsTreeSpatialMap< //
 		return (int) l;
 	}
 
-	protected static class SynchronizedIterator<T> implements Iterator<T> {
-		private final Iterator<T> iterator;
-		private final ReadWriteLock lock;
-
-		public SynchronizedIterator(Iterator<T> iterator, ReadWriteLock lock) {
-			this.iterator = iterator;
-			this.lock = lock;
-		}
-
-		@Override
-		public boolean hasNext() {
-			try (LockHold hold = LockHold.lock(lock.readLock())) {
-				return iterator.hasNext();
-			}
-		}
-
-		@Override
-		public T next() {
-			try (LockHold hold = LockHold.lock(lock.readLock())) {
-				return iterator.next();
-			}
-		}
-
-		@Override
-		public void remove() {
-			try (LockHold hold = LockHold.lock(lock.writeLock())) {
-				iterator.remove();
-			}
-		}
-	}
-
 	protected abstract static class ToArrayConsumer<A, T, U extends A> implements Consumer<T> {
 		protected final A[] arr;
 		protected int i = 0;
@@ -172,7 +141,7 @@ public abstract class AbstractConstraintsTreeSpatialMap< //
 			@Override
 			public Iterator<Entry<DS, T>> iterator() {
 				try (LockHold hold = LockHold.lock(tree.dataStore.readLock())) {
-					return new SynchronizedIterator<>(
+					return new DBSynchronizedIterator<>(
 						IteratorUtils.transformedIterator(tree.iterator(query), r -> r.asEntry()),
 						tree.dataStore.getLock());
 				}
@@ -220,6 +189,12 @@ public abstract class AbstractConstraintsTreeSpatialMap< //
 			public boolean isEmpty() {
 				return AbstractConstraintsTreeSpatialMap.this.isEmpty();
 			}
+
+			@Override
+			public Spliterator<Entry<DS, T>> spliterator() {
+				// Size estimate is more expensive than benefits of knowing size
+				return Spliterators.spliteratorUnknownSize(iterator(), 0);
+			}
 		};
 	}
 
@@ -229,7 +204,7 @@ public abstract class AbstractConstraintsTreeSpatialMap< //
 			@Override
 			public Iterator<Entry<DS, T>> iterator() {
 				try (LockHold hold = LockHold.lock(tree.dataStore.readLock())) {
-					return new SynchronizedIterator<>(
+					return new DBSynchronizedIterator<>(
 						IteratorUtils.transformedIterator(tree.orderedIterator(query),
 							r -> r.asEntry()),
 						tree.dataStore.getLock());
@@ -245,6 +220,12 @@ public abstract class AbstractConstraintsTreeSpatialMap< //
 			public boolean isEmpty() {
 				return AbstractConstraintsTreeSpatialMap.this.isEmpty();
 			}
+
+			@Override
+			public Spliterator<Entry<DS, T>> spliterator() {
+				// Size estimate is more expensive than benefits of knowing size
+				return Spliterators.spliteratorUnknownSize(iterator(), 0);
+			}
 		};
 	}
 
@@ -254,7 +235,7 @@ public abstract class AbstractConstraintsTreeSpatialMap< //
 			@Override
 			public Iterator<DS> iterator() {
 				try (LockHold hold = LockHold.lock(tree.dataStore.readLock())) {
-					return new SynchronizedIterator<>(
+					return new DBSynchronizedIterator<>(
 						IteratorUtils.transformedIterator(tree.iterator(query), r -> r.getShape()),
 						tree.dataStore.getLock());
 				}
@@ -301,6 +282,12 @@ public abstract class AbstractConstraintsTreeSpatialMap< //
 			public boolean isEmpty() {
 				return AbstractConstraintsTreeSpatialMap.this.isEmpty();
 			}
+
+			@Override
+			public Spliterator<DS> spliterator() {
+				// Size estimate is more expensive than benefits of knowing size
+				return Spliterators.spliteratorUnknownSize(iterator(), 0);
+			}
 		};
 	}
 
@@ -310,7 +297,7 @@ public abstract class AbstractConstraintsTreeSpatialMap< //
 			@Override
 			public Iterator<DS> iterator() {
 				try (LockHold hold = LockHold.lock(tree.dataStore.readLock())) {
-					return new SynchronizedIterator<>(
+					return new DBSynchronizedIterator<>(
 						IteratorUtils.transformedIterator(tree.orderedIterator(query),
 							r -> r.getShape()),
 						tree.dataStore.getLock());
@@ -326,6 +313,12 @@ public abstract class AbstractConstraintsTreeSpatialMap< //
 			public boolean isEmpty() {
 				return AbstractConstraintsTreeSpatialMap.this.isEmpty();
 			}
+
+			@Override
+			public Spliterator<DS> spliterator() {
+				// Size estimate is more expensive than benefits of knowing size
+				return Spliterators.spliteratorUnknownSize(iterator(), 0);
+			}
 		};
 	}
 
@@ -335,7 +328,7 @@ public abstract class AbstractConstraintsTreeSpatialMap< //
 			@Override
 			public Iterator<T> iterator() {
 				try (LockHold hold = LockHold.lock(tree.dataStore.readLock())) {
-					return new SynchronizedIterator<>(
+					return new DBSynchronizedIterator<>(
 						IteratorUtils.transformedIterator(tree.iterator(query),
 							r -> r.getRecordValue()),
 						tree.dataStore.getLock());
@@ -383,6 +376,12 @@ public abstract class AbstractConstraintsTreeSpatialMap< //
 			public boolean isEmpty() {
 				return AbstractConstraintsTreeSpatialMap.this.isEmpty();
 			}
+
+			@Override
+			public Spliterator<T> spliterator() {
+				// Size estimate is more expensive than benefits of knowing size
+				return Spliterators.spliteratorUnknownSize(iterator(), 0);
+			}
 		};
 	}
 
@@ -392,7 +391,7 @@ public abstract class AbstractConstraintsTreeSpatialMap< //
 			@Override
 			public Iterator<T> iterator() {
 				try (LockHold hold = LockHold.lock(tree.dataStore.readLock())) {
-					return new SynchronizedIterator<>(
+					return new DBSynchronizedIterator<>(
 						IteratorUtils.transformedIterator(tree.orderedIterator(query),
 							r -> r.getRecordValue()),
 						tree.dataStore.getLock());
@@ -407,6 +406,12 @@ public abstract class AbstractConstraintsTreeSpatialMap< //
 			@Override
 			public boolean isEmpty() {
 				return AbstractConstraintsTreeSpatialMap.this.isEmpty();
+			}
+
+			@Override
+			public Spliterator<T> spliterator() {
+				// Size estimate is more expensive than benefits of knowing size
+				return Spliterators.spliteratorUnknownSize(iterator(), 0);
 			}
 		};
 	}

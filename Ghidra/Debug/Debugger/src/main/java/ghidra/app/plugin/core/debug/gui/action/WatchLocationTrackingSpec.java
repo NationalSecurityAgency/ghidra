@@ -16,13 +16,11 @@
 package ghidra.app.plugin.core.debug.gui.action;
 
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
 import javax.swing.Icon;
 
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.TrackLocationAction;
-import ghidra.async.AsyncUtils;
 import ghidra.debug.api.action.*;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.debug.api.watch.WatchRow;
@@ -115,28 +113,25 @@ public class WatchLocationTrackingSpec implements LocationTrackingSpec {
 	class WatchLocationTracker implements LocationTracker {
 		private AddressSetView reads;
 		private DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
-		private PcodeExecutor<WatchValue> asyncExec = null;
+		private PcodeExecutor<WatchValue> exec = null;
 		private PcodeExpression compiled;
 
 		@Override
-		public CompletableFuture<Address> computeTraceAddress(PluginTool tool,
-				DebuggerCoordinates coordinates) {
-			if (!Objects.equals(current, coordinates) || asyncExec == null) {
+		public Address computeTraceAddress(PluginTool tool, DebuggerCoordinates coordinates) {
+			if (!Objects.equals(current, coordinates) || exec == null) {
 				current = coordinates;
-				asyncExec = current.getPlatform() == null ? null
+				exec = current.getPlatform() == null ? null
 						: DebuggerPcodeUtils.buildWatchExecutor(tool, coordinates);
 			}
 			else {
-				asyncExec.getState().clear();
+				exec.getState().clear();
 			}
 			if (current.getTrace() == null) {
-				return AsyncUtils.nil();
+				return null;
 			}
-			return CompletableFuture.supplyAsync(() -> {
-				compiled = DebuggerPcodeUtils.compileExpression(tool, current, expression);
-				WatchValue value = compiled.evaluate(asyncExec);
-				return value == null ? null : value.address();
-			});
+			compiled = DebuggerPcodeUtils.compileExpression(tool, current, expression);
+			WatchValue value = compiled.evaluate(exec);
+			return value == null ? null : value.address();
 		}
 
 		@Override
