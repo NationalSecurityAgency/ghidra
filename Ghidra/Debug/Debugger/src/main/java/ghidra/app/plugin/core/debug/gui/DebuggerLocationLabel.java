@@ -15,12 +15,18 @@
  */
 package ghidra.app.plugin.core.debug.gui;
 
+import java.awt.event.MouseEvent;
 import java.util.*;
 
 import javax.swing.JLabel;
 
 import org.apache.commons.collections4.ComparatorUtils;
 
+import docking.ActionContext;
+import docking.ComponentProvider;
+import ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionActionContext;
+import ghidra.app.plugin.core.debug.gui.modules.DebuggerModuleActionContext;
+import ghidra.app.plugin.core.debug.gui.modules.DebuggerSectionActionContext;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
@@ -203,5 +209,34 @@ public class DebuggerLocationLabel extends JLabel {
 		String label = computeLocationString();
 		setText(label);
 		setToolTipText(label);
+	}
+
+	public ActionContext getActionContext(ComponentProvider provider, MouseEvent event) {
+		TraceProgramView view = current.getView();
+		if (view == null) {
+			return null;
+		}
+		if (address == null) {
+			return null;
+		}
+		try {
+			TraceSection section = getNearestSectionContaining();
+			if (section != null) {
+				return new DebuggerSectionActionContext(provider, Set.of(section), this, true);
+			}
+			TraceModule module = getNearestModuleContaining();
+			if (module != null) {
+				return new DebuggerModuleActionContext(provider, Set.of(module), this, true);
+			}
+			TraceMemoryRegion region = getRegionContaining();
+			if (region != null) {
+				return new DebuggerRegionActionContext(provider, Set.of(region), this, true);
+			}
+			return null;
+		}
+		catch (Throwable t) {
+			// The error should already be displayed in the label
+			return null;
+		}
 	}
 }

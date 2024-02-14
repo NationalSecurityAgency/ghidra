@@ -27,6 +27,7 @@ import javax.swing.JPanel;
 
 import org.apache.commons.lang3.StringUtils;
 
+import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
 import docking.menu.MultiStateDockingAction;
@@ -539,6 +540,10 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 	@Override
 	protected void writeConfigState(SaveState saveState) {
 		super.writeConfigState(saveState);
+
+		CONFIG_STATE_HANDLER.writeConfigState(this, saveState);
+		trackingTrait.writeConfigState(saveState);
+		readsMemTrait.writeConfigState(saveState);
 	}
 
 	@Override
@@ -547,6 +552,7 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 
 		CONFIG_STATE_HANDLER.readConfigState(this, saveState);
 		trackingTrait.readConfigState(saveState);
+		readsMemTrait.readConfigState(saveState);
 
 		if (isMainViewer()) {
 			followsCurrentThread = true;
@@ -555,7 +561,6 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 			actionFollowsCurrentThread.setSelected(followsCurrentThread);
 			updateBorder();
 		}
-		// TODO: actionAutoReadMemory
 	}
 
 	@Override
@@ -581,6 +586,14 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 			boolean export) {
 		super.updateLocation(block, blockOffset, column, export);
 		locationLabel.goToAddress(currentLocation == null ? null : currentLocation.getAddress());
+	}
+
+	@Override
+	public ActionContext getActionContext(MouseEvent event) {
+		if (event == null || event.getSource() != locationLabel) {
+			return super.getActionContext(event);
+		}
+		return locationLabel.getActionContext(this, event);
 	}
 
 	@Override

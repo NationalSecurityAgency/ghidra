@@ -433,10 +433,9 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	 * little conflated, since before the debugger, no one else presented a listing that could claim
 	 * to be "main" except the "connected" one. Here, we treat "connected" to mean that the address
 	 * is synchronized exactly with the other providers. "Main" on the other hand, does not
-	 * necessarily have that property, but it is still <em>not</em> a snapshot. It is the main
-	 * listing presented by this plugin, and so it has certain unique features. Calling
-	 * {@link DebuggerListingPlugin#getProvider()} will return the main dynamic listing, despite it
-	 * not really being "connected."
+	 * necessarily have that property, but it is still <em>not</em> a clone. It is the main listing
+	 * presented by this plugin, and so it has certain unique features. Calling
+	 * {@link DebuggerListingPlugin#getProvider()} will return the main dynamic listing.
 	 * 
 	 * @return true if this is the main listing for the plugin.
 	 */
@@ -882,6 +881,14 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		if (trigger == EventTrigger.GUI_ACTION) {
 			doCheckCurrentModuleMissing();
 		}
+	}
+
+	@Override
+	public ActionContext getActionContext(MouseEvent event) {
+		if (event == null || event.getSource() != locationLabel) {
+			return super.getActionContext(event);
+		}
+		return locationLabel.getActionContext(this, event);
 	}
 
 	@Override

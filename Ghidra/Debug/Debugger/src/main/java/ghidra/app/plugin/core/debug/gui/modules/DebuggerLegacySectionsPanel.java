@@ -48,24 +48,21 @@ public class DebuggerLegacySectionsPanel extends JPanel {
 
 	protected static Set<TraceModule> getSelectedModulesFromContext(
 			DebuggerSectionActionContext context) {
-		return context.getSelectedSections()
+		return context.getSelectedSections(false)
 				.stream()
 				.map(r -> r.getModule())
 				.collect(Collectors.toSet());
 	}
 
 	protected static Set<TraceSection> getSelectedSectionsFromContext(
-			DebuggerSectionActionContext context) {
-		return context.getSelectedSections()
-				.stream()
-				.map(r -> r.getSection())
-				.collect(Collectors.toSet());
+			DebuggerSectionActionContext context, boolean allowExpansion) {
+		return context.getSelectedSections(allowExpansion);
 	}
 
 	protected static AddressSetView getSelectedAddressesFromContext(
 			DebuggerSectionActionContext context) {
 		AddressSet sel = new AddressSet();
-		for (TraceSection section : getSelectedSectionsFromContext(context)) {
+		for (TraceSection section : getSelectedSectionsFromContext(context, false)) {
 			sel.add(section.getRange());
 		}
 		return sel;
