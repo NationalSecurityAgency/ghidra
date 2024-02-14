@@ -339,26 +339,28 @@ class ComponentNode extends Node {
 	}
 
 	private void setupFocusUpdateListeners(JTabbedPane tabbedPane) {
-		registerSpacebarActionToTransferFocusToTabbedComponent(tabbedPane);
+		registerActionToTransferFocusToTabbedComponent(tabbedPane);
 		tabbedPane.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent e) {
 				int index = tabbedPane.indexAtLocation(e.getX(), e.getY());
-				Component selectedComponent = tabbedPane.getComponentAt(index);
-				focusComponent(selectedComponent);
+				if (index >= 0) {
+					Component selectedComponent = tabbedPane.getComponentAt(index);
+					focusComponent(selectedComponent);
+				}
 			}
 		});
 	}
 
 	/**
-	 * Registers a keybinding that binds VK_SPACE to an action that transfers focus the 
-	 * component represented by the currently focussed tab of a JTabbedPane. This is so that
-	 * when using keyboard focus traversal and the JTabbedPane get focus such that using arrow
-	 * keys allows the user to switch tabs, pressing the spacebar will transfer control to the
-	 * currently focused tab.
-	 * @param tabbedPane the JTabbedPane to add this spacebar keybinding.
+	 * Registers a keybinding that allows the user to press the space bar to transfer focus to the 
+	 * component inside of the current tab of the tabbed pane. When using keyboard navigation, the 
+	 * tabbed pane will place focus on its tabs, not on the components in the tabs.  Adding the 
+	 * space bar trigger makes keyboard navigation easier by giving the user a method to focus the 
+	 * component represented by the tab.
+	 * @param tabbedPane the JTabbedPane 
 	 */
-	private void registerSpacebarActionToTransferFocusToTabbedComponent(JTabbedPane tabbedPane) {
+	private void registerActionToTransferFocusToTabbedComponent(JTabbedPane tabbedPane) {
 		Action focusAction = new AbstractAction("Focus") {
 			@Override
 			public void actionPerformed(ActionEvent ev) {
