@@ -614,8 +614,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @param log The log
 	 * @param consumer A consumer object for {@link DomainObject}s generated
 	 * @param monitor A cancelable task monitor
-	 * @return A {@link List} of newly loaded programs and libraries.  Any program in the list is 
-	 *   the caller's responsibility to release.
+	 * @return The {@link Loaded} library, or null if it was not found. The returned library is the
+	 *   caller's responsibility to release.
 	 * @throws IOException if there was an IO-related problem loading
 	 * @throws CancelledException if the user cancelled the load
 	 */
@@ -625,6 +625,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			LoadSpec desiredLoadSpec, List<Option> options, MessageLog log, Object consumer,
 			TaskMonitor monitor) throws CancelledException, IOException {
 
+		libraryName = libraryName.trim();
 		Program library = null;
 		if (libraryDestFolderPath != null) {
 			String libraryPath = FilenameUtils.getPath(libraryName);
@@ -636,11 +637,11 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			}
 		}
 		String simpleLibraryName = FilenameUtils.getName(libraryName);
-		List<FSRL> candidateLibraryFsrls =
-			findLibrary(Path.of(libraryName), fsSearchPaths, log, monitor);
 
 		boolean success = false;
 		try {
+			List<FSRL> candidateLibraryFsrls =
+				findLibrary(getCheckedPath(libraryName), fsSearchPaths, log, monitor);
 			for (FSRL candidateLibraryFsrl : candidateLibraryFsrls) {
 				monitor.checkCancelled();
 				List<String> newLibraryList = new ArrayList<>();
@@ -657,13 +658,16 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 				success = true;
 				return new Loaded<Program>(library, simpleLibraryName, libraryDestFolderPath);
 			}
-			return null;
+		}
+		catch (InvalidInputException e) {
+			log.appendMsg("Cannot load library with invalid name: \"" + libraryName + "\"");
 		}
 		finally {
 			if (!success && library != null) {
 				library.release(consumer);
 			}
 		}
+		return null;
 	}
 
 	/**
@@ -1111,16 +1115,17 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		if (isLoadSystemLibraries(options) || shouldSearchAllPaths(options)) {
 			List<Path> searchPaths = new ArrayList<>();
 			for (String str : LibrarySearchPathManager.getLibraryPathsList()) {
-				if (str.isBlank()) {
+				str = str.trim();
+				if (str.isEmpty()) {
 					continue;
 				}
 				try {
-					Path path = Path.of(str.trim()).normalize();
+					Path path = getCheckedPath(str).normalize();
 					if (path.isAbsolute() && Files.exists(path)) {
 						searchPaths.add(path);
 					}
 				}
-				catch (InvalidPathException e) {
+				catch (InvalidInputException e) {
 					log.appendMsg("Skipping invalid system library search path: \"" + str + "\"");
 				}
 			}
@@ -1240,5 +1245,25 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		return isCaseInsensitiveLibraryFilenames()
 				? String.CASE_INSENSITIVE_ORDER
 				: (s1, s2) -> s1.compareTo(s2);
+	}
+
+	/**
+	 * Calls {@link Path#of(String, String...)} with the given parameter, throwing a checked
+	 * exception if a failure occurred.
+	 * <p>
+	 * NOTE: {@link Path#of(String, String...)} throws an unchecked exception, which has proven 
+	 * dangerous.
+	 * 
+	 * @param str The string to convert to a {@link Path}
+	 * @return The string converted to a {@link Path}
+	 * @throws InvalidInputException if the given string cannot be converted to a {@link Path}
+	 */
+	private Path getCheckedPath(String str) throws InvalidInputException {
+		try {
+			return Path.of(str);
+		}
+		catch (InvalidPathException e) {
+			throw new InvalidInputException(e.getMessage());
+		}
 	}
 }
