@@ -25,6 +25,7 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.formats.gfilesystem.FSRL;
 import ghidra.framework.model.*;
 import ghidra.program.model.listing.Program;
+import ghidra.util.SystemUtilities;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.classfinder.ExtensionPoint;
 import ghidra.util.exception.CancelledException;
@@ -50,6 +51,13 @@ public interface Loader extends ExtensionPoint, Comparable<Loader> {
 	 * Key used to lookup and store all loader options in the project's saved state
 	 */
 	public static final String OPTIONS_PROJECT_SAVE_STATE_KEY = "LOADER_OPTIONS";
+
+	/**
+	 * System property used to disable the loaders' message logs being echoed to the
+	 * application.log file
+	 */
+	public static boolean loggingDisabled =
+		SystemUtilities.getBooleanProperty("disable.loader.logging", false);
 
 	/**
 	 * If this {@link Loader} supports loading the given {@link ByteProvider}, this methods returns
