@@ -428,7 +428,8 @@ public class TraceRmiTarget extends AbstractTarget {
 
 	@Override
 	protected Map<String, ActionEntry> collectRefreshActions(ActionContext context) {
-		return collectByName(ActionName.REFRESH, context);
+		return collectFromMethods(connection.getMethods().getByAction(ActionName.REFRESH), context,
+			true, false, false);
 	}
 
 	@Override

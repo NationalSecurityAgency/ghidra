@@ -398,7 +398,11 @@ public class ObjectsTreePanel extends JPanel {
 	protected <R, A> R getItemsFromPaths(TreePath[] paths,
 			Collector<? super AbstractNode, A, R> collector) {
 		return Stream.of(paths)
-				.map(p -> (AbstractNode) p.getLastPathComponent())
+				.<AbstractNode> mapMulti((path, consumer) -> {
+					if (path.getLastPathComponent() instanceof AbstractNode node) {
+						consumer.accept(node);
+					}
+				})
 				.collect(collector);
 	}
 

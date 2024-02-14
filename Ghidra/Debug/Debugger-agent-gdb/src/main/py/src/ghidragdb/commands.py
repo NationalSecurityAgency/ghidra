@@ -277,6 +277,9 @@ def start_trace(name):
     with STATE.trace.open_tx("Create Root Object"):
         root = STATE.trace.create_root_object(schema_xml, 'Session')
         root.set_value('_display', 'GNU gdb ' + util.GDB_VERSION.full)
+        STATE.trace.create_object(AVAILABLES_PATH).insert()
+        STATE.trace.create_object(BREAKPOINTS_PATH).insert()
+        STATE.trace.create_object(INFERIORS_PATH).insert()
     gdb.set_convenience_variable('_ghidra_tracing', True)
 
 
@@ -1057,7 +1060,7 @@ def put_available():
         procobj = STATE.trace.create_object(ppath)
         keys.append(AVAILABLE_KEY_PATTERN.format(pid=proc.pid))
         procobj.set_value('_pid', proc.pid)
-        procobj.set_value('_display', '{} {}'.format(proc.pid, proc.name))
+        procobj.set_value('_display', '{} {}'.format(proc.pid, proc.name()))
         procobj.insert()
     STATE.trace.proxy_object_path(AVAILABLES_PATH).retain_values(keys)
 
