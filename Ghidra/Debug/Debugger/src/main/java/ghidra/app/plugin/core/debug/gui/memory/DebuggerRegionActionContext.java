@@ -15,22 +15,41 @@
  */
 package ghidra.app.plugin.core.debug.gui.memory;
 
+import java.awt.Component;
 import java.util.Collection;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import docking.ComponentProvider;
 import docking.DefaultActionContext;
 import docking.widgets.table.GTable;
+import ghidra.trace.model.memory.TraceMemoryRegion;
 
 public class DebuggerRegionActionContext extends DefaultActionContext {
-	private final Set<RegionRow> selectedRegions;
+	private final Set<TraceMemoryRegion> selectedRegions;
+	private final boolean forcedSingle;
 
-	public DebuggerRegionActionContext(DebuggerRegionsProvider provider,
-			Collection<RegionRow> selected, GTable table) {
-		super(provider, selected, table);
-		this.selectedRegions = Set.copyOf(selected);
+	private static Set<TraceMemoryRegion> toRegions(Collection<RegionRow> rows) {
+		return rows.stream().map(RegionRow::getRegion).collect(Collectors.toUnmodifiableSet());
 	}
 
-	public Set<RegionRow> getSelectedRegions() {
+	public DebuggerRegionActionContext(DebuggerRegionsProvider provider,
+			Collection<RegionRow> rows, GTable table) {
+		this(provider, toRegions(rows), table, false);
+	}
+
+	public DebuggerRegionActionContext(ComponentProvider provider,
+			Set<TraceMemoryRegion> selected, Component sourceComponent, boolean forcedSingle) {
+		super(provider, selected, sourceComponent);
+		this.selectedRegions = selected;
+		this.forcedSingle = forcedSingle;
+	}
+
+	public Set<TraceMemoryRegion> getSelectedRegions() {
 		return selectedRegions;
+	}
+
+	public boolean isForcedSingle() {
+		return forcedSingle;
 	}
 }

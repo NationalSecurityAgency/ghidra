@@ -43,20 +43,6 @@ import ghidra.trace.model.target.TraceObjectInterface;
 public abstract class AbstractObjectsTableBasedPanel<U extends TraceObjectInterface>
 		extends ObjectsTablePanel implements ListSelectionListener, CellActivationListener {
 
-	public static boolean isContextNonEmpty(DebuggerObjectActionContext ctx) {
-		return ctx != null && !ctx.getObjectValues().isEmpty();
-	}
-
-	public static <T extends TraceObjectInterface> Stream<T> getSelected(
-			DebuggerObjectActionContext ctx, Class<T> iface) {
-		return ctx == null ? null
-				: ctx.getObjectValues()
-						.stream()
-						.filter(v -> v.isObject())
-						.map(v -> v.getChild().queryInterface(iface))
-						.filter(r -> r != null);
-	}
-
 	private final ComponentProvider provider;
 	private final Class<U> objType;
 
@@ -80,6 +66,19 @@ public abstract class AbstractObjectsTableBasedPanel<U extends TraceObjectInterf
 
 		addSelectionListener(this);
 		addCellActivationListener(this);
+	}
+
+	public boolean isContextNonEmpty(DebuggerObjectActionContext ctx) {
+		return getSelected(ctx).findAny().isPresent();
+	}
+
+	public Stream<U> getSelected(DebuggerObjectActionContext ctx) {
+		return ctx == null ? null
+				: ctx.getObjectValues()
+						.stream()
+						.filter(v -> v.isObject())
+						.map(v -> v.getChild().queryInterface(objType))
+						.filter(r -> r != null);
 	}
 
 	public DebuggerObjectActionContext getActionContext() {
