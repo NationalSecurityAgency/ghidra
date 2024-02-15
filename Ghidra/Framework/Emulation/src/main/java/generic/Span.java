@@ -32,7 +32,7 @@ import generic.ULongSpan.*;
  * impose behaviors and properties that aren't otherwise present on the type of endpoints. For
  * example, the domain may be {@link Long}s, but using unsigned attributes. The domain also provides
  * a factory for new spans. While nominally, this only supports closed intervals, the domain can
- * define a custom endpoint type to obtain mixed intervals, as in {@link End}.
+ * define a custom endpoint type to obtain mixed intervals.
  *
  * @param <N> the type of endpoints
  * @param <S> the type of spans (recursive)
@@ -387,7 +387,7 @@ public interface Span<N, S extends Span<N, S>> extends Comparable<S> {
 	 * existing entries are truncated or deleted (or coalesced if they share the same value as the
 	 * new entry) so that the new entry can fit.
 	 * 
-	 * @implNote It is recommended to create an interface (having only the {@link V} parameter)
+	 * @implNote It is recommended to create an interface (having only the {@code <V>} parameter)
 	 *           extending this one specific to your domain and span type, then implement it using
 	 *           an extension of {@link DefaultSpanMap}. See {@link ULongSpanMap} for an example.
 	 * @param <N> the type of endpoints
@@ -835,7 +835,7 @@ public interface Span<N, S extends Span<N, S>> extends Comparable<S> {
 			if (this == obj) {
 				return true;
 			}
-			if (!(obj instanceof @SuppressWarnings("rawtypes") DefaultSpanMap that)) {
+			if (!(obj instanceof DefaultSpanMap that)) {
 				return false;
 			}
 			if (this.domain != that.domain) {
@@ -995,7 +995,7 @@ public interface Span<N, S extends Span<N, S>> extends Comparable<S> {
 			if (this == obj) {
 				return true;
 			}
-			if (!(obj instanceof @SuppressWarnings("rawtypes") DefaultSpanSet that)) {
+			if (!(obj instanceof DefaultSpanSet that)) {
 				return false;
 			}
 			if (!Objects.equals(this.map, that.map)) {
@@ -1081,6 +1081,11 @@ public interface Span<N, S extends Span<N, S>> extends Comparable<S> {
 		}
 	}
 
+	/**
+	 * Provides a default {@link #toString} implementation
+	 * 
+	 * @return the string
+	 */
 	@SuppressWarnings("unchecked")
 	default String doToString() {
 		return domain().toString((S) this);

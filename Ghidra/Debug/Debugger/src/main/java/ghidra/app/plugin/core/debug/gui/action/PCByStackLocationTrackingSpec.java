@@ -15,8 +15,6 @@
  */
 package ghidra.app.plugin.core.debug.gui.action;
 
-import java.util.concurrent.CompletableFuture;
-
 import javax.swing.Icon;
 
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.TrackLocationAction;
@@ -67,7 +65,8 @@ public enum PCByStackLocationTrackingSpec implements LocationTrackingSpec, Locat
 		return this;
 	}
 
-	public Address doComputeTraceAddress(PluginTool tool, DebuggerCoordinates coordinates) {
+	@Override
+	public Address computeTraceAddress(PluginTool tool, DebuggerCoordinates coordinates) {
 		Trace trace = coordinates.getTrace();
 		TraceThread thread = coordinates.getThread();
 		long snap = coordinates.getSnap();
@@ -84,15 +83,9 @@ public enum PCByStackLocationTrackingSpec implements LocationTrackingSpec, Locat
 	}
 
 	@Override
-	public CompletableFuture<Address> computeTraceAddress(PluginTool tool,
-			DebuggerCoordinates coordinates) {
-		return CompletableFuture.supplyAsync(() -> doComputeTraceAddress(tool, coordinates));
-	}
-
-	@Override
 	public GoToInput getDefaultGoToInput(PluginTool tool, DebuggerCoordinates coordinates,
 			ProgramLocation location) {
-		Address address = doComputeTraceAddress(tool, coordinates);
+		Address address = computeTraceAddress(tool, coordinates);
 		if (address == null) {
 			return NoneLocationTrackingSpec.INSTANCE.getDefaultGoToInput(tool, coordinates,
 				location);

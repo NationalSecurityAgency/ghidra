@@ -1128,7 +1128,8 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		}
 		waitForTasks();
 
-		assertEquals(4, modelProvider.attributesTablePanel.tableModel.getModelData().size());
+		waitForPass(() -> assertEquals(4,
+			modelProvider.attributesTablePanel.tableModel.getModelData().size()));
 	}
 
 	@Test
@@ -1158,6 +1159,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		// TODO: Should I collapse entries that are links to the same object?
 		//   Would use the "Life" column to display span for each included entry.
 		//   Neat, but not sure it's worth it
-		assertEquals(14, modelProvider.elementsTablePanel.tableModel.getModelData().size());
+		waitForPass(() -> assertEquals(14,
+			modelProvider.elementsTablePanel.tableModel.getModelData().size()));
 	}
 }

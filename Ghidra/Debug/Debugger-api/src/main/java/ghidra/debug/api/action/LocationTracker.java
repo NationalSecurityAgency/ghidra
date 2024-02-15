@@ -51,8 +51,7 @@ public interface LocationTracker {
 	 * @param coordinates the trace, thread, snap, etc., of the tool
 	 * @return the address to navigate to
 	 */
-	CompletableFuture<Address> computeTraceAddress(PluginTool tool,
-			DebuggerCoordinates coordinates);
+	Address computeTraceAddress(PluginTool tool, DebuggerCoordinates coordinates);
 
 	/**
 	 * Get the suggested input if the user activates "Go To" while this tracker is active

@@ -15,13 +15,14 @@
  */
 package ghidra.util;
 
-import java.util.Collection;
-import java.util.Comparator;
+import java.util.*;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public enum StreamUtils {
-	;
+public class StreamUtils {
+	private StreamUtils() {
+	}
+
 	@SuppressWarnings("unchecked")
 	public static <T> Stream<T> merge(Collection<? extends Stream<? extends T>> streams,
 			Comparator<? super T> comparator) {
@@ -30,5 +31,10 @@ public enum StreamUtils {
 		}
 		return StreamSupport.stream(new MergeSortingSpliterator<>(
 			streams.stream().map(s -> s.spliterator()).toList(), comparator), false);
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> Iterable<T> iter(Stream<? extends T> stream) {
+		return () -> (Iterator<T>) stream.iterator();
 	}
 }

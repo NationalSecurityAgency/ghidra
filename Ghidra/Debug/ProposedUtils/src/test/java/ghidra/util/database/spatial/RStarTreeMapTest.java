@@ -629,9 +629,9 @@ public class RStarTreeMapTest {
 		private static final int MAX_CHILDREN = 5;
 		private final DBCachedObjectStoreFactory storeFactory;
 		private final IntRStarTree tree;
-		private final SpatialMap<IntRect, String, IntRectQuery> map;
+		public final SpatialMap<IntRect, String, IntRectQuery> map;
 
-		protected MyDomainObject(Object consumer) throws IOException, VersionException {
+		public MyDomainObject(Object consumer) throws IOException, VersionException {
 			super(new DBHandle(), DBOpenMode.CREATE, new ConsoleTaskMonitor(), "Testing", 500, 1000,
 				consumer);
 			storeFactory = new DBCachedObjectStoreFactory(this);

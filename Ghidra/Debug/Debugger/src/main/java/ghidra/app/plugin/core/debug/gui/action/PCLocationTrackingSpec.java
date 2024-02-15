@@ -15,8 +15,6 @@
  */
 package ghidra.app.plugin.core.debug.gui.action;
 
-import java.util.concurrent.CompletableFuture;
-
 import javax.swing.Icon;
 
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.TrackLocationAction;
@@ -70,17 +68,14 @@ public enum PCLocationTrackingSpec implements LocationTrackingSpec, LocationTrac
 	}
 
 	@Override
-	public CompletableFuture<Address> computeTraceAddress(PluginTool tool,
-			DebuggerCoordinates coordinates) {
-		return CompletableFuture.supplyAsync(() -> {
-			if (coordinates.getTime().isSnapOnly()) {
-				Address pc = BY_STACK.doComputeTraceAddress(tool, coordinates);
-				if (pc != null) {
-					return pc;
-				}
+	public Address computeTraceAddress(PluginTool tool, DebuggerCoordinates coordinates) {
+		if (coordinates.getTime().isSnapOnly()) {
+			Address pc = BY_STACK.computeTraceAddress(tool, coordinates);
+			if (pc != null) {
+				return pc;
 			}
-			return BY_REG.doComputeTraceAddress(tool, coordinates);
-		});
+		}
+		return BY_REG.computeTraceAddress(tool, coordinates);
 	}
 
 	@Override

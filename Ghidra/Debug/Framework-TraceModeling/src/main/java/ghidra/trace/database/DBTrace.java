@@ -15,6 +15,7 @@
  */
 package ghidra.trace.database;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
@@ -148,6 +149,8 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	// NOTE: Can't pre-construct unmodifiableMap(fixedProgramViews), because values()' id changes
 	protected ListenerSet<TraceProgramViewListener> viewListeners =
 		new ListenerSet<>(TraceProgramViewListener.class, true);
+
+	private volatile boolean closing;
 
 	public DBTrace(String name, CompilerSpec baseCompilerSpec, Object consumer)
 			throws IOException, LanguageNotFoundException {
@@ -608,7 +611,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		DBTraceProgramView view;
 		try (LockHold hold = lockRead()) {
 			view = fixedProgramViews.computeIfAbsent(snap, s -> {
-				Msg.debug(this, "Creating fixed view at snap=" + snap);
+				Msg.trace(this, "Creating fixed view at snap=" + snap);
 				return new DBTraceProgramView(this, snap, baseCompilerSpec);
 			});
 		}
@@ -870,5 +873,30 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 
 	public void updateViewportsSnapshotDeleted(TraceSnapshot snapshot) {
 		allViewports(v -> v.updateSnapshotDeleted(snapshot));
+	}
+
+	@Override
+	public void save(String comment, TaskMonitor monitor) throws IOException, CancelledException {
+		objectManager.flushWbCaches();
+		super.save(comment, monitor);
+	}
+
+	@Override
+	public void saveToPackedFile(File outputFile, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		objectManager.flushWbCaches();
+		super.saveToPackedFile(outputFile, monitor);
+	}
+
+	public boolean isClosing() {
+		return closing;
+	}
+
+	@Override
+	protected void close() {
+		closing = true;
+		objectManager.flushWbCaches();
+		super.close();
+		objectManager.waitWbWorkers();
 	}
 }

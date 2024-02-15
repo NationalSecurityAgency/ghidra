@@ -15,8 +15,6 @@
  */
 package ghidra.app.plugin.core.debug.gui.action;
 
-import java.util.concurrent.CompletableFuture;
-
 import ghidra.debug.api.action.*;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
@@ -52,7 +50,8 @@ public interface RegisterLocationTrackingSpec extends LocationTrackingSpec, Loca
 		return this;
 	}
 
-	default Address doComputeTraceAddress(PluginTool tool, DebuggerCoordinates coordinates) {
+	@Override
+	default Address computeTraceAddress(PluginTool tool, DebuggerCoordinates coordinates) {
 		Trace trace = coordinates.getTrace();
 		TracePlatform platform = coordinates.getPlatform();
 		TraceThread thread = coordinates.getThread();
@@ -86,12 +85,6 @@ public interface RegisterLocationTrackingSpec extends LocationTrackingSpec, Loca
 		// Could use code unit, but that can't specify space, yet, either....
 		return platform.mapGuestToHost(computeDefaultAddressSpace(coordinates)
 				.getAddress(value.getUnsignedValue().longValue(), true));
-	}
-
-	@Override
-	default CompletableFuture<Address> computeTraceAddress(PluginTool tool,
-			DebuggerCoordinates coordinates) {
-		return CompletableFuture.supplyAsync(() -> doComputeTraceAddress(tool, coordinates));
 	}
 
 	@Override
