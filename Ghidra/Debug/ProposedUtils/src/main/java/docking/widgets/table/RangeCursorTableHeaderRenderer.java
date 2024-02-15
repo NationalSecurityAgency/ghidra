@@ -42,8 +42,8 @@ public class RangeCursorTableHeaderRenderer<N extends Number & Comparable<N>>
 			if ((e.getButton() != MouseEvent.BUTTON1)) {
 				return;
 			}
-			doSeek(e);
 			e.consume();
+			doSeek(e);
 		}
 
 		@Override
@@ -53,8 +53,8 @@ public class RangeCursorTableHeaderRenderer<N extends Number & Comparable<N>>
 			if ((e.getModifiersEx() & (onmask | offmask)) != onmask) {
 				return;
 			}
-			doSeek(e);
 			e.consume();
+			doSeek(e);
 		}
 
 		protected void doSeek(MouseEvent e) {

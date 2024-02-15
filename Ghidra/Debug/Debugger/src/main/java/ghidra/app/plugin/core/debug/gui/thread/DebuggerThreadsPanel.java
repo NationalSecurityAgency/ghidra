@@ -170,8 +170,13 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 
 	private final SeekListener seekListener = pos -> {
 		long snap = Math.round(pos);
-		if (current.getTrace() == null || snap < 0) {
+		if (snap < 0) {
 			snap = 0;
+		}
+		long max =
+			current.getTrace() == null ? 0 : current.getTrace().getTimeManager().getMaxSnap();
+		if (snap > max) {
+			snap = max;
 		}
 		traceManager.activateSnap(snap);
 	};

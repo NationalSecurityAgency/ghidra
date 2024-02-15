@@ -274,8 +274,13 @@ public class DebuggerLegacyThreadsPanel extends JPanel {
 
 		headerRenderer.addSeekListener(seekListener = pos -> {
 			long snap = Math.round(pos);
-			if (current.getTrace() == null || snap < 0) {
+			if (snap < 0) {
 				snap = 0;
+			}
+			long max =
+				current.getTrace() == null ? 0 : current.getTrace().getTimeManager().getMaxSnap();
+			if (snap > max) {
+				snap = max;
 			}
 			traceManager.activateSnap(snap);
 			myActionContext = new DebuggerSnapActionContext(current.getTrace(), snap);

@@ -19,7 +19,7 @@ import static org.junit.Assert.*;
 
 import java.awt.event.MouseEvent;
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.stream.*;
 
 import org.jdom.JDOMException;
 import org.junit.*;
@@ -36,6 +36,7 @@ import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.PrimitiveRow;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTreeModel.AbstractNode;
 import ghidra.app.plugin.core.debug.gui.model.PathTableModel.PathRow;
+import ghidra.app.plugin.core.debug.gui.model.columns.TraceValueLifePlotColumn;
 import ghidra.app.plugin.core.debug.gui.model.columns.TraceValueValColumn;
 import ghidra.dbg.target.TargetEventScope;
 import ghidra.dbg.target.TargetObject;
@@ -1161,5 +1162,76 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		//   Neat, but not sure it's worth it
 		waitForPass(() -> assertEquals(14,
 			modelProvider.elementsTablePanel.tableModel.getModelData().size()));
+	}
+
+	protected Stream<DynamicTableColumn<?, ?, ?>> streamColumns(
+			GDynamicColumnTableModel<?, ?> model) {
+		return IntStream.range(0, model.getColumnCount()).mapToObj(model::getColumn);
+	}
+
+	protected <T extends DynamicTableColumn<?, ?, ?>> T findColumnOfType(
+			GDynamicColumnTableModel<?, ?> model, Class<T> type) {
+		return streamColumns(model)
+				.flatMap(c -> type.isInstance(c) ? Stream.of(type.cast(c)) : Stream.of())
+				.findAny()
+				.orElse(null);
+	}
+
+	@Test
+	public void testLifePlotColumnFitsSnapshotsOnActivate() throws Throwable {
+		TraceValueLifePlotColumn plotCol = findColumnOfType(
+			modelProvider.elementsTablePanel.tableModel, TraceValueLifePlotColumn.class);
+		createTraceAndPopulateObjects();
+
+		traceManager.activateTrace(tb.trace);
+		waitForSwing();
+
+		// NB. The plot adds a margin of 1
+		assertEquals(Lifespan.span(0, 21), plotCol.getFullRange());
+	}
+
+	@Test
+	public void testLifePlotColumnFitsSnapshotsOnAddSnapshot() throws Throwable {
+		TraceValueLifePlotColumn plotCol = findColumnOfType(
+			modelProvider.elementsTablePanel.tableModel, TraceValueLifePlotColumn.class);
+		createTraceAndPopulateObjects();
+
+		traceManager.activateTrace(tb.trace);
+		waitForSwing();
+
+		try (Transaction tx = tb.startTransaction()) {
+			tb.trace.getTimeManager().getSnapshot(30, true);
+		}
+		waitForDomainObject(tb.trace);
+
+		// NB. The plot adds a margin of 1
+		assertEquals(Lifespan.span(0, 31), plotCol.getFullRange());
+
+		try (Transaction tx = tb.startTransaction()) {
+			tb.trace.getTimeManager().getSnapshot(31, true);
+		}
+		waitForDomainObject(tb.trace);
+
+		assertEquals(Lifespan.span(0, 32), plotCol.getFullRange());
+	}
+
+	@Test
+	public void testLifePlotColumnFitsSnapshotsOnAddSnapshotSupressEvents() throws Throwable {
+		TraceValueLifePlotColumn plotCol = findColumnOfType(
+			modelProvider.elementsTablePanel.tableModel, TraceValueLifePlotColumn.class);
+		createTraceAndPopulateObjects();
+
+		traceManager.activateTrace(tb.trace);
+		waitForSwing();
+
+		tb.trace.setEventsEnabled(false);
+		try (Transaction tx = tb.startTransaction()) {
+			tb.trace.getTimeManager().getSnapshot(30, true);
+		}
+		tb.trace.setEventsEnabled(true);
+		waitForDomainObject(tb.trace);
+
+		// NB. The plot adds a margin of 1
+		assertEquals(Lifespan.span(0, 31), plotCol.getFullRange());
 	}
 }

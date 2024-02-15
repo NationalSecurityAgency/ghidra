@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.debug.gui.model.columns;
 
 import docking.widgets.table.*;
 import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
+import generic.Span;
 import generic.Span.SpanSet;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.docking.settings.Settings;
@@ -57,6 +58,10 @@ public class TraceValueLifePlotColumn
 	public void setFullRange(Lifespan fullRange) {
 		cellRenderer.setFullRange(fullRange);
 		headerRenderer.setFullRange(fullRange);
+	}
+
+	public Span<Long, ?> getFullRange() {
+		return cellRenderer.getFullRange();
 	}
 
 	public void setSnap(long snap) {
