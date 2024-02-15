@@ -141,6 +141,7 @@ public class DebuggerConsolePlugin extends Plugin implements DebuggerConsoleServ
 	 * For testing: get the number of rows having a given class of action context
 	 * 
 	 * @param ctxCls the context class
+	 * @return the number of rows
 	 */
 	public long getRowCount(Class<? extends ActionContext> ctxCls) {
 		return provider.getRowCount(ctxCls);

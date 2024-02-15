@@ -22,6 +22,7 @@ import javax.swing.Icon;
 
 import docking.widgets.tree.GTreeLazyNode;
 import docking.widgets.tree.GTreeNode;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.dbg.target.*;
 import ghidra.dbg.util.PathUtils.TargetObjectKeyComparator;
@@ -35,6 +36,7 @@ import ghidra.util.datastruct.WeakValueHashMap;
 import utilities.util.IDKeyed;
 
 public class ObjectTreeModel implements DisplaysModified {
+	public static final GIcon ICON_PENDING = new GIcon("icon.pending");
 
 	class ListenerForChanges extends TraceDomainObjectListener
 			implements DomainObjectClosedListener {
@@ -193,6 +195,38 @@ public class ObjectTreeModel implements DisplaysModified {
 		}
 	}
 
+	public static class PendingNode extends GTreeLazyNode {
+		@Override
+		public String getName() {
+			return ""; // Want it sorted to the front
+		}
+
+		@Override
+		public String getDisplayText() {
+			return "Refreshing...";
+		}
+
+		@Override
+		public Icon getIcon(boolean expanded) {
+			return ICON_PENDING;
+		}
+
+		@Override
+		public boolean isLeaf() {
+			return true;
+		}
+
+		@Override
+		protected List<GTreeNode> generateChildren() {
+			return List.of();
+		}
+
+		@Override
+		public String getToolTip() {
+			return null;
+		}
+	}
+
 	public abstract class AbstractNode extends GTreeLazyNode {
 		public abstract TraceObjectValue getValue();
 
@@ -332,7 +366,7 @@ public class ObjectTreeModel implements DisplaysModified {
 		}
 	}
 
-	class RootNode extends AbstractNode {
+	public class RootNode extends AbstractNode {
 		@Override
 		public TraceObjectValue getValue() {
 			if (trace == null) {
