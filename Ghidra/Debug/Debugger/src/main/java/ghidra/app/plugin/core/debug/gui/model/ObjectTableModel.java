@@ -164,7 +164,7 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		}
 	}
 
-	public record ValueAttribute<T> (ValueRow row, String name, Class<T> type)
+	public record ValueAttribute<T>(ValueRow row, String name, Class<T> type)
 			implements ValueProperty<T> {
 		public TraceObjectValue getEntry() {
 			return row.getAttributeEntry(name);
@@ -556,6 +556,7 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		Set<DynamicTableColumn<ValueRow, ?, ?>> hiddenColumns =
 			new HashSet<>(computeAttributeColumns(byVisible.get(false)));
 		Set<DynamicTableColumn<ValueRow, ?, ?>> toRemove = new HashSet<>();
+		boolean[] removedIndices = new boolean[getColumnCount()];
 		for (int i = 0; i < getColumnCount(); i++) {
 			DynamicTableColumn<ValueRow, ?, ?> exists = getColumn(i);
 			if (!(exists instanceof AutoAttributeColumn)) {
@@ -563,11 +564,31 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 			}
 			if (!visibleColumns.remove(exists) && !hiddenColumns.remove(exists)) {
 				toRemove.add(exists);
+				removedIndices[i] = true;
 			}
 		}
+		TableSortState curSortState = getTableSortState();
+		TableSortStateEditor newStateEditor = new TableSortStateEditor();
+		for (ColumnSortState css : curSortState.getAllSortStates()) {
+			int index = css.getColumnModelIndex();
+			if (removedIndices[index]) {
+				continue; // Don't add too new
+			}
+			int precedingRemoved = 0;
+			for (int i = 0; i < index; i++) {
+				if (removedIndices[index]) {
+					precedingRemoved++;
+				}
+			}
+			newStateEditor.addSortedColumn(index - precedingRemoved, css.getSortDirection());
+		}
+		TableSortState newSortState = newStateEditor.createTableSortState();
+
+		setTableSortState(TableSortState.createUnsortedSortState());
 		removeTableColumns(toRemove);
 		addTableColumns(visibleColumns, true);
 		addTableColumns(hiddenColumns, false);
+		setTableSortState(newSortState);
 	}
 
 	@Override
