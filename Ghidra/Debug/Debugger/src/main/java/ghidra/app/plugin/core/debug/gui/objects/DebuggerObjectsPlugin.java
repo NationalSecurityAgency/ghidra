@@ -275,12 +275,12 @@ public class DebuggerObjectsPlugin extends AbstractDebuggerPlugin
 		providers.get(0).readConfigState(saveState);
 	}
 
-	public void objectError(String message) {
+	public void objectError(String message, Throwable ex) {
 		if (consoleService == null) {
 			Msg.error(this, message);
 			return;
 		}
-		consoleService.log(DebuggerResources.ICON_LOG_ERROR, message);
+		consoleService.log(DebuggerResources.ICON_LOG_ERROR, message, ex);
 	}
 
 }
