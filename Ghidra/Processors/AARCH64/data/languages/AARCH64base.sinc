@@ -2866,8 +2866,10 @@ is size.ldstr=1 & b_2429=0x8 & b_23=1 & L=1 & b_21=0 & b_1620=0b11111 & b_15=1 &
 :ldaxp Rt_GPR64, Rt2_GPR64, addrReg
 is size.ldstr=3 & b_2429=0x8 & b_23=0 & L=1 & b_21=1 & b_15=1 & Rt2_GPR64 & addrReg & Rt_GPR64
 {
-	Rt_GPR64 = *(addrReg);
-	Rt2_GPR64 = *(addrReg+8);
+	local addrval1:8 = *(addrReg);
+	local addrval2:8 = *(addrReg+8);
+	Rt_GPR64 = addrval1;
+	Rt2_GPR64 = addrval2;
 }
 
 # C6.2.148 LDAXP page C6-1518 line 90122 MATCH x88608000/mask=xbfe08000
@@ -2877,8 +2879,10 @@ is size.ldstr=3 & b_2429=0x8 & b_23=0 & L=1 & b_21=1 & b_15=1 & Rt2_GPR64 & addr
 :ldaxp Rt_GPR32, Rt2_GPR32, addrReg
 is size.ldstr=2 & b_2429=0x8 & b_23=0 & L=1 & b_21=1 & b_1620 & b_15=1 & Rt2_GPR32 & addrReg & Rt_GPR32 & Rt_GPR64 & Rt2_GPR64
 {
-	Rt_GPR64 = zext(*:4(addrReg));
-	Rt2_GPR64 = zext(*:4(addrReg+4));
+	local addrval1:8 = zext(*:4(addrReg));
+	local addrval2:8 = zext(*:4(addrReg+4));
+	Rt_GPR64 = addrval1;
+	Rt2_GPR64 = addrval2;
 }
 
 # C6.2.149 LDAXR page C6-1520 line 90256 MATCH x88408000/mask=xbfe08000
@@ -2974,8 +2978,10 @@ is b_3031=0b11 & b_2329=0b0010001 & b_22=1 & b_21=0 & b_15=0 & aa_Xt & Rn_GPR64x
 :ldnp Rt_GPR32, Rt2_GPR32, addrPairIndexed
 is b_3031=0b00 & b_2229=0b10100001 & Rt2_GPR32 & addrPairIndexed & Rt_GPR32 & Rt_GPR64 & Rt2_GPR64
 {
-	Rt_GPR64 = zext(*:4 addrPairIndexed);
-	Rt2_GPR64 = zext(*:4 (addrPairIndexed + 4));
+	local addrval1:8 = zext(*:4 addrPairIndexed);
+	local addrval2:8 = zext(*:4 (addrPairIndexed + 4));
+	Rt_GPR64 = addrval1;
+	Rt2_GPR64 = addrval2;
 }
 
 # C6.2.163 LDNP page C6-1544 line 91702 MATCH x28400000/mask=x7fc00000
@@ -2985,8 +2991,10 @@ is b_3031=0b00 & b_2229=0b10100001 & Rt2_GPR32 & addrPairIndexed & Rt_GPR32 & Rt
 :ldnp Rt_GPR64, Rt2_GPR64, addrPairIndexed
 is b_3031=0b10 & b_2229=0b10100001 & Rt2_GPR64 & addrPairIndexed & Rt_GPR64
 {
-	Rt_GPR64 = *addrPairIndexed;
-	Rt2_GPR64 = *(addrPairIndexed + 8);
+	local addrval1:8 = *addrPairIndexed;
+	local addrval2:8 = *(addrPairIndexed + 8);
+	Rt_GPR64 = addrval1;
+	Rt2_GPR64 = addrval2;
 }
 
 # C6.2.164 LDP page C6-1546 line 91841 MATCH x28c00000/mask=x7fc00000
@@ -3000,8 +3008,10 @@ is b_3031=0b10 & b_2229=0b10100001 & Rt2_GPR64 & addrPairIndexed & Rt_GPR64
 :ldp Rt_GPR32, Rt2_GPR32, addrPairIndexed
 is b_3031=0b00 & b_2529=0b10100 & (b_24=1 | b_23=1) & b_22=1 & Rt2_GPR32 & addrPairIndexed & Rt_GPR32 & Rt_GPR64 & Rt2_GPR64
 {
-	Rt_GPR64 = zext(*:4 addrPairIndexed);
-	Rt2_GPR64 = zext(*:4 (addrPairIndexed + 4));
+	local addrval1:8 = zext(*:4 addrPairIndexed);
+	local addrval2:8 = zext(*:4 (addrPairIndexed + 4));
+	Rt_GPR64 = addrval1;
+	Rt2_GPR64 = addrval2;
 }
 
 # C6.2.164 LDP page C6-1546 line 91841 MATCH x28c00000/mask=x7fc00000
@@ -3015,8 +3025,10 @@ is b_3031=0b00 & b_2529=0b10100 & (b_24=1 | b_23=1) & b_22=1 & Rt2_GPR32 & addrP
 :ldp Rt_GPR64, Rt2_GPR64, addrPairIndexed
 is b_3031=0b10 & b_2529=0b10100 & (b_24=1 | b_23=1) & b_22=1 & Rt2_GPR64 & addrPairIndexed & Rt_GPR64
 {
-	Rt_GPR64 = *addrPairIndexed;
-	Rt2_GPR64 = *(addrPairIndexed + 8);
+	local addrval1:8 = *addrPairIndexed;
+	local addrval2:8 = *(addrPairIndexed + 8);
+	Rt_GPR64 = addrval1;
+	Rt2_GPR64 = addrval2;
 }
 
 # C6.2.165 LDPSW page C6-1550 line 92077 MATCH x68c00000/mask=xffc00000
@@ -3028,8 +3040,10 @@ is b_3031=0b10 & b_2529=0b10100 & (b_24=1 | b_23=1) & b_22=1 & Rt2_GPR64 & addrP
 :ldpsw Rt_GPR64, Rt2_GPR64, addrPairIndexed
 is b_2531=0b0110100 & (b_24=1 | b_23=1) & b_22=1 & Rt2_GPR64 & addrPairIndexed & Rt_GPR64
 {
-	Rt_GPR64 = *(addrPairIndexed);
-	Rt2_GPR64 = *(addrPairIndexed+8);
+	local addrval1:8 = sext(*:4 addrPairIndexed);
+	local addrval2:8 = sext(*:4 (addrPairIndexed + 8));
+	Rt_GPR64 = addrval1;
+	Rt2_GPR64 = addrval2;
 }
 
 # C6.2.166 LDR (immediate) page C6-1553 line 92262 MATCH xb9400000/mask=xbfc00000
@@ -3502,8 +3516,10 @@ is size.ldstr=3 & b_2729=7 & v=0 & b_2425=0 & b_23=0 & b_2122=2 & b_1011=0 & Uns
 :ldxp Rt_GPR64, Rt2_GPR64, addrReg
 is size.ldstr=3 & b_2429=0x8 & b_23=0 & L=1 & b_21=1 & b_15=0 & Rt2_GPR64 & addrReg & Rt_GPR64
 {
-	Rt_GPR64 = *addrReg;
-	Rt2_GPR64 = *(addrReg + 8);
+	local addrval1:8 = *addrReg;
+	local addrval2:8 = *(addrReg + 8);
+	Rt_GPR64 = addrval1;
+	Rt2_GPR64 = addrval2;
 }
 
 # C6.2.208 LDXP page C6-1646 line 97748 MATCH x88600000/mask=xbfe08000
@@ -3514,8 +3530,10 @@ is size.ldstr=3 & b_2429=0x8 & b_23=0 & L=1 & b_21=1 & b_15=0 & Rt2_GPR64 & addr
 :ldxp Rt_GPR32, Rt2_GPR32, addrReg
 is size.ldstr=2 & b_2429=0x8 & b_23=0 & L=1 & b_21=1 & b_15=0 & Rt2_GPR32 & addrReg & Rt_GPR32 & Rt_GPR64 & Rt2_GPR64
 {
-	Rt_GPR64 = zext(*:4 addrReg);
-	Rt2_GPR64 = zext(*:4 (addrReg + 4));
+	local addrval1:8 = zext(*:4 addrReg);
+	local addrval2:8 = zext(*:4 (addrReg + 4));
+	Rt_GPR64 = addrval1;
+	Rt2_GPR64 = addrval2;
 }
 
 # C6.2.209 LDXR page C6-1648 line 97882 MATCH x88400000/mask=xbfe08000
