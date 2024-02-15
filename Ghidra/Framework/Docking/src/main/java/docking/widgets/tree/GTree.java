@@ -1693,7 +1693,7 @@ public class GTree extends JPanel implements BusyListener {
 		};
 		//@formatter:off
 		expandAction.setPopupMenuData(new MenuData(
-				new String[] { "Exapnd" },
+				new String[] { "Expand" },
 				Icons.EXPAND_ALL_ICON,
 				actionMenuGroup, NO_MNEMONIC,
 				Integer.toString(subGroupIndex++)

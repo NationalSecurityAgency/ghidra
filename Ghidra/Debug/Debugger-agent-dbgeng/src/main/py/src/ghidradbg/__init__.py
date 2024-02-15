@@ -13,7 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 ##
-import ctypes
-ctypes.windll.kernel32.SetErrorMode(0x0001|0x0002|0x8000)
-
 from . import util, commands, methods, hooks
+import ctypes
+
+
+ctypes.windll.kernel32.SetErrorMode(0x0001 | 0x0002 | 0x8000)

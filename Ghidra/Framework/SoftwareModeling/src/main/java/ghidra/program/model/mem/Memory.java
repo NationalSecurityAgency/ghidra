@@ -836,7 +836,7 @@ public interface Memory extends AddressSetView {
 			throws MemoryAccessException;
 
 	/**
-	 * Write short at addr in big endian order.
+	 * Write short at addr in default endian order.
 	 *
 	 * @param addr the Address of the short.
 	 * @param value the data to write.
@@ -857,7 +857,7 @@ public interface Memory extends AddressSetView {
 	public void setShort(Address addr, short value, boolean bigEndian) throws MemoryAccessException;
 
 	/**
-	 * Write int at addr.
+	 * Write int at addr in the default endian order.
 	 *
 	 * @param addr the Address of the int.
 	 * @param value the data to write.
@@ -879,7 +879,7 @@ public interface Memory extends AddressSetView {
 	public void setInt(Address addr, int value, boolean bigEndian) throws MemoryAccessException;
 
 	/**
-	 * Write long at addr.
+	 * Write long at addr in the default endian order.
 	 *
 	 * @param addr the Address of the long.
 	 * @param value the data to write.

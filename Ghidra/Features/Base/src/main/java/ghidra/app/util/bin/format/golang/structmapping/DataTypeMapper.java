@@ -169,21 +169,30 @@ public class DataTypeMapper implements AutoCloseable {
 	 * @throws IOException if the class's Ghidra structure data type could not be found
 	 */
 	public <T> void registerStructure(Class<T> clazz) throws IOException {
-		Structure structDT = null;
-		String structName = StructureMappingInfo.getStructureDataTypeNameForClass(clazz);
-		if (structName != null && !structName.isBlank()) {
-			structDT = getType(structName, Structure.class);
-		}
-		if (!StructureReader.class.isAssignableFrom(clazz) && structDT == null) {
-			if (structName == null || structName.isBlank()) {
-				structName = "<missing>";
+		StructureMapping sma = clazz.getAnnotation(StructureMapping.class);
+		List<String> structNames = sma != null ? Arrays.asList(sma.structureName()) : List.of();
+		Structure structDT = getType(structNames, Structure.class);
+		if (structDT == null) {
+			String dtName = structNames.isEmpty() ? "<missing>" : String.join("|", structNames);
+			if (!StructureReader.class.isAssignableFrom(clazz)) {
+				throw new IOException("Missing struct definition for class %s, structure name: [%s]"
+						.formatted(clazz.getSimpleName(), dtName));
 			}
-			throw new IOException(
-				"Missing struct definition %s - %s".formatted(clazz.getSimpleName(), structName));
+			if (structNames.size() != 1) {
+				throw new IOException(
+					"Bad StructMapping,StructureReader definition for class %s, structure name: [%s]"
+							.formatted(clazz.getSimpleName(), dtName));
+			}
 		}
 
-		StructureMappingInfo<T> structMappingInfo = StructureMappingInfo.fromClass(clazz, structDT);
-		mappingInfo.put(clazz, structMappingInfo);
+		try {
+			StructureMappingInfo<T> structMappingInfo =
+				StructureMappingInfo.fromClass(clazz, structDT);
+			mappingInfo.put(clazz, structMappingInfo);
+		}
+		catch (IllegalArgumentException e) {
+			throw new IOException(e.getMessage());
+		}
 	}
 
 	/**
@@ -282,7 +291,32 @@ public class DataTypeMapper implements AutoCloseable {
 	}
 
 	/**
-	 * Returns a named {@link DataType}, searching the registered 
+	 * Returns a named {@link DataType}, searching the registered
+	 * {@link #addProgramSearchCategoryPath(CategoryPath...) program}
+	 * and {@link #addArchiveSearchCategoryPath(CategoryPath...) archive} category paths.
+	 * <p>
+	 * DataTypes that were found in the attached archive gdt manager will be copied into the
+	 * program's data type manager before being returned.
+	 *
+	 * @param <T> DataType or derived type
+	 * @param names list containing the data type name and any alternates
+	 * @param clazz expected DataType class
+	 * @return DataType or null if not found
+	 */
+	public <T extends DataType> T getType(List<String> names, Class<T> clazz) {
+		for (String dtName : names) {
+			if (dtName != null && !dtName.isBlank()) {
+				T result = getType(dtName, clazz);
+				if (result != null) {
+					return result;
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Returns a named {@link DataType}, searching the registered
 	 * {@link #addProgramSearchCategoryPath(CategoryPath...) program}
 	 * and {@link #addArchiveSearchCategoryPath(CategoryPath...) archive} category paths.
 	 * <p>

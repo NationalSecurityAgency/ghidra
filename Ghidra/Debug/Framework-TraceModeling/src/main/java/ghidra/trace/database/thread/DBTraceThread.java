@@ -20,9 +20,9 @@ import java.io.IOException;
 import db.DBRecord;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TraceThreadChangeType;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
@@ -118,7 +118,7 @@ public class DBTraceThread extends DBAnnotatedObject implements TraceThread {
 			this.name = name;
 			update(NAME_COLUMN);
 			manager.trace
-					.setChanged(new TraceChangeRecord<>(TraceThreadChangeType.CHANGED, null, this));
+					.setChanged(new TraceChangeRecord<>(TraceEvents.THREAD_CHANGED, null, this));
 		}
 	}
 
@@ -155,9 +155,8 @@ public class DBTraceThread extends DBAnnotatedObject implements TraceThread {
 
 			this.lifespan = newLifespan;
 
-			manager.trace.setChanged(
-				new TraceChangeRecord<>(TraceThreadChangeType.LIFESPAN_CHANGED, null,
-					this, oldLifespan, newLifespan));
+			manager.trace.setChanged(new TraceChangeRecord<>(TraceEvents.THREAD_LIFESPAN_CHANGED,
+				null, this, oldLifespan, newLifespan));
 		}
 	}
 
@@ -172,7 +171,7 @@ public class DBTraceThread extends DBAnnotatedObject implements TraceThread {
 			this.comment = comment;
 			update(COMMENT_COLUMN);
 			manager.trace
-					.setChanged(new TraceChangeRecord<>(TraceThreadChangeType.CHANGED, null, this));
+					.setChanged(new TraceChangeRecord<>(TraceEvents.THREAD_CHANGED, null, this));
 		}
 	}
 

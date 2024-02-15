@@ -56,8 +56,8 @@ import ghidra.base.widgets.table.DataTypeTableCellEditor;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.debug.api.watch.WatchRow;
 import ghidra.docking.settings.*;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.DomainObjectChangeRecord;
+import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
@@ -75,12 +75,11 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceMemoryBytesChangeType;
-import ghidra.trace.model.Trace.TraceMemoryStateChangeType;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.trace.util.TraceAddressSpace;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -109,8 +108,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 
 		static ActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
+			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
 					.popupMenuPath(NAME)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
@@ -247,9 +245,9 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 
 	class ForDepsListener extends TraceDomainObjectListener {
 		public ForDepsListener() {
-			listenForUntyped(DomainObject.DO_OBJECT_RESTORED, this::objectRestored);
-			listenFor(TraceMemoryBytesChangeType.CHANGED, this::bytesChanged);
-			listenFor(TraceMemoryStateChangeType.CHANGED, this::stateChanged);
+			listenForUntyped(DomainObjectEvent.RESTORED, this::objectRestored);
+			listenFor(TraceEvents.BYTES_CHANGED, this::bytesChanged);
+			listenFor(TraceEvents.BYTES_STATE_CHANGED, this::stateChanged);
 		}
 
 		private void objectRestored(DomainObjectChangeRecord rec) {
@@ -459,8 +457,8 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		int modelCol = watchTable.convertColumnIndexToModel(watchTable.getSelectedColumn());
 		Throwable error = row.getError(); // I don't care the selected column for errors
 		if (error != null) {
-			Msg.showError(this, getComponent(), "Evaluation error",
-				"Could not evaluate watch", error);
+			Msg.showError(this, getComponent(), "Evaluation error", "Could not evaluate watch",
+				error);
 		}
 		else if (modelCol == WatchTableColumns.ADDRESS.ordinal()) {
 			Address address = row.getAddress();
@@ -509,9 +507,8 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 					selHasMemoryReads(ctx))
 				.onAction(this::activatedSelectReads)
 				.buildAndInstallLocal(this);
-		actionAdd = AddAction.builder(plugin)
-				.onAction(this::activatedAdd)
-				.buildAndInstallLocal(this);
+		actionAdd =
+			AddAction.builder(plugin).onAction(this::activatedAdd).buildAndInstallLocal(this);
 		actionRemove = RemoveAction.builder(plugin)
 				.withContext(DebuggerWatchActionContext.class)
 				.enabledWhen(ctx -> !ctx.getWatchRows().isEmpty())
@@ -609,8 +606,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 					return;
 				}
 			}
-			try (Transaction tx =
-				current.getTrace().openTransaction("Apply Watch Data Type")) {
+			try (Transaction tx = current.getTrace().openTransaction("Apply Watch Data Type")) {
 				try {
 					listing.clearCodeUnits(row.getAddress(), row.getRange().getMaxAddress(), false);
 					Data data = listing.createData(address, dataType, size);

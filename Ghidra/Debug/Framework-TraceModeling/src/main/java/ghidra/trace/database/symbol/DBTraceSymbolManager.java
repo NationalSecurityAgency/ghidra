@@ -39,10 +39,10 @@ import ghidra.trace.database.space.DBTraceSpaceKey;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TraceSymbolChangeType;
 import ghidra.trace.model.symbol.*;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.DBCachedObjectStoreFactory.AbstractDBFieldCodec;
@@ -241,8 +241,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 	public DBTraceSymbolManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 			DBTraceThreadManager threadManager, DBTraceDataTypeManager dataTypeManager,
-			DBTraceOverlaySpaceAdapter overlayAdapter)
-			throws VersionException, IOException {
+			DBTraceOverlaySpaceAdapter overlayAdapter) throws VersionException, IOException {
 		this.trace = trace;
 		this.lock = lock;
 		this.threadManager = threadManager;
@@ -278,8 +277,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		allNamespaces = new DBTraceSymbolMultipleTypesView<>(this, namespaces, classes);
 		uniqueNamespaces =
 			new DBTraceSymbolMultipleTypesNoDuplicatesView<>(this, namespaces, classes);
-		notLabels =
-			new DBTraceSymbolMultipleTypesNoDuplicatesView<>(this, namespaces, classes);
+		notLabels = new DBTraceSymbolMultipleTypesNoDuplicatesView<>(this, namespaces, classes);
 		allSymbols = new DBTraceSymbolMultipleTypesView<>(this, labels, namespaces, classes);
 	}
 
@@ -357,7 +355,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 	}
 
 	// Internal
-	public void replaceDataTypes(long oldID, long newID) {
+	public void replaceDataTypes(Map<Long, Long> dataTypeReplacementMap) {
 		// Would apply to functions and variables, but those are not supported.
 	}
 
@@ -521,9 +519,8 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 			delID(thread, symbol.getAddress().getAddressSpace(), symbol.getID());
 		}
 		// TODO: Remove from other space maps, once implemented.
-		trace.setChanged(
-			new TraceChangeRecord<>(TraceSymbolChangeType.DELETED, symbol.getSpace(), symbol, null,
-				null));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.SYMBOL_DELETED, symbol.getSpace(),
+			symbol, null, null));
 		return true;
 	}
 
@@ -593,9 +590,9 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		Collection<Long> result = new ArrayList<>();
 		for (DBTraceAddressSnapRangePropertyMapSpace<Long, DBTraceSymbolIDEntry> space : idMap
 				.getActiveMemorySpaces()) {
-			result.addAll(space
-					.reduce(TraceAddressSnapRangeQuery.added(from, to, space.getAddressSpace()))
-					.values());
+			result.addAll(
+				space.reduce(TraceAddressSnapRangeQuery.added(from, to, space.getAddressSpace()))
+						.values());
 		}
 		return result;
 	}
@@ -608,9 +605,9 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		Collection<Long> result = new ArrayList<>();
 		for (DBTraceAddressSnapRangePropertyMapSpace<Long, DBTraceSymbolIDEntry> space : idMap
 				.getActiveMemorySpaces()) {
-			result.addAll(space
-					.reduce(TraceAddressSnapRangeQuery.removed(from, to, space.getAddressSpace()))
-					.values());
+			result.addAll(
+				space.reduce(TraceAddressSnapRangeQuery.removed(from, to, space.getAddressSpace()))
+						.values());
 		}
 		return result;
 	}

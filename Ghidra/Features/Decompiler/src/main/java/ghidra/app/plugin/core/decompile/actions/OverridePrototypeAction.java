@@ -28,8 +28,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.*;
-import ghidra.program.model.symbol.Reference;
-import ghidra.program.model.symbol.SourceType;
+import ghidra.program.model.symbol.*;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.InvalidInputException;
@@ -48,7 +47,7 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 	 * @param tokenAtCursor is the point in the window the user has selected
 	 * @return the PcodeOp or null
 	 */
-	public static PcodeOp getCallOp(Program program, ClangToken tokenAtCursor) {
+	static PcodeOp getCallOp(Program program, ClangToken tokenAtCursor) {
 		if (tokenAtCursor == null) {
 			return null;
 		}
@@ -74,6 +73,38 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 		}
 
 		return null;
+	}
+
+	static Symbol getSymbol(Function func, ClangToken tokenAtCursor) {
+		if (tokenAtCursor == null || (func instanceof UndefinedFunction)) {
+			return null;
+		}
+
+		Namespace overspace = HighFunction.findOverrideSpace(func);
+		if (overspace == null) {
+			return null;
+		}
+		PcodeOp op = getCallOp(func.getProgram(), tokenAtCursor);
+		if (op == null) {
+			return null;
+		}
+		SymbolTable symtab = func.getProgram().getSymbolTable();
+		SymbolIterator iter = symtab.getSymbolsAsIterator(op.getSeqnum().getTarget());
+		while (iter.hasNext()) {
+			Symbol sym = iter.next();
+			if (sym.getSymbolType() != SymbolType.LABEL) {
+				continue;
+			}
+			if (!sym.getParentNamespace().equals(overspace)) {
+				continue;
+			}
+			if (!sym.getName().startsWith("prt")) {
+				continue;
+			}
+			return sym;
+		}
+		return null;
+
 	}
 
 	private static PcodeOp getOpForAddress(Program program, Address addr, ClangToken token) {
@@ -114,7 +145,7 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 		return opCode == PcodeOp.CALL || opCode == PcodeOp.CALLIND;
 	}
 
-	private Function getCalledFunction(Program program, PcodeOp op) {
+	static Function getCalledFunction(Program program, PcodeOp op) {
 		if (op.getOpcode() != PcodeOp.CALL) {
 			return null;
 		}
@@ -226,8 +257,7 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 		}
 
 		// don't enable if override already in place
-		return DeletePrototypeOverrideAction.getSymbol(context.getFunction(),
-			context.getTokenAtCursor()) == null;
+		return getSymbol(context.getFunction(), context.getTokenAtCursor()) == null;
 	}
 
 	@Override
@@ -235,10 +265,10 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 		Function func = context.getFunction();
 		Program program = func.getProgram();
 		PcodeOp op = getCallOp(program, context.getTokenAtCursor());
-		Function calledfunc = getCalledFunction(program, op);
+		Function calledFunc = getCalledFunction(program, op);
 		boolean varargs = false;
-		if (calledfunc != null) {
-			varargs = calledfunc.hasVarArgs();
+		if (calledFunc != null) {
+			varargs = calledFunc.hasVarArgs();
 		}
 		if ((op.getOpcode() == PcodeOp.CALL) && !varargs) {
 			if (OptionDialog.showOptionDialog(context.getDecompilerPanel(),
@@ -250,26 +280,21 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 				return;
 			}
 		}
-		Address addr = op.getSeqnum().getTarget();
-		String name = "func"; // Default if we don't have a real name
-		String conv = program.getCompilerSpec().getDefaultCallingConvention().getName();
-		if (calledfunc != null) {
-			name = calledfunc.getName();
-			conv = calledfunc.getCallingConventionName();
-		}
 
-		String signature = generateSignature(op, name, calledfunc);
-		PluginTool tool = context.getTool();
-		ProtoOverrideDialog dialog =
-			new ProtoOverrideDialog(tool, calledfunc != null ? calledfunc : func, signature, conv);
-		tool.showDialog(dialog);
-		FunctionDefinition fdef = dialog.getFunctionDefinition();
+		String name = "func"; // Default if we don't have a real name
+		if (calledFunc != null) {
+			name = calledFunc.getName();
+		}
+		String signature = generateSignature(op, name, calledFunc);
+
+		FunctionDefinition fdef = editSignature(context, calledFunc, signature);
 		if (fdef == null) {
 			return;
 		}
 		int transaction = program.startTransaction("Override Signature");
 		boolean commit = false;
 		try {
+			Address addr = op.getSeqnum().getTarget();
 			HighFunctionDBUtil.writeOverride(func, addr, fdef);
 			commit = true;
 		}
@@ -282,13 +307,30 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 		}
 	}
 
+	static FunctionDefinition editSignature(DecompilerActionContext context, Function calledFunc,
+			String signature) {
+		Function func = context.getFunction();
+		Program program = func.getProgram();
+		PluginTool tool = context.getTool();
+
+		String conv = program.getCompilerSpec().getDefaultCallingConvention().getName();
+		if (calledFunc != null) {
+			conv = calledFunc.getCallingConventionName();
+		}
+
+		ProtoOverrideDialog dialog =
+			new ProtoOverrideDialog(tool, calledFunc != null ? calledFunc : func, signature, conv);
+		tool.showDialog(dialog);
+		return dialog.getFunctionDefinition();
+	}
+
 	/**
 	 * <code>ProtoOverrideDialog</code> provides the ability to edit the
 	 * function signature associated with a specific function definition override
 	 * at a sub-function callsite.  
 	 * Use of this editor requires the presence of the tool-based datatype manager service.
 	 */
-	private class ProtoOverrideDialog extends EditFunctionSignatureDialog {
+	private static class ProtoOverrideDialog extends EditFunctionSignatureDialog {
 		private FunctionDefinition functionDefinition;
 		private final String initialSignature;
 		private final String initialConvention;

@@ -16,7 +16,8 @@
 package ghidra.app.util.bin.format.dwarf4;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf4.DWARFUtil.LengthResult;
@@ -101,7 +102,7 @@ public class DWARFCompilationUnit {
 	/**
 	 * The contents of the first DIE (that must be a compile unit) in this compUnit.
 	 */
-	private DWARFCompileUnit compUnit;
+	protected DWARFCompileUnit compUnit;
 
 	/**
 	 * Creates a new {@link DWARFCompilationUnit} by reading a compilationUnit's header data
@@ -175,18 +176,17 @@ public class DWARFCompilationUnit {
 
 		try {
 			DebugInfoEntry compileUnitDIE =
-				DebugInfoEntry.read(debugInfoBR, cu, dwarfProgram.getAttributeFactory());
+				DebugInfoEntry.read(debugInfoBR, cu, -1, dwarfProgram.getAttributeFactory());
 
 			DWARFCompileUnit compUnit =
 				DWARFCompileUnit.read(DIEAggregate.createSingle(compileUnitDIE));
-			cu.setCompileUnit(compUnit);
+			cu.compUnit = compUnit;
 			return cu;
 		}
 		catch (IOException ioe) {
-			Msg.error(null,
-				"Failed to parse the DW_TAG_compile_unit DIE at the start of compilation unit " +
-					cuNumber + " at offset " + startOffset + " (0x" +
-					Long.toHexString(startOffset) + "), skipping entire compilation unit",
+			Msg.error(DWARFCompilationUnit.class,
+				"Failed to parse the DW_TAG_compile_unit DIE at the start of compilation unit %d at offset %d (0x%x), skipping entire compilation unit"
+						.formatted(cuNumber, startOffset, startOffset),
 				ioe);
 			debugInfoBR.setPointerIndex(cu.getEndOffset());
 			return null;
@@ -238,10 +238,6 @@ public class DWARFCompilationUnit {
 
 	public DWARFCompileUnit getCompileUnit() {
 		return compUnit;
-	}
-
-	protected void setCompileUnit(DWARFCompileUnit compUnit) {
-		this.compUnit = compUnit;
 	}
 
 	public DWARFProgram getProgram() {
@@ -327,77 +323,4 @@ public class DWARFCompilationUnit {
 		return compUnitNumber;
 	}
 
-	/**
-	 * Reads the {@link DebugInfoEntry} records for this compilation unit from the .debug_info
-	 * section.
-	 * <p>
-	 * @param entries List of DIE records that is written to by this method.  This list should
-	 * be empty if the caller only wants this CU's records (ie. normal mode), or the list
-	 * can be used to accumulate all DIE records (preload all DIE mode).
-	 * @param monitor {@link TaskMonitor} to watch for cancelation
-	 * @throws IOException if error reading data
-	 * @throws DWARFException if error in DWARF structure
-	 * @throws CancelledException if user cancels.
-	 */
-	public void readDIEs(List<DebugInfoEntry> entries, TaskMonitor monitor)
-			throws IOException, DWARFException, CancelledException {
-
-		BinaryReader br = dwarfProgram.getDebugInfo();
-		br.setPointerIndex(firstDIEOffset);
-
-		Deque<DebugInfoEntry> parentStack = new ArrayDeque<>();
-
-		DebugInfoEntry parent = null;
-		DebugInfoEntry die;
-		DebugInfoEntry unexpectedTerminator = null;
-		while (br.getPointerIndex() < endOffset) {
-			long startOfDIE = br.getPointerIndex();
-			try {
-				die = DebugInfoEntry.read(br, this, dwarfProgram.getAttributeFactory());
-			}
-			catch (IOException e) {
-				Msg.error(this,
-					"Failed to read DIE at offset 0x%x in compunit %d (at 0x%x), skipping remainder of compilation unit."
-							.formatted(startOfDIE, compUnitNumber, startOffset),
-					e);
-				br.setPointerIndex(endOffset);
-				continue;
-			}
-
-			monitor.checkCancelled();
-
-			if (die.isTerminator()) {
-				if (parent == null && parentStack.isEmpty()) {
-					unexpectedTerminator = die;
-					continue;
-				}
-				parent = !parentStack.isEmpty() ? parentStack.pop() : null;
-				continue;
-			}
-
-			if (unexpectedTerminator != null) {
-				throw new DWARFException("Unexpected terminator entry at 0x%x"
-						.formatted(unexpectedTerminator.getOffset()));
-			}
-			entries.add(die);
-
-			if (parent != null) {
-				parent.addChild(die);
-				die.setParent(parent);
-			}
-			else {
-				if (die.getOffset() != firstDIEOffset) {
-					throw new DWARFException(
-						"Unexpected root level DIE at 0x%x".formatted(die.getOffset()));
-				}
-			}
-
-			if (die.getAbbreviation().hasChildren()) {
-				if (parent != null) {
-					parentStack.push(parent);
-				}
-				parent = die;
-			}
-		}
-	}
 }

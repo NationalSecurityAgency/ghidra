@@ -77,10 +77,10 @@ import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceMemoryBytesChangeType;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceAddressSpace;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.InvalidNameException;
 import ghidra.util.datastruct.TestDataStructureErrorHandlerInstaller;
 import ghidra.util.exception.CancelledException;
@@ -224,12 +224,23 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 		return new AddressRangeImpl(addr(program, min), addr(program, max));
 	}
 
+	protected static AddressRange rng(Address min, long length) throws AddressOverflowException {
+		return new AddressRangeImpl(min, length);
+	}
+
 	protected static AddressSetView set(AddressRange... ranges) {
 		AddressSet set = new AddressSet();
 		for (AddressRange rng : ranges) {
 			set.add(rng);
 		}
 		return set;
+	}
+
+	protected static AddressRange quantize(AddressRange rng, long page) {
+		AddressSpace space = rng.getAddressSpace();
+		long min = Long.divideUnsigned(rng.getMinAddress().getOffset(), page) * page;
+		long max = Long.divideUnsigned(rng.getMaxAddress().getOffset() + page - 1, page) * page - 1;
+		return new AddressRangeImpl(space.getAddress(min), space.getAddress(max));
 	}
 
 	public static Language getToyBE64Language() {
@@ -809,7 +820,7 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 
 		TraceDomainObjectListener listener = new TraceDomainObjectListener() {
 			{
-				listenFor(TraceMemoryBytesChangeType.CHANGED, this::bytesChanged);
+				listenFor(TraceEvents.BYTES_CHANGED, this::bytesChanged);
 			}
 
 			void bytesChanged(TraceAddressSpace space, TraceAddressSnapRange range, byte[] oldValue,

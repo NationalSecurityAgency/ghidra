@@ -150,7 +150,7 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 
 	@Test
 	@SuppressWarnings("resource")
-	public void testFindSimple() throws Exception {
+	public void testFindText() throws Exception {
 		terminalService = addPlugin(tool, TerminalPlugin.class);
 
 		try (DefaultTerminal term = (DefaultTerminal) terminalService
@@ -160,6 +160,38 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 			term.injectDisplayOutput(TEST_CONTENTS);
 
 			term.provider.findDialog.txtFind.setText("term");
+
+			performAction(term.provider.actionFindNext, false);
+			waitForPass(() -> assertSingleSelection(0, 0, 4,
+				term.provider.panel.fieldPanel.getSelection()));
+
+			performAction(term.provider.actionFindNext, false);
+			waitForPass(() -> assertSingleSelection(0, 5, 9,
+				term.provider.panel.fieldPanel.getSelection()));
+
+			performAction(term.provider.actionFindNext, false);
+			waitForPass(() -> assertSingleSelection(1, 2, 6,
+				term.provider.panel.fieldPanel.getSelection()));
+
+			performAction(term.provider.actionFindNext, false);
+			OkDialog dialog = waitForInfoDialog();
+			assertEquals("String not found", dialog.getMessage());
+			dialog.close();
+		}
+	}
+
+	@Test
+	@SuppressWarnings("resource")
+	public void testFindTextCaps() throws Exception {
+		terminalService = addPlugin(tool, TerminalPlugin.class);
+
+		try (DefaultTerminal term = (DefaultTerminal) terminalService
+				.createNullTerminal(Charset.forName("UTF-8"), buf -> {
+				})) {
+			term.setFixedSize(80, 25);
+			term.injectDisplayOutput(TEST_CONTENTS);
+
+			term.provider.findDialog.txtFind.setText("TERM");
 
 			performAction(term.provider.actionFindNext, false);
 			waitForPass(() -> assertSingleSelection(0, 0, 4,
@@ -282,6 +314,44 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 			term.injectDisplayOutput(TEST_CONTENTS);
 
 			term.provider.findDialog.txtFind.setText("o?term");
+			term.provider.findDialog.cbRegex.setSelected(true);
+
+			performAction(term.provider.actionFindNext, false);
+			waitForPass(() -> assertSingleSelection(0, 0, 4,
+				term.provider.panel.fieldPanel.getSelection()));
+
+			performAction(term.provider.actionFindNext, false);
+			waitForPass(() -> assertSingleSelection(0, 5, 9,
+				term.provider.panel.fieldPanel.getSelection()));
+
+			performAction(term.provider.actionFindNext, false);
+			waitForPass(() -> assertSingleSelection(1, 1, 6,
+				term.provider.panel.fieldPanel.getSelection()));
+
+			// NB. the o is optional, so it finds a subrange of the previous result
+			performAction(term.provider.actionFindNext, false);
+			waitForPass(() -> assertSingleSelection(1, 2, 6,
+				term.provider.panel.fieldPanel.getSelection()));
+
+			performAction(term.provider.actionFindNext, false);
+			OkDialog dialog = waitForInfoDialog();
+			assertEquals("String not found", dialog.getMessage());
+			dialog.close();
+		}
+	}
+
+	@Test
+	@SuppressWarnings("resource")
+	public void testFindRegexCaps() throws Exception {
+		terminalService = addPlugin(tool, TerminalPlugin.class);
+
+		try (DefaultTerminal term = (DefaultTerminal) terminalService
+				.createNullTerminal(Charset.forName("UTF-8"), buf -> {
+				})) {
+			term.setFixedSize(80, 25);
+			term.injectDisplayOutput(TEST_CONTENTS);
+
+			term.provider.findDialog.txtFind.setText("o?TERM");
 			term.provider.findDialog.cbRegex.setSelected(true);
 
 			performAction(term.provider.actionFindNext, false);

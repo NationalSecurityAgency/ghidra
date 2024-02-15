@@ -1,0 +1,107 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <META http-equiv="Content-Language" content="en-us">
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+    <TITLE>Wildcard Assembler Module</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY>
+    <H1><A name="Wildcard_Assembler_Module"></A>Wildcard Assembler Module</H1>
+
+    <BLOCKQUOTE>
+      <P><B>This feature is currently only available as an API for Ghidra scripts and plugins. For
+      an example of how to use the API, see the FindInstructionWithWildcard and
+      WildSleighAssemblerInfo scripts in the Script Manager.</B></P>
+
+      <P>The <I>Wildcard Assembler</I> extends Ghidra's assembler to enable assembling instructions
+      with specific tokens replaced with wildcards.</P>
+
+      <P>This assembler will return metadata for each wildcard in an assembled instruction. This
+      metadata includes details of which specific bits of an assembled instruction are used to
+      derive the value of the wildcarded token and the expression used to derive the value.</P>
+
+      <H2>Wildcard Syntax</H2>
+
+      <P>Wildcards in instructions are specified by replacing the to-be-wildcarded token with a
+      wildcard name surrounded by backticks (e.g. <CODE>`Q1`</CODE> where Q1 is an arbitrary
+      wildcard name) and passing the entire instruction to the Wildcard Assembler.</P>
+
+      <P>By default, the Wildcard Assembler will return metadata about all possible values that a
+      wildcarded token could take and all the encodings of all these values. This behavior can be
+      limited by filtering the wildcard by appending specific syntax after the wildcard name:</P>
+
+      <UL>
+        <LI>
+          <B>Numeric Filter:</B> 
+
+          <UL>
+            <LI>Appending <CODE>[..]</CODE> e.g., <CODE>MOV RAX, `Q1[..]`</CODE>, will constrain
+            the wildcarded token to only numeric values (and not registers or other strings).</LI>
+
+            <LI>Appending <CODE>[0x0..0x100]</CODE> (where 0x0 and 0x100 are arbitrary hexadecimal
+            values with the smaller number first) will constrain the wildcarded token to only
+            numeric values between the two given values. This can be used to ensure that the
+            returned encodings can hold values of a desired size. Multiple non-contiguous ranges
+            can be specified by separating them with commas (e.g.
+            <CODE>[0x0..0x5,0x1000..0x4000]</CODE>)</LI>
+          </UL>
+        </LI>
+
+        <LI>
+          <B>Regex Filter:</B> 
+
+          <UL>
+            <LI>Appending <CODE>/ABCD</CODE> where ABCD is an arbitrary regular expression will
+            constrain the wildcarded token to only be string tokens matching the given regular
+            expression. This is most likely used for filtering register names; for example
+            appending <CODE>/(sp)|(lr)</CODE> to a wildcard in a register position in ARM assembly
+            will limit the wildcard results to only encodings using the <CODE>sp</CODE> or
+            <CODE>lr</CODE> registers in that position.</LI>
+          </UL>
+        </LI>
+      </UL>
+
+      <P>Normally a wildcard will only match a single token. For example, in a x86:LE:32:default
+      binary:</P>
+
+      <BLOCKQUOTE>
+        <DL>
+          <DT>No wildcard:</DT>
+
+          <DD><CODE>MOVSD.REP ES:EDI,ESI</CODE></DD>
+
+          <DT>Single token:</DT>
+
+          <DD><CODE>MOVSD.REP `Q1`:EDI,ESI</CODE></DD>
+
+          <DT>Single token:</DT>
+
+          <DD><CODE>MOVSD.REP ES:`Q2`,ESI</CODE></DD>
+        </DL>
+      </BLOCKQUOTE>
+
+      <P>To allow a single wildcard to match multiple related tokens: precede the wildcard name
+      with a <CODE>!</CODE> character:</P>
+
+      <BLOCKQUOTE>
+        <DL>
+          <DT>Multi-token:</DT>
+
+          <DD><CODE>MOVSD.REP `!Q4`,ESI</CODE></DD>
+
+          <DT>Single token (Does <I>NOT</I> assemble):</DT>
+
+          <DD><CODE>MOVSD.REP `Q3`,ESI</CODE></DD>
+        </DL>
+      </BLOCKQUOTE>
+
+      <P class="providedbyplugin">Provided by: <I>Wildcard Assembler Module</I></P>
+    </BLOCKQUOTE>
+  </BODY>
+</HTML>

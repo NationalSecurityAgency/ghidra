@@ -46,6 +46,11 @@ public enum EnumerableTargetObjectSchema implements TargetObjectSchema {
 		public AttributeSchema getDefaultAttributeSchema() {
 			return AttributeSchema.DEFAULT_ANY;
 		}
+
+		@Override
+		public boolean isAssignableFrom(TargetObjectSchema that) {
+			return true;
+		}
 	},
 	/**
 	 * The least restrictive, but least informative object schema.
@@ -62,6 +67,12 @@ public enum EnumerableTargetObjectSchema implements TargetObjectSchema {
 		@Override
 		public AttributeSchema getDefaultAttributeSchema() {
 			return AttributeSchema.DEFAULT_ANY;
+		}
+
+		@Override
+		public boolean isAssignableFrom(TargetObjectSchema that) {
+			// That is has as schema implies it's a TargetObject
+			return true;
 		}
 	},
 	TYPE(Class.class),

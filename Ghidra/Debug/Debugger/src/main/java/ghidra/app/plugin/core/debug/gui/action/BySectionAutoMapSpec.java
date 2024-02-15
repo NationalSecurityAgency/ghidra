@@ -24,8 +24,8 @@ import ghidra.debug.api.modules.SectionMapProposal;
 import ghidra.debug.api.modules.SectionMapProposal.SectionMapEntry;
 import ghidra.program.model.listing.Program;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TraceSectionChangeType;
-import ghidra.trace.util.TraceChangeType;
+import ghidra.trace.util.TraceEvent;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -43,8 +43,8 @@ public class BySectionAutoMapSpec implements AutoMapSpec {
 	}
 
 	@Override
-	public Collection<TraceChangeType<?, ?>> getChangeTypes() {
-		return List.of(TraceSectionChangeType.ADDED);
+	public Collection<TraceEvent<?, ?>> getChangeTypes() {
+		return List.of(TraceEvents.SECTION_ADDED);
 	}
 
 	@Override

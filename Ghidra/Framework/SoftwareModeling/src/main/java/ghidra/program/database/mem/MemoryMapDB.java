@@ -21,8 +21,8 @@ import java.util.*;
 
 import db.DBConstants;
 import db.DBHandle;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.DomainObjectChangeRecord;
+import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.*;
 import ghidra.program.database.code.CodeManager;
@@ -32,7 +32,7 @@ import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
-import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -485,23 +485,23 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	void fireBlockAdded(MemoryBlock newBlock) {
 		AddressRange range = new AddressRangeImpl(newBlock.getStart(), newBlock.getEnd());
 		program.getTreeManager().addMemoryBlock(newBlock.getName(), range);
-		program.setChanged(ChangeManager.DOCR_MEMORY_BLOCK_ADDED, newBlock.getStart(),
-			newBlock.getEnd(), null, null);
-		program.fireEvent(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_RESTORED));
+		program.setChanged(ProgramEvent.MEMORY_BLOCK_ADDED, newBlock.getStart(), newBlock.getEnd(),
+			null, null);
+		program.fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.RESTORED));
 	}
 
 	void fireBlockSplit() {
-		program.fireEvent(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_RESTORED));
+		program.fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.RESTORED));
 	}
 
 	void fireBlockRemoved(Address blockStartAddr) {
-		program.setChanged(ChangeManager.DOCR_MEMORY_BLOCK_REMOVED, blockStartAddr, null);
-		program.fireEvent(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_RESTORED));
+		program.setChanged(ProgramEvent.MEMORY_BLOCK_REMOVED, blockStartAddr, null);
+		program.fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.RESTORED));
 	}
 
 	void fireBlockMoved(MemoryBlockDB block, Address oldStartAddr) {
-		program.setChanged(ChangeManager.DOCR_MEMORY_BLOCKS_JOINED, oldStartAddr, block);
-		program.fireEvent(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_RESTORED));
+		program.setChanged(ProgramEvent.MEMORY_BLOCKS_JOINED, oldStartAddr, block);
+		program.fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.RESTORED));
 	}
 
 	/**
@@ -512,17 +512,16 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	 * @param oldBlockStartAddr original start address of affected block
 	 */
 	void fireBlocksJoined(MemoryBlock newBlock, Address oldBlockStartAddr) {
-		program.setChanged(ChangeManager.DOCR_MEMORY_BLOCKS_JOINED, oldBlockStartAddr, newBlock);
+		program.setChanged(ProgramEvent.MEMORY_BLOCKS_JOINED, oldBlockStartAddr, newBlock);
 	}
 
 	void fireBlockSplit(MemoryBlockDB originalBlock, MemoryBlockDB newBlock) {
-		program.setChanged(ChangeManager.DOCR_MEMORY_BLOCK_SPLIT, null, null, originalBlock,
-			newBlock);
+		program.setChanged(ProgramEvent.MEMORY_BLOCK_SPLIT, null, null, originalBlock, newBlock);
 	}
 
 	void fireBlockChanged(MemoryBlock block) {
 		if (program != null) {
-			program.setChanged(ChangeManager.DOCR_MEMORY_BLOCK_CHANGED, block, null);
+			program.setChanged(ProgramEvent.MEMORY_BLOCK_CHANGED, block, null);
 		}
 
 		// name could have changed
@@ -535,7 +534,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			Address end = addr.addNoWrap(count - 1);
 
 			program.getCodeManager().memoryChanged(addr, end);
-			program.setChanged(ChangeManager.DOCR_MEMORY_BYTES_CHANGED, addr, end, null, null);
+			program.setChanged(ProgramEvent.MEMORY_BYTES_CHANGED, addr, end, null, null);
 
 		}
 		catch (AddressOverflowException e) {

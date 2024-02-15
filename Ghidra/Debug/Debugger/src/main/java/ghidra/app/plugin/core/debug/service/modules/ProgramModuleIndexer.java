@@ -104,13 +104,13 @@ public class ProgramModuleIndexer implements DomainFolderChangeAdapter {
 			if (disposed) {
 				return;
 			}
-			if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
+			if (ev.contains(DomainObjectEvent.RESTORED)) {
 				refreshIndex(program.getDomainFile(), program);
 				return;
 			}
-			if (ev.containsEvent(DomainObject.DO_PROPERTY_CHANGED)) {
+			if (ev.contains(DomainObjectEvent.PROPERTY_CHANGED)) {
 				for (DomainObjectChangeRecord rec : ev) {
-					if (rec.getEventType() == DomainObject.DO_PROPERTY_CHANGED) {
+					if (rec.getEventType() == DomainObjectEvent.PROPERTY_CHANGED) {
 						// OldValue is actually the property name :/
 						// See DomainObjectAdapter#propertyChanged
 						String propertyName = (String) rec.getOldValue();

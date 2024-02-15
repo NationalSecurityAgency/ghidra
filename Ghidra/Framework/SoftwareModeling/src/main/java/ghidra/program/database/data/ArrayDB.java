@@ -98,7 +98,7 @@ class ArrayDB extends DataTypeDB implements Array {
 		lock.acquire();
 		try {
 			checkIsValid();
-			if ( displayName == null ) {
+			if (displayName == null) {
 				displayName = DataTypeUtilities.getDisplayName(this, false);
 			}
 			return displayName;
@@ -223,25 +223,43 @@ class ArrayDB extends DataTypeDB implements Array {
 	}
 
 	@Override
-	public boolean isEquivalent(DataType dt) {
+	protected boolean isEquivalent(DataType dt, DataTypeConflictHandler handler) {
 		if (dt == this) {
 			return true;
 		}
 		if (!(dt instanceof Array)) {
 			return false;
 		}
+
 		Array array = (Array) dt;
 		if (getNumElements() != array.getNumElements()) {
 			return false;
 		}
+
 		DataType dataType = getDataType();
-		if (!dataType.isEquivalent(array.getDataType())) {
+		DataType otherDataType = array.getDataType();
+
+		// if they contain datatypes that have same ids, then we are essentially equivalent.
+		if (DataTypeUtilities.isSameDataType(dataType, otherDataType)) {
+			return true;
+		}
+
+		if (handler != null) {
+			handler = handler.getSubsequentHandler();
+		}
+		if (!DataTypeDB.isEquivalent(dataType, otherDataType, handler)) {
 			return false;
 		}
+
 		if (dataType instanceof Dynamic && getElementLength() != array.getElementLength()) {
 			return false;
 		}
 		return true;
+	}
+
+	@Override
+	public boolean isEquivalent(DataType dt) {
+		return isEquivalent(dt, null);
 	}
 
 	@Override
@@ -255,13 +273,37 @@ class ArrayDB extends DataTypeDB implements Array {
 
 			if (oldDt == getDataType()) {
 
+				int oldElementLength = getElementLength();
+				int newElementLength =
+					elementLength = newDt.getLength() < 0 ? oldElementLength : -1;
+
+				// check for existing pointer to newDt
+				ArrayDataType newArray =
+					new ArrayDataType(newDt, getNumElements(), newElementLength, dataMgr);
+				DataType existingArray =
+					dataMgr.getDataType(newDt.getCategoryPath(), newArray.getName());
+				if (existingArray != null && existingArray != this) {
+					// avoid duplicate array - replace this array with existing one
+					dataMgr.addDataTypeToReplace(this, existingArray);
+					return;
+				}
+
+				if (!newDt.getCategoryPath().equals(oldDt.getCategoryPath())) {
+					// move this pointer to same category as newDt
+					try {
+						super.setCategoryPath(newDt.getCategoryPath());
+					}
+					catch (DuplicateNameException e) {
+						throw new RuntimeException(e); // already checked
+					}
+				}
+
 				oldDt.removeParent(this);
 				newDt.addParent(this);
 
 				String myOldName = getOldName();
 				int oldLength = getLength();
 				int oldAlignment = getAlignment();
-				int oldElementLength = getElementLength();
 
 				record.setLongValue(ArrayDBAdapter.ARRAY_DT_ID_COL, dataMgr.getResolvedID(newDt));
 				if (newDt instanceof Dynamic || newDt instanceof FactoryDataType) {
@@ -276,7 +318,7 @@ class ArrayDB extends DataTypeDB implements Array {
 					dataMgr.dbError(e);
 				}
 				refreshName();
-				if (!getName().equals(myOldName)) {
+				if (!oldDt.getName().equals(newDt.getName())) {
 					notifyNameChanged(myOldName);
 				}
 				if (getLength() != oldLength || oldElementLength != getElementLength()) {

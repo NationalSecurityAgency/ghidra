@@ -49,7 +49,7 @@ import ghidra.util.task.*;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.SUPPORT,
+	category = PluginCategoryNames.COMMON,
 	shortDescription = "Clipboard Manager",
 	description = "This plugin manages cut/copy/paste of labels, comments, formatted code, and byte strings to and from the system clipboard.",
 	servicesProvided = { ClipboardService.class }

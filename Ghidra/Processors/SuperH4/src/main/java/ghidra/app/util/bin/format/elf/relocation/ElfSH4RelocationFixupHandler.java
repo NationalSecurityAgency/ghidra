@@ -15,7 +15,7 @@
  */
 package ghidra.app.util.bin.format.elf.relocation;
 
-import ghidra.app.plugin.core.reloc.RelocationFixupHandler;
+import ghidra.app.plugin.core.reloc.ElfRelocationFixupHandler;
 import ghidra.app.util.opinion.ElfLoader;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Language;
@@ -23,29 +23,44 @@ import ghidra.program.model.lang.Processor;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.reloc.Relocation;
+import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.util.CodeUnitInsertionException;
 
-public class ElfSH4RelocationFixupHandler extends RelocationFixupHandler {
+public class ElfSH4RelocationFixupHandler extends ElfRelocationFixupHandler {
+
+	public ElfSH4RelocationFixupHandler() {
+		super(SH_ElfRelocationType.class);
+	}
 
 	@Override
 	public boolean processRelocation(Program program, Relocation relocation, Address oldImageBase,
 			Address newImageBase) throws MemoryAccessException, CodeUnitInsertionException {
 
-		switch (relocation.getType()) {
-			case SH_ElfRelocationConstants.R_SH_DIR32:
-			case SH_ElfRelocationConstants.R_SH_REL32:
-			case SH_ElfRelocationConstants.R_SH_GLOB_DAT:
-			case SH_ElfRelocationConstants.R_SH_JMP_SLOT:
-			case SH_ElfRelocationConstants.R_SH_RELATIVE:
+		if (relocation.getStatus() != Status.APPLIED) {
+			return false;
+		}
+
+		SH_ElfRelocationType type = (SH_ElfRelocationType) getRelocationType(relocation.getType());
+		if (type == null) {
+			return false;
+		}
+
+		switch (type) {
+			case R_SH_DIR32:
+			case R_SH_REL32:
+			case R_SH_GLOB_DAT:
+			case R_SH_JMP_SLOT:
+			case R_SH_RELATIVE:
 				return process32BitRelocation(program, relocation, oldImageBase, newImageBase);
 
-//			case SH_ElfRelocationConstants.R_SH_DIR8WPN:
-//			case SH_ElfRelocationConstants.R_SH_DIR8WPZ:
-//			case SH_ElfRelocationConstants.R_SH_IND12W:
-//			case SH_ElfRelocationConstants.R_SH_DIR8WPL:
+//			case R_SH_DIR8WPN:
+//			case R_SH_DIR8WPZ:
+//			case R_SH_IND12W:
+//			case R_SH_DIR8WPL:
 
+			default:
+				return false;
 		}
-		return false;
 	}
 
 	@Override
@@ -58,7 +73,7 @@ public class ElfSH4RelocationFixupHandler extends RelocationFixupHandler {
 			return false;
 		}
 		Processor processor = language.getProcessor();
-		return ("SuperH4".equals(processor.toString()) || "SuperH".equals(processor.toString()));
+		return "SuperH4".equals(processor.toString());
 	}
 
 }

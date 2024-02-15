@@ -26,7 +26,7 @@ import ghidra.util.Msg;
  * Structure found immediately after a {@link GoType} structure, if it has the uncommon flag
  * set.
  */
-@StructureMapping(structureName = "runtime.uncommontype")
+@StructureMapping(structureName = {"runtime.uncommontype", "internal/abi.UncommonType"})
 public class GoUncommonType {
 
 	@ContextField

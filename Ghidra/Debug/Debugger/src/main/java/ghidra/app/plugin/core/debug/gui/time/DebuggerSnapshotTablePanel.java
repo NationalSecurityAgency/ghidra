@@ -28,13 +28,13 @@ import javax.swing.table.*;
 import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.docking.settings.Settings;
-import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TraceSnapshotChangeType;
 import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 
@@ -94,11 +94,11 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 
 	private class SnapshotListener extends TraceDomainObjectListener {
 		public SnapshotListener() {
-			listenForUntyped(DomainObject.DO_OBJECT_RESTORED, e -> objectRestored());
+			listenForUntyped(DomainObjectEvent.RESTORED, e -> objectRestored());
 
-			listenFor(TraceSnapshotChangeType.ADDED, this::snapAdded);
-			listenFor(TraceSnapshotChangeType.CHANGED, this::snapChanged);
-			listenFor(TraceSnapshotChangeType.DELETED, this::snapDeleted);
+			listenFor(TraceEvents.SNAPSHOT_ADDED, this::snapAdded);
+			listenFor(TraceEvents.SNAPSHOT_CHANGED, this::snapChanged);
+			listenFor(TraceEvents.SNAPSHOT_DELETED, this::snapDeleted);
 		}
 
 		private void objectRestored() {
@@ -234,9 +234,9 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 			return;
 		}
 		TraceTimeManager manager = currentTrace.getTimeManager();
-		Collection<? extends TraceSnapshot> snapshots = hideScratch
-				? manager.getSnapshots(0, true, Long.MAX_VALUE, true)
-				: manager.getAllSnapshots();
+		Collection<? extends TraceSnapshot> snapshots =
+			hideScratch ? manager.getSnapshots(0, true, Long.MAX_VALUE, true)
+					: manager.getAllSnapshots();
 		snapshotTableModel
 				.addAll(snapshots.stream().map(s -> new SnapshotRow(currentTrace, s)).toList());
 	}

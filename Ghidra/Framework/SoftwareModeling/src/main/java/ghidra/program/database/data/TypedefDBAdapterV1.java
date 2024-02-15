@@ -108,8 +108,8 @@ class TypedefDBAdapterV1 extends TypedefDBAdapter implements RecordTranslator {
 	DBRecord getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID) throws IOException {
 		Field[] keys =
 			table.findRecords(new LongField(datatypeID.getValue()), V1_TYPEDEF_UNIVERSAL_DT_ID_COL);
-		for (int i = 0; i < keys.length; i++) {
-			DBRecord record = table.getRecord(keys[i]);
+		for (Field key : keys) {
+			DBRecord record = table.getRecord(key);
 			if (record.getLongValue(V1_TYPEDEF_SOURCE_ARCHIVE_ID_COL) == sourceID.getValue()) {
 				return translateRecord(record);
 			}
@@ -136,5 +136,10 @@ class TypedefDBAdapterV1 extends TypedefDBAdapter implements RecordTranslator {
 		rec.setLongValue(TYPEDEF_LAST_CHANGE_TIME_COL,
 			oldRec.getLongValue(V1_TYPEDEF_LAST_CHANGE_TIME_COL));
 		return rec;
+	}
+
+	@Override
+	public int getRecordCount() {
+		return table.getRecordCount();
 	}
 }

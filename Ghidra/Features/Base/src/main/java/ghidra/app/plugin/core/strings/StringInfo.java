@@ -48,7 +48,12 @@ public record StringInfo(
 		s.codePoints().forEach(codePoint -> {
 			try {
 				UnicodeScript script = Character.UnicodeScript.of(codePoint);
-				scripts.add(script);
+				if (script == UnicodeScript.UNKNOWN) {
+					features.add(StringInfoFeature.CODEC_ERROR); // TODO: are we mis-using this enum to signal bad character?
+				}
+				else {
+					scripts.add(script);
+				}
 
 				if (codePoint == StringUtilities.UNICODE_REPLACEMENT) {
 					features.add(StringInfoFeature.CODEC_ERROR);

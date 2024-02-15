@@ -270,6 +270,9 @@ public class VariableStorage implements Comparable<VariableStorage> {
 			if (getClass().equals(VariableStorage.class)) {
 				return this; // only reuse if simple VariableStorage instance
 			}
+			if (isVoidStorage()) {
+				return VOID_STORAGE;
+			}
 			if (isUnassignedStorage()) {
 				return UNASSIGNED_STORAGE;
 			}

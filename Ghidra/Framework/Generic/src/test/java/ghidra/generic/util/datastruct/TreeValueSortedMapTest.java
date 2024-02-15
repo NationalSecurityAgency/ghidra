@@ -24,9 +24,6 @@ import org.apache.commons.collections4.comparators.ReverseComparator;
 import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 
-import ghidra.generic.util.datastruct.TreeValueSortedMap;
-import ghidra.generic.util.datastruct.ValueSortedMap;
-
 public class TreeValueSortedMapTest {
 	@Test
 	public void testNaturalOrder() {
@@ -34,8 +31,8 @@ public class TreeValueSortedMapTest {
 		queue.put("2nd", 2);
 		queue.put("1st", 1);
 		queue.put("3rd", 3);
-		List<String> ordered = new ArrayList<>(queue.keySet());
-		assertEquals(Arrays.asList(new String[] { "1st", "2nd", "3rd" }), ordered);
+		List<String> ordered = queue.keySet().toList();
+		assertEquals(List.of("1st", "2nd", "3rd"), ordered);
 	}
 
 	@Test
@@ -45,8 +42,8 @@ public class TreeValueSortedMapTest {
 		queue.put("2nd", 2);
 		queue.put("1st", 1);
 		queue.put("3rd", 3);
-		List<String> ordered = new ArrayList<>(queue.keySet());
-		assertEquals(Arrays.asList(new String[] { "3rd", "2nd", "1st" }), ordered);
+		List<String> ordered = queue.keySet().toList();
+		assertEquals(List.of("3rd", "2nd", "1st"), ordered);
 	}
 
 	@Test
@@ -256,27 +253,16 @@ public class TreeValueSortedMapTest {
 			}
 			checkConsistent(queue);
 			assertEquals(0, queue.values().indexOf(0));
-			assertEquals(1, queue.values().lastIndexOf(0));
 			assertEquals(2, queue.values().indexOf(1));
-			assertEquals(4, queue.values().lastIndexOf(1));
 			assertEquals(5, queue.values().indexOf(2));
-			assertEquals(5, queue.values().lastIndexOf(2));
 			assertEquals(6, queue.values().indexOf(3));
-			assertEquals(6, queue.values().lastIndexOf(3));
 			assertEquals(7, queue.values().indexOf(4));
-			assertEquals(8, queue.values().lastIndexOf(4));
 			assertEquals(9, queue.values().indexOf(5));
-			assertEquals(10, queue.values().lastIndexOf(5));
 			assertEquals(11, queue.values().indexOf(6));
-			assertEquals(19, queue.values().lastIndexOf(6));
 			assertEquals(-1, queue.values().indexOf(7));
-			assertEquals(-1, queue.values().lastIndexOf(7));
 			assertEquals(20, queue.values().indexOf(8));
-			assertEquals(21, queue.values().lastIndexOf(8));
 			assertEquals(-1, queue.values().indexOf(9));
-			assertEquals(-1, queue.values().lastIndexOf(9));
 			assertEquals(22, queue.values().indexOf(10));
-			assertEquals(22, queue.values().lastIndexOf(10));
 		}
 	}
 

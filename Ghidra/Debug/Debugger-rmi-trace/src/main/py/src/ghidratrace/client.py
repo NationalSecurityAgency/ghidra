@@ -61,7 +61,7 @@ class Receiver(Thread):
             result = self.client._handle_invoke_method(request)
             Client._write_value(
                 reply.xreply_invoke_method.return_value, result)
-        except Exception as e:
+        except BaseException as e:
             reply.xreply_invoke_method.error = ''.join(
                 traceback.format_exc())
         self.client._send(reply)
@@ -79,7 +79,7 @@ class Receiver(Thread):
                 result = request.handler(
                     getattr(reply, request.field_name))
                 request.set_result(result)
-            except Exception as e:
+            except BaseException as e:
                 request.set_exception(e)
 
     def _recv(self, field_name, handler):
@@ -425,6 +425,7 @@ class ParamDesc:
 class RemoteMethod:
     name: str
     action: str
+    display: str
     description: str
     parameters: List[RemoteParameter]
     return_schema: sch.Schema
@@ -484,11 +485,14 @@ class MethodRegistry(object):
             cls._to_display(p.annotation), cls._to_description(p.annotation))
 
     @classmethod
-    def create_method(cls, function, name=None, action=None, description=None) -> RemoteMethod:
+    def create_method(cls, function, name=None, action=None, display=None,
+                      description=None) -> RemoteMethod:
         if name is None:
             name = function.__name__
         if action is None:
             action = name
+        if display is None:
+            display = name
         if description is None:
             description = function.__doc__ or ''
         sig = inspect.signature(function)
@@ -496,14 +500,16 @@ class MethodRegistry(object):
         for p in sig.parameters.values():
             params.append(cls._make_param(p))
         return_schema = cls._to_schema(sig, sig.return_annotation)
-        return RemoteMethod(name, action, description, params, return_schema, function)
+        return RemoteMethod(name, action, display, description, params,
+                            return_schema, function)
 
-    def method(self, func=None, *, name=None, action=None, description='',
-               condition=True):
+    def method(self, func=None, *, name=None, action=None, display=None,
+               description='', condition=True):
 
         def _method(func):
             if condition:
-                method = self.create_method(func, name, action, description)
+                method = self.create_method(func, name, action, display,
+                                            description)
                 self.register_method(method)
             return func
 
@@ -669,6 +675,7 @@ class Client(object):
     def _write_method(to: bufs.Method, method: RemoteMethod):
         to.name = method.name
         to.action = method.action
+        to.display = method.display
         to.description = method.description
         Client._write_parameters(to.parameters, method.parameters)
         to.return_type.name = method.return_schema.name

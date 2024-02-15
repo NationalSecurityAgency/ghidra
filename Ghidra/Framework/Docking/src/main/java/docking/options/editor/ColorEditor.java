@@ -91,7 +91,7 @@ public class ColorEditor extends PropertyEditorSupport {
 		String colorString =
 			WebColors.toString(ColorUtils.contrastForegroundColor(newColor), false);
 		previewLabel.setText(
-			"<HTML><CENTER><I><FONT SIZE=2 COLOR=" + colorString + ">click</FONT></I></CENTER>");
+			"<html><CENTER><I><FONT SIZE=2 COLOR=" + colorString + ">click</FONT></I></CENTER>");
 
 		previewLabel.setBackground(color);
 	}

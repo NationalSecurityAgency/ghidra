@@ -27,10 +27,9 @@ import ghidra.trace.database.space.DBTraceSpaceBased;
 import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.ImmutableTraceAddressSnapRange;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace.TraceModuleChangeType;
-import ghidra.trace.model.Trace.TraceSectionChangeType;
 import ghidra.trace.model.modules.TraceModuleSpace;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.database.DBCachedObjectIndex;
 import ghidra.util.exception.VersionException;
 
@@ -98,7 +97,7 @@ public class DBTraceModuleSpace implements TraceModuleSpace, DBTraceSpaceBased {
 		DBTraceModule module = moduleMapSpace
 				.put(new ImmutableTraceAddressSnapRange(range, lifespan), null);
 		module.set(modulePath, moduleName);
-		trace.setChanged(new TraceChangeRecord<>(TraceModuleChangeType.ADDED, null, module));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.MODULE_ADDED, null, module));
 		return module;
 	}
 
@@ -136,7 +135,7 @@ public class DBTraceModuleSpace implements TraceModuleSpace, DBTraceSpaceBased {
 		DBTraceSection section = sectionMapSpace
 				.put(new ImmutableTraceAddressSnapRange(range, module.getLifespan()), null);
 		section.set(module, sectionPath, sectionName);
-		trace.setChanged(new TraceChangeRecord<>(TraceSectionChangeType.ADDED, null, section));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.SECTION_ADDED, null, section));
 		return section;
 	}
 

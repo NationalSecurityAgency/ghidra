@@ -173,7 +173,7 @@ public class UnionDBTest extends AbstractGenericTest {
 			"   0   short   2      \"\"\n" + 
 			"   0   int:2(0)   1   bf1   \"bf1Comment\"\n" + 
 			"}\n" + 
-			"Size = 2   Actual Alignment = 1", union);
+			"Length: 2 Alignment: 1", union);
 		//@formatter:on
 	}
 
@@ -195,7 +195,7 @@ public class UnionDBTest extends AbstractGenericTest {
 			"   0   short   2      \"\"\n" + 
 			"   0   int:2(0)   1   bf1   \"bf1Comment\"\n" + 
 			"}\n" + 
-			"Size = 4   Actual Alignment = 4", union);
+			"Length: 4 Alignment: 4", union);
 		//@formatter:on
 	}
 
@@ -216,7 +216,7 @@ public class UnionDBTest extends AbstractGenericTest {
 			"   0   dword   4   field3   \"\"\n" + 
 			"   0   byte   1   field4   \"Comment4\"\n" + 
 			"}\n" + 
-			"Size = 4   Actual Alignment = 1", union);
+			"Length: 4 Alignment: 1", union);
 		//@formatter:on
 	}
 
@@ -239,7 +239,7 @@ public class UnionDBTest extends AbstractGenericTest {
 			"   0   dword   4   field3   \"\"\n" + 
 			"   0   byte   1   field4   \"Comment4\"\n" + 
 			"}\n" + 
-			"Size = 4   Actual Alignment = 1", union);
+			"Length: 4 Alignment: 1", union);
 		//@formatter:on
 	}
 
@@ -263,7 +263,7 @@ public class UnionDBTest extends AbstractGenericTest {
 			"   0   dword   4   field3   \"\"\n" + 
 			"   0   byte   1   field4   \"Comment4\"\n" + 
 			"}\n" + 
-			"Size = 4   Actual Alignment = 1", union);
+			"Length: 4 Alignment: 1", union);
 		//@formatter:on
 
 		dataMgr.remove(td, TaskMonitor.DUMMY);
@@ -277,7 +277,7 @@ public class UnionDBTest extends AbstractGenericTest {
 			"   0   dword   4   field3   \"\"\n" + 
 			"   0   byte   1   field4   \"Comment4\"\n" + 
 			"}\n" + 
-			"Size = 4   Actual Alignment = 1", union);
+			"Length: 4 Alignment: 1", union);
 		//@formatter:on
 	}
 
@@ -302,7 +302,7 @@ public class UnionDBTest extends AbstractGenericTest {
 			"   0   dword   4   field3   \"\"\n" + 
 			"   0   byte   1   field4   \"Comment4\"\n" + 
 			"}\n" + 
-			"Size = 4   Actual Alignment = 1", union);
+			"Length: 4 Alignment: 1", union);
 		//@formatter:on
 
 		dataMgr.replaceDataType(td, CharDataType.dataType, false);
@@ -318,7 +318,7 @@ public class UnionDBTest extends AbstractGenericTest {
 			"   0   dword   4   field3   \"\"\n" + 
 			"   0   byte   1   field4   \"Comment4\"\n" + 
 			"}\n" + 
-			"Size = 4   Actual Alignment = 1", union);
+			"Length: 4 Alignment: 1", union);
 		//@formatter:on
 	}
 
@@ -374,7 +374,7 @@ public class UnionDBTest extends AbstractGenericTest {
 			"   0   byte   1   field4   \"Comment4\"\n" + 
 			"   0   struct_1   11      \"\"\n" + 
 			"}\n" + 
-			"Size = 11   Actual Alignment = 1", union);
+			"Length: 11 Alignment: 1", union);
 		//@formatter:on
 
 		union.delete(Sets.newHashSet(2, 4));
@@ -388,7 +388,7 @@ public class UnionDBTest extends AbstractGenericTest {
 			"   0   word   2      \"Comment2\"\n" + 
 			"   0   byte   1   field4   \"Comment4\"\n" + 
 			"}\n" + 
-			"Size = 2   Actual Alignment = 1", union);
+			"Length: 2 Alignment: 1", union);
 		//@formatter:on
 	}
 
@@ -431,7 +431,7 @@ public class UnionDBTest extends AbstractGenericTest {
 			"   0   int:4(0)   1   MyBit1   \"bitComment1\"\n" + 
 			"   0   int:3(0)   1   MyBit2   \"bitComment2\"\n" + 
 			"}\n" + 
-			"Size = 4   Actual Alignment = 1", newUnion);
+			"Length: 4 Alignment: 1", newUnion);
 		//@formatter:on
 
 		union.replaceWith(newUnion);
@@ -446,7 +446,7 @@ public class UnionDBTest extends AbstractGenericTest {
 			"   0   int:4(0)   1   MyBit1   \"bitComment1\"\n" + 
 			"   0   int:3(0)   1   MyBit2   \"bitComment2\"\n" + 
 			"}\n" + 
-			"Size = 4   Actual Alignment = 1", union);
+			"Length: 4 Alignment: 1", union);
 		//@formatter:on
 
 		assertEquals("testReplaceWith()", union.getDescription());

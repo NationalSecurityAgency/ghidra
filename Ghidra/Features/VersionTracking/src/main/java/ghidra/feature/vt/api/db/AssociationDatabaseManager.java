@@ -22,7 +22,7 @@ import java.util.*;
 
 import db.*;
 import ghidra.feature.vt.api.impl.MarkupItemStorage;
-import ghidra.feature.vt.api.impl.VTChangeManager;
+import ghidra.feature.vt.api.impl.VTEvent;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.util.VTAssociationStatusException;
 import ghidra.program.database.DBObjectCache;
@@ -245,7 +245,7 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 		finally {
 			lock.release();
 		}
-		session.setChanged(VTChangeManager.DOCR_VT_ASSOCIATION_ADDED, null, newAssociation);
+		session.setChanged(VTEvent.ASSOCIATION_ADDED, null, newAssociation);
 		return newAssociation;
 	}
 
@@ -254,8 +254,7 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 		long id = existingAssociation.getKey();
 		try {
 			associationTableAdapter.removeAssociaiton(id);
-			session.setChanged(VTChangeManager.DOCR_VT_ASSOCIATION_REMOVED, existingAssociation,
-				null);
+			session.setChanged(VTEvent.ASSOCIATION_REMOVED, existingAssociation, null);
 		}
 		catch (IOException e) {
 			session.dbError(e);
@@ -752,10 +751,9 @@ public class AssociationDatabaseManager implements VTAssociationManager {
 			long sourceID = session.getLongFromSourceAddress(sourceAddress);
 			long destinationID = session.getLongFromDestinationAddress(destinationAddress);
 			try {
-				Set<DBRecord> relatedRecords =
-					associationTableAdapter
-							.getRelatedAssociationRecordsBySourceAndDestinationAddress(
-								sourceID, destinationID);
+				Set<DBRecord> relatedRecords = associationTableAdapter
+						.getRelatedAssociationRecordsBySourceAndDestinationAddress(sourceID,
+							destinationID);
 				for (DBRecord record : relatedRecords) {
 					VTAssociationDB associationDB = getAssociationForRecord(record);
 					VTAssociationStatus status = associationDB.getStatus();

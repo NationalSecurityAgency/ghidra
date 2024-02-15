@@ -17,7 +17,7 @@ package ghidra.app.services;
 
 import java.util.List;
 
-import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.*;
 
 /**
  * Simplified datatype service interface to provide query capabilities
@@ -28,7 +28,9 @@ public interface DataTypeQueryService {
 	/**
 	 * Gets the sorted list of all datatypes known by this service via it's owned DataTypeManagers.
 	 * This method can be called frequently, as the underlying data is indexed and only updated
-	 * as changes are made.
+	 * as changes are made.  The sorting of the list is done using the {@link DataTypeComparator} 
+	 * whose primary sort is based upon the {@link DataTypeNameComparator}.
+	 * 
 	 * @return the sorted list of known data types.
 	 */
 	public List<DataType> getSortedDataTypeList();

@@ -15,6 +15,9 @@
  */
 package ghidra.app.plugin.core.strings;
 
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
+
 import javax.swing.Icon;
 
 import docking.action.DockingAction;
@@ -112,9 +115,10 @@ public class ViewStringsPlugin extends ProgramPlugin implements DomainObjectList
 				.enabledWhen(vsac -> vsac.getCount() > 0)
 				.onAction(vsac -> {
 					try {
-						DataSettingsDialog dialog = vsac.getCount() == 1
-								? new DataSettingsDialog(vsac.getSelectedData())
-								: new DataSettingsDialog(vsac.getProgram(), vsac.getProgramSelection());
+						DataSettingsDialog dialog =
+							vsac.getCount() == 1 ? new DataSettingsDialog(vsac.getSelectedData())
+									: new DataSettingsDialog(vsac.getProgram(),
+										vsac.getProgramSelection());
 
 						tool.showDialog(dialog);
 						dialog.dispose();
@@ -187,10 +191,7 @@ public class ViewStringsPlugin extends ProgramPlugin implements DomainObjectList
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
 
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED) ||
-			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_MOVED) ||
-			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_REMOVED) ||
-			ev.containsEvent(ChangeManager.DOCR_DATA_TYPE_CHANGED)) {
+		if (ev.contains(RESTORED, MEMORY_BLOCK_MOVED, MEMORY_BLOCK_REMOVED, DATA_TYPE_CHANGED)) {
 			markDataAsStale();
 			return;
 		}
@@ -199,23 +200,26 @@ public class ViewStringsPlugin extends ProgramPlugin implements DomainObjectList
 
 			DomainObjectChangeRecord doRecord = ev.getChangeRecord(i);
 			Object newValue = doRecord.getNewValue();
-			switch (doRecord.getEventType()) {
-				case ChangeManager.DOCR_CODE_REMOVED:
-					ProgramChangeRecord pcRec = (ProgramChangeRecord) doRecord;
-					provider.remove(pcRec.getStart(), pcRec.getEnd());
-					break;
-				case ChangeManager.DOCR_CODE_ADDED:
-					if (newValue instanceof Data) {
-						provider.add((Data) newValue);
-					}
-					break;
-				default:
-					//Msg.info(this, "Unhandled event type: " + doRecord.getEventType());
-					break;
+			EventType eventType = doRecord.getEventType();
+			if (eventType instanceof ProgramEvent type) {
+				switch (type) {
+					case CODE_REMOVED:
+						ProgramChangeRecord pcRec = (ProgramChangeRecord) doRecord;
+						provider.remove(pcRec.getStart(), pcRec.getEnd());
+						break;
+					case CODE_ADDED:
+						if (newValue instanceof Data) {
+							provider.add((Data) newValue);
+						}
+						break;
+					default:
+						//Msg.info(this, "Unhandled event type: " + doRecord.getEventType());
+						break;
+				}
 			}
 		}
 
-		if (ev.containsEvent(ChangeManager.DOCR_DATA_TYPE_SETTING_CHANGED)) {
+		if (ev.contains(ProgramEvent.DATA_TYPE_SETTING_CHANGED)) {
 			// Unusual code: because the table model goes directly to the settings values
 			// during each repaint, we don't need to figure out which row was changed.
 			provider.getComponent().repaint();

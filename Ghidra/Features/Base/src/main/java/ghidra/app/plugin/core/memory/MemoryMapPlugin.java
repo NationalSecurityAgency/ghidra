@@ -15,12 +15,16 @@
  */
 package ghidra.app.plugin.core.memory;
 
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
+
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.services.GoToService;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainObjectChangedEvent;
+import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -28,7 +32,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ProgramEvent;
 import ghidra.program.util.ProgramLocation;
 
 /**
@@ -86,15 +90,11 @@ public class MemoryMapPlugin extends ProgramPlugin implements DomainObjectListen
 		if (provider == null || !provider.isVisible()) {
 			return;
 		}
-		if (ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_ADDED) ||
-			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_REMOVED) ||
-			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_MOVED) ||
-			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_SPLIT) ||
-			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCKS_JOINED) ||
-			ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
+		if (ev.contains(MEMORY_BLOCK_ADDED, MEMORY_BLOCK_REMOVED, MEMORY_BLOCK_MOVED,
+			MEMORY_BLOCK_SPLIT, MEMORY_BLOCKS_JOINED, RESTORED)) {
 			this.provider.updateMap();
 		}
-		else if (ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_CHANGED)) {
+		else if (ev.contains(ProgramEvent.MEMORY_BLOCK_CHANGED)) {
 			this.provider.updateData();
 		}
 	}

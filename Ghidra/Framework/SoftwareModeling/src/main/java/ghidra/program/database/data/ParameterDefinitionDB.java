@@ -152,6 +152,30 @@ final class ParameterDefinitionDB implements ParameterDefinition {
 		return record.getIntValue(FunctionParameterAdapter.PARAMETER_ORDINAL_COL);
 	}
 
+	boolean isEquivalent(ParameterDefinition parm, DataTypeConflictHandler handler) {
+		if (parm == null) {
+			return false;
+		}
+		if (getOrdinal() != parm.getOrdinal()) {
+			return false;
+		}
+
+		DataType dataType = getDataType();
+		DataType otherDataType = parm.getDataType();
+
+		// if they contain datatypes that have same ids, then we are essentially equivalent.
+		if (DataTypeUtilities.isSameDataType(dataType, otherDataType)) {
+			return true;
+		}
+
+		return DataTypeDB.isEquivalent(dataType, otherDataType, handler);
+	}
+
+	@Override
+	public boolean isEquivalent(ParameterDefinition parm) {
+		return isEquivalent(parm, null);
+	}
+
 	@Override
 	public boolean isEquivalent(Variable otherVar) {
 		if (otherVar == null) {
@@ -164,20 +188,6 @@ final class ParameterDefinitionDB implements ParameterDefinition {
 			return false;
 		}
 		if (!DataTypeUtilities.isSameOrEquivalentDataType(getDataType(), otherVar.getDataType())) {
-			return false;
-		}
-		return true;
-	}
-
-	@Override
-	public boolean isEquivalent(ParameterDefinition parm) {
-		if (parm == null) {
-			return false;
-		}
-		if (getOrdinal() != parm.getOrdinal()) {
-			return false;
-		}
-		if (!DataTypeUtilities.isSameOrEquivalentDataType(getDataType(), parm.getDataType())) {
 			return false;
 		}
 		return true;

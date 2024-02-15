@@ -32,7 +32,7 @@ import docking.widgets.table.RowObjectTableModel;
 import docking.widgets.table.threaded.GThreadedTablePanel;
 import generic.theme.GIcon;
 import ghidra.feature.vt.api.db.DeletedMatch;
-import ghidra.feature.vt.api.impl.VTChangeManager;
+import ghidra.feature.vt.api.impl.VTEvent;
 import ghidra.feature.vt.api.impl.VersionTrackingChangeRecord;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.gui.actions.CreateImpliedMatchAction;
@@ -105,11 +105,11 @@ public class VTImpliedMatchesTableProvider extends ComponentProviderAdapter
 			};
 		showReferenceLocationAction.setSelected(true);
 		showReferenceLocationAction.setToolBarData(new ToolBarData(REFERNCE_FROM_ICON, "2"));
-		showReferenceLocationAction.setDescription(
-			"<html>Sets table selection navigation mode to " +
-				"navigate <br> to <b>Source</b> and <b>Dest Reference Address</b> columns");
-		showReferenceLocationAction.setHelpLocation(
-			new HelpLocation("VersionTrackingPlugin", "Navigate_References"));
+		showReferenceLocationAction
+				.setDescription("<html>Sets table selection navigation mode to " +
+					"navigate <br> to <b>Source</b> and <b>Dest Reference Address</b> columns");
+		showReferenceLocationAction
+				.setHelpLocation(new HelpLocation("VersionTrackingPlugin", "Navigate_References"));
 		addLocalAction(showReferenceLocationAction);
 
 		showReferenceToLocationAction =
@@ -122,11 +122,11 @@ public class VTImpliedMatchesTableProvider extends ComponentProviderAdapter
 				}
 			};
 		showReferenceToLocationAction.setToolBarData(new ToolBarData(REFERNCE_TO_ICON, "2"));
-		showReferenceToLocationAction.setDescription(
-			"<html>Sets table selection navigation mode to " +
-				"navigate <br> to <b>Source</b> and <b>Dest Address</b> columns");
-		showReferenceToLocationAction.setHelpLocation(
-			new HelpLocation("VersionTrackingPlugin", "Navigate_Match"));
+		showReferenceToLocationAction
+				.setDescription("<html>Sets table selection navigation mode to " +
+					"navigate <br> to <b>Source</b> and <b>Dest Address</b> columns");
+		showReferenceToLocationAction
+				.setHelpLocation(new HelpLocation("VersionTrackingPlugin", "Navigate_Match"));
 		addLocalAction(showReferenceToLocationAction);
 
 		DockingAction action = new CreateImpliedMatchAction(controller, this);
@@ -210,23 +210,23 @@ public class VTImpliedMatchesTableProvider extends ComponentProviderAdapter
 		boolean matchesContextChanged = false;
 		for (int i = 0; i < ev.numRecords(); i++) {
 			DomainObjectChangeRecord doRecord = ev.getChangeRecord(i);
-			int eventType = doRecord.getEventType();
+			EventType eventType = doRecord.getEventType();
 
-			if (eventType == VTChangeManager.DOCR_VT_ASSOCIATION_STATUS_CHANGED ||
-				eventType == VTChangeManager.DOCR_VT_ASSOCIATION_MARKUP_STATUS_CHANGED) {
+			if (eventType == VTEvent.ASSOCIATION_STATUS_CHANGED ||
+				eventType == VTEvent.ASSOCIATION_MARKUP_STATUS_CHANGED) {
 				matchesContextChanged = true;
 			}
-			else if (eventType == DomainObject.DO_OBJECT_RESTORED ||
-				eventType == VTChangeManager.DOCR_VT_MATCH_SET_ADDED) {
+			else if (eventType == DomainObjectEvent.RESTORED ||
+				eventType == VTEvent.MATCH_SET_ADDED) {
 				reload();
 				matchesContextChanged = true;
 			}
-			else if (eventType == VTChangeManager.DOCR_VT_MATCH_ADDED) {
+			else if (eventType == VTEvent.MATCH_ADDED) {
 				VersionTrackingChangeRecord vtRecord = (VersionTrackingChangeRecord) doRecord;
 				impliedMatchTableModel.matchAdded((VTMatch) vtRecord.getNewValue());
 				matchesContextChanged = true;
 			}
-			else if (eventType == VTChangeManager.DOCR_VT_MATCH_DELETED) {
+			else if (eventType == VTEvent.MATCH_DELETED) {
 				VersionTrackingChangeRecord vtRecord = (VersionTrackingChangeRecord) doRecord;
 				impliedMatchTableModel.matchDeleted((DeletedMatch) vtRecord.getOldValue());
 				matchesContextChanged = true;

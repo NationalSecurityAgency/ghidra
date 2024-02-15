@@ -193,7 +193,7 @@ class InfoPanel extends JPanel {
 	private HyperlinkComponent buildJavaVersionComponent() {
 		String anchorName = "java_version";
 		final HyperlinkComponent javaVersionComponent =
-			new HyperlinkComponent("<HTML><CENTER>Java Version " + "<A HREF=\"" + anchorName +
+			new HyperlinkComponent("<html><CENTER>Java Version " + "<A HREF=\"" + anchorName +
 				"\">" + System.getProperty("java.version") + "</A></CENTER>");
 		javaVersionComponent.addHyperlinkListener(anchorName, e -> {
 			if (e.getEventType() != HyperlinkEvent.EventType.ACTIVATED) {

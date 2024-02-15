@@ -2253,6 +2253,8 @@ void JumpTable::recoverModel(Funcdata *fd)
 void JumpTable::sanityCheck(Funcdata *fd)
 
 {
+  if (jmodel->isOverride())
+    return;			// Don't perform sanity check on an override
   uint4 sz = addresstable.size();
 
   if (!isReachable(indirect))

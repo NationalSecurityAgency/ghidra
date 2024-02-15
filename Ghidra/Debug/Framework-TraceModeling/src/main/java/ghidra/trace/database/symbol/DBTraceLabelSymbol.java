@@ -26,11 +26,9 @@ import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter.DecodesAddresses
 import ghidra.trace.database.listing.*;
 import ghidra.trace.database.space.DBTraceSpaceKey;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace.TraceSymbolChangeType;
 import ghidra.trace.model.symbol.TraceLabelSymbol;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceAddressSpace;
-import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.*;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectStore;
 import ghidra.util.database.DBObjectColumn;
@@ -139,7 +137,7 @@ public class DBTraceLabelSymbol extends AbstractDBTraceSymbol
 			Lifespan oldLifespan = lifespan;
 			this.lifespan = newLifespan;
 
-			manager.trace.setChanged(new TraceChangeRecord<>(TraceSymbolChangeType.LIFESPAN_CHANGED,
+			manager.trace.setChanged(new TraceChangeRecord<>(TraceEvents.SYMBOL_LIFESPAN_CHANGED,
 				getSpace(), this, oldLifespan, newLifespan));
 		}
 	}
@@ -253,13 +251,13 @@ public class DBTraceLabelSymbol extends AbstractDBTraceSymbol
 				if (other.doSetPrimary(false)) {
 					other.update(AbstractDBTraceSymbol.FLAGS_COLUMN);
 					manager.trace.setChanged(new TraceChangeRecord<>(
-						TraceSymbolChangeType.SET_AS_PRIMARY, getSpace(), this, other, this));
+						TraceEvents.SYMBOL_PRIMARY_CHANGED, getSpace(), this, other, this));
 					firedEvent = true;
 				}
 			}
 			if (!firedEvent) {
 				manager.trace.setChanged(new TraceChangeRecord<>(
-					TraceSymbolChangeType.SET_AS_PRIMARY, getSpace(), this));
+					TraceEvents.SYMBOL_PRIMARY_CHANGED, getSpace(), this));
 			}
 			return true;
 		}

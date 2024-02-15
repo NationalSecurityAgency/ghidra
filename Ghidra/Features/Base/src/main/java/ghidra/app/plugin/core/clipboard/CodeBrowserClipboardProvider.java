@@ -44,10 +44,12 @@ import ghidra.app.util.viewer.listingpanel.ListingModel;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.database.mem.AddressSourceInfo;
 import ghidra.program.database.symbol.CodeSymbol;
 import ghidra.program.database.symbol.FunctionSymbol;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.Memory;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
 import ghidra.util.Msg;
@@ -65,6 +67,8 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		new ClipboardType(DataFlavor.stringFlavor, "Address");
 	public static final ClipboardType ADDRESS_TEXT_WITH_OFFSET_TYPE =
 		new ClipboardType(DataFlavor.stringFlavor, "Address w/ Offset");
+	public static final ClipboardType BYTE_SOURCE_OFFSET_TYPE =
+		new ClipboardType(DataFlavor.stringFlavor, "Byte Source Offset");
 	public static final ClipboardType CODE_TEXT_TYPE =
 		new ClipboardType(DataFlavor.stringFlavor, "Formatted Code");
 	public static final ClipboardType LABELS_COMMENTS_TYPE =
@@ -94,6 +98,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		list.add(CPP_BYTE_ARRAY_TYPE);
 		list.add(ADDRESS_TEXT_TYPE);
 		list.add(ADDRESS_TEXT_WITH_OFFSET_TYPE);
+		list.add(BYTE_SOURCE_OFFSET_TYPE);
 
 		return list;
 	}
@@ -220,6 +225,9 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		}
 		else if (copyType == ADDRESS_TEXT_WITH_OFFSET_TYPE) {
 			return copySymbolString(monitor);
+		}
+		else if (copyType == BYTE_SOURCE_OFFSET_TYPE) {
+			return copyByteSourceOffset(monitor);
 		}
 		else if (copyType == CODE_TEXT_TYPE) {
 			return copyCode(monitor);
@@ -380,6 +388,24 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 			}
 		}
 		return createStringTransferable(StringUtils.join(strings, "\n"));
+	}
+
+	private Transferable copyByteSourceOffset(TaskMonitor monitor) {
+		AddressSetView addrs = getSelectedAddresses();
+		Memory currentMemory = currentProgram.getMemory();
+		List<String> strings = new ArrayList<>();
+		AddressIterator addresses = addrs.getAddresses(true);
+		while (addresses.hasNext() && !monitor.isCancelled()) {
+			AddressSourceInfo addressSourceInfo =
+				currentMemory.getAddressSourceInfo(addresses.next());
+			if (addressSourceInfo != null) {
+				long fileOffset = addressSourceInfo.getFileOffset();
+				String fileOffsetString =
+					fileOffset != -1 ? "%x".formatted(fileOffset) : "<NO_OFFSET>";
+				strings.add(fileOffsetString);
+			}
+		}
+		return createStringTransferable(String.join("\n", strings));
 	}
 
 	protected Transferable copyCode(TaskMonitor monitor) {

@@ -92,6 +92,7 @@ data/typeinfo/golang/golang_1.17_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/golang/golang_1.18_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/golang/golang_1.19_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/golang/golang_1.20_anybit_any.gdt||GHIDRA||||END|
+data/typeinfo/golang/golang_1.21_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/golang/runtimesnapshot.go||GHIDRA||||END|
 data/typeinfo/mac_10.9/mac_osx.gdt||GHIDRA||||END|
 data/typeinfo/rust/rust-common.gdt||GHIDRA||||END|
@@ -365,6 +366,7 @@ src/main/help/help/topics/Intro/images/Empty_ghidra.png||GHIDRA||||END|
 src/main/help/help/topics/Intro/images/Err_Dialog.png||GHIDRA||||END|
 src/main/help/help/topics/Intro/images/Open_ghidra.png||GHIDRA||||END|
 src/main/help/help/topics/Intro/images/Simple_err_dialog.png||GHIDRA||||END|
+src/main/help/help/topics/KeyboardNavigation/KeyboardNavigation.htm||GHIDRA||||END|
 src/main/help/help/topics/LabelMgrPlugin/FieldNames.htm||GHIDRA||||END|
 src/main/help/help/topics/LabelMgrPlugin/Labels.htm||GHIDRA||||END|
 src/main/help/help/topics/LabelMgrPlugin/images/AddLabel.png||GHIDRA||||END|

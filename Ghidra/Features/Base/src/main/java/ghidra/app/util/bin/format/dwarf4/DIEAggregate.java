@@ -15,6 +15,7 @@
  */
 package ghidra.app.util.bin.format.dwarf4;
 
+import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute.*;
 import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.*;
 
 import java.io.IOException;
@@ -50,6 +51,8 @@ public class DIEAggregate {
 	 * Sanity check upper limit on how many DIE records can be in a aggregate.
 	 */
 	private static final int MAX_FRAGMENT_COUNT = 20;
+
+	public static final int[] REF_ATTRS = { DW_AT_abstract_origin, DW_AT_specification };
 
 	/**
 	 * A list of {@link DebugInfoEntry DIEs} that make up this DWARF program element, with
@@ -94,13 +97,13 @@ public class DIEAggregate {
 		// keep querying for abstract_origin DIEs as long as we haven't seen them yet,
 		// and add them to the fragment list.
 		DebugInfoEntry tmp;
-		while ((tmp = result.getRefDIE(DWARFAttribute.DW_AT_abstract_origin)) != null &&
+		while ((tmp = result.getRefDIE(DW_AT_abstract_origin)) != null &&
 			!result.hasOffset(tmp.getOffset()) && result.getFragmentCount() < MAX_FRAGMENT_COUNT) {
 			result.addFragment(tmp);
 		}
 
 		// look for 1 spec DIE and add it.
-		tmp = result.getRefDIE(DWARFAttribute.DW_AT_specification);
+		tmp = result.getRefDIE(DW_AT_specification);
 		if (tmp != null) {
 			result.addFragment(tmp);
 		}
@@ -227,7 +230,7 @@ public class DIEAggregate {
 	}
 
 	public DWARFProgram getProgram() {
-		return getHeadFragment().getCompilationUnit().getProgram();
+		return getHeadFragment().getProgram();
 	}
 
 	/**
@@ -250,13 +253,13 @@ public class DIEAggregate {
 	public DIEAggregate getDeclParent() {
 		DebugInfoEntry declDIE = getLastFragment();
 		DebugInfoEntry declParent = declDIE.getParent();
-		return getCompilationUnit().getProgram().getAggregate(declParent);
+		return getProgram().getAggregate(declParent);
 	}
 
 	public DIEAggregate getParent() {
 		DebugInfoEntry die = getHeadFragment();
 		DebugInfoEntry parent = die.getParent();
-		return getCompilationUnit().getProgram().getAggregate(parent);
+		return getProgram().getAggregate(parent);
 	}
 
 	/**
@@ -272,13 +275,7 @@ public class DIEAggregate {
 	 * @return
 	 */
 	public int getDepth() {
-		DebugInfoEntry die = getHeadFragment();
-		int result = 0;
-		while (die != null) {
-			result++;
-			die = die.getParent();
-		}
-		return result - 1;
+		return getProgram().getParentDepth(getHeadFragment().getIndex());
 	}
 
 	private AttrInfo findAttribute(int attribute) {
@@ -431,9 +428,9 @@ public class DIEAggregate {
 		DWARFNumericAttribute val = attrInfo.getValue(DWARFNumericAttribute.class);
 		long offset = (val != null) ? val.getUnsignedValue() : -1;
 
-		DebugInfoEntry result = getProgram().getEntryAtByteOffsetUnchecked(offset);
+		DebugInfoEntry result = getProgram().getDIEByOffset(offset);
 		if (result == null) {
-			Msg.warn(this, "Invalid reference value [" + Long.toHexString(offset) + "]");
+			Msg.warn(this, "Invalid reference value [%x]".formatted(offset));
 			Msg.warn(this, this.toString());
 		}
 		return result;
@@ -441,7 +438,7 @@ public class DIEAggregate {
 
 	public DIEAggregate getRef(int attribute) {
 		DebugInfoEntry die = getRefDIE(attribute);
-		return getCompilationUnit().getProgram().getAggregate(die);
+		return getProgram().getAggregate(die);
 	}
 
 	/**
@@ -500,7 +497,7 @@ public class DIEAggregate {
 	 * abstract portion
 	 */
 	public DIEAggregate getAbstractInstance() {
-		AttrInfo aoAttr = findAttribute(DWARFAttribute.DW_AT_abstract_origin);
+		AttrInfo aoAttr = findAttribute(DW_AT_abstract_origin);
 		if (aoAttr == null) {
 			return null;
 		}
@@ -585,16 +582,16 @@ public class DIEAggregate {
 		}
 	}
 
-	private int assertValidInt(long l) throws IOException {
+	private int assertValidInt(long l) throws DWARFException {
 		if (l < Integer.MIN_VALUE || l > Integer.MAX_VALUE) {
-			throw new IOException("Value out of allowed range: " + l);
+			throw new DWARFException("Value out of allowed range: " + l);
 		}
 		return (int) l;
 	}
 
-	private int assertValidUInt(long l) throws IOException {
+	private int assertValidUInt(long l) throws DWARFException {
 		if (l < 0 || l > Integer.MAX_VALUE) {
-			throw new IOException("Value out of allowed range: " + l);
+			throw new DWARFException("Value out of allowed range: " + l);
 		}
 		return (int) l;
 	}
@@ -606,11 +603,11 @@ public class DIEAggregate {
 	 * @param attribute
 	 * @param defaultValue
 	 * @return
-	 * @throws IOException
+	 * @throws DWARFException
 	 * @throws DWARFExpressionException
 	 */
 	public int parseDataMemberOffset(int attribute, int defaultValue)
-			throws IOException, DWARFExpressionException {
+			throws DWARFException, DWARFExpressionException {
 
 		AttrInfo attrInfo = findAttribute(attribute);
 		if (attrInfo == null) {
@@ -633,7 +630,7 @@ public class DIEAggregate {
 			return assertValidUInt(evaluator.pop());
 		}
 		else {
-			throw new IOException(
+			throw new DWARFException(
 				"DWARF attribute form not valid for data member offset: " + attrInfo.form);
 		}
 	}
@@ -698,7 +695,7 @@ public class DIEAggregate {
 	 * @throws IOException if an I/O error occurs
 	 */
 	private List<DWARFLocation> readDebugLocList(long offset) throws IOException {
-		BinaryReader debug_loc = getCompilationUnit().getProgram().getDebugLocation();
+		BinaryReader debug_loc = getProgram().getDebugLocation();
 
 		List<DWARFLocation> results = new ArrayList<>();
 		if (debug_loc == null) {
@@ -890,7 +887,7 @@ public class DIEAggregate {
 	 */
 	public List<DWARFRange> readRange(int attribute) throws IOException {
 		byte pointerSize = getCompilationUnit().getPointerSize();
-		BinaryReader reader = getCompilationUnit().getProgram().getDebugRanges();
+		BinaryReader reader = getProgram().getDebugRanges();
 
 		long offset = getUnsignedLong(attribute, -1);
 		if (offset == -1) {

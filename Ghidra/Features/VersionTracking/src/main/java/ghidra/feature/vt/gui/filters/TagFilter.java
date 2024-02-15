@@ -15,8 +15,7 @@
  */
 package ghidra.feature.vt.gui.filters;
 
-import static ghidra.feature.vt.gui.filters.Filter.FilterEditingStatus.APPLIED;
-import static ghidra.feature.vt.gui.filters.Filter.FilterEditingStatus.NONE;
+import static ghidra.feature.vt.gui.filters.Filter.FilterEditingStatus.*;
 
 import java.awt.BorderLayout;
 import java.util.*;
@@ -25,14 +24,13 @@ import javax.swing.*;
 
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
-import ghidra.feature.vt.api.impl.VTChangeManager;
+import ghidra.feature.vt.api.impl.VTEvent;
 import ghidra.feature.vt.api.impl.VersionTrackingChangeRecord;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.plugin.VTControllerListener;
 import ghidra.feature.vt.gui.util.MatchInfo;
-import ghidra.framework.model.DomainObjectChangeRecord;
-import ghidra.framework.model.DomainObjectChangedEvent;
+import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.SaveState;
 
@@ -352,13 +350,13 @@ public class TagFilter extends AncillaryFilter<VTMatch> {
 
 			for (int i = 0; i < ev.numRecords(); i++) {
 				DomainObjectChangeRecord doRecord = ev.getChangeRecord(i);
-				int eventType = doRecord.getEventType();
+				EventType eventType = doRecord.getEventType();
 
-				if (eventType == VTChangeManager.DOCR_VT_TAG_ADDED) {
+				if (eventType == VTEvent.TAG_ADDED) {
 					VersionTrackingChangeRecord vtRecord = (VersionTrackingChangeRecord) doRecord;
 					tagAdded((VTMatchTag) vtRecord.getNewValue());
 				}
-				else if (eventType == VTChangeManager.DOCR_VT_TAG_REMOVED) {
+				else if (eventType == VTEvent.TAG_REMOVED) {
 					VersionTrackingChangeRecord vtRecord = (VersionTrackingChangeRecord) doRecord;
 					tagRemoved((String) vtRecord.getOldValue());
 				}

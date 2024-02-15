@@ -42,7 +42,7 @@ public class ParamSpillDWARFFunctionFixup implements DWARFFunctionFixup {
 				DWARFVariable paramSpill = DWARFVariable.fromDataType(dfunc, param.type);
 				String paramName = param.name.getName();
 				paramSpill.name =
-					param.name.replaceName(paramName + "-local", paramName + "-local");
+					param.name.replaceName(paramName + "_local", paramName + "_local");
 				paramSpill.setStackStorage(paramStackOffset);
 				dfunc.localVars.add(paramSpill);
 				param.clearStorage();

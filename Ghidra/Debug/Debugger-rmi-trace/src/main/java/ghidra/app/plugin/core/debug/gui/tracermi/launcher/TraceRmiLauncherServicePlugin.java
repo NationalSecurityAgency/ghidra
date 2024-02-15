@@ -183,12 +183,22 @@ public class TraceRmiLauncherServicePlugin extends Plugin
 				.toList();
 	}
 
+	protected void executeTask(Task task) {
+		ProgressService progressService = tool.getService(ProgressService.class);
+		if (progressService != null) {
+			progressService.execute(task);
+		}
+		else {
+			tool.execute(task);
+		}
+	}
+
 	protected void relaunch(TraceRmiLaunchOffer offer) {
-		tool.execute(new ReLaunchTask(offer));
+		executeTask(new ReLaunchTask(offer));
 	}
 
 	protected void configureAndLaunch(TraceRmiLaunchOffer offer) {
-		tool.execute(new ConfigureAndLaunchTask(offer));
+		executeTask(new ConfigureAndLaunchTask(offer));
 	}
 
 	protected String[] constructLaunchMenuPrefix() {

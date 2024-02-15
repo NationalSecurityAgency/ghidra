@@ -104,9 +104,15 @@ public class DeleteAction extends DockingAction {
 
 	@Override
 	public void actionPerformed(ActionContext context) {
+		//@formatter:off
 		int choice = OptionDialog.showYesNoDialogWithNoAsDefaultButton(null,
-			"Confirm Delete Operation", "Are you sure you want to delete selected\n categories " +
-				"and/or dataTypes?\n(Note: There is no undo for archives.)");
+			"Confirm Delete Operation", 
+				"Are you sure you want to delete selected\n" + 
+				"data types and/or categories?\n\n" + 
+				"Note: There is no undo for archives and\n" + 
+				"changes may trigger the removal of related\n" + 
+				"data types, components and defined data.)");
+		//@formatter:on
 		if (choice != OptionDialog.OPTION_ONE) {
 			return;
 		}

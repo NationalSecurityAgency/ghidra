@@ -25,13 +25,11 @@ import ghidra.dbg.util.*;
 import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectInterface;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace.TraceStackChangeType;
 import ghidra.trace.model.stack.*;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceChangeRecord;
-import ghidra.trace.util.TraceChangeType;
+import ghidra.trace.util.*;
 import ghidra.util.LockHold;
 
 public class DBTraceObjectStack implements TraceObjectStack, DBTraceObjectInterface {
@@ -42,18 +40,18 @@ public class DBTraceObjectStack implements TraceObjectStack, DBTraceObjectInterf
 		}
 
 		@Override
-		protected TraceChangeType<TraceStack, Void> getAddedType() {
-			return TraceStackChangeType.ADDED;
+		protected TraceEvent<TraceStack, Void> getAddedType() {
+			return TraceEvents.STACK_ADDED;
 		}
 
 		@Override
-		protected TraceChangeType<TraceStack, Lifespan> getLifespanChangedType() {
+		protected TraceEvent<TraceStack, Lifespan> getLifespanChangedType() {
 			return null;
 		}
 
 		@Override
-		protected TraceChangeType<TraceStack, ?> getChangedType() {
-			return TraceStackChangeType.CHANGED;
+		protected TraceEvent<TraceStack, ?> getChangedType() {
+			return TraceEvents.STACK_CHANGED;
 		}
 
 		@Override
@@ -62,8 +60,8 @@ public class DBTraceObjectStack implements TraceObjectStack, DBTraceObjectInterf
 		}
 
 		@Override
-		protected TraceChangeType<TraceStack, Void> getDeletedType() {
-			return TraceStackChangeType.DELETED;
+		protected TraceEvent<TraceStack, Void> getDeletedType() {
+			return TraceEvents.STACK_DELETED;
 		}
 	}
 

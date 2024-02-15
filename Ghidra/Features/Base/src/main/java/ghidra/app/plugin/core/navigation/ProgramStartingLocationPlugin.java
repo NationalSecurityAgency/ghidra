@@ -36,6 +36,7 @@ import ghidra.program.model.listing.ProgramUserData;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolTable;
 import ghidra.program.util.ProgramLocation;
+import ghidra.util.Swing;
 import ghidra.util.xml.XmlUtilities;
 
 //@formatter:off
@@ -44,14 +45,17 @@ import ghidra.util.xml.XmlUtilities;
 	packageName = CorePluginPackage.NAME,
 	category = PluginCategoryNames.COMMON,
 	shortDescription = "Determines the starting location when a program is opened.",
-	description = "This plugin watches for new programs being opened and determines the best starting location for the listing view.",
+	description = 
+		"This plugin watches for new programs being opened and determines the best " + 
+		"starting location for the listing view.  It is also responsible for storing " +
+		"and restoring the program's last listing location when reopened.",
 	servicesRequired = { GoToService.class },
 	eventsConsumed = { FirstTimeAnalyzedPluginEvent.class }
 )
 //@formatter:on
 public class ProgramStartingLocationPlugin extends ProgramPlugin {
 
-	public static enum NonActiveProgramState {
+	public enum NonActiveProgramState {
 		NEWLY_OPENED,
 		RESTORED,
 		FIRST_ANALYSIS_COMPLETED
@@ -75,7 +79,9 @@ public class ProgramStartingLocationPlugin extends ProgramPlugin {
 		if (event instanceof FirstTimeAnalyzedPluginEvent ev) {
 			Program program = ev.getProgram();
 			if (program != null) {
-				firstAnalysisCompleted(program);
+				// call firstAnalysisCompleted() in its own swing thread so we don't block
+				// the event broadcast thread with a GUI modal popup
+				Swing.runLater(() -> firstAnalysisCompleted(program));
 			}
 		}
 	}
@@ -99,6 +105,7 @@ public class ProgramStartingLocationPlugin extends ProgramPlugin {
 		}
 	}
 
+	@Override
 	protected void programClosed(Program program) {
 		ProgramLocation lastLocation = currentLocationsMap.remove(program);
 		if (lastLocation == null) {

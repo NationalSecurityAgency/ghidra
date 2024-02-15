@@ -273,8 +273,8 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 		return matchingStylePanel;
 	}
 
-	// toggles whether the structure being created is new, based upon the name field, or a current 
-	// structure, based upon a structure in the table.  This method updates the GUI to reflect the 
+	// toggles whether the structure being created is new, based upon the name field, or a current
+	// structure, based upon a structure in the table.  This method updates the GUI to reflect the
 	// current creation state.
 	private void setCreateStructureByName(boolean createStructureByName) {
 		if (createStructureByName) {
@@ -572,7 +572,7 @@ public class CreateStructureDialog extends ReusableDialogComponentProvider {
 			message = EXISITING_STRUCTURE_STATUS_PREFIX;
 		}
 
-		setStatusText("<HTML>" + message + "<BR>\"" + HTMLUtilities.escapeHTML(name) + "\"");
+		setStatusText("<html>" + message + "<BR>\"" + HTMLUtilities.escapeHTML(name) + "\"");
 	}
 
 	// this class is used instead of a cell renderer so that sorting will

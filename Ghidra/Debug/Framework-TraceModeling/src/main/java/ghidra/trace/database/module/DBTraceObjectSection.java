@@ -25,13 +25,11 @@ import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectInterface;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TraceSectionChangeType;
 import ghidra.trace.model.modules.TraceObjectModule;
 import ghidra.trace.model.modules.TraceSection;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.annot.TraceObjectInterfaceUtils;
-import ghidra.trace.util.TraceChangeRecord;
-import ghidra.trace.util.TraceChangeType;
+import ghidra.trace.util.*;
 import ghidra.util.LockHold;
 
 public class DBTraceObjectSection implements TraceObjectSection, DBTraceObjectInterface {
@@ -53,18 +51,18 @@ public class DBTraceObjectSection implements TraceObjectSection, DBTraceObjectIn
 		}
 
 		@Override
-		protected TraceChangeType<TraceSection, Void> getAddedType() {
-			return TraceSectionChangeType.ADDED;
+		protected TraceEvent<TraceSection, Void> getAddedType() {
+			return TraceEvents.SECTION_ADDED;
 		}
 
 		@Override
-		protected TraceChangeType<TraceSection, Lifespan> getLifespanChangedType() {
+		protected TraceEvent<TraceSection, Lifespan> getLifespanChangedType() {
 			return null; // it's the module's lifespan that matters.
 		}
 
 		@Override
-		protected TraceChangeType<TraceSection, Void> getChangedType() {
-			return TraceSectionChangeType.CHANGED;
+		protected TraceEvent<TraceSection, Void> getChangedType() {
+			return TraceEvents.SECTION_CHANGED;
 		}
 
 		@Override
@@ -73,8 +71,8 @@ public class DBTraceObjectSection implements TraceObjectSection, DBTraceObjectIn
 		}
 
 		@Override
-		protected TraceChangeType<TraceSection, Void> getDeletedType() {
-			return TraceSectionChangeType.DELETED;
+		protected TraceEvent<TraceSection, Void> getDeletedType() {
+			return TraceEvents.SECTION_DELETED;
 		}
 	}
 

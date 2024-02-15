@@ -24,7 +24,7 @@ import ghidra.app.util.bin.format.golang.structmapping.*;
 /**
  * Structure used to define a field in a {@link GoStructType struct type}.
  */
-@StructureMapping(structureName = "runtime.structfield")
+@StructureMapping(structureName = {"runtime.structfield", "internal/abi.StructField"})
 public class GoStructField {
 
 	@ContextField

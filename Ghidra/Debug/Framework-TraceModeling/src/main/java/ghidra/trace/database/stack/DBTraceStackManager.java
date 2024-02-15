@@ -31,13 +31,13 @@ import ghidra.trace.database.address.DBTraceOverlaySpaceAdapter;
 import ghidra.trace.database.stack.DBTraceStack.ThreadSnap;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace.TraceStackChangeType;
 import ghidra.trace.model.stack.*;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.exception.VersionException;
@@ -156,7 +156,7 @@ public class DBTraceStackManager implements TraceStackManager, DBTraceManager {
 				stack = stackStore.create();
 				stack.set(thread, snap);
 			}
-			trace.setChanged(new TraceChangeRecord<>(TraceStackChangeType.ADDED, null, stack));
+			trace.setChanged(new TraceChangeRecord<>(TraceEvents.STACK_ADDED, null, stack));
 			return stack;
 		}
 		return stacksByThreadSnap.getOne(key);

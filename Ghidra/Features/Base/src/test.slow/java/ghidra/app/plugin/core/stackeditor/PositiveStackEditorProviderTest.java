@@ -137,7 +137,7 @@ public class PositiveStackEditorProviderTest extends AbstractStackEditorTest {
 		 */
 		@Override
 		public void domainObjectChanged(DomainObjectChangedEvent event) {
-			if (event.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
+			if (event.contains(DomainObjectEvent.RESTORED)) {
 				Object source = event.getSource();
 				if (source instanceof DataTypeManagerDomainObject) {
 					DataTypeManagerDomainObject restoredDomainObject =

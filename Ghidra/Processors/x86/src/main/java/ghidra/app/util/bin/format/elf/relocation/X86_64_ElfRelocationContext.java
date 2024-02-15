@@ -24,15 +24,14 @@ import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.util.*;
-import ghidra.util.exception.AssertException;
-import ghidra.util.exception.NotFoundException;
+import ghidra.util.exception.*;
 
 /**
  * <code>X86_64_ElfRelocationContext</code> provides ability to generate a
  * Global Offset Table (GOT) to facilitate GOT related relocations encountered within 
  * object modules.
  */
-class X86_64_ElfRelocationContext extends ElfRelocationContext {
+class X86_64_ElfRelocationContext extends ElfRelocationContext<X86_64_ElfRelocationHandler> {
 
 	private AddressRange allocatedGotLimits;
 	private Address allocatedGotAddress;
@@ -50,7 +49,10 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 	public long getSymbolValue(ElfSymbol symbol) {
 		long symbolValue = super.getSymbolValue(symbol);
 		if (symbolValue == 0 && ElfConstants.GOT_SYMBOL_NAME.equals(symbol.getNameAsString())) {
-			Address gotAddr = allocateGot();
+			Address gotAddr = symbolMap.get(symbol);
+			if (gotAddr == null) {
+				gotAddr = allocateGot();
+			}
 			if (gotAddr != null) {
 				return gotAddr.getOffset();
 			}
@@ -113,15 +115,24 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 	}
 
 	private boolean requiresGotEntry(ElfRelocation r) {
-		switch (r.getType()) {
-			case X86_64_ElfRelocationConstants.R_X86_64_GOTPCREL:
-//			case X86_64_ElfRelocationConstants.R_X86_64_GOTOFF64:
-//			case X86_64_ElfRelocationConstants.R_X86_64_GOTPC32:
-//			case X86_64_ElfRelocationConstants.R_X86_64_GOT64:
-			case X86_64_ElfRelocationConstants.R_X86_64_GOTPCREL64:
-//			case X86_64_ElfRelocationConstants.R_X86_64_GOTPC64:
-//			case X86_64_ElfRelocationConstants.R_X86_64_GOTPCRELX:
-//			case X86_64_ElfRelocationConstants.R_X86_64_REX_GOTPCRELX:
+
+		X86_64_ElfRelocationType type = handler.getRelocationType(r.getType());
+		if (type == null) {
+			return false;
+		}
+
+		switch (type) {
+			case R_X86_64_GOTPCREL:
+//			case R_X86_64_GOTOFF64:
+//			case R_X86_64_GOTPC32:
+//			case R_X86_64_GOT64:
+			case R_X86_64_GOTPCREL64:
+//			case R_X86_64_GOTPC64:
+				return true;
+			case R_X86_64_GOTPCRELX:
+			case R_X86_64_REX_GOTPCRELX:
+				// NOTE: Relocation may not actually require GOT entry in which case %got 
+				// may be over-allocated, but is required in some cases.
 				return true;
 			default:
 				return false;
@@ -141,7 +152,7 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 			return null;
 		}
 
-		if (gotElfSymbol != null && getSymbolAddress(gotElfSymbol) != null) {
+		if (gotElfSymbol != null && gotElfSymbol.getValue() != 0) {
 			throw new AssertException(ElfConstants.GOT_SYMBOL_NAME + " already allocated");
 		}
 
@@ -151,8 +162,16 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 			ElfRelocationHandler.GOT_BLOCK_NAME);
 		if (allocatedGotLimits != null &&
 			allocatedGotLimits.getMinAddress().getOffset() < Integer.MAX_VALUE) {
-			// GOT must fall within first 32-bit segment
+			// NOTE: GOT must fall within first 32-bit segment
 			if (gotElfSymbol != null) {
+				// remember where GOT was allocated
+				try {
+					loadHelper.createSymbol(allocatedGotLimits.getMinAddress(),
+						ElfConstants.GOT_SYMBOL_NAME, true, false, null);
+				}
+				catch (InvalidInputException e) {
+					throw new AssertionError("Unexpected exception", e);
+				}
 				symbolMap.put(gotElfSymbol, allocatedGotLimits.getMinAddress());
 			}
 			allocatedGotAddress = allocatedGotLimits.getMinAddress();

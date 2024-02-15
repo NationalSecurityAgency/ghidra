@@ -32,17 +32,16 @@ import ghidra.app.util.viewer.listingpanel.AddressSetDisplayListener;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceMemoryStateChangeType;
-import ghidra.trace.model.Trace.TraceSnapshotChangeType;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -100,8 +99,14 @@ public abstract class DebuggerReadsMemoryTrait {
 
 	protected class ForReadsTraceListener extends TraceDomainObjectListener {
 		public ForReadsTraceListener() {
-			listenFor(TraceSnapshotChangeType.ADDED, this::snapshotAdded);
-			listenFor(TraceMemoryStateChangeType.CHANGED, this::memStateChanged);
+			listenForUntyped(DomainObjectEvent.RESTORED, this::objectRestored);
+			listenFor(TraceEvents.SNAPSHOT_ADDED, this::snapshotAdded);
+			listenFor(TraceEvents.BYTES_STATE_CHANGED, this::memStateChanged);
+		}
+
+		private void objectRestored(DomainObjectChangeRecord rec) {
+			actionRefreshSelected.updateEnabled(null);
+			doAutoRead();
 		}
 
 		private void snapshotAdded(TraceSnapshot snapshot) {

@@ -525,6 +525,16 @@ public:
 /// It knows how to map from specific switch variable values to the destination
 /// \e case block and how to label the value.
 class JumpTable {
+public:
+  /// \brief Recovery status for a specific JumpTable
+  enum RecoveryMode {
+    success = 0,			///< JumpTable is fully recovered
+    fail_normal = 1,		///< Normal failure to recover
+    fail_thunk = 2,		///< Likely \b thunk
+    fail_noflow = 3,		///< No legal flow to BRANCHIND
+    fail_return = 4  		///< Likely \b return operation
+  };
+private:
   /// \brief An address table index and its corresponding out-edge
   struct IndexPair {
     int4 blockPosition;				///< Out-edge index for the basic-block

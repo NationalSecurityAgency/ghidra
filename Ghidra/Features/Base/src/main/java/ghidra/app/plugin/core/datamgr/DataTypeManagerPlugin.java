@@ -83,9 +83,8 @@ import ghidra.util.task.TaskMonitor;
 	servicesProvided = { DataTypeManagerService.class, DataTypeArchiveService.class }
 )
 //@formatter:on
-public class DataTypeManagerPlugin extends ProgramPlugin
-		implements DomainObjectListener, DataTypeManagerService, DataTypeArchiveService,
-		PopupActionProvider {
+public class DataTypeManagerPlugin extends ProgramPlugin implements DomainObjectListener,
+		DataTypeManagerService, DataTypeArchiveService, PopupActionProvider {
 
 	private static final String EXTENSIONS_PATH_PREFIX = Path.GHIDRA_HOME + "/Extensions";
 
@@ -281,7 +280,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent event) {
-		if (event.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
+		if (event.contains(DomainObjectEvent.RESTORED)) {
 			Object source = event.getSource();
 			if (source instanceof DataTypeManagerDomainObject) {
 				DataTypeManagerDomainObject domainObject = (DataTypeManagerDomainObject) source;
@@ -290,7 +289,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 				editorManager.domainObjectRestored(domainObject);
 			}
 		}
-		else if (event.containsEvent(DomainObject.DO_OBJECT_RENAMED)) {
+		else if (event.contains(DomainObjectEvent.RENAMED)) {
 			provider.programRenamed();
 		}
 	}
@@ -580,9 +579,8 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	public void openProjectDataTypeArchive() {
 
-		OpenVersionedFileDialog<DataTypeArchive> dialog =
-			new OpenVersionedFileDialog<>(tool, "Open Project Data Type Archive",
-				DataTypeArchive.class);
+		OpenVersionedFileDialog<DataTypeArchive> dialog = new OpenVersionedFileDialog<>(tool,
+			"Open Project Data Type Archive", DataTypeArchive.class);
 		dialog.setHelpLocation(new HelpLocation(HelpTopics.PROGRAM, "Open_File_Dialog"));
 		dialog.addOkActionListener(ev -> {
 			DomainFile domainFile = dialog.getDomainFile();

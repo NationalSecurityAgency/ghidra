@@ -18,11 +18,15 @@ package ghidra.app.plugin.core.disassembler;
 import db.Transaction;
 import docking.action.MenuData;
 import docking.widgets.dialogs.NumberInputDialog;
+import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.ListingContextAction;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
 
@@ -70,28 +74,15 @@ class SetLengthOverrideAction extends ListingContextAction {
 
 		int minLength = 0;
 		long maxLength = Math.min(Instruction.MAX_LENGTH_OVERRIDE, protoLen - 1);
-		Instruction nextInstr = listing.getInstructionAfter(address);
-		if (nextInstr != null &&
-			nextInstr.getAddress().getAddressSpace().equals(address.getAddressSpace())) {
-			long limit = nextInstr.getAddress().subtract(address);
-			maxLength = Math.min(limit, maxLength);
-			if (limit < instr.getParsedLength()) {
-				minLength = 1; // unable to restore to default length using 0 value
-				restoreTip = "";
-			}
-		}
 
 		if (maxLength == 0) {
 			// Assume we have an instruction whose length can't be changed
 			Msg.showError(this, null, "Length Override Error",
-				"Insufficient space to alter current length override of 1-byte");
+				"The length of a " + protoLen + "-byte instruction may not be overridden!");
 			return;
 		}
 
-		int currentLengthOverride = 0;
-		if (instr.isLengthOverridden()) {
-			currentLengthOverride = instr.getLength();
-		}
+		final int currentLengthOverride = getDefaultOffcutLength(program, instr);
 
 		NumberInputDialog dialog = new NumberInputDialog("Override/Restore Instruction Length",
 			"Enter byte-length [" + minLength + ".." + maxLength + restoreTip + alignTip + "]",
@@ -112,7 +103,20 @@ class SetLengthOverrideAction extends ListingContextAction {
 		}
 
 		try (Transaction tx = instr.getProgram().openTransaction(kind + " Length Override")) {
+			if (lengthOverride == 0) {
+				// Clear any code units that may have been created in the offcut
+				final int trueLength = instr.getParsedLength();
+				listing.clearCodeUnits(address.add(currentLengthOverride),
+					address.add(trueLength - 1), false);
+			}
 			instr.setLengthOverride(lengthOverride);
+
+			final Address offcutStart = address.add(lengthOverride);
+			if (lengthOverride != 0 && isOffcutFlowReference(program, offcutStart)) {
+				tool.executeBackgroundCommand(new DisassembleCommand(offcutStart, null, true),
+					program);
+				removeErrorBookmark(program, offcutStart);
+			}
 		}
 		catch (CodeUnitInsertionException e) {
 			Msg.showError(this, null, "Length Override Error", e.getMessage());
@@ -132,6 +136,41 @@ class SetLengthOverrideAction extends ListingContextAction {
 		}
 		int alignment = program.getLanguage().getInstructionAlignment();
 		return instr.getParsedLength() > alignment;
+	}
+
+	private int getDefaultOffcutLength(final Program program, final Instruction instr) {
+		if (instr.isLengthOverridden()) {
+			return instr.getLength();
+		}
+		final AddressSet instrBody = new AddressSet(instr.getMinAddress().next(),
+			instr.getMinAddress().add(instr.getParsedLength() - 1));
+		final Address addr =
+			program.getReferenceManager().getReferenceDestinationIterator(instrBody, true).next();
+		if (addr != null) {
+			final int offset = (int) addr.subtract(instr.getMinAddress());
+			if (offset % program.getLanguage().getInstructionAlignment() == 0) {
+				return offset;
+			}
+		}
+		return 0;
+	}
+
+	private boolean isOffcutFlowReference(final Program program, final Address address) {
+		for (Reference reference : program.getReferenceManager().getReferencesTo(address)) {
+			if (reference.getReferenceType().isFlow()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void removeErrorBookmark(final Program program, final Address at) {
+		final BookmarkManager bookmarkManager = program.getBookmarkManager();
+		final Bookmark bookmark = bookmarkManager.getBookmark(at, BookmarkType.ERROR,
+			Disassembler.ERROR_BOOKMARK_CATEGORY);
+		if (bookmark != null) {
+			bookmarkManager.removeBookmark(bookmark);
+		}
 	}
 
 }

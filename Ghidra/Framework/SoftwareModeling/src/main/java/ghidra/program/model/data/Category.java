@@ -59,6 +59,9 @@ public interface Category extends Comparable<Category> {
 	 * occurs. In other words, finds all data types whose name matches the given name once
 	 * any conflict suffixes have been removed from both the given name and the data types
 	 * that are being scanned.
+	 * <br>
+	 * NOTE: The {@code name} provided must not contain array or pointer decorations.
+	 * 
 	 * @param name the name for which to get conflict related data types in this category. Note:
 	 * the name that is passed in will be normalized to its base name, so you may pass in names
 	 * with .conflict appended as a convenience.

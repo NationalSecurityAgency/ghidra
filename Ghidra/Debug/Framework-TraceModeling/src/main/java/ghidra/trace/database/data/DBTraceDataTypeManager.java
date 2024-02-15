@@ -16,7 +16,8 @@
 package ghidra.trace.database.data;
 
 import java.io.IOException;
-import java.util.LinkedList;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
@@ -184,18 +185,15 @@ public class DBTraceDataTypeManager extends ProgramBasedDataTypeManagerDB
 	}
 
 	@Override
-	protected void replaceDataTypeIDs(long oldID, long newID) {
-		if (oldID == newID) {
-			return;
-		}
-		trace.getCodeManager().replaceDataTypes(oldID, newID);
-		trace.getSymbolManager().replaceDataTypes(oldID, newID);
+	protected void replaceDataTypesUsed(Map<Long, Long> dataTypeReplacementMap) {
+		trace.getCodeManager().replaceDataTypes(dataTypeReplacementMap);
+		trace.getSymbolManager().replaceDataTypes(dataTypeReplacementMap);
 	}
 
 	@Override
-	protected void deleteDataTypeIDs(LinkedList<Long> deletedIds, TaskMonitor monitor)
-			throws CancelledException {
-		trace.getCodeManager().clearData(deletedIds, monitor);
+	protected void deleteDataTypesUsed(Set<Long> deletedIds) {
+		// TODO: Should use replacement type instead of clearing
+		trace.getCodeManager().clearData(deletedIds, TaskMonitor.DUMMY);
 		trace.getSymbolManager().invalidateCache(false);
 	}
 

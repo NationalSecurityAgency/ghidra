@@ -21,13 +21,14 @@ import java.util.List;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainObjectChangedEvent;
+import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.classfinder.ClassSearcher;
 
 //@formatter:off
@@ -67,16 +68,11 @@ public class RelocationFixupPlugin extends ProgramPlugin implements DomainObject
 
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (!ev.containsEvent(ChangeManager.DOCR_IMAGE_BASE_CHANGED)) {
-			return;
-		}
-		for (DomainObjectChangeRecord record : ev) {
-			if (record.getEventType() == ChangeManager.DOCR_IMAGE_BASE_CHANGED) {
-				Address oldImageBase = (Address) record.getOldValue();
-				Address newImageBase = (Address) record.getNewValue();
-				imageBaseChanged(oldImageBase, newImageBase);
-			}
-		}
+		ev.forEach(ProgramEvent.IMAGE_BASE_CHANGED, r -> {
+			Address oldImageBase = (Address) r.getOldValue();
+			Address newImageBase = (Address) r.getNewValue();
+			imageBaseChanged(oldImageBase, newImageBase);
+		});
 	}
 
 	private void imageBaseChanged(Address oldImageBase, Address newImageBase) {

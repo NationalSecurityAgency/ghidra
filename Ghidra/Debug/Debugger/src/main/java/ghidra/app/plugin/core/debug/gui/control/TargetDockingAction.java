@@ -15,41 +15,51 @@
  */
 package ghidra.app.plugin.core.debug.gui.control;
 
+import java.util.Comparator;
+
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.KeyBindingType;
+import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.target.Target.ActionEntry;
+import ghidra.framework.plugintool.PluginTool;
 
 class TargetDockingAction extends DockingAction {
-	private final DebuggerControlPlugin plugin;
+	private final PluginTool tool;
 	private final ActionName action;
 	private final String defaultDescription;
 
 	private ActionEntry entry;
 
 	public TargetDockingAction(String name, String owner, KeyBindingType keyBindingType,
-			DebuggerControlPlugin plugin, ActionName action, String defaultDescription) {
+			PluginTool tool, ActionName action, String defaultDescription) {
 		super(name, owner, keyBindingType);
-		this.plugin = plugin;
+		this.tool = tool;
 		this.action = action;
 		this.defaultDescription = defaultDescription;
 	}
 
 	private ActionEntry findEntry(ActionContext context) {
-		Target target = plugin.current.getTarget();
+		DebuggerTraceManagerService traceManager =
+			tool.getService(DebuggerTraceManagerService.class);
+		if (traceManager == null) {
+			return null;
+		}
+		Target target = traceManager.getCurrent().getTarget();
 		if (target == null) {
 			return null;
 		}
-		for (ActionEntry ent : target.collectActions(action, context).values()) {
-			if (ent.requiresPrompt()) {
-				continue;
-			}
-			return ent;
-			// TODO: What if multiple match? Do I care to display the extras?
-		}
-		return null;
+		return target.collectActions(action, context)
+				.values()
+				.stream()
+				.filter(e -> !e.requiresPrompt())
+				.sorted(Comparator.comparing(e -> -e.specificity()))
+				.findFirst()
+				.orElse(null);
+		// TODO: What if multiple match? Do I care to display the extras?
+		// Esp., step process vs step thread
 	}
 
 	protected void updateFromContext(ActionContext context) {
@@ -73,6 +83,6 @@ class TargetDockingAction extends DockingAction {
 		if (entry == null) {
 			return;
 		}
-		plugin.runTask(getName(), entry);
+		TargetActionTask.runAction(tool, getName(), entry);
 	}
 }

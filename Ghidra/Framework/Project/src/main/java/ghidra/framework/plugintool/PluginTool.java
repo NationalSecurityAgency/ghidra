@@ -501,7 +501,8 @@ public abstract class PluginTool extends AbstractDockingTool {
 		pluginMgr.close();
 		if (project != null) {
 			if (project.getToolManager() != null) {
-				project.getToolManager().disconnectTool(this);
+				project.getToolManager()
+						.disconnectTool(this);
 			}
 		}
 
@@ -633,7 +634,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 		}
 
 		winMgr.restoreWindowDataFromXml(root);
-		winMgr.setToolName(fullName);
+		updateTitle();
 		return hasErrors;
 	}
 
@@ -720,7 +721,8 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 */
 	public boolean threadIsBackgroundTaskThread() {
 		ThreadGroup taskGroup = taskMgr.getTaskThreadGroup();
-		ThreadGroup group = Thread.currentThread().getThreadGroup();
+		ThreadGroup group = Thread.currentThread()
+				.getThreadGroup();
 		while (group != null && group != taskGroup) {
 			group = group.getParent();
 		}
@@ -1050,8 +1052,28 @@ public abstract class PluginTool extends AbstractDockingTool {
 		addAction(saveAsAction);
 	}
 
-	protected void addExportToolAction() {
+	/**
+	 * Adds actions to the tool for transferring focus to the first component in the next
+	 * or previous dockable component provider.
+	 */
+	protected void addNextPreviousProviderActions() {
+		// @formatter:off
+		new ActionBuilder("Jump to Next Dockable Provider", ToolConstants.TOOL_OWNER)
+			.keyBinding(KeyStroke.getKeyStroke("control J"))
+			.description("Transfer focus to the next major component in this windows")
+			.onAction(e -> nextDockableComponent(true))
+			.buildAndInstall(this);
 
+		new ActionBuilder("Jump to Previous Dockable Provider", ToolConstants.TOOL_OWNER)
+			.keyBinding("shift control J")
+			.description("Transfer focus to the previous major component in this windows")
+			.onAction(e -> nextDockableComponent(false))
+			.buildAndInstall(this);
+		// @formatter:on
+
+	}
+
+	protected void addExportToolAction() {
 		String menuGroup = "Tool";
 		String exportPullright = "Export";
 		setMenuGroup(new String[] { ToolConstants.MENU_FILE, exportPullright }, menuGroup);
@@ -1310,7 +1332,8 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * @param height height in pixels
 	 */
 	public void setSize(int width, int height) {
-		winMgr.getMainWindow().setSize(new Dimension(width, height));
+		winMgr.getMainWindow()
+				.setSize(new Dimension(width, height));
 	}
 
 	/**
@@ -1318,7 +1341,8 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * @return dimension of this tool's frame
 	 */
 	public Dimension getSize() {
-		return winMgr.getMainWindow().getSize();
+		return winMgr.getMainWindow()
+				.getSize();
 	}
 
 	/**
@@ -1327,7 +1351,8 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * @param y screen y coordinate
 	 */
 	public void setLocation(int x, int y) {
-		winMgr.getMainWindow().setLocation(x, y);
+		winMgr.getMainWindow()
+				.setLocation(x, y);
 	}
 
 	/**
@@ -1335,7 +1360,8 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * @return location of this tool's frame
 	 */
 	public Point getLocation() {
-		return winMgr.getMainWindow().getLocation();
+		return winMgr.getMainWindow()
+				.getLocation();
 	}
 
 	private void updateTitle() {
@@ -1525,6 +1551,63 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 	public boolean isRestoringDataState() {
 		return restoringDataState;
+	}
+
+	/**
+	 * Transfers focus to the first component in the next/previous dockable component provider.
+	 * @param forward true to go to next provider, false to go to previous provider
+	 */
+	private void nextDockableComponent(boolean forward) {
+		KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		Component focusOwner = focusManager.getPermanentFocusOwner();
+		Component next = findNextProviderComponent(focusOwner, forward);
+
+		// If going backwards, go back one more provider, then go forward to get the first
+		// component in the resulting provider. This makes it so that when going backwards, you
+		// still get the first component in the component provider and not the last.
+		if (!forward) {
+			next = findNextProviderComponent(next, false);
+			next = findNextProviderComponent(next, true);
+		}
+		if (next != null) {
+			next.requestFocus();
+		}
+	}
+
+	private Component findNextProviderComponent(Component component, boolean forward) {
+		if (component == null) {
+			return null;
+		}
+
+		DockingWindowManager windowManager = getWindowManager();
+		ComponentProvider startingProvider = windowManager.getComponentProvider(component);
+
+		Component next = getNext(component, forward);
+		while (next != null && next != component) {
+			// Skip JTabbedPanes. Assume the user prefers that the component inside the tabbed
+			// pane gets focus, not the tabbed pane itself so the user does not have to navigate
+			// twice to get the internal component.
+			if (next instanceof JTabbedPane) {
+				next = getNext(next, forward);
+				continue;
+			}
+			ComponentProvider nextProvider = windowManager.getComponentProvider(next);
+			if (nextProvider != startingProvider) {
+				return next;
+			}
+			next = getNext(next, forward);
+		}
+		return null;
+	}
+
+	private Component getNext(Component component, boolean forward) {
+		KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		Window window = focusManager.getFocusedWindow();
+		FocusTraversalPolicy policy = window.getFocusTraversalPolicy();
+		if (forward) {
+			return policy.getComponentAfter(window, component);
+		}
+		return policy.getComponentBefore(window, component);
 	}
 
 //==================================================================================================

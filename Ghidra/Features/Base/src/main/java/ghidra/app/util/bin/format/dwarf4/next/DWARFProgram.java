@@ -15,9 +15,9 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next;
 
-import java.io.Closeable;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
+import java.util.Map.Entry;
 
 import org.apache.commons.collections4.ListValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
@@ -40,7 +40,7 @@ import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.util.Msg;
-import ghidra.util.datastruct.FixedSizeHashMap;
+import ghidra.util.datastruct.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -53,10 +53,6 @@ public class DWARFProgram implements Closeable {
 	public static final String DWARF_ROOT_NAME = "DWARF";
 	public static final CategoryPath DWARF_ROOT_CATPATH = CategoryPath.ROOT.extend(DWARF_ROOT_NAME);
 	public static final CategoryPath UNCAT_CATPATH = DWARF_ROOT_CATPATH.extend("_UNCATEGORIZED_");
-
-	public static final int DEFAULT_NAME_LENGTH_CUTOFF = SymbolUtilities.MAX_SYMBOL_NAME_LENGTH;
-	public static final int MAX_NAME_LENGTH_CUTOFF = SymbolUtilities.MAX_SYMBOL_NAME_LENGTH;
-	public static final int MIN_NAME_LENGTH_CUTOFF = 20;
 
 	private static final int NAME_HASH_REPLACEMENT_SIZE = 8 + 2 + 2;
 	private static final String ELLIPSES_STR = "...";
@@ -122,70 +118,63 @@ public class DWARFProgram implements Closeable {
 	}
 
 	private final Program program;
-	private DWARFImportOptions importOptions;
-	private DWARFImportSummary importSummary;
+	private final DWARFDataTypeManager dwarfDTM;
 	private DWARFNameInfo rootDNI = DWARFNameInfo.createRoot(DWARF_ROOT_CATPATH);
 	private DWARFNameInfo unCatDataTypeRoot = DWARFNameInfo.createRoot(UNCAT_CATPATH);
+	private DWARFImportOptions importOptions;
+	private DWARFImportSummary importSummary;
 
 	private DWARFSectionProvider sectionProvider;
 	private StringTable debugStrings;
-	private List<DWARFCompilationUnit> compUnits = new ArrayList<>();
-	private DWARFCompilationUnit currentCompUnit;
 	private DWARFAttributeFactory attributeFactory;
-	private int totalDIECount = -1;
 	private int totalAggregateCount;
-	private boolean foundCrossCURefs = false;
 	private long programBaseAddressFixup;
 
 	private int maxDNICacheSize = 50;
 	private FixedSizeHashMap<Long, DWARFNameInfo> dniCache =
 		new FixedSizeHashMap<>(100, maxDNICacheSize);
-	private int nameLengthCutoffSize = DEFAULT_NAME_LENGTH_CUTOFF;
 
 	private Map<DWARFAttributeSpecification, DWARFAttributeSpecification> attributeSpecIntern =
 		new HashMap<>();
 
+	private DWARFRegisterMappings dwarfRegisterMappings;
+	private final boolean stackGrowsNegative;
+
+	private List<DWARFFunctionFixup> functionFixups;
 	private BinaryReader debugLocation;
 	private BinaryReader debugRanges;
 	private BinaryReader debugInfoBR;
 	private BinaryReader debugLineBR;
 	private BinaryReader debugAbbrBR;
 
-	private DWARFRegisterMappings dwarfRegisterMappings;
 
-	/**
-	 * List of all the currently loaded DIE records.
-	 */
-	private List<DebugInfoEntry> currentDIEs = new ArrayList<>();
+	// dieOffsets, siblingIndexes, parentIndexes contain for each DIE the information needed 
+	// to read each DIE and to navigate to parent / child / sibling elements.
+	// Each DIE record in the binary will consume 8+4+4=16 bytes in ram in these indexes.
+	// DIE instances do not keep references to other DIEs.
+	protected long[] dieOffsets = new long[0]; // offset in the debuginfo stream of this DIE
+	protected int[] siblingIndexes = new int[0]; // index of each DIE's next sibling.
+	protected int[] parentIndexes = new int[0]; // index of each DIE's parent record, or -1 for root
 
-	/**
-	 * Map of DIE offsets to DIE instances of the elements in {@link #currentDIEs}.
-	 */
-	private Map<Long, DebugInfoEntry> offsetMap = new HashMap<>();
+	// DIE index -> compunit lookup.  Each key in the map is the index of the last DIE of a
+	// compunit.  Querying the map for the ceilingEntry() of a DIE's index will return
+	// the compunit for that DIE.
+	protected TreeMap<Integer, DWARFCompilationUnit> compUnitDieIndex = new TreeMap<>();
+	protected List<DWARFCompilationUnit> compUnits = new ArrayList<>();
 
-	/**
-	 * Map of DIE offsets to {@link DIEAggregate} instances.
-	 */
-	private Map<Long, DIEAggregate> aggregatesByOffset = new HashMap<>();
+	// boolean flag, per die record, indicating that the DIE is the target of another DIE via
+	// an aggregate reference, and therefore not the root DIE record of an aggregate. 
+	protected BitSet indexHasRef = new BitSet();
 
-	/**
-	 * List of current {@link DIEAggregate} instances.
-	 */
-	private List<DIEAggregate> aggregates = new ArrayList<>();
+	// Cache of DIE and DIEAggregate instances.  If needed instance is not found (because of
+	// gc), it will be re-read / re-created and placed back into the map.
+	protected WeakValueHashMap<Long, DebugInfoEntry> diesByOffset = new WeakValueHashMap<>();
+	private WeakValueHashMap<Long, DIEAggregate> aggsByOffset = new WeakValueHashMap<>();
 
-	/**
-	 * Map of DIE offsets of {@link DIEAggregate}s that are being pointed to by
-	 * other {@link DIEAggregate}s with a DW_AT_type property.
-	 * <p>
-	 * In other words, a map of inbound links to a DIEA.
-	 */
+	// Map of DIE offsets of {@link DIEAggregate}s that are being pointed to by
+	// other {@link DIEAggregate}s with a DW_AT_type property.
+	// In other words, a map of inbound links to a DIEA.
 	private ListValuedMap<Long, DIEAggregate> typeReferers = new ArrayListValuedHashMap<>();
-
-	private final DWARFDataTypeManager dwarfDTM;
-
-	private final boolean stackGrowsNegative;
-
-	private List<DWARFFunctionFixup> functionFixups;
 
 	/**
 	 * Main constructor for DWARFProgram.
@@ -218,8 +207,7 @@ public class DWARFProgram implements Closeable {
 	 * @throws DWARFException if bad stuff happens.
 	 */
 	public DWARFProgram(Program program, DWARFImportOptions importOptions, TaskMonitor monitor,
-			DWARFSectionProvider sectionProvider)
-			throws CancelledException, IOException, DWARFException {
+			DWARFSectionProvider sectionProvider) throws CancelledException, IOException {
 		if (sectionProvider == null) {
 			throw new IllegalArgumentException("Null DWARFSectionProvider");
 		}
@@ -228,15 +216,8 @@ public class DWARFProgram implements Closeable {
 		this.sectionProvider = sectionProvider;
 		this.importOptions = importOptions;
 		this.importSummary = new DWARFImportSummary();
-		this.nameLengthCutoffSize = Math.max(MIN_NAME_LENGTH_CUTOFF,
-			Math.min(importOptions.getNameLengthCutoff(), MAX_NAME_LENGTH_CUTOFF));
 		this.dwarfDTM = new DWARFDataTypeManager(this, program.getDataTypeManager());
 		this.stackGrowsNegative = program.getCompilerSpec().stackGrowsNegative();
-
-		monitor.setMessage("Reading DWARF debug string table");
-		this.debugStrings = StringTable.readStringTable(
-			sectionProvider.getSectionAsByteProvider(DWARFSectionNames.DEBUG_STR, monitor));
-
 		this.attributeFactory = new DWARFAttributeFactory(this);
 
 		this.debugLocation = getBinaryReaderFor(DWARFSectionNames.DEBUG_LOC, monitor);
@@ -245,8 +226,9 @@ public class DWARFProgram implements Closeable {
 		this.debugAbbrBR = getBinaryReaderFor(DWARFSectionNames.DEBUG_ABBREV, monitor);
 		this.debugRanges = getBinaryReaderFor(DWARFSectionNames.DEBUG_RANGES, monitor);
 
-		// if there are relocations (already handled by the ghidra loader) anywhere in the debuginfo or debugrange sections, then
-		// we don't need to manually fix up addresses extracted from DWARF data.
+		// if there are relocations (already handled by the ghidra loader) anywhere in the 
+		// debuginfo or debugrange sections, then we don't need to manually fix up addresses
+		// extracted from DWARF data.
 		boolean hasRelocations = hasRelocations(debugInfoBR) || hasRelocations(debugRanges);
 		if (!hasRelocations) {
 			Long oib = ElfLoader.getElfOriginalImageBase(program);
@@ -259,22 +241,200 @@ public class DWARFProgram implements Closeable {
 			DWARFRegisterMappingsManager.hasDWARFRegisterMapping(program.getLanguage())
 					? DWARFRegisterMappingsManager.getMappingForLang(program.getLanguage())
 					: null;
+	}
+
+	/**
+	 * Reads and indexes available DWARF information.
+	 * 
+	 * @param monitor {@link TaskMonitor}
+	 * @throws IOException if error reading data
+	 * @throws DWARFException if bad or invalid DWARF information
+	 * @throws CancelledException if cancelled
+	 */
+	public void init(TaskMonitor monitor) throws IOException, DWARFException, CancelledException {
+		monitor.setMessage("DWARF: Reading string table");
+		this.debugStrings = StringTable.readStringTable(
+			sectionProvider.getSectionAsByteProvider(DWARFSectionNames.DEBUG_STR, monitor));
+
 		bootstrapCompilationUnits(monitor);
-		checkPreconditions(monitor);
+
+		LongArrayList dieOffsetList = new LongArrayList();
+		IntArrayList siblingIndexList = new IntArrayList();
+		IntArrayList parentIndexList = new IntArrayList();
+		LongArrayList aggrTargets = new LongArrayList();
+
+		monitor.initialize(debugInfoBR.length(), "DWARF: Indexing records");
+		for (DWARFCompilationUnit cu : compUnits) {
+			debugInfoBR.setPointerIndex(cu.getFirstDIEOffset());
+			monitor.setMessage("DWARF: Indexing records - Compilation Unit #%d/%d"
+					.formatted(cu.getCompUnitNumber() + 1, compUnits.size()));
+			indexDIEsForCU(cu, dieOffsetList, parentIndexList, siblingIndexList, aggrTargets, monitor);
+			compUnitDieIndex.put(dieOffsetList.size() - 1, cu);
+		}
+
+		dieOffsets = dieOffsetList.toLongArray();
+		siblingIndexes = siblingIndexList.toArray();
+		parentIndexes = parentIndexList.toArray();
+
+		indexDIEAggregates(aggrTargets, monitor); // after this point, DIEAggregates are functional
+		int nonHeadCount = indexHasRef.cardinality();
+		totalAggregateCount = dieOffsetList.size() - nonHeadCount;
+
+		indexDIEATypeRefs(monitor);
+
+		Msg.info(this,
+			"DWARF: %d compile units, %d DIEs".formatted(compUnits.size(), dieOffsets.length));
+	}
+
+	protected void indexDIEATypeRefs(TaskMonitor monitor) throws CancelledException {
+		monitor.initialize(totalAggregateCount, "DWARF: Indexing Type References");
+		for (DIEAggregate diea : allAggregates()) {
+			monitor.increment();
+			DIEAggregate typeRef = diea.getTypeRef();
+			if (typeRef != null) {
+				typeReferers.put(typeRef.getOffset(), diea);
+			}
+		}
+
+	}
+
+	protected void indexDIEAggregates(LongArrayList aggrTargets, TaskMonitor monitor)
+			throws CancelledException, DWARFException {
+		monitor.initialize(aggrTargets.size(), "DWARF: Indexing DIE Aggregates");
+		for (long aggrTargetOffset : aggrTargets) {
+			monitor.increment();
+			int dieIndex = getDIEIndex(aggrTargetOffset);
+			if (dieIndex < 0) {
+				throw new DWARFException();
+			}
+			indexHasRef.set(dieIndex);
+		}
+	}
+
+	private void bootstrapCompilationUnits(TaskMonitor monitor)
+			throws CancelledException, IOException, DWARFException {
+
+		debugInfoBR.setPointerIndex(0);
+		monitor.initialize(debugInfoBR.length(), "DWARF: Bootstrapping Compilation Units");
+		while (debugInfoBR.hasNext()) {
+			monitor.checkCancelled();
+			monitor.setProgress(debugInfoBR.getPointerIndex());
+			monitor.setMessage("DWARF: Bootstrapping Compilation Unit #" + compUnits.size());
+
+			DWARFCompilationUnit cu = DWARFCompilationUnit.readCompilationUnit(this, debugInfoBR,
+				debugAbbrBR, compUnits.size(), monitor);
+
+			if (cu != null) {
+				compUnits.add(cu);
+				debugInfoBR.setPointerIndex(cu.getEndOffset());
+			}
+		}
+	}
+
+	private void indexDIEsForCU(DWARFCompilationUnit cu, LongArrayList dieOffsetList,
+			IntArrayList parentIndexList, IntArrayList siblingIndexList,
+			LongArrayList aggrTargets, TaskMonitor monitor) throws CancelledException {
+		long endOffset = cu.getEndOffset();
+
+		int perCuDieCount = 0;
+		int parentIndex = -1;
+		long unexpectedTerminator = -1;
+		while (debugInfoBR.getPointerIndex() < endOffset) {
+
+			long startOfDIE = debugInfoBR.getPointerIndex();
+			monitor.setProgress(startOfDIE);
+			monitor.setMessage("DWARF: Indexing Compilation Unit #" + compUnits.size());
+			monitor.checkCancelled();
+
+			try {
+				int dieIndex = dieOffsetList.size();
+				DebugInfoEntry die =
+					DebugInfoEntry.read(debugInfoBR, cu, dieIndex, attributeFactory);
+
+				if (die.isTerminator()) {
+					if (parentIndex == -1) {
+						unexpectedTerminator = startOfDIE;
+						continue;
+					}
+					parentIndex = parentIndexList.get(parentIndex);
+					continue;
+				}
+				if (unexpectedTerminator != -1) {
+					// if we run into a non-terminator die after hitting a terminator, throw error
+					throw new DWARFException(
+						"Unexpected terminator entry at 0x%x".formatted(unexpectedTerminator));
+				}
+				if (parentIndex == -1 && perCuDieCount != 0 /* first die of CU */) {
+					throw new DWARFException(
+						"Unexpected root level DIE at 0x%x".formatted(startOfDIE));
+				}
+
+				dieOffsetList.add(startOfDIE);
+				parentIndexList.add(parentIndex);
+				siblingIndexList.add(dieIndex + 1);
+				perCuDieCount++;
+
+				updateSiblingIndexes(siblingIndexList, parentIndexList, dieIndex);
+
+				if (die.getAbbreviation().hasChildren()) {
+					parentIndex = dieIndex;
+				}
+
+				DIEAggregate diea = DIEAggregate.createSingle(die);
+				for (int attr : DIEAggregate.REF_ATTRS) {
+					long refdOffset = diea.getUnsignedLong(attr, -1);
+					if (refdOffset != -1) {
+						aggrTargets.add(refdOffset);
+					}
+				}
+
+				diesByOffset.put(startOfDIE, die);
+			}
+			catch (IOException e) {
+				Msg.error(this,
+					"Failed to read DIE at offset 0x%x in compunit %d (at 0x%x), skipping remainder of compilation unit."
+							.formatted(startOfDIE, cu.getCompUnitNumber(), cu.getStartOffset()),
+					e);
+				debugInfoBR.setPointerIndex(endOffset);
+			}
+		}
+
+	}
+
+	protected void updateSiblingIndexes(IntArrayList siblingIndexList, IntArrayList parentIndexList,
+			int index) {
+		int x = siblingIndexList.size();
+		while (index != -1) {
+			siblingIndexList.set(index, x);
+			index = parentIndexList.get(index);
+		}
 	}
 
 	@Override
 	public void close() throws IOException {
-		sectionProvider.close();
+		if (sectionProvider != null) {
+			sectionProvider.close();
+		}
+		if (debugStrings != null) {
+			debugStrings.clear();
+		}
 		compUnits.clear();
+		dniCache.clear();
+
 		debugAbbrBR = null;
 		debugInfoBR = null;
 		debugLineBR = null;
 		debugLocation = null;
 		debugRanges = null;
-		debugStrings.clear();
-		dniCache.clear();
-		clearDIEIndexes();
+
+		dieOffsets = new long[0];
+		parentIndexes = new int[0];
+		siblingIndexes = new int[0];
+		indexHasRef.clear();
+		aggsByOffset.clear();
+		diesByOffset.clear();
+		typeReferers.clear();
+		compUnitDieIndex.clear();
 
 		if (functionFixups != null) {
 			for (DWARFFunctionFixup funcFixup : functionFixups) {
@@ -314,10 +474,10 @@ public class DWARFProgram implements Closeable {
 	private BinaryReader getBinaryReaderFor(String sectionName, TaskMonitor monitor)
 			throws IOException {
 		ByteProvider bp = sectionProvider.getSectionAsByteProvider(sectionName, monitor);
-		return (bp != null) ? new BinaryReader(bp, !isBigEndian()) : null;
+		return (bp != null) ? new BinaryReader(bp, isLittleEndian()) : null;
 	}
 
-	private boolean hasRelocations(BinaryReader br) throws IOException {
+	private boolean hasRelocations(BinaryReader br) {
 		if (br == null) {
 			return false;
 		}
@@ -330,7 +490,6 @@ public class DWARFProgram implements Closeable {
 		return false;
 	}
 
-	//-------------------------------------------------------------------------
 	private static boolean isAnonDWARFName(String name) {
 		return (name == null) || name.startsWith("._") || name.startsWith("<anonymous");
 	}
@@ -349,14 +508,11 @@ public class DWARFProgram implements Closeable {
 		return name;
 	}
 
-	/**
+	/*
 	 * Returns the string path of a DWARF entry.
 	 * <p>
 	 * Always returns a name for the passed-in entry, but you should probably only use this
 	 * for entries that are {@link DIEAggregate#isNamedType()}
-	 * <p>
-	 * @param diea
-	 * @return never null
 	 */
 	private DWARFNameInfo getDWARFNameInfo(DIEAggregate diea, DWARFNameInfo localRootDNI) {
 
@@ -411,12 +567,13 @@ public class DWARFProgram implements Closeable {
 
 			// check to see if there are struct member defs that ref this anon type
 			// and build a name using the field names
-			List<DIEAggregate> referringMembers = (diea != null)
-					? diea.getProgram().getTypeReferers(diea, DWARFTag.DW_TAG_member)
-					: null;
+			List<DIEAggregate> referringMembers =
+				diea.getProgram().getTypeReferers(diea, DWARFTag.DW_TAG_member);
 
 			String referringMemberNames = getReferringMemberFieldNames(referringMembers);
 			if (!referringMemberNames.isEmpty()) {
+				// this re-homes this anon struct def from the root of the compunit to the
+				// structure that is using this anon struct def.
 				parentDNI = getName(referringMembers.get(0).getParent());
 				referringMemberNames = "_for_" + referringMemberNames;
 			}
@@ -447,7 +604,7 @@ public class DWARFProgram implements Closeable {
 					name = DWARFUtil.getLexicalBlockName(diea);
 					break;
 				case DWARFTag.DW_TAG_formal_parameter:
-					name = "param_" + DWARFUtil.getMyPositionInParent(diea.getHeadFragment());
+					name = "param_%d".formatted(diea.getHeadFragment().getPositionInParent());
 					isAnon = true;
 					break;
 				case DWARFTag.DW_TAG_subprogram:
@@ -531,13 +688,12 @@ public class DWARFProgram implements Closeable {
 			}
 			String memberName = referringMember.getName();
 			if (memberName == null) {
-				int positionInParent =
-					DWARFUtil.getMyPositionInParent(referringMember.getHeadFragment());
+				int positionInParent = referringMember.getHeadFragment().getPositionInParent();
 				if (positionInParent == -1) {
 					continue;
 				}
 				DWARFNameInfo parentDNI = getName(commonParent);
-				memberName = parentDNI.getName() + "_" + Integer.toString(positionInParent);
+				memberName = "%s_%d".formatted(parentDNI.getName(), positionInParent);
 			}
 			if (result.length() > 0) {
 				result.append("_");
@@ -546,7 +702,7 @@ public class DWARFProgram implements Closeable {
 		}
 		return result.toString();
 	}	
-	
+
 	/**
 	 * Transform a string with a C++ template-like syntax into a hopefully shorter version that
 	 * uses a fixed-length hash of the original string.
@@ -556,32 +712,31 @@ public class DWARFProgram implements Closeable {
 	 * becomes
 	 * <p>
 	 * blah&lt;$12345678$&gt;
-	 * @param s
-	 * @return
+	 * @param s data type name
+	 * @return transformed data type name
 	 */
 	private static String abbrevTemplateName(String s) {
 		int startBracket = s.indexOf('<');
 		int endBracket = s.lastIndexOf('>');
 		if (startBracket + NAME_HASH_REPLACEMENT_SIZE < endBracket) {
 			String templateParams = s.substring(startBracket, endBracket);
-			return s.substring(0, startBracket + 1) + "$" +
-				Integer.toHexString(templateParams.hashCode()) + "$" + s.substring(endBracket);
+			return "%s$%x$%s".formatted(s.substring(0, startBracket + 1), templateParams.hashCode(),
+				s.substring(endBracket));
 		}
 		return s;
 	}
 
 	private String ensureSafeNameLength(String s) {
-		if (s.length() <= nameLengthCutoffSize) {
+		if (s.length() <= SymbolUtilities.MAX_SYMBOL_NAME_LENGTH) {
 			return s;
 		}
 		s = abbrevTemplateName(s);
-		if (s.length() <= nameLengthCutoffSize) {
+		if (s.length() <= SymbolUtilities.MAX_SYMBOL_NAME_LENGTH) {
 			return s;
 		}
-		int prefixKeepLength =
-			nameLengthCutoffSize - ELLIPSES_STR.length() - NAME_HASH_REPLACEMENT_SIZE;
-		return s.substring(0, prefixKeepLength) + ELLIPSES_STR + "$" +
-			Integer.toHexString(s.hashCode()) + "$";
+		int prefixKeepLength = SymbolUtilities.MAX_SYMBOL_NAME_LENGTH - ELLIPSES_STR.length() -
+			NAME_HASH_REPLACEMENT_SIZE;
+		return "%s%s$%x$".formatted(s.substring(0, prefixKeepLength), ELLIPSES_STR, s.hashCode());
 	}
 
 	private List<String> ensureSafeNameLengths(List<String> strs) {
@@ -600,41 +755,152 @@ public class DWARFProgram implements Closeable {
 		return dni;
 	}
 
-	public DWARFNameInfo lookupDNIByOffset(long offset) {
+	private DWARFNameInfo lookupDNIByOffset(long offset) {
 		DWARFNameInfo tmp = dniCache.get(offset);
 		return tmp;
 	}
 
-	public void cacheDNIByOffset(long offset, DWARFNameInfo dni) {
+	private void cacheDNIByOffset(long offset, DWARFNameInfo dni) {
 		dniCache.put(offset, dni);
 	}
 
-	//------------------------------------------------------------------------------
+	/**
+	 * Returns the parent DIE of the specified (by index) DIE
+	 * 
+	 * @param dieIndex index of a DIE record
+	 * @return parent DIE, or null if no parent (eg. root DIE)
+	 */
+	public DebugInfoEntry getParentOf(int dieIndex) {
+		int parentIndex = parentIndexes[dieIndex];
+		return parentIndex >= 0 ? getDIEByIndex(parentIndex) : null;
+	}
 
 	/**
-	 * Bootstrap all compilation unit headers and abbreviation definitions.
-	 * @throws DWARFException
-	 * @throws IOException
-	 * @throws CancelledException
+	 * Returns the index of the parent of the specified DIE.
+	 * 
+	 * @param dieIndex index of a DIE record
+	 * @return index of the parent of specified DIE, or -1 if no parent (eg. root DIE)
 	 */
-	private void bootstrapCompilationUnits(TaskMonitor monitor)
-			throws CancelledException, IOException, DWARFException {
+	public int getParentIndex(int dieIndex) {
+		return parentIndexes[dieIndex];
+	}
 
-		BinaryReader br = debugInfoBR;
-		br.setPointerIndex(0);
-		while (br.hasNext()) {
-			monitor.checkCancelled();
-			monitor.setMessage("Bootstrapping DWARF Compilation Unit #" + compUnits.size());
+	/**
+	 * Returns the depth of the specified DIE.
+	 * 
+	 * @param dieIndex index of a DIE record
+	 * @return parent/child depth of specified record, where 0 is the root DIE
+	 */
+	public int getParentDepth(int dieIndex) {
+		int depth = 0;
+		while (dieIndex != -1) {
+			dieIndex = parentIndexes[dieIndex];
+			depth++;
+		}
+		return depth - 1;
+	}
 
-			DWARFCompilationUnit cu = DWARFCompilationUnit.readCompilationUnit(this, br,
-				debugAbbrBR, compUnits.size(), monitor);
+	/**
+	 * Returns the children of the specified DIE
+	 * 
+	 * @param dieIndex index of a DIE record
+	 * @return list of DIE instances that are children of the specified DIE
+	 */
+	public List<DebugInfoEntry> getChildrenOf(int dieIndex) {
+		IntArrayList childIndexes = getDIEChildIndexes(dieIndex);
+		if (childIndexes.isEmpty()) {
+			return List.of();
+		}
+		List<DebugInfoEntry> result = new ArrayList<>(childIndexes.size());
+		for (int i = 0; i < childIndexes.size(); i++) {
+			result.add(getDIEByIndex(childIndexes.get(i)));
+		}
+		return result;
+	}
 
-			if (cu != null) {
-				compUnits.add(cu);
-				br.setPointerIndex(cu.getEndOffset());
+	/**
+	 * Returns list of indexes of the children of the specified DIE
+	 * 
+	 * @param dieIndex index of a DIE record
+	 * @return list of DIE indexes that are children of the specified DIE
+	 */
+	public IntArrayList getDIEChildIndexes(int dieIndex) {
+		IntArrayList result = new IntArrayList(true);
+		if (dieIndex >= 0) {
+			int parentSiblingIndex = siblingIndexes[dieIndex];
+			for (int index = dieIndex + 1; index < parentSiblingIndex; index =
+				siblingIndexes[index]) {
+				result.add(index);
 			}
 		}
+		return result;
 	}
+
+	private DWARFCompilationUnit getCompilationUnitForDIE(int dieIndex) {
+		Entry<Integer, DWARFCompilationUnit> entry = compUnitDieIndex.ceilingEntry(dieIndex);
+		return entry != null ? entry.getValue() : null;
+	}
+
+	/**
+	 * Returns the specified DIE record.
+	 * 
+	 * @param dieOffset offset of a DIE record
+	 * @return {@link DebugInfoEntry} instance, or null if invalid offset
+	 */
+	public DebugInfoEntry getDIEByOffset(long dieOffset) {
+		DebugInfoEntry die = diesByOffset.get(dieOffset);
+		if (die != null) {
+			return die;
+		}
+		int dieIndex = getDIEIndex(dieOffset);
+		return getDIEByOffset(dieOffset, dieIndex);
+	}
+
+	private DebugInfoEntry getDIEByOffset(long dieOffset, int dieIndex) {
+		if (dieOffset == -1 || dieIndex == -1) {
+			return null;
+		}
+
+		DebugInfoEntry die = diesByOffset.get(dieOffset);
+		if (die == null) {
+			try {
+				debugInfoBR.setPointerIndex(dieOffset);
+				DWARFCompilationUnit cu = getCompilationUnitForDIE(dieIndex);
+				if (dieOffset < cu.getFirstDIEOffset() || cu.getEndOffset() < dieOffset) {
+					throw new RuntimeException();
+				}
+				die = DebugInfoEntry.read(debugInfoBR, cu, dieIndex, attributeFactory);
+				diesByOffset.put(dieOffset, die);
+			}
+			catch (IOException e) {
+				// shouldn't happen, will fall thru and return null
+			}
+		}
+		return die;
+	}
+
+	private int getDIEIndex(long dieOffset) {
+		DebugInfoEntry die = diesByOffset.get(dieOffset);
+		if (die != null) {
+			return die.getIndex();
+		}
+		int index = Arrays.binarySearch(dieOffsets, dieOffset);
+		return index >= 0 ? index : -1;
+	}
+
+	private DebugInfoEntry getDIEByIndex(int dieIndex) {
+		long dieOffset =
+			0 <= dieIndex && dieIndex < dieOffsets.length ? dieOffsets[dieIndex] : -1;
+		return getDIEByOffset(dieOffset, dieIndex);
+	}
+
+	public void dumpDIEs(PrintStream ps) {
+		for (int dieIndex = 0; dieIndex < dieOffsets.length; dieIndex++) {
+			DebugInfoEntry die = getDIEByIndex(dieIndex);
+			ps.append(die.toString());
+		}
+	}
+
 
 	/**
 	 * Returns the {@link DIEAggregate} that contains the specified {@link DebugInfoEntry}.
@@ -644,43 +910,43 @@ public class DWARFProgram implements Closeable {
 	 * the aggregate was not found.
 	 */
 	public DIEAggregate getAggregate(DebugInfoEntry die) {
-		if (die != null && !importOptions.isPreloadAllDIEs() &&
-			die.getCompilationUnit() != currentCompUnit) {
-			throw new RuntimeException(
-				"Bad request for getAggregate() when compUnit is not updated");
+		DIEAggregate diea = (die != null) ? aggsByOffset.get(die.getOffset()) : null;
+		if (diea == null && die != null) {
+			diea = DIEAggregate.createFromHead(die);
+			aggsByOffset.put(die.getOffset(), diea);
 		}
-		return (die != null) ? aggregatesByOffset.get(die.getOffset()) : null;
+		return diea;
+	}
+
+	private DIEAggregate getAggregateByIndex(int dieIndex) {
+		DebugInfoEntry die = getDIEByIndex(dieIndex);
+		return getAggregate(die);
 	}
 
 	/**
 	 * Returns the {@link DIEAggregate} that contains the {@link DebugInfoEntry} specified
 	 * by the offset.
 	 *
-	 * @param offset offset of a DIE record
+	 * @param dieOffset offset of a DIE record
 	 * @return {@link DIEAggregate} that contains the DIE record specified, or null if bad
 	 * offset.
 	 */
-	public DIEAggregate getAggregate(long offset) {
-		return aggregatesByOffset.get(offset);
+	public DIEAggregate getAggregate(long dieOffset) {
+		DIEAggregate diea = aggsByOffset.get(dieOffset);
+		if (diea != null) {
+			return diea;
+		}
+		DebugInfoEntry die = getDIEByOffset(dieOffset);
+		return getAggregate(die);
 	}
 
 	/**
-	 * Returns the list of all currently loaded {@link DIEAggregate}s, which will be either
-	 * just the DIEA of the current CU, or all DIEA if {@link DWARFImportOptions#isPreloadAllDIEs()}.
+	 * Returns iterable that traverses all {@link DIEAggregate}s in the program. 
 	 *
-	 * @return List of {@link DIEAggregate}.
+	 * @return sequence of {@link DIEAggregate}es
 	 */
-	public List<DIEAggregate> getAggregates() {
-		return aggregates;
-	}
-
-	/**
-	 * Returns the total number of DIE records in the entire program.
-	 *
-	 * @return the total number of DIE records in the entire program.
-	 */
-	public int getTotalDIECount() {
-		return totalDIECount;
+	public Iterable<DIEAggregate> allAggregates() {
+		return new DIEAggregateIterator();
 	}
 
 	/**
@@ -692,52 +958,12 @@ public class DWARFProgram implements Closeable {
 		return totalAggregateCount;
 	}
 
-	/**
-	 * Sets the currently active compilation unit.  Used when 'paging' through the DIE records
-	 * in a compilation-unit-at-a-time manner, vs the {@link DWARFImportOptions#isPreloadAllDIEs()}
-	 * where all DIE/DIEA records are loaded at once.
-	 *
-	 * @param cu {@link DWARFCompilationUnit} to set as the active element and load it's DIE records.
-	 * @param monitor {@link TaskMonitor} to update with status and check for cancelation.
-	 * @throws CancelledException if user cancels
-	 * @throws IOException if error reading data
-	 * @throws DWARFException if error in DWARF record structure
-	 */
-	public void setCurrentCompilationUnit(DWARFCompilationUnit cu, TaskMonitor monitor)
-			throws CancelledException, IOException, DWARFException {
-		if (cu != currentCompUnit) {
-			currentCompUnit = cu;
-			if (cu != null && !importOptions.isPreloadAllDIEs()) {
-				clearDIEIndexes();
-				cu.readDIEs(currentDIEs, monitor);
-				rebuildDIEIndexes();
-			}
-		}
-	}
-
-	public List<DWARFCompilationUnit> getCompilationUnits() {
-		return compUnits;
-	}
-
-	public DWARFCompilationUnit getCompilationUnitFor(long offset) {
-		for (DWARFCompilationUnit cu : getCompilationUnits()) {
-			if (cu.containsOffset(offset)) {
-				return cu;
-			}
-		}
-		return null;
-	}
-
 	public BinaryReader getDebugLocation() {
 		return debugLocation;
 	}
 
 	public BinaryReader getDebugRanges() {
 		return debugRanges;
-	}
-
-	public BinaryReader getDebugInfo() {
-		return debugInfoBR;
 	}
 
 	public BinaryReader getDebugLine() {
@@ -760,6 +986,10 @@ public class DWARFProgram implements Closeable {
 		return debugStrings;
 	}
 
+	public void setDebugStrings(StringTable debugStrings) {
+		this.debugStrings = debugStrings;
+	}
+
 	public AddressSpace getStackSpace() {
 		return program.getAddressFactory().getStackSpace();
 	}
@@ -772,14 +1002,6 @@ public class DWARFProgram implements Closeable {
 		this.attributeFactory = attributeFactory;
 	}
 
-	public boolean getFoundCrossCURefs() {
-		return foundCrossCURefs;
-	}
-
-	public void setFoundCrossCURefs(boolean b) {
-		this.foundCrossCURefs = b;
-	}
-
 	public DWARFAttributeSpecification internAttributeSpec(DWARFAttributeSpecification das) {
 		DWARFAttributeSpecification inDAS = attributeSpecIntern.get(das);
 		if (inDAS == null) {
@@ -787,53 +1009,6 @@ public class DWARFProgram implements Closeable {
 			attributeSpecIntern.put(inDAS, inDAS);
 		}
 		return inDAS;
-	}
-
-	/**
-	 * @return the entries list
-	 */
-	public List<DebugInfoEntry> getEntries() {
-		return currentDIEs;
-	}
-
-	/**
-	 * Returns the count of the DIE records in this compilation unit.
-	 * <p>
-	 * Only valid if called after {@link #checkPreconditions(TaskMonitor)}
-	 * and before {@link #clearDIEIndexes()}.
-	 * @return number of DIE records in the compunit.
-	 * @throws IOException
-	 * @throws CancelledException
-	 */
-	public int getDIECount() throws IOException, CancelledException {
-		return currentDIEs.size();
-	}
-
-	/**
-	 * Releases the memory used by the DIE entries read when invoking
-	 * {@link #checkPreconditions(TaskMonitor)}.
-	 */
-	public void clearDIEIndexes() {
-		offsetMap.clear();
-		currentDIEs.clear();
-		aggregatesByOffset.clear();
-		aggregates.clear();
-		typeReferers.clear();
-	}
-
-	/**
-	 * Returns the entry with the given byte offset.
-	 * <p>
-	 * The byte offset corresponds to the byte index
-	 * in the original file where the entry was defined.
-	 * <p>
-	 * Returns null if the requested entry does not exist.
-	 *
-	 * @param byteOffset the byte offset
-	 * @return the entry with the given byte offset
-	 */
-	public DebugInfoEntry getEntryAtByteOffsetUnchecked(long byteOffset) {
-		return offsetMap.get(Long.valueOf(byteOffset));
 	}
 
 	private List<DIEAggregate> getTypeReferers(DIEAggregate targetDIEA) {
@@ -859,192 +1034,6 @@ public class DWARFProgram implements Closeable {
 			}
 		}
 		return result;
-	}
-
-	private void rebuildDIEIndexes() {
-		buildDIEIndex();
-		buildAggregateIndex();
-		buildTypeRefIndex();
-	}
-
-	private void buildDIEIndex() {
-		for (DebugInfoEntry die : currentDIEs) {
-			offsetMap.put(Long.valueOf(die.getOffset()), die);
-		}
-	}
-
-	private boolean checkForCrossCURefs(List<DebugInfoEntry> dies) {
-		// 'static' set of attribute types that refer from one DIE to another DIE
-		int[] refAttrs = { DWARFAttribute.DW_AT_type, DWARFAttribute.DW_AT_abstract_origin,
-			DWARFAttribute.DW_AT_specification };
-		for (DebugInfoEntry die : dies) {
-			DIEAggregate diea = DIEAggregate.createSingle(die);
-			for (int attr : refAttrs) {
-				long refdOffset = diea.getUnsignedLong(attr, -1);
-				if (refdOffset == -1) {
-					continue;
-				}
-				if (!die.getCompilationUnit().containsOffset(refdOffset)) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	private void buildAggregateIndex() {
-		Map<Long, DebugInfoEntry> offsetMap2Head = buildHeadIndex();
-		for (DebugInfoEntry die : currentDIEs) {
-			if (aggregatesByOffset.containsKey(die.getOffset())) {
-				continue;
-			}
-			DebugInfoEntry head = getHead(die, offsetMap2Head);
-			DIEAggregate diea = DIEAggregate.createFromHead(head);
-			aggregates.add(diea);
-			for (long fragOffset : diea.getOffsets()) {
-				aggregatesByOffset.put(fragOffset, diea);
-			}
-		}
-	}
-
-	private int countAggregates() {
-		Map<Long, DebugInfoEntry> offsetMap2Head = buildHeadIndex();
-		Set<Long> uniqueHeads = new HashSet<>();
-		for (DebugInfoEntry die : currentDIEs) {
-			DebugInfoEntry head = getHead(die, offsetMap2Head);
-			uniqueHeads.add(head.getOffset());
-		}
-		return uniqueHeads.size();
-	}
-
-	private void buildTypeRefIndex() {
-		for (DIEAggregate diea : aggregates) {
-			DIEAggregate typeRef = diea.getTypeRef();
-			if (typeRef != null) {
-				typeReferers.put(typeRef.getOffset(), diea);
-			}
-		}
-	}
-
-	private Map<Long, DebugInfoEntry> buildHeadIndex() {
-		Map<Long, DebugInfoEntry> offsetMap2Head = new HashMap<>();
-		for (DebugInfoEntry die : currentDIEs) {
-			offsetMap2Head.put(Long.valueOf(die.getOffset()), die);
-
-			// If this entry has refs back to a previous DIE, overwrite their
-			// offset2head mapping so that their offset points to this entry.
-			// This codeblock is similar to the logic in DIEAggregrate#createFromHead()
-			DIEAggregate diea = DIEAggregate.createSingle(die);
-			int[] refAttrs =
-				{ DWARFAttribute.DW_AT_abstract_origin, DWARFAttribute.DW_AT_specification };
-			for (int attr : refAttrs) {
-				long refdOffset = diea.getUnsignedLong(attr, -1);
-				if (refdOffset == -1) {
-					continue;
-				}
-
-				offsetMap2Head.put(refdOffset, die);
-			}
-		}
-		return offsetMap2Head;
-	}
-
-	/**
-	 * Returns the 'head'-most {@link DebugInfoEntry DIE} instance of the DIEs that
-	 * make up the fragment chain that include the {@code die} parameter.
-	 * <p>
-	 * Since there can be many-to-one DIE relationships (for instance, many 'spec' DIEs pointing
-	 * to the same decl DIE), the results can be asymmetric, and will return the last
-	 * 'head' that references the non-head DIE.
-	 *
-	 * @param die {@link DebugInfoEntry} record
-	 * @return never null
-	 */
-	private DebugInfoEntry getHead(DebugInfoEntry die, Map<Long, DebugInfoEntry> offsetMap2Head) {
-		// Loop until the we don't find any more redirections in the offset2HeadMap.
-		// This loop isn't endless because the lastmost DIE read will always
-		// point to itself, ending the loop.
-		while (true) {
-			DebugInfoEntry tmp = offsetMap2Head.get(die.getOffset());
-			if (tmp == die) {
-				return die;
-			}
-			die = tmp;
-		}
-	}
-
-	/**
-	 * Iterates over all the DWARF DIE records in the program and checks for some
-	 * pre-known issues, throwing an exception if there is a problem that would
-	 * prevent a successful run.
-	 *
-	 * @param monitor {@link TaskMonitor} to check for cancel and upate with status.
-	 * @throws DWARFException if DWARF structure error.
-	 * @throws CancelledException if user cancels.
-	 * @throws IOException if error reading data.
-	 */
-	public void checkPreconditions(TaskMonitor monitor)
-			throws DWARFPreconditionException, DWARFException, CancelledException, IOException {
-		monitor.setIndeterminate(false);
-		monitor.setShowProgressValue(true);
-
-		monitor.setMaximum(getCompilationUnits().size());
-
-		if (getCompilationUnits().size() > 0 &&
-			getCompilationUnits().get(0).getCompileUnit().hasDWO()) {
-			// probably won't get anything from the file because its all in an external DWO
-			Msg.warn(this,
-				"Unsupported DWARF DWO (external debug file) detected -- unlikely any debug information will be found");
-		}
-
-		// This loop:
-		// 1) preloads the DIEs if that option is set
-		// 2) checks for cross-cu refs
-		// 3) sums up the total number of DIE records found and updates prog with total.
-		boolean preLoad = importOptions.isPreloadAllDIEs();
-		totalDIECount = 0;
-		totalAggregateCount = 0;
-		clearDIEIndexes();
-		for (DWARFCompilationUnit cu : getCompilationUnits()) {
-			monitor.setMessage("DWARF Checking Preconditions - Compilation Unit #" +
-				cu.getCompUnitNumber() + "/" + getCompilationUnits().size());
-			monitor.setProgress(cu.getCompUnitNumber());
-
-			cu.readDIEs(currentDIEs, monitor);
-
-			if (totalDIECount > importOptions.getImportLimitDIECount() && !preLoad) {
-				throw new DWARFPreconditionException(
-					String.format(program.getName() + " has more DIE records (%d) than limit of %d",
-						totalDIECount, importOptions.getImportLimitDIECount()));
-			}
-
-			if (!preLoad) {
-				foundCrossCURefs |= checkForCrossCURefs(currentDIEs);
-				totalDIECount += currentDIEs.size();
-				totalAggregateCount += countAggregates();
-				currentDIEs.clear();
-				if (foundCrossCURefs) {
-					throw new DWARFPreconditionException(
-						"Found cross-compilation unit references between DIE records, but 'preload' is not turned on");
-				}
-			}
-
-		}
-		if (preLoad) {
-			// build DIE indexes once
-			rebuildDIEIndexes();
-			this.totalAggregateCount = aggregates.size();
-			this.totalDIECount = currentDIEs.size();
-		}
-	}
-
-	/**
-	 * Sets the maximum length of symbols and datatypes created during import.
-	 *
-	 * @param nameLenCutoff int, should not be more than {@link SymbolUtilities#MAX_SYMBOL_NAME_LENGTH}.
-	 */
-	public void setNameLengthCutoff(int nameLenCutoff) {
-		this.nameLengthCutoffSize = nameLenCutoff;
 	}
 
 	/**
@@ -1080,5 +1069,48 @@ public class DWARFProgram implements Closeable {
 			functionFixups = DWARFFunctionFixup.findFixups();
 		}
 		return functionFixups;
+	}
+
+	//---------------------------------------------------------------------------------------------
+
+	private class DIEAggregateIterator implements Iterator<DIEAggregate>, Iterable<DIEAggregate> {
+
+		private int index = -1;
+
+		private int findNext() {
+			int i = index;
+			if (i < dieOffsets.length) {
+				for (i = i + 1; i < dieOffsets.length; i++) {
+					if (!indexHasRef.get(i)) {
+						return i;
+					}
+				}
+			}
+			return i;
+		}
+
+		@Override
+		public Iterator<DIEAggregate> iterator() {
+			return this;
+		}
+
+		@Override
+		public boolean hasNext() {
+			if (index == -1) {
+				index = findNext();
+			}
+			return 0 <= index && index < dieOffsets.length;
+		}
+
+		@Override
+		public DIEAggregate next() {
+			if (!hasNext()) {
+				throw new NoSuchElementException();
+			}
+			int resultIndex = index;
+			index = findNext();
+			return getAggregateByIndex(resultIndex);
+		}
+
 	}
 }

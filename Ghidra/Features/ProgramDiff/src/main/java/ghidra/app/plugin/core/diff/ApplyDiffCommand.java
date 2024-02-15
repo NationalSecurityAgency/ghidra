@@ -145,7 +145,7 @@ class ApplyDiffCommand extends BackgroundCommand implements AnalysisWorker {
 				};
 //				// The events were disabled while doing apply Diff. Now re-enable them by firing object restored event.
 //				((DomainObjectAdapter)currentProgram).fireEvent(new DomainObjectChangeRecord(
-//									DomainObject.DO_OBJECT_RESTORED));
+//									DomainObjectEvent.RESTORED));
 //				((DomainObjectAdapter)currentProgram).flushEvents();
 				if (!monitor.isCancelled()) {
 					SwingUtilities.invokeLater(r);

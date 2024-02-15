@@ -29,8 +29,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceManager;
-import ghidra.trace.model.Trace.TraceOverlaySpaceChangeType;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.DBCachedObjectStoreFactory.AbstractDBFieldCodec;
@@ -267,7 +267,7 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 		ent.set(space.getName(), base.getName());
 		trace.updateViewsAddSpaceBlock(space);
 		trace.setChanged(
-			new TraceChangeRecord<>(TraceOverlaySpaceChangeType.ADDED, null, trace, null, space));
+			new TraceChangeRecord<>(TraceEvents.OVERLAY_ADDED, null, trace, null, space));
 		return space;
 	}
 
@@ -313,8 +313,8 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 			assert space != null;
 			factory.removeOverlaySpace(name);
 			trace.updateViewsDeleteSpaceBlock(space);
-			trace.setChanged(new TraceChangeRecord<>(TraceOverlaySpaceChangeType.DELETED, null,
-				trace, space, null));
+			trace.setChanged(
+				new TraceChangeRecord<>(TraceEvents.OVERLAY_DELETED, null, trace, space, null));
 			invalidateCache(true);
 		}
 	}

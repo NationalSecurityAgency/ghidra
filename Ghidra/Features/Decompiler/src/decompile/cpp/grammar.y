@@ -1047,8 +1047,11 @@ Datatype *CParse::newStruct(const string &ident,vector<TypeDeclarator *> *declis
   }
 
   TypeStruct::assignFieldOffsets(sublist);
-  if (!glb->types->setFields(sublist,res,-1,-1,0)) {
-    setError("Bad structure definition");
+  try {
+    glb->types->setFields(sublist,res,-1,-1,0);
+  }
+  catch (LowlevelError &err) {
+    setError(err.explain);
     glb->types->destroyType(res);
     return (Datatype *)0;
   }
@@ -1080,8 +1083,11 @@ Datatype *CParse::newUnion(const string &ident,vector<TypeDeclarator *> *declist
     sublist.emplace_back(i,0,decl->getIdentifier(),decl->buildType(glb));
   }
 
-  if (!glb->types->setFields(sublist,res,-1,-1,0)) {
-    setError("Bad union definition");
+  try {
+    glb->types->setFields(sublist,res,-1,-1,0);
+  }
+  catch (LowlevelError &err) {
+    setError(err.explain);
     glb->types->destroyType(res);
     return (Datatype *)0;
   }

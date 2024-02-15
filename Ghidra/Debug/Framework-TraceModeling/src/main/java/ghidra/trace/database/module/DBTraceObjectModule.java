@@ -28,12 +28,10 @@ import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.target.*;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TraceModuleChangeType;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.annot.TraceObjectInterfaceUtils;
-import ghidra.trace.util.TraceChangeRecord;
-import ghidra.trace.util.TraceChangeType;
+import ghidra.trace.util.*;
 import ghidra.util.LockHold;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -56,18 +54,18 @@ public class DBTraceObjectModule implements TraceObjectModule, DBTraceObjectInte
 		}
 
 		@Override
-		protected TraceChangeType<TraceModule, Void> getAddedType() {
-			return TraceModuleChangeType.ADDED;
+		protected TraceEvent<TraceModule, Void> getAddedType() {
+			return TraceEvents.MODULE_ADDED;
 		}
 
 		@Override
-		protected TraceChangeType<TraceModule, Lifespan> getLifespanChangedType() {
-			return TraceModuleChangeType.LIFESPAN_CHANGED;
+		protected TraceEvent<TraceModule, Lifespan> getLifespanChangedType() {
+			return TraceEvents.MODULE_LIFESPAN_CHANGED;
 		}
 
 		@Override
-		protected TraceChangeType<TraceModule, Void> getChangedType() {
-			return TraceModuleChangeType.CHANGED;
+		protected TraceEvent<TraceModule, Void> getChangedType() {
+			return TraceEvents.MODULE_CHANGED;
 		}
 
 		@Override
@@ -76,8 +74,8 @@ public class DBTraceObjectModule implements TraceObjectModule, DBTraceObjectInte
 		}
 
 		@Override
-		protected TraceChangeType<TraceModule, Void> getDeletedType() {
-			return TraceModuleChangeType.DELETED;
+		protected TraceEvent<TraceModule, Void> getDeletedType() {
+			return TraceEvents.MODULE_DELETED;
 		}
 	}
 

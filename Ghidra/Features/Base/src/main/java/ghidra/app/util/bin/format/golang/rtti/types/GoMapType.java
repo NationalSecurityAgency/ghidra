@@ -30,7 +30,7 @@ import ghidra.util.Msg;
  * See {@link GoRttiMapper#getMapGoType()} or the "runtime.hmap" type for the definition of
  * a instance of a map variable in memory. 
  */
-@StructureMapping(structureName = "runtime.maptype")
+@StructureMapping(structureName = {"runtime.maptype", "internal/abi.MapType"})
 public class GoMapType extends GoType {
 
 	@FieldMapping
@@ -51,7 +51,7 @@ public class GoMapType extends GoType {
 	@FieldMapping
 	private int keysize;
 
-	@FieldMapping
+	@FieldMapping(fieldName = {"elemsize", "ValueSize"})
 	private int elemsize;
 
 	@FieldMapping

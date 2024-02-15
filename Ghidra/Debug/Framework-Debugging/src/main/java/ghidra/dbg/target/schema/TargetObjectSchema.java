@@ -1233,4 +1233,20 @@ public interface TargetObjectSchema {
 		}
 		throw new IllegalArgumentException("No index between stack and frame");
 	}
+
+	/**
+	 * Check if this schema can accept a value of the given other schema
+	 * 
+	 * <p>
+	 * This works analogously to {@link Class#isAssignableFrom(Class)}, except that schemas are
+	 * quite a bit less flexible. Only {@link EnumerableTargetObjectSchema#ANY} and
+	 * {@link EnumerableTargetObjectSchema#OBJECT} can accept anything other than exactly
+	 * themselves.
+	 * 
+	 * @param that
+	 * @return true if an object of that schema can be assigned to this schema.
+	 */
+	default boolean isAssignableFrom(TargetObjectSchema that) {
+		return this.equals(that);
+	}
 }

@@ -15,12 +15,11 @@
  */
 package agent.dbgeng.rmi;
 
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.*;
 
-import java.nio.ByteBuffer;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import org.junit.Ignore;
 import org.junit.Test;
@@ -28,19 +27,22 @@ import org.junit.Test;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
 import ghidra.dbg.util.PathPattern;
 import ghidra.dbg.util.PathPredicates;
+import ghidra.debug.api.tracermi.RemoteMethod;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemorySpace;
+import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.time.TraceSnapshot;
 
 public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
-	private static final long RUN_TIMEOUT_MS = 20000;
+	private static final long RUN_TIMEOUT_MS = 5000;
 	private static final long RETRY_MS = 500;
 
-	record PythonAndTrace(PythonAndConnection conn, ManagedDomainObject mdo) implements AutoCloseable {
+	record PythonAndTrace(PythonAndConnection conn, ManagedDomainObject mdo)
+			implements AutoCloseable {
 		public void execute(String cmd) {
 			conn.execute(cmd);
 		}
@@ -85,8 +87,9 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 		return conn.conn.connection().getLastSnapshot(tb.trace);
 	}
 
-	@Test  // The 10s wait makes this a pretty expensive test
+	@Test
 	public void testOnNewThread() throws Exception {
+		final int INIT_NOTEPAD_THREAD_COUNT = 4; // This could be fragile
 		try (PythonAndTrace conn = startAndSyncPython("notepad.exe")) {
 			conn.execute("from ghidradbg.commands import *");
 			txPut(conn, "processes");
@@ -98,14 +101,18 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 			}, RUN_TIMEOUT_MS, RETRY_MS);
 
 			txPut(conn, "threads");
-			waitForPass(() -> assertEquals(4,
+			waitForPass(() -> assertEquals(INIT_NOTEPAD_THREAD_COUNT,
 				tb.objValues(lastSnap(conn), "Processes[].Threads[]").size()),
 				RUN_TIMEOUT_MS, RETRY_MS);
 
-			conn.execute("dbg().go(10)");
+			// Via method, go is asynchronous
+			RemoteMethod go = conn.conn.getMethod("go");
+			TraceObject proc = tb.objAny("Processes[]");
+			go.invoke(Map.of("process", proc));
 
 			waitForPass(
-				() -> assertTrue(tb.objValues(lastSnap(conn), "Processes[].Threads[]").size() > 4),
+				() -> assertThat(tb.objValues(lastSnap(conn), "Processes[].Threads[]").size(),
+					greaterThan(INIT_NOTEPAD_THREAD_COUNT)),
 				RUN_TIMEOUT_MS, RETRY_MS);
 		}
 	}
@@ -116,39 +123,39 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "processes");
 
 			waitForPass(() -> {
-				TraceObject inf = tb.objAny("Processes[]");
-				assertNotNull(inf);
-				assertEquals("STOPPED", tb.objValue(inf, lastSnap(conn), "_state"));
+				TraceObject proc = tb.obj("Processes[0]");
+				assertNotNull(proc);
+				assertEquals("STOPPED", tb.objValue(proc, lastSnap(conn), "_state"));
 			}, RUN_TIMEOUT_MS, RETRY_MS);
 
 			txPut(conn, "threads");
 			waitForPass(() -> assertEquals(4,
-				tb.objValues(lastSnap(conn), "Processes[].Threads[]").size()),
+				tb.objValues(lastSnap(conn), "Processes[0].Threads[]").size()),
 				RUN_TIMEOUT_MS, RETRY_MS);
 
 			// Now the real test
+			conn.execute("print('Selecting 1')");
 			conn.execute("util.select_thread(1)");
 			waitForPass(() -> {
-				String tnum = conn.executeCapture("util.selected_thread()");
-				assertTrue(tnum.contains("1"));
-				String threadIndex = threadIndex(traceManager.getCurrentObject());
-				assertTrue(tnum.contains(threadIndex));
+				String tnum = conn.executeCapture("print(util.selected_thread())").strip();
+				assertEquals("1", tnum);
+				assertEquals(tb.obj("Processes[0].Threads[1]"), traceManager.getCurrentObject());
 			}, RUN_TIMEOUT_MS, RETRY_MS);
 
 			conn.execute("util.select_thread(2)");
 			waitForPass(() -> {
-				String tnum = conn.executeCapture("util.selected_thread()");
-				assertTrue(tnum.contains("2"));
+				String tnum = conn.executeCapture("print(util.selected_thread())").strip();
+				assertEquals("2", tnum);
 				String threadIndex = threadIndex(traceManager.getCurrentObject());
-				assertTrue(tnum.contains(threadIndex));
+				assertEquals("2", threadIndex);
 			}, RUN_TIMEOUT_MS, RETRY_MS);
 
 			conn.execute("util.select_thread(0)");
 			waitForPass(() -> {
-				String tnum = conn.executeCapture("util.selected_thread()");
-				assertTrue(tnum.contains("0"));
+				String tnum = conn.executeCapture("print(util.selected_thread())").strip();
+				assertEquals("0", tnum);
 				String threadIndex = threadIndex(traceManager.getCurrentObject());
-				assertTrue(tnum.contains(threadIndex));
+				assertEquals("0", threadIndex);
 			}, RUN_TIMEOUT_MS, RETRY_MS);
 		}
 	}
@@ -190,21 +197,44 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 		// FWIW, I've already seen this getting exercised in other tests.
 	}
 
-	//@Test - dbgeng has limited support via DEBUG_CDS_DATA, 
-	//     but expensive to implement anything here
+	/**
+	 * dbgeng has limited support via DEBUG_CDS_DATA. It tells us what space has changed, but not
+	 * the address(es). We have some options:
+	 * 
+	 * 1) Ignore it. This puts the onus of refreshing on the user. The upside is that past
+	 * observations are preserved. The downside is we can't be certain of their accuracy.
+	 * 
+	 * 2) Invalidate the entire space. This will ensure the UI either updates automatically or
+	 * indicates the possible staleness. The downside is that we lose past observations.
+	 * 
+	 * 3) Remember what addresses have been fetched since last BREAK, and refresh them all. This is
+	 * better than refreshing the entire space (prohibitive), but we could get right back there if
+	 * the user has captured the full space and then modifies a single byte.
+	 * 
+	 * For the moment, we favor option (2), as we'd prefer never to display inaccurate data,
+	 * especially as non-stale. The lost observations are a small price to pay, since they're not
+	 * particularly important for the interactive use case.
+	 */
+	@Test
 	public void testOnMemoryChanged() throws Exception {
 		try (PythonAndTrace conn = startAndSyncPython("notepad.exe")) {
 
-			conn.execute("ghidra_trace_txstart('Tx')");
-			conn.execute("ghidra_trace_putmem('$pc 10')");
-			conn.execute("ghidra_trace_txcommit()");
 			long address = getAddressAtOffset(conn, 0);
-			conn.execute("util.get_debugger().write(" + address + ", b'\\x7f')");
+
+			conn.execute("ghidra_trace_txstart('Tx')");
+			conn.execute("ghidra_trace_putmem(%d, 10)".formatted(address));
+			conn.execute("ghidra_trace_txcommit()");
 
 			waitForPass(() -> {
-				ByteBuffer buf = ByteBuffer.allocate(10);
-				tb.trace.getMemoryManager().getBytes(lastSnap(conn), tb.addr(address), buf);
-				assertEquals(0x7f, buf.get(0));
+				assertEquals(TraceMemoryState.KNOWN,
+					tb.trace.getMemoryManager().getState(lastSnap(conn), tb.addr(address)));
+			}, RUN_TIMEOUT_MS, RETRY_MS);
+
+			conn.execute("util.dbg.write(%d, b'\\x7f')".formatted(address));
+
+			waitForPass(() -> {
+				assertEquals(TraceMemoryState.UNKNOWN,
+					tb.trace.getMemoryManager().getState(lastSnap(conn), tb.addr(address)));
 			}, RUN_TIMEOUT_MS, RETRY_MS);
 		}
 	}
@@ -216,8 +246,7 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 			conn.execute("ghidra_trace_txstart('Tx')");
 			conn.execute("ghidra_trace_putreg()");
 			conn.execute("ghidra_trace_txcommit()");
-			conn.execute("util.get_debugger().reg._set_register('rax', 0x1234)");
-			conn.execute("util.get_debugger().stepi()");
+			conn.execute("util.dbg.cmd('r rax=0x1234')");
 
 			String path = "Processes[].Threads[].Registers";
 			TraceObject registers = Objects.requireNonNull(tb.objAny(path, Lifespan.at(0)));
@@ -234,8 +263,15 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 		try (PythonAndTrace conn = startAndSyncPython("notepad.exe")) {
 			txPut(conn, "processes");
 
-			conn.execute("util.get_debugger()._control.SetExecutionStatus(DbgEng.DEBUG_STATUS_GO)");
-			waitRunning();
+			// WaitForEvents is not required for this test to pass. 
+			conn.execute("""
+					@util.dbg.eng_thread
+					def go_no_wait():
+					    util.dbg._base._control.SetExecutionStatus(DbgEng.DEBUG_STATUS_GO)
+
+					go_no_wait()
+					""");
+			waitRunning("Missed running after go");
 
 			TraceObject proc = waitForValue(() -> tb.objAny("Processes[]"));
 			waitForPass(() -> {
@@ -260,9 +296,10 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 	public void testOnExited() throws Exception {
 		try (PythonAndTrace conn = startAndSyncPython("netstat.exe")) {
 			txPut(conn, "processes");
-			waitStopped();
+			waitStopped("Missed initial stop");
 
-			conn.execute("util.get_debugger().go()");
+			// Do the synchronous wait here, since netstat should terminate
+			conn.execute("util.dbg.go()");
 
 			waitForPass(() -> {
 				TraceSnapshot snapshot =
@@ -285,14 +322,12 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "breakpoints");
 			assertEquals(0, tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]").size());
 
-			conn.execute("dbg = util.get_debugger()");
-			conn.execute("pc = dbg.reg.get_pc()");
-			conn.execute("dbg.bp(expr=pc)");
+			conn.execute("pc = util.get_pc()");
+			conn.execute("util.dbg.bp(expr=pc)");
 
 			waitForPass(() -> {
 				List<Object> brks = tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]");
 				assertEquals(1, brks.size());
-				return (TraceObject) brks.get(0);
 			});
 		}
 	}
@@ -303,24 +338,22 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "breakpoints");
 			assertEquals(0, tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]").size());
 
-			conn.execute("dbg = util.get_debugger()");
-			conn.execute("pc = dbg.reg.get_pc()");
-			conn.execute("dbg.bp(expr=pc)");
+			conn.execute("pc = util.get_pc()");
+			conn.execute("util.dbg.bp(expr=pc)");
 
 			TraceObject brk = waitForPass(() -> {
 				List<Object> brks = tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]");
 				assertEquals(1, brks.size());
 				return (TraceObject) brks.get(0);
 			});
+
 			assertEquals(true, tb.objValue(brk, lastSnap(conn), "Enabled"));
-			conn.execute("dbg.bd(0)");
-			conn.execute("dbg.stepi()");
+			conn.execute("util.dbg.bd(0)");
 			assertEquals(false, tb.objValue(brk, lastSnap(conn), "Enabled"));
 
 			/* Not currently enabled
 			assertEquals("", tb.objValue(brk, lastSnap(conn), "Command"));
-			conn.execute("dbg.bp(expr=pc, windbgcmd='bl')");
-			conn.execute("dbg.stepi()");
+			conn.execute("util.dbg.bp(expr=pc, windbgcmd='bl')");
 			assertEquals("bl", tb.objValue(brk, lastSnap(conn), "Command"));
 			*/
 		}
@@ -332,22 +365,23 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 			txPut(conn, "breakpoints");
 			assertEquals(0, tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]").size());
 
-			conn.execute("dbg = util.get_debugger()");
-			conn.execute("pc = dbg.reg.get_pc()");
-			conn.execute("dbg.bp(expr=pc)");
+			conn.execute("pc = util.get_pc()");
+			conn.execute("util.dbg.bp(expr=pc)");
 
 			TraceObject brk = waitForPass(() -> {
 				List<Object> brks = tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]");
 				assertEquals(1, brks.size());
 				return (TraceObject) brks.get(0);
 			});
+			String id = brk.getCanonicalPath().index();
+			assertEquals("0", id);
 
-			conn.execute("dbg.cmd('bc %s')".formatted(brk.getCanonicalPath().index()));
-			conn.execute("dbg.stepi()");
+			// Causes access violation in pybag/comtypes during tear-down
+			//conn.execute("util.dbg.bc(%s)".formatted(id));
+			conn.execute("util.dbg.cmd('bc %s')".formatted(id));
 
-			waitForPass(
-				() -> assertEquals(0,
-					tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]").size()));
+			waitForPass(() -> assertEquals(0,
+				tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]").size()));
 		}
 	}
 
@@ -367,7 +401,7 @@ public class DbgEngHooksTest extends AbstractDbgEngTraceRmiTest {
 	}
 
 	private long getAddressAtOffset(PythonAndTrace conn, int offset) {
-		String inst = "util.get_inst(util.get_debugger().reg.get_pc()+" + offset + ")";
+		String inst = "print(util.get_inst(util.get_pc()+" + offset + "))";
 		String ret = conn.executeCapture(inst);
 		String[] split = ret.split("\\s+");  // get target
 		return Long.decode(split[1]);

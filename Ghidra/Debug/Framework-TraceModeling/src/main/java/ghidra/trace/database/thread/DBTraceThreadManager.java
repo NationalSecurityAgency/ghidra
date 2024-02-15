@@ -26,9 +26,9 @@ import ghidra.trace.database.DBTraceManager;
 import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectManager;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace.TraceThreadChangeType;
 import ghidra.trace.model.thread.*;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.exception.DuplicateNameException;
@@ -122,7 +122,7 @@ public class DBTraceThreadManager implements TraceThreadManager, DBTraceManager 
 			thread = threadStore.create();
 			thread.set(path, display, lifespan);
 		}
-		trace.setChanged(new TraceChangeRecord<>(TraceThreadChangeType.ADDED, null, thread));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.THREAD_ADDED, null, thread));
 		return thread;
 	}
 
@@ -192,6 +192,6 @@ public class DBTraceThreadManager implements TraceThreadManager, DBTraceManager 
 
 	public void deleteThread(DBTraceThread thread) {
 		threadStore.delete(thread);
-		trace.setChanged(new TraceChangeRecord<>(TraceThreadChangeType.DELETED, null, thread));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.THREAD_DELETED, null, thread));
 	}
 }

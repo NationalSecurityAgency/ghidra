@@ -39,15 +39,12 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.Program;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceMemoryBytesChangeType;
-import ghidra.trace.model.Trace.TraceStackChangeType;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceAddressSpace;
-import ghidra.trace.util.TraceRegisterUtils;
+import ghidra.trace.util.*;
 import ghidra.util.Swing;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
@@ -124,11 +121,11 @@ public class DebuggerLegacyStackPanel extends JPanel {
 
 	class ForStackListener extends TraceDomainObjectListener {
 		public ForStackListener() {
-			listenFor(TraceStackChangeType.ADDED, this::stackAdded);
-			listenFor(TraceStackChangeType.CHANGED, this::stackChanged);
-			listenFor(TraceStackChangeType.DELETED, this::stackDeleted);
+			listenFor(TraceEvents.STACK_ADDED, this::stackAdded);
+			listenFor(TraceEvents.STACK_CHANGED, this::stackChanged);
+			listenFor(TraceEvents.STACK_DELETED, this::stackDeleted);
 
-			listenFor(TraceMemoryBytesChangeType.CHANGED, this::bytesChanged);
+			listenFor(TraceEvents.BYTES_CHANGED, this::bytesChanged);
 		}
 
 		private void stackAdded(TraceStack stack) {

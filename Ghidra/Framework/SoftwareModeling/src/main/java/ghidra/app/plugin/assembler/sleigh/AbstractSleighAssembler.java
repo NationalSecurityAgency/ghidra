@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.assembler.sleigh;
 
+import static ghidra.program.util.ProgramEvent.*;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Collection;
@@ -37,7 +39,6 @@ import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.util.ChangeManager;
 import ghidra.util.task.TaskMonitor;
 
 public abstract class AbstractSleighAssembler<RP extends AssemblyResolvedPatterns>
@@ -47,10 +48,7 @@ public abstract class AbstractSleighAssembler<RP extends AssemblyResolvedPattern
 	protected class ListenerForSymbolsRefresh implements DomainObjectListener {
 		@Override
 		public void domainObjectChanged(DomainObjectChangedEvent ev) {
-			if (ev.containsEvent(ChangeManager.DOCR_SYMBOL_ADDED) ||
-				ev.containsEvent(ChangeManager.DOCR_SYMBOL_ADDRESS_CHANGED) ||
-				ev.containsEvent(ChangeManager.DOCR_SYMBOL_REMOVED) ||
-				ev.containsEvent(ChangeManager.DOCR_SYMBOL_RENAMED)) {
+			if (ev.contains(SYMBOL_ADDED, SYMBOL_ADDRESS_CHANGED, SYMBOL_REMOVED, SYMBOL_RENAMED)) {
 				synchronized (lock) {
 					symbols = null;
 				}

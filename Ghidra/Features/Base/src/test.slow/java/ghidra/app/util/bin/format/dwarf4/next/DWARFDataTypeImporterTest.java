@@ -18,9 +18,8 @@ package ghidra.app.util.bin.format.dwarf4.next;
 import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute.*;
 import static org.junit.Assert.*;
 
-import java.util.*;
-
 import java.io.IOException;
+import java.util.*;
 
 import org.junit.Test;
 
@@ -29,6 +28,7 @@ import ghidra.app.util.bin.format.dwarf4.encoding.DWARFEncoding;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
+import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.util.exception.CancelledException;
 
 /**
@@ -48,7 +48,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	 */
 	@Test
 	public void testAnonBaseType() throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry baseDIE = addBaseType(null, 4, DWARFEncoding.DW_ATE_signed, cu);
+		DebugInfoEntry baseDIE = addBaseType(null, 4, DWARFEncoding.DW_ATE_signed);
 
 		importAllDataTypes();
 
@@ -60,8 +60,8 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	@Test
 	public void testAnonBaseTypeWithTypedef()
 			throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry baseDIE = addBaseType(null, 4, DWARFEncoding.DW_ATE_signed, cu);
-		DebugInfoEntry typedefDIE = addTypedef("mytypedef", baseDIE, cu);
+		DebugInfoEntry baseDIE = addBaseType(null, 4, DWARFEncoding.DW_ATE_signed);
+		DebugInfoEntry typedefDIE = addTypedef("mytypedef", baseDIE);
 
 		importAllDataTypes();
 
@@ -83,7 +83,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	@Test
 	public void testNonStandardBaseTypeName()
 			throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry baseDIE = addBaseType("blah", 4, DWARFEncoding.DW_ATE_signed, cu);
+		DebugInfoEntry baseDIE = addBaseType("blah", 4, DWARFEncoding.DW_ATE_signed);
 
 		importAllDataTypes();
 
@@ -97,7 +97,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 	@Test
 	public void testBaseTypeInt() throws CancelledException, IOException, DWARFException {
-		addTypedef("mytypedef", addInt(cu), cu);
+		addTypedef("mytypedef", addInt());
 
 		importAllDataTypes();
 
@@ -113,8 +113,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	@Test
 	public void testBaseTypeUInt() throws CancelledException, IOException, DWARFException {
 
-		addTypedef("mytypedef", addBaseType("unsigned int", 4, DWARFEncoding.DW_ATE_unsigned, cu),
-			cu);
+		addTypedef("mytypedef", addBaseType("unsigned int", 4, DWARFEncoding.DW_ATE_unsigned));
 
 		importAllDataTypes();
 
@@ -132,8 +131,8 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 			throws CancelledException, IOException, DWARFException {
 		// test when int data type name has a bitsize string (8|16|32|64,etc)
 
-		addBaseType("uint32_t", 4, DWARFEncoding.DW_ATE_unsigned, cu);
-		addBaseType("blah32blah", 4, DWARFEncoding.DW_ATE_signed, cu);
+		addBaseType("uint32_t", 4, DWARFEncoding.DW_ATE_unsigned);
+		addBaseType("blah32blah", 4, DWARFEncoding.DW_ATE_signed);
 
 		importAllDataTypes();
 
@@ -155,7 +154,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 			throws CancelledException, IOException, DWARFException {
 		// test when int data type name has a bitsize string that doesn't make sense
 
-		addBaseType("uint32_t", 2 /* not 4 */, DWARFEncoding.DW_ATE_unsigned, cu);
+		addBaseType("uint32_t", 2 /* not 4 */, DWARFEncoding.DW_ATE_unsigned);
 
 		importAllDataTypes();
 
@@ -169,12 +168,12 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	@SuppressWarnings("unused")
 	public void testStructType() throws CancelledException, IOException, DWARFException {
 
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry floatDIE = addFloat(cu);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry floatDIE = addFloat();
 
-		DebugInfoEntry structDIE = newStruct("mystruct", 100).create(cu);
-		DebugInfoEntry structF1DIE = newMember(structDIE, "f1", intDIE, 0).create(cu);
-		DebugInfoEntry structF2DIE = newMember(structDIE, "f2", floatDIE, 10).create(cu);
+		DebugInfoEntry structDIE = newStruct("mystruct", 100).create();
+		DebugInfoEntry structF1DIE = newMember(structDIE, "f1", intDIE, 0).create();
+		DebugInfoEntry structF2DIE = newMember(structDIE, "f2", floatDIE, 10).create();
 
 		importAllDataTypes();
 
@@ -184,13 +183,13 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	@Test
 	public void testStructDecl() throws CancelledException, IOException, DWARFException {
 
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry floatDIE = addFloat(cu);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry floatDIE = addFloat();
 
-		DebugInfoEntry declDIE = newDeclStruct("mystruct").create(cu);
-		DebugInfoEntry structDIE = newSpecStruct(declDIE, 100).create(cu);
-		newMember(structDIE, "f1", intDIE, 0).create(cu);
-		newMember(structDIE, "f2", floatDIE, 10).create(cu);
+		DebugInfoEntry declDIE = newDeclStruct("mystruct").create();
+		DebugInfoEntry structDIE = newSpecStruct(declDIE, 100).create();
+		newMember(structDIE, "f1", intDIE, 0).create();
+		newMember(structDIE, "f2", floatDIE, 10).create();
 
 		importAllDataTypes();
 
@@ -210,15 +209,17 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	public void testStructDanglingDecl() throws CancelledException, IOException, DWARFException {
 
 		// CU1
-		newDeclStruct("mystruct").create(cu);
+		newDeclStruct("mystruct").create();
+		
+		addCompUnit();
 
 		// CU2
-		DebugInfoEntry intDIE = addInt(cu2);
-		DebugInfoEntry floatDIE = addFloat(cu2);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry floatDIE = addFloat();
 
-		DebugInfoEntry structDIE = newStruct("mystruct", 100).create(cu2);
-		newMember(structDIE, "f1", intDIE, 0).create(cu2);
-		newMember(structDIE, "f2", floatDIE, 10).create(cu2);
+		DebugInfoEntry structDIE = newStruct("mystruct", 100).create();
+		newMember(structDIE, "f1", intDIE, 0).create();
+		newMember(structDIE, "f2", floatDIE, 10).create();
 
 		importAllDataTypes();
 
@@ -243,20 +244,22 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	public void testStructDeclThenGrow() throws CancelledException, IOException, DWARFException {
 
 		// CU1
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry struct1Decl = newDeclStruct("struct1").create(cu);
-		DebugInfoEntry struct2 = newStruct("struct2", 20).create(cu);
-		newMember(struct2, "struct1field", struct1Decl, 0).create(cu);
-		newMember(struct2, "guardfield", intDIE, 16).create(cu);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry struct1Decl = newDeclStruct("struct1").create();
+		DebugInfoEntry struct2 = newStruct("struct2", 20).create();
+		newMember(struct2, "struct1field", struct1Decl, 0).create();
+		newMember(struct2, "guardfield", intDIE, 16).create();
+
+		addCompUnit();
 
 		// CU2
-		DebugInfoEntry int2DIE = addInt(cu2);
+		DebugInfoEntry int2DIE = addInt();
 
-		DebugInfoEntry struct1Impl = newStruct("struct1", 16).create(cu2);
-		newMember(struct1Impl, "f1", int2DIE, 0).create(cu2);
-		newMember(struct1Impl, "f2", int2DIE, 4).create(cu2);
-		newMember(struct1Impl, "f3", int2DIE, 8).create(cu2);
-		newMember(struct1Impl, "f4", int2DIE, 12).create(cu2);
+		DebugInfoEntry struct1Impl = newStruct("struct1", 16).create();
+		newMember(struct1Impl, "f1", int2DIE, 0).create();
+		newMember(struct1Impl, "f2", int2DIE, 4).create();
+		newMember(struct1Impl, "f3", int2DIE, 8).create();
+		newMember(struct1Impl, "f4", int2DIE, 12).create();
 
 		importAllDataTypes();
 
@@ -273,11 +276,13 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		// CU1
 		// struct structA; // fwd decl
 		// struct structB { structA struct1field; int guardfield; }
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry structADecl = newDeclStruct("structA").create(cu);
-		DebugInfoEntry structB = newStruct("structB", 20).create(cu);
-		newMember(structB, "structAfield", structADecl, 0).create(cu);
-		newMember(structB, "guardfield", intDIE, 16).create(cu);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry structADecl = newDeclStruct("structA").create();
+		DebugInfoEntry structB = newStruct("structB", 20).create();
+		newMember(structB, "structAfield", structADecl, 0).create();
+		newMember(structB, "guardfield", intDIE, 16).create();
+
+		addCompUnit();
 
 		// CU2
 		// struct structB { structA struct1field; int guardfield; }
@@ -287,16 +292,17 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		// The order of the DIE records is important.  The structure (structB) 
 		// containing the problematic structA needs to be hit first so we can
 		// test that cached types are handled correctly.
-		DebugInfoEntry int2DIE = addInt(cu2);
-		DebugInfoEntry structB_cu2 = newStruct("structB", 20).create(cu2);
-		newMember(structB_cu2, "structAfield", getForwardOffset(cu2, 2), 0).create(cu2);
-		newMember(structB_cu2, "guardfield", int2DIE, 16).create(cu2);
+		DebugInfoEntry int2DIE = addInt();
+		DebugInfoEntry structB_cu2 = newStruct("structB", 20).create();
+		long structA_cu2_offset = dwarfProg.getRelativeDIEOffset(2);
+		newMember(structB_cu2, "structAfield", structA_cu2_offset, 0).create();
+		newMember(structB_cu2, "guardfield", int2DIE, 16).create();
 
-		DebugInfoEntry structA_cu2 = newStruct("structA", 16).create(cu2);
-		newMember(structA_cu2, "f1", int2DIE, 0).create(cu2);
-		newMember(structA_cu2, "f2", int2DIE, 4).create(cu2);
-		newMember(structA_cu2, "f3", int2DIE, 8).create(cu2);
-		newMember(structA_cu2, "f4", int2DIE, 12).create(cu2);
+		DebugInfoEntry structA_cu2 = newStruct("structA", 16).create();
+		newMember(structA_cu2, "f1", int2DIE, 0).create();
+		newMember(structA_cu2, "f2", int2DIE, 4).create();
+		newMember(structA_cu2, "f3", int2DIE, 8).create();
+		newMember(structA_cu2, "f4", int2DIE, 12).create();
 
 		importAllDataTypes();
 
@@ -313,20 +319,22 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	public void testStructDup() throws CancelledException, IOException, DWARFException {
 
 		// CU1
-		DebugInfoEntry intDIE1 = addInt(cu);
-		DebugInfoEntry floatDIE1 = addFloat(cu);
+		DebugInfoEntry intDIE1 = addInt();
+		DebugInfoEntry floatDIE1 = addFloat();
 
-		DebugInfoEntry structDIE1 = newStruct("mystruct", 100).create(cu);
-		newMember(structDIE1, "f1", intDIE1, 0).create(cu);
-		newMember(structDIE1, "f2", floatDIE1, 10).create(cu);
+		DebugInfoEntry structDIE1 = newStruct("mystruct", 100).create();
+		newMember(structDIE1, "f1", intDIE1, 0).create();
+		newMember(structDIE1, "f2", floatDIE1, 10).create();
+
+		addCompUnit();
 
 		// CU2
-		DebugInfoEntry intDIE2 = addInt(cu2);
-		DebugInfoEntry floatDIE2 = addFloat(cu2);
+		DebugInfoEntry intDIE2 = addInt();
+		DebugInfoEntry floatDIE2 = addFloat();
 
-		DebugInfoEntry structDIE2 = newStruct("mystruct", 100).create(cu2);
-		newMember(structDIE2, "f1", intDIE2, 0).create(cu2);
-		newMember(structDIE2, "f2", floatDIE2, 10).create(cu2);
+		DebugInfoEntry structDIE2 = newStruct("mystruct", 100).create();
+		newMember(structDIE2, "f1", intDIE2, 0).create();
+		newMember(structDIE2, "f2", floatDIE2, 10).create();
 
 		importAllDataTypes();
 
@@ -347,21 +355,23 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	public void testStructConflictDup() throws CancelledException, IOException, DWARFException {
 
 		// CU1
-		DebugInfoEntry intDIE1 = addInt(cu);
-		DebugInfoEntry floatDIE1 = addFloat(cu);
+		DebugInfoEntry intDIE1 = addInt();
+		DebugInfoEntry floatDIE1 = addFloat();
 
-		DebugInfoEntry structDIE1 = newStruct("mystruct", 100).create(cu);
-		newMember(structDIE1, "f1", intDIE1, 0).create(cu);
-		newMember(structDIE1, "f2", floatDIE1, 10).create(cu);
+		DebugInfoEntry structDIE1 = newStruct("mystruct", 100).create();
+		newMember(structDIE1, "f1", intDIE1, 0).create();
+		newMember(structDIE1, "f2", floatDIE1, 10).create();
+
+		addCompUnit();
 
 		// CU2
-		DebugInfoEntry intDIE2 = addInt(cu2);
-		DebugInfoEntry floatDIE2 = addFloat(cu2);
+		DebugInfoEntry intDIE2 = addInt();
+		DebugInfoEntry floatDIE2 = addFloat();
 
 		// incompatible field datatypes when compared to previous def (int f1, float f2 vs float f1, int f2)
-		DebugInfoEntry structDIE2 = newStruct("mystruct", 50).create(cu2);
-		newMember(structDIE2, "f1", floatDIE2, 0).create(cu2);
-		newMember(structDIE2, "f2", intDIE2, 10).create(cu2);
+		DebugInfoEntry structDIE2 = newStruct("mystruct", 50).create();
+		newMember(structDIE2, "f1", floatDIE2, 0).create();
+		newMember(structDIE2, "f2", intDIE2, 10).create();
 
 		importAllDataTypes();
 
@@ -375,20 +385,22 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	@Test
 	public void testStructDupPartial() throws CancelledException, IOException, DWARFException {
 
-		DebugInfoEntry floatDIE1 = addFloat(cu);
+		DebugInfoEntry floatDIE1 = addFloat();
 
 		// this struct has only 1 field defined
-		DebugInfoEntry structDIE1 = newStruct("mystruct", 100).create(cu);
-		// missing field def: newMember(structDIE1, "f1", intDIE1, 0).create(cu);
-		newMember(structDIE1, "f2", floatDIE1, 10).create(cu);
+		DebugInfoEntry structDIE1 = newStruct("mystruct", 100).create();
+		// missing field def: newMember(structDIE1, "f1", intDIE1, 0).create();
+		newMember(structDIE1, "f2", floatDIE1, 10).create();
 
-		DebugInfoEntry intDIE2 = addInt(cu2);
-		DebugInfoEntry floatDIE2 = addFloat(cu2);
+		addCompUnit();
+
+		DebugInfoEntry intDIE2 = addInt();
+		DebugInfoEntry floatDIE2 = addFloat();
 
 		// this struct has both fields defined
-		DebugInfoEntry structDIE2 = newStruct("mystruct", 100).create(cu2);
-		newMember(structDIE2, "f1", intDIE2, 0).create(cu2);
-		newMember(structDIE2, "f2", floatDIE2, 10).create(cu2);
+		DebugInfoEntry structDIE2 = newStruct("mystruct", 100).create();
+		newMember(structDIE2, "f1", intDIE2, 0).create();
+		newMember(structDIE2, "f2", floatDIE2, 10).create();
 
 		importAllDataTypes();
 
@@ -404,15 +416,15 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	@Test
 	public void testStructWithPtr() throws CancelledException, IOException, DWARFException {
 
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry floatDIE = addFloat(cu);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry floatDIE = addFloat();
 
-		DebugInfoEntry struct1DIE = newStruct("mystruct", 100).create(cu);
-		newMember(struct1DIE, "f1", intDIE, 0).create(cu);
-		newMember(struct1DIE, "f2", floatDIE, 10).create(cu);
+		DebugInfoEntry struct1DIE = newStruct("mystruct", 100).create();
+		newMember(struct1DIE, "f1", intDIE, 0).create();
+		newMember(struct1DIE, "f2", floatDIE, 10).create();
 
-		DebugInfoEntry struct2DIE = newStruct("mystruct2", 10).create(cu);
-		newMember(struct2DIE, "ptr_to_struct1", addPtr(struct1DIE, cu), 0).create(cu);
+		DebugInfoEntry struct2DIE = newStruct("mystruct2", 10).create();
+		newMember(struct2DIE, "ptr_to_struct1", addPtr(struct1DIE), 0).create();
 
 		importAllDataTypes();
 
@@ -428,25 +440,25 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	public void testStructWithLoop() throws CancelledException, IOException, DWARFException {
 
 		// base types
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry floatDIE = addFloat(cu);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry floatDIE = addFloat();
 		//-----------------------
 		// decl mystruct
-		DebugInfoEntry struct1DeclDIE = newDeclStruct("mystruct").create(cu);
-		DebugInfoEntry struct1PtrDIE = addPtr(struct1DeclDIE, cu);
+		DebugInfoEntry struct1DeclDIE = newDeclStruct("mystruct").create();
+		DebugInfoEntry struct1PtrDIE = addPtr(struct1DeclDIE);
 		//-----------------------
 		// mystruct2 { ptr_to_struct1 : struct1PtrDIE }
-		DebugInfoEntry struct2DIE = newStruct("mystruct2", 10).create(cu);
+		DebugInfoEntry struct2DIE = newStruct("mystruct2", 10).create();
 		DebugInfoEntry struct2F1DIE =
-			newMember(struct2DIE, "ptr_to_struct1", struct1PtrDIE, 0).create(cu);
-		DebugInfoEntry struct2PtrDIE = addPtr(struct2DIE, cu);
+			newMember(struct2DIE, "ptr_to_struct1", struct1PtrDIE, 0).create();
+		DebugInfoEntry struct2PtrDIE = addPtr(struct2DIE);
 		//--------------------
 		// spec mystruct { f1: intDIE; f2_ptr_to_struct2: struct2PtrDIE }
 		DebugInfoEntry struct1DIE =
-			newSpecStruct(struct1DeclDIE, 100).addString(DW_AT_name, "mystruct").create(cu);
-		DebugInfoEntry structF1DIE = newMember(struct1DIE, "f1", intDIE, 0).create(cu);
+			newSpecStruct(struct1DeclDIE, 100).addString(DW_AT_name, "mystruct").create();
+		DebugInfoEntry structF1DIE = newMember(struct1DIE, "f1", intDIE, 0).create();
 		DebugInfoEntry structF2DIE =
-			newMember(struct1DIE, "f2_ptr_to_struct2", struct2PtrDIE, 10).create(cu);
+			newMember(struct1DIE, "f2_ptr_to_struct2", struct2PtrDIE, 10).create();
 		//----------------------
 
 		importAllDataTypes();
@@ -465,15 +477,16 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	@SuppressWarnings("unused")
 	public void testStructWithBadSelfLoop() throws CancelledException, IOException, DWARFException {
 
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry floatDIE = addFloat(cu);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry floatDIE = addFloat();
 
-		DebugInfoEntry struct1DeclDIE = newDeclStruct("mystruct").create(cu);
+		DebugInfoEntry struct1DeclDIE = newDeclStruct("mystruct").create();
 		//-----------------------
 		DebugInfoEntry struct1DIE =
-			newSpecStruct(struct1DeclDIE, 100).addString(DW_AT_name, "mystruct").create(cu);
-		DebugInfoEntry structF1DIE = newMember(struct1DIE, "f1", intDIE, 0).create(cu);
-		DebugInfoEntry structF2DIE = newMember(struct1DIE, "f2_struct1", struct1DIE, 10).create(cu);
+			newSpecStruct(struct1DeclDIE, 100).addString(DW_AT_name, "mystruct").create();
+		DebugInfoEntry structF1DIE = newMember(struct1DIE, "f1", intDIE, 0).create();
+		DebugInfoEntry structF2DIE =
+			newMember(struct1DIE, "f2_struct1", struct1DIE, 10).create();
 		//----------------------
 
 		importAllDataTypes();
@@ -486,24 +499,32 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	@SuppressWarnings("unused")
 	public void testStructConflictingMemberOffsets()
 			throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry floatDIE = addFloat(cu);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry floatDIE = addFloat();
 
-		DebugInfoEntry declDIE =
-			new DIECreator(DWARFTag.DW_TAG_structure_type).addString(DW_AT_name,
-				"mystruct").addBoolean(DW_AT_declaration, true).create(cu);
+		DebugInfoEntry declDIE = new DIECreator(dwarfProg, DWARFTag.DW_TAG_structure_type) //
+				.addString(DW_AT_name, "mystruct")
+				.addBoolean(DW_AT_declaration, true)
+				.create();
 
-		DebugInfoEntry structDIE =
-			new DIECreator(DWARFTag.DW_TAG_structure_type).addRef(DW_AT_specification,
-				declDIE).addInt(DW_AT_byte_size, 100).create(cu);
+		DebugInfoEntry structDIE = new DIECreator(dwarfProg, DWARFTag.DW_TAG_structure_type) //
+				.addRef(DW_AT_specification, declDIE)
+				.addInt(DW_AT_byte_size, 100)
+				.create();
 
-		DebugInfoEntry structF1DIE =
-			new DIECreator(DWARFTag.DW_TAG_member).addString(DW_AT_name, "f1").addRef(DW_AT_type,
-				intDIE).addInt(DW_AT_data_member_location, 10).setParent(structDIE).create(cu);
+		DebugInfoEntry structF1DIE = new DIECreator(dwarfProg, DWARFTag.DW_TAG_member) //
+				.addString(DW_AT_name, "f1")
+				.addRef(DW_AT_type, intDIE)
+				.addInt(DW_AT_data_member_location, 10)
+				.setParent(structDIE)
+				.create();
 
-		DebugInfoEntry structF2DIE =
-			new DIECreator(DWARFTag.DW_TAG_member).addString(DW_AT_name, "f2").addRef(DW_AT_type,
-				floatDIE).addInt(DW_AT_data_member_location, 10).setParent(structDIE).create(cu);
+		DebugInfoEntry structF2DIE = new DIECreator(dwarfProg, DWARFTag.DW_TAG_member) //
+				.addString(DW_AT_name, "f2")
+				.addRef(DW_AT_type, floatDIE)
+				.addInt(DW_AT_data_member_location, 10)
+				.setParent(structDIE)
+				.create();
 
 		importAllDataTypes();
 
@@ -516,24 +537,32 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	@SuppressWarnings("unused")
 	public void testStructConflictingMemberNames()
 			throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry floatDIE = addFloat(cu);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry floatDIE = addFloat();
 
-		DebugInfoEntry declDIE =
-			new DIECreator(DWARFTag.DW_TAG_structure_type).addString(DW_AT_name,
-				"mystruct").addBoolean(DW_AT_declaration, true).create(cu);
+		DebugInfoEntry declDIE = new DIECreator(dwarfProg, DWARFTag.DW_TAG_structure_type) // 
+				.addString(DW_AT_name, "mystruct")
+				.addBoolean(DW_AT_declaration, true)
+				.create();
 
-		DebugInfoEntry structDIE =
-			new DIECreator(DWARFTag.DW_TAG_structure_type).addRef(DW_AT_specification,
-				declDIE).addInt(DW_AT_byte_size, 100).create(cu);
+		DebugInfoEntry structDIE = new DIECreator(dwarfProg, DWARFTag.DW_TAG_structure_type) //
+				.addRef(DW_AT_specification, declDIE)
+				.addInt(DW_AT_byte_size, 100)
+				.create();
 
-		DebugInfoEntry structF1DIE =
-			new DIECreator(DWARFTag.DW_TAG_member).addString(DW_AT_name, "f1").addRef(DW_AT_type,
-				intDIE).addInt(DW_AT_data_member_location, 0).setParent(structDIE).create(cu);
+		DebugInfoEntry structF1DIE = new DIECreator(dwarfProg, DWARFTag.DW_TAG_member) //
+				.addString(DW_AT_name, "f1")
+				.addRef(DW_AT_type, intDIE)
+				.addInt(DW_AT_data_member_location, 0)
+				.setParent(structDIE)
+				.create();
 
-		DebugInfoEntry structF2DIE =
-			new DIECreator(DWARFTag.DW_TAG_member).addString(DW_AT_name, "f1").addRef(DW_AT_type,
-				floatDIE).addInt(DW_AT_data_member_location, 10).setParent(structDIE).create(cu);
+		DebugInfoEntry structF2DIE = new DIECreator(dwarfProg, DWARFTag.DW_TAG_member) //
+				.addString(DW_AT_name, "f1")
+				.addRef(DW_AT_type, floatDIE)
+				.addInt(DW_AT_data_member_location, 10)
+				.setParent(structDIE)
+				.create();
 
 		importAllDataTypes();
 
@@ -561,12 +590,12 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	public void testStructMemberWithSameNameAsStruct()
 			throws CancelledException, IOException, DWARFException {
 
-		addInt(cu);
-		addFloat(cu);
+		addInt();
+		addFloat();
 
-		DebugInfoEntry struct1aDIE = newStruct("mystruct", 1).create(cu);
-		DebugInfoEntry struct1bDIE = newStruct("mystruct", 4).create(cu);
-		newMember(struct1bDIE, "f1", struct1aDIE, 0).create(cu);
+		DebugInfoEntry struct1aDIE = newStruct("mystruct", 1).create();
+		DebugInfoEntry struct1bDIE = newStruct("mystruct", 4).create();
+		newMember(struct1bDIE, "f1", struct1aDIE, 0).create();
 
 		importAllDataTypes();
 
@@ -593,12 +622,13 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	public void testStructMemberWithSameNameAsStruct2()
 			throws CancelledException, IOException, DWARFException {
 
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry floatDIE = addFloat(cu);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry floatDIE = addFloat();
 
-		DebugInfoEntry struct1aDIE = newStruct("mystruct", 4).create(cu);
-		DebugInfoEntry struct1bDIE = newStruct("mystruct", 4).create(cu);
-		DebugInfoEntry struct1bF1DIE = newMember(struct1bDIE, "f1", struct1aDIE, 0).create(cu);
+		DebugInfoEntry struct1aDIE = newStruct("mystruct", 4).create();
+		DebugInfoEntry struct1bDIE = newStruct("mystruct", 4).create();
+		DebugInfoEntry struct1bF1DIE =
+			newMember(struct1bDIE, "f1", struct1aDIE, 0).create();
 
 		importAllDataTypes();
 
@@ -640,14 +670,14 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 	@Test
 	public void testStructInherit() throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry intDIE = addInt(cu);
+		DebugInfoEntry intDIE = addInt();
 		//-----------------------
-		DebugInfoEntry baseDIE = newStruct("base", 10).create(cu);
-		newMember(baseDIE, "basef1", intDIE, 0).create(cu);
+		DebugInfoEntry baseDIE = newStruct("base", 10).create();
+		newMember(baseDIE, "basef1", intDIE, 0).create();
 		//--------------------
-		DebugInfoEntry struct1DIE = newStruct("mystruct", 100).create(cu);
-		newInherit(struct1DIE, baseDIE, 0).create(cu);
-		newMember(struct1DIE, "f1", intDIE, 50).create(cu);
+		DebugInfoEntry struct1DIE = newStruct("mystruct", 100).create();
+		newInherit(struct1DIE, baseDIE, 0).create();
+		newMember(struct1DIE, "f1", intDIE, 50).create();
 		//--------------------
 
 		importAllDataTypes();
@@ -666,14 +696,14 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		// and the outer struct has fields that are defined to be within the footprint
 		// of the embedded struct's trailing padding.
 
-		DebugInfoEntry intDIE = addInt(cu);
+		DebugInfoEntry intDIE = addInt();
 		//-----------------------
-		DebugInfoEntry baseDIE = newStruct("base", 20).create(cu);
-		newMember(baseDIE, "basef1", intDIE, 0).create(cu);
+		DebugInfoEntry baseDIE = newStruct("base", 20).create();
+		newMember(baseDIE, "basef1", intDIE, 0).create();
 		//--------------------
-		DebugInfoEntry struct1DIE = newStruct("mystruct", 100).create(cu);
-		newInherit(struct1DIE, baseDIE, 0).create(cu);
-		newMember(struct1DIE, "f1", intDIE, 4).create(cu);
+		DebugInfoEntry struct1DIE = newStruct("mystruct", 100).create();
+		newInherit(struct1DIE, baseDIE, 0).create();
+		newMember(struct1DIE, "f1", intDIE, 4).create();
 		//--------------------
 
 		importAllDataTypes();
@@ -700,16 +730,17 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 	@Test
 	public void testStructNested() throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry floatDIE = addFloat(cu);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry floatDIE = addFloat();
 
 		//-----------------------
-		DebugInfoEntry struct1DIE = newStruct("mystruct", 100).create(cu);
-		newMember(struct1DIE, "f1", intDIE, 0).create(cu);
-		newMember(struct1DIE, "f2", floatDIE, 10).create(cu);
+		DebugInfoEntry struct1DIE = newStruct("mystruct", 100).create();
+		newMember(struct1DIE, "f1", intDIE, 0).create();
+		newMember(struct1DIE, "f2", floatDIE, 10).create();
 		//--------------------
-		DebugInfoEntry struct2DIE = newStruct("mystruct2", 10).setParent(struct1DIE).create(cu);
-		newMember(struct2DIE, "blah1", intDIE, 0).create(cu);
+		DebugInfoEntry struct2DIE =
+			newStruct("mystruct2", 10).setParent(struct1DIE).create();
+		newMember(struct2DIE, "blah1", intDIE, 0).create();
 		//----------------------
 
 		importAllDataTypes();
@@ -725,17 +756,17 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	@Test
 	public void testStructAnonNestedStructFurball()
 			throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry floatDIE = addFloat(cu);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry floatDIE = addFloat();
 
 		//-----------------------
-		DebugInfoEntry struct1DIE = newStruct("mystruct", 100).create(cu);
-		DebugInfoEntry anonStructDIE = newStruct(null, 10).setParent(struct1DIE).create(cu);
-		newMember(anonStructDIE, "blah1", intDIE, 0).create(cu);
-		newMember(struct1DIE, "f1", intDIE, 0).create(cu);
-		newMember(struct1DIE, "f2", floatDIE, 10).create(cu);
-		newMember(struct1DIE, "f3", anonStructDIE, 14).create(cu);
-		newMember(struct1DIE, "f4", anonStructDIE, 54).create(cu);
+		DebugInfoEntry struct1DIE = newStruct("mystruct", 100).create();
+		DebugInfoEntry anonStructDIE = newStruct(null, 10).setParent(struct1DIE).create();
+		newMember(anonStructDIE, "blah1", intDIE, 0).create();
+		newMember(struct1DIE, "f1", intDIE, 0).create();
+		newMember(struct1DIE, "f2", floatDIE, 10).create();
+		newMember(struct1DIE, "f3", anonStructDIE, 14).create();
+		newMember(struct1DIE, "f4", anonStructDIE, 54).create();
 		//----------------------
 
 		importAllDataTypes();
@@ -753,18 +784,18 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		// tests that the dwarf context / location where an anon struct is defined
 		// does not affect where the Ghidra data type is created (in the parent struct's
 		// category path)
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry floatDIE = addFloat(cu);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry floatDIE = addFloat();
 
 		//-----------------------
-		DebugInfoEntry anonStructDIE = newStruct(null, 10).create(cu);
-		newMember(anonStructDIE, "blah1", intDIE, 0).create(cu);
+		DebugInfoEntry anonStructDIE = newStruct(null, 10).create();
+		newMember(anonStructDIE, "blah1", intDIE, 0).create();
 
-		DebugInfoEntry struct1DIE = newStruct("mystruct", 100).create(cu);
-		newMember(struct1DIE, "f1", intDIE, 0).create(cu);
-		newMember(struct1DIE, "f2", floatDIE, 10).create(cu);
-		newMember(struct1DIE, "f3", anonStructDIE, 14).create(cu);
-		newMember(struct1DIE, "f4", anonStructDIE, 54).create(cu);
+		DebugInfoEntry struct1DIE = newStruct("mystruct", 100).create();
+		newMember(struct1DIE, "f1", intDIE, 0).create();
+		newMember(struct1DIE, "f2", floatDIE, 10).create();
+		newMember(struct1DIE, "f3", anonStructDIE, 14).create();
+		newMember(struct1DIE, "f4", anonStructDIE, 54).create();
 		//----------------------
 
 		importAllDataTypes();
@@ -783,11 +814,11 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		// tests that an anon struct with a typedef to it gets the name of the typedef
 		// and that the typedef itself isn't created
 
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry anonStructDIE = newStruct(null, 10).create(cu);
-		newMember(anonStructDIE, "f1", intDIE, 0).create(cu);
-		newMember(anonStructDIE, "f2", intDIE, 0).create(cu);
-		addTypedef("mystruct", anonStructDIE, cu);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry anonStructDIE = newStruct(null, 10).create();
+		newMember(anonStructDIE, "f1", intDIE, 0).create();
+		newMember(anonStructDIE, "f2", intDIE, 0).create();
+		addTypedef("mystruct", anonStructDIE);
 
 		//----------------------
 
@@ -801,12 +832,12 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	@Test
 	public void testStructFlexarray() throws CancelledException, IOException, DWARFException {
 
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry arrayDIE = newArray(cu, intDIE, false, -1);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry arrayDIE = newArray(intDIE, false, -1);
 
-		DebugInfoEntry structDIE = newStruct("mystruct", 100).create(cu);
-		newMember(structDIE, "f1", intDIE, 0).create(cu);
-		newMember(structDIE, "flexarray", arrayDIE, 100).create(cu);
+		DebugInfoEntry structDIE = newStruct("mystruct", 100).create();
+		newMember(structDIE, "f1", intDIE, 0).create();
+		newMember(structDIE, "flexarray", arrayDIE, 100).create();
 
 		importAllDataTypes();
 
@@ -828,12 +859,12 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	public void testStructFlexarray_noValue()
 			throws CancelledException, IOException, DWARFException {
 
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry arrayDIE = newArray(cu, intDIE, true, -1);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry arrayDIE = newArray(intDIE, true, -1);
 
-		DebugInfoEntry structDIE = newStruct("mystruct", 100).create(cu);
-		newMember(structDIE, "f1", intDIE, 0).create(cu);
-		newMember(structDIE, "flexarray", arrayDIE, 100).create(cu);
+		DebugInfoEntry structDIE = newStruct("mystruct", 100).create();
+		newMember(structDIE, "f1", intDIE, 0).create();
+		newMember(structDIE, "flexarray", arrayDIE, 100).create();
 
 		importAllDataTypes();
 
@@ -850,12 +881,12 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	public void testStructFlexarray_0count()
 			throws CancelledException, IOException, DWARFException {
 
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry arrayDIE = newArrayUsingCount(cu, intDIE, 0);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry arrayDIE = newArrayUsingCount(intDIE, 0);
 
-		DebugInfoEntry structDIE = newStruct("mystruct", 100).create(cu);
-		newMember(structDIE, "f1", intDIE, 0).create(cu);
-		newMember(structDIE, "flexarray", arrayDIE, 100).create(cu);
+		DebugInfoEntry structDIE = newStruct("mystruct", 100).create();
+		newMember(structDIE, "f1", intDIE, 0).create();
+		newMember(structDIE, "flexarray", arrayDIE, 100).create();
 
 		importAllDataTypes();
 
@@ -867,12 +898,12 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	public void testStructInteriorFlexarray()
 			throws CancelledException, IOException, DWARFException {
 
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry arrayDIE = newArray(cu, intDIE, false, -1);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry arrayDIE = newArray(intDIE, false, -1);
 
-		DebugInfoEntry structDIE = newStruct("mystruct", 100).create(cu);
-		newMember(structDIE, "f1", intDIE, 0).create(cu);
-		newMember(structDIE, "flexarray", arrayDIE, 100).create(cu);
+		DebugInfoEntry structDIE = newStruct("mystruct", 100).create();
+		newMember(structDIE, "f1", intDIE, 0).create();
+		newMember(structDIE, "flexarray", arrayDIE, 100).create();
 
 		importAllDataTypes();
 
@@ -892,12 +923,12 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	public void testStructZeroLenField()
 			throws CancelledException, IOException, DWARFException {
 
-		DebugInfoEntry intDIE = addInt(cu);
+		DebugInfoEntry intDIE = addInt();
 
-		DebugInfoEntry emptyStructDIE = newStruct("emptystruct", 0).create(cu);
-		DebugInfoEntry structDIE = newStruct("mystruct", 10).create(cu);
-		newMember(structDIE, "f1", intDIE, 0).create(cu);
-		newMember(structDIE, "f2", emptyStructDIE, 4).create(cu);
+		DebugInfoEntry emptyStructDIE = newStruct("emptystruct", 0).create();
+		DebugInfoEntry structDIE = newStruct("mystruct", 10).create();
+		newMember(structDIE, "f1", intDIE, 0).create();
+		newMember(structDIE, "f2", emptyStructDIE, 4).create();
 
 		importAllDataTypes();
 
@@ -917,14 +948,14 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	public void testStruct2ZeroLenField()
 			throws CancelledException, IOException, DWARFException {
 
-		DebugInfoEntry intDIE = addInt(cu);
+		DebugInfoEntry intDIE = addInt();
 
-		DebugInfoEntry emptyStructDIE = newStruct("emptystruct", 0).create(cu);
-		DebugInfoEntry structDIE = newStruct("mystruct", 10).create(cu);
-		newMember(structDIE, "f1", intDIE, 0).create(cu);
-		newMember(structDIE, "f2", emptyStructDIE, 4).create(cu);
-		newMember(structDIE, "f3", emptyStructDIE, 4).create(cu);
-		newMember(structDIE, "f4", intDIE, 4).create(cu);
+		DebugInfoEntry emptyStructDIE = newStruct("emptystruct", 0).create();
+		DebugInfoEntry structDIE = newStruct("mystruct", 10).create();
+		newMember(structDIE, "f1", intDIE, 0).create();
+		newMember(structDIE, "f2", emptyStructDIE, 4).create();
+		newMember(structDIE, "f3", emptyStructDIE, 4).create();
+		newMember(structDIE, "f4", intDIE, 4).create();
 
 		importAllDataTypes();
 
@@ -949,22 +980,22 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	@Test
 	public void testStructBitfields() throws CancelledException, IOException, DWARFException {
 
-		DebugInfoEntry intDIE = addInt(cu);
+		DebugInfoEntry intDIE = addInt();
 
-		DebugInfoEntry structDIE = newStruct("mystruct", 100).create(cu);
-		newMember(structDIE, "f1", intDIE, 0).create(cu);
+		DebugInfoEntry structDIE = newStruct("mystruct", 100).create();
+		newMember(structDIE, "f1", intDIE, 0).create();
 		newMember(structDIE, "bitfield1_3", intDIE, 4) //
 			.addInt(DW_AT_bit_size, 3) //
 			.addInt(DW_AT_bit_offset, 29) //
-			.create(cu);
+				.create();
 		newMember(structDIE, "bitfield2_2", intDIE, 4) //
 			.addInt(DW_AT_bit_size, 2) //
 			.addInt(DW_AT_bit_offset, 27) //
-			.create(cu);
+				.create();
 		newMember(structDIE, "bitfield3_9", intDIE, 4) //
 			.addInt(DW_AT_bit_size, 9) //
 			.addInt(DW_AT_bit_offset, 18) //
-			.create(cu);
+				.create();
 
 		importAllDataTypes();
 
@@ -991,17 +1022,17 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	@Test
 	public void testStructNamespaceReservedChar_Colon()
 			throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry floatDIE = addFloat(cu);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry floatDIE = addFloat();
 
 		//-----------------------
-		DebugInfoEntry struct1DIE = newStruct("mystruct::with::colons", 100).create(cu);
+		DebugInfoEntry struct1DIE = newStruct("mystruct::with::colons", 100).create();
 		DebugInfoEntry nestedStructDIE =
-			newStruct("nested_struct", 10).setParent(struct1DIE).create(cu);
-		newMember(nestedStructDIE, "blah1", intDIE, 0).create(cu);
-		newMember(struct1DIE, "f1", intDIE, 0).create(cu);
-		newMember(struct1DIE, "f2", floatDIE, 10).create(cu);
-		newMember(struct1DIE, "f3", nestedStructDIE, 20).create(cu);
+			newStruct("nested_struct", 10).setParent(struct1DIE).create();
+		newMember(nestedStructDIE, "blah1", intDIE, 0).create();
+		newMember(struct1DIE, "f1", intDIE, 0).create();
+		newMember(struct1DIE, "f2", floatDIE, 10).create();
+		newMember(struct1DIE, "f3", nestedStructDIE, 20).create();
 		//----------------------
 
 		importAllDataTypes();
@@ -1015,17 +1046,17 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	@Test
 	public void testStructNamespaceReservedChar_FwdSlash()
 			throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry floatDIE = addFloat(cu);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry floatDIE = addFloat();
 
 		//-----------------------
-		DebugInfoEntry struct1DIE = newStruct("mystruct::operator/()", 100).create(cu);
+		DebugInfoEntry struct1DIE = newStruct("mystruct::operator/()", 100).create();
 		DebugInfoEntry nestedStructDIE =
-			newStruct("nested_struct", 10).setParent(struct1DIE).create(cu);
-		newMember(nestedStructDIE, "blah1", intDIE, 0).create(cu);
-		newMember(struct1DIE, "f1", intDIE, 0).create(cu);
-		newMember(struct1DIE, "f2", floatDIE, 10).create(cu);
-		newMember(struct1DIE, "f3", nestedStructDIE, 20).create(cu);
+			newStruct("nested_struct", 10).setParent(struct1DIE).create();
+		newMember(nestedStructDIE, "blah1", intDIE, 0).create();
+		newMember(struct1DIE, "f1", intDIE, 0).create();
+		newMember(struct1DIE, "f2", floatDIE, 10).create();
+		newMember(struct1DIE, "f3", nestedStructDIE, 20).create();
 		//----------------------
 
 		importAllDataTypes();
@@ -1039,13 +1070,13 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	@Test
 	public void testStructNamespaceReservedChar_Spaces()
 			throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry floatDIE = addFloat(cu);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry floatDIE = addFloat();
 
 		//-----------------------
-		DebugInfoEntry struct1DIE = newStruct("mystruct<int, float>", 100).create(cu);
-		newMember(struct1DIE, "f1", intDIE, 0).create(cu);
-		newMember(struct1DIE, "f2", floatDIE, 10).create(cu);
+		DebugInfoEntry struct1DIE = newStruct("mystruct<int, float>", 100).create();
+		newMember(struct1DIE, "f1", intDIE, 0).create();
+		newMember(struct1DIE, "f2", floatDIE, 10).create();
 		//----------------------
 
 		importAllDataTypes();
@@ -1058,23 +1089,25 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	@Test
 	public void testUnion() throws CancelledException, IOException, DWARFException {
 
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry doubleDIE = addDouble(cu);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry doubleDIE = addDouble();
 
-		DebugInfoEntry unionDeclDIE =
-			new DIECreator(DWARFTag.DW_TAG_union_type).addString(DW_AT_name, "myunion").addBoolean(
-				DW_AT_declaration, true).create(cu);
+		DebugInfoEntry unionDeclDIE = new DIECreator(dwarfProg, DWARFTag.DW_TAG_union_type) //
+				.addString(DW_AT_name, "myunion")
+				.addBoolean(DW_AT_declaration, true)
+				.create();
 
 		//-----------------------
 
 		int UNION_STATIC_SIZE = 10;
-		DebugInfoEntry unionDIE =
-			new DIECreator(DWARFTag.DW_TAG_union_type).addRef(DW_AT_specification,
-				unionDeclDIE).addInt(DW_AT_byte_size, UNION_STATIC_SIZE).create(cu);
+		DebugInfoEntry unionDIE = new DIECreator(dwarfProg, DWARFTag.DW_TAG_union_type) //
+				.addRef(DW_AT_specification, unionDeclDIE)
+				.addInt(DW_AT_byte_size, UNION_STATIC_SIZE)
+				.create();
 
-		newMember(unionDIE, "f1", intDIE, -1).create(cu);
-		newMember(unionDIE, "f2_self", unionDIE, -1).create(cu);
-		newMember(unionDIE, "f3", doubleDIE, -1).create(cu);
+		newMember(unionDIE, "f1", intDIE, -1).create();
+		newMember(unionDIE, "f2_self", unionDIE, -1).create();
+		newMember(unionDIE, "f3", doubleDIE, -1).create();
 
 		//----------------------
 
@@ -1090,17 +1123,17 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 	@Test
 	public void testUnionFlexArray() throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry arrayDIE = newArray(cu, intDIE, false, -1);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry arrayDIE = newArray(intDIE, false, -1);
 
 		int UNION_STATIC_SIZE = 10;
-		DebugInfoEntry unionDIE = new DIECreator(DWARFTag.DW_TAG_union_type) //
-			.addString(DW_AT_name, "myunion") //
-			.addInt(DW_AT_byte_size, UNION_STATIC_SIZE) //
-			.create(cu);
+		DebugInfoEntry unionDIE = new DIECreator(dwarfProg, DWARFTag.DW_TAG_union_type) //
+				.addString(DW_AT_name, "myunion")
+				.addInt(DW_AT_byte_size, UNION_STATIC_SIZE)
+				.create();
 
-		newMember(unionDIE, "f1", intDIE, -1).create(cu);
-		newMember(unionDIE, "flexarray", arrayDIE, -1).create(cu);
+		newMember(unionDIE, "f1", intDIE, -1).create();
+		newMember(unionDIE, "flexarray", arrayDIE, -1).create();
 
 		//----------------------
 
@@ -1123,25 +1156,29 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	 */
 	@Test
 	public void testConstElide() throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry intDIE = addInt(cu);
+		DebugInfoEntry intDIE = addInt();
 
 		DebugInfoEntry constDIE =
-			new DIECreator(DWARFTag.DW_TAG_const_type).addRef(DW_AT_type, intDIE).create(cu);
+			new DIECreator(dwarfProg, DWARFTag.DW_TAG_const_type).addRef(DW_AT_type, intDIE)
+					.create();
 
 		DebugInfoEntry volatileDIE =
-			new DIECreator(DWARFTag.DW_TAG_volatile_type).addRef(DW_AT_type, intDIE).create(cu);
+			new DIECreator(dwarfProg, DWARFTag.DW_TAG_volatile_type).addRef(DW_AT_type, intDIE)
+					.create();
 
 		DebugInfoEntry volatileconstDIE =
-			new DIECreator(DWARFTag.DW_TAG_volatile_type).addRef(DW_AT_type, constDIE).create(cu);
+			new DIECreator(dwarfProg, DWARFTag.DW_TAG_volatile_type).addRef(DW_AT_type, constDIE)
+					.create();
 
-		DebugInfoEntry structDIE =
-			new DIECreator(DWARFTag.DW_TAG_structure_type).addString(DW_AT_name, "mystruct").addInt(
-				DW_AT_byte_size, 100).create(cu);
+		DebugInfoEntry structDIE = new DIECreator(dwarfProg, DWARFTag.DW_TAG_structure_type) //
+				.addString(DW_AT_name, "mystruct")
+				.addInt(DW_AT_byte_size, 100)
+				.create();
 
-		newMember(structDIE, "f1", intDIE, 0).create(cu);
-		newMember(structDIE, "f2", constDIE, 10).create(cu);
-		newMember(structDIE, "f3", volatileDIE, 20).create(cu);
-		newMember(structDIE, "f4", volatileconstDIE, 40).create(cu);
+		newMember(structDIE, "f1", intDIE, 0).create();
+		newMember(structDIE, "f2", constDIE, 10).create();
+		newMember(structDIE, "f3", volatileDIE, 20).create();
+		newMember(structDIE, "f4", volatileconstDIE, 40).create();
 
 		importAllDataTypes();
 
@@ -1171,8 +1208,8 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	 */
 	@Test
 	public void testArray() throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry arrayDIE = newArray(cu, intDIE, false, 10);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry arrayDIE = newArray(intDIE, false, 10);
 
 		importAllDataTypes();
 
@@ -1186,8 +1223,8 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	 */
 	@Test
 	public void testArrayWithCountAttr() throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry arrayDIE = newArrayUsingCount(cu, intDIE, 10);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry arrayDIE = newArrayUsingCount(intDIE, 10);
 
 		importAllDataTypes();
 
@@ -1201,8 +1238,8 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 			throws CancelledException, IOException, DWARFException {
 		// Tests that an array with non-zero elements, but with zero-len data type
 		// becomes a zero-element array.  (yuck)
-		DebugInfoEntry emptyStructDIE = newStruct("emptystruct", 0).create(cu);
-		DebugInfoEntry arrayDIE = newArrayUsingCount(cu, emptyStructDIE, 10);
+		DebugInfoEntry emptyStructDIE = newStruct("emptystruct", 0).create();
+		DebugInfoEntry arrayDIE = newArrayUsingCount(emptyStructDIE, 10);
 
 		importAllDataTypes();
 
@@ -1216,8 +1253,8 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	@Test
 	public void testArrayWithZeroElements()
 			throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry intDIE = addInt(cu);
-		DebugInfoEntry arrayDIE = newArrayUsingCount(cu, intDIE, 0);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry arrayDIE = newArrayUsingCount(intDIE, 0);
 
 		importAllDataTypes();
 
@@ -1260,9 +1297,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	@Test
 	public void testExtremeNames() throws CancelledException, DWARFException, IOException {
 
-		int nameLenCutoff = 50;
-		dwarfProg.getImportOptions().setNameLengthCutoff(nameLenCutoff);
-		dwarfProg.setNameLengthCutoff(nameLenCutoff);
+		int nameLenCutoff = SymbolUtilities.MAX_SYMBOL_NAME_LENGTH;
 
 		String structLongName = longName("mystruct_", "", 1000);
 		String templateLongName = longName("mystruct_", "", 1000);
@@ -1273,15 +1308,15 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		String exactTemplateName2 =
 			longName("", "template<X>", nameLenCutoff - "template<X>".length() + 1);
 
-		DebugInfoEntry structDIE = newStruct(structLongName, 0).create(cu);
-		DebugInfoEntry exactDIE = newStruct(exactName, 0).create(cu);
-		DebugInfoEntry exactTemplateDIE = newStruct(exactTemplateName, 0).create(cu);
-		DebugInfoEntry exactTemplateDIE2 = newStruct(exactTemplateName2, 0).create(cu);
-		DebugInfoEntry templateDIE = newStruct(templateLongName, 0).create(cu);
+		DebugInfoEntry structDIE = newStruct(structLongName, 0).create();
+		DebugInfoEntry exactDIE = newStruct(exactName, 0).create();
+		DebugInfoEntry exactTemplateDIE = newStruct(exactTemplateName, 0).create();
+		DebugInfoEntry exactTemplateDIE2 = newStruct(exactTemplateName2, 0).create();
+		DebugInfoEntry templateDIE = newStruct(templateLongName, 0).create();
 		DebugInfoEntry struct3DIE =
-			newStruct(substructLongName, 0).setParent(templateDIE).create(cu);
+			newStruct(substructLongName, 0).setParent(templateDIE).create();
 
-		checkPreconditions();
+		buildMockDIEIndexes();
 
 		DWARFNameInfo sDNI = dwarfProg.getName(getAggregate(structDIE));
 		DWARFNameInfo exactDNI = dwarfProg.getName(getAggregate(exactDIE));
@@ -1325,12 +1360,15 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	@Test
 	public void testHostilePtrLoop() throws CancelledException, IOException, DWARFException {
 
+		addCompUnit();
+
 		// hack to make a forward reference to a DIE that hasn't been created yet.
 		// This creates a hostile loop in the data type references.
-		DebugInfoEntry constDIE = new DIECreator(DWARFTag.DW_TAG_const_type).addRef(DW_AT_type,
-			getForwardOffset(cu, 1)).create(cu);
-		DebugInfoEntry ptrDIE =
-			new DIECreator(DWARFTag.DW_TAG_pointer_type).addRef(DW_AT_type, constDIE).create(cu);
+		long fwdDIE = dwarfProg.getRelativeDIEOffset(1);
+		DebugInfoEntry constDIE =
+			new DIECreator(dwarfProg, DWARFTag.DW_TAG_const_type).addRef(DW_AT_type, fwdDIE)
+					.create();
+		DebugInfoEntry ptrDIE = addPtr(constDIE);
 
 		importAllDataTypes();
 
@@ -1367,17 +1405,19 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	public void testStructDeclViaPtr() throws CancelledException, IOException, DWARFException {
 
 		// CU1
-		addFwdPtr(cu, 1); // points to the DIE created in the next line even though it doesn't exist yet
-		newDeclStruct("mystruct").create(cu);
+		addFwdPtr(1); // points to the DIE created in the next line even though it doesn't exist yet
+		newDeclStruct("mystruct").create();
+
+		addCompUnit();
 
 		// CU2
-		DebugInfoEntry intDIE = addInt(cu2);
-		DebugInfoEntry floatDIE = addFloat(cu2);
+		DebugInfoEntry intDIE = addInt();
+		DebugInfoEntry floatDIE = addFloat();
 
-		addFwdPtr(cu2, 1); // fwd points to structDIE even though it doesn't exist yet
-		DebugInfoEntry structDIE = newStruct("mystruct", 100).create(cu2);
-		newMember(structDIE, "f1", intDIE, 0).create(cu2);
-		newMember(structDIE, "f2", floatDIE, 10).create(cu2);
+		addFwdPtr(1); // fwd points to structDIE even though it doesn't exist yet
+		DebugInfoEntry structDIE = newStruct("mystruct", 100).create();
+		newMember(structDIE, "f1", intDIE, 0).create();
+		newMember(structDIE, "f2", floatDIE, 10).create();
 
 		importAllDataTypes();
 
@@ -1397,13 +1437,17 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 			throws CancelledException, IOException, DWARFException {
 		// CU1
 		// this struct has a field with a typedef to a basetype int
-		DebugInfoEntry structDIE = newStruct("mystruct", 10).create(cu);
-		newMember(structDIE, "f1", addTypedef("intX_t", addInt(cu), cu), 0).create(cu);
+		DebugInfoEntry typedefDIE = addTypedef("intX_t", addInt());
+		DebugInfoEntry structDIE = newStruct("mystruct", 10).create();
+		newMember(structDIE, "f1", typedefDIE, 0).create();
+
+		addCompUnit();
 
 		// CU2
 		// this struct has a field with a basetype int
-		DebugInfoEntry structDIE_CU2 = newStruct("mystruct", 10).create(cu2);
-		newMember(structDIE_CU2, "f1", addInt(cu2), 0).create(cu2);
+		DebugInfoEntry cu2IntDIE = addInt();
+		DebugInfoEntry structDIE_CU2 = newStruct("mystruct", 10).create();
+		newMember(structDIE_CU2, "f1", cu2IntDIE, 0).create();
 
 		importAllDataTypes();
 
@@ -1416,15 +1460,23 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	@Test
 	public void testAsymetricEquivTypedefedBaseTypes_rev()
 			throws CancelledException, IOException, DWARFException {
+
 		// CU1
+		DebugInfoEntry cu1IntDIE = addInt();
+
 		// this struct has a field with a basetype int
-		DebugInfoEntry structDIE = newStruct("mystruct", 10).create(cu);
-		newMember(structDIE, "f1", addInt(cu), 0).create(cu);
+		DebugInfoEntry structDIE = newStruct("mystruct", 10).create();
+		newMember(structDIE, "f1", cu1IntDIE, 0).create();
+
+		addCompUnit();
 
 		// CU2
+		DebugInfoEntry cu2IntDIE = addInt();
+		DebugInfoEntry cu2TypedefDIE = addTypedef("intX_t", cu2IntDIE);
+
 		// this struct has a field with a typedef of a basetype int
-		DebugInfoEntry structDIE_CU2 = newStruct("mystruct", 10).create(cu2);
-		newMember(structDIE_CU2, "f1", addTypedef("intX_t", addInt(cu2), cu2), 0).create(cu2);
+		DebugInfoEntry structDIE_CU2 = newStruct("mystruct", 10).create();
+		newMember(structDIE_CU2, "f1", cu2TypedefDIE, 0).create();
 
 		importAllDataTypes();
 
@@ -1437,15 +1489,18 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	@Test
 	public void testAsymetricEquivTypedefedBaseTypes_not_false_positive()
 			throws CancelledException, IOException, DWARFException {
+
 		// CU1
 		// this struct has a field with a typedef to a basetype int
-		DebugInfoEntry structDIE = newStruct("mystruct", 10).create(cu);
-		newMember(structDIE, "f1", addTypedef("intX_t", addInt(cu), cu), 0).create(cu);
+		DebugInfoEntry cu2TypedefDIE = addTypedef("intX_t", addInt());
+		DebugInfoEntry structDIE = newStruct("mystruct", 10).create();
+		newMember(structDIE, "f1", cu2TypedefDIE, 0).create();
 
 		// CU2
+		DebugInfoEntry cu2FloatDIE = addFloat();
 		// this struct has a field with a basetype float, which is incompatible with int
-		DebugInfoEntry structDIE_CU2 = newStruct("mystruct", 10).create(cu2);
-		newMember(structDIE_CU2, "f1", addFloat(cu2), 0).create(cu2);
+		DebugInfoEntry structDIE_CU2 = newStruct("mystruct", 10).create();
+		newMember(structDIE_CU2, "f1", cu2FloatDIE, 0).create();
 
 		importAllDataTypes();
 
@@ -1462,8 +1517,8 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	//=================================================================================
 	@Test
 	public void testEnum() throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry enumDIE = createEnum("enum1", 4, cu);
-		addEnumValue(enumDIE, "val1", 1, cu);
+		DebugInfoEntry enumDIE = createEnum("enum1", 4);
+		addEnumValue(enumDIE, "val1", 1);
 
 		importAllDataTypes();
 
@@ -1475,8 +1530,8 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 	@Test
 	public void testAnonEnum() throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry enumDIE = createEnum(null, 4, cu);
-		addEnumValue(enumDIE, "val1", 1, cu);
+		DebugInfoEntry enumDIE = createEnum(null, 4);
+		addEnumValue(enumDIE, "val1", 1);
 
 		importAllDataTypes();
 
@@ -1487,9 +1542,9 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 	@Test
 	public void testAnonEnumWithTypedef() throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry enumDIE = createEnum(null, 4, cu);
-		addEnumValue(enumDIE, "val1", 1, cu);
-		DebugInfoEntry typedefDIE = addTypedef("typedefed_enum", enumDIE, cu);
+		DebugInfoEntry enumDIE = createEnum(null, 4);
+		addEnumValue(enumDIE, "val1", 1);
+		DebugInfoEntry typedefDIE = addTypedef("typedefed_enum", enumDIE);
 
 		importAllDataTypes();
 
@@ -1503,13 +1558,13 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	@Test
 	public void testMultiAnonEnumWithTypedef()
 			throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry enum1DIE = createEnum(null, 4, cu);
-		addEnumValue(enum1DIE, "val1", 1, cu);
-		DebugInfoEntry typedef1DIE = addTypedef("typedefed_enum1", enum1DIE, cu);
+		DebugInfoEntry enum1DIE = createEnum(null, 4);
+		addEnumValue(enum1DIE, "val1", 1);
+		DebugInfoEntry typedef1DIE = addTypedef("typedefed_enum1", enum1DIE);
 
-		DebugInfoEntry enum2DIE = createEnum(null, 4, cu);
-		addEnumValue(enum2DIE, "abc1", 1, cu);
-		DebugInfoEntry typedef2DIE = addTypedef("typedefed_enum2", enum2DIE, cu);
+		DebugInfoEntry enum2DIE = createEnum(null, 4);
+		addEnumValue(enum2DIE, "abc1", 1);
+		DebugInfoEntry typedef2DIE = addTypedef("typedefed_enum2", enum2DIE);
 
 		importAllDataTypes();
 
@@ -1541,23 +1596,23 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	@Test
 	public void testMultiAnonEnumWithTypedef2()
 			throws CancelledException, IOException, DWARFException {
-		DebugInfoEntry enum1DIE = createEnum(null, 4, cu);
-		addEnumValue(enum1DIE, "val1", 1, cu);
-		DebugInfoEntry typedef1aDIE = addTypedef("typedefed_enum1a", enum1DIE, cu);
+		DebugInfoEntry enum1DIE = createEnum(null, 4);
+		addEnumValue(enum1DIE, "val1", 1);
+		DebugInfoEntry typedef1aDIE = addTypedef("typedefed_enum1a", enum1DIE);
 
-		DebugInfoEntry enum2DIE = createEnum(null, 4, cu);
-		addEnumValue(enum2DIE, "abc1", 1, cu);
-		DebugInfoEntry typedef2aDIE = addTypedef("typedefed_enum2a", enum2DIE, cu);
+		DebugInfoEntry enum2DIE = createEnum(null, 4);
+		addEnumValue(enum2DIE, "abc1", 1);
+		DebugInfoEntry typedef2aDIE = addTypedef("typedefed_enum2a", enum2DIE);
 
-		DebugInfoEntry enum3DIE = createEnum(null, 4, cu);
-		addEnumValue(enum3DIE, "three1", 1, cu);
-		DebugInfoEntry typedef3DIE = addTypedef("typedefed_enum3", enum3DIE, cu);
+		DebugInfoEntry enum3DIE = createEnum(null, 4);
+		addEnumValue(enum3DIE, "three1", 1);
+		DebugInfoEntry typedef3DIE = addTypedef("typedefed_enum3", enum3DIE);
 
-		DebugInfoEntry enum4DIE = createEnum(null, 4, cu);
-		addEnumValue(enum4DIE, "four1", 1, cu);
+		DebugInfoEntry enum4DIE = createEnum(null, 4);
+		addEnumValue(enum4DIE, "four1", 1);
 
-		DebugInfoEntry typedef1bDIE = addTypedef("typedefed_enum1b", enum1DIE, cu);
-		DebugInfoEntry typedef2bDIE = addTypedef("typedefed_enum2b", enum2DIE, cu);
+		DebugInfoEntry typedef1bDIE = addTypedef("typedefed_enum1b", enum1DIE);
+		DebugInfoEntry typedef2bDIE = addTypedef("typedefed_enum2b", enum2DIE);
 
 		importAllDataTypes();
 

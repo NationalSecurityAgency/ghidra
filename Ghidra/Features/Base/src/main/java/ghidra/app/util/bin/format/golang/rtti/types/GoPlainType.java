@@ -32,7 +32,7 @@ import ghidra.util.Msg;
  * <p>
  * {@link GoType} structure that defines a built-in primitive type.
  */
-@StructureMapping(structureName = "runtime._type")
+@StructureMapping(structureName = {"runtime._type", "internal/abi.Type"})
 public class GoPlainType extends GoType implements StructureReader<GoType> {
 	@Override
 	public void readStructure() throws IOException {

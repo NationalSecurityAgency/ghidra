@@ -18,17 +18,19 @@ package ghidra.app.plugin.core.debug.gui.control;
 import docking.ActionContext;
 import docking.action.builder.AbstractActionBuilder;
 import ghidra.debug.api.target.ActionName;
+import ghidra.framework.plugintool.Plugin;
+import ghidra.framework.plugintool.PluginTool;
 
 class TargetActionBuilder
 		extends AbstractActionBuilder<TargetDockingAction, ActionContext, TargetActionBuilder> {
-	private final DebuggerControlPlugin plugin;
+	private final PluginTool tool;
 
 	private ActionName action;
 	private String defaultDescription;
 
-	public TargetActionBuilder(String name, DebuggerControlPlugin plugin) {
-		super(name, plugin.getName());
-		this.plugin = plugin;
+	public TargetActionBuilder(String name, Plugin owner) {
+		super(name, owner.getName());
+		this.tool = owner.getTool();
 	}
 
 	@Override
@@ -62,7 +64,7 @@ class TargetActionBuilder
 			// Make the super.validate() hush
 		});
 		validate();
-		TargetDockingAction result = new TargetDockingAction(name, owner, keyBindingType, plugin,
+		TargetDockingAction result = new TargetDockingAction(name, owner, keyBindingType, tool,
 			action, defaultDescription);
 		decorateAction(result);
 		return result;

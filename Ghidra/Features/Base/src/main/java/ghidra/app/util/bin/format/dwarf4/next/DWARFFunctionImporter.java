@@ -20,7 +20,6 @@ import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.*;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.util.bin.format.dwarf4.*;
@@ -98,9 +97,9 @@ public class DWARFFunctionImporter {
 			}
 		}
 
-		for (DIEAggregate diea : DIEAMonitoredIterator.iterable(prog,
-			"DWARF - Create Funcs & Symbols", monitor)) {
-			monitor.checkCancelled();
+		monitor.initialize(prog.getTotalAggregateCount(), "DWARF - Create Funcs & Symbols");
+		for (DIEAggregate diea : prog.allAggregates()) {
+			monitor.increment();
 
 			try {
 				switch (diea.getTag()) {
@@ -133,8 +132,9 @@ public class DWARFFunctionImporter {
 				throw oom;
 			}
 			catch (Throwable th) {
-				Msg.error(this,
-					"Error when processing DWARF information for DIE " + diea.getHexOffset(), th);
+				Msg.error(this, "Error when processing DWARF information for DIE %x"
+						.formatted(diea.getOffset()),
+					th);
 				Msg.info(this, "DIE info:\n" + diea.toString());
 			}
 		}
@@ -145,17 +145,12 @@ public class DWARFFunctionImporter {
 
 	private void logImportErrorSummary() {
 		if (!importSummary.unknownRegistersEncountered.isEmpty()) {
-			Msg.error(this, "Found " + importSummary.unknownRegistersEncountered.size() +
-				" unknown registers referenced in DWARF expression operands:");
+			Msg.error(this, "Found %d unknown registers referenced in DWARF expression operands:"
+					.formatted(importSummary.unknownRegistersEncountered.size()));
 			List<Integer> sortedUnknownRegs =
 				new ArrayList<>(importSummary.unknownRegistersEncountered);
 			Collections.sort(sortedUnknownRegs);
-			Msg.error(this,
-				"  unknown registers: " +
-					sortedUnknownRegs.stream()
-							.map(i -> Integer.toString(i))
-							.collect(
-								Collectors.joining(", ")));
+			Msg.error(this, "  unknown registers: %s".formatted(sortedUnknownRegs));
 		}
 	}
 

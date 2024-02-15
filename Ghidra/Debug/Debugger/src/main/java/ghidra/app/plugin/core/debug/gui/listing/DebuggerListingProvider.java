@@ -48,7 +48,8 @@ import ghidra.app.nav.ListingPanelContainer;
 import ghidra.app.plugin.core.clipboard.CodeBrowserClipboardProvider;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.codebrowser.MarkerServiceBackgroundColorModel;
-import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
+import ghidra.app.plugin.core.debug.disassemble.CurrentPlatformTraceDisassembleCommand;
+import ghidra.app.plugin.core.debug.disassemble.CurrentPlatformTraceDisassembleCommand.Reqs;
 import ghidra.app.plugin.core.debug.gui.DebuggerLocationLabel;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.FollowsCurrentThreadAction;
@@ -180,10 +181,10 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 			if (codeViewer.isEmpty()) {
 				return;
 			}
-			Swing.runIfSwingOrRunLater(
-				() -> codeViewer.get()
-						.getListingPanel()
-						.scrollTo(new ProgramLocation(program, selection.getMinAddress())));
+			ListingPanel listingPanel = codeViewer.get().getListingPanel();
+			Swing.runIfSwingOrRunLater(() -> {
+				listingPanel.scrollTo(new ProgramLocation(program, selection.getMinAddress()));
+			});
 		}
 
 		@Override
@@ -1203,8 +1204,13 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		}
 		AddressSpace space = start.getAddressSpace();
 		AddressSet set = new AddressSet(space.getMinAddress(), space.getMaxAddress());
-		TraceDisassembleCommand dis =
-			new TraceDisassembleCommand(current.getPlatform(), start, set);
+
+		Reqs reqs = Reqs.fromView(tool, view);
+		if (reqs == null) {
+			return;
+		}
+		CurrentPlatformTraceDisassembleCommand dis =
+			new CurrentPlatformTraceDisassembleCommand(tool, set, reqs, start);
 		dis.run(tool, view);
 	}
 

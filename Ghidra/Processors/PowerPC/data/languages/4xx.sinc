@@ -5,3 +5,129 @@
     S = dataCacheRead(RA_OR_ZERO,B);
 }
 
+# ========================================================================
+
+# PowerISA II: Chapter 10. Legacy Move Assist Instruction [Category: Legacy Move Assist]
+# CMT: Determine Leftmost Zero Byte
+# FORM: X-form
+# binutils: 476.d: 1a4: 7c 83 28 9c     dlmzb   r3,r4,r5
+# binutils: titan.d: 158:       7c 22 00 9c     dlmzb   r2,r1,r0
+define pcodeop DetermineLeftmostZeroByte;
+:dlmzb  S,A,B is OP=31 & S & A & B & XOP_1_10=78 & Rc=0 
+{
+   # search from left for the first occurrence of null byte
+
+   # low 32 bits of RS concatenated with low 32 bits of RB
+@ifdef BIT_64
+   tmpD:8 = zext( S:4 );
+@else
+   tmpD:8 = zext( S );
+@endif
+
+   tmpD = tmpD << 32;
+
+@ifdef BIT_64
+   tmpD = tmpD | zext( B:4 );
+@else
+   tmpD = tmpD | zext( B );
+@endif
+
+   tmpX:8 = 0;
+
+   <unmatched>
+
+   if ( tmpX == 8 ) goto <done_searching>;
+      tmpX = tmpX + 1;
+
+   if ( ( ( tmpD << ( (tmpX-1) * 8 ) ) & 0xFF00000000000000 ) != 0 ) goto <unmatched>;
+
+   <done_searching>
+
+   # place byte number in register A and low 7 bits of XER
+@ifdef BIT_64
+   A = tmpX;
+   XER = ( XER & 0xFFFFFFFFFFFFFF80 ) | tmpX;
+@else
+   A = tmpX:4;
+   XER = ( XER & 0xFFFFFF80 ) | tmpX:4;
+@endif
+
+}
+
+# PowerISA II: Chapter 10. Legacy Move Assist Instruction [Category: Legacy Move Assist]
+# CMT: Determine Leftmost Zero Byte
+# FORM: X-form
+# binutils: 476.d: 1a8:     7c 83 28 9d     dlmzb\.  r3,r4,r5
+# binutils: titan.d: 15c:   7c 22 00 9d     dlmzb\.  r2,r1,r0
+define pcodeop  DetermineLeftmostZeroByte1;
+:dlmzb. S,A,B is OP=31 & S & A & B & XOP_1_10=78 & Rc=1 
+{
+   # search from left for the first occurrence of null byte
+
+   # low 32 bits of RS concatenated with low 32 bits of RB
+@ifdef BIT_64
+   tmpD:8 = zext( S:4 );
+@else
+   tmpD:8 = zext( S );
+@endif
+
+   tmpD = tmpD << 32;
+
+@ifdef BIT_64
+   tmpD = tmpD | zext( B:4 );
+@else
+   tmpD = tmpD | zext( B );
+@endif
+
+   tmpX:8 = 0;
+   tmpY:8 = 0;
+
+   <unmatched>
+
+   if ( tmpX == 8 ) goto <done_searching>;
+   tmpX = tmpX + 1;
+
+   if ( ( ( tmpD << ( (tmpX - 1) * 8 ) ) & 0xFF00000000000000 ) != 0 ) goto <unmatched>;
+
+   # matched
+   tmpY = 1;
+
+   <done_searching>
+
+   # place byte number in register A and low 7 bits of XER
+@ifdef BIT_64
+   A = tmpX;
+   XER = ( XER & 0xFFFFFFFFFFFFFF80 ) | tmpX;
+@else
+   A = tmpX:4;
+   XER = ( XER & 0xFFFFFF80 ) | tmpX:4;
+@endif
+
+   # Rc section
+
+   # Set bit 35 of CR to SO
+   cr0 = (cr0 & 0xe) | zext( xer_so & 1);
+
+
+   # Set bits 32:34 of CR
+   if ( tmpY != 1 ) goto <no_match>;
+
+   if ( tmpX >= 5 ) goto <high_bytes>;
+      cr0 = ( cr0 & 0x1 ) | 4;
+      goto <finished>;
+
+   <high_bytes>
+      cr0 =  ( cr0 & 0x1 ) | 8;
+      goto <finished>;
+
+   <no_match>
+      cr0 = ( cr0 & 0x1 ) | 2;
+   <finished>
+}
+
+#icread 0,r0           0x7c 00 07 cc
+:icread RA_OR_ZERO,B		is OP=31 & BITS_21_25=0 & B & XOP_1_10=998 & BIT_0=0 & RA_OR_ZERO
+{
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
+	instructionCacheRead(ea);	
+}

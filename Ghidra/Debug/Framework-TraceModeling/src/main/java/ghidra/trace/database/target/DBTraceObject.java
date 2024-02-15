@@ -43,7 +43,6 @@ import ghidra.trace.database.target.visitors.TreeTraversal.Visitor;
 import ghidra.trace.database.thread.DBTraceObjectThread;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Lifespan.*;
-import ghidra.trace.model.Trace.TraceObjectChangeType;
 import ghidra.trace.model.breakpoint.TraceObjectBreakpointLocation;
 import ghidra.trace.model.breakpoint.TraceObjectBreakpointSpec;
 import ghidra.trace.model.memory.TraceObjectMemoryRegion;
@@ -55,6 +54,7 @@ import ghidra.trace.model.target.*;
 import ghidra.trace.model.target.annot.TraceObjectInterfaceUtils;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.Msg;
 import ghidra.util.database.*;
@@ -647,7 +647,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 			DBTraceObject child = setter.canonicalLifeChanged;
 			if (child != null) {
 				child.emitEvents(
-					new TraceChangeRecord<>(TraceObjectChangeType.LIFE_CHANGED, null, child));
+					new TraceChangeRecord<>(TraceEvents.OBJECT_LIFE_CHANGED, null, child));
 			}
 			return result;
 		}

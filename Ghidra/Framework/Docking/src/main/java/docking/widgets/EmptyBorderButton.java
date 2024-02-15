@@ -15,8 +15,7 @@
  */
 package docking.widgets;
 
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -35,6 +34,8 @@ import resources.ResourceManager;
 public class EmptyBorderButton extends JButton {
 
 	private ButtonStateListener emptyBorderButtonChangeListener;
+
+	private ButtonFocusListener emptyBorderButtonFocusListener;
 
 	/**
 	 * A raised beveled border.
@@ -105,7 +106,10 @@ public class EmptyBorderButton extends JButton {
 		installLookAndFeelFix();
 		clearBorder();
 		emptyBorderButtonChangeListener = new ButtonStateListener();
+		emptyBorderButtonFocusListener = new ButtonFocusListener();
+
 		addChangeListener(emptyBorderButtonChangeListener);
+		addFocusListener(emptyBorderButtonFocusListener);
 	}
 
 	@Override
@@ -164,6 +168,9 @@ public class EmptyBorderButton extends JButton {
 		else if (rollover) {
 			setBorder(getRaisedBorder());
 		}
+		else if (isFocusOwner()) {
+			setBorder(getRaisedBorder());
+		}
 		else {
 			setBorder(NO_BUTTON_BORDER);
 		}
@@ -179,6 +186,7 @@ public class EmptyBorderButton extends JButton {
 
 	public void removeListeners() {
 		removeChangeListener(emptyBorderButtonChangeListener);
+		removeFocusListener(emptyBorderButtonFocusListener);
 	}
 
 	private class ButtonStateListener implements ChangeListener {
@@ -186,5 +194,19 @@ public class EmptyBorderButton extends JButton {
 		public void stateChanged(ChangeEvent e) {
 			updateBorderBasedOnState();
 		}
+	}
+
+	private class ButtonFocusListener implements FocusListener {
+
+		@Override
+		public void focusGained(FocusEvent e) {
+			updateBorderBasedOnState();
+		}
+
+		@Override
+		public void focusLost(FocusEvent e) {
+			updateBorderBasedOnState();
+		}
+
 	}
 }

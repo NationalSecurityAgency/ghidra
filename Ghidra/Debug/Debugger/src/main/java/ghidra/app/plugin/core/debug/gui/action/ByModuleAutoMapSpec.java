@@ -24,9 +24,8 @@ import ghidra.debug.api.modules.ModuleMapProposal;
 import ghidra.debug.api.modules.ModuleMapProposal.ModuleMapEntry;
 import ghidra.program.model.listing.Program;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TraceMemoryRegionChangeType;
-import ghidra.trace.model.Trace.TraceModuleChangeType;
-import ghidra.trace.util.TraceChangeType;
+import ghidra.trace.util.TraceEvent;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -44,9 +43,10 @@ public class ByModuleAutoMapSpec implements AutoMapSpec {
 	}
 
 	@Override
-	public Collection<TraceChangeType<?, ?>> getChangeTypes() {
-		return List.of(TraceModuleChangeType.ADDED, TraceModuleChangeType.CHANGED,
-			TraceMemoryRegionChangeType.ADDED, TraceMemoryRegionChangeType.CHANGED);
+	public Collection<TraceEvent<?, ?>> getChangeTypes() {
+		return List.of(
+			TraceEvents.MODULE_ADDED, TraceEvents.MODULE_CHANGED,
+			TraceEvents.REGION_ADDED, TraceEvents.REGION_CHANGED);
 	}
 
 	@Override

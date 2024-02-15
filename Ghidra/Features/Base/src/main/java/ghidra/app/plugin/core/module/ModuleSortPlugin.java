@@ -54,7 +54,7 @@ import ghidra.util.task.*;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.TREE,
+	category = PluginCategoryNames.PROGRAM_ORGANIZATION,
 	shortDescription = "Sort Fragments within Module",
 	description = "Plugin to sort Modules and Fragments within a selected Module. " +
 			"Child Module folders are always name-sorted and placed " +

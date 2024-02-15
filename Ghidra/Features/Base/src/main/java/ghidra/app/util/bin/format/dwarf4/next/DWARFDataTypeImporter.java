@@ -56,7 +56,7 @@ public class DWARFDataTypeImporter {
 
 	/**
 	 * Tracks which {@link DIEAggregate DIEAs} have been visited by {@link #getDataTypeWorker(DIEAggregate, DataType)}
-	 * during the current {@link #getDataType(DIEAggregate, DataType)} session.
+	 * during the current {@link #getDataType(DIEAggregate, DWARFDataType)} session.
 	 * <p>
 	 * Some recursive calls are permitted to handle loops in the data types, but are limited
 	 * to 2 recursions.
@@ -625,12 +625,8 @@ public class DWARFDataTypeImporter {
 		return (structSize < 0 || structSize > Integer.MAX_VALUE);
 	}
 
-	/**
+	/*
 	 * Populates stub structs or unions with there fields.
-	 * @param diea
-	 * @param dataType
-	 * @throws IOException
-	 * @throws DWARFExpressionException
 	 */
 	private void finishStruct(DIEAggregate diea, DWARFDataType ddt)
 			throws IOException, DWARFExpressionException {
@@ -646,13 +642,8 @@ public class DWARFDataTypeImporter {
 		}
 	}
 
-	/**
+	/*
 	 * Populates an empty {@link UnionDataType} with its fields.
-	 * @param union
-	 * @param diea
-	 * @param rec
-	 * @throws IOException
-	 * @throws DWARFExpressionException
 	 */
 	private void populateStubUnion(DWARFDataType ddt, DIEAggregate diea)
 			throws IOException, DWARFExpressionException {
@@ -775,12 +766,8 @@ public class DWARFDataTypeImporter {
 		}
 	}
 
-	/**
+	/*
 	 * Populates an empty {@link StructureDataType} with its fields.
-	 * @param structure
-	 * @param diea
-	 * @throws IOException
-	 * @throws DWARFExpressionException
 	 */
 	private void populateStubStruct(DWARFDataType ddt, DIEAggregate diea)
 			throws IOException, DWARFExpressionException {
@@ -804,12 +791,11 @@ public class DWARFDataTypeImporter {
 		}
 	}
 
-	/**
+	/*
 	 * Restore structure fields to their regular size (if there is room) to ensure
 	 * future DataType equiv and comparisons are successful.
 	 * <p>
 	 * (ie. undoes {@link #getUnpaddedDataTypeLength(DataType)} if there is room)
-	 * @param structure
 	 */
 	private void removeUneededStructMemberShrinkage(StructureDataType structure) {
 		DataTypeComponent[] definedComponents = structure.getDefinedComponents();
@@ -836,10 +822,8 @@ public class DWARFDataTypeImporter {
 
 	}
 
-	/**
+	/*
 	 * Detect the real length of a DataType (ie. drop any trailing padding).
-	 * @param dt
-	 * @return
 	 */
 	private int getUnpaddedDataTypeLength(DataType dt) {
 		if (dt instanceof TypeDef) {
@@ -1088,14 +1072,10 @@ public class DWARFDataTypeImporter {
 		return result;
 	}
 
-	/**
+	/*
 	 * Creates a Ghidra {@link ArrayDataType}.
 	 * <p>
 	 * Multi-dim DWARF arrays will result in nested Ghidra array types.
-	 * <p>
-	 * @param diea
-	 * @throws IOException
-	 * @throws DWARFExpressionException
 	 */
 	private DWARFDataType makeDataTypeForArray(DIEAggregate diea)
 			throws IOException, DWARFExpressionException {
@@ -1179,7 +1159,7 @@ public class DWARFDataTypeImporter {
 		return result;
 	}
 
-	/**
+	/*
 	 * Creates a {@link Pointer} datatype.
 	 * <p>
 	 * If there is no pointer size specified in the DWARF DIE, use the default pointer size
@@ -1197,9 +1177,6 @@ public class DWARFDataTypeImporter {
 	 * The struct creation code will stop the recursive loop after the second time
 	 * makeDataTypeForPointer() is hit because there will be an empty struct in the cache.
 	 *
-	 * @param diea
-	 * @throws IOException
-	 * @throws DWARFExpressionException
 	 */
 	private DWARFDataType makeDataTypeForPointer(DIEAggregate diea)
 			throws IOException, DWARFExpressionException {
@@ -1251,7 +1228,7 @@ public class DWARFDataTypeImporter {
 		return new DWARFDataType(dt, dni, diea.getOffset());
 	}
 
-	/**
+	/*
 	 * Creates a {@link TypeDef} datatype.
 	 * <p>
 	 * If the typedef has the same name as the destination type, create an equiv mapping
@@ -1265,10 +1242,6 @@ public class DWARFDataTypeImporter {
 	 * create the typedef as it can do it better if there are size specifiers in the typedef name
 	 * (eg. int64_t).
 	 * 
-	 * @param diea
-	 * @param rec
-	 * @throws IOException
-	 * @throws DWARFExpressionException
 	 */
 	private DWARFDataType makeDataTypeForTypedef(DIEAggregate diea)
 			throws IOException, DWARFExpressionException {
@@ -1325,13 +1298,11 @@ public class DWARFDataTypeImporter {
 		return new DWARFDataType(typedefDT, typedefDNI, diea.getOffset());
 	}
 
-	/**
+	/*
 	 * Creates a datatype representing the string in the unspecifiedtype dwarf definition.
 	 * <p>
 	 * Most likely will be a void type.
 	 *
-	 * @param diea
-	 * @return
 	 */
 	private DWARFDataType makeDataTypeForUnspecifiedType(DIEAggregate diea) {
 		DWARFNameInfo dni = prog.getName(diea);

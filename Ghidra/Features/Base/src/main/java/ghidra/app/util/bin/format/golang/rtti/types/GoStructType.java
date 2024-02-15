@@ -29,7 +29,7 @@ import ghidra.util.exception.CancelledException;
 /**
  * Golang type information about a specific structure type.
  */
-@StructureMapping(structureName = "runtime.structtype")
+@StructureMapping(structureName = {"runtime.structtype", "internal/abi.StructType"})
 public class GoStructType extends GoType {
 
 	@FieldMapping

@@ -15,13 +15,12 @@
  */
 package ghidra.app.util.bin.format.dwarf4;
 
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import generic.jar.ResourceFile;
 import ghidra.app.cmd.comments.AppendCommentCmd;
@@ -221,7 +220,7 @@ public class DWARFUtil {
 	 * name.
 	 */
 	public static List<String> findLinkageNameInChildren(DebugInfoEntry die) {
-		DWARFProgram prog = die.getCompilationUnit().getProgram();
+		DWARFProgram prog = die.getProgram();
 		for (DebugInfoEntry childDIE : die.getChildren(DWARFTag.DW_TAG_subprogram)) {
 			DIEAggregate childDIEA = prog.getAggregate(childDIE);
 			String linkage = childDIEA.getString(DWARFAttribute.DW_AT_linkage_name, null);
@@ -279,7 +278,7 @@ public class DWARFUtil {
 		int typeDefCount = 0;
 		for (DebugInfoEntry childDIE : parent.getChildren()) {
 			DIEAggregate childDIEA = prog.getAggregate(childDIE);
-			if (diea == childDIEA) {
+			if (diea == childDIEA || diea.getOffset() == childDIEA.getOffset()) {
 				return "anon_" + getContainerTypeName(childDIEA) + "_" + typeDefCount;
 			}
 			if (childDIEA.isNamedType()) {
@@ -387,30 +386,10 @@ public class DWARFUtil {
 	private static String getLexicalBlockNameWorker(DebugInfoEntry die) {
 		if (die.getTag() == DWARFTag.DW_TAG_lexical_block ||
 			die.getTag() == DWARFTag.DW_TAG_inlined_subroutine) {
-			return getLexicalBlockNameWorker(die.getParent()) + "_" +
-				Integer.toString(getMyPositionInParent(die));
+			return "%s_%d".formatted(getLexicalBlockNameWorker(die.getParent()),
+				die.getPositionInParent());
 		}
 		return "";
-	}
-
-	/**
-	 * Returns the ordinal position of this {@link DebugInfoEntry} in it's parent.
-	 *
-	 * @param die {@link DebugInfoEntry}
-	 * @return int index of ourself in our parent, or -1 if not found in parent.
-	 */
-	public static int getMyPositionInParent(DebugInfoEntry die) {
-		DebugInfoEntry parent = die.getParent();
-		if (parent != null) {
-			int position = 0;
-			for (DebugInfoEntry childDIE : parent.getChildren(die.getTag())) {
-				if (childDIE == die) {
-					return position;
-				}
-				position++;
-			}
-		}
-		return -1;
 	}
 
 	/**

@@ -409,7 +409,7 @@ public class ClassSearcher {
 			buffy.append(suffix);
 			between = "|";
 		}
-		buffy.append(')');
+		buffy.append(")$");
 		extensionPointSuffixPattern = Pattern.compile(buffy.toString());
 		log.trace("Using extension point pattern: {}", extensionPointSuffixPattern);
 	}

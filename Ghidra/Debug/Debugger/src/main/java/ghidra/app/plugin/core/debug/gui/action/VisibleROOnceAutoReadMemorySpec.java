@@ -57,7 +57,7 @@ public class VisibleROOnceAutoReadMemorySpec implements AutoReadMemorySpec {
 		Target target = coordinates.getTarget();
 		TraceMemoryManager mm = coordinates.getTrace().getMemoryManager();
 		AddressSetView alreadyKnown = mm.getAddressesWithState(coordinates.getSnap(), visible,
-			s -> s == TraceMemoryState.KNOWN);
+			s -> s == TraceMemoryState.KNOWN || s == TraceMemoryState.ERROR);
 		AddressSet toRead = visible.subtract(alreadyKnown);
 
 		if (toRead.isEmpty()) {

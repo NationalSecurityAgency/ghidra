@@ -16,12 +16,15 @@
 package ghidra.app.services;
 
 import java.util.Collection;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.*;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import ghidra.debug.api.progress.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.ServiceInfo;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -99,4 +102,33 @@ public interface ProgressService {
 	 * @param listener the listener
 	 */
 	void removeProgressListener(ProgressListener listener);
+
+	/**
+	 * A drop-in replacement for {@link PluginTool#execute(Task)} that publishes progress via the
+	 * service rather than displaying a dialog.
+	 * 
+	 * <p>
+	 * In addition to changing how progress is displayed, this also returns a future so that task
+	 * completion can be detected by the caller.
+	 * 
+	 * @param task task to run in a new thread
+	 * @return a future which completes when the task is finished
+	 */
+	default CompletableFuture<Void> execute(Task task) {
+		return CompletableFuture.supplyAsync(() -> {
+			try (CloseableTaskMonitor monitor = publishTask()) {
+				try {
+					task.run(monitor);
+				}
+				catch (CancelledException e) {
+					throw new CancellationException("User cancelled");
+				}
+				catch (Throwable e) {
+					monitor.reportError(e);
+					return ExceptionUtils.rethrow(e);
+				}
+				return null;
+			}
+		});
+	}
 }

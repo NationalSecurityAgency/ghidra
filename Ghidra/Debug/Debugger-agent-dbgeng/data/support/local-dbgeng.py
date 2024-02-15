@@ -13,18 +13,48 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 ##
+
 import os
-from ghidradbg.commands import *
+import sys
 
-ghidra_trace_connect(os.getenv('GHIDRA_TRACE_RMI_ADDR'))
-args = os.getenv('OPT_TARGET_ARGS')
-if args:
-    args = ' ' + args
-ghidra_trace_create(os.getenv('OPT_TARGET_IMG') + args, start_trace=False)
-ghidra_trace_start(os.getenv('OPT_TARGET_IMG'))
-ghidra_trace_sync_enable()
 
-# TODO: HACK
-dbg().wait()
+home = os.getenv('GHIDRA_HOME')
 
-repl()
+if os.path.isdir(f'{home}\\ghidra\\.git'):
+    sys.path.append(
+        f'{home}\\ghidra\\Ghidra\\Debug\\Debugger-agent-dbgeng\\build\\pypkg\\src')
+    sys.path.append(
+        f'{home}\\ghidra\\Ghidra\\Debug\\Debugger-rmi-trace\\build\\pypkg\\src')
+elif os.path.isdir(f'{home}\\.git'):
+    sys.path.append(
+        f'{home}\\Ghidra\\Debug\\Debugger-agent-dbgeng\\build\\pypkg\\src')
+    sys.path.append(
+        f'{home}\\Ghidra\\Debug\\Debugger-rmi-trace\\build\\pypkg\\src')
+else:
+    sys.path.append(
+        f'{home}\\Ghidra\\Debug\\Debugger-agent-dbgeng\\pypkg\\src')
+    sys.path.append(f'{home}\\Ghidra\\Debug\\Debugger-rmi-trace\\pypkg\\src')
+
+
+def main():
+    # Delay these imports until sys.path is patched
+    from ghidradbg import commands as cmd
+    from ghidradbg.util import dbg
+
+    cmd.ghidra_trace_connect(os.getenv('GHIDRA_TRACE_RMI_ADDR'))
+    args = os.getenv('OPT_TARGET_ARGS')
+    if args:
+        args = ' ' + args
+    cmd.ghidra_trace_create(
+        os.getenv('OPT_TARGET_IMG') + args, start_trace=False)
+    cmd.ghidra_trace_start(os.getenv('OPT_TARGET_IMG'))
+    cmd.ghidra_trace_sync_enable()
+
+    # TODO: HACK
+    dbg.wait()
+
+    cmd.repl()
+
+
+if __name__ == '__main__':
+    main()

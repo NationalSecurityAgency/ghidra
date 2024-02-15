@@ -27,7 +27,6 @@ import ghidra.program.model.address.AddressRange;
 import ghidra.trace.database.target.*;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TraceBreakpointChangeType;
 import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.annot.TraceObjectInterfaceUtils;
@@ -59,18 +58,18 @@ public class DBTraceObjectBreakpointLocation
 		}
 
 		@Override
-		protected TraceChangeType<TraceBreakpoint, Void> getAddedType() {
-			return TraceBreakpointChangeType.ADDED;
+		protected TraceEvent<TraceBreakpoint, Void> getAddedType() {
+			return TraceEvents.BREAKPOINT_ADDED;
 		}
 
 		@Override
-		protected TraceChangeType<TraceBreakpoint, Lifespan> getLifespanChangedType() {
-			return TraceBreakpointChangeType.LIFESPAN_CHANGED;
+		protected TraceEvent<TraceBreakpoint, Lifespan> getLifespanChangedType() {
+			return TraceEvents.BREAKPOINT_LIFESPAN_CHANGED;
 		}
 
 		@Override
-		protected TraceChangeType<TraceBreakpoint, Void> getChangedType() {
-			return TraceBreakpointChangeType.CHANGED;
+		protected TraceEvent<TraceBreakpoint, Void> getChangedType() {
+			return TraceEvents.BREAKPOINT_CHANGED;
 		}
 
 		@Override
@@ -79,8 +78,8 @@ public class DBTraceObjectBreakpointLocation
 		}
 
 		@Override
-		protected TraceChangeType<TraceBreakpoint, Void> getDeletedType() {
-			return TraceBreakpointChangeType.DELETED;
+		protected TraceEvent<TraceBreakpoint, Void> getDeletedType() {
+			return TraceEvents.BREAKPOINT_DELETED;
 		}
 	}
 

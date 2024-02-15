@@ -21,54 +21,54 @@ import java.lang.annotation.*;
  * Indicates that the tagged class corresponds to a Ghidra structure.
  * <p>
  * For fixed/static length structures, an existing Ghidra structure data type will be found and
- * then bound to the tagged class, and it will control how instances of the tagged class 
+ * then bound to the tagged class, and it will control how instances of the tagged class
  * are deserialized.  Only fields that are interesting / relevant need to be tagged with
- * a {@link FieldMapping} annotation, which causes them to be pulled into the java structure.
+ * a {@link FieldMapping} annotation, which causes them to be pulled into the java class.
  * <p>
- * For {@link FieldOutput#isVariableLength() variable} length structures, a unique Ghidra 
+ * For {@link FieldOutput#isVariableLength() variable} length structures, a unique Ghidra
  * structure data type will be created for each combination of field lengths, and the tagged
  * class must deserialize itself by implementing the {@link StructureReader} interface. (each
  * field that needs to be mapped into the Ghidra structure must be tagged with a {@link FieldOutput}
  * annotation)
  * <p>
- * In either case, various annotations on fields and methods will control how this structure 
+ * In either case, various annotations on fields and methods will control how this structure
  * will be marked up in the Ghidra program.
  * <p>
  * The tagged class must be {@link DataTypeMapper#registerStructure(Class) registered} with
- * the {@link DataTypeMapper program context} to enable the suite of structure mapped classes 
+ * the {@link DataTypeMapper program context} to enable the suite of structure mapped classes
  * to work together when applied to a Ghidra binary.
  * <p>
  * For variable length structure classes, when the struct mapping system creates a custom-fitted
  * structure to markup a specific location with its specific data, the new struct data type's name
  * will be patterned as "structurename_NN_MM_...", where NN and MM and etc are the lengths of the
- * variable length fields found in the structure. 
+ * variable length fields found in the structure.
  * <p>
  * Structure mapped classes must have a {@link StructureContext} member variable that is tagged
  * with the {@link ContextField} annotation, and probably should have a {@link DataTypeMapper}
- * member variable (that corresponds to a more specific type of DataTypeMapper) that is also 
+ * member variable (that corresponds to a more specific type of DataTypeMapper) that is also
  * tagged with the ContextField annotation.
- * 
+ *
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface StructureMapping {
 	/**
-	 * Specifies the name of a Ghidra structure that the tagged class represents.  For fixed
-	 * length structures, the {@link DataTypeMapper} will search for this Ghidra data type
-	 * in it's configured
+	 * Specifies the name, and optionally alternate names, of a Ghidra structure that the tagged 
+	 * class represents.  For fixed length structures, the {@link DataTypeMapper} will search 
+	 * for this Ghidra data type in it's configured
 	 * {@link DataTypeMapper#addArchiveSearchCategoryPath(ghidra.program.model.data.CategoryPath...) archive}
-	 * and 
+	 * and
 	 * {@link DataTypeMapper#addProgramSearchCategoryPath(ghidra.program.model.data.CategoryPath...) program}
 	 * search paths.
-	 * 
-	 * @return name of a Ghidra structure data type
+	 *
+	 * @return name(s) of a Ghidra structure data type
 	 */
-	String structureName();
+	String[] structureName();
 
 	/**
-	 * Optional reference to a 'function' (implemented via a class) that will be called to do 
+	 * Optional reference to a 'function' (implemented via a class) that will be called to do
 	 * custom markup.
-	 * 
+	 *
 	 * @return {@link StructureMarkupFunction} class
 	 */
 	@SuppressWarnings("rawtypes")

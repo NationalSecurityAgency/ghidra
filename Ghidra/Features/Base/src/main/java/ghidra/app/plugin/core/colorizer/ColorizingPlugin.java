@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.colorizer;
 
+import static ghidra.program.util.ProgramEvent.*;
+
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +42,6 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ChangeManager;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.ColorUtils;
 import ghidra.util.HelpLocation;
@@ -266,8 +267,9 @@ public class ColorizingPlugin extends ProgramPlugin implements DomainObjectListe
 				return !set.isEmpty();
 			}
 		};
-		clearAllAction.setPopupMenuData(new MenuData(new String[] { MENU_PULLRIGHT,
-			"Clear All Colors" }, null, group, MenuData.NO_MNEMONIC, Integer.toString(subgroup++)));
+		clearAllAction
+				.setPopupMenuData(new MenuData(new String[] { MENU_PULLRIGHT, "Clear All Colors" },
+					null, group, MenuData.NO_MNEMONIC, Integer.toString(subgroup++)));
 		clearAllAction.setHelpLocation(helpLocation);
 
 		//
@@ -299,9 +301,8 @@ public class ColorizingPlugin extends ProgramPlugin implements DomainObjectListe
 
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (ev.containsEvent(ChangeManager.DOCR_INT_ADDRESS_SET_PROPERTY_MAP_ADDED) ||
-			ev.containsEvent(ChangeManager.DOCR_INT_ADDRESS_SET_PROPERTY_MAP_REMOVED) ||
-			ev.containsEvent(ChangeManager.DOCR_INT_ADDRESS_SET_PROPERTY_MAP_CHANGED)) {
+		if (ev.contains(INT_PROPERTY_MAP_ADDED, INT_PROPERTY_MAP_REMOVED,
+			INT_PROPERTY_MAP_CHANGED)) {
 			updateManager.update();
 		}
 	}
@@ -340,9 +341,8 @@ public class ColorizingPlugin extends ProgramPlugin implements DomainObjectListe
 				color = MARKER_COLOR;
 			}
 
-			markerSet =
-				markerService.createPointMarker(MARKER_NAME, MARKER_DESCRIPTION, currentProgram,
-					PRIORITY, false, true, false, color, null);
+			markerSet = markerService.createPointMarker(MARKER_NAME, MARKER_DESCRIPTION,
+				currentProgram, PRIORITY, false, true, false, color, null);
 		}
 		else {
 			markerSet.clearAll();

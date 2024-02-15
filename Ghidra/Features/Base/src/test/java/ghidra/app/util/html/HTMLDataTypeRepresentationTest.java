@@ -361,8 +361,8 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 
 	private String getParamText(String html) {
 
-		// function html format: 
-		// 	<HTML>void&nbsp;myFunction(<BR>&nbsp;&nbsp;&nbsp;&nbsp;byte&nbsp;)<BR></HTML>
+		// function html format:
+		// 	<html>void&nbsp;myFunction(<BR>&nbsp;&nbsp;&nbsp;&nbsp;byte&nbsp;)<BR></HTML>
 
 		Pattern p = Pattern.compile("\\((.*)\\)");
 		Matcher matcher = p.matcher(html);

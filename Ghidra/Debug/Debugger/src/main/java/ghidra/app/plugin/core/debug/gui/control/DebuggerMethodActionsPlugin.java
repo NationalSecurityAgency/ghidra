@@ -18,6 +18,8 @@ package ghidra.app.plugin.core.debug.gui.control;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.Icon;
+
 import docking.ActionContext;
 import docking.Tool;
 import docking.action.*;
@@ -26,9 +28,11 @@ import ghidra.app.context.ProgramActionContext;
 import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.model.DebuggerObjectActionContext;
 import ghidra.app.services.*;
 import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.target.Target.ActionEntry;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
@@ -59,12 +63,17 @@ public class DebuggerMethodActionsPlugin extends Plugin implements PopupActionPr
 		public InvokeActionEntryAction(ActionEntry entry) {
 			super(entry.display(), DebuggerMethodActionsPlugin.this.getName());
 			this.entry = entry;
-			setPopupMenuData(new MenuData(new String[] { getName() }, GROUP_METHODS));
+			Icon icon = null;
+			if (ActionName.REFRESH.equals(entry.name())) {
+				// TODO: Allow method annotation to specify icon?
+				icon = DebuggerResources.ICON_REFRESH;
+			}
+			setPopupMenuData(new MenuData(new String[] { getName() }, icon, GROUP_METHODS));
 		}
 
 		@Override
 		public void actionPerformed(ActionContext context) {
-			tool.execute(new TargetActionTask(entry.display(), entry));
+			TargetActionTask.runAction(tool, entry.display(), entry);
 		}
 	}
 
