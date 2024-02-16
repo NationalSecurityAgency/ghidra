@@ -44,6 +44,12 @@ public class DBTraceObjectValueBehind implements TraceObjectValueStorage {
 	}
 
 	@Override
+	public String toString() {
+		return "<%s parent=%s entryKey=%s lifespan=%s value=%s>".formatted(
+			getClass().getSimpleName(), parent, entryKey, lifespan, value);
+	}
+
+	@Override
 	public String getEntryKey() {
 		return entryKey;
 	}

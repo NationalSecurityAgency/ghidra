@@ -147,6 +147,11 @@ public class DBTraceObjectValue implements TraceObjectValue {
 		this.wrapped = wrapped;
 	}
 
+	@Override
+	public String toString() {
+		return wrapped.toString();
+	}
+
 	void setWrapped(TraceObjectValueStorage wrapped) {
 		this.wrapped = wrapped;
 		if (wrapped instanceof DBTraceObjectValueData data) {
