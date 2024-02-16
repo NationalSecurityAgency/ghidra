@@ -33,8 +33,16 @@ functionManager = currentProgram.getFunctionManager()
 
 f = askFile("Give me a file to open", "Go baby go!")
 
-for line in file(f.absolutePath):  # note, cannot use open(), since that is in GhidraScript
+for line_no, line in enumerate(file(f.absolutePath)):  # note, cannot use open(), since that is in GhidraScript
     pieces = line.split()
+
+    # skip empty lines and comments
+    if not pieces or line[0].startswith('#'):
+        continue
+   
+    if len(pieces) not in [2,3]:
+        print("Skip line #{}: {}".format(line_no, line))
+        continue
 
     name = pieces[0]
     address = toAddr(pieces[1])
