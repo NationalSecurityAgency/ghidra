@@ -118,7 +118,7 @@ public class TargetActionTask extends Task {
 	private void reportError(Throwable error) {
 		DebuggerConsoleService consoleService = tool.getService(DebuggerConsoleService.class);
 		if (consoleService != null) {
-			consoleService.log(DebuggerResources.ICON_LOG_ERROR, error.getMessage());
+			consoleService.log(DebuggerResources.ICON_LOG_ERROR, error.getMessage(), error);
 		}
 		else {
 			Msg.showError(this, null, "Control Error", error.getMessage(), error);

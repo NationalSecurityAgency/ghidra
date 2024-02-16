@@ -190,7 +190,7 @@ public class TraceRmiTarget extends AbstractTarget {
 			Msg.trace(this, "No root schema, yet: " + trace);
 			return null;
 		}
-		TargetObjectSchema schema = ctx.getSchema(type);
+		TargetObjectSchema schema = ctx.getSchemaOrNull(type);
 		if (schema == null) {
 			Msg.error(this, "Schema " + type + " not in trace! " + trace);
 			return null;

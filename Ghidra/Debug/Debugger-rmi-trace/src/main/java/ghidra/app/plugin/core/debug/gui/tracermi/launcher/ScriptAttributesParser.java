@@ -51,6 +51,7 @@ public abstract class ScriptAttributesParser {
 	public static final String AT_ARG = "@arg";
 	public static final String AT_ARGS = "@args";
 	public static final String AT_TTY = "@tty";
+	public static final String AT_TIMEOUT = "@timeout";
 
 	public static final String PREFIX_ENV = "env:";
 	public static final String PREFIX_ARG = "arg:";
@@ -66,6 +67,10 @@ public abstract class ScriptAttributesParser {
 		"%s: Invalid %s syntax. Use :type \"Display\" \"Tool Tip\"";
 	public static final String MSGPAT_INVALID_ARGS_SYNTAX =
 		"%s: Invalid %s syntax. Use \"Display\" \"Tool Tip\"";
+	public static final String MSGPAT_INVALID_TTY_SYNTAX =
+		"%s: Invalid %s syntax. Use TTY_TARGET [if env:OPT_EXTRA_TTY]";
+	public static final String MSGPAT_INVALID_TIMEOUT_SYNTAX = "" +
+		"%s: Invalid %s syntax. Use [milliseconds]";
 
 	protected record Location(String fileName, int lineNo) {
 		@Override
@@ -228,6 +233,33 @@ public abstract class ScriptAttributesParser {
 		}
 	}
 
+	public interface TtyCondition {
+		boolean isActive(Map<String, ?> args);
+	}
+
+	enum ConstTtyCondition implements TtyCondition {
+		ALWAYS {
+			@Override
+			public boolean isActive(Map<String, ?> args) {
+				return true;
+			}
+		},
+	}
+
+	record EqualsTtyCondition(String key, String repr) implements TtyCondition {
+		@Override
+		public boolean isActive(Map<String, ?> args) {
+			return Objects.toString(args.get(key)).equals(repr);
+		}
+	}
+
+	record BoolTtyCondition(String key) implements TtyCondition {
+		@Override
+		public boolean isActive(Map<String, ?> args) {
+			return args.get(key) instanceof Boolean b && b.booleanValue();
+		}
+	}
+
 	protected static String addrToString(InetAddress address) {
 		if (address.isAnyLocalAddress()) {
 			return "127.0.0.1"; // Can't connect to 0.0.0.0 as such. Choose localhost.
@@ -244,7 +276,8 @@ public abstract class ScriptAttributesParser {
 
 	public record ScriptAttributes(String title, String description, List<String> menuPath,
 			String menuGroup, String menuOrder, Icon icon, HelpLocation helpLocation,
-			Map<String, ParameterDescription<?>> parameters, Collection<String> extraTtys) {
+			Map<String, ParameterDescription<?>> parameters, Map<String, TtyCondition> extraTtys,
+			int timeoutMillis) {
 	}
 
 	/**
@@ -302,7 +335,8 @@ public abstract class ScriptAttributesParser {
 	private HelpLocation helpLocation;
 	private final Map<String, UserType<?>> userTypes = new HashMap<>();
 	private final Map<String, ParameterDescription<?>> parameters = new LinkedHashMap<>();
-	private final Set<String> extraTtys = new LinkedHashSet<>();
+	private final Map<String, TtyCondition> extraTtys = new LinkedHashMap<>();
+	private int timeoutMillis = AbstractTraceRmiLaunchOffer.DEFAULT_TIMEOUT_MILLIS;
 
 	/**
 	 * Check if a line should just be ignored, e.g., blank lines, or the "shebang" line on UNIX.
@@ -352,7 +386,8 @@ public abstract class ScriptAttributesParser {
 	/**
 	 * Process a line in the metadata comment block
 	 * 
-	 * @param line the line, excluding any comment delimiters
+	 * @param loc the location, for error reporting
+	 * @param comment the comment, excluding any comment delimiters
 	 */
 	public void parseComment(Location loc, String comment) {
 		if (comment.isBlank()) {
@@ -379,6 +414,7 @@ public abstract class ScriptAttributesParser {
 			case AT_ARG -> parseArg(loc, parts[1], ++argc);
 			case AT_ARGS -> parseArgs(loc, parts[1]);
 			case AT_TTY -> parseTty(loc, parts[1]);
+			case AT_TIMEOUT -> parseTimeout(loc, parts[1]);
 			default -> parseUnrecognized(loc, comment);
 		}
 	}
@@ -531,9 +567,38 @@ public abstract class ScriptAttributesParser {
 		}
 	}
 
-	protected void parseTty(Location loc, String str) {
-		if (!extraTtys.add(str)) {
+	protected void putTty(Location loc, String name, TtyCondition condition) {
+		if (extraTtys.put(name, condition) != null) {
 			Msg.warn(this, "%s: Duplicate %s. Ignored".formatted(loc, AT_TTY));
+		}
+	}
+
+	protected void parseTty(Location loc, String str) {
+		List<String> parts = ShellUtils.parseArgs(str);
+		switch (parts.size()) {
+			case 1:
+				putTty(loc, parts.get(0), ConstTtyCondition.ALWAYS);
+				return;
+			case 3:
+				if ("if".equals(parts.get(1))) {
+					putTty(loc, parts.get(0), new BoolTtyCondition(parts.get(2)));
+					return;
+				}
+			case 5:
+				if ("if".equals(parts.get(1)) && "==".equals(parts.get(3))) {
+					putTty(loc, parts.get(0), new EqualsTtyCondition(parts.get(2), parts.get(4)));
+					return;
+				}
+		}
+		Msg.error(this, MSGPAT_INVALID_TTY_SYNTAX.formatted(loc, AT_TTY));
+	}
+
+	protected void parseTimeout(Location loc, String str) {
+		try {
+			timeoutMillis = Integer.parseInt(str);
+		}
+		catch (NumberFormatException e) {
+			Msg.error(this, MSGPAT_INVALID_TIMEOUT_SYNTAX.formatted(loc, AT_TIMEOUT));
 		}
 	}
 
@@ -560,7 +625,8 @@ public abstract class ScriptAttributesParser {
 		}
 		return new ScriptAttributes(title, getDescription(), List.copyOf(menuPath), menuGroup,
 			menuOrder, new GIcon(iconId), helpLocation,
-			Collections.unmodifiableMap(new LinkedHashMap<>(parameters)), List.copyOf(extraTtys));
+			Collections.unmodifiableMap(new LinkedHashMap<>(parameters)),
+			Collections.unmodifiableMap(new LinkedHashMap<>(extraTtys)), timeoutMillis);
 	}
 
 	private String getDescription() {

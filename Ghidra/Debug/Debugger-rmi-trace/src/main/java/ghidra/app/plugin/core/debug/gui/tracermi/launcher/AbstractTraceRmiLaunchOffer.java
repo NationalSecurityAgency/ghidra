@@ -64,6 +64,7 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 
 	public static final String PREFIX_DBGLAUNCH = "DBGLAUNCH_";
 	public static final String PARAM_DISPLAY_IMAGE = "Image";
+	public static final int DEFAULT_TIMEOUT_MILLIS = 10000;
 
 	protected record PtyTerminalSession(Terminal terminal, Pty pty, PtySession session,
 			Thread waiter) implements TerminalSession {
@@ -149,7 +150,11 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 	}
 
 	protected int getTimeoutMillis() {
-		return 10000;
+		return DEFAULT_TIMEOUT_MILLIS;
+	}
+
+	protected int getConnectionTimeoutMillis() {
+		return getTimeoutMillis();
 	}
 
 	@Override
@@ -550,7 +555,7 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 				launchBackEnd(monitor, sessions, args, acceptor.getAddress());
 				monitor.setMessage("Waiting for connection");
 				monitor.increment();
-				acceptor.setTimeout(getTimeoutMillis());
+				acceptor.setTimeout(getConnectionTimeoutMillis());
 				connection = acceptor.accept();
 				connection.registerTerminals(sessions.values());
 				monitor.setMessage("Waiting for trace");

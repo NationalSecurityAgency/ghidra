@@ -108,8 +108,18 @@ public class DebuggerConsolePlugin extends Plugin implements DebuggerConsoleServ
 	}
 
 	@Override
+	public void log(Icon icon, String message, Throwable error) {
+		provider.log(icon, message, error);
+	}
+
+	@Override
 	public void log(Icon icon, String message, ActionContext context) {
 		provider.log(icon, message, context);
+	}
+
+	@Override
+	public void log(Icon icon, String message, Throwable error, ActionContext context) {
+		provider.log(icon, message, error, context);
 	}
 
 	@Override
