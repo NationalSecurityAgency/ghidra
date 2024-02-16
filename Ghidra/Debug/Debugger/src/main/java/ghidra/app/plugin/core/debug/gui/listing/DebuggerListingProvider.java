@@ -50,6 +50,7 @@ import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.codebrowser.MarkerServiceBackgroundColorModel;
 import ghidra.app.plugin.core.debug.disassemble.CurrentPlatformTraceDisassembleCommand;
 import ghidra.app.plugin.core.debug.disassemble.CurrentPlatformTraceDisassembleCommand.Reqs;
+import ghidra.app.plugin.core.debug.disassemble.DebuggerDisassemblerPlugin;
 import ghidra.app.plugin.core.debug.gui.DebuggerLocationLabel;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.FollowsCurrentThreadAction;
@@ -1207,9 +1208,11 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		if (exists != null) {
 			return;
 		}
-		AddressSpace space = start.getAddressSpace();
-		AddressSet set = new AddressSet(space.getMinAddress(), space.getMaxAddress());
-
+		AddressSetView set = DebuggerDisassemblerPlugin.computeAutoDisassembleAddresses(start,
+			current.getTrace(), current.getViewSnap());
+		if (set == null) {
+			return;
+		}
 		Reqs reqs = Reqs.fromView(tool, view);
 		if (reqs == null) {
 			return;
