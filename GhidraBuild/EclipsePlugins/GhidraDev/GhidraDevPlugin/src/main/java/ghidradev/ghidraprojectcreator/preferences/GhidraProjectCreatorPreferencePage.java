@@ -229,12 +229,21 @@ implements IWorkbenchPreferencePage {
 		}
 		String layoutVersion = applicationProperties.getProperty(
 			ApplicationProperties.APPLICATION_LAYOUT_VERSION_PROPERTY);
-		if (layoutVersion == null || !layoutVersion.equals("1")) {
-			// We can be smarter about this check and what we support later, once the layout version 
-			// actually changes.
+		boolean layoutVersionError = false;
+		try {
+			int ver = Integer.parseInt(layoutVersion);
+			if (ver < 1 || ver > 2) {
+				layoutVersionError = true;
+			}
+		}
+		catch (NumberFormatException e) {
+			layoutVersionError = true;
+		}
+		if (layoutVersionError) {
 			throw new IOException(
-				"Ghidra application layout is not supported.  Please upgrade " +
-					Activator.PLUGIN_ID + " to use this version of Ghidra.");
+				"Ghidra application layout '%s' is not supported.  Please upgrade %s to use this version of Ghidra."
+						.formatted(layoutVersion != null ? layoutVersion : "<null>",
+							Activator.PLUGIN_ID));
 		}
 	}
 }
