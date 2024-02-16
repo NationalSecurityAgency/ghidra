@@ -60,7 +60,7 @@ public abstract class AbstractDebuggerPlatformMapper implements DebuggerPlatform
 	}
 
 	protected boolean isCancelSilently(Address start, long snap) {
-		return trace.getCodeManager().definedUnits().containsAddress(snap, start);
+		return trace.getCodeManager().instructions().getAt(snap, start) != null;
 	}
 
 	protected Collection<DisassemblyInject> getDisassemblyInjections(TraceObject object) {
