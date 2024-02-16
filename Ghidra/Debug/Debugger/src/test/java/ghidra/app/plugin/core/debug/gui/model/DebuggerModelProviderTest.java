@@ -1058,6 +1058,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		try (Transaction tx = tb.startTransaction()) {
 			threads.setAttribute(Lifespan.nowOn(0), "Current", thread0);
 		}
+		waitForDomainObject(tb.trace);
 		waitForTasks();
 
 		assertEquals(11, node.getChildren().size());

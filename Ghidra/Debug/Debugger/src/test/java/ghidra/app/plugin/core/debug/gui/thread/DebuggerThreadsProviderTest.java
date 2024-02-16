@@ -395,6 +395,7 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerTes
 		try (Transaction tx = tb.startTransaction()) {
 			thread1.getObject().removeTree(Lifespan.nowOn(16));
 		}
+		waitForDomainObject(tb.trace);
 		waitForTasks();
 
 		waitForPass(() -> {

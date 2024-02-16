@@ -363,7 +363,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 	@Test
 	public void testActionMapRegions() throws Exception {
-		assertFalse(provider.actionMapRegions.isEnabled());
+		assertDisabled(provider, provider.actionMapRegions);
 
 		createAndOpenTrace();
 		createAndOpenProgramFromTrace();
@@ -375,7 +375,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerTes
 		waitForSwing();
 
 		// Still
-		assertFalse(provider.actionMapRegions.isEnabled());
+		assertDisabled(provider, provider.actionMapRegions);
 
 		addBlocks();
 		try (Transaction tx = program.openTransaction("Change name")) {

@@ -819,7 +819,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
 			String getObject = extractOutSection(out, "---GetObject---");
-			assertEquals("1\tTest.Objects[1]", getObject);
+			assertEquals("%d\tTest.Objects[1]".formatted(object.getKey()), getObject);
 		}
 	}
 

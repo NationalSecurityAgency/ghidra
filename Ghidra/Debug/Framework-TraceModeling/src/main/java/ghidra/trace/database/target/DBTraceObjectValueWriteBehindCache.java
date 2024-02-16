@@ -222,18 +222,17 @@ class DBTraceObjectValueWriteBehindCache {
 	public Stream<DBTraceObjectValueBehind> streamCanonicalParents(DBTraceObject child,
 			Lifespan lifespan) {
 		TraceObjectKeyPath path = child.getCanonicalPath();
-		if (path.isRoot()) {
+		TraceObjectKeyPath parentPath = path.parent();
+		if (parentPath == null) { // child is the root
+			return Stream.of();
+		}
+		DBTraceObject parent = manager.getObjectByCanonicalPath(parentPath);
+		if (parent == null) {
+			// Not inserted yet, or someone deleted the parent object
 			return Stream.of();
 		}
 		String entryKey = path.key();
-		// TODO: Better indexing?
-		return cachedValues.values()
-				.stream()
-				.flatMap(v -> v.entrySet()
-						.stream()
-						.filter(e -> entryKey.equals(e.getKey()))
-						.map(e -> e.getValue()))
-				.flatMap(v -> streamSub(v, lifespan, true));
+		return streamValues(parent, entryKey, lifespan, true);
 	}
 
 	public Stream<DBTraceObjectValueBehind> streamValues(DBTraceObject parent, Lifespan lifespan) {
