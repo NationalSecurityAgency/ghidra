@@ -36,6 +36,31 @@ import ghidra.util.task.TaskMonitor;
  */
 public class TargetActionTask extends Task {
 
+	static class FutureTask extends Task {
+		private final Task delegate;
+		final CompletableFuture<Void> future = new CompletableFuture<>();
+
+		public FutureTask(Task delegate) {
+			super(delegate.getTaskTitle(), delegate.canCancel(), delegate.hasProgress(),
+				delegate.isModal(), delegate.getWaitForTaskCompleted());
+			this.delegate = delegate;
+		}
+
+		@Override
+		public void run(TaskMonitor monitor) throws CancelledException {
+			try {
+				delegate.run(monitor);
+				future.complete(null);
+			}
+			catch (CancelledException e) {
+				future.cancel(false);
+			}
+			catch (Throwable e) {
+				future.completeExceptionally(e);
+			}
+		}
+	}
+
 	/**
 	 * Execute a task
 	 * 
@@ -53,26 +78,9 @@ public class TargetActionTask extends Task {
 		if (progressService != null) {
 			return progressService.execute(task);
 		}
-		CompletableFuture<Void> future = new CompletableFuture<>();
-		tool.execute(
-			new Task(task.getTaskTitle(), task.canCancel(), task.hasProgress(), task.isModal(),
-				task.getWaitForTaskCompleted()) {
-				@Override
-				public void run(TaskMonitor monitor) throws CancelledException {
-					try {
-						task.run(monitor);
-						future.complete(null);
-					}
-					catch (CancelledException e) {
-						future.cancel(false);
-					}
-					catch (Throwable e) {
-						future.completeExceptionally(e);
-					}
-				}
-			});
-		tool.execute(task);
-		return future;
+		FutureTask wrapper = new FutureTask(task);
+		tool.execute(wrapper);
+		return wrapper.future;
 	}
 
 	/**
