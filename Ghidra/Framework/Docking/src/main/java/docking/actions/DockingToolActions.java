@@ -87,7 +87,7 @@ public interface DockingToolActions {
 	public Set<DockingActionIf> getActions(String owner);
 
 	/**
-	 * Returns all actions known to the tool
+	 * Returns all actions known to the tool. 
 	 * @return the actions
 	 */
 	public Set<DockingActionIf> getAllActions();
@@ -103,4 +103,5 @@ public interface DockingToolActions {
 	 * @param placeholder the placeholder containing information related to the action it represents
 	 */
 	public void registerSharedActionPlaceholder(SharedDockingActionPlaceholder placeholder);
+
 }

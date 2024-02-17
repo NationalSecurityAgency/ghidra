@@ -29,9 +29,18 @@ import ghidra.util.Swing;
  */
 public class ShowContextMenuAction extends DockingAction {
 
-	public ShowContextMenuAction(KeyStroke keyStroke) {
-		super("Show Context Menu", DockingWindowManager.DOCKING_WINDOWS_OWNER);
-		setKeyBindingData(new KeyBindingData(keyStroke));
+	public ShowContextMenuAction(KeyStroke keyStroke, boolean isPrimary) {
+		super(isPrimary ? "Show Context Menu" : "Show Context Menu Alternate",
+			DockingWindowManager.DOCKING_WINDOWS_OWNER, isPrimary);
+
+		// Only the primary action will appear in the tool' key binding settings UI.  The primary
+		// action can be managed by the users.  The secondary action is not managed at this time.
+		if (isPrimary) {
+			setKeyBindingData(new KeyBindingData(keyStroke));
+		}
+		else {
+			createSystemKeyBinding(keyStroke);
+		}
 	}
 
 	@Override

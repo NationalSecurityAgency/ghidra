@@ -59,9 +59,12 @@
         the tool options. For example, the following keys cannot be changed:</P>
 
         <UL>
-          <LI><TT><B>F1, Help, Ctrl-F1, F4</B></TT> (this bindings are reserved and cannot be used
-          when assigning key bindings to actions)</LI>
-
+          <LI>System Action Keybindings - System action default key bindings can be changed, with   
+          added restrictions: 1) The binding for a System action cannot be used by any other action, 
+          2) A key stroke bound to a System action cannot be used by another action until that 
+          key stroke is cleared from the System action.   The UI will show a message when these 
+          restrictions are triggered.
+          </LI>
           <LI>Menu Navigation Actions: <TT><B>1-9, Page Up/Down, End, Home</B></TT> (these key
           bindings are usable with a menu or popup menu open and are otherwise available for
           assignment to key bindings).</LI>

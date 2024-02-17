@@ -15,6 +15,8 @@
  */
 package docking.actions;
 
+import static generic.util.action.SystemKeyBindings.*;
+
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
@@ -32,7 +34,6 @@ import org.apache.commons.collections4.map.LazyMap;
 import docking.*;
 import docking.action.*;
 import docking.tool.util.DockingToolConstants;
-import generic.util.action.ReservedKeyBindings;
 import ghidra.framework.options.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
@@ -60,7 +61,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 	private Map<String, SharedStubKeyBindingAction> sharedActionMap = new HashMap<>();
 
 	private ToolOptions keyBindingOptions;
-	private Tool dockingTool;
+	private Tool tool;
 	private KeyBindingsManager keyBindingsManager;
 	private OptionsChangeListener optionChangeListener = (options, optionName, oldValue,
 			newValue) -> updateKeyBindingsFromOptions(options, optionName, (KeyStroke) newValue);
@@ -72,45 +73,49 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 	 * @param actionToGuiHelper the class that takes actions and maps them to GUI widgets
 	 */
 	public ToolActions(Tool tool, ActionToGuiHelper actionToGuiHelper) {
-		this.dockingTool = tool;
+		this.tool = tool;
 		this.actionGuiHelper = actionToGuiHelper;
 		this.keyBindingsManager = new KeyBindingsManager(tool);
 		this.keyBindingOptions = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
 		this.keyBindingOptions.addOptionsChangeListener(optionChangeListener);
 
-		createReservedKeyBindings();
+		createSystemActions();
 		SharedActionRegistry.installSharedActions(tool, this);
 	}
 
-	private void createReservedKeyBindings() {
-		KeyBindingAction keyBindingAction = new KeyBindingAction(this);
-		keyBindingsManager.addReservedAction(keyBindingAction,
-			ReservedKeyBindings.UPDATE_KEY_BINDINGS_KEY);
+	private void createSystemActions() {
 
-		keyBindingsManager.addReservedAction(new HelpAction(false, ReservedKeyBindings.HELP_KEY1));
-		keyBindingsManager.addReservedAction(new HelpAction(false, ReservedKeyBindings.HELP_KEY2));
-		keyBindingsManager
-				.addReservedAction(new HelpAction(true, ReservedKeyBindings.HELP_INFO_KEY));
-		keyBindingsManager.addReservedAction(
-			new ShowContextMenuAction(ReservedKeyBindings.CONTEXT_MENU_KEY1));
-		keyBindingsManager.addReservedAction(
-			new ShowContextMenuAction(ReservedKeyBindings.CONTEXT_MENU_KEY2));
+		addSystemAction(new SetKeyBindingAction(tool, UPDATE_KEY_BINDINGS_KEY));
 
-		keyBindingsManager.addReservedAction(
-			new NextPreviousWindowAction(ReservedKeyBindings.FOCUS_NEXT_WINDOW_KEY, true));
-		keyBindingsManager.addReservedAction(
-			new NextPreviousWindowAction(ReservedKeyBindings.FOCUS_PREVIOUS_WINDOW_KEY, false));
+		addSystemAction(new HelpAction(HELP_KEY1, false));
+		addSystemAction(new HelpAction(HELP_KEY2, true));
+		addSystemAction(new HelpInfoAction(HELP_INFO_KEY));
+		addSystemAction(new ShowContextMenuAction(CONTEXT_MENU_KEY1, true));
+		addSystemAction(new ShowContextMenuAction(CONTEXT_MENU_KEY2, false));
 
-		keyBindingsManager.addReservedAction(
-			new GlobalFocusTraversalAction(ReservedKeyBindings.FOCUS_NEXT_COMPONENT_KEY, true));
-		keyBindingsManager.addReservedAction(
-			new GlobalFocusTraversalAction(ReservedKeyBindings.FOCUS_PREVIOUS_COMPONENT_KEY,
-				false));
+		addSystemAction(new NextPreviousWindowAction(FOCUS_NEXT_WINDOW_KEY, true));
+		addSystemAction(new NextPreviousWindowAction(FOCUS_PREVIOUS_WINDOW_KEY, false));
+
+		addSystemAction(new GlobalFocusTraversalAction(FOCUS_NEXT_COMPONENT_KEY, true));
+		addSystemAction(new GlobalFocusTraversalAction(FOCUS_PREVIOUS_COMPONENT_KEY, false));
 
 		// helpful debugging actions
-		keyBindingsManager.addReservedAction(new ShowFocusInfoAction());
-		keyBindingsManager.addReservedAction(new ShowFocusCycleAction());
-		keyBindingsManager.addReservedAction(new ComponentThemeInspectorAction());
+		addSystemAction(new ShowFocusInfoAction());
+		addSystemAction(new ShowFocusCycleAction());
+		addSystemAction(new ComponentThemeInspectorAction());
+	}
+
+	private void addSystemAction(DockingAction action) {
+
+		// Some System actions support changing the keybinding.  In the future, all System actions
+		// may support this.
+		if (action.getKeyBindingType().isManaged()) {
+			KeyBindingData kbd = action.getKeyBindingData();
+			KeyStroke ks = kbd.getKeyBinding();
+			loadKeyBindingFromOptions(action, ks);
+		}
+
+		keyBindingsManager.addSystemAction(action);
 	}
 
 	public void dispose() {
@@ -170,7 +175,6 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 	}
 
 	private void loadKeyBindingFromOptions(DockingActionIf action, KeyStroke ks) {
-
 		String description = "Keybinding for " + action.getFullName();
 		keyBindingOptions.registerOption(action.getFullName(), OptionType.KEYSTROKE_TYPE, ks, null,
 			description);
@@ -288,6 +292,8 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 
 		result.addAll(sharedActionMap.values());
 
+		result.addAll(keyBindingsManager.getSystemActions());
+
 		return result;
 	}
 
@@ -311,7 +317,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 	 * otherwise the options will be removed because they are noted as not being used.
 	 */
 	public synchronized void restoreKeyBindings() {
-		keyBindingOptions = dockingTool.getOptions(DockingToolConstants.KEY_BINDINGS);
+		keyBindingOptions = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
 
 		Iterator<DockingActionIf> it = getKeyBindingActionsIterator();
 		for (DockingActionIf action : CollectionUtils.asIterable(it)) {
@@ -406,8 +412,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 		}
 
 		DockingActionIf action = (DockingActionIf) evt.getSource();
-		if (!action.getKeyBindingType()
-				.isManaged()) {
+		if (!action.getKeyBindingType().isManaged()) {
 			// this reads unusually, but we need to notify the tool to rebuild its 'Window' menu
 			// in the case that this action is one of the tool's special actions
 			keyBindingsChanged();
@@ -429,7 +434,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 
 	// triggered by a user-initiated action; called by propertyChange()
 	private void keyBindingsChanged() {
-		dockingTool.setConfigChanged(true);
+		tool.setConfigChanged(true);
 		actionGuiHelper.keyBindingsChanged();
 	}
 
@@ -445,6 +450,17 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Checks whether the given key stroke can be used for the given action for restrictions such as
+	 * those for System level actions.
+	 * @param action the action; may be null
+	 * @param ks the key stroke
+	 * @return A null value if valid; a non-null error message if invalid
+	 */
+	public String validateActionKeyBinding(DockingActionIf action, KeyStroke ks) {
+		return keyBindingsManager.validateActionKeyBinding(action, ks);
 	}
 
 	public Action getAction(KeyStroke ks) {

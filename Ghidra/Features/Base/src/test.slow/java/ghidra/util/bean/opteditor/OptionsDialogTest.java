@@ -38,6 +38,7 @@ import docking.action.DockingActionIf;
 import docking.actions.KeyBindingUtils;
 import docking.options.editor.*;
 import docking.tool.ToolConstants;
+import docking.tool.util.DockingToolConstants;
 import docking.widgets.MultiLineLabel;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
@@ -51,6 +52,7 @@ import ghidra.app.plugin.core.console.ConsolePlugin;
 import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.options.ScreenElement;
 import ghidra.framework.main.ConsoleTextPane;
+import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.dialog.KeyBindingsPanel;
@@ -422,47 +424,48 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		String actionName = "Clear Cut";
 		String pluginName = "DataTypeManagerPlugin";
 		KeyStroke defaultKeyStroke = getKeyBinding(actionName);
-		assertOptionsKeyStroke(actionName, pluginName, defaultKeyStroke);
+		assertOptionsKeyStroke(tool, actionName, pluginName, defaultKeyStroke);
 
 		int keyCode = KeyEvent.VK_Q;
 		int modifiers = InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK;
 		KeyStroke newKeyStroke = setKeyBinding(actionName, modifiers, keyCode, 'Q');
 
 		apply();
-		assertOptionsKeyStroke(actionName, pluginName, newKeyStroke);
+		assertOptionsKeyStroke(tool, actionName, pluginName, newKeyStroke);
 
 		restoreDefaults();
 
 		KeyStroke currentBinding = getKeyBinding(actionName);
 		assertEquals("Key binding not restored after a call to restore defautls", defaultKeyStroke,
 			currentBinding);
-		assertOptionsKeyStroke(actionName, pluginName, defaultKeyStroke);
+		assertOptionsKeyStroke(tool, actionName, pluginName, defaultKeyStroke);
 	}
 
 	@Test
 	public void testRestoreDefaultsForFrontEndKeybindings() throws Exception {
 		runSwing(() -> dialog.close());
 
-		setUpDialog(env.getFrontEndTool());
+		FrontEndTool frontEndTool = env.getFrontEndTool();
+		setUpDialog(frontEndTool);
 
 		String actionName = "Archive Project";
 		String pluginName = "ArchivePlugin";
 		KeyStroke defaultKeyStroke = getKeyBinding(actionName);
-		assertOptionsKeyStroke(actionName, pluginName, defaultKeyStroke);
+		assertOptionsKeyStroke(frontEndTool, actionName, pluginName, defaultKeyStroke);
 
 		int keyCode = KeyEvent.VK_Q;
 		int modifiers = InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK;
 		KeyStroke newKeyStroke = setKeyBinding(actionName, modifiers, keyCode, 'Q');
 
 		apply();
-		assertOptionsKeyStroke(actionName, pluginName, newKeyStroke);
+		assertOptionsKeyStroke(frontEndTool, actionName, pluginName, newKeyStroke);
 
 		restoreDefaults();
 
 		KeyStroke currentBinding = getKeyBinding(actionName);
 		assertEquals("Key binding not restored after a call to restore defautls", defaultKeyStroke,
 			currentBinding);
-		assertOptionsKeyStroke(actionName, pluginName, defaultKeyStroke);
+		assertOptionsKeyStroke(frontEndTool, actionName, pluginName, defaultKeyStroke);
 	}
 
 	@Test
@@ -763,12 +766,9 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		return KeyBindingUtils.parseKeyStroke(keyBindingColumnValue);
 	}
 
-	private void assertOptionsKeyStroke(String actionName, String pluginName, KeyStroke value)
-			throws Exception {
-		OptionsEditor editor = seleNodeWithCustomEditor("Key Bindings");
-		KeyBindingsPanel panel = (KeyBindingsPanel) getInstanceField("panel", editor);
-
-		Options options = (Options) getInstanceField("options", panel);
+	private void assertOptionsKeyStroke(PluginTool pluginTool, String actionName, String pluginName,
+			KeyStroke value) throws Exception {
+		Options options = pluginTool.getOptions(DockingToolConstants.KEY_BINDINGS);
 		KeyStroke optionsKeyStroke =
 			options.getKeyStroke(actionName + " (" + pluginName + ")", null);
 		assertEquals("The options keystroke does not match the value in keybinding options table",
@@ -784,6 +784,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		JTextField textField = (JTextField) getInstanceField("ksField", panel);
 		triggerKey(textField, modifiers, keyCode, keyChar);
+		waitForSwing();
 
 		KeyStroke expectedKeyStroke = KeyStroke.getKeyStroke(keyCode, modifiers, false);
 		KeyStroke currentBinding = getKeyBinding(actionName);
