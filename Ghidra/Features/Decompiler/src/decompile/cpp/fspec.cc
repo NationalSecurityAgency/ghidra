@@ -69,6 +69,24 @@ const ParamEntry *ParamEntry::findEntryByStorage(const list<ParamEntry> &entryLi
   return (const ParamEntry *)0;
 }
 
+/// Check previous ParamEntry, if it exists, and compare storage class.
+/// If it is different, this is the first, and its flag gets set.
+/// \param curList is the list of previous ParamEntry
+void ParamEntry::resolveFirst(list<ParamEntry> &curList)
+
+{
+  list<ParamEntry>::const_iterator iter = curList.end();
+  --iter;
+  if (iter == curList.begin()) {
+    flags |= first_storage;
+    return;
+  }
+  --iter;
+  if (type != (*iter).type) {
+    flags |= first_storage;
+  }
+}
+
 /// If the ParamEntry is initialized with a \e join address, cache the join record and
 /// adjust the group and groupsize based on the ParamEntrys being overlapped
 /// \param curList is the current list of ParamEntry
@@ -536,6 +554,7 @@ void ParamEntry::decode(Decoder &decoder,bool normalstack,bool grouped,list<Para
   }
   if (grouped)
     flags |= is_grouped;
+  resolveFirst(curList);
   resolveJoin(curList);
   resolveOverlap(curList);
 }
@@ -583,11 +602,44 @@ ParamListStandard::~ParamListStandard(void)
   }
 }
 
+/// The entry must have a unique group.
+/// If no matching entry is found, the \b end iterator is returned.
+/// \param type is the storage class
+/// \return the first matching iterator
+list<ParamEntry>::const_iterator ParamListStandard::getFirstIter(type_class type) const
+
+{
+  list<ParamEntry>::const_iterator iter;
+  for(iter=entry.begin();iter!=entry.end();++iter) {
+    const ParamEntry &curEntry( *iter );
+    if (curEntry.getType() == type && curEntry.getAllGroups().size() == 1)
+      return iter;
+  }
+  return iter;
+}
+
+/// If the stack entry is not present, null is returned
+/// \return the stack entry or null
+const ParamEntry *ParamListStandard::getStackEntry(void) const
+
+{
+  list<ParamEntry>::const_iterator iter = entry.end();
+  if (iter != entry.begin()) {
+    --iter;		// Stack entry necessarily must be the last entry
+    const ParamEntry &curEntry( *iter );
+    if (!curEntry.isExclusion() && curEntry.getSpace()->getType() == IPTR_SPACEBASE) {
+      return &(*iter);
+    }
+  }
+  return (const ParamEntry *)0;
+}
+
 /// Find the (first) entry containing the given memory range
 /// \param loc is the starting address of the range
 /// \param size is the number of bytes in the range
+/// \param just is \b true if the search enforces a justified match
 /// \return the pointer to the matching ParamEntry or null if no match exists
-const ParamEntry *ParamListStandard::findEntry(const Address &loc,int4 size) const
+const ParamEntry *ParamListStandard::findEntry(const Address &loc,int4 size,bool just) const
 
 {
   int4 index = loc.getSpace()->getIndex();
@@ -602,7 +654,7 @@ const ParamEntry *ParamListStandard::findEntry(const Address &loc,int4 size) con
     const ParamEntry *testEntry = (*res.first).getParamEntry();
     ++res.first;
     if (testEntry->getMinSize() > size) continue;
-    if (testEntry->justifiedContain(loc,size)==0)	// Make sure the range is properly justified in entry
+    if (!just || testEntry->justifiedContain(loc,size)==0)	// Make sure the range is properly justified in entry
       return testEntry;
   }
   return (const ParamEntry *)0;
@@ -779,7 +831,7 @@ void ParamListStandard::buildTrialMap(ParamActive *active) const
 
   for(int4 i=0;i<active->getNumTrials();++i) {
     ParamTrial &paramtrial(active->getTrial(i));
-    const ParamEntry *entrySlot = findEntry(paramtrial.getAddress(),paramtrial.getSize());
+    const ParamEntry *entrySlot = findEntry(paramtrial.getAddress(),paramtrial.getSize(),true);
     // Note: if a trial is "definitely not used" but there is a matching entry,
     // we still include it in the map
     if (entrySlot == (const ParamEntry *)0)
@@ -1241,9 +1293,9 @@ void ParamListStandard::fillinMap(ParamActive *active) const
 bool ParamListStandard::checkJoin(const Address &hiaddr,int4 hisize,const Address &loaddr,int4 losize) const
 
 {
-  const ParamEntry *entryHi = findEntry(hiaddr,hisize);
+  const ParamEntry *entryHi = findEntry(hiaddr,hisize,true);
   if (entryHi == (const ParamEntry *)0) return false;
-  const ParamEntry *entryLo = findEntry(loaddr,losize);
+  const ParamEntry *entryLo = findEntry(loaddr,losize,true);
   if (entryLo == (const ParamEntry *)0) return false;
   if (entryHi->getGroup() == entryLo->getGroup()) {
     if (entryHi->isExclusion()||entryLo->isExclusion()) return false;
@@ -1270,9 +1322,9 @@ bool ParamListStandard::checkSplit(const Address &loc,int4 size,int4 splitpoint)
 {
   Address loc2 = loc + splitpoint;
   int4 size2 = size - splitpoint;
-  const ParamEntry *entryNum = findEntry(loc,splitpoint);
+  const ParamEntry *entryNum = findEntry(loc,splitpoint,true);
   if (entryNum == (const ParamEntry *)0) return false;
-  entryNum = findEntry(loc2,size2);
+  entryNum = findEntry(loc2,size2,true);
   if (entryNum == (const ParamEntry *)0) return false;
   return true;
 }
@@ -1280,13 +1332,13 @@ bool ParamListStandard::checkSplit(const Address &loc,int4 size,int4 splitpoint)
 bool ParamListStandard::possibleParam(const Address &loc,int4 size) const
 
 {
-  return ((const ParamEntry *)0 != findEntry(loc,size));
+  return ((const ParamEntry *)0 != findEntry(loc,size,true));
 }
 
 bool ParamListStandard::possibleParamWithSlot(const Address &loc,int4 size,int4 &slot,int4 &slotsize) const
 
 {
-  const ParamEntry *entryNum = findEntry(loc,size);
+  const ParamEntry *entryNum = findEntry(loc,size,true);
   if (entryNum == (const ParamEntry *)0) return false;
   slot = entryNum->getSlot(loc,0);
   if (entryNum->isExclusion()) {
@@ -1473,7 +1525,7 @@ void ParamListRegister::fillinMap(ParamActive *active) const
   // Mark anything active as used
   for(int4 i=0;i<active->getNumTrials();++i) {
     ParamTrial &paramtrial(active->getTrial(i));
-    const ParamEntry *entrySlot = findEntry(paramtrial.getAddress(),paramtrial.getSize());
+    const ParamEntry *entrySlot = findEntry(paramtrial.getAddress(),paramtrial.getSize(),true);
     if (entrySlot == (const ParamEntry *)0)	// There may be no matching entry (if the model was recovered late)
       paramtrial.markNoUse();
     else {
@@ -1535,10 +1587,22 @@ void ParamListStandardOut::assignMap(const PrototypePieces &proto,TypeFactory &t
   }
 }
 
-void ParamListStandardOut::fillinMap(ParamActive *active) const
+void ParamListStandardOut::initialize(void)
 
 {
-  if (active->getNumTrials() == 0) return; // No trials to check
+  useFillinFallback = true;
+  list<ModelRule>::const_iterator iter;
+  for(iter=modelRules.begin();iter!=modelRules.end();++iter) {
+    if ((*iter).canAffectFillinOutput()) {
+      useFillinFallback = false;
+      break;
+    }
+  }
+}
+
+void ParamListStandardOut::fillinMapFallback(ParamActive *active,bool firstOnly) const
+
+{
   const ParamEntry *bestentry = (const ParamEntry *)0;
   int4 bestcover = 0;
   type_class bestclass = TYPECLASS_PTR;
@@ -1547,6 +1611,9 @@ void ParamListStandardOut::fillinMap(ParamActive *active) const
   list<ParamEntry>::const_iterator iter;
   for(iter=entry.begin();iter!=entry.end();++iter) {
     const ParamEntry *curentry = &(*iter);
+    if (firstOnly && !curentry->isFirstInClass() && curentry->isExclusion() && curentry->getAllGroups().size() == 1) {
+      continue;	// This is not the first entry in the storage class
+    }
     bool putativematch = false;
     for(int4 j=0;j<active->getNumTrials();++j) { // Evaluate all trials in terms of current ParamEntry
       ParamTrial &paramtrial(active->getTrial(j));
@@ -1616,6 +1683,50 @@ void ParamListStandardOut::fillinMap(ParamActive *active) const
   }
 }
 
+void ParamListStandardOut::fillinMap(ParamActive *active) const
+
+{
+  if (active->getNumTrials() == 0) return; // No trials to check
+  if (useFillinFallback) {
+    fillinMapFallback(active,false);
+    return;
+  }
+  for(int4 i=0;i<active->getNumTrials();++i) {
+    ParamTrial &trial(active->getTrial(i));
+    trial.setEntry((const ParamEntry *)0, 0);
+    if (!trial.isActive()) continue;
+    const ParamEntry *entry = findEntry(trial.getAddress(),trial.getSize(),false);
+    if (entry == (const ParamEntry *)0) {
+      trial.markNoUse();
+      continue;
+    }
+    int4 res = entry->justifiedContain(trial.getAddress(),trial.getSize());
+    if ((trial.isRemFormed() || trial.isIndCreateFormed()) && !entry->isFirstInClass()) {
+      trial.markNoUse();
+      continue;
+    }
+    trial.setEntry(entry,res);
+  }
+  active->sortTrials();
+  list<ModelRule>::const_iterator iter;
+  for(iter=modelRules.begin();iter!=modelRules.end();++iter) {
+    if ((*iter).fillinOutputMap(active)) {
+      for(int4 i=0;i<active->getNumTrials();++i) {
+	ParamTrial &trial(active->getTrial(i));
+	if (trial.isActive()) {
+	  trial.markUsed();
+	}
+	else {
+	  trial.markNoUse();
+	  trial.setEntry((const ParamEntry *)0,0);
+	}
+      }
+      return;
+    }
+  }
+  fillinMapFallback(active, true);
+}
+
 bool ParamListStandardOut::possibleParam(const Address &loc,int4 size) const
 
 {
@@ -1625,6 +1736,13 @@ bool ParamListStandardOut::possibleParam(const Address &loc,int4 size) const
       return true;
   }
   return false;
+}
+
+void ParamListStandardOut::decode(Decoder &decoder,vector<EffectRecord> &effectlist,bool normalstack)
+
+{
+  ParamListStandard::decode(decoder,effectlist,normalstack);
+  initialize();
 }
 
 ParamList *ParamListStandardOut::clone(void) const
@@ -3615,6 +3733,8 @@ void FuncProto::setModel(ProtoModel *m)
       flags |= has_thisptr;
     if (m->isConstructor())
       flags |= is_constructor;
+    if (m->isAutoKillByCall())
+      flags |= auto_killbycall;
     model = m;
   }
   else {
@@ -4387,6 +4507,19 @@ void FuncProto::printRaw(const string &funcname,ostream &s) const
     s << "...";
   }
   s << ") extrapop=" << dec << extrapop;
+}
+
+/// This assumes the storage location has already been determined to be contained
+/// in standard return value location.
+/// \return \b true if the location should be considered killed by call
+bool FuncProto::isAutoKillByCall(void) const
+
+{
+  if ((flags & auto_killbycall)!=0)
+    return true;		// The ProtoModel always does killbycall
+  if (isOutputLocked())
+    return true;		// A locked output location is killbycall by definition
+  return false;
 }
 
 /// \brief Encode \b this to a stream as a \<prototype> element.

@@ -199,7 +199,63 @@ bool ParamStoreEnvironment::comparePiece(const VarnodeData &vData,ParameterPiece
 
 TEST(paramstore_x64) {
   ProtoModel *model = theEnviron.getModel("x86:LE:64:default:gcc","__stdcall");
-  ASSERT(theEnviron.test(model,"void func(int4 a,int4 b);","void,EDI,ESI"));
+  ASSERT(theEnviron.test(model,"void func(int4,int4);","void,EDI,ESI"));
+  ASSERT(theEnviron.test(model,"void func(float4,float4);","void,XMM0:4,XMM1:4"));
+  ASSERT(theEnviron.test(model, "void func(int2 a,int4 b,int1 c);", "void,DI,ESI,DX:1"));
+  ASSERT(theEnviron.test(model, "void func(int8,int8);", "void,RDI,RSI"));
+  ASSERT(theEnviron.test(model, "void func(float8,float8);", "void,XMM0:8,XMM1:8"));
+  ASSERT(theEnviron.test(model, "void func(int4,float4,int4,float4);", "void,EDI,XMM0:4,ESI,XMM1:4"));
+  ASSERT(theEnviron.test(model, "void func(float4,int4,float4,int4);", "void,XMM0:4,EDI,XMM1:4,ESI"));
+  ASSERT(theEnviron.test(model, "void func(int4,float8,float8,int4);", "void,EDI,XMM0:8,XMM1:8,ESI"));
+  ASSERT(theEnviron.test(model, "void func(float8,int8,int8,float8);", "void,XMM0:8,RDI,RSI,XMM1:8"));
+  ASSERT(theEnviron.test(model, "void func(float10);", "void,stack8:10"));
+  ASSERT(theEnviron.test(model, "void func(float4,float10,float4);", "void,XMM0:4,stack8:10,XMM1:4"));
+  theEnviron.parseType(model,"struct intfloatpair { int4 a; float4 b;};");
+  ASSERT(theEnviron.test(model, "void func(intfloatpair);", "void,RDI"));
+  theEnviron.parseType(model,"struct longfloatpair { int8 a; float4 b;};");
+  ASSERT(theEnviron.test(model, "void func(int4,longfloatpair);", "void,EDI,join XMM0:8 RSI"));
+  theEnviron.parseType(model,"struct longdoublepair { int8 a; float8 b;};");
+  ASSERT(theEnviron.test(model, "void func(int4,longdoublepair);", "void,EDI,join XMM0:8 RSI"));
+  theEnviron.parseType(model,"struct intdoublepair { int4 a; float8 b;};");
+  ASSERT(theEnviron.test(model, "void func(int4,intdoublepair);", "void,EDI,join XMM0:8 RSI"));
+  theEnviron.parseType(model,"struct floatintpair { float4 a; int4 b;};");
+  ASSERT(theEnviron.test(model, "void func(int4,floatintpair);", "void,EDI,RSI"));
+  theEnviron.parseType(model,"struct doubleintpair { float8 a; int4 b;};");
+  ASSERT(theEnviron.test(model, "void func(int4,doubleintpair);", "void,EDI,join RSI XMM0:8"));
+  theEnviron.parseType(model,"struct intintfloat { int4 a; int4 b; float4 c; };");
+  ASSERT(theEnviron.test(model, "void func(int4,intintfloat);", "void,EDI,join XMM0:4 RSI"));
+  theEnviron.parseType(model,"struct intintfloatfloat { int4 a; int4 b; float4 c; float4 d;};");
+  ASSERT(theEnviron.test(model, "void func(int4,intintfloatfloat);", "void,EDI,join XMM0:8 RSI"));
+  theEnviron.parseType(model,"struct intfloatfloatint { int4 a; float4 b; float4 c; int4 d;};");
+  ASSERT(theEnviron.test(model, "void func(int4,intfloatfloatint);", "void,EDI,join RDX RSI"));
+  theEnviron.parseType(model,"struct intfloatfloat { int4 a; float4 b; float4 c; };");
+  ASSERT(theEnviron.test(model, "void func(int4,intfloatfloat);", "void,EDI,join XMM0:4 RSI"));
+  theEnviron.parseType(model,"struct floatfloatpair { float4 a; float4 b; };");
+  ASSERT(theEnviron.test(model, "void func(int4,floatfloatpair);", "void,EDI,XMM0:8"));
+  theEnviron.parseType(model,"struct doublefloatpair { float8 a; float4 b; };");
+  ASSERT(theEnviron.test(model, "void func(int4,doublefloatpair);", "void,EDI,join XMM1:8 XMM0:8"));
+  theEnviron.parseType(model,"struct floatfloatfloat { float4 a; float4 b; float4 c; };");
+  ASSERT(theEnviron.test(model, "void func(floatfloatfloat,int8);", "void,join XMM1:4 XMM0:8,RDI"));
+  theEnviron.parseType(model,"struct intintintint { int4 a; int4 b; int4 c; int4 d; };");
+  ASSERT(theEnviron.test(model, "void func(intintintint);", "void,join RSI RDI"));
+  ASSERT(theEnviron.test(model, "void func(int4,intintintint);", "void,EDI,join RDX RSI"));
+  theEnviron.parseType(model,"struct intintintintint { int4 a; int4 b; int4 c; int4 d; int4 e;};");
+  ASSERT(theEnviron.test(model, "void func(intintintintint);", "void,stack8:20"));
+  ASSERT(theEnviron.test(model, "void func(float4,float4,float4,float4,float4,float4,float4,float4,longfloatpair);",
+			 "void,XMM0:4,XMM1:4,XMM2:4,XMM3:4,XMM4:4,XMM5:4,XMM6:4,XMM7:4,stack8:16"));
+  ASSERT(theEnviron.test(model, "void func(xunknown4,xunknown8);", "void,EDI,RSI"));
+  ASSERT(theEnviron.test(model, "intintintint func(void);", "join RDX RAX"));
+  ASSERT(theEnviron.test(model, "floatintpair func(void);", "RAX"));
+  ASSERT(theEnviron.test(model, "longfloatpair func(void);", "join XMM0:8 RAX"));
+  ASSERT(theEnviron.test(model, "longdoublepair func(void);", "join XMM0:8 RAX"));
+  ASSERT(theEnviron.test(model, "doubleintpair func(void);", "join RAX XMM0:8"));
+  ASSERT(theEnviron.test(model, "floatfloatfloat func(void);", "join XMM1:4 XMM0:8"));
+  theEnviron.parseType(model, "struct doubledoublepair { float8 a; float8 b; };");
+  ASSERT(theEnviron.test(model, "doubledoublepair func(void);", "join XMM1:8 XMM0:8"));
+  ASSERT(theEnviron.test(model, "floatfloatpair func(void);", "XMM0:8"));
+  ASSERT(theEnviron.test(model, "intintintintint func(void);", "RAX,RDI"));
+  theEnviron.parseType(model, "struct doubleintintint { float8 a; int4 b; int4 c; int4 d; };");
+  ASSERT(theEnviron.test(model, "doubleintintint func(void);", "RAX,RDI"));
 }
 
 TEST(paramstore_aarch64_cdecl) {

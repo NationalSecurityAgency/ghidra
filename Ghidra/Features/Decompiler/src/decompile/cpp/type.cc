@@ -1507,6 +1507,9 @@ void TypeStruct::setFields(const vector<TypeField> &fd,int4 fixedSize,int4 fixed
     size = calcSize;
   alignment = (fixedAlign < 1) ? calcAlign : fixedAlign;
   calcAlignSize();
+  if (fixedSize <= 0) {	// Unless specifically overridden
+    size = alignSize;	// pad out structure to with alignment bytes
+  }
 }
 
 /// Find the proper subfield given an offset. Return the index of that field

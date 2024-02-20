@@ -77,12 +77,13 @@ public class MultiMemberAssign extends AssignAction {
 		int[] tmpStatus = status.clone();
 		ArrayList<Varnode> pieces = new ArrayList<>();
 		ParameterPieces param = new ParameterPieces();
-		ArrayList<DataType> primitives = new ArrayList<>();
-		if (!DatatypeFilter.extractPrimitives(dt, 16, primitives) || primitives.isEmpty()) {
+		PrimitiveExtractor primitives = new PrimitiveExtractor(dt, false, 0, 16);
+		if (!primitives.isValid() || primitives.size() == 0 || primitives.containsUnknown() ||
+			!primitives.isAligned() || primitives.containsHoles()) {
 			return FAIL;
 		}
 		for (int i = 0; i < primitives.size(); ++i) {
-			DataType curType = primitives.get(i);
+			DataType curType = primitives.get(i).dt;
 			if (resource.assignAddressFallback(resourceType, curType, !consumeFromStack, tmpStatus,
 				param) == FAIL) {
 				return FAIL;
