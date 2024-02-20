@@ -77,7 +77,7 @@ public class LabelSymbolApplier extends MsSymbolApplier
 			applyFunction(symbolAddress, label, applicator.getCancelOnlyWrappingMonitor());
 		}
 		else {
-			applicator.createSymbol(symbolAddress, label, true);
+			applicator.createSymbol(symbolAddress, label, false);
 		}
 	}
 
@@ -158,7 +158,7 @@ public class LabelSymbolApplier extends MsSymbolApplier
 	}
 
 	private boolean applyFunction(Address address, String name, TaskMonitor monitor) {
-		applicator.createSymbol(address, name, true);
+		applicator.createSymbol(address, name, false);
 		Function function = applicator.getExistingOrCreateOneByteFunction(address);
 		if (function == null) {
 			return false;

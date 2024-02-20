@@ -55,7 +55,7 @@ public class DataSymbolApplier extends MsSymbolApplier
 		if (!createData(symbol, symbolAddress, typeRecordNumber)) {
 			return;
 		}
-		applicator.createSymbol(symbolAddress, symbol.getName(), true);
+		applicator.createSymbol(symbolAddress, symbol.getName(), false);
 	}
 
 	@Override

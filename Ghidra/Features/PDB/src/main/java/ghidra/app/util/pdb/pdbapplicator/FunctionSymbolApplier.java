@@ -255,7 +255,7 @@ public class FunctionSymbolApplier extends AbstractBlockContextApplier
 		String plateAddition =
 			"PDB: static local for function (" + applicator.getAddress(symbol) + "): " + getName();
 		// TODO: 20220210... consider adding function name as namespace to varName
-		applicator.createSymbol(varAddress, varName, true, plateAddition);
+		applicator.createSymbol(varAddress, varName, false, plateAddition);
 	}
 
 	// Method copied from ApplyStackVariables (ghidra.app.util.bin.format.pdb package)
