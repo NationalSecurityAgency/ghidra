@@ -60,6 +60,11 @@ public class TagFilter extends AncillaryFilter<VTMatch> {
 		initializeTags();
 	}
 
+	@Override
+	protected Filter<VTMatch> createEmptyCopy() {
+		return new TagFilter(controller);
+	}
+
 	private JComponent createComponent() {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createTitledBorder("Tags"));
@@ -93,7 +98,7 @@ public class TagFilter extends AncillaryFilter<VTMatch> {
 	}
 
 	/**
-	 * This differs from {@link #initializeTags()} in that this method will keep any excluded 
+	 * This differs from {@link #initializeTags()} in that this method will keep any excluded
 	 * tags when updating.
 	 */
 	private void reInitializeTags() {
@@ -288,11 +293,11 @@ public class TagFilter extends AncillaryFilter<VTMatch> {
 		Set<String> names = excludedTags.keySet();
 		Set<String> otherNames = otherTagFilter.excludedTags.keySet();
 
-		// 
-		// This filter is a collection of 'things', that are NOT allowed to pass the filter.   
+		//
+		// This filter is a collection of 'things', that are NOT allowed to pass the filter.
 		// We are only a sub-filter if the other filter is a subset of our filter, since we will
-		// be taking the already excluded items and adding more restrictions.  Suppose our filter 
-		// consists of: 'cat', 'dog', 'mouse'.  We would then be a sub-filter if the other 
+		// be taking the already excluded items and adding more restrictions.  Suppose our filter
+		// consists of: 'cat', 'dog', 'mouse'.  We would then be a sub-filter if the other
 		// filter's set consists of: 'cat', 'dog'.
 		//
 		if (names.containsAll(otherNames)) {
@@ -343,10 +348,10 @@ public class TagFilter extends AncillaryFilter<VTMatch> {
 		public void sessionUpdated(DomainObjectChangedEvent ev) {
 			//
 			// Note: we don't trigger a refilter after changes are made.  We assume that if a tag
-			//       is added, then it will not be excluded by default.  If a tag is removed, 
+			//       is added, then it will not be excluded by default.  If a tag is removed,
 			//       then the work to remove it will have cleared any matches using that tag, which
 			//       will trigger an update to the table, which will trigger a refilter.
-			// 
+			//
 
 			for (int i = 0; i < ev.numRecords(); i++) {
 				DomainObjectChangeRecord doRecord = ev.getChangeRecord(i);
