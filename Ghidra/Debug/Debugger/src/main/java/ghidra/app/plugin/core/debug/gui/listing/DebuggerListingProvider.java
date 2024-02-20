@@ -229,6 +229,8 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		public ForListingTrackingTrait() {
 			super(DebuggerListingProvider.this.tool, DebuggerListingProvider.this.plugin,
 				DebuggerListingProvider.this);
+
+			getListingPanel().addIndexMapChangeListener(e -> this.doTrack());
 		}
 
 		@Override
