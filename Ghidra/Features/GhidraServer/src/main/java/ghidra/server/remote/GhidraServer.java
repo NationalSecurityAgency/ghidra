@@ -69,6 +69,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 	private static final String SERIAL_FILTER_FILE = "serial.filter";
 
 	private static final String TLS_SERVER_PROTOCOLS_PROPERTY = "ghidra.tls.server.protocols";
+	private static final String TLS_ENABLED_CIPHERS_PROPERTY = "jdk.tls.server.cipherSuites";
 
 	private static SslRMIServerSocketFactory serverSocketFactory;
 	private static SslRMIClientSocketFactory clientSocketFactory;
@@ -796,7 +797,16 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 			}
 			log.info(
 				"   Anonymous server access: " + (allowAnonymousAccess ? "enabled" : "disabled"));
-
+			
+			String enabledCiphers = System.getProperty(TLS_ENABLED_CIPHERS_PROPERTY);
+			if (enabledCiphers != null) {
+				String[] cipherList = enabledCiphers.split(",");
+				log.info("   Enabled cipher suites:");
+				for (String s : cipherList) {
+					log.info("       " + s);
+				}
+			}
+			
 			serverSocketFactory = new SslRMIServerSocketFactory(null, getEnabledTlsProtocols(),
 				authMode == PKI_LOGIN) {
 				@Override
