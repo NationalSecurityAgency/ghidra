@@ -412,6 +412,16 @@ public abstract class AbstractGhidraHeadedDebuggerTest
 		robot.keyRelease(KeyEvent.VK_ESCAPE);
 	}
 
+	protected static void escapePopupMenu() {
+		waitForPass(noExc(() -> {
+			pressEscape();
+			assertEquals(0, runSwing(() -> {
+				return MenuSelectionManager.defaultManager().getSelectedPath().length;
+			}).intValue());
+		}));
+		waitForSwing();
+	}
+
 	protected static Point getViewportPosition(Component comp) {
 		Component parent = comp.getParent();
 		if (!(parent instanceof JViewport)) {
