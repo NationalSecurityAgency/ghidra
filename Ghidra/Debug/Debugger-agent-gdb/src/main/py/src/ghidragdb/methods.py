@@ -484,7 +484,7 @@ def launch_loader(inferior: sch.Schema('Inferior'),
     ''')
 
 
-@REGISTRY.method(action='launch', display='Land and Run')
+@REGISTRY.method(action='launch', display='Launch and Run')
 def launch_run(inferior: sch.Schema('Inferior'),
                file: ParamDesc(str, display='File'),
                args: ParamDesc(str, display='Arguments')=''):
