@@ -35,7 +35,7 @@ public class NextPreviousWindowAction extends DockingAction {
 			DockingWindowManager.DOCKING_WINDOWS_OWNER);
 
 		this.forward = forward;
-		createReservedKeyBinding(keybinding);
+		createSystemKeyBinding(keybinding);
 		setEnabled(true);
 	}
 

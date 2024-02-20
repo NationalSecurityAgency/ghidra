@@ -17,19 +17,22 @@ package docking.actions;
 
 import java.awt.Component;
 
-import docking.ActionContext;
-import docking.DockingWindowManager;
+import javax.swing.KeyStroke;
+
+import docking.*;
 import docking.action.*;
 import ghidra.util.Msg;
 
-public class KeyBindingAction extends DockingAction {
+public class SetKeyBindingAction extends DockingAction {
 
 	public static String NAME = "Set KeyBinding";
-	private ToolActions toolActions;
+	private Tool tool;
 
-	public KeyBindingAction(ToolActions toolActions) {
+	public SetKeyBindingAction(Tool tool, KeyStroke keyStroke) {
 		super(NAME, DockingWindowManager.DOCKING_WINDOWS_OWNER);
-		this.toolActions = toolActions;
+		this.tool = tool;
+
+		setKeyBindingData(new KeyBindingData(keyStroke));
 
 		// Help actions don't have help
 		DockingWindowManager.getHelpService().excludeFromHelp(this);
@@ -56,7 +59,7 @@ public class KeyBindingAction extends DockingAction {
 			return;
 		}
 
-		KeyEntryDialog d = new KeyEntryDialog(action, toolActions);
+		KeyEntryDialog d = new KeyEntryDialog(tool, action);
 		DockingWindowManager.showDialog(d);
 	}
 
@@ -72,6 +75,7 @@ public class KeyBindingAction extends DockingAction {
 
 			// It is not key binding managed, which means that it may be a shared key binding
 			String actionName = dockingAction.getName();
+			ToolActions toolActions = (ToolActions) tool.getToolActions();
 			DockingActionIf sharedAction = toolActions.getSharedStubKeyBindingAction(actionName);
 			if (sharedAction != null) {
 				return sharedAction;

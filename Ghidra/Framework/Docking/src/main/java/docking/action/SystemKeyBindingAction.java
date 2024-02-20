@@ -19,19 +19,27 @@ import javax.swing.KeyStroke;
 
 import docking.*;
 
-class ReservedKeyBindingAction extends DockingKeyBindingAction {
+/**
+ * An {@link DockingKeyBindingAction} to signal that the given {@link DockingAction} gets priority
+ * over all other non-system actions in the system.
+ */
+public class SystemKeyBindingAction extends DockingKeyBindingAction {
 
-	ReservedKeyBindingAction(Tool tool, DockingActionIf action, KeyStroke keyStroke) {
+	SystemKeyBindingAction(Tool tool, DockingActionIf action, KeyStroke keyStroke) {
 		super(tool, action, keyStroke);
 	}
 
+	public DockingActionIf getAction() {
+		return dockingAction;
+	}
+
 	@Override
-	public boolean isReservedKeybindingPrecedence() {
+	public boolean isSystemKeybindingPrecedence() {
 		return true;
 	}
 
 	@Override
 	public KeyBindingPrecedence getKeyBindingPrecedence() {
-		return KeyBindingPrecedence.ReservedActionsLevel;
+		return KeyBindingPrecedence.SystemActionsLevel;
 	}
 }

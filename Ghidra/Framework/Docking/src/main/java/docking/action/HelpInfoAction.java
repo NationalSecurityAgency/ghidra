@@ -17,14 +17,14 @@ package docking.action;
 
 import javax.swing.KeyStroke;
 
-public class HelpAction extends AbstractHelpAction {
+public class HelpInfoAction extends AbstractHelpAction {
 
-	public HelpAction(KeyStroke keyStroke, boolean isPrimary) {
-		super("Context Help", keyStroke, isPrimary);
+	public HelpInfoAction(KeyStroke keybinding) {
+		super("Help Info", keybinding, true);
 	}
 
 	@Override
 	public boolean isInfo() {
-		return false;
+		return true;
 	}
 }

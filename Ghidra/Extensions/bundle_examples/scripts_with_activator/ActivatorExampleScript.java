@@ -17,7 +17,8 @@
 //@category Examples.Bundle
 
 import docking.ActionContext;
-import docking.action.*;
+import docking.action.DockingAction;
+import docking.action.ToolBarData;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.CodeViewerService;
 import ghidra.app.services.ConsoleService;
@@ -40,7 +41,7 @@ public class ActivatorExampleScript extends GhidraScript {
 		println("The activator will remove the action if this bundle is deactivated,");
 		println("  e.g. if this script is modified and the bundle needs to be reloaded.");
 
-		DockingAction action = new DockingAction("Added by script!!", null, false) {
+		DockingAction action = new DockingAction("Added by script!!", null) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				ConsoleService console = tool.getService(ConsoleService.class);

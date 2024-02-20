@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 import java.awt.Rectangle;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.List;
 import java.util.Set;
 
 import javax.swing.*;
@@ -28,16 +29,17 @@ import javax.swing.table.*;
 import org.junit.*;
 
 import docking.DockingWindowManager;
-import docking.KeyEntryTextField;
-import docking.action.DockingActionIf;
-import docking.tool.util.DockingToolConstants;
+import docking.action.*;
+import docking.actions.KeyBindingUtils;
+import docking.actions.ToolActions;
 import docking.widgets.MultiLineLabel;
 import generic.test.TestUtils;
+import generic.util.action.SystemKeyBindings;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
+import ghidra.app.plugin.core.navigation.GoToAddressLabelPlugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
-import ghidra.util.Msg;
 
 /**
  * Tests for key bindings option panel
@@ -62,6 +64,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		tool = env.getTool();
 
 		tool.addPlugin(CodeBrowserPlugin.class.getName());
+		tool.addPlugin(GoToAddressLabelPlugin.class.getName());
 
 		env.showTool();
 
@@ -123,14 +126,6 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	private boolean ignoreAction(DockingActionIf action) {
-		if (!action.getKeyBindingType().isManaged()) {
-			return true;
-		}
-
-		return action.getFullName().contains("Table Data");
-	}
-
 	@Test
 	public void testEditKeyBinding() throws Exception {
 		// find action that has a keystroke assigned
@@ -139,7 +134,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		selectRowForAction(action);
 		triggerText(keyField, "z");
-		assertEquals("Z", keyField.getText());
+		assertKeyFieldText("Z");
 
 		apply();
 		assertEquals(KeyStroke.getKeyStroke(KeyEvent.VK_Z, 0), getKeyStroke(action));
@@ -157,24 +152,19 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 
 		triggerText(keyField, "z");
-		assertTrue(statusPane.getText().indexOf("No action is selected.") != -1);
+		assertMessage("No action is selected.");
 	}
 
 	@Test
 	public void testSetKeyBinding() throws Exception {
 		// set a key binding on an action that does not have a key binding
-
 		selectRowForAction(action1);
 		triggerActionKey(keyField, InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_X);
-		assertEquals(
-			KeyEntryTextField.parseKeyStroke(
-				KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK)),
-			keyField.getText());
+		KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK);
+		assertKeyFieldText(KeyBindingUtils.parseKeyStroke(ks));
 
 		apply();
-		assertEquals(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK),
-			getKeyStroke(action1));
-
+		assertEquals(ks, getKeyStroke(action1));
 	}
 
 	@Test
@@ -182,57 +172,34 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		selectRowForAction(action1);
 		triggerText(keyField, "x");
-		assertEquals("X", keyField.getText());
+		assertKeyFieldText("X");
 
 		apply();
 		assertEquals(KeyStroke.getKeyStroke(KeyEvent.VK_X, 0), getKeyStroke(action1));
-
-	}
-
-	@Test
-	public void testSetKeyBindingNotAllowed() throws Exception {
-
-		selectRowForAction(action1);
-		triggerActionKey(keyField, 0, KeyEvent.VK_F1);
-		// F1 is the help key and cannot be used
-		assertEquals("", keyField.getText());
-
-		triggerActionKey(keyField, 0, KeyEvent.VK_HELP);
-		assertEquals("", keyField.getText());
-
-		triggerActionKey(keyField, 0, KeyEvent.VK_SHIFT);
-		assertEquals("", keyField.getText());
-
-		triggerActionKey(keyField, 0, KeyEvent.VK_ENTER);
-		assertEquals("", keyField.getText());
 	}
 
 	@Test
 	public void testSetKeyBinding3() throws Exception {
 
 		selectRowForAction(action1);
-		triggerActionKey(keyField, InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_HOME);
-		assertEquals(
-			KeyEntryTextField.parseKeyStroke(
-				KeyStroke.getKeyStroke(KeyEvent.VK_HOME, InputEvent.CTRL_DOWN_MASK)),
-			keyField.getText());
+		typeKeyStroke(InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_HOME);
+		KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_HOME, InputEvent.CTRL_DOWN_MASK);
+		assertKeyFieldText(ks);
 
 		apply();
-		assertEquals(KeyStroke.getKeyStroke(KeyEvent.VK_HOME, InputEvent.CTRL_DOWN_MASK),
-			getKeyStroke(action1));
+		assertEquals(ks, getKeyStroke(action1));
 	}
 
 	@Test
 	public void testSetKeyBinding4() throws Exception {
 
 		selectRowForAction(action1);
-		triggerActionKey(keyField, 0, KeyEvent.VK_PAGE_UP);
-		assertEquals(
-			KeyEntryTextField.parseKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, 0)),
-			keyField.getText());
+		typeKeyStroke(KeyEvent.VK_PAGE_UP);
+		KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, 0);
+		assertKeyFieldText(ks);
 
 		apply();
-		assertEquals(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, 0), getKeyStroke(action1));
+		assertEquals(ks, getKeyStroke(action1));
 	}
 
 	@Test
@@ -259,13 +226,11 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// set the new binding that uses the 'Alt' key
 		selectRowForAction(action1);
-		triggerActionKey(keyField, InputEvent.ALT_DOWN_MASK, keyCode);
-		String keyStrokeString = KeyEntryTextField.parseKeyStroke(
-			KeyStroke.getKeyStroke(keyCode, InputEvent.ALT_DOWN_MASK));
-		assertEquals(keyStrokeString, keyField.getText());
+		typeKeyStroke(InputEvent.ALT_DOWN_MASK, keyCode);
+		KeyStroke ks = KeyStroke.getKeyStroke(keyCode, InputEvent.ALT_DOWN_MASK);
+		assertKeyFieldText(ks);
 		apply();
-		assertEquals(KeyStroke.getKeyStroke(keyCode, InputEvent.ALT_DOWN_MASK),
-			getKeyStroke(action1));
+		assertEquals(ks, getKeyStroke(action1));
 
 		// verify the additional binding for 'Alt Graph'
 		action =
@@ -278,8 +243,8 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		selectRowForAction(action1);
 
-		triggerActionKey(keyField, 0, KeyEvent.VK_ENTER);
-		assertEquals("", keyField.getText());
+		typeKeyStroke(KeyEvent.VK_ENTER);
+		assertNoKeyStrokeText();
 
 		apply();
 		assertNull(getKeyStroke(action1));
@@ -289,8 +254,8 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testClearKeyBinding2() throws Exception {
 
 		selectRowForAction(action1);
-		triggerText(keyField, "\b");
-		assertEquals("", keyField.getText());
+		typeBackspace();
+		assertNoKeyStrokeText();
 
 		apply();
 		assertNull(getKeyStroke(action1));
@@ -302,31 +267,36 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		// verify that a list of collisions show up
 
 		selectRowForAction(action1);
-		triggerActionKey(keyField, 0, KeyEvent.VK_OPEN_BRACKET);
+		typeKeyStroke(KeyEvent.VK_OPEN_BRACKET);
 		apply();
 
 		// set same binding on a different action, which will trigger the collisions list
 		selectRowForAction(action2);
-		triggerActionKey(keyField, 0, KeyEvent.VK_OPEN_BRACKET);
+		typeKeyStroke(KeyEvent.VK_OPEN_BRACKET);
 
 		MultiLineLabel label = (MultiLineLabel) findComponentByName(panel, "CollisionLabel");
 
 		String msg = label.getLabel();
 		String[] lines = msg.split("\n");
 		assertEquals(3, lines.length);
-		assertTrue(lines[1].contains(action1.getName()));
-		assertTrue(lines[2].contains(action2.getName()));
+
+		boolean success = msg.contains(action1.getName()) && msg.contains(action2.getName());
+
+		assertTrue("In-use action message incorrect.\n\tIt should contain these 2 actions:\n\t\t" +
+			action1.getName() + "\n\t\t" + action2.getName() + ".\nActual message:\n" +
+			msg + "\n", success);
 	}
 
 	@Test
 	public void testSetReservedKeybinding() throws Exception {
 		// try to set a reserved keybinding
-		KeyStroke reservedKeystroke = KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0);
+		KeyStroke reservedKeystroke = SystemKeyBindings.UPDATE_KEY_BINDINGS_KEY; // F4
 
 		selectRowForAction(action1);
-		triggerActionKey(keyField, 0, reservedKeystroke.getKeyCode());
+		typeKeyStroke(reservedKeystroke);
 
-		assertEquals("", keyField.getText());
+		assertNoKeyStrokeText();
+		assertMessage("F4 in use by System action 'Set KeyBinding'");
 
 		apply();
 		assertEquals(null, getKeyStroke(action1));
@@ -336,8 +306,8 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		selectRowForAction(action1);
 
 		KeyStroke validKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK);
-		triggerActionKey(keyField, InputEvent.CTRL_DOWN_MASK, validKeyStroke.getKeyCode());
-		assertEquals(KeyEntryTextField.parseKeyStroke(validKeyStroke), keyField.getText());
+		typeKeyStroke(validKeyStroke);
+		assertKeyFieldText(validKeyStroke);
 
 		apply();
 		assertEquals(validKeyStroke, getKeyStroke(action1));
@@ -345,21 +315,171 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		// try again to set a reserved binding
 		setUpDialog();
 		selectRowForAction(action1);
-
 		assertEquals(validKeyStroke, getKeyStroke(action1));
 
-		String originalText = keyField.getText();
-		triggerActionKey(keyField, 0, reservedKeystroke.getKeyCode());
-
-		assertEquals(originalText, keyField.getText());
+		typeKeyStroke(reservedKeystroke.getKeyCode());
+		assertNoKeyStrokeText();
+		assertMessage("F4 in use by System action 'Set KeyBinding'");
 
 		apply();
 		assertEquals(validKeyStroke, getKeyStroke(action1));
 	}
 
+	@Test
+	public void testSetKeyBindingOnSystemAction() throws Exception {
+		//
+		// Test that users can change the keybinding for a System action.  The new binding cannot
+		// be in use by any other action.
+		//
+		DockingActionIf goToAction = getAction(tool, "Go To Address/Label"); // arbitrary plugin action
+		KeyStroke goToKs = goToAction.getKeyBinding();
+		assertNotNull(goToKs);
+
+		DockingActionIf systemAction = getAction("Show Context Menu"); // arbitrary system action
+		KeyStroke systemKs = systemAction.getKeyBinding();
+		assertNotNull(systemKs);
+		selectRowForAction(systemAction);
+
+		typeKeyStroke(goToKs);
+		assertNoKeyStrokeText();
+		assertMessage("System action cannot be set to in-use key stroke");
+
+		apply();
+		assertEquals(systemKs, getKeyStroke(systemAction)); // unchanged
+
+		// clear the in-use binding and then try again
+		clearKeyBinding(goToKs);
+
+		setUpDialog();
+		selectRowForAction(systemAction);
+
+		typeKeyStroke(goToKs);
+		assertKeyFieldText("G");
+
+		apply();
+		assertEquals(goToKs, getKeyStroke(systemAction));
+	}
+
+	@Test
+	public void testSetKeybindingUsingSystemDefaultBinding_InUse() throws Exception {
+		//
+		// Test that users can change the keybinding for a non-System action to use a pre-defined
+		// System key stroke only if the binding is not in-use by a System action. 
+		//
+		// This test will clear the system key binding in the UI by using the backspace key.
+		// Note: The 'Apply' button must be pressed before the system key stroke can be reused.
+		//
+
+		DockingActionIf systemAction = getAction("Show Context Menu"); // arbitrary system action
+		KeyStroke systemKs = systemAction.getKeyBinding();
+		String systemKsText = KeyBindingUtils.parseKeyStroke(systemKs);
+		assertEquals(SystemKeyBindings.CONTEXT_MENU_KEY1, systemKs);
+		assertNotNull(systemKs);
+
+		DockingActionIf goToAction = getAction(tool, "Go To Address/Label"); // arbitrary plugin action
+		KeyStroke goToKs = goToAction.getKeyBinding();
+		assertNotNull(goToKs);
+
+		setUpDialog();
+
+		selectRowForAction(action1);
+		typeKeyStroke(systemKs);
+		assertNoKeyStrokeText();
+		assertMessage(systemKsText + " in use by System action 'Show Context Menu'");
+
+		selectRowForAction(systemAction);
+		typeBackspace();
+		apply();
+		assertEquals(null, getKeyStroke(systemAction));
+
+		selectRowForAction(action1);
+		typeKeyStroke(systemKs);
+		assertKeyFieldText(systemKsText);
+		assertNoErrorMessage();
+	}
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================
+
+	private boolean ignoreAction(DockingActionIf action) {
+		if (!action.getKeyBindingType().isManaged()) {
+			return true;
+		}
+
+		return action.getFullName().contains("Table Data");
+	}
+
+	private void assertNoKeyStrokeText() {
+		assertEquals("", keyField.getText());
+	}
+
+	private void assertKeyFieldText(KeyStroke ks) {
+		assertKeyFieldText(KeyBindingUtils.parseKeyStroke(ks));
+	}
+
+	private void assertKeyFieldText(String s) {
+		assertEquals(s, runSwing(() -> keyField.getText()));
+	}
+
+	private void assertNoErrorMessage() {
+		assertMessage("");
+	}
+
+	private void typeBackspace() {
+		triggerBackspaceKey(keyField);
+		waitForSwing();
+	}
+
+	private void typeKeyStroke(KeyStroke ks) {
+		triggerKey(keyField, ks);
+		waitForSwing();
+	}
+
+	private void typeKeyStroke(int keyCode) {
+		typeKeyStroke(0, keyCode);
+	}
+
+	private void typeKeyStroke(int modifiers, int keyCode) {
+		triggerKey(keyField, modifiers, keyCode, KeyEvent.CHAR_UNDEFINED);
+		waitForSwing();
+	}
+
+	private void clearKeyBinding(KeyStroke ks) {
+
+		ToolActions toolActions = (ToolActions) tool.getToolActions();
+		Action action = toolActions.getAction(ks);
+		if (action instanceof MultipleKeyAction multiAction) {
+			List<DockingActionIf> actions = multiAction.getActions();
+			for (DockingActionIf dockingAction : actions) {
+				runSwing(() -> dockingAction.setKeyBindingData(null));
+			}
+		}
+		else if (action instanceof SystemKeyBindingAction systemAction) {
+			DockingActionIf dockingAction = systemAction.getAction();
+			runSwing(() -> dockingAction.setKeyBindingData(null));
+		}
+	}
+
+	private DockingActionIf getAction(String name) {
+
+		Set<DockingActionIf> actions = tool.getAllActions();
+		for (DockingActionIf action : actions) {
+			if (action.getName().equals(name)) {
+				return action;
+			}
+		}
+
+		fail("Unable to find System action '%s'".formatted(name));
+		return null;
+	}
+
+	private void assertMessage(String text) {
+		String kbStatusMessage = runSwing(panel::getStatusText);
+		if (!kbStatusMessage.contains(text)) {
+			fail("Expected message: " + text + ".  Found message: " + kbStatusMessage);
+		}
+	}
 
 	private void apply() {
 		runSwing(() -> panel.apply());
@@ -374,7 +494,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		Set<DockingActionIf> list = tool.getAllActions();
 		for (DockingActionIf action : list) {
 			KeyStroke ks = action.getKeyBinding();
-			if (ignoreAction(action) && ks != null &&
+			if (!ignoreAction(action) && ks != null &&
 				ks != KeyStroke.getKeyStroke(KeyEvent.VK_Z, 0)) {
 				return action;
 			}
@@ -390,7 +510,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 			if (actionName.equals(model.getValueAt(i, 0))) {
 				if (ks != null) {
 					String ksStr = (String) model.getValueAt(i, 1);
-					return ksStr.equals(KeyEntryTextField.parseKeyStroke(ks));
+					return ksStr.equals(KeyBindingUtils.parseKeyStroke(ks));
 				}
 				return true;
 			}
@@ -398,24 +518,22 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		return false;
 	}
 
-	private void selectRowForAction(DockingActionIf action) throws Exception {
+	private void selectRowForAction(DockingActionIf action) {
 		String actionName = action.getName();
-
-		Msg.debug(this, "Keybinding Action: " + action.getFullName());
 		for (int i = 0; i < model.getRowCount(); i++) {
 			if (actionName.equals(model.getValueAt(i, 0))) {
-				final int idx = i;
-
-				Msg.debug(this, "\tselection row for action: " + i);
+				int idx = i;
 				runSwing(() -> {
 					table.setRowSelectionInterval(idx, idx);
 					Rectangle rect = table.getCellRect(idx, idx, true);
 					table.scrollRectToVisible(rect);
 				});
+
+				waitForSwing();
 				return;
 			}
 		}
-		waitForSwing();
+		fail("Could not find action to select: " + action);
 	}
 
 	private KeyStroke getKeyStroke(DockingActionIf action) {
@@ -423,8 +541,15 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void setUpDialog() throws Exception {
+
+		if (panel != null) {
+			runSwing(() -> {
+				dialog.setVisible(false);
+			});
+		}
+
 		runSwing(() -> {
-			panel = new KeyBindingsPanel(tool, tool.getOptions(DockingToolConstants.KEY_BINDINGS));
+			panel = new KeyBindingsPanel(tool);
 			panel.setOptionsPropertyChangeListener(evt -> {
 				// stub
 			});
@@ -439,6 +564,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		keyField = (JTextField) getInstanceField("ksField", panel);
 		statusPane = findComponent(panel, JTextPane.class);
 		model = table.getModel();
+		waitForSwing();
 	}
 
 	// find 2 actions that do not have key bindings so that we can add and change the values

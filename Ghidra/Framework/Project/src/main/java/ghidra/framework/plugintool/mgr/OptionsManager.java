@@ -271,7 +271,7 @@ public class OptionsManager implements OptionsService, OptionsChangeListener {
 		private KeyBindingsPanel panel;
 
 		KeyBindingOptionsEditor() {
-			panel = new KeyBindingsPanel(tool, getOptions(DockingToolConstants.KEY_BINDINGS));
+			panel = new KeyBindingsPanel(tool);
 		}
 
 		@Override
