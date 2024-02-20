@@ -303,7 +303,7 @@ public interface DebuggerTraceManagerService {
 	 * 
 	 * <p>
 	 * If asynchronous notification is needed, use
-	 * {@link #activateAndNotify(DebuggerCoordinates, boolean)}.
+	 * {@link #activateAndNotify(DebuggerCoordinates, ActivationCause)}.
 	 * 
 	 * @param coordinates the desired coordinates
 	 * @param cause the cause of activation
@@ -483,34 +483,6 @@ public interface DebuggerTraceManagerService {
 	default void activateObject(TraceObject object) {
 		activate(resolveObject(object));
 	}
-
-	/**
-	 * Control whether trace activation is synchronized with debugger activation
-	 * 
-	 * @param enabled true to synchronize, false otherwise
-	 */
-	void setSynchronizeActive(boolean enabled);
-
-	/**
-	 * Check whether trace activation is synchronized with debugger activation
-	 * 
-	 * @return true if synchronized, false otherwise
-	 */
-	boolean isSynchronizeActive();
-
-	/**
-	 * Add a listener for changes to activation synchronization enablement
-	 * 
-	 * @param listener the listener to receive change notifications
-	 */
-	void addSynchronizeActiveChangeListener(BooleanChangeAdapter listener);
-
-	/**
-	 * Remove a listener for changes to activation synchronization enablement
-	 * 
-	 * @param listener the listener receiving change notifications
-	 */
-	void removeSynchronizeActiveChangeListener(BooleanChangeAdapter listener);
 
 	/**
 	 * Control whether traces should be saved by default

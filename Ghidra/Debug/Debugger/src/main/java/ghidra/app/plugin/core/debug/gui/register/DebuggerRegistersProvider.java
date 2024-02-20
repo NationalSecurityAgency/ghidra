@@ -480,6 +480,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	@AutoServiceConsumed
 	private DebuggerControlService controlService;
 	@AutoServiceConsumed
+	private DebuggerConsoleService consoleService;
+	@AutoServiceConsumed
 	private MarkerService markerService; // TODO: Mark address types (separate plugin?)
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
@@ -847,15 +849,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		CompletableFuture<Void> future = editor.setRegister(rv);
 		future.exceptionally(ex -> {
 			ex = AsyncUtils.unwrapThrowable(ex);
-			if (ex instanceof DebuggerModelAccessException) {
-				Msg.error(this, "Could not write target register", ex);
-				plugin.getTool()
-						.setStatusInfo("Could not write target register: " + ex.getMessage());
-			}
-			else {
-				Msg.showError(this, getComponent(), "Edit Register",
-					"Could not write target register", ex);
-			}
+			reportError("Edit Register", "Could not write target register", ex);
 			return null;
 		});
 		return;
@@ -1278,9 +1272,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			current.getThread(), current.getFrame(), registers);
 		return future.exceptionally(ex -> {
 			ex = AsyncUtils.unwrapThrowable(ex);
-			String msg = "Could not read target registers for selected thread: " + ex.getMessage();
-			Msg.info(this, msg);
-			plugin.getTool().setStatusInfo(msg);
+			reportError(null, "Could not read target registers for selected thread", ex);
 			return ExceptionUtils.rethrow(ex);
 		}).thenApply(__ -> null);
 	}
@@ -1300,5 +1292,18 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	public DebuggerCoordinates getCurrent() {
 		return current;
+	}
+
+	private void reportError(String title, String message, Throwable ex) {
+		plugin.getTool().setStatusInfo(message + ": " + ex.getMessage());
+		if (title != null && !(ex instanceof DebuggerModelAccessException)) {
+			Msg.showError(this, getComponent(), title, message, ex);
+		}
+		else if (consoleService != null) {
+			consoleService.log(DebuggerResources.ICON_LOG_ERROR, message, ex);
+		}
+		else {
+			Msg.error(this, message, ex);
+		}
 	}
 }
