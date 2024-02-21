@@ -1164,7 +1164,7 @@ public interface TargetObjectSchema {
 	 * {@link TargetStackFrame}, and the frame level (index) must precede it.
 	 * 
 	 * @param frameLevel the frame level. May be ignored if not applicable
-	 * @path the path of the seed object relative to the root
+	 * @param path the path of the seed object relative to the root
 	 * @return the predicates where the register container should be found, possibly empty
 	 */
 	default PathPredicates searchForRegisterContainer(int frameLevel, List<String> path) {
