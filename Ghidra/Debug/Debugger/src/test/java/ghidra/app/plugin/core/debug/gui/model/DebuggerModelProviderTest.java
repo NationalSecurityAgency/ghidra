@@ -25,8 +25,8 @@ import org.jdom.JDOMException;
 import org.junit.*;
 
 import db.Transaction;
-import docking.widgets.table.DynamicTableColumn;
-import docking.widgets.table.GDynamicColumnTableModel;
+import docking.widgets.table.*;
+import docking.widgets.table.ColumnSortState.SortDirection;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
@@ -36,8 +36,7 @@ import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.PrimitiveRow;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTreeModel.AbstractNode;
 import ghidra.app.plugin.core.debug.gui.model.PathTableModel.PathRow;
-import ghidra.app.plugin.core.debug.gui.model.columns.TraceValueLifePlotColumn;
-import ghidra.app.plugin.core.debug.gui.model.columns.TraceValueValColumn;
+import ghidra.app.plugin.core.debug.gui.model.columns.*;
 import ghidra.dbg.target.TargetEventScope;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.SchemaContext;
@@ -365,9 +364,17 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		modelProvider.setPath(TraceObjectKeyPath.parse("Processes[0].Handles"));
 		waitForTasks();
 
+		int keyColIndex =
+			waitForValue(() -> findColumnOfClass(modelProvider.elementsTablePanel.tableModel,
+				TraceValueKeyColumn.class));
 		int valColIndex =
 			waitForValue(() -> findColumnOfClass(modelProvider.elementsTablePanel.tableModel,
 				TraceValueValColumn.class));
+
+		TableSortStateEditor sortEditor = new TableSortStateEditor();
+		sortEditor.addSortedColumn(keyColIndex, SortDirection.ASCENDING);
+		modelProvider.elementsTablePanel.tableModel
+				.setTableSortState(sortEditor.createTableSortState());
 
 		waitForPass(() -> {
 			for (int i = 0; i < 10; i++) {

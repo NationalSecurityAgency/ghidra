@@ -469,6 +469,15 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerTest
 
 		traceManager.activateSnap(traceManager.getCurrentSnap() - 1);
 		waitForSwing();
+		assertEquals(
+			"Cannot navigate time in Control Target mode. Switch to Trace or Emulate mode first.",
+			tool.getStatusInfo());
+		assertEquals(recorder.getSnap(), traceManager.getCurrentSnap());
+
+		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
+		waitForSwing();
+		traceManager.activateSnap(traceManager.getCurrentSnap() - 1);
+		waitForSwing();
 		assertEquals(ControlMode.RW_EMULATOR, controlService.getCurrentMode(tb.trace));
 
 		controlService.setCurrentMode(tb.trace, ControlMode.RW_TARGET);

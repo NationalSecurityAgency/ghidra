@@ -22,9 +22,9 @@ import java.util.concurrent.*;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.AbstractDebuggerPlugin;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
-import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
-import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
+import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.services.*;
+import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.debug.api.control.ControlMode;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.*;
@@ -46,6 +46,7 @@ import ghidra.util.datastruct.ListenerSet;
 	status = PluginStatus.RELEASED,
 	eventsConsumed = {
 		TraceOpenedPluginEvent.class,
+		TraceActivatedPluginEvent.class,
 		TraceClosedPluginEvent.class,
 	},
 	servicesRequired = {
@@ -262,6 +263,29 @@ public class DebuggerControlServicePlugin extends AbstractDebuggerPlugin
 		return new FollowsViewStateEditor(view);
 	}
 
+	protected void coordinatesActivated(DebuggerCoordinates coordinates, ActivationCause cause) {
+		if (cause != ActivationCause.USER) {
+			return;
+		}
+		Trace trace = coordinates.getTrace();
+		if (trace == null) {
+			return;
+		}
+		ControlMode oldMode;
+		ControlMode newMode;
+		synchronized (currentModes) {
+			oldMode = currentModes.getOrDefault(trace, ControlMode.DEFAULT);
+			newMode = oldMode.modeOnChange(coordinates);
+			if (newMode != oldMode) {
+				currentModes.put(trace, newMode);
+			}
+		}
+		if (newMode != oldMode) {
+			listeners.invoke().modeChanged(trace, newMode);
+			tool.contextChanged(null);
+		}
+	}
+
 	protected void installMemoryEditor(TraceProgramView view) {
 		TraceProgramViewMemory memory = view.getMemory();
 		if (memory.getLiveMemoryHandler() != null) {
@@ -321,6 +345,9 @@ public class DebuggerControlServicePlugin extends AbstractDebuggerPlugin
 		super.processEvent(event);
 		if (event instanceof TraceOpenedPluginEvent ev) {
 			installAllMemoryEditors(ev.getTrace());
+		}
+		else if (event instanceof TraceActivatedPluginEvent ev) {
+			coordinatesActivated(ev.getActiveCoordinates(), ev.getCause());
 		}
 		else if (event instanceof TraceClosedPluginEvent ev) {
 			uninstallAllMemoryEditors(ev.getTrace());
