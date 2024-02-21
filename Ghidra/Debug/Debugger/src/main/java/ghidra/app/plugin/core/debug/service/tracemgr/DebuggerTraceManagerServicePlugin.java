@@ -568,7 +568,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			}
 		}
 		newCurrent = validateCoordiantes(newCurrent, cause);
-		if (!doSetCurrent(newCurrent)) {
+		if (newCurrent == null || !doSetCurrent(newCurrent)) {
 			return null;
 		}
 		return newCurrent;

@@ -94,6 +94,11 @@ public enum ControlMode {
 		public boolean isSelectable(DebuggerCoordinates coordinates) {
 			return coordinates.isAlive();
 		}
+
+		@Override
+		public ControlMode getAlternative(DebuggerCoordinates coordinates) {
+			return RW_EMULATOR;
+		}
 	},
 	/**
 	 * Control actions, breakpoint commands, and state edits are all directed to the target.
@@ -149,6 +154,11 @@ public enum ControlMode {
 		@Override
 		public boolean isSelectable(DebuggerCoordinates coordinates) {
 			return coordinates.isAlive();
+		}
+
+		@Override
+		public ControlMode getAlternative(DebuggerCoordinates coordinates) {
+			return RW_EMULATOR;
 		}
 	},
 	/**
@@ -393,8 +403,9 @@ public enum ControlMode {
 				"Cannot navigate time in %s mode. Switch to Trace or Emulate mode first."
 						.formatted(name),
 				true);
+			return null;
 		}
-		return coordinates.snap(target.getSnap());
+		return coordinates;
 	}
 
 	/**
@@ -448,6 +459,37 @@ public enum ControlMode {
 	 */
 	public boolean isSelectable(DebuggerCoordinates coordinates) {
 		return true;
+	}
+
+	/**
+	 * If the mode can no longer be selected for new coordinates, get the new mode
+	 * 
+	 * <p>
+	 * For example, if a target terminates while the mode is {@link #RO_TARGET}, this specifies the
+	 * new mode.
+	 * 
+	 * @param coordinates the new coordinates
+	 * @return the new mode
+	 */
+	public ControlMode getAlternative(DebuggerCoordinates coordinates) {
+		throw new AssertionError("INTERNAL: Non-selectable mode must provide alternative");
+	}
+
+	/**
+	 * Find the new mode (or same) mode when activating the given coordinates
+	 * 
+	 * <p>
+	 * The default is implemented using {@link #isSelectable(DebuggerCoordinates)} followed by
+	 * {@link #getAlternative(DebuggerCoordinates)}.
+	 * 
+	 * @param coordinates the new coordinates
+	 * @return the mode
+	 */
+	public ControlMode modeOnChange(DebuggerCoordinates coordinates) {
+		if (isSelectable(coordinates)) {
+			return this;
+		}
+		return getAlternative(coordinates);
 	}
 
 	/**
