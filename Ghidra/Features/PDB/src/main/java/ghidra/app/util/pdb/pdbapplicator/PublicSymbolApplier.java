@@ -65,7 +65,7 @@ public class PublicSymbolApplier extends MsSymbolApplier implements DirectSymbol
 			// Note: there might be issues of thunk functions getting the same mangled name
 			// as thunked functions, which violates the thesis of their being unique.
 			// TODO: investigate this.
-			applicator.createSymbol(symbolAddress, name, true);
+			applicator.createSymbol(symbolAddress, name, false);
 
 			Program program = applicator.getProgram();
 			if (GuidUtil.isGuidLabel(program, symbolAddress, name)) {
