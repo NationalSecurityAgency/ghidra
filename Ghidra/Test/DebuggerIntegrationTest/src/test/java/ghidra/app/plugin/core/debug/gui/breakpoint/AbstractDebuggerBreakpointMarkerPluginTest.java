@@ -355,11 +355,11 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 		}));
 		escapePopupMenu();
 
-		lb.disableForProgram();
-		waitForDomainObject(program);
-		waitForPass(
-			() -> assertEquals(State.INCONSISTENT_DISABLED,
-				lb.computeStateForProgram(program)));
+		waitForPass(() -> {
+			lb.disableForProgram();
+			waitForDomainObject(program);
+			assertEquals(State.INCONSISTENT_DISABLED, lb.computeStateForProgram(program));
+		});
 
 		waitForPass(noExc(() -> {
 			clickListing(codeBrowserPlugin.getListingPanel(), addr(program, 0x00400123),
@@ -387,10 +387,11 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 		}));
 		escapePopupMenu();
 
-		lb.enableForProgram();
-		waitForDomainObject(program);
-		waitForPass(
-			() -> assertEquals(State.INCONSISTENT_ENABLED, lb.computeStateForProgram(program)));
+		waitForPass(() -> {
+			lb.enableForProgram();
+			waitForDomainObject(program);
+			assertEquals(State.INCONSISTENT_ENABLED, lb.computeStateForProgram(program));
+		});
 
 		waitForPass(noExc(() -> {
 			clickListing(codeBrowserPlugin.getListingPanel(), addr(program, 0x00400123),
@@ -424,10 +425,11 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 		}));
 		escapePopupMenu();
 
-		lb.disableForProgram(); // Adds "enable", which will only affect bookmark
-		waitForDomainObject(program);
-		waitForPass(
-			() -> assertEquals(State.INCONSISTENT_ENABLED, lb.computeStateForTrace(trace)));
+		waitForPass(() -> {
+			lb.disableForProgram(); // Adds "enable", which will only affect bookmark
+			waitForDomainObject(program);
+			assertEquals(State.INCONSISTENT_ENABLED, lb.computeStateForTrace(trace));
+		});
 
 		waitForPass(noExc(() -> {
 			clickListing(listingPlugin.getListingPanel(), addr(trace, 0x55550123),
@@ -455,10 +457,11 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 		}));
 		escapePopupMenu();
 
-		lb.enableForProgram(); // This time, adds "disable", which will only affect bookmark
-		waitForDomainObject(program);
-		waitForPass(
-			() -> assertEquals(State.INCONSISTENT_DISABLED, lb.computeStateForTrace(trace)));
+		waitForPass(() -> {
+			lb.enableForProgram(); // This time, adds "disable", which will only affect bookmark
+			waitForDomainObject(program);
+			assertEquals(State.INCONSISTENT_DISABLED, lb.computeStateForTrace(trace));
+		});
 
 		waitForPass(noExc(() -> {
 			clickListing(listingPlugin.getListingPanel(), addr(trace, 0x55550123),
