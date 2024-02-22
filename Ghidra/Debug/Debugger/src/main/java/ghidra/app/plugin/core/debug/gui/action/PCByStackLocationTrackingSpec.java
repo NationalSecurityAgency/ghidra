@@ -73,7 +73,14 @@ public enum PCByStackLocationTrackingSpec implements LocationTrackingSpec, Locat
 			return null;
 		}
 		long snap = coordinates.getSnap();
-		TraceStack stack = trace.getStackManager().getLatestStack(thread, snap);
+		TraceStack stack;
+		try {
+			stack = trace.getStackManager().getLatestStack(thread, snap);
+		}
+		catch (IllegalStateException e) {
+			// Schema does not specify a stack
+			return null;
+		}
 		if (stack == null) {
 			return null;
 		}
