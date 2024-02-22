@@ -46,6 +46,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.reloc.RelocationTable;
 import ghidra.program.model.symbol.*;
@@ -671,6 +672,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 				int rawDataSize = sections[i].getSizeOfRawData();
 				int rawDataPtr = sections[i].getPointerToRawData();
 				virtualSize = sections[i].getVirtualSize();
+				MemoryBlock block = null;
 				if (rawDataSize != 0 && rawDataPtr != 0) {
 					int dataSize =
 						((rawDataSize > virtualSize && virtualSize > 0) || rawDataSize < 0)
@@ -682,8 +684,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 							Msg.warn(this, "OptionalHeader.SizeOfImage < size of " +
 								sections[i].getName() + " section");
 						}
-						MemoryBlockUtils.createInitializedBlock(prog, false, sectionName, address,
-							fileBytes, rawDataPtr, dataSize, "", "", r, w, x, log);
+						block = MemoryBlockUtils.createInitializedBlock(prog, false, sectionName,
+							address, fileBytes, rawDataPtr, dataSize, "", "", r, w, x, log);
 						sectionToAddress.put(sections[i], address);
 					}
 					if (rawDataSize == virtualSize) {
@@ -711,9 +713,24 @@ public class PeLoader extends AbstractPeDebugLoader {
 				else {
 					int dataSize = (virtualSize > 0 || rawDataSize < 0) ? virtualSize : 0;
 					if (dataSize > 0) {
-						MemoryBlockUtils.createUninitializedBlock(prog, false, sectionName, address,
-							dataSize, "", "", r, w, x, log);
-						sectionToAddress.putIfAbsent(sections[i], address);
+						if (block != null) {
+							MemoryBlock paddingBlock =
+								MemoryBlockUtils.createInitializedBlock(prog, false, sectionName,
+									address, dataSize, "", "", r, w, x, log);
+							if (paddingBlock != null) {
+								try {
+									prog.getMemory().join(block, paddingBlock);
+								}
+								catch (Exception e) {
+									log.appendMsg(e.getMessage());
+								}
+							}
+						}
+						else {
+							MemoryBlockUtils.createUninitializedBlock(prog, false, sectionName,
+								address, dataSize, "", "", r, w, x, log);
+							sectionToAddress.putIfAbsent(sections[i], address);
+						}
 					}
 				}
 
