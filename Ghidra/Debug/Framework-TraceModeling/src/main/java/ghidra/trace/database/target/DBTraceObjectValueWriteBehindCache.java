@@ -176,28 +176,30 @@ class DBTraceObjectValueWriteBehindCache {
 	}
 
 	public Stream<DBTraceObjectValueBehind> streamAllValues() {
-		return doStreamAllValues();
+		return StreamUtils.sync(cachedValues, doStreamAllValues());
 	}
 
 	public DBTraceObjectValueBehind get(DBTraceObject parent, String key, long snap) {
-		var keys = cachedValues.get(parent);
-		if (keys == null) {
-			return null;
-		}
-		var values = keys.get(key);
-		if (values == null) {
-			return null;
-		}
+		synchronized (cachedValues) {
+			var keys = cachedValues.get(parent);
+			if (keys == null) {
+				return null;
+			}
+			var values = keys.get(key);
+			if (values == null) {
+				return null;
+			}
 
-		var floor = values.floorEntry(snap);
-		if (floor == null) {
-			return null;
-		}
+			var floor = values.floorEntry(snap);
+			if (floor == null) {
+				return null;
+			}
 
-		if (!floor.getValue().getLifespan().contains(snap)) {
-			return null;
+			if (!floor.getValue().getLifespan().contains(snap)) {
+				return null;
+			}
+			return floor.getValue();
 		}
-		return floor.getValue();
 	}
 
 	public Stream<DBTraceObjectValueBehind> streamParents(DBTraceObject child, Lifespan lifespan) {
@@ -236,25 +238,29 @@ class DBTraceObjectValueWriteBehindCache {
 	}
 
 	public Stream<DBTraceObjectValueBehind> streamValues(DBTraceObject parent, Lifespan lifespan) {
-		// TODO: Better indexing?
-		var keys = cachedValues.get(parent);
-		if (keys == null) {
-			return Stream.of();
+		synchronized (cachedValues) {
+			var keys = cachedValues.get(parent);
+			if (keys == null) {
+				return Stream.of();
+			}
+			return StreamUtils.sync(cachedValues,
+				keys.values().stream().flatMap(v -> streamSub(v, lifespan, true)));
 		}
-		return keys.values().stream().flatMap(v -> streamSub(v, lifespan, true));
 	}
 
 	public Stream<DBTraceObjectValueBehind> streamValues(DBTraceObject parent, String key,
 			Lifespan lifespan, boolean forward) {
-		var keys = cachedValues.get(parent);
-		if (keys == null) {
-			return Stream.of();
+		synchronized (cachedValues) {
+			var keys = cachedValues.get(parent);
+			if (keys == null) {
+				return Stream.of();
+			}
+			var values = keys.get(key);
+			if (values == null) {
+				return Stream.of();
+			}
+			return StreamUtils.sync(cachedValues, streamSub(values, lifespan, forward));
 		}
-		var values = keys.get(key);
-		if (values == null) {
-			return Stream.of();
-		}
-		return streamSub(values, lifespan, forward);
 	}
 
 	static boolean intersectsRange(Object value, AddressRange range) {
@@ -265,14 +271,16 @@ class DBTraceObjectValueWriteBehindCache {
 	private Stream<DBTraceObjectValueBehind> streamValuesIntersectingLifespan(Lifespan lifespan,
 			String entryKey) {
 		// TODO: In-memory spatial index?
-		var top = cachedValues.values().stream();
-		var keys = entryKey == null
-				? top.flatMap(v -> v.values().stream())
-				: top.flatMap(v -> v.entrySet()
-						.stream()
-						.filter(e -> entryKey.equals(e.getKey()))
-						.map(e -> e.getValue()));
-		return keys.flatMap(v -> streamSub(v, lifespan, true));
+		synchronized (cachedValues) {
+			var top = cachedValues.values().stream();
+			var keys = entryKey == null
+					? top.flatMap(v -> v.values().stream())
+					: top.flatMap(v -> v.entrySet()
+							.stream()
+							.filter(e -> entryKey.equals(e.getKey()))
+							.map(e -> e.getValue()));
+			return StreamUtils.sync(cachedValues, keys.flatMap(v -> streamSub(v, lifespan, true)));
+		}
 	}
 
 	public Stream<DBTraceObjectValueBehind> streamValuesIntersecting(Lifespan lifespan,
@@ -302,38 +310,46 @@ class DBTraceObjectValueWriteBehindCache {
 		return null;
 	}
 
-	public <I extends TraceObjectInterface> AddressSetView getObjectsAddresSet(long snap,
+	public <I extends TraceObjectInterface> AddressSetView getObjectsAddressSet(long snap,
 			String key, Class<I> ifaceCls, Predicate<? super I> predicate) {
 		return new AbstractAddressSetView() {
 			AddressSet collectRanges() {
 				AddressSet result = new AddressSet();
-				for (DBTraceObjectValueBehind v : StreamUtils
-						.iter(streamValuesIntersectingLifespan(Lifespan.at(snap), key))) {
-					AddressRange range = getIfRangeOrAddress(v.getValue());
-					if (range == null) {
-						continue;
+				try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
+					synchronized (cachedValues) {
+						for (DBTraceObjectValueBehind v : StreamUtils
+								.iter(streamValuesIntersectingLifespan(Lifespan.at(snap), key))) {
+							AddressRange range = getIfRangeOrAddress(v.getValue());
+							if (range == null) {
+								continue;
+							}
+							if (!DBTraceObjectManager.acceptValue(v.getWrapper(), key, ifaceCls,
+								predicate)) {
+								continue;
+							}
+							result.add(range);
+						}
 					}
-					if (!DBTraceObjectManager.acceptValue(v.getWrapper(), key, ifaceCls,
-						predicate)) {
-						continue;
-					}
-					result.add(range);
 				}
 				return result;
 			}
 
 			@Override
 			public boolean contains(Address addr) {
-				for (DBTraceObjectValueBehind v : StreamUtils
-						.iter(streamValuesIntersectingLifespan(Lifespan.at(snap), key))) {
-					if (!addr.equals(v.getValue())) {
-						continue;
+				try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
+					synchronized (cachedValues) {
+						for (DBTraceObjectValueBehind v : StreamUtils
+								.iter(streamValuesIntersectingLifespan(Lifespan.at(snap), key))) {
+							if (!addr.equals(v.getValue())) {
+								continue;
+							}
+							if (!DBTraceObjectManager.acceptValue(v.getWrapper(), key, ifaceCls,
+								predicate)) {
+								continue;
+							}
+							return true;
+						}
 					}
-					if (!DBTraceObjectManager.acceptValue(v.getWrapper(), key, ifaceCls,
-						predicate)) {
-						continue;
-					}
-					return true;
 				}
 				return false;
 			}
