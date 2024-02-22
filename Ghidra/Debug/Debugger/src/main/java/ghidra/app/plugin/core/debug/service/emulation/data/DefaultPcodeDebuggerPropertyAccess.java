@@ -53,7 +53,7 @@ public class DefaultPcodeDebuggerPropertyAccess<T>
 	@Override
 	protected T whenNull(Address hostAddress) {
 		DebuggerStaticMappingService mappingService =
-			data.getTool().getService(DebuggerStaticMappingService.class);
+			data.getServiceProvider().getService(DebuggerStaticMappingService.class);
 		if (mappingService == null) {
 			return super.whenNull(hostAddress);
 		}

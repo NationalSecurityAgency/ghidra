@@ -40,20 +40,8 @@ public class ModuleRow {
 		}
 	}
 
-	public static String computeShortName(String path) {
-		int sep = path.lastIndexOf('\\');
-		if (sep > 0 && sep < path.length()) {
-			path = path.substring(sep + 1);
-		}
-		sep = path.lastIndexOf('/');
-		if (sep > 0 && sep < path.length()) {
-			path = path.substring(sep + 1);
-		}
-		return path;
-	}
-
 	public String getShortName() {
-		return computeShortName(module.getName());
+		return DebuggerStaticMappingUtils.computeModuleShortName(module.getName());
 	}
 
 	public String getName() {

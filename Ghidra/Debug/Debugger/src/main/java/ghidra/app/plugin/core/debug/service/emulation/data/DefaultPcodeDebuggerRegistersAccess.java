@@ -19,7 +19,7 @@ import java.util.concurrent.CompletableFuture;
 
 import ghidra.debug.api.emulation.PcodeDebuggerRegistersAccess;
 import ghidra.debug.api.target.Target;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.pcode.exec.trace.data.DefaultPcodeTraceRegistersAccess;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
@@ -33,13 +33,13 @@ import ghidra.trace.model.thread.TraceThread;
 public class DefaultPcodeDebuggerRegistersAccess extends DefaultPcodeTraceRegistersAccess
 		implements PcodeDebuggerRegistersAccess, InternalPcodeDebuggerDataAccess {
 
-	protected final PluginTool tool;
+	protected final ServiceProvider provider;
 	protected final Target target;
 
 	/**
 	 * Construct a shim
 	 * 
-	 * @param tool the tool controlling the session
+	 * @param provider the service provider (usually the tool)
 	 * @param target the target
 	 * @param platform the associated platform, having the same trace as the recorder
 	 * @param snap the associated snap
@@ -47,11 +47,11 @@ public class DefaultPcodeDebuggerRegistersAccess extends DefaultPcodeTraceRegist
 	 * @param frame the associated frame, or 0 if not applicable
 	 * @param viewport the viewport, set to the same snapshot
 	 */
-	protected DefaultPcodeDebuggerRegistersAccess(PluginTool tool, Target target,
+	protected DefaultPcodeDebuggerRegistersAccess(ServiceProvider provider, Target target,
 			TracePlatform platform, long snap, TraceThread thread, int frame,
 			TraceTimeViewport viewport) {
 		super(platform, snap, thread, frame, viewport);
-		this.tool = tool;
+		this.provider = provider;
 		this.target = target;
 	}
 
@@ -61,8 +61,8 @@ public class DefaultPcodeDebuggerRegistersAccess extends DefaultPcodeTraceRegist
 	}
 
 	@Override
-	public PluginTool getTool() {
-		return tool;
+	public ServiceProvider getServiceProvider() {
+		return provider;
 	}
 
 	@Override

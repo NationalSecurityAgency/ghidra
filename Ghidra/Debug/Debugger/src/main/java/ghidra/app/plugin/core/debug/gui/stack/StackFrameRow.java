@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.debug.gui.stack;
 
 import db.Transaction;
+import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.trace.model.stack.TraceStackFrame;
@@ -84,11 +85,12 @@ public class StackFrameRow {
 	}
 
 	public Function getFunction() {
-		return panel.provider.getFunction(getProgramCounter());
+		return DebuggerStaticMappingUtils.getFunction(getProgramCounter(), panel.current,
+			panel.provider.getTool());
 	}
 
 	public String getModule() {
-		return panel.provider.getModule(getProgramCounter());
+		return DebuggerStaticMappingUtils.getModuleName(getProgramCounter(), panel.current);
 	}
 
 	protected void update() {

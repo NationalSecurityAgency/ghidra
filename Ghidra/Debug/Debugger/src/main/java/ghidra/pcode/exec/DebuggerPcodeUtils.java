@@ -26,7 +26,7 @@ import ghidra.app.plugin.processors.sleigh.SleighException;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.pcode.emu.ThreadPcodeExecutorState;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
@@ -73,12 +73,12 @@ public enum DebuggerPcodeUtils {
 		/**
 		 * Construct a parser bound to the given coordinates
 		 * 
-		 * @param tool the tool for the mapping service
+		 * @param provider the service provider (usually the tool)
 		 * @param coordinates the current coordinates for context
 		 */
-		public LabelBoundPcodeParser(PluginTool tool, DebuggerCoordinates coordinates) {
+		public LabelBoundPcodeParser(ServiceProvider provider, DebuggerCoordinates coordinates) {
 			super((SleighLanguage) coordinates.getPlatform().getLanguage());
-			this.mappings = tool.getService(DebuggerStaticMappingService.class);
+			this.mappings = provider.getService(DebuggerStaticMappingService.class);
 			this.coordinates = coordinates;
 		}
 
@@ -194,15 +194,17 @@ public enum DebuggerPcodeUtils {
 	 * substituted for their offsets. If a label moves, the program should be recompiled in order to
 	 * update those substitutions.
 	 * 
-	 * @param tool the tool for context
+	 * @param provider the service provider (usually the tool)
 	 * @param coordinates the coordinates for the trace (and programs) from which labels can be
 	 *            resolved
 	 * @see SleighProgramCompiler#compileProgram(PcodeParser, SleighLanguage, String, String,
 	 *      PcodeUseropLibrary)
 	 */
-	public static PcodeProgram compileProgram(PluginTool tool, DebuggerCoordinates coordinates,
+	public static PcodeProgram compileProgram(ServiceProvider provider,
+			DebuggerCoordinates coordinates,
 			String sourceName, String source, PcodeUseropLibrary<?> library) {
-		return SleighProgramCompiler.compileProgram(new LabelBoundPcodeParser(tool, coordinates),
+		return SleighProgramCompiler.compileProgram(
+			new LabelBoundPcodeParser(provider, coordinates),
 			(SleighLanguage) coordinates.getPlatform().getLanguage(), sourceName, source, library);
 	}
 
@@ -211,13 +213,14 @@ public enum DebuggerPcodeUtils {
 	 *
 	 * <p>
 	 * This has the same limitations as
-	 * {@link #compileProgram(PluginTool, DebuggerCoordinates, String, String, PcodeUseropLibrary)}
+	 * {@link #compileProgram(ServiceProvider, DebuggerCoordinates, String, String, PcodeUseropLibrary)}
 	 * 
 	 * @see SleighProgramCompiler#compileExpression(PcodeParser, SleighLanguage, String)
 	 */
-	public static PcodeExpression compileExpression(PluginTool tool,
+	public static PcodeExpression compileExpression(ServiceProvider provider,
 			DebuggerCoordinates coordinates, String source) {
-		return SleighProgramCompiler.compileExpression(new LabelBoundPcodeParser(tool, coordinates),
+		return SleighProgramCompiler.compileExpression(
+			new LabelBoundPcodeParser(provider, coordinates),
 			(SleighLanguage) coordinates.getPlatform().getLanguage(), source);
 	}
 
@@ -228,11 +231,11 @@ public enum DebuggerPcodeUtils {
 	 * If a thread is included, the executor state will have access to both the memory and registers
 	 * in the context of that thread. Otherwise, only memory access is permitted.
 	 * 
-	 * @param tool the plugin tool
+	 * @param provider the service provider (usually the tool)
 	 * @param coordinates the coordinates
 	 * @return the state
 	 */
-	public static PcodeExecutorState<byte[]> executorStateForCoordinates(PluginTool tool,
+	public static PcodeExecutorState<byte[]> executorStateForCoordinates(ServiceProvider provider,
 			DebuggerCoordinates coordinates) {
 		Trace trace = coordinates.getTrace();
 		if (trace == null) {
@@ -244,7 +247,7 @@ public enum DebuggerPcodeUtils {
 			throw new IllegalArgumentException(
 				"Given trace or platform does not use a Sleigh language");
 		}
-		DefaultPcodeDebuggerAccess access = new DefaultPcodeDebuggerAccess(tool,
+		DefaultPcodeDebuggerAccess access = new DefaultPcodeDebuggerAccess(provider,
 			coordinates.getTarget(), platform, coordinates.getViewSnap());
 		PcodeExecutorState<byte[]> shared =
 			new RWTargetMemoryPcodeExecutorState(access.getDataForSharedState(), Mode.RW);
@@ -270,13 +273,13 @@ public enum DebuggerPcodeUtils {
 	 * If a thread is included, the executor will have access to both the memory and registers in
 	 * the context of that thread. Otherwise, only memory access is permitted.
 	 * 
-	 * @param tool the plugin tool. TODO: This shouldn't be required
+	 * @param provider the service provider (usually the tool)
 	 * @param coordinates the coordinates
 	 * @return the executor
 	 */
-	public static PcodeExecutor<byte[]> executorForCoordinates(PluginTool tool,
+	public static PcodeExecutor<byte[]> executorForCoordinates(ServiceProvider provider,
 			DebuggerCoordinates coordinates) {
-		PcodeExecutorState<byte[]> state = executorStateForCoordinates(tool, coordinates);
+		PcodeExecutorState<byte[]> state = executorStateForCoordinates(provider, coordinates);
 
 		SleighLanguage slang = (SleighLanguage) state.getLanguage();
 		return new PcodeExecutor<>(slang, BytesPcodeArithmetic.forLanguage(slang), state,
@@ -695,12 +698,12 @@ public enum DebuggerPcodeUtils {
 		}
 	}
 
-	public static WatchValuePcodeExecutorState buildWatchState(PluginTool tool,
+	public static WatchValuePcodeExecutorState buildWatchState(ServiceProvider provider,
 			DebuggerCoordinates coordinates) {
 		PcodeTraceDataAccess data = new DefaultPcodeTraceAccess(coordinates.getPlatform(),
 			coordinates.getViewSnap(), coordinates.getSnap())
 					.getDataForThreadState(coordinates.getThread(), coordinates.getFrame());
-		PcodeExecutorState<byte[]> bytesState = executorStateForCoordinates(tool, coordinates);
+		PcodeExecutorState<byte[]> bytesState = executorStateForCoordinates(provider, coordinates);
 		return new WatchValuePcodeExecutorState(new WatchValuePcodeExecutorStatePiece(
 			bytesState,
 			new TraceMemoryStatePcodeExecutorStatePiece(data),
@@ -717,18 +720,18 @@ public enum DebuggerPcodeUtils {
 	 * machine state, if applicable. Use the executor in a background thread to avoid locking the
 	 * GUI.
 	 * 
-	 * @param tool this plugin tool
+	 * @param provider the service provider (usually the tool)
 	 * @param coordinates the coordinates providing context for the evaluation
 	 * @return an executor for evaluating the watch
 	 */
-	public static PcodeExecutor<WatchValue> buildWatchExecutor(PluginTool tool,
+	public static PcodeExecutor<WatchValue> buildWatchExecutor(ServiceProvider provider,
 			DebuggerCoordinates coordinates) {
 		TracePlatform platform = coordinates.getPlatform();
 		Language language = platform.getLanguage();
 		if (!(language instanceof SleighLanguage slang)) {
 			throw new IllegalArgumentException("Watch expressions require a Sleigh language");
 		}
-		WatchValuePcodeExecutorState state = buildWatchState(tool, coordinates);
+		WatchValuePcodeExecutorState state = buildWatchState(provider, coordinates);
 		return new PcodeExecutor<>(slang, state.getArithmetic(), state, Reason.INSPECT);
 	}
 }
