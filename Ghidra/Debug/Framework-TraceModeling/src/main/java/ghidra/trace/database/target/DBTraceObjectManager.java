@@ -422,7 +422,8 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 	public Stream<DBTraceObjectValue> getAllValues() {
 		return Stream.concat(
 			valueMap.values().stream().map(v -> v.getWrapper()),
-			valueWbCache.streamAllValues().map(v -> v.getWrapper()));
+			StreamUtils.lock(lock.readLock(),
+				valueWbCache.streamAllValues().map(v -> v.getWrapper())));
 	}
 
 	protected Stream<DBTraceObjectValueData> streamValuesIntersectingData(Lifespan span,
@@ -672,7 +673,7 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 		return new UnionAddressSetView(
 			valueMap.getAddressSetView(Lifespan.at(snap),
 				v -> acceptValue(v.getWrapper(), key, ifaceCls, predicate)),
-			valueWbCache.getObjectsAddresSet(snap, key, ifaceCls, predicate));
+			valueWbCache.getObjectsAddressSet(snap, key, ifaceCls, predicate));
 	}
 
 	public <I extends TraceObjectInterface> I getSuccessor(TraceObject seed,
