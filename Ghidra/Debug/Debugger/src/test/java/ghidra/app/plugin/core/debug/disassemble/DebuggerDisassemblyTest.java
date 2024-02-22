@@ -17,9 +17,9 @@ package ghidra.app.plugin.core.debug.disassemble;
 
 import static org.junit.Assert.*;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -44,8 +44,7 @@ import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.debug.api.control.ControlMode;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.lang.LanguageID;
-import ghidra.program.model.lang.RegisterValue;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
@@ -115,10 +114,20 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 				    <schema name='Stack' canonical='yes' elementResync='NEVER'
 				            attributeResync='NEVER'>
 				        <interface name='Stack' />
+				        <interface name='Aggregate' />
 				        <element schema='Frame' />
 				    </schema>
 				    <schema name='Frame' elementResync='NEVER' attributeResync='NEVER'>
 				        <interface name='StackFrame' />
+				        <interface name='Aggregate' />
+				        <attribute name='Registers' schema='RegisterContainer' />
+				    </schema>
+				    <schema name='RegisterContainer' elementResync='NEVER' attributeResync='NEVER'>
+				        <interface name='RegisterContainer' />
+				        <element schema='Register' />
+				    </schema>
+				    <schema name='Register' elementResync='NEVER' attributeResync='NEVER'>
+				       <interface name='Register' />
 				    </schema>
 				</context>""");
 
@@ -148,7 +157,12 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 	}
 
 	protected TraceObjectThread createPolyglotTrace(String arch, long offset,
-			Supplier<ByteBuffer> byteSupplier) throws IOException {
+			Supplier<ByteBuffer> byteSupplier) throws Exception {
+		return createPolyglotTrace(arch, offset, byteSupplier, true);
+	}
+
+	protected TraceObjectThread createPolyglotTrace(String arch, long offset,
+			Supplier<ByteBuffer> byteSupplier, boolean pcInStack) throws Exception {
 		createAndOpenTrace("DATA:BE:64:default");
 
 		DBTraceObjectManager objects = tb.trace.getObjectManager();
@@ -171,13 +185,31 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 			// TODO: Why doesn't setRange work after insert?
 			objBinText.insert(zeroOn, ConflictResolution.DENY);
 
-			DBTraceObject objFrame =
-				objects.createObject(TraceObjectKeyPath.parse("Targets[0].Threads[0].Stack[0]"));
-			objFrame.insert(zeroOn, ConflictResolution.DENY);
-			TraceObjectStackFrame frame = objFrame.queryInterface(TraceObjectStackFrame.class);
-			frame.setProgramCounter(zeroOn, tb.addr(offset));
-
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
+			if (pcInStack) {
+				DBTraceObject objFrame =
+					objects.createObject(
+						TraceObjectKeyPath.parse("Targets[0].Threads[0].Stack[0]"));
+				objFrame.insert(zeroOn, ConflictResolution.DENY);
+				TraceObjectStackFrame frame = objFrame.queryInterface(TraceObjectStackFrame.class);
+				frame.setProgramCounter(zeroOn, tb.addr(offset));
+			}
+			else {
+				objects.createObject(
+					TraceObjectKeyPath.parse("Targets[0].Threads[0].Stack[0].Registers"))
+						.insert(zeroOn, ConflictResolution.DENY);
+				TraceObjectThread thread = objects.getObjectByCanonicalPath(
+					TraceObjectKeyPath.parse("Targets[0].Threads[0]"))
+						.queryInterface(TraceObjectThread.class);
+				traceManager.activateThread(thread);
+				DBTraceMemorySpace regs =
+					Objects.requireNonNull(memory.getMemoryRegisterSpace(thread, true));
+				TraceGuestPlatform platform =
+					Unique.assertOne(tb.trace.getPlatformManager().getGuestPlatforms());
+				Register regPc = platform.getLanguage().getProgramCounter();
+				regs.setValue(platform, 0, new RegisterValue(regPc, BigInteger.valueOf(offset)));
+			}
+
 			ByteBuffer bytes = byteSupplier.get();
 			assertEquals(bytes.remaining(), memory.putBytes(0, tb.addr(offset), bytes));
 		}
@@ -257,6 +289,21 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 			assertNull(instructions.getAt(1, tb.addr(0x00400000)));
 			assertMnemonic("INC", instructions.getAt(1, tb.addr(0x00400001)));
 			assertNull(instructions.getAt(1, tb.addr(0x00400003)));
+		});
+	}
+
+	@Test
+	public void testAutoDisassembleGuestX8664WithPcInRegs() throws Throwable {
+		enableAutoDisassembly();
+		getSLEIGH_X86_64_LANGUAGE(); // So that the platform is mapped promptly
+		createPolyglotTrace("x86-64", 0x00400000, () -> tb.buf(0x90, 0x90, 0x90), false);
+
+		waitForPass(() -> {
+			DBTraceInstructionsMemoryView instructions = tb.trace.getCodeManager().instructions();
+			assertMnemonic("NOP", instructions.getAt(0, tb.addr(0x00400000)));
+			assertMnemonic("NOP", instructions.getAt(0, tb.addr(0x00400001)));
+			assertMnemonic("NOP", instructions.getAt(0, tb.addr(0x00400002)));
+			assertNull(instructions.getAt(0, tb.addr(0x00400003)));
 		});
 	}
 
@@ -352,7 +399,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		TraceObjectThread thread =
 			createPolyglotTrace("armv8le", 0x00400000, () -> tb.buf(0x70, 0x47));
 
-		// Set up registers to injects will select THUMB
+		// Set up registers so injects will select THUMB
 		// TODO
 
 		Address start = tb.addr(0x00400000);
