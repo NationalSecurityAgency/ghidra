@@ -16,7 +16,7 @@
 package ghidra.app.plugin.core.debug.service.emulation.data;
 
 import ghidra.debug.api.target.Target;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.thread.TraceThread;
 
@@ -30,25 +30,25 @@ public class DefaultPcodeDebuggerAccess extends
 	/**
 	 * Construct a shim
 	 * 
-	 * @param tool the tool controlling the session
+	 * @param provider the service provider (usually the tool)
 	 * @param target the target
 	 * @param platform the associated platform, having the same trace as the recorder
 	 * @param snap the associated snap
 	 */
-	public DefaultPcodeDebuggerAccess(PluginTool tool, Target target, TracePlatform platform,
-			long snap) {
-		super(tool, target, platform, snap);
+	public DefaultPcodeDebuggerAccess(ServiceProvider provider, Target target,
+			TracePlatform platform, long snap) {
+		super(provider, target, platform, snap);
 	}
 
 	@Override
 	protected DefaultPcodeDebuggerMemoryAccess newDataForSharedState() {
-		return new DefaultPcodeDebuggerMemoryAccess(tool, target, platform, snap, viewport);
+		return new DefaultPcodeDebuggerMemoryAccess(provider, target, platform, snap, viewport);
 	}
 
 	@Override
 	protected DefaultPcodeDebuggerRegistersAccess newDataForLocalState(TraceThread thread,
 			int frame) {
-		return new DefaultPcodeDebuggerRegistersAccess(tool, target, platform, snap, thread, frame,
-			viewport);
+		return new DefaultPcodeDebuggerRegistersAccess(provider, target, platform, snap, thread,
+			frame, viewport);
 	}
 }

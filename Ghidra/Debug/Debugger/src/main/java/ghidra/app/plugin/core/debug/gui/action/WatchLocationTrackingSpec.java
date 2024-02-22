@@ -24,7 +24,7 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources.TrackLocationAction;
 import ghidra.debug.api.action.*;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.debug.api.watch.WatchRow;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.DebuggerPcodeUtils.WatchValue;
 import ghidra.pcode.exec.SleighUtils.AddressOf;
@@ -117,11 +117,12 @@ public class WatchLocationTrackingSpec implements LocationTrackingSpec {
 		private PcodeExpression compiled;
 
 		@Override
-		public Address computeTraceAddress(PluginTool tool, DebuggerCoordinates coordinates) {
+		public Address computeTraceAddress(ServiceProvider provider,
+				DebuggerCoordinates coordinates) {
 			if (!Objects.equals(current, coordinates) || exec == null) {
 				current = coordinates;
 				exec = current.getPlatform() == null ? null
-						: DebuggerPcodeUtils.buildWatchExecutor(tool, coordinates);
+						: DebuggerPcodeUtils.buildWatchExecutor(provider, coordinates);
 			}
 			else {
 				exec.getState().clear();
@@ -129,20 +130,20 @@ public class WatchLocationTrackingSpec implements LocationTrackingSpec {
 			if (current.getTrace() == null) {
 				return null;
 			}
-			compiled = DebuggerPcodeUtils.compileExpression(tool, current, expression);
+			compiled = DebuggerPcodeUtils.compileExpression(provider, current, expression);
 			WatchValue value = compiled.evaluate(exec);
 			return value == null ? null : value.address();
 		}
 
 		@Override
-		public GoToInput getDefaultGoToInput(PluginTool tool, DebuggerCoordinates coordinates,
-				ProgramLocation location) {
+		public GoToInput getDefaultGoToInput(ServiceProvider provider,
+				DebuggerCoordinates coordinates, ProgramLocation location) {
 			TracePlatform platform = current.getPlatform();
 			String defaultSpace =
 				platform == null ? "ram" : platform.getLanguage().getDefaultSpace().getName();
 			AddressOf addrOf = SleighUtils.recoverAddressOf(defaultSpace, expression);
 			if (addrOf == null) {
-				return NoneLocationTrackingSpec.INSTANCE.getDefaultGoToInput(tool, coordinates,
+				return NoneLocationTrackingSpec.INSTANCE.getDefaultGoToInput(provider, coordinates,
 					location);
 			}
 			return new GoToInput(addrOf.space(),
