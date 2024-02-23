@@ -467,7 +467,7 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> implements Pr
 		String description = limited
 							.stream()
 							.map(info -> info.getDescription())
-							.collect(Collectors.joining(", "));
+							.collect(Collectors.joining(" | "));
 		//@formatter:on
 		if (limited != sourceInfos) {
 			description += "...";

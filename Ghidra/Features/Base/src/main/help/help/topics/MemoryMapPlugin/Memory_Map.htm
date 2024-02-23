@@ -134,10 +134,10 @@
       this property applies to Default and Overlay blocks.</P>
       
       <P><I><B>Byte Source -</B></I> Provides information about the source of the bytes in this
-      	block.  If the bytes were originally imported from a file, then this will indicate which file
-      	and the offset into that file.  If the bytes are mapped to another region of memory, it will
-      	provide the address for the mapping.  Blocks may consist of regions that have different
-      	sources.  In that case, source information about the first several regions will be
+      	block. A block is made up of one or more sub-blocks. Each sub-block is listed by its type,
+      	size, and other type-specific information. For example, if the bytes were originally imported 
+      	from a file, then the file name and the offset into that file is displayed. If the bytes are
+      	mapped to another region of memory, then the start address for the mapping will be
       	displayed.</P>
 
       <P><I><B>Source -</B></I> Description of block origination.</P>
