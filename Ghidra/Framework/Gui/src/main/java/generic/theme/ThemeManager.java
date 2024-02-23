@@ -576,6 +576,21 @@ public abstract class ThemeManager {
 	}
 
 	/**
+	 * Binds the component to the font identified by the given font id. Whenever the font for
+	 * the font id changes, the component will updated with the new font.
+	 * <p>
+	 * This method is fairly niche and should not be called by most clients.  Instead, call
+	 * {@link #registerFont(Component, String)}.
+	 *
+	 * @param component the component to set/update the font
+	 * @param fontId the id of the font to register with the given component
+	 * @param fontStyle the font style
+	 */
+	public void registerFont(Component component, String fontId, int fontStyle) {
+		// do nothing
+	}
+
+	/**
 	 * Returns true if the current theme use dark default values.
 	 * @return true if the current theme use dark default values.
 	 */

@@ -68,7 +68,7 @@ public class FontModifier {
 	}
 
 	/**
-	 * Sets the font stle modifier. This can be called multiple times to bold and italicize.
+	 * Sets the font style modifier. This can be called multiple times to bold and italicize.
 	 * @param newStyle the style to use for the font.
 	 */
 	public void addStyleModifier(int newStyle) {

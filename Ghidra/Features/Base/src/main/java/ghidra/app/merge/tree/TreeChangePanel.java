@@ -24,13 +24,14 @@ import docking.widgets.label.GIconLabel;
 import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Messages;
+import generic.theme.Gui;
 import ghidra.util.layout.PairLayout;
 import resources.Icons;
 
 /**
  * Panel to show whether tree name and tree structure changed.
- * 
- * 
+ *
+ *
  */
 class TreeChangePanel extends JPanel {
 
@@ -74,9 +75,7 @@ class TreeChangePanel extends JPanel {
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
 		treeNameLabel = new GDLabel("Tree Name");
-		Font font = treeNameLabel.getFont();
-		font = font.deriveFont(Font.BOLD);
-		treeNameLabel.setFont(font);
+		Gui.registerFont(treeNameLabel, Font.BOLD);
 
 		nameLabel = new GDLabel("Name Changed");
 		nameIconLabel = new GIconLabel(CHANGED_ICON);

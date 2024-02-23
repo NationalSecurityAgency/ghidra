@@ -15,17 +15,16 @@
  */
 package ghidra.framework.plugintool.dialog;
 
+import java.awt.Font;
 import java.awt.Point;
 import java.util.*;
 
 import javax.swing.KeyStroke;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
 
 import docking.action.DockingActionIf;
 import docking.action.MenuData;
 import docking.actions.KeyBindingUtils;
-import generic.theme.GColor;
+import generic.theme.*;
 import ghidra.framework.plugintool.PluginConfigurationModel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginDescription;
@@ -37,29 +36,52 @@ import ghidra.util.HTMLUtilities;
  */
 class PluginDetailsPanel extends AbstractDetailsPanel {
 
-	private SimpleAttributeSet nameAttrSet;
-	private SimpleAttributeSet depNameAttrSet;
-	private SimpleAttributeSet descrAttrSet;
-	private SimpleAttributeSet categoriesAttrSet;
-	private SimpleAttributeSet classAttrSet;
-	private SimpleAttributeSet locAttrSet;
-	private SimpleAttributeSet developerAttrSet;
-	private SimpleAttributeSet dependencyAttrSet;
-	private SimpleAttributeSet noValueAttrSet;
+	private static final GColor NO_VALUE_COLOR = new GColor("color.fg.pluginpanel.details.novalue");
+	private static final GColor DEPENDENCY_COLOR =
+		new GColor("color.fg.pluginpanel.details.dependency");
+	private static final GColor LOCATION_COLOR = new GColor("color.fg.pluginpanel.details.loc");
+	private static final GColor DEVELOPER_COLOR =
+		new GColor("color.fg.pluginpanel.details.developer");
+	private static final GColor CLASS_COLOR = new GColor("color.fg.pluginpanel.details.class");
+	private static final GColor CATEGORIES_COLOR =
+		new GColor("color.fg.pluginpanel.details.category");
+	private static final GColor TITLE_COLOR = new GColor("color.fg.pluginpanel.details.title");
+	private static final GColor DESCRIPTION_COLOR =
+		new GColor("color.fg.pluginpanel.details.description");
+	private static final GColor NAME_NO_DEPENDENTS_COLOR =
+		new GColor("color.fg.pluginpanel.details.name.no.dependents");
+	private static final GColor NAME_DEPENDENTS_COLOR =
+		new GColor("color.fg.pluginpanel.details.name.has.dependents");
+
+	private GAttributes nameAttrs;
+	private GAttributes dependenciesNameAttrs;
+	private GAttributes descriptionAttrs;
+	private GAttributes categoriesAttrs;
+	private GAttributes classAttrs;
+	private GAttributes locationAttrs;
+	private GAttributes developerAttrs;
+	private GAttributes dependencyAttrs;
+	private GAttributes noValueAttrs;
 
 	private final PluginConfigurationModel model;
 	private PluginTool tool;
+	private PluginDescription currentDescriptor;
 
 	PluginDetailsPanel(PluginTool tool, PluginConfigurationModel model) {
-		super();
 		this.tool = tool;
 		this.model = model;
 		createFieldAttributes();
 		createMainPanel();
 	}
 
+	@Override
+	protected void refresh() {
+		setPluginDescription(currentDescriptor);
+	}
+
 	void setPluginDescription(PluginDescription descriptor) {
 
+		this.currentDescriptor = descriptor;
 		textLabel.setText("");
 		if (descriptor == null) {
 			return;
@@ -74,43 +96,43 @@ class PluginDetailsPanel extends AbstractDetailsPanel {
 
 		insertRowTitle(buffer, "Name");
 		insertRowValue(buffer, descriptor.getName(),
-			!dependencies.isEmpty() ? depNameAttrSet : nameAttrSet);
+			!dependencies.isEmpty() ? dependenciesNameAttrs : nameAttrs);
 
 		insertRowTitle(buffer, "Description");
-		insertRowValue(buffer, descriptor.getDescription(), descrAttrSet);
+		insertRowValue(buffer, descriptor.getDescription(), descriptionAttrs);
 
 		insertRowTitle(buffer, "Status");
 		insertRowValue(buffer, descriptor.getStatus().getDescription(),
-			(descriptor.getStatus() == PluginStatus.RELEASED) ? titleAttrSet : developerAttrSet);
+			(descriptor.getStatus() == PluginStatus.RELEASED) ? titleAttrs : developerAttrs);
 
 		insertRowTitle(buffer, "Package");
-		insertRowValue(buffer, descriptor.getPluginPackage().getName(), categoriesAttrSet);
+		insertRowValue(buffer, descriptor.getPluginPackage().getName(), categoriesAttrs);
 
 		insertRowTitle(buffer, "Category");
-		insertRowValue(buffer, descriptor.getCategory(), categoriesAttrSet);
+		insertRowValue(buffer, descriptor.getCategory(), categoriesAttrs);
 
 		insertRowTitle(buffer, "Plugin Class");
-		insertRowValue(buffer, descriptor.getPluginClass().getName(), classAttrSet);
+		insertRowValue(buffer, descriptor.getPluginClass().getName(), classAttrs);
 
 		insertRowTitle(buffer, "Class Location");
-		insertRowValue(buffer, descriptor.getSourceLocation(), locAttrSet);
+		insertRowValue(buffer, descriptor.getSourceLocation(), locationAttrs);
 
 		insertRowTitle(buffer, "Used By");
 
 		buffer.append("<TD VALIGN=\"TOP\">");
 
 		if (dependencies.isEmpty()) {
-			insertHTMLLine(buffer, "None", noValueAttrSet);
+			insertHTMLLine(buffer, "None", noValueAttrs);
 		}
 		else {
 			for (int i = 0; i < dependencies.size(); i++) {
 				insertHTMLString(buffer, dependencies.get(i).getPluginClass().getName(),
-					dependencyAttrSet);
+					dependencyAttrs);
 				if (i < dependencies.size() - 1) {
 					buffer.append(HTMLUtilities.BR);
 				}
 			}
-			insertHTMLLine(buffer, "", titleAttrSet);  // add a newline
+			insertHTMLLine(buffer, "", titleAttrs);  // add a newline
 		}
 		buffer.append("</TD>");
 		buffer.append("</TR>");
@@ -121,16 +143,16 @@ class PluginDetailsPanel extends AbstractDetailsPanel {
 
 		List<Class<?>> servicesRequired = descriptor.getServicesRequired();
 		if (servicesRequired.isEmpty()) {
-			insertHTMLLine(buffer, "None", noValueAttrSet);
+			insertHTMLLine(buffer, "None", noValueAttrs);
 		}
 		else {
 			for (int i = 0; i < servicesRequired.size(); i++) {
-				insertHTMLString(buffer, servicesRequired.get(i).getName(), dependencyAttrSet);
+				insertHTMLString(buffer, servicesRequired.get(i).getName(), dependencyAttrs);
 				if (i < servicesRequired.size() - 1) {
 					buffer.append(HTMLUtilities.BR);
 				}
 			}
-			insertHTMLLine(buffer, "", titleAttrSet);  // add a newline
+			insertHTMLLine(buffer, "", titleAttrs);  // add a newline
 		}
 		buffer.append("</TD>");
 		buffer.append("</TR>");
@@ -158,7 +180,7 @@ class PluginDetailsPanel extends AbstractDetailsPanel {
 
 		buffer.append("<TR>");
 		buffer.append("<TD VALIGN=\"TOP\">");
-		insertHTMLLine(buffer, "Loaded Actions:", titleAttrSet);
+		insertHTMLLine(buffer, "Loaded Actions:", titleAttrs);
 		buffer.append("</TD>");
 
 		Set<DockingActionIf> actions = Collections.emptySet();
@@ -169,7 +191,7 @@ class PluginDetailsPanel extends AbstractDetailsPanel {
 
 		if (actions.isEmpty()) {
 			buffer.append("<TD VALIGN=\"TOP\">");
-			insertHTMLLine(buffer, "No actions for plugin", noValueAttrSet);
+			insertHTMLLine(buffer, "No actions for plugin", noValueAttrs);
 			buffer.append("</TD>");
 			buffer.append("</TR>");
 			return;
@@ -182,7 +204,7 @@ class PluginDetailsPanel extends AbstractDetailsPanel {
 
 		for (DockingActionIf dockableAction : actions) {
 			buffer.append("<TR><TD WIDTH=\"200\">");
-			insertHTMLString(buffer, dockableAction.getName(), locAttrSet);
+			insertHTMLString(buffer, dockableAction.getName(), locationAttrs);
 			buffer.append("</TD>");
 
 			buffer.append("<TD WIDTH=\"300\">");
@@ -190,17 +212,17 @@ class PluginDetailsPanel extends AbstractDetailsPanel {
 			String[] menuPath = menuBarData == null ? null : menuBarData.getMenuPath();
 			String menuPathString = createStringForMenuPath(menuPath);
 			if (menuPathString != null) {
-				insertHTMLString(buffer, menuPathString, locAttrSet);
+				insertHTMLString(buffer, menuPathString, locationAttrs);
 			}
 			else {
 				MenuData popupMenuData = dockableAction.getPopupMenuData();
 				String[] popupPath = popupMenuData == null ? null : popupMenuData.getMenuPath();
 
 				if (popupPath != null) {
-					insertHTMLString(buffer, "(in a context popup menu)", noValueAttrSet);
+					insertHTMLString(buffer, "(in a context popup menu)", noValueAttrs);
 				}
 				else {
-					insertHTMLString(buffer, "Not in a menu", noValueAttrSet);
+					insertHTMLString(buffer, "Not in a menu", noValueAttrs);
 				}
 			}
 
@@ -210,10 +232,10 @@ class PluginDetailsPanel extends AbstractDetailsPanel {
 			KeyStroke keyBinding = dockableAction.getKeyBinding();
 			if (keyBinding != null) {
 				String keyStrokeString = KeyBindingUtils.parseKeyStroke(keyBinding);
-				insertHTMLString(buffer, keyStrokeString, locAttrSet);
+				insertHTMLString(buffer, keyStrokeString, locationAttrs);
 			}
 			else {
-				insertHTMLString(buffer, "No keybinding", noValueAttrSet);
+				insertHTMLString(buffer, "No keybinding", noValueAttrs);
 			}
 
 			buffer.append("</TD></TR>");
@@ -242,74 +264,19 @@ class PluginDetailsPanel extends AbstractDetailsPanel {
 	@Override
 	protected void createFieldAttributes() {
 
-		titleAttrSet = new SimpleAttributeSet();
-		titleAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
-		titleAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(11));
-		titleAttrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);
-		titleAttrSet.addAttribute(StyleConstants.Foreground,
-			new GColor("color.fg.pluginpanel.details.title"));
+		Font font = Gui.getFont(FONT_DEFAULT);
+		titleAttrs = new GAttributes(font, TITLE_COLOR);
+		nameAttrs = new GAttributes(font, NAME_NO_DEPENDENTS_COLOR);
+		dependenciesNameAttrs = new GAttributes(font, NAME_DEPENDENTS_COLOR);
+		descriptionAttrs = new GAttributes(font, DESCRIPTION_COLOR);
+		categoriesAttrs = new GAttributes(font, CATEGORIES_COLOR);
+		locationAttrs = new GAttributes(font, LOCATION_COLOR);
+		developerAttrs = new GAttributes(font, DEVELOPER_COLOR);
 
-		nameAttrSet = new SimpleAttributeSet();
-		nameAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
-		nameAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(11));
-		nameAttrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);
-		nameAttrSet.addAttribute(StyleConstants.Foreground,
-			new GColor("color.fg.pluginpanel.details.name.no.dependents"));
+		Font fontMonospaced = Gui.getFont(FONT_MONOSPACED);
+		classAttrs = new GAttributes(fontMonospaced, CLASS_COLOR);
+		dependencyAttrs = new GAttributes(fontMonospaced, DEPENDENCY_COLOR);
 
-		depNameAttrSet = new SimpleAttributeSet();
-		depNameAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
-		depNameAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(11));
-		depNameAttrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);
-		depNameAttrSet.addAttribute(StyleConstants.Foreground,
-			new GColor("color.fg.pluginpanel.details.name.has.dependents"));
-
-		descrAttrSet = new SimpleAttributeSet();
-		descrAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
-		descrAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(11));
-		descrAttrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);
-		descrAttrSet.addAttribute(StyleConstants.Foreground,
-			new GColor("color.fg.pluginpanel.details.description"));
-
-		categoriesAttrSet = new SimpleAttributeSet();
-		categoriesAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
-		categoriesAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(11));
-		categoriesAttrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);
-		categoriesAttrSet.addAttribute(StyleConstants.Foreground,
-			new GColor("color.fg.pluginpanel.details.category"));
-
-		classAttrSet = new SimpleAttributeSet();
-		classAttrSet.addAttribute(StyleConstants.FontFamily, "monospaced");
-		classAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(11));
-		classAttrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);
-		classAttrSet.addAttribute(StyleConstants.Foreground,
-			new GColor("color.fg.pluginpanel.details.class"));
-
-		locAttrSet = new SimpleAttributeSet();
-		locAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
-		locAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(11));
-		locAttrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);
-		locAttrSet.addAttribute(StyleConstants.Foreground,
-			new GColor("color.fg.pluginpanel.details.loc"));
-
-		developerAttrSet = new SimpleAttributeSet();
-		developerAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
-		developerAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(11));
-		developerAttrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);
-		developerAttrSet.addAttribute(StyleConstants.Foreground,
-			new GColor("color.fg.pluginpanel.details.developer"));
-
-		dependencyAttrSet = new SimpleAttributeSet();
-		dependencyAttrSet.addAttribute(StyleConstants.FontFamily, "monospaced");
-		dependencyAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(11));
-		dependencyAttrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);
-		dependencyAttrSet.addAttribute(StyleConstants.Foreground,
-			new GColor("color.fg.pluginpanel.details.dependency"));
-
-		noValueAttrSet = new SimpleAttributeSet();
-		noValueAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
-		noValueAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(11));
-		noValueAttrSet.addAttribute(StyleConstants.Italic, Boolean.TRUE);
-		noValueAttrSet.addAttribute(StyleConstants.Foreground,
-			new GColor("color.fg.pluginpanel.details.novalue"));
+		noValueAttrs = new GAttributes(font, NO_VALUE_COLOR);
 	}
 }

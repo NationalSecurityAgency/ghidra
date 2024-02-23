@@ -26,7 +26,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
-import javax.swing.table.*;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 
 import db.Transaction;
 import docking.action.DockingAction;
@@ -265,8 +266,8 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		}
 
 		@Override
-		protected void configureFont(JTable table, TableModel model, int column) {
-			setFont(fixedWidthFont);
+		protected Font getDefaultFont() {
+			return fixedWidthFont;
 		}
 
 		@Override

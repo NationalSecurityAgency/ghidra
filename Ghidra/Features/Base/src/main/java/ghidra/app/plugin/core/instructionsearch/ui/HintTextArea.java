@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docking.widgets.textarea;
+package ghidra.app.plugin.core.instructionsearch.ui;
 
 import java.awt.*;
 
@@ -23,8 +23,8 @@ import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Messages;
 
 /**
- * Simple text area that shows a text hint when the field is empty. 
- * 
+ * Simple text area that shows a text hint when the field is empty.
+ *
  * Hint text will be shown in light grey, italicized, and in angle brackets.  Normal text will
  * be plain black.
  */
@@ -34,7 +34,7 @@ public class HintTextArea extends JTextArea {
 
 	/**
 	 * Constructs the class with the hint text to be shown.
-	 * 
+	 *
 	 * @param hint the hint
 	 */
 	public HintTextArea(String hint) {
@@ -42,8 +42,8 @@ public class HintTextArea extends JTextArea {
 	}
 
 	/**
-	 * Need to override the setText method so we can set font attributes.
-	 * 
+	 * Need to override the setText method so we can set formatting attributes.
+	 *
 	 * @param text the text
 	 */
 	@Override
@@ -74,7 +74,27 @@ public class HintTextArea extends JTextArea {
 	 * Sets the text attributes to be used when NOT viewing the hint.
 	 */
 	protected void setAttributes() {
-		this.setFont(getFont().deriveFont(Font.PLAIN));
 		setForeground(Colors.FOREGROUND);
+	}
+
+	/**
+	 * Sets the text attributes to be used when there is an error in the input.
+	 */
+	private void setErrorAttributes() {
+		setForeground(Colors.ERROR);
+	}
+
+	/**
+	 * Invoked. when the text in the box does not pass validation.
+	 */
+	public void setError() {
+		setErrorAttributes();
+	}
+
+	/**
+	 * Invoked when the text in the box passes validation.
+	 */
+	public void setValid() {
+		setAttributes();
 	}
 }

@@ -25,6 +25,7 @@ import docking.util.AnimatedIcon;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.label.GIconLabel;
+import generic.theme.Gui;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.layout.VerticalLayout;
@@ -35,6 +36,8 @@ import resources.ResourceManager;
 // TODO Code duplication - Either eliminate the TaskMonitorComponent or use this inside of it
 public class GProgressBar extends JPanel {
 	private static final NumberFormat PERCENT_FORMAT = NumberFormat.getPercentInstance();
+
+	private static final String MESSAGE_FONT_ID = "font.task.progress.label.message";
 
 	private volatile long lastProgress = -1;
 	private volatile long progress;
@@ -47,7 +50,6 @@ public class GProgressBar extends JPanel {
 	private volatile boolean paintProgressValue = true;
 	private boolean showingIcon = true;
 
-	private final float fontSize;
 	private JProgressBar progressBar;
 	private JLabel messageLabel;
 	private JLabel imageLabel;
@@ -61,10 +63,9 @@ public class GProgressBar extends JPanel {
 	private CancelledListener cancelledListener;
 
 	public GProgressBar(CancelledListener cancelledListener, boolean includeTextField,
-			boolean includeCancelButton, boolean includeAnimatedIcon, float fontSize) {
+			boolean includeCancelButton, boolean includeAnimatedIcon) {
 		super(new BorderLayout(5, 1));
 		this.cancelledListener = cancelledListener;
-		this.fontSize = fontSize;
 
 		buildProgressPanel(includeTextField, includeCancelButton, includeAnimatedIcon);
 
@@ -217,7 +218,7 @@ public class GProgressBar extends JPanel {
 				// don't care
 			}
 		};
-		messageLabel.setFont(messageLabel.getFont().deriveFont(fontSize));
+		Gui.registerFont(messageLabel, MESSAGE_FONT_ID);
 		Dimension d = messageLabel.getPreferredSize();
 		d.width = 180;
 		messageLabel.setPreferredSize(d);

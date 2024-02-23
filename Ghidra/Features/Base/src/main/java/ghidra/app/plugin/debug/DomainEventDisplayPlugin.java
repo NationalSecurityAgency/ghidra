@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.debug;
 
-import java.awt.Font;
 import java.util.Date;
 
 import ghidra.app.DeveloperPluginPackage;
@@ -47,28 +46,18 @@ public class DomainEventDisplayPlugin extends Plugin implements DomainObjectList
 
 	private Program currentProgram;
 	private DomainEventComponentProvider provider;
-	private String padString;
 
-	/**
-	  * Constructor
-	  */
 	public DomainEventDisplayPlugin(PluginTool tool) {
 
 		super(tool);
 
-		String dateStr = new Date() + ": ";
-		padString = dateStr.replaceAll(".", " ");
-
 		provider = new DomainEventComponentProvider(tool, getName());
 
-		// Note: this plugin in the 'Developer' category and as such does not need help 
+		// Note: this plugin in the 'Developer' category and as such does not need help
 		HelpService helpService = Help.getHelpService();
 		helpService.excludeFromHelp(provider);
 	}
 
-	/**
-	 * Put event processing code here.
-	 */
 	@Override
 	public void processEvent(PluginEvent event) {
 		if (event instanceof ProgramActivatedPluginEvent) {
@@ -83,10 +72,6 @@ public class DomainEventDisplayPlugin extends Plugin implements DomainObjectList
 		}
 	}
 
-	/**
-	 * Tells a plugin that it is no longer needed.  The plugin should remove
-	 * itself from anything that it is registered to and release any resources.
-	 */
 	@Override
 	public void dispose() {
 		if (currentProgram != null) {
@@ -94,32 +79,11 @@ public class DomainEventDisplayPlugin extends Plugin implements DomainObjectList
 		}
 	}
 
-	/**
-	 * This is the callback method for DomainObjectChangedEvents.
-	 */
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
 		if (tool != null && provider.isVisible()) {
 			outputEvent(ev);
 		}
-	}
-
-	/**
-	 * Get the font for the text area; font property will show up on the
-	 * plugin property sheet.
-	 */
-	public Font getFont() {
-		return provider.getFont();
-	}
-
-	/**
-	 * Set the font for the text area; font property will show up on the
-	 * plugin property sheet.
-	
-	 */
-	public void setFont(Font font) {
-		provider.setFont(font);
-		tool.setConfigChanged(true);
 	}
 
 	/**

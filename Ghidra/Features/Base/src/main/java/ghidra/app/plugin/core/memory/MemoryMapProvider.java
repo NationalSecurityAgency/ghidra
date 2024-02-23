@@ -67,7 +67,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 	private DockingAction deleteAction;
 	private DockingAction setBaseAction;
 
-	private MemoryMapPlugin plugin = null;
+	private MemoryMapPlugin plugin;
 
 	private Program program;
 	private MemoryMapManager memManager;
@@ -135,8 +135,12 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		table.installNavigation(tool);
 		table.setAutoCreateColumnsFromModel(false);
 
-		GTableCellRenderer monoRenderer = new GTableCellRenderer();
-		monoRenderer.setFont(monoRenderer.getFixedWidthFont());
+		GTableCellRenderer monoRenderer = new GTableCellRenderer() {
+			@Override
+			protected Font getDefaultFont() {
+				return fixedWidthFont;
+			}
+		};
 
 		TableColumn column = table.getColumn(MemoryMapModel.START_COL);
 		column.setCellRenderer(monoRenderer);

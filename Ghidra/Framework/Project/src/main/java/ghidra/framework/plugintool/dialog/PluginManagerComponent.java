@@ -176,7 +176,7 @@ public class PluginManagerComponent extends JPanel implements Scrollable {
 			labelPanel.setBackground(BG);
 
 			GLabel nameLabel = new GLabel(pluginPackage.getName());
-			nameLabel.setFont(nameLabel.getFont().deriveFont(18f));
+			Gui.registerFont(nameLabel, "font.pluginpanel.name");
 			nameLabel.setForeground(new GColor("color.fg.pluginpanel.name"));
 			labelPanel.add(nameLabel);
 

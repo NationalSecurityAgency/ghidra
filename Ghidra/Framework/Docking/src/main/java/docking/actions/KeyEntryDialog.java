@@ -26,7 +26,9 @@ import docking.action.DockingActionIf;
 import docking.action.KeyBindingData;
 import docking.tool.ToolConstants;
 import docking.widgets.label.GIconLabel;
+import generic.theme.GAttributes;
 import generic.theme.GThemeDefaults.Colors.Messages;
+import generic.theme.Gui;
 import ghidra.util.HelpLocation;
 import resources.Icons;
 
@@ -43,7 +45,8 @@ public class KeyEntryDialog extends DialogComponentProvider {
 	private KeyEntryTextField keyEntryField;
 	private JTextPane collisionPane;
 	private StyledDocument doc;
-	private SimpleAttributeSet textAttrSet;
+
+	private SimpleAttributeSet textAttrs;
 	private Color bgColor;
 
 	public KeyEntryDialog(Tool tool, DockingActionIf action) {
@@ -172,10 +175,8 @@ public class KeyEntryDialog extends DialogComponentProvider {
 	}
 
 	private void setUpAttributes() {
-		textAttrSet = new SimpleAttributeSet();
-		textAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
-		textAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(11));
-		textAttrSet.addAttribute(StyleConstants.Foreground, Messages.NORMAL);
+		Font font = Gui.getFont("font.standard");
+		textAttrs = new GAttributes(font, Messages.NORMAL);
 	}
 
 	private void updateCollisionPane(KeyStroke ks) {
@@ -194,7 +195,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 		String ksName = KeyBindingUtils.parseKeyStroke(ks);
 		String text = keyBindings.getActionsForKeyStrokeText(ksName);
 		try {
-			doc.insertString(0, text, textAttrSet);
+			doc.insertString(0, text, textAttrs);
 			collisionPane.setCaretPosition(0);
 		}
 		catch (BadLocationException e) {

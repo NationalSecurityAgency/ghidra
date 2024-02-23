@@ -28,7 +28,8 @@ import ghidra.util.datastruct.WeakSet;
  * for the font id, this class will update the component's font to the new value.
  */
 public class ComponentFontRegistry {
-	private WeakSet<Component> components = WeakDataStructureFactory.createCopyOnReadWeakSet();
+	private WeakSet<StyledComponent> components =
+		WeakDataStructureFactory.createCopyOnReadWeakSet();
 	private String fontId;
 
 	/**
@@ -45,8 +46,18 @@ public class ComponentFontRegistry {
 	 * @param component the component to add
 	 */
 	public void addComponent(Component component) {
-		component.setFont(Gui.getFont(fontId));
-		components.add(component);
+		addComponent(component, Font.PLAIN);
+	}
+
+	/**
+	 * Allows clients to update the default font being used for a component to use the given style.
+	 * @param component the component
+	 * @param fontStyle the font style (e.g., {@link Font#BOLD})
+	 */
+	public void addComponent(Component component, int fontStyle) {
+		StyledComponent sc = new StyledComponent(component, fontStyle);
+		sc.setFont(Gui.getFont(fontId));
+		components.add(sc);
 	}
 
 	/**
@@ -54,10 +65,26 @@ public class ComponentFontRegistry {
 	 */
 	public void updateComponentFonts() {
 		Font font = Gui.getFont(fontId);
-		for (Component component : components) {
+		for (StyledComponent c : components) {
+			c.setFont(font);
+		}
+	}
+
+	private record StyledComponent(Component component, int fontStyle) {
+
+		void setFont(Font font) {
 			Font existingFont = component.getFont();
-			if (!Objects.equals(existingFont, font)) {
-				component.setFont(font);
+			Font styledFont = font;
+			int style = fontStyle();
+			if (style != Font.PLAIN) {
+				// Only style the font when it is not plain.  Doing this means that clients cannot
+				// override a non-plain font to be plain.  If clients need that behavior, they must
+				// create their own custom font id and register their component with Gui.
+				styledFont = font.deriveFont(style);
+			}
+
+			if (!Objects.equals(existingFont, styledFont)) {
+				component.setFont(styledFont);
 			}
 		}
 	}

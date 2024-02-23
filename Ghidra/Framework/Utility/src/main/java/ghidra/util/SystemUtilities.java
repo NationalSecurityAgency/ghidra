@@ -100,7 +100,7 @@ public class SystemUtilities {
 	}
 
 	/**
-	 * Clean the specified user name to eliminate any spaces or leading domain name 
+	 * Clean the specified user name to eliminate any spaces or leading domain name
 	 * which may be present (e.g., "MyDomain\John Doe" becomes "JohnDoe").
 	 * @param name user name string to be cleaned-up
 	 * @return the clean user name
@@ -127,8 +127,8 @@ public class SystemUtilities {
 	}
 
 	/**
-	 * Get the user that is running the application.  This name may be modified to 
-	 * eliminate any spaces or leading domain name which may be present in Java's 
+	 * Get the user that is running the application.  This name may be modified to
+	 * eliminate any spaces or leading domain name which may be present in Java's
 	 * {@code user.name} system property (see {@link #getCleanUserName(String)}).
 	 * @return the user name
 	 */
@@ -173,20 +173,15 @@ public class SystemUtilities {
 	}
 
 	/**
-	 * Checks to see if the font size override setting is enabled and adjusts
-	 * the given font as necessary to match the override setting. If the setting
-	 * is not enabled, then <code>font</code> is returned.
+	 * No longer supported.  Use the theming system for fonts
 	 *
-	 * @param font
-	 *            The current font to adjust, if necessary.
-	 * @return a font object with the proper size.
+	 * @param font the font
+	 * @return the same font passed in
+	 * @deprecated Use the theming system for fonts
 	 */
+	@Deprecated(since = "11.1", forRemoval = true)
 	public static Font adjustForFontSizeOverride(Font font) {
-		if (FONT_SIZE_OVERRIDE_VALUE == null) {
-			return font;
-		}
-
-		return font.deriveFont((float) FONT_SIZE_OVERRIDE_VALUE.intValue());
+		return font;
 	}
 
 	/**
@@ -350,10 +345,10 @@ public class SystemUtilities {
 	}
 
 	/**
-	 * Returns a file that contains the given class. If the class is in a jar file, then 
-	 * the jar file will be returned. If the file is in a .class file, then the directory 
+	 * Returns a file that contains the given class. If the class is in a jar file, then
+	 * the jar file will be returned. If the file is in a .class file, then the directory
 	 * containing the package root will be returned (i.e. the "bin" directory).
-	 * 
+	 *
 	 * @param classObject the class for which to get the location
 	 * @return the containing location
 	 */
