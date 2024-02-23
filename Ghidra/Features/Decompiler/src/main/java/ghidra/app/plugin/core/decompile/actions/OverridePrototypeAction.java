@@ -36,7 +36,7 @@ import ghidra.util.exception.InvalidInputException;
 public class OverridePrototypeAction extends AbstractDecompilerAction {
 
 	public OverridePrototypeAction() {
-		super("Override Signature");
+		super("Override Signature"); 
 		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionOverrideSignature"));
 		setPopupMenuData(new MenuData(new String[] { "Override Signature" }, "Decompile"));
 	}
