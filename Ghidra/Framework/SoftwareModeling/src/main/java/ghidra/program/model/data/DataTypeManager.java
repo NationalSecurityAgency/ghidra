@@ -88,7 +88,9 @@ public interface DataTypeManager {
 
 	/**
 	 * Returns a unique name not currently used by any other dataType or category
-	 * with the same baseName
+	 * with the same baseName.  This does not produce a conflict name and is intended 
+	 * to be used when generating an artifical datatype name only (e.g., {@code temp_1},
+	 * {@code temp_2}; for {@code baseName="temp"}.
 	 *
 	 * @param path the path of the name
 	 * @param baseName the base name to be made unique

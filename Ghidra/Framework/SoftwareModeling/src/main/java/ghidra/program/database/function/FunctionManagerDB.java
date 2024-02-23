@@ -563,8 +563,8 @@ public class FunctionManagerDB implements FunctionManager {
 	}
 
 	@Override
-	public FunctionIterator getFunctions(Address start, boolean foward) {
-		return new FunctionIteratorDB(start, foward);
+	public FunctionIterator getFunctions(Address start, boolean forward) {
+		return new FunctionIteratorDB(start, forward);
 	}
 
 	@Override
@@ -585,8 +585,8 @@ public class FunctionManagerDB implements FunctionManager {
 	}
 
 	@Override
-	public FunctionIterator getFunctionsNoStubs(Address start, boolean foward) {
-		return new FunctionFilteredIterator(new FunctionIteratorDB(start, foward));
+	public FunctionIterator getFunctionsNoStubs(Address start, boolean forward) {
+		return new FunctionFilteredIterator(new FunctionIteratorDB(start, forward));
 	}
 
 	@Override

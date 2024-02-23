@@ -20,6 +20,7 @@ import java.util.Collection;
 
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
+import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.util.InvalidNameException;
@@ -50,6 +51,12 @@ public interface DataType {
 	@Deprecated
 	public static final DataType VOID = VoidDataType.dataType;
 
+	/**
+	 * Datatype name conflict suffix.
+	 * 
+	 * See {@link DataTypeUtilities} for various methods related to conflict name handling.
+	 * Direct use of this string in application/user-level code is discouraged.
+	 */
 	public final static String CONFLICT_SUFFIX = ".conflict";
 
 	public final static String TYPEDEF_ATTRIBUTE_PREFIX = "__((";

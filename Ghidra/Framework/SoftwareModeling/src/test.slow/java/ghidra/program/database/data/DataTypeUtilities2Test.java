@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.program.model.data;
+package ghidra.program.database.data;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -24,8 +24,9 @@ import org.junit.Test;
 
 import generic.test.AbstractGTest;
 import ghidra.program.database.data.DataTypeUtilities;
+import ghidra.program.model.data.*;
 
-public class DataTypeUtilitiesTest extends AbstractGTest {
+public class DataTypeUtilities2Test extends AbstractGTest {
 
 	@Test
 	public void testGetContainedDataTypes() {

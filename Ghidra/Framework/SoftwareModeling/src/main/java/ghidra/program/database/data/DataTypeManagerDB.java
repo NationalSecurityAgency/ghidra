@@ -1091,11 +1091,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 	}
 
-	ConflictResult resolveConflict(DataTypeConflictHandler handler, DataType addedDataType,
-			DataType existingDataType) {
-		return handler.resolveConflict(addedDataType, existingDataType);
-	}
-
 	@Override
 	public String getUniqueName(CategoryPath path, String baseName) {
 		int pos = baseName.lastIndexOf('_');
@@ -1119,7 +1114,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		return name;
 	}
 
-	String getUniqueName(CategoryPath path1, CategoryPath path2, String baseName) {
+	String getTemporaryUniqueName(CategoryPath newCategoryPath, CategoryPath currentCategoryPath,
+			String baseName) {
 		int pos = baseName.lastIndexOf('_');
 		int oneUpNumber = 0;
 		String name = baseName;
@@ -1134,7 +1130,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				// the number will get updated below
 			}
 		}
-		while (getDataType(path1, name) != null || getDataType(path2, name) != null) {
+		while (getDataType(newCategoryPath, name) != null ||
+			getDataType(currentCategoryPath, name) != null) {
 			++oneUpNumber;
 			name = baseName + "_" + oneUpNumber;
 		}
@@ -1428,47 +1425,47 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	/**
 	 * This method gets a ".conflict" name that is not currently used by any data
-	 * types in the indicated category of the data type manager.
+	 * types in the datatype's category within this data type manager.  If the baseName without
+	 * conflict suffix is not used that name will be returned.
+	 * <br>
+	 * NOTE: The original datatype name will be returned unchanged for pointers and arrays since 
+	 * they cannot be renamed.
+	 * 
 	 * @param dt datatype who name is used to establish non-conflict base name
 	 * @return the unused conflict name or original name for datatypes whose name is automatic
 	 */
 	public String getUnusedConflictName(DataType dt) {
+		return getUnusedConflictName(dt.getCategoryPath(), dt);
+	}
+
+	/**
+	 * This method gets a ".conflict" name that is not currently used by any data
+	 * types in the indicated category within this data type manager.  If the baseName without
+	 * conflict suffix is not used that name will be returned.
+	 * <br>
+	 * NOTE: The original datatype name will be returned unchanged for pointers and arrays since 
+	 * they cannot be renamed.
+	 * 
+	 * @param path the category path of the category where the new data type live in
+	 *             the data type manager.
+	 * @param dt datatype who name is used to establish non-conflict base name
+	 * @return the unused conflict name
+	 */
+	public String getUnusedConflictName(CategoryPath path, DataType dt) {
 		String name = dt.getName();
 		if ((dt instanceof Array) || (dt instanceof Pointer) || (dt instanceof BuiltInDataType)) {
 			// name not used - anything will do
 			return name;
 		}
-		return getUnusedConflictName(dt.getCategoryPath(), name);
-	}
 
-	/**
-	 * This method gets a ".conflict" name that is not currently used by any data
-	 * types in the indicated category of the data type manager.
-	 * 
-	 * @param path the category path of the category where the new data type live in
-	 *             the data type manager.
-	 * @param name The name of the data type. This name may or may not contain
-	 *             ".conflict" as part of it. If the name contains ".conflict", only
-	 *             the part of the name that comes prior to the ".conflict" will be
-	 *             used to determine a new unused conflict name.
-	 * @return the unused conflict name
-	 */
-	public String getUnusedConflictName(CategoryPath path, String name) {
-		int index = name.indexOf(DataType.CONFLICT_SUFFIX);
-		if (index > 0) {
-			name = name.substring(0, index);
-		}
-		// Name sequence: <baseName>, <baseName>.conflict, <basename>.conflict1, ...
-
-		String baseName = name + DataType.CONFLICT_SUFFIX;
-		String testName = name;
+		String baseName = DataTypeUtilities.getNameWithoutConflict(dt);
+		String testName = baseName;
 		int count = 0;
 		while (getDataType(path, testName) != null) {
-			String countSuffix = "";
-			if (count != 0) {
-				countSuffix = Integer.toString(count);
+			testName = baseName + DataType.CONFLICT_SUFFIX;
+			if (count > 0) {
+				testName += Integer.toString(count);
 			}
-			testName = baseName + countSuffix;
 			++count;
 		}
 		return testName;
@@ -4394,7 +4391,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			if (dataType instanceof Pointer || dataType instanceof Array) {
 				dataType = DataTypeUtilities.getBaseDataType(dataType);
 			}
-			if (!contains(dataType)) {
+			if (dataType == null || !contains(dataType)) {
 				return false;
 			}
 			List<DataType> relatedByName = findDataTypesSameLocation(dataType);
@@ -4508,7 +4505,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			if (dt instanceof Pointer || dt instanceof Array) {
 				continue;
 			}
-			boolean isConflict = dt.getName().contains(DataType.CONFLICT_SUFFIX);
+			boolean isConflict = DataTypeUtilities.isConflictDataType(dt);
 			String name = DataTypeUtilities.getNameWithoutConflict(dt, false);
 			if (!name.equals(lastBaseName)) {
 				// base name changed

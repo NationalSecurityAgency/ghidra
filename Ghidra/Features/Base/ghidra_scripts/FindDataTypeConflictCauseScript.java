@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 // Search for the root cause of a datatype conflict based upon a selected datatype.
 //@category Data Types
 import java.util.*;
@@ -55,8 +56,8 @@ public class FindDataTypeConflictCauseScript extends GhidraScript {
 		}
 
 		DataType selectedDt = DataTypeUtilities.getBaseDataType(selectedDatatypes.get(0));
-		if (selectedDt instanceof Pointer || selectedDt instanceof Array) {
-			popup("Selected datatype must not be a Pointer or Array");
+		if (selectedDt == null) {
+			popup("Selected datatype must not be a default Pointer");
 			return;
 		}
 

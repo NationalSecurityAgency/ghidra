@@ -618,24 +618,22 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 	}
 
 	private String generateTypedefName(CategoryPath path) {
-		String newName = TypedefDataType.generateTypedefName(this);
-		DataType dt = dataMgr.getDataType(path, newName);
-		if (dt == null || dt == this) {
-			return newName;
-		}
-
-		String baseName = newName + DataType.CONFLICT_SUFFIX;
-		newName = baseName;
+		String baseName = TypedefDataType.generateTypedefName(this);
+		String testName = baseName;
 		int count = 0;
-		while (true) {
-			dt = dataMgr.getDataType(path, newName);
-			if (dt == null || dt == this) {
-				break;
+		while (!isNameUnusedOrMine(path, testName)) {
+			testName = baseName + DataType.CONFLICT_SUFFIX;
+			if (count > 0) {
+				testName += Integer.toString(count);
 			}
-			count++;
-			newName = baseName + count;
+			++count;
 		}
-		return newName;
+		return testName;
+	}
+
+	private boolean isNameUnusedOrMine(CategoryPath path, String newName) {
+		DataType dt = dataMgr.getDataType(path, newName);
+		return dt == null || dt == this;
 	}
 
 	boolean updateAutoName(boolean notify) {
