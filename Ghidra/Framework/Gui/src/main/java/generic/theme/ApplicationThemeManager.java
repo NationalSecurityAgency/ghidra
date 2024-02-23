@@ -298,6 +298,11 @@ public class ApplicationThemeManager extends ThemeManager {
 		lookAndFeelManager.registerFont(component, fontId);
 	}
 
+	@Override
+	public void registerFont(Component component, String fontId, int fontStyle) {
+		lookAndFeelManager.registerFont(component, fontId, fontStyle);
+	}
+
 	private void installFlatLookAndFeels() {
 		UIManager.installLookAndFeel(LafType.FLAT_LIGHT.getName(), FlatLightLaf.class.getName());
 		UIManager.installLookAndFeel(LafType.FLAT_DARK.getName(), FlatDarkLaf.class.getName());

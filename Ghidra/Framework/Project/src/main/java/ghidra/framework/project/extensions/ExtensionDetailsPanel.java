@@ -15,13 +15,11 @@
  */
 package ghidra.framework.project.extensions;
 
-import java.awt.Color;
+import java.awt.Font;
 import java.awt.Point;
 
-import javax.swing.text.SimpleAttributeSet;
-
 import docking.widgets.table.threaded.ThreadedTableModelListener;
-import generic.theme.GColor;
+import generic.theme.*;
 import ghidra.framework.plugintool.dialog.AbstractDetailsPanel;
 import ghidra.util.extensions.ExtensionDetails;
 
@@ -33,27 +31,28 @@ import ghidra.util.extensions.ExtensionDetails;
  */
 class ExtensionDetailsPanel extends AbstractDetailsPanel {
 
-	private static final Color FG_COLOR_AUTHOR =
+	private static final GColor FG_COLOR_AUTHOR =
 		new GColor("color.fg.extensionpanel.details.author");
-	private static final Color FG_COLOR_DATE = new GColor("color.fg.extensionpanel.details.date");
-	private static final Color FG_COLOR_DESCRIPTION =
+	private static final GColor FG_COLOR_DATE = new GColor("color.fg.extensionpanel.details.date");
+	private static final GColor FG_COLOR_DESCRIPTION =
 		new GColor("color.fg.extensionpanel.details.description");
-	private static final Color FG_COLOR_NAME = new GColor("color.fg.extensionpanel.details.name");
-	private static final Color FG_COLOR_PATH = new GColor("color.fg.extensionpanel.path");
-	private static final Color FG_COLOR_TITLE = new GColor("color.fg.extensionpanel.details.title");
-	private static final Color FG_COLOR_VERSION =
+	private static final GColor FG_COLOR_NAME = new GColor("color.fg.extensionpanel.details.name");
+	private static final GColor FG_COLOR_PATH = new GColor("color.fg.extensionpanel.path");
+	private static final GColor FG_COLOR_TITLE =
+		new GColor("color.fg.extensionpanel.details.title");
+	private static final GColor FG_COLOR_VERSION =
 		new GColor("color.fg.extensionpanel.details.version");
 
 	/** Attribute sets define the visual characteristics for each field */
-	private SimpleAttributeSet nameAttrSet;
-	private SimpleAttributeSet descrAttrSet;
-	private SimpleAttributeSet authorAttrSet;
-	private SimpleAttributeSet createdOnAttrSet;
-	private SimpleAttributeSet versionAttrSet;
-	private SimpleAttributeSet pathAttrSet;
+	private GAttributes nameAttrSet;
+	private GAttributes descrAttrSet;
+	private GAttributes authorAttrSet;
+	private GAttributes createdOnAttrSet;
+	private GAttributes versionAttrSet;
+	private GAttributes pathAttrSet;
+	private ExtensionDetails currentDetails;
 
 	ExtensionDetailsPanel(ExtensionTablePanel tablePanel) {
-		super();
 		createFieldAttributes();
 		createMainPanel();
 
@@ -82,13 +81,19 @@ class ExtensionDetailsPanel extends AbstractDetailsPanel {
 		});
 	}
 
+	@Override
+	protected void refresh() {
+		setDescription(currentDetails);
+	}
+
 	/**
 	 * Updates this panel with the given extension.
-	 * 
+	 *
 	 * @param details the extension to display
 	 */
 	public void setDescription(ExtensionDetails details) {
 
+		this.currentDetails = details;
 		clear();
 		if (details == null) {
 			return;
@@ -134,12 +139,14 @@ class ExtensionDetailsPanel extends AbstractDetailsPanel {
 
 	@Override
 	protected void createFieldAttributes() {
-		titleAttrSet = createAttributeSet(FG_COLOR_TITLE);
-		nameAttrSet = createAttributeSet(FG_COLOR_NAME);
-		descrAttrSet = createAttributeSet(FG_COLOR_DESCRIPTION);
-		authorAttrSet = createAttributeSet(FG_COLOR_AUTHOR);
-		createdOnAttrSet = createAttributeSet(FG_COLOR_DATE);
-		versionAttrSet = createAttributeSet(FG_COLOR_VERSION);
-		pathAttrSet = createAttributeSet(FG_COLOR_PATH);
+
+		Font font = Gui.getFont(FONT_DEFAULT);
+		titleAttrs = new GAttributes(font, FG_COLOR_TITLE);
+		nameAttrSet = new GAttributes(font, FG_COLOR_NAME);
+		descrAttrSet = new GAttributes(font, FG_COLOR_DESCRIPTION);
+		authorAttrSet = new GAttributes(font, FG_COLOR_AUTHOR);
+		createdOnAttrSet = new GAttributes(font, FG_COLOR_DATE);
+		versionAttrSet = new GAttributes(font, FG_COLOR_VERSION);
+		pathAttrSet = new GAttributes(font, FG_COLOR_PATH);
 	}
 }

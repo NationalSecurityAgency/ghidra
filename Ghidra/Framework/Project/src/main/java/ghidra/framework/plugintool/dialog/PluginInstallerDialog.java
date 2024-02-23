@@ -15,11 +15,14 @@
  */
 package ghidra.framework.plugintool.dialog;
 
+import static ghidra.framework.plugintool.dialog.PluginInstallerTableModel.*;
+
 import java.awt.*;
 import java.util.List;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 
 import docking.DialogComponentProvider;
 import docking.widgets.table.*;
@@ -149,30 +152,23 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 		tableFilterPanel = new GTableFilterPanel<>(table, tableModel);
 
 		JScrollPane sp = new JScrollPane(table);
-
 		pluginTablePanel.add(sp, BorderLayout.CENTER);
 		pluginTablePanel.add(tableFilterPanel, BorderLayout.SOUTH);
 
 		// Restrict the size of the first couple columns - the default size is
 		// way too large. This is annoying but our table column classes don't have a nice
 		// way to restrict column width.
-		TableColumn inst_col =
-			table.getColumnModel().getColumn(PluginInstallerTableModel.INSTALLED_COL);
-		inst_col.setMaxWidth(30);
-		TableColumn status_col =
-			table.getColumnModel().getColumn(PluginInstallerTableModel.STATUS_COL);
-		status_col.setMaxWidth(24);
+		TableColumnModel columnModel = table.getColumnModel();
+		TableColumn installedColumn = columnModel.getColumn(INSTALLED_COL);
+		installedColumn.setMaxWidth(30);
+		TableColumn statusColumn = columnModel.getColumn(STATUS_COL);
+		statusColumn.setMaxWidth(24);
 
-		tableModel.setTableSortState(
-			TableSortState.createDefaultSortState(PluginInstallerTableModel.NAME_COL));
+		tableModel.setTableSortState(TableSortState.createDefaultSortState(NAME_COL));
 		tableModel.refresh();
 
-		table.getColumnModel()
-				.getColumn(PluginInstallerTableModel.NAME_COL)
-				.setCellRenderer(new NameCellRenderer());
-		table.getColumnModel()
-				.getColumn(PluginInstallerTableModel.STATUS_COL)
-				.setCellRenderer(new StatusCellRenderer());
+		columnModel.getColumn(NAME_COL).setCellRenderer(new NameCellRenderer());
+		columnModel.getColumn(STATUS_COL).setCellRenderer(new StatusCellRenderer());
 
 		HelpService help = Help.getHelpService();
 		help.registerHelp(table, new HelpLocation(GenericHelpTopics.TOOL, "PluginDialog"));
@@ -214,10 +210,10 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 
 			renderer.setIcon((value instanceof Icon) ? (Icon) value : null);
 			String toolTipText = "";
-			if (value == PluginInstallerTableModel.EXPERIMENTAL_ICON) {
+			if (value == EXPERIMENTAL_ICON) {
 				toolTipText = "This plugin is usable, but not fully tested or documented";
 			}
-			else if (value == PluginInstallerTableModel.DEV_ICON) {
+			else if (value == DEV_ICON) {
 				toolTipText =
 					"This plugin is under development and not intended for general use.\n" +
 						"It could cause Ghidra to become unstable!";

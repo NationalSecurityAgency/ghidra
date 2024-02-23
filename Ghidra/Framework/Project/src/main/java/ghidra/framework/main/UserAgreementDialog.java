@@ -15,7 +15,8 @@
  */
 package ghidra.framework.main;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Insets;
 import java.io.InputStream;
 
 import javax.swing.*;
@@ -57,11 +58,10 @@ public class UserAgreementDialog extends DialogComponentProvider {
 	}
 
 	private JComponent buildWorkPanel() {
-		Font font = Gui.getFont(FONT_ID);
 		JPanel panel = new JPanel(new BorderLayout());
 		JLabel label = new GDLabel("Ghidra User Agreement", SwingConstants.CENTER);
 		label.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
-		label.setFont(font.deriveFont(Font.ITALIC, 22f));
+		Gui.registerFont(label, FONT_ID);
 		panel.add(label, BorderLayout.NORTH);
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 40, 40, 40));
 		JEditorPane editorPane = new JEditorPane();

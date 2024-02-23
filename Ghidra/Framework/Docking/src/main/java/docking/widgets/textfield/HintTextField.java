@@ -67,7 +67,7 @@ public class HintTextField extends JTextField {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param hint the hint text
 	 * @param required true, if the field should be marked as required
 	 * @param verifier input verifier, or null if none needed
@@ -78,7 +78,6 @@ public class HintTextField extends JTextField {
 		this.verifier = verifier;
 
 		addListeners();
-		setFont(getFont().deriveFont(Font.PLAIN));
 		validateField();
 	}
 
@@ -143,7 +142,7 @@ public class HintTextField extends JTextField {
 	/**
 	 * Sets whether the field is required or not. If so, it will be rendered
 	 * differently to indicate that to the user.
-	 * 
+	 *
 	 * @param required true if required, false otherwise
 	 */
 	public void setRequired(boolean required) {
@@ -161,7 +160,7 @@ public class HintTextField extends JTextField {
 
 	/**
 	 * Returns true if the field contains valid input.
-	 * 
+	 *
 	 * @return true if valid, false otherwise
 	 */
 	public boolean isFieldValid() {
@@ -179,7 +178,7 @@ public class HintTextField extends JTextField {
 	}
 
 	/**
-	 * Checks the validity of the field and sets the appropriate 
+	 * Checks the validity of the field and sets the appropriate
 	 * field attributes.
 	 */
 	private void validateField() {
