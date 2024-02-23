@@ -15,7 +15,7 @@
  */
 package ghidra.program.model.data;
 
-import java.util.*;
+import java.util.Comparator;
 
 import ghidra.program.database.data.DataTypeUtilities;
 
@@ -79,24 +79,13 @@ public class DataTypeNameComparator implements Comparator<String> {
 		}
 
 		// Same base-name, order by conflict
-		int conflict1 = getConflictValue(dt1Name);
-		int conflict2 = getConflictValue(dt2Name);
+		int conflict1 = DataTypeUtilities.getConflictValue(dt1Name);
+		int conflict2 = DataTypeUtilities.getConflictValue(dt2Name);
 		if (conflict1 != conflict2) {
 			return conflict1 - conflict2;
 		}
 
 		return name1.compareTo(name2);
-	}
-
-	private int getConflictValue(String dtName) {
-		String conflict = DataTypeUtilities.getConflictString(dtName);
-		if (conflict == null) {
-			return -1;
-		}
-		if (conflict.length() == 0) {
-			return 0;
-		}
-		return Integer.parseInt(conflict);
 	}
 
 }

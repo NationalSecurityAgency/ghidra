@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.datamgr;
+package ghidra.program.database.data;
 
 import static org.junit.Assert.*;
 
 import org.junit.*;
 
 import generic.test.AbstractGenericTest;
-import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
@@ -32,8 +31,6 @@ import ghidra.program.model.data.*;
  */
 public class DataTypeUtilitiesTest extends AbstractGenericTest {
 
-	private ProgramBuilder builder;
-	private ProgramDB program;
 	private DataTypeManager dataTypeManager;
 	private int txID;
 
@@ -43,70 +40,15 @@ public class DataTypeUtilitiesTest extends AbstractGenericTest {
 
 	@Before
 	public void setUp() throws Exception {
-		builder = new ProgramBuilder("nameTest", ProgramBuilder._TOY, this);
-
-		assertNotNull(builder);
-		program = builder.getProgram();
-		assertNotNull(program);
-		dataTypeManager = program.getDataTypeManager();
-		assertNotNull(dataTypeManager);
-		txID = program.startTransaction("NamingUtilities test");
+		dataTypeManager = new StandAloneDataTypeManager("Test");
+		dataTypeManager.startTransaction("Test");
 	}
 
 	@After
 	public void tearDown() throws Exception {
 		if (txID != 0) {
-			program.endTransaction(txID, false);
+			dataTypeManager.endTransaction(txID, true);
 		}
-		if (builder != null) {
-			builder.dispose();
-		}
-	}
-
-	@Test
-	public void testIsSameKindDataType() {
-
-		assertTrue(
-			DataTypeUtilities.isSameKindDataType(IntegerDataType.dataType, ShortDataType.dataType));
-		assertFalse(
-			DataTypeUtilities.isSameKindDataType(FloatDataType.dataType, ShortDataType.dataType));
-
-		assertTrue(
-			DataTypeUtilities.isSameKindDataType(new PointerDataType(IntegerDataType.dataType),
-				new PointerDataType(ShortDataType.dataType)));
-		assertFalse(
-			DataTypeUtilities.isSameKindDataType(new PointerDataType(FloatDataType.dataType),
-				new PointerDataType(ShortDataType.dataType)));
-
-		assertTrue(
-			DataTypeUtilities.isSameKindDataType(new StructureDataType("X", 10),
-				new StructureDataType("Y", 5)));
-		assertTrue(
-			DataTypeUtilities.isSameKindDataType(new UnionDataType("X"), new UnionDataType("Y")));
-		assertFalse(
-			DataTypeUtilities.isSameKindDataType(new StructureDataType("X", 10),
-				new UnionDataType("Y")));
-
-		assertTrue(
-			DataTypeUtilities.isSameKindDataType(
-				new PointerDataType(new StructureDataType("X", 10)),
-				new PointerDataType(new StructureDataType("Y", 5))));
-		assertTrue(
-			DataTypeUtilities.isSameKindDataType(new PointerDataType(new UnionDataType("X")),
-				new PointerDataType(new UnionDataType("Y"))));
-		assertFalse(
-			DataTypeUtilities.isSameKindDataType(
-				new PointerDataType(new StructureDataType("X", 10)),
-				new PointerDataType(new UnionDataType("Y"))));
-
-		assertTrue(
-			DataTypeUtilities.isSameKindDataType(
-				new TypedefDataType("Foo", new PointerDataType(new StructureDataType("X", 10))),
-				new PointerDataType(new StructureDataType("Y", 5))));
-		assertFalse(
-			DataTypeUtilities.isSameKindDataType(
-				new TypedefDataType("Foo", new PointerDataType(new StructureDataType("X", 10))),
-				new PointerDataType(new UnionDataType("Y"))));
 	}
 
 	@Test
@@ -393,15 +335,9 @@ public class DataTypeUtilitiesTest extends AbstractGenericTest {
 
 		same("/cat1/simpleStruct.conflict1 *32 *64", "/cat1/simpleStruct *32 *64");
 
-		same("/cat1/simpleStruct.conflict_1234 *64", "/cat1.conflict5/simpleStruct *64");
-
 		same("/cat1/simpleStruct", "/cat1/simpleStruct.conflict1");
 
-		same("/cat1/simpleStruct.conflict_1234.conflict", "/cat1/simpleStruct");
-
 		same("/cat1/simpleStruct.conflict_1234", "/cat1/simpleStruct.conflict3");
-
-		same("simpleStruct.conflict_1234_abc", "simpleStruct.conflict4_abc");
 
 		same("simpleStruct.conflict12", "simpleStruct.conflict34");
 
@@ -525,6 +461,12 @@ public class DataTypeUtilitiesTest extends AbstractGenericTest {
 		different("/cat1/simpleStruct[11] *32[2]", "/cat1/simpleStruct.conflict1[11] *8[2]");
 
 		different("/cat1/simpleStruct[6] *16[9]", "/cat1/simpleStruct.conflict1[6] *64[9]");
+
+		different("/cat1/simpleStruct.conflict_1234 *64", "/cat1.conflict5/simpleStruct *64");
+
+		different("/cat1/simpleStruct.conflict_1234.conflict", "/cat1/simpleStruct");
+
+		different("simpleStruct.conflict_1234_abc", "simpleStruct.conflict4_abc");
 	}
 
 	private void same(String name1, String name2) {

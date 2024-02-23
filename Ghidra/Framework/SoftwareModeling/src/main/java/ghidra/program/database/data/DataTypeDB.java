@@ -392,7 +392,7 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 			// generate a name that would not cause a duplicate in either the current path
 			// or
 			// the new path. Use the new name if possible.
-			String uniqueName = dataMgr.getUniqueName(path, getCategoryPath(), name);
+			String uniqueName = dataMgr.getTemporaryUniqueName(path, getCategoryPath(), name);
 			doSetName(uniqueName);
 
 			// set the path - this is guaranteed to work since we make a name that won't

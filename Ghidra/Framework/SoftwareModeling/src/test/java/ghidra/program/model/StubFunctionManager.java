@@ -99,7 +99,7 @@ public class StubFunctionManager implements FunctionManager {
 	}
 
 	@Override
-	public FunctionIterator getFunctions(Address start, boolean foward) {
+	public FunctionIterator getFunctions(Address start, boolean forward) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -114,7 +114,7 @@ public class StubFunctionManager implements FunctionManager {
 	}
 
 	@Override
-	public FunctionIterator getFunctionsNoStubs(Address start, boolean foward) {
+	public FunctionIterator getFunctionsNoStubs(Address start, boolean forward) {
 		throw new UnsupportedOperationException();
 	}
 

@@ -177,8 +177,8 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 
 	/**
 	 * This method throws an exception if the indicated data type is an ancestor of
-	 * this data type. In other words, the specified data type has a component or
-	 * sub-component containing this data type.
+	 * this data type (i.e., the specified data type has a component or
+	 * sub-component containing this data type).
 	 * 
 	 * @param dataType the data type
 	 * @throws IllegalArgumentException if the data type is an ancestor of this data

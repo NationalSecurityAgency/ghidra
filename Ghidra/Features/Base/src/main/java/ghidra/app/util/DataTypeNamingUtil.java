@@ -15,6 +15,7 @@
  */
 package ghidra.app.util;
 
+import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.FunctionSignature;
@@ -53,9 +54,9 @@ public class DataTypeNamingUtil {
 		}
 
 		sb.append("_");
-		sb.append(mangleDTName(returnType.getName()));
+		sb.append(mangleDTName(returnType));
 		for (ParameterDefinition p : parameters) {
-			sb.append("_").append(mangleDTName(p.getDataType().getName()));
+			sb.append("_").append(mangleDTName(p.getDataType()));
 		}
 
 		if (functionDefinition.hasVarArgs()) {
@@ -72,8 +73,9 @@ public class DataTypeNamingUtil {
 		return name;
 	}
 
-	private static String mangleDTName(String s) {
-		return s.replaceAll(" ", "_").replaceAll("\\*", "ptr");
+	private static String mangleDTName(DataType dt) {
+		String name = DataTypeUtilities.getNameWithoutConflict(dt);
+		return name.replaceAll(" ", "_").replaceAll("\\*", "ptr");
 	}
 
 }
