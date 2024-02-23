@@ -95,31 +95,51 @@ public class CompareFuncsFromMatchedTokensAction extends AbstractMatchedTokensAc
 			currentPair.rightToken() == null) {
 			return;
 		}
-		FunctionComparisonService service = tool.getService(FunctionComparisonService.class);
-		if (service == null) {
-			Msg.error(this, "Function Comparison Service not found!");
-			return;
-		}
-		FunctionComparisonProvider comparisonProvider = service.createFunctionComparisonProvider();
-		comparisonProvider.removeAddFunctionsAction();
 
 		ClangFuncNameToken leftFuncToken = (ClangFuncNameToken) currentPair.leftToken();
 		ClangFuncNameToken rightFuncToken = (ClangFuncNameToken) currentPair.rightToken();
 
 		Function leftFunction = getFuncFromToken(leftFuncToken, decompPanel.getLeftProgram());
 		Function rightFunction = getFuncFromToken(rightFuncToken, decompPanel.getRightProgram());
-
 		if (leftFunction == null || rightFunction == null) {
 			return;
 		}
 
-		comparisonProvider.getModel().compareFunctions(leftFunction, rightFunction);
+		FunctionComparisonService service = tool.getService(FunctionComparisonService.class);
+		if (service == null) {
+			Msg.error(this, "Function Comparison Service not found!");
+			return;
+		}
 
+		FunctionComparisonProvider comparisonProvider = service.createFunctionComparisonProvider();
+		comparisonProvider.removeAddFunctionsAction();
+		comparisonProvider.getModel().compareFunctions(leftFunction, rightFunction);
 	}
 
 	private Function getFuncFromToken(ClangFuncNameToken funcToken, Program program) {
 		Address callTarget = funcToken.getPcodeOp().getInput(0).getAddress();
-		return program.getFunctionManager().getFunctionAt(callTarget);
+		Function func = program.getFunctionManager().getFunctionAt(callTarget);
+		if (func == null) {
+			Msg.showWarn(this, null, "Unable to Compare Callees",
+				"Can't compare callees - null Function for " + funcToken.getText());
+			return null;
+		}
+		if (func.isExternal()) {
+			Msg.showWarn(this, null, "Unable to Compare Callees",
+				"Can't compare callees - " + func.getName() + " is external");
+			return null;
+		}
+		if (!func.isThunk()) {
+			return func;
+		}
+		func = func.getThunkedFunction(true);
+		if (func.isExternal()) {
+			Msg.showWarn(this, null, "Unable to Compare",
+				"Can't compare callees - " + func.getName() + " is external");
+			return null;
+		}
+		return func;
+
 	}
 
 }
