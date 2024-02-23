@@ -176,13 +176,6 @@ public class ApplicationUtilities {
 				new File(tempOverrideDir, getUserSpecificDirName(tempOverrideDir, appName)));
 		}
 
-		// Look for XDG environment variable
-		File xdgRuntimeDir = getEnvFile(XdgUtils.XDG_RUNTIME_DIR, false);
-		if (xdgRuntimeDir != null) {
-			return createDir(
-				new File(xdgRuntimeDir, getUserSpecificDirName(xdgRuntimeDir, appName)));
-		}
-
 		File javaTmpDir = getJavaTmpDir();
 		return createDir(new File(getJavaTmpDir(), getUserSpecificDirName(javaTmpDir, appName)));
 	}
