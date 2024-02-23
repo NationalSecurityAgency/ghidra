@@ -460,9 +460,9 @@ public class PackedDecode implements Decoder {
 			curPos.advancePosition(length);
 			return res;
 		}
-		StringBuilder buf = new StringBuilder();
-		String res = new String(curPos.array, curPos.current, curLen);
-		buf.append(res);
+		int size = curLen;
+		byte[] buf = new byte[length];
+		System.arraycopy(curPos.array, curPos.current, buf, 0, curLen);
 		length -= curLen;
 		curPos.advancePosition(curLen);
 		while (length > 0) {
@@ -470,13 +470,12 @@ public class PackedDecode implements Decoder {
 			if (curLen > length) {
 				curLen = length;
 			}
-			res = new String(curPos.array, curPos.current, curLen);
-			buf.append(res);
+			System.arraycopy(curPos.array, curPos.current, buf, size, curLen);
+			size += curLen;
 			length -= curLen;
 			curPos.advancePosition(curLen);
 		}
-		res = buf.toString();
-		return res;
+		return new String(buf, 0, size);
 	}
 
 	@Override
