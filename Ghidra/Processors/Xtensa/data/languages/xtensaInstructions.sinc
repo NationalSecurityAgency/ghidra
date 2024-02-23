@@ -122,7 +122,7 @@
 # BANY - Branch if Any Bit Set, pg. 265.
 :bany srel_16_23, as, at, is srel_16_23 & ar = 0b1000 & as & at & op0 = 0b0111 {
 	local test:4 = as & at;
-	if (test == 0)	goto srel_16_23;
+	if (test != 0)	goto srel_16_23;
 }
 
 macro extract_bit(bit, result) {
@@ -399,7 +399,7 @@ macro extract_bit(bit, result) {
 	local mt:1 = (x s> (-clamp));
 	local max:4 = (zext(mt) * x) + (zext(!mt) * (-clamp));
 	mt = (x s< (clamp-1));
-	local y = (zext(mt) * max) + (zext(!mt) * (clamp-1));
+	ar = (zext(mt) * max) + (zext(!mt) * (clamp-1));
 }
 
 # DHI - Data Cache Hit Invalidate, pg. 313.
@@ -1165,6 +1165,12 @@ rfi_eps: ptr is u4_8_11	[ ptr = $(EPS_BASE) + (4 * u4_8_11); ] { export *[regist
     local shift:4 = 31 - u5_4_7_plus7;
 	local tmp:4 = as << shift;
 	ar = tmp s>> shift;
+}
+:sext ar, as, 7 is op2 = 0b0010 & op1 = 0b0011 & ar & as & u4_4_7 = 0 & op0 = 0 {
+    ar = sext(as:1);
+}
+:sext ar, as, 15 is op2 = 0b0010 & op1 = 0b0011 & ar & as & u4_4_7 = 8 & op0 = 0 {
+    ar = sext(as:2);
 }
 
 # SICT - Store Instruction Cache Tag, pg. 519.

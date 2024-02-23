@@ -2431,6 +2431,11 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * @param replacementDataType datatype which is the replacement
 	 */
 	protected void addDataTypeToReplace(DataType oldDataType, DataType replacementDataType) {
+		Objects.requireNonNull(oldDataType);
+		Objects.requireNonNull(replacementDataType);
+		if (oldDataType == replacementDataType) {
+			throw new AssertionError("Invalid datatype replacement pair");
+		}
 		typesToReplace.add(new Pair<>(oldDataType, replacementDataType));
 	}
 

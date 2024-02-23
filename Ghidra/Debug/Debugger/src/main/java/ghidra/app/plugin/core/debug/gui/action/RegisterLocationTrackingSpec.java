@@ -15,11 +15,9 @@
  */
 package ghidra.app.plugin.core.debug.gui.action;
 
-import java.util.concurrent.CompletableFuture;
-
 import ghidra.debug.api.action.*;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
@@ -52,10 +50,14 @@ public interface RegisterLocationTrackingSpec extends LocationTrackingSpec, Loca
 		return this;
 	}
 
-	default Address doComputeTraceAddress(PluginTool tool, DebuggerCoordinates coordinates) {
+	@Override
+	default Address computeTraceAddress(ServiceProvider provider, DebuggerCoordinates coordinates) {
 		Trace trace = coordinates.getTrace();
 		TracePlatform platform = coordinates.getPlatform();
 		TraceThread thread = coordinates.getThread();
+		if (thread == null) {
+			return null;
+		}
 		long viewSnap = coordinates.getViewSnap();
 		long snap = coordinates.getSnap();
 		int frame = coordinates.getFrame();
@@ -89,13 +91,7 @@ public interface RegisterLocationTrackingSpec extends LocationTrackingSpec, Loca
 	}
 
 	@Override
-	default CompletableFuture<Address> computeTraceAddress(PluginTool tool,
-			DebuggerCoordinates coordinates) {
-		return CompletableFuture.supplyAsync(() -> doComputeTraceAddress(tool, coordinates));
-	}
-
-	@Override
-	default GoToInput getDefaultGoToInput(PluginTool tool, DebuggerCoordinates coordinates,
+	default GoToInput getDefaultGoToInput(ServiceProvider provider, DebuggerCoordinates coordinates,
 			ProgramLocation location) {
 		Register register = computeRegister(coordinates);
 		return GoToInput.offsetOnly(register.getName());

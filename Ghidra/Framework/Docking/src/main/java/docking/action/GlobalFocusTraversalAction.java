@@ -53,7 +53,7 @@ public class GlobalFocusTraversalAction extends DockingAction {
 			DockingWindowManager.DOCKING_WINDOWS_OWNER);
 
 		this.forward = forward;
-		createReservedKeyBinding(keybinding);
+		createSystemKeyBinding(keybinding);
 		setEnabled(isGlobalFocusTraversalEnabled());
 	}
 

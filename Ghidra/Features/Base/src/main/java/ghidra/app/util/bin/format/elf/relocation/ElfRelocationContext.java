@@ -17,8 +17,6 @@ package ghidra.app.util.bin.format.elf.relocation;
 
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
-
 import ghidra.app.util.bin.format.elf.*;
 import ghidra.app.util.bin.format.elf.extend.ElfLoadAdapter;
 import ghidra.app.util.importer.MessageLog;
@@ -32,10 +30,12 @@ import ghidra.util.exception.*;
 /**
  * <code>ElfRelocationContext</code> provides a relocation handler context related
  * to the processing of entries contained within a specific relocation table.
+ * 
+ * @param <H> ELF relocation handler class
  */
-public class ElfRelocationContext {
+public class ElfRelocationContext<H extends ElfRelocationHandler> {
 
-	protected final ElfRelocationHandler handler;
+	protected final H handler;
 	protected final ElfLoadHelper loadHelper;
 	protected final Map<ElfSymbol, Address> symbolMap;
 	protected final Program program;
@@ -51,12 +51,16 @@ public class ElfRelocationContext {
 	 * @param loadHelper the elf load helper
 	 * @param symbolMap Elf symbol placement map
 	 */
-	protected ElfRelocationContext(ElfRelocationHandler handler, ElfLoadHelper loadHelper,
+	protected ElfRelocationContext(H handler, ElfLoadHelper loadHelper,
 			Map<ElfSymbol, Address> symbolMap) {
 		this.handler = handler;
 		this.loadHelper = loadHelper;
 		this.symbolMap = symbolMap;
 		this.program = loadHelper.getProgram();
+
+		if (handler == null) {
+			loadHelper.log("Unable to process ELF relocations: relocation handler not found");
+		}
 	}
 
 	/**
@@ -83,7 +87,7 @@ public class ElfRelocationContext {
 
 	/**
 	 * Process a relocation from the relocation table which corresponds to this context.
-	 * All relocation entries must be processed in the order they appear within the table.
+	 * All relocation entries will be processed in the order they appear within the table.
 	 * @param relocation relocation to be processed
 	 * @param relocationAddress relocation address where it should be applied
 	 * @return applied relocation result
@@ -91,32 +95,77 @@ public class ElfRelocationContext {
 	public final RelocationResult processRelocation(ElfRelocation relocation,
 			Address relocationAddress) {
 
+		int symbolIndex = relocation.getSymbolIndex();
+		ElfSymbol sym = getSymbol(symbolIndex);
+
 		if (handler == null) {
-			handleNoHandlerError(relocation, relocationAddress);
+			String symbolName = sym != null ? sym.getNameAsString() : null;
+			ElfRelocationHandler.bookmarkNoHandlerError(program, relocationAddress,
+				relocation.getType(), symbolIndex, symbolName);
 			return RelocationResult.FAILURE;
 		}
 
-		int symbolIndex = relocation.getSymbolIndex();
-		ElfSymbol sym = getSymbol(symbolIndex);
 		if (sym == null) {
-			ElfRelocationHandler.markAsError(program, relocationAddress, relocation.getType(), null,
-				"invalid symbol index (" + symbolIndex + ")", getLog());
+			handler.markAsError(program, relocationAddress, relocation.getType(), null, -1,
+				"Invalid symbol index (" + symbolIndex + ")", getLog());
 			return RelocationResult.FAILURE;
 		}
 		if (sym.isTLS()) {
-			handleUnsupportedTLSRelocation(relocation, relocationAddress, sym);
-			return RelocationResult.FAILURE;
+			handler.markAsWarning(program, relocationAddress, relocation.getType(),
+				sym.getNameAsString(), symbolIndex, "Relocation for TLS Symbol not supported",
+				getLog());
+			return RelocationResult.UNSUPPORTED;
 		}
 
 		try {
-			return handler.relocate(this, relocation, relocationAddress);
+			return processRelocation(relocation, sym, relocationAddress);
 		}
 		catch (MemoryAccessException | NotFoundException e) {
 			loadHelper.log(e);
-			ElfRelocationHandler.markAsUnhandled(program, relocationAddress, relocation.getType(),
-				symbolIndex, sym.getNameAsString(), getLog());
+			handler.markAsError(program, relocationAddress, relocation.getType(),
+				sym.getNameAsString(), symbolIndex, "Processing Failure - " + e.getMessage(),
+				getLog());
 		}
 		return RelocationResult.FAILURE;
+	}
+
+	/**
+	 * Process a relocation from the relocation table which corresponds to this context
+	 * after preliminary checks have been performed and ELF symbol resolved.
+	 * All relocation entries will be processed in the order they appear within the table.
+	 * 
+	 * @param relocation relocation to be processed
+	 * @param elfSymbol resolved ELF symbol (not null)
+	 * @param relocationAddress relocation address where it should be applied
+	 * @return applied relocation result
+	 * @throws MemoryAccessException if a memory access error occurs
+	 * @throws NotFoundException NOTE: use of this exception is deprecated and should not be thrown
+	 */
+	protected RelocationResult processRelocation(ElfRelocation relocation, ElfSymbol elfSymbol,
+			Address relocationAddress) throws MemoryAccessException, NotFoundException {
+		return handler.relocate(this, relocation, relocationAddress);
+	}
+
+	/**
+	 * Generate relocation error log entry and bookmark.
+	 * 
+	 * @param relocationAddress relocation address
+	 * @param typeId relocation type ID value (will get mapped to {@link ElfRelocationType#name()}
+	 * if possible). 
+	 * @param symbolIndex associated symbol index within symbol table (-1 to ignore)
+	 * @param symbolName relocation symbol name or null if unknown
+	 * @param msg error message
+	 */
+	public final void markRelocationError(Address relocationAddress, int typeId, int symbolIndex,
+			String symbolName, String msg) {
+		if (handler != null) {
+			handler.markAsError(program, relocationAddress, typeId, symbolName, -1, msg, getLog());
+		}
+		else {
+			// must use static method without relocation type resolution
+			ElfRelocationHandler.markAsError(program, relocationAddress, typeId, symbolIndex,
+				symbolName, msg, getLog());
+		}
 	}
 
 	/**
@@ -124,48 +173,26 @@ public class ElfRelocationContext {
 	 * relocation handler.
 	 * @return RELR relocation type or 0 if not supported
 	 */
-	public long getRelrRelocationType() {
+	public int getRelrRelocationType() {
 		return handler != null ? handler.getRelrRelocationType() : 0;
-	}
-
-	private void handleUnsupportedTLSRelocation(ElfRelocation relocation, Address relocationAddress,
-			ElfSymbol sym) {
-		ElfRelocationHandler.markAsError(program, relocationAddress, relocation.getType(),
-			sym.getNameAsString(), "TLS symbol relocation not yet supported", getLog());
-	}
-
-	private void handleNoHandlerError(ElfRelocation relocation, Address relocationAddress) {
-
-		String symName = getSymbolName(relocation.getSymbolIndex());
-
-		String nameMsg = "";
-		if (!StringUtils.isBlank(symName)) {
-			nameMsg = " to: " + symName;
-		}
-		program.getBookmarkManager()
-				.setBookmark(relocationAddress, BookmarkType.ERROR, "Relocation",
-					"No handler to process ELF Relocation" + nameMsg);
-
-		loadHelper.log(
-			"WARNING: At " + relocationAddress + " no handler to process ELF Relocation" + nameMsg);
 	}
 
 	/**
 	 * Get a relocation context for a specfic Elf image and relocation table
 	 * @param loadHelper Elf load helper
 	 * @param symbolMap Elf symbol placement map
-	 * @return relocation context or null
+	 * @return relocation context object
 	 */
-	public static ElfRelocationContext getRelocationContext(ElfLoadHelper loadHelper,
+	public static ElfRelocationContext<?> getRelocationContext(ElfLoadHelper loadHelper,
 			Map<ElfSymbol, Address> symbolMap) {
 		ElfHeader elf = loadHelper.getElfHeader();
-		ElfRelocationContext context = null;
+		ElfRelocationContext<?> context = null;
 		ElfRelocationHandler handler = ElfRelocationHandlerFactory.getHandler(elf);
 		if (handler != null) {
 			context = handler.createRelocationContext(loadHelper, symbolMap);
 		}
 		if (context == null) {
-			context = new ElfRelocationContext(handler, loadHelper, symbolMap);
+			context = new ElfRelocationContext<>(handler, loadHelper, symbolMap);
 		}
 		return context;
 	}

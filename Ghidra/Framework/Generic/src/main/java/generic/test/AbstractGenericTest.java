@@ -21,7 +21,6 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.lang.reflect.*;
-import java.net.*;
 import java.nio.file.*;
 import java.util.*;
 import java.util.List;
@@ -328,18 +327,6 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 		return WindowUtilities.windowForComponent(c);
 	}
 
-	public File getLocalResourceFile(String relativePath) {
-		URL resource = getClass().getResource(relativePath);
-		try {
-			URI uri = resource.toURI();
-			return new File(uri);
-		}
-		catch (URISyntaxException e) {
-			Msg.error(this, "Unable to convert URL to URI", e);
-		}
-		return null;
-	}
-
 	/**
 	 * Load a text resource file into an ArrayList. Each line of the file is
 	 * stored as an item in the list.
@@ -355,13 +342,14 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 		if (is == null) {
 			throw new IOException("Could not find resource: " + name);
 		}
+		Msg.debug(AbstractGenericTest.class, "Loading classpath resource: " + name);
 		BufferedReader br = new BufferedReader(new InputStreamReader(is));
-		ArrayList<String> text = readText(br);
+		List<String> text = readText(br);
 		br.close();
 		return text;
 	}
 
-	private static ArrayList<String> readText(BufferedReader br) throws IOException {
+	private static List<String> readText(BufferedReader br) throws IOException {
 		ArrayList<String> list = new ArrayList<>();
 		String line = "";
 		while (line != null) {
@@ -374,10 +362,11 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 	}
 
-	public static ArrayList<String> loadTextResource(String name) throws IOException {
+	public static List<String> loadTextResource(String name) throws IOException {
 		File file = getTestDataFile(name);
+		Msg.debug(AbstractGenericTest.class, "Loading text file: " + file);
 		BufferedReader reader = new BufferedReader(new FileReader(file));
-		ArrayList<String> text = readText(reader);
+		List<String> text = readText(reader);
 		reader.close();
 		return text;
 	}
@@ -396,6 +385,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	 */
 	public static File getTestDataFile(String path) throws FileNotFoundException {
 		ResourceFile resourceFile = Application.getModuleDataFile("TestResources", path);
+		Msg.debug(AbstractGenericTest.class, "Loading test data file: " + resourceFile);
 		return resourceFile.getFile(false);
 	}
 
@@ -429,6 +419,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	public static File findTestDataFile(String path) {
 		try {
 			ResourceFile resourceFile = Application.getModuleDataFile("TestResources", path);
+			Msg.debug(AbstractGenericTest.class, "Loading test data file: " + resourceFile);
 			return resourceFile.getFile(false);
 		}
 		catch (FileNotFoundException e) {

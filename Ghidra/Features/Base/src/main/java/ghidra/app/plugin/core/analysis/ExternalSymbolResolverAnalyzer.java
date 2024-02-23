@@ -15,21 +15,16 @@
  */
 package ghidra.app.plugin.core.analysis;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import ghidra.app.services.*;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.opinion.*;
-import ghidra.framework.model.*;
+import ghidra.app.util.opinion.ElfLoader;
+import ghidra.app.util.opinion.MachoLoader;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.listing.Library;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ExternalSymbolResolver;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -61,7 +56,7 @@ public class ExternalSymbolResolverAnalyzer extends AbstractAnalyzer {
 		if (program.getDomainFile().getParent() == null) {
 			return false;
 		}
-		
+
 		Options options = program.getOptions(Program.PROGRAM_INFO);
 		String format = options.getString("Executable Format", null);
 		return ElfLoader.ELF_NAME.equals(format) || MachoLoader.MACH_O_NAME.equals(format);
@@ -71,65 +66,16 @@ public class ExternalSymbolResolverAnalyzer extends AbstractAnalyzer {
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
 
-		Object consumer = new Object();
-		log = new MessageLog(); // For now, we don't want the analysis log spammed
-		ProjectData projectData = program.getDomainFile().getParent().getProjectData();
-		List<Loaded<Program>> loadedPrograms = new ArrayList<>();
-
-		// Add program to list
-		loadedPrograms.add(new Loaded<>(program, program.getName(),
-			program.getDomainFile().getParent().getPathname()));
-
-		// Add external libraries to list
-		for (Library extLibrary : ExternalSymbolResolver.getLibrarySearchList(program)) {
-			monitor.checkCancelled();
-			String libPath = extLibrary.getAssociatedProgramPath();
-			if (libPath == null) {
-				continue;
+		try (ExternalSymbolResolver esr = new ExternalSymbolResolver(
+			program.getDomainFile().getParent().getProjectData(), monitor)) {
+			esr.addProgramToFixup(program);
+			esr.fixUnresolvedExternalSymbols();
+			esr.logInfo(s -> Msg.info(this, s), false);
+			if (esr.hasProblemLibraries()) {
+				// causes a popup message at end of analysis session
+				esr.logInfo(log::appendMsg, true);
 			}
-
-			DomainFile libDomainFile = projectData.getFile(libPath);
-			if (libDomainFile == null) {
-				log.appendMsg("Referenced external program not found: " + libPath);
-				continue;
-			}
-
-			try {
-				DomainObject libDomainObject =
-					libDomainFile.getDomainObject(consumer, false, false, monitor);
-				if (libDomainObject instanceof Program p) {
-					loadedPrograms.add(new Loaded<>(p, libDomainFile.getName(),
-						libDomainFile.getParent().getPathname()));
-				}
-				else {
-					libDomainObject.release(consumer);
-					log.appendMsg("Referenced external program is not a program: " + libPath);
-				}
-			}
-			catch (IOException e) {
-				log.appendMsg("Failed to open library dependency project file: " +
-					libDomainFile.getPathname());
-			}
-			catch (VersionException e) {
-				log.appendMsg(
-					"Referenced external program requires updgrade, unable to consider symbols: " +
-						libPath);
-			}
-		}
-
-		// Resolve symbols
-		try {
-			ExternalSymbolResolver.fixUnresolvedExternalSymbols(loadedPrograms, false, log,
-				monitor);
 			return true;
-		}
-		catch (IOException e) {
-			return false;
-		}
-		finally {
-			for (int i = 1; i < loadedPrograms.size(); i++) {
-				loadedPrograms.get(i).release(consumer);
-			}
 		}
 	}
 }

@@ -23,9 +23,16 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.reloc.RelocationResult;
-import ghidra.util.exception.NotFoundException;
 
-public class MSP430X_ElfRelocationHandler extends ElfRelocationHandler {
+public class MSP430X_ElfRelocationHandler
+		extends AbstractElfRelocationHandler<MSP430X_ElfRelocationType, ElfRelocationContext<?>> {
+
+	/**
+	 * Constructor
+	 */
+	public MSP430X_ElfRelocationHandler() {
+		super(MSP430X_ElfRelocationType.class);
+	}
 
 	@Override
 	public boolean canRelocate(ElfHeader elf) {
@@ -34,48 +41,42 @@ public class MSP430X_ElfRelocationHandler extends ElfRelocationHandler {
 	}
 
 	@Override
-	public RelocationResult relocate(ElfRelocationContext elfRelocationContext,
-			ElfRelocation relocation, Address relocationAddress)
-			throws MemoryAccessException, NotFoundException {
-		int type = relocation.getType();
-		if (type == MSP430X_ElfRelocationConstants.R_MSP430_NONE) {
-			return RelocationResult.SKIPPED;
-		}
+	protected RelocationResult relocate(ElfRelocationContext<?> elfRelocationContext,
+			ElfRelocation relocation, MSP430X_ElfRelocationType type, Address relocationAddress,
+			ElfSymbol elfSymbol, Address symbolAddr, long symbolValue, String symbolName)
+			throws MemoryAccessException {
 
 		Program program = elfRelocationContext.getProgram();
 		Memory memory = program.getMemory();
 		int symbolIndex = relocation.getSymbolIndex();
 		long addend = relocation.getAddend(); // will be 0 for REL case
 		long offset = relocationAddress.getOffset();
-		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex); // may be null
-		String symbolName = elfRelocationContext.getSymbolName(symbolIndex);
-		long symbolValue = elfRelocationContext.getSymbolValue(sym);
-		int byteLength = 0;
+		int byteLength;
 
 		switch (type) {
-			case MSP430X_ElfRelocationConstants.R_MSP430_ABS32:
+			case R_MSP430_ABS32:
 				int newIntValue = (int) (symbolValue + addend);
 				memory.setInt(relocationAddress, newIntValue);
 				byteLength = 4;
 				break;
-			case MSP430X_ElfRelocationConstants.R_MSP430_ABS16:
-			case MSP430X_ElfRelocationConstants.R_MSP430X_ABS16:
+			case R_MSP430_ABS16:
+			case R_MSP430X_ABS16:
 				short newShortValue = (short) (symbolValue + addend);
 				memory.setShort(relocationAddress, newShortValue);
 				byteLength = 2;
 				break;
-			case MSP430X_ElfRelocationConstants.R_MSP430_ABS8:
+			case R_MSP430_ABS8:
 				byte newByteValue = (byte) (symbolValue + addend);
 				memory.setByte(relocationAddress, newByteValue);
 				byteLength = 1;
 				break;
-			case MSP430X_ElfRelocationConstants.R_MSP430_PCR16:
-			case MSP430X_ElfRelocationConstants.R_MSP430X_PCR16:
+			case R_MSP430_PCR16:
+			case R_MSP430X_PCR16:
 				newShortValue = (short) (symbolValue + addend - offset);
 				memory.setShort(relocationAddress, newShortValue);
 				byteLength = 2;
 				break;
-			case MSP430X_ElfRelocationConstants.R_MSP430X_PCR20_EXT_SRC:
+			case R_MSP430X_PCR20_EXT_SRC:
 				newIntValue = (int) (symbolValue + addend - offset - 4);
 				memory.setShort(relocationAddress.add(4), (short) (newIntValue));
 				newIntValue >>= 16;
@@ -86,7 +87,7 @@ public class MSP430X_ElfRelocationHandler extends ElfRelocationHandler {
 				memory.setShort(relocationAddress, highWord);
 				byteLength = 6;
 				break;
-			case MSP430X_ElfRelocationConstants.R_MSP430X_PCR20_EXT_DST:
+			case R_MSP430X_PCR20_EXT_DST:
 				newIntValue = (int) (symbolValue + addend - offset - 4);
 				memory.setShort(relocationAddress.add(4), (short) (newIntValue));
 				newIntValue >>= 16;
@@ -97,7 +98,7 @@ public class MSP430X_ElfRelocationHandler extends ElfRelocationHandler {
 				memory.setShort(relocationAddress, highWord);
 				byteLength = 6;
 				break;
-			case MSP430X_ElfRelocationConstants.R_MSP430X_PCR20_EXT_ODST:
+			case R_MSP430X_PCR20_EXT_ODST:
 				newIntValue = (int) (symbolValue + addend - offset - 4);
 				memory.setShort(relocationAddress.add(6), (short) (newIntValue));
 				newIntValue >>= 16;
@@ -108,7 +109,7 @@ public class MSP430X_ElfRelocationHandler extends ElfRelocationHandler {
 				memory.setShort(relocationAddress, highWord);
 				byteLength = 8;
 				break;
-			case MSP430X_ElfRelocationConstants.R_MSP430X_ABS20_EXT_SRC:
+			case R_MSP430X_ABS20_EXT_SRC:
 				newIntValue = (int) (symbolValue + addend);
 				memory.setShort(relocationAddress.add(4), (short) (newIntValue));
 				newIntValue >>= 16;
@@ -119,7 +120,7 @@ public class MSP430X_ElfRelocationHandler extends ElfRelocationHandler {
 				memory.setShort(relocationAddress, highWord);
 				byteLength = 6;
 				break;
-			case MSP430X_ElfRelocationConstants.R_MSP430X_ABS20_EXT_DST:
+			case R_MSP430X_ABS20_EXT_DST:
 				newIntValue = (int) (symbolValue + addend);
 				memory.setShort(relocationAddress.add(4), (short) (newIntValue));
 				newIntValue >>= 16;
@@ -130,7 +131,7 @@ public class MSP430X_ElfRelocationHandler extends ElfRelocationHandler {
 				memory.setShort(relocationAddress, highWord);
 				byteLength = 6;
 				break;
-			case MSP430X_ElfRelocationConstants.R_MSP430X_ABS20_EXT_ODST:
+			case R_MSP430X_ABS20_EXT_ODST:
 				newIntValue = (int) (symbolValue + addend);
 				memory.setShort(relocationAddress.add(6), (short) (newIntValue));
 				newIntValue >>= 16;
@@ -141,7 +142,7 @@ public class MSP430X_ElfRelocationHandler extends ElfRelocationHandler {
 				memory.setShort(relocationAddress, highWord);
 				byteLength = 8;
 				break;
-			case MSP430X_ElfRelocationConstants.R_MSP430X_ABS20_ADR_SRC:
+			case R_MSP430X_ABS20_ADR_SRC:
 				newIntValue = (int) (symbolValue + addend);
 				memory.setShort(relocationAddress.add(2), (short) (newIntValue & 0xffff));
 				newIntValue >>= 16;
@@ -152,7 +153,7 @@ public class MSP430X_ElfRelocationHandler extends ElfRelocationHandler {
 				memory.setShort(relocationAddress, highWord);
 				byteLength = 4;
 				break;
-			case MSP430X_ElfRelocationConstants.R_MSP430X_ABS20_ADR_DST:
+			case R_MSP430X_ABS20_ADR_DST:
 				newIntValue = (int) (symbolValue + addend);
 				memory.setShort(relocationAddress.add(2), (short) (newIntValue & 0xffff));
 				newIntValue >>= 16;
@@ -163,7 +164,7 @@ public class MSP430X_ElfRelocationHandler extends ElfRelocationHandler {
 				memory.setShort(relocationAddress, highWord);
 				byteLength = 4;
 				break;
-			case MSP430X_ElfRelocationConstants.R_MSP430X_PCR20_CALL:
+			case R_MSP430X_PCR20_CALL:
 				newIntValue = (int) (symbolValue + addend - offset);
 				memory.setShort(relocationAddress.add(2), (short) newIntValue);
 				newIntValue >>= 16;
@@ -174,7 +175,7 @@ public class MSP430X_ElfRelocationHandler extends ElfRelocationHandler {
 				memory.setShort(relocationAddress, highWord);
 				byteLength = 4;
 				break;
-			case MSP430X_ElfRelocationConstants.R_MSP430X_10_PCREL:
+			case R_MSP430X_10_PCREL:
 				short oldShortValue = memory.getShort(relocationAddress);
 				oldShortValue &= 0xfc00;
 				newShortValue = (short) (symbolValue + addend - offset - 2);

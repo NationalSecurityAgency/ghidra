@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -424,32 +424,29 @@ public class PdbResearch {
 		}
 		AbstractMsSymbol symbol = iter.peek(); //temporary during development
 		MsSymbolApplier applier = applicator.getSymbolApplier(iter);
-		if (applier instanceof TypedefSymbolApplier) {
-			TypedefSymbolApplier typedefApplier = (TypedefSymbolApplier) applier;
+		if (applier instanceof TypedefSymbolApplier typedefApplier) {
 			RecordNumber typeNumber = typedefApplier.getTypeRecordNumber();
 			AbstractMsType type = applicator.getPdb().getTypeRecord(typeNumber);
 			System.out
-					.println("UDT " + typedefApplier.getName() + " depends on " + type.toString());
+					.println(
+						"UDT " + typedefApplier.getName() + " depends on " + type.toString());
 //			applier.apply();
 //			procSym(symbolGroup);
 		}
-		else if (applier instanceof ReferenceSymbolApplier) {
-			ReferenceSymbolApplier refSymbolApplier = (ReferenceSymbolApplier) applier;
+		else if (applier instanceof ReferenceSymbolApplier refSymbolApplier) {
 			MsSymbolIterator refIter =
-				refSymbolApplier.getInitializedReferencedSymbolGroupIterator();
+				refSymbolApplier.getRefIterFromSymbol();
 			if (refIter == null) {
 				throw new PdbException("PDB: Referenced Symbol Error - not refIter");
 			}
 			// recursion
 			childWalkSym(applicator, refIter.getStreamNumber(), refIter);
 		}
-		else if (applier instanceof DataSymbolApplier) {
-			DataSymbolApplier dataSymbolApplier = (DataSymbolApplier) applier;
-			MsTypeApplier typeApplier = dataSymbolApplier.getTypeApplier();
+		else if (applier instanceof DataSymbolApplier dataSymbolApplier) {
+			MsTypeApplier typeApplier = dataSymbolApplier.getTypeApplier(symbol);
 			childWalkType(streamNumber, typeApplier);
 		}
-		else if (applier instanceof FunctionSymbolApplier) {
-			FunctionSymbolApplier functionSymbolApplier = (FunctionSymbolApplier) applier;
+		else if (applier instanceof FunctionSymbolApplier functionSymbolApplier) {
 			functionSymbolApplier.getFunction();
 //			AbstractMsTypeApplier typeApplier = functionSymbolApplier.getTypeApplier();
 //			childWalkType(symbolGroup.getModuleNumber(), typeApplier);

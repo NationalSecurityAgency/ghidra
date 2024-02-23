@@ -24,7 +24,8 @@ import ghidra.debug.api.platform.DebuggerPlatformMapper;
 import ghidra.debug.api.platform.DisassemblyResult;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
-import ghidra.program.model.lang.*;
+import ghidra.program.model.lang.Endian;
+import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.target.TraceObject;
@@ -59,7 +60,7 @@ public abstract class AbstractDebuggerPlatformMapper implements DebuggerPlatform
 	}
 
 	protected boolean isCancelSilently(Address start, long snap) {
-		return trace.getCodeManager().definedUnits().containsAddress(snap, start);
+		return trace.getCodeManager().instructions().getAt(snap, start) != null;
 	}
 
 	protected Collection<DisassemblyInject> getDisassemblyInjections(TraceObject object) {
@@ -85,9 +86,10 @@ public abstract class AbstractDebuggerPlatformMapper implements DebuggerPlatform
 		if (!result) {
 			return DisassemblyResult.failed(dis.getStatusMsg());
 		}
+		AddressSetView actualSet = dis.getDisassembledAddressSet();
 		for (DisassemblyInject i : injects) {
-			i.post(tool, trace, snap, dis.getDisassembledAddressSet());
+			i.post(tool, trace, snap, actualSet);
 		}
-		return DisassemblyResult.success(!dis.getDisassembledAddressSet().isEmpty());
+		return DisassemblyResult.success(actualSet != null && !actualSet.isEmpty());
 	}
 }

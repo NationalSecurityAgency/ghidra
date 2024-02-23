@@ -5502,11 +5502,12 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 {
 	build COND;
 	local tmp = Rn;
+	local tmpRm = Rm;
 	access:1 = hasExclusiveAccess(tmp);
 	Rd = 1;
 	if (!access) goto inst_next;
 	Rd = 0;
-	*tmp = Rm;
+	*tmp = tmpRm;
 }
 
 @endif # VERSION_6
@@ -5517,36 +5518,38 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 {
 	build COND;
 	local tmp = Rn;
-  	access:1 = hasExclusiveAccess(tmp);
-  	Rd = 1;
-  	if (!access) goto inst_next;
-  	Rd = 0;
-  	local tmpRm = Rm;
-  	*tmp = tmpRm:1;
+	local tmpRm = Rm;
+	access:1 = hasExclusiveAccess(tmp);
+	Rd = 1;
+	if (!access) goto inst_next;
+	Rd = 0;
+	*tmp = tmpRm:1;
 }
 
 :strexd^COND Rd,Rm,Rm2,[Rn]  is $(AMODE) & ARMcond=1 & COND & c2027=0x1a & Rn & Rd & c0411=0xf9 & c0003 & Rm & Rm2
 {
 	build COND;
 	local addr = Rn;
+	local tmpRm = Rm;
+	local tmpRm2 = Rm2;
   	access:1 = hasExclusiveAccess(addr);
   	Rd = 1;
   	if (!access) goto inst_next;
   	Rd = 0;
-	*(addr) = Rm;
+	*(addr) = tmpRm;
 	addr = addr + 4;
-	*(addr) = Rm2;
+	*(addr) = tmpRm2;
 }
 
 :strexh^COND  Rd,Rm,[Rn]    is $(AMODE) & ARMcond=1 & COND & c2027=0x1e & c0411=0xf9 & Rn & Rd & Rm
 {
 	build COND;
 	local tmp = Rn;
+	local tmpRm = Rm;
   	access:1 = hasExclusiveAccess(tmp);
   	Rd = 1;
   	if (!access) goto inst_next;
   	Rd = 0;
-  	local tmpRm = Rm;
 	*tmp = tmpRm:2;
 }
 

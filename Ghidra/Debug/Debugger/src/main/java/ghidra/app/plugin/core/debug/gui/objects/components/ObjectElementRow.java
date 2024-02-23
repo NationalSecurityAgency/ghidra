@@ -35,7 +35,7 @@ public class ObjectElementRow {
 			map = attributes;
 		}).exceptionally(ex -> {
 			DebuggerObjectsPlugin plugin = provider.getPlugin();
-			plugin.objectError("Failed to fetch attributes");
+			plugin.objectError("Failed to fetch attributes", ex);
 			return null;
 		});
 	}

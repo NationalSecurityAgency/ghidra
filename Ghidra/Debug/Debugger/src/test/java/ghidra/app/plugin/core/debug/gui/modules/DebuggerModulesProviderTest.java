@@ -401,7 +401,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 		});
 	}
 
-	@Test
+	// @Test // Not gonna with write-behind cache
 	public void testUndoRedoCausesUpdateInProvider() throws Exception {
 		createAndOpenTrace();
 
@@ -491,7 +491,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 	@Test
 	public void testActionMapModules() throws Exception {
-		assertFalse(provider.actionMapModules.isEnabled());
+		assertDisabled(provider, provider.actionMapModules);
 
 		createAndOpenTrace();
 		createAndOpenProgramFromTrace();
@@ -503,7 +503,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 		waitForSwing();
 
 		// Still
-		assertFalse(provider.actionMapModules.isEnabled());
+		assertDisabled(provider, provider.actionMapModules);
 
 		try (Transaction tx = program.openTransaction("Change name")) {
 			program.setImageBase(addr(program, 0x00400000), true);
@@ -516,7 +516,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 		waitForPass(() -> assertModuleTableSize(2));
 
 		runSwing(() -> provider.setSelectedModules(Set.of(modExe)));
-		assertTrue(provider.actionMapModules.isEnabled());
+		assertEnabled(provider, provider.actionMapModules);
 
 		performEnabledAction(provider, provider.actionMapModules, false);
 
@@ -558,7 +558,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 	@Test
 	public void testActionMapSections() throws Exception {
-		assertFalse(provider.actionMapSections.isEnabled());
+		assertDisabled(provider, provider.actionMapSections);
 
 		createAndOpenTrace();
 		createAndOpenProgramFromTrace();
@@ -570,7 +570,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 		waitForTasks();
 
 		// Still
-		assertFalse(provider.actionMapSections.isEnabled());
+		assertDisabled(provider, provider.actionMapSections);
 
 		MemoryBlock block = addBlock();
 		try (Transaction tx = program.openTransaction("Change name")) {
@@ -581,7 +581,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 		waitForPass(() -> assertSectionTableSize(4));
 
 		runSwing(() -> provider.setSelectedSections(Set.of(secExeText)));
-		assertTrue(provider.actionMapSections.isEnabled());
+		assertEnabled(provider, provider.actionMapSections);
 
 		performEnabledAction(provider, provider.actionMapSections, false);
 

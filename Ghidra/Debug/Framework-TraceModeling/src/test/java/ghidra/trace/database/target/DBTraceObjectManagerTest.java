@@ -327,42 +327,42 @@ public class DBTraceObjectManagerTest extends AbstractGhidraHeadlessIntegrationT
 	@Test
 	public void testClear() {
 		populateModel(3);
-		assertEquals(5, manager.getAllObjects().size());
+		assertEquals(5, manager.getObjectCount());
 
 		try (Transaction tx = b.startTransaction()) {
 			manager.clear();
 		}
-		assertEquals(0, manager.getAllObjects().size());
+		assertEquals(0, manager.getObjectCount());
 
 		populateModel(3);
-		assertEquals(5, manager.getAllObjects().size());
+		assertEquals(5, manager.getObjectCount());
 	}
 
-	@Test
+	// @Test // Write-behind cache does not implement undo or redo
 	public void testUndoRedo() throws Exception {
 		populateModel(3);
-		assertEquals(5, manager.getAllObjects().size());
+		assertEquals(5, manager.getObjectCount());
 
 		b.trace.undo();
-		assertEquals(0, manager.getAllObjects().size());
+		assertEquals(0, manager.getObjectCount());
 
 		b.trace.redo();
-		assertEquals(5, manager.getAllObjects().size());
+		assertEquals(5, manager.getObjectCount());
 	}
 
-	@Test
+	// @Test // Write-behind cache does not implement abort
 	public void testAbort() throws Exception {
 		try (Transaction tx = b.startTransaction()) {
 			populateModel(3);
-			assertEquals(5, manager.getAllObjects().size());
+			assertEquals(5, manager.getObjectCount());
 
 			tx.abort();
 		}
 
-		assertEquals(0, manager.getAllObjects().size());
+		assertEquals(0, manager.getObjectCount());
 
 		populateModel(3);
-		assertEquals(5, manager.getAllObjects().size());
+		assertEquals(5, manager.getObjectCount());
 	}
 
 	@Test

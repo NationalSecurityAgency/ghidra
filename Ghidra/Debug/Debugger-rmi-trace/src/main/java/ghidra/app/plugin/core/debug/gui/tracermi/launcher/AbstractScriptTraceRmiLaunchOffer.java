@@ -22,6 +22,7 @@ import java.util.*;
 import javax.swing.Icon;
 
 import ghidra.app.plugin.core.debug.gui.tracermi.launcher.ScriptAttributesParser.ScriptAttributes;
+import ghidra.app.plugin.core.debug.gui.tracermi.launcher.ScriptAttributesParser.TtyCondition;
 import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.debug.api.tracermi.TerminalSession;
 import ghidra.program.model.listing.Program;
@@ -87,6 +88,11 @@ public abstract class AbstractScriptTraceRmiLaunchOffer extends AbstractTraceRmi
 		return attrs.parameters();
 	}
 
+	@Override
+	protected int getConnectionTimeoutMillis() {
+		return attrs.timeoutMillis();
+	}
+
 	protected abstract void prepareSubprocess(List<String> commandLine, Map<String, String> env,
 			Map<String, ?> args, SocketAddress address);
 
@@ -97,9 +103,12 @@ public abstract class AbstractScriptTraceRmiLaunchOffer extends AbstractTraceRmi
 		Map<String, String> env = new HashMap<>(System.getenv());
 		prepareSubprocess(commandLine, env, args, address);
 
-		for (String tty : attrs.extraTtys()) {
+		for (Map.Entry<String, TtyCondition> ent : attrs.extraTtys().entrySet()) {
+			if (!ent.getValue().isActive(args)) {
+				continue;
+			}
 			NullPtyTerminalSession ns = nullPtyTerminal();
-			env.put(tty, ns.name());
+			env.put(ent.getKey(), ns.name());
 			sessions.put(ns.name(), ns);
 		}
 

@@ -32,43 +32,32 @@ import ghidra.util.exception.CancelledException;
 /**
  * Applier for {@link AbstractPublicMsSymbol} symbols.
  */
-public class PublicSymbolApplier extends MsSymbolApplier {
+public class PublicSymbolApplier extends MsSymbolApplier implements DirectSymbolApplier {
 
 	private AbstractPublicMsSymbol symbol;
-	private Address symbolAddress = null;
-	private Address existingSymbolAddress = null;
 
 	/**
 	 * Constructor
 	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
-	 * @param iter the Iterator containing the symbol sequence being processed
+	 * @param symbol the symbol for this applier
 	 */
-	public PublicSymbolApplier(DefaultPdbApplicator applicator, MsSymbolIterator iter) {
-		super(applicator, iter);
-		AbstractMsSymbol abstractSymbol = iter.next();
-		if (!(abstractSymbol instanceof AbstractPublicMsSymbol)) {
-			throw new AssertException(
-				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
-		}
-		symbol = (AbstractPublicMsSymbol) abstractSymbol;
+	public PublicSymbolApplier(DefaultPdbApplicator applicator, AbstractPublicMsSymbol symbol) {
+		super(applicator);
+		this.symbol = symbol;
 	}
 
 	@Override
-	void applyTo(MsSymbolApplier applyToApplier) {
-		// Do nothing.
-	}
-
-	@Override
-	void apply() throws CancelledException, PdbException {
-
-		symbolAddress = applicator.getAddress(symbol);
+	public void apply(MsSymbolIterator iter) throws PdbException, CancelledException {
+		getValidatedSymbol(iter, true);
+		Address symbolAddress = applicator.getAddress(symbol);
 
 		String name = symbol.getName();
 		if (applicator.isInvalidAddress(symbolAddress, name)) {
 			return;
 		}
 
-		existingSymbolAddress = applicator.witnessSymbolNameAtAddress(getName(), symbolAddress);
+		Address existingSymbolAddress =
+			applicator.witnessSymbolNameAtAddress(name, symbolAddress);
 		// TODO: Consider... could add restriction of not putting down symbol if it is mangled,
 		//  as this would violate the uniqueness of the symbol... but we would also want to
 		//  know that this situation was being presented.
@@ -76,7 +65,7 @@ public class PublicSymbolApplier extends MsSymbolApplier {
 			// Note: there might be issues of thunk functions getting the same mangled name
 			// as thunked functions, which violates the thesis of their being unique.
 			// TODO: investigate this.
-			applicator.createSymbol(symbolAddress, name, true);
+			applicator.createSymbol(symbolAddress, name, false);
 
 			Program program = applicator.getProgram();
 			if (GuidUtil.isGuidLabel(program, symbolAddress, name)) {
@@ -91,15 +80,13 @@ public class PublicSymbolApplier extends MsSymbolApplier {
 		}
 	}
 
-	Address getAddress() {
-		return symbolAddress;
+	private AbstractPublicMsSymbol getValidatedSymbol(MsSymbolIterator iter, boolean iterate) {
+		AbstractMsSymbol abstractSymbol = iterate ? iter.next() : iter.peek();
+		if (!(abstractSymbol instanceof AbstractPublicMsSymbol pubSymbol)) {
+			throw new AssertException(
+				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
+		}
+		return pubSymbol;
 	}
 
-	Address getAddressRemappedThroughPublicSymbol() {
-		return (existingSymbolAddress != null) ? existingSymbolAddress : symbolAddress;
-	}
-
-	String getName() {
-		return symbol.getName();
-	}
 }

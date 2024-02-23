@@ -278,20 +278,22 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 
 	protected void createActions() {
 		actionMapRegions = MapRegionsAction.builder(plugin)
-				.enabledWhen(this::isContextNonEmpty)
-				.popupWhen(this::isContextNonEmpty)
+				.enabledWhen(ctx -> isContextNonEmpty(ctx) && isContextNotForcedSingle(ctx))
+				.popupWhen(ctx -> isContextNonEmpty(ctx) && isContextNotForcedSingle(ctx))
 				.onAction(this::activatedMapRegions)
-				.buildAndInstallLocal(this);
+				.buildAndInstall(tool);
 		actionMapRegionTo = MapRegionToAction.builder(plugin)
 				.enabledWhen(ctx -> currentProgram != null && isContextSingleSelection(ctx))
 				.popupWhen(ctx -> currentProgram != null && isContextSingleSelection(ctx))
 				.onAction(this::activatedMapRegionTo)
-				.buildAndInstallLocal(this);
+				.buildAndInstall(tool);
 		actionMapRegionsTo = MapRegionsToAction.builder(plugin)
-				.enabledWhen(ctx -> currentProgram != null && isContextNonEmpty(ctx))
-				.popupWhen(ctx -> currentProgram != null && isContextNonEmpty(ctx))
+				.enabledWhen(ctx -> currentProgram != null && isContextNonEmpty(ctx) &&
+					isContextNotForcedSingle(ctx))
+				.popupWhen(ctx -> currentProgram != null && isContextNonEmpty(ctx) &&
+					isContextNotForcedSingle(ctx))
 				.onAction(this::activatedMapRegionsTo)
-				.buildAndInstallLocal(this);
+				.buildAndInstall(tool);
 		actionSelectAddresses = new SelectAddressesAction();
 		actionSelectRows = SelectRowsAction.builder(plugin)
 				.description("Select regions by dynamic selection")
@@ -329,13 +331,20 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 	}
 
 	private boolean isContextNonEmpty(ActionContext context) {
-		if (context instanceof DebuggerRegionActionContext legacyCtx) {
-			return legacyPanel.isContextNonEmpty(legacyCtx);
+		if (context instanceof DebuggerRegionActionContext ctx) {
+			return legacyPanel.isContextNonEmpty(ctx);
 		}
 		else if (context instanceof DebuggerObjectActionContext ctx) {
-			return DebuggerRegionsPanel.isContextNonEmpty(ctx);
+			return panel.isContextNonEmpty(ctx);
 		}
 		return false;
+	}
+
+	private boolean isContextNotForcedSingle(ActionContext context) {
+		if (context instanceof DebuggerRegionActionContext ctx) {
+			return !ctx.isForcedSingle();
+		}
+		return true;
 	}
 
 	private boolean isContextSingleSelection(ActionContext context) {
@@ -343,12 +352,12 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 		return sel != null && sel.size() == 1;
 	}
 
-	private static Set<TraceMemoryRegion> getSelectedRegions(ActionContext context) {
-		if (context instanceof DebuggerRegionActionContext legacyCtx) {
-			return DebuggerLegacyRegionsPanel.getSelectedRegions(legacyCtx);
+	private Set<TraceMemoryRegion> getSelectedRegions(ActionContext context) {
+		if (context instanceof DebuggerRegionActionContext ctx) {
+			return DebuggerLegacyRegionsPanel.getSelectedRegions(ctx);
 		}
 		else if (context instanceof DebuggerObjectActionContext ctx) {
-			return DebuggerRegionsPanel.getSelectedRegions(ctx);
+			return panel.getSelectedRegions(ctx);
 		}
 		return null;
 	}

@@ -112,38 +112,32 @@ public class DebuggerObjectsPlugin extends AbstractDebuggerPlugin
 				provider.traceOpened(ev.getTrace());
 			}
 		}
-		else if (event instanceof TraceActivatedPluginEvent) {
-			TraceActivatedPluginEvent ev = (TraceActivatedPluginEvent) event;
+		else if (event instanceof TraceActivatedPluginEvent ev) {
 			for (DebuggerObjectsProvider provider : providers) {
 				provider.traceActivated(ev.getActiveCoordinates());
 			}
 		}
-		else if (event instanceof TraceClosedPluginEvent) {
-			TraceClosedPluginEvent ev = (TraceClosedPluginEvent) event;
+		else if (event instanceof TraceClosedPluginEvent ev) {
 			for (DebuggerObjectsProvider provider : providers) {
 				provider.traceClosed(ev.getTrace());
 			}
 		}
-		else if (event instanceof ModelActivatedPluginEvent) {
-			ModelActivatedPluginEvent ev = (ModelActivatedPluginEvent) event;
+		else if (event instanceof ModelActivatedPluginEvent ev) {
 			for (DebuggerObjectsProvider provider : providers) {
 				provider.modelActivated(ev.getActiveModel());
 			}
 		}
-		else if (event instanceof ProgramActivatedPluginEvent) {
-			ProgramActivatedPluginEvent ev = (ProgramActivatedPluginEvent) event;
+		else if (event instanceof ProgramActivatedPluginEvent ev) {
 			for (DebuggerObjectsProvider provider : providers) {
 				provider.setProgram(ev.getActiveProgram());
 			}
 		}
-		else if (event instanceof ProgramOpenedPluginEvent) {
-			ProgramOpenedPluginEvent ev = (ProgramOpenedPluginEvent) event;
+		else if (event instanceof ProgramOpenedPluginEvent ev) {
 			for (DebuggerObjectsProvider provider : providers) {
 				provider.setProgram(ev.getProgram());
 			}
 		}
-		else if (event instanceof ProgramSelectionPluginEvent) {
-			ProgramSelectionPluginEvent ev = (ProgramSelectionPluginEvent) event;
+		else if (event instanceof ProgramSelectionPluginEvent ev) {
 			for (DebuggerObjectsProvider provider : providers) {
 				provider.setProgram(ev.getProgram());
 			}
@@ -275,12 +269,12 @@ public class DebuggerObjectsPlugin extends AbstractDebuggerPlugin
 		providers.get(0).readConfigState(saveState);
 	}
 
-	public void objectError(String message) {
+	public void objectError(String message, Throwable ex) {
 		if (consoleService == null) {
 			Msg.error(this, message);
 			return;
 		}
-		consoleService.log(DebuggerResources.ICON_LOG_ERROR, message);
+		consoleService.log(DebuggerResources.ICON_LOG_ERROR, message, ex);
 	}
 
 }

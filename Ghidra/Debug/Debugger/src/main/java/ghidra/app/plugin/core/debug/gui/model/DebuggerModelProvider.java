@@ -18,13 +18,16 @@ package ghidra.app.plugin.core.debug.gui.model;
 import java.awt.*;
 import java.awt.event.*;
 import java.lang.invoke.MethodHandles;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeExpansionListener;
+import javax.swing.tree.TreePath;
 
 import docking.*;
 import docking.action.DockingAction;
@@ -39,12 +42,17 @@ import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.CloneWindowAction;
 import ghidra.app.plugin.core.debug.gui.MultiProviderSaveBehavior.SaveableProvider;
+import ghidra.app.plugin.core.debug.gui.control.TargetActionTask;
 import ghidra.app.plugin.core.debug.gui.model.AbstractQueryTablePanel.CellActivationListener;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ObjectRow;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
-import ghidra.app.plugin.core.debug.gui.model.ObjectTreeModel.AbstractNode;
+import ghidra.app.plugin.core.debug.gui.model.ObjectTreeModel.*;
+import ghidra.app.plugin.core.debug.gui.model.ObjectTreeModel.RootNode;
 import ghidra.app.plugin.core.debug.gui.model.PathTableModel.PathRow;
 import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.debug.api.target.ActionName;
+import ghidra.debug.api.target.Target;
+import ghidra.debug.api.target.Target.ActionEntry;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
@@ -265,8 +273,13 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 
 	private final SeekListener seekListener = pos -> {
 		long snap = Math.round(pos);
-		if (current.getTrace() == null || snap < 0) {
+		if (snap < 0) {
 			snap = 0;
+		}
+		long max =
+			current.getTrace() == null ? 0 : current.getTrace().getTimeManager().getMaxSnap();
+		if (snap > max) {
+			snap = max;
 		}
 		traceManager.activateSnap(snap);
 	};
@@ -501,11 +514,26 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			setPath(value == null ? TraceObjectKeyPath.of() : value.getCanonicalPath(),
 				objectsTreePanel, EventOrigin.INTERNAL_GENERATED);
 		});
+		objectsTreePanel.tree.addTreeExpansionListener(new TreeExpansionListener() {
+			@Override
+			public void treeExpanded(TreeExpansionEvent expEvent) {
+				if (EventQueue.getCurrentEvent() instanceof InputEvent event &&
+					!event.isShiftDown()) {
+					refreshTargetChildren(expEvent.getPath());
+				}
+			}
+
+			@Override
+			public void treeCollapsed(TreeExpansionEvent event) {
+				// I don't care
+			}
+		});
 		objectsTreePanel.tree.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
 					activateObjectSelectedInTree();
+					e.consume();
 				}
 			}
 		});
@@ -572,6 +600,54 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		rebuildPanels();
 	}
 
+	private TraceObjectValue getObject(TreePath path) {
+		if (path.getLastPathComponent() instanceof CanonicalNode node) {
+			return node.getValue();
+		}
+		if (path.getLastPathComponent() instanceof RootNode node) {
+			return node.getValue();
+		}
+		return null;
+	}
+
+	private void refreshTargetChildren(TreePath path) {
+		TraceObjectValue value = getObject(path);
+		if (value == null) {
+			return;
+		}
+		DebuggerCoordinates current = traceManager.getCurrentFor(value.getTrace());
+		if (!current.isAliveAndPresent() && limitToSnap) {
+			return;
+		}
+		Target target = current.getTarget();
+		if (target == null) {
+			return;
+		}
+		Map<String, ActionEntry> actions = target.collectActions(ActionName.REFRESH,
+			new DebuggerObjectActionContext(List.of(value), this, objectsTreePanel));
+		for (ActionEntry ent : actions.values()) {
+			if (ent.requiresPrompt()) {
+				continue;
+			}
+			if (path.getLastPathComponent() instanceof AbstractNode node) {
+				/**
+				 * This pending node does not duplicate what the lazy node already does. For all
+				 * it's concerned, once it has loaded the entries from the database, it is done.
+				 * This task asks the target to update that database, so it needs its own indicator.
+				 */
+				PendingNode pending = new PendingNode();
+				node.addNode(0, pending);
+				CompletableFuture<Void> future =
+					TargetActionTask.runAction(plugin.getTool(), ent.display(), ent);
+				future.handle((__, ex) -> {
+					node.removeNode(pending);
+					return null;
+				});
+				return;
+			}
+		}
+	}
+
 	private void activateObjectSelectedInTree() {
 		List<AbstractNode> sel = objectsTreePanel.getSelectedItems();
 		if (sel.size() != 1) {
@@ -580,7 +656,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			return;
 		}
 		TraceObjectValue value = sel.get(0).getValue();
-		if (value.getValue() instanceof TraceObject child) {
+		if (value != null && value.getValue() instanceof TraceObject child) {
 			activatePath(child.getCanonicalPath());
 		}
 	}

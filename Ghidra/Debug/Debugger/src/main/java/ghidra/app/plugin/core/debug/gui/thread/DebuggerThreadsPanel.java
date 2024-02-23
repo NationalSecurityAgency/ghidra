@@ -20,12 +20,16 @@ import java.util.List;
 import javax.swing.JTable;
 import javax.swing.event.ListSelectionEvent;
 
+import docking.widgets.table.AbstractDynamicTableColumn;
 import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
 import docking.widgets.table.TableColumnDescriptor;
 import docking.widgets.table.threaded.ThreadedTableModelListener;
+import ghidra.app.plugin.core.debug.gui.action.PCLocationTrackingSpec;
+import ghidra.app.plugin.core.debug.gui.action.SPLocationTrackingSpec;
 import ghidra.app.plugin.core.debug.gui.model.*;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.*;
 import ghidra.app.plugin.core.debug.gui.model.columns.*;
+import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.TargetObjectSchema;
@@ -34,10 +38,10 @@ import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
-import ghidra.trace.model.Lifespan;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Function;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.thread.TraceObjectThread;
 
 public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceObjectThread> {
@@ -67,53 +71,92 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 		}
 	}
 
-	private abstract static class AbstractThreadLifeBoundColumn
-			extends TraceValueObjectPropertyColumn<Long> {
-		public AbstractThreadLifeBoundColumn() {
-			super(Long.class);
+	private Address computeProgramCounter(DebuggerCoordinates coords) {
+		// TODO: Cheating a bit. Also, can user configure whether by stack or regs?
+		return PCLocationTrackingSpec.INSTANCE.computeTraceAddress(provider.getTool(),
+			coords);
+	}
+
+	private class ThreadPcColumn extends TraceValueObjectPropertyColumn<Address> {
+		public ThreadPcColumn() {
+			super(Address.class);
 		}
 
-		abstract Long fromLifespan(Lifespan lifespan);
-
 		@Override
-		public ValueProperty<Long> getProperty(ValueRow row) {
-			return new ValueDerivedProperty<>(row, Long.class) {
+		public ValueProperty<Address> getProperty(ValueRow row) {
+			TraceObject obj = row.getValue().getChild();
+			DebuggerCoordinates coords = provider.current.object(obj);
+			return new ValueAddressProperty(row) {
 				@Override
-				public Long getValue() {
-					// De-duplication may not select parent value at current snap 
-					TraceObjectValue curVal =
-						row.getValue().getChild().getCanonicalParent(row.currentSnap());
-					if (curVal == null) {
-						// Thread is not actually alive a current snap
-						return null;
-					}
-					return fromLifespan(curVal.getLifespan());
+				public Address getValue() {
+					return computeProgramCounter(coords);
 				}
 			};
 		}
-	}
 
-	private static class ThreadCreatedColumn extends AbstractThreadLifeBoundColumn {
 		@Override
 		public String getColumnName() {
-			return "Created";
-		}
-
-		@Override
-		Long fromLifespan(Lifespan lifespan) {
-			return lifespan.minIsFinite() ? lifespan.lmin() : null;
+			return "PC";
 		}
 	}
 
-	private static class ThreadDestroyedColumn extends AbstractThreadLifeBoundColumn {
+	private class ThreadFunctionColumn
+			extends AbstractDynamicTableColumn<ValueRow, Function, Trace> {
 		@Override
 		public String getColumnName() {
-			return "Destroyed";
+			return "Function";
 		}
 
 		@Override
-		Long fromLifespan(Lifespan lifespan) {
-			return lifespan.maxIsFinite() ? lifespan.lmax() : null;
+		public Function getValue(ValueRow rowObject, Settings settings, Trace data,
+				ServiceProvider serviceProvider) throws IllegalArgumentException {
+			DebuggerCoordinates coords = provider.current.object(rowObject.currentObject());
+			Address pc = computeProgramCounter(coords);
+			if (pc == null) {
+				return null;
+			}
+			return DebuggerStaticMappingUtils.getFunction(pc, coords, serviceProvider);
+		}
+	}
+
+	private class ThreadModuleColumn extends AbstractDynamicTableColumn<ValueRow, String, Trace> {
+		@Override
+		public String getColumnName() {
+			return "Module";
+		}
+
+		@Override
+		public String getValue(ValueRow rowObject, Settings settings, Trace data,
+				ServiceProvider serviceProvider) throws IllegalArgumentException {
+			DebuggerCoordinates coords = provider.current.object(rowObject.currentObject());
+			Address pc = computeProgramCounter(coords);
+			if (pc == null) {
+				return null;
+			}
+			return DebuggerStaticMappingUtils.getModuleName(pc, coords);
+		}
+	}
+
+	private class ThreadSpColumn extends TraceValueObjectPropertyColumn<Address> {
+		public ThreadSpColumn() {
+			super(Address.class);
+		}
+
+		@Override
+		public ValueProperty<Address> getProperty(ValueRow row) {
+			DebuggerCoordinates coords = provider.current.object(row.currentObject());
+			return new ValueAddressProperty(row) {
+				@Override
+				public Address getValue() {
+					return SPLocationTrackingSpec.INSTANCE.computeTraceAddress(provider.getTool(),
+						coords);
+				}
+			};
+		}
+
+		@Override
+		public String getColumnName() {
+			return "SP";
 		}
 	}
 
@@ -144,7 +187,7 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 	private static class ThreadPlotColumn extends TraceValueLifePlotColumn {
 	}
 
-	private static class ThreadTableModel extends ObjectTableModel {
+	private class ThreadTableModel extends ObjectTableModel {
 		protected ThreadTableModel(Plugin plugin) {
 			super(plugin);
 		}
@@ -154,10 +197,12 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 			TableColumnDescriptor<ValueRow> descriptor = new TableColumnDescriptor<>();
 			descriptor.addHiddenColumn(new ThreadPathColumn());
 			descriptor.addVisibleColumn(new ThreadNameColumn(), 1, true);
-			descriptor.addVisibleColumn(new ThreadCreatedColumn());
-			descriptor.addVisibleColumn(new ThreadDestroyedColumn());
+			descriptor.addVisibleColumn(new ThreadPcColumn());
+			descriptor.addVisibleColumn(new ThreadFunctionColumn());
+			descriptor.addHiddenColumn(new ThreadModuleColumn());
+			descriptor.addHiddenColumn(new ThreadSpColumn());
 			descriptor.addVisibleColumn(new ThreadStateColumn());
-			descriptor.addVisibleColumn(new ThreadCommentColumn());
+			descriptor.addHiddenColumn(new ThreadCommentColumn());
 			descriptor.addVisibleColumn(new ThreadPlotColumn());
 			return descriptor;
 		}
@@ -170,8 +215,13 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 
 	private final SeekListener seekListener = pos -> {
 		long snap = Math.round(pos);
-		if (current.getTrace() == null || snap < 0) {
+		if (snap < 0) {
 			snap = 0;
+		}
+		long max =
+			current.getTrace() == null ? 0 : current.getTrace().getTimeManager().getMaxSnap();
+		if (snap > max) {
+			snap = max;
 		}
 		traceManager.activateSnap(snap);
 	};

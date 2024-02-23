@@ -35,8 +35,8 @@ public class DBTraceObjectValueMapAddressSetView extends AbstractAddressSetView 
 
 	private final AddressFactory factory;
 	private final ReadWriteLock lock;
-	private final SpatialMap<ValueShape, InternalTraceObjectValue, TraceObjectValueQuery> map;
-	private final Predicate<? super InternalTraceObjectValue> predicate;
+	private final SpatialMap<ValueShape, DBTraceObjectValueData, TraceObjectValueQuery> map;
+	private final Predicate<? super DBTraceObjectValueData> predicate;
 
 	/**
 	 * An address set view that unions all addresses where an entry satisfying the given predicate
@@ -52,8 +52,8 @@ public class DBTraceObjectValueMapAddressSetView extends AbstractAddressSetView 
 	 * @param predicate a predicate to further filter entries
 	 */
 	public DBTraceObjectValueMapAddressSetView(AddressFactory factory, ReadWriteLock lock,
-			SpatialMap<ValueShape, InternalTraceObjectValue, TraceObjectValueQuery> map,
-			Predicate<? super InternalTraceObjectValue> predicate) {
+			SpatialMap<ValueShape, DBTraceObjectValueData, TraceObjectValueQuery> map,
+			Predicate<? super DBTraceObjectValueData> predicate) {
 		this.factory = factory;
 		this.lock = lock;
 		this.map = map;
@@ -63,7 +63,7 @@ public class DBTraceObjectValueMapAddressSetView extends AbstractAddressSetView 
 	@Override
 	public boolean contains(Address addr) {
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
-			for (InternalTraceObjectValue value : map
+			for (DBTraceObjectValueData value : map
 					.reduce(TraceObjectValueQuery.intersecting(Lifespan.ALL,
 						new AddressRangeImpl(addr, addr)))
 					.values()) {
@@ -95,7 +95,7 @@ public class DBTraceObjectValueMapAddressSetView extends AbstractAddressSetView 
 	@Override
 	public boolean isEmpty() {
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
-			for (InternalTraceObjectValue value : map.values()) {
+			for (DBTraceObjectValueData value : map.values()) {
 				if (predicate.test(value)) {
 					return false;
 				}
@@ -107,7 +107,7 @@ public class DBTraceObjectValueMapAddressSetView extends AbstractAddressSetView 
 	@Override
 	public Address getMinAddress() {
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
-			for (Entry<ValueShape, InternalTraceObjectValue> entry : map
+			for (Entry<ValueShape, DBTraceObjectValueData> entry : map
 					.reduce(TraceObjectValueQuery.all().starting(AddressDimension.FORWARD))
 					.orderedEntries()) {
 				if (predicate.test(entry.getValue())) {
@@ -121,7 +121,7 @@ public class DBTraceObjectValueMapAddressSetView extends AbstractAddressSetView 
 	@Override
 	public Address getMaxAddress() {
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
-			for (Entry<ValueShape, InternalTraceObjectValue> entry : map
+			for (Entry<ValueShape, DBTraceObjectValueData> entry : map
 					.reduce(TraceObjectValueQuery.all().starting(AddressDimension.BACKWARD))
 					.orderedEntries()) {
 				if (predicate.test(entry.getValue())) {
@@ -153,14 +153,14 @@ public class DBTraceObjectValueMapAddressSetView extends AbstractAddressSetView 
 
 	protected AddressRangeIterator doGetAddressRanges(RecAddress start, RecAddress end,
 			boolean forward) {
-		Iterator<Entry<ValueShape, InternalTraceObjectValue>> mapIt = map
+		Iterator<Entry<ValueShape, DBTraceObjectValueData>> mapIt = map
 				.reduce(TraceObjectValueQuery
 						.intersecting(EntryKeyDimension.INSTANCE.absoluteMin(),
 							EntryKeyDimension.INSTANCE.absoluteMax(), Lifespan.ALL, start, end)
 						.starting(forward ? AddressDimension.FORWARD : AddressDimension.BACKWARD))
 				.orderedEntries()
 				.iterator();
-		Iterator<Entry<ValueShape, InternalTraceObjectValue>> fltIt =
+		Iterator<Entry<ValueShape, DBTraceObjectValueData>> fltIt =
 			IteratorUtils.filteredIterator(mapIt, e -> predicate.test(e.getValue()));
 		Iterator<AddressRange> rawIt =
 			IteratorUtils.transformedIterator(fltIt, e -> e.getKey().getRange(factory));

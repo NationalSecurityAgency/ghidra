@@ -269,7 +269,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerTes
 		waitForPass(() -> assertTableSize(0));
 	}
 
-	@Test
+	// @Test // Not gonna with write-behind cache
 	public void testUndoRedo() throws Exception {
 		createAndOpenTrace();
 
@@ -304,7 +304,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerTes
 		});
 	}
 
-	@Test
+	// @Test // Not gonna with write-behind cache
 	public void testAbort() throws Exception {
 		createAndOpenTrace();
 		traceManager.activateTrace(tb.trace);
@@ -363,7 +363,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 	@Test
 	public void testActionMapRegions() throws Exception {
-		assertFalse(provider.actionMapRegions.isEnabled());
+		assertDisabled(provider, provider.actionMapRegions);
 
 		createAndOpenTrace();
 		createAndOpenProgramFromTrace();
@@ -375,7 +375,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerTes
 		waitForSwing();
 
 		// Still
-		assertFalse(provider.actionMapRegions.isEnabled());
+		assertDisabled(provider, provider.actionMapRegions);
 
 		addBlocks();
 		try (Transaction tx = program.openTransaction("Change name")) {

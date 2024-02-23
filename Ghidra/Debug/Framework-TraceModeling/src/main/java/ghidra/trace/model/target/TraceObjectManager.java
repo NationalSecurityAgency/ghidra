@@ -123,16 +123,23 @@ public interface TraceObjectManager {
 	/**
 	 * Get all the objects in the database
 	 * 
-	 * @return the collection of all objects
+	 * @return the stream of all objects
 	 */
-	Collection<? extends TraceObject> getAllObjects();
+	Stream<? extends TraceObject> getAllObjects();
+
+	/**
+	 * Get the number of objects in the database
+	 * 
+	 * @return the number of objects
+	 */
+	int getObjectCount();
 
 	/**
 	 * Get all the values (edges) in the database
 	 * 
-	 * @return the collect of all values
+	 * @return the stream of all values
 	 */
-	Collection<? extends TraceObjectValue> getAllValues();
+	Stream<? extends TraceObjectValue> getAllValues();
 
 	/**
 	 * Get all address-ranged values intersecting the given span and address range

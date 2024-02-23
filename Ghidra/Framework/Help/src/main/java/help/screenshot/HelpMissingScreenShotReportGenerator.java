@@ -15,14 +15,6 @@
  */
 package help.screenshot;
 
-import help.GHelpBuilder;
-import help.HelpBuildUtils;
-import help.validator.UnusedHelpImageFileFinder;
-import help.validator.location.DirectoryHelpModuleLocation;
-import help.validator.location.HelpModuleLocation;
-import help.validator.model.HelpTopic;
-import help.validator.model.IMG;
-
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.lang.reflect.Method;
@@ -35,6 +27,14 @@ import java.util.*;
 import java.util.Map.Entry;
 
 import javax.imageio.ImageIO;
+
+import help.GHelpBuilder;
+import help.HelpBuildUtils;
+import help.validator.UnusedHelpImageFileFinder;
+import help.validator.location.DirectoryHelpModuleLocation;
+import help.validator.location.HelpModuleLocation;
+import help.validator.model.HelpTopic;
+import help.validator.model.IMG;
 
 public class HelpMissingScreenShotReportGenerator {
 
@@ -68,17 +68,17 @@ public class HelpMissingScreenShotReportGenerator {
 		generator.generateReport();
 	}
 
-	private Set<HelpModuleLocation> helpDirectories = new HashSet<HelpModuleLocation>();
-	private Map<String, HelpTopic> topicNameToTopic = new HashMap<String, HelpTopic>();
-	private Set<HelpTestCase> testCases = new HashSet<HelpTestCase>();
-	private Map<String, HelpTestCase> imageNameToTestCase = new HashMap<String, HelpTestCase>();
+	private Set<HelpModuleLocation> helpDirectories = new HashSet<>();
+	private Map<String, HelpTopic> topicNameToTopic = new HashMap<>();
+	private Set<HelpTestCase> testCases = new HashSet<>();
+	private Map<String, HelpTestCase> imageNameToTestCase = new HashMap<>();
 
-	private SortedSet<String> badlyNamedTestFiles = new TreeSet<String>();
-	private SortedSet<HelpTestCase> badlyNamedTestCases = new TreeSet<HelpTestCase>();
+	private SortedSet<String> badlyNamedTestFiles = new TreeSet<>();
+	private SortedSet<HelpTestCase> badlyNamedTestCases = new TreeSet<>();
 //	private Map<HelpDirectory, IMG> untestedImages = new TreeMap<HelpDirectory, IMG>();
-	private Map<HelpTopic, Set<IMG>> untestedImages = new TreeMap<HelpTopic, Set<IMG>>();
+	private Map<HelpTopic, Set<IMG>> untestedImages = new TreeMap<>();
 
-	private Set<Path> examinedImageFiles = new HashSet<Path>();
+	private Set<Path> examinedImageFiles = new HashSet<>();
 
 	private File outputFile;
 
@@ -125,8 +125,8 @@ public class HelpMissingScreenShotReportGenerator {
 		writer.write("<P>\n");
 
 		//
-		// Total Image File Count 
-		//		
+		// Total Image File Count
+		//
 		int untestedCount = 0;
 		Collection<Set<IMG>> values = untestedImages.values();
 		for (Set<IMG> set : values) {
@@ -141,7 +141,7 @@ public class HelpMissingScreenShotReportGenerator {
 
 		//
 		// All Tested Images
-		// 
+		//
 		writer.write("<H3>\n");
 		writer.write("Total Tested Images: " + imageNameToTestCase.size() + "\n");
 		writer.write("</H3>\n");
@@ -432,7 +432,7 @@ public class HelpMissingScreenShotReportGenerator {
 
 		Set<IMG> set = untestedImages.get(topic);
 		if (set == null) {
-			set = new TreeSet<IMG>();
+			set = new TreeSet<>();
 			untestedImages.put(topic, set);
 		}
 
@@ -619,7 +619,7 @@ public class HelpMissingScreenShotReportGenerator {
 	}
 
 	private void writeHeader(BufferedWriter writer) throws IOException {
-		writer.write("<HTML>\n");
+		writer.write("<html>\n");
 		writer.write("<HEAD>\n");
 		createStyleSheet(writer);
 		writer.write("</HEAD>\n");
@@ -635,7 +635,7 @@ public class HelpMissingScreenShotReportGenerator {
 		writer.write("<BR>\n");
 
 		writer.write("</BODY>\n");
-		writer.write("</HTML>\n");
+		writer.write("</html>\n");
 	}
 
 	private void createStyleSheet(BufferedWriter writer) throws IOException {
@@ -643,11 +643,16 @@ public class HelpMissingScreenShotReportGenerator {
 		writer.write("<!--\n");
 
 		writer.write("body { font-family:arial; font-size:22pt }\n");
-		writer.write("h1 { color:#000080; font-family:times new roman; font-size:28pt; font-weight:bold; text-align:center; }\n");
-		writer.write("h2 { color:#984c4c; font-family:times new roman; font-size:28pt; font-weight:bold; }\n");
-		writer.write("h2.title { color:#000080; font-family:times new roman; font-size:14pt; font-weight:bold; text-align:center;}\n");
-		writer.write("h3 { color:#0000ff; font-family:times new roman; font-size:14pt; font-weight:bold; margin-left:.5in }\n");
-		writer.write("table { margin-left:1in; margin-right:1in; min-width:20em; width:90%; background-color:#EEEEFF }\n");
+		writer.write(
+			"h1 { color:#000080; font-family:times new roman; font-size:28pt; font-weight:bold; text-align:center; }\n");
+		writer.write(
+			"h2 { color:#984c4c; font-family:times new roman; font-size:28pt; font-weight:bold; }\n");
+		writer.write(
+			"h2.title { color:#000080; font-family:times new roman; font-size:14pt; font-weight:bold; text-align:center;}\n");
+		writer.write(
+			"h3 { color:#0000ff; font-family:times new roman; font-size:14pt; font-weight:bold; margin-left:.5in }\n");
+		writer.write(
+			"table { margin-left:1in; margin-right:1in; min-width:20em; width:90%; background-color:#EEEEFF }\n");
 		writer.write("th { text-align:center;  }\n");
 		writer.write("td { text-align:left; padding: 20px }\n");
 
@@ -665,7 +670,8 @@ public class HelpMissingScreenShotReportGenerator {
 		private Path filePath;
 		private HelpTopic helpTopic;
 
-		HelpTestFile(HelpModuleLocation helpDir, HelpTopic helpTopic, Path filePath, String filename) {
+		HelpTestFile(HelpModuleLocation helpDir, HelpTopic helpTopic, Path filePath,
+				String filename) {
 			this.helpDir = helpDir;
 			this.helpTopic = helpTopic;
 			this.filePath = filePath;

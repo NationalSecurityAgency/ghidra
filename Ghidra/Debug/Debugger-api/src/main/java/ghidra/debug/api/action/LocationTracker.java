@@ -15,10 +15,8 @@
  */
 package ghidra.debug.api.action;
 
-import java.util.concurrent.CompletableFuture;
-
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.TraceAddressSnapRange;
@@ -47,22 +45,21 @@ public interface LocationTracker {
 	 * The address returned must be in the host platform's language, i.e., please use
 	 * {@link TracePlatform#mapGuestToHost(Address)}.
 	 * 
-	 * @param tool the tool containing the provider
+	 * @param provider the service provider (usually the tool)
 	 * @param coordinates the trace, thread, snap, etc., of the tool
 	 * @return the address to navigate to
 	 */
-	CompletableFuture<Address> computeTraceAddress(PluginTool tool,
-			DebuggerCoordinates coordinates);
+	Address computeTraceAddress(ServiceProvider provider, DebuggerCoordinates coordinates);
 
 	/**
 	 * Get the suggested input if the user activates "Go To" while this tracker is active
 	 *
-	 * @param tool the tool containing the provider
+	 * @param provider the service provider (usually the tool)
 	 * @param coordinates the user's current coordinates
 	 * @param location the user's current location
 	 * @return the suggested address or Sleigh expression
 	 */
-	GoToInput getDefaultGoToInput(PluginTool tool, DebuggerCoordinates coordinates,
+	GoToInput getDefaultGoToInput(ServiceProvider provider, DebuggerCoordinates coordinates,
 			ProgramLocation location);
 
 	// TODO: Is there a way to generalize these so that other dependencies need not

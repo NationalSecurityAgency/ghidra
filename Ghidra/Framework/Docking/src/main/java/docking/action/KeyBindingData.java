@@ -63,9 +63,9 @@ public class KeyBindingData {
 	}
 
 	public KeyBindingData(KeyStroke keyStroke, KeyBindingPrecedence precedence) {
-		if (precedence == KeyBindingPrecedence.ReservedActionsLevel) {
+		if (precedence == KeyBindingPrecedence.SystemActionsLevel) {
 			throw new IllegalArgumentException(
-				"Can't set precedence to Reserved KeyBindingPrecedence");
+				"Can't set precedence to System KeyBindingPrecedence");
 		}
 		this.keyStroke = keyStroke;
 		this.keyBindingPrecedence = precedence;
@@ -93,9 +93,9 @@ public class KeyBindingData {
 			keyBindingPrecedence + "]";
 	}
 
-	static KeyBindingData createReservedKeyBindingData(KeyStroke keyStroke) {
+	static KeyBindingData createSystemKeyBindingData(KeyStroke keyStroke) {
 		KeyBindingData keyBindingData = new KeyBindingData(keyStroke);
-		keyBindingData.keyBindingPrecedence = KeyBindingPrecedence.ReservedActionsLevel;
+		keyBindingData.keyBindingPrecedence = KeyBindingPrecedence.SystemActionsLevel;
 		return keyBindingData;
 	}
 
@@ -105,7 +105,7 @@ public class KeyBindingData {
 	 * @param newKeyBindingData the data to validate
 	 * @return the potentially changed data
 	 */
-	public static KeyBindingData validateKeyBindingData(KeyBindingData newKeyBindingData) {
+	static KeyBindingData validateKeyBindingData(KeyBindingData newKeyBindingData) {
 		if (newKeyBindingData == null) {
 			return null;
 		}
@@ -117,8 +117,8 @@ public class KeyBindingData {
 		}
 
 		KeyBindingPrecedence precedence = newKeyBindingData.getKeyBindingPrecedence();
-		if (precedence == KeyBindingPrecedence.ReservedActionsLevel) {
-			return createReservedKeyBindingData(KeyBindingUtils.validateKeyStroke(keyBinding));
+		if (precedence == KeyBindingPrecedence.SystemActionsLevel) {
+			return createSystemKeyBindingData(KeyBindingUtils.validateKeyStroke(keyBinding));
 		}
 		return new KeyBindingData(KeyBindingUtils.validateKeyStroke(keyBinding), precedence);
 	}

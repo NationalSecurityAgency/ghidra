@@ -25,27 +25,24 @@ import ghidra.util.exception.CancelledException;
 /**
  * Applier for {@link PeCoffSectionMsSymbol} symbols.
  */
-public class PeCoffSectionSymbolApplier extends MsSymbolApplier {
+public class PeCoffSectionSymbolApplier extends MsSymbolApplier implements DirectSymbolApplier {
 
 	private PeCoffSectionMsSymbol symbol;
 
 	/**
 	 * Constructor
 	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
-	 * @param iter the Iterator containing the symbol sequence being processed
+	 * @param symbol the symbol for this applier
 	 */
-	public PeCoffSectionSymbolApplier(DefaultPdbApplicator applicator, MsSymbolIterator iter) {
-		super(applicator, iter);
-		AbstractMsSymbol abstractSymbol = iter.next();
-		if (!(abstractSymbol instanceof PeCoffSectionMsSymbol)) {
-			throw new AssertException(
-				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
-		}
-		symbol = (PeCoffSectionMsSymbol) abstractSymbol;
+	public PeCoffSectionSymbolApplier(DefaultPdbApplicator applicator,
+			PeCoffSectionMsSymbol symbol) {
+		super(applicator);
+		this.symbol = symbol;
 	}
 
 	@Override
-	void apply() throws PdbException, CancelledException {
+	public void apply(MsSymbolIterator iter) throws PdbException, CancelledException {
+		getValidatedSymbol(iter, true);
 		int sectionNum = symbol.getSectionNumber();
 		long realAddress = symbol.getRva();
 		symbol.getLength();
@@ -59,8 +56,13 @@ public class PeCoffSectionSymbolApplier extends MsSymbolApplier {
 //		applicator.addMemorySectionRefinement(symbol);
 	}
 
-	@Override
-	void applyTo(MsSymbolApplier applyToApplier) {
-		// Do nothing
+	private PeCoffSectionMsSymbol getValidatedSymbol(MsSymbolIterator iter, boolean iterate) {
+		AbstractMsSymbol abstractSymbol = iterate ? iter.next() : iter.peek();
+		if (!(abstractSymbol instanceof PeCoffSectionMsSymbol peCoffSectionSymbol)) {
+			throw new AssertException(
+				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
+		}
+		return peCoffSectionSymbol;
 	}
+
 }

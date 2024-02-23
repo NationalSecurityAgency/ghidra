@@ -15,15 +15,12 @@
  */
 package ghidra.app.plugin.core.debug.gui.action;
 
-import java.util.concurrent.CompletableFuture;
-
 import javax.swing.Icon;
 
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.TrackLocationAction;
-import ghidra.async.AsyncUtils;
 import ghidra.debug.api.action.*;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.TraceAddressSnapRange;
@@ -66,13 +63,12 @@ public enum NoneLocationTrackingSpec implements LocationTrackingSpec, LocationTr
 	}
 
 	@Override
-	public CompletableFuture<Address> computeTraceAddress(PluginTool tool,
-			DebuggerCoordinates coordinates) {
-		return AsyncUtils.nil();
+	public Address computeTraceAddress(ServiceProvider provider, DebuggerCoordinates coordinates) {
+		return null;
 	}
 
 	@Override
-	public GoToInput getDefaultGoToInput(PluginTool tool, DebuggerCoordinates coordinates,
+	public GoToInput getDefaultGoToInput(ServiceProvider provider, DebuggerCoordinates coordinates,
 			ProgramLocation location) {
 		if (location == null) {
 			return GoToInput.fromString("00000000");

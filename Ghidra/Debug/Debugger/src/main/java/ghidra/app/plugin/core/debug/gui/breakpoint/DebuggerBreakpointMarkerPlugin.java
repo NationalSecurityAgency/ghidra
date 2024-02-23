@@ -1145,6 +1145,6 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 			return;
 		}
 		Msg.error(this, message, ex);
-		consoleService.log(DebuggerResources.ICON_LOG_ERROR, message + " (" + ex + ")");
+		consoleService.log(DebuggerResources.ICON_LOG_ERROR, message, ex);
 	}
 }

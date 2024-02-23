@@ -35,7 +35,7 @@ import ghidra.app.plugin.core.debug.gui.register.*;
 import ghidra.app.plugin.core.debug.gui.watch.DebuggerWatchesProvider.WatchDataSettingsDialog;
 import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
-import ghidra.app.services.*;
+import ghidra.app.services.DebuggerControlService;
 import ghidra.dbg.model.TestTargetRegisterBankInThread;
 import ghidra.debug.api.action.ActionSource;
 import ghidra.debug.api.control.ControlMode;

@@ -54,6 +54,11 @@ public abstract class TraceValueObjectPropertyColumn<T>
 			super.getTableCellRendererComponent(data);
 			@SuppressWarnings("unchecked")
 			ValueProperty<T> p = (ValueProperty<T>) data.getValue();
+			if (p == null) {
+				setText("");
+				setToolTipText("");
+				return this;
+			}
 			setText(p.getHtmlDisplay());
 			setToolTipText(p.getToolTip());
 			setForeground(getForegroundFor(data.getTable(), p.isModified(), data.isSelected()));

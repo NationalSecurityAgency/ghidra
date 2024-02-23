@@ -397,8 +397,6 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 
 	@Test
 	public void testSynchronizeFocusTraceToModel() throws Throwable {
-		assertTrue(traceManager.isSynchronizeActive());
-
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 
@@ -448,18 +446,10 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		waitForSwing();
 
 		waitForPass(() -> assertEquals(frame0, mb.testModel.session.getFocus()));
-
-		traceManager.setSynchronizeActive(false);
-		traceManager.activateFrame(1);
-		waitForSwing();
-
-		waitForPass(() -> assertEquals(frame0, mb.testModel.session.getFocus()));
 	}
 
 	@Test
 	public void testSynchronizeFocusModelToTrace() throws Throwable {
-		assertTrue(traceManager.isSynchronizeActive());
-
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 
@@ -503,12 +493,5 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		waitOn(mb.testModel.session.requestFocus(frame0));
 
 		waitForPass(() -> assertEquals(0, traceManager.getCurrentFrame()));
-
-		traceManager.setSynchronizeActive(false);
-		waitOn(mb.testModel.session.requestFocus(frame1));
-		// Not super reliable, but at least wait for it to change in case it does
-		Thread.sleep(200);
-
-		assertEquals(0, traceManager.getCurrentFrame());
 	}
 }

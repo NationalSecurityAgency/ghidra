@@ -48,6 +48,7 @@ public abstract class AbstractQueryTableModel<T> extends ThreadedTableModel<T, T
 		}
 
 		protected void objectRestored(DomainObjectChangeRecord record) {
+			AbstractQueryTableModel.this.maxSnapChanged();
 			reload();
 		}
 

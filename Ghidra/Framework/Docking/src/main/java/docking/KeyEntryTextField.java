@@ -57,18 +57,7 @@ public class KeyEntryTextField extends JTextField {
 	 */
 	public void setKeyStroke(KeyStroke ks) {
 		processEntry(ks);
-		setText(parseKeyStroke(ks));
-	}
-
-	/**
-	 * Converts the toString() form of the keyStroke, e.g., Ctrl-M is returned as 
-	 * "keyCode CtrlM-P" and we want it to look like: "Ctrl-M"
-	 * 
-	 * @param ks the keystroke to parse
-	 * @return the parse string for the keystroke
-	 */
-	public static String parseKeyStroke(KeyStroke ks) {
-		return KeyBindingUtils.parseKeyStroke(ks);
+		setText(KeyBindingUtils.parseKeyStroke(ks));
 	}
 
 	public void clearField() {
@@ -114,21 +103,12 @@ public class KeyEntryTextField extends JTextField {
 		@Override
 		public void keyPressed(KeyEvent e) {
 			int keyCode = e.getKeyCode();
-			if (isHelpKey(keyCode)) {
-				return;
-			}
-
 			KeyStroke keyStroke = null;
 			if (!isClearKey(keyCode) && !isModifiersOnly(e)) {
 				keyStroke = KeyStroke.getKeyStroke(keyCode, e.getModifiersEx());
 			}
-
 			processEntry(keyStroke);
 			e.consume();
-		}
-
-		private boolean isHelpKey(int keyCode) {
-			return keyCode == KeyEvent.VK_F1 || keyCode == KeyEvent.VK_HELP;
 		}
 
 		private boolean isClearKey(int keyCode) {

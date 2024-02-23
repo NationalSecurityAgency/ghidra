@@ -32,28 +32,25 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Applier for {@link AbstractLabelMsSymbol} symbols.
  */
-public class LabelSymbolApplier extends MsSymbolApplier implements DeferrableFunctionSymbolApplier {
+public class LabelSymbolApplier extends MsSymbolApplier
+		implements DirectSymbolApplier, NestableSymbolApplier {
 
 	private AbstractLabelMsSymbol symbol;
-	private Function function = null;
 
 	/**
 	 * Constructor
 	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
-	 * @param iter the Iterator containing the symbol sequence being processed
+	 * @param symbol the symbol for this applier
 	 */
-	public LabelSymbolApplier(DefaultPdbApplicator applicator, MsSymbolIterator iter) {
-		super(applicator, iter);
-		AbstractMsSymbol abstractSymbol = iter.next();
-		if (!(abstractSymbol instanceof AbstractLabelMsSymbol)) {
-			throw new AssertException(
-				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
-		}
-		symbol = (AbstractLabelMsSymbol) abstractSymbol;
+	public LabelSymbolApplier(DefaultPdbApplicator applicator, AbstractLabelMsSymbol symbol) {
+		super(applicator);
+		this.symbol = symbol;
 	}
 
 	@Override
-	void apply() throws PdbException, CancelledException {
+	public void apply(MsSymbolIterator iter) throws PdbException, CancelledException {
+		// Pealing the symbol off again, as the iterator is coming in fresh, and we need the symbol
+		getValidatedSymbol(iter, true);
 		// A naked label seems to imply an assembly procedure, unlike that applyTo(MsSymbolApplier),
 		// which is used for applying to something else (basically a block sequence of symbols,
 		// as is seen with GlobalProcedure symbols), in which case it is typically an instruction
@@ -80,12 +77,15 @@ public class LabelSymbolApplier extends MsSymbolApplier implements DeferrableFun
 			applyFunction(symbolAddress, label, applicator.getCancelOnlyWrappingMonitor());
 		}
 		else {
-			applicator.createSymbol(symbolAddress, label, true);
+			applicator.createSymbol(symbolAddress, label, false);
 		}
 	}
 
 	@Override
-	void applyTo(MsSymbolApplier applyToApplier) {
+	public void applyTo(NestingSymbolApplier applyToApplier, MsSymbolIterator iter)
+			throws PdbException, CancelledException {
+		// Pealing the symbol off again, as the iterator is coming in fresh, and we need the symbol
+		getValidatedSymbol(iter, true);
 		String label = getLabel();
 		if (label == null) {
 			return;
@@ -158,12 +158,12 @@ public class LabelSymbolApplier extends MsSymbolApplier implements DeferrableFun
 	}
 
 	private boolean applyFunction(Address address, String name, TaskMonitor monitor) {
-		applicator.createSymbol(address, name, true);
-		function = applicator.getExistingOrCreateOneByteFunction(address);
+		applicator.createSymbol(address, name, false);
+		Function function = applicator.getExistingOrCreateOneByteFunction(address);
 		if (function == null) {
 			return false;
 		}
-		applicator.scheduleDeferredFunctionWork(this);
+		applicator.scheduleDisassembly(address);
 
 		if (!function.isThunk() &&
 			function.getSignatureSource().isLowerPriorityThan(SourceType.IMPORTED)) {
@@ -198,8 +198,13 @@ public class LabelSymbolApplier extends MsSymbolApplier implements DeferrableFun
 		return label;
 	}
 
-	@Override
-	public Address getAddress() {
-		return applicator.getAddress(symbol);
+	private AbstractLabelMsSymbol getValidatedSymbol(MsSymbolIterator iter, boolean iterate) {
+		AbstractMsSymbol abstractSymbol = iterate ? iter.next() : iter.peek();
+		if (!(abstractSymbol instanceof AbstractLabelMsSymbol labelSymbol)) {
+			throw new AssertException(
+				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
+		}
+		return labelSymbol;
 	}
+
 }

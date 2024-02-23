@@ -26,52 +26,38 @@ import ghidra.util.exception.CancelledException;
 /**
  * Applier for {@link AbstractBlockMsSymbol} symbols.
  */
-public class BlockSymbolApplier extends MsSymbolApplier {
+public class BlockSymbolApplier extends MsSymbolApplier
+		implements BlockNestingSymbolApplier, NestableSymbolApplier {
 
 	private AbstractBlockMsSymbol symbol;
 
 	/**
 	 * Constructor
 	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
-	 * @param iter the Iterator containing the symbol sequence being processed
+	 * @param symbol the symbol for this applier
 	 */
-	public BlockSymbolApplier(DefaultPdbApplicator applicator, MsSymbolIterator iter) {
-		super(applicator, iter);
-		AbstractMsSymbol abstractSymbol = iter.next();
-		if (!(abstractSymbol instanceof AbstractBlockMsSymbol)) {
+	public BlockSymbolApplier(DefaultPdbApplicator applicator, AbstractBlockMsSymbol symbol) {
+		super(applicator);
+		this.symbol = symbol;
+	}
+
+	@Override
+	public void applyTo(NestingSymbolApplier applyToApplier, MsSymbolIterator iter)
+			throws PdbException, CancelledException {
+		getValidatedSymbol(iter, true);
+		if (applyToApplier instanceof AbstractBlockContextApplier applier) {
+			Address address = applicator.getAddress(symbol);
+			applier.beginBlock(address, symbol.getName(), symbol.getLength());
+		}
+	}
+
+	private AbstractBlockMsSymbol getValidatedSymbol(MsSymbolIterator iter, boolean iterate) {
+		AbstractMsSymbol abstractSymbol = iterate ? iter.next() : iter.peek();
+		if (!(abstractSymbol instanceof AbstractBlockMsSymbol blockSymbol)) {
 			throw new AssertException(
 				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
 		}
-		symbol = (AbstractBlockMsSymbol) abstractSymbol;
+		return blockSymbol;
 	}
 
-	@Override
-	void apply() throws PdbException, CancelledException {
-		pdbLogAndInfoMessage(this,
-			"Cannot apply " + this.getClass().getSimpleName() + " directly to program");
-	}
-
-	@Override
-	void applyTo(MsSymbolApplier applyToApplier) {
-		// Do nothing
-	}
-
-	@Override
-	void manageBlockNesting(MsSymbolApplier applierParam) {
-		Address address = applicator.getAddress(symbol);
-		if (applierParam instanceof FunctionSymbolApplier) {
-			FunctionSymbolApplier functionSymbolApplier = (FunctionSymbolApplier) applierParam;
-			functionSymbolApplier.beginBlock(address, symbol.getName(), symbol.getLength());
-		}
-		else if (applierParam instanceof SeparatedCodeSymbolApplier) {
-			SeparatedCodeSymbolApplier separatedCodeSymbolApplier =
-				(SeparatedCodeSymbolApplier) applierParam;
-			separatedCodeSymbolApplier.beginBlock(address);
-		}
-		else if (applierParam instanceof ManagedProcedureSymbolApplier) {
-			ManagedProcedureSymbolApplier procedureSymbolApplier =
-				(ManagedProcedureSymbolApplier) applierParam;
-			procedureSymbolApplier.beginBlock(address, symbol.getName(), symbol.getLength());
-		}
-	}
 }

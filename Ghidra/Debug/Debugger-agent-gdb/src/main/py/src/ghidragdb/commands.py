@@ -277,6 +277,9 @@ def start_trace(name):
     with STATE.trace.open_tx("Create Root Object"):
         root = STATE.trace.create_root_object(schema_xml, 'Session')
         root.set_value('_display', 'GNU gdb ' + util.GDB_VERSION.full)
+        STATE.trace.create_object(AVAILABLES_PATH).insert()
+        STATE.trace.create_object(BREAKPOINTS_PATH).insert()
+        STATE.trace.create_object(INFERIORS_PATH).insert()
     gdb.set_convenience_variable('_ghidra_tracing', True)
 
 
@@ -1057,7 +1060,7 @@ def put_available():
         procobj = STATE.trace.create_object(ppath)
         keys.append(AVAILABLE_KEY_PATTERN.format(pid=proc.pid))
         procobj.set_value('_pid', proc.pid)
-        procobj.set_value('_display', '{} {}'.format(proc.pid, proc.name))
+        procobj.set_value('_display', '{} {}'.format(proc.pid, proc.name()))
         procobj.insert()
     STATE.trace.proxy_object_path(AVAILABLES_PATH).retain_values(keys)
 
@@ -1505,6 +1508,19 @@ def ghidra_trace_sync_disable(*, is_mi, **kwargs):
     """
 
     hooks.disable_current_inferior()
+
+
+@cmd('ghidra trace sync-synth-stopped', '-ghidra-trace-sync-synth-stopped',
+     gdb.COMMAND_SUPPORT, False)
+def ghidra_trace_sync_synth_stopped(*, is_mi, **kwargs):
+    """
+    Act as though the target has just stopped.
+
+    This may need to be invoked immediately after 'ghidra trace sync-enable',
+    to ensure the first snapshot displays the initial/current target state.
+    """
+
+    hooks.on_stop(object())  # Pass a fake event
 
 
 @cmd('ghidra util wait-stopped', '-ghidra-util-wait-stopped', gdb.COMMAND_NONE, False)

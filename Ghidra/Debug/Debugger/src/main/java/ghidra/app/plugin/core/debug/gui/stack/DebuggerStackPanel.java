@@ -27,6 +27,7 @@ import ghidra.app.plugin.core.debug.gui.model.AbstractQueryTablePanel.CellActiva
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.columns.TraceValueKeyColumn;
 import ghidra.app.plugin.core.debug.gui.model.columns.TraceValueObjectAttributeColumn;
+import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.dbg.target.TargetStack;
 import ghidra.dbg.target.TargetStackFrame;
@@ -40,7 +41,6 @@ import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.stack.TraceObjectStackFrame;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
@@ -84,7 +84,8 @@ public class DebuggerStackPanel extends AbstractObjectsTableBasedPanel<TraceObje
 				ServiceProvider serviceProvider) throws IllegalArgumentException {
 			TraceObjectValue value =
 				rowObject.getAttributeEntry(TargetStackFrame.PC_ATTRIBUTE_NAME);
-			return value == null ? null : provider.getFunction(value.castValue());
+			return DebuggerStaticMappingUtils.getFunction(value.castValue(), provider.current,
+				serviceProvider);
 		}
 	}
 
@@ -99,7 +100,7 @@ public class DebuggerStackPanel extends AbstractObjectsTableBasedPanel<TraceObje
 				ServiceProvider serviceProvider) throws IllegalArgumentException {
 			TraceObjectValue value =
 				rowObject.getAttributeEntry(TargetStackFrame.PC_ATTRIBUTE_NAME);
-			return value == null ? null : provider.getModule(value.castValue());
+			return DebuggerStaticMappingUtils.getModuleName(value.castValue(), provider.current);
 		}
 	}
 

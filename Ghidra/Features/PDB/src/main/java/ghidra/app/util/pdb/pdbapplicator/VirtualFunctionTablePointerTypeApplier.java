@@ -19,7 +19,6 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.VoidDataType;
 import ghidra.util.exception.CancelledException;
 
 /**
@@ -36,7 +35,8 @@ public class VirtualFunctionTablePointerTypeApplier extends MsTypeApplier {
 	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
 	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public VirtualFunctionTablePointerTypeApplier(DefaultPdbApplicator applicator) throws IllegalArgumentException {
+	public VirtualFunctionTablePointerTypeApplier(DefaultPdbApplicator applicator)
+			throws IllegalArgumentException {
 		super(applicator);
 	}
 
@@ -61,20 +61,10 @@ public class VirtualFunctionTablePointerTypeApplier extends MsTypeApplier {
 			throws PdbException, CancelledException {
 
 		// usually no record number, so cannot retrieve or store from/to applicator
-		DataType dataType;
 
-		if (type instanceof AbstractVirtualFunctionTablePointerWithOffsetMsType vftPtrWOffset) {
-			dataType =
-				applyPointer(vftPtrWOffset.getPointerTypeRecordNumber(), fixupContext, breakCycle);
-		}
-		else if (type instanceof AbstractVirtualFunctionTablePointerMsType vftPtr) {
-			dataType = applyPointer(vftPtr.getPointerTypeRecordNumber(), fixupContext, breakCycle);
-		}
-		else {
-			dataType = VoidDataType.dataType;
-			applicator.appendLogMsg(
-				"PDB Warning: Type not handled: " + type.getClass().getSimpleName());
-		}
+		AbstractVirtualFunctionTablePointerMsType vftPtrType = validateType(type);
+		RecordNumber recordNumber = vftPtrType.getPointerTypeRecordNumber();
+		DataType dataType = applyPointer(recordNumber, fixupContext, breakCycle);
 
 		// unlike regular pointer, we are resolving vft pointer
 		dataType = applicator.resolve(dataType);
@@ -93,15 +83,14 @@ public class VirtualFunctionTablePointerTypeApplier extends MsTypeApplier {
 		return null;
 	}
 
-	private static AbstractMsType validateType(AbstractMsType type)
+	private static AbstractVirtualFunctionTablePointerMsType validateType(AbstractMsType type)
 			throws IllegalArgumentException {
-		if (!(type instanceof AbstractVirtualFunctionTablePointerMsType) &&
-			!(type instanceof AbstractVirtualFunctionTablePointerWithOffsetMsType)) {
+		if (!(type instanceof AbstractVirtualFunctionTablePointerMsType vftPtrType)) {
 			throw new IllegalArgumentException(
 				"PDB Incorrectly applying " + type.getClass().getSimpleName() + " to " +
 					VirtualFunctionTablePointerTypeApplier.class.getSimpleName());
 		}
-		return type;
+		return vftPtrType;
 	}
 
 }

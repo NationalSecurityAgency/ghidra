@@ -253,7 +253,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			}
 			DebuggerCoordinates coords = current;
 			TraceObjectKeyPath focus = curTarget.getFocus();
-			if (focus != null && synchronizeActive.get()) {
+			if (focus != null) {
 				coords = coords.path(focus);
 			}
 			coords = coords.snap(curTarget.getSnap());
@@ -273,8 +273,6 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	protected TargetObject curObj;
 	@AutoConfigStateField(codec = BooleanAsyncConfigFieldCodec.class)
 	protected final AsyncReference<Boolean, Void> saveTracesByDefault = new AsyncReference<>(true);
-	@AutoConfigStateField(codec = BooleanAsyncConfigFieldCodec.class)
-	protected final AsyncReference<Boolean, Void> synchronizeActive = new AsyncReference<>(true);
 	@AutoConfigStateField(codec = BooleanAsyncConfigFieldCodec.class)
 	protected final AsyncReference<Boolean, Void> autoCloseOnTerminate = new AsyncReference<>(true);
 
@@ -569,7 +567,8 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 				newCurrent = newCurrent.snap(target.getSnap());
 			}
 		}
-		if (!doSetCurrent(newCurrent)) {
+		newCurrent = validateCoordiantes(newCurrent, cause);
+		if (newCurrent == null || !doSetCurrent(newCurrent)) {
 			return null;
 		}
 		return newCurrent;
@@ -583,10 +582,21 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		tool.contextChanged(null);
 	}
 
+	private ControlMode getEffectiveControlMode(Trace trace) {
+		if (trace == null) {
+			return ControlMode.RO_TRACE;
+		}
+		return controlService == null ? ControlMode.DEFAULT : controlService.getCurrentMode(trace);
+	}
+
+	private DebuggerCoordinates validateCoordiantes(DebuggerCoordinates coordinates,
+			ActivationCause cause) {
+		ControlMode mode = getEffectiveControlMode(coordinates.getTrace());
+		return mode.validateCoordinates(tool, coordinates, cause);
+	}
+
 	private boolean isFollowsPresent(Trace trace) {
-		ControlMode mode = controlService == null
-				? ControlMode.DEFAULT
-				: controlService.getCurrentMode(trace);
+		ControlMode mode = getEffectiveControlMode(trace);
 		return mode.followsPresent();
 	}
 
@@ -628,9 +638,6 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			return;
 		}
 		DebuggerCoordinates toActivate = current.target(target);
-		if (isFollowsPresent(current.getTrace())) {
-			toActivate = toActivate.snap(target.getSnap());
-		}
 		activate(toActivate, ActivationCause.FOLLOW_PRESENT);
 	}
 
@@ -1043,19 +1050,12 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			}
 		}
 
-		if (!synchronizeActive.get() && cause == ActivationCause.SYNC_MODEL) {
-			return AsyncUtils.nil();
-		}
 		if (cause == ActivationCause.FOLLOW_PRESENT) {
 			if (!isFollowsPresent(newTrace)) {
 				return AsyncUtils.nil();
 			}
 			if (current.getTrace() != newTrace) {
-				/**
-				 * The snap needs to match upon re-activating this trace, lest it look like the user
-				 * intentionally navigated to the past. That may cause the control mode to switch
-				 * off of "Target."
-				 */
+				// The snap needs to match upon re-activating this trace.
 				try {
 					newTrace.getProgramView().setSnap(coordinates.getViewSnap());
 				}
@@ -1082,7 +1082,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 				return null;
 			});
 
-		if (!synchronizeActive.get() || cause != ActivationCause.USER) {
+		if (cause != ActivationCause.USER) {
 			return future;
 		}
 		Target target = resolved.getTarget();
@@ -1150,27 +1150,6 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	@Override
 	public DebuggerCoordinates resolveObject(TraceObject object) {
 		return current.object(object);
-	}
-
-	@Override
-	public void setSynchronizeActive(boolean enabled) {
-		synchronizeActive.set(enabled, null);
-		// TODO: Which action to take here, if any?
-	}
-
-	@Override
-	public boolean isSynchronizeActive() {
-		return synchronizeActive.get();
-	}
-
-	@Override
-	public void addSynchronizeActiveChangeListener(BooleanChangeAdapter listener) {
-		synchronizeActive.addChangeListener(listener);
-	}
-
-	@Override
-	public void removeSynchronizeActiveChangeListener(BooleanChangeAdapter listener) {
-		synchronizeActive.removeChangeListener(listener);
 	}
 
 	@Override

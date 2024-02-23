@@ -108,6 +108,7 @@ public class PdbApplicatorMetrics {
 	private Set<Class<? extends AbstractMsType>> unexpectedMemberFunctionContainerTypes =
 		new HashSet<>();
 	private Set<Class<? extends AbstractMsSymbol>> cannotApplySymbols = new HashSet<>();
+	private Set<Class<? extends AbstractMsSymbol>> nonNestableSymbols = new HashSet<>();
 	private Set<Class<? extends AbstractMsSymbol>> unexpectedGlobalSymbols = new HashSet<>();
 	private Set<Class<? extends AbstractMsSymbol>> unexpectedPublicSymbols = new HashSet<>();
 	private boolean witnessEnumerateNarrowing = false;
@@ -126,6 +127,14 @@ public class PdbApplicatorMetrics {
 	 */
 	void witnessCannotApplySymbolType(AbstractMsSymbol symbol) {
 		cannotApplySymbols.add(symbol.getClass());
+	}
+
+	/**
+	 * Method to capture symbol type that we cannot currently process as a nested symbol
+	 * @param symbol The symbol type witnessed
+	 */
+	void witnessNonNestableSymbolType(AbstractMsSymbol symbol) {
+		nonNestableSymbols.add(symbol.getClass());
 	}
 
 	/**
@@ -220,6 +229,7 @@ public class PdbApplicatorMetrics {
 		builder.append(reportUnunsualThisPointerUnderlyingTypes());
 		builder.append(reportUnunsualMemberFunctionContainerTypes());
 		builder.append(reportNonappliableSymbols());
+		builder.append(reportNonNestableSymbols());
 		builder.append(reportUnexpectedPublicSymbols());
 		builder.append(reportUnexpectedGlobalSymbols());
 		builder.append(reportEnumerateNarrowing());
@@ -276,6 +286,15 @@ public class PdbApplicatorMetrics {
 			builder.append(
 				"Could not apply one or more instances of an unsupported PDB symbol type: " +
 					clazz.getSimpleName() + "\n");
+		}
+		return builder.toString();
+	}
+
+	private String reportNonNestableSymbols() {
+		StringBuilder builder = new StringBuilder();
+		for (Class<? extends AbstractMsSymbol> clazz : nonNestableSymbols) {
+			builder.append("Could not nest one or more instances of a PDB symbol type: " +
+				clazz.getSimpleName() + "\n");
 		}
 		return builder.toString();
 	}

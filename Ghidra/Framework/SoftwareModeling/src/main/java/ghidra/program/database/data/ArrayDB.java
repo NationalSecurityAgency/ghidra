@@ -282,7 +282,7 @@ class ArrayDB extends DataTypeDB implements Array {
 					new ArrayDataType(newDt, getNumElements(), newElementLength, dataMgr);
 				DataType existingArray =
 					dataMgr.getDataType(newDt.getCategoryPath(), newArray.getName());
-				if (existingArray != null) {
+				if (existingArray != null && existingArray != this) {
 					// avoid duplicate array - replace this array with existing one
 					dataMgr.addDataTypeToReplace(this, existingArray);
 					return;

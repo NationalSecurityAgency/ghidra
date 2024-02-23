@@ -19,17 +19,18 @@
 #@desc   <h3>Launch with <tt>gdb</tt></h3>
 #@desc   <p>This will launch the target on the local machine using <tt>gdb</tt>. GDB must already
 #@desc   be installed on your system, and it must embed the Python 3 interpreter. You will also
-#@desc   need <tt>protobuf</tt> and <tt>psutil</tt> installed for Python 3.
+#@desc   need <tt>protobuf</tt> and <tt>psutil</tt> installed for Python 3.</p>
 #@desc </body></html>
 #@menu-group local
 #@icon icon.debugger
 #@help TraceRmiLauncherServicePlugin#gdb
 #@enum StartCmd:str run start starti
-#@env OPT_GDB_PATH:str="gdb" "Path to gdb" "The path to gdb. Omit the full path to resolve using the system PATH."
-#@env OPT_START_CMD:StartCmd="start" "Run command" "The gdb command to actually run the target."
 #@arg :str "Image" "The target binary executable image"
 #@args "Arguments" "Command-line arguments to pass to the target"
-#@tty TTY_TARGET
+#@env OPT_GDB_PATH:str="gdb" "Path to gdb" "The path to gdb. Omit the full path to resolve using the system PATH."
+#@env OPT_START_CMD:StartCmd="start" "Run command" "The gdb command to actually run the target."
+#@env OPT_EXTRA_TTY:bool=false "Inferior TTY" "Provide a separate terminal emulator for the target."
+#@tty TTY_TARGET if env:OPT_EXTRA_TTY
 
 if [ -d ${GHIDRA_HOME}/ghidra/.git ]
 then
@@ -47,6 +48,8 @@ fi
 target_image="$1"
 shift
 target_args="$@"
+
+# NOTE: Ghidra will leave TTY_TARGET empty, which gdb takes for the same terminal.
 
 "$OPT_GDB_PATH" \
   -q \

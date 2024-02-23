@@ -101,12 +101,10 @@ public class DebuggerRegistersPlugin extends AbstractDebuggerPlugin {
 	@Override
 	public void processEvent(PluginEvent event) {
 		super.processEvent(event);
-		if (event instanceof TraceActivatedPluginEvent) {
-			TraceActivatedPluginEvent ev = (TraceActivatedPluginEvent) event;
+		if (event instanceof TraceActivatedPluginEvent ev) {
 			connectedProvider.coordinatesActivated(ev.getActiveCoordinates());
 		}
-		if (event instanceof TraceClosedPluginEvent) {
-			TraceClosedPluginEvent ev = (TraceClosedPluginEvent) event;
+		if (event instanceof TraceClosedPluginEvent ev) {
 			traceClosed(ev.getTrace());
 		}
 	}

@@ -101,6 +101,15 @@ public class DefaultEnumeratedColumnTableModel<C extends Enum<C> & EnumeratedTab
 		}
 
 		/**
+		 * Check if this column should be visible by default
+		 * 
+		 * @return true if visible
+		 */
+		default public boolean isVisible() {
+			return true;
+		}
+
+		/**
 		 * Get the default sort direction for this column
 		 * 
 		 * @return the sort direction
@@ -217,10 +226,15 @@ public class DefaultEnumeratedColumnTableModel<C extends Enum<C> & EnumeratedTab
 		if (cols != null) { // Smells
 			List<C> defaultOrder = defaultSortOrder();
 			for (C col : cols) {
-				descriptor.addVisibleColumn(
-					new EnumeratedDynamicTableColumn<R>(col),
-					defaultOrder.indexOf(col), // -1 means not found, not sorted
-					col.defaultSortDirection().isAscending());
+				EnumeratedDynamicTableColumn<R> ecol = new EnumeratedDynamicTableColumn<R>(col);
+				if (col.isVisible()) {
+					descriptor.addVisibleColumn(ecol,
+						defaultOrder.indexOf(col), // -1 means not found, not sorted
+						col.defaultSortDirection().isAscending());
+				}
+				else {
+					descriptor.addHiddenColumn(ecol);
+				}
 			}
 		}
 		return descriptor;

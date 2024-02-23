@@ -25,36 +25,42 @@ import ghidra.util.exception.CancelledException;
 /**
  * Applier for {@link ExtraFrameAndProcedureInformationMsSymbol} symbols.
  */
-public class FrameAndProcedureInformationSymbolApplier extends MsSymbolApplier {
+public class FrameAndProcedureInformationSymbolApplier extends MsSymbolApplier
+		implements NestableSymbolApplier {
 
 	private ExtraFrameAndProcedureInformationMsSymbol symbol;
 
 	/**
 	 * Constructor
 	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
-	 * @param iter the Iterator containing the symbol sequence being processed
+	 * @param symbol the symbol for this applier
 	 */
 	public FrameAndProcedureInformationSymbolApplier(DefaultPdbApplicator applicator,
-			MsSymbolIterator iter) {
-		super(applicator, iter);
-		AbstractMsSymbol abstractSymbol = iter.next();
-		if (!(abstractSymbol instanceof ExtraFrameAndProcedureInformationMsSymbol)) {
+			ExtraFrameAndProcedureInformationMsSymbol symbol) {
+		super(applicator);
+		this.symbol = symbol;
+	}
+
+	@Override
+	public void applyTo(NestingSymbolApplier applyToApplier, MsSymbolIterator iter)
+			throws PdbException, CancelledException {
+		getValidatedSymbol(iter, true);
+		// TODO; depending on all children of AbstractBlockContextApplier, might need to change
+		//  this to FunctionSymbolApplier and possibly Managed... (or remove Separated code
+		//  from this parent)
+		if (applyToApplier instanceof AbstractBlockContextApplier applier) {
+			applier.setSpecifiedFrameSize(symbol.getProcedureFrameTotalLength());
+		}
+	}
+
+	private ExtraFrameAndProcedureInformationMsSymbol getValidatedSymbol(MsSymbolIterator iter,
+			boolean iterate) {
+		AbstractMsSymbol abstractSymbol = iterate ? iter.next() : iter.peek();
+		if (!(abstractSymbol instanceof ExtraFrameAndProcedureInformationMsSymbol frameSymbol)) {
 			throw new AssertException(
 				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
 		}
-		symbol = (ExtraFrameAndProcedureInformationMsSymbol) abstractSymbol;
+		return frameSymbol;
 	}
 
-	@Override
-	void applyTo(MsSymbolApplier applyToApplier) throws PdbException, CancelledException {
-		if (applyToApplier instanceof FunctionSymbolApplier) {
-			FunctionSymbolApplier functionSymbolApplier = (FunctionSymbolApplier) applyToApplier;
-			functionSymbolApplier.setSpecifiedFrameSize(symbol.getProcedureFrameTotalLength());
-		}
-	}
-
-	@Override
-	void apply() {
-		// Quietly do nothing
-	}
 }

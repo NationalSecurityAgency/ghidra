@@ -21,7 +21,6 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
@@ -116,27 +115,11 @@ public class DebuggerLegacyRegionsPanel extends JPanel {
 		}
 	}
 
-	protected static RegionRow getSelectedRegionRow(ActionContext context) {
-		if (!(context instanceof DebuggerRegionActionContext)) {
-			return null;
-		}
-		DebuggerRegionActionContext ctx = (DebuggerRegionActionContext) context;
-		Set<RegionRow> regions = ctx.getSelectedRegions();
-		if (regions.size() != 1) {
-			return null;
-		}
-		return regions.iterator().next();
-	}
-
 	protected static Set<TraceMemoryRegion> getSelectedRegions(ActionContext context) {
-		if (!(context instanceof DebuggerRegionActionContext)) {
+		if (!(context instanceof DebuggerRegionActionContext ctx)) {
 			return null;
 		}
-		DebuggerRegionActionContext ctx = (DebuggerRegionActionContext) context;
-		return ctx.getSelectedRegions()
-				.stream()
-				.map(r -> r.getRegion())
-				.collect(Collectors.toSet());
+		return ctx.getSelectedRegions();
 	}
 
 	private class RegionsListener extends TraceDomainObjectListener {
@@ -277,16 +260,6 @@ public class DebuggerLegacyRegionsPanel extends JPanel {
 
 	boolean isContextNonEmpty(DebuggerRegionActionContext ctx) {
 		return !ctx.getSelectedRegions().isEmpty();
-	}
-
-	private static Set<TraceMemoryRegion> getSelectedRegions(DebuggerRegionActionContext ctx) {
-		if (ctx == null) {
-			return null;
-		}
-		return ctx.getSelectedRegions()
-				.stream()
-				.map(r -> r.getRegion())
-				.collect(Collectors.toSet());
 	}
 
 	protected void navigateToSelectedRegion() {

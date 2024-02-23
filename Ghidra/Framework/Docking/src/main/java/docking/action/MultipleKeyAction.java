@@ -142,8 +142,8 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 	}
 
 	private boolean ignoreActionWhileMenuShowing() {
-		if (getKeyBindingPrecedence() == KeyBindingPrecedence.ReservedActionsLevel) {
-			return false; // allow reserved bindings through "no matter what!"
+		if (getKeyBindingPrecedence() == KeyBindingPrecedence.SystemActionsLevel) {
+			return false; // allow system bindings through "no matter what!"
 		}
 
 		MenuSelectionManager menuManager = MenuSelectionManager.defaultManager();
@@ -238,8 +238,8 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 	}
 
 	@Override
-	public boolean isReservedKeybindingPrecedence() {
-		return false; // MultipleKeyActions can never be reserved 
+	public boolean isSystemKeybindingPrecedence() {
+		return false; // MultipleKeyActions can never be 'system' 
 	}
 
 	@Override

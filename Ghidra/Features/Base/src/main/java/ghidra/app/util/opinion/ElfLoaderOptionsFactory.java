@@ -35,7 +35,7 @@ public class ElfLoaderOptionsFactory {
 	static final boolean PERFORM_RELOCATIONS_DEFAULT = true;
 
 	public static final String APPLY_UNDEFINED_SYMBOL_DATA_NAME = "Apply Undefined Symbol Data";
-	static final boolean APPLY_UNDEFINED_SYMBOL_DATA_DEFAULT = false;
+	static final boolean APPLY_UNDEFINED_SYMBOL_DATA_DEFAULT = true;
 
 	// NOTE: Using too large of an image base can cause problems for relocation processing
 	// for some language scenarios which utilize 32-bit relocations.  This may be due to

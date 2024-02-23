@@ -76,7 +76,7 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 	}
 
 	static Symbol getSymbol(Function func, ClangToken tokenAtCursor) {
-		if (tokenAtCursor == null) {
+		if (tokenAtCursor == null || (func instanceof UndefinedFunction)) {
 			return null;
 		}
 

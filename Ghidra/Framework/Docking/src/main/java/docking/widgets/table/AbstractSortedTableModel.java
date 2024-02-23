@@ -22,6 +22,7 @@ import javax.swing.table.TableModel;
 
 import docking.widgets.table.sort.DefaultColumnComparator;
 import docking.widgets.table.sort.RowBasedColumnComparator;
+import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
@@ -242,6 +243,14 @@ public abstract class AbstractSortedTableModel<T> extends AbstractGTableModel<T>
 	}
 
 	protected TableSortingContext<T> createSortingContext(TableSortState newSortState) {
+
+		if (!isValidSortState(newSortState)) {
+			Msg.error(this, """
+					"Table '%s' sort is invalid.  Assuming columns have been removed. \
+					Setting unsorted.""".formatted(getName()));
+			newSortState = TableSortState.createUnsortedSortState();
+		}
+
 		return new TableSortingContext<>(newSortState, getComparatorChain(newSortState));
 	}
 

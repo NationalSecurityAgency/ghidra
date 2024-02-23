@@ -86,7 +86,6 @@ class UninitializedSubMemoryBlock extends SubMemoryBlock {
 
 	@Override
 	protected String getDescription() {
-		return "";
+		return "uninit[0x%x]".formatted(subBlockLength);
 	}
-
 }

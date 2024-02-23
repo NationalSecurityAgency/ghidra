@@ -367,7 +367,7 @@ def refresh_modules(node: sch.Schema('ModuleContainer')):
 
 
 # node is Module so this appears in Modules panel
-@REGISTRY.method(display='Load all Modules and all Sections')
+@REGISTRY.method(display='Refresh all Modules and all Sections')
 def load_all_sections(node: sch.Schema('Module')):
     """
     Load/refresh all modules and all sections.
@@ -484,7 +484,7 @@ def launch_loader(inferior: sch.Schema('Inferior'),
     ''')
 
 
-@REGISTRY.method(action='launch', display='Land and Run')
+@REGISTRY.method(action='launch', display='Launch and Run')
 def launch_run(inferior: sch.Schema('Inferior'),
                file: ParamDesc(str, display='File'),
                args: ParamDesc(str, display='Arguments')=''):

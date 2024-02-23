@@ -32,50 +32,52 @@ public class ReferenceSymbolApplier extends MsSymbolApplier {
 	/**
 	 * Constructor
 	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
-	 * @param iter the Iterator containing the symbol sequence being processed
+	 * @param symbol the symbol for this applier
 	 */
-	public ReferenceSymbolApplier(DefaultPdbApplicator applicator, MsSymbolIterator iter) {
-		super(applicator, iter);
-		AbstractMsSymbol abstractSymbol = iter.next();
-		if (!(abstractSymbol instanceof AbstractReferenceMsSymbol)) {
-			throw new AssertException(
-				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
-		}
-		symbol = (AbstractReferenceMsSymbol) abstractSymbol;
+	public ReferenceSymbolApplier(DefaultPdbApplicator applicator,
+			AbstractReferenceMsSymbol symbol) {
+		super(applicator);
+		this.symbol = symbol;
 	}
 
-	@Override
-	void applyTo(MsSymbolApplier applyToApplier) {
-		// Do nothing.
-	}
+	//TODO: since we stopped taking the references from publics/globals to module-based symbols
+	//  and processing them that way and are now just processing directly from the
+	//  modules, we need to determine if there is any use for these reference symbols.
+	// We currently are not implementing the DirectSymbolApplier or the NestingSymbolApplier
+	//  interfaces... so we are an applier just in form at this point.
+	// => Re-evaluate!!!
+//	@Override
+//	public void apply(MsSymbolIterator iter) throws PdbException, CancelledException {
+//		getValidatedSymbol(iter, true);
+//		getValidatedSymbol(iter, true);
+//		MsSymbolIterator refIter = getRefIterFromSymbol();
+//		applicator.procSymNew(refIter);
+//	}
 
-	@Override
-	void apply() throws CancelledException, PdbException {
-		// Potential recursive call via applicator.procSym().
-		MsSymbolIterator refIter = getInitializedReferencedSymbolGroupIterator();
-		if (refIter == null) {
-			throw new PdbException("PDB: Referenced Symbol Error - null refIter");
-		}
-		applicator.procSym(refIter);
-	}
-
-	MsSymbolIterator getInitializedReferencedSymbolGroupIterator() throws PdbException {
-		SymbolGroup refSymbolGroup = getReferencedSymbolGroup();
-		if (refSymbolGroup == null) {
-			return null;
-		}
-		MsSymbolIterator refIter = refSymbolGroup.getSymbolIterator();
-		refIter.initGetByOffset(getOffsetInReferencedSymbolGroup());
+	/**
+	 * Checks check symbol from primary iterator for correct type and then retrieves the
+	 * properly initialized reference iterator
+	 * @return the initialized reference iterator
+	 * @throws PdbException upon not enough data to parse
+	 * @throws CancelledException upon user cancellation
+	 */
+	MsSymbolIterator getRefIterFromSymbol()
+			throws CancelledException, PdbException {
+		int refModuleNumber = symbol.getModuleIndex();
+		MsSymbolIterator refIter =
+			applicator.getPdb().getDebugInfo().getSymbolIterator(refModuleNumber);
+		long refOffset = symbol.getOffsetActualSymbolInDollarDollarSymbols();
+		refIter.initGetByOffset(refOffset);
 		return refIter;
 	}
 
-	SymbolGroup getReferencedSymbolGroup() {
-		int refModuleNumber = symbol.getModuleIndex();
-		return applicator.getSymbolGroupForModule(refModuleNumber);
-	}
-
-	long getOffsetInReferencedSymbolGroup() {
-		return symbol.getOffsetActualSymbolInDollarDollarSymbols();
+	private AbstractReferenceMsSymbol getValidatedSymbol(MsSymbolIterator iter, boolean iterate) {
+		AbstractMsSymbol abstractSymbol = iterate ? iter.next() : iter.peek();
+		if (!(abstractSymbol instanceof AbstractReferenceMsSymbol refSymbol)) {
+			throw new AssertException(
+				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
+		}
+		return refSymbol;
 	}
 
 }

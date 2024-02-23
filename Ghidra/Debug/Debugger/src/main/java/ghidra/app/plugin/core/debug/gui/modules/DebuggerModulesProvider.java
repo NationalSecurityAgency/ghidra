@@ -306,12 +306,13 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		return Set.of();
 	}
 
-	protected static Set<TraceSection> getSelectedSections(ActionContext context) {
+	protected static Set<TraceSection> getSelectedSections(ActionContext context,
+			boolean allowExpansion) {
 		if (context instanceof DebuggerModuleActionContext ctx) {
 			return DebuggerLegacyModulesPanel.getSelectedSectionsFromContext(ctx);
 		}
 		if (context instanceof DebuggerSectionActionContext ctx) {
-			return DebuggerLegacySectionsPanel.getSelectedSectionsFromContext(ctx);
+			return DebuggerLegacySectionsPanel.getSelectedSectionsFromContext(ctx, allowExpansion);
 		}
 		if (context instanceof DebuggerObjectActionContext ctx) {
 			return DebuggerModulesPanel.getSelectedSectionsFromContext(ctx);
@@ -372,7 +373,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		public ImportFromFileSystemAction() {
 			super(plugin);
 			setPopupMenuData(new MenuData(new String[] { NAME }, GROUP));
-			addLocalAction(this);
+			tool.addAction(this);
 			setEnabled(true);
 		}
 
@@ -467,7 +468,6 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	SelectAddressesAction actionSelectAddresses;
 	ImportFromFileSystemAction actionImportFromFileSystem;
 	ToggleDockingAction actionShowSectionsTable;
-	// TODO: Save the state of this toggle? Not really compelled.
 	ToggleDockingAction actionFilterSectionsByModules;
 	DockingAction actionSelectCurrent;
 
@@ -594,30 +594,32 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 				.onAction(this::activatedMapManually)
 				.buildAndInstallLocal(this);
 		actionMapModules = MapModulesAction.builder(plugin)
-				.enabledWhen(this::isContextNonEmpty)
-				.popupWhen(this::isContextNonEmpty)
+				.enabledWhen(ctx -> isContextHasModules(ctx) && isContextNotForcedSingle(ctx))
+				.popupWhen(ctx -> isContextHasModules(ctx) && isContextNotForcedSingle(ctx))
 				.onAction(this::activatedMapModules)
-				.buildAndInstallLocal(this);
+				.buildAndInstall(tool);
 		actionMapModuleTo = MapModuleToAction.builder(plugin)
 				.enabledWhen(ctx -> currentProgram != null && getSelectedModules(ctx).size() == 1)
 				.popupWhen(ctx -> currentProgram != null && getSelectedModules(ctx).size() == 1)
 				.onAction(this::activatedMapModuleTo)
-				.buildAndInstallLocal(this);
+				.buildAndInstall(tool);
 		actionMapSections = MapSectionsAction.builder(plugin)
-				.enabledWhen(this::isContextNonEmpty)
-				.popupWhen(this::isContextNonEmpty)
+				.enabledWhen(ctx -> isContextHasSections(ctx) && isContextNotForcedSingle(ctx))
+				.popupWhen(ctx -> isContextHasSections(ctx) && isContextNotForcedSingle(ctx))
 				.onAction(this::activatedMapSections)
-				.buildAndInstallLocal(this);
+				.buildAndInstall(tool);
 		actionMapSectionTo = MapSectionToAction.builder(plugin)
-				.enabledWhen(ctx -> currentProgram != null && getSelectedSections(ctx).size() == 1)
-				.popupWhen(ctx -> currentProgram != null && getSelectedSections(ctx).size() == 1)
+				.enabledWhen(
+					ctx -> currentProgram != null && getSelectedSections(ctx, false).size() == 1)
+				.popupWhen(
+					ctx -> currentProgram != null && getSelectedSections(ctx, false).size() == 1)
 				.onAction(this::activatedMapSectionTo)
-				.buildAndInstallLocal(this);
+				.buildAndInstall(tool);
 		actionMapSectionsTo = MapSectionsToAction.builder(plugin)
 				.enabledWhen(ctx -> currentProgram != null && isContextSectionsOfOneModule(ctx))
 				.popupWhen(ctx -> currentProgram != null && isContextSectionsOfOneModule(ctx))
 				.onAction(this::activatedMapSectionsTo)
-				.buildAndInstallLocal(this);
+				.buildAndInstall(tool);
 
 		actionAutoMap = AutoMapAction.builder(plugin)
 				.onActionStateChanged(this::changedAutoMapSpec)
@@ -653,12 +655,20 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		contextChanged();
 	}
 
+	private boolean isContextHasModules(ActionContext context) {
+		return !getSelectedModules(context).isEmpty();
+	}
+
+	private boolean isContextHasSections(ActionContext context) {
+		return !getSelectedSections(context, false).isEmpty();
+	}
+
 	private boolean isContextNonEmpty(ActionContext context) {
 		if (context instanceof DebuggerModuleActionContext ctx) {
 			return !ctx.getSelectedModules().isEmpty();
 		}
 		if (context instanceof DebuggerSectionActionContext ctx) {
-			return !ctx.getSelectedSections().isEmpty();
+			return !ctx.getSelectedSections(false).isEmpty();
 		}
 		if (context instanceof DebuggerObjectActionContext ctx) {
 			return !ctx.getObjectValues().isEmpty();
@@ -666,8 +676,18 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		return false;
 	}
 
-	private boolean isContextSectionsOfOneModule(ActionContext ignored) {
-		Set<TraceSection> sel = getSelectedSections(myActionContext);
+	private boolean isContextNotForcedSingle(ActionContext context) {
+		if (context instanceof DebuggerModuleActionContext ctx) {
+			return !ctx.isForcedSingle();
+		}
+		if (context instanceof DebuggerSectionActionContext ctx) {
+			return !ctx.isForcedSingle();
+		}
+		return true;
+	}
+
+	private boolean isContextSectionsOfOneModule(ActionContext context) {
+		Set<TraceSection> sel = getSelectedSections(context, false);
 		if (sel == null || sel.isEmpty()) {
 			return false;
 		}
@@ -713,40 +733,40 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		tool.showComponentProvider(provider, true);
 	}
 
-	private void activatedMapModules(ActionContext ignored) {
-		Set<TraceModule> sel = getSelectedModules(myActionContext);
+	private void activatedMapModules(ActionContext context) {
+		Set<TraceModule> sel = getSelectedModules(context);
 		if (sel == null || sel.isEmpty()) {
 			return;
 		}
 		mapModules(sel);
 	}
 
-	private void activatedMapModuleTo(ActionContext ignored) {
-		Set<TraceModule> sel = getSelectedModules(myActionContext);
+	private void activatedMapModuleTo(ActionContext context) {
+		Set<TraceModule> sel = getSelectedModules(context);
 		if (sel == null || sel.size() != 1) {
 			return;
 		}
 		mapModuleTo(sel.iterator().next());
 	}
 
-	private void activatedMapSections(ActionContext ignored) {
-		Set<TraceSection> sel = getSelectedSections(myActionContext);
+	private void activatedMapSections(ActionContext context) {
+		Set<TraceSection> sel = getSelectedSections(context, true);
 		if (sel == null || sel.isEmpty()) {
 			return;
 		}
 		mapSections(sel);
 	}
 
-	private void activatedMapSectionsTo(ActionContext ignored) {
-		Set<TraceSection> sel = getSelectedSections(myActionContext);
+	private void activatedMapSectionsTo(ActionContext context) {
+		Set<TraceSection> sel = getSelectedSections(context, true);
 		if (sel == null || sel.isEmpty()) {
 			return;
 		}
 		mapSectionsTo(sel);
 	}
 
-	private void activatedMapSectionTo(ActionContext ignored) {
-		Set<TraceSection> sel = getSelectedSections(myActionContext);
+	private void activatedMapSectionTo(ActionContext context) {
+		Set<TraceSection> sel = getSelectedSections(context, false);
 		if (sel == null || sel.size() != 1) {
 			return;
 		}

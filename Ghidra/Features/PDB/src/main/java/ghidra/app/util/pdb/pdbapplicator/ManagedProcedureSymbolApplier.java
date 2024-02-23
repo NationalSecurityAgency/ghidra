@@ -15,8 +15,6 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.util.*;
-
 import ghidra.app.cmd.function.CallDepthChangeInfo;
 import ghidra.app.util.bin.format.pdb2.pdbreader.MsSymbolIterator;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
@@ -48,20 +46,8 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Applier for {@link AbstractManagedProcedureMsSymbol} symbols.
  */
-public class ManagedProcedureSymbolApplier extends MsSymbolApplier
-		implements DeferrableFunctionSymbolApplier {
-
-	private static final String BLOCK_INDENT = "   ";
-
-	private AbstractManagedProcedureMsSymbol procedureSymbol;
-
-	private Address specifiedAddress;
-	private Address address;
-	private boolean isNonReturning;
-	private Function function = null;
-	private long specifiedFrameSize = 0;
-	private long currentFrameSize = 0;
-	private BlockCommentsManager comments;
+public class ManagedProcedureSymbolApplier extends AbstractBlockContextApplier
+		implements BlockNestingSymbolApplier {
 
 	private int symbolBlockNestingLevel;
 	private Address currentBlockAddress;
@@ -69,160 +55,200 @@ public class ManagedProcedureSymbolApplier extends MsSymbolApplier
 	// might not need this, but investigating whether it will help us.  TODO remove?
 	private int baseParamOffset = 0;
 
-//	private List<RegisterRelativeSymbolApplier> stackVariableAppliers = new ArrayList<>();
+	private AbstractManagedProcedureMsSymbol symbol;
 
-	private List<MsSymbolApplier> allAppliers = new ArrayList<>();
-	private RegisterChangeCalculator registerChangeCalculator;
+	// TODO: We are having difficulty figuring out how to process these... actually not getting
+	//  correct addresses in some situations.  This flag allows us to bypass this symbol and
+	//  its nested symbols.
+	private boolean developerStillHavingProblemProcessingThese = true;
 
 	/**
 	 * Constructor
 	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
-	 * @param iter the Iterator containing the symbol sequence being processed
-	 * @throws CancelledException upon user cancellation
+	 * @param symbol the symbol for this applier
 	 */
-	public ManagedProcedureSymbolApplier(DefaultPdbApplicator applicator, MsSymbolIterator iter)
-			throws CancelledException {
-		super(applicator, iter);
-		AbstractMsSymbol abstractSymbol = iter.next();
-		symbolBlockNestingLevel = 0;
-		comments = new BlockCommentsManager();
-		currentBlockAddress = null;
-
-		if (!(abstractSymbol instanceof AbstractManagedProcedureMsSymbol)) {
-			throw new AssertException(
-				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
-		}
-		// TODO: Remove the witness call once we effectively process this class of symbols
-		//  See that the applyTo() method is much unimplemented.
-		applicator.getPdbApplicatorMetrics().witnessCannotApplySymbolType(abstractSymbol);
-		procedureSymbol = (AbstractManagedProcedureMsSymbol) abstractSymbol;
-		specifiedAddress = applicator.getRawAddress(procedureSymbol);
-		address = applicator.getAddress(procedureSymbol);
-		isNonReturning = procedureSymbol.getFlags().doesNotReturn();
-
-		manageBlockNesting(this);
-
-		while (notDone()) {
-			applicator.checkCancelled();
-			MsSymbolApplier applier = applicator.getSymbolApplier(iter);
-			allAppliers.add(applier);
-			applier.manageBlockNesting(this);
-		}
+	public ManagedProcedureSymbolApplier(DefaultPdbApplicator applicator,
+			AbstractManagedProcedureMsSymbol symbol) {
+		super(applicator);
+		this.symbol = symbol;
 	}
 
 	@Override
-	void manageBlockNesting(MsSymbolApplier applierParam) {
-		ManagedProcedureSymbolApplier procedureSymbolApplier =
-			(ManagedProcedureSymbolApplier) applierParam;
-		long start = procedureSymbol.getDebugStartOffset();
-		long end = procedureSymbol.getDebugEndOffset();
+	public void apply(MsSymbolIterator iter) throws PdbException, CancelledException {
+		getValidatedSymbol(iter, true);
+		processSymbol(iter);
+	}
+
+	// TODO.  Investigate more.  This is not working for at least one CLI dll in that we are
+	// not getting correct addresses.  There is no omap and the one section is unnamed.
+	private void processSymbol(MsSymbolIterator iter)
+			throws CancelledException, PdbException {
+
+		Address address = applicator.getAddress(symbol);
+		String name = symbol.getName();
+
+		// Regardless of ability to apply this symbol, we need to progress through symbols to the
+		//  matching "end" symbol before we return
+		if (!processEndSymbol(symbol.getEndPointer(), iter)) {
+			applicator.appendLogMsg("PDB: Failed to process function at address " + address);
+			return;
+		}
+
+		// Eventually will remove this when we know how to process
+		if (developerStillHavingProblemProcessingThese) {
+			applicator.getPdbApplicatorMetrics().witnessCannotApplySymbolType(symbol);
+			return;
+		}
+
+		if (applicator.isInvalidAddress(address, name)) {
+			applicator.appendLogMsg("PDB: Failed to process function at address: " + address);
+			return;
+		}
+
+		Function function = applicator.getExistingOrCreateOneByteFunction(address);
+		if (function == null) {
+			return;
+		}
+
+		// Collecting all addresses from all functions to do one large bulk disassembly of the
+		//  complete AddressSet of function addresses.  We could consider removing this logic
+		//  of collecting them all for bulk diassembly and do individual disassembly at the
+		//  same deferred point in time.
+		applicator.scheduleDisassembly(address);
+
+		boolean succeededSetFunctionSignature = setFunctionDefinition(function, address, symbol);
+
+		// If signature was set, then override existing primary mangled symbol with
+		// the global symbol that provided this signature so that Demangler does not overwrite
+		// the richer data type we get with global symbols.
+		applicator.createSymbol(address, name, succeededSetFunctionSignature);
+	}
+
+	@Override
+	public void deferredApply(MsSymbolIterator iter)
+			throws PdbException, CancelledException {
+		// Pealing the symbol off again, as the iterator is coming in fresh, and we need the symbol
+		getValidatedSymbol(iter, true);
+
+		// Eventually will remove this when we know how to process
+		if (developerStillHavingProblemProcessingThese) {
+			processEndSymbol(symbol.getEndPointer(), iter);
+			return;
+		}
+
+		String name = symbol.getName();
+		Address address = applicator.getAddress(symbol);
+
+		long start = getStartOffset();
+		long end = getEndOffset();
 		Address blockAddress = address.add(start);
 		long length = end - start;
-		procedureSymbolApplier.beginBlock(blockAddress, procedureSymbol.getName(), length);
+
+		// Not sure if following procedure from parent class can be used or if should be
+		// specialized below
+		deferredProcessing(iter, name, address, blockAddress, length);
+
 	}
 
-	/**
-	 * Returns the {@link Function} for this applier.
-	 * @return the Function
-	 */
-	Function getFunction() {
-		return function;
-	}
-
-	/**
-	 * Returns the current frame size.
-	 * @return the current frame size.
-	 */
-	long getCurrentFrameSize() {
-		return currentFrameSize;
-	}
-
-	/**
-	 * Returns the frame size as specified by the PDB
-	 * @return the frame size.
-	 */
-	long getSpecifiedFrameSize() {
-		return specifiedFrameSize;
-	}
-
-	/**
-	 * Set the specified frame size.
-	 * @param specifiedFrameSize the frame size.
-	 */
-	void setSpecifiedFrameSize(long specifiedFrameSize) {
-		this.specifiedFrameSize = specifiedFrameSize;
-		currentFrameSize = specifiedFrameSize;
-	}
-
-	/**
-	 * Get the function name
-	 * @return the function name
-	 */
-	String getName() {
-		return procedureSymbol.getName();
-	}
-
-	@Override
-	void applyTo(MsSymbolApplier applyToApplier) {
-		// Do nothing.
-	}
-
-	@Override
-	void apply() throws PdbException, CancelledException {
-		// TODO.  Investigate more.  This is not working for at least one CLI dll in that we are
-		// not getting correct addresses.  There is no omap and the one section is unnamed.
-//		boolean result = applyTo(applicator.getCancelOnlyWrappingMonitor());
-//		if (result == false) {
-//			throw new PdbException(this.getClass().getSimpleName() + ": failure at " + address +
-//				" applying " + getName());
+//	private void deferredProcessing(MsSymbolIterator iter)
+//			throws CancelledException, PdbException {
+//
+//		long currentFrameSize = 0;
+//
+////		symbolBlockNestingLevel = 0;
+////		BlockCommentsManager comments = new BlockCommentsManager();
+////		currentBlockAddress = null;
+//
+//		// TODO: Remove the witness call once we effectively process this class of symbols
+//		//  See that the applyTo() method is much unimplemented.
+//		applicator.getPdbApplicatorMetrics().witnessCannotApplySymbolType(symbol);
+//
+//		Address specifiedAddress = applicator.getRawAddress(symbol);
+//		Address address = applicator.getAddress(symbol);
+//		boolean isNonReturning = symbol.getFlags().doesNotReturn();
+//
+//		initContext();
+//		applyTo(this, context, iter);
+//
+////		TaskMonitor monitor = applicator.getCancelOnlyWrappingMonitor();
+////		RegisterChangeCalculator registerChangeCalculator =
+////			new RegisterChangeCalculator(symbol, function, monitor);
+////
+////		// TODO: need to decide how/where these get passed around... either we pass the function
+////		//  around or pass things in the blockNestingContext or other
+////		int baseParamOffset = VariableUtilities.getBaseStackParamOffset(function_x);
+////		long currentFrameSize = 0;
+//
+//		while (notDone(context, iter)) {
+//			applicator.checkCancelled();
+//			AbstractMsSymbol subSymbol = iter.peek();
+//
+//			// TODO: msSymbol, subSymbol, comments, currentFrameSize, baseParmOffset
+//
+//			MsSymbolApplier applier = applicator.getSymbolApplier(subSymbol, iter);
+////			if (applier instanceof BlockNestingSymbolApplier nestingApplier) {
+////				//nestingApplier.manageBlockNesting(iter, blockNestingContext);
+////				nestingApplier.applyTo(this, context, iter);
+////			}
+//			if (applier instanceof NestableSymbolApplier nestingApplier) {
+//				nestingApplier.applyTo(this, iter);
+//			}
+//			else {
+//				applicator.getPdbApplicatorMetrics().witnessNonNestableSymbolType(subSymbol);
+//				iter.next();
+//			}
 //		}
-	}
-
-	boolean applyTo(TaskMonitor monitor) throws PdbException, CancelledException {
-		if (applicator.isInvalidAddress(address, getName())) {
-			return false;
-		}
-
-		// TODO: We do not know, yet, how/where to apply this.  Need to wait for other .NET
-		// work to get done for loading.  Have commented-out code below, but have added some
-		// functionality (laying down symbol).  This file was somewhat copied from
-		// FunctionSymbolApplier.
-		// TODO: Also see the TODO in the constructor regarding the call to witness.
-		for (MsSymbolApplier applier : allAppliers) {
-			applier.applyTo(this);
-		}
-
-		boolean functionSuccess = applyFunction(monitor);
-		if (functionSuccess == false) {
-			return false;
-		}
-//		registerChangeCalculator = new RegisterChangeCalculator(procedureSymbol, function, monitor);
 //
-//		baseParamOffset = VariableUtilities.getBaseStackParamOffset(function);
+//		// comments
+//		//TODO: deal with specifiedAddress vs. address... do we still want to do any of this
+////		long addressDelta = address_x.subtract(specifiedAddress_x);
+////		blockNestingContext.getComments().applyTo(applicator.getProgram(), addressDelta);
+//		context.getComments().applyTo(applicator.getProgram(), 0);
 //
+////		// line numbers
+////		// TODO: not done yet
+//////	ApplyLineNumbers applyLineNumbers = new ApplyLineNumbers(pdbParser, xmlParser, program);
+//////	applyLineNumbers.applyTo(monitor, log);
+//
+//	}
+
+//	boolean applyTo(TaskMonitor monitor) throws PdbException, CancelledException {
+//		if (applicator.isInvalidAddress(address, getName())) {
+//			return false;
+//		}
+//
+//		// TODO: We do not know, yet, how/where to apply this.  Need to wait for other .NET
+//		// work to get done for loading.  Have commented-out code below, but have added some
+//		// functionality (laying down symbol).  This file was somewhat copied from
+//		// FunctionSymbolApplier.
+//		// TODO: Also see the TODO in the constructor regarding the call to witness.
 //		for (MsSymbolApplier applier : allAppliers) {
 //			applier.applyTo(this);
 //		}
 //
-//		// comments
-//		long addressDelta = address.subtract(specifiedAddress);
-//		comments.applyTo(applicator.getProgram(), addressDelta);
-
-		// line numbers
-		// TODO: not done yet
-//	ApplyLineNumbers applyLineNumbers = new ApplyLineNumbers(pdbParser, xmlParser, program);
-//	applyLineNumbers.applyTo(monitor, log);
-
-		return true;
-	}
-
-	Integer getRegisterPrologChange(Register register) {
-		return registerChangeCalculator.getRegChange(applicator, register);
-	}
-
-	int getBaseParamOffset() {
-		return baseParamOffset;
-	}
+//		boolean functionSuccess = applyFunction(procedureSymbol);
+//		if (functionSuccess == false) {
+//			return false;
+//		}
+////		registerChangeCalculator = new RegisterChangeCalculator(procedureSymbol, function, monitor);
+////
+////		baseParamOffset = VariableUtilities.getBaseStackParamOffset(function);
+////
+////		for (MsSymbolApplier applier : allAppliers) {
+////			applier.applyTo(this);
+////		}
+////
+////		// comments
+////		long addressDelta = address.subtract(specifiedAddress);
+////		comments.applyTo(applicator.getProgram(), addressDelta);
+//
+//		// line numbers
+//		// TODO: not done yet
+////	ApplyLineNumbers applyLineNumbers = new ApplyLineNumbers(pdbParser, xmlParser, program);
+////	applyLineNumbers.applyTo(monitor, log);
+//
+//		return true;
+//	}
 
 	/**
 	 * Sets a local variable (address, name, type)
@@ -235,38 +261,59 @@ public class ManagedProcedureSymbolApplier extends MsSymbolApplier
 			return; // silently return.
 		}
 		// Currently just placing a comment.
-		String comment = getIndent(symbolBlockNestingLevel + 1) + "static local (stored at " +
-			address + ") " + dataType.getName() + " " + name;
-		comments.addPreComment(currentBlockAddress, comment);
+		String comment =
+			context.getIndent(symbolBlockNestingLevel + 1) + "static local (stored at " +
+				address + ") " + dataType.getName() + " " + name;
+		context.getComments().addPreComment(currentBlockAddress, comment);
 	}
 
-	private boolean applyFunction(TaskMonitor monitor) {
+//	private boolean applyFunction(AbstractManagedProcedureMsSymbol procedureSymbol) {
+//
+//		Address address = applicator.getAddress(procedureSymbol);
+//		String name = procedureSymbol.getName();
+//
+//		applicator.createSymbol(address, name, true);
+//
+//		Function function = applicator.getExistingOrCreateOneByteFunction(address);
+//		if (function == null) {
+//			return false;
+//		}
+////		applicator.scheduleDeferredFunctionWork(this);
+//		applicator.scheduleDisassembly(address);
+//
+//		boolean isNonReturning = procedureSymbol.getFlags().doesNotReturn();
+//
+//		if (!function.isThunk() &&
+//			function.getSignatureSource().isLowerPriorityThan(SourceType.IMPORTED)) {
+//			setFunctionDefinition(applicator.getCancelOnlyWrappingMonitor());
+//			function.setNoReturn(isNonReturning);
+//		}
+//		//currentFrameSize = 0;
+//		return true;
+//	}
+//
+	/**
+	 * returns true only if we set a function signature
+	 * @return true if function signature was set
+	 * @throws PdbException upon processing error
+	 * @throws CancelledException upon user cancellation
+	 */
+	private boolean setFunctionDefinition(Function function, Address address,
+			AbstractManagedProcedureMsSymbol symbol) throws CancelledException, PdbException {
 
-		applicator.createSymbol(address, getName(), true);
-
-		function = applicator.getExistingOrCreateOneByteFunction(address);
-		if (function == null) {
+		if (function.getSignatureSource().isHigherPriorityThan(SourceType.ANALYSIS)) {
+			// return if IMPORTED or USER_DEFINED
 			return false;
 		}
-		applicator.scheduleDeferredFunctionWork(this);
 
-		if (!function.isThunk() &&
-			function.getSignatureSource().isLowerPriorityThan(SourceType.IMPORTED)) {
-			setFunctionDefinition(monitor);
-			function.setNoReturn(isNonReturning);
-		}
-		currentFrameSize = 0;
-		return true;
-	}
+		// Since the thunk detection algorithms are overly aggressive and make mistakes, we
+		//  are specifically clearing the value to override these false positives
+		function.setThunkedFunction(null);
 
-	private boolean setFunctionDefinition(TaskMonitor monitor) {
-		if (procedureSymbol == null) {
-			// TODO: is there anything we can do with thunkSymbol?
-			// long x = thunkSymbol.getParentPointer();
-			return true;
-		}
+		function.setNoReturn(isNonReturning());
+
 		// Rest presumes procedureSymbol.
-		long token = procedureSymbol.getToken();
+		long token = symbol.getToken();
 		// TODO: once GP-328 is merged, use static methods to get table and row.
 		// CliIndexUtils.getTableIdUnencoded(token) and .getRowIdUnencoded(token).
 		int table = (int) (token >> 24) & 0xff;
@@ -338,60 +385,6 @@ public class ManagedProcedureSymbolApplier extends MsSymbolApplier
 		return true;
 	}
 
-	private boolean notDone() {
-		return (symbolBlockNestingLevel > 0) && iter.hasNext();
-	}
-
-	int endBlock() {
-		if (--symbolBlockNestingLevel < 0) {
-			applicator.appendLogMsg(
-				"Block Nesting went negative for " + getName() + " at " + address);
-		}
-		if (symbolBlockNestingLevel == 0) {
-			//currentFunctionSymbolApplier = null;
-		}
-		return symbolBlockNestingLevel;
-	}
-
-	void beginBlock(Address startAddress, String name, long length) {
-
-		int nestingLevel = beginBlock(startAddress);
-		if (!applicator.getPdbApplicatorOptions().applyCodeScopeBlockComments()) {
-			return;
-		}
-		if (applicator.isInvalidAddress(startAddress, name)) {
-			return;
-		}
-
-		String indent = getIndent(nestingLevel);
-
-		String baseComment = "level " + nestingLevel + ", length " + length;
-
-		String preComment = indent + "PDB: Block Beg, " + baseComment;
-		if (!name.isEmpty()) {
-			preComment += " (" + name + ")";
-		}
-		comments.addPreComment(startAddress, preComment);
-
-		String postComment = indent + "PDB: Block End, " + baseComment;
-		Address endAddress = startAddress.add(((length <= 0) ? 0 : length - 1));
-		comments.addPostComment(endAddress, postComment);
-	}
-
-	private int beginBlock(Address startAddress) {
-		currentBlockAddress = startAddress;
-		++symbolBlockNestingLevel;
-		return symbolBlockNestingLevel;
-	}
-
-	private String getIndent(int indentLevel) {
-		String indent = "";
-		for (int i = 1; i < indentLevel; i++) {
-			indent += BLOCK_INDENT;
-		}
-		return indent;
-	}
-
 	// Method copied from ApplyStackVariables (ghidra.app.util.bin.format.pdb package)
 	//  on 20191119. TODO: Do we need something like this?
 	/**
@@ -400,7 +393,8 @@ public class ManagedProcedureSymbolApplier extends MsSymbolApplier
 	 * @return stack offset that stack variables will be relative to.
 	 * @throws CancelledException upon user cancellation.
 	 */
-	private int getFrameBaseOffset(TaskMonitor monitor) throws CancelledException {
+	private int getFrameBaseOffset(Function function, TaskMonitor monitor)
+			throws CancelledException {
 
 		int retAddrSize = function.getProgram().getDefaultPointerSize();
 
@@ -432,54 +426,28 @@ public class ManagedProcedureSymbolApplier extends MsSymbolApplier
 		return max;
 	}
 
-	private static class RegisterChangeCalculator {
-
-		private Map<Register, Integer> registerChangeByRegisterName = new HashMap<>();
-		private CallDepthChangeInfo callDepthChangeInfo;
-		private Address debugStart;
-
-		private RegisterChangeCalculator(AbstractManagedProcedureMsSymbol procedureSymbol,
-				Function function, TaskMonitor monitor) throws CancelledException {
-			callDepthChangeInfo = createCallDepthChangInfo(procedureSymbol, function, monitor);
-		}
-
-		private CallDepthChangeInfo createCallDepthChangInfo(
-				AbstractManagedProcedureMsSymbol procedureSymbol, Function function,
-				TaskMonitor monitor) throws CancelledException {
-			if (procedureSymbol == null) {
-				return null;
-			}
-			Register frameReg = function.getProgram().getCompilerSpec().getStackPointer();
-			Address entryAddr = function.getEntryPoint();
-			debugStart = entryAddr.add(procedureSymbol.getDebugStartOffset());
-			AddressSet scopeSet = new AddressSet();
-			scopeSet.addRange(entryAddr, debugStart);
-			return new CallDepthChangeInfo(function, scopeSet, frameReg, monitor);
-		}
-
-		Integer getRegChange(DefaultPdbApplicator applicator, Register register) {
-			if (callDepthChangeInfo == null || register == null) {
-				return null;
-			}
-			Integer change = registerChangeByRegisterName.get(register);
-			if (change != null) {
-				return change;
-			}
-			change = callDepthChangeInfo.getRegDepth(debugStart, register);
-			registerChangeByRegisterName.put(register, change);
-			return change;
-		}
-
+	@Override
+	long getStartOffset() {
+		return symbol.getDebugStartOffset();
 	}
 
 	@Override
-	public void doDeferredProcessing() {
-		// TODO:
-		// Try to processes parameters, locals, scopes if applicable.
+	long getEndOffset() {
+		return symbol.getDebugEndOffset();
 	}
 
-	@Override
-	public Address getAddress() {
-		return address;
+	private boolean isNonReturning() {
+		return symbol.getFlags().doesNotReturn();
 	}
+
+	private AbstractManagedProcedureMsSymbol getValidatedSymbol(MsSymbolIterator iter,
+			boolean iterate) {
+		AbstractMsSymbol abstractSymbol = iterate ? iter.next() : iter.peek();
+		if (!(abstractSymbol instanceof AbstractManagedProcedureMsSymbol procSymbol)) {
+			throw new AssertException(
+				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
+		}
+		return procSymbol;
+	}
+
 }

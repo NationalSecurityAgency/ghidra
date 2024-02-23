@@ -91,21 +91,13 @@ public enum ControlMode {
 		}
 
 		@Override
-		public ControlMode modeOnChange(DebuggerCoordinates coordinates) {
-			if (coordinates.isAliveAndPresent()) {
-				return this;
-			}
-			return getAlternative(coordinates);
-		}
-
-		@Override
 		public boolean isSelectable(DebuggerCoordinates coordinates) {
 			return coordinates.isAlive();
 		}
 
 		@Override
 		public ControlMode getAlternative(DebuggerCoordinates coordinates) {
-			return RO_TRACE;
+			return RW_EMULATOR;
 		}
 	},
 	/**
@@ -157,14 +149,6 @@ public enum ControlMode {
 		@Override
 		public boolean useEmulatedBreakpoints() {
 			return false;
-		}
-
-		@Override
-		public ControlMode modeOnChange(DebuggerCoordinates coordinates) {
-			if (coordinates.isAliveAndPresent()) {
-				return this;
-			}
-			return getAlternative(coordinates);
 		}
 
 		@Override
@@ -390,6 +374,39 @@ public enum ControlMode {
 	 * @return true to follow, false if not
 	 */
 	public abstract boolean followsPresent();
+
+	/**
+	 * Validate and/or adjust the given coordinates pre-activation
+	 * 
+	 * <p>
+	 * This is called by the trace manager whenever there is a request to activate new coordinates.
+	 * The control mode may adjust or reject the request before the trace manager actually performs
+	 * and notifies the activation.
+	 * 
+	 * @param tool the tool for displaying status messages
+	 * @param coordinates the requested coordinates
+	 * @param cause the cause of the activation
+	 * @return the effective coordinates or null to reject
+	 */
+	public DebuggerCoordinates validateCoordinates(PluginTool tool,
+			DebuggerCoordinates coordinates, ActivationCause cause) {
+		if (!followsPresent()) {
+			return coordinates;
+		}
+		Target target = coordinates.getTarget();
+		if (target == null) {
+			return coordinates;
+		}
+		if (cause == ActivationCause.USER &&
+			(!coordinates.getTime().isSnapOnly() || coordinates.getSnap() != target.getSnap())) {
+			tool.setStatusInfo(
+				"Cannot navigate time in %s mode. Switch to Trace or Emulate mode first."
+						.formatted(name),
+				true);
+			return null;
+		}
+		return coordinates;
+	}
 
 	/**
 	 * Check if (broadly speaking) the mode supports editing the given coordinates

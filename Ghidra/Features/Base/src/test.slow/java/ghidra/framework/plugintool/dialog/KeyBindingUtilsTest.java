@@ -235,7 +235,7 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 		debug("a");
 
 		// get current options
-		ToolOptions toolKeyBindingOptions = (ToolOptions) getInstanceField("options", panel);
+		ToolOptions toolKeyBindingOptions = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
 
 		debug("b");
 
@@ -289,7 +289,8 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		debug("i");
 
-		ToolOptions newlyLoadedDefaultOptions = (ToolOptions) getInstanceField("options", panel);
+		ToolOptions newlyLoadedDefaultOptions = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
+
 		assertOptionsMatch(
 			"The options from the first tool instance have changed " +
 				"in the second tool instance even though the testing changes were not applied.",
@@ -328,7 +329,7 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		setKeyBindingsUpDialog(tool);
 
-		newlyLoadedDefaultOptions = (ToolOptions) getInstanceField("options", panel);
+		newlyLoadedDefaultOptions = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
 		assertOptionsDontMatch(
 			"The options are the same after making changes, applying, closing and reloading.",
 			originalOptions, newlyLoadedDefaultOptions);
@@ -364,7 +365,7 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(newBinding, restoredBinding);
 
 		setKeyBindingsUpDialog(tool);
-		ToolOptions options = (ToolOptions) getInstanceField("options", panel);
+		ToolOptions options = tool.getOptions(DockingToolConstants.KEY_BINDINGS);
 		KeyStroke optionBinding = options.getKeyStroke(action.getFullName(), null);
 		assertEquals(appliedBinding, optionBinding);
 
@@ -457,7 +458,7 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void setSelectionPath(final GTree tree, final TreePath path) throws Exception {
-		SwingUtilities.invokeAndWait(() -> tree.setSelectionPath(path));
+		runSwing(() -> tree.setSelectionPath(path));
 	}
 
 	private GTreeNode getGTreeNode(GTreeNode parent, String nodeName) throws Exception {
@@ -520,7 +521,7 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 			if (actionName.equals(model.getValueAt(i, 0)) &&
 				owner.equals(model.getValueAt(i, 2))) {
 				final int idx = i;
-				SwingUtilities.invokeAndWait(() -> {
+				runSwing(() -> {
 					table.setRowSelectionInterval(idx, idx);
 					Rectangle rect = table.getCellRect(idx, idx, true);
 					table.scrollRectToVisible(rect);

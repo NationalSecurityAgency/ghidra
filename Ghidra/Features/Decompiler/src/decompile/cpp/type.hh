@@ -746,8 +746,8 @@ public:
   Datatype *findByName(const string &n);		///< Return type of given name
   Datatype *setName(Datatype *ct,const string &n); 	///< Set the given types name
   void setDisplayFormat(Datatype *ct,uint4 format);	///< Set the display format associated with the given data-type
-  bool setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,int4 fixedalign,uint4 flags);	///< Set fields on a TypeStruct
-  bool setFields(vector<TypeField> &fd,TypeUnion *ot,int4 fixedsize,int4 fixedalign,uint4 flags);	///< Set fields on a TypeUnion
+  void setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,int4 fixedalign,uint4 flags);	///< Set fields on a TypeStruct
+  void setFields(vector<TypeField> &fd,TypeUnion *ot,int4 fixedsize,int4 fixedalign,uint4 flags);	///< Set fields on a TypeUnion
   void setPrototype(const FuncProto *fp,TypeCode *newCode,uint4 flags);	///< Set the prototype on a TypeCode
   bool setEnumValues(const vector<string> &namelist,
 		      const vector<uintb> &vallist,

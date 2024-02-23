@@ -199,7 +199,7 @@ class ByteMappedSubMemoryBlock extends SubMemoryBlock {
 
 	@Override
 	protected String getDescription() {
-		return "Byte Mapped: " + mappedAddress + ", " + byteMappingScheme;
+		return "bytemap[0x%x, 0x%x, %s]".formatted(subBlockOffset, subBlockLength, mappedAddress);
 	}
 
 }

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,15 +25,21 @@ import ghidra.util.classfinder.ExtensionPoint;
 
 public abstract class RelocationFixupHandler implements ExtensionPoint {
 
+	/**
+	 * Default abstract constructor for an {@link RelocationFixupHandler}.
+	 */
+	protected RelocationFixupHandler() {
+	}
+
 	public abstract boolean processRelocation(Program program, Relocation relocation,
-			Address oldImageBase, Address newImageBase) throws MemoryAccessException,
-			CodeUnitInsertionException;
+			Address oldImageBase, Address newImageBase)
+			throws MemoryAccessException, CodeUnitInsertionException;
 
 	public abstract boolean handlesProgram(Program program);
 
 	protected boolean process32BitRelocation(Program program, Relocation relocation,
-			Address oldImageBase, Address newImageBase) throws MemoryAccessException,
-			CodeUnitInsertionException {
+			Address oldImageBase, Address newImageBase)
+			throws MemoryAccessException, CodeUnitInsertionException {
 		long diff = newImageBase.subtract(oldImageBase);
 
 		Address address = relocation.getAddress();
@@ -52,8 +57,8 @@ public abstract class RelocationFixupHandler implements ExtensionPoint {
 	}
 
 	public boolean process64BitRelocation(Program program, Relocation relocation,
-			Address oldImageBase, Address newImageBase) throws MemoryAccessException,
-			CodeUnitInsertionException {
+			Address oldImageBase, Address newImageBase)
+			throws MemoryAccessException, CodeUnitInsertionException {
 
 		long diff = newImageBase.subtract(oldImageBase);
 

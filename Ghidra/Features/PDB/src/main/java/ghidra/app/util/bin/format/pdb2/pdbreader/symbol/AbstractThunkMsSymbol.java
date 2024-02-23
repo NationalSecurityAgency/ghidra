@@ -26,9 +26,7 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.*;
  * Note: we do not necessarily understand each of these symbol type classes.  Refer to the
  *  base class for more information.
  */
-public abstract class AbstractThunkMsSymbol extends AbstractMsSymbol
-		implements AddressMsSymbol, NameMsSymbol {
-
+public abstract class AbstractThunkMsSymbol extends AbstractProcedureMsSymbol {
 	public enum Ordinal {
 
 		NOTYPE("", 0),
@@ -115,6 +113,7 @@ public abstract class AbstractThunkMsSymbol extends AbstractMsSymbol
 	 * Returns the parent pointer.
 	 * @return Parent pointer.
 	 */
+	@Override
 	public long getParentPointer() {
 		return parentPointer;
 	}
@@ -123,6 +122,7 @@ public abstract class AbstractThunkMsSymbol extends AbstractMsSymbol
 	 * Returns the end pointer.
 	 * @return End pointer.
 	 */
+	@Override
 	public long getEndPointer() {
 		return endPointer;
 	}
@@ -131,8 +131,45 @@ public abstract class AbstractThunkMsSymbol extends AbstractMsSymbol
 	 * Returns the next pointer
 	 * @return Next pointer.
 	 */
+	@Override
 	public long getNextPointer() {
 		return nextPointer;
+	}
+
+	/**
+	 * Returns the procedure length.  For thunk, we think procedure length is the length field
+	 * @return Length.
+	 */
+	@Override
+	public long getProcedureLength() {
+		return length;
+	}
+
+	/**
+	 * Returns the debug start offset.  This is dummied-in as the zero offset
+	 * @return Debug start offset.
+	 */
+	@Override
+	public long getDebugStartOffset() {
+		return 0L;
+	}
+
+	/**
+	 * Returns the debug end offset.  This is dummied-in as the length of the method
+	 * @return Debug end offset.
+	 */
+	@Override
+	public long getDebugEndOffset() {
+		return length;
+	}
+
+	/**
+	 * Returns the type record number.  We dummied-in NO_TYPE, as there is not type record number
+	 * @return Type record number.
+	 */
+	@Override
+	public RecordNumber getTypeRecordNumber() {
+		return RecordNumber.NO_TYPE;
 	}
 
 	/**

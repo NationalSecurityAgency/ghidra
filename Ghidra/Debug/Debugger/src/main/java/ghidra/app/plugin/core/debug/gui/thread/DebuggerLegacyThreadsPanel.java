@@ -37,6 +37,7 @@ import ghidra.framework.model.DomainObjectChangeRecord;
 import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
+import ghidra.program.model.address.Address;
 import ghidra.trace.model.*;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.thread.TraceThreadManager;
@@ -55,32 +56,40 @@ public class DebuggerLegacyThreadsPanel extends JPanel {
 
 	protected enum ThreadTableColumns
 		implements EnumeratedTableColumn<ThreadTableColumns, ThreadRow> {
-		NAME("Name", String.class, ThreadRow::getName, ThreadRow::setName, true),
-		CREATED("Created", Long.class, ThreadRow::getCreationSnap, true),
-		DESTROYED("Destroyed", String.class, ThreadRow::getDestructionSnap, true),
-		STATE("State", ThreadState.class, ThreadRow::getState, true),
-		COMMENT("Comment", String.class, ThreadRow::getComment, ThreadRow::setComment, true),
-		PLOT("Plot", Lifespan.class, ThreadRow::getLifespan, false);
+		NAME("Name", String.class, ThreadRow::getName, ThreadRow::setName, true, true),
+		PC("PC", Address.class, ThreadRow::getProgramCounter, true, true),
+		FUNCTION("Function", ghidra.program.model.listing.Function.class, ThreadRow::getFunction, //
+				true, true),
+		MODULE("Module", String.class, ThreadRow::getModule, true, false),
+		SP("SP", Address.class, ThreadRow::getStackPointer, true, false),
+		CREATED("Created", Long.class, ThreadRow::getCreationSnap, true, false),
+		DESTROYED("Destroyed", String.class, ThreadRow::getDestructionSnap, true, false),
+
+		STATE("State", ThreadState.class, ThreadRow::getState, true, true),
+		COMMENT("Comment", String.class, ThreadRow::getComment, ThreadRow::setComment, true, false),
+		PLOT("Plot", Lifespan.class, ThreadRow::getLifespan, false, true);
 
 		private final String header;
 		private final Function<ThreadRow, ?> getter;
 		private final BiConsumer<ThreadRow, Object> setter;
 		private final boolean sortable;
+		private final boolean visible;
 		private final Class<?> cls;
 
 		<T> ThreadTableColumns(String header, Class<T> cls, Function<ThreadRow, T> getter,
-				boolean sortable) {
-			this(header, cls, getter, null, sortable);
+				boolean sortable, boolean visible) {
+			this(header, cls, getter, null, sortable, visible);
 		}
 
 		@SuppressWarnings("unchecked")
 		<T> ThreadTableColumns(String header, Class<T> cls, Function<ThreadRow, T> getter,
-				BiConsumer<ThreadRow, T> setter, boolean sortable) {
+				BiConsumer<ThreadRow, T> setter, boolean sortable, boolean visible) {
 			this.header = header;
 			this.cls = cls;
 			this.getter = getter;
 			this.setter = (BiConsumer<ThreadRow, Object>) setter;
 			this.sortable = sortable;
+			this.visible = visible;
 		}
 
 		@Override
@@ -106,6 +115,11 @@ public class DebuggerLegacyThreadsPanel extends JPanel {
 		@Override
 		public boolean isSortable() {
 			return sortable;
+		}
+
+		@Override
+		public boolean isVisible() {
+			return visible;
 		}
 
 		@Override
@@ -253,29 +267,28 @@ public class DebuggerLegacyThreadsPanel extends JPanel {
 
 		TableColumnModel columnModel = threadTable.getColumnModel();
 		TableColumn colName = columnModel.getColumn(ThreadTableColumns.NAME.ordinal());
-		colName.setPreferredWidth(100);
 		colName.setCellRenderer(boldCurrentRenderer);
 		TableColumn colCreated = columnModel.getColumn(ThreadTableColumns.CREATED.ordinal());
-		colCreated.setPreferredWidth(10);
 		colCreated.setCellRenderer(boldCurrentRenderer);
 		TableColumn colDestroyed = columnModel.getColumn(ThreadTableColumns.DESTROYED.ordinal());
-		colDestroyed.setPreferredWidth(10);
 		colDestroyed.setCellRenderer(boldCurrentRenderer);
 		TableColumn colState = columnModel.getColumn(ThreadTableColumns.STATE.ordinal());
-		colState.setPreferredWidth(20);
 		colState.setCellRenderer(boldCurrentRenderer);
 		TableColumn colComment = columnModel.getColumn(ThreadTableColumns.COMMENT.ordinal());
-		colComment.setPreferredWidth(100);
 		colComment.setCellRenderer(boldCurrentRenderer);
 		TableColumn colPlot = columnModel.getColumn(ThreadTableColumns.PLOT.ordinal());
-		colPlot.setPreferredWidth(200);
 		colPlot.setCellRenderer(spanRenderer);
 		colPlot.setHeaderRenderer(headerRenderer);
 
 		headerRenderer.addSeekListener(seekListener = pos -> {
 			long snap = Math.round(pos);
-			if (current.getTrace() == null || snap < 0) {
+			if (snap < 0) {
 				snap = 0;
+			}
+			long max =
+				current.getTrace() == null ? 0 : current.getTrace().getTimeManager().getMaxSnap();
+			if (snap > max) {
+				snap = max;
 			}
 			traceManager.activateSnap(snap);
 			myActionContext = new DebuggerSnapActionContext(current.getTrace(), snap);
