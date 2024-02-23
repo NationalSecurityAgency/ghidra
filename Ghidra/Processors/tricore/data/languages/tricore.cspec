@@ -33,19 +33,28 @@
   </returnaddress>
   
   <stackpointer register="a10" space="ram"/>
+  
+  <prefersplit style="inhalf">
+    <register name="e4"/>
+    <register name="e6"/>
+  </prefersplit>
+    
   <default_proto>
-    <prototype name="__stdcall" extrapop="0" stackshift="0" strategy="register">
+    <prototype name="__stdcall" extrapop="0" stackshift="0">
       <input>
-          <pentry minsize="1" maxsize="4">   <!-- This is the first non pointer -->
+          <pentry minsize="4" maxsize="4" storage="hiddenret">
               <register name="a4"/>
           </pentry>
-          <pentry minsize="1" maxsize="4">
+          <pentry minsize="4" maxsize="4" metatype="ptr">   <!-- This is the first pointer -->
+              <register name="a4"/>
+          </pentry>
+          <pentry minsize="4" maxsize="4" metatype="ptr">
               <register name="a5"/>
           </pentry>
-          <pentry minsize="1" maxsize="4">
+          <pentry minsize="4" maxsize="4" metatype="ptr">
               <register name="a6"/>
           </pentry>
-           <pentry minsize="1" maxsize="4">
+          <pentry minsize="4" maxsize="4" metatype="ptr">
               <register name="a7"/>
           </pentry>
           <pentry minsize="1" maxsize="4">   <!-- This is the first non pointer -->
@@ -54,31 +63,35 @@
           <pentry minsize="1" maxsize="4">
               <register name="d5"/>
           </pentry>
+          <pentry minsize="5" maxsize="8">    <!-- This is the first >4 byte non pointer -->
+              <register name="e4"/>
+          </pentry>
           <pentry minsize="1" maxsize="4">
               <register name="d6"/>
           </pentry>
           <pentry minsize="1" maxsize="4">
               <register name="d7"/>
           </pentry>
-          <pentry minsize="5" maxsize="8">    <!-- This is the first >4 byte non pointer -->
-              <register name="e4"/>
+          <pentry minsize="5" maxsize="8">
+              <register name="e6"/>
           </pentry>
           <pentry minsize="1" maxsize="500" align="4">
-              <addr offset="16" space="ram"/>
+              <addr offset="0" space="stack"/>
           </pentry>
+          <rule>
+             <datatype name="struct" minsize="17"/>
+             <convert_to_ptr/>
+          </rule>
       </input>
-      
-          <!-- There are issues with locking in function signatures with multiple possible
-         return locations.  When the signature is committed/locked, Ghidra will apply the
-         first available location, which is incorrect.  The decompiler can figure
-         out between two variable locations but doesn't currently pass back the
-         return storage location.  A fix is needed, or use custom storage.  -->
          
       <output>
-        <pentry minsize="1" maxsize="4" metatype="ptr">
+        <pentry minsize="4" maxsize="4" metatype="ptr">
           <register name="a2"/>
         </pentry>
-        <pentry minsize="1" maxsize="8">
+        <pentry minsize="1" maxsize="4">
+          <register name="d2"/>
+        </pentry>        
+        <pentry minsize="5" maxsize="8">
           <register name="e2"/>
         </pentry>
       </output>
@@ -91,6 +104,10 @@
 		<register name="d13"/>
 		<register name="d14"/>
 		<register name="d15"/>
+		<register name="a0"/>
+		<register name="a1"/>
+		<register name="a8"/>
+		<register name="a9"/>
 		<register name="a10"/>
 		<register name="a11"/>
 		<register name="a12"/>
@@ -101,64 +118,9 @@
     </prototype>
   </default_proto>
 
-          <!-- This will no longer be necessary once fixes are made to support the
-               correct choice of storage location when there are multiple return types  -->
-         
-    <prototype name="__stdcall_data" extrapop="0" stackshift="0" strategy="register">
-      <input>
-          <pentry minsize="1" maxsize="4">   <!-- This is the first non pointer -->
-              <register name="a4"/>
-          </pentry>
-          <pentry minsize="1" maxsize="4">   <!-- This is the first non pointer -->
-              <register name="d4"/>
-          </pentry>
-          <pentry minsize="1" maxsize="4">
-              <register name="d5"/>
-          </pentry>
-          <pentry minsize="1" maxsize="4">
-              <register name="a5"/>
-          </pentry>
-          <pentry minsize="1" maxsize="4">
-              <register name="a6"/>
-          </pentry>
-          <pentry minsize="1" maxsize="4">
-              <register name="d6"/>
-          </pentry>
-          <pentry minsize="1" maxsize="4">
-              <register name="a7"/>
-          </pentry>
-          <pentry minsize="1" maxsize="4">
-              <register name="d7"/>
-          </pentry>
-          <pentry minsize="5" maxsize="8">    <!-- This is the first >4 byte non pointer -->
-              <register name="e4"/>
-          </pentry>
-          <pentry minsize="1" maxsize="500" align="4">
-              <addr offset="16" space="ram"/>
-          </pentry>
-      </input>
-      <output>
-        <pentry minsize="1" maxsize="8">
-          <register name="e2"/>
-        </pentry>
-      </output>
-      <unaffected>
-		<register name="d8"/>
-		<register name="d9"/>
-		<register name="d10"/>
-		<register name="d11"/>
-		<register name="d12"/>
-		<register name="d13"/>
-		<register name="d14"/>
-		<register name="d15"/>
-		<register name="a10"/>
-		<register name="a11"/>
-		<register name="a12"/>
-		<register name="a13"/>
-		<register name="a14"/>
-		<register name="a15"/>
-      </unaffected>
-    </prototype>
+    <!-- __stdcall_data calling convention removed, no longer necessary as decompiler will return
+         the correct return storage location when there are multiple return location types
+    -->
     
   <callotherfixup targetop="saveCallerState">
      <pcode>
