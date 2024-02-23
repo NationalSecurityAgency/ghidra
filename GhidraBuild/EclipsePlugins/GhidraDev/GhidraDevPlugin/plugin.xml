@@ -39,6 +39,23 @@
       </wizard>
    </extension>
    <extension
+         point="org.eclipse.ui.importWizards">
+      <category
+            id="GhidraCategory"
+            name="Ghidra">
+      </category>
+      <wizard
+            category="GhidraCategory"
+            class="ghidradev.ghidraprojectcreator.wizards.ImportGhidraModuleSourceWizard"
+            icon="icons/brick_add.png"
+            id="ghidradev.ghidraprojectcreator.wizards.ImportGhidraModuleSourceWizard"
+            name="Ghidra Module Source">
+         <description>
+            Imports a Ghidra module source directory to a new project.
+         </description>
+      </wizard>
+   </extension>
+   <extension
          point="org.eclipse.ui.exportWizards">
       <category
             id="GhidraCategory"
@@ -50,6 +67,9 @@
             icon="icons/brick_go.png"
             id="ghidradev.ghidraprojectcreator.wizards.ExportGhidraModuleWizard"
             name="Ghidra Module Extension">
+         <description>
+            Exports a Ghidra module project to a zipped Ghidra extension.
+         </description>
       </wizard>
    </extension>
    <extension
@@ -143,6 +163,19 @@
                   <parameter
                         name="newWizardId"
                         value="ghidradev.ghidraprojectcreator.wizards.CreateGhidraModuleProjectWizard">
+                  </parameter>
+               </command>
+            </menu>
+            <menu
+                  label="Import">
+               <command
+                     commandId="org.eclipse.ui.file.import"
+                     icon="icons/brick_add.png"
+                     label="Ghidra Module Source"
+                     style="push">
+                  <parameter
+                        name="importWizardId"
+                        value="ghidradev.ghidraprojectcreator.wizards.ImportGhidraModuleWizard">
                   </parameter>
                </command>
             </menu>

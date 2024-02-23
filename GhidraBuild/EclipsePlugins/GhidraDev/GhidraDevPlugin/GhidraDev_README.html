@@ -36,6 +36,7 @@ change with future releases.</p>
     <li><a href="#NewGhidraScript">New Ghidra Script</a></li>
     <li><a href="#NewGhidraScriptProject">New Ghidra Script Project</a></li>
     <li><a href="#NewGhidraModuleProject">New Ghidra Module Project</a></li>
+    <li><a href="#ImportGhidraModuleSource">Import Ghidra Module Source</a></li>
     <li><a href="#ExportGhidraModuleExtension">Export Ghidra Module Extension</a></li>
     <li><a href="#Preferences">Preferences</a></li>
     <li><a href="#LinkGhidra">Link Ghidra</a></li>
@@ -58,6 +59,14 @@ change with future releases.</p>
   <li>
     GhidraDev has been upgraded to be compatible with Ghidra 11.1 and later. Older versions of
     GhidraDev will report an error when trying to link against Ghidra 11.1 or later.
+  </li>
+   <li>
+    GhidraDev now supports importing a Ghidra module source directory. This will work best
+    with Ghidra module projects created from Ghidra 11.1 or later.
+  </li>
+  <li>
+    GhidraDev will now fail to launch Ghidra if a top-level <i>build</i> directory is detected.
+    Presence of this intermediate build artifact can cause Ghidra to have runtime/debugging issues.
   </li>
 </ul>
 <p><u><b>3.0.2</b>:</u> 
@@ -242,6 +251,13 @@ installed into Ghidra as an "extension".</p>
       a new Ghidra module project that is linked against a specified Ghidra installation.  The
       project can be initialized with optional template source files that provide a good starting
       point for implementing advanced Ghidra features such as Analyzers, Plugins, Loaders, etc.
+    </li>
+  </ul>
+    <li>Import</li>
+  <ul>
+    <li>
+      <a name="ImportGhidraModuleSource"></a><b>Ghidra Module Source:</b> Opens a wizard that
+      imports a Ghidra module source directory as a new Ghidra module project.
     </li>
   </ul>
   <li>Export</li>

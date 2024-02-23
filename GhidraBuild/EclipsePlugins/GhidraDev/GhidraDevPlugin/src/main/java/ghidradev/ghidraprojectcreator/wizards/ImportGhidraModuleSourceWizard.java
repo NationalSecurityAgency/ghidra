@@ -26,47 +26,44 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.wizard.Wizard;
-import org.eclipse.ui.INewWizard;
+import org.eclipse.ui.IImportWizard;
 import org.eclipse.ui.IWorkbench;
 
 import ghidra.GhidraApplicationLayout;
 import ghidradev.EclipseMessageUtils;
-import ghidradev.ghidraprojectcreator.utils.GhidraScriptUtils;
+import ghidradev.ghidraprojectcreator.utils.GhidraModuleUtils;
 import ghidradev.ghidraprojectcreator.wizards.pages.*;
 import utilities.util.FileUtilities;
 
 /**
- * Wizard to create a new Ghidra scripting project.
+ * Wizard for importing Ghidra module source to a new Ghidra module project.
  */
-public class CreateGhidraScriptProjectWizard extends Wizard implements INewWizard {
+public class ImportGhidraModuleSourceWizard extends Wizard implements IImportWizard {
 
+	private ChooseGhidraModuleSourceWizardPage sourcePage;
 	private CreateGhidraProjectWizardPage projectPage;
-	private ConfigureGhidraScriptProjectWizardPage projectConfigPage;
 	private ChooseGhidraInstallationWizardPage ghidraInstallationPage;
 	private EnablePythonWizardPage pythonPage;
 
-	/**
-	 * Creates a new Ghidra scripting project wizard.
-	 */
-	public CreateGhidraScriptProjectWizard() {
-		setNeedsProgressMonitor(true);
+	public ImportGhidraModuleSourceWizard() {
+		super();
 	}
-
+	 
 	@Override
 	public void init(IWorkbench wb, IStructuredSelection selection) {
-		projectPage = new CreateGhidraProjectWizardPage("GhidraScripts", true);
-		projectConfigPage = new ConfigureGhidraScriptProjectWizardPage();
+		sourcePage = new ChooseGhidraModuleSourceWizardPage();
+		projectPage = new CreateGhidraProjectWizardPage(false);
 		ghidraInstallationPage = new ChooseGhidraInstallationWizardPage();
 		pythonPage = new EnablePythonWizardPage(ghidraInstallationPage);
 	}
-
+	
 	@Override
-	public void addPages() {
+    public void addPages() {
+		addPage(sourcePage);
 		addPage(projectPage);
-		addPage(projectConfigPage);
 		addPage(ghidraInstallationPage);
 		addPage(pythonPage);
-	}
+    }
 
 	@Override
 	public boolean performFinish() {
@@ -74,19 +71,16 @@ public class CreateGhidraScriptProjectWizard extends Wizard implements INewWizar
 			return false;
 		}
 
+		File moduleSourceDir = sourcePage.getSourceDir();
 		File ghidraInstallDir = ghidraInstallationPage.getGhidraInstallDir();
 		String projectName = projectPage.getProjectName();
-		File projectDir = projectPage.getProjectDir();
 		boolean createRunConfig = projectPage.shouldCreateRunConfig();
 		String runConfigMemory = projectPage.getRunConfigMemory();
-		boolean linkUserScripts = projectConfigPage.shouldLinkUsersScripts();
-		boolean linkSystemScripts = projectConfigPage.shouldLinkSystemScripts();
 		String jythonInterpreterName = pythonPage.getJythonInterpreterName();
 		try {
 			getContainer().run(true, false,
-				monitor -> create(ghidraInstallDir, projectName, projectDir, createRunConfig,
-					runConfigMemory, linkUserScripts, linkSystemScripts, jythonInterpreterName,
-					monitor));
+				monitor -> importModuleSource(ghidraInstallDir, projectName, moduleSourceDir,
+					createRunConfig, runConfigMemory, jythonInterpreterName, monitor));
 		}
 		catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
@@ -101,37 +95,33 @@ public class CreateGhidraScriptProjectWizard extends Wizard implements INewWizar
 	}
 
 	/**
-	 * Creates a Ghidra script project.
-	 *  
+	 * Imports a Ghidra module source directory to a new Ghidra module project.
+	 * 
 	 * @param ghidraInstallDir The Ghidra installation directory to use.
 	 * @param projectName The name of the project to create.
-	 * @param projectDir The project's directory.
+	 * @param moduleSourceDir The module source directory to import.
 	 * @param createRunConfig Whether or not to create a new run configuration for the project.
 	 * @param runConfigMemory The run configuration's desired memory.  Could be null.
-	 * @param linkUserScripts Whether or not to link in the user scripts directory.
-	 * @param linkSystemScripts Whether or not to link in the system scripts directories.
 	 * @param jythonInterpreterName The name of the Jython interpreter to use for Python support.
 	 *   Could be null if Python support is not wanted.
 	 * @param monitor The monitor to use during project creation.
 	 * @throws InvocationTargetException if an error occurred during project creation.
 	 */
-	private void create(File ghidraInstallDir, String projectName, File projectDir,
-			boolean createRunConfig, String runConfigMemory, boolean linkUserScripts,
-			boolean linkSystemScripts, String jythonInterpreterName, IProgressMonitor monitor)
-			throws InvocationTargetException {
+	private void importModuleSource(File ghidraInstallDir, String projectName, File moduleSourceDir,
+			boolean createRunConfig, String runConfigMemory, String jythonInterpreterName,
+			IProgressMonitor monitor) throws InvocationTargetException {
 		try {
-			info("Creating " + projectName + " at " + projectDir);
-			monitor.beginTask("Creating " + projectName, 2);
+			info("Importing " + projectName + " at " + moduleSourceDir);
+			monitor.beginTask("Importing " + projectName, 2);
 
 			GhidraApplicationLayout ghidraLayout = new GhidraApplicationLayout(ghidraInstallDir);
 			monitor.worked(1);
 
-			GhidraScriptUtils.createGhidraScriptProject(projectName, projectDir, createRunConfig,
-				runConfigMemory, linkUserScripts, linkSystemScripts, ghidraLayout,
-				jythonInterpreterName, monitor);
+			GhidraModuleUtils.importGhidraModuleSource(projectName, moduleSourceDir,
+				createRunConfig, runConfigMemory, ghidraLayout, jythonInterpreterName, monitor);
 			monitor.worked(1);
 
-			info("Finished creating " + projectName);
+			info("Finished importing " + projectName);
 		}
 		catch (IOException | ParseException | CoreException e) {
 			throw new InvocationTargetException(e);
@@ -149,11 +139,12 @@ public class CreateGhidraScriptProjectWizard extends Wizard implements INewWizar
 	 */
 	private boolean validate() {
 		if (FileUtilities.isPathContainedWithin(ghidraInstallationPage.getGhidraInstallDir(),
-				projectPage.getProjectDir())) {
-			EclipseMessageUtils.showErrorDialog("Invalid Project Root Directory",
-				"Project root directory cannot reside inside of the selected Ghidra installation directory.");
+			sourcePage.getSourceDir())) {
+			EclipseMessageUtils.showErrorDialog("Invalid Module Source Directory",
+				"Module source directory cannot reside inside of the selected Ghidra installation directory.");
 			return false;
 		}
 		return true;
 	}
+
 }
