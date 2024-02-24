@@ -72,8 +72,8 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 			return; // UI is being updated
 		}
 
-		FileListCellRenderer cellRenderer = (FileListCellRenderer) getCellRenderer();
-		if (cellRenderer == null) {
+		ListCellRenderer<? super File> renderer = getCellRenderer();
+		if (!(renderer instanceof FileListCellRenderer cellRenderer)) {
 			return; // initializing
 		}
 
