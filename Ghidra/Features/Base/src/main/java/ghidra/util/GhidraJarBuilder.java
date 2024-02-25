@@ -340,11 +340,9 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 		}
 		if (!wroteToZip) {
 			System.out.println("Can't create source zip!  Has source been downloaded and installed?");
-			// zip.close reports error if nothing has been written to it
-			zip.close();
-		} else {
-			zip.close(); // close it anyway to prevent a memory leak
 		}
+		// zip.close reports error if nothing has been written to it
+		zip.close();
 	}
 
 	private void writeModuleSrcZipToOverallSrcZip(Zip zip, File srcZipFileForModule)
