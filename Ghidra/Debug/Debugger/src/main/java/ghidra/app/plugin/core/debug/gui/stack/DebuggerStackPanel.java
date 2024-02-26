@@ -84,6 +84,9 @@ public class DebuggerStackPanel extends AbstractObjectsTableBasedPanel<TraceObje
 				ServiceProvider serviceProvider) throws IllegalArgumentException {
 			TraceObjectValue value =
 				rowObject.getAttributeEntry(TargetStackFrame.PC_ATTRIBUTE_NAME);
+			if (value == null) {
+				return null;
+			}
 			return DebuggerStaticMappingUtils.getFunction(value.castValue(), provider.current,
 				serviceProvider);
 		}
@@ -100,6 +103,9 @@ public class DebuggerStackPanel extends AbstractObjectsTableBasedPanel<TraceObje
 				ServiceProvider serviceProvider) throws IllegalArgumentException {
 			TraceObjectValue value =
 				rowObject.getAttributeEntry(TargetStackFrame.PC_ATTRIBUTE_NAME);
+			if (value == null) {
+				return null;
+			}
 			return DebuggerStaticMappingUtils.getModuleName(value.castValue(), provider.current);
 		}
 	}

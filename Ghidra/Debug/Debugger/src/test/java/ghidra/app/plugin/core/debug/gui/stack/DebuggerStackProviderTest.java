@@ -15,7 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.gui.stack;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.List;
@@ -52,6 +53,7 @@ import ghidra.trace.model.stack.TraceObjectStack;
 import ghidra.trace.model.target.*;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.thread.TraceObjectThread;
+import ghidra.util.table.GhidraTable;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -215,13 +217,18 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 
 	protected void assertRow(int level, Address pcVal, Function func) {
 		ValueRow row = stackProvider.panel.getAllItems().get(level);
+		var tableModel = QueryPanelTestHelper.getTableModel(stackProvider.panel);
+		GhidraTable table = QueryPanelTestHelper.getTable(stackProvider.panel);
 
-		DynamicTableColumn<ValueRow, String, Trace> levelCol =
-			stackProvider.panel.getColumnByNameAndType("Level", String.class).getValue();
-		DynamicTableColumn<ValueRow, ?, Trace> pcCol =
-			stackProvider.panel.getColumnByNameAndType("PC", ValueProperty.class).getValue();
-		DynamicTableColumn<ValueRow, Function, Trace> funcCol =
-			stackProvider.panel.getColumnByNameAndType("Function", Function.class).getValue();
+		DynamicTableColumn<ValueRow, String, Trace> levelCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "Level", String.class)
+				.column();
+		DynamicTableColumn<ValueRow, ?, Trace> pcCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "PC", ValueProperty.class)
+				.column();
+		DynamicTableColumn<ValueRow, Function, Trace> funcCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "Function", Function.class)
+				.column();
 
 		assertEquals(PathUtils.makeKey(PathUtils.makeIndex(level)), rowColVal(row, levelCol));
 		assertEquals(pcVal, rowColVal(row, pcCol));
@@ -308,8 +315,6 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 
 	/**
 	 * Because keys are strings, we need to ensure they get sorted numerically
-	 * 
-	 * @throws Exception
 	 */
 	@Test
 	public void testTableSortedCorrectly() throws Exception {
