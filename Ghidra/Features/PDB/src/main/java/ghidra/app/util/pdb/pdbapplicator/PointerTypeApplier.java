@@ -19,7 +19,7 @@ import ghidra.app.util.SymbolPath;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractPointerMsType.PointerMode;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractPointerMsType.MsPointerMode;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.CancelledException;
 
@@ -52,8 +52,8 @@ public class PointerTypeApplier extends MsTypeApplier {
 	 */
 	String getPointerCommentField(AbstractPointerMsType type, FixupContext fixupContext)
 			throws CancelledException, PdbException {
-		AbstractPointerMsType.PointerMode pointerMode = type.getPointerMode();
-		if (pointerMode == AbstractPointerMsType.PointerMode.MEMBER_FUNCTION_POINTER) {
+		AbstractPointerMsType.MsPointerMode pointerMode = type.getPointerMode();
+		if (pointerMode == AbstractPointerMsType.MsPointerMode.MEMBER_FUNCTION_POINTER) {
 			// We are no longer able to get underlying type in time due to cycle breaks unless
 			// we start doing fixups on pmf/pdm pointers.
 			// TODO: consider fixups on these later... maybe after we understand contents of
@@ -63,7 +63,7 @@ public class PointerTypeApplier extends MsTypeApplier {
 			//return "\"::*\" (pmf) to type: " + underlyingType;
 			return "\"::*\" (pmf)";
 		}
-		else if (pointerMode == AbstractPointerMsType.PointerMode.MEMBER_DATA_POINTER) {
+		else if (pointerMode == AbstractPointerMsType.MsPointerMode.MEMBER_DATA_POINTER) {
 			// We are no longer able to get underlying type in time due to cycle breaks unless
 			// we start doing fixups on pmf/pdm pointers.
 			// TODO: consider fixups on these later... maybe after we understand contents of
@@ -109,9 +109,9 @@ public class PointerTypeApplier extends MsTypeApplier {
 	private DataType applyAbstractPointerMsType(AbstractPointerMsType type,
 			FixupContext fixupContext) throws CancelledException, PdbException {
 
-		AbstractPointerMsType.PointerMode pointerMode = type.getPointerMode();
-		if (pointerMode == AbstractPointerMsType.PointerMode.MEMBER_DATA_POINTER ||
-			pointerMode == AbstractPointerMsType.PointerMode.MEMBER_FUNCTION_POINTER) {
+		AbstractPointerMsType.MsPointerMode pointerMode = type.getPointerMode();
+		if (pointerMode == AbstractPointerMsType.MsPointerMode.MEMBER_DATA_POINTER ||
+			pointerMode == AbstractPointerMsType.MsPointerMode.MEMBER_FUNCTION_POINTER) {
 			return processMemberPointer(type, fixupContext);
 		}
 		return processPointer(type, fixupContext);
@@ -125,8 +125,8 @@ public class PointerTypeApplier extends MsTypeApplier {
 		int size = type.getSize().intValueExact();
 
 		String name;
-		AbstractPointerMsType.PointerMode pointerMode = type.getPointerMode();
-		if (pointerMode == AbstractPointerMsType.PointerMode.MEMBER_FUNCTION_POINTER) {
+		AbstractPointerMsType.MsPointerMode pointerMode = type.getPointerMode();
+		if (pointerMode == AbstractPointerMsType.MsPointerMode.MEMBER_FUNCTION_POINTER) {
 			name = String.format("pmf_%08x", type.toString().hashCode());
 		}
 		else {
@@ -175,7 +175,7 @@ public class PointerTypeApplier extends MsTypeApplier {
 		int size = type.getSize().intValueExact();
 		AbstractMsType under = applicator.getPdb().getTypeRecord(type.getUnderlyingRecordNumber());
 		CategoryPath categoryPath = applicator.getAnonymousTypesCategory();
-		PointerMode mode = type.getPointerMode();
+		MsPointerMode mode = type.getPointerMode();
 		AbstractPointerMsType.PointerType pt = type.getPointerType();
 		String name =
 			String.format("StubPtr%d_%s%s_To_%s", 8 * size, pt.toString(), mode.toString(),
