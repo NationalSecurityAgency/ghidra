@@ -16,6 +16,7 @@
 package ghidra.app.util.bin.format.swift.types;
 
 import java.io.IOException;
+import java.util.Map;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.swift.SwiftUtils;
@@ -71,6 +72,20 @@ public class TargetTypeContextDescriptor extends TargetContextDescriptor {
 	 */
 	public int getFields() {
 		return fields;
+	}
+
+	/**
+	 * Gets this {@link TargetTypeContextDescriptor}'s {@link FieldDescriptor}
+	 * 
+	 * @param fieldDescriptors A {@link Map} of {@link FieldDescriptor}'s keyed by their base
+	 *   addresses
+	 * @return This {@link TargetTypeContextDescriptor}'s {@link FieldDescriptor}, or null if it
+	 *   doesn't have one
+	 */
+	public FieldDescriptor getFieldDescriptor(Map<Long, FieldDescriptor> fieldDescriptors) {
+		FieldDescriptor fieldDescriptor =
+			fieldDescriptors.get(getBase() + TargetContextDescriptor.SIZE + 8 + fields);
+		return fieldDescriptor != null ? fieldDescriptor : null;
 	}
 
 	@Override

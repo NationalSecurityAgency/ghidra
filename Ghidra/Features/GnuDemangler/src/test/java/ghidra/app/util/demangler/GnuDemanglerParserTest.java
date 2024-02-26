@@ -54,9 +54,9 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		assertName(object, "bob");
 
 		DemangledFunction function = (DemangledFunction) object;
-		List<DemangledDataType> parameters = function.getParameters();
+		List<DemangledParameter> parameters = function.getParameters();
 		assertEquals(1, parameters.size());
-		DemangledDataType p1 = parameters.get(0);
+		DemangledDataType p1 = parameters.get(0).getType();
 		assertEquals("bob(int const[8] (*) [12])", p1.getOriginalDemangled());
 		assertEquals("undefined bob(int const *[])", object.getSignature(false));
 	}
@@ -113,9 +113,9 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		DemangledObject object = parser.parse("fake", "Layout::graphNew(short[][][][], char*)");
 		assertType(object, DemangledFunction.class);
 		DemangledFunction function = (DemangledFunction) object;
-		List<DemangledDataType> parameters = function.getParameters();
+		List<DemangledParameter> parameters = function.getParameters();
 		assertEquals(2, parameters.size());
-		DemangledDataType p1 = parameters.get(0);
+		DemangledDataType p1 = parameters.get(0).getType();
 		assertEquals(4, p1.getArrayDimensions());
 	}
 
@@ -153,12 +153,12 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		DemangledFunction method = (DemangledFunction) object;
 
-		List<DemangledDataType> parameters = method.getParameters();
+		List<DemangledParameter> parameters = method.getParameters();
 		assertEquals(4, parameters.size());
-		assertEquals("unsigned long (*)(long const &)", parameters.get(0).getSignature());
-		assertEquals("unsigned long", parameters.get(1).getSignature());
-		assertEquals("unsigned long", parameters.get(2).getSignature());
-		assertEquals("float", parameters.get(3).getSignature());
+		assertEquals("unsigned long (*)(long const &)", parameters.get(0).getType().getSignature());
+		assertEquals("unsigned long", parameters.get(1).getType().getSignature());
+		assertEquals("unsigned long", parameters.get(2).getType().getSignature());
+		assertEquals("float", parameters.get(3).getType().getSignature());
 	}
 
 	@Test
@@ -176,9 +176,9 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 			"_Rb_tree<Location,Location,std::_Identity<Location>,std::less<Location>,std::allocator<Location>>");
 
 		DemangledFunction function = (DemangledFunction) object;
-		List<DemangledDataType> parameters = function.getParameters();
+		List<DemangledParameter> parameters = function.getParameters();
 		assertEquals(1, parameters.size());
-		assertEquals("Location const &", parameters.get(0).getSignature());
+		assertEquals("Location const &", parameters.get(0).getType().getSignature());
 	}
 
 	@Test
@@ -194,7 +194,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		assertType(object, DemangledFunction.class);
 
 		DemangledFunction function = (DemangledFunction) object;
-		List<DemangledDataType> parameters = function.getParameters();
+		List<DemangledParameter> parameters = function.getParameters();
 
 		assertEquals(
 			"__insertion_sort<__gnu_cxx::__normal_iterator<std::pair<unsigned_long,PcodeOp*>*,std::vector<std::pair<unsigned_long,PcodeOp*>,std::allocator<std::pair<unsigned_long,PcodeOp*>>>>,bool(*)(std::pair<unsigned_long,PcodeOp*>const&,std::pair<unsigned_long,PcodeOp*>const&)>",
@@ -211,9 +211,9 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 			"bool (*)(std::pair<unsigned long,PcodeOp *> const &,std::pair<unsigned long,PcodeOp *> const &)",
 			parameters.get(2).toString());
 
-		assertType(parameters.get(2), DemangledFunctionPointer.class);
+		assertType(parameters.get(2).getType(), DemangledFunctionPointer.class);
 
-		DemangledFunctionPointer fptr = (DemangledFunctionPointer) parameters.get(2);
+		DemangledFunctionPointer fptr = (DemangledFunctionPointer) parameters.get(2).getType();
 
 		assertEquals("bool", fptr.getReturnType().getName());
 
@@ -234,9 +234,9 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		assertEquals(
 			"undefined std::set<bbnode*,std::less<bbnode*>,std::allocator<bbnode*>>::insert(bbnode const * &)",
 			method.getSignature(false));
-		List<DemangledDataType> parameters = method.getParameters();
+		List<DemangledParameter> parameters = method.getParameters();
 		assertEquals(1, parameters.size());
-		assertEquals("bbnode const * &", parameters.get(0).getSignature());
+		assertEquals("bbnode const * &", parameters.get(0).getType().getSignature());
 	}
 
 	@Test
@@ -252,9 +252,9 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		DemangledFunction method = (DemangledFunction) object;
 		assertEquals("undefined Bar::Fred::Fred(int)", method.getSignature(false));
 
-		List<DemangledDataType> parameters = method.getParameters();
+		List<DemangledParameter> parameters = method.getParameters();
 		assertEquals(1, parameters.size());
-		assertEquals("int", parameters.get(0).getSignature());
+		assertEquals("int", parameters.get(0).getType().getSignature());
 	}
 
 	@Test
@@ -428,9 +428,9 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		DemangledFunction function = (DemangledFunction) object;
 		assertEquals("undefined Foo::getBool(float)", function.getSignature(false));
 
-		List<DemangledDataType> parameters = function.getParameters();
+		List<DemangledParameter> parameters = function.getParameters();
 		assertEquals(1, parameters.size());
-		assertEquals("float", parameters.get(0).getSignature());
+		assertEquals("float", parameters.get(0).getType().getSignature());
 	}
 
 	@Test
@@ -447,13 +447,13 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		DemangledFunction function = (DemangledFunction) object;
 
-		List<DemangledDataType> parameters = function.getParameters();
+		List<DemangledParameter> parameters = function.getParameters();
 		assertEquals(5, parameters.size());
-		assertEquals("int", parameters.get(0).getSignature());
-		assertEquals("double", parameters.get(1).getSignature());
-		assertEquals("char", parameters.get(2).getSignature());
-		assertEquals("long", parameters.get(3).getSignature());
-		assertEquals("short", parameters.get(4).getSignature());
+		assertEquals("int", parameters.get(0).getType().getSignature());
+		assertEquals("double", parameters.get(1).getType().getSignature());
+		assertEquals("char", parameters.get(2).getType().getSignature());
+		assertEquals("long", parameters.get(3).getType().getSignature());
+		assertEquals("short", parameters.get(4).getType().getSignature());
 	}
 
 	@Test
@@ -827,13 +827,13 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		DemangledFunction method = (DemangledFunction) object;
 
-		List<DemangledDataType> parameters = method.getParameters();
+		List<DemangledParameter> parameters = method.getParameters();
 		assertEquals(5, parameters.size());
-		assertEquals("SECTION_INFO *", parameters.get(0).getSignature());
-		assertEquals("int *", parameters.get(1).getSignature());
-		assertEquals("int *[]", parameters.get(2).getSignature());
-		assertEquals("int", parameters.get(3).getSignature());
-		assertEquals("short const *", parameters.get(4).getSignature());
+		assertEquals("SECTION_INFO *", parameters.get(0).getType().getSignature());
+		assertEquals("int *", parameters.get(1).getType().getSignature());
+		assertEquals("int *[]", parameters.get(2).getType().getSignature());
+		assertEquals("int", parameters.get(3).getType().getSignature());
+		assertEquals("short const *", parameters.get(4).getType().getSignature());
 	}
 
 	@Test
@@ -935,10 +935,10 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 			"undefined Magick::operator<(Magick::Coordinate const &,Magick::Coordinate const &)",
 			method.getSignature(false));
 
-		List<DemangledDataType> parameters = method.getParameters();
+		List<DemangledParameter> parameters = method.getParameters();
 		assertEquals(2, parameters.size());
-		assertEquals("Magick::Coordinate const &", parameters.get(0).getSignature());
-		assertEquals("Magick::Coordinate const &", parameters.get(1).getSignature());
+		assertEquals("Magick::Coordinate const &", parameters.get(0).getType().getSignature());
+		assertEquals("Magick::Coordinate const &", parameters.get(1).getType().getSignature());
 	}
 
 	@Test
@@ -1072,9 +1072,9 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		assertEquals("undefined Magick::pageImage::operator()(Magick::Image &)",
 			method.getSignature(false));
 
-		List<DemangledDataType> parameters = method.getParameters();
+		List<DemangledParameter> parameters = method.getParameters();
 		assertEquals(1, parameters.size());
-		assertEquals("Magick::Image &", parameters.get(0).getSignature());
+		assertEquals("Magick::Image &", parameters.get(0).getType().getSignature());
 	}
 
 	@Test
@@ -1536,13 +1536,14 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		DemangledFunction df = (DemangledFunction) object;
 
-		List<DemangledDataType> parameters = df.getParameters();
+		List<DemangledParameter> parameters = df.getParameters();
 		assertEquals("Number of parameters", 1, parameters.size());
-		assertEquals("Name of type parsed", "F", parameters.get(0).getName());
-		assertEquals("Param Type Name parsed", "WTF", parameters.get(0).getNamespace().toString());
+		assertEquals("Name of type parsed", "F", parameters.get(0).getType().getName());
+		assertEquals("Param Type Name parsed", "WTF",
+			parameters.get(0).getType().getNamespace().toString());
 		assertEquals("Param Template was parsed",
 			"<WTF::F<void (Core::FileClient &)> (Core::File &)>",
-			parameters.get(0).getTemplate().toString());
+			parameters.get(0).getType().getTemplate().toString());
 
 		assertEquals(
 			"undefined Core::AsyncFile::perform(WTF::F<WTF::F<void (Core::FileClient &)> (Core::File &)> &&)",
@@ -1569,9 +1570,9 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		DemangledFunction df = (DemangledFunction) object;
 
-		List<DemangledDataType> parameters = df.getParameters();
+		List<DemangledParameter> parameters = df.getParameters();
 		assertEquals("Number of parameters", 1, parameters.size());
-		DemangledDataType demangParamDT = parameters.get(0);
+		DemangledDataType demangParamDT = parameters.get(0).getType();
 
 		assertEquals("Name of type parsed", "function", demangParamDT.getName());
 		assertEquals("Param Type Name parsed", "boost", demangParamDT.getNamespace().toString());
@@ -1601,9 +1602,9 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 
 		DemangledFunction df = (DemangledFunction) object;
 
-		List<DemangledDataType> parameters = df.getParameters();
+		List<DemangledParameter> parameters = df.getParameters();
 		assertEquals("Number of parameters", 1, parameters.size());
-		DemangledDataType demangParamDT = parameters.get(0);
+		DemangledDataType demangParamDT = parameters.get(0).getType();
 
 		assertEquals("Name of type parsed", "function", demangParamDT.getName());
 		assertEquals("Param Type Name parsed", "boost", demangParamDT.getNamespace().toString());
@@ -1705,9 +1706,9 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		assertType(object, DemangledFunction.class);
 
 		DemangledFunction function = (DemangledFunction) object;
-		List<DemangledDataType> parameters = function.getParameters();
+		List<DemangledParameter> parameters = function.getParameters();
 		assertEquals(2, parameters.size());
-		assertTrue(parameters.get(1).isVarArgs());
+		assertTrue(parameters.get(1).getType().isVarArgs());
 
 		assertEquals("undefined testVarArgs(int,...)", object.getSignature(false));
 	}

@@ -27,6 +27,9 @@
         <constraint primary="332"  secondary="golang" processor="x86" endian="little" size="32" />
         <constraint primary="34404"  secondary="golang" processor="x86" endian="little" size="64"	variant="default" />
       </constraint>
+      <constraint compilerSpecID="swift">
+        <constraint primary="34404"  secondary="swift" processor="x86" endian="little" size="64" variant="default" />
+      </constraint>
     </constraint>
     <constraint loader="Debug Symbols (DBG)" compilerSpecID="windows">
         <constraint primary="332"   processor="x86"     endian="little" size="32" />
@@ -55,6 +58,9 @@
     <constraint loader="Mac OS X Mach-O" compilerSpecID="gcc">
         <constraint primary="7"        processor="x86"     endian="little" size="32" />
         <constraint primary="16777223" processor="x86"     endian="little" size="64"	variant="default" />
+    </constraint>
+    <constraint loader="Mac OS X Mach-O" compilerSpecID="swift">
+        <constraint primary="16777223" secondary="swift" processor="x86" endian="little" size="64" variant="default" />
     </constraint>
     <constraint loader="DYLD Cache" compilerSpecID="gcc">
         <constraint primary="x86_64"   processor="x86"     endian="little" size="64"	variant="default" />

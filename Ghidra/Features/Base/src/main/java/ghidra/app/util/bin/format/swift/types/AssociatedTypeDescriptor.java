@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.swift.SwiftStructure;
+import ghidra.app.util.bin.format.swift.SwiftTypeMetadataStructure;
 import ghidra.app.util.bin.format.swift.SwiftUtils;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
@@ -30,7 +30,7 @@ import ghidra.util.exception.DuplicateNameException;
  * 
  * @see <a href="https://github.com/apple/swift/blob/main/include/swift/RemoteInspection/Records.h">swift/RemoteInspection/Records.h</a> 
  */
-public final class AssociatedTypeDescriptor implements SwiftStructure {
+public final class AssociatedTypeDescriptor extends SwiftTypeMetadataStructure {
 
 	/**
 	 * The size (in bytes) of an {@link AssociatedTypeDescriptor} structure
@@ -51,6 +51,7 @@ public final class AssociatedTypeDescriptor implements SwiftStructure {
 	 * @throws IOException if there was an IO-related problem creating the structure
 	 */
 	public AssociatedTypeDescriptor(BinaryReader reader) throws IOException {
+		super(reader.getPointerIndex());
 		conformingTypeName = reader.readNext(SwiftUtils::relativeString);
 		protocolTypeName = reader.readNext(SwiftUtils::relativeString);
 		numAssociatedTypes = reader.readNextInt();
