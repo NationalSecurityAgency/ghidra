@@ -73,7 +73,7 @@ public abstract class AbstractPointerMsType extends AbstractMsType {
 
 	}
 
-	public enum PointerMode {
+	public enum MsPointerMode {
 
 		INVALID("", -1), // Our default
 		POINTER("*", 0), // Normal
@@ -83,9 +83,9 @@ public abstract class AbstractPointerMsType extends AbstractMsType {
 		RVALUE_REFERENCE("&&", 4),
 		RESERVED("", 5);
 
-		private static final Map<Integer, PointerMode> BY_VALUE = new HashMap<>();
+		private static final Map<Integer, MsPointerMode> BY_VALUE = new HashMap<>();
 		static {
-			for (PointerMode val : values()) {
+			for (MsPointerMode val : values()) {
 				BY_VALUE.put(val.value, val);
 			}
 		}
@@ -106,11 +106,11 @@ public abstract class AbstractPointerMsType extends AbstractMsType {
 			return label;
 		}
 
-		public static PointerMode fromValue(int val) {
+		public static MsPointerMode fromValue(int val) {
 			return BY_VALUE.getOrDefault(val, INVALID);
 		}
 
-		private PointerMode(String label, int value) {
+		private MsPointerMode(String label, int value) {
 			this.label = label;
 			this.value = value;
 		}
@@ -164,7 +164,7 @@ public abstract class AbstractPointerMsType extends AbstractMsType {
 	//==============================================================================================
 	protected RecordNumber underlyingRecordNumber;
 	protected PointerType pointerType;
-	protected PointerMode pointerMode;
+	protected MsPointerMode pointerMode;
 	protected boolean isFlat; // 0:32 pointer
 	protected boolean isVolatile;
 	protected boolean isConst;
@@ -191,8 +191,8 @@ public abstract class AbstractPointerMsType extends AbstractMsType {
 	public void parseExtendedPointerInfo(PdbByteReader reader, int intSize,
 			StringParseType stringType) throws PdbException {
 
-		if (pointerMode == PointerMode.MEMBER_DATA_POINTER ||
-			pointerMode == PointerMode.MEMBER_FUNCTION_POINTER) {
+		if (pointerMode == MsPointerMode.MEMBER_DATA_POINTER ||
+			pointerMode == MsPointerMode.MEMBER_FUNCTION_POINTER) {
 			memberPointerContainingClassRecordNumber =
 				RecordNumber.parse(pdb, reader, RecordCategory.TYPE, intSize);
 			memberPointerType = MemberPointerType.fromValue(reader.parseUnsignedShortVal());
@@ -265,10 +265,10 @@ public abstract class AbstractPointerMsType extends AbstractMsType {
 	}
 
 	/**
-	 * Returns {@link PointerMode} attribute.
-	 * @return {@link PointerMode} attribute.
+	 * Returns {@link MsPointerMode} attribute.
+	 * @return {@link MsPointerMode} attribute.
 	 */
-	public PointerMode getPointerMode() {
+	public MsPointerMode getPointerMode() {
 		return pointerMode;
 	}
 
