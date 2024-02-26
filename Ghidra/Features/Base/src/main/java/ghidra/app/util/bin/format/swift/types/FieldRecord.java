@@ -18,7 +18,8 @@ package ghidra.app.util.bin.format.swift.types;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.swift.*;
+import ghidra.app.util.bin.format.swift.SwiftTypeMetadataStructure;
+import ghidra.app.util.bin.format.swift.SwiftUtils;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -27,7 +28,7 @@ import ghidra.util.exception.DuplicateNameException;
  * 
  * @see <a href="https://github.com/apple/swift/blob/main/include/swift/RemoteInspection/Records.h">swift/RemoteInspection/Records.h</a> 
  */
-public final class FieldRecord implements SwiftStructure {
+public final class FieldRecord extends SwiftTypeMetadataStructure {
 
 	/**
 	 * The size (in bytes) of a {@link FieldRecord} structure
@@ -45,6 +46,7 @@ public final class FieldRecord implements SwiftStructure {
 	 * @throws IOException if there was an IO-related problem creating the structure
 	 */
 	public FieldRecord(BinaryReader reader) throws IOException {
+		super(reader.getPointerIndex());
 		flags = reader.readNextInt();
 		mangledTypeName = reader.readNext(SwiftUtils::relativeString);
 		fieldName = reader.readNext(SwiftUtils::relativeString);

@@ -54,7 +54,7 @@ public class DemangledFunction extends DemangledObject {
 	protected DemangledDataType returnType;
 	protected String callingConvention;// __cdecl, __thiscall, etc.
 	protected boolean thisPassedOnStack = true;
-	protected List<DemangledDataType> parameters = new ArrayList<>();
+	protected List<DemangledParameter> parameters = new ArrayList<>();
 	protected DemangledTemplate template;
 	protected boolean isOverloadedOperator = false;
 	protected SourceType signatureSourceType = SourceType.ANALYSIS;
@@ -140,11 +140,15 @@ public class DemangledFunction extends DemangledObject {
 		this.isOverloadedOperator = isOverloadedOperator;
 	}
 
-	public void addParameter(DemangledDataType parameter) {
+	public void addParameter(DemangledParameter parameter) {
 		parameters.add(parameter);
 	}
 
-	public List<DemangledDataType> getParameters() {
+	public void addParameters(List<DemangledParameter> params) {
+		parameters.addAll(params);
+	}
+
+	public List<DemangledParameter> getParameters() {
 		return new ArrayList<>(parameters);
 	}
 
@@ -323,7 +327,7 @@ public class DemangledFunction extends DemangledObject {
 	}
 
 	protected void addParameters(StringBuilder buffer, boolean format) {
-		Iterator<DemangledDataType> paramIterator = parameters.iterator();
+		Iterator<DemangledParameter> paramIterator = parameters.iterator();
 		buffer.append('(');
 		int padLength = format ? buffer.length() : 0;
 		String pad = StringUtils.rightPad("", padLength);
@@ -332,7 +336,11 @@ public class DemangledFunction extends DemangledObject {
 		}
 
 		while (paramIterator.hasNext()) {
-			buffer.append(paramIterator.next().getSignature());
+			DemangledParameter param = paramIterator.next();
+			buffer.append(param.getType().getSignature());
+			if (param.getLabel() != null) {
+				buffer.append(" " + param.getLabel());
+			}
 			if (paramIterator.hasNext()) {
 				buffer.append(',');
 				if (format) {
@@ -353,9 +361,9 @@ public class DemangledFunction extends DemangledObject {
 	public String getParameterString() {
 		StringBuffer buffer = new StringBuffer();
 		buffer.append('(');
-		Iterator<DemangledDataType> dditer = parameters.iterator();
+		Iterator<DemangledParameter> dditer = parameters.iterator();
 		while (dditer.hasNext()) {
-			buffer.append(dditer.next().getSignature());
+			buffer.append(dditer.next().getType().getSignature());
 			if (dditer.hasNext()) {
 				buffer.append(',');
 			}
@@ -576,13 +584,13 @@ public class DemangledFunction extends DemangledObject {
 			return false;
 		}
 
-		DemangledDataType lastType = parameters.get(parameters.size() - 1);
+		DemangledDataType lastType = parameters.get(parameters.size() - 1).getType();
 		return lastType.isVarArgs();
 	}
 
 	private boolean hasVoidParams() {
 		if (parameters.size() == 1) {
-			DemangledDataType ddt = parameters.get(0);
+			DemangledDataType ddt = parameters.get(0).getType();
 			return ddt.isVoid() && !ddt.isPointer();
 		}
 		return false;
@@ -634,7 +642,7 @@ public class DemangledFunction extends DemangledObject {
 		// If returnType is null check for constructor or destructor names
 		if (THIS_CALL.equals(function.getCallingConventionName())) {
 			String n = getName();
-			if (n.equals(namespace.getName())) {
+			if (namespace != null && n.equals(namespace.getName())) {
 				// constructor
 				return DataType.DEFAULT;
 			}
@@ -698,17 +706,18 @@ public class DemangledFunction extends DemangledObject {
 	private List<ParameterDefinitionImpl> convertMangledToParamDef(Program program) {
 
 		List<ParameterDefinitionImpl> args = new ArrayList<>();
-		for (DemangledDataType param : parameters) {
+		for (DemangledParameter param : parameters) {
 			// stop when a void parameter is hit.  This probably the only defined parameter.
-			if (param.isVoid() && !param.isPointer()) {
+			DemangledDataType type = param.getType();
+			if (type.isVoid() && !type.isPointer()) {
 				break;
 			}
-			if (param.isVarArgs()) {
+			if (type.isVarArgs()) {
 				break;
 			}
 
-			DataType dt = param.getDataType(program.getDataTypeManager());
-			args.add(new ParameterDefinitionImpl(null, dt, null));
+			DataType dt = type.getDataType(program.getDataTypeManager());
+			args.add(new ParameterDefinitionImpl(param.getLabel(), dt, null));
 		}
 		return args;
 	}

@@ -31,6 +31,8 @@ public class SwiftTypeMetadataAnalyzer extends AbstractAnalyzer {
 	private static final String NAME = "Swift Type Metadata Analyzer";
 	private static final String DESCRIPTION = "Discovers Swift type metadata records.";
 
+	private SwiftTypeMetadata typeMetadata;
+
 	public SwiftTypeMetadataAnalyzer() {
 		super(NAME, DESCRIPTION, AnalyzerType.BYTE_ANALYZER);
 		setDefaultEnablement(true);
@@ -45,13 +47,21 @@ public class SwiftTypeMetadataAnalyzer extends AbstractAnalyzer {
 	@Override
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
+		if (typeMetadata != null) {
+			return true;
+		}
 		try {
-			SwiftTypeMetadata typeMetadata = new SwiftTypeMetadata(program, monitor, log);
+			typeMetadata = new SwiftTypeMetadata(program, monitor, log);
 			typeMetadata.markup();
 		}
 		catch (IOException e) {
 			return false;
 		}
 		return true;
+	}
+
+	@Override
+	public void analysisEnded(Program program) {
+		typeMetadata = null;
 	}
 }
