@@ -229,7 +229,7 @@ public class CategoryPath implements Comparable<CategoryPath> {
 
 	/**
 	 * Return the {@link String} representation of this category path including the category name,
-	 * where components are delimited with a forward slash.  Any occurance of a forward slash 
+	 * where components are delimited with a forward slash.  Any occurrence of a forward slash
 	 * within individual path components will be escaped (e.g., {@code "\/"}).
 	 * @return the full category path
 	 */
@@ -241,9 +241,9 @@ public class CategoryPath implements Comparable<CategoryPath> {
 	}
 
 	/**
-	 * Return the {@link String} representation of the specified {@code childName} within this 
-	 * category path where all path components are delimited with a forward slash.  Any occurance 
-	 * of a forward slash within individual path components, including the {@code childName}, will 
+	 * Return the {@link String} representation of the specified {@code childName} within this
+	 * category path where all path components are delimited with a forward slash.  Any occurrence
+	 * of a forward slash within individual path components, including the {@code childName}, will
 	 * be escaped (e.g., {@code "\/"}).
 	 * @param childName child name
 	 * @return full path for a child within this category
@@ -307,7 +307,7 @@ public class CategoryPath implements Comparable<CategoryPath> {
 	 */
 	public boolean isAncestorOrSelf(CategoryPath candidateAncestorPath) {
 
-		// Result categoryPath          This
+		// Result candidateAncestor     This
 		// ------ --------------------- ------------------------
 		// True   /                     /
 		// True   /                     /apple
@@ -344,12 +344,12 @@ public class CategoryPath implements Comparable<CategoryPath> {
 	 */
 	@Override
 	public int compareTo(CategoryPath other) {
-		if (isRoot() && other.isRoot()) {
-			return 0;
+		if (isRoot()) {
+			return other.isRoot() ? 0 : -1;
 		}
 
-		if (isRoot() || other.isRoot()) {
-			return isRoot() ? -1 : 1;
+		if (other.isRoot()) {
+			return 1;
 		}
 
 		int result = parent.compareTo(other.getParent());
