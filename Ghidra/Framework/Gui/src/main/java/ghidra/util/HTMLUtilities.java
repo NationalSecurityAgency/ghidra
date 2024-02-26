@@ -391,7 +391,7 @@ public class HTMLUtilities {
 		Object colorAttribute = attributes.getAttribute(StyleConstants.Foreground);
 		if (colorAttribute instanceof Color fgColor) {
 			String hexColor = HTMLUtilities.toHexString(fgColor);
-			color = "color: % s;".formatted(hexColor);
+			color = "color: %s;".formatted(hexColor);
 		}
 
 		String escaped = escapeHTML(text);
