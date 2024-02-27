@@ -30,7 +30,6 @@ from pybag.dbgeng.idebugbreakpoint import DebugBreakpoint
 from . import commands, util
 
 
-
 ALL_EVENTS = 0xFFFF
 
 
@@ -103,8 +102,9 @@ class ProcessState(object):
             commands.STATE.trace.snapshot(description)
         proc = util.selected_process()
         ipath = commands.PROCESS_PATTERN.format(procnum=proc)
-        commands.STATE.trace.proxy_object_path(
-            ipath).set_value('_exit_code', exit_code)
+        procobj = commands.STATE.trace.proxy_object_path(ipath)
+        procobj.set_value('_exit_code', exit_code)
+        procobj.set_value('_state', 'TERMINATED')
 
 
 class BrkState(object):
@@ -178,6 +178,8 @@ def on_state_changed(*args):
                 commands.put_state(proc)
         if args[1] == DbgEng.DEBUG_STATUS_BREAK:
             return on_stop(args)
+        elif args[1] == DbgEng.DEBUG_STATUS_NO_DEBUGGEE:
+            return on_exited(proc)
         else:
             return on_cont(args)
     return S_OK
@@ -376,6 +378,7 @@ def on_stop(*args):
 
 
 def on_exited(proc):
+    # print("ON EXITED")
     if proc not in PROC_STATE:
         # print("not in state")
         return
