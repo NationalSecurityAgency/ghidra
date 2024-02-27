@@ -98,18 +98,23 @@ public class PointerTypeApplier extends MsDataTypeApplier {
 			switch (msPointerMode) {
 				case POINTER:
 					dataType = processPointer(pointerMsType, underlyingType);
+					break;
 				case LVALUE_REFERENCE:
 					dataType = processReference(pointerMsType, underlyingType);
+					break;
 				case RVALUE_REFERENCE:
 					dataType = processReference(pointerMsType, underlyingType);
+					break;
 				case MEMBER_DATA_POINTER:
 				case MEMBER_FUNCTION_POINTER:
 					dataType = processMemberPointer(pointerMsType, underlyingType);
+					break;
 				case INVALID:
 				case RESERVED:
 					Msg.warn(this, "Unable to process PointerMode: " + msPointerMode +
 						". Using default Pointer.");
 					dataType = PointerDataType.dataType;
+					break;
 				default:
 					throw new PdbException("PDB Error: unhandled PointerMode in " + getClass());
 			}
@@ -142,13 +147,15 @@ public class PointerTypeApplier extends MsDataTypeApplier {
 	}
 
 	private CategoryPath getCategoryPathForMemberPointer(RecordNumber containingClassRecordNumber) {
-		AbstractMsType containingType = applicator.getTypeRecord(containingClassRecordNumber);
-		MsTypeApplier applier = applicator.getTypeApplier(containingClassRecordNumber);
-		if (containingType instanceof AbstractCompositeMsType compositeMsType &&
-			applier instanceof CompositeTypeApplier compositeApplier) {
-			SymbolPath symbolPath = compositeApplier.getFixedSymbolPath(compositeMsType);
-			CategoryPath categoryPath = applicator.getCategory(symbolPath);
-			return ClassTypeUtils.getInternalsCategoryPath(categoryPath);
+		if (containingClassRecordNumber != null) {
+			AbstractMsType containingType = applicator.getTypeRecord(containingClassRecordNumber);
+			MsTypeApplier applier = applicator.getTypeApplier(containingClassRecordNumber);
+			if (containingType instanceof AbstractCompositeMsType compositeMsType &&
+				applier instanceof CompositeTypeApplier compositeApplier) {
+				SymbolPath symbolPath = compositeApplier.getFixedSymbolPath(compositeMsType);
+				CategoryPath categoryPath = applicator.getCategory(symbolPath);
+				return ClassTypeUtils.getInternalsCategoryPath(categoryPath);
+			}
 		}
 		return applicator.getAnonymousTypesCategory();
 	}
