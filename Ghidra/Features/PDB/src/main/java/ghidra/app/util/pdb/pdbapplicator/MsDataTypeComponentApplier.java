@@ -16,19 +16,16 @@
 package ghidra.app.util.pdb.pdbapplicator;
 
 /**
- * Used for creating a wrapper for when there is not associated type to the PDB type (or if we
- * have not yet created the association).
+ * Abstract class representing the applier for a specific PDB_ID type, distinguished as having
+ *  components for an actual data type but not representing a data type in and of itself.
  */
-public class NoTypeApplier extends MsTypeApplier {
+public abstract class MsDataTypeComponentApplier extends MsTypeApplier {
 
-	// Intended for: AbstractMsType
 	/**
-	 * Constructor for nested type applier.
+	 * Constructor.
 	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
-	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public NoTypeApplier(DefaultPdbApplicator applicator)
-			throws IllegalArgumentException {
+	public MsDataTypeComponentApplier(DefaultPdbApplicator applicator) {
 		super(applicator);
 	}
 

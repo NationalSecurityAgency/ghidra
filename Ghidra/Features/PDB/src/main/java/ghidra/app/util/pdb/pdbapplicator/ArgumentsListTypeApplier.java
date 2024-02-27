@@ -15,32 +15,22 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractArgumentsListMsType;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
-import ghidra.program.model.data.DataType;
-import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link AbstractArgumentsListMsType} types.
  */
-public class ArgumentsListTypeApplier extends MsTypeApplier {
+public class ArgumentsListTypeApplier extends MsDataTypeComponentApplier {
 
 	// Intended for: AbstractArgumentsListMsType
 	/**
-	 * Constructor for the applicator that applies a arguments list.
-	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
-	 * @throws IllegalArgumentException Upon invalid arguments.
+	 * Constructor for the applicator that applies a arguments list
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working
+	 * @throws IllegalArgumentException Upon invalid arguments
 	 */
-	public ArgumentsListTypeApplier(DefaultPdbApplicator applicator) throws IllegalArgumentException {
+	public ArgumentsListTypeApplier(DefaultPdbApplicator applicator)
+			throws IllegalArgumentException {
 		super(applicator);
-	}
-
-	@Override
-	DataType apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
-			throws PdbException, CancelledException {
-		// do nothing
-		return null;
 	}
 
 }

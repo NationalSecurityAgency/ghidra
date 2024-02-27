@@ -132,7 +132,7 @@ public class FunctionSymbolApplier extends AbstractBlockContextApplier
 
 		function.setNoReturn(isNonReturning());
 
-		AbstractMsType fType = applicator.getPdb().getTypeRecord(typeRecordNumber);
+		AbstractMsType fType = applicator.getTypeRecord(typeRecordNumber);
 		MsTypeApplier applier = applicator.getTypeApplier(fType);
 		if (!(applier instanceof AbstractFunctionTypeApplier)) {
 			applicator.appendLogMsg("Error: Failed to resolve datatype RecordNumber " +

@@ -50,7 +50,7 @@ public class FindDataTypeConflictCauseScript extends GhidraScript {
 		}
 
 		List<DataType> selectedDatatypes = dtmService.getSelectedDatatypes();
-		if (selectedDatatypes.size() != 1 || !(selectedDatatypes.get(0) instanceof Composite)) {
+		if (selectedDatatypes.size() != 1) {
 			popup("Select a single conflict datatype before running script");
 			return;
 		}

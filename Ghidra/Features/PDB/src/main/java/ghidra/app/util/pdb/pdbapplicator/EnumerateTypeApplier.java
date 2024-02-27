@@ -16,35 +16,22 @@
 package ghidra.app.util.pdb.pdbapplicator;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.Numeric;
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractEnumerateMsType;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.app.util.pdb.PdbNamespaceUtils;
 import ghidra.program.model.data.DataType;
-import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link AbstractEnumerateMsType} types.
  */
-public class EnumerateTypeApplier extends MsTypeApplier {
+public class EnumerateTypeApplier extends MsDataTypeComponentApplier {
 
 	// Intended for: AbstractEnumerateMsType
 	/**
-	 * Constructor for enumerate type applier, for transforming a enumerate into a
-	 * Ghidra DataType.
-	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
+	 * Constructor for enumerate type applier, for transforming a enumerate into a Ghidra DataType
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working
 	 */
 	public EnumerateTypeApplier(DefaultPdbApplicator applicator) {
 		super(applicator);
-	}
-
-	@Override
-	DataType apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
-			throws PdbException, CancelledException {
-		DataType dataType = applyEnumerateMsType((AbstractEnumerateMsType) type);
-		//dataType is null for now... so no resolve
-		//return applicator.resolve(dataType);
-		return null;
 	}
 
 	String getName(AbstractEnumerateMsType type) {

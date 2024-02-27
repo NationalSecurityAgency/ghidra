@@ -91,7 +91,7 @@ public class TypedefSymbolApplier extends MsSymbolApplier
 		String name = symbol.getName();
 
 		RecordNumber typeRecordNumber = symbol.getTypeRecordNumber();
-		AbstractMsType mType = applicator.getPdb().getTypeRecord(typeRecordNumber);
+		AbstractMsType mType = applicator.getTypeRecord(typeRecordNumber);
 		MsTypeApplier applier = applicator.getTypeApplier(typeRecordNumber);
 		// TODO:... NOT SURE IF WILL ALWAYS BE A DATATYPE OR WILL BE A VARIABLE OR ????
 		if (applier == null) {

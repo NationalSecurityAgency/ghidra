@@ -15,24 +15,19 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
-import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
-import ghidra.program.model.data.DataType;
-import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link AbstractVirtualFunctionTablePointerMsType} and
  * {@link AbstractVirtualFunctionTablePointerWithOffsetMsType} types.
  */
-public class VirtualFunctionTablePointerTypeApplier extends MsTypeApplier {
+public class VirtualFunctionTablePointerTypeApplier extends MsDataTypeComponentApplier {
 
 	// Intended for: AbstractVirtualFunctionTablePointerMsType or
 	//  AbstractVirtualFunctionTablePointerWithOffsetMsType
 	/**
-	 * Constructor for enum type applier, for transforming a enum into a
-	 * Ghidra DataType.
-	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
+	 * Constructor for enum type applier, for transforming a enum into a Ghidra DataType
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working
 	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
 	public VirtualFunctionTablePointerTypeApplier(DefaultPdbApplicator applicator)
@@ -56,34 +51,7 @@ public class VirtualFunctionTablePointerTypeApplier extends MsTypeApplier {
 		return "VFTablePtr" + getOffset(type);
 	}
 
-	@Override
-	DataType apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
-			throws PdbException, CancelledException {
-
-		// usually no record number, so cannot retrieve or store from/to applicator
-
-		AbstractVirtualFunctionTablePointerMsType vftPtrType = validateType(type);
-		RecordNumber recordNumber = vftPtrType.getPointerTypeRecordNumber();
-		DataType dataType = applyPointer(recordNumber, fixupContext, breakCycle);
-
-		// unlike regular pointer, we are resolving vft pointer
-		dataType = applicator.resolve(dataType);
-		return dataType;
-	}
-
-	private DataType applyPointer(RecordNumber pointerTypeRecordNumber, FixupContext fixupContext,
-			boolean breakCycle) throws CancelledException, PdbException {
-		MsTypeApplier rawApplier = applicator.getTypeApplier(pointerTypeRecordNumber);
-		if (rawApplier instanceof PointerTypeApplier pointerApplier) {
-			AbstractMsType type = applicator.getPdb().getTypeRecord(pointerTypeRecordNumber);
-			return pointerApplier.apply(type, fixupContext, breakCycle);
-		}
-		applicator.appendLogMsg("cannot process " + rawApplier.getClass().getSimpleName() + "for " +
-			getClass().getSimpleName());
-		return null;
-	}
-
-	private static AbstractVirtualFunctionTablePointerMsType validateType(AbstractMsType type)
+	private static AbstractMsType validateType(AbstractMsType type)
 			throws IllegalArgumentException {
 		if (!(type instanceof AbstractVirtualFunctionTablePointerMsType vftPtrType)) {
 			throw new IllegalArgumentException(
