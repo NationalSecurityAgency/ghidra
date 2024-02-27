@@ -189,8 +189,7 @@ public class DebuggerLegacyThreadsPanel extends JPanel {
 
 	/* package access for testing */
 	final SpanTableCellRenderer<Long> spanRenderer = new SpanTableCellRenderer<>();
-	final RangeCursorTableHeaderRenderer<Long> headerRenderer =
-		new RangeCursorTableHeaderRenderer<>(0L);
+	final RangeCursorTableHeaderRenderer<Long> headerRenderer;
 
 	final TableCellRenderer boldCurrentRenderer = new AbstractGColumnRenderer<Object>() {
 		@Override
@@ -226,6 +225,8 @@ public class DebuggerLegacyThreadsPanel extends JPanel {
 		this.autoServiceWiring = AutoService.wireServicesConsumed(plugin, this);
 
 		threadTableModel = new ThreadTableModel(provider);
+		headerRenderer = new RangeCursorTableHeaderRenderer<>(0L,
+			threadTableModel.getColumn(ThreadTableColumns.PLOT.ordinal()));
 		threadTable = new GhidraTable(threadTableModel);
 		threadTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		add(new JScrollPane(threadTable));

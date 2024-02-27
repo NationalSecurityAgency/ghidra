@@ -82,6 +82,10 @@ public abstract class AbstractQueryTablePanel<T, M extends AbstractQueryTableMod
 
 	protected abstract M createModel(Plugin plugin);
 
+	protected void coordinatesChanged() {
+		// Extension point
+	}
+
 	public void goToCoordinates(DebuggerCoordinates coords) {
 		if (DebuggerCoordinates.equalsIgnoreRecorderAndView(current, coords)) {
 			return;
@@ -102,14 +106,20 @@ public abstract class AbstractQueryTablePanel<T, M extends AbstractQueryTableMod
 		if (limitToSnap) {
 			tableModel.setSpan(Lifespan.at(current.getSnap()));
 		}
+		coordinatesChanged();
 	}
 
 	public void reload() {
 		tableModel.reload();
 	}
 
+	protected void queryChanged() {
+		// Extension point
+	}
+
 	public void setQuery(ModelQuery query) {
 		tableModel.setQuery(query);
+		queryChanged();
 	}
 
 	public ModelQuery getQuery() {
@@ -128,12 +138,16 @@ public abstract class AbstractQueryTablePanel<T, M extends AbstractQueryTableMod
 		return limitToSnap;
 	}
 
+	protected void showHiddenChanged() {
+		tableModel.setShowHidden(showHidden);
+	}
+
 	public void setShowHidden(boolean showHidden) {
 		if (this.showHidden == showHidden) {
 			return;
 		}
 		this.showHidden = showHidden;
-		tableModel.setShowHidden(showHidden);
+		showHiddenChanged();
 	}
 
 	public boolean isShowHidden() {
