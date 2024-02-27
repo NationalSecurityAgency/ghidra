@@ -275,7 +275,7 @@ def start_trace(name):
     with open(schema_fn, 'r') as schema_file:
         schema_xml = schema_file.read()
     with STATE.trace.open_tx("Create Root Object"):
-        root = STATE.trace.create_root_object(schema_xml, 'Session')
+        root = STATE.trace.create_root_object(schema_xml, 'GdbSession')
         root.set_value('_display', 'GNU gdb ' + util.GDB_VERSION.full)
         STATE.trace.create_object(AVAILABLES_PATH).insert()
         STATE.trace.create_object(BREAKPOINTS_PATH).insert()

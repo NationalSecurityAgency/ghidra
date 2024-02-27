@@ -115,6 +115,9 @@ public class ModelQuery {
 
 	public List<TargetObjectSchema> computeSchemas(Trace trace) {
 		TargetObjectSchema rootSchema = trace.getObjectManager().getRootSchema();
+		if (rootSchema == null) {
+			return List.of();
+		}
 		return predicates.getPatterns()
 				.stream()
 				.map(p -> rootSchema.getSuccessorSchema(p.asPath()))

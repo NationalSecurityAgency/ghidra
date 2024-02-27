@@ -1185,23 +1185,24 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 				.orElse(null);
 	}
 
+	protected TraceValueLifePlotColumn getPlotColumn() {
+		return findColumnOfType(modelProvider.elementsTablePanel.tableModel,
+			TraceValueLifePlotColumn.class);
+	}
+
 	@Test
 	public void testLifePlotColumnFitsSnapshotsOnActivate() throws Throwable {
-		TraceValueLifePlotColumn plotCol = findColumnOfType(
-			modelProvider.elementsTablePanel.tableModel, TraceValueLifePlotColumn.class);
 		createTraceAndPopulateObjects();
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
 		// NB. The plot adds a margin of 1
-		assertEquals(Lifespan.span(0, 21), plotCol.getFullRange());
+		assertEquals(Lifespan.span(0, 21), getPlotColumn().getFullRange());
 	}
 
 	@Test
 	public void testLifePlotColumnFitsSnapshotsOnAddSnapshot() throws Throwable {
-		TraceValueLifePlotColumn plotCol = findColumnOfType(
-			modelProvider.elementsTablePanel.tableModel, TraceValueLifePlotColumn.class);
 		createTraceAndPopulateObjects();
 
 		traceManager.activateTrace(tb.trace);
@@ -1213,20 +1214,18 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		waitForDomainObject(tb.trace);
 
 		// NB. The plot adds a margin of 1
-		assertEquals(Lifespan.span(0, 31), plotCol.getFullRange());
+		assertEquals(Lifespan.span(0, 31), getPlotColumn().getFullRange());
 
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getTimeManager().getSnapshot(31, true);
 		}
 		waitForDomainObject(tb.trace);
 
-		assertEquals(Lifespan.span(0, 32), plotCol.getFullRange());
+		assertEquals(Lifespan.span(0, 32), getPlotColumn().getFullRange());
 	}
 
 	@Test
 	public void testLifePlotColumnFitsSnapshotsOnAddSnapshotSupressEvents() throws Throwable {
-		TraceValueLifePlotColumn plotCol = findColumnOfType(
-			modelProvider.elementsTablePanel.tableModel, TraceValueLifePlotColumn.class);
 		createTraceAndPopulateObjects();
 
 		traceManager.activateTrace(tb.trace);
@@ -1240,6 +1239,6 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		waitForDomainObject(tb.trace);
 
 		// NB. The plot adds a margin of 1
-		assertEquals(Lifespan.span(0, 31), plotCol.getFullRange());
+		assertEquals(Lifespan.span(0, 31), getPlotColumn().getFullRange());
 	}
 }

@@ -196,6 +196,11 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 		}
 
 		@Override
+		protected TraceValueLifePlotColumn newPlotColumn() {
+			return new ThreadPlotColumn();
+		}
+
+		@Override
 		protected TableColumnDescriptor<ValueRow> createTableColumnDescriptor() {
 			TableColumnDescriptor<ValueRow> descriptor = new TableColumnDescriptor<>();
 			descriptor.addHiddenColumn(new ThreadPathColumn());
@@ -206,7 +211,7 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 			descriptor.addHiddenColumn(new ThreadSpColumn());
 			descriptor.addVisibleColumn(new ThreadStateColumn());
 			descriptor.addHiddenColumn(new ThreadCommentColumn());
-			descriptor.addVisibleColumn(new ThreadPlotColumn());
+			descriptor.addVisibleColumn(getPlotColumn());
 			return descriptor;
 		}
 	}
