@@ -21,6 +21,7 @@ apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
 
 apply from: "$rootProject.projectDir/gradle/debugger/hasNodepJar.gradle"
 apply from: "$rootProject.projectDir/gradle/debugger/hasPythonPackage.gradle"
+apply from: "buildNatives.gradle"
 
 apply plugin: 'eclipse'
 eclipse.project.name = 'Debug Debugger-agent-dbgeng'
@@ -34,6 +35,14 @@ dependencies {
 	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
 	testImplementation project(path: ":Debugger-gadp", configuration: 'testArtifacts')
+}
+
+// Include buildable native source in distribution
+rootProject.assembleDistribution {
+    from (this.project.projectDir.toString()) {
+		include "src/**"
+		into  { getZipPath(this.project) }
+    }
 }
 
 tasks.nodepJar {
