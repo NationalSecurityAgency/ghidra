@@ -146,20 +146,29 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 	public void setFont(Font f) {
 		super.setFont(f);
 
+		checkForInvalidSetFont(f);
+	}
+
+	private void checkForInvalidSetFont(Font f) {
 		//
 		// Due to the nature of how setFont() is typically used (external client setup vs internal
 		// rendering), we created setBaseFontId() to allow external clients to set the base font in
 		// a way that is consistent with theming.  Ignore any request to use one of our existing
 		// fonts, as some clients may do that from the getTableCellRendererComponent() method.
 		//
-		if (defaultFont != null &&
-			!CollectionUtils.isOneOf(f, defaultFont, fixedWidthFont, boldFont)) {
-
-			String caller =
-				ReflectionUtilities.getClassNameOlderThan(getClass().getName(), "generic.theme");
-			Msg.debug(this, "Calling setFont() on the renderer is discouraged.  " +
-				"To change the font, call setBaseFontId().  Called from " + caller);
+		if (defaultFont == null ||
+			CollectionUtils.isOneOf(f, defaultFont, fixedWidthFont, boldFont)) {
+			return;
 		}
+
+		if (Gui.isUpdatingTheme()) {
+			return; // the UI will set fonts while the theme is updating
+		}
+
+		String caller = ReflectionUtilities
+				.getClassNameOlderThan(AbstractGCellRenderer.class.getName(), "generic.theme");
+		Msg.debug(this, "Calling setFont() on the renderer is discouraged.  " +
+			"To change the font, call setBaseFontId().  Called from " + caller);
 	}
 
 	/**
