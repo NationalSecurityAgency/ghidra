@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,39 +25,30 @@ import ghidra.util.exception.CancelledException;
 /**
  * Applier for {@link AbstractModifierMsType} types.
  */
-public class ModifierTypeApplier extends MsTypeApplier {
+public class ModifierTypeApplier extends MsDataTypeApplier {
 
 	// Intended for: AbstractModifierMsType
 	/**
-	 * Constructor for modifier type applier.
-	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
+	 * Constructor for modifier type applier
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working
 	 */
 	public ModifierTypeApplier(DefaultPdbApplicator applicator) {
 		super(applicator);
 	}
 
-	RecordNumber getUnderlyingNonModifierRecordNumber(RecordNumber underlyingRecord) {
-		return getUnderlyingNonModifierRecordNumber(applicator, underlyingRecord);
-	}
-
-	static RecordNumber getUnderlyingNonModifierRecordNumber(DefaultPdbApplicator applicator,
-			RecordNumber underlyingRecord) {
-		AbstractMsType underlyingType = applicator.getPdb().getTypeRecord(underlyingRecord);
-		while (underlyingType instanceof AbstractModifierMsType modifierType) {
-			RecordNumber modifiedRecord = modifierType.getModifiedRecordNumber();
-			underlyingType = applicator.getPdb().getTypeRecord(modifiedRecord);
-		}
-		return underlyingType.getRecordNumber();
-	}
-
 	@Override
-	DataType apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
-			throws PdbException, CancelledException {
-		AbstractModifierMsType modifierType = (AbstractModifierMsType) type;
-		RecordNumber modifiedRecord = modifierType.getModifiedRecordNumber();
+	boolean apply(AbstractMsType type) throws PdbException, CancelledException {
 
-		DataType modifiedType =
-			applicator.getProcessedDataType(modifiedRecord, fixupContext, false);
+		AbstractModifierMsType modifierMsType = (AbstractModifierMsType) type;
+		// Doing pre-check on type first using the getDataTypeOrSchedule method.  The logic is
+		//  simpler here for Composites or Functions because we only have one dependency type,
+		//  so we are not doing a separate call to a pre-check method as there is in those appliers.
+		//  If type is not available, return false.
+		RecordNumber modifiedRecordNumber = modifierMsType.getModifiedRecordNumber();
+		DataType modifiedType = applicator.getDataTypeOrSchedule(modifiedRecordNumber);
+		if (modifiedType == null) {
+			return false;
+		}
 
 		// If Ghidra eventually has a modified type (const, volatile) in its model, then we can
 		//  perform the applicator.getDataType(modifierType) here, and the
@@ -75,11 +66,14 @@ public class ModifierTypeApplier extends MsTypeApplier {
 		//  the underlying type of a Modifier to be a pointer.  However, MSFT primitives include
 		//  pointers to primitives, so in these cases we could see a const pointer to primitive
 		//  where the const comes from the Modifier type.
+		DataType modifierType = modifiedType;
 
-//		if (modifiedType != null && !applicator.isPlaceholderType(modifiedType)) {
-		if (modifiedType != null) {
-			applicator.putDataType(modifierType, modifiedType);
-		}
-		return modifiedType;
+		// Store modified type as modifier type
+		applicator.putDataType(modifierMsType, modifierType);
+		// I'm hesitant to schedule resolve... what if I'm a pointer.  Should I resolve
+		//  modified pointers, modified other types, both, or neither?  TODO; investigate
+
+		return true;
 	}
+
 }

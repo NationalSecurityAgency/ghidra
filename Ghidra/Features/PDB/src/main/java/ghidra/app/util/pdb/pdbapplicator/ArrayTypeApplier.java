@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,64 +28,48 @@ import ghidra.util.exception.CancelledException;
 /**
  * Applier for {@link AbstractArrayMsType} types.
  */
-public class ArrayTypeApplier extends MsTypeApplier {
+public class ArrayTypeApplier extends MsDataTypeApplier {
 
 	// Intended for: AbstractArrayMsType
 	/**
 	 * Constructor for the applicator that applies a "array" type, transforming it into a
-	 * Ghidra DataType.
-	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
+	 * Ghidra DataType
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working
 	 */
 	public ArrayTypeApplier(DefaultPdbApplicator applicator) {
 		super(applicator);
 	}
 
 	@Override
-	DataType apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
-			throws PdbException, CancelledException {
-		return applyType((AbstractArrayMsType) type, fixupContext);
+	boolean apply(AbstractMsType type) throws PdbException, CancelledException {
+
+		AbstractArrayMsType arrayType = (AbstractArrayMsType) type;
+		// Doing pre-check on type first using the getDataTypeOrSchedule method.  The logic is
+		//  simpler here for Composites or Functions because we only have one dependency type,
+		//  so we are not doing a separate call to a pre-check method as there is in those appliers.
+		//  If type is not available, return false.
+		RecordNumber underlyingRecordNumber = arrayType.getElementTypeRecordNumber();
+		DataType underlyingDataType = applicator.getDataTypeOrSchedule(underlyingRecordNumber);
+		if (underlyingDataType == null) {
+			return false;
+		}
+
+		int numElements = calculateNumElements(arrayType, underlyingDataType);
+		if (numElements == -1) {
+			// There was a math calculation problem (probably have the wrong underlying type,
+			// which we still need to figure out; i.e., better composite mapper) so we
+			// will change the underlying type for now...
+			underlyingDataType = Undefined1DataType.dataType;
+			numElements = getSizeInt(arrayType); // array size (but divided by 1) is array size
+		}
+		DataType dataType = new ArrayDataType(underlyingDataType, numElements, -1,
+			applicator.getDataTypeManager());
+		applicator.putDataType(arrayType, dataType);
+		return true;
 	}
 
 	boolean isFlexibleArray(AbstractMsType type) {
 		return BigInteger.ZERO.equals(type.getSize());
-	}
-
-	private DataType applyType(AbstractArrayMsType type, FixupContext fixupContext)
-			throws CancelledException, PdbException {
-		if (fixupContext != null) {
-			DataType existingDt = applicator.getDataType(type);
-			if (existingDt != null) {
-				return existingDt;
-			}
-		}
-
-		RecordNumber underlyingRecord = type.getElementTypeRecordNumber();
-		DataType underlyingDataType =
-			applicator.getProcessedDataType(underlyingRecord, fixupContext, false);
-
-		DataType dataType;
-		if (applicator.isPlaceholderType(underlyingDataType)) {
-			Long longArraySize = getSizeLong(type);
-			int intArraySize = longArraySize.intValue();
-			dataType =
-				applicator.getPlaceholderArray(intArraySize, underlyingDataType.getAlignment());
-		}
-		else {
-			int numElements = calculateNumElements(type, underlyingDataType);
-			if (numElements == -1) {
-				// There was a math calculation problem (probably have the wrong underlying type,
-				// which we still need to figure out; i.e., better composite mapper) so we
-				// will change the underlying type for now...
-				underlyingDataType = Undefined1DataType.dataType;
-				numElements = getSizeInt(type); // array size (but divided by 1) is array size
-			}
-			dataType = new ArrayDataType(underlyingDataType, numElements, -1,
-				applicator.getDataTypeManager());
-		}
-
-		DataType resolvedType = applicator.resolve(dataType);
-		applicator.putDataType(type, resolvedType);
-		return resolvedType;
 	}
 
 	private int calculateNumElements(AbstractArrayMsType type, DataType underlyingDataType) {

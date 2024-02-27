@@ -15,11 +15,8 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
-import ghidra.program.model.data.DataType;
-import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link AbstractBaseClassMsType}, {@link AbstractVirtualBaseClassMsType}, and
@@ -83,22 +80,23 @@ public class UdtSourceLineTypeApplier extends MsTypeApplier {
 		return null;
 	}
 
-	@Override
-	DataType apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
-			throws PdbException, CancelledException {
-		String filename = getSourceFileName(type);
-		int lineNumber = getLineNumber(type);
-		RecordNumber udtRecordNumber = getUdtRecordNumber(type);
-		MsTypeApplier typeApplier = applicator.getTypeApplier(udtRecordNumber);
-
-		// do nothing at the moment.
-		applicator.putRecordNumberByFileName(udtRecordNumber, filename);
-		if (type instanceof UserDefinedTypeModuleSourceAndLineMsType) {
-			int moduleNumber = ((UserDefinedTypeModuleSourceAndLineMsType) type).getModuleNumber();
-			applicator.putRecordNumberByModuleNumber(udtRecordNumber, moduleNumber);
-		}
-		return null;
-	}
+	// Keeping as commented out for now so to have something to start with for this ITEM type
+//	@Override
+//	DataType apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
+//			throws PdbException, CancelledException {
+//		String filename = getSourceFileName(type);
+//		int lineNumber = getLineNumber(type);
+//		RecordNumber udtRecordNumber = getUdtRecordNumber(type);
+//		MsTypeApplier typeApplier = applicator.getTypeApplier(udtRecordNumber);
+//
+//		// do nothing at the moment.
+//		applicator.putRecordNumberByFileName(udtRecordNumber, filename);
+//		if (type instanceof UserDefinedTypeModuleSourceAndLineMsType) {
+//			int moduleNumber = ((UserDefinedTypeModuleSourceAndLineMsType) type).getModuleNumber();
+//			applicator.putRecordNumberByModuleNumber(udtRecordNumber, moduleNumber);
+//		}
+//		return null;
+//	}
 
 	private static AbstractMsType validateType(AbstractMsType type)
 			throws IllegalArgumentException {

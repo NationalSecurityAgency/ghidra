@@ -16,6 +16,7 @@
 package ghidra.app.util.pdb.pdbapplicator;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
+import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.PrimitiveMsType;
 import ghidra.program.model.data.DataType;
@@ -24,22 +25,20 @@ import ghidra.util.exception.CancelledException;
 /**
  * Applier for {@link PrimitiveMsType} types.
  */
-public class PrimitiveTypeApplier extends MsTypeApplier {
+public class PrimitiveTypeApplier extends MsDataTypeApplier {
 
 	// Intended for: PrimitiveMsType
 	/**
-	 * Constructor for primitive type applier, for transforming a primitive into a
-	 * Ghidra DataType.
-	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
+	 * Constructor for primitive type applier, for transforming a primitive into a Ghidra DataType
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working
 	 */
 	public PrimitiveTypeApplier(DefaultPdbApplicator applicator) {
 		super(applicator);
 	}
 
 	@Override
-	DataType apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
-			throws PdbException, CancelledException {
-		return applyPrimitiveMsType((PrimitiveMsType) type);
+	boolean apply(AbstractMsType type) throws PdbException, CancelledException {
+		return (applyPrimitiveMsType((PrimitiveMsType) type) != null);
 	}
 
 	boolean isNoType(AbstractMsType type) {
@@ -59,7 +58,9 @@ public class PrimitiveTypeApplier extends MsTypeApplier {
 //		}
 
 		int indexNumber = type.getNumber();
-		DataType existingDt = applicator.getDataType(indexNumber);
+		RecordNumber recordNumber = RecordNumber.typeRecordNumber(indexNumber);
+		DataType existingDt = applicator.getDataType(recordNumber);
+
 		if (existingDt != null) {
 			return existingDt;
 		}
@@ -2062,8 +2063,11 @@ public class PrimitiveTypeApplier extends MsTypeApplier {
 
 		}
 
+		// Doing a direct and immediate resolve (not scheduling... the type would never get into
+		//  the processing queue because primitive type numbers are not found in the sequential
+		//  set of record numbers, but they are referred to by non-primitive types).
 		primitiveDataType = applicator.resolve(primitiveDataType);
-		applicator.putDataType(indexNumber, primitiveDataType);
+		applicator.putDataType(recordNumber, primitiveDataType);
 
 		return primitiveDataType;
 	}

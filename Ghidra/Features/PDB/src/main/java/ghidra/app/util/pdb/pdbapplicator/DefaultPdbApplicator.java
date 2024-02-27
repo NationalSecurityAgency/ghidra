@@ -35,6 +35,7 @@ import ghidra.app.util.bin.format.pe.cli.tables.CliAbstractTableRow;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.pdb.PdbCategories;
 import ghidra.framework.options.Options;
+import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.disassemble.DisassemblerContextImpl;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
@@ -137,16 +138,17 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	PdbRegisterNameToProgramRegisterMapper registerNameToRegisterMapper;
 
 	//==============================================================================================
+	private MultiphaseDataTypeResolver multiphaseResolver;
 	private int resolveCount;
+	private int conflictCount;
 	private PdbCategories categoryUtils;
 	private PdbPrimitiveTypeApplicator pdbPrimitiveTypeApplicator;
 	private TypeApplierFactory typeApplierParser;
-	// We may need to put one or more of the following maps into the "analysis state" for access by
+	// We may need to put the following map into the "analysis state" for access by
 	//  a second PDB analyzer to do the "deferred" processing of functions.  Then a mandatory
-	//  second PDB analyzer would, at a minimum, remove the maps from the analysis state.
-	private Map<Integer, Long> dataTypeIdByMsTypeNum;
-	private Map<Integer, DataTypeImpl> dataTypeImplByMsTypeNum;
-	private Map<Integer, CppCompositeType> classTypeByMsTypeNum;
+	//  second PDB analyzer would, at a minimum, remove the map from the analysis state.
+	private Map<RecordNumber, DataType> dataTypeByMsTypeNum;
+	private Map<RecordNumber, CppCompositeType> classTypeByMsTypeNum;
 	private ComplexTypeMapper complexTypeMapper;
 	/**
 	 * This namespace map documents as follows:
@@ -316,6 +318,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		PdbResearch.initBreakPointRecordNumbers(); // for developmental debug
 
 		resolveCount = 0;
+		conflictCount = 0;
 
 //		PdbResearch.childWalk(this, monitor);
 
@@ -332,6 +335,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 //		PdbResearch.developerDebugOrder(this, monitor);
 
 		Msg.info(this, "resolveCount: " + resolveCount);
+		Msg.info(this, "conflictCount: " + conflictCount);
 
 		// Currently, defining classes needs to have a program.  When this is no longer true,
 		//  then this call can be performed with the data types only work.
@@ -437,10 +441,9 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		pdbAddressManager = new PdbAddressManager(this, imageBase);
 
 		categoryUtils = setPdbCatogoryUtils(pdb.getFilename());
-		initializePlaceholders();
+		multiphaseResolver = new MultiphaseDataTypeResolver(this);
 		pdbPrimitiveTypeApplicator = new PdbPrimitiveTypeApplicator(dataTypeManager);
-		dataTypeIdByMsTypeNum = new HashMap<>();
-		dataTypeImplByMsTypeNum = new HashMap<>();
+		dataTypeByMsTypeNum = new HashMap<>();
 		classTypeByMsTypeNum = new HashMap<>();
 		complexTypeMapper = new ComplexTypeMapper();
 		typeApplierParser = new TypeApplierFactory(this);
@@ -495,7 +498,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		imageBase = (imageBaseParam != null) ? imageBaseParam : program.getImageBase();
 	}
 
-	private List<SymbolGroup> createSymbolGroups() throws CancelledException, PdbException {
+	private List<SymbolGroup> createSymbolGroups() throws CancelledException {
 		List<SymbolGroup> mySymbolGroups = new ArrayList<>();
 		PdbDebugInfo debugInfo = pdb.getDebugInfo();
 		if (debugInfo == null) {
@@ -684,14 +687,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		return categoryUtils.getAnonymousTypesCategory();
 	}
 
-	/**
-	 * Returns the {@link CategoryPath} for Placeholder Types Category for the PDB
-	 * @return the {@link CategoryPath}
-	 */
-	CategoryPath getPlaceholderTypesCategory() {
-		return categoryUtils.getPlaceholderTypesCategory();
-	}
-
 //	/**
 //	 * Returns the name of what should be the next Anonymous Function (based on the count of
 //	 * the number of anonymous functions) so that there is a unique name for the function.
@@ -754,130 +749,16 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	//==============================================================================================
 	//==============================================================================================
 
-	private Map<Integer, Pointer> placeholderPointers;
-	private Set<Long> pointerIDs;
-	// Structure used to mock placeholder array.
-	private Map<PlaceholderArrayKey, Structure> placeholderArrays;
-	private Set<Long> arrayIDs;
-
-	private void initializePlaceholders() {
-		placeholderPointers = new HashMap<>();
-		pointerIDs = new HashSet<>();
-		placeholderArrays = new HashMap<>();
-		arrayIDs = new HashSet<>();
-	}
-
-	private void cleanUpPlaceholders() throws CancelledException {
-
-		TaskMonitor monitor = getMonitor();
-		DataTypeManager dtm = getDataTypeManager();
-
-		// Remove placeholder arrays from DTM and from the Set
-		for (long id : arrayIDs) {
-			checkCancelled();
-			DataType dt = dtm.getDataType(id);
-			Collection<DataType> parents = dt.getParents();
-			if (parents.size() == 0) {
-				dtm.remove(dt, monitor);
-			}
-			else {
-				Msg.warn(this,
-					"PDB: Could not eliminate parented placeholder array: " + dt.getName());
-			}
-		}
-		arrayIDs.clear();
-		arrayIDs = null;
-
-		// Eliminate array placeholder map
-		placeholderArrays.clear();
-		placeholderArrays = null;
-
-		// Not removing placeholder pointers from DTM, but we are eliminating them from the Set
-		pointerIDs.clear();
-		pointerIDs = null;
-
-		// Eliminate pointer placeholder map
-		placeholderPointers.clear();
-		placeholderPointers = null;
-	}
-
-	Pointer getPlaceholderPointer(int size) throws PdbException {
-		Pointer pointer = placeholderPointers.get(size);
-		if (pointer != null) {
-			return pointer;
-		}
-		DataTypeManager dtm = getDataTypeManager();
-		pointer = new PointerDataType(null, size, dtm);
-		pointer = (Pointer) resolve(pointer);
-		long id = dtm.getID(pointer);
-		if (id == -1) {
-			throw new PdbException("Could not create placeholder pointer.");
-		}
-		placeholderPointers.put(size, pointer);
-		pointerIDs.add(id);
-		return pointer;
-	}
-
-	boolean isPlaceholderPointer(DataType pointer) {
-		// need this check for unresolved member types (such as primitives or bit-fields)
-		if (pointer instanceof DataTypeImpl || pointer instanceof BitFieldDataType) {
-			return false;
-		}
-		long id = getDataTypeManager().getID(pointer);
-		return pointerIDs.contains(id);
-	}
-
-	private record PlaceholderArrayKey(int arraySize, int alignment) {}
-
-	// Using a structure as a mock array because we can set both size and alignment, which
-	//  is what needs to be consistent with the final real array when used in a containing
-	//  composite.
-	DataType getPlaceholderArray(int arraySize, int alignment) throws PdbException {
-		PlaceholderArrayKey key = new PlaceholderArrayKey(arraySize, alignment);
-		Structure placeholderArray = placeholderArrays.get(key);
-		if (placeholderArray != null) {
-			return placeholderArray;
-		}
-
-		DataTypeManager dtm = getDataTypeManager();
-		String name = String.format("placeholder_array_%08x_%02x", arraySize, alignment);
-		placeholderArray =
-			new StructureDataType(getPlaceholderTypesCategory(), name, arraySize, dtm);
-		placeholderArray.align(alignment);
-		if (arraySize == 0) {
-			// For the zero-length, we need to enable packing to prevent the placeholder array
-			//  (actual structure) from reporting itself as "not yet defined."
-			placeholderArray.setPackingEnabled(true);
-		}
-		placeholderArray = (Structure) resolve(placeholderArray);
-
-		long id = dtm.getID(placeholderArray);
-		if (id == -1) {
-			throw new PdbException("Could not create array placeholder.");
-		}
-		placeholderArrays.put(key, placeholderArray);
-		arrayIDs.add(id);
-		return placeholderArray;
-	}
-
-	boolean isPlaceholderArray(DataType array) {
-		return array.getCategoryPath().equals(getPlaceholderTypesCategory());
-	}
-
-	boolean isPlaceholderType(DataType type) {
-		return isPlaceholderPointer(type) || isPlaceholderArray(type);
-	}
-
-	//==============================================================================================
-	//==============================================================================================
-	//==============================================================================================
-
 	/**
 	 * Returns the processed Ghidra class type associated with the PDB type record number.  Causes
 	 *  the type to be processed if it already has not been.
 	 * <p>
 	 * This method is intended to be used by "Consumers" that need the type after all type
-	 *  creation is complete.
+	 *  creation is complete (i.e., symbol appliers).  Thus, an additional resolve step is added
+	 *  here because the internal processing of PDB data types does not resolve pointers and
+	 *  structures used to stub certain pointers (member pointers and other larger-than-64-bit
+	 *  pointers) and we assume that a consumer is going to lay down this type in a program, so
+	 *  we make sure that it is resolved.
 	 * @param recordNumber the record number of the type needed
 	 * @return the Ghidra data type
 	 * @throws CancelledException upon user cancellation
@@ -885,23 +766,19 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	 * @see #getDataType(AbstractMsType)
 	 * @see #getDataType(RecordNumber)
 	 */
-	DataType getCompletedDataType(RecordNumber recordNumber) //************************************************ 5 REFS
+	DataType getCompletedDataType(RecordNumber recordNumber)
 			throws CancelledException, PdbException {
 		DataType dataType = getDataType(recordNumber);
 		if (dataType instanceof DataTypeImpl) {
 			if (!(dataType instanceof BuiltInDataType)) {
-				AbstractMsType type = getPdb().getTypeRecord(recordNumber);
-				Msg.info(this, "Type not resolved for record: " + recordNumber + "; " +
-					type.getClass().getSimpleName());
+				dataType = resolve(dataType);
+				putDataType(recordNumber, dataType);
 			}
 		}
 		else if (dataType == null) {
-			AbstractMsType type = getPdb().getTypeRecord(recordNumber);
-			Msg.info(this, "Type not completed for record: " + recordNumber + "; " +
+			AbstractMsType type = getTypeRecord(recordNumber);
+			throw new PdbException("Type not completed for record: " + recordNumber + "; " +
 				type.getClass().getSimpleName());
-			FixupContext fixupContext = new FixupContext();
-			fixupContext.addStagedRecord(recordNumber.getNumber());
-			dataType = getProcessedDataType(recordNumber, fixupContext, false);
 		}
 		return dataType;
 	}
@@ -914,40 +791,20 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	 * @param dataType the data type to store
 	 */
 	void putDataType(AbstractMsType msType, DataType dataType) {
-		Integer number = getNumber(msType);
-		putDataType(number, dataType);
+		RecordNumber recordNumber = msType.getRecordNumber();
+		putDataType(recordNumber, dataType);
 	}
 
 	/**
-	 * Stores the Ghidra data type associated with the PDB data type.
+	 * Stores the Ghidra data type associated with the PDB record number.
 	 * This method is intended to be used by appliers that work on this specific type, not by
 	 *  appliers that need the data type
-	 * @param number number of type record
+	 * @param recordNumber record number of type record
 	 * @param dataType the data type to store
 	 */
-	void putDataType(Integer number, DataType dataType) {
-		DataType existing = getDataType(number); // could be null
-		if (existing == dataType) {
-			return;
-		}
-		if (existing != null) {
-			if (dataType.isEquivalent(existing)) {
-				if (!(existing instanceof DataTypeImpl) || dataType instanceof DataTypeImpl) {
-					return;
-				}
-			}
-			else if (isDefinedComposite(existing)) {
-				//TODO: Need to investigate how to deal with this.... we are only storing one, so
-				// how do we know we have the correct one... we should know by what the fwdref was...
-				// record-number-wise.
-				if (isDefinedComposite(dataType)) {
-					appendLogMsg("Existing and Replacement datatypes are both keepers:\n" +
-						existing + "\n" + dataType + "\n");
-				}
-				return;
-			}
-		}
-		putDataTypeInternal(number, dataType);
+	void putDataType(RecordNumber recordNumber, DataType dataType) {
+		RecordNumber mappedNumber = getMappedRecordNumber(recordNumber);
+		dataTypeByMsTypeNum.put(mappedNumber, dataType);
 	}
 
 	/**
@@ -958,15 +815,12 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	 * @return the Ghidra data type
 	 */
 	DataType getDataType(AbstractMsType msType) {
-		Integer number = getNumber(msType);
-		if (number == null) {
-			return null;
-		}
-		return getDataType(number);
+		RecordNumber recordNumber = msType.getRecordNumber();
+		return getDataType(recordNumber);
 	}
 
 	/**
-	 * Returns the Ghidra data type associated with the PDB type record number.
+	 * Returns the Ghidra data type associated with the PDB record number.
 	 * <p>
 	 * This method is intended to be used by appliers that work on this specific type, not by
 	 *  appliers that need the data type
@@ -975,48 +829,25 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	 * @see #getDataType(AbstractMsType)
 	 */
 	DataType getDataType(RecordNumber recordNumber) {
-		if (recordNumber.getCategory() != RecordCategory.TYPE) {
-			return null;
-		}
-		return getDataType(recordNumber.getNumber());
+		RecordNumber mappedNumber = getMappedRecordNumber(recordNumber);
+		return dataTypeByMsTypeNum.get(mappedNumber);
 	}
 
 	/**
-	 * Returns the Ghidra data type associated with the PDB data type number.
+	 * Returns the Ghidra data type associated with the PDB record number.
 	 * This method is intended to be used by appliers that work on this specific type, not by
 	 *  appliers that need the data type
-	 * @param number the PDB type record number
+	 * @param recordNumber the PDB type record number
 	 * @return the Ghidra data type
 	 */
-	DataType getDataType(Integer number) {
-		Integer mappedNumber = getMappedComplexType(number);
-		Long ID = dataTypeIdByMsTypeNum.get(mappedNumber);
-		if (ID == null) {
-			return dataTypeImplByMsTypeNum.get(mappedNumber);
+	DataType getDataTypeOrSchedule(RecordNumber recordNumber) {
+		RecordNumber mappedNumber = getMappedRecordNumber(recordNumber);
+		DataType dt = dataTypeByMsTypeNum.get(mappedNumber);
+		if (dt != null) {
+			return dt;
 		}
-		return dataTypeManager.getDataType(ID);
-	}
-
-	private boolean isDefinedComposite(DataType dt) {
-		return (dt instanceof Composite comp && comp.getNumDefinedComponents() > 0);
-	}
-
-	private void putDataTypeInternal(Integer number, DataType dataType) {
-		Integer mappedNumber = getMappedComplexType(number);
-		if (dataType instanceof DataTypeImpl impl) {
-			if (!(dataType instanceof BuiltInDataType)) {
-				Msg.warn(this, "PDB: Unexpected Impl storage: " + impl.getClass().getSimpleName());
-			}
-			dataTypeImplByMsTypeNum.put(mappedNumber, impl);
-		}
-		else {
-			long dataTypeID = dataTypeManager.getID(dataType);
-			if (dataTypeID == -1) {
-				// Error, such as DataType is not DB version
-				return;
-			}
-			dataTypeIdByMsTypeNum.put(mappedNumber, dataTypeID);
-		}
+		multiphaseResolver.scheduleTodo(recordNumber);
+		return null;
 	}
 
 	//==============================================================================================
@@ -1028,8 +859,8 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	 * @param classType the class to store
 	 */
 	void putClassType(AbstractMsType msType, CppCompositeType classType) {
-		Integer number = getNumber(msType);
-		CppCompositeType existing = getClassType(number);
+		RecordNumber recordNumber = msType.getRecordNumber();
+		CppCompositeType existing = getClassType(recordNumber);
 		if (existing == classType) {
 			return;
 		}
@@ -1038,7 +869,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 				"Existing class type; not replacing:\n" + existing + "\n" + classType + "\n");
 			return;
 		}
-		putClassType(number, classType);
+		putClassType(recordNumber, classType);
 	}
 
 	/**
@@ -1051,35 +882,78 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	 * @see #getDataType(RecordNumber)
 	 */
 	CppCompositeType getClassType(AbstractMsType msType) {
-		Integer number = getNumber(msType);
-		return getClassType(number);
+		return getClassType(msType.getRecordNumber());
 	}
 
-	private CppCompositeType getClassType(Integer number) {
-		return classTypeByMsTypeNum.get(getMappedComplexType(number));
+	private CppCompositeType getClassType(RecordNumber recordNumber) {
+		return classTypeByMsTypeNum.get(getMappedRecordNumber(recordNumber));
 	}
 
-	private void putClassType(Integer number, CppCompositeType classType) {
-		Integer mappedNumber = getMappedComplexType(number);
+	private void putClassType(RecordNumber recordNumber, CppCompositeType classType) {
+		RecordNumber mappedNumber = getMappedRecordNumber(recordNumber);
 		classTypeByMsTypeNum.put(mappedNumber, classType);
 	}
 
 	//==============================================================================================
-	// Might change this to private if removed use from CompositeTypeApplier
-	Integer getNumber(AbstractMsType msType) {
-		if (msType == null) {
-			return null;
-		}
-		RecordNumber recordNumber = msType.getRecordNumber();
-		if (recordNumber == null || recordNumber.getCategory() != RecordCategory.TYPE) {
-			return null;
-		}
-		return recordNumber.getNumber();
+	/**
+	 * Returns the record for the associated record number, which is expected to match the
+	 *  desired class
+	 * @param recordNumber the record number
+	 * @return the record
+	 */
+	public AbstractMsType getTypeRecord(RecordNumber recordNumber) {
+		return pdb.getTypeRecord(recordNumber, AbstractMsType.class);
 	}
 
+	/**
+	 * Returns the record for the mapped associated record number, which is expected to match the
+	 *  desired class
+	 * @param recordNumber the record number
+	 * @return the record
+	 */
+	public AbstractMsType getMappedTypeRecord(RecordNumber recordNumber) {
+		RecordNumber mappedNumber = getMappedRecordNumber(recordNumber);
+		return pdb.getTypeRecord(mappedNumber, AbstractMsType.class);
+	}
+
+	/**
+	 * Returns the record for the associated record number, which is expected to match the
+	 *  desired class
+	 * @param <T> class return type
+	 * @param recordNumber record number
+	 * @param typeClass desired class type for return
+	 * @return the record
+	 */
+	public <T extends AbstractMsType> T getTypeRecord(RecordNumber recordNumber,
+			Class<T> typeClass) {
+		return pdb.getTypeRecord(recordNumber, typeClass);
+	}
+
+	/**
+	 * Returns the record for the mapped associated record number, which is expected to match the
+	 *  desired class
+	 * @param <T> class return type
+	 * @param recordNumber record number
+	 * @param typeClass desired class type for return
+	 * @return the record
+	 */
+	public <T extends AbstractMsType> T getMappedTypeRecord(RecordNumber recordNumber,
+			Class<T> typeClass) {
+		RecordNumber mappedNumber = getMappedRecordNumber(recordNumber);
+		return pdb.getTypeRecord(mappedNumber, typeClass);
+	}
+
+	//==============================================================================================
 	// Might change this to private if removed use from CompositeTypeApplier
-	Integer getMappedComplexType(Integer input) {
-		return complexTypeMapper.getMapped(input);
+	/**
+	 * Returns map to alternate record number or argument record number if no map.  Result is
+	 *  RecordNumber of alternative record for the complex type.  Map is of fwdref to definition
+	 *  RecordNumbers.  The fwdref number is generally, but not always, the lower number
+	 * @param recordNumber the record number for which to do the lookup
+	 * @return the mapped record number or the original record number if no mapped entry
+	 */
+	RecordNumber getMappedRecordNumber(RecordNumber recordNumber) {
+		return complexTypeMapper.getMapped(recordNumber);
 	}
 
 	//==============================================================================================
@@ -1115,98 +989,24 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		for (int indexNumber = tpi.getTypeIndexMin(); indexNumber < tpi
 				.getTypeIndexMaxExclusive(); indexNumber++) {
 			monitor.checkCancelled();
-			processAndResolve(indexNumber);
+			RecordNumber recordNumber = RecordNumber.typeRecordNumber(indexNumber);
+			RecordNumber mappedNumber = getMappedRecordNumber(recordNumber);
+			multiphaseResolver.process(mappedNumber);
 			monitor.incrementProgress(1);
 		}
 
-		// Might need to do this later (after typedefs and symbols)... TODO: figure this out
-		cleanUpPlaceholders();
+		doCheck();
 	}
 
-	private void processAndResolve(int indexNumber) throws CancelledException, PdbException {
-		DataType dt = getDataType(indexNumber);
-		if (dt != null && !(dt instanceof DataTypeImpl)) {
-			return;
-		}
-		RecordNumber recordNumber = RecordNumber.typeRecordNumber(indexNumber);
-		AbstractMsType msType = pdb.getTypeRecord(recordNumber);
-		MsTypeApplier applier = getTypeApplier(recordNumber);
-		if (applier instanceof CompositeTypeApplier) {
-			FixupContext fixupContext = new FixupContext();
-			int mappedNumber = getMappedComplexType(indexNumber);
-			fixupContext.moveToHeadProcessRecord(mappedNumber);
-			DataType dataType = applier.apply(msType, fixupContext, false);
-			fixupContext.moveProcessToFixupsRecord(mappedNumber, dataType);
-			fixUpTypes(fixupContext);
-		}
-		else {
-			DataType dataType = applier.apply(msType, null, true);
-		}
-	}
-
-	DataType getProcessedDataType(RecordNumber recordNumber, FixupContext fixupContext,
-			boolean breakCycle) throws CancelledException, PdbException {
-		int mappedNumber = getMappedComplexType(recordNumber.getNumber());
-		AbstractMsType type = pdb.getTypeRecord(RecordNumber.typeRecordNumber(mappedNumber));
-		MsTypeApplier applier = getTypeApplier(recordNumber);
-
-		if (fixupContext == null) {
-			return applier.apply(type, fixupContext, breakCycle);
-		}
-
-		if (!(applier instanceof CompositeTypeApplier) &&
-			!(applier instanceof ModifierTypeApplier)) {
-			return applier.apply(type, fixupContext, breakCycle);
-		}
-
-		DataType dataType = getDataType(mappedNumber);
-		if (dataType != null) {
-			return dataType;
-		}
-		dataType = fixupContext.getFixupDataType(mappedNumber);
-		if (dataType != null) {
-			return dataType;
-		}
-
-		fixupContext.ensureInContext(mappedNumber);
-		if (breakCycle) {
-			return null;
-		}
-
-		fixupContext.moveToHeadProcessRecord(mappedNumber);
-		dataType = applier.apply(type, fixupContext, breakCycle);
-		fixupContext.moveProcessToFixupsRecord(mappedNumber, dataType);
-
-		return dataType;
-	}
-
-	private void fixUpTypes(FixupContext fixupContext) throws PdbException, CancelledException {
-
-		Integer recordToProcess;
-		while ((recordToProcess = fixupContext.peekStagedRecord()) != null) {
-			checkCancelled();
-			RecordNumber recordNumber = RecordNumber.typeRecordNumber(recordToProcess);
-			AbstractMsType msType = pdb.getTypeRecord(recordNumber);
-			MsTypeApplier applier = getTypeApplier(recordNumber);
-			fixupContext.moveFromStagedToProcessRecord();
-			DataType dataType = applier.apply(msType, fixupContext, false);
-			fixupContext.moveProcessToFixupsRecord(recordToProcess, dataType);
-		}
-
-		while ((recordToProcess = fixupContext.peekFixupsRecord()) != null) {
-			checkCancelled();
-			RecordNumber recordNumber = RecordNumber.typeRecordNumber(recordToProcess);
-			AbstractMsType msType = pdb.getTypeRecord(recordNumber);
-			MsTypeApplier applier = getTypeApplier(recordNumber);
-			if (applier instanceof CompositeTypeApplier fixupApplier) {
-				DataType dataType = applier.apply(msType, fixupContext, false);
-				if (dataType instanceof DataTypeImpl) {
-					appendLogMsg("Unexpected resolve for: " + dataType.getClass().getSimpleName());
-					dataType = resolve(dataType);
+	private void doCheck() throws PdbException {
+		for (Map.Entry<RecordNumber, DataType> entry : dataTypeByMsTypeNum.entrySet()) {
+			DataType dt = entry.getValue();
+			if (dt instanceof DataTypeImpl) {
+				if (!(dt instanceof Pointer) && !(dt instanceof BitFieldDataType) &&
+					!(dt instanceof BuiltInDataType)) {
+					throw new PdbException("Type not fully processed: " + entry.getKey());
 				}
-				fixupApplier.fixUp(fixupContext);
 			}
-			fixupContext.popFixupsRecord();
 		}
 	}
 
@@ -1240,7 +1040,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			String filename = entry.getKey();
 			PdbLog.message("FileName: " + filename);
 			for (RecordNumber recordNumber : entry.getValue()) {
-				AbstractMsType msType = pdb.getTypeRecord(recordNumber);
+				AbstractMsType msType = getTypeRecord(recordNumber);
 				PdbLog.message(recordNumber.toString() + "\n" + msType);
 			}
 		}
@@ -1249,7 +1049,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			int moduleNumber = entry.getKey();
 			PdbLog.message("ModuleNumber: " + moduleNumber);
 			for (RecordNumber recordNumber : entry.getValue()) {
-				AbstractMsType msType = pdb.getTypeRecord(recordNumber);
+				AbstractMsType msType = getTypeRecord(recordNumber);
 				PdbLog.message(recordNumber.toString() + "\n" + msType);
 			}
 		}
@@ -1271,11 +1071,13 @@ public class DefaultPdbApplicator implements PdbApplicator {
 				.getTypeIndexMaxExclusive(); indexNumber++) {
 			monitor.checkCancelled();
 			RecordNumber recordNumber = RecordNumber.itemRecordNumber(indexNumber);
-			AbstractMsType msType = pdb.getTypeRecord(recordNumber);
+			AbstractMsType msType = getTypeRecord(recordNumber);
 			MsTypeApplier applier = getTypeApplier(recordNumber);
-			FixupContext fixupContext = new FixupContext();
-			fixupContext.addStagedRecord(indexNumber);
-			applier.apply(msType, fixupContext, false); // fixupContext and breakCycle meaningless here?
+			// TODO: Need to decide what work gets done for ITEM types and craft interface for
+			//  calling methods for doing work.  Perhaps something like the following:
+//			if (applier instanceof MsItemTypeApplier itemApplier) {
+//				itemApplier.apply(msType);
+//			}
 			monitor.incrementProgress(1);
 		}
 	}
@@ -1296,6 +1098,9 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		DataType resolved = getDataTypeManager().resolve(dataType,
 			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
 		resolveCount++;
+		if (DataTypeUtilities.isConflictDataType(resolved)) {
+			conflictCount++;
+		}
 		return resolved;
 	}
 
