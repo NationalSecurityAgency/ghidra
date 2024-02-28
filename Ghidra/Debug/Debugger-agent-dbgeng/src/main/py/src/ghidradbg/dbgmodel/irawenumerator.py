@@ -13,13 +13,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 ##
-from ctypes             import *
-from comtypes           import BSTR
-from comtypes.hresult   import S_OK, S_FALSE
+from ctypes import *
 
+from comtypes import BSTR
 from comtypes.gen import DbgMod
+from comtypes.hresult import S_OK, S_FALSE
 from pybag.dbgeng import exception
-import dbgmodel.imodelobject as mo
+
+from . import imodelobject as mo
+
 
 class RawEnumerator(object):
     def __init__(self, keys, kind):
@@ -46,6 +48,3 @@ class RawEnumerator(object):
     def Reset(self):
         hr = self._keys.Reset()
         exception.check_err(hr)
-
-
- 

@@ -13,13 +13,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 ##
-from ctypes             import *
-from comtypes           import COMError
-from comtypes.hresult   import S_OK, S_FALSE
+from ctypes import *
 
+from comtypes import COMError
 from comtypes.gen import DbgMod
+from comtypes.hresult import S_OK, S_FALSE
 from pybag.dbgeng import exception
-import dbgmodel.imodelobject as mo
+
+from . import imodelobject as mo
+
 
 class ModelIterator(object):
     def __init__(self, iter):
@@ -33,7 +35,8 @@ class ModelIterator(object):
         indexer = POINTER(DbgMod.IModelObject)()
         metadata = POINTER(DbgMod.IKeyStore)()
         try:
-            self._iter.GetNext(byref(object), dimensions, byref(indexer), byref(metadata))
+            self._iter.GetNext(byref(object), dimensions,
+                               byref(indexer), byref(metadata))
         except COMError as ce:
             return None
         index = mo.ModelObject(indexer)
@@ -43,6 +46,3 @@ class ModelIterator(object):
     def Reset(self):
         hr = self._keys.Reset()
         exception.check_err(hr)
-
-
- 

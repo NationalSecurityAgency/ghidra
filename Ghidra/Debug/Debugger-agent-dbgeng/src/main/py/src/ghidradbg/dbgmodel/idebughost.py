@@ -13,34 +13,32 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 ##
-from ctypes             import *
-from comtypes.hresult   import S_OK, S_FALSE
+from ctypes import *
 
 from comtypes.gen import DbgMod
+from comtypes.hresult import S_OK, S_FALSE
 from pybag.dbgeng import exception
+from pybag.dbgeng import win32
 
-from .idatamodelmanager import DataModelManager
-from .idebughost        import DebugHost
 
-class HostDataModelAccess(object):
-    def __init__(self, hdma):
-        self._hdma = hdma
-        exception.wrap_comclass(self._hdma)
+class DebugHost(object):
+    def __init__(self, host):
+        self._host = host
+        exception.wrap_comclass(self._host)
 
     def Release(self):
-        cnt = self._hdma.Release()
+        cnt = self._host.Release()
         if cnt == 0:
-            self._hdma = None
+            self._host = None
         return cnt
 
-    # HostDataModelAccess
+    # DebugHost
 
-    def GetDataModel(self):
-        manager = POINTER(DbgMod.IDataModelManager)()
-        host = POINTER(DbgMod.IDebugHost)()
-        hr = self._hdma.GetDataModel(byref(manager), byref(host))
-        exception.check_err(hr)
-        return (DataModelManager(manager), DebugHost(host))
-		
+    def GetCurrentContext(self, context):
+        raise exception.E_NOTIMPL_Error
 
- 
+    def GetDefaultMetadata(self, metadata):
+        raise exception.E_NOTIMPL_Error
+
+    def GetHostDefinedInterface(self, hostUnk):
+        raise exception.E_NOTIMPL_Error

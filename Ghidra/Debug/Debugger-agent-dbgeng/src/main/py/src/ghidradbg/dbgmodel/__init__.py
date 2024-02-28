@@ -13,7 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 ##
+import os
 
-# NOTE: libraries must precede EVERYTHING, esp pybag and DbgMod
 
-from . import libraries, util, commands, methods, hooks
+def module_locator():
+    return os.path.dirname(os.path.realpath(__file__))

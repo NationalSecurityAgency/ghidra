@@ -13,18 +13,20 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 ##
-from ctypes             	import *
-from comtypes			    import IUnknown, COMError
-from comtypes.automation    import IID, VARIANT
-from comtypes.hresult   	import S_OK, S_FALSE
-from comtypes.gen.DbgMod   	import *
-from enum 					import Enum
+from ctypes import *
+from enum import Enum
 
+from comtypes import IUnknown, COMError
+from comtypes.automation import IID, VARIANT
 from comtypes.gen import DbgMod
+from comtypes.hresult import S_OK, S_FALSE
 from pybag.dbgeng import exception
 
-from .ikeyenumerator import KeyEnumerator
+from comtypes.gen.DbgMod import *
+
 from .iiterableconcept import IterableConcept
+from .ikeyenumerator import KeyEnumerator
+
 
 class ModelObjectKind(Enum):
     PROPERTY_ACCESSOR = 0
@@ -37,6 +39,7 @@ class ModelObjectKind(Enum):
     INTRINSIC = 7
     METHOD = 8
     KEY_REFERENCE = 9
+
 
 class ModelObject(object):
     def __init__(self, obj):
@@ -56,42 +59,42 @@ class ModelObject(object):
 
     def AddParentModel(self, model, contextObject, override):
         raise exception.E_NOTIMPL_Error
-        
+
     def ClearConcepts(self):
         raise exception.E_NOTIMPL_Error
-        
+
     def ClearKeys(self):
         raise exception.E_NOTIMPL_Error
-        
+
     def Compare(self, other, equal):
         raise exception.E_NOTIMPL_Error
-        
+
     def Dereference(self, object):
         raise exception.E_NOTIMPL_Error
-        
+
     def EnumerateKeyReferences(self):
         raise exception.E_NOTIMPL_Error
-        
+
     def EnumerateKeys(self):
         keys = POINTER(DbgMod.IKeyEnumerator)()
         hr = self._obj.EnumerateKeys(byref(keys))
         if hr != S_OK:
             return None
         return KeyEnumerator(keys)
-		
+
     def EnumerateKeyValues(self):
         raise exception.E_NOTIMPL_Error
-        
+
     def EnumerateRawReferences(self, kind, searchFlags):
         raise exception.E_NOTIMPL_Error
-        
+
     def EnumerateRawValues(self, kind, searchFlag):
         keys = POINTER(DbgMod.IRawEnumerator)()
         hr = self._obj.EnumerateRawValues(kind, searchFlag, byref(keys))
         if hr != S_OK:
             return None
         return RawEnumerator(keys, kind)
-		
+
     def GetConcept(self, ref):
         ifc = POINTER(IUnknown)()
         metadata = POINTER(DbgMod.IKeyStore)()
@@ -102,10 +105,10 @@ class ModelObject(object):
 
     def GetContext(self, context):
         raise exception.E_NOTIMPL_Error
-        
+
     def GetContextForDataModel(self, dataModelObject, context):
         raise exception.E_NOTIMPL_Error
-        
+
     def GetIntrinsicValue(self):
         var = VARIANT()
         hr = self._obj.GetIntrinsicValue(var)
@@ -123,7 +126,7 @@ class ModelObject(object):
         raise exception.E_NOTIMPL_Error
 
     def GetKeyValue(self, key):
-        kbuf = cast(c_wchar_p(key),POINTER(c_ushort))
+        kbuf = cast(c_wchar_p(key), POINTER(c_ushort))
         value = POINTER(DbgMod.IModelObject)()
         store = POINTER(DbgMod.IKeyStore)()
         hr = self._obj.GetKeyValue(kbuf, byref(value), byref(store))
@@ -142,16 +145,16 @@ class ModelObject(object):
 
     def GetNumberOfParentModels(self, numModels):
         raise exception.E_NOTIMPL_Error
-        
+
     def GetParentModel(self, i, model, context):
         raise exception.E_NOTIMPL_Error
-        
+
     def GetRawReference(self, kind, name, searchFlags, object):
         raise exception.E_NOTIMPL_Error
-        
+
     def GetRawValue(self, kind, name, searchFlags, object):
         raise exception.E_NOTIMPL_Error
-        
+
     def GetTargetInfo(self):
         location = POINTER(DbgMod._Location)()
         type = POINTER(DbgMod.IDebugHostType)()
@@ -161,47 +164,47 @@ class ModelObject(object):
 
     def GetTypeInfo(self, type):
         raise exception.E_NOTIMPL_Error
-        
+
     def IsEqualTo(self, other, equal):
         raise exception.E_NOTIMPL_Error
-        
+
     def RemoveParentModel(self, model):
         raise exception.E_NOTIMPL_Error
-        
+
     def SetConcept(self, ref, interface, metadata):
         raise exception.E_NOTIMPL_Error
-        
+
     def SetContextForDataModel(self, modelObject, context):
         raise exception.E_NOTIMPL_Error
-        
+
     def SetKey(self, key, object, metadata):
         raise exception.E_NOTIMPL_Error
-        
+
     def SetKeyValue(self, key, object):
         raise exception.E_NOTIMPL_Error
-        
+
     def TryCastToRuntimeType(self, runtimeTypedObject):
         raise exception.E_NOTIMPL_Error
-        
+
     # Auxiliary
 
     def GetKeyValueMap(self):
         map = {}
         keys = self.EnumerateKeys()
-        (k,v) = keys.GetNext()
+        (k, v) = keys.GetNext()
         while k is not None:
             map[k.value] = self.GetKeyValue(k.value)
-            (k,v) = keys.GetNext()
+            (k, v) = keys.GetNext()
         return map
 
     def GetRawValueMap(self):
         map = {}
         kind = self.GetKind()
         keys = self.EnumerateRawValues(kind, c_long(0))
-        (k,v) = keys.GetNext()
+        (k, v) = keys.GetNext()
         while k is not None:
             map[k.value] = v
-            (k,v) = keys.GetNext()
+            (k, v) = keys.GetNext()
         return map
 
     def GetAttributes(self):
@@ -210,11 +213,10 @@ class ModelObject(object):
         if kind == ModelObjectKind.ERROR:
             return map
         if kind == ModelObjectKind.INTRINSIC or \
-            kind == ModelObjectKind.TARGET_OBJECT or \
-            kind == ModelObjectKind.TARGET_OBJECT_REFERENCE:
+                kind == ModelObjectKind.TARGET_OBJECT or \
+                kind == ModelObjectKind.TARGET_OBJECT_REFERENCE:
             return self.GetRawValueMap()
         return self.GetKeyValueMap()
-
 
     def GetElements(self):
         list = []
@@ -248,7 +250,7 @@ class ModelObject(object):
                 if "x" not in idx:
                     idx = int(idx)
                 else:
-                    idx = int(idx,16)
+                    idx = int(idx, 16)
                 next = next.GetElement(idx)
             else:
                 next = next.GetKeyValue(element)
@@ -268,6 +270,5 @@ class ModelObject(object):
         kind = self.GetKind()
         if kind == ModelObjectKind.TARGET_OBJECT or \
            kind == ModelObjectKind.INTRINSIC:
-           return self.GetTargetInfo()
+            return self.GetTargetInfo()
         return None
-

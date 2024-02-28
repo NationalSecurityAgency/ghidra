@@ -14,10 +14,10 @@
 #  limitations under the License.
 ##
 from ghidratrace.client import Address, RegVal
-
 from pybag import pydbg
 
 from . import util
+
 
 language_map = {
     'ARM': ['AARCH64:BE:64:v8A', 'AARCH64:LE:64:AppleSilicon', 'AARCH64:LE:64:v8A', 'ARM:BE:64:v8', 'ARM:LE:64:v8'],
