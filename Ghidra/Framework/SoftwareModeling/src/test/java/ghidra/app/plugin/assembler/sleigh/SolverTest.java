@@ -15,13 +15,15 @@
  */
 package ghidra.app.plugin.assembler.sleigh;
 
+import static ghidra.pcode.utils.SlaFormat.*;
 import static org.junit.Assert.*;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Test;
-import org.xml.sax.SAXException;
 
 import ghidra.GhidraApplicationLayout;
 import ghidra.app.plugin.assembler.sleigh.expr.*;
@@ -37,9 +39,8 @@ import ghidra.app.plugin.processors.sleigh.template.HandleTpl;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
 import ghidra.program.model.lang.LanguageID;
+import ghidra.program.model.pcode.*;
 import ghidra.util.Msg;
-import ghidra.xml.XmlPullParser;
-import ghidra.xml.XmlPullParserFactory;
 
 public class SolverTest {
 	static final DefaultAssemblyResolutionFactory FACTORY = new DefaultAssemblyResolutionFactory();
@@ -164,24 +165,54 @@ public class SolverTest {
 	}
 
 	@Test
-	public void testCatOrSolver() throws SAXException, NeedsBackfillException {
-		XmlPullParser parser = XmlPullParserFactory.create("""
-				<or_exp>
-				  <lshift_exp>
-				    <tokenfield bigendian='false' signbit='false' bitstart='0' bitend='3'
-				                bytestart='0' byteend='0' shift='0'/>
-				    <intb val='4'/>
-				  </lshift_exp>
-				  <tokenfield bigendian='false' signbit='false' bitstart='8' bitend='11'
-				              bytestart='1' byteend='1' shift='0'/>
-				</or_exp>
-				""",
-			"Test", null, true);
-		PatternExpression exp = PatternExpression.restoreExpression(parser, null);
+	public void testCatOrSolver() throws NeedsBackfillException, DecoderException, IOException {
+		PatchPackedEncode encode = new PatchPackedEncode();
+		encode.clear();
+		encode.openElement(ELEM_OR_EXP);
+		encode.openElement(ELEM_LSHIFT_EXP);
+		encode.openElement(ELEM_TOKENFIELD);
+		encode.writeBool(ATTRIB_BIGENDIAN, false);
+		encode.writeBool(ATTRIB_SIGNBIT, false);
+		encode.writeSignedInteger(ATTRIB_STARTBIT, 0);
+		encode.writeSignedInteger(ATTRIB_ENDBIT, 3);
+		encode.writeSignedInteger(ATTRIB_STARTBYTE, 0);
+		encode.writeSignedInteger(ATTRIB_ENDBYTE, 0);
+		encode.writeSignedInteger(ATTRIB_SHIFT, 0);
+		encode.closeElement(ELEM_TOKENFIELD);
+		encode.openElement(ELEM_INTB);
+		encode.writeSignedInteger(ATTRIB_VAL, 4);
+		encode.closeElement(ELEM_INTB);
+		encode.closeElement(ELEM_LSHIFT_EXP);
+		encode.openElement(ELEM_TOKENFIELD);
+		encode.writeBool(ATTRIB_BIGENDIAN, false);
+		encode.writeBool(ATTRIB_SIGNBIT, false);
+		encode.writeSignedInteger(ATTRIB_STARTBIT, 0);
+		encode.writeSignedInteger(ATTRIB_ENDBIT, 11);
+		encode.writeSignedInteger(ATTRIB_STARTBYTE, 1);
+		encode.writeSignedInteger(ATTRIB_ENDBYTE, 1);
+		encode.writeSignedInteger(ATTRIB_SHIFT, 0);
+		encode.closeElement(ELEM_TOKENFIELD);
+		encode.closeElement(ELEM_OR_EXP);
+		ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+		encode.writeTo(outStream);
+		byte[] bytes = outStream.toByteArray();
+		PackedDecode decoder = new PackedDecode();
+		decoder.open(1024, "Test");
+		decoder.ingestBytes(bytes, 0, bytes.length);
+		decoder.endIngest();
+//				<or_exp>
+//				  <lshift_exp>
+//				    <tokenfield bigendian='false' signbit='false' bitstart='0' bitend='3'
+//				                bytestart='0' byteend='0' shift='0'/>
+//				    <intb val='4'/>
+//				  </lshift_exp>
+//				  <tokenfield bigendian='false' signbit='false' bitstart='8' bitend='11'
+//				              bytestart='1' byteend='1' shift='0'/>
+//				</or_exp>
+		PatternExpression exp = PatternExpression.decodeExpression(decoder, null);
 		RecursiveDescentSolver solver = RecursiveDescentSolver.getSolver();
-		AssemblyResolution res =
-			solver.solve(FACTORY, exp, MaskedLong.fromLong(0x78), Collections.emptyMap(),
-				FACTORY.nop("NOP"), "Test");
+		AssemblyResolution res = solver.solve(FACTORY, exp, MaskedLong.fromLong(0x78),
+			Collections.emptyMap(), FACTORY.nop("NOP"), "Test");
 		AssemblyResolution e = FACTORY.fromString("ins:X7:X8", "Test", null);
 		assertEquals(e, res);
 	}

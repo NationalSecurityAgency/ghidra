@@ -15,17 +15,13 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import java.io.PrintStream;
-import java.util.Iterator;
-import java.util.List;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import org.jdom.Element;
+import java.io.IOException;
 
 import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.sleighbase.SleighBase;
-import ghidra.pcodeCPort.slghpatexpress.PatternExpression;
 import ghidra.pcodeCPort.slghpatexpress.PatternValue;
-import ghidra.pcodeCPort.utils.XmlUtils;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.Location;
 
 public class ValueMapSymbol extends ValueSymbol {
@@ -60,38 +56,23 @@ public class ValueMapSymbol extends ValueSymbol {
 	}
 
 	@Override
-	public void saveXml(PrintStream s) {
-		s.append("<valuemap_sym");
-		saveSleighSymbolXmlHeader(s);
-		s.append(">\n");
-		patval.saveXml(s);
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_VALUEMAP_SYM);
+		encoder.writeUnsignedInteger(ATTRIB_ID, id);
+		patval.encode(encoder);
 		for (int i = 0; i < valuetable.size(); ++i) {
-			s.append("<valuetab val=\"").append(Long.toString(valuetable.get(i))).append("\"/>\n");
+			encoder.openElement(ELEM_VALUETAB);
+			encoder.writeSignedInteger(ATTRIB_VAL, valuetable.get(i));
+			encoder.closeElement(ELEM_VALUETAB);
 		}
-		s.append("</valuemap_sym>\n");
+		encoder.closeElement(ELEM_VALUEMAP_SYM);
 	}
 
 	@Override
-	public void saveXmlHeader(PrintStream s) {
-		s.append("<valuemap_sym_head");
-		saveSleighSymbolXmlHeader(s);
-		s.append("/>\n");
-	}
-
-	@Override
-	public void restoreXml(Element el, SleighBase trans) {
-		List<?> list = el.getChildren();
-		Iterator<?> iter = list.iterator();
-		Element element = (Element) iter.next();
-		patval = (PatternValue) PatternExpression.restoreExpression(element, trans);
-		patval.layClaim();
-		while (iter.hasNext()) {
-			Element child = (Element) iter.next();
-			long value = XmlUtils.decodeUnknownLong(child.getAttributeValue("val"));
-			valuetable.push_back(value);
-		}
-		checkTableFill();
-
+	public void encodeHeader(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_VALUEMAP_SYM_HEAD);
+		encodeSleighSymbolHeader(encoder);
+		encoder.closeElement(ELEM_VALUEMAP_SYM_HEAD);
 	}
 
 }

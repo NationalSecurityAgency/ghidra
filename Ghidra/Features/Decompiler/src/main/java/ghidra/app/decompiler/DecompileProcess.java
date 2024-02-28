@@ -77,7 +77,7 @@ public class DecompileProcess {
 	private int maxResultSizeMBYtes = 50; // maximum result size in MBytes to allow from decompiler
 
 	private PackedDecode paramDecoder;			// Decoder to use for queries from the decompiler
-	private PackedEncode resultEncoder;			// Encoder to use for query responses
+	private PatchPackedEncode resultEncoder;	// Encoder to use for query responses
 	private StringIngest stringDecoder;		// Ingest of exception and status messages
 
 	public enum DisposeState {
@@ -202,7 +202,7 @@ public class DecompileProcess {
 	private int readToBuffer(ByteIngest buf) throws IOException {
 		int cur;
 		for (;;) {
-			buf.ingestStream(nativeIn);
+			buf.ingestStreamToNextTerminator(nativeIn);
 			do {
 				cur = nativeIn.read();
 			}
@@ -239,7 +239,7 @@ public class DecompileProcess {
 		write(string_end);
 	}
 
-	private void writeString(Encoder byteResult) throws IOException {
+	private void writeString(CachedEncoder byteResult) throws IOException {
 		if (nativeOut == null) {
 			return;
 		}
@@ -426,7 +426,7 @@ public class DecompileProcess {
 		// Decompiler process may callback during the registerProgram operation
 		// so provide query/reponse decoding/encoding
 		paramDecoder = new PackedDecode(program.getAddressFactory());
-		resultEncoder = new PackedEncode();
+		resultEncoder = new PatchPackedEncode();
 
 		StringIngest response = new StringIngest();	// Don't use stringDecoder
 
@@ -605,8 +605,8 @@ public class DecompileProcess {
 	 * @throws IOException for problems with the pipe to the decompiler process
 	 * @throws DecompileException for problems executing the command
 	 */
-	public synchronized void sendCommand1Param(String command, Encoder param1, ByteIngest response)
-			throws IOException, DecompileException {
+	public synchronized void sendCommand1Param(String command, CachedEncoder param1,
+			ByteIngest response) throws IOException, DecompileException {
 		if (!statusGood) {
 			throw new IOException(command + " called on bad process");
 		}

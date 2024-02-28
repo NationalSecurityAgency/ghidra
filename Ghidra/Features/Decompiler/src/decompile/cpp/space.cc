@@ -45,13 +45,15 @@ void AddrSpace::calcScaleMask(void)
 /// \param t is the processor translator associated with the new space
 /// \param tp is the type of the new space (PROCESSOR, CONSTANT, INTERNAL,...)
 /// \param nm is the name of the new space
+/// \param bigEnd is \b true for big endian encoding
 /// \param size is the (offset encoding) size of the new space
 /// \param ws is the number of bytes in an addressable unit
 /// \param ind is the integer identifier for the new space
 /// \param fl can be 0 or AddrSpace::hasphysical
 /// \param dl is the number of rounds to delay heritage for the new space
-AddrSpace::AddrSpace(AddrSpaceManager *m,const Translate *t,spacetype tp,const string &nm,
-		     uint4 size,uint4 ws, int4 ind,uint4 fl,int4 dl)
+/// \param dead is the number of rounds to delay before dead code removal
+AddrSpace::AddrSpace(AddrSpaceManager *m,const Translate *t,spacetype tp,const string &nm,bool bigEnd,
+		     uint4 size,uint4 ws, int4 ind,uint4 fl,int4 dl,int4 dead)
 {
   refcount = 0;			// No references to this space yet
   manage = m;
@@ -62,13 +64,13 @@ AddrSpace::AddrSpace(AddrSpaceManager *m,const Translate *t,spacetype tp,const s
   wordsize = ws;
   index = ind;
   delay = dl;
-  deadcodedelay = dl;		// Deadcode delay initially starts the same as heritage delay
+  deadcodedelay = dead;
   minimumPointerSize = 0;	// (initially) assume pointers must match the space size exactly
   shortcut = ' ';		// Placeholder meaning shortcut is unassigned
 
   // These are the flags we allow to be set from constructor
   flags = (fl & hasphysical);
-  if (t->isBigEndian())
+  if (bigEnd)
     flags |= big_endian;
   flags |= (heritaged | does_deadcode);		// Always on unless explicitly turned off in derived constructor
   
@@ -92,24 +94,6 @@ AddrSpace::AddrSpace(AddrSpaceManager *m,const Translate *t,spacetype tp)
   minimumPointerSize = 0;
   shortcut = ' ';
   // We let big_endian get set by attribute
-}
-
-/// Save the \e name, \e index, \e bigendian, \e delay,
-/// \e size, \e wordsize, and \e physical attributes which
-/// are common with all address spaces derived from AddrSpace
-/// \param s the stream where the attributes are written
-void AddrSpace::saveBasicAttributes(ostream &s) const
-
-{
-  a_v(s,"name",name);
-  a_v_i(s,"index",index);
-  a_v_b(s,"bigendian",isBigEndian());
-  a_v_i(s,"delay",delay);
-  if (delay != deadcodedelay)
-    a_v_i(s,"deadcodedelay",deadcodedelay);
-  a_v_i(s,"size",addressSize);
-  if (wordsize > 1) a_v_i(s,"wordsize",wordsize);
-  a_v_b(s,"physical",hasPhysical());
 }
 
 /// The logical form of the space is truncated from its actual size
@@ -310,17 +294,6 @@ uintb AddrSpace::read(const string &s,int4 &size) const
   return offset;
 }
 
-/// Write a tag fully describing the details of this space
-/// suitable for later recovery via decode.
-/// \param s is the stream being written
-void AddrSpace::saveXml(ostream &s) const
-
-{
-  s << "<space";		// This implies type=processor
-  saveBasicAttributes(s);
-  s << "/>\n";
-}
-
 /// Walk attributes of the current element and recover all the properties defining
 /// this space.  The processor translator, \e trans, and the
 /// \e type must already be filled in.
@@ -378,7 +351,7 @@ const int4 ConstantSpace::INDEX = 0;
 /// \param m is the associated address space manager
 /// \param t is the associated processor translator
 ConstantSpace::ConstantSpace(AddrSpaceManager *m,const Translate *t)
-  : AddrSpace(m,t,IPTR_CONSTANT,NAME,sizeof(uintb),1,INDEX,0,0)
+  : AddrSpace(m,t,IPTR_CONSTANT,NAME,false,sizeof(uintb),1,INDEX,0,0,0)
 {
   clearFlags(heritaged|does_deadcode|big_endian);
   if (HOST_ENDIAN==1)		// Endianness always matches host
@@ -397,14 +370,6 @@ void ConstantSpace::printRaw(ostream &s,uintb offset) const
 
 {
   s << "0x" << hex << offset;
-}
-
-/// The ConstantSpace should never be explicitly saved as it is
-/// always built automatically
-void ConstantSpace::saveXml(ostream &s) const
-
-{
-  throw LowlevelError("Should never save the constant space as XML");
 }
 
 /// As the ConstantSpace is never saved, it should never get
@@ -426,7 +391,7 @@ const int4 OtherSpace::INDEX = 1;
 /// \param t is the associated processor translator
 /// \param ind is the integer identifier
 OtherSpace::OtherSpace(AddrSpaceManager *m,const Translate *t,int4 ind)
-  : AddrSpace(m,t,IPTR_PROCESSOR,NAME,sizeof(uintb),1,INDEX,0,0)
+  : AddrSpace(m,t,IPTR_PROCESSOR,NAME,false,sizeof(uintb),1,INDEX,0,0,0)
 {
   clearFlags(heritaged|does_deadcode);
   setFlags(is_otherspace);
@@ -445,14 +410,6 @@ void OtherSpace::printRaw(ostream &s,uintb offset) const
   s << "0x" << hex << offset;
 }
 
-void OtherSpace::saveXml(ostream &s) const
-
-{
-  s << "<space_other";
-  saveBasicAttributes(s);
-  s << "/>\n";
-}
-
 const string UniqueSpace::NAME = "unique";
 
 const uint4 UniqueSpace::SIZE = 4;
@@ -465,7 +422,7 @@ const uint4 UniqueSpace::SIZE = 4;
 /// \param ind is the integer identifier
 /// \param fl are attribute flags (currently unused)
 UniqueSpace::UniqueSpace(AddrSpaceManager *m,const Translate *t,int4 ind,uint4 fl)
-  : AddrSpace(m,t,IPTR_INTERNAL,NAME,SIZE,1,ind,fl,0)
+  : AddrSpace(m,t,IPTR_INTERNAL,NAME,t->isBigEndian(),SIZE,1,ind,fl,0,0)
 {
   setFlags(hasphysical);
 }
@@ -476,14 +433,6 @@ UniqueSpace::UniqueSpace(AddrSpaceManager *m,const Translate *t)
   setFlags(hasphysical);
 }
 
-void UniqueSpace::saveXml(ostream &s) const
-
-{
-  s << "<space_unique";
-  saveBasicAttributes(s);
-  s << "/>\n";
-}
-
 const string JoinSpace::NAME = "join";
 
 /// This is the constructor for the \b join space, which is automatically constructed by the
@@ -492,7 +441,7 @@ const string JoinSpace::NAME = "join";
 /// \param t is the associated processor translator
 /// \param ind is the integer identifier
 JoinSpace::JoinSpace(AddrSpaceManager *m,const Translate *t,int4 ind)
-  : AddrSpace(m,t,IPTR_JOIN,NAME,sizeof(uintm),1,ind,0,0)
+  : AddrSpace(m,t,IPTR_JOIN,NAME,t->isBigEndian(),sizeof(uintm),1,ind,0,0,0)
 {
   // This is a virtual space
   // setFlags(hasphysical);
@@ -691,12 +640,6 @@ uintb JoinSpace::read(const string &s,int4 &size) const
   return rec->getUnified().offset;
 }
 
-void JoinSpace::saveXml(ostream &s) const
-
-{
-  throw LowlevelError("Should never save join space to XML");
-}
-
 void JoinSpace::decode(Decoder &decoder)
 
 {
@@ -710,16 +653,6 @@ OverlaySpace::OverlaySpace(AddrSpaceManager *m,const Translate *t)
 {
   baseSpace = (AddrSpace *)0;
   setFlags(overlay);
-}
-
-void OverlaySpace::saveXml(ostream &s) const
-
-{
-  s << "<space_overlay";
-  a_v(s,"name",name);
-  a_v_i(s,"index",index);
-  a_v(s,"base",baseSpace->getName());
-  s << "/>\n";
 }
 
 void OverlaySpace::decode(Decoder &decoder)

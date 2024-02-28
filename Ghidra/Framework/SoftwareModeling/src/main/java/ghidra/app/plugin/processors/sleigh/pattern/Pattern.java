@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +19,13 @@
  */
 package ghidra.app.plugin.processors.sleigh.pattern;
 
-import ghidra.app.plugin.processors.sleigh.*;
-import ghidra.program.model.mem.*;
-import ghidra.xml.*;
+import ghidra.app.plugin.processors.sleigh.ParserWalker;
+import ghidra.app.plugin.processors.sleigh.SleighDebugLogger;
+import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 /**
- * 
- *
  * A pattern which either matches or doesnt match a particular
  * InstructionContext.  In particular, the bits comprising the
  * current instruction in the executable, and possible other
@@ -34,14 +33,25 @@ import ghidra.xml.*;
  */
 public abstract class Pattern {
 	public abstract Pattern simplifyClone();
+
 	public abstract void shiftInstruction(int sa);
-	public abstract Pattern doOr(Pattern b,int sa);
-	public abstract Pattern doAnd(Pattern b,int sa);
-	public abstract boolean isMatch(ParserWalker walker, SleighDebugLogger debug) throws MemoryAccessException;
+
+	public abstract Pattern doOr(Pattern b, int sa);
+
+	public abstract Pattern doAnd(Pattern b, int sa);
+
+	public abstract boolean isMatch(ParserWalker walker, SleighDebugLogger debug)
+			throws MemoryAccessException;
+
 	public abstract int numDisjoint();
+
 	public abstract DisjointPattern getDisjoint(int i);
+
 	public abstract boolean alwaysTrue();
+
 	public abstract boolean alwaysFalse();
+
 	public abstract boolean alwaysInstructionTrue();
-	public abstract void restoreXml(XmlPullParser parser);
+
+	public abstract void decode(Decoder decoder) throws DecoderException;
 }

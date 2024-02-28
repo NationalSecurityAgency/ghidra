@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,80 +19,67 @@
  */
 package ghidra.app.plugin.processors.sleigh.symbol;
 
-import ghidra.app.plugin.processors.sleigh.*;
-import ghidra.app.plugin.processors.sleigh.expression.*;
-import ghidra.program.model.mem.*;
-import ghidra.xml.*;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import java.util.*;
+import java.util.ArrayList;
+
+import ghidra.app.plugin.processors.sleigh.*;
+import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
+import ghidra.app.plugin.processors.sleigh.expression.PatternValue;
+import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 /**
- * 
- *
  * A variable with its semantic (and printing) value equal to a fixed
  * mapping of its pattern
  */
 public class ValueSymbol extends FamilySymbol {
 
 	protected PatternValue patval;
-	
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.FamilySymbol#getPatternValue()
-	 */
+
 	@Override
-    public PatternValue getPatternValue() {
+	public PatternValue getPatternValue() {
 		return patval;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.TripleSymbol#getPatternExpression()
-	 */
 	@Override
-    public PatternExpression getPatternExpression() {
+	public PatternExpression getPatternExpression() {
 		return patval;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.symbol.TripleSymbol#getFixedHandle(ghidra.app.plugin.processors.sleigh.FixedHandle, ghidra.app.plugin.processors.sleigh.ParserWalker)
-	 */
 	@Override
-    public void getFixedHandle(FixedHandle hand, ParserWalker walker) throws MemoryAccessException {
+	public void getFixedHandle(FixedHandle hand, ParserWalker walker) throws MemoryAccessException {
 		hand.space = walker.getConstSpace();
 		hand.offset_space = null;
 		hand.offset_offset = patval.getValue(walker);
 		hand.size = 0;			// Cannot provide size
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.symbol.TripleSymbol#print(ghidra.app.plugin.processors.sleigh.ParserWalker)
-	 */
 	@Override
-    public String print(ParserWalker walker) throws MemoryAccessException {
+	public String print(ParserWalker walker) throws MemoryAccessException {
 		long val = patval.getValue(walker);
 		String res;
-		if (val >= 0)
+		if (val >= 0) {
 			res = "0x" + Long.toHexString(val);
-		else
+		}
+		else {
 			res = "-0x" + Long.toHexString(-val);
+		}
 		return res;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.symbol.TripleSymbol#printList(ghidra.app.plugin.processors.sleigh.ParserWalker, java.util.ArrayList)
-	 */
 	@Override
-    public void printList(ParserWalker walker, ArrayList<Object> list) throws MemoryAccessException {
+	public void printList(ParserWalker walker, ArrayList<Object> list)
+			throws MemoryAccessException {
 		list.add(walker.getParentHandle());
 	}
-	
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.Symbol#restoreXml(org.jdom.Element, ghidra.program.model.address.AddressFactory)
-	 */
+
 	@Override
-    public void restoreXml(XmlPullParser parser,SleighLanguage sleigh) {
-	    XmlElement el = parser.start("value_sym");
-		patval = (PatternValue)PatternExpression.restoreExpression(parser,sleigh);
-		parser.end(el);
+	public void decode(Decoder decoder, SleighLanguage sleigh) throws DecoderException {
+//		int el = decoder.openElement(ELEM_VALUE_SYM);
+		patval = (PatternValue) PatternExpression.decodeExpression(decoder, sleigh);
+		decoder.closeElementSkipping(ELEM_VALUE_SYM.id());
 	}
 
 }

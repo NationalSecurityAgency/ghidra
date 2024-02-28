@@ -15,16 +15,15 @@
  */
 package ghidra.pcodeCPort.semantics;
 
-import java.io.*;
-import java.util.List;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import org.jdom.Element;
+import java.io.IOException;
 
 import generic.stl.VectorSTL;
 import ghidra.pcodeCPort.semantics.ConstTpl.const_type;
 import ghidra.pcodeCPort.semantics.ConstTpl.v_field;
 import ghidra.pcodeCPort.space.spacetype;
-import ghidra.pcodeCPort.translate.Translate;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.Location;
 
 public class VarnodeTpl {
@@ -129,22 +128,25 @@ public class VarnodeTpl {
 
 	public int transfer(VectorSTL<HandleTpl> params) {
 		boolean doesOffsetPlus = false;
-		int handleIndex=0;
-		int plus=0;
-		
-		if ((offset.getType()==const_type.handle)&&(offset.getSelect()==v_field.v_offset_plus)) {
+		int handleIndex = 0;
+		int plus = 0;
+
+		if ((offset.getType() == const_type.handle) &&
+			(offset.getSelect() == v_field.v_offset_plus)) {
 			handleIndex = offset.getHandleIndex();
-			plus = (int)offset.getReal();
+			plus = (int) offset.getReal();
 			doesOffsetPlus = true;
 		}
 		space.transfer(params);
 		offset.transfer(params);
 		size.transfer(params);
 		if (doesOffsetPlus) {
-			if (isLocalTemp())
+			if (isLocalTemp()) {
 				return plus;		// A positive number indicates truncation of a local temp
-			if (params.get(handleIndex).getSize().isZero())
+			}
+			if (params.get(handleIndex).getSize().isZero()) {
 				return plus;		//     or a zerosize object
+			}
 		}
 		return -1;
 	}
@@ -155,60 +157,40 @@ public class VarnodeTpl {
 		size.changeHandleIndex(handmap);
 	}
 
-	public boolean adjustTruncation(int sz,boolean isbigendian) {
+	public boolean adjustTruncation(int sz, boolean isbigendian) {
 		// We know this.offset is an v_field.offset_plus, check that the truncation is in bounds (given -sz-)
 		// adjust plus for endianness if necessary
 		// return true if truncation is in bounds
-		if (size.getType() != const_type.real)
+		if (size.getType() != const_type.real) {
 			return false;
-		int numbytes = (int)size.getReal();
+		}
+		int numbytes = (int) size.getReal();
 		int byteoffset = (int) offset.getReal();
-		if (numbytes + byteoffset > sz) return false;
-		
+		if (numbytes + byteoffset > sz) {
+			return false;
+		}
+
 		// Encode the original truncation amount with the plus value
 		long val = byteoffset;
 		val <<= 16;
-		if (isbigendian)
+		if (isbigendian) {
 			val |= (sz - (numbytes + byteoffset));
-		else
+		}
+		else {
 			val |= byteoffset;
-		
-		offset = new ConstTpl(const_type.handle,offset.getHandleIndex(),v_field.v_offset_plus,val);
+		}
+
+		offset =
+			new ConstTpl(const_type.handle, offset.getHandleIndex(), v_field.v_offset_plus, val);
 		return true;
 	}
-	
-	public void saveXml(PrintStream s) {
-		s.append("<varnode_tpl>");
-//        s.append( "<varnode_tpl id=\"" + id + "\">" );
-		space.saveXml(s);
-		offset.saveXml(s);
-		size.saveXml(s);
-		s.append("</varnode_tpl>\n");
-	}
 
-	@Override
-	public String toString() {
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		PrintStream ps = new PrintStream(baos, true);
-		saveXml(ps);
-		ps.flush();
-		String result = baos.toString();
-		ps.close();
-		try {
-			baos.close();
-		}
-		catch (IOException e) {
-			// whatever
-		}
-		return result;
-	}
-
-	public void restoreXml(Element el, Translate trans) {
-		List<?> list = el.getChildren();
-
-		space.restoreXml((Element) list.get(0), trans);
-		offset.restoreXml((Element) list.get(1), trans);
-		size.restoreXml((Element) list.get(2), trans);
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_VARNODE_TPL);
+		space.encode(encoder);
+		offset.encode(encoder);
+		size.encode(encoder);
+		encoder.closeElement(ELEM_VARNODE_TPL);
 	}
 
 	public int compareTo(VarnodeTpl op2) {

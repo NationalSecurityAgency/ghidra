@@ -1959,7 +1959,7 @@ const string FspecSpace::NAME = "fspec";
 /// \param t is the associated processor translator
 /// \param ind is the index associated with the space
 FspecSpace::FspecSpace(AddrSpaceManager *m,const Translate *t,int4 ind)
-  : AddrSpace(m,t,IPTR_FSPEC,NAME,sizeof(void *),1,ind,0,1)
+  : AddrSpace(m,t,IPTR_FSPEC,NAME,false,sizeof(void *),1,ind,0,1,1)
 {
   clearFlags(heritaged|does_deadcode|big_endian);
   if (HOST_ENDIAN==1)		// Endianness always set by host
@@ -2006,12 +2006,6 @@ void FspecSpace::printRaw(ostream &s,uintb offset) const
     s << "func_";
     fc->getEntryAddress().printRaw(s);
   }
-}
-
-void FspecSpace::saveXml(ostream &s) const
-
-{
-  throw LowlevelError("Should never encode fspec space to stream");
 }
 
 void FspecSpace::decode(Decoder &decoder)

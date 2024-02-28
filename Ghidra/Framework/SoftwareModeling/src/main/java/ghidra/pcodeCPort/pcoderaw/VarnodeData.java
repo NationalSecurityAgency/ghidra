@@ -15,12 +15,9 @@
  */
 package ghidra.pcodeCPort.pcoderaw;
 
-import org.jdom.Element;
-
-import ghidra.pcodeCPort.address.*;
-import ghidra.pcodeCPort.error.*;
-import ghidra.pcodeCPort.space.*;
-import ghidra.pcodeCPort.translate.*;
+import ghidra.pcodeCPort.address.Address;
+import ghidra.pcodeCPort.address.AddressUtils;
+import ghidra.pcodeCPort.space.AddrSpace;
 
 public class VarnodeData {
 	//  string name;			// This field will be depracated when sleigh comes on line
@@ -29,17 +26,18 @@ public class VarnodeData {
 	public long offset;
 
 	public int size;
-	// for use before restoreXML
-	public VarnodeData() { 
+
+	public VarnodeData() {
 	}
-	public VarnodeData( AddrSpace base, long off, int size ) {
+
+	public VarnodeData(AddrSpace base, long off, int size) {
 		space = base;
 		offset = off;
 		this.size = size;
 	}
 
 	@Override
-	public boolean equals( Object obj ) {
+	public boolean equals(Object obj) {
 		if (obj == this) {
 			return true;
 		}
@@ -52,53 +50,25 @@ public class VarnodeData {
 
 	@Override
 	public int hashCode() {
-	    return space.hashCode() + (int) offset + size;
+		return space.hashCode() + (int) offset + size;
 	}
-	
-	public int compareTo( VarnodeData other ) {
-		int result = space.compareTo( other.space );
+
+	public int compareTo(VarnodeData other) {
+		int result = space.compareTo(other.space);
 		if (result != 0) {
 			return result;
 		}
-		result = AddressUtils.unsignedCompare( offset, other.offset );
+		result = AddressUtils.unsignedCompare(offset, other.offset);
 		if (result != 0) {
 			return result;
 		}
 		return other.size - size;// BIG sizes come first
 	}
-	
-	// Build this VarnodeData from an \b \<addr\> tag
-	// \param el is the parsed tag
-	// \param trans is the relevant processor translator
-	public void restoreXml( Element el, Translate trans ) {
-		String name = el.getAttributeValue( "name" );
-		if (name != null) {
-			VarnodeData vdata = trans.getRegister( name );
-			space = vdata.space;
-			offset = vdata.offset;
-			size = vdata.size;
-			return;
-		}
-
-		
-		String attributeValue = el.getAttributeValue( "space" );
-		if ( attributeValue == null ) {
-		    return;
-		}
-		
-        space = trans.getSpaceByName( attributeValue );
-		if (space == null) {
-			throw new LowlevelError( "Unknown space name: " + attributeValue );
-		}
-		offset = AddrSpace.restore_xml_offset( el );
-		size = AddrSpace.restore_xml_size( el );
-	}
-
 
 	public Address getAddress() {
 //	    if ( space == null ) {
 //	        return new Address( AddrSpace.MIN_SPACE, 0 );
 //	    }
-	    return new Address(this.space, this.offset);
+		return new Address(this.space, this.offset);
 	}
 }

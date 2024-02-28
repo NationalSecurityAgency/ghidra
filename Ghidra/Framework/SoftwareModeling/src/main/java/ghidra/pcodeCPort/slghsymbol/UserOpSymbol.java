@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,12 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import ghidra.pcodeCPort.sleighbase.*;
-import ghidra.pcodeCPort.utils.*;
+import static ghidra.pcode.utils.SlaFormat.*;
+
+import java.io.IOException;
+
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.Location;
-
-import java.io.PrintStream;
-
-import org.jdom.Element;
-
 
 // A user-defined pcode-op
 public class UserOpSymbol extends SleighSymbol {
@@ -31,15 +28,15 @@ public class UserOpSymbol extends SleighSymbol {
 	private int index;
 
 	public UserOpSymbol(Location location) {
-	    super(location);
-	} // For use with restoreXml
+		super(location);
+	}
 
-	public UserOpSymbol( Location location, String nm ) {
-		super( location, nm );
+	public UserOpSymbol(Location location, String nm) {
+		super(location, nm);
 		index = 0;
 	}
 
-	public void setIndex( int ind ) {
+	public void setIndex(int ind) {
 		index = ind;
 	}
 
@@ -48,30 +45,23 @@ public class UserOpSymbol extends SleighSymbol {
 	}
 
 	@Override
-    public symbol_type getType() {
+	public symbol_type getType() {
 		return symbol_type.userop_symbol;
 	}
 
 	@Override
-    public void saveXml( PrintStream s ) {
-		s.append( "<userop" );
-	    saveSleighSymbolXmlHeader(s);
-		s.append( " index=\"" );
-		s.print( index );
-		s.print( "\"" );
-		s.println( "/>" );
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_USEROP);
+		encoder.writeUnsignedInteger(ATTRIB_ID, id);
+		encoder.writeSignedInteger(ATTRIB_INDEX, index);
+		encoder.closeElement(ELEM_USEROP);
 	}
 
 	@Override
-    public void saveXmlHeader( PrintStream s ) {
-		s.append( "<userop_head" );
-	    saveSleighSymbolXmlHeader(s);
-		s.println( "/>" );
-	}
-
-	@Override
-    public void restoreXml( Element el, SleighBase trans ) {
-		index = XmlUtils.decodeUnknownInt( el.getAttributeValue( "index" ) );
+	public void encodeHeader(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_USEROP_HEAD);
+		encodeSleighSymbolHeader(encoder);
+		encoder.closeElement(ELEM_USEROP_HEAD);
 	}
 
 }

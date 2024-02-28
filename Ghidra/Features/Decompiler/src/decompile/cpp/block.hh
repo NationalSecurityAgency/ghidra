@@ -132,7 +132,7 @@ private:
 				// the result of the condition being false
   static void replaceEdgeMap(vector<BlockEdge> &vec);	///< Update block references in edges with copy map
   void addInEdge(FlowBlock *b,uint4 lab);	///< Add an edge coming into \b this
-  void decodeNextInEdge(Decoder &decoder,BlockMap &resolver);	///< Restore the next input edge from XML
+  void decodeNextInEdge(Decoder &decoder,BlockMap &resolver);	///< Decode the next input edge from stream
   void halfDeleteInEdge(int4 slot);		///< Delete the \e in half of an edge, correcting indices
   void halfDeleteOutEdge(int4 slot);		///< Delete the \e out half of an edge, correcting indices
   void removeInEdge(int4 slot);			///< Remove an incoming edge

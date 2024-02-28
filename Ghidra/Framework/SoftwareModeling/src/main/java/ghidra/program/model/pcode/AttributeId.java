@@ -171,7 +171,7 @@ public record AttributeId(String name, int id) {
 
 	// space
 	public static final AttributeId ATTRIB_BASE = new AttributeId("base", 89);
-	public static final AttributeId ATTRIB_DEADCODEDELAY = new AttributeId("deadcodedelay", 90);
+//	public static final AttributeId ATTRIB_DEADCODEDELAY = new AttributeId("deadcodedelay", 90);
 	public static final AttributeId ATTRIB_DELAY = new AttributeId("delay", 91);
 	public static final AttributeId ATTRIB_LOGICALSIZE = new AttributeId("logicalsize", 92);
 	public static final AttributeId ATTRIB_PHYSICAL = new AttributeId("physical", 93);

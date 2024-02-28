@@ -31,7 +31,7 @@ const string IopSpace::NAME = "iop";
 /// \param t is the associated processor translator
 /// \param ind is the associated index
 IopSpace::IopSpace(AddrSpaceManager *m,const Translate *t,int4 ind)
-  : AddrSpace(m,t,IPTR_IOP,NAME,sizeof(void *),1,ind,0,1)
+  : AddrSpace(m,t,IPTR_IOP,NAME,false,sizeof(void *),1,ind,0,1,1)
 {
   clearFlags(heritaged|does_deadcode|big_endian);
   if (HOST_ENDIAN==1)		// Endianness always set to host
@@ -56,12 +56,6 @@ void IopSpace::printRaw(ostream &s,uintb offset) const
     bl = (BlockBasic *)bs->getOut(0);
   s << "code_" << bl->getStart().getShortcut();
   bl->getStart().printRaw(s);
-}
-
-void IopSpace::saveXml(ostream &s) const
-
-{
-  throw LowlevelError("Should never encode iop space to stream");
 }
 
 void IopSpace::decode(Decoder &decoder)
