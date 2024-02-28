@@ -22,15 +22,14 @@ import socket
 import sys
 import time
 
+from ghidratrace import sch
+from ghidratrace.client import Client, Address, AddressRange, TraceObject
 from pybag import pydbg, userdbg, kerneldbg
 from pybag.dbgeng import core as DbgEng
 from pybag.dbgeng import exception
-from dbgmodel.imodelobject import ModelObjectKind
-
-from ghidratrace import sch
-from ghidratrace.client import Client, Address, AddressRange, TraceObject
 
 from . import util, arch, methods, hooks
+from .dbgmodel.imodelobject import ModelObjectKind
 
 
 PAGE_SIZE = 4096

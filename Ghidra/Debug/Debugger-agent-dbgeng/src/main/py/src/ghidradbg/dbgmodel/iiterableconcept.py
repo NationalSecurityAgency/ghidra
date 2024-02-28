@@ -13,36 +13,30 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 ##
-from ctypes             import *
-from comtypes.hresult   import S_OK, S_FALSE
+from ctypes import *
 
+from comtypes import COMError
 from comtypes.gen import DbgMod
+from comtypes.hresult import S_OK, S_FALSE
 from pybag.dbgeng import exception
-from pybag.dbgeng import win32
 
-class DebugHost(object):
-    def __init__(self, host):
-        self._host = host
-        exception.wrap_comclass(self._host)
+from .imodeliterator import ModelIterator
 
-    def Release(self):
-        cnt = self._host.Release()
-        if cnt == 0:
-            self._host = None
-        return cnt
 
-    # DebugHost
+class IterableConcept(object):
+    def __init__(self, concept):
+        self._concept = concept
+        concept.AddRef()
 
-    def GetCurrentContext(self, context):
+    # IterableConcept
+
+    def GetDefaultIndexDimensionality(self, context, dimensionality):
         raise exception.E_NOTIMPL_Error
 
-    def GetDefaultMetadata(self, metadata):
-        raise exception.E_NOTIMPL_Error
-        
-    def GetHostDefinedInterface(self, hostUnk):
-        raise exception.E_NOTIMPL_Error
-
-
-
-
- 
+    def GetIterator(self, context):
+        iterator = POINTER(DbgMod.IModelIterator)()
+        try:
+            self._concept.GetIterator(context._obj, byref(iterator))
+        except COMError as ce:
+            return None
+        return ModelIterator(iterator)

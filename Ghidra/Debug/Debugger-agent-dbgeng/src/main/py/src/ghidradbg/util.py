@@ -28,22 +28,16 @@ import traceback
 
 from comtypes import CoClass, GUID
 import comtypes
+from comtypes.gen import DbgMod
 from comtypes.hresult import S_OK
-
 from pybag import pydbg, userdbg, kerneldbg, crashdbg
 from pybag.dbgeng import core as DbgEng
 from pybag.dbgeng import exception
 from pybag.dbgeng import util as DbgUtil
 from pybag.dbgeng.callbacks import DbgEngCallbacks
 
-from dbgmodel.ihostdatamodelaccess import HostDataModelAccess
-import comtypes.client
-try:
-    from comtypes.gen import DbgMod
-except:
-    tlb = "..\..\..\..\build\os\win_x86_64\dbgmodel.tlb"
-    comtypes.client.GetModule(tlb)
-    from comtypes.gen import DbgMod
+from ghidradbg.dbgmodel.ihostdatamodelaccess import HostDataModelAccess
+
 
 DbgVersion = namedtuple('DbgVersion', ['full', 'name', 'dotted', 'arch'])
 

@@ -19,11 +19,10 @@ from io import StringIO
 import re
 import sys
 
-from pybag import pydbg
-from pybag.dbgeng import core as DbgEng, exception
-
 from ghidratrace import sch
 from ghidratrace.client import MethodRegistry, ParamDesc, Address, AddressRange
+from pybag import pydbg
+from pybag.dbgeng import core as DbgEng, exception
 
 from . import util, commands
 

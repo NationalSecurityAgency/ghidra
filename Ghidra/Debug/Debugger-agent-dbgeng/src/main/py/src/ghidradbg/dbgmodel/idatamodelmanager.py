@@ -13,12 +13,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 ##
-from ctypes             import *
-from comtypes.hresult   import S_OK, S_FALSE
+from ctypes import *
 
 from comtypes.gen import DbgMod
+from comtypes.hresult import S_OK, S_FALSE
 from pybag.dbgeng import exception
-import dbgmodel.imodelobject as mo
+
+from . import imodelobject as mo
+
 
 class DataModelManager(object):
     def __init__(self, mgr):
@@ -41,43 +43,43 @@ class DataModelManager(object):
 
     def AcquireNamedModel(self, modelName, modelObject):
         raise exception.E_NOTIMPL_Error
-        
+
     def Close(self):
         raise exception.E_NOTIMPL_Error
-        
+
     def CreateNoValue(self, object):
         raise exception.E_NOTIMPL_Error
-        
+
     def CreateErrorObject(self, error, message, object):
         raise exception.E_NOTIMPL_Error
-        
+
     def CreateTypedObject(self, context, objectLocation, objectType, object):
         raise exception.E_NOTIMPL_Error
-        
+
     def CreateTypedObjectByReference(self, context, objectLocation, objectType, object):
         raise exception.E_NOTIMPL_Error
-        
+
     def CreateSyntheticObject(self, context, object):
         raise exception.E_NOTIMPL_Error
-        
+
     def CreateDataModelObject(self, dataModel, object):
         raise exception.E_NOTIMPL_Error
-        
+
     def CreateTypedIntrinsicObject(self, intrinsicData, type, object):
         raise exception.E_NOTIMPL_Error
-        
+
     def CreateIntrinsicObject(self, objectKind, intrinsicData, object):
         raise exception.E_NOTIMPL_Error
-        
+
     def GetModelForTypeSignature(self, typeSignature, dataModel):
         raise exception.E_NOTIMPL_Error
-        
+
     def GetModelForType(self, type, dataModel, typeSignature, wildcardMatches):
         raise exception.E_NOTIMPL_Error
-        
+
     def RegisterExtensionForTypeSignature(self, typeSignature, dataModel):
         raise exception.E_NOTIMPL_Error
-        
+
     def RegisterModelForTypeSignature(self, typeSignature, dataModel):
         raise exception.E_NOTIMPL_Error
 
@@ -92,5 +94,3 @@ class DataModelManager(object):
 
     def UnregisterNamedModel(self, modelName):
         raise exception.E_NOTIMPL_Error
-
- 

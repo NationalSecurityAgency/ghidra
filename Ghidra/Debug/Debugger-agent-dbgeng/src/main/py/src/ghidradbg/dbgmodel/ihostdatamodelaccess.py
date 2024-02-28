@@ -13,39 +13,32 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 ##
-from ctypes             import *
-from comtypes           import BSTR
-from comtypes.hresult   import S_OK, S_FALSE
+from ctypes import *
 
 from comtypes.gen import DbgMod
+from comtypes.hresult import S_OK, S_FALSE
 from pybag.dbgeng import exception
-import dbgmodel.imodelobject as mo
 
-class KeyEnumerator(object):
-    def __init__(self, keys):
-        self._keys = keys
-        exception.wrap_comclass(self._keys)
+from .idatamodelmanager import DataModelManager
+from .idebughost import DebugHost
+
+
+class HostDataModelAccess(object):
+    def __init__(self, hdma):
+        self._hdma = hdma
+        exception.wrap_comclass(self._hdma)
 
     def Release(self):
-        cnt = self._keys.Release()
+        cnt = self._hdma.Release()
         if cnt == 0:
-            self._keys = None
+            self._hdma = None
         return cnt
 
-    # KeyEnumerator
+    # HostDataModelAccess
 
-    def GetNext(self):
-        key = BSTR()
-        value = POINTER(DbgMod.IModelObject)()
-        store = POINTER(DbgMod.IKeyStore)()
-        hr = self._keys.GetNext(byref(key), byref(value), byref(store))
-        if hr != S_OK:
-            return (None, None)
-        return (key, mo.ModelObject(value))
-
-    def Reset(self):
-        hr = self._keys.Reset()
+    def GetDataModel(self):
+        manager = POINTER(DbgMod.IDataModelManager)()
+        host = POINTER(DbgMod.IDebugHost)()
+        hr = self._hdma.GetDataModel(byref(manager), byref(host))
         exception.check_err(hr)
-
-
- 
+        return (DataModelManager(manager), DebugHost(host))
