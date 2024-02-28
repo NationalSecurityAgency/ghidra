@@ -199,6 +199,14 @@ public class Gui {
 	}
 
 	/**
+	 * Returns true if the theme system is in the process of updating
+	 * @return true if the theme system is in the process of updating
+	 */
+	public static boolean isUpdatingTheme() {
+		return themeManager.isUpdatingTheme();
+	}
+
+	/**
 	 * Returns true if the given id is a system-defined id, such as those starting with
 	 * {@code laf.color} or {@code system.color}.
 	 *

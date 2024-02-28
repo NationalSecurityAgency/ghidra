@@ -236,11 +236,9 @@ public class ReflectionUtilities {
 		StackTraceElement[] trace = t.getStackTrace();
 		int lastIgnoreIndex = -1;
 		for (int i = 0; i < trace.length; i++) {
-
 			StackTraceElement element = trace[i];
-			String className = element.getClassName();
-			int nameIndex = patterns.indexOf(className);
-			if (nameIndex != -1) {
+			String text = element.getClassName() + " " + element.getMethodName();
+			if (containsAny(text, patterns)) {
 				lastIgnoreIndex = i;
 			}
 			else {
@@ -267,6 +265,15 @@ public class ReflectionUtilities {
 		StackTraceElement[] updatedTrace = Arrays.copyOfRange(trace, startIndex, trace.length);
 		t.setStackTrace(updatedTrace);
 		return t;
+	}
+
+	private static boolean containsAny(String text, List<String> patterns) {
+		for (String pattern : patterns) {
+			if (text.contains(pattern)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
