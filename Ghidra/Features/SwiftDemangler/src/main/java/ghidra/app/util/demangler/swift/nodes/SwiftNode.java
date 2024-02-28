@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
-import ghidra.app.util.bin.format.swift.SwiftTypeMetadata;
 import ghidra.app.util.demangler.*;
 import ghidra.app.util.demangler.swift.SwiftDemangledNodeKind;
 import ghidra.app.util.demangler.swift.SwiftDemangler;
@@ -113,7 +112,7 @@ public abstract class SwiftNode {
 			case Tuple -> new SwiftTupleNode();
 			case TupleElement -> new SwiftTupleElementNode();
 			case TupleElementName -> new SwiftGenericTextNode();
-			case Type -> new SwiftTypeNode();
+			case Type -> new SwiftGenericPassthroughNode();
 			case TypeAlias -> new SwiftTypeAliasNode();
 			case TypeList -> new SwiftTypeListNode();
 			case TypeMetadataAccessFunction -> new SwiftTypeMetadataAccessFunctionNode();
@@ -129,11 +128,10 @@ public abstract class SwiftNode {
 	 * Demangles this {@link SwiftNode}
 	 * 
 	 * @param demangler The {@link SwiftDemangler}
-	 * @param typeMetadata The {@link SwiftTypeMetadata}, or null if it is not known
 	 * @return The demangled {@link SwiftNode}
 	 * @throws DemangledException if a problem occurred
 	 */
-	public abstract Demangled demangle(SwiftDemangler demangler, SwiftTypeMetadata typeMetadata)
+	public abstract Demangled demangle(SwiftDemangler demangler)
 			throws DemangledException;
 
 	/**
@@ -354,17 +352,16 @@ public abstract class SwiftNode {
 	 * Demangles the first child {@link SwiftNode}, if it exists
 	 * 
 	 * @param demangler The {@link SwiftDemangler}
-	 * @param typeMetadata The {@link SwiftTypeMetadata}, or null if it is not known
 	 * @return The demangled first child {@link SwiftNode}
 	 * @throws DemangledException if there are no children or another problem occurred
 	 */
-	protected Demangled demangleFirstChild(SwiftDemangler demangler, SwiftTypeMetadata typeMetadata)
+	protected Demangled demangleFirstChild(SwiftDemangler demangler)
 			throws DemangledException {
 		Demangled first = null;
 		for (int i = 0; i < children.size(); i++) {
 			SwiftNode child = children.get(i);
 			if (i == 0) {
-				first = child.demangle(demangler, typeMetadata);
+				first = child.demangle(demangler);
 			}
 			else {
 				child.skip(child);

@@ -18,7 +18,6 @@ package ghidra.app.util.demangler.swift.nodes;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.format.swift.SwiftTypeMetadata;
 import ghidra.app.util.demangler.*;
 import ghidra.app.util.demangler.swift.SwiftDemangledNodeKind;
 import ghidra.app.util.demangler.swift.SwiftDemangler;
@@ -29,13 +28,12 @@ import ghidra.app.util.demangler.swift.SwiftDemangler;
 public class SwiftGlobalVariableOnceDeclListNode extends SwiftNode {
 
 	@Override
-	public Demangled demangle(SwiftDemangler demangler, SwiftTypeMetadata typeMetadata)
-			throws DemangledException {
+	public Demangled demangle(SwiftDemangler demangler) throws DemangledException {
 		List<Demangled> elements = new ArrayList<>();
 		for (SwiftNode child : getChildren()) {
 			switch (child.getKind()) {
 				case Identifier:
-					elements.add(child.demangle(demangler, typeMetadata));
+					elements.add(child.demangle(demangler));
 					break;
 				default:
 					skip(child);

@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.demangler.swift.nodes;
 
-import ghidra.app.util.bin.format.swift.SwiftTypeMetadata;
 import ghidra.app.util.demangler.Demangled;
 import ghidra.app.util.demangler.DemangledException;
 import ghidra.app.util.demangler.swift.SwiftDemangledNodeKind;
@@ -29,8 +28,7 @@ import ghidra.program.model.lang.CompilerSpec;
 public class SwiftAllocatorNode extends SwiftNode {
 
 	@Override
-	public Demangled demangle(SwiftDemangler demangler, SwiftTypeMetadata typeMetadata)
-			throws DemangledException {
+	public Demangled demangle(SwiftDemangler demangler) throws DemangledException {
 		String name = null;
 		Demangled namespace = null;
 		Demangled type = null;
@@ -39,12 +37,12 @@ public class SwiftAllocatorNode extends SwiftNode {
 		for (SwiftNode child : getChildren()) {
 			switch (child.getKind()) {
 				case Class:
-					namespace = child.demangle(demangler, typeMetadata);
+					namespace = child.demangle(demangler);
 					name = "__allocating_init";
 					callingConvention = CompilerSpec.CALLING_CONVENTION_thiscall;
 					break;
 				case Extension:
-					namespace = child.demangle(demangler, typeMetadata);
+					namespace = child.demangle(demangler);
 					if (child.hasChild(SwiftDemangledNodeKind.Class)) {
 						name = "__allocating_init";
 						callingConvention = CompilerSpec.CALLING_CONVENTION_thiscall;
@@ -60,14 +58,14 @@ public class SwiftAllocatorNode extends SwiftNode {
 				case Enum:
 				case Protocol:
 				case Structure:
-					namespace = child.demangle(demangler, typeMetadata);
+					namespace = child.demangle(demangler);
 					name = "init";
 					break;
 				case Type:
-					type = child.demangle(demangler, typeMetadata);
+					type = child.demangle(demangler);
 					break;
 				case LabelList:
-					labelList = child.demangle(demangler, typeMetadata);
+					labelList = child.demangle(demangler);
 					break;
 				default:
 					skip(child);

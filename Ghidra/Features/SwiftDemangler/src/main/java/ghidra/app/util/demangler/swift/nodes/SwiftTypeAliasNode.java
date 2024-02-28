@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.demangler.swift.nodes;
 
-import ghidra.app.util.bin.format.swift.SwiftTypeMetadata;
 import ghidra.app.util.demangler.*;
 import ghidra.app.util.demangler.swift.SwiftDemangledNodeKind;
 import ghidra.app.util.demangler.swift.SwiftDemangler;
@@ -26,8 +25,7 @@ import ghidra.app.util.demangler.swift.SwiftDemangler;
 public class SwiftTypeAliasNode extends SwiftNode {
 
 	@Override
-	public Demangled demangle(SwiftDemangler demangler, SwiftTypeMetadata typeMetadata)
-			throws DemangledException {
+	public Demangled demangle(SwiftDemangler demangler) throws DemangledException {
 		String name = null;
 		Demangled namespace = null;
 		for (SwiftNode child : getChildren()) {
@@ -36,7 +34,7 @@ public class SwiftTypeAliasNode extends SwiftNode {
 					name = child.getText();
 					break;
 				case Module:
-					namespace = child.demangle(demangler, typeMetadata);
+					namespace = child.demangle(demangler);
 					break;
 				default:
 					skip(child);

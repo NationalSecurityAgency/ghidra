@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.demangler.swift.nodes;
 
-import ghidra.app.util.bin.format.swift.SwiftTypeMetadata;
 import ghidra.app.util.demangler.*;
 import ghidra.app.util.demangler.swift.SwiftDemangledNodeKind;
 import ghidra.app.util.demangler.swift.SwiftDemangler;
@@ -28,20 +27,19 @@ import ghidra.program.model.lang.CompilerSpec;
 public class SwiftGlobalVariableOnceFunctionNode extends SwiftNode {
 
 	@Override
-	public Demangled demangle(SwiftDemangler demangler, SwiftTypeMetadata typeMetadata)
-			throws DemangledException {
+	public Demangled demangle(SwiftDemangler demangler) throws DemangledException {
 		Demangled namespace = null;
 		DemangledList names = null;
 		for (SwiftNode child : getChildren()) {
 			switch (child.getKind()) {
 				case GlobalVariableOnceDeclList:
-					Demangled demangled = child.demangle(demangler, typeMetadata);
+					Demangled demangled = child.demangle(demangler);
 					if (demangled instanceof DemangledList list) {
 						names = list;
 					}
 					break;
 				case Structure:
-					namespace = child.demangle(demangler, typeMetadata);
+					namespace = child.demangle(demangler);
 					break;
 				default:
 					skip(child);

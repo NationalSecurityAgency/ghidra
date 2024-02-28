@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.demangler.swift.datatypes;
 
-import ghidra.app.util.bin.format.swift.SwiftTypeMetadata;
 import ghidra.app.util.demangler.*;
 import ghidra.app.util.demangler.swift.SwiftDemangler;
 
@@ -31,13 +30,11 @@ public class SwiftEnum extends DemangledStructure {
 	 * @param originalDemangled The natively demangled string
 	 * @param name The enum name
 	 * @param namespace The enum namespace (could be null)
-	 * @param typeMetadata The {@link SwiftTypeMetadata}, or null if it is not known
 	 * @param demangler A {@link SwiftDemangler}
 	 * @throws DemangledException if a problem occurred
 	 */
-	public SwiftEnum(String mangled, String originalDemangled, String name,
-			Demangled namespace, SwiftTypeMetadata typeMetadata, SwiftDemangler demangler)
-			throws DemangledException {
+	public SwiftEnum(String mangled, String originalDemangled, String name, Demangled namespace,
+			SwiftDemangler demangler) throws DemangledException {
 		super(mangled, originalDemangled, name,
 			SwiftDataTypeUtils.getCategoryPath(namespace).getPath(), true);
 		setNamespace(namespace);

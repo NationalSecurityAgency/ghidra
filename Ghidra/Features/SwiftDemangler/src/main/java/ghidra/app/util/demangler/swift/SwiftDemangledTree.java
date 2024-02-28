@@ -20,6 +20,7 @@ import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import ghidra.app.util.demangler.DemangledException;
 import ghidra.app.util.demangler.swift.SwiftNativeDemangler.SwiftNativeDemangledOutput;
 import ghidra.app.util.demangler.swift.nodes.SwiftNode;
 import ghidra.app.util.demangler.swift.nodes.SwiftNode.NodeProperties;
@@ -78,11 +79,17 @@ public class SwiftDemangledTree {
 	 * 
 	 * @param nativeDemangler The Swift native demangler
 	 * @param mangled The mangled string
-	 * @throws IOException If there was an IO-related error
+	 * @throws DemangledException If there was an issue demangling
 	 */
 	public SwiftDemangledTree(SwiftNativeDemangler nativeDemangler, String mangled)
-			throws IOException {
-		SwiftNativeDemangledOutput demangledOutput = nativeDemangler.demangle(mangled);
+			throws DemangledException {
+		SwiftNativeDemangledOutput demangledOutput;
+		try {
+			demangledOutput = nativeDemangler.demangle(mangled);
+		}
+		catch (IOException e) {
+			throw new DemangledException(e);
+		}
 		demangledString = demangledOutput.demangled();
 		Stack<SwiftNode> stack = new Stack<>();
 		for (String line : demangledOutput.tree()) {

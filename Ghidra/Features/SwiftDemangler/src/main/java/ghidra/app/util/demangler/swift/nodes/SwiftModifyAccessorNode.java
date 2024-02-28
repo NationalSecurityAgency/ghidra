@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.demangler.swift.nodes;
 
-import ghidra.app.util.bin.format.swift.SwiftTypeMetadata;
 import ghidra.app.util.demangler.*;
 import ghidra.app.util.demangler.swift.SwiftDemangledNodeKind;
 import ghidra.app.util.demangler.swift.SwiftDemangler;
@@ -29,18 +28,17 @@ import ghidra.program.model.lang.CompilerSpec;
 public class SwiftModifyAccessorNode extends SwiftNode {
 
 	@Override
-	public Demangled demangle(SwiftDemangler demangler, SwiftTypeMetadata typeMetadata)
-			throws DemangledException {
+	public Demangled demangle(SwiftDemangler demangler) throws DemangledException {
 		Demangled demangled = null;
 		String name = "modify_";
 		String callingConvention = CompilerSpec.CALLING_CONVENTION_thiscall;
 		for (SwiftNode child : getChildren()) {
 			switch (child.getKind()) {
 				case Subscript:
-					demangled = child.demangle(demangler, typeMetadata);
+					demangled = child.demangle(demangler);
 					break;
 				case Variable:
-					demangled = child.demangle(demangler, typeMetadata);
+					demangled = child.demangle(demangler);
 					break;
 				default:
 					skip(child);

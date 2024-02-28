@@ -15,9 +15,7 @@
  */
 package ghidra.app.util.demangler.swift.nodes;
 
-import ghidra.app.util.bin.format.swift.SwiftTypeMetadata;
-import ghidra.app.util.demangler.Demangled;
-import ghidra.app.util.demangler.DemangledDataType;
+import ghidra.app.util.demangler.*;
 import ghidra.app.util.demangler.swift.SwiftDemangledNodeKind;
 import ghidra.app.util.demangler.swift.SwiftDemangler;
 
@@ -27,7 +25,7 @@ import ghidra.app.util.demangler.swift.SwiftDemangler;
 public class SwiftBuiltinTypeNameNode extends SwiftNode {
 
 	@Override
-	public Demangled demangle(SwiftDemangler demangler, SwiftTypeMetadata typeMetadata) {
+	public Demangled demangle(SwiftDemangler demangler) throws DemangledException {
 		String orig = getText();
 		String name = switch (orig) {
 			case "Builtin.Int1":

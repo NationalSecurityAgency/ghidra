@@ -33,16 +33,38 @@ import ghidra.util.task.TaskMonitor;
  */
 public class SwiftDemangler implements Demangler {
 
-	private Program program;
+	private Map<String, SwiftNode> cache;
 	private SwiftTypeMetadata typeMetadata;
 	private SwiftNativeDemangler nativeDemangler;
-	private SwiftDemanglerOptions options;
-	private Map<String, SwiftNode> cache;
-	private DemangledException initException;
+
+	/**
+	 * Creates a new {@link SwiftDemangler} that is not associated with any {@link Program}.
+	 * Call {@link #initialize(Program)} to associate it with a program, which will enable access
+	 * to the Swift type metadata.
+	 */
+	public SwiftDemangler() {
+		super();
+		try {
+			initialize(null);
+		}
+		catch (IOException e) {
+			// should not happen when initializing with null
+		}
+	}
+
+	/**
+	 * Creates a new {@link SwiftDemangler} that is associated with the given {@link Program}
+	 * 
+	 * @param program The {@link Program} to demangle
+	 * @throws IOException if there was a problem parsing the Swift type metadata
+	 */
+	public SwiftDemangler(Program program) throws IOException {
+		super();
+		initialize(program);
+	}
 
 	@Override
-	public boolean canDemangle(Program p) {
-		this.program = p;
+	public boolean canDemangle(Program program) {
 		return SwiftUtils.isSwift(program);
 	}
 
@@ -57,97 +79,25 @@ public class SwiftDemangler implements Demangler {
 		return demangle(mangled);
 	}
 
-	/**
-	 * Initializes class variables
-	 * 
-	 * @param opt The options
-	 * @throws DemangledException If there was an issue with initialization
-	 */
-	private void init(DemanglerOptions opt) throws DemangledException {
-		if (initException != null) {
-			throw initException;
-		}
-
-		if (program != null && typeMetadata == null) {
-			try {
+	public void initialize(Program program) throws IOException {
+		cache = new HashMap<>();
+		nativeDemangler = null;
+		try {
+			if (program != null) {
 				program.setPreferredRootNamespaceCategoryPath(
 					SwiftDataTypeUtils.SWIFT_CATEGORY.getPath());
 				typeMetadata = new SwiftTypeMetadata(program, TaskMonitor.DUMMY, new MessageLog());
 			}
-			catch (CancelledException e) {
-				return;
-			}
-			catch (IOException e) {
-				initException = new DemangledException(e);
-				throw initException;
-			}
 		}
-
-		if (opt != null) {
-			options = getSwiftDemanglerOptions(opt);
-		}
-		
-		if (nativeDemangler == null) {
-			try {
-				nativeDemangler = new SwiftNativeDemangler(options.getSwiftDir());
-			}
-			catch (IOException e) {
-				throw new DemangledException(e);
-			}
-		}
-
-		if (cache == null) {
-			cache = new HashMap<>();
-		}
-	}
-
-	/**
-	 * Demangles the given mangled string
-	 * 
-	 * @param mangled The mangled string
-	 * @param originalDemangled The demangled string produced by the native Swift demangler
-	 * @param meta The {@link SwiftTypeMetadata}, or null if unavailable
-	 * @return The {@link Demangled} object, or null if the mangled string is not a supported Swift
-	 *   symbol
-	 * @throws DemangledException if a problem occurred
-	 */
-	public Demangled demangle(String mangled, String originalDemangled, SwiftTypeMetadata meta)
-			throws DemangledException {
-		if (!isSwiftMangledSymbol(mangled)) {
-			return null;
-		}
-
-		try {
-			SwiftNode root;
-			if (cache.containsKey(mangled)) {
-				root = cache.get(mangled);
-			}
-			else {
-				SwiftDemangledTree tree = new SwiftDemangledTree(nativeDemangler, mangled);
-				root = tree.getRoot();
-			}
-			cache.put(mangled, root);
-			if (root == null) {
-				return null;
-			}
-			Demangled demangled = root.demangle(this, meta);
-			if (root.walkAndTest(node -> node.childWasSkipped())) {
-				demangled.setName(options.getIncompletePrefix() + demangled.getName());
-			}
-			return demangled;
-		}
-		catch (IOException e) {
-			throw new DemangledException(e);
+		catch (CancelledException e) {
+			return;
 		}
 	}
 
 	@Override
-	public DemangledObject demangle(String mangled, DemanglerOptions opt)
-			throws DemangledException {
-
-		init(opt);
-
-		Demangled demangled = demangle(mangled, null, typeMetadata);
+	public DemangledObject demangle(String mangled, DemanglerOptions op) throws DemangledException {
+		SwiftDemanglerOptions options = getSwiftDemanglerOptions(op);
+		Demangled demangled = getDemangled(mangled, options);
 		if (demangled instanceof DemangledFunction func) {
 			return func;
 		}
@@ -162,12 +112,44 @@ public class SwiftDemangler implements Demangler {
 	}
 
 	/**
-	 * Clears the cache
+	 * Get a new {@link Demangled} by demangling the given mangled string
+	 * 
+	 * @param mangled The mangled string
+	 * @param op The options (could be null)
+	 * @return A new {@link Demangled}
+	 * @throws DemangledException if there was an issue demangling
 	 */
-	public void clearCache() {
-		if (cache != null) {
-			cache.clear();
+	public Demangled getDemangled(String mangled, SwiftDemanglerOptions op)
+			throws DemangledException {
+		if (!isSwiftMangledSymbol(mangled)) {
+			return null;
 		}
+
+		SwiftDemanglerOptions options = getSwiftDemanglerOptions(op);
+		setSwiftNativeDemangler(options);
+
+		SwiftNode root = cache.containsKey(mangled) ? cache.get(mangled)
+				: new SwiftDemangledTree(nativeDemangler, mangled).getRoot();
+		cache.put(mangled, root);
+		if (root == null) {
+			return null;
+		}
+
+		Demangled demangled = root.demangle(this);
+		if (root.walkAndTest(node -> node.childWasSkipped())) {
+			demangled.setName(options.getIncompletePrefix() + demangled.getName());
+		}
+
+		return demangled;
+	}
+
+	/**
+	 * Gets the {@link SwiftTypeMetadata}
+	 * 
+	 * @return The {@link SwiftTypeMetadata}, or null if it is not available
+	 */
+	public SwiftTypeMetadata getTypeMetadata() {
+		return typeMetadata;
 	}
 
 	/**
@@ -194,5 +176,22 @@ public class SwiftDemangler implements Demangler {
 			opt = createDefaultOptions();
 		}
 		return (SwiftDemanglerOptions) opt;
+	}
+
+	/**
+	 * Ensures that this demangler has access to a {@link SwiftNativeDemangler}
+	 * 
+	 * @param options The options
+	 * @throws DemangledException if there was a problem getting the {@link SwiftNativeDemangler}
+	 */
+	private void setSwiftNativeDemangler(SwiftDemanglerOptions options) throws DemangledException {
+		if (nativeDemangler == null) {
+			try {
+				nativeDemangler = new SwiftNativeDemangler(options.getSwiftDir());
+			}
+			catch (IOException e) {
+				throw new DemangledException(e);
+			}
+		}
 	}
 }

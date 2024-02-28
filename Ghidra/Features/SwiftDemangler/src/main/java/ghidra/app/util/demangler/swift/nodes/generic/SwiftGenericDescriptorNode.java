@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.demangler.swift.nodes.generic;
 
-import ghidra.app.util.bin.format.swift.SwiftTypeMetadata;
 import ghidra.app.util.demangler.*;
 import ghidra.app.util.demangler.swift.SwiftDemangler;
 import ghidra.app.util.demangler.swift.nodes.SwiftNode;
@@ -26,9 +25,8 @@ import ghidra.app.util.demangler.swift.nodes.SwiftNode;
 public class SwiftGenericDescriptorNode extends SwiftNode {
 
 	@Override
-	public Demangled demangle(SwiftDemangler demangler, SwiftTypeMetadata typeMetadata)
-			throws DemangledException {
-		Demangled demangled = demangleFirstChild(demangler, typeMetadata);
+	public Demangled demangle(SwiftDemangler demangler) throws DemangledException {
+		Demangled demangled = demangleFirstChild(demangler);
 		return new DemangledLabel(properties.mangled(), properties.originalDemangled(),
 			demangled.getNamespaceString());
 	}

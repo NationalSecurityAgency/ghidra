@@ -32,18 +32,17 @@ public class SwiftStructure extends DemangledStructure {
 	 * @param originalDemangled The natively demangled string
 	 * @param name The structure name
 	 * @param namespace The structure namespace (could be null)
-	 * @param typeMetadata The {@link SwiftTypeMetadata}, or null if it is not known
 	 * @param demangler A {@link SwiftDemangler}
 	 * @throws DemangledException if a problem occurred
 	 */
 	public SwiftStructure(String mangled, String originalDemangled, String name,
-			Demangled namespace, SwiftTypeMetadata typeMetadata, SwiftDemangler demangler)
-			throws DemangledException {
+			Demangled namespace, SwiftDemangler demangler) throws DemangledException {
 		super(mangled, originalDemangled, name,
 			SwiftDataTypeUtils.getCategoryPath(namespace).getPath(), true);
 		setNamespace(namespace);
 
 		// Try to add structure fields from the type metadata
+		SwiftTypeMetadata typeMetadata = demangler.getTypeMetadata();
 		if (typeMetadata != null) {
 			TargetTypeContextDescriptor typeDescriptor =
 				typeMetadata.getTargetTypeContextDescriptors().get(name);
@@ -53,8 +52,7 @@ public class SwiftStructure extends DemangledStructure {
 				if (fieldDescriptor != null) {
 					for (FieldRecord fieldRecord : fieldDescriptor.getFieldRecords()) {
 						String mangledType = "_T" + fieldRecord.getMangledTypeName();
-						Demangled demangled =
-							demangler.demangle(mangledType, originalDemangled, typeMetadata);
+						Demangled demangled = demangler.getDemangled(mangledType, null);
 						if (demangled instanceof DemangledDataType ddt) {
 							addField(fieldRecord.getFieldName(), fieldRecord.getDescription(), ddt);
 						}

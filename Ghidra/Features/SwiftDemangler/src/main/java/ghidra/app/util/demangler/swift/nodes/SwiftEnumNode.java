@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.demangler.swift.nodes;
 
-import ghidra.app.util.bin.format.swift.SwiftTypeMetadata;
 import ghidra.app.util.demangler.Demangled;
 import ghidra.app.util.demangler.DemangledException;
 import ghidra.app.util.demangler.swift.SwiftDemangledNodeKind;
@@ -28,8 +27,7 @@ import ghidra.app.util.demangler.swift.datatypes.SwiftEnum;
 public class SwiftEnumNode extends SwiftNode {
 
 	@Override
-	public Demangled demangle(SwiftDemangler demangler, SwiftTypeMetadata typeMetadata)
-			throws DemangledException {
+	public Demangled demangle(SwiftDemangler demangler) throws DemangledException {
 		String name = null;
 		Demangled namespace = null;
 		Demangled privateDeclNamespace = null;
@@ -39,15 +37,16 @@ public class SwiftEnumNode extends SwiftNode {
 					name = child.getText();
 					break;
 				case PrivateDeclName:
-					Demangled temp = child.demangle(demangler, typeMetadata);
+					Demangled temp = child.demangle(demangler);
 					name = temp.getName();
 					privateDeclNamespace = temp.getNamespace();
 					break;
 				case Class:
+				case Enum:
 				case Extension:
 				case Module:
 				case Structure:
-					namespace = child.demangle(demangler, typeMetadata);
+					namespace = child.demangle(demangler);
 					break;
 				default:
 					skip(child);
@@ -58,6 +57,6 @@ public class SwiftEnumNode extends SwiftNode {
 			return getUnknown();
 		}
 		return new SwiftEnum(properties.mangled(), properties.originalDemangled(), name,
-			SwiftNode.join(namespace, privateDeclNamespace), typeMetadata, demangler);
+			SwiftNode.join(namespace, privateDeclNamespace), demangler);
 	}
 }

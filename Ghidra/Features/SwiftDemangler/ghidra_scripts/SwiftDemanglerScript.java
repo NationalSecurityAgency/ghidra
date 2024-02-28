@@ -27,7 +27,7 @@ public class SwiftDemanglerScript extends GhidraScript {
 
 	@Override
 	protected void run() throws Exception {
-		SwiftDemangler demangler = new SwiftDemangler();
+		SwiftDemangler demangler = new SwiftDemangler(currentProgram);
 		SwiftDemanglerOptions options = new SwiftDemanglerOptions();
 		if (!demangler.canDemangle(currentProgram)) {
 			println("Not a Swift program");

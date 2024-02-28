@@ -46,7 +46,7 @@ public class DemangledLabel extends DemangledObject {
 
 	@Override
 	public String getSignature(boolean format) {
-		return originalDemangled;
+		return getName();
 	}
 
 }

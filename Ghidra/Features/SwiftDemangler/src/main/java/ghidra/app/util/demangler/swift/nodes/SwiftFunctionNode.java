@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.demangler.swift.nodes;
 
-import ghidra.app.util.bin.format.swift.SwiftTypeMetadata;
 import ghidra.app.util.demangler.*;
 import ghidra.app.util.demangler.swift.SwiftDemangledNodeKind;
 import ghidra.app.util.demangler.swift.SwiftDemangler;
@@ -28,8 +27,7 @@ import ghidra.program.model.lang.CompilerSpec;
 public class SwiftFunctionNode extends SwiftNode {
 
 	@Override
-	public Demangled demangle(SwiftDemangler demangler, SwiftTypeMetadata typeMetadata)
-			throws DemangledException {
+	public Demangled demangle(SwiftDemangler demangler) throws DemangledException {
 		String name = null;
 		Demangled namespace = null;
 		Demangled type = null;
@@ -44,7 +42,7 @@ public class SwiftFunctionNode extends SwiftNode {
 					name = child.getText() + " infix";
 					break;
 				case LocalDeclName:
-					name = child.demangle(demangler, typeMetadata).getName();
+					name = child.demangle(demangler).getName();
 					break;
 				case Class:
 					callingConvention = CompilerSpec.CALLING_CONVENTION_thiscall;
@@ -55,13 +53,13 @@ public class SwiftFunctionNode extends SwiftNode {
 				case Module:
 				case Protocol:
 				case Structure:
-					namespace = child.demangle(demangler, typeMetadata);
+					namespace = child.demangle(demangler);
 					break;
 				case Type:
-					type = child.demangle(demangler, typeMetadata);
+					type = child.demangle(demangler);
 					break;
 				case LabelList:
-					labelList = child.demangle(demangler, typeMetadata);
+					labelList = child.demangle(demangler);
 					break;
 				default:
 					skip(child);

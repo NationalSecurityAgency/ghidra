@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.demangler.swift.nodes;
 
-import ghidra.app.util.bin.format.swift.SwiftTypeMetadata;
 import ghidra.app.util.demangler.*;
 import ghidra.app.util.demangler.swift.SwiftDemangledNodeKind;
 import ghidra.app.util.demangler.swift.SwiftDemangler;
@@ -28,17 +27,16 @@ import ghidra.program.model.lang.CompilerSpec;
 public class SwiftFunctionTypeNode extends SwiftNode {
 
 	@Override
-	public Demangled demangle(SwiftDemangler demangler, SwiftTypeMetadata typeMetadata)
-			throws DemangledException {
+	public Demangled demangle(SwiftDemangler demangler) throws DemangledException {
 		Demangled argumentTuple = null;
 		Demangled returnType = null;
 		for (SwiftNode child : getChildren()) {
 			switch (child.getKind()) {
 				case ArgumentTuple:
-					argumentTuple = child.demangle(demangler, typeMetadata);
+					argumentTuple = child.demangle(demangler);
 					break;
 				case ReturnType:
-					returnType = child.demangle(demangler, typeMetadata);
+					returnType = child.demangle(demangler);
 					break;
 				default:
 					skip(child);
@@ -63,12 +61,12 @@ public class SwiftFunctionTypeNode extends SwiftNode {
 			SwiftNode struct = functionAncestor.getChild(SwiftDemangledNodeKind.Structure);
 			SwiftNode enumm = functionAncestor.getChild(SwiftDemangledNodeKind.Enum);
 			if (struct != null) {
-				if (struct.demangle(demangler, typeMetadata) instanceof DemangledDataType type) {
+				if (struct.demangle(demangler) instanceof DemangledDataType type) {
 					function.addParameter(new DemangledParameter(type));
 				}
 			}
 			else if (enumm != null) {
-				if (enumm.demangle(demangler, typeMetadata) instanceof DemangledDataType type) {
+				if (enumm.demangle(demangler) instanceof DemangledDataType type) {
 					function.addParameter(new DemangledParameter(type));
 					// Enums are currently represented as single field structures, but in reality,
 					// there could be more fields.  Add a varargs parameter so these other fields
@@ -94,7 +92,7 @@ public class SwiftFunctionTypeNode extends SwiftNode {
 			}
 			else {
 				SwiftTuple tuple = new SwiftTuple(properties.mangled(),
-					properties.originalDemangled(), list, typeMetadata, demangler);
+					properties.originalDemangled(), list, demangler);
 				function.setReturnType(tuple);
 			}
 		}

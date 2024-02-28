@@ -15,9 +15,7 @@
  */
 package ghidra.app.util.demangler.swift.nodes;
 
-import ghidra.app.util.bin.format.swift.SwiftTypeMetadata;
-import ghidra.app.util.demangler.Demangled;
-import ghidra.app.util.demangler.DemangledDataType;
+import ghidra.app.util.demangler.*;
 import ghidra.app.util.demangler.swift.SwiftDemangledNodeKind;
 import ghidra.app.util.demangler.swift.SwiftDemangler;
 
@@ -27,7 +25,7 @@ import ghidra.app.util.demangler.swift.SwiftDemangler;
 public class SwiftDependentGenericParamTypeNode extends SwiftNode {
 
 	@Override
-	public Demangled demangle(SwiftDemangler demangler, SwiftTypeMetadata typeMetadata) {
+	public Demangled demangle(SwiftDemangler demangler) throws DemangledException {
 		// We don't really support this yet
 		return new DemangledDataType(properties.mangled(), properties.originalDemangled(),
 			DemangledDataType.UNDEFINED);

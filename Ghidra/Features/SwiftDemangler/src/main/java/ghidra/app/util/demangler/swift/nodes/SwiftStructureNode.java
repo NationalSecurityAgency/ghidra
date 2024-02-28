@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.demangler.swift.nodes;
 
-import ghidra.app.util.bin.format.swift.SwiftTypeMetadata;
 import ghidra.app.util.demangler.*;
 import ghidra.app.util.demangler.swift.SwiftDemangledNodeKind;
 import ghidra.app.util.demangler.swift.SwiftDemangler;
@@ -27,8 +26,7 @@ import ghidra.app.util.demangler.swift.datatypes.*;
 public class SwiftStructureNode extends SwiftNode {
 
 	@Override
-	public Demangled demangle(SwiftDemangler demangler, SwiftTypeMetadata typeMetadata)
-			throws DemangledException {
+	public Demangled demangle(SwiftDemangler demangler) throws DemangledException {
 		String name = null;
 		Demangled namespace = null;
 		Demangled privateDeclNamespace = null;
@@ -38,14 +36,15 @@ public class SwiftStructureNode extends SwiftNode {
 					name = child.getText();
 					break;
 				case PrivateDeclName:
-					Demangled temp = child.demangle(demangler, typeMetadata);
+					Demangled temp = child.demangle(demangler);
 					name = temp.getName();
 					privateDeclNamespace = temp.getNamespace();
 					break;
 				case Class:
+				case Enum:
 				case Module:
 				case Structure:
-					namespace = child.demangle(demangler, typeMetadata);
+					namespace = child.demangle(demangler);
 					break;
 				default:
 					skip(child);
@@ -85,7 +84,7 @@ public class SwiftStructureNode extends SwiftNode {
 		}
 
 		SwiftStructure struct = new SwiftStructure(mangled, orig, name,
-			SwiftNode.join(namespace, privateDeclNamespace), typeMetadata, demangler);
+			SwiftNode.join(namespace, privateDeclNamespace), demangler);
 
 		// The structure has no fields, which behaves poorly in the decompiler. Give it one
 		// undefined* field instead.

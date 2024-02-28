@@ -23,8 +23,11 @@ import ghidra.app.util.demangler.swift.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.OptionType;
 import ghidra.framework.options.Options;
+import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * An analyzer to demangle Swift mangled symbols
@@ -70,14 +73,22 @@ public class SwiftDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 	}
 
 	@Override
-	protected DemangledObject doDemangle(String mangled, DemanglerOptions options, MessageLog log)
-			throws DemangledException {
-		return demangler.demangle(mangled, options);
+	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
+			throws CancelledException {
+		try {
+			demangler.initialize(program);
+		}
+		catch (IOException e) {
+			log.appendMsg(e.getMessage());
+			return false;
+		}
+		return super.added(program, set, monitor, log);
 	}
 
 	@Override
-	public void analysisEnded(Program program) {
-		demangler.clearCache();
+	protected DemangledObject doDemangle(String mangled, DemanglerOptions options, MessageLog log)
+			throws DemangledException {
+		return demangler.demangle(mangled, options);
 	}
 
 	@Override

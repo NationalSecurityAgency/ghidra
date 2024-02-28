@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.demangler.swift.nodes;
 
-import ghidra.app.util.bin.format.swift.SwiftTypeMetadata;
 import ghidra.app.util.demangler.*;
 import ghidra.app.util.demangler.swift.SwiftDemangledNodeKind;
 import ghidra.app.util.demangler.swift.SwiftDemangler;
@@ -26,9 +25,8 @@ import ghidra.app.util.demangler.swift.SwiftDemangler;
 public class SwiftInOutNode extends SwiftNode {
 
 	@Override
-	public Demangled demangle(SwiftDemangler demangler, SwiftTypeMetadata typeMetadata)
-			throws DemangledException {
-		Demangled demangled = demangleFirstChild(demangler, typeMetadata);
+	public Demangled demangle(SwiftDemangler demangler) throws DemangledException {
+		Demangled demangled = demangleFirstChild(demangler);
 		if (demangled instanceof DemangledDataType type) {
 			type.incrementPointerLevels();
 		}

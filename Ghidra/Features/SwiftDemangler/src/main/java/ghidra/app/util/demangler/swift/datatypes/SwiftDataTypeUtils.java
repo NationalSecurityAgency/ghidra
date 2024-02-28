@@ -31,18 +31,22 @@ public class SwiftDataTypeUtils {
 	public static final CategoryPath SWIFT_CATEGORY = new CategoryPath("/Demangler");
 
 	/**
-	 * A {@link Demangled} to represent the standard Swift namespace
-	 */
-	public static final Demangled SWIFT_NAMESPACE = new DemangledUnknown("", null, "Swift");
-
-	/**
 	 * Checks to see if the given namespace is the standard Swift namespace
 	 * 
 	 * @param namespace The namespace to check
 	 * @return True if the given namespace is the standard Swift namespace; otherwise, false
 	 */
 	public static boolean isSwiftNamespace(Demangled namespace) {
-		return namespace != null && namespace.getName().equals(SWIFT_NAMESPACE.getName());
+		return namespace != null && namespace.getName().equals("Swift");
+	}
+
+	/**
+	 * Gets a {@link Demangled} to represent the standard Swift namespace
+	 * 
+	 * @return A {@link Demangled} to represent the standard Swift namespace
+	 */
+	public static Demangled getSwiftNamespace() {
+		return new DemangledUnknown("", "Swift", "Swift");
 	}
 
 	/**

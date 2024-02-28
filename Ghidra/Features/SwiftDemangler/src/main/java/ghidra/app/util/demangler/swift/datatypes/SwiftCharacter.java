@@ -31,8 +31,9 @@ public class SwiftCharacter extends DemangledStructure {
 	 */
 	public SwiftCharacter(String mangled, String originalDemangled) {
 		super(mangled, originalDemangled, "Character",
-			SwiftDataTypeUtils.getCategoryPath(SwiftDataTypeUtils.SWIFT_NAMESPACE).getPath(), true);
-		setNamespace(SwiftDataTypeUtils.SWIFT_NAMESPACE);
+			SwiftDataTypeUtils.getCategoryPath(SwiftDataTypeUtils.getSwiftNamespace()).getPath(),
+			true);
+		setNamespace(SwiftDataTypeUtils.getSwiftNamespace());
 
 		DemangledDataType stringDt = new DemangledDataType(mangled, null, DemangledDataType.CHAR);
 		stringDt.incrementPointerLevels();

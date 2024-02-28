@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.demangler.swift.nodes;
 
-import ghidra.app.util.bin.format.swift.SwiftTypeMetadata;
 import ghidra.app.util.demangler.*;
 import ghidra.app.util.demangler.swift.SwiftDemangledNodeKind;
 import ghidra.app.util.demangler.swift.SwiftDemangler;
@@ -26,22 +25,21 @@ import ghidra.app.util.demangler.swift.SwiftDemangler;
 public class SwiftProtocolConformanceNode extends SwiftNode {
 
 	@Override
-	public Demangled demangle(SwiftDemangler demangler, SwiftTypeMetadata typeMetadata)
-			throws DemangledException {
-		Demangled type1 = null;
-		Demangled type2 = null;
+	public Demangled demangle(SwiftDemangler demangler) throws DemangledException {
+		Demangled type = null;
+		Demangled protocol = null;
 		Demangled namespace = null;
 		for (SwiftNode child : getChildren()) {
 			switch (child.getKind()) {
 				case Module:
-					namespace = child.demangle(demangler, typeMetadata);
+					namespace = child.demangle(demangler);
 					break;
 				case Type:
-					if (type1 == null) {
-						type1 = child.demangle(demangler, typeMetadata);
+					if (child.hasChild(SwiftDemangledNodeKind.Protocol)) {
+						protocol = child.demangle(demangler);
 					}
 					else {
-						type2 = child.demangle(demangler, typeMetadata);
+						type = child.demangle(demangler);
 					}
 					break;
 				default:
@@ -49,11 +47,12 @@ public class SwiftProtocolConformanceNode extends SwiftNode {
 					break;
 			}
 		}
-		if (type1 == null && type2 == null) {
+		if (type == null || protocol == null) {
 			return getUnknown();
 		}
-		DemangledUnknown demangled = new DemangledUnknown(properties.mangled(),
-			properties.originalDemangled(), SwiftNode.join(type2, type1).getNamespaceString());
+		DemangledUnknown demangled =
+			new DemangledUnknown(properties.mangled(), properties.originalDemangled(),
+				type.getNamespaceString() + "->" + protocol.getNamespaceString());
 		demangled.setNamespace(namespace);
 		return demangled;
 	}

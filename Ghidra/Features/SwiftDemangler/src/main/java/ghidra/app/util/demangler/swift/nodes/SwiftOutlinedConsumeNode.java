@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.demangler.swift.nodes;
 
-import ghidra.app.util.bin.format.swift.SwiftTypeMetadata;
 import ghidra.app.util.demangler.*;
 import ghidra.app.util.demangler.swift.SwiftDemangledNodeKind;
 import ghidra.app.util.demangler.swift.SwiftDemangler;
@@ -28,13 +27,12 @@ import ghidra.program.model.lang.CompilerSpec;
 public class SwiftOutlinedConsumeNode extends SwiftNode {
 
 	@Override
-	public Demangled demangle(SwiftDemangler demangler, SwiftTypeMetadata typeMetadata)
-			throws DemangledException {
+	public Demangled demangle(SwiftDemangler demangler) throws DemangledException {
 		Demangled type = null;
 		for (SwiftNode child : getChildren()) {
 			switch (child.getKind()) {
 				case Type:
-					type = child.demangle(demangler, typeMetadata);
+					type = child.demangle(demangler);
 					break;
 				default:
 					skip(child);

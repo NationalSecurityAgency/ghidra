@@ -31,8 +31,9 @@ public class SwiftString extends DemangledStructure {
 	 */
 	public SwiftString(String mangled, String originalDemangled) {
 		super(mangled, originalDemangled, "String",
-			SwiftDataTypeUtils.getCategoryPath(SwiftDataTypeUtils.SWIFT_NAMESPACE).getPath(), true);
-		setNamespace(SwiftDataTypeUtils.SWIFT_NAMESPACE);
+			SwiftDataTypeUtils.getCategoryPath(SwiftDataTypeUtils.getSwiftNamespace()).getPath(),
+			true);
+		setNamespace(SwiftDataTypeUtils.getSwiftNamespace());
 
 		DemangledDataType stringDt = new DemangledDataType(mangled, null, DemangledDataType.CHAR);
 		stringDt.incrementPointerLevels();

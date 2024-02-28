@@ -32,7 +32,7 @@ public class SwiftArray extends DemangledDataType {
 	 */
 	public SwiftArray(String mangled, String originalDemangled) {
 		super(mangled, originalDemangled, "Array");
-		setNamespace(SwiftDataTypeUtils.SWIFT_NAMESPACE);
+		setNamespace(SwiftDataTypeUtils.getSwiftNamespace());
 		setBoundType(
 			new DemangledDataType(mangled, originalDemangled, DemangledDataType.UNDEFINED));
 		setArray(1);
