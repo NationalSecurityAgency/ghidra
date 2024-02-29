@@ -32,6 +32,7 @@ import ghidra.GhidraLauncher;
 /**
  * Utility methods for working with Ghidra launchers in Eclipse.
  */
+@SuppressWarnings("restriction")
 public class GhidraLaunchUtils {
 
 	/**

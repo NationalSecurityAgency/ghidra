@@ -94,6 +94,7 @@ public class GhidraModuleUtils {
 		sourceFolders.add(project.getFolder("src/main/java"));
 		sourceFolders.add(project.getFolder("src/main/help"));
 		sourceFolders.add(project.getFolder("src/main/resources"));
+		sourceFolders.add(project.getFolder("src/test/java"));
 		sourceFolders.add(project.getFolder("ghidra_scripts"));
 		for (IFolder sourceFolder : sourceFolders) {
 			GhidraProjectUtils.createFolder(sourceFolder, monitor);
@@ -204,6 +205,76 @@ public class GhidraModuleUtils {
 	}
 
 	/**
+	 * Imports a Ghidra module source directory to a new Ghidra module project with the given name.
+	 * 
+	 * @param projectName The name of the project to create.
+	 * @param moduleSourceDir The module source directory to import.
+	 * @param createRunConfig Whether or not to create a new run configuration for the project.
+	 * @param runConfigMemory The run configuration's desired memory.  Could be null.
+	 * @param ghidraLayout The Ghidra layout to link the project to.
+	 * @param jythonInterpreterName The name of the Jython interpreter to use for Python support.
+	 *   Could be null if Python support is not wanted.
+	 * @param monitor The progress monitor to use during project creation.
+	 * @return The imported project.
+	 * @throws IOException If there was a file-related problem with creating the project.
+	 * @throws ParseException If there was a parse-related problem with creating the project.
+	 * @throws CoreException If there was an Eclipse-related problem with creating the project.
+	 */
+	public static IJavaProject importGhidraModuleSource(String projectName, File moduleSourceDir,
+			boolean createRunConfig, String runConfigMemory, GhidraApplicationLayout ghidraLayout,
+			String jythonInterpreterName, IProgressMonitor monitor)
+			throws IOException, ParseException, CoreException {
+
+		// Create empty Ghidra project
+		IJavaProject javaProject =
+			GhidraProjectUtils.createEmptyGhidraProject(projectName, moduleSourceDir,
+				createRunConfig, runConfigMemory, ghidraLayout, jythonInterpreterName, monitor);
+		IProject project = javaProject.getProject();
+
+		// Find source directory paths
+		List<IPath> sourcePaths = new ArrayList<>();
+		IFolder srcFolder = project.getFolder("src");
+		List<IFolder> srcSubFolders = getSubFolders(srcFolder);
+		if (!srcSubFolders.isEmpty()) {
+			for (IFolder srcSubFolder : srcSubFolders) {
+				List<IFolder> subSubFolders = getSubFolders(srcSubFolder);
+				if (!subSubFolders.isEmpty()) {
+					sourcePaths.addAll(subSubFolders.stream().map(e -> e.getFullPath()).toList());
+				}
+				else {
+					sourcePaths.add(srcSubFolder.getFullPath());
+				}
+			}
+		}
+		else {
+			sourcePaths.add(srcFolder.getFullPath());
+		}
+
+		// Find jar file paths
+		List<IPath> jarPaths = new ArrayList<>();
+		IFolder libFolder = project.getFolder("lib");
+		if (libFolder.exists()) {
+			for (IResource resource : libFolder.members()) {
+				if (resource.getType() == IResource.FILE &&
+					resource.getFileExtension().equals("jar")) {
+					jarPaths.add(resource.getFullPath());
+				}
+			}
+		}
+
+		// Put the source and jar paths in the project's classpath
+		List<IClasspathEntry> cp = new ArrayList<>();
+		cp.addAll(sourcePaths.stream().map(e -> JavaCore.newSourceEntry(e)).toList());
+		cp.addAll(jarPaths.stream().map(e -> JavaCore.newLibraryEntry(e, null, null)).toList());
+		GhidraProjectUtils.addToClasspath(javaProject, cp, monitor);
+
+		// Update language ant properties file
+		GhidraModuleUtils.writeAntProperties(project, ghidraLayout);
+
+		return javaProject;
+	}
+
+	/**
 	 * Writes project-specific ant properties, which get imported by the module project's language
 	 * build.xml file to allow building against a Ghidra that lives in an external location. If the 
 	 * given project is not a Ghidra module project, or if the Ghidra module project does not have a 
@@ -277,5 +348,25 @@ public class GhidraModuleUtils {
 		refactoring.checkFinalConditions(monitor);
 		Change change = refactoring.createChange(monitor);
 		change.perform(monitor);
+	}
+
+	/**
+	 * Gets a {@link List} of sub-folders
+	 * 
+	 * @param folder The folder to get the sub-folders of
+	 * @return A {@link List} of 
+	 * @throws CoreException If there was an Eclipse-related problem getting the sub-folders
+	 */
+	private static List<IFolder> getSubFolders(IFolder folder) throws CoreException {
+		List<IFolder> subFolders = new ArrayList<>();
+		if (folder.exists()) {
+			for (IResource resource : folder.members()) {
+				if (resource.getType() == IResource.FOLDER) {
+					subFolders.add(folder.getFolder(resource.getName()));
+				}
+			}
+		}
+
+		return subFolders;
 	}
 }

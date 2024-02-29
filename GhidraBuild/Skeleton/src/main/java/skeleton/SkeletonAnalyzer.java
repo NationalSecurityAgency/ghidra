@@ -41,7 +41,7 @@ public class SkeletonAnalyzer extends AbstractAnalyzer {
 
 		// TODO: Return true if analyzer should be enabled by default
 
-		return false;
+		return true;
 	}
 
 	@Override
@@ -50,7 +50,7 @@ public class SkeletonAnalyzer extends AbstractAnalyzer {
 		// TODO: Examine 'program' to determine of this analyzer should analyze it.  Return true
 		// if it can.
 
-		return false;
+		return true;
 	}
 
 	@Override
