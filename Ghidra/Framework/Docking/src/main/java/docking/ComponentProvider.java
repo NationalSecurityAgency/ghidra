@@ -307,6 +307,14 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
+	 * Returns all the local actions registered for this component provider.
+	 * @return all the local actions registered for this component provider
+	 */
+	public Set<DockingActionIf> getLocalActions() {
+		return dockingTool.getLocalActions(this);
+	}
+
+	/**
 	 * Removes all local actions from this component provider
 	 */
 	protected void removeAllLocalActions() {

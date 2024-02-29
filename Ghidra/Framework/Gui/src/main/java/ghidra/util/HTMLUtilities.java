@@ -26,6 +26,7 @@ import javax.swing.text.*;
 
 import generic.text.TextLayoutGraphics;
 import generic.theme.GAttributes;
+import generic.theme.GColor;
 import ghidra.util.html.HtmlLineSplitter;
 import utilities.util.reflection.ReflectionUtilities;
 
@@ -919,6 +920,9 @@ public class HTMLUtilities {
 	 * @return a string of the format #RRGGBB.
 	 */
 	public static String toHexString(Color color) {
+		if (color instanceof GColor gColor) {
+			return gColor.toHexString();
+		}
 		// this will format a color value as a 6 digit hex string (e.g. #rrggbb)
 		return String.format("#%06X", color.getRGB() & 0xffffff);
 	}

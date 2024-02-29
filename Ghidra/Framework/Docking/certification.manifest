@@ -11,6 +11,8 @@ Module.manifest||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
 data/docking.theme.properties||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
+src/main/help/help/topics/KeyboardNavigation/KeyboardNavigation.html||GHIDRA||||END|
+src/main/help/help/topics/KeyboardNavigation/images/ActionsDialog.png||GHIDRA||||END|
 src/main/help/help/topics/Misc/Welcome_to_Help.htm||GHIDRA||||END|
 src/main/help/help/topics/Theming/ThemingDeveloperDocs.html||GHIDRA||||END|
 src/main/help/help/topics/Theming/ThemingInternals.html||GHIDRA||||END|

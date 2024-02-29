@@ -20,6 +20,8 @@ import static java.awt.event.KeyEvent.*;
 import static javax.swing.KeyStroke.*;
 
 import java.awt.Toolkit;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 
 import javax.swing.KeyStroke;
 
@@ -51,6 +53,9 @@ public class SystemKeyBindings {
 	public static final KeyStroke UPDATE_KEY_BINDINGS_KEY = getKeyStroke(VK_F4, 0);
 
 	public static final KeyStroke COMPONENT_THEME_INFO_KEY = getKeyStroke(VK_F9, CTRL_ALT_SHIFT);
+
+	public static final KeyStroke ACTION_CHOOSER_KEY =
+		KeyStroke.getKeyStroke(KeyEvent.VK_3, InputEvent.CTRL_DOWN_MASK);
 
 	private SystemKeyBindings() {
 		// utils class
