@@ -58,9 +58,6 @@ extern int sleigherror(const char *str );
   MacroSymbol *macrosym;
   LabelSymbol *labelsym;
   SubtableSymbol *subtablesym;
-  StartSymbol *startsym;
-  EndSymbol *endsym;
-  Next2Symbol *next2sym;
   OperandSymbol *operandsym;
   VarnodeListSymbol *varlistsym;
   VarnodeSymbol *varsym;
@@ -122,9 +119,7 @@ extern int sleigherror(const char *str );
 %token <specsym> SPECSYM
 %token <varlistsym> VARLISTSYM
 %token <operandsym> OPERANDSYM
-%token <startsym> STARTSYM
-%token <endsym> ENDSYM
-%token <next2sym> NEXT2SYM
+%token <specsym> JUMPSYM
 %token <macrosym> MACROSYM
 %token <labelsym> LABELSYM
 %token <subtablesym> SUBTABLESYM
@@ -459,9 +454,7 @@ sizedstar: '*' '[' SPACESYM ']' ':' INTEGER { $$ = new StarQuality; $$->size = *
   | '*' ':' INTEGER		{ $$ = new StarQuality; $$->size = *$3; delete $3; $$->id=ConstTpl(slgh->getDefaultCodeSpace()); }
   | '*'				{ $$ = new StarQuality; $$->size = 0; $$->id=ConstTpl(slgh->getDefaultCodeSpace()); }
   ;
-jumpdest: STARTSYM		{ VarnodeTpl *sym = $1->getVarnode(); $$ = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),sym->getOffset(),ConstTpl(ConstTpl::j_curspace_size)); delete sym; }
-  | ENDSYM			{ VarnodeTpl *sym = $1->getVarnode(); $$ = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),sym->getOffset(),ConstTpl(ConstTpl::j_curspace_size)); delete sym; }
-  | NEXT2SYM			{ VarnodeTpl *sym = $1->getVarnode(); $$ = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),sym->getOffset(),ConstTpl(ConstTpl::j_curspace_size)); delete sym; }
+jumpdest: JUMPSYM		{ VarnodeTpl *sym = $1->getVarnode(); $$ = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),sym->getOffset(),ConstTpl(ConstTpl::j_curspace_size)); delete sym; }
   | INTEGER			{ $$ = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),ConstTpl(ConstTpl::real,*$1),ConstTpl(ConstTpl::j_curspace_size)); delete $1; }
   | BADINTEGER                  { $$ = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),ConstTpl(ConstTpl::real,0),ConstTpl(ConstTpl::j_curspace_size)); slgh->reportError("Parsed integer is too big (overflow)"); }
   | OPERANDSYM			{ $$ = $1->getVarnode(); $1->setCodeAddress(); }
@@ -503,9 +496,7 @@ familysymbol: VALUESYM		{ $$ = $1; }
 specificsymbol: VARSYM		{ $$ = $1; }
   | SPECSYM                     { $$ = $1; }
   | OPERANDSYM			{ $$ = $1; }
-  | STARTSYM			{ $$ = $1; }
-  | ENDSYM			{ $$ = $1; }
-  | NEXT2SYM			{ $$ = $1; }
+  | JUMPSYM			{ $$ = $1; }
   ;
 charstring: CHAR		{ $$ = new string; (*$$) += $1; }
   | charstring CHAR		{ $$ = $1; (*$$) += $2; }
@@ -578,9 +569,7 @@ anysymbol: SPACESYM		{ $$ = $1; }
   | VARSYM			{ $$ = $1; }
   | VARLISTSYM			{ $$ = $1; }
   | OPERANDSYM			{ $$ = $1; }
-  | STARTSYM			{ $$ = $1; }
-  | ENDSYM			{ $$ = $1; }
-  | NEXT2SYM			{ $$ = $1; }
+  | JUMPSYM			{ $$ = $1; }
   | BITSYM                      { $$ = $1; }
   ;
 %%
