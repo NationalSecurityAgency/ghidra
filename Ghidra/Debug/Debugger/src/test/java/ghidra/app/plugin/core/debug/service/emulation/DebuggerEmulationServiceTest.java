@@ -33,12 +33,14 @@ import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformOpinion;
+import ghidra.app.plugin.core.debug.service.emulation.data.DefaultPcodeDebuggerAccess;
 import ghidra.app.plugin.core.debug.service.platform.DebuggerPlatformServicePlugin;
 import ghidra.app.services.DebuggerEmulationService.EmulationResult;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.debug.api.platform.DebuggerPlatformMapper;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.DecodePcodeExecutionException;
 import ghidra.pcode.exec.InterruptPcodeExecutionException;
 import ghidra.pcode.utils.Utils;
@@ -57,6 +59,7 @@ import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.Scheduler;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.task.TaskMonitor;
@@ -114,8 +117,8 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 		assertEquals(new BigInteger("0000", 16), regs.getViewValue(0, regR0).getUnsignedValue());
 		assertEquals(new BigInteger("1234", 16), regs.getViewValue(0, regR1).getUnsignedValue());
 
-		long scratch =
-			emulationPlugin.emulate(trace, TraceSchedule.parse("0:t0-1"), TaskMonitor.DUMMY);
+		long scratch = emulationPlugin.emulate(trace,
+			TraceSchedule.snap(0).steppedForward(thread, 1), TaskMonitor.DUMMY);
 
 		assertEquals(new BigInteger("00400002", 16),
 			regs.getViewValue(scratch, regPC).getUnsignedValue());
@@ -171,8 +174,8 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 		assertEquals(new BigInteger("00000400", 16),
 			regs.getViewValue(0, regR1).getUnsignedValue());
 
-		long scratch =
-			emulationPlugin.emulate(trace, TraceSchedule.parse("0:t0-1"), TaskMonitor.DUMMY);
+		long scratch = emulationPlugin.emulate(trace,
+			TraceSchedule.snap(0).steppedForward(thread, 1), TaskMonitor.DUMMY);
 
 		assertEquals(new BigInteger("00000402", 16),
 			regs.getViewValue(scratch, regPC).getUnsignedValue());
@@ -220,6 +223,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 
 		Trace trace = traceManager.getCurrentTrace();
 		assertNotNull(trace);
+		TraceThread thread = Unique.assertOne(trace.getThreadManager().getAllThreads());
 
 		TraceMemoryManager mem = trace.getMemoryManager();
 		assertEquals(new BigInteger("000100", 16),
@@ -229,8 +233,8 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 		assertEquals(new BigInteger("0800", 16),
 			mem.getViewValue(0, regW1).getUnsignedValue());
 
-		long scratch =
-			emulationPlugin.emulate(trace, TraceSchedule.parse("0:t0-1"), TaskMonitor.DUMMY);
+		long scratch = emulationPlugin.emulate(trace,
+			TraceSchedule.snap(0).steppedForward(thread, 1), TaskMonitor.DUMMY);
 
 		assertEquals(new BigInteger("000102", 16),
 			mem.getViewValue(scratch, regPC).getUnsignedValue());
@@ -377,7 +381,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 		EmulationResult result = emulationPlugin.run(trace.getPlatformManager().getHostPlatform(),
 			TraceSchedule.snap(0), TaskMonitor.DUMMY, Scheduler.oneThread(thread));
 
-		assertEquals(TraceSchedule.parse("0:t0-1"), result.schedule());
+		assertEquals(TraceSchedule.snap(0).steppedForward(thread, 1), result.schedule());
 		assertTrue(result.error() instanceof DecodePcodeExecutionException);
 
 		long scratch = result.snapshot();
@@ -432,7 +436,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 		EmulationResult result = emulationPlugin.run(trace.getPlatformManager().getHostPlatform(),
 			TraceSchedule.snap(0), TaskMonitor.DUMMY, Scheduler.oneThread(thread));
 
-		assertEquals(TraceSchedule.parse("0:t0-1"), result.schedule());
+		assertEquals(TraceSchedule.snap(0).steppedForward(thread, 1), result.schedule());
 		assertTrue(result.error() instanceof InterruptPcodeExecutionException);
 
 		long scratch = result.snapshot();
@@ -496,13 +500,13 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 		// This is already testing if the one set at the entry is ignored
 		EmulationResult result1 = emulationPlugin.run(trace.getPlatformManager().getHostPlatform(),
 			TraceSchedule.snap(0), monitor, Scheduler.oneThread(thread));
-		assertEquals(TraceSchedule.parse("0:t0-1"), result1.schedule());
+		assertEquals(TraceSchedule.snap(0).steppedForward(thread, 1), result1.schedule());
 		assertTrue(result1.error() instanceof InterruptPcodeExecutionException);
 
 		// This will test if the one just hit gets ignored
 		EmulationResult result2 = emulationPlugin.run(trace.getPlatformManager().getHostPlatform(),
 			result1.schedule(), monitor, Scheduler.oneThread(thread));
-		assertEquals(TraceSchedule.parse("0:t0-2"), result2.schedule());
+		assertEquals(TraceSchedule.snap(0).steppedForward(thread, 2), result2.schedule());
 		assertTrue(result1.error() instanceof InterruptPcodeExecutionException);
 	}
 
@@ -558,7 +562,8 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 		EmulationResult result = emulationPlugin.run(trace.getPlatformManager().getHostPlatform(),
 			TraceSchedule.snap(0), TaskMonitor.DUMMY, Scheduler.oneThread(thread));
 
-		assertEquals(TraceSchedule.parse("0:t0-1.t0-2"), result.schedule());
+		assertEquals(TraceSchedule.snap(0).steppedForward(thread, 1).steppedPcodeForward(thread, 2),
+			result.schedule());
 		assertTrue(result.error() instanceof InterruptPcodeExecutionException);
 
 		long scratch = result.snapshot();
@@ -619,7 +624,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 		EmulationResult result = emulationPlugin.run(trace.getPlatformManager().getHostPlatform(),
 			TraceSchedule.snap(0), TaskMonitor.DUMMY, Scheduler.oneThread(thread));
 
-		assertEquals(TraceSchedule.parse("0:t0-1"), result.schedule());
+		assertEquals(TraceSchedule.snap(0).steppedForward(thread, 1), result.schedule());
 		assertTrue(result.error() instanceof InterruptPcodeExecutionException);
 
 		long scratch = result.snapshot();
@@ -675,11 +680,11 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 		TraceMemorySpace regs = trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
 
 		// Step as written to fill the cache
-		waitOn(traceManager.activateAndNotify(current.time(TraceSchedule.parse("0:t0-1")),
-			ActivationCause.USER));
+		waitOn(traceManager.activateAndNotify(
+			current.time(TraceSchedule.snap(0).steppedForward(thread, 1)), ActivationCause.USER));
 		waitForSwing();
-		waitOn(traceManager.activateAndNotify(current.time(TraceSchedule.parse("0:t0-2")),
-			ActivationCause.USER));
+		waitOn(traceManager.activateAndNotify(
+			current.time(TraceSchedule.snap(0).steppedForward(thread, 2)), ActivationCause.USER));
 		waitForSwing();
 		long scratch = traceManager.getCurrentView().getSnap();
 
@@ -699,11 +704,11 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 		}
 
 		// Check the cache is still valid
-		waitOn(traceManager.activateAndNotify(current.time(TraceSchedule.parse("0:t0-1")),
-			ActivationCause.USER));
+		waitOn(traceManager.activateAndNotify(
+			current.time(TraceSchedule.snap(0).steppedForward(thread, 1)), ActivationCause.USER));
 		waitForSwing();
-		waitOn(traceManager.activateAndNotify(current.time(TraceSchedule.parse("0:t0-2")),
-			ActivationCause.USER));
+		waitOn(traceManager.activateAndNotify(
+			current.time(TraceSchedule.snap(0).steppedForward(thread, 2)), ActivationCause.USER));
 		waitForSwing();
 		assertEquals(scratch, traceManager.getCurrentView().getSnap());
 		assertEquals(new BigInteger("1234", 16),
@@ -745,5 +750,38 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerTe
 		TraceThread thread = Unique.assertOne(trace.getThreadManager().getAllThreads());
 		TraceMemorySpace regs = trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
 		assertEquals(new BigInteger("2234", 16), regs.getViewValue(0, regSP).getUnsignedValue());
+	}
+
+	@Test
+	public void testNewThreadAfterLoadTrace() throws Exception {
+		createAndOpenTrace();
+		createProgramFromTrace();
+		intoProject(program);
+
+		long restartEmuSnap = 3;
+		try (Transaction tx = tb.startTransaction()) {
+			tb.trace.getObjectManager().createRootObject(ProgramEmulationUtils.EMU_SESSION_SCHEMA);
+			tb.trace.getTimeManager().getSnapshot(restartEmuSnap, true);
+		}
+		traceManager.activateTrace(tb.trace);
+		traceManager.activateSnap(restartEmuSnap);
+
+		try (Transaction tx = tb.startTransaction()) {
+			TracePlatform host = tb.trace.getPlatformManager().getHostPlatform();
+			DefaultPcodeDebuggerAccess access =
+				new DefaultPcodeDebuggerAccess(tool, null, host, restartEmuSnap);
+			BytesDebuggerPcodeEmulator emulator = new BytesDebuggerPcodeEmulator(access);
+
+			TraceSnapshot snapshot =
+				tb.trace.getTimeManager().createSnapshot("created new emulator thread");
+			long newSnap = snapshot.getKey();
+			emulator.writeDown(host, newSnap, newSnap);
+
+			TraceThread newTraceThread = ProgramEmulationUtils.doLaunchEmulationThread(tb.trace,
+				newSnap, program, tb.addr(0x00400000), addr(program, 0x00400000));
+			newTraceThread.setName("MyThread");
+
+			PcodeThread<byte[]> newEmuThread = emulator.newThread(newTraceThread.getPath());
+		}
 	}
 }

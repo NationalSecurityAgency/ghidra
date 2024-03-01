@@ -803,8 +803,8 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 * @param path the path pattern
 	 * @return the object or null
 	 */
-	public TraceObject objAny(String pat) {
-		return objAny(pat, Lifespan.at(0));
+	public TraceObject objAny(String path) {
+		return objAny(path, Lifespan.at(0));
 	}
 
 	public TraceObject objAny(String path, Lifespan span) {

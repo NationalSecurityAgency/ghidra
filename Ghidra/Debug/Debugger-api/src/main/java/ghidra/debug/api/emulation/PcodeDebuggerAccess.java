@@ -24,7 +24,7 @@ import ghidra.trace.model.thread.TraceThread;
  * 
  * <p>
  * In addition to the trace "coordinates" encapsulated by {@link PcodeTraceAccess}, this
- * encapsulates the tool controlling a session and the session's trace recorder. This permits p-code
+ * encapsulates the tool controlling a session and the session's target. This permits p-code
  * executor/emulator states to access target data and to access session data, e.g., data from mapped
  * static images. It supports the same method chain pattern as {@link PcodeTraceAccess}, but
  * starting with {@link DefaultPcodeDebuggerAccess}.

@@ -33,6 +33,11 @@ public class VisibleAutoReadMemorySpec implements AutoReadMemorySpec {
 	public static final String CONFIG_NAME = "1_READ_VISIBLE";
 
 	@Override
+	public boolean equals(Object obj) {
+		return this.getClass() == obj.getClass();
+	}
+
+	@Override
 	public String getConfigName() {
 		return CONFIG_NAME;
 	}

@@ -497,9 +497,11 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerTest {
 		Address entry = createEmulatableProgram();
 
 		flat.emulateLaunch(entry);
-		flat.emulate(TraceSchedule.parse("0:t0-1"), monitor);
+		TraceSchedule schedule =
+			traceManager.getCurrent().getTime().steppedForward(traceManager.getCurrentThread(), 1);
+		flat.emulate(schedule, monitor);
 
-		assertEquals(TraceSchedule.parse("0:t0-1"), traceManager.getCurrent().getTime());
+		assertEquals(schedule, traceManager.getCurrent().getTime());
 	}
 
 	@Test
@@ -507,12 +509,14 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerTest {
 		Address entry = createEmulatableProgram();
 
 		flat.emulateLaunch(entry);
+		TraceSchedule schedule =
+			traceManager.getCurrent().getTime().steppedForward(traceManager.getCurrentThread(), 1);
 
 		flat.stepEmuInstruction(1, monitor);
-		assertEquals(TraceSchedule.parse("0:t0-1"), traceManager.getCurrent().getTime());
+		assertEquals(schedule, traceManager.getCurrent().getTime());
 
 		flat.stepEmuInstruction(-1, monitor);
-		assertEquals(TraceSchedule.parse("0"), traceManager.getCurrent().getTime());
+		assertEquals(TraceSchedule.ZERO, traceManager.getCurrent().getTime());
 	}
 
 	@Test
@@ -520,12 +524,15 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerTest {
 		Address entry = createEmulatableProgram();
 
 		flat.emulateLaunch(entry);
+		TraceSchedule schedule = traceManager.getCurrent()
+				.getTime()
+				.steppedPcodeForward(traceManager.getCurrentThread(), 1);
 
 		flat.stepEmuPcodeOp(1, monitor);
-		assertEquals(TraceSchedule.parse("0:.t0-1"), traceManager.getCurrent().getTime());
+		assertEquals(schedule, traceManager.getCurrent().getTime());
 
 		flat.stepEmuPcodeOp(-1, monitor);
-		assertEquals(TraceSchedule.parse("0"), traceManager.getCurrent().getTime());
+		assertEquals(TraceSchedule.ZERO, traceManager.getCurrent().getTime());
 	}
 
 	@Test
@@ -533,12 +540,14 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerTest {
 		Address entry = createEmulatableProgram();
 
 		flat.emulateLaunch(entry);
+		TraceSchedule schedule =
+			traceManager.getCurrent().getTime().skippedForward(traceManager.getCurrentThread(), 1);
 
 		flat.skipEmuInstruction(1, monitor);
-		assertEquals(TraceSchedule.parse("0:t0-s1"), traceManager.getCurrent().getTime());
+		assertEquals(schedule, traceManager.getCurrent().getTime());
 
 		flat.skipEmuInstruction(-1, monitor);
-		assertEquals(TraceSchedule.parse("0"), traceManager.getCurrent().getTime());
+		assertEquals(TraceSchedule.ZERO, traceManager.getCurrent().getTime());
 	}
 
 	@Test
@@ -546,12 +555,15 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerTest {
 		Address entry = createEmulatableProgram();
 
 		flat.emulateLaunch(entry);
+		TraceSchedule schedule = traceManager.getCurrent()
+				.getTime()
+				.skippedPcodeForward(traceManager.getCurrentThread(), 1);
 
 		flat.skipEmuPcodeOp(1, monitor);
-		assertEquals(TraceSchedule.parse("0:.t0-s1"), traceManager.getCurrent().getTime());
+		assertEquals(schedule, traceManager.getCurrent().getTime());
 
 		flat.skipEmuPcodeOp(-1, monitor);
-		assertEquals(TraceSchedule.parse("0"), traceManager.getCurrent().getTime());
+		assertEquals(TraceSchedule.ZERO, traceManager.getCurrent().getTime());
 	}
 
 	@Test
@@ -559,12 +571,16 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerTest {
 		Address entry = createEmulatableProgram();
 
 		flat.emulateLaunch(entry);
+		TraceSchedule schedule = traceManager.getCurrent()
+				.getTime()
+				.patched(traceManager.getCurrentThread(),
+					traceManager.getCurrentPlatform().getLanguage(), "r0=0x321");
 
 		flat.patchEmu("r0=0x321", monitor);
-		assertEquals(TraceSchedule.parse("0:t0-{r0=0x321}"), traceManager.getCurrent().getTime());
+		assertEquals(schedule, traceManager.getCurrent().getTime());
 
 		flat.stepEmuInstruction(-1, monitor);
-		assertEquals(TraceSchedule.parse("0"), traceManager.getCurrent().getTime());
+		assertEquals(TraceSchedule.ZERO, traceManager.getCurrent().getTime());
 	}
 
 	@Test

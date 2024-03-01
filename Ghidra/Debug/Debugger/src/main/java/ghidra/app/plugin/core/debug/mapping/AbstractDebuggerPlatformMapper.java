@@ -16,7 +16,8 @@
 package ghidra.app.plugin.core.debug.mapping;
 
 import java.util.Collection;
-import java.util.Set;
+import java.util.Comparator;
+import java.util.stream.Collectors;
 
 import ghidra.app.plugin.core.debug.disassemble.DisassemblyInject;
 import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
@@ -25,11 +26,11 @@ import ghidra.debug.api.platform.DisassemblyResult;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Endian;
-import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.task.TaskMonitor;
 
 public abstract class AbstractDebuggerPlatformMapper implements DebuggerPlatformMapper {
@@ -63,8 +64,12 @@ public abstract class AbstractDebuggerPlatformMapper implements DebuggerPlatform
 		return trace.getCodeManager().instructions().getAt(snap, start) != null;
 	}
 
-	protected Collection<DisassemblyInject> getDisassemblyInjections(TraceObject object) {
-		return Set.of();
+	protected Collection<DisassemblyInject> getDisassemblyInjections(TracePlatform platform) {
+		return ClassSearcher.getInstances(DisassemblyInject.class)
+				.stream()
+				.filter(i -> i.isApplicable(platform))
+				.sorted(Comparator.comparing(i -> i.getPriority()))
+				.collect(Collectors.toList());
 	}
 
 	@Override
@@ -75,12 +80,11 @@ public abstract class AbstractDebuggerPlatformMapper implements DebuggerPlatform
 		}
 		TracePlatform platform = trace.getPlatformManager().getPlatform(getCompilerSpec(object));
 
-		Collection<DisassemblyInject> injects = getDisassemblyInjections(object);
+		Collection<DisassemblyInject> injects = getDisassemblyInjections(platform);
 		TraceDisassembleCommand dis = new TraceDisassembleCommand(platform, start, restricted);
-		Language language = platform.getLanguage();
 		AddressSet startSet = new AddressSet(start);
 		for (DisassemblyInject i : injects) {
-			i.pre(tool, dis, trace, language, snap, thread, startSet, restricted);
+			i.pre(tool, dis, platform, snap, thread, startSet, restricted);
 		}
 		boolean result = dis.applyToTyped(trace.getFixedProgramView(snap), monitor);
 		if (!result) {
@@ -88,7 +92,7 @@ public abstract class AbstractDebuggerPlatformMapper implements DebuggerPlatform
 		}
 		AddressSetView actualSet = dis.getDisassembledAddressSet();
 		for (DisassemblyInject i : injects) {
-			i.post(tool, trace, snap, actualSet);
+			i.post(tool, platform, snap, actualSet);
 		}
 		return DisassemblyResult.success(actualSet != null && !actualSet.isEmpty());
 	}
