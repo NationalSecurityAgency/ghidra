@@ -228,7 +228,7 @@ public class LaunchAction extends MultiActionDockingAction {
 		}
 		ConfigLast last = findMostRecentConfig();
 		TraceRmiLaunchOffer offer = findOffer(last);
-		if (last == null) {
+		if (offer == null) {
 			return "Configure and launch " + program.getName();
 		}
 		return "Re-launch " + program.getName() + " using " + offer.getTitle();
