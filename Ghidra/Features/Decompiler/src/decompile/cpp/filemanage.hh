@@ -35,8 +35,7 @@ class FileManage {
   vector<string> pathlist;	// List of paths to search for files
   static char separator;
   static string buildPath(const vector<string> &pathels,int level);
-  static bool testDevelopmentPath(const vector<string> &pathels,int level,string &root);
-  static bool testInstallPath(const vector<string> &pathels,int level,string &root);
+  static bool testGhidraPath(const vector<string> &pathels,int level,string &root);
 public:
   void addDir2Path(const string &path);
   void addCurrentDir(void);
