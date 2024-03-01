@@ -17,11 +17,17 @@ package help.validator.model;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 import ghidra.util.exception.AssertException;
 import help.HelpBuildUtils;
-import help.validator.*;
+import help.PathKey;
+import help.validator.AnchorManager;
+import help.validator.HTMLFileParser;
+import help.validator.ReferenceTagProcessor;
+import help.validator.TagProcessor;
 import help.validator.location.HelpModuleLocation;
 
 public class HelpFile {
@@ -74,9 +80,10 @@ public class HelpFile {
 		return anchorManager.getDuplicateAnchorsByID();
 	}
 
-	public AnchorDefinition getAnchorDefinition(Path helpPath) {
-		Map<String, AnchorDefinition> anchorsByHelpPath = anchorManager.getAnchorsByHelpPath();
-		return anchorsByHelpPath.get(helpPath.toString());
+	public AnchorDefinition getAnchorDefinition(Path helpPath) {		
+		Map<PathKey, AnchorDefinition> anchorsByHelpPath = anchorManager.getAnchorsByHelpPath();
+		AnchorDefinition def = anchorsByHelpPath.get(new PathKey(helpPath));
+		return def;
 	}
 
 	public Collection<AnchorDefinition> getAllAnchorDefinitions() {
