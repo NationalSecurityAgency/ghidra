@@ -22,11 +22,9 @@ def checkPythonVersion(String pyCmd) {
 			standardOutput = stdout
 		}
 		def version = "$stdout".strip()
-		println "$pyCmd is version $version"
 		return version
 	}
 	catch (Exception e) {
-		println "Could not run $pyCmd: $e"
 		return "ABSENT"
 	}
 }
@@ -36,11 +34,9 @@ ext.SUPPORTED_PY_VERSIONS = ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12']
 def findPython3() {
 	for (pyCmd in ['python3', 'python']) {
 		if (checkPythonVersion(pyCmd) in SUPPORTED_PY_VERSIONS) {
-			println "Using $pyCmd"
 			return pyCmd
 		}
 	}
-	println "Could not find compatible Python 3"
 	// Don't fail until task execution. Just let "python3" fail.
 	return 'python3'
 }
