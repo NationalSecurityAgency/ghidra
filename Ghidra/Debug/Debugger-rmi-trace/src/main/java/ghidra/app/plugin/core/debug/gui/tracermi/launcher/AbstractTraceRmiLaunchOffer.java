@@ -64,6 +64,8 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 
 	public static final String PREFIX_DBGLAUNCH = "DBGLAUNCH_";
 	public static final String PARAM_DISPLAY_IMAGE = "Image";
+	public static final String PREFIX_PARAM_EXTTOOL = "env:GHIDRA_LANG_EXTTOOL_";
+
 	public static final int DEFAULT_TIMEOUT_MILLIS = 10000;
 
 	protected record PtyTerminalSession(Terminal terminal, Pty pty, PtySession session,
@@ -272,6 +274,15 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 					Msg.warn(this, "'Image' parameter has unexpected type: " + paramImage.type);
 				}
 				paramImage = (ParameterDescription<String>) param;
+			}
+			else if (param.name.startsWith(PREFIX_PARAM_EXTTOOL)) {
+				String tool = param.name.substring(PREFIX_PARAM_EXTTOOL.length());
+				List<String> names =
+					program.getLanguage().getLanguageDescription().getExternalNames(tool);
+				if (names != null && !names.isEmpty()) {
+					var paramStr = (ParameterDescription<String>) param;
+					paramStr.set(map, names.get(0));
+				}
 			}
 		}
 		if (paramImage != null) {
