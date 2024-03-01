@@ -25,6 +25,7 @@ import org.jdom.JDOMException;
 import org.junit.*;
 
 import db.Transaction;
+import docking.ActionContext;
 import docking.widgets.table.*;
 import docking.widgets.table.ColumnSortState.SortDirection;
 import docking.widgets.tree.GTree;
@@ -641,8 +642,10 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		selectAttribute("_next");
 		waitForSwing();
 
-		assertEnabled(modelProvider, modelProvider.actionFollowLink);
-		performAction(modelProvider.actionFollowLink, modelProvider, true);
+		ActionContext ctx =
+			runSwing(() -> modelProvider.attributesTableListener.computeContext(true));
+		assertTrue(runSwing(() -> modelProvider.actionFollowLink.isEnabledForContext(ctx)));
+		performAction(modelProvider.actionFollowLink, ctx, true);
 
 		TraceObjectKeyPath thread3Path = TraceObjectKeyPath.parse("Processes[0].Threads[3]");
 		assertPathIs(thread3Path, 0, 5);
