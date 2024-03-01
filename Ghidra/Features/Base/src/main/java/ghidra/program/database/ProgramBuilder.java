@@ -93,7 +93,7 @@ public class ProgramBuilder {
 	 * Construct program builder using the big-endian Toy language and default compiler spec.
 	 * This builder object will be the program consumer and must be disposed to properly
 	 * release the program.
-	 * @throws Exception if there is an exception creating the program 
+	 * @throws Exception if there is an exception creating the program
 	 */
 	public ProgramBuilder() throws Exception {
 		this("Test Program", _TOY);
@@ -279,7 +279,7 @@ public class ProgramBuilder {
 		AbstractGenericTest.setInstanceField("recordChanges", program, Boolean.valueOf(enabled));
 	}
 
-	/** 
+	/**
 	 * This prevents the 'ask to analyze' dialog from showing when called with {@code true}
 	 */
 	public void setAnalyzed() {
@@ -320,8 +320,8 @@ public class ProgramBuilder {
 
 		return tx(() -> {
 			return program.getMemory()
-				.createInitializedBlock(name, addr(address), size, (byte) 0, TaskMonitor.DUMMY,
-					true);
+					.createInitializedBlock(name, addr(address), size, (byte) 0, TaskMonitor.DUMMY,
+						true);
 		});
 	}
 
@@ -411,7 +411,7 @@ public class ProgramBuilder {
 			DisassembleCommand cmd = new DisassembleCommand(addresses, addresses, followFlows);
 
 			cmd.applyTo(program);
-			AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY);
+			AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY, false);
 		});
 	}
 
@@ -419,7 +419,7 @@ public class ProgramBuilder {
 		tx(() -> {
 			DisassembleCommand cmd = new DisassembleCommand(set, set, true);
 			cmd.applyTo(program);
-			AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY);
+			AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY, false);
 		});
 	}
 
@@ -427,7 +427,7 @@ public class ProgramBuilder {
 		tx(() -> {
 			DisassembleCommand cmd = new DisassembleCommand(set, set, followFlows);
 			cmd.applyTo(program);
-			AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY);
+			AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY, false);
 		});
 	}
 
@@ -437,7 +437,7 @@ public class ProgramBuilder {
 			DisassembleCommand cmd = new ArmDisassembleCommand(address,
 				new AddressSet(address, address.add(length - 1)), true);
 			cmd.applyTo(program);
-			AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY);
+			AutoAnalysisManager.getAnalysisManager(program).startAnalysis(TaskMonitor.DUMMY, false);
 		});
 	}
 
