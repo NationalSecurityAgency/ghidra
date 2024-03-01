@@ -13,30 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.mapping.legacy;
+package ghidra.app.plugin.core.debug.mapping;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Set;
 
-import ghidra.app.plugin.core.debug.disassemble.DisassemblyInject;
-import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.debug.api.platform.DebuggerPlatformMapper;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.lifecycle.Transitional;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.util.classfinder.ClassSearcher;
 
 /**
- * An opinion which retains the front-end functionality when using the mapped recorder, i.e., when
- * displaying non-object-based traces.
+ * An opinion which just uses the trace's "host" platform, i.e., because the target created the
+ * trace with the correct host language. Other mappers assume the trace language is DATA, and that
+ * the real language must be mapped as a guest platform.
  */
-@Transitional
-public class LegacyDebuggerPlatformOpinion implements DebuggerPlatformOpinion {
+public class HostDebuggerPlatformOpinion implements DebuggerPlatformOpinion {
 
-	protected static class LegacyDebuggerPlatformMapper extends AbstractDebuggerPlatformMapper {
-		public LegacyDebuggerPlatformMapper(PluginTool tool, Trace trace) {
+	protected static class HostDebuggerPlatformMapper extends AbstractDebuggerPlatformMapper {
+		public HostDebuggerPlatformMapper(PluginTool tool, Trace trace) {
 			super(tool, trace);
 		}
 
@@ -54,23 +49,13 @@ public class LegacyDebuggerPlatformOpinion implements DebuggerPlatformOpinion {
 		public boolean canInterpret(TraceObject newFocus, long snap) {
 			return true;
 		}
-
-		@Override
-		protected Collection<DisassemblyInject> getDisassemblyInjections(TraceObject object) {
-			// Track an injects set using a listener instead?
-			return ClassSearcher.getInstances(DisassemblyInject.class)
-					.stream()
-					.filter(i -> i.isApplicable(trace))
-					.sorted(Comparator.comparing(i -> i.getPriority()))
-					.collect(Collectors.toList());
-		}
 	}
 
 	enum Offers implements DebuggerPlatformOffer {
-		LEGACY {
+		HOST {
 			@Override
 			public String getDescription() {
-				return "Legacy (Already mapped by recorder)";
+				return "Host/base (Language already chosen by target)";
 			}
 
 			@Override
@@ -85,12 +70,12 @@ public class LegacyDebuggerPlatformOpinion implements DebuggerPlatformOpinion {
 
 			@Override
 			public DebuggerPlatformMapper take(PluginTool tool, Trace trace) {
-				return new LegacyDebuggerPlatformMapper(tool, trace);
+				return new HostDebuggerPlatformMapper(tool, trace);
 			}
 
 			@Override
 			public boolean isCreatorOf(DebuggerPlatformMapper mapper) {
-				return mapper.getClass() == LegacyDebuggerPlatformMapper.class;
+				return mapper.getClass() == HostDebuggerPlatformMapper.class;
 			}
 		};
 	}
@@ -98,9 +83,6 @@ public class LegacyDebuggerPlatformOpinion implements DebuggerPlatformOpinion {
 	@Override
 	public Set<DebuggerPlatformOffer> getOffers(Trace trace, TraceObject focus, long snap,
 			boolean includeOverrides) {
-		if (trace.getObjectManager().getRootObject() != null) {
-			return Set.of();
-		}
-		return Set.of(Offers.LEGACY);
+		return Set.of(Offers.HOST);
 	}
 }

@@ -18,38 +18,38 @@ package ghidra.app.plugin.core.debug.platform.arm;
 import java.math.BigInteger;
 
 import ghidra.app.plugin.core.debug.disassemble.*;
-import ghidra.app.plugin.core.debug.disassemble.DisassemblyInjectInfo.CompilerInfo;
+import ghidra.app.plugin.core.debug.disassemble.DisassemblyInjectInfo.PlatformInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.lang.*;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
 
 @DisassemblyInjectInfo(
-	compilers = {
-		@CompilerInfo(langID = "ARM:LE:32:v8"),
-		@CompilerInfo(langID = "ARM:LE:32:v8T"),
-		@CompilerInfo(langID = "ARM:LEBE:32:v8LEInstruction"),
-		@CompilerInfo(langID = "ARM:BE:32:v8"),
-		@CompilerInfo(langID = "ARM:BE:32:v8T"),
-		@CompilerInfo(langID = "ARM:LE:32:v7"),
-		@CompilerInfo(langID = "ARM:LEBE:32:v7LEInstruction"),
-		@CompilerInfo(langID = "ARM:BE:32:v7"),
-		@CompilerInfo(langID = "ARM:LE:32:Cortex"),
-		@CompilerInfo(langID = "ARM:BE:32:Cortex"),
-		@CompilerInfo(langID = "ARM:LE:32:v6"),
-		@CompilerInfo(langID = "ARM:BE:32:v6"),
-		@CompilerInfo(langID = "ARM:LE:32:v5t"),
-		@CompilerInfo(langID = "ARM:BE:32:v5t"),
-		@CompilerInfo(langID = "ARM:LE:32:v5"),
-		@CompilerInfo(langID = "ARM:BE:32:v5"),
-		@CompilerInfo(langID = "ARM:LE:32:v4t"),
-		@CompilerInfo(langID = "ARM:BE:32:v4t"),
-		@CompilerInfo(langID = "ARM:LE:32:v4"),
-		@CompilerInfo(langID = "ARM:BE:32:v4"),
+	platforms = {
+		@PlatformInfo(langID = "ARM:LE:32:v8"),
+		@PlatformInfo(langID = "ARM:LE:32:v8T"),
+		@PlatformInfo(langID = "ARM:LEBE:32:v8LEInstruction"),
+		@PlatformInfo(langID = "ARM:BE:32:v8"),
+		@PlatformInfo(langID = "ARM:BE:32:v8T"),
+		@PlatformInfo(langID = "ARM:LE:32:v7"),
+		@PlatformInfo(langID = "ARM:LEBE:32:v7LEInstruction"),
+		@PlatformInfo(langID = "ARM:BE:32:v7"),
+		@PlatformInfo(langID = "ARM:LE:32:Cortex"),
+		@PlatformInfo(langID = "ARM:BE:32:Cortex"),
+		@PlatformInfo(langID = "ARM:LE:32:v6"),
+		@PlatformInfo(langID = "ARM:BE:32:v6"),
+		@PlatformInfo(langID = "ARM:LE:32:v5t"),
+		@PlatformInfo(langID = "ARM:BE:32:v5t"),
+		@PlatformInfo(langID = "ARM:LE:32:v5"),
+		@PlatformInfo(langID = "ARM:BE:32:v5"),
+		@PlatformInfo(langID = "ARM:LE:32:v4t"),
+		@PlatformInfo(langID = "ARM:BE:32:v4t"),
+		@PlatformInfo(langID = "ARM:LE:32:v4"),
+		@PlatformInfo(langID = "ARM:BE:32:v4"),
 	})
 public class ArmDisassemblyInject implements DisassemblyInject {
 	protected static final long THUMB_BIT = 0x20;
@@ -59,15 +59,15 @@ public class ArmDisassemblyInject implements DisassemblyInject {
 	}
 
 	@Override
-	public void pre(PluginTool tool, TraceDisassembleCommand command, Trace trace,
-			Language language, long snap, TraceThread thread, AddressSetView startSet,
-			AddressSetView restricted) {
+	public void pre(PluginTool tool, TraceDisassembleCommand command, TracePlatform platform,
+			long snap, TraceThread thread, AddressSetView startSet, AddressSetView restricted) {
 		/**
 		 * TODO: There are probably several avenues to figure the TMode. The most important, I think
-		 * is the cpsr register, when it's available. For auto-pc, the trace recorder ought to have
-		 * recorded cpsr at the recorded tick.
+		 * is the cpsr register, when it's available. For auto-pc, the target ought to have recorded
+		 * cpsr at the current snapshot.
 		 */
 
+		Language language = platform.getLanguage();
 		Register cpsrReg = language.getRegister("cpsr");
 		Register tModeReg = language.getRegister("TMode");
 
@@ -77,24 +77,22 @@ public class ArmDisassemblyInject implements DisassemblyInject {
 			return;
 		}
 
-		TraceMemorySpace regs = trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
+		TraceMemorySpace regs =
+			platform.getTrace().getMemoryManager().getMemoryRegisterSpace(thread, false);
 		/**
 		 * Some variants (particularly Cortex-M) are missing cpsr. This seems to indicate it only
 		 * supports THUMB. There is an epsr (xpsr in gdb), but we don't have it in our models, and
 		 * its TMode bit must be set, or it will fault.
+		 * 
+		 * TODO: If registers are recorded as generic objects, then we can find epsr/xpsr whether or
+		 * not its in the Sleigh model.
 		 */
-		if (regs == null || regs.getState(snap, cpsrReg) != TraceMemoryState.KNOWN) {
+		if (regs == null || regs.getState(platform, snap, cpsrReg) != TraceMemoryState.KNOWN) {
 			command.setInitialContext(new RegisterValue(tModeReg, BigInteger.ONE));
 			return;
 		}
-		/**
-		 * TODO: Once we have register mapping figured out for object-based traces, we need to have
-		 * this check the cpsr register there, instead. Better yet, regarding epsr and xpsr, we can
-		 * actually check them, even though they don't exist in the slaspec, because we have access
-		 * to the raw recorded register objects.
-		 */
 
-		RegisterValue cpsrVal = regs.getValue(snap, cpsrReg);
+		RegisterValue cpsrVal = regs.getValue(platform, snap, cpsrReg);
 		if (isThumbMode(cpsrVal)) {
 			command.setInitialContext(new RegisterValue(tModeReg, BigInteger.ONE));
 		}

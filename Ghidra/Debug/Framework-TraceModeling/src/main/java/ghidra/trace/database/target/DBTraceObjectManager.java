@@ -573,7 +573,12 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 	public <I extends TraceObjectInterface> I getObjectByPath(long snap, String path,
 			Class<I> iface) {
 		try (LockHold hold = trace.lockRead()) {
-			return getObjectsByPath(Lifespan.at(snap), TraceObjectKeyPath.parse(path)).findAny()
+			TraceObjectKeyPath parsed = TraceObjectKeyPath.parse(path);
+			DBTraceObject object = getObjectByCanonicalPath(parsed);
+			if (object != null) {
+				return object.queryInterface(iface);
+			}
+			return getObjectsByPath(Lifespan.at(snap), parsed).findAny()
 					.map(o -> o.queryInterface(iface))
 					.orElse(null);
 		}

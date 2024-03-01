@@ -178,12 +178,18 @@ public class StackUnwinder {
 		Address pcVal = null;
 		TraceThread thread = coordinates.getThread();
 		long viewSnap = coordinates.getViewSnap();
-		TraceStack stack = trace.getStackManager().getLatestStack(thread, viewSnap);
-		if (stack != null) {
-			TraceStackFrame frame = stack.getFrame(level, false);
-			if (frame != null) {
-				pcVal = frame.getProgramCounter(viewSnap);
+		try {
+			TraceStack stack = trace.getStackManager().getLatestStack(thread, viewSnap);
+			if (stack != null) {
+				TraceStackFrame frame = stack.getFrame(level, false);
+				if (frame != null) {
+					pcVal = frame.getProgramCounter(viewSnap);
+				}
 			}
+		}
+		catch (IllegalStateException e) {
+			// Schema does not specify a stack
+			// leave pcVal = null, so we'll get it from registers
 		}
 		TraceMemorySpace regs = Objects.requireNonNull(
 			trace.getMemoryManager().getMemoryRegisterSpace(thread, level, false),

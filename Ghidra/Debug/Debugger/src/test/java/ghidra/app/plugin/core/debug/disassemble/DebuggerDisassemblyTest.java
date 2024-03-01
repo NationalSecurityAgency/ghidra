@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.debug.disassemble;
 
 import static org.junit.Assert.*;
 
+import java.io.ByteArrayInputStream;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -24,7 +25,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Test;
 
 import db.Transaction;
 import docking.action.DockingActionIf;
@@ -32,11 +34,13 @@ import generic.Unique;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.plugin.core.assembler.AssemblerPluginTestHelper;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
+import ghidra.app.plugin.core.debug.gui.action.LoadEmulatorAutoReadMemorySpec;
 import ghidra.app.plugin.core.debug.gui.listing.*;
 import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
+import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin;
+import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
 import ghidra.app.plugin.core.debug.service.platform.DebuggerPlatformServicePlugin;
-import ghidra.app.services.DebuggerControlService;
-import ghidra.app.services.DebuggerPlatformService;
+import ghidra.app.services.*;
 import ghidra.dbg.target.TargetEnvironment;
 import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
@@ -57,6 +61,7 @@ import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectManager;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.guest.TraceGuestPlatform;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceObjectMemoryRegion;
 import ghidra.trace.model.program.TraceProgramView;
@@ -65,6 +70,7 @@ import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.task.TaskMonitor;
 
 public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
@@ -149,6 +155,10 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		listingProvider.setAutoDisassemble(true);
 	}
 
+	protected void enableLoadEmulator() throws Throwable {
+		runSwing(() -> listingProvider.setAutoReadMemorySpec(new LoadEmulatorAutoReadMemorySpec()));
+	}
+
 	protected DebuggerListingActionContext createActionContext(Address start, int len) {
 		TraceProgramView view = tb.trace.getProgramView();
 		ProgramSelection sel = new ProgramSelection(start, start.addWrap(len - 1));
@@ -220,12 +230,21 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		return thread;
 	}
 
-	protected void setLegacyProgramCounter(long offset, TraceThread thread, long snap) {
+	protected void setLegacyProgramCounterInStack(long offset, TraceThread thread, long snap) {
 		try (Transaction tx = tb.startTransaction()) {
 			DBTraceStackManager manager = tb.trace.getStackManager();
 			TraceStack stack = manager.getStack(thread, snap, true);
 			TraceStackFrame frame = stack.getFrame(0, true);
 			frame.setProgramCounter(Lifespan.nowOn(snap), tb.addr(offset));
+		}
+	}
+
+	protected void setLegacyProgramCounterInRegs(long offset, TraceThread thread, long snap) {
+		try (Transaction tx = tb.startTransaction()) {
+			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
+			DBTraceMemorySpace regs = memory.getMemoryRegisterSpace(thread, true);
+			Register pc = tb.language.getProgramCounter();
+			regs.setValue(0, new RegisterValue(pc, BigInteger.valueOf(offset)));
 		}
 	}
 
@@ -259,7 +278,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 	}
 
 	@Test
-	public void testAutoDisasembleReDisasembleOffcut() throws Throwable {
+	public void testAutoDisasembleReDisasembleX8664Offcut() throws Throwable {
 		enableAutoDisassembly();
 		createLegacyTrace("x86:LE:64:default", 0x00400000, () -> tb.buf(0xeb, 0xff, 0xc0));
 
@@ -268,7 +287,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 			thread = tb.getOrAddThread("Thread 1", 0);
 		}
 
-		setLegacyProgramCounter(0x00400000, thread, 0);
+		setLegacyProgramCounterInStack(0x00400000, thread, 0);
 
 		waitForPass(() -> {
 			DBTraceInstructionsMemoryView instructions = tb.trace.getCodeManager().instructions();
@@ -281,7 +300,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		});
 
 		// The jump will advance one byte. Just simulate that by updating the stack and/or regs
-		setLegacyProgramCounter(0x00400001, thread, 1);
+		setLegacyProgramCounterInStack(0x00400001, thread, 1);
 		traceManager.activateSnap(1);
 
 		waitForPass(() -> {
@@ -289,6 +308,93 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 			assertNull(instructions.getAt(1, tb.addr(0x00400000)));
 			assertMnemonic("INC", instructions.getAt(1, tb.addr(0x00400001)));
 			assertNull(instructions.getAt(1, tb.addr(0x00400003)));
+		});
+	}
+
+	@Test
+	public void testAutoDisassembleReDisassembleX8664OffcutByEmulation() throws Throwable {
+		DebuggerEmulationService emuService = addPlugin(tool, DebuggerEmulationServicePlugin.class);
+		enableAutoDisassembly();
+		createLegacyTrace("x86:LE:64:default", 0x00400000, () -> tb.buf(0xeb, 0xff, 0xc0));
+
+		TraceThread thread;
+		try (Transaction tx = tb.startTransaction()) {
+			thread = tb.getOrAddThread("Thread 1", 0);
+		}
+
+		setLegacyProgramCounterInRegs(0x00400000, thread, 0);
+
+		waitForPass(() -> {
+			DBTraceInstructionsMemoryView instructions = tb.trace.getCodeManager().instructions();
+			assertMnemonic("JMP", instructions.getAt(0, tb.addr(0x00400000)));
+			/**
+			 * Depending on preference for branch or fall-through, the disassembler may or may not
+			 * proceed to the following instructions. I don't really care, since the test is the the
+			 * JMP gets deleted after the update to PC.
+			 */
+		});
+
+		TraceSchedule schedule = TraceSchedule.snap(0).steppedForward(thread, 1);
+		// Pre-load the cache, so I don't have to wait for background async emulation
+		long viewSnap = emuService.emulate(tb.trace, schedule, monitor);
+		traceManager.activateTime(schedule);
+		waitForSwing();
+		assertEquals(viewSnap, traceManager.getCurrentView().getSnap());
+
+		waitForPass(() -> {
+			DBTraceInstructionsMemoryView instructions = tb.trace.getCodeManager().instructions();
+			assertNull(instructions.getAt(viewSnap, tb.addr(0x00400000)));
+			assertMnemonic("INC", instructions.getAt(viewSnap, tb.addr(0x00400001)));
+			assertNull(instructions.getAt(viewSnap, tb.addr(0x00400003)));
+		});
+	}
+
+	@Test
+	public void testAutoDisassembleReDisassembleX8664OffcutByProgEmu() throws Throwable {
+		DebuggerEmulationService emuService = addPlugin(tool, DebuggerEmulationServicePlugin.class);
+
+		createProgram(getSLEIGH_X86_64_LANGUAGE());
+		Address start;
+		try (Transaction tx = program.openTransaction("Load")) {
+			start = program.getAddressFactory().getDefaultAddressSpace().getAddress(0x00400000);
+			program.getMemory()
+					.createInitializedBlock(".text", start,
+						new ByteArrayInputStream(arr("ebffc0")), 3, monitor, false);
+		}
+		intoProject(program);
+
+		useTrace(ProgramEmulationUtils.launchEmulationTrace(program, start, this));
+		tb.trace.release(this);
+		TraceThread thread = Unique.assertOne(tb.trace.getThreadManager().getAllThreads());
+
+		traceManager.openTrace(tb.trace);
+		traceManager.activateThread(thread);
+
+		enableLoadEmulator();
+		enableAutoDisassembly();
+
+		waitForPass(() -> {
+			DBTraceInstructionsMemoryView instructions = tb.trace.getCodeManager().instructions();
+			assertMnemonic("JMP", instructions.getAt(0, tb.addr(0x00400000)));
+			/**
+			 * Depending on preference for branch or fall-through, the disassembler may or may not
+			 * proceed to the following instructions. I don't really care, since the test is the the
+			 * JMP gets deleted after the update to PC.
+			 */
+		});
+
+		TraceSchedule schedule = TraceSchedule.snap(0).steppedForward(thread, 1);
+		// Pre-load the cache, so I don't have to wait for background async emulation
+		long viewSnap = emuService.emulate(tb.trace, schedule, monitor);
+		traceManager.activateTime(schedule);
+		waitForSwing();
+		assertEquals(viewSnap, traceManager.getCurrentView().getSnap());
+
+		waitForPass(() -> {
+			DBTraceInstructionsMemoryView instructions = tb.trace.getCodeManager().instructions();
+			assertNull(instructions.getAt(viewSnap, tb.addr(0x00400000)));
+			assertMnemonic("INC", instructions.getAt(viewSnap, tb.addr(0x00400001)));
+			assertNull(instructions.getAt(viewSnap, tb.addr(0x00400003)));
 		});
 	}
 
@@ -374,14 +480,27 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 	public void testCurrentDisassembleActionGuestArm() throws Throwable {
 		TraceObjectThread thread =
 			createPolyglotTrace("armv8le", 0x00400000, () -> tb.buf(0x1e, 0xff, 0x2f, 0xe1));
-
-		// Set up registers so injects will select ARM
-		// TODO
-
-		Address start = tb.addr(0x00400000);
+		traceManager.activateThread(thread);
+		waitForSwing();
 
 		// Ensure the mapper is added to the trace
 		assertNotNull(platformService.getMapper(tb.trace, thread.getObject(), 0));
+
+		TracePlatform arm = Unique.assertOne(tb.trace.getPlatformManager().getGuestPlatforms());
+		// If cpsr is UNKNOWN, inject will assume, e.g., Cortex-M, and set THUMB mode.
+		try (Transaction tx = tb.startTransaction()) {
+			tb.trace.getObjectManager()
+					.createObject(
+						TraceObjectKeyPath.parse("Targets[0].Threads[0].Stack[0].Registers"))
+					.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
+			DBTraceMemorySpace regs = Objects.requireNonNull(
+				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true));
+			Register cpsr = arm.getLanguage().getRegister("cpsr");
+			regs.setValue(arm, 0, new RegisterValue(cpsr, BigInteger.ZERO));
+		}
+		waitForDomainObject(tb.trace);
+
+		Address start = tb.addr(0x00400000);
 
 		ListingActionContext actionContext = createActionContext(start, 4);
 		performAction(disassemblerPlugin.actionDisassemble, actionContext, true);
@@ -394,18 +513,29 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 	}
 
 	@Test
-	@Ignore("TODO")
 	public void testCurrentDisassembleActionGuestThumb() throws Throwable {
 		TraceObjectThread thread =
 			createPolyglotTrace("armv8le", 0x00400000, () -> tb.buf(0x70, 0x47));
-
-		// Set up registers so injects will select THUMB
-		// TODO
-
-		Address start = tb.addr(0x00400000);
+		traceManager.activateThread(thread);
+		waitForSwing();
 
 		// Ensure the mapper is added to the trace
 		assertNotNull(platformService.getMapper(tb.trace, thread.getObject(), 0));
+
+		TracePlatform arm = Unique.assertOne(tb.trace.getPlatformManager().getGuestPlatforms());
+		try (Transaction tx = tb.startTransaction()) {
+			tb.trace.getObjectManager()
+					.createObject(
+						TraceObjectKeyPath.parse("Targets[0].Threads[0].Stack[0].Registers"))
+					.insert(Lifespan.nowOn(0), ConflictResolution.DENY);
+			DBTraceMemorySpace regs = Objects.requireNonNull(
+				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true));
+			Register cpsr = arm.getLanguage().getRegister("cpsr");
+			regs.setValue(arm, 0, new RegisterValue(cpsr, BigInteger.ONE.shiftLeft(5)));
+		}
+		waitForDomainObject(tb.trace);
+
+		Address start = tb.addr(0x00400000);
 
 		ListingActionContext actionContext = createActionContext(start, 4);
 		performAction(disassemblerPlugin.actionDisassemble, actionContext, true);

@@ -310,8 +310,14 @@ public class DebuggerCoordinates {
 			if (frameLevel == null) {
 				return objThread.getCanonicalPath();
 			}
-			TraceStack stack =
-				thread.getTrace().getStackManager().getStack(thread, time.getSnap(), false);
+			TraceStack stack;
+			try {
+				stack = thread.getTrace().getStackManager().getStack(thread, time.getSnap(), false);
+			}
+			catch (IllegalStateException e) {
+				// Schema does not specify a stack
+				return objThread.getCanonicalPath();
+			}
 			if (stack == null) {
 				return objThread.getCanonicalPath();
 			}
