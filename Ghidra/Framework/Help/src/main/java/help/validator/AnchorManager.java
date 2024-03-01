@@ -15,15 +15,24 @@
  */
 package help.validator;
 
-import help.validator.model.*;
-
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import help.PathKey;
+import help.validator.model.AnchorDefinition;
+import help.validator.model.HREF;
+import help.validator.model.IMG;
 
 public class AnchorManager {
 
-	private Map<String, AnchorDefinition> anchorsByHelpPath =
-		new HashMap<String, AnchorDefinition>();
+	private Map<PathKey, AnchorDefinition> anchorsByHelpPath =
+		new HashMap<>();
 	private Map<String, AnchorDefinition> anchorsById = new HashMap<String, AnchorDefinition>();
 	private Map<String, AnchorDefinition> anchorsByName = new HashMap<String, AnchorDefinition>();
 	private Map<String, List<AnchorDefinition>> duplicateAnchorsById =
@@ -35,7 +44,7 @@ public class AnchorManager {
 	public AnchorManager() {
 	}
 
-	public void addAnchor(Path file, String anchorName, int srcLineNo) {
+	public void addAnchor(Path file, String anchorName, int srcLineNo) {		
 		AnchorDefinition anchor = new AnchorDefinition(file, anchorName, srcLineNo);
 
 		String id = anchor.getId();
@@ -45,8 +54,8 @@ public class AnchorManager {
 		}
 
 		anchorsById.put(id, anchor);
-		anchorsByHelpPath.put(anchor.getHelpPath(), anchor);
-
+		anchorsByHelpPath.put(new PathKey(anchor.getHelpPath()), anchor);
+		
 		if (anchorName != null) {
 			anchorsByName.put(anchorName, anchor);
 		}
@@ -71,11 +80,11 @@ public class AnchorManager {
 
 		if (!anchorsByName.containsKey(anchorName)) {
 			anchorsByName.put(anchorName, anchor);
-			anchorsByHelpPath.put(anchor.getHelpPath(), anchor);
+			anchorsByHelpPath.put(new PathKey(anchor.getHelpPath()), anchor);
 		}
 	}
 
-	public Map<String, AnchorDefinition> getAnchorsByHelpPath() {
+	public Map<PathKey, AnchorDefinition> getAnchorsByHelpPath() {
 		return anchorsByHelpPath;
 	}
 
