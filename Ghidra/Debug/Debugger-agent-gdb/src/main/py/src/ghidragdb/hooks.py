@@ -513,7 +513,8 @@ def install_hooks():
     gdb.events.exited.connect(on_exited)  # Inferior exited
 
     gdb.events.clear_objfiles.connect(on_clear_objfiles)
-    gdb.events.free_objfile.connect(on_free_objfile)
+    if hasattr(gdb.events, 'free_objfile'):
+        gdb.events.free_objfile.connect(on_free_objfile)
     gdb.events.new_objfile.connect(on_new_objfile)
 
     gdb.events.breakpoint_created.connect(on_breakpoint_created)
@@ -547,7 +548,8 @@ def remove_hooks():
     gdb.events.exited.disconnect(on_exited)  # Inferior exited
 
     gdb.events.clear_objfiles.disconnect(on_clear_objfiles)
-    gdb.events.free_objfile.disconnect(on_free_objfile)
+    if hasattr(gdb.events, 'free_objfile'):
+        gdb.events.free_objfile.disconnect(on_free_objfile)
     gdb.events.new_objfile.disconnect(on_new_objfile)
 
     gdb.events.breakpoint_created.disconnect(on_breakpoint_created)

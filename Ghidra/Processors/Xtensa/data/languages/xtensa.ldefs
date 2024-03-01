@@ -14,6 +14,7 @@
     <compiler name="default" spec="xtensa.cspec" id="default"/>
     <external_name tool="gnu" name="xtensa"/>
     <external_name tool="DWARF.register.mapping.file" name="xtensa.dwarf"/>
+    <external_name tool="qemu" name="qemu-xtensa"/>
   </language>
   <language processor="Xtensa"
             endian="big"
@@ -28,5 +29,6 @@
     <compiler name="default" spec="xtensa.cspec" id="default"/>
     <external_name tool="gnu" name="xtensa"/>
     <external_name tool="DWARF.register.mapping.file" name="xtensa.dwarf"/>
+    <external_name tool="qemu" name="qemu-xtensaeb"/>
   </language>
 </language_definitions>

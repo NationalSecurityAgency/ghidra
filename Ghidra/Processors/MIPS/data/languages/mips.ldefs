@@ -17,6 +17,7 @@
     <external_name tool="gnu" name="mips:4000"/>
     <external_name tool="IDA-PRO" name="mipsb"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
+    <external_name tool="qemu" name="qemu-mips"/>
   </language>
   <language processor="MIPS"
             endian="little"
@@ -35,6 +36,7 @@
     <external_name tool="gnu" name="mips:4000"/>
     <external_name tool="IDA-PRO" name="mipsl"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
+    <external_name tool="qemu" name="qemu-mipsel"/>
   </language>
   <language processor="MIPS"
             endian="big"
@@ -49,6 +51,7 @@
     <compiler name="default" spec="mips32_fp64.cspec" id="default"/>
     <external_name tool="IDA-PRO" name="mipsb"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
+    <external_name tool="qemu" name="qemu-mips"/>
   </language>
   <language processor="MIPS"
             endian="little"
@@ -63,6 +66,7 @@
     <compiler name="default" spec="mips32_fp64.cspec" id="default"/>
     <external_name tool="IDA-PRO" name="mipsl"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
+    <external_name tool="qemu" name="qemu-mipsel"/>
   </language>
   <language processor="MIPS"
             endian="big"
@@ -79,6 +83,7 @@
     <external_name tool="IDA-PRO" name="mipsb"/>
     <external_name tool="IDA-PRO" name="r5900r"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
+    <external_name tool="qemu" name="qemu-mips64"/>
   </language>
   <language processor="MIPS"
             endian="little"
@@ -96,6 +101,7 @@
     <external_name tool="IDA-PRO" name="mipsl"/>
     <external_name tool="IDA-PRO" name="r5900l"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
+    <external_name tool="qemu" name="qemu-mips64el"/>
   </language>
   <language processor="MIPS"
             endian="big"
@@ -142,6 +148,7 @@
     <external_name tool="IDA-PRO" name="mipsb"/>
     <external_name tool="IDA-PRO" name="r5900r"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
+    <external_name tool="qemu" name="qemu-mips64"/>
   </language>
   <language processor="MIPS"
             endian="little"
@@ -158,6 +165,7 @@
     <external_name tool="IDA-PRO" name="mipsl"/>
     <external_name tool="IDA-PRO" name="r5900l"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
+    <external_name tool="qemu" name="qemu-mips64el"/>
   </language>
   <language processor="MIPS"
             endian="big"
@@ -178,6 +186,7 @@
     <external_name tool="IDA-PRO" name="mipsb"/>
     <external_name tool="IDA-PRO" name="r5900r"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
+    <external_name tool="qemu" name="qemu-mipsn32"/>
   </language>
   <language processor="MIPS"
             endian="little"
@@ -199,6 +208,7 @@
     <external_name tool="IDA-PRO" name="mipsl"/>
     <external_name tool="IDA-PRO" name="r5900l"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
+    <external_name tool="qemu" name="qemu-mipsn32el"/>
   </language>
   <language processor="MIPS"
             endian="little"
@@ -257,6 +267,7 @@
     <external_name tool="IDA-PRO" name="mipsb"/>
     <external_name tool="IDA-PRO" name="r5900r"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
+    <external_name tool="qemu" name="qemu-mipsn32"/>
   </language>
   <language processor="MIPS"
             endian="little"
@@ -277,6 +288,7 @@
     <external_name tool="IDA-PRO" name="mipsl"/>
     <external_name tool="IDA-PRO" name="r5900l"/>
     <external_name tool="DWARF.register.mapping.file" name="mips.dwarf"/>
+    <external_name tool="qemu" name="qemu-mipsn32el"/>
   </language>
   <language processor="MIPS"
             endian="big"

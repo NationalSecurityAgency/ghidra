@@ -102,6 +102,7 @@ public abstract class AbstractScriptTraceRmiLaunchOffer extends AbstractTraceRmi
 		List<String> commandLine = new ArrayList<>();
 		Map<String, String> env = new HashMap<>(System.getenv());
 		prepareSubprocess(commandLine, env, args, address);
+		env.put("GHIDRA_LANGUAGE_ID", program.getLanguageID().toString());
 
 		for (Map.Entry<String, TtyCondition> ent : attrs.extraTtys().entrySet()) {
 			if (!ent.getValue().isActive(args)) {

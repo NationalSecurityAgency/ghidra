@@ -14,6 +14,7 @@
     <compiler name="Visual Studio" spec="AARCH64_win.cspec" id="windows"/>
     <external_name tool="gnu" name="aarch64"/>
     <external_name tool="DWARF.register.mapping.file" name="AARCH64.dwarf"/>
+    <external_name tool="qemu" name="qemu-aarch64"/>
   </language>
   <language processor="AARCH64"
             endian="big"
@@ -29,6 +30,7 @@
     <compiler name="default" spec="AARCH64.cspec" id="default"/>
     <external_name tool="gnu" name="aarch64"/>
     <external_name tool="DWARF.register.mapping.file" name="AARCH64.dwarf"/>
+    <external_name tool="qemu" name="qemu-aarch64_be"/>
   </language>
   <language processor="AARCH64"
             endian="little"
@@ -44,6 +46,7 @@
     <compiler name="default" spec="AARCH64_ilp32.cspec" id="default"/>
     <external_name tool="gnu" name="aarch64:ilp32"/>
     <external_name tool="DWARF.register.mapping.file" name="AARCH64.dwarf"/>
+    <external_name tool="qemu" name="qemu-aarch64"/>
   </language>
   <language processor="AARCH64"
             endian="big"
@@ -60,5 +63,6 @@
     <compiler name="default" spec="AARCH64_ilp32.cspec" id="default"/>
     <external_name tool="gnu" name="aarch64:ilp32"/>
     <external_name tool="DWARF.register.mapping.file" name="AARCH64.dwarf"/>
+    <external_name tool="qemu" name="qemu-aarch64_be"/>
   </language>
 </language_definitions>
