@@ -19,66 +19,85 @@
  */
 package ghidra.app.plugin.processors.sleigh.expression;
 
+import static ghidra.pcode.utils.SlaFormat.*;
+
 import ghidra.app.plugin.processors.sleigh.ParserWalker;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 /**
- * 
- *
  * An expression which results in a pattern for a specific InstructionContext
  */
 public abstract class PatternExpression {
 	public abstract long getValue(ParserWalker walker) throws MemoryAccessException;
 
-	public abstract void restoreXml(XmlPullParser parser, SleighLanguage lang);
+	public abstract void decode(Decoder decoder, SleighLanguage lang) throws DecoderException;
 
-	public static PatternExpression restoreExpression(XmlPullParser parser, SleighLanguage lang) {
-		XmlElement el = parser.peek();
+	public static PatternExpression decodeExpression(Decoder decoder, SleighLanguage lang)
+			throws DecoderException {
+		int el = decoder.peekElement();
 		PatternExpression res;
-		String nm = el.getName();
-		if (nm.equals("tokenfield"))
+		if (el == ELEM_TOKENFIELD.id()) {
 			res = new TokenField();
-		else if (nm.equals("contextfield"))
+		}
+		else if (el == ELEM_CONTEXTFIELD.id()) {
 			res = new ContextField();
-		else if (nm.equals("intb"))
+		}
+		else if (el == ELEM_INTB.id()) {
 			res = new ConstantValue();
-		else if (nm.equals("operand_exp"))
+		}
+		else if (el == ELEM_OPERAND_EXP.id()) {
 			res = new OperandValue();
-		else if (nm.equals("start_exp"))
+		}
+		else if (el == ELEM_START_EXP.id()) {
 			res = new StartInstructionValue();
-		else if (nm.equals("end_exp"))
+		}
+		else if (el == ELEM_END_EXP.id()) {
 			res = new EndInstructionValue();
-		else if (nm.equals("next2_exp"))
+		}
+		else if (el == ELEM_NEXT2_EXP.id()) {
 			res = new Next2InstructionValue();
-		else if (nm.equals("plus_exp"))
+		}
+		else if (el == ELEM_PLUS_EXP.id()) {
 			res = new PlusExpression();
-		else if (nm.equals("sub_exp"))
+		}
+		else if (el == ELEM_SUB_EXP.id()) {
 			res = new SubExpression();
-		else if (nm.equals("mult_exp"))
+		}
+		else if (el == ELEM_MULT_EXP.id()) {
 			res = new MultExpression();
-		else if (nm.equals("lshift_exp"))
+		}
+		else if (el == ELEM_LSHIFT_EXP.id()) {
 			res = new LeftShiftExpression();
-		else if (nm.equals("rshift_exp"))
+		}
+		else if (el == ELEM_RSHIFT_EXP.id()) {
 			res = new RightShiftExpression();
-		else if (nm.equals("and_exp"))
+		}
+		else if (el == ELEM_AND_EXP.id()) {
 			res = new AndExpression();
-		else if (nm.equals("or_exp"))
+		}
+		else if (el == ELEM_OR_EXP.id()) {
 			res = new OrExpression();
-		else if (nm.equals("xor_exp"))
+		}
+		else if (el == ELEM_XOR_EXP.id()) {
 			res = new XorExpression();
-		else if (nm.equals("div_exp"))
+		}
+		else if (el == ELEM_DIV_EXP.id()) {
 			res = new DivExpression();
-		else if (nm.equals("minus_exp"))
+		}
+		else if (el == ELEM_MINUS_EXP.id()) {
 			res = new MinusExpression();
-		else if (nm.equals("not_exp"))
+		}
+		else if (el == ELEM_NOT_EXP.id()) {
 			res = new NotExpression();
-		else
+		}
+		else {
 			return null;
+		}
 
-		res.restoreXml(parser, lang);
+		res.decode(decoder, lang);
 		return res;
 	}
 

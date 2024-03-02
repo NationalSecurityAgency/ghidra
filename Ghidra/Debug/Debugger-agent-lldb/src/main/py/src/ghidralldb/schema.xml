@@ -1,5 +1,5 @@
 <context>
-	<schema name="Session" elementResync="NEVER" attributeResync="NEVER">
+	<schema name="LldbSession" elementResync="NEVER" attributeResync="NEVER">
 		<interface name="Access" />
 		<interface name="Attacher" />
 		<interface name="Interpreter" />

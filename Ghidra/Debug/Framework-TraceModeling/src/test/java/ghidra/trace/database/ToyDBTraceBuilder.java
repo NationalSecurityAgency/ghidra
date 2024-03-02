@@ -729,6 +729,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	public File save() throws IOException, CancelledException {
 		Path tmp = Files.createTempFile("test", ".db");
 		Files.delete(tmp); // saveAs must create the file
+		trace.objectManager.flushWbCaches();
 		trace.getDBHandle().saveAs(tmp.toFile(), false, new ConsoleTaskMonitor());
 		return tmp.toFile();
 	}
@@ -802,8 +803,8 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 * @param path the path pattern
 	 * @return the object or null
 	 */
-	public TraceObject objAny(String pat) {
-		return objAny(pat, Lifespan.at(0));
+	public TraceObject objAny(String path) {
+		return objAny(path, Lifespan.at(0));
 	}
 
 	public TraceObject objAny(String path, Lifespan span) {

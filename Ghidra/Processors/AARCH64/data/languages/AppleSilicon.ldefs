@@ -11,6 +11,7 @@
             id="AARCH64:LE:64:AppleSilicon">
     <description>AppleSilicon ARM v8.5-A LE instructions, LE data, AMX extensions</description>
     <compiler name="default" spec="AARCH64.cspec" id="default"/>
+    <compiler name="Swift" spec="AARCH64_swift.cspec" id="swift"/>
     <external_name tool="gnu" name="aarch64"/>
     <external_name tool="gnu" name="aarch64:ilp32"/>
     <external_name tool="DWARF.register.mapping.file" name="AARCH64.dwarf"/>

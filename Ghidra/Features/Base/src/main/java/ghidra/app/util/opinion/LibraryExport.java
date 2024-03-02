@@ -23,8 +23,8 @@ public class LibraryExport {
 	private String symbolName;
 	private int purge;
 	private String comment;
-	private String fowardLibName;
-	private String fowardSymName;
+	private String forwardLibName;
+	private String forwardSymName;
 
 	private String noReturnStr;
 	private boolean noReturn;
@@ -35,8 +35,8 @@ public class LibraryExport {
 		symbolName = export.getAttributeValue("NAME");
 		purge = Integer.parseInt(export.getAttributeValue("PURGE"));
 		comment = export.getAttributeValue("COMMENT");
-		fowardLibName = export.getAttributeValue("FOWARDLIBRARY");
-		fowardSymName = export.getAttributeValue("FOWARDSYMBOL");
+		forwardLibName = export.getAttributeValue("FOWARDLIBRARY");
+		forwardSymName = export.getAttributeValue("FOWARDSYMBOL");
 
 		noReturnStr = export.getAttributeValue("NO_RETURN");
 		noReturn = noReturnStr != null && "y".equals(noReturnStr);
@@ -63,13 +63,13 @@ public class LibraryExport {
 	}
 
 
-	public String getFowardLibName() {
-		return fowardLibName;
+	public String getForwardLibName() {
+		return forwardLibName;
 	}
 
 
-	public String getFowardSymName() {
-		return fowardSymName;
+	public String getForwardSymName() {
+		return forwardSymName;
 	}
 
 

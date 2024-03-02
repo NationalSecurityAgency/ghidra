@@ -548,10 +548,10 @@ JumpTable::RecoveryMode Funcdata::stageJumpTable(Funcdata &partial,JumpTable *jt
 
 /// Backtrack from the BRANCHIND, looking for ops that might affect the destination.
 /// If a CALLOTHER, which is not injected/inlined in some way, is in the flow path of
-/// the destination calculation, we know the jump-table analysis will fail and return \b true.
+/// the destination calculation, we know the jump-table analysis will fail and the failure mode is returned.
 /// \param op is the BRANCHIND op
-/// \return \b true if jump-table analysis is guaranteed to fail
-bool Funcdata::earlyJumpTableFail(PcodeOp *op)
+/// \return \b success if there is no early failure, or the failure mode otherwise
+JumpTable::RecoveryMode Funcdata::earlyJumpTableFail(PcodeOp *op)
 
 {
   Varnode *vn = op->getIn(0);
@@ -559,9 +559,9 @@ bool Funcdata::earlyJumpTableFail(PcodeOp *op)
   list<PcodeOp *>::const_iterator startiter = beginOpDead();
   int4 countMax = 8;
   while(iter != startiter) {
-    if (vn->getSize() == 1) return false;
+    if (vn->getSize() == 1) return JumpTable::success;
     countMax -= 1;
-    if (countMax < 0) return false;		// Don't iterate too many times
+    if (countMax < 0) return JumpTable::success;	// Don't iterate too many times
     --iter;
     op = *iter;
     Varnode *outvn = op->getOut();
@@ -575,33 +575,33 @@ bool Funcdata::earlyJumpTableFail(PcodeOp *op)
 	  int4 id = (int4)op->getIn(0)->getOffset();
 	  UserPcodeOp *userOp = glb->userops.getOp(id);
 	  if (dynamic_cast<InjectedUserOp *>(userOp) != (InjectedUserOp *)0)
-	    return false;	// Don't try to back track through injection
+	    return JumpTable::success;	// Don't try to back track through injection
 	  if (dynamic_cast<JumpAssistOp *>(userOp) != (JumpAssistOp *)0)
-	    return false;
+	    return JumpTable::success;
 	  if (dynamic_cast<SegmentOp *>(userOp) != (SegmentOp *)0)
-	    return false;
+	    return JumpTable::success;
 	  if (outhit)
-	    return true;	// Address formed via uninjected CALLOTHER, analysis will fail
+	    return JumpTable::fail_callother;	// Address formed via uninjected CALLOTHER, analysis will fail
 	  // Assume CALLOTHER will not interfere with address and continue backtracking
 	}
 	else {
 	  // CALL or CALLIND - Output has not been established yet
-	  return false;	// Don't try to back track through CALL
+	  return JumpTable::success;	// Don't try to back track through CALL
 	}
       }
       else if (op->isBranch())
-	return false;	// Don't try to back track further
+	return JumpTable::success;	// Don't try to back track further
       else {
-	if (op->code() == CPUI_STORE) return false;	// Don't try to back track through STORE
+	if (op->code() == CPUI_STORE) return JumpTable::success;	// Don't try to back track through STORE
 	if (outhit)
-	  return false;		// Some special op (CPOOLREF, NEW, etc) generates address, don't assume failure
+	  return JumpTable::success;	// Some special op (CPOOLREF, NEW, etc) generates address, don't assume failure
 	// Assume special will not interfere with address and continue backtracking
       }
     }
     else if (op->getEvalType() == PcodeOp::unary) {
       if (outhit) {
 	Varnode *invn = op->getIn(0);
-	if (invn->getSize() != vn->getSize()) return false;
+	if (invn->getSize() != vn->getSize()) return JumpTable::success;
 	vn = invn;		// Treat input as address
       }
       // Continue backtracking
@@ -610,20 +610,20 @@ bool Funcdata::earlyJumpTableFail(PcodeOp *op)
       if (outhit) {
 	OpCode opc = op->code();
 	if (opc != CPUI_INT_ADD && opc != CPUI_INT_SUB && opc != CPUI_INT_XOR)
-	  return false;
-	if (!op->getIn(1)->isConstant()) return false;		// Don't back-track thru binary op, don't assume failure
+	  return JumpTable::success;
+	if (!op->getIn(1)->isConstant()) return JumpTable::success;	// Don't back-track thru binary op, don't assume failure
 	Varnode *invn = op->getIn(0);
-	if (invn->getSize() != vn->getSize()) return false;
+	if (invn->getSize() != vn->getSize()) return JumpTable::success;
 	vn = invn;		// Treat input as address
       }
       // Continue backtracking
     }
     else {
       if (outhit)
-	return false;
+	return JumpTable::success;
     }
   }
-  return false;
+  return JumpTable::success;
 }
 
 /// \brief Recover control-flow destinations for a BRANCHIND
@@ -657,7 +657,8 @@ JumpTable *Funcdata::recoverJumpTable(Funcdata &partial,PcodeOp *op,FlowInfo *fl
 
   if ((flags & jumptablerecovery_dont)!=0)
     return (JumpTable *)0;	// Explicitly told not to recover jumptables
-  if (earlyJumpTableFail(op))
+  mode = earlyJumpTableFail(op);
+  if (mode != JumpTable::success)
     return (JumpTable *)0;
   JumpTable trialjt(glb);
   mode = stageJumpTable(partial,&trialjt,op,flow);

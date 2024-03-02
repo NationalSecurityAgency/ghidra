@@ -47,6 +47,7 @@ import ghidra.trace.model.target.*;
 import ghidra.trace.model.thread.*;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
+import ghidra.util.StreamUtils;
 import ghidra.util.task.TaskMonitor;
 
 public class ObjectBasedTraceRecorderTest extends AbstractGhidraHeadedDebuggerTest {
@@ -88,7 +89,7 @@ public class ObjectBasedTraceRecorderTest extends AbstractGhidraHeadedDebuggerTe
 
 	protected void dumpObjects() {
 		System.err.println("All objects:");
-		for (TraceObject object : objects.getAllObjects()) {
+		for (TraceObject object : StreamUtils.iter(objects.getAllObjects())) {
 			System.err.println("  " + object);
 		}
 	}
@@ -99,7 +100,7 @@ public class ObjectBasedTraceRecorderTest extends AbstractGhidraHeadedDebuggerTe
 
 		waitForPass(noExc(() -> {
 			waitOn(recorder.flushTransactions());
-			assertEquals(5, objects.getAllObjects().size());
+			assertEquals(5, objects.getObjectCount());
 		}));
 	}
 

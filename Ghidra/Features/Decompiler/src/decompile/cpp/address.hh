@@ -98,10 +98,10 @@ public:
   void encode(Encoder &encoder) const; ///< Encode \b this to a stream
   void encode(Encoder &encoder,int4 size) const; ///< Encode \b this and a size to a stream
 
-  /// Restore an address from parsed XML
+  /// Decode an address from a stream
   static Address decode(Decoder &decoder);
 
-  /// Restore an address and size from parsed XML
+  /// Decode an address and size from a stream
   static Address decode(Decoder &decoder,int4 &size);
 };
 
@@ -221,7 +221,7 @@ class RangeProperties {
   bool seenLast;		///< End of the range is actively specified
 public:
   RangeProperties(void) { first = 0; last = 0; isRegister = false; seenLast = false; }
-  void decode(Decoder &decoder);	///< Restore \b this from an XML stream
+  void decode(Decoder &decoder);	///< Decode \b this from a stream
 };
 
 /// \brief A disjoint set of Ranges, possibly across multiple address spaces

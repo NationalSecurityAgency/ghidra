@@ -19,6 +19,7 @@ import docking.widgets.table.*;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.framework.plugintool.TestDummyServiceProvider;
+import ghidra.util.Swing;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -113,6 +114,13 @@ public class TestDataKeyModel extends ThreadedTableModelStub<Long> {
 
 	int getTestRowCount() {
 		return ROWCOUNT;
+	}
+
+	void removeTableColumn(int index) {
+		Swing.runNow(() -> {
+			DynamicTableColumn<Long, ?, ?> column = getColumn(index);
+			removeTableColumn(column);
+		});
 	}
 
 	@Override

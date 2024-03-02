@@ -398,6 +398,8 @@ public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedD
 			waitForPass(
 				() -> assertEquals(node, Unique.assertOne(provider.tree.getSelectedNodes())));
 
+			controlService.setCurrentMode(target.getTrace(), ControlMode.RO_TRACE);
+			waitForSwing();
 			traceManager.activateSnap(0);
 			waitForPass(() -> {
 				assertEquals(0, traceManager.getCurrentSnap());

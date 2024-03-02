@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +21,7 @@ public final class CoffSymbolSectionNumber {
 	/** absolute symbols */
 	public final static short N_ABS       = -1;
 	/** undefined external symbol */
-	public final static short N_UNDEf     =  0;
+	public final static short N_UNDEF     =  0;
 	/** .text section symbol */
 	public final static short N_TEXT      =  1;
 	/** .data section symbol */

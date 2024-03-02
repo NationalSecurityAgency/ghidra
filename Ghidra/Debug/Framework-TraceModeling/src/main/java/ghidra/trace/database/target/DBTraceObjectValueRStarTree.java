@@ -36,16 +36,16 @@ public class DBTraceObjectValueRStarTree extends AbstractHyperRStarTree< //
 		ValueTriple, //
 		ValueShape, DBTraceObjectValueData, //
 		ValueBox, DBTraceObjectValueNode, //
-		InternalTraceObjectValue, TraceObjectValueQuery> {
+		DBTraceObjectValueData, TraceObjectValueQuery> {
 
 	public static class DBTraceObjectValueMap extends AsSpatialMap<ValueShape, //
-			DBTraceObjectValueData, ValueBox, InternalTraceObjectValue, TraceObjectValueQuery> {
+			DBTraceObjectValueData, ValueBox, DBTraceObjectValueData, TraceObjectValueQuery> {
 
 		private final AddressFactory factory;
 		private final ReadWriteLock lock;
 
 		public DBTraceObjectValueMap(AbstractConstraintsTree<ValueShape, DBTraceObjectValueData, //
-				ValueBox, ?, InternalTraceObjectValue, TraceObjectValueQuery> tree,
+				ValueBox, ?, DBTraceObjectValueData, TraceObjectValueQuery> tree,
 				TraceObjectValueQuery query, AddressFactory factory, ReadWriteLock lock) {
 			super(tree, query);
 			this.factory = factory;
@@ -59,7 +59,7 @@ public class DBTraceObjectValueRStarTree extends AbstractHyperRStarTree< //
 		}
 
 		public AddressSetView getAddressSetView(Lifespan at,
-				Predicate<? super InternalTraceObjectValue> predicate) {
+				Predicate<? super DBTraceObjectValueData> predicate) {
 			return new DBTraceObjectValueMapAddressSetView(factory, lock,
 				this.reduce(TraceObjectValueQuery.intersecting(
 					EntryKeyDimension.INSTANCE.absoluteMin(),

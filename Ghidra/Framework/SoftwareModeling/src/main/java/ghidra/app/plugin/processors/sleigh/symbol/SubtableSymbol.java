@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,18 +19,18 @@
  */
 package ghidra.app.plugin.processors.sleigh.symbol;
 
-import ghidra.app.plugin.processors.sleigh.*;
-import ghidra.app.plugin.processors.sleigh.expression.*;
-import ghidra.program.model.lang.*;
-import ghidra.program.model.mem.*;
-import ghidra.util.xml.*;
-import ghidra.xml.*;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import java.util.*;
+import java.util.ArrayList;
+
+import ghidra.app.plugin.processors.sleigh.*;
+import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
+import ghidra.program.model.lang.UnknownInstructionException;
+import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 /**
- * 
- *
  * A collection of Constructors or a Symbol representing
  * one out of a family of Constructors, choosen based on InstructionContext
  */
@@ -40,67 +39,61 @@ public class SubtableSymbol extends TripleSymbol {
 	private Constructor[] construct;	// All the constructors in this table
 	private DecisionNode decisiontree;	// The decision tree for this table
 
-	public DecisionNode getDecisionNode() { return decisiontree; }
-	
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.symbol.TripleSymbol#resolve(ghidra.app.plugin.processors.sleigh.ParserWalker, ghidra.app.plugin.processors.sleigh.SleighDebugLogger)
-	 */
+	public DecisionNode getDecisionNode() {
+		return decisiontree;
+	}
+
 	@Override
-    public Constructor resolve(ParserWalker walker, SleighDebugLogger debug) throws MemoryAccessException, UnknownInstructionException {
+	public Constructor resolve(ParserWalker walker, SleighDebugLogger debug)
+			throws MemoryAccessException, UnknownInstructionException {
 		return decisiontree.resolve(walker, debug);
 	}
-	
-	public int getNumConstructors() { return construct.length; }
-	public Constructor getConstructor(int i) { return construct[i]; }
-	
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.symbol.TripleSymbol#getPatternExpression()
-	 */
-	@Override
-    public PatternExpression getPatternExpression() {
-		throw new SleighException("Cannot use subtable in expression");
+
+	public int getNumConstructors() {
+		return construct.length;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.symbol.TripleSymbol#getFixedHandle(ghidra.app.plugin.processors.sleigh.FixedHandle, ghidra.app.plugin.processors.sleigh.ParserWalker)
-	 */
-	@Override
-    public void getFixedHandle(FixedHandle hand, ParserWalker walker) {
-		throw new SleighException("Cannot use subtable in expression");
+	public Constructor getConstructor(int i) {
+		return construct[i];
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.symbol.TripleSymbol#print(ghidra.app.plugin.processors.sleigh.ParserWalker)
-	 */
 	@Override
-    public String print(ParserWalker walker) throws MemoryAccessException {
+	public PatternExpression getPatternExpression() {
 		throw new SleighException("Cannot use subtable in expression");
 	}
 
 	@Override
-    public void printList(ParserWalker walker, ArrayList<Object> list) {
+	public void getFixedHandle(FixedHandle hand, ParserWalker walker) {
 		throw new SleighException("Cannot use subtable in expression");
 	}
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.symbol.Symbol#restoreXml(org.jdom.Element, ghidra.app.plugin.processors.sleigh.SleighLanguage)
-	 */
+
 	@Override
-    public void restoreXml(XmlPullParser parser, SleighLanguage sleigh) throws UnknownInstructionException {
-	    XmlElement el = parser.start("subtable_sym");
-		int numct = SpecXmlUtils.decodeInt(el.getAttribute("numct"));
+	public String print(ParserWalker walker) throws MemoryAccessException {
+		throw new SleighException("Cannot use subtable in expression");
+	}
+
+	@Override
+	public void printList(ParserWalker walker, ArrayList<Object> list) {
+		throw new SleighException("Cannot use subtable in expression");
+	}
+
+	@Override
+	public void decode(Decoder decoder, SleighLanguage sleigh) throws DecoderException {
+//		int el = decoder.openElement(ELEM_SUBTABLE_SYM);
+		int numct = (int) decoder.readSignedInteger(ATTRIB_NUMCT);
 		construct = new Constructor[numct];		// Array must be built
-												// before restoring constructors
-		for(int i=0;i<numct;++i) {
+		// before restoring constructors
+		for (int i = 0; i < numct; ++i) {
 			Constructor ct = new Constructor();
 			ct.setId(i);
 			construct[i] = ct;
-			ct.restoreXml(parser,sleigh);
+			ct.decode(decoder, sleigh);
 		}
-		if (!parser.peek().isEnd()) {
+		if (decoder.peekElement() != 0) {
 			decisiontree = new DecisionNode();
-			decisiontree.restoreXml(parser,null,this);
+			decisiontree.decode(decoder, null, this);
 		}
-		parser.end(el);
+		decoder.closeElement(ELEM_SUBTABLE_SYM.id());
 	}
 
 }

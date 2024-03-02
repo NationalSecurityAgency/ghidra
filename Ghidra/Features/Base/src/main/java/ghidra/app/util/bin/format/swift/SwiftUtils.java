@@ -58,6 +58,23 @@ public class SwiftUtils {
 	}
 
 	/**
+	 * Checks if the given {@List} of section names contains a Swift section name
+	 * 
+	 * @param sectionNames The {@link List} of section names to check
+	 * @return True if the given {@List} of section names contains a Swift section name; otherwise, 
+	 *   false
+	 */
+	public static boolean isSwift(List<String> sectionNames) {
+		List<String> prefixes = List.of("__swift", "swift", ".sw5");
+		for (String sectionName : sectionNames) {
+			if (prefixes.stream().anyMatch(prefix -> sectionName.startsWith(prefix))) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Gets a {@link List} of {@link MemoryBlock}s that match the given {@link SwiftSection}
 	 * 
 	 * @param section The {@link SwiftSection}

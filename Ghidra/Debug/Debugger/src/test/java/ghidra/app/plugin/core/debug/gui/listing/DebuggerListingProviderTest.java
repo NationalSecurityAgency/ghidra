@@ -58,9 +58,12 @@ import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.*;
 import ghidra.plugin.importer.ImporterPlugin;
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
-import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.RefType;
+import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.*;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
@@ -878,6 +881,39 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerTes
 	}
 
 	@Test
+	public void testActionGoToExternalLinkage() throws Exception {
+		createMappedTraceAndProgram();
+
+		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
+
+		try (Transaction tx = program.openTransaction("Add EXTERNAL and ref")) {
+			Function func = program.getExternalManager()
+					.addExtLocation("lib", "testExtFunc", null, SourceType.IMPORTED)
+					.createFunction();
+			// This is the same construct as imported from a PE's IAT
+			Address dataAddr = ss.getAddress(0x00600123);
+			Data data = program.getListing().createData(dataAddr, PointerDataType.dataType);
+			data.addMnemonicReference(func.getEntryPoint(), RefType.EXTERNAL_REF,
+				SourceType.IMPORTED);
+		}
+
+		waitForProgram(program);
+		traceManager.activateTrace(tb.trace);
+		waitForSwing();
+
+		assertTrue(listingProvider.actionGoTo.isEnabled());
+
+		performAction(listingProvider.actionGoTo, false);
+		DebuggerGoToDialog dialog1 = waitForDialogComponent(DebuggerGoToDialog.class);
+		runSwing(() -> {
+			dialog1.setOffset("testExtFunc");
+			dialog1.okCallback();
+		});
+		waitForPass(
+			() -> assertEquals(tb.addr(0x00400123), listingProvider.getLocation().getAddress()));
+	}
+
+	@Test
 	public void testActionTrackLocation() throws Exception {
 		assertTrue(listingProvider.actionTrackLocation.isEnabled());
 		createAndOpenTrace();
@@ -1457,7 +1493,8 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerTes
 		traceManager.activate(DebuggerCoordinates.NOWHERE.thread(thread).snap(0));
 		waitForSwing();
 
-		assertEquals(tb.addr(0x00401234), listingProvider.getLocation().getAddress());
+		waitForPass(
+			() -> assertEquals(tb.addr(0x00401234), listingProvider.getLocation().getAddress()));
 
 		try (Transaction tx = tb.startTransaction()) {
 			TraceMemorySpace regs = mm.getMemoryRegisterSpace(thread, true);
@@ -1465,7 +1502,8 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerTes
 		}
 		waitForDomainObject(tb.trace);
 
-		assertEquals(tb.addr(0x00404321), listingProvider.getLocation().getAddress());
+		waitForPass(
+			() -> assertEquals(tb.addr(0x00404321), listingProvider.getLocation().getAddress()));
 	}
 
 	@Test
@@ -1598,7 +1636,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 		DebuggerOpenProgramActionContext ctx = new DebuggerOpenProgramActionContext(df);
 		waitForPass(() -> assertTrue(consolePlugin.logContains(ctx)));
-		assertTrue(consolePlugin.getLogRow(ctx).getMessage() instanceof String message &&
+		assertTrue(consolePlugin.getLogRow(ctx).message() instanceof String message &&
 			message.contains("recovery"));
 	}
 
@@ -1627,7 +1665,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 		DebuggerOpenProgramActionContext ctx = new DebuggerOpenProgramActionContext(df);
 		waitForPass(() -> assertTrue(consolePlugin.logContains(ctx)));
-		assertTrue(consolePlugin.getLogRow(ctx).getMessage() instanceof String message &&
+		assertTrue(consolePlugin.getLogRow(ctx).message() instanceof String message &&
 			message.contains("version"));
 	}
 
@@ -1646,8 +1684,8 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerTes
 		waitForSwing();
 
 		LogRow<?> row = consolePlugin.getLogRow(ctx);
-		assertEquals(1, row.getActions().size());
-		BoundAction boundAction = row.getActions().get(0);
+		assertEquals(1, row.actions().size());
+		BoundAction boundAction = row.actions().get(0);
 		assertEquals(listingProvider.actionOpenProgram, boundAction.action);
 
 		boundAction.perform();

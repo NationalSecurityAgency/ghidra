@@ -722,6 +722,11 @@ public final class AutoImporter {
 				.load(provider, importName, project, projectFolderPath, loadSpec, loaderOptions,
 					messageLog, consumer, monitor);
 
+		// Optionally echo loader message log to application.log
+		if (!Loader.loggingDisabled && messageLog.hasMessages()) {
+			Msg.info(AutoImporter.class, "Additional info:\n" + messageLog.toString());
+		}
+
 		// Filter out and release non-Programs
 		List<Loaded<Program>> loadedPrograms = new ArrayList<>();
 		for (Loaded<? extends DomainObject> loaded : loadResults) {

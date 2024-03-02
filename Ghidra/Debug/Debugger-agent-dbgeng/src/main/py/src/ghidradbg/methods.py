@@ -19,11 +19,10 @@ from io import StringIO
 import re
 import sys
 
-from pybag import pydbg
-from pybag.dbgeng import core as DbgEng, exception
-
 from ghidratrace import sch
 from ghidratrace.client import MethodRegistry, ParamDesc, Address, AddressRange
+from pybag import pydbg
+from pybag.dbgeng import core as DbgEng, exception
 
 from . import util, commands
 
@@ -40,13 +39,16 @@ AVAILABLE_PATTERN = re.compile('Available\[(?P<pid>\\d*)\]')
 WATCHPOINT_PATTERN = re.compile('Watchpoints\[(?P<watchnum>\\d*)\]')
 BREAKPOINT_PATTERN = re.compile('Breakpoints\[(?P<breaknum>\\d*)\]')
 BREAK_LOC_PATTERN = extre(BREAKPOINT_PATTERN, '\[(?P<locnum>\\d*)\]')
-PROCESS_PATTERN = re.compile('Processes\[(?P<procnum>\\d*)\]')
-PROC_BREAKS_PATTERN = extre(PROCESS_PATTERN, '\.Breakpoints')
+SESSIONS_PATTERN = re.compile('Sessions')
+SESSION_PATTERN = extre(SESSIONS_PATTERN, '\[(?P<snum>\\d*)\]')
+PROCESSES_PATTERN = extre(SESSION_PATTERN, '\.Processes')
+PROCESS_PATTERN = extre(PROCESSES_PATTERN, '\[(?P<procnum>\\d*)\]')
+PROC_BREAKS_PATTERN = extre(PROCESS_PATTERN, '\.Debug.Breakpoints')
 PROC_BREAKBPT_PATTERN = extre(PROC_BREAKS_PATTERN, '\[(?P<breaknum>\\d*)\]')
 ENV_PATTERN = extre(PROCESS_PATTERN, '\.Environment')
 THREADS_PATTERN = extre(PROCESS_PATTERN, '\.Threads')
 THREAD_PATTERN = extre(THREADS_PATTERN, '\[(?P<tnum>\\d*)\]')
-STACK_PATTERN = extre(THREAD_PATTERN, '\.Stack')
+STACK_PATTERN = extre(THREAD_PATTERN, '\.Stack.Frames')
 FRAME_PATTERN = extre(STACK_PATTERN, '\[(?P<level>\\d*)\]')
 REGS_PATTERN0 = extre(THREAD_PATTERN, '.Registers')
 REGS_PATTERN = extre(FRAME_PATTERN, '.Registers')
@@ -204,14 +206,21 @@ def evaluate(expr: str):
     return str(eval(expr, shared_globals))
 
 
-@REGISTRY.method(action='refresh')
+@REGISTRY.method(action='refresh', display="Refresh", condition=util.dbg.use_generics)
+def refresh_generic(node: sch.OBJECT):
+    """List processes on pydbg's host system."""
+    with commands.open_tracked_tx('Refresh Generic'):
+        commands.ghidra_trace_put_generic(node)
+
+
+@REGISTRY.method(action='refresh', display='Refresh Available')
 def refresh_available(node: sch.Schema('AvailableContainer')):
     """List processes on pydbg's host system."""
     with commands.open_tracked_tx('Refresh Available'):
         commands.ghidra_trace_put_available()
 
 
-@REGISTRY.method(action='refresh')
+@REGISTRY.method(action='refresh', display='Refresh Breakpoints')
 def refresh_breakpoints(node: sch.Schema('BreakpointContainer')):
     """
     Refresh the list of breakpoints (including locations for the current
@@ -221,14 +230,14 @@ def refresh_breakpoints(node: sch.Schema('BreakpointContainer')):
         commands.ghidra_trace_put_breakpoints()
 
 
-@REGISTRY.method(action='refresh')
+@REGISTRY.method(action='refresh', display='Refresh Processes')
 def refresh_processes(node: sch.Schema('ProcessContainer')):
     """Refresh the list of processes."""
     with commands.open_tracked_tx('Refresh Processes'):
-        commands.ghidra_trace_put_threads()
+        commands.ghidra_trace_put_processes()
 
 
-@REGISTRY.method(action='refresh')
+@REGISTRY.method(action='refresh', display='Refresh Breakpoint Locations')
 def refresh_proc_breakpoints(node: sch.Schema('BreakpointLocationContainer')):
     """
     Refresh the breakpoint locations for the process.
@@ -240,21 +249,21 @@ def refresh_proc_breakpoints(node: sch.Schema('BreakpointLocationContainer')):
         commands.ghidra_trace_put_breakpoints()
 
 
-@REGISTRY.method(action='refresh')
+@REGISTRY.method(action='refresh', display='Refresh Environment')
 def refresh_environment(node: sch.Schema('Environment')):
     """Refresh the environment descriptors (arch, os, endian)."""
     with commands.open_tracked_tx('Refresh Environment'):
         commands.ghidra_trace_put_environment()
 
 
-@REGISTRY.method(action='refresh')
+@REGISTRY.method(action='refresh', display='Refresh Threads')
 def refresh_threads(node: sch.Schema('ThreadContainer')):
     """Refresh the list of threads in the process."""
     with commands.open_tracked_tx('Refresh Threads'):
         commands.ghidra_trace_put_threads()
 
 
-@REGISTRY.method(action='refresh')
+@REGISTRY.method(action='refresh', display='Refresh Stack')
 def refresh_stack(node: sch.Schema('Stack')):
     """Refresh the backtrace for the thread."""
     tnum = find_thread_by_stack_obj(node)
@@ -262,7 +271,7 @@ def refresh_stack(node: sch.Schema('Stack')):
         commands.ghidra_trace_put_frames()
 
 
-@REGISTRY.method(action='refresh')
+@REGISTRY.method(action='refresh', display='Refresh Registers')
 def refresh_registers(node: sch.Schema('RegisterValueContainer')):
     """Refresh the register values for the frame."""
     tnum = find_thread_by_regs_obj(node)
@@ -270,14 +279,14 @@ def refresh_registers(node: sch.Schema('RegisterValueContainer')):
         commands.ghidra_trace_putreg()
 
 
-@REGISTRY.method(action='refresh')
+@REGISTRY.method(action='refresh', display='Refresh Memory')
 def refresh_mappings(node: sch.Schema('Memory')):
     """Refresh the list of memory regions for the process."""
     with commands.open_tracked_tx('Refresh Memory Regions'):
         commands.ghidra_trace_put_regions()
 
 
-@REGISTRY.method(action='refresh')
+@REGISTRY.method(action='refresh', display='Refresh Modules')
 def refresh_modules(node: sch.Schema('ModuleContainer')):
     """
     Refresh the modules and sections list for the process.

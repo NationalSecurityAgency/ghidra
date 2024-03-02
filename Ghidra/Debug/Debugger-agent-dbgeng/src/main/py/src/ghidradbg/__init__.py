@@ -13,8 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 ##
-from . import util, commands, methods, hooks
-import ctypes
 
+# NOTE: libraries must precede EVERYTHING, esp pybag and DbgMod
 
-ctypes.windll.kernel32.SetErrorMode(0x0001 | 0x0002 | 0x8000)
+from . import libraries, util, commands, methods, hooks

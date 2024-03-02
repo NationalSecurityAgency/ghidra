@@ -108,7 +108,6 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 					file bash
 					ghidra trace start
 					%s
-					ghidra trace tx-open "Fake" 'ghidra trace create-obj Breakpoints'
 					starti"""
 					.formatted(INSTRUMENT_STOPPED));
 			RemoteMethod refreshBreakpoints = conn.getMethod("refresh_breakpoints");

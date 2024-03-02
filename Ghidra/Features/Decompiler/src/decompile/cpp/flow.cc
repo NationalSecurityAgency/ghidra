@@ -722,14 +722,37 @@ void FlowInfo::truncateIndirectJump(PcodeOp *op,JumpTable::RecoveryMode mode)
   else {
     data.opSetOpcode(op,CPUI_CALLIND); // Turn jump into call
     setupCallindSpecs(op,(FuncCallSpecs *)0);
-    if (mode != JumpTable::fail_thunk)			// Unless the switch was a thunk mechanism
-      data.getCallSpecs(op)->setBadJumpTable(true);	// Consider using special name for switch variable
+    FuncCallSpecs *fc = data.getCallSpecs(op);
+    uint4 returnType;
+    bool noParams;
+
+    if (mode == JumpTable::fail_thunk) {
+      returnType = 0;
+      noParams = false;
+    }
+    else if (mode == JumpTable::fail_callother) {
+      returnType = PcodeOp::noreturn;
+      fc->setNoReturn(true);
+      data.warning("Does not return", op->getAddr());
+      noParams = true;
+    }
+    else {
+      returnType = 0;
+      noParams = false;
+      fc->setBadJumpTable(true);		// Consider using special name for switch variable
+      data.warning("Treating indirect jump as call",op->getAddr());
+    }
+    if (noParams) {
+      if (!fc->hasModel()) {
+	fc->setInternal(glb->defaultfp, glb->types->getTypeVoid());
+	fc->setInputLock(true);
+	fc->setOutputLock(true);
+      }
+    }
 
     // Create an artificial return
-    PcodeOp *truncop = artificialHalt(op->getAddr(),0);
+    PcodeOp *truncop = artificialHalt(op->getAddr(),returnType);
     data.opDeadInsertAfter(truncop,op);
-
-    data.warning("Treating indirect jump as call",op->getAddr());
   }
 }
 

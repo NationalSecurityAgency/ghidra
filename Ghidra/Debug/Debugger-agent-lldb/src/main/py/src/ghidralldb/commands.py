@@ -261,7 +261,7 @@ def start_trace(name):
     with open(schema_fn, 'r') as schema_file:
         schema_xml = schema_file.read()
     with STATE.trace.open_tx("Create Root Object"):
-        root = STATE.trace.create_root_object(schema_xml, 'Session')
+        root = STATE.trace.create_root_object(schema_xml, 'LldbSession')
         root.set_value('_display', 'GNU lldb ' + util.LLDB_VERSION.full)
     util.set_convenience_variable('_ghidra_tracing', "true")
 

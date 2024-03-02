@@ -321,7 +321,7 @@ void IfcOption::execute(istream &s)
   }
   
   try {
-    string res = dcp->conf->options->set(ElementId::find(optname),p1,p2,p3);
+    string res = dcp->conf->options->set(ElementId::find(optname,0),p1,p2,p3);
     *status->optr << res << endl;
   }
   catch(ParseError &err) {

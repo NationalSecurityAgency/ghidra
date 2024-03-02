@@ -15,16 +15,13 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import java.io.PrintStream;
-import java.util.Iterator;
-import java.util.List;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import org.jdom.Element;
+import java.io.IOException;
 
 import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.sleighbase.SleighBase;
-import ghidra.pcodeCPort.slghpatexpress.PatternExpression;
 import ghidra.pcodeCPort.slghpatexpress.PatternValue;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.Location;
 
 public class NameSymbol extends ValueSymbol {
@@ -34,7 +31,7 @@ public class NameSymbol extends ValueSymbol {
 
 	public NameSymbol(Location location) {
 		super(location);
-	} // For use with restoreXml
+	}
 
 	public NameSymbol(Location location, String nm, PatternValue pv, VectorSTL<String> nt) {
 		super(location, nm, pv);
@@ -60,44 +57,26 @@ public class NameSymbol extends ValueSymbol {
 	}
 
 	@Override
-	public void saveXml(PrintStream s) {
-		s.append("<name_sym");
-		saveSleighSymbolXmlHeader(s);
-		s.println(">");
-		patval.saveXml(s);
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_NAME_SYM);
+		encoder.writeUnsignedInteger(ATTRIB_ID, id);
+		patval.encode(encoder);
 		for (int i = 0; i < nametable.size(); ++i) {
 			String name = nametable.get(i);
+			encoder.openElement(ELEM_NAMETAB);
 			if (name != null) {
-				s.append("<nametab name=\"");
-				s.append(name);
-				s.println("\"/>");
+				encoder.writeString(ATTRIB_NAME, name);
 			}
-			else {
-				s.println("<nametab/>");
-			}
+			encoder.closeElement(ELEM_NAMETAB);
 		}
-		s.println("</name_sym>");
+		encoder.closeElement(ELEM_NAME_SYM);
 	}
 
 	@Override
-	public void saveXmlHeader(PrintStream s) {
-		s.append("<name_sym_head");
-		saveSleighSymbolXmlHeader(s);
-		s.println("/>");
-	}
-
-	@Override
-	public void restoreXml(Element el, SleighBase trans) {
-		List<?> list = el.getChildren();
-		Iterator<?> iter = list.iterator();
-		Element element = (Element) iter.next();
-		patval = (PatternValue) PatternExpression.restoreExpression(element, trans);
-		patval.layClaim();
-		while (iter.hasNext()) {
-			Element child = (Element) iter.next();
-			nametable.push_back(child.getAttributeValue("name"));
-		}
-		checkTableFill();
+	public void encodeHeader(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_NAME_SYM_HEAD);
+		encodeSleighSymbolHeader(encoder);
+		encoder.closeElement(ELEM_NAME_SYM_HEAD);
 	}
 
 }

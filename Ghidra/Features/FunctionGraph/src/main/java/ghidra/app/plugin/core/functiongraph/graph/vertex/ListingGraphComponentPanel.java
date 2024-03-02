@@ -39,8 +39,7 @@ import docking.widgets.fieldpanel.Layout;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.BackgroundColorModel;
 import docking.widgets.label.GDLabel;
-import generic.theme.GColor;
-import generic.theme.GIcon;
+import generic.theme.*;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Tooltips;
 import ghidra.app.plugin.core.codebrowser.MarkerServiceBackgroundColorModel;
@@ -245,8 +244,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 		tooltipTitleLabel.setHorizontalAlignment(SwingConstants.LEADING);
 		tooltipTitleLabel.setBackground(Tooltips.BACKGROUND);
 		tooltipTitleLabel.setOpaque(true);
-		Font labelFont = tooltipTitleLabel.getFont();
-		tooltipTitleLabel.setFont(labelFont.deriveFont(Font.BOLD));
+		Gui.registerFont(tooltipTitleLabel, Font.BOLD);
 
 		JPanel headerPanel = new JPanel(new BorderLayout());
 		headerPanel.add(tooltipTitleLabel);

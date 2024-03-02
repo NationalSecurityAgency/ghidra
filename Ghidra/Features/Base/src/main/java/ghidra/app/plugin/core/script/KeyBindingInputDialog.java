@@ -21,24 +21,28 @@ import java.awt.Component;
 import javax.swing.*;
 
 import docking.*;
+import docking.actions.KeyBindingUtils;
+import docking.actions.ToolActions;
 import docking.widgets.label.GLabel;
-import generic.util.action.ReservedKeyBindings;
 import ghidra.framework.plugintool.Plugin;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
 
 class KeyBindingInputDialog extends DialogComponentProvider implements KeyEntryListener {
 	private KeyEntryTextField kbField;
 	private KeyStroke ks;
 	private boolean isCancelled;
+	private Plugin plugin;
 
 	KeyBindingInputDialog(Component parent, String scriptName, KeyStroke currentKeyStroke,
 			Plugin plugin, HelpLocation help) {
 		super("Assign Script Key Binding", true, true, true, false);
+		this.plugin = plugin;
 
 		kbField = new KeyEntryTextField(20, this);
 		kbField.setName("KEY_BINDING");
 		kbField.setText(
-			currentKeyStroke == null ? "" : KeyEntryTextField.parseKeyStroke(currentKeyStroke));
+			currentKeyStroke == null ? "" : KeyBindingUtils.parseKeyStroke(currentKeyStroke));
 
 		JPanel panel = new JPanel(new BorderLayout(10, 10));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -55,8 +59,11 @@ class KeyBindingInputDialog extends DialogComponentProvider implements KeyEntryL
 
 	@Override
 	protected void okCallback() {
-		if (ks != null && ReservedKeyBindings.isReservedKeystroke(ks)) {
-			setStatusText(kbField.getText() + " is a reserved keystroke");
+		PluginTool tool = plugin.getTool();
+		ToolActions toolActions = (ToolActions) tool.getToolActions();
+		String errorMessage = toolActions.validateActionKeyBinding(null, ks);
+		if (errorMessage != null) {
+			setStatusText(errorMessage);
 			return;
 		}
 

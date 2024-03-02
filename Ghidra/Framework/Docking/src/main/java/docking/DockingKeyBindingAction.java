@@ -30,7 +30,7 @@ import docking.actions.KeyBindingUtils;
  */
 public abstract class DockingKeyBindingAction extends AbstractAction {
 
-	private DockingActionIf dockingAction;
+	protected DockingActionIf dockingAction;
 
 	protected final KeyStroke keyStroke;
 	protected final Tool tool;
@@ -54,7 +54,7 @@ public abstract class DockingKeyBindingAction extends AbstractAction {
 
 	public abstract KeyBindingPrecedence getKeyBindingPrecedence();
 
-	public boolean isReservedKeybindingPrecedence() {
+	public boolean isSystemKeybindingPrecedence() {
 		return false;
 	}
 

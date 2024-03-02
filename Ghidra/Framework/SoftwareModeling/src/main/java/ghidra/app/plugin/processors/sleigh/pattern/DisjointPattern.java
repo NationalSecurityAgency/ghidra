@@ -19,12 +19,12 @@
  */
 package ghidra.app.plugin.processors.sleigh.pattern;
 
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
+import static ghidra.pcode.utils.SlaFormat.*;
+
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 /**
- * 
- *
  * A pattern with no ORs in it
  */
 public abstract class DisjointPattern extends Pattern {
@@ -55,22 +55,25 @@ public abstract class DisjointPattern extends Pattern {
 
 	public int getMask(int startbit, int size, boolean context) {
 		PatternBlock block = getBlock(context);
-		if (block != null)
+		if (block != null) {
 			return block.getMask(startbit, size);
+		}
 		return 0;
 	}
 
 	public int getValue(int startbit, int size, boolean context) {
 		PatternBlock block = getBlock(context);
-		if (block != null)
+		if (block != null) {
 			return block.getValue(startbit, size);
+		}
 		return 0;
 	}
 
 	public int getLength(boolean context) {
 		PatternBlock block = getBlock(context);
-		if (block != null)
+		if (block != null) {
 			return block.getLength();
+		}
 		return 0;
 	}
 
@@ -80,18 +83,22 @@ public abstract class DisjointPattern extends Pattern {
 		a = getBlock(false);
 		b = op2.getBlock(false);
 		if (b != null) {		// a must match existing block
-			if (a == null)
+			if (a == null) {
 				return false;
-			if (!a.specializes(b))
+			}
+			if (!a.specializes(b)) {
 				return false;
+			}
 		}
 		a = getBlock(true);
 		b = op2.getBlock(true);
 		if (b != null) {		// a must match existing block
-			if (a == null)
+			if (a == null) {
 				return false;
-			if (!a.specializes(b))
+			}
+			if (!a.specializes(b)) {
 				return false;
+			}
 		}
 		return true;
 	}
@@ -102,32 +109,39 @@ public abstract class DisjointPattern extends Pattern {
 		a = getBlock(false);
 		b = op2.getBlock(false);
 		if (b != null) {		// a must match existing block
-			if (a == null)
+			if (a == null) {
 				return false;
-			if (!a.identical(b))
+			}
+			if (!a.identical(b)) {
 				return false;
+			}
 		}
 		a = getBlock(true);
 		b = op2.getBlock(true);
 		if (b != null) {		// a must match existing block
-			if (a == null)
+			if (a == null) {
 				return false;
-			if (!a.identical(b))
+			}
+			if (!a.identical(b)) {
 				return false;
+			}
 		}
 		return true;
 	}
 
-	static public DisjointPattern restoreDisjoint(XmlPullParser parser) {
-		XmlElement el = parser.peek();
+	static public DisjointPattern decodeDisjoint(Decoder decoder) throws DecoderException {
+		int el = decoder.peekElement();
 		DisjointPattern res;
-		if (el.getName().equals("instruct_pat"))
+		if (el == ELEM_INSTRUCT_PAT.id()) {
 			res = new InstructionPattern();
-		else if (el.getName().equals("context_pat"))
+		}
+		else if (el == ELEM_CONTEXT_PAT.id()) {
 			res = new ContextPattern();
-		else
+		}
+		else {
 			res = new CombinePattern();
-		res.restoreXml(parser);
+		}
+		res.decode(decoder);
 		return res;
 	}
 }

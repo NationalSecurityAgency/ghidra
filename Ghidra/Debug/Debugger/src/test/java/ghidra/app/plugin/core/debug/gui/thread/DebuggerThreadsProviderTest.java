@@ -29,7 +29,6 @@ import db.Transaction;
 import docking.widgets.table.*;
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
-import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.*;
 import ghidra.app.plugin.core.debug.gui.model.QueryPanelTestHelper;
 import ghidra.dbg.target.TargetExecutionStateful;
@@ -154,25 +153,24 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerTes
 		assertThreadsTableSize(0);
 	}
 
-	protected void assertThreadRow(int position, Object object, String name, Long created,
-			Long destroyed, TargetExecutionState state, String comment) {
+	protected void assertThreadRow(int position, Object object, String name,
+			TargetExecutionState state, String comment) {
 		// NB. Not testing plot, since that's unmodified from generic ObjectTable
 		ValueRow row = provider.panel.getAllItems().get(position);
-		DynamicTableColumn<ValueRow, ?, Trace> nameCol =
-			provider.panel.getColumnByNameAndType("Name", ValueRow.class).getValue();
-		DynamicTableColumn<ValueRow, ?, Trace> createdCol =
-			provider.panel.getColumnByNameAndType("Created", ValueProperty.class).getValue();
-		DynamicTableColumn<ValueRow, ?, Trace> destroyedCol =
-			provider.panel.getColumnByNameAndType("Destroyed", ValueProperty.class).getValue();
-		DynamicTableColumn<ValueRow, ?, Trace> stateCol =
-			provider.panel.getColumnByNameAndType("State", ValueProperty.class).getValue();
-		DynamicTableColumn<ValueRow, ?, Trace> commentCol =
-			provider.panel.getColumnByNameAndType("Comment", ValueProperty.class).getValue();
+		var tableModel = QueryPanelTestHelper.getTableModel(provider.panel);
+		GhidraTable table = QueryPanelTestHelper.getTable(provider.panel);
+		DynamicTableColumn<ValueRow, ?, Trace> nameCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "Name", ValueRow.class)
+				.column();
+		DynamicTableColumn<ValueRow, ?, Trace> stateCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "State", ValueProperty.class)
+				.column();
+		DynamicTableColumn<ValueRow, ?, Trace> commentCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "Comment", ValueProperty.class)
+				.column();
 
 		assertSame(object, row.getValue().getValue());
 		assertEquals(name, rowColDisplay(row, nameCol));
-		assertEquals(created, rowColVal(row, createdCol));
-		assertEquals(destroyed, rowColVal(row, destroyedCol));
 		assertEquals(state.name(), rowColVal(row, stateCol));
 		assertEquals(comment, rowColVal(row, commentCol));
 	}
@@ -180,9 +178,9 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerTes
 	protected void assertThreadsPopulated() {
 		assertThreadsTableSize(2);
 
-		assertThreadRow(0, thread1.getObject(), "Processes[1].Threads[1]", 0L, null,
+		assertThreadRow(0, thread1.getObject(), "Processes[1].Threads[1]",
 			TargetExecutionState.STOPPED, "A comment");
-		assertThreadRow(1, thread2.getObject(), "Processes[1].Threads[2]", 0L, 10L,
+		assertThreadRow(1, thread2.getObject(), "Processes[1].Threads[2]",
 			TargetExecutionState.STOPPED, "Another comment");
 	}
 
@@ -395,10 +393,11 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerTes
 		try (Transaction tx = tb.startTransaction()) {
 			thread1.getObject().removeTree(Lifespan.nowOn(16));
 		}
+		waitForDomainObject(tb.trace);
 		waitForTasks();
 
 		waitForPass(() -> {
-			assertThreadRow(0, thread1.getObject(), "Processes[1].Threads[1]", 0L, 15L,
+			assertThreadRow(0, thread1.getObject(), "Processes[1].Threads[1]",
 				TargetExecutionState.STOPPED, "A comment");
 		});
 		// NOTE: Destruction will not be visible in plot unless snapshot 15 is created
@@ -428,11 +427,12 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerTes
 		traceManager.activateTrace(tb.trace);
 		waitForTasks();
 
-		int commentViewIdx =
-			provider.panel.getColumnByNameAndType("Comment", ValueProperty.class).getKey();
-		ObjectTableModel tableModel = QueryPanelTestHelper.getTableModel(provider.panel);
+		var tableModel = QueryPanelTestHelper.getTableModel(provider.panel);
 		GhidraTable table = QueryPanelTestHelper.getTable(provider.panel);
-		int commentModelIdx = table.convertColumnIndexToModel(commentViewIdx);
+		int commentModelIdx = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "Comment", ValueProperty.class)
+				.modelIndex();
+		assertNotEquals(-1, commentModelIdx);
 
 		runSwing(() -> {
 			tableModel.setValueAt(new ValueFixedProperty<>("A different comment"), 0,
@@ -444,7 +444,7 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerTes
 			thread1.getObject().getAttribute(0, TraceObjectThread.KEY_COMMENT).getValue()));
 	}
 
-	@Test
+	// @Test // Not gonna with write-behind cache
 	public void testUndoRedoCausesUpdateInProvider() throws Exception {
 		createAndOpenTrace();
 		addThreads();

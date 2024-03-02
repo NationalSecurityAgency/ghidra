@@ -48,7 +48,13 @@ public class ApplicationProperties extends Properties {
 	 * The application's layout version.  The layout version should get incremented any time
 	 * something changes about the application that could affect external tools that need to 
 	 * navigate the application in some way (such as the Eclipse GhidraDev plugin).
-	 * For example, "1".
+	 * <p>
+	 * Current application versions are:
+	 * <ul>
+	 *   <li>1: Layout used by Ghidra &lt; 11.1</li>
+	 *   <li>2: Introduced with Ghidra 11.1.  Default user settings/cache/temp directories changed,
+	 *       and XDG environment variables are supported.
+	 * </ul>
 	 */
 	public static final String APPLICATION_LAYOUT_VERSION_PROPERTY = "application.layout.version";
 

@@ -209,7 +209,7 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 		current = coordinates;
 
 		mainPanel.setTrace(current.getTrace());
-		mainPanel.setSelectedSnapshot(current.getSnap());
+		mainPanel.setCurrentSnapshot(current.getSnap());
 	}
 
 	public void writeConfigState(SaveState saveState) {

@@ -17,6 +17,7 @@
 #define __SEMANTICS_HH__
 
 #include "context.hh"
+#include "slaformat.hh"
 
 namespace ghidra {
 
@@ -45,8 +46,6 @@ private:
   } value;
   uintb value_real;
   v_field select;		// Which part of handle to use as constant
-  static void printHandleSelector(ostream &s,v_field val);
-  static v_field readHandleSelector(const string &name);
 public:
   ConstTpl(void) { type = real; value_real = 0; }
   ConstTpl(const ConstTpl &op2) {
@@ -72,8 +71,8 @@ public:
   void changeHandleIndex(const vector<int4> &handmap);
   void fillinSpace(FixedHandle &hand,const ParserWalker &walker) const;
   void fillinOffset(FixedHandle &hand,const ParserWalker &walker) const;
-  void saveXml(ostream &s) const;
-  void restoreXml(const Element *el,const AddrSpaceManager *manage);
+  void encode(Encoder &encoder) const;
+  void decode(Decoder &decoder);
 };
 
 class VarnodeTpl {
@@ -102,8 +101,8 @@ public:
   bool isRelative(void) const { return (offset.getType() == ConstTpl::j_relative); }
   void changeHandleIndex(const vector<int4> &handmap);
   bool adjustTruncation(int4 sz,bool isbigendian);
-  void saveXml(ostream &s) const;
-  void restoreXml(const Element *el,const AddrSpaceManager *manage);
+  void encode(Encoder &encoder) const;
+  void decode(Decoder &decoder);
 };
 
 class HandleTpl {
@@ -132,8 +131,8 @@ public:
   void setTempOffset(uintb val) { temp_offset = ConstTpl(ConstTpl::real,val); }
   void fix(FixedHandle &hand,const ParserWalker &walker) const;
   void changeHandleIndex(const vector<int4> &handmap);
-  void saveXml(ostream &s) const;
-  void restoreXml(const Element *el,const AddrSpaceManager *manage);
+  void encode(Encoder &encoder) const;
+  void decode(Decoder &decoder);
 };
 
 class OpTpl {
@@ -156,8 +155,8 @@ public:
   void setInput(VarnodeTpl *vt,int4 slot) { input[slot] = vt; }
   void removeInput(int4 index);
   void changeHandleIndex(const vector<int4> &handmap);
-  void saveXml(ostream &s) const;
-  void restoreXml(const Element *el,const AddrSpaceManager *manage);
+  void encode(Encoder &encoder) const;
+  void decode(Decoder &decoder);
 };
 
 class ConstructTpl {
@@ -185,8 +184,8 @@ public:
   void setInput(VarnodeTpl *vn,int4 index,int4 slot);
   void setOutput(VarnodeTpl *vn,int4 index);
   void deleteOps(const vector<int4> &indices);
-  void saveXml(ostream &s,int4 sectionid) const;
-  int4 restoreXml(const Element *el,const AddrSpaceManager *manage);
+  void encode(Encoder &encoder,int4 sectionid) const;
+  int4 decode(Decoder &decoder);
 };
 
 class PcodeEmit;   // Forward declaration for emitter

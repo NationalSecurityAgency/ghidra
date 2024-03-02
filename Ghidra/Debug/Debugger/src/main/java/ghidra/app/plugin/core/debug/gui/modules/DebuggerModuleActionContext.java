@@ -15,22 +15,41 @@
  */
 package ghidra.app.plugin.core.debug.gui.modules;
 
+import java.awt.Component;
 import java.util.Collection;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import docking.ComponentProvider;
 import docking.DefaultActionContext;
 import docking.widgets.table.GTable;
+import ghidra.trace.model.modules.TraceModule;
 
 public class DebuggerModuleActionContext extends DefaultActionContext {
-	private final Set<ModuleRow> selectedModules;
+	private final Set<TraceModule> selectedModules;
+	private final boolean forcedSingle;
 
-	public DebuggerModuleActionContext(DebuggerModulesProvider provider,
-			Collection<ModuleRow> selected, GTable table) {
-		super(provider, selected, table);
-		this.selectedModules = Set.copyOf(selected);
+	private static Set<TraceModule> toModules(Collection<ModuleRow> rows) {
+		return rows.stream().map(ModuleRow::getModule).collect(Collectors.toUnmodifiableSet());
 	}
 
-	public Set<ModuleRow> getSelectedModules() {
+	public DebuggerModuleActionContext(DebuggerModulesProvider provider,
+			Collection<ModuleRow> rows, GTable table) {
+		this(provider, toModules(rows), table, false);
+	}
+
+	public DebuggerModuleActionContext(ComponentProvider provider, Set<TraceModule> selected,
+			Component sourceComponent, boolean forcedSingle) {
+		super(provider, selected, sourceComponent);
+		this.selectedModules = selected;
+		this.forcedSingle = forcedSingle;
+	}
+
+	public Set<TraceModule> getSelectedModules() {
 		return selectedModules;
+	}
+
+	public boolean isForcedSingle() {
+		return forcedSingle;
 	}
 }

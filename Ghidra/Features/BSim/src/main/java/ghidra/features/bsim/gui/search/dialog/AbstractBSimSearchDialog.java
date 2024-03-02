@@ -28,6 +28,7 @@ import docking.DockingWindowManager;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.textfield.FloatingPointTextField;
+import generic.theme.Gui;
 import ghidra.features.bsim.query.BSimServerInfo;
 import ghidra.features.bsim.query.description.DatabaseInformation;
 import ghidra.features.bsim.query.facade.QueryDatabaseException;
@@ -243,7 +244,7 @@ public abstract class AbstractBSimSearchDialog extends DialogComponentProvider {
 		contentPanel.add(comp, fullWidth ? BorderLayout.CENTER : BorderLayout.WEST);
 
 		JLabel label = new JLabel(name);
-		label.setFont(label.getFont().deriveFont(Font.BOLD));
+		Gui.registerFont(label, Font.BOLD);
 		titlePanel.add(label, BorderLayout.NORTH);
 
 		return panel;
@@ -260,7 +261,7 @@ public abstract class AbstractBSimSearchDialog extends DialogComponentProvider {
 
 //==================================================================================================
 // test methods
-//==================================================================================================	
+//==================================================================================================
 	protected void setServer(BSimServerInfo info) {
 		initializeConnection(info);
 	}
@@ -271,7 +272,7 @@ public abstract class AbstractBSimSearchDialog extends DialogComponentProvider {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 	protected abstract class BSimQueryTask extends Task {
 		protected Exception errorException;
 

@@ -18,6 +18,7 @@ package ghidra.framework.plugintool;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.*;
+import java.math.BigInteger;
 import java.util.*;
 
 import ghidra.framework.options.SaveState;
@@ -258,6 +259,20 @@ public interface AutoConfigState {
 		}
 	}
 
+	static class BigIntegerConfigFieldCodec implements ConfigFieldCodec<BigInteger> {
+		public static final BigIntegerConfigFieldCodec INSTANCE = new BigIntegerConfigFieldCodec();
+
+		@Override
+		public BigInteger read(SaveState state, String name, BigInteger current) {
+			return new BigInteger(state.getBytes(name, new byte[] { 0 }));
+		}
+
+		@Override
+		public void write(SaveState state, String name, BigInteger value) {
+			state.putBytes(name, value == null ? null : value.toByteArray());
+		}
+	}
+
 	static class EnumConfigFieldCodec implements ConfigFieldCodec<Enum<?>> {
 		public static final EnumConfigFieldCodec INSTANCE = new EnumConfigFieldCodec();
 
@@ -301,6 +316,8 @@ public interface AutoConfigState {
 			addCodec(float[].class, FloatArrayConfigFieldCodec.INSTANCE);
 			addCodec(double[].class, DoubleArrayConfigFieldCodec.INSTANCE);
 			addCodec(String[].class, StringArrayConfigFieldCodec.INSTANCE);
+
+			addCodec(BigInteger.class, BigIntegerConfigFieldCodec.INSTANCE);
 		}
 
 		private static <T> void addCodec(Class<T> cls, ConfigFieldCodec<T> codec) {

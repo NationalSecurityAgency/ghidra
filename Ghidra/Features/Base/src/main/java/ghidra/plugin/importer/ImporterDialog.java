@@ -38,6 +38,7 @@ import docking.widgets.dialogs.MultiLineMessageDialog;
 import docking.widgets.label.GLabel;
 import docking.widgets.list.GListCellRenderer;
 import generic.theme.GIcon;
+import generic.theme.Gui;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.*;
 import ghidra.app.util.bin.ByteProvider;
@@ -240,8 +241,7 @@ public class ImporterDialog extends DialogComponentProvider {
 			validateFormInput();
 		});
 
-		Font font = languageButton.getFont();
-		languageButton.setFont(font.deriveFont(Font.BOLD));
+		Gui.registerFont(languageButton, Font.BOLD);
 
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(languageTextField, BorderLayout.CENTER);

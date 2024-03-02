@@ -484,10 +484,10 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		RootMessage.Builder dispatch(RootMessage req, RootMessage.Builder rep) throws Exception;
 
 		default RootMessage handle(RootMessage req) {
-			/*String desc = toString(req);
+			String desc = toString(req);
 			if (desc != null) {
 				TimedMsg.debug(this, "HANDLING: " + desc);
-			}*/
+			}
 			RootMessage.Builder rep = RootMessage.newBuilder();
 			try {
 				rep = dispatch(req, rep);
@@ -514,12 +514,12 @@ public class TraceRmiHandler implements TraceRmiConnection {
 					case REQUEST_START_TX -> "startTx(%d,%s)".formatted(
 						req.getRequestStartTx().getTxid().getId(),
 						req.getRequestStartTx().getDescription());
-					case REQUEST_SET_VALUE -> "setValue(%d,%s,%s,=%s)".formatted(
+					/*case REQUEST_SET_VALUE -> "setValue(%d,%s,%s,=%s)".formatted(
 						req.getRequestSetValue().getValue().getParent().getId(),
 						req.getRequestSetValue().getValue().getParent().getPath().getPath(),
 						req.getRequestSetValue().getValue().getKey(),
 						ValueDecoder.DISPLAY
-								.toValue(req.getRequestSetValue().getValue().getValue()));
+								.toValue(req.getRequestSetValue().getValue().getValue()));*/
 					default -> null;
 				};
 			}

@@ -528,11 +528,12 @@ class JumpTable {
 public:
   /// \brief Recovery status for a specific JumpTable
   enum RecoveryMode {
-    success = 0,			///< JumpTable is fully recovered
+    success = 0,		///< JumpTable is fully recovered
     fail_normal = 1,		///< Normal failure to recover
     fail_thunk = 2,		///< Likely \b thunk
     fail_noflow = 3,		///< No legal flow to BRANCHIND
-    fail_return = 4  		///< Likely \b return operation
+    fail_return = 4,  		///< Likely \b return operation
+    fail_callother = 5		///< Address formed by CALLOTHER
   };
 private:
   /// \brief An address table index and its corresponding out-edge

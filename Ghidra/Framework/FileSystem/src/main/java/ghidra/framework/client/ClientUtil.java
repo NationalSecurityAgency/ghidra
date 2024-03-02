@@ -199,6 +199,9 @@ public class ClientUtil {
 			Msg.debug(ClientUtil.class, "Server not connected (" + operation + ")");
 			promptForReconnect(repository, operation, mustRetry, parent);
 		}
+		else if (exc instanceof RepositoryNotFoundException) {
+			Msg.showError(ClientUtil.class, parent, title, exc.getMessage());
+		}
 		else if (exc instanceof UserAccessException) {
 			Msg.showError(ClientUtil.class, parent, title,
 				"Access denied: " + repository + "\n" + exc.getMessage());

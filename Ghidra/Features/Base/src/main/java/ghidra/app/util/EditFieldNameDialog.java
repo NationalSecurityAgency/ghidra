@@ -115,6 +115,7 @@ public class EditFieldNameDialog extends DialogComponentProvider {
 		String name = getCurrentFieldName();
 		setTitle("Edit Field Name: " + dataTypeComponent.getParent().getName() + "." + name);
 		fieldName.setText(name);
+		fieldName.selectAll();
 		clearStatusText();
 		tool.showDialog(this);
 	}

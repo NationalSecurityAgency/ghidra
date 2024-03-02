@@ -127,8 +127,8 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 			return false; // let the normal event flow continue
 		}
 
-		// *Special*, reserved key bindings--these can always be processed
-		if (processReservedKeyActionsPrecedence(action, event)) {
+		// *Special*, System key bindings--these can always be processed and are a higher priority
+		if (processSystemActionPrecedence(action, event)) {
 			return true;
 		}
 
@@ -245,6 +245,16 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 		return true; // default case; allow it through
 	}
 
+	private boolean isSettingKeyBindings(KeyEvent event) {
+		Component destination = event.getComponent();
+		if (destination == null) {
+			Component focusOwner = focusProvider.getFocusOwner();
+			destination = focusOwner;
+		}
+
+		return destination instanceof KeyEntryTextField;
+	}
+
 	private boolean willBeHandledByTextComponent(KeyEvent event) {
 
 		Component destination = event.getComponent();
@@ -301,10 +311,16 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 		throw new AssertException("New precedence added to KeyBindingPrecedence?");
 	}
 
-	private boolean processReservedKeyActionsPrecedence(DockingKeyBindingAction action,
+	private boolean processSystemActionPrecedence(DockingKeyBindingAction action,
 			KeyEvent event) {
 
-		if (!action.isReservedKeybindingPrecedence()) {
+		if (isSettingKeyBindings(event)) {
+			// This means the user is setting keybindings.  Do not process System actions during 
+			// this operation so that the user can assign those keybindings.
+			return false;
+		}
+
+		if (!action.isSystemKeybindingPrecedence()) {
 			return false;
 		}
 

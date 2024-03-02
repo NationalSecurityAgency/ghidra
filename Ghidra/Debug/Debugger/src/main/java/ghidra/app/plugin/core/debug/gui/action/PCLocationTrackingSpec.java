@@ -15,14 +15,12 @@
  */
 package ghidra.app.plugin.core.debug.gui.action;
 
-import java.util.concurrent.CompletableFuture;
-
 import javax.swing.Icon;
 
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.TrackLocationAction;
 import ghidra.debug.api.action.*;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.TraceAddressSnapRange;
@@ -70,23 +68,20 @@ public enum PCLocationTrackingSpec implements LocationTrackingSpec, LocationTrac
 	}
 
 	@Override
-	public CompletableFuture<Address> computeTraceAddress(PluginTool tool,
-			DebuggerCoordinates coordinates) {
-		return CompletableFuture.supplyAsync(() -> {
-			if (coordinates.getTime().isSnapOnly()) {
-				Address pc = BY_STACK.doComputeTraceAddress(tool, coordinates);
-				if (pc != null) {
-					return pc;
-				}
+	public Address computeTraceAddress(ServiceProvider provider, DebuggerCoordinates coordinates) {
+		if (coordinates.getTime().isSnapOnly()) {
+			Address pc = BY_STACK.computeTraceAddress(provider, coordinates);
+			if (pc != null) {
+				return pc;
 			}
-			return BY_REG.doComputeTraceAddress(tool, coordinates);
-		});
+		}
+		return BY_REG.computeTraceAddress(provider, coordinates);
 	}
 
 	@Override
-	public GoToInput getDefaultGoToInput(PluginTool tool, DebuggerCoordinates coordinates,
+	public GoToInput getDefaultGoToInput(ServiceProvider provider, DebuggerCoordinates coordinates,
 			ProgramLocation location) {
-		return BY_REG.getDefaultGoToInput(tool, coordinates, location);
+		return BY_REG.getDefaultGoToInput(provider, coordinates, location);
 	}
 
 	// Note it does no good to override affectByRegChange. It must do what we'd avoid anyway.

@@ -23,16 +23,16 @@ import java.awt.event.KeyEvent;
  * key events see {@link KeyBindingOverrideKeyEventDispatcher#dispatchKeyEvent(KeyEvent)}.
  */
 public enum KeyBindingPrecedence {
-    
-    /** Actions at this level will be processed before all others, including Java components'.  */
-    ReservedActionsLevel,
-    
+
+	/** Actions at this level will be processed before all others, including Java components'.  */
+	SystemActionsLevel,
+
 	/** Actions with this precedence will be processed before key listener on Java components. */
 	KeyListenerLevel,
-	
+
 	/** Actions with this precedence will be processed before actions on Java components. */
 	ActionMapLevel,
-	
+
 	/** This level of precedence is the default level of precedence and gets processed after
 	 *  Java components' key listeners and actions.  */
 	DefaultLevel

@@ -17,6 +17,7 @@
     <external_name tool="IDA-PRO" name="68040"/>
     <external_name tool="IDA-PRO" name="68K"/>
     <external_name tool="DWARF.register.mapping.file" name="68000.dwarf"/>
+    <external_name tool="qemu" name="qemu-m68k"/>
   </language>
   <language processor="68000"
             endian="big"
@@ -32,6 +33,7 @@
     <external_name tool="gnu" name="m68k:68030"/>
     <external_name tool="IDA-PRO" name="68030"/>
     <external_name tool="DWARF.register.mapping.file" name="68000.dwarf"/>
+    <external_name tool="qemu" name="qemu-m68k"/>
   </language>
   <language processor="68000"
             endian="big"
@@ -49,6 +51,7 @@
     <external_name tool="IDA-PRO" name="68020"/>
     <external_name tool="IDA-PRO" name="68020EX"/>
     <external_name tool="DWARF.register.mapping.file" name="68000.dwarf"/>
+    <external_name tool="qemu" name="qemu-m68k"/>
   </language>
   <language processor="68000"
             endian="big"
@@ -64,5 +67,6 @@
     <compiler name="register" spec="68000_register.cspec" id="register"/>
     <external_name tool="IDA-PRO" name="colfire"/>
     <external_name tool="DWARF.register.mapping.file" name="68000.dwarf"/>
+    <external_name tool="qemu" name="qemu-m68k"/>
   </language>
 </language_definitions>

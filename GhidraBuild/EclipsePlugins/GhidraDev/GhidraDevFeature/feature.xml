@@ -2,7 +2,7 @@
 <feature
       id="ghidra.ghidradev"
       label="GhidraDev"
-      version="3.0.2.qualifier"
+      version="3.1.0.qualifier"
       provider-name="Ghidra">
 
    <description>
@@ -45,9 +45,6 @@ limitations under the License.
 
    <plugin
          id="ghidra.ghidradev"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
+         version="0.0.0"/>
 
 </feature>

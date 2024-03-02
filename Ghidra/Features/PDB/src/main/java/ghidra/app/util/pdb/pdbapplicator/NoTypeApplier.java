@@ -15,11 +15,6 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
-import ghidra.program.model.data.DataType;
-import ghidra.util.exception.CancelledException;
-
 /**
  * Used for creating a wrapper for when there is not associated type to the PDB type (or if we
  * have not yet created the association).
@@ -37,10 +32,4 @@ public class NoTypeApplier extends MsTypeApplier {
 		super(applicator);
 	}
 
-	@Override
-	DataType apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
-			throws PdbException, CancelledException {
-		// do nothing
-		return null;
-	}
 }

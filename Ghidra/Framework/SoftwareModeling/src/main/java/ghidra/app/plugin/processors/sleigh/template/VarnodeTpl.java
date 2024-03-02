@@ -19,14 +19,13 @@
  */
 package ghidra.app.plugin.processors.sleigh.template;
 
+import static ghidra.pcode.utils.SlaFormat.*;
+
 import ghidra.app.plugin.processors.sleigh.ParserWalker;
-import ghidra.program.model.address.AddressFactory;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 /**
- * 
- *
  *  Placeholder for what will resolve to a Varnode instance given
  *  a specific InstructionContext
  */
@@ -57,8 +56,9 @@ public class VarnodeTpl {
 	}
 
 	public boolean isDynamic(ParserWalker walker) {
-		if (offset.getType() != ConstTpl.HANDLE)
+		if (offset.getType() != ConstTpl.HANDLE) {
 			return false;
+		}
 		// Technically we should probably check all three ConstTpls
 		// for dynamic handles, but in all cases, if there is any
 		// dynamic piece, then the offset is dynamic
@@ -70,15 +70,15 @@ public class VarnodeTpl {
 		return (offset.getType() == ConstTpl.J_RELATIVE);
 	}
 
-	public void restoreXml(XmlPullParser parser, AddressFactory factory) {
-		XmlElement el = parser.start("varnode_tpl");
+	public void decode(Decoder decoder) throws DecoderException {
+		int el = decoder.openElement(ELEM_VARNODE_TPL);
 		space = new ConstTpl();
-		space.restoreXml(parser, factory);
+		space.decode(decoder);
 		offset = new ConstTpl();
-		offset.restoreXml(parser, factory);
+		offset.decode(decoder);
 		size = new ConstTpl();
-		size.restoreXml(parser, factory);
-		parser.end(el);
+		size.decode(decoder);
+		decoder.closeElement(el);
 	}
 
 	@Override

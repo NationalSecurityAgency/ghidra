@@ -72,7 +72,8 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 		new DropDownWindowVisibilityListener<>();
 
 	private GDHtmlLabel previewLabel;
-	protected GList<T> list = new GList<>();
+	protected DropDownList list = new DropDownList();
+
 	private WeakSet<DropDownSelectionChoiceListener<T>> choiceListeners =
 		WeakDataStructureFactory.createSingleThreadAccessWeakSet();
 	private Collection<CellEditorListener> cellEditorListeners = new HashSet<>();
@@ -82,7 +83,6 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 	private WindowComponentListener parentWindowListener = new WindowComponentListener();
 	private T selectedValue;
 
-	private int cellHeight;
 	private int matchingWindowHeight = MIN_HEIGHT;
 	private Point lastLocation;
 	protected final DropDownTextFieldDataModel<T> dataModel;
@@ -278,15 +278,6 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 
 	private void initDataList() {
 
-		Font font = list.getFont();
-		FontMetrics fontMetrics = list.getFontMetrics(font);
-		int padding = 2; // top and bottom border height
-		int lineHeight = fontMetrics.getHeight() + padding;
-		int iconAndPaddingHeight = 16 + padding;
-		cellHeight = Math.max(lineHeight, iconAndPaddingHeight);
-
-		list.setFixedCellHeight(cellHeight);
-		list.setFixedCellWidth(MIN_WIDTH - 20); // add some fudge for scrollbars
 		list.setCellRenderer(dataModel.getListRenderer());
 
 		list.addKeyListener(keyListener);
@@ -654,7 +645,7 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 	 * signalling to use the clicked item.  When pressing Enter, they may have been typing and
 	 * ignoring the list, so we have to do some validation.
 	 */
-	@SuppressWarnings("unchecked")  // for the cast to T
+	@SuppressWarnings("unchecked") // the item better be our type
 	private void setTextFromListOnEnterPress() {
 		Object selectedItem = list.getSelectedValue();
 		if (selectedItem == null) {
@@ -746,6 +737,30 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 //=================================================================================================
 // Inner Classes
 //=================================================================================================
+
+	protected class DropDownList extends GList<T> {
+		@Override
+		public void setFont(Font f) {
+			super.setFont(f);
+			updateCellDimensions(f);
+		}
+
+		private void updateCellDimensions(Font font) {
+
+			if (font == null || list == null) {
+				return; // UI is initializing
+			}
+
+			FontMetrics fontMetrics = list.getFontMetrics(font);
+			int padding = 2; // top and bottom border height
+			int lineHeight = fontMetrics.getHeight() + padding;
+			int iconAndPaddingHeight = 16 + padding;
+			int cellHeight = Math.max(lineHeight, iconAndPaddingHeight);
+
+			list.setFixedCellHeight(cellHeight);
+			list.setFixedCellWidth(MIN_WIDTH - 20); // add some fudge for scrollbars
+		}
+	}
 
 	private class HideWindowFocusListener extends FocusAdapter {
 		@Override

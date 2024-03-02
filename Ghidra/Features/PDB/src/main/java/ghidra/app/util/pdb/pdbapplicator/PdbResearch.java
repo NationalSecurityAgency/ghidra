@@ -378,10 +378,12 @@ public class PdbResearch {
 		for (int indexNumber : developerDebugOrderIndexNumbers) {
 			monitor.checkCancelled();
 			PdbResearch.checkBreak(indexNumber);
-			FixupContext fixupContext = new FixupContext();
-			fixupContext.addStagedRecord(indexNumber);
-			applicator.getProcessedDataType(RecordNumber.typeRecordNumber(indexNumber),
-				fixupContext, true);
+			//20240214: neutered internals... containing method not being used at the moment...
+			// consider what needs to be done below
+//			FixupContext fixupContext = new FixupContext();
+//			fixupContext.addStagedRecord(indexNumber);
+//			applicator.getProcessedDataType(RecordNumber.typeRecordNumber(indexNumber),
+//				fixupContext, true);
 		}
 
 	}
@@ -426,7 +428,7 @@ public class PdbResearch {
 		MsSymbolApplier applier = applicator.getSymbolApplier(iter);
 		if (applier instanceof TypedefSymbolApplier typedefApplier) {
 			RecordNumber typeNumber = typedefApplier.getTypeRecordNumber();
-			AbstractMsType type = applicator.getPdb().getTypeRecord(typeNumber);
+			AbstractMsType type = applicator.getTypeRecord(typeNumber);
 			System.out
 					.println(
 						"UDT " + typedefApplier.getName() + " depends on " + type.toString());

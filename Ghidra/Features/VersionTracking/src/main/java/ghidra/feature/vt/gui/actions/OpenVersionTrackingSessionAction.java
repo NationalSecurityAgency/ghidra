@@ -38,7 +38,7 @@ public class OpenVersionTrackingSessionAction extends DockingAction {
 		String[] menuPath = { ToolConstants.MENU_FILE, "Open Session..." };
 		setMenuBarData(new MenuData(menuPath, "AAA"));
 		setDescription("Opens a Version Tracking Session");
-		setHelpLocation(new HelpLocation("VersionTrackingPlugin", "Open_Session"));
+		setHelpLocation(new HelpLocation("VersionTrackingPlugin", "Version_Tracking_Tool"));
 	}
 
 	@Override

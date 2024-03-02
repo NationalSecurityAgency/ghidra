@@ -18,11 +18,10 @@ package ghidra.features.bsim.gui.search.results;
 import static ghidra.features.bsim.gui.search.results.BSimResultStatus.*;
 
 import java.awt.Component;
+import java.awt.Font;
 import java.util.*;
 
 import javax.swing.JLabel;
-import javax.swing.JTable;
-import javax.swing.table.TableModel;
 
 import docking.widgets.table.*;
 import generic.lsh.vector.LSHVectorFactory;
@@ -56,7 +55,7 @@ public class BSimMatchResultsModel extends AddressBasedTableModel<BSimMatchResul
 	private Collection<BSimMatchResult> results = new ArrayList<BSimMatchResult>();
 
 	// Maps functions (represented by addresses) to the number of matches in the query.
-	// This is here to provide quick access for the MatchCountTableColumn. 
+	// This is here to provide quick access for the MatchCountTableColumn.
 	private Map<Address, Integer> functionMatchMap = new HashMap<>();
 
 	public BSimMatchResultsModel(PluginTool tool, DatabaseInformation info,
@@ -70,15 +69,15 @@ public class BSimMatchResultsModel extends AddressBasedTableModel<BSimMatchResul
 			return; // Info can be null, even if FunctionDatabase return Ready  (not created yet)
 		}
 		if (info.execats != null) {
-			for (int i = 0; i < info.execats.size(); ++i) {
-				addTableColumn(new ExecCategoryColumn(info.execats.get(i)));
+			for (String element : info.execats) {
+				addTableColumn(new ExecCategoryColumn(element));
 			}
 		}
 		if (info.functionTags != null) {
 			int mask = 1;
 			mask <<= FunctionTagBSimFilterType.RESERVED_BITS;
-			for (int i = 0; i < info.functionTags.size(); ++i) {
-				addTableColumn(new FunctionTagColumn(info.functionTags.get(i), mask));
+			for (String element : info.functionTags) {
+				addTableColumn(new FunctionTagColumn(element, mask));
 				mask <<= 1;
 			}
 		}
@@ -90,7 +89,7 @@ public class BSimMatchResultsModel extends AddressBasedTableModel<BSimMatchResul
 		}
 
 		// Must add this column here because it requires that the queryManager
-		// be available. At the time createTableColumnDescriptor() is called this 
+		// be available. At the time createTableColumnDescriptor() is called this
 		// is not the case. The index is set to '-1' so it will be placed at the end
 		// of the list.
 		if (lshVectorFactory != null) {
@@ -114,12 +113,12 @@ public class BSimMatchResultsModel extends AddressBasedTableModel<BSimMatchResul
 		descriptor.addHiddenColumn(new CompilerMatchColumn());
 		descriptor.addHiddenColumn(new MatchCountTableColumn());
 		descriptor.addHiddenColumn(new FunctionSizeTableColumn());
-		descriptor.addHiddenColumn(new FunctionTagColumn("Known Library",
-			FunctionTagBSimFilterType.KNOWN_LIBRARY_MASK));
+		descriptor.addHiddenColumn(
+			new FunctionTagColumn("Known Library", FunctionTagBSimFilterType.KNOWN_LIBRARY_MASK));
 		descriptor.addHiddenColumn(new FunctionTagColumn("Has Unimplemented",
 			FunctionTagBSimFilterType.HAS_UNIMPLEMENTED_MASK));
-		descriptor.addHiddenColumn(new FunctionTagColumn("Has Bad Data",
-			FunctionTagBSimFilterType.HAS_BADDATA_MASK));
+		descriptor.addHiddenColumn(
+			new FunctionTagColumn("Has Bad Data", FunctionTagBSimFilterType.HAS_BADDATA_MASK));
 		descriptor.addVisibleColumn(
 			DiscoverableTableUtils.adaptColumForModel(this, new AddressTableColumn()));
 		descriptor.addHiddenColumn(new MatchingFunctionAddressTableColumn());
@@ -171,9 +170,9 @@ public class BSimMatchResultsModel extends AddressBasedTableModel<BSimMatchResul
 	}
 
 	/**
-	 * Parses the given result set to find the number of matches associated with 
-	 * each base function. 
-	 * 
+	 * Parses the given result set to find the number of matches associated with
+	 * each base function.
+	 *
 	 * @param queryResults the query results to inspect
 	 */
 	private void parseFunctionMatchCounts(Collection<BSimMatchResult> queryResults) {
@@ -192,7 +191,7 @@ public class BSimMatchResultsModel extends AddressBasedTableModel<BSimMatchResul
 	/**
 	 * Associate a given FunctionDescription with the entry point of the matching function in a program
 	 * @param desc is the FunctionDescription to recover
-	 * @param prog is the Program (possibly) containing the Function object 
+	 * @param prog is the Program (possibly) containing the Function object
 	 * @return the entry point address of the function (if it exists), or just the address within the default space
 	 */
 	public static Address recoverAddress(FunctionDescription desc, Program prog) {
@@ -288,10 +287,10 @@ public class BSimMatchResultsModel extends AddressBasedTableModel<BSimMatchResul
 		}
 
 		@Override
-		public String getValue(BSimMatchResult rowObject, Settings settings, Program program,
+		public String getValue(BSimMatchResult rowObject, Settings settings, Program p,
 				ServiceProvider serviceProvider) throws IllegalArgumentException {
 			Address address = rowObject.getAddress();
-			Function function = program.getFunctionManager().getFunctionAt(address);
+			Function function = p.getFunctionManager().getFunctionAt(address);
 			boolean showNamespace = SHOW_NAMESPACE.getValue(settings);
 			if (function != null) {
 				return function.getName(showNamespace);
@@ -319,7 +318,7 @@ public class BSimMatchResultsModel extends AddressBasedTableModel<BSimMatchResul
 		}
 
 		@Override
-		public String getValue(BSimMatchResult rowObject, Settings settings, Program program,
+		public String getValue(BSimMatchResult rowObject, Settings settings, Program p,
 				ServiceProvider serviceProvider) throws IllegalArgumentException {
 			String name = rowObject.getSimilarFunctionName();
 			boolean showNamespace = SHOW_NAMESPACE.getValue(settings);
@@ -365,7 +364,7 @@ public class BSimMatchResultsModel extends AddressBasedTableModel<BSimMatchResul
 
 	/**
 	 * Column for showing the number of matches each base function has.
-	 * 
+	 *
 	 * Note the use of the {@link BSimMatchResultsModel#functionMatchMap}; this is
 	 * for performance reasons. We don't want this class looping over the entire
 	 * result set calculating match counts every time the table is refreshed.
@@ -380,7 +379,7 @@ public class BSimMatchResultsModel extends AddressBasedTableModel<BSimMatchResul
 		}
 
 		@Override
-		public Integer getValue(BSimMatchResult rowObject, Settings settings, Program program,
+		public Integer getValue(BSimMatchResult rowObject, Settings settings, Program p,
 				ServiceProvider provider) throws IllegalArgumentException {
 			return functionMatchMap.get(rowObject.getAddress());
 		}
@@ -392,7 +391,7 @@ public class BSimMatchResultsModel extends AddressBasedTableModel<BSimMatchResul
 	}
 
 	/**
-	 * Column for showing the address of the matching function.  
+	 * Column for showing the address of the matching function.
 	 */
 	private static class MatchingFunctionAddressTableColumn
 			extends AbstractProgramBasedDynamicTableColumn<BSimMatchResult, Long> {
@@ -404,7 +403,7 @@ public class BSimMatchResultsModel extends AddressBasedTableModel<BSimMatchResul
 		}
 
 		@Override
-		public Long getValue(BSimMatchResult rowObject, Settings settings, Program data,
+		public Long getValue(BSimMatchResult rowObject, Settings settings, Program p,
 				ServiceProvider serviceProvider) throws IllegalArgumentException {
 			Long addr = rowObject.getMatchFunctionDescription().getAddress();
 			return addr;
@@ -437,8 +436,8 @@ public class BSimMatchResultsModel extends AddressBasedTableModel<BSimMatchResul
 		}
 
 		@Override
-		protected void configureFont(JTable table, TableModel model, int column) {
-			setFont(fixedWidthFont);
+		protected Font getDefaultFont() {
+			return fixedWidthFont;
 		}
 
 		@Override
@@ -464,10 +463,10 @@ public class BSimMatchResultsModel extends AddressBasedTableModel<BSimMatchResul
 		}
 
 		@Override
-		public Long getValue(BSimMatchResult rowObject, Settings settings, Program program,
+		public Long getValue(BSimMatchResult rowObject, Settings settings, Program p,
 				ServiceProvider provider) throws IllegalArgumentException {
 			Address address = rowObject.getAddress();
-			Function function = program.getFunctionManager().getFunctionAt(address);
+			Function function = p.getFunctionManager().getFunctionAt(address);
 			return function.getBody().getNumAddresses();
 		}
 
@@ -482,7 +481,6 @@ public class BSimMatchResultsModel extends AddressBasedTableModel<BSimMatchResul
 		private String columnName;
 
 		ExecDateColumn(String name) {
-			super();
 			columnName = name;
 		}
 
@@ -492,7 +490,7 @@ public class BSimMatchResultsModel extends AddressBasedTableModel<BSimMatchResul
 		}
 
 		@Override
-		public Date getValue(BSimMatchResult rowObject, Settings settings, Program program,
+		public Date getValue(BSimMatchResult rowObject, Settings settings, Program p,
 				ServiceProvider serviceProvider) throws IllegalArgumentException {
 			return rowObject.getDate();
 		}
@@ -519,7 +517,7 @@ public class BSimMatchResultsModel extends AddressBasedTableModel<BSimMatchResul
 		}
 
 		@Override
-		public String getValue(BSimMatchResult rowObject, Settings settings, Program program,
+		public String getValue(BSimMatchResult rowObject, Settings settings, Program p,
 				ServiceProvider serviceProvider) throws IllegalArgumentException {
 			return rowObject.getExeCategoryAlphabetic(columnName);
 		}
@@ -540,7 +538,7 @@ public class BSimMatchResultsModel extends AddressBasedTableModel<BSimMatchResul
 		}
 
 		@Override
-		public String getValue(BSimMatchResult rowObject, Settings settings, Program program,
+		public String getValue(BSimMatchResult rowObject, Settings settings, Program p,
 				ServiceProvider serviceProvider) throws IllegalArgumentException {
 			return rowObject.getArchitecture();
 		}
@@ -561,7 +559,7 @@ public class BSimMatchResultsModel extends AddressBasedTableModel<BSimMatchResul
 		}
 
 		@Override
-		public String getValue(BSimMatchResult rowObject, Settings settings, Program program,
+		public String getValue(BSimMatchResult rowObject, Settings settings, Program p,
 				ServiceProvider serviceProvider) throws IllegalArgumentException {
 			return rowObject.getCompilerName();
 		}
@@ -582,7 +580,7 @@ public class BSimMatchResultsModel extends AddressBasedTableModel<BSimMatchResul
 		}
 
 		@Override
-		public String getValue(BSimMatchResult rowObject, Settings settings, Program program,
+		public String getValue(BSimMatchResult rowObject, Settings settings, Program p,
 				ServiceProvider serviceProvider) throws IllegalArgumentException {
 			return rowObject.getMd5();
 		}
@@ -604,7 +602,7 @@ public class BSimMatchResultsModel extends AddressBasedTableModel<BSimMatchResul
 		}
 
 		@Override
-		public Double getValue(BSimMatchResult rowObject, Settings settings, Program program,
+		public Double getValue(BSimMatchResult rowObject, Settings settings, Program p,
 				ServiceProvider serviceProvider) throws IllegalArgumentException {
 			return rowObject.getSimilarity();
 		}
@@ -630,7 +628,7 @@ public class BSimMatchResultsModel extends AddressBasedTableModel<BSimMatchResul
 		}
 
 		@Override
-		public Double getValue(BSimMatchResult rowObject, Settings settings, Program program,
+		public Double getValue(BSimMatchResult rowObject, Settings settings, Program p,
 				ServiceProvider serviceProvider) throws IllegalArgumentException {
 			return rowObject.getSignificance();
 		}
@@ -662,7 +660,7 @@ public class BSimMatchResultsModel extends AddressBasedTableModel<BSimMatchResul
 		}
 
 		@Override
-		public Double getValue(BSimMatchResult rowObject, Settings settings, Program program,
+		public Double getValue(BSimMatchResult rowObject, Settings settings, Program p,
 				ServiceProvider serviceProvider) throws IllegalArgumentException {
 			return vectorFactory.getSelfSignificance(
 				rowObject.getMatchFunctionDescription().getSignatureRecord().getLSHVector());
@@ -696,7 +694,7 @@ public class BSimMatchResultsModel extends AddressBasedTableModel<BSimMatchResul
 		}
 
 		@Override
-		public Boolean getValue(BSimMatchResult rowObject, Settings settings, Program data,
+		public Boolean getValue(BSimMatchResult rowObject, Settings settings, Program p,
 				ServiceProvider serviceProvider) throws IllegalArgumentException {
 			return rowObject.isFlagSet(mask);
 		}

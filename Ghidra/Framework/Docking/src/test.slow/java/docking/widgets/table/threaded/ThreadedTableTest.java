@@ -194,6 +194,19 @@ public class ThreadedTableTest extends AbstractThreadedTableTest {
 		assertDidNotFilter();
 	}
 
+	@Test
+	public void testRemovingSortedColumn() {
+
+		sortOnLastColumn();
+
+		// removing the last column will invalidate the last sort
+		removeLastColumn();
+
+		// check sort becomes 'unsorted'
+		TableSortingContext<Long> sortingContext = model.getSortingContext();
+		assertTrue(sortingContext.isUnsorted());
+	}
+
 	// Note: this is now handled the ThreadedTableFilterTest
 	//
 	//	public void testContinuedFilteringUsesPreviousFilteredData() throws Exception {
@@ -555,6 +568,18 @@ public class ThreadedTableTest extends AbstractThreadedTableTest {
 // Private Methods
 //==================================================================================================
 
+	private void sortOnLastColumn() {
+		int index = model.getColumnCount() - 1;
+		sortColumn(index);
+		checkSort(index);
+	}
+
+	private void removeLastColumn() {
+		int n = model.getColumnCount();
+		model.removeTableColumn(n - 1);
+		waitForTableModel(model);
+	}
+
 	private void assertPendingPanelShowing() {
 		JComponent pendingPanel = (JComponent) getInstanceField("pendingPanel", threadedTablePanel);
 
@@ -810,8 +835,7 @@ public class ThreadedTableTest extends AbstractThreadedTableTest {
 
 		List<Object> modelValues = getModelValues(model, TestDataKeyModel.STRING_COL);
 		assertEquals("Filter did not match the expected row count", 3, modelValues.size());
-		for (int i = 0; i < modelValues.size(); i++) {
-			Object value = modelValues.get(i);
+		for (Object value : modelValues) {
 			assertEquals(text, value);
 		}
 	}

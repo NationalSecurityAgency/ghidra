@@ -177,10 +177,8 @@ public class DebuggerRegionsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 		return new ModelQuery(schema.searchFor(TargetMemoryRegion.class, path, true));
 	}
 
-	protected static Set<TraceMemoryRegion> getSelectedRegions(DebuggerObjectActionContext ctx) {
-		return ctx == null ? null
-				: AbstractObjectsTableBasedPanel.getSelected(ctx, TraceObjectMemoryRegion.class)
-						.collect(Collectors.toSet());
+	protected Set<TraceMemoryRegion> getSelectedRegions(DebuggerObjectActionContext ctx) {
+		return ctx == null ? null : getSelected(ctx).collect(Collectors.toSet());
 	}
 
 	public DebuggerRegionsPanel(DebuggerRegionsProvider provider) {

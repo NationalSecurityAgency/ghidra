@@ -232,14 +232,20 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 	protected void assertModuleRow(int pos, Object object, String name, Address start, Address end,
 			long length) {
 		ValueRow row = provider.modulesPanel.getAllItems().get(pos);
-		DynamicTableColumn<ValueRow, ?, Trace> nameCol =
-			provider.modulesPanel.getColumnByNameAndType("Name", ValueProperty.class).getValue();
-		DynamicTableColumn<ValueRow, ?, Trace> baseCol =
-			provider.modulesPanel.getColumnByNameAndType("Base", ValueProperty.class).getValue();
-		DynamicTableColumn<ValueRow, ?, Trace> maxCol =
-			provider.modulesPanel.getColumnByNameAndType("Max", ValueProperty.class).getValue();
-		DynamicTableColumn<ValueRow, ?, Trace> lengthCol =
-			provider.modulesPanel.getColumnByNameAndType("Length", ValueProperty.class).getValue();
+		var tableModel = QueryPanelTestHelper.getTableModel(provider.modulesPanel);
+		GhidraTable table = QueryPanelTestHelper.getTable(provider.modulesPanel);
+		DynamicTableColumn<ValueRow, ?, Trace> nameCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "Name", ValueProperty.class)
+				.column();
+		DynamicTableColumn<ValueRow, ?, Trace> baseCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "Base", ValueProperty.class)
+				.column();
+		DynamicTableColumn<ValueRow, ?, Trace> maxCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "Max", ValueProperty.class)
+				.column();
+		DynamicTableColumn<ValueRow, ?, Trace> lengthCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "Length", ValueProperty.class)
+				.column();
 
 		assertSame(object, row.getValue().getValue());
 		assertEquals(name, rowColVal(row, nameCol));
@@ -251,17 +257,23 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 	protected void assertSectionRow(int pos, Object object, String moduleName, String name,
 			Address start, Address end, long length) {
 		ValueRow row = provider.sectionsPanel.getAllItems().get(pos);
-		DynamicTableColumn<ValueRow, ?, Trace> moduleNameCol =
-			provider.sectionsPanel.getColumnByNameAndType("Module Name", ValueProperty.class)
-					.getValue();
-		DynamicTableColumn<ValueRow, ?, Trace> nameCol =
-			provider.sectionsPanel.getColumnByNameAndType("Name", String.class).getValue();
-		DynamicTableColumn<ValueRow, ?, Trace> startCol =
-			provider.sectionsPanel.getColumnByNameAndType("Start", ValueProperty.class).getValue();
-		DynamicTableColumn<ValueRow, ?, Trace> endCol =
-			provider.sectionsPanel.getColumnByNameAndType("End", ValueProperty.class).getValue();
-		DynamicTableColumn<ValueRow, ?, Trace> lengthCol =
-			provider.sectionsPanel.getColumnByNameAndType("Length", ValueProperty.class).getValue();
+		var tableModel = QueryPanelTestHelper.getTableModel(provider.sectionsPanel);
+		GhidraTable table = QueryPanelTestHelper.getTable(provider.sectionsPanel);
+		DynamicTableColumn<ValueRow, ?, Trace> moduleNameCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "Module Name", ValueProperty.class)
+				.column();
+		DynamicTableColumn<ValueRow, ?, Trace> nameCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "Name", String.class)
+				.column();
+		DynamicTableColumn<ValueRow, ?, Trace> startCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "Start", ValueProperty.class)
+				.column();
+		DynamicTableColumn<ValueRow, ?, Trace> endCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "End", ValueProperty.class)
+				.column();
+		DynamicTableColumn<ValueRow, ?, Trace> lengthCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "Length", ValueProperty.class)
+				.column();
 
 		assertSame(object, row.getValue().getValue());
 		assertEquals(moduleName, rowColVal(row, moduleNameCol));
@@ -401,7 +413,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 		});
 	}
 
-	@Test
+	// @Test // Not gonna with write-behind cache
 	public void testUndoRedoCausesUpdateInProvider() throws Exception {
 		createAndOpenTrace();
 
@@ -491,7 +503,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 	@Test
 	public void testActionMapModules() throws Exception {
-		assertFalse(provider.actionMapModules.isEnabled());
+		assertDisabled(provider, provider.actionMapModules);
 
 		createAndOpenTrace();
 		createAndOpenProgramFromTrace();
@@ -503,7 +515,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 		waitForSwing();
 
 		// Still
-		assertFalse(provider.actionMapModules.isEnabled());
+		assertDisabled(provider, provider.actionMapModules);
 
 		try (Transaction tx = program.openTransaction("Change name")) {
 			program.setImageBase(addr(program, 0x00400000), true);
@@ -516,7 +528,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 		waitForPass(() -> assertModuleTableSize(2));
 
 		runSwing(() -> provider.setSelectedModules(Set.of(modExe)));
-		assertTrue(provider.actionMapModules.isEnabled());
+		assertEnabled(provider, provider.actionMapModules);
 
 		performEnabledAction(provider, provider.actionMapModules, false);
 
@@ -558,7 +570,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 	@Test
 	public void testActionMapSections() throws Exception {
-		assertFalse(provider.actionMapSections.isEnabled());
+		assertDisabled(provider, provider.actionMapSections);
 
 		createAndOpenTrace();
 		createAndOpenProgramFromTrace();
@@ -570,7 +582,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 		waitForTasks();
 
 		// Still
-		assertFalse(provider.actionMapSections.isEnabled());
+		assertDisabled(provider, provider.actionMapSections);
 
 		MemoryBlock block = addBlock();
 		try (Transaction tx = program.openTransaction("Change name")) {
@@ -581,7 +593,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerTes
 		waitForPass(() -> assertSectionTableSize(4));
 
 		runSwing(() -> provider.setSelectedSections(Set.of(secExeText)));
-		assertTrue(provider.actionMapSections.isEnabled());
+		assertEnabled(provider, provider.actionMapSections);
 
 		performEnabledAction(provider, provider.actionMapSections, false);
 

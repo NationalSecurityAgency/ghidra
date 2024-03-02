@@ -62,8 +62,19 @@ public class DataTypeUtilities {
 		cPrimitiveNameMap.put("long double", LongDoubleDataType.dataType);
 	}
 
-	private static final Pattern DATATYPE_CONFLICT_PATTERN =
-		Pattern.compile(Pattern.quote(DataType.CONFLICT_SUFFIX) + "_?[0-9]*");
+	// TODO: Should we drop the handling of "_" use in conflict name.  It's unclear 
+	// when/if this was ever used in the generation of a conflict name.
+	// NOTE: It is assumed that all BuiltInDataType types (other then possibly Pointers) 
+	// will not utilize conflict names.  This includes pointers and arrays whose base
+	// type is a BuiltInDataType.
+	// NOTE: The BASE_DATATYPE_CONFLICT_PATTERN may never be applied to a pointer
+	// or array name as it will always fail to match.  Pointer and array decorations 
+	// must be stripped off first.
+	private static final Pattern BASE_DATATYPE_CONFLICT_PATTERN =
+		Pattern.compile(Pattern.quote(DataType.CONFLICT_SUFFIX) + "([_]{0,1}\\d+){0,1}$");
+
+	private static final Pattern DATATYPE_POINTER_ARRAY_PATTERN =
+		Pattern.compile("(( \\*\\d*)|(\\[\\d+\\]))+$");
 
 	public static Collection<DataType> getContainedDataTypes(DataType rootDataType) {
 		HashMap<String, DataType> dataTypeMap = new HashMap<>();
@@ -297,80 +308,11 @@ public class DataTypeUtilities {
 	}
 
 	/**
-	 * Get the name of a data type with all conflict naming patterns removed.
-	 * 
-	 * @param dataType data type
-	 * @param includeCategoryPath if true the category path will be included with the
-	 * returned name (e.g., /mypath/mydt)
-	 * @return name with optional category path included
-	 */
-	public static String getNameWithoutConflict(DataType dataType, boolean includeCategoryPath) {
-		String name = includeCategoryPath ? dataType.getPathName() : dataType.getName();
-		return getNameWithoutConflict(name);
-	}
-
-	/**
-	 * Get the name of a data type with all conflict naming patterns removed.
-	 * 
-	 * @param dataTypeName data type name with optional category path included
-	 * @return name with optional category path included
-	 */
-	public static String getNameWithoutConflict(String dataTypeName) {
-		return DATATYPE_CONFLICT_PATTERN.matcher(dataTypeName).replaceAll("");
-	}
-
-	/**
-	 * Get the conflict value string associated with a conflict datatype name.
-	 * 
-	 * @param dataType datatype to be checked
-	 * @return conflict value string.  Will be null if name is not a conflict name, or
-	 * empty string if conflict has no number.  Otherwise a decimal value string will be returned.
-	 */
-	public static String getConflictString(DataType dataType) {
-		return getConflictString(dataType.getName());
-	}
-
-	/**
-	 * Get the conflict value string associated with a conflict datatype name.
-	 * 
-	 * @param dataTypeName datatype name to be checked
-	 * @return conflict value string.  Will be one of the following:
-	 * <ol>
-	 * <li>A null value if not a conflict name,</li>
-	 * <li>an empty string if conflict name without a number, or</li>
-	 * <li>a decimal string value which corresponds to the conflict number in the name.</li>
-	 * </ol>
-	 */
-	public static String getConflictString(String dataTypeName) {
-		Matcher matcher = DATATYPE_CONFLICT_PATTERN.matcher(dataTypeName);
-		if (matcher.find()) {
-			MatchResult matchResult = matcher.toMatchResult();
-			return dataTypeName.substring(matchResult.start() + DataType.CONFLICT_SUFFIX.length(),
-				matchResult.end());
-		}
-		return null;
-	}
-
-	/**
-	 * Compares two data type name strings to determine if they are equivalent names, ignoring
-	 * conflict patterns present.
-	 * 
-	 * @param name1 the first name
-	 * @param name2 the second name
-	 * @return true if the names are equivalent when conflict suffixes are ignored.
-	 */
-	public static boolean equalsIgnoreConflict(String name1, String name2) {
-		name1 = DATATYPE_CONFLICT_PATTERN.matcher(name1).replaceAll("");
-		name2 = DATATYPE_CONFLICT_PATTERN.matcher(name2).replaceAll("");
-		return name1.equals(name2);
-	}
-
-	/**
 	 * Get the base data type for the specified data type stripping away pointers and arrays only. A
 	 * null will be returned for a default pointer.
 	 *
-	 * @param dt the data type whose base data type is to be determined.
-	 * @return the base data type.
+	 * @param dt the data type whose base data type is to be determined. 
+	 * @return the base data type (may be null for default pointer).
 	 */
 	public static DataType getBaseDataType(DataType dt) {
 		DataType baseDataType = dt;
@@ -839,5 +781,222 @@ public class DataTypeUtilities {
 			return secondaryMatch;
 		}
 		return null;
+	}
+
+	//
+	// Conflict naming utilities
+	//
+
+	private static boolean canHaveConflictName(DataType dt) {
+		if (dt == null) {
+			return false; // e.g., base type for default pointer
+		}
+		return !(dt instanceof BuiltIn) || (dt instanceof Pointer);
+	}
+
+	private static String getPointerArrayDecorations(String dataTypeName) {
+		// Use of this preliminary check greatly speeds-up the check for cases
+		// not involving a pointer or array
+		if (!dataTypeName.contains("*") && !dataTypeName.contains("[")) {
+			return null;
+		}
+
+		// Return the trailing pointer and array decorations if they exist
+		Matcher matcher = DATATYPE_POINTER_ARRAY_PATTERN.matcher(dataTypeName);
+		if (matcher.find()) {
+			MatchResult matchResult = matcher.toMatchResult();
+			return dataTypeName.substring(matchResult.start());
+		}
+		return null;
+	}
+
+	/**
+	 * Get the name of a data type with all conflict naming patterns removed.
+	 * 
+	 * @param dataType data type
+	 * @param includeCategoryPath if true, the category path will be included with the
+	 * returned name (e.g., /mypath/mydt) and any occurance of a forward slash within individual 
+	 * path components, including the data type name, will be escaped (e.g., {@code "\/"}).
+	 * @return name with optional category path included
+	 */
+	public static String getNameWithoutConflict(DataType dataType, boolean includeCategoryPath) {
+		String name = getNameWithoutConflict(dataType);
+		if (includeCategoryPath) {
+			name = dataType.getCategoryPath().getPath(name);
+		}
+		return name;
+	}
+
+	/**
+	 * Get the name of a data type with all conflict naming patterns removed.
+	 * 
+	 * @param dataTypeName data type name with optional category path included
+	 * @return name with optional category path included
+	 */
+	public static String getNameWithoutConflict(String dataTypeName) {
+		String decorations = getPointerArrayDecorations(dataTypeName);
+		String baseDataTypeName = dataTypeName;
+		if (decorations != null) {
+			baseDataTypeName =
+				dataTypeName.substring(0, dataTypeName.length() - decorations.length());
+		}
+		String name = BASE_DATATYPE_CONFLICT_PATTERN.matcher(baseDataTypeName).replaceAll("");
+		if (decorations != null) {
+			name += decorations;
+		}
+		return name;
+	}
+
+	/**
+	 * Get a datatype's name without conflict suffix.
+	 * 
+	 * @param dt datatype (pointer and array permitted)
+	 * @return datatype's name without conflict suffix
+	 */
+	public static String getNameWithoutConflict(DataType dt) {
+		String dtName = dt.getName();
+		if (!canHaveConflictName(dt)) {
+			return dtName; // e.g., many BuiltIn types
+		}
+		DataType baseDataType = getBaseDataType(dt);
+		if (baseDataType == null) {
+			return dtName; // e.g., default pointer
+		}
+		if (baseDataType != dt && !canHaveConflictName(baseDataType)) {
+			return dtName; // e.g., pointer to BuiltIn
+		}
+
+		if (baseDataType == dt) {
+			// Non-pointer/array case
+			return BASE_DATATYPE_CONFLICT_PATTERN.matcher(dtName).replaceAll("");
+		}
+
+		// Isolate pointer/array decorations
+		// NOTE: This is faster than using regex to isolate pointer and array decorations
+		String baseDtName = baseDataType.getName();
+		String decorations = dtName.substring(baseDtName.length());
+
+		// remove conflict suffix
+		return BASE_DATATYPE_CONFLICT_PATTERN.matcher(baseDtName).replaceAll("") + decorations;
+	}
+
+	private static int getBaseConflictValue(String baseDataTypeName) {
+		Matcher matcher = BASE_DATATYPE_CONFLICT_PATTERN.matcher(baseDataTypeName);
+		if (matcher.find()) {
+			MatchResult matchResult = matcher.toMatchResult();
+			int startIx = matchResult.start() + DataType.CONFLICT_SUFFIX.length();
+			if (startIx < baseDataTypeName.length() && baseDataTypeName.charAt(startIx) == '_') {
+				++startIx;
+			}
+			String valueStr = baseDataTypeName.substring(startIx);
+			if (valueStr.length() == 0) {
+				return 0;
+			}
+			try {
+				return Integer.parseInt(valueStr);
+			}
+			catch (NumberFormatException e) {
+				return -1;
+			}
+		}
+		return -1;
+	}
+
+	/**
+	 * Get the conflict value string associated with a conflict datatype name.
+	 * 
+	 * @param dataType datatype to be checked
+	 * @return conflict value:
+	 * <ol>
+	 * <li>-1: when type does not have a conflict name,</li>
+	 * <li>0: when conflict name does not have a number (i.e., {@code .conflict}), or</li>
+	 * <li>a positive value which corresponds to the conflict number in the name 
+	 *     (e.g., returns 2 for {@code .conflict2}).</li>
+	 * </ol>
+	 */
+	public static int getConflictValue(DataType dataType) {
+		if (!canHaveConflictName(dataType)) {
+			return -1; // e.g., many BuiltIn types
+		}
+		DataType baseDataType = getBaseDataType(dataType);
+		if (baseDataType == null) {
+			return -1; // e.g., default pointer
+		}
+		if (baseDataType != dataType && !canHaveConflictName(baseDataType)) {
+			return -1; // e.g., pointer to BuiltIn
+		}
+		return getBaseConflictValue(baseDataType.getName());
+	}
+
+	/**
+	 * Get the conflict value associated with a conflict datatype name.
+	 * 
+	 * @param dataTypeName datatype name to be checked
+	 * @return conflict value:
+	 * <ol>
+	 * <li>-1: when name is not have a conflict name,</li>
+	 * <li>0: when conflict name does not have a number (i.e., {@code .conflict}), or</li>
+	 * <li>a positive value which corresponds to the conflict number in the name 
+	 *     (e.g., returns 2 for {@code .conflict2}).</li>
+	 * </ol>
+	 */
+	public static int getConflictValue(String dataTypeName) {
+		String decorations = getPointerArrayDecorations(dataTypeName);
+		String baseDataTypeName = dataTypeName;
+		if (decorations != null) {
+			baseDataTypeName =
+				dataTypeName.substring(0, dataTypeName.length() - decorations.length());
+		}
+		return getBaseConflictValue(baseDataTypeName);
+	}
+
+	/**
+	 * Determine if the specified data type name is a conflict name.
+	 * 
+	 * @param dataTypeName datatype name
+	 * @return true if data type name is a conflict name.
+	 */
+	public static boolean isConflictDataTypeName(String dataTypeName) {
+		String decorations = getPointerArrayDecorations(dataTypeName);
+		String baseDataTypeName = dataTypeName;
+		if (decorations != null) {
+			baseDataTypeName =
+				dataTypeName.substring(0, dataTypeName.length() - decorations.length());
+		}
+		Matcher matcher = BASE_DATATYPE_CONFLICT_PATTERN.matcher(baseDataTypeName);
+		return matcher.find();
+	}
+
+	/**
+	 * Determine if the specified data type has a conflict name.
+	 * @param dt datatype (pointer and array permitted)
+	 * @return true if data type has a conflict name.
+	 */
+	public static boolean isConflictDataType(DataType dt) {
+		if (!canHaveConflictName(dt)) {
+			return false; // e.g., many BuiltIn types
+		}
+		DataType baseDataType = getBaseDataType(dt);
+		if (baseDataType == null) {
+			return false; // e.g., default pointer
+		}
+		if (baseDataType != dt && !canHaveConflictName(baseDataType)) {
+			return false; // e.g., pointer to BuiltIn
+		}
+
+		Matcher matcher = BASE_DATATYPE_CONFLICT_PATTERN.matcher(dt.getName());
+		return matcher.find();
+	}
+
+	/**
+	 * Compares two data type name strings to determine if they are equivalent names, ignoring
+	 * conflict patterns present.
+	 * 
+	 * @param name1 the first name
+	 * @param name2 the second name
+	 * @return true if the names are equivalent when conflict suffixes are ignored.
+	 */
+	public static boolean equalsIgnoreConflict(String name1, String name2) {
+		return getNameWithoutConflict(name1).equals(getNameWithoutConflict(name2));
 	}
 }

@@ -37,6 +37,7 @@ import ghidra.app.util.bin.format.pe.ImageCor20Header.ImageCor20Flags;
 import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
 import ghidra.app.util.bin.format.pe.debug.DebugCOFFSymbol;
 import ghidra.app.util.bin.format.pe.debug.DebugDirectoryParser;
+import ghidra.app.util.bin.format.swift.SwiftUtils;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.Options;
@@ -46,6 +47,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.reloc.RelocationTable;
 import ghidra.program.model.symbol.*;
@@ -671,6 +673,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 				int rawDataSize = sections[i].getSizeOfRawData();
 				int rawDataPtr = sections[i].getPointerToRawData();
 				virtualSize = sections[i].getVirtualSize();
+				MemoryBlock block = null;
 				if (rawDataSize != 0 && rawDataPtr != 0) {
 					int dataSize =
 						((rawDataSize > virtualSize && virtualSize > 0) || rawDataSize < 0)
@@ -682,8 +685,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 							Msg.warn(this, "OptionalHeader.SizeOfImage < size of " +
 								sections[i].getName() + " section");
 						}
-						MemoryBlockUtils.createInitializedBlock(prog, false, sectionName, address,
-							fileBytes, rawDataPtr, dataSize, "", "", r, w, x, log);
+						block = MemoryBlockUtils.createInitializedBlock(prog, false, sectionName,
+							address, fileBytes, rawDataPtr, dataSize, "", "", r, w, x, log);
 						sectionToAddress.put(sections[i], address);
 					}
 					if (rawDataSize == virtualSize) {
@@ -711,9 +714,24 @@ public class PeLoader extends AbstractPeDebugLoader {
 				else {
 					int dataSize = (virtualSize > 0 || rawDataSize < 0) ? virtualSize : 0;
 					if (dataSize > 0) {
-						MemoryBlockUtils.createUninitializedBlock(prog, false, sectionName, address,
-							dataSize, "", "", r, w, x, log);
-						sectionToAddress.putIfAbsent(sections[i], address);
+						if (block != null) {
+							MemoryBlock paddingBlock =
+								MemoryBlockUtils.createInitializedBlock(prog, false, sectionName,
+									address, dataSize, "", "", r, w, x, log);
+							if (paddingBlock != null) {
+								try {
+									prog.getMemory().join(block, paddingBlock);
+								}
+								catch (Exception e) {
+									log.appendMsg(e.getMessage());
+								}
+							}
+						}
+						else {
+							MemoryBlockUtils.createUninitializedBlock(prog, false, sectionName,
+								address, dataSize, "", "", r, w, x, log);
+							sectionToAddress.putIfAbsent(sections[i], address);
+						}
 					}
 				}
 
@@ -904,6 +922,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			CLI("cli", "cli"),
 			Rustc(RustConstants.RUST_COMPILER, RustConstants.RUST_COMPILER),
 			GOLANG("golang", "golang"),
+			Swift("swift", "swift"),
 			Unknown("unknown", "unknown"),
 
 			// The following values represent the presence of ambiguous indicators
@@ -968,6 +987,15 @@ public class PeLoader extends AbstractPeDebugLoader {
 					log.appendMsg("Rust error: " + e.getMessage());
 				}
 				return CompilerEnum.Rustc;
+			}
+			
+			// Check for Swift
+			List<String> sectionNames =
+				Arrays.stream(pe.getNTHeader().getFileHeader().getSectionHeaders())
+						.map(section -> section.getName())
+						.toList();
+			if (SwiftUtils.isSwift(sectionNames)) {
+				return CompilerEnum.Swift;
 			}
 
 			// Check for managed code (.NET)

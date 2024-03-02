@@ -15,18 +15,16 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.List;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import org.jdom.Element;
+import java.io.IOException;
+import java.util.ArrayList;
 
 import ghidra.pcodeCPort.context.SleighError;
 import ghidra.pcodeCPort.semantics.VarnodeTpl;
-import ghidra.pcodeCPort.sleighbase.SleighBase;
 import ghidra.pcodeCPort.slghpatexpress.OperandValue;
 import ghidra.pcodeCPort.slghpatexpress.PatternExpression;
-import ghidra.pcodeCPort.utils.XmlUtils;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.Location;
 
 public class OperandSymbol extends SpecificSymbol {
@@ -47,7 +45,7 @@ public class OperandSymbol extends SpecificSymbol {
 
 	public OperandSymbol(Location location) {
 		super(location);
-	} // For use with restoreXml
+	}
 
 	public int getRelativeOffset() {
 		return reloffset;
@@ -139,8 +137,9 @@ public class OperandSymbol extends SpecificSymbol {
 
 	public void defineOperand(TripleSymbol tri) {
 		if ((defexp != null) || (triple != null)) {
-			throw new SleighError("Redefining operand " + tri.getName() + " from " +
-				tri.getLocation(), getLocation());
+			throw new SleighError(
+				"Redefining operand " + tri.getName() + " from " + tri.getLocation(),
+				getLocation());
 		}
 		triple = tri;
 	}
@@ -161,8 +160,8 @@ public class OperandSymbol extends SpecificSymbol {
 		if (triple instanceof SpecificSymbol) {
 			return ((SpecificSymbol) triple).getVarnode();
 		}
-		else if ((triple != null) &&
-			((triple.getType() == symbol_type.valuemap_symbol) || (triple.getType() == symbol_type.name_symbol))) {
+		else if ((triple != null) && ((triple.getType() == symbol_type.valuemap_symbol) ||
+			(triple.getType() == symbol_type.name_symbol))) {
 			return new VarnodeTpl(location, hand, true); // Zero-size symbols
 		}
 		return new VarnodeTpl(location, hand, false); // Possible dynamic handle
@@ -184,66 +183,31 @@ public class OperandSymbol extends SpecificSymbol {
 	}
 
 	@Override
-	public void saveXml(PrintStream s) {
-		s.append("<operand_sym");
-		saveSleighSymbolXmlHeader(s);
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_OPERAND_SYM);
+		encoder.writeUnsignedInteger(ATTRIB_ID, id);
 		if (triple != null) {
-			s.append(" subsym=\"0x");
-			s.print(Long.toHexString(triple.getId()));
-			s.append("\"");
+			encoder.writeUnsignedInteger(ATTRIB_SUBSYM, triple.getId());
 		}
-		s.append(" off=\"");
-		s.print(reloffset);
-		s.append("\"");
-		s.append(" base=\"").print(offsetbase);
-		s.append("\"");
-		s.append(" minlen=\"").print(minimumlength);
-		s.append("\"");
+		encoder.writeSignedInteger(ATTRIB_OFF, reloffset);
+		encoder.writeSignedInteger(ATTRIB_BASE, offsetbase);
+		encoder.writeSignedInteger(ATTRIB_MINLEN, minimumlength);
 		if (isCodeAddress()) {
-			s.append(" code=\"true\"");
+			encoder.writeBool(ATTRIB_CODE, true);
 		}
-		s.append(" index=\"").print(hand);
-		s.append("\">\n");
-		localexp.saveXml(s);
+		encoder.writeSignedInteger(ATTRIB_INDEX, hand);
+		localexp.encode(encoder);
 		if (defexp != null) {
-			defexp.saveXml(s);
+			defexp.encode(encoder);
 		}
-		s.append("</operand_sym>\n");
+		encoder.closeElement(ELEM_OPERAND_SYM);
 	}
 
 	@Override
-	public void saveXmlHeader(PrintStream s) {
-		s.append("<operand_sym_head");
-		saveSleighSymbolXmlHeader(s);
-		s.append("/>\n");
-	}
-
-	@Override
-	public void restoreXml(Element el, SleighBase trans) {
-		defexp = null;
-		triple = null;
-		flags = 0;
-		hand = XmlUtils.decodeUnknownInt(el.getAttributeValue("index"));
-		reloffset = XmlUtils.decodeUnknownInt(el.getAttributeValue("off"));
-		offsetbase = XmlUtils.decodeUnknownInt(el.getAttributeValue("base"));
-		minimumlength = XmlUtils.decodeUnknownInt(el.getAttributeValue("minlen"));
-		String value = el.getAttributeValue("subsym");
-		if (value != null) {
-			int id = XmlUtils.decodeUnknownInt(value);
-			triple = (TripleSymbol) trans.findSymbol(id);
-		}
-		if (XmlUtils.decodeBoolean(el.getAttributeValue("code"))) {
-			flags |= code_address;
-		}
-		List<?> children = el.getChildren();
-		Element firstChild = (Element) children.get(0);
-		localexp = (OperandValue) PatternExpression.restoreExpression(firstChild, trans);
-		localexp.layClaim();
-		if (children.size() > 1) {
-			Element secondChild = (Element) children.get(1);
-			defexp = PatternExpression.restoreExpression(secondChild, trans);
-			defexp.layClaim();
-		}
+	public void encodeHeader(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_OPERAND_SYM_HEAD);
+		encodeSleighSymbolHeader(encoder);
+		encoder.closeElement(ELEM_OPERAND_SYM_HEAD);
 	}
 
 }

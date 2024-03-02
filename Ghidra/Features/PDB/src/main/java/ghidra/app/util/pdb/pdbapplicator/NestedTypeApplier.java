@@ -15,16 +15,12 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
-import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
-import ghidra.program.model.data.DataType;
-import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link AbstractNestedTypeMsType} and {@link AbstractNestedTypeExtMsType} types.
  */
-public class NestedTypeApplier extends MsTypeApplier {
+public class NestedTypeApplier extends MsDataTypeComponentApplier {
 
 	// Intended for: AbstractNestedTypeMsType or AbstractNestedTypeExtMsType
 	/**
@@ -53,25 +49,6 @@ public class NestedTypeApplier extends MsTypeApplier {
 		return "";
 	}
 
-	@Override
-	DataType apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
-			throws PdbException, CancelledException {
-		RecordNumber typeRecordNumber;
-		if (type instanceof AbstractNestedTypeMsType nestedType) {
-			typeRecordNumber = nestedType.getNestedTypeDefinitionRecordNumber();
-		}
-		else if (type instanceof AbstractNestedTypeExtMsType extNestedType) {
-			typeRecordNumber = extNestedType.getNestedTypeDefinitionRecordNumber();
-		}
-		else {
-			throw new PdbException(
-				"Unexpected nested type in field list: " + type.getClass().getSimpleName());
-		}
-		AbstractMsType mType = applicator.getPdb().getTypeRecord(typeRecordNumber);
-		MsTypeApplier applier = applicator.getTypeApplier(typeRecordNumber);
-		return applier.apply(mType, fixupContext, breakCycle);
-	}
-
 	private static AbstractMsType validateType(AbstractMsType type)
 			throws IllegalArgumentException {
 		if (!(type instanceof AbstractNestedTypeMsType) &&
@@ -81,4 +58,5 @@ public class NestedTypeApplier extends MsTypeApplier {
 		}
 		return type;
 	}
+
 }

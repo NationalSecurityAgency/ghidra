@@ -1260,7 +1260,6 @@ public class DefaultProjectData implements ProjectData {
 	public void close() {
 		synchronized (this) {
 			if (!closed) {
-				Msg.debug(this, "Closing ProjectData: " + projectDir);
 				closed = true;
 			}
 			if (inUseCount != 0) {
@@ -1300,8 +1299,6 @@ public class DefaultProjectData implements ProjectData {
 			if (disposed) {
 				return;
 			}
-
-			Msg.debug(this, "Disposing ProjectData: " + projectDir);
 
 			closed = true;
 			disposed = true;

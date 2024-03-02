@@ -20,6 +20,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import ghidra.program.model.address.*;
+import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.util.LockHold;
@@ -202,10 +203,6 @@ public class DBTraceProgramViewMemory extends AbstractDBTraceProgramViewMemory {
 		if (regionBlocks == null) { // <init> order
 			return;
 		}
-		for (AbstractDBTraceProgramViewMemoryBlock block : forceFullView
-				? spaceBlocks.values()
-				: regionBlocks.values()) {
-			block.invalidateBytesCache(range);
-		}
+		cache.invalidate(range);
 	}
 }

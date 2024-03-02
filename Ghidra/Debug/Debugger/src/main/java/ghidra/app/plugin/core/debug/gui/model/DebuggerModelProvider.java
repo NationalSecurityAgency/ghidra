@@ -18,13 +18,16 @@ package ghidra.app.plugin.core.debug.gui.model;
 import java.awt.*;
 import java.awt.event.*;
 import java.lang.invoke.MethodHandles;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.tree.TreePath;
 
 import docking.*;
 import docking.action.DockingAction;
@@ -32,6 +35,7 @@ import docking.action.ToggleDockingAction;
 import docking.action.builder.ActionBuilder;
 import docking.action.builder.ToggleActionBuilder;
 import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
+import docking.widgets.tree.support.GTreeSelectionEvent;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import generic.theme.GColor;
 import generic.theme.GIcon;
@@ -39,12 +43,17 @@ import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.CloneWindowAction;
 import ghidra.app.plugin.core.debug.gui.MultiProviderSaveBehavior.SaveableProvider;
+import ghidra.app.plugin.core.debug.gui.control.TargetActionTask;
 import ghidra.app.plugin.core.debug.gui.model.AbstractQueryTablePanel.CellActivationListener;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ObjectRow;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
-import ghidra.app.plugin.core.debug.gui.model.ObjectTreeModel.AbstractNode;
+import ghidra.app.plugin.core.debug.gui.model.ObjectTreeModel.*;
+import ghidra.app.plugin.core.debug.gui.model.ObjectTreeModel.RootNode;
 import ghidra.app.plugin.core.debug.gui.model.PathTableModel.PathRow;
 import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.debug.api.target.ActionName;
+import ghidra.debug.api.target.Target;
+import ghidra.debug.api.target.Target.ActionEntry;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
@@ -258,15 +267,19 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 
 	DebuggerObjectActionContext myActionContext;
 
-	private final CellActivationListener elementActivationListener =
-		table -> activatedElementsTable();
-	private final CellActivationListener attributeActivationListener =
-		table -> activatedAttributesTable();
+	final ObjectsTreeListener objectsTreeListener = new ObjectsTreeListener();
+	final ElementsTableListener elementsTableListener = new ElementsTableListener();
+	final AttributesTableListener attributesTableListener = new AttributesTableListener();
 
 	private final SeekListener seekListener = pos -> {
 		long snap = Math.round(pos);
-		if (current.getTrace() == null || snap < 0) {
+		if (snap < 0) {
 			snap = 0;
+		}
+		long max =
+			current.getTrace() == null ? 0 : current.getTrace().getTimeManager().getMaxSnap();
+		if (snap > max) {
+			snap = max;
 		}
 		traceManager.activateSnap(snap);
 	};
@@ -417,6 +430,197 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		mainPanel.revalidate();
 	}
 
+	protected class ObjectsTreeListener implements Adapters.FocusListener,
+			Adapters.TreeExpansionListener, Adapters.MouseListener, Adapters.KeyListener {
+		@Override
+		public void keyPressed(KeyEvent e) {
+			if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+				activateObjectSelectedInTree();
+				e.consume(); // lest is select the next row down
+			}
+		}
+
+		@Override
+		public void mouseClicked(MouseEvent e) {
+			if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
+				activateObjectSelectedInTree();
+				e.consume();
+			}
+		}
+
+		@Override
+		public void treeExpanded(TreeExpansionEvent event) {
+			if (EventQueue.getCurrentEvent() instanceof InputEvent inputEvent &&
+				!inputEvent.isShiftDown()) {
+				refreshTargetChildren(event.getPath());
+			}
+		}
+
+		@Override
+		public void focusGained(FocusEvent e) {
+			setContextFromSelection();
+		}
+
+		public void selectionChanged(GTreeSelectionEvent evt) {
+			setContextFromSelection();
+			List<AbstractNode> sel = objectsTreePanel.getSelectedItems();
+			if (sel.size() == 1) {
+				TraceObjectValue value = sel.get(0).getValue();
+				setPath(value == null ? TraceObjectKeyPath.of() : value.getCanonicalPath(),
+					objectsTreePanel, EventOrigin.INTERNAL_GENERATED);
+			}
+		}
+
+		private void setContextFromSelection() {
+			myActionContext = computeContext(false);
+			contextChanged();
+		}
+
+		/*test access*/
+		DebuggerObjectActionContext computeContext(boolean ignoreFocus) {
+			if (!objectsTreePanel.tree.tree().isFocusOwner() && !ignoreFocus) {
+				return null;
+			}
+			Trace trace = current.getTrace();
+			if (trace == null) {
+				return null;
+			}
+			if (trace.getObjectManager().getRootObject() == null) {
+				return null;
+			}
+			List<AbstractNode> sel = objectsTreePanel.getSelectedItems();
+			if (sel.isEmpty()) {
+				return null;
+			}
+			return new DebuggerObjectActionContext(sel.stream()
+					.map(n -> n.getValue())
+					.filter(o -> o != null) // Root for no trace would return null
+					.collect(Collectors.toList()),
+				DebuggerModelProvider.this, objectsTreePanel);
+		}
+	}
+
+	protected class ElementsTableListener
+			implements Adapters.FocusListener, CellActivationListener {
+		@Override
+		public void cellActivated(JTable table) {
+			ValueRow row = elementsTablePanel.getSelectedItem();
+			if (row == null) {
+				return;
+			}
+			if (!(row instanceof ObjectRow objectRow)) {
+				return;
+			}
+			activatePath(objectRow.getTraceObject().getCanonicalPath());
+		}
+
+		@Override
+		public void focusGained(FocusEvent e) {
+			setContextFromSelection();
+		}
+
+		public void selectionChanged(ListSelectionEvent evt) {
+			if (evt.getValueIsAdjusting()) {
+				return;
+			}
+			setContextFromSelection();
+
+			List<ValueRow> sel = elementsTablePanel.getSelectedItems();
+			if (sel.size() != 1) {
+				attributesTablePanel.setQuery(ModelQuery.attributesOf(path));
+				return;
+			}
+			TraceObjectValue value = sel.get(0).getValue();
+			if (!value.isObject()) {
+				return;
+			}
+			TraceObject object = value.getChild();
+			attributesTablePanel.setQuery(ModelQuery.attributesOf(object.getCanonicalPath()));
+		}
+
+		private void setContextFromSelection() {
+			myActionContext = computeContext(false);
+			contextChanged();
+		}
+
+		/*test access*/
+		DebuggerObjectActionContext computeContext(boolean ignoreFocus) {
+			if (!elementsTablePanel.table.isFocusOwner() && !ignoreFocus) {
+				return null;
+			}
+			Trace trace = current.getTrace();
+			if (trace == null) {
+				return null;
+			}
+			if (trace.getObjectManager().getRootObject() == null) {
+				return null;
+			}
+			List<ValueRow> sel = elementsTablePanel.getSelectedItems();
+			if (sel.isEmpty()) {
+				return null;
+			}
+			return new DebuggerObjectActionContext(sel.stream()
+					.map(r -> r.getValue())
+					.collect(Collectors.toList()),
+				DebuggerModelProvider.this, elementsTablePanel);
+		}
+	}
+
+	protected class AttributesTableListener
+			implements Adapters.FocusListener, CellActivationListener {
+		@Override
+		public void cellActivated(JTable table) {
+			PathRow row = attributesTablePanel.getSelectedItem();
+			if (row == null) {
+				return;
+			}
+			Object value = row.getValue();
+			if (!(value instanceof TraceObject object)) {
+				return;
+			}
+			activatePath(object.getCanonicalPath());
+		}
+
+		@Override
+		public void focusGained(FocusEvent e) {
+			setContextFromSelection();
+		}
+
+		public void selectionChanged(ListSelectionEvent evt) {
+			if (evt.getValueIsAdjusting()) {
+				return;
+			}
+			setContextFromSelection();
+		}
+
+		private void setContextFromSelection() {
+			myActionContext = computeContext(false);
+			contextChanged();
+		}
+
+		/*test access*/
+		DebuggerObjectActionContext computeContext(boolean ignoreFocus) {
+			if (!attributesTablePanel.table.isFocusOwner() && !ignoreFocus) {
+				return null;
+			}
+			Trace trace = current.getTrace();
+			if (trace == null) {
+				return null;
+			}
+			if (trace.getObjectManager().getRootObject() == null) {
+				return null;
+			}
+			List<PathRow> sel = attributesTablePanel.getSelectedItems();
+			if (sel.isEmpty()) {
+				return null;
+			}
+			return new DebuggerObjectActionContext(sel.stream()
+					.map(r -> Objects.requireNonNull(r.getPath().getLastEntry()))
+					.collect(Collectors.toList()),
+				DebuggerModelProvider.this, attributesTablePanel);
+		}
+	}
+
 	protected void buildMainPanel() {
 		mainPanel = new JPanel(new BorderLayout());
 		pathField = new MyTextField();
@@ -474,102 +678,71 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		queryPanel.add(pathField, BorderLayout.CENTER);
 		queryPanel.add(goButton, BorderLayout.EAST);
 
-		objectsTreePanel.addTreeSelectionListener(evt -> {
-			Trace trace = current.getTrace();
-			if (trace == null) {
-				return;
-			}
-			if (trace.getObjectManager().getRootObject() == null) {
-				return;
-			}
-			List<AbstractNode> sel = objectsTreePanel.getSelectedItems();
-			if (!sel.isEmpty()) {
-				myActionContext = new DebuggerObjectActionContext(sel.stream()
-						.map(n -> n.getValue())
-						.filter(o -> o != null) // Root for no trace would return null
-						.collect(Collectors.toList()),
-					this, objectsTreePanel);
-			}
-			else {
-				myActionContext = null;
-			}
-			contextChanged();
-			if (sel.size() != 1) {
-				return;
-			}
-			TraceObjectValue value = sel.get(0).getValue();
-			setPath(value == null ? TraceObjectKeyPath.of() : value.getCanonicalPath(),
-				objectsTreePanel, EventOrigin.INTERNAL_GENERATED);
-		});
-		objectsTreePanel.tree.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
-					activateObjectSelectedInTree();
-				}
-			}
-		});
-		objectsTreePanel.tree.tree().addKeyListener(new KeyAdapter() {
-			@Override
-			public void keyPressed(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-					activateObjectSelectedInTree();
-					e.consume(); // lest is select the next row down
-				}
-			}
-		});
+		objectsTreePanel.addTreeSelectionListener(objectsTreeListener::selectionChanged);
+		objectsTreePanel.tree.tree().addFocusListener(objectsTreeListener);
+		objectsTreePanel.tree.addTreeExpansionListener(objectsTreeListener);
+		objectsTreePanel.tree.addMouseListener(objectsTreeListener);
+		objectsTreePanel.tree.tree().addKeyListener(objectsTreeListener);
 
-		elementsTablePanel.addSelectionListener(evt -> {
-			if (evt.getValueIsAdjusting()) {
-				return;
-			}
-			List<ValueRow> sel = elementsTablePanel.getSelectedItems();
-			if (!sel.isEmpty()) {
-				myActionContext = new DebuggerObjectActionContext(sel.stream()
-						.map(r -> r.getValue())
-						.collect(Collectors.toList()),
-					this, elementsTablePanel);
-			}
-			else {
-				myActionContext = null;
-			}
-			contextChanged();
-
-			if (sel.size() != 1) {
-				attributesTablePanel.setQuery(ModelQuery.attributesOf(path));
-				return;
-			}
-			TraceObjectValue value = sel.get(0).getValue();
-			if (!value.isObject()) {
-				return;
-			}
-			TraceObject object = value.getChild();
-			attributesTablePanel.setQuery(ModelQuery.attributesOf(object.getCanonicalPath()));
-		});
-		attributesTablePanel.addSelectionListener(evt -> {
-			if (evt.getValueIsAdjusting()) {
-				return;
-			}
-			List<PathRow> sel = attributesTablePanel.getSelectedItems();
-			if (!sel.isEmpty()) {
-				myActionContext = new DebuggerObjectActionContext(sel.stream()
-						.map(r -> Objects.requireNonNull(r.getPath().getLastEntry()))
-						.collect(Collectors.toList()),
-					this, attributesTablePanel);
-			}
-			else {
-				myActionContext = null;
-			}
-			contextChanged();
-		});
-
-		elementsTablePanel.addCellActivationListener(elementActivationListener);
-		attributesTablePanel.addCellActivationListener(attributeActivationListener);
-
+		elementsTablePanel.addSelectionListener(elementsTableListener::selectionChanged);
+		elementsTablePanel.table.addFocusListener(elementsTableListener);
+		elementsTablePanel.addCellActivationListener(elementsTableListener);
 		elementsTablePanel.addSeekListener(seekListener);
+
+		attributesTablePanel.addSelectionListener(attributesTableListener::selectionChanged);
+		attributesTablePanel.table.addFocusListener(attributesTableListener);
+		attributesTablePanel.addCellActivationListener(attributesTableListener);
 		attributesTablePanel.addSeekListener(seekListener);
 
 		rebuildPanels();
+	}
+
+	private TraceObjectValue getObject(TreePath path) {
+		if (path.getLastPathComponent() instanceof CanonicalNode node) {
+			return node.getValue();
+		}
+		if (path.getLastPathComponent() instanceof RootNode node) {
+			return node.getValue();
+		}
+		return null;
+	}
+
+	private void refreshTargetChildren(TreePath path) {
+		TraceObjectValue value = getObject(path);
+		if (value == null) {
+			return;
+		}
+		DebuggerCoordinates current = traceManager.getCurrentFor(value.getTrace());
+		if (!current.isAliveAndPresent() && limitToSnap) {
+			return;
+		}
+		Target target = current.getTarget();
+		if (target == null) {
+			return;
+		}
+		Map<String, ActionEntry> actions = target.collectActions(ActionName.REFRESH,
+			new DebuggerObjectActionContext(List.of(value), this, objectsTreePanel));
+		for (ActionEntry ent : actions.values()) {
+			if (ent.requiresPrompt()) {
+				continue;
+			}
+			if (path.getLastPathComponent() instanceof AbstractNode node) {
+				/**
+				 * This pending node does not duplicate what the lazy node already does. For all
+				 * it's concerned, once it has loaded the entries from the database, it is done.
+				 * This task asks the target to update that database, so it needs its own indicator.
+				 */
+				PendingNode pending = new PendingNode();
+				node.addNode(0, pending);
+				CompletableFuture<Void> future =
+					TargetActionTask.runAction(plugin.getTool(), ent.display(), ent);
+				future.handle((__, ex) -> {
+					node.removeNode(pending);
+					return null;
+				});
+				return;
+			}
+		}
 	}
 
 	private void activateObjectSelectedInTree() {
@@ -580,13 +753,24 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			return;
 		}
 		TraceObjectValue value = sel.get(0).getValue();
-		if (value.getValue() instanceof TraceObject child) {
+		if (value != null && value.getValue() instanceof TraceObject child) {
 			activatePath(child.getCanonicalPath());
 		}
 	}
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
+		if (event != null) {
+			if (event.getComponent() == objectsTreePanel.tree.tree()) {
+				return objectsTreeListener.computeContext(true);
+			}
+			else if (event.getComponent() == elementsTablePanel.table) {
+				return elementsTableListener.computeContext(true);
+			}
+			else if (event.getComponent() == attributesTablePanel.table) {
+				return attributesTableListener.computeContext(true);
+			}
+		}
 		if (myActionContext != null) {
 			return myActionContext;
 		}
@@ -627,29 +811,6 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 				.enabledWhen(this::hasSingleLink)
 				.onAction(this::activatedFollowLink)
 				.buildAndInstallLocal(this);
-	}
-
-	private void activatedElementsTable() {
-		ValueRow row = elementsTablePanel.getSelectedItem();
-		if (row == null) {
-			return;
-		}
-		if (!(row instanceof ObjectRow objectRow)) {
-			return;
-		}
-		activatePath(objectRow.getTraceObject().getCanonicalPath());
-	}
-
-	private void activatedAttributesTable() {
-		PathRow row = attributesTablePanel.getSelectedItem();
-		if (row == null) {
-			return;
-		}
-		Object value = row.getValue();
-		if (!(value instanceof TraceObject object)) {
-			return;
-		}
-		activatePath(object.getCanonicalPath());
 	}
 
 	private void activatedCloneWindow() {

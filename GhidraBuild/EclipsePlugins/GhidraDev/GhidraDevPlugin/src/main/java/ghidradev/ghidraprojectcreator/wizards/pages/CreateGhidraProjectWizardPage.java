@@ -39,6 +39,7 @@ import ghidradev.ghidraprojectcreator.utils.GhidraProjectUtils;
 public class CreateGhidraProjectWizardPage extends WizardPage {
 
 	private String suggestedProjectName;
+	private boolean showProjectDir;
 
 	private Text projectNameText;
 	private Text projectRootDirText;
@@ -50,19 +51,25 @@ public class CreateGhidraProjectWizardPage extends WizardPage {
 	 * Creates a Ghidra new project wizard page with the given suggested project name.
 	 * 
 	 * @param suggestedProjectName The suggested project name.
+	 * @param showProjectDir True to show a component for selecting the root project directory;
+	 *   otherwise, false
 	 */
-	public CreateGhidraProjectWizardPage(String suggestedProjectName) {
+	public CreateGhidraProjectWizardPage(String suggestedProjectName, boolean showProjectDir) {
 		super("CreateGhidraProjectWizardPage");
 		setTitle("Create Ghidra Project");
 		setDescription("Create a new Ghidra project.");
 		this.suggestedProjectName = suggestedProjectName;
+		this.showProjectDir = showProjectDir;
 	}
 	
 	/**
 	 * Creates a Ghidra new project wizard page.
+	 * 
+	 * @param showProjectDir True to show a component for selecting the root project directory;
+	 *   otherwise, false
 	 */
-	public CreateGhidraProjectWizardPage() {
-		this("");
+	public CreateGhidraProjectWizardPage(boolean showProjectDir) {
+		this("", showProjectDir);
 	}
 
 	@Override
@@ -81,25 +88,28 @@ public class CreateGhidraProjectWizardPage extends WizardPage {
 		new Label(container, SWT.NONE).setText(""); // empty grid cell
 
 		// Project directory
-		Label projectDirLabel = new Label(container, SWT.NULL);
-		String projectDirToolTip = "The directory where this project will be created.";
-		projectDirLabel.setText("Project root directory:");
-		projectDirLabel.setToolTipText(projectDirToolTip);
-		projectRootDirText = new Text(container, SWT.BORDER | SWT.SINGLE);
-		projectRootDirText.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		projectRootDirText.setText(GhidraProjectCreatorPreferences.getGhidraLastProjectRootPath());
-		projectRootDirText.addModifyListener(evt -> validate());
-		projectRootDirText.setToolTipText(projectDirToolTip);
-		projectDirButton = new Button(container, SWT.BUTTON1);
-		projectDirButton.setText("...");
-		projectDirButton.setToolTipText("Browse to select project root directory");
-		projectDirButton.addListener(SWT.Selection, evt -> {
-			DirectoryDialog dialog = new DirectoryDialog(container.getShell());
-			String path = dialog.open();
-			if (path != null) {
-				projectRootDirText.setText(path);
-			}
-		});
+		if (showProjectDir) {
+			Label projectDirLabel = new Label(container, SWT.NULL);
+			String projectDirToolTip = "The directory where this project will be created.";
+			projectDirLabel.setText("Project root directory:");
+			projectDirLabel.setToolTipText(projectDirToolTip);
+			projectRootDirText = new Text(container, SWT.BORDER | SWT.SINGLE);
+			projectRootDirText.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+			projectRootDirText
+					.setText(GhidraProjectCreatorPreferences.getGhidraLastProjectRootPath());
+			projectRootDirText.addModifyListener(evt -> validate());
+			projectRootDirText.setToolTipText(projectDirToolTip);
+			projectDirButton = new Button(container, SWT.BUTTON1);
+			projectDirButton.setText("...");
+			projectDirButton.setToolTipText("Browse to select project root directory");
+			projectDirButton.addListener(SWT.Selection, evt -> {
+				DirectoryDialog dialog = new DirectoryDialog(container.getShell());
+				String path = dialog.open();
+				if (path != null) {
+					projectRootDirText.setText(path);
+				}
+			});
+		}
 
 		// Create run configuration checkbox
 		createRunConfigCheckboxButton = new Button(container, SWT.CHECK);
@@ -153,14 +163,13 @@ public class CreateGhidraProjectWizardPage extends WizardPage {
 	 * Gets the project directory. This is the directory where the .project file should live.
 	 * 
 	 * @return The project directory. This is the directory where the .project file should live.
-	 *   Could be null if unspecified, however, the page will not be valid until the project 
-	 *   directory is valid, so it should never be null when called by other classes.
+	 *   Could be null if unspecified.
 	 */
 	public File getProjectDir() {
 		if (projectNameText.getText().isEmpty()) {
 			return null;
 		}
-		if (projectRootDirText.getText().isEmpty()) {
+		if (projectRootDirText == null || projectRootDirText.getText().isEmpty()) {
 			return null;
 		}
 		return new File(projectRootDirText.getText(), getProjectName());
@@ -227,10 +236,10 @@ public class CreateGhidraProjectWizardPage extends WizardPage {
 		else if (BAD.chars().anyMatch(ch -> projectName.indexOf(ch) != -1)) {
 			message = "Project name cannot contain invalid characters:\n " + BAD;
 		}
-		else if (projectDir == null) {
+		else if (showProjectDir && projectDir == null) {
 			message = "Project root directory must be specified";
 		}
-		else if (projectDir.exists()) {
+		else if (showProjectDir && projectDir.exists()) {
 			message = "Project already exists at: " + projectDir.getAbsolutePath();
 		}
 		else if (ResourcesPlugin.getWorkspace().getRoot().getProject(projectName).exists()) {
@@ -250,8 +259,10 @@ public class CreateGhidraProjectWizardPage extends WizardPage {
 		setErrorMessage(message);
 		setPageComplete(message == null);
 		if (message == null) {
-			GhidraProjectCreatorPreferences.setGhidraLastProjectRootPath(
-				projectRootDirText.getText());
+			if (projectRootDirText != null) {
+				GhidraProjectCreatorPreferences
+						.setGhidraLastProjectRootPath(projectRootDirText.getText());
+			}
 		}
 	}
 }

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,5 +54,5 @@ public class SectionSymbol extends SleighSymbol {
 	public symbol_type getType() {
 		return symbol_type.section_symbol;
 	}
-	// Not saved or restored
+	// Not encoded
 }

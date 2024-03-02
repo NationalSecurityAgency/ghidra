@@ -15,11 +15,9 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import java.io.PrintStream;
+import java.io.IOException;
 
-import org.jdom.Element;
-
-import ghidra.pcodeCPort.sleighbase.SleighBase;
+import ghidra.program.model.pcode.Encoder;
 
 // Change to context command
 public abstract class ContextChange {
@@ -29,9 +27,7 @@ public abstract class ContextChange {
 
 	public abstract void validate();
 
-	public abstract void saveXml(PrintStream s);
-
-	public abstract void restoreXml(Element el, SleighBase trans);
+	public abstract void encode(Encoder encoder) throws IOException;
 
 	public void dispose() {
 	}

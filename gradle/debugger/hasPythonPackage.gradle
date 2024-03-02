@@ -14,6 +14,35 @@
  * limitations under the License.
  */
 
+def checkPythonVersion(String pyCmd) {
+	try {
+		def stdout = new ByteArrayOutputStream()
+		exec {
+			commandLine pyCmd, "-c", "import sys; print('{0}.{1}'.format(*sys.version_info))"
+			standardOutput = stdout
+		}
+		def version = "$stdout".strip()
+		return version
+	}
+	catch (Exception e) {
+		return "ABSENT"
+	}
+}
+
+ext.SUPPORTED_PY_VERSIONS = ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12']
+
+def findPython3() {
+	for (pyCmd in ['python3', 'python']) {
+		if (checkPythonVersion(pyCmd) in SUPPORTED_PY_VERSIONS) {
+			return pyCmd
+		}
+	}
+	// Don't fail until task execution. Just let "python3" fail.
+	return 'python3'
+}
+
+ext.PYTHON3 = findPython3()
+
 task assemblePyPackage(type: Copy) {
 	from "src/main/py"
 	into "build/pypkg/"
@@ -27,7 +56,7 @@ task buildPyPackage(type: Exec) {
 	outputs.dir(dist)
 
 	workingDir { "build/pypkg" }
-	commandLine "python3", "-m", "build"
+	commandLine PYTHON3, "-m", "build"
 }
 
 // At the moment, any module with a python package also distributes it.

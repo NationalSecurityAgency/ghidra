@@ -17,8 +17,9 @@ package generic.theme;
 
 import java.awt.*;
 
-import javax.swing.Icon;
-import javax.swing.LookAndFeel;
+import javax.swing.*;
+
+import ghidra.util.Msg;
 
 /**
  * Provides a static set of methods for globally managing application themes and their values.
@@ -36,6 +37,8 @@ import javax.swing.LookAndFeel;
  *
  */
 public class Gui {
+	private static final String FONT_SUFFIX = ".font";
+
 	// Start with an StubThemeManager so that simple tests can operate without having
 	// to initialize the theme system. Applications and integration tests will
 	// called ThemeManager.initialize() which will replace this with a fully initialized version.
@@ -146,6 +149,9 @@ public class Gui {
 	/**
 	 * Binds the component to the font identified by the given font id. Whenever the font for
 	 * the font id changes, the component will updated with the new font.
+	 * <p>
+	 * Calling this method will trigger a call to {@link JComponent#setFont(Font)}.
+	 *
 	 * @param component the component to set/update the font
 	 * @param fontId the id of the font to register with the given component
 	 */
@@ -154,11 +160,50 @@ public class Gui {
 	}
 
 	/**
+	 * Registers the given component with the given font style.  This method allows clients to not
+	 * define a font id in the theme system, but instead to signal that they want the default font
+	 * for the given component, modified with the given style.  As the underlying font is changed,
+	 * the client will be updated with that new font with the given style applied.
+	 * <P>
+	 * Most clients should <b>not</b> be using this method.  Instead, use
+	 * {@link #registerFont(JComponent, int)}.
+	 * <P>
+	 * The downside of using this method is that the end user cannot modify the style of the font.
+	 * By using the standard theming mechanism for registering fonts, the end user has full control.
+	 *
+	 * @param component the component to set/update the font
+	 * @param fontStyle the font style, one of Font.BOLD, Font.ITALIC,
+	 */
+	public static void registerFont(JComponent component, int fontStyle) {
+
+		if (fontStyle == Font.PLAIN) {
+			Msg.warn(Gui.class,
+				"Gui.registerFont(Component, int) may only be used for a non-plain font style.  " +
+					"Use registerFont(Component, String) instead.");
+			return;
+		}
+
+		String id = component.getUIClassID(); // e.g., ButtonUI
+		String name = id.substring(0, id.length() - 2); // strip off "UI"
+		String fontId = FontValue.LAF_ID_PREFIX + name + FONT_SUFFIX; // e.g., laf.font.Button.font 
+
+		themeManager.registerFont(component, fontId, fontStyle);
+	}
+
+	/**
 	 * Returns true if the active theme is using dark defaults
 	 * @return true if the active theme is using dark defaults
 	 */
 	public static boolean isDarkTheme() {
 		return themeManager.isDarkTheme();
+	}
+
+	/**
+	 * Returns true if the theme system is in the process of updating
+	 * @return true if the theme system is in the process of updating
+	 */
+	public static boolean isUpdatingTheme() {
+		return themeManager.isUpdatingTheme();
 	}
 
 	/**

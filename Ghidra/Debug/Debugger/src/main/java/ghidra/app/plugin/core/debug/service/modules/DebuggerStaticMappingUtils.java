@@ -20,18 +20,21 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
+import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.debug.api.modules.MapEntry;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.ProjectData;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.*;
-import ghidra.program.model.listing.Library;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.ExternalManager;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.program.TraceProgramView;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.ComparatorMath;
 import ghidra.util.Msg;
 
@@ -300,5 +303,56 @@ public enum DebuggerStaticMappingUtils {
 			return names.get(0) + "*";
 		}
 		return names.stream().collect(Collectors.joining(","));
+	}
+
+	public static Function getFunction(Address pc, DebuggerCoordinates coordinates,
+			ServiceProvider serviceProvider) {
+		if (pc == null) {
+			return null;
+		}
+		DebuggerStaticMappingService mappingService =
+			serviceProvider.getService(DebuggerStaticMappingService.class);
+		if (mappingService == null) {
+			return null;
+		}
+		TraceThread curThread = coordinates.getThread();
+		if (curThread == null) {
+			return null;
+		}
+		TraceLocation dloc = new DefaultTraceLocation(curThread.getTrace(),
+			curThread, Lifespan.at(coordinates.getSnap()), pc);
+		ProgramLocation sloc = mappingService.getOpenMappedLocation(dloc);
+		if (sloc == null) {
+			return null;
+		}
+		return sloc.getProgram().getFunctionManager().getFunctionContaining(sloc.getAddress());
+	}
+
+	public static String computeModuleShortName(String path) {
+		int sep = path.lastIndexOf('\\');
+		if (sep > 0 && sep < path.length()) {
+			path = path.substring(sep + 1);
+		}
+		sep = path.lastIndexOf('/');
+		if (sep > 0 && sep < path.length()) {
+			path = path.substring(sep + 1);
+		}
+		return path;
+	}
+
+	public static String getModuleName(Address pc, DebuggerCoordinates coordinates) {
+		if (pc == null) {
+			return null;
+		}
+		Trace trace = coordinates.getTrace();
+		if (trace == null) {
+			return null;
+		}
+		for (TraceModule module : trace.getModuleManager()
+				.getModulesAt(coordinates.getSnap(), pc)) {
+			// Just take the first
+			return computeModuleShortName(module.getName());
+		}
+		return null;
 	}
 }

@@ -53,7 +53,10 @@
 		<logger name="ghidra.framework.project" level="DEBUG"/>
 		<logger name="ghidra.framework.project.DefaultProject" level="WARN"/>
 		<logger name="ghidra.framework.project.DefaultProjectManager" level="INFO"/>
-				
+						
+		<!-- Ignore warnings about missing content classes in test env -->
+		<logger name="ghidra.framework.project.tool.GhidraToolTemplate" level="ERROR"/>
+		
 		<logger name="functioncalls" level="DEBUG" />
 		<logger name="generic.random" level="WARN"/>
 		<logger name="ghidra.app.plugin.core.progmgr.ProgramManagerPlugin" level="WARN"/>

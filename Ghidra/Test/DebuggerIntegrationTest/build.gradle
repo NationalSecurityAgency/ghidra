@@ -63,6 +63,7 @@ dependencies {
 	testImplementation project(path: ':PDB', configuration: 'testArtifacts')
 	testImplementation project(path: ':GnuDemangler', configuration: 'testArtifacts')
 
+	testImplementation project(path: ':ProposedUtils', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-TraceModeling', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')

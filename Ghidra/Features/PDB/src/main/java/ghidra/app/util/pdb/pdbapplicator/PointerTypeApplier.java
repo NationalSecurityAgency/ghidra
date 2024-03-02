@@ -19,24 +19,23 @@ import ghidra.app.util.SymbolPath;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractPointerMsType.PointerMode;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractPointerMsType.MsPointerMode;
 import ghidra.program.model.data.*;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link AbstractPointerMsType} types.
  */
-public class PointerTypeApplier extends MsTypeApplier {
+public class PointerTypeApplier extends MsDataTypeApplier {
 
 	// Intended for: AbstractPointerMsType
 	/**
-	 * Constructor for pointer type applier, for transforming a enum into a
-	 * Ghidra DataType.
-	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
-	 * @throws IllegalArgumentException Upon invalid arguments.
+	 * Constructor for pointer type applier, for transforming a enum into a Ghidra DataType
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working
+	 * @throws IllegalArgumentException Upon invalid arguments
 	 */
-	public PointerTypeApplier(DefaultPdbApplicator applicator)
-			throws IllegalArgumentException {
+	public PointerTypeApplier(DefaultPdbApplicator applicator) throws IllegalArgumentException {
 		super(applicator);
 	}
 
@@ -45,15 +44,14 @@ public class PointerTypeApplier extends MsTypeApplier {
 	 *  if we develop member pointers into the Ghidra framework; this method exists to pass some
 	 *  pertinent information along to the user
 	 * @param type the PDB type being inspected
-	 * @param fixupContext the fixup context to use; or pass in null during fixup process
 	 * @return comment string or null
 	 * @throws CancelledException upon user cancellation
 	 * @throws PdbException upon processing error
 	 */
-	String getPointerCommentField(AbstractPointerMsType type, FixupContext fixupContext)
+	String getPointerCommentField(AbstractPointerMsType type)
 			throws CancelledException, PdbException {
-		AbstractPointerMsType.PointerMode pointerMode = type.getPointerMode();
-		if (pointerMode == AbstractPointerMsType.PointerMode.MEMBER_FUNCTION_POINTER) {
+		AbstractPointerMsType.MsPointerMode msPointerMode = type.getPointerMode();
+		if (msPointerMode == AbstractPointerMsType.MsPointerMode.MEMBER_FUNCTION_POINTER) {
 			// We are no longer able to get underlying type in time due to cycle breaks unless
 			// we start doing fixups on pmf/pdm pointers.
 			// TODO: consider fixups on these later... maybe after we understand contents of
@@ -63,7 +61,7 @@ public class PointerTypeApplier extends MsTypeApplier {
 			//return "\"::*\" (pmf) to type: " + underlyingType;
 			return "\"::*\" (pmf)";
 		}
-		else if (pointerMode == AbstractPointerMsType.PointerMode.MEMBER_DATA_POINTER) {
+		else if (msPointerMode == AbstractPointerMsType.MsPointerMode.MEMBER_DATA_POINTER) {
 			// We are no longer able to get underlying type in time due to cycle breaks unless
 			// we start doing fixups on pmf/pdm pointers.
 			// TODO: consider fixups on these later... maybe after we understand contents of
@@ -77,56 +75,62 @@ public class PointerTypeApplier extends MsTypeApplier {
 	}
 
 	@Override
-	DataType apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
-			throws PdbException, CancelledException {
+	boolean apply(AbstractMsType type) throws PdbException, CancelledException {
+
+		AbstractPointerMsType pointerMsType = (AbstractPointerMsType) type;
+		// Doing pre-check on type first using the getDataTypeOrSchedule method.  The logic is
+		//  simpler here for Composites or Functions because we only have one dependency type,
+		//  so we are not doing a separate call to a pre-check method as there is in those appliers.
+		//  If type is not available, return false.
+		RecordNumber underlyingRecordNumber = pointerMsType.getUnderlyingRecordNumber();
+		DataType underlyingType = applicator.getDataTypeOrSchedule(underlyingRecordNumber);
+		if (underlyingType == null) {
+			return false;
+		}
 
 		DataType dataType;
-		if (fixupContext != null) {
-			// The next line will only return null until we start putting in a DB version of the
-			//  pointer, below.  Need to work that out.  TODO: take care of this
-			dataType = applicator.getDataType(type);
-			if (dataType != null) {
-				return dataType;
-			}
-		}
+
 		if (type instanceof DummyMsType) {
 			dataType = new PointerDataType(applicator.getDataTypeManager());
 		}
 		else {
-			dataType = applyAbstractPointerMsType((AbstractPointerMsType) type, fixupContext);
+			AbstractPointerMsType.MsPointerMode msPointerMode = pointerMsType.getPointerMode();
+			switch (msPointerMode) {
+				case POINTER:
+					dataType = processPointer(pointerMsType, underlyingType);
+					break;
+				case LVALUE_REFERENCE:
+					dataType = processReference(pointerMsType, underlyingType);
+					break;
+				case RVALUE_REFERENCE:
+					dataType = processReference(pointerMsType, underlyingType);
+					break;
+				case MEMBER_DATA_POINTER:
+				case MEMBER_FUNCTION_POINTER:
+					dataType = processMemberPointer(pointerMsType, underlyingType);
+					break;
+				case INVALID:
+				case RESERVED:
+					Msg.warn(this, "Unable to process PointerMode: " + msPointerMode +
+						". Using default Pointer.");
+					dataType = PointerDataType.dataType;
+					break;
+				default:
+					throw new PdbException("PDB Error: unhandled PointerMode in " + getClass());
+			}
 		}
-		dataType = applicator.resolve(dataType);
+
 		applicator.putDataType(type, dataType);
-		return dataType;
+		return true;
 	}
 
-	private DataType getUnderlyingType(AbstractPointerMsType type, FixupContext fixupContext)
-			throws CancelledException, PdbException {
-		RecordNumber underlyingRecord = type.getUnderlyingRecordNumber();
-		return applicator.getProcessedDataType(underlyingRecord, fixupContext, true);
-	}
+	private DataType processMemberPointer(AbstractPointerMsType type, DataType underlyingType) {
 
-	private DataType applyAbstractPointerMsType(AbstractPointerMsType type,
-			FixupContext fixupContext) throws CancelledException, PdbException {
-
-		AbstractPointerMsType.PointerMode pointerMode = type.getPointerMode();
-		if (pointerMode == AbstractPointerMsType.PointerMode.MEMBER_DATA_POINTER ||
-			pointerMode == AbstractPointerMsType.PointerMode.MEMBER_FUNCTION_POINTER) {
-			return processMemberPointer(type, fixupContext);
-		}
-		return processPointer(type, fixupContext);
-	}
-
-	private DataType processMemberPointer(AbstractPointerMsType type, FixupContext fixupContext)
-			throws CancelledException, PdbException {
-
-		// future use
-		DataType underlyingType = getUnderlyingType(type, fixupContext);
 		int size = type.getSize().intValueExact();
 
 		String name;
-		AbstractPointerMsType.PointerMode pointerMode = type.getPointerMode();
-		if (pointerMode == AbstractPointerMsType.PointerMode.MEMBER_FUNCTION_POINTER) {
+		AbstractPointerMsType.MsPointerMode msPointerMode = type.getPointerMode();
+		if (msPointerMode == AbstractPointerMsType.MsPointerMode.MEMBER_FUNCTION_POINTER) {
 			name = String.format("pmf_%08x", type.toString().hashCode());
 		}
 		else {
@@ -139,25 +143,24 @@ public class PointerTypeApplier extends MsTypeApplier {
 		DataType dt = new StructureDataType(storagePath, name, size);
 		dt.setDescription(type.toString());
 
-		return applicator.resolve(dt);
+		return dt;
 	}
 
 	private CategoryPath getCategoryPathForMemberPointer(RecordNumber containingClassRecordNumber) {
-		AbstractMsType containingType =
-			applicator.getPdb().getTypeRecord(containingClassRecordNumber);
-		MsTypeApplier applier = applicator.getTypeApplier(containingClassRecordNumber);
-		if (containingType instanceof AbstractCompositeMsType compositeMsType &&
-			applier instanceof CompositeTypeApplier compositeApplier) {
-			SymbolPath symbolPath = compositeApplier.getFixedSymbolPath(compositeMsType);
-			CategoryPath categoryPath = applicator.getCategory(symbolPath);
-			return ClassTypeUtils.getInternalsCategoryPath(categoryPath);
+		if (containingClassRecordNumber != null) {
+			AbstractMsType containingType = applicator.getTypeRecord(containingClassRecordNumber);
+			MsTypeApplier applier = applicator.getTypeApplier(containingClassRecordNumber);
+			if (containingType instanceof AbstractCompositeMsType compositeMsType &&
+				applier instanceof CompositeTypeApplier compositeApplier) {
+				SymbolPath symbolPath = compositeApplier.getFixedSymbolPath(compositeMsType);
+				CategoryPath categoryPath = applicator.getCategory(symbolPath);
+				return ClassTypeUtils.getInternalsCategoryPath(categoryPath);
+			}
 		}
 		return applicator.getAnonymousTypesCategory();
 	}
 
-	private DataType processPointer(AbstractPointerMsType type, FixupContext fixupContext)
-			throws CancelledException, PdbException {
-		DataType underlyingType = getUnderlyingType(type, fixupContext);
+	private DataType processPointer(AbstractPointerMsType type, DataType underlyingType) {
 		int size = type.getSize().intValueExact();
 		if (size > PointerDataType.MAX_POINTER_SIZE_BYTES) {
 			return getStubPointer(type);
@@ -165,21 +168,28 @@ public class PointerTypeApplier extends MsTypeApplier {
 		if (size == applicator.getDataOrganization().getPointerSize()) {
 			size = -1; // Use default
 		}
-		if (underlyingType == null || applicator.isPlaceholderType(underlyingType)) {
-			return applicator.getPlaceholderPointer(size);
+		return new PointerDataType(underlyingType, size, applicator.getDataTypeManager());
+	}
+
+	private DataType processReference(AbstractPointerMsType type, DataType underlyingType) {
+		int size = type.getSize().intValueExact();
+		if (size > PointerDataType.MAX_POINTER_SIZE_BYTES) {
+			return getStubPointer(type);
+		}
+		if (size == applicator.getDataOrganization().getPointerSize()) {
+			size = -1; // Use default
 		}
 		return new PointerDataType(underlyingType, size, applicator.getDataTypeManager());
 	}
 
 	private DataType getStubPointer(AbstractPointerMsType type) {
 		int size = type.getSize().intValueExact();
-		AbstractMsType under = applicator.getPdb().getTypeRecord(type.getUnderlyingRecordNumber());
+		AbstractMsType under = applicator.getTypeRecord(type.getUnderlyingRecordNumber());
 		CategoryPath categoryPath = applicator.getAnonymousTypesCategory();
-		PointerMode mode = type.getPointerMode();
+		MsPointerMode msPointerMode = type.getPointerMode();
 		AbstractPointerMsType.PointerType pt = type.getPointerType();
-		String name =
-			String.format("StubPtr%d_%s%s_To_%s", 8 * size, pt.toString(), mode.toString(),
-				under.getName());
+		String name = String.format("StubPtr%d_%s%s_To_%s", 8 * size, pt.toString(),
+			msPointerMode.toString(), under.getName());
 		DataType stubPtr = new StructureDataType(categoryPath, name, size);
 		return stubPtr;
 	}

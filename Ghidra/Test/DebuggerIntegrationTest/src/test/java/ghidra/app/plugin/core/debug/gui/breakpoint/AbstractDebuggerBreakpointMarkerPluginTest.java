@@ -346,26 +346,31 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 		waitForPass(
 			() -> assertEquals(State.ENABLED, lb.computeStateForProgram(program)));
 
-		clickListing(codeBrowserPlugin.getListingPanel(), addr(program, 0x00400123),
-			MouseEvent.BUTTON3);
-		assertMenu(POPUP_ACTIONS,
-			Set.of(AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
+		waitForPass(noExc(() -> {
+			clickListing(codeBrowserPlugin.getListingPanel(), addr(program, 0x00400123),
+				MouseEvent.BUTTON3);
+			assertMenu(POPUP_ACTIONS, Set.of(
+				AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
 				AbstractDisableBreakpointAction.NAME, AbstractClearBreakpointAction.NAME));
+		}));
+		escapePopupMenu();
 
-		pressEscape();
-		lb.disableForProgram();
-		waitForDomainObject(program);
-		waitForPass(
-			() -> assertEquals(State.INCONSISTENT_DISABLED, lb.computeStateForProgram(program)));
+		waitForPass(() -> {
+			lb.disableForProgram();
+			waitForDomainObject(program);
+			assertEquals(State.INCONSISTENT_DISABLED, lb.computeStateForProgram(program));
+		});
 
-		clickListing(codeBrowserPlugin.getListingPanel(), addr(program, 0x00400123),
-			MouseEvent.BUTTON3);
-		assertMenu(POPUP_ACTIONS,
-			Set.of(AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
-				AbstractEnableBreakpointAction.NAME, AbstractDisableBreakpointAction.NAME,
-				AbstractClearBreakpointAction.NAME));
+		waitForPass(noExc(() -> {
+			clickListing(codeBrowserPlugin.getListingPanel(), addr(program, 0x00400123),
+				MouseEvent.BUTTON3);
+			assertMenu(POPUP_ACTIONS,
+				Set.of(AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
+					AbstractEnableBreakpointAction.NAME, AbstractDisableBreakpointAction.NAME,
+					AbstractClearBreakpointAction.NAME));
+		}));
+		escapePopupMenu();
 
-		pressEscape();
 		CompletableFuture<Void> dis = lb.disableForTrace(trace);
 		handleToggleBreakpointInvocation(Unique.assertOne(lb.getTraceBreakpoints(trace)), false);
 		waitOn(dis);
@@ -373,24 +378,30 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 		waitForPass(
 			() -> assertEquals(State.DISABLED, lb.computeStateForProgram(program)));
 
-		clickListing(codeBrowserPlugin.getListingPanel(), addr(program, 0x00400123),
-			MouseEvent.BUTTON3);
-		assertMenu(POPUP_ACTIONS,
-			Set.of(AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
-				AbstractEnableBreakpointAction.NAME, AbstractClearBreakpointAction.NAME));
+		waitForPass(noExc(() -> {
+			clickListing(codeBrowserPlugin.getListingPanel(), addr(program, 0x00400123),
+				MouseEvent.BUTTON3);
+			assertMenu(POPUP_ACTIONS,
+				Set.of(AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
+					AbstractEnableBreakpointAction.NAME, AbstractClearBreakpointAction.NAME));
+		}));
+		escapePopupMenu();
 
-		pressEscape();
-		lb.enableForProgram();
-		waitForDomainObject(program);
-		waitForPass(
-			() -> assertEquals(State.INCONSISTENT_ENABLED, lb.computeStateForProgram(program)));
+		waitForPass(() -> {
+			lb.enableForProgram();
+			waitForDomainObject(program);
+			assertEquals(State.INCONSISTENT_ENABLED, lb.computeStateForProgram(program));
+		});
 
-		clickListing(codeBrowserPlugin.getListingPanel(), addr(program, 0x00400123),
-			MouseEvent.BUTTON3);
-		assertMenu(POPUP_ACTIONS,
-			Set.of(AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
-				AbstractEnableBreakpointAction.NAME, AbstractDisableBreakpointAction.NAME,
-				AbstractClearBreakpointAction.NAME));
+		waitForPass(noExc(() -> {
+			clickListing(codeBrowserPlugin.getListingPanel(), addr(program, 0x00400123),
+				MouseEvent.BUTTON3);
+			assertMenu(POPUP_ACTIONS,
+				Set.of(AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
+					AbstractEnableBreakpointAction.NAME, AbstractDisableBreakpointAction.NAME,
+					AbstractClearBreakpointAction.NAME));
+		}));
+		escapePopupMenu();
 
 		// TODO: Margin, too?
 	}
@@ -405,24 +416,31 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 		waitForPass(
 			() -> assertEquals(State.ENABLED, lb.computeStateForTrace(trace)));
 
-		clickListing(listingPlugin.getListingPanel(), addr(trace, 0x55550123), MouseEvent.BUTTON3);
-		assertMenu(POPUP_ACTIONS,
-			Set.of(AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
+		waitForPass(noExc(() -> {
+			clickListing(listingPlugin.getListingPanel(), addr(trace, 0x55550123),
+				MouseEvent.BUTTON3);
+			assertMenu(POPUP_ACTIONS, Set.of(
+				AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
 				AbstractDisableBreakpointAction.NAME, AbstractClearBreakpointAction.NAME));
+		}));
+		escapePopupMenu();
 
-		pressEscape();
-		lb.disableForProgram(); // Adds "enable", which will only affect bookmark
-		waitForDomainObject(program);
-		waitForPass(
-			() -> assertEquals(State.INCONSISTENT_ENABLED, lb.computeStateForTrace(trace)));
+		waitForPass(() -> {
+			lb.disableForProgram(); // Adds "enable", which will only affect bookmark
+			waitForDomainObject(program);
+			assertEquals(State.INCONSISTENT_ENABLED, lb.computeStateForTrace(trace));
+		});
 
-		clickListing(listingPlugin.getListingPanel(), addr(trace, 0x55550123), MouseEvent.BUTTON3);
-		assertMenu(POPUP_ACTIONS,
-			Set.of(AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
+		waitForPass(noExc(() -> {
+			clickListing(listingPlugin.getListingPanel(), addr(trace, 0x55550123),
+				MouseEvent.BUTTON3);
+			assertMenu(POPUP_ACTIONS, Set.of(
+				AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
 				AbstractEnableBreakpointAction.NAME, AbstractDisableBreakpointAction.NAME,
 				AbstractClearBreakpointAction.NAME));
+		}));
+		escapePopupMenu();
 
-		pressEscape();
 		CompletableFuture<Void> dis = lb.disableForTrace(trace);
 		handleToggleBreakpointInvocation(Unique.assertOne(lb.getTraceBreakpoints(trace)), false);
 		waitOn(dis);
@@ -430,22 +448,30 @@ public abstract class AbstractDebuggerBreakpointMarkerPluginTest<T>
 		waitForPass(
 			() -> assertEquals(State.DISABLED, lb.computeStateForTrace(trace)));
 
-		clickListing(listingPlugin.getListingPanel(), addr(trace, 0x55550123), MouseEvent.BUTTON3);
-		assertMenu(POPUP_ACTIONS,
-			Set.of(AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
+		waitForPass(noExc(() -> {
+			clickListing(listingPlugin.getListingPanel(), addr(trace, 0x55550123),
+				MouseEvent.BUTTON3);
+			assertMenu(POPUP_ACTIONS, Set.of(
+				AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
 				AbstractEnableBreakpointAction.NAME, AbstractClearBreakpointAction.NAME));
+		}));
+		escapePopupMenu();
 
-		pressEscape();
-		lb.enableForProgram(); // This time, adds "disable", which will only affect bookmark
-		waitForDomainObject(program);
-		waitForPass(
-			() -> assertEquals(State.INCONSISTENT_DISABLED, lb.computeStateForTrace(trace)));
+		waitForPass(() -> {
+			lb.enableForProgram(); // This time, adds "disable", which will only affect bookmark
+			waitForDomainObject(program);
+			assertEquals(State.INCONSISTENT_DISABLED, lb.computeStateForTrace(trace));
+		});
 
-		clickListing(listingPlugin.getListingPanel(), addr(trace, 0x55550123), MouseEvent.BUTTON3);
-		assertMenu(POPUP_ACTIONS,
-			Set.of(AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
+		waitForPass(noExc(() -> {
+			clickListing(listingPlugin.getListingPanel(), addr(trace, 0x55550123),
+				MouseEvent.BUTTON3);
+			assertMenu(POPUP_ACTIONS, Set.of(
+				AbstractSetBreakpointAction.NAME, AbstractToggleBreakpointAction.NAME,
 				AbstractEnableBreakpointAction.NAME, AbstractDisableBreakpointAction.NAME,
 				AbstractClearBreakpointAction.NAME));
+		}));
+		escapePopupMenu();
 
 		// TODO: Should mixed trace enablement be considered?
 		// TODO: Margin, too?

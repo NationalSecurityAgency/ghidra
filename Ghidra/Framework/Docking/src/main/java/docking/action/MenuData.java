@@ -15,9 +15,8 @@
  */
 package docking.action;
 
-import java.util.Arrays;
-
 import java.awt.event.KeyEvent;
+import java.util.Arrays;
 
 import javax.swing.Icon;
 
@@ -98,6 +97,10 @@ public class MenuData {
 		return menuPath;
 	}
 
+	/**
+	 * Returns the menu path as a string. This method includes accelerator characters in the path
+	 * @return the menu path as a string
+	 */
 	public String getMenuPathAsString() {
 		if (menuPath == null || menuPath.length == 0) {
 			return null;
@@ -107,6 +110,28 @@ public class MenuData {
 			buildy.append(menuPath[i]);
 			if (i != (menuPath.length - 1)) {
 				buildy.append("->");
+			}
+		}
+		return buildy.toString();
+	}
+
+	/**
+	 * Returns the menu path as a string. This method filters accelerator chars('&') from the path.
+	 * @return the menu path as a string without '&' chars
+	 */
+	public String getMenuPathDisplayString() {
+		if (menuPath == null || menuPath.length == 0) {
+			return null;
+		}
+		StringBuilder buildy = new StringBuilder();
+		for (int i = 0; i < menuPath.length; i++) {
+			if (i != (menuPath.length - 1)) {
+				buildy.append(processMenuItemName(menuPath[i]));
+				buildy.append("->");
+			}
+			else {
+				// the last entry has already had processMenuItemName called on it
+				buildy.append(menuPath[i]);
 			}
 		}
 		return buildy.toString();

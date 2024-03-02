@@ -31,6 +31,16 @@ import ghidra.trace.model.modules.TraceModule;
 public class DefaultModuleMapProposal
 		extends AbstractMapProposal<TraceModule, Program, ModuleMapEntry>
 		implements ModuleMapProposal {
+	protected static final int BLOCK_BITS = 12;
+	protected static final int BLOCK_SIZE = 1 << BLOCK_BITS;
+	protected static final long BLOCK_MASK = -1L << BLOCK_BITS;
+
+	protected static AddressRange quantize(AddressRange range) {
+		AddressSpace space = range.getAddressSpace();
+		Address min = space.getAddress(range.getMinAddress().getOffset() & BLOCK_MASK);
+		Address max = space.getAddress(range.getMaxAddress().getOffset() | ~BLOCK_MASK);
+		return new AddressRangeImpl(min, max);
+	}
 
 	/**
 	 * A module-program entry in a proposed module map
@@ -129,8 +139,8 @@ public class DefaultModuleMapProposal
 		public void setProgram(Program program) {
 			setToObject(program, program);
 			try {
-				this.moduleRange =
-					new AddressRangeImpl(getModule().getBase(), computeImageSize(program));
+				this.moduleRange = quantize(
+					new AddressRangeImpl(getModule().getBase(), computeImageSize(program)));
 			}
 			catch (AddressOverflowException e) {
 				// This is terribly unlikely
@@ -203,7 +213,7 @@ public class DefaultModuleMapProposal
 	private void processModule() {
 		moduleBase = module.getBase();
 		try {
-			moduleRange = new AddressRangeImpl(moduleBase, imageSize);
+			moduleRange = quantize(new AddressRangeImpl(moduleBase, imageSize));
 		}
 		catch (AddressOverflowException e) {
 			return; // Just score it as having no matches?

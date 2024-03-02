@@ -310,6 +310,9 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 
 	@Override
 	public Address mapHostToGuest(Address hostAddress) {
+		if (hostAddress == null) {
+			return null;
+		}
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
 			Entry<Address, DBTraceGuestPlatformMappedRange> floorEntry =
 				rangesByHostAddress.floorEntry(hostAddress);
@@ -322,6 +325,9 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 
 	@Override
 	public AddressRange mapHostToGuest(AddressRange hostRange) {
+		if (hostRange == null) {
+			return null;
+		}
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
 			Entry<Address, DBTraceGuestPlatformMappedRange> floorEntry =
 				rangesByHostAddress.floorEntry(hostRange.getMinAddress());
@@ -350,6 +356,9 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 
 	@Override
 	public Address mapGuestToHost(Address guestAddress) {
+		if (guestAddress == null) {
+			return null;
+		}
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
 			Entry<Address, DBTraceGuestPlatformMappedRange> floorEntry =
 				rangesByGuestAddress.floorEntry(guestAddress);
@@ -362,6 +371,9 @@ public class DBTraceGuestPlatform extends DBAnnotatedObject
 
 	@Override
 	public AddressRange mapGuestToHost(AddressRange guestRange) {
+		if (guestRange == null) {
+			return null;
+		}
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
 			Entry<Address, DBTraceGuestPlatformMappedRange> floorEntry =
 				rangesByGuestAddress.floorEntry(guestRange.getMinAddress());

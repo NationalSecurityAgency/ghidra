@@ -46,17 +46,14 @@ public class DebuggerLegacyModulesPanel extends JPanel {
 
 	protected static Set<TraceModule> getSelectedModulesFromContext(
 			DebuggerModuleActionContext context) {
-		return context.getSelectedModules()
-				.stream()
-				.map(r -> r.getModule())
-				.collect(Collectors.toSet());
+		return context.getSelectedModules();
 	}
 
 	protected static Set<TraceSection> getSelectedSectionsFromContext(
 			DebuggerModuleActionContext context) {
 		return context.getSelectedModules()
 				.stream()
-				.flatMap(r -> r.getModule().getSections().stream())
+				.flatMap(m -> m.getSections().stream())
 				.collect(Collectors.toSet());
 	}
 
@@ -67,24 +64,6 @@ public class DebuggerLegacyModulesPanel extends JPanel {
 			sel.add(module.getRange());
 		}
 		return sel;
-	}
-
-	protected static ModuleRow getSelectedModuleRowFromContext(
-			DebuggerModuleActionContext context) {
-		Set<ModuleRow> modules = context.getSelectedModules();
-		if (modules.size() != 1) {
-			return null;
-		}
-		return modules.iterator().next();
-	}
-
-	protected static SectionRow getSelectedSectionRowFromContext(
-			DebuggerSectionActionContext context) {
-		Set<SectionRow> sections = context.getSelectedSections();
-		if (sections.size() != 1) {
-			return null;
-		}
-		return sections.iterator().next();
 	}
 
 	protected enum ModuleTableColumns

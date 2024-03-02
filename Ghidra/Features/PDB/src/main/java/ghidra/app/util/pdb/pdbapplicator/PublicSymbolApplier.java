@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -65,7 +65,7 @@ public class PublicSymbolApplier extends MsSymbolApplier implements DirectSymbol
 			// Note: there might be issues of thunk functions getting the same mangled name
 			// as thunked functions, which violates the thesis of their being unique.
 			// TODO: investigate this.
-			applicator.createSymbol(symbolAddress, name, true);
+			applicator.createSymbol(symbolAddress, name, false);
 
 			Program program = applicator.getProgram();
 			if (GuidUtil.isGuidLabel(program, symbolAddress, name)) {

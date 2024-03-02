@@ -18,7 +18,7 @@ package ghidra.app.util.bin.format.swift.types;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.swift.SwiftStructure;
+import ghidra.app.util.bin.format.swift.SwiftTypeMetadataStructure;
 import ghidra.app.util.bin.format.swift.SwiftUtils;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
@@ -26,7 +26,7 @@ import ghidra.util.exception.DuplicateNameException;
 /**
  * Represents a Swift entry point 
  */
-public final class EntryPoint implements SwiftStructure {
+public final class EntryPoint extends SwiftTypeMetadataStructure {
 
 	/**
 	 * The size (in bytes) of an {@link EntryPoint} structure
@@ -42,6 +42,7 @@ public final class EntryPoint implements SwiftStructure {
 	 * @throws IOException if there was an IO-related problem creating the structure
 	 */
 	public EntryPoint(BinaryReader reader) throws IOException {
+		super(reader.getPointerIndex());
 		entryPoint = reader.readNextInt();
 	}
 

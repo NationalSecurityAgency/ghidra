@@ -91,7 +91,8 @@ void InjectPayloadSleigh::decode(Decoder &decoder)
 void InjectPayloadSleigh::printTemplate(ostream &s) const
 
 {
-  tpl->saveXml(s,-1);
+  XmlEncode encoder(s);
+  tpl->encode(encoder,-1);
 }
 
 void InjectPayloadSleigh::checkParameterRestrictions(InjectContextSleigh &con,
@@ -247,7 +248,8 @@ void ExecutablePcodeSleigh::decode(Decoder &decoder)
 void ExecutablePcodeSleigh::printTemplate(ostream &s) const
 
 {
-  tpl->saveXml(s,-1);
+  XmlEncode encoder(s);
+  tpl->encode(encoder,-1);
 }
 
 InjectPayloadDynamic::~InjectPayloadDynamic(void)

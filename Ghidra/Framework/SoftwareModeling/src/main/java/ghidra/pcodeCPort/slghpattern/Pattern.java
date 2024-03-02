@@ -15,9 +15,9 @@
  */
 package ghidra.pcodeCPort.slghpattern;
 
-import java.io.PrintStream;
+import java.io.IOException;
 
-import org.jdom.Element;
+import ghidra.program.model.pcode.Encoder;
 
 public abstract class Pattern {
 
@@ -44,8 +44,6 @@ public abstract class Pattern {
 
 	public abstract boolean alwaysInstructionTrue();
 
-	public abstract void saveXml(PrintStream s);
-
-	public abstract void restoreXml(Element el);
+	public abstract void encode(Encoder encoder) throws IOException;
 
 }

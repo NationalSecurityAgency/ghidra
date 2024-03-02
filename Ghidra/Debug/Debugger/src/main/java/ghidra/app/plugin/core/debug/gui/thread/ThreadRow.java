@@ -16,8 +16,14 @@
 package ghidra.app.plugin.core.debug.gui.thread;
 
 import db.Transaction;
+import ghidra.app.plugin.core.debug.gui.action.PCLocationTrackingSpec;
+import ghidra.app.plugin.core.debug.gui.action.SPLocationTrackingSpec;
+import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.debug.api.target.Target;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Function;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
@@ -48,6 +54,34 @@ public class ThreadRow {
 
 	public String getName() {
 		return thread.getName();
+	}
+
+	private Address computeProgramCounter(DebuggerCoordinates coords) {
+		// TODO: Cheating a bit. Also, can user configure whether by stack or regs?
+		return PCLocationTrackingSpec.INSTANCE.computeTraceAddress(provider.getTool(),
+			coords);
+	}
+
+	public Address getProgramCounter() {
+		DebuggerCoordinates coords = provider.current.thread(thread);
+		return computeProgramCounter(coords);
+	}
+
+	public Function getFunction() {
+		DebuggerCoordinates coords = provider.current.thread(thread);
+		Address pc = computeProgramCounter(coords);
+		return DebuggerStaticMappingUtils.getFunction(pc, coords, provider.getTool());
+	}
+
+	public String getModule() {
+		DebuggerCoordinates coords = provider.current.thread(thread);
+		Address pc = computeProgramCounter(coords);
+		return DebuggerStaticMappingUtils.getModuleName(pc, coords);
+	}
+
+	public Address getStackPointer() {
+		DebuggerCoordinates coords = provider.current.thread(thread);
+		return SPLocationTrackingSpec.INSTANCE.computeTraceAddress(provider.getTool(), coords);
 	}
 
 	public long getCreationSnap() {

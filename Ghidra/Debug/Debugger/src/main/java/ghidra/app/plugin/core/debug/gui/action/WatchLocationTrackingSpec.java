@@ -16,17 +16,15 @@
 package ghidra.app.plugin.core.debug.gui.action;
 
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
 import javax.swing.Icon;
 
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.TrackLocationAction;
-import ghidra.async.AsyncUtils;
 import ghidra.debug.api.action.*;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.debug.api.watch.WatchRow;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.DebuggerPcodeUtils.WatchValue;
 import ghidra.pcode.exec.SleighUtils.AddressOf;
@@ -115,39 +113,37 @@ public class WatchLocationTrackingSpec implements LocationTrackingSpec {
 	class WatchLocationTracker implements LocationTracker {
 		private AddressSetView reads;
 		private DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
-		private PcodeExecutor<WatchValue> asyncExec = null;
+		private PcodeExecutor<WatchValue> exec = null;
 		private PcodeExpression compiled;
 
 		@Override
-		public CompletableFuture<Address> computeTraceAddress(PluginTool tool,
+		public Address computeTraceAddress(ServiceProvider provider,
 				DebuggerCoordinates coordinates) {
-			if (!Objects.equals(current, coordinates) || asyncExec == null) {
+			if (!Objects.equals(current, coordinates) || exec == null) {
 				current = coordinates;
-				asyncExec = current.getPlatform() == null ? null
-						: DebuggerPcodeUtils.buildWatchExecutor(tool, coordinates);
+				exec = current.getPlatform() == null ? null
+						: DebuggerPcodeUtils.buildWatchExecutor(provider, coordinates);
 			}
 			else {
-				asyncExec.getState().clear();
+				exec.getState().clear();
 			}
 			if (current.getTrace() == null) {
-				return AsyncUtils.nil();
+				return null;
 			}
-			return CompletableFuture.supplyAsync(() -> {
-				compiled = DebuggerPcodeUtils.compileExpression(tool, current, expression);
-				WatchValue value = compiled.evaluate(asyncExec);
-				return value == null ? null : value.address();
-			});
+			compiled = DebuggerPcodeUtils.compileExpression(provider, current, expression);
+			WatchValue value = compiled.evaluate(exec);
+			return value == null ? null : value.address();
 		}
 
 		@Override
-		public GoToInput getDefaultGoToInput(PluginTool tool, DebuggerCoordinates coordinates,
-				ProgramLocation location) {
+		public GoToInput getDefaultGoToInput(ServiceProvider provider,
+				DebuggerCoordinates coordinates, ProgramLocation location) {
 			TracePlatform platform = current.getPlatform();
 			String defaultSpace =
 				platform == null ? "ram" : platform.getLanguage().getDefaultSpace().getName();
 			AddressOf addrOf = SleighUtils.recoverAddressOf(defaultSpace, expression);
 			if (addrOf == null) {
-				return NoneLocationTrackingSpec.INSTANCE.getDefaultGoToInput(tool, coordinates,
+				return NoneLocationTrackingSpec.INSTANCE.getDefaultGoToInput(provider, coordinates,
 					location);
 			}
 			return new GoToInput(addrOf.space(),

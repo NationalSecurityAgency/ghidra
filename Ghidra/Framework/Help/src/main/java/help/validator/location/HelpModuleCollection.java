@@ -16,10 +16,21 @@
 package help.validator.location;
 
 import java.io.File;
-import java.net.*;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.help.HelpSet;
@@ -29,8 +40,17 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 import help.CustomTOCView.CustomTreeItemDecorator;
 import help.HelpBuildUtils;
+import help.PathKey;
 import help.TOCItemProvider;
-import help.validator.model.*;
+import help.validator.model.AnchorDefinition;
+import help.validator.model.GhidraTOCFile;
+import help.validator.model.HREF;
+import help.validator.model.HelpFile;
+import help.validator.model.HelpTopic;
+import help.validator.model.IMG;
+import help.validator.model.TOCItem;
+import help.validator.model.TOCItemDefinition;
+import help.validator.model.TOCItemExternal;
 
 /**
  * A class that is meant to hold a single help <b>input</b> directory and 0 or more
@@ -352,49 +372,5 @@ public class HelpModuleCollection implements TOCItemProvider {
 	@Override
 	public String toString() {
 		return helpLocations.toString();
-	}
-
-//==================================================================================================
-// Inner Classes
-//==================================================================================================
-
-	/** A class that wraps a Path and allows map lookup for paths from different file systems */
-	private class PathKey {
-		private String path;
-
-		PathKey(Path p) {
-			if (p == null) {
-				throw new IllegalArgumentException("Path cannot be null");
-			}
-			this.path = p.toString().replace('\\', '/');
-		}
-
-		@Override
-		public int hashCode() {
-			return path.hashCode();
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (obj == null) {
-				return false;
-			}
-			if (getClass() != obj.getClass()) {
-				return false;
-			}
-
-			PathKey other = (PathKey) obj;
-
-			boolean result = path.equals(other.path);
-			return result;
-		}
-
-		@Override
-		public String toString() {
-			return path.toString();
-		}
 	}
 }

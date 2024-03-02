@@ -47,7 +47,7 @@ public class ComponentInfoPlugin extends Plugin {
 		//@formatter:off
 		DockingAction action =
 			new ActionBuilder("Component Display", getName())
-			.menuPath("Help", "Show Diagnostic Component Information")
+			.menuPath("Help", "Component Diagnostics")
 			.onAction(e -> showComponentDialog())
 			.buildAndInstall(tool);
 		//@formatter:on

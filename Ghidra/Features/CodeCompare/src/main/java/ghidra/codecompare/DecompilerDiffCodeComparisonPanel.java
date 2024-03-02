@@ -20,17 +20,25 @@ import java.util.List;
 import javax.swing.Icon;
 
 import docking.ActionContext;
-import docking.action.*;
-import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
+import docking.action.DockingAction;
+import docking.action.ToggleDockingAction;
+import docking.action.ToolBarData;
 import generic.theme.GIcon;
-import ghidra.app.decompiler.component.*;
+import ghidra.app.decompiler.component.DecompileData;
+import ghidra.app.decompiler.component.DecompilerCodeComparisonPanel;
+import ghidra.app.decompiler.component.DualDecompileResultsListener;
+import ghidra.app.decompiler.component.DualDecompilerActionContext;
 import ghidra.codecompare.graphanalysis.TokenBin;
 import ghidra.framework.options.OptionsChangeListener;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HTMLUtilities;
+import ghidra.util.HelpLocation;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.*;
+import ghidra.util.task.Task;
+import ghidra.util.task.TaskBuilder;
+import ghidra.util.task.TaskLauncher;
+import ghidra.util.task.TaskListener;
 import resources.Icons;
 import resources.MultiIcon;
 
@@ -44,6 +52,7 @@ public class DecompilerDiffCodeComparisonPanel
 		implements DualDecompileResultsListener, OptionsChangeListener {
 
 	public static final String CODE_DIFF_VIEW = "Decompiler Diff View";
+	private static final String HELP_TOPIC = "FunctionComparison";
 	private DecompileDataDiff decompileDataDiff;
 	private DiffClangHighlightController leftHighlightController;
 	private DiffClangHighlightController rightHighlightController;
@@ -199,7 +208,8 @@ public class DecompilerDiffCodeComparisonPanel
 		 */
 		public MyToggleExactConstantMatching(String owner) {
 			super("Toggle Exact Constant Matching", owner);
-
+			setHelpLocation(new HelpLocation(HELP_TOPIC, "Toggle Exact Constant Matching"));
+			
 			this.setToolBarData(new ToolBarData(NO_EXACT_CONSTANT_MATCHING_ICON, "toggles"));
 
 			setDescription(HTMLUtilities.toHTML("Toggle whether or not constants must\n" +

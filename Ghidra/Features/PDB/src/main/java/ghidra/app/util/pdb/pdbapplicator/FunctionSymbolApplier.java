@@ -39,12 +39,9 @@ public class FunctionSymbolApplier extends AbstractBlockContextApplier
 
 	// Do not trust any of these variables... this is work in progress (possibly getting
 	//  torn up), but non-functioning code in other classes or this class still depend on these
-	private Address address_x;
 	private Function function_x = null;
 	private long specifiedFrameSize_x = 0;
 	private long currentFrameSize_x = 0;
-
-	private Address currentBlockAddress;
 
 	// might not need this, but investigating whether it will help us.  TODO remove?
 	private int baseParamOffset = 0;
@@ -135,11 +132,11 @@ public class FunctionSymbolApplier extends AbstractBlockContextApplier
 
 		function.setNoReturn(isNonReturning());
 
-		AbstractMsType fType = applicator.getPdb().getTypeRecord(typeRecordNumber);
+		AbstractMsType fType = applicator.getTypeRecord(typeRecordNumber);
 		MsTypeApplier applier = applicator.getTypeApplier(fType);
 		if (!(applier instanceof AbstractFunctionTypeApplier)) {
 			applicator.appendLogMsg("Error: Failed to resolve datatype RecordNumber " +
-				typeRecordNumber + " at " + address_x);
+				typeRecordNumber + " at " + address);
 			return false;
 		}
 
@@ -248,16 +245,17 @@ public class FunctionSymbolApplier extends AbstractBlockContextApplier
 	 * @param dataType data type of the variable.
 	 */
 	void setLocalVariable(Address varAddress, String varName, DataType dataType) {
-		if (currentBlockAddress == null) {
+		if (varAddress == null) {
 			return; // silently return.
 		}
 		if (varName.isBlank()) {
 			return; // silently return.
 		}
 
-		String plateAddition = "PDB: static local for function (" + address_x + "): " + getName();
+		String plateAddition =
+			"PDB: static local for function (" + applicator.getAddress(symbol) + "): " + getName();
 		// TODO: 20220210... consider adding function name as namespace to varName
-		applicator.createSymbol(varAddress, varName, true, plateAddition);
+		applicator.createSymbol(varAddress, varName, false, plateAddition);
 	}
 
 	// Method copied from ApplyStackVariables (ghidra.app.util.bin.format.pdb package)

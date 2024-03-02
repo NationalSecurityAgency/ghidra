@@ -372,8 +372,8 @@ public abstract class DockingAction implements DockingActionIf {
 			precedence = kbData.getKeyBindingPrecedence();
 		}
 
-		if (precedence == KeyBindingPrecedence.ReservedActionsLevel) {
-			return true; // reserved actions are special
+		if (precedence == KeyBindingPrecedence.SystemActionsLevel) {
+			return true; // system actions are special
 		}
 
 		// log a trace message instead of throwing an exception, as to not break any legacy code
@@ -453,8 +453,8 @@ public abstract class DockingAction implements DockingActionIf {
 	 * other actions are prevented from using the same KeyStroke as a reserved keybinding.
 	 * @param keyStroke the keystroke to be used for the keybinding
 	 */
-	void createReservedKeyBinding(KeyStroke keyStroke) {
-		KeyBindingData data = KeyBindingData.createReservedKeyBindingData(keyStroke);
+	void createSystemKeyBinding(KeyStroke keyStroke) {
+		KeyBindingData data = KeyBindingData.createSystemKeyBindingData(keyStroke);
 		setKeyBindingData(data);
 	}
 

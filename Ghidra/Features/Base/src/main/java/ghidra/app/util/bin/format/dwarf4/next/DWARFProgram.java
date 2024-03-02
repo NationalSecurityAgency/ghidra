@@ -36,7 +36,6 @@ import ghidra.formats.gfilesystem.FSUtilities;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.util.Msg;
@@ -653,10 +652,8 @@ public class DWARFProgram implements Closeable {
 		try {
 			int dwarfSize = diea.parseInt(DWARFAttribute.DW_AT_byte_size, 0);
 			int dwarfEncoding = (int) diea.getUnsignedLong(DWARFAttribute.DW_AT_encoding, -1);
-			String name = createAnonName(
-				"anon_basetype_" + DWARFEncoding.getTypeName(dwarfEncoding) + "_" + dwarfSize,
-				diea);
-			return name;
+			return "anon_basetype_%s_%d".formatted(DWARFEncoding.getTypeName(dwarfEncoding),
+				dwarfSize);
 		}
 		catch (IOException | DWARFExpressionException e) {
 			return createAnonName("anon_basetype_unknown", diea);
@@ -665,13 +662,11 @@ public class DWARFProgram implements Closeable {
 
 	private String getAnonEnumName(DIEAggregate diea) {
 		int enumSize = Math.max(1, (int) diea.getUnsignedLong(DWARFAttribute.DW_AT_byte_size, 1));
-		String name = createAnonName("anon_enum_" + (enumSize * 8), diea);
-		return name;
+		return "anon_enum_%d".formatted(enumSize * 8);
 	}
 
 	private static String createAnonName(String baseName, DIEAggregate diea) {
-		return baseName + DataType.CONFLICT_SUFFIX + diea.getHexOffset();
-
+		return "%s.dwarf_%x".formatted(baseName, diea.getOffset());
 	}
 
 	private String getReferringMemberFieldNames(List<DIEAggregate> referringMembers) {

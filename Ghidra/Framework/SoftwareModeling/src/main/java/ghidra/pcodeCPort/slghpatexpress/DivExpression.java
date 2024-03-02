@@ -15,10 +15,13 @@
  */
 package ghidra.pcodeCPort.slghpatexpress;
 
-import java.io.PrintStream;
+import static ghidra.pcode.utils.SlaFormat.*;
+
+import java.io.IOException;
 
 import generic.stl.VectorSTL;
 import ghidra.pcodeCPort.utils.MutableInt;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.Location;
 
 public class DivExpression extends BinaryExpression {
@@ -39,10 +42,10 @@ public class DivExpression extends BinaryExpression {
 	}
 
 	@Override
-	public void saveXml(PrintStream s) {
-		s.append("<div_exp>\n");
-		super.saveXml(s);
-		s.append("</div_exp>\n");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_DIV_EXP);
+		super.encode(encoder);
+		encoder.closeElement(ELEM_DIV_EXP);
 	}
 
 }

@@ -24,12 +24,12 @@ import ghidra.app.util.pdb.PdbNamespaceUtils;
 /**
  * Applier for {@link AbstractComplexMsType} types.
  */
-public abstract class AbstractComplexTypeApplier extends MsTypeApplier {
+public abstract class AbstractComplexTypeApplier extends MsDataTypeApplier {
 
 	// Intended for: AbstractComplexMsType
 	/**
-	 * Constructor for complex type applier.
-	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
+	 * Constructor for complex type applier
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working
 	 */
 	public AbstractComplexTypeApplier(DefaultPdbApplicator applicator) {
 		super(applicator);
@@ -56,12 +56,7 @@ public abstract class AbstractComplexTypeApplier extends MsTypeApplier {
 	 */
 	public <T extends AbstractComplexMsType> T getDefinitionType(AbstractComplexMsType mType,
 			Class<T> type) {
-		Integer num = applicator.getNumber(mType);
-		Integer mappedIndex = applicator.getMappedComplexType(num);
-		if (mappedIndex != null) {
-			mType =
-				applicator.getPdb().getTypeRecord(RecordNumber.typeRecordNumber(mappedIndex), type);
-		}
+		mType = applicator.getMappedTypeRecord(mType.getRecordNumber(), type);
 		return type.cast(mType);
 	}
 
@@ -75,11 +70,8 @@ public abstract class AbstractComplexTypeApplier extends MsTypeApplier {
 	//return mine or my def's (and set mine)
 	SymbolPath getFixedSymbolPath(AbstractComplexMsType type) {
 		SymbolPath path = getSymbolPath(type);
-		Integer num = applicator.getNumber(type);
-		Integer mappedIndex = applicator.getMappedComplexType(num);
-		if (mappedIndex != null) {
-			return PdbNamespaceUtils.convertToGhidraPathName(path, mappedIndex);
-		}
+		RecordNumber mappedNumber = applicator.getMappedRecordNumber(type.getRecordNumber());
+		Integer num = mappedNumber.getNumber();
 		return PdbNamespaceUtils.convertToGhidraPathName(path, num);
 	}
 

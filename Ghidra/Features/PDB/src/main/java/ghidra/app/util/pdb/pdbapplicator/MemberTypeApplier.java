@@ -15,30 +15,20 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMemberMsType;
-import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
-import ghidra.program.model.data.DataType;
-import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link AbstractMemberMsType} types.
  */
-public class MemberTypeApplier extends MsTypeApplier {
+public class MemberTypeApplier extends MsDataTypeComponentApplier {
 
 	// Intended for: AbstractMemberMsType
 	/**
-	 * Constructor for member type applier.
-	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
+	 * Constructor for member type applier
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working
 	 */
 	public MemberTypeApplier(DefaultPdbApplicator applicator) {
 		super(applicator);
 	}
 
-	@Override
-	DataType apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
-			throws PdbException, CancelledException {
-		// do nothing
-		return null;
-	}
 }

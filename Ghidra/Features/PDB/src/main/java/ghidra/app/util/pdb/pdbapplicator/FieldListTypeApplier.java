@@ -21,14 +21,12 @@ import java.util.List;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
-import ghidra.program.model.data.DataType;
-import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link AbstractFieldListMsType} types and {@code NO_TYPE} when in place of the
  * former type.
  */
-public class FieldListTypeApplier extends MsTypeApplier {
+public class FieldListTypeApplier extends MsDataTypeComponentApplier {
 
 	//TODO: evaluate the static method and multiple constructors... what can be cleaned up with
 	// regard to these and the possible NoType record???
@@ -46,35 +44,30 @@ public class FieldListTypeApplier extends MsTypeApplier {
 	}
 
 	/**
-	 * Constructor.
-	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
-	 * @throws IllegalArgumentException Upon invalid arguments.
+	 * Constructor
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working
+	 * @throws IllegalArgumentException Upon invalid arguments
 	 */
 	public FieldListTypeApplier(DefaultPdbApplicator applicator) throws IllegalArgumentException {
 		super(applicator);
-	}
-
-	@Override
-	DataType apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
-			throws PdbException, CancelledException {
-		// do nothing
-		return null;
 	}
 
 	//==============================================================================================
 
 	record FieldLists(List<AbstractMsType> bases, List<AbstractMsType> members,
 			List<AbstractMemberMsType> nonstaticMembers,
+			List<AbstractStaticMemberMsType> staticMembers,
 			List<AbstractVirtualFunctionTablePointerMsType> vftPtrs, List<AbstractMsType> methods,
 			List<AbstractNestedTypeMsType> nestedTypes, List<AbstractEnumerateMsType> enumerates) {}
 
 	//==============================================================================================
 
 	FieldLists getFieldLists(RecordNumber recordNumber) throws PdbException {
-		AbstractMsType type = applicator.getPdb().getTypeRecord(recordNumber);
+		AbstractMsType type = applicator.getTypeRecord(recordNumber);
 		if (type instanceof PrimitiveMsType primitive && primitive.isNoType()) {
 			return new FieldLists(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(),
-				new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+				new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(),
+				new ArrayList<>());
 		}
 		else if (type instanceof AbstractFieldListMsType fieldListType) {
 			return getFieldLists(fieldListType);
@@ -98,6 +91,8 @@ public class FieldListTypeApplier extends MsTypeApplier {
 		}
 		List<AbstractMemberMsType> nonstaticMembers =
 			new ArrayList<>(fieldListType.getNonStaticMembers());
+		List<AbstractStaticMemberMsType> staticMembers =
+			new ArrayList<>(fieldListType.getStaticMembers());
 		List<AbstractVirtualFunctionTablePointerMsType> vftPtrs =
 			new ArrayList<>(fieldListType.getVftPointers());
 		List<AbstractNestedTypeMsType> nestedTypes =
@@ -115,6 +110,7 @@ public class FieldListTypeApplier extends MsTypeApplier {
 				members.addAll(lists.members());
 				methods.addAll(lists.methods());
 				nonstaticMembers.addAll(lists.nonstaticMembers());
+				staticMembers.addAll(lists.staticMembers());
 				vftPtrs.addAll(lists.vftPtrs());
 				nestedTypes.addAll(lists.nestedTypes());
 				enumerates.addAll(lists.enumerates());
@@ -124,7 +120,8 @@ public class FieldListTypeApplier extends MsTypeApplier {
 			}
 		}
 
-		return new FieldLists(bases, members, nonstaticMembers, vftPtrs, methods, nestedTypes,
+		return new FieldLists(bases, members, nonstaticMembers, staticMembers, vftPtrs, methods,
+			nestedTypes,
 			enumerates);
 	}
 
