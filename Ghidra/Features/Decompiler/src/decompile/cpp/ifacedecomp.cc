@@ -462,21 +462,51 @@ void IfaceDecompData::followFlow(ostream &s,int4 size)
 void IfcFuncload::execute(istream &s)
 
 {
-  string funcname;
+  string funcname, basename, first, second, availFuncnames;
   Address offset;
+  Scope *funcscope;
+  bool needFirst;
 
   s >> funcname;
 
   if (dcp->conf == (Architecture *)0)
     throw IfaceExecutionError("No image loaded");
 
-  string basename;
-  Scope *funcscope = dcp->conf->symboltab->resolveScopeFromSymbolName(funcname,"::",basename,(Scope *)0);
+  {
+    // Detect names
+    funcscope = dcp->conf->symboltab->getGlobalScope();
+
+    ScopeMap::const_iterator iter,enditer, iter2, enditer2;
+    iter = funcscope->childrenBegin();
+    enditer = funcscope->childrenEnd();
+    for (; iter != enditer; ++iter) {
+      funcscope = (*iter).second;
+      first = funcscope->getName();
+      iter2 = funcscope->childrenBegin();
+      enditer2 = funcscope->childrenEnd();
+      availFuncnames.append(first);
+      needFirst = false;
+      for (; iter2 != enditer2; ++iter2) {
+        second = (*iter2).second->getName();
+        if (!second.empty()) {
+	  if (needFirst) {
+            availFuncnames.append(" ");
+            availFuncnames.append(first);
+	  }
+          availFuncnames.append("::");
+          availFuncnames.append(second);
+	  needFirst = true;
+	}
+      }
+      availFuncnames.append("\n");
+    }
+  }
+  funcscope = dcp->conf->symboltab->resolveScopeFromSymbolName(funcname,"::",basename,(Scope *)0);
   if (funcscope == (Scope *)0)
-    throw IfaceExecutionError("Bad namespace: "+funcname);
+    throw IfaceExecutionError("Bad namespace. Try one of:\n"+availFuncnames);
   dcp->fd = funcscope->queryFunction( basename ); // Is function already in database
   if (dcp->fd == (Funcdata *)0)
-    throw IfaceExecutionError("Unknown function name: "+funcname);
+    throw IfaceExecutionError("Unknown function name. Try one of:\n"+availFuncnames);
 
   if (!dcp->fd->hasNoCode())
     dcp->followFlow(*status->optr,0);
