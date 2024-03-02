@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifdef WIN32
-#include <Windows.h>
-#endif
 
 #ifdef WIN32
+#include <Windows.h>
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
 	for (int i = 0; i < 10; i++) {
 		Sleep(1000);
 	}
 }
 #else
+#include <unistd.h>
 int main(int argc, char** argv) {
 	for (int i = 0; i < 10; i++) {
 		sleep(1);
