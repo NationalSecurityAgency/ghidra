@@ -16,6 +16,7 @@
 package ghidra.trace.database.target;
 
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -210,11 +211,15 @@ class DBTraceObjectValueWriteBehindCache {
 
 	private Stream<DBTraceObjectValueBehind> streamSub(
 			NavigableMap<Long, DBTraceObjectValueBehind> map, Lifespan span, boolean forward) {
-		Long floor = map.floorKey(span.min());
-		if (floor == null) {
-			floor = span.min();
+		long min;
+		Entry<Long, DBTraceObjectValueBehind> floor = map.floorEntry(span.min());
+		if (floor != null && floor.getValue().getLifespan().contains(span.min())) {
+			min = floor.getKey();
 		}
-		var sub = map.subMap(floor, true, span.max(), true);
+		else {
+			min = span.min();
+		}
+		var sub = map.subMap(min, true, span.max(), true);
 		if (!forward) {
 			sub = sub.descendingMap();
 		}

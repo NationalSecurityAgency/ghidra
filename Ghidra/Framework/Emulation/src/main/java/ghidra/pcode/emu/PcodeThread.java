@@ -15,8 +15,6 @@
  */
 package ghidra.pcode.emu;
 
-import java.util.List;
-
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.emu.DefaultPcodeThread.PcodeEmulationLibrary;
 import ghidra.pcode.exec.*;
@@ -289,6 +287,9 @@ public interface PcodeThread<T> {
 	 * reliable way to halt execution. Note the emulator may halt mid instruction. If this is not
 	 * desired, then upon catching the exception, un-suspend the p-code thread and call
 	 * {@link #finishInstruction()} or {@link #dropInstruction()}.
+	 * 
+	 * @see PcodeMachine#setSuspended(boolean)
+	 * @param suspended true to suspend the machine, false to let it run
 	 */
 	void setSuspended(boolean suspended);
 
@@ -341,6 +342,7 @@ public interface PcodeThread<T> {
 	 * The memory part of this state is shared among all threads in the same machine. See
 	 * {@link PcodeMachine#getSharedState()}.
 	 * 
+	 * @return the state
 	 */
 	ThreadPcodeExecutorState<T> getState();
 

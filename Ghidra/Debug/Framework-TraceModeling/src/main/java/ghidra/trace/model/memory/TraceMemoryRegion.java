@@ -89,6 +89,9 @@ public interface TraceMemoryRegion extends TraceUniqueObject {
 	 * 
 	 * @param creationSnap the creation snap, or {@link Long#MIN_VALUE} for "since the beginning of
 	 *            time"
+	 * @throws DuplicateNameException if extending the region would cause a naming conflict
+	 * @throws TraceOverlappedRegionException if extending the region would cause it to overlap
+	 *             another
 	 */
 	void setCreationSnap(long creationSnap)
 			throws DuplicateNameException, TraceOverlappedRegionException;
@@ -105,6 +108,9 @@ public interface TraceMemoryRegion extends TraceUniqueObject {
 	 * 
 	 * @param destructionSnap the destruction snap, or {@link Long#MAX_VALUE} for "to the end of
 	 *            time"
+	 * @throws DuplicateNameException if extending the region would cause a naming conflict
+	 * @throws TraceOverlappedRegionException if extending the region would cause it to overlap
+	 *             another
 	 */
 	void setDestructionSnap(long destructionSnap)
 			throws DuplicateNameException, TraceOverlappedRegionException;
@@ -138,22 +144,38 @@ public interface TraceMemoryRegion extends TraceUniqueObject {
 	AddressRange getRange();
 
 	/**
+	 * Set the minimum address of the range
+	 * 
 	 * @see #setRange(AddressRange)
+	 * @param min the new minimum
+	 * @throws TraceOverlappedRegionException if extending the region would cause it to overlap
+	 *             another
 	 */
 	void setMinAddress(Address min) throws TraceOverlappedRegionException;
 
 	/**
+	 * Get the minimum address of the range
+	 * 
 	 * @see #getRange()
+	 * @return the minimum address
 	 */
 	Address getMinAddress();
 
 	/**
+	 * Set the maximum address of the range
+	 * 
 	 * @see #setRange(AddressRange)
+	 * @param max the new minimum
+	 * @throws TraceOverlappedRegionException if extending the region would cause it to overlap
+	 *             another
 	 */
 	void setMaxAddress(Address max) throws TraceOverlappedRegionException;
 
 	/**
+	 * Get the maximum address of the range
+	 * 
 	 * @see #getRange()
+	 * @return the maximum address
 	 */
 	Address getMaxAddress();
 
@@ -164,6 +186,11 @@ public interface TraceMemoryRegion extends TraceUniqueObject {
 	 * This adjusts the max address of the range so that its length becomes that given
 	 * 
 	 * @see #setRange(AddressRange)
+	 * @param length the desired length of the range
+	 * @throws AddressOverflowException if extending the range would cause the max address to
+	 *             overflow
+	 * @throws TraceOverlappedRegionException if extending the region would cause it to overlap
+	 *             another
 	 */
 	void setLength(long length) throws AddressOverflowException, TraceOverlappedRegionException;
 
@@ -182,7 +209,9 @@ public interface TraceMemoryRegion extends TraceUniqueObject {
 	void setFlags(Collection<TraceMemoryFlag> flags);
 
 	/**
-	 * @see #setFlags(Collection)
+	 * Set the flags, e.g., permissions, of this region
+	 * 
+	 * @param flags the flags
 	 */
 	default void setFlags(TraceMemoryFlag... flags) {
 		setFlags(Arrays.asList(flags));
@@ -191,12 +220,14 @@ public interface TraceMemoryRegion extends TraceUniqueObject {
 	/**
 	 * Add the given flags, e.g., permissions, to this region
 	 * 
-	 * @see #setFlags(Collection)
+	 * @param flags the flags
 	 */
 	void addFlags(Collection<TraceMemoryFlag> flags);
 
 	/**
-	 * @see #addFlags(Collection)
+	 * Add the given flags, e.g., permissions, to this region
+	 * 
+	 * @param flags the flags
 	 */
 	default void addFlags(TraceMemoryFlag... flags) {
 		addFlags(Arrays.asList(flags));
@@ -205,12 +236,14 @@ public interface TraceMemoryRegion extends TraceUniqueObject {
 	/**
 	 * Remove the given flags, e.g., permissions, from this region
 	 * 
-	 * @see #setFlags(Collection)
+	 * @param flags the flags
 	 */
 	void clearFlags(Collection<TraceMemoryFlag> flags);
 
 	/**
-	 * @see #clearFlags(Collection)
+	 * Remove the given flags, e.g., permissions, from this region
+	 * 
+	 * @param flags the flags
 	 */
 	default void clearFlags(TraceMemoryFlag... flags) {
 		clearFlags(Arrays.asList(flags));
@@ -249,7 +282,7 @@ public interface TraceMemoryRegion extends TraceUniqueObject {
 	/**
 	 * Add or clear the {@link TraceMemoryFlag#WRITE} flag
 	 * 
-	 * @param read true to add, false to clear
+	 * @param write true to add, false to clear
 	 */
 	default void setWrite(boolean write) {
 		if (write) {
@@ -272,7 +305,7 @@ public interface TraceMemoryRegion extends TraceUniqueObject {
 	/**
 	 * Add or clear the {@link TraceMemoryFlag#EXECUTE} flag
 	 * 
-	 * @param read true to add, false to clear
+	 * @param execute true to add, false to clear
 	 */
 	default void setExecute(boolean execute) {
 		if (execute) {
@@ -295,7 +328,7 @@ public interface TraceMemoryRegion extends TraceUniqueObject {
 	/**
 	 * Add or clear the {@link TraceMemoryFlag#VOLATILE} flag
 	 * 
-	 * @param read true to add, false to clear
+	 * @param vol true to add, false to clear
 	 */
 	default void setVolatile(boolean vol) {
 		if (vol) {
@@ -319,4 +352,18 @@ public interface TraceMemoryRegion extends TraceUniqueObject {
 	 * Delete this region from the trace
 	 */
 	void delete();
+
+	/**
+	 * Check if the region is valid at the given snapshot
+	 * 
+	 * <p>
+	 * In object mode, a region's life may be disjoint, so checking if the snap occurs between
+	 * creation and destruction is not quite sufficient. This method encapsulates validity. In
+	 * object mode, it checks that the region object has a canonical parent at the given snapshot.
+	 * In table mode, it checks that the lifespan contains the snap.
+	 * 
+	 * @param snap the snapshot key
+	 * @return true if valid, false if not
+	 */
+	boolean isValid(long snap);
 }
