@@ -11,20 +11,20 @@
 
 package SWIG;
 
-public class SBStringList {
+public class SBScriptObject {
   private transient long swigCPtr;
   protected transient boolean swigCMemOwn;
 
-  protected SBStringList(long cPtr, boolean cMemoryOwn) {
+  protected SBScriptObject(long cPtr, boolean cMemoryOwn) {
     swigCMemOwn = cMemoryOwn;
     swigCPtr = cPtr;
   }
 
-  protected static long getCPtr(SBStringList obj) {
+  protected static long getCPtr(SBScriptObject obj) {
     return (obj == null) ? 0 : obj.swigCPtr;
   }
 
-  protected static long swigRelease(SBStringList obj) {
+  protected static long swigRelease(SBScriptObject obj) {
     long ptr = 0;
     if (obj != null) {
       if (!obj.swigCMemOwn)
@@ -45,46 +45,31 @@ public class SBStringList {
     if (swigCPtr != 0) {
       if (swigCMemOwn) {
         swigCMemOwn = false;
-        lldbJNI.delete_SBStringList(swigCPtr);
+        lldbJNI.delete_SBScriptObject(swigCPtr);
       }
       swigCPtr = 0;
     }
   }
 
-  public SBStringList() {
-    this(lldbJNI.new_SBStringList__SWIG_0(), true);
+  public SBScriptObject(SWIGTYPE_p_void ptr, ScriptLanguage lang) {
+    this(lldbJNI.new_SBScriptObject__SWIG_0(SWIGTYPE_p_void.getCPtr(ptr), lang.swigValue()), true);
   }
 
-  public SBStringList(SBStringList rhs) {
-    this(lldbJNI.new_SBStringList__SWIG_1(SBStringList.getCPtr(rhs), rhs), true);
+  public SBScriptObject(SBScriptObject rhs) {
+    this(lldbJNI.new_SBScriptObject__SWIG_1(SBScriptObject.getCPtr(rhs), rhs), true);
   }
 
   public boolean IsValid() {
-    return lldbJNI.SBStringList_IsValid(swigCPtr, this);
+    return lldbJNI.SBScriptObject_IsValid(swigCPtr, this);
   }
 
-  public void AppendString(String str) {
-    lldbJNI.SBStringList_AppendString(swigCPtr, this, str);
+  public SWIGTYPE_p_void GetPointer() {
+    long cPtr = lldbJNI.SBScriptObject_GetPointer(swigCPtr, this);
+    return (cPtr == 0) ? null : new SWIGTYPE_p_void(cPtr, false);
   }
 
-  public void AppendList(String[] strv, int strc) {
-    lldbJNI.SBStringList_AppendList__SWIG_0(swigCPtr, this, strv, strc);
-  }
-
-  public void AppendList(SBStringList strings) {
-    lldbJNI.SBStringList_AppendList__SWIG_1(swigCPtr, this, SBStringList.getCPtr(strings), strings);
-  }
-
-  public long GetSize() {
-    return lldbJNI.SBStringList_GetSize(swigCPtr, this);
-  }
-
-  public String GetStringAtIndex(long idx) {
-    return lldbJNI.SBStringList_GetStringAtIndex__SWIG_0(swigCPtr, this, idx);
-  }
-
-  public void Clear() {
-    lldbJNI.SBStringList_Clear(swigCPtr, this);
+  public ScriptLanguage GetLanguage() {
+    return ScriptLanguage.swigToEnum(lldbJNI.SBScriptObject_GetLanguage(swigCPtr, this));
   }
 
 }
