@@ -11,9 +11,10 @@
 
 package SWIG;
 
-public final class TypeSummaryCapping {
-  public final static TypeSummaryCapping eTypeSummaryCapped = new TypeSummaryCapping("eTypeSummaryCapped", lldbJNI.eTypeSummaryCapped_get());
-  public final static TypeSummaryCapping eTypeSummaryUncapped = new TypeSummaryCapping("eTypeSummaryUncapped", lldbJNI.eTypeSummaryUncapped_get());
+public final class WatchpointValueKind {
+  public final static WatchpointValueKind eWatchPointValueKindInvalid = new WatchpointValueKind("eWatchPointValueKindInvalid", lldbJNI.eWatchPointValueKindInvalid_get());
+  public final static WatchpointValueKind eWatchPointValueKindVariable = new WatchpointValueKind("eWatchPointValueKindVariable", lldbJNI.eWatchPointValueKindVariable_get());
+  public final static WatchpointValueKind eWatchPointValueKindExpression = new WatchpointValueKind("eWatchPointValueKindExpression", lldbJNI.eWatchPointValueKindExpression_get());
 
   public final int swigValue() {
     return swigValue;
@@ -23,33 +24,33 @@ public final class TypeSummaryCapping {
     return swigName;
   }
 
-  public static TypeSummaryCapping swigToEnum(int swigValue) {
+  public static WatchpointValueKind swigToEnum(int swigValue) {
     if (swigValue < swigValues.length && swigValue >= 0 && swigValues[swigValue].swigValue == swigValue)
       return swigValues[swigValue];
     for (int i = 0; i < swigValues.length; i++)
       if (swigValues[i].swigValue == swigValue)
         return swigValues[i];
-    throw new IllegalArgumentException("No enum " + TypeSummaryCapping.class + " with value " + swigValue);
+    throw new IllegalArgumentException("No enum " + WatchpointValueKind.class + " with value " + swigValue);
   }
 
-  private TypeSummaryCapping(String swigName) {
+  private WatchpointValueKind(String swigName) {
     this.swigName = swigName;
     this.swigValue = swigNext++;
   }
 
-  private TypeSummaryCapping(String swigName, int swigValue) {
+  private WatchpointValueKind(String swigName, int swigValue) {
     this.swigName = swigName;
     this.swigValue = swigValue;
     swigNext = swigValue+1;
   }
 
-  private TypeSummaryCapping(String swigName, TypeSummaryCapping swigEnum) {
+  private WatchpointValueKind(String swigName, WatchpointValueKind swigEnum) {
     this.swigName = swigName;
     this.swigValue = swigEnum.swigValue;
     swigNext = this.swigValue+1;
   }
 
-  private static TypeSummaryCapping[] swigValues = { eTypeSummaryCapped, eTypeSummaryUncapped };
+  private static WatchpointValueKind[] swigValues = { eWatchPointValueKindInvalid, eWatchPointValueKindVariable, eWatchPointValueKindExpression };
   private static int swigNext = 0;
   private final int swigValue;
   private final String swigName;

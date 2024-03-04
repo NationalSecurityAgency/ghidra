@@ -1,6 +1,6 @@
 To use the LLDB agent in Ghidra, you will need to build the JNI interface to the LLDB Scripting Bridge.
 
-If you are using the distribution (vs. source) and wish to use the default swig files included (LLDB v16), you can use the
+If you are using the distribution (vs. source) and wish to use the default swig files included (LLDB v17), you can use the
 macos_debugger_lldb_build_from_brew script in this same directory, kindly provide by @cyberkaida.  Make sure a 7.x version
 of gradle is in your path, and you've defined GHIDRA_INSTALL_DIR.
 
@@ -8,11 +8,12 @@ To do this:
 (1) check the version for your copy of lldb:
 	lldb --version
 	
-If you have a version other than the most current (release/16.x), you will need to generate the JNI interface for the version you have.
+If you have a version other than the most current (release/17.x), you will need to generate the JNI interface for the version you have.
 
-(2a) To install LLVM/lldb version 16:
+(2a) To install LLVM/lldb version 17:
 	- git clone https://github.com/llvm/llvm-project.git
-	- git checkout release/16.x
+	- cd llvm-project
+	- git checkout release/17.x
 	
 IF YOU WISH TO BUILD LLDB:
 	- cd llvm-project
@@ -48,7 +49,7 @@ TROUBLESHOOTING:
 (1) If you are trying to execute "gradle buildGhidra" with LLVM_HOME already set, you are likely 
     to run into difficulties.  Unset LLVM_HOME (or on Windows set LLVM_HOME=) before running.
 (2) If you are running "gradle generateSwig" and encounter errors, make sure LLVM_HOME is set.
-(3) If you are running "gradle buildNatives" and it succeeds but there is no library in Ghidra/
+(3) If you are running "gradle build" and it succeeds but there is no library in Ghidra/
     Debug/Debugger-swig/lldb/build/os, again check LLVM_HOME, LLVM_BUILD, and JAVA_HOME.  Keep
     in mind that different generators for LLVM, esp. for Window, may put liblldb.xxx in unusual 
     places. Check "build/lib", "build/bin", and subdirs like "build/Release/bin".
