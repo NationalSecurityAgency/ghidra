@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.pty.linux;
+package ghidra.pty.unix;
 
 import com.sun.jna.*;
 import com.sun.jna.ptr.IntByReference;

@@ -18,7 +18,6 @@ import re
 
 from ghidratrace import sch
 from ghidratrace.client import MethodRegistry, ParamDesc, Address, AddressRange
-
 import lldb
 
 from . import commands, util
@@ -66,9 +65,7 @@ def find_proc_by_num(procnum):
 
 
 def find_proc_by_pattern(object, pattern, err_msg):
-    print(object.path)
     mat = pattern.fullmatch(object.path)
-    print(mat)
     if mat is None:
         raise TypeError(f"{object} is not {err_msg}")
     procnum = int(mat['procnum'])
@@ -81,11 +78,12 @@ def find_proc_by_obj(object):
 
 def find_proc_by_procbreak_obj(object):
     return find_proc_by_pattern(object, PROC_BREAKS_PATTERN,
-                               "a BreakpointLocationContainer")
+                                "a BreakpointLocationContainer")
+
 
 def find_proc_by_procwatch_obj(object):
     return find_proc_by_pattern(object, PROC_WATCHES_PATTERN,
-                               "a WatchpointContainer")
+                                "a WatchpointContainer")
 
 
 def find_proc_by_env_obj(object):
@@ -108,7 +106,8 @@ def find_thread_by_num(proc, tnum):
     for t in proc.threads:
         if t.GetThreadID() == tnum:
             return t
-    raise KeyError(f"Processes[{proc.GetProcessID()}].Threads[{tnum}] does not exist")
+    raise KeyError(
+        f"Processes[{proc.GetProcessID()}].Threads[{tnum}] does not exist")
 
 
 def find_thread_by_pattern(pattern, object, err_msg):
@@ -166,7 +165,7 @@ def find_reg_by_name(f, name):
 # I could keep my own cache in a dict, but why?
 def find_bpt_by_number(breaknum):
     # TODO: If len exceeds some threshold, use binary search?
-    for i in range(0,util.get_target().GetNumBreakpoints()):
+    for i in range(0, util.get_target().GetNumBreakpoints()):
         b = util.get_target().GetBreakpointAtIndex(i)
         if b.GetID() == breaknum:
             return b
@@ -189,7 +188,7 @@ def find_bpt_by_obj(object):
 # I could keep my own cache in a dict, but why?
 def find_wpt_by_number(watchnum):
     # TODO: If len exceeds some threshold, use binary search?
-    for i in range(0,util.get_target().GetNumWatchpoints()):
+    for i in range(0, util.get_target().GetNumWatchpoints()):
         w = util.get_target().GetWatchpointAtIndex(i)
         if w.GetID() == watchnum:
             return w
@@ -202,6 +201,7 @@ def find_wpt_by_pattern(pattern, object, err_msg):
         raise TypeError(f"{object} is not {err_msg}")
     watchnum = int(mat['watchnum'])
     return find_wpt_by_number(watchnum)
+
 
 def find_wpt_by_obj(object):
     return find_wpt_by_pattern(PROC_WATCHLOC_PATTERN, object, "a WatchpointSpec")
@@ -244,7 +244,7 @@ def execute(cmd: str, to_string: bool=False):
 def refresh_available(node: sch.Schema('AvailableContainer')):
     """List processes on lldb's host system."""
     with commands.open_tracked_tx('Refresh Available'):
-        util.get_debugger().HandleCommand('ghidra_trace_put_available')
+        util.get_debugger().HandleCommand('ghidra trace put-available')
 
 
 @REGISTRY.method(action='refresh')
@@ -254,14 +254,14 @@ def refresh_breakpoints(node: sch.Schema('BreakpointContainer')):
     process).
     """
     with commands.open_tracked_tx('Refresh Breakpoints'):
-        util.get_debugger().HandleCommand('ghidra_trace_put_breakpoints')
+        util.get_debugger().HandleCommand('ghidra trace put-breakpoints')
 
 
 @REGISTRY.method(action='refresh')
 def refresh_processes(node: sch.Schema('ProcessContainer')):
     """Refresh the list of processes."""
     with commands.open_tracked_tx('Refresh Processes'):
-        util.get_debugger().HandleCommand('ghidra_trace_put_threads')
+        util.get_debugger().HandleCommand('ghidra trace put-threads')
 
 
 @REGISTRY.method(action='refresh')
@@ -273,7 +273,7 @@ def refresh_proc_breakpoints(node: sch.Schema('BreakpointLocationContainer')):
     refreshed.
     """
     with commands.open_tracked_tx('Refresh Breakpoint Locations'):
-        util.get_debugger().HandleCommand('ghidra_trace_put_breakpoints');
+        util.get_debugger().HandleCommand('ghidra trace put-breakpoints')
 
 
 @REGISTRY.method(action='refresh')
@@ -285,20 +285,21 @@ def refresh_proc_watchpoints(node: sch.Schema('WatchpointContainer')):
     refreshed.
     """
     with commands.open_tracked_tx('Refresh Watchpoint Locations'):
-        util.get_debugger().HandleCommand('ghidra_trace_put_watchpoints');
+        util.get_debugger().HandleCommand('ghidra trace put-watchpoints')
 
 
 @REGISTRY.method(action='refresh')
 def refresh_environment(node: sch.Schema('Environment')):
     """Refresh the environment descriptors (arch, os, endian)."""
     with commands.open_tracked_tx('Refresh Environment'):
-        util.get_debugger().HandleCommand('ghidra_trace_put_environment')
+        util.get_debugger().HandleCommand('ghidra trace put-environment')
+
 
 @REGISTRY.method(action='refresh')
 def refresh_threads(node: sch.Schema('ThreadContainer')):
     """Refresh the list of threads in the process."""
     with commands.open_tracked_tx('Refresh Threads'):
-        util.get_debugger().HandleCommand('ghidra_trace_put_threads')
+        util.get_debugger().HandleCommand('ghidra trace put-threads')
 
 
 @REGISTRY.method(action='refresh')
@@ -307,7 +308,7 @@ def refresh_stack(node: sch.Schema('Stack')):
     t = find_thread_by_stack_obj(node)
     t.process.SetSelectedThread(t)
     with commands.open_tracked_tx('Refresh Stack'):
-        util.get_debugger().HandleCommand('ghidra_trace_put_frames');
+        util.get_debugger().HandleCommand('ghidra trace put-frames')
 
 
 @REGISTRY.method(action='refresh')
@@ -317,14 +318,14 @@ def refresh_registers(node: sch.Schema('RegisterValueContainer')):
     f.thread.SetSelectedFrame(f.GetFrameID())
     # TODO: Groups?
     with commands.open_tracked_tx('Refresh Registers'):
-        util.get_debugger().HandleCommand('ghidra_trace_putreg');
+        util.get_debugger().HandleCommand('ghidra trace putreg')
 
 
 @REGISTRY.method(action='refresh')
 def refresh_mappings(node: sch.Schema('Memory')):
     """Refresh the list of memory regions for the process."""
     with commands.open_tracked_tx('Refresh Memory Regions'):
-        util.get_debugger().HandleCommand('ghidra_trace_put_regions');
+        util.get_debugger().HandleCommand('ghidra trace put-regions')
 
 
 @REGISTRY.method(action='refresh')
@@ -335,13 +336,14 @@ def refresh_modules(node: sch.Schema('ModuleContainer')):
     This will refresh the sections for all modules, not just the selected one.
     """
     with commands.open_tracked_tx('Refresh Modules'):
-        util.get_debugger().HandleCommand('ghidra_trace_put_modules');
+        util.get_debugger().HandleCommand('ghidra trace put-modules')
 
 
 @REGISTRY.method(action='activate')
 def activate_process(process: sch.Schema('Process')):
     """Switch to the process."""
     return
+
 
 @REGISTRY.method(action='activate')
 def activate_thread(thread: sch.Schema('Thread')):
@@ -376,10 +378,12 @@ def attach_obj(process: sch.Schema('Process'), target: sch.Schema('Attachable'))
     pid = find_availpid_by_obj(target)
     util.get_debugger().HandleCommand(f'process attach -p {pid}')
 
+
 @REGISTRY.method(action='attach')
 def attach_pid(process: sch.Schema('Process'), pid: int):
     """Attach the process to the given target."""
     util.get_debugger().HandleCommand(f'process attach -p {pid}')
+
 
 @REGISTRY.method(action='attach')
 def attach_name(process: sch.Schema('Process'), name: str):
@@ -395,23 +399,24 @@ def detach(process: sch.Schema('Process')):
 
 @REGISTRY.method(action='launch')
 def launch_loader(process: sch.Schema('Process'),
-          file: ParamDesc(str, display='File'),
-          args: ParamDesc(str, display='Arguments')=''):
+                  file: ParamDesc(str, display='File'),
+                  args: ParamDesc(str, display='Arguments')=''):
     """
     Start a native process with the given command line, stopping at 'main'.
 
     If 'main' is not defined in the file, this behaves like 'run'.
     """
     util.get_debugger().HandleCommand(f'file {file}')
-    if args is not '':
-        util.get_debugger().HandleCommand(f'settings set target.run-args {args}')
+    if args != '':
+        util.get_debugger().HandleCommand(
+            f'settings set target.run-args {args}')
     util.get_debugger().HandleCommand(f'process launch --stop-at-entry')
 
 
 @REGISTRY.method(action='launch')
 def launch(process: sch.Schema('Process'),
-        file: ParamDesc(str, display='File'),
-        args: ParamDesc(str, display='Arguments')=''):
+           file: ParamDesc(str, display='File'),
+           args: ParamDesc(str, display='Arguments')=''):
     """
     Run a native process with the given command line.
 
@@ -419,8 +424,9 @@ def launch(process: sch.Schema('Process'),
     signaled.
     """
     util.get_debugger().HandleCommand(f'file {file}')
-    if args is not '':
-        util.get_debugger().HandleCommand(f'settings set target.run-args {args}')
+    if args != '':
+        util.get_debugger().HandleCommand(
+            f'settings set target.run-args {args}')
     util.get_debugger().HandleCommand(f'run')
 
 
@@ -440,9 +446,9 @@ def _continue(process: sch.Schema('Process')):
 def interrupt():
     """Interrupt the execution of the debugged program."""
     util.get_debugger().HandleCommand('process interrupt')
-    #util.get_process().SendAsyncInterrupt()
-    #util.get_debugger().HandleCommand('^c')
-    #util.get_process().Signal(2)
+    # util.get_process().SendAsyncInterrupt()
+    # util.get_debugger().HandleCommand('^c')
+    # util.get_process().Signal(2)
 
 
 @REGISTRY.method(action='step_into')
@@ -527,13 +533,15 @@ def break_read_range(process: sch.Schema('Process'), range: AddressRange):
     offset_start = process.trace.memory_mapper.map_back(
         proc, Address(range.space, range.min))
     sz = range.length()
-    util.get_debugger().HandleCommand(f'watchpoint set expression -s {sz} -w read -- {offset_start}')
+    util.get_debugger().HandleCommand(
+        f'watchpoint set expression -s {sz} -w read -- {offset_start}')
 
 
 @REGISTRY.method(action='break_read')
 def break_read_expression(expression: str):
     """Set a read watchpoint."""
-    util.get_debugger().HandleCommand(f'watchpoint set expression -w read -- {expression}')
+    util.get_debugger().HandleCommand(
+        f'watchpoint set expression -w read -- {expression}')
 
 
 @REGISTRY.method(action='break_write')
@@ -543,13 +551,15 @@ def break_write_range(process: sch.Schema('Process'), range: AddressRange):
     offset_start = process.trace.memory_mapper.map_back(
         proc, Address(range.space, range.min))
     sz = range.length()
-    util.get_debugger().HandleCommand(f'watchpoint set expression -s {sz} -- {offset_start}')
+    util.get_debugger().HandleCommand(
+        f'watchpoint set expression -s {sz} -- {offset_start}')
 
 
 @REGISTRY.method(action='break_write')
 def break_write_expression(expression: str):
     """Set a watchpoint."""
-    util.get_debugger().HandleCommand(f'watchpoint set expression -- {expression}')
+    util.get_debugger().HandleCommand(
+        f'watchpoint set expression -- {expression}')
 
 
 @REGISTRY.method(action='break_access')
@@ -559,13 +569,15 @@ def break_access_range(process: sch.Schema('Process'), range: AddressRange):
     offset_start = process.trace.memory_mapper.map_back(
         proc, Address(range.space, range.min))
     sz = range.length()
-    util.get_debugger().HandleCommand(f'watchpoint set expression -s {sz} -w read_write -- {offset_start}')
+    util.get_debugger().HandleCommand(
+        f'watchpoint set expression -s {sz} -w read_write -- {offset_start}')
 
 
 @REGISTRY.method(action='break_access')
 def break_access_expression(expression: str):
     """Set an access watchpoint."""
-    util.get_debugger().HandleCommand(f'watchpoint set expression -w read_write -- {expression}')
+    util.get_debugger().HandleCommand(
+        f'watchpoint set expression -w read_write -- {expression}')
 
 
 @REGISTRY.method(action='break_ext')
@@ -580,11 +592,13 @@ def toggle_watchpoint(breakpoint: sch.Schema('WatchpointSpec'), enabled: bool):
     wpt = find_wpt_by_obj(watchpoint)
     wpt.enabled = enabled
 
+
 @REGISTRY.method(action='toggle')
 def toggle_breakpoint(breakpoint: sch.Schema('BreakpointSpec'), enabled: bool):
     """Toggle a breakpoint."""
     bpt = find_bpt_by_obj(breakpoint)
     bpt.enabled = enabled
+
 
 @REGISTRY.method(action='toggle')
 def toggle_breakpoint_location(location: sch.Schema('BreakpointLocation'), enabled: bool):
@@ -601,6 +615,7 @@ def delete_watchpoint(watchpoint: sch.Schema('WatchpointSpec')):
     wptnum = wpt.GetID()
     util.get_debugger().HandleCommand(f'watchpoint delete {wptnum}')
 
+
 @REGISTRY.method(action='delete')
 def delete_breakpoint(breakpoint: sch.Schema('BreakpointSpec')):
     """Delete a breakpoint."""
@@ -615,8 +630,16 @@ def read_mem(process: sch.Schema('Process'), range: AddressRange):
     proc = find_proc_by_obj(process)
     offset_start = process.trace.memory_mapper.map_back(
         proc, Address(range.space, range.min))
+    ci = util.get_debugger().GetCommandInterpreter()
     with commands.open_tracked_tx('Read Memory'):
-        util.get_debugger().HandleCommand(f'ghidra_trace_putmem 0x{offset_start:x} {range.length()}')
+        result = lldb.SBCommandReturnObject()
+        ci.HandleCommand(
+            f'ghidra trace putmem 0x{offset_start:x} {range.length()}', result)
+        if result.Succeeded():
+            return
+        print(f"Could not read 0x{offset_start:x}: {result}")
+        util.get_debugger().HandleCommand(
+            f'ghidra trace putmem-state 0x{offset_start:x} {range.length()} error')
 
 
 @REGISTRY.method
@@ -628,7 +651,7 @@ def write_mem(process: sch.Schema('Process'), address: Address, data: bytes):
 
 
 @REGISTRY.method
-def write_reg(frame: sch.Schema('Frame'), name: str, value: bytes):
+def write_reg(frame: sch.Schema('StackFrame'), name: str, value: bytes):
     """Write a register."""
     f = find_frame_by_obj(frame)
     f.select()
@@ -637,4 +660,5 @@ def write_reg(frame: sch.Schema('Frame'), name: str, value: bytes):
     reg = find_reg_by_name(f, mname)
     size = int(lldb.parse_and_eval(f'sizeof(${mname})'))
     arr = '{' + ','.join(str(b) for b in mval) + '}'
-    util.get_debugger().HandleCommand(f'expr ((unsigned char[{size}])${mname}) = {arr};')
+    util.get_debugger().HandleCommand(
+        f'expr ((unsigned char[{size}])${mname}) = {arr};')

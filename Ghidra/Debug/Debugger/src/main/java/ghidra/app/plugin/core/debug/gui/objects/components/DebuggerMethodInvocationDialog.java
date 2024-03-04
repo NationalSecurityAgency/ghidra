@@ -310,7 +310,11 @@ public class DebuggerMethodInvocationDialog extends DialogComponentProvider
 
 			PropertyEditor editor = getEditor(param);
 			Object val = computeMemorizedValue(param);
-			editor.setValue(val);
+			if (val == null) {
+				editor.setValue("");
+			} else {
+				editor.setValue(val);
+			}
 			editor.addPropertyChangeListener(this);
 			pairPanel.add(MiscellaneousUtils.getEditorComponent(editor));
 			paramEditors.put(param, editor);

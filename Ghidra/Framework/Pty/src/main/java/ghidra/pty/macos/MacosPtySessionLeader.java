@@ -13,19 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.pty.linux;
+package ghidra.pty.macos;
 
-import com.sun.jna.LastErrorException;
-import com.sun.jna.Native;
+import ghidra.pty.unix.PosixC.Ioctls;
+import ghidra.pty.unix.UnixPtySessionLeader;
 
-public interface Err {
-	PosixC BARE_POSIX = PosixC.BARE;
+public class MacosPtySessionLeader extends UnixPtySessionLeader {
 
-	static int checkLt0(int result) {
-		if (result < 0) {
-			int errno = Native.getLastError();
-			throw new LastErrorException("[" + errno + "] " + BARE_POSIX.strerror(errno));
-		}
-		return result;
+	public static void main(String[] args) throws Exception {
+		MacosPtySessionLeader leader = new MacosPtySessionLeader();
+		leader.parseArgs(args);
+		leader.run();
+	}
+
+	@Override
+	protected Ioctls ioctls() {
+		return MacosIoctls.INSTANCE;
 	}
 }

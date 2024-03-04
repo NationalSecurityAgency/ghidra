@@ -57,15 +57,29 @@ public interface TraceRmiLaunchOffer {
 	 * @param exception optional error, if failed
 	 */
 	public record LaunchResult(Program program, Map<String, TerminalSession> sessions,
-			TraceRmiConnection connection, Trace trace, Throwable exception)
-			implements AutoCloseable {
+			TraceRmiAcceptor acceptor, TraceRmiConnection connection, Trace trace,
+			Throwable exception) implements AutoCloseable {
+		public LaunchResult(Program program, Map<String, TerminalSession> sessions,
+				TraceRmiAcceptor acceptor, TraceRmiConnection connection, Trace trace,
+				Throwable exception) {
+			this.program = program;
+			this.sessions = sessions;
+			this.acceptor = acceptor == null || acceptor.isClosed() ? null : acceptor;
+			this.connection = connection;
+			this.trace = trace;
+			this.exception = exception;
+		}
+
 		@Override
 		public void close() throws Exception {
-			for (TerminalSession s : sessions.values()) {
-				s.close();
-			}
 			if (connection != null) {
 				connection.close();
+			}
+			if (acceptor != null) {
+				acceptor.cancel();
+			}
+			for (TerminalSession s : sessions.values()) {
+				s.close();
 			}
 		}
 	}

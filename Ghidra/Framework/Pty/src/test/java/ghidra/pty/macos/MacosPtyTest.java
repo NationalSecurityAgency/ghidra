@@ -13,13 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.pty.windows;
+package ghidra.pty.macos;
 
-import ghidra.pty.PtyParent;
+import static org.junit.Assume.assumeTrue;
 
-public class ConPtyParent extends ConPtyEndpoint implements PtyParent {
-	public ConPtyParent(Handle writeHandle, Handle readHandle,
-			PseudoConsoleHandle pseudoConsoleHandle) {
-		super(writeHandle, readHandle, pseudoConsoleHandle);
+import java.io.IOException;
+
+import org.junit.Before;
+
+import ghidra.framework.OperatingSystem;
+import ghidra.pty.unix.AbstractUnixPtyTest;
+import ghidra.pty.unix.UnixPty;
+
+public class MacosPtyTest extends AbstractUnixPtyTest {
+	@Before
+	public void checkLinux() {
+		assumeTrue(OperatingSystem.MAC_OS_X == OperatingSystem.CURRENT_OPERATING_SYSTEM);
+	}
+
+	@Override
+	protected UnixPty openpty() throws IOException {
+		return UnixPty.openpty(MacosIoctls.INSTANCE);
 	}
 }
