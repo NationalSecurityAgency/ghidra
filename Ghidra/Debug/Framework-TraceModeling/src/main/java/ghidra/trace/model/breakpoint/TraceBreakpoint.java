@@ -18,6 +18,8 @@ package ghidra.trace.model.breakpoint;
 import java.util.Collection;
 import java.util.Set;
 
+import ghidra.pcode.emu.DefaultPcodeThread.PcodeEmulationLibrary;
+import ghidra.pcode.exec.SleighUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.*;
@@ -51,6 +53,8 @@ public interface TraceBreakpoint extends TraceUniqueObject {
 	 * 
 	 * <p>
 	 * This should be a name suitable for display on the screen
+	 * 
+	 * @param name the new name
 	 */
 	void setName(String name);
 
@@ -75,12 +79,18 @@ public interface TraceBreakpoint extends TraceUniqueObject {
 	AddressRange getRange();
 
 	/**
+	 * Get the minimum address in this breakpoint's range
+	 * 
 	 * @see #getRange()
+	 * @return the minimum address
 	 */
 	Address getMinAddress();
 
 	/**
+	 * Get the maximum address in this breakpoint's range
+	 * 
 	 * @see #getRange()
+	 * @return the maximum address
 	 */
 	Address getMaxAddress();
 
@@ -109,6 +119,7 @@ public interface TraceBreakpoint extends TraceUniqueObject {
 	 * Set the cleared snap of this breakpoint
 	 * 
 	 * @param clearedSnap the cleared snap, or {@link Long#MAX_VALUE} for "to the end of time"
+	 * @throws DuplicateNameException if extending the lifespan would cause a naming collision
 	 */
 	void setClearedSnap(long clearedSnap) throws DuplicateNameException;
 
@@ -236,21 +247,27 @@ public interface TraceBreakpoint extends TraceUniqueObject {
 	 * Set Sleigh source to replace the breakpointed instruction in emulation
 	 * 
 	 * <p>
-	 * The default is simply "<code>{@link PcodeEmulationLibrary#emu_swi() emu_swi()};
-	 * {@link PcodeEmulationLibrary#emu_exec_decoded() emu_exec_decoded()};</code>", effectively a
-	 * non-conditional breakpoint followed by execution of the actual instruction. Modifying this
-	 * allows clients to create conditional breakpoints or simply override or inject additional
-	 * logic into an emulated target.
+	 * The default is simply:
+	 * </p>
+	 * 
+	 * <pre>
+	 * {@link PcodeEmulationLibrary#emu_swi() emu_swi()};
+	 * {@link PcodeEmulationLibrary#emu_exec_decoded() emu_exec_decoded()};
+	 * </pre>
+	 * <p>
+	 * That is effectively a non-conditional breakpoint followed by execution of the actual
+	 * instruction. Modifying this allows clients to create conditional breakpoints or simply
+	 * override or inject additional logic into an emulated target.
 	 * 
 	 * <p>
-	 * <b>NOTE:</b> This current has no effect on access breakpoints, but only execution
+	 * <b>NOTE:</b> This currently has no effect on access breakpoints, but only execution
 	 * breakpoints.
 	 * 
 	 * <p>
 	 * If the specified source fails to compile during emulator set-up, this will fall back to
-	 * {@link PcodeEmulationLibrary#emu_err
+	 * {@link PcodeEmulationLibrary#emu_swi()}
 	 * 
-	 * @see #DEFAULT_SLEIGH
+	 * @see SleighUtils#UNCONDITIONAL_BREAK
 	 * @param sleigh the Sleigh source
 	 */
 	void setEmuSleigh(String sleigh);
@@ -266,4 +283,18 @@ public interface TraceBreakpoint extends TraceUniqueObject {
 	 * Delete this breakpoint from the trace
 	 */
 	void delete();
+
+	/**
+	 * Check if the breakpoint is valid at the given snapshot
+	 * 
+	 * <p>
+	 * In object mode, a breakpoint's life may be disjoint, so checking if the snap occurs between
+	 * creation and destruction is not quite sufficient. This method encapsulates validity. In
+	 * object mode, it checks that the breakpoint object has a canonical parent at the given
+	 * snapshot. In table mode, it checks that the lifespan contains the snap.
+	 * 
+	 * @param snap the snapshot key
+	 * @return true if valid, false if not
+	 */
+	boolean isValid(long snap);
 }

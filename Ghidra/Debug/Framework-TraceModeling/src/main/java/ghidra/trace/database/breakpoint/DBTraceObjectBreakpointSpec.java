@@ -224,6 +224,11 @@ public class DBTraceObjectBreakpointSpec
 	}
 
 	@Override
+	public boolean isValid(long snap) {
+		return object.getCanonicalParent(snap) != null;
+	}
+
+	@Override
 	public TraceObject getObject() {
 		return object;
 	}

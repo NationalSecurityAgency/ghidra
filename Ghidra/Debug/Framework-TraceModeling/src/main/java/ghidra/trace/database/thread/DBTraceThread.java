@@ -184,4 +184,11 @@ public class DBTraceThread extends DBAnnotatedObject implements TraceThread {
 	public void delete() {
 		manager.deleteThread(this);
 	}
+
+	@Override
+	public boolean isValid(long snap) {
+		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
+			return lifespan.contains(snap);
+		}
+	}
 }
