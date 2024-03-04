@@ -283,14 +283,19 @@ class Trace(object):
                 self._snap += 1
             return self._snap
 
-    def snapshot(self, description, datetime=None):
+    def snapshot(self, description, datetime=None, snap=None):
         """
         Create a snapshot.
 
         Future state operations implicitly modify this new snapshot.
+        The snap argument is optional.  If ommitted, this creates a snapshot immediately
+        after the last created snapshot.  If given, it creates the given snapshot.
         """
 
-        snap = self._next_snap()
+        if snap is None:
+            snap = self._next_snap()
+        else:
+            self._snap = snap
         self.client._snapshot(self.id, description, datetime, snap)
         return snap
 
