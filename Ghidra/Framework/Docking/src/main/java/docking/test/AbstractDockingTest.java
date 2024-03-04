@@ -1283,7 +1283,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 
 		}, waitForCompletion);
 
-		if (!SwingUtilities.isEventDispatchThread()) {
+		if (!Swing.isSwingThread()) {
 			waitForSwing();
 		}
 	}

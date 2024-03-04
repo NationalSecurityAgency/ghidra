@@ -349,11 +349,39 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	}
 
 	/**
+	 * Undo the last transaction on the domain object and wait for all events to be flushed.  This
+	 * method takes the undo item name, which is used to find the undo item.  Once found, all items
+	 * before and including that undo item will be undone.
+	 *
+	 * @param dobj The domain object upon which to perform the undo.
+	 * @param name the name of the undo item on the stack.
+	 */
+	public static void undo(UndoableDomainObject dobj, String name) {
+
+		List<String> names = dobj.getAllUndoNames();
+		int i = 0;
+		for (; i < names.size(); i++) {
+			String undoName = names.get(i);
+			if (name.equals(undoName)) {
+				break;
+			}
+		}
+
+		if (i == names.size()) {
+			fail("Unable to find undo entry '%s'.  All undo names: %s".formatted(name, names));
+		}
+
+		while (i-- >= 0) {
+			undo(dobj, true);
+		}
+	}
+
+	/**
 	 * Undo the last transaction on the domain object and wait for all events to be flushed.
 	 *
 	 * @param dobj The domain object upon which to perform the undo.
 	 */
-	public static void undo(final UndoableDomainObject dobj) {
+	public static void undo(UndoableDomainObject dobj) {
 		undo(dobj, true);
 	}
 
@@ -362,7 +390,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 *
 	 * @param dobj The domain object upon which to perform the redo.
 	 */
-	public static void redo(final UndoableDomainObject dobj) {
+	public static void redo(UndoableDomainObject dobj) {
 		redo(dobj, true);
 	}
 
