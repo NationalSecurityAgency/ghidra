@@ -11,6 +11,7 @@
 <symbol space="ram" offset="0x484" name="iofunc"/>
 </binaryimage>
 <script>
+  <com>option integerformat dec</com>
   <com>volatile [ram,0x210000,64]</com>
   <com>map addr r0x210000 int1 NVRAM[32]</com>
   <com>set track A0 0x210000 r0x484 r0x485</com>
