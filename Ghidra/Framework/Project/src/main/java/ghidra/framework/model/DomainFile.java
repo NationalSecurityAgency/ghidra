@@ -65,8 +65,13 @@ public interface DomainFile extends Comparable<DomainFile> {
 	public boolean exists();
 
 	/**
-	 * Returns a unique file-ID 
-	 * @return the ID
+	 * Returns a unique file-ID if one has been established or null.  Examples which may result in 
+	 * null ID:
+	 * <ul>
+	 * <li>Very old project file which pre-dates introduction of file ID, or</li>
+	 * <li>Remote versioned file with lost connection</li> 
+	 * </ul>
+	 * @return the file-ID or null if failed to obtain ID.
 	 */
 	public String getFileID();
 

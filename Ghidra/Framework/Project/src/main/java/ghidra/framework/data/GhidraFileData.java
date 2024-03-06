@@ -218,8 +218,8 @@ public class GhidraFileData {
 	}
 
 	/**
-	 * Returns a unique file-ID 
-	 * @return the ID
+	 * Returns a unique file-ID if one has been established or null
+	 * @return the file-ID or null if failed to obtain ID
 	 */
 	String getFileID() {
 		return fileID;
