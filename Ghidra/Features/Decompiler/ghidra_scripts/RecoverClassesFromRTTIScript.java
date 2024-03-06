@@ -80,6 +80,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.reloc.Relocation;
+import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.reloc.RelocationTable;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.GhidraProgramUtilities;
@@ -210,8 +211,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			if (!runGcc) {
 				return;
 			}
-			//run fixup old elf relocations script
-			runScript("FixElfExternalOffsetDataRelocationScript.java");
+
 			recoverClassesFromRTTI = new RTTIGccClassRecoverer(currentProgram, state.getTool(),
 				this, BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
 				nameVfunctions, hasDebugSymbols, monitor);
@@ -231,9 +231,6 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			if (!runGcc) {
 				return;
 			}
-
-			//run fixup old elf relocations script
-			runScript("FixElfExternalOffsetDataRelocationScript.java");
 
 			hasDebugSymbols = isDwarfLoadedInProgram();
 			if (hasDwarf() && !hasDebugSymbols) {
@@ -379,7 +376,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			DWARFProgram.DWARF_ROOT_NAME) || options.getBoolean("DWARF Loaded", false));
 	}
 
-	public String validate() throws CancelledException {
+	public String validate() throws Exception {
 
 		if (currentProgram == null) {
 			return ("There is no open program");
@@ -417,6 +414,8 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		// check that gcc loader or mingw analyzer has fixed the relocations correctly
 		if (isGcc()) {
 
+			runScript("FixElfExternalOffsetDataRelocationScript.java");
+
 			// first check that there is even rtti by searching the special string in memory
 			if (!isStringInProgramMemory("class_type_info")) {
 				return ("This program does not contain RTTI.");
@@ -432,7 +431,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 					"contact the Ghidra team so this issue can be fixed.");
 			}
 
-			if (hasUnhandledRelocations()) {
+			if (hasRelocationIssue()) {
 				return ("This program has unhandled elf relocations so cannot continue. Please " +
 					"contact the Ghidra team for assistance.");
 			}
@@ -442,7 +441,13 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 	}
 
-	private boolean hasUnhandledRelocations() throws CancelledException {
+	/**
+	 * Method to determine if the gcc relocations needed to find the special typeinfos/vtables 
+	 * have any issues that would keep script from running correctly.
+	 * @return true if there are any issues with the relocations, false otherwise
+	 * @throws CancelledException if cancelled
+	 */
+	private boolean hasRelocationIssue() throws CancelledException {
 
 		RelocationTable relocationTable = currentProgram.getRelocationTable();
 
@@ -452,16 +457,38 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			monitor.checkCancelled();
 			Relocation r = relocations.next();
 
-			if (r.getSymbolName().contains("class_type_info") &&
-				(r.getStatus() != Relocation.Status.APPLIED &&
-					r.getStatus() != Relocation.Status.APPLIED_OTHER &&
-					r.getStatus() != Relocation.Status.SKIPPED)) {
-				return true;
-			}
+			String symbolName = r.getSymbolName();
 
+			if (symbolName != null && symbolName.contains("class_type_info")) {
+
+				Status status = r.getStatus();
+
+				// if any relocations for special typeinfo class symbols have failed then there
+				// is an issue
+				if (status == Status.FAILURE) {
+					return true;
+				}
+				
+				// if any relocations for special typeinfo class symbols are unsupported then
+				// determine where the symbol is located before determining if it is an issue
+				if(status == Status.UNSUPPORTED) {
+
+					//if relocation symbol is the same as the symbol at the relcation address
+					//then this situation is not an issue - it indicates a copy relocation at the
+					//location of the special typeinfo vtable which is a use case that can be handled
+					Address address = r.getAddress();
+					Symbol symbolAtAddress  = currentProgram.getSymbolTable().getSymbol(symbolName, address, currentProgram.getGlobalNamespace());
+					if(symbolAtAddress != null) {
+						continue;
+					}
+					return true;
+				}
+
+			}
 		}
 		return false;
 	}
+
 
 	private void analyzeProgramChanges(AddressSetView beforeChanges) throws Exception {
 

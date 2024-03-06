@@ -80,7 +80,9 @@ public class Vtable {
 		this.monitor = monitor;
 		this.typeinfoRefAddress = typeinfoRef.getAddress();
 		this.typeinfo = (GccTypeinfo) typeinfoRef.getReferencedTypeinfo();
-		this.typeinfoNamespace = typeinfo.getNamespace();
+		if (this.typeinfo != null) {
+			this.typeinfoNamespace = typeinfo.getNamespace();
+		}
 
 		AddressSpace addressSpace = vtableAddress.getAddressSpace();
 		defaultPointerSize = addressSpace.getPointerSize();
@@ -390,9 +392,6 @@ public class Vtable {
 	 */
 	private boolean isPossibleFunctionPointer(Address address) throws CancelledException {
 
-		// TODO: make one that works for all casea in helper
-		// TODO: make sure it recognizes the external functions
-
 		long longValue = extendedFlatAPI.getLongValueAt(address);
 
 		Register lowBitCodeMode = program.getRegister("LowBitCodeMode");
@@ -605,26 +604,6 @@ public class Vtable {
 	public List<Vtable> getInternalVtables() {
 		return internalVtables;
 	}
-
-	
-	// TODO: put in helper or ext api
-	private boolean inExternalBlock(Address address) {
-
-		MemoryBlock externalBlock = getExternalBlock();
-		if (externalBlock == null) {
-			return false;
-		}
-		if (externalBlock.contains(address)) {
-			return true;
-		}
-		return false;
-
-	}
-
-	private MemoryBlock getExternalBlock() {
-		return program.getMemory().getBlock("EXTERNAL");
-	}
-
 	
 	public void setIsConstructionVtable(Boolean setting) {
 		isConstruction = setting;
