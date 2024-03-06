@@ -363,7 +363,7 @@ public class PackedDatabaseCache {
 				else {
 					Msg.debug(this, "Using cached packed database: " + cachedDb.packedDbFilePath);
 				}
-				return new PackedDatabase(packedDbFile, packedDbLock, cachedDb, monitor);
+				return new PackedDatabase(cachedDb, packedDbFile, packedDbLock, monitor);
 			}
 			finally {
 				if (packedDbLock != null && packedDbLock.haveLock()) {
