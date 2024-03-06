@@ -41,14 +41,12 @@ public enum SPARC_ElfRelocationType implements ElfRelocationType {
 	R_SPARC_JMP_SLOT(21),		//
 	R_SPARC_RELATIVE(22),		// B + A
 	R_SPARC_UA32(23),		// S + A
-
 	R_SPARC_PLT32(24),		// L + A
 	R_SPARC_HIPLT22(25),		// (L + A) >> 10
 	R_SPARC_LOPLT10(26),		// (L + A) & 0x3FF
 	R_SPARC_PCPLT32(27),		// L + A - P
 	R_SPARC_PCPLT22(28),		// (L + A - P) >> 10
 	R_SPARC_PCPLT10(29),		// (L + A - P) & 0x3FF
-
 	R_SPARC_10(30),			// S + A
 	R_SPARC_11(31),			// S + A
 	R_SPARC_64(32),			// S + A
@@ -75,7 +73,6 @@ public enum SPARC_ElfRelocationType implements ElfRelocationType {
 	R_SPARC_REGISTER(53),		// S + A
 	R_SPARC_UA64(54),		// S + A
 	R_SPARC_UA16(55),		// S + A
-
 	R_SPARC_TLS_GD_HI22(56),	//
 	R_SPARC_TLS_GD_LO10(57),	//
 	R_SPARC_TLS_GD_ADD(58),		//
@@ -100,7 +97,6 @@ public enum SPARC_ElfRelocationType implements ElfRelocationType {
 	R_SPARC_TLS_DTPOFF64(77),	//
 	R_SPARC_TLS_TPOFF32(78),	//
 	R_SPARC_TLS_TPOFF64(79),	//
-
 	R_SPARC_GOTDATA_HIX22(80),	// ((S + A - GOT) >> 10) ^ ((S + A - GOT) >> 31)
 	R_SPARC_GOTDATA_LOX10(81),	// ((S + A - GOT) & 0x3ff) | (((S + A - GOT) >> 31) & 0x1c00)
 	R_SPARC_GOTDATA_OP_HIX22(82),	// (G >> 10) ^ (G >> 31)

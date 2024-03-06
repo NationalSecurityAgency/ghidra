@@ -151,6 +151,7 @@ public enum MIPS_ElfRelocationType implements ElfRelocationType {
 	R_MIPS_PC32(248),
 	R_MIPS_EH(249),
 	R_MIPS_GNU_REL16_S2(250),
+
 	R_MIPS_GNU_VTINHERIT(253),
 	R_MIPS_GNU_VTENTRY(254);
 
