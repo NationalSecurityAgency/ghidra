@@ -53,7 +53,11 @@ public enum X86_32_ElfRelocationType implements ElfRelocationType {
 	R_386_TLS_GOTDESC(39), 	// GOT offset for TLS descriptor.  */
 	R_386_TLS_DESC_CALL(40), // Marker of call through TLS descriptor for relaxation.  */
 	R_386_TLS_DESC(41), 	// TLS descriptor containing pointer to code and to argument, returning the TLS offset for the symbol.  */
-	R_386_IRELATIVE(42); 	// Adjust indirectly by program base */
+	R_386_IRELATIVE(42), 	// Adjust indirectly by program base */
+	R_386_GOT32X(43),
+	R_386_USED_BY_INTEL_200(200),
+	R_386_GNU_VTINHERIT(250),
+	R_386_GNU_VTENTRY(251);
 
 	public final int typeId;
 

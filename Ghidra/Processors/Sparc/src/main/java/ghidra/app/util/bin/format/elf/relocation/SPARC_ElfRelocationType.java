@@ -117,9 +117,7 @@ public enum SPARC_ElfRelocationType implements ElfRelocationType {
 	R_SPARC_IRELATIVE(249),		//
 	R_SPARC_GNU_VTIHERIT(250),	//
 	R_SPARC_GNU_VTENTRY(251),	//
-	R_SPARC_REV32(252),		//
-
-	R_SPARC_max(253);		// update as needed
+	R_SPARC_REV32(252);		//
 
 	public final int typeId;
 
