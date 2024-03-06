@@ -15,7 +15,7 @@
 ::@env OPT_TARGET_IMG:str="" "Image" "The target binary executable image"
 ::@env OPT_TARGET_ARGS:str="" "Arguments" "Command-line arguments to pass to the target"
 ::@env OPT_USE_DBGMODEL:bool=true "Use dbgmodel" "Load and use dbgmodel.dll if it is available."
-::@env OPT_DBGMODEL_PATH:str="" "Path to dbgeng" "Path to dbgeng and associated DLLS (if not Windows Kits)."
+::@env WINDBG_DIR:str="" "Path to dbgeng" "Path to dbgeng and associated DLLS (if not Windows Kits)."
 
 @echo off
 
