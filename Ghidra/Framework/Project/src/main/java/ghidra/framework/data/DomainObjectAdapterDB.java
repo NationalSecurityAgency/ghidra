@@ -554,7 +554,7 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 		}
 		try {
 
-			ContentHandler ch = DomainObjectAdapter.getContentHandler(this);
+			ContentHandler<?> ch = DomainObjectAdapter.getContentHandler(this);
 			PackedDatabase.packDatabase(dbh, name, ch.getContentType(), outputFile, monitor);
 
 			// TODO :( output method will cause Redo-able transactions to be cleared
