@@ -312,6 +312,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 	@Override
 	public void deleteAddressRange(Address startAddr, Address endAddr, TaskMonitor monitor)
 			throws CancelledException {
+		AddressRange.checkValidRange(startAddr, endAddr);
 		lock.acquire();
 		try {
 			ArrayList<EquateRefDB> list = new ArrayList<>();

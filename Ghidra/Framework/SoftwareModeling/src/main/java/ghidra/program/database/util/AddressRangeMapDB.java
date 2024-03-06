@@ -214,13 +214,7 @@ public class AddressRangeMapDB implements DBListener {
 	 * @throws IllegalArgumentException if the end address is greater then the start address
 	 */
 	public void paintRange(Address startAddress, Address endAddress, Field value) {
-		if (!startAddress.hasSameAddressSpace(endAddress)) {
-			throw new IllegalArgumentException("Addresses must be in the same space!");
-		}
-		if (startAddress.compareTo(endAddress) > 0) {
-			throw new IllegalArgumentException("Start address must be <= end address!");
-		}
-
+		AddressRange.checkValidRange(startAddress, endAddress);
 		lock.acquire();
 		try {
 			clearCache();
@@ -566,8 +560,7 @@ public class AddressRangeMapDB implements DBListener {
 		record = getRecordAfter(address);
 		if (record != null) {
 			Address startAddress = getStartAddress(record);
-			if (startAddress.hasSameAddressSpace(address) &&
-				startAddress.compareTo(address) > 0) {
+			if (startAddress.hasSameAddressSpace(address) && startAddress.compareTo(address) > 0) {
 				gapEnd = startAddress.subtract(1);
 			}
 		}
