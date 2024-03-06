@@ -49,8 +49,8 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 
 	@Override
 	public RelocationResult relocate(ElfRelocationContext elfRelocationContext,
-			ElfRelocation relocation,
-			Address relocationAddress) throws MemoryAccessException, NotFoundException {
+			ElfRelocation relocation, Address relocationAddress) 
+					throws MemoryAccessException, NotFoundException {
 
 		PowerPC_ElfRelocationContext ppcRelocationContext =
 			(PowerPC_ElfRelocationContext) elfRelocationContext;
@@ -100,6 +100,7 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 		int symbolValue = (int) elfRelocationContext.getSymbolValue(sym);
 //		}
 		String symbolName = elfRelocationContext.getSymbolName(symbolIndex);
+		long relocbase = elfRelocationContext.getImageBaseWordAdjustmentOffset();
 
 		int oldValue = memory.getInt(relocationAddress);
 		int newValue = 0;
@@ -129,7 +130,19 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 				break;
 			case PowerPC_ElfRelocationConstants.R_PPC_ADDR16:
 			case PowerPC_ElfRelocationConstants.R_PPC_UADDR16:
+				newValue = symbolValue + addend;
+				memory.setShort(relocationAddress, (short) newValue);
+				byteLength = 2;
+				break;
 			case PowerPC_ElfRelocationConstants.R_PPC_ADDR16_LO:
+				if (Long.compareUnsigned(symbolValue, relocbase) > 0 && 
+						Long.compareUnsigned(symbolValue, relocbase + addend) <= 0) {
+					/**
+					 * (freebsd) Addend values are sometimes relative to sections in rela,
+					 * where in reality they are relative to relocbase.  Detect this condition.
+					 */
+					symbolValue = (int) relocbase;
+				}
 				newValue = symbolValue + addend;
 				memory.setShort(relocationAddress, (short) newValue);
 				byteLength = 2;
@@ -139,37 +152,17 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 				memory.setShort(relocationAddress, (short) newValue);
 				byteLength = 2;
 				break;
-			/**
-			 * 
-			R_POWERPC_ADDR16_HA: ((Symbol + Addend + 0x8000) >> 16) & 0xffff
-			static inline void addr16_ha(unsigned char* view, Address value)
-			{ This::addr16_hi(view, value + 0x8000); }
-			
-			static inline void
-			addr16_hi(unsigned char* view, Address value)
-			{ This::template rela<16,16>(view, 16, 0xffff, value + 0x8000, CHECK_NONE); }
-			
-			rela(unsigned char* view,
-			unsigned int right_shift,
-			typename elfcpp::Valtype_base<fieldsize>::Valtype dst_mask,
-			Address value,
-			Overflow_check overflow)
-			{
-			typedef typename elfcpp::Swap<fieldsize, big_endian>::Valtype Valtype;
-			Valtype* wv = reinterpret_cast<Valtype*>(view);
-			Valtype val = elfcpp::Swap<fieldsize, big_endian>::readval(wv);  // original bytes
-			
-			Valtype reloc = value >> 16;
-			val &= ~0xffff;
-			reloc &= dst_mask;
-			elfcpp::Swap<fieldsize, big_endian>::writeval(wv, val | reloc); // write instr btes
-			return overflowed<valsize>(value >> 16, overflow);
-			}
-			
-			
-			 */
 			case PowerPC_ElfRelocationConstants.R_PPC_ADDR16_HA:
-				newValue = (symbolValue + addend + 0x8000) >> 16;
+				if (Long.compareUnsigned(symbolValue, relocbase) > 0 && 
+						Long.compareUnsigned(symbolValue, relocbase + addend) <= 0) {
+					/**
+					 * (freebsd) Addend values are sometimes relative to sections in rela,
+					 * where in reality they are relative to relocbase.  Detect this condition.
+					 */
+					symbolValue = (int) relocbase;
+				}
+				newValue = symbolValue + addend;
+				newValue = (newValue >> 16) + ((newValue & 0x8000) != 0 ? 1 : 0);
 				memory.setShort(relocationAddress, (short) newValue);
 				byteLength = 2;
 				break;
