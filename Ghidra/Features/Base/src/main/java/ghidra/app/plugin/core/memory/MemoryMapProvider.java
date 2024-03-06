@@ -480,6 +480,13 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 			column.setResizable(false);
 		}
 
+		column = table.getColumn(MemoryMapModel.ARTIFICIAL_COL);
+		if (column != null) {
+			column.setMaxWidth(65);
+			column.setMinWidth(65);
+			column.setResizable(false);
+		}
+
 		column = table.getColumn(MemoryMapModel.BLOCK_TYPE_COL);
 		if (column != null) {
 			column.setMinWidth(25);

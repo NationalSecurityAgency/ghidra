@@ -105,8 +105,8 @@ public class MachoProgramBuilder {
 	 */
 	public static void buildProgram(Program program, ByteProvider provider, FileBytes fileBytes,
 			MessageLog log, TaskMonitor monitor) throws Exception {
-		MachoProgramBuilder machoProgramBuilder = new MachoProgramBuilder(program, provider,
-			fileBytes, log, monitor);
+		MachoProgramBuilder machoProgramBuilder =
+			new MachoProgramBuilder(program, provider, fileBytes, log, monitor);
 		machoProgramBuilder.build();
 	}
 
@@ -154,7 +154,7 @@ public class MachoProgramBuilder {
 		fixupProgramTree(null); // should be done last to account for new memory blocks
 		setCompiler();
 	}
-	
+
 	/**
 	 * Sets the image base
 	 * 
@@ -339,8 +339,7 @@ public class MachoProgramBuilder {
 	 * @param suffix An optional suffix that will get appended to tree segment and segment nodes
 	 * @throws Exception if there was a problem fixing up the Program Tree
 	 */
-	protected void fixupProgramTree(String suffix)
-			throws Exception {
+	protected void fixupProgramTree(String suffix) throws Exception {
 		if (suffix == null) {
 			suffix = "";
 		}
@@ -399,7 +398,7 @@ public class MachoProgramBuilder {
 						section.getSectionName() + suffix));
 				sectionFragment.move(sectionStart, sectionEnd);
 			}
-			
+
 			// If the sections fully filled the segment, we can remove the now-empty segment
 			if (segmentFragment.isEmpty()) {
 				segmentModule.removeChild(segmentFragment.getName());
@@ -456,7 +455,7 @@ public class MachoProgramBuilder {
 			log.appendMsg("Unable to determine entry point.");
 		}
 	}
- 	
+
 	protected boolean processExports(MachHeader header) throws Exception {
 		monitor.setMessage("Processing exports...");
 
@@ -501,7 +500,7 @@ public class MachoProgramBuilder {
 		}
 
 		return !exports.isEmpty();
- 	}
+	}
 
 	protected void processNewExport(Address baseAddr, ExportEntry export, String name)
 			throws AddressOutOfBoundsException, Exception {
@@ -680,6 +679,10 @@ public class MachoProgramBuilder {
 				start, undefinedSymbols.size() * machoHeader.getAddressSize(), false);
 			// assume any value in external is writable.
 			block.setWrite(true);
+
+			// Mark block as an artificial fabrication
+			block.setArtificial(true);
+
 			block.setSourceName(BLOCK_SOURCE_NAME);
 			block.setComment(
 				"NOTE: This block is artificial and is used to make relocations work correctly");
@@ -792,14 +795,15 @@ public class MachoProgramBuilder {
 		}
 	}
 
-	private void processBindings(BindingTable bindingTable, List<String> libraryPaths) throws Exception {
+	private void processBindings(BindingTable bindingTable, List<String> libraryPaths)
+			throws Exception {
 		DataConverter converter = DataConverter.getInstance(program.getLanguage().isBigEndian());
 		SymbolTable symbolTable = program.getSymbolTable();
 
 		List<Binding> bindings = bindingTable.getBindings();
 		List<Binding> threadedBindings = bindingTable.getThreadedBindings();
 		List<SegmentCommand> segments = machoHeader.getAllSegments();
-		
+
 		if (threadedBindings != null) {
 			DyldChainedFixups dyldChainedFixups =
 				new DyldChainedFixups(program, machoHeader, libraryPaths, log, monitor);
@@ -834,7 +838,7 @@ public class MachoProgramBuilder {
 				Address addr =
 					space.getAddress(segments.get(binding.getSegmentIndex()).getVMaddress() +
 						binding.getSegmentOffset());
-				
+
 				fixupExternalLibrary(binding.getLibraryOrdinal(), symbol, libraryPaths);
 
 				boolean success = false;
@@ -1103,16 +1107,16 @@ public class MachoProgramBuilder {
 	}
 
 	/**
- 	 * Processes the section relocations from all {@link Section}s.
- 	 * 
- 	 * @throws CancelledException if the operation was cancelled.
- 	 */
- 	protected void processSectionRelocations() throws CancelledException {
- 		monitor.setMessage("Processing section relocations...");
+	 * Processes the section relocations from all {@link Section}s.
+	 * 
+	 * @throws CancelledException if the operation was cancelled.
+	 */
+	protected void processSectionRelocations() throws CancelledException {
+		monitor.setMessage("Processing section relocations...");
 
 		LinkedHashMap<RelocationInfo, Address> relocationMap = new LinkedHashMap<>();
- 		for (Section section : machoHeader.getAllSections()) {
- 			monitor.checkCancelled();
+		for (Section section : machoHeader.getAllSections()) {
+			monitor.checkCancelled();
 
 			MemoryBlock sectionMemoryBlock = getMemoryBlock(section);
 			if (sectionMemoryBlock == null) {
@@ -1124,54 +1128,54 @@ public class MachoProgramBuilder {
 			}
 
 			for (RelocationInfo relocationInfo : section.getRelocations()) {
- 				monitor.checkCancelled();
+				monitor.checkCancelled();
 				Address address = sectionMemoryBlock.getStart().add(relocationInfo.getAddress());
 				relocationMap.put(relocationInfo, address);
 			}
 		}
- 		performRelocations(relocationMap);
+		performRelocations(relocationMap);
 	}
 
 	/**
- 	 * Processes the external relocations from all {@link DynamicSymbolTableCommand}s.
- 	 * 
- 	 * @throws CancelledException if the operation was cancelled.
- 	 */
- 	protected void processExternalRelocations() throws CancelledException {
+	 * Processes the external relocations from all {@link DynamicSymbolTableCommand}s.
+	 * 
+	 * @throws CancelledException if the operation was cancelled.
+	 */
+	protected void processExternalRelocations() throws CancelledException {
 
 		monitor.setMessage("Processing external relocations...");
 
 		LinkedHashMap<RelocationInfo, Address> relocationMap = new LinkedHashMap<>();
- 		for (DynamicSymbolTableCommand cmd : machoHeader
- 				.getLoadCommands(DynamicSymbolTableCommand.class)) {
- 			monitor.checkCancelled();
- 			for (RelocationInfo relocationInfo : cmd.getExternalRelocations()) {
- 				monitor.checkCancelled();
- 				relocationMap.put(relocationInfo, space.getAddress(relocationInfo.getAddress()));
- 			}
- 		}
- 		performRelocations(relocationMap);
+		for (DynamicSymbolTableCommand cmd : machoHeader
+				.getLoadCommands(DynamicSymbolTableCommand.class)) {
+			monitor.checkCancelled();
+			for (RelocationInfo relocationInfo : cmd.getExternalRelocations()) {
+				monitor.checkCancelled();
+				relocationMap.put(relocationInfo, space.getAddress(relocationInfo.getAddress()));
+			}
+		}
+		performRelocations(relocationMap);
 	}
 
 	/**
- 	 * Processes the local relocations from all {@link DynamicSymbolTableCommand}s.
- 	 * 
- 	 * @throws CancelledException if the operation was cancelled.
- 	 */
- 	protected void processLocalRelocations() throws CancelledException {
+	 * Processes the local relocations from all {@link DynamicSymbolTableCommand}s.
+	 * 
+	 * @throws CancelledException if the operation was cancelled.
+	 */
+	protected void processLocalRelocations() throws CancelledException {
 
 		monitor.setMessage("Processing local relocations...");
 
 		LinkedHashMap<RelocationInfo, Address> relocationMap = new LinkedHashMap<>();
- 		for (DynamicSymbolTableCommand cmd : machoHeader
- 				.getLoadCommands(DynamicSymbolTableCommand.class)) {
- 			monitor.checkCancelled();
- 			for (RelocationInfo relocationInfo : cmd.getLocalRelocations()) {
- 				monitor.checkCancelled();
- 				relocationMap.put(relocationInfo, space.getAddress(relocationInfo.getAddress()));
- 			}
- 		}
- 		performRelocations(relocationMap);
+		for (DynamicSymbolTableCommand cmd : machoHeader
+				.getLoadCommands(DynamicSymbolTableCommand.class)) {
+			monitor.checkCancelled();
+			for (RelocationInfo relocationInfo : cmd.getLocalRelocations()) {
+				monitor.checkCancelled();
+				relocationMap.put(relocationInfo, space.getAddress(relocationInfo.getAddress()));
+			}
+		}
+		performRelocations(relocationMap);
 	}
 
 	protected List<String> processLibraries() throws Exception {
@@ -1215,7 +1219,7 @@ public class MachoProgramBuilder {
 		if (program.getSymbolTable().getLibrarySymbol(Library.UNKNOWN) == null) {
 			program.getSymbolTable().createExternalLibrary(Library.UNKNOWN, SourceType.IMPORTED);
 		}
-		
+
 		return libraryPaths;
 	}
 
@@ -1257,23 +1261,23 @@ public class MachoProgramBuilder {
 	 * @throws CancelledException if the operation was cancelled.
 	 */
 	private void performRelocations(LinkedHashMap<RelocationInfo, Address> relocationMap)
- 			throws CancelledException {
+			throws CancelledException {
 
 		if (relocationMap.isEmpty()) {
 			return;
 		}
 
- 		MachoRelocationHandler handler = MachoRelocationHandlerFactory.getHandler(machoHeader);
+		MachoRelocationHandler handler = MachoRelocationHandlerFactory.getHandler(machoHeader);
 		if (handler == null) {
 			log.appendMsg(String.format("No relocation handler for machine type 0x%x",
 				machoHeader.getCpuType()));
 		}
 
- 		Iterator<RelocationInfo> iter = relocationMap.keySet().iterator();
- 		while (iter.hasNext()) {
- 			RelocationInfo relocationInfo = iter.next();
- 			Address address = relocationMap.get(relocationInfo);
- 			MachoRelocation relocation = null;
+		Iterator<RelocationInfo> iter = relocationMap.keySet().iterator();
+		while (iter.hasNext()) {
+			RelocationInfo relocationInfo = iter.next();
+			Address address = relocationMap.get(relocationInfo);
+			MachoRelocation relocation = null;
 
 			RelocationResult result = RelocationResult.FAILURE;
 			if (handler != null) {
@@ -1281,7 +1285,7 @@ public class MachoProgramBuilder {
 						? new MachoRelocation(program, machoHeader, address, relocationInfo,
 							iter.next())
 						: new MachoRelocation(program, machoHeader, address, relocationInfo);
- 				try {
+				try {
 					result = handler.relocate(relocation);
 
 					if (result.status() == Status.UNSUPPORTED) {
@@ -1291,9 +1295,9 @@ public class MachoProgramBuilder {
 					}
 				}
 				catch (MemoryAccessException e) {
- 					handleRelocationError(address, String.format(
+					handleRelocationError(address, String.format(
 						"Relocation failure at address %s: error accessing memory.", address));
- 				}
+				}
 				catch (RelocationException e) {
 					handleRelocationError(address, String.format(
 						"Relocation failure at address %s: %s", address, e.getMessage()));
@@ -1306,18 +1310,19 @@ public class MachoProgramBuilder {
 					msg = String.format("Relocation failure at address %s: %s", address, msg);
 					handleRelocationError(address, msg);
 					Msg.error(this, msg, e);
- 				}
+				}
 			}
 			program.getRelocationTable()
 					.add(address, result.status(), relocationInfo.getType(),
-						new long[] { relocationInfo.getValue(),
-					relocationInfo.getLength(), relocationInfo.isPcRelocated() ? 1 : 0,
-					relocationInfo.isExternal() ? 1 : 0, relocationInfo.isScattered() ? 1 : 0 },
+						new long[] { relocationInfo.getValue(), relocationInfo.getLength(),
+							relocationInfo.isPcRelocated() ? 1 : 0,
+							relocationInfo.isExternal() ? 1 : 0,
+							relocationInfo.isScattered() ? 1 : 0 },
 						result.byteLength(),
 						relocation != null ? relocation.getTargetDescription() : null);
 		}
 	}
-	
+
 	/**
 	 * Marks up {@link LoadCommand} dadta
 	 * 
@@ -1338,10 +1343,10 @@ public class MachoProgramBuilder {
 	 * @param message The error message
 	 */
 	private void handleRelocationError(Address address, String message) {
- 		program.getBookmarkManager()
- 				.setBookmark(address, BookmarkType.ERROR, "Relocations", message);
- 		log.appendMsg(message);
- 	}
+		program.getBookmarkManager()
+				.setBookmark(address, BookmarkType.ERROR, "Relocations", message);
+		log.appendMsg(message);
+	}
 
 	private void addLibrary(String library) {
 		library = library.replaceAll(" ", "_");

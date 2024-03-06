@@ -30,10 +30,12 @@ public class ExtMemoryMap implements IsfObject {
 	String kind;
 	String comment;
 	boolean isVolatile;
+	boolean isArtificial;
 	String type;
 	String location;
 
-	public ExtMemoryMap(AddressRange range, MemoryBlock block, MemoryMapBytesFile bf, boolean write) throws IOException {
+	public ExtMemoryMap(AddressRange range, MemoryBlock block, MemoryMapBytesFile bf, boolean write)
+			throws IOException {
 
 		String permissions = "";
 		if (block.isRead()) {
@@ -54,12 +56,17 @@ public class ExtMemoryMap implements IsfObject {
 		if (block.isVolatile()) {
 			isVolatile = true;
 		}
+		if (block.isArtificial()) {
+			isArtificial = true;
+		}
 		type = block.getType().name();
-		if (block.getType() == MemoryBlockType.BIT_MAPPED || block.getType() == MemoryBlockType.BYTE_MAPPED) {
+		if (block.getType() == MemoryBlockType.BIT_MAPPED ||
+			block.getType() == MemoryBlockType.BYTE_MAPPED) {
 			// bit mapped blocks can only have one sub-block
 			MemoryBlockSourceInfo info = block.getSourceInfos().get(0);
 			location = info.getMappedRange().get().getMinAddress().toString();
-		} else if (block.isInitialized() && write) {
+		}
+		else if (block.isInitialized() && write) {
 			location = bf.getFileName() + ":" + bf.getOffset();
 			bf.writeBytes(range);
 		}

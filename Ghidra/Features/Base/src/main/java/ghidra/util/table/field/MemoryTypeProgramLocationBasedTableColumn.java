@@ -111,6 +111,7 @@ public class MemoryTypeProgramLocationBasedTableColumn
 			updateForWrite(block, buffy, tooltipBuffy);
 			updateForExecute(block, buffy, tooltipBuffy);
 			updateForVolatile(block, buffy, tooltipBuffy);
+			updateForArtificial(block, buffy, tooltipBuffy);
 		}
 
 		private void updateForVolatile(MemoryBlock block, StringBuilder buffy,
@@ -126,6 +127,21 @@ public class MemoryTypeProgramLocationBasedTableColumn
 			}
 
 			tooltipBuffy.append(HTMLUtilities.spaces(2)).append("Volatile<br>");
+		}
+
+		private void updateForArtificial(MemoryBlock block, StringBuilder buffy,
+				StringBuilder tooltipBuffy) {
+
+			if (block.isArtificial()) {
+				buffy.append("<b>A</b>");
+				tooltipBuffy.append("<image src=\"" + onIcon.getUrl() + "\">");
+			}
+			else {
+				buffy.append(HTMLUtilities.colorString(disabledColor, "A"));
+				tooltipBuffy.append("<image src=\"" + offIcon.getUrl() + "\">");
+			}
+
+			tooltipBuffy.append(HTMLUtilities.spaces(2)).append("Artificial<br>");
 		}
 
 		private void updateForExecute(MemoryBlock block, StringBuilder buffy,
@@ -186,7 +202,7 @@ public class MemoryTypeProgramLocationBasedTableColumn
 	private class MemoryTypeComparator implements Comparator<MemoryBlock> {
 		@Override
 		public int compare(MemoryBlock o1, MemoryBlock o2) {
-			return o1.getPermissions() - o2.getPermissions();
+			return o1.getFlags() - o2.getFlags();
 		}
 	}
 }

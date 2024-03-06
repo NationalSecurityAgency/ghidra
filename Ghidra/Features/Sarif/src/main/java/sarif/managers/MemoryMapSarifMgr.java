@@ -68,26 +68,27 @@ public class MemoryMapSarifMgr extends SarifMgr {
 	////////////////////////////
 
 	@Override
-	public boolean read(Map<String, Object> result, SarifProgramOptions options, TaskMonitor monitor)
-			throws CancelledException {
+	public boolean read(Map<String, Object> result, SarifProgramOptions options,
+			TaskMonitor monitor) throws CancelledException {
 		try {
 			processMemoryBlock(result, programMgr.getDirectory(), program, monitor);
 			return true;
-		} catch (FileNotFoundException | AddressOverflowException e) {
+		}
+		catch (FileNotFoundException | AddressOverflowException e) {
 			log.appendException(e);
 		}
 		return false;
 	}
 
-	private void processMemoryBlock(Map<String, Object> result, String directory, Program program, TaskMonitor monitor)
-			throws FileNotFoundException, AddressOverflowException {
+	private void processMemoryBlock(Map<String, Object> result, String directory, Program program,
+			TaskMonitor monitor) throws FileNotFoundException, AddressOverflowException {
 
 		String name = (String) result.get("name");
 		AddressSet set = SarifUtils.getLocations(result, program, null);
 		Address blockAddress = set.getMinAddress();
 		if (set.getNumAddressRanges() != 1) {
-			throw new RuntimeException(
-					"Unexpected number of ranges for block @ " + blockAddress + ": " + set.getNumAddressRanges());
+			throw new RuntimeException("Unexpected number of ranges for block @ " + blockAddress +
+				": " + set.getNumAddressRanges());
 		}
 		int length = (int) set.getMaxAddress().subtract(blockAddress) + 1;
 
@@ -100,6 +101,7 @@ public class MemoryMapSarifMgr extends SarifMgr {
 		boolean x = permissions.indexOf("x") >= 0;
 
 		boolean isVolatile = (boolean) result.get("isVolatile");
+		boolean isArtificial = (boolean) result.get("isArtificial");
 
 		String comment = (String) result.get("comment");
 		String type = (String) result.get("type");
@@ -110,33 +112,41 @@ public class MemoryMapSarifMgr extends SarifMgr {
 			MemoryBlock block = null;
 			if (type.equals("DEFAULT")) {
 				if (loc == null) {
-					block = MemoryBlockUtils.createUninitializedBlock(program, false, name, blockAddress, length,
-							comment, null, r, w, x, log);
-				} else {
+					block = MemoryBlockUtils.createUninitializedBlock(program, false, name,
+						blockAddress, length, comment, null, r, w, x, log);
+				}
+				else {
 					String[] split = loc.split(":");
 					String fileName = split[0];
 					int fileOffset = Integer.parseInt(split[1]);
 					byte[] bytes = setData(directory, fileName, fileOffset, length, log);
-					block = MemoryBlockUtils.createInitializedBlock(program, false, name, blockAddress,
-							new ByteArrayInputStream(bytes), bytes.length, comment, null, r, w, x, log, monitor);
+					block = MemoryBlockUtils.createInitializedBlock(program, false, name,
+						blockAddress, new ByteArrayInputStream(bytes), bytes.length, comment, null,
+						r, w, x, log, monitor);
 				}
-			} else if (type.equals("BIT_MAPPED")) {
+			}
+			else if (type.equals("BIT_MAPPED")) {
 				Address sourceAddr = factory.getAddress(loc);
-				block = MemoryBlockUtils.createBitMappedBlock(program, name, blockAddress, sourceAddr, length, comment,
-						comment, r, w, x, false, log);
-			} else if (type.equals("BYTE_MAPPED")) {
+				block = MemoryBlockUtils.createBitMappedBlock(program, name, blockAddress,
+					sourceAddr, length, comment, comment, r, w, x, false, log);
+			}
+			else if (type.equals("BYTE_MAPPED")) {
 				Address sourceAddr = factory.getAddress(loc);
-				block = MemoryBlockUtils.createByteMappedBlock(program, name, blockAddress, sourceAddr, length, comment,
-						comment, r, w, x, false, log);
-			} else {
+				block = MemoryBlockUtils.createByteMappedBlock(program, name, blockAddress,
+					sourceAddr, length, comment, comment, r, w, x, false, log);
+			}
+			else {
 				throw new RuntimeException("Unexpected type value - " + type);
 			}
 			if (block != null) {
 				block.setVolatile(isVolatile);
+				block.setArtificial(isArtificial);
 			}
-		} catch (FileNotFoundException e) {
+		}
+		catch (FileNotFoundException e) {
 			throw e;
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			log.appendException(e);
 		}
 	}
@@ -160,7 +170,8 @@ public class MemoryMapSarifMgr extends SarifMgr {
 				}
 				pos += readLen;
 			}
-		} catch (IndexOutOfBoundsException e) {
+		}
+		catch (IndexOutOfBoundsException e) {
 			log.appendMsg("Read exceeded array length " + length);
 		}
 		return bytes;
@@ -170,8 +181,8 @@ public class MemoryMapSarifMgr extends SarifMgr {
 	// SARIF WRITE CURRENT DTD //
 	/////////////////////////////
 
-	void write(JsonArray results, AddressSetView addrs, TaskMonitor monitor, boolean isWriteContents, String filePath)
-			throws IOException, CancelledException {
+	void write(JsonArray results, AddressSetView addrs, TaskMonitor monitor,
+			boolean isWriteContents, String filePath) throws IOException, CancelledException {
 		monitor.setMessage("Writing MEMORY MAP ...");
 
 		List<Pair<AddressRange, MemoryBlock>> request = new ArrayList<>();
@@ -179,7 +190,8 @@ public class MemoryMapSarifMgr extends SarifMgr {
 		while (iter.hasNext()) {
 			monitor.checkCancelled();
 			AddressRange ranges = iter.next();
-			RangeBlock rb = new RangeBlock(program.getAddressFactory(), program.getMemory(), ranges);
+			RangeBlock rb =
+				new RangeBlock(program.getAddressFactory(), program.getMemory(), ranges);
 			for (int i = 0; i < rb.getRanges().length; ++i) {
 				AddressRange range = rb.getRanges()[i];
 				MemoryBlock block = rb.getBlocks()[i];
@@ -190,16 +202,19 @@ public class MemoryMapSarifMgr extends SarifMgr {
 		try {
 			bf = isWriteContents ? new MemoryMapBytesFile(program, filePath) : null;
 			writeAsSARIF(request, bf, isWriteContents, results);
-		} finally {
+		}
+		finally {
 			if (isWriteContents) {
 				bf.close();
 			}
 		}
 	}
 
-	public static void writeAsSARIF(List<Pair<AddressRange, MemoryBlock>> request, MemoryMapBytesFile bytes,
-			boolean isWriteContents, JsonArray results) throws IOException {
-		SarifMemoryMapWriter writer = new SarifMemoryMapWriter(request, null, bytes, isWriteContents);
+	public static void writeAsSARIF(List<Pair<AddressRange, MemoryBlock>> request,
+			MemoryMapBytesFile bytes, boolean isWriteContents, JsonArray results)
+			throws IOException {
+		SarifMemoryMapWriter writer =
+			new SarifMemoryMapWriter(request, null, bytes, isWriteContents);
 		new TaskLauncher(new SarifWriterTask(SUBKEY, writer, results), null);
 	}
 
