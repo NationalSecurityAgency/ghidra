@@ -36,6 +36,8 @@ public enum RISCV_ElfRelocationType implements ElfRelocationType {
 	R_RISCV_TLS_DTPREL64(9), // TLS relocation word64(TLS + S + A - TLS_TP_OFFSET
 	R_RISCV_TLS_TPREL32(10), // TLS relocation word32(TLS + S + A + S_TLS_OFFSET - TLS_DTV_OFFSET
 	R_RISCV_TLS_TPREL64(11), // TLS relocation word64(TLS + S + A + S_TLS_OFFSET - TLS_DTV_OFFSET
+	R_RISCV_TLSDESC(12),
+
 	R_RISCV_BRANCH(16), 	// PC-relative branch (SB-Type)
 	R_RISCV_JAL(17), 		// PC-relative jump (UJ-Type)
 	R_RISCV_CALL(18), 		// PC-relative call MACRO call,tail (auipc+jalr pair)
@@ -77,9 +79,14 @@ public enum RISCV_ElfRelocationType implements ElfRelocationType {
 	R_RISCV_SET8(54), 		// Local label subtraction 
 	R_RISCV_SET16(55), 		// Local label subtraction 
 	R_RISCV_SET32(56), 		// Local label subtraction
-	R_RISCV_32_PCREL(57); 	// 32-bit PC relative
-	// 58-191 Reserved Reserved for future standard use 
-	// 192-255 Reserved Reserved for nonstandard ABI extensions 
+	R_RISCV_32_PCREL(57), 	// 32-bit PC relative
+	R_RISCV_IRELATIVE(58),
+	R_RISCV_SET_ULEB128(60),
+	R_RISCV_SUB_ULEB128(61),
+	R_RISCV_TLSDESC_HI20(62),
+	R_RISCV_TLSDESC_LOAD_LO12(63),
+	R_RISCV_TLSDESC_ADD_LO12(64),
+	R_RISCV_TLSDESC_CALL(65);
 
 	public final int typeId;
 

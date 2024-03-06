@@ -22,7 +22,10 @@ public enum eBPF_ElfRelocationType implements ElfRelocationType {
 	R_BPF_64_ABS64(2),		// S + A
 	R_BPF_64_ABS32(3),		// S + A
 	R_BPF_64_NODYLD32(4),	// S + A
-	R_BPF_64_32(10);		// (S + A) / 8 - 1
+
+	R_BPF_64_32(10),		// (S + A) / 8 - 1
+
+	R_BPF_GNU_64_16(256);
 
 	public final int typeId;
 
