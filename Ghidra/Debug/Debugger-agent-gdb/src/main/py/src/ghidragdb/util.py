@@ -289,7 +289,7 @@ class BreakpointLocationInfoReaderV8(object):
         pass
 
     def get_locations(self, breakpoint):
-        pass
+        return []
 
 
 class BreakpointLocationInfoReaderV13(object):

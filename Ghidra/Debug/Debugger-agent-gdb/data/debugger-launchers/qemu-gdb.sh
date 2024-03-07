@@ -23,7 +23,7 @@
 #@desc   (you may install <tt>gdb-multiarch</tt>), and it must embed the Python 3 interpreter. You
 #@desc   will also need <tt>protobuf</tt> installed for Python 3.
 #@desc </body></html>
-#@menu-group qemu
+#@menu-group cross
 #@icon icon.debugger
 #@help TraceRmiLauncherServicePlugin#gdb
 #@enum StartCmd:str run start starti

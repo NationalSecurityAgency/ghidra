@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.debug.gui.objects.components;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.beans.*;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.List;
 
@@ -44,6 +45,28 @@ import ghidra.util.layout.PairLayout;
 
 public class DebuggerMethodInvocationDialog extends DialogComponentProvider
 		implements PropertyChangeListener {
+
+	public static class BigIntEditor extends PropertyEditorSupport {
+		@Override
+		public String getJavaInitializationString() {
+			Object value = getValue();
+			return value == null
+					? "null"
+					: "new BigInteger(\"%s\")".formatted(value);
+		}
+
+		@Override
+		public void setAsText(String text) throws IllegalArgumentException {
+			setValue(text == null
+					? null
+					: new BigInteger(text));
+		}
+	}
+
+	static {
+		PropertyEditorManager.registerEditor(BigInteger.class, BigIntEditor.class);
+	}
+
 	private static final String KEY_MEMORIZED_ARGUMENTS = "memorizedArguments";
 
 	static class ChoicesPropertyEditor implements PropertyEditor {
