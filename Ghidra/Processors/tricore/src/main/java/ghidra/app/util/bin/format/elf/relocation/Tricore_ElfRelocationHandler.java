@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,6 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.reloc.RelocationResult;
 import ghidra.program.model.reloc.Relocation.Status;
-import ghidra.util.Msg;
 import ghidra.util.exception.NotFoundException;
 
 public class Tricore_ElfRelocationHandler
@@ -52,21 +51,9 @@ public class Tricore_ElfRelocationHandler
 		Program program = elfRelocationContext.getProgram();
 		Memory memory = program.getMemory();
 
-		if (R_TRICORE_NONE == type) {
-			return RelocationResult.SKIPPED;
-		}
-
 		long addend = relocation.hasAddend() ? relocation.getAddend() : memory.getInt(relocationAddress);
 		long offset = relocationAddress.getOffset();
 		int symbolIndex = relocation.getSymbolIndex();
-
-		long symbolValue = 0;
-		String symbolName = null;
-		ElfSymbol symbol = elfRelocationContext.getSymbol(symbolIndex);
-		if (symbol != null) {
-			symbolValue = elfRelocationContext.getSymbolValue(symbol);
-			symbolName = symbol.getNameAsString();
-		}
 
 		long rv = 0;
 		int byteLength = -1;

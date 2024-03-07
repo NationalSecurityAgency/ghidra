@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,15 +17,6 @@ package ghidra.app.util.bin.format.elf.relocation;
 
 public enum Tricore_ElfRelocationType implements ElfRelocationType {
 
-	// e_flags Identifying TriCore/PCP Derivatives
-	public static final int EF_TRICORE_V1_1 = 0x80000000;
-	public static final int EF_TRICORE_V1_2 = 0x40000000;
-	public static final int EF_TRICORE_V1_3 = 0x20000000;
-	public static final int EF_TRICORE_PCP2 = 0x02000000;
-
-	// TriCore Section Attribute Flags
-	public static final int SHF_TRICORE_ABS = 0x400;
-	public static final int SHF_TRICORE_NOREAD = 0x800;
 
 	R_TRICORE_NONE(0), // none none
 	R_TRICORE_32REL(1), // word32 S + A - P
@@ -137,6 +128,16 @@ public enum Tricore_ElfRelocationType implements ElfRelocationType {
 	R_TRICORE_SBREG_S2(78), // SMALL DATA Baseregister operand 2
 	R_TRICORE_SBREG_S1(79), // SMALL DATA Baseregister operand 1
 	R_TRICORE_SBREG_D(80); // SMALL DATA Baseregister destination
+	
+	// e_flags Identifying TriCore/PCP Derivatives
+	public static final int EF_TRICORE_V1_1 = 0x80000000;
+	public static final int EF_TRICORE_V1_2 = 0x40000000;
+	public static final int EF_TRICORE_V1_3 = 0x20000000;
+	public static final int EF_TRICORE_PCP2 = 0x02000000;
+
+	// TriCore Section Attribute Flags
+	public static final int SHF_TRICORE_ABS = 0x400;
+	public static final int SHF_TRICORE_NOREAD = 0x800;
 
 	public final int typeId;
 
