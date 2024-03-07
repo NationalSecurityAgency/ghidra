@@ -432,7 +432,7 @@ class XmlEncode : public Encoder {
     tag_stop = 2			///< No tag is currently being written
   };
   static const char spaces[];		///< Array of ' ' characters for emitting indents
-  static const int4 MAX_SPACES;
+  static const int4 MAX_SPACES;		///< Maximum number of leading spaces when indenting XML
   ostream &outStream;			///< The stream receiving the encoded data
   int4 tagStatus;			///< Stage of writing an element tag
   int4 depth;				///< Depth of open elements
