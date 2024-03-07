@@ -106,6 +106,7 @@ public class Tricore_ElfRelocationHandler
 			rv = symbolValue + addend - offset;
 			byteLength = relocate_BR(memory, relocationAddress, rv);
 			break;
+		/**
 		case R_TRICORE_10LI: // BO S + A - A[1]
 			break;
 		case R_TRICORE_16LI: // BOL S + A - A[1]
@@ -120,16 +121,19 @@ public class Tricore_ElfRelocationHandler
 			break;
 		case R_TRICORE_10OFF:
 			break;
+		**/
 		case R_TRICORE_16OFF:
 			rv = symbolValue + addend;
 			byteLength = relocate_BOL(memory, relocationAddress, rv);
 			break;
+		/**
 		case R_TRICORE_8ABS:
 			break;
 		case R_TRICORE_16ABS:
 			break;
 		case R_TRICORE_16BIT:
 			break;
+		**/
 		case R_TRICORE_3POS:
 			rv = symbolValue + addend;
 			byteLength = relocate_3POS(memory, relocationAddress, rv);
@@ -162,6 +166,7 @@ public class Tricore_ElfRelocationHandler
 			rv = (symbolValue + addend);
 			byteLength = relocate_5POS2(memory, relocationAddress, rv);
 			break;
+		/**
 		case R_TRICORE_BRCC:
 			break;
 		case R_TRICORE_BRCZ:
@@ -254,22 +259,27 @@ public class Tricore_ElfRelocationHandler
 			break;
 		case R_TRICORE_RELATIVE:
 			break;
+		**/
 		case R_TRICORE_BITPOS:
 			// This reads as a pseudo relocation, possibly do RelocationResult.PARTIAL instead?
 			return RelocationResult.SKIPPED;
+		/**
 		case R_TRICORE_SBREG_S2:
 			break;
 		case R_TRICORE_SBREG_S1:
 			break;
 		case R_TRICORE_SBREG_D:
 			break;
+		**/
 		default:
-			markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName, elfRelocationContext.getLog());
 			break;
 		}
-		if (byteLength < 0) {
+		
+		if (byteLength <= 0) {
+			markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName, elfRelocationContext.getLog());
 			return RelocationResult.UNSUPPORTED;
 		}
+		
 		return new RelocationResult(Status.APPLIED, byteLength);
 	}
 
