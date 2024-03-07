@@ -65,6 +65,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 	private JCheckBox writeCB;
 	private JCheckBox executeCB;
 	private JCheckBox volatileCB;
+	private JCheckBox artificialCB;
 	private JCheckBox overlayCB;
 	private RegisterField initialValueField;
 	private JLabel initialValueLabel;
@@ -108,6 +109,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		writeCB.setSelected(model.isWrite());
 		executeCB.setSelected(model.isExecute());
 		volatileCB.setSelected(model.isVolatile());
+		artificialCB.setSelected(model.isArtificial());
 		overlayCB.setSelected(model.isOverlay());
 	}
 
@@ -169,6 +171,11 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		volatileCB.setSelected(model.isVolatile());
 		volatileCB.addActionListener(e -> model.setVolatile(volatileCB.isSelected()));
 
+		artificialCB = new GCheckBox("Artificial");
+		artificialCB.setName("Artificial");
+		artificialCB.setSelected(model.isArtificial());
+		artificialCB.addActionListener(e -> model.setArtificial(artificialCB.isSelected()));
+
 		overlayCB = new GCheckBox("Overlay");
 		overlayCB.setName("Overlay");
 		overlayCB.setSelected(model.isOverlay());
@@ -180,6 +187,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		panel.add(writeCB);
 		panel.add(executeCB);
 		panel.add(volatileCB);
+		panel.add(artificialCB);
 		panel.add(overlayCB);
 
 		return panel;
@@ -320,6 +328,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		writeCB.setSelected(model.isWrite());
 		executeCB.setSelected(model.isExecute());
 		volatileCB.setSelected(model.isVolatile());
+		artificialCB.setSelected(model.isArtificial());
 		overlayCB.setSelected(model.isOverlay());
 
 		setOkEnabled(false);

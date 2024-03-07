@@ -259,6 +259,10 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext<X86_64_ElfRelocat
 				ElfRelocationHandler.GOT_BLOCK_NAME, allocatedGotAddress, size,
 				"NOTE: This block is artificial and allows ELF Relocations to work correctly",
 				"Elf Loader", true, false, false, loadHelper.getLog());
+
+			// Mark block as an artificial fabrication
+			block.setArtificial(true);
+
 			DataConverter converter =
 				program.getMemory().isBigEndian() ? BigEndianDataConverter.INSTANCE
 						: LittleEndianDataConverter.INSTANCE;

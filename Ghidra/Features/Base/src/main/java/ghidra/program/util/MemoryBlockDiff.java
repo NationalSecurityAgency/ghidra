@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +22,8 @@ import ghidra.util.SystemUtilities;
  * <CODE>MemoryBlockDiff</CODE> determines the types of differences between two memory blocks.
  */
 public class MemoryBlockDiff {
-	
+
+	//@formatter:off
 	public static final int NAME          = 0x001;
 	public static final int START_ADDRESS = 0x002;
 	public static final int END_ADDRESS   = 0x004;
@@ -32,16 +32,18 @@ public class MemoryBlockDiff {
 	public static final int WRITE         = 0x020;
 	public static final int EXECUTE       = 0x040;
 	public static final int VOLATILE      = 0x080;
-	public static final int TYPE          = 0x100;
-	public static final int INIT          = 0x200;
-	public static final int SOURCE        = 0x400;
-	public static final int COMMENT       = 0x800;
-	public static final int ALL           = 0xFFF;
-	
+	public static final int ARTIFICIAL    = 0x100;
+	public static final int TYPE          = 0x200;
+	public static final int INIT          = 0x400;
+	public static final int SOURCE        = 0x800;
+	public static final int COMMENT       = 0x1000;
+	public static final int ALL           = 0x1FFF;
+	//@formatter:on
+
 	private MemoryBlock block1;
 	private MemoryBlock block2;
 	private int diffFlags;
-	
+
 	/**
 	 * Constructor. <CODE>MemoryBlockDiff</CODE> determines the types of differences 
 	 * between two memory blocks.
@@ -57,139 +59,149 @@ public class MemoryBlockDiff {
 	MemoryBlock getBlock1() {
 		return block1;
 	}
-	
+
 	MemoryBlock getBlock2() {
 		return block2;
 	}
-	
+
 	/**
 	 * Returns true if the memory block names differ.
 	 */
 	public boolean isNameDifferent() {
 		return (diffFlags & NAME) != 0;
 	}
-	
+
 	/**
 	 * Returns true if the start addresses of the memory blocks differ.
 	 */
 	public boolean isStartAddressDifferent() {
 		return (diffFlags & START_ADDRESS) != 0;
 	}
-	
+
 	/**
 	 * Returns true if the end addresses of the memory blocks differ.
 	 */
 	public boolean isEndAddressDifferent() {
 		return (diffFlags & END_ADDRESS) != 0;
 	}
-	
+
 	/**
 	 * Returns true if the sizes of the memory blocks differ.
 	 */
 	public boolean isSizeDifferent() {
 		return (diffFlags & SIZE) != 0;
 	}
-	
+
 	/**
 	 * Returns true if the memory blocks Read flags differ.
 	 */
 	public boolean isReadDifferent() {
 		return (diffFlags & READ) != 0;
 	}
-	
+
 	/**
 	 * Returns true if the memory blocks Write flags differ.
 	 */
 	public boolean isWriteDifferent() {
 		return (diffFlags & WRITE) != 0;
 	}
-	
+
 	/**
 	 * Returns true if the memory blocks Execute flags differ.
 	 */
 	public boolean isExecDifferent() {
 		return (diffFlags & EXECUTE) != 0;
 	}
-	
+
 	/**
 	 * Returns true if the memory blocks Volatile flags differ.
 	 */
 	public boolean isVolatileDifferent() {
 		return (diffFlags & VOLATILE) != 0;
 	}
-	
+
+	/**
+	 * Returns true if the memory blocks Artificial flags differ.
+	 */
+	public boolean isArtificialDifferent() {
+		return (diffFlags & ARTIFICIAL) != 0;
+	}
+
 	/**
 	 * Returns true if the type for the memory blocks differ.
 	 */
 	public boolean isTypeDifferent() {
 		return (diffFlags & TYPE) != 0;
 	}
-	
+
 	/**
 	 * Returns true if the initialization of the memory blocks isn't the same.
 	 */
 	public boolean isInitDifferent() {
 		return (diffFlags & INIT) != 0;
 	}
-	
+
 	/**
 	 * Returns true if the source for the memory blocks differ.
 	 */
 	public boolean isSourceDifferent() {
 		return (diffFlags & SOURCE) != 0;
 	}
-	
+
 	/**
 	 * Returns true if the comments on the memory blocks differ.
 	 */
 	public boolean isCommentDifferent() {
 		return (diffFlags & COMMENT) != 0;
 	}
-	
+
 	/**
 	 * Gets a string representation of the types of memory differences for this MemoryBlockDiff.
 	 */
 	public String getDifferencesAsString() {
 		StringBuffer buf = new StringBuffer();
-		if((diffFlags & NAME) != 0) {
+		if ((diffFlags & NAME) != 0) {
 			buf.append("Name ");
 		}
-		if((diffFlags & START_ADDRESS) != 0) {
+		if ((diffFlags & START_ADDRESS) != 0) {
 			buf.append("StartAddress ");
 		}
-		if((diffFlags & END_ADDRESS) != 0) {
+		if ((diffFlags & END_ADDRESS) != 0) {
 			buf.append("EndAddress ");
 		}
-		if((diffFlags & SIZE) != 0) {
+		if ((diffFlags & SIZE) != 0) {
 			buf.append("Size ");
 		}
-		if((diffFlags & READ) != 0) {
+		if ((diffFlags & READ) != 0) {
 			buf.append("R ");
 		}
-		if((diffFlags & WRITE) != 0) {
+		if ((diffFlags & WRITE) != 0) {
 			buf.append("W ");
 		}
-		if((diffFlags & EXECUTE) != 0) {
+		if ((diffFlags & EXECUTE) != 0) {
 			buf.append("X ");
 		}
-		if((diffFlags & VOLATILE) != 0) {
+		if ((diffFlags & VOLATILE) != 0) {
 			buf.append("Volatile ");
 		}
-		if((diffFlags & TYPE) != 0) {
+		if ((diffFlags & ARTIFICIAL) != 0) {
+			buf.append("Artificial ");
+		}
+		if ((diffFlags & TYPE) != 0) {
 			buf.append("Type ");
 		}
-		if((diffFlags & INIT) != 0) {
+		if ((diffFlags & INIT) != 0) {
 			buf.append("Initialized ");
 		}
-		if((diffFlags & SOURCE) != 0) {
+		if ((diffFlags & SOURCE) != 0) {
 			buf.append("Source ");
 		}
-		if((diffFlags & COMMENT) != 0) {
+		if ((diffFlags & COMMENT) != 0) {
 			buf.append("Comment ");
 		}
 		return buf.toString();
 	}
-	
+
 	/**
 	 * Gets an integer value that has bits set as flags indicating the types of differences
 	 * that exist between the two memory blocks.
@@ -207,9 +219,9 @@ public class MemoryBlockDiff {
 		if (block2 == null) {
 			return ALL;
 		}
-		
+
 		int flags = 0;
-		if(!block1.getName().equals(block2.getName())) {
+		if (!block1.getName().equals(block2.getName())) {
 			flags |= NAME;
 		}
 		if (!block1.getStart().equals(block2.getStart())) {
@@ -232,6 +244,9 @@ public class MemoryBlockDiff {
 		}
 		if (block1.isVolatile() != block2.isVolatile()) {
 			flags |= VOLATILE;
+		}
+		if (block1.isArtificial() != block2.isArtificial()) {
+			flags |= ARTIFICIAL;
 		}
 		if (!block1.getType().equals(block2.getType())) {
 			flags |= TYPE;

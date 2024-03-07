@@ -39,7 +39,7 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 	static final int V3_NAME_COL = 0;
 	static final int V3_COMMENTS_COL = 1;
 	static final int V3_SOURCE_COL = 2;
-	static final int V3_PERMISSIONS_COL = 3;
+	static final int V3_FLAGS_COL = 3;
 	static final int V3_START_ADDR_COL = 4;
 	static final int V3_LENGTH_COL = 5;
 	static final int V3_SEGMENT_COL = 6;
@@ -60,7 +60,7 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 	static Schema V3_BLOCK_SCHEMA = new Schema(V3_VERSION, "Key",
 		new Field[] { StringField.INSTANCE, StringField.INSTANCE, StringField.INSTANCE,
 			ByteField.INSTANCE, LongField.INSTANCE, LongField.INSTANCE, IntField.INSTANCE },
-		new String[] { "Name", "Comments", "Source Name", "Permissions", "Start Address", "Length",
+		new String[] { "Name", "Comments", "Source Name", "Flags", "Start Address", "Length",
 			"Segment" });
 
 	static Schema V3_SUB_BLOCK_SCHEMA = new Schema(V3_VERSION, "Key",
@@ -116,8 +116,8 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 	void refreshMemory() throws IOException {
 		Map<Long, List<SubMemoryBlock>> subBlockMap = getSubBlockMap();
 
-		Map<Long, MemoryBlockDB> blockMap = memoryBlocks.stream().collect(
-			Collectors.toMap(MemoryBlockDB::getID, Function.identity()));
+		Map<Long, MemoryBlockDB> blockMap = memoryBlocks.stream()
+				.collect(Collectors.toMap(MemoryBlockDB::getID, Function.identity()));
 
 		List<MemoryBlockDB> newBlocks = new ArrayList<>();
 		RecordIterator it = memBlockTable.iterator();
@@ -163,14 +163,14 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 
 	@Override
 	MemoryBlockDB createInitializedBlock(String name, Address startAddr, InputStream is,
-			long length, int permissions) throws AddressOverflowException, IOException {
+			long length, int flags) throws AddressOverflowException, IOException {
 
 		// TODO verify that it is necessary to pre-define all segments in the address map
 		updateAddressMapForAllAddresses(startAddr, length);
 
 		List<SubMemoryBlock> subBlocks = new ArrayList<>();
 		try {
-			DBRecord blockRecord = createMemoryBlockRecord(name, startAddr, length, permissions);
+			DBRecord blockRecord = createMemoryBlockRecord(name, startAddr, length, flags);
 			long key = blockRecord.getKey();
 			int numFullBlocks = (int) (length / maxSubBlockSize);
 			int lastSubBlockSize = (int) (length % maxSubBlockSize);
@@ -201,30 +201,30 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 
 	@Override
 	MemoryBlockDB createBlock(MemoryBlockType blockType, String name, Address startAddr,
-			long length, Address mappedAddress, boolean initializeBytes, int permissions,
+			long length, Address mappedAddress, boolean initializeBytes, int flags,
 			int encodedMappingScheme) throws AddressOverflowException, IOException {
 
 		if (blockType == MemoryBlockType.BIT_MAPPED) {
-			return createBitMappedBlock(name, startAddr, length, mappedAddress, permissions);
+			return createBitMappedBlock(name, startAddr, length, mappedAddress, flags);
 		}
 		if (blockType == MemoryBlockType.BYTE_MAPPED) {
-			return createByteMappedBlock(name, startAddr, length, mappedAddress, permissions,
+			return createByteMappedBlock(name, startAddr, length, mappedAddress, flags,
 				encodedMappingScheme);
 		}
 		// DEFAULT block type
 		if (initializeBytes) {
-			return createInitializedBlock(name, startAddr, null, length, permissions);
+			return createInitializedBlock(name, startAddr, null, length, flags);
 		}
-		return createUninitializedBlock(name, startAddr, length, permissions);
+		return createUninitializedBlock(name, startAddr, length, flags);
 	}
 
 	@Override
-	MemoryBlockDB createInitializedBlock(String name, Address startAddr, DBBuffer buf,
-			int permissions) throws AddressOverflowException, IOException {
+	MemoryBlockDB createInitializedBlock(String name, Address startAddr, DBBuffer buf, int flags)
+			throws AddressOverflowException, IOException {
 		updateAddressMapForAllAddresses(startAddr, buf.length());
 
 		List<SubMemoryBlock> subBlocks = new ArrayList<>();
-		DBRecord blockRecord = createMemoryBlockRecord(name, startAddr, buf.length(), permissions);
+		DBRecord blockRecord = createMemoryBlockRecord(name, startAddr, buf.length(), flags);
 		long key = blockRecord.getKey();
 
 		DBRecord subRecord =
@@ -239,11 +239,11 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 	}
 
 	MemoryBlockDB createUninitializedBlock(String name, Address startAddress, long length,
-			int permissions) throws IOException, AddressOverflowException {
+			int flags) throws IOException, AddressOverflowException {
 		updateAddressMapForAllAddresses(startAddress, length);
 
 		List<SubMemoryBlock> subBlocks = new ArrayList<>();
-		DBRecord blockRecord = createMemoryBlockRecord(name, startAddress, length, permissions);
+		DBRecord blockRecord = createMemoryBlockRecord(name, startAddress, length, flags);
 		long key = blockRecord.getKey();
 
 		DBRecord subRecord = createSubBlockRecord(key, 0, length, V3_SUB_TYPE_UNINITIALIZED, 0, 0);
@@ -256,9 +256,9 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 	}
 
 	@Override
-	protected MemoryBlockDB createBlock(String name, Address startAddress, long length,
-			int permissions, List<SubMemoryBlock> splitBlocks) throws IOException {
-		DBRecord blockRecord = createMemoryBlockRecord(name, startAddress, length, permissions);
+	protected MemoryBlockDB createBlock(String name, Address startAddress, long length, int flags,
+			List<SubMemoryBlock> splitBlocks) throws IOException {
+		DBRecord blockRecord = createMemoryBlockRecord(name, startAddress, length, flags);
 		long key = blockRecord.getKey();
 
 		long startingOffset = 0;
@@ -274,26 +274,26 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 	}
 
 	MemoryBlockDB createBitMappedBlock(String name, Address startAddress, long length,
-			Address mappedAddress, int permissions) throws IOException, AddressOverflowException {
+			Address mappedAddress, int flags) throws IOException, AddressOverflowException {
 		return createMappedBlock(V3_SUB_TYPE_BIT_MAPPED, name, startAddress, length, mappedAddress,
-			permissions, 0);
+			flags, 0);
 	}
 
 	MemoryBlockDB createByteMappedBlock(String name, Address startAddress, long length,
-			Address mappedAddress, int permissions, int mappingScheme)
+			Address mappedAddress, int flags, int mappingScheme)
 			throws IOException, AddressOverflowException {
 		return createMappedBlock(V3_SUB_TYPE_BYTE_MAPPED, name, startAddress, length, mappedAddress,
-			permissions, mappingScheme);
+			flags, mappingScheme);
 	}
 
 	@Override
 	protected MemoryBlockDB createFileBytesBlock(String name, Address startAddress, long length,
-			FileBytes fileBytes, long offset, int permissions)
+			FileBytes fileBytes, long offset, int flags)
 			throws IOException, AddressOverflowException {
 
 		updateAddressMapForAllAddresses(startAddress, length);
 		List<SubMemoryBlock> subBlocks = new ArrayList<>();
-		DBRecord blockRecord = createMemoryBlockRecord(name, startAddress, length, permissions);
+		DBRecord blockRecord = createMemoryBlockRecord(name, startAddress, length, flags);
 		long key = blockRecord.getKey();
 
 		DBRecord subRecord = createSubBlockRecord(key, 0, length, V3_SUB_TYPE_FILE_BYTES,
@@ -307,13 +307,12 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 	}
 
 	private MemoryBlockDB createMappedBlock(byte type, String name, Address startAddress,
-			long length, Address mappedAddress, int permissions,
-			int mappingScheme)
+			long length, Address mappedAddress, int flags, int mappingScheme)
 			throws IOException, AddressOverflowException {
 		updateAddressMapForAllAddresses(startAddress, length);
 
 		List<SubMemoryBlock> subBlocks = new ArrayList<>();
-		DBRecord blockRecord = createMemoryBlockRecord(name, startAddress, length, permissions);
+		DBRecord blockRecord = createMemoryBlockRecord(name, startAddress, length, flags);
 		long key = blockRecord.getKey();
 
 		long encoded = addrMap.getKey(mappedAddress, true);
@@ -377,12 +376,12 @@ public class MemoryMapDBAdapterV3 extends MemoryMapDBAdapter {
 	}
 
 	private DBRecord createMemoryBlockRecord(String name, Address startAddr, long length,
-			int permissions) {
+			int flags) {
 		DBRecord record = V3_BLOCK_SCHEMA.createRecord(memBlockTable.getKey());
 		record.setString(V3_NAME_COL, name);
 		record.setLongValue(V3_START_ADDR_COL, addrMap.getKey(startAddr, true));
 		record.setLongValue(V3_LENGTH_COL, length);
-		record.setByteValue(V3_PERMISSIONS_COL, (byte) permissions);
+		record.setByteValue(V3_FLAGS_COL, (byte) flags);
 		record.setIntValue(V3_SEGMENT_COL, getSegment(startAddr));
 		return record;
 	}

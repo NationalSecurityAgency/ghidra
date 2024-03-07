@@ -92,7 +92,7 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertEquals(false, block.isMapped());
 		assertNull(block.getComment());
 		assertNull(block.getSourceName());
-		assertEquals(MemoryBlock.READ, block.getPermissions());
+		assertEquals(MemoryBlock.READ, block.getFlags());
 
 		List<MemoryBlockSourceInfo> sourceInfos = block.getSourceInfos();
 
@@ -192,7 +192,7 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertEquals(true, block.isMapped());
 		assertNull(block.getComment());
 		assertNull(block.getSourceName());
-		assertEquals(MemoryBlock.READ, block.getPermissions());
+		assertEquals(MemoryBlock.READ, block.getFlags());
 
 		List<MemoryBlockSourceInfo> sourceInfos = block.getSourceInfos();
 
@@ -228,7 +228,7 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertEquals(true, block.isMapped());
 		assertNull(block.getComment());
 		assertNull(block.getSourceName());
-		assertEquals(MemoryBlock.READ, block.getPermissions());
+		assertEquals(MemoryBlock.READ, block.getFlags());
 
 		List<MemoryBlockSourceInfo> sourceInfos = block.getSourceInfos();
 
@@ -264,7 +264,7 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertEquals(false, block.isMapped());
 		assertNull(block.getComment());
 		assertNull(block.getSourceName());
-		assertEquals(MemoryBlock.READ, block.getPermissions());
+		assertEquals(MemoryBlock.READ, block.getFlags());
 
 		List<MemoryBlockSourceInfo> sourceInfos = block.getSourceInfos();
 

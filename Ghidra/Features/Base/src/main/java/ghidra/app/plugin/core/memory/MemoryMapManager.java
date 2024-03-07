@@ -363,6 +363,7 @@ class MemoryMapManager {
 							newBlock.setWrite(bigBlock.isWrite());
 							newBlock.setExecute(bigBlock.isExecute());
 							newBlock.setVolatile(bigBlock.isVolatile());
+							newBlock.setArtificial(bigBlock.isArtificial());
 							newBlock.setSourceName("Resized Memory Block");
 						}
 						else {

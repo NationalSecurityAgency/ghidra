@@ -62,26 +62,11 @@
     
     <P><A name="OverlayType"></A><B>Overlay</B> - Each of the above memory block types may 
     optionally be created as an <I>Overlay</I> block.  One or more memory blocks may be defined
-    within the same overlay address space.     
-    
-    
-    An overlay memory block may be created in two ways:
-	 * <ul>
-	 * <li>Specifying a {@code start} address within an existing overlay address space 
-	 * ({@code overlay} parameter is ignored), or</li>
-	 * <li>Specifying a {@code start} address within a physical memory address space and passing
-	 * {@code overlay=true}.  This use case will force the creation of a new unique overlay 
-	 * address space.</li>
-	 * </ul>
-    
-    
-    
-    If this option is selected, the block is created in a new
-      overlay address space.&nbsp; Overlay blocks can serve various 
-      purposes where a memory range may contain different data/code or map to different areas of memory 
-      at any given point in time or processor state.  &nbsp; Note that
-      overlay blocks are fixed and may not be moved, split, merged or expanded.&nbsp; In addition, Overlays
-      do not relocate with image base changes and have significant limitations in conjunction with
+    within the same overlay address space where the <B>Overlayed Space</B> is reflected in the memory map table.    
+	Overlay blocks can serve various 
+      purposes where a memory range may contain different data/code at any given point in time 
+      or processor state.  &nbsp; Note that Overlay blocks 
+      do not relocate with image base changes and have some limitations in conjunction with
       decompilation and analysis.</P>
 
     <P>To view the <I>Memory Map</I>, select <B>Window<IMG src="help/shared/arrow.gif" border="0">
@@ -123,6 +108,9 @@
       <P><I><B>X * -</B></I> Indicates execute permission.</P>
        
       <P><B>Volatile * </B> - Indicates a region of volatile I/O Memory.</P>
+      
+      <P><B>Artificial * </B> - Indicates an artificial memory block which has been fabricated to 
+      facilitate analysis.</P>
 
 	  <P><I><B>Overlayed Space -</B></I> If the block is an overlay block this column indicates the name
 	  of the overlayed physical memory space.  This field will be empty for non-overlay blocks.</P>
@@ -200,6 +188,13 @@
         <P>The volatile setting of a memory block can be changed by left-clicking on the
         checkbox.</P>
       </BLOCKQUOTE>
+      
+      <H3>Change Artificial Setting</H3>
+
+      <BLOCKQUOTE>
+        <P>The artificial setting of a memory block can be changed by left-clicking on the
+        checkbox.</P>
+      </BLOCKQUOTE>
 
       <H3>Initialize Memory Block</H3>
 
@@ -266,7 +261,11 @@
 
         <P><B><I>Execute</I></B> - Sets the execute permission.</P>
 
-        <P><B>Volatile</B> - Marks this block as volatile I/O memory.</P>
+        <P><B>Volatile</B> - Marks a block as volatile I/O memory.</P>
+        
+        <P><B>Artificial</B> - Marks a memory block as artificial.  This may be useful when a 
+        block is required to facilitate analysis but does not exist in the same form within a 
+        running/loaded process state.</P>
         
         <P><B>Overlay</B> - Creates the block as an overlay block. An overlay memory block may be 
         created in two ways:

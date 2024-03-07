@@ -18,7 +18,6 @@ package ghidra.app.plugin.core.memory;
 import javax.swing.event.ChangeListener;
 
 import ghidra.app.cmd.memory.*;
-import ghidra.framework.cmd.Command;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.mem.ByteMappingScheme;
 import ghidra.program.database.mem.FileBytes;
@@ -55,6 +54,7 @@ class AddBlockModel {
 	private boolean isWrite;
 	private boolean isExecute;
 	private boolean isVolatile;
+	private boolean isArtificial;
 	private InitializedType initializedType;
 	private String comment;
 	private FileBytes fileBytes;
@@ -125,6 +125,7 @@ class AddBlockModel {
 		isExecute = false;
 		isVolatile = false;
 		isOverlay = false;
+		isArtificial = false;
 		schemeDestByteCount = blockType == MemoryBlockType.BIT_MAPPED ? 8 : 1;
 		schemeSrcByteCount = 1;
 		initializedType = InitializedType.UNINITIALIZED;
@@ -146,6 +147,10 @@ class AddBlockModel {
 
 	void setVolatile(boolean b) {
 		this.isVolatile = b;
+	}
+
+	void setArtificial(boolean b) {
+		this.isArtificial = b;
 	}
 
 	void setOverlay(boolean b) {
@@ -226,6 +231,10 @@ class AddBlockModel {
 		return isVolatile;
 	}
 
+	boolean isArtificial() {
+		return isArtificial;
+	}
+
 	boolean isOverlay() {
 		return isOverlay;
 	}
@@ -240,7 +249,8 @@ class AddBlockModel {
 		if (!isValid) {
 			return false;
 		}
-		Command cmd = createAddBlockCommand();
+		AbstractAddMemoryBlockCmd cmd = createAddBlockCommand();
+		cmd.setArtificial(isArtificial);
 		if (!tool.execute(cmd, program)) {
 			message = cmd.getStatusMsg();
 			return false;
@@ -248,7 +258,7 @@ class AddBlockModel {
 		return true;
 	}
 
-	Command createAddBlockCommand() {
+	AbstractAddMemoryBlockCmd createAddBlockCommand() {
 		String source = "";
 		switch (blockType) {
 			case BIT_MAPPED:
@@ -267,7 +277,7 @@ class AddBlockModel {
 		}
 	}
 
-	private Command createNonMappedMemoryBlock(String source) {
+	private AbstractAddMemoryBlockCmd createNonMappedMemoryBlock(String source) {
 		switch (initializedType) {
 			case INITIALIZED_FROM_FILE_BYTES:
 				return new AddFileBytesMemoryBlockCmd(blockName, comment, source, startAddr, length,
@@ -293,8 +303,8 @@ class AddBlockModel {
 	private void validateInfo() {
 		message = "";
 		isValid = hasValidName() && hasValidStartAddress() && hasValidLength() &&
-			hasNoMemoryConflicts() && hasMappedAddressIfNeeded() &&
-			hasInitialValueIfNeeded() && hasFileBytesInfoIfNeeded() && isOverlayIfOtherSpace();
+			hasNoMemoryConflicts() && hasMappedAddressIfNeeded() && hasInitialValueIfNeeded() &&
+			hasFileBytesInfoIfNeeded() && isOverlayIfOtherSpace();
 	}
 
 	private boolean hasFileBytesInfoIfNeeded() {

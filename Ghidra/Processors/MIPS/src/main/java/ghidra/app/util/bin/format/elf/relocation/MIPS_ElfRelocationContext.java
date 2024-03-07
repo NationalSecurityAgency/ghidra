@@ -310,6 +310,10 @@ class MIPS_ElfRelocationContext extends ElfRelocationContext<MIPS_ElfRelocationH
 				sectionGotAddress, size,
 				"NOTE: This block is artificial and allows ELF Relocations to work correctly",
 				"Elf Loader", true, false, false, loadHelper.getLog());
+
+			// Mark block as an artificial fabrication
+			block.setArtificial(true);
+
 			DataConverter converter =
 				program.getMemory().isBigEndian() ? BigEndianDataConverter.INSTANCE
 						: LittleEndianDataConverter.INSTANCE;

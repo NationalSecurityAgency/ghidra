@@ -46,17 +46,22 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	 */
 	public static final String EXTERNAL_BLOCK_NAME = "EXTERNAL";
 
-	// Memory block permission bits
+	// Memory block flag bits
+	// NOTE: These are used by stored Flags with DB (8-bits) and 
+	// should be changed other than to add values.
+	public static int ARTIFICIAL = 0x10;
 	public static int VOLATILE = 0x8;
 	public static int READ = 0x4;
 	public static int WRITE = 0x2;
 	public static int EXECUTE = 0x1;
 
 	/**
-	 * Returns block permissions as a bit mask. Permission bits defined as READ, WRITE, EXECUTE and
-	 * VOLATILE
+	 * Returns block flags (i.e., permissions and attributes) as a bit mask. 
+	 * These bits defined as {@link #READ}, {@link #WRITE}, {@link #EXECUTE}, {@link #VOLATILE},
+	 * {@link #ARTIFICIAL}.
+	 * @return block flag bits
 	 */
-	public int getPermissions();
+	public int getFlags();
 
 	/**
 	 * Get memory data in the form of an InputStream. Null is returned for thos memory blocks which
@@ -107,6 +112,8 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 
 	/**
 	 * Get the name of this block
+	 * 
+	 * @return block name
 	 */
 	public String getName();
 
@@ -122,6 +129,8 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 
 	/**
 	 * Get the comment associated with this block.
+	 * 
+	 * @return block comment string
 	 */
 	public String getComment();
 
@@ -134,6 +143,8 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 
 	/**
 	 * Returns the value of the read property associated with this block
+	 * 
+	 * @return true if enabled else false
 	 */
 	public boolean isRead();
 
@@ -146,6 +157,8 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 
 	/**
 	 * Returns the value of the write property associated with this block
+	 * 
+	 * @return true if enabled else false
 	 */
 	public boolean isWrite();
 
@@ -158,6 +171,8 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 
 	/**
 	 * Returns the value of the execute property associated with this block
+	 * 
+	 * @return true if enabled else false
 	 */
 	public boolean isExecute();
 
@@ -178,17 +193,40 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	public void setPermissions(boolean read, boolean write, boolean execute);
 
 	/**
-	 * Returns the value of the volatile property associated with this block. This attribute is
+	 * Returns the volatile attribute state of this block. This attribute is
 	 * generally associated with block of I/O regions of memory.
+	 * 
+	 * @return true if enabled else false
 	 */
 	public boolean isVolatile();
 
 	/**
-	 * Sets the volatile property associated with this block.
+	 * Sets the volatile attribute state associated of this block.  This attribute is
+	 * generally associated with block of I/O regions of memory.
 	 * 
-	 * @param v the value to set the volatile property to.
+	 * @param v the volatile attribute state.
 	 */
 	public void setVolatile(boolean v);
+
+	/**
+	 * Returns the artificial attribute state of this block. This attribute is
+	 * generally associated with blocks which have been fabricated to facilitate 
+	 * analysis but do not exist in the same form within a running/loaded process
+	 * state.
+	 * 
+	 * @return true if enabled else false
+	 */
+	public boolean isArtificial();
+
+	/**
+	 * Sets the artificial attribute state associated with this block. This attribute is
+	 * generally associated with blocks which have been fabricated to facilitate 
+	 * analysis but do not exist in the same form within a running/loaded process
+	 * state.
+	 * 
+	 * @param a the artificial attribute state.
+	 */
+	public void setArtificial(boolean a);
 
 	/**
 	 * Get the name of the source of this memory block.
@@ -208,6 +246,7 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	 * Returns the byte at the given address in this block.
 	 * 
 	 * @param addr the address.
+	 * @return byte value from this block and specified address
 	 * @throws MemoryAccessException if any of the requested bytes are uninitialized.
 	 * @throws IllegalArgumentException if the Address is not in this block.
 	 */
@@ -246,6 +285,7 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	 * Puts the given byte at the given address in this block.
 	 * 
 	 * @param addr the address.
+	 * @param b byte value
 	 * @throws MemoryAccessException if the block is uninitialized
 	 * @throws IllegalArgumentException if the Address is not in this block.
 	 */

@@ -901,7 +901,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 					mappedAddr = info.getMappedRange().get().getMinAddress();
 				}
 				MemoryBlockDB newBlock = adapter.createBlock(block.getType(), name, start, length,
-					mappedAddr, block.isInitialized(), block.getPermissions(), mappingScheme);
+					mappedAddr, block.isInitialized(), block.getFlags(), mappingScheme);
 				allAddrSet.add(newBlock.getStart(), newBlock.getEnd());
 				initializeBlocks();
 				fireBlockAdded(newBlock);
