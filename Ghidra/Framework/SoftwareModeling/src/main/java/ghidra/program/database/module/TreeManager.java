@@ -98,9 +98,7 @@ public class TreeManager implements ManagerDB {
 	public void imageBaseChanged(boolean commit) {
 		lock.acquire();
 		try {
-			Iterator<ModuleManager> iter = treeMap.values().iterator();
-			while (iter.hasNext()) {
-				ModuleManager m = iter.next();
+			for (ModuleManager m : treeMap.values()) {
 				m.imageBaseChanged(commit);
 			}
 		}
@@ -376,6 +374,7 @@ public class TreeManager implements ManagerDB {
 	@Override
 	public void deleteAddressRange(Address startAddr, Address endAddr, TaskMonitor monitor)
 			throws CancelledException {
+		AddressRange.checkValidRange(startAddr, endAddr);
 		lock.acquire();
 		try {
 			Iterator<String> keys = treeMap.keySet().iterator();

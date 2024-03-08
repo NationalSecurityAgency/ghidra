@@ -210,6 +210,7 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 
 	@Override
 	public void deleteAddressRange(Address start, Address end, TaskMonitor monitor) {
+		AddressRange.checkValidRange(start, end);
 		lock.acquire();
 		try {
 			super.deleteAddressRange(start, end, monitor);

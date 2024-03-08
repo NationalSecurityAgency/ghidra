@@ -724,6 +724,8 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	public void deleteAddressRange(Address start, Address end, TaskMonitor monitor)
 			throws CancelledException {
 
+		AddressRange.checkValidRange(start, end);
+
 		// Expand range to include any overlapping or delay-slotted instructions
 		CodeUnit cu = getCodeUnitContaining(start);
 		if (cu != null) {
@@ -2194,11 +2196,14 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 
 	/**
 	 * Clears all comments in the given range (inclusive).
+	 * The specified start and end addresses must form a valid range within
+	 * a single {@link AddressSpace}.
 	 *
 	 * @param start the start address of the range to clear
 	 * @param end the end address of the range to clear
 	 */
 	public void clearComments(Address start, Address end) {
+		AddressRange.checkValidRange(start, end);
 		lock.acquire();
 		try {
 			try {
@@ -2227,6 +2232,8 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 
 	/**
 	 * Clears the properties in the given range (inclusive).
+	 * The specified start and end addresses must form a valid range within
+	 * a single {@link AddressSpace}.
 	 *
 	 * @param start the start address of the range to clear
 	 * @param end the end address of the range to clear
@@ -2289,6 +2296,9 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	/**
 	 * Remove code units, symbols, equates, and references to code units in the given range 
 	 * (inclusive).  Comments and comment history will be retained.
+	 * The specified start and end addresses must form a valid range within
+	 * a single {@link AddressSpace}.
+	 * 
 	 * @param start the start address of the range to clear
 	 * @param end the end address of the range to clear
 	 * @param clearContext if true all context-register values will be cleared over range
@@ -2297,6 +2307,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 */
 	public void clearCodeUnits(Address start, Address end, boolean clearContext,
 			TaskMonitor monitor) throws CancelledException {
+		AddressRange.checkValidRange(start, end);
 		lock.acquire();
 		try {
 			// Expand range to include any overlapping or delay-slotted instructions
@@ -2336,10 +2347,10 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * @param monitor the task monitor
 	 */
 	public void clearAll(boolean clearContext, TaskMonitor monitor) {
-		Address minAddr = program.getMinAddress();
-		Address maxAddr = program.getMaxAddress();
 		try {
-			clearCodeUnits(minAddr, maxAddr, clearContext, monitor);
+			for (AddressRange range : program.getMemory().getAddressRanges()) {
+				clearCodeUnits(range.getMinAddress(), range.getMaxAddress(), clearContext, monitor);
+			}
 		}
 		catch (CancelledException e) {
 			// nothing to do
@@ -2571,17 +2582,18 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	}
 
 	/**
-	 * Check if any instruction intersects the specified address range
+	 * Check if any instruction intersects the specified address range.
+	 * The specified start and end addresses must form a valid range within
+	 * a single {@link AddressSpace}.
+	 * 
 	 * @param start start of range
 	 * @param end end of range
 	 * @throws ContextChangeException if there is a context register change conflict
 	 */
 	public void checkContextWrite(Address start, Address end) throws ContextChangeException {
+		AddressRange.checkValidRange(start, end);
 		lock.acquire();
 		try {
-			if (!start.getAddressSpace().equals(end.getAddressSpace())) {
-				throw new IllegalArgumentException();
-			}
 			if (!contextLockingEnabled || creatingInstruction ||
 				!program.getMemory().contains(start, end)) {
 				return;

@@ -2427,6 +2427,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	@Override
 	public void deleteAddressRange(Address startAddr, Address endAddr, TaskMonitor monitor)
 			throws CancelledException {
+		AddressRange.checkValidRange(startAddr, endAddr);
 		lock.acquire();
 		try {
 			invalidateCache(true);

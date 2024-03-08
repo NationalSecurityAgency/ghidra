@@ -28,6 +28,7 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.database.bookmark.OldBookmark;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.listing.BookmarkManager;
 import ghidra.program.model.util.*;
 import ghidra.program.util.ChangeManager;
@@ -576,9 +577,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 	public void removeAll(Address addr) {
 		lock.acquire();
 		try {
-			Iterator<PropertyMapDB<?>> iter = propertyMapCache.values().iterator();
-			while (iter.hasNext()) {
-				PropertyMapDB<?> pm = iter.next();
+			for (PropertyMapDB<?> pm : propertyMapCache.values()) {
 				pm.remove(addr);
 			}
 
@@ -591,15 +590,13 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 	@Override
 	public void removeAll(Address startAddr, Address endAddr, TaskMonitor monitor)
 			throws CancelledException {
+		AddressRange.checkValidRange(startAddr, endAddr);
 		lock.acquire();
 		try {
-			Iterator<PropertyMapDB<?>> iter = propertyMapCache.values().iterator();
-			while (iter.hasNext()) {
+			for (PropertyMapDB<?> pm : propertyMapCache.values()) {
 				monitor.checkCancelled();
-				PropertyMapDB<?> pm = iter.next();
 				pm.removeRange(startAddr, endAddr);
 			}
-
 		}
 		finally {
 			lock.release();
@@ -611,13 +608,10 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 			throws CancelledException {
 		lock.acquire();
 		try {
-			Iterator<PropertyMapDB<?>> iter = propertyMapCache.values().iterator();
-			while (iter.hasNext()) {
+			for (PropertyMapDB<?> pm : propertyMapCache.values()) {
 				monitor.checkCancelled();
-				PropertyMapDB<?> pm = iter.next();
 				pm.moveRange(fromAddr, fromAddr.add(length - 1), toAddr);
 			}
-
 		}
 		finally {
 			lock.release();
