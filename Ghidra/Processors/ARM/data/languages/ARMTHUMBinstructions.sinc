@@ -40,6 +40,7 @@ define token instrThumb (16)
   op9=(9,15)
   op11=(11,15)
   op12=(12,15)
+  op13=(13,15)
   op0=(0,15)
   sop0407=(4,7)
   sop0507=(5,7)
@@ -55,8 +56,10 @@ define token instrThumb (16)
   Rd0003=(0,3)
   Rd0810=(8,10)
   Rd0811=(8,11)
+  Rd1215hi=(12,15)
   Rn0002=(0,2)
   Rn0003=(0,3)
+  Rd0003hi=(0,3)
   Rn0305=(3,5)
   Rn0810=(8,10)
   Rm0305=(3,5)
@@ -106,8 +109,13 @@ define token instrThumb (16)
 
   thcond=(8,11)
   thcpn=(8,11)
+  thcop=(8,10)
   thopcode1=(4,7)
+  thop1=(4,6)
   thopcode2=(5,7)
+  thop2=(7,7)
+  thopcode3=(0,5)
+  thop3=(4,5)
   l07=(7,7)
   l11=(11,11)
   h1=(7,7)
@@ -194,20 +202,23 @@ define token instrThumb (16)
   thc1315=(13,15)
   thc1415=(14,15)
   thc1515=(15,15)
+
 ;
 
 attach variables [ Rd0002 Rd0810 Rn0002 Rn0305  Rn0810 Rm0305 Rm0608 Rs0305 ]
                  [ r0 r1 r2 r3 r4 r5 r6 r7 ];
 
 attach variables [ Rm0003 Rm0306 Rd0811 Rn0003 Rt1215 Rt0811 Ra1215 Rd0003 part2Rt part2Rd0003 ] [ r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 sp lr pc ];
+attach variables [ Rd1215hi Rd0003hi ] [ r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 sp lr pc _ ];
 
 attach variables [ thCRn thCRd thCRm ] [ cr0 cr1 cr2 cr3 cr4 cr5 cr6 cr7 cr8 cr9 cr10 cr11 cr12 cr13 cr14 cr15 ]; 	
 
 attach names [ thcpn ] [ p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15  ];
+attach names [ thcop ] [ p0 p1 p2 p3 p4 p5 p6 p7  ];
 
 attach variables [ hrn0002 hrm0305 hrd0002 ]
                  [ r8 r9 r10 r11 r12 sp lr pc ];
-                 
+
 macro th_addflags(op1,op2) {
   tmpCY = carry(op1,op2);
   tmpOV = scarry(op1,op2);
@@ -260,6 +271,33 @@ macro th_logicflags() {
 
 macro th_affectflags() {
   CY = tmpCY; ZR = tmpZR; NG = tmpNG; OV = tmpOV;
+}
+
+macro readAPSR_nzcvq(r) {
+# TODO: GE bits have not been included
+	r = zext( (NG<<4) | (ZR<<3) | (CY<<2) | (OV<<1) | (Q) ) << 27;
+}
+
+macro writeAPSR_nzcvq(r) {
+# TODO: GE bits have not been included
+  local tmp = r >> 27 & 0x1f;
+  Q  = ((tmp     ) & 0x1) != 0;
+  OV = ((tmp >> 1) & 0x1) != 0;
+  CY = ((tmp >> 2) & 0x1) != 0;
+  ZR = ((tmp >> 3) & 0x1) != 0;
+  NG = ((tmp >> 4) & 0x1) != 0;
+}
+
+macro readAPSR_nzcv(r) {
+	r = zext( (NG<<3) | (ZR<<2) | (CY<<1) | (OV) ) << 28;
+}
+
+macro writeAPSR_nzcv(r) {
+  local tmp = r >> 28 & 0xf;
+  OV = ((tmp)      & 0x1) != 0;
+  CY = ((tmp >> 1) & 0x1) != 0;
+  ZR = ((tmp >> 2) & 0x1) != 0;
+  NG = ((tmp >> 3) & 0x1) != 0;
 }
 
 ###############################################################################
@@ -1589,6 +1627,7 @@ bxns: "ns" is thc0002=0b100 { }
 
 @if defined(VERSION_6T2) || defined(VERSION_7)
 
+@ifndef CDE
 :cdp^ItCond thcpn,thopcode1,thCRd,thCRn,thCRm,thopcode2 is TMode=1 & ItCond & op8=0xee & thopcode1 & thCRn; thCRd & thcpn & thopcode2 & thc0404=0 & thCRm
 {
   build ItCond;
@@ -1606,6 +1645,7 @@ bxns: "ns" is thc0002=0b100 { }
   t_op2:4 = thopcode2;
   coprocessor_function2(t_cpn,t_op1,t_op2,thCRd,thCRn,thCRm);
 }
+@endif #CDE
 
 define pcodeop IndexCheck;
 
@@ -1902,6 +1942,7 @@ XYZ:  X^Y^Z             is TMode=1 & X & Y & Z  { }
 	# just sets up the condition and If Then/Else mask
 }
 
+@ifndef CDE
 :ldc^ItCond thcpn,thCRd,taddrmode5 	is (TMode=1 & ItCond & op9=0x76 & thN6=0 & thL4=1; thCRd & thcpn) & taddrmode5
 {
   build ItCond;
@@ -1933,7 +1974,7 @@ XYZ:  X^Y^Z             is TMode=1 & X & Y & Z  { }
   t_cpn:4 = thcpn;
   coprocessor_loadlong(t_cpn,thCRd,taddrmode5);
 }
-
+@endif # CDE
 @endif # VERSION_6T2 || VERSION_7
 
 :ldmia^ItCond	Rn_exclaim,ldbrace	is TMode=1 & ItCond & op11=0x19 & Rn_exclaim & ldbrace & Rn_exclaim_WB
@@ -2541,7 +2582,7 @@ macro th_set_carry_for_lsr(op1,shift_count) {
 
 
 @endif # VERSION_6T2 || VERSION_7
-
+@ifndef CDE
 :mcr^ItCond thcpn,thc0507,Rt1215,thCRn,thCRm,thopcode2 is TMode=1 & ItCond & op8=0xee & thc0507 & thc0404=0 & thCRn; Rt1215 & thcpn & thopcode2 & thc0404=1 & thCRm
 {
   build ItCond;
@@ -2575,7 +2616,7 @@ macro th_set_carry_for_lsr(op1,shift_count) {
   t_op:4 = thopcode1;
   coprocessor_moveto2(t_cpn,t_op,Rt1215,Rn0003,thCRm);
 }
-
+@endif # CDE
 
 :mov^CheckInIT_ZN^ItCond	Rd0810,Immed8		is TMode=1 & ItCond & op11=4 & Rd0810 & Immed8 & CheckInIT_ZN
 {
@@ -2652,7 +2693,7 @@ macro th_set_carry_for_lsr(op1,shift_count) {
   Rd0811 = (zext(Immed16) << 16) | (Rd0811 & 0xffff);
 }
 
-
+@ifndef CDE
 :mrc^ItCond thcpn,thc0507,Rt1215,thCRn,thCRm,thopcode2 is TMode=1 & ItCond & op8=0xee & thc0507 & thc0404=1 & thCRn; Rt1215 & thcpn & thopcode2 & thc0404=1 & thCRm
 {
   build ItCond;
@@ -2660,6 +2701,15 @@ macro th_set_carry_for_lsr(op1,shift_count) {
   t_op1:4 = thc0507;
   t_op2:4 = thopcode2;
   Rt1215 = coprocessor_movefromRt(t_cpn,t_op1,t_op2,thCRn,thCRm);
+}
+:mrc^ItCond thcpn,thc0507,"APSR_nzcv",thCRn,thCRm,thopcode2 is TMode=1 & ItCond & op8=0xee & thc0507 & thc0404=1 & thCRn; Rt1215=15 & thcpn & thopcode2 & thc0404=1 & thCRm
+{
+  build ItCond;
+  t_cpn:4 = thcpn;
+  t_op1:4 = thc0507;
+  t_op2:4 = thopcode2;
+  local tmp:4 = coprocessor_movefromRt(t_cpn,t_op1,t_op2,thCRn,thCRm);
+  writeAPSR_nzcv(tmp);
 }
 
 :mrc2^ItCond thcpn,thc0507,Rt1215,thCRn,thCRm,thopcode2 is TMode=1 & ItCond & op8=0xfe & thc0507 & thc0404=1 & thCRn; Rt1215 & thcpn & thopcode2 & thc0404=1 & thCRm
@@ -2669,6 +2719,15 @@ macro th_set_carry_for_lsr(op1,shift_count) {
   t_op1:4 = thc0507;
   t_op2:4 = thopcode2;
   Rt1215 = coprocessor_movefromRt(t_cpn,t_op1,t_op2,thCRn,thCRm);
+}
+:mrc2^ItCond thcpn,thc0507,"APSR_nzcv",thCRn,thCRm,thopcode2 is TMode=1 & ItCond & op8=0xfe & thc0507 & thc0404=1 & thCRn; Rt1215=15 & thcpn & thopcode2 & thc0404=1 & thCRm
+{
+  build ItCond;
+  t_cpn:4 = thcpn;
+  t_op1:4 = thc0507;
+  t_op2:4 = thopcode2;
+  local tmp:4 = coprocessor_movefromRt(t_cpn,t_op1,t_op2,thCRn,thCRm);
+  writeAPSR_nzcv(tmp);
 }
 
 :mrrc^ItCond thcpn,thopcode1,Rt1215,Rn0003,thCRm   is TMode=1 & ItCond & op4=0xec5 & Rn0003; Rt1215 & thcpn & thopcode1 & thCRm
@@ -2688,22 +2747,7 @@ macro th_set_carry_for_lsr(op1,shift_count) {
   Rt1215 = coprocessor_movefromRt(t_cpn,t_op,thCRm);
   Rn0003 = coprocessor_movefromRt2(t_cpn,t_op,thCRm);
 }
-
-macro readAPSR(r) {
-# TODO: GE bits have not been included
-	r = r | zext( (NG<<4) | (ZR<<3) | (CY<<2) | (OV<<1) | (Q) ) << 27;
-}
-
-macro writeAPSR(r) {
-# TODO: GE bits have not been included
-  local tmp = r >> 27 & 0x1f;
-  Q  = ((tmp     ) & 0x1) != 0;
-  OV = ((tmp >> 1) & 0x1) != 0;
-  CY = ((tmp >> 2) & 0x1) != 0;
-  ZR = ((tmp >> 3) & 0x1) != 0;
-  NG = ((tmp >> 4) & 0x1) != 0;
-}
-
+@endif #CDE
 @if defined(VERSION_7M)
 
 define pcodeop getMainStackPointer;
@@ -2722,7 +2766,7 @@ mrsipsr: 		is thc0000=0 { }
 mrsepsr: "e"	is thc0101=1 { }
 mrsepsr:		is thc0101=0 { }
 mrsapsr: 		is thc0202=1 { }
-mrsapsr: "a"	is thc0202=0 & Rd0811 { readAPSR(Rd0811); }
+mrsapsr: "a"	is thc0202=0 & Rd0811 { readAPSR_nzcvq(Rd0811); }
 
 mrspsr: mrsipsr^mrsepsr^mrsapsr^"psr"	is	mrsipsr & mrsepsr & mrsapsr & Rd0811	{
 	Rd0811 = 0;
@@ -2820,7 +2864,7 @@ control: "control" 			is epsilon {}
 {
   build ItCond;
   tmp:4 = 0;
-  readAPSR(tmp);
+  readAPSR_nzcvq(tmp);
   Rd0811 = tmp;
 }
 
@@ -2840,7 +2884,7 @@ msrepsr: 		is thc0101=0 { }
 msrapsr: 		is thc0202=1 { }
 msrapsr: "a"	is thc0202=0 & Rn0003 {
 	cpsr = cpsr | (Rn0003 & 0xf8000000);
-	writeAPSR(cpsr);
+	writeAPSR_nzcvq(cpsr);
 }
 
 msrpsr: msripsr^msrepsr^msrapsr^"psr"	is	msripsr & msrepsr & msrapsr	{
@@ -2955,7 +2999,7 @@ thcpsrmask: cpsr^thpsrmask	is thpsrmask & cpsr { export thpsrmask; }
   build ItCond;
   build thcpsrmask;
   cpsr = (cpsr& ~thcpsrmask) | (Rn0003 & thcpsrmask);
-  writeAPSR(cpsr);
+  writeAPSR_nzcvq(cpsr);
 }
 
 thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
@@ -3773,7 +3817,7 @@ macro th_set_carry_for_ror(result, count) {
 :sdiv^ItCond   Rd0811,Rn0003,Rm0003    is TMode=1 & ItCond & op4=0xfb9 & Rn0003; op12=0xf & Rd0811 & thc0407=0xf & Rm0003
 {
     build ItCond;
-    local result = Rn0003 / Rm0003;
+    local result = Rn0003 s/ Rm0003;
     Rd0811 = result;
 }
 
@@ -4259,7 +4303,7 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
 @endif # VERSION_6
 
 @if defined(VERSION_6T2) || defined(VERSION_7)
-
+@ifndef CDE
 :stc^ItCond thcpn,thCRd,taddrmode5 	is (TMode=1 & ItCond & op9=0x76 & thN6=0 & thL4=0; thCRd & thcpn) & taddrmode5
 {
   build ItCond;
@@ -4291,6 +4335,7 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
   t_cpn:4 = thcpn;
   coprocessor_storelong(t_cpn,thCRd,taddrmode5);
 }
+@endif # CDE
 
 :stm^ItCond    Rn0003,thstrlist_inc           is TMode=1 & ItCond & op11=0x1d & thc0910=0 & sop0608=2 & thwbit=0 & thc0404=0 & Rn0003; thc1515=0 & thc1313=0 & thstrlist_inc
 {
