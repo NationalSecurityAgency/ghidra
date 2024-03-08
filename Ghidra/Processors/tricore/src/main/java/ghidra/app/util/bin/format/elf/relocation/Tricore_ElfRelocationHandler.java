@@ -82,8 +82,12 @@ public class Tricore_ElfRelocationHandler
 			rv = symbolValue + addend;
 			byteLength = relocate_absB(memory, relocationAddress, rv);
 			break;
+			
+		/**
 		case R_TRICORE_16SM: // BOL S + A - A[0]
 			break;
+		**/
+		
 		case R_TRICORE_HI: // RLC S + A + 8000H >> 16
 			rv = (symbolValue + addend + 0x8000) >> 16;
 			byteLength = relocate_RLC(memory, relocationAddress, rv);
@@ -100,12 +104,17 @@ public class Tricore_ElfRelocationHandler
 			rv = symbolValue + addend;
 			byteLength = relocate_ABS(memory, relocationAddress, rv);
 			break;
+			
+		/**
 		case R_TRICORE_10SM: // BO S + A - A[0]
 			break;
+		**/
+			
 		case R_TRICORE_15REL: // BR S + A - P
 			rv = symbolValue + addend - offset;
 			byteLength = relocate_BR(memory, relocationAddress, rv);
 			break;
+			
 		/**
 		case R_TRICORE_10LI: // BO S + A - A[1]
 			break;
@@ -122,10 +131,12 @@ public class Tricore_ElfRelocationHandler
 		case R_TRICORE_10OFF:
 			break;
 		**/
+			
 		case R_TRICORE_16OFF:
 			rv = symbolValue + addend;
 			byteLength = relocate_BOL(memory, relocationAddress, rv);
 			break;
+			
 		/**
 		case R_TRICORE_8ABS:
 			break;
@@ -134,6 +145,7 @@ public class Tricore_ElfRelocationHandler
 		case R_TRICORE_16BIT:
 			break;
 		**/
+			
 		case R_TRICORE_3POS:
 			rv = symbolValue + addend;
 			byteLength = relocate_3POS(memory, relocationAddress, rv);
@@ -166,6 +178,7 @@ public class Tricore_ElfRelocationHandler
 			rv = (symbolValue + addend);
 			byteLength = relocate_5POS2(memory, relocationAddress, rv);
 			break;
+			
 		/**
 		case R_TRICORE_BRCC:
 			break;
@@ -260,9 +273,11 @@ public class Tricore_ElfRelocationHandler
 		case R_TRICORE_RELATIVE:
 			break;
 		**/
+			
 		case R_TRICORE_BITPOS:
 			// This reads as a pseudo relocation, possibly do RelocationResult.PARTIAL instead?
 			return RelocationResult.SKIPPED;
+			
 		/**
 		case R_TRICORE_SBREG_S2:
 			break;
@@ -271,6 +286,7 @@ public class Tricore_ElfRelocationHandler
 		case R_TRICORE_SBREG_D:
 			break;
 		**/
+			
 		default:
 			break;
 		}
