@@ -158,7 +158,7 @@ public class EquateTablePlugin extends ProgramPlugin implements DomainObjectList
 			OptionDialog.QUESTION_MESSAGE);
 
 		if (option != OptionDialog.CANCEL_OPTION) {
-			tool.execute(new RemoveEquateCmd(equateNames, getTool()), currentProgram);
+			tool.execute(new RemoveEquateCmd(equateNames), currentProgram);
 		}
 	}
 

@@ -328,13 +328,13 @@ public class FunctionPlugin extends Plugin implements DataService {
 		return maxSize;
 	}
 
-	protected void execute(Program program, Command cmd) {
+	protected void execute(Program program, Command<Program> cmd) {
 		if (!tool.execute(cmd, program)) {
 			Msg.showError(this, tool.getToolFrame(), cmd.getName(), cmd.getStatusMsg());
 		}
 	}
 
-	protected void execute(Program program, BackgroundCommand cmd) {
+	protected void execute(Program program, BackgroundCommand<Program> cmd) {
 		tool.executeBackgroundCommand(cmd, program);
 	}
 

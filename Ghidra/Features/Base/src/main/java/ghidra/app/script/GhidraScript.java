@@ -882,7 +882,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @param cmd the command to run
 	 * @return true if the command successfully ran
 	 */
-	public final boolean runCommand(Command cmd) {
+	public final boolean runCommand(Command<Program> cmd) {
 		return cmd.applyTo(currentProgram);
 	}
 
@@ -893,7 +893,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @param cmd the background command to run
 	 * @return true if the background command successfully ran
 	 */
-	public final boolean runCommand(BackgroundCommand cmd) {
+	public final boolean runCommand(BackgroundCommand<Program> cmd) {
 		return cmd.applyTo(currentProgram, monitor);
 	}
 

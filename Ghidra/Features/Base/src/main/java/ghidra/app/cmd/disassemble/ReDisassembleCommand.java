@@ -16,14 +16,13 @@
 package ghidra.app.cmd.disassemble;
 
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.disassemble.ReDisassembler;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-public class ReDisassembleCommand extends BackgroundCommand {
+public class ReDisassembleCommand extends BackgroundCommand<Program> {
 	private final Address seed;
 
 	public ReDisassembleCommand(Address seed) {
@@ -31,8 +30,8 @@ public class ReDisassembleCommand extends BackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		ReDisassembler dis = new ReDisassembler((Program) obj);
+	public boolean applyTo(Program program, TaskMonitor monitor) {
+		ReDisassembler dis = new ReDisassembler(program);
 		try {
 			dis.disasemble(seed, monitor);
 			return true;

@@ -65,7 +65,7 @@ import ghidra.util.task.TaskMonitor;
  * </pre>
  */
 public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
-		implements UndoableDomainObject, ErrorHandler, DBConstants {
+		implements ErrorHandler, DBConstants {
 
 	protected static final int NUM_UNDOS = 50;
 

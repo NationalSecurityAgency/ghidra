@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,6 @@
 package ghidra.app.cmd.refs;
 
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
@@ -28,7 +26,7 @@ import ghidra.util.task.TaskMonitor;
  * specified address and opIndex to all code units identified by a 
  * set of addresses.
  */
-public class AddMemRefsCmd extends BackgroundCommand {
+public class AddMemRefsCmd extends BackgroundCommand<Program> {
 
 	private Address fromAddr;
 	private AddressSetView toSet;
@@ -45,8 +43,8 @@ public class AddMemRefsCmd extends BackgroundCommand {
 	 * @param source the source of the reference
 	 * @param opIndex source operand index
 	 */
-	public AddMemRefsCmd(Address fromAddr, AddressSetView toSet, RefType refType,
-			SourceType source, int opIndex) {
+	public AddMemRefsCmd(Address fromAddr, AddressSetView toSet, RefType refType, SourceType source,
+			int opIndex) {
 		super("Add Memory References", true, true, false);
 
 		this.fromAddr = fromAddr;
@@ -57,11 +55,9 @@ public class AddMemRefsCmd extends BackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-
-		Program p = (Program) obj;
-		ReferenceManager refMgr = p.getReferenceManager();
-		Listing listing = p.getListing();
+	public boolean applyTo(Program program, TaskMonitor monitor) {
+		ReferenceManager refMgr = program.getReferenceManager();
+		Listing listing = program.getListing();
 
 		monitor.initialize(toSet.getNumAddresses());
 		monitor.setMessage("Adding memory references...");

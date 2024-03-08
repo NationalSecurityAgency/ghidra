@@ -20,15 +20,15 @@ import java.util.List;
 import java.util.Set;
 
 import db.util.ErrorHandler;
+import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.DomainObjectListener;
-import ghidra.framework.model.UndoableDomainObject;
 import ghidra.program.model.listing.Program;
 
 /**
  * Main interface for a Version Tracking Session
  *
  */
-public interface VTSession extends ErrorHandler, UndoableDomainObject {
+public interface VTSession extends ErrorHandler, DomainObject {
 
 	/**
 	 * Returns the AssociationManager.

@@ -23,7 +23,6 @@ import ghidra.app.cmd.module.CreateDefaultTreeCmd;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -53,7 +52,6 @@ import ghidra.util.task.TaskMonitor;
 )
 //@formatter:on
 public class SampleProgramTreePlugin extends ProgramPlugin {
-	private Listing listing;
 
 	/**
 	 * Construct a new SampleProgramTreePlugin.
@@ -90,8 +88,7 @@ public class SampleProgramTreePlugin extends ProgramPlugin {
 	 * Method Modularize.
 	 */
 	private void modularize() {
-		BackgroundCommand cmd = new ModularizeCommand();
-
+		ModularizeCommand cmd = new ModularizeCommand();
 		tool.executeBackgroundCommand(cmd, currentProgram);
 	}
 
@@ -99,7 +96,7 @@ public class SampleProgramTreePlugin extends ProgramPlugin {
 	 * Background command that will create the new tree and organize it.
 	 *
 	 */
-	class ModularizeCommand extends BackgroundCommand {
+	static class ModularizeCommand extends BackgroundCommand<Program> {
 		private int fragment_count = 0;
 		private String programTreeName = "Sample Tree";
 
@@ -108,10 +105,9 @@ public class SampleProgramTreePlugin extends ProgramPlugin {
 		}
 
 		@Override
-		public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-			Program program = (Program) obj;
+		public boolean applyTo(Program program, TaskMonitor monitor) {
 
-			listing = program.getListing();
+			Listing listing = program.getListing();
 
 			createDefaultTreeView(program, programTreeName);
 
@@ -145,8 +141,8 @@ public class SampleProgramTreePlugin extends ProgramPlugin {
 
 				monitor.setMessage("Module " + start + " : " + mod_name);
 
-				ProgramModule mod = make_module(mod_name, frags);
-				makeFragment(start, end, "frag_" + fragment_count, mod);
+				ProgramModule mod = make_module(listing, mod_name, frags);
+				makeFragment(listing, start, end, "frag_" + fragment_count, mod);
 				fragment_count++;
 			}
 
@@ -156,24 +152,17 @@ public class SampleProgramTreePlugin extends ProgramPlugin {
 		private void createDefaultTreeView(Program program, String defaultTreeName) {
 			String treeName = defaultTreeName;
 			int oneUp = 1;
+			Listing listing = program.getListing();
 			while (listing.getRootModule(treeName) != null) {
 				treeName = defaultTreeName + "_" + oneUp;
 				oneUp++;
 			}
 			CreateDefaultTreeCmd cmd = new CreateDefaultTreeCmd(defaultTreeName);
-			if (tool.execute(cmd, program)) {
-				tool.setStatusInfo(cmd.getStatusMsg());
-			}
+			cmd.applyTo(program);
 		}
 
-		/**
-		 * Method make_module.
-		 * @param start
-		 * @param entry_address
-		 * @param prev_name
-		 * @param code
-		 */
-		private ProgramModule make_module(String moduleName, ProgramModule parent) {
+		private ProgramModule make_module(Listing listing, String moduleName,
+				ProgramModule parent) {
 			String modName = moduleName;
 
 			int oneUp = 1;
@@ -183,6 +172,7 @@ public class SampleProgramTreePlugin extends ProgramPlugin {
 					newMod = parent.createModule(modName);
 				}
 				catch (DuplicateNameException e) {
+					// ignore
 				}
 				modName = moduleName + "_" + oneUp;
 				oneUp++;
@@ -190,19 +180,14 @@ public class SampleProgramTreePlugin extends ProgramPlugin {
 			return newMod;
 		}
 
-		/**
-		 * Method make_frag.
-		 * @param start
-		 * @param entry_address
-		 * @param prev_name
-		 */
-		private ProgramFragment makeFragment(Address start, Address end, String fragmentName,
-				ProgramModule parent) {
+		private ProgramFragment makeFragment(Listing listing, Address start, Address end,
+				String fragmentName, ProgramModule parent) {
 
 			try {
 				parent.createFragment(fragmentName);
 			}
 			catch (DuplicateNameException e) {
+				// ignore
 			}
 			ProgramFragment frag = listing.getFragment(programTreeName, fragmentName);
 

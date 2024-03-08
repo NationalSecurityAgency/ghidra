@@ -352,31 +352,31 @@ class FileActionManager {
 	 * all domain objects.
 	 */
 	private DomainObject[] lockDomainObjects(List<DomainFile> files) {
-		DomainObject[] objs = new DomainObject[files.size()];
+		DomainObject[] domainObjects = new DomainObject[files.size()];
 		int lastIndex = 0;
 		boolean locked = true;
 		while (lastIndex < files.size()) {
 			try {
-				objs[lastIndex] = files.get(lastIndex).getDomainObject(this, false, false, null);
+				domainObjects[lastIndex] =
+					files.get(lastIndex).getDomainObject(this, false, false, null);
 			}
 			catch (Throwable t) {
 				Msg.error(this, "Failed to aqcuire domain object instance", t);
 				locked = false;
 				break;
 			}
-			if (!objs[lastIndex].lock(null)) {
+			if (!domainObjects[lastIndex].lock(null)) {
 				String title = "Exit Ghidra";
 				StringBuffer buf = new StringBuffer();
-				UndoableDomainObject udo = (UndoableDomainObject) objs[lastIndex];
+				DomainObject d = domainObjects[lastIndex];
 				buf.append("The File " + files.get(lastIndex).getPathname() +
 					" is currently being modified by the\n");
 				buf.append("the following actions:\n \n");
-				TransactionInfo t = udo.getCurrentTransactionInfo();
+				TransactionInfo t = d.getCurrentTransactionInfo();
 				List<String> list = t.getOpenSubTransactions();
-				Iterator<String> it = list.iterator();
-				while (it.hasNext()) {
+				for (String element : list) {
 					buf.append("\n     ");
-					buf.append(it.next());
+					buf.append(element);
 				}
 				buf.append("\n \n");
 				buf.append(
@@ -391,22 +391,22 @@ class FileActionManager {
 
 				if (result == OptionDialog.CANCEL_OPTION) {
 					locked = false;
-					objs[lastIndex].release(this);
+					domainObjects[lastIndex].release(this);
 					break;
 				}
-				udo.forceLock(true, null);
+				d.forceLock(true, null);
 			}
 			++lastIndex;
 		}
 		if (!locked) {
 			//skip the last one that could not be locked...
 			for (int i = 0; i < lastIndex; i++) {
-				objs[i].unlock();
-				objs[i].release(this);
+				domainObjects[i].unlock();
+				domainObjects[i].release(this);
 			}
 			return null;
 		}
-		return objs;
+		return domainObjects;
 	}
 
 	/**

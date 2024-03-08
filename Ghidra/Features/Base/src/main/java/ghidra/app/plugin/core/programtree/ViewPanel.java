@@ -18,7 +18,6 @@ package ghidra.app.plugin.core.programtree;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.HashMap;
-import java.util.Iterator;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -103,6 +102,9 @@ class ViewPanel extends JPanel implements ChangeListener {
 
 	boolean removeView(ViewProviderService vps) {
 		String viewName = vps.getViewName();
+		if (!map.containsKey(viewName)) {
+			return false; // view not found (may have already be removed)
+		}
 		tabbedPane.removeChangeListener(this);
 		// remove us as a listener so that the viewChanged() method is
 		// not called while we are removing the view provider
@@ -178,10 +180,8 @@ class ViewPanel extends JPanel implements ChangeListener {
 		tabbedPane.setSelectedComponent(c); // causes a state change event
 
 		updateLocalActions(v);
-		Iterator<String> iter = map.keySet().iterator();
-		while (iter.hasNext()) {
+		for (String key : map.keySet()) {
 
-			String key = iter.next();
 			ViewProviderService vps = map.get(key);
 			JComponent comp = vps.getViewComponent();
 			if (c != comp) {
@@ -225,9 +225,7 @@ class ViewPanel extends JPanel implements ChangeListener {
 	}
 
 	ViewProviderService getViewProviderForComponent(Component component) {
-		Iterator<String> iter = map.keySet().iterator();
-		while (iter.hasNext()) {
-			String name = iter.next();
+		for (String name : map.keySet()) {
 			ViewProviderService v = map.get(name);
 			if (v.getViewComponent() == component) {
 				return v;
@@ -357,10 +355,8 @@ class ViewPanel extends JPanel implements ChangeListener {
 	 */
 	private void viewChanged() {
 		JComponent c = (JComponent) tabbedPane.getSelectedComponent();
-		Iterator<String> iter = map.keySet().iterator();
-		while (iter.hasNext()) {
+		for (String key : map.keySet()) {
 
-			String key = iter.next();
 			ViewProviderService v = map.get(key);
 			if (c == v.getViewComponent()) {
 				v.setHasFocus(true);

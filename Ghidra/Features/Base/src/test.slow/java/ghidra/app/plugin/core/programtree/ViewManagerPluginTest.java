@@ -239,6 +239,8 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		final DockingActionIf closeAction = getAction(plugin, "Close Tree View");
 		SwingUtilities.invokeAndWait(() -> closeAction.actionPerformed(new DefaultActionContext()));
 
+		waitForBusyTool(tool);
+
 		String[] treeNames = program.getListing().getTreeNames();
 		assertEquals(treeNames.length - 1, tabbedPane.getTabCount());
 		ViewProviderService vps = provider.getCurrentViewProvider();
@@ -258,7 +260,9 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		final DockingActionIf deleteAction = getAction(plugin, "Delete Tree View");
 		SwingUtilities
 				.invokeAndWait(() -> deleteAction.actionPerformed(new DefaultActionContext()));
-		program.flushEvents();
+
+		waitForBusyTool(tool);
+
 		assertNull(program.getListing().getRootModule("Tree Two"));
 		String[] treeNames = program.getListing().getTreeNames();
 		assertEquals(treeNames.length, tabbedPane.getTabCount());
@@ -267,6 +271,7 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(provider.getCurrentView().hasSameAddresses(cb.getView()));
 
 		undo(program);
+
 		// Tree Two should come back
 		assertNotNull(program.getListing().getRootModule("Tree Two"));
 		ViewProviderService vps = provider.getCurrentViewProvider();
@@ -275,6 +280,7 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(provider.getCurrentView().hasSameAddresses(vps.getCurrentView()));
 
 		redo(program);
+
 		assertNull(program.getListing().getRootModule("Tree Two"));
 		treeNames = program.getListing().getTreeNames();
 		assertEquals(treeNames.length, tabbedPane.getTabCount());
@@ -293,30 +299,30 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		SwingUtilities
 				.invokeAndWait(() -> deleteAction.actionPerformed(new DefaultActionContext()));
-		program.flushEvents();
+		waitForBusyTool(tool);
 
 		setCurrentViewProvider("Tree One");
 
 		SwingUtilities
 				.invokeAndWait(() -> deleteAction.actionPerformed(new DefaultActionContext()));
-		program.flushEvents();
+		waitForBusyTool(tool);
 
 		setCurrentViewProvider("Tree Two");
 
 		SwingUtilities
 				.invokeAndWait(() -> deleteAction.actionPerformed(new DefaultActionContext()));
-		program.flushEvents();
+		waitForBusyTool(tool);
 
 		setCurrentViewProvider("Tree Three");
 
 		SwingUtilities
 				.invokeAndWait(() -> deleteAction.actionPerformed(new DefaultActionContext()));
-		program.flushEvents();
+		waitForBusyTool(tool);
 
 		// attempt to delete the last view
 		SwingUtilities
 				.invokeAndWait(() -> deleteAction.actionPerformed(new DefaultActionContext()));
-		program.flushEvents();
+		waitForBusyTool(tool);
 
 		ViewProviderService vps = provider.getCurrentViewProvider();
 		assertEquals(DEFAULT_TREE_NAME, vps.getViewName());

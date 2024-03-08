@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,6 @@
 package ghidra.app.cmd.refs;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.InvalidInputException;
 
@@ -26,13 +24,13 @@ import ghidra.util.exception.InvalidInputException;
  * 
  * 
  */
-public class SetExternalNameCmd implements Command {
+public class SetExternalNameCmd implements Command<Program> {
 
 	private String externalName;
 	private String externalPath;
 	private String status;
 	private boolean userDefined = true;
-		
+
 	/**
 	 * Constructs a new command for setting the external program name and path.
 	 * @param externalName the name of the link.
@@ -43,32 +41,24 @@ public class SetExternalNameCmd implements Command {
 		this.externalPath = externalPath;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
-	public boolean applyTo(DomainObject obj) {
-		Program p = (Program)obj;
+	@Override
+	public boolean applyTo(Program program) {
 		try {
-			p.getExternalManager().setExternalPath(externalName, externalPath, userDefined);
-		} catch (InvalidInputException e) {
+			program.getExternalManager().setExternalPath(externalName, externalPath, userDefined);
+		}
+		catch (InvalidInputException e) {
 			status = "Invalid name specified";
 			return false;
 		}
 		return true;
 	}
 
-
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
+	@Override
 	public String getStatusMsg() {
 		return status;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
+	@Override
 	public String getName() {
 		return "Set External Program Name";
 	}

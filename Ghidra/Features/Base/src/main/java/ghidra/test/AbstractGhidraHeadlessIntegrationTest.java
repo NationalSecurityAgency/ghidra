@@ -32,7 +32,7 @@ import ghidra.app.script.GhidraScriptConstants;
 import ghidra.app.services.GoToService;
 import ghidra.framework.*;
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.UndoableDomainObject;
+import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.mgr.ServiceManager;
@@ -307,7 +307,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 * @param wait if true, wait for undo to fully complete in Swing thread. If a modal dialog may
 	 *            result from this undo, wait should be set false.
 	 */
-	public static void undo(UndoableDomainObject dobj, boolean wait) {
+	public static void undo(DomainObject dobj, boolean wait) {
 		Runnable r = () -> {
 			try {
 				dobj.undo();
@@ -331,7 +331,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 * @param wait if true, wait for redo to fully complete in Swing thread. If a modal dialog may
 	 *            result from this redo, wait should be set false.
 	 */
-	public static void redo(UndoableDomainObject dobj, boolean wait) {
+	public static void redo(DomainObject dobj, boolean wait) {
 		Runnable r = () -> {
 			try {
 				dobj.redo();
@@ -356,7 +356,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 * @param dobj The domain object upon which to perform the undo.
 	 * @param name the name of the undo item on the stack.
 	 */
-	public static void undo(UndoableDomainObject dobj, String name) {
+	public static void undo(DomainObject dobj, String name) {
 
 		List<String> names = dobj.getAllUndoNames();
 		int i = 0;
@@ -381,7 +381,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 *
 	 * @param dobj The domain object upon which to perform the undo.
 	 */
-	public static void undo(UndoableDomainObject dobj) {
+	public static void undo(DomainObject dobj) {
 		undo(dobj, true);
 	}
 
@@ -390,7 +390,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 *
 	 * @param dobj The domain object upon which to perform the redo.
 	 */
-	public static void redo(UndoableDomainObject dobj) {
+	public static void redo(DomainObject dobj) {
 		redo(dobj, true);
 	}
 
@@ -401,7 +401,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 * @param dobj The domain object upon which to perform the undo.
 	 * @param count number of transactions to undo
 	 */
-	public static void undo(UndoableDomainObject dobj, int count) {
+	public static void undo(DomainObject dobj, int count) {
 		for (int i = 0; i < count; ++i) {
 			undo(dobj);
 		}
@@ -414,7 +414,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 * @param dobj The domain object upon which to perform the redo.
 	 * @param count number of transactions to redo
 	 */
-	public static void redo(UndoableDomainObject dobj, int count) {
+	public static void redo(DomainObject dobj, int count) {
 		for (int i = 0; i < count; ++i) {
 			redo(dobj);
 		}
@@ -422,9 +422,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 
 	public static <T extends Plugin> T getPlugin(PluginTool tool, Class<T> c) {
 		List<Plugin> list = tool.getManagedPlugins();
-		Iterator<Plugin> it = list.iterator();
-		while (it.hasNext()) {
-			Plugin p = it.next();
+		for (Plugin p : list) {
 			if (p.getClass() == c) {
 				return c.cast(p);
 			}

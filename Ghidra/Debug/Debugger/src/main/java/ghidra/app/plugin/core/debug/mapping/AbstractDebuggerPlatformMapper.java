@@ -73,8 +73,8 @@ public abstract class AbstractDebuggerPlatformMapper implements DebuggerPlatform
 	}
 
 	@Override
-	public DisassemblyResult disassemble(TraceThread thread, TraceObject object,
-			Address start, AddressSetView restricted, long snap, TaskMonitor monitor) {
+	public DisassemblyResult disassemble(TraceThread thread, TraceObject object, Address start,
+			AddressSetView restricted, long snap, TaskMonitor monitor) {
 		if (isCancelSilently(start, snap)) {
 			return DisassemblyResult.CANCELLED;
 		}
@@ -86,7 +86,7 @@ public abstract class AbstractDebuggerPlatformMapper implements DebuggerPlatform
 		for (DisassemblyInject i : injects) {
 			i.pre(tool, dis, platform, snap, thread, startSet, restricted);
 		}
-		boolean result = dis.applyToTyped(trace.getFixedProgramView(snap), monitor);
+		boolean result = dis.applyTo(trace.getFixedProgramView(snap), monitor);
 		if (!result) {
 			return DisassemblyResult.failed(dis.getStatusMsg());
 		}

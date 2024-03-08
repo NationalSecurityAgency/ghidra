@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,26 +18,23 @@ package ghidra.app.plugin.core.memory;
 import ghidra.app.plugin.core.clear.ClearCmd;
 import ghidra.app.plugin.core.clear.ClearOptions;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.util.exception.RollbackException;
 import ghidra.util.task.TaskMonitor;
 
-public class UninitializedBlockCmd extends BackgroundCommand {
+public class UninitializedBlockCmd extends BackgroundCommand<Program> {
 
 	private MemoryBlock block;
-	private Program program;
 
-	public UninitializedBlockCmd(Program program, MemoryBlock block) {
+	public UninitializedBlockCmd(MemoryBlock block) {
 		super("Unitialize Memory Block", false, true, true);
-		this.program = program;
 		this.block = block;
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) throws RuntimeException {
+	public boolean applyTo(Program program, TaskMonitor monitor) throws RuntimeException {
 		ClearOptions clearOptions = new ClearOptions(false);
 		clearOptions.setClearCode(true);
 		clearOptions.setClearDefaultReferences(true);

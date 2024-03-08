@@ -197,9 +197,8 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			if (pcInStack) {
-				DBTraceObject objFrame =
-					objects.createObject(
-						TraceObjectKeyPath.parse("Targets[0].Threads[0].Stack[0]"));
+				DBTraceObject objFrame = objects
+						.createObject(TraceObjectKeyPath.parse("Targets[0].Threads[0].Stack[0]"));
 				objFrame.insert(zeroOn, ConflictResolution.DENY);
 				TraceObjectStackFrame frame = objFrame.queryInterface(TraceObjectStackFrame.class);
 				frame.setProgramCounter(zeroOn, tb.addr(offset));
@@ -208,8 +207,8 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 				objects.createObject(
 					TraceObjectKeyPath.parse("Targets[0].Threads[0].Stack[0].Registers"))
 						.insert(zeroOn, ConflictResolution.DENY);
-				TraceObjectThread thread = objects.getObjectByCanonicalPath(
-					TraceObjectKeyPath.parse("Targets[0].Threads[0]"))
+				TraceObjectThread thread = objects
+						.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Targets[0].Threads[0]"))
 						.queryInterface(TraceObjectThread.class);
 				traceManager.activateThread(thread);
 				DBTraceMemorySpace regs =
@@ -248,8 +247,8 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		}
 	}
 
-	protected void createLegacyTrace(String langID, long offset,
-			Supplier<ByteBuffer> byteSupplier) throws Throwable {
+	protected void createLegacyTrace(String langID, long offset, Supplier<ByteBuffer> byteSupplier)
+			throws Throwable {
 		createAndOpenTrace(langID);
 
 		try (Transaction tx = tb.startTransaction()) {
@@ -358,8 +357,8 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		try (Transaction tx = program.openTransaction("Load")) {
 			start = program.getAddressFactory().getDefaultAddressSpace().getAddress(0x00400000);
 			program.getMemory()
-					.createInitializedBlock(".text", start,
-						new ByteArrayInputStream(arr("ebffc0")), 3, monitor, false);
+					.createInitializedBlock(".text", start, new ByteArrayInputStream(arr("ebffc0")),
+						3, monitor, false);
 		}
 		intoProject(program);
 
@@ -654,7 +653,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 				new AddressSet(start, start.addWrap(1)));
 			dis.setInitialContext(DebuggerDisassemblerPlugin.deriveAlternativeDefaultContext(
 				tb.language, new LanguageID("ARM:LE:32:v8T"), start));
-			dis.applyToTyped(tb.trace.getProgramView(), TaskMonitor.DUMMY);
+			dis.applyTo(tb.trace.getProgramView(), TaskMonitor.DUMMY);
 		}
 		waitForDomainObject(tb.trace);
 
@@ -715,11 +714,11 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		TraceGuestPlatform guest =
 			Unique.assertOne(tb.trace.getPlatformManager().getGuestPlatforms());
 		try (Transaction tx = tb.startTransaction()) {
-			TraceDisassembleCommand dis = new TraceDisassembleCommand(guest, start,
-				new AddressSet(start, start.addWrap(1)));
+			TraceDisassembleCommand dis =
+				new TraceDisassembleCommand(guest, start, new AddressSet(start, start.addWrap(1)));
 			dis.setInitialContext(DebuggerDisassemblerPlugin.deriveAlternativeDefaultContext(
 				guest.getLanguage(), new LanguageID("ARM:LE:32:v8T"), start));
-			dis.applyToTyped(tb.trace.getProgramView(), TaskMonitor.DUMMY);
+			dis.applyTo(tb.trace.getProgramView(), TaskMonitor.DUMMY);
 		}
 		waitForDomainObject(tb.trace);
 

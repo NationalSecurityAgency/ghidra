@@ -18,7 +18,6 @@ package ghidra.app.plugin.core.equate;
 import java.util.*;
 
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.database.symbol.EquateManager;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
@@ -31,7 +30,7 @@ import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
-public class CreateEnumEquateCommand extends BackgroundCommand {
+public class CreateEnumEquateCommand extends BackgroundCommand<Program> {
 
 	private AddressSetView addresses;
 	private Enum enoom;
@@ -47,9 +46,7 @@ public class CreateEnumEquateCommand extends BackgroundCommand {
 	 * @param enoom The enum to apply equates with
 	 * @param shouldDoOnSubOps true if the enum should also be applied to the sub-operands.
 	 */
-	public CreateEnumEquateCommand(Program program, AddressSetView addresses, Enum enoom,
-			boolean shouldDoOnSubOps) {
-		this.program = Objects.requireNonNull(program);
+	public CreateEnumEquateCommand(AddressSetView addresses, Enum enoom, boolean shouldDoOnSubOps) {
 		this.addresses = Objects.requireNonNull(addresses);
 		this.enoom = Objects.requireNonNull(enoom);
 		this.shouldDoOnSubOps = shouldDoOnSubOps;
@@ -61,7 +58,8 @@ public class CreateEnumEquateCommand extends BackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
+	public boolean applyTo(Program p, TaskMonitor monitor) {
+		this.program = p;
 
 		monitor.setIndeterminate(true);
 		monitor.setMessage("Installing Equate");

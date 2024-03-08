@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,22 +16,21 @@
 package ghidra.app.cmd.data;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.data.DataTypeComponent;
+import ghidra.program.model.listing.Program;
 import ghidra.util.exception.DuplicateNameException;
-
 
 /**
  * Command to rename a component in a data type. 
  *
  */
-public class RenameDataFieldCmd implements Command {
-	
+public class RenameDataFieldCmd implements Command<Program> {
+
 	private DataTypeComponent comp;
 	private String newName;
 
 	private String statusMsg = "";
-	
+
 	/**
 	 * Construct a new RenameDataFieldCmd.
 	 * @param comp component in data type to be renamed
@@ -43,11 +41,8 @@ public class RenameDataFieldCmd implements Command {
 		this.newName = newName;
 	}
 
-	/*
-	 *  (non-Javadoc)
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
-	public boolean applyTo(DomainObject obj) {
+	@Override
+	public boolean applyTo(Program program) {
 		if (comp == null) {
 			statusMsg = "Null data type";
 			return false;
@@ -55,7 +50,8 @@ public class RenameDataFieldCmd implements Command {
 		try {
 			comp.setFieldName(newName);
 			return true;
-		} catch(DuplicateNameException e) {
+		}
+		catch (DuplicateNameException e) {
 			statusMsg = "Type name already exists: " + newName;
 		}
 		return false;
@@ -65,6 +61,7 @@ public class RenameDataFieldCmd implements Command {
 	 *  (non-Javadoc)
 	 * @see ghidra.framework.cmd.Command#getStatusMsg()
 	 */
+	@Override
 	public String getStatusMsg() {
 		return statusMsg;
 	}
@@ -73,6 +70,7 @@ public class RenameDataFieldCmd implements Command {
 	 *  (non-Javadoc)
 	 * @see ghidra.framework.cmd.Command#getName()
 	 */
+	@Override
 	public String getName() {
 		return "Rename Data Field";
 	}

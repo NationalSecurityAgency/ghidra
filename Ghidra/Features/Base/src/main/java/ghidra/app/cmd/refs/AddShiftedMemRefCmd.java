@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,6 @@
 package ghidra.app.cmd.refs;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
@@ -25,7 +23,7 @@ import ghidra.program.model.symbol.*;
 /**
  * Command class to add a shifted memory reference to the program.
  */
-public class AddShiftedMemRefCmd implements Command {
+public class AddShiftedMemRefCmd implements Command<Program> {
 
 	private Address fromAddr;
 	private Address toAddr;
@@ -33,9 +31,9 @@ public class AddShiftedMemRefCmd implements Command {
 	private SourceType source;
 	private int opIndex;
 	private int shift;
-	
-    /**
-     * Command constructor for adding a shifted memory reference
+
+	/**
+	 * Command constructor for adding a shifted memory reference
 	 * @param fromAddr address of the codeunit where the reference occurs
 	 * @param toAddr computed as the value of the operand at opIndex shifted
 	 * by the number of bits specified by shiftValue 
@@ -43,41 +41,32 @@ public class AddShiftedMemRefCmd implements Command {
 	 * @param source the source of the reference
 	 * @param opIndex the operand index in the code unit where the reference occurs 
 	 * @param shift the number of bits to shift the value by
-     */
-    public AddShiftedMemRefCmd(Address fromAddr, Address toAddr, RefType refType, 
-    		SourceType source, int opIndex, int shift) {
-    	this.fromAddr = fromAddr;
-    	this.toAddr = toAddr;
-    	this.refType = refType;
-    	this.source = source;
-    	this.opIndex = opIndex;
-    	this.shift = shift;
-    }
-    
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
 	 */
-    public boolean applyTo(DomainObject obj) {
-    	Program p = (Program)obj;
-    	ReferenceManager refMgr = p.getReferenceManager();
+	public AddShiftedMemRefCmd(Address fromAddr, Address toAddr, RefType refType, SourceType source,
+			int opIndex, int shift) {
+		this.fromAddr = fromAddr;
+		this.toAddr = toAddr;
+		this.refType = refType;
+		this.source = source;
+		this.opIndex = opIndex;
+		this.shift = shift;
+	}
+
+	@Override
+	public boolean applyTo(Program program) {
+		ReferenceManager refMgr = program.getReferenceManager();
 		refMgr.addShiftedMemReference(fromAddr, toAddr, shift, refType, source, opIndex);
 		return true;
-    }
- 
+	}
 
-    /**
-     * @see ghidra.framework.cmd.Command#getStatusMsg()
-     */
-    public String getStatusMsg() {
-        return "";
-    }
+	@Override
+	public String getStatusMsg() {
+		return "";
+	}
 
-    /**
-     * @see ghidra.framework.cmd.Command#getName()
-     */
-    public String getName() {
-        return "Add Shifted Memory Reference";
-    }
+	@Override
+	public String getName() {
+		return "Add Shifted Memory Reference";
+	}
 
 }

@@ -182,9 +182,8 @@ public class EquatePlugin extends Plugin {
 			iter = listing.getCodeUnits(context.getProgram().getMemory(), true);
 		}
 
-		BackgroundCommand cmd =
-			new CreateEquateCmd(scalar, iter, dialog.getEquateName(),
-				dialog.getOverwriteExisting(), context);
+		BackgroundCommand cmd = new CreateEquateCmd(scalar, iter, dialog.getEquateName(),
+			dialog.getOverwriteExisting(), context);
 		tool.executeBackgroundCommand(cmd, context.getProgram());
 
 		dialog.dispose();
@@ -214,7 +213,7 @@ public class EquatePlugin extends Plugin {
 		boolean shouldDoOnSubOps = dialog.shouldApplyOnSubOps();
 		Program program = context.getProgram();
 		CreateEnumEquateCommand cmd =
-			new CreateEnumEquateCommand(program, addresses, (Enum) dataType, shouldDoOnSubOps);
+			new CreateEnumEquateCommand(addresses, (Enum) dataType, shouldDoOnSubOps);
 		tool.executeBackgroundCommand(cmd, program);
 
 		dialog.dispose();
@@ -287,8 +286,7 @@ public class EquatePlugin extends Plugin {
 	}
 
 	private void renameEquate(ListingActionContext context, Enum enoom, Equate oldEquate,
-			String newEquateName,
-			CodeUnitIterator iter) {
+			String newEquateName, CodeUnitIterator iter) {
 
 		// First do a sanity check to make sure we're not trying to change to a duplicate
 		// name.
@@ -337,8 +335,7 @@ public class EquatePlugin extends Plugin {
 	}
 
 	private RenameEquateCmd createRenameCmd(Enum enoom, String oldName, String newName,
-			Address addr,
-			int opIndex) {
+			Address addr, int opIndex) {
 
 		if (enoom != null) {
 			return new RenameEquateCmd(oldName, enoom, addr, opIndex);
@@ -374,8 +371,7 @@ public class EquatePlugin extends Plugin {
 			Program program = context.getProgram();
 			List<Integer> opIndexes = getInstructionMatches(program, instr, equate);
 			for (Integer opIndexe : opIndexes) {
-				bckCmd.add(
-					new ClearEquateCmd(equate.getName(), instr.getAddress(), opIndexe));
+				bckCmd.add(new ClearEquateCmd(equate.getName(), instr.getAddress(), opIndexe));
 			}
 		}
 		else if (cu instanceof Data) {

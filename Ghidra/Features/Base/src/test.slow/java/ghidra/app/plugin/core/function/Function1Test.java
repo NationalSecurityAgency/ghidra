@@ -531,6 +531,8 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		JTextArea textArea = findComponent(vcd, JTextArea.class);
 		triggerText(textArea, "My New Comment");
 		pressButtonByText(vcd.getComponent(), "OK");
+		waitForBusyTool(tool);
+
 		assertTrue(cb.goToField(addr("0x1006420"), "Variable Comment", 0, 0, 0));
 		assertEquals("My New Comment", cb.getCurrentFieldText());
 		assertTrue(deleteComment.isEnabledForContext(cb.getProvider().getActionContext(null)));
@@ -540,6 +542,8 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		textArea = findComponent(vcd, JTextArea.class);
 		triggerText(textArea, "more stuff");
 		pressButtonByText(vcd.getComponent(), "OK");
+		waitForBusyTool(tool);
+
 		assertTrue(cb.goToField(addr("0x1006420"), "Variable Comment", 0, 0, 0));
 		assertEquals("more stuff", cb.getCurrentFieldText());
 		undo(program, "Set Variable Comment");
@@ -790,7 +794,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		Function function = program.getListing().getFunctionAt(addr("0x100248f"));
 		assertNotNull(function);// function created by FunctionStartAnalyzer
 
-		CompoundCmd cmd = new CompoundCmd("test");
+		CompoundCmd<Program> cmd = new CompoundCmd<>("test");
 		for (Parameter parm : function.getParameters()) {
 			cmd.add(new DeleteVariableCmd(parm));
 		}
@@ -887,8 +891,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		Variable[] vars = function.getLocalVariables(VariableFilter.STACK_VARIABLE_FILTER);
 		tx(program, () -> {
 			DataType byteDT = program.getDataTypeManager()
-					.addDataType(new ByteDataType(),
-						DataTypeConflictHandler.DEFAULT_HANDLER);
+					.addDataType(new ByteDataType(), DataTypeConflictHandler.DEFAULT_HANDLER);
 			vars[1].setDataType(byteDT, SourceType.ANALYSIS);
 		});
 
@@ -1050,6 +1053,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 		runSwing(() -> editorField.setText("fred"));
 
 		pressButtonByText(dialog, "OK");
+		waitForBusyTool();
 
 		assertEquals("fred", cb.getCurrentFieldText());
 		undo(program, "Edit Label");
@@ -1077,6 +1081,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		pressButtonByText(dialog, "OK");
 		waitForBusyTool();
+
 		assertEquals("dword ptr [EBP + bob],0x0", cb.getCurrentFieldText());
 		undo(program, "Edit Label");
 		cb.updateNow();
@@ -1486,8 +1491,8 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void waitForBusyTool() {
-		waitForBusyTool(tool);
 		program.flushEvents();
+		waitForBusyTool(tool);
 		waitForSwing();
 		cb.updateNow();
 	}
@@ -1495,9 +1500,7 @@ public class Function1Test extends AbstractGhidraHeadedIntegrationTest {
 	private void doCycleAction(DockingActionIf action) {
 		assertTrue(action.isEnabledForContext(cb.getProvider().getActionContext(null)));
 		performAction(action, cb.getProvider(), true);
-		program.flushEvents();
-		waitForSwing();
-		cb.updateNow();
+		waitForBusyTool();
 	}
 
 	private Function createFunctionAtEntry() {

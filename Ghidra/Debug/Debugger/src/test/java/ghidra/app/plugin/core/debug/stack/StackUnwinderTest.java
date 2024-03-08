@@ -190,8 +190,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 
 			function.updateFunction("__cdecl",
 				new ReturnParameterImpl(IntegerDataType.dataType, program),
-				List.of(
-					new ParameterImpl("n", IntegerDataType.dataType, program)),
+				List.of(new ParameterImpl("n", IntegerDataType.dataType, program)),
 				FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, true, SourceType.ANALYSIS);
 			function.addLocalVariable(
 				new LocalVariableImpl("i", IntegerDataType.dataType, -8, program),
@@ -263,14 +262,12 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 
 			function.updateFunction("__cdecl",
 				new ReturnParameterImpl(UnsignedIntegerDataType.dataType, program),
-				List.of(
-					new ParameterImpl("n", UnsignedIntegerDataType.dataType, program)),
+				List.of(new ParameterImpl("n", UnsignedIntegerDataType.dataType, program)),
 				FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, true, SourceType.ANALYSIS);
 			// NOTE: The decompiler doesn't actually use sum.... For some reason, it re-uses n
 			// Still, in the tests, I can use uVar1 (EAX) as a register variable
-			function.addLocalVariable(
-				new LocalVariableImpl("sum", 0, UnsignedIntegerDataType.dataType, register("EDX"),
-					program),
+			function.addLocalVariable(new LocalVariableImpl("sum", 0,
+				UnsignedIntegerDataType.dataType, register("EDX"), program),
 				SourceType.USER_DEFINED);
 
 			Instruction ins = program.getListing().getInstructionAt(stackRefInstr);
@@ -501,18 +498,15 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 					.createFunction("fillStruct", funcInstr,
 						new AddressSet(funcInstr, end.previous()), SourceType.USER_DEFINED);
 			funFillStruct.updateFunction("__cdecl", null,
-				List.of(
-					new ParameterImpl("s", new PointerDataType(structure), program)),
+				List.of(new ParameterImpl("s", new PointerDataType(structure), program)),
 				FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, true, SourceType.ANALYSIS);
 
 			Function main = program.getFunctionManager()
 					.createFunction("main", entry, new AddressSet(entry, funcInstr.previous()),
 						SourceType.USER_DEFINED);
-			main.updateFunction("__cdecl",
-				new ReturnParameterImpl(DWordDataType.dataType, program),
+			main.updateFunction("__cdecl", new ReturnParameterImpl(DWordDataType.dataType, program),
 				FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, true, SourceType.ANALYSIS);
-			main.addLocalVariable(
-				new LocalVariableImpl("myStack", structure, -8, program),
+			main.addLocalVariable(new LocalVariableImpl("myStack", structure, -8, program),
 				SourceType.ANALYSIS);
 			return main;
 		}
@@ -581,16 +575,14 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 					.createFunction("fillStruct", funcInstr,
 						new AddressSet(funcInstr, end.previous()), SourceType.USER_DEFINED);
 			funFillStruct.updateFunction("__cdecl", null,
-				List.of(
-					new ParameterImpl("s", new PointerDataType(structure), program),
+				List.of(new ParameterImpl("s", new PointerDataType(structure), program),
 					new ParameterImpl("i", IntegerDataType.dataType, program)),
 				FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, true, SourceType.ANALYSIS);
 
 			Function main = program.getFunctionManager()
 					.createFunction("main", entry, new AddressSet(entry, funcInstr.previous()),
 						SourceType.USER_DEFINED);
-			main.updateFunction("__cdecl",
-				new ReturnParameterImpl(DWordDataType.dataType, program),
+			main.updateFunction("__cdecl", new ReturnParameterImpl(DWordDataType.dataType, program),
 				FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, true, SourceType.ANALYSIS);
 			return main;
 		}
@@ -614,10 +606,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 
 		UnwindInfo infoAtBody = ua.computeUnwindInfo(bodyInstr, monitor);
 		assertEquals(new UnwindInfo(function, -20L, 4L, stack(0),
-			Map.of(
-				register("EBP"), stack(-4)),
-			new StackUnwindWarningSet(), null),
-			infoAtBody);
+			Map.of(register("EBP"), stack(-4)), new StackUnwindWarningSet(), null), infoAtBody);
 	}
 
 	@Test
@@ -640,13 +629,11 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 			infoAtEntry);
 
 		UnwindInfo infoAtBody = ua.computeUnwindInfo(bodyInstr, monitor);
-		assertEquals(new UnwindInfo(function, -20L, 4L, stack(0),
-			Map.of(
-				register("EBP"), stack(-4)),
-			new StackUnwindWarningSet(
-				new UnspecifiedConventionStackUnwindWarning(myExtern),
-				new UnknownPurgeStackUnwindWarning(myExtern)),
-			null),
+		assertEquals(
+			new UnwindInfo(function, -20L, 4L, stack(0), Map.of(register("EBP"), stack(-4)),
+				new StackUnwindWarningSet(new UnspecifiedConventionStackUnwindWarning(myExtern),
+					new UnknownPurgeStackUnwindWarning(myExtern)),
+				null),
 			infoAtBody);
 	}
 
@@ -670,11 +657,8 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		UnwindInfo infoAtBody = ua.computeUnwindInfo(bodyInstr, monitor);
 		DataType ptr2Undef = new PointerDataType(DataType.DEFAULT, program.getDataTypeManager());
 		assertEquals(new UnwindInfo(function, -20L, 4L, stack(0),
-			Map.of(
-				register("EBP"), stack(-4)),
-			new StackUnwindWarningSet(
-				new UnexpectedTargetTypeStackUnwindWarning(ptr2Undef)),
-			null),
+			Map.of(register("EBP"), stack(-4)),
+			new StackUnwindWarningSet(new UnexpectedTargetTypeStackUnwindWarning(ptr2Undef)), null),
 			infoAtBody);
 	}
 
@@ -684,8 +668,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		addPlugin(tool, DebuggerListingPlugin.class);
 		addPlugin(tool, DisassemblerPlugin.class);
 		addPlugin(tool, DecompilePlugin.class);
-		DebuggerControlService editingService =
-			addPlugin(tool, DebuggerControlServicePlugin.class);
+		DebuggerControlService editingService = addPlugin(tool, DebuggerControlServicePlugin.class);
 		DebuggerEmulationService emuService = addPlugin(tool, DebuggerEmulationServicePlugin.class);
 
 		Function function = createSumSquaresProgramX86_32();
@@ -744,8 +727,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		addPlugin(tool, DebuggerListingPlugin.class);
 		addPlugin(tool, DisassemblerPlugin.class);
 		addPlugin(tool, DecompilePlugin.class);
-		DebuggerControlService editingService =
-			addPlugin(tool, DebuggerControlServicePlugin.class);
+		DebuggerControlService editingService = addPlugin(tool, DebuggerControlServicePlugin.class);
 		DebuggerEmulationService emuService = addPlugin(tool, DebuggerEmulationServicePlugin.class);
 
 		Function function = createFibonacciProgramX86_32();
@@ -775,13 +757,12 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		TraceBreakpoint bptUnwind;
 		try (Transaction tx = tb.startTransaction()) {
 			bptUnwind = tb.trace.getBreakpointManager()
-					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr,
-						Set.of(),
+					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr, Set.of(),
 						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "unwind stack");
 			tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[1]", Lifespan.nowOn(0), tb.addr(0xdeadbeef),
-						Set.of(),
-						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "capture return value");
+						Set.of(), Set.of(TraceBreakpointKind.SW_EXECUTE), true,
+						"capture return value");
 		}
 
 		EmulationResult result = emuService.run(atSetup.getPlatform(), atSetup.getTime(), monitor,
@@ -916,8 +897,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getBreakpointManager()
-					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr,
-						Set.of(),
+					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr, Set.of(),
 						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "unwind stack");
 		}
 
@@ -957,8 +937,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getBreakpointManager()
-					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr,
-						Set.of(),
+					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr, Set.of(),
 						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "unwind stack");
 		}
 
@@ -999,8 +978,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getBreakpointManager()
-					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr,
-						Set.of(),
+					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr, Set.of(),
 						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "unwind stack");
 		}
 
@@ -1041,8 +1019,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getBreakpointManager()
-					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr,
-						Set.of(),
+					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr, Set.of(),
 						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "unwind stack");
 		}
 
@@ -1166,8 +1143,8 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 			FieldLocation fieldLocation, Field field) throws Throwable {
 		VariableValueTable table = new VariableValueTable();
 		StackUnwindWarningSet warnings = new StackUnwindWarningSet();
-		waitOn(valuesService.fillVariableValueTable(table, programLocation, current,
-			fieldLocation, field, warnings));
+		waitOn(valuesService.fillVariableValueTable(table, programLocation, current, fieldLocation,
+			field, warnings));
 		table.add(new WarningsRow(warnings));
 		return table;
 	}
@@ -1182,16 +1159,12 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
 			traceManager.getCurrent(), loc.fLoc, loc.field);
 
-		assertTable(Map.of(
-			RowKey.NAME, "Name: n",
-			RowKey.FRAME, "Frame: 0 fib pc=0040002c sp=00004ff4 base=00004ff4",
-			RowKey.STORAGE, "Storage: Stack[0x4]:4",
-			RowKey.TYPE, "Type: uint",
-			RowKey.LOCATION, "Location: 00004ff8:4",
-			RowKey.BYTES, "Bytes: (KNOWN) 01 00 00 00",
-			RowKey.INTEGER, "Integer: (KNOWN) 1",
-			RowKey.VALUE, "Value: (KNOWN) 1h",
-			RowKey.WARNINGS, "IGNORED"), table);
+		assertTable(Map.of(RowKey.NAME, "Name: n", RowKey.FRAME,
+			"Frame: 0 fib pc=0040002c sp=00004ff4 base=00004ff4", RowKey.STORAGE,
+			"Storage: Stack[0x4]:4", RowKey.TYPE, "Type: uint", RowKey.LOCATION,
+			"Location: 00004ff8:4", RowKey.BYTES, "Bytes: (KNOWN) 01 00 00 00", RowKey.INTEGER,
+			"Integer: (KNOWN) 1", RowKey.VALUE, "Value: (KNOWN) 1h", RowKey.WARNINGS, "IGNORED"),
+			table);
 	}
 
 	@Test
@@ -1204,15 +1177,11 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
 			traceManager.getCurrent(), loc.fLoc, loc.field);
 
-		assertTable(Map.of(
-			RowKey.NAME, "Name: sum",
-			RowKey.FRAME, "Frame: 0 fib pc=0040002c sp=00004ff4 base=00004ff4",
-			RowKey.STORAGE, "Storage: EDX:4",
-			RowKey.TYPE, "Type: uint",
-			RowKey.LOCATION, "Location: EDX:4",
-			RowKey.INTEGER, "Integer: (UNKNOWN) 0",
-			RowKey.VALUE, "Value: (UNKNOWN) 0h",
-			RowKey.WARNINGS, "IGNORED"), table);
+		assertTable(Map.of(RowKey.NAME, "Name: sum", RowKey.FRAME,
+			"Frame: 0 fib pc=0040002c sp=00004ff4 base=00004ff4", RowKey.STORAGE, "Storage: EDX:4",
+			RowKey.TYPE, "Type: uint", RowKey.LOCATION, "Location: EDX:4", RowKey.INTEGER,
+			"Integer: (UNKNOWN) 0", RowKey.VALUE, "Value: (UNKNOWN) 0h", RowKey.WARNINGS,
+			"IGNORED"), table);
 	}
 
 	@Test
@@ -1225,15 +1194,11 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
 			traceManager.getCurrent(), loc.fLoc, loc.field);
 
-		assertTable(Map.of(
-			RowKey.NAME, "Name: <RETURN>",
-			RowKey.FRAME, "Frame: 0 fib pc=0040002c sp=00004ff4 base=00004ff4",
-			RowKey.STORAGE, "Storage: EAX:4",
-			RowKey.TYPE, "Type: uint",
-			RowKey.LOCATION, "Location: EAX:4",
-			RowKey.INTEGER, "Integer: (KNOWN) 1",
-			RowKey.VALUE, "Value: (KNOWN) 1h",
-			RowKey.WARNINGS, "IGNORED"), table);
+		assertTable(Map.of(RowKey.NAME, "Name: <RETURN>", RowKey.FRAME,
+			"Frame: 0 fib pc=0040002c sp=00004ff4 base=00004ff4", RowKey.STORAGE, "Storage: EAX:4",
+			RowKey.TYPE, "Type: uint", RowKey.LOCATION, "Location: EAX:4", RowKey.INTEGER,
+			"Integer: (KNOWN) 1", RowKey.VALUE, "Value: (KNOWN) 1h", RowKey.WARNINGS, "IGNORED"),
+			table);
 	}
 
 	@Test
@@ -1247,16 +1212,11 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
 			traceManager.getCurrent(), loc.fLoc, loc.field);
 
-		assertTable(Map.of(
-			RowKey.NAME, "Name: myGlobal",
-			RowKey.STORAGE, "Storage: 00600000:4",
-			RowKey.TYPE, "Type: int",
-			RowKey.LOCATION, "Location: 00600000:4",
-			RowKey.BYTES, "Bytes: (KNOWN) ef be ad de",
-			RowKey.INTEGER, """
+		assertTable(Map.of(RowKey.NAME, "Name: myGlobal", RowKey.STORAGE, "Storage: 00600000:4",
+			RowKey.TYPE, "Type: int", RowKey.LOCATION, "Location: 00600000:4", RowKey.BYTES,
+			"Bytes: (KNOWN) ef be ad de", RowKey.INTEGER, """
 					Integer: (KNOWN) 3735928559, 0xdeadbeef
-					-559038737, -0x21524111""",
-			RowKey.VALUE, "Value: (KNOWN) DEADBEEFh",
+					-559038737, -0x21524111""", RowKey.VALUE, "Value: (KNOWN) DEADBEEFh",
 			RowKey.WARNINGS, "IGNORED"), table);
 	}
 
@@ -1269,17 +1229,17 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		Address dynamicAddress = dynLoc.getAddress();
 		try (Transaction tx = tb.startTransaction()) {
 			int length = stIns.getLength();
-			assertEquals(length, tb.trace.getMemoryManager()
-					.putBytes(current.getSnap(), dynamicAddress,
-						ByteBuffer.wrap(stIns.getBytes())));
+			assertEquals(length,
+				tb.trace.getMemoryManager()
+						.putBytes(current.getSnap(), dynamicAddress,
+							ByteBuffer.wrap(stIns.getBytes())));
 			new TraceDisassembleCommand(current.getPlatform(), dynamicAddress,
 				new AddressSet(dynamicAddress, dynamicAddress.add(length - 1)))
-						.applyToTyped(current.getView(), monitor);
+						.applyTo(current.getView(), monitor);
 		}
 		waitForDomainObject(tb.trace);
-		return Objects.requireNonNull(tb.trace.getCodeManager()
-				.instructions()
-				.getAt(current.getViewSnap(), dynamicAddress));
+		return Objects.requireNonNull(
+			tb.trace.getCodeManager().instructions().getAt(current.getViewSnap(), dynamicAddress));
 	}
 
 	@Test
@@ -1295,16 +1255,11 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
 			traceManager.getCurrent(), loc.fLoc, loc.field);
 
-		assertTable(Map.of(
-			RowKey.NAME, "Name: myGlobal",
-			RowKey.STORAGE, "Storage: 00600000:4",
-			RowKey.TYPE, "Type: int",
-			RowKey.LOCATION, "Location: 00600000:4",
-			RowKey.BYTES, "Bytes: (KNOWN) ef be ad de",
-			RowKey.INTEGER, """
+		assertTable(Map.of(RowKey.NAME, "Name: myGlobal", RowKey.STORAGE, "Storage: 00600000:4",
+			RowKey.TYPE, "Type: int", RowKey.LOCATION, "Location: 00600000:4", RowKey.BYTES,
+			"Bytes: (KNOWN) ef be ad de", RowKey.INTEGER, """
 					Integer: (KNOWN) 3735928559, 0xdeadbeef
-					-559038737, -0x21524111""",
-			RowKey.VALUE, "Value: (KNOWN) DEADBEEFh",
+					-559038737, -0x21524111""", RowKey.VALUE, "Value: (KNOWN) DEADBEEFh",
 			RowKey.WARNINGS, "IGNORED"), table);
 	}
 
@@ -1319,16 +1274,12 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
 			traceManager.getCurrent(), loc.fLoc, loc.field);
 
-		assertTable(Map.of(
-			RowKey.NAME, "Name: n",
-			RowKey.FRAME, "Frame: 0 fib pc=0040002c sp=00004ff4 base=00004ff4",
-			RowKey.STORAGE, "Storage: Stack[0x4]:4",
-			RowKey.TYPE, "Type: uint",
-			RowKey.LOCATION, "Location: 00004ff8:4",
-			RowKey.BYTES, "Bytes: (KNOWN) 01 00 00 00",
-			RowKey.INTEGER, "Integer: (KNOWN) 1",
-			RowKey.VALUE, "Value: (KNOWN) 1h",
-			RowKey.WARNINGS, "IGNORED"), table);
+		assertTable(Map.of(RowKey.NAME, "Name: n", RowKey.FRAME,
+			"Frame: 0 fib pc=0040002c sp=00004ff4 base=00004ff4", RowKey.STORAGE,
+			"Storage: Stack[0x4]:4", RowKey.TYPE, "Type: uint", RowKey.LOCATION,
+			"Location: 00004ff8:4", RowKey.BYTES, "Bytes: (KNOWN) 01 00 00 00", RowKey.INTEGER,
+			"Integer: (KNOWN) 1", RowKey.VALUE, "Value: (KNOWN) 1h", RowKey.WARNINGS, "IGNORED"),
+			table);
 	}
 
 	@Test
@@ -1342,15 +1293,11 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
 			traceManager.getCurrent(), loc.fLoc, loc.field);
 
-		assertTable(Map.of(
-			RowKey.NAME, "Name: sum",
-			RowKey.FRAME, "Frame: 0 fib pc=0040002c sp=00004ff4 base=00004ff4",
-			RowKey.STORAGE, "Storage: EDX:4",
-			RowKey.TYPE, "Type: uint",
-			RowKey.LOCATION, "Location: EDX:4",
-			RowKey.INTEGER, "Integer: (UNKNOWN) 0",
-			RowKey.VALUE, "Value: (UNKNOWN) 0h",
-			RowKey.WARNINGS, "IGNORED"), table);
+		assertTable(Map.of(RowKey.NAME, "Name: sum", RowKey.FRAME,
+			"Frame: 0 fib pc=0040002c sp=00004ff4 base=00004ff4", RowKey.STORAGE, "Storage: EDX:4",
+			RowKey.TYPE, "Type: uint", RowKey.LOCATION, "Location: EDX:4", RowKey.INTEGER,
+			"Integer: (UNKNOWN) 0", RowKey.VALUE, "Value: (UNKNOWN) 0h", RowKey.WARNINGS,
+			"IGNORED"), table);
 	}
 
 	@Test
@@ -1367,11 +1314,9 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
 			traceManager.getCurrent(), loc.fLoc, loc.field);
 
-		assertTable(Map.of(
-			RowKey.NAME, "Name: EBP",
-			RowKey.FRAME, "Frame: 2 fib pc=00400013 sp=00004ff8 base=00005000",
-			RowKey.LOCATION, "Location: 00004ff0:4",
-			RowKey.INTEGER, "Integer: (KNOWN) 20476, 0x4ffc",
+		assertTable(Map.of(RowKey.NAME, "Name: EBP", RowKey.FRAME,
+			"Frame: 2 fib pc=00400013 sp=00004ff8 base=00005000", RowKey.LOCATION,
+			"Location: 00004ff0:4", RowKey.INTEGER, "Integer: (KNOWN) 20476, 0x4ffc",
 			RowKey.WARNINGS, "IGNORED"), table);
 	}
 
@@ -1388,9 +1333,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
 			traceManager.getCurrent(), loc.fLoc, loc.field);
 
-		assertTable(Map.of(
-			RowKey.NAME, "Name: EDX",
-			RowKey.INTEGER, "Integer: (UNKNOWN) 0",
+		assertTable(Map.of(RowKey.NAME, "Name: EDX", RowKey.INTEGER, "Integer: (UNKNOWN) 0",
 			RowKey.WARNINGS, "IGNORED"), table);
 	}
 
@@ -1495,16 +1438,11 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
 			traceManager.getCurrent(), loc.fLoc, loc.field);
 
-		assertTable(Map.of(
-			RowKey.NAME, "Name: myGlobal",
-			RowKey.STORAGE, "Storage: 00600000:4",
-			RowKey.TYPE, "Type: int",
-			RowKey.LOCATION, "Location: 00600000:4",
-			RowKey.BYTES, "Bytes: (KNOWN) ef be ad de",
-			RowKey.INTEGER, """
+		assertTable(Map.of(RowKey.NAME, "Name: myGlobal", RowKey.STORAGE, "Storage: 00600000:4",
+			RowKey.TYPE, "Type: int", RowKey.LOCATION, "Location: 00600000:4", RowKey.BYTES,
+			"Bytes: (KNOWN) ef be ad de", RowKey.INTEGER, """
 					Integer: (KNOWN) 3735928559, 0xdeadbeef
-					-559038737, -0x21524111""",
-			RowKey.VALUE, "Value: (KNOWN) DEADBEEFh",
+					-559038737, -0x21524111""", RowKey.VALUE, "Value: (KNOWN) DEADBEEFh",
 			RowKey.WARNINGS, "IGNORED"), table);
 	}
 
@@ -1518,16 +1456,12 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
 			traceManager.getCurrent(), loc.fLoc, loc.field);
 
-		assertTable(Map.of(
-			RowKey.NAME, "Name: n",
-			RowKey.FRAME, "Frame: 0 fib pc=0040002c sp=00004ff4 base=00004ff4",
-			RowKey.STORAGE, "Storage: Stack[0x4]:4",
-			RowKey.TYPE, "Type: uint",
-			RowKey.LOCATION, "Location: 00004ff8:4",
-			RowKey.BYTES, "Bytes: (KNOWN) 01 00 00 00",
-			RowKey.INTEGER, "Integer: (KNOWN) 1",
-			RowKey.VALUE, "Value: (KNOWN) 1h",
-			RowKey.WARNINGS, "IGNORED"), table);
+		assertTable(Map.of(RowKey.NAME, "Name: n", RowKey.FRAME,
+			"Frame: 0 fib pc=0040002c sp=00004ff4 base=00004ff4", RowKey.STORAGE,
+			"Storage: Stack[0x4]:4", RowKey.TYPE, "Type: uint", RowKey.LOCATION,
+			"Location: 00004ff8:4", RowKey.BYTES, "Bytes: (KNOWN) 01 00 00 00", RowKey.INTEGER,
+			"Integer: (KNOWN) 1", RowKey.VALUE, "Value: (KNOWN) 1h", RowKey.WARNINGS, "IGNORED"),
+			table);
 	}
 
 	@Test
@@ -1541,15 +1475,11 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
 			traceManager.getCurrent(), loc.fLoc, loc.field);
 
-		assertTable(Map.of(
-			RowKey.NAME, "Name: uVar1",
-			RowKey.FRAME, "Frame: 0 fib pc=0040002c sp=00004ff4 base=00004ff4",
-			RowKey.STORAGE, "Storage: EAX:4",
-			RowKey.TYPE, "Type: uint",
-			RowKey.LOCATION, "Location: EAX:4",
-			RowKey.INTEGER, "Integer: (KNOWN) 1",
-			RowKey.VALUE, "Value: (KNOWN) 1h",
-			RowKey.WARNINGS, "IGNORED"), table);
+		assertTable(Map.of(RowKey.NAME, "Name: uVar1", RowKey.FRAME,
+			"Frame: 0 fib pc=0040002c sp=00004ff4 base=00004ff4", RowKey.STORAGE, "Storage: EAX:4",
+			RowKey.TYPE, "Type: uint", RowKey.LOCATION, "Location: EAX:4", RowKey.INTEGER,
+			"Integer: (KNOWN) 1", RowKey.VALUE, "Value: (KNOWN) 1h", RowKey.WARNINGS, "IGNORED"),
+			table);
 	}
 
 	@Test
@@ -1566,15 +1496,10 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
 			traceManager.getCurrent(), loc.fLoc, loc.field);
 
-		assertTable(Map.of(
-			RowKey.NAME, "Name: myGlobal",
-			RowKey.STORAGE, "Storage: 00600000:4",
-			RowKey.TYPE, "Type: MyStruct",
-			RowKey.LOCATION, "Location: 00600000:4",
-			RowKey.BYTES, "Bytes: (KNOWN) e6 07 0c 09",
-			RowKey.INTEGER, "Integer: (KNOWN) 151783398, 0x90c07e6",
-			RowKey.VALUE, "Value: (KNOWN) ",
-			RowKey.WARNINGS, "IGNORED"), table);
+		assertTable(Map.of(RowKey.NAME, "Name: myGlobal", RowKey.STORAGE, "Storage: 00600000:4",
+			RowKey.TYPE, "Type: MyStruct", RowKey.LOCATION, "Location: 00600000:4", RowKey.BYTES,
+			"Bytes: (KNOWN) e6 07 0c 09", RowKey.INTEGER, "Integer: (KNOWN) 151783398, 0x90c07e6",
+			RowKey.VALUE, "Value: (KNOWN) ", RowKey.WARNINGS, "IGNORED"), table);
 	}
 
 	@Test
@@ -1591,14 +1516,10 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
 			traceManager.getCurrent(), loc.fLoc, loc.field);
 
-		assertTable(Map.of(
-			RowKey.NAME, "Name: m",
-			RowKey.TYPE, "Type: byte",
-			RowKey.LOCATION, "Location: 00600002:1",
-			RowKey.BYTES, "Bytes: (KNOWN) 0c",
-			RowKey.INTEGER, "Integer: (KNOWN) 12, 0xc",
-			RowKey.VALUE, "Value: (KNOWN) Ch",
-			RowKey.WARNINGS, "IGNORED"), table);
+		assertTable(Map.of(RowKey.NAME, "Name: m", RowKey.TYPE, "Type: byte", RowKey.LOCATION,
+			"Location: 00600002:1", RowKey.BYTES, "Bytes: (KNOWN) 0c", RowKey.INTEGER,
+			"Integer: (KNOWN) 12, 0xc", RowKey.VALUE, "Value: (KNOWN) Ch", RowKey.WARNINGS,
+			"IGNORED"), table);
 	}
 
 	@Test
@@ -1615,16 +1536,12 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
 			traceManager.getCurrent(), loc.fLoc, loc.field);
 
-		assertTable(Map.of(
-			RowKey.NAME, "Name: myStack",
-			RowKey.FRAME, "Frame: 1 main pc=00400012 sp=00004fe4 base=00004ff0",
-			RowKey.STORAGE, "Storage: Stack[-0x8]:4",
-			RowKey.TYPE, "Type: MyStruct",
-			RowKey.LOCATION, "Location: 00004fe8:4",
-			RowKey.BYTES, "Bytes: (UNKNOWN) 00 00 00 00",
-			RowKey.INTEGER, "Integer: (UNKNOWN) 0",
-			RowKey.VALUE, "Value: (UNKNOWN) ",
-			RowKey.WARNINGS, "IGNORED"), table);
+		assertTable(Map.of(RowKey.NAME, "Name: myStack", RowKey.FRAME,
+			"Frame: 1 main pc=00400012 sp=00004fe4 base=00004ff0", RowKey.STORAGE,
+			"Storage: Stack[-0x8]:4", RowKey.TYPE, "Type: MyStruct", RowKey.LOCATION,
+			"Location: 00004fe8:4", RowKey.BYTES, "Bytes: (UNKNOWN) 00 00 00 00", RowKey.INTEGER,
+			"Integer: (UNKNOWN) 0", RowKey.VALUE, "Value: (UNKNOWN) ", RowKey.WARNINGS, "IGNORED"),
+			table);
 	}
 
 	@Test
@@ -1641,14 +1558,10 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
 			traceManager.getCurrent(), loc.fLoc, loc.field);
 
-		assertTable(Map.of(
-			RowKey.NAME, "Name: y",
-			RowKey.FRAME, "Frame: 1 main pc=00400012 sp=00004fe4 base=00004ff0",
-			RowKey.TYPE, "Type: word",
-			RowKey.LOCATION, "Location: 00004fe8:2",
-			RowKey.BYTES, "Bytes: (UNKNOWN) 00 00",
-			RowKey.INTEGER, "Integer: (UNKNOWN) 0",
-			RowKey.VALUE, "Value: (UNKNOWN) 0h",
+		assertTable(Map.of(RowKey.NAME, "Name: y", RowKey.FRAME,
+			"Frame: 1 main pc=00400012 sp=00004fe4 base=00004ff0", RowKey.TYPE, "Type: word",
+			RowKey.LOCATION, "Location: 00004fe8:2", RowKey.BYTES, "Bytes: (UNKNOWN) 00 00",
+			RowKey.INTEGER, "Integer: (UNKNOWN) 0", RowKey.VALUE, "Value: (UNKNOWN) 0h",
 			RowKey.WARNINGS, "IGNORED"), table);
 	}
 
@@ -1666,16 +1579,13 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
 			traceManager.getCurrent(), loc.fLoc, loc.field);
 
-		assertTable(Map.of(
-			RowKey.NAME, "Name: s",
-			RowKey.FRAME, "Frame: 0 fillStruct pc=00400041 sp=00004fe0 base=00004fe0",
-			RowKey.STORAGE, "Storage: Stack[0x4]:4",
-			RowKey.TYPE, "Type: MyStruct *",
-			RowKey.LOCATION, "Location: 00004fe4:4",
+		assertTable(Map.of(RowKey.NAME, "Name: s", RowKey.FRAME,
+			"Frame: 0 fillStruct pc=00400041 sp=00004fe0 base=00004fe0", RowKey.STORAGE,
+			"Storage: Stack[0x4]:4", RowKey.TYPE, "Type: MyStruct *", RowKey.LOCATION,
+			"Location: 00004fe4:4",
 			// NOTE: Value is the pointer, not the struct
-			RowKey.BYTES, "Bytes: (KNOWN) 00 00 60 00",
-			RowKey.INTEGER, "Integer: (KNOWN) 6291456, 0x600000",
-			RowKey.VALUE, "Value: (KNOWN) 00600000",
+			RowKey.BYTES, "Bytes: (KNOWN) 00 00 60 00", RowKey.INTEGER,
+			"Integer: (KNOWN) 6291456, 0x600000", RowKey.VALUE, "Value: (KNOWN) 00600000",
 			RowKey.WARNINGS, "IGNORED"), table);
 	}
 
@@ -1693,14 +1603,10 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
 			traceManager.getCurrent(), loc.fLoc, loc.field);
 
-		assertTable(Map.of(
-			RowKey.NAME, "Name: y",
-			RowKey.FRAME, "Frame: 0 fillStruct pc=00400041 sp=00004fe0 base=00004fe0",
-			RowKey.TYPE, "Type: word",
-			RowKey.LOCATION, "Location: 00600000:2",
-			RowKey.BYTES, "Bytes: (KNOWN) e6 07",
-			RowKey.INTEGER, "Integer: (KNOWN) 2022, 0x7e6",
-			RowKey.VALUE, "Value: (KNOWN) 7E6h",
+		assertTable(Map.of(RowKey.NAME, "Name: y", RowKey.FRAME,
+			"Frame: 0 fillStruct pc=00400041 sp=00004fe0 base=00004fe0", RowKey.TYPE, "Type: word",
+			RowKey.LOCATION, "Location: 00600000:2", RowKey.BYTES, "Bytes: (KNOWN) e6 07",
+			RowKey.INTEGER, "Integer: (KNOWN) 2022, 0x7e6", RowKey.VALUE, "Value: (KNOWN) 7E6h",
 			RowKey.WARNINGS, "IGNORED"), table);
 	}
 
@@ -1718,14 +1624,10 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerTest {
 		VariableValueTable table = getVariableValueTable(valuesService, loc.pLoc,
 			traceManager.getCurrent(), loc.fLoc, loc.field);
 
-		assertTable(Map.of(
-			RowKey.NAME, "Name: m",
-			RowKey.FRAME, "Frame: 0 fillStruct pc=0040002e sp=00004fe0 base=00004fe0",
-			RowKey.TYPE, "Type: byte",
-			RowKey.LOCATION, "Location: 0060000a:1",
-			RowKey.BYTES, "Bytes: (KNOWN) 0c",
-			RowKey.INTEGER, "Integer: (KNOWN) 12, 0xc",
-			RowKey.VALUE, "Value: (KNOWN) Ch",
+		assertTable(Map.of(RowKey.NAME, "Name: m", RowKey.FRAME,
+			"Frame: 0 fillStruct pc=0040002e sp=00004fe0 base=00004fe0", RowKey.TYPE, "Type: byte",
+			RowKey.LOCATION, "Location: 0060000a:1", RowKey.BYTES, "Bytes: (KNOWN) 0c",
+			RowKey.INTEGER, "Integer: (KNOWN) 12, 0xc", RowKey.VALUE, "Value: (KNOWN) Ch",
 			RowKey.WARNINGS, "IGNORED"), table);
 	}
 

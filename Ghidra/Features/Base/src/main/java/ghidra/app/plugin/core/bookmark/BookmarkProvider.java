@@ -396,7 +396,7 @@ public class BookmarkProvider extends ComponentProviderAdapter {
 
 	}
 
-	private static class BookmarkRowObjectDeleteCommand extends BackgroundCommand {
+	private static class BookmarkRowObjectDeleteCommand extends BackgroundCommand<Program> {
 		private List<BookmarkRowObject> bookmarkList;
 
 		public BookmarkRowObjectDeleteCommand(List<BookmarkRowObject> bookmarkList) {
@@ -419,14 +419,14 @@ public class BookmarkProvider extends ComponentProviderAdapter {
 		}
 
 		@Override
-		public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-			boolean wasEabled = obj.isSendingEvents();
+		public boolean applyTo(Program program, TaskMonitor monitor) {
+			boolean wasEabled = program.isSendingEvents();
 			try {
-				obj.setEventsEnabled(false);
-				return doApplyTo(obj, monitor);
+				program.setEventsEnabled(false);
+				return doApplyTo(program, monitor);
 			}
 			finally {
-				obj.setEventsEnabled(wasEabled);
+				program.setEventsEnabled(wasEabled);
 			}
 
 		}

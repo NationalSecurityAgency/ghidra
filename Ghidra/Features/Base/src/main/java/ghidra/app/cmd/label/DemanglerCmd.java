@@ -19,7 +19,6 @@ import java.util.List;
 
 import ghidra.app.util.demangler.*;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SymbolUtilities;
@@ -27,7 +26,7 @@ import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.task.TaskMonitor;
 
-public class DemanglerCmd extends BackgroundCommand {
+public class DemanglerCmd extends BackgroundCommand<Program> {
 
 	private Address addr;
 	private String mangled;
@@ -49,10 +48,9 @@ public class DemanglerCmd extends BackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
+	public boolean applyTo(Program prog, TaskMonitor monitor) {
 
 		// search until we find a demangler that can handle the given mangled input
-		Program prog = (Program) obj;
 		for (Demangler demangler : getDemanglers()) {
 			if (!demangler.canDemangle(prog)) {
 				continue;
@@ -114,9 +112,8 @@ public class DemanglerCmd extends BackgroundCommand {
 			return false;
 		}
 
-		setStatusMsg(
-			"Failed to apply mangled symbol at " + addr + "; name:  " + mangled + " (" +
-				demangler.getClass().getName() + "/" + demangledObject.getClass().getName() + ")");
+		setStatusMsg("Failed to apply mangled symbol at " + addr + "; name:  " + mangled + " (" +
+			demangler.getClass().getName() + "/" + demangledObject.getClass().getName() + ")");
 		return false; // error
 	}
 
