@@ -79,7 +79,6 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 	private static final String DIVIDER_LOCATION = "DividerLocation";
 
-	private ImageIcon navigatableIcon;
 	private Map<Program, ListingHighlightProvider> programHighlighterMap = new HashMap<>();
 	private ProgramHighlighterProvider highlighterAdapter;
 
@@ -843,19 +842,6 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	@Override
 	public String getTextSelection() {
 		return currentStringSelection;
-	}
-
-	@Override
-	public Icon getIcon() {
-		if (isConnected()) {
-			return super.getIcon();
-		}
-
-		if (navigatableIcon == null) {
-			Icon primaryIcon = super.getIcon();
-			navigatableIcon = NavigatableIconFactory.createSnapshotOverlayIcon(primaryIcon);
-		}
-		return navigatableIcon;
 	}
 
 	@Override

@@ -92,7 +92,7 @@ public class DebuggerMemoryBytesPlugin
 	private void createActions() {
 		actionNewMemory = NewMemoryAction.builder(this)
 				.enabled(true)
-				.onAction(c -> createNewDisconnectedProvider())
+				.onAction(c -> connectedProvider.cloneWindow())
 				.buildAndInstall(tool);
 	}
 
