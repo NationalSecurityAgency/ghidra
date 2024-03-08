@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,43 +16,46 @@
 package ghidra.app.cmd.function;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.listing.*;
 
 /**
  * Command for deleting a variable in a function.
  */
-public class DeleteVariableCmd implements Command {
-    
-    private Variable var;
-    
-    public DeleteVariableCmd(Variable var) {
-    	this.var = var;
-    }
-    
+public class DeleteVariableCmd implements Command<Program> {
+
+	private Variable var;
+
+	public DeleteVariableCmd(Variable var) {
+		this.var = var;
+	}
+
 	/**
 	 * 
 	 * @see ghidra.framework.cmd.Command#getName()
 	 */
-    public String getName() {
-        return "Delete " + (var instanceof Parameter ? "Parameter" : "Variable");
-    }
-    
+	@Override
+	public String getName() {
+		return "Delete " + (var instanceof Parameter ? "Parameter" : "Variable");
+	}
+
 	/**
 	 * 
 	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */	    
-	public boolean applyTo(DomainObject obj) {
+	 */
+	@Override
+	public boolean applyTo(Program program) {
 		Function f = var.getFunction();
+		if (f == null || f.getProgram() != program) {
+			return false;
+		}
 		f.removeVariable(var);
 		return true;
 	}
-    
-    
 
 	/**
 	 * @see ghidra.framework.cmd.Command#getStatusMsg()
 	 */
+	@Override
 	public String getStatusMsg() {
 		return "";
 	}

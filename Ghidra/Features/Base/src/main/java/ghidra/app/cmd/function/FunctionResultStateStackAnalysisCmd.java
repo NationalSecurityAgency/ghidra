@@ -18,7 +18,6 @@ package ghidra.app.cmd.function;
 import java.util.*;
 
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.Undefined;
@@ -31,12 +30,11 @@ import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.state.*;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * Command for analyzing the Stack; the command is run in the background.
  */
-public class FunctionResultStateStackAnalysisCmd extends BackgroundCommand {
+public class FunctionResultStateStackAnalysisCmd extends BackgroundCommand<Program> {
 	private AddressSet entryPoints = new AddressSet();
 	private boolean forceProcessing = false;
 	private boolean dontCreateNewVariables = false;
@@ -65,13 +63,8 @@ public class FunctionResultStateStackAnalysisCmd extends BackgroundCommand {
 		this(new AddressSet(entry, entry), forceProcessing);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.BackgroundCommand#applyTo(ghidra.framework.model.DomainObject, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		Program program = (Program) obj;
+	public boolean applyTo(Program program, TaskMonitor monitor) {
 
 		int count = 0;
 		monitor.initialize(entryPoints.getNumAddresses());
@@ -335,14 +328,11 @@ public class FunctionResultStateStackAnalysisCmd extends BackgroundCommand {
 			for (SequenceNumber seq : results.getReturnAddresses()) {
 				ContextState returnState = results.getContextStates(seq).next();
 				Varnode varnode =
-					returnState.get(results.getStackPointerVarnode(),
-						TaskMonitor.DUMMY);
-				Varnode zero =
-					new Varnode(addrFactory.getConstantSpace().getAddress(0),
-						stackReg.getMinimumByteSize());
-				varnode =
-					replaceInputVarnodes(varnode, results.getStackPointerVarnode(), zero, 4,
-						monitor);
+					returnState.get(results.getStackPointerVarnode(), TaskMonitor.DUMMY);
+				Varnode zero = new Varnode(addrFactory.getConstantSpace().getAddress(0),
+					stackReg.getMinimumByteSize());
+				varnode = replaceInputVarnodes(varnode, results.getStackPointerVarnode(), zero, 4,
+					monitor);
 				if (varnode == null) {
 					continue;
 				}

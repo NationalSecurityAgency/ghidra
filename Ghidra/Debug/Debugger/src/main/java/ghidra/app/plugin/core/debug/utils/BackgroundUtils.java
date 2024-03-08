@@ -25,7 +25,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import ghidra.async.AsyncUtils;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.model.DomainObject;
-import ghidra.framework.model.UndoableDomainObject;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
@@ -35,8 +34,8 @@ import ghidra.util.task.*;
 public enum BackgroundUtils {
 	;
 
-	public static class AsyncBackgroundCommand<T extends UndoableDomainObject>
-			extends BackgroundCommand {
+	public static class AsyncBackgroundCommand<T extends DomainObject>
+			extends BackgroundCommand<T> {
 		private CompletableFuture<?> promise;
 
 		private final CancelledListener cancelledListener = this::cancelled;
@@ -53,9 +52,8 @@ public enum BackgroundUtils {
 		}
 
 		@Override
-		@SuppressWarnings("unchecked")
-		public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-			promise = futureProducer.apply((T) obj, monitor);
+		public boolean applyTo(T obj, TaskMonitor monitor) {
+			promise = futureProducer.apply(obj, monitor);
 			monitor.addCancelledListener(cancelledListener);
 			try {
 				promise.get();
@@ -103,8 +101,8 @@ public enum BackgroundUtils {
 	 * @param futureProducer a function to start the task
 	 * @return a future which completes when the task is finished.
 	 */
-	public static <T extends UndoableDomainObject> AsyncBackgroundCommand<T> async(PluginTool tool,
-			T obj, String name, boolean hasProgress, boolean canCancel, boolean isModal,
+	public static <T extends DomainObject> AsyncBackgroundCommand<T> async(PluginTool tool, T obj,
+			String name, boolean hasProgress, boolean canCancel, boolean isModal,
 			BiFunction<T, TaskMonitor, CompletableFuture<?>> futureProducer) {
 		AsyncBackgroundCommand<T> cmd =
 			new AsyncBackgroundCommand<>(name, hasProgress, canCancel, isModal, futureProducer);
@@ -119,7 +117,7 @@ public enum BackgroundUtils {
 	 * The returned future includes error handling, so even if the task completes in error, the
 	 * returned future will just complete with null. If further error handling is required, then the
 	 * {@code futureProducer} should make the future available. This differs from
-	 * {@link #async(PluginTool, UndoableDomainObject, String, boolean, boolean, boolean, BiFunction)}
+	 * {@link #async(PluginTool, DomainObject, String, boolean, boolean, boolean, BiFunction)}
 	 * in that it doesn't use the tool's task manager, so it can run in parallel with other tasks.
 	 * There is not currently a supported method to run multiple non-modal tasks concurrently, since
 	 * they would have to share a single task monitor component.
@@ -172,14 +170,14 @@ public enum BackgroundUtils {
 
 		private final PluginTool tool;
 		private final String name;
-		private final UndoableDomainObject obj;
+		private final DomainObject obj;
 		private final int delay;
 		private final EnumSet<TaskOpt> opts;
 
 		private TaskMonitor lastMonitor;
 
-		public PluginToolExecutorService(PluginTool tool, String name, UndoableDomainObject obj,
-				int delay, TaskOpt... opts) {
+		public PluginToolExecutorService(PluginTool tool, String name, DomainObject obj, int delay,
+				TaskOpt... opts) {
 			this.tool = tool;
 			this.name = name;
 			this.obj = obj;
@@ -223,10 +221,8 @@ public enum BackgroundUtils {
 		}
 
 		protected void executeForeground(Runnable command) {
-			Task task = new Task(name,
-				opts.contains(TaskOpt.CAN_CANCEL),
-				opts.contains(TaskOpt.HAS_PROGRESS),
-				opts.contains(TaskOpt.IS_MODAL)) {
+			Task task = new Task(name, opts.contains(TaskOpt.CAN_CANCEL),
+				opts.contains(TaskOpt.HAS_PROGRESS), opts.contains(TaskOpt.IS_MODAL)) {
 				@Override
 				public void run(TaskMonitor monitor) throws CancelledException {
 					lastMonitor = monitor;
@@ -237,10 +233,8 @@ public enum BackgroundUtils {
 		}
 
 		protected void executeBackground(Runnable command) {
-			BackgroundCommand cmd = new BackgroundCommand(name,
-				opts.contains(TaskOpt.HAS_PROGRESS),
-				opts.contains(TaskOpt.CAN_CANCEL),
-				opts.contains(TaskOpt.IS_MODAL)) {
+			BackgroundCommand cmd = new BackgroundCommand(name, opts.contains(TaskOpt.HAS_PROGRESS),
+				opts.contains(TaskOpt.CAN_CANCEL), opts.contains(TaskOpt.IS_MODAL)) {
 				@Override
 				public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
 					lastMonitor = monitor;

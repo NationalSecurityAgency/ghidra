@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,6 @@
 package ghidra.app.cmd.refs;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Reference;
@@ -27,13 +25,13 @@ import ghidra.program.model.symbol.ReferenceManager;
  * Command class for setting a reference to be primary.  Any other
  * reference that was primary at that address will no longer be primary.
  */
-public class SetPrimaryRefCmd implements Command {
+public class SetPrimaryRefCmd implements Command<Program> {
 
 	private Address fromAddr;
 	private int opIndex;
 	private Address toAddr;
 	private boolean isPrimary;
-	
+
 	private String status;
 
 	/**
@@ -44,7 +42,7 @@ public class SetPrimaryRefCmd implements Command {
 	 * @param isPrimary true to make the reference primary, false to make it non-primary
 	 */
 	public SetPrimaryRefCmd(Reference ref, boolean isPrimary) {
-	    this (ref.getFromAddress(), ref.getOperandIndex(), ref.getToAddress(), isPrimary);
+		this(ref.getFromAddress(), ref.getOperandIndex(), ref.getToAddress(), isPrimary);
 	}
 
 	/**
@@ -63,38 +61,30 @@ public class SetPrimaryRefCmd implements Command {
 		this.isPrimary = isPrimary;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
-    public boolean applyTo(DomainObject obj) {
-    	
-    	ReferenceManager refMgr = ((Program)obj).getReferenceManager();
-    	Reference ref = refMgr.getReference(fromAddr, toAddr, opIndex);
+	@Override
+	public boolean applyTo(Program program) {
 
-    	if (ref == null) {
-    		status = "Reference not found";
-    		return false;
-    	}
+		ReferenceManager refMgr = program.getReferenceManager();
+		Reference ref = refMgr.getReference(fromAddr, toAddr, opIndex);
 
-    	refMgr.setPrimary(ref, isPrimary);
+		if (ref == null) {
+			status = "Reference not found";
+			return false;
+		}
+
+		refMgr.setPrimary(ref, isPrimary);
 
 		return true;
-    }	
+	}
 
+	@Override
+	public String getStatusMsg() {
+		return status;
+	}
 
-    /**
-     * @see ghidra.framework.cmd.Command#getStatusMsg()
-     */
-    public String getStatusMsg() {
-        return status;
-    }
-
-    /**
-     * @see ghidra.framework.cmd.Command#getName()
-     */
-    public String getName() {
-        return "Set Primary Reference";
-    }
+	@Override
+	public String getName() {
+		return "Set Primary Reference";
+	}
 
 }

@@ -674,7 +674,7 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		data = program.getListing().getDataAt(addr(1001));
 		assertEquals("byte", data.getDataType().getName());
 
-		UninitializedBlockCmd cmd = new UninitializedBlockCmd(program, block);
+		UninitializedBlockCmd cmd = new UninitializedBlockCmd(block);
 		cmd.applyTo(program);
 
 		assertNotNull(block);

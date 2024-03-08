@@ -16,14 +16,13 @@
 package ghidra.app.cmd.comments;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 
 /**
  *  Command to append a specific type of comment on a code unit.
  */
-public class AppendCommentCmd implements Command {
+public class AppendCommentCmd implements Command<Program> {
 
 	private Address address;
 	private int commentType;
@@ -49,24 +48,17 @@ public class AppendCommentCmd implements Command {
 		cmdName = "Append Comment";
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
 	@Override
 	public String getName() {
 		return cmdName;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		CodeUnit cu = getCodeUnit((Program) obj);
+	public boolean applyTo(Program program) {
+		CodeUnit cu = getCodeUnit(program);
 		if (cu == null) {
-			message =
-				"No Instruction or Data found for address " + address.toString() +
-					"  Is this address valid?";
+			message = "No Instruction or Data found for address " + address.toString() +
+				"  Is this address valid?";
 			return false;
 		}
 		String previousComment = cu.getComment(commentType);
@@ -95,9 +87,6 @@ public class AppendCommentCmd implements Command {
 		return cu;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
 	@Override
 	public String getStatusMsg() {
 		return message;

@@ -16,7 +16,6 @@
 package ghidra.app.cmd.memory;
 
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.LockException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
@@ -29,7 +28,7 @@ import ghidra.util.task.TaskMonitor;
  * Command that runs in the background to delete a memory block, as 
  * the delete may be a time consuming operation.
  */
-public class DeleteBlockCmd extends BackgroundCommand {
+public class DeleteBlockCmd extends BackgroundCommand<Program> {
 	private Address[] blockAddresses;
 	private DeleteBlockListener listener;
 	private boolean status;
@@ -51,8 +50,8 @@ public class DeleteBlockCmd extends BackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		Program program = (Program) obj;
+	public boolean applyTo(Program program, TaskMonitor monitor) {
+
 		Memory mem = program.getMemory();
 
 		if (!program.hasExclusiveAccess()) {

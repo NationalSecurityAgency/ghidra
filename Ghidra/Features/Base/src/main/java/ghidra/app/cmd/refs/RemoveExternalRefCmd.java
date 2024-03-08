@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,6 @@
 package ghidra.app.cmd.refs;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Reference;
@@ -26,51 +24,43 @@ import ghidra.program.model.symbol.ReferenceManager;
 /**
  * Command for removing external references.
  */
-public class RemoveExternalRefCmd implements Command {
+public class RemoveExternalRefCmd implements Command<Program> {
 
 	private Address fromAddr;
 	private int opIndex;
-	
-    /**
-     * Constructs a new command for removing an external reference.
-	 * @param fromAddr the address of the codeunit making the external reference.
-	 * @param opIndex the operand index.
-     */
-    public RemoveExternalRefCmd(Address fromAddr, int opIndex) {
-		this.fromAddr = fromAddr;
-		this.opIndex = opIndex;
-    }
 
 	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
+	 * Constructs a new command for removing an external reference.
+	 * @param fromAddr the address of the codeunit making the external reference.
+	 * @param opIndex the operand index.
 	 */
-    public boolean applyTo(DomainObject obj) {
-    	ReferenceManager refMgr = ((Program)obj).getReferenceManager();
-    	
-    	Reference[] refs = refMgr.getReferencesFrom(fromAddr, opIndex);
-		for (int i = 0; i < refs.length; i++) {
-			Reference ref = refs[i];
+	public RemoveExternalRefCmd(Address fromAddr, int opIndex) {
+		this.fromAddr = fromAddr;
+		this.opIndex = opIndex;
+	}
+
+	@Override
+	public boolean applyTo(Program program) {
+		ReferenceManager refMgr = program.getReferenceManager();
+
+		Reference[] refs = refMgr.getReferencesFrom(fromAddr, opIndex);
+		for (Reference ref : refs) {
 			if (ref.isExternalReference()) {
 				refMgr.delete(ref);
 			}
 		}
 
- 		return true;
-    }
+		return true;
+	}
 
-    /**
-     * @see ghidra.framework.cmd.Command#getStatusMsg()
-     */
-    public String getStatusMsg() {
-        return null;
-    }
+	@Override
+	public String getStatusMsg() {
+		return null;
+	}
 
-    /**
-     * @see ghidra.framework.cmd.Command#getName()
-     */
-    public String getName() {
-        return "Remove External Reference";
-    }
+	@Override
+	public String getName() {
+		return "Remove External Reference";
+	}
 
 }

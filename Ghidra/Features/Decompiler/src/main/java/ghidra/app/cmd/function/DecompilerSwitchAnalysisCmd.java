@@ -23,7 +23,6 @@ import ghidra.app.decompiler.DecompileResults;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
@@ -40,7 +39,7 @@ import ghidra.util.UndefinedFunction;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
-public class DecompilerSwitchAnalysisCmd extends BackgroundCommand {
+public class DecompilerSwitchAnalysisCmd extends BackgroundCommand<Program> {
 	private static final int DEFAULT_CASE_VALUE = 0xbad1abe1;
 
 	private Program program;
@@ -54,8 +53,8 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		program = (Program) obj;
+	public boolean applyTo(Program p, TaskMonitor monitor) {
+		program = p;
 
 		if (monitor.isCancelled()) {
 			return false;

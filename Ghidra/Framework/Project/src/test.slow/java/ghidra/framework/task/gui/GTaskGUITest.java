@@ -28,7 +28,7 @@ import org.junit.*;
 
 import docking.test.AbstractDockingTest;
 import generic.concurrent.GThreadPool;
-import ghidra.framework.model.UndoableDomainObject;
+import ghidra.framework.model.DomainObject;
 import ghidra.framework.task.*;
 import ghidra.framework.task.gui.taskview.*;
 import ghidra.util.exception.CancelledException;
@@ -412,8 +412,9 @@ public class GTaskGUITest extends AbstractDockingTest {
 
 	private void assertWaitingCount(int count) {
 		waitForSwing();
-		waitForCondition(() -> count == getWaitingCount(), "Timed-out waiting for the 'wait count' to be " + count + ", but was " +
-			getWaitingCount());
+		waitForCondition(() -> count == getWaitingCount(),
+			"Timed-out waiting for the 'wait count' to be " + count + ", but was " +
+				getWaitingCount());
 	}
 
 	private int getWaitingCount() {
@@ -647,11 +648,12 @@ public class GTaskGUITest extends AbstractDockingTest {
 		}
 
 		void waitForWorkFinished(int n) {
-			waitForCondition(() -> workCount.get() == n, "Work iteration " + n + " never completed");
+			waitForCondition(() -> workCount.get() == n,
+				"Work iteration " + n + " never completed");
 		}
 
 		@Override
-		public void run(UndoableDomainObject obj, TaskMonitor monitor) throws CancelledException {
+		public void run(DomainObject obj, TaskMonitor monitor) throws CancelledException {
 			debug(getName() + ": Run called");
 			monitor.initialize(loopCount);
 			taskStartLatch.countDown();

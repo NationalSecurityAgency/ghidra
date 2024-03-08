@@ -46,6 +46,10 @@ import ghidra.util.task.TaskMonitor;
  */
 public class FillOutStructureCmd extends BackgroundCommand {
 
+	// NOTE: (see GP-4408) This Command implementation should be refactored to break-out the 
+	// Utility aspects which are contained within and used publicly without invoking the applyTo
+	// method.  In addition, the Command should not be constructed with a Program instance.
+
 	/**
 	 * Varnode with data-flow traceable to original pointer
 	 */
@@ -276,10 +280,7 @@ public class FillOutStructureCmd extends BackgroundCommand {
 			HashMap<Address, Address> savedList = addressToCallInputMap;
 			addressToCallInputMap = new HashMap<>();
 			Set<Address> keys = savedList.keySet();
-			Iterator<Address> keyIter = keys.iterator();
-			while (keyIter.hasNext()) {
-				Address addr = keyIter.next();
-
+			for (Address addr : keys) {
 				if (doneSet.contains(addr)) {
 					continue;
 				}

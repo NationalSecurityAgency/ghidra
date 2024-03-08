@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.CompilerSpec;
@@ -37,9 +36,11 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Command to create apply a function signature at an address.
  *
- *
+ * {@link Function} signature changes are applied using 
+ * {@link Function#updateFunction(String, Variable, List, FunctionUpdateType, boolean, SourceType)}
+ * with an update type of {@link FunctionUpdateType#DYNAMIC_STORAGE_FORMAL_PARAMS}.
  */
-public class ApplyFunctionSignatureCmd extends BackgroundCommand {
+public class ApplyFunctionSignatureCmd extends BackgroundCommand<Program> {
 	private Address entryPt;
 	private SourceType source;
 	private FunctionRenameOption functionRenameOption;
@@ -159,8 +160,8 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		program = (Program) obj;
+	public boolean applyTo(Program p, TaskMonitor monitor) {
+		this.program = p;
 
 		Function func = program.getListing().getFunctionContaining(entryPt);
 

@@ -16,7 +16,6 @@
 package ghidra.app.cmd.label;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
@@ -29,7 +28,7 @@ import ghidra.util.exception.InvalidInputException;
  * @deprecated The need for this class is now unnecessary since duplicate labels are permitted
  */
 @Deprecated
-public class AddUniqueLabelCmd implements Command {
+public class AddUniqueLabelCmd implements Command<Program> {
 	private Address address;
 	private String name;
 	private Namespace namespace;
@@ -52,12 +51,9 @@ public class AddUniqueLabelCmd implements Command {
 		this.source = source;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		SymbolTable symbolTable = ((Program) obj).getSymbolTable();
+	public boolean applyTo(Program program) {
+		SymbolTable symbolTable = program.getSymbolTable();
 		try {
 			newSymbol = symbolTable.createLabel(address, name, namespace, source);
 			return true;//symbol already exist at this address, just complete
@@ -76,17 +72,11 @@ public class AddUniqueLabelCmd implements Command {
 		return false;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
 	@Override
 	public String getStatusMsg() {
 		return errorMsg;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
 	@Override
 	public String getName() {
 		return "Add Unique Label";

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,6 @@
 package ghidra.app.cmd.function;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
@@ -25,44 +23,35 @@ import ghidra.program.model.listing.Program;
 /**
  * Command to set the Function's Repeatable Comment.
  */
-public class SetFunctionRepeatableCommentCmd implements Command {
-    private Address entry;
-    private String  newRepeatableComment;
-    
-    /**
-     * Constructs a new command for setting the Repeatable comment.
-     * @param entry address of the function for which to set a Repeatablecomment.
-     * @param newRepeatableComment comment to set as the function Repeatable comment.
-     */
-    public SetFunctionRepeatableCommentCmd(Address entry, String newRepeatableComment) {
-        this.entry = entry;
-        this.newRepeatableComment = newRepeatableComment;
-    }
-    
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
-    public String getName() {
-        return "Set Function Repeatable Comment";
-    }
-    
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
-	public boolean applyTo(DomainObject obj) {
-		Program program = (Program)obj;
-        Function f = program.getListing().getFunctionAt(entry);
-        if (f != null) {
-	        f.setRepeatableComment(newRepeatableComment);
-        }
-        return true;	
-    }
+public class SetFunctionRepeatableCommentCmd implements Command<Program> {
+	private Address entry;
+	private String newRepeatableComment;
 
 	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
+	 * Constructs a new command for setting the Repeatable comment.
+	 * @param entry address of the function for which to set a Repeatablecomment.
+	 * @param newRepeatableComment comment to set as the function Repeatable comment.
 	 */
+	public SetFunctionRepeatableCommentCmd(Address entry, String newRepeatableComment) {
+		this.entry = entry;
+		this.newRepeatableComment = newRepeatableComment;
+	}
+
+	@Override
+	public String getName() {
+		return "Set Function Repeatable Comment";
+	}
+
+	@Override
+	public boolean applyTo(Program program) {
+		Function f = program.getListing().getFunctionAt(entry);
+		if (f != null) {
+			f.setRepeatableComment(newRepeatableComment);
+		}
+		return true;
+	}
+
+	@Override
 	public String getStatusMsg() {
 		return "";
 	}

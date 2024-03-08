@@ -361,7 +361,7 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> implements Pr
 		if (result == OptionDialog.NO_OPTION) {
 			return;
 		}
-		UninitializedBlockCmd cmd = new UninitializedBlockCmd(program, block);
+		UninitializedBlockCmd cmd = new UninitializedBlockCmd(block);
 		provider.getTool().executeBackgroundCommand(cmd, program);
 	}
 

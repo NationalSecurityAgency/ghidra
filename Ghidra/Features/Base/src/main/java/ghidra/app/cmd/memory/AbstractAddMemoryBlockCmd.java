@@ -16,7 +16,6 @@
 package ghidra.app.cmd.memory;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.LockException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
@@ -28,7 +27,8 @@ import ghidra.util.exception.*;
 /**
  * Base command class for adding memory blocks.
  */
-public abstract class AbstractAddMemoryBlockCmd implements Command {
+public abstract class AbstractAddMemoryBlockCmd implements Command<Program> {
+
 	protected String message;
 	protected final String name;
 	protected final String comment;
@@ -82,8 +82,7 @@ public abstract class AbstractAddMemoryBlockCmd implements Command {
 			MemoryConflictException, AddressOverflowException, CancelledException;
 
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		Program program = (Program) obj;
+	public boolean applyTo(Program program) {
 		try {
 			Memory memory = program.getMemory();
 			MemoryBlock block = createMemoryBlock(memory);

@@ -18,7 +18,6 @@ package ghidra.app.plugin.core.function;
 import docking.action.MenuData;
 import ghidra.app.cmd.function.CreateThunkFunctionCmd;
 import ghidra.app.context.*;
-import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Symbol;
@@ -83,7 +82,7 @@ class EditThunkFunctionAction extends ProgramContextAction {
 		Symbol referencedSymbol = dialog.getSymbol();
 		Address referencedFunctionAddr = dialog.getAddress();
 
-		BackgroundCommand cmd;
+		CreateThunkFunctionCmd cmd;
 		if (referencedSymbol != null) {
 			cmd = new CreateThunkFunctionCmd(func.getEntryPoint(), null, referencedSymbol);
 		}
