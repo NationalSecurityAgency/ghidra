@@ -247,7 +247,7 @@ public class DWARFLine {
 	private int address_size;
 	private int segment_selector_size;
 
-	private long opcodes_start = -1; // offset where line number program opcodes start
+	private long opcodes_start; // offset where line number program opcodes start
 
 	private DWARFLine() {
 		// empty, use #read()

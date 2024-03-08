@@ -234,6 +234,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 			GoSourceFileInfo sfi = null;
 			if (analyzerOptions.outputSourceInfo && (sfi = funcdata.getSourceFileInfo()) != null) {
 				markupSession.appendComment(func, "Golang source: ", sfi.getDescription());
+				funcdata.markupSourceFileInfo();
 			}
 
 			if (funcdata.getFlags().isEmpty() /* dont try to get arg info for ASM funcs*/) {
