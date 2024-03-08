@@ -19,6 +19,7 @@ import static ghidra.app.plugin.core.debug.gui.DebuggerResources.ICON_REGISTER_M
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.datatransfer.DataFlavor;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.invoke.MethodHandles;
@@ -26,8 +27,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.swing.JLabel;
-import javax.swing.JPanel;
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -62,6 +62,7 @@ import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
 import ghidra.app.plugin.core.marker.MarkerMarginProvider;
 import ghidra.app.plugin.core.marker.MarkerOverviewProvider;
 import ghidra.app.services.*;
+import ghidra.app.services.DebuggerControlService.ControlModeChangeListener;
 import ghidra.app.services.DebuggerListingService.LocationTrackingSpecChangeListener;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
@@ -293,7 +294,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	private DebuggerStaticMappingService mappingService;
 	@AutoServiceConsumed
 	private DebuggerConsoleService consoleService;
-	@AutoServiceConsumed
+	//@AutoServiceConsumed via method
 	private DebuggerControlService controlService;
 	@AutoServiceConsumed
 	private ProgramManager programManager;
@@ -354,6 +355,12 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 	protected final ForStaticSyncMappingChangeListener mappingChangeListener =
 		new ForStaticSyncMappingChangeListener();
+	private final ControlModeChangeListener controlModeChangeListener = (trace, mode) -> {
+		if (trace == current.getTrace()) {
+			// for Paste action
+			contextChanged();
+		}
+	};
 
 	protected final boolean isMainListing;
 
@@ -598,6 +605,17 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	}
 
 	@AutoServiceConsumed
+	private void setControlService(DebuggerControlService controlService) {
+		if (this.controlService != null) {
+			this.controlService.removeModeChangeListener(controlModeChangeListener);
+		}
+		this.controlService = controlService;
+		if (this.controlService != null) {
+			this.controlService.addModeChangeListener(controlModeChangeListener);
+		}
+	}
+
+	@AutoServiceConsumed
 	private void setConsoleService(DebuggerConsoleService consoleService) {
 		if (consoleService != null) {
 			if (actionOpenProgram != null) {
@@ -726,6 +744,14 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	}
 
 	@Override
+	public Icon getIcon() {
+		if (isMainListing()) {
+			return getBaseIcon();
+		}
+		return super.getIcon();
+	}
+
+	@Override
 	protected ListingActionContext newListingActionContext() {
 		return new DebuggerListingActionContext(this);
 	}
@@ -739,6 +765,21 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 					return false;
 				}
 				return context.getComponentProvider() == componentProvider;
+			}
+
+			@Override
+			public boolean canPaste(DataFlavor[] availableFlavors) {
+				if (controlService == null) {
+					return false;
+				}
+				Trace trace = current.getTrace();
+				if (trace == null) {
+					return false;
+				}
+				if (!controlService.getCurrentMode(trace).canEdit(current)) {
+					return false;
+				}
+				return super.canPaste(availableFlavors);
 			}
 		};
 	}
