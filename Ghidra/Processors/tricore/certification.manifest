@@ -14,3 +14,5 @@ data/languages/tricore.sinc||GHIDRA||||END|
 data/languages/tricore.slaspec||GHIDRA||||END|
 data/manuals/tricore.idx||GHIDRA||||END|
 data/manuals/tricore2.idx||GHIDRA||||END|
+data/patterns/patternconstraints.xml||GHIDRA||||END|
+data/patterns/tricore_patterns.xml||GHIDRA||||END|
