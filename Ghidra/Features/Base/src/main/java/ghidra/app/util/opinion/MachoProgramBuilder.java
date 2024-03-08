@@ -998,7 +998,7 @@ public class MachoProgramBuilder {
 
 	/**
 	 * Sets up the {@link MachHeader} in memory and returns its address.  If the header was not 
-	 * intended to reside in memory (like for Mach-O object files}, then this method will create an 
+	 * intended to reside in memory (like for Mach-O object files), then this method will create an
 	 * area in the "OTHER" address space for the header to live in.
 	 * 
 	 * @param segments A {@link Collection} of {@link SegmentCommand Mach-O segments}
@@ -1011,12 +1011,15 @@ public class MachoProgramBuilder {
 		long lowestFileOffset = Long.MAX_VALUE;
 
 		// Check to see if the header resides in an existing segment.  If it does, we know its
-		// address and we are done.  Keep track of the lowest file offset of later use.
+		// address and we are done.  Keep track of the lowest file offset for later use.
 		for (SegmentCommand segment : segments) {
-			if (segment.getFileOffset() == 0 && segment.getFileSize() > 0) {
-				return space.getAddress(segment.getVMaddress());
+			if (segment.getFileOffset() == 0) {
+				if (segment.getFileSize() > 0) {
+					return space.getAddress(segment.getVMaddress());
+				}
+			} else {
+				lowestFileOffset = Math.min(lowestFileOffset, segment.getFileOffset());
 			}
-			lowestFileOffset = Math.min(lowestFileOffset, segment.getFileOffset());
 		}
 
 		// The header did not live in a defined segment.  Create a memory region in the OTHER space 
