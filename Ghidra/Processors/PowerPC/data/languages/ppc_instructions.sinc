@@ -2285,7 +2285,8 @@ define pcodeop lswxOp;
 #lwax r0,r2,r0	0x7c 02 02 aa	
 :lwax D,RA_OR_ZERO,B 	is OP=31 & D & RA_OR_ZERO & B & XOP_1_10=341 & BIT_0=0
 {
-	D = sext(*:4(RA_OR_ZERO));
+	ea:$(REGISTER_SIZE) = RA_OR_ZERO+B;
+	D = sext(*:4(ea));
 }
 @endif
 
