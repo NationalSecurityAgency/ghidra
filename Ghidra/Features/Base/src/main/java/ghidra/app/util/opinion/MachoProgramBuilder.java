@@ -236,7 +236,8 @@ public class MachoProgramBuilder {
 					break;
 				}
 
-				if (section.getSize() > 0 && (allowZeroAddr || section.getAddress() != 0)) {
+				if (section.getSize() > 0 && section.getOffset() > 0 &&
+					(allowZeroAddr || section.getAddress() != 0)) {
 					if (createMemoryBlock(section.getSectionName(),
 						space.getAddress(section.getAddress()), section.getOffset(),
 						section.getSize(), section.getSegmentName(), source, section.isRead(),
@@ -998,7 +999,7 @@ public class MachoProgramBuilder {
 
 	/**
 	 * Sets up the {@link MachHeader} in memory and returns its address.  If the header was not 
-	 * intended to reside in memory (like for Mach-O object files}, then this method will create an 
+	 * intended to reside in memory (like for Mach-O object files), then this method will create an
 	 * area in the "OTHER" address space for the header to live in.
 	 * 
 	 * @param segments A {@link Collection} of {@link SegmentCommand Mach-O segments}
@@ -1011,9 +1012,13 @@ public class MachoProgramBuilder {
 		long lowestFileOffset = Long.MAX_VALUE;
 
 		// Check to see if the header resides in an existing segment.  If it does, we know its
-		// address and we are done.  Keep track of the lowest file offset of later use.
+		// address and we are done.  Keep track of the lowest file offset for later use.
 		for (SegmentCommand segment : segments) {
-			if (segment.getFileOffset() == 0 && segment.getFileSize() > 0) {
+			if (segment.getFileOffset() == 0 && segment.getFileSize() == 0) {
+				// Don't consider empty segments (seen in .dSYM/DWARF files)
+				continue;
+			}
+			if (segment.getFileOffset() == 0) {
 				return space.getAddress(segment.getVMaddress());
 			}
 			lowestFileOffset = Math.min(lowestFileOffset, segment.getFileOffset());
