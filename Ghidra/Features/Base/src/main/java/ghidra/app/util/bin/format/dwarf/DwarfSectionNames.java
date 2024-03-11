@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +15,15 @@
  */
 package ghidra.app.util.bin.format.dwarf;
 
-import ghidra.app.util.opinion.*;
+import ghidra.app.plugin.core.analysis.DwarfLineNumberAnalyzer;
+import ghidra.app.util.opinion.ElfLoader;
+import ghidra.app.util.opinion.MachoLoader;
 import ghidra.program.model.listing.Program;
 
+/**
+ * Section name logic for the obsolete {@link DwarfLineNumberAnalyzer}
+ */
+@Deprecated(forRemoval = true)
 public final class DwarfSectionNames {
 	private final static String MACHO_PREFIX = "__";
 	private final static String   ELF_PREFIX = ".";

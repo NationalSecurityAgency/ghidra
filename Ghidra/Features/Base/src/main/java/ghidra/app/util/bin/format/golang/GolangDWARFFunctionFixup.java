@@ -19,11 +19,9 @@ import java.util.*;
 
 import ghidra.app.plugin.core.analysis.TransientProgramProperties;
 import ghidra.app.plugin.core.analysis.TransientProgramProperties.SCOPE;
-import ghidra.app.util.bin.format.dwarf4.*;
-import ghidra.app.util.bin.format.dwarf4.encoding.DWARFSourceLanguage;
-import ghidra.app.util.bin.format.dwarf4.funcfixup.DWARFFunctionFixup;
-import ghidra.app.util.bin.format.dwarf4.next.*;
-import ghidra.app.util.bin.format.dwarf4.next.DWARFFunction.CommitMode;
+import ghidra.app.util.bin.format.dwarf.*;
+import ghidra.app.util.bin.format.dwarf.DWARFFunction.CommitMode;
+import ghidra.app.util.bin.format.dwarf.funcfixup.DWARFFunctionFixup;
 import ghidra.app.util.bin.format.golang.rtti.GoFuncData;
 import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.program.model.address.Address;
@@ -32,7 +30,6 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.SymbolType;
-import ghidra.util.Msg;
 import ghidra.util.classfinder.ExtensionPointProperties;
 import ghidra.util.task.TaskMonitor;
 
@@ -66,7 +63,7 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 	 */
 	public static boolean isGolangFunction(DWARFFunction dfunc) {
 		DIEAggregate diea = dfunc.diea;
-		int cuLang = diea.getCompilationUnit().getCompileUnit().getLanguage();
+		int cuLang = diea.getCompilationUnit().getLanguage();
 		if (cuLang != DWARFSourceLanguage.DW_LANG_Go) {
 			return false;
 		}
@@ -175,12 +172,11 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 				spillVars.add(dvar);
 				if (dvar.type instanceof Structure &&
 					dvar.getStorageSize() != dvar.type.getLength()) {
-					Msg.warn(GoFunctionFixup.class,
-						"Known storage allocation problem: func %s@%s param %s register allocation for structs missing inter-field padding."
-								.formatted(dfunc.name.getName(), dfunc.address,
-									dvar.name.getName()));
+					dfunc.getProgram()
+							.logWarningAt(dfunc.address, dfunc.name.getName(),
+								"Golang known storage allocation problem: param \"%s\" register allocation for structs missing inter-field padding."
+										.formatted(dvar.name.getName()));
 				}
-
 			}
 			else {
 				if (!dvar.isZeroByte()) {
@@ -210,7 +206,7 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 				// because we will do it manually
 				for (DataTypeComponent dtc : multiReturn.getNormalStorageComponents()) {
 					allocateReturnStorage(dfunc, dfunc.retval,
-						dtc.getFieldName() + "-return-result-alias", dtc.getDataType(),
+						dtc.getFieldName() + "_return_result_alias", dtc.getDataType(),
 						storageAllocator, false);
 				}
 
@@ -218,7 +214,7 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 				// the decompiler's expectations for storage layout)
 				for (DataTypeComponent dtc : multiReturn.getStackStorageComponents()) {
 					allocateReturnStorage(dfunc, dfunc.retval,
-						dtc.getFieldName() + "-return-result-alias", dtc.getDataType(),
+						dtc.getFieldName() + "_return_result_alias", dtc.getDataType(),
 						storageAllocator, false);
 				}
 
@@ -231,7 +227,7 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 				}
 			}
 			else {
-				allocateReturnStorage(dfunc, dfunc.retval, "return-value-alias-variable",
+				allocateReturnStorage(dfunc, dfunc.retval, "return_value_alias_variable",
 					dfunc.retval.type, storageAllocator, true);
 			}
 		}
@@ -251,7 +247,7 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 		// by variables that we create artificially.
 		for (DWARFVariable dvar : spillVars) {
 			DWARFVariable spill = DWARFVariable.fromDataType(dfunc, dvar.type);
-			String paramName = dvar.name.getName() + "-spill";
+			String paramName = dvar.name.getName() + "_spill";
 			spill.name = dvar.name.replaceName(paramName, paramName);
 			spill.setStackStorage(storageAllocator.getStackAllocation(spill.type));
 			dfunc.localVars.add(spill);
@@ -282,8 +278,7 @@ public class GolangDWARFFunctionFixup implements DWARFFunctionFixup {
 
 	private DWARFVariable createReturnResultAliasVar(DWARFFunction dfunc, DataType dataType,
 			String name, long stackOffset) {
-		DWARFVariable returnResultVar =
-			DWARFVariable.fromDataType(dfunc, dataType);
+		DWARFVariable returnResultVar = DWARFVariable.fromDataType(dfunc, dataType);
 		returnResultVar.name = dfunc.name.createChild(name, name, SymbolType.LOCAL_VAR);
 		returnResultVar.setStackStorage(stackOffset);
 		return returnResultVar;

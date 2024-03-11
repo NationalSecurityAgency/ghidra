@@ -23,7 +23,7 @@ import org.jdom.*;
 import org.jdom.input.SAXBuilder;
 
 import generic.jar.ResourceFile;
-import ghidra.app.util.bin.format.dwarf4.DWARFUtil;
+import ghidra.app.util.bin.format.dwarf.DWARFUtil;
 import ghidra.program.model.lang.*;
 import ghidra.util.Msg;
 import ghidra.util.xml.XmlUtilities;
