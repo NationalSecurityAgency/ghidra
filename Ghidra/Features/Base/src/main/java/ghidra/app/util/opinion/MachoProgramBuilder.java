@@ -236,7 +236,8 @@ public class MachoProgramBuilder {
 					break;
 				}
 
-				if (section.getSize() > 0 && (allowZeroAddr || section.getAddress() != 0)) {
+				if (section.getSize() > 0 && section.getOffset() > 0 &&
+					(allowZeroAddr || section.getAddress() != 0)) {
 					if (createMemoryBlock(section.getSectionName(),
 						space.getAddress(section.getAddress()), section.getOffset(),
 						section.getSize(), section.getSegmentName(), source, section.isRead(),
@@ -1013,13 +1014,14 @@ public class MachoProgramBuilder {
 		// Check to see if the header resides in an existing segment.  If it does, we know its
 		// address and we are done.  Keep track of the lowest file offset for later use.
 		for (SegmentCommand segment : segments) {
-			if (segment.getFileOffset() == 0) {
-				if (segment.getFileSize() > 0) {
-					return space.getAddress(segment.getVMaddress());
-				}
-			} else {
-				lowestFileOffset = Math.min(lowestFileOffset, segment.getFileOffset());
+			if (segment.getFileOffset() == 0 && segment.getFileSize() == 0) {
+				// Don't consider empty segments (seen in .dSYM/DWARF files)
+				continue;
 			}
+			if (segment.getFileOffset() == 0) {
+				return space.getAddress(segment.getVMaddress());
+			}
+			lowestFileOffset = Math.min(lowestFileOffset, segment.getFileOffset());
 		}
 
 		// The header did not live in a defined segment.  Create a memory region in the OTHER space 
