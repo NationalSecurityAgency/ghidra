@@ -18,7 +18,7 @@ package ghidra.app.util.bin.format.golang.rtti.types;
 import java.io.IOException;
 import java.util.*;
 
-import ghidra.app.util.bin.format.dwarf4.DWARFUtil;
+import ghidra.app.util.bin.format.dwarf.DWARFUtil;
 import ghidra.app.util.bin.format.golang.rtti.GoName;
 import ghidra.app.util.bin.format.golang.rtti.GoSlice;
 import ghidra.app.util.bin.format.golang.structmapping.*;

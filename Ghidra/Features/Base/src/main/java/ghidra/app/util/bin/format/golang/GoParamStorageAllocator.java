@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.golang;
 
 import java.util.*;
 
-import ghidra.app.util.bin.format.dwarf4.DWARFUtil;
+import ghidra.app.util.bin.format.dwarf.DWARFUtil;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;

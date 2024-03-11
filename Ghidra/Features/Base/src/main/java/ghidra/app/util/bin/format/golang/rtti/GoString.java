@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.function.Predicate;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.dwarf4.next.DWARFDataInstanceHelper;
+import ghidra.app.util.bin.format.dwarf.DWARFDataInstanceHelper;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;

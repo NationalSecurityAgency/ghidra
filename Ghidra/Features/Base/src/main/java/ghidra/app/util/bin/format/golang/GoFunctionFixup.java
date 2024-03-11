@@ -18,7 +18,7 @@ package ghidra.app.util.bin.format.golang;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.format.dwarf4.DWARFUtil;
+import ghidra.app.util.bin.format.dwarf.DWARFUtil;
 import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
