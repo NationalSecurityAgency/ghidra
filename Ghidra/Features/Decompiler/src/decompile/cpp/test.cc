@@ -18,8 +18,6 @@
 
 namespace ghidra {
 
-vector<UnitTest *> UnitTest::tests;
-
 /// Run all the tests unless a non-empty set of names is passed in.
 /// In which case, only the named tests in the set are run.
 /// \param testNames is the set of names
@@ -30,7 +28,7 @@ int UnitTest::run(set<string> &testNames)
   int total = 0;
   int passed = 0;
 
-  for(auto &t : UnitTest::tests) {
+  for(auto &t : UnitTest::tests()) {
     if (testNames.size() > 0 && testNames.find(t->name) == testNames.end()) {
       continue;
     }
