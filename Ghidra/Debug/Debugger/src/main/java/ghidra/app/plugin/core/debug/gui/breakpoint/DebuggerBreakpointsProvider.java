@@ -954,6 +954,10 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		breakpointPanel.add(breakpointFilterPanel, BorderLayout.SOUTH);
 		mainPanel.setLeftComponent(breakpointPanel);
 
+		String namePrefix = "Breakpoints";
+		breakpointTable.setAccessibleNamePrefix(namePrefix);
+		breakpointFilterPanel.setAccessibleNamePrefix(namePrefix);
+
 		JPanel locationPanel = new JPanel(new BorderLayout());
 		locationTable = new GhidraTable(locationTableModel);
 		locationTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -962,8 +966,11 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		locationFilterPanel.setSecondaryFilter(filterLocationsBySelectedBreakpoints);
 		locationPanel.add(locationFilterPanel, BorderLayout.SOUTH);
 		mainPanel.setRightComponent(locationPanel);
-
 		mainPanel.setResizeWeight(0.5);
+
+		String locationsNamePrefix = "Breakpoint Locations";
+		locationTable.setAccessibleNamePrefix(locationsNamePrefix);
+		locationFilterPanel.setAccessibleNamePrefix(locationsNamePrefix);
 
 		breakpointTable.getSelectionModel().addListSelectionListener(evt -> {
 			List<LogicalBreakpointRow> sel = breakpointFilterPanel.getSelectedItems();
@@ -1096,6 +1103,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 
 		locColModel.setVisible(locThreadsCol, false);
 		locColModel.setVisible(locSleighCol, false);
+
 	}
 
 	protected void navigateToSelectedBreakpoint() {

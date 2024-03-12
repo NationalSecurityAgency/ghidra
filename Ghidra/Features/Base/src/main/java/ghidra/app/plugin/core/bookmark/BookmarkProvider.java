@@ -67,10 +67,11 @@ public class BookmarkProvider extends ComponentProviderAdapter {
 
 		bookmarkTable = threadedTablePanel.getTable();
 		bookmarkTable.setAutoLookupColumn(BookmarkTableModel.CATEGORY_COL);
-
 		panel = new JPanel(new BorderLayout());
 		panel.add(threadedTablePanel, BorderLayout.CENTER);
 		panel.add(createFilterFieldPanel(), BorderLayout.SOUTH);
+
+		bookmarkTable.setAccessibleNamePrefix("Bookmarks");
 
 		adjustTableColumns();
 
@@ -116,6 +117,8 @@ public class BookmarkProvider extends ComponentProviderAdapter {
 		tableFilterPanel = new GhidraTableFilterPanel<>(bookmarkTable, model);
 		tableFilterPanel.setToolTipText(
 			"Include bookmarks with Categories or Descriptions containing this text.");
+
+		tableFilterPanel.setAccessibleNamePrefix("Bookmarks");
 
 		return tableFilterPanel;
 	}

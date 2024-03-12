@@ -17,6 +17,7 @@ package docking.widgets.tree;
 
 import java.awt.BorderLayout;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 
@@ -70,6 +71,26 @@ public class DefaultGTreeFilterProvider implements GTreeFilterProvider {
 	@Override
 	public void setEnabled(boolean enabled) {
 		filterField.setEnabled(enabled);
+	}
+
+	@Override
+	public void setAccessibleNamePrefix(String namePrefix) {
+		filterField.setAccessibleNamePrefix(namePrefix);
+
+		String buttonNamePrefix = namePrefix + " Filter Options";
+		filterStateButton.setName(buttonNamePrefix + " Button");
+		AccessibleContext context = filterStateButton.getAccessibleContext();
+
+		// Don't add "Button" to prefix because screen readers reads the name followed by the role,
+		// which in this case, is "button"
+		context.setAccessibleName(buttonNamePrefix);
+
+		// Setting the accessible description to empty string prevents it from reading any tooltips
+		// on the button when the button gets focus. These buttons tend to have particularly large
+		// tooltips which seem excessive to read to the user every time they get focus. We may need
+		// to revisit this decision.
+		context.setAccessibleDescription("");
+
 	}
 
 	private void updateModelFilter() {

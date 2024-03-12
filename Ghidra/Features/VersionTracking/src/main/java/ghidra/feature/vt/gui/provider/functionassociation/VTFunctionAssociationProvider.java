@@ -446,7 +446,6 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 			new VTFunctionAssociationTableModel(tool, controller, sourceProgram, true);
 		sourceThreadedTablePanel = new GhidraThreadedTablePanel<>(sourceFunctionsModel, 1000);
 		sourceFunctionsTable = sourceThreadedTablePanel.getTable();
-		sourceFunctionsTable.setName("SourceFunctionTable");
 		sourceFunctionsTable
 				.setPreferenceKey("VTFunctionAssociationTableModel - Source Function Table");
 		sourceFunctionsTable.installNavigation(tool);
@@ -474,7 +473,6 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 
 		sourceTableFilterPanel =
 			new GhidraTableFilterPanel<>(sourceFunctionsTable, sourceFunctionsModel);
-
 		JPanel sourceFunctionPanel = new JPanel(new BorderLayout());
 		String sourceString =
 			(sourceProgram != null) ? sourceProgram.getDomainFile().toString() : NO_SESSION;
@@ -484,6 +482,11 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		sourceFunctionPanel.add(sourceSessionLabel, BorderLayout.NORTH);
 		sourceFunctionPanel.add(sourceThreadedTablePanel, BorderLayout.CENTER);
 		sourceFunctionPanel.add(sourceTableFilterPanel, BorderLayout.SOUTH);
+
+		String namePrefix = "Source Functions";
+		sourceFunctionsTable.setAccessibleNamePrefix(namePrefix);
+		sourceTableFilterPanel.setAccessibleNamePrefix(namePrefix);
+
 		return sourceFunctionPanel;
 	}
 
@@ -495,7 +498,6 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		destinationThreadedTablePanel =
 			new GhidraThreadedTablePanel<>(destinationFunctionsModel, 1000);
 		destinationFunctionsTable = destinationThreadedTablePanel.getTable();
-		destinationFunctionsTable.setName("DestinationFunctionTable");
 		destinationFunctionsTable.setPreferenceKey(
 			"VTFunctionAssociationTableModel - " + "Destination Function Table");
 		destinationFunctionsTable.installNavigation(tool);
@@ -526,7 +528,6 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 
 		destinationTableFilterPanel =
 			new GhidraTableFilterPanel<>(destinationFunctionsTable, destinationFunctionsModel);
-
 		JPanel destinationFunctionPanel = new JPanel(new BorderLayout());
 		String destinationString =
 			(destinationProgram != null) ? destinationProgram.getDomainFile().toString()
@@ -537,6 +538,11 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		destinationFunctionPanel.add(destinationSessionLabel, BorderLayout.NORTH);
 		destinationFunctionPanel.add(destinationThreadedTablePanel, BorderLayout.CENTER);
 		destinationFunctionPanel.add(destinationTableFilterPanel, BorderLayout.SOUTH);
+
+		String namePrefix = "Destination Functions";
+		destinationFunctionsTable.setAccessibleNamePrefix(namePrefix);
+		destinationTableFilterPanel.setAccessibleNamePrefix(namePrefix);
+
 		return destinationFunctionPanel;
 	}
 

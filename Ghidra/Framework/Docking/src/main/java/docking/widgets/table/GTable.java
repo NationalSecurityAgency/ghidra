@@ -410,6 +410,24 @@ public class GTable extends JTable {
 	}
 
 	/**
+	 * Sets an accessible name on the GTable such that screen readers will properly describe them.
+	 * <P>
+	 * This prefix should be the base name that describes the type of items in the table. 
+	 * This method will then append the necessary information to property name the table.
+	 *
+	 * @param namePrefix the accessible name prefix to assign to the filter component. For
+	 * example if the table contains fruits, then "Fruits" would be an appropriate prefix name.
+	 */
+	public void setAccessibleNamePrefix(String namePrefix) {
+		// set the component name as general good practice
+		setName(namePrefix + " Table");
+
+		// screen reader reads the accessible name followed by the role ("table" in this case)
+		// so don't append "Table" to the accessible name
+		getAccessibleContext().setAccessibleName(namePrefix);
+	}
+
+	/**
 	 * Enables or disables auto-edit.  When enabled, the user can start typing to trigger an
 	 * edit of an editable table cell.
 	 *

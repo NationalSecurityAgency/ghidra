@@ -90,6 +90,11 @@ public class VTImpliedMatchesTableProvider extends ComponentProviderAdapter
 		filterPanel = new GhidraTableFilterPanel<>(impliedMatchesTable, impliedMatchTableModel);
 		panel.add(tablePanel, BorderLayout.CENTER);
 		panel.add(filterPanel, BorderLayout.SOUTH);
+
+		String namePrefix = "Implied Matches";
+		impliedMatchesTable.setAccessibleNamePrefix(namePrefix);
+		filterPanel.setAccessibleNamePrefix(namePrefix);
+
 		return panel;
 	}
 
@@ -250,7 +255,6 @@ public class VTImpliedMatchesTableProvider extends ComponentProviderAdapter
 			new GhidraThreadedTablePanel<>(impliedMatchTableModel);
 
 		impliedMatchesTable = impliedMatchTablePanel.getTable();
-
 		impliedSelectionListener = e -> {
 			if (e.getValueIsAdjusting()) {
 				return;

@@ -44,6 +44,15 @@ public class GFilterTable<ROW_OBJECT> extends JPanel {
 		filterPanel.dispose();
 	}
 
+	/**
+	 * Sets the accessible name prefix for both the table and the filter panel
+	 * @param prefix the name prefix
+	 */
+	public void setAccessibleNamePrefix(String prefix) {
+		table.setAccessibleNamePrefix(prefix);
+		filterPanel.setAccessibleNamePrefix(prefix);
+	}
+
 	private void buildTable() {
 		if (model instanceof ThreadedTableModel) {
 			buildThreadedTable();

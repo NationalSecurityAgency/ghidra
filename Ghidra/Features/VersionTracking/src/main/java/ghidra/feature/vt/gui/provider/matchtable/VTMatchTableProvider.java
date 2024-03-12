@@ -98,7 +98,6 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		setIcon(VersionTrackingPluginPackage.ICON);
 		setDefaultWindowPosition(WindowPosition.TOP);
 		createActions();
-
 		component = createComponent();
 
 		setVisible(true);
@@ -219,13 +218,13 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 
 		matchesTable = createMatchesTable();
 		JPanel matchesTablePanel = new JPanel(new BorderLayout());
-
 		JPanel filterAreaPanel = createFilterArea();
 		matchesTablePanel.add(tablePanel, BorderLayout.CENTER);
 		matchesTablePanel.add(filterAreaPanel, BorderLayout.SOUTH);
-
 		JPanel parentPanel = new JPanel(new BorderLayout());
 		parentPanel.add(matchesTablePanel);
+
+		matchesTable.setAccessibleNamePrefix("Matches");
 
 		return parentPanel;
 	}

@@ -781,9 +781,9 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 		GTreeSelectionListener contextSelectionListener = e -> notifyContextChanged();
 		incomingTree.addGTreeSelectionListener(contextSelectionListener);
 		outgoingTree.addGTreeSelectionListener(contextSelectionListener);
-
 		splitPane.setLeftComponent(createTreePanel(true, incomingTree));
 		splitPane.setRightComponent(createTreePanel(false, outgoingTree));
+
 		splitPane.addHierarchyListener(new HierarchyListener() {
 			@Override
 			public void hierarchyChanged(HierarchyEvent e) {
@@ -801,6 +801,9 @@ public class CallTreeProvider extends ComponentProviderAdapter {
 		});
 
 		container.add(splitPane, BorderLayout.CENTER);
+
+		incomingTree.setAccessibleNamePrefix("Incoming Function Calls");
+		outgoingTree.setAccessibleNamePrefix("Outgoing Function Calls");
 
 		return container;
 	}

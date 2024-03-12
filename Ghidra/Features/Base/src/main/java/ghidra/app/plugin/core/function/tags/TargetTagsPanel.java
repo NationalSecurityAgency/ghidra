@@ -33,11 +33,9 @@ public class TargetTagsPanel extends TagListPanel {
 	 * 
 	 * @param provider the component provider
 	 * @param tool the plugin tool
-	 * @param title the panel title
 	 */
-	public TargetTagsPanel(FunctionTagProvider provider,
-			PluginTool tool, String title) {
-		super(provider, tool, title);
+	public TargetTagsPanel(FunctionTagProvider provider, PluginTool tool) {
+		super(provider, tool, "Function Tags Assigned");
 
 		table.setDisabled(false);
 	}
