@@ -701,7 +701,13 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 								++failureCount;
 								failedAddr = address;
 								handleRelocationError(program, address, relocationType,
-									"Unsupported COFF relocation type", null);
+									"unsupported type", null);
+							}
+							else if (status == Status.FAILURE) {
+								++failureCount;
+								failedAddr = address;
+								handleRelocationError(program, address, relocationType,
+									"unknown reason", null);
 							}
 						}
 					}
