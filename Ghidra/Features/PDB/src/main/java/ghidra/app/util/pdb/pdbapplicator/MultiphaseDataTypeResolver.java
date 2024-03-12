@@ -59,6 +59,8 @@ public class MultiphaseDataTypeResolver {
 		if (applicator.getDataType(recordNumber) != null) {
 			return;
 		}
+		// Location where one might do conditional: todoStack.setDebug(true)
+
 		// If not in the map, it will also not be in the todo or resolve stacks, as both
 		//  should be empty at this point.
 		scheduleTodo(recordNumber);
@@ -81,6 +83,7 @@ public class MultiphaseDataTypeResolver {
 				resolveStack.push(recordToProcess);
 			}
 		}
+		// If set true above, location where one might do conditional: todoStack.setDebug(false)
 
 		// Pop top of stack and work on it.
 		while ((recordToProcess = resolveStack.pop()) != null) {
@@ -134,13 +137,21 @@ public class MultiphaseDataTypeResolver {
 			private RecordNode(RecordNumber recordNumber) {
 				this.recordNumber = recordNumber;
 			}
+
+			@Override
+			public String toString() {
+				return recordNumber.toString();
+			}
 		}
 
+		static final int TO_STRING_LIMIT = 500;
 		static final RecordNumber HEAD = RecordNumber.typeRecordNumber(-1);
 		static final RecordNumber TAIL = RecordNumber.typeRecordNumber(-2);
 		Map<RecordNumber, RecordNode> map;
 		RecordNode head;
 		RecordNode tail;
+		boolean debug;
+		StringBuilder debugBuilder;
 
 		/**
 		 * Constructor for new record stack
@@ -154,6 +165,14 @@ public class MultiphaseDataTypeResolver {
 			head.prev = tail;
 			tail.next = head;
 			tail.prev = null;
+		}
+
+		/**
+		 * Set or clear developer debug
+		 * @param debug {@code true} to turn on; {@code false} to turn off
+		 */
+		void setDebug(boolean debug) {
+			this.debug = debug;
 		}
 
 		/**
@@ -177,6 +196,14 @@ public class MultiphaseDataTypeResolver {
 			}
 			if (node == null) {
 				node = new RecordNode(recordNumber);
+				if (debug) {
+					if (map.isEmpty()) {
+						debugBuilder = new StringBuilder();
+					}
+					debugBuilder.append("push:");
+					debugBuilder.append(recordNumber);
+					debugBuilder.append("\n");
+				}
 				map.put(recordNumber, node);
 			}
 			else { // already exists in non-top-of-stack position
@@ -208,6 +235,14 @@ public class MultiphaseDataTypeResolver {
 			}
 			removeNodeLinkage(node);
 			map.remove(node.recordNumber);
+			if (debug) {
+				debugBuilder.append(" pop:");
+				debugBuilder.append(node.recordNumber);
+				debugBuilder.append("\n");
+				if (map.isEmpty()) {
+					System.out.println(debugBuilder.toString());
+				}
+			}
 			return node.recordNumber;
 		}
 
@@ -247,6 +282,27 @@ public class MultiphaseDataTypeResolver {
 			node.next.prev = node.prev;
 			node.prev = null;
 			node.next = null;
+		}
+
+		@Override
+		public String toString() {
+			int count = 0;
+			RecordNode node = head.prev;
+			StringBuilder builder = new StringBuilder();
+			builder.append('[');
+			while (node != tail && count < TO_STRING_LIMIT) {
+				if (count != 0) {
+					builder.append(",");
+				}
+				builder.append(node);
+				node = node.prev;
+				count++;
+			}
+			if (node != tail) {
+				builder.append("...");
+			}
+			builder.append(']');
+			return builder.toString();
 		}
 
 	}
