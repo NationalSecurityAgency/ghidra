@@ -36,12 +36,12 @@ import ghidra.util.task.TaskMonitor;
  *  
  * 
  */
-public class ConflictHandlerTest2 extends AbstractGhidraHeadedIntegrationTest {
+public class ConflictHandler2Test extends AbstractGhidraHeadedIntegrationTest {
 	private ProgramDB program;
 	private DataTypeManagerDB dtm;
 	private int transactionID;
 
-	public ConflictHandlerTest2() {
+	public ConflictHandler2Test() {
 		super();
 	}
 
@@ -137,7 +137,7 @@ public class ConflictHandlerTest2 extends AbstractGhidraHeadedIntegrationTest {
 		}
 		try {
 			if (!DefaultCompositeMember.applyDataTypeMembers(composite, false, size, members,
-				msg -> Msg.warn(ConflictHandlerTest2.class, msg), monitor)) {
+				msg -> Msg.warn(ConflictHandler2Test.class, msg), monitor)) {
 				((Structure) composite).deleteAll();
 			}
 		}

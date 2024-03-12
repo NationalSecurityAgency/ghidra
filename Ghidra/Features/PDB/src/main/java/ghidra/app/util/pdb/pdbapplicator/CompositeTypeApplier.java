@@ -23,6 +23,7 @@ import ghidra.app.util.SymbolPath;
 import ghidra.app.util.bin.format.pdb.DefaultCompositeMember;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
+import ghidra.app.util.pdb.pdbapplicator.ClassFieldAttributes.Access;
 import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
@@ -211,6 +212,9 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 			throws PdbException, CancelledException {
 
 		AbstractCompositeMsType cType = (AbstractCompositeMsType) type;
+		ClassFieldAttributes.Access defaultAccess =
+			(type instanceof AbstractClassMsType) ? ClassFieldAttributes.Access.PRIVATE
+					: ClassFieldAttributes.Access.PUBLIC;
 
 		for (AbstractMsType baseType : msBases) {
 			applicator.checkCancelled();
@@ -222,13 +226,14 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 			}
 
 			if (baseType instanceof AbstractBaseClassMsType baseClassType) {
-				applyDirectBaseClass(baseClassType, myClassType);
+				applyDirectBaseClass(baseClassType, myClassType, defaultAccess);
 			}
 			else if (baseType instanceof AbstractVirtualBaseClassMsType virtualBaseClassType) {
-				applyDirectVirtualBaseClass(virtualBaseClassType, myClassType);
+				applyDirectVirtualBaseClass(virtualBaseClassType, myClassType, defaultAccess);
 			}
 			else if (baseType instanceof AbstractIndirectVirtualBaseClassMsType indirectVirtualBaseClassType) {
-				applyIndirectVirtualBaseClass(indirectVirtualBaseClassType, myClassType);
+				applyIndirectVirtualBaseClass(indirectVirtualBaseClassType, myClassType,
+					defaultAccess);
 			}
 			else {
 				throw new AssertException(
@@ -237,7 +242,8 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		}
 	}
 
-	private void applyDirectBaseClass(AbstractBaseClassMsType base, CppCompositeType myClassType)
+	private void applyDirectBaseClass(AbstractBaseClassMsType base, CppCompositeType myClassType,
+			Access defaultAccess)
 			throws PdbException {
 		CppCompositeType underlyingClassType =
 			getUnderlyingClassType(base.getBaseClassRecordNumber());
@@ -246,11 +252,12 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		}
 		ClassFieldMsAttributes atts = base.getAttributes();
 		int offset = applicator.bigIntegerToInt(base.getOffset());
-		myClassType.addDirectBaseClass(underlyingClassType, convertAttributes(atts), offset);
+		myClassType.addDirectBaseClass(underlyingClassType,
+			ClassFieldAttributes.convert(atts, defaultAccess), offset);
 	}
 
 	private void applyDirectVirtualBaseClass(AbstractVirtualBaseClassMsType base,
-			CppCompositeType myClassType) throws PdbException {
+			CppCompositeType myClassType, Access defaultAccess) throws PdbException {
 		CppCompositeType underlyingCt =
 			getUnderlyingClassType(base.getBaseClassRecordNumber());
 		if (underlyingCt == null) {
@@ -261,12 +268,13 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		ClassFieldMsAttributes atts = base.getAttributes();
 		int basePointerOffset = applicator.bigIntegerToInt(base.getBasePointerOffset());
 		int offsetFromVbt = applicator.bigIntegerToInt(base.getBaseOffsetFromVbt());
-		myClassType.addDirectVirtualBaseClass(underlyingCt, convertAttributes(atts),
+		myClassType.addDirectVirtualBaseClass(underlyingCt,
+			ClassFieldAttributes.convert(atts, defaultAccess),
 			basePointerOffset, vbtptr, offsetFromVbt);
 	}
 
 	private void applyIndirectVirtualBaseClass(AbstractIndirectVirtualBaseClassMsType base,
-			CppCompositeType myClassType) throws PdbException {
+			CppCompositeType myClassType, Access defaultAccess) throws PdbException {
 		CppCompositeType underlyingCt =
 			getUnderlyingClassType(base.getBaseClassRecordNumber());
 		if (underlyingCt == null) {
@@ -277,7 +285,8 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		ClassFieldMsAttributes atts = base.getAttributes();
 		int basePointerOffset = applicator.bigIntegerToInt(base.getBasePointerOffset());
 		int offsetFromVbt = applicator.bigIntegerToInt(base.getBaseOffsetFromVbt());
-		myClassType.addIndirectVirtualBaseClass(underlyingCt, convertAttributes(atts),
+		myClassType.addIndirectVirtualBaseClass(underlyingCt,
+			ClassFieldAttributes.convert(atts, defaultAccess),
 			basePointerOffset, vbtptr, offsetFromVbt);
 	}
 
@@ -313,49 +322,18 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		return dataType;
 	}
 
-	private static CppCompositeType.ClassFieldAttributes convertAttributes(
-			ClassFieldMsAttributes atts) {
-		CppCompositeType.Access myAccess;
-		switch (atts.getAccess()) {
-			case PUBLIC:
-				myAccess = CppCompositeType.Access.PUBLIC;
-				break;
-			case PROTECTED:
-				myAccess = CppCompositeType.Access.PROTECTED;
-				break;
-			case PRIVATE:
-				myAccess = CppCompositeType.Access.PRIVATE;
-				break;
-			default:
-				myAccess = CppCompositeType.Access.BLANK;
-				break;
-		}
-		CppCompositeType.Property myProperty;
-		switch (atts.getProperty()) {
-			case VIRTUAL:
-				myProperty = CppCompositeType.Property.VIRTUAL;
-				break;
-			case STATIC:
-				myProperty = CppCompositeType.Property.STATIC;
-				break;
-			case FRIEND:
-				myProperty = CppCompositeType.Property.FRIEND;
-				break;
-			default:
-				myProperty = CppCompositeType.Property.BLANK;
-				break;
-		}
-		return new CppCompositeType.ClassFieldAttributes(myAccess, myProperty);
-	}
-
 	private void addMembers(Composite composite, CppCompositeType myClassType,
 			List<AbstractMemberMsType> msMembers, AbstractCompositeMsType type,
 			List<DefaultPdbUniversalMember> myMembers)
 			throws CancelledException, PdbException {
+		ClassFieldAttributes.Access defaultAccess =
+			(type instanceof AbstractClassMsType) ? ClassFieldAttributes.Access.PRIVATE
+					: ClassFieldAttributes.Access.PUBLIC;
 		for (int index = 0; index < msMembers.size(); index++) {
 			applicator.checkCancelled();
 			AbstractMemberMsType memberType = msMembers.get(index);
-			DefaultPdbUniversalMember member = getNonStaticMember(composite, memberType, index);
+			DefaultPdbUniversalMember member =
+				getNonStaticMember(composite, defaultAccess, memberType, index);
 			DataType dt = member.getDataType().getDataType();
 			myMembers.add(member);
 			myClassType.addMember(member.getName(), dt, member.isZeroLengthArray(),
@@ -386,8 +364,8 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 	}
 
 	/**
-	 * Uses {@link DefaultPdbApplicator#getDataTypeOrSchedule(Integer)}) on all underlying types
-	 *  to ensure that the types get scheduled... and detects whether any types were not yet
+	 * Uses {@link DefaultPdbApplicator#getDataTypeOrSchedule(RecordNumber)}) on all underlying
+	 *  types to ensure that the types get scheduled... and detects whether any types were not yet
 	 *  available so that this composite type is denoted as not done.
 	 * @param lists the lists of all underlying types
 	 * @return {@code true} if all underlying types are already available
@@ -461,14 +439,15 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 				throw new PdbException("Unhandled type: " + method.getClass().getSimpleName());
 			}
 		}
-		for (AbstractNestedTypeMsType nested : lists.nestedTypes()) {
-			applicator.checkCancelled();
-			RecordNumber recordNumber = nested.getNestedTypeDefinitionRecordNumber();
-			DataType dt = applicator.getDataTypeOrSchedule(recordNumber);
-			if (dt == null) {
-				done = false;
-			}
-		}
+		// Might cause problems, so remove until understood and possibly needed
+//		for (AbstractNestedTypeMsType nested : lists.nestedTypes()) {
+//			applicator.checkCancelled();
+//			RecordNumber recordNumber = nested.getNestedTypeDefinitionRecordNumber();
+//			DataType dt = applicator.getDataTypeOrSchedule(recordNumber);
+//			if (dt == null) {
+//				done = false;
+//			}
+//		}
 		for (AbstractMemberMsType nonstaticMember : lists.nonstaticMembers()) {
 			applicator.checkCancelled();
 			RecordNumber recordNumber = nonstaticMember.getFieldTypeRecordNumber();
@@ -509,7 +488,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 	}
 
 	private DefaultPdbUniversalMember getNonStaticMember(Composite container,
-			AbstractMemberMsType memberMsType, int ordinal)
+			Access defaultAccess, AbstractMemberMsType memberMsType, int ordinal)
 			throws CancelledException, PdbException {
 
 		MsTypeApplier applier = applicator.getTypeApplier(memberMsType);
@@ -546,7 +525,8 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 			arrayApplier.isFlexibleArray(fieldType));
 
 		DefaultPdbUniversalMember member = new DefaultPdbUniversalMember(memberName, fieldDataType,
-			isZeroLengthArray, offset, convertAttributes(memberAttributes), memberComment);
+			isZeroLengthArray, offset,
+			ClassFieldAttributes.convert(memberAttributes, defaultAccess), memberComment);
 		return member;
 	}
 

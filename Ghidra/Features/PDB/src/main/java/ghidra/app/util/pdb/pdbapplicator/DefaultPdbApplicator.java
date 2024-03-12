@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 
@@ -197,12 +196,10 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	 * @param logParam the MessageLog to which to output messages
 	 * @throws PdbException if there was a problem processing the data
 	 * @throws CancelledException upon user cancellation
-	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes
 	 */
 	public void applyTo(Program programParam, DataTypeManager dataTypeManagerParam,
 			Address imageBaseParam, PdbApplicatorOptions applicatorOptionsParam,
-			MessageLog logParam) throws PdbException, CancelledException, IOException {
+			MessageLog logParam) throws PdbException, CancelledException {
 
 		// FIXME: should not support use of DataTypeManager-only since it will not have the correct
 		// data organization if it corresponds to a data type archive.  Need to evaluate archive
@@ -420,12 +417,10 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	 * Initializes helper classes and data items used for applying the PDB
 	 * @throws CancelledException upon user cancellation
 	 * @throws PdbException upon error in processing components
-	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes
 	 */
 	private void initializeApplyTo(Program programParam, DataTypeManager dataTypeManagerParam,
 			Address imageBaseParam, PdbApplicatorOptions applicatorOptionsParam,
-			MessageLog logParam) throws PdbException, CancelledException, IOException {
+			MessageLog logParam) throws PdbException, CancelledException {
 
 		validateAndSetParameters(programParam, dataTypeManagerParam, imageBaseParam,
 			applicatorOptionsParam, logParam);
@@ -846,7 +841,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		if (dt != null) {
 			return dt;
 		}
-		multiphaseResolver.scheduleTodo(recordNumber);
+		multiphaseResolver.scheduleTodo(mappedNumber);
 		return null;
 	}
 

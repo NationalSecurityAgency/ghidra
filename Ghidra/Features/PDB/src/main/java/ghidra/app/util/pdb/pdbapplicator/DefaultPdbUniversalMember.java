@@ -16,7 +16,6 @@
 package ghidra.app.util.pdb.pdbapplicator;
 
 import ghidra.app.util.bin.format.pdb.*;
-import ghidra.app.util.pdb.pdbapplicator.CppCompositeType.*;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.CancelledException;
 
@@ -30,9 +29,6 @@ public class DefaultPdbUniversalMember extends PdbMember {
 	private ClassFieldAttributes attributes;
 	private boolean isZeroLengthArray;
 
-	private static final ClassFieldAttributes blankAtttributes =
-		new ClassFieldAttributes(Access.BLANK, Property.BLANK);
-
 	/**
 	 * Default PDB member construction
 	 * @param name member field name.  For bitfields this also conveys the bit-size
@@ -43,7 +39,7 @@ public class DefaultPdbUniversalMember extends PdbMember {
 	DefaultPdbUniversalMember(String name, DataType dataType, int offset) {
 		super(name, dataType.getName(), offset, null);
 		this.dataType = dataType;
-		this.attributes = blankAtttributes;
+		this.attributes = ClassFieldAttributes.BLANK;
 		this.isZeroLengthArray = false;
 	}
 

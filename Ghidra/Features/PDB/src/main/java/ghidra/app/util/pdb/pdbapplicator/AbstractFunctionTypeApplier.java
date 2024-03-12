@@ -237,8 +237,8 @@ public abstract class AbstractFunctionTypeApplier extends MsDataTypeApplier {
 	}
 
 	/**
-	 * Uses {@link DefaultPdbApplicator#getDataTypeOrSchedule(Integer)}) on all underlying types
-	 *  to ensure that the types get scheduled... and detects whether any types were not yet
+	 * Uses {@link DefaultPdbApplicator#getDataTypeOrSchedule(RecordNumber)}) on all underlying
+	 *  types to ensure that the types get scheduled... and detects whether any types were not yet
 	 *  available so that this composite type is denoted as not done.
 	 * @param type the MS type of the function
 	 * @return {@code true} if all underlying types are already available
