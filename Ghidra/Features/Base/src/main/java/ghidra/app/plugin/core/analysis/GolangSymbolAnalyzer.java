@@ -65,7 +65,7 @@ import utilities.util.FileUtilities;
  */
 public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 
-	private final static String NAME = "Golang Symbol";
+	private final static String NAME = "Golang Symbols";
 	private final static String DESCRIPTION = """
 			Analyze Golang binaries for RTTI and function symbols.
 			'Apply Data Archives' and 'Shared Return Calls' analyzers should be disabled \

@@ -25,6 +25,7 @@ import generic.jar.ResourceFile;
 import ghidra.app.cmd.function.ApplyFunctionDataTypesCmd;
 import ghidra.app.plugin.core.datamgr.util.DataTypeArchiveUtility;
 import ghidra.app.services.*;
+import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.Application;
 import ghidra.framework.model.*;
@@ -84,7 +85,7 @@ public class ApplyDataArchiveAnalyzer extends AbstractAnalyzer {
 
 	@Override
 	public boolean getDefaultEnablement(Program program) {
-		if ("golang".equals(program.getCompilerSpec().getCompilerSpecID().toString())) {
+		if (GoRttiMapper.isGolangProgram(program)) {
 			return false;
 		}
 		return super.getDefaultEnablement(program);
