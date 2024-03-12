@@ -42,6 +42,8 @@ public class SymbolGTree extends GTree {
 		setCellRenderer(new SymbolTreeCellRenderer());
 
 		setDragNDropHandler(new SymbolGTreeDragNDropHandler(plugin));
+
+		setAccessibleNamePrefix("Symbol");
 	}
 
 	@Override

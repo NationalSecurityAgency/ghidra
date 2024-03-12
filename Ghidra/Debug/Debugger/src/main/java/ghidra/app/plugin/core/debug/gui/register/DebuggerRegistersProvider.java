@@ -570,6 +570,10 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		regsFilterPanel = new GhidraTableFilterPanel<>(regsTable, regsTableModel);
 		mainPanel.add(regsFilterPanel, BorderLayout.SOUTH);
 
+		String namePrefix = "Registers";
+		regsTable.setAccessibleNamePrefix(namePrefix);
+		regsFilterPanel.setAccessibleNamePrefix(namePrefix);
+
 		regsTable.getSelectionModel().addListSelectionListener(evt -> {
 			if (evt.getValueIsAdjusting()) {
 				return;

@@ -32,6 +32,6 @@ public class ListingFieldDescriptionProvider implements FieldDescriptionProvider
 			String addressString = address.toString(address.getAddressSpace().showSpaceName(), 1);
 			return fieldFactory.getFieldName() + " Field at Address " + addressString;
 		}
-		return "Unknown Field";
+		return "No program open";
 	}
 }

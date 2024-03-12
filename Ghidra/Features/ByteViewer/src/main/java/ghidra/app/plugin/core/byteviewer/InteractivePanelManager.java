@@ -37,8 +37,7 @@ public class InteractivePanelManager {
 
 	public InteractivePanelManager() {
 		JTable table = new JTable();
-		header = new JTableHeader();
-		table.setTableHeader(header);
+		header = table.getTableHeader();
 		columnModel = header.getColumnModel();
 		separatorWidth = (new JSeparator(SwingConstants.VERTICAL)).getPreferredSize().width;
 		mainPanel = new JPanel(new HeaderLayoutManager());
@@ -296,6 +295,7 @@ public class InteractivePanelManager {
 	}
 
 	record ComponentData(String name, JComponent component) {
+		@Override
 		public String toString() {
 			return name;
 		}

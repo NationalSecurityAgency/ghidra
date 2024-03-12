@@ -175,6 +175,9 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 			functionComparisonPanel);
 		splitPane.setResizeWeight(0.4);
 		markupPanel.add(splitPane, BorderLayout.CENTER);
+
+		markupItemsTable.setAccessibleNamePrefix("Markup Items");
+
 		return markupPanel;
 	}
 
@@ -404,6 +407,10 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 		ancillaryFilterButton
 				.addActionListener(e -> tool.showDialog(ancillaryFilterDialog, component));
 		ancillaryFilterButton.setToolTipText("Filters Dialog");
+
+		String buttonNamePrefix = "Markup Items Table Filter";
+		ancillaryFilterButton.setName(buttonNamePrefix + " Button");
+		ancillaryFilterButton.getAccessibleContext().setAccessibleName(buttonNamePrefix);
 
 		parentPanel.add(ancillaryFilterButton, BorderLayout.EAST);
 

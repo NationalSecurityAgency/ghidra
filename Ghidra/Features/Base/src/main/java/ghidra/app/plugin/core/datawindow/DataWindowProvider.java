@@ -109,7 +109,6 @@ class DataWindowProvider extends ComponentProviderAdapter {
 
 		threadedTablePanel = new GhidraThreadedTablePanel<>(dataModel, 1000);
 		dataTable = threadedTablePanel.getTable();
-		dataTable.setName("DataTable");
 		dataTable.setAutoLookupColumn(DataTableModel.DATA_COL);
 		dataTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
 		dataTable.setPreferredScrollableViewportSize(new Dimension(350, 150));
@@ -138,11 +137,14 @@ class DataWindowProvider extends ComponentProviderAdapter {
 		setDataTableRenderer();
 
 		filterPanel = new GhidraTableFilterPanel<>(dataTable, dataModel);
-		dataTable.getModel();
 
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(threadedTablePanel, BorderLayout.CENTER);
 		panel.add(filterPanel, BorderLayout.SOUTH);
+
+		String namePrefix = "Defined Data";
+		dataTable.setAccessibleNamePrefix(namePrefix);
+		filterPanel.setAccessibleNamePrefix(namePrefix);
 
 		return panel;
 	}
@@ -158,12 +160,10 @@ class DataWindowProvider extends ComponentProviderAdapter {
 	private void setDataTableRenderer() {
 		dataTable.getColumnModel()
 				.getColumn(DataTableModel.LOCATION_COL)
-				.setPreferredWidth(
-					DataTableModel.ADDRESS_COL_WIDTH);
+				.setPreferredWidth(DataTableModel.ADDRESS_COL_WIDTH);
 		dataTable.getColumnModel()
 				.getColumn(DataTableModel.SIZE_COL)
-				.setPreferredWidth(
-					DataTableModel.SIZE_COL_WIDTH);
+				.setPreferredWidth(DataTableModel.SIZE_COL_WIDTH);
 	}
 
 	void reload() {

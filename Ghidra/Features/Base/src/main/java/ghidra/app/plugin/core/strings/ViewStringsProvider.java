@@ -112,7 +112,6 @@ public class ViewStringsProvider extends ComponentProviderAdapter {
 
 		threadedTablePanel = new GhidraThreadedTablePanel<>(stringModel, 1000);
 		table = threadedTablePanel.getTable();
-		table.setName("DataTable");
 		table.setPreferredScrollableViewportSize(new Dimension(350, 150));
 		table.getSelectionModel().addListSelectionListener(e -> notifyContextChanged());
 
@@ -150,18 +149,20 @@ public class ViewStringsProvider extends ComponentProviderAdapter {
 			}
 		});
 		TableColumn stringRepCol = table.getColumnModel()
-				.getColumn(
-					ViewStringsTableModel.COLUMNS.STRING_REP_COL.ordinal());
+				.getColumn(ViewStringsTableModel.COLUMNS.STRING_REP_COL.ordinal());
 
 		stringRepCol.setCellEditor(new StringRepCellEditor());
 
 		table.installNavigation(tool);
 
 		filterPanel = new GhidraTableFilterPanel<>(table, stringModel);
-
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(threadedTablePanel, BorderLayout.CENTER);
 		panel.add(filterPanel, BorderLayout.SOUTH);
+
+		String namePrefix = "Defined Strings";
+		table.setAccessibleNamePrefix(namePrefix);
+		filterPanel.setAccessibleNamePrefix(namePrefix);
 
 		return panel;
 	}
@@ -236,7 +237,6 @@ public class ViewStringsProvider extends ComponentProviderAdapter {
 			delayedShowProgramLocation.set(loc);
 		}
 	}
-
 
 	public Program getProgram() {
 		return currentProgram;

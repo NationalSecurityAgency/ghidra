@@ -183,11 +183,9 @@ public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
 		gbc.weightx = 1;
 		gbc.gridwidth = 2;
 		gbc.insets = new Insets(5, 5, 5, 5);
-
 		hyperlink = new HyperlinkComponent("<html>Enter an address, label, <a href=\"" +
 			EXPRESSION_ANCHOR_NAME + "\">expression</a>, or " + "<a href=\"" +
 			FILE_OFFSET_ANCHOR_NAME + "\">file offset</a>:");
-
 		HyperlinkListener hyperlinkListener = evt -> {
 			if (evt.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
 				HelpLocation loc = new HelpLocation(HelpTopics.NAVIGATION, evt.getDescription());
@@ -196,12 +194,14 @@ public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
 		};
 		hyperlink.addHyperlinkListener(EXPRESSION_ANCHOR_NAME, hyperlinkListener);
 		hyperlink.addHyperlinkListener(FILE_OFFSET_ANCHOR_NAME, hyperlinkListener);
-
 		inner.add(hyperlink, gbc);
 
 		comboBox = new GhidraComboBox<>();
 		comboBox.setEditable(true);
 		comboBox.addActionListener(evt -> okCallback());
+		String comboName = "Go To Address or Lable Text Field / Combobox";
+		comboBox.setName(comboName);
+		comboBox.getAccessibleContext().setAccessibleName(comboName);
 
 		gbc.insets = new Insets(2, 5, 2, 0);
 		gbc.gridx = 0;
@@ -212,12 +212,18 @@ public class GoToAddressLabelDialog extends ReusableDialogComponentProvider
 		caseSensitiveBox = new GCheckBox("Case sensitive", false);
 		gbc.gridy = 2;
 		gbc.gridwidth = 1;
+		String caseSensitiveCheckBoxName = "Case Sensitive Checkbox";
+		caseSensitiveBox.setName(caseSensitiveCheckBoxName);
+		caseSensitiveBox.getAccessibleContext().setAccessibleName(caseSensitiveCheckBoxName);
 		inner.add(caseSensitiveBox, gbc);
 
 		includeDynamicBox = new GCheckBox("Dynamic labels", true);
 		includeDynamicBox.setToolTipText("Include dynamic lables in the search (slower)");
 		gbc.gridx = 1;
 		inner.add(includeDynamicBox, gbc);
+		String dynamicCheckBoxName = "Dynamic Checkbox";
+		includeDynamicBox.setName(dynamicCheckBoxName);
+		includeDynamicBox.getAccessibleContext().setAccessibleName(dynamicCheckBoxName);
 
 		mainPanel = new JPanel(new BorderLayout());
 		Border emptyBorder = BorderFactory.createEmptyBorder(5, 5, 0, 5);

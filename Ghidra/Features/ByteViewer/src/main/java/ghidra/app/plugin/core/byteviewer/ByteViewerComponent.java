@@ -88,7 +88,8 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		this.fm = fm;
 		this.layoutModel = layoutModel;
 
-		setName(model.getName());
+		setName("Byte Viewer");
+		getAccessibleContext().setAccessibleName("ByteViewer");
 		initialize();
 
 		// specialized line coloring

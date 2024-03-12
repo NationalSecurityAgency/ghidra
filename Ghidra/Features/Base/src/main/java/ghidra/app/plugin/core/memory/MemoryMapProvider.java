@@ -135,6 +135,10 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		table.installNavigation(tool);
 		table.setAutoCreateColumnsFromModel(false);
 
+		String namePrefix = "Memory Map";
+		table.setAccessibleNamePrefix(namePrefix);
+		filterPanel.setAccessibleNamePrefix(namePrefix);
+
 		GTableCellRenderer monoRenderer = new GTableCellRenderer() {
 			@Override
 			protected Font getDefaultFont() {

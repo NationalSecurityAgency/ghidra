@@ -21,6 +21,7 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 
 import docking.*;
@@ -64,6 +65,8 @@ public class ComponentInfoDialog extends DialogComponentProvider implements Prop
 	private EventDisplayPanel eventDisplay;
 	private JSplitPane splitPane;
 	private ToggleDockingAction eventAction;
+	private ToggleDockingAction toggleFollowFocusAction;
+	private boolean updateOnFocusChange = true;
 
 	public ComponentInfoDialog() {
 		super("Component Inspector", false);
@@ -71,7 +74,8 @@ public class ComponentInfoDialog extends DialogComponentProvider implements Prop
 		addWorkPanel(buildMainPanel());
 		addDismissButton();
 		addOKButton();
-		setOkButtonText("Arm");
+		setOkButtonText("Reset");
+		setOkToolTip("Clears component table and will re-populate on next focussed component");
 
 		setPreferredSize(1200, 600);
 		eventDisplay = new EventDisplayPanel();
@@ -79,7 +83,7 @@ public class ComponentInfoDialog extends DialogComponentProvider implements Prop
 
 		KeyboardFocusManager km = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 		km.addPropertyChangeListener("permanentFocusOwner", this);
-		arm();
+		reset();
 	}
 
 	private void createActions() {
@@ -106,6 +110,19 @@ public class ComponentInfoDialog extends DialogComponentProvider implements Prop
 				.onAction(c -> toggleShowEvents())
 				.build();
 		addAction(eventAction);
+
+		toggleFollowFocusAction = new ToggleActionBuilder("Follow Focus", ACTION_OWNER)
+				.toolBarIcon(Icons.NAVIGATE_ON_INCOMING_EVENT_ICON)
+				.description("On causes component table to constant repopulate as focus changes")
+				.onAction(c -> toggleFollowFocus())
+				.selected(true)
+				.build();
+		addAction(toggleFollowFocusAction);
+	}
+
+	private void toggleFollowFocus() {
+		updateOnFocusChange = toggleFollowFocusAction.isSelected();
+		setOkEnabled(!updateOnFocusChange);
 	}
 
 	private void toggleShowEvents() {
@@ -125,11 +142,11 @@ public class ComponentInfoDialog extends DialogComponentProvider implements Prop
 
 	@Override
 	protected void okCallback() {
-		arm();
+		reset();
 	}
 
 	// clear the current table data. The next component to get focus will repopulate the table data.
-	private void arm() {
+	private void reset() {
 		setRootContainer(null);
 	}
 
@@ -154,6 +171,7 @@ public class ComponentInfoDialog extends DialogComponentProvider implements Prop
 	private JComponent buildTablePanel() {
 		model = new ComponentTableModel();
 		filterTable = new GFilterTable<ComponentInfo>(model);
+		filterTable.setAccessibleNamePrefix("Component Info");
 		return filterTable;
 	}
 
@@ -244,7 +262,7 @@ public class ComponentInfoDialog extends DialogComponentProvider implements Prop
 	}
 
 	private void selectFocusedComponentInTable(Component newFocusComponent) {
-		if (infos.isEmpty()) {
+		if (infos.isEmpty() || updateOnFocusChange) {
 			if (newFocusComponent == null) {
 				return;
 			}
@@ -255,6 +273,9 @@ public class ComponentInfoDialog extends DialogComponentProvider implements Prop
 	}
 
 	void setRootContainer(Container container) {
+		if (rootComponentForTable == container) {
+			return;
+		}
 		rootComponentForTable = container;
 		buildComponentModel();
 	}
@@ -383,6 +404,8 @@ public class ComponentInfoDialog extends DialogComponentProvider implements Prop
 			descriptor.addVisibleColumn(new ComponentNameColumn());
 			descriptor.addVisibleColumn(new ComponentClassColumn());
 			descriptor.addVisibleColumn(new ToolTipColumn());
+			descriptor.addVisibleColumn(new AccessibleNameColumn());
+			descriptor.addVisibleColumn(new AccessibleDescriptionColumn());
 			descriptor.addHiddenColumn(new FocusableColumn());
 			descriptor.addHiddenColumn(new IsFocusCycleRootColumn());
 			descriptor.addHiddenColumn(new focusCycleRootColumn());
@@ -427,6 +450,54 @@ public class ComponentInfoDialog extends DialogComponentProvider implements Prop
 			public String getValue(ComponentInfo info, Settings settings, Object data,
 					ServiceProvider provider) throws IllegalArgumentException {
 				return info.getToolTip();
+			}
+
+			@Override
+			public int getColumnPreferredWidth() {
+				return 200;
+			}
+		}
+
+		private class AccessibleNameColumn
+				extends AbstractDynamicTableColumn<ComponentInfo, String, Object> {
+
+			@Override
+			public String getColumnName() {
+				return "Accessible Name";
+			}
+
+			@Override
+			public String getValue(ComponentInfo info, Settings settings, Object data,
+					ServiceProvider provider) throws IllegalArgumentException {
+				AccessibleContext context = info.getComponent().getAccessibleContext();
+				if (context != null) {
+					return context.getAccessibleName();
+				}
+				return "";
+			}
+
+			@Override
+			public int getColumnPreferredWidth() {
+				return 200;
+			}
+		}
+
+		private class AccessibleDescriptionColumn
+				extends AbstractDynamicTableColumn<ComponentInfo, String, Object> {
+
+			@Override
+			public String getColumnName() {
+				return "Accessible Description";
+			}
+
+			@Override
+			public String getValue(ComponentInfo info, Settings settings, Object data,
+					ServiceProvider provider) throws IllegalArgumentException {
+				AccessibleContext context = info.getComponent().getAccessibleContext();
+				if (context != null) {
+					return context.getAccessibleDescription();
+				}
+				return "";
 			}
 
 			@Override
@@ -510,7 +581,8 @@ public class ComponentInfoDialog extends DialogComponentProvider implements Prop
 			public String getValue(ComponentInfo info, Settings settings, Object data,
 					ServiceProvider provider) throws IllegalArgumentException {
 				Set<AWTKeyStroke> keys = info.getComponent()
-						.getFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS);
+						.getFocusTraversalKeys(
+							KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS);
 				return keys == null ? "" : keys.toString();
 			}
 

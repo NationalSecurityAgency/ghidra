@@ -35,6 +35,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
+import ghidra.util.table.GhidraTable;
 import ghidra.util.task.SwingUpdateManager;
 import resources.Icons;
 
@@ -84,13 +85,17 @@ public class RegisterManagerProvider extends ComponentProviderAdapter {
 		splitPane.setDividerLocation(0.3);
 
 		tree.addGTreeSelectionListener(e -> showRegister());
-
 		values.getTable().getSelectionModel().addListSelectionListener(e -> {
 			JTable table = values.getTable();
 			deleteRegisterValuesAction.setEnabled(table.getSelectedRowCount() > 0);
 			selectRegisterValuesAction.setEnabled(table.getSelectedRowCount() > 0);
 		});
 
+		tree.setAccessibleNamePrefix("Register Manager");
+
+		GhidraTable table = values.getTable();
+		String namePrefix = "Register Manager Values";
+		table.setAccessibleNamePrefix(namePrefix);
 	}
 
 	void createActions() {
