@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.beans.PropertyEditor;
 import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.field.*;
@@ -35,7 +34,6 @@ import ghidra.util.exception.AssertException;
 public class ArrayValuesFieldFactory extends FieldFactory {
 	public static final String FIELD_NAME = "Array Values";
 	private int valuesPerLine;
-	private PropertyEditor arrayOptionsEditor = new ArrayElementPropertyEditor();
 
 	public ArrayValuesFieldFactory() {
 		super(FIELD_NAME);
@@ -66,7 +64,7 @@ public class ArrayValuesFieldFactory extends FieldFactory {
 		// we need to install a custom editor that allows us to edit a group of related options
 		fieldOptions.registerOption(FormatManager.ARRAY_DISPLAY_OPTIONS, OptionType.CUSTOM_TYPE,
 			new ArrayElementWrappedOption(), null, FormatManager.ARRAY_DISPLAY_DESCRIPTION,
-			arrayOptionsEditor);
+			() -> new ArrayElementPropertyEditor());
 		CustomOption wrappedOption = fieldOptions.getCustomOption(
 			FormatManager.ARRAY_DISPLAY_OPTIONS, new ArrayElementWrappedOption());
 

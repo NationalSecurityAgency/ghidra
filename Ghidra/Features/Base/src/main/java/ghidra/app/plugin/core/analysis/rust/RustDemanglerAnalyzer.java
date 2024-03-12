@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.analysis.rust;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
+import java.beans.*;
 import java.util.Arrays;
 
 import docking.options.editor.BooleanEditor;
@@ -90,24 +89,14 @@ public class RustDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 		options.registerOption(OPTION_NAME_DEMANGLE_USE_KNOWN_PATTERNS, demangleOnlyKnownPatterns,
 			help, OPTION_DESCRIPTION_USE_KNOWN_PATTERNS);
 
-		BooleanEditor deprecatedEditor = null;
-		FormatEditor formatEditor = null;
-		if (!SystemUtilities.isInHeadlessMode()) {
-			// Only add the custom options editor when not headless.   The custom editor allows
-			// the list of choices presented to the user to change depending on the state of the
-			// useDeprecatedDemangler flag.
-			deprecatedEditor = new BooleanEditor();
-			deprecatedEditor.setValue(Boolean.valueOf(useDeprecatedDemangler));
-			formatEditor = new FormatEditor(demanglerFormat, deprecatedEditor);
-			deprecatedEditor.addPropertyChangeListener(formatEditor);
-		}
+		RustOptionsEditor optionsEditor = new RustOptionsEditor();
 
 		options.registerOption(OPTION_NAME_USE_DEPRECATED_DEMANGLER, OptionType.BOOLEAN_TYPE,
 			useDeprecatedDemangler, help, OPTION_DESCRIPTION_DEPRECATED_DEMANGLER,
-			deprecatedEditor);
+			() -> optionsEditor.getDeprecatedNameEditor());
 
 		options.registerOption(OPTION_NAME_DEMANGLER_FORMAT, OptionType.ENUM_TYPE, demanglerFormat,
-			help, OPTION_DESCRIPTION_DEMANGLER_FORMAT, formatEditor);
+			help, OPTION_DESCRIPTION_DEMANGLER_FORMAT, () -> optionsEditor.getFormatEditor());
 	}
 
 	@Override
@@ -160,6 +149,45 @@ public class RustDemanglerAnalyzer extends AbstractDemanglerAnalyzer {
 		demangledVariable.setNamespace(namespace);
 
 		super.apply(program, address, demangledVariable, options, log, monitor);
+	}
+
+//==================================================================================================
+// Inner Classes
+//==================================================================================================
+
+	// We only use the editor when not headless, since GUI code in headless will throw an exception.
+	// Further, the options below have a relationship, so we need to build them together.
+	// The format editor's list of choices presented to the user will change depending on the state
+	// of the deprecated boolean editor.
+	private class RustOptionsEditor {
+
+		private BooleanEditor deprecatedEditor;
+		private FormatEditor formatEditor;
+
+		private void lazyInit() {
+			if (SystemUtilities.isInHeadlessMode()) {
+				return; // the editor should not be requested in headless mode
+			}
+
+			if (deprecatedEditor != null) {
+				return; // already loaded
+			}
+
+			deprecatedEditor = new BooleanEditor();
+			deprecatedEditor.setValue(Boolean.valueOf(useDeprecatedDemangler));
+			formatEditor = new FormatEditor(demanglerFormat, deprecatedEditor);
+			deprecatedEditor.addPropertyChangeListener(formatEditor);
+		}
+
+		PropertyEditor getDeprecatedNameEditor() {
+			lazyInit();
+			return deprecatedEditor;
+		}
+
+		PropertyEditor getFormatEditor() {
+			lazyInit();
+			return formatEditor;
+		}
 	}
 
 	private static class FormatEditor extends EnumEditor implements PropertyChangeListener {

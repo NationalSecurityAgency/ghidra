@@ -363,7 +363,7 @@ public class ProgramCompilerSpec extends BasicCompilerSpec {
 			OptionType.STRING_TYPE, evalChoices[0],
 			new HelpLocation("DecompilePlugin", "OptionProtoEval"),
 			"Select the default function prototype/evaluation model to be used during Decompiler analysis",
-			new StringWithChoicesEditor(evalChoices));
+			() -> new StringWithChoicesEditor(evalChoices));
 
 		// TODO: registration of DECOMPILER_OUTPUT_LANGUAGE option should be tied to Processor
 		// and not presence of stored option.

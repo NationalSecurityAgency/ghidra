@@ -36,7 +36,7 @@ import ghidra.xml.*;
  * Utility class for installing/removing "specification extensions" to a Program.
  * A specification extension is a program specific version of either a:
  *   - Prototype Model
- *   - Call Fixup or 
+ *   - Call Fixup or
  *   - Callother Fixup
  * Normally these objects are provided by the language specific configuration files (.cspec or .pspec),
  * but this class allows additional objects to be added that are specific to the program.
@@ -48,7 +48,7 @@ import ghidra.xml.*;
  *   - \<callotherfixup>   - describing a Callother Fixup
  *   - \<prototype>        - describing a typical Prototype Model
  *   - \<resolveprototype> - describing a Prototype Model merged from other models
- *   
+ * 
  * Each type of object has a unique name or target, which must be specified as part of the XML tag,
  * which is referred to in this class as the extension's "formal name".  In the \<callotherfixup> tag,
  * the formal name is given by the "targetop" attribute; for all the other tags, the formal name is
@@ -332,7 +332,7 @@ public class SpecExtension {
 		if (!SystemUtilities.isInHeadlessMode()) {
 			Options options = program.getOptions(SPEC_EXTENSION);
 			options.setOptionsHelpLocation(new HelpLocation("DecompilePlugin", "ExtensionOptions"));
-			options.registerOptionsEditor(new SpecExtensionEditor((ProgramDB) program));
+			options.registerOptionsEditor(() -> new SpecExtensionEditor((ProgramDB) program));
 		}
 	}
 

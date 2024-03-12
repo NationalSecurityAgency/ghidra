@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.misc;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.awt.Component;
 import java.awt.Container;
@@ -53,7 +52,7 @@ public class PropertyEditorTest extends AbstractGhidraHeadedIntegrationTest {
 			runSwing(() -> DockingDialog.createDialog(null, dialogComponent, null));
 		SwingUtilities.invokeLater(() -> editorDialog.setVisible(true));
 
-		waitForJDialog(null, "Test Properties", 500);
+		waitForJDialog("Test Properties");
 		assertNotNull("Dialog failed to launch", editorDialog);
 		waitForSwing();
 		waitForOptionsTree(dialogComponent);
@@ -219,7 +218,7 @@ public class PropertyEditorTest extends AbstractGhidraHeadedIntegrationTest {
 		Options options = new ToolOptions("Test");
 		String[] choices = new String[] { "abc", "def", "ghi", "jkl" };
 		options.registerOption("TestStringWithChoices", OptionType.STRING_TYPE, choices[0], null,
-			"String Choices", new StringWithChoicesEditor(choices));
+			"String Choices", () -> new StringWithChoicesEditor(choices));
 
 		dialog = showEditor(options);
 

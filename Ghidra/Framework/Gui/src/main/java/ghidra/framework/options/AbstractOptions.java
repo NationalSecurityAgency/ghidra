@@ -21,17 +21,17 @@ import java.beans.PropertyEditor;
 import java.beans.PropertyEditorManager;
 import java.io.File;
 import java.util.*;
+import java.util.function.Supplier;
 
 import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
 
 import generic.theme.*;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.AssertException;
 import utilities.util.reflection.ReflectionUtilities;
+import utility.function.Dummy;
 
 public abstract class AbstractOptions implements Options {
 	public static final Set<Class<?>> SUPPORTED_CLASSES = buildSupportedClassSet();
@@ -83,7 +83,14 @@ public abstract class AbstractOptions implements Options {
 	protected abstract boolean notifyOptionChanged(String optionName, Object oldValue,
 			Object newValue);
 
-	public synchronized void registerOptionsEditor(String categoryPath, OptionsEditor editor) {
+	public synchronized void registerOptionsEditor(String categoryPath,
+			Supplier<OptionsEditor> editorSupplier) {
+
+		OptionsEditor editor = null;
+		if (!SystemUtilities.isInHeadlessMode()) {
+			editor = editorSupplier.get();
+		}
+
 		optionsEditorMap.put(categoryPath, editor);
 	}
 
@@ -128,12 +135,13 @@ public abstract class AbstractOptions implements Options {
 	@Override
 	public void registerOption(String optionName, OptionType type, Object defaultValue,
 			HelpLocation help, String description) {
-		registerOption(optionName, type, defaultValue, help, description, null);
+		registerOption(optionName, type, defaultValue, help, description,
+			(Supplier<PropertyEditor>) null);
 	}
 
 	@Override
 	public synchronized void registerOption(String optionName, OptionType type, Object defaultValue,
-			HelpLocation help, String description, PropertyEditor editor) {
+			HelpLocation help, String description, Supplier<PropertyEditor> editorSupplier) {
 
 		if (type == OptionType.NO_TYPE) {
 			throw new IllegalArgumentException(
@@ -153,10 +161,20 @@ public abstract class AbstractOptions implements Options {
 					", defaultValue = " + defaultValue);
 		}
 
-		if (type == OptionType.CUSTOM_TYPE && editor == null) {
-			throw new IllegalStateException(
-				"Can't register a custom option without a property editor");
+		editorSupplier = Dummy.ifNull(editorSupplier);
+		PropertyEditor editor = null;
+		boolean isHeadless = SystemUtilities.isInHeadlessMode();
+		if (!isHeadless) {
+			editor = editorSupplier.get();
 		}
+
+		if (type == OptionType.CUSTOM_TYPE) {
+			if (!isHeadless && editor == null) {
+				throw new IllegalStateException(
+					"Can't register a custom option without a property editor");
+			}
+		}
+
 		if (description == null) {
 			Msg.error(this, "Registered an option without a description: " + optionName,
 				ReflectionUtilities.createJavaFilteredThrowable());
@@ -169,7 +187,8 @@ public abstract class AbstractOptions implements Options {
 		}
 
 		Option option =
-			createRegisteredOption(optionName, type, description, help, defaultValue, editor);
+			createRegisteredOption(optionName, type, description, help, defaultValue,
+				editor);
 
 		valueMap.put(optionName, option);
 	}
@@ -594,8 +613,8 @@ public abstract class AbstractOptions implements Options {
 
 	@Override
 	public PropertyEditor getPropertyEditor(String optionName) {
-		if (!SwingUtilities.isEventDispatchThread()) {
-			throw new IllegalStateException("This method must be called from the swing thread.");
+		if (!Swing.isSwingThread()) {
+			throw new IllegalStateException("This method must be called from the Swing thread");
 		}
 		Option option = getOption(optionName, OptionType.NO_TYPE, null);
 		PropertyEditor editor = option.getPropertyEditor();
@@ -688,8 +707,8 @@ public abstract class AbstractOptions implements Options {
 	}
 
 	@Override
-	public synchronized void registerOptionsEditor(OptionsEditor editor) {
-		optionsEditorMap.put("", editor);
+	public synchronized void registerOptionsEditor(Supplier<OptionsEditor> editor) {
+		registerOptionsEditor("", editor);
 	}
 
 	@Override
