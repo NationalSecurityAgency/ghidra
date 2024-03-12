@@ -223,6 +223,13 @@ public class VarnodeBank {
 		searchvn2.setInput(true);
 		return locTree.subSet(searchvn1,searchvn2).iterator();
 	}
+
+	public Iterator<VarnodeAST> locRange(Address min, Address max) {
+		VarnodeAST searchvn1 = new VarnodeAST(min,0,0);
+		searchvn1.setInput(true);
+		VarnodeAST searchvn2 = new VarnodeAST(max, Integer.MAX_VALUE,0);
+		return locTree.subSet(searchvn1,searchvn2).iterator();
+	}
 	
 	public Iterator<VarnodeAST> locRange(int sz,Address addr) {
 		VarnodeAST searchvn1 = new VarnodeAST(addr,sz,0);
