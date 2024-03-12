@@ -174,7 +174,7 @@ public class PcodeSyntaxTree implements PcodeFactory {
 	}
 
 	/**
-	 * return all Varnodes that start at a given Address
+	 * return all Varnodes bounded between two Addresses
 	 * @param min -- Minimum Address of Varnodes
 	 * @param max -- Maximum Address of Varnodes
 	 * @return -- Iterator to Varnodes
