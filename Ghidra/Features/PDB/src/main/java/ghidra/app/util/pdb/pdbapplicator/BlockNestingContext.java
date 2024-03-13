@@ -58,6 +58,10 @@ public class BlockNestingContext {
 		return nestingLevel;
 	}
 
+	public int getLevel() {
+		return nestingLevel;
+	}
+
 	public void beginBlock(Address startAddress, String name, long length) {
 		++nestingLevel;
 		currentBlockAddress = startAddress;

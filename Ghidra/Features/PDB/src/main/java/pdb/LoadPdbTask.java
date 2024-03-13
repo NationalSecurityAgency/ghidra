@@ -25,10 +25,10 @@ import ghidra.app.plugin.core.disassembler.EntryPointAnalyzer;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.bin.format.pdb.PdbException;
 import ghidra.app.util.bin.format.pdb.PdbParser;
-import ghidra.app.util.bin.format.pdb2.pdbreader.AbstractPdb;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbReaderOptions;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.pdb.pdbapplicator.*;
+import ghidra.app.util.pdb.pdbapplicator.PdbApplicatorControl;
+import ghidra.app.util.pdb.pdbapplicator.PdbApplicatorOptions;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
@@ -134,7 +134,7 @@ class LoadPdbTask extends Task {
 	}
 
 	private boolean parseWithNewParser(MessageLog log, TaskMonitor monitor)
-			throws IOException, CancelledException {
+			throws CancelledException {
 
 		PdbReaderOptions pdbReaderOptions = new PdbReaderOptions(); // use defaults
 
@@ -142,20 +142,8 @@ class LoadPdbTask extends Task {
 
 		pdbApplicatorOptions.setProcessingControl(control);
 
-		try (AbstractPdb pdb = ghidra.app.util.bin.format.pdb2.pdbreader.PdbParser.parse(pdbFile,
-			pdbReaderOptions, monitor)) {
-			monitor.setMessage("PDB: Parsing " + pdbFile + "...");
-			pdb.deserialize();
-			DefaultPdbApplicator applicator = new DefaultPdbApplicator(pdb);
-			applicator.applyTo(program, program.getDataTypeManager(), program.getImageBase(),
-				pdbApplicatorOptions, log);
-
-			return true;
-		}
-		catch (ghidra.app.util.bin.format.pdb2.pdbreader.PdbException e) {
-			log.appendMsg("PDB Error: " + e.getMessage());
-		}
-		return false;
+		return PdbUniversalAnalyzer.doAnalysis(program, pdbFile, pdbReaderOptions,
+			pdbApplicatorOptions, log, monitor);
 	}
 
 	// We need to kick off any byte analyzers (like getting import symbols), as they typically
