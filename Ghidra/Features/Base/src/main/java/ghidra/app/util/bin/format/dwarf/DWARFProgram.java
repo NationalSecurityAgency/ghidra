@@ -316,10 +316,11 @@ public class DWARFProgram implements Closeable {
 
 			DWARFUnitHeader unitHeader =
 				DWARFUnitHeader.read(this, debugInfoBR, debugAbbrBR, compUnits.size(), monitor);
-			if (unitHeader != null) {
-				debugInfoBR.setPointerIndex(unitHeader.getEndOffset());
+			if (unitHeader == null) {
+				break;
 			}
 
+			debugInfoBR.setPointerIndex(unitHeader.getEndOffset());
 			if (unitHeader instanceof DWARFCompilationUnit cu) {
 				compUnits.add(cu);
 				importSummary.dwarfVers.add((int) cu.getDWARFVersion());
