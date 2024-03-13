@@ -2012,15 +2012,15 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 # DEXTR D[c], D[a], D[b], pos (RRPW)
 :dextr Rd2831,Rd0811,Rd1215,const2327Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x77 ; Rd2831 & const2327Z & op1622=0x0
 {
-	local tmp:8 = (zext(Rd0811) << 32) | (zext(Rd1215) << const2327Z);
-	Rd2831 = tmp[32,32];
+	local shift = const2327Z;
+	Rd2831 = (Rd0811 << shift) | (Rd1215 >> (32 - shift));
 }
 
 # DEXTR D[c], D[a], D[b], D[d] (RRRR)
 :dextr Rd2831,Rd0811,Rd1215,Rd2427 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x17 ; Rd2427 & Rd2831 & op1623=0x80
 {
-	local tmp:8 = (zext(Rd0811) << 32) | (zext(Rd1215) << Rd2427[0,5]);
-	Rd2831 = tmp[32,32];
+	local shift = Rd2427[0,5];
+	Rd2831 = (Rd0811 << shift) | (Rd1215 >> (32 - shift));
 }
 
 # DISABLE (SYS)
