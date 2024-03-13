@@ -1093,7 +1093,7 @@ public abstract class CompositeEditorPanel extends JPanel
 	private Integer findBackward(String text) {
 
 		String searchText = text.toLowerCase();
-		int colCount = model.getColumnCount();
+		int colCount = table.getColumnCount();
 		int currentRow = Math.max(0, model.getRow());
 
 		// search previous lines
@@ -1117,16 +1117,20 @@ public abstract class CompositeEditorPanel extends JPanel
 		return null;
 	}
 
-	private boolean matchesSearch(String searchText, int row, int col) {
-		int modelCol = table.convertColumnIndexToModel(col);
-		Object valueAt = model.getValueAt(row, modelCol);
+	private boolean matchesSearch(String searchText, int viewRow, int viewCol) {
+
+		// Note: row is the same in view and model space; col is in view space and can differ from
+		// the model, since columns can be hidden in the view, but remain in the model.
+		int modelRow = viewRow;
+		int modelCol = table.convertColumnIndexToModel(viewCol);
+		Object valueAt = model.getValueAt(modelRow, modelCol);
 		if (valueAt == null) {
 			return false;
 		}
 
 		String value = getString(valueAt).toLowerCase();
-		if (modelCol == model.getNameColumn()) {
-			return nameMatchesSearch(searchText, row, value);
+		if (viewCol == model.getNameColumn()) {
+			return nameMatchesSearch(searchText, modelRow, value);
 		}
 
 		return value.contains(searchText);
