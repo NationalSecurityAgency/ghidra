@@ -123,10 +123,10 @@ public class DyldCacheSlideInfo1 extends DyldCacheSlideInfoCommon {
 	}
 
 	@Override
-	public List<DyldCacheSlideFixup> getSlideFixups(BinaryReader reader, int pointerSize,
-			MessageLog log, TaskMonitor monitor) throws IOException, CancelledException {
+	public List<DyldFixup> getSlideFixups(BinaryReader reader, int pointerSize, MessageLog log,
+			TaskMonitor monitor) throws IOException, CancelledException {
 
-		List<DyldCacheSlideFixup> fixups = new ArrayList<>(1024);
+		List<DyldFixup> fixups = new ArrayList<>(1024);
 
 		// V1 pointers currently don't need to be fixed, unless the cache is slid from its preferred
 		// location.
@@ -155,7 +155,7 @@ public class DyldCacheSlideInfo1 extends DyldCacheSlideInfoCommon {
 							long pageOffset = pageEntriesIndex * 8 * 4 + bitMapIndex * 4;
 							long value = reader.readLong(segmentOffset + pageOffset) /* + slide */;
 							fixups.add(
-								new DyldCacheSlideFixup(segmentOffset + pageOffset, value, 8));
+								new DyldFixup(segmentOffset + pageOffset, value, 8, null, null));
 						}
 					}
 				}

@@ -31,6 +31,7 @@ import ghidra.app.util.bin.format.macho.commands.chained.*;
 import ghidra.app.util.bin.format.macho.commands.dyld.*;
 import ghidra.app.util.bin.format.macho.commands.dyld.BindingTable.Binding;
 import ghidra.app.util.bin.format.macho.dyld.DyldChainedPtr.DyldChainType;
+import ghidra.app.util.bin.format.macho.dyld.DyldFixup;
 import ghidra.app.util.bin.format.macho.relocation.*;
 import ghidra.app.util.bin.format.macho.threadcommand.ThreadCommand;
 import ghidra.app.util.bin.format.objectiveC.ObjectiveC1_Constants;
@@ -71,6 +72,7 @@ public class MachoProgramBuilder {
 	protected Memory memory;
 	protected Listing listing;
 	protected AddressSpace space;
+	protected BinaryReader reader;
 
 	/**
 	 * Creates a new {@link MachoProgramBuilder} based on the given information.
@@ -91,6 +93,7 @@ public class MachoProgramBuilder {
 		this.memory = program.getMemory();
 		this.listing = program.getListing();
 		this.space = program.getAddressFactory().getDefaultAddressSpace();
+		this.reader = new BinaryReader(provider, !memory.isBigEndian());
 	}
 
 	/**
@@ -119,7 +122,7 @@ public class MachoProgramBuilder {
 		monitor.setCancelEnabled(true);
 
 		// Setup memory
-		setImageBase();
+		setProgramImageBase();
 		processMemoryBlocks(machoHeader, provider.getName(), true, true);
 
 		// Process load commands
@@ -156,29 +159,34 @@ public class MachoProgramBuilder {
 	}
 
 	/**
-	 * Sets the image base
+	 * Sets the {@link Program} image base
 	 * 
-	 * @throws Exception if there was a problem setting the image base
+	 * @throws Exception if there was a problem setting the {@link Program} image base
 	 */
-	protected void setImageBase() throws Exception {
-		Address imageBaseAddr = null;
+	protected void setProgramImageBase() throws Exception {
+		program.setImageBase(getMachoBaseAddress(), true);
+	}
+
+	/**
+	 * Gets the base address of this Mach-O. This is the address of the start of the Mach-O, not
+	 * necessary the {@link Program} image base.
+	 * 
+	 * @return The base address of this Mach-O
+	 */
+	protected Address getMachoBaseAddress() {
+		Address lowestAddr = null;
 		for (SegmentCommand segment : machoHeader.getAllSegments()) {
 			if (segment.getFileSize() > 0) {
 				Address segmentAddr = space.getAddress(segment.getVMaddress());
-				if (imageBaseAddr == null) {
-					imageBaseAddr = segmentAddr;
+				if (lowestAddr == null) {
+					lowestAddr = segmentAddr;
 				}
-				else if (segmentAddr.compareTo(imageBaseAddr) < 0) {
-					imageBaseAddr = segmentAddr;
+				else if (segmentAddr.compareTo(lowestAddr) < 0) {
+					lowestAddr = segmentAddr;
 				}
 			}
 		}
-		if (imageBaseAddr != null) {
-			program.setImageBase(imageBaseAddr, true);
-		}
-		else {
-			program.setImageBase(space.getAddress(0), true);
-		}
+		return lowestAddr != null ? lowestAddr : space.getAddress(0);
 	}
 
 	/**
@@ -761,9 +769,59 @@ public class MachoProgramBuilder {
 	}
 
 	public List<Address> processChainedFixups(List<String> libraryPaths) throws Exception {
-		DyldChainedFixups dyldChainedFixups =
-			new DyldChainedFixups(program, machoHeader, libraryPaths, log, monitor);
-		return dyldChainedFixups.processChainedFixups();
+		monitor.setMessage("Fixing up chained pointers...");
+
+		SymbolTable symbolTable = program.getSymbolTable();
+		Address imagebase = getMachoBaseAddress();
+		List<DyldFixup> fixups = new ArrayList<>();
+
+		// First look for a DyldChainedFixupsCommand
+		List<DyldChainedFixupsCommand> loadCommands =
+			machoHeader.getLoadCommands(DyldChainedFixupsCommand.class);
+		if (!loadCommands.isEmpty()) {
+			for (DyldChainedFixupsCommand loadCommand : loadCommands) {
+				fixups.addAll(loadCommand.getChainedFixups(reader, imagebase.getOffset(),
+					symbolTable, log, monitor));
+			}
+		}
+		else {
+			// Didn't find a DyldChainedFixupsCommand, so look for the sections with fixup info
+			Section chainStartsSection =
+				machoHeader.getSection(SegmentNames.SEG_TEXT, SectionNames.CHAIN_STARTS);
+			Section threadStartsSection =
+				machoHeader.getSection(SegmentNames.SEG_TEXT, SectionNames.THREAD_STARTS);
+
+			if (chainStartsSection != null) {
+				reader.setPointerIndex(chainStartsSection.getOffset());
+				DyldChainedStartsOffsets chainedStartsOffsets =
+					new DyldChainedStartsOffsets(reader);
+				for (int offset : chainedStartsOffsets.getChainStartOffsets()) {
+					fixups.addAll(DyldChainedFixups.getChainedFixups(reader, null,
+						chainedStartsOffsets.getPointerFormat(), offset, 0, 0,
+						imagebase.getOffset(), symbolTable, log, monitor));
+				}
+			}
+			else if (threadStartsSection != null) {
+				Address threadSectionStart = space.getAddress(threadStartsSection.getAddress());
+				Address threadSectionEnd =
+					threadSectionStart.add(threadStartsSection.getSize() - 1);
+				long nextOffSize = (memory.getInt(threadSectionStart) & 1) * 4 + 4;
+				Address chainHead = threadSectionStart.add(4);
+				while (chainHead.compareTo(threadSectionEnd) < 0 && !monitor.isCancelled()) {
+					int headStartOffset = memory.getInt(chainHead);
+					if (headStartOffset == 0xFFFFFFFF || headStartOffset == 0) {
+						break;
+					}
+					long chainStart = Integer.toUnsignedLong(headStartOffset);
+					fixups.addAll(DyldChainedFixups.processPointerChain(reader, chainStart,
+						nextOffSize, imagebase.getOffset(), log, monitor));
+					chainHead = chainHead.add(4);
+				}
+			}
+		}
+
+		return DyldChainedFixups.fixupChainedPointers(fixups, program, imagebase, libraryPaths,
+			log, monitor);
 	}
 
 	protected void processBindings(boolean doClassic, List<String> libraryPaths) throws Exception {
@@ -800,24 +858,22 @@ public class MachoProgramBuilder {
 			throws Exception {
 		DataConverter converter = DataConverter.getInstance(program.getLanguage().isBigEndian());
 		SymbolTable symbolTable = program.getSymbolTable();
+		Address imagebase = getMachoBaseAddress();
 
 		List<Binding> bindings = bindingTable.getBindings();
 		List<Binding> threadedBindings = bindingTable.getThreadedBindings();
 		List<SegmentCommand> segments = machoHeader.getAllSegments();
 
 		if (threadedBindings != null) {
-			DyldChainedFixups dyldChainedFixups =
-				new DyldChainedFixups(program, machoHeader, libraryPaths, log, monitor);
 			DyldChainedImports chainedImports = new DyldChainedImports(bindings);
 			for (Binding threadedBinding : threadedBindings) {
-				List<Address> fixedAddresses = new ArrayList<>();
-				SegmentCommand segment = segments.get(threadedBinding.getSegmentIndex());
-				dyldChainedFixups.processPointerChain(chainedImports, fixedAddresses,
-					DyldChainType.DYLD_CHAINED_PTR_ARM64E,
-					segments.get(threadedBinding.getSegmentIndex()).getVMaddress(),
-					threadedBinding.getSegmentOffset(), 0);
-				log.appendMsg("Fixed up %d chained pointers in %s".formatted(fixedAddresses.size(),
-					segment.getSegmentName()));
+				List<DyldFixup> fixups = DyldChainedFixups.getChainedFixups(reader,
+					chainedImports, DyldChainType.DYLD_CHAINED_PTR_ARM64E,
+					segments.get(threadedBinding.getSegmentIndex()).getFileOffset(),
+					threadedBinding.getSegmentOffset(), 0, imagebase.getOffset(),
+					symbolTable, log, monitor);
+				DyldChainedFixups.fixupChainedPointers(fixups, program, imagebase, libraryPaths,
+					log, monitor);
 			}
 		}
 		else {
@@ -1074,8 +1130,7 @@ public class MachoProgramBuilder {
 				}
 
 				if (section.getSectionName().equals(SectionNames.CHAIN_STARTS)) {
-					ByteProvider p = new MemoryByteProvider(memory, block.getStart());
-					BinaryReader reader = new BinaryReader(p, machoHeader.isLittleEndian());
+					reader.setPointerIndex(section.getOffset());
 					DyldChainedStartsOffsets chainedStartsOffsets =
 						new DyldChainedStartsOffsets(reader);
 					DataUtilities.createData(program, block.getStart(),

@@ -15,11 +15,15 @@
  */
 package ghidra.app.util.bin.format.macho.dyld;
 
+import ghidra.program.model.symbol.Symbol;
+
 /**
- * Stores information needed to perform a slide pointer fixup
+ * Stores information needed to perform a dyld pointer fixup
  * 
  * @param offset The offset of where to perform the fixup (from some base address/index)
  * @param value The fixed up value
  * @param size The size of the fixup in bytes
+ * @param symbol The {@link Symbol} associated with the fixup (could be null)
+ * @param libOrdinal The library ordinal associated with the fixup (could be null)
  */
-public record DyldCacheSlideFixup(long offset, long value, int size) {}
+public record DyldFixup(long offset, long value, int size, Symbol symbol, Integer libOrdinal) {}

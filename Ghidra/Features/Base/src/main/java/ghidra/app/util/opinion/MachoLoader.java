@@ -90,7 +90,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 
 			// A Mach-O file may contain PRELINK information.  If so, we use a special
 			// program builder that knows how to deal with it.
-			if (MachoPrelinkUtils.isMachoPrelink(provider, monitor)) {
+			if (MachoPrelinkUtils.isMachoPrelink(provider, true, monitor)) {
 				MachoPrelinkProgramBuilder.buildProgram(program, provider, fileBytes, log, monitor);
 			}
 			else {

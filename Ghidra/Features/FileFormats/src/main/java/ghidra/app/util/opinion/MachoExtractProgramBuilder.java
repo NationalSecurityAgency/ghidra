@@ -26,13 +26,13 @@ import ghidra.program.model.symbol.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Builds up a {@link Program} of components extracted from a DYLD Cache by parsing the Mach-O 
+ * Builds up a {@link Program} of components extracted from a Mach-O container by parsing the Mach-O 
  * headers
  */
-public class DyldCacheExtractProgramBuilder extends MachoProgramBuilder {
+public class MachoExtractProgramBuilder extends MachoProgramBuilder {
 
 	/**
-	 * Creates a new {@link DyldCacheExtractProgramBuilder} based on the given information.
+	 * Creates a new {@link MachoExtractProgramBuilder} based on the given information.
 	 * 
 	 * @param program The {@link Program} to build up.
 	 * @param provider The {@link ByteProvider} that contains the Mach-O's bytes.
@@ -41,13 +41,13 @@ public class DyldCacheExtractProgramBuilder extends MachoProgramBuilder {
 	 * @param monitor A cancelable task monitor.
 	 * @throws Exception if a problem occurs.
 	 */
-	protected DyldCacheExtractProgramBuilder(Program program, ByteProvider provider,
+	protected MachoExtractProgramBuilder(Program program, ByteProvider provider,
 			FileBytes fileBytes, MessageLog log, TaskMonitor monitor) throws Exception {
 		super(program, provider, fileBytes, log, monitor);
 	}
 
 	/**
-	 * Builds up a {@link Program} of components extracted from a DYLD Cache
+	 * Builds up a {@link Program} of Mach-O components extracted from a Mach-O container
 	 * 
 	 * @param program The {@link Program} to build up.
 	 * @param provider The {@link ByteProvider} that contains the Mach-O's bytes.
@@ -58,13 +58,13 @@ public class DyldCacheExtractProgramBuilder extends MachoProgramBuilder {
 	 */
 	public static void buildProgram(Program program, ByteProvider provider, FileBytes fileBytes,
 			MessageLog log, TaskMonitor monitor) throws Exception {
-		DyldCacheExtractProgramBuilder programBuilder = new DyldCacheExtractProgramBuilder(program,
+		MachoExtractProgramBuilder programBuilder = new MachoExtractProgramBuilder(program,
 			provider, fileBytes, log, monitor);
 		programBuilder.build();
 	}
 
 	@Override
-	protected void setImageBase() throws Exception {
+	protected void setProgramImageBase() throws Exception {
 		program.setImageBase(space.getAddress(0), true);
 	}
 

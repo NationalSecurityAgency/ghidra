@@ -75,7 +75,7 @@ public class MachoPrelinkFileSystem extends GFileSystemBase implements GFileSyst
 
 	@Override
 	public boolean isValid(TaskMonitor monitor) throws IOException {
-		return MachoPrelinkUtils.isMachoPrelink(provider, monitor);
+		return MachoPrelinkUtils.isMachoPrelink(provider, false, monitor);
 	}
 
 	@Override
