@@ -37,11 +37,11 @@ import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.NotFoundException;
 
-/** 
+/**
  * Provides a service for tracking the selected basic/subroutine block models for a tool.
  * Methods are provided for obtaining an instance of the active or arbitrary block model.
- * A new model instance is always provided since the internal cache will quickly become 
- * stale based upon program changes.  The current model implementations do not handle 
+ * A new model instance is always provided since the internal cache will quickly become
+ * stale based upon program changes.  The current model implementations do not handle
  * program changes which would invalidate the cached blocks stored within the model.
  * 
  * A single basic/sub model list is maintained since it is possible that some uses
@@ -111,9 +111,12 @@ public class BlockModelServicePlugin extends ProgramPlugin
 
 		// Install model selection option in Tool panel
 		options = tool.getOptions(ToolConstants.TOOL_OPTIONS);
-		editor = new StringWithChoicesEditor(availableModelNames);
 		options.registerOption(SUB_OPTION, OptionType.STRING_TYPE, selectedSubroutineModelName,
-			null, "The default subroutine model used when creating call graphs.", editor);
+			null, "The default subroutine model used when creating call graphs.",
+			() -> {
+				editor = new StringWithChoicesEditor(availableModelNames);
+				return editor;
+			});
 		setPreferedModel(options);
 		updateModelOptions();
 		options.addOptionsChangeListener(this);
@@ -168,7 +171,9 @@ public class BlockModelServicePlugin extends ProgramPlugin
 
 		modelUpdateInProgress = true;
 		try {
-			editor.setChoices(availableModelNames);
+			if (editor != null) {
+				editor.setChoices(availableModelNames);
+			}
 			options.setString(SUB_OPTION, selectedSubroutineModelName);
 		}
 		finally {

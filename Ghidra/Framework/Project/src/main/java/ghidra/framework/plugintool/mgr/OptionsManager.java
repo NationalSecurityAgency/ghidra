@@ -238,7 +238,7 @@ public class OptionsManager implements OptionsService, OptionsChangeListener {
 			oldEditor.dispose();
 		}
 
-		keyBindingOptions.registerOptionsEditor(new KeyBindingOptionsEditor());
+		keyBindingOptions.registerOptionsEditor(() -> new KeyBindingOptionsEditor());
 		OptionsDialog dialog =
 			new OptionsDialog("Options for " + tool.getName(), "Options", getEditableOptions(),
 				null, true);
