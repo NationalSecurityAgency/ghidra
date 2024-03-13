@@ -58,7 +58,7 @@ public class FunctionWindowPluginTest extends AbstractGhidraHeadedIntegrationTes
 		plugin.showFunctions();
 		waitForSwing();
 		provider = tool.getComponentProvider("Functions Window");
-		functionTable = (GTable) findComponentByName(provider.getComponent(), "FunctionTable");
+		functionTable = (GTable) findComponentByName(provider.getComponent(), "Functions Table");
 	}
 
 	@After

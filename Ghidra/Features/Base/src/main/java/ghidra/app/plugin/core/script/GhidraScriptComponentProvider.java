@@ -214,7 +214,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			}
 		});
 
-		scriptTable.setAccessibleNamePrefix("Script");
+		scriptTable.setAccessibleNamePrefix("Scripts");
 
 		TableColumnModel columnModel = scriptTable.getColumnModel();
 		// Set default column sizes
@@ -462,6 +462,10 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 	JTable getTable() {
 		return scriptTable;
+	}
+
+	GTree getTree() {
+		return scriptCategoryTree;
 	}
 
 	int getScriptIndex(ResourceFile scriptFile) {

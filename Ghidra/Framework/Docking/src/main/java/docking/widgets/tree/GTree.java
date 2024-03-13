@@ -260,6 +260,7 @@ public class GTree extends JPanel implements BusyListener {
 	 * example if the tree contains fruits, then "Fruits" would be an appropriate prefix name.
 	 */
 	public void setAccessibleNamePrefix(String namePrefix) {
+		setName(namePrefix + "GTree");
 		tree.setName(namePrefix + " Tree");
 		tree.getAccessibleContext().setAccessibleName(namePrefix);
 		tree.getAccessibleContext().setAccessibleDescription("");
