@@ -26,8 +26,7 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.ByteProviderWrapper;
 import ghidra.app.util.bin.format.macho.MachException;
 import ghidra.app.util.bin.format.macho.MachHeader;
-import ghidra.app.util.bin.format.macho.commands.SegmentCommand;
-import ghidra.app.util.bin.format.macho.commands.SegmentNames;
+import ghidra.app.util.bin.format.macho.commands.*;
 import ghidra.app.util.bin.format.macho.prelink.*;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
@@ -41,14 +40,20 @@ public class MachoPrelinkUtils {
 	 * Check to see if the given {@link ByteProvider} is a Mach-O PRELINK binary
 	 * 
 	 * @param provider The {@link ByteProvider} to check
+	 * @param allowFileset True if Mach-O file sets should be considered a PRELINK binary; 
+	 *   otherwise, false
 	 * @param monitor A monitor
 	 * @return True if the given {@link ByteProvider} is a Mach-O PRELINK binary; otherwise, false
 	 */
-	public static boolean isMachoPrelink(ByteProvider provider, TaskMonitor monitor) {
+	public static boolean isMachoPrelink(ByteProvider provider, boolean allowFileset,
+			TaskMonitor monitor) {
 		try {
-			return new MachHeader(provider).parseSegments()
+			MachHeader header = new MachHeader(provider);
+			boolean hasPrelinkSegment = new MachHeader(provider).parseSegments()
 					.stream()
 					.anyMatch(segment -> segment.getSegmentName().startsWith("__PRELINK"));
+			boolean hasFileSet = header.parseAndCheck(LoadCommandTypes.LC_FILESET_ENTRY);
+			return hasPrelinkSegment && allowFileset && hasFileSet;
 		}
 		catch (MachException | IOException e) {
 			// Assume it's not a Mach-O PRELINK...fall through

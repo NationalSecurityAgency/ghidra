@@ -22,7 +22,7 @@ import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.file.formats.ios.dyldcache.DyldCacheExtractor;
+import ghidra.file.formats.ios.fileset.MachoFileSetExtractor;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.Project;
 import ghidra.program.database.mem.FileBytes;
@@ -31,18 +31,18 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * A {@link Loader} for components extracted by Ghidra from a DYLD Cache
+ * A {@link Loader} for Mach-O file set entries extracted by Ghidra from a Mach-O file set
  */
-public class DyldCacheExtractLoader extends MachoLoader {
+public class MachoFileSetExtractLoader extends MachoLoader {
 
-	public final static String DYLD_CACHE_EXTRACT_NAME = "Extracted DYLD Component";
+	public final static String MACHO_FILESET_EXTRACT_NAME = "Extracted Mach-O File Set Entry";
 
 	@Override
 	public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException {
-		if (provider.length() >= DyldCacheExtractor.FOOTER_V1.length) {
-			if (Arrays.equals(DyldCacheExtractor.FOOTER_V1,
-				provider.readBytes(provider.length() - DyldCacheExtractor.FOOTER_V1.length,
-					DyldCacheExtractor.FOOTER_V1.length))) {
+		if (provider.length() >= MachoFileSetExtractor.FOOTER_V1.length) {
+			if (Arrays.equals(MachoFileSetExtractor.FOOTER_V1,
+				provider.readBytes(provider.length() - MachoFileSetExtractor.FOOTER_V1.length,
+					MachoFileSetExtractor.FOOTER_V1.length))) {
 				return super.findSupportedLoadSpecs(provider);
 			}
 		}
@@ -69,20 +69,20 @@ public class DyldCacheExtractLoader extends MachoLoader {
 	}
 
 	@Override
-	protected void loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
-			List<Option> options, MessageLog messageLog, Program program, TaskMonitor monitor)
+	protected void loadProgramInto(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+			MessageLog messageLog, Program program, TaskMonitor monitor)
 			throws IOException, LoadException, CancelledException {
 		load(provider, loadSpec, options, program, monitor, messageLog);
 	}
 
 	@Override
 	public boolean supportsLoadIntoProgram(Program program) {
-		return DYLD_CACHE_EXTRACT_NAME.equals(program.getExecutableFormat());
+		return MACHO_FILESET_EXTRACT_NAME.equals(program.getExecutableFormat());
 	}
 
 	@Override
 	public String getName() {
-		return DYLD_CACHE_EXTRACT_NAME;
+		return MACHO_FILESET_EXTRACT_NAME;
 	}
 
 	@Override
