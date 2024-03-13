@@ -194,7 +194,7 @@ public interface Options {
 	 * @deprecated Use instead
 	 * {@link #registerOption(String, OptionType, Object, HelpLocation, String, Supplier)}
 	 */
-	@Deprecated(since = "11.1", forRemoval = true)
+	@Deprecated(since = "11.0.2", forRemoval = true)
 	default public void registerOption(String optionName, OptionType type, Object defaultValue,
 			HelpLocation help, String description, PropertyEditor editor) {
 		String caller = ReflectionUtilities.getClassNameOlderThan(Options.class);
@@ -248,7 +248,7 @@ public interface Options {
 	 * @param editor the editor
 	 * @deprecated Use instead {@link #registerOptionsEditor(Supplier)}
 	 */
-	@Deprecated(since = "11.1", forRemoval = true)
+	@Deprecated(since = "11.0.2", forRemoval = true)
 	default public void registerOptionsEditor(OptionsEditor editor) {
 		String caller = ReflectionUtilities.getClassNameOlderThan(Options.class);
 		String message = """
