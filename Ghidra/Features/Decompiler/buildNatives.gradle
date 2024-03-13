@@ -205,9 +205,7 @@ model {
 					if (b.toolChain in Gcc || b.toolChain in Clang) {
 						b.linker.args "-lz"
 					}
-					else {
-						b.cppCompiler.define "LOCAL_ZLIB"
-					}
+					b.cppCompiler.define "LOCAL_ZLIB"
 				}
 			} // end binaries.all (sleigh)
 		} // end sleigh
