@@ -703,7 +703,7 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 				"should become ignored by applying a match.");
 
 		vtOptions.getOptions(APPLY_MARKUP_OPTIONS_NAME)
-				.registerOptionsEditor(new ApplyMarkupPropertyEditor(controller));
+				.registerOptionsEditor(() -> new ApplyMarkupPropertyEditor(controller));
 		vtOptions.getOptions(DISPLAY_APPLY_MARKUP_OPTIONS)
 				.setOptionsHelpLocation(
 					new HelpLocation("VersionTracking", "Apply Markup Options"));

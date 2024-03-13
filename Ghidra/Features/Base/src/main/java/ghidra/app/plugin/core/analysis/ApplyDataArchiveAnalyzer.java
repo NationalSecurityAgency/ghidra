@@ -127,13 +127,13 @@ public class ApplyDataArchiveAnalyzer extends AbstractAnalyzer {
 
 		options.registerOption(OPTION_NAME_ARCHIVE_CHOOSER, OptionType.STRING_TYPE,
 			CHOOSER_AUTO_DETECT, null, OPTION_DESCRIPTION_ARCHIVE_CHOOSER,
-			new StringWithChoicesEditor(chooserList));
+			() -> new StringWithChoicesEditor(chooserList));
 
 		options.registerOption(OPTION_NAME_GDT_FILEPATH, OptionType.FILE_TYPE, null, null,
 			OPTION_DESCRIPTION_GDT_FILEPATH,
-			new FileChooserEditor(FileDataTypeManager.GDT_FILEFILTER));
+			() -> new FileChooserEditor(FileDataTypeManager.GDT_FILEFILTER));
 		options.registerOption(OPTION_NAME_PROJECT_PATH, OptionType.STRING_TYPE, null, null,
-			OPTION_DESCRIPTION_PROJECT_PATH, new ProjectPathChooserEditor(
+			OPTION_DESCRIPTION_PROJECT_PATH, () -> new ProjectPathChooserEditor(
 				"Choose Data Type Archive", DATATYPEARCHIVE_PROJECT_FILTER));
 	}
 

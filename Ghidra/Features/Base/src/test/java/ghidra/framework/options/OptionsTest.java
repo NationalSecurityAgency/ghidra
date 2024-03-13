@@ -296,7 +296,8 @@ public class OptionsTest extends AbstractGuiTest {
 	@Test
 	public void testRegisterPropertyEditor() {
 		MyPropertyEditor editor = new MyPropertyEditor();
-		options.registerOption("color", OptionType.COLOR_TYPE, Color.RED, null, "foo", editor);
+		options.registerOption("color", OptionType.COLOR_TYPE, Color.RED, null, "foo",
+			() -> editor);
 		assertEquals(editor, options.getRegisteredPropertyEditor("color"));
 	}
 
@@ -570,10 +571,10 @@ public class OptionsTest extends AbstractGuiTest {
 	@Test
 	public void testRegisteringOptionsEditor() {
 		MyOptionsEditor myOptionsEditor = new MyOptionsEditor();
-		options.registerOptionsEditor(myOptionsEditor);
+		options.registerOptionsEditor(() -> myOptionsEditor);
 		assertEquals(myOptionsEditor, options.getOptionsEditor());
 		Options subOptions = options.getOptions("SUB");
-		subOptions.registerOptionsEditor(myOptionsEditor);
+		subOptions.registerOptionsEditor(() -> myOptionsEditor);
 		assertEquals(myOptionsEditor, subOptions.getOptionsEditor());
 
 	}
