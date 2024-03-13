@@ -22,31 +22,36 @@ import java.util.*;
 import javax.swing.SwingUtilities;
 
 import docking.ActionContext;
+import docking.widgets.OptionDialog;
 import ghidra.app.plugin.core.codebrowser.CodeViewerActionContext;
 import ghidra.app.plugin.core.colorizer.ColorizingService;
 import ghidra.feature.vt.api.db.VTAssociationDB;
 import ghidra.feature.vt.api.db.VTSessionDB;
 import ghidra.feature.vt.api.main.*;
+import ghidra.feature.vt.api.util.VTSessionFileUtil;
 import ghidra.feature.vt.gui.duallisting.VTListingContext;
 import ghidra.feature.vt.gui.provider.markuptable.VTMarkupItemContext;
 import ghidra.feature.vt.gui.task.SaveTask;
 import ghidra.feature.vt.gui.task.VtTask;
 import ghidra.feature.vt.gui.util.MatchInfo;
 import ghidra.feature.vt.gui.util.MatchInfoFactory;
+import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.data.DomainObjectAdapterDB;
+import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.SaveDataDialog;
+import ghidra.framework.main.projectdata.actions.CheckoutsDialog;
 import ghidra.framework.model.*;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.framework.store.ItemCheckoutStatus;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.AddressCorrelation;
 import ghidra.program.util.ProgramLocation;
-import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
+import ghidra.util.*;
 import ghidra.util.datastruct.WeakValueHashMap;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
@@ -94,30 +99,193 @@ public class VTControllerImpl
 		return session;
 	}
 
+	private boolean checkSessionFileAccess(DomainFile domainFile) {
+
+		DomainFolder folder = domainFile.getParent();
+		if (folder == null || !folder.isInWritableProject()) {
+			Msg.showError(this, null, "Can't open VT Session: " + domainFile,
+				"VT Session file use limited to active project only.");
+			return false;
+		}
+		if (domainFile.isVersioned()) {
+			if (domainFile.isCheckedOut()) {
+				if (!domainFile.isCheckedOutExclusive()) {
+					Msg.showError(this, null, "Can't open VT Session: " + domainFile,
+						"VT Session file is checked-out but does not have exclusive access.\n" +
+							"You must undo checkout and re-checkout with exclusive access.");
+					return false;
+				}
+				if (domainFile.isReadOnly()) {
+					Msg.showError(this, null, "Can't open VT Session: " + domainFile,
+						"VT Session file is set read-only which prevents its use.");
+					return false;
+				}
+				return true;
+			}
+			return checkoutSession(domainFile);
+		}
+		else if (domainFile.isReadOnly()) { // non-versioned file
+			Msg.showError(this, null, "Can't open VT Session: " + domainFile,
+				"VT Session file is set read-only which prevents its use.");
+			return false;
+		}
+		return true;
+	}
+
+	private boolean checkoutSession(DomainFile domainFile) {
+
+		Project activeProject = AppInfo.getActiveProject();
+		RepositoryAdapter repository = activeProject.getRepository();
+
+		if (repository != null) {
+			try {
+				ItemCheckoutStatus[] checkouts = domainFile.getCheckouts();
+				if (checkouts.length != 0) {
+					int rc = OptionDialog.showOptionDialogWithCancelAsDefaultButton(null,
+						"Checkout VT Session",
+						"VT Session " + domainFile.getName() + " is NOT CHECKED OUT but " +
+							"is checked-out by another user.\n" +
+							"Opening VT Session requires an exclusive check out of this file.\n" +
+							"Do you want to view the list of active checkouts for this file?",
+						"View Checkout(s)...");
+					if (rc != OptionDialog.OPTION_ONE) {
+						return false;
+					}
+
+					CheckoutsDialog dialog = new CheckoutsDialog(plugin.getTool(),
+						repository.getUser(), domainFile, checkouts);
+					plugin.getTool().showDialog(dialog);
+
+					return false;
+
+				}
+			}
+			catch (IOException e) {
+				Msg.showError(this, null, "Checkout VT Session Failed: " + domainFile.getName(),
+					e.getMessage());
+				return false;
+			}
+		}
+
+		int rc = OptionDialog.showOptionDialogWithCancelAsDefaultButton(null, "Checkout VT Session",
+			"VT Session " + domainFile.getName() + " is NOT CHECKED OUT.\n" +
+				"Opening VT Session requires an exclusive check out of this file.\n" +
+				"Do you want to Check Out this file?",
+			"Checkout...");
+		if (rc != OptionDialog.OPTION_ONE) {
+			return false;
+		}
+
+		TaskLauncher.launchModal("Checkout VT Session", new MonitoredRunnable() {
+
+			@Override
+			public void monitoredRun(TaskMonitor monitor) {
+				try {
+					domainFile.checkout(true, monitor);
+				}
+				catch (CancelledException e) {
+					// ignore
+				}
+				catch (IOException e) {
+					Msg.showError(this, null, "Checkout VT Session Failed: " + domainFile.getName(),
+						e.getMessage());
+				}
+			}
+		});
+		return domainFile.isCheckedOutExclusive();
+	}
+
 	@Override
-	public void openVersionTrackingSession(DomainFile domainFile) {
+	public boolean openVersionTrackingSession(DomainFile domainFile) {
+		if (!VTSession.class.isAssignableFrom(domainFile.getDomainObjectClass())) {
+			throw new IllegalArgumentException("File does not correspond to a VTSession");
+		}
 		if (!checkForUnSavedChanges()) {
-			return;
+			return false;
 		}
 		try {
-			VTSessionDB newSession =
-				(VTSessionDB) domainFile.getDomainObject(this, true, true, TaskMonitor.DUMMY);
-			doOpenSession(newSession);
-		}
-		catch (VersionException e) {
-			Msg.showError(this, null, "Can't open domainFile " + domainFile.getName(),
-				e.getMessage());
+			if (!checkSessionFileAccess(domainFile)) {
+				return false;
+			}
+
+			VTSessionDB vtSessionDB = getVTSessionDB(domainFile, this);
+			if (vtSessionDB != null) {
+				try {
+					openVersionTrackingSession(vtSessionDB);
+					return true;
+				}
+				finally {
+					vtSessionDB.release(this);
+				}
+			}
 		}
 		catch (CancelledException e) {
-			Msg.error(this, "Got unexexped cancelled exception", e);
+			// ignore - return false
+		}
+		catch (VersionException e) {
+			VersionExceptionHandler.showVersionError(null, domainFile.getName(), "VT Session",
+				"open", e);
 		}
 		catch (IOException e) {
-			Msg.showError(this, null, "Can't open " + domainFile.getName(), e.getMessage());
+			Msg.showError(this, null, "Can't open VT Session: " + domainFile.getName(),
+				e.getMessage());
 		}
+		return false;
+	}
+
+	private static class OpenVTSessionTask extends Task {
+
+		private final Object consumer;
+		private final DomainFile vtSessionFile;
+
+		Exception exception;
+		VTSessionDB vtSessionDB;
+
+		OpenVTSessionTask(DomainFile vtSessionFile, Object consumer) {
+			super("Opening VT Session", true, false, true, true);
+			this.vtSessionFile = vtSessionFile;
+			this.consumer = consumer;
+		}
+
+		@Override
+		public void run(TaskMonitor monitor) throws CancelledException {
+			try {
+				vtSessionDB =
+					(VTSessionDB) vtSessionFile.getDomainObject(consumer, true, true, monitor);
+			}
+			catch (Exception e) {
+				exception = e;
+			}
+		}
+	}
+
+	private VTSessionDB getVTSessionDB(DomainFile vtSessionFile, Object consumer)
+			throws IOException, VersionException, CancelledException {
+
+		OpenVTSessionTask task = new OpenVTSessionTask(vtSessionFile, consumer);
+
+		TaskLauncher.launch(task);
+
+		if (task.exception != null) {
+			if (task.exception instanceof CancelledException ce) {
+				throw ce;
+			}
+			if (task.exception instanceof VersionException ve) {
+				throw ve;
+			}
+			if (task.exception instanceof IOException ioe) {
+				throw ioe;
+			}
+			throw new IOException("VTSessionDB failure", task.exception);
+		}
+
+		return task.vtSessionDB;
 	}
 
 	@Override
 	public void openVersionTrackingSession(VTSession newSession) {
+		// FIXME: new session wizard should have handled existing session before starting -
+		// should be no need for this check
 		if (!checkForUnSavedChanges()) {
 			return;
 		}
@@ -595,43 +763,79 @@ public class VTControllerImpl
 // Inner Classes
 //==================================================================================================
 
+	private void updateProgram(DomainFile file, boolean isSource) {
+
+		String type = isSource ? "Source" : "Destination";
+		Program newProgram;
+		try {
+			newProgram = (Program) file.getDomainObject(this, false, false, TaskMonitor.DUMMY);
+		}
+		catch (Exception e) {
+			Msg.showError(this, getParentComponent(),
+				"Error opening VT " + type + " Program: " + file, e);
+			return;
+		}
+
+		if (isSource) {
+			session.updateSourceProgram(newProgram);
+		}
+		else {
+			session.updateDestinationProgram(newProgram);
+		}
+
+//		List<DomainObjectChangeRecord> events = new ArrayList<DomainObjectChangeRecord>();
+//		events.add(new DomainObjectChangeRecord(DomainObjectEvent.RESTORED));
+//		domainObjectChanged(new DomainObjectChangedEvent(newProgram, events));
+		matchInfoFactory.clearCache();
+		fireSessionChanged();
+	}
+
 	private class MyFolderListener extends DomainFolderListenerAdapter {
 
 		@Override
 		public void domainFileObjectReplaced(DomainFile file, DomainObject oldObject) {
 
-			/**
-			 * Special handling for when a file is checked-in.  The existing program has be moved
-			 * to a proxy file (no longer in the project) so that it can be closed and the program
-			 * re-opened with the new version after the check-in merge.
-			 */
 			if (session == null) {
 				return;
 			}
-			if (session.getSourceProgram() != oldObject &&
-				session.getDestinationProgram() != oldObject) {
-				return;
-			}
-			Program newProgram;
-			try {
-				newProgram = (Program) file.getDomainObject(this, false, false, TaskMonitor.DUMMY);
-			}
-			catch (Exception e) {
-				Msg.showError(this, getParentComponent(), "Error opening program " + file, e);
+
+			if (session.getSourceProgram() == oldObject) {
+				updateProgram(file, true);
 				return;
 			}
 
-			if (oldObject == session.getSourceProgram()) {
-				session.updateSourceProgram(newProgram);
+			String type;
+			if (session == oldObject) {
+				type = "VT Session";
 			}
-			else if (oldObject == session.getDestinationProgram()) {
-				session.updateDestinationProgram(newProgram);
+			else if (session.getDestinationProgram() == oldObject) {
+				if (VTSessionFileUtil.canUpdate(file)) {
+					updateProgram(file, false);
+					return;
+				}
+				type = "Destination Program";
 			}
-//			List<DomainObjectChangeRecord> events = new ArrayList<DomainObjectChangeRecord>();
-//			events.add(new DomainObjectChangeRecord(DomainObjectEvent.RESTORED));
-//			domainObjectChanged(new DomainObjectChangedEvent(newProgram, events));
-			matchInfoFactory.clearCache();
-			fireSessionChanged();
+			else {
+				return;
+			}
+
+			// Session or destination program can no longer be saved to project so we
+			// have no choice but to close session.
+
+			// Since we are already in the Swing thread we need to delay closing so we do
+			// not continue to block the Swing thread and the checkin which is in progress.
+			// This allows the DomainFile checkin to complete its processing first.
+			SwingUtilities.invokeLater(() -> {
+
+				Msg.showInfo(this, plugin.getTool().getToolFrame(), "Closing VT Session",
+					type + " checkin has forced session close.\n" +
+						"You will be prompted to save any other changes if needed, after which\n" +
+						"you may reopen the VT Session.");
+
+				closeVersionTrackingSession();
+
+				// NOTE: a future convenience could be added to attempt reopening of session
+			});
 		}
 	}
 

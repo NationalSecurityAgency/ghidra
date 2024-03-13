@@ -115,9 +115,8 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testAddToSessionNoSelectionUnlimitedAddresses() throws Exception {
 
-		session =
-			VTSessionDB.createVTSession(testName.getMethodName() + " - Test Match Set Manager",
-				sourceProgram, destinationProgram, this);
+		session = new VTSessionDB(testName.getMethodName() + " - Test Match Set Manager",
+			sourceProgram, destinationProgram, this);
 
 		String sessionName = "Untitled";
 
@@ -170,9 +169,8 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testAddToSessionNoSelectionLimitAddressesToEntireProgram() throws Exception {
 
-		session =
-			VTSessionDB.createVTSession(testName.getMethodName() + " - Test Match Set Manager",
-				sourceProgram, destinationProgram, this);
+		session = new VTSessionDB(testName.getMethodName() + " - Test Match Set Manager",
+			sourceProgram, destinationProgram, this);
 
 		String sessionName = "Untitled";
 
@@ -231,9 +229,8 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testAddToSessionNoSelectionLimitAddressesToMyOwn() throws Exception {
 
-		session =
-			VTSessionDB.createVTSession(testName.getMethodName() + " - Test Match Set Manager",
-				sourceProgram, destinationProgram, this);
+		session = new VTSessionDB(testName.getMethodName() + " - Test Match Set Manager",
+			sourceProgram, destinationProgram, this);
 
 		String sessionName = "Untitled";
 
@@ -292,9 +289,8 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testAddToSessionNoSelectionLimitAddressesToMyOwnChanged() throws Exception {
 
-		session =
-			VTSessionDB.createVTSession(testName.getMethodName() + " - Test Match Set Manager",
-				sourceProgram, destinationProgram, this);
+		session = new VTSessionDB(testName.getMethodName() + " - Test Match Set Manager",
+			sourceProgram, destinationProgram, this);
 
 		String sessionName = "Untitled";
 
@@ -366,9 +362,8 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testAddToSessionWithSelectionLimitAddressesToEntireProgram() throws Exception {
 
-		session =
-			VTSessionDB.createVTSession(testName.getMethodName() + " - Test Match Set Manager",
-				sourceProgram, destinationProgram, this);
+		session = new VTSessionDB(testName.getMethodName() + " - Test Match Set Manager",
+			sourceProgram, destinationProgram, this);
 
 		String sessionName = "Untitled";
 
@@ -429,9 +424,8 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testAddToSessionWithSelectionLimitAddressesToSelection() throws Exception {
 
-		session =
-			VTSessionDB.createVTSession(testName.getMethodName() + " - Test Match Set Manager",
-				sourceProgram, destinationProgram, this);
+		session = new VTSessionDB(testName.getMethodName() + " - Test Match Set Manager",
+			sourceProgram, destinationProgram, this);
 
 		String sessionName = "Untitled";
 
@@ -492,9 +486,8 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testAddToSessionWithSelectionLimitAddressesToMyOwn() throws Exception {
 
-		session =
-			VTSessionDB.createVTSession(testName.getMethodName() + " - Test Match Set Manager",
-				sourceProgram, destinationProgram, this);
+		session = new VTSessionDB(testName.getMethodName() + " - Test Match Set Manager",
+			sourceProgram, destinationProgram, this);
 
 		String sessionName = "Untitled";
 
@@ -568,9 +561,8 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testAddToSessionWithSelectionLimitAddressesToMyOwnThenBackNext() throws Exception {
 
-		session =
-			VTSessionDB.createVTSession(testName.getMethodName() + " - Test Match Set Manager",
-				sourceProgram, destinationProgram, this);
+		session = new VTSessionDB(testName.getMethodName() + " - Test Match Set Manager",
+			sourceProgram, destinationProgram, this);
 
 		String sessionName = "Untitled";
 
@@ -671,9 +663,8 @@ public class VTAddToSessionTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testAddToSessionResultingInNoMatchesFound() throws Exception {
 
 		setErrorGUIEnabled(true);
-		session =
-			VTSessionDB.createVTSession(testName.getMethodName() + " - Test Match Set Manager",
-				sourceProgram, destinationProgram, this);
+		session = new VTSessionDB(testName.getMethodName() + " - Test Match Set Manager",
+			sourceProgram, destinationProgram, this);
 
 		String sessionName = "Untitled";
 

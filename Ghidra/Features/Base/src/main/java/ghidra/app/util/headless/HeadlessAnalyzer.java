@@ -424,7 +424,6 @@ public class HeadlessAnalyzer {
 
 			if (locator.getProjectDir().exists()) {
 				project = openProject(locator);
-				AppInfo.setActiveProject(project);
 			}
 			else {
 				if (options.runScriptsNoImport) {
@@ -441,7 +440,6 @@ public class HeadlessAnalyzer {
 				Msg.info(this, "Creating " + (options.deleteProject ? "temporary " : "") +
 					"project: " + locator);
 				project = getProjectManager().createProject(locator, null, false);
-				AppInfo.setActiveProject(project);
 			}
 
 			try {
@@ -459,7 +457,6 @@ public class HeadlessAnalyzer {
 			}
 			finally {
 				project.close();
-				AppInfo.setActiveProject(null);
 				if (!options.runScriptsNoImport && options.deleteProject) {
 					FileUtilities.deleteDir(locator.getProjectDir());
 					locator.getMarkerFile().delete();
@@ -1841,11 +1838,13 @@ public class HeadlessAnalyzer {
 		HeadlessProject(HeadlessGhidraProjectManager projectManager, GhidraURLConnection connection)
 				throws IOException {
 			super(projectManager, connection);
+			AppInfo.setActiveProject(this);
 		}
 
 		HeadlessProject(HeadlessGhidraProjectManager projectManager, ProjectLocator projectLocator)
 				throws NotOwnerException, LockException, IOException {
 			super(projectManager, projectLocator, false);
+			AppInfo.setActiveProject(this);
 		}
 	}
 

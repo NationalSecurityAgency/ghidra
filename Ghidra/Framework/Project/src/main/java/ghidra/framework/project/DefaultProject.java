@@ -27,6 +27,7 @@ import org.jdom.output.XMLOutputter;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.data.DefaultProjectData;
 import ghidra.framework.data.TransientDataManager;
+import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.project.tool.GhidraToolTemplate;
@@ -291,16 +292,16 @@ public class DefaultProject implements Project {
 				throw new IOException("Invalid Ghidra URL specified: " + url);
 			}
 
-			ProjectData projectData = otherViewsMap.get(url);
-			if (projectData == null) {
-				projectData = openProjectView(url);
+			ProjectData viewedProjectData = otherViewsMap.get(url);
+			if (viewedProjectData == null) {
+				viewedProjectData = openProjectView(url);
 			}
 
-			if (projectData != null && visible && visibleViews.add(url)) {
+			if (viewedProjectData != null && visible && visibleViews.add(url)) {
 				notifyVisibleViewAdded(url);
 			}
 
-			return projectData;
+			return viewedProjectData;
 		}
 	}
 
@@ -377,6 +378,11 @@ public class DefaultProject implements Project {
 	public void close() {
 		synchronized (otherViewsMap) {
 			isClosed = true;
+
+			// Clear active project if this is the current active project.
+			if (AppInfo.getActiveProject() == this) {
+				AppInfo.setActiveProject(null);
+			}
 
 			for (DefaultProjectData dataMgr : otherViewsMap.values()) {
 				if (dataMgr != null) {
