@@ -18,9 +18,10 @@ package ghidra.file.formats.ios.fileset;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+import ghidra.app.util.bin.ByteArrayProvider;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.format.macho.MachException;
-import ghidra.app.util.bin.format.macho.MachHeader;
+import ghidra.app.util.bin.format.macho.*;
+import ghidra.app.util.bin.format.macho.commands.SegmentCommand;
 import ghidra.file.formats.ios.ExtractedMacho;
 import ghidra.formats.gfilesystem.FSRL;
 import ghidra.util.exception.CancelledException;
@@ -59,5 +60,50 @@ public class MachoFileSetExtractor {
 			new MachHeader(provider, providerOffset, false).parse(), FOOTER_V1, monitor);
 		extractedMacho.pack();
 		return extractedMacho.getByteProvider(fsrl);
+	}
+
+	/**
+	 * Gets a {@link ByteProvider} that contains a single segment from a Mach-O file set
+	 * 
+	 * @param provider The Mach-O file set {@link ByteProvider}
+	 * @param segment The segment to extract
+	 * @param fsrl {@link FSRL} to assign to the resulting {@link ByteProvider}
+	 * @param monitor {@link TaskMonitor}
+	 * @return {@link ByteProvider} containing the bytes of the single-segment Mach-O
+	 * @throws MachException If there was an error creating Mach-O headers
+	 * @throws IOException If there was an IO-related issue with extracting the segment
+	 * @throws CancelledException If the user cancelled the operation
+	 */
+	public static ByteProvider extractSegment(ByteProvider provider, SegmentCommand segment, FSRL fsrl, TaskMonitor monitor) throws IOException, MachException, CancelledException {
+
+		int magic = MachConstants.MH_MAGIC_64;
+		int allSegmentsSize = SegmentCommand.size(magic);
+
+		// Mach-O Header
+		byte[] header =
+			MachHeader.create(magic, 0x100000c, 0x80000002, 6, 1, allSegmentsSize, 0x42100085, 0);
+
+		// Segment command
+		byte[] segmentCommandBytes =
+			SegmentCommand.create(magic, segment.getSegmentName(), segment.getVMaddress(),
+				segment.getVMsize(), header.length + allSegmentsSize, segment.getFileSize(),
+				segment.getMaxProtection(), segment.getInitProtection(), 0, segment.getFlags());
+
+		// Segment data
+		byte[] segmentDataBytes =
+			provider.readBytes(segment.getFileOffset(), segment.getFileSize());
+
+		// Combine pieces
+		int totalSize = header.length + allSegmentsSize + segmentDataBytes.length;
+		byte[] result = new byte[totalSize + FOOTER_V1.length];
+		System.arraycopy(header, 0, result, 0, header.length);
+		System.arraycopy(segmentCommandBytes, 0, result, header.length, segmentCommandBytes.length);
+		System.arraycopy(segmentDataBytes, 0, result, header.length + segmentCommandBytes.length,
+			segmentDataBytes.length);
+
+		// Add footer
+		System.arraycopy(FOOTER_V1, 0, result, result.length - FOOTER_V1.length, FOOTER_V1.length);
+
+		return new ByteArrayProvider(result, fsrl);
 	}
 }

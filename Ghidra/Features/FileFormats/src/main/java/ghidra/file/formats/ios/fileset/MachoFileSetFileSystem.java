@@ -37,13 +37,14 @@ import ghidra.util.task.TaskMonitor;
  * A {@link GFileSystem} implementation for Mach-O file set entries
  */
 @FileSystemInfo(type = MachoFileSetFileSystem.MACHO_FILESET_FSTYPE, description = "Mach-O file set", factory = MachoFileSetFileSystemFactory.class)
-public class MachoFileSetFileSystem extends AbstractFileSystem<FileSetEntryCommand> {
+public class MachoFileSetFileSystem extends AbstractFileSystem<MachoFileSetEntry> {
 
 	public static final String MACHO_FILESET_FSTYPE = "machofileset";
 
 	private ByteProvider provider;
 	private ByteProvider fixedUpProvider;
-	private Map<FileSetEntryCommand, List<SegmentCommand>> entrySegmentMap;
+	private MachHeader header;
+	private Map<MachoFileSetEntry, List<SegmentCommand>> entrySegmentMap;
 
 	/**
 	 * Creates a new {@link MachoFileSetFileSystem}
@@ -68,16 +69,35 @@ public class MachoFileSetFileSystem extends AbstractFileSystem<FileSetEntryComma
 		MessageLog log = new MessageLog();
 		try {
 			monitor.setMessage("Opening Mach-O file set...");
-			MachHeader header = new MachHeader(provider).parse();
+			header = new MachHeader(provider).parse();
 			SegmentCommand textSegment = header.getSegment(SegmentNames.SEG_TEXT);
 			if (textSegment == null) {
 				throw new MachException(SegmentNames.SEG_TEXT + " not found!");
 			}
+
+			// File set entries
 			for (FileSetEntryCommand cmd : header.getLoadCommands(FileSetEntryCommand.class)) {
-				fsIndex.storeFile(cmd.getFileSetEntryId().getString(), fsIndex.getFileCount(),
-					false, -1, cmd);
-				MachHeader entryHeader = new MachHeader(provider, cmd.getFileOffset());
-				entrySegmentMap.put(cmd, entryHeader.parseSegments());
+				MachoFileSetEntry entry = new MachoFileSetEntry(cmd.getFileSetEntryId().getString(),
+					cmd.getFileOffset(), false);
+				fsIndex.storeFile(entry.id(), fsIndex.getFileCount(), false, -1, entry);
+				entrySegmentMap.put(entry,
+					new MachHeader(provider, entry.offset()).parseSegments());
+			}
+
+			// BRANCH segments, if present
+			SegmentCommand branchStubs = header.getSegment(SegmentNames.SEG_BRANCH_STUBS);
+			if (branchStubs != null) {
+				MachoFileSetEntry entry =
+					new MachoFileSetEntry(SegmentNames.SEG_BRANCH_STUBS.substring(2), 0, true);
+				fsIndex.storeFile(entry.id(), fsIndex.getFileCount(), false, -1, entry);
+				entrySegmentMap.put(entry, List.of(branchStubs));
+			}
+			SegmentCommand branchGots = header.getSegment(SegmentNames.SEG_BRANCH_GOTS);
+			if (branchGots != null) {
+				MachoFileSetEntry entry =
+					new MachoFileSetEntry(SegmentNames.SEG_BRANCH_GOTS.substring(2), 0, true);
+				fsIndex.storeFile(entry.id(), fsIndex.getFileCount(), false, -1, entry);
+				entrySegmentMap.put(entry, List.of(branchGots));
 			}
 
 			monitor.setMessage("Getting chained pointers...");
@@ -106,27 +126,31 @@ public class MachoFileSetFileSystem extends AbstractFileSystem<FileSetEntryComma
 	@Override
 	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		FileSetEntryCommand cmd = fsIndex.getMetadata(file);
-		if (cmd == null) {
+		MachoFileSetEntry entry = fsIndex.getMetadata(file);
+		if (entry == null) {
 			return null;
 		}
 		try {
-			return MachoFileSetExtractor.extractFileSetEntry(fixedUpProvider, cmd.getFileOffset(),
+			if (entry.isBranchSegment()) {
+				return MachoFileSetExtractor.extractSegment(fixedUpProvider,
+					header.getSegment("__" + entry.id()), file.getFSRL(), monitor);
+			}
+			return MachoFileSetExtractor.extractFileSetEntry(fixedUpProvider, entry.offset(),
 				file.getFSRL(), monitor);
 		}
 		catch (MachException e) {
 			throw new IOException(
-				"Invalid Mach-O header detected at 0x%x".formatted(cmd.getFileOffset()));
+				"Invalid Mach-O header detected at 0x%x".formatted(entry.offset()));
 		}
 	}
 
 	@Override
 	public FileAttributes getFileAttributes(GFile file, TaskMonitor monitor) {
 		FileAttributes result = new FileAttributes();
-		FileSetEntryCommand cmd = fsIndex.getMetadata(file);
-		if (cmd != null) {
-			result.add(NAME_ATTR, cmd.getFileSetEntryId().getString());
-			result.add(PATH_ATTR, cmd.getFileSetEntryId().getString());
+		MachoFileSetEntry entry = fsIndex.getMetadata(file);
+		if (entry != null) {
+			result.add(NAME_ATTR, entry.id());
+			result.add(PATH_ATTR, entry.id());
 		}
 		return result;
 	}
@@ -144,7 +168,7 @@ public class MachoFileSetFileSystem extends AbstractFileSystem<FileSetEntryComma
 	/**
 	 * {@return the map of file set entry segments}
 	 */
-	public Map<FileSetEntryCommand, List<SegmentCommand>> getEntrySegmentMap() {
+	public Map<MachoFileSetEntry, List<SegmentCommand>> getEntrySegmentMap() {
 		return entrySegmentMap;
 	}
 
@@ -163,6 +187,9 @@ public class MachoFileSetFileSystem extends AbstractFileSystem<FileSetEntryComma
 		if (fixedUpProvider != null) {
 			fixedUpProvider.close();
 			fixedUpProvider = null;
+		}
+		if (header != null) {
+			header = null;
 		}
 		fsIndex.clear();
 		entrySegmentMap.clear();

@@ -23,9 +23,9 @@ import docking.action.builder.ActionBuilder;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.app.util.bin.format.macho.commands.FileSetEntryCommand;
 import ghidra.app.util.bin.format.macho.commands.SegmentCommand;
 import ghidra.app.util.opinion.MachoFileSetExtractLoader;
+import ghidra.file.formats.ios.fileset.MachoFileSetEntry;
 import ghidra.file.formats.ios.fileset.MachoFileSetFileSystem;
 import ghidra.formats.gfilesystem.*;
 import ghidra.framework.plugintool.*;
@@ -106,13 +106,12 @@ public class MachoFileSetBuilderPlugin extends Plugin {
 		long refAddr = refAddress.getOffset();
 		try (FileSystemRef fsRef = openMachoFileSet(program, monitor)) {
 			MachoFileSetFileSystem fs = (MachoFileSetFileSystem) fsRef.getFilesystem();
-			Map<FileSetEntryCommand, List<SegmentCommand>> entrySegmentMap =
-				fs.getEntrySegmentMap();
+			Map<MachoFileSetEntry, List<SegmentCommand>> entrySegmentMap = fs.getEntrySegmentMap();
 			String fsPath = null;
-			for (FileSetEntryCommand cmd : entrySegmentMap.keySet()) {
-				for (SegmentCommand segment : entrySegmentMap.get(cmd)) {
+			for (MachoFileSetEntry entry : entrySegmentMap.keySet()) {
+				for (SegmentCommand segment : entrySegmentMap.get(entry)) {
 					if (segment.contains(refAddr)) {
-						fsPath = cmd.getFileSetEntryId().getString();
+						fsPath = entry.id();
 						break;
 					}
 				}
