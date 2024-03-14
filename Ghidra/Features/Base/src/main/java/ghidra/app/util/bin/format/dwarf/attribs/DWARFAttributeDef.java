@@ -69,8 +69,9 @@ public class DWARFAttributeDef<E extends Enum<E>> {
 		E e = mapper.apply(attributeId);
 
 		// NOTE: implicit value is a space saving hack built into DWARF.  It adds an extra
-		// field in the attributespec that needs to be read.
-		long implicitValue = form == DWARFForm.DW_FORM_indirect // read leb128 if present 
+		// field in the attributespec that needs to be read now in the .debug_abbr.  This is 
+		// different than DW_FORM_indirect, which is read from the DIE in .debug_info
+		long implicitValue = form == DWARFForm.DW_FORM_implicit_const // read leb128 if present 
 				? reader.readNext(LEB128::signed)
 				: 0;
 
