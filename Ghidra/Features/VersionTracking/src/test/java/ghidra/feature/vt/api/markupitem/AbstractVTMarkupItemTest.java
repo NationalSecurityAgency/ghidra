@@ -97,13 +97,13 @@ public abstract class AbstractVTMarkupItemTest extends AbstractGhidraHeadedInteg
 
 	@After
 	public void tearDown() throws Exception {
-		env.dispose();
 		if (sourceProgram != null) {
 			sourceProgram.release(this);
 		}
 		if (destinationProgram != null) {
 			destinationProgram.release(this);
 		}
+		env.dispose();
 	}
 
 	/**

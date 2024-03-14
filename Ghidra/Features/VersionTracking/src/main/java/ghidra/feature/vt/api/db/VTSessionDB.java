@@ -367,7 +367,7 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession {
 	private void initializePrograms(Program sourceProgram, Program destinationProgram,
 			boolean rememberProgramIds) throws IOException {
 
-		if (!destinationProgram.canSave()) {
+		if (!SystemUtilities.isInTestingMode() && !destinationProgram.canSave()) {
 			throw new ReadOnlyException(
 				"VT Session destination program is read-only which prevents its use");
 		}

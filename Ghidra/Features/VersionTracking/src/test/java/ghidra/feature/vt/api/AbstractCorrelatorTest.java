@@ -52,20 +52,23 @@ public abstract class AbstractCorrelatorTest extends AbstractGhidraHeadedIntegra
 
 	@Before
 	public void setUp() throws Exception {
-
+		errors = new ArrayList<>();
 		env = new TestEnv();
 		sourceProgram = getSourceProgram();
 		destinationProgram = getDestinationProgram();
-		errors = new ArrayList<>();
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		env.release(destinationProgram);
-		env.release(sourceProgram);
+		if (destinationProgram != null) {
+			env.release(destinationProgram);
+			destinationProgram = null;
+		}
+		if (sourceProgram != null) {
+			env.release(sourceProgram);
+			sourceProgram = null;
+		}
 		env.dispose();
-		sourceProgram = null;
-		destinationProgram = null;
 		env = null;
 
 		if (errors.size() > 0) {
