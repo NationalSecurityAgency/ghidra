@@ -438,7 +438,7 @@ macro complement(op)
 # P-code INT_SRIGHT.
 macro arithmeticShiftRight(op)
 {
-        $(C) = op & 1;
+        $(C) = ((op & 1) != 0);
         op = (op s>> 1);
         setNZFlags(op);
 }
