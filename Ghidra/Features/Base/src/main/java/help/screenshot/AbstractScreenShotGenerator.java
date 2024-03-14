@@ -111,7 +111,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 		setInstanceField("allowTestTools", ToolUtils.class, Boolean.FALSE);
 		setDockIcon();
 
-		ThemeManager.getInstance().setTheme(new FlatLightTheme());
+		runSwing(() -> ThemeManager.getInstance().setTheme(new FlatLightTheme()));
 	}
 
 	protected TestEnv newTestEnv() throws Exception {
