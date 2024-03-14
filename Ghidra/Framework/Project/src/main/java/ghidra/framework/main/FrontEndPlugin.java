@@ -1109,11 +1109,11 @@ public class FrontEndPlugin extends Plugin
 				"opens this type of file");
 	}
 
-	private void showLinkedFolder(DomainFile domainFile) {
-
+	void showLinkedFolder(DomainFile domainFile) {
 		try {
 			LinkedGhidraFolder linkedFolder =
 				FolderLinkContentHandler.getReadOnlyLinkedFolder(domainFile);
+
 			if (linkedFolder == null) {
 				return;  // unsupported use
 			}
@@ -1133,7 +1133,6 @@ public class FrontEndPlugin extends Plugin
 			Msg.showError(this, projectDataPanel, "Linked-folder failure: " + domainFile.getName(),
 				e);
 		}
-
 	}
 
 	private class MyToolChestChangeListener implements ToolChestChangeListener {
