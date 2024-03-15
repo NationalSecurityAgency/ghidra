@@ -28,17 +28,17 @@ from . import commands, hooks, util
 @contextmanager
 def no_pagination():
     before = gdb.parameter('pagination')
-    gdb.set_parameter('pagination', False)
+    util.set_bool_param('pagination', False)
     yield
-    gdb.set_parameter('pagination', before)
+    util.set_bool_param('pagination', before)
 
 
 @contextmanager
 def no_confirm():
     before = gdb.parameter('confirm')
-    gdb.set_parameter('confirm', False)
+    util.set_bool_param('confirm', False)
     yield
-    gdb.set_parameter('confirm', before)
+    util.set_bool_param('confirm', before)
 
 
 class GdbExecutor(Executor):
@@ -175,7 +175,7 @@ def find_frame_by_level(thread, level):
     f = gdb.selected_frame()
 
     # Navigate up or down, because I can't just get by level
-    down = level - f.level()
+    down = level - util.get_level(f)
     while down > 0:
         f = f.older()
         if f is None:
@@ -188,7 +188,6 @@ def find_frame_by_level(thread, level):
             raise KeyError(
                 f"Inferiors[{thread.inferior.num}].Threads[{thread.num}].Stack[{level}] does not exist")
         down += 1
-    assert f.level() == level
     return f
 
 
@@ -215,7 +214,7 @@ def find_frame_by_regs_obj(object):
 
 # Because there's no method to get a register by name....
 def find_reg_by_name(f, name):
-    for reg in f.architecture().registers():
+    for reg in util.get_register_descs(f.architecture()):
         # TODO: gdb appears to be case sensitive, but until we encounter a
         # situation where case matters, we'll be insensitive
         if reg.name.lower() == name.lower():

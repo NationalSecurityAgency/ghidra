@@ -19,7 +19,7 @@ import traceback
 
 import gdb
 
-from . import commands
+from . import commands, util
 
 
 class GhidraHookPrefix(gdb.Command):
@@ -89,10 +89,10 @@ class InferiorState(object):
                 commands.put_frames()
                 self.visited.add(thread)
             frame = gdb.selected_frame()
-            hashable_frame = (thread, frame.level())
+            hashable_frame = (thread, util.get_level(frame))
             if first or hashable_frame not in self.visited:
                 commands.putreg(
-                    frame, frame.architecture().registers('general'))
+                    frame, util.get_register_descs(frame.architecture(), 'general'))
                 commands.putmem("$pc", "1", from_tty=False)
                 commands.putmem("$sp", "1", from_tty=False)
                 self.visited.add(hashable_frame)
@@ -234,7 +234,7 @@ def on_frame_selected():
     t = gdb.selected_thread()
     f = gdb.selected_frame()
     HOOK_STATE.ensure_batch()
-    with trace.open_tx("Frame {}.{}.{} selected".format(inf.num, t.num, f.level())):
+    with trace.open_tx("Frame {}.{}.{} selected".format(inf.num, t.num, util.get_level(f))):
         INF_STATES[inf.num].record()
         commands.activate()
 
@@ -274,7 +274,7 @@ def on_register_changed(event):
     # For now, just record the lot
     HOOK_STATE.ensure_batch()
     with trace.open_tx("Register {} changed".format(event.regnum)):
-        commands.putreg(event.frame, event.frame.architecture().registers())
+        commands.putreg(event.frame, util.get_register_descs(event.frame.architecture()))
 
 
 @log_errors
@@ -549,8 +549,10 @@ def install_hooks():
             cont
             end
             """)
-        HOOK_STATE.mem_catchpoint = (
-            set(gdb.breakpoints()) - breaks_before).pop()
+        bpts = gdb.breakpoints()
+        # NB: this is unnecessary for gdb 11+
+        if len(bpts) > 0:
+            HOOK_STATE.mem_catchpoint = (set(bpts) - breaks_before).pop()
 
     gdb.events.cont.connect(on_cont)
     gdb.events.stop.connect(on_stop)
