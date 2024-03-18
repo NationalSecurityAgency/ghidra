@@ -117,7 +117,7 @@ def get_endian():
 
 def get_osabi():
     parm = gdb.parameter('osabi')
-    if not parm in ['auto', 'default']:
+    if not parm in ['', 'auto', 'default']:
         return parm
     # We have to hack around the fact the GDB won't give us the current OS ABI
     # via the API if it is "auto" or "default". Using "show", we can get it, but
