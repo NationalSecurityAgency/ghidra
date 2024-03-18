@@ -1434,7 +1434,6 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 	res_nibble3 = (res_nibble3 - carry_nibble3 * 10) & 0xf;
 
 	tmp_res:2 = (res_nibble3 << 12) + (res_nibble2 << 8) + (res_nibble1 << 4) + res_nibble0;
-	$(OVERFLOW) = ((0x0 s<= DEST_W_AD) && (tmp_res s< 0x0)); # Undefined in documentation, but this behaviour observed for MSP430FR5994
 	DEST_W_AD = tmp_res;
 
 	build tbl_wzero;
@@ -1462,7 +1461,6 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 	res_nibble1 = (res_nibble1 - carry_nibble1 * 10) & 0xf;
 
 	tmp_res:1 = (res_nibble1 << 4) + res_nibble0;
-	$(OVERFLOW) = ((0x0 s<= DEST_B_AD) && (tmp_res s< 0x0)); # Undefined in documentation, but this behaviour observed for MSP430FR5994
 	DEST_B_AD = tmp_res;
 
 	build tbl_bzero;
@@ -1506,7 +1504,6 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 	res_nibble3 = (res_nibble3 - carry_nibble3 * 10) & 0xf;
 
 	tmp_res:2 = (res_nibble3 << 12) + (res_nibble2 << 8) + (res_nibble1 << 4) + res_nibble0;
-	$(OVERFLOW) = ((DEST_W_AD s< 0x0) && (SRC_W_AS s< 0x0) && (0x0 s<= tmp_res)) || ((0x0 s<= DEST_W_AD) && (0x0 s<= SRC_W_AS) && (tmp_res s< 0x0)); # Undefined in ISA, but this behaviour observed for MSP430FR5994
 	DEST_W_AD = tmp_res;
 
 	build tbl_wzero;
@@ -1537,7 +1534,6 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 	res_nibble1 = (res_nibble1 - carry_nibble1 * 10) & 0xf;
 
 	tmp_res:1 = (res_nibble1 << 4) + res_nibble0;
-	$(OVERFLOW) = ((DEST_B_AD s< 0x0) && (SRC_B_AS s< 0x0) && (0x0 s<= tmp_res)) || ((0x0 s<= DEST_B_AD) && (0x0 s<= SRC_B_AS) && (tmp_res s< 0x0)); # Undefined in ISA, but this behaviour observed for MSP430FR5994
 	DEST_B_AD = tmp_res;
 
 	build tbl_bzero;
