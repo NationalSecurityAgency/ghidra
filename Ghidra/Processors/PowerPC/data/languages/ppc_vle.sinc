@@ -117,7 +117,7 @@ IMM16B: val						is IMM_0_10_VLE & IMM_16_20_VLE [ val = (IMM_16_20_VLE << 11) |
 :se_blrl						is $(ISVLE) & OP15_VLE=2 & LK0_VLE=1 {	
 	tmp:$(REGISTER_SIZE) = LR & ~1;
 	LR = inst_next;
-	return [tmp];			
+	call [tmp];			
 }
 
 :se_sc							is $(ISVLE) & OP16_VLE=2 {
