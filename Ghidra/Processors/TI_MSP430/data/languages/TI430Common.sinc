@@ -1101,40 +1101,39 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 	build postIncrementStore;
 }
 
+macro addWithCarry(src, dest){
+    local incoming_carry = zext($(CARRY));
+    local sum_without_carry = src + dest;
+    
+    local tmp_carry:1 = carry(src, dest);
+    tmp_carry = tmp_carry || carry(sum_without_carry, incoming_carry);
+    
+    local tmp_overflow:1 = scarry(src, dest);
+    tmp_overflow = tmp_overflow ^^ scarry(sum_without_carry, incoming_carry);
+    
+    dest = sum_without_carry + incoming_carry;
+    $(CARRY) = tmp_carry;
+    $(OVERFLOW) = tmp_overflow;
+ }
+
+
 #------------------
 #	16 bit SRC Word
 #------------------
 :ADDC^".W" SRC_W_AS, DEST_W_AD is ctx_haveext=0 & (op16_12_4=0x6 & bow=0x0 & tbl_wzero & postIncrementStore) ... & SRC_W_AS ... & DEST_W_AD ... {
-	# Operation Flags...
-	tmp_carry:1 = (carry(SRC_W_AS,zext($(CARRY))) || carry(DEST_W_AD,SRC_W_AS + zext($(CARRY))));		 #C Flag
-	tmp_res:2 = SRC_W_AS + DEST_W_AD + zext($(CARRY)); # Cannot use scarry as src and dst (each without carry) are compared to final result (with carry)
-	tmp_overflow:1 = ((DEST_W_AD s< 0x0) && (SRC_W_AS s< 0x0) && (0x0 s<= tmp_res)) || ((0x0 s<= DEST_W_AD) && (0x0 s<= SRC_W_AS) && (tmp_res s< 0x0));
- 	# Operation...
-	DEST_W_AD = SRC_W_AS + DEST_W_AD + zext($(CARRY));
+	addWithCarry(SRC_W_AS,DEST_W_AD);
 	build tbl_wzero;
-	# Result Flags...
-	$(CARRY) = tmp_carry;
-	$(OVERFLOW) = tmp_overflow;
 	$(SIGN) = (DEST_W_AD s< 0x0);			# S Flag
 	$(ZERO) = (DEST_W_AD == 0x0);			# Z Flag
 	build postIncrementStore;
 }
 
-
 #------------------
 #	16 bit SRC Byte
 #------------------
 :ADDC^".B" SRC_B_AS, DEST_B_AD is ctx_haveext=0 & (op16_12_4=0x6 & bow=0x1 & tbl_bzero & postIncrementStore) ... & SRC_B_AS ... & DEST_B_AD ... {
-	# Operation Flags...
-	tmp_carry:1 = (carry(SRC_B_AS, $(CARRY)) || carry(DEST_B_AD,SRC_B_AS + $(CARRY)));		 #C Flag
-	tmp_res:1 = SRC_B_AS + DEST_B_AD + zext($(CARRY));
-	tmp_overflow:1 = ((DEST_B_AD s< 0x0) && (SRC_B_AS s< 0x0) && (0x0 s<= tmp_res)) || ((0x0 s<= DEST_B_AD) && (0x0 s<= SRC_B_AS) && (tmp_res s< 0x0));
- 	# Operation...
-	DEST_B_AD = SRC_B_AS + DEST_B_AD + $(CARRY);
+	addWithCarry(SRC_B_AS, DEST_B_AD);
 	build tbl_bzero;
-	# Result Flags...
-	$(CARRY) = tmp_carry;
-	$(OVERFLOW) = tmp_overflow;
 	$(SIGN) = (DEST_B_AD s< 0x0);			# S Flag
 	$(ZERO) = (DEST_B_AD == 0x0);			# Z Flag
 	build postIncrementStore;
@@ -1181,21 +1180,28 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 	build postIncrementStore;
 }
 
+macro subtractWithCarry(dest, src){
+    local incoming_carry = zext($(CARRY));
+    local not_incoming_carry = zext(!($(CARRY)));
+    local diff_without_carry = dest - src;
+    
+    local tmp_carry:1 = dest > src;
+    tmp_carry = tmp_carry || (diff_without_carry < incoming_carry);
+    
+    local tmp_overflow:1 = sborrow(dest, src);
+    tmp_overflow = tmp_overflow ^^ sborrow(diff_without_carry, not_incoming_carry);
+    
+    dest = diff_without_carry - not_incoming_carry;
+    $(CARRY) = tmp_carry;
+    $(OVERFLOW) = tmp_overflow;
+}
+
 #------------------
 #	16 bit SRC Word
 #------------------
 :SUBC^".W" SRC_W_AS, DEST_W_AD is ctx_haveext=0 & (op16_12_4=0x7 & bow=0x0 & tbl_wzero & postIncrementStore) ... & SRC_W_AS ... & DEST_W_AD ... {
-	# Operation
-	tmp_res:2 = DEST_W_AD + ~SRC_W_AS + zext($(CARRY));
-	# Operation Flags...
-	tmp_carry:1 = (carry(~SRC_W_AS, zext($(CARRY))) || carry(DEST_W_AD, ~SRC_W_AS + zext($(CARRY))));
-	tmp_overflow:1 = ((DEST_W_AD s< 0x0) && (~SRC_W_AS s< 0x0) && (0x0 s<= tmp_res)) || ((0x0 s<= DEST_W_AD) && (0x0 s<= ~SRC_W_AS) && (tmp_res s< 0x0));
-	# Operation...
-	DEST_W_AD = tmp_res;
+	subtractWithCarry(DEST_W_AD,SRC_W_AS);
 	build tbl_wzero;
-	# Result Flags...
-	$(CARRY) = tmp_carry;
-	$(OVERFLOW) = tmp_overflow;
 	$(SIGN) = (DEST_W_AD s< 0x0);			# S Flag
 	$(ZERO) = (DEST_W_AD == 0x0);			# Z Flag
 	build postIncrementStore;
@@ -1206,17 +1212,8 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #	16 bit SRC Byte
 #------------------
 :SUBC^".B" SRC_B_AS, DEST_B_AD is ctx_haveext=0 & (op16_12_4=0x7 & bow=0x1 & tbl_bzero & postIncrementStore) ... & SRC_B_AS ... & DEST_B_AD ... {
-	# Operation...
-	tmp_res:1 = DEST_B_AD + ~SRC_B_AS + $(CARRY);
-	# Operation Flags...
-	tmp_carry:1 = (carry(~SRC_B_AS, $(CARRY)) || carry(DEST_B_AD, ~SRC_B_AS + $(CARRY)));
-	tmp_overflow:1 = ((DEST_B_AD s< 0x0) && (~SRC_B_AS s< 0x0) && (0x0 s<= tmp_res)) || ((0x0 s<= DEST_B_AD) && (0x0 s<= ~SRC_B_AS) && (tmp_res s< 0x0));
-	# Operation...
-	DEST_B_AD = tmp_res;
+	subtractWithCarry(DEST_B_AD,SRC_B_AS);
 	build tbl_bzero;
-	# Result Flags...
-	$(CARRY) = tmp_carry;
-	$(OVERFLOW) = tmp_overflow;
 	$(SIGN) = (DEST_B_AD s< 0x0);			# S Flag
 	$(ZERO) = (DEST_B_AD == 0x0);			# Z Flag
 	build postIncrementStore;
