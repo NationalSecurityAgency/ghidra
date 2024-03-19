@@ -38,6 +38,13 @@ public interface TraceRmiAcceptor {
 	TraceRmiConnection accept() throws IOException, CancelledException;
 
 	/**
+	 * Check if the acceptor is actually still accepting.
+	 * 
+	 * @return true if not accepting anymore
+	 */
+	boolean isClosed();
+
+	/**
 	 * Get the address (and port) where the acceptor is listening
 	 * 
 	 * @return the socket address

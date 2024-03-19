@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.pty.linux;
+package ghidra.pty.unix;
 
 import com.sun.jna.*;
 import com.sun.jna.Structure.FieldOrder;
@@ -26,10 +26,16 @@ import com.sun.jna.Structure.FieldOrder;
  */
 public interface PosixC extends Library {
 
+	interface Ioctls {
+		Class<? extends UnixPtySessionLeader> leaderClass();
+
+		long TIOCSCTTY();
+
+		long TIOCSWINSZ();
+	}
+
 	@FieldOrder({ "ws_row", "ws_col", "ws_xpixel", "ws_ypixel" })
 	class Winsize extends Structure {
-		public static final int TIOCSWINSZ = 0x5414; // This may actually be Linux-specific
-
 		public short ws_row;
 		public short ws_col;
 		public short ws_xpixel; // Unused
@@ -39,11 +45,21 @@ public interface PosixC extends Library {
 		}
 	}
 
-	@FieldOrder({ "c_iflag", "c_oflag", "c_cflag", "c_lflag", "c_line", "c_cc", "c_ispeed",
-		"c_ospeed" })
-	class Termios extends Structure {
-		public static final int TCSANOW = 0;
+	@FieldOrder({ "steal" })
+	class ControllingTty extends Structure {
+		public int steal;
 
+		public static class ByReference extends ControllingTty implements Structure.ByReference {
+		}
+	}
+
+	@FieldOrder(
+		{ "c_iflag", "c_oflag", "c_cflag", "c_lflag", "c_line", "c_cc", "c_ispeed",
+			"c_ospeed" }
+	)
+	class Termios extends Structure {
+		// TCSANOW and ECHO are the same on Linux and macOS
+		public static final int TCSANOW = 0;
 		public static final int ECHO = 0000010; // Octal
 
 		public int c_iflag;
@@ -110,7 +126,7 @@ public interface PosixC extends Library {
 		}
 
 		@Override
-		public int ioctl(int fd, int cmd, Pointer... args) {
+		public int ioctl(int fd, long cmd, Pointer... args) {
 			return Err.checkLt0(BARE.ioctl(fd, cmd, args));
 		}
 
@@ -141,7 +157,7 @@ public interface PosixC extends Library {
 
 	int execv(String path, String[] argv);
 
-	int ioctl(int fd, int cmd, Pointer... args);
+	int ioctl(int fd, long cmd, Pointer... args);
 
 	int tcgetattr(int fd, Termios.ByReference termios_p);
 

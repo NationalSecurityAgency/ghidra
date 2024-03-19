@@ -13,13 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.pty.windows;
+package ghidra.pty.unix;
 
-import ghidra.pty.PtyParent;
+import com.sun.jna.LastErrorException;
+import com.sun.jna.Native;
 
-public class ConPtyParent extends ConPtyEndpoint implements PtyParent {
-	public ConPtyParent(Handle writeHandle, Handle readHandle,
-			PseudoConsoleHandle pseudoConsoleHandle) {
-		super(writeHandle, readHandle, pseudoConsoleHandle);
+public interface Err {
+	PosixC BARE_POSIX = PosixC.BARE;
+
+	static int checkLt0(int result) {
+		if (result < 0) {
+			int errno = Native.getLastError();
+			throw new LastErrorException("[" + errno + "] " + BARE_POSIX.strerror(errno));
+		}
+		return result;
 	}
 }

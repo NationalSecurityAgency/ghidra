@@ -14,10 +14,10 @@
 #  limitations under the License.
 ##
 from ghidratrace.client import Address, RegVal
-
 import lldb
 
 from . import util
+
 
 # NOTE: This map is derived from the ldefs using a script
 language_map = {
@@ -25,9 +25,9 @@ language_map = {
     'armv7': ['ARM:BE:32:v7', 'ARM:LE:32:v7'],
     'armv7k': ['ARM:BE:32:v7', 'ARM:LE:32:v7'],
     'armv7s': ['ARM:BE:32:v7', 'ARM:LE:32:v7'],
-    'arm64': ['ARM:BE:64:v8', 'ARM:LE:64:v8'],
+    'arm64': ['AARCH64:BE:64:v8A', 'AARCH64:LE:64:v8A'],
     'arm64_32': ['ARM:BE:32:v8', 'ARM:LE:32:v8'],
-    'arm64e': ['ARM:BE:64:v8', 'ARM:LE:64:v8'],
+    'arm64e': ['AARCH64:BE:64:v8A', 'AARCH64:LE:64:v8A'],
     'i386': ['x86:LE:32:default'],
     'thumbv7': ['ARM:BE:32:v7', 'ARM:LE:32:v7'],
     'thumbv7k': ['ARM:BE:32:v7', 'ARM:LE:32:v7'],
@@ -40,7 +40,7 @@ data64_compiler_map = {
     None: 'pointer64',
 }
 
-x86_compiler_map = {
+default_compiler_map = {
     'freebsd': 'gcc',
     'linux': 'gcc',
     'netbsd': 'gcc',
@@ -55,10 +55,12 @@ x86_compiler_map = {
 }
 
 compiler_map = {
-    'DATA:BE:64:default': data64_compiler_map,
-    'DATA:LE:64:default': data64_compiler_map,
-    'x86:LE:32:default': x86_compiler_map,
-    'x86:LE:64:default': x86_compiler_map,
+    'DATA:BE:64:': data64_compiler_map,
+    'DATA:LE:64:': data64_compiler_map,
+    'x86:LE:32:': default_compiler_map,
+    'x86:LE:64:': default_compiler_map,
+    'ARM:LE:32:': default_compiler_map,
+    'ARM:LE:64:': default_compiler_map,
 }
 
 
@@ -132,12 +134,20 @@ def compute_ghidra_compiler(lang):
         return comp
 
     # Check if the selected lang has specific compiler recommendations
-    if not lang in compiler_map:
+    matched_lang = sorted(
+        (l for l in compiler_map if l in lang),
+        key=lambda l: compiler_map[l]
+    )
+    if len(matched_lang) == 0:
         return 'default'
-    comp_map = compiler_map[lang]
+    comp_map = compiler_map[matched_lang[0]]
     osabi = get_osabi()
-    if osabi in comp_map:
-        return comp_map[osabi]
+    matched_osabi = sorted(
+        (l for l in comp_map if l in osabi),
+        key=lambda l: comp_map[l]
+    )
+    if len(matched_osabi) > 0:
+        return comp_map[matched_osabi[0]]
     if None in comp_map:
         return comp_map[None]
     return 'default'
@@ -161,7 +171,8 @@ class DefaultMemoryMapper(object):
     def map_back(self, proc: lldb.SBProcess, address: Address) -> int:
         if address.space == self.defaultSpace:
             return address.offset
-        raise ValueError(f"Address {address} is not in process {proc.GetProcessID()}")
+        raise ValueError(
+            f"Address {address} is not in process {proc.GetProcessID()}")
 
 
 DEFAULT_MEMORY_MAPPER = DefaultMemoryMapper('ram')
@@ -203,11 +214,11 @@ class DefaultRegisterMapper(object):
 
     def map_value(self, proc, name, value):
         try:
-            ### TODO: this seems half-baked
+            # TODO: this seems half-baked
             av = value.to_bytes(8, "big")
         except e:
             raise ValueError("Cannot convert {}'s value: '{}', type: '{}'"
-                               .format(name, value, value.type))
+                             .format(name, value, value.type))
         return RegVal(self.map_name(proc, name), av)
 
     def map_name_back(self, proc, name):
@@ -258,4 +269,3 @@ def compute_register_mapper(lang):
         if ':LE:' in lang:
             return DEFAULT_LE_REGISTER_MAPPER
     return register_mappers[lang]
-    

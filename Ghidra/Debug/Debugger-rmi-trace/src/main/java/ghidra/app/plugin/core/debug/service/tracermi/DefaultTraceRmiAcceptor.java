@@ -63,6 +63,11 @@ public class DefaultTraceRmiAcceptor extends AbstractTraceRmiListener implements
 	}
 
 	@Override
+	public boolean isClosed() {
+		return socket.isClosed();
+	}
+
+	@Override
 	public void close() {
 		plugin.removeAcceptor(this);
 		super.close();

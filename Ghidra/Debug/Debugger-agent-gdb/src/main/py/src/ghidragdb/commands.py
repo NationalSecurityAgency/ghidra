@@ -552,7 +552,7 @@ def putmem_state(address, length, state, pages=True):
     inf = gdb.selected_inferior()
     base, addr = STATE.trace.memory_mapper.map(inf, start)
     if base != addr.space:
-        trace.create_overlay_space(base, addr.space)
+        STATE.trace.create_overlay_space(base, addr.space)
     STATE.trace.set_memory_state(addr.extend(end - start), state)
 
 

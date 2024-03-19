@@ -15,29 +15,24 @@
  */
 package ghidra.pty.linux;
 
-import java.io.InputStream;
-import java.io.OutputStream;
+import ghidra.pty.unix.PosixC.Ioctls;
+import ghidra.pty.unix.UnixPtySessionLeader;
 
-import ghidra.pty.PtyEndpoint;
+public enum LinuxIoctls implements Ioctls {
+	INSTANCE;
 
-public class LinuxPtyEndpoint implements PtyEndpoint {
-	protected final int fd;
-	private final FdOutputStream outputStream;
-	private final FdInputStream inputStream;
-
-	LinuxPtyEndpoint(int fd) {
-		this.fd = fd;
-		this.outputStream = new FdOutputStream(fd);
-		this.inputStream = new FdInputStream(fd);
+	@Override
+	public Class<? extends UnixPtySessionLeader> leaderClass() {
+		return LinuxPtySessionLeader.class;
 	}
 
 	@Override
-	public OutputStream getOutputStream() {
-		return outputStream;
+	public long TIOCSCTTY() {
+		return 0x540eL;
 	}
 
 	@Override
-	public InputStream getInputStream() {
-		return inputStream;
+	public long TIOCSWINSZ() {
+		return 0x5414L;
 	}
 }

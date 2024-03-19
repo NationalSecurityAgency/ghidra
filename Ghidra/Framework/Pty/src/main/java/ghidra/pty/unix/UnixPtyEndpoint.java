@@ -13,17 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.pty.ssh;
+package ghidra.pty.unix;
 
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import com.jcraft.jsch.ChannelExec;
+import ghidra.pty.PtyEndpoint;
+import ghidra.pty.unix.PosixC.Ioctls;
 
-import ghidra.pty.PtyParent;
+public class UnixPtyEndpoint implements PtyEndpoint {
+	protected final Ioctls ioctls;
+	protected final int fd;
+	private final FdOutputStream outputStream;
+	private final FdInputStream inputStream;
 
-public class SshPtyParent extends SshPtyEndpoint implements PtyParent {
-	public SshPtyParent(ChannelExec channel, OutputStream outputStream, InputStream inputStream) {
-		super(channel, outputStream, inputStream);
+	UnixPtyEndpoint(Ioctls ioctls, int fd) {
+		this.ioctls = ioctls;
+		this.fd = fd;
+		this.outputStream = new FdOutputStream(fd);
+		this.inputStream = new FdInputStream(fd);
+	}
+
+	@Override
+	public OutputStream getOutputStream() {
+		return outputStream;
+	}
+
+	@Override
+	public InputStream getInputStream() {
+		return inputStream;
 	}
 }

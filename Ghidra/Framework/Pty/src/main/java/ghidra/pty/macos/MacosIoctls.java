@@ -13,22 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.pty.linux;
+package ghidra.pty.macos;
 
-import ghidra.pty.PtyParent;
-import ghidra.pty.linux.PosixC.Winsize;
+import ghidra.pty.unix.PosixC.Ioctls;
+import ghidra.pty.unix.UnixPtySessionLeader;
 
-public class LinuxPtyParent extends LinuxPtyEndpoint implements PtyParent {
-	LinuxPtyParent(int fd) {
-		super(fd);
+public enum MacosIoctls implements Ioctls {
+	INSTANCE;
+
+	@Override
+	public Class<? extends UnixPtySessionLeader> leaderClass() {
+		return MacosPtySessionLeader.class;
 	}
 
 	@Override
-	public void setWindowSize(short cols, short rows) {
-		Winsize.ByReference ws = new Winsize.ByReference();
-		ws.ws_col = cols;
-		ws.ws_row = rows;
-		ws.write();
-		PosixC.INSTANCE.ioctl(fd, Winsize.TIOCSWINSZ, ws.getPointer());
+	public long TIOCSCTTY() {
+		return 0x20007461L;
+	}
+
+	@Override
+	public long TIOCSWINSZ() {
+		return 0x80087467L;
 	}
 }

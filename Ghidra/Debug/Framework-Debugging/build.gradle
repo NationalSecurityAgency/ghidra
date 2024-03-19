@@ -28,8 +28,8 @@ dependencies {
 	api project(':SoftwareModeling')
 	api project(':ProposedUtils')
 
-	api "net.java.dev.jna:jna:5.4.0"
-	api "net.java.dev.jna:jna-platform:5.4.0"
+	api "net.java.dev.jna:jna:5.14.0"
+	api "net.java.dev.jna:jna-platform:5.14.0"
 
 	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
 }

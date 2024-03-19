@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.pty.windows;
+package ghidra.pty.unix;
 
 import ghidra.pty.PtyParent;
+import ghidra.pty.unix.PosixC.Ioctls;
 
-public class ConPtyParent extends ConPtyEndpoint implements PtyParent {
-	public ConPtyParent(Handle writeHandle, Handle readHandle,
-			PseudoConsoleHandle pseudoConsoleHandle) {
-		super(writeHandle, readHandle, pseudoConsoleHandle);
+public class UnixPtyParent extends UnixPtyEndpoint implements PtyParent {
+	UnixPtyParent(Ioctls ioctls, int fd) {
+		super(ioctls, fd);
 	}
 }

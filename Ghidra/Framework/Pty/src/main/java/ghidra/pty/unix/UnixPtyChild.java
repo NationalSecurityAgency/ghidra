@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.pty.linux;
+package ghidra.pty.unix;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,17 +21,17 @@ import java.util.*;
 
 import ghidra.pty.PtyChild;
 import ghidra.pty.PtySession;
-import ghidra.pty.linux.PosixC.Termios;
 import ghidra.pty.local.LocalProcessPtySession;
+import ghidra.pty.unix.PosixC.*;
 import ghidra.util.Msg;
 
-public class LinuxPtyChild extends LinuxPtyEndpoint implements PtyChild {
+public class UnixPtyChild extends UnixPtyEndpoint implements PtyChild {
 	static final PosixC LIB_POSIX = PosixC.INSTANCE;
 
 	private final String name;
 
-	LinuxPtyChild(int fd, String name) {
-		super(fd);
+	UnixPtyChild(Ioctls ioctls, int fd, String name) {
+		super(ioctls, fd);
 		this.name = name;
 	}
 
@@ -70,7 +70,7 @@ public class LinuxPtyChild extends LinuxPtyEndpoint implements PtyChild {
 		argsList.add(javaCommand);
 		argsList.add("-cp");
 		argsList.add(System.getProperty("java.class.path"));
-		argsList.add(LinuxPtySessionLeader.class.getCanonicalName());
+		argsList.add(ioctls.leaderClass().getCanonicalName());
 
 		argsList.add(name);
 		argsList.addAll(Arrays.asList(args));
@@ -105,5 +105,19 @@ public class LinuxPtyChild extends LinuxPtyEndpoint implements PtyChild {
 		LIB_POSIX.tcgetattr(fd, tmios);
 		tmios.c_lflag &= ~Termios.ECHO;
 		LIB_POSIX.tcsetattr(fd, Termios.TCSANOW, tmios);
+	}
+
+	@Override
+	public void setWindowSize(short cols, short rows) {
+		Winsize.ByReference ws = new Winsize.ByReference();
+		ws.ws_col = cols;
+		ws.ws_row = rows;
+		ws.write();
+		try {
+			PosixC.INSTANCE.ioctl(fd, ioctls.TIOCSWINSZ(), ws.getPointer());
+		}
+		catch (Exception e) {
+			Msg.error(this, "Could not set terminal window size: " + e);
+		}
 	}
 }

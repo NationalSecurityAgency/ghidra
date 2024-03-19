@@ -441,6 +441,7 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 		Pty pty = factory.openpty();
 
 		PtyParent parent = pty.getParent();
+		PtyChild child = pty.getChild();
 		Terminal terminal = terminalService.createWithStreams(Charset.forName("UTF-8"),
 			parent.getInputStream(), parent.getOutputStream());
 		terminal.setSubTitle(ShellUtils.generateLine(commandLine));
@@ -448,7 +449,7 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 			@Override
 			public void resized(short cols, short rows) {
 				try {
-					parent.setWindowSize(cols, rows);
+					child.setWindowSize(cols, rows);
 				}
 				catch (Exception e) {
 					Msg.error(this, "Could not resize pty: " + e);
@@ -490,12 +491,13 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 		Pty pty = factory.openpty();
 
 		PtyParent parent = pty.getParent();
+		PtyChild child = pty.getChild();
 		Terminal terminal = terminalService.createWithStreams(Charset.forName("UTF-8"),
 			parent.getInputStream(), parent.getOutputStream());
 		TerminalListener resizeListener = new TerminalListener() {
 			@Override
 			public void resized(short cols, short rows) {
-				parent.setWindowSize(cols, rows);
+				child.setWindowSize(cols, rows);
 			}
 		};
 		terminal.addTerminalListener(resizeListener);
@@ -549,7 +551,7 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 				if (lastExc == null) {
 					lastExc = new CancelledException();
 				}
-				return new LaunchResult(program, sessions, connection, trace, lastExc);
+				return new LaunchResult(program, sessions, acceptor, connection, trace, lastExc);
 			}
 			acceptor = null;
 			sessions.clear();
@@ -598,10 +600,16 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 				}
 			}
 			catch (Exception e) {
+				DebuggerConsoleService consoleService =
+					tool.getService(DebuggerConsoleService.class);
+				if (consoleService != null) {
+					consoleService.log(DebuggerResources.ICON_LOG_ERROR,
+						"Launch %s Failed".formatted(getTitle()), e);
+				}
 				lastExc = e;
 				prompt = mode != PromptMode.NEVER;
 				LaunchResult result =
-					new LaunchResult(program, sessions, connection, trace, lastExc);
+					new LaunchResult(program, sessions, acceptor, connection, trace, lastExc);
 				if (prompt) {
 					switch (promptError(result)) {
 						case KEEP:
@@ -621,13 +629,13 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 							catch (Exception e1) {
 								Msg.error(this, "Could not close", e1);
 							}
-							return new LaunchResult(program, Map.of(), null, null, lastExc);
+							return new LaunchResult(program, Map.of(), null, null, null, lastExc);
 					}
 					continue;
 				}
 				return result;
 			}
-			return new LaunchResult(program, sessions, connection, trace, null);
+			return new LaunchResult(program, sessions, null, connection, trace, null);
 		}
 	}
 
@@ -702,21 +710,25 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 		StringBuilder sb = new StringBuilder();
 		for (Entry<String, TerminalSession> ent : result.sessions().entrySet()) {
 			TerminalSession session = ent.getValue();
-			sb.append("<li>Terminal: " + HTMLUtilities.escapeHTML(ent.getKey()) + " &rarr; <tt>" +
-				HTMLUtilities.escapeHTML(session.description()) + "</tt>");
+			sb.append("<li>Terminal: %s &rarr; <tt>%s</tt>".formatted(
+				HTMLUtilities.escapeHTML(ent.getKey()),
+				HTMLUtilities.escapeHTML(session.description())));
 			if (session.isTerminated()) {
 				sb.append(" (Terminated)");
 			}
 			sb.append("</li>\n");
 		}
+		if (result.acceptor() != null) {
+			sb.append("<li>Acceptor: <tt>%s</tt></li>\n".formatted(
+				HTMLUtilities.escapeHTML(result.acceptor().getAddress().toString())));
+		}
 		if (result.connection() != null) {
-			sb.append("<li>Connection: <tt>" +
-				HTMLUtilities.escapeHTML(result.connection().getRemoteAddress().toString()) +
-				"</tt></li>\n");
+			sb.append("<li>Connection: <tt>%s</tt></li>\n".formatted(
+				HTMLUtilities.escapeHTML(result.connection().getRemoteAddress().toString())));
 		}
 		if (result.trace() != null) {
-			sb.append(
-				"<li>Trace: " + HTMLUtilities.escapeHTML(result.trace().getName()) + "</li>\n");
+			sb.append("<li>Trace: %s</li>\n".formatted(
+				HTMLUtilities.escapeHTML(result.trace().getName())));
 		}
 		return sb.toString();
 	}
