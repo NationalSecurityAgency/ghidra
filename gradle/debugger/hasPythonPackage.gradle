@@ -20,6 +20,7 @@ def checkPythonVersion(String pyCmd) {
 		exec {
 			commandLine pyCmd, "-c", "import sys; print('{0}.{1}'.format(*sys.version_info))"
 			standardOutput = stdout
+			standardError = null
 		}
 		def version = "$stdout".strip()
 		return version
