@@ -32,6 +32,7 @@ import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.pcode.*;
+import ghidra.program.model.pcode.HighFunctionDBUtil.ReturnCommitOption;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.util.AcyclicCallGraphBuilder;
 import ghidra.util.Msg;
@@ -215,17 +216,10 @@ public class DecompilerParameterIdCmd extends BackgroundCommand<Program> {
 					if (hfunc == null) {
 						return;
 					}
-					HighFunctionDBUtil.commitParamsToDatabase(hfunc, true, SourceType.ANALYSIS);
-					boolean commitReturn = true;
-					if (!commitVoidReturn) {
-						DataType returnType = hfunc.getFunctionPrototype().getReturnType();
-						if (returnType instanceof VoidDataType) {
-							commitReturn = false;
-						}
-					}
-					if (commitReturn) {
-						HighFunctionDBUtil.commitReturnToDatabase(hfunc, SourceType.ANALYSIS);
-					}
+					ReturnCommitOption returnCommit = commitVoidReturn ? ReturnCommitOption.COMMIT
+							: ReturnCommitOption.COMMIT_NO_VOID;
+					HighFunctionDBUtil.commitParamsToDatabase(hfunc, true, returnCommit,
+						SourceType.ANALYSIS);
 					goodInfo = true;
 				}
 				else {

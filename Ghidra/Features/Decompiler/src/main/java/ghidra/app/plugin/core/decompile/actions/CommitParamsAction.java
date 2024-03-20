@@ -24,6 +24,7 @@ import ghidra.app.util.HelpTopics;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.pcode.HighFunctionDBUtil;
+import ghidra.program.model.pcode.HighFunctionDBUtil.ReturnCommitOption;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
@@ -59,8 +60,8 @@ public class CommitParamsAction extends AbstractDecompilerAction {
 				source = SourceType.USER_DEFINED;
 			}
 
-			HighFunctionDBUtil.commitReturnToDatabase(hfunc, source);
-			HighFunctionDBUtil.commitParamsToDatabase(hfunc, true, source);
+			HighFunctionDBUtil.commitParamsToDatabase(hfunc, true, ReturnCommitOption.COMMIT,
+				source);
 		}
 		catch (DuplicateNameException e) {
 			throw new AssertException("Unexpected exception", e);
