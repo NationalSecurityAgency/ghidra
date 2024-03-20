@@ -13,44 +13,57 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.file.formats.complzss;
+package ghidra.file.formats.lzfse;
 
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.ByteProviderWrapper;
-import ghidra.file.formats.lzss.LzssCodec;
-import ghidra.file.formats.lzss.LzssConstants;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.annotations.FileSystemInfo;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-@FileSystemInfo(type = "lzss", description = "LZSS Compression", factory = CompLzssFileSystemFactory.class)
-public class CompLzssFileSystem implements GFileSystem {
+/**
+ * A {@link GFileSystem} implementation LZFSE compressed files
+ * 
+ * @see <a href="https://github.com/lzfse/lzfse">lzfse reference implementation</a> 
+ */
+@FileSystemInfo(type = "lzfse", description = "LZFSE", factory = LzfseFileSystemFactory.class, priority = FileSystemInfo.PRIORITY_HIGH)
+public class LzfseFileSystem implements GFileSystem {
+
 	private FSRLRoot fsFSRL;
 	private SingleFileSystemIndexHelper fsIndex;
 	private FileSystemRefManager fsRefManager = new FileSystemRefManager(this);
-	private ByteProvider payloadProvider;
+	private ByteProvider decompressedProvider;
 
-	public CompLzssFileSystem(FSRLRoot fsrl, ByteProvider provider, FileSystemService fsService,
+	/**
+	 * Creates a new {@link LzfseFileSystem}.
+	 * <p>
+	 * NOTE: Successful completion of this constructor will result in {@code decompressedFile}
+	 * being deleted.
+	 * 
+	 * @param fsrlRoot This filesystem's {@link FSRLRoot}
+	 * @param decompressedFile The decompressed lzfse {@link File file} (will be deleted after use)
+	 * @param fsService The {@link FileSystemService}
+	 * @param monitor {@link TaskMonitor}
+	 * @throws IOException If there was an IO-related error
+	 * @throws CancelledException If the user cancelled the operation
+	 */
+	public LzfseFileSystem(FSRLRoot fsrlRoot, File decompressedFile, FileSystemService fsService,
 			TaskMonitor monitor) throws IOException, CancelledException {
-		this.fsFSRL = fsrl;
+		monitor.setMessage("Decompressing LZFSE...");
 
-		monitor.setMessage("Decompressing LZSS...");
-
-		try (ByteProvider tmpBP = new ByteProviderWrapper(provider, LzssConstants.HEADER_LENGTH,
-			provider.length() - LzssConstants.HEADER_LENGTH);
-				InputStream tmpIS = tmpBP.getInputStream(0);) {
-
-			this.payloadProvider = fsService.getDerivedByteProviderPush(provider.getFSRL(), null,
-				"decompressed lzss", -1, (os) -> LzssCodec.decompress(os, tmpIS), monitor);
-			this.fsIndex = new SingleFileSystemIndexHelper(this, fsFSRL, "lzss_decompressed",
-				payloadProvider.length(), payloadProvider.getFSRL().getMD5());
-		}
+		this.fsFSRL = fsrlRoot;
+		String name = "lzfse_decompressed";
+		decompressedProvider =
+			fsService.pushFileToCache(decompressedFile, fsFSRL.appendPath(name), monitor);
+		fsIndex = new SingleFileSystemIndexHelper(this, fsFSRL, name,
+			decompressedProvider.length(), decompressedProvider.getFSRL().getMD5());
 	}
+
 
 	@Override
 	public FSRLRoot getFSRL() {
@@ -69,15 +82,15 @@ public class CompLzssFileSystem implements GFileSystem {
 
 	@Override
 	public boolean isClosed() {
-		return payloadProvider == null;
+		return decompressedProvider == null;
 	}
 
 	@Override
 	public void close() throws IOException {
 		fsRefManager.onClose();
-		if (payloadProvider != null) {
-			payloadProvider.close();
-			payloadProvider = null;
+		if (decompressedProvider != null) {
+			decompressedProvider.close();
+			decompressedProvider = null;
 		}
 		fsIndex.clear();
 	}
@@ -85,7 +98,7 @@ public class CompLzssFileSystem implements GFileSystem {
 	@Override
 	public ByteProvider getByteProvider(GFile file, TaskMonitor monitor) throws IOException {
 		return fsIndex.isPayloadFile(file)
-				? new ByteProviderWrapper(payloadProvider, file.getFSRL())
+				? new ByteProviderWrapper(decompressedProvider, file.getFSRL())
 				: null;
 	}
 
@@ -98,5 +111,4 @@ public class CompLzssFileSystem implements GFileSystem {
 	public GFile lookup(String path) throws IOException {
 		return fsIndex.lookup(path);
 	}
-
 }
