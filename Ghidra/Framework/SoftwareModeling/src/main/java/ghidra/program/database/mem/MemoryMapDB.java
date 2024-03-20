@@ -19,8 +19,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
-import db.DBConstants;
 import db.DBHandle;
+import ghidra.framework.data.OpenMode;
 import ghidra.framework.model.DomainObjectChangeRecord;
 import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.store.LockException;
@@ -94,8 +94,9 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	 * @throws IOException if a database io error occurs.
 	 * @throws VersionException if the database version is different from the expected version
 	 */
-	public MemoryMapDB(DBHandle handle, AddressMapDB addrMap, int openMode, boolean isBigEndian,
-			Lock lock, TaskMonitor monitor) throws IOException, VersionException {
+	public MemoryMapDB(DBHandle handle, AddressMapDB addrMap, OpenMode openMode,
+			boolean isBigEndian, Lock lock, TaskMonitor monitor)
+			throws IOException, VersionException {
 		this.addrMap = addrMap;
 		this.lock = lock;
 		defaultEndian = isBigEndian ? BIG_ENDIAN : LITTLE_ENDIAN;
@@ -106,8 +107,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	// for testing
-	MemoryMapDB(DBHandle handle, AddressMapDB addrMap, int openMode, boolean isBigEndian,
-			Lock lock) {
+	MemoryMapDB(DBHandle handle, AddressMapDB addrMap, boolean isBigEndian, Lock lock) {
 		this.addrMap = addrMap;
 		this.lock = lock;
 		defaultEndian = isBigEndian ? BIG_ENDIAN : LITTLE_ENDIAN;
@@ -271,9 +271,9 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	@Override
-	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
+	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		if (openMode == DBConstants.UPGRADE) {
+		if (openMode == OpenMode.UPGRADE) {
 			// Ensure that the key has been generated for the end address of each block
 			// This will allow undefined data to be returned for all address contained
 			// within any 32-bit block (see CodeManager handling of AddressMap.INVALID_ADDRESS_KEY).

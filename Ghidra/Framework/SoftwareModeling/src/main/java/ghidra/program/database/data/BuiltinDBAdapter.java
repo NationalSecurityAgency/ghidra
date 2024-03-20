@@ -18,6 +18,7 @@ package ghidra.program.database.data;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.exception.VersionException;
 
 /**
@@ -39,9 +40,9 @@ public abstract class BuiltinDBAdapter {
 	 * @throws VersionException if the database handle's version doesn't match the expected version.
 	 * @throws IOException if there was a problem accessing the database
 	 */
-	static BuiltinDBAdapter getAdapter(DBHandle handle, int openMode, String tablePrefix)
+	static BuiltinDBAdapter getAdapter(DBHandle handle, OpenMode openMode, String tablePrefix)
 			throws VersionException, IOException {
-		return new BuiltinDBAdapterV0(handle, tablePrefix, openMode == DBConstants.CREATE);
+		return new BuiltinDBAdapterV0(handle, tablePrefix, openMode == OpenMode.CREATE);
 	}
 
 	/**

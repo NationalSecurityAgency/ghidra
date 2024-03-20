@@ -28,6 +28,7 @@ import ghidra.feature.vt.api.impl.*;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.util.VTSessionFileUtil;
 import ghidra.framework.data.DomainObjectAdapterDB;
+import ghidra.framework.data.OpenMode;
 import ghidra.framework.model.*;
 import ghidra.framework.model.TransactionInfo.Status;
 import ghidra.framework.options.Options;

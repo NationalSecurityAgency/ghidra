@@ -20,6 +20,7 @@ import java.util.NoSuchElementException;
 
 import db.*;
 import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.map.*;
 import ghidra.program.database.util.DatabaseTableUtils;
 import ghidra.program.model.address.*;
@@ -91,13 +92,22 @@ public abstract class PropertyMapDB<T> implements PropertyMap<T> {
 		}
 	}
 
-	void checkMapVersion(int openMode, TaskMonitor monitor)
+	/**
+	 * Check if a table upgrade should be performed or a version error thrown.
+	 * @param openMode the mode that the program was openned in or null if instantiated during
+	 * cache invalidate.  Used to detect versioning error only.
+	 * @param monitor task monitor
+	 * @throws VersionException if the database version is not the expected version.
+	 * @throws CancelledException if the user cancels the upgrade operation.
+	 * @throws IOException if an IO error occurs
+	 */
+	void checkMapVersion(OpenMode openMode, TaskMonitor monitor)
 			throws VersionException, CancelledException, IOException {
 		if (propertyTable != null && addrMap.isUpgraded()) {
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				upgradeTable(monitor);
 			}
-			else if (openMode != -1) {
+			else if (openMode != null) {
 				throw new VersionException(true);
 			}
 		}

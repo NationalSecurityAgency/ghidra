@@ -21,6 +21,7 @@ import java.util.Date;
 import javax.help.UnsupportedOperationException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.data.CompositeInternal;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.VersionException;
@@ -74,10 +75,10 @@ class CompositeDBAdapterV5V6 extends CompositeDBAdapter {
 	 * for this adapter.
 	 * @throws IOException if IO error occurs
 	 */
-	CompositeDBAdapterV5V6(DBHandle handle, int openMode, String tablePrefix)
+	CompositeDBAdapterV5V6(DBHandle handle, OpenMode openMode, String tablePrefix)
 			throws VersionException, IOException {
 		String tableName = tablePrefix + COMPOSITE_TABLE_NAME;
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			compositeTable = handle.createTable(tableName, V5V6_COMPOSITE_SCHEMA,
 				new int[] { V5V6_COMPOSITE_CAT_COL, V5V6_COMPOSITE_UNIVERSAL_DT_ID_COL });
 		}
@@ -88,7 +89,7 @@ class CompositeDBAdapterV5V6 extends CompositeDBAdapter {
 			}
 			int version = compositeTable.getSchema().getVersion();
 			if (version != VERSION) {
-				if (version == V5_VERSION && openMode == DBConstants.READ_ONLY) {
+				if (version == V5_VERSION && openMode == OpenMode.IMMUTABLE) {
 					return; // StructureDB handles read-only flex-array migration
 				}
 				throw new VersionException(version < VERSION);
@@ -96,6 +97,7 @@ class CompositeDBAdapterV5V6 extends CompositeDBAdapter {
 		}
 	}
 
+	@Override
 	int getVersion() {
 		return compositeTable.getSchema().getVersion();
 	}

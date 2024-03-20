@@ -27,6 +27,7 @@ import ghidra.feature.vt.api.impl.MarkupItemStorage;
 import ghidra.feature.vt.api.main.VTSession;
 import ghidra.feature.vt.api.markuptype.VTMarkupTypeFactory;
 import ghidra.feature.vt.api.util.Stringable;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;

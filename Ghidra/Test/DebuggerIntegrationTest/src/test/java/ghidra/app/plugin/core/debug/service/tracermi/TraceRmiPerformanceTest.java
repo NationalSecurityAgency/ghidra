@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.service.tracermi;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.io.*;
 import java.net.*;
@@ -36,6 +36,7 @@ import ghidra.app.services.TraceRmiService;
 import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.debug.api.tracermi.TraceRmiAcceptor;
 import ghidra.debug.api.tracermi.TraceRmiConnection;
+import ghidra.framework.data.OpenMode;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.rmi.trace.TraceRmi.*;
@@ -277,8 +278,7 @@ public class TraceRmiPerformanceTest extends AbstractGhidraHeadedDebuggerIntegra
 					.setRequestSetValue(RequestSetValue.newBuilder()
 							.setOid(oid)
 							.setValue(ValSpec.newBuilder()
-									.setParent(ObjSpec.newBuilder()
-											.setPath(path))
+									.setParent(ObjSpec.newBuilder().setPath(path))
 									.setKey(key)
 									.setSpan(TraceRmiHandler.makeSpan(lifespan))
 									.setValue(TraceRmiHandler.makeValue(value)))
@@ -294,9 +294,8 @@ public class TraceRmiPerformanceTest extends AbstractGhidraHeadedDebuggerIntegra
 			DomObjId oid0 = DomObjId.newBuilder().setId(0).build();
 			ObjPath path = ObjPath.newBuilder().setPath("Processes[0].Memory[" + key + "]").build();
 			RootMessage msgCreate = RootMessage.newBuilder()
-					.setRequestCreateObject(RequestCreateObject.newBuilder()
-							.setOid(oid0)
-							.setPath(path))
+					.setRequestCreateObject(
+						RequestCreateObject.newBuilder().setOid(oid0).setPath(path))
 					.build();
 			results.add(request(msgCreate).thenAccept(reply -> {
 				assertMsgCase(MsgCase.REPLY_CREATE_OBJECT, reply);
@@ -450,8 +449,7 @@ public class TraceRmiPerformanceTest extends AbstractGhidraHeadedDebuggerIntegra
 		}
 
 		@Override
-		public NerfedTraceRmiHandler doAccept(TraceRmiAcceptor acceptor)
-				throws IOException {
+		public NerfedTraceRmiHandler doAccept(TraceRmiAcceptor acceptor) throws IOException {
 			Socket client = socket.accept();
 			NerfedTraceRmiHandler handler = new NerfedTraceRmiHandler(plugin, client);
 			handler.start();
@@ -490,8 +488,7 @@ public class TraceRmiPerformanceTest extends AbstractGhidraHeadedDebuggerIntegra
 	public void testMeasurePlainTable() throws Exception {
 		DBHandle handle = new DBHandle();
 		// Some comparable number of fields to a DBTraceObjectValue
-		Schema schema = new SchemaBuilder()
-				.field("Parent", LongField.class)
+		Schema schema = new SchemaBuilder().field("Parent", LongField.class)
 				.field("EntryKey", StringField.class)
 				.field("MinSnap", LongField.class)
 				.field("MaxSnap", LongField.class)
@@ -567,7 +564,7 @@ public class TraceRmiPerformanceTest extends AbstractGhidraHeadedDebuggerIntegra
 	}
 
 	public static class TestDomainObject extends DBCachedDomainObjectAdapter {
-		protected TestDomainObject(DBHandle dbh, DBOpenMode openMode, TaskMonitor monitor,
+		protected TestDomainObject(DBHandle dbh, OpenMode openMode, TaskMonitor monitor,
 				String name, int timeInterval, int bufSize, Object consumer) {
 			super(dbh, openMode, monitor, name, timeInterval, bufSize, consumer);
 		}
@@ -588,7 +585,7 @@ public class TraceRmiPerformanceTest extends AbstractGhidraHeadedDebuggerIntegra
 	public void testMeasureObjectStore() throws Exception {
 		DBHandle handle = new DBHandle();
 		TestDomainObject domObj =
-			new TestDomainObject(handle, DBOpenMode.CREATE, monitor, "Test", 500, 1000, this);
+			new TestDomainObject(handle, OpenMode.CREATE, monitor, "Test", 500, 1000, this);
 		DBCachedObjectStoreFactory factory = new DBCachedObjectStoreFactory(domObj);
 
 		try (TimeMe tm = new TimeMe("Object Store")) {

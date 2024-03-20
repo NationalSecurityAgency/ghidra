@@ -20,6 +20,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
 import db.DBRecord;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTrace;
@@ -176,7 +177,7 @@ public class DBTraceDataSettingsAdapter
 		}
 	}
 
-	public DBTraceDataSettingsAdapter(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	public DBTraceDataSettingsAdapter(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 			DBTraceThreadManager threadManager) throws IOException, VersionException {
 		super(NAME, dbh, openMode, lock, monitor, baseLanguage, trace, threadManager,
@@ -184,17 +185,16 @@ public class DBTraceDataSettingsAdapter
 	}
 
 	@Override
-	protected DBTraceDataSettingsSpace createSpace(
-			AddressSpace space, DBTraceSpaceEntry ent) throws VersionException, IOException {
+	protected DBTraceDataSettingsSpace createSpace(AddressSpace space, DBTraceSpaceEntry ent)
+			throws VersionException, IOException {
 		return new DBTraceDataSettingsSpace(
 			tableName(space, ent.getThreadKey(), ent.getFrameLevel()), trace.getStoreFactory(),
 			lock, space, null, 0, dataType, dataFactory);
 	}
 
 	@Override
-	protected DBTraceDataSettingsSpace createRegisterSpace(
-			AddressSpace space, TraceThread thread, DBTraceSpaceEntry ent)
-			throws VersionException, IOException {
+	protected DBTraceDataSettingsSpace createRegisterSpace(AddressSpace space, TraceThread thread,
+			DBTraceSpaceEntry ent) throws VersionException, IOException {
 		return new DBTraceDataSettingsSpace(
 			tableName(space, ent.getThreadKey(), ent.getFrameLevel()), trace.getStoreFactory(),
 			lock, space, thread, ent.getFrameLevel(), dataType, dataFactory);
@@ -206,8 +206,7 @@ public class DBTraceDataSettingsAdapter
 	}
 
 	@Override
-	public DBTraceDataSettingsSpace getRegisterSpace(TraceThread thread,
-			boolean createIfAbsent) {
+	public DBTraceDataSettingsSpace getRegisterSpace(TraceThread thread, boolean createIfAbsent) {
 		return (DBTraceDataSettingsSpace) super.getRegisterSpace(thread, createIfAbsent);
 	}
 

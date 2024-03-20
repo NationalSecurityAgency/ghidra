@@ -22,6 +22,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
 import db.Transaction;
+import ghidra.framework.data.OpenMode;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.database.data.ProgramBasedDataTypeManagerDB;
 import ghidra.program.model.address.Address;
@@ -33,7 +34,6 @@ import ghidra.trace.database.DBTraceManager;
 import ghidra.trace.model.data.TraceBasedDataTypeManager;
 import ghidra.util.InvalidNameException;
 import ghidra.util.UniversalID;
-import ghidra.util.database.DBOpenMode;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -46,11 +46,10 @@ public class DBTraceDataTypeManager extends ProgramBasedDataTypeManagerDB
 
 	private static final String INSTANCE_TABLE_PREFIX = null; // placeholder only
 
-	public DBTraceDataTypeManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	public DBTraceDataTypeManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, DBTrace trace)
 			throws CancelledException, VersionException, IOException {
-		super(dbh, null, openMode.toInteger(), INSTANCE_TABLE_PREFIX, trace, trace.getLock(),
-			monitor);
+		super(dbh, null, openMode, INSTANCE_TABLE_PREFIX, trace, trace.getLock(), monitor);
 		this.lock = lock; // TODO: nothing uses this local lock - not sure what its purpose is
 		this.trace = trace;
 
@@ -72,7 +71,7 @@ public class DBTraceDataTypeManager extends ProgramBasedDataTypeManagerDB
 			}
 		}, null, false, monitor);
 
-		if (openMode == DBOpenMode.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			saveDataOrganization();
 		}
 	}

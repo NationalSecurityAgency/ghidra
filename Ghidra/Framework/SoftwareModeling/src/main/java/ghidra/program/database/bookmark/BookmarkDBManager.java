@@ -26,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import db.*;
 import db.util.ErrorHandler;
 import generic.util.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.*;
 import ghidra.program.database.map.AddressIndexPrimaryKeyIterator;
 import ghidra.program.database.map.AddressMap;
@@ -65,11 +66,11 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 	 * schema
 	 * @throws IOException if there is a problem accessing the database.
 	 */
-	public BookmarkDBManager(DBHandle handle, AddressMap addrMap, int openMode, Lock lock,
+	public BookmarkDBManager(DBHandle handle, AddressMap addrMap, OpenMode openMode, Lock lock,
 			TaskMonitor monitor) throws VersionException, IOException {
 		this.addrMap = addrMap;
 		this.lock = lock;
-		upgrade = (openMode == DBConstants.UPGRADE);
+		upgrade = (openMode == OpenMode.UPGRADE);
 		bookmarkTypeAdapter = BookmarkTypeDBAdapter.getAdapter(handle, openMode);
 		int[] types = bookmarkTypeAdapter.getTypeIds();
 		bookmarkAdapter = BookmarkDBAdapter.getAdapter(handle, openMode, types, addrMap, monitor);
@@ -112,7 +113,7 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 	}
 
 	@Override
-	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
+	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		// Nothing to do
 	}

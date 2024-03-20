@@ -25,6 +25,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.junit.*;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.LanguageID;
@@ -42,7 +43,7 @@ public class DBTraceAddressSnapRangePropertyMapOcclusionIntoPastIterableTest
 		extends AbstractGhidraHeadlessIntegrationTest {
 	protected static class MyObject extends DBCachedDomainObjectAdapter {
 		protected MyObject(Object consumer) throws IOException {
-			super(new DBHandle(), DBOpenMode.CREATE, new ConsoleTaskMonitor(), "Testing", 500, 1000,
+			super(new DBHandle(), OpenMode.CREATE, new ConsoleTaskMonitor(), "Testing", 500, 1000,
 				consumer);
 		}
 
@@ -152,8 +153,7 @@ public class DBTraceAddressSnapRangePropertyMapOcclusionIntoPastIterableTest
 	@Before
 	public void setUp() throws IOException, VersionException {
 		toy = DefaultLanguageService.getLanguageService()
-				.getLanguage(
-					new LanguageID("Toy:BE:64:default"));
+				.getLanguage(new LanguageID("Toy:BE:64:default"));
 		obj = new MyObject(this);
 		factory = new DBCachedObjectStoreFactory(obj);
 		try (Transaction tid = obj.openTransaction("CreateTable")) {

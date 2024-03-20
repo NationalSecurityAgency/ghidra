@@ -33,6 +33,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.junit.*;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.UniversalIdGenerator;
 import ghidra.util.database.DirectedIterator.Direction;
 import ghidra.util.database.annot.*;
@@ -67,7 +68,7 @@ public class DBCachedObjectStoreTest {
 
 		protected MyDomainObject(String name, int timeInterval, int bufSize, Object consumer)
 				throws VersionException, IOException {
-			super(new DBHandle(), DBOpenMode.CREATE, new ConsoleTaskMonitor(), name, timeInterval,
+			super(new DBHandle(), OpenMode.CREATE, new ConsoleTaskMonitor(), name, timeInterval,
 				bufSize, consumer);
 			this.storeFactory = new DBCachedObjectStoreFactory(this);
 			try (Transaction tx = dbh.openTransaction(this)) {
@@ -76,7 +77,7 @@ public class DBCachedObjectStoreTest {
 			}
 		}
 
-		protected MyDomainObject(DBHandle handle, DBOpenMode openMode, TaskMonitor monitor,
+		protected MyDomainObject(DBHandle handle, OpenMode openMode, TaskMonitor monitor,
 				int timeInterval, int bufSize, Object consumer)
 				throws VersionException, IOException {
 			super(handle, openMode, monitor, null, timeInterval, bufSize, consumer);
@@ -311,8 +312,8 @@ public class DBCachedObjectStoreTest {
 		DBHandle opened = new DBHandle(tmp.toFile());
 		MyDomainObject restored = null;
 		try {
-			restored = new MyDomainObject(opened, DBOpenMode.READ_ONLY, new ConsoleTaskMonitor(),
-				500, 1000, this);
+			restored = new MyDomainObject(opened, OpenMode.IMMUTABLE, new ConsoleTaskMonitor(), 500,
+				1000, this);
 			MyObject rObj = restored.store.getObjectAt(0x1234);
 			assertEquals(0x811, rObj.f1);
 			assertEquals(0x812, rObj.f2);
@@ -1941,15 +1942,15 @@ public class DBCachedObjectStoreTest {
 					.map(Entry::getKey)
 					.collect(Collectors.toList());
 		assertEquals(List.of(-3L, -1L, 1L, 3L), list);
-		list = ((List<Entry<Long, ?>>) (List) Arrays.asList(entrySet.toArray(new Entry[4])))
-				.stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList());
+		list =
+			((List<Entry<Long, ?>>) (List) Arrays.asList(entrySet.toArray(new Entry[4]))).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList());
 		assertEquals(List.of(-3L, -1L, 1L, 3L), list);
-		list = ((List<Entry<Long, ?>>) (List) Arrays.asList(entrySet.toArray(new Entry[5])))
-				.stream()
-				.map(nullable(Entry::getKey))
-				.collect(Collectors.toList());
+		list =
+			((List<Entry<Long, ?>>) (List) Arrays.asList(entrySet.toArray(new Entry[5]))).stream()
+					.map(nullable(Entry::getKey))
+					.collect(Collectors.toList());
 		assertEquals(Arrays.asList(new Long[] { -3L, -1L, 1L, 3L, null }), list);
 
 		List<Long> rList =
@@ -1957,15 +1958,15 @@ public class DBCachedObjectStoreTest {
 					.map(Entry::getKey)
 					.collect(Collectors.toList());
 		assertEquals(List.of(3L, 1L, -1L, -3L), rList);
-		rList = ((List<Entry<Long, ?>>) (List) Arrays.asList(rEntrySet.toArray(new Entry[4])))
-				.stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList());
+		rList =
+			((List<Entry<Long, ?>>) (List) Arrays.asList(rEntrySet.toArray(new Entry[4]))).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList());
 		assertEquals(List.of(3L, 1L, -1L, -3L), rList);
-		rList = ((List<Entry<Long, ?>>) (List) Arrays.asList(rEntrySet.toArray(new Entry[5])))
-				.stream()
-				.map(nullable(Entry::getKey))
-				.collect(Collectors.toList());
+		rList =
+			((List<Entry<Long, ?>>) (List) Arrays.asList(rEntrySet.toArray(new Entry[5]))).stream()
+					.map(nullable(Entry::getKey))
+					.collect(Collectors.toList());
 		assertEquals(Arrays.asList(new Long[] { 3L, 1L, -1L, -3L, null }), rList);
 	}
 
@@ -2083,20 +2084,21 @@ public class DBCachedObjectStoreTest {
 	public void testAsEntrySetDescendingIterator() {
 		populateStore(-3, -1, 1, 3);
 
-		assertEquals(List.of(3L, 1L, -1L, -3L), IteratorUtils.toList(entrySet.descendingIterator())
-				.stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
-		assertEquals(List.of(-3L, -1L, 1L, 3L), IteratorUtils.toList(rEntrySet.descendingIterator())
-				.stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
+		assertEquals(List.of(3L, 1L, -1L, -3L),
+			IteratorUtils.toList(entrySet.descendingIterator())
+					.stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
+		assertEquals(List.of(-3L, -1L, 1L, 3L),
+			IteratorUtils.toList(rEntrySet.descendingIterator())
+					.stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
 	}
 
 	@Test
 	public void testAsEntrySetSubSet() {
-		assertEquals(map.subMap(1L, 2L).keySet().keySpan,
-			entrySet.subSet(ent(1), ent(2)).keySpan);
+		assertEquals(map.subMap(1L, 2L).keySet().keySpan, entrySet.subSet(ent(1), ent(2)).keySpan);
 		assertEquals(rMap.subMap(2L, 1L).keySet().keySpan,
 			rEntrySet.subSet(ent(2), ent(1)).keySpan);
 		assertEquals(map.subMap(1L, 2L).keySet().direction,
@@ -2123,10 +2125,10 @@ public class DBCachedObjectStoreTest {
 			new ArrayList<>(rEntrySet.subSet(ent(3), false, ent(-3), true)).stream()
 					.map(Entry::getKey)
 					.collect(Collectors.toList()));
-		assertEquals(List.of(-3L, -1L, 1L), new ArrayList<>(entrySet.subSet(ent(-3), ent(3)))
-				.stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
+		assertEquals(List.of(-3L, -1L, 1L),
+			new ArrayList<>(entrySet.subSet(ent(-3), ent(3))).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
 
 		assertEquals(List.of(-1L, 1L, 3L),
 			new ArrayList<>(entrySet.subSet(ent(-3), false, ent(3), true)).stream()
@@ -2136,10 +2138,10 @@ public class DBCachedObjectStoreTest {
 			new ArrayList<>(rEntrySet.subSet(ent(3), true, ent(-3), false)).stream()
 					.map(Entry::getKey)
 					.collect(Collectors.toList()));
-		assertEquals(List.of(3L, 1L, -1L), new ArrayList<>(rEntrySet.subSet(ent(3), ent(-3)))
-				.stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
+		assertEquals(List.of(3L, 1L, -1L),
+			new ArrayList<>(rEntrySet.subSet(ent(3), ent(-3))).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
 
 		assertEquals(List.of(-3L, -1L, 1L, 3L),
 			new ArrayList<>(entrySet.subSet(ent(-3), true, ent(3), true)).stream()
@@ -2160,27 +2162,32 @@ public class DBCachedObjectStoreTest {
 
 		populateStore(-5, -3, -1, 1, 3, 5);
 
-		assertEquals(List.of(-5L, -3L), new ArrayList<>(entrySet.headSet(ent(-1), false)).stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
-		assertEquals(List.of(5L, 3L), new ArrayList<>(rEntrySet.headSet(ent(1), false)).stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
+		assertEquals(List.of(-5L, -3L),
+			new ArrayList<>(entrySet.headSet(ent(-1), false)).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
+		assertEquals(List.of(5L, 3L),
+			new ArrayList<>(rEntrySet.headSet(ent(1), false)).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
 
-		assertEquals(List.of(-5L, -3L, -1L), new ArrayList<>(entrySet.headSet(ent(-1), true))
-				.stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
-		assertEquals(List.of(5L, 3L, 1L), new ArrayList<>(rEntrySet.headSet(ent(1), true)).stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
+		assertEquals(List.of(-5L, -3L, -1L),
+			new ArrayList<>(entrySet.headSet(ent(-1), true)).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
+		assertEquals(List.of(5L, 3L, 1L),
+			new ArrayList<>(rEntrySet.headSet(ent(1), true)).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
 
-		assertEquals(List.of(-5L, -3L), new ArrayList<>(entrySet.headSet(ent(-1))).stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
-		assertEquals(List.of(5L, 3L), new ArrayList<>(rEntrySet.headSet(ent(1))).stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
+		assertEquals(List.of(-5L, -3L),
+			new ArrayList<>(entrySet.headSet(ent(-1))).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
+		assertEquals(List.of(5L, 3L),
+			new ArrayList<>(rEntrySet.headSet(ent(1))).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
 	}
 
 	@Test
@@ -2192,27 +2199,32 @@ public class DBCachedObjectStoreTest {
 
 		populateStore(-5, -3, -1, 1, 3, 5);
 
-		assertEquals(List.of(3L, 5L), new ArrayList<>(entrySet.tailSet(ent(1), false)).stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
-		assertEquals(List.of(-3L, -5L), new ArrayList<>(rEntrySet.tailSet(ent(-1), false)).stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
+		assertEquals(List.of(3L, 5L),
+			new ArrayList<>(entrySet.tailSet(ent(1), false)).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
+		assertEquals(List.of(-3L, -5L),
+			new ArrayList<>(rEntrySet.tailSet(ent(-1), false)).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
 
-		assertEquals(List.of(1L, 3L, 5L), new ArrayList<>(entrySet.tailSet(ent(1), true)).stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
-		assertEquals(List.of(-1L, -3L, -5L), new ArrayList<>(rEntrySet.tailSet(ent(-1), true))
-				.stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
+		assertEquals(List.of(1L, 3L, 5L),
+			new ArrayList<>(entrySet.tailSet(ent(1), true)).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
+		assertEquals(List.of(-1L, -3L, -5L),
+			new ArrayList<>(rEntrySet.tailSet(ent(-1), true)).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
 
-		assertEquals(List.of(1L, 3L, 5L), new ArrayList<>(entrySet.tailSet(ent(1))).stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
-		assertEquals(List.of(-1L, -3L, -5L), new ArrayList<>(rEntrySet.tailSet(ent(-1))).stream()
-				.map(Entry::getKey)
-				.collect(Collectors.toList()));
+		assertEquals(List.of(1L, 3L, 5L),
+			new ArrayList<>(entrySet.tailSet(ent(1))).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
+		assertEquals(List.of(-1L, -3L, -5L),
+			new ArrayList<>(rEntrySet.tailSet(ent(-1))).stream()
+					.map(Entry::getKey)
+					.collect(Collectors.toList()));
 	}
 
 	@Test
