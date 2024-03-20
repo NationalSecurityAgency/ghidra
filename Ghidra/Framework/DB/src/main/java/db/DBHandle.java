@@ -18,7 +18,6 @@ package db;
 import java.io.File;
 import java.io.IOException;
 import java.util.Hashtable;
-import java.util.Iterator;
 
 import db.buffers.*;
 import db.util.ErrorHandler;
@@ -439,8 +438,7 @@ public class DBHandle {
 	 * @throws IllegalStateException if transaction is already active or this {@link DBHandle} has 
 	 * already been closed.
 	 */
-	public Transaction openTransaction(ErrorHandler errorHandler)
-			throws IllegalStateException {
+	public Transaction openTransaction(ErrorHandler errorHandler) throws IllegalStateException {
 		return new Transaction() {
 
 			long txId = startTransaction();
@@ -540,6 +538,33 @@ public class DBHandle {
 	 */
 	public synchronized boolean hasUncommittedChanges() {
 		return (bufferMgr != null && !bufferMgr.atCheckpoint());
+	}
+
+	/**
+	 * Set the DB source buffer file with a newer local buffer file version.
+	 * Intended for use following a merge or commit operation only where a local checkout has been
+	 * retained.
+	 * @param versionedSourceBufferFile updated local DB source buffer file opened for versioning 
+	 * update (NOTE: file itself is read-only).  File must be an instance of 
+	 * {@link LocalManagedBufferFile}.
+	 * @throws IOException if an IO error occurs
+	 */
+	public void setDBVersionedSourceFile(BufferFile versionedSourceBufferFile) throws IOException {
+		if (!(versionedSourceBufferFile instanceof LocalManagedBufferFile bf) ||
+			!versionedSourceBufferFile.isReadOnly()) {
+			throw new IllegalArgumentException(
+				"Requires local versioned buffer file opened for versioning update");
+		}
+		synchronized (this) {
+			if (isTransactionActive()) {
+				throw new IOException("transaction is active");
+			}
+			bufferMgr.clearRecoveryFiles();
+			bufferMgr.setDBVersionedSourceFile(bf);
+			++checkpointNum;
+			reloadTables();
+		}
+		notifyDbRestored();
 	}
 
 	/**
@@ -1022,10 +1047,9 @@ public class DBHandle {
 	public Table[] getTables() {
 		Table[] t = new Table[tables.size()];
 
-		Iterator<Table> it = tables.values().iterator();
 		int i = 0;
-		while (it.hasNext()) {
-			t[i++] = it.next();
+		for (Table element : tables.values()) {
+			t[i++] = element;
 		}
 		return t;
 	}
@@ -1050,8 +1074,7 @@ public class DBHandle {
 	 * @return new table instance
 	 * @throws IOException if IO error occurs during table creation
 	 */
-	public Table createTable(String name, Schema schema, int[] indexedColumns)
-			throws IOException {
+	public Table createTable(String name, Schema schema, int[] indexedColumns) throws IOException {
 		Table table;
 		synchronized (this) {
 			if (tables.containsKey(name)) {

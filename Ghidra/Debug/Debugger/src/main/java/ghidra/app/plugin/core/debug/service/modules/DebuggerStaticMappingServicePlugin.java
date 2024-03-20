@@ -32,7 +32,8 @@ import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingProposals.ModuleMapProposalGenerator;
-import ghidra.app.plugin.core.debug.utils.*;
+import ghidra.app.plugin.core.debug.utils.ProgramLocationUtils;
+import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
 import ghidra.app.services.*;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
@@ -60,6 +61,7 @@ import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
+//@formatter:off
 @PluginInfo(
 	shortDescription = "Debugger static mapping manager",
 	description = "Track and manage static mappings (program-trace relocations)",
@@ -70,8 +72,9 @@ import ghidra.util.task.TaskMonitor;
 		TraceOpenedPluginEvent.class, TraceClosedPluginEvent.class, },
 	servicesRequired = { ProgramManager.class, DebuggerTraceManagerService.class, },
 	servicesProvided = { DebuggerStaticMappingService.class, })
+//@formatter:on
 public class DebuggerStaticMappingServicePlugin extends Plugin
-		implements DebuggerStaticMappingService, DomainFolderChangeAdapter {
+		implements DebuggerStaticMappingService, DomainFolderChangeListener {
 
 	protected class MappingEntry {
 		private final TraceStaticMapping mapping;

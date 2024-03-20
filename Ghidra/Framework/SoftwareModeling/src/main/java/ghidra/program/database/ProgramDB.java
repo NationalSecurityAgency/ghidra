@@ -1843,12 +1843,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	}
 
 	@Override
-	public void invalidate() {
-		clearCache(false);
-		fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.RESTORED));
-	}
-
-	@Override
 	public boolean isChangeable() {
 		return changeable;
 	}

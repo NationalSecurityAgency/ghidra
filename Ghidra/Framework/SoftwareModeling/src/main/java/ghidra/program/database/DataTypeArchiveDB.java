@@ -509,9 +509,6 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#invalidate()
-	 */
 	@Override
 	public void invalidate() {
 		clearCache(false);

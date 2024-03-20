@@ -20,14 +20,13 @@ import java.io.IOException;
 import javax.swing.Icon;
 
 import db.*;
-import db.buffers.BufferFile;
-import db.buffers.ManagedBufferFile;
+import db.buffers.*;
 import generic.theme.GIcon;
-import ghidra.framework.data.DBWithUserDataContentHandler;
-import ghidra.framework.data.DomainObjectMergeManager;
+import ghidra.framework.data.*;
 import ghidra.framework.model.ChangeSet;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.*;
+import ghidra.framework.store.local.LocalDatabaseItem;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -58,8 +57,7 @@ public class ProgramContentHandler extends DBWithUserDataContentHandler<ProgramD
 		if (!(obj instanceof ProgramDB)) {
 			throw new IOException("Unsupported domain object: " + obj.getClass().getName());
 		}
-		return createFile((ProgramDB) obj, PROGRAM_CONTENT_TYPE, fs, path, name,
-			monitor);
+		return createFile((ProgramDB) obj, PROGRAM_CONTENT_TYPE, fs, path, name, monitor);
 	}
 
 	@Override
@@ -361,6 +359,23 @@ public class ProgramContentHandler extends DBWithUserDataContentHandler<ProgramD
 	@Override
 	public ProgramLinkContentHandler getLinkHandler() {
 		return linkHandler;
+	}
+
+	@Override
+	public boolean canResetDBSourceFile() {
+		return true;
+	}
+
+	@Override
+	public void resetDBSourceFile(FolderItem item, DomainObjectAdapterDB domainObj)
+			throws IOException {
+		if (!(item instanceof LocalDatabaseItem dbItem) ||
+			!(domainObj instanceof ProgramDB program)) {
+			throw new IllegalArgumentException("LocalDatabaseItem and ProgramDB required");
+		}
+		LocalManagedBufferFile bf = dbItem.openForUpdate(FolderItem.DEFAULT_CHECKOUT_ID);
+		program.getDBHandle().setDBVersionedSourceFile(bf);
+		getProgramChangeSet(program, bf);
 	}
 
 }

@@ -21,14 +21,13 @@ import javax.swing.Icon;
 
 import db.DBConstants;
 import db.DBHandle;
-import db.buffers.BufferFile;
-import db.buffers.ManagedBufferFile;
+import db.buffers.*;
 import generic.theme.GIcon;
-import ghidra.framework.data.DBContentHandler;
-import ghidra.framework.data.DomainObjectMergeManager;
+import ghidra.framework.data.*;
 import ghidra.framework.model.ChangeSet;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.*;
+import ghidra.framework.store.local.LocalDatabaseItem;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -369,6 +368,23 @@ public class DataTypeArchiveContentHandler extends DBContentHandler<DataTypeArch
 	@Override
 	public DataTypeArchiveLinkContentHandler getLinkHandler() {
 		return linkHandler;
+	}
+
+	@Override
+	public boolean canResetDBSourceFile() {
+		return true;
+	}
+
+	@Override
+	public void resetDBSourceFile(FolderItem item, DomainObjectAdapterDB domainObj)
+			throws IOException {
+		if (!(item instanceof LocalDatabaseItem dbItem) ||
+			!(domainObj instanceof DataTypeArchiveDB dataTypeArchive)) {
+			throw new IllegalArgumentException("LocalDatabaseItem and DataTypeArchiveDB required");
+		}
+		LocalManagedBufferFile bf = dbItem.openForUpdate(FolderItem.DEFAULT_CHECKOUT_ID);
+		dataTypeArchive.getDBHandle().setDBVersionedSourceFile(bf);
+		getDataTypeArchiveChangeSet(dataTypeArchive, bf);
 	}
 
 }

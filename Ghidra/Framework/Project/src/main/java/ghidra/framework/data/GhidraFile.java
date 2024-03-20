@@ -382,10 +382,11 @@ public class GhidraFile implements DomainFile {
 	@Override
 	public boolean canAddToRepository() {
 		try {
-			return getFileData().canAddToRepository();
+			getFileData().checkCanAddToRepository();
+			return true;
 		}
 		catch (IOException e) {
-			fileError(e);
+			// ignore
 		}
 		return false;
 	}
@@ -473,10 +474,9 @@ public class GhidraFile implements DomainFile {
 	}
 
 	@Override
-	public void checkin(CheckinHandler checkinHandler, boolean okToUpgrade, TaskMonitor monitor)
+	public void checkin(CheckinHandler checkinHandler, TaskMonitor monitor)
 			throws IOException, VersionException, CancelledException {
-		getFileData().checkin(checkinHandler, okToUpgrade,
-			monitor != null ? monitor : TaskMonitor.DUMMY);
+		getFileData().checkin(checkinHandler, monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override

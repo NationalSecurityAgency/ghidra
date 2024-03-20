@@ -1640,22 +1640,6 @@ public class DataTypeManagerHandler {
 		}
 
 		@Override
-		public void domainFileObjectReplaced(DomainFile file, DomainObject oldObject) {
-			if (oldObject instanceof DataTypeArchiveDB) {
-				for (Archive archive : openArchives) {
-					if (archive instanceof ProjectArchive) {
-						ProjectArchive projectArchive = (ProjectArchive) archive;
-						DomainObject domainObject = projectArchive.getDomainObject();
-						if (domainObject == oldObject) {
-							replaceArchiveWithFile(projectArchive, file);
-							return;
-						}
-					}
-				}
-			}
-		}
-
-		@Override
 		public void domainFileRenamed(DomainFile file, String oldName) {
 			if (!DataTypeArchiveContentHandler.DATA_TYPE_ARCHIVE_CONTENT_TYPE
 					.equals(file.getContentType())) {
