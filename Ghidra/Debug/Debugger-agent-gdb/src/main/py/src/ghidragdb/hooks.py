@@ -541,18 +541,18 @@ def install_hooks():
         HOOK_STATE.mem_catchpoint.enabled = True
     else:
         breaks_before = set(gdb.breakpoints())
-        gdb.execute("""
-            catch syscall group:memory
-            commands
-            silent
-            hooks-ghidra event-memory
-            cont
-            end
-            """)
-        bpts = gdb.breakpoints()
-        # NB: this is unnecessary for gdb 11+
-        if len(bpts) > 0:
-            HOOK_STATE.mem_catchpoint = (set(bpts) - breaks_before).pop()
+        try:
+            gdb.execute("""
+                catch syscall group:memory
+                commands
+                silent
+                hooks-ghidra event-memory
+                cont
+                end
+                """)
+            HOOK_STATE.mem_catchpoint = (set(gdb.breakpoints()) - breaks_before).pop()
+        except Exception as e:
+            print(f"Error setting memory catchpoint: {e}")
 
     gdb.events.cont.connect(on_cont)
     gdb.events.stop.connect(on_stop)

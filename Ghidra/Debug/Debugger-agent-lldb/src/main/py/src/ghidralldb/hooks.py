@@ -67,8 +67,11 @@ class ProcessState(object):
             hashable_frame = (thread.GetThreadID(), frame.GetFrameID())
             if first or hashable_frame not in self.visited:
                 banks = frame.GetRegisters()
-                commands.putreg(frame, banks.GetFirstValueByName(
-                    commands.DEFAULT_REGISTER_BANK))
+                primary = banks.GetFirstValueByName(commands.DEFAULT_REGISTER_BANK)
+                if primary.value is None:
+                    primary = banks[0]
+                    commands.DEFAULT_REGISTER_BANK = primary.name
+                commands.putreg(frame, primary)
                 commands.putmem("$pc", "1", result=None)
                 commands.putmem("$sp", "1", result=None)
                 self.visited.add(hashable_frame)
@@ -473,7 +476,7 @@ def on_cont(event):
 
 
 def on_stop(event):
-    proc = lldb.SBProcess.GetProcessFromEvent(event)
+    proc = lldb.SBProcess.GetProcessFromEvent(event) if event is not None else util.get_process()
     if proc.GetProcessID() not in PROC_STATE:
         print("not in state")
         return

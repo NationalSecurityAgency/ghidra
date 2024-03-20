@@ -1524,7 +1524,7 @@ def ghidra_trace_sync_synth_stopped(*, is_mi, **kwargs):
     """
 
     hooks.on_stop(object())  # Pass a fake event
-
+    
 
 @cmd('ghidra util wait-stopped', '-ghidra-util-wait-stopped', gdb.COMMAND_NONE, False)
 def ghidra_util_wait_stopped(timeout='1', *, is_mi, **kwargs):

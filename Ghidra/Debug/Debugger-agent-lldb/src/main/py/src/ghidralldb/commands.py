@@ -221,6 +221,8 @@ elif lldb.debugger:
     lldb.debugger.HandleCommand(
         'command script add -f ghidralldb.commands.ghidra_trace_sync_disable    ghidra trace sync-disable')
     lldb.debugger.HandleCommand(
+        'command script add -f ghidralldb.commands.ghidra_trace_sync_synth_stopped    ghidra trace sync-synth-stopped')
+    lldb.debugger.HandleCommand(
         'command script add -f ghidralldb.commands.ghidra_util_mark             _mark_')
     #lldb.debugger.HandleCommand('target stop-hook add -P ghidralldb.hooks.StopHook')
     lldb.debugger.SetAsync(True)
@@ -1580,6 +1582,18 @@ def ghidra_trace_sync_disable(debugger, command, result, internal_dict):
 
     hooks.disable_current_process()
 
+
+@convert_errors
+def ghidra_trace_sync_synth_stopped(debugger, command, result, internal_dict):
+    """
+    Act as though the target has just stopped.
+
+    This may need to be invoked immediately after 'ghidra trace sync-enable',
+    to ensure the first snapshot displays the initial/current target state.
+    """
+
+    hooks.on_stop(None)  # Pass a fake event
+    
 
 @convert_errors
 def ghidra_util_wait_stopped(debugger, command, result, internal_dict):

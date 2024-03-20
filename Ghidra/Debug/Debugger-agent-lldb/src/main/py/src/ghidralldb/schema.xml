@@ -426,6 +426,9 @@
 		<attribute name="Floating Point Registers" schema="RegisterBank" />
 		<attribute name="Advanced Vector Extensions" schema="RegisterBank" />
 		<attribute name="Memory Protection Extensions" schema="RegisterBank" />
+		<attribute name="float" schema="RegisterBank" />
+		<attribute name="general" schema="RegisterBank" />
+		<attribute name="system" schema="RegisterBank" />
 		<attribute name="_descriptions" schema="RegisterValueContainer" />
 		<attribute name="_value" schema="ANY" hidden="yes" />
 		<attribute name="_type" schema="STRING" hidden="yes" />
