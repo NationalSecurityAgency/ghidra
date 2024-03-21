@@ -28,7 +28,6 @@ import ghidra.app.plugin.core.colorizer.ColorizingService;
 import ghidra.feature.vt.api.db.VTAssociationDB;
 import ghidra.feature.vt.api.db.VTSessionDB;
 import ghidra.feature.vt.api.main.*;
-import ghidra.feature.vt.api.util.VTSessionFileUtil;
 import ghidra.feature.vt.gui.duallisting.VTListingContext;
 import ghidra.feature.vt.gui.provider.markuptable.VTMarkupItemContext;
 import ghidra.feature.vt.gui.task.SaveTask;
@@ -69,7 +68,6 @@ public class VTControllerImpl
 
 	private ToolOptions vtOptions;
 	private MatchInfo currentMatchInfo;
-	private MyFolderListener folderListener;
 
 	public VTControllerImpl(VTPlugin plugin) {
 		this.plugin = plugin;
@@ -77,11 +75,6 @@ public class VTControllerImpl
 		matchInfoFactory = new MatchInfoFactory();
 		vtOptions = plugin.getTool().getOptions(VERSION_TRACKING_OPTIONS_NAME);
 		vtOptions.addOptionsChangeListener(this);
-		folderListener = new MyFolderListener();
-		plugin.getTool()
-				.getProject()
-				.getProjectData()
-				.addDomainFolderChangeListener(folderListener);
 	}
 
 	@Override
@@ -762,82 +755,6 @@ public class VTControllerImpl
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
-
-	private void updateProgram(DomainFile file, boolean isSource) {
-
-		String type = isSource ? "Source" : "Destination";
-		Program newProgram;
-		try {
-			newProgram = (Program) file.getDomainObject(this, false, false, TaskMonitor.DUMMY);
-		}
-		catch (Exception e) {
-			Msg.showError(this, getParentComponent(),
-				"Error opening VT " + type + " Program: " + file, e);
-			return;
-		}
-
-		if (isSource) {
-			session.updateSourceProgram(newProgram);
-		}
-		else {
-			session.updateDestinationProgram(newProgram);
-		}
-
-//		List<DomainObjectChangeRecord> events = new ArrayList<DomainObjectChangeRecord>();
-//		events.add(new DomainObjectChangeRecord(DomainObjectEvent.RESTORED));
-//		domainObjectChanged(new DomainObjectChangedEvent(newProgram, events));
-		matchInfoFactory.clearCache();
-		fireSessionChanged();
-	}
-
-	private class MyFolderListener extends DomainFolderListenerAdapter {
-
-		@Override
-		public void domainFileObjectReplaced(DomainFile file, DomainObject oldObject) {
-
-			if (session == null) {
-				return;
-			}
-
-			if (session.getSourceProgram() == oldObject) {
-				updateProgram(file, true);
-				return;
-			}
-
-			String type;
-			if (session == oldObject) {
-				type = "VT Session";
-			}
-			else if (session.getDestinationProgram() == oldObject) {
-				if (VTSessionFileUtil.canUpdate(file)) {
-					updateProgram(file, false);
-					return;
-				}
-				type = "Destination Program";
-			}
-			else {
-				return;
-			}
-
-			// Session or destination program can no longer be saved to project so we
-			// have no choice but to close session.
-
-			// Since we are already in the Swing thread we need to delay closing so we do
-			// not continue to block the Swing thread and the checkin which is in progress.
-			// This allows the DomainFile checkin to complete its processing first.
-			SwingUtilities.invokeLater(() -> {
-
-				Msg.showInfo(this, plugin.getTool().getToolFrame(), "Closing VT Session",
-					type + " checkin has forced session close.\n" +
-						"You will be prompted to save any other changes if needed, after which\n" +
-						"you may reopen the VT Session.");
-
-				closeVersionTrackingSession();
-
-				// NOTE: a future convenience could be added to attempt reopening of session
-			});
-		}
-	}
 
 	private class OpenSessionTask extends Task {
 

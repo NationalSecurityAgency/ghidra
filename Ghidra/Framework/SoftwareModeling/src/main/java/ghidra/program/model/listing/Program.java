@@ -357,12 +357,6 @@ public interface Program extends DataTypeManagerDomainObject, ProgramArchitectur
 	public Address[] parseAddress(String addrStr, boolean caseSensitive);
 
 	/**
-	 * Invalidates any caching in a program.
-	 * NOTE: Over-using this method can adversely affect system performance.
-	 */
-	public void invalidate();
-
-	/**
 	 * Create a new overlay space based upon the given base AddressSpace
 	 * @param overlaySpaceName the name of the new overlay space.
 	 * @param baseSpace the base AddressSpace to overlay (i.e., overlayed-space)	

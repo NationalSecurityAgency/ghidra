@@ -21,12 +21,13 @@ import javax.swing.Icon;
 
 import db.DBHandle;
 import db.buffers.BufferFile;
+import db.buffers.LocalManagedBufferFile;
 import generic.theme.GIcon;
-import ghidra.framework.data.DBContentHandler;
-import ghidra.framework.data.DomainObjectMergeManager;
+import ghidra.framework.data.*;
 import ghidra.framework.model.ChangeSet;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.*;
+import ghidra.framework.store.local.LocalDatabaseItem;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
@@ -166,6 +167,22 @@ public class VTSessionContentHandler extends DBContentHandler<VTSessionDB> {
 	@Override
 	public boolean isPrivateContentType() {
 		return false;
+	}
+
+	@Override
+	public boolean canResetDBSourceFile() {
+		return true;
+	}
+
+	@Override
+	public void resetDBSourceFile(FolderItem item, DomainObjectAdapterDB domainObj)
+			throws IOException {
+		if (!(item instanceof LocalDatabaseItem dbItem) ||
+			!(domainObj instanceof VTSessionDB vtSession)) {
+			throw new IllegalArgumentException("LocalDatabaseItem and VTSessionDB required");
+		}
+		LocalManagedBufferFile bf = dbItem.openForUpdate(FolderItem.DEFAULT_CHECKOUT_ID);
+		vtSession.getDBHandle().setDBVersionedSourceFile(bf);
 	}
 
 }

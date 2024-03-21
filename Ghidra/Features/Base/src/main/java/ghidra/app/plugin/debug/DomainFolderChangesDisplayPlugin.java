@@ -133,11 +133,6 @@ public class DomainFolderChangesDisplayPlugin extends Plugin
 	}
 
 	@Override
-	public void domainFileObjectReplaced(DomainFile file, DomainObject oldObject) {
-		provider.addText("domainFileObjectReplaced: " + file.getPathname());
-	}
-
-	@Override
 	public void domainFileObjectOpenedForUpdate(DomainFile file, DomainObject object) {
 		provider.addText("domainFileObjectOpenedForUpdate: " + file.getPathname());
 	}

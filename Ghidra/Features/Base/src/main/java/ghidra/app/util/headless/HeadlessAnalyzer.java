@@ -1488,7 +1488,7 @@ public class HeadlessAnalyzer {
 					public boolean createKeepFile() throws CancelledException {
 						return false;
 					}
-				}, true, TaskMonitor.DUMMY);
+				}, TaskMonitor.DUMMY);
 				Msg.info(this, "REPORT: Committed file changes to repository: " + df.getPathname());
 			}
 			catch (IOException e) {

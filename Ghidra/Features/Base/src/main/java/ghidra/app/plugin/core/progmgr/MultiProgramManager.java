@@ -23,13 +23,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import org.jdom.Element;
-
 import ghidra.app.events.*;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.*;
-import ghidra.app.util.task.OpenProgramRequest;
-import ghidra.app.util.task.OpenProgramTask;
 import ghidra.framework.data.DomainObjectAdapterDB;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
@@ -38,7 +34,6 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
-import ghidra.util.task.TaskLauncher;
 
 /**
  * Class for tracking open programs in the tool.
@@ -49,7 +44,6 @@ class MultiProgramManager implements TransactionListener {
 	private PluginTool tool;
 	private ProgramInfo currentInfo;
 	private TransactionMonitor txMonitor;
-	private MyFolderListener folderListener;
 
 	private Runnable programChangedRunnable;
 	private boolean hasUnsavedPrograms;
@@ -72,8 +66,6 @@ class MultiProgramManager implements TransactionListener {
 		txMonitor = new TransactionMonitor();
 		txMonitor.setName("Transaction Open (Program being modified)");
 		tool.addStatusComponent(txMonitor, true, true);
-		folderListener = new MyFolderListener();
-		tool.getProject().getProjectData().addDomainFolderChangeListener(folderListener);
 
 		programChangedRunnable = () -> {
 			if (tool == null) {
@@ -111,7 +103,6 @@ class MultiProgramManager implements TransactionListener {
 	}
 
 	void dispose() {
-		tool.getProject().getProjectData().removeDomainFolderChangeListener(folderListener);
 		fireActivatedEvent(null);
 
 		for (Program p : programMap.keySet()) {
@@ -442,41 +433,6 @@ class MultiProgramManager implements TransactionListener {
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
-	private class MyFolderListener extends DomainFolderListenerAdapter {
-
-		@Override
-		public void domainFileObjectReplaced(DomainFile file, DomainObject oldObject) {
-
-			/**
-			 * Special handling for when a file is checked-in.  The existing program has be moved
-			 * to a proxy file (no longer in the project) so that it can be closed and the program
-			 * re-opened with the new version after the check-in merge.
-			 */
-
-			if (!programMap.containsKey(oldObject)) {
-				return;
-			}
-			Element dataState = null;
-			if (currentInfo != null && currentInfo.program == oldObject) {
-				// save dataState as though the project state was saved and re-opened to simulate
-				// recovering after closing the program during this swap
-				dataState = tool.saveDataStateToXml(true);
-			}
-			OpenProgramTask openTask = new OpenProgramTask(file, DomainFile.DEFAULT_VERSION, this);
-			openTask.setSilent();
-			new TaskLauncher(openTask, tool.getToolFrame());
-			OpenProgramRequest openProgramReq = openTask.getOpenProgram();
-			if (openProgramReq != null) {
-				plugin.openProgram(openProgramReq.getProgram(),
-					dataState != null ? ProgramManager.OPEN_CURRENT : ProgramManager.OPEN_VISIBLE);
-				openProgramReq.release();
-				removeProgram((Program) oldObject);
-				if (dataState != null) {
-					tool.restoreDataStateFromXml(dataState);
-				}
-			}
-		}
-	}
 
 	class ProgramInfo implements Comparable<ProgramInfo> {
 

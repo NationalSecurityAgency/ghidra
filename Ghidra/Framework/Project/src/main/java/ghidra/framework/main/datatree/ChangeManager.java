@@ -140,11 +140,6 @@ class ChangeManager implements DomainFolderChangeListener {
 		}
 	}
 
-//    @Override
-//    public void domainFileSaved(DomainFile file, DomainObject dobj) {
-//    	treePanel.getActionManager().adjustActions();	
-//    }
-
 	@Override
 	public void domainFileStatusChanged(DomainFile file, boolean fileIDset) {
 		DomainFileNode fileNode = findDomainFileNode(file, true);
@@ -152,7 +147,6 @@ class ChangeManager implements DomainFolderChangeListener {
 			fileNode.refresh();
 		}
 		treePanel.domainChange();
-//		treePanel.getActionManager().adjustActions();
 	}
 
 	private void getFolderPath(DomainFolder df, List<String> list) {
@@ -221,27 +215,4 @@ class ChangeManager implements DomainFolderChangeListener {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.framework.model.DomainFolderChangeListener#domainFileObjectReplaced(ghidra.framework.model.DomainFile, ghidra.framework.model.DomainObject)
-	 */
-	@Override
-	public void domainFileObjectReplaced(DomainFile file, DomainObject oldObject) {
-		// ignored
-	}
-
-	/*
-	 * @see ghidra.framework.model.DomainFolderChangeListener#domainFileObjectOpenedForUpdate(ghidra.framework.model.DomainFile, ghidra.framework.model.DomainObject)
-	 */
-	@Override
-	public void domainFileObjectOpenedForUpdate(DomainFile file, DomainObject object) {
-		// ignored
-	}
-
-	/*
-	 * @see ghidra.framework.model.DomainFolderChangeListener#domainFileObjectClosed(ghidra.framework.model.DomainFile, ghidra.framework.model.DomainObject)
-	 */
-	@Override
-	public void domainFileObjectClosed(DomainFile file, DomainObject object) {
-		// ignored
-	}
 }
