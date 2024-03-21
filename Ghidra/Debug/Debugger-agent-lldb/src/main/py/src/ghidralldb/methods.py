@@ -73,7 +73,7 @@ def find_proc_by_pattern(object, pattern, err_msg):
 
 
 def find_proc_by_obj(object):
-    return find_proc_by_pattern(object, PROCESS_PATTERN, "an Process")
+    return find_proc_by_pattern(object, PROCESS_PATTERN, "a Process")
 
 
 def find_proc_by_procbreak_obj(object):
