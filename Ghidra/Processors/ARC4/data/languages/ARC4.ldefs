@@ -1,0 +1,18 @@
+<!-- Copyright 2023 The Johns Hopkins University Applied Physics Laboratory LLC
+     Authors: Dan Genin and Tommy Johnson
+-->
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="ARC4"
+            endian="little"
+            size="32"
+            variant="default"
+            version="1.0"
+            slafile="ARC4_le.sla"
+            processorspec="ARC4.pspec"
+            id="ARC4:BE:32:default">
+    <description>ARC4 32 bit little-endian</description>
+    <compiler name="default" spec="ARC4.cspec" id="default"/>
+  </language>
+</language_definitions>
