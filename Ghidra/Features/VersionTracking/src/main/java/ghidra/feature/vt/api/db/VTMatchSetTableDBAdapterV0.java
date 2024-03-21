@@ -25,6 +25,7 @@ import org.jdom.output.XMLOutputter;
 
 import db.*;
 import ghidra.feature.vt.api.main.VTProgramCorrelator;
+import ghidra.framework.data.OpenMode;
 import ghidra.framework.options.ToolOptions;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.*;

@@ -84,7 +84,7 @@ public class FunctionWindowPluginTest extends AbstractGhidraHeadedIntegrationTes
 
 		int numData = functionTable.getRowCount();
 
-		CompoundCmd cmd = new CompoundCmd("Clear");
+		CompoundCmd<Program> cmd = new CompoundCmd<>("Clear");
 		FunctionIterator itr = program.getListing().getFunctions(true);
 		while (itr.hasNext()) {
 			Function f = itr.next();

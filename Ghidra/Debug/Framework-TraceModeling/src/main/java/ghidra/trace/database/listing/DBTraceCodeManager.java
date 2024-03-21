@@ -15,7 +15,7 @@
  */
 package ghidra.trace.database.listing;
 
-import static ghidra.lifecycle.Unfinished.TODO;
+import static ghidra.lifecycle.Unfinished.*;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -25,6 +25,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
 import db.DBRecord;
+import ghidra.framework.data.OpenMode;
 import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
@@ -323,7 +324,7 @@ public class DBTraceCodeManager extends AbstractDBTraceSpaceBasedManager<DBTrace
 	protected final Map<AddressSnap, UndefinedDBTraceData> undefinedCache =
 		new WeakValueHashMap<>();
 
-	public DBTraceCodeManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	public DBTraceCodeManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 			DBTraceThreadManager threadManager, DBTracePlatformManager platformManager,
 			DBTraceDataTypeManager dataTypeManager, DBTraceOverlaySpaceAdapter overlayAdapter,

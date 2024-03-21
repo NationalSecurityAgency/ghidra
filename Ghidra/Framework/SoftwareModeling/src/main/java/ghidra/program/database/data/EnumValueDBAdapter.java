@@ -24,6 +24,7 @@ package ghidra.program.database.data;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -54,20 +55,20 @@ abstract class EnumValueDBAdapter implements RecordTranslator {
 	 * @throws IOException if there is trouble accessing the database.
 	 * @throws CancelledException if task is cancelled
 	 */
-	static EnumValueDBAdapter getAdapter(DBHandle handle, int openMode, String tablePrefix,
+	static EnumValueDBAdapter getAdapter(DBHandle handle, OpenMode openMode, String tablePrefix,
 			TaskMonitor monitor) throws VersionException, IOException, CancelledException {
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			return new EnumValueDBAdapterV1(handle, tablePrefix, true);
 		}
 		try {
 			return new EnumValueDBAdapterV1(handle, tablePrefix, false);
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			EnumValueDBAdapter adapter = findReadOnlyAdapter(handle);
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = upgrade(handle, adapter, tablePrefix, monitor);
 			}
 			return adapter;

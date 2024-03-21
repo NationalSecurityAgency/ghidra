@@ -24,13 +24,13 @@ import java.util.*;
 
 import org.junit.Test;
 
-import db.Transaction;
 import db.DBHandle;
+import db.Transaction;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.memory.TraceMemoryState;
-import ghidra.util.database.DBOpenMode;
 import ghidra.util.task.ConsoleTaskMonitor;
 import ghidra.util.task.TaskMonitor;
 
@@ -683,62 +683,52 @@ public abstract class AbstractDBTraceMemoryManagerMemoryTest
 		}
 
 		try {
-			memory.findBytes(3, b.range(0x4000, 0x4003), b.buf(1, 2, 3, 4), b.buf(-1, -1, -1),
-				true, TaskMonitor.DUMMY);
+			memory.findBytes(3, b.range(0x4000, 0x4003), b.buf(1, 2, 3, 4), b.buf(-1, -1, -1), true,
+				TaskMonitor.DUMMY);
 		}
 		catch (IllegalArgumentException e) {
 			// pass
 		}
 
 		// Degenerate
-		assertNull(
-			memory.findBytes(2, b.range(0x4000, 0x4003), b.buf(), b.buf(),
-				true, TaskMonitor.DUMMY));
+		assertNull(memory.findBytes(2, b.range(0x4000, 0x4003), b.buf(), b.buf(), true,
+			TaskMonitor.DUMMY));
 
 		// Too soon
-		assertNull(
-			memory.findBytes(2, b.range(0x4000, 0x4003), b.buf(1, 2, 3, 4), b.buf(-1, -1, -1, -1),
-				true, TaskMonitor.DUMMY));
+		assertNull(memory.findBytes(2, b.range(0x4000, 0x4003), b.buf(1, 2, 3, 4),
+			b.buf(-1, -1, -1, -1), true, TaskMonitor.DUMMY));
 
 		// Too small
-		assertNull(
-			memory.findBytes(3, b.range(0x4000, 0x4002), b.buf(1, 2, 3, 4), b.buf(-1, -1, -1, -1),
-				true, TaskMonitor.DUMMY));
+		assertNull(memory.findBytes(3, b.range(0x4000, 0x4002), b.buf(1, 2, 3, 4),
+			b.buf(-1, -1, -1, -1), true, TaskMonitor.DUMMY));
 
 		// Too high
-		assertNull(
-			memory.findBytes(3, b.range(0x4001, 0x4004), b.buf(1, 2, 3, 4), b.buf(-1, -1, -1, -1),
-				true, TaskMonitor.DUMMY));
+		assertNull(memory.findBytes(3, b.range(0x4001, 0x4004), b.buf(1, 2, 3, 4),
+			b.buf(-1, -1, -1, -1), true, TaskMonitor.DUMMY));
 
 		// Too high, into unknown
-		assertNull(
-			memory.findBytes(3, b.range(0x4001, 0x4005), b.buf(1, 2, 3, 4, 5),
-				b.buf(-1, -1, -1, -1, -1), true, TaskMonitor.DUMMY));
+		assertNull(memory.findBytes(3, b.range(0x4001, 0x4005), b.buf(1, 2, 3, 4, 5),
+			b.buf(-1, -1, -1, -1, -1), true, TaskMonitor.DUMMY));
 
 		// Too low
-		assertNull(
-			memory.findBytes(3, b.range(0x3fff, 0x4002), b.buf(1, 2, 3, 4), b.buf(-1, -1, -1, -1),
-				true, TaskMonitor.DUMMY));
+		assertNull(memory.findBytes(3, b.range(0x3fff, 0x4002), b.buf(1, 2, 3, 4),
+			b.buf(-1, -1, -1, -1), true, TaskMonitor.DUMMY));
 
 		// Perfect match
-		assertEquals(b.addr(0x4000),
-			memory.findBytes(3, b.range(0x4000, 0x4003), b.buf(1, 2, 3, 4), b.buf(-1, -1, -1, -1),
-				true, TaskMonitor.DUMMY));
+		assertEquals(b.addr(0x4000), memory.findBytes(3, b.range(0x4000, 0x4003), b.buf(1, 2, 3, 4),
+			b.buf(-1, -1, -1, -1), true, TaskMonitor.DUMMY));
+
+		// Make it work for the match
+		assertEquals(b.addr(0x4000), memory.findBytes(3, b.range(0x0, -1), b.buf(1, 2, 3, 4),
+			b.buf(-1, -1, -1, -1), true, TaskMonitor.DUMMY));
 
 		// Make it work for the match
 		assertEquals(b.addr(0x4000),
-			memory.findBytes(3, b.range(0x0, -1), b.buf(1, 2, 3, 4), b.buf(-1, -1, -1, -1),
-				true, TaskMonitor.DUMMY));
-
-		// Make it work for the match
-		assertEquals(b.addr(0x4000),
-			memory.findBytes(3, b.range(0x0, -1), b.buf(1), b.buf(-1),
-				true, TaskMonitor.DUMMY));
+			memory.findBytes(3, b.range(0x0, -1), b.buf(1), b.buf(-1), true, TaskMonitor.DUMMY));
 
 		// Sub match
-		assertEquals(b.addr(0x4001),
-			memory.findBytes(3, b.range(0x4000, 0x4003), b.buf(2, 3, 4), b.buf(-1, -1, -1),
-				true, TaskMonitor.DUMMY));
+		assertEquals(b.addr(0x4001), memory.findBytes(3, b.range(0x4000, 0x4003), b.buf(2, 3, 4),
+			b.buf(-1, -1, -1), true, TaskMonitor.DUMMY));
 	}
 
 	@Test
@@ -811,7 +801,7 @@ public abstract class AbstractDBTraceMemoryManagerMemoryTest
 		DBHandle opened = new DBHandle(tmp.toFile());
 		DBTrace restored = null;
 		try {
-			restored = new DBTrace(opened, DBOpenMode.UPDATE, new ConsoleTaskMonitor(), this);
+			restored = new DBTrace(opened, OpenMode.UPDATE, new ConsoleTaskMonitor(), this);
 
 			DBTraceMemorySpace rSpace =
 				restored.getMemoryManager().getMemorySpace(b.language.getDefaultDataSpace(), true);

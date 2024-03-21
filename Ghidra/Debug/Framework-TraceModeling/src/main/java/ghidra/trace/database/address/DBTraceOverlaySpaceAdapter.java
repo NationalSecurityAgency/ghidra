@@ -23,6 +23,7 @@ import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.ProgramAddressFactory;
 import ghidra.program.database.ProgramOverlayAddressSpace;
 import ghidra.program.model.address.Address;
@@ -149,7 +150,7 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 	protected final DBCachedObjectStore<DBTraceOverlaySpaceEntry> overlayStore;
 	protected final DBCachedObjectIndex<String, DBTraceOverlaySpaceEntry> overlaysByName;
 
-	public DBTraceOverlaySpaceAdapter(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	public DBTraceOverlaySpaceAdapter(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, DBTrace trace) throws VersionException, IOException {
 		this.dbh = dbh;
 		this.lock = lock;

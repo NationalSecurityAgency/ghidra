@@ -23,7 +23,6 @@ import java.util.List;
 
 import org.junit.*;
 
-import db.DBConstants;
 import db.DBHandle;
 import generic.test.AbstractGenericTest;
 import ghidra.program.database.ProgramDB;
@@ -58,9 +57,7 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		addressFactory = language.getAddressFactory();
 		AddressMapDB addrMap = program.getAddressMap();
 		Lock lock = new Lock("Test");
-		int openMode = DBConstants.CREATE;
-		mem = new MemoryMapDB(handle, addrMap, openMode, true, lock);
-
+		mem = new MemoryMapDB(handle, addrMap, true, lock);
 		MemoryMapDBAdapter adapter =
 			new MemoryMapDBAdapterV3(handle, mem, MAX_SUB_BLOCK_SIZE, true);
 		FileBytesAdapter fileBytesAdapter = new FileBytesAdapterV0(handle, true);

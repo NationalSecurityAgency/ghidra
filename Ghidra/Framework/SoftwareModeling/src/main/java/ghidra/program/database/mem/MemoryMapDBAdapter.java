@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.util.List;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.mem.*;
@@ -75,21 +76,21 @@ abstract class MemoryMapDBAdapter {
 	static final byte SUB_TYPE_UNINITIALIZED = MemoryMapDBAdapterV3.V3_SUB_TYPE_UNINITIALIZED;
 	static final byte SUB_TYPE_FILE_BYTES = MemoryMapDBAdapterV3.V3_SUB_TYPE_FILE_BYTES;
 
-	static MemoryMapDBAdapter getAdapter(DBHandle handle, int openMode, MemoryMapDB memMap,
+	static MemoryMapDBAdapter getAdapter(DBHandle handle, OpenMode openMode, MemoryMapDB memMap,
 			TaskMonitor monitor) throws VersionException, IOException {
 
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			return new MemoryMapDBAdapterV3(handle, memMap, Memory.GBYTE, true);
 		}
 		try {
 			return new MemoryMapDBAdapterV3(handle, memMap, Memory.GBYTE, false);
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			MemoryMapDBAdapter adapter = findReadOnlyAdapter(handle, memMap);
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = upgrade(handle, adapter, memMap, monitor);
 			}
 			return adapter;

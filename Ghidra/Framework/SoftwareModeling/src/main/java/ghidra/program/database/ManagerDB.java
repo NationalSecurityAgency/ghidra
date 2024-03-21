@@ -17,6 +17,7 @@ package ghidra.program.database;
 
 import java.io.IOException;
 
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -43,7 +44,7 @@ public interface ManagerDB {
 	 * @throws IOException if a database io error occurs.
 	 * @throws CancelledException if the user cancelled the operation via the task monitor.
 	 */
-	void programReady(int openMode, int currentRevision, TaskMonitor monitor)
+	void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException;
 
 	/**

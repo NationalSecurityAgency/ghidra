@@ -18,6 +18,7 @@ package ghidra.program.database.data;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.data.Category;
 import ghidra.util.exception.VersionException;
 
@@ -34,9 +35,9 @@ abstract class CategoryDBAdapter {
 	 * @throws VersionException if the database handle's version doesn't match the expected version.
 	 * @throws IOException if there is a problem accessing the database.
 	 */
-	static CategoryDBAdapter getAdapter(DBHandle handle, int openMode, String tablePrefix)
+	static CategoryDBAdapter getAdapter(DBHandle handle, OpenMode openMode, String tablePrefix)
 			throws VersionException, IOException {
-		return new CategoryDBAdapterV0(handle, tablePrefix, openMode == DBConstants.CREATE);
+		return new CategoryDBAdapterV0(handle, tablePrefix, openMode == OpenMode.CREATE);
 	}
 
 	/**

@@ -18,8 +18,8 @@ package ghidra.program.database.data;
 import java.io.IOException;
 import java.util.Set;
 
-import db.DBConstants;
 import db.DBHandle;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.exception.VersionException;
 
 /**
@@ -41,21 +41,21 @@ abstract class ParentChildAdapter {
 	 * @throws VersionException if the database handle's version doesn't match the expected version.
 	 * @throws IOException if there is trouble accessing the database.
 	 */
-	static ParentChildAdapter getAdapter(DBHandle handle, int openMode, String tablePrefix)
+	static ParentChildAdapter getAdapter(DBHandle handle, OpenMode openMode, String tablePrefix)
 			throws VersionException, IOException {
 
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			return new ParentChildDBAdapterV0(handle, tablePrefix, true);
 		}
 		try {
 			return new ParentChildDBAdapterV0(handle, tablePrefix, false);
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			ParentChildAdapter adapter = findReadOnlyAdapter(handle);
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = upgrade(handle, adapter, tablePrefix);
 			}
 			return adapter;

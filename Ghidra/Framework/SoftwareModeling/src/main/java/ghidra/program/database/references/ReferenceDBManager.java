@@ -23,6 +23,7 @@ import org.apache.commons.collections4.map.LazySortedMap;
 
 import db.*;
 import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.*;
 import ghidra.program.database.external.ExternalManagerDB;
 import ghidra.program.database.map.AddressMap;
@@ -71,7 +72,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 	 * @throws IOException if a database io error occurs.
 	 * @throws VersionException if the database version is different from the expected version
 	 */
-	public ReferenceDBManager(DBHandle dbHandle, AddressMap addrMap, int openMode, Lock lock,
+	public ReferenceDBManager(DBHandle dbHandle, AddressMap addrMap, OpenMode openMode, Lock lock,
 			TaskMonitor monitor) throws CancelledException, IOException, VersionException {
 		this.addrMap = addrMap;
 		this.lock = lock;
@@ -87,7 +88,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		}
 		try {
 			oldStackRefAdapter = OldStackRefDBAdpater.getAdapter(dbHandle, openMode, monitor);
-			if (openMode != DBConstants.UPGRADE) {
+			if (openMode != OpenMode.UPGRADE) {
 				// Upgrade required
 				versionExc = (new VersionException(true)).combine(versionExc);
 			}
@@ -100,7 +101,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		}
 	}
 
-	private void initializeAdapters(DBHandle handle, int openMode, TaskMonitor monitor)
+	private void initializeAdapters(DBHandle handle, OpenMode openMode, TaskMonitor monitor)
 			throws VersionException, CancelledException, IOException {
 		VersionException versionExc = null;
 		try {
@@ -118,7 +119,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		if (versionExc != null) {
 			throw versionExc;
 		}
-		if (openMode == DBConstants.UPGRADE) {
+		if (openMode == OpenMode.UPGRADE) {
 			// Delete old table which is no longer used
 			handle.deleteTable("Memory References");
 		}
@@ -127,13 +128,13 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 	@Override
 	public void setProgram(ProgramDB program) {
 		this.program = program;
-		symbolMgr = (SymbolManager) program.getSymbolTable();
+		symbolMgr = program.getSymbolTable();
 	}
 
 	@Override
-	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
+	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		if (openMode == DBConstants.UPGRADE) {
+		if (openMode == OpenMode.UPGRADE) {
 
 			// Eliminate old stack references table
 			processOldAdapterStackRefs(monitor);
@@ -773,10 +774,8 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		int outOfScopeOffset = scope.getOutOfScopeOffset();
 
 		SortedMap<Address, List<Reference>> subMap = dataReferences.tailMap(minStorageAddr);
-		Iterator<List<Reference>> refListIter = subMap.values().iterator();
-		while (refListIter.hasNext()) {
+		for (List<Reference> refList : subMap.values()) {
 
-			List<Reference> refList = refListIter.next();
 			for (Reference ref : refList) {
 
 				if (ref.getToAddress().compareTo(maxStorageAddr) > 0) {

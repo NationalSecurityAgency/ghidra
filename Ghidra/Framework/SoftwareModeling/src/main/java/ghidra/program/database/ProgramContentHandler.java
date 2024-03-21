@@ -19,7 +19,8 @@ import java.io.IOException;
 
 import javax.swing.Icon;
 
-import db.*;
+import db.DBHandle;
+import db.Field;
 import db.buffers.*;
 import generic.theme.GIcon;
 import ghidra.framework.data.*;
@@ -76,8 +77,7 @@ public class ProgramContentHandler extends DBWithUserDataContentHandler<ProgramD
 		try {
 			bf = dbItem.open(version, minChangeVersion);
 			dbh = new DBHandle(bf);
-			int openMode = DBConstants.READ_ONLY;
-			program = new ProgramDB(dbh, openMode, monitor, consumer);
+			program = new ProgramDB(dbh, OpenMode.IMMUTABLE, monitor, consumer);
 			getProgramChangeSet(program, bf);
 			success = true;
 			return program;
@@ -128,7 +128,7 @@ public class ProgramContentHandler extends DBWithUserDataContentHandler<ProgramD
 		try {
 			bf = dbItem.open(version);
 			dbh = new DBHandle(bf);
-			int openMode = okToUpgrade ? DBConstants.UPGRADE : DBConstants.UPDATE;
+			OpenMode openMode = okToUpgrade ? OpenMode.UPGRADE : OpenMode.UPDATE;
 			program = new ProgramDB(dbh, openMode, monitor, consumer);
 			getProgramChangeSet(program, bf);
 			program.setProgramUserData(new ProgramUserDataDB(program));
@@ -181,7 +181,7 @@ public class ProgramContentHandler extends DBWithUserDataContentHandler<ProgramD
 		try {
 			bf = dbItem.openForUpdate(checkoutId);
 			dbh = new DBHandle(bf, recover, monitor);
-			int openMode = okToUpgrade ? DBConstants.UPGRADE : DBConstants.UPDATE;
+			OpenMode openMode = okToUpgrade ? OpenMode.UPGRADE : OpenMode.UPDATE;
 			program = new ProgramDB(dbh, openMode, monitor, consumer);
 			if (checkoutId == FolderItem.DEFAULT_CHECKOUT_ID) {
 				getProgramChangeSet(program, bf);
@@ -291,8 +291,7 @@ public class ProgramContentHandler extends DBWithUserDataContentHandler<ProgramD
 		try {
 			bf = dbItem.open(toVer, fromVer);
 			dbh = new DBHandle(bf);
-			int openMode = DBConstants.READ_ONLY;
-			program = new ProgramDB(dbh, openMode, null, this);
+			program = new ProgramDB(dbh, OpenMode.IMMUTABLE, null, this);
 			return getProgramChangeSet(program, bf);
 		}
 		catch (VersionException | IOException e) {

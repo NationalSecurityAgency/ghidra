@@ -22,6 +22,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 import db.DBHandle;
 import db.DBRecord;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.ProgramUserData;
 import ghidra.trace.database.DBTrace;
@@ -95,7 +96,7 @@ public class DBTraceAddressPropertyManager implements TraceAddressPropertyManage
 	protected final TraceAddressPropertyManager apiView =
 		new DBTraceAddressPropertyManagerApiView(this);
 
-	public DBTraceAddressPropertyManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	public DBTraceAddressPropertyManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 			DBTraceThreadManager threadManager) throws VersionException, IOException {
 		this.dbh = dbh;
@@ -117,7 +118,7 @@ public class DBTraceAddressPropertyManager implements TraceAddressPropertyManage
 			if (ent.map == null) {
 				try {
 					propertyMapsByName.put(ent.name,
-						ent.map = doCreateMap(ent.name, DBOpenMode.UPDATE, ent.getValueClass()));
+						ent.map = doCreateMap(ent.name, OpenMode.UPDATE, ent.getValueClass()));
 				}
 				catch (Exception e) {
 					Msg.error(this, "Cannot load address property " + ent.name, e);
@@ -130,7 +131,7 @@ public class DBTraceAddressPropertyManager implements TraceAddressPropertyManage
 	}
 
 	@SuppressWarnings("unchecked")
-	protected <T> AbstractDBTracePropertyMap<T, ?> doCreateMap(String name, DBOpenMode openMode,
+	protected <T> AbstractDBTracePropertyMap<T, ?> doCreateMap(String name, OpenMode openMode,
 			Class<T> valueClass) {
 		String tableName = "AddressProperty: " + name;
 		try {
@@ -175,7 +176,7 @@ public class DBTraceAddressPropertyManager implements TraceAddressPropertyManage
 			}
 			DBTraceAddressPropertyEntry ent = propertyStore.create();
 			ent.set(name, valueClass);
-			AbstractDBTracePropertyMap<T, ?> map = doCreateMap(name, DBOpenMode.CREATE, valueClass);
+			AbstractDBTracePropertyMap<T, ?> map = doCreateMap(name, OpenMode.CREATE, valueClass);
 			ent.map = map;
 			propertyMapsByName.put(name, map);
 			return map;

@@ -33,13 +33,12 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Database version of the DomainObjectAdapter; this version adds the
+ * Database version of the DomainObjectAdapter.  Adds the
  * concept of starting a transaction before a change is made to the
  * domain object and ending the transaction. The transaction allows for
  * undo/redo changes.
  */
-public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
-		implements ErrorHandler, DBConstants {
+public abstract class DomainObjectAdapterDB extends DomainObjectAdapter implements ErrorHandler {
 
 	protected static final int NUM_UNDOS = 50;
 
@@ -269,6 +268,15 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 		finally {
 			transactionMgr.endTransaction(this, txId, true, true);
 		}
+	}
+
+	/**
+	 * Set instance as immutable by disabling use of transactions.  Attempts to start a transaction
+	 * will result in a {@link TerminatedTransactionException}.  This method should invoked at the end of 
+	 * instance instatiation {@link OpenMode#IMMUTABLE} was used.
+	 */
+	protected void setImmutable() {
+		transactionMgr.setImmutable();
 	}
 
 	/**

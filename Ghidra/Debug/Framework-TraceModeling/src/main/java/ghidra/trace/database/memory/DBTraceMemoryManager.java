@@ -26,6 +26,7 @@ import java.util.function.Predicate;
 
 import db.DBHandle;
 import ghidra.dbg.target.TargetMemoryRegion;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.mem.MemBuffer;
@@ -41,7 +42,6 @@ import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.MathUtilities;
 import ghidra.util.UnionAddressSetView;
-import ghidra.util.database.DBOpenMode;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -53,7 +53,7 @@ public class DBTraceMemoryManager extends AbstractDBTraceSpaceBasedManager<DBTra
 
 	protected final DBTraceOverlaySpaceAdapter overlayAdapter;
 
-	public DBTraceMemoryManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	public DBTraceMemoryManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 			DBTraceThreadManager threadManager, DBTraceOverlaySpaceAdapter overlayAdapter)
 			throws IOException, VersionException {
@@ -91,8 +91,8 @@ public class DBTraceMemoryManager extends AbstractDBTraceSpaceBasedManager<DBTra
 	}
 
 	@Override
-	protected DBTraceMemorySpace createRegisterSpace(AddressSpace space,
-			TraceThread thread, DBTraceSpaceEntry ent) throws VersionException, IOException {
+	protected DBTraceMemorySpace createRegisterSpace(AddressSpace space, TraceThread thread,
+			DBTraceSpaceEntry ent) throws VersionException, IOException {
 		return new DBTraceMemorySpace(this, dbh, space, ent, thread);
 	}
 
@@ -117,8 +117,7 @@ public class DBTraceMemoryManager extends AbstractDBTraceSpaceBasedManager<DBTra
 	}
 
 	@Override
-	public DBTraceMemorySpace getMemoryRegisterSpace(TraceThread thread,
-			boolean createIfAbsent) {
+	public DBTraceMemorySpace getMemoryRegisterSpace(TraceThread thread, boolean createIfAbsent) {
 		return getForRegisterSpace(thread, 0, createIfAbsent);
 	}
 
@@ -135,8 +134,8 @@ public class DBTraceMemoryManager extends AbstractDBTraceSpaceBasedManager<DBTra
 	}
 
 	@Override
-	public TraceMemoryRegion addRegion(String path, Lifespan lifespan,
-			AddressRange range, Collection<TraceMemoryFlag> flags)
+	public TraceMemoryRegion addRegion(String path, Lifespan lifespan, AddressRange range,
+			Collection<TraceMemoryFlag> flags)
 			throws TraceOverlappedRegionException, DuplicateNameException {
 		if (trace.getObjectManager().hasSchema()) {
 			return trace.getObjectManager().addMemoryRegion(path, lifespan, range, flags);
@@ -223,9 +222,8 @@ public class DBTraceMemoryManager extends AbstractDBTraceSpaceBasedManager<DBTra
 					.getObjectsAddressSet(snap, TargetMemoryRegion.RANGE_ATTRIBUTE_NAME,
 						TraceObjectMemoryRegion.class, r -> true);
 		}
-		return new UnionAddressSetView(getActiveMemorySpaces().stream()
-				.map(m -> m.getRegionsAddressSet(snap))
-				.toList());
+		return new UnionAddressSetView(
+			getActiveMemorySpaces().stream().map(m -> m.getRegionsAddressSet(snap)).toList());
 	}
 
 	@Override
@@ -397,9 +395,9 @@ public class DBTraceMemoryManager extends AbstractDBTraceSpaceBasedManager<DBTra
 		}
 		Collection<DBTraceMemoryRegion> result = new ArrayList<>();
 		for (DBTraceMemorySpace space : memSpaces.values()) {
-			result.addAll(space.regionMapSpace
-					.reduce(TraceAddressSnapRangeQuery.added(from, to, space.space))
-					.values());
+			result.addAll(
+				space.regionMapSpace.reduce(TraceAddressSnapRangeQuery.added(from, to, space.space))
+						.values());
 		}
 		return result;
 	}
@@ -429,9 +427,9 @@ public class DBTraceMemoryManager extends AbstractDBTraceSpaceBasedManager<DBTra
 		for (DBTraceMemorySpace space : memSpaces.values()) {
 			AddressRange rng =
 				new AddressRangeImpl(space.space.getMinAddress(), space.space.getMaxAddress());
-			result.addAll(space.stateMapSpace
-					.reduce(TraceAddressSnapRangeQuery.enclosed(rng, between))
-					.entries());
+			result.addAll(
+				space.stateMapSpace.reduce(TraceAddressSnapRangeQuery.enclosed(rng, between))
+						.entries());
 		}
 		return result;
 	}

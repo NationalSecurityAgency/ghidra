@@ -344,7 +344,17 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	@Override
 	public AddressSetView getBody() {
-		return program.getNamespaceManager().getAddressSet(this);
+		manager.lock.acquire();
+		try {
+			if (!checkIsValid()) {
+				// Function or its symbol has been deleted
+				return new AddressSet(entryPoint, entryPoint);
+			}
+			return program.getNamespaceManager().getAddressSet(this);
+		}
+		finally {
+			manager.lock.release();
+		}
 	}
 
 	@Override

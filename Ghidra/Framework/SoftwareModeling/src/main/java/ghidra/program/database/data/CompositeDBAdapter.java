@@ -18,6 +18,7 @@ package ghidra.program.database.data;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.util.DBRecordAdapter;
 import ghidra.program.model.data.CompositeInternal;
 import ghidra.util.UniversalID;
@@ -80,17 +81,17 @@ abstract class CompositeDBAdapter implements DBRecordAdapter {
 	 * @throws IOException if there is trouble accessing the database.
 	 * @throws CancelledException task cancelled
 	 */
-	static CompositeDBAdapter getAdapter(DBHandle handle, int openMode, String tablePrefix,
+	static CompositeDBAdapter getAdapter(DBHandle handle, OpenMode openMode, String tablePrefix,
 			TaskMonitor monitor) throws VersionException, IOException, CancelledException {
 		try {
 			return new CompositeDBAdapterV5V6(handle, openMode, tablePrefix);
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			CompositeDBAdapter adapter = findReadOnlyAdapter(handle, tablePrefix);
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				return upgrade(handle, adapter, tablePrefix, monitor);
 			}
 			return adapter;
@@ -108,7 +109,7 @@ abstract class CompositeDBAdapter implements DBRecordAdapter {
 	private static CompositeDBAdapter findReadOnlyAdapter(DBHandle handle, String tablePrefix)
 			throws VersionException, IOException {
 		try {
-			return new CompositeDBAdapterV5V6(handle, DBConstants.READ_ONLY, tablePrefix);
+			return new CompositeDBAdapterV5V6(handle, OpenMode.IMMUTABLE, tablePrefix);
 		}
 		catch (VersionException e) {
 			// ignore
@@ -148,7 +149,7 @@ abstract class CompositeDBAdapter implements DBRecordAdapter {
 		long id = tmpHandle.startTransaction();
 		CompositeDBAdapter tmpAdapter = null;
 		try {
-			tmpAdapter = new CompositeDBAdapterV5V6(tmpHandle, DBConstants.CREATE, tablePrefix);
+			tmpAdapter = new CompositeDBAdapterV5V6(tmpHandle, OpenMode.CREATE, tablePrefix);
 			RecordIterator it = oldAdapter.getRecords();
 			while (it.hasNext()) {
 				monitor.checkCancelled();
@@ -157,7 +158,7 @@ abstract class CompositeDBAdapter implements DBRecordAdapter {
 			}
 			oldAdapter.deleteTable(handle);
 			CompositeDBAdapter newAdapter =
-				new CompositeDBAdapterV5V6(handle, DBConstants.CREATE, tablePrefix);
+				new CompositeDBAdapterV5V6(handle, OpenMode.CREATE, tablePrefix);
 			if (oldAdapter.getVersion() < FLEX_ARRAY_ELIMINATION_SCHEMA_VERSION) {
 				newAdapter.flexArrayMigrationRequired = true;
 			}

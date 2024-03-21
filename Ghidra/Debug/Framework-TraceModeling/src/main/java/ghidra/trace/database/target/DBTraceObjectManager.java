@@ -31,6 +31,7 @@ import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.util.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTrace;
@@ -68,8 +69,8 @@ import ghidra.util.task.TaskMonitor;
 public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager {
 	private static final int OBJECTS_CONTAINING_CACHE_SIZE = 100;
 
-	public static class DBTraceObjectSchemaDBFieldCodec extends
-			AbstractDBFieldCodec<SchemaContext, DBTraceObjectSchemaEntry, StringField> {
+	public static class DBTraceObjectSchemaDBFieldCodec
+			extends AbstractDBFieldCodec<SchemaContext, DBTraceObjectSchemaEntry, StringField> {
 		public DBTraceObjectSchemaDBFieldCodec(Class<DBTraceObjectSchemaEntry> objectType,
 				Field field, int column) {
 			super(SchemaContext.class, objectType, StringField.class, field, column);
@@ -118,9 +119,7 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 		@DBAnnotatedColumn(SCHEMA_COLUMN_NAME)
 		static DBObjectColumn SCHEMA_COLUMN;
 
-		@DBAnnotatedField(
-			column = CONTEXT_COLUMN_NAME,
-			codec = DBTraceObjectSchemaDBFieldCodec.class)
+		@DBAnnotatedField(column = CONTEXT_COLUMN_NAME, codec = DBTraceObjectSchemaDBFieldCodec.class)
 		private SchemaContext context;
 		@DBAnnotatedField(column = SCHEMA_COLUMN_NAME)
 		private String schemaName;
@@ -175,7 +174,7 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 	protected final Map<Class<? extends TraceObjectInterface>, Set<TargetObjectSchema>> //
 	schemasByInterface = new HashMap<>();
 
-	public DBTraceObjectManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	public DBTraceObjectManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace)
 			throws IOException, VersionException {
 		this.lock = lock;
@@ -185,16 +184,15 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 		schemaStore = factory.getOrCreateCachedStore(DBTraceObjectSchemaEntry.TABLE_NAME,
 			DBTraceObjectSchemaEntry.class, DBTraceObjectSchemaEntry::new, true);
 		loadRootSchema();
-		objectStore = factory.getOrCreateCachedStore(DBTraceObject.TABLE_NAME,
-			DBTraceObject.class, (s, r) -> new DBTraceObject(this, s, r), true);
+		objectStore = factory.getOrCreateCachedStore(DBTraceObject.TABLE_NAME, DBTraceObject.class,
+			(s, r) -> new DBTraceObject(this, s, r), true);
 
 		valueTree = new DBTraceObjectValueRStarTree(this, factory,
 			DBTraceObjectValueData.TABLE_NAME, ValueSpace.INSTANCE, DBTraceObjectValueData.class,
 			DBTraceObjectValueNode.class, false, 50);
 		valueMap = valueTree.asSpatialMap();
 
-		objectsByPath =
-			objectStore.getIndex(TraceObjectKeyPath.class, DBTraceObject.PATH_COLUMN);
+		objectsByPath = objectStore.getIndex(TraceObjectKeyPath.class, DBTraceObject.PATH_COLUMN);
 
 		valueWbCache = new DBTraceObjectValueWriteBehindCache(this);
 
@@ -297,12 +295,12 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 		return entry;
 	}
 
-	protected DBTraceObjectValue doCreateValue(Lifespan lifespan,
-			DBTraceObject parent, String key, Object value) {
+	protected DBTraceObjectValue doCreateValue(Lifespan lifespan, DBTraceObject parent, String key,
+			Object value) {
 		// Root is never in write-behind cache
-		DBTraceObjectValue entry = parent == null
-				? doCreateValueData(lifespan, parent, key, value).getWrapper()
-				: valueWbCache.doCreateValue(lifespan, parent, key, value).getWrapper();
+		DBTraceObjectValue entry =
+			parent == null ? doCreateValueData(lifespan, parent, key, value).getWrapper()
+					: valueWbCache.doCreateValue(lifespan, parent, key, value).getWrapper();
 		if (parent != null) {
 			parent.notifyValueCreated(entry);
 		}
@@ -420,18 +418,17 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 
 	@Override
 	public Stream<DBTraceObjectValue> getAllValues() {
-		return Stream.concat(
-			valueMap.values().stream().map(v -> v.getWrapper()),
-			StreamUtils.lock(lock.readLock(),
-				valueWbCache.streamAllValues().map(v -> v.getWrapper())));
+		return Stream.concat(valueMap.values().stream().map(v -> v.getWrapper()), StreamUtils
+				.lock(lock.readLock(), valueWbCache.streamAllValues().map(v -> v.getWrapper())));
 	}
 
 	protected Stream<DBTraceObjectValueData> streamValuesIntersectingData(Lifespan span,
 			AddressRange range, String entryKey) {
 		return valueMap.reduce(TraceObjectValueQuery.intersecting(
 			entryKey != null ? entryKey : EntryKeyDimension.INSTANCE.absoluteMin(),
-			entryKey != null ? entryKey : EntryKeyDimension.INSTANCE.absoluteMax(),
-			span, range)).values().stream();
+			entryKey != null ? entryKey : EntryKeyDimension.INSTANCE.absoluteMax(), span, range))
+				.values()
+				.stream();
 	}
 
 	protected Stream<DBTraceObjectValueBehind> streamValuesIntersectingBehind(Lifespan span,
@@ -442,9 +439,10 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 	@Override
 	public Collection<? extends TraceObjectValue> getValuesIntersecting(Lifespan span,
 			AddressRange range, String entryKey) {
-		return Stream.concat(
-			streamValuesIntersectingData(span, range, entryKey).map(v -> v.getWrapper()),
-			streamValuesIntersectingBehind(span, range, entryKey).map(v -> v.getWrapper()))
+		return Stream
+				.concat(
+					streamValuesIntersectingData(span, range, entryKey).map(v -> v.getWrapper()),
+					streamValuesIntersectingBehind(span, range, entryKey).map(v -> v.getWrapper()))
 				.toList();
 	}
 
@@ -460,9 +458,9 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 
 	public Collection<? extends TraceObjectValue> getValuesAt(long snap, Address address,
 			String entryKey) {
-		return Stream.concat(
-			streamValuesAtData(snap, address, entryKey).map(v -> v.getWrapper()),
-			streamValuesAtBehind(snap, address, entryKey).map(v -> v.getWrapper()))
+		return Stream
+				.concat(streamValuesAtData(snap, address, entryKey).map(v -> v.getWrapper()),
+					streamValuesAtBehind(snap, address, entryKey).map(v -> v.getWrapper()))
 				.toList();
 	}
 
@@ -474,16 +472,14 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 		}
 		Class<? extends TargetObject> targetIf = TraceObjectInterfaceUtils.toTargetIf(ifClass);
 		PathMatcher matcher = rootSchema.searchFor(targetIf, true);
-		return getValuePaths(span, matcher)
-				.filter(p -> {
-					TraceObject object = p.getDestination(getRootObject());
-					if (object == null) {
-						Msg.error(this, "NULL VALUE! " + p.getLastEntry());
-						return false;
-					}
-					return true;
-				})
-				.map(p -> p.getDestination(getRootObject()).queryInterface(ifClass));
+		return getValuePaths(span, matcher).filter(p -> {
+			TraceObject object = p.getDestination(getRootObject());
+			if (object == null) {
+				Msg.error(this, "NULL VALUE! " + p.getLastEntry());
+				return false;
+			}
+			return true;
+		}).map(p -> p.getDestination(getRootObject()).queryInterface(ifClass));
 	}
 
 	@Override
@@ -632,8 +628,8 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 		return Set.copyOf(result);
 	}
 
-	public <I extends TraceObjectInterface> Collection<I> getObjectsIntersecting(
-			Lifespan lifespan, AddressRange range, String key, Class<I> iface) {
+	public <I extends TraceObjectInterface> Collection<I> getObjectsIntersecting(Lifespan lifespan,
+			AddressRange range, String key, Class<I> iface) {
 		try (LockHold hold = trace.lockRead()) {
 			Set<TargetObjectSchema> schemas;
 			synchronized (schemasByInterface) {
@@ -802,8 +798,8 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 		if (!exists.getLife().intersects(lifespan)) {
 			return;
 		}
-		throw new DuplicateNameException("A thread having path '" + path +
-			"' already exists within an overlapping snap");
+		throw new DuplicateNameException(
+			"A thread having path '" + path + "' already exists within an overlapping snap");
 	}
 
 	public TraceObjectThread addThread(String path, String display, Lifespan lifespan)
