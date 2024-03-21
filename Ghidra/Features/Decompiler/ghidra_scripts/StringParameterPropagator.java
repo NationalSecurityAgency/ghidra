@@ -36,6 +36,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.*;
+import ghidra.program.model.pcode.HighFunctionDBUtil.ReturnCommitOption;
 import ghidra.program.model.symbol.*;
 import ghidra.util.exception.*;
 
@@ -195,9 +196,10 @@ public class StringParameterPropagator extends GhidraScript {
 				int maxParams = funcInfo.getMaxParamsSeen();
 				boolean couldBeVararg = !funcInfo.numParamsAgree();
 				if (!funcInfo.numParamsAgree()) {
-					currentProgram.getBookmarkManager().setBookmark(calledFunc.getEntryPoint(),
-						BookmarkType.NOTE, this.getClass().getName(),
-						"Number of parameters disagree min: " + minParams + " max: " + maxParams);
+					currentProgram.getBookmarkManager()
+							.setBookmark(calledFunc.getEntryPoint(), BookmarkType.NOTE,
+								this.getClass().getName(), "Number of parameters disagree min: " +
+									minParams + " max: " + maxParams);
 
 					println("WARNING : Number of params disagree for " + calledFunc.getName() +
 						" @ " + entry);
@@ -317,9 +319,8 @@ public class StringParameterPropagator extends GhidraScript {
 						ReferenceIterator dataRefIter = rData.getReferenceIteratorTo();
 						while (dataRefIter.hasNext()) {
 							Reference dataRef = dataRefIter.next();
-							func =
-								currentProgram.getFunctionManager().getFunctionContaining(
-									dataRef.getFromAddress());
+							func = currentProgram.getFunctionManager()
+									.getFunctionContaining(dataRef.getFromAddress());
 							if (func == null) {
 								continue;
 							}
@@ -337,9 +338,8 @@ public class StringParameterPropagator extends GhidraScript {
 	private void collectDataRefenceLocations(HashSet<Address> dataItemLocationSet,
 			HashSet<Address> referringFuncLocationSet) {
 		int count = 0;
-		ReferenceIterator iter =
-			currentProgram.getReferenceManager().getReferenceIterator(
-				currentProgram.getMinAddress());
+		ReferenceIterator iter = currentProgram.getReferenceManager()
+				.getReferenceIterator(currentProgram.getMinAddress());
 		while (iter.hasNext() && !monitor.isCancelled()) {
 			Reference ref = iter.next();
 
@@ -412,7 +412,8 @@ public class StringParameterPropagator extends GhidraScript {
 		if (convention == null) {
 			convention = currentProgram.getCompilerSpec().getDefaultCallingConvention();
 		}
-		if (initialConvention != null && !convention.getName().equals(initialConvention.getName())) {
+		if (initialConvention != null &&
+			!convention.getName().equals(initialConvention.getName())) {
 			return true;
 		}
 
@@ -452,8 +453,9 @@ public class StringParameterPropagator extends GhidraScript {
 		if (param == null) {
 			return false;
 		}
-		currentProgram.getBookmarkManager().setBookmark(func.getEntryPoint(), BookmarkType.NOTE,
-			this.getClass().getName(), "Created " + dt.getName() + " parameter");
+		currentProgram.getBookmarkManager()
+				.setBookmark(func.getEntryPoint(), BookmarkType.NOTE, this.getClass().getName(),
+					"Created " + dt.getName() + " parameter");
 		return false;
 	}
 
@@ -476,7 +478,8 @@ public class StringParameterPropagator extends GhidraScript {
 		}
 		if (minParams == numParams) {
 			try {
-				HighFunctionDBUtil.commitParamsToDatabase(hfunction, true, SourceType.USER_DEFINED);
+				HighFunctionDBUtil.commitParamsToDatabase(hfunction, true,
+					ReturnCommitOption.NO_COMMIT, SourceType.USER_DEFINED);
 			}
 			catch (DuplicateNameException e) {
 				throw new AssertException("Unexpected exception", e);
@@ -497,9 +500,8 @@ public class StringParameterPropagator extends GhidraScript {
 			if (i < f.getParameterCount()) {
 				continue;
 			}
-			VariableStorage storage =
-				convention.getArgLocation(i - 1, f.getParameters(), DataType.DEFAULT,
-					currentProgram);
+			VariableStorage storage = convention.getArgLocation(i - 1, f.getParameters(),
+				DataType.DEFAULT, currentProgram);
 			if (storage.isUnassignedStorage()) {
 				break;
 			}
@@ -576,7 +578,8 @@ public class StringParameterPropagator extends GhidraScript {
 					}
 
 					long mask =
-						0xffffffffffffffffL >>> ((8 - entry.getAddressSpace().getPointerSize()) * 8);
+						0xffffffffffffffffL >>> ((8 - entry.getAddressSpace().getPointerSize()) *
+							8);
 					Address possibleAddr = entry.getNewAddress(mask & value);
 					if (stringLocationSet.contains(possibleAddr)) {
 						markStringParam(constUse, possibleAddr, calledFuncAddr, i - 1,
@@ -637,9 +640,8 @@ public class StringParameterPropagator extends GhidraScript {
 			return true;
 
 		try {
-			DecompileResults decompRes =
-				decompInterface.decompileFunction(f,
-					decompInterface.getOptions().getDefaultTimeout(), monitor);
+			DecompileResults decompRes = decompInterface.decompileFunction(f,
+				decompInterface.getOptions().getDefaultTimeout(), monitor);
 
 			hfunction = decompRes.getHighFunction();
 		}
