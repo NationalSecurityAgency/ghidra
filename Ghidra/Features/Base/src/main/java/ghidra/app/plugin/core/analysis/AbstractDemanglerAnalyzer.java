@@ -46,6 +46,8 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 	private static final AddressSetView EXTERNAL_SET = new AddressSet(
 		AddressSpace.EXTERNAL_SPACE.getMinAddress(), AddressSpace.EXTERNAL_SPACE.getMaxAddress());
 
+	private String baseMonitorMessage;
+
 	public AbstractDemanglerAnalyzer(String name, String description) {
 		super(name, description, AnalyzerType.BYTE_ANALYZER);
 		setPriority(AnalysisPriority.DATA_TYPE_PROPOGATION.before().before().before());
@@ -93,21 +95,21 @@ public abstract class AbstractDemanglerAnalyzer extends AbstractAnalyzer {
 			set = set.subtract(EXTERNAL_SET);
 		}
 
-		String baseMonitorMessage = monitor.getMessage();
-		int memorySymbolCount =
-			demangleSymbols(program, set, 0, baseMonitorMessage, options, log, monitor);
+		if (baseMonitorMessage == null) {
+			baseMonitorMessage = monitor.getMessage();
+		}
+		int memorySymbolCount = demangleSymbols(program, set, 0, options, log, monitor);
 		if (demangleExternals) {
 			// process external symbols last
-			demangleSymbols(program, EXTERNAL_SET, memorySymbolCount, baseMonitorMessage, options,
-				log, monitor);
+			demangleSymbols(program, EXTERNAL_SET, memorySymbolCount, options, log, monitor);
 		}
 
 		return true;
 	}
 
 	private int demangleSymbols(Program program, AddressSetView set, int initialCount,
-			String baseMonitorMessage, DemanglerOptions options, MessageLog log,
-			TaskMonitor monitor) throws CancelledException {
+			DemanglerOptions options, MessageLog log, TaskMonitor monitor)
+			throws CancelledException {
 
 		int count = initialCount;
 		SymbolTable symbolTable = program.getSymbolTable();
