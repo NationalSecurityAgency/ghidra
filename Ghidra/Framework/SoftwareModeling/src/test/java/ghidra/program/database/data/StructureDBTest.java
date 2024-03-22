@@ -60,7 +60,7 @@ public class StructureDBTest extends AbstractGenericTest {
 		DataOrganizationImpl dataOrg = (DataOrganizationImpl) dataMgr.getDataOrganization();
 		dataOrg.setBigEndian(true);
 
-		// re-resolve with modified endianess
+		// re-resolve with modified endianness
 		struct = (StructureDB) dataMgr.resolve(structClone, null);
 	}
 
@@ -1312,7 +1312,7 @@ public class StructureDBTest extends AbstractGenericTest {
 	public void testReplaceWith2() throws InvalidDataTypeException {
 
 		// NOTE: non-packed bitfields should remain unchanged when
-		// transitioning endianess even though it makes little sense.
+		// transitioning endianness even though it makes little sense.
 		// Unaligned structures are not intended to be portable! 
 
 		TypeDef td = new TypedefDataType("Foo", IntegerDataType.dataType);

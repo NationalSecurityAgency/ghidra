@@ -113,7 +113,7 @@ class MemSearchDialog extends ReusableDialogComponentProvider {
 		mainPanel = buildMainPanel();
 		addWorkPanel(mainPanel);
 		buildButtons();
-		setEndianess(isBigEndian);
+		setEndianness(isBigEndian);
 		setAlignment(1);
 		setUseSharedLocation(true);
 	}
@@ -135,7 +135,7 @@ class MemSearchDialog extends ReusableDialogComponentProvider {
 		updateDisplay();
 	}
 
-	void setEndianess(boolean isBigEndian) {
+	void setEndianness(boolean isBigEndian) {
 		if (isBigEndian) {
 			bigEndian.setSelected(isBigEndian);
 		}

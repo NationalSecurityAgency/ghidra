@@ -34,9 +34,9 @@ the specification. All definition statements start with the keyword
 </p>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="sleigh_endianess_definition"></a>4.1. Endianess Definition</h3></div></div></div>
+<a name="sleigh_endianness_definition"></a>4.1. Endianness Definition</h3></div></div></div>
 <p>
-The first definition in any SLEIGH specification must be for endianess. Either
+The first definition in any SLEIGH specification must be for endianness. Either
 </p>
 <div class="informalexample"><pre class="programlisting">
 define endian=big;            <span class="emphasis"><em>OR</em></span>
@@ -47,11 +47,11 @@ This defines how the processor interprets contiguous sequences of
 bytes as integers or other values and globally affects values across
 all address spaces. It also affects how integer fields
 within an instruction are interpreted, (see <a class="xref" href="sleigh_tokens.html#sleigh_defining_tokens" title="6.1. Defining Tokens and Fields">Section 6.1, “Defining Tokens and Fields”</a>),
-although it is possible to override this setting in the rare case that endianess is
+although it is possible to override this setting in the rare case that endianness is
 different for data versus instruction encoding.
 The specification designer generally only needs to worry about
-endianess when labeling instruction fields and when defining overlapping registers,
-otherwise the specification language hides endianess issues.
+endianness when labeling instruction fields and when defining overlapping registers,
+otherwise the specification language hides endianness issues.
 </p>
 </div>
 <div class="sect2">

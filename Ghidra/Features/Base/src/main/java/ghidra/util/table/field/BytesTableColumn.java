@@ -34,11 +34,11 @@ public class BytesTableColumn extends ProgramLocationTableColumnExtensionPoint<A
 	private static final ByteCountSettingsDefinition BYTE_COUNT = ByteCountSettingsDefinition.DEF;
 	private static final MemoryOffsetSettingsDefinition MEMORY_OFFSET =
 		MemoryOffsetSettingsDefinition.DEF;
-	private static final EndianSettingsDefinition ENDIANESS = EndianSettingsDefinition.DEF;
+	private static final EndianSettingsDefinition ENDIANNESS = EndianSettingsDefinition.DEF;
 	private static final FormatSettingsDefinition FORMAT = FormatSettingsDefinition.DEF;
 
 	private static SettingsDefinition[] SETTINGS_DEFS =
-		{ BYTE_COUNT, MEMORY_OFFSET, ENDIANESS, FORMAT };
+		{ BYTE_COUNT, MEMORY_OFFSET, ENDIANNESS, FORMAT };
 
 	private final GColumnRenderer<Byte[]> monospacedRenderer = new MonospacedByteRenderer();
 

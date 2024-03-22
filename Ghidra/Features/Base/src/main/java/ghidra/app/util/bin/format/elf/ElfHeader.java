@@ -117,7 +117,7 @@ public class ElfHeader implements StructConverter {
 			e_ident_magic_num = ElfConstants.MAGIC_NUM;
 			e_ident_magic_str = ElfConstants.MAGIC_STR;
 
-			determineHeaderEndianess();
+			determineHeaderEndianness();
 
 			// reader uses unbounded provider wrapper to allow handling of missing/truncated headers
 			reader = new BinaryReader(new UnlimitedByteProviderWrapper(provider),
@@ -1328,7 +1328,7 @@ public class ElfHeader implements StructConverter {
 		return false;
 	}
 
-	private void determineHeaderEndianess() throws ElfException, IOException {
+	private void determineHeaderEndianness() throws ElfException, IOException {
 
 		if (provider.length() < INITIAL_READ_LEN) {
 			throw new ElfException("Not enough bytes to be a valid ELF executable.");
@@ -1344,10 +1344,10 @@ public class ElfHeader implements StructConverter {
 				Integer.toHexString(bytes[ElfConstants.EI_DATA]) + ")");
 		}
 		if (!hasLittleEndianHeaders && bytes[ElfConstants.EI_NIDENT] != 0) {
-			// Header endianess sanity check
+			// Header endianness sanity check
 			// Some toolchains always use little endian Elf Headers
 
-			// TODO: unsure if forced endianess applies to relocation data
+			// TODO: unsure if forced endianness applies to relocation data
 
 			// Check first byte of version (allow switch if equal 1)
 			if (bytes[ElfConstants.EI_NIDENT + 4] == 1) {

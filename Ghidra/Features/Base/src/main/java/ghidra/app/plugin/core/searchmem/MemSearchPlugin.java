@@ -280,7 +280,7 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 			searchDialog.setShowAdvancedOptions(showAdvancedOptions);
 		}
 		else {
-			searchDialog.setEndianess(navigatable.getProgram().getLanguage().isBigEndian());
+			searchDialog.setEndianness(navigatable.getProgram().getLanguage().isBigEndian());
 			searchDialog.close(); // close it to make sure it gets parented to the current focused window.
 		}
 

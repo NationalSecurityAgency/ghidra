@@ -4940,7 +4940,7 @@ macro BitReverse_arm(val) {
 
 @endif # VERSION_6K
 
-# Hopefully we never encounter this instruction since we can not change the effective endianess of the language
+# Hopefully we never encounter this instruction since we can not change the effective endianness of the language
 armEndianNess: "LE" is c0031=0xf1010000 { export 0:1; }
 armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 

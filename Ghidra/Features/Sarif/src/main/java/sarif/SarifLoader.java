@@ -149,7 +149,7 @@ public class SarifLoader extends AbstractProgramLoader {
 		}
 
 		if (loadSpecs.isEmpty() && provider.getName().endsWith(FILE_EXTENSION)) {
-			// just put 'em all in (give endianess preference)
+			// just put 'em all in (give endianness preference)
 			List<LanguageDescription> languageDescriptions =
 				getLanguageService().getLanguageDescriptions(false);
 			for (LanguageDescription languageDescription : languageDescriptions) {
