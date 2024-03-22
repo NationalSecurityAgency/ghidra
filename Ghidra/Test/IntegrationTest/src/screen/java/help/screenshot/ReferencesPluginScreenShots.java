@@ -230,15 +230,24 @@ public class ReferencesPluginScreenShots extends GhidraScreenShotGenerator {
 		CodeUnit cu = program.getListing().getCodeUnitAt(addr(0x401008));
 		ReferencesPlugin plugin = getPlugin(tool, ReferencesPlugin.class);
 		final EditReferenceDialog dialog = new EditReferenceDialog(plugin);
-		dialog.initDialog(cu, 0, 0, null);
+
 		runSwing(() -> {
-			JRadioButton choiceButton = (JRadioButton) getInstanceField("memRefChoice", dialog);
-			invokeInstanceMethod("refChoiceActivated", dialog,
-				new Class<?>[] { JRadioButton.class }, new Object[] { choiceButton });
+			dialog.initDialog(cu, 0, 0, null);
 		}, true);
-		showDialogWithoutBlocking(tool, dialog);
+
+		JRadioButton choiceButton = (JRadioButton) getInstanceField("memRefChoice", dialog);
+		pressButton(choiceButton);
 
 		final JPanel panel = (JPanel) getInstanceField("memRefPanel", dialog);
+
+		runSwing(() -> {
+			JCheckBox ovCheckbox =
+				(JCheckBox) getInstanceField("includeOtherOverlaysCheckbox", panel);
+			ovCheckbox.setSelected(true);
+		});
+
+		showDialogWithoutBlocking(tool, dialog);
+
 		JButton button = (JButton) getInstanceField("addrHistoryButton", panel);
 		Rectangle buttonBounds = button.getBounds();
 		buttonBounds = SwingUtilities.convertRectangle(button.getParent(), buttonBounds, panel);
@@ -246,7 +255,8 @@ public class ReferencesPluginScreenShots extends GhidraScreenShotGenerator {
 		buttonBounds.y += buttonBounds.height / 2 + 20;  // half button height + padding added by takeSnippet()
 		System.out.println("Button bounds = " + buttonBounds);
 		Rectangle bounds = panel.getBounds();
-		bounds.height = 3 * bounds.height / 5;  // get rid of empty space
+		bounds.y -= 10;
+		bounds.height = 4 * bounds.height / 5;  // get rid of empty space
 		bounds = SwingUtilities.convertRectangle(panel.getParent(), bounds, null);
 		captureDialog();
 		takeSnippet(bounds);
@@ -257,7 +267,8 @@ public class ReferencesPluginScreenShots extends GhidraScreenShotGenerator {
 			checkbox.setSelected(true);
 		});
 		bounds = panel.getBounds();
-		bounds.height = 3 * bounds.height / 5;
+		bounds.y -= 10;
+		bounds.height = 4 * bounds.height / 5;
 		bounds = SwingUtilities.convertRectangle(panel.getParent(), bounds, null);
 		captureDialog();
 		takeSnippet(bounds);

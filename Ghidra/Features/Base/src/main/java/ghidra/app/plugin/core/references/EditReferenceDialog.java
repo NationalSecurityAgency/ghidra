@@ -69,6 +69,7 @@ public class EditReferenceDialog extends ReusableDialogComponentProvider {
 		addCancelButton();
 
 		setDefaultButton(applyButton);
+		setUseSharedLocation(true);
 	}
 
 	@Override
