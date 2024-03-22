@@ -48,6 +48,7 @@ public class RepositoryItem implements java.io.Serializable {
 	 * Constructor.
 	 * @param folderPath path of folder containing item.
 	 * @param itemName name of item
+	 * @param fileID unique file ID
 	 * @param itemType type of item (FILE or DATABASE)
 	 * @param contentType content type associated with item
 	 * @param version repository item version or -1 if versioning not supported
@@ -66,8 +67,8 @@ public class RepositoryItem implements java.io.Serializable {
 
 	/**
 	 * Serialization method
-	 * @param out
-	 * @throws IOException
+	 * @param out serialization output stream
+	 * @throws IOException if an IO error occurs
 	 */
 	private void writeObject(java.io.ObjectOutputStream out) throws IOException {
 		out.writeLong(serialVersionUID);
@@ -82,9 +83,9 @@ public class RepositoryItem implements java.io.Serializable {
 
 	/**
 	 * Deserialization method
-	 * @param in
-	 * @throws IOException
-	 * @throws ClassNotFoundException
+	 * @param in deserialization input stream
+	 * @throws IOException if IO error occurs
+	 * @throws ClassNotFoundException if unrecognized serialVersionUID detected
 	 */
 	private void readObject(java.io.ObjectInputStream in) throws IOException,
 			ClassNotFoundException {
