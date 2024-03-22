@@ -67,13 +67,22 @@ class ProcessState(object):
             hashable_frame = (thread.GetThreadID(), frame.GetFrameID())
             if first or hashable_frame not in self.visited:
                 banks = frame.GetRegisters()
-                primary = banks.GetFirstValueByName(commands.DEFAULT_REGISTER_BANK)
+                primary = banks.GetFirstValueByName(
+                    commands.DEFAULT_REGISTER_BANK)
                 if primary.value is None:
                     primary = banks[0]
-                    commands.DEFAULT_REGISTER_BANK = primary.name
-                commands.putreg(frame, primary)
-                commands.putmem("$pc", "1", result=None)
-                commands.putmem("$sp", "1", result=None)
+                    if primary is not None:
+                        commands.DEFAULT_REGISTER_BANK = primary.name
+                if primary is not None:
+                    commands.putreg(frame, primary)
+                try:
+                    commands.putmem("$pc", "1", result=None)
+                except BaseException as e:
+                    print(f"Couldn't record page with PC: {e}")
+                try:
+                    commands.putmem("$sp", "1", result=None)
+                except BaseException as e:
+                    print(f"Couldn't record page with SP: {e}")
                 self.visited.add(hashable_frame)
         if first or self.regions or self.threads or self.modules:
             # Sections, memory syscalls, or stack allocations
@@ -113,7 +122,7 @@ class BrkState(object):
         return self.break_loc_counts.get(b.GetID(), 0)
 
     def del_brkloc_count(self, b):
-        if b not in self.break_loc_counts:
+        if b.GetID() not in self.break_loc_counts:
             return 0  # TODO: Print a warning?
         count = self.break_loc_counts[b.GetID()]
         del self.break_loc_counts[b.GetID()]
@@ -125,19 +134,32 @@ BRK_STATE = BrkState()
 PROC_STATE = {}
 
 
+class QuitSentinel(object):
+    pass
+
+
+QUIT = QuitSentinel()
+
+
 def process_event(self, listener, event):
     try:
         desc = util.get_description(event)
-        # print('Event:', desc)
+        # print(f"Event: {desc}")
+        target = util.get_target()
+        if not target.IsValid():
+            # LLDB may crash on event.GetBroadcasterClass, otherwise
+            # All the checks below, e.g. SBTarget.EventIsTargetEvent, call this
+            print(f"Ignoring {desc} because target is invalid")
+            return
         event_process = util.get_process()
-        if event_process not in PROC_STATE:
+        if event_process.IsValid() and event_process not in PROC_STATE:
             PROC_STATE[event_process.GetProcessID()] = ProcessState()
             rc = event_process.GetBroadcaster().AddListener(listener, ALL_EVENTS)
-            if rc is False:
+            if not rc:
                 print("add listener for process failed")
 
         # NB: Calling put_state on running leaves an open transaction
-        if event_process.is_running is False:
+        if not event_process.is_running:
             commands.put_state(event_process)
         type = event.GetType()
         if lldb.SBTarget.EventIsTargetEvent(event):
@@ -157,6 +179,8 @@ def process_event(self, listener, event):
                     return on_exited(event)
                 if event_process.is_stopped:
                     return on_stop(event)
+                if event_process.is_running:
+                    return on_cont(event)
                 return True
             if (type & lldb.SBProcess.eBroadcastBitInterrupt) != 0:
                 if event_process.is_stopped:
@@ -244,6 +268,9 @@ def process_event(self, listener, event):
             if (type & lldb.SBCommandInterpreter.eBroadcastBitAsynchronousOutputData) != 0:
                 return True
             if (type & lldb.SBCommandInterpreter.eBroadcastBitQuitCommandReceived) != 0:
+                # DO NOT return QUIT here.
+                # For some reason, this event comes just after launch.
+                # Maybe need to figure out *which* interpreter?
                 return True
             if (type & lldb.SBCommandInterpreter.eBroadcastBitResetPrompt) != 0:
                 return True
@@ -251,7 +278,7 @@ def process_event(self, listener, event):
                 return True
         print("UNKNOWN EVENT")
         return True
-    except RuntimeError as e:
+    except BaseException as e:
         print(e)
 
 
@@ -267,50 +294,57 @@ class EventThread(threading.Thread):
         target = util.get_target()
         proc = util.get_process()
         rc = cli.GetBroadcaster().AddListener(listener, ALL_EVENTS)
-        if rc is False:
+        if not rc:
             print("add listener for cli failed")
-            return
+            # return
         rc = target.GetBroadcaster().AddListener(listener, ALL_EVENTS)
-        if rc is False:
+        if not rc:
             print("add listener for target failed")
-            return
+            # return
         rc = proc.GetBroadcaster().AddListener(listener, ALL_EVENTS)
-        if rc is False:
+        if not rc:
             print("add listener for process failed")
-            return
+            # return
 
         # Not sure what effect this logic has
         rc = cli.GetBroadcaster().AddInitialEventsToListener(listener, ALL_EVENTS)
-        if rc is False:
-            print("add listener for cli failed")
-            return
+        if not rc:
+            print("add initial events for cli failed")
+            # return
         rc = target.GetBroadcaster().AddInitialEventsToListener(listener, ALL_EVENTS)
-        if rc is False:
-            print("add listener for target failed")
-            return
+        if not rc:
+            print("add initial events for target failed")
+            # return
         rc = proc.GetBroadcaster().AddInitialEventsToListener(listener, ALL_EVENTS)
-        if rc is False:
-            print("add listener for process failed")
-            return
+        if not rc:
+            print("add initial events for process failed")
+            # return
 
         rc = listener.StartListeningForEventClass(
             util.get_debugger(), lldb.SBThread.GetBroadcasterClassName(), ALL_EVENTS)
-        if rc is False:
+        if not rc:
             print("add listener for threads failed")
-            return
+            # return
         # THIS WILL NOT WORK: listener = util.get_debugger().GetListener()
 
         while True:
             event_recvd = False
-            while event_recvd is False:
+            while not event_recvd:
                 if listener.WaitForEvent(lldb.UINT32_MAX, self.event):
                     try:
-                        self.func(listener, self.event)
-                        while listener.GetNextEvent(self.event):
-                            self.func(listener, self.event)
-                        event_recvd = True
+                        result = self.func(listener, self.event)
+                        if result is QUIT:
+                            return
                     except BaseException as e:
                         print(e)
+                    while listener.GetNextEvent(self.event):
+                        try:
+                            result = self.func(listener, self.event)
+                            if result is QUIT:
+                                return
+                        except BaseException as e:
+                            print(e)
+                    event_recvd = True
             proc = util.get_process()
             if proc is not None and not proc.is_alive:
                 break
@@ -445,7 +479,7 @@ def on_memory_changed(event):
 
 
 def on_register_changed(event):
-    print("Register changed: {}".format(dir(event)))
+    # print("Register changed: {}".format(dir(event)))
     proc = util.get_process()
     if proc.GetProcessID() not in PROC_STATE:
         return
@@ -476,7 +510,8 @@ def on_cont(event):
 
 
 def on_stop(event):
-    proc = lldb.SBProcess.GetProcessFromEvent(event) if event is not None else util.get_process()
+    proc = lldb.SBProcess.GetProcessFromEvent(
+        event) if event is not None else util.get_process()
     if proc.GetProcessID() not in PROC_STATE:
         print("not in state")
         return
@@ -586,7 +621,7 @@ def on_breakpoint_deleted(b):
     notify_others_breaks(proc)
     if proc.GetProcessID() not in PROC_STATE:
         return
-    old_count = BRK_STATE.del_brkloc_count(b.GetID())
+    old_count = BRK_STATE.del_brkloc_count(b)
     trace = commands.STATE.trace
     if trace is None:
         return

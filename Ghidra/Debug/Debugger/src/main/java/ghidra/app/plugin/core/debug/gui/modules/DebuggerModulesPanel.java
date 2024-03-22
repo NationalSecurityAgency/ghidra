@@ -160,6 +160,9 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 			DebuggerObjectActionContext ctx) {
 		Set<TraceModule> result = new HashSet<>();
 		for (TraceObjectValue value : ctx.getObjectValues()) {
+			if (!value.isObject()) {
+				continue;
+			}
 			TraceObject child = value.getChild();
 			TraceObjectModule module = child.queryInterface(TraceObjectModule.class);
 			if (module != null) {
@@ -179,6 +182,9 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 			DebuggerObjectActionContext ctx) {
 		Set<TraceSection> result = new HashSet<>();
 		for (TraceObjectValue value : ctx.getObjectValues()) {
+			if (!value.isObject()) {
+				continue;
+			}
 			TraceObject child = value.getChild();
 			TraceObjectModule module = child.queryInterface(TraceObjectModule.class);
 			if (module != null) {

@@ -21,7 +21,7 @@ import sys
 import lldb
 
 
-LldbVersion = namedtuple('LldbVersion', ['full', 'major', 'minor'])
+LldbVersion = namedtuple('LldbVersion', ['display', 'full', 'major', 'minor'])
 
 
 def _compute_lldb_ver():
@@ -32,7 +32,7 @@ def _compute_lldb_ver():
     else:
         full = top.split('-')[1]    # "lldb-x.y.z"
     major, minor = full.split('.')[:2]
-    return LldbVersion(full, int(major), int(minor))
+    return LldbVersion(top, full, int(major), int(minor))
 
 
 LLDB_VERSION = _compute_lldb_ver()
@@ -150,8 +150,11 @@ class RegionInfoReader(object):
 
     def full_mem(self):
         # TODO: This may not work for Harvard architectures
-        sizeptr = int(parse_and_eval('sizeof(void*)')) * 8
-        return Region(0, 1 << sizeptr, 0, None, 'full memory')
+        try:
+            sizeptr = int(parse_and_eval('sizeof(void*)')) * 8
+            return Region(0, 1 << sizeptr, 0, None, 'full memory')
+        except ValueError:
+            return Region(0, 1 << 64, 0, None, 'full memory')
 
 
 def _choose_region_info_reader():

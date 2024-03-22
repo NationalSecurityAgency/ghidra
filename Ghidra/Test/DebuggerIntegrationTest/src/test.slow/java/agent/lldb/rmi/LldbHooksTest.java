@@ -15,7 +15,8 @@
  */
 package agent.lldb.rmi;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.*;
 
 import java.nio.ByteBuffer;
@@ -41,7 +42,7 @@ import ghidra.trace.model.time.TraceSnapshot;
 
 @Category(NightlyCategory.class) // this may actually be an @PortSensitive test
 public class LldbHooksTest extends AbstractLldbTraceRmiTest {
-	private static final long RUN_TIMEOUT_MS = 20000;
+	private static final long RUN_TIMEOUT_MS = 5000;
 	private static final long RETRY_MS = 500;
 
 	record LldbAndTrace(LldbAndConnection conn, ManagedDomainObject mdo) implements AutoCloseable {
@@ -64,10 +65,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 	protected LldbAndTrace startAndSyncLldb() throws Exception {
 		LldbAndConnection conn = startAndConnectLldb();
 		try {
-			// TODO: Why does using 'set arch' cause a hang at quit?
-			conn.execute(
-				"ghidralldb.util.set_convenience_variable('ghidra-language', 'x86:LE:64:default')");
-			conn.execute("ghidra_trace_start");
+			conn.execute("ghidra trace start");
 			ManagedDomainObject mdo = waitDomainObject("/New Traces/lldb/noname");
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
 			return new LldbAndTrace(conn, mdo);
@@ -102,7 +100,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 				RUN_TIMEOUT_MS, RETRY_MS);
 
 			conn.execute("continue");
-			waitStopped();
+			waitStopped(conn.conn);
 			txPut(conn, "threads");
 			waitForPass(() -> assertEquals(2,
 				tb.objValues(lastSnap(conn), "Processes[].Threads[]").size()),
@@ -131,7 +129,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 				RUN_TIMEOUT_MS, RETRY_MS);
 
 			conn.execute("continue");
-			waitStopped();
+			waitStopped(conn.conn);
 			waitForPass(() -> {
 				TraceObject inf = tb.objAny("Processes[]");
 				assertNotNull(inf);
@@ -207,11 +205,11 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 		try (LldbAndTrace conn = startAndSyncLldb()) {
 			traceManager.openTrace(tb.trace);
 
-			start(conn, "bash");
-			conn.execute("breakpoint set -n read");
+			start(conn, getSpecimenPrint());
+			conn.execute("breakpoint set -n puts");
 			conn.execute("cont");
 
-			waitStopped();
+			waitStopped(conn.conn);
 			waitForPass(() -> assertThat(
 				tb.objValues(lastSnap(conn), "Processes[].Threads[].Stack[]").size(),
 				greaterThan(2)),
@@ -224,6 +222,8 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 			conn.execute("frame select 0");
 			waitForPass(() -> assertEquals("0", frameIndex(traceManager.getCurrentObject())),
 				RUN_TIMEOUT_MS, RETRY_MS);
+
+			conn.execute("kill");
 		}
 	}
 
@@ -234,16 +234,16 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 		// FWIW, I've already seen this getting exercised in other tests.
 	}
 
-	@Test
+	//@Test // LLDB does not provide the necessary events
 	public void testOnMemoryChanged() throws Exception {
 		try (LldbAndTrace conn = startAndSyncLldb()) {
-			start(conn, "bash");
+			start(conn, getSpecimenPrint());
 
 			long address = Long.decode(conn.executeCapture("dis -c1 -n main").split("\\s+")[1]);
 			conn.execute("expr *((char*)(void(*)())main) = 0x7f");
-			conn.execute("ghidra_trace_txstart 'Tx'");
-			conn.execute("ghidra_trace_putmem `(void(*)())main` 10");
-			conn.execute("ghidra_trace_txcommit");
+			//conn.execute("ghidra trace tx-start 'Tx'");
+			//conn.execute("ghidra trace putmem '(void(*)())main' 10");
+			//conn.execute("ghidra trace tx-commit");
 
 			waitForPass(() -> {
 				ByteBuffer buf = ByteBuffer.allocate(10);
@@ -253,15 +253,15 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 		}
 	}
 
-	@Test
+	//@Test // LLDB does not provide the necessary events
 	public void testOnRegisterChanged() throws Exception {
 		try (LldbAndTrace conn = startAndSyncLldb()) {
-			start(conn, "bash");
+			start(conn, getSpecimenPrint());
 
-			conn.execute("expr $rax = 0x1234");
-			conn.execute("ghidra_trace_txstart 'Tx'");
-			conn.execute("ghidra_trace_putreg");
-			conn.execute("ghidra_trace_txcommit");
+			conn.execute("expr $%s = 0x1234".formatted(PLAT.intReg()));
+			//conn.execute("ghidra trace tx-start 'Tx'");
+			//conn.execute("ghidra trace putreg");
+			//conn.execute("ghidra trace tx-commit");
 
 			String path = "Processes[].Threads[].Stack[].Registers";
 			TraceObject registers = Objects.requireNonNull(tb.objAny(path, Lifespan.at(0)));
@@ -269,29 +269,33 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 					.getAddressSpace(registers.getCanonicalPath().toString());
 			TraceMemorySpace regs = tb.trace.getMemoryManager().getMemorySpace(space, false);
 			waitForPass(() -> assertEquals("1234",
-				regs.getValue(lastSnap(conn), tb.reg("RAX")).getUnsignedValue().toString(16)));
+				regs.getValue(lastSnap(conn), tb.reg(PLAT.intReg()))
+						.getUnsignedValue()
+						.toString(16)));
 		}
 	}
 
 	@Test
 	public void testOnCont() throws Exception {
 		try (LldbAndTrace conn = startAndSyncLldb()) {
-			start(conn, "bash");
+			start(conn, getSpecimenRead());
 
 			conn.execute("cont");
-			waitRunning();
+			waitRunning(conn.conn);
 
 			TraceObject proc = waitForValue(() -> tb.objAny("Processes[]"));
 			waitForPass(() -> {
 				assertEquals("RUNNING", tb.objValue(proc, lastSnap(conn), "_state"));
 			}, RUN_TIMEOUT_MS, RETRY_MS);
+
+			conn.execute("process interrupt");
 		}
 	}
 
 	@Test
 	public void testOnStop() throws Exception {
 		try (LldbAndTrace conn = startAndSyncLldb()) {
-			start(conn, "bash");
+			start(conn, getSpecimenPrint());
 
 			TraceObject inf = waitForValue(() -> tb.objAny("Processes[]"));
 			waitForPass(() -> {
@@ -303,25 +307,22 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testOnExited() throws Exception {
 		try (LldbAndTrace conn = startAndSyncLldb()) {
-			conn.execute("file bash");
-			conn.execute("ghidra_trace_sync_enable");
-			conn.execute("process launch --stop-at-entry -- -c 'exit 1'");
-			txPut(conn, "processes");
+			start(conn, getSpecimenPrint());
 
 			conn.execute("cont");
-			waitRunning();
+			waitRunning(conn.conn);
 
 			waitForPass(() -> {
 				TraceSnapshot snapshot =
 					tb.trace.getTimeManager().getSnapshot(lastSnap(conn), false);
 				assertNotNull(snapshot);
-				assertEquals("Exited with code 1", snapshot.getDescription());
+				assertEquals("Exited with code 72", snapshot.getDescription());
 
 				TraceObject proc = tb.objAny("Processes[]");
 				assertNotNull(proc);
 				Object val = tb.objValue(proc, lastSnap(conn), "_exit_code");
 				assertThat(val, instanceOf(Number.class));
-				assertEquals(1, ((Number) val).longValue());
+				assertEquals(72, ((Number) val).longValue());
 			}, RUN_TIMEOUT_MS, RETRY_MS);
 		}
 	}
@@ -329,7 +330,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testOnBreakpointCreated() throws Exception {
 		try (LldbAndTrace conn = startAndSyncLldb()) {
-			start(conn, "bash");
+			start(conn, getSpecimenPrint());
 			assertEquals(0, tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]").size());
 
 			conn.execute("breakpoint set -n main");
@@ -346,9 +347,10 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testOnBreakpointModified() throws Exception {
 		try (LldbAndTrace conn = startAndSyncLldb()) {
-			start(conn, "bash");
+			start(conn, getSpecimenPrint());
 			assertEquals(0, tb.objValues(lastSnap(conn), "Breakpoints[]").size());
 
+			//conn.execute("script lldb.debugger.SetAsync(False)");
 			conn.execute("breakpoint set -n main");
 			conn.execute("stepi");
 			TraceObject brk = waitForPass(() -> {
@@ -357,6 +359,8 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 				return (TraceObject) brks.get(0);
 			});
 			assertEquals(null, tb.objValue(brk, lastSnap(conn), "Condition"));
+
+			waitStopped(conn.conn);
 			conn.execute("breakpoint modify -c 'x>3'");
 			conn.execute("stepi");
 			// NB: Testing "Commands" requires multi-line input - not clear how to do this
@@ -372,7 +376,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 	@Test
 	public void testOnBreakpointDeleted() throws Exception {
 		try (LldbAndTrace conn = startAndSyncLldb()) {
-			start(conn, "bash");
+			start(conn, getSpecimenPrint());
 			assertEquals(0, tb.objValues(lastSnap(conn), "Processes[].Breakpoints[]").size());
 
 			conn.execute("breakpoint set -n main");
@@ -384,6 +388,7 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 				return (TraceObject) brks.get(0);
 			});
 
+			waitStopped(conn.conn);
 			conn.execute("breakpoint delete %s".formatted(brk.getCanonicalPath().index()));
 			conn.execute("stepi");
 
@@ -395,15 +400,15 @@ public class LldbHooksTest extends AbstractLldbTraceRmiTest {
 
 	private void start(LldbAndTrace conn, String obj) {
 		conn.execute("file " + obj);
-		conn.execute("ghidra_trace_sync_enable");
+		conn.execute("ghidra trace sync-enable");
 		conn.execute("process launch --stop-at-entry");
 		txPut(conn, "processes");
 	}
 
 	private void txPut(LldbAndTrace conn, String obj) {
-		conn.execute("ghidra_trace_txstart 'Tx" + obj + "'");
-		conn.execute("ghidra_trace_put_" + obj);
-		conn.execute("ghidra_trace_txcommit");
+		conn.execute("ghidra trace tx-start 'Tx" + obj + "'");
+		conn.execute("ghidra trace put-" + obj);
+		conn.execute("ghidra trace tx-commit");
 	}
 
 }

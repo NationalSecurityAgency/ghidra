@@ -1506,7 +1506,7 @@ def ghidra_trace_sync_disable(*, is_mi, **kwargs):
     """
     Cease synchronizing the current inferior with the Ghidra trace.
 
-    This is the opposite of 'ghidra trace sync-disable', except it will not
+    This is the opposite of 'ghidra trace sync-enable', except it will not
     automatically remove hooks.
     """
 

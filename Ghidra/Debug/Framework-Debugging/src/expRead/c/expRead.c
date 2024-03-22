@@ -13,24 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <stdio.h>
+#include <unistd.h>
 
-#ifdef WIN32
-#include <Windows.h>
-#include <debugapi.h>
-#define DLLEXPORT __declspec(dllexport)
-#else
-#define DLLEXPORT
-#define OutputDebugString(out) puts(out)
-#endif
-
-DLLEXPORT volatile char overwrite[] = "Hello, World!";
-
-#ifdef WIN32
-int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
-#else
 int main(int argc, char** argv) {
-#endif
-	OutputDebugString(overwrite);
-	return overwrite[0];
+	char c;
+	read(0, &c, sizeof(c));
 }
