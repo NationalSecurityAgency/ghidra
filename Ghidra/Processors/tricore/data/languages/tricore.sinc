@@ -6564,7 +6564,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 # MUL.U E[c], D[a], const9 (RC)
 :mul.u Re2831,Rd0811,const1220Z is PCPMode=0 & ( Rd0811 & op0007=0x53 ; Re2831 & op2127=0x2 ) & const1220Z
 {
-	Re2831 = zext(Rd0811 * const1220Z);
+	Re2831 = zext(Rd0811) * zext(const1220Z);
 	overflowflagsd(Re2831);
 }
 @endif
@@ -6573,7 +6573,7 @@ macro multiply_u_u(mres0, rega, regb, n) {
 # MUL.U E[c], D[a], D[b] (RR2)
 :mul.u Re2831,Rd0811,Rd1215 is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x73 ; Re2831 & op1627=0x68
 {
-	Re2831 = zext(Rd0811 * Rd1215);
+	Re2831 = zext(Rd0811) * zext(Rd1215);
 	overflowflagsd(Re2831);
 }
 @endif
