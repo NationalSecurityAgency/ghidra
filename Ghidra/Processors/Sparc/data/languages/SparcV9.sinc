@@ -829,44 +829,40 @@ callreloff: reloc  is disp30 [reloc=inst_start+4*disp30;] { export *:$(SIZE) rel
 
 #----------------MULTIPLY 32 bit
 @if SIZE=="8"
-:umul    RS1,regorimm,RD             is op=2 & RD & op3=0x0a & RS1 & regorimm {local res:8 = zext(RS1:4) * zext(regorimm:4); Y=res>>32; RD = res:4;}
-:smul    RS1,regorimm,RD             is op=2 & RD & op3=0x0b & RS1 & regorimm {local res:8 = sext(RS1:4) * sext(regorimm:4); Y=res>>32; RD = res:4;}
-:umulcc  RS1,regorimm,RD             is op=2 & RD & op3=0x1a & RS1 & regorimm {local res:8 = zext(RS1:4) * zext(regorimm:4); Y=res>>32; zeroflags(res); RD = res:4; logicflags();}
-:smulcc  RS1,regorimm,RD             is op=2 & RD & op3=0x1b & RS1 & regorimm {local res:8 = sext(RS1:4) * sext(regorimm:4); Y=res>>32; zeroflags(res); RD = res:4; logicflags();}
+:umul    RS1,regorimm,RD             is op=2 & RD & op3=0x0a & RS1 & regorimm {local res:8 = zext(RS1:4) * zext(regorimm:4); Y=res >> 32; RD = res:4;}
+:smul    RS1,regorimm,RD             is op=2 & RD & op3=0x0b & RS1 & regorimm {local res:8 = sext(RS1:4) * sext(regorimm:4); Y=res s>> 32; RD = res:4;}
+:umulcc  RS1,regorimm,RD             is op=2 & RD & op3=0x1a & RS1 & regorimm {local res:8 = zext(RS1:4) * zext(regorimm:4); Y=res >> 32; zeroflags(res:4); RD = res:4; logicflags();}
+:smulcc  RS1,regorimm,RD             is op=2 & RD & op3=0x1b & RS1 & regorimm {local res:8 = sext(RS1:4) * sext(regorimm:4); Y=res s>> 32; zeroflags(res:4); RD = res:4; logicflags();}
 
 @else
 # size = 4
 :umul    RS1,regorimm,RD             is op=2 & RD & op3=0x0a & RS1 & regorimm
 {
-	tmp_RS1:8 = zext(RS1);
-	tmp_regorimm:8 = zext(regorimm);
-	tmp:8 = tmp_RS1 * tmp_regorimm;
-	RD = tmp:4; tmp2:8 = tmp >> 32;
-	Y = tmp2:4;
+	local res:8 = zext(RS1:4) * zext(regorimm:4);
+	Y = res[32,32];
+	RD = res:4;
 }
 
 :smul    RS1,regorimm,RD             is op=2 & RD & op3=0x0b & RS1 & regorimm
 {
-	tmp_RS1:8 = sext(RS1);
-	tmp_regorimm:8 = sext(regorimm);
-	tmp:8 = tmp_RS1 * tmp_regorimm;
-	RD = tmp:4; tmp2:8 = tmp >> 32;
-	Y = tmp2:4;
+	local res:8 = sext(RS1:4) * sext(regorimm:4);
+	Y = res[32,32];
+	RD = res:4;
 }
 
 :umulcc  RS1,regorimm,RD             is op=2 & RD & op3=0x1a & RS1 & regorimm
 {
 	local res:8 = zext(RS1:4) * zext(regorimm:4);
-	Y=res[32,32];
-	zeroflags(res);
+	Y = res[32,32];
+	zeroflags(res:4);
 	RD = res:4;
 	logicflags();
 }
 :smulcc  RS1,regorimm,RD             is op=2 & RD & op3=0x1b & RS1 & regorimm
 {
-	local res:8 = zext(RS1:4) * zext(regorimm:4);
-	Y=res[32,32];
-	zeroflags(res);
+	local res:8 = sext(RS1:4) * sext(regorimm:4);
+	Y = res[32,32];
+	zeroflags(res:4);
 	RD = res:4;
 	logicflags();
 }
@@ -903,38 +899,26 @@ callreloff: reloc  is disp30 [reloc=inst_start+4*disp30;] { export *:$(SIZE) rel
 
 :udiv    RS1,regorimm,RD             is op=2 & RD & op3=0x0e & RS1 & regorimm
 {
-	numerator:8 = (zext(Y) << 32) + (zext(RS1) & 0xffffffff);
-	denom:8 = zext(regorimm) & 0xffffffff;
+	numerator:8 = (zext(Y) << 32) + zext(RS1);
+	denom:8 = zext(regorimm:4)
 	local res:8 = numerator / denom;
-@if SIZE=="8"
-	RD = res;
-@else
-	RD = res:$(SIZE);
-@endif
+	RD = zext(res:4);
 }
 :sdiv    RS1,regorimm,RD             is op=2 & RD & op3=0x0f & RS1 & regorimm
 {
-	numerator:8 = (zext(Y) << 32) + (zext(RS1) & 0xffffffff);
-	denom:8 = zext(regorimm) & 0xffffffff;
+	numerator:8 = (sext(Y) << 32) + zext(RS1:4);
+	denom:8 = sext(regorimm:4);
 	local res:8 = numerator s/ denom;
-@if SIZE=="8"
-	RD = res;
-@else
-	RD = res:$(SIZE);
-@endif
+	RD = sext(res:4);
 }
 
 :udivcc    RS1,regorimm,RD           is op=2 & RD & op3=0x1e & RS1 & regorimm
 {
-	numerator:8 = (zext(Y) << 32) + (zext(RS1) & 0xffffffff);
-	denom:8 = zext(regorimm) & 0xffffffff;
+	numerator:8 = (zext(Y) << 32) + zext(RS1:4);
+	denom:8 = zext(regorimm:4)
 	local res:8 = numerator / denom;
-	zeroflags(res);
-@if SIZE=="8"
-	RD = res;
-@else
-	RD = res:$(SIZE);
-@endif
+	zeroflags(res:4);
+	RD = zext(res:4);
 	i_vf = res > 0xffffffff;
 	i_cf = 0;
 	x_vf = 0;
@@ -943,14 +927,10 @@ callreloff: reloc  is disp30 [reloc=inst_start+4*disp30;] { export *:$(SIZE) rel
 :sdivcc    RS1,regorimm,RD           is op=2 & RD & op3=0x1f & RS1 & regorimm
 {
 	numerator:8 = (sext(Y) << 32) + (zext(RS1) & 0xffffffff);
-	denom:8 = sext(regorimm);
+	denom:8 = sext(regorimm:4);
 	local res:8 = numerator s/ denom;
-	zeroflags(res);
-@if SIZE=="8"
-	RD = res;
-@else
-	RD = res:$(SIZE);
-@endif
+	zeroflags(res:4);
+	RD = sext(res:4);
 	i_vf = (res s>= 0x80000000) || (res s<= -0x7ffffffff);
 	i_cf = 0;
 	x_vf = 0;
@@ -1017,6 +997,12 @@ sethidisp: "%hi("^hi^")"  is udisp22 [hi=udisp22<<10;] { export *[const]:$(SIZE)
 :restore  RS1,regorimm,RD            is op=0x2 & RD & op3=0x3d & RS1 & regorimm { local tmp = RS1 + regorimm; restore(); didrestore=1; RD = tmp; }
 :restore                             is op=0x2 & rd=0 & op3=0x3d                {                             restore(); didrestore=1; }
 
+# FIXME  'jmpl' can have 'return' in the delayslot to return from a user trap handler
+#        - jmpl    sets the trapped PC supplied to user trap handler
+#        - return  sets the trapped nPC supplied to user trap handler
+#        Nothing in instruction encoding defines this, requiring a context register;
+#        or a fake 8-byte instruction, requiring logic for 64-bits of tokens
+
 :return  retea                       is op=0x2 & op3=0x39 & retea { build retea; restore(); delayslot(1); didrestore=1; return [retea]; }
 
 :jmpl    retea,RD                    is op=0x2 & RD & op3=0x38 & retea { build retea; RD = inst_start; delayslot(1);  goto [retea]; }
@@ -1024,6 +1010,9 @@ sethidisp: "%hi("^hi^")"  is udisp22 [hi=udisp22<<10;] { export *[const]:$(SIZE)
 # special case where link register is loaded with return address; functions as indirect call
 :jmpl    retea,RD                    is op=0x2 & RD & prd=15 & op3=0x38 & retea { build retea; RD = inst_start; delayslot(1); call [retea]; }
 
+# This could be better to split out into three cases to use return instead of goto:
+#  - rs1=31 & simm13=8 to return, assume SAVE from CALL
+#  - rs1=15 & simm13=8 to return, assume no SAVE from CALL
 :jmpl    retea                       is op=0x2 & rd=0 & op3=0x38 & retea { build retea; delayslot(1);  goto [retea]; }
 :ret                                 is op=0x2 & rd=0 & rs1=31 & op3=0x38 & i=1 & simm13=8 & retea   { build retea; delayslot(1); return [retea]; }
 :retl                                is op=0x2 & rd=0 & rs1=15 & op3=0x38 & i=1 & simm13=8 & retea   { build retea; delayslot(1); return [retea]; }
@@ -1031,31 +1020,35 @@ sethidisp: "%hi("^hi^")"  is udisp22 [hi=udisp22<<10;] { export *[const]:$(SIZE)
 casa_ea: [RS1]imm_asi  is i=0 & RS1 & imm_asi { local tmp1:1 = imm_asi; local tmp = RS1+segment(tmp1); export tmp; }
 casa_ea: [RS1]%ASI     is i=1 & RS1 & ASI     { local tmp = RS1+segment(ASI); export tmp; }
 
-:casa   casa_ea,RS2,RD               is op=0x3 & RD & op3=0x3c & casa_ea & RS2 
-{ 
-	local tmp:4=RD:4; 
-	RD=zext(*:4 casa_ea); 
-	if ((RS2 & 0xFFFFFFFF)!=RD) goto <end>; 
-	*:4 casa_ea=tmp; 
+:casa   casa_ea,RS2,RD               is op=0x3 & RD & op3=0x3c & casa_ea & RS2
+{
+	local tmp:4=RD:4;
+	local tmp2:$(SIZE) = RS2;
+	local tmp_ea:$(SIZE) = casa_ea;
+	RD=zext(*:4 tmp_ea);
+	if ((tmp2 & 0xFFFFFFFF)!=RD) goto <end>;
+	*:4 tmp_ea=tmp;
 <end>
 }
-:casxa  casa_ea,RS2,RD               is op=0x3 & RD & op3=0x3e & casa_ea & RS2 
-{ 
-	local tmp=RD; 
-	RD=*:$(SIZE) casa_ea; 
-	if (RS2!=RD) goto <end>; 
-	*:$(SIZE) casa_ea=tmp; 
+:casxa  casa_ea,RS2,RD               is op=0x3 & RD & op3=0x3e & casa_ea & RS2
+{
+	local tmp=RD;
+	local tmp2:$(SIZE) = RS2;
+	local tmp_ea:$(SIZE) = casa_ea;
+	RD=*:$(SIZE) tmp_ea;
+	if (tmp2!=RD) goto <end>;
+	*:$(SIZE) tmp_ea=tmp;
 <end>
 }
 
 :impdef1                             is op=0x2 & op3=0x36 unimpl
 :impdef2                             is op=0x2 & op3=0x37 unimpl
 
-:ldstub    ea,RD                     is op=0x3 & RD & op3=0xd & ea { RD = zext(*:1 ea); *:1 ea = 0xFF; }
-:ldstuba   ea_alt,RD                 is op=0x3 & RD & op3=0x1d & ea_alt { RD = zext(*:1 ea_alt); *:1 ea_alt = 0xFF; }
+:ldstub    ea,RD                     is op=0x3 & RD & op3=0xd & ea { local tmp_ea:$(SIZE) = ea; RD = zext(*:1 tmp_ea); *:1 tmp_ea = 0xFF; }
+:ldstuba   ea_alt,RD                 is op=0x3 & RD & op3=0x1d & ea_alt { local tmp_ea:$(SIZE) = ea_alt; RD = zext(*:1 tmp_ea); *:1 tmp_ea = 0xFF; }
 
-:swap  ea,RD                         is op=0x3 & RD & op3=0xF & ea { tmp:4=RD:4; RD = zext(*:4 ea); *:4 ea = tmp; }
-:swapa ea_alt,RD                     is op=0x3 & RD & op3=0x1F & ea_alt { tmp:4=RD:4; RD = zext(*:4 ea_alt); *:4 ea_alt = tmp; }
+:swap  ea,RD                         is op=0x3 & RD & op3=0xF & ea { local tmp_ea:$(SIZE) = ea; tmp:4=RD:4; RD = zext(*:4 tmp_ea); *:4 tmp_ea = tmp; }
+:swapa ea_alt,RD                     is op=0x3 & RD & op3=0x1F & ea_alt { local tmp_ea:$(SIZE) = ea_alt; tmp:4=RD:4; RD = zext(*:4 tmp_ea); *:4 tmp_ea = tmp; }
 
 :taddcc   RS1,regorimm,RD            is op=2 & RD & op3=0x20 & RS1 & regorimm
 {
