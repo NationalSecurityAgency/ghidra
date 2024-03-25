@@ -37,26 +37,41 @@ import ghidra.util.task.TaskMonitor;
 public class MachoPrelinkUtils {
 
 	/**
-	 * Check to see if the given {@link ByteProvider} is a Mach-O PRELINK binary
+	 * Check to see if the given {@link ByteProvider} is a Mach-O PRELINK binary.
+	 * <p>
+	 * NOTE: This method will return false if the binary is a Mach-O file set.
 	 * 
 	 * @param provider The {@link ByteProvider} to check
-	 * @param allowFileset True if Mach-O file sets should be considered a PRELINK binary; 
-	 *   otherwise, false
 	 * @param monitor A monitor
 	 * @return True if the given {@link ByteProvider} is a Mach-O PRELINK binary; otherwise, false
 	 */
-	public static boolean isMachoPrelink(ByteProvider provider, boolean allowFileset,
-			TaskMonitor monitor) {
+	public static boolean isMachoPrelink(ByteProvider provider, TaskMonitor monitor) {
 		try {
 			MachHeader header = new MachHeader(provider);
 			boolean hasPrelinkSegment = new MachHeader(provider).parseSegments()
 					.stream()
 					.anyMatch(segment -> segment.getSegmentName().startsWith("__PRELINK"));
 			boolean hasFileSet = header.parseAndCheck(LoadCommandTypes.LC_FILESET_ENTRY);
-			return hasPrelinkSegment && allowFileset && hasFileSet;
+			return hasPrelinkSegment && !hasFileSet;
 		}
 		catch (MachException | IOException e) {
 			// Assume it's not a Mach-O PRELINK...fall through
+		}
+		return false;
+	}
+
+	/**
+	 * Check to see if the given {@link ByteProvider} is a Mach-O file set
+	 * 
+	 * @param provider The {@link ByteProvider} to check
+	 * @return True if the given {@link ByteProvider} is a Mach-O file set; otherwise, false
+	 */
+	public static boolean isMachoFileset(ByteProvider provider) {
+		try {
+			return new MachHeader(provider).parseAndCheck(LoadCommandTypes.LC_FILESET_ENTRY);
+		}
+		catch (MachException | IOException e) {
+			// Assume it's not a Mach-O file set...fall through
 		}
 		return false;
 	}

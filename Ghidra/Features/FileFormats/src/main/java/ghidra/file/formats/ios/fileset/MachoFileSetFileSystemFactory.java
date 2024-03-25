@@ -18,9 +18,7 @@ package ghidra.file.formats.ios.fileset;
 import java.io.IOException;
 
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.format.macho.MachException;
-import ghidra.app.util.bin.format.macho.MachHeader;
-import ghidra.app.util.bin.format.macho.commands.LoadCommandTypes;
+import ghidra.app.util.opinion.MachoPrelinkUtils;
 import ghidra.formats.gfilesystem.FSRLRoot;
 import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.formats.gfilesystem.factory.GFileSystemFactoryByteProvider;
@@ -46,12 +44,6 @@ public class MachoFileSetFileSystemFactory implements
 	@Override
 	public boolean probe(ByteProvider byteProvider, FileSystemService fsService,
 			TaskMonitor monitor) throws IOException, CancelledException {
-		try {
-			return new MachHeader(byteProvider).parseAndCheck(LoadCommandTypes.LC_FILESET_ENTRY);
-		}
-		catch (MachException e) {
-			// Assume it's not a Mach-O...fall through
-		}
-		return false;
+		return MachoPrelinkUtils.isMachoFileset(byteProvider);
 	}
 }
