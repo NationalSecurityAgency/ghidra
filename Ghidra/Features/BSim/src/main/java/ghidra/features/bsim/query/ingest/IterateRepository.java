@@ -15,13 +15,10 @@
  */
 package ghidra.features.bsim.query.ingest;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import ghidra.features.bsim.query.LSHException;
-import ghidra.framework.client.NotConnectedException;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.protocol.ghidra.*;
@@ -38,11 +35,11 @@ public abstract class IterateRepository {
 	 * Perform processing on program obtained from repository.
 	 * @param program program obtained from repository
 	 * @param monitor processing task monitor
-	 * @throws Exception if an error occured during processing.
+	 * @throws IOException if an error occured during processing.
 	 * @throws CancelledException if processing was cancelled
 	 */
 	protected abstract void process(Program program, TaskMonitor monitor)
-			throws Exception, CancelledException;
+			throws IOException, CancelledException;
 
 	/**
 	 * Process the specified repository URL
@@ -59,93 +56,32 @@ public abstract class IterateRepository {
 			throw new MalformedURLException("Unsupported repository URL: " + ghidraURL);
 		}
 
-		URL repoURL = GhidraURL.getProjectURL(ghidraURL);
-		String path = GhidraURL.getProjectPathname(ghidraURL);
+		GhidraURLQuery.queryUrl(ghidraURL, new GhidraURLResultHandlerAdapter(true) {
 
-		String finalelement = null;
-		path = path.trim();
-		if (!path.endsWith("/")) {
-			int pos = path.lastIndexOf('/');
-			if (pos >= 0) {
-				String tmp = path.substring(0, pos + 1);
-				if (tmp.length() != 0 && !tmp.equals("/")) {
-					finalelement = path.substring(pos + 1);		// A possible file name at the end of the path
-					path = tmp;
+			@Override
+			public void processResult(DomainFolder domainFolder, URL url, TaskMonitor m)
+					throws IOException, CancelledException {
 
-					if (GhidraURL.isServerRepositoryURL(ghidraURL)) {
-						ghidraURL = new URL(repoURL + path);
-					}
-					else {
-						ghidraURL = new URL(repoURL + "?" + path);
-					}
-				}
-			}
-		}
-
-		try {
-			GhidraURLConnection c = (GhidraURLConnection) ghidraURL.openConnection();
-
-			Msg.debug(IterateRepository.class, "Opening ghidra repository: " + ghidraURL);
-			Object obj = c.getContent();
-			if (!(obj instanceof GhidraURLWrappedContent)) {
-				throw new IOException("Connect to repository folder failed");
-			}
-
-			Object consumer = new Object();
-
-			GhidraURLWrappedContent wrappedContent = (GhidraURLWrappedContent) obj;
-			Object content = null;
-			try {
-				content = wrappedContent.getContent(consumer);
-				if (!(content instanceof DomainFolder)) {
-					throw new IOException("Connect to repository folder failed");
-				}
-
-				DomainFolder folder = (DomainFolder) content;
-
-				int totalFiles = getTotalFileCount(folder);
+				int totalFiles = getTotalFileCount(domainFolder);
 
 				monitor.setMaximum(totalFiles);
 				monitor.setShowProgressValue(true);
 
-				if (finalelement != null) {
-					DomainFolder subfolder = folder.getFolder(finalelement);
-
-					if (subfolder != null) {
-						folder = subfolder;
-						// fall thru to the DomainFile and DomainFolder loop
-					}
-					else {
-						DomainFile file = folder.getFile(finalelement);
-
-						if (file == null) {
-							throw new IOException("Bad folder/file element: " + finalelement);
-						}
-
-						process(file, monitor);
-						return;
-					}
-				}
-
-				process(folder, monitor);
+				process(domainFolder, monitor);
 			}
-			finally {
-				if (content != null) {
-					wrappedContent.release(content, consumer);
-				}
+
+			@Override
+			public void processResult(DomainFile domainFile, URL url, TaskMonitor m)
+					throws IOException, CancelledException {
+				process(domainFile, monitor);
 			}
-		}
-		catch (NotConnectedException e) {
-			throw new IOException(
-				"Ghidra repository connection failed (" + repoURL + "): " + e.getMessage());
-		}
-		catch (FileNotFoundException e) {
-			throw new IOException("Repository path not found: " + path);
-		}
+
+		}, monitor);
+
 	}
 
 	private void process(DomainFolder folder, TaskMonitor monitor)
-			throws Exception, CancelledException {
+			throws IOException, CancelledException {
 
 		for (DomainFile file : folder.getFiles()) {
 			monitor.checkCancelled();
@@ -177,7 +113,7 @@ public abstract class IterateRepository {
 	}
 
 	private void process(DomainFile file, TaskMonitor monitor)
-			throws Exception, CancelledException {
+			throws IOException, CancelledException {
 
 		// Do not follow folder-links or consider program links.  Using content type
 		// to filter is best way to control this.  If program links should be considered
@@ -189,12 +125,11 @@ public abstract class IterateRepository {
 		}
 
 		Program program = null;
-		Object consumer = new Object();
 		try {
 			Msg.debug(IterateRepository.class, "Processing " + file.getPathname() + "...");
 			monitor.setMessage("Processing: " + file.getName());
 			monitor.incrementProgress(1);
-			program = (Program) file.getReadOnlyDomainObject(consumer, -1, monitor);
+			program = (Program) file.getReadOnlyDomainObject(this, -1, monitor);
 			process(program, monitor);
 		}
 		catch (VersionException e) {
@@ -203,7 +138,7 @@ public abstract class IterateRepository {
 		}
 		finally {
 			if (program != null) {
-				program.release(consumer);
+				program.release(this);
 			}
 		}
 	}

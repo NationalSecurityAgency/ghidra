@@ -120,22 +120,15 @@ public class DefaultProject implements Project {
 	}
 
 	/**
-	 * Constructor for opening a URL-based project
+	 * Construct a project with specific project manager and data
 	 * 
 	 * @param projectManager the manager of this project
-	 * @param connection project URL connection (not previously used)
-	 * @throws IOException if I/O error occurs.
+	 * @param projectData the project data
 	 */
-	protected DefaultProject(DefaultProjectManager projectManager, GhidraURLConnection connection)
-			throws IOException {
+	protected DefaultProject(DefaultProjectManager projectManager, DefaultProjectData projectData) {
 
 		this.projectManager = projectManager;
-
-		Msg.info(this, "Opening project/repository: " + connection.getURL());
-		projectData = (DefaultProjectData) connection.getProjectData();
-		if (projectData == null) {
-			throw new IOException("Failed to open project/repository: " + connection.getURL());
-		}
+		this.projectData = projectData;
 
 		projectLocator = projectData.getProjectLocator();
 		if (!SystemUtilities.isInHeadlessMode()) {
