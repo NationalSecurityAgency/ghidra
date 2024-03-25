@@ -1351,8 +1351,8 @@ macro subtractWithCarry(dest, src){
 	$(SIGN) = (DEST_B_AD s< 0x0);			# S Flag
 	$(ZERO) = (DEST_B_AD == 0x0);			# Z Flag
 	# Operation Flags...
-	$(CARRY) = 1;		# Carry is NOT set if there is a borrow
-	$(OVERFLOW) = 0;	# V Flag
+	$(CARRY) = 1;		
+	$(OVERFLOW) = 0;	
 	build postIncrement;
 }
 
@@ -1536,8 +1536,8 @@ macro subtractWithCarry(dest, src){
 	build tbl_bzero;
 	# Result Flags...
 	$(CARRY) = tmp_carry;
-	$(SIGN) = (DEST_B_AD s< 0x0);		# S Flag
-	$(ZERO) = (DEST_B_AD == 0x0);		# Z Flag
+	$(SIGN) = (tmp_res s< 0x0);		# S Flag
+	$(ZERO) = (tmp_res == 0x0);		# Z Flag
 	build postIncrementStore;
 }
 
