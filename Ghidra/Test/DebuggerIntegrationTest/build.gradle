@@ -57,6 +57,7 @@ dependencies {
 	}
 
 	// some tests use classes in Base, FunctionGraph and PDB
+	testImplementation project(path: ':Pty', configuration: 'testArtifacts')
 	testImplementation project(path: ':Base', configuration: 'testArtifacts')
 	testImplementation project(path: ':Base', configuration: 'integrationTestArtifacts')	
 	testImplementation project(path: ':FunctionGraph', configuration: 'testArtifacts')	
