@@ -338,12 +338,16 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 				wroteToZip |= writeZipRecursively(zip, srcDir.getAbsolutePath(), srcDir);
 			}
 		}
-		if (wroteToZip) {
-			System.out
-					.println("Can't create source zip!  Has source been downloaded and installed?");
-			// zip.close reports error if nothing has been written to it
-			zip.close();
+		if (!wroteToZip) {
+			System.out.println("Can't create source zip!  Has source been downloaded and installed?");
 		}
+		// zip.close reports error if nothing has been written to it
+		try {
+			zip.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
 	}
 
 	private void writeModuleSrcZipToOverallSrcZip(Zip zip, File srcZipFileForModule)
