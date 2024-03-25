@@ -247,6 +247,9 @@ public class ClangToken implements ClangNode {
 		else if (node == ELEM_FUNCNAME.id()) {
 			token = new ClangFuncNameToken(par, null);
 		}
+		else if (node == ELEM_NORETURN.id()) {
+			token = new ClangTypeToken(par);
+		}
 		else if (node == ELEM_TYPE.id()) {
 			token = new ClangTypeToken(par);
 		}
