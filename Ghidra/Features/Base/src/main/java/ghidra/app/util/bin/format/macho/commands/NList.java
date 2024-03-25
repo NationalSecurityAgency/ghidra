@@ -69,11 +69,14 @@ public class NList implements StructConverter {
 	 * @param stringTableOffset offset of the string table
 	 */
 	public void initString(BinaryReader reader, long stringTableOffset) {
-		try {
-			string = reader.readAsciiString(stringTableOffset + n_strx);
-		}
-		catch (Exception e) {
-			string = "";
+		string = "";
+		if (n_strx != 0) {
+			try {
+				string = reader.readAsciiString(stringTableOffset + n_strx);
+			}
+			catch (Exception e) {
+				// use empty string
+			}
 		}
 	}
 
