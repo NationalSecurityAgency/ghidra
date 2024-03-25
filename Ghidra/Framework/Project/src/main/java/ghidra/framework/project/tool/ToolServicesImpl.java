@@ -32,7 +32,7 @@ import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.preferences.Preferences;
-import ghidra.framework.protocol.ghidra.GetUrlContentTypeTask;
+import ghidra.framework.protocol.ghidra.ContentTypeQueryTask;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.util.Msg;
 import ghidra.util.filechooser.GhidraFileChooserModel;
@@ -272,7 +272,7 @@ class ToolServicesImpl implements ToolServices {
 	}
 
 	private String getContentType(URL url) throws IllegalArgumentException {
-		GetUrlContentTypeTask task = new GetUrlContentTypeTask(url);
+		ContentTypeQueryTask task = new ContentTypeQueryTask(url);
 		TaskLauncher.launch(task); // blocking task
 		return task.getContentType();
 	}

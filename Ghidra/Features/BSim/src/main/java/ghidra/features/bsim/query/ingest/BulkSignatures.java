@@ -1025,8 +1025,7 @@ public class BulkSignatures implements AutoCloseable {
 		}
 
 		@Override
-		protected void process(Program program, TaskMonitor monitor)
-				throws IOException, LSHException {
+		protected void process(Program program, TaskMonitor monitor) throws IOException {
 			// NOTE: task monitor not used by DescriptionManager
 			String md5string = program.getExecutableMD5();
 			if ((md5string == null) || (md5string.length() < 10)) {
@@ -1059,9 +1058,8 @@ public class BulkSignatures implements AutoCloseable {
 					manager.saveXml(fwrite);
 				}
 			}
-			catch (LSHException | IOException e) {
-				Msg.error(this, e.getMessage());
-				throw e;
+			catch (LSHException e) {
+				throw new IOException("Program signature generation failure: " + e.getMessage());
 			}
 		}
 	}
@@ -1084,8 +1082,7 @@ public class BulkSignatures implements AutoCloseable {
 		}
 
 		@Override
-		protected void process(Program program, TaskMonitor monitor)
-				throws IOException, LSHException, DecompileException {
+		protected void process(Program program, TaskMonitor monitor) throws IOException {
 			// NOTE: task monitor not used by DescriptionManager
 			String md5string = program.getExecutableMD5();
 			if ((md5string == null) || (md5string.length() < 10)) {
@@ -1121,9 +1118,8 @@ public class BulkSignatures implements AutoCloseable {
 				manager.saveXml(fwrite);
 				fwrite.close();
 			}
-			catch (DecompileException | LSHException | IOException e) {
-				Msg.error(this, e.getMessage());
-				throw e;
+			catch (DecompileException | LSHException e) {
+				throw new IOException("Program signature generation failure: " + e.getMessage());
 			}
 		}
 	}
