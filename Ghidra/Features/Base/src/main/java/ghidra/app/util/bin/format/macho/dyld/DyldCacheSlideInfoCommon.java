@@ -67,9 +67,11 @@ public abstract class DyldCacheSlideInfoCommon implements StructConverter {
 
 		monitor.setMessage("Parsing DYLD slide info...");
 		monitor.initialize(1);
+		String errorMessage = "Failed to parse dyld_cache_slide_info";
 		try {
 			reader.setPointerIndex(slideInfoOffset);
 			int version = reader.readInt(reader.getPointerIndex());
+			errorMessage += version;
 			DyldCacheSlideInfoCommon returnedSlideInfo = switch (version) {
 				case 1 -> new DyldCacheSlideInfo1(reader, mappingAddress, mappingSize,
 					mappingFileOffset);
@@ -79,15 +81,14 @@ public abstract class DyldCacheSlideInfoCommon implements StructConverter {
 					mappingFileOffset);
 				case 4 -> new DyldCacheSlideInfo4(reader, mappingAddress, mappingSize,
 					mappingFileOffset);
-				default -> throw new IOException("Unrecognized slide info version: " + version);
+				default -> throw new IOException(); // will be caught and version will be added to message
 			};
 			monitor.incrementProgress(1);
 			returnedSlideInfo.slideInfoOffset = slideInfoOffset;
 			return returnedSlideInfo;
 		}
 		catch (IOException e) {
-			log.appendMsg(DyldCacheSlideInfoCommon.class.getSimpleName(),
-				"Failed to parse dyld_cache_slide_info.");
+			log.appendMsg(DyldCacheSlideInfoCommon.class.getSimpleName(), errorMessage);
 			return null;
 		}
 	}
