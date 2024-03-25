@@ -72,6 +72,11 @@ static TestInfo MainInfo = {
 	mainFunctionInfoTable,		/* function table */
 };
 
+NOINLINE TestInfo TestInfo_force(void)
+{
+	return MainInfo;
+}
+
 NOINLINE void TestInfo_reset(void)
 {
 	MainInfo.numpass = 0;
