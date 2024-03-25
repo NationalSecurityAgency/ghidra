@@ -113,6 +113,46 @@ public class GhidraFileData {
 		refresh();
 	}
 
+	/**
+	 * Construct a new file instance with a specified name and a corresponding parent folder using
+	 * up-to-date folder items.
+	 * @param parent parent folder
+	 * @param name file name
+	 * @param folderItem local folder item
+	 * @param versionedFolderItem versioned folder item
+	 */
+	GhidraFileData(GhidraFolderData parent, String name, LocalFolderItem folderItem,
+			FolderItem versionedFolderItem) {
+		this.parent = parent;
+		this.name = name;
+		this.folderItem = folderItem;
+		this.versionedFolderItem = versionedFolderItem;
+
+		this.projectData = parent.getProjectData();
+		this.fileSystem = parent.getLocalFileSystem();
+		this.versionedFileSystem = parent.getVersionedFileSystem();
+		this.listener = parent.getChangeListener();
+
+		validateCheckout();
+		updateFileID();
+	}
+
+	void refresh(LocalFolderItem localFolderItem, FolderItem verFolderItem) {
+		icon = null;
+		disabledIcon = null;
+
+		this.folderItem = localFolderItem;
+		this.versionedFolderItem = verFolderItem;
+
+		validateCheckout();
+		boolean fileIDset = updateFileID();
+
+		if (parent.visited()) {
+			// NOTE: we should maintain some cached data so we can determine if something really changed
+			listener.domainFileStatusChanged(getDomainFile(), fileIDset);
+		}
+	}
+
 	private boolean refresh() throws IOException {
 		String parentPath = parent.getPathname();
 		if (folderItem == null) {
@@ -138,9 +178,12 @@ public class GhidraFileData {
 		if (folderItem == null && versionedFolderItem == null) {
 			throw new FileNotFoundException(name + " not found");
 		}
+		return updateFileID();
+	}
+
+	private boolean updateFileID() {
 		boolean fileIdWasNull = fileID == null;
 		fileID = folderItem != null ? folderItem.getFileID() : versionedFolderItem.getFileID();
-
 		return fileIdWasNull && fileID != null;
 	}
 
@@ -157,26 +200,32 @@ public class GhidraFileData {
 		disabledIcon = null;
 		fileIDset |= refresh();
 		if (parent.visited()) {
+			// NOTE: we should maintain some cached data so we can determine if something really changed
 			listener.domainFileStatusChanged(getDomainFile(), fileIDset);
 		}
 	}
 
-	private void validateCheckout() throws IOException {
+	private void validateCheckout() {
 		if (fileSystem.isReadOnly() || !versionedFileSystem.isOnline()) {
 			return;
 		}
-		if (folderItem != null && folderItem.isCheckedOut()) {
-			// Cleanup checkout status which may be stale
-			if (versionedFolderItem != null) {
-				ItemCheckoutStatus coStatus =
-					versionedFolderItem.getCheckout(folderItem.getCheckoutId());
-				if (coStatus == null) {
+		try {
+			if (folderItem != null && folderItem.isCheckedOut()) {
+				// Cleanup checkout status which may be stale
+				if (versionedFolderItem != null) {
+					ItemCheckoutStatus coStatus =
+						versionedFolderItem.getCheckout(folderItem.getCheckoutId());
+					if (coStatus == null) {
+						folderItem.clearCheckout();
+					}
+				}
+				else {
 					folderItem.clearCheckout();
 				}
 			}
-			else {
-				folderItem.clearCheckout();
-			}
+		}
+		catch (IOException e) {
+			// ignore
 		}
 	}
 
