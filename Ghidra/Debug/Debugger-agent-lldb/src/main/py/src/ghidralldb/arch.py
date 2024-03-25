@@ -50,8 +50,8 @@ language_map = {
     'thumbv7em': ['ARM:BE:32:Cortex', 'ARM:LE:32:Cortex'],
     'armv8': ['ARM:BE:32:v8', 'ARM:LE:32:v8'],
     'armv8l': ['ARM:BE:32:v8', 'ARM:LE:32:v8'],
-    'arm64': ['ARM:BE:64:v8', 'ARM:LE:64:v8'],
-    'arm64e': ['ARM:BE:64:v8', 'ARM:LE:64:v8'],
+    'arm64': ['AARCH64:BE:64:v8A', 'AARCH64:LE:64:AppleSilicon', 'AARCH64:LE:64:v8A'],
+    'arm64e': ['AARCH64:BE:64:v8A', 'AARCH64:LE:64:AppleSilicon', 'AARCH64:LE:64:v8A'],
     'arm64_32': ['ARM:BE:32:v8', 'ARM:LE:32:v8'],
     'mips': ['MIPS:BE:32:default', 'MIPS:LE:32:default'],
     'mipsr2': ['MIPS:BE:32:default', 'MIPS:LE:32:default'],
@@ -141,10 +141,24 @@ compiler_map = {
 }
 
 
-def get_arch():
+def find_host_triple():
+    dbg = util.get_debugger()
+    for i in range(dbg.GetNumPlatforms()):
+        platform = dbg.GetPlatformAtIndex(i)
+        if platform.GetName() == 'host':
+            return platform.GetTriple()
+    return 'unrecognized'
+
+
+def find_triple():
     triple = util.get_target().triple
-    if triple is None:
-        return "x86_64"
+    if triple is not None:
+        return triple
+    return find_host_triple()
+
+
+def get_arch():
+    triple = find_triple()
     return triple.split('-')[0]
 
 
@@ -152,7 +166,6 @@ def get_endian():
     parm = util.get_convenience_variable('endian')
     if parm != 'auto':
         return parm
-    # Once again, we have to hack using the human-readable 'show'
     order = util.get_target().GetByteOrder()
     if order is lldb.eByteOrderLittle:
         return 'little'
@@ -167,15 +180,11 @@ def get_osabi():
     parm = util.get_convenience_variable('osabi')
     if not parm in ['auto', 'default']:
         return parm
-    # We have to hack around the fact the LLDB won't give us the current OS ABI
-    # via the API if it is "auto" or "default". Using "show", we can get it, but
-    # we have to parse output meant for a human. The current value will be on
-    # the top line, delimited by double quotes. It will be the last delimited
-    # thing on that line. ("auto" may appear earlier on the line.)
-    triple = util.get_target().triple
+    triple = find_triple()
     # this is an unfortunate feature of the tests
     if triple is None or '-' not in triple:
         return "default"
+    triple = find_triple()
     return triple.split('-')[2]
 
 
@@ -274,29 +283,8 @@ class DefaultRegisterMapper(object):
     def map_name(self, proc, name):
         return name
 
-    """
-    def convert_value(self, value, type=None):
-        if type is None:
-            type = value.dynamic_type.strip_typedefs()
-        l = type.sizeof
-        # l - 1 because array() takes the max index, inclusive
-        # NOTE: Might like to pre-lookup 'unsigned char', but it depends on the
-        # architecture *at the time of lookup*.
-        cv = value.cast(lldb.lookup_type('unsigned char').array(l - 1))
-        rng = range(l)
-        if self.byte_order == 'little':
-            rng = reversed(rng)
-        return bytes(cv[i] for i in rng)
-    """
-
     def map_value(self, proc, name, value):
-        try:
-            # TODO: this seems half-baked
-            av = value.to_bytes(8, "big")
-        except e:
-            raise ValueError("Cannot convert {}'s value: '{}', type: '{}'"
-                             .format(name, value, value.type))
-        return RegVal(self.map_name(proc, name), av)
+        return RegVal(self.map_name(proc, name), value)
 
     def map_name_back(self, proc, name):
         return name

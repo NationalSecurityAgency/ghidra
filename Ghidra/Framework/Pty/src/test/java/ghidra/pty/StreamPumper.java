@@ -13,24 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <stdio.h>
+package ghidra.pty;
 
-#ifdef WIN32
-#include <Windows.h>
-#include <debugapi.h>
-#define DLLEXPORT __declspec(dllexport)
-#else
-#define DLLEXPORT
-#define OutputDebugString(out) puts(out)
-#endif
+import java.io.*;
 
-DLLEXPORT volatile char overwrite[] = "Hello, World!";
+public class StreamPumper extends Thread {
+	private final InputStream in;
+	private final OutputStream out;
 
-#ifdef WIN32
-int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow) {
-#else
-int main(int argc, char** argv) {
-#endif
-	OutputDebugString(overwrite);
-	return overwrite[0];
+	public StreamPumper(InputStream in, OutputStream out) {
+		setDaemon(true);
+		this.in = in;
+		this.out = out;
+	}
+
+	@Override
+	public void run() {
+		byte[] buf = new byte[1024];
+		try {
+			while (true) {
+				int len = in.read(buf);
+				if (len <= 0) {
+					break;
+				}
+				out.write(buf, 0, len);
+			}
+		}
+		catch (IOException e) {
+		}
+	}
 }

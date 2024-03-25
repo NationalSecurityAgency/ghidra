@@ -92,7 +92,11 @@ class Receiver(Thread):
         dbg_seq = 0
         while not self._is_shutdown:
             #print("Receiving message")
-            reply = recv_delimited(self.client.s, bufs.RootMessage(), dbg_seq)
+            try:
+                reply = recv_delimited(self.client.s, bufs.RootMessage(), dbg_seq)
+            except BaseException as e:
+                self._is_shutdown = True
+                return
             #print(f"Got one: {reply.WhichOneof('msg')}")
             dbg_seq += 1
             try:
@@ -333,6 +337,14 @@ class Trace(object):
         return self.client._delete_bytes(self.id, snap, range)
 
     def put_registers(self, space, values, snap=None):
+        """
+        TODO
+
+        values is a dictionary, where each key is a a register name, and the
+        value is a byte array. No matter the target architecture, the value is
+        given in big-endian byte order.
+        """
+
         if snap is None:
             snap = self.snap()
         return self.client._put_registers(self.id, snap, space, values)

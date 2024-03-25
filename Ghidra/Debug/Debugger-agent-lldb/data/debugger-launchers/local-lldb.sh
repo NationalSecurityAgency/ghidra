@@ -24,7 +24,7 @@
 #@menu-group local
 #@icon icon.debugger
 #@help TraceRmiLauncherServicePlugin#lldb
-#@enum StartCmd:str run "process launch" "process launch --stop-at-entry"
+#@enum StartCmd:str "process launch" "process launch --stop-at-entry"
 #@arg :str "Image" "The target binary executable image"
 #@args "Arguments" "Command-line arguments to pass to the target"
 #@env OPT_LLDB_PATH:str="lldb" "Path to lldb" "The path to lldb. Omit the full path to resolve using the system PATH."
