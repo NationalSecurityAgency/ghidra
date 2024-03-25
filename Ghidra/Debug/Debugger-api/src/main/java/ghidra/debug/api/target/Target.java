@@ -170,6 +170,20 @@ public interface Target {
 	Map<String, ActionEntry> collectActions(ActionName name, ActionContext context);
 
 	/**
+	 * Execute a command as if in the CLI
+	 * 
+	 * @param command the command
+	 * @param toString true to capture the output and return it, false to print to the terminal
+	 * @return the captured output, or null if {@code toString} is false
+	 */
+	CompletableFuture<String> executeAsync(String command, boolean toString);
+
+	/**
+	 * @see #executeAsync(String, boolean)
+	 */
+	String execute(String command, boolean toString);
+
+	/**
 	 * Get the trace thread that contains the given object
 	 * 
 	 * @param path the path of the object

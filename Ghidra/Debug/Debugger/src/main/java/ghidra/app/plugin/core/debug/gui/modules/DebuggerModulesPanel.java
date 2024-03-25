@@ -28,6 +28,7 @@ import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.dbg.target.TargetModule;
 import ghidra.dbg.target.TargetProcess;
 import ghidra.dbg.target.schema.TargetObjectSchema;
+import ghidra.debug.api.model.DebuggerObjectActionContext;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.ServiceProvider;

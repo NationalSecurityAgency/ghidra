@@ -192,6 +192,15 @@ public class TraceRmiLauncherServicePlugin extends Plugin
 				.toList();
 	}
 
+	@Override
+	public List<TraceRmiLaunchOffer> getSavedOffers(Program program) {
+		Map<String, Long> savedConfigs = loadSavedConfigs(program);
+		return getOffers(program).stream()
+				.filter(o -> savedConfigs.containsKey(o.getConfigName()))
+				.sorted(Comparator.comparing(o -> -savedConfigs.get(o.getConfigName())))
+				.toList();
+	}
+
 	protected void executeTask(Task task) {
 		ProgressService progressService = tool.getService(ProgressService.class);
 		if (progressService != null) {

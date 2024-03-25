@@ -20,12 +20,14 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import ghidra.app.services.DebuggerTargetService;
 import ghidra.async.AsyncPairingQueue;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
@@ -65,6 +67,19 @@ public class TestTraceRmiConnection implements TraceRmiConnection {
 				retType);
 		}
 
+		public TestRemoteMethod(String name, ActionName action, String display, String description,
+				Map<String, RemoteParameter> parameters, TargetObjectSchema retType) {
+			this(name, action, display, description, parameters, retType.getName(),
+				new AsyncPairingQueue<>(), new AsyncPairingQueue<>());
+		}
+
+		public TestRemoteMethod(String name, ActionName action, String display, String description,
+				TargetObjectSchema retType, RemoteParameter... parameters) {
+			this(name, action, display, description, Stream.of(parameters)
+					.collect(Collectors.toMap(RemoteParameter::name, p -> p)),
+				retType);
+		}
+
 		@Override
 		public RemoteAsyncResult invokeAsync(Map<String, Object> arguments) {
 			argQueue.give().complete(arguments);
@@ -80,10 +95,24 @@ public class TestTraceRmiConnection implements TraceRmiConnection {
 		public void result(Object ret) {
 			retQueue.give().complete(ret);
 		}
+
+		public CompletableFuture<Map<String, Object>> expect(
+				Function<Map<String, Object>, Object> impl) {
+			record ArgsRet(Map<String, Object> args, Object ret) {
+			}
+			var result = argQueue().take().thenApply(a -> new ArgsRet(a, impl.apply(a)));
+			result.thenApply(ar -> ar.ret).handle(AsyncUtils.copyTo(retQueue().give()));
+			return result.thenApply(ar -> ar.args);
+		}
 	}
 
 	public record TestRemoteParameter(String name, SchemaName type, boolean required,
 			Object defaultValue, String display, String description) implements RemoteParameter {
+		public TestRemoteParameter(String name, TargetObjectSchema type, boolean required,
+				Object defaultValue, String display, String description) {
+			this(name, type.getName(), required, defaultValue, display, description);
+		}
+
 		@Override
 		public Object getDefaultValue() {
 			return defaultValue;
