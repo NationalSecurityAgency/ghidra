@@ -1450,23 +1450,31 @@ public class MachoProgramBuilder {
 			if (address.compareTo(block.getEnd()) > 0) {
 				break;
 			}
-			int length;
 			try {
 				listing.createData(address, datatype);
-				length = listing.getDataAt(address).getLength();
+				if (datatype instanceof Pointer) {
+					fixupThumbPointers(address);
+				}
+				address = address.add(listing.getDataAt(address).getLength());
 			}
-			catch (Exception e) {
-				// don't worry about exceptions
-				// may have already been created, by relocation, or chain pointers
-				if (!(datatype instanceof Pointer)) {
+			catch (CodeUnitInsertionException e) {
+				if (datatype instanceof TerminatedStringDataType) {
+					// Sometimes there are huge strings, like JSON blobs
+					log.appendMsg("Skipping markup for large string at: " + address);
+				}
+				else if (!(datatype instanceof Pointer)) {
+					// May have already been created, by relocation, or chain pointers
+					log.appendMsg("Skipping markup for existing pointer at: " + address);
+				}
+				else {
 					log.appendException(e);
 				}
 				return;
 			}
-			if (datatype instanceof Pointer) {
-				fixupThumbPointers(address);
+			catch (Exception e) {
+				log.appendException(e);
+				return;
 			}
-			address = address.add(length);
 		}
 	}
 
