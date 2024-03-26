@@ -243,7 +243,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				quit
 				""".formatted(PREAMBLE));
 		assertEquals("""
-				Selected Ghidra language: DATA:LE:64:default
+				Selected Ghidra language: x86:LE:32:default
 				Selected Ghidra compiler: pointer64""",
 			extractOutSection(out, "---Import---"));
 		assertEquals("""
