@@ -134,7 +134,7 @@ public class MachoProgramBuilder {
 		processAbsoluteSymbols();
 		List<String> libraryPaths = processLibraries();
 		List<Address> chainedFixups = processChainedFixups(libraryPaths);
-		processBindings(false, libraryPaths);
+		processDyldInfo(false, libraryPaths);
 		processSectionRelocations();
 		processExternalRelocations();
 		processLocalRelocations();
@@ -824,10 +824,11 @@ public class MachoProgramBuilder {
 			log, monitor);
 	}
 
-	protected void processBindings(boolean doClassic, List<String> libraryPaths) throws Exception {
+	protected void processDyldInfo(boolean doClassic, List<String> libraryPaths) throws Exception {
 
 		List<DyldInfoCommand> commands = machoHeader.getLoadCommands(DyldInfoCommand.class);
 		for (DyldInfoCommand command : commands) {
+			processRebases(command.getRebaseTable());
 			processBindings(command.getBindingTable(), libraryPaths);
 			processBindings(command.getLazyBindingTable(), libraryPaths);
 			processBindings(command.getWeakBindingTable(), libraryPaths);
@@ -852,6 +853,10 @@ public class MachoProgramBuilder {
 				log.appendException(e);
 			}
 		}
+	}
+
+	private void processRebases(RebaseTable rebaseTable) throws Exception {
+		// If we ever support rebasing a Mach-O at load time, this should get implemented
 	}
 
 	private void processBindings(BindingTable bindingTable, List<String> libraryPaths)
