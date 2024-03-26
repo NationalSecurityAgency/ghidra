@@ -22,6 +22,56 @@
 
 <BODY>
 
+<H1 align="center">Ghidra 11.0.2 Change History (March 2024)</H1>
+<blockquote><p><u><B>Improvements</B></u></p>
+<ul>
+    <li><I>Accessibility</I>. Eliminated redundant screen-reading of text with cursor-up and cursor-down movements in the Decompiler view. (GP-4297, Issue #6177)</li>
+    <li><I>Debugger:GDB</I>. Fixed an issue connecting to GDB on some builds of Windows. (GP-4392, Issue #6107)</li>
+    <li><I>Decompiler</I>. The Decompiler now treats software breakpoints as indirect calls that do not take parameters and do not return. (GP-4332)</li>
+    <li><I>Decompiler</I>. Improved detection of switch variables when their path crosses a call. (GP-4369)</li>
+    <li><I>Headless</I>. Updated analyzer options to not create Java Swing components in headless mode. (GP-4309)</li>
+    <li><I>Importer:ELF</I>. Revised ELF PowerPC relocation processing for <span class="gcode">R_PPC_ADDR16_LO</span> and <span class="gcode">R_PPC_ADDR16_HA</span> to address FreeBSD conventions. (GP-4397)</li>
+    <li><I>Multi-User</I>. Updated Ghidra Server <span class="gcode">server.conf</span> to facilitate specification of enabled TLS cipher suites.  Enabled cipher suites have been constrained by default, consistent with RFC 9151. (GP-4330)</li>
+    <li><I>Multi-User</I>. Made minor improvement to shared project performance when populating folders containing a large number of files.  This was done by caching the FileID associated with each remote project file. (GP-4455)</li>
+    <li><I>Processors</I>. Added support for ARM v8-M Custom Datapath Extension. (GP-1791)</li>
+    <li><I>Scripting</I>. Added check to <span class="gcode">RecoverClassesFromRTTIScript</span> to not run if there are unhandled relocations in GCC programs for the necessary RTTI symbols. (GP-4371)</li>
+</ul>
+</blockquote>
+<blockquote><p><u><B>Bugs</B></u></p>
+<ul>
+    <li><I>Analysis</I>. Fixed analysis lockup if the fall-through of an instruction is overridden to itself. (GP-4312, Issue #6179)</li>
+    <li><I>Analysis</I>. Loosened MIPS jump target function-start pattern. (GP-4442, Issue #3677, #4193)</li>
+    <li><I>BSim</I>. Corrected BSim command <span class="gcode">listexes --limit</span> option processing. (GP-4362, Issue #6246)</li>
+    <li><I>Build</I>. Removed unused log4j-jcl 2.16.0 jar dependency.  Updated postgresql JDBC driver jar to 42.6.2. (GP-4449)</li>
+    <li><I>Debugger</I>. Removed leading slash in executable path for Windows launch options. (GP-4331)</li>
+    <li><I>Debugger:GDB</I>. Fixed issue parsing breakpoints with command lists, especially with <span class="gtitle">Use existing session (new-ui)<span class="gtitle">. (GP-4368, Issue #6257)</li>
+    <li><I>Debugger:Listing</I>. Auto-disassembly now ignores <span class="gcode">UNKNOWN</span> memory (fixed regression) and re-disassembles if PC lands offcut in an existing instruction. (GP-4278)</li>
+    <li><I>Debugger:Recorder</I>. Changed register-recording errors to go to log only, not popup. (GP-4305)</li>
+    <li><I>Decompiler</I>. The Decompiler will now convert an indirect branch into a return operation if the branch target  can be traced to the formal return address storage location. (GP-4226)</li>
+    <li><I>Decompiler</I>. Fixed bug causing <em>"Could not find op at target address"</em> exception when applying <span class="gcode">SwitchOverride</span> script. (GP-4314)</li>
+    <li><I>Decompiler</I>. Fixed bug that could cause the Decompiler display to drop characters with a multi-byte UTF8 encoding. (GP-4360)</li>
+    <li><I>Function Compare</I>. Corrected handling of thunked functions in the <span class="gtitle">Compare Matching Callees</span> action. (GP-4354, Issue #6159)</li>
+    <li><I>GUI</I>. Fixed an <span class="gcode">IllegalArgumentException</span> that occurred when trying to expand data over a selection in the Listing that spanned addresses from multiple address spaces. (GP-701)</li>
+    <li><I>GUI</I>. Fixed screen reader support of tooltips by using the lower-case html tag; some readers could not process an upper-case tag. (GP-4296, Issue #6176)</li>
+    <li><I>GUI</I>. Fixed Data Types tree broken <span class="gcode">Cut</span> operation when the tree is filtered. (GP-4373, Issue #6137)</li>
+    <li><I>GUI</I>. Fixed Structure Editor exception when searching with some columns removed. (GP-4426)</li>
+    <li><I>Headless</I>. Fixed exception looking for extensions when running Headless Ghidra using the single Ghidra Jar mode. (GP-4294, Issue #6178)</li>
+    <li><I>Importer</I>. Fixed an uncaught <span class="gcode">InvalidPathException</span> that could occur when loading libraries during import. (GP-4326, Issue #5894)</li>
+    <li><I>Importer:COFF</I>. Fixed an <span class="gcode">EOFException</span> in the CoffLoader that could occur when parsing symbols. (GP-4344, Issue #6236)</li>
+    <li><I>Importer:Mach-O</I>. The <span class="gcode">dyld_shared_cache</span> loader no longer throws an exception when importing newer versions that use <span class="gcode">dyld_cache_slide_info5</span>. (GP-4457)</li>
+    <li><I>Memory</I>. Fixed an issue with the GUI sometimes showing incorrect file byte offsets for memory blocks that have been joined. (GP-4357)</li>
+    <li><I>Processors</I>. Fixed AARCH64 instructions which could overwrite source registers during reads (<span class="gcode">ldaxp</span>, <span class="gcode">ldnp</span>, <span class="gcode">ldp</span>, <span class="gcode">ldpsw</span>, <span class="gcode">ldxp</span>). (GP-3851, Issue #5791)</li>
+    <li><I>Processors</I>. Fixed 6809 <span class="gcode">clr</span> instruction not clearing the carry flag. (GP-3889, Issue #5838)</li>
+    <li><I>Processors</I>. Fixed several ARM instructions which could potentially overwrite a source register before reading. (GP-3892, Issue #5822)</li>
+    <li><I>Processors</I>. Fixed Z80 8-bit <span class="gcode">INC</span> instructions' setting of the carry flag. (GP-4273, Issue #2247, #2277)</li>
+    <li><I>Processors</I>. Improved Tricore calling conventions. (GP-4319, Issue #5757)</li>
+    <li><I>Processors</I>. Corrected semantics for Tricore <span class="gcode">dextr</span> instruction. (GP-4418, Issue #5756, #6303)</li>
+    <li><I>Processors</I>. Fixed semantics of PowerPC <span class="gcode">lwax</span> instruction. (GP-4419)</li>
+    <li><I>Version Tracking</I>. Fixed broken Version Tracking tag filter. (GP-4336)</li>
+    <li><I>Version Tracking</I>. Fixed <span class="gcode">MemoryAccessException</span> in Version Tracking Data Correlator when data is partially contained in uninitialized memory. (GP-4339, Issue #6238)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 11.0.1 Change History (January 2024)</H1>
 <blockquote><p><u><B>Improvements</B></u></p>
 <ul>
