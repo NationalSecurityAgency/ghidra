@@ -87,17 +87,42 @@ public enum DWARFTag {
 	DW_TAG_type_unit(0x41),
 	DW_TAG_rvalue_reference_type(0x42),
 	DW_TAG_template_alias(0x43),
+	DW_TAG_coarray_type(0x44),
+	DW_TAG_generic_subrange(0x45),
+	DW_TAG_dynamic_type(0x46),
+	DW_TAG_atomic_type(0x47),
 	DW_TAG_call_site(0x48),
 	DW_TAG_call_site_parameter(0x49),
+	DW_TAG_skeleton_unit(0x4a),
+	DW_TAG_immutable_type(0x4b),
 
 	DW_TAG_lo_user(0x4080),
+	
+	DW_TAG_MIPS_loop(0x4081),
+	DW_TAG_HP_array_descriptor(0x4090),
+	DW_TAG_HP_Bliss_field(0x4091),
+	DW_TAG_HP_Bliss_field_set(0x4092),
+	
+	DW_TAG_format_label(0x4101), // original comment mentions FORTRAN
+	DW_TAG_function_template(0x4102),
+	DW_TAG_class_template(0x4103),
+	DW_TAG_GNU_BINCL(0x4104),
+	DW_TAG_GNU_EINCL(0x4105),
+	DW_TAG_GNU_template_template_param(0x4106),
+	DW_TAG_GNU_template_parameter_pack(0x4107),
+	DW_TAG_GNU_formal_parameter_pack(0x4108),
 	DW_TAG_gnu_call_site(0x4109),
 	DW_TAG_gnu_call_site_parameter(0x410a),
-	DW_TAG_APPLE_ptrauth_type(0x4300),  // Apple proprietary
-	DW_TAG_hi_user(0xffff),
 
+	DW_TAG_APPLE_ptrauth_type(0x4300),  // Apple proprietary
+	
+	DW_TAG_hi_user(0xffff),
+	
+	
 	DW_TAG_UNKNOWN(-1); // fake ghidra tag
 
+	
+	
 	private int id;
 
 	DWARFTag(int id) {
@@ -275,7 +300,9 @@ public enum DWARFTag {
 	private static Map<Integer, DWARFTag> buildLookup() {
 		Map<Integer, DWARFTag> result = new HashMap<>();
 		for (DWARFTag tag : values()) {
-			result.put(tag.id, tag);
+			if (result.put(tag.id, tag) != null) {
+				throw new RuntimeException("Duplicate DWARFTag enum const value " + tag);
+			}
 		}
 		return result;
 	}
