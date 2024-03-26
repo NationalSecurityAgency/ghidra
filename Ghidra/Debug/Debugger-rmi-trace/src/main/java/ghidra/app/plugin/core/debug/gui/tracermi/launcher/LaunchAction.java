@@ -15,14 +15,10 @@
  */
 package ghidra.app.plugin.core.debug.gui.tracermi.launcher;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Stream;
 
 import javax.swing.*;
-
-import org.jdom.Element;
-import org.jdom.JDOMException;
 
 import docking.ActionContext;
 import docking.PopupMenuHandler;
@@ -30,12 +26,11 @@ import docking.action.*;
 import docking.action.builder.ActionBuilder;
 import docking.menu.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
+import ghidra.app.plugin.core.debug.gui.tracermi.launcher.TraceRmiLauncherServicePlugin.ConfigLast;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
-import ghidra.framework.options.SaveState;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.listing.ProgramUserData;
-import ghidra.util.*;
-import ghidra.util.xml.XmlUtilities;
+import ghidra.util.HelpLocation;
+import ghidra.util.Swing;
 
 public class LaunchAction extends MultiActionDockingAction {
 	public static final String NAME = "Launch";
@@ -55,58 +50,10 @@ public class LaunchAction extends MultiActionDockingAction {
 
 	protected String[] prependConfigAndLaunch(List<String> menuPath) {
 		Program program = plugin.currentProgram;
-		return Stream.concat(
-			Stream.of("Configure and Launch " + program.getName() + " using..."),
-			menuPath.stream()).toArray(String[]::new);
-	}
-
-	record ConfigLast(String configName, long last) {
-	}
-
-	ConfigLast checkSavedConfig(ProgramUserData userData, String propName) {
-		if (!propName.startsWith(AbstractTraceRmiLaunchOffer.PREFIX_DBGLAUNCH)) {
-			return null;
-		}
-		String configName =
-			propName.substring(AbstractTraceRmiLaunchOffer.PREFIX_DBGLAUNCH.length());
-		String propVal = Objects.requireNonNull(
-			userData.getStringProperty(propName, null));
-		Element element;
-		try {
-			element = XmlUtilities.fromString(propVal);
-		}
-		catch (JDOMException | IOException e) {
-			Msg.error(this, "Could not load launcher config for " + configName + ": " + e, e);
-			return null;
-		}
-		SaveState state = new SaveState(element);
-		if (!state.hasValue("last")) {
-			return null;
-		}
-		return new ConfigLast(configName, state.getLong("last", 0));
-	}
-
-	ConfigLast findMostRecentConfig() {
-		Program program = plugin.currentProgram;
-		if (program == null) {
-			return null;
-		}
-		ConfigLast best = null;
-
-		ProgramUserData userData = program.getProgramUserData();
-		for (String propName : userData.getStringPropertyNames()) {
-			ConfigLast candidate = checkSavedConfig(userData, propName);
-			if (candidate == null) {
-				continue;
-			}
-			else if (best == null) {
-				best = candidate;
-			}
-			else if (candidate.last > best.last) {
-				best = candidate;
-			}
-		}
-		return best;
+		String title = program == null
+				? "Configure and Launch ..."
+				: "Configure and Launch %s using...".formatted(program.getName());
+		return Stream.concat(Stream.of(title), menuPath.stream()).toArray(String[]::new);
 	}
 
 	@Override
@@ -116,17 +63,7 @@ public class LaunchAction extends MultiActionDockingAction {
 
 		List<DockingActionIf> actions = new ArrayList<>();
 
-		Map<String, Long> saved = new HashMap<>();
-		if (program != null) {
-			ProgramUserData userData = program.getProgramUserData();
-			for (String propName : userData.getStringPropertyNames()) {
-				ConfigLast check = checkSavedConfig(userData, propName);
-				if (check == null) {
-					continue;
-				}
-				saved.put(check.configName, check.last);
-			}
-		}
+		Map<String, Long> saved = plugin.loadSavedConfigs(program);
 
 		for (TraceRmiLaunchOffer offer : offers) {
 			actions.add(new ActionBuilder(offer.getConfigName(), plugin.getName())
@@ -134,7 +71,7 @@ public class LaunchAction extends MultiActionDockingAction {
 					.popupMenuGroup(offer.getMenuGroup(), offer.getMenuOrder())
 					.popupMenuIcon(offer.getIcon())
 					.helpLocation(offer.getHelpLocation())
-					.enabledWhen(ctx -> true)
+					.enabledWhen(ctx -> !offer.requiresImage() || program != null)
 					.onAction(ctx -> plugin.configureAndLaunch(offer))
 					.build());
 			Long last = saved.get(offer.getConfigName());
@@ -143,8 +80,11 @@ public class LaunchAction extends MultiActionDockingAction {
 				// Thus, no worries about program.getName() below.
 				continue;
 			}
+			String title = program == null
+					? "Re-launch " + offer.getTitle()
+					: "Re-launch %s using %s".formatted(program.getName(), offer.getTitle());
 			actions.add(new ActionBuilder(offer.getConfigName(), plugin.getName())
-					.popupMenuPath("Re-launch " + program.getName() + " using " + offer.getTitle())
+					.popupMenuPath(title)
 					.popupMenuGroup("0", "%016x".formatted(Long.MAX_VALUE - last))
 					.popupMenuIcon(offer.getIcon())
 					.helpLocation(offer.getHelpLocation())
@@ -169,6 +109,7 @@ public class LaunchAction extends MultiActionDockingAction {
 			MenuManager manager =
 				new MenuManager("Launch", (char) 0, GROUP, true, handler, null);
 			for (DockingActionIf action : actionList) {
+				action.setEnabled(action.isEnabledForContext(context));
 				manager.addAction(action);
 			}
 			return manager.getPopupMenu();
@@ -193,26 +134,14 @@ public class LaunchAction extends MultiActionDockingAction {
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
-		return plugin.currentProgram != null;
-	}
-
-	protected TraceRmiLaunchOffer findOffer(ConfigLast last) {
-		if (last == null) {
-			return null;
-		}
-		for (TraceRmiLaunchOffer offer : plugin.getOffers(plugin.currentProgram)) {
-			if (offer.getConfigName().equals(last.configName)) {
-				return offer;
-			}
-		}
-		return null;
+		return !plugin.getOffers(plugin.currentProgram).isEmpty();
 	}
 
 	@Override
 	public void actionPerformed(ActionContext context) {
 		// See comment on super method about use of runLater
-		ConfigLast last = findMostRecentConfig();
-		TraceRmiLaunchOffer offer = findOffer(last);
+		ConfigLast last = plugin.findMostRecentConfig(plugin.currentProgram);
+		TraceRmiLaunchOffer offer = plugin.findOffer(last);
 		if (offer == null) {
 			Swing.runLater(() -> button.showPopup());
 			return;
@@ -223,14 +152,17 @@ public class LaunchAction extends MultiActionDockingAction {
 	@Override
 	public String getDescription() {
 		Program program = plugin.currentProgram;
-		if (program == null) {
-			return "Launch (program required)";
+		ConfigLast last = plugin.findMostRecentConfig(program);
+		TraceRmiLaunchOffer offer = plugin.findOffer(last);
+		if (offer == null && program == null) {
+			return "Configure and launch";
 		}
-		ConfigLast last = findMostRecentConfig();
-		TraceRmiLaunchOffer offer = findOffer(last);
 		if (offer == null) {
 			return "Configure and launch " + program.getName();
 		}
-		return "Re-launch " + program.getName() + " using " + offer.getTitle();
+		if (program == null) {
+			return "Re-launch " + offer.getTitle();
+		}
+		return "Re-launch %s using %s".formatted(program.getName(), offer.getTitle());
 	}
 }

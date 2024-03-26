@@ -52,6 +52,7 @@ public interface TraceRmiLaunchOffer {
 	 * @param sessions any terminal sessions created while launching the back-end. If there are more
 	 *            than one, they are distinguished by launcher-defined keys. If there are no
 	 *            sessions, then there was likely a catastrophic error in the launcher.
+	 * @param acceptor the acceptor if waiting for a connection
 	 * @param connection if the target connected back to Ghidra, that connection
 	 * @param trace if the connection started a trace, the (first) trace it created
 	 * @param exception optional error, if failed
@@ -138,7 +139,7 @@ public interface TraceRmiLaunchOffer {
 		/**
 		 * Re-write the launcher arguments, if desired
 		 * 
-		 * @param launcher the launcher that will create the target
+		 * @param offer the offer that will create the target
 		 * @param arguments the arguments suggested by the offer or saved settings
 		 * @param relPrompt describes the timing of this callback relative to prompting the user
 		 * @return the adjusted arguments
@@ -176,7 +177,7 @@ public interface TraceRmiLaunchOffer {
 	 * memorized. The opinion will generate each offer fresh each time, so it's important that the
 	 * "same offer" have the same configuration name. Note that the name <em>cannot</em> depend on
 	 * the program name, but can depend on the model factory and program language and/or compiler
-	 * spec. This name cannot contain semicolons ({@ code ;}).
+	 * spec. This name cannot contain semicolons ({@code ;}).
 	 * 
 	 * @return the configuration name
 	 */
@@ -262,6 +263,8 @@ public interface TraceRmiLaunchOffer {
 	 * The order of entries in the quick-launch drop-down menu is always most-recently to
 	 * least-recently used. An entry that has never been used does not appear in the quick launch
 	 * menu.
+	 * 
+	 * @return the sub-group name for ordering in the menu
 	 */
 	default String getMenuOrder() {
 		return "";
@@ -285,4 +288,11 @@ public interface TraceRmiLaunchOffer {
 	 * @return the parameters
 	 */
 	Map<String, ParameterDescription<?>> getParameters();
+
+	/**
+	 * Check if this offer requires an open program
+	 * 
+	 * @return true if required
+	 */
+	boolean requiresImage();
 }

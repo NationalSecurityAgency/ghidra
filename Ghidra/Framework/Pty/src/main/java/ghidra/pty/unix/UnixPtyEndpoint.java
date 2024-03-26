@@ -15,8 +15,7 @@
  */
 package ghidra.pty.unix;
 
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 
 import ghidra.pty.PtyEndpoint;
 import ghidra.pty.unix.PosixC.Ioctls;
@@ -42,5 +41,10 @@ public class UnixPtyEndpoint implements PtyEndpoint {
 	@Override
 	public InputStream getInputStream() {
 		return inputStream;
+	}
+
+	protected void closeStreams() throws IOException {
+		outputStream.close();
+		inputStream.close();
 	}
 }
