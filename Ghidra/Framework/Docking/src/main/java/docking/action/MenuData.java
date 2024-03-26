@@ -326,15 +326,20 @@ public class MenuData {
 	}
 
 	private static String processMenuItemName(String string) {
-		StringBuilder builder = new StringBuilder();
-		for (int i = 0; i < string.length(); i++) {
-			if (string.charAt(i) == '&') {
+		int firstAmp = string.indexOf('&');
+		if (firstAmp < 0) {
+			return string;
+		}
+		StringBuilder builder = new StringBuilder(string.substring(0, firstAmp));
+		for (int i = firstAmp; i < string.length(); i++) {
+			char ch = string.charAt(i);
+			if (ch == '&') {
 				if (i < string.length() - 1 && string.charAt(i+1) == '&') {
 					builder.append('&');
 					i++;
 				}
 			} else {
-				builder.append(string.charAt(i));				
+				builder.append(ch);
 			}
 		}
 		return builder.toString();
