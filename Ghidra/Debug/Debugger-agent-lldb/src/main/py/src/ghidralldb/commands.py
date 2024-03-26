@@ -1416,15 +1416,13 @@ def put_processes():
 
 
 def put_state(event_process):
-    STATE.require_no_tx()
-    STATE.tx = STATE.require_trace().start_tx("state", undoable=False)
     ipath = PROCESS_PATTERN.format(procnum=event_process.GetProcessID())
-    procobj = STATE.trace.create_object(ipath)
-    state = "STOPPED" if event_process.is_stopped else "RUNNING"
-    procobj.set_value('_state', state)
-    procobj.insert()
-    STATE.require_tx().commit()
-    STATE.reset_tx()
+    with STATE.client.batch():
+        with STATE.require_trace().open_tx('State'):
+            procobj = STATE.trace.create_object(ipath)
+            state = "STOPPED" if event_process.is_stopped else "RUNNING"
+            procobj.set_value('_state', state)
+            procobj.insert()
 
 
 @convert_errors
