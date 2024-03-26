@@ -192,22 +192,18 @@ model {
 					}
 				} // end cpp
 				
-				if (isCurrentWindows()) {
-					c {
-						source {
-							srcDir "src/decompile/zlib"
-							include "*.c"
-						}
+				c {
+					source {
+						srcDir "src/decompile/zlib"
+						include "*.c"
 					}
 				}
 			} // end sources (sleigh)
 			
 			binaries {
 				all{ b ->
-					if (b.toolChain in Gcc || b.toolChain in Clang) {
-						b.linker.args "-lz"
-					}
 					b.cppCompiler.define "LOCAL_ZLIB"
+					b.cCompiler.define "NO_GZIP"
 				}
 			} // end binaries.all (sleigh)
 		} // end sleigh
@@ -252,7 +248,6 @@ model {
 				b.cCompiler.define "_CRT_NONSTDC_NO_DEPRECATE"
 				b.cCompiler.define "WIN64"
 				b.cCompiler.define "ZLIB_WINAPI"
-				b.cCompiler.define "NO_GZIP"
 			}
 			else if (b.toolChain in Clang) {
 				b.cppCompiler.args "-std=c++11"
