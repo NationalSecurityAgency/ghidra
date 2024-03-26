@@ -1,9 +1,8 @@
 ##MODULE IP: Oxygen Icons - LGPL 3.0
 MODULE FILE LICENSE: postgresql-15.3.tar.gz Postgresql License
-MODULE FILE LICENSE: lib/postgresql-42.6.0.jar PostgresqlJDBC License
+MODULE FILE LICENSE: lib/postgresql-42.6.2.jar PostgresqlJDBC License
 MODULE FILE LICENSE: lib/json-simple-1.1.1.jar Apache License 2.0
 MODULE FILE LICENSE: lib/commons-dbcp2-2.9.0.jar Apache License 2.0
 MODULE FILE LICENSE: lib/commons-pool2-2.11.1.jar Apache License 2.0
 MODULE FILE LICENSE: lib/commons-logging-1.2.jar Apache License 2.0
-MODULE FILE LICENSE: lib/log4j-jcl-2.16.0.jar Apache License 2.0
 MODULE FILE LICENSE: lib/h2-2.2.220.jar H2 Mozilla License 2.0
