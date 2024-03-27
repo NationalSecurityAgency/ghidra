@@ -15,12 +15,15 @@
  */
 package ghidra.app.plugin.core.analysis;
 
+import java.util.Arrays;
+
 import ghidra.app.plugin.core.clear.ClearFlowAndRepairCmd;
 import ghidra.app.services.AnalysisPriority;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Processor;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.FlowType;
 import ghidra.program.model.symbol.Reference;
 import ghidra.program.util.*;
@@ -106,6 +109,17 @@ public class SparcAnalyzer extends ConstantPropagationAnalyzer {
 						ClearFlowAndRepairCmd cmd =
 							new ClearFlowAndRepairCmd(fallAddr, false, false, true);
 						cmd.applyTo(instr.getProgram(), monitor);
+					} else if (delayInstr.getMnemonicString().compareToIgnoreCase("_or") == 0) {
+						Register r2 = delayInstr.getRegister(2);
+						// if the output register is o7 (return address register) and
+						// either of the inputs are 0, then override instruction flow
+						// to be a CALL_RETURN since a saved return address was restored
+						if (r2 != null && r2.getName().equals("o7")) {
+							if (Arrays.stream(delayInstr.getInputObjects())
+								.anyMatch(obj -> (obj instanceof Scalar) && (((Scalar) obj).getValue() == 0))) {
+								instr.setFlowOverride(FlowOverride.CALL_RETURN);
+							}
+						}
 					}
 				}
 				return false;
