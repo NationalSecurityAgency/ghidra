@@ -21,6 +21,7 @@ import static ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute.*;
 import java.io.IOException;
 import java.util.*;
 
+import ghidra.app.util.bin.format.dwarf.attribs.DWARFAttribute;
 import ghidra.app.util.bin.format.dwarf.expression.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
@@ -308,6 +309,11 @@ public class DWARFVariable {
 
 			long res = exprEvaluator.pop();
 			if (res == 0) {
+				if (diea.hasAttribute(DWARFAttribute.DW_AT_const_value)) {
+					// skip without complaining global vars with a const value and bad location expression 
+					return false;
+				}
+
 				// If the expression evaluated to a static address of '0'.
 				// This case is probably caused by relocation fixups not being applied to the
 				// .debug_info section.
