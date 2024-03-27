@@ -350,7 +350,11 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 	@Override
 	public void setNorthComponent(JComponent comp) {
 		connectedProvider.setNorthComponent(comp);
+	}
 
+	@Override
+	public void requestFocus() {
+		connectedProvider.requestFocus();
 	}
 
 	@Override
