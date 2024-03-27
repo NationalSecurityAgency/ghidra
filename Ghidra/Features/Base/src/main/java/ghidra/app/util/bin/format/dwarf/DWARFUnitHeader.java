@@ -29,7 +29,7 @@ public class DWARFUnitHeader {
 	 * Reads the initial fields found in a unit header.
 	 * 
 	 * @param dprog {@link DWARFProgram}
-	 * @param reader {@link BinaryReader} .debug_info stream
+	 * @param reader {@link BinaryReader} stream
 	 * @param abbrReader  {@link BinaryReader} .debug_abbr stream
 	 * @param unitNumber ordinal of this item
 	 * @param monitor {@link TaskMonitor}
@@ -58,7 +58,7 @@ public class DWARFUnitHeader {
 		}
 
 		DWARFUnitHeader partial = new DWARFUnitHeader(dprog, startOffset, endOffset,
-			lengthInfo.length(), lengthInfo.intSize(), version, unitNumber);
+			lengthInfo.intSize(), version, unitNumber);
 
 		if (2 <= version && version <= 4) {
 			return DWARFCompilationUnit.readV4(partial, reader, abbrReader, monitor);
@@ -84,20 +84,14 @@ public class DWARFUnitHeader {
 	protected final DWARFProgram dprog;
 
 	/**
-	 * Offset in the debug_info section of this compUnit's header
+	 * Offset in the section of this header
 	 */
 	protected final long startOffset;
 
 	/**
-	 * Offset in the debug_info section of the end of this compUnit.  (right after
-	 * the last DIE record)
+	 * Offset in the section of the end of this header. (exclusive)
 	 */
 	protected final long endOffset;
-
-	/**
-	 * Length in bytes of this compUnit header and DIE records.
-	 */
-	protected final long length;
 
 	/**
 	 * size of integers, 4=int32 or 8=int64
@@ -105,7 +99,8 @@ public class DWARFUnitHeader {
 	protected final int intSize;
 
 	/**
-	 * DWARF ver number, as read from the compunit structure, currently not used but being kept.
+	 * Version number, as read from the header.  Note: Some header types use version numbers that do
+	 * not match the general dwarfVersion.
 	 */
 	protected final short dwarfVersion;
 
@@ -118,18 +113,16 @@ public class DWARFUnitHeader {
 		this.dprog = other.dprog;
 		this.startOffset = other.startOffset;
 		this.endOffset = other.endOffset;
-		this.length = other.length;
 		this.intSize = other.intSize;
 		this.dwarfVersion = other.dwarfVersion;
 		this.unitNumber = other.unitNumber;
 	}
 
-	protected DWARFUnitHeader(DWARFProgram dprog, long startOffset, long endOffset, long length,
-			int intSize, short version, int unitNumber) {
+	protected DWARFUnitHeader(DWARFProgram dprog, long startOffset, long endOffset, int intSize,
+			short version, int unitNumber) {
 		this.dprog = dprog;
 		this.startOffset = startOffset;
 		this.endOffset = endOffset;
-		this.length = length;
 		this.intSize = intSize;
 		this.dwarfVersion = version;
 		this.unitNumber = unitNumber;
@@ -141,17 +134,6 @@ public class DWARFUnitHeader {
 
 	public short getDWARFVersion() {
 		return dwarfVersion;
-	}
-
-	/**
-	 * An unsigned long (4 bytes in 32-bit or 8 bytes in 64-bit format) representing
-	 * the length of the .debug_info contribution for this unit, not including the length 
-	 * field itself.
-	 * 
-	 * @return the length in bytes of this unit
-	 */
-	public long getLength() {
-		return this.length;
 	}
 
 	/**

@@ -422,16 +422,16 @@ public class DWARFFunctionImporter {
 			return;
 		}
 
-		DWARFRangeList blockRanges =
-			Objects.requireNonNullElse(DWARFFunction.getFuncBodyRanges(diea), DWARFRangeList.EMTPY);
-		Address blockStart =
-			!blockRanges.isEmpty() ? prog.getCodeAddress(blockRanges.getFirst().getFrom()) : null;
-
-		if (blockStart != null && importOptions.isOutputLexicalBlockComments()) {
-			boolean disjoint = blockRanges.getListCount() > 1;
-			DWARFName dni = prog.getName(diea);
-			appendComment(blockStart, CodeUnit.PRE_COMMENT,
-				"Begin: %s%s".formatted(dni.getName(), disjoint ? " - Disjoint" : ""), "\n");
+		Address blockStart = null;
+		DWARFRangeList blockRanges = DWARFFunction.getFuncBodyRanges(diea);
+		if (!blockRanges.isEmpty()) {
+			blockStart = prog.getCodeAddress(blockRanges.getFirst().getFrom());
+			if (importOptions.isOutputLexicalBlockComments()) {
+				boolean disjoint = blockRanges.getListCount() > 1;
+				DWARFName dni = prog.getName(diea);
+				appendComment(blockStart, CodeUnit.PRE_COMMENT,
+					"Begin: %s%s".formatted(dni.getName(), disjoint ? " - Disjoint" : ""), "\n");
+			}
 		}
 
 		processFuncChildren(diea, dfunc,
@@ -554,24 +554,21 @@ public class DWARFFunctionImporter {
 		}
 
 		String name = prog.getEntryName(diea);
-		DWARFRange labelPc;
-		if (name != null && (labelPc = diea.getPCRange()) != null) {
+		DWARFRange labelPc = diea.getPCRange();
+		if (name != null && !labelPc.isEmpty() && labelPc.getFrom() != 0) {
 			Address address = prog.getCodeAddress(labelPc.getFrom());
-			if (address.getOffset() != 0) {
-				try {
-					SymbolTable symbolTable = currentProgram.getSymbolTable();
-					symbolTable.createLabel(address, name, currentProgram.getGlobalNamespace(),
-						SourceType.IMPORTED);
+			try {
+				SymbolTable symbolTable = currentProgram.getSymbolTable();
+				symbolTable.createLabel(address, name, currentProgram.getGlobalNamespace(),
+					SourceType.IMPORTED);
 
-					String locationInfo = DWARFSourceInfo.getDescriptionStr(diea);
-					if (locationInfo != null) {
-						appendComment(address, CodeUnit.EOL_COMMENT, locationInfo, "; ");
-					}
+				String locationInfo = DWARFSourceInfo.getDescriptionStr(diea);
+				if (locationInfo != null) {
+					appendComment(address, CodeUnit.EOL_COMMENT, locationInfo, "; ");
 				}
-				catch (InvalidInputException e) {
-					Msg.error(this, "Problem creating label at " + address + " with name " + name,
-						e);
-				}
+			}
+			catch (InvalidInputException e) {
+				Msg.error(this, "Problem creating label at " + address + " with name " + name, e);
 			}
 		}
 	}

@@ -58,43 +58,35 @@ public class DWARFLocationList {
 		List<DWARFLocation> results = new ArrayList<>();
 
 		byte pointerSize = cu.getPointerSize();
+		long baseAddress = cu.getPCRange().getFrom();
+		long maxAddrVal = pointerSize == 4 ? NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG : -1;
 
-		DWARFRange cuRange = cu.getPCRange();
-		long baseAddrOffset = (cuRange != null) ? cuRange.getFrom() : 0;
-		long baseFixup = cu.getProgram().getProgramBaseAddressFixup();
-		long eolVal = pointerSize == 4 ? NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG : -1;
-
-		// Loop through the debug_loc entry
 		while (reader.hasNext()) {
+			// Read the beginning and ending addresses
 			long beginning = reader.readNextUnsignedValue(pointerSize);
-			long ending = reader.readNextUnsignedValue(pointerSize);
+			long ending = reader.readNextUnsignedValue(pointerSize); // dwarf end addrs are exclusive
 
+			// End of the list
 			if (beginning == 0 && ending == 0) {
-				// List end
 				break;
-			}
-			else if (beginning == ending) {
-				// don't add empty range
-				continue;
 			}
 
 			// Check to see if this is a base address entry
-			if (beginning == eolVal) {
-				baseAddrOffset = ending + baseFixup;
+			if (beginning == maxAddrVal) {
+				baseAddress = ending;
+				continue;
 			}
-			else {
-				beginning += baseAddrOffset;
-				ending += baseAddrOffset;
 
-				// byte array size is 2 bytes
-				int size = reader.readNextUnsignedShort();
+			int size = reader.readNextUnsignedShort();
+			byte[] expr = reader.readNextByteArray(size);
 
-				// Read the exprloc bytes
-				byte[] expr = reader.readNextByteArray(size);
-
-				// TODO: verify end addr calc with DWARFstd.pdf, inclusive vs exclusive
-				results.add(new DWARFLocation(new DWARFRange(beginning, ending), expr));
+			if (beginning == ending) {
+				// skip adding empty ranges because Ghidra can't use them
+				continue;
 			}
+
+			DWARFRange range = new DWARFRange(baseAddress + beginning, baseAddress + ending);
+			results.add(new DWARFLocation(range, expr));
 		}
 		return new DWARFLocationList(results);
 	}
@@ -109,8 +101,7 @@ public class DWARFLocationList {
 	 */
 	public static DWARFLocationList readV5(BinaryReader reader, DWARFCompilationUnit cu)
 			throws IOException {
-		long baseAddrFixup = cu.getProgram().getProgramBaseAddressFixup();
-		long baseAddr = baseAddrFixup;
+		long baseAddr = cu.getPCRange().getFrom();
 		DWARFProgram dprog = cu.getProgram();
 
 		List<DWARFLocation> list = new ArrayList<>();
@@ -149,24 +140,27 @@ public class DWARFLocationList {
 					list.add(new DWARFLocation(baseAddr + startOfs, baseAddr + endOfs, expr));
 					break;
 				}
+				case DW_LLE_default_location: {
+					byte[] expr = reader.readNext(DWARFLocationList::uleb128SizedByteArray);
+					list.add(new DWARFLocation(DWARFRange.EMPTY, expr));
+					break;
+				}
 				case DW_LLE_base_address: {
-					baseAddr = reader.readNextUnsignedValue(cu.getPointerSize()) + baseAddrFixup;
+					baseAddr = reader.readNextUnsignedValue(cu.getPointerSize());
 					break;
 				}
 				case DW_LLE_start_end: {
 					long startAddr = reader.readNextUnsignedValue(cu.getPointerSize());
 					long endAddr = reader.readNextUnsignedValue(cu.getPointerSize());
 					byte[] expr = reader.readNext(DWARFLocationList::uleb128SizedByteArray);
-					list.add(new DWARFLocation(startAddr + baseAddrFixup, endAddr + baseAddrFixup,
-						expr));
+					list.add(new DWARFLocation(startAddr, endAddr, expr));
 					break;
 				}
 				case DW_LLE_start_length: {
 					long startAddr = reader.readNextUnsignedValue(cu.getPointerSize());
 					int len = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 					byte[] expr = reader.readNext(DWARFLocationList::uleb128SizedByteArray);
-					list.add(new DWARFLocation(startAddr + baseAddrFixup,
-						startAddr + baseAddrFixup + len, expr));
+					list.add(new DWARFLocation(startAddr, startAddr + len, expr));
 					break;
 				}
 				default:

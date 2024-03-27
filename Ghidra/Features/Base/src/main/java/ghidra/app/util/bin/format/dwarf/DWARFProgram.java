@@ -30,6 +30,7 @@ import ghidra.app.util.bin.format.dwarf.attribs.*;
 import ghidra.app.util.bin.format.dwarf.expression.DWARFExpressionException;
 import ghidra.app.util.bin.format.dwarf.external.ExternalDebugInfo;
 import ghidra.app.util.bin.format.dwarf.funcfixup.DWARFFunctionFixup;
+import ghidra.app.util.bin.format.dwarf.line.DWARFLine;
 import ghidra.app.util.bin.format.dwarf.sectionprovider.*;
 import ghidra.app.util.bin.format.golang.rtti.GoSymbolName;
 import ghidra.app.util.opinion.*;
@@ -533,12 +534,20 @@ public class DWARFProgram implements Closeable {
 		return dwarfDTM;
 	}
 
+	public List<DWARFCompilationUnit> getCompilationUnits() {
+		return compUnits;
+	}
+
 	public boolean isBigEndian() {
 		return program.getLanguage().isBigEndian();
 	}
 
 	public boolean isLittleEndian() {
 		return !program.getLanguage().isBigEndian();
+	}
+
+	public BinaryReader getDebugLineBR() {
+		return debugLineBR;
 	}
 
 	private BinaryReader getBinaryReaderFor(String sectionName, TaskMonitor monitor)
@@ -1137,7 +1146,7 @@ public class DWARFProgram implements Closeable {
 	}
 
 	/**
-	 * Returns an address value, corrected for any Ghidra load offset shenanigans.
+	 * Returns an address value.
 	 * 
 	 * @param form the format of the numeric value
 	 * @param value raw offset or indirect address index (depending on the DWARFForm)
@@ -1149,14 +1158,14 @@ public class DWARFProgram implements Closeable {
 		switch (form) {
 			case DW_FORM_addr:
 			case DW_FORM_udata:
-				return value + programBaseAddressFixup;
+				return value;
 			case DW_FORM_addrx:
 			case DW_FORM_addrx1:
 			case DW_FORM_addrx2:
 			case DW_FORM_addrx3:
 			case DW_FORM_addrx4: {
 				long addr = addressListTable.getOffset((int) value, cu);
-				return addr + programBaseAddressFixup;
+				return addr;
 			}
 			default:
 				throw new IOException("Unsupported form %s".formatted(form));
@@ -1221,31 +1230,18 @@ public class DWARFProgram implements Closeable {
 	 * 
 	 * @param diea {@link DIEAggregate}
 	 * @param attribute attribute id that points to the line info
-	 * @return {@link DWARFLine}, or null if attribute
+	 * @return {@link DWARFLine}, never null, see {@link DWARFLine#empty()}
 	 * @throws IOException if error reading line data
 	 */
 	public DWARFLine getLine(DIEAggregate diea, DWARFAttribute attribute) throws IOException {
 		DWARFNumericAttribute attrib = diea.getAttribute(attribute, DWARFNumericAttribute.class);
 		if (attrib == null || debugLineBR == null) {
-			return null;
+			return DWARFLine.empty();
 		}
 		long stmtListOffset = attrib.getUnsignedValue();
-		debugLineBR.setPointerIndex(stmtListOffset);
-
-		// probe for the DWARFLine version number
-		// length : dwarf_length
-		// version : 2 bytes
-		DWARFLengthValue lengthInfo = DWARFLengthValue.read(debugLineBR, getDefaultIntSize());
-		if (lengthInfo == null) {
-			throw new DWARFException("Invalid DWARFLine length at 0x%x".formatted(stmtListOffset));
-		}
-
-		int version = debugLineBR.readNextUnsignedShort();
-
-		return version < 5
-				? DWARFLine.readV4(this, debugLineBR, lengthInfo, version)
-				: DWARFLine.readV5(this, debugLineBR, lengthInfo, version,
-					diea.getCompilationUnit());
+		DWARFLine result = DWARFLine.read(debugLineBR.clone(stmtListOffset), getDefaultIntSize(),
+			diea.getCompilationUnit());
+		return result;
 	}
 
 	/**
@@ -1337,21 +1333,23 @@ public class DWARFProgram implements Closeable {
 
 	public AddressRange getAddressRange(DWARFRange range, boolean isCode) {
 		AddressSpace defAS = program.getAddressFactory().getDefaultAddressSpace();
-		Address start = defAS.getAddress(range.getFrom(), true /* TODO check this */);
-		Address end = defAS.getAddress(range.getTo() - 1, true /* TODO check this */);
+		Address start =
+			defAS.getAddress(range.getFrom() + programBaseAddressFixup, true /* TODO check this */);
+		Address end = defAS.getAddress(range.getTo() - 1 + programBaseAddressFixup,
+			true /* TODO check this */);
 		return new AddressRangeImpl(start, end);
 	}
 
-	public Address getCodeAddress(Number offset) {
+	public Address getCodeAddress(long offset) {
 		return program.getAddressFactory()
 				.getDefaultAddressSpace()
-				.getAddress(offset.longValue(), true);
+				.getAddress(offset + programBaseAddressFixup, true);
 	}
 
-	public Address getDataAddress(Number offset) {
+	public Address getDataAddress(long offset) {
 		return program.getAddressFactory()
 				.getDefaultAddressSpace()
-				.getAddress(offset.longValue(), true);
+				.getAddress(offset + programBaseAddressFixup, true);
 	}
 
 	public boolean stackGrowsNegative() {

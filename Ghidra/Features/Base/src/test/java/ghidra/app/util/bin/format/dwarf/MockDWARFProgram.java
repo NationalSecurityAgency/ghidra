@@ -68,8 +68,8 @@ public class MockDWARFProgram extends DWARFProgram {
 			compUnitDieIndex.put(dieOffsets.length - 1, currentCompUnit);
 		}
 		long start = compUnits.size() * 0x1000;
-		currentCompUnit = new MockDWARFCompilationUnit(this, start, start + 0x1000, 0,
-			dwarfIntSize, (short) 4, (byte) 8, 0);
+		currentCompUnit = new MockDWARFCompilationUnit(this, start, start + 0x1000, dwarfIntSize,
+			(short) 4, (byte) 8, 0);
 		compUnits.add(currentCompUnit);
 		compUnitDieIndex.put(dieOffsets.length - 1, currentCompUnit);
 

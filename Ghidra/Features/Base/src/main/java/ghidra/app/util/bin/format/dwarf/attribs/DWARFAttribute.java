@@ -39,7 +39,7 @@ public enum DWARFAttribute {
 	DW_AT_bit_offset(0xc),	// dwarf-3
 	DW_AT_bit_size(0xd, constant, exprloc, reference),
 	//DW_AT_element_list(0xf),
-	DW_AT_stmt_list(0x10, lineptr),
+	DW_AT_stmt_list(0x10, lineptr, constant),
 	DW_AT_low_pc(0x11, address),
 	DW_AT_high_pc(0x12, address, constant),
 	DW_AT_language(0x13, constant),
@@ -252,7 +252,7 @@ public enum DWARFAttribute {
 
 		@Override
 		protected String getRawAttributeIdDescription() {
-			return "DW_AT_???? %d (0x%x)".formatted(attributeId, attributeId);
+			return "DW_AT_???? %d (0x%x)".formatted(rawAttributeId, rawAttributeId);
 		}
 
 		@Override

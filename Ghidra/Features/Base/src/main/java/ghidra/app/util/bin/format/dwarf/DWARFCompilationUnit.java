@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.dwarf.line.DWARFLine;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -170,7 +171,6 @@ public class DWARFCompilationUnit extends DWARFUnitHeader {
 	 * @param dwarfProgram {@link DWARFProgram} 
 	 * @param startOffset offset in provider where it starts
 	 * @param endOffset offset in provider where it ends
-	 * @param length how many bytes following the header the DIEs of this unit take
 	 * @param intSize 4 (DWARF_32) or 8 (DWARF_64)
 	 * @param dwarfVersion 2-5 
 	 * @param pointerSize default size of pointers
@@ -179,9 +179,9 @@ public class DWARFCompilationUnit extends DWARFUnitHeader {
 	 * @param codeToAbbreviationMap map of abbreviation numbers to {@link DWARFAbbreviation} instances
 	 */
 	public DWARFCompilationUnit(DWARFProgram dwarfProgram, long startOffset, long endOffset,
-			long length, int intSize, short dwarfVersion, byte pointerSize, int unitNumber,
+			int intSize, short dwarfVersion, byte pointerSize, int unitNumber,
 			long firstDIEOffset, Map<Integer, DWARFAbbreviation> codeToAbbreviationMap) {
-		super(dwarfProgram, startOffset, endOffset, length, intSize, dwarfVersion, unitNumber);
+		super(dwarfProgram, startOffset, endOffset, intSize, dwarfVersion, unitNumber);
 		this.pointerSize = pointerSize;
 		this.firstDIEOffset = firstDIEOffset;
 		this.codeToAbbreviationMap =
@@ -230,6 +230,10 @@ public class DWARFCompilationUnit extends DWARFUnitHeader {
 		return firstDIEOffset;
 	}
 
+	public DWARFLine getLine() {
+		return line;
+	}
+
 	/**
 	 * Get the filename that produced the compile unit
 	 * 
@@ -237,50 +241,6 @@ public class DWARFCompilationUnit extends DWARFUnitHeader {
 	 */
 	public String getName() {
 		return diea.getString(DW_AT_name, null);
-	}
-
-	/**
-	 * Get a file name with the full path included based on a file index.
-	 * @param index index of the file
-	 * @return file name with full path or null if line information does not exist
-	 * @throws IllegalArgumentException if a negative or invalid file index is given
-	 */
-	public String getFullFileByIndex(int index) {
-		if (index < 0) {
-			throw new IllegalArgumentException("Negative file index was given.");
-		}
-		if (this.line == null) {
-			return null;
-		}
-
-		return this.line.getFullFile(index, null);
-	}
-
-	/**
-	 * Get a file name based on a file index.
-	 * @param index index of the file
-	 * @return file name or null if line information does not exist
-	 * @throws IllegalArgumentException if a negative or invalid file index is given
-	 */
-	public String getFileByIndex(int index) {
-		if (index < 0) {
-			throw new IllegalArgumentException("Negative file index was given.");
-		}
-		if (this.line == null) {
-			return null;
-		}
-
-		return this.line.getFile(index, null);
-	}
-
-	/**
-	 * Checks validity of a file index number.
-	 * 
-	 * @param index file number, 1..N
-	 * @return boolean true if index is a valid file number, false otherwise
-	 */
-	public boolean isValidFileIndex(int index) {
-		return line.isValidFileIndex(index);
 	}
 
 	/**
@@ -330,6 +290,12 @@ public class DWARFCompilationUnit extends DWARFUnitHeader {
 		return diea.getUnsignedLong(DW_AT_str_offsets_base, 0);
 	}
 
+	/**
+	 * Returns the range covered by this CU, as defined by the lo_pc and high_pc attribute values,
+	 * defaulting to (0,0] if missing.
+	 * 
+	 * @return {@link DWARFRange} that this CU covers, never null
+	 */
 	public DWARFRange getPCRange() {
 		return diea.getPCRange();
 	}

@@ -25,6 +25,7 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import ghidra.app.util.bin.format.dwarf.attribs.*;
 import ghidra.app.util.bin.format.dwarf.expression.*;
+import ghidra.app.util.bin.format.dwarf.line.DWARFLine;
 import ghidra.util.Msg;
 
 /**
@@ -470,9 +471,15 @@ public class DIEAggregate {
 		if (attr == null) {
 			return null;
 		}
-		int fileNum = (int) attr.getUnsignedValue();
-		DWARFCompilationUnit cu = attrInfo.die.getCompilationUnit();
-		return cu.isValidFileIndex(fileNum) ? cu.getFileByIndex(fileNum) : null;
+		try {
+			int fileNum = attr.getUnsignedIntExact();
+			DWARFCompilationUnit cu = attrInfo.die.getCompilationUnit();
+			DWARFLine line = cu.getLine();
+			return line.getFilePath(fileNum, false);
+		}
+		catch (IOException e) {
+			return null;
+		}
 	}
 
 	/**
@@ -710,7 +717,8 @@ public class DIEAggregate {
 	/**
 	 * Return the range specified by the low_pc...high_pc attribute values.
 	 * 
-	 * @return {@link DWARFRange} containing low_pc - high_pc, or null if the low_pc is not present
+	 * @return {@link DWARFRange} containing low_pc - high_pc, or empty range if the low_pc is 
+	 * not present
 	 */
 	public DWARFRange getPCRange() {
 		DWARFNumericAttribute lowPc = getAttribute(DW_AT_low_pc, DWARFNumericAttribute.class);
@@ -720,29 +728,26 @@ public class DIEAggregate {
 				long rawLowPc = lowPc.getUnsignedValue();
 				long lowPcOffset = getProgram().getAddress(lowPc.getAttributeForm(), rawLowPc,
 					getCompilationUnit());
-				long highPcOffset = lowPcOffset + 1;
+				long highPcOffset = lowPcOffset;
 
 				DWARFNumericAttribute highPc =
 					getAttribute(DW_AT_high_pc, DWARFNumericAttribute.class);
 				if (highPc != null) {
 					if (highPc.getAttributeForm() == DWARFForm.DW_FORM_addr) {
-						long baseAddrFixup = getProgram().getProgramBaseAddressFixup();
-						highPcOffset = highPc.getUnsignedValue() + baseAddrFixup;
+						highPcOffset = highPc.getUnsignedValue();
 					}
 					else {
 						highPcOffset = highPc.getUnsignedValue();
-						if (highPcOffset != 0) {
-							highPcOffset = lowPcOffset + highPcOffset;
-						}
+						highPcOffset = lowPcOffset + highPcOffset;
 					}
 				}
 				return new DWARFRange(lowPcOffset, highPcOffset);
 			}
 			catch (IOException e) {
-				// fall thru, return null
+				// fall thru, return empty
 			}
 		}
-		return null;
+		return DWARFRange.EMPTY;
 	}
 
 	/**

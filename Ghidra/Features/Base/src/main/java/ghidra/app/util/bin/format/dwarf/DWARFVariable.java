@@ -316,7 +316,7 @@ public class DWARFVariable {
 				return false;
 			}
 
-			setRamStorage(res + prog.getProgramBaseAddressFixup());
+			setRamStorage(res);
 			return true;
 		}
 		catch (DWARFExpressionException | UnsupportedOperationException
@@ -400,7 +400,7 @@ public class DWARFVariable {
 			}
 			else if (exprEvaluator.getRawLastRegister() == -1 && res != 0) {
 				// static global variable location
-				setRamStorage(res + prog.getProgramBaseAddressFixup());
+				setRamStorage(res);
 			}
 			else {
 				Msg.error(this,

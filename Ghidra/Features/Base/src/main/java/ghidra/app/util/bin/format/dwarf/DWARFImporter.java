@@ -20,7 +20,11 @@ import java.util.Collections;
 import java.util.List;
 
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.dwarf.line.DWARFLine.SourceFileAddr;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
+import ghidra.program.model.listing.CodeUnit;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
@@ -170,6 +174,30 @@ public class DWARFImporter {
 		return new CategoryPath(newRoot, cpParts.subList(origRootParts.size(), cpParts.size()));
 	}
 
+	private void addSourceLineInfo(BinaryReader reader) throws CancelledException, IOException {
+		if ( reader == null ) {
+			return;
+		}
+		monitor.initialize(reader.length(), "DWARF Source Line Info");
+		List<DWARFCompilationUnit> compUnits = prog.getCompilationUnits();
+		for (DWARFCompilationUnit cu : compUnits) {
+			try {
+				monitor.checkCancelled();
+				monitor.setProgress(cu.getLine().getStartOffset());
+				List<SourceFileAddr> allSFA = cu.getLine().getAllSourceFileAddrInfo(cu, reader);
+				for (SourceFileAddr sfa : allSFA) {
+					Address addr = prog.getCodeAddress(sfa.address());
+					DWARFUtil.appendComment(prog.getGhidraProgram(), addr, CodeUnit.EOL_COMMENT, "",
+						"%s:%d".formatted(sfa.fileName(), sfa.lineNum()), ";");
+				}
+			}
+			catch (IOException e) {
+				Msg.error(this,
+					"Failed to read DWARF line info for cu %d".formatted(cu.getUnitNumber()), e);
+			}
+		}
+	}
+
 	/**
 	 * Imports DWARF information according to the {@link DWARFImportOptions} set.
 	 * <p>
@@ -203,6 +231,10 @@ public class DWARFImporter {
 
 		if (importOptions.isOrganizeTypesBySourceFile()) {
 			moveTypesIntoSourceFolders();
+		}
+
+		if (importOptions.isOutputSourceLineInfo()) {
+			addSourceLineInfo(prog.getDebugLineBR());
 		}
 
 		importSummary.totalElapsedMS = System.currentTimeMillis() - start_ts;

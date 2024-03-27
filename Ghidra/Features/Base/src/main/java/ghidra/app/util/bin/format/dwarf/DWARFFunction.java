@@ -78,7 +78,7 @@ public class DWARFFunction {
 			return null;
 		}
 		DWARFRangeList bodyRanges = getFuncBodyRanges(diea);
-		if (bodyRanges == null || bodyRanges.isEmpty()) {
+		if (bodyRanges.isEmpty()) {
 			return null;
 		}
 
@@ -330,17 +330,17 @@ public class DWARFFunction {
 		// TODO: dw_at_entry_pc is also sometimes available, typically in things like inlined_subroutines
 		DWARFProgram dprog = diea.getProgram();
 		DWARFRangeList bodyRangeList = getFuncBodyRanges(diea);
-		if (bodyRangeList != null && !bodyRangeList.isEmpty()) {
-			DWARFRange bodyRange =
-				flattenDisjoint ? bodyRangeList.getFlattenedRange() : bodyRangeList.getFirst();
-			return dprog.getAddressRange(bodyRange, true);
+		if (bodyRangeList.isEmpty()) {
+			return null;
 		}
-		return null;
+		DWARFRange bodyRange =
+			flattenDisjoint ? bodyRangeList.getFlattenedRange() : bodyRangeList.getFirst();
+		return dprog.getAddressRange(bodyRange, true);
 	}
 
 	public static DWARFRangeList getFuncBodyRanges(DIEAggregate diea) throws IOException {
 		DWARFRange body = diea.getPCRange();
-		if (body != null && !body.isEmpty()) {
+		if (!body.isEmpty()) {
 			return new DWARFRangeList(body);
 		}
 		if (diea.hasAttribute(DW_AT_ranges)) {

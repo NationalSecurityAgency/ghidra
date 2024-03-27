@@ -15,8 +15,6 @@
  */
 package ghidra.app.util.bin.format.dwarf;
 
-import static ghidra.app.util.bin.format.dwarf.DWARFTag.*;
-
 import java.io.IOException;
 import java.util.*;
 
@@ -152,7 +150,7 @@ public class DWARFAbbreviation {
 	}
 
 	public String getTagName() {
-		return tag != DW_TAG_UNKNOWN ? tag.name() : "DW_TAG_??? %d".formatted(tagId);
+		return tag.name(tagId);
 	}
 
 	/**
