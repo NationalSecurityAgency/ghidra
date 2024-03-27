@@ -19,13 +19,14 @@ package docking.widgets.searchlist;
  * An record to hold the list item and additional information needed to properly render the item.
  * @param value the list item (T)
  * @param category the category for the item
- * @param isFirst true if this is the first item in the category (categories are only displayed for
- * the first entry)
- * @param isLast true if this is the last item in the category (a separator line is displayed 
- * between categories)
+ * @param showCategory true if this is the first item in the category and therefor the category
+ * should be displayed.
+ * @param drawSeparator if true, then a separator line should be drawn after this entry. This
+ * should only be the case for the last entry in a category (and not the last category.)
  *
  * @param <T> the type of list items
  */
-public record SearchListEntry<T>(T value, String category, boolean isFirst, boolean isLast) {
+public record SearchListEntry<T>(T value, String category, boolean showCategory,
+		boolean drawSeparator) {
 
 }

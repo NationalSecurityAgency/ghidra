@@ -43,6 +43,9 @@ public class SearchList<T> extends JPanel {
 	private Consumer<T> selectedConsumer = Dummy.consumer();
 	private ListCellRenderer<SearchListEntry<T>> itemRenderer = new DefaultItemRenderer();
 	private String currentFilterText;
+	private boolean showCategories = true;
+	private boolean singleClickMode = false;
+	private BiFunction<T, String, String> displayNameFunction = (t, c) -> t.toString();
 
 	/**
 	 * Construct a new SearchList given a model and an chosen item callback.
@@ -55,8 +58,8 @@ public class SearchList<T> extends JPanel {
 		this.model = model;
 		this.chosenItemCallback = Dummy.ifNull(chosenItemCallback);
 
-		add(buildFilterField(), BorderLayout.NORTH);
 		add(buildList(), BorderLayout.CENTER);
+		add(buildFilterField(), BorderLayout.NORTH);
 		model.addListDataListener(new SearchListDataListener());
 		modelChanged();
 	}
@@ -67,6 +70,14 @@ public class SearchList<T> extends JPanel {
 	 */
 	public String getFilterText() {
 		return textField.getText();
+	}
+
+	/**
+	 * Returns the search list model.
+	 * @return the model
+	 */
+	public SearchListModel<T> getModel() {
+		return model;
 	}
 
 	/**
@@ -87,6 +98,17 @@ public class SearchList<T> extends JPanel {
 			return entry.value();
 		}
 		return null;
+	}
+
+	public void setSelectedItem(T t) {
+		ListModel<SearchListEntry<T>> listModel = jList.getModel();
+		for (int i = 0; i < listModel.getSize(); i++) {
+			SearchListEntry<T> entry = listModel.getElementAt(i);
+			if (entry.value().equals(t)) {
+				jList.setSelectedIndex(i);
+				return;
+			}
+		}
 	}
 
 	/**
@@ -112,9 +134,39 @@ public class SearchList<T> extends JPanel {
 	 */
 	public void setInitialSelection() {
 		jList.clearSelection();
-		if (model.getSize() > 0) {
-			jList.setSelectedIndex(0);
-		}
+	}
+
+	/**
+	 * Sets an option to display categories in the list or not.
+	 * @param b true to show categories, false to not shoe them
+	 */
+	public void setShowCategories(boolean b) {
+		showCategories = b;
+	}
+
+	/**
+	 * Sets an option for the list to respond to either double or single mouse clicks. By default,
+	 * it responds to a double click.
+	 * @param b true for single click mode, false for double click mode
+	 */
+	public void setSingleClickMode(boolean b) {
+		singleClickMode = b;
+	}
+
+	public void setDisplayNameFunction(BiFunction<T, String, String> nameFunction) {
+		this.displayNameFunction = nameFunction;
+	}
+
+	public void setMouseHoverSelection() {
+		jList.addMouseMotionListener(new MouseMotionAdapter() {
+			@Override
+			public void mouseMoved(MouseEvent e) {
+				int index = jList.locationToIndex(e.getPoint());
+				if (index >= 0) {
+					jList.setSelectedIndex(index);
+				}
+			}
+		});
 	}
 
 	/**
@@ -124,15 +176,20 @@ public class SearchList<T> extends JPanel {
 		model.dispose();
 	}
 
+	private String getDisplayName(T value, String category) {
+		return displayNameFunction.apply(value, category);
+	}
+
 	private Component buildList() {
 		JPanel panel = new JPanel(new BorderLayout());
-		panel.setBorder(BorderFactory.createEmptyBorder(0, 5, 5, 5));
+		panel.setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 0));
 		jList = new JList<SearchListEntry<T>>(model);
 		JScrollPane jScrollPane = new JScrollPane(jList);
 		jScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		jList.setCellRenderer(new SearchListRenderer());
 		jList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		jList.addKeyListener(new ListKeyListener());
+		jList.setVisibleRowCount(Math.min(model.getSize(), 20));
 		jList.addListSelectionListener(e -> {
 			if (e.getValueIsAdjusting()) {
 				return;
@@ -142,18 +199,25 @@ public class SearchList<T> extends JPanel {
 		});
 		jList.addMouseListener(new GMouseListenerAdapter() {
 			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (singleClickMode && e.getButton() == MouseEvent.BUTTON1) {
+					chooseItem();
+					return;
+				}
+				super.mouseClicked(e);
+			}
+
+			@Override
 			public void doubleClickTriggered(MouseEvent e) {
 				chooseItem();
 			}
 		});
-
 		panel.add(jScrollPane, BorderLayout.CENTER);
 		return panel;
 	}
 
 	private Component buildFilterField() {
 		JPanel panel = new JPanel(new BorderLayout());
-		panel.setBorder(BorderFactory.createEmptyBorder(10, 5, 5, 5));
 		textField = new JTextField();
 		panel.add(textField, BorderLayout.CENTER);
 		textField.addKeyListener(new TextFieldKeyListener());
@@ -189,7 +253,7 @@ public class SearchList<T> extends JPanel {
 		return width + 10;
 	}
 
-	private void chooseItem() {
+	public void chooseItem() {
 		SearchListEntry<T> selectedValue = jList.getSelectedValue();
 		if (selectedValue != null) {
 			chosenItemCallback.accept(selectedValue.value(), selectedValue.category());
@@ -236,30 +300,32 @@ public class SearchList<T> extends JPanel {
 			panel.setBorder(normalBorder);
 
 			// only display the category for the first entry in that category
-			if (value.isFirst()) {
+			if (value.showCategory()) {
 				categoryLabel.setText(value.category());
 			}
 
 			// Display a separator at the bottom of the last entry in the category to make
 			// category boundaries
-			if (value.isLast()) {
+			if (value.drawSeparator()) {
 				panel.setBorder(lastEntryBorder);
 				panel.add(jSeparator, BorderLayout.SOUTH);
 			}
 			Dimension size = categoryLabel.getPreferredSize();
 			categoryLabel.setPreferredSize(new Dimension(categoryWidth, size.height));
 			Component itemRendererComp =
-				itemRenderer.getListCellRendererComponent(list, value, index,
-					isSelected, false);
+				itemRenderer.getListCellRendererComponent(list, value, index, isSelected, false);
 
 			Color background = itemRendererComp.getBackground();
-			panel.add(categoryLabel, BorderLayout.WEST);
+			if (showCategories) {
+				panel.add(categoryLabel, BorderLayout.WEST);
+			}
 			panel.add(itemRendererComp, BorderLayout.CENTER);
 			panel.setBackground(background);
 			categoryLabel.setOpaque(true);
 			categoryLabel.setBackground(background);
 			categoryLabel.setForeground(itemRendererComp.getForeground());
-
+			panel.getAccessibleContext()
+					.setAccessibleName(getDisplayName(value.value(), value.category()));
 			return panel;
 		}
 	}
@@ -268,11 +334,10 @@ public class SearchList<T> extends JPanel {
 
 		@Override
 		public Component getListCellRendererComponent(JList<? extends SearchListEntry<T>> list,
-				SearchListEntry<T> value, int index,
-				boolean isSelected, boolean hasFocus) {
+				SearchListEntry<T> value, int index, boolean isSelected, boolean hasFocus) {
 
-			JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index,
-				isSelected, false);
+			JLabel label =
+				(JLabel) super.getListCellRendererComponent(list, value, index, isSelected, false);
 			SearchListEntry<T> entry = value;
 			T t = entry.value();
 			label.setText(t.toString());
@@ -308,21 +373,25 @@ public class SearchList<T> extends JPanel {
 			}
 			else if (keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_DOWN) {
 				KeyboardFocusManager.getCurrentKeyboardFocusManager().redispatchEvent(jList, e);
+				jList.requestFocus();
 			}
 		}
 	}
 
 	private class ListKeyListener extends KeyAdapter {
 		@Override
-		public void keyPressed(KeyEvent e) {
-			int keyCode = e.getKeyCode();
+		public void keyTyped(KeyEvent e) {
+			if (e.getKeyChar() == '\n') {
+				chooseItem();
+
+			}
+			int keyCode = e.getKeyChar();
 			if (keyCode == KeyEvent.VK_ENTER) {
 				chooseItem();
 			}
-			else if (keyCode != KeyEvent.VK_UP && keyCode != KeyEvent.VK_DOWN) {
-				KeyboardFocusManager.getCurrentKeyboardFocusManager().redispatchEvent(textField, e);
-				textField.requestFocus();
-			}
+
+			KeyboardFocusManager.getCurrentKeyboardFocusManager().redispatchEvent(textField, e);
+			textField.requestFocus();
 		}
 	}
 
@@ -354,8 +423,12 @@ public class SearchList<T> extends JPanel {
 
 		@Override
 		public boolean test(T t, String category) {
-			return t.toString().toLowerCase().contains(filterText);
+			return getDisplayName(t, category).toLowerCase().contains(filterText);
 		}
+	}
+
+	public JTextField getFilterField() {
+		return textField;
 	}
 
 }

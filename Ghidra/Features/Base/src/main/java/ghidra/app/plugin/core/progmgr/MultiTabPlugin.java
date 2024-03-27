@@ -18,13 +18,14 @@ package ghidra.app.plugin.core.progmgr;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
-import javax.swing.KeyStroke;
-import javax.swing.Timer;
+import javax.swing.*;
 
 import docking.ActionContext;
 import docking.DockingUtils;
 import docking.action.*;
 import docking.tool.ToolConstants;
+import docking.widgets.tab.GTabPanel;
+import generic.theme.GIcon;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -53,18 +54,21 @@ import ghidra.util.HelpLocation;
 )
 //@formatter:on
 public class MultiTabPlugin extends Plugin implements DomainObjectListener {
+	private final static Icon TRANSIENT_ICON = new GIcon("icon.plugin.programmanager.transient");
+	private final static Icon EMPTY8_ICON = new GIcon("icon.plugin.programmanager.empty.small");
 
 	//
-	// Unusual Code Alert!: We can't initialize these in the fields above because calling
+	// Unusual Code Alert!: We can't initialize these fields below because calling
 	// DockingUtils calls into Swing code.  Further, we don't want Swing code being accessed
 	// when the Plugin classes are loaded, as they get loaded in the headless environment.
+	// So these fields are not static.
 	//
 	private final KeyStroke NEXT_TAB_KEYSTROKE =
 		KeyStroke.getKeyStroke(KeyEvent.VK_F9, DockingUtils.CONTROL_KEY_MODIFIER_MASK);
 	private final KeyStroke PREVIOUS_TAB_KEYSTROKE =
 		KeyStroke.getKeyStroke(KeyEvent.VK_F8, DockingUtils.CONTROL_KEY_MODIFIER_MASK);
 
-	private MultiTabPanel tabPanel;
+	private GTabPanel<Program> tabPanel;
 	private ProgramManager progService;
 	private CodeViewerService cvService;
 	private DockingAction goToProgramAction;
@@ -173,20 +177,20 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener {
 
 	private void switchToProgram(Program program) {
 		if (lastActiveProgram != null) {
-			tabPanel.setSelectedProgram(lastActiveProgram);
+			tabPanel.selectTab(lastActiveProgram);
 		}
 	}
 
 	private void showProgramList() {
-		tabPanel.showProgramList();
+		tabPanel.showTabList(!tabPanel.isShowingTabList());
 	}
 
 	private void highlightNextProgram(boolean forwardDirection) {
-		tabPanel.highlightNextProgram(forwardDirection);
+		tabPanel.highlightNextTab(forwardDirection);
 	}
 
 	private void selectHighlightedProgram() {
-		tabPanel.selectHighlightedProgram();
+		tabPanel.selectTab(tabPanel.getHighlightedTabValue());
 	}
 
 	String getStringUsedInList(Program program) {
@@ -257,24 +261,50 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener {
 		selectHighlightedProgramTimer.restart();
 	}
 
-	boolean isChanged(Object obj) {
-		return ((Program) obj).isChanged();
-	}
-
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
 		if (ev.getSource() instanceof Program) {
 			Program program = (Program) ev.getSource();
-			tabPanel.refresh(program);
+			tabPanel.refreshTab(program);
 		}
 	}
 
 	@Override
 	protected void init() {
-		tabPanel = new MultiTabPanel(this);
+		tabPanel = new GTabPanel<Program>("Program");
+		tabPanel.setNameFunction(p -> getTabName(p));
+		tabPanel.setIconFunction(p -> getIcon(p));
+		tabPanel.setToolTipFunction(p -> getToolTip(p));
+		tabPanel.setSelectedTabConsumer(p -> programSelected(p));
+		tabPanel.setRemoveTabActionPredicate(p -> progService.closeProgram(p, false));
+
 		progService = tool.getService(ProgramManager.class);
 		cvService = tool.getService(CodeViewerService.class);
 		cvService.setNorthComponent(tabPanel);
+	}
+
+	private Icon getIcon(Program program) {
+		ProjectLocator projectLocator = program.getDomainFile().getProjectLocator();
+		if (projectLocator != null && projectLocator.isTransient()) {
+			return TRANSIENT_ICON;
+		}
+		return EMPTY8_ICON;
+	}
+
+	private String getTabName(Program program) {
+		DomainFile df = program.getDomainFile();
+		String tabName = df.getName();
+		if (df.isReadOnly()) {
+			int version = df.getVersion();
+			if (!df.canSave() && version != DomainFile.DEFAULT_VERSION) {
+				tabName += "@" + version;
+			}
+			tabName = tabName + " [Read-Only]";
+		}
+		if (program.isChanged()) {
+			tabName = "*" + tabName;
+		}
+		return tabName;
 	}
 
 	boolean removeProgram(Program program) {
@@ -284,13 +314,14 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener {
 	void programSelected(Program program) {
 		if (program != progService.getCurrentProgram()) {
 			progService.setCurrentProgram(program);
+			cvService.requestFocus();
 		}
 	}
 
 	private void add(Program prog) {
 
 		if (progService.isVisible(prog)) {
-			tabPanel.addProgram(prog);
+			tabPanel.addTab(prog);
 			prog.removeListener(this);
 			prog.addListener(this);
 			updateActionEnablement();
@@ -299,7 +330,7 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener {
 
 	private void remove(Program prog) {
 		prog.removeListener(this);
-		tabPanel.removeProgram(prog);
+		tabPanel.removeTab(prog);
 		updateActionEnablement();
 	}
 
@@ -326,8 +357,8 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener {
 
 			if (prog != null) {
 				add(prog);
-				if (tabPanel.getSelectedProgram() != prog) {
-					tabPanel.setSelectedProgram(prog);
+				if (tabPanel.getSelectedTabValue() != prog) {
+					tabPanel.selectTab(prog);
 					updateActionEnablement();
 				}
 			}
@@ -338,7 +369,7 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener {
 				add(prog);
 				if (progService.getCurrentProgram() != prog) {
 					currentProgram = prog;
-					tabPanel.setSelectedProgram(prog);
+					tabPanel.selectTab(prog);
 					updateActionEnablement();
 				}
 			}
