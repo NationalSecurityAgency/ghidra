@@ -242,7 +242,7 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 			Address address = null;
 			try {
 				short sectionNum = symbol.getSectionNumber();
-				if (sectionNum == 0) {//external symbols
+				if (sectionNum == CoffSymbolSectionNumber.N_UNDEF) {//external symbols
 					address = externalAddress;
 					String name = symbol.getName();
 					Symbol sym = symbolTable.getGlobalSymbol(name, address);
@@ -255,13 +255,17 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 					externalAddress = externalAddress
 							.add(getPointerSizeAligned(externalAddress.getAddressSpace()));
 				}
-				else if (sectionNum <= -2) {
+				else if (sectionNum < CoffSymbolSectionNumber.N_DEBUG) {
 					log.appendMsg("Strange symbol " + symbol + " : " + symbol.getBasicType() +
 						" - from section " + sectionNum);
 				}
+				else if (sectionNum == CoffSymbolSectionNumber.N_DEBUG) {
+					// skip debug symbols
+					continue;
+				}
 				else {
 					CoffSectionHeader section = null;
-					if (sectionNum == -1) { // absolute symbols
+					if (sectionNum == CoffSymbolSectionNumber.N_ABS) { // absolute symbols {
 						// usually corresponds to IO or memory registers
 						address = CoffSectionHeader.getAddress(program.getLanguage(),
 							symbol.getValue(), program.getLanguage().getDefaultDataSpace());

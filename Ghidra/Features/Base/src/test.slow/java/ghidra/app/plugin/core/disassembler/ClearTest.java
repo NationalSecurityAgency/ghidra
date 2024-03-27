@@ -52,7 +52,7 @@ import ghidra.test.TestEnv;
 public class ClearTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private static final String COMMENTS_CHECK_BOX_TEXT =
-		"<HTML>Comments <FONT SIZE=\"2\">(does not affect automatic comments)</FONT>";
+		"<html>Comments <FONT SIZE=\"2\">(does not affect automatic comments)</FONT>";
 
 	private TestEnv env;
 	private PluginTool tool;

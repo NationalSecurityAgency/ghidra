@@ -113,7 +113,7 @@ public class DyldCacheSlideInfo4 extends DyldCacheSlideInfoCommon {
 	}
 
 	/**
-	 * Create a new {@link DyldCacheSlideInfo3}.
+	 * Create a new {@link DyldCacheSlideInfo4}.
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of a DYLD slide info 3
 	 * @param mappingAddress The base address of where the slide fixups will take place

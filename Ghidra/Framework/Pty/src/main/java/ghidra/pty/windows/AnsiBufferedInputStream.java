@@ -270,6 +270,14 @@ public class AnsiBufferedInputStream extends InputStream {
 				execSetGraphicsRendition();
 				mode = Mode.CHARS;
 				break;
+			case 'h':
+				execPrivateSequence(true);
+				mode = Mode.CHARS;
+				break;
+			case 'l':
+				execPrivateSequence(false);
+				mode = Mode.CHARS;
+				break;
 		}
 	}
 
@@ -472,5 +480,10 @@ public class AnsiBufferedInputStream extends InputStream {
 		// Msg.info(this, "Title: " + readAndClear(titleBuf));
 		// TODO: Maybe a callback. Otherwise, don't care
 		titleBuf.clear();
+	}
+
+	protected void execPrivateSequence(boolean enable) {
+		// These don't matter for input buffering.
+		escBuf.clear();
 	}
 }

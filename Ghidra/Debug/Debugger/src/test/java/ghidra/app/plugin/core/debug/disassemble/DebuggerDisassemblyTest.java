@@ -53,6 +53,7 @@ import ghidra.trace.database.listing.DBTraceInstruction;
 import ghidra.trace.database.listing.DBTraceInstructionsMemoryView;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
+import ghidra.trace.database.stack.DBTraceStackManager;
 import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectManager;
 import ghidra.trace.model.Lifespan;
@@ -60,7 +61,7 @@ import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceObjectMemoryRegion;
 import ghidra.trace.model.program.TraceProgramView;
-import ghidra.trace.model.stack.TraceObjectStackFrame;
+import ghidra.trace.model.stack.*;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.trace.model.thread.TraceObjectThread;
@@ -130,9 +131,9 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		listingProvider.setAutoDisassemble(false);
 	}
 
-	protected void assertX86Nop(Instruction instruction) {
+	protected void assertMnemonic(String expected, Instruction instruction) {
 		assertNotNull(instruction);
-		assertEquals("NOP", instruction.getMnemonicString());
+		assertEquals(expected, instruction.getMnemonicString());
 	}
 
 	protected void enableAutoDisassembly() throws Throwable {
@@ -187,6 +188,15 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		return thread;
 	}
 
+	protected void setLegacyProgramCounter(long offset, TraceThread thread, long snap) {
+		try (Transaction tx = tb.startTransaction()) {
+			DBTraceStackManager manager = tb.trace.getStackManager();
+			TraceStack stack = manager.getStack(thread, snap, true);
+			TraceStackFrame frame = stack.getFrame(0, true);
+			frame.setProgramCounter(Lifespan.nowOn(snap), tb.addr(offset));
+		}
+	}
+
 	protected void createLegacyTrace(String langID, long offset,
 			Supplier<ByteBuffer> byteSupplier) throws Throwable {
 		createAndOpenTrace(langID);
@@ -194,7 +204,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			memory.createRegion("Memory[bin:.text]", 0, tb.range(offset, offset + 0xffff),
-				Set.of(TraceMemoryFlag.EXECUTE));
+				Set.of(TraceMemoryFlag.EXECUTE, TraceMemoryFlag.READ));
 			ByteBuffer bytes = byteSupplier.get();
 			assertEquals(bytes.remaining(), memory.putBytes(0, tb.addr(offset), bytes));
 		}
@@ -209,11 +219,44 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerTest {
 		getSLEIGH_X86_64_LANGUAGE(); // So that the load isn't charged against the time-out
 		waitForPass(() -> {
 			DBTraceInstructionsMemoryView instructions = tb.trace.getCodeManager().instructions();
-			assertX86Nop(instructions.getAt(0, tb.addr(0x00400000)));
-			assertX86Nop(instructions.getAt(0, tb.addr(0x00400001)));
-			assertX86Nop(instructions.getAt(0, tb.addr(0x00400002)));
-			// NB. The auto disassembler will now proceed into "never known" memory.
-			// It's too much trouble to prevent it, and it's different behavior than the D key.
+			assertMnemonic("NOP", instructions.getAt(0, tb.addr(0x00400000)));
+			assertMnemonic("NOP", instructions.getAt(0, tb.addr(0x00400001)));
+			assertMnemonic("NOP", instructions.getAt(0, tb.addr(0x00400002)));
+			assertNull(instructions.getAt(0, tb.addr(0x00400003)));
+		});
+	}
+
+	@Test
+	public void testAutoDisasembleReDisasembleOffcut() throws Throwable {
+		enableAutoDisassembly();
+		createLegacyTrace("x86:LE:64:default", 0x00400000, () -> tb.buf(0xeb, 0xff, 0xc0));
+
+		TraceThread thread;
+		try (Transaction tx = tb.startTransaction()) {
+			thread = tb.getOrAddThread("Thread 1", 0);
+		}
+
+		setLegacyProgramCounter(0x00400000, thread, 0);
+
+		waitForPass(() -> {
+			DBTraceInstructionsMemoryView instructions = tb.trace.getCodeManager().instructions();
+			assertMnemonic("JMP", instructions.getAt(0, tb.addr(0x00400000)));
+			/**
+			 * Depending on preference for branch or fall-through, the disassembler may or may not
+			 * proceed to the following instructions. I don't really care, since the test is the the
+			 * JMP gets deleted after the update to PC.
+			 */
+		});
+
+		// The jump will advance one byte. Just simulate that by updating the stack and/or regs
+		setLegacyProgramCounter(0x00400001, thread, 1);
+		traceManager.activateSnap(1);
+
+		waitForPass(() -> {
+			DBTraceInstructionsMemoryView instructions = tb.trace.getCodeManager().instructions();
+			assertNull(instructions.getAt(1, tb.addr(0x00400000)));
+			assertMnemonic("INC", instructions.getAt(1, tb.addr(0x00400001)));
+			assertNull(instructions.getAt(1, tb.addr(0x00400003)));
 		});
 	}
 

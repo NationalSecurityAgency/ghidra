@@ -20,6 +20,7 @@ import java.awt.Font;
 import java.beans.PropertyEditor;
 import java.io.File;
 import java.util.*;
+import java.util.function.Supplier;
 
 import javax.swing.KeyStroke;
 
@@ -61,7 +62,7 @@ public class SubOptions implements Options {
 	public List<Options> getChildOptions() {
 		List<String> optionPaths = getOptionNames();
 		Set<String> childCategories = AbstractOptions.getChildCategories(optionPaths);
-		List<Options> childOptions = new ArrayList<Options>(childCategories.size());
+		List<Options> childOptions = new ArrayList<>(childCategories.size());
 		for (String categoryName : childCategories) {
 			childOptions.add(new SubOptions(options, categoryName, prefix + categoryName +
 				DELIMITER));
@@ -88,7 +89,7 @@ public class SubOptions implements Options {
 
 	@Override
 	public void registerOption(String optionName, OptionType type, Object defaultValue,
-			HelpLocation help, String description, PropertyEditor editor) {
+			HelpLocation help, String description, Supplier<PropertyEditor> editor) {
 		options.registerOption(prefix + optionName, type, defaultValue, help, description, editor);
 	}
 
@@ -252,7 +253,7 @@ public class SubOptions implements Options {
 	@Override
 	public List<String> getOptionNames() {
 		List<String> allOptionPaths = options.getOptionNames();
-		List<String> names = new ArrayList<String>();
+		List<String> names = new ArrayList<>();
 		for (String path : allOptionPaths) {
 			if (path.startsWith(prefix)) {
 				names.add(path.substring(prefix.length()));
@@ -317,7 +318,7 @@ public class SubOptions implements Options {
 	}
 
 	@Override
-	public void registerOptionsEditor(OptionsEditor editor) {
+	public void registerOptionsEditor(Supplier<OptionsEditor> editor) {
 		options.registerOptionsEditor(prefix, editor);
 	}
 
@@ -378,7 +379,7 @@ public class SubOptions implements Options {
 	public List<String> getLeafOptionNames() {
 		List<String> optionPaths = getOptionNames();
 		Set<String> leaves = AbstractOptions.getLeaves(optionPaths);
-		return new ArrayList<String>(leaves);
+		return new ArrayList<>(leaves);
 	}
 
 	@Override

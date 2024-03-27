@@ -606,7 +606,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 		PropertyEditor editor = options.getPropertyEditor(filePropertyName);
 		if (editor == null && options.getType(filePropertyName) == OptionType.STRING_TYPE) {
 			options.registerOption(filePropertyName, OptionType.STRING_TYPE, null, null, null,
-				new StringBasedFileEditor());
+				() -> new StringBasedFileEditor());
 		}
 	}
 

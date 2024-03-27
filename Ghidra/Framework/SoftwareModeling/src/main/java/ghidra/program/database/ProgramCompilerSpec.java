@@ -244,7 +244,7 @@ public class ProgramCompilerSpec extends BasicCompilerSpec {
 			return;
 		}
 		StringBuilder buffer = new StringBuilder();
-		buffer.append("<HTML>User-defined extensions failed to parse: ");
+		buffer.append("<html>User-defined extensions failed to parse: ");
 		buffer.append("<ul>");
 		for (String line : errorList) {
 			buffer.append("<li>").append(line).append("</li>");
@@ -363,7 +363,7 @@ public class ProgramCompilerSpec extends BasicCompilerSpec {
 			OptionType.STRING_TYPE, evalChoices[0],
 			new HelpLocation("DecompilePlugin", "OptionProtoEval"),
 			"Select the default function prototype/evaluation model to be used during Decompiler analysis",
-			new StringWithChoicesEditor(evalChoices));
+			() -> new StringWithChoicesEditor(evalChoices));
 
 		// TODO: registration of DECOMPILER_OUTPUT_LANGUAGE option should be tied to Processor
 		// and not presence of stored option.

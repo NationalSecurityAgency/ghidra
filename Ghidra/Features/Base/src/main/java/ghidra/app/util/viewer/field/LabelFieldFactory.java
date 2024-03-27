@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.beans.PropertyEditor;
 import java.math.BigInteger;
 import java.util.*;
 
@@ -59,8 +58,6 @@ public class LabelFieldFactory extends FieldFactory {
 	private Icon EMPTY_ICON = new EmptyIcon(12, 16);
 	private Icon ANCHOR_ICON =
 		new MultiIcon(EMPTY_ICON, new GIcon("icon.base.util.viewer.fieldfactory.label"));
-
-	private PropertyEditor namespaceOptionsEditor = new NamespacePropertyEditor();
 
 	private boolean displayFunctionLabel;
 	private boolean displayLocalNamespace;
@@ -107,7 +104,7 @@ public class LabelFieldFactory extends FieldFactory {
 		// we need to install a custom editor that allows us to edit a group of related options
 		fieldOptions.registerOption(NAMESPACE_OPTIONS, OptionType.CUSTOM_TYPE,
 			new NamespaceWrappedOption(), null, "Adjusts the Label Field namespace display",
-			namespaceOptionsEditor);
+			() -> new NamespacePropertyEditor());
 		CustomOption wrappedOption =
 			fieldOptions.getCustomOption(NAMESPACE_OPTIONS, new NamespaceWrappedOption());
 		if (!(wrappedOption instanceof NamespaceWrappedOption)) {
