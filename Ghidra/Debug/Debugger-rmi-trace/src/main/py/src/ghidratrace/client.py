@@ -62,8 +62,9 @@ class Receiver(Thread):
             Client._write_value(
                 reply.xreply_invoke_method.return_value, result)
         except BaseException as e:
-            reply.xreply_invoke_method.error = ''.join(
-                traceback.format_exc())
+            print("Error caused by front end")
+            traceback.print_exc()
+            reply.xreply_invoke_method.error = repr(e)
         self.client._send(reply)
 
     def _handle_reply(self, reply):
@@ -552,8 +553,16 @@ class Batch(object):
     def append(self, fut):
         self.futures.append(fut)
 
+    @staticmethod
+    def _get_result(f, timeout):
+        try:
+            return f.result(timeout)
+        except BaseException as e:
+            print(f"Exception in batch operation: {repr(e)}")
+            return e
+
     def results(self, timeout=None):
-        return [f.result(timeout) for f in self.futures]
+        return [self._get_result(f, timeout) for f in self.futures]
 
 
 class Client(object):

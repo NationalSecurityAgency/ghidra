@@ -365,6 +365,9 @@ public class TerminalProvider extends ComponentProviderAdapter {
 			terminated = true;
 			removeLocalAction(actionTerminate);
 			panel.terminalListeners.clear();
+			panel.setOutputCallback(buf -> {
+			});
+			panel.getFieldPanel().setCursorOn(false);
 			setTitle("[Terminal]");
 			setSubTitle("Terminated");
 			if (!isVisible()) {

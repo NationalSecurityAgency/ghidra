@@ -27,7 +27,6 @@ import java.util.concurrent.*;
 import java.util.stream.*;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import com.google.protobuf.ByteString;
 
@@ -493,8 +492,9 @@ public class TraceRmiHandler implements TraceRmiConnection {
 				return rep == null ? null : rep.build();
 			}
 			catch (Throwable e) {
+				Msg.error(this, "Exception caused by back end", e);
 				return rep.setError(ReplyError.newBuilder()
-						.setMessage(e.getMessage() + "\n" + ExceptionUtils.getStackTrace(e)))
+						.setMessage(e.getMessage()))
 						.build();
 			}
 		}

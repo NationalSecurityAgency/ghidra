@@ -48,8 +48,8 @@ class HookState(object):
     def end_batch(self):
         if self.batch is None:
             return
-        commands.STATE.client.end_batch()
         self.batch = None
+        commands.STATE.client.end_batch()
 
     def check_skip_continue(self):
         skip = self.skip_continue

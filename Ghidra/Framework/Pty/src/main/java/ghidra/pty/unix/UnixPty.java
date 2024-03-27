@@ -68,6 +68,8 @@ public class UnixPty implements Pty {
 		if (closed) {
 			return;
 		}
+		child.closeStreams();
+		parent.closeStreams();
 		LIB_POSIX.close(achild);
 		LIB_POSIX.close(aparent);
 		closed = true;
