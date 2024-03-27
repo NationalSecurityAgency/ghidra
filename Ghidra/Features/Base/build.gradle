@@ -19,6 +19,7 @@ apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
 apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
 apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
 apply from: "$rootProject.projectDir/gradle/javadoc.gradle"
+apply plugin: 'com.google.protobuf'
 apply plugin: 'eclipse'
 eclipse.project.name = 'Features Base'
 
@@ -33,8 +34,21 @@ rootProject.createJsondocs.exclude '**/ghidra/app/plugin/core/**'
 	a bit of custom help file generation.
 */
 
+buildscript {
+	repositories {
+		maven {
+			url = uri("https://plugins.gradle.org/m2/")
+		}
+	}
+	dependencies {
+		classpath("com.google.protobuf:protobuf-gradle-plugin:0.9.4")
+	}
+}
+
+
 configurations {
 	javacc
+	proto
 }
 
 dependencies {
@@ -63,16 +77,52 @@ dependencies {
 	testImplementation project(path: ':DB', configuration: 'testArtifacts')
 	
 	javacc 'net.java.dev.javacc:javacc:5.0'
+
+	proto 'com.google.protobuf:protobuf-java:3.25.1'
+	configurations.implementation.extendsFrom(configurations.proto)
 }
 
+protobuf {
+    // Configure the protoc executable
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.25.1'
+    }
+    // Make generator tasks visible in Eclipse
+    generateProtoTasks {
+        all().each {
+            it.group = 'generate proto'
+        }
+    }
+}
 
-// add in the output of the javacc tasks to the java source
 sourceSets {
 	main {
 		java {	
+			// Add in the output of the javacc tasks to the java source
 			srcDirs 'build/generated-src/javacc'
+			// Generated protobuf sources
+			srcDirs 'build/generated/source/proto/main/java'
 		}
 	}
+}
+eclipse {
+    classpath {
+        file {
+            whenMerged {
+                def source = entries.find {
+                    it.path == 'build/generated/source/proto/main/java'
+                }
+                source.entryAttributes['ignore_optional_problems'] = 'true'
+            }
+        }
+    }
+}
+
+// Extend jar task to collect extra dependencies.
+jar {
+    from {
+        configurations.proto.collect { it.isDirectory() ? it : zipTree(it) }
+    }
 }
 
 task buildCParser(type: JavaExec) {
