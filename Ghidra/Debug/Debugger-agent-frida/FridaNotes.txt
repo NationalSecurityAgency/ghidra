@@ -14,6 +14,15 @@ Ghidra needs a dynamically-loadable version of libfrida-core.a which you can gen
 
 Libfrida-core.so should then be added to the jna.library.path or put someplace like /usr/lib/x86_64-linux-gnu, where it will get picked up by Native.load().
 
+
+ - For Windows support:
+ 	download the latest fridacore dev kit for win x64 for example: frida-core-devkit-16.2.1-windows-x86_64.tar.xz
+ 	Extract the files to any folder
+ 	Copy the files from Ghidra/Debug/Debugger-agent-frida/src/main/cpp  to that folder, overriding any existing.
+ 	Open frida_dll-msvc_build.sln and build in release mode for x64. This should give you a frida-core.dll.
+ 	Copy that dll to Ghidra/patch/win32-x86-64
+ 	Profit
+
 - Frida Functionality
 	The most interesting bits of Frida are available as "methods" from the Objects Tree.  For instance, if you select a function and hit "M", you will get a dialog with available methods.  Selecting, for example, "intercept" will bring up a second dialog with the relevant parameters.  For many of these, you will want to provide your own Javascript "on" functions, e.g. onEnter for the Interceptor. Stalking is available on Threads and the individual thread entries. Scan, protect, and watch functions are available on Memory. You can also redirect the output to GhidraScript, although this relies on a bit of a hack.  If your Javascript "Name" parameter is something like "interpreter", prepend "interpreter<=" to the output from your Javascript, and the results will be passed to both the console and the script.
 	
