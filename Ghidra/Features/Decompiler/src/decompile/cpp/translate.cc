@@ -224,8 +224,10 @@ AddrSpace *AddrSpaceManager::decodeSpace(Decoder &decoder,const Translate *trans
     res = new OtherSpace(this,trans);
   else if (elemId == ELEM_SPACE_OVERLAY)
     res = new OverlaySpace(this,trans);
-  else
+  else if (elemId == ELEM_SPACE)
     res = new AddrSpace(this,trans,IPTR_PROCESSOR);
+  else
+    throw LowlevelError("Invalid address space element. Internal element id: " + elemId);
 
   res->decode(decoder);
   return res;
