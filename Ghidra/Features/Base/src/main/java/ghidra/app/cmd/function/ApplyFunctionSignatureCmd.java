@@ -300,7 +300,7 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand<Program> {
 			return 0;
 		}
 
-		if (!CompilerSpec.CALLING_CONVENTION_thiscall.equals(conventionName)) {
+		if (!conventionName.startsWith(CompilerSpec.CALLING_CONVENTION_thiscall)) {
 			return 0;
 		}
 
