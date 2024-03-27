@@ -54,6 +54,7 @@ class PrimitiveExtractor {
     union_invalid = 16			///< Unions are treated as an illegal element
   };
 public:
+  /// \brief A primitive data-type and its offset within the containing data-type
   class Primitive {
   public:
     Datatype *dt;		///< Primitive data-type
@@ -71,7 +72,7 @@ public:
   PrimitiveExtractor(Datatype *dt,bool unionIllegal,int4 offset,int4 max);	///< Constructor
   int4 size(void) const { return primitives.size(); }	///< Return the number of primitives extracted
   const Primitive &get(int4 i) const { return primitives[i]; }	///< Get a particular primitive
-  bool isValid(void) const { return (flags & invalid) == 0; }
+  bool isValid(void) const { return (flags & invalid) == 0; }	///< Return \b true if primitives were successfully extracted
   bool containsUnknown(void) const { return (flags & unknown_element)!=0; }	///< Are there \b unknown elements
   bool isAligned(void) const { return (flags & unaligned)==0; }		///< Are all elements aligned
   bool containsHoles(void) const { return (flags & extra_space)!=0; }	///< Is there empty space that is not padding

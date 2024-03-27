@@ -17,6 +17,7 @@
 #include "coreaction.hh"
 #include "subflow.hh"
 #include "rangeutil.hh"
+#include "multiprecision.hh"
 
 namespace ghidra {
 
@@ -1884,8 +1885,12 @@ int4 RuleDoubleShift::applyOp(PcodeOp *op,Funcdata &data)
   }
   else if (sa1 == sa2 && size <= sizeof(uintb)) {	// FIXME:  precision
     mask = calc_mask(size);
-    if (opc1 == CPUI_INT_LEFT)
+    if (opc1 == CPUI_INT_LEFT) {
+      // The INT_LEFT is highly likely to be a multiply, so don't collapse to an INT_AND if there
+      // are other uses of the intermediate value.
+      if (secvn->loneDescend() == (PcodeOp *)0) return 0;
       mask = (mask<<sa1) & mask;
+    }
     else
       mask = (mask>>sa1) & mask;
     newvn = data.newConstant(size,mask);
@@ -7359,16 +7364,15 @@ int4 RuleDivTermAdd::applyOp(PcodeOp *op,Funcdata &data)
   OpCode shiftopc;
   PcodeOp *subop = findSubshift(op,n,shiftopc);
   if (subop == (PcodeOp *)0) return 0;
-  // TODO: Cannot currently support 128-bit arithmetic, except in special case of 2^64
-  if (n > 64) return 0;
+  if (n > 127) return 0;	// Up to 128-bits
   
   Varnode *multvn = subop->getIn(0);
   if (!multvn->isWritten()) return 0;
   PcodeOp *multop = multvn->getDef();
   if (multop->code() != CPUI_INT_MULT) return 0;
-  uintb multConst;
-  int4 constExtType = multop->getIn(1)->isConstantExtended(multConst);
-  if (constExtType < 0) return 0;
+  uint8 multConst[2];
+  if (!multop->getIn(1)->isConstantExtended(multConst))
+    return 0;
   
   Varnode *extvn = multop->getIn(0);
   if (!extvn->isWritten()) return 0;
@@ -7381,20 +7385,10 @@ int4 RuleDivTermAdd::applyOp(PcodeOp *op,Funcdata &data)
     if (op->code()==CPUI_INT_RIGHT) return 0;
   }
 
-  uintb newc;
-  if (n < 64 || (extvn->getSize() <= 8)) {
-    uintb pow = 1;
-    pow <<= n;			// Calculate 2^n
-    newc = multConst + pow;
-  }
-  else {
-    if (constExtType != 2) return 0; // TODO: Can't currently represent
-    if (!signbit_negative(multConst,8)) return 0;
-    // Adding 2^64 to a sign-extended 64-bit value with its sign set, causes all the
-    // set extension bits to be cancelled out, converting it into a
-    // zero-extended 64-bit value.
-    constExtType = 1;		// Set extension of constant to INT_ZEXT
-  }
+  uint8 power[2];
+  set_u128(power, 1);
+  leftshift128(power,power,n);		// power = 2^n
+  add128(multConst,power,multConst);	// multConst += 2^n
   Varnode *x = extop->getIn(0);
 
   list<PcodeOp *>::const_iterator iter;
@@ -7405,17 +7399,7 @@ int4 RuleDivTermAdd::applyOp(PcodeOp *op,Funcdata &data)
       continue;
 
     // Construct the new constant
-    Varnode *newConstVn;
-    if (constExtType == 0)
-      newConstVn = data.newConstant(extvn->getSize(),newc);
-    else {
-      // Create new extension of the constant
-      PcodeOp *newExtOp = data.newOp(1,op->getAddr());
-      data.opSetOpcode(newExtOp,(constExtType==1) ? CPUI_INT_ZEXT : CPUI_INT_SEXT);
-      newConstVn = data.newUniqueOut(extvn->getSize(),newExtOp);
-      data.opSetInput(newExtOp,data.newConstant(8,multConst),0);
-      data.opInsertBefore(newExtOp,op);
-    }
+    Varnode *newConstVn = data.newExtendedConstant(extvn->getSize(), multConst, op);
 
     // Construct the new multiply
     PcodeOp *newmultop = data.newOp(2,op->getAddr());
@@ -7532,7 +7516,8 @@ int4 RuleDivTermAdd2::applyOp(PcodeOp *op,Funcdata &data)
   if (!multvn->isWritten()) return 0;
   PcodeOp *multop = multvn->getDef();
   if (multop->code() != CPUI_INT_MULT) return 0;
-  if (!multop->getIn(1)->isConstant()) return 0;
+  uint8 multConst[2];
+  if (!multop->getIn(1)->isConstantExtended(multConst)) return 0;
   Varnode *zextvn = multop->getIn(0);
   if (!zextvn->isWritten()) return 0;
   PcodeOp *zextop = zextvn->getDef();
@@ -7545,14 +7530,16 @@ int4 RuleDivTermAdd2::applyOp(PcodeOp *op,Funcdata &data)
     if (addop->code() != CPUI_INT_ADD) continue;
     if ((addop->getIn(0)!=z)&&(addop->getIn(1)!=z)) continue;
 
-    uintb pow = 1;
-    pow <<= n;			// Calculate 2^n
-    uintb newc = multop->getIn(1)->getOffset() + pow;
+    uint8 pow[2];
+    set_u128(pow, 1);
+    leftshift128(pow,pow,n);		// Calculate 2^n
+    add128(multConst, pow, multConst);	// multConst = multConst + 2^n
     PcodeOp *newmultop = data.newOp(2,op->getAddr());
     data.opSetOpcode(newmultop,CPUI_INT_MULT);
     Varnode *newmultvn = data.newUniqueOut(zextvn->getSize(),newmultop);
     data.opSetInput(newmultop,zextvn,0);
-    data.opSetInput(newmultop,data.newConstant(zextvn->getSize(),newc),1);
+    Varnode *newConstVn = data.newExtendedConstant(zextvn->getSize(), multConst, op);
+    data.opSetInput(newmultop,newConstVn,1);
     data.opInsertBefore(newmultop,op);
 
     PcodeOp *newshiftop = data.newOp(2,op->getAddr());
@@ -7591,7 +7578,7 @@ int4 RuleDivTermAdd2::applyOp(PcodeOp *op,Funcdata &data)
 /// \param xsize will hold the number of (non-zero) bits in the numerand
 /// \param extopc holds whether the extension is INT_ZEXT or INT_SEXT
 /// \return the extended numerand if possible, or the unextended numerand, or NULL
-Varnode *RuleDivOpt::findForm(PcodeOp *op,int4 &n,uintb &y,int4 &xsize,OpCode &extopc)
+Varnode *RuleDivOpt::findForm(PcodeOp *op,int4 &n,uint8 *y,int4 &xsize,OpCode &extopc)
 
 {
   PcodeOp *curOp = op;
@@ -7621,18 +7608,22 @@ Varnode *RuleDivOpt::findForm(PcodeOp *op,int4 &n,uintb &y,int4 &xsize,OpCode &e
   if (curOp->code() != CPUI_INT_MULT) return (Varnode *)0;	// There MUST be an INT_MULT
   Varnode *inVn = curOp->getIn(0);
   if (!inVn->isWritten()) return (Varnode *)0;
-  if (inVn->isConstantExtended(y) >= 0) {
+  if (inVn->isConstantExtended(y)) {
     inVn = curOp->getIn(1);
     if (!inVn->isWritten()) return (Varnode *)0;
   }
-  else if (curOp->getIn(1)->isConstantExtended(y) < 0)
+  else if (!curOp->getIn(1)->isConstantExtended(y))
     return (Varnode *)0;	// There MUST be a constant
 
   Varnode *resVn;
   PcodeOp *extOp = inVn->getDef();
   extopc = extOp->code();
   if (extopc != CPUI_INT_SEXT) {
-    uintb nzMask = inVn->getNZMask();
+    uintb nzMask;
+    if (extopc == CPUI_INT_ZEXT)
+      nzMask = extOp->getIn(0)->getNZMask();
+    else
+      nzMask = inVn->getNZMask();
     xsize = 8*sizeof(uintb) - count_leading_zeros(nzMask);
     if (xsize == 0) return (Varnode *)0;
     if (xsize > 4*inVn->getSize()) return (Varnode *)0;
@@ -7672,44 +7663,50 @@ Varnode *RuleDivOpt::findForm(PcodeOp *op,int4 &n,uintb &y,int4 &xsize,OpCode &e
 /// Do some additional checks on the parameters as an optimized encoding
 /// of a divisor.
 /// \param n is the power of 2
-/// \param y is the multiplicative coefficient
+/// \param y is the (up to 128-bit) multiplicative coefficient
 /// \param xsize is the maximum power of 2
 /// \return the divisor or 0 if the checks fail
-uintb RuleDivOpt::calcDivisor(uintb n,uint8 y,int4 xsize)
+uintb RuleDivOpt::calcDivisor(uintb n,uint8 *y,int4 xsize)
 
 {
-  if (n > 127) return 0;		// Not enough precision
-  if (y <= 1) return 0;		// Boundary cases are wrong form
+  if (n > 127 || xsize > 64) return 0;		// Not enough precision
+  uint8 power[2];
+  uint8 q[2];
+  uint8 r[2];
+  set_u128(power, 1);
+  if (ulessequal128(y, power))		// Boundary cases, y <= 1, are wrong form
+    return 0;
 
-  uint8 d,r;
-  uint8 power;
-  if (n < 64) {
-    power = ((uint8)1) << n;
-    d = power / (y-1);
-    r = power % (y-1);
+  subtract128(y, power, y);			// y = y - 1
+  leftshift128(power, power, n);		// power = 2^n
+
+  udiv128(power, y, q, r);
+  if (0 != q[1])
+    return 0;			// Result is bigger than 64-bits
+  if (uless128(y,q)) return 0;	// if y < q
+  uint8 diff = 0;
+  if (!uless128(r,q)) {		// if r >= q
+    // Its possible y is 1 too big giving us a q that is smaller by 1 than the correct value
+    q[0] += 1;			// Adjust to bigger q
+    subtract128(r,y,r);		// and remainder for the smaller y
+    add128(r, q, r);
+    if (!uless128(r,q)) return 0;
+    diff = q[0];		// Using y that is off by one adds extra error, affecting allowable maxx
   }
-  else {
-    if (0 != power2Divide(n,y-1,d,r))
-      return 0;			// Result is bigger than 64-bits
-  }
-  if (d>=y) return 0;
-  if (r >= d) return 0;
   // The optimization of division to multiplication
   // by the reciprocal holds true, if the maximum value
-  // of x times the remainder is less than 2^n
-  uint8 maxx = 1;
-  maxx <<= xsize;
+  // of x times q-r is less than 2^n
+  uint8 maxx = (xsize == 64) ? 0 : ((uint8)1) << xsize;
   maxx -= 1;			// Maximum possible x value
-  uint8 tmp;
-  if (n < 64)
-    tmp = power / (d-r);	// r < d => divisor is non-zero
-  else {
-    uint8 unused;
-    if (0 != power2Divide(n,d-r,tmp,unused))
-      return (uintb)d;		// tmp is bigger than 2^64 > maxx
-  }
-  if (tmp<=maxx) return 0;
-  return (uintb)d;
+  uint8 tmp[2];
+  uint8 denom[2];
+  diff += q[0] - r[0];
+  set_u128(denom,diff);
+  udiv128(power,denom, tmp, r);
+  if (0 != tmp[1])
+    return (uintb)q[0];		// tmp is bigger than 2^64 > maxx
+  if (tmp[0]<=maxx) return 0;
+  return (uintb)q[0];
 }
 
 /// \brief Replace sign-bit extractions from the first given Varnode with the second Varnode
@@ -7785,7 +7782,7 @@ bool RuleDivOpt::checkFormOverlap(PcodeOp *op)
     Varnode *cvn = superOp->getIn(1);
     if (!cvn->isConstant()) return true;	// Might be a form where constant has propagated yet
     int4 n,xsize;
-    uintb y;
+    uint8 y[2];
     OpCode extopc;
     Varnode *inVn = findForm(superOp, n, y, xsize, extopc);
     if (inVn != (Varnode *)0) return true;
@@ -7797,8 +7794,8 @@ bool RuleDivOpt::checkFormOverlap(PcodeOp *op)
 /// \brief Convert INT_MULT and shift forms into INT_DIV or INT_SDIV
 ///
 /// The unsigned and signed variants are:
-///   - `sub( (zext(V)*c)>>n, 0)   =>  V / (2^n/(c-1))`
-///   - `sub( (sext(V)*c)s>>n, 0)  =>  V s/ (2^n/(c-1))`
+///   - `sub( (zext(V)*c), d) >> e   =>  V / (2^n/(c-1)) where n = d*8 + e`
+///   - `sub( (sext(V)*c), d) s>> e =>  V s/ (2^n/(c-1)) where n = d*8 + e`
 void RuleDivOpt::getOpList(vector<uint4> &oplist) const
 
 {
@@ -7811,7 +7808,7 @@ int4 RuleDivOpt::applyOp(PcodeOp *op,Funcdata &data)
 
 {
   int4 n,xsize;
-  uintb y;
+  uint8 y[2];
   OpCode extOpc;
   Varnode *inVn = findForm(op,n,y,xsize,extOpc);
   if (inVn == (Varnode *)0) return 0;

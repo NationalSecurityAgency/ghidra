@@ -1600,6 +1600,15 @@ void ParamListStandardOut::initialize(void)
   }
 }
 
+/// \brief Find the return value storage using the older \e fallback method
+///
+/// Given the active set of trial locations that might hold (pieces of) the return value, calculate
+/// the best matching ParamEntry from \b this ParamList and mark all the trials that are contained
+/// in the ParamEntry as \e used.  If \b firstOnly is \b true, the ParamList is assumed to contain
+/// partial storage locations that might get used for return values split storage.  In this case,
+/// only the first ParamEntry in a storage class is allowed to match.
+/// \param active is the set of active trials
+/// \param firstOnly is \b true if only the first entry in a storage class can match
 void ParamListStandardOut::fillinMapFallback(ParamActive *active,bool firstOnly) const
 
 {
