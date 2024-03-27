@@ -1,0 +1,712 @@
+# Material generated from https://github.com/T-head-Semi/thead-extension-spec/releases/download/2.0.0/xthead-2022-09-05-2.0.0.pdf
+#  Pcode is untested!
+
+# Cache Management Operations (XTheadCmo)
+
+@ifdef xtheadcmo1p0
+#    Clean all D-cache
+define pcodeop th.dcache.call;
+:th.dcache.call is op2531=0x0 & op2024=0x1 & op1519=0 & op1214=0 & op0711=0 & op0006=0x0b {th.dcache.call();}
+
+#    Clean & invalidate all D-cache
+define pcodeop th.dcache.ciall;
+:th.dcache.ciall is op2531=0x0 & op2024=0x3 & op1519=0 & op1214=0 & op0711=0 & op0006=0x0b {th.dcache.ciall();}
+
+#    Invalidate all D-cache
+define pcodeop th.dcache.iall;
+:th.dcache.iall is op2531=0x0 & op2024=0x2 & op1519=0 & op1214=0 & op0711=0 & op0006=0x0b {th.dcache.iall();}
+
+#    Clean D-cache at PA
+define pcodeop th.dcache.cpa;
+:th.dcache.cpa rs1 is op2531=0x1 & op2024=0x9 & rs1 & op1214=0 & op0711=0 & op0006=0x0b {th.dcache.cpa(rs1);}
+
+#    Clean and invalidate D-cache at PA
+define pcodeop th.dcache.cipa;
+:th.dcache.cipa rs1 is op2531=0x1 & op2024=0xb & rs1 & op1214=0 & op0711=0 & op0006=0x0b {th.dcache.cipa(rs1);}
+
+#    Invalidate D-cache at PA
+define pcodeop th.dcache.ipa;
+:th.dcache.ipa rs1 is op2531=0x1 & op2024=0xa & rs1 & op1214=0 & op0711=0 & op0006=0x0b {th.dcache.ipa(rs1);}
+
+#    Clean D-cache at VA
+define pcodeop th.dcache.cva;
+:th.dcache.cva rs1 is op2531=0x1 & op2024=0x5 & rs1 & op1214=0 & op0711=0 & op0006=0x0b {th.dcache.cva(rs1);}
+
+#    Clean and invalidate D-cache at VA
+define pcodeop th.dcache.civa;
+:th.dcache.civa rs1 is op2531=0x1 & op2024=0x7 & rs1 & op1214=0 & op0711=0 & op0006=0x0b {th.dcache.civa(rs1);}
+
+#    Invalidate D-cache at VA
+define pcodeop th.dcache.iva;
+:th.dcache.iva rs1 is op2531=0x1 & op2024=0x6 & rs1 & op1214=0 & op0711=0 & op0006=0x0b {th.dcache.iva(rs1);}
+
+#    Clean D-cache by set/way
+define pcodeop th.dcache.csw;
+:th.dcache.csw rs1 is op2531=0x1 & op2024=0x1 & rs1 & op1214=0 & op0711=0 & op0006=0x0b {th.dcache.csw(rs1);}
+
+#    Clean & invalidate D-cache by set/way
+define pcodeop th.dcache.cisw;
+:th.dcache.cisw rs1 is op2531=0x1 & op2024=0x3 & rs1 & op1214=0 & op0711=0 & op0006=0x0b {th.dcache.cisw(rs1);}
+
+#    Invalidate D-cache by set/way
+define pcodeop th.dcache.isw;
+:th.dcache.isw rs1 is op2531=0x1 & op2024=0x2 & rs1 & op1214=0 & op0711=0 & op0006=0x0b {th.dcache.isw(rs1);}
+
+#    Clean L1 D-cache at PA
+define pcodeop th.dcache.cpal1;
+:th.dcache.cpal1 rs1 is op2531=0x1 & op2024=0x8 & rs1 & op1214=0 & op0711=0 & op0006=0x0b {th.dcache.cpal1(rs1);}
+
+#    Clean L1 D-cache at VA
+define pcodeop th.dcache.cval1;
+:th.dcache.cval1 rs1 is op2531=0x1 & op2024=0x4 & rs1 & op1214=0 & op0711=0 & op0006=0x0b {th.dcache.cval1(rs1);}
+
+#    Invalidate all I-cache
+define pcodeop th.icache.iall;
+:th.icache.iall is op2531=0x0 & op2024=0x10 & op1519=0 & op1214=0 & op0711=0 & op0006=0x0b {th.icache.iall();}
+
+#    Invalidate all I-cache on all harts
+define pcodeop th.icache.ialls;
+:th.icache.ialls is op2531=0x0 & op2024=0x11 & op1519=0 & op1214=0 & op0711=0 & op0006=0x0b {th.icache.ialls();}
+
+#    Invalidate I-cache at PA
+define pcodeop th.icache.ipa;
+:th.icache.ipa rs1 is op2531=0x1 & op2024=0x18 & rs1 & op1214=0 & op0711=0 & op0006=0x0b {th.icache.ipa(rs1);}
+
+#    Invalidate I-cache at VA
+define pcodeop th.icache.iva;
+:th.icache.iva rs1 is op2531=0x1 & op2024=0x10 & rs1 & op1214=0 & op0711=0 & op0006=0x0b {th.icache.iva(rs1);}
+
+#    Clean all L2 cache
+define pcodeop th.l2cache.call;
+:th.l2cache.call is op2531=0x0 & op2024=0x15 & op1519=0 & op1214=0 & op0711=0 & op0006=0x0b {th.l2cache.call();}
+
+#    Clean & invalidate all L2 cache
+define pcodeop th.l2cache.ciall;
+:th.l2cache.ciall is op2531=0x0 & op2024=0x17 & op1519=0 & op1214=0 & op0711=0 & op0006=0x0b {th.l2cache.ciall();}
+
+#    Invalidate all L2 cache
+define pcodeop th.l2cache.iall;
+:th.l2cache.iall is op2531=0x0 & op2024=0x16 & op1519=0 & op1214=0 & op0711=0 & op0006=0x0b {th.l2cache.iall();}
+
+@endif
+
+# Multi-core synchronization instructions (XTheadSync)
+
+@ifdef xtheadsync1p0
+
+#    Invalidate TLB (page table cache) on all harts via broadcasting.
+define pcodeop th.sfence.vmas;
+:th.sfence.vmas rs1, rs2 is op2531=0x2 & rs2 & rs1 & op1214=0 & op0711=0 & op0006=0x0b {th.sfence.vmas(rs1,rs2);}
+
+#    Ensures that all preceding instructions retire earlier than this instruction and all subsequent
+#    instructions retire later than this instruction.
+define pcodeop th.sync;
+:th.sync is op2531=0x0 & op2024=0x18 & op1519=0 & op1214=0 & op0711=0 & op0006=0x0b {th.sync();}
+
+#    Broadcasts an instruction, that ensures that all preceding instructions retire earlier than this
+#    instruction and all subsequent instructions retire later than this instruction on all harts.
+define pcodeop th.sync.s;
+:th.sync.s is op2531=0x0 & op2024=0x19 & op1519=0 & op1214=0 & op0711=0 & op0006=0x0b {th.sync.s();}
+
+#    Ensures that all preceding instructions retire earlier than this instruction and all subsequent
+#    instructions retire later than this instruction and clears the pipeline when this instruction retires.
+define pcodeop th.sync.i;
+:th.sync.i is op2531=0x0 & op2024=0x1a & op1519=0 & op1214=0 & op0711=0 & op0006=0x0b {th.sync.i();}
+
+#    Ensures that all preceding instructions retire earlier than this instruction and all subsequent
+#    instructions retire later than this instruction and clears the pipeline when this instruction retires
+#    on all harts.
+define pcodeop th.sync.is;
+:th.sync.is is op2531=0x0 & op2024=0x1b & op1519=0 & op1214=0 & op0711=0 & op0006=0x0b {th.sync.is();}
+
+@endif
+
+# Address calculation instructions (XTheadBa) version 1.0
+
+@ifdef xtheadba1p0
+
+# we need locally defined immediate fields for several of these ops
+uimm2631: op2631 is op2631 {local tmp:$(XLEN) = op2631; export tmp;}
+uimm2526: op2526 is op2526 {local tmp:$(XLEN) = op2526; export tmp;}
+uimm2025: op2025 is op2025 {local tmp:$(XLEN) = op2025; export tmp;}
+uimm2024: op2024 is op2024 {local tmp:$(XLEN) = op2024; export tmp;}
+simm2024: sop2024 is sop2024 {local tmp:$(XLEN) = sop2024; export tmp;}
+
+#    Add a shifted operand to a second operand
+define pcodeop th.addsl;
+:th.addsl rd, rs1, rs2, uimm2526 is op2731=0 & uimm2526 & rs2 & rs1 & op1214=0x1 & rd & op0006=0x0b {rd= rs1 + (rs2 << uimm2526);}
+
+@endif
+
+# Basic bit-manipulation (XTheadBb) version 1.0
+
+@ifdef xtheadbb1p0
+
+#    Perform a cyclic right shift
+define pcodeop th.srri;
+:th.srri rd, rs1, uimm2025 is op2631=0x4 & uimm2025 & rs1 & op1214=0x1 & rd & op0006=0x0b {rd=th.srri(rs1,uimm2025);}
+
+#    Perform a cyclic right shift on word operand
+define pcodeop th.srriw;
+:th.srriw rd, rs1, uimm2024 is op2531=0xa & uimm2024 & rs1 & op1214=0x1 & rd & op0006=0x0b {rd=th.srriw(rs1,uimm2024);}
+
+#    Extract and sign-extend bits
+define pcodeop th.ext;
+:th.ext rd, rs1, uimm2631, uimm2025 is uimm2631 & uimm2025 & rs1 & op1214=0x2 & rd & op0006=0x0b {
+    local mask = ((1 << (uimm2631 - uimm2025 + 1))  - 1) << uimm2025 ;
+    rd = sext((rs1 & mask) >> uimm2025 );
+}
+
+#    Extract and zero-extend bits
+define pcodeop th.extu;
+:th.extu rd, rs1, uimm2631, uimm2025 is uimm2631 & uimm2025 & rs1 & op1214=0x3 & rd & op0006=0x0b {
+    local mask = ((1 << (uimm2631 - uimm2025 + 1))  - 1) << uimm2025 ;
+    rd = zext((rs1 & mask) >> uimm2025 );
+}
+
+#    Find first '0'-bit
+define pcodeop th.ff0;
+:th.ff0 rd, rs1 is op2731=0x10 & op2526=0x2 & op2024=0x00 & rs1 & op1214=0x1 & rd & op0006=0x0b {rd=th.ff0(rs1);}
+
+#    Find first '1'-bit
+define pcodeop th.ff1;
+:th.ff1 rd, rs1 is op2731=0x10 & op2526=0x3 & op2024=0x00 & rs1 & op1214=0x1 & rd & op0006=0x0b {rd=th.ff1(rs1);}
+
+#    Reverse the byte order
+define pcodeop th.rev;
+:th.rev rd, rs1 is op2731=0x10 & op2526=0x1 & op2024=0x00 & rs1 & op1214=0x1 & rd & op0006=0x0b {rd=th.rev(rs1);}
+
+#   Reverse the byte order of a word operand 
+define pcodeop th.revb;
+:th.revw rd, rs1 is op2731=0x12 & op2526=0x0 & op2024=0x00 & rs1 & op1214=0x1 & rd & op0006=0x0b {rd=th.revb(rs1);}
+
+#    Test for NUL bytes
+define pcodeop th.tstnbz;
+:th.tstnbz rd, rs1 is op2731=0x10 & op2526=0x0 & op2024=0x00 & rs1 & op1214=0x1 & rd & op0006=0x0b {rd=th.tstnbz(rs1);}
+
+# Single-bit instructions (XTheadBs)
+
+#    Tests if a single bit is set
+define pcodeop th.tst;
+:th.tst rd, rs1, uimm2025 is op2631=0x22 & uimm2025 & rs1 & op1214=0x1 & rd & op0006=0x0b {rd=th.tst(rs1,uimm2025);}
+
+@endif
+
+# Conditional move (XTheadCondMov) Version 1.0
+
+@ifdef xtheadcondmov1p0
+
+#    Move if equal zero
+define pcodeop th.mveqz;
+:th.mveqz rd, rs1, rs2 is op2731=0x08 & op2526=0 & rs2 & rs1 & op1214=0x1 & rd & op0006=0x0b {rd=th.mveqz(rs1,rs2);}
+
+#    Move if not equal zero
+define pcodeop th.mvneqz;
+:th.mvneqz rd, rs1, rs2 is op2731=0x08 & op2526=0x01 & rs2 & rs1 & op1214=0x1 & rd & op0006=0x0b {rd=th.mvneqz(rs1,rs2);}
+
+@endif
+
+# Indexed memory operations (XTheadMemIdx) Version 1.0
+
+@ifdef xtheadmemidx1p0
+
+#    Load indexed byte, increment address after loading
+:th.lbia rd, (rs1), simm2024, uimm2526 is op2731=0x3 & uimm2526 & simm2024 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1;
+    rd = sext(*[ram]:1 ea);
+    rs1 = rs1 + (sext(simm2024) << uimm2526);
+}
+
+#    Load indexed byte, increment address before loading
+:th.lbib rd, (rs1), simm2024, uimm2526 is op2731=0x1 & uimm2526 & simm2024 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    rs1 = rs1 + (sext(simm2024) << uimm2526);
+    local ea:$(XLEN) = rs1;
+    rd = sext(*[ram]:1 ea);
+}
+
+#    Load indexed unsigned byte, increment address after loading
+:th.lbuia rd, (rs1), simm2024, uimm2526 is op2731=0x13 & uimm2526 & simm2024 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1;
+    rd = zext(*[ram]:1 ea);
+    rs1 = rs1 + (sext(simm2024)<< uimm2526);
+}
+
+#    Load indexed unsigned byte, increment address before loading
+:th.lbuib rd, (rs1), simm2024, uimm2526 is op2731=0x11 & uimm2526 & simm2024 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    rs1 = rs1 + (sext(simm2024)<< uimm2526);
+    local ea:$(XLEN) = rs1;
+    rd = zext(*[ram]:1 ea);
+}
+
+#    Load indexed half-word, increment address after loading
+:th.lhia rd, (rs1), simm2024, uimm2526 is op2731=0x07 & uimm2526 & simm2024 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1;
+    rd = sext(*[ram]:2 ea);
+    rs1 = rs1 + (sext(simm2024)<< uimm2526);
+}
+
+#    Load indexed half-word, increment address before loading
+:th.lhib rd, (rs1), simm2024, uimm2526 is op2731=0x05 & uimm2526 & simm2024 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    rs1 = rs1 + (sext(simm2024)<< uimm2526);
+    local ea:$(XLEN) = rs1;
+    rd = sext(*[ram]:2 ea);
+}
+
+#    Load indexed unsigned half-word, increment address after loading
+:th.lhuia rd, (rs1), simm2024, uimm2526 is op2731=0x17 & uimm2526 & simm2024 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1;
+    rd = sext(*[ram]:2 ea);
+    rs1 = rs1 + (sext(simm2024)<< uimm2526);
+}
+
+#    Load indexed unsigned half-word, increment address before loading
+:th.lhuib rd, (rs1), simm2024, uimm2526 is op2731=0x15 & uimm2526 & simm2024 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    rs1 = rs1 + (sext(simm2024)<< uimm2526);
+    local ea:$(XLEN) = rs1;
+    rd = sext(*[ram]:2 ea);
+}
+
+#    Load indexed word, increment address after loading
+:th.lwia rd, (rs1), simm2024, uimm2526 is op2731=0x0b & uimm2526 & simm2024 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    rs1 = rs1 + (sext(simm2024)<< uimm2526);
+    local ea:$(XLEN) = rs1;
+    rd = sext(*[ram]:4 ea);
+}
+
+#    Load indexed word, increment address before loading
+:th.lwib rd, (rs1), simm2024, uimm2526 is op2731=0x09 & uimm2526 & simm2024 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    rs1 = rs1 + (sext(simm2024)<< uimm2526);
+    local ea:$(XLEN) = rs1;
+    rd = sext(*[ram]:4 ea);
+}
+
+#    Load indexed unsigned word, increment address after loading
+:th.lwuia rd, (rs1), simm2024, uimm2526 is op2731=0x1b & uimm2526 & simm2024 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1;
+    rd = zext(*[ram]:4 ea);
+    rs1 = rs1 + (sext(simm2024)<< uimm2526);
+}
+
+#    Load indexed unsigned word, increment address before loading
+:th.lwuib rd, (rs1), simm2024, uimm2526 is op2731=0x19 & uimm2526 & simm2024 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    rs1 = rs1 + (sext(simm2024)<< uimm2526);
+    local ea:$(XLEN) = rs1;
+    rd = zext(*[ram]:4 ea);
+}
+
+@if ADDRSIZE == "64"
+#    Load indexed double-word, increment address after loading
+:th.ldia rd, (rs1), simm2024, uimm2526 is op2731=0x0f & uimm2526 & simm2024 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1;
+    rd = sext(*[ram]:8 ea);
+    rs1 = rs1 + (sext(simm2024)<< uimm2526);
+}
+
+#    Load indexed double-word, increment address before loading
+:th.ldib rd, (rs1), simm2024, uimm2526 is op2731=0x0d & uimm2526 & simm2024 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    rs1 = rs1 + (sext(simm2024)<< uimm2526);
+    local ea:$(XLEN) = rs1;
+    rd = sext(*[ram]:8 ea);
+}
+@endif
+
+#    Store indexed byte, increment address after loading
+:th.sbia rd, (rs1), simm2024, uimm2526 is op2731=0x03 & uimm2526 & simm2024 & rs1 & op1214=0x5 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1;
+    *[ram]:1 ea = rd;
+    rs1 = rs1 + (sext(simm2024)<< uimm2526);
+}
+
+#    Store indexed byte, increment address before loading
+:th.sbib rd, (rs1), simm2024, uimm2526 is op2731=0x01 & uimm2526 & simm2024 & rs1 & op1214=0x5 & rd & op0006=0xb
+{
+    rs1 = rs1 + (sext(simm2024)<< uimm2526);
+    local ea:$(XLEN) = rs1;
+    *[ram]:1 ea = rd;
+}
+
+#    Store indexed half-word, increment address after loading
+:th.shia rd, (rs1), simm2024, uimm2526 is op2731=0x07 & uimm2526 & simm2024 & rs1 & op1214=0x5 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1;
+    *[ram]:2 ea = rd;
+    rs1 = rs1 + (sext(simm2024)<< uimm2526);
+}
+
+#    Store indexed half-word, increment address before loading
+:th.shib rd, (rs1), simm2024, uimm2526 is op2731=0x05 & uimm2526 & simm2024 & rs1 & op1214=0x5 & rd & op0006=0xb
+{
+    rs1 = rs1 + (sext(simm2024)<< uimm2526);
+    local ea:$(XLEN) = rs1;
+    *[ram]:2 ea = rd;
+}
+
+#    Store indexed word, increment address after loading
+:th.swia rd, (rs1), simm2024, uimm2526 is op2731=0x0b & uimm2526 & simm2024 & rs1 & op1214=0x5 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1;
+    *[ram]:4 ea = rd;
+    rs1 = rs1 + (sext(simm2024)<< uimm2526);
+}
+
+#    Store indexed word, increment address before loading
+:th.swib rd, (rs1), simm2024, uimm2526 is op2731=0x09 & uimm2526 & simm2024 & rs1 & op1214=0x5 & rd & op0006=0xb
+{
+    rs1 = rs1 + (sext(simm2024)<< uimm2526);
+    local ea:$(XLEN) = rs1;
+    *[ram]:4 ea = rd;
+}
+
+@if ADDRSIZE == "64"
+#    Store indexed word, increment address after loading
+:th.sdia rd, (rs1), simm2024, uimm2526 is op2731=0x0f & uimm2526 & simm2024 & rs1 & op1214=0x5 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1;
+    *[ram]:8 ea = rd;
+    rs1 = rs1 + (sext(simm2024)<< uimm2526);
+}
+
+#    Store indexed double word, increment address before loading
+:th.sdib rd, (rs1), simm2024, uimm2526 is op2731=0x0d & uimm2526 & simm2024 & rs1 & op1214=0x5 & rd & op0006=0xb
+{
+    rs1 = rs1 + (sext(simm2024)<< uimm2526);
+    local ea:$(XLEN) = rs1;
+    *[ram]:8 ea = rd;
+}
+@endif
+
+#    Load indexed byte
+:th.lrb rd, rs1, rs2, uimm2526 is op2731=0x00 & uimm2526 & rs2 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (rs2 << uimm2526);
+    rd = sext(*[ram]:1 ea);
+}
+
+#    Load indexed unsigned byte
+:th.lrbu rd, rs1, rs2, uimm2526 is op2731=0x10 & uimm2526 & rs2 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (rs2 << uimm2526);
+    rd = zext(*[ram]:1 ea);
+}
+
+#    Load indexed half-word
+:th.lrh rd, rs1, rs2, uimm2526 is op2731=0x04 & uimm2526 & rs2 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (rs2 << uimm2526);
+    rd = sext(*[ram]:2 ea);
+}
+
+#    Load indexed unsigned half-word
+:th.lrhu rd, rs1, rs2, uimm2526 is op2731=0x14 & uimm2526 & rs2 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (rs2 << uimm2526);
+    rd = zext(*[ram]:2 ea);
+}
+
+#    Load indexed word
+:th.lrw rd, rs1, rs2, uimm2526 is op2731=0x08 & uimm2526 & rs2 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (rs2 << uimm2526);
+    rd = sext(*[ram]:4 ea);
+}
+
+#    Load indexed unsigned word
+:th.lrwu rd, rs1, rs2, uimm2526 is op2731=0x18 & uimm2526 & rs2 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (rs2 << uimm2526);
+    rd = zext(*[ram]:4 ea);
+}
+
+@if ADDRSIZE == "64"
+#    Load indexed double word
+:th.lrd rd, rs1, rs2, uimm2526 is op2731=0x0c & uimm2526 & rs2 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (rs2 << uimm2526);
+    rd = sext(*[ram]:8 ea);
+}
+
+@endif
+
+#    Store indexed byte
+:th.srb rd, rs1, rs2, uimm2526 is op2731=0x00 & uimm2526 & rs2 & rs1 & op1214=0x5 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (rs2 << uimm2526);
+    *[ram]:1 ea = rd;
+}
+
+#    Store indexed half-word
+:th.srh rd, rs1, rs2, uimm2526 is op2731=0x04 & uimm2526 & rs2 & rs1 & op1214=0x5 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (rs2 << uimm2526);
+    *[ram]:2 ea = rd;
+}
+
+#    Store indexed word
+:th.srw rd, rs1, rs2, uimm2526 is op2731=0x08 & uimm2526 & rs2 & rs1 & op1214=0x5 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (rs2 << uimm2526);
+    *[ram]:4 ea = rd;
+}
+
+@if ADDRSIZE == "64"
+#    Store indexed double-word
+:th.srd rd, rs1, rs2, uimm2526 is op2731=0x0c & uimm2526 & rs2 & rs1 & op1214=0x5 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (rs2 << uimm2526);
+    *[ram]:8 ea = rd;
+}
+@endif
+
+#    Load unsigned indexed byte
+:th.lurb rd, rs1, rs2, uimm2526 is op2731=0x02 & uimm2526 & rs2 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (zext(rs2) << uimm2526);
+    rd = sext(*[ram]:1 ea);
+}
+
+#    Load unsigned indexed unsigned byte
+:th.lurbu rd, rs1, rs2, uimm2526 is op2731=0x12 & uimm2526 & rs2 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (zext(rs2) << uimm2526);
+    rd = zext(*[ram]:1 ea);
+}
+
+#    Load unsigned indexed half-word
+:th.lurh rd, rs1, rs2,  uimm2526 is op2731=0x06 & uimm2526 & rs2 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (zext(rs2) << uimm2526);
+    rd = sext(*[ram]:2 ea);
+}
+
+#    Load unsigned indexed unsigned half-word
+:th.lurhu rd, rs1, rs2, uimm2526 is op2731=0x16 & uimm2526 & rs2 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (zext(rs2) << uimm2526);
+    rd = zext(*[ram]:2 ea);
+}
+
+#    Load unsigned indexed word
+:th.lurw rd, rs1, rs2, uimm2526 is op2731=0x0a & uimm2526 & rs2 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (zext(rs2) << uimm2526);
+    rd = sext(*[ram]:4 ea);
+}
+
+#    Load unsigned indexed unsigned word
+:th.lurwu rd, rs1, rs2, uimm2526 is op2731=0x1a & uimm2526 & rs2 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (zext(rs2) << uimm2526);
+    rd = zext(*[ram]:4 ea);
+}
+
+@if ADDRSIZE == "64"
+#    Load unsigned indexed double-word
+:th.lurd rd, rs1, rs2, uimm2526 is op2731=0x0e & uimm2526 & rs2 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (zext(rs2) << uimm2526);
+    rd = sext(*[ram]:8 ea);
+}
+@endif
+
+#    Store unsigned indexed byte
+:th.surb rd, rs1, rs2, uimm2526 is op2731=0x02 & uimm2526 & rs2 & rs1 & op1214=0x5 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (zext(rs2) << uimm2526);
+    *[ram]:1 ea = rd;
+}
+
+#    Store unsigned indexed half-word
+:th.surh rd, rs1, rs2, uimm2526 is op2731=0x06 & uimm2526 & rs2 & rs1 & op1214=0x5 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (zext(rs2) << uimm2526);
+    *[ram]:2 ea = rd;
+}
+
+#    Store unsigned indexed word
+:th.surw rd, rs1, rs2, uimm2526 is op2731=0x0a & uimm2526 & rs2 & rs1 & op1214=0x5 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (zext(rs2) << uimm2526);
+    *[ram]:4 ea = rd;
+}
+
+@if ADDRSIZE == "64"
+#    Store unsigned indexed double-word
+:th.surd rd, rs1, rs2, uimm2526 is op2731=0x0e & uimm2526 & rs2 & rs1 & op1214=0x5 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (zext(rs2) << uimm2526);
+    *[ram]:8 ea = rd;
+}
+@endif
+@endif
+
+# Two-GPR memory operations (XTheadMemPair) Version 1
+
+@ifdef xtheadmempair1p0
+
+@if ADDRSIZE == "64"
+#    Load two 64-bit values from memory into two GPRs
+:th.ldd rd, rs2, (rs1), uimm2526, 4 is op2731=0x1f & uimm2526 & rs2 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (zext(uimm2526) << 4);
+    rd = *[ram]:8 ea;
+    rs2 = *[ram]:8 (ea + 8);
+}
+@endif
+
+#    Load two signed 32-bit values from memory into two GPRs
+:th.lwd rd, rs2, (rs1), uimm2526, 3 is op2731=0x1c & uimm2526 & rs2 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (zext(uimm2526) << 3);
+    rd = sext(*[ram]:4 ea);
+    rs2 = sext(*[ram]:4 (ea + 4));
+}
+
+#    Load two unsigned 32-bit values from memory into two GPRs
+:th.lwud rd, rs2, (rs1), uimm2526, 3 is op2731=0x1e & uimm2526 & rs2 & rs1 & op1214=0x4 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (zext(uimm2526) << 3);
+    rd = zext(*[ram]:4 ea);
+    rs2 = zext(*[ram]:4 (ea + 4));
+}
+
+@if ADDRSIZE == "64"
+#    Store two 64-bit values to memory from two GPRs
+:th.sdd rd, rs2, (rs1), uimm2526, 4 is op2731=0x1f & uimm2526 & rs2 & rs1 & op1214=0x5 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (zext(uimm2526) << 4);
+    *[ram]:8 ea = rd;
+    *[ram]:8 (ea + 8) = rs2;
+}
+@endif
+
+#    Store two 32-bit values to memory from two GPRs
+:th.swd rd, rs2, (rs1), uimm2526, 3 is op2731=0x1c & uimm2526 & rs2 & rs1 & op1214=0x5 & rd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (zext(uimm2526) << 3);
+    *[ram]:4 ea = rd;
+    *[ram]:4 (ea + 4) = rs2;
+}
+@endif
+
+# Indexed memory operations for floating-point registers (XTheadFMemIdx) Version 1.0
+
+@ifdef xtheadfmemidx1p0
+
+#    Load indexed double-precision floating point value
+:th.flrd frd, rs1, rs2, uimm2526 is op2731=0x0c & uimm2526 & rs2 & rs1 & op1214=0x6 & frd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (rs2 << uimm2526);
+    frd = *[ram]:8 ea;
+}
+
+#    Load indexed single-precision floating point value
+:th.flrw frd, rs1, rs2, uimm2526 is op2731=0x08 & uimm2526 & rs2 & rs1 & op1214=0x6 & frd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (rs2 << uimm2526);
+    frd = *[ram]:4 ea;
+}
+
+#    Load unsigned indexed double-precision floating point value
+:th.flurd frd, rs1, rs2, uimm2526 is op2731=0x0e & uimm2526 & rs2 & rs1 & op1214=0x6 & frd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (zext(rs2) << uimm2526);
+    frd = *[ram]:8 ea;
+}
+
+#    Load unsigned indexed single-precision floating point value
+:th.flurw frd, rs1, rs2, uimm2526 is op2731=0x0a & uimm2526 & rs2 & rs1 & op1214=0x6 & frd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (zext(rs2 )<< uimm2526);
+    frd = *[ram]:4 ea;
+}
+
+#    Store indexed double-precision floating point value
+:th.fsrd frd, rs1, rs2, uimm2526 is op2731=0x0c & uimm2526 & rs2 & rs1 & op1214=0x7 & frd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (rs2 << uimm2526);
+    *[ram]:8 ea = frd;
+}
+
+#    Store indexed single-precision floating point value
+:th.fsrw frd, rs1, rs2, uimm2526 is op2731=0x08 & uimm2526 & rs2 & rs1 & op1214=0x7 & frd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (rs2 << uimm2526);
+    *[ram]:4 ea = frd;
+}
+
+#    Store unsigned indexed double-precision floating point value
+:th.fsurd frd, rs1, rs2, uimm2526 is op2731=0x0e & uimm2526 & rs2 & rs1 & op1214=0x7 & frd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (zext(rs2) << uimm2526);
+    *[ram]:8 ea = frd;
+}
+
+#    Store unsigned indexed single-precision floating point value
+:th.fsurw frd, rs1, rs2, uimm2526 is op2731=0x0a & uimm2526 & rs2 & rs1 & op1214=0x7 & frd & op0006=0xb
+{
+    local ea:$(XLEN) = rs1 + (zext(rs2) << uimm2526);
+    *[ram]:4 ea = frd;
+}
+
+@endif
+
+# Multiply-accumulate instructions (XTheadMac) Version 1.0
+
+@ifdef xtheadmac1p0
+
+#    Compute multiply-add result of double-word operands
+:th.mula rd, rs1, rs2 is op2731=0x04 & op2526=0 & rs2 & rs1 & op1214=0x1 & rd & op0006=0xb
+{
+    rd = rd + (rs1 * rs2);
+}
+
+#    Compute multiply-add result of half-word operands
+:th.mulah rd, rs1, rs2 is op2731=0x05 & op2526=0 & rs2 & rs1 & op1214=0x1 & rd & op0006=0xb
+{
+    # do we want a 32 bit sign extend here?
+    rd = sext(rd + (sext(rs1 & 0xffff) * sext(rs2 & 0xffff)));
+}
+
+#    Compute multiply-add result of word operands
+:th.mulaw rd, rs1, rs2 is op2731=0x04 & op2526=0x2 & rs2 & rs1 & op1214=0x1 & rd & op0006=0xb
+{
+    # do we want a 32 bit sign extend here?
+    rd = sext(rd + (rs1 * rs2));
+}
+
+#    Compute multiply-subtract result of double-word operands
+:th.muls rd, rs1, rs2 is op2731=0x04 & op2526=0x1 & rs2 & rs1 & op1214=0x1 & rd & op0006=0xb
+{
+    rd = rd - (rs1 * rs2);
+}
+
+#    Compute multiply-subtract result of half-word operands.
+:th.mulsh rd, rs1, rs2 is op2731=0x05 & op2526=0x1 & rs2 & rs1 & op1214=0x1 & rd & op0006=0xb
+{
+    # do we want a 32 bit sign extend here?
+    rd = sext(rd - (sext(rs1 & 0xffff) * sext(rs2 & 0xffff)));    
+}
+
+#    Compute multiply-subtract result of word operands
+:th.mulsw rd, rs1, rs2 is op2731=0x04 & op2526=0x3 & rs2 & rs1 & op1214=0x1 & rd & op0006=0xb
+{
+    # do we want a 32 bit sign extend here?
+    rd = sext(rd - (sext(rs1) * sext(rs2)));
+}
+
+@endif
