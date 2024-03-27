@@ -511,7 +511,7 @@ public interface Structure extends Composite {
 		/**
 		 * Compute the normalized bit offset of a bitfield relative to the start of a structure.
 		 * 
-		 * NOTE: This implementation currently relies only on endianess to dictate bit allocation
+		 * NOTE: This implementation currently relies only on endianness to dictate bit allocation
 		 * ordering. If future support is added for alternate bitfield packing, this implementation
 		 * will require modification.
 		 * 

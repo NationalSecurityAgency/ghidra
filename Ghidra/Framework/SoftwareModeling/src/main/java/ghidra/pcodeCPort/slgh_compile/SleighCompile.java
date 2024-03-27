@@ -1017,7 +1017,7 @@ public class SleighCompile extends SleighBase {
 	public void setEndian(int end) {
 		entry("setEndian", end);
 		target_endian = end;
-		predefinedSymbols(); // Set up symbols now that we know endianess
+		predefinedSymbols(); // Set up symbols now that we know endianness
 	}
 
 	public void setAlignment(int val) {

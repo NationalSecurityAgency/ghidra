@@ -1097,7 +1097,7 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 	 * Create copy of structure for target dtm (source archive information is discarded). 
 	 * <p>
 	 * WARNING! copying non-packed structures which contain bitfields can produce invalid results when
-	 * switching endianess due to the differences in packing order.
+	 * switching endianness due to the differences in packing order.
 	 * 
 	 * @param dtm target data type manager
 	 * @return cloned structure
@@ -1114,7 +1114,7 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 	/**
 	 * Create cloned structure for target dtm preserving source archive information. WARNING!
 	 * cloning non-packed structures which contain bitfields can produce invalid results when
-	 * switching endianess due to the differences in packing order.
+	 * switching endianness due to the differences in packing order.
 	 * 
 	 * @param dtm target data type manager
 	 * @return cloned structure

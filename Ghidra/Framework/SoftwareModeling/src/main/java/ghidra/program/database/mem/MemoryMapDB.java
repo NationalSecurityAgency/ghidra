@@ -88,7 +88,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	 * @param handle the open database handle.
 	 * @param addrMap the address map.
 	 * @param openMode the open mode for the program.
-	 * @param isBigEndian endianess flag
+	 * @param isBigEndian endianness flag
 	 * @param lock the program synchronization lock
 	 * @param monitor Task monitor for upgrading
 	 * @throws IOException if a database io error occurs.

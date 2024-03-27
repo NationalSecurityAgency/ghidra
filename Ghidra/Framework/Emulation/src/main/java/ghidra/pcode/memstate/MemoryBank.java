@@ -30,7 +30,7 @@ public abstract class MemoryBank {
 	 * A MemoryBank must be associated with a specific address space, have a preferred or natural
 	 * pagesize.  The pagesize must be a power of 2.
 	 * @param spc is the associated address space
-	 * @param isBigEndian memory endianess
+	 * @param isBigEndian memory endianness
 	 * @param ps ps is the number of bytes in a page (must be a power of 2)
 	 * @param faultHandler memory fault handler
 	 */

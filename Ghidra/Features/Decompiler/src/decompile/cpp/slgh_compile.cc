@@ -973,7 +973,7 @@ bool ConsistencyChecker::checkVarnodeTruncation(Constructor *ct,int4 slot,
 ///
 /// Run through all Varnodes looking for offset templates marked as ConstTpl::v_offset_plus,
 /// which indicates they were constructed using truncation notation. These truncation expressions
-/// are checked for validity and adjusted depending on the endianess of the address space.
+/// are checked for validity and adjusted depending on the endianness of the address space.
 /// \param ct is the Constructor
 /// \param cttpl is the given p-code section
 /// \param isbigendian is set to \b true if the SLEIGH specification is big endian
@@ -2589,7 +2589,7 @@ void SleighCompile::setEndian(int4 end)
 
 {
   setBigEndian( (end == 1) );
-  predefinedSymbols();		// Set up symbols now that we know endianess
+  predefinedSymbols();		// Set up symbols now that we know endianness
 }
 
 /// \brief Definition a set of Varnodes

@@ -517,7 +517,7 @@
     <li><I>Build</I>. Added support for building with Gradle 8. (GP-2476, Issue #3527, #5003)</li>
     <li><I>Build</I>. The build now enforces a maximum-supported Gradle version. The current supported versions are Gradle 7.3 or later. (GP-3111)</li>
     <li><I>Build</I>. Ghidra can now run from development/repository mode using Gradle's compiled jars, instead of just relying on Eclipse's compilation output. (GP-3140)</li>
-    <li><I>C Parsing</I>. Provided GDT archives have been updated to include new ProgramArchitecture settings for processor, data organization, and endianess. (GP-1377)</li>
+    <li><I>C Parsing</I>. Provided GDT archives have been updated to include new ProgramArchitecture settings for processor, data organization, and endianness. (GP-1377)</li>
     <li><I>CParser</I>. Removed unnecessary <span class="gcode">-D</span> defines related to wchar_t from CParser <span class="gcode">prf</span> files and GDT parsing scripts. (GP-3294, Issue #5196)</li>
     <li><I>Data Types</I>. Function definitions can now be applied from selected Category instead of only from an entire Archive. (GP-199)</li>
     <li><I>Data Types</I>. Changed Structure/Union editor to show numbers in hex format by default. Also added <span class="gcode">Shift-H</span> keybinding action for toggling hex/decimal view. (GP-2943)</li>
@@ -1810,7 +1810,7 @@
     <li><I>Data Types</I>. Fixed a NullPointerException that occurred when trying to edit a function datatype in a datatype archive when there was no open program in the tool. (GP-356, Issue #2407)</li>
     <li><I>Data Types</I>. Corrected the retention of datatype archive search paths, which did not properly remember disabled paths. (GP-639)</li>
     <li><I>Data Types</I>. Fixed potential deadlock encountered when working with the DataTypes tree. (GP-774, Issue #2832)</li>
-    <li><I>Decompiler</I>. Fixed endianess issue for joined, two-register returns of <code>longlong</code> values for MIPS 32-bit little endian variants. (GP-513)</li>
+    <li><I>Decompiler</I>. Fixed endianness issue for joined, two-register returns of <code>longlong</code> values for MIPS 32-bit little endian variants. (GP-513)</li>
     <li><I>Decompiler</I>. The Decompiler no longer emits comments in the middle of conditional expressions. (GP-621, Issue #1670)</li>
     <li><I>Decompiler</I>. Fixed <code>Redefinition of structure...</code> exceptions in the Decompiler caused by a PNG Image and other opaque datatypes. (GP-820, Issue #2734)</li>
     <li><I>Decompiler</I>. Fixed infinite loop in the Decompiler when analyzing return values. (GP-821, Issue #2851)</li>
@@ -1971,7 +1971,7 @@
     <li><I>Decompiler</I>. Fixed issue with the Auto Create/Fill Structure command that caused it to silently miss some pointer accesses. (GP-344)</li>
     <li><I>Decompiler</I>. Jump table recovery now takes into account encoded bits, like ARM/THUMB mode transition, that may be present in address tables. (GP-387, Issue #2420)</li>
     <li><I>Decompiler</I>. Fixed a bug in the Decompiler <B>renaming</B> action when applied to function references. (GP-477, Issue #2415)</li>
-    <li><I>Decompiler</I>. Corrected 8-byte return value storage specification in compiler-spec affecting <code>longlong</code> and <code>double</code> return values.  Endianess ordering of <code>r0</code>/<code>r1</code> was incorrect. (GP-512, Issue #2547)</li>
+    <li><I>Decompiler</I>. Corrected 8-byte return value storage specification in compiler-spec affecting <code>longlong</code> and <code>double</code> return values.  Endianness ordering of <code>r0</code>/<code>r1</code> was incorrect. (GP-512, Issue #2547)</li>
     <li><I>Graphing</I>. Fixed the Function Graph's <B>drag-to-select-nodes</B> feature. (GP-430)</li>
     <li><I>Graphing</I>. Fixed issue where the graph in the satellite view is sometimes truncated. (GP-469)</li>
     <li><I>Graphing</I>. Fixed a stack trace issue caused by reusing a graph display window to show a graph that is larger than is allowed. (GP-492)</li>

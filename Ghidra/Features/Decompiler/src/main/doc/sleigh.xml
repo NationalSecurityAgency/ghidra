@@ -294,7 +294,7 @@ forces an interpretation on each varnode that it uses, as either an
 integer, a floating-point number, or a boolean value. In the case of
 an integer, the varnode is interpreted as having a big endian or
 little endian encoding, depending on the specification (see
-<xref linkend="sleigh_endianess_definition"/>). Certain instructions
+<xref linkend="sleigh_endianness_definition"/>). Certain instructions
 also distinguish between signed and unsigned interpretations. For a
 signed integer, the varnode is considered to have a standard twos
 complement encoding. For a boolean interpretation, the varnode must be
@@ -645,10 +645,10 @@ SLEIGH files must start with all the definitions needed by the rest of
 the specification. All definition statements start with the keyword
 <emphasis role="bold">define</emphasis> and end with a semicolon ‘;’.
 </para>
-<sect2 id="sleigh_endianess_definition">
-<title>Endianess Definition</title>
+<sect2 id="sleigh_endianness_definition">
+<title>Endianness Definition</title>
 <para>
-The first definition in any SLEIGH specification must be for endianess. Either
+The first definition in any SLEIGH specification must be for endianness. Either
 <informalexample>
 <programlisting>
 define endian=big;            <emphasis>OR</emphasis>
@@ -659,11 +659,11 @@ This defines how the processor interprets contiguous sequences of
 bytes as integers or other values and globally affects values across
 all address spaces. It also affects how integer fields
 within an instruction are interpreted, (see <xref linkend="sleigh_defining_tokens"/>),
-although it is possible to override this setting in the rare case that endianess is
+although it is possible to override this setting in the rare case that endianness is
 different for data versus instruction encoding.
 The specification designer generally only needs to worry about
-endianess when labeling instruction fields and when defining overlapping registers,
-otherwise the specification language hides endianess issues.
+endianness when labeling instruction fields and when defining overlapping registers,
+otherwise the specification language hides endianness issues.
 </para>
 </sect2>
 <sect2 id="sleigh_alignment_definition">
@@ -1147,9 +1147,9 @@ field and the range of bits within the token making up the field. The
 size of a field does <emphasis>not</emphasis> need to be a multiple of
 8. The range is inclusive where the least significant bit in the token
 is labeled 0. When defining tokens that are bigger than 1 byte, the
-global endianess setting (See <xref linkend="sleigh_endianess_definition"/>)
+global endianness setting (See <xref linkend="sleigh_endianness_definition"/>)
 will affect this labeling. Although it is rarely required, it is possible to override
-the global endianess setting for a specific token by appending either the qualifier
+the global endianness setting for a specific token by appending either the qualifier
 <emphasis role="bold">endian=little</emphasis> or <emphasis role="bold">endian=big</emphasis>
 immediately after the token name and size. For instance:
 <informalexample>
