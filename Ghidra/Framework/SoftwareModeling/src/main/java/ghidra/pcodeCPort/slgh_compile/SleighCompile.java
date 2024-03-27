@@ -254,6 +254,7 @@ public class SleighCompile extends SleighBase {
 	private boolean warnunusedfields;   // True if fields are defined but not used
 	private boolean lenientconflicterrors; // True if we ignore most pattern conflict errors
 	private boolean largetemporarywarning; // True if we warn about temporaries larger than SleighBase.MAX_UNIQUE_SIZE
+	private boolean largeintegerwarning; // True if we warn about integers larger than it's size
 	private boolean warnalllocalcollisions;	// True if local export collisions generate individual warnings
 	private boolean warnallnops;		// True if pcode NOPs generate individual warnings
 	private boolean failinsensitivedups;	// True if case insensitive register duplicates cause error
@@ -538,6 +539,13 @@ public class SleighCompile extends SleighBase {
 					" bytes.");
 			reportWarning(null, "Use -o switch to list each individually.");
 		}
+		checker.testLargeIntegers();
+		if ((!largeintegerwarning) && checker.getNumLargeIntegers() > 0) {
+			reportWarning(null,
+				checker.getNumLargeIntegers() +
+					" constructors export constant integers larger then the export size.");
+			reportWarning(null, "Use -o switch to list each individually.");
+		}
 	}
 
 	private static int findCollision(Map<Long, Integer> local2Operand, ArrayList<Long> locals,
@@ -703,6 +711,7 @@ public class SleighCompile extends SleighBase {
 		warnunnecessarypcode = false;
 		lenientconflicterrors = true;
 		largetemporarywarning = false;
+		largeintegerwarning = true;
 		warnallnops = false;
 		failinsensitivedups = true;
 		debugoutput = false;
