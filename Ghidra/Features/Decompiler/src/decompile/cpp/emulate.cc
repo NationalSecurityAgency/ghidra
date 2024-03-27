@@ -101,7 +101,7 @@ bool BreakTableCallBack::doAddressBreak(const Address &addr)
 /// \param vcache is the container for cached VarnodeData
 /// \param in is the map of OpBehavior
 /// \param uniqReserve is the starting offset for temporaries in the \e unique space
-PcodeEmitCache::PcodeEmitCache(vector<PcodeOpRaw *> &ocache,vector<VarnodeData *> &vcache,
+PcodeEmitCache::PcodeEmitCache(vector<PcodeOpRaw> &ocache, vector<VarnodeData> &vcache,
 			       const vector<OpBehavior *> &in,uintb uniqReserve)
   : opcache(ocache), varcache(vcache), inst(in)
 {
@@ -114,18 +114,16 @@ PcodeEmitCache::PcodeEmitCache(vector<PcodeOpRaw *> &ocache,vector<VarnodeData *
 VarnodeData *PcodeEmitCache::createVarnode(const VarnodeData *var)
 
 {
-  VarnodeData *res = new VarnodeData();
-  *res = *var;
-  varcache.push_back(res);
-  return res;
+  varcache.push_back(*var);
+  return &varcache.back();
 }
 
 void PcodeEmitCache::dump(const Address &addr,OpCode opc,VarnodeData *outvar,VarnodeData *vars,int4 isize)
 
 {
-  PcodeOpRaw *op = new PcodeOpRaw();
+  opcache.emplace_back();
+  PcodeOpRaw *op = &opcache.back();
   op->setSeqNum(addr,uniq);
-  opcache.push_back(op);
   op->setBehavior( inst[opc] );
   uniq += 1;
   if (outvar != (VarnodeData *)0) {
@@ -335,16 +333,14 @@ EmulatePcodeCache::EmulatePcodeCache(Translate *t,MemoryState *s,BreakTable *b)
   OpBehavior::registerInstructions(inst,t);
   breaktable = b;
   breaktable->setEmulate(this);
+  opcache.reserve(1000);
+  varcache.reserve(1000);
 }
 
 /// Free all the VarnodeData and PcodeOpRaw objects and clear the cache
 void EmulatePcodeCache::clearCache(void)
 
 {
-  for(int4 i=0;i<opcache.size();++i)
-    delete opcache[i];
-  for(int4 i=0;i<varcache.size();++i)
-    delete varcache[i];
   opcache.clear();
   varcache.clear();
 }
@@ -378,7 +374,7 @@ void EmulatePcodeCache::establishOp(void)
 
 {
   if (current_op < opcache.size()) {
-    currentOp = opcache[current_op];
+    currentOp = &opcache[current_op];
     currentBehave = currentOp->getBehavior();
     return;
   }

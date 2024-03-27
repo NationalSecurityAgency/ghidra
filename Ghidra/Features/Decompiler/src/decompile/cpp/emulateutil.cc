@@ -292,15 +292,6 @@ void EmulateSnippet::fallthruOp(void)
   setCurrentOp(pos);
 }
 
-EmulateSnippet::~EmulateSnippet(void)
-
-{
-  for(int4 i=0;i<opList.size();++i)
-    delete opList[i];
-  for(int4 i=0;i<varList.size();++i)
-    delete varList[i];
-}
-
 /// \brief Provide the caller with an emitter for building the p-code snippet
 ///
 /// Any p-code produced by the PcodeEmit, when triggered by the caller, becomes
@@ -328,7 +319,7 @@ bool EmulateSnippet::checkForLegalCode(void) const
 
 {
   for(int4 i=0;i<opList.size();++i) {
-    PcodeOpRaw *op = opList[i];
+    const PcodeOpRaw *op = &opList[i];
     VarnodeData *vn;
     OpCode opc = op->getOpcode();
     if (opc == CPUI_BRANCHIND || opc == CPUI_CALL || opc == CPUI_CALLIND || opc == CPUI_CALLOTHER ||
