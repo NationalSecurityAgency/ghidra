@@ -45,8 +45,8 @@ public class DWARFRangeList {
 		byte pointerSize = cu.getPointerSize();
 		List<DWARFRange> ranges = new ArrayList<>();
 
-		DWARFRange cuRange = cu.getPCRange();
-		long baseAddress = cuRange != null ? cuRange.getFrom() : 0;
+		long baseAddress = cu.getPCRange().getFrom();
+		long maxAddrVal = pointerSize == 4 ? NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG : -1;
 
 		while (reader.hasNext()) {
 			// Read the beginning and ending addresses
@@ -59,8 +59,7 @@ public class DWARFRangeList {
 			}
 
 			// Check to see if this is a base address entry
-			if (beginning == -1 ||
-				(pointerSize == 4 && beginning == NumericUtilities.MAX_UNSIGNED_INT32_AS_LONG)) {
+			if (beginning == maxAddrVal) {
 				baseAddress = ending;
 				continue;
 			}
@@ -85,8 +84,7 @@ public class DWARFRangeList {
 		List<DWARFRange> list = new ArrayList<>();
 
 		DWARFProgram dprog = cu.getProgram();
-		long baseAddrFixup = dprog.getProgramBaseAddressFixup();
-		long baseAddr = baseAddrFixup;
+		long baseAddr = cu.getPCRange().getFrom();
 
 		while (reader.hasNext()) {
 			int rleId = reader.readNextUnsignedByte();
@@ -121,20 +119,19 @@ public class DWARFRangeList {
 					break;
 				}
 				case DW_RLE_base_address: {
-					baseAddr = reader.readNextUnsignedValue(cu.getPointerSize()) + baseAddrFixup;
+					baseAddr = reader.readNextUnsignedValue(cu.getPointerSize());
 					break;
 				}
 				case DW_RLE_start_end: {
 					long startAddr = reader.readNextUnsignedValue(cu.getPointerSize());
 					long endAddr = reader.readNextUnsignedValue(cu.getPointerSize());
-					list.add(new DWARFRange(startAddr + baseAddrFixup, endAddr + baseAddrFixup));
+					list.add(new DWARFRange(startAddr, endAddr));
 					break;
 				}
 				case DW_RLE_start_length: {
 					long startAddr = reader.readNextUnsignedValue(cu.getPointerSize());
 					int len = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
-					list.add(
-						new DWARFRange(startAddr + baseAddrFixup, startAddr + baseAddrFixup + len));
+					list.add(new DWARFRange(startAddr, startAddr + len));
 					break;
 				}
 				default:

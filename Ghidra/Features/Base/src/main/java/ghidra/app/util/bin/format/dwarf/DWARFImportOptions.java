@@ -38,6 +38,11 @@ public class DWARFImportOptions {
 		"Include source code location info (filename:linenumber) in comments attached to the " +
 			"Ghidra datatype or function or variable created.";
 
+	private static final String OPTION_SOURCE_LINEINFO = "Output Source Line Info";
+	private static final String OPTION_SOURCE_LINEINFO_DESC =
+		"Place end-of-line comments containg the source code filename and line number at " +
+			"each location provided in the DWARF data";
+
 	private static final String OPTION_OUTPUT_DWARF_DIE_INFO = "Output DWARF DIE Info";
 	private static final String OPTION_OUTPUT_DWARF_DIE_INFO_DESC =
 		"Include DWARF DIE offset info in comments attached to the Ghidra datatype or function " +
@@ -98,6 +103,7 @@ public class DWARFImportOptions {
 	private boolean specialCaseSizedBaseTypes = true;
 	private boolean importLocalVariables = true;
 	private boolean useBookmarks = true;
+	private boolean outputSourceLineInfo = false;
 
 	/**
 	 * Create new instance
@@ -360,6 +366,14 @@ public class DWARFImportOptions {
 		return useBookmarks;
 	}
 
+	public boolean isOutputSourceLineInfo() {
+		return outputSourceLineInfo;
+	}
+
+	public void setOutputSourceLineInfo(boolean outputSourceLineInfo) {
+		this.outputSourceLineInfo = outputSourceLineInfo;
+	}
+
 	/**
 	 * See {@link Analyzer#registerOptions(Options, ghidra.program.model.listing.Program)}
 	 * 
@@ -392,6 +406,9 @@ public class DWARFImportOptions {
 
 		options.registerOption(OPTION_IMPORT_LOCAL_VARS, isImportLocalVariables(), null,
 			OPTION_IMPORT_LOCAL_VARS_DESC);
+
+		options.registerOption(OPTION_SOURCE_LINEINFO, isOutputSourceLineInfo(), null,
+			OPTION_SOURCE_LINEINFO_DESC);
 	}
 
 	/**
@@ -414,5 +431,8 @@ public class DWARFImportOptions {
 		setTryPackDataTypes(options.getBoolean(OPTION_TRY_PACK_STRUCTS, isTryPackStructs()));
 		setImportLocalVariables(
 			options.getBoolean(OPTION_IMPORT_LOCAL_VARS, isImportLocalVariables()));
+		setOutputSourceLineInfo(
+			options.getBoolean(OPTION_SOURCE_LINEINFO, isOutputSourceLineInfo()));
+
 	}
 }
