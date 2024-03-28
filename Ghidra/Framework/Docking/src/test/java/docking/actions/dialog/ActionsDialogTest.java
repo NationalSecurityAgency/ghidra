@@ -270,17 +270,20 @@ public class ActionsDialogTest extends AbstractDockingTest {
 
 	@Test
 	public void testActivatingAction() {
-		addLocal(toolbar("Apple", ENABLED, contextA));
+		DockingActionIf appleAction = toolbar("Apple", ENABLED, contextA);
+		addLocal(appleAction);
 		addLocal(menuItem("Banana", ENABLED, contextA));
 		addLocal(popup("Pear", ENABLED, ADD_TO_POPUP, contextA));
 		addLocal(keyAction("Kiwi", ENABLED, contextA));
 
 		ActionsModel model = buildModel(contextA, ActionDisplayLevel.ALL);
 		ActionChooserDialog dialog = getSwing(() -> new ActionChooserDialog(model));
+		dialog.selectAction(appleAction);
 
 		assertEquals(0, triggeredActions.size());
 
 		pressReturn(dialog);
+
 		assertEquals(1, triggeredActions.size());
 		assertEquals("Apple", triggeredActions.get(0));
 	}

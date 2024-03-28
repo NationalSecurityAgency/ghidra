@@ -177,6 +177,11 @@ public class ActionChooserDialog extends DialogComponentProvider {
 		return actionRunner;
 	}
 
+	// for testing
+	void selectAction(DockingActionIf action) {
+		searchList.setSelectedItem(action);
+	}
+
 	@Override
 	public void dispose() {
 		super.dispose();
