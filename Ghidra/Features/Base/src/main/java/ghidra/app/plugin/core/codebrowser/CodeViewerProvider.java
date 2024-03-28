@@ -24,7 +24,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -39,7 +40,8 @@ import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import docking.widgets.fieldpanel.support.*;
 import generic.theme.GIcon;
 import ghidra.app.context.ListingActionContext;
-import ghidra.app.nav.*;
+import ghidra.app.nav.ListingPanelContainer;
+import ghidra.app.nav.LocationMemento;
 import ghidra.app.plugin.core.clipboard.CodeBrowserClipboardProvider;
 import ghidra.app.plugin.core.codebrowser.actions.*;
 import ghidra.app.plugin.core.codebrowser.hover.ListingHoverService;
@@ -164,6 +166,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 		codeViewerClipboardProvider = newClipboardProvider();
 		tool.addPopupActionProvider(this);
+		setDefaultFocusComponent(listingPanel.getFieldPanel());
 	}
 
 	protected CodeBrowserClipboardProvider newClipboardProvider() {
@@ -882,11 +885,6 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		}
 		setLocation(location);
 		return true;
-	}
-
-	@Override
-	public void requestFocus() {
-		listingPanel.getFieldPanel().requestFocus();
 	}
 
 	@Override
