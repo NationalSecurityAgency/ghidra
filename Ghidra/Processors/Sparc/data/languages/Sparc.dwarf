@@ -6,7 +6,7 @@
     <register_mapping dwarf="14" ghidra="sp" stackpointer="true"/>
     <register_mapping dwarf="15" ghidra="o7"/>
     <register_mapping dwarf="16" ghidra="l0" auto_count="8"/> <!-- l0..l7 -->
-    <register_mapping dwarf="24" ghidra="i0" auto_count="8"/> <!-- i0..i5 -->
+    <register_mapping dwarf="24" ghidra="i0" auto_count="6"/> <!-- i0..i5 -->
     <register_mapping dwarf="30" ghidra="fp" stackpointer="true"/>
     <register_mapping dwarf="31" ghidra="i7"/>
     <register_mapping dwarf="32" ghidra="fs0" auto_count="32"/> <!-- fs0..fs31 -->
