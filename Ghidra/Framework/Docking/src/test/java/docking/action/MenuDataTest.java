@@ -34,6 +34,45 @@ public class MenuDataTest {
 		MenuData menuData = new MenuData(new String[] { "One", "Two", "&Three" });
 		assertEquals(menuData.getMnemonic(), 'T');
 	}
+	
+	/**
+	 * There should be no mnemonic, the ampersand is escaped.
+	 */
+	@Test
+	public void testMenuDataMnemonicSkipsEscapedAmpersand() {
+		MenuData menuData = new MenuData(new String[] { "One", "Two", "&&Three" });
+		assertEquals(menuData.getMnemonic(), MenuData.NO_MNEMONIC);
+	}
+
+	/**
+	 * The mnemonic should be 'h'. The first two ampersands form an escaped
+	 * ampersand. The third ampersand is not escaped.
+	 */
+	@Test
+	public void testMenuDataMnemonicEscapesAmpersandLeftToRight() {
+		MenuData menuData = new MenuData(new String[] { "One", "Two", "T&&&hree" });
+		assertEquals(menuData.getMnemonic(), 'h');
+	}
+
+	/**
+	 * There should be no mnemonic, the trailing ampersand is not followed by any
+	 * character.
+	 */
+	@Test
+	public void testMenuDataMnemonicIgnoresTrailingAmpersand() {
+		MenuData menuData = new MenuData(new String[] { "One", "Two", "Three&" });
+		assertEquals(menuData.getMnemonic(), MenuData.NO_MNEMONIC);
+	}
+
+	/**
+	 * The mnemonic should be 'T'. This is the expected behaviour as per the
+	 * "Desktop development with C++" workload in Visual Studio.
+	 */
+	@Test
+	public void testMenuDataMnemonicParsesLeftToRight() {
+		MenuData menuData = new MenuData(new String[] { "One", "Two", "&T&hree" });
+		assertEquals(menuData.getMnemonic(), 'T');
+	}
 
 	/**
 	 * Mnemonic should be 'h' based on the value that was explicitly set
@@ -85,5 +124,24 @@ public class MenuDataTest {
 		String[] newPath = { "Four", newName };
 		menuData.setMenuPath(newPath);
 		assertEquals(menuData.getMnemonic(), MenuData.NO_MNEMONIC);
+	}
+	
+	@Test
+	public void testGetMenuItemNameEscapesAmpersand() {
+		MenuData menuData = new MenuData(new String[] { "One", "Two", "&&Three" });
+		assertEquals(menuData.getMenuItemName(), "&Three");
+	}
+	
+	/**
+	 * Ampersands that are not escaped should be ignored regardless of use as
+	 * mnemonics.
+	 */
+	@Test
+	public void testGetMenuItemNameIgnoresUnescapedAmpersand() {
+		MenuData menuData = new MenuData(new String[] { "One", "Two", "Three&" });
+		assertEquals(menuData.getMenuItemName(), "Three");
+		
+		menuData.setMenuItemName("&T&hree");
+		assertEquals(menuData.getMenuItemName(), "Three");
 	}
 }

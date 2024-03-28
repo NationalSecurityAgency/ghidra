@@ -117,7 +117,7 @@ public class MenuData {
 
 	/**
 	 * Returns the menu path as a string. This method filters accelerator chars('&') from the path.
-	 * @return the menu path as a string without '&' chars
+	 * @return the menu path as a string without unescaped '&' chars
 	 */
 	public String getMenuPathDisplayString() {
 		if (menuPath == null || menuPath.length == 0) {
@@ -260,7 +260,7 @@ public class MenuData {
 	}
 
 	/**
-	 * Sets the menu item name and the mnemonic, using the first '&amp;' found in the text
+	 * Sets the menu item name and the mnemonic, using the first unescaped '&amp;' found in the text
 	 * as a marker ("S&amp;ave As").
 	 * <p>
 	 * NOTE: do NOT use this method with strings that contain user-supplied text.  Instead, use
@@ -305,7 +305,12 @@ public class MenuData {
 	}
 
 	private static int getMnemonic(String string) {
-		int indexOf = string.indexOf('&');
+		int indexOf;
+		int fromIndex = 0;
+		do {
+			indexOf = string.indexOf('&', fromIndex);
+			fromIndex = indexOf + 2;
+		} while (indexOf >= 0 && indexOf < string.length() - 1 && string.charAt(indexOf + 1) == '&');
 		if (indexOf >= 0 && indexOf < string.length() - 1) {
 			return string.charAt(indexOf + 1);
 		}
@@ -321,7 +326,23 @@ public class MenuData {
 	}
 
 	private static String processMenuItemName(String string) {
-		return string.replaceFirst("&", "");
+		int firstAmp = string.indexOf('&');
+		if (firstAmp < 0) {
+			return string;
+		}
+		StringBuilder builder = new StringBuilder(string.substring(0, firstAmp));
+		for (int i = firstAmp; i < string.length(); i++) {
+			char ch = string.charAt(i);
+			if (ch == '&') {
+				if (i < string.length() - 1 && string.charAt(i+1) == '&') {
+					builder.append('&');
+					i++;
+				}
+			} else {
+				builder.append(ch);
+			}
+		}
+		return builder.toString();
 	}
 
 	public String getMenuItemName() {
