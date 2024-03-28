@@ -37,6 +37,7 @@ import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer.LaunchConfigurator;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer.PromptMode;
 import ghidra.debug.spi.tracermi.TraceRmiLaunchOpinion;
+import ghidra.formats.gfilesystem.FSRL;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -122,11 +123,7 @@ public class TraceRmiLauncherServicePlugin extends Plugin
 		}
 	}
 
-	public static File getProgramPath(Program program) {
-		if (program == null) {
-			return null;
-		}
-		String path = program.getExecutablePath();
+	public static File tryProgramPath(String path) {
 		if (path == null) {
 			return null;
 		}
@@ -141,6 +138,26 @@ public class TraceRmiLauncherServicePlugin extends Plugin
 			Msg.error(TraceRmiLauncherServicePlugin.class, "Cannot examine file " + path, e);
 			return null;
 		}
+	}
+
+	public static String extractFirstFsrl(Program program) {
+		FSRL fsrl = FSRL.fromProgram(program);
+		if (fsrl == null) {
+			return null;
+		}
+		FSRL first = fsrl.split().get(0);
+		return first.getPath();
+	}
+
+	public static File getProgramPath(Program program) {
+		if (program == null) {
+			return null;
+		}
+		File exec = tryProgramPath(program.getExecutablePath());
+		if (exec != null) {
+			return exec;
+		}
+		return tryProgramPath(extractFirstFsrl(program));
 	}
 
 	protected final ToolOptions options;
