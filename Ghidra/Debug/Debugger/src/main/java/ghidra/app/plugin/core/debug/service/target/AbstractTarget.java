@@ -308,6 +308,11 @@ public abstract class AbstractTarget implements Target {
 	}
 
 	@Override
+	public String execute(String command, boolean toString) {
+		return getSync("execute", () -> executeAsync(command, toString));
+	}
+
+	@Override
 	public void activate(DebuggerCoordinates prev, DebuggerCoordinates coords) {
 		runSync("activate", () -> activateAsync(prev, coords));
 	}

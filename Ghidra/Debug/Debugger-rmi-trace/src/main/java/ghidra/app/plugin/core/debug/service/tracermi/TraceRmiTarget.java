@@ -25,7 +25,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import docking.ActionContext;
 import ghidra.app.context.ProgramLocationActionContext;
-import ghidra.app.plugin.core.debug.gui.model.DebuggerObjectActionContext;
 import ghidra.app.plugin.core.debug.gui.tracermi.RemoteMethodInvocationDialog;
 import ghidra.app.plugin.core.debug.service.target.AbstractTarget;
 import ghidra.app.services.DebuggerConsoleService;
@@ -38,6 +37,7 @@ import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.util.PathMatcher;
 import ghidra.dbg.util.PathPredicates;
 import ghidra.dbg.util.PathPredicates.Align;
+import ghidra.debug.api.model.DebuggerObjectActionContext;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.debug.api.tracermi.*;
@@ -51,6 +51,7 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
 import ghidra.trace.model.guest.TracePlatform;
+import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.memory.TraceObjectMemoryRegion;
 import ghidra.trace.model.stack.*;
 import ghidra.trace.model.target.*;
@@ -611,6 +612,13 @@ public class TraceRmiTarget extends AbstractTarget {
 		}
 	}
 
+	record ExecuteMatcher(int score, List<ParamSpec> spec) implements MethodMatcher {
+		static final ExecuteMatcher HAS_CMD_TOSTRING = new ExecuteMatcher(2, List.of(
+			new TypeParamSpec("command", String.class),
+			new TypeParamSpec("toString", Boolean.class)));
+		static final List<ExecuteMatcher> ALL = matchers(HAS_CMD_TOSTRING);
+	}
+
 	record ReadMemMatcher(int score, List<ParamSpec> spec) implements MethodMatcher {
 		static final ReadMemMatcher HAS_PROC_RANGE = new ReadMemMatcher(2, List.of(
 			new TypeParamSpec("process", TargetProcess.class),
@@ -842,6 +850,18 @@ public class TraceRmiTarget extends AbstractTarget {
 	}
 
 	@Override
+	public CompletableFuture<String> executeAsync(String command, boolean toString) {
+		MatchedMethod execute = matches.getBest("execute", ActionName.EXECUTE, ExecuteMatcher.ALL);
+		if (execute == null) {
+			return CompletableFuture.failedFuture(new NoSuchElementException());
+		}
+		Map<String, Object> args = new HashMap<>();
+		args.put(execute.params.get("command").name(), command);
+		args.put(execute.params.get("toString").name(), toString);
+		return execute.method.invokeAsync(args).toCompletableFuture().thenApply(v -> (String) v);
+	}
+
+	@Override
 	public CompletableFuture<Void> activateAsync(DebuggerCoordinates prev,
 			DebuggerCoordinates coords) {
 		if (prev.getSnap() != coords.getSnap()) {
@@ -906,15 +926,11 @@ public class TraceRmiTarget extends AbstractTarget {
 	}
 
 	protected TraceObject getProcessForSpace(AddressSpace space) {
-		for (TraceObjectValue objVal : trace.getObjectManager()
-				.getValuesIntersecting(
+		for (TraceMemoryRegion region : trace.getMemoryManager()
+				.getRegionsIntersecting(
 					Lifespan.at(getSnap()),
-					new AddressRangeImpl(space.getMinAddress(), space.getMaxAddress()),
-					TargetMemoryRegion.RANGE_ATTRIBUTE_NAME)) {
-			TraceObject obj = objVal.getParent();
-			if (!obj.getInterfaces().contains(TraceObjectMemoryRegion.class)) {
-				continue;
-			}
+					new AddressRangeImpl(space.getMinAddress(), space.getMaxAddress()))) {
+			TraceObject obj = ((TraceObjectMemoryRegion) region).getObject();
 			return obj.queryCanonicalAncestorsTargetInterface(TargetProcess.class)
 					.findFirst()
 					.orElse(null);

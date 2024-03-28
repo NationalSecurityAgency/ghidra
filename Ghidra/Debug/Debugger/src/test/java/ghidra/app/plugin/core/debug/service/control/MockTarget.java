@@ -24,7 +24,6 @@ import ghidra.async.AsyncUtils;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
-import ghidra.debug.api.target.Target.ActionEntry;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
@@ -113,6 +112,16 @@ class MockTarget implements Target {
 
 	@Override
 	public void invalidateMemoryCaches() {
+	}
+
+	@Override
+	public CompletableFuture<String> executeAsync(String command, boolean toString) {
+		return AsyncUtils.nil();
+	}
+
+	@Override
+	public String execute(String command, boolean toString) {
+		return null;
 	}
 
 	@Override

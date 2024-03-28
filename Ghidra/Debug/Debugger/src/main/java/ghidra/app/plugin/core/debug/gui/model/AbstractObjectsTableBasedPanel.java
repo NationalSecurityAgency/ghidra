@@ -29,6 +29,7 @@ import ghidra.app.plugin.core.debug.gui.model.AbstractQueryTablePanel.CellActiva
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueProperty;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.services.DebuggerListingService;
+import ghidra.debug.api.model.DebuggerObjectActionContext;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.Plugin;

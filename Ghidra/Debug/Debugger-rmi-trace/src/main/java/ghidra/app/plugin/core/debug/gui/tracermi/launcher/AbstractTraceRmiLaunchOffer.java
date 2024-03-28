@@ -146,6 +146,15 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 		this.terminalService = Objects.requireNonNull(tool.getService(TerminalService.class));
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (this.getClass() != obj.getClass()) {
+			return false;
+		}
+		AbstractTraceRmiLaunchOffer other = (AbstractTraceRmiLaunchOffer) obj;
+		return this.getConfigName().equals(other.getConfigName());
+	}
+
 	protected int getTimeoutMillis() {
 		return DEFAULT_TIMEOUT_MILLIS;
 	}
