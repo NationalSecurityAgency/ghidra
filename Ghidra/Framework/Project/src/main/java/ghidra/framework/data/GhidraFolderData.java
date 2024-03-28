@@ -26,8 +26,7 @@ import ghidra.framework.protocol.ghidra.TransientProjectData;
 import ghidra.framework.store.FileSystem;
 import ghidra.framework.store.FolderItem;
 import ghidra.framework.store.FolderNotEmptyException;
-import ghidra.framework.store.local.LocalFileSystem;
-import ghidra.framework.store.local.LocalFolderItem;
+import ghidra.framework.store.local.*;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -615,10 +614,27 @@ class GhidraFolderData {
 
 	private <T extends FolderItem> Map<String, T> itemMapOf(T[] items) {
 		Map<String, T> map = new HashMap<>();
+		int badItemCount = 0;
+		int nullNameCount = 0;
 		for (T item : items) {
-			if (item != null) {
-				map.put(item.getName(), item);
+			if (item == null || item instanceof UnknownFolderItem) {
+				++badItemCount;
+				continue;
 			}
+			String itemName = item.getName();
+			if (itemName == null) {
+				++nullNameCount;
+				continue;
+			}
+			map.put(itemName, item);
+		}
+		if (badItemCount != 0) {
+			Msg.error(this,
+				"Project folder contains " + badItemCount + " bad items: " + getPathname());
+		}
+		if (nullNameCount != 0) {
+			Msg.error(this,
+				"Project folder contains " + nullNameCount + " null items: " + getPathname());
 		}
 		return map;
 	}
