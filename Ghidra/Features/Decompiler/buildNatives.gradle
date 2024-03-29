@@ -246,7 +246,6 @@ model {
 				b.cCompiler.args "/Oy"			// Omit frame pointer
 				b.cCompiler.define "_CRT_SECURE_NO_DEPRECATE"
 				b.cCompiler.define "_CRT_NONSTDC_NO_DEPRECATE"
-				b.cCompiler.define "WIN64"
 				b.cCompiler.define "ZLIB_WINAPI"
 			}
 			else if (b.toolChain in Clang) {
