@@ -2495,7 +2495,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	 * @param recoveredClass the given class
 	 * @return the offset in the given class structure of the classes single virtual parent or NONE 
 	 * if cannot retrieve an offset value or if there is not a single virtual parent for the given
-	 * class.
+	 * class. Return null if cannot retrieve the offset for the single virtual parent. 
 	 * @throws CancelledException if cancelled
 	 * @throws AddressOutOfBoundsException if trying to access an address that does not exist in program
 	 * @throws MemoryAccessException  if trying to access memory that can't be accessed
@@ -2517,7 +2517,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	private Map<RecoveredClass, Integer> getBaseClassOffsetMap(RecoveredClass recoveredClass)
 			throws CancelledException, MemoryAccessException, AddressOutOfBoundsException {
 
-		Map<RecoveredClass, Integer> baseClassOffsetMap = new HashMap<RecoveredClass, Integer>();
+		Map<RecoveredClass, Integer> baseClassOffsetMap = new HashMap<>();
 
 		Data baseClassArrayData = getBaseClassArray(recoveredClass);
 
