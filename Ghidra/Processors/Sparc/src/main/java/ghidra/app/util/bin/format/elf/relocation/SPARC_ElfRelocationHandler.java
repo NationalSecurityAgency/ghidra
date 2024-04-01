@@ -96,8 +96,8 @@ public class SPARC_ElfRelocationHandler
 				memory.setInt(relocationAddress, newValue);
 				break;
 			case R_SPARC_COPY:
-				markAsWarning(program, relocationAddress, type, symbolName, symbolIndex,
-					"Runtime copy not supported", elfRelocationContext.getLog());
+				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
+					sym.getSize(), elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 			default:
 				markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName,

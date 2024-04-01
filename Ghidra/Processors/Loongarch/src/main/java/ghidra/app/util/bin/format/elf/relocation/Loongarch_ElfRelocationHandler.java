@@ -39,6 +39,11 @@ public class Loongarch_ElfRelocationHandler
 	}
 
 	@Override
+	public int getRelrRelocationType() {
+		return Loongarch_ElfRelocationType.R_LARCH_RELATIVE.typeId;
+	}
+
+	@Override
 	protected RelocationResult relocate(ElfRelocationContext<?> elfRelocationContext,
 			ElfRelocation relocation, Loongarch_ElfRelocationType type, Address relocationAddress,
 			ElfSymbol sym, Address symbolAddr, long symbolValue, String symbolName)
@@ -106,8 +111,8 @@ public class Loongarch_ElfRelocationHandler
 
 			case R_LARCH_COPY:
 				// Runtime memory copy in executable memcpy (PC, RtAddr, sizeof (sym))
-				markAsWarning(program, relocationAddress, type, symbolName, symbolIndex,
-					"Runtime copy not supported", elfRelocationContext.getLog());
+				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
+					sym.getSize(), elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 
 			case R_LARCH_JUMP_SLOT:

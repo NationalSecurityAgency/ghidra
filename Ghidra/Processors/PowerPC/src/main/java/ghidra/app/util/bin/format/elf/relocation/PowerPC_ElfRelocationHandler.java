@@ -54,6 +54,11 @@ public class PowerPC_ElfRelocationHandler extends
 	}
 
 	@Override
+	public int getRelrRelocationType() {
+		return PowerPC_ElfRelocationType.R_PPC_RELATIVE.typeId;
+	}
+
+	@Override
 	protected RelocationResult relocate(PowerPC_ElfRelocationContext elfRelocationContext,
 			ElfRelocation relocation, PowerPC_ElfRelocationType type, Address relocationAddress,
 			ElfSymbol sym, Address symbolAddr, long symbolValue, String symbolName)
@@ -87,9 +92,9 @@ public class PowerPC_ElfRelocationHandler extends
 
 		switch (type) {
 			case R_PPC_COPY:
-				markAsWarning(program, relocationAddress, type, symbolName, symbolIndex,
-					"Runtime copy not supported", elfRelocationContext.getLog());
-				return RelocationResult.SKIPPED;
+				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
+					sym.getSize(), elfRelocationContext.getLog());
+				return RelocationResult.UNSUPPORTED;
 			case R_PPC_ADDR32:
 			case R_PPC_UADDR32:
 			case R_PPC_GLOB_DAT:
