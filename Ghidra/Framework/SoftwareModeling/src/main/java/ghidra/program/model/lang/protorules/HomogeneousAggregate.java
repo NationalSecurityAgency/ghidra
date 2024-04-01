@@ -19,7 +19,6 @@ import static ghidra.program.model.pcode.AttributeId.*;
 import static ghidra.program.model.pcode.ElementId.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.pcode.Encoder;
@@ -67,17 +66,18 @@ public class HomogeneousAggregate extends SizeRestrictedFilter {
 		if (meta != PcodeDataTypeManager.TYPE_ARRAY && meta != PcodeDataTypeManager.TYPE_STRUCT) {
 			return false;
 		}
-		ArrayList<DataType> res = new ArrayList<>();
-		if (!DatatypeFilter.extractPrimitives(dt, MAX_PRIMITIVES, res) || res.isEmpty()) {
+		PrimitiveExtractor primitives = new PrimitiveExtractor(dt, true, 0, MAX_PRIMITIVES);
+		if (!primitives.isValid() || primitives.size() == 0 || primitives.containsUnknown() ||
+			!primitives.isAligned() || primitives.containsHoles()) {
 			return false;
 		}
-		DataType base = res.get(0);
+		DataType base = primitives.get(0).dt;
 		int baseMeta = PcodeDataTypeManager.getMetatype(base);
 		if (baseMeta != metaType) {
 			return false;
 		}
-		for (int i = 1; i < res.size(); ++i) {
-			if (res.get(i) != base) {
+		for (int i = 1; i < primitives.size(); ++i) {
+			if (primitives.get(i).dt != base) {
 				return false;
 			}
 		}

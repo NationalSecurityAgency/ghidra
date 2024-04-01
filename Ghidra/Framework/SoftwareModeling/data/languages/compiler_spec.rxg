@@ -409,6 +409,22 @@
           <attribute name="storage"/>
         </optional>
       </element>
+      <element name="join_dual_class">
+        <optional>
+          <attribute name="reversejustify">
+            <ref name="boolean_type"/>
+          </attribute>
+        </optional>
+        <optional>
+          <attribute name="storage"/>
+        </optional>
+        <optional>
+          <attribute name="a"/>
+        </optional>
+        <optional>
+          <attribute name="b"/>
+        </optional>
+      </element>
     </choice>
     <zeroOrMore>
       <element name="consume_extra">
