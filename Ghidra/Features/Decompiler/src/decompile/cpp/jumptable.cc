@@ -53,18 +53,44 @@ void LoadTable::decode(Decoder &decoder)
   decoder.closeElement(elemId);
 }
 
-/// We assume the list of LoadTable entries is sorted and perform an in-place
-/// collapse of any sequences into a single LoadTable entry.
+/// Sort the entries and collapse any contiguous sequences into a single LoadTable entry.
 /// \param table is the list of entries to collapse
 void LoadTable::collapseTable(vector<LoadTable> &table)
 
 {
   if (table.empty()) return;
-  vector<LoadTable>::iterator iter,lastiter;
+
+  // Test if the table is already sorted and contiguous entries
+  bool issorted = true;
+  vector<LoadTable>::iterator iter = table.begin();
+  int4 num = (*iter).num;
+  int4 size = (*iter).size;
+  Address nextaddr = (*iter).addr + size;
+  ++iter;
+
+  for(;iter!=table.end();++iter) {
+    if ( (*iter).addr == nextaddr && (*iter).size == size) {
+      num += (*iter).num;
+      nextaddr = (*iter).addr + (*iter).size;
+    }
+    else {
+      issorted = false;
+      break;
+    }
+  }
+  if (issorted) {
+    // Table is sorted and contiguous.
+    table.resize(1);	// Truncate everything but the first entry
+    table.front().num = num;
+    return;
+  }
+
+  sort(table.begin(),table.end());
+
   int4 count = 1;
   iter = table.begin();
-  lastiter = iter;
-  Address nextaddr = (*iter).addr + (*iter).size * (*iter).num;
+  vector<LoadTable>::iterator lastiter = iter;
+  nextaddr = (*iter).addr + (*iter).size * (*iter).num;
   ++iter;
   for(;iter!=table.end();++iter) {
     if (( (*iter).addr == nextaddr ) && ((*iter).size == (*lastiter).size)) {
@@ -85,12 +111,12 @@ void LoadTable::collapseTable(vector<LoadTable> &table)
 void EmulateFunction::executeLoad(void)
 
 {
-  if (collectloads) {
+  if (loadpoints != (vector<LoadTable> *)0) {
     uintb off = getVarnodeValue(currentOp->getIn(1));
     AddrSpace *spc = currentOp->getIn(0)->getSpaceFromConst();
     off = AddrSpace::addressToByte(off,spc->getWordSize());
     int4 sz = currentOp->getOut()->getSize();
-    loadpoints.push_back(LoadTable(Address(spc,off),sz));
+    loadpoints->push_back(LoadTable(Address(spc,off),sz));
   }
   EmulatePcodeOp::executeLoad();
 }
@@ -133,7 +159,7 @@ EmulateFunction::EmulateFunction(Funcdata *f)
   : EmulatePcodeOp(f->getArch())
 {
   fd = f;
-  collectloads = false;
+  loadpoints = (vector<LoadTable> *)0;
 }
 
 void EmulateFunction::setExecuteAddress(const Address &addr)
@@ -223,39 +249,6 @@ uintb EmulateFunction::emulatePath(uintb val,const PathMeld &pathMeld,
   }
   Varnode *invn = pathMeld.getOp(0)->getIn(0);
   return getVarnodeValue(invn);
-}
-
-/// Pass back any LOAD records collected during emulation.  The individual records
-/// are sorted and collapsed into concise \e table descriptions.
-/// \param res will hold any resulting table descriptions
-void EmulateFunction::collectLoadPoints(vector<LoadTable> &res) const
-
-{
-  if (loadpoints.empty()) return;
-  bool issorted = true;
-  vector<LoadTable>::const_iterator iter;
-  vector<LoadTable>::iterator lastiter;
-
-  iter = loadpoints.begin();
-  res.push_back( *iter );	// Copy the first entry
-  ++iter;
-  lastiter = res.begin();
-
-  Address nextaddr = (*lastiter).addr + (*lastiter).size;
-  for(;iter!=loadpoints.end();++iter) {
-    if (issorted && (( (*iter).addr == nextaddr ) && ((*iter).size == (*lastiter).size))) {
-      (*lastiter).num += (*iter).num;
-      nextaddr = (*iter).addr + (*iter).size;
-    }
-    else {
-      issorted = false;
-      res.push_back( *iter );
-    }
-  }
-  if (!issorted) {
-    sort(res.begin(),res.end());
-    LoadTable::collapseTable(res);
-  }
 }
 
 /// The starting value for the range and the step is preserved.  The
@@ -398,8 +391,8 @@ bool JumpModelTrivial::recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,
   return ((size != 0)&&(size<=matchsize));
 }
 
-void JumpModelTrivial::buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,vector<LoadTable> *loadpoints) const
-
+void JumpModelTrivial::buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+				      vector<LoadTable> *loadpoints,vector<int4> *loadcounts) const
 {
   addresstable.clear();
   BlockBasic *bl = indop->getParent();
@@ -1423,15 +1416,14 @@ bool JumpBasic::recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 m
   return true;
 }
 
-void JumpBasic::buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,vector<LoadTable> *loadpoints) const
-
+void JumpBasic::buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+			       vector<LoadTable> *loadpoints,vector<int4> *loadcounts) const
 {
   uintb val,addr;
   addresstable.clear();		// Clear out any partial recoveries
 				// Build the emulation engine
   EmulateFunction emul(fd);
-  if (loadpoints != (vector<LoadTable> *)0)
-    emul.setLoadCollect(true);
+  emul.setLoadCollect(loadpoints);
 
   uintb mask = ~((uintb)0);
   int4 bit = fd->getArch()->funcptr_align;
@@ -1446,10 +1438,10 @@ void JumpBasic::buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addr
     addr = AddrSpace::addressToByte(addr,spc->getWordSize());
     addr &= mask;
     addresstable.push_back(Address(spc,addr));
+    if (loadcounts != (vector<int4> *)0)
+      loadcounts->push_back(loadpoints->size());
     notdone = jrange->next();
   }
-  if (loadpoints != (vector<LoadTable> *)0)
-    emul.collectLoadPoints(*loadpoints);
 }
 
 void JumpBasic::findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext)
@@ -1562,8 +1554,8 @@ bool JumpBasic::foldInGuards(Funcdata *fd,JumpTable *jump)
   return change;
 }
 
-bool JumpBasic::sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable)
-
+bool JumpBasic::sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+			    vector<LoadTable> &loadpoints,vector<int4> *loadcounts)
 {
   // Test all the addresses in \b this address table checking
   // that they are reasonable. We cut off at the first unreasonable address.
@@ -1596,6 +1588,9 @@ bool JumpBasic::sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &address
   if (i!=addresstable.size()) {
     addresstable.resize(i);
     jrange->truncate(i);
+    if (loadcounts != (vector<int4> *)0) {
+      loadpoints.resize((*loadcounts)[i-1]);
+    }
   }
   return true;
 }
@@ -1967,8 +1962,8 @@ bool JumpBasicOverride::recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize
   return true;
 }
 
-void JumpBasicOverride::buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,vector<LoadTable> *loadpoints) const
-
+void JumpBasicOverride::buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+				       vector<LoadTable> *loadpoints,vector<int4> *loadcounts) const
 {
   addresstable = addrtable;	// Addresses are already calculated, just copy them out
 }
@@ -2116,8 +2111,8 @@ bool JumpAssisted::recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint
   return true;
 }
 
-void JumpAssisted::buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,vector<LoadTable> *loadpoints) const
-
+void JumpAssisted::buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+				  vector<LoadTable> *loadpoints,vector<int4> *loadcounts) const
 {
   if (userop->getIndex2Addr() == -1)
     throw LowlevelError("Final index2addr calculation outside of jumpassist");
@@ -2249,8 +2244,11 @@ void JumpTable::recoverModel(Funcdata *fd)
 /// Check pathological cases when there is only one address in the table, if we find
 /// this, throw the JumptableThunkError. Let the model run its sanity check.
 /// Print a warning if the sanity check truncates the original address table.
+/// Passing in \b loadcounts indicates that LOADs were collected in \b loadpoints, which may
+/// need to be truncated as well.
 /// \param fd is the function containing the switch
-void JumpTable::sanityCheck(Funcdata *fd)
+/// \param loadcounts (if non-null) associates each switch value with the number of LOADs it needed
+void JumpTable::sanityCheck(Funcdata *fd,vector<int4> *loadcounts)
 
 {
   if (jmodel->isOverride())
@@ -2277,7 +2275,7 @@ void JumpTable::sanityCheck(Funcdata *fd)
       throw JumptableThunkError("Likely thunk");
     }
   }
-  if (!jmodel->sanityCheck(fd,indirect,addresstable)) {
+  if (!jmodel->sanityCheck(fd,indirect,addresstable,loadpoints,loadcounts)) {
     ostringstream err;
     err << "Jumptable at " << opaddress << " did not pass sanity check.";
     throw LowlevelError(err.str());
@@ -2592,11 +2590,16 @@ void JumpTable::recoverAddresses(Funcdata *fd)
   }
   //  if (sz < 2)
   //    fd->warning("Jumptable has only one branch",opaddress);
-  if (collectloads)
-    jmodel->buildAddresses(fd,indirect,addresstable,&loadpoints);
-  else
-    jmodel->buildAddresses(fd,indirect,addresstable,(vector<LoadTable> *)0);
-  sanityCheck(fd);
+  if (collectloads) {
+    vector<int4> loadcounts;
+    jmodel->buildAddresses(fd,indirect,addresstable,&loadpoints,&loadcounts);
+    sanityCheck(fd,&loadcounts);
+    LoadTable::collapseTable(loadpoints);
+  }
+  else {
+    jmodel->buildAddresses(fd,indirect,addresstable,(vector<LoadTable> *)0,(vector<int4> *)0);
+    sanityCheck(fd,(vector<int4> *)0);
+  }
 }
 
 /// Do a normal recoverAddresses, but save off the old JumpModel, and if we fail recovery, put back the old model.
@@ -2683,7 +2686,7 @@ bool JumpTable::recoverLabels(Funcdata *fd)
   else {
     jmodel = new JumpModelTrivial(this);
     jmodel->recoverModel(fd,indirect,addresstable.size(),glb->max_jumptable_size);
-    jmodel->buildAddresses(fd,indirect,addresstable,(vector<LoadTable> *)0);
+    jmodel->buildAddresses(fd,indirect,addresstable,(vector<LoadTable> *)0,(vector<int4> *)0);
     trivialSwitchOver();
     jmodel->buildLabels(fd,addresstable,label,origmodel);
   }
