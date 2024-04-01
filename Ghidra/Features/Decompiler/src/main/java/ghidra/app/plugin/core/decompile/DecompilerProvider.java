@@ -165,6 +165,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 		plugin.getTool().addServiceListener(serviceListener);
 		programListener = new DecompilerProgramListener(controller, redecompileUpdater);
+		setDefaultFocusComponent(controller.getDecompilerPanel());
 	}
 
 //==================================================================================================
@@ -285,12 +286,6 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	public void setMemento(LocationMemento memento) {
 		DecompilerLocationMemento decompMemento = (DecompilerLocationMemento) memento;
 		pendingViewerPosition = decompMemento.getViewerPosition();
-	}
-
-	@Override
-	public void requestFocus() {
-		controller.getDecompilerPanel().requestFocus();
-		tool.toFront(this);
 	}
 
 //==================================================================================================

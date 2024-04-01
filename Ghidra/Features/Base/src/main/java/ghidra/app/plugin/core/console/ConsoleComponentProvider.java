@@ -399,19 +399,6 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter implement
 		return component;
 	}
 
-	@Override
-	public void requestFocus() {
-		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-		Component focusOwner = kfm.getFocusOwner();
-		if (focusOwner != null) {
-			if (SwingUtilities.isDescendingFrom(focusOwner, component)) {
-				return; // nothing to do
-			}
-		}
-
-		component.requestFocus();
-	}
-
 	public void setCurrentProgram(Program program) {
 		currentProgram = program;
 	}
