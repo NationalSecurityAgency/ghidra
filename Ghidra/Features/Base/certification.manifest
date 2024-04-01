@@ -718,7 +718,6 @@ src/main/resources/images/ThunkFunction.gif||GHIDRA||||END|
 src/main/resources/images/U.gif||GHIDRA||||END|
 src/main/resources/images/Unpackage.gif||GHIDRA||||END|
 src/main/resources/images/V.png||GHIDRA||||END|
-src/main/resources/images/VCRFastForward.gif||GHIDRA||||END|
 src/main/resources/images/akregator.png||Oxygen Icons - LGPL 3.0||||END|
 src/main/resources/images/application_double.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/applications-development.png||Oxygen Icons - LGPL 3.0||||END|
@@ -876,7 +875,6 @@ src/main/resources/images/page_white.png||FAMFAMFAM Icons - CC 2.5|||famfamfam s
 src/main/resources/images/page_white_c.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/pencil16.png||GHIDRA||||END|
 src/main/resources/images/pin.png||GHIDRA||||END|
-src/main/resources/images/pinkX.gif||GHIDRA||||END|
 src/main/resources/images/play_again.png||GHIDRA||||END|
 src/main/resources/images/preferences-system.png||Tango Icons - Public Domain|||tango|END|
 src/main/resources/images/question_zero.png||GHIDRA||||END|
@@ -916,7 +914,6 @@ src/main/resources/images/view-sort-descending.png||Oxygen Icons - LGPL 3.0|||Ox
 src/main/resources/images/window.png||GHIDRA||||END|
 src/main/resources/images/wizard.png||Nuvola Icons - LGPL 2.1|||nuvola|END|
 src/main/resources/images/x-office-document-template.png||Tango Icons - Public Domain|||tango icon set|END|
-src/main/resources/images/x.gif||GHIDRA||||END|
 src/main/resources/images/xor.png||GHIDRA||||END|
 src/main/resources/pcodetest/chunk1.hinc||GHIDRA||||END|
 src/main/resources/pcodetest/chunk2.hinc||GHIDRA||||END|

@@ -100,4 +100,8 @@ public class ListingPanelContainer extends JPanel {
 			add(northComponent, BorderLayout.NORTH);
 		}
 	}
+
+	public JComponent getNorthPanel() {
+		return northComponent;
+	}
 }
