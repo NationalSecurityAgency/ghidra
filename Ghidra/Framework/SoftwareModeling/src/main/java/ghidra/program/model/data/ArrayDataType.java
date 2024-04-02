@@ -36,6 +36,15 @@ public class ArrayDataType extends DataTypeImpl implements Array {
 	 * Constructs a new Array dataType.
 	 * @param dataType the dataType of the elements in the array (null is not permitted).
 	 * @param numElements the number of elements in the array (0 is permitted).
+	 */
+	public ArrayDataType(DataType dataType, int numElements) {
+		this(dataType, numElements, -1, null);
+	}
+
+	/**
+	 * Constructs a new Array dataType.
+	 * @param dataType the dataType of the elements in the array (null is not permitted).
+	 * @param numElements the number of elements in the array (0 is permitted).
 	 * @param elementLength the length of an individual element in the array.  This value
 	 * is only used for {@link Dynamic} dataType where {@link Dynamic#canSpecifyLength()} 
 	 * returns true.
