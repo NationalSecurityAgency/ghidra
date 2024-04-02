@@ -21,7 +21,6 @@ import java.awt.BorderLayout;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 import javax.swing.*;
 
@@ -64,17 +63,29 @@ public class GTabPanelTest extends AbstractDockingTest {
 	}
 
 	@Test
-	public void testFirstTabIsSelectedByDefault() {
-		assertEquals("One", getSelectedValue());
+	public void testNoTabIsSelectedByDefault() {
+		assertEquals(null, getSelectedValue());
+	}
+
+	@Test
+	public void testSettingNoTabSelected() {
+
+		AtomicReference<String> selectedValue = new AtomicReference<String>();
+		Consumer<String> c = s -> selectedValue.set(s);
+		runSwing(() -> gTabPanel.setSelectedTabConsumer(c));
+		setSelectedValue("One");
+		assertEquals("One", selectedValue.get());
+		setSelectedValue(null);
+		assertEquals(null, selectedValue.get());
 	}
 
 	@Test
 	public void testAddValue() {
 		assertEquals(3, getTabCount());
-		assertEquals("One", getSelectedValue());
+		assertEquals(null, getSelectedValue());
 		addValue("Four");
 		assertEquals(4, getTabCount());
-		assertEquals("One", getSelectedValue());
+		assertEquals(null, getSelectedValue());
 		assertEquals("Four", getValue(3));
 	}
 
@@ -86,6 +97,7 @@ public class GTabPanelTest extends AbstractDockingTest {
 
 	@Test
 	public void testSwitchToInvalidValue() {
+		setSelectedValue("One");
 		try {
 			gTabPanel.selectTab("Four");
 			fail("expected exception");
@@ -99,11 +111,12 @@ public class GTabPanelTest extends AbstractDockingTest {
 
 	@Test
 	public void testCloseSelected() {
+		setSelectedValue("One");
 		assertEquals(3, getTabCount());
 		assertEquals("One", getSelectedValue());
 		removeTab("One");
 		assertEquals(2, getTabCount());
-		assertEquals("Two", getSelectedValue());
+		assertNull(getSelectedValue());
 	}
 
 	@Test
@@ -148,50 +161,76 @@ public class GTabPanelTest extends AbstractDockingTest {
 
 	@Test
 	public void testRemovedConsumer() {
-		AtomicReference<String> removedValue = new AtomicReference<String>();
-		Consumer<String> c = s -> removedValue.set(s);
-		runSwing(() -> gTabPanel.setRemovedTabConsumer(c));
+		AtomicReference<String> closedValue = new AtomicReference<String>();
+		Consumer<String> c = s -> closedValue.set(s);
+		runSwing(() -> gTabPanel.setCloseTabConsumer(c));
 		runSwing(() -> gTabPanel.closeTab("Two"));
-		assertEquals("Two", removedValue.get());
+		assertEquals("Two", closedValue.get());
 	}
 
 	@Test
-	public void testSetRemoveTabPredicateAcceptsRemove() {
-		AtomicReference<String> removePredicateCallValue = new AtomicReference<String>();
-		Predicate<String> p = s -> {
-			removePredicateCallValue.set(s);
-			return true;
+	public void testSetRemoveTabConsumer() {
+		AtomicReference<String> closedValueReference = new AtomicReference<String>();
+		Consumer<String> c = s -> {
+			closedValueReference.set(s);
+			gTabPanel.removeTab(s);
 		};
-		runSwing(() -> gTabPanel.setRemoveTabActionPredicate(p));
+		runSwing(() -> gTabPanel.setCloseTabConsumer(c));
 		runSwing(() -> gTabPanel.closeTab("Two"));
-		assertEquals("Two", removePredicateCallValue.get());
+		assertEquals("Two", closedValueReference.get());
 		assertEquals(2, getTabCount());
 	}
 
 	@Test
-	public void testSetRemoveTabPredicateRejectsRemove() {
-		AtomicReference<String> removePredicateCallValue = new AtomicReference<String>();
-		Predicate<String> p = s -> {
-			removePredicateCallValue.set(s);
-			return false;
-		};
-		runSwing(() -> gTabPanel.setRemoveTabActionPredicate(p));
-		runSwing(() -> gTabPanel.closeTab("Two"));
-		assertEquals("Two", removePredicateCallValue.get());
-		assertEquals(3, getTabCount());
+	public void testHighlightNext() {
+		assertNull(getHighlightedValue());
+		highlightNextTab(true);
+		assertEquals("One", getHighlightedValue());
+		highlightNextTab(true);
+		assertEquals("Two", getHighlightedValue());
+		highlightNextTab(false);
+		assertEquals("One", getHighlightedValue());
+		highlightNextTab(false);
+		assertEquals("Three Three Three", getHighlightedValue());
+		setSelectedValue("One");
+		highlightNextTab(true);
+		assertEquals("Two", getHighlightedValue());
 	}
 
 	@Test
-	public void testHighlightNext() {
-		assertNull(gTabPanel.getHighlightedTabValue());
-		runSwing(() -> gTabPanel.highlightNextTab(true));
-		assertEquals("Two", gTabPanel.getHighlightedTabValue());
-		runSwing(() -> gTabPanel.highlightNextTab(true));
-		assertEquals("Three Three Three", gTabPanel.getHighlightedTabValue());
-		runSwing(() -> gTabPanel.highlightNextTab(false));
-		assertEquals("Two", gTabPanel.getHighlightedTabValue());
-		runSwing(() -> gTabPanel.highlightNextTab(false));
-		assertNull(gTabPanel.getHighlightedTabValue());
+	public void testGetAccessibleNameNoTabs() {
+		removeTab("One");
+		removeTab("Two");
+		removeTab("Three Three Three");
+		assertEquals("Test Tab Panel: No Tabs", gTabPanel.getAccessibleName());
+	}
+
+	@Test
+	public void testGetAccessibleNameNoTabSelected() {
+		setSelectedValue(null);
+		assertEquals("Test Tab Panel: No Selected Tab", gTabPanel.getAccessibleName());
+	}
+
+	@Test
+	public void testGetAccessiblNameTabSelected() {
+		setSelectedValue("Two");
+		assertEquals("Test Tab Panel: Two selected", gTabPanel.getAccessibleName());
+	}
+
+	@Test
+	public void testGetAccessiblNameNoTabSelectedAndTabHighighted() {
+		setSelectedValue(null);
+		highlightNextTab(true);
+		assertEquals("Test Tab Panel: No Selected Tab: One highlighted",
+			gTabPanel.getAccessibleName());
+	}
+
+	@Test
+	public void testGetAccessiblNameTabSelectedAndTabHighighted() {
+		setSelectedValue("One");
+		highlightNextTab(true);
+		assertEquals("Test Tab Panel: One selected: Two highlighted",
+			gTabPanel.getAccessibleName());
 	}
 
 	private List<String> getHiddenTabs() {
@@ -210,6 +249,10 @@ public class GTabPanelTest extends AbstractDockingTest {
 		runSwing(() -> gTabPanel.selectTab(value));
 	}
 
+	private void highlightNextTab(boolean b) {
+		runSwing(() -> gTabPanel.highlightNextPreviousTab(b));
+	}
+
 	private void removeTab(String value) {
 		runSwing(() -> gTabPanel.removeTab(value));
 	}
@@ -220,6 +263,10 @@ public class GTabPanelTest extends AbstractDockingTest {
 
 	private String getSelectedValue() {
 		return runSwing(() -> gTabPanel.getSelectedTabValue());
+	}
+
+	private String getHighlightedValue() {
+		return runSwing(() -> gTabPanel.getHighlightedTabValue());
 	}
 
 	private String getValue(int i) {
