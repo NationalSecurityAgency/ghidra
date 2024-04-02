@@ -18,6 +18,7 @@ package ghidra.program.database.data;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 import ghidra.util.UniversalID;
@@ -42,14 +43,14 @@ class AddressModelDBAdapterV0 extends AddressModelDBAdapter {
 	/**
 	 * Gets a version 0 adapter for the Function Definition database table.
 	 * @param handle handle to the database containing the table.
-	 * @param openMode {@link DBConstants} value.
+	 * @param openMode {@link OpenMode} value.
 	 * @throws VersionException if the the table's version does not match the expected version
 	 * for this adapter.
 	 * @throws IOException if unable to create database table.
 	 */
-	public AddressModelDBAdapterV0(DBHandle handle, int openMode) throws VersionException, IOException {
+	public AddressModelDBAdapterV0(DBHandle handle, OpenMode openMode) throws VersionException, IOException {
 
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			table = handle.createTable(ADDRESS_MODEL_TABLE_NAME, V0_ADDRESS_MODEL_SCHEMA,
 				new int[] { V0_ADDRESS_MODEL_DT_ID_COL });
 		}

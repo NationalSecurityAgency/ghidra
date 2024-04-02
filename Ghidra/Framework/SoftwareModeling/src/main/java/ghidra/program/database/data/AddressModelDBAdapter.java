@@ -18,6 +18,7 @@ package ghidra.program.database.data;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -43,17 +44,17 @@ abstract class AddressModelDBAdapter {
 	 * @throws VersionException if the database handle's version doesn't match the expected version.
 	 * @throws IOException if there is trouble accessing the database.
 	 */
-	static AddressModelDBAdapter getAdapter(DBHandle handle, int openMode,
+	static AddressModelDBAdapter getAdapter(DBHandle handle, OpenMode openMode,
 			TaskMonitor monitor) throws VersionException, IOException {
 		try {
 			return new AddressModelDBAdapterV0(handle, openMode);
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			AddressModelDBAdapter adapter = findReadOnlyAdapter(handle);
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = upgrade(handle, adapter);
 			}
 			return adapter;
@@ -70,7 +71,7 @@ abstract class AddressModelDBAdapter {
 	static AddressModelDBAdapter findReadOnlyAdapter(DBHandle handle)
 			throws VersionException, IOException {
 		try {
-			return new AddressModelDBAdapterV0(handle, DBConstants.READ_ONLY);
+			return new AddressModelDBAdapterV0(handle, OpenMode.IMMUTABLE);
 		}
 		catch (VersionException e) {
 			if (!e.isUpgradable()) {
@@ -97,7 +98,7 @@ abstract class AddressModelDBAdapter {
 		long id = tmpHandle.startTransaction();
 		AddressModelDBAdapter tmpAdapter = null;
 		try {
-			tmpAdapter = new AddressModelDBAdapterV0(tmpHandle, DBConstants.CREATE);
+			tmpAdapter = new AddressModelDBAdapterV0(tmpHandle, OpenMode.CREATE);
 			RecordIterator it = oldAdapter.getRecords();
 			while (it.hasNext()) {
 				DBRecord rec = it.next();
@@ -105,7 +106,7 @@ abstract class AddressModelDBAdapter {
 			}
 			oldAdapter.deleteTable(handle);
 			AddressModelDBAdapterV0 newAdapter =
-				new AddressModelDBAdapterV0(handle, DBConstants.CREATE);
+				new AddressModelDBAdapterV0(handle, OpenMode.CREATE);
 			it = tmpAdapter.getRecords();
 			while (it.hasNext()) {
 				DBRecord rec = it.next();
