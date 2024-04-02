@@ -29,6 +29,7 @@ import ghidra.feature.vt.api.correlator.program.ImpliedMatchProgramCorrelator;
 import ghidra.feature.vt.api.correlator.program.ManualMatchProgramCorrelator;
 import ghidra.feature.vt.api.impl.*;
 import ghidra.feature.vt.api.main.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.program.database.DBObjectCache;

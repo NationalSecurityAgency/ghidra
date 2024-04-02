@@ -44,6 +44,7 @@ import utility.application.ApplicationLayout;
 
 public class BSimLaunchable implements GhidraLaunchable {
 
+	// BSim log4j config file resides at root of resource directory
 	private static final String BSIM_LOGGING_CONFIGURATION_FILE = "bsim.log4j.xml";
 
 	private static final int DEFAULT_LIST_EXE_LIMIT = 20;
@@ -1056,15 +1057,9 @@ public class BSimLaunchable implements GhidraLaunchable {
 		 */
 		System.setProperty(SystemUtilities.HEADLESS_PROPERTY, Boolean.TRUE.toString());
 
-		try {
-			URL configFileUrl =
-				BSimLaunchable.class.getClassLoader().getResource(BSIM_LOGGING_CONFIGURATION_FILE);
-			System.setProperty(LoggingInitialization.LOG4J2_CONFIGURATION_PROPERTY,
-				configFileUrl.toURI().toString());
-		}
-		catch (URISyntaxException e) {
-			System.err.println("ERROR: " + e.getMessage());
-		}
+		// Use BSim log config to ensure we get desired console output
+		System.setProperty(LoggingInitialization.LOG4J2_CONFIGURATION_PROPERTY,
+			BSIM_LOGGING_CONFIGURATION_FILE); 
 
 		ApplicationConfiguration config;
 		switch (type) {

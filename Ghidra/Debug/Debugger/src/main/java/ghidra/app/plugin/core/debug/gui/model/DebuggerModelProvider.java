@@ -51,6 +51,7 @@ import ghidra.app.plugin.core.debug.gui.model.ObjectTreeModel.*;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTreeModel.RootNode;
 import ghidra.app.plugin.core.debug.gui.model.PathTableModel.PathRow;
 import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.debug.api.model.DebuggerObjectActionContext;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.target.Target.ActionEntry;

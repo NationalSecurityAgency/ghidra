@@ -171,7 +171,7 @@ public class ProgramEmulationUtils {
 	 */
 	public static Set<TraceMemoryFlag> getRegionFlags(MemoryBlock block) {
 		Set<TraceMemoryFlag> result = EnumSet.noneOf(TraceMemoryFlag.class);
-		int mask = block.getPermissions();
+		int mask = block.getFlags();
 		if ((mask & MemoryBlock.READ) != 0) {
 			result.add(TraceMemoryFlag.READ);
 		}

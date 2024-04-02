@@ -222,9 +222,8 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 
 		DockingActionIf createFolderAction = getAction("Create Folder");
 		performAction(createFolderAction, getActionContext(), true);
-		waitForProgram(program);
 
-		setEditorText("test1");
+		waitForBusyTool(tool);
 
 		String currentText = setEditorText("test1");
 		assertEquals(newName, currentText);
@@ -258,7 +257,8 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 
 		DockingActionIf createFragmentAction = getAction("Create Fragment");
 		performAction(createFragmentAction, getActionContext(), true);
-		waitForProgram(program);
+
+		waitForBusyTool(tool);
 
 		String currentText = setEditorText("test1");
 		assertEquals(newName, currentText);
@@ -633,8 +633,7 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 
 		int row = getRowForPath(nodes[0].getTreePath());
 		Component comp = getCellRendererComponentForLeaf(nodes[0], row);
-		assertEquals(new GIcon(DnDTreeCellRenderer.VIEWED_FRAGMENT),
-			((JLabel) comp).getIcon());
+		assertEquals(new GIcon(DnDTreeCellRenderer.VIEWED_FRAGMENT), ((JLabel) comp).getIcon());
 	}
 
 	@Test
@@ -676,26 +675,22 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 
 		int row = getRowForPath(node.getTreePath());
 		Component comp = getCellRendererComponentForLeaf(node, row);
-		assertEquals(new GIcon(DnDTreeCellRenderer.VIEWED_FRAGMENT),
-			((JLabel) comp).getIcon());
+		assertEquals(new GIcon(DnDTreeCellRenderer.VIEWED_FRAGMENT), ((JLabel) comp).getIcon());
 
 		row = getRowForPath(n2.getTreePath());
 		comp = getCellRendererComponentForLeaf(n2, row);
-		assertEquals(new GIcon(DnDTreeCellRenderer.VIEWED_FRAGMENT),
-			((JLabel) comp).getIcon());
+		assertEquals(new GIcon(DnDTreeCellRenderer.VIEWED_FRAGMENT), ((JLabel) comp).getIcon());
 
 		setSelectionPaths(new TreePath[] { n2.getTreePath() });
 		setViewPaths(getSelectionPaths());
 
 		row = getRowForPath(n2.getTreePath());
 		comp = getCellRendererComponentForLeaf(n2, row);
-		assertEquals(new GIcon(DnDTreeCellRenderer.VIEWED_FRAGMENT),
-			((JLabel) comp).getIcon());
+		assertEquals(new GIcon(DnDTreeCellRenderer.VIEWED_FRAGMENT), ((JLabel) comp).getIcon());
 
 		row = getRowForPath(node.getTreePath());
 		getCellRendererComponentForLeaf(node, row);
-		assertEquals(new GIcon(DnDTreeCellRenderer.FRAGMENT),
-			((JLabel) comp).getIcon());
+		assertEquals(new GIcon(DnDTreeCellRenderer.FRAGMENT), ((JLabel) comp).getIcon());
 
 	}
 
@@ -737,8 +732,7 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		int row = getRowForPath(node.getTreePath());
 		Component comp = tree.getCellRenderer()
 				.getTreeCellRendererComponent(tree, node, true, false, true, row, false);
-		assertEquals(new GIcon(DnDTreeCellRenderer.CLOSED_FOLDER),
-			((JLabel) comp).getIcon());
+		assertEquals(new GIcon(DnDTreeCellRenderer.CLOSED_FOLDER), ((JLabel) comp).getIcon());
 	}
 
 	@Test

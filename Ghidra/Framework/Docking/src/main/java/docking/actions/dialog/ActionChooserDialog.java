@@ -59,6 +59,10 @@ public class ActionChooserDialog extends DialogComponentProvider {
 		addOKButton();
 		addCancelButton();
 		updateTitle();
+		setAccessibleDescription(
+			"This dialog initialy shows only locally relevant actions. Repeat initial keybinding " +
+				"to show More. Use up down arrows to scroll through list of actions and press" +
+				" enter to invoke selected action. Type text to filter list.");
 	}
 
 	@Override
@@ -86,14 +90,12 @@ public class ActionChooserDialog extends DialogComponentProvider {
 	 * @param dialog the DialogComponentProvider that has focus
 	 * @param context the ActionContext that is active and will be used to invoke the chosen action
 	 */
-	public ActionChooserDialog(Tool tool, DialogComponentProvider dialog,
-			ActionContext context) {
+	public ActionChooserDialog(Tool tool, DialogComponentProvider dialog, ActionContext context) {
 		this(dialog.getActions(), new HashSet<>(), context);
 	}
 
 	private ActionChooserDialog(Set<DockingActionIf> localActions,
-			Set<DockingActionIf> globalActions,
-			ActionContext context) {
+			Set<DockingActionIf> globalActions, ActionContext context) {
 		this(new ActionsModel(localActions, globalActions, context));
 	}
 
@@ -138,6 +140,7 @@ public class ActionChooserDialog extends DialogComponentProvider {
 
 	private JComponent buildMainPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
+		panel.setBorder(BorderFactory.createEmptyBorder(5, 2, 0, 2));
 		searchList = new SearchList<DockingActionIf>(model, (a, c) -> actionChosen(a)) {
 			@Override
 			protected BiPredicate<DockingActionIf, String> createFilter(String text) {
@@ -148,6 +151,8 @@ public class ActionChooserDialog extends DialogComponentProvider {
 		searchList.setSelectionCallback(this::itemSelected);
 		searchList.setInitialSelection();  // update selection after adding our listener
 		searchList.setItemRenderer(new ActionRenderer());
+		searchList.setDisplayNameFunction(
+			(t, c) -> getActionDisplayName(t, c) + " " + getKeyBindingString(t));
 		panel.add(searchList);
 		return panel;
 	}
@@ -156,14 +161,13 @@ public class ActionChooserDialog extends DialogComponentProvider {
 		if (!canPerformAction(action)) {
 			return;
 		}
-
+		ActionContext context = model.getContext();
 		close();
-		scheduleActionAfterFocusRestored(action);
+		scheduleActionAfterFocusRestored(action, context);
 	}
 
-	private void scheduleActionAfterFocusRestored(DockingActionIf action) {
+	private void scheduleActionAfterFocusRestored(DockingActionIf action, ActionContext context) {
 		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-		ActionContext context = model.getContext();
 		actionRunner = new ActionRunner(action, context);
 		kfm.addPropertyChangeListener("permanentFocusOwner", actionRunner);
 	}
@@ -171,6 +175,11 @@ public class ActionChooserDialog extends DialogComponentProvider {
 	// for testing
 	ActionRunner getActionRunner() {
 		return actionRunner;
+	}
+
+	// for testing
+	void selectAction(DockingActionIf action) {
+		searchList.setSelectedItem(action);
 	}
 
 	@Override

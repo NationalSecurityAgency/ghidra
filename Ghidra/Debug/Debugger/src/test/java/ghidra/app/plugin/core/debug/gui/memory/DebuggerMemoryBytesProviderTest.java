@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.memory;
 
-import static ghidra.lifecycle.Unfinished.*;
+import static ghidra.lifecycle.Unfinished.TODO;
 import static org.junit.Assert.*;
 
 import java.awt.*;
@@ -49,7 +49,7 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources.FollowsCurrentThreadAc
 import ghidra.app.plugin.core.debug.gui.action.*;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
-import ghidra.app.services.*;
+import ghidra.app.services.DebuggerControlService;
 import ghidra.async.SwingExecutorService;
 import ghidra.debug.api.control.ControlMode;
 import ghidra.debug.api.model.TraceRecorder;

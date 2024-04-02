@@ -40,4 +40,5 @@ public class GhidraTableFilterPanel<ROW_OBJECT> extends GTableFilterPanel<ROW_OB
 			String filterLabel) {
 		super(table, tableModel, filterLabel);
 	}
+
 }

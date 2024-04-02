@@ -98,7 +98,6 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		setIcon(VersionTrackingPluginPackage.ICON);
 		setDefaultWindowPosition(WindowPosition.TOP);
 		createActions();
-
 		component = createComponent();
 
 		setVisible(true);
@@ -219,13 +218,13 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 
 		matchesTable = createMatchesTable();
 		JPanel matchesTablePanel = new JPanel(new BorderLayout());
-
 		JPanel filterAreaPanel = createFilterArea();
 		matchesTablePanel.add(tablePanel, BorderLayout.CENTER);
 		matchesTablePanel.add(filterAreaPanel, BorderLayout.SOUTH);
-
 		JPanel parentPanel = new JPanel(new BorderLayout());
 		parentPanel.add(matchesTablePanel);
+
+		matchesTable.setAccessibleNamePrefix("Matches");
 
 		return parentPanel;
 	}
@@ -704,7 +703,7 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 				"should become ignored by applying a match.");
 
 		vtOptions.getOptions(APPLY_MARKUP_OPTIONS_NAME)
-				.registerOptionsEditor(new ApplyMarkupPropertyEditor(controller));
+				.registerOptionsEditor(() -> new ApplyMarkupPropertyEditor(controller));
 		vtOptions.getOptions(DISPLAY_APPLY_MARKUP_OPTIONS)
 				.setOptionsHelpLocation(
 					new HelpLocation("VersionTracking", "Apply Markup Options"));

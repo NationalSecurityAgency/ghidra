@@ -106,9 +106,18 @@ public class VersionTrackingPluginScreenShots extends GhidraScreenShotGenerator 
 	@After
 	@Override
 	public void tearDown() {
-		sourceProgram = null;
-		destinationProgram = null;
-		session = null;
+		if (sourceProgram != null) {
+			vtTestEnv.release(sourceProgram);
+			sourceProgram = null;
+		}
+		if (destinationProgram != null) {
+			vtTestEnv.release(destinationProgram);
+			destinationProgram = null;
+		}
+		if (session != null) {
+			session.release(vtTestEnv);
+			session = null;
+		}
 		controller = null;
 		correlator = null;
 		vtTestEnv.dispose();
@@ -910,11 +919,11 @@ public class VersionTrackingPluginScreenShots extends GhidraScreenShotGenerator 
 
 		// Set the Source
 		chooseProjectFile(dialogComponent, "SOURCE_BUTTON",
-			new String[] { "git_DevTestProject", "WallaceSrc" });
+			new String[] { "ghidra_DevTestProject", "WallaceSrc" });
 
 		// Set the Destination
 		chooseProjectFile(dialogComponent, "DESTINATION_BUTTON",
-			new String[] { "git_DevTestProject", "WallaceVersion2" });
+			new String[] { "ghidra_DevTestProject", "WallaceVersion2" });
 		waitForSwing();
 	}
 

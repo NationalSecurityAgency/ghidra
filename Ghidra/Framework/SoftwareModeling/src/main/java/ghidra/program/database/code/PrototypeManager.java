@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.database.util.DatabaseVersionException;
@@ -92,19 +93,19 @@ class PrototypeManager {
 	 * @throws VersionException thrown if the database version doesn't match this adapter version
 	 * @throws IOException if a database io error occurs.
 	 */
-	PrototypeManager(DBHandle dbHandle, AddressMap addrMap, int openMode, TaskMonitor monitor)
+	PrototypeManager(DBHandle dbHandle, AddressMap addrMap, OpenMode openMode, TaskMonitor monitor)
 			throws VersionException, IOException {
 
 		this.addrMap = addrMap;
 
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			createDBTables(dbHandle);
 			contextTable = dbHandle.createTable(CONTEXT_TABLE_NAME, REGISTER_SCHEMA);
 		}
 		findAdapters(dbHandle, openMode);
 		loadContextTable(dbHandle, openMode);
 
-		if (openMode == DBConstants.UPGRADE) {
+		if (openMode == OpenMode.UPGRADE) {
 			upgradeTable(dbHandle, monitor);
 		}
 // debug for enormous prototype problem
@@ -399,7 +400,7 @@ class PrototypeManager {
 
 	}
 
-	private void findAdapters(DBHandle handle, int openMode) throws VersionException {
+	private void findAdapters(DBHandle handle, OpenMode openMode) throws VersionException {
 		try {
 			protoAdapter = new ProtoDBAdapterV1(handle);
 			return;
@@ -410,18 +411,18 @@ class PrototypeManager {
 
 		protoAdapter = getOldAdapter(handle);
 
-		if (openMode == DBConstants.UPDATE) {
+		if (openMode == OpenMode.UPDATE) {
 			throw new VersionException(true);
 		}
 	}
 
-	private void loadContextTable(DBHandle dbHandle, int openMode)
+	private void loadContextTable(DBHandle dbHandle, OpenMode openMode)
 			throws VersionException, IOException {
 		contextTable = dbHandle.getTable(CONTEXT_TABLE_NAME);
 		if (contextTable == null) {
 			contextTable = dbHandle.createTable(CONTEXT_TABLE_NAME, REGISTER_SCHEMA);
 		}
-		if ((openMode == DBConstants.UPDATE) &&
+		if ((openMode == OpenMode.UPDATE) &&
 			(contextTable.getSchema().getVersion() != CURRENT_CONTEXT_VERSION)) {
 			throw new VersionException(true);
 		}

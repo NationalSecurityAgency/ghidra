@@ -362,7 +362,7 @@
       		bit-size is generally appended to the base datatype for datatype specification and 
       		presentation purposes (e.g., char:1).</li>
       		<li>A zero-length bitfield may be defined within a byte but its precise bit position
-      		is controlled by endianess alone.  A zero-length bitfield has no affect within a non-packed
+      		is controlled by endianness alone.  A zero-length bitfield has no affect within a non-packed
       		structure and is intended for use within packed structures where it may impart alignment
       		affects based upon compiler conventions.</li> 
       		<li>Inserting a bitfield within a non-packed structure may cause component shifts based 
@@ -382,7 +382,7 @@
     
     <P><IMG alt="Note:" src="help/shared/note.png">While packing of bitfields within packed 
     structures is controlled by the compiler specification (e.g., data organization), bit-packing
-    order is currently fixed based upon endianess.  Little-endian packs starting with bit-0 (lsb)
+    order is currently fixed based upon endianness.  Little-endian packs starting with bit-0 (lsb)
     while big-endian packs starting with bit-7 (msb).</P>
     
     <P><IMG alt="Note:" src="help/shared/note.png">The use of bitfield components is not 

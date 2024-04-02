@@ -18,6 +18,7 @@ package docking.widgets.table;
 import static docking.DockingUtils.*;
 import static docking.action.MenuData.*;
 import static java.awt.event.InputEvent.*;
+import static javax.swing.ListSelectionModel.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -407,6 +408,24 @@ public class GTable extends JTable {
 	 */
 	public boolean areActionsEnabled() {
 		return enableActionKeyBindings;
+	}
+
+	/**
+	 * Sets an accessible name on the GTable such that screen readers will properly describe them.
+	 * <P>
+	 * This prefix should be the base name that describes the type of items in the table. 
+	 * This method will then append the necessary information to property name the table.
+	 *
+	 * @param namePrefix the accessible name prefix to assign to the filter component. For
+	 * example if the table contains fruits, then "Fruits" would be an appropriate prefix name.
+	 */
+	public void setAccessibleNamePrefix(String namePrefix) {
+		// set the component name as general good practice
+		setName(namePrefix + " Table");
+
+		// screen reader reads the accessible name followed by the role ("table" in this case)
+		// so don't append "Table" to the accessible name
+		getAccessibleContext().setAccessibleName(namePrefix);
 	}
 
 	/**
@@ -1158,28 +1177,29 @@ public class GTable extends JTable {
 
 	private void copyColumns(int... copyColumns) {
 
-		int[] originalColumns = new int[0];
-		boolean wasAllowed = getColumnSelectionAllowed();
-		if (wasAllowed) {
-			originalColumns = getSelectedColumns();
-		}
-
-		setColumnSelectionAllowed(true);
-		setSelectedColumns(copyColumns);
+		//
+		// We have to change the column model's selection settings to ensure that the copy works
+		// correctly.  For example, if the model only allows single column selection, then we have
+		// to change that to allow for multiple column selection.  We will put the original state
+		// back when finished.
+		//
+		ColumnSelectionState originalState = ColumnSelectionState.copy(this);
+		ColumnSelectionState newState = ColumnSelectionState.withColumns(this, copyColumns);
+		newState.apply();
 
 		copying = true;
 		try {
-
 			Action builtinCopyAction = TransferHandler.getCopyAction();
 			builtinCopyAction.actionPerformed(new ActionEvent(GTable.this, 0, "copy"));
 		}
 		finally {
 			copying = false;
-
-			// put back whatever selection existed before this action was executed
-			setSelectedColumns(originalColumns);
-			setColumnSelectionAllowed(wasAllowed);
+			originalState.apply(); // put back column model's original selection state
 		}
+	}
+
+	private int getColumnSelectionMode() {
+		return getColumnModel().getSelectionModel().getSelectionMode();
 	}
 
 	private void setSelectedColumns(int[] columns) {
@@ -1441,6 +1461,42 @@ public class GTable extends JTable {
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
+
+	/**
+	 * A class that captures attribute of the table's column model so that we can change and then
+	 * restore those values.
+	 */
+	private static class ColumnSelectionState {
+		private GTable table;
+		private boolean selectionAllowed;
+		private int[] selectedColumns;
+		private int selectionMode;
+
+		ColumnSelectionState(GTable table, boolean selectionAllowed, int selectionMode,
+				int[] selectedColumns) {
+			this.table = table;
+			this.selectionAllowed = selectionAllowed;
+			this.selectedColumns = selectedColumns;
+			this.selectionMode = selectionMode;
+		}
+
+		void apply() {
+			table.getColumnModel().getSelectionModel().setSelectionMode(selectionMode);
+			table.setColumnSelectionAllowed(selectionAllowed);
+			table.setSelectedColumns(selectedColumns);
+		}
+
+		static ColumnSelectionState withColumns(GTable table, int[] columns) {
+			return new ColumnSelectionState(table, true, MULTIPLE_INTERVAL_SELECTION, columns);
+		}
+
+		static ColumnSelectionState copy(GTable table) {
+			int[] columns = table.getSelectedColumns();
+			boolean allowed = table.getColumnSelectionAllowed();
+			int mode = table.getColumnSelectionMode();
+			return new ColumnSelectionState(table, allowed, mode, columns);
+		}
+	}
 
 	private class MyTableColumnModelListener implements TableColumnModelListener {
 		@Override

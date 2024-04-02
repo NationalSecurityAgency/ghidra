@@ -176,6 +176,11 @@ public class DBTraceObjectThread implements TraceObjectThread, DBTraceObjectInte
 	}
 
 	@Override
+	public boolean isValid(long snap) {
+		return object.getCanonicalParent(snap) != null;
+	}
+
+	@Override
 	public TraceChangeRecord<?, ?> translateEvent(TraceChangeRecord<?, ?> rec) {
 		return translator.translate(rec);
 	}

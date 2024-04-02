@@ -407,6 +407,10 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		watchFilterPanel = new GhidraTableFilterPanel<>(watchTable, watchTableModel);
 		mainPanel.add(watchFilterPanel, BorderLayout.SOUTH);
 
+		String namePrefix = "Watches";
+		watchTable.setAccessibleNamePrefix(namePrefix);
+		watchFilterPanel.setAccessibleNamePrefix(namePrefix);
+
 		watchTable.getSelectionModel().addListSelectionListener(evt -> {
 			if (evt.getValueIsAdjusting()) {
 				return;

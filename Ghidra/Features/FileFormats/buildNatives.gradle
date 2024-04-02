@@ -1,0 +1,88 @@
+/* ###
+ * IP: GHIDRA
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// Native build files are already applied in development mode (indicated by presence of the
+// Generic project).  Only need to apply them if we are in a distribution.
+if (findProject(':Generic') == null) {
+	// running from within Ghidra install
+	apply from: "../../../GPL/utils.gradle"
+	apply from: "../../../GPL/nativePlatforms.gradle"
+	apply from: "../../../GPL/nativeBuildProperties.gradle"
+}
+
+model {
+	components {
+		lzfse(NativeExecutableSpec) {
+			baseName "lzfse"
+			
+			targetPlatform "win_x86_64"
+			targetPlatform "linux_x86_64"
+			targetPlatform "linux_arm_64"
+			targetPlatform "mac_x86_64"
+			targetPlatform "mac_arm_64"
+			targetPlatform "freebsd_x86_64"
+			targetPlatform "freebsd_arm_64"
+		
+			sources {
+				c {
+					source {
+						srcDir "src/lzfse/c"
+						include "lzfse_encode.c"
+						include "lzfse_decode.c"
+						include "lzfse_encode_base.c"
+						include "lzfse_decode_base.c"
+						include "lzvn_encode_base.c"
+						include "lzvn_decode_base.c"
+						include "lzfse_fse.c"
+						include "lzfse_main.c"
+					}
+				}
+			}
+		}
+	}
+	
+	binaries {
+		all{ b ->
+			if (b.toolChain in Gcc) {
+				b.cCompiler.args "-std=c99"
+				b.cCompiler.args "-Wall"
+				b.cCompiler.args "-O2"
+				if (b.targetPlatform.operatingSystem.linux) {
+					b.cCompiler.define "LINUX"
+					b.cCompiler.define "_LINUX"
+				}
+			}
+		 	else if (b.toolChain in VisualCpp) {
+				if (b.targetPlatform.operatingSystem.windows) {
+					b.cCompiler.define "WINDOWS"
+					b.cCompiler.define "_WINDOWS"
+					b.cCompiler.define "WIN32"
+					b.cCompiler.define "_WIN32"
+					if (b.targetPlatform.name == "win_x86_64") {
+						b.cCompiler.define "WIN64"
+						b.cCompiler.define "_WIN64"
+					}	
+				}
+				b.cCompiler.args "/O2"
+			}
+			else if (b.toolChain in Clang) {
+				b.cCompiler.args "-std=c99"
+				b.cCompiler.args "-Wall"
+				b.cCompiler.args "-O2"
+			}
+		}
+	}
+}

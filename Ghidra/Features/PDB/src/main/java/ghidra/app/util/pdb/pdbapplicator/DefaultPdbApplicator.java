@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 
@@ -26,6 +25,8 @@ import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
+import ghidra.app.plugin.core.analysis.TransientProgramProperties;
+import ghidra.app.plugin.core.analysis.TransientProgramProperties.SCOPE;
 import ghidra.app.util.*;
 import ghidra.app.util.bin.format.pdb.PdbParserConstants;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
@@ -50,20 +51,23 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * The main engine for applying an AbstractPdb to Ghidra, whether a Program or DataTypeManager.
- * The class is to be constructed first.
+ * The class is to be constructed first with {@link Program} and/or {@link DataTypeManager}.
+ * Either, but not both can be null.  If the Program is not null but the DatatypeManager is null,
+ *  then the DataTypeManager is gotten from the Program.  If the Program is null, then data types
+ *  can be applied to a DataTypeManager.
  * <p>
- * The
- * {@link #applyTo(Program, DataTypeManager, Address, PdbApplicatorOptions, MessageLog)} method is
- * then called with the appropriate {@link PdbApplicatorOptions} along with
- * a {@link Program} and/or {@link DataTypeManager}.  Either, but not both can be null.
- * If the Program is not null but the DatatypeManager is null, then the DataTypeManager is gotten
- * from the Program.  If the Program is null, then data types can be applied to a DataTypeManager.
- * The validation logic for the parameters is found in
- * {@link #validateAndSetParameters(Program, DataTypeManager, Address, PdbApplicatorOptions,
- * MessageLog)}.
+ * The validation logic for the parameters is found in {@link #validateAndSetParameters(Program,
+ *  DataTypeManager, Address, PdbApplicatorOptions, MessageLog)}.
  * <p>
  * Once the parameters are validated, appropriate classes and storage containers are constructed.
- * Then processing commences, first with data types, followed by symbol-related processing.
+ * <p>
+ * Then the user either calls a series of methods if processing is done under an analysis state
+ *  or the user calls a different single method if not running as analysis.
+ * For analysis, the methods to use are {@link #applyDataTypesAndMainSymbolsAnalysis()},
+ *  {@link #applyFunctionInternalsAnalysis()}, and {@link #applyAnalysisReporting(Program)}.
+ *  For non-analysis state the method to use is {@link #applyNoAnalysisState()}.
+ * <p>
+ * Processing commences, first with data types, followed by symbol-related processing.
  * <p>
  * {@link PdbApplicatorMetrics} are captured during the processing and status and logging is
  * reported to various mechanisms including {@link Msg}, {@link MessageLog}, and {@link PdbLog}.
@@ -71,6 +75,62 @@ import ghidra.util.task.TaskMonitor;
 public class DefaultPdbApplicator implements PdbApplicator {
 
 	private static final String THUNK_NAME_PREFIX = "[thunk]:";
+
+	//==============================================================================================
+
+	private static final String PDB_ANALYSIS_LOOKUP_STATE = "PDB_UNIVERSAL_ANALYSIS_STATE";
+
+	/**
+	 * Analysis state for items that need to be passed from the first PDB analysis phase to
+	 *  subsequent PDB analysis phase(s).
+	 */
+	static class PdbUniversalAnalysisState {
+
+		private PdbApplicatorMetrics pdbApplicatorMetrics; // Required
+		private Map<RecordNumber, DataType> dataTypeByMsTypeNum; // Required
+		private Map<RecordNumber, CppCompositeType> classTypeByMsTypeNum; // Move to program state
+		private PdbAddressManager pdbAddressManager; // Could recreate each time
+		private ComplexTypeMapper complexTypeMapper; // Could recreate each time
+
+		PdbUniversalAnalysisState() {
+			pdbApplicatorMetrics = new PdbApplicatorMetrics();
+			dataTypeByMsTypeNum = new HashMap<>();
+			classTypeByMsTypeNum = new HashMap<>();
+			pdbAddressManager = new PdbAddressManager();
+			complexTypeMapper = new ComplexTypeMapper();
+		}
+
+		PdbApplicatorMetrics getPdbApplicatorMetrics() {
+			return pdbApplicatorMetrics;
+		}
+
+		PdbAddressManager getPdbAddressManager() {
+			return pdbAddressManager;
+		}
+
+		ComplexTypeMapper getComplexTypeMapper() {
+			return complexTypeMapper;
+		}
+
+		Map<RecordNumber, DataType> getDataTypeByMsTypeNumMap() {
+			return dataTypeByMsTypeNum;
+		}
+
+		Map<RecordNumber, CppCompositeType> getClassTypeByMsTypeNumMap() {
+			return classTypeByMsTypeNum;
+		}
+	}
+
+	public static PdbUniversalAnalysisState getPdbAnalysisLookupState(Program program,
+			boolean asAnalysis) {
+		if (program == null || !asAnalysis) {
+			return new PdbUniversalAnalysisState();
+		}
+		PdbUniversalAnalysisState pdbAnalysisLookupState = TransientProgramProperties.getProperty(
+			program, PDB_ANALYSIS_LOOKUP_STATE, SCOPE.ANALYSIS_SESSION,
+			PdbUniversalAnalysisState.class, () -> new PdbUniversalAnalysisState());
+		return pdbAnalysisLookupState;
+	}
 
 	//==============================================================================================
 	/**
@@ -109,6 +169,8 @@ public class DefaultPdbApplicator implements PdbApplicator {
 
 	//==============================================================================================
 	private AbstractPdb pdb;
+
+	private PdbUniversalAnalysisState pdbAnalysisLookupState;
 
 	private PdbApplicatorMetrics pdbApplicatorMetrics;
 
@@ -169,24 +231,14 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	private Map<Integer, Set<RecordNumber>> recordNumbersByModuleNumber;
 
 	//==============================================================================================
-	// Addresses of locations of functions for disassembly/function-creation.
-	AddressSet disassembleAddresses;
-	List<DeferrableFunctionSymbolApplier> deferredFunctionWorkAppliers;
-
-	//==============================================================================================
 	private int currentModuleNumber = 0;
 
 	//==============================================================================================
-	public DefaultPdbApplicator(AbstractPdb pdb) {
-		Objects.requireNonNull(pdb, "pdb cannot be null");
-		this.pdb = pdb;
-	}
-
-	//==============================================================================================
-	//==============================================================================================
 	/**
+	 * Constructor for DefaultPdbApplicator.
 	 * Applies the PDB to the {@link Program} or {@link DataTypeManager}. Either, but not both,
 	 * can be null
+	 * @param pdb the parsed PDB to apply
 	 * @param programParam the {@link Program} to which to apply the PDB. Can be null in certain
 	 * circumstances
 	 * @param dataTypeManagerParam the {@link DataTypeManager} to which to apply data types. Can be
@@ -196,21 +248,98 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	 * @param applicatorOptionsParam {@link PdbApplicatorOptions} used for applying the PDB
 	 * @param logParam the MessageLog to which to output messages
 	 * @throws PdbException if there was a problem processing the data
-	 * @throws CancelledException upon user cancellation
-	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes
 	 */
-	public void applyTo(Program programParam, DataTypeManager dataTypeManagerParam,
-			Address imageBaseParam, PdbApplicatorOptions applicatorOptionsParam,
-			MessageLog logParam) throws PdbException, CancelledException, IOException {
+	public DefaultPdbApplicator(AbstractPdb pdb, Program programParam,
+			DataTypeManager dataTypeManagerParam, Address imageBaseParam,
+			PdbApplicatorOptions applicatorOptionsParam, MessageLog logParam) throws PdbException {
+
+		Objects.requireNonNull(pdb, "pdb cannot be null");
+		this.pdb = pdb;
 
 		// FIXME: should not support use of DataTypeManager-only since it will not have the correct
 		// data organization if it corresponds to a data type archive.  Need to evaluate archive
 		// use case and determine if a program must always be used.
 
-		initializeApplyTo(programParam, dataTypeManagerParam, imageBaseParam,
-			applicatorOptionsParam, logParam);
+		initialize(programParam, dataTypeManagerParam, imageBaseParam, applicatorOptionsParam,
+			logParam);
+	}
 
+	//==============================================================================================
+	//==============================================================================================
+	/**
+	 * First of the PDB analysis phases.  This phase creates data types and also lays down public
+	 *  symbols and some global symbols pertaining to functions, but not necessarily the global
+	 *  symbols pertaining to block scopes, local variables, and parameters.  See other methods
+	 *  below.
+	 * @throws PdbException upon error processing the PDB
+	 * @throws CancelledException upon user cancellation
+	 */
+	public void applyDataTypesAndMainSymbolsAnalysis()
+			throws PdbException, CancelledException {
+		pdbAnalysisLookupState = getPdbAnalysisLookupState(program, true);
+		doPdbPreWork();
+		doPdbTypesAndMainSymbolsWork();
+		// Flag is set after the first phase... additional phases might not have been run.
+		//  If it is determined that other analyzers need to know if work from follow-on phases
+		//  have been completed, then we will possibly need to set another flag or have more
+		//  that true/false values for this flag (maybe tri-state).
+		// Also see applyNoAnalysisState()
+		if (program != null) {
+			Options options = program.getOptions(Program.PROGRAM_INFO);
+			options.setBoolean(PdbParserConstants.PDB_LOADED, true);
+		}
+	}
+
+	/**
+	 * Follow-on PDB analysis phase method that intends to figure out block scopes, local
+	 *  variables, and parameters for functions.  This should be called only after code processing
+	 *  has been completed for the program.
+	 * @throws PdbException upon error processing the PDB
+	 * @throws CancelledException upon user cancellation
+	 */
+	public void applyFunctionInternalsAnalysis()
+			throws PdbException, CancelledException {
+		pdbAnalysisLookupState = getPdbAnalysisLookupState(program, true);
+		doPdbPreWork();
+		doPdbFunctionInternalsWork();
+	}
+
+	/**
+	 * Does final applicator reporting, including metrics
+	 * @param program the program
+	 * @throws CancelledException upon user cancellation
+	 */
+	public static void applyAnalysisReporting(Program program) throws CancelledException {
+		PdbUniversalAnalysisState state = getPdbAnalysisLookupState(program, true);
+		doReports(state);
+	}
+
+	/**
+	 * This method can be used instead of the multi-phased analysis methods.  Generally, this
+	 *  method should only be used when not processing in an analysis state.  It does work of
+	 *  some other analyzers (the disassembly phase).
+	 * @throws PdbException upon error processing the PDB
+	 * @throws CancelledException upon user cancellation
+	 */
+	public void applyNoAnalysisState() throws PdbException, CancelledException {
+		pdbAnalysisLookupState = getPdbAnalysisLookupState(program, false);
+		doPdbPreWork();
+		doPdbTypesAndMainSymbolsWork();
+		doDisassemblyWork();
+		doPdbFunctionInternalsWork();
+		doReports(pdbAnalysisLookupState);
+		// Setting flag that indicates that PDB has been loaded.  The flag is also set by a
+		//  different method that is intended to be called when processing is done under the
+		//  auspices of an analysis state, whereas this method that also sets the flag does so
+		//  for non-analysis state processing.
+		if (program != null) {
+			Options options = program.getOptions(Program.PROGRAM_INFO);
+			options.setBoolean(PdbParserConstants.PDB_LOADED, true);
+		}
+	}
+
+	//==============================================================================================
+	private void doPdbTypesAndMainSymbolsWork() throws PdbException, CancelledException {
 		switch (applicatorOptions.getProcessingControl()) {
 			case DATA_TYPES_ONLY:
 				processTypes();
@@ -226,34 +355,46 @@ public class DefaultPdbApplicator implements PdbApplicator {
 				throw new PdbException("PDB: Invalid Application Control: " +
 					applicatorOptions.getProcessingControl());
 		}
-
-		if (program != null) {
-			// TODO: if I'm PDB Universal Analyzer #1, schedule PDD Universal Analyzer #2; for now,
-			//  just calling doDeferred here.
-			doDeferredProgramProcessing();
-			// Mark PDB analysis as complete.
-			Options options = program.getOptions(Program.PROGRAM_INFO);
-			options.setBoolean(PdbParserConstants.PDB_LOADED, true);
-		}
-
-		pdbAddressManager.logReport();
-
-		pdbApplicatorMetrics.logReport();
-
-		Msg.info(this, "PDB Terminated Normally");
+		Msg.info(this, "PDB Types and Main Symbols Processing Terminated Normally");
 	}
 
-	//==============================================================================================
-	private void doDeferredProgramProcessing() throws CancelledException, PdbException {
-		disassembleFunctions();
-		doDeferredFunctionProcessing();
+	private void doDisassemblyWork() throws PdbException, CancelledException {
+		if (program != null) {
+			disassembleFunctions();
+		}
+		Msg.info(this, "PDB Disassembly Terminated Normally");
+	}
+
+	private void doPdbFunctionInternalsWork() throws PdbException, CancelledException {
+		if (program != null) {
+			doDeferredFunctionProcessing();
+//			Options options = program.getOptions(Program.PROGRAM_INFO);
+//			options.setBoolean(PdbParserConstants.PDB_LOADED, true);
+		}
+//		// Where/when? Split up? reporting... mixed info... depends on what is carried in analysis
+//		//  state: applicator, pdb, etc.  If not applicator... then each has separate report
+//		//  unless PdbApplicatorMetrics is put into the state... and then what happens if we
+//		//  never kick off the second phase?  Do we need a final phase to do the reporting?
+//		pdbAddressManager.logReport();
+//		pdbApplicatorMetrics.logReport();
+		Msg.info(this, "PDB Function Internals Processing Terminated Normally");
+	}
+
+	private static void doReports(PdbUniversalAnalysisState state) throws CancelledException {
+		Msg.info(DefaultPdbApplicator.class, "PDB Applicator Reporting");
+		state.getPdbAddressManager().logReport();
+		state.getPdbApplicatorMetrics().logReport();
+		Msg.info(DefaultPdbApplicator.class, "PDB Applicator Reporting Terminated Normally");
 	}
 
 	//==============================================================================================
 	/**
 	 * Set the context for each function, disassemble them, and then do fix-ups
+	 * @throws PdbException upon issue gathering the data
 	 */
-	private void disassembleFunctions() throws CancelledException {
+	private void disassembleFunctions() throws PdbException, CancelledException {
+
+		AddressSet disassembleAddresses = gatherAddressesForDisassembly();
 
 		TaskMonitor monitor = getMonitor();
 		Listing listing = program.getListing();
@@ -303,11 +444,6 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		}
 		doDeferredProcessGlobalSymbolsNoTypedefs();
 		doDeferredProcessModuleSymbols();
-//
-//		for (DeferrableFunctionSymbolApplier applier : deferredFunctionWorkAppliers) {
-//			cancelOnlyWrappingMonitor.checkCancelled();
-//			applier.doDeferredProcessing();
-//		}
 	}
 
 	//==============================================================================================
@@ -418,57 +554,63 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	//==============================================================================================
 	/**
 	 * Initializes helper classes and data items used for applying the PDB
-	 * @throws CancelledException upon user cancellation
 	 * @throws PdbException upon error in processing components
-	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes
 	 */
-	private void initializeApplyTo(Program programParam, DataTypeManager dataTypeManagerParam,
+	private void initialize(Program programParam, DataTypeManager dataTypeManagerParam,
 			Address imageBaseParam, PdbApplicatorOptions applicatorOptionsParam,
-			MessageLog logParam) throws PdbException, CancelledException, IOException {
+			MessageLog logParam) throws PdbException {
 
 		validateAndSetParameters(programParam, dataTypeManagerParam, imageBaseParam,
 			applicatorOptionsParam, logParam);
 
 		cancelOnlyWrappingMonitor = new CancelOnlyWrappingTaskMonitor(getMonitor());
-		pdbApplicatorMetrics = new PdbApplicatorMetrics();
 
 		pdbPeHeaderInfoManager = new PdbPeHeaderInfoManager(this);
 
-		symbolGroups = createSymbolGroups();
-		linkerModuleNumber = findLinkerModuleNumber();
-
-		pdbAddressManager = new PdbAddressManager(this, imageBase);
-
-		categoryUtils = setPdbCatogoryUtils(pdb.getFilename());
 		multiphaseResolver = new MultiphaseDataTypeResolver(this);
 		pdbPrimitiveTypeApplicator = new PdbPrimitiveTypeApplicator(dataTypeManager);
-		dataTypeByMsTypeNum = new HashMap<>();
-		classTypeByMsTypeNum = new HashMap<>();
-		complexTypeMapper = new ComplexTypeMapper();
+
 		typeApplierParser = new TypeApplierFactory(this);
 		isClassByNamespace = new TreeMap<>();
 
 		symbolApplierParser = new SymbolApplierFactory(this);
-
-		if (program != null) {
-			disassembleAddresses = new AddressSet();
-			deferredFunctionWorkAppliers = new ArrayList<>();
-			// Currently, this must happen after symbolGroups are created.
-			PdbVbtManager pdbVbtManager = new PdbVbtManager(this);
-			//pdbVbtManager.CreateVirtualBaseTables(); // Depends on symbolGroups
-			vbtManager = pdbVbtManager;
-			registerNameToRegisterMapper = new PdbRegisterNameToProgramRegisterMapper(program);
-		}
-		else {
-			vbtManager = new VbtManager(getDataTypeManager());
-		}
 
 		// Investigations
 		labelsByAddress = new HashMap<>();
 		// Investigations into source/line info
 		recordNumbersByFileName = new HashMap<>();
 		recordNumbersByModuleNumber = new HashMap<>();
+	}
+
+	/**
+	 * Does some basic work based on the PDB and other parameters.  This work can be redone
+	 *  for each analysis phase (results should not differ)
+	 * @throws CancelledException upon user cancellation
+	 * @throws PdbException upon error in processing components
+	 */
+	private void doPdbPreWork() throws CancelledException, PdbException {
+
+		pdbApplicatorMetrics = pdbAnalysisLookupState.getPdbApplicatorMetrics();
+		pdbAddressManager = pdbAnalysisLookupState.getPdbAddressManager();
+		complexTypeMapper = pdbAnalysisLookupState.getComplexTypeMapper();
+		dataTypeByMsTypeNum = pdbAnalysisLookupState.getDataTypeByMsTypeNumMap();
+		classTypeByMsTypeNum = pdbAnalysisLookupState.getClassTypeByMsTypeNumMap();
+
+		if (!pdbAddressManager.isInitialized()) {
+			pdbAddressManager.initialize(this, imageBase);
+		}
+		categoryUtils = setPdbCatogoryUtils(pdb.getFilename());
+		symbolGroups = createSymbolGroups();
+		linkerModuleNumber = findLinkerModuleNumber();
+		if (program != null) {
+			// Currently, this must happen after symbolGroups are created.
+			PdbVbtManager pdbVbtManager = new PdbVbtManager(this);
+			vbtManager = pdbVbtManager;
+			registerNameToRegisterMapper = new PdbRegisterNameToProgramRegisterMapper(program);
+		}
+		else {
+			vbtManager = new VbtManager(getDataTypeManager());
+		}
 	}
 
 	private void validateAndSetParameters(Program programParam,
@@ -846,7 +988,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		if (dt != null) {
 			return dt;
 		}
-		multiphaseResolver.scheduleTodo(recordNumber);
+		multiphaseResolver.scheduleTodo(mappedNumber);
 		return null;
 	}
 
@@ -1135,18 +1277,12 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		return myFunction;
 	}
 
-	//==============================================================================================
-//	void scheduleDeferredFunctionWork(DeferrableFunctionSymbolApplier applier) {
-//		// Not using normalized address is OK, as we should have already set the context and
-//		//  used the normalized address when creating the one-byte function
-//		disassembleAddresses.add(applier.getAddress());
-//		//deferredFunctionWorkAppliers.add(applier);
-//	}
-//
-	void scheduleDisassembly(Address address) {
-		// Not using normalized address is OK, as we should have already set the context and
-		//  used the normalized address when creating the one-byte function
-		disassembleAddresses.add(address);
+	Function getExistingFunction(Address address) {
+		if (program == null) {
+			return null;
+		}
+		// TODO: do we have to have normalized function address to retrieve (see method above)
+		return program.getListing().getFunctionAt(address);
 	}
 
 	//==============================================================================================
@@ -1350,6 +1486,48 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		processSymbolGroup(0, iter);
 	}
 
+	private AddressSet gatherAddressesForDisassembly() throws CancelledException, PdbException {
+		if (program == null) {
+			return null;
+		}
+		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		int num = debugInfo.getNumModules();
+		TaskMonitor monitor = getMonitor();
+		monitor.setMessage("PDB: Deferred-applying module symbol components...");
+		monitor.initialize(num + 1); // add one because we doing 0 through num, inclusive
+		AddressSet addresses = new AddressSet();
+		// Process symbols list for each module
+		// moduleNumber = 0 is for global symbols
+		for (int moduleNumber = 0; moduleNumber <= num; moduleNumber++) {
+			monitor.checkCancelled();
+			setCurrentModuleNumber(moduleNumber);
+			// Process module symbols list
+			SymbolGroup symbolGroup = getSymbolGroupForModule(moduleNumber);
+			if (symbolGroup != null) {
+				MsSymbolIterator iter = symbolGroup.getSymbolIterator();
+				addresses.add(getDisassembleAddressForModule(moduleNumber, iter));
+			}
+			monitor.increment();
+		}
+		return addresses;
+	}
+
+	AddressSet getDisassembleAddressForModule(int moduleNumber, MsSymbolIterator iter)
+			throws CancelledException {
+		iter.initGet();
+		TaskMonitor monitor = getMonitor();
+		AddressSet addresses = new AddressSet();
+		while (iter.hasNext()) {
+			monitor.checkCancelled();
+			MsSymbolApplier applier = getSymbolApplier(iter);
+			if (applier instanceof DisassembleableAddressSymbolApplier disassembleApplier) {
+				addresses.add(disassembleApplier.getAddressForDisassembly());
+			}
+			iter.next();
+		}
+		return addresses;
+	}
+
 	//==============================================================================================
 	int getCurrentModuleNumber() {
 		return currentModuleNumber;
@@ -1359,39 +1537,26 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		currentModuleNumber = moduleNumber;
 	}
 
+	//==============================================================================================
 	private void doDeferredProcessModuleSymbols() throws CancelledException, PdbException {
 		PdbDebugInfo debugInfo = pdb.getDebugInfo();
 		if (debugInfo == null) {
 			return;
 		}
-
-		int totalCount = 0;
-		int num = debugInfo.getNumModules();
 		TaskMonitor monitor = getMonitor();
-		for (int moduleNumber = 1; moduleNumber <= num; moduleNumber++) {
-			monitor.checkCancelled();
-			SymbolGroup symbolGroup = getSymbolGroupForModule(moduleNumber);
-			if (symbolGroup == null) {
-				continue; // should not happen
-			}
-			totalCount++;
-			//totalCount += symbolGroup.size();
-		}
 		monitor.setMessage("PDB: Deferred-applying module symbol components...");
-		//monitor.setMessage("PDB: Applying " + totalCount + " module symbol components...");
-		monitor.initialize(totalCount);
-
+		int num = debugInfo.getNumModules();
+		monitor.initialize(num);
 		// Process symbols list for each module
 		for (int moduleNumber = 1; moduleNumber <= num; moduleNumber++) {
 			monitor.checkCancelled();
 			setCurrentModuleNumber(moduleNumber);
 			// Process module symbols list
 			SymbolGroup symbolGroup = getSymbolGroupForModule(moduleNumber);
-			if (symbolGroup == null) {
-				continue; // should not happen
+			if (symbolGroup != null) {
+				MsSymbolIterator iter = symbolGroup.getSymbolIterator();
+				doDeferredModuleSymbolGroup(moduleNumber, iter);
 			}
-			MsSymbolIterator iter = symbolGroup.getSymbolIterator();
-			doDeferredModuleSymbolGroup(moduleNumber, iter);
 			monitor.increment();
 		}
 	}
@@ -1414,60 +1579,30 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		}
 	}
 
+	//==============================================================================================
 	private void processModuleSymbols() throws CancelledException, PdbException {
 		PdbDebugInfo debugInfo = pdb.getDebugInfo();
 		if (debugInfo == null) {
 			return;
 		}
-
-		int totalCount = 0;
 		int num = debugInfo.getNumModules();
 		TaskMonitor monitor = getMonitor();
-		for (int moduleNumber = 1; moduleNumber <= num; moduleNumber++) {
-			monitor.checkCancelled();
-			SymbolGroup symbolGroup = getSymbolGroupForModule(moduleNumber);
-			if (symbolGroup == null) {
-				continue; // should not happen
-			}
-			totalCount++;
-			//totalCount += symbolGroup.size();
-		}
 		monitor.setMessage("PDB: Applying module symbol components...");
-		//monitor.setMessage("PDB: Applying " + totalCount + " module symbol components...");
-		monitor.initialize(totalCount);
-
+		monitor.initialize(num);
 		// Process symbols list for each module
 		for (int moduleNumber = 1; moduleNumber <= num; moduleNumber++) {
 			monitor.checkCancelled();
 			setCurrentModuleNumber(moduleNumber);
 			// Process module symbols list
 			SymbolGroup symbolGroup = getSymbolGroupForModule(moduleNumber);
-			if (symbolGroup == null) {
-				continue; // should not happen
+			if (symbolGroup != null) {
+				MsSymbolIterator iter = symbolGroup.getSymbolIterator();
+				processSymbolGroup(moduleNumber, iter);
 			}
-			MsSymbolIterator iter = symbolGroup.getSymbolIterator();
-			processSymbolGroup(moduleNumber, iter);
 			monitor.increment();
-//			catelogSymbols(index, symbolGroup);
-			// do not call monitor.incrementProgress(1) here, as it is updated inside of
-			//  processSymbolGroup.
 		}
 	}
 
-//	private Set<Class<? extends AbstractMsSymbol>> moduleSymbols = new HashSet<>();
-//
-//	private void catelogSymbols(int moduleNumber, SymbolGroup symbolGroup)
-//			throws CancelledException {
-//		symbolGroup.initGet();
-//		while (symbolGroup.hasNext()) {
-//			monitor.checkCancelled();
-//			AbstractMsSymbol symbol = symbolGroup.peek();
-//			moduleSymbols.add(symbol.getClass());
-//			symbolGroup.next();
-//		}
-//	}
-//
-	//==============================================================================================
 	private void processSymbolGroup(int moduleNumber, MsSymbolIterator iter)
 			throws CancelledException {
 		iter.initGet();
@@ -2238,11 +2373,11 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		else if (plate.contains(comment)) {
 			return true;
 		}
-		else if (!plate.endsWith("\n")) {
-			plate += '\n';
+		else if (!comment.endsWith("\n")) {
+			comment += '\n';
 		}
-		plate += comment;
-		SetCommentCmd.createComment(program, address, comment, CodeUnit.PLATE_COMMENT);
+		plate = comment + plate; // putting new comment at top of existing plate
+		SetCommentCmd.createComment(program, address, plate, CodeUnit.PLATE_COMMENT);
 		return true;
 	}
 

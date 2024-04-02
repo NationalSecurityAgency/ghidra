@@ -109,8 +109,8 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 	public void setUI(ComboBoxUI ui) {
 		super.setUI(ui);
 		// this gets called during construction and during theming changes.  It always
-		// creates a new editor and any listeners or documents set on the current editor are 
-		// lost.  So to combat this, we install the pass through listeners here instead of 
+		// creates a new editor and any listeners or documents set on the current editor are
+		// lost.  So to combat this, we install the pass through listeners here instead of
 		// in the init() method. We also reset the document if the client ever called the
 		// setDocument() method
 
@@ -337,8 +337,13 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 
 	@Override
 	public void requestFocus() {
-		JTextField textField = getTextField();
-		textField.requestFocus();
+		if (isEditable) {
+			JTextField textField = getTextField();
+			textField.requestFocus();
+		}
+		else {
+			super.requestFocus();
+		}
 	}
 
 	private String matchHistory(String input) {
@@ -400,7 +405,7 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 	private void installPassThroughListeners() {
 		JTextField textField = getTextField();
 
-		// this gets called during construction before our fields are initialized, so need to 
+		// this gets called during construction before our fields are initialized, so need to
 		// create them here
 		if (passThroughActionListener == null) {
 			passThroughActionListener = new PassThroughActionListener();
@@ -426,7 +431,7 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 	}
 
 	/**
-	 * Listener on the editor's JTextField that then calls any registered action 
+	 * Listener on the editor's JTextField that then calls any registered action
 	 * listener on this combobox
 	 */
 	private class PassThroughActionListener implements ActionListener {
@@ -440,7 +445,7 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 	}
 
 	/**
-	 * Listener on the editor's JTextField that then calls any registered editor key 
+	 * Listener on the editor's JTextField that then calls any registered editor key
 	 * listener on this combobox
 	 */
 	private class PassThroughKeyListener implements KeyListener {
@@ -468,7 +473,7 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 	}
 
 	/**
-	 * Listener on the editor's JTextField's document that then calls any registered document 
+	 * Listener on the editor's JTextField's document that then calls any registered document
 	 * listener on this combobox
 	 */
 	private class PassThroughDocumentListener implements DocumentListener {

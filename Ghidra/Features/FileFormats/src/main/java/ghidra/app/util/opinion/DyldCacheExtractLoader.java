@@ -55,7 +55,7 @@ public class DyldCacheExtractLoader extends MachoLoader {
 
 		try {
 			FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
-			DyldCacheExtractProgramBuilder.buildProgram(program, provider, fileBytes, log, monitor);
+			MachoExtractProgramBuilder.buildProgram(program, provider, fileBytes, log, monitor);
 		}
 		catch (CancelledException e) {
 			return;

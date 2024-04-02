@@ -303,7 +303,7 @@ public class OptionsDBTest extends AbstractDockingTest {
 	@Test
 	public void testRegisterPropertyEditor() {
 		MyPropertyEditor editor = new MyPropertyEditor();
-		options.registerOption("foo", OptionType.INT_TYPE, 5, null, "description", editor);
+		options.registerOption("foo", OptionType.INT_TYPE, 5, null, "description", () -> editor);
 		assertEquals(editor, options.getRegisteredPropertyEditor("foo"));
 
 	}
@@ -561,12 +561,11 @@ public class OptionsDBTest extends AbstractDockingTest {
 	@Test
 	public void testRegisteringOptionsEditor() {
 		MyOptionsEditor myOptionsEditor = new MyOptionsEditor();
-		options.registerOptionsEditor(myOptionsEditor);
+		options.registerOptionsEditor(() -> myOptionsEditor);
 		assertEquals(myOptionsEditor, options.getOptionsEditor());
 		Options subOptions = options.getOptions("SUB");
-		subOptions.registerOptionsEditor(myOptionsEditor);
+		subOptions.registerOptionsEditor(() -> myOptionsEditor);
 		assertEquals(myOptionsEditor, subOptions.getOptionsEditor());
-
 	}
 
 	@Test

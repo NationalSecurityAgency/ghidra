@@ -16,13 +16,12 @@
 package ghidra.app.cmd.equate;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Equate;
 import ghidra.program.model.symbol.EquateTable;
 
-public class ClearEquateCmd implements Command {
+public class ClearEquateCmd implements Command<Program> {
 
 	private String equateName;
 	private Address addr;
@@ -42,8 +41,8 @@ public class ClearEquateCmd implements Command {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		EquateTable equateTable = ((Program) obj).getEquateTable();
+	public boolean applyTo(Program program) {
+		EquateTable equateTable = program.getEquateTable();
 		Equate equate = equateTable.getEquate(equateName);
 
 		clearEquate(equate, equateTable);

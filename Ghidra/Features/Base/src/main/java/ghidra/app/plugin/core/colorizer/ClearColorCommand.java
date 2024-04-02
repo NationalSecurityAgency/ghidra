@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +19,7 @@ import ghidra.framework.cmd.Command;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.AddressSetView;
 
-class ClearColorCommand implements Command {
+class ClearColorCommand implements Command<DomainObject> {
 
 	private final AddressSetView set;
 	private final ColorizingService colorizingService;

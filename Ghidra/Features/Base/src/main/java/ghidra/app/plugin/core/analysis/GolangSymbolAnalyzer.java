@@ -40,7 +40,6 @@ import ghidra.app.util.bin.format.golang.structmapping.MarkupSession;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.viewer.field.AddressAnnotatedStringHandler;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -66,7 +65,7 @@ import utilities.util.FileUtilities;
  */
 public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 
-	private final static String NAME = "Golang Symbol";
+	private final static String NAME = "Golang Symbols";
 	private final static String DESCRIPTION = """
 			Analyze Golang binaries for RTTI and function symbols.
 			'Apply Data Archives' and 'Shared Return Calls' analyzers should be disabled \
@@ -136,7 +135,8 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 			}
 
 			if (analyzerOptions.propagateRtti) {
-				Msg.info(this, "Golang symbol analyzer: scheduling RTTI propagation after reference analysis");
+				Msg.info(this,
+					"Golang symbol analyzer: scheduling RTTI propagation after reference analysis");
 				aam.schedule(new PropagateRttiBackgroundCommand(goBinary),
 					AnalysisPriority.REFERENCE_ANALYSIS.after().priority());
 			}
@@ -408,6 +408,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 			MemoryBlockUtils.createUninitializedBlock(program, false, "ARTIFICAL_GOLANG_CONTEXT",
 				mbStart, len, "Artifical memory block created to hold golang context data types",
 				null, true, true, false, null);
+		newMB.setArtificial(true);
 		return newMB.getStart();
 	}
 
@@ -501,7 +502,8 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 	 * main entry point of the duff function to any unnamed functions that are within the footprint
 	 * of the main function.
 	 */
-	private static class FixupDuffAlternateEntryPointsBackgroundCommand extends BackgroundCommand {
+	private static class FixupDuffAlternateEntryPointsBackgroundCommand
+			extends BackgroundCommand<Program> {
 
 		private Function duffFunc;
 		private GoFuncData funcData;
@@ -513,11 +515,13 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		}
 
 		@Override
-		public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
+		public boolean applyTo(Program program, TaskMonitor monitor) {
+			if (!duffFunc.getProgram().equals(program)) {
+				throw new AssertionError();
+			}
 			String ccName = duffFunc.getCallingConventionName();
 			Namespace funcNS = duffFunc.getParentNamespace();
 			AddressSet funcBody = new AddressSet(funcData.getBody());
-			Program program = duffFunc.getProgram();
 			String duffComment = program.getListing()
 					.getCodeUnitAt(duffFunc.getEntryPoint())
 					.getComment(CodeUnit.PLATE_COMMENT);
@@ -556,7 +560,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 	 * overrides to callsites that have a RTTI type parameter that return a specialized
 	 * type instead of a void*.
 	 */
-	private static class PropagateRttiBackgroundCommand extends BackgroundCommand {
+	private static class PropagateRttiBackgroundCommand extends BackgroundCommand<Program> {
 		record RttiFuncInfo(GoSymbolName funcName, int rttiParamIndex,
 				java.util.function.Function<GoType, DataType> returnTypeMapper) {
 
@@ -567,8 +571,8 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		}
 
 		record CallSiteInfo(Reference ref, Function callingFunc, Function calledFunc,
-				Register register,
-				java.util.function.Function<GoType, DataType> returnTypeMapper) {}
+				Register register, java.util.function.Function<GoType, DataType> returnTypeMapper) {
+		}
 
 		private GoRttiMapper goBinary;
 		private MarkupSession markupSession;
@@ -582,7 +586,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		}
 
 		@Override
-		public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
+		public boolean applyTo(Program program, TaskMonitor monitor) {
 			if (goBinary.newStorageAllocator().isAbi0Mode()) {
 				// If abi0 mode, don't even bother because currently only handles rtti passed via
 				// register.

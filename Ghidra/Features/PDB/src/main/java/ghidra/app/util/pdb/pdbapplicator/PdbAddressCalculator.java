@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.io.IOException;
 import java.util.*;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -36,7 +35,7 @@ abstract class PdbAddressCalculator {
 	private int maxSegment;
 
 	static PdbAddressCalculator chooseAddressCalculator(PdbApplicator applicator, Address imageBase)
-			throws CancelledException, PdbException, IOException {
+			throws CancelledException, PdbException {
 
 		AbstractPdb pdb = applicator.getPdb();
 		PdbDebugInfo dbi = pdb.getDebugInfo();

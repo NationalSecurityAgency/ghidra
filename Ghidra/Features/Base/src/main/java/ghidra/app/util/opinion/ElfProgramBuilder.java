@@ -1546,6 +1546,10 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			// assume any value in external is writable.
 			block.setWrite(true);
+
+			// Mark block as an artificial fabrication
+			block.setArtificial(true);
+
 			block.setSourceName(BLOCK_SOURCE_NAME);
 			block.setComment(
 				"NOTE: This block is artificial and allows ELF Relocations to work correctly");

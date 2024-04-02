@@ -20,6 +20,7 @@ import java.util.*;
 
 import db.*;
 import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.*;
 import ghidra.program.database.map.AddressKeyAddressIterator;
 import ghidra.program.database.map.AddressMap;
@@ -58,7 +59,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 	 * @throws VersionException if the database version doesn't match the current version.
 	 * @throws IOException if a database error occurs.
 	 */
-	public EquateManager(DBHandle handle, AddressMap addrMap, int openMode, Lock lock,
+	public EquateManager(DBHandle handle, AddressMap addrMap, OpenMode openMode, Lock lock,
 			TaskMonitor monitor) throws VersionException, IOException {
 
 		this.addrMap = addrMap;
@@ -72,7 +73,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 		return program;
 	}
 
-	private void initializeAdapters(DBHandle handle, int openMode, TaskMonitor monitor)
+	private void initializeAdapters(DBHandle handle, OpenMode openMode, TaskMonitor monitor)
 			throws VersionException, IOException {
 		VersionException versionExc = null;
 		try {
@@ -98,7 +99,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 	}
 
 	@Override
-	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
+	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		// Nothing to do
 	}
@@ -312,6 +313,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 	@Override
 	public void deleteAddressRange(Address startAddr, Address endAddr, TaskMonitor monitor)
 			throws CancelledException {
+		AddressRange.checkValidRange(startAddr, endAddr);
 		lock.acquire();
 		try {
 			ArrayList<EquateRefDB> list = new ArrayList<>();

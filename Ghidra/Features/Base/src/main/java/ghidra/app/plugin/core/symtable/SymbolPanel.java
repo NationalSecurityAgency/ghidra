@@ -62,7 +62,6 @@ class SymbolPanel extends JPanel {
 
 		symTable = threadedTablePanel.getTable();
 		symTable.setAutoLookupColumn(SymbolTableModel.LABEL_COL);
-		symTable.setName("SymbolTable");//used by JUnit...
 		symTable.setRowSelectionAllowed(true);
 		symTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		symTable.getModel().addTableModelListener(listener);
@@ -72,6 +71,8 @@ class SymbolPanel extends JPanel {
 				tool.contextChanged(symProvider);
 			}
 		});
+
+		symTable.setAccessibleNamePrefix("Symbol");
 
 		symTable.installNavigation(tool);
 
@@ -102,8 +103,8 @@ class SymbolPanel extends JPanel {
 			"<html><b>Selected</b> causes filter to only consider the symbol's name.");
 		nameColumnOnlyCheckbox.setFocusable(false);
 		nameColumnOnlyCheckbox.setSelected(FILTER_NAME_ONLY_DEFAULT);
-		tableFilterPanel.setFilterRowTransformer(
-			updateRowDataTransformer(FILTER_NAME_ONLY_DEFAULT));
+		tableFilterPanel
+				.setFilterRowTransformer(updateRowDataTransformer(FILTER_NAME_ONLY_DEFAULT));
 		nameColumnOnlyCheckbox.addItemListener(e -> {
 			boolean nameOnly = nameColumnOnlyCheckbox.isSelected();
 			tableFilterPanel.setFilterRowTransformer(updateRowDataTransformer(nameOnly));
@@ -111,6 +112,7 @@ class SymbolPanel extends JPanel {
 
 		tableFilterPanel.add(nameColumnOnlyCheckbox);
 
+		tableFilterPanel.setAccessibleNamePrefix("Symbol");
 		return tableFilterPanel;
 	}
 

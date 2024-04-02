@@ -307,4 +307,11 @@ public class DBTraceMemoryRegion
 	public void delete() {
 		space.deleteRegion(this);
 	}
+
+	@Override
+	public boolean isValid(long snap) {
+		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
+			return lifespan.contains(snap);
+		}
+	}
 }

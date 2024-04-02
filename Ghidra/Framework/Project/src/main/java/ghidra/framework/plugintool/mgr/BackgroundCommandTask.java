@@ -31,11 +31,12 @@ import ghidra.util.task.TaskMonitor;
 /**
  * A task that executes a command in separate thread, not in the Swing Thread
  */
-class BackgroundCommandTask extends Task implements AbortedTransactionListener {
+class BackgroundCommandTask<T extends DomainObject> extends Task
+		implements AbortedTransactionListener {
 
-	private BackgroundCommand cmd;
+	private BackgroundCommand<T> cmd;
 	private ToolTaskManager taskMgr;
-	private UndoableDomainObject obj;
+	private T obj;
 
 	private boolean doneQueueProcessing;
 
@@ -46,8 +47,7 @@ class BackgroundCommandTask extends Task implements AbortedTransactionListener {
 	 * @param obj the domain object to be modified by this task.
 	 * @param cmd the background command to invoke.
 	 */
-	public BackgroundCommandTask(ToolTaskManager taskMgr, UndoableDomainObject obj,
-			BackgroundCommand cmd) {
+	public BackgroundCommandTask(ToolTaskManager taskMgr, T obj, BackgroundCommand<T> cmd) {
 		super(cmd.getName(), cmd.canCancel(), cmd.hasProgress(), cmd.isModal());
 		this.cmd = cmd;
 		this.taskMgr = taskMgr;
@@ -58,7 +58,7 @@ class BackgroundCommandTask extends Task implements AbortedTransactionListener {
 	 * Returns the Domain Object associated with this Task
 	 * @return the object
 	 */
-	public UndoableDomainObject getDomainObject() {
+	public T getDomainObject() {
 		return obj;
 	}
 
@@ -67,7 +67,7 @@ class BackgroundCommandTask extends Task implements AbortedTransactionListener {
 	 * 
 	 * @return background command
 	 */
-	public BackgroundCommand getCommand() {
+	public BackgroundCommand<T> getCommand() {
 		return cmd;
 	}
 

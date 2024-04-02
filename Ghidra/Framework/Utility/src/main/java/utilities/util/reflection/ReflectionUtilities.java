@@ -22,6 +22,7 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import ghidra.util.Msg;
+import ghidra.util.exception.AssertException;
 
 public class ReflectionUtilities {
 
@@ -225,11 +226,17 @@ public class ReflectionUtilities {
 	}
 
 	private static Throwable createThrowableWithStackOlderThan(List<String> patterns) {
+		return createThrowableWithStackOlderThan(patterns,
+			StackElementMatcher.CONTAINS_CLASS_OR_METHOD);
+	}
+
+	private static Throwable createThrowableWithStackOlderThan(List<String> patterns,
+			StackElementMatcher matcher) {
 
 		if (patterns.isEmpty()) {
 			// always ignore our class.  We get this for free if the client passes in any classes
 			patterns = new ArrayList<>();
-			patterns.add(0, ReflectionUtilities.class.getName());
+			patterns.add(ReflectionUtilities.class.getName());
 		}
 
 		Throwable t = new Throwable();
@@ -237,8 +244,7 @@ public class ReflectionUtilities {
 		int lastIgnoreIndex = -1;
 		for (int i = 0; i < trace.length; i++) {
 			StackTraceElement element = trace[i];
-			String text = element.getClassName() + " " + element.getMethodName();
-			if (containsAny(text, patterns)) {
+			if (matchesAnyPattern(element, patterns, matcher)) {
 				lastIgnoreIndex = i;
 			}
 			else {
@@ -267,15 +273,6 @@ public class ReflectionUtilities {
 		return t;
 	}
 
-	private static boolean containsAny(String text, List<String> patterns) {
-		for (String pattern : patterns) {
-			if (text.contains(pattern)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	/**
 	 * Creates a throwable whose stack trace is based upon the current call stack, with any
 	 * information coming before, and including, the given classes removed.
@@ -289,7 +286,8 @@ public class ReflectionUtilities {
 	public static Throwable createThrowableWithStackOlderThan(Class<?>... classes) {
 		List<String> patterns =
 			Arrays.stream(classes).map(c -> c.getName()).collect(Collectors.toList());
-		return createThrowableWithStackOlderThan(patterns);
+
+		return createThrowableWithStackOlderThan(patterns, StackElementMatcher.EXACT_CLASS);
 	}
 
 	/**
@@ -309,9 +307,7 @@ public class ReflectionUtilities {
 		for (int i = 0; i < trace.length; i++) {
 
 			StackTraceElement element = trace[i];
-			String traceString = element.toString();
-
-			boolean matches = containsAny(traceString, pattern);
+			boolean matches = matchesAnyPattern(element, pattern);
 			if (foundIt && !matches) {
 				desiredStartIndex = i;
 				break;
@@ -346,8 +342,7 @@ public class ReflectionUtilities {
 
 		List<StackTraceElement> list = new ArrayList<>();
 		for (StackTraceElement element : trace) {
-			String traceString = element.toString();
-			if (containsAny(traceString, patterns)) {
+			if (matchesAnyPattern(element, patterns)) {
 				continue;
 			}
 
@@ -422,9 +417,14 @@ public class ReflectionUtilities {
 		return t;
 	}
 
-	private static boolean containsAny(String s, String... patterns) {
-		for (String p : patterns) {
-			if (s.contains(p)) {
+	private static boolean matchesAnyPattern(StackTraceElement element, String... patterns) {
+		return matchesAnyPattern(element, List.of(patterns), StackElementMatcher.CONTAINS_ANY);
+	}
+
+	private static boolean matchesAnyPattern(StackTraceElement element, List<String> patterns,
+			StackElementMatcher matcher) {
+		for (String pattern : patterns) {
+			if (matcher.matches(element, pattern)) {
 				return true;
 			}
 		}
@@ -766,6 +766,63 @@ public class ReflectionUtilities {
 			return ((Class<?>) type).getTypeParameters();
 		}
 		return ((ParameterizedType) type).getActualTypeArguments();
+	}
+
+	private static class StackElementMatcher {
+
+		static final StackElementMatcher EXACT_CLASS =
+			new StackElementMatcher(Match.EXACT, Content.CLASS_NAME);
+
+		static final StackElementMatcher CONTAINS_CLASS_OR_METHOD =
+			new StackElementMatcher(Match.CONTAINS, Content.CLASS_AND_METHOD_NAME);
+
+		static final StackElementMatcher CONTAINS_ANY =
+			new StackElementMatcher(Match.CONTAINS, Content.ALL);
+
+		static enum Match {
+			EXACT, CONTAINS;
+
+			boolean matches(String input, String pattern) {
+				switch (this) {
+					case EXACT:
+						return input.equals(pattern);
+					case CONTAINS:
+						return input.contains(pattern);
+					default:
+						throw new AssertException("Missing case type");
+				}
+			}
+		}
+
+		static enum Content {
+			CLASS_NAME, CLASS_AND_METHOD_NAME, ALL;
+
+			String convert(StackTraceElement e) {
+				switch (this) {
+					case CLASS_NAME:
+						return e.getClassName();
+					case CLASS_AND_METHOD_NAME:
+						return e.getClassName() + ' ' + e.getMethodName();
+					case ALL:
+						return e.toString();
+					default:
+						throw new AssertException("Missing case type");
+				}
+			}
+		}
+
+		private Match matchType;
+		private Content contentType;
+
+		StackElementMatcher(Match matchType, Content contentType) {
+			this.matchType = matchType;
+			this.contentType = contentType;
+		}
+
+		boolean matches(StackTraceElement element, String pattern) {
+			String s = contentType.convert(element);
+			return matchType.matches(s, pattern);
+		}
 	}
 
 }

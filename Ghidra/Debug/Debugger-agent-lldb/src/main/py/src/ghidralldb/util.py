@@ -21,20 +21,24 @@ import sys
 import lldb
 
 
-LldbVersion = namedtuple('LldbVersion', ['full', 'major', 'minor'])
+LldbVersion = namedtuple('LldbVersion', ['display', 'full', 'major', 'minor'])
 
 
 def _compute_lldb_ver():
     blurb = lldb.debugger.GetVersionString()
     top = blurb.split('\n')[0]
-    full = top.split(' ')[2]
+    if ' version ' in top:
+        full = top.split(' ')[2]    # "lldb version x.y.z"
+    else:
+        full = top.split('-')[1]    # "lldb-x.y.z"
     major, minor = full.split('.')[:2]
-    return LldbVersion(full, int(major), int(minor))
+    return LldbVersion(top, full, int(major), int(minor))
 
 
 LLDB_VERSION = _compute_lldb_ver()
 
 GNU_DEBUGDATA_PREFIX = ".gnu_debugdata for "
+
 
 class Module(namedtuple('BaseModule', ['name', 'base', 'max', 'sections'])):
     pass
@@ -70,7 +74,7 @@ class ModuleInfoReader(object):
         name = s.GetName()
         attrs = s.GetPermissions()
         return Section(name, start, end, offset, attrs)
-    
+
     def finish_module(self, name, sections):
         alloc = {k: s for k, s in sections.items()}
         if len(alloc) == 0:
@@ -96,7 +100,7 @@ class ModuleInfoReader(object):
             fspec = module.GetFileSpec()
             name = debracket(fspec.GetFilename())
             sections = {}
-       	    for i in range(0, module.GetNumSections()):
+            for i in range(0, module.GetNumSections()):
                 s = self.section_from_sbsection(module.GetSectionAtIndex(i))
                 sname = debracket(s.name)
                 sections[sname] = s
@@ -107,8 +111,8 @@ class ModuleInfoReader(object):
 def _choose_module_info_reader():
     return ModuleInfoReader()
 
-MODULE_INFO_READER = _choose_module_info_reader()
 
+MODULE_INFO_READER = _choose_module_info_reader()
 
 
 class Region(namedtuple('BaseRegion', ['start', 'end', 'offset', 'perms', 'objfile'])):
@@ -137,8 +141,8 @@ class RegionInfoReader(object):
         reglist = get_process().GetMemoryRegions()
         for i in range(0, reglist.GetSize()):
             module = get_target().GetModuleAtIndex(i)
-            info = lldb.SBMemoryRegionInfo();
-            success = reglist.GetMemoryRegionAtIndex(i, info);
+            info = lldb.SBMemoryRegionInfo()
+            success = reglist.GetMemoryRegionAtIndex(i, info)
             if success:
                 r = self.region_from_sbmemreg(info)
                 regions.append(r)
@@ -146,8 +150,11 @@ class RegionInfoReader(object):
 
     def full_mem(self):
         # TODO: This may not work for Harvard architectures
-        sizeptr = int(parse_and_eval('sizeof(void*)')) * 8
-        return Region(0, 1 << sizeptr, 0, None, 'full memory')
+        try:
+            sizeptr = int(parse_and_eval('sizeof(void*)')) * 8
+            return Region(0, 1 << sizeptr, 0, None, 'full memory')
+        except ValueError:
+            return Region(0, 1 << 64, 0, None, 'full memory')
 
 
 def _choose_region_info_reader():
@@ -177,28 +184,39 @@ def _choose_breakpoint_location_info_reader():
 
 BREAKPOINT_LOCATION_INFO_READER = _choose_breakpoint_location_info_reader()
 
+
 def get_debugger():
     return lldb.SBDebugger.FindDebuggerWithID(1)
+
 
 def get_target():
     return get_debugger().GetTargetAtIndex(0)
 
+
 def get_process():
     return get_target().GetProcess()
-    
+
+
 def selected_thread():
     return get_process().GetSelectedThread()
 
+
 def selected_frame():
     return selected_thread().GetSelectedFrame()
-    
+
+
 def parse_and_eval(expr, signed=False):
     if signed is True:
-        return get_target().EvaluateExpression(expr).GetValueAsSigned()
-    return get_target().EvaluateExpression(expr).GetValueAsUnsigned()
+        return get_eval(expr).GetValueAsSigned()
+    return get_eval(expr).GetValueAsUnsigned()
+
 
 def get_eval(expr):
-    return get_target().EvaluateExpression(expr)
+    eval = get_target().EvaluateExpression(expr)
+    if eval.GetError().Fail():
+        raise ValueError(eval.GetError().GetCString())
+    return eval
+
 
 def get_description(object, level=None):
     stream = lldb.SBStream()
@@ -208,7 +226,9 @@ def get_description(object, level=None):
         object.GetDescription(stream, level)
     return escape_ansi(stream.GetData())
 
+
 conv_map = {}
+
 
 def get_convenience_variable(id):
     #val = get_target().GetEnvironment().Get(id)
@@ -219,18 +239,20 @@ def get_convenience_variable(id):
         return "auto"
     return val
 
+
 def set_convenience_variable(id, value):
     #env = get_target().GetEnvironment()
-    #return env.Set(id, value, True)
+    # return env.Set(id, value, True)
     conv_map[id] = value
 
-    
+
 def escape_ansi(line):
-    ansi_escape =re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
+    ansi_escape = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
     return ansi_escape.sub('', line)
- 
+
+
 def debracket(init):
     val = init
-    val = val.replace("[","(")
-    val = val.replace("]",")")
+    val = val.replace("[", "(")
+    val = val.replace("]", ")")
     return val

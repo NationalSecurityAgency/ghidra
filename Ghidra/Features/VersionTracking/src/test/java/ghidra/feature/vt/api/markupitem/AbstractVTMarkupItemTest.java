@@ -97,13 +97,13 @@ public abstract class AbstractVTMarkupItemTest extends AbstractGhidraHeadedInteg
 
 	@After
 	public void tearDown() throws Exception {
-		env.dispose();
 		if (sourceProgram != null) {
 			sourceProgram.release(this);
 		}
 		if (destinationProgram != null) {
 			destinationProgram.release(this);
 		}
+		env.dispose();
 	}
 
 	/**
@@ -348,7 +348,7 @@ public abstract class AbstractVTMarkupItemTest extends AbstractGhidraHeadedInteg
 	}
 
 	protected VTSessionDB createNewSession() throws Exception {
-		return VTSessionDB.createVTSession(testName.getMethodName() + " - Test Match Set Manager",
+		return new VTSessionDB(testName.getMethodName() + " - Test Match Set Manager",
 			sourceProgram, destinationProgram, this);
 	}
 

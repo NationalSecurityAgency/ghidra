@@ -16,19 +16,19 @@
 package ghidra.app.plugin.core.debug.service.model;
 
 import db.Transaction;
-import ghidra.framework.model.UndoableDomainObject;
+import ghidra.framework.model.DomainObject;
 
 public class RecorderPermanentTransaction implements AutoCloseable {
 
-	public static RecorderPermanentTransaction start(UndoableDomainObject obj, String description) {
+	public static RecorderPermanentTransaction start(DomainObject obj, String description) {
 		Transaction tx = obj.openTransaction(description);
 		return new RecorderPermanentTransaction(obj, tx);
 	}
 
-	private final UndoableDomainObject obj;
+	private final DomainObject obj;
 	private final Transaction tx;
 
-	public RecorderPermanentTransaction(UndoableDomainObject obj, Transaction tx) {
+	public RecorderPermanentTransaction(DomainObject obj, Transaction tx) {
 		this.obj = obj;
 		this.tx = tx;
 	}

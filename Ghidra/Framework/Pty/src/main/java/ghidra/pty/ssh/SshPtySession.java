@@ -15,6 +15,9 @@
  */
 package ghidra.pty.ssh;
 
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import com.jcraft.jsch.*;
 
 import ghidra.pty.PtySession;
@@ -27,14 +30,35 @@ public class SshPtySession implements PtySession {
 		this.channel = channel;
 	}
 
-	@Override
-	public int waitExited() throws InterruptedException {
+	protected int doWaitExited(Long millis) throws InterruptedException, TimeoutException {
+		long startMs = System.currentTimeMillis();
 		// Doesn't look like there's a clever way to wait. So do the spin sleep :(
 		while (!channel.isEOF()) {
-			Thread.sleep(1000);
+			Thread.sleep(100);
+			long elapsed = System.currentTimeMillis() - startMs;
+			if (millis != null && elapsed > millis) {
+				throw new TimeoutException();
+			}
 		}
 		// NB. May not be available
 		return channel.getExitStatus();
+	}
+
+	@Override
+	public int waitExited() throws InterruptedException {
+		try {
+			return doWaitExited(null);
+		}
+		catch (TimeoutException e) {
+			throw new AssertionError(e);
+		}
+	}
+
+	@Override
+	public int waitExited(long timeout, TimeUnit unit)
+			throws InterruptedException, TimeoutException {
+		long millis = TimeUnit.MILLISECONDS.convert(timeout, unit);
+		return doWaitExited(millis);
 	}
 
 	@Override

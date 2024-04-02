@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +15,18 @@
  */
 package ghidra.app.cmd.register;
 
+import java.math.BigInteger;
+
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.util.Msg;
 
-import java.math.BigInteger;
-
 /**
  * Command for setting the value of a register over a range of addresses.
  */
-public class SetRegisterCmd implements Command {
+public class SetRegisterCmd implements Command<Program> {
 	private Register register;
 	private Address start;
 	private Address end;
@@ -55,12 +53,9 @@ public class SetRegisterCmd implements Command {
 		this.value = value;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		Program program = (Program) obj;
+	public boolean applyTo(Program program) {
+
 		ProgramContext context = program.getProgramContext();
 
 		try {
@@ -74,17 +69,11 @@ public class SetRegisterCmd implements Command {
 		return true;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
 	@Override
 	public String getStatusMsg() {
 		return errorMsg;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
 	@Override
 	public String getName() {
 		return "Set Register Value";

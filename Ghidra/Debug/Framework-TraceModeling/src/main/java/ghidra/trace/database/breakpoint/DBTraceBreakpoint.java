@@ -408,7 +408,7 @@ public class DBTraceBreakpoint
 
 	@Override
 	public boolean isEnabled(long snap) {
-		// NB. Only object mode support per-snap enablement
+		// NB. Only object mode supports per-snap enablement
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
 			return enabled;
 		}
@@ -490,5 +490,12 @@ public class DBTraceBreakpoint
 	@Override
 	public void delete() {
 		space.deleteBreakpoint(this);
+	}
+
+	@Override
+	public boolean isValid(long snap) {
+		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
+			return lifespan.contains(snap);
+		}
 	}
 }

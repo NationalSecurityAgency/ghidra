@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import db.*;
 import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.*;
 import ghidra.program.database.code.CodeManager;
 import ghidra.program.database.external.ExternalManagerDB;
@@ -90,8 +91,8 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	 * @throws IOException if a database io error occurs.
 	 * @throws VersionException if the database version doesn't match the current version.
 	 */
-	public SymbolManager(DBHandle handle, AddressMap addrMap, int openMode, ErrorHandler errHandler,
-			Lock lock, TaskMonitor monitor)
+	public SymbolManager(DBHandle handle, AddressMap addrMap, OpenMode openMode,
+			ErrorHandler errHandler, Lock lock, TaskMonitor monitor)
 			throws CancelledException, IOException, VersionException {
 
 		this.addrMap = addrMap;
@@ -104,13 +105,13 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		variableStorageMgr =
 			new VariableStorageManagerDB(handle, addrMap, openMode, errHandler, lock, monitor);
 
-		if (openMode == DBConstants.UPGRADE &&
+		if (openMode == OpenMode.UPGRADE &&
 			OldVariableStorageManagerDB.isOldVariableStorageManagerUpgradeRequired(handle)) {
 			oldVariableStorageMgr = new OldVariableStorageManagerDB(handle, addrMap, monitor);
 		}
 	}
 
-	private void initializeAdapters(DBHandle handle, int openMode, TaskMonitor monitor)
+	private void initializeAdapters(DBHandle handle, OpenMode openMode, TaskMonitor monitor)
 			throws VersionException, CancelledException, IOException {
 		VersionException versionExc = null;
 		try {
@@ -150,10 +151,10 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	}
 
 	@Override
-	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
+	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
-		if (openMode == DBConstants.UPGRADE) {
+		if (openMode == OpenMode.UPGRADE) {
 			processOldLocalSymbols(monitor);
 			processOldExternalEntryPoints(monitor);
 
@@ -2427,6 +2428,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	@Override
 	public void deleteAddressRange(Address startAddr, Address endAddr, TaskMonitor monitor)
 			throws CancelledException {
+		AddressRange.checkValidRange(startAddr, endAddr);
 		lock.acquire();
 		try {
 			invalidateCache(true);

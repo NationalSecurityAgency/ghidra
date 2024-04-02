@@ -27,7 +27,7 @@ public class RunBashInTerminalScript extends TerminalGhidraScript {
 		Map<String, String> env = new HashMap<>(System.getenv());
 		env.put("TERM", "xterm-256color");
 		PtySession session = pty.getChild().session(new String[] { "/usr/bin/bash" }, env);
-		displayInTerminal(pty.getParent(), () -> {
+		displayInTerminal(pty, () -> {
 			try {
 				session.waitExited();
 			}

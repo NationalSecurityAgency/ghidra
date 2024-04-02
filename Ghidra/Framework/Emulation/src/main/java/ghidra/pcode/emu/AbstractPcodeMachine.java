@@ -38,6 +38,8 @@ import ghidra.util.classfinder.ClassSearcher;
  * <p>
  * For a complete example of a p-code emulator, see {@link PcodeEmulator}. For an alternative
  * implementation incorporating an abstract piece, see the Taint Analyzer.
+ * 
+ * @param <T> the type of objects in the machine's state
  */
 public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 

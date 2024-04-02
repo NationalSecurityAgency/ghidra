@@ -48,7 +48,6 @@ import ghidra.framework.remote.User;
 import ghidra.framework.store.LockException;
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.program.database.ProgramContentHandler;
-import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.GhidraProgramUtilities;
@@ -310,52 +309,55 @@ public class HeadlessAnalyzer {
 
 			Msg.info(HeadlessAnalyzer.class, "HEADLESS: execution starts");
 
-			GhidraURLConnection c = (GhidraURLConnection) ghidraURL.openConnection();
-			c.setReadOnly(options.readOnly); // writable repository connection
+			// force explicit folder access since file may have same name as folder
+			ghidraURL = GhidraURL.getFolderURL(ghidraURL);
 
-			if (c.getRepositoryName() == null) {
-				throw new MalformedURLException("Unsupported repository URL: " + ghidraURL);
-			}
+			Msg.info(this, "Opening ghidra repository folder: " + ghidraURL);
 
-			Msg.info(this, "Opening ghidra repository project: " + ghidraURL);
-			Object obj = c.getContent();
-			if (!(obj instanceof GhidraURLWrappedContent)) {
-				throw new IOException(
-					"Connect to repository folder failed. Response code: " + c.getStatusCode());
-			}
-			GhidraURLWrappedContent wrappedContent = (GhidraURLWrappedContent) obj;
-			Object content = null;
-			try {
-				content = wrappedContent.getContent(this);
-				if (!(content instanceof DomainFolder)) {
-					throw new IOException("Connect to repository folder failed");
-				}
+			GhidraURLQuery.queryRepositoryUrl(ghidraURL, options.readOnly,
+				new GhidraURLResultHandlerAdapter() {
 
-				DomainFolder folder = (DomainFolder) content;
-				project = new HeadlessProject(getProjectManager(), c);
+					@Override
+					public void processResult(DomainFolder domainFolder, URL url,
+							TaskMonitor monitor) throws IOException, CancelledException {
+						try {
+							project = new HeadlessProject(getProjectManager(),
+								domainFolder.getProjectData());
 
-				if (!checkUpdateOptions()) {
-					return; // TODO: Should an exception be thrown?
-				}
+							if (!checkUpdateOptions()) {
+								return; // TODO: Should an exception be thrown?
+							}
 
-				if (options.runScriptsNoImport) {
-					processNoImport(folder.getPathname());
-				}
-				else {
-					processWithImport(folder.getPathname(), filesToImport);
-				}
-			}
-			catch (FileNotFoundException e) {
-				throw new IOException("Connect to repository folder failed");
-			}
-			finally {
-				if (content != null) {
-					wrappedContent.release(content, this);
-				}
-				if (project != null) {
-					project.close();
-				}
-			}
+							if (options.runScriptsNoImport) {
+								processNoImport(domainFolder.getPathname());
+							}
+							else {
+								processWithImport(domainFolder.getPathname(), filesToImport);
+							}
+						}
+						finally {
+							if (project != null) {
+								project.close();
+							}
+						}
+					}
+
+					@Override
+					public void handleError(String title, String message, URL url,
+							IOException cause) throws IOException {
+						if (cause instanceof FileNotFoundException) {
+							throw new IOException("Connect to repository folder failed");
+						}
+						if (cause != null) {
+							throw cause;
+						}
+						throw new IOException(title + ": " + message);
+					}
+				}, TaskMonitor.DUMMY);
+
+		}
+		catch (CancelledException e) {
+			throw new IOException(e); // unexpected
 		}
 		finally {
 			GhidraScriptUtil.dispose();
@@ -424,7 +426,6 @@ public class HeadlessAnalyzer {
 
 			if (locator.getProjectDir().exists()) {
 				project = openProject(locator);
-				AppInfo.setActiveProject(project);
 			}
 			else {
 				if (options.runScriptsNoImport) {
@@ -441,7 +442,6 @@ public class HeadlessAnalyzer {
 				Msg.info(this, "Creating " + (options.deleteProject ? "temporary " : "") +
 					"project: " + locator);
 				project = getProjectManager().createProject(locator, null, false);
-				AppInfo.setActiveProject(project);
 			}
 
 			try {
@@ -459,7 +459,6 @@ public class HeadlessAnalyzer {
 			}
 			finally {
 				project.close();
-				AppInfo.setActiveProject(null);
 				if (!options.runScriptsNoImport && options.deleteProject) {
 					FileUtilities.deleteDir(locator.getProjectDir());
 					locator.getMarkerFile().delete();
@@ -1491,7 +1490,7 @@ public class HeadlessAnalyzer {
 					public boolean createKeepFile() throws CancelledException {
 						return false;
 					}
-				}, true, TaskMonitor.DUMMY);
+				}, TaskMonitor.DUMMY);
 				Msg.info(this, "REPORT: Committed file changes to repository: " + df.getPathname());
 			}
 			catch (IOException e) {
@@ -1838,14 +1837,15 @@ public class HeadlessAnalyzer {
 	 */
 	private static class HeadlessProject extends DefaultProject {
 
-		HeadlessProject(HeadlessGhidraProjectManager projectManager, GhidraURLConnection connection)
-				throws IOException {
-			super(projectManager, connection);
-		}
-
 		HeadlessProject(HeadlessGhidraProjectManager projectManager, ProjectLocator projectLocator)
 				throws NotOwnerException, LockException, IOException {
 			super(projectManager, projectLocator, false);
+			AppInfo.setActiveProject(this);
+		}
+
+		HeadlessProject(HeadlessGhidraProjectManager projectManager, ProjectData projectData) {
+			super(projectManager, (DefaultProjectData) projectData);
+			AppInfo.setActiveProject(this);
 		}
 	}
 

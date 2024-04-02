@@ -15,6 +15,9 @@
  */
 package ghidra.app.util.bin.format.macho.dyld;
 
+import java.io.IOException;
+
+import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -114,6 +117,29 @@ public class DyldChainedPtr {
 		}
 	}
 
+	public static int getSize(DyldChainType ptrFormat) {
+		return switch (ptrFormat) {
+			case DYLD_CHAINED_PTR_ARM64E:
+			case DYLD_CHAINED_PTR_ARM64E_USERLAND:
+			case DYLD_CHAINED_PTR_ARM64E_USERLAND24:
+			case DYLD_CHAINED_PTR_64:
+			case DYLD_CHAINED_PTR_64_OFFSET:
+			case DYLD_CHAINED_PTR_ARM64E_KERNEL:
+			case DYLD_CHAINED_PTR_64_KERNEL_CACHE:
+			case DYLD_CHAINED_PTR_ARM64E_FIRMWARE:
+			case DYLD_CHAINED_PTR_X86_64_KERNEL_CACHE:
+				yield 8;
+
+			case DYLD_CHAINED_PTR_32:
+			case DYLD_CHAINED_PTR_32_CACHE:
+			case DYLD_CHAINED_PTR_32_FIRMWARE:
+				yield 4;
+
+			default:
+				yield 8;
+		};
+	}
+
 	public static RelocationResult setChainValue(Memory memory, Address chainLoc,
 			DyldChainType ptrFormat,
 			long value) throws MemoryAccessException {
@@ -145,8 +171,8 @@ public class DyldChainedPtr {
 		return new RelocationResult(Status.APPLIED_OTHER, byteLength);
 	}
 
-	public static long getChainValue(Memory memory, Address chainLoc, DyldChainType ptrFormat)
-			throws MemoryAccessException {
+	public static long getChainValue(BinaryReader reader, long chainLoc, DyldChainType ptrFormat)
+			throws IOException {
 		switch (ptrFormat) {
 			case DYLD_CHAINED_PTR_ARM64E:
 			case DYLD_CHAINED_PTR_ARM64E_USERLAND:
@@ -157,12 +183,12 @@ public class DyldChainedPtr {
 			case DYLD_CHAINED_PTR_64_KERNEL_CACHE:
 			case DYLD_CHAINED_PTR_ARM64E_FIRMWARE:
 			case DYLD_CHAINED_PTR_X86_64_KERNEL_CACHE:
-				return memory.getLong(chainLoc);
+				return reader.readLong(chainLoc);
 
 			case DYLD_CHAINED_PTR_32:
 			case DYLD_CHAINED_PTR_32_CACHE:
 			case DYLD_CHAINED_PTR_32_FIRMWARE:
-				return memory.getInt(chainLoc) & 0xFFFFFFFFL;
+				return reader.readUnsignedInt(chainLoc);
 			default:
 				return 0;
 		}

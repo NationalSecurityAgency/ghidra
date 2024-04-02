@@ -349,6 +349,9 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 				// assume any value in external is writable.
 				block.setWrite(true);
 
+				// Mark block as an artificial fabrication
+				block.setArtificial(true);
+
 				Address current = externalAddressStart;
 				while (current.compareTo(externalAddress) < 0) {
 					createUndefined(program.getListing(), program.getMemory(), current,
@@ -698,7 +701,13 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 								++failureCount;
 								failedAddr = address;
 								handleRelocationError(program, address, relocationType,
-									"Unsupported COFF relocation type", null);
+									"unsupported type", null);
+							}
+							else if (status == Status.FAILURE) {
+								++failureCount;
+								failedAddr = address;
+								handleRelocationError(program, address, relocationType,
+									"unknown reason", null);
 							}
 						}
 					}
@@ -745,8 +754,8 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 		}
 	}
 
-	private void handleRelocationError(Program program, Address address,
-			Short relocationType, String message, Exception causeToReport) {
+	private void handleRelocationError(Program program, Address address, Short relocationType,
+			String message, Exception causeToReport) {
 		String bookmarkMessage =
 			String.format("Failed to apply COFF Relocation type 0x%x: %s", relocationType, message);
 		program.getBookmarkManager()

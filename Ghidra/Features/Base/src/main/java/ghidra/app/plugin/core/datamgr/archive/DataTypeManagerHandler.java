@@ -438,8 +438,7 @@ public class DataTypeManagerHandler {
 	}
 
 	public FileArchive openArchive(ResourceFile file, boolean acquireWriteLock,
-			boolean isUserAction)
-			throws IOException, DuplicateIdException {
+			boolean isUserAction) throws IOException, DuplicateIdException {
 
 		file = file.getCanonicalFile();
 
@@ -1282,45 +1281,43 @@ public class DataTypeManagerHandler {
 
 	}
 
-	public void save(UndoableDomainObject undoableDomainObject) {
+	public void save(DomainObject domainObject) {
 
-		tool.prepareToSave(undoableDomainObject);
-		if (acquireSaveLock(undoableDomainObject)) {
+		tool.prepareToSave(domainObject);
+		if (acquireSaveLock(domainObject)) {
 
 			try {
-				DomainFileSaveTask task = new DomainFileSaveTask(CONTENT_NAME,
-					undoableDomainObject.getDomainFile(), tool);
+				DomainFileSaveTask task =
+					new DomainFileSaveTask(CONTENT_NAME, domainObject.getDomainFile(), tool);
 				new TaskLauncher(task, tool.getToolFrame());
 			}
 			finally {
-				undoableDomainObject.unlock();
+				domainObject.unlock();
 			}
 		}
 	}
 
-	public void saveAs(UndoableDomainObject undoableDomainObject) {
-		if (!getSaveAsLock(undoableDomainObject)) {
+	public void saveAs(DomainObject domainObject) {
+		if (!getSaveAsLock(domainObject)) {
 			return;
 		}
 		try {
 			DataTreeDialog dialog = getSaveDialog();
-//			dialog.setNameText(undoableDomainObject.getDomainFile().getName());
 			treeDialogCancelled = true;
 			tool.showDialog(dialog);
 			if (!treeDialogCancelled) {
-				saveAs(undoableDomainObject, dialog.getDomainFolder(), dialog.getNameText());
+				saveAs(domainObject, dialog.getDomainFolder(), dialog.getNameText());
 			}
 		}
 		finally {
-			undoableDomainObject.unlock();
+			domainObject.unlock();
 		}
 	}
 
-	private void saveAs(UndoableDomainObject undoableDomainObject, DomainFolder folder,
-			String name) {
+	private void saveAs(DomainObject domainObject, DomainFolder folder, String name) {
 		DomainFile existingFile = folder.getFile(name);
-		if (existingFile == undoableDomainObject.getDomainFile()) {
-			save(undoableDomainObject);
+		if (existingFile == domainObject.getDomainFile()) {
+			save(domainObject);
 			return;
 		}
 		if (existingFile != null) {
@@ -1330,24 +1327,23 @@ public class DataTypeManagerHandler {
 				return;
 			}
 		}
-		tool.prepareToSave(undoableDomainObject);
-		DomainObjectSaveAsTask task = new DomainObjectSaveAsTask(CONTENT_NAME, undoableDomainObject,
-			folder, name, existingFile != null);
+		tool.prepareToSave(domainObject);
+		DomainObjectSaveAsTask task = new DomainObjectSaveAsTask(CONTENT_NAME, domainObject, folder,
+			name, existingFile != null);
 		new TaskLauncher(task, tool.getToolFrame());
 	}
 
-	private boolean acquireSaveLock(UndoableDomainObject undoableDomainObject) {
-		if (!undoableDomainObject.lock(null)) {
+	private boolean acquireSaveLock(DomainObject domainObject) {
+		if (!domainObject.lock(null)) {
 			String title = "Save " + CONTENT_NAME + " (Busy)";
 			StringBuilder buf = new StringBuilder();
 			buf.append("The " + CONTENT_NAME + " is currently being modified by \n");
 			buf.append("the following actions:\n ");
-			TransactionInfo t = undoableDomainObject.getCurrentTransactionInfo();
+			TransactionInfo t = domainObject.getCurrentTransactionInfo();
 			List<String> list = t.getOpenSubTransactions();
-			Iterator<String> it = list.iterator();
-			while (it.hasNext()) {
+			for (String element : list) {
 				buf.append("\n     ");
-				buf.append(it.next());
+				buf.append(element);
 			}
 			buf.append("\n \n");
 			buf.append(
@@ -1362,7 +1358,7 @@ public class DataTypeManagerHandler {
 				"Save Archive!", OptionDialog.WARNING_MESSAGE);
 
 			if (result == OptionDialog.OPTION_ONE) {
-				undoableDomainObject.forceLock(true, "Save Archive");
+				domainObject.forceLock(true, "Save Archive");
 				return true;
 			}
 			return false;
@@ -1370,18 +1366,17 @@ public class DataTypeManagerHandler {
 		return true;
 	}
 
-	private boolean getSaveAsLock(UndoableDomainObject undoableDomainObject) {
-		if (!undoableDomainObject.lock(null)) {
+	private boolean getSaveAsLock(DomainObject domainObject) {
+		if (!domainObject.lock(null)) {
 			String title = "Save " + CONTENT_NAME + " As (Busy)";
 			StringBuffer buf = new StringBuffer();
 			buf.append("The " + CONTENT_NAME +
 				" is currently being modified by the following actions/tasks:\n \n");
-			TransactionInfo t = undoableDomainObject.getCurrentTransactionInfo();
+			TransactionInfo t = domainObject.getCurrentTransactionInfo();
 			List<String> list = t.getOpenSubTransactions();
-			Iterator<String> it = list.iterator();
-			while (it.hasNext()) {
+			for (String element : list) {
 				buf.append("\n     ");
-				buf.append(it.next());
+				buf.append(element);
 			}
 			buf.append("\n \n");
 			buf.append(
@@ -1401,11 +1396,11 @@ public class DataTypeManagerHandler {
 				OptionDialog.WARNING_MESSAGE);
 
 			if (result == OptionDialog.OPTION_ONE) {
-				undoableDomainObject.forceLock(true, "Save Archive As");
+				domainObject.forceLock(true, "Save Archive As");
 				return true;
 			}
 			else if (result == OptionDialog.OPTION_TWO) {
-				undoableDomainObject.forceLock(false, "Save Archive As");
+				domainObject.forceLock(false, "Save Archive As");
 				return true;
 			}
 			return false;
@@ -1446,9 +1441,8 @@ public class DataTypeManagerHandler {
 
 	private CreateDataTypeArchiveDataTreeDialog getCreateDialog() {
 
-		CreateDataTypeArchiveDataTreeDialog dialog =
-			new CreateDataTypeArchiveDataTreeDialog(null, "Create",
-				DataTreeDialog.CREATE, createArchiveFileFilter);
+		CreateDataTypeArchiveDataTreeDialog dialog = new CreateDataTypeArchiveDataTreeDialog(null,
+			"Create", DataTreeDialog.CREATE, createArchiveFileFilter);
 
 		ActionListener listener = event -> {
 			DomainFolder folder = dialog.getDomainFolder();
@@ -1529,8 +1523,7 @@ public class DataTypeManagerHandler {
 			}
 			catch (IOException e) {
 				setStatusText("Unexpected IOException!");
-				Msg.showError(null, getComponent(), "Unexpected Exception",
-					e.getMessage(), e);
+				Msg.showError(null, getComponent(), "Unexpected Exception", e.getMessage(), e);
 			}
 
 			return false;
@@ -1581,12 +1574,12 @@ public class DataTypeManagerHandler {
 	static class DomainObjectSaveAsTask extends Task {
 
 		private String domainObjectType;
-		private UndoableDomainObject domainObject;
+		private DomainObject domainObject;
 		private DomainFolder parentFolder;
 		private String newName;
 		private boolean doOverwrite;
 
-		DomainObjectSaveAsTask(String domainObjectType, UndoableDomainObject domainObject,
+		DomainObjectSaveAsTask(String domainObjectType, DomainObject domainObject,
 				DomainFolder folder, String newName, boolean doOverwrite) {
 
 			super("Save " + domainObjectType + " As", true, true, true);
@@ -1628,9 +1621,7 @@ public class DataTypeManagerHandler {
 					.equals(file.getContentType())) {
 				return;
 			}
-			Iterator<Archive> archiveIter = openArchives.iterator();
-			while (archiveIter.hasNext()) {
-				Archive archive = archiveIter.next();
+			for (Archive archive : openArchives) {
 				if (archive instanceof ProjectArchive) {
 					ProjectArchive projectArchive = (ProjectArchive) archive;
 					DomainFile domainFile = projectArchive.getDomainFile();
@@ -1649,24 +1640,6 @@ public class DataTypeManagerHandler {
 		}
 
 		@Override
-		public void domainFileObjectReplaced(DomainFile file, DomainObject oldObject) {
-			if (oldObject instanceof DataTypeArchiveDB) {
-				Iterator<Archive> archiveIter = openArchives.iterator();
-				while (archiveIter.hasNext()) {
-					Archive archive = archiveIter.next();
-					if (archive instanceof ProjectArchive) {
-						ProjectArchive projectArchive = (ProjectArchive) archive;
-						DomainObject domainObject = projectArchive.getDomainObject();
-						if (domainObject == oldObject) {
-							replaceArchiveWithFile(projectArchive, file);
-							return;
-						}
-					}
-				}
-			}
-		}
-
-		@Override
 		public void domainFileRenamed(DomainFile file, String oldName) {
 			if (!DataTypeArchiveContentHandler.DATA_TYPE_ARCHIVE_CONTENT_TYPE
 					.equals(file.getContentType())) {
@@ -1674,9 +1647,7 @@ public class DataTypeManagerHandler {
 			}
 			String newName = file.getName();
 			String fileID = file.getFileID();
-			Iterator<Archive> archiveIter = openArchives.iterator();
-			while (archiveIter.hasNext()) {
-				Archive archive = archiveIter.next();
+			for (Archive archive : openArchives) {
 				if (!archive.isModifiable()) {
 					continue;
 				}

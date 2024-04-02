@@ -204,7 +204,7 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 					int method, index, locationType = -1;
 					locAddress = null;
 
-					if(fixup.getDataBlock() == null) {
+					if (fixup.getDataBlock() == null) {
 						continue;	// If no data block don't try to fixup
 					}
 					try {
@@ -612,6 +612,9 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 
 				// assume any value in external is writable.
 				block.setWrite(true);
+
+				// Mark block as an artificial fabrication
+				block.setArtificial(true);
 
 				Address current = externalAddressStart;
 				while (current.compareTo(externalAddress) < 0) {

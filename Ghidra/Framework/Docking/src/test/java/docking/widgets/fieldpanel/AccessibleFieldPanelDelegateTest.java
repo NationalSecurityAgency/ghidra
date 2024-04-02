@@ -25,13 +25,13 @@ import java.util.Locale;
 
 import javax.accessibility.*;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.field.*;
+import docking.widgets.fieldpanel.internal.EmptyBigLayoutModel;
 import docking.widgets.fieldpanel.support.*;
 
 public class AccessibleFieldPanelDelegateTest {
@@ -42,7 +42,7 @@ public class AccessibleFieldPanelDelegateTest {
 	private static FontMetrics fontMetrics =
 		new JLabel("Dummy").getFontMetrics(new Font("Monospaced", Font.PLAIN, 12));
 	private List<AnchoredLayout> layouts;
-	private JPanel panel = new JPanel();
+	private FieldPanel panel = new FieldPanel(new EmptyBigLayoutModel());
 	private TestAccessibleContext testContext = new TestAccessibleContext();
 	private int fieldLineHeight = fontMetrics.getHeight() + 1;
 

@@ -701,20 +701,6 @@ public class DefaultProjectDataTest extends AbstractGhidraHeadedIntegrationTest 
 				oldParent.getPathname(), oldName));
 		}
 
-		@Override
-		public void domainFileObjectReplaced(DomainFile file, DomainObject oldObject) {
-			// not tested
-		}
-
-		@Override
-		public void domainFileObjectOpenedForUpdate(DomainFile file, DomainObject object) {
-			// not tested
-		}
-
-		@Override
-		public void domainFileObjectClosed(DomainFile file, DomainObject object) {
-			// not tested
-		}
 	}
 }
 

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,6 @@
 package ghidra.app.cmd.module;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.listing.Listing;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.DuplicateNameException;
@@ -29,13 +27,13 @@ import ghidra.util.exception.DuplicateNameException;
  * 
  * 
  */
-public class RenameTreeCmd implements Command {
+public class RenameTreeCmd implements Command<Program> {
 
 	private String oldName;
 	private String newName;
 	private Program program;
 	private String statusMsg;
-	 
+
 	/**
 	 * Constructor for RenameTreeCmd.
 	 * @param oldName old name of the tree
@@ -46,31 +44,26 @@ public class RenameTreeCmd implements Command {
 		this.newName = newName;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
-	public boolean applyTo(DomainObject obj) {
-		program = (Program)obj;
+	@Override
+	public boolean applyTo(Program p) {
+		program = p;
 		Listing listing = program.getListing();
 		try {
 			listing.renameTree(oldName, newName);
 			return true;
-		} catch (DuplicateNameException e) {
+		}
+		catch (DuplicateNameException e) {
 			statusMsg = e.getMessage();
 		}
 		return false;
 	}
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
+
+	@Override
 	public String getStatusMsg() {
 		return statusMsg;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
+	@Override
 	public String getName() {
 		return "Rename Tree View";
 	}

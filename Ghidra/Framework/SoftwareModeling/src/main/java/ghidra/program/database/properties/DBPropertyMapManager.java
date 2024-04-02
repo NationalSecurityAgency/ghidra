@@ -23,11 +23,13 @@ import java.util.Iterator;
 import java.util.TreeMap;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.ManagerDB;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.bookmark.OldBookmark;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.listing.BookmarkManager;
 import ghidra.program.model.util.*;
 import ghidra.program.util.ChangeManager;
@@ -88,13 +90,13 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 	 * @throws CancelledException if task is cancelled
 	 */
 	public DBPropertyMapManager(DBHandle handle, ChangeManager changeMgr, AddressMap addrMap,
-			int openMode, Lock lock, TaskMonitor monitor)
+			OpenMode openMode, Lock lock, TaskMonitor monitor)
 			throws IOException, VersionException, CancelledException {
 		this.dbHandle = handle;
 		this.changeMgr = changeMgr;
 		this.addrMap = addrMap;
 		this.lock = lock;
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			dbHandle.createTable(PROPERTIES_TABLE_NAME, PROPERTIES_SCHEMA);
 		}
 		findAdapters(handle);
@@ -102,32 +104,23 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 		loadPropertyMaps(openMode, monitor);
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#setProgram(ghidra.program.database.ProgramDB)
-	 */
 	@Override
 	public void setProgram(ProgramDB program) {
 		this.program = program;
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#programReady(int, int, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
-	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
+	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		// Nothing to do
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#invalidateCache(boolean)
-	 */
 	@Override
 	public void invalidateCache(boolean all) throws IOException {
 		lock.acquire();
 		try {
 			propertyMapCache.clear();
-			loadPropertyMaps(-1, TaskMonitor.DUMMY);
+			loadPropertyMaps(null, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			// will not happen
@@ -140,7 +133,14 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 		}
 	}
 
-	private void loadPropertyMaps(int openMode, TaskMonitor monitor)
+	/**
+	 * Load {@code propertyMapCache} with all property map instances.
+	 * @param openMode open mode or null if in response to a cache invalidate
+	 * @param monitor task monitor
+	 * @throws VersionException if a version error occurs
+	 * @throws CancelledException if task is cancelled
+	 */
+	private void loadPropertyMaps(OpenMode openMode, TaskMonitor monitor)
 			throws VersionException, CancelledException {
 		try {
 			VersionException ve = null;
@@ -176,7 +176,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 								BookmarkManager.OLD_BOOKMARK_PROPERTY_OBJECT_CLASS2
 										.equals(className)) {
 								// Upgrade handled by new BookmarkManager
-								if (openMode == DBConstants.UPDATE) {
+								if (openMode == OpenMode.UPDATE) {
 									throw new VersionException(VersionException.OLDER_VERSION,
 										true);
 								}
@@ -192,7 +192,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 
 							break;
 						default:
-							if (openMode >= 0) {
+							if (openMode != null) {
 								// employ unsupported property class
 								Msg.showError(this, null, "Unsupported Property", "WARNING: " +
 									" property ignored, unrecognized type: " + propertyType);
@@ -237,7 +237,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 			}
 			IntPropertyMapDB pm = null;
 			try {
-				pm = new IntPropertyMapDB(dbHandle, DBConstants.CREATE, program, changeMgr, addrMap,
+				pm = new IntPropertyMapDB(dbHandle, OpenMode.CREATE, program, changeMgr, addrMap,
 					propertyName, TaskMonitor.DUMMY);
 				propertiesDBAdapter.putRecord(propertyName, INT_PROPERTY_TYPE, null);
 				propertyMapCache.put(propertyName, pm);
@@ -275,8 +275,8 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 			}
 			LongPropertyMapDB pm = null;
 			try {
-				pm = new LongPropertyMapDB(dbHandle, DBConstants.CREATE, program, changeMgr,
-					addrMap, propertyName, TaskMonitor.DUMMY);
+				pm = new LongPropertyMapDB(dbHandle, OpenMode.CREATE, program, changeMgr, addrMap,
+					propertyName, TaskMonitor.DUMMY);
 				propertiesDBAdapter.putRecord(propertyName, LONG_PROPERTY_TYPE, null);
 				propertyMapCache.put(propertyName, pm);
 			}
@@ -314,8 +314,8 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 			}
 			StringPropertyMapDB pm = null;
 			try {
-				pm = new StringPropertyMapDB(dbHandle, DBConstants.CREATE, program, changeMgr,
-					addrMap, propertyName, TaskMonitor.DUMMY);
+				pm = new StringPropertyMapDB(dbHandle, OpenMode.CREATE, program, changeMgr, addrMap,
+					propertyName, TaskMonitor.DUMMY);
 				propertiesDBAdapter.putRecord(propertyName, STRING_PROPERTY_TYPE, null);
 				propertyMapCache.put(propertyName, pm);
 			}
@@ -347,7 +347,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 			}
 			ObjectPropertyMapDB<T> pm = null;
 			try {
-				pm = new ObjectPropertyMapDB<>(dbHandle, DBConstants.CREATE, program, changeMgr,
+				pm = new ObjectPropertyMapDB<>(dbHandle, OpenMode.CREATE, program, changeMgr,
 					addrMap, propertyName, objectClass, TaskMonitor.DUMMY, false);
 				propertiesDBAdapter.putRecord(propertyName, OBJECT_PROPERTY_TYPE,
 					objectClass.getName());
@@ -387,8 +387,8 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 			}
 			VoidPropertyMapDB pm = null;
 			try {
-				pm = new VoidPropertyMapDB(dbHandle, DBConstants.CREATE, program, changeMgr,
-					addrMap, propertyName, TaskMonitor.DUMMY);
+				pm = new VoidPropertyMapDB(dbHandle, OpenMode.CREATE, program, changeMgr, addrMap,
+					propertyName, TaskMonitor.DUMMY);
 				propertiesDBAdapter.putRecord(propertyName, VOID_PROPERTY_TYPE, null);
 				propertyMapCache.put(propertyName, pm);
 			}
@@ -576,9 +576,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 	public void removeAll(Address addr) {
 		lock.acquire();
 		try {
-			Iterator<PropertyMapDB<?>> iter = propertyMapCache.values().iterator();
-			while (iter.hasNext()) {
-				PropertyMapDB<?> pm = iter.next();
+			for (PropertyMapDB<?> pm : propertyMapCache.values()) {
 				pm.remove(addr);
 			}
 
@@ -591,15 +589,13 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 	@Override
 	public void removeAll(Address startAddr, Address endAddr, TaskMonitor monitor)
 			throws CancelledException {
+		AddressRange.checkValidRange(startAddr, endAddr);
 		lock.acquire();
 		try {
-			Iterator<PropertyMapDB<?>> iter = propertyMapCache.values().iterator();
-			while (iter.hasNext()) {
+			for (PropertyMapDB<?> pm : propertyMapCache.values()) {
 				monitor.checkCancelled();
-				PropertyMapDB<?> pm = iter.next();
 				pm.removeRange(startAddr, endAddr);
 			}
-
 		}
 		finally {
 			lock.release();
@@ -611,13 +607,10 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 			throws CancelledException {
 		lock.acquire();
 		try {
-			Iterator<PropertyMapDB<?>> iter = propertyMapCache.values().iterator();
-			while (iter.hasNext()) {
+			for (PropertyMapDB<?> pm : propertyMapCache.values()) {
 				monitor.checkCancelled();
-				PropertyMapDB<?> pm = iter.next();
 				pm.moveRange(fromAddr, fromAddr.add(length - 1), toAddr);
 			}
-
 		}
 		finally {
 			lock.release();

@@ -67,10 +67,11 @@ public class BookmarkProvider extends ComponentProviderAdapter {
 
 		bookmarkTable = threadedTablePanel.getTable();
 		bookmarkTable.setAutoLookupColumn(BookmarkTableModel.CATEGORY_COL);
-
 		panel = new JPanel(new BorderLayout());
 		panel.add(threadedTablePanel, BorderLayout.CENTER);
 		panel.add(createFilterFieldPanel(), BorderLayout.SOUTH);
+
+		bookmarkTable.setAccessibleNamePrefix("Bookmarks");
 
 		adjustTableColumns();
 
@@ -116,6 +117,8 @@ public class BookmarkProvider extends ComponentProviderAdapter {
 		tableFilterPanel = new GhidraTableFilterPanel<>(bookmarkTable, model);
 		tableFilterPanel.setToolTipText(
 			"Include bookmarks with Categories or Descriptions containing this text.");
+
+		tableFilterPanel.setAccessibleNamePrefix("Bookmarks");
 
 		return tableFilterPanel;
 	}
@@ -396,7 +399,7 @@ public class BookmarkProvider extends ComponentProviderAdapter {
 
 	}
 
-	private static class BookmarkRowObjectDeleteCommand extends BackgroundCommand {
+	private static class BookmarkRowObjectDeleteCommand extends BackgroundCommand<Program> {
 		private List<BookmarkRowObject> bookmarkList;
 
 		public BookmarkRowObjectDeleteCommand(List<BookmarkRowObject> bookmarkList) {
@@ -419,14 +422,14 @@ public class BookmarkProvider extends ComponentProviderAdapter {
 		}
 
 		@Override
-		public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-			boolean wasEabled = obj.isSendingEvents();
+		public boolean applyTo(Program program, TaskMonitor monitor) {
+			boolean wasEabled = program.isSendingEvents();
 			try {
-				obj.setEventsEnabled(false);
-				return doApplyTo(obj, monitor);
+				program.setEventsEnabled(false);
+				return doApplyTo(program, monitor);
 			}
 			finally {
-				obj.setEventsEnabled(wasEabled);
+				program.setEventsEnabled(wasEabled);
 			}
 
 		}

@@ -256,7 +256,7 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 		analysisMgr.addListener(this);
 
 		Options options = program.getOptions(Program.ANALYSIS_PROPERTIES);
-		options.registerOptionsEditor(new AnalysisOptionsEditor(program));
+		options.registerOptionsEditor(() -> new AnalysisOptionsEditor(program));
 		options.setOptionsHelpLocation(
 			new HelpLocation("AutoAnalysisPlugin", "Auto_Analysis_Option"));
 	}
@@ -264,7 +264,8 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 	private void programActivated(Program program) {
 		program.getOptions(StoredAnalyzerTimes.OPTIONS_LIST)
 				.registerOption(StoredAnalyzerTimes.OPTION_NAME, OptionType.CUSTOM_TYPE, null, null,
-					"Cumulative analysis task times", new StoredAnalyzerTimesPropertyEditor());
+					"Cumulative analysis task times",
+					() -> new StoredAnalyzerTimesPropertyEditor());
 
 	}
 

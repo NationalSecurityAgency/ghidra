@@ -20,7 +20,6 @@ import java.io.IOException;
 import ghidra.app.decompiler.*;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.Function;
@@ -33,7 +32,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
-public class DecompilerParallelConventionAnalysisCmd extends BackgroundCommand {
+public class DecompilerParallelConventionAnalysisCmd extends BackgroundCommand<Program> {
 
 	private static final String STD_NAMESPACE = "std";
 
@@ -75,8 +74,8 @@ public class DecompilerParallelConventionAnalysisCmd extends BackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		program = (Program) obj;
+	public boolean applyTo(Program p, TaskMonitor monitor) {
+		program = p;
 
 		try {
 			monitor.checkCancelled();
@@ -207,8 +206,8 @@ public class DecompilerParallelConventionAnalysisCmd extends BackgroundCommand {
 				// prevent accidental treatment of std namespace as class
 				!parentNamespace.getName().equals(STD_NAMESPACE)) {
 				//    does it have a this call convention that is the equivalent of the stdcall
-				PrototypeModel callingConvention = program.getCompilerSpec().getCallingConvention(
-					CompilerSpec.CALLING_CONVENTION_thiscall);
+				PrototypeModel callingConvention = program.getCompilerSpec()
+						.getCallingConvention(CompilerSpec.CALLING_CONVENTION_thiscall);
 				if (callingConvention != null) {
 					modelName = CompilerSpec.CALLING_CONVENTION_thiscall;
 				}

@@ -252,8 +252,7 @@ public class CppCompositeType {
 	}
 
 	public void addVirtualFunctionTablePointer(String name, DataType dataType, int offset) {
-		Member newMember = new Member(name, dataType, false,
-			new ClassFieldAttributes(Access.UNKNOWN, Property.UNKNOWN), offset);
+		Member newMember = new Member(name, dataType, false, ClassFieldAttributes.UNKNOWN, offset);
 		layoutVftPtrMembers.add(newMember);
 	}
 
@@ -275,14 +274,14 @@ public class CppCompositeType {
 
 	public void addMember(String memberName, DataType dataType, boolean isFlexibleArray, int offset,
 			String comment) {
-		addMember(memberName, dataType, isFlexibleArray,
-			new ClassFieldAttributes(Access.UNKNOWN, Property.UNKNOWN), offset, comment);
+		addMember(memberName, dataType, isFlexibleArray, ClassFieldAttributes.UNKNOWN, offset,
+			comment);
 	}
 
 	public void addMember(String memberName, DataType dataType, boolean isFlexibleArray,
 			int offset) {
-		addMember(memberName, dataType, isFlexibleArray,
-			new ClassFieldAttributes(Access.UNKNOWN, Property.UNKNOWN), offset, null);
+		addMember(memberName, dataType, isFlexibleArray, ClassFieldAttributes.UNKNOWN, offset,
+			null);
 	}
 
 	public void addMember(String memberName, DataType dataType, boolean isFlexibleArray,
@@ -314,14 +313,14 @@ public class CppCompositeType {
 	 */
 	public void insertMember(String memberName, DataType dataType, boolean isFlexibleArray,
 			int offset, String comment) {
-		insertMember(memberName, dataType, isFlexibleArray,
-			new ClassFieldAttributes(Access.UNKNOWN, Property.UNKNOWN), offset, comment);
+		insertMember(memberName, dataType, isFlexibleArray, ClassFieldAttributes.UNKNOWN, offset,
+			comment);
 	}
 
 	public void insertMember(String memberName, DataType dataType, boolean isFlexibleArray,
 			int offset) {
-		insertMember(memberName, dataType, isFlexibleArray,
-			new ClassFieldAttributes(Access.UNKNOWN, Property.UNKNOWN), offset, null);
+		insertMember(memberName, dataType, isFlexibleArray, ClassFieldAttributes.UNKNOWN, offset,
+			null);
 	}
 
 	public void insertMember(String memberName, DataType dataType, boolean isFlexibleArray,
@@ -351,8 +350,7 @@ public class CppCompositeType {
 	}
 
 	public void addStaticMember(String memberName, DataType dataType) {
-		addStaticMember(memberName, dataType,
-			new ClassFieldAttributes(Access.UNKNOWN, Property.UNKNOWN));
+		addStaticMember(memberName, dataType, ClassFieldAttributes.UNKNOWN);
 	}
 
 	public void addStaticMember(String memberName, DataType dataType,
@@ -379,8 +377,7 @@ public class CppCompositeType {
 	}
 
 	public void addSyntacticBaseClass(CppCompositeType baseClassType) throws PdbException {
-		addSyntacticBaseClass(baseClassType,
-			new ClassFieldAttributes(Access.UNKNOWN, Property.UNKNOWN));
+		addSyntacticBaseClass(baseClassType, ClassFieldAttributes.UNKNOWN);
 	}
 
 	public void addSyntacticBaseClass(CppCompositeType baseClassType,
@@ -390,8 +387,7 @@ public class CppCompositeType {
 	}
 
 	public void addDirectSyntacticBaseClass(CppCompositeType baseClassType) throws PdbException {
-		addDirectSyntacticBaseClass(baseClassType,
-			new ClassFieldAttributes(Access.UNKNOWN, Property.UNKNOWN));
+		addDirectSyntacticBaseClass(baseClassType, ClassFieldAttributes.UNKNOWN);
 	}
 
 	public void addDirectSyntacticBaseClass(CppCompositeType baseClassType,
@@ -401,8 +397,7 @@ public class CppCompositeType {
 	}
 
 	public void addVirtualSyntacticBaseClass(CppCompositeType baseClassType) throws PdbException {
-		addVirtualSyntacticBaseClass(baseClassType,
-			new ClassFieldAttributes(Access.UNKNOWN, Property.UNKNOWN));
+		addVirtualSyntacticBaseClass(baseClassType, ClassFieldAttributes.UNKNOWN);
 	}
 
 	public void addVirtualSyntacticBaseClass(CppCompositeType baseClassType,
@@ -413,8 +408,7 @@ public class CppCompositeType {
 
 	public void insertSyntacticBaseClass(CppCompositeType baseClassType, int ordinal)
 			throws PdbException {
-		insertSyntacticBaseClass(baseClassType,
-			new ClassFieldAttributes(Access.UNKNOWN, Property.UNKNOWN), ordinal);
+		insertSyntacticBaseClass(baseClassType, ClassFieldAttributes.UNKNOWN, ordinal);
 	}
 
 	public void insertSyntacticBaseClass(CppCompositeType baseClassType,
@@ -429,8 +423,7 @@ public class CppCompositeType {
 
 	public void insertDirectSyntacticBaseClass(CppCompositeType baseClassType, int ordinal)
 			throws PdbException {
-		insertDirectSyntacticBaseClass(baseClassType,
-			new ClassFieldAttributes(Access.UNKNOWN, Property.UNKNOWN), ordinal);
+		insertDirectSyntacticBaseClass(baseClassType, ClassFieldAttributes.UNKNOWN, ordinal);
 	}
 
 	public void insertDirectSyntacticBaseClass(CppCompositeType baseClassType,
@@ -445,8 +438,7 @@ public class CppCompositeType {
 
 	public void insertVirtualSyntacticBaseClass(CppCompositeType baseClassType, int ordinal)
 			throws PdbException {
-		insertVirtualSyntacticBaseClass(baseClassType,
-			new ClassFieldAttributes(Access.UNKNOWN, Property.UNKNOWN), ordinal);
+		insertVirtualSyntacticBaseClass(baseClassType, ClassFieldAttributes.UNKNOWN, ordinal);
 	}
 
 	public void insertVirtualSyntacticBaseClass(CppCompositeType baseClassType,
@@ -461,8 +453,7 @@ public class CppCompositeType {
 
 	//==============================================================================================
 	public void addDirectBaseClass(CppCompositeType baseClassType, int offset) throws PdbException {
-		addDirectBaseClass(baseClassType,
-			new ClassFieldAttributes(Access.UNKNOWN, Property.UNKNOWN), offset);
+		addDirectBaseClass(baseClassType, ClassFieldAttributes.UNKNOWN, offset);
 	}
 
 	public void addDirectBaseClass(CppCompositeType baseClassType, ClassFieldAttributes attributes,
@@ -491,9 +482,8 @@ public class CppCompositeType {
 //
 	public void addDirectVirtualBaseClass(CppCompositeType baseClassType, int basePointerOffset,
 			DataType vbptr, int offsetFromVbt) throws PdbException {
-		addDirectVirtualBaseClass(baseClassType,
-			new ClassFieldAttributes(Access.UNKNOWN, Property.UNKNOWN), basePointerOffset, vbptr,
-			offsetFromVbt);
+		addDirectVirtualBaseClass(baseClassType, ClassFieldAttributes.UNKNOWN, basePointerOffset,
+			vbptr, offsetFromVbt);
 	}
 
 	public void addDirectVirtualBaseClass(CppCompositeType baseClassType,
@@ -524,9 +514,8 @@ public class CppCompositeType {
 //
 	public void addIndirectVirtualBaseClass(CppCompositeType baseClassType, int basePointerOffset,
 			DataType vbptr, int offsetFromVbt) throws PdbException {
-		addIndirectVirtualBaseClass(baseClassType,
-			new ClassFieldAttributes(Access.UNKNOWN, Property.UNKNOWN), basePointerOffset, vbptr,
-			offsetFromVbt);
+		addIndirectVirtualBaseClass(baseClassType, ClassFieldAttributes.UNKNOWN, basePointerOffset,
+			vbptr, offsetFromVbt);
 	}
 
 	public void addIndirectVirtualBaseClass(CppCompositeType baseClassType,
@@ -947,7 +936,8 @@ public class CppCompositeType {
 		}
 
 		boolean allVbtFound = true;
-		for (Entry<Integer, PlaceholderVirtualBaseTable> tableEntry : placeholderVirtualBaseTables.entrySet()) {
+		for (Entry<Integer, PlaceholderVirtualBaseTable> tableEntry : placeholderVirtualBaseTables
+				.entrySet()) {
 			int vbtptrOffset = tableEntry.getKey();
 			PlaceholderVirtualBaseTable table = tableEntry.getValue();
 			if (!table.validateOffset()) {
@@ -1736,7 +1726,8 @@ public class CppCompositeType {
 		}
 
 		PlaceholderVirtualBaseTableEntry getEntryByName(String nameParam) {
-			for (Entry<Integer, PlaceholderVirtualBaseTableEntry> entry : entriesByIndex.entrySet()) {
+			for (Entry<Integer, PlaceholderVirtualBaseTableEntry> entry : entriesByIndex
+					.entrySet()) {
 				if (nameParam.equals(
 					entry.getValue().getVirtualBaseClass().getBaseClassType().getName())) {
 					return entry.getValue();
@@ -1749,36 +1740,6 @@ public class CppCompositeType {
 	//----------------------------------------------------------------------------------------------
 	//----------------------------------------------------------------------------------------------
 	//----------------------------------------------------------------------------------------------
-	static class ClassFieldAttributes {
-		Access access;
-		Property property;
-
-		ClassFieldAttributes(Access access, Property property) {
-			this.access = access;
-			this.property = property;
-		}
-
-		private Access getAccess() {
-			return access;
-		}
-
-		private Property getProperty() {
-			return property;
-		}
-
-		@Override
-		public String toString() {
-			StringBuilder builder = new StringBuilder();
-			if (access.getValue() > Access.BLANK.getValue()) {
-				builder.append(access);
-			}
-			if (property.equals(Property.VIRTUAL)) {
-				builder.append(property);
-			}
-			return builder.toString();
-		}
-	}
-
 	//----------------------------------------------------------------------------------------------
 	static enum Type {
 		UNKNOWN("UNKNOWN_TYPE", -1),
@@ -1817,93 +1778,6 @@ public class CppCompositeType {
 		}
 
 		private Type(String label, int value) {
-			this.label = label;
-			this.value = value;
-		}
-	}
-
-	//----------------------------------------------------------------------------------------------
-	static enum Access {
-		UNKNOWN("UNKNOWN_ACCESS ", -1),
-		BLANK("", 0),
-		PUBLIC("public", 1),
-		PROTECTED("protected", 2),
-		PRIVATE("private", 3);
-
-		private static final Map<Integer, Access> BY_VALUE = new HashMap<>();
-		static {
-			for (Access val : values()) {
-				BY_VALUE.put(val.value, val);
-			}
-		}
-		private final String label;
-		private final int value;
-
-		public String getString() {
-			return label;
-		}
-
-		@Override
-		public String toString() {
-			if (label.length() != 0) {
-				return label + " ";
-			}
-			return label;
-		}
-
-		public int getValue() {
-			return value;
-		}
-
-		public static Access fromValue(int val) {
-			return BY_VALUE.getOrDefault(val, UNKNOWN);
-		}
-
-		private Access(String label, int value) {
-			this.label = label;
-			this.value = value;
-		}
-	}
-
-	//----------------------------------------------------------------------------------------------
-	static enum Property {
-		UNKNOWN("INVALID_PROPERTY", -1),
-		BLANK("", 0),
-		VIRTUAL("virtual ", 1),
-		STATIC("static ", 2),
-		FRIEND("friend ", 3);
-		// Also consider <intro>, <pure>, <intro,pure>.  See MSFT.
-
-		private static final Map<Integer, Property> BY_VALUE = new HashMap<>();
-		static {
-			for (Property val : values()) {
-				BY_VALUE.put(val.value, val);
-			}
-		}
-		private final String label;
-		private final int value;
-
-		public String getString() {
-			return label;
-		}
-
-		@Override
-		public String toString() {
-			if (label.length() != 0) {
-				return label + " ";
-			}
-			return label;
-		}
-
-		public int getValue() {
-			return value;
-		}
-
-		public static Property fromValue(int val) {
-			return BY_VALUE.getOrDefault(val, UNKNOWN);
-		}
-
-		private Property(String label, int value) {
 			this.label = label;
 			this.value = value;
 		}

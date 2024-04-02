@@ -126,13 +126,13 @@ public class ProgramManagerPluginScreenShots extends GhidraScreenShotGenerator
 		checkinComment = "Version 2";
 		keepCheckedOut = true;
 		assertTrue(df.canCheckin());
-		df.checkin(this, false, null);
+		df.checkin(this, null);
 
 		changeProgram(p, "bbb");
 		checkinComment = "Version 3";
 		keepCheckedOut = true;
 		assertTrue(df.canCheckin());
-		df.checkin(this, false, null);
+		df.checkin(this, null);
 
 		p.release(this);
 		performAction("Open File", "ProgramManagerPlugin", false);

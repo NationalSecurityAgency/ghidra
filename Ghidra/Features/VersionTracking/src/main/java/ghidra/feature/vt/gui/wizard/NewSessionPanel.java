@@ -15,22 +15,10 @@
  */
 package ghidra.feature.vt.gui.wizard;
 
-import java.awt.BorderLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.awt.*;
+import java.util.*;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.Icon;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JSeparator;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
+import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -38,22 +26,19 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.button.BrowseButton;
 import docking.widgets.label.GDLabel;
-import docking.wizard.AbstractMageJPanel;
-import docking.wizard.WizardPanelDisplayability;
-import docking.wizard.WizardState;
+import docking.wizard.*;
 import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Ids.Fonts;
 import generic.theme.Gui;
 import ghidra.app.util.task.OpenProgramRequest;
 import ghidra.app.util.task.OpenProgramTask;
+import ghidra.feature.vt.api.util.VTSessionFileUtil;
 import ghidra.framework.main.DataTreeDialog;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
-import ghidra.util.HelpLocation;
-import ghidra.util.InvalidNameException;
-import ghidra.util.StringUtilities;
+import ghidra.util.*;
 import ghidra.util.task.TaskLauncher;
 
 /**
@@ -309,28 +294,31 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 	private String createVTSessionName(String sourceName, String destinationName) {
 
 		// if together they are within the bounds just return session name with both full names
-		if (sourceName.length() + destinationName.length() <= 2 * VTSESSION_NAME_PROGRAM_NAME_MAX_LENGTH) {
+		if (sourceName.length() + destinationName.length() <= 2 *
+			VTSESSION_NAME_PROGRAM_NAME_MAX_LENGTH) {
 			return "VT_" + sourceName + "_" + destinationName;
 		}
 
 		// give destination name all space not used by source name 
 		if (sourceName.length() < VTSESSION_NAME_PROGRAM_NAME_MAX_LENGTH) {
 			int leftover = VTSESSION_NAME_PROGRAM_NAME_MAX_LENGTH - sourceName.length();
-			destinationName =
-				StringUtilities.trimMiddle(destinationName, VTSESSION_NAME_PROGRAM_NAME_MAX_LENGTH + leftover);
+			destinationName = StringUtilities.trimMiddle(destinationName,
+				VTSESSION_NAME_PROGRAM_NAME_MAX_LENGTH + leftover);
 			return "VT_" + sourceName + "_" + destinationName;
 		}
 
 		// give source name all space not used by destination name 
 		if (destinationName.length() < VTSESSION_NAME_PROGRAM_NAME_MAX_LENGTH) {
 			int leftover = VTSESSION_NAME_PROGRAM_NAME_MAX_LENGTH - destinationName.length();
-			sourceName = StringUtilities.trimMiddle(sourceName, VTSESSION_NAME_PROGRAM_NAME_MAX_LENGTH + leftover);
+			sourceName = StringUtilities.trimMiddle(sourceName,
+				VTSESSION_NAME_PROGRAM_NAME_MAX_LENGTH + leftover);
 			return "VT_" + sourceName + "_" + destinationName;
 		}
 
 		// if both too long, shorten both of them
 		sourceName = StringUtilities.trimMiddle(sourceName, VTSESSION_NAME_PROGRAM_NAME_MAX_LENGTH);
-		destinationName = StringUtilities.trimMiddle(destinationName, VTSESSION_NAME_PROGRAM_NAME_MAX_LENGTH);
+		destinationName =
+			StringUtilities.trimMiddle(destinationName, VTSESSION_NAME_PROGRAM_NAME_MAX_LENGTH);
 
 		return "VT_" + sourceName + "_" + destinationName;
 	}
@@ -418,16 +406,17 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 		state.put(VTWizardStateKey.NEW_SESSION_FOLDER, folder);
 	}
 
-	private void openProgram(ProgramInfo programInfo) {
+	private boolean openProgram(ProgramInfo programInfo) {
 
 		if (programInfo.hasProgram()) {
-			return; // already open
+			return true; // already open
 		}
 
 		OpenProgramTask openProgramTask = new OpenProgramTask(programInfo.getFile(), tool);
 		new TaskLauncher(openProgramTask, tool.getActiveWindow());
 		OpenProgramRequest openProgram = openProgramTask.getOpenProgram();
 		programInfo.setProgram(openProgram != null ? openProgram.getProgram() : null);
+		return programInfo.hasProgram();
 	}
 
 	@Override
@@ -480,25 +469,54 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 		DomainFile file = folder.getFile(name);
 		if (file != null) {
 			notifyListenersOfStatusMessage(
-				"'" + file.getPathname() + "' is the name of an existing domain file");
+				"'" + file.getPathname() + "' is the name of an existing project file");
 			return false;
 		}
 
-		openProgram(sourceProgramInfo);
-		if (!sourceProgramInfo.hasProgram()) {
+		// Known Issue: Opening programs before comitted to using them (i.e., Next is clicked) seems 
+		// premature and will subject user to prompts about possible checkout and/or upgrades 
+		// with possible slow re-disassembly (see GP-4151)
+
+		if (!isValidDestinationProgramFile() || !isValidSourceProgramFile()) {
+			return false;
+		}
+
+		if (!openProgram(sourceProgramInfo)) {
 			notifyListenersOfStatusMessage(
 				"Can't open source program " + sourceProgramInfo.getName());
 			return false;
 		}
 
-		openProgram(destinationProgramInfo);
-		if (!destinationProgramInfo.hasProgram()) {
+		if (!openProgram(destinationProgramInfo)) {
 			notifyListenersOfStatusMessage(
 				"Can't open destination program " + destinationProgramInfo.getName());
 			return false;
 		}
 
 		notifyListenersOfStatusMessage(" ");
+		return true;
+	}
+
+	private boolean isValidSourceProgramFile() {
+		try {
+			VTSessionFileUtil.validateSourceProgramFile(sourceProgramInfo.file, false);
+		}
+		catch (Exception e) {
+			notifyListenersOfStatusMessage(e.getMessage());
+			return false;
+		}
+		return true;
+	}
+
+	private boolean isValidDestinationProgramFile() {
+		try {
+			VTSessionFileUtil.validateDestinationProgramFile(destinationProgramInfo.file, false,
+				false);
+		}
+		catch (Exception e) {
+			notifyListenersOfStatusMessage(e.getMessage());
+			return false;
+		}
 		return true;
 	}
 

@@ -40,8 +40,8 @@ public enum Loongarch_ElfRelocationType implements ElfRelocationType {
 	R_LARCH_IRELATIVE(12), /* Runtime local indirect function resolving
 							*	*(void **) PC((((void *)(*)()) (B + A)) ()
 							*/
-
-	/* Relocations 13..19 reserved for dynamic linker  */
+	R_LARCH_TLS_DESC32(13),
+	R_LARCH_TLS_DESC64(14),
 
 	R_LARCH_MARK_LA(20), 	// Mark la.abs Load absolute address for static link.
 	R_LARCH_MARK_PCREL(21), // Mark external label branch Access PC relative address for static link.
@@ -148,7 +148,24 @@ public enum Loongarch_ElfRelocationType implements ElfRelocationType {
 	R_LARCH_SUB6(106), 			// pcaddi
 	R_LARCH_ADD_ULEB128(107), 	// relax delete
 	R_LARCH_SUB_ULEB128(108), 	// relax delete
-	R_LARCH_64_PCREL(109); 		// pcaddi
+	R_LARCH_64_PCREL(109), 		// pcaddi
+	R_LARCH_CALL32(110),
+	R_LARCH_TLS_DESC_PC_HI20(111),
+	R_LARCH_TLS_DESC_PC_LO12(112),
+	R_LARCH_TLS_DESC64_PC_LO20(113),
+	R_LARCH_TLS_DESC64_PC_HI12(114),
+	R_LARCH_TLS_DESC_HI20(115),
+	R_LARCH_TLS_DESC_LO12(116),
+	R_LARCH_TLS_DESC64_LO20(117),
+	R_LARCH_TLS_DESC64_HI12(118),
+	R_LARCH_TLS_DESC_LD(119),
+	R_LARCH_TLS_DESC_CALL(120),
+	R_LARCH_TLS_TLS_LE_HI20_R(121),
+	R_LARCH_TLS_TLS_LE_ADD_R(122),
+	R_LARCH_TLS_TLS_LE_LO12_R(123),
+	R_LARCH_TLS_TLS_LD_PCREL20_S2(124),
+	R_LARCH_TLS_TLS_GD_PCREL20_S2(125),
+	R_LARCH_TLS_TLS_DESC_PCREL20_S2(126);
 
 	public final int typeId;
 

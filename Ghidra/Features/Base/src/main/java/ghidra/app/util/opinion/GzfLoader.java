@@ -20,12 +20,12 @@ import java.util.*;
 
 import org.apache.commons.io.FilenameUtils;
 
-import db.DBConstants;
 import db.DBHandle;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.Application;
+import ghidra.framework.data.OpenMode;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.Project;
 import ghidra.framework.store.db.PackedDatabase;
@@ -57,7 +57,8 @@ public class GzfLoader implements Loader {
 	}
 
 	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program program) {
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+			Program program) {
 		if (options != null && options.size() > 0) {
 			return "GzfLoader takes no options";
 		}
@@ -73,8 +74,8 @@ public class GzfLoader implements Loader {
 	@Override
 	public LoadResults<? extends DomainObject> load(ByteProvider provider, String programName,
 			Project project, String projectFolderPath, LoadSpec loadSpec, List<Option> options,
-			MessageLog messageLog, Object consumer, TaskMonitor monitor) throws IOException,
-			CancelledException, VersionException {
+			MessageLog messageLog, Object consumer, TaskMonitor monitor)
+			throws IOException, CancelledException, VersionException {
 
 		Program program = loadPackedProgramDatabase(provider, programName, consumer, monitor);
 		return new LoadResults<>(program, programName, projectFolderPath);
@@ -95,15 +96,15 @@ public class GzfLoader implements Loader {
 			boolean success = false;
 			DBHandle dbh = null;
 			try {
-				if (!ProgramContentHandler.PROGRAM_CONTENT_TYPE.equals(
-					packedDatabase.getContentType())) {
+				if (!ProgramContentHandler.PROGRAM_CONTENT_TYPE
+						.equals(packedDatabase.getContentType())) {
 					throw new IOException("File imported is not a Program: " + programName);
 				}
 
 				monitor.setMessage("Restoring " + provider.getName());
 
 				dbh = packedDatabase.open(monitor);
-				program = new ProgramDB(dbh, DBConstants.UPGRADE, monitor, consumer);
+				program = new ProgramDB(dbh, OpenMode.UPGRADE, monitor, consumer);
 				success = true;
 			}
 			finally {

@@ -1,0 +1,31 @@
+<patternlist>
+  <patternpairs totalbits="32" postbits="16">
+    <prepatterns>
+      <data>00000000 10010000</data> <!-- ret -->>
+      <data>10011101 ........ ........ ........</data> <!-- ja disp24 -->>
+      <data>00011101 ........ ........ ........</data> <!-- j disp24 -->>
+      <data>11011100 00001011</data> <!-- ji a11 -->>
+      <data>00101101 00001011 00000000 00110000</data> <!-- ji a11 -->>
+      <data>00111100 ........</data> <!-- j disp8 -->>
+    </prepatterns>
+    <postpatterns>
+      <data>00000010 ........</data> <!-- sub.a a10, const8 -->>
+      <data>00000101 ....1111 ........ ....01..</data> <!-- ld.bu d15, off18 -->>
+      <data>00001100 ........</data> <!-- ld.bu d15, [aN], off4 -->>
+      <data>00111011 ....0000 ........ 1111....</data> <!-- mov d15, const16 -->>
+      <data>00111011 ....0000 ........ 0100....</data> <!-- mov d4, const16 -->>
+      <data>00111011 ....0000 ........ 1000....</data> <!-- mov d8, const16 -->>
+      <data>10000010 ....1111</data> <!-- mov d15, const4 -->>
+      <data>10000010 ....0100</data> <!-- mov d4, const4 -->>
+      <data>10000010 ....1000</data> <!-- mov d8, const4 -->>
+      <data>01111101 ....0000 ........ 1111....</data> <!-- movh d15, const16 -->>
+      <data>10010001 ....0000 ........ 1111....</data> <!-- movh.a a15, const16 -->>
+      <data>01111101 ....0000 ........ 0100....</data> <!-- movh d4, const16 -->>
+      <data>01111101 ....0000 ........ 1000....</data> <!-- movh d8, const16 -->>
+      <data>11011010 ........</data> <!-- mov d15, const8 -->>
+      <data>00011101 ........ ........ ........</data> <!-- j disp24  (thunk detection) -->>
+      <data>10000101 ....1111 ........ ....00..</data> <!-- ld.w d15, off18 -->>
+      <funcstart/>
+    </postpatterns>
+  </patternpairs>
+</patternlist>

@@ -55,7 +55,7 @@
         <pentry minsize="1" maxsize="4" extension="inttype">
           <register name="a2"/>
         </pentry>
-        <!-- TODO: Are joins impacted by endianess ? -->
+        <!-- TODO: Are joins impacted by endianness ? -->
         <pentry minsize="5" maxsize="8" extension="inttype">
           <addr space="join" piece1="a3" piece2="a2"/>
         </pentry>
@@ -126,7 +126,7 @@
       <pentry minsize="1" maxsize="4" extension="inttype">
         <register name="a2"/>
       </pentry>
-      <!-- TODO: Are joins impacted by endianess ? -->
+      <!-- TODO: Are joins impacted by endianness ? -->
       <pentry minsize="5" maxsize="8" extension="inttype">
         <addr space="join" piece1="a3" piece2="a2"/>
       </pentry>

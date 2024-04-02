@@ -196,7 +196,7 @@ public class MemoryMergeManager implements MergeResolver {
 			if (isNameConflict(i)) {
 				conflictList.add(new ConflictInfo(i, true, false, false));
 			}
-			if (isPermissionConflict(i)) {
+			if (isFlagsConflict(i)) {
 				conflictList.add(new ConflictInfo(i, false, true, false));
 			}
 			if (isCommentConflict(i)) {
@@ -233,7 +233,8 @@ public class MemoryMergeManager implements MergeResolver {
 		String myName = myBlocks[index].getName();
 		String origName = origBlocks[index].getName();
 
-		if (!myName.equals(origName) && !latestName.equals(origName) && !myName.equals(latestName)) {
+		if (!myName.equals(origName) && !latestName.equals(origName) &&
+			!myName.equals(latestName)) {
 			return true;
 		}
 		return false;
@@ -244,13 +245,12 @@ public class MemoryMergeManager implements MergeResolver {
 	 * LATEST and MY programs.
 	 * @param index block index
 	 */
-	private boolean isPermissionConflict(int index) {
-		int latestPermissions = latestBlocks[index].getPermissions();
-		int myPermissions = myBlocks[index].getPermissions();
-		int origPermissions = origBlocks[index].getPermissions();
+	private boolean isFlagsConflict(int index) {
+		int latestFlags = latestBlocks[index].getFlags();
+		int myFlags = myBlocks[index].getFlags();
+		int origFlags = origBlocks[index].getFlags();
 
-		if (myPermissions != origPermissions && latestPermissions != origPermissions &&
-			myPermissions != latestPermissions) {
+		if (myFlags != origFlags && latestFlags != origFlags && myFlags != latestFlags) {
 			return true;
 		}
 		return false;
@@ -363,27 +363,21 @@ public class MemoryMergeManager implements MergeResolver {
 
 		if (info.nameConflict) {
 			title = "Resolve Name Conflict";
-			latestStr =
-				"Use Block name '" + latestBlocks[info.index].getName() + "'  (" +
-					MergeConstants.LATEST_TITLE + ")";
-			myStr =
-				"Use Block name '" + getUniqueBlockName(myBlocks[info.index].getName()) + "'  (" +
-					MergeConstants.MY_TITLE + ")";
-			origStr =
-				"Use Block name '" + origBlocks[info.index].getName() + "'  (" +
-					MergeConstants.ORIGINAL_TITLE + ")";
+			latestStr = "Use Block name '" + latestBlocks[info.index].getName() + "'  (" +
+				MergeConstants.LATEST_TITLE + ")";
+			myStr = "Use Block name '" + getUniqueBlockName(myBlocks[info.index].getName()) +
+				"'  (" + MergeConstants.MY_TITLE + ")";
+			origStr = "Use Block name '" + origBlocks[info.index].getName() + "'  (" +
+				MergeConstants.ORIGINAL_TITLE + ")";
 		}
 		else if (info.permissionConflict) {
-			title = "Resolve Permissions Conflict";
-			latestStr =
-				"Use '" + getPermissionString(latestBlocks[info.index]) + "'  (" +
-					MergeConstants.LATEST_TITLE + ")";
-			myStr =
-				"Use '" + getPermissionString(myBlocks[info.index]) + "'  (" +
-					MergeConstants.MY_TITLE + ")";
-			origStr =
-				"Use '" + getPermissionString(origBlocks[info.index]) + "'  (" +
-					MergeConstants.ORIGINAL_TITLE + ")";
+			title = "Resolve Flags Conflict";
+			latestStr = "Use '" + getFlagsString(latestBlocks[info.index]) + "'  (" +
+				MergeConstants.LATEST_TITLE + ")";
+			myStr = "Use '" + getFlagsString(myBlocks[info.index]) + "'  (" +
+				MergeConstants.MY_TITLE + ")";
+			origStr = "Use '" + getFlagsString(origBlocks[info.index]) + "'  (" +
+				MergeConstants.ORIGINAL_TITLE + ")";
 		}
 		else {
 			// comment conflict
@@ -393,7 +387,8 @@ public class MemoryMergeManager implements MergeResolver {
 			myStr = myBlocks[info.index].getComment();
 			origStr = origBlocks[info.index].getComment();
 		}
-		if ((memoryDetailChoice == ASK_USER) && conflictOption == ASK_USER && mergeManager != null) {
+		if ((memoryDetailChoice == ASK_USER) && conflictOption == ASK_USER &&
+			mergeManager != null) {
 			title = title + " (Block index " + info.index + ")";
 			showMergePanel(panelID, title, latestStr, myStr, origStr);
 		}
@@ -428,6 +423,7 @@ public class MemoryMergeManager implements MergeResolver {
 			resultBlocks[info.index].setWrite(sourceBlock.isWrite());
 			resultBlocks[info.index].setExecute(sourceBlock.isExecute());
 			resultBlocks[info.index].setVolatile(sourceBlock.isVolatile());
+			resultBlocks[info.index].setArtificial(sourceBlock.isArtificial());
 		}
 		else {
 			resultBlocks[info.index].setComment(sourceBlock.getComment());
@@ -456,8 +452,8 @@ public class MemoryMergeManager implements MergeResolver {
 			Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
 		}
 		mergeManager.setApplyEnabled(false);
-		mergeManager.showComponent(mergePanel, "MemoryMerge", new HelpLocation(
-			HelpTopics.REPOSITORY, "MemoryConflict"));
+		mergeManager.showComponent(mergePanel, "MemoryMerge",
+			new HelpLocation(HelpTopics.REPOSITORY, "MemoryConflict"));
 		// block until the user either cancels or hits the "Apply" button
 		// on the merge dialog...
 		// when the "Apply" button is hit, get the user's selection
@@ -465,7 +461,7 @@ public class MemoryMergeManager implements MergeResolver {
 
 	}
 
-	private String getPermissionString(MemoryBlock block) {
+	private String getFlagsString(MemoryBlock block) {
 		StringBuffer sb = new StringBuffer();
 		sb.append("Read = ");
 		sb.append(block.isExecute());
@@ -478,6 +474,9 @@ public class MemoryMergeManager implements MergeResolver {
 		sb.append(", ");
 		sb.append("Volatile = ");
 		sb.append(block.isVolatile());
+		sb.append(", ");
+		sb.append("Artificial = ");
+		sb.append(block.isArtificial());
 		return sb.toString();
 	}
 
@@ -501,7 +500,7 @@ public class MemoryMergeManager implements MergeResolver {
 				}
 			}
 		}
-		if (!isPermissionConflict(index)) {
+		if (!isFlagsConflict(index)) {
 			boolean permission = myBlocks[index].isRead();
 			if (permission != origBlocks[index].isRead()) {
 				resultBlocks[index].setRead(permission);
@@ -529,6 +528,14 @@ public class MemoryMergeManager implements MergeResolver {
 			permission = myBlocks[index].isVolatile();
 			if (permission != origBlocks[index].isVolatile()) {
 				resultBlocks[index].setVolatile(permission);
+				if (!progressUpdated) {
+					currentMonitor.setProgress(++progressIndex);
+					progressUpdated = true;
+				}
+			}
+			permission = myBlocks[index].isArtificial();
+			if (permission != origBlocks[index].isArtificial()) {
+				resultBlocks[index].setArtificial(permission);
 				if (!progressUpdated) {
 					currentMonitor.setProgress(++progressIndex);
 					progressUpdated = true;

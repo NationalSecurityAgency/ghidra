@@ -19,8 +19,8 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.*;
 
-import ghidra.app.util.bin.format.dwarf4.DWARFUtil;
-import ghidra.app.util.bin.format.dwarf4.next.DWARFDataInstanceHelper;
+import ghidra.app.util.bin.format.dwarf.DWARFDataInstanceHelper;
+import ghidra.app.util.bin.format.dwarf.DWARFUtil;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;

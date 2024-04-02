@@ -26,8 +26,7 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.ByteProviderWrapper;
 import ghidra.app.util.bin.format.macho.MachException;
 import ghidra.app.util.bin.format.macho.MachHeader;
-import ghidra.app.util.bin.format.macho.commands.SegmentCommand;
-import ghidra.app.util.bin.format.macho.commands.SegmentNames;
+import ghidra.app.util.bin.format.macho.commands.*;
 import ghidra.app.util.bin.format.macho.prelink.*;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
@@ -38,7 +37,9 @@ import ghidra.util.task.TaskMonitor;
 public class MachoPrelinkUtils {
 
 	/**
-	 * Check to see if the given {@link ByteProvider} is a Mach-O PRELINK binary
+	 * Check to see if the given {@link ByteProvider} is a Mach-O PRELINK binary.
+	 * <p>
+	 * NOTE: This method will return false if the binary is a Mach-O file set.
 	 * 
 	 * @param provider The {@link ByteProvider} to check
 	 * @param monitor A monitor
@@ -46,12 +47,31 @@ public class MachoPrelinkUtils {
 	 */
 	public static boolean isMachoPrelink(ByteProvider provider, TaskMonitor monitor) {
 		try {
-			return new MachHeader(provider).parseSegments()
+			MachHeader header = new MachHeader(provider);
+			boolean hasPrelinkSegment = new MachHeader(provider).parseSegments()
 					.stream()
 					.anyMatch(segment -> segment.getSegmentName().startsWith("__PRELINK"));
+			boolean hasFileSet = header.parseAndCheck(LoadCommandTypes.LC_FILESET_ENTRY);
+			return hasPrelinkSegment && !hasFileSet;
 		}
 		catch (MachException | IOException e) {
 			// Assume it's not a Mach-O PRELINK...fall through
+		}
+		return false;
+	}
+
+	/**
+	 * Check to see if the given {@link ByteProvider} is a Mach-O file set
+	 * 
+	 * @param provider The {@link ByteProvider} to check
+	 * @return True if the given {@link ByteProvider} is a Mach-O file set; otherwise, false
+	 */
+	public static boolean isMachoFileset(ByteProvider provider) {
+		try {
+			return new MachHeader(provider).parseAndCheck(LoadCommandTypes.LC_FILESET_ENTRY);
+		}
+		catch (MachException | IOException e) {
+			// Assume it's not a Mach-O file set...fall through
 		}
 		return false;
 	}

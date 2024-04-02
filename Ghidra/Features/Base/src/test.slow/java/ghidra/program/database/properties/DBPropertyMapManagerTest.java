@@ -23,8 +23,10 @@ import java.util.Iterator;
 
 import org.junit.*;
 
-import db.*;
+import db.DBHandle;
+import db.Table;
 import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMap;
@@ -153,9 +155,8 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 		program = null;
 
 		dbh = new DBHandle(dbFile);
-		mgr =
-			new DBPropertyMapManager(dbh, changeMgr, addrMap, DBConstants.UPDATE, new Lock("TEST"),
-				TaskMonitor.DUMMY);
+		mgr = new DBPropertyMapManager(dbh, changeMgr, addrMap, OpenMode.UPDATE, new Lock("TEST"),
+			TaskMonitor.DUMMY);
 		PropertyMap<?> pmap = mgr.getPropertyMap("TEST");
 		assertEquals(1, pmap.getSize());
 	}
@@ -171,9 +172,8 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 		program = null;
 
 		dbh = new DBHandle(dbFile);
-		mgr =
-			new DBPropertyMapManager(dbh, changeMgr, addrMap, DBConstants.UPDATE, new Lock("TEST"),
-				TaskMonitor.DUMMY);
+		mgr = new DBPropertyMapManager(dbh, changeMgr, addrMap, OpenMode.UPDATE, new Lock("TEST"),
+			TaskMonitor.DUMMY);
 		PropertyMap<?> pmap = mgr.getPropertyMap("TEST");
 		assertEquals(1, pmap.getSize());
 	}
@@ -189,9 +189,8 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 		program = null;
 
 		dbh = new DBHandle(dbFile);
-		mgr =
-			new DBPropertyMapManager(dbh, changeMgr, addrMap, DBConstants.UPDATE, new Lock("TEST"),
-				TaskMonitor.DUMMY);
+		mgr = new DBPropertyMapManager(dbh, changeMgr, addrMap, OpenMode.UPDATE, new Lock("TEST"),
+			TaskMonitor.DUMMY);
 		PropertyMap<?> pmap = mgr.getPropertyMap("TEST");
 		assertEquals(1, pmap.getSize());
 	}
@@ -207,9 +206,8 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 		program = null;
 
 		dbh = new DBHandle(dbFile);
-		mgr =
-			new DBPropertyMapManager(dbh, changeMgr, addrMap, DBConstants.UPDATE, new Lock("TEST"),
-				TaskMonitor.DUMMY);
+		mgr = new DBPropertyMapManager(dbh, changeMgr, addrMap, OpenMode.UPDATE, new Lock("TEST"),
+			TaskMonitor.DUMMY);
 		PropertyMap<?> pmap = mgr.getPropertyMap("TEST");
 		assertEquals(1, pmap.getSize());
 	}
@@ -226,9 +224,8 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 		program = null;
 
 		dbh = new DBHandle(dbFile);
-		mgr =
-			new DBPropertyMapManager(dbh, changeMgr, addrMap, DBConstants.UPDATE, new Lock("TEST"),
-				TaskMonitor.DUMMY);
+		mgr = new DBPropertyMapManager(dbh, changeMgr, addrMap, OpenMode.UPDATE, new Lock("TEST"),
+			TaskMonitor.DUMMY);
 		PropertyMap<?> pmap = mgr.getPropertyMap("TEST");
 		assertEquals(1, pmap.getSize());
 	}
@@ -244,9 +241,8 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 		program = null;
 
 		dbh = new DBHandle(dbFile);
-		mgr =
-			new DBPropertyMapManager(dbh, changeMgr, addrMap, DBConstants.UPDATE, new Lock("TEST"),
-				TaskMonitor.DUMMY);
+		mgr = new DBPropertyMapManager(dbh, changeMgr, addrMap, OpenMode.UPDATE, new Lock("TEST"),
+			TaskMonitor.DUMMY);
 		PropertyMap<?> pmap = mgr.getPropertyMap("TEST");
 		assertEquals(1, pmap.getSize());
 	}
@@ -263,9 +259,8 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 
 		dbh = new DBHandle(dbFile);
 		dbh.startTransaction();
-		mgr =
-			new DBPropertyMapManager(dbh, changeMgr, addrMap, DBConstants.UPDATE, new Lock("TEST"),
-				TaskMonitor.DUMMY);
+		mgr = new DBPropertyMapManager(dbh, changeMgr, addrMap, OpenMode.UPDATE, new Lock("TEST"),
+			TaskMonitor.DUMMY);
 		mgr.removePropertyMap("TEST");
 
 		assertNull(mgr.getIntPropertyMap("TEST"));
@@ -282,9 +277,8 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 		program = null;
 
 		dbh = new DBHandle(dbFile);
-		mgr =
-			new DBPropertyMapManager(dbh, changeMgr, addrMap, DBConstants.UPDATE, new Lock("TEST"),
-				TaskMonitor.DUMMY);
+		mgr = new DBPropertyMapManager(dbh, changeMgr, addrMap, OpenMode.UPDATE, new Lock("TEST"),
+			TaskMonitor.DUMMY);
 
 		int cnt = 0;
 		Iterator<String> iter = mgr.propertyManagers();

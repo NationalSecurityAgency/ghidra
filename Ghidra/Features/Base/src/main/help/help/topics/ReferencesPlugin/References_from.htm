@@ -1166,10 +1166,13 @@ c<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
           <BLOCKQUOTE>
             <P>[<I><B><IMG src="images/unchecked.png" alt="" valign="middle" align="middle">
             Offset</B></I>] The <I>To Address</I> entry is required for normal memory references
-            and specifies the reference destination as a memory offset. &nbsp;This entry is always
+            and specifies the reference destination as a memory offset within a selected address
+            space. &nbsp;The address offset entry is always
             interpretted as a unsigned hex value &nbsp;(i.e., the "0x" entry prefix is assumed).
             &nbsp;For those processors with multiple address-spaces, a pull-down is also provided
-            allowing the address-space to be selected.<BR>
+            allowing the address-space to be selected.  Address spaces which overlay the
+            </I>OTHER</I> non-loaded space are only included if the <B>Include OTHER overlay spaces</B>
+            checkbox is selected.<BR>
             </P>
           </BLOCKQUOTE>
 
@@ -1178,10 +1181,19 @@ c<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
           <BLOCKQUOTE>
             <P>[<B><I><IMG src="images/checked.png" alt="" valign="middle" align="middle">
             Offset</I></B>] The <I>Base Address</I> entry is required for offset memory references
-            and specifies the offset base location as a memory offset. &nbsp;This entry is always
-            interpretted as a unsigned hex value &nbsp;(i.e., the 0x entry prefix is assumed).
-            &nbsp;For those processors with multiple address-spaces, a pull-down is also provided
-            allowing the address-space to be selected.<BR>
+            and specifies the offset base location. &nbsp;See <B>To Address</B> entry above for
+            entry details.<BR>
+            </P>
+          </BLOCKQUOTE>
+          
+          <H3>Include OTHER overlay spaces</H3>
+
+          <BLOCKQUOTE>
+            <P>The <I>Include OTHER overlay spaces</I> checkbox when selected allows address spaces 
+            which overlay the </I>OTHER</I> non-loaded space to be included in the <I>To Address</I>
+            or <I>Base Address</I> address space selection pulldown list.  This may be appropriate
+            when working with special purpose overlay spaces which can facilitate flow overrides
+            (e.g., <I>syscall</I>).<BR>
             </P>
           </BLOCKQUOTE>
 

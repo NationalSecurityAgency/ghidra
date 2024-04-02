@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.disassemble;
 
-import ghidra.framework.cmd.TypedBackgroundCommand;
+import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
@@ -27,7 +27,7 @@ import ghidra.trace.model.program.TraceProgramView;
 import ghidra.util.MathUtilities;
 import ghidra.util.task.TaskMonitor;
 
-public class TraceDisassembleCommand extends TypedBackgroundCommand<TraceProgramView> {
+public class TraceDisassembleCommand extends BackgroundCommand<TraceProgramView> {
 
 	protected final TracePlatform platform;
 	protected final Address start;
@@ -76,7 +76,7 @@ public class TraceDisassembleCommand extends TypedBackgroundCommand<TraceProgram
 	}
 
 	@Override
-	public boolean applyToTyped(TraceProgramView view, TaskMonitor monitor) {
+	public boolean applyTo(TraceProgramView view, TaskMonitor monitor) {
 		Disassembler disassembler = getDisassembler(view, monitor);
 		MemBuffer buffer = getBuffer(view);
 		if (buffer == null) {

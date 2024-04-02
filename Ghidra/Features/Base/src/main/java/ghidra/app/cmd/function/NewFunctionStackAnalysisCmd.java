@@ -19,7 +19,6 @@ import java.math.BigInteger;
 import java.util.*;
 
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.Undefined;
@@ -39,7 +38,7 @@ import ghidra.util.task.TaskMonitor;
  * Command for analyzing the Stack; the command is run in the background.
  * NOTE: referenced thunk-functions should be created prior to this command
  */
-public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
+public class NewFunctionStackAnalysisCmd extends BackgroundCommand<Program> {
 
 	private static final int MAX_PARAM_OFFSET = 2048;        // max size of param reference space
 	private static final int MAX_LOCAL_OFFSET = -(64 * 1024);  // max size of local reference space
@@ -86,13 +85,9 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 		doLocals = doLocalAnalysis;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.BackgroundCommand#applyTo(ghidra.framework.model.DomainObject, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		program = (Program) obj;
+	public boolean applyTo(Program p, TaskMonitor monitor) {
+		program = p;
 
 		int count = 0;
 		long numAddresses = entryPoints.getNumAddresses();
@@ -133,7 +128,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 	/**
 	 * Analyze a function to build a stack frame based on stack references.
 	 * 
-	 * @param entry   The address of the entry point for the new function
+	 * @param f   function to analyze
 	 * @param monitor the task monitor that is checked to see if the command has
 	 * been cancelled.
 	 * @throws CancelledException if the user canceled this command
@@ -164,9 +159,8 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 			// Later this should change to stack locked.
 			Variable[] variables = func.getVariables(VariableFilter.STACK_VARIABLE_FILTER);
 			boolean hasReferences = false;
-			for (int i = 0; i < variables.length; i++) {
-				Reference[] referencesTo =
-					program.getReferenceManager().getReferencesTo(variables[i]);
+			for (Variable variable : variables) {
+				Reference[] referencesTo = program.getReferenceManager().getReferencesTo(variable);
 				if (referencesTo.length != 0) {
 					hasReferences = true;
 					break;
@@ -599,13 +593,13 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 		return -1;
 	}
 
-	/**
-	 * Checks the indicated function in the program to determine if it is a jump thunk
-	 * through a function pointer.
-	 * @param func the function to check
-	 * @param monitor status monitor for indicating progress and allowing cancel.
-	 * @returntrue if check if this is a jump thunk through a function pointer
-	 */
+//	/**
+//	 * Checks the indicated function in the program to determine if it is a jump thunk
+//	 * through a function pointer.
+//	 * @param func the function to check
+//	 * @param monitor status monitor for indicating progress and allowing cancel.
+//	 * @returntrue if check if this is a jump thunk through a function pointer
+//	 */
 //	private boolean checkThunk(Function func, TaskMonitor monitor) {
 //		Instruction instr = program.getListing().getInstructionAt(func.getEntryPoint());
 //		if (instr == null) {

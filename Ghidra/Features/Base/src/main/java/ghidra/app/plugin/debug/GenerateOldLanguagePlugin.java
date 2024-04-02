@@ -545,7 +545,7 @@ public class GenerateOldLanguagePlugin extends Plugin implements ApplicationLeve
 		 */
 		@Override
 		public List<LanguageDescription> getLanguageDescriptions(Processor processor,
-				Endian endianess, Integer size, String variant) {
+				Endian endianness, Integer size, String variant) {
 			throw new UnsupportedOperationException();
 		}
 

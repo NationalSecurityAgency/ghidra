@@ -98,7 +98,7 @@ class TraceBreakpointSet {
 	/**
 	 * Get the trace
 	 * 
-	 * @return
+	 * @return the trace
 	 */
 	public Trace getTrace() {
 		return trace;
@@ -237,7 +237,7 @@ class TraceBreakpointSet {
 	 * The caller should first call {@link #canMerge(TraceBreakpoint)} to check if the breakpoint
 	 * "fits."
 	 * 
-	 * @param bpt
+	 * @param bpt the breakpoint
 	 * @return true if the set actually changed as a result
 	 */
 	public boolean add(TraceBreakpoint bpt) {

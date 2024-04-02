@@ -28,7 +28,6 @@ import docking.widgets.label.GLabel;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.GhidraOptions;
 import ghidra.app.services.ProgramManager;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
@@ -363,13 +362,13 @@ class AnalyzeAllOpenProgramsTask extends Task {
 		}
 
 		@Override
-		public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
+		public boolean applyTo(Program program, TaskMonitor monitor) {
 			monitor.addCancelledListener(bottomUpCancelledListener);
 
 			// note: this call has to be here, so our listener on the monitor is in place
 			manager.reAnalyzeAll(null);
 
-			boolean result = super.applyTo(obj, monitor);
+			boolean result = super.applyTo(program, monitor);
 			monitor.removeCancelledListener(bottomUpCancelledListener);
 			finishedLatch.countDown();
 			return result;

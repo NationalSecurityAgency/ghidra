@@ -70,13 +70,14 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 			PtySession session = pty.getChild().session(new String[] { "/usr/bin/bash" }, env);
 
 			PtyParent parent = pty.getParent();
+			PtyChild child = pty.getChild();
 			try (Terminal term = terminalService.createWithStreams(Charset.forName("UTF-8"),
 				parent.getInputStream(), parent.getOutputStream())) {
 				term.addTerminalListener(new TerminalListener() {
 					@Override
 					public void resized(short cols, short rows) {
 						System.err.println("resized: " + cols + "x" + rows);
-						parent.setWindowSize(cols, rows);
+						child.setWindowSize(cols, rows);
 					}
 				});
 				session.waitExited();
@@ -101,13 +102,14 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 				pty.getChild().session(new String[] { "C:\\Windows\\system32\\cmd.exe" }, env);
 
 			PtyParent parent = pty.getParent();
+			PtyChild child = pty.getChild();
 			try (Terminal term = terminalService.createWithStreams(Charset.forName("UTF-8"),
 				parent.getInputStream(), parent.getOutputStream())) {
 				term.addTerminalListener(new TerminalListener() {
 					@Override
 					public void resized(short cols, short rows) {
 						System.err.println("resized: " + cols + "x" + rows);
-						parent.setWindowSize(cols, rows);
+						child.setWindowSize(cols, rows);
 					}
 				});
 				session.waitExited();

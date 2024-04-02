@@ -98,7 +98,7 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 
 		ToolOptions displayOptions = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_DISPLAY);
 		ToolOptions fieldOptions = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
-		displayOptions.registerOptionsEditor(new ListingDisplayOptionsEditor(displayOptions));
+		displayOptions.registerOptionsEditor(() -> new ListingDisplayOptionsEditor(displayOptions));
 		displayOptions.setOptionsHelpLocation(
 			new HelpLocation(getName(), GhidraOptions.CATEGORY_BROWSER_DISPLAY));
 		fieldOptions.setOptionsHelpLocation(
@@ -350,7 +350,11 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 	@Override
 	public void setNorthComponent(JComponent comp) {
 		connectedProvider.setNorthComponent(comp);
+	}
 
+	@Override
+	public void requestFocus() {
+		connectedProvider.requestFocus();
 	}
 
 	@Override
@@ -616,7 +620,7 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 		options.registerOption(ManualViewerCommandWrappedOption.MANUAL_VIEWER_OPTIONS,
 			OptionType.CUSTOM_TYPE,
 			ManualViewerCommandWrappedOption.getDefaultBrowserLoaderOptions(), helpLocation,
-			"Options for running manual viewer", new ManualViewerCommandEditor());
+			"Options for running manual viewer", () -> new ManualViewerCommandEditor());
 
 	}
 

@@ -39,6 +39,7 @@ import org.junit.*;
 
 import db.*;
 import generic.theme.GThemeDefaults.Colors.Palette;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.ColorUtils;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
@@ -540,8 +541,9 @@ public class RStarTreeMapTest {
 							int x = e.getX() * rootWidth / getWidth();
 							int y = e.getY() * rootHeight / getHeight();
 							selected.clear();
-							selected.addAll(asSpatialMap().reduce(
-								IntRectQuery.intersecting(rect(x, x, y, y))).keys());
+							selected.addAll(
+								asSpatialMap().reduce(IntRectQuery.intersecting(rect(x, x, y, y)))
+										.keys());
 							repaint();
 						}
 					});
@@ -632,23 +634,23 @@ public class RStarTreeMapTest {
 		public final SpatialMap<IntRect, String, IntRectQuery> map;
 
 		public MyDomainObject(Object consumer) throws IOException, VersionException {
-			super(new DBHandle(), DBOpenMode.CREATE, new ConsoleTaskMonitor(), "Testing", 500, 1000,
+			super(new DBHandle(), OpenMode.CREATE, new ConsoleTaskMonitor(), "Testing", 500, 1000,
 				consumer);
 			storeFactory = new DBCachedObjectStoreFactory(this);
 			try (Transaction tx = openTransaction("CreateMaps")) {
-				tree = new IntRStarTree(storeFactory, DBIntRectStringDataRecord.TABLE_NAME,
-					true, MAX_CHILDREN);
+				tree = new IntRStarTree(storeFactory, DBIntRectStringDataRecord.TABLE_NAME, true,
+					MAX_CHILDREN);
 				map = tree.asSpatialMap();
 			}
 		}
 
 		protected MyDomainObject(File file, Object consumer) throws IOException, VersionException {
-			super(new DBHandle(file), DBOpenMode.UPDATE, new ConsoleTaskMonitor(), "Testing", 500,
+			super(new DBHandle(file), OpenMode.UPDATE, new ConsoleTaskMonitor(), "Testing", 500,
 				1000, consumer);
 			storeFactory = new DBCachedObjectStoreFactory(this);
 			// No transaction, as tree should already exist
-			tree = new IntRStarTree(storeFactory, DBIntRectStringDataRecord.TABLE_NAME,
-				true, MAX_CHILDREN);
+			tree = new IntRStarTree(storeFactory, DBIntRectStringDataRecord.TABLE_NAME, true,
+				MAX_CHILDREN);
 			map = tree.asSpatialMap();
 		}
 
@@ -767,10 +769,10 @@ public class RStarTreeMapTest {
 		IntRect queryRect1 = rect(1, 1, 12, 13);
 		IntRect queryRect2 = rect(4, 4, 12, 13);
 		List<IntRect> expected = new ArrayList<>();
-		IteratorUtils.filteredIterator(allRects(range),
-			r -> queryRect1.intersects(r) && queryRect2.intersects(r))
-				.forEachRemaining(
-					expected::add);
+		IteratorUtils
+				.filteredIterator(allRects(range),
+					r -> queryRect1.intersects(r) && queryRect2.intersects(r))
+				.forEachRemaining(expected::add);
 
 		System.out.println(expected);
 
@@ -934,8 +936,7 @@ public class RStarTreeMapTest {
 			loaded = new MyDomainObject(tmp.toFile(), this);
 
 			assert loaded.map.entries()
-					.contains(
-						new ImmutablePair<>(rect(1, 5, 6, 10), "Some value"));
+					.contains(new ImmutablePair<>(rect(1, 5, 6, 10), "Some value"));
 		}
 		finally {
 			if (loaded != null) {
@@ -1002,18 +1003,16 @@ public class RStarTreeMapTest {
 			obj.map.reduce(IntRectQuery.enclosed(rect(12, 12, 6, 6))).firstValue());
 
 		assertEquals("Point(12,6)",
-			obj.map.reduce(IntRectQuery.enclosed(rect(1, 12, 6, 6))
-					.starting(
-						Rectangle2DDirection.RIGHTMOST))
+			obj.map.reduce(
+				IntRectQuery.enclosed(rect(1, 12, 6, 6)).starting(Rectangle2DDirection.RIGHTMOST))
 					.firstValue());
-		assertEquals("Point(6,1)", obj.map.reduce(IntRectQuery.enclosed(rect(6, 6, 1, 12))
-				.starting(
-					Rectangle2DDirection.BOTTOMMOST))
-				.firstValue());
+		assertEquals("Point(6,1)",
+			obj.map.reduce(
+				IntRectQuery.enclosed(rect(6, 6, 1, 12)).starting(Rectangle2DDirection.BOTTOMMOST))
+					.firstValue());
 		assertEquals("Point(6,12)",
-			obj.map.reduce(IntRectQuery.enclosed(rect(6, 6, 1, 12))
-					.starting(
-						Rectangle2DDirection.TOPMOST))
+			obj.map.reduce(
+				IntRectQuery.enclosed(rect(6, 6, 1, 12)).starting(Rectangle2DDirection.TOPMOST))
 					.firstValue());
 	}
 
@@ -1036,14 +1035,12 @@ public class RStarTreeMapTest {
 		actual.clear();
 		points.stream()
 				.filter(e -> e.getKey().enclosedBy(rect(1, 6, 1, 12)))
-				.forEach(
-					e -> expected.put(e.getKey(), e.getValue()));
+				.forEach(e -> expected.put(e.getKey(), e.getValue()));
 		assertEquals(72, expected.size()); // Sanity check on expected
 		obj.map.reduce(IntRectQuery.enclosed(rect(1, 6, 1, 12)))
 				.entries()
 				.stream()
-				.forEach(
-					e -> actual.put(e.getKey(), e.getValue()));
+				.forEach(e -> actual.put(e.getKey(), e.getValue()));
 		assertEquals(expected, actual);
 	}
 
@@ -1068,9 +1065,8 @@ public class RStarTreeMapTest {
 
 		expected = List.of("Point(6,6)", "Point(5,6)", "Point(4,6)", "Point(3,6)", "Point(2,6)",
 			"Point(1,6)");
-		actual = new ArrayList<>(obj.map.reduce(IntRectQuery.enclosed(rect(1, 6, 6, 6))
-				.starting(
-					Rectangle2DDirection.RIGHTMOST))
+		actual = new ArrayList<>(obj.map.reduce(
+			IntRectQuery.enclosed(rect(1, 6, 6, 6)).starting(Rectangle2DDirection.RIGHTMOST))
 				.orderedValues());
 	}
 
@@ -1123,8 +1119,7 @@ public class RStarTreeMapTest {
 			Map<IntRect, String> actual = new HashMap<>();
 			points.stream()
 					.filter(e -> e.getKey().enclosedBy(rect(7, 12, 1, 12)))
-					.forEach(
-						e -> expected.put(e.getKey(), e.getValue()));
+					.forEach(e -> expected.put(e.getKey(), e.getValue()));
 			obj.map.entries().stream().forEach(e -> actual.put(e.getKey(), e.getValue()));
 			assertEquals(expected, actual);
 

@@ -165,21 +165,22 @@ def cmd(cli_name, mi_name, cli_class, cli_repeat):
         _CLICmd.__doc__ = func.__doc__
         _CLICmd()
 
-        class _MICmd(gdb.MICommand):
+        if hasattr(gdb, 'MICommand'):
+            class _MICmd(gdb.MICommand):
 
-            def __init__(self):
-                super().__init__(mi_name)
+                def __init__(self):
+                    super().__init__(mi_name)
 
-            def invoke(self, argv):
-                try:
-                    return func(*argv, is_mi=True)
-                except TypeError as e:
-                    raise gdb.GdbError(e.args[0].replace(func.__name__ + "()",
-                                       mi_name))
+                def invoke(self, argv):
+                    try:
+                        return func(*argv, is_mi=True)
+                    except TypeError as e:
+                        raise gdb.GdbError(e.args[0].replace(func.__name__ + "()",
+                                           mi_name))
 
-        _MICmd.__doc__ = func.__doc__
-        _MICmd()
-        return func
+            _MICmd.__doc__ = func.__doc__
+            _MICmd()
+            return func
 
     return _cmd
 
@@ -551,7 +552,7 @@ def putmem_state(address, length, state, pages=True):
     inf = gdb.selected_inferior()
     base, addr = STATE.trace.memory_mapper.map(inf, start)
     if base != addr.space:
-        trace.create_overlay_space(base, addr.space)
+        STATE.trace.create_overlay_space(base, addr.space)
     STATE.trace.set_memory_state(addr.extend(end - start), state)
 
 
@@ -586,7 +587,7 @@ def ghidra_trace_delmem(address, length, *, is_mi, **kwargs):
 def putreg(frame, reg_descs):
     inf = gdb.selected_inferior()
     space = REGS_PATTERN.format(infnum=inf.num, tnum=gdb.selected_thread().num,
-                                level=frame.level())
+                                level=util.get_level(frame))
     STATE.trace.create_overlay_space('register', space)
     cobj = STATE.trace.create_object(space)
     cobj.insert()
@@ -594,12 +595,12 @@ def putreg(frame, reg_descs):
     keys = []
     values = []
     for desc in reg_descs:
-        v = frame.read_register(desc)
+        v = frame.read_register(desc.name)
         rv = mapper.map_value(inf, desc.name, v)
         values.append(rv)
         # TODO: Key by gdb's name or mapped name? I think gdb's.
         rpath = REG_PATTERN.format(infnum=inf.num, tnum=gdb.selected_thread(
-        ).num, level=frame.level(), regname=desc.name)
+        ).num, level=util.get_level(frame), regname=desc.name)
         keys.append(REG_KEY_PATTERN.format(regname=desc.name))
         robj = STATE.trace.create_object(rpath)
         robj.set_value('_value', rv.value)
@@ -621,7 +622,7 @@ def ghidra_trace_putreg(group='all', *, is_mi, **kwargs):
     STATE.require_tx()
     frame = gdb.selected_frame()
     with STATE.client.batch() as b:
-        return putreg(frame, frame.architecture().registers(group))
+        return putreg(frame, util.get_register_descs(frame.architecture(), group))
 
 
 @cmd('ghidra trace delreg', '-ghidra-trace-delreg', gdb.COMMAND_DATA, True)
@@ -636,11 +637,11 @@ def ghidra_trace_delreg(group='all', *, is_mi, **kwargs):
     inf = gdb.selected_inferior()
     frame = gdb.selected_frame()
     space = 'Inferiors[{}].Threads[{}].Stack[{}].Registers'.format(
-        inf.num, gdb.selected_thread().num, frame.level()
+        inf.num, gdb.selected_thread().num, util.get_level(frame)
     )
     mapper = STATE.trace.register_mapper
     names = []
-    for desc in frame.architecture().registers(group):
+    for desc in util.get_register_descs(frame.architecture(), group):
         names.append(mapper.map_name(inf, desc.name))
     return STATE.trace.delete_registers(space, names)
 
@@ -962,7 +963,7 @@ def activate(path=None):
         else:
             frame = gdb.selected_frame()
             path = FRAME_PATTERN.format(
-                infnum=inf.num, tnum=t.num, level=frame.level())
+                infnum=inf.num, tnum=t.num, level=util.get_level(frame))
     trace.proxy_object_path(path).activate()
 
 
@@ -1402,19 +1403,21 @@ def put_frames():
     bt = gdb.execute('bt', to_string=True).strip().split('\n')
     f = newest_frame(gdb.selected_frame())
     keys = []
+    level = 0
     while f is not None:
         fpath = FRAME_PATTERN.format(
-            infnum=inf.num, tnum=t.num, level=f.level())
+            infnum=inf.num, tnum=t.num, level=level)
         fobj = STATE.trace.create_object(fpath)
-        keys.append(FRAME_KEY_PATTERN.format(level=f.level()))
+        keys.append(FRAME_KEY_PATTERN.format(level=level))
         base, pc = mapper.map(inf, f.pc())
         if base != pc.space:
             STATE.trace.create_overlay_space(base, pc.space)
         fobj.set_value('_pc', pc)
         fobj.set_value('_func', str(f.function()))
         fobj.set_value(
-            '_display', bt[f.level()].strip().replace('\\s+', ' '))
+            '_display', bt[level].strip().replace('\\s+', ' '))
         f = f.older()
+        level += 1
         fobj.insert()
     STATE.trace.proxy_object_path(STACK_PATTERN.format(
         infnum=inf.num, tnum=t.num)).retain_values(keys)
@@ -1503,7 +1506,7 @@ def ghidra_trace_sync_disable(*, is_mi, **kwargs):
     """
     Cease synchronizing the current inferior with the Ghidra trace.
 
-    This is the opposite of 'ghidra trace sync-disable', except it will not
+    This is the opposite of 'ghidra trace sync-enable', except it will not
     automatically remove hooks.
     """
 
@@ -1521,7 +1524,7 @@ def ghidra_trace_sync_synth_stopped(*, is_mi, **kwargs):
     """
 
     hooks.on_stop(object())  # Pass a fake event
-
+    
 
 @cmd('ghidra util wait-stopped', '-ghidra-util-wait-stopped', gdb.COMMAND_NONE, False)
 def ghidra_util_wait_stopped(timeout='1', *, is_mi, **kwargs):

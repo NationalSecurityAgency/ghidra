@@ -135,6 +135,10 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		table.installNavigation(tool);
 		table.setAutoCreateColumnsFromModel(false);
 
+		String namePrefix = "Memory Map";
+		table.setAccessibleNamePrefix(namePrefix);
+		filterPanel.setAccessibleNamePrefix(namePrefix);
+
 		GTableCellRenderer monoRenderer = new GTableCellRenderer() {
 			@Override
 			protected Font getDefaultFont() {
@@ -478,6 +482,13 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		}
 
 		column = table.getColumn(MemoryMapModel.VOLATILE_COL);
+		if (column != null) {
+			column.setMaxWidth(65);
+			column.setMinWidth(65);
+			column.setResizable(false);
+		}
+
+		column = table.getColumn(MemoryMapModel.ARTIFICIAL_COL);
 		if (column != null) {
 			column.setMaxWidth(65);
 			column.setMinWidth(65);

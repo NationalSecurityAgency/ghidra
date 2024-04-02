@@ -324,7 +324,7 @@ public class StringDataInstance {
 		this.showTranslation = TRANSLATION.isShowTranslated(settings);
 		this.translatedValue = getTranslatedValue(settings, buf);
 		this.renderSetting = RENDER.getEnumValue(settings);
-		this.endianSetting = ENDIAN.getEndianess(settings, null);
+		this.endianSetting = ENDIAN.getEndianness(settings, null);
 
 		this.length = length;
 	}

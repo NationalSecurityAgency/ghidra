@@ -66,7 +66,7 @@ public class DefaultModuleMapProposal
 				// TODO: Determine how to handle these.
 				return false;
 			}
-			if (block.isExternalBlock()) {
+			if (block.isArtificial()) {
 				return false;
 			}
 			return true;

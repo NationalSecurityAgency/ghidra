@@ -1678,6 +1678,8 @@ macro wzero(full, word)
 	goto <top>;
 }
 
+define pcodeop bcd_add;
+
 :DADCX.B DST8_0_4						is ctx_haveext=4 & op16_12_4=0xA & src16_8_4=0x3 & as=0x0 & bow=1 & ctx_al=1 & postIncrementStore & DST8_0_4 & reg_Direct16_0_4 & repeat_carry {
 	<top>
 	build repeat_carry;

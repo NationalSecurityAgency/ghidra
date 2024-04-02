@@ -289,7 +289,34 @@ class BreakpointLocationInfoReaderV8(object):
         pass
 
     def get_locations(self, breakpoint):
+        inf = gdb.selected_inferior()
+        thread_groups = [inf.num]
+        if breakpoint.location is not None and breakpoint.location.startswith("*0x"):
+            address = int(breakpoint.location[1:],16)
+            loc = BreakpointLocation(address, breakpoint.enabled, thread_groups)
+            return [loc]
+        return []
+
+
+class BreakpointLocationInfoReaderV9(object):
+    def breakpoint_from_line(self, line):
         pass
+
+    def location_from_line(self, line):
+        pass
+
+    def get_locations(self, breakpoint):
+        inf = gdb.selected_inferior()
+        thread_groups = [inf.num]
+        if breakpoint.location is None:
+            return []
+        try:
+            address = gdb.parse_and_eval(breakpoint.location).address
+            loc = BreakpointLocation(address, breakpoint.enabled, thread_groups)
+            return [loc]
+        except Exception as e:
+            print(f"Error parsing bpt location = {breakpoint.location}")
+        return []
 
 
 class BreakpointLocationInfoReaderV13(object):
@@ -298,13 +325,62 @@ class BreakpointLocationInfoReaderV13(object):
 
 
 def _choose_breakpoint_location_info_reader():
-    if 8 <= GDB_VERSION.major < 13:
-        return BreakpointLocationInfoReaderV8()
-    elif GDB_VERSION.major >= 13:
+    if GDB_VERSION.major >= 13:
         return BreakpointLocationInfoReaderV13()
+    if GDB_VERSION.major >= 9:
+        return BreakpointLocationInfoReaderV9()
+    if GDB_VERSION.major >= 8:
+        return BreakpointLocationInfoReaderV8()
     else:
         raise gdb.GdbError(
             "GDB version not recognized by ghidragdb: " + GDB_VERSION.full)
 
 
 BREAKPOINT_LOCATION_INFO_READER = _choose_breakpoint_location_info_reader()
+
+def set_bool_param_by_api(name, value):
+    gdb.set_parameter(name, value)
+
+
+def set_bool_param_by_cmd(name, value):
+    val = 'on' if value else 'off'
+    gdb.execute(f'set {name} {val}')
+
+
+def choose_set_parameter():
+    if GDB_VERSION.major >= 13:
+        return set_bool_param_by_api
+    else:
+        return set_bool_param_by_cmd
+
+set_bool_param = choose_set_parameter()
+
+
+def get_level(frame):
+    if hasattr(frame, "level"):
+        return frame.level()
+    else:
+        level = -1;
+        f = frame
+        while f is not None:
+            level += 1
+            f = f.newer()
+        return level
+
+
+class RegisterDesc(namedtuple('BaseRegisterDesc', ['name'])):
+    pass
+
+def get_register_descs(arch, group='all'):
+    if hasattr(arch, "registers"):
+        return arch.registers(group)
+    else:
+        descs = []
+        regset = gdb.execute(f"info registers {group}", to_string=True).strip().split('\n')
+        for line in regset:
+            if not line.startswith(" "):
+                tokens = line.strip().split()
+                descs.append(RegisterDesc(tokens[0]))       	
+        return descs
+
+

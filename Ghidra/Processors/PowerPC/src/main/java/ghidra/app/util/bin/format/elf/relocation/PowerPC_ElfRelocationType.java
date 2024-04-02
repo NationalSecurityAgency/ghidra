@@ -56,6 +56,11 @@ public enum PowerPC_ElfRelocationType implements ElfRelocationType {
 	R_PPC_SECTOFF_HA(36), 		// half16 #ha(R + A)
 	R_PPC_ADDR30(37), 			// word30 (S + A - P) >> 2
 
+	R_PPC_RELAX(48),
+	R_PPC_RELAX_PLT(49),
+	R_PPC_RELAX_PLTREL24(50),
+	R_PPC_16DX_HA(51),
+
 	R_POWERPC_TLS(67),
 	R_POWERPC_DTPMOD(68),
 	R_POWERPC_TPREL16(69),

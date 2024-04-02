@@ -54,7 +54,6 @@
 		<attribute schema="VOID" />
 	</schema>
 	<schema name="WatchpointContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
-		<interface name="WatchpointSpecContainer" />
 		<element schema="WatchpointSpec" />
 		<attribute name="_supported_breakpoint_kinds" schema="SET_BREAKPOINT_KIND" required="yes" hidden="yes" />
 		<attribute name="_value" schema="ANY" hidden="yes" />
@@ -107,7 +106,8 @@
 		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
 		<attribute name="_order" schema="INT" hidden="yes" />
 		<attribute name="_modified" schema="BOOL" hidden="yes" />
-		<attribute name="_enabled" schema="BOOL" required="yes" hidden="yes" />
+		<attribute name="Enabled" schema="BOOL" required="yes" />
+		<attribute-alias from="_enabled" to="Enabled" />
 		<attribute name="Commands" schema="STRING" />
 		<attribute name="Condition" schema="STRING" />
 		<attribute name="Hit Count" schema="INT" />
@@ -131,7 +131,8 @@
 		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
 		<attribute name="_order" schema="INT" hidden="yes" />
 		<attribute name="_modified" schema="BOOL" hidden="yes" />
-		<attribute name="_enabled" schema="BOOL" required="yes" hidden="yes" />
+		<attribute name="Enabled" schema="BOOL" required="yes" />
+		<attribute-alias from="_enabled" to="Enabled" />
 		<attribute name="_range" schema="RANGE" hidden="yes" />
 		<attribute name="Condition" schema="STRING" />
 		<attribute name="Hit Count" schema="INT" />
@@ -241,6 +242,8 @@
 		<attribute name="_kind" schema="STRING" fixed="yes" hidden="yes" />
 		<attribute name="_order" schema="INT" hidden="yes" />
 		<attribute name="_modified" schema="BOOL" hidden="yes" />
+		<attribute name="Enabled" schema="BOOL" required="yes" />
+		<attribute-alias from="_enabled" to="Enabled" />
 		<attribute schema="VOID" />
 	</schema>
 	<schema name="BreakpointLocationContainer" canonical="yes" elementResync="NEVER" attributeResync="NEVER">
@@ -426,6 +429,9 @@
 		<attribute name="Floating Point Registers" schema="RegisterBank" />
 		<attribute name="Advanced Vector Extensions" schema="RegisterBank" />
 		<attribute name="Memory Protection Extensions" schema="RegisterBank" />
+		<attribute name="float" schema="RegisterBank" />
+		<attribute name="general" schema="RegisterBank" />
+		<attribute name="system" schema="RegisterBank" />
 		<attribute name="_descriptions" schema="RegisterValueContainer" />
 		<attribute name="_value" schema="ANY" hidden="yes" />
 		<attribute name="_type" schema="STRING" hidden="yes" />

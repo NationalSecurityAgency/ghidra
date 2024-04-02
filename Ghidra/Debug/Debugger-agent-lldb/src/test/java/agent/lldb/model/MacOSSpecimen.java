@@ -35,6 +35,12 @@ public enum MacOSSpecimen implements DebuggerTestSpecimen, DebuggerModelTestUtil
 			return DummyProc.which("expSpin");
 		}
 	},
+	READ {
+		@Override
+		public String getCommandLine() {
+			return DummyProc.which("expRead");
+		}
+	},
 	FORK_EXIT {
 		@Override
 		public String getCommandLine() {

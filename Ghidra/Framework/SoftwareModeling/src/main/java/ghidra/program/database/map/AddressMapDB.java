@@ -18,8 +18,8 @@ package ghidra.program.database.map;
 import java.io.IOException;
 import java.util.*;
 
-import db.DBConstants;
 import db.DBHandle;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.ProgramAddressFactory;
 import ghidra.program.database.map.AddressMapDBAdapter.AddressMapEntry;
 import ghidra.program.database.mem.MemoryMapDB;
@@ -181,15 +181,15 @@ public class AddressMapDB implements AddressMap {
 	 * @throws IOException thrown if a dabase io error occurs.
 	 * @throws VersionException if the database version does not match the expected version.
 	 */
-	public AddressMapDB(DBHandle handle, int openMode, AddressFactory factory, long baseImageOffset,
-			TaskMonitor monitor) throws IOException, VersionException {
-		this.readOnly = (openMode == DBConstants.READ_ONLY);
+	public AddressMapDB(DBHandle handle, OpenMode openMode, AddressFactory factory,
+			long baseImageOffset, TaskMonitor monitor) throws IOException, VersionException {
+		this.readOnly = (openMode == OpenMode.IMMUTABLE);
 		this.addrFactory = factory;
 		this.baseImageOffset = baseImageOffset;
 		defaultAddrSpace = addrFactory.getDefaultAddressSpace();
 		adapter = AddressMapDBAdapter.getAdapter(handle, openMode, addrFactory, monitor);
 		oldAddrMap = (adapter.oldAddrMap != null) ? adapter.oldAddrMap : this;
-		useOldAddrMap = (openMode == DBConstants.READ_ONLY && oldAddrMap != this);
+		useOldAddrMap = (openMode == OpenMode.IMMUTABLE && oldAddrMap != this);
 		baseAddrs = adapter.getBaseAddresses(false);
 		init(true);
 	}

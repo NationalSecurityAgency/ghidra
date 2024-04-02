@@ -964,7 +964,9 @@ void IfcPrintCXml::execute(istream &s)
 
   dcp->conf->print->setOutputStream(status->fileoptr);
   dcp->conf->print->setMarkup(true);
+  dcp->conf->print->setPackedOutput(false);
   dcp->conf->print->docFunction(dcp->fd);
+  *status->fileoptr << endl;
   dcp->conf->print->setMarkup(false);
 }
 

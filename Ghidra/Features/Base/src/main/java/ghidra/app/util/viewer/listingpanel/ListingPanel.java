@@ -122,6 +122,10 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 				validate();
 			}
 		});
+
+		String viewName = "Assembly Listing View";
+		fieldPanel.setName(viewName);
+		fieldPanel.getAccessibleContext().setAccessibleName(viewName);
 	}
 
 	/**

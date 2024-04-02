@@ -34,7 +34,8 @@ public abstract class AbstractTraceRmiLaunchOpinion implements TraceRmiLaunchOpi
 		String pluginName = PluginUtils.getPluginNameFromClass(TraceRmiLauncherServicePlugin.class);
 		options.registerOption(TraceRmiLauncherServicePlugin.OPTION_NAME_SCRIPT_PATHS,
 			OptionType.STRING_TYPE, "", new HelpLocation(pluginName, "options"),
-			"Paths to search for user-created debugger launchers", new ScriptPathsPropertyEditor());
+			"Paths to search for user-created debugger launchers",
+			() -> new ScriptPathsPropertyEditor());
 	}
 
 	@Override

@@ -28,29 +28,18 @@ import ghidra.program.model.data.LEB128;
 
 /**
  * A Mach-O binding table
- * 
- * @see <a href="https://github.com/apple-oss-distributions/dyld/blob/main/common/MachOLayout.cpp">common/MachOLayout.cpp</a> 
- * @see <a href="https://github.com/apple-oss-distributions/dyld/blob/main/common/MachOAnalyzer.cpp">common/MachOAnalyzer.cpp</a> 
  */
-public class BindingTable {
+public class BindingTable extends OpcodeTable {
 
-	private List<Binding> bindings;
+	private List<Binding> bindings = new ArrayList<>();
 	private List<Binding> threadedBindings;
-	private List<Long> opcodeOffsets;
-	private List<Long> ulebOffsets;
-	private List<Long> slebOffsets;
-	private List<Long> stringOffsets;
+
 
 	/**
 	 * Creates an empty {@link BindingTable}
 	 */
 	public BindingTable() {
-		bindings = new ArrayList<>();
-		threadedBindings = null;
-		opcodeOffsets = new ArrayList<>();
-		ulebOffsets = new ArrayList<>();
-		slebOffsets = new ArrayList<>();
-		stringOffsets = new ArrayList<>();
+		super();
 	}
 
 	/**
@@ -204,34 +193,6 @@ public class BindingTable {
 	 */
 	public List<Binding> getThreadedBindings() {
 		return threadedBindings;
-	}
-
-	/**
-	 * {@return opcode offsets from the start of the bind data}
-	 */
-	public List<Long> getOpcodeOffsets() {
-		return opcodeOffsets;
-	}
-
-	/**
-	 * {@return ULEB128 offsets from the start of the bind data}
-	 */
-	public List<Long> getUlebOffsets() {
-		return ulebOffsets;
-	}
-
-	/**
-	 * {@return SLEB128 offsets from the start of the bind data}
-	 */
-	public List<Long> getSlebOffsets() {
-		return slebOffsets;
-	}
-
-	/**
-	 * {@return string offsets from the start of the bind data}
-	 */
-	public List<Long> getStringOffsets() {
-		return stringOffsets;
 	}
 
 	/**

@@ -201,6 +201,33 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 		this(table, tableModel, " Filter: ");
 	}
 
+	/**
+	 * Sets an accessible name on the filter component. This prefix will be used to assign
+	 * meaningful accessible names to the filter text field and the filter options button such
+	 * that screen readers will properly describe them.
+	 * <P>
+	 * This prefix should be the base name that describes the type of items in the table.  For
+	 * example if the table contains fruits, then "Fruits" would be an appropriate prefix name.
+	 * This method will then append the necessary information to name the text field and the button.
+	 *
+	 * @param namePrefix the accessible name prefix to assign to the filter component. 
+	 */
+	public void setAccessibleNamePrefix(String namePrefix) {
+		filterField.setAccessibleNamePrefix(namePrefix);
+		String filterOptionsPrefix = namePrefix + " Filter Options";
+		filterStateButton.setName(filterOptionsPrefix + " Button");
+
+		// screen reader reads the accessible name followed by the role ("button" in this case)
+		// so don't append "button" to the accessible name
+		filterStateButton.getAccessibleContext().setAccessibleName(filterOptionsPrefix);
+
+		// Setting the accessible description to empty string prevents it from reading any tooltips
+		// on the button when the button gets focus. These buttons tend to have particularly large
+		// tooltips which seem excessive to read to the user every time they get focus. We may need
+		// to revisit this decision.
+		filterStateButton.getAccessibleContext().setAccessibleDescription("");
+	}
+
 	public GTableFilterPanel(JTable table, RowObjectTableModel<ROW_OBJECT> tableModel,
 			String filterLabel) {
 		this.table = table;

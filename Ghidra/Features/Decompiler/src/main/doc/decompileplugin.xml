@@ -1326,7 +1326,7 @@
     <informalexample>
       <itemizedlist spacing='compact'>
 	<listitem>Processor family</listitem>
-	<listitem>Endianess</listitem>
+	<listitem>Endianness</listitem>
 	<listitem>Size of the address bus</listitem>
 	<listitem>Processor variant</listitem>
 	<listitem>Compiler producing the Program</listitem>

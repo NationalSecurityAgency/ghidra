@@ -401,6 +401,56 @@
           version tracking session.</P>
         </BLOCKQUOTE>
         
+        <H2><A name="Open_Existing_Session"></A>Open an Existing Session</H2>
+
+        <BLOCKQUOTE>
+        
+         <P>To open an existing session you can do one of the following:</P>
+
+          <UL>
+            <LI>Double click a an existing Session in the Project Manager window. Sessions can be 
+            identified by the <IMG border="0" src="images/start-here.png"> icon next to their names.</LI>
+            
+            <LI>Drag an existing Session onto a running tool.</LI>
+            
+            <LI>Choose File->Open Session... from an open Version Tracking tool and select a Version Tracking Session.</LI>
+            
+            
+        </BLOCKQUOTE>
+        
+        <H2><A name="Versioning_Sessions"></A>Sessions in Project Repositories</H2>
+
+        <BLOCKQUOTE>
+        
+          <P>Sessions can be versioned using Ghidra's 
+          <A href="help/topics/VersionControl/project_repository.htm#ProjectRepository">Project Repository</A> 
+          mechanism mostly in the same way programs or data archives can be with some 
+          qualifications:</P>
+
+          <UL>
+            <LI>Most shared project actions work for Sessions as they normally do, such as <b>Add to
+             Version Control</b>, <b>Check In</b>, <b>History</b>, ... </LI>
+            
+            <LI>When checking out a Session you must choose exclusive checkout because there is no
+            way to merge two Sessions that have been edited. Exclusive checkout will prevent others
+            from making changes to the session until an Undo Checkout is performed.</LI>
+            
+            <LI>In order for others to check out a Session that another user has added to source 
+            control, the two programs used in creating the session must be first added to source 
+            control. NOTE: The exact two programs used when creating the Session (not copies of the 
+            programs) must be the ones added.</LI>
+            
+            <LI>When opening a versioned session in the active project the user may be prompted to perform a checkout if not currently checked-out.</LI>
+            
+            <LI>Opening a versioned session must have an exclusive checkout or it will fail on open.  In addition, only a session within the active project may be opened (i.e., not a viewed project or URL-based access).  </LI>
+            
+            <LI>NOTE: A session and its two programs must reside within the same project.</LI>
+            
+          </UL>
+        
+        </BLOCKQUOTE>
+        
+        
     </BLOCKQUOTE><!-- Main content blockquote -->
 
     <P class="providedbyplugin">Provided by: <I>Version Tracking Plugin</I></P>

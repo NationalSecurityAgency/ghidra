@@ -14,33 +14,108 @@
 #  limitations under the License.
 ##
 from ghidratrace.client import Address, RegVal
-
 import lldb
 
 from . import util
 
+
 # NOTE: This map is derived from the ldefs using a script
 language_map = {
     'aarch64': ['AARCH64:BE:64:v8A', 'AARCH64:LE:64:AppleSilicon', 'AARCH64:LE:64:v8A'],
+    'arm': ['ARM:BE:32:v8', 'ARM:BE:32:v8T', 'ARM:LE:32:v8', 'ARM:LE:32:v8T'],
+    'armv4': ['ARM:BE:32:v4', 'ARM:LE:32:v4'],
+    'armv4t': ['ARM:BE:32:v4t', 'ARM:LE:32:v4t'],
+    'armv5': ['ARM:BE:32:v5', 'ARM:LE:32:v5'],
+    'armv5e': ['ARM:BE:32:v5t', 'ARM:LE:32:v5t'],
+    'armv5t': ['ARM:BE:32:v5t', 'ARM:LE:32:v5t'],
+    'armv6': ['ARM:BE:32:v6', 'ARM:LE:32:v6'],
+    'armv6m': ['ARM:BE:32:Cortex', 'ARM:LE:32:Cortex'],
     'armv7': ['ARM:BE:32:v7', 'ARM:LE:32:v7'],
-    'armv7k': ['ARM:BE:32:v7', 'ARM:LE:32:v7'],
+    'armv7l': ['ARM:BE:32:v7', 'ARM:LE:32:v7'],
+    'armv7f': ['ARM:BE:32:v7', 'ARM:LE:32:v7'],
     'armv7s': ['ARM:BE:32:v7', 'ARM:LE:32:v7'],
-    'arm64': ['ARM:BE:64:v8', 'ARM:LE:64:v8'],
-    'arm64_32': ['ARM:BE:32:v8', 'ARM:LE:32:v8'],
-    'arm64e': ['ARM:BE:64:v8', 'ARM:LE:64:v8'],
-    'i386': ['x86:LE:32:default'],
+    'armv7k': ['ARM:BE:32:v7', 'ARM:LE:32:v7'],
+    'armv7m': ['ARM:BE:32:v7', 'ARM:LE:32:v7'],
+    'armv7em': ['ARM:BE:32:Cortex', 'ARM:LE:32:Cortex'],
+    'xscale': ['ARM:BE:32:v6', 'ARM:LE:32:v6'],
+    'thumbv5': ['ARM:BE:32:v5', 'ARM:LE:32:v5'],
+    'thumbv5e': ['ARM:BE:32:v5', 'ARM:LE:32:v5'],
+    'thumbv6': ['ARM:BE:32:v6', 'ARM:LE:32:v6'],
+    'thumbv6m': ['ARM:BE:32:Cortex', 'ARM:LE:32:Cortex'],
     'thumbv7': ['ARM:BE:32:v7', 'ARM:LE:32:v7'],
-    'thumbv7k': ['ARM:BE:32:v7', 'ARM:LE:32:v7'],
+    'thumbv7f': ['ARM:BE:32:v7', 'ARM:LE:32:v7'],
     'thumbv7s': ['ARM:BE:32:v7', 'ARM:LE:32:v7'],
+    'thumbv7k': ['ARM:BE:32:v7', 'ARM:LE:32:v7'],
+    'thumbv7m': ['ARM:BE:32:v7', 'ARM:LE:32:v7'],
+    'thumbv7em': ['ARM:BE:32:Cortex', 'ARM:LE:32:Cortex'],
+    'armv8': ['ARM:BE:32:v8', 'ARM:LE:32:v8'],
+    'armv8l': ['ARM:BE:32:v8', 'ARM:LE:32:v8'],
+    'arm64': ['AARCH64:BE:64:v8A', 'AARCH64:LE:64:AppleSilicon', 'AARCH64:LE:64:v8A'],
+    'arm64e': ['AARCH64:BE:64:v8A', 'AARCH64:LE:64:AppleSilicon', 'AARCH64:LE:64:v8A'],
+    'arm64_32': ['ARM:BE:32:v8', 'ARM:LE:32:v8'],
+    'mips': ['MIPS:BE:32:default', 'MIPS:LE:32:default'],
+    'mipsr2': ['MIPS:BE:32:default', 'MIPS:LE:32:default'],
+    'mipsr3': ['MIPS:BE:32:default', 'MIPS:LE:32:default'],
+    'mipsr5': ['MIPS:BE:32:default', 'MIPS:LE:32:default'],
+    'mipsr6': ['MIPS:BE:32:default', 'MIPS:LE:32:default'],
+    'mipsel': ['MIPS:BE:32:default', 'MIPS:LE:32:default'],
+    'mipsr2el': ['MIPS:BE:32:default', 'MIPS:LE:32:default'],
+    'mipsr3el': ['MIPS:BE:32:default', 'MIPS:LE:32:default'],
+    'mipsr5el': ['MIPS:BE:32:default', 'MIPS:LE:32:default'],
+    'mipsr6el': ['MIPS:BE:32:default', 'MIPS:LE:32:default'],
+    'mips64': ['MIPS:BE:3264:default', 'MIPS:LE:64:default'],
+    'mips64r2': ['MIPS:BE:64:default', 'MIPS:LE:64:default'],
+    'mips64r3': ['MIPS:BE:64:default', 'MIPS:LE:64:default'],
+    'mips64r5': ['MIPS:BE:64:default', 'MIPS:LE:64:default'],
+    'mips64r6': ['MIPS:BE:64:default', 'MIPS:LE:64:default'],
+    'mips64el': ['MIPS:BE:64:default', 'MIPS:LE:64:default'],
+    'mips64r2el': ['MIPS:BE:64:default', 'MIPS:LE:64:default'],
+    'mips64r3el': ['MIPS:BE:64:default', 'MIPS:LE:64:default'],
+    'mips64r5el': ['MIPS:BE:64:default', 'MIPS:LE:64:default'],
+    'mips64r6el': ['MIPS:BE:64:default', 'MIPS:LE:64:default'],
+    'msp:430X': ['TI_MSP430:LE:16:default'],
+    'powerpc': ['PowerPC:BE:32:4xx', 'PowerPC:LE:32:4xx'],
+    'ppc601': ['PowerPC:BE:32:4xx', 'PowerPC:LE:32:4xx'],
+    'ppc602': ['PowerPC:BE:32:4xx', 'PowerPC:LE:32:4xx'],
+    'ppc603': ['PowerPC:BE:32:4xx', 'PowerPC:LE:32:4xx'],
+    'ppc603e': ['PowerPC:BE:32:4xx', 'PowerPC:LE:32:4xx'],
+    'ppc603ev': ['PowerPC:BE:32:4xx', 'PowerPC:LE:32:4xx'],
+    'ppc604': ['PowerPC:BE:32:4xx', 'PowerPC:LE:32:4xx'],
+    'ppc604e': ['PowerPC:BE:32:4xx', 'PowerPC:LE:32:4xx'],
+    'ppc620': ['PowerPC:BE:32:4xx', 'PowerPC:LE:32:4xx'],
+    'ppc750': ['PowerPC:BE:32:4xx', 'PowerPC:LE:32:4xx'],
+    'ppc7400': ['PowerPC:BE:32:4xx', 'PowerPC:LE:32:4xx'],
+    'ppc7450': ['PowerPC:BE:32:4xx', 'PowerPC:LE:32:4xx'],
+    'ppc970': ['PowerPC:BE:32:4xx', 'PowerPC:LE:32:4xx'],
+    'powerpc64': ['PowerPC:BE:64:4xx', 'PowerPC:LE:64:4xx'],
+    'powerpc64le': ['PowerPC:BE:64:4xx', 'PowerPC:LE:64:4xx'],
+    'ppc970-64': ['PowerPC:BE:64:4xx', 'PowerPC:LE:64:4xx'],
+    's390x': [],
+    'sparc': ['sparc:BE:32:default', 'sparc:BE:64:default'],
+    'sparcv9': ['sparc:BE:32:default', 'sparc:BE:64:default'],
+    'i386': ['x86:LE:32:default'],
+    'i486': ['x86:LE:32:default'],
+    'i486sx': ['x86:LE:32:default'],
+    'i686': ['x86:LE:64:default'],
     'x86_64': ['x86:LE:64:default'],
-    'wasm32': ['x86:LE:64:default'],
+    'x86_64h': ['x86:LE:64:default'],
+    'hexagon': [],
+    'hexagonv4': [],
+    'hexagonv5': [],
+    'riscv32': ['RISCV:LE:32:RV32G', 'RISCV:LE:32:RV32GC', 'RISCV:LE:32:RV32I', 'RISCV:LE:32:RV32IC', 'RISCV:LE:32:RV32IMC', 'RISCV:LE:32:default'],
+    'riscv64': ['RISCV:LE:64:RV64G', 'RISCV:LE:64:RV64GC', 'RISCV:LE:64:RV64I', 'RISCV:LE:64:RV64IC', 'RISCV:LE:64:default'],
+    'unknown-mach-32': ['DATA:LE:32:default', 'DATA:LE:32:default'],
+    'unknown-mach-64': ['DATA:LE:64:default', 'DATA:LE:64:default'],
+    'arc': [],
+    'avr': ['avr8:LE:24:xmega'],
+    'wasm32': ['x86:LE:32:default'],
 }
 
 data64_compiler_map = {
     None: 'pointer64',
 }
 
-x86_compiler_map = {
+default_compiler_map = {
     'freebsd': 'gcc',
     'linux': 'gcc',
     'netbsd': 'gcc',
@@ -52,20 +127,38 @@ x86_compiler_map = {
     'windows': 'Visual Studio',
     # This may seem wrong, but Ghidra cspecs really describe the ABI
     'Cygwin': 'Visual Studio',
+    'default': 'default',
+    'unknown': 'gcc',
 }
 
 compiler_map = {
-    'DATA:BE:64:default': data64_compiler_map,
-    'DATA:LE:64:default': data64_compiler_map,
-    'x86:LE:32:default': x86_compiler_map,
-    'x86:LE:64:default': x86_compiler_map,
+    'DATA:BE:64:': data64_compiler_map,
+    'DATA:LE:64:': data64_compiler_map,
+    'x86:LE:32:': default_compiler_map,
+    'x86:LE:64:': default_compiler_map,
+    'ARM:LE:32:': default_compiler_map,
+    'ARM:LE:64:': default_compiler_map,
 }
 
 
-def get_arch():
+def find_host_triple():
+    dbg = util.get_debugger()
+    for i in range(dbg.GetNumPlatforms()):
+        platform = dbg.GetPlatformAtIndex(i)
+        if platform.GetName() == 'host':
+            return platform.GetTriple()
+    return 'unrecognized'
+
+
+def find_triple():
     triple = util.get_target().triple
-    if triple is None:
-        return "x86_64"
+    if triple is not None:
+        return triple
+    return find_host_triple()
+
+
+def get_arch():
+    triple = find_triple()
     return triple.split('-')[0]
 
 
@@ -73,7 +166,6 @@ def get_endian():
     parm = util.get_convenience_variable('endian')
     if parm != 'auto':
         return parm
-    # Once again, we have to hack using the human-readable 'show'
     order = util.get_target().GetByteOrder()
     if order is lldb.eByteOrderLittle:
         return 'little'
@@ -88,15 +180,11 @@ def get_osabi():
     parm = util.get_convenience_variable('osabi')
     if not parm in ['auto', 'default']:
         return parm
-    # We have to hack around the fact the LLDB won't give us the current OS ABI
-    # via the API if it is "auto" or "default". Using "show", we can get it, but
-    # we have to parse output meant for a human. The current value will be on
-    # the top line, delimited by double quotes. It will be the last delimited
-    # thing on that line. ("auto" may appear earlier on the line.)
-    triple = util.get_target().triple
+    triple = find_triple()
     # this is an unfortunate feature of the tests
-    if triple is None:
-        return "linux"
+    if triple is None or '-' not in triple:
+        return "default"
+    triple = find_triple()
     return triple.split('-')[2]
 
 
@@ -132,12 +220,20 @@ def compute_ghidra_compiler(lang):
         return comp
 
     # Check if the selected lang has specific compiler recommendations
-    if not lang in compiler_map:
+    matched_lang = sorted(
+        (l for l in compiler_map if l in lang),
+        key=lambda l: compiler_map[l]
+    )
+    if len(matched_lang) == 0:
         return 'default'
-    comp_map = compiler_map[lang]
+    comp_map = compiler_map[matched_lang[0]]
     osabi = get_osabi()
-    if osabi in comp_map:
-        return comp_map[osabi]
+    matched_osabi = sorted(
+        (l for l in comp_map if l in osabi),
+        key=lambda l: comp_map[l]
+    )
+    if len(matched_osabi) > 0:
+        return comp_map[matched_osabi[0]]
     if None in comp_map:
         return comp_map[None]
     return 'default'
@@ -161,7 +257,8 @@ class DefaultMemoryMapper(object):
     def map_back(self, proc: lldb.SBProcess, address: Address) -> int:
         if address.space == self.defaultSpace:
             return address.offset
-        raise ValueError(f"Address {address} is not in process {proc.GetProcessID()}")
+        raise ValueError(
+            f"Address {address} is not in process {proc.GetProcessID()}")
 
 
 DEFAULT_MEMORY_MAPPER = DefaultMemoryMapper('ram')
@@ -186,29 +283,8 @@ class DefaultRegisterMapper(object):
     def map_name(self, proc, name):
         return name
 
-    """
-    def convert_value(self, value, type=None):
-        if type is None:
-            type = value.dynamic_type.strip_typedefs()
-        l = type.sizeof
-        # l - 1 because array() takes the max index, inclusive
-        # NOTE: Might like to pre-lookup 'unsigned char', but it depends on the
-        # architecture *at the time of lookup*.
-        cv = value.cast(lldb.lookup_type('unsigned char').array(l - 1))
-        rng = range(l)
-        if self.byte_order == 'little':
-            rng = reversed(rng)
-        return bytes(cv[i] for i in rng)
-    """
-
     def map_value(self, proc, name, value):
-        try:
-            ### TODO: this seems half-baked
-            av = value.to_bytes(8, "big")
-        except e:
-            raise ValueError("Cannot convert {}'s value: '{}', type: '{}'"
-                               .format(name, value, value.type))
-        return RegVal(self.map_name(proc, name), av)
+        return RegVal(self.map_name(proc, name), value)
 
     def map_name_back(self, proc, name):
         return name
@@ -258,4 +334,3 @@ def compute_register_mapper(lang):
         if ':LE:' in lang:
             return DEFAULT_LE_REGISTER_MAPPER
     return register_mappers[lang]
-    

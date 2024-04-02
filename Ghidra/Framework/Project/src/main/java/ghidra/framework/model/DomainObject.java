@@ -20,17 +20,31 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import db.TerminatedTransactionException;
+import db.Transaction;
 import ghidra.framework.data.DomainObjectFileListener;
 import ghidra.framework.options.Options;
+import ghidra.framework.store.LockException;
 import ghidra.util.ReadOnlyException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
+import utility.function.ExceptionalCallback;
+import utility.function.ExceptionalSupplier;
 
 /**
  * <CODE>DomainObject</CODE> is the interface that must be supported by
  * data objects that are persistent. <CODE>DomainObject</CODE>s maintain an
  * association with a <CODE>DomainFile</CODE>. A <CODE>DomainObject</CODE> that
  * has never been saved will have a null <CODE>DomainFile</CODE>.
+ * <P>
+ * Supports transactions and the ability to undo/redo changes made within a stack of 
+ * recent transactions.  Each transactions may contain many sub-transactions which
+ * reflect concurrent changes to the domain object.  If any sub-transaction fails to commit,
+ * all concurrent sub-transaction changes will be rolled-back. 
+ * <P>
+ * NOTE: A <i>transaction</i> must be started in order
+ * to make any change to this domain object - failure to do so will result in a 
+ * IOException.
  * <P>
  * Note: Previously (before 11.1), domain object change event types were defined in this file as
  * integer constants. Event ids have since been converted to enum types. The defines in this file  
@@ -376,4 +390,226 @@ public interface DomainObject {
 	 * @return a long value that is incremented for every change to the program.
 	 */
 	public long getModificationNumber();
+
+	/**
+	 * Open new transaction.  This should generally be done with a try-with-resources block:
+	 * <pre>
+	 * try (Transaction tx = dobj.openTransaction(description)) {
+	 * 	// ... Do something
+	 * }
+	 * </pre>
+	 * 
+	 * @param description a short description of the changes to be made.
+	 * @return transaction object
+	 * @throws IllegalStateException if this {@link DomainObject} has already been closed.
+	 */
+	public Transaction openTransaction(String description) throws IllegalStateException;
+
+	/**
+	 * Performs the given callback inside of a transaction.  Use this method in place of the more
+	 * verbose try/catch/finally semantics.
+	 * <p>
+	 * <pre>
+	 * program.withTransaction("My Description", () -> {
+	 * 	// ... Do something
+	 * });
+	 * </pre>
+	 * 
+	 * <p>
+	 * Note: the transaction created by this method will always be committed when the call is 
+	 * finished.  If you need the ability to abort transactions, then you need to use the other 
+	 * methods on this interface.
+	 * 
+	 * @param description brief description of transaction
+	 * @param callback the callback that will be called inside of a transaction
+	 * @throws E any exception that may be thrown in the given callback
+	 */
+	public default <E extends Exception> void withTransaction(String description,
+			ExceptionalCallback<E> callback) throws E {
+		int id = startTransaction(description);
+		try {
+			callback.call();
+		}
+		finally {
+			endTransaction(id, true);
+		}
+	}
+
+	/**
+	 * Calls the given supplier inside of a transaction.  Use this method in place of the more
+	 * verbose try/catch/finally semantics.
+	 * <p>
+	 * <pre>
+	 * program.withTransaction("My Description", () -> {
+	 * 	// ... Do something
+	 * 	return result;
+	 * });
+	 * </pre>
+	 * <p>
+	 * If you do not need to supply a result, then use 
+	 * {@link #withTransaction(String, ExceptionalCallback)} instead.
+	 * 
+	 * @param <E> the exception that may be thrown from this method 
+	 * @param <T> the type of result returned by the supplier
+	 * @param description brief description of transaction
+	 * @param supplier the supplier that will be called inside of a transaction
+	 * @return the result returned by the supplier
+	 * @throws E any exception that may be thrown in the given callback
+	 */
+	public default <E extends Exception, T> T withTransaction(String description,
+			ExceptionalSupplier<T, E> supplier) throws E {
+		T t = null;
+		boolean success = false;
+		int id = startTransaction(description);
+		try {
+			t = supplier.get();
+			success = true;
+		}
+		finally {
+			endTransaction(id, success);
+		}
+		return t;
+	}
+
+	/**
+	 * Start a new transaction in order to make changes to this domain object.
+	 * All changes must be made in the context of a transaction. 
+	 * If a transaction is already in progress, a sub-transaction 
+	 * of the current transaction will be returned.
+	 * @param description brief description of transaction
+	 * @return transaction ID
+	 * @throws DomainObjectLockedException the domain object is currently locked
+	 * @throws TerminatedTransactionException an existing transaction which has not yet ended was terminated early.
+	 * Sub-transactions are not permitted until the terminated transaction ends.
+	 */
+	public int startTransaction(String description);
+
+	/**
+	 * Start a new transaction in order to make changes to this domain object.
+	 * All changes must be made in the context of a transaction. 
+	 * If a transaction is already in progress, a sub-transaction 
+	 * of the current transaction will be returned.
+	 * @param description brief description of transaction
+	 * @param listener listener to be notified if the transaction is aborted.
+	 * @return transaction ID
+	 * @throws DomainObjectLockedException the domain object is currently locked
+	 * @throws TerminatedTransactionException an existing transaction which has not yet ended was terminated early.
+	 * Sub-transactions are not permitted until the terminated transaction ends.
+	 */
+	public int startTransaction(String description, AbortedTransactionListener listener);
+
+	/**
+	 * Terminate the specified transaction for this domain object.
+	 * @param transactionID transaction ID obtained from startTransaction method
+	 * @param commit if true the changes made in this transaction will be marked for commit,
+	 * if false this and any concurrent transaction will be rolled-back.
+	 */
+	public void endTransaction(int transactionID, boolean commit);
+
+	/**
+	 * Returns the current transaction info
+	 * @return the current transaction info
+	 */
+	public TransactionInfo getCurrentTransactionInfo();
+
+	/**
+	 * Returns true if the last transaction was terminated from the action that started it.
+	 * @return true if the last transaction was terminated from the action that started it.
+	 */
+	public boolean hasTerminatedTransaction();
+
+	/**
+	 * Return array of all domain objects synchronized with a 
+	 * shared transaction manager.
+	 * @return returns array of synchronized domain objects or
+	 * null if this domain object is not synchronized with others.
+	 */
+	public DomainObject[] getSynchronizedDomainObjects();
+
+	/**
+	 * Synchronize the specified domain object with this domain object
+	 * using a shared transaction manager.  If either or both is already shared, 
+	 * a transition to a single shared transaction manager will be 
+	 * performed.  
+	 * @param domainObj the domain object
+	 * @throws LockException if lock or open transaction is active on either
+	 * this or the specified domain object
+	 */
+	public void addSynchronizedDomainObject(DomainObject domainObj) throws LockException;
+
+	/**
+	 * Remove this domain object from a shared transaction manager.  If
+	 * this object has not been synchronized with others via a shared
+	 * transaction manager, this method will have no affect.
+	 * @throws LockException if lock or open transaction is active
+	 */
+	public void releaseSynchronizedDomainObject() throws LockException;
+
+	/**
+	 * Returns true if there is a previous state to "undo" to.
+	 */
+	boolean canUndo();
+
+	/**
+	 * Returns true if there is a later state to "redo" to.
+	 */
+	boolean canRedo();
+
+	/**
+	 * Clear all undoable/redoable transactions
+	 */
+	public void clearUndo();
+
+	/**
+	 * Returns to the previous state.  Normally, this will cause the current state
+	 * to appear on the "redo" stack.  This method will do nothing if there are
+	 * no previous states to "undo".
+	 * @throws IOException if an IO error occurs
+	 */
+	void undo() throws IOException;
+
+	/**
+	 * Returns to a latter state that exists because of an undo.  Normally, this
+	 * will cause the current state to appear on the "undo" stack.  This method
+	 * will do nothing if there are no latter states to "redo".
+	 * @throws IOException if an IO error occurs
+	 */
+	void redo() throws IOException;
+
+	/**
+	 * Returns a description of the change that would be "undone".
+	 * @return a description of the change that would be "undone". 
+	 */
+	public String getUndoName();
+
+	/**
+	 * Returns a description of the change that would be "redone".
+	 * @return a description of the change that would be "redone".
+	 */
+	public String getRedoName();
+
+	/**
+	 * Returns a list of the names of all current undo transactions
+	 * @return a list of the names of all current undo transactions
+	 */
+	public List<String> getAllUndoNames();
+
+	/**
+	 * Returns a list of the names of all current redo transactions
+	 * @return a list of the names of all current redo transactions
+	 */
+	public List<String> getAllRedoNames();
+
+	/**
+	 * Adds the given transaction listener to this domain object
+	 * @param listener the new transaction listener to add
+	 */
+	public void addTransactionListener(TransactionListener listener);
+
+	/**
+	 * Removes the given transaction listener from this domain object.
+	 * @param listener the transaction listener to remove
+	 */
+	public void removeTransactionListener(TransactionListener listener);
+
 }

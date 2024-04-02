@@ -15,12 +15,13 @@
  */
 package ghidra.trace.database.memory;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.util.Set;
 
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
 import org.junit.*;
 
 import db.Transaction;
@@ -79,6 +80,29 @@ public abstract class AbstractDBTraceMemoryManagerRegionsTest
 		assertEquals(Set.of(region), Set.copyOf(memory.getAllRegions()));
 	}
 
+	protected static class InvalidRegionMatcher extends BaseMatcher<TraceMemoryRegion> {
+		private final long snap;
+
+		public InvalidRegionMatcher(long snap) {
+			this.snap = snap;
+		}
+
+		@Override
+		public boolean matches(Object actual) {
+			return actual == null ||
+				actual instanceof TraceMemoryRegion region && !region.isValid(snap);
+		}
+
+		@Override
+		public void describeTo(Description description) {
+			description.appendText("An invalid or null region");
+		}
+	}
+
+	protected static InvalidRegionMatcher invalidRegion(long snap) {
+		return new InvalidRegionMatcher(snap);
+	}
+
 	@Test
 	public void testGetLiveRegionByPath() throws Exception {
 		assertNull(memory.getLiveRegionByPath(0, "Regions[0x1000]"));
@@ -90,8 +114,8 @@ public abstract class AbstractDBTraceMemoryManagerRegionsTest
 		}
 
 		assertEquals(region, memory.getLiveRegionByPath(0, "Regions[0x1000]"));
-		assertNull(memory.getLiveRegionByPath(0, "Regions[0x1001]"));
-		assertNull(memory.getLiveRegionByPath(-1, "Regions[0x1000]"));
+		assertThat(memory.getLiveRegionByPath(0, "Regions[0x1001]"), invalidRegion(0));
+		assertThat(memory.getLiveRegionByPath(-1, "Regions[0x1000]"), invalidRegion(-1));
 	}
 
 	@Test

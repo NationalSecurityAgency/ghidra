@@ -58,6 +58,7 @@ public class FakeSharedProject {
 	private GhidraProject gProject;
 	private TestProgramManager programManager = new TestProgramManager();
 	private FakeRepository repo;
+	private boolean isFileSharingEnabled; // set true if multiple projects share repo files
 
 	public FakeSharedProject(FakeRepository repo, User user) throws IOException {
 
@@ -83,6 +84,14 @@ public class FakeSharedProject {
 
 		DefaultProjectData pd = getProjectData();
 		invokeInstanceMethod("setVersionedFileSystem", pd, argTypes(FileSystem.class), args(fs));
+	}
+
+	/**
+	 * Mark project as sharing file with another project via a common repo.
+	 * This is needed to bypass check performed by assertFileInProject
+	 */
+	public void enableFileSharing() {
+		isFileSharingEnabled = true;
 	}
 
 	/**
@@ -162,6 +171,7 @@ public class FakeSharedProject {
 	public DomainFile getDomainFile(String filepath) {
 		Project project = getGhidraProject().getProject();
 		ProjectData projectData = project.getProjectData();
+		refresh(); // force refresh since we do not employ repo listener
 		DomainFile df;
 		if (filepath.startsWith("/")) {
 			df = projectData.getFile(filepath);
@@ -287,7 +297,7 @@ public class FakeSharedProject {
 			}
 		};
 
-		df.checkin(ch, false, TaskMonitor.DUMMY);
+		df.checkin(ch, TaskMonitor.DUMMY);
 		repo.refresh();
 	}
 
@@ -385,6 +395,10 @@ public class FakeSharedProject {
 
 		if (df == null) {
 			throw new IllegalArgumentException("DomainFile cannot be null");
+		}
+
+		if (isFileSharingEnabled) {
+			return;
 		}
 
 		ProjectLocator pl = df.getProjectLocator();

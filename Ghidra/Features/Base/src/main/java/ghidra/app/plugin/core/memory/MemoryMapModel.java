@@ -51,12 +51,13 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> implements Pr
 	final static byte WRITE = 5;
 	final static byte EXECUTE = 6;
 	final static byte VOLATILE = 7;
-	final static byte OVERLAY = 8;
-	final static byte BLOCK_TYPE = 9;
-	final static byte INIT = 10;
-	final static byte BYTE_SOURCE = 11;
-	final static byte SOURCE = 12;
-	final static byte COMMENT = 13;
+	final static byte ARTIFICIAL = 8;
+	final static byte OVERLAY = 9;
+	final static byte BLOCK_TYPE = 10;
+	final static byte INIT = 11;
+	final static byte BYTE_SOURCE = 12;
+	final static byte SOURCE = 13;
+	final static byte COMMENT = 14;
 
 	final static String NAME_COL = "Name";
 	final static String START_COL = "Start";
@@ -66,6 +67,7 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> implements Pr
 	final static String WRITE_COL = "W";
 	final static String EXECUTE_COL = "X";
 	final static String VOLATILE_COL = "Volatile";
+	final static String ARTIFICIAL_COL = "Artificial";
 	final static String OVERLAY_COL = "Overlayed Space";
 	final static String BLOCK_TYPE_COL = "Type";
 	final static String INIT_COL = "Initialized";
@@ -80,9 +82,9 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> implements Pr
 	private List<MemoryBlock> memList;
 	private MemoryMapProvider provider;
 
-	private final static String COLUMN_NAMES[] =
-		{ NAME_COL, START_COL, END_COL, LENGTH_COL, READ_COL, WRITE_COL, EXECUTE_COL, VOLATILE_COL,
-			OVERLAY_COL, BLOCK_TYPE_COL, INIT_COL, BYTE_SOURCE_COL, SOURCE_COL, COMMENT_COL };
+	private final static String COLUMN_NAMES[] = { NAME_COL, START_COL, END_COL, LENGTH_COL,
+		READ_COL, WRITE_COL, EXECUTE_COL, VOLATILE_COL, ARTIFICIAL_COL, OVERLAY_COL, BLOCK_TYPE_COL,
+		INIT_COL, BYTE_SOURCE_COL, SOURCE_COL, COMMENT_COL };
 
 	MemoryMapModel(MemoryMapProvider provider, Program program) {
 		super(START);
@@ -124,7 +126,7 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> implements Pr
 	@Override
 	public boolean isSortable(int columnIndex) {
 		if (columnIndex == READ || columnIndex == WRITE || columnIndex == EXECUTE ||
-			columnIndex == VOLATILE || columnIndex == INIT) {
+			columnIndex == VOLATILE || columnIndex == ARTIFICIAL || columnIndex == INIT) {
 			return false;
 		}
 		return true;
@@ -163,7 +165,7 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> implements Pr
 	@Override
 	public Class<?> getColumnClass(int columnIndex) {
 		if (columnIndex == READ || columnIndex == WRITE || columnIndex == EXECUTE ||
-			columnIndex == VOLATILE || columnIndex == INIT) {
+			columnIndex == VOLATILE || columnIndex == ARTIFICIAL || columnIndex == INIT) {
 			return Boolean.class;
 		}
 		return String.class;
@@ -178,6 +180,8 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> implements Pr
 			case WRITE:
 			case EXECUTE:
 			case VOLATILE:
+			case ARTIFICIAL:
+				return true;
 			case COMMENT:
 				return true;
 			case INIT:
@@ -267,6 +271,14 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> implements Pr
 				});
 				break;
 			}
+			case ARTIFICIAL: {
+				program.withTransaction("Set Artificial State", () -> {
+					boolean value = ((Boolean) aValue).booleanValue();
+					block.setArtificial(value);
+					provider.setStatusText("");
+				});
+				break;
+			}
 			case INIT:
 				MemoryBlockType blockType = block.getType();
 				if (blockType == MemoryBlockType.BIT_MAPPED ||
@@ -349,7 +361,7 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> implements Pr
 		if (result == OptionDialog.NO_OPTION) {
 			return;
 		}
-		UninitializedBlockCmd cmd = new UninitializedBlockCmd(program, block);
+		UninitializedBlockCmd cmd = new UninitializedBlockCmd(block);
 		provider.getTool().executeBackgroundCommand(cmd, program);
 	}
 
@@ -428,6 +440,8 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> implements Pr
 					return block.isExecute() ? Boolean.TRUE : Boolean.FALSE;
 				case VOLATILE:
 					return block.isVolatile() ? Boolean.TRUE : Boolean.FALSE;
+				case ARTIFICIAL:
+					return block.isArtificial() ? Boolean.TRUE : Boolean.FALSE;
 				case OVERLAY:
 					return getOverlayBaseSpaceName(block);
 				case INIT:
@@ -554,29 +568,21 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> implements Pr
 				case LENGTH:
 					return (int) (b1.getSize() - b2.getSize());
 				case READ:
-					int b1r = (b1.isRead() ? 1 : -1);
-					int b2r = (b2.isRead() ? 1 : -1);
-					return (b1r - b2r);
+					return Boolean.compare(b1.isRead(), b2.isRead());
 				case WRITE:
-					int b1w = (b1.isWrite() ? 1 : -1);
-					int b2w = (b2.isWrite() ? 1 : -1);
-					return (b1w - b2w);
+					return Boolean.compare(b1.isWrite(), b2.isWrite());
 				case EXECUTE:
-					int b1x = (b1.isExecute() ? 1 : -1);
-					int b2x = (b2.isExecute() ? 1 : -1);
-					return (b1x - b2x);
+					return Boolean.compare(b1.isExecute(), b2.isExecute());
 				case VOLATILE:
-					int b1v = (b1.isVolatile() ? 1 : -1);
-					int b2v = (b2.isVolatile() ? 1 : -1);
-					return (b1v - b2v);
+					return Boolean.compare(b1.isVolatile(), b2.isVolatile());
+				case ARTIFICIAL:
+					return Boolean.compare(b1.isArtificial(), b2.isArtificial());
 				case OVERLAY:
 					String ov1 = getOverlayBaseSpaceName(b1);
 					String ov2 = getOverlayBaseSpaceName(b2);
 					return ov1.compareTo(ov2);
 				case INIT:
-					int b1init = (b1.isInitialized() ? 1 : -1);
-					int b2init = (b2.isInitialized() ? 1 : -1);
-					return (b1init - b2init);
+					return Boolean.compare(b1.isInitialized(), b2.isInitialized());
 
 				//case BYTE_SOURCE: - handled by default comparator
 

@@ -133,7 +133,7 @@ public class VTPlugin extends Plugin {
 
 	private void initializeOptions() {
 		Options options = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_DISPLAY);
-		options.registerOptionsEditor(new ListingDisplayOptionsEditor(options));
+		options.registerOptionsEditor(() -> new ListingDisplayOptionsEditor(options));
 		options.setOptionsHelpLocation(new HelpLocation(CodeBrowserPlugin.class.getSimpleName(),
 			GhidraOptions.CATEGORY_BROWSER_DISPLAY));
 
@@ -216,10 +216,10 @@ public class VTPlugin extends Plugin {
 		for (DomainFile domainFile : data) {
 			if (domainFile != null &&
 				VTSession.class.isAssignableFrom(domainFile.getDomainObjectClass())) {
-				openVersionTrackingSession(domainFile);
-				return true;
+				return controller.openVersionTrackingSession(domainFile);
 			}
 		}
+
 		DomainFile programFile1 = null;
 		DomainFile programFile2 = null;
 		for (DomainFile domainFile : data) {
@@ -249,10 +249,6 @@ public class VTPlugin extends Plugin {
 		return false;
 	}
 
-	private void openVersionTrackingSession(DomainFile domainFile) {
-		controller.openVersionTrackingSession(domainFile);
-	}
-
 	@Override
 	public void readConfigState(SaveState saveState) {
 		controller.readConfigState(saveState);
@@ -274,20 +270,18 @@ public class VTPlugin extends Plugin {
 	@Override
 	public void readDataState(SaveState saveState) {
 		String pathname = saveState.getString("PATHNAME", null);
-		String location = saveState.getString("PROJECT_LOCATION", null);
-		String projectName = saveState.getString("PROJECT_NAME", null);
-		if (location == null || projectName == null) {
+		if (pathname == null) {
 			return;
 		}
-		ProjectLocator url = new ProjectLocator(location, projectName);
-
-		ProjectData projectData = tool.getProject().getProjectData(url);
-		if (projectData == null) {
-			Msg.showError(this, tool.getToolFrame(), "File Not Found", "Could not find " + url);
+		Project project = tool.getProject();
+		if (project == null) {
 			return;
 		}
-
+		ProjectData projectData = project.getProjectData();
 		DomainFile domainFile = projectData.getFile(pathname);
+		if (domainFile == null) {
+			return;
+		}
 		controller.openVersionTrackingSession(domainFile);
 	}
 
@@ -298,21 +292,7 @@ public class VTPlugin extends Plugin {
 			return;
 		}
 		DomainFile domainFile = session.getDomainFile();
-
-		String projectLocation = null;
-		String projectName = null;
-		String path = null;
-		ProjectLocator url = domainFile.getProjectLocator();
-		if (url != null) {
-			projectLocation = url.getLocation();
-			projectName = url.getName();
-			path = domainFile.getPathname();
-		}
-
-		saveState.putString("PROJECT_LOCATION", projectLocation);
-		saveState.putString("PROJECT_NAME", projectName);
-		saveState.putString("PATHNAME", path);
-
+		saveState.putString("PATHNAME", domainFile.getPathname());
 	}
 
 	@Override

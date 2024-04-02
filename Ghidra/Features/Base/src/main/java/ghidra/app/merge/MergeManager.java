@@ -25,7 +25,7 @@ import javax.swing.SwingUtilities;
 import generic.util.WindowUtilities;
 import ghidra.framework.data.DomainObjectMergeManager;
 import ghidra.framework.model.DomainFile;
-import ghidra.framework.model.UndoableDomainObject;
+import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginException;
 import ghidra.program.model.listing.DomainObjectChangeSet;
@@ -43,10 +43,10 @@ public abstract class MergeManager implements DomainObjectMergeManager {
 
 	protected MergeResolver[] mergeResolvers;
 
-	protected UndoableDomainObject resultDomainObject; // where changes will be merged to
-	protected UndoableDomainObject myDomainObject; // source of changes to be applied
-	protected UndoableDomainObject originalDomainObject; // original version that was checked out
-	protected UndoableDomainObject latestDomainObject; // latest version of the program
+	protected DomainObject resultDomainObject; // where changes will be merged to
+	protected DomainObject myDomainObject; // source of changes to be applied
+	protected DomainObject originalDomainObject; // original version that was checked out
+	protected DomainObject latestDomainObject; // latest version of the program
 	protected DomainObjectChangeSet latestChangeSet;
 	protected DomainObjectChangeSet myChangeSet;
 
@@ -69,10 +69,9 @@ public abstract class MergeManager implements DomainObjectMergeManager {
 
 //	protected boolean isShowingListingMergePanel = false;
 
-	public MergeManager(UndoableDomainObject resultDomainObject,
-			UndoableDomainObject myDomainObject, UndoableDomainObject originalDomainObject,
-			UndoableDomainObject latestDomainObject, DomainObjectChangeSet latestChangeSet,
-			DomainObjectChangeSet myChangeSet) {
+	public MergeManager(DomainObject resultDomainObject, DomainObject myDomainObject,
+			DomainObject originalDomainObject, DomainObject latestDomainObject,
+			DomainObjectChangeSet latestChangeSet, DomainObjectChangeSet myChangeSet) {
 		this.resultDomainObject = resultDomainObject;
 		this.myDomainObject = myDomainObject;
 		this.originalDomainObject = originalDomainObject;
@@ -96,7 +95,7 @@ public abstract class MergeManager implements DomainObjectMergeManager {
 	 * @return the indicated program version or null if a valid version isn't specified.
 	 * @see MergeConstants
 	 */
-	public UndoableDomainObject getDomainObject(int version) {
+	public DomainObject getDomainObject(int version) {
 		switch (version) {
 			case MergeConstants.LATEST:
 				return latestDomainObject;
@@ -209,7 +208,7 @@ public abstract class MergeManager implements DomainObjectMergeManager {
 	}
 
 	protected abstract MergeManagerPlugin createMergeManagerPlugin(ModalPluginTool mergePluginTool,
-			MergeManager multiUserMergeManager, UndoableDomainObject modifiableDomainObject);
+			MergeManager multiUserMergeManager, DomainObject modifiableDomainObject);
 
 	protected abstract void initializeMerge();
 
@@ -559,7 +558,7 @@ public abstract class MergeManager implements DomainObjectMergeManager {
 	 * @param infoType the string indicating the type of resolve information
 	 * @param infoObject the object for the named string. This information is
 	 * determined by the merge manager that creates it.
-	 * @see getResolveInformation(String)
+	 * @see #getResolveInformation(String)
 	 */
 	@Override
 	public void setResolveInformation(String infoType, Object infoObject) {

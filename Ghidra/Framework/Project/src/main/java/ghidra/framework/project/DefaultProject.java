@@ -27,6 +27,7 @@ import org.jdom.output.XMLOutputter;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.data.DefaultProjectData;
 import ghidra.framework.data.TransientDataManager;
+import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.project.tool.GhidraToolTemplate;
@@ -119,22 +120,15 @@ public class DefaultProject implements Project {
 	}
 
 	/**
-	 * Constructor for opening a URL-based project
+	 * Construct a project with specific project manager and data
 	 * 
 	 * @param projectManager the manager of this project
-	 * @param connection project URL connection (not previously used)
-	 * @throws IOException if I/O error occurs.
+	 * @param projectData the project data
 	 */
-	protected DefaultProject(DefaultProjectManager projectManager, GhidraURLConnection connection)
-			throws IOException {
+	protected DefaultProject(DefaultProjectManager projectManager, DefaultProjectData projectData) {
 
 		this.projectManager = projectManager;
-
-		Msg.info(this, "Opening project/repository: " + connection.getURL());
-		projectData = (DefaultProjectData) connection.getProjectData();
-		if (projectData == null) {
-			throw new IOException("Failed to open project/repository: " + connection.getURL());
-		}
+		this.projectData = projectData;
 
 		projectLocator = projectData.getProjectLocator();
 		if (!SystemUtilities.isInHeadlessMode()) {
@@ -291,16 +285,16 @@ public class DefaultProject implements Project {
 				throw new IOException("Invalid Ghidra URL specified: " + url);
 			}
 
-			ProjectData projectData = otherViewsMap.get(url);
-			if (projectData == null) {
-				projectData = openProjectView(url);
+			ProjectData viewedProjectData = otherViewsMap.get(url);
+			if (viewedProjectData == null) {
+				viewedProjectData = openProjectView(url);
 			}
 
-			if (projectData != null && visible && visibleViews.add(url)) {
+			if (viewedProjectData != null && visible && visibleViews.add(url)) {
 				notifyVisibleViewAdded(url);
 			}
 
-			return projectData;
+			return viewedProjectData;
 		}
 	}
 
@@ -377,6 +371,11 @@ public class DefaultProject implements Project {
 	public void close() {
 		synchronized (otherViewsMap) {
 			isClosed = true;
+
+			// Clear active project if this is the current active project.
+			if (AppInfo.getActiveProject() == this) {
+				AppInfo.setActiveProject(null);
+			}
 
 			for (DefaultProjectData dataMgr : otherViewsMap.values()) {
 				if (dataMgr != null) {

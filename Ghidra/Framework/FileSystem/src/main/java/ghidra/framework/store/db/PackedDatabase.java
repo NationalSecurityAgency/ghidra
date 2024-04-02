@@ -25,6 +25,7 @@ import db.buffers.BufferFileManager;
 import db.buffers.LocalManagedBufferFile;
 import generic.jar.ResourceFile;
 import ghidra.framework.Application;
+import ghidra.framework.store.FileSystemInitializer;
 import ghidra.framework.store.FolderItem;
 import ghidra.framework.store.db.PackedDatabaseCache.CachedDB;
 import ghidra.framework.store.local.*;
@@ -80,7 +81,7 @@ public class PackedDatabase extends Database {
 	 * Constructor for an existing packed database which will be unpacked into
 	 * a temporary dbDir.
 	 * @param packedDbFile existing packed database file.
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	private PackedDatabase(ResourceFile packedDbFile) throws IOException {
 		super(createDBDir(), null, true);
@@ -106,14 +107,14 @@ public class PackedDatabase extends Database {
 
 	/**
 	 * Constructor for an existing packed database backed by a unpacking cache
-	 * @param packedDbFile
+	 * @param cachedDb cached packed DB to be opened.
+	 * @param packedDbFile packed DB file which corresponds to {@code cacheDb}
 	 * @param packedDbLock read lock, null signals read only database
-	 * @param cachedDb
-	 * @param monitor
-	 * @throws CancelledException
-	 * @throws IOException
+	 * @param monitor unpack monitor used if refresh required
+	 * @throws CancelledException is unpack is cancelled
+	 * @throws IOException if IO error occurs
 	 */
-	PackedDatabase(ResourceFile packedDbFile, LockFile packedDbLock, CachedDB cachedDb,
+	PackedDatabase(CachedDB cachedDb, ResourceFile packedDbFile, LockFile packedDbLock, 
 			TaskMonitor monitor) throws CancelledException, IOException {
 		super(cachedDb.dbDir, null, false);
 		this.packedDbFile = packedDbFile;
@@ -146,15 +147,15 @@ public class PackedDatabase extends Database {
 
 	/**
 	 * Constructor for a new packed database which will be created from an 
-	 * open PackedDBHandle.
-	 * @param dbHandle
-	 * @param packedDbFile
-	 * @param itemName
+	 * open {@link PackedDBHandle dbHandle}.
+	 * @param dbHandle packed DB handle
+	 * @param packedDbFile packed DB file which corresponds to {@code dbHandle}
+	 * @param itemName DB name
 	 * @param newDatabaseId database ID to be forced for new database or null to generate 
 	 * new database ID
-	 * @param monitor
-	 * @throws CancelledException
-	 * @throws IOException
+	 * @param monitor DB save/pack monitor
+	 * @throws CancelledException if packed file creation is cancelled
+	 * @throws IOException if IO error occurs
 	 */
 	PackedDatabase(PackedDBHandle dbHandle, ResourceFile packedDbFile, String itemName,
 			Long newDatabaseId, TaskMonitor monitor) throws CancelledException, IOException {
@@ -238,12 +239,12 @@ public class PackedDatabase extends Database {
 	}
 
 	/**
-	 * Get a packed database which whose unpacking will be cached if possible
-	 * @param packedDbFile
-	 * @param monitor
+	 * Get a packed database which whose unpacking will be cached if possible.
+	 * @param packedDbFile packed database file to be opened
+	 * @param monitor unpack/open monitor
 	 * @return packed database which corresponds to the specified packedDbFile
-	 * @throws IOException
-	 * @throws CancelledException
+	 * @throws IOException if IO error occurs
+	 * @throws CancelledException if unpack/open is cancelled
 	 */
 	public static PackedDatabase getPackedDatabase(File packedDbFile, TaskMonitor monitor)
 			throws IOException, CancelledException {
@@ -253,12 +254,12 @@ public class PackedDatabase extends Database {
 	/**
 	 * Get a packed database whose unpacking may be cached if possible
 	 * provided doNotCache is false.
-	 * @param packedDbFile
+	 * @param packedDbFile packed database file to be opened
 	 * @param neverCache if true unpacking will never be cache.
-	 * @param monitor
+	 * @param monitor unpack/open monitor
 	 * @return packed database which corresponds to the specified packedDbFile
-	 * @throws IOException
-	 * @throws CancelledException
+	 * @throws IOException if IO error occurs
+	 * @throws CancelledException if unpack/open is cancelled
 	 */
 	public static PackedDatabase getPackedDatabase(File packedDbFile, boolean neverCache,
 			TaskMonitor monitor) throws IOException, CancelledException {
@@ -268,14 +269,14 @@ public class PackedDatabase extends Database {
 	/**
 	 * Get a packed database whose unpacking may be cached if possible
 	 * provided doNotCache is false.
-	 * @param packedDbFile
+	 * @param packedDbFile packed database resource file to be opened
 	 * @param neverCache if true unpacking will never be cache.
-	 * @param monitor
+	 * @param monitor unpack/open monitor
 	 * @return packed database which corresponds to the specified packedDbFile
-	 * @throws IOException
-	 * @throws CancelledException
+	 * @throws IOException if IO error occurs
+	 * @throws CancelledException if unpack/open is cancelled
 	 */
-	public static PackedDatabase getPackedDatabase(ResourceFile packedDbFile, boolean neverCache,
+	public static synchronized PackedDatabase getPackedDatabase(ResourceFile packedDbFile, boolean neverCache,
 			TaskMonitor monitor) throws IOException, CancelledException {
 		if (!neverCache && PackedDatabaseCache.isEnabled()) {
 			try {
@@ -291,8 +292,8 @@ public class PackedDatabase extends Database {
 
 	/**
 	 * Check for the presence of directory read-only lock
-	 * @param directory
-	 * @return true if read-only lock exists+
+	 * @param directory directory to check for read-only lock
+	 * @return true if read-only lock exists
 	 */
 	public static boolean isReadOnlyPDBDirectory(ResourceFile directory) {
 		File dir = directory.getFile(false);
@@ -324,7 +325,7 @@ public class PackedDatabase extends Database {
 	 * Free resources consumed by this object.
 	 * If there is an associated database handle it will be closed.
 	 */
-	public void dispose() {
+	public synchronized void dispose() {
 		if (!isCached && dbDir != null && dbDir.exists()) {
 			File tmpDbDir = new File(dbDir.getParentFile(), dbDir.getName() + ".delete");
 			if (!dbDir.renameTo(tmpDbDir)) {
@@ -360,7 +361,7 @@ public class PackedDatabase extends Database {
 	 * Creates a temporary directory which will be used for storing 
 	 * the unpacked database files.
 	 * @return temporary database directory
-	 * @throws IOException
+	 * @throws IOException if failed to create DB directory
 	 */
 	private static File createDBDir() throws IOException {
 
@@ -377,15 +378,18 @@ public class PackedDatabase extends Database {
 
 	/**
 	 * Returns the update lock file for the specified packedFile.
-	 * @param packedFile
+	 * @param packedFile packed DB file which requires an update lock file
+	 * @return update lock file
 	 */
 	private static LockFile getUpdateLock(File packedFile) {
 		return new LockFile(packedFile.getParentFile(), packedFile.getName(), UPDATE_LOCK_TYPE);
 	}
 
 	/**
-	 * Returns the general lock file for the specified packedFile.
-	 * @param packedFile
+	 * Returns the general lock file for the specified packedFile needed to facilitate 
+	 * unpacking and read-only use.
+	 * @param packedFile packed DB file which requires a general lock file
+	 * @return general lock file
 	 */
 	static LockFile getFileLock(File packedFile) {
 		return new LockFile(packedFile.getParentFile(), packedFile.getName());
@@ -393,6 +397,7 @@ public class PackedDatabase extends Database {
 
 	/**
 	 * Returns the user defined content type associated with this database.
+	 * @return packed DB content type
 	 */
 	public String getContentType() {
 		return contentType;
@@ -400,6 +405,7 @@ public class PackedDatabase extends Database {
 
 	/**
 	 * Returns the storage file associated with this packed database.
+	 * @return associated packed DB file
 	 */
 	public ResourceFile getPackedFile() {
 		return packedDbFile;
@@ -409,9 +415,9 @@ public class PackedDatabase extends Database {
 	 * Deletes the storage file associated with this packed database.
 	 * This method should not be called while the database is open, if
 	 * it is an attempt will be made to close the handle.
-	 * @throws IOException
+	 * @throws IOException if IO error occurs (e.g., file in-use or write-protected)
 	 */
-	public void delete() throws IOException {
+	public synchronized void delete() throws IOException {
 		if (isReadOnly) {
 			throw new ReadOnlyException(
 				"Read-only DB directory lock, file removal not allowed: " + packedDbFile);
@@ -430,9 +436,11 @@ public class PackedDatabase extends Database {
 
 	/**
 	 * Deletes the storage file associated with this packed database.
-	 * @throws IOException
+	 * @param packedDbFile packed DB file to be removed
+	 * @throws FileInUseException if packed DB is currently locked and in use
+	 * @throws IOException if an IO error occurs (e.g., file in-use or write-protected)
 	 */
-	public static void delete(File packedDbFile) throws IOException {
+	public static synchronized void delete(File packedDbFile) throws IOException {
 		LockFile updateLock = getUpdateLock(packedDbFile);
 		lock(updateLock, false, false);
 		try {
@@ -450,7 +458,7 @@ public class PackedDatabase extends Database {
 	 * @param lockFile general or update lock file
 	 * @param wait if true, block until lock is obtained.
 	 * @param hold if true, hold lock until released.
-	 * @throws FileInUseException
+	 * @throws FileInUseException if lock is already active and failed to acquire
 	 */
 	static void lock(LockFile lockFile, boolean wait, boolean hold) throws FileInUseException {
 		if (!lockFile.createLock(wait ? LOCK_TIMEOUT : 0, hold)) {
@@ -465,7 +473,7 @@ public class PackedDatabase extends Database {
 
 	/**
 	 * Read user content type and name from packed file.
-	 * @throws IOException
+	 * @throws IOException if IO error occurs
 	 */
 	private void readContentTypeAndName() throws IOException {
 
@@ -497,7 +505,8 @@ public class PackedDatabase extends Database {
 	 * @param checkinId the check-in id
 	 * @param packedFile the file to unpack
 	 * @param monitor the task monitor
-	 * @throws CancelledException
+	 * @throws IOException if IO error occurs
+	 * @throws CancelledException if unpack is cancelled
 	 */
 	public static void unpackDatabase(BufferFileManager bfMgr, long checkinId, File packedFile,
 			TaskMonitor monitor) throws IOException, CancelledException {
@@ -541,11 +550,11 @@ public class PackedDatabase extends Database {
 	/**
 	 * Refresh the temporary database from the packed file if it has been updated
 	 * since the previous refresh.
-	 * @param monitor
+	 * @param monitor unpack monitor
 	 * @return True if refresh was successful or not required.
 	 * False may be returned if refresh failed due to unpacked files being in use.
-	 * @throws IOException
-	 * @throws CancelledException
+	 * @throws IOException if IO error occurs
+	 * @throws CancelledException if unpack is cancelled
 	 */
 	private boolean refreshUnpacking(TaskMonitor monitor) throws CancelledException, IOException {
 		monitor.setMessage("Waiting...");
@@ -599,11 +608,13 @@ public class PackedDatabase extends Database {
 	/**
 	 * Serialize (i.e., pack) an open database into the specified outputFile.
 	 * @param dbh open database handle
-	 * @param itemName item name to associate with packed content
-	 * @param contentType supported content type
+	 * @param itemName name to associate with packed content
+	 * @param contentType supported DB content type
 	 * @param outputFile packed output file to be created
-	 * @param monitor progress monitor
-	 * @throws IOException
+	 * @param monitor save/pack monitor
+	 * @throws ReadOnlyException if {@code outputFile} location is write-protected
+	 * @throws DuplicateFileException if {@code outputFile} already exists
+	 * @throws IOException if IO error occurs
 	 * @throws CancelledException if monitor cancels operation
 	 */
 	public static void packDatabase(DBHandle dbh, String itemName, String contentType,
@@ -617,34 +628,18 @@ public class PackedDatabase extends Database {
 				throw new DuplicateFileException(outputFile + " already exists");
 			}
 			boolean success = false;
-			InputStream itemIn = null;
 			File tmpFile = null;
 			try {
 				tmpFile = Application.createTempFile("pack", ".tmp");
 				tmpFile.delete();
 				dbh.saveAs(tmpFile, false, monitor);
-				itemIn = new BufferedInputStream(new FileInputStream(tmpFile));
-				try {
+				try (InputStream itemIn = new BufferedInputStream(new FileInputStream(tmpFile))){
 					ItemSerializer.outputItem(itemName, contentType, FolderItem.DATABASE_FILE_TYPE,
 						tmpFile.length(), itemIn, outputFile, monitor);
-				}
-				finally {
-					try {
-						itemIn.close();
-					}
-					catch (IOException e) {
-					}
 				}
 				success = true;
 			}
 			finally {
-				if (itemIn != null) {
-					try {
-						itemIn.close();
-					}
-					catch (IOException e) {
-					}
-				}
 				tmpFile.delete();
 				if (!success) {
 					outputFile.delete();
@@ -654,15 +649,14 @@ public class PackedDatabase extends Database {
 	}
 
 	/**
-	 * Create a packed file from an existing Database.
-	 * @param name database name
-	 * @param contentType user content type
-	 * @param bfMgr buffer file manager for existing database
-	 * @param version buffer file version to be packed
-	 * @param outputFile packed storage file to be created
-	 * @param monitor
-	 * @throws IOException
-	 * @throws CancelledException
+	 * Create a packed file from an existing non-packed DB file.
+	 * @param name name to associate with packed content
+	 * @param contentType supported DB content type
+	 * @param dbFile existing non-packed DB file
+	 * @param outputFile new packed DB file to be created or overwritten
+	 * @param monitor save/pack monitor
+	 * @throws IOException if IO error occurs
+	 * @throws CancelledException if monitor cancels operation
 	 */
 	private static void packDatabase(String name, String contentType, File dbFile, File outputFile,
 			TaskMonitor monitor) throws IOException, CancelledException {
@@ -672,31 +666,20 @@ public class PackedDatabase extends Database {
 		}
 		monitor.setMessage("Packing file...");
 
-		InputStream itemIn = new FileInputStream(dbFile);
-		try {
+		try (InputStream itemIn = new FileInputStream(dbFile)) {
 			ItemSerializer.outputItem(name, contentType, FolderItem.DATABASE_FILE_TYPE,
 				dbFile.length(), itemIn, outputFile, monitor);
-		}
-		catch (IOCancelledException e) {
-			throw new CancelledException();
-		}
-		finally {
-			try {
-				itemIn.close();
-			}
-			catch (IOException e) {
-			}
 		}
 	}
 
 	/**
 	 * Using the temporary unpacked database, update the packed storage file
 	 * using the latest buffer file version.
-	 * @param monitor
-	 * @throws CancelledException
-	 * @throws IOException
+	 * @param monitor pack monitor
+	 * @throws CancelledException if pack is cancelled
+	 * @throws IOException if IO error occurs
 	 */
-	void packDatabase(TaskMonitor monitor) throws CancelledException, IOException {
+	synchronized void packDatabase(TaskMonitor monitor) throws CancelledException, IOException {
 
 		if (isReadOnly || dbHandle == null || bfMgr == null || bfMgr.getCurrentVersion() == 0 ||
 			!updateLock.haveLock()) {
@@ -832,9 +815,9 @@ public class PackedDatabase extends Database {
 	}
 
 	/**
-	 * Attempt to remove all old temporary databases.
-	 * Those still open by an existing process should 
-	 * not be removed by the operating system.
+	 * Attempt to remove all old temporary databases.  This method is not intended for general use 
+	 * and should only be invoked once during module initialization 
+	 * (see {@link FileSystemInitializer}).
 	 */
 	public static void cleanupOldTempDatabases() {
 
@@ -865,6 +848,7 @@ public class PackedDatabase extends Database {
 				}
 			}
 			catch (Exception e) {
+				// ignore
 			}
 		}
 

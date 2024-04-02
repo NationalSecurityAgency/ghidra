@@ -30,5 +30,6 @@
     <external_name tool="gnu" name="sparc:v9b"/>
     <external_name tool="IDA-PRO" name="sparcb" />
     <external_name tool="qemu" name="qemu-sparc64"/>
+    <external_name tool="DWARF.register.mapping.file" name="Sparc.dwarf"/>
   </language>
 </language_definitions>

@@ -118,8 +118,6 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 		threadedTablePanel = new GhidraThreadedTablePanel<>(functionModel, 1000);
 
 		functionTable = threadedTablePanel.getTable();
-		functionTable.setName("FunctionTable");
-
 		functionTable.installNavigation(tool);
 		functionTable.setAutoLookupColumn(FunctionTableModel.NAME_COL);
 		functionTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
@@ -147,6 +145,10 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 		setFunctionTableRenderer();
 
 		tableFilterPanel = new GhidraTableFilterPanel<>(functionTable, functionModel);
+
+		String namePrefix = "Functions";
+		functionTable.setAccessibleNamePrefix(namePrefix);
+		tableFilterPanel.setAccessibleNamePrefix(namePrefix);
 
 		JPanel container = new JPanel(new BorderLayout());
 		container.add(threadedTablePanel, BorderLayout.CENTER);

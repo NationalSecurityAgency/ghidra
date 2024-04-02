@@ -18,6 +18,7 @@ package ghidra.program.database.data;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
@@ -59,17 +60,17 @@ abstract class TypedefDBAdapter {
 	 * @throws IOException if there is trouble accessing the database.
 	 * @throws CancelledException if task is cancelled
 	 */
-	static TypedefDBAdapter getAdapter(DBHandle handle, int openMode, String tablePrefix,
+	static TypedefDBAdapter getAdapter(DBHandle handle, OpenMode openMode, String tablePrefix,
 			TaskMonitor monitor) throws VersionException, IOException, CancelledException {
 		try {
-			return new TypedefDBAdapterV2(handle, tablePrefix, openMode == DBConstants.CREATE);
+			return new TypedefDBAdapterV2(handle, tablePrefix, openMode == OpenMode.CREATE);
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			TypedefDBAdapter adapter = findReadOnlyAdapter(handle);
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = upgrade(handle, adapter, tablePrefix, monitor);
 			}
 			return adapter;

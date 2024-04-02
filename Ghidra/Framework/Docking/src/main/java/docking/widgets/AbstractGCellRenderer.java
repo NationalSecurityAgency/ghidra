@@ -66,6 +66,7 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 	protected Font defaultFont;
 	protected Font fixedWidthFont;
 	protected Font boldFont;
+	protected Font italicFont;
 	protected int dropRow = -1;
 
 	private boolean instanceAlternateRowColors = true;
@@ -138,6 +139,7 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 		defaultFont = f;
 		fixedWidthFont = new Font("monospaced", f.getStyle(), f.getSize());
 		boldFont = f.deriveFont(Font.BOLD);
+		italicFont = f.deriveFont(Font.ITALIC);
 
 		Gui.registerFont(this, fontId);
 	}
@@ -157,7 +159,7 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 		// fonts, as some clients may do that from the getTableCellRendererComponent() method.
 		//
 		if (defaultFont == null ||
-			CollectionUtils.isOneOf(f, defaultFont, fixedWidthFont, boldFont)) {
+			CollectionUtils.isOneOf(f, defaultFont, fixedWidthFont, boldFont, italicFont)) {
 			return;
 		}
 
@@ -180,6 +182,15 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 		super.setFont(boldFont);
 	}
 
+	/**
+	 * Sets the font of this renderer to be italic until the next time that getTableCellRenderer()
+	 * is called, as it resets the font to the default font on each pass.
+	 * @see #getDefaultFont()
+	 */
+	protected void setItalic() {
+		super.setFont(italicFont);
+	}
+
 	protected Font getDefaultFont() {
 		return defaultFont;
 	}
@@ -190,6 +201,10 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 
 	public Font getBoldFont() {
 		return boldFont;
+	}
+
+	public Font getItalicFont() {
+		return italicFont;
 	}
 
 	/**

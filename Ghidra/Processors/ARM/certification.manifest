@@ -20,8 +20,11 @@ data/languages/ARM7_be.slaspec||GHIDRA||||END|
 data/languages/ARM7_le.slaspec||GHIDRA||||END|
 data/languages/ARM8_be.slaspec||GHIDRA||||END|
 data/languages/ARM8_le.slaspec||GHIDRA||||END|
+data/languages/ARM8m_be.slaspec||GHIDRA||||END|
+data/languages/ARM8m_le.slaspec||GHIDRA||||END|
 data/languages/ARMCortex.pspec||GHIDRA||||END|
 data/languages/ARMTHUMBinstructions.sinc||GHIDRA||||END|
+data/languages/ARM_CDE.sinc||GHIDRA||||END|
 data/languages/ARM_v45.cspec||GHIDRA||||END|
 data/languages/ARM_v45.pspec||GHIDRA||||END|
 data/languages/ARM_win.cspec||GHIDRA||||END|

@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
@@ -138,10 +139,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		@DBAnnotatedColumn(STORAGE_COLUMN_NAME)
 		static DBObjectColumn STORAGE_COLUMN;
 
-		@DBAnnotatedField(
-			column = STORAGE_COLUMN_NAME,
-			indexed = true,
-			codec = VariableStorageDBFieldCodec.class)
+		@DBAnnotatedField(column = STORAGE_COLUMN_NAME, indexed = true, codec = VariableStorageDBFieldCodec.class)
 		private VariableStorage storage;
 
 		protected final DBTraceSymbolManager manager;
@@ -238,7 +236,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 
 	protected final Map<Byte, AbstractDBTraceSymbolSingleTypeView<?>> symbolViews = new HashMap<>();
 
-	public DBTraceSymbolManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	public DBTraceSymbolManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace,
 			DBTraceThreadManager threadManager, DBTraceDataTypeManager dataTypeManager,
 			DBTraceOverlaySpaceAdapter overlayAdapter) throws VersionException, IOException {

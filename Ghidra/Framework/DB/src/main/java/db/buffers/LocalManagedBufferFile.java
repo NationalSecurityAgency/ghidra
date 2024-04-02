@@ -157,7 +157,6 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	 * <code>preSaveThread</code> corresponds to the PreSaveTask which creates the 
 	 * preSaveFile when this buffer file is updateable.
 	 */
-	//private Thread preSaveThread;
 	private PreSaveTask preSaveTask;
 
 	/**
@@ -228,8 +227,8 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 		setFreeIndexes(versionFileHandler.getFreeIndexList());
 		String[] names = versionFileHandler.getOldParameterNames();
 		clearParameters();
-		for (int i = 0; i < names.length; i++) {
-			setParameter(names[i], versionFileHandler.getOldParameter(names[i]));
+		for (String name : names) {
+			setParameter(name, versionFileHandler.getOldParameter(name));
 		}
 	}
 

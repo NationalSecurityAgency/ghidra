@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.*;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.util.EmptyRecordIterator;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
@@ -38,11 +39,12 @@ class OverlaySpaceDBAdapterV1 extends OverlaySpaceDBAdapter {
 	static final int OV_SPACE_NAME_COL_V1 = 0;
 	static final int OV_SPACE_BASE_COL_V1 = 1;
 
-	OverlaySpaceDBAdapterV1(DBHandle dbHandle, int openMode) throws IOException, VersionException {
+	OverlaySpaceDBAdapterV1(DBHandle dbHandle, OpenMode openMode)
+			throws IOException, VersionException {
 		super(dbHandle);
 
 		Table table = dbHandle.getTable(TABLE_NAME);
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			if (table != null) {
 				throw new IOException("Table already exists: " + TABLE_NAME);
 			}

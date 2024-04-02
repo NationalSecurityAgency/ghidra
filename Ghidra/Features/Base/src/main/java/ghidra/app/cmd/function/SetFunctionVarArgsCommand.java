@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,47 +16,41 @@
 package ghidra.app.cmd.function;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Program;
 
 /**
  * A simple command to set whether or not a function has VarArgs.
  */
-public class SetFunctionVarArgsCommand implements Command {
-    private Function function;
-    private boolean hasVarArgs;
-    
-    /**
-     * Creates a new command that will set whether or not there are VarArgs on the given
-     * function.
-     * 
-     * @param function The function on which to set whether or not there are VarArgs.
-     * @param hasVarArgs true if you want to set this function to have VarArgs.
-     */
-    public SetFunctionVarArgsCommand( Function function, boolean hasVarArgs ) {
-        this.function = function;
-        this.hasVarArgs = hasVarArgs;
-    }
+public class SetFunctionVarArgsCommand implements Command<Program> {
+	private Function function;
+	private boolean hasVarArgs;
 
-    /**
-     * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-     */
-    public boolean applyTo(DomainObject obj) {        
-        function.setVarArgs( hasVarArgs );
-        return true;
-    }
+	/**
+	 * Creates a new command that will set whether or not there are VarArgs on the given
+	 * function.
+	 * 
+	 * @param function The function on which to set whether or not there are VarArgs.
+	 * @param hasVarArgs true if you want to set this function to have VarArgs.
+	 */
+	public SetFunctionVarArgsCommand(Function function, boolean hasVarArgs) {
+		this.function = function;
+		this.hasVarArgs = hasVarArgs;
+	}
 
-    /**
-     * @see ghidra.framework.cmd.Command#getStatusMsg()
-     */
-    public String getStatusMsg() {
-        return "";
-    }
+	@Override
+	public boolean applyTo(Program program) {
+		function.setVarArgs(hasVarArgs);
+		return true;
+	}
 
-    /**
-     * @see ghidra.framework.cmd.Command#getName()
-     */
-    public String getName() {
-        return "Set Function VarArgs";
-    }
+	@Override
+	public String getStatusMsg() {
+		return "";
+	}
+
+	@Override
+	public String getName() {
+		return "Set Function VarArgs";
+	}
 }

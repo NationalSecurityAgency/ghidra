@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.*;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.framework.options.Options;
 import ghidra.program.database.ManagerDB;
 import ghidra.program.database.ProgramDB;
@@ -60,14 +61,14 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 	 * @throws VersionException
 	 * @throws IOException
 	 */
-	public RelocationManager(DBHandle handle, AddressMap addrMap, int openMode, Lock lock,
+	public RelocationManager(DBHandle handle, AddressMap addrMap, OpenMode openMode, Lock lock,
 			TaskMonitor monitor) throws VersionException, IOException {
 		this.addrMap = addrMap;
 		this.lock = lock;
 		initializeAdapters(handle, openMode, monitor);
 	}
 
-	private void initializeAdapters(DBHandle handle, int openMode, TaskMonitor monitor)
+	private void initializeAdapters(DBHandle handle, OpenMode openMode, TaskMonitor monitor)
 			throws VersionException, IOException {
 		adapter = RelocationDBAdapter.getAdapter(handle, openMode, addrMap, monitor);
 	}
@@ -83,10 +84,10 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 	}
 
 	@Override
-	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
+	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
-		if (openMode == DBConstants.UPGRADE &&
+		if (openMode == OpenMode.UPGRADE &&
 			currentRevision < ProgramDB.RELOCATION_STATUS_ADDED_VERSION) {
 			RelocationDBAdapter.preV6DataMigrationUpgrade(adapter, program, monitor);
 		}

@@ -148,7 +148,6 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		scriptRoot = new RootNode();
 
 		scriptCategoryTree = new GTree(scriptRoot);
-		scriptCategoryTree.setName("CATEGORY_TREE");
 		scriptCategoryTree.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent e) {
@@ -177,6 +176,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 		scriptCategoryTree.getSelectionModel()
 				.setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+
+		scriptCategoryTree.setAccessibleNamePrefix("Script Category");
 	}
 
 	private void build() {
@@ -185,7 +186,6 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		tableModel = new GhidraScriptTableModel(this, infoManager);
 
 		scriptTable = new DraggableScriptTable(this, tableModel);
-		scriptTable.setName("SCRIPT_TABLE");
 		scriptTable.setAutoLookupColumn(tableModel.getNameColumnIndex());
 		scriptTable.setRowSelectionAllowed(true);
 		scriptTable.setAutoCreateColumnsFromModel(false);
@@ -213,6 +213,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 				runScript();
 			}
 		});
+
+		scriptTable.setAccessibleNamePrefix("Scripts");
 
 		TableColumnModel columnModel = scriptTable.getColumnModel();
 		// Set default column sizes
@@ -460,6 +462,10 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 	JTable getTable() {
 		return scriptTable;
+	}
+
+	GTree getTree() {
+		return scriptCategoryTree;
 	}
 
 	int getScriptIndex(ResourceFile scriptFile) {
@@ -1015,12 +1021,16 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		tableFilterPanel.setToolTipText("<html>Include scripts with <b>Names</b> or " +
 			"<b>Descriptions</b> containing this text.");
 		tableFilterPanel.setFocusComponent(scriptCategoryTree);
+
+		tableFilterPanel.setAccessibleNamePrefix("Script");
+
 	}
 
 	private JComponent buildDescriptionComponent() {
 		descriptionTextPane = new JTextPane();
 		descriptionTextPane.setEditable(false);
 		descriptionTextPane.setEditorKit(new HTMLEditorKit());
+		descriptionTextPane.setName("Script Description");
 		JPanel descriptionPanel = new JPanel(new BorderLayout());
 		descriptionPanel.add(descriptionTextPane);
 		JScrollPane scrollPane = new JScrollPane(descriptionPanel);
@@ -1038,9 +1048,9 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	private void updateDescriptionPanel() {
 		ResourceFile script = getSelectedScript();
 		ScriptInfo info = infoManager.getExistingScriptInfo(script); // null script is ok
-		String text = script != null
-				? (info != null ? info.getToolTipText() : "Error! no script info!")
-				: null; // no selected script
+		String text =
+			script != null ? (info != null ? info.getToolTipText() : "Error! no script info!")
+					: null; // no selected script
 
 		// have to do an invokeLater here, since the DefaultCaret class runs in an invokeLater,
 		// which will overwrite our location setting

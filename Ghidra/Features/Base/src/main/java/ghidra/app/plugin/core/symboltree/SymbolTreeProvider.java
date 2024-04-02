@@ -219,7 +219,8 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		SymbolNode node = (SymbolNode) object;
 		Symbol symbol = node.getSymbol();
 		SymbolType type = symbol.getSymbolType();
-		if (!type.isNamespace() || type == SymbolType.FUNCTION) {
+		if (!type.isNamespace() ||
+			type == SymbolType.FUNCTION) {
 			plugin.goTo(symbol);
 		}
 	}
@@ -246,7 +247,8 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		deleteAction.setEnabled(false);
 
 		DockingAction referencesAction =
-			new ShowSymbolReferencesAction(plugin.getTool(), plugin.getName());
+			new ShowSymbolReferencesAction(plugin.getTool(),
+				plugin.getName());
 
 		DockingAction selectionAction = new SelectionAction(plugin);
 		selectionAction.setEnabled(false);
@@ -369,11 +371,14 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 				}
 				catch (DuplicateNameException e) {
 					sb.append("Parent namespace " + namespace.getName() +
-						" contains namespace named " + symbol.getName() + "\n");
+						" contains namespace named " + symbol.getName() +
+						"\n");
 				}
 				catch (InvalidInputException | CircularDependencyException e) {
-					sb.append("Could not change parent namespace for " + symbol.getName() + ": " +
-						e.getMessage() + "\n");
+					sb.append("Could not change parent namespace for " + symbol.getName() +
+						": " +
+						e.getMessage() +
+						"\n");
 				}
 			}
 		}
@@ -400,7 +405,8 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 			return true;
 		}
 		// the symbol to move does not allow dups, so make sure all existing symbols do allow dups.
-		List<Symbol> symbols = symbolTable.getSymbols(symbol.getName(), destinationNamespace);
+		List<Symbol> symbols = symbolTable.getSymbols(symbol.getName(),
+			destinationNamespace);
 		for (Symbol s : symbols) {
 			if (!s.getSymbolType().allowsDuplicates()) {
 				return false;
@@ -659,7 +665,8 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 
 		@Override
 		public String toString() {
-			return getClass().getSimpleName() + " " + symbol;
+			return getClass().getSimpleName() +
+				" " + symbol;
 		}
 	}
 

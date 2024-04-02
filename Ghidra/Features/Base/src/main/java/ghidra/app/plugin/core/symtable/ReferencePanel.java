@@ -28,10 +28,6 @@ import ghidra.program.model.symbol.Reference;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraThreadedTablePanel;
 
-/**
- * 
- * 
- */
 class ReferencePanel extends JPanel {
 
 	private ReferenceProvider referenceProvider;
@@ -50,7 +46,6 @@ class ReferencePanel extends JPanel {
 
 		refTable = threadedTablePanel.getTable();
 		refTable.setAutoLookupColumn(SymbolReferenceModel.LABEL_COL);
-		refTable.setName("ReferenceTable");//used by JUnit...
 		refTable.setPreferredScrollableViewportSize(new Dimension(250, 200));
 		refTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		refTable.installNavigation(provider.getTool());
@@ -66,6 +61,9 @@ class ReferencePanel extends JPanel {
 		}
 
 		add(threadedTablePanel, BorderLayout.CENTER);
+
+		String namePrefix = "Reference";
+		refTable.setAccessibleNamePrefix(namePrefix);
 	}
 
 	GhidraTable getTable() {

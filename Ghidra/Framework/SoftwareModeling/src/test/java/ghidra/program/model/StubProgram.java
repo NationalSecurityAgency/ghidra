@@ -537,11 +537,6 @@ public class StubProgram implements Program {
 	}
 
 	@Override
-	public void invalidate() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public Register getRegister(String name) {
 		throw new UnsupportedOperationException();
 	}

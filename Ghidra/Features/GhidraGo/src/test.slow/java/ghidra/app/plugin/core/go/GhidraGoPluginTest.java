@@ -69,7 +69,6 @@ public class GhidraGoPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		layout = (GhidraApplicationLayout) createApplicationLayout();
 		ghidraGo = new GhidraGo();
 
-
 		CheckForFileProcessedRunnable.WAIT_FOR_PROCESSING_DELAY_MS = 1000;
 		CheckForFileProcessedRunnable.MAX_WAIT_FOR_PROCESSING_MIN = 1;
 		CheckForFileProcessedRunnable.WAIT_FOR_PROCESSING_PERIOD_MS = 10;
@@ -129,7 +128,7 @@ public class GhidraGoPluginTest extends AbstractGhidraHeadedIntegrationTest {
 			}
 		});
 		AbstractErrDialog err = waitForErrorDialog();
-		assertEquals("Unsupported Content", err.getTitle());
+		assertEquals("Content Not Found", err.getTitle());
 	}
 
 }

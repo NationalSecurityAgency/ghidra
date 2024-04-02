@@ -13,37 +13,78 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// A script that runs Auto Version Tracking given the options set in one of the following ways:
+
+// A script that runs Auto Version Tracking such that the current program in the tool is the 
+// destination program and the user is prompted to choose the source program. The user must also
+// choose a name for a new Version Tracking Session. The script cannot run using an existing session.
+// There are many options that can be set in one of the following ways:
 // 1. If script is run from the CodeBrowser, the GUI options are set in a pop up dialog by user.
-// 2. If script is run in headless mode either the defaults provided by the script are used or the 
-//    user can specify a script to be run that sets the options. See example script 
+// 2. If script is run in headless mode either the default options provided by the script are used  
+//    or the user can specify a script to be run that sets the options. See example script 
 //    SetAutoVersionTrackingOptionsScript that can be copied and updated to reflect the users 
 //    desired options. 
 //  
-// NOTE: This is an example to show how run this script in headless mode
+// HEADLESS MODE NON-SHARED PROJECT: 
+//    
+//    This is an example to show how run this script in headless mode against a local non-shared
+//    project
 //   
 //    <ghidra_install>/support/analyzeHeadless.bat/sh c:/MyGhidraProjectFolder 
-//     MyProjectName/OptionalFolderContainingProgram -process Program1.exe -postScript 
+//     MyProjectName/OptionalFolderContainingDestProgram -process DestinationProgram.exe -postScript 
 //     MyOptionsSetupScript -postScript AutoVersionTrackingScript.java "/FolderContainingSession" 
-//     "MySessionName" true "/OptionalFolderContainingProgram/Program2.exe"
+//     "MySessionName" "/OptionalFolderContainingSourceProgram/SourceProgram.exe"
 //
-// 
-//     NOTE: The first program will be analyzed for you if it is not already analyzed (and if you 
-//           do not include the -noanalysis option) as it is part of the typical analyzeHeadless run.
-// 		     The second program must be analyzed prior to running the script as the headless analyzer
-//           itself knows nothing about the file other than as a given option name. This is true in
-//           both GUI and headless mode. 
-//       
-//     NOTE: The second to last parameter is to identify whether the first listed program
-//           is the source program or not. True means first program is source program and second 
-//           program is destination program. False means second program is source program and first
-//           program is destination program. This is important if you want the correct markup to be 
-//           applied from the source to destination program.
+//     NOTE: The destination program will be analyzed for you if it is not already analyzed (and if  
+//           you do not include the -noanalysis option) as it is part of the typical analyzeHeadless 
+// 		     run. The source program must be analyzed prior to running the script as the headless 
+//           analyzer itself knows nothing about the file other than as a given option name. This is 
+//           true in both GUI and headless mode. 
 //
 //     NOTE: The options setup script is optional. It is only necessary if users want to change the
-//           default options. To use it make a copy of the example one and save to a new script. You
-//           You may need to add the -scriptPath to the headless run so it will find your script.
+//           other default options that are not settable on the headless command line. To use an 
+//           options script, make a copy of the example one (SetAutoVersionTrackingOptionsScript) 
+//           and save it with a new script file name. Then use the -postScript headless argument to
+//           run the options script before the second -postScript argument to run the 
+//           AutoVersionTrackingScript. Depending on where you save your script, you might also need 
+//           to add the -scriptPath to the headless run so it will find your script.
 //
+// SHARED PROJECT MODE FROM GUI
+//     
+//     From the GUI, this script can run on local project files contained in the shared project or 
+//     those that have been added to source control. If the destination program has been added to 
+//     version control but is not checked out, the user will be prompted to checkout the file. 
+//     If the file is not checked-out the script will not proceed. User is responsible for checking 
+//     in changes to the destination file made by the script if they want the changes added. After 
+//     the script is run, if user wants to add the session to version control they can. 
+//     
+// SHARED PROJECT MODE FROM HEADLESS MODE:
+//
+//     If running this script in headless mode on a shared project, both source and destination 
+//     programs must have already been added to version control before running the script or the 
+//     script will not be able to locate the programs because the only programs visible to it will 
+//     be those in the shared repository project. 
+//
+//     The headless shared project run will be different from the non-shared project in terms of how 
+//     to tell it where the project location is. Instead of specifying a project location and 
+//     project name, the user must instead specify the Ghidra Server repository URL.
+//            
+//     Also, there are necessary extra arguments to the headless run in order to connect to the
+//     server and commit the destination program changes to the server. 
+//
+//     This is an example command line for running this script in headless shared project mode:
+//   
+//    <ghidra_install>/support/analyzeHeadless.bat/sh 
+//     ghidra://localhost:13100/MyProjectName/OptionalFolderContainingDestProgram -process 
+//     DestinationProgram.exe -postScript MyOptionsSetupScript -postScript 
+//     AutoVersionTrackingScript.java "/FolderContainingSession" 
+//     "MySessionName" "/OptionalFolderContainingSourceProgram/SourceProgram.exe" 
+//     optionalAddSessionToVersionControl -connect username -p -commit "my commit msg"
+//
+//	   NOTE: The Destination program being processed in the shared project headless run must not be
+//     checked out by anyone prior to the run. The headless script expects the file to be in version 
+//     control but not checked out. The headless script will check it out, run the given scripts 
+//     against it then check in any changes with the given commit message.
+// 
 //@category Version Tracking
 import ghidra.app.script.GhidraScript;
 import ghidra.feature.vt.api.db.VTSessionDB;
@@ -62,29 +103,29 @@ import ghidra.util.task.TaskLauncher;
 
 public class AutoVersionTrackingScript extends GhidraScript {
 
-	private Program sourceProgram;
-	private Program destinationProgram;
-
-	@Override
-	public void cleanup(boolean success) {
-		if (sourceProgram != null && sourceProgram.isUsedBy(this)) {
-			sourceProgram.release(this);
-		}
-		if (destinationProgram != null && destinationProgram.isUsedBy(this)) {
-			destinationProgram.release(this);
-		}
-		super.cleanup(success);
-	}
+	private static final int NUM_ARGS = 3;
 
 	@Override
 	public void run() throws Exception {
+		
+		if(currentProgram == null) {
+			println("Please open the destination program.");
+			return;
+		}
+
+		Program destinationProgram = currentProgram;
+
+		if (!destinationProgram.canSave()) {
+			println("VT Session destination program " + destinationProgram.getName() +
+				" is read-only which prevents its use.");
+			return;
+		}
 
 		GhidraValuesMap startupValues = new GhidraValuesMap();
 
 		startupValues.defineProjectFolder("Version Tracking Session Folder", "/");
 		startupValues.defineString("Version Tracking Session Name");
-		startupValues.defineBoolean("Check if current program is the Source Program", true);
-		startupValues.defineProgram("Please select the other program");
+		startupValues.defineProjectFile("Please select the SOURCE program", "/");
 
 		startupValues.setValidator((valueMap, status) -> {
 
@@ -107,89 +148,105 @@ public class AutoVersionTrackingScript extends GhidraScript {
 				return false;
 			}
 
-			if (!valueMap.hasValue("Please select the other program")) {
-				status.setStatusText("Must choose second program!", MessageType.ERROR);
+			if (!valueMap.hasValue("Please select the SOURCE program")) {
+				status.setStatusText("Must choose a SOURCE program!", MessageType.ERROR);
 				return false;
 			}
 			return true;
 		});
 
 		startupValues = askValues("Enter Auto Version Tracking Information",
-			"Changing these options will not change the corresponding tool options", startupValues);
+			"The currently opened program is assumed to be the DESTINATION program.",
+			startupValues);
 
 		DomainFolder folder = startupValues.getProjectFolder("Version Tracking Session Folder");
 
 		String name = startupValues.getString("Version Tracking Session Name");
-		boolean isCurrentProgramSourceProg =
-			startupValues.getBoolean("Check if current program is the Source Program");
 
 		// setting auto upgrade to isHeadless, will cause headless uses to auto upgrade, but in
-		// Gui mode, will prompt before upgrading.
+		// GUI mode, will prompt before upgrading.
 		boolean autoUpgradeIfNeeded = isRunningHeadless();
-		Program otherProgram = startupValues.getProgram("Please select the other program", this,
-			state.getTool(), autoUpgradeIfNeeded);
 
-		if (isCurrentProgramSourceProg) {
-			sourceProgram = currentProgram;
-			destinationProgram = otherProgram;
-		}
-		else {
-			destinationProgram = currentProgram;
-			sourceProgram = otherProgram;
-		}
-
-		if (sourceProgram == null || destinationProgram == null) {
+		DomainFile sourceProgramDF =
+			startupValues.getProjectFile("Please select the SOURCE program");
+		if (!Program.class.isAssignableFrom(sourceProgramDF.getDomainObjectClass())) {
+			println(sourceProgramDF.getContentType() + " file " + sourceProgramDF.getName() +
+				" may not be specified as the SOURCE Program.");
 			return;
 		}
 
-		// Need to end the script transaction or it interferes with vt things that need locks
-		end(true);
+		Program sourceProgram = (Program) sourceProgramDF.getDomainObject(this, autoUpgradeIfNeeded,
+			false, monitor);
 
-		VTSession session =
-			VTSessionDB.createVTSession(name, sourceProgram, destinationProgram, this);
+		VTSession session = null;
+		try {
+			// Need to end the script transaction or it interferes with vt things that need locks
+			end(true);
 
-		if (folder.getFile(name) == null) {
-			folder.createFile(name, session, monitor);
-		}
+			session = new VTSessionDB(name, sourceProgram, destinationProgram, this);
 
-		// create a default options map in case cannot get user input
-		GhidraValuesMap optionsMap = createDefaultOptions();
-
-		// if running script in GUI get options from user and update the vtOptions with them
-		if (!isRunningHeadless()) {
-			optionsMap = getOptionsFromUser();
-
-		}
-		// else if running script in headless get possible options set by prescript that saves
-		// optionsMap in script state variable and update the vtOptions with them
-		else {
-			// try to get options map from state if running headless
-			// if user runs prescript to set up their own options map those options will be used
-			// See SetAutoVersionTrackingOptionsScript.java as an example
-			GhidraValuesMap stateOptionsMap =
-				(GhidraValuesMap) state.getEnvironmentVar("autoVTOptionsMap");
-			if (optionsMap != null) {
-				optionsMap = stateOptionsMap;
+			if (folder.getFile(name) == null) {
+				folder.createFile(name, session, monitor);
 			}
 
-		}
+			// create a default options map in case cannot get user input
+			GhidraValuesMap optionsMap = createDefaultOptions();
 
-		ToolOptions vtOptions = setToolOptionsFromOptionsMap(optionsMap);
+			// if running script in GUI get options from user and update the vtOptions with them
+			if (!isRunningHeadless()) {
+				optionsMap = getOptionsFromUser();
 
-		AutoVersionTrackingTask autoVtTask = new AutoVersionTrackingTask(session, vtOptions);
+			}
+			// else if running script in headless get possible options set by prescript that saves
+			// optionsMap in script state variable and update the vtOptions with them
+			else {
+				// try to get options map from state if running headless
+				// if user runs prescript to set up their own options map those options will be used
+				// See SetAutoVersionTrackingOptionsScript.java as an example
+				GhidraValuesMap stateOptionsMap =
+					(GhidraValuesMap) state.getEnvironmentVar("autoVTOptionsMap");
+				if (stateOptionsMap != null) {
+					optionsMap = stateOptionsMap;
+				}
 
-		TaskLauncher.launch(autoVtTask);
+			}
 
-		// if not running headless user can decide whether to save or not
-		// if running headless - must save here or nothing that was done in this script will be
-		// accessible later.
-		if (isRunningHeadless()) {
-			otherProgram.save("Updated with Auto Version Tracking", monitor);
+			ToolOptions vtOptions = setToolOptionsFromOptionsMap(optionsMap);
+
+			AutoVersionTrackingTask autoVtTask = new AutoVersionTrackingTask(session, vtOptions);
+
+			TaskLauncher.launch(autoVtTask);
+
+			// Save destination program and session changes
+			destinationProgram.save("Updated with Auto Version Tracking", monitor);
 			session.save();
+
+			println(autoVtTask.getStatusMsg());
+		}
+		catch (CancelledException e) {
+			// let finally clean up
+			return;
+		}
+		finally {
+			if (sourceProgram != null) {
+				sourceProgram.release(this);
+			}
+			if (session != null) {
+				session.release(this);
+
+			}
 		}
 
-		println(autoVtTask.getStatusMsg());
-		otherProgram.release(this);
+		// try adding to version control if it is a transient project (ie headless operating against
+		// a shared project repository
+		if (state.getProject().getProjectLocator().isTransient()) {
+
+			session.getDomainFile()
+					.addToVersionControl("Added new session + " + session.getName(), false,
+						monitor);
+			println("Added session " + session.getName() + " to version control.");
+		}
+
 	}
 
 	/**
