@@ -383,7 +383,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * @return true if this provider is showing.
 	 */
 	public boolean isVisible() {
-		return dockingTool.isVisible(this);
+		return dockingTool != null && dockingTool.isVisible(this);
 	}
 
 	/**
