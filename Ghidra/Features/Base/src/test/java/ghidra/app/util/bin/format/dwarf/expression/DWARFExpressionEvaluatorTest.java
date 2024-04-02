@@ -22,17 +22,18 @@ import java.io.IOException;
 
 import org.junit.*;
 
-import ghidra.app.util.bin.format.dwarf.DWARFRegisterMappings;
-import ghidra.app.util.bin.format.dwarf.expression.*;
+import ghidra.app.util.bin.format.dwarf.DWARFTestBase;
 
-public class DWARFExpressionEvaluatorTest {
+public class DWARFExpressionEvaluatorTest extends DWARFTestBase {
 
 	DWARFExpressionEvaluator evaluator;
 
+	@Override
 	@Before
-	public void setup() {
-		evaluator = new DWARFExpressionEvaluator((byte) 8, true, 4 /* dwarf32 */,
-			DWARFRegisterMappings.DUMMY);
+	public void setUp() throws Exception {
+		super.setUp();
+		ensureCompUnit();
+		evaluator = new DWARFExpressionEvaluator(cu);
 	}
 
 	/**
@@ -167,12 +168,19 @@ public class DWARFExpressionEvaluatorTest {
 
 			/* 53 */ (byte) DW_OP_call_ref, 4, 3, 2, 1,
 
-			/* 54 */ (byte) DW_OP_implicit_value, (byte) 0x05, 1, 2, 3, 4, 5//
+			/* 54 */ (byte) DW_OP_implicit_value, (byte) 0x05, 1, 2, 3, 4, 5, //
+			
+			/* 55 */ (byte) DW_OP_implicit_pointer, 1, 0, 0, 0, 2,
+			
+			/* 56 */ (byte) DW_OP_addrx, 0
+			
+			
 		});
 		// @formatter:on
 
+		assertEquals(4, evaluator.getDWARFCompilationUnit().getIntSize());
 		assertNotNull("Did not successfully instantiate DWARFExpression", expr);
-		assertEquals("Did not read all opcodes", 55, expr.getOpCount());
+		assertEquals("Did not read all opcodes", 57, expr.getOpCount());
 
 		assertEquals(0x55, expr.getOp(1).getOperandValue(0));
 		assertEquals(0xfe, expr.getOp(2).getOperandValue(0));
@@ -205,6 +213,11 @@ public class DWARFExpressionEvaluatorTest {
 		assertEquals(0x33, expr.getOp(20).getOperandValue(0));
 		assertEquals(128, expr.getOp(21).getOperandValue(0));
 		assertEquals(-128, expr.getOp(22).getOperandValue(0));
+
+		assertEquals(5, expr.getOp(54).getOperandValue(0));
+
+		assertEquals(1, expr.getOp(55).getOperandValue(0));
+		assertEquals(2, expr.getOp(55).getOperandValue(1));
 	}
 
 	@Test
@@ -401,5 +414,32 @@ public class DWARFExpressionEvaluatorTest {
 			// Should have been able to read 3 of the operations before failing
 			Assert.assertEquals(dee.getExpression().getOpCount(), 3);
 		}
+	}
+
+	@Test
+	public void testAddrx() throws DWARFExpressionException {
+		// test that OP_addrx fails with invalid index.  Needs real test
+		DWARFExpression expr = evaluator.readExpr(new byte[] { (byte) DW_OP_addrx, 0 });
+		try {
+			evaluator.evaluate(expr);
+			fail();
+		}
+		catch (DWARFExpressionException dee) {
+			// good
+		}
+	}
+
+	@Test
+	public void testConstx() throws DWARFExpressionException {
+		// test that OP_constx fails with invalid index.  Needs real test
+		DWARFExpression expr = evaluator.readExpr(new byte[] { (byte) DW_OP_constx, 0 });
+		try {
+			evaluator.evaluate(expr);
+			fail();
+		}
+		catch (DWARFExpressionException dee) {
+			// good
+		}
+
 	}
 }
