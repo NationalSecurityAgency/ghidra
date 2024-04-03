@@ -254,8 +254,7 @@ public class ShowConstantUse extends GhidraScript {
 				ConstUseLocation entry = (ConstUseLocation) rowObject;
 				Function func = entry.getProgram()
 						.getFunctionManager()
-						.getFunctionContaining(
-							entry.getAddress());
+						.getFunctionContaining(entry.getAddress());
 				if (func == null) {
 					return "";
 				}
@@ -762,9 +761,7 @@ public class ShowConstantUse extends GhidraScript {
 		if (defUseList == null || defUseList.size() <= 0) {
 			return value;
 		}
-		Iterator<PcodeOp> iterator = defUseList.iterator();
-		while (iterator.hasNext()) {
-			PcodeOp pcodeOp = iterator.next();
+		for (PcodeOp pcodeOp : defUseList) {
 			int opcode = pcodeOp.getOpcode();
 			switch (opcode) {
 				case PcodeOp.INT_AND:
@@ -970,8 +967,7 @@ public class ShowConstantUse extends GhidraScript {
 	}
 
 	private void followThroughGlobal(HashMap<Address, Long> constUse, ArrayList<PcodeOp> defUseList,
-			HighVariable hvar,
-			ArrayList<FunctionParamUse> funcList,
+			HighVariable hvar, ArrayList<FunctionParamUse> funcList,
 			HashSet<SequenceNumber> doneSet) {
 		Address loc = hvar.getRepresentative().getAddress();
 		PcodeOp def = hvar.getRepresentative().getDef();
@@ -1013,6 +1009,7 @@ public class ShowConstantUse extends GhidraScript {
 	private Address lastDecompiledFuncAddr = null;
 
 	private DecompInterface setUpDecompiler(Program program) {
+
 		DecompInterface decompInterface = new DecompInterface();
 
 		// call it to get results
@@ -1021,13 +1018,8 @@ public class ShowConstantUse extends GhidraScript {
 			return null;
 		}
 
-		DecompileOptions options;
-		options = new DecompileOptions();
-		OptionsService service = state.getTool().getService(OptionsService.class);
-		if (service != null) {
-			ToolOptions opt = service.getOptions("Decompiler");
-			options.grabFromToolAndProgram(null, opt, program);
-		}
+		DecompileOptions options = DecompilerUtils.getDecompileOptions(state.getTool(), program);
+
 		decompInterface.setOptions(options);
 
 		decompInterface.toggleCCode(true);

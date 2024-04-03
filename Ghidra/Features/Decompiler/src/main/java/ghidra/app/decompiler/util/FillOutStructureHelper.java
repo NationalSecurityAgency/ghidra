@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.decompile.actions;
+package ghidra.app.decompiler.util;
 
 import java.util.*;
 import java.util.Map.Entry;
 
-import docking.options.OptionsService;
 import ghidra.app.cmd.label.RenameLabelCmd;
 import ghidra.app.decompiler.*;
-import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
-import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.app.decompiler.component.DecompilerUtils;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.*;
@@ -32,9 +29,9 @@ import ghidra.program.model.lang.PrototypeModel;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.*;
-import ghidra.program.util.*;
 import ghidra.util.Msg;
-import ghidra.util.exception.*;
+import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -44,11 +41,7 @@ import ghidra.util.task.TaskMonitor;
  * to the structure, even if the structure must grow.
  *
  */
-public class FillOutStructureCmd extends BackgroundCommand {
-
-	// NOTE: (see GP-4408) This Command implementation should be refactored to break-out the 
-	// Utility aspects which are contained within and used publicly without invoking the applyTo
-	// method.  In addition, the Command should not be constructed with a Program instance.
+public class FillOutStructureHelper {
 
 	/**
 	 * Varnode with data-flow traceable to original pointer
@@ -66,18 +59,15 @@ public class FillOutStructureCmd extends BackgroundCommand {
 	private static final String DEFAULT_BASENAME = "astruct";
 	private static final String DEFAULT_CATEGORY = "/auto_structs";
 
-	private int currentCallDepth = 0;		// Current call depth (from root function)
-	private int maxCallDepth = 1;
+	private Program currentProgram;
+	private TaskMonitor monitor;
+	private DecompileOptions decompileOptions;
 
+	private static final int maxCallDepth = 1;
+
+	private int currentCallDepth;		// Current call depth (from root function)
 	private NoisyStructureBuilder componentMap = new NoisyStructureBuilder();
 	private HashMap<Address, Address> addressToCallInputMap = new HashMap<>();
-
-	private Program currentProgram;
-	private ProgramLocation currentLocation;
-	private Function rootFunction;
-	private TaskMonitor monitor;
-	private PluginTool tool;
-
 	private List<OffsetPcodeOpPair> storePcodeOps = new ArrayList<>();
 	private List<OffsetPcodeOpPair> loadPcodeOps = new ArrayList<>();
 
@@ -85,92 +75,15 @@ public class FillOutStructureCmd extends BackgroundCommand {
 	 * Constructor.
 	 * 
 	 * @param program the current program
-	 * @param location the current program location
-	 * @param tool the current plugin tool
+	 * @param decompileOptions decompiler options 
+	 *   (see {@link DecompilerUtils#getDecompileOptions(ServiceProvider, Program)})
+	 * @param monitor task monitor
 	 */
-	public FillOutStructureCmd(Program program, ProgramLocation location, PluginTool tool) {
-		super("Fill Out Structure", true, false, true);
-		this.tool = tool;
+	public FillOutStructureHelper(Program program, DecompileOptions decompileOptions,
+			TaskMonitor monitor) {
 		this.currentProgram = program;
-		this.currentLocation = Objects.requireNonNull(location);
-	}
-
-	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor taskMonitor) {
-		this.monitor = taskMonitor;
-
-		rootFunction =
-			currentProgram.getFunctionManager().getFunctionContaining(currentLocation.getAddress());
-		if (rootFunction == null) {
-			return false;
-		}
-
-		int transaction = currentProgram.startTransaction("Fill Out Structure Variable");
-		try {
-			HighVariable var = null;
-
-			if (!(currentLocation instanceof DecompilerLocation)) {
-				// if we don't have one, make one, and map variable to a varnode
-				Address storageAddr = computeStorageAddress(currentLocation, rootFunction);
-				var = computeHighVariable(storageAddr, rootFunction);
-			}
-			else {
-
-				// get the Varnode under the cursor
-				DecompilerLocation dloc = (DecompilerLocation) currentLocation;
-				ClangToken token = dloc.getToken();
-				if (token == null) {
-					return false;
-				}
-
-				var = token.getHighVariable();
-				Varnode exactSpot = token.getVarnode();
-
-				if ((var != null) && (exactSpot != null)) {
-					HighFunction hfunc = var.getHighFunction();
-					try { // Adjust HighVariable based on exact varnode selected, if there are merged groups
-						var = hfunc.splitOutMergeGroup(var, exactSpot);
-					}
-					catch (PcodeException ex) {
-						return false;
-					}
-				}
-			}
-
-			if (var == null || var.getSymbol() == null || var.getOffset() >= 0) {
-				return false;
-			}
-
-			boolean isThisParam =
-				CreateStructureVariableAction.testForAutoParameterThis(var, rootFunction);
-			Structure structDT =
-				CreateStructureVariableAction.getStructureForExtending(var.getDataType());
-			if (structDT != null) {
-				componentMap.populateOriginalStructure(structDT);
-			}
-
-			fillOutStructureDef(var);
-			pushIntoCalls();
-
-			structDT = createStructure(structDT, var, rootFunction, isThisParam);
-			populateStructure(structDT);
-
-			DataType pointerDT = new PointerDataType(structDT);
-
-			// Delay adding to the manager until full structure is accumulated
-			pointerDT = currentProgram.getDataTypeManager()
-					.addDataType(pointerDT, DataTypeConflictHandler.DEFAULT_HANDLER);
-			commitVariable(var, pointerDT, isThisParam);
-		}
-		catch (Exception e) {
-			Msg.showError(this, tool.getToolFrame(), "Auto Create Structure Failed",
-				"Failed to create Structure variable", e);
-		}
-		finally {
-			currentProgram.endTransaction(transaction, true);
-		}
-
-		return true;
+		this.decompileOptions = decompileOptions;
+		this.monitor = monitor;
 	}
 
 	/**
@@ -179,31 +92,82 @@ public class FillOutStructureCmd extends BackgroundCommand {
 	 * or any existing data-types. A new structure is always created.
 	 * @param var a parameter, local variable, or global variable used in the given function
 	 * @param function the function to process
+	 * @param createNewStructure if true a new structure with a unique name will always be generated,
+	 * if false and variable corresponds to a structure pointer the existing structure will be 
+	 * updated instead.
+	 * @param createClassIfNeeded if true and variable corresponds to a <B>this</B> pointer without 
+	 * an assigned Ghidra Class (i.e., {@code void * this}), the function will be assigned to a 
+	 * new unique Ghidra Class namespace with a new identically named structure returned.  If false,
+	 * a new uniquely structure will be created.
 	 * @return a filled-in structure or null if one could not be created
 	 */
-	public Structure processStructure(HighVariable var, Function function) {
+	public Structure processStructure(HighVariable var, Function function,
+			boolean createNewStructure, boolean createClassIfNeeded) {
 
 		if (var == null || var.getSymbol() == null || var.getOffset() >= 0) {
 			return null;
 		}
 
-		Structure structDT;
+		init();
 
-		try {
-			fillOutStructureDef(var);
-			pushIntoCalls();
-			structDT = createStructure(null, var, function, false);
-			populateStructure(structDT);
+		Structure structDT = null;
+
+		if (!createNewStructure) {
+			structDT = getStructureForExtending(var.getDataType());
+			if (structDT != null) {
+				componentMap.populateOriginalStructure(structDT);
+			}
 		}
-		catch (Exception e) {
+
+		fillOutStructureDef(var);
+		pushIntoCalls();
+
+		long size = componentMap.getSize();
+		if (size == 0) {
 			return null;
 		}
+		if (size < 0 || size > Integer.MAX_VALUE) {
+			Msg.error(this, "Computed structure length out-of-range: " + size);
+			return null;
+		}
+
+		if (structDT == null) {
+			if (createClassIfNeeded && DecompilerUtils.testForAutoParameterThis(var, function)) {
+				structDT = createUniqueClassNamespaceAndStructure(var, (int) size, function);
+			}
+			else {
+				structDT = createUniqueStructure((int) size);
+			}
+		}
+		else {
+			expandStructureSizeIfNeeded(structDT, (int) size);
+		}
+
+		populateStructure(structDT);
 
 		return structDT;
 	}
 
+	private void expandStructureSizeIfNeeded(Structure struct, int size) {
+		// TODO: How should an existing packed structure be handled? Growing and offset-based 
+		// placement does not apply
+		int len = struct.isZeroLength() ? 0 : struct.getLength();
+		if (size > len) {
+			struct.growStructure(size - len);
+		}
+	}
+
+	private void init() {
+		currentCallDepth = 0;		// Current call depth (from root function)
+		componentMap = new NoisyStructureBuilder();
+		addressToCallInputMap = new HashMap<>();
+		storePcodeOps = new ArrayList<>();
+		loadPcodeOps = new ArrayList<>();
+	}
+
 	/**
-	 * Retrieve the component map that was generated when structure was created using decomiler info
+	 * Retrieve the component map that was generated when structure was created using decomiler info.
+	 * Results are not valid until {@link #processStructure(HighVariable, Function, boolean)} is invoked.
 	 * @return componentMap
 	 */
 	public NoisyStructureBuilder getComponentMap() {
@@ -212,7 +176,8 @@ public class FillOutStructureCmd extends BackgroundCommand {
 
 	/**
 	 * Retrieve the offset/pcodeOp pairs that are used to store data into the variable
-	 * the FillInStructureCmd was trying to create a structure on.
+	 * used to fill-out structure.
+	 * Results are not valid until {@link #processStructure(HighVariable, Function, boolean)} is invoked.
 	 * @return the pcodeOps doing the storing to the associated variable
 	 */
 	public List<OffsetPcodeOpPair> getStorePcodeOps() {
@@ -221,7 +186,8 @@ public class FillOutStructureCmd extends BackgroundCommand {
 
 	/**
 	 * Retrieve the offset/pcodeOp pairs that are used to load data from the variable
-	 * the FillInStructureCmd was trying to create a structure on.
+	 * used to fill-out structure.
+	 * Results are not valid until {@link #processStructure(HighVariable, Function, boolean)} is invoked.
 	 * @return the pcodeOps doing the loading from the associated variable
 	 */
 	public List<OffsetPcodeOpPair> getLoadPcodeOps() {
@@ -296,58 +262,12 @@ public class FillOutStructureCmd extends BackgroundCommand {
 	}
 
 	/**
-	 * Retype the HighVariable to a given data-type to the database
-	 * @param var is the decompiler variable to retype
-	 * @param newDt is the data-type
-	 * @param isThisParam is true if the variable is a 'this' pointer
-	 */
-	private void commitVariable(HighVariable var, DataType newDt, boolean isThisParam) {
-		if (!isThisParam) {
-			try {
-				HighFunctionDBUtil.updateDBVariable(var.getSymbol(), null, newDt,
-					SourceType.USER_DEFINED);
-			}
-			catch (DuplicateNameException e) {
-				throw new AssertException("Unexpected exception", e);
-			}
-			catch (InvalidInputException e) {
-				Msg.error(this,
-					"Failed to re-type variable " + var.getName() + ": " + e.getMessage());
-			}
-		}
-	}
-
-	/**
-	 * Compute the storage address associated with a particular Location
-	 * @param location is the location being queried
-	 * @param function is the function owning the location
-	 * @return the corresponding storage address or null
-	 */
-	private Address computeStorageAddress(ProgramLocation location, Function function) {
-
-		Address storageAddress = null;
-
-		// make sure what we are over can be mapped to decompiler
-		// param, local, etc...
-
-		if (location instanceof VariableLocation) {
-			VariableLocation varLoc = (VariableLocation) location;
-			storageAddress = varLoc.getVariable().getVariableStorage().getMinAddress();
-		}
-		else if (location instanceof FunctionParameterFieldLocation) {
-			FunctionParameterFieldLocation funcPFL = (FunctionParameterFieldLocation) location;
-			storageAddress = funcPFL.getParameter().getVariableStorage().getMinAddress();
-		}
-		return storageAddress;
-	}
-
-	/**
 	 * Decompile a function and return the resulting HighVariable associated with a storage address
 	 * @param storageAddress the storage address of the variable
 	 * @param function is the function
-	 * @return the corresponding HighVariable
+	 * @return the corresponding HighVariable or null
 	 */
-	private HighVariable computeHighVariable(Address storageAddress, Function function) {
+	public HighVariable computeHighVariable(Address storageAddress, Function function) {
 		if (storageAddress == null) {
 			return null;
 		}
@@ -360,7 +280,12 @@ public class FillOutStructureCmd extends BackgroundCommand {
 				return null;
 			}
 
-			DecompileResults results = decompileFunction(function, decomplib);
+			DecompileResults results = decomplib.decompileFunction(function,
+				decomplib.getOptions().getDefaultTimeout(), monitor);
+			if (monitor.isCancelled()) {
+				return null;
+			}
+
 			HighFunction highFunc = results.getHighFunction();
 
 			// no decompile...
@@ -407,55 +332,11 @@ public class FillOutStructureCmd extends BackgroundCommand {
 	 */
 	private DecompInterface setUpDecompiler() {
 		DecompInterface decomplib = new DecompInterface();
-
-		DecompileOptions options;
-		options = new DecompileOptions();
-		OptionsService service = tool.getService(OptionsService.class);
-		if (service != null) {
-			ToolOptions opt = service.getOptions("Decompiler");
-			options.grabFromToolAndProgram(null, opt, currentProgram);
-		}
-		decomplib.setOptions(options);
-
+		decomplib.setOptions(decompileOptions);
 		decomplib.toggleCCode(true);
 		decomplib.toggleSyntaxTree(true);
 		decomplib.setSimplificationStyle("decompile");
-
 		return decomplib;
-	}
-
-	public DecompileResults decompileFunction(Function f, DecompInterface decomplib) {
-		DecompileResults decompRes;
-
-		decompRes =
-			decomplib.decompileFunction(f, decomplib.getOptions().getDefaultTimeout(), monitor);
-
-		return decompRes;
-	}
-
-	/**
-	 * Recover the structure associated with the given pointer variable, or if there is no structure,
-	 * create it.  Resize the structure to be at least as large as the maxOffset seen so far.
-	 * @param structDT is the structure data-type to fill in, or null if a new Structure should be created
-	 * @param var is the given pointer variable
-	 * @param f is the function
-	 * @param isThisParam is true if the variable is a 'this' pointer
-	 * @return the Structure object
-	 */
-	private Structure createStructure(Structure structDT, HighVariable var, Function f,
-			boolean isThisParam) {
-
-		if (structDT == null) {
-			structDT = createNewStruct(var, (int) componentMap.getSize(), f, isThisParam);
-		}
-		else {
-			// FIXME: How should an existing packed structure be handled? Growing and offset-based placement does not apply
-			int len = structDT.isZeroLength() ? 0 : structDT.getLength();
-			if (componentMap.getSize() > len) {
-				structDT.growStructure((int) componentMap.getSize() - len);
-			}
-		}
-		return structDT;
 	}
 
 	/**
@@ -497,70 +378,90 @@ public class FillOutStructureCmd extends BackgroundCommand {
 	}
 
 	/**
-	 * Create a new structure of a given size. If the associated variable is a 'this' pointer,
-	 * make sure there is a the structure is associated with the class namespace.
-	 * @param var is the associated variable
+	 * Create a new structure of a given size and unique generated name within the DEFAULT_CATEGORY. 
+	 * 
 	 * @param size is the desired structure size
-	 * @param f is the function owning the variable
-	 * @param isThisParam is true if the variable is a 'this' variable
 	 * @return the new Structure
 	 */
-	private Structure createNewStruct(HighVariable var, int size, Function f, boolean isThisParam) {
-		if (isThisParam) {
-			Namespace rootNamespace = currentProgram.getGlobalNamespace();
-			Namespace newNamespace = createUniqueClassName(rootNamespace);
-			String name = f.getName();
-			Symbol symbol = f.getSymbol();
-			RenameLabelCmd command =
-				new RenameLabelCmd(symbol, name, newNamespace, SourceType.USER_DEFINED);
-			if (!command.applyTo(currentProgram)) {
-				return null;
-			}
-			Structure structDT = VariableUtilities.findOrCreateClassStruct(f);
-			if (structDT == null) {
-				return null;
-			}
-// FIXME: How should an existing packed structure be handled? Growing and offset-based placement does not apply
-			int len = structDT.isZeroLength() ? 0 : structDT.getLength();
-			if (len < size) {
-				structDT.growStructure(size - len);
-			}
-			return structDT;
-		}
-		String structName = createUniqueStructName(var, DEFAULT_CATEGORY, DEFAULT_BASENAME);
-
-		StructureDataType dt = new StructureDataType(new CategoryPath(DEFAULT_CATEGORY), structName,
-			size, f.getProgram().getDataTypeManager());
+	private Structure createUniqueStructure(int size) {
+		ProgramBasedDataTypeManager dtm = currentProgram.getDataTypeManager();
+		String structName = dtm.getUniqueName(new CategoryPath(DEFAULT_CATEGORY), DEFAULT_BASENAME);
+		StructureDataType dt =
+			new StructureDataType(new CategoryPath(DEFAULT_CATEGORY), structName, size, dtm);
 		return dt;
 	}
 
-	private Namespace createUniqueClassName(Namespace rootNamespace) {
+	/**
+	 * Create new unique Ghidra Class namespace and corresponding structure.
+	 * @param var {@code "this"} pointer variable
+	 * @param size structure size
+	 * @param f Ghidra Class member function
+	 * @return new Ghidra Class structure or null on error
+	 */
+	private Structure createUniqueClassNamespaceAndStructure(HighVariable var, int size,
+			Function f) {
+		Namespace newNamespace = createUniqueClassName();
+		if (newNamespace == null) {
+			return null;
+		}
+
+		// Move function into new Ghidra Class namespace
+		RenameLabelCmd command =
+			new RenameLabelCmd(f.getSymbol(), f.getName(), newNamespace, SourceType.USER_DEFINED);
+		if (!command.applyTo(currentProgram)) {
+			return null;
+		}
+
+		// Allocate new Ghidra Class structure
+		Structure structDT = VariableUtilities.findOrCreateClassStruct(f);
+		if (structDT == null) {
+			return null;
+		}
+
+		expandStructureSizeIfNeeded(structDT, size);
+
+		return structDT;
+	}
+
+	private boolean programContainsNamedStructure(String structName) {
+		ProgramBasedDataTypeManager dtm = currentProgram.getDataTypeManager();
+		List<DataType> list = new ArrayList<>();
+		dtm.findDataTypes(structName, list, true, monitor);
+		for (DataType dt : list) {
+			if (dt instanceof Structure) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Generate a unique Ghidra Class which does not have an existing structure
+	 * @return new unique Ghidra Class namespace or null on error
+	 */
+	private Namespace createUniqueClassName() {
+		Namespace rootNamespace = currentProgram.getGlobalNamespace();
 		SymbolTable symbolTable = currentProgram.getSymbolTable();
 		String newClassBase = "AutoClass";
-		String newClassName = "";
-		for (int i = 1; i < 1000; ++i) {
-			newClassName = newClassBase + Integer.toString(i);
-			if (symbolTable.getSymbols(newClassName, rootNamespace).isEmpty()) {
+		String newClassName;
+		int index = 1;
+		while (true) {
+			// cycle until we find unused class/structure name
+			newClassName = newClassBase + Integer.toString(index++);
+			if (symbolTable.getNamespace(newClassName, rootNamespace) == null &&
+				!programContainsNamedStructure(newClassName)) {
 				break;
 			}
 		}
 		// Create the class
-		GhidraClass newClass = null;
 		try {
-			newClass =
-				symbolTable.createClass(rootNamespace, newClassName, SourceType.USER_DEFINED);
+			return symbolTable.createClass(rootNamespace, newClassName, SourceType.USER_DEFINED);
 		}
-		catch (DuplicateNameException e) {
+		catch (DuplicateNameException | InvalidInputException e) {
+			// unexpected unless possible race condition
 			Msg.error(this, "Error creating class '" + newClassName + "'", e);
 		}
-		catch (InvalidInputException e) {
-			Msg.error(this, "Error creating class '" + newClassName + "'", e);
-		}
-		return newClass;
-	}
-
-	private String createUniqueStructName(HighVariable var, String category, String base) {
-		return currentProgram.getDataTypeManager().getUniqueName(new CategoryPath(category), base);
+		return null;
 	}
 
 	private boolean sanityCheck(long offset, long existingSize) {
@@ -575,38 +476,6 @@ public class FillOutStructureCmd extends BackgroundCommand {
 			return false; // bigger than existing size; arbitrary cut-off to prevent huge structures
 		}
 		return true;
-	}
-
-	/**
-	 * Get the data-type associated with a Varnode.  If the Varnode is produce by a CAST p-code
-	 * op, take the most specific data-type between what it was cast from and cast to.
-	 * @param vn is the Varnode to get the data-type for
-	 * @return the data-type
-	 */
-	public static DataType getDataTypeTraceBackward(Varnode vn) {
-		DataType res = vn.getHigh().getDataType();
-		PcodeOp op = vn.getDef();
-		if (op != null && op.getOpcode() == PcodeOp.CAST) {
-			Varnode otherVn = op.getInput(0);
-			res = MetaDataType.getMostSpecificDataType(res, otherVn.getHigh().getDataType());
-		}
-		return res;
-	}
-
-	/**
-	 * Get the data-type associated with a Varnode.  If the Varnode is input to a CAST p-code
-	 * op, take the most specific data-type between what it was cast from and cast to.
-	 * @param vn is the Varnode to get the data-type for
-	 * @return the data-type
-	 */
-	public static DataType getDataTypeTraceForward(Varnode vn) {
-		DataType res = vn.getHigh().getDataType();
-		PcodeOp op = vn.getLoneDescend();
-		if (op != null && op.getOpcode() == PcodeOp.CAST) {
-			Varnode otherVn = op.getOutput();
-			res = MetaDataType.getMostSpecificDataType(res, otherVn.getHigh().getDataType());
-		}
-		return res;
 	}
 
 	/**
@@ -692,7 +561,7 @@ public class FillOutStructureCmd extends BackgroundCommand {
 						componentMap.setMinimumSize(currentRef.offset);
 						break;
 					case PcodeOp.LOAD:
-						outDt = getDataTypeTraceForward(output);
+						outDt = DecompilerUtils.getDataTypeTraceForward(output);
 						componentMap.addDataType(currentRef.offset, outDt);
 
 						if (outDt != null) {
@@ -706,7 +575,7 @@ public class FillOutStructureCmd extends BackgroundCommand {
 						if (pcodeOp.getSlot(currentRef.varnode) != 1) {
 							break; // store must be into the target structure
 						}
-						outDt = getDataTypeTraceBackward(inputs[2]);
+						outDt = DecompilerUtils.getDataTypeTraceBackward(inputs[2]);
 						componentMap.addDataType(currentRef.offset, outDt);
 
 						if (outDt != null) {
@@ -735,12 +604,12 @@ public class FillOutStructureCmd extends BackgroundCommand {
 							}
 						}
 						else {
-							outDt = getDataTypeTraceBackward(currentRef.varnode);
+							outDt = DecompilerUtils.getDataTypeTraceBackward(currentRef.varnode);
 							componentMap.addReference(currentRef.offset, outDt);
 						}
 						break;
 					case PcodeOp.CALLIND:
-						outDt = getDataTypeTraceBackward(currentRef.varnode);
+						outDt = DecompilerUtils.getDataTypeTraceBackward(currentRef.varnode);
 						componentMap.addReference(currentRef.offset, outDt);
 						break;
 				}
@@ -773,6 +642,34 @@ public class FillOutStructureCmd extends BackgroundCommand {
 		}
 		todoList.add(new PointerRef(output, offset));
 		doneList.add(output);
+	}
+
+	/**
+	 * Check if a variable has a data-type that is suitable for being extended.
+	 * If so return the structure data-type, otherwise return null.
+	 * Modulo typedefs, the data-type of the variable must be exactly a
+	 * "pointer to a structure".  Not a "structure" itself, or a
+	 * "pointer to a pointer to ... a structure".
+	 * @param dt is the data-type of the variable to test
+	 * @return the extendable structure data-type or null
+	 */
+	public static Structure getStructureForExtending(DataType dt) {
+		if (dt instanceof TypeDef) {
+			dt = ((TypeDef) dt).getBaseDataType();
+		}
+		if (dt instanceof Pointer) {
+			dt = ((Pointer) dt).getDataType();
+		}
+		else {
+			return null;
+		}
+		if (dt instanceof TypeDef) {
+			dt = ((TypeDef) dt).getBaseDataType();
+		}
+		if (dt instanceof Structure) {
+			return (Structure) dt;
+		}
+		return null;
 	}
 
 	/**

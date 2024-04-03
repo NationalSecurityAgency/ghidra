@@ -16,11 +16,15 @@
  */
 package ghidra.app.plugin.core.diff;
 
+import java.lang.reflect.InvocationTargetException;
+
+import javax.swing.SwingUtilities;
+
+import docking.widgets.dialogs.ReadTextDialog;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.core.analysis.AnalysisWorker;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
@@ -28,17 +32,11 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-import java.lang.reflect.InvocationTargetException;
-
-import javax.swing.SwingUtilities;
-
-import docking.widgets.dialogs.ReadTextDialog;
-
 /**
  * Command to apply diffs to current program.
  * 
  */
-class ApplyDiffCommand extends BackgroundCommand implements AnalysisWorker {
+class ApplyDiffCommand extends BackgroundCommand<Program> implements AnalysisWorker {
 
 	private AddressSetView p1AddressSet;
 	private DiffController diffControl;
@@ -47,9 +45,6 @@ class ApplyDiffCommand extends BackgroundCommand implements AnalysisWorker {
 	private boolean applied;
 	private ProgramDiffPlugin plugin;
 
-	/**
-	 * Constructor.
-	 */
 	ApplyDiffCommand(ProgramDiffPlugin plugin, AddressSetView program1AddressSet,
 			DiffController diffControl) {
 		super("Apply Differences", false, true, true);
@@ -59,8 +54,8 @@ class ApplyDiffCommand extends BackgroundCommand implements AnalysisWorker {
 	}
 
 	@Override
-	public boolean analysisWorkerCallback(Program program, Object workerContext, TaskMonitor monitor)
-			throws Exception, CancelledException {
+	public boolean analysisWorkerCallback(Program program, Object workerContext,
+			TaskMonitor monitor) throws Exception, CancelledException {
 		// Diff apply done with analysis disabled
 		return diffControl.apply(p1AddressSet, monitor);
 	}
@@ -70,11 +65,8 @@ class ApplyDiffCommand extends BackgroundCommand implements AnalysisWorker {
 		return getName();
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.BackgroundCommand#applyTo(ghidra.framework.model.DomainObject, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
+	public boolean applyTo(Program program, TaskMonitor monitor) {
 		monitor.setMessage("ApplyDiffTask starting...");
 		applied = false;
 		final ProgramLocation origLocation = plugin.getProgramLocation();
@@ -90,9 +82,8 @@ class ApplyDiffCommand extends BackgroundCommand implements AnalysisWorker {
 					AutoAnalysisManager.getAnalysisManager(plugin.getFirstProgram());
 				boolean merged = autoAnalysisManager.scheduleWorker(this, null, false, monitor);
 				if (merged) {
-					statusMsg =
-						"Apply differences has finished."
-							+ " If your expected change didn't occur, check your Diff Apply Settings.";
+					statusMsg = "Apply differences has finished." +
+						" If your expected change didn't occur, check your Diff Apply Settings.";
 					title = "Program Diff: Apply differences has finished.";
 					applied = true;
 				}
@@ -114,15 +105,14 @@ class ApplyDiffCommand extends BackgroundCommand implements AnalysisWorker {
 					}
 				}
 				Msg.showError(this, plugin.getListingPanel(), "Error Applying Diff",
-					"An error occurred while applying differences.\n"
-						+ "Only some of the differences may have been applied.",
+					"An error occurred while applying differences.\n" +
+						"Only some of the differences may have been applied.",
 					(t != null) ? t : e);
 				applyMsg = message + diffControl.getApplyMessage();
 			}
 			catch (CancelledException e) {
-				statusMsg =
-					"User cancelled \"Apply Differences\". "
-						+ "Differences were only partially applied.";
+				statusMsg = "User cancelled \"Apply Differences\". " +
+					"Differences were only partially applied.";
 				applyMsg = diffControl.getApplyMessage();
 			}
 			finally {

@@ -17,17 +17,77 @@ package ghidra.app.decompiler.component;
 
 import java.util.*;
 
+import docking.options.OptionsService;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.*;
 import ghidra.app.decompiler.*;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
+import ghidra.framework.options.ToolOptions;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.data.MetaDataType;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.*;
 
 public class DecompilerUtils {
+
+	/**
+	 * Gaither decompiler options from tool and program.  If tool is null or does not provide
+	 * a {@link OptionsService} provider only options stored within the program will be consumed.
+	 * @param serviceProvider plugin tool or service provider providing access to {@link OptionsService}
+	 * @param program program
+	 * @return decompiler options
+	 */
+	public static DecompileOptions getDecompileOptions(ServiceProvider serviceProvider,
+			Program program) {
+		DecompileOptions options;
+		options = new DecompileOptions();
+		OptionsService service = null;
+		if (serviceProvider != null) {
+			service = serviceProvider.getService(OptionsService.class);
+		}
+		if (service != null) {
+			ToolOptions opt = service.getOptions("Decompiler");
+			options.grabFromToolAndProgram(null, opt, program);
+		}
+		else {
+			options.grabFromProgram(program);
+		}
+		return options;
+	}
+
+	/**
+	 * Get the data-type associated with a Varnode.  If the Varnode is input to a CAST p-code
+	 * op, take the most specific data-type between what it was cast from and cast to.
+	 * @param vn is the Varnode to get the data-type for
+	 * @return the data-type
+	 */
+	public static DataType getDataTypeTraceForward(Varnode vn) {
+		DataType res = vn.getHigh().getDataType();
+		PcodeOp op = vn.getLoneDescend();
+		if (op != null && op.getOpcode() == PcodeOp.CAST) {
+			Varnode otherVn = op.getOutput();
+			res = MetaDataType.getMostSpecificDataType(res, otherVn.getHigh().getDataType());
+		}
+		return res;
+	}
+
+	/**
+	 * Get the data-type associated with a Varnode.  If the Varnode is produce by a CAST p-code
+	 * op, take the most specific data-type between what it was cast from and cast to.
+	 * @param vn is the Varnode to get the data-type for
+	 * @return the data-type
+	 */
+	public static DataType getDataTypeTraceBackward(Varnode vn) {
+		DataType res = vn.getHigh().getDataType();
+		PcodeOp op = vn.getDef();
+		if (op != null && op.getOpcode() == PcodeOp.CAST) {
+			Varnode otherVn = op.getInput(0);
+			res = MetaDataType.getMostSpecificDataType(res, otherVn.getHigh().getDataType());
+		}
+		return res;
+	}
 
 	/**
 	 * If the token refers to an individual Varnode, return it. Otherwise return null
@@ -212,6 +272,25 @@ public class DecompilerUtils {
 			}
 		}
 		return pcodeops;
+	}
+
+	/**
+	 * Test specified variable to see if it corresponds to the auto {@code this} parameter
+	 * of the specified {@link Function}
+	 * @param var decompiler {@link HighVariable variable}
+	 * @param function decompiled function
+	 * @return true if {@code var} corresponds to existing auto {@code this} parameter, else false
+	 */
+	public static boolean testForAutoParameterThis(HighVariable var, Function function) {
+		if (var instanceof HighParam) {
+			int slot = ((HighParam) var).getSlot();
+			Parameter parameter = function.getParameter(slot);
+			if ((parameter != null) &&
+				(parameter.getAutoParameterType() == AutoParameterType.THIS)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

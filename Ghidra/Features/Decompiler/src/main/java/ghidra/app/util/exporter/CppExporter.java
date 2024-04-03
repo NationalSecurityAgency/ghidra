@@ -20,18 +20,16 @@ import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 
-import docking.options.OptionsService;
 import generic.cache.CachingPool;
 import generic.cache.CountingBasicFactory;
 import generic.concurrent.QCallback;
-import ghidra.GhidraOptions;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.DecompileOptions.CommentStyleEnum;
+import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.decompiler.parallel.ChunkingParallelDecompiler;
 import ghidra.app.decompiler.parallel.ParallelDecompiler;
 import ghidra.app.util.*;
 import ghidra.framework.model.DomainObject;
-import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.*;
@@ -245,20 +243,8 @@ public class CppExporter extends Exporter {
 
 	private void configureOptions(Program program) {
 		if (!userSuppliedOptions) {
-			options = new DecompileOptions();
 
-			if (provider != null) {
-				OptionsService service = provider.getService(OptionsService.class);
-				if (service != null) {
-					ToolOptions fieldOptions =
-						service.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
-					ToolOptions opt = service.getOptions("Decompiler");
-					options.grabFromToolAndProgram(fieldOptions, opt, program);
-				}
-			}
-			else {
-				options.grabFromProgram(program);	// Let headless pull program specific options
-			}
+			options = DecompilerUtils.getDecompileOptions(provider, program);
 
 			if (isUseCppStyleComments) {
 				options.setCommentStyle(CommentStyleEnum.CPPStyle);
