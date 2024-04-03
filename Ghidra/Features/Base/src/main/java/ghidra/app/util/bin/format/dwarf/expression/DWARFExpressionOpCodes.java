@@ -180,6 +180,19 @@ public class DWARFExpressionOpCodes {
 	public static final int DW_OP_bit_piece = 0x9d;
 	public static final int DW_OP_implicit_value = 0x9e;
 	public static final int DW_OP_stack_value = 0x9f;
+
+	// DWARF5
+	public static final int DW_OP_implicit_pointer = 0xa0;
+	public static final int DW_OP_addrx = 0xa1;
+	public static final int DW_OP_constx = 0xa2;
+	public static final int DW_OP_entry_value = 0xa3;
+	public static final int DW_OP_const_type = 0xa4;
+	public static final int DW_OP_regval_type = 0xa5;
+	public static final int DW_OP_deref_type = 0xa6;
+	public static final int DW_OP_xderef_type = 0xa7;
+	public static final int DW_OP_convert = 0xa8;
+	public static final int DW_OP_reinterpret = 0xa9;
+
 	public static final int DW_OP_lo_user = 0xe0;
 	public static final int DW_OP_hi_user = 0xff;
 
@@ -191,9 +204,11 @@ public class DWARFExpressionOpCodes {
 	/**
 	 * These opcodes are known, but can not be evaluated in the current Ghidra DWARF code
 	 */
-	public static final int[] UNSUPPORTED_OPCODES_LIST = { DW_OP_deref_size, DW_OP_xderef,
-		DW_OP_xderef_size, DW_OP_push_object_address, DW_OP_form_tls_address, DW_OP_call2,
-		DW_OP_call4, DW_OP_call_ref, DW_OP_implicit_value };
+	public static final int[] UNSUPPORTED_OPCODES_LIST =
+		{ DW_OP_deref_size, DW_OP_xderef, DW_OP_xderef_size, DW_OP_push_object_address,
+			DW_OP_form_tls_address, DW_OP_call2, DW_OP_call4, DW_OP_call_ref, DW_OP_implicit_value,
+			DW_OP_implicit_pointer, DW_OP_entry_value, DW_OP_const_type, DW_OP_regval_type,
+			DW_OP_deref_type, DW_OP_xderef_type, DW_OP_convert, DW_OP_reinterpret };
 
 	/**
 	 * These opcodes are known, but can not be evaluated in the current Ghidra DWARF code.
@@ -242,6 +257,18 @@ public class DWARFExpressionOpCodes {
 		addOperandTypeMapping(DW_OP_call_ref, DWARF_INT);// U_INT OR U_LONG depending on DWARF32 or DWARF64
 		addOperandTypeMapping(DW_OP_bit_piece, U_LEB128, U_LEB128);
 		addOperandTypeMapping(DW_OP_implicit_value, U_LEB128, SIZED_BLOB);
+
+		// dwarf5
+		addOperandTypeMapping(DW_OP_implicit_pointer, DWARF_INT, S_LEB128);
+		addOperandTypeMapping(DW_OP_addrx, U_LEB128);
+		addOperandTypeMapping(DW_OP_constx, U_LEB128);
+		addOperandTypeMapping(DW_OP_entry_value, U_LEB128, SIZED_BLOB);
+		addOperandTypeMapping(DW_OP_const_type, U_LEB128, U_BYTE, SIZED_BLOB);
+		addOperandTypeMapping(DW_OP_regval_type, U_LEB128, U_LEB128);
+		addOperandTypeMapping(DW_OP_deref_type, U_BYTE, U_LEB128);
+		addOperandTypeMapping(DW_OP_xderef_type, U_BYTE, U_LEB128);
+		addOperandTypeMapping(DW_OP_convert, U_LEB128);
+		addOperandTypeMapping(DW_OP_reinterpret, U_LEB128);
 	}
 
 	public static final DWARFExpressionOperandType[] EMPTY_OPERANDTYPES = {};
