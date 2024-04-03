@@ -33,15 +33,33 @@
 //@category Data Types
 //@keybinding F6
 
-import ghidra.app.plugin.core.decompile.actions.FillOutStructureCmd;
+import org.apache.commons.lang3.StringUtils;
+
+import ghidra.app.decompiler.DecompileOptions;
+import ghidra.app.decompiler.component.DecompilerUtils;
+import ghidra.app.decompiler.util.FillOutStructureCmd;
 import ghidra.app.script.GhidraScript;
 
 public class CreateStructure extends GhidraScript {
 
 	@Override
 	public void run() {
-		FillOutStructureCmd fillCmd =
-			new FillOutStructureCmd(currentProgram, currentLocation, state.getTool());
-		fillCmd.applyTo(currentProgram, this.monitor);
+
+		if (currentProgram == null || currentLocation == null) {
+			popup("Requires open program and location");
+			return;
+		}
+
+		DecompileOptions decompileOptions =
+			DecompilerUtils.getDecompileOptions(state.getTool(), currentProgram);
+		FillOutStructureCmd cmd = new FillOutStructureCmd(currentLocation, decompileOptions);
+		if (!cmd.applyTo(currentProgram, this.monitor)) {
+			String detail = "";
+			String msg = cmd.getStatusMsg();
+			if (!StringUtils.isBlank(msg)) {
+				detail = ": " + msg;
+			}
+			popup("Failed to fill-out structure" + detail);
+		}
 	}
 }

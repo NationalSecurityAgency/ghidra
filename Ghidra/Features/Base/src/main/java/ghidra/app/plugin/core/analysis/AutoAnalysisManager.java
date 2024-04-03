@@ -108,7 +108,7 @@ public class AutoAnalysisManager {
 	//private Integer currentTaskPriority = null;
 	//private Stack<Integer> taskPriorityStack = new Stack<Integer>();
 
-	private PriorityQueue<BackgroundCommand> queue = new PriorityQueue<>();
+	private PriorityQueue<BackgroundCommand<Program>> queue = new PriorityQueue<>();
 	private Map<String, Long> timedTasks = new HashMap<>();
 	// used for testing and performance monitoring; accessed via reflection
 	private Map<String, Long> cumulativeTasks = new HashMap<>();
@@ -231,7 +231,7 @@ public class AutoAnalysisManager {
 		Options options = program.getOptions(Program.ANALYSIS_PROPERTIES);
 		analyzer.optionsChanged(options.getOptions(analyzer.getName()), getProgram());
 
-		BackgroundCommand cmd = new OneShotAnalysisCommand(analyzer, set, log);
+		OneShotAnalysisCommand cmd = new OneShotAnalysisCommand(analyzer, set, log);
 		schedule(cmd, analyzer.getPriority().priority());
 	}
 
@@ -643,13 +643,13 @@ public class AutoAnalysisManager {
 
 	private class AnalysisTaskWrapper {
 
-		private final BackgroundCommand task;
+		private final BackgroundCommand<Program> task;
 		Integer taskPriority;
 
 		private long timeAccumulator;
 		private long startTime;
 
-		AnalysisTaskWrapper(BackgroundCommand task, int taskPriority) {
+		AnalysisTaskWrapper(BackgroundCommand<Program> task, int taskPriority) {
 			this.task = task;
 			this.taskPriority = taskPriority;
 		}
@@ -845,7 +845,7 @@ public class AutoAnalysisManager {
 	 */
 	public synchronized void cancelQueuedTasks() {
 		while (!queue.isEmpty()) {
-			BackgroundCommand cmd = queue.getFirst();
+			BackgroundCommand<Program> cmd = queue.getFirst();
 			if (cmd instanceof AnalysisWorkerCommand) {
 				AnalysisWorkerCommand workerCmd = (AnalysisWorkerCommand) cmd;
 				if (!workerCmd.canCancel()) {
@@ -857,7 +857,7 @@ public class AutoAnalysisManager {
 		}
 	}
 
-	synchronized boolean schedule(BackgroundCommand cmd, int priority) {
+	synchronized boolean schedule(BackgroundCommand<Program> cmd, int priority) {
 
 		if (cmd == null) {
 			throw new IllegalArgumentException("Can't schedule a null command");
@@ -1583,7 +1583,8 @@ public class AutoAnalysisManager {
 	 * In a Headed environment a modal task dialog will be used to block user input if the
 	 * worker was scheduled with analyzeChanges==false
 	 */
-	private class AnalysisWorkerCommand extends BackgroundCommand implements CancelledListener {
+	private class AnalysisWorkerCommand extends BackgroundCommand<Program>
+			implements CancelledListener {
 
 		private AnalysisWorker worker;
 		private Object workerContext;
@@ -1651,7 +1652,7 @@ public class AutoAnalysisManager {
 		}
 
 		@Override
-		public boolean applyTo(DomainObject obj, TaskMonitor analysisMonitor) {
+		public boolean applyTo(Program p, TaskMonitor analysisMonitor) {
 
 			synchronized (this) {
 				workerMonitor.removeCancelledListener(this);
@@ -1660,7 +1661,7 @@ public class AutoAnalysisManager {
 					return false;
 				}
 
-				assert (obj == program);
+				assert (p == program);
 
 				if (analysisMonitor != workerMonitor) {
 					if (!workerMonitor.isCancelEnabled()) {

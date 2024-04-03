@@ -27,10 +27,11 @@
 //
 //@category Analysis
 
+import java.util.*;
+
 import ghidra.app.decompiler.*;
+import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.script.GhidraScript;
-import ghidra.framework.options.ToolOptions;
-import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.PrototypeModel;
@@ -39,10 +40,6 @@ import ghidra.program.model.pcode.*;
 import ghidra.program.model.pcode.HighFunctionDBUtil.ReturnCommitOption;
 import ghidra.program.model.symbol.*;
 import ghidra.util.exception.*;
-
-import java.util.*;
-
-import docking.options.OptionsService;
 
 public class StringParameterPropagator extends GhidraScript {
 
@@ -612,18 +609,11 @@ public class StringParameterPropagator extends GhidraScript {
 	private Address lastDecompiledFuncAddr = null;
 
 	private DecompInterface setUpDecompiler(Program program) {
+
+		DecompileOptions options = DecompilerUtils.getDecompileOptions(state.getTool(), program);
+
 		DecompInterface decompInterface = new DecompInterface();
 
-		DecompileOptions options;
-		options = new DecompileOptions();
-		PluginTool tool = state.getTool();
-		if (tool != null) {
-			OptionsService service = tool.getService(OptionsService.class);
-			if (service != null) {
-				ToolOptions opt = service.getOptions("Decompiler");
-				options.grabFromToolAndProgram(null, opt, program);
-			}
-		}
 		decompInterface.setOptions(options);
 
 		decompInterface.toggleCCode(true);

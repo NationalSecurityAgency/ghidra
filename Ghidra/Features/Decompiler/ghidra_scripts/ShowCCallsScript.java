@@ -25,10 +25,9 @@
 
 import java.util.Iterator;
 
-import docking.options.OptionsService;
 import ghidra.app.decompiler.*;
+import ghidra.app.decompiler.component.DecompilerUtils;
 import ghidra.app.script.GhidraScript;
-import ghidra.framework.options.ToolOptions;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.HighFunction;
@@ -38,214 +37,215 @@ import ghidra.program.model.symbol.Symbol;
 
 public class ShowCCallsScript extends GhidraScript {
 
-    private Address lastAddr = null;
+	private Address lastAddr = null;
 
-    @Override
-    public void run() throws Exception {
+	@Override
+	public void run() throws Exception {
 
-        if (currentLocation == null) {
-            println("No Location.");
-            return;
-        }
-
-        Listing listing = currentProgram.getListing();
-
-        Function func = listing.getFunctionContaining(currentAddress);
-
-        if (func == null) {
-            println("No Function at address " + currentAddress);
-            return;
-        }
-
-        DecompInterface decomplib = setUpDecompiler(currentProgram);
-        
-        try {
-        	if (!decomplib.openProgram(currentProgram)) {
-        		println("Decompile Error: " + decomplib.getLastMessage());
-        		return;
-        	}
-
-	        // call decompiler for all refs to current function
-	        Symbol sym = this.getSymbolAt(func.getEntryPoint());
-	
-	        Reference refs[] = sym.getReferences(null);
-	
-	        for (int i = 0; i < refs.length; i++) {
-	            if (monitor.isCancelled()) {
-	                break;
-	            }
-	
-	            // get function containing.
-	            Address refAddr = refs[i].getFromAddress();
-	            Function refFunc = currentProgram.getFunctionManager()
-	                    .getFunctionContaining(refAddr);
-	
-	            if (refFunc == null) {
-	                continue;
-	            }
-	
-	            // decompile function
-	            // look for call to this function
-	            // display call
-	            analyzeFunction(decomplib, currentProgram, refFunc, refAddr);
-	        }
-        }
-        finally {
-        	decomplib.dispose();
-        }
-
-        lastAddr = null;
-    }
-
-	private DecompInterface setUpDecompiler(Program program) {
-		DecompInterface decomplib = new DecompInterface();
-        
-		DecompileOptions options;
-		options = new DecompileOptions(); 
-		OptionsService service = state.getTool().getService(OptionsService.class);
-		if (service != null) {
-			ToolOptions opt = service.getOptions("Decompiler");
-			options.grabFromToolAndProgram(null,opt,program);    	
+		if (currentLocation == null) {
+			println("No Location.");
+			return;
 		}
-        decomplib.setOptions(options);
-        
+
+		Listing listing = currentProgram.getListing();
+
+		Function func = listing.getFunctionContaining(currentAddress);
+
+		if (func == null) {
+			println("No Function at address " + currentAddress);
+			return;
+		}
+
+		DecompInterface decomplib = setUpDecompiler(currentProgram);
+
+		try {
+			if (!decomplib.openProgram(currentProgram)) {
+				println("Decompile Error: " + decomplib.getLastMessage());
+				return;
+			}
+
+			// call decompiler for all refs to current function
+			Symbol sym = this.getSymbolAt(func.getEntryPoint());
+
+			Reference refs[] = sym.getReferences(null);
+
+			for (Reference ref : refs) {
+				if (monitor.isCancelled()) {
+					break;
+				}
+
+				// get function containing.
+				Address refAddr = ref.getFromAddress();
+				Function refFunc =
+					currentProgram.getFunctionManager().getFunctionContaining(refAddr);
+
+				if (refFunc == null) {
+					continue;
+				}
+
+				// decompile function
+				// look for call to this function
+				// display call
+				analyzeFunction(decomplib, currentProgram, refFunc, refAddr);
+			}
+		}
+		finally {
+			decomplib.dispose();
+		}
+
+		lastAddr = null;
+	}
+
+	/**
+	 * Method to setup the decompiler interface for the given program
+	 * @param program the given program
+	 * @return the decompiler interface
+	 */
+	private DecompInterface setUpDecompiler(Program program) {
+
+		DecompileOptions options = DecompilerUtils.getDecompileOptions(state.getTool(), program);
+
+		DecompInterface decomplib = new DecompInterface();
+
+		decomplib.setOptions(options);
+
 		decomplib.toggleCCode(true);
 		decomplib.toggleSyntaxTree(true);
 		decomplib.setSimplificationStyle("decompile");
-		
+
 		return decomplib;
 	}
 
-    /**
-     * Analyze a functions references
-     */
-    public void analyzeFunction(DecompInterface decomplib, Program prog, Function f, Address refAddr) {
+	/**
+	 * Analyze a functions references
+	 */
+	public void analyzeFunction(DecompInterface decomplib, Program prog, Function f,
+			Address refAddr) {
 
-        if (f == null) {
-            return;
-        }
+		if (f == null) {
+			return;
+		}
 
-        // don't decompile the function again if it was the same as the last one
-        //
-        if (!f.getEntryPoint().equals(lastAddr))
-            decompileFunction(f, decomplib);
-        lastAddr = f.getEntryPoint();
+		// don't decompile the function again if it was the same as the last one
+		//
+		if (!f.getEntryPoint().equals(lastAddr))
+			decompileFunction(f, decomplib);
+		lastAddr = f.getEntryPoint();
 
-        Instruction instr = prog.getListing().getInstructionAt(refAddr);
-        if (instr == null) {
-            return;
-        }
+		Instruction instr = prog.getListing().getInstructionAt(refAddr);
+		if (instr == null) {
+			return;
+		}
 
-        println(printCall(f, refAddr));
-    }
+		println(printCall(f, refAddr));
+	}
 
+	HighFunction hfunction = null;
 
+	ClangTokenGroup docroot = null;
 
-    HighFunction hfunction = null;
+	public boolean decompileFunction(Function f, DecompInterface decomplib) {
+		// decomplib.setSimplificationStyle("normalize", null);
+		// HighFunction hfunction = decomplib.decompileFunction(f);
 
-    ClangTokenGroup docroot = null;
+		DecompileResults decompRes =
+			decomplib.decompileFunction(f, decomplib.getOptions().getDefaultTimeout(), monitor);
+		//String statusMsg = decomplib.getDecompileMessage();
 
-    public boolean decompileFunction(Function f, DecompInterface decomplib) {
-    	// decomplib.setSimplificationStyle("normalize", null);
-        // HighFunction hfunction = decomplib.decompileFunction(f);
+		hfunction = decompRes.getHighFunction();
+		docroot = decompRes.getCCodeMarkup();
 
-        DecompileResults decompRes = decomplib.decompileFunction(f, decomplib.getOptions().getDefaultTimeout(), monitor);
-        //String statusMsg = decomplib.getDecompileMessage();
+		if (hfunction == null)
+			return false;
 
-        hfunction = decompRes.getHighFunction();
-        docroot = decompRes.getCCodeMarkup();
+		return true;
+	}
 
-        if (hfunction == null)
-        	return false;
+	/**
+	 * get the pcode ops that refer to an address
+	 */
+	public Iterator<PcodeOpAST> getPcodeOps(Address refAddr) {
+		if (hfunction == null) {
+			return null;
+		}
+		Iterator<PcodeOpAST> piter = hfunction.getPcodeOps(refAddr.getPhysicalAddress());
+		return piter;
+	}
 
-        return true;
-    }
+	public String printCall(Function f, Address refAddr) {
+		StringBuffer buff = new StringBuffer();
 
-    /**
-     * get the pcode ops that refer to an address
-     */
-    public Iterator<PcodeOpAST> getPcodeOps(Address refAddr) {
-        if (hfunction == null) {
-            return null;
-        }
-        Iterator<PcodeOpAST> piter = hfunction.getPcodeOps(refAddr.getPhysicalAddress());
-        return piter;
-    }
+		printCall(refAddr, docroot, buff, false, false);
 
-    public String printCall(Function f, Address refAddr) {
-        StringBuffer buff = new StringBuffer();
+		return buff.toString();
+	}
 
-        printCall(refAddr, docroot, buff, false, false);
+	private boolean printCall(Address refAddr, ClangNode node, StringBuffer buff, boolean didStart,
+			boolean isCall) {
+		if (node == null) {
+			return false;
+		}
 
-        return buff.toString();
-    }
+		Address min = node.getMinAddress();
+		Address max = node.getMaxAddress();
+		if (min == null)
+			return false;
 
-    private boolean printCall(Address refAddr, ClangNode node, StringBuffer buff, boolean didStart, boolean isCall) {
-    	if (node == null) {
-    		return false;
-    	}
-    	
-    	Address min = node.getMinAddress();
-        Address max = node.getMaxAddress();
-        if (min == null)
-            return false;
+		if (refAddr.getPhysicalAddress().equals(max) && node instanceof ClangStatement) {
+			ClangStatement stmt = (ClangStatement) node;
+			// Don't check for an actual call. The call could be buried more deeply.  As long as the original call reference site
+			// is the max address, then display the results.
+			// So this block assumes that the last address contained in the call will be the
+			// address you are looking for.
+			//    - This could lead to strange behavior if the call reference is placed on some address
+			//    that is not the final call point used by the decompiler.
+			//    - Also if there is a delay slot, then the last address for the call reference point
+			//    might not be the last address for the block of PCode.
+			//if (stmt.getPcodeOp().getOpcode() == PcodeOp.CALL) {
+			if (!didStart) {
+				Address nodeAddr = node.getMaxAddress();
+				// Decompiler only knows base space.
+				//   If reference came from an overlay space, convert address back
+				if (refAddr.getAddressSpace().isOverlaySpace()) {
+					nodeAddr = refAddr.getAddressSpace().getOverlayAddress(nodeAddr);
+				}
+				buff.append(" " + nodeAddr + "   : ");
+			}
 
-        if (refAddr.getPhysicalAddress().equals(max) && node instanceof ClangStatement) {
-        	ClangStatement stmt = (ClangStatement) node;
-        	// Don't check for an actual call. The call could be buried more deeply.  As long as the original call reference site
-        	// is the max address, then display the results.
-        	// So this block assumes that the last address contained in the call will be the
-        	// address you are looking for.
-        	//    - This could lead to strange behavior if the call reference is placed on some address
-        	//    that is not the final call point used by the decompiler.
-        	//    - Also if there is a delay slot, then the last address for the call reference point
-        	//    might not be the last address for the block of PCode.
-        	//if (stmt.getPcodeOp().getOpcode() == PcodeOp.CALL) {
-	        	if (!didStart) {
-	        		Address nodeAddr = node.getMaxAddress();
-	        		// Decompiler only knows base space.
-	        		//   If reference came from an overlay space, convert address back
-	        	    if (refAddr.getAddressSpace().isOverlaySpace()) {
-	        	        nodeAddr = refAddr.getAddressSpace().getOverlayAddress(nodeAddr);
-	        	    }
-	        		buff.append(" " + nodeAddr + "   : ");
-	        	}
-	        	
-	        	buff.append("   " + toString(stmt));
-	        	return true;
-        	//}
-        }
-        for (int j = 0; j < node.numChildren(); j++) {
-        	isCall = node instanceof ClangStatement;
-            didStart |= printCall(refAddr, node.Child(j), buff, didStart, isCall);
-        }
-        return didStart;
-    }
+			buff.append("   " + toString(stmt));
+			return true;
+			//}
+		}
+		for (int j = 0; j < node.numChildren(); j++) {
+			isCall = node instanceof ClangStatement;
+			didStart |= printCall(refAddr, node.Child(j), buff, didStart, isCall);
+		}
+		return didStart;
+	}
 
 	public String toString(ClangStatement node) {
-	    StringBuffer buffer = new StringBuffer();
-		int open=-1;
-        for (int j = 0; j < node.numChildren(); j++) {
-	        ClangNode subNode = node.Child(j);
-	        if (subNode instanceof ClangSyntaxToken) {
-	        	ClangSyntaxToken syntaxNode = (ClangSyntaxToken) subNode;
-	        	if (syntaxNode.getOpen() != -1) {
-	        		if (node.Child(j+2) instanceof ClangTypeToken) {
-	        			open = syntaxNode.getOpen();
-		        		continue;
-	        		}
-	        	}
-	        	if (syntaxNode.getClose() == open && open != -1) {
-	        		open = -1;
-	        		continue;
-	        	}
-	        }
-        	if (open != -1) {
-        		continue;
-        	}
-	        buffer.append(subNode.toString());
-	    }
-	    return buffer.toString();
+		StringBuffer buffer = new StringBuffer();
+		int open = -1;
+		for (int j = 0; j < node.numChildren(); j++) {
+			ClangNode subNode = node.Child(j);
+			if (subNode instanceof ClangSyntaxToken) {
+				ClangSyntaxToken syntaxNode = (ClangSyntaxToken) subNode;
+				if (syntaxNode.getOpen() != -1) {
+					if (node.Child(j + 2) instanceof ClangTypeToken) {
+						open = syntaxNode.getOpen();
+						continue;
+					}
+				}
+				if (syntaxNode.getClose() == open && open != -1) {
+					open = -1;
+					continue;
+				}
+			}
+			if (open != -1) {
+				continue;
+			}
+			buffer.append(subNode.toString());
+		}
+		return buffer.toString();
 	}
 }
-
