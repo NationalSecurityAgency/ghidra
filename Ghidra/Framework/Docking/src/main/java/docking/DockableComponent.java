@@ -441,11 +441,14 @@ public class DockableComponent extends JPanel implements ContainerListener {
 	}
 
 	@Override
-	// we aren't focusable, so pass focus to a valid child component
 	public void requestFocus() {
 		if (lastFocusedComponent != null && lastFocusedComponent.isShowing()) {
 			lastFocusedComponent.requestFocus();
 			return;
+		}
+
+		if (placeholder == null) {
+			return;	// this implies we have been disposed
 		}
 		placeholder.getProvider().requestFocus();
 	}
