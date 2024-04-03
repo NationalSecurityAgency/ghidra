@@ -218,8 +218,8 @@ public class PatchInstructionAction extends AbstractPatchAction {
 	protected void prepare() {
 		CodeUnit cu = getCodeUnit();
 		language = getLanguage(cu);
-		warnLanguage();
 		cache.get(language).get(null);
+		warnLanguage();
 		assembler = getAssembler(cu);
 	}
 

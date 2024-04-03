@@ -21,11 +21,25 @@ import ghidra.app.plugin.assembler.sleigh.parse.AssemblyParseResult;
 import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
-import ghidra.program.model.listing.Instruction;
-import ghidra.program.model.listing.InstructionIterator;
+import ghidra.program.model.lang.Language;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 
 public interface GenericAssembler<RP extends AssemblyResolvedPatterns> {
+	/**
+	 * Get the language of this assembler
+	 * 
+	 * @return the processor language
+	 */
+	public Language getLanguage();
+
+	/**
+	 * If the assembler is bound to a program, get that program
+	 * 
+	 * @return the program, or null
+	 */
+	public Program getProgram();
+
 	/**
 	 * Assemble a sequence of instructions and place them at the given address.
 	 * 
