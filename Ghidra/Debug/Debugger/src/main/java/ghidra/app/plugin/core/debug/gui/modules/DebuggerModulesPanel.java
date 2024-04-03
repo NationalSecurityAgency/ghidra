@@ -232,7 +232,7 @@ public class DebuggerModulesPanel extends AbstractObjectsTableBasedPanel<TraceOb
 	}
 
 	@Override
-	protected ObjectTableModel createModel(Plugin plugin) {
+	protected ObjectTableModel createModel() {
 		return new ModuleTableModel(plugin);
 	}
 

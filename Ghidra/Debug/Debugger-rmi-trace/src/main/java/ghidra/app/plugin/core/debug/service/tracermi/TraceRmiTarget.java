@@ -38,6 +38,7 @@ import ghidra.dbg.util.PathMatcher;
 import ghidra.dbg.util.PathPredicates;
 import ghidra.dbg.util.PathPredicates.Align;
 import ghidra.debug.api.model.DebuggerObjectActionContext;
+import ghidra.debug.api.model.DebuggerSingleObjectPathActionContext;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.debug.api.tracermi.*;
@@ -144,6 +145,20 @@ public class TraceRmiTarget extends AbstractTarget {
 					}
 				}
 			}
+			else if (context instanceof DebuggerSingleObjectPathActionContext ctx) {
+				TraceObject object =
+					trace.getObjectManager().getObjectByCanonicalPath(ctx.getPath());
+				if (object != null) {
+					return object;
+				}
+				object = trace.getObjectManager()
+						.getObjectsByPath(Lifespan.at(getSnap()), ctx.getPath())
+						.findAny()
+						.orElse(null);
+				if (object != null) {
+					return object;
+				}
+			}
 		}
 		if (allowCoordsObject) {
 			DebuggerTraceManagerService traceManager =
@@ -156,13 +171,45 @@ public class TraceRmiTarget extends AbstractTarget {
 		return null;
 	}
 
-	protected Object findArgumentForSchema(ActionContext context, TargetObjectSchema schema,
-			boolean allowContextObject, boolean allowCoordsObject, boolean allowSuitableObject) {
+	/**
+	 * "Find" a boolean value for the given context.
+	 * 
+	 * <p>
+	 * At the moment, this is only used for toggle actions, where the "found" parameter is the
+	 * opposite of the context object's current state. That object is presumed the object argument
+	 * of the "toggle" method.
+	 * 
+	 * @param action the action name, so this is only applied to {@link ActionName#TOGGLE}
+	 * @param context the context in which to find the object whose current state is to be
+	 *            considered
+	 * @param allowContextObject true to allow the object to come from context
+	 * @param allowCoordsObject true to allow the object to come from the current coordinates
+	 * @return a value if found, null if not
+	 */
+	protected Boolean findBool(ActionName action, ActionContext context, boolean allowContextObject,
+			boolean allowCoordsObject) {
+		if (!Objects.equals(action, ActionName.TOGGLE)) {
+			return null;
+		}
+		TraceObject object = findObject(context, allowContextObject, allowCoordsObject);
+		if (object == null) {
+			return null;
+		}
+		TraceObjectValue attrEnabled =
+			object.getAttribute(getSnap(), TargetTogglable.ENABLED_ATTRIBUTE_NAME);
+		boolean enabled = attrEnabled != null && attrEnabled.getValue() instanceof Boolean b && b;
+		return !enabled;
+	}
+
+	protected Object findArgumentForSchema(ActionName action, ActionContext context,
+			TargetObjectSchema schema, boolean allowContextObject, boolean allowCoordsObject,
+			boolean allowSuitableObject) {
 		if (schema instanceof EnumerableTargetObjectSchema prim) {
 			return switch (prim) {
 				case OBJECT -> findObject(context, allowContextObject, allowCoordsObject);
 				case ADDRESS -> findAddress(context);
 				case RANGE -> findRange(context);
+				case BOOL -> findBool(action, context, allowContextObject, allowCoordsObject);
 				default -> null;
 			};
 		}
@@ -183,8 +230,9 @@ public class TraceRmiTarget extends AbstractTarget {
 		MISSING; // The argument requires a prompt
 	}
 
-	protected Object findArgument(RemoteParameter parameter, ActionContext context,
-			boolean allowContextObject, boolean allowCoordsObject, boolean allowSuitableObject) {
+	protected Object findArgument(ActionName action, RemoteParameter parameter,
+			ActionContext context, boolean allowContextObject, boolean allowCoordsObject,
+			boolean allowSuitableObject) {
 		SchemaName type = parameter.type();
 		SchemaContext ctx = getSchemaContext();
 		if (ctx == null) {
@@ -196,8 +244,8 @@ public class TraceRmiTarget extends AbstractTarget {
 			Msg.error(this, "Schema " + type + " not in trace! " + trace);
 			return null;
 		}
-		Object arg = findArgumentForSchema(context, schema, allowContextObject, allowCoordsObject,
-			allowSuitableObject);
+		Object arg = findArgumentForSchema(action, context, schema, allowContextObject,
+			allowCoordsObject, allowSuitableObject);
 		if (arg != null) {
 			return arg;
 		}
@@ -211,8 +259,8 @@ public class TraceRmiTarget extends AbstractTarget {
 			boolean allowContextObject, boolean allowCoordsObject, boolean allowSuitableObject) {
 		Map<String, Object> args = new HashMap<>();
 		for (RemoteParameter param : method.parameters().values()) {
-			Object found = findArgument(param, context, allowContextObject, allowCoordsObject,
-				allowSuitableObject);
+			Object found = findArgument(method.action(), param, context, allowContextObject,
+				allowCoordsObject, allowSuitableObject);
 			if (found != null) {
 				args.put(param.name(), found);
 			}
@@ -430,6 +478,12 @@ public class TraceRmiTarget extends AbstractTarget {
 	@Override
 	protected Map<String, ActionEntry> collectRefreshActions(ActionContext context) {
 		return collectFromMethods(connection.getMethods().getByAction(ActionName.REFRESH), context,
+			true, false, false);
+	}
+
+	@Override
+	protected Map<String, ActionEntry> collectToggleActions(ActionContext context) {
+		return collectFromMethods(connection.getMethods().getByAction(ActionName.TOGGLE), context,
 			true, false, false);
 	}
 
@@ -1219,9 +1273,8 @@ public class TraceRmiTarget extends AbstractTarget {
 			String condition, String commands) {
 		RemoteParameter paramProc = brk.params.get("process");
 		if (paramProc != null) {
-			Object proc =
-				findArgumentForSchema(null, getSchemaContext().getSchema(paramProc.type()), true,
-					true, true);
+			Object proc = findArgumentForSchema(null, null,
+				getSchemaContext().getSchema(paramProc.type()), true, true, true);
 			if (proc == null) {
 				Msg.error(this, "Cannot find required process argument for " + brk.method);
 			}

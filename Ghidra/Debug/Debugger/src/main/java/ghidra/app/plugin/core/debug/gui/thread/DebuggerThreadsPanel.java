@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.debug.gui.thread;
 
 import java.util.List;
 
-import javax.swing.JTable;
 import javax.swing.event.ListSelectionEvent;
 
 import docking.widgets.table.AbstractDynamicTableColumn;
@@ -258,7 +257,7 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 	}
 
 	@Override
-	protected ObjectTableModel createModel(Plugin plugin) {
+	protected ObjectTableModel createModel() {
 		return new ThreadTableModel(plugin);
 	}
 
@@ -291,15 +290,6 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 	public void coordinatesActivated(DebuggerCoordinates coordinates) {
 		super.coordinatesActivated(coordinates);
 		trySelectCurrentThread();
-	}
-
-	@Override
-	public void cellActivated(JTable table) {
-		// No super
-		ValueRow item = getSelectedItem();
-		if (item != null) {
-			traceManager.activateObject(item.getValue().getChild());
-		}
 	}
 
 	@Override

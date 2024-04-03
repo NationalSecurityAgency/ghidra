@@ -371,6 +371,14 @@ public class TraceRecorderTarget extends AbstractTarget {
 	}
 
 	@Override
+	protected Map<String, ActionEntry> collectToggleActions(ActionContext context) {
+		return collectIfaceActions(context, TargetTogglable.class, "Toggle",
+			ActionName.TOGGLE, "Toggle the object",
+			togglable -> true,
+			togglable -> togglable.toggle(!togglable.isEnabled()));
+	}
+
+	@Override
 	public Trace getTrace() {
 		return recorder.getTrace();
 	}

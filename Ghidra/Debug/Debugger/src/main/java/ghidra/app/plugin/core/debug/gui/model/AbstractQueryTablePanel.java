@@ -41,6 +41,7 @@ public abstract class AbstractQueryTablePanel<T, M extends AbstractQueryTableMod
 		void cellActivated(JTable table);
 	}
 
+	protected final Plugin plugin;
 	protected final M tableModel;
 	protected final GhidraTable table;
 	protected final GhidraTableFilterPanel<T> filterPanel;
@@ -54,7 +55,9 @@ public abstract class AbstractQueryTablePanel<T, M extends AbstractQueryTableMod
 
 	public AbstractQueryTablePanel(Plugin plugin) {
 		super(new BorderLayout());
-		tableModel = createModel(plugin);
+		this.plugin = plugin;
+
+		tableModel = createModel();
 		table = new GhidraTable(tableModel);
 		filterPanel = new GhidraTableFilterPanel<>(table, tableModel);
 
@@ -80,7 +83,7 @@ public abstract class AbstractQueryTablePanel<T, M extends AbstractQueryTableMod
 		});
 	}
 
-	protected abstract M createModel(Plugin plugin);
+	protected abstract M createModel();
 
 	protected void coordinatesChanged() {
 		// Extension point
