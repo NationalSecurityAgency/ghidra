@@ -1153,7 +1153,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 			}
 			traceManager.activateTrace(trace);
 		}
-		listingService.goTo(row.getAddress(), true);
+		listingService.goTo(row.getProgramLocation(), true);
 	}
 
 	protected void createActions() {

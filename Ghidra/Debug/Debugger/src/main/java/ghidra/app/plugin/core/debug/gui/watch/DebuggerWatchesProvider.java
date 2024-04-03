@@ -483,7 +483,8 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 			return;
 		}
 		if (address.isMemoryAddress()) {
-			listingService.goTo(address, true);
+			ProgramLocation loc = new ProgramLocation(current.getView(), address);
+			listingService.goTo(loc, true);
 			return;
 		}
 	}

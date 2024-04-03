@@ -63,6 +63,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.*;
@@ -639,7 +640,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 				if (listingService == null) {
 					return;
 				}
-				listingService.goTo(address, true);
+				ProgramLocation loc = new ProgramLocation(current.getView(), address);
+				listingService.goTo(loc, true);
 			}).build());
 		}
 		return result;
@@ -658,7 +660,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		if (address == null) {
 			return;
 		}
-		listingService.goTo(address, true);
+		ProgramLocation loc = new ProgramLocation(current.getView(), address);
+		listingService.goTo(loc, true);
 	}
 
 	@Override

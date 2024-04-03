@@ -24,7 +24,7 @@ public class PathsTablePanel extends AbstractQueryTablePanel<PathRow, PathTableM
 	}
 
 	@Override
-	protected PathTableModel createModel(Plugin plugin) {
+	protected PathTableModel createModel() {
 		return new PathTableModel(plugin);
 	}
 }

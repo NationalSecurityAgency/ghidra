@@ -267,8 +267,8 @@ public class DebuggerLegacyRegionsPanel extends JPanel {
 			int selectedRow = regionTable.getSelectedRow();
 			int selectedColumn = regionTable.getSelectedColumn();
 			Object value = regionTable.getValueAt(selectedRow, selectedColumn);
-			if (value instanceof Address) {
-				listingService.goTo((Address) value, true);
+			if (value instanceof Address address) {
+				listingService.goTo(address, true);
 			}
 		}
 	}

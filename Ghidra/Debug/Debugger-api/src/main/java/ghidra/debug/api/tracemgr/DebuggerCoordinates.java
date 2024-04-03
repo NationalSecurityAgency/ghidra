@@ -499,11 +499,9 @@ public class DebuggerCoordinates {
 		else if (trace == null) {
 			throw new IllegalArgumentException("No trace");
 		}
-		else {
-			if (newPath == null) {
-				return new DebuggerCoordinates(trace, platform, target, thread, view, time, frame,
-					newPath);
-			}
+		else if (newPath == null) {
+			return new DebuggerCoordinates(trace, platform, target, thread, view, time, frame,
+				newPath);
 		}
 		TraceThread newThread = target != null
 				? resolveThread(target, newPath)
@@ -514,6 +512,31 @@ public class DebuggerCoordinates {
 
 		return new DebuggerCoordinates(trace, platform, target, newThread, view, time,
 			newFrame, newPath);
+	}
+
+	public DebuggerCoordinates pathNonCanonical(TraceObjectKeyPath newPath) {
+		if (trace == null && newPath == null) {
+			return NOWHERE;
+		}
+		else if (trace == null) {
+			throw new IllegalArgumentException("No trace");
+		}
+		else if (newPath == null) {
+			return new DebuggerCoordinates(trace, platform, target, thread, view, time, frame,
+				newPath);
+		}
+		TraceObject object = trace.getObjectManager().getObjectByCanonicalPath(newPath);
+		if (object != null) {
+			return path(newPath);
+		}
+		object = trace.getObjectManager()
+				.getObjectsByPath(Lifespan.at(getSnap()), newPath)
+				.findAny()
+				.orElse(null);
+		if (object != null) {
+			return path(object.getCanonicalPath());
+		}
+		throw new IllegalArgumentException("No such object at path" + path);
 	}
 
 	protected static TraceThread resolveThread(Target target, TraceObjectKeyPath objectPath) {
