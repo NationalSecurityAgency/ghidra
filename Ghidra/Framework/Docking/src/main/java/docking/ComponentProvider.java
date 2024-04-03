@@ -238,18 +238,20 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 
 		JComponent component = getComponent();
 		Container parent = component == null ? null : component.getParent();
-
 		if (parent == null) {
 			return;	// we are either disposed or not added to the tool yet
 		}
 
 		Container focusCycleRoot = parent.getFocusCycleRootAncestor();
-		FocusTraversalPolicy focusTraversalPolicy = focusCycleRoot.getFocusTraversalPolicy();
-		Component componentAfter = focusTraversalPolicy.getComponentAfter(focusCycleRoot, parent);
+		if (focusCycleRoot == null) {
+			return;
+		}
 
 		// Only request focus if next component in focus traversal belongs to this provider
-		if (componentAfter != null && SwingUtilities.isDescendingFrom(componentAfter, parent)) {
-			DockingWindowManager.requestFocus(componentAfter);
+		FocusTraversalPolicy policy = focusCycleRoot.getFocusTraversalPolicy();
+		Component firstComponent = policy.getComponentAfter(focusCycleRoot, parent);
+		if (firstComponent != null && SwingUtilities.isDescendingFrom(firstComponent, parent)) {
+			DockingWindowManager.requestFocus(firstComponent);
 		}
 	}
 
