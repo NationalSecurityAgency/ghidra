@@ -40,6 +40,7 @@ import ghidra.app.plugin.core.debug.gui.modules.DebuggerModuleMapProposalDialog.
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesProvider.MapModulesAction;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesProvider.MapSectionsAction;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerSectionMapProposalDialog.SectionMapTableColumns;
+import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServiceTestAccess;
 import ghidra.app.services.DebuggerListingService;
 import ghidra.debug.api.modules.ModuleMapProposal.ModuleMapEntry;
 import ghidra.debug.api.modules.SectionMapProposal.SectionMapEntry;
@@ -302,6 +303,7 @@ public class DebuggerModulesProviderLegacyTest extends AbstractGhidraHeadedDebug
 
 	@Test
 	public void testActivatingNoTraceEmptiesProvider() throws Exception {
+		DebuggerTraceManagerServiceTestAccess.setEnsureActiveTrace(traceManager, false);
 		createAndOpenTrace();
 
 		addModules();

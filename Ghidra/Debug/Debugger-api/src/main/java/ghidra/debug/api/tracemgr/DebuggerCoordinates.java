@@ -45,6 +45,16 @@ import ghidra.util.NotOwnerException;
 
 public class DebuggerCoordinates {
 
+	/**
+	 * Coordinates that indicate no trace is active in the Debugger UI.
+	 * 
+	 * <p>
+	 * Typically, that only happens when no trace is open. Telling the trace manager to activate
+	 * {@code NOWHERE} will cause it to instead activate the most recently active trace, which may
+	 * very well be the current trace, resulting in no change. Internally, the trace manager will
+	 * activate {@code NOWHERE} whenever the current trace is closed, effectively activating the
+	 * most recent trace other than the one just closed.
+	 */
 	public static final DebuggerCoordinates NOWHERE =
 		new DebuggerCoordinates(null, null, null, null, null, null, null, null);
 

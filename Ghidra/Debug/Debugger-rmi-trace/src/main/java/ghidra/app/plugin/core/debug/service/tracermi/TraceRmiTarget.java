@@ -82,6 +82,12 @@ public class TraceRmiTarget extends AbstractTarget {
 	}
 
 	@Override
+	public String describe() {
+		return "%s in %s at %s (rmi)".formatted(getTrace().getDomainFile().getName(),
+			connection.getDescription(), connection.getRemoteAddress());
+	}
+
+	@Override
 	public boolean isValid() {
 		return !connection.isClosed() && connection.isTarget(trace);
 	}

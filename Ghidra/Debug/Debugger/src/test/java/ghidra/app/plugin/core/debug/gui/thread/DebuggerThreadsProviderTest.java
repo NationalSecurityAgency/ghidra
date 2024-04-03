@@ -17,10 +17,8 @@ package ghidra.app.plugin.core.debug.gui.thread;
 
 import static org.junit.Assert.*;
 
-import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.Objects;
-import java.util.Set;
 
 import org.junit.*;
 import org.junit.experimental.categories.Category;
@@ -31,6 +29,7 @@ import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.*;
 import ghidra.app.plugin.core.debug.gui.model.QueryPanelTestHelper;
+import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServiceTestAccess;
 import ghidra.dbg.target.TargetExecutionStateful;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.schema.SchemaContext;
@@ -119,32 +118,6 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerTes
 		}
 	}
 
-	/**
-	 * Check that there exist no tabs, and that the tab row is invisible
-	 */
-	protected void assertZeroTabs() {
-		assertEquals(0, provider.traceTabs.getList().getModel().getSize());
-		assertEquals("Tab row should not be visible", 0,
-			provider.traceTabs.getVisibleRect().height);
-	}
-
-	/**
-	 * Check that exactly one tab exists, and that the tab row is visible
-	 */
-	protected void assertOneTabPopulated() {
-		assertEquals(1, provider.traceTabs.getList().getModel().getSize());
-		assertNotEquals("Tab row should be visible", 0,
-			provider.traceTabs.getVisibleRect().height);
-	}
-
-	protected void assertNoTabSelected() {
-		assertTabSelected(null);
-	}
-
-	protected void assertTabSelected(Trace trace) {
-		assertEquals(trace, provider.traceTabs.getSelectedItem());
-	}
-
 	protected void assertThreadsTableSize(int size) {
 		assertEquals(size, provider.panel.getAllItems().size());
 	}
@@ -195,7 +168,6 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerTes
 	}
 
 	protected void assertProviderEmpty() {
-		assertZeroTabs();
 		assertThreadsEmpty();
 	}
 
@@ -219,52 +191,8 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerTes
 	}
 
 	@Test
-	public void testOpenTracePopupatesTab() throws Exception {
-		createAndOpenTrace();
-		waitForTasks();
-
-		waitForPass(() -> {
-			assertOneTabPopulated();
-			assertNoTabSelected();
-			assertThreadsEmpty();
-		});
-	}
-
-	@Test
-	public void testActivateTraceSelectsTab() throws Exception {
-		createAndOpenTrace();
-		traceManager.activateTrace(tb.trace);
-		waitForTasks();
-
-		waitForPass(() -> {
-			assertOneTabPopulated();
-			assertTabSelected(tb.trace);
-		});
-
-		traceManager.activateTrace(null);
-		waitForTasks();
-
-		waitForPass(() -> {
-			assertOneTabPopulated();
-			assertNoTabSelected();
-		});
-	}
-
-	@Test
-	public void testSelectTabActivatesTrace() throws Exception {
-		createAndOpenTrace();
-		waitForTasks();
-		provider.traceTabs.setSelectedItem(tb.trace);
-		waitForTasks();
-
-		waitForPass(() -> {
-			assertEquals(tb.trace, traceManager.getCurrentTrace());
-			assertEquals(tb.trace, provider.current.getTrace());
-		});
-	}
-
-	@Test
 	public void testActivateNoTraceEmptiesProvider() throws Exception {
+		DebuggerTraceManagerServiceTestAccess.setEnsureActiveTrace(traceManager, false);
 		createAndOpenTrace();
 		addThreads();
 		traceManager.activateTrace(tb.trace);
@@ -276,26 +204,6 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerTes
 		waitForTasks();
 
 		waitForPass(() -> assertThreadsEmpty());
-	}
-
-	@Test
-	public void testCurrentTraceClosedUpdatesTabs() throws Exception {
-		createAndOpenTrace();
-		traceManager.activateTrace(tb.trace);
-		waitForTasks();
-
-		waitForPass(() -> {
-			assertOneTabPopulated();
-			assertTabSelected(tb.trace);
-		});
-
-		traceManager.closeTrace(tb.trace);
-		waitForTasks();
-
-		waitForPass(() -> {
-			assertZeroTabs();
-			assertNoTabSelected();
-		});
 	}
 
 	@Test
@@ -311,25 +219,6 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerTes
 		waitForTasks();
 
 		waitForPass(() -> assertThreadsEmpty());
-	}
-
-	@Test
-	public void testCloseTraceTabPopupMenuItem() throws Exception {
-		createAndOpenTrace();
-		waitForTasks();
-
-		waitForPass(() -> assertOneTabPopulated());
-		clickListItem(provider.traceTabs.getList(), 0, MouseEvent.BUTTON3);
-		waitForTasks();
-		Set<String> expected = Set.of("Close " + tb.trace.getName());
-		assertMenu(expected, expected);
-
-		clickSubMenuItemByText("Close " + tb.trace.getName());
-		waitForTasks();
-
-		waitForPass(() -> {
-			assertEquals(Set.of(), traceManager.getOpenTraces());
-		});
 	}
 
 	@Test

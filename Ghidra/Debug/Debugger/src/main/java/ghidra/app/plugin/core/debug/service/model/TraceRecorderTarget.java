@@ -91,6 +91,12 @@ public class TraceRecorderTarget extends AbstractTarget {
 	}
 
 	@Override
+	public String describe() {
+		return "%s in %s (recorder)".formatted(getTrace().getDomainFile().getName(),
+			recorder.getTarget().getModel().getBrief());
+	}
+
+	@Override
 	public boolean isValid() {
 		return recorder.isRecording();
 	}
