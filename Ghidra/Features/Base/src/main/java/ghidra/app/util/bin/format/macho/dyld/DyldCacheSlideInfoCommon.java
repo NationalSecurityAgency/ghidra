@@ -81,6 +81,8 @@ public abstract class DyldCacheSlideInfoCommon implements StructConverter {
 					mappingFileOffset);
 				case 4 -> new DyldCacheSlideInfo4(reader, mappingAddress, mappingSize,
 					mappingFileOffset);
+				case 5 -> new DyldCacheSlideInfo5(reader, mappingAddress, mappingSize,
+					mappingFileOffset);
 				default -> throw new IOException(); // will be caught and version will be added to message
 			};
 			monitor.incrementProgress(1);
