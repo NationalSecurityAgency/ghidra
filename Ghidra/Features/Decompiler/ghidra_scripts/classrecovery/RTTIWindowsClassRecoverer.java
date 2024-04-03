@@ -2543,6 +2543,11 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 					baseClassDescriptorAddress.toString());
 				continue;
 			}
+			
+			// Continue if the class has mult inh but base class is not on the parent list
+			if (!recoveredClass.getParentList().contains(baseClass)) {
+				continue;
+			}
 
 			int mdisp = api.getInt(baseClassDescriptorAddress.add(8));
 			int pdisp = api.getInt(baseClassDescriptorAddress.add(12));
