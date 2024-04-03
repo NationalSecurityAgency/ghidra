@@ -603,9 +603,6 @@ public class HeadlessAnalyzer {
 	 */
 	private boolean checkUpdateOptions() {
 
-		boolean isImport = !options.runScriptsNoImport;
-		boolean commitAllowed = isCommitAllowed();
-
 		if (options.readOnly) {
 			String readOnlyError =
 				"Abort due to Headless analyzer error: The requested -readOnly option " +
@@ -621,7 +618,13 @@ public class HeadlessAnalyzer {
 				return false;
 			}
 		}
+		else if (!isInWritableProject()) {
+			Msg.error(this, "Processing files within read-only project/repository " +
+				"- the -readOnly option is required.");
+			return false;
+		}
 
+		boolean commitAllowed = isCommitAllowed();
 		if (options.commit && !commitAllowed) {
 			Msg.error(this,
 				"Commit to repository not possible (due to permission or connection issue)");
@@ -640,6 +643,7 @@ public class HeadlessAnalyzer {
 		}
 
 		if (options.overwrite) {
+			boolean isImport = !options.runScriptsNoImport;
 			if (!isImport) {
 				Msg.info(this,
 					"Ignoring -overwrite because it is not applicable to -process mode.");
@@ -654,6 +658,10 @@ public class HeadlessAnalyzer {
 		return true;
 	}
 
+	private boolean isInWritableProject() {
+		return project.getProjectData().getRootFolder().isInWritableProject();
+	}
+
 	private boolean isCommitAllowed() {
 		RepositoryAdapter repository = project.getRepository();
 		if (repository == null) {
@@ -666,7 +674,7 @@ public class HeadlessAnalyzer {
 			}
 			User user = repository.getUser();
 			if (!user.hasWritePermission()) {
-				Msg.warn(this, "User '" + user.getName() +
+				Msg.error(this, "User '" + user.getName() +
 					"' does not have write permission to repository - commit not allowed");
 				return false;
 			}
@@ -1126,31 +1134,38 @@ public class HeadlessAnalyzer {
 		boolean keepFile = true; // if false file should be deleted after release
 		boolean terminateCheckoutWhenDone = false;
 
-		boolean readOnlyFile = options.readOnly || domFile.isReadOnly();
+		boolean readOnlyFile =
+			options.readOnly || domFile.isReadOnly() || !domFile.isInWritableProject();
 
 		try {
 			// Exclusive checkout required when commit option specified
-			if (!readOnlyFile) {
-				if (domFile.isVersioned()) {
-					if (!domFile.isCheckedOut()) {
-						if (!domFile.checkout(options.commit, TaskMonitor.DUMMY)) {
-							Msg.warn(this, "Skipped processing for " + domFile.getPathname() +
-								" -- failed to get exclusive file checkout required for commit");
-							return;
-						}
-					}
-					else if (options.commit && !domFile.isCheckedOutExclusive()) {
-						Msg.error(this, "Skipped processing for " + domFile.getPathname() +
-							" -- file is checked-out non-exclusive (commit requires exclusive checkout)");
+			if (!readOnlyFile && domFile.isVersioned()) {
+				if (!domFile.isCheckedOut()) {
+					if (!domFile.canCheckout()) {
+						Msg.warn(this, "Skipped processing for " + domFile.getPathname() +
+							" within read-only repository");
 						return;
 					}
+					if (!domFile.checkout(options.commit, TaskMonitor.DUMMY)) {
+						Msg.warn(this, "Skipped processing for " + domFile.getPathname() +
+							" -- failed to get exclusive file checkout required for commit");
+						return;
+					}
+					// Only terminate checkout when done if we did the checkout
+					terminateCheckoutWhenDone = true;
 				}
-				terminateCheckoutWhenDone = true;
+				else if (options.commit && !domFile.isCheckedOutExclusive()) {
+					Msg.error(this, "Skipped processing for " + domFile.getPathname() +
+						" -- file is checked-out non-exclusive (commit requires exclusive checkout)");
+					return;
+				}
 			}
 
 			program = (Program) domFile.getDomainObject(this, true, false, TaskMonitor.DUMMY);
 
-			Msg.info(this, "REPORT: Processing project file: " + domFile.getPathname());
+			String readOnlyText = readOnlyFile ? "read-only " : "";
+			Msg.info(this,
+				"REPORT: Processing " + readOnlyText + "project file: " + domFile.getPathname());
 
 			// This method already takes into account whether the user has set the "noanalysis"
 			// flag or not
