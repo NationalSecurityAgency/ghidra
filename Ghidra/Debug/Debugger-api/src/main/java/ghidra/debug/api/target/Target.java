@@ -136,6 +136,13 @@ public interface Target {
 	}
 
 	/**
+	 * Describe the target for display in the UI
+	 * 
+	 * @return the description
+	 */
+	String describe();
+
+	/**
 	 * Check if the target is still valid
 	 * 
 	 * @return true if valid

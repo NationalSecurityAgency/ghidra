@@ -76,6 +76,14 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 			coords);
 	}
 
+	DebuggerCoordinates coordsForObject(TraceObject object) {
+		if (provider.current.getTrace() != object.getTrace()) {
+			// This can happen transiently, so just find something graceful
+			return DebuggerCoordinates.NOWHERE.object(object);
+		}
+		return provider.current.object(object);
+	}
+
 	private class ThreadPcColumn extends TraceValueObjectPropertyColumn<Address> {
 		public ThreadPcColumn() {
 			super(Address.class);
@@ -84,7 +92,8 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 		@Override
 		public ValueProperty<Address> getProperty(ValueRow row) {
 			TraceObject obj = row.getValue().getChild();
-			DebuggerCoordinates coords = provider.current.object(obj);
+
+			DebuggerCoordinates coords = coordsForObject(obj);
 			return new ValueAddressProperty(row) {
 				@Override
 				public Address getValue() {
@@ -110,7 +119,7 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 		public Function getValue(ValueRow rowObject, Settings settings, Trace data,
 				ServiceProvider serviceProvider) throws IllegalArgumentException {
 			TraceObject obj = rowObject.getValue().getChild();
-			DebuggerCoordinates coords = provider.current.object(obj);
+			DebuggerCoordinates coords = coordsForObject(obj);
 			Address pc = computeProgramCounter(coords);
 			if (pc == null) {
 				return null;
@@ -129,7 +138,7 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 		public String getValue(ValueRow rowObject, Settings settings, Trace data,
 				ServiceProvider serviceProvider) throws IllegalArgumentException {
 			TraceObject obj = rowObject.getValue().getChild();
-			DebuggerCoordinates coords = provider.current.object(obj);
+			DebuggerCoordinates coords = coordsForObject(obj);
 			Address pc = computeProgramCounter(coords);
 			if (pc == null) {
 				return null;
@@ -146,7 +155,7 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 		@Override
 		public ValueProperty<Address> getProperty(ValueRow row) {
 			TraceObject obj = row.getValue().getChild();
-			DebuggerCoordinates coords = provider.current.object(obj);
+			DebuggerCoordinates coords = coordsForObject(obj);
 			return new ValueAddressProperty(row) {
 				@Override
 				public Address getValue() {

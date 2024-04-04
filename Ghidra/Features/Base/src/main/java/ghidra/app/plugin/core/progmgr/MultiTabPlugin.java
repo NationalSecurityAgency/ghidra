@@ -222,51 +222,12 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener, Opti
 		}
 	}
 
-	String getStringUsedInList(Program program) {
-		DomainFile df = program.getDomainFile();
-		String changeIndicator = program.isChanged() ? "*" : "";
-		String pathString = getShortPath(df);
-		if (!df.isInWritableProject()) {
-			return pathString + " [Read-Only]" + changeIndicator;
-		}
-		return pathString + changeIndicator;
+	private String getToolTip(Program program) {
+		return DomainObjectDisplayUtils.getToolTip(program);
 	}
 
-	private String getShortPath(DomainFile df) {
-		String pathString = df.toString();
-		int length = pathString.length();
-		if (length < 100) {
-			return pathString;
-		}
-
-		String[] pathParts = pathString.split("/");
-		if (pathParts.length == 2) { // at least 2 for project name and filename
-			return pathString;
-		}
-
-		String projectName = df.getProjectLocator().getName();
-		int parentFolderIndex = pathParts.length - 2;
-		String parentName = pathParts[parentFolderIndex];
-		String filename = df.getName();
-		pathString = projectName + ":/.../" + parentName + "/" + filename;
-		return pathString;
-	}
-
-	String getToolTip(Program program) {
-		return getStringUsedInList(program);
-	}
-
-	String getName(Program program) {
-		DomainFile df = program.getDomainFile();
-		String tabName = df.getName();
-		if (df.isReadOnly()) {
-			int version = df.getVersion();
-			if (!df.canSave() && version != DomainFile.DEFAULT_VERSION) {
-				tabName += "@" + version;
-			}
-			tabName = tabName + " [Read-Only]";
-		}
-		return tabName;
+	private String getTabName(Program program) {
+		return DomainObjectDisplayUtils.getTabText(program);
 	}
 
 	void keyTypedFromListWindow(KeyEvent e) {
@@ -332,22 +293,6 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener, Opti
 			return TRANSIENT_ICON;
 		}
 		return EMPTY8_ICON;
-	}
-
-	private String getTabName(Program program) {
-		DomainFile df = program.getDomainFile();
-		String tabName = df.getName();
-		if (df.isReadOnly()) {
-			int version = df.getVersion();
-			if (!df.canSave() && version != DomainFile.DEFAULT_VERSION) {
-				tabName += "@" + version;
-			}
-			tabName = tabName + " [Read-Only]";
-		}
-		if (program.isChanged()) {
-			tabName = "*" + tabName;
-		}
-		return tabName;
 	}
 
 	boolean removeProgram(Program program) {

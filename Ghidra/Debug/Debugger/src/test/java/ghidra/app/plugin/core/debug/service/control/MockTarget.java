@@ -47,6 +47,11 @@ class MockTarget implements Target {
 	}
 
 	@Override
+	public String describe() {
+		return "Mock Target";
+	}
+
+	@Override
 	public boolean isValid() {
 		return true;
 	}

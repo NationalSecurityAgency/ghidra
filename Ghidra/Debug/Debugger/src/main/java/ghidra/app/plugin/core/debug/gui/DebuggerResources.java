@@ -1614,7 +1614,7 @@ public interface DebuggerResources {
 	}
 
 	interface CloseAllTracesAction extends CloseTraceAction {
-		String NAME = NAME_PREFIX + " All Traces";
+		String NAME = NAME_PREFIX + "All Traces";
 		String DESCRIPTION = "Close all traces";
 		String HELP_ANCHOR = "close_all_traces";
 
@@ -1641,7 +1641,7 @@ public interface DebuggerResources {
 	}
 
 	interface CloseOtherTracesAction extends CloseTraceAction {
-		String NAME = NAME_PREFIX + " Other Traces";
+		String NAME = NAME_PREFIX + "Other Traces";
 		String DESCRIPTION = "Close all traces except the current one";
 		String HELP_ANCHOR = "close_other_traces";
 
@@ -1668,7 +1668,7 @@ public interface DebuggerResources {
 	}
 
 	interface CloseDeadTracesAction extends CloseTraceAction {
-		String NAME = NAME_PREFIX + " Dead Traces";
+		String NAME = NAME_PREFIX + "Dead Traces";
 		String DESCRIPTION = "Close all traces not being recorded";
 		String HELP_ANCHOR = "close_dead_traces";
 
