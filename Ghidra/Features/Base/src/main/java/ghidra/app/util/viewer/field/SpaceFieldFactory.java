@@ -16,6 +16,8 @@
 package ghidra.app.util.viewer.field;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
@@ -78,14 +80,15 @@ public class SpaceFieldFactory extends FieldFactory {
 			else if (n < 0) {
 				n = -n;
 			}
-			FieldElement[] fes = new FieldElement[n];
+
+			List<FieldElement> elements = new ArrayList<>(n);
 			AttributedString as = new AttributedString("", Colors.FOREGROUND, getMetrics());
 			for (int i = 0; i < n; i++) {
-				fes[i] = new TextFieldElement(as, 0, 0);
+				elements.add(new TextFieldElement(as, 0, 0));
 			}
 
-			return ListingTextField.createMultilineTextField(this, proxy, fes, startX + varWidth,
-				width, n + 1, hlProvider);
+			return ListingTextField.createMultilineTextField(this, proxy, elements,
+				startX + varWidth, width, hlProvider);
 
 		}
 		return null;

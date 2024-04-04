@@ -492,11 +492,19 @@ public class VerticalLayoutTextField implements TextField {
 	@Override
 	public RowColLocation dataToScreenLocation(int dataRow, int dataColumn) {
 
-		FieldRow fieldRow = getFieldRowFromDataRow(dataRow);
-		TextField field = fieldRow.field;
-		RowColLocation location = field.dataToScreenLocation(dataRow, dataColumn);
-		int screenRow = fieldRow.screenRow;
-		return location.withRow(screenRow);
+		// search each line looking for a match for the given row and column
+		for (int i = 0; i < subFields.size(); i++) {
+			FieldRow row = subFields.get(i);
+			RowColLocation loc = row.field.dataToScreenLocation(dataRow, dataColumn);
+
+			// A DefaultRowColLocation means that the line did not have an exact match for
+			// the dataRow and dataColumn, so need to keep looking at each line.
+			if (!(loc instanceof DefaultRowColLocation)) {
+				return new RowColLocation(i, loc.col());
+			}
+		}
+		// We did not find a match for the given row and column, so return a default location of 0,0
+		return new DefaultRowColLocation();
 	}
 
 	@Override
