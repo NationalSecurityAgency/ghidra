@@ -2315,10 +2315,10 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 					recoveredClass.getVftableAddresses().size() > 1 &&
 					recoveredClass.inheritsVirtualAncestor()) {
 
-					int virtParentOffset = getSingleVirtualParentOffset(baseClass);
+					Integer virtParentOffset = getSingleVirtualParentOffset(baseClass);
 
 					int dataLength;
-					if (virtParentOffset == NONE) {
+					if (virtParentOffset == null || virtParentOffset == NONE) {
 						dataLength = baseClassStructure.getLength();
 					}
 					else {
@@ -2436,7 +2436,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	 * @param recoveredClass the given class
 	 * @return the offset in the given class structure of the classes single virtual parent or NONE 
 	 * if cannot retrieve an offset value or if there is not a single virtual parent for the given
-	 * class.
+	 * class. Return null if cannot retrieve the offset for the single virtual parent. 
 	 * @throws CancelledException if cancelled
 	 * @throws AddressOutOfBoundsException if trying to access an address that does not exist in program
 	 * @throws MemoryAccessException  if trying to access memory that can't be accessed
@@ -2458,7 +2458,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	private Map<RecoveredClass, Integer> getBaseClassOffsetMap(RecoveredClass recoveredClass)
 			throws CancelledException, MemoryAccessException, AddressOutOfBoundsException {
 
-		Map<RecoveredClass, Integer> parentOffsetMap = new HashMap<RecoveredClass, Integer>();
+		Map<RecoveredClass, Integer> baseClassOffsetMap = new HashMap<>();
 
 		Data baseClassArrayData = getBaseClassArray(recoveredClass);
 
@@ -2484,9 +2484,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 					baseClassDescriptorAddress.toString());
 				continue;
 			}
-
+			
 			// Continue if the class has mult inh but base class is not on the parent list
-			//TODO: possibly update to include all base classes
 			if (!recoveredClass.getParentList().contains(baseClass)) {
 				continue;
 			}
@@ -2509,9 +2508,9 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				}
 				baseClassOffset = api.getInt(recoveredClass.getVbtableAddress().add(vdisp)) + pdisp;
 			}
-			parentOffsetMap.put(baseClass, baseClassOffset);
+			baseClassOffsetMap.put(baseClass, baseClassOffset);
 		}
-		return parentOffsetMap;
+		return baseClassOffsetMap;
 	}
 
 	/**
