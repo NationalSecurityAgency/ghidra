@@ -16,6 +16,8 @@
 package ghidra.app.util.viewer.field;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 
 import docking.widgets.fieldpanel.field.AttributedString;
 import docking.widgets.fieldpanel.field.FieldElement;
@@ -70,16 +72,16 @@ public class FunctionRepeatableCommentFieldFactory extends FieldFactory {
 		Function f = (Function) obj;
 		Program program = f.getProgram();
 		String[] commentArr = f.getRepeatableCommentAsArray();
-		FieldElement[] fields = new FieldElement[commentArr.length];
+		List<FieldElement> fields = new ArrayList<>();
 		AttributedString prototype =
 			new AttributedString("prototype", CommentColors.REPEATABLE, getMetrics());
 		for (int i = 0; i < commentArr.length; i++) {
-			fields[i] = CommentUtils.parseTextForAnnotations(commentArr[i], program, prototype, i);
+			fields.add(CommentUtils.parseTextForAnnotations(commentArr[i], program, prototype, i));
 		}
 
 		if (commentArr.length > 0) {
 			return ListingTextField.createMultilineTextField(this, proxy, fields, x, width,
-				Integer.MAX_VALUE, hlProvider);
+				hlProvider);
 		}
 		return null;
 	}

@@ -56,7 +56,8 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	private MemoryBlockStartFieldFactory(FieldFormatModel model, ListingHighlightProvider hlProvider,
+	private MemoryBlockStartFieldFactory(FieldFormatModel model,
+			ListingHighlightProvider hlProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 	}
@@ -85,7 +86,7 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 		}
 
 		// Convert the text to field elements.
-		FieldElement[] elements = createFieldElements(attributedStrings);
+		List<FieldElement> elements = createFieldElements(attributedStrings);
 
 		// And put the elements in a text field.
 		ListingTextField ltf = ListingTextField.createMultilineTextField(this, proxy, elements,
@@ -227,7 +228,7 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 		return lines;
 	}
 
-	private FieldElement[] createFieldElements(List<AttributedString> attributedStrings) {
+	private List<FieldElement> createFieldElements(List<AttributedString> attributedStrings) {
 		List<FieldElement> elements = new ArrayList<>();
 		int lineNum = 0;
 		for (AttributedString line : attributedStrings) {
@@ -235,11 +236,6 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 			elements.add(blockElement);
 			lineNum++;
 		}
-
-		// Convert to an array
-		FieldElement[] elementsArray = new FieldElement[elements.size()];
-		elements.toArray(elementsArray);
-
-		return elementsArray;
+		return elements;
 	}
 }

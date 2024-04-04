@@ -449,26 +449,26 @@ public class PostCommentFieldFactory extends FieldFactory {
 					(comments.length == 0 || alwaysShowAutomatic) ? autoComment.length : 0;
 				AttributedString prototypeString =
 					new AttributedString("prototype", color, getMetrics());
-				FieldElement[] fields =
-					new FieldElement[comments.length + nLinesAfterBlocks + nLinesAutoComment];
-				if (fields.length > 0) {
+				int commentLineCount = comments.length + nLinesAfterBlocks + nLinesAutoComment;
+				List<FieldElement> elements = new ArrayList<>(commentLineCount);
+				if (commentLineCount > 0) {
 					for (int i = 0; i < nLinesAutoComment; i++) {
 						AttributedString as = new AttributedString(autoComment[i],
 							CommentColors.AUTO, getMetrics(automaticCommentStyle), false, null);
-						fields[i] = new TextFieldElement(as, i, 0);
+						elements.add(new TextFieldElement(as, i, 0));
 					}
 					for (int i = 0; i < comments.length; i++) {
 						int index = nLinesAutoComment + i;
-						fields[index] = CommentUtils.parseTextForAnnotations(comments[i],
-							instr.getProgram(), prototypeString, index);
+						elements.add(CommentUtils.parseTextForAnnotations(comments[i],
+							instr.getProgram(), prototypeString, index));
 					}
-					for (int i = fields.length - nLinesAfterBlocks; i < fields.length; i++) {
+					for (int i = commentLineCount - nLinesAfterBlocks; i < commentLineCount; i++) {
 						// add blank lines for end-of-block
 						AttributedString as = new AttributedString("", color, getMetrics());
-						fields[i] = new TextFieldElement(as, i, 0);
+						elements.add(new TextFieldElement(as, i, 0));
 					}
-					return ListingTextField.createMultilineTextField(this, proxy, fields, xStart,
-						width, Integer.MAX_VALUE, hlProvider);
+					return ListingTextField.createMultilineTextField(this, proxy, elements, xStart,
+						width, hlProvider);
 				}
 			}
 		}
@@ -516,10 +516,9 @@ public class PostCommentFieldFactory extends FieldFactory {
 				fields.add(new TextFieldElement(as, fields.size(), 0));
 			}
 		}
-		FieldElement[] elements = fields.toArray(new FieldElement[fields.size()]);
 
-		return ListingTextField.createMultilineTextField(this, proxy, elements, xStart, width,
-			Integer.MAX_VALUE, hlProvider);
+		return ListingTextField.createMultilineTextField(this, proxy, fields, xStart, width,
+			hlProvider);
 	}
 
 	private void init(Options options) {
