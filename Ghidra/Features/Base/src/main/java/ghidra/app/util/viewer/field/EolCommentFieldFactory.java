@@ -292,6 +292,9 @@ public class EolCommentFieldFactory extends FieldFactory {
 			elementList.addAll(elements);
 		}
 
+		if (elementList.isEmpty()) {
+			return null;
+		}
 		return ListingTextField.createMultilineTextField(this, proxy, elementList, x, width,
 			maxDisplayLines, hlProvider);
 	}
