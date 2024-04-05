@@ -96,11 +96,46 @@ macro subtraction_flags1(register, operand, result) {
 }
 
 macro adc(op1) {
-    local result:2 = zext(A) + zext(op1) + zext($(C_FLAG));
-    resultFlags(result:1);
-    $(V_FLAG) = (~(A ^ op1) & (A ^ result:1) & 0x80) != 0;
-    $(C_FLAG) = (result & 0x100) != 0;
-    A = result:1;
+
+	local result:2 = zext(A) + zext(op1) + zext($(C_FLAG));
+
+	if($(D_FLAG) == 0) goto <NOT_DECIMAL>;
+#<DECIMAL>
+
+	local AL;
+	local AH;
+
+	AL = (A & 0x0F) + (op1 & 0x0F) + $(C_FLAG); # 10
+	AH = (A >> 4) + (op1 >> 4) + (AL > 15); # 20
+
+	local add_6_al = (AL > 9);
+	AL = AL + zext(add_6_al * 6); # AL = 16
+	result = result + zext(add_6_al * 6);
+
+	$(Z_FLAG) = ((A + op1 + $(C_FLAG)) & 0xFF) == 0;
+	$(N_FLAG) = (AH & 0x8) != 0;
+
+	# TODO: the overflow is incorrect
+	$(V_FLAG) = !(((A ^ op1) & 0x80) && ((A ^ (result:1)) & 0x80));
+
+	local add_6_ah = (AH > 9);
+	AH = AH + zext(add_6_ah * 6); # 26
+	#Y = AH;
+
+	$(C_FLAG) = (AH > 15);
+	A = ((AH << 4) | AL);
+	#Y = AL;
+	goto <END>;
+
+<NOT_DECIMAL>
+
+	$(Z_FLAG) = (result:1 & 0xFF) == 0;
+
+	$(N_FLAG) = (result & 0x80) != 0;
+	$(V_FLAG) = (~(A ^ op1) & (A ^ result:1) & 0x80) != 0;
+	$(C_FLAG) = (result & 0xFF00) != 0;
+	A = (result:1 & 0xFF);
+<END>
 }
 
 # reads two bytes from the specified address
@@ -199,15 +234,7 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 
 :ADC OP1     is (cc=1 & aaa=3) ... & OP1
 {
-	local op1 = OP1;
-	local tmpC = $(C_FLAG);
-	
-	$(C_FLAG) = carry(A, op1);
-	
-	A = A + op1 + tmpC;
-
-	resultFlags(A);
-	$(V_FLAG) = $(C_FLAG);
+	adc(OP1);
 }
 
 :AND OP1     is (cc=1 & aaa=1) ... & OP1
