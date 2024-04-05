@@ -19,6 +19,8 @@ package classrecovery;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.cmd.label.DemanglerCmd;
 import ghidra.app.plugin.core.analysis.ReferenceAddressPair;
 import ghidra.app.util.NamespaceUtils;
@@ -101,6 +103,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 	protected final FunctionManager functionManager;
 	protected final Listing listing;
+	protected final Memory memory;
 
 	public RTTIGccClassRecoverer(Program program, ServiceProvider serviceProvider,
 			FlatProgramAPI api, boolean createBookmarks, boolean useShortTemplates,
@@ -113,6 +116,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		functionManager = program.getFunctionManager();
 		listing = program.getListing();
+
+		memory = program.getMemory();
+
 	}
 
 	@Override
@@ -156,7 +162,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		List<GccTypeinfo> specialTypeinfos = createSpecialTypeinfos();
 		if (specialTypeinfos.isEmpty()) {
 			Msg.debug(this, "Could not create special typeinfos");
-			return null;
 		}
 
 		Msg.debug(this, "Creating Special Vtables");
@@ -169,7 +174,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		if (specialVtables.size() != specialTypeinfos.size()) {
 			Msg.debug(this, "Not equal number of special vtables and special typeinfos");
-			return null;
 		}
 
 		setComponentOffset();
@@ -355,7 +359,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		// in a non-loaded section that isn't real memory then it shouldn't be the case where the 
 		// typeinfo is at the same location as the vtable since it should have enough memory and 
 		// real bytes that point to a real typeinfo in program memory
-		if (hasAssociatedFileByes(vtableAddress)) {
+		if (isLoadedAndInitializedMemory(vtableAddress)) {
 			return null;
 		}
 
@@ -381,7 +385,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 	}
 
-	private boolean hasAssociatedFileByes(Address address) {
+	private boolean isLoadedAndInitializedMemory(Address address) {
 
 		if (inExternalBlock(address)) {
 			return false;
@@ -391,9 +395,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		}
 		Memory memory = program.getMemory();
 
-		long fileOffset = memory.getAddressSourceInfo(address).getFileOffset();
-		if (fileOffset == -1) {
-			return false;
+		AddressSetView initMem = memory.getLoadedAndInitializedAddressSet();
+		if (initMem.contains(address)) {
+			return true;
 		}
 
 		return true;
@@ -451,7 +455,6 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		return null;
 	}
 
-	// TODO: can this be used for regular ones too?
 	private Symbol findTypeinfoSymbolUsingMangledNamespaceString(String mangledNamespace,
 			String namespaceName) throws CancelledException {
 
@@ -2220,6 +2223,19 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		SpecialVtable specialVtable = new SpecialVtable(program, vtableAddress, typeinfoRef,
 			isExternal, vtableSymbol.getParentNamespace(), monitor);
+
+		if (specialTypeinfo != null) {
+			specialTypeinfo.setVtableAddress(vtableAddress);
+		}
+
+		if (!specialVtable.isExternal()) {
+			specialVtable.applyVtableData();
+			vtableToSizeMap.put(specialVtable.getAddress(), specialVtable.getLength());
+			createVtableLabel(specialVtable);
+			createVtableComment(specialVtable);
+			createVfunctionSymbol(specialVtable);
+		}
+
 		return specialVtable;
 	}
 
@@ -2362,9 +2378,14 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 					typeinfoSymbol = createDemangledTypeinfoSymbol(typeinfoAddress);
 					if (typeinfoSymbol == null) {
-						Msg.debug(this, "Could not create demangled typeinfo symbol at " +
-							typeinfoAddress.toString());
-						continue;
+						//If no mangled class name, check for non-mangled pascal type class name
+						typeinfoSymbol =
+							createTypeinfoSymbolFromNonMangledString(typeinfoAddress);
+						if (typeinfoSymbol == null) {
+							Msg.debug(this, "Could not create typeinfo symbol at " +
+								typeinfoAddress.toString());
+							continue;
+						}
 					}
 				}
 
@@ -2374,9 +2395,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 					if (specialTypeinfoNamespaceName == null) {
 						continue;
 					}
-					GccTypeinfo specialTypeinfo =
-						getTypeinfo(specialTypeinfoNamespaceName, specialTypeinfos);
-					typeinfo.setInheritedSpecialTypeinfo(specialTypeinfo);
+
+					typeinfo.setInheritedSpecialTypeinfoNamespace(specialVtable.getNamespace());
+
 					typeinfos.add(typeinfo);
 					continue;
 				}
@@ -2390,7 +2411,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		for (GccTypeinfo typeinfo : typeinfos) {
 			monitor.checkCancelled();
 			Address typeinfoAddress = typeinfo.getAddress();
-			if (typeinfo.getInheritedSpecialTypeinfo() == null) {
+			if (typeinfo.getInheritedSpecialTypeinfoNamespace() == null) {
 
 				typeinfosToRemove.add(typeinfo);
 				continue;
@@ -2436,9 +2457,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 				continue;
 			}
 
-			// TODO: update the typeinfo with the correct namespace based on the structure
-
-			String namespaceName = typeinfo.getInheritedSpecialTypeinfo().getNamespace().getName();
+			String namespaceName = typeinfo.getInheritedSpecialTypeinfoNamespace().getName();
 
 			// if typeinfo inherits class_type_info then no Base to update
 			if (namespaceName.equals(CLASS_TYPEINFO_NAMESPACE)) {
@@ -2652,6 +2671,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 			// ok if has symbol at the actual addr so don't check it
 			if (offset == 0) {
+				offset++;
 				continue;
 			}
 
@@ -2848,6 +2868,103 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		return newSymbol;
 	}
 
+
+	private Symbol createTypeinfoSymbolFromNonMangledString(Address typeinfoAddress)
+			throws DuplicateNameException, InvalidInputException, CancelledException {
+
+		Address typeinfoNameAddress = getTypeinfoNameAddress(typeinfoAddress);
+
+		if (typeinfoNameAddress == null) {
+			Msg.debug(this,
+				"Could not get typeinfo-name address from " + typeinfoAddress.toString());
+			return null;
+		}
+
+		String typeinfoNameString = getStringFromMemory(typeinfoNameAddress);
+
+		if (typeinfoNameString == null) {
+			Msg.debug(this, "Could not get typeinfo string from " + typeinfoNameAddress.toString());
+			return null;
+		}
+
+		// get length from start of string
+		String lenString = getAsciiLengthString(typeinfoNameString);
+		if (lenString.isEmpty()) {
+			Msg.debug(this,
+				"Could not get typeinfo-name string len from " + typeinfoNameAddress.toString());
+			return null;
+		}
+
+		// convert lenString to int len
+		try {
+			int len = Integer.parseInt(lenString);
+
+			// get className from string - if not exactly the correct len then return null
+			String className = typeinfoNameString.substring(lenString.length());
+			if (className.length() != len) {
+				Msg.debug(this, "Expected typeinfo-name to be len " + len + " but it was " +
+					className.length());
+				return null;
+			}
+
+			program.getListing()
+					.clearCodeUnits(typeinfoNameAddress,
+						typeinfoNameAddress.add(typeinfoNameString.length()), true);
+			boolean created = createString(typeinfoNameAddress, typeinfoNameString.length());
+			if (!created) {
+				Msg.debug(this, "Could not create string at " + typeinfoNameAddress);
+			}
+
+			// create typeinfo name symbol
+			Namespace classNamespace =
+				symbolTable.getOrCreateNameSpace(globalNamespace, className, SourceType.ANALYSIS);
+			Symbol typeinfoNameSymbol = symbolTable.createLabel(typeinfoNameAddress,
+				"typeinfo-name", classNamespace, SourceType.ANALYSIS);
+			typeinfoNameSymbol.setPrimary();
+
+			// create the new typeinfo symbol in the demangled namespace
+			Symbol typeinfoSymbol = symbolTable.createLabel(typeinfoAddress, "typeinfo",
+				classNamespace, SourceType.ANALYSIS);
+			typeinfoSymbol.setPrimary();
+
+			api.setPlateComment(typeinfoAddress, "typeinfo for " + classNamespace.getName(true));
+
+			return typeinfoSymbol;
+		}
+		catch (NumberFormatException ex) {
+			return null;
+		}
+	}
+
+	private String getAsciiLengthString(String string) throws CancelledException {
+
+		boolean isDigit = true;
+		int len = 0;
+		String lenString = new String();
+		while (isDigit) {
+			monitor.checkCancelled();
+			String charString = string.substring(len, len);
+			if (!StringUtils.isNumeric(charString)) {
+				return lenString;
+			}
+			lenString.concat(charString);
+			len++;
+		}
+		return lenString;
+	}
+
+	private boolean isAllAscii(Address address, int len) throws CancelledException {
+
+		for (int i = 0; i < len; i++) {
+			monitor.checkCancelled();
+
+			if (!isAscii(address.add(i))) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	private boolean isTypeinfoNameString(String string) {
 
 		DemangledObject demangledObject = DemanglerUtil.demangle(string);
@@ -2931,6 +3048,14 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		TerminatedStringDataType sdt = new TerminatedStringDataType();
 		MemBuffer buf = new DumbMemBufferImpl(program.getMemory(), address);
 		return (String) sdt.getValue(buf, sdt.getDefaultSettings(), stringLen);
+
+	}
+
+	private String getStringFromMemory(Address address, int len) {
+
+		TerminatedStringDataType sdt = new TerminatedStringDataType();
+		MemBuffer buf = new DumbMemBufferImpl(program.getMemory(), address);
+		return (String) sdt.getValue(buf, sdt.getDefaultSettings(), len);
 
 	}
 
@@ -3544,79 +3669,90 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 	}
 
-	private Address findSpecialVtable(GccTypeinfo specialTypeinfo,
-			List<GccTypeinfo> specialTypeinfos) throws CancelledException {
-
-		String namespaceName = specialTypeinfo.getNamespace().getName();
-		String mangledNamespaceString = specialTypeinfo.getMangledNamespaceString();
-
-		// try finding with normal symbol name and namespace
-		Symbol vtableSymbol =
-			getSymbolInNamespaces(SPECIAL_CLASS_NAMESPACE, namespaceName, VTABLE_LABEL);
-		if (vtableSymbol == null) {
-			// then try finding with mangled symbol
-			vtableSymbol =
-				findAndReturnDemangledSymbol(MANGLED_VTABLE_PREFIX + mangledNamespaceString,
-					SPECIAL_CLASS_NAMESPACE, namespaceName, VTABLE_LABEL);
-
-			// then try finding top of special vtable by finding ref to special typeinfo
-			if (vtableSymbol == null) {
-				Address vtableAddress = findSpecialVtableUsingSpecialTypeinfo(
-					specialTypeinfo.getAddress(), specialTypeinfos);
-
-				if (vtableAddress == null) {
-					return null;
-				}
-
-				try {
-					vtableSymbol = symbolTable.createLabel(vtableAddress, VTABLE_LABEL,
-						specialTypeinfo.getNamespace(), SourceType.ANALYSIS);
-					api.setPlateComment(vtableAddress,
-						"vtable for " + specialTypeinfo.getNamespace());
-
-				}
-				catch (InvalidInputException e) {
-					// ignore
-				}
-
-			}
-		}
-		if (vtableSymbol != null) {
-			return vtableSymbol.getAddress();
-		}
-		return null;
-	}
-
 	private List<SpecialVtable> findSpecialVtables(List<GccTypeinfo> specialTypeinfos)
 			throws Exception {
 
 		List<SpecialVtable> specialVtables = new ArrayList<SpecialVtable>();
 
-		for (GccTypeinfo specialTypeinfo : specialTypeinfos) {
-			monitor.checkCancelled();
+		Map<String, String> namespaceMap = new HashMap<String, String>();
+		namespaceMap.put(CLASS_TYPEINFO_NAMESPACE, MANGLED_CLASS_TYPEINFO_NAMESPACE);
+		namespaceMap.put(SI_CLASS_TYPEINFO_NAMESPACE, MANGLED_SI_CLASS_TYPEINFO_NAMESPACE);
+		namespaceMap.put(VMI_CLASS_TYPEINFO_NAMESPACE, MANGLED_VMI_CLASS_TYPEINFO_NAMESPACE);
 
-			Address vtableAddress = findSpecialVtable(specialTypeinfo, specialTypeinfos);
+		for (String namespaceName : namespaceMap.keySet()) {
 
+			GccTypeinfo specTypeinfo = getSpecialTypeinfo(specialTypeinfos, namespaceName);
+
+			Address vtableAddress = findSpecialVtableAddress(namespaceName,
+				namespaceMap.get(namespaceName), specialTypeinfos);
 			if (vtableAddress == null) {
 				continue;
 			}
 
-			SpecialVtable specialVtable = createSpecialVtable(vtableAddress, specialTypeinfo);
-			if (specialVtable != null) {
-				specialVtables.add(specialVtable);
-				specialTypeinfo.setVtableAddress(vtableAddress);
-				if (!specialVtable.isExternal()) {
-					specialVtable.applyVtableData();
-					vtableToSizeMap.put(specialVtable.getAddress(), specialVtable.getLength());
-					createVtableLabel(specialVtable);
-					createVtableComment(specialVtable);
-					createVfunctionSymbol(specialVtable);
-				}
-			}
+			SpecialVtable specialVtable =
+				createSpecialVtable(vtableAddress, specTypeinfo);
+			specialVtables.add(specialVtable);
 
 		}
 		return specialVtables;
 	}
+
+	private Address findSpecialVtableAddress(String namespaceName, String mangledNamespace,
+			List<GccTypeinfo> specialTypeinfos) throws CancelledException {
+
+		//First try to find with special symbols
+		Symbol vtableSymbol = getSymbolInNamespaces(namespaceName, mangledNamespace, VTABLE_LABEL);
+
+		if (vtableSymbol != null) {
+			return vtableSymbol.getAddress();
+
+		}
+
+		// then try finding with mangled symbol
+		vtableSymbol = findAndReturnDemangledSymbol(MANGLED_VTABLE_PREFIX + mangledNamespace,
+			SPECIAL_CLASS_NAMESPACE, namespaceName, VTABLE_LABEL);
+		if (vtableSymbol != null) {
+			return vtableSymbol.getAddress();
+		}
+
+		//Then with special typeinfo if there is one
+		GccTypeinfo specTypeinfo = getSpecialTypeinfo(specialTypeinfos, namespaceName);
+
+		if (specTypeinfo != null) {
+			Address vtableAddress = findSpecialVtableUsingSpecialTypeinfo(specTypeinfo.getAddress(),
+				specialTypeinfos);
+			if (vtableAddress == null) {
+				return null;
+			}
+			try {
+				vtableSymbol = symbolTable.createLabel(vtableAddress, VTABLE_LABEL,
+					specTypeinfo.getNamespace(), SourceType.ANALYSIS);
+				api.setPlateComment(vtableAddress, "vtable for " + specTypeinfo.getNamespace());
+				return vtableSymbol.getAddress();
+
+			}
+			catch (InvalidInputException e) {
+				Msg.warn(this,
+					"Found vtable at " + vtableAddress + " but cannot create symbol" + e);
+				return null;
+			}
+		}
+
+		return null;
+	}
+
+	private GccTypeinfo getSpecialTypeinfo(List<GccTypeinfo> specialTypeinfos,
+			String namespaceName) {
+
+		for (GccTypeinfo specialTypeinfo : specialTypeinfos) {
+
+			if (specialTypeinfo.getNamespace().getName().equals(namespaceName)) {
+				return specialTypeinfo;
+			}
+		}
+		return null;
+	}
+
 
 	/*
 	 * Method to find special vtable using special typeinfo references. This

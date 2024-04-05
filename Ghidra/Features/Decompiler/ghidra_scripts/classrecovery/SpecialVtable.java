@@ -15,9 +15,15 @@
  */
 package classrecovery;
 
+import java.util.List;
+
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.reloc.Relocation;
+import ghidra.program.model.reloc.Relocation.Status;
+import ghidra.program.model.reloc.RelocationTable;
 import ghidra.program.model.symbol.Namespace;
+import ghidra.program.model.symbol.Symbol;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -45,7 +51,20 @@ public class SpecialVtable extends Vtable {
 			return;
 		}
 		
-		typeinfoRefAddress = vtableAddress.add(defaultPointerSize);					
+		typeinfoRefAddress = vtableAddress.add(defaultPointerSize);
+
+		// check for vtable has memory but all zeros or has possible invalid values which in both
+		// cases would make the pointer to special typeinfo invalid
+		if (hasSpecialCopyUnhandledRelocation(vtableAddress)) {
+			isConstruction = false;
+			isPrimary = true;
+			typeinfoAddress = null;
+			length = 3 * defaultPointerSize; //actually prob 11*defPtr but are all zeros in this case
+			hasVfunctions = true; // they are null though so will count as num=0, need this to be true so check for refs to vfunction top will work
+			numVfunctions = 0;
+			vfunctionTop = vtableAddress.add(2 * defaultPointerSize);
+			return;
+		}
 				
 		
 		setTypeinfoAddress();
@@ -71,7 +90,9 @@ public class SpecialVtable extends Vtable {
 		
 		isConstruction = false;
 		
-		classNamespace = typeinfoNamespace;
+		if (classNamespace == null) {
+			classNamespace = typeinfoNamespace;
+		}
 		
 		
 		setLength();
@@ -82,4 +103,34 @@ public class SpecialVtable extends Vtable {
 		return refFromTypeinfos;
 	}
 	
+	private boolean hasSpecialCopyUnhandledRelocation(Address address) {
+
+		RelocationTable relocationTable = program.getRelocationTable();
+
+		List<Relocation> relocations = relocationTable.getRelocations(address);
+
+		for (Relocation relocation : relocations) {
+
+			Status status = relocation.getStatus();
+			if (status == Status.UNSUPPORTED) {
+
+				String symbolName = relocation.getSymbolName();
+
+				if (symbolName == null || !symbolName.contains("class_type_info")) {
+					continue;
+				}
+
+				//if relocation symbol is the same as the symbol at the relcation address
+				//then this situation is not an issue - it indicates a copy relocation at the
+				//location of the special typeinfo vtable which is a use case that can be handled
+				Symbol symbolAtAddress = program.getSymbolTable()
+						.getSymbol(symbolName, address, program.getGlobalNamespace());
+				if (symbolAtAddress != null) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 }
