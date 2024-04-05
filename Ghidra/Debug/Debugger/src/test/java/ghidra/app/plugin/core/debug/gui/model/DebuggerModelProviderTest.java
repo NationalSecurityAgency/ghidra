@@ -67,6 +67,8 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 					        <element schema='Process' />
 					    </schema>
 					    <schema name='Process' elementResync='NEVER' attributeResync='ONCE'>
+					        <interface name='Process' />
+					        <interface name='Activatable' />
 					        <attribute name='Threads' schema='ThreadContainer' />
 					        <attribute name='Handles' schema='HandleContainer' />
 					    </schema>
@@ -76,6 +78,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 					    </schema>
 					    <schema name='Thread' elementResync='NEVER' attributeResync='NEVER'>
 					        <interface name='Thread' />
+					        <interface name='Activatable' />
 					        <attribute name='_display' schema='STRING' />
 					        <attribute name='_self' schema='Thread' />
 					        <attribute name='Stack' schema='Stack' />
@@ -87,6 +90,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 					    </schema>
 					    <schema name='Frame' elementResync='NEVER' attributeResync='NEVER'>
 					        <interface name='StackFrame' />
+					        <interface name='Activatable' />
 					    </schema>
 					    <schema name='HandleContainer' canonical='yes' elementResync='NEVER'
 					            attributeResync='ONCE'>
@@ -409,26 +413,26 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 
 		TraceObjectManager objects = tb.trace.getObjectManager();
 		TraceObject root = objects.getRootObject();
-		TraceObjectKeyPath processesPath = TraceObjectKeyPath.parse("Processes");
-		TraceObject processes = objects.getObjectByCanonicalPath(processesPath);
+		TraceObjectKeyPath process0Path = TraceObjectKeyPath.parse("Processes[0]");
+		TraceObject process0 = objects.getObjectByCanonicalPath(process0Path);
 		traceManager.activateObject(root);
 		waitForTasks();
 
-		modelProvider.setTreeSelection(processesPath, EventOrigin.USER_GENERATED);
+		modelProvider.setTreeSelection(process0Path, EventOrigin.USER_GENERATED);
 		waitForSwing();
 
 		GTree tree = modelProvider.objectsTreePanel.tree;
 		GTreeNode node = waitForPass(() -> {
 			GTreeNode n = Unique.assertOne(tree.getSelectedNodes());
 			assertEquals(
-				"Processes@%d".formatted(System.identityHashCode(processes.getCanonicalParent(0))),
+				"[0]@%d".formatted(System.identityHashCode(process0.getCanonicalParent(0))),
 				n.getName());
 			return n;
 		});
 		clickTreeNode(tree, node, MouseEvent.BUTTON1);
 		clickTreeNode(tree, node, MouseEvent.BUTTON1);
 		waitForSwing();
-		waitForPass(() -> assertEquals(processes, traceManager.getCurrentObject()));
+		waitForPass(() -> assertEquals(process0, traceManager.getCurrentObject()));
 	}
 
 	@Test
@@ -569,8 +573,8 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		});
 		clickTableCell(modelProvider.attributesTablePanel.table, rowIndex, 0, 2);
 
-		assertEquals(TraceObjectKeyPath.parse("Processes[0].Threads"),
-			traceManager.getCurrentObject().getCanonicalPath());
+		// ThreadContainer is not activatable, so only changes provider's path
+		assertEquals(TraceObjectKeyPath.parse("Processes[0].Threads"), modelProvider.getPath());
 	}
 
 	@Test

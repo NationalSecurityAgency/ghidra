@@ -551,7 +551,14 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			if (performElementCellDefaultAction(table)) {
 				return;
 			}
-			performValueRowDefaultAction(elementsTablePanel.getSelectedItem());
+			ValueRow sel = elementsTablePanel.getSelectedItem();
+			if (performValueRowDefaultAction(sel)) {
+				return;
+			}
+			if (sel == null) {
+				return;
+			}
+			setPath(sel.currentObject().getCanonicalPath(), table, EventOrigin.USER_GENERATED);
 		}
 
 		@Override
@@ -610,7 +617,14 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			implements Adapters.FocusListener, CellActivationListener {
 		@Override
 		public void cellActivated(JTable table) {
-			performPathRowDefaultAction(attributesTablePanel.getSelectedItem());
+			PathRow sel = attributesTablePanel.getSelectedItem();
+			if (performPathRowDefaultAction(sel)) {
+				return;
+			}
+			if (sel == null || !(sel.getValue() instanceof TraceObject obj)) {
+				return;
+			}
+			setPath(obj.getCanonicalPath(), table, EventOrigin.USER_GENERATED);
 		}
 
 		@Override

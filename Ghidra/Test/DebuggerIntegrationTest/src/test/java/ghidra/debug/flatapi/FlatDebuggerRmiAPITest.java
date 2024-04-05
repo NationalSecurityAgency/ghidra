@@ -26,6 +26,7 @@ import org.junit.Test;
 
 import db.Transaction;
 import generic.Unique;
+import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
 import ghidra.app.plugin.core.debug.gui.tracermi.launcher.TestTraceRmiLaunchOpinion.TestTraceRmiLaunchOffer;
 import ghidra.app.plugin.core.debug.gui.tracermi.launcher.TraceRmiLauncherServicePlugin;
 import ghidra.app.plugin.core.debug.service.tracermi.TestTraceRmiConnection.TestRemoteMethod;
@@ -48,6 +49,10 @@ public class FlatDebuggerRmiAPITest extends AbstractLiveFlatDebuggerAPITest<Flat
 
 	@Before
 	public void setUpRmiTest() throws Throwable {
+		DebuggerListingProvider listingProvider =
+			waitForComponentProvider(DebuggerListingProvider.class);
+		// Auto-reads hang the TaskManager because readMem calls are not expected or answered
+		listingProvider.setAutoReadMemorySpec(readNone);
 		rmiLaunchPlugin = addPlugin(tool, TraceRmiLauncherServicePlugin.class);
 	}
 

@@ -546,7 +546,7 @@ public class DebuggerCoordinates {
 		if (object != null) {
 			return path(object.getCanonicalPath());
 		}
-		throw new IllegalArgumentException("No such object at path" + path);
+		throw new IllegalArgumentException("No such object at path " + newPath);
 	}
 
 	protected static TraceThread resolveThread(Target target, TraceObjectKeyPath objectPath) {
