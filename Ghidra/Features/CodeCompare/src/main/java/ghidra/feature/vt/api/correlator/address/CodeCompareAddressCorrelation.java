@@ -378,34 +378,30 @@ public class CodeCompareAddressCorrelation implements AddressCorrelation {
 		computeParamCorrelation();
 	}
 
-	protected void computeParamCorrelation() {
-		int sourceCount = sourceFunction.getParameterCount();
-		int destinationCount = destinationFunction.getParameterCount();
+	private void computeParamCorrelation() {
 		Parameter[] sourceParameters = sourceFunction.getParameters();
 		Parameter[] destinationParameters = destinationFunction.getParameters();
-		boolean allMatch = false;
+		if (sourceParameters.length != destinationParameters.length) {
+			return;
+		}
 		Map<Address, CorrelationContainer> map = new HashMap<Address, CorrelationContainer>();
-		if (sourceCount == destinationCount) {
-			allMatch = true;
-			for (int i = 0; i < sourceParameters.length; i++) {
-				Parameter sourceParameter = sourceParameters[i];
-				Parameter destinationParameter = destinationParameters[i];
-				if (!sourceParameter.isValid() || !destinationParameter.isValid() ||
-					sourceParameter.getLength() != destinationParameter.getLength()) {
-					// - an invalid parameter does not have defined storage (or address)
-					// - length must also match
-					allMatch = false;
-					break;
-				}
-				Address dest = destinationParameter.getVariableStorage().getMinAddress();
-				Address src = sourceParameter.getVariableStorage().getMinAddress();
-				map.put(src, new CorrelationContainer(CorrelationKind.PARAMETERS,
-					new AddressRangeImpl(dest, dest)));
+		for (int i = 0; i < sourceParameters.length; i++) {
+			Parameter sourceParameter = sourceParameters[i];
+			Parameter destinationParameter = destinationParameters[i];
+			if (!sourceParameter.isValid() || !destinationParameter.isValid()) {
+				return;
 			}
+			VariableStorage sourceParamStorage = sourceParameter.getVariableStorage();
+			VariableStorage destParamStorage = destinationParameter.getVariableStorage();
+			if (!sourceParamStorage.equals(destParamStorage)) {
+				return;
+			}
+			Address dest = sourceParamStorage.getMinAddress();
+			Address src = destParamStorage.getMinAddress();
+			map.put(src, new CorrelationContainer(CorrelationKind.PARAMETERS,
+				new AddressRangeImpl(dest, dest)));
 		}
-		if (allMatch) {
-			cachedForwardAddressMap.putAll(map);
-		}
+		cachedForwardAddressMap.putAll(map);
 	}
 
 	private void defineRange(Map<CodeUnit, TreeSet<AddressRange>> sourceMap,
