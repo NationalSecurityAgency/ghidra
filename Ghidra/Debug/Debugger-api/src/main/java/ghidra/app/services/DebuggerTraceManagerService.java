@@ -251,6 +251,18 @@ public interface DebuggerTraceManagerService {
 	void closeTrace(Trace trace);
 
 	/**
+	 * Close the given trace without confirmation
+	 * 
+	 * <p>
+	 * Ordinarily, {@link #closeTrace(Trace)} will prompt the user to confirm termination of live
+	 * targets associated with traces to be closed. Such prompts can cause issues during automated
+	 * tests.
+	 * 
+	 * @param trace the trace to close
+	 */
+	void closeTraceNoConfirm(Trace trace);
+
+	/**
 	 * Close all traces
 	 */
 	void closeAllTraces();

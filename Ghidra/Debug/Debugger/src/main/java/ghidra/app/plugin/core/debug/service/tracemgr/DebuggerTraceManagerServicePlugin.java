@@ -449,12 +449,12 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 	@Override
 	public void closeAllTraces() {
-		checkCloseTraces(getOpenTraces());
+		checkCloseTraces(getOpenTraces(), false);
 	}
 
 	@Override
 	public void closeOtherTraces(Trace keep) {
-		checkCloseTraces(getOpenTraces().stream().filter(t -> t != keep).toList());
+		checkCloseTraces(getOpenTraces().stream().filter(t -> t != keep).toList(), false);
 	}
 
 	@Override
@@ -463,7 +463,8 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 				? getOpenTraces()
 				: getOpenTraces().stream()
 						.filter(t -> targetService.getTarget(t) == null)
-						.toList());
+						.toList(),
+			false);
 	}
 
 	@AutoServiceConsumed
@@ -1026,7 +1027,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 				.collect(Collectors.joining("\n"));
 	}
 
-	protected void checkCloseTraces(Collection<Trace> traces) {
+	protected void checkCloseTraces(Collection<Trace> traces, boolean noConfirm) {
 		List<Target> live =
 			traces.stream()
 					.map(t -> targetService.getTarget(t))
@@ -1037,7 +1038,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		 * same thread to avoid a ClosedException.
 		 */
 		Swing.runIfSwingOrRunLater(() -> {
-			if (live.isEmpty()) {
+			if (live.isEmpty() || noConfirm) {
 				doCloseTraces(traces, live);
 				return;
 			}
@@ -1052,7 +1053,12 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 	@Override
 	public void closeTrace(Trace trace) {
-		checkCloseTraces(List.of(trace));
+		checkCloseTraces(List.of(trace), false);
+	}
+
+	@Override
+	public void closeTraceNoConfirm(Trace trace) {
+		checkCloseTraces(List.of(trace), true);
 	}
 
 	@Override

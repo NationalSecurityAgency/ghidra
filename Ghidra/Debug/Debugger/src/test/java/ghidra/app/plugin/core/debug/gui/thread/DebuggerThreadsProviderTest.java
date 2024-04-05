@@ -88,6 +88,7 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerTes
 				    </schema>
 				    <schema name='Thread' elementResync='NEVER' attributeResync='NEVER'>
 				        <interface name='Thread' />
+				        <interface name='Activatable' />
 				    </schema>
 				</context>""");
 
