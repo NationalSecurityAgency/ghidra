@@ -131,6 +131,19 @@
   <language processor="RISCV"
             endian="little"
             size="32"
+            variant="RV32_QingKe"
+            version="1.3"
+            slafile="riscv.lp32qingke.sla"
+            processorspec="RV32IMACFX.pspec"
+            id="RISCV:LE:32:qingke">
+    <description>RISC-V 32 little WCH/QingKe</description>
+    <compiler name="gcc" spec="riscv32-fp32.cspec" id="gcc"/>
+    <external_name tool="gnu" name="riscv:rv32"/>
+    <external_name tool="DWARF.register.mapping.file" name="riscv32.dwarf"/>
+  </language>
+  <language processor="RISCV"
+            endian="little"
+            size="32"
             variant="RV32GC"
             version="1.3"
             slafile="riscv.ilp32d.sla"
