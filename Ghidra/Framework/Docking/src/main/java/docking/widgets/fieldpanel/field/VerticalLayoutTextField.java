@@ -503,7 +503,7 @@ public class VerticalLayoutTextField implements TextField {
 				return new RowColLocation(i, loc.col());
 			}
 		}
-		// We did not find a match for the given row and column, so return a default location of 0,0
+
 		return new DefaultRowColLocation();
 	}
 
@@ -558,18 +558,6 @@ public class VerticalLayoutTextField implements TextField {
 			return null;
 		}
 		return subFields.get(screenRow).field;
-	}
-
-	private FieldRow getFieldRowFromDataRow(int dataRow) {
-		int currentRow = 0;
-		for (FieldRow row : subFields) {
-			int length = row.field.getNumDataRows();
-			if (currentRow + length > dataRow) {
-				return row;
-			}
-			currentRow += length;
-		}
-		return subFields.get(subFields.size() - 1);
 	}
 
 	private int getDataRow(TextField field) {
