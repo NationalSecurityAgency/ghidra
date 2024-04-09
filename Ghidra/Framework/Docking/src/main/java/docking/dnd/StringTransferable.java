@@ -20,7 +20,7 @@ import java.io.IOException;
 
 public class StringTransferable implements Transferable {
 
-	private String data = null;
+	protected String data = null;
 	private DataFlavor[] flavors = { DataFlavor.stringFlavor };
 
 	public StringTransferable(String data) {
@@ -41,5 +41,14 @@ public class StringTransferable implements Transferable {
 	public Object getTransferData(DataFlavor flavor)
 			throws UnsupportedFlavorException, IOException {
 		return data;
+	}
+
+	public void removeOuterQuotes() {
+		if (data.length() < 2) {
+			return;
+		}
+		if (data.charAt(0) == '"' && data.charAt(data.length() - 1) == '"') {
+			data = data.substring(1, data.length() - 1);
+		}
 	}
 }
