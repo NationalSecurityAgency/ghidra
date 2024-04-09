@@ -74,7 +74,6 @@ public class GTabPanel<T> extends JPanel {
 		this.tabTypeName = tabTypeName;
 		setLayout(new HorizontalLayout(0));
 		setFocusable(true);
-		setBorder(new GTabPanelBorder());
 		getAccessibleContext().setAccessibleDescription(
 			"Use left and right arrows to highlight other tabs and press enter to select " +
 				"the highlighted tab");
@@ -491,11 +490,13 @@ public class GTabPanel<T> extends JPanel {
 		allTabs.clear();
 		removeAll();
 		closeTabList();
+		setBorder(null);
 		if (!shouldShowTabs()) {
 			revalidate();
 			repaint();
 			return;
 		}
+		setBorder(new GTabPanelBorder());
 
 		GTab<T> selectedTab = null;
 		int availableWidth = getPanelWidth();
