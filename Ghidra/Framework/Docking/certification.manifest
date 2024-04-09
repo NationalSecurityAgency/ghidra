@@ -56,6 +56,7 @@ src/main/resources/images/eatbits7.png||GHIDRA||reviewed||END|
 src/main/resources/images/edit-clear.png||Tango Icons - Public Domain|||tango icon set|END|
 src/main/resources/images/edit-redo.png||Tango Icons - Public Domain|||tango icon set|END|
 src/main/resources/images/edit-undo.png||Tango Icons - Public Domain|||tango icon set|END|
+src/main/resources/images/empty8x16.png||GHIDRA||||END|
 src/main/resources/images/expand.gif||GHIDRA||||END|
 src/main/resources/images/filter_off.png||GHIDRA||||END|
 src/main/resources/images/filter_on.png||GHIDRA||||END|
