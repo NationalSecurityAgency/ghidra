@@ -345,7 +345,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			plugin.getTool().setStatusInfo("User cancelled keybinding.");
 			return;
 		}
-		action.setKeyBindingData(new KeyBindingData(dialog.getKeyStroke()));
+		KeyStroke newKs = dialog.getKeyStroke();
+		action.setKeyBindingData(newKs == null ? null : new KeyBindingData(newKs));
 		scriptTable.repaint();
 	}
 

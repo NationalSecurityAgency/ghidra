@@ -230,6 +230,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		if (!isVisible()) {
 			return;
 		}
+
 		dockingTool.toFront();
 		if (defaultFocusComponent != null) {
 			DockingWindowManager.requestFocus(defaultFocusComponent);

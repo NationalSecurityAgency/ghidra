@@ -94,10 +94,8 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		// look for the info panel
 		MultiLineLabel label = findComponent(panel, MultiLineLabel.class);
 		String str = "To add or change a key binding, select an action\n" +
-			"and type any key combination\n" +
-			" \n" +
-			"To remove a key binding, select an action and\n" +
-			"press <Enter> or <Backspace>";
+			"and type any key combination\n" + " \n" +
+			"To remove a key binding, select an action and\n" + "press <Enter> or <Backspace>";
 
 		assertEquals(str, label.getLabel());
 
@@ -215,9 +213,8 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		// verify that no action is mapped to the new binding
 		int keyCode = KeyEvent.VK_0;
 		int modifiers = InputEvent.ALT_DOWN_MASK | InputEvent.ALT_GRAPH_DOWN_MASK;
-		KeyEvent keyEvent =
-			new KeyEvent(dialog, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), modifiers,
-				keyCode, KeyEvent.CHAR_UNDEFINED);
+		KeyEvent keyEvent = new KeyEvent(dialog, KeyEvent.KEY_PRESSED, System.currentTimeMillis(),
+			modifiers, keyCode, KeyEvent.CHAR_UNDEFINED);
 		KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(keyEvent);
 		DockingWindowManager dwm = DockingWindowManager.getActiveInstance();
 		Action action =
@@ -233,8 +230,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(ks, getKeyStroke(action1));
 
 		// verify the additional binding for 'Alt Graph'
-		action =
-			(Action) TestUtils.invokeInstanceMethod("getActionForKeyStroke", dwm, keyStroke);
+		action = (Action) TestUtils.invokeInstanceMethod("getActionForKeyStroke", dwm, keyStroke);
 		assertNotNull(action);
 	}
 
@@ -283,8 +279,8 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 		boolean success = msg.contains(action1.getName()) && msg.contains(action2.getName());
 
 		assertTrue("In-use action message incorrect.\n\tIt should contain these 2 actions:\n\t\t" +
-			action1.getName() + "\n\t\t" + action2.getName() + ".\nActual message:\n" +
-			msg + "\n", success);
+			action1.getName() + "\n\t\t" + action2.getName() + ".\nActual message:\n" + msg + "\n",
+			success);
 	}
 
 	@Test
@@ -560,8 +556,7 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 			dialog.setVisible(true);
 		});
 		table = findComponent(panel, JTable.class);
-		keyField = findComponent(panel, JTextField.class);
-		keyField = (JTextField) getInstanceField("ksField", panel);
+		keyField = (JTextField) findComponentByName(panel, "Key Entry Text Field");
 		statusPane = findComponent(panel, JTextPane.class);
 		model = table.getModel();
 		waitForSwing();

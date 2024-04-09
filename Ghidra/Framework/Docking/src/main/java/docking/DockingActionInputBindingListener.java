@@ -13,17 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docking.tool.util;
+package docking;
 
-import docking.Tool;
+import javax.swing.KeyStroke;
+
+import gui.event.MouseBinding;
 
 /**
- * An interface to house constants used by the {@link Tool}
+ * A simple listener interface to notify clients of changes to key strokes and mouse bindings.
  */
-public interface DockingToolConstants {
+public interface DockingActionInputBindingListener {
 
 	/**
-	 * Name of options for key bindings that map action name to a key stroke or mouse binding.
+	 * Called when the key stroke is changed.
+	 * @param ks the key stroke.
 	 */
-	public final static String KEY_BINDINGS = "Key Bindings";
+	public void keyStrokeChanged(KeyStroke ks);
+
+	/**
+	 * Called when the mouse binding is changed.
+	 * @param mb the mouse binding.
+	 */
+	public void mouseBindingChanged(MouseBinding mb);
 }

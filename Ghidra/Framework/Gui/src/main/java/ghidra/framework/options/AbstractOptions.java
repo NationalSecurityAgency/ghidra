@@ -49,6 +49,7 @@ public abstract class AbstractOptions implements Options {
 		set.add(Color.class);
 		set.add(Font.class);
 		set.add(KeyStroke.class);
+		set.add(ActionTrigger.class);
 		set.add(File.class);
 		set.add(Date.class);
 		return set;
@@ -154,6 +155,17 @@ public abstract class AbstractOptions implements Options {
 		if (type == OptionType.FONT_TYPE) {
 			warnShouldUseTheme("font");
 		}
+		if (type == OptionType.KEYSTROKE_TYPE) {
+			type = OptionType.ACTION_TRIGGER;
+			if (defaultValue instanceof KeyStroke) {
+				defaultValue = new ActionTrigger((KeyStroke) defaultValue);
+			}
+			if (editorSupplier != null) {
+				Msg.error(this, "Custom KeyStroke property editors are no longer supported.  " +
+					"Use ActionTrigger instead");
+				editorSupplier = null;
+			}
+		}
 
 		if (!type.isCompatible(defaultValue)) {
 			throw new IllegalStateException(
@@ -187,8 +199,7 @@ public abstract class AbstractOptions implements Options {
 		}
 
 		Option option =
-			createRegisteredOption(optionName, type, description, help, defaultValue,
-				editor);
+			createRegisteredOption(optionName, type, description, help, defaultValue, editor);
 
 		valueMap.put(optionName, option);
 	}
@@ -235,7 +246,7 @@ public abstract class AbstractOptions implements Options {
 
 		// There are several cases where an existing option may exist when registering an option
 		// 1) the option was accessed before it was registered
-		// 2) the option was loaded from a store (database or toolstate)
+		// 2) the option was loaded from a store (database or tool state)
 		// 3) the option was registered more than once.
 		//
 		// The only time this is a problem is if the exiting option type is not compatible with
@@ -288,11 +299,19 @@ public abstract class AbstractOptions implements Options {
 				valueMap.put(optionName, option);
 			}
 		}
-		else if (type != OptionType.NO_TYPE && type != option.getOptionType()) {
-			throw new IllegalStateException(
-				"Expected option type: " + type + ", but was type: " + option.getOptionType());
-		}
+
+		validateOptionType(option, type);
 		return option;
+	}
+
+	private void validateOptionType(Option option, OptionType type) {
+
+		if (type == option.getOptionType() || type == OptionType.NO_TYPE) {
+			return;
+		}
+
+		throw new IllegalStateException(
+			"Expected option type: " + type + ", but was type: " + option.getOptionType());
 	}
 
 	@Override
@@ -503,9 +522,30 @@ public abstract class AbstractOptions implements Options {
 
 	@Override
 	public KeyStroke getKeyStroke(String optionName, KeyStroke defaultValue) {
-		Option option = getOption(optionName, OptionType.KEYSTROKE_TYPE, defaultValue);
+
+		ActionTrigger defaultTrigger = null;
+		if (defaultValue != null) {
+			defaultTrigger = new ActionTrigger(defaultValue);
+		}
+
+		Option option = getOption(optionName, OptionType.ACTION_TRIGGER, defaultTrigger);
 		try {
-			return (KeyStroke) option.getValue(defaultValue);
+			ActionTrigger actionTrigger = (ActionTrigger) option.getValue(defaultTrigger);
+			if (actionTrigger != null) {
+				return actionTrigger.getKeyStroke();
+			}
+			return null;
+		}
+		catch (ClassCastException e) {
+			return defaultValue;
+		}
+	}
+
+	@Override
+	public ActionTrigger getActionTrigger(String optionName, ActionTrigger defaultValue) {
+		Option option = getOption(optionName, OptionType.ACTION_TRIGGER, defaultValue);
+		try {
+			return (ActionTrigger) option.getValue(defaultValue);
 		}
 		catch (ClassCastException e) {
 			return defaultValue;
@@ -592,7 +632,16 @@ public abstract class AbstractOptions implements Options {
 
 	@Override
 	public void setKeyStroke(String optionName, KeyStroke value) {
-		putObject(optionName, value, OptionType.KEYSTROKE_TYPE);
+		ActionTrigger actionTrigger = null;
+		if (value != null) {
+			actionTrigger = new ActionTrigger(value);
+		}
+		setActionTrigger(optionName, actionTrigger);
+	}
+
+	@Override
+	public void setActionTrigger(String optionName, ActionTrigger value) {
+		putObject(optionName, value, OptionType.ACTION_TRIGGER);
 	}
 
 	@Override
