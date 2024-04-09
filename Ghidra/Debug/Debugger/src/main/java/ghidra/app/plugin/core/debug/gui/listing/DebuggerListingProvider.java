@@ -57,6 +57,8 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources.FollowsCurrentThreadAc
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.OpenProgramAction;
 import ghidra.app.plugin.core.debug.gui.action.*;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerMissingModuleActionContext;
+import ghidra.app.plugin.core.debug.gui.thread.DebuggerTraceFileActionContext;
+import ghidra.app.plugin.core.debug.gui.trace.DebuggerTraceTabPanel;
 import ghidra.app.plugin.core.debug.utils.ProgramLocationUtils;
 import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
 import ghidra.app.plugin.core.marker.MarkerMarginProvider;
@@ -342,6 +344,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	protected final ListenerSet<LocationTrackingSpecChangeListener> trackingSpecChangeListeners =
 		new ListenerSet<>(LocationTrackingSpecChangeListener.class, true);
 
+	protected final DebuggerTraceTabPanel traceTabs;
 	protected final DebuggerLocationLabel locationLabel = new DebuggerLocationLabel();
 	protected final JLabel trackingLabel = new JLabel();
 
@@ -372,6 +375,8 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		this.plugin = plugin;
 		this.isMainListing = isConnected;
 
+		// TODO: An icon to distinguish dynamic from static
+
 		syncTrait = new ForListingSyncTrait();
 		goToTrait = new ForListingGoToTrait();
 		trackingTrait = new ForListingTrackingTrait();
@@ -394,13 +399,21 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		readsMemTrait.goToCoordinates(current);
 		locationLabel.goToCoordinates(current);
 
-		// TODO: An icon to distinguish dynamic from static
+		if (isConnected) {
+			traceTabs = new DebuggerTraceTabPanel(plugin);
+		}
+		else {
+			traceTabs = null;
+		}
 
 		addDisplayListener(readsMemTrait.getDisplayListener());
 
 		JPanel northPanel = new JPanel(new BorderLayout());
 		northPanel.add(locationLabel);
 		northPanel.add(trackingLabel, BorderLayout.EAST);
+		if (traceTabs != null) {
+			northPanel.add(traceTabs, BorderLayout.NORTH);
+		}
 		this.setNorthComponent(northPanel);
 		if (isConnected) {
 			setTitle(DebuggerResources.TITLE_PROVIDER_LISTING);
@@ -929,6 +942,12 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
+		if (traceTabs != null) {
+			DebuggerTraceFileActionContext traceCtx = traceTabs.getActionContext(event);
+			if (traceCtx != null) {
+				return traceCtx;
+			}
+		}
 		if (event == null || event.getSource() != locationLabel) {
 			return super.getActionContext(event);
 		}
@@ -1036,7 +1055,6 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 				.collect(Collectors.toSet());
 
 		// Attempt to open probable matches. All others, list to import
-		// TODO: What if sections are not presented?
 		for (TraceModule mod : modules) {
 			DomainFile match = mappingService.findBestModuleProgram(space, mod);
 			if (match == null) {
@@ -1064,8 +1082,9 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 				new DebuggerMissingModuleActionContext(mod));
 		}
 		/**
-		 * Once the programs are opened, including those which are successfully imported, the mapper
-		 * bot should take over, eventually invoking callbacks to our mapping change listener.
+		 * Once the programs are opened, including those which are successfully imported, the
+		 * automatic mapper should take effect, eventually invoking callbacks to our mapping change
+		 * listener.
 		 */
 	}
 

@@ -279,7 +279,6 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		builder.createMemory("test", "0x0", 100);
 		Program p = doOpenProgram(builder.getProgram(), true);
 		p.setTemporary(false); // we need to be notified of changes 
-
 		// select notepad
 		panel.selectTab(p);
 		int transactionID = p.startTransaction("test");
@@ -622,6 +621,7 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// don't let focus issues hide the popup list
 		panel.setIgnoreFocus(true);
+		panel.setShowTabsAlways(true);
 
 		return p;
 	}

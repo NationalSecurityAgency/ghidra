@@ -458,7 +458,7 @@ public interface DebuggerTraceManagerService {
 	DebuggerCoordinates resolvePath(TraceObjectKeyPath path);
 
 	/**
-	 * Activate the given object path
+	 * Activate the given canonical object path
 	 * 
 	 * @param path the desired path
 	 */

@@ -27,7 +27,6 @@ import ghidra.app.util.pdb.pdbapplicator.DefaultPdbApplicator;
 import ghidra.app.util.pdb.pdbapplicator.PdbApplicatorOptions;
 import ghidra.framework.*;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.OptionType;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.AddressSetView;
@@ -192,9 +191,8 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	 * @throws CancelledException upon user cancellation
 	 */
 	public static boolean doAnalysis(Program program, File pdbFile,
-			PdbReaderOptions pdbReaderOptions,
-			PdbApplicatorOptions pdbApplicatorOptions, MessageLog log, TaskMonitor monitor)
-			throws CancelledException {
+			PdbReaderOptions pdbReaderOptions, PdbApplicatorOptions pdbApplicatorOptions,
+			MessageLog log, TaskMonitor monitor) throws CancelledException {
 		PdbLog.message(
 			"================================================================================");
 		PdbLog.message(new Date(System.currentTimeMillis()).toString() + "\n");
@@ -236,8 +234,7 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 				AnalysisPriority.DATA_TYPE_PROPOGATION.after().after().after().priority());
 
 			// Following is intended to be the last PDB analysis background command
-			aam.schedule(
-				new PdbReportingBackgroundCommand(),
+			aam.schedule(new PdbReportingBackgroundCommand(),
 				AnalysisPriority.DATA_TYPE_PROPOGATION.after().after().after().after().priority());
 
 		}
@@ -340,7 +337,7 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	 *    local variables and other things that might make sense to process in the first phase
 	 *    (for now, they will be in the second phase).
 	 */
-	private static class ProcessPdbFunctionInternalsCommand extends BackgroundCommand {
+	private static class ProcessPdbFunctionInternalsCommand extends BackgroundCommand<Program> {
 
 		File pdbFile;
 		private PdbReaderOptions pdbReaderOptions;
@@ -357,14 +354,13 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 		}
 
 		@Override
-		public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-			Program program = (Program) obj;
+		public boolean applyTo(Program program, TaskMonitor monitor) {
 			try (AbstractPdb pdb = PdbParser.parse(pdbFile, pdbReaderOptions, monitor)) {
 				monitor.setMessage("PDB: Parsing " + pdbFile + "...");
 				pdb.deserialize();
-				DefaultPdbApplicator applicator = new DefaultPdbApplicator(pdb, program,
-					program.getDataTypeManager(), program.getImageBase(), pdbApplicatorOptions,
-					log);
+				DefaultPdbApplicator applicator =
+					new DefaultPdbApplicator(pdb, program, program.getDataTypeManager(),
+						program.getImageBase(), pdbApplicatorOptions, log);
 				applicator.applyFunctionInternalsAnalysis();
 				return true;
 			}
@@ -382,15 +378,14 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	/**
 	 * A background command that performs final PDB analysis reporting.
 	 */
-	private static class PdbReportingBackgroundCommand extends BackgroundCommand {
+	private static class PdbReportingBackgroundCommand extends BackgroundCommand<Program> {
 
 		public PdbReportingBackgroundCommand() {
 			super("PDB Universal Reporting", false, false, false);
 		}
 
 		@Override
-		public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-			Program program = (Program) obj;
+		public boolean applyTo(Program program, TaskMonitor monitor) {
 			try {
 				DefaultPdbApplicator.applyAnalysisReporting(program);
 				return true;

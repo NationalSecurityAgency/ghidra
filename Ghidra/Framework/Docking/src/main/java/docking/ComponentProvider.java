@@ -115,6 +115,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	private String inceptionInformation;
 
 	private String registeredFontId;
+	private Component defaultFocusComponent;
 
 	private ThemeListener themeListener = this::themeChanged;
 
@@ -225,21 +226,37 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		return instanceID;
 	}
 
-	// Default implementation
-	public void requestFocus() {
-
-		JComponent component = getComponent();
-		if (component == null) {
-			return; // this shouldn't happen; this implies we have been disposed
+	public final void requestFocus() {
+		if (!isVisible()) {
+			return;
 		}
-
-		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-		Component focusOwner = kfm.getFocusOwner();
-		if (focusOwner != null && SwingUtilities.isDescendingFrom(focusOwner, component)) {
+		dockingTool.toFront();
+		if (defaultFocusComponent != null) {
+			DockingWindowManager.requestFocus(defaultFocusComponent);
 			return;
 		}
 
-		component.requestFocus();
+		JComponent component = getComponent();
+		Container parent = component == null ? null : component.getParent();
+		if (parent == null) {
+			return;	// we are either disposed or not added to the tool yet
+		}
+
+		Container focusCycleRoot = parent.getFocusCycleRootAncestor();
+		if (focusCycleRoot == null) {
+			return;
+		}
+
+		// Only request focus if next component in focus traversal belongs to this provider
+		FocusTraversalPolicy policy = focusCycleRoot.getFocusTraversalPolicy();
+		Component firstComponent = policy.getComponentAfter(focusCycleRoot, parent);
+		if (firstComponent != null && SwingUtilities.isDescendingFrom(firstComponent, parent)) {
+			DockingWindowManager.requestFocus(firstComponent);
+		}
+	}
+
+	protected void setDefaultFocusComponent(Component component) {
+		this.defaultFocusComponent = component;
 	}
 
 	/**
@@ -368,7 +385,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * @return true if this provider is showing.
 	 */
 	public boolean isVisible() {
-		return dockingTool.isVisible(this);
+		return dockingTool != null && dockingTool.isVisible(this);
 	}
 
 	/**

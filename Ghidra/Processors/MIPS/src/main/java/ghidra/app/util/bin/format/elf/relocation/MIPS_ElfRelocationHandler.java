@@ -608,8 +608,8 @@ public class MIPS_ElfRelocationHandler
 
 			case R_MIPS_COPY:
 				// TODO: Requires symbol lookup into dynamic library - not sure what we can do here
-				markAsWarning(program, relocationAddress, type, symbolName, symbolIndex,
-					"Runtime copy not supported", log);
+				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
+					elfSymbol.getSize(), elfRelocationContext.getLog());
 				if (saveValue) {
 					elfRelocationContext.savedAddendHasError = true;
 				}

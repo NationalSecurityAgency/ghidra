@@ -69,7 +69,7 @@ public class ObjectsTablePanel extends AbstractQueryTablePanel<ValueRow, ObjectT
 	}
 
 	@Override
-	protected ObjectTableModel createModel(Plugin plugin) {
+	protected ObjectTableModel createModel() {
 		return new ObjectTableModel(plugin);
 	}
 

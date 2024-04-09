@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import db.Transaction;
 import generic.Unique;
+import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServiceTestAccess;
 import ghidra.app.script.GhidraState;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.debug.api.breakpoint.LogicalBreakpoint;
@@ -172,6 +173,7 @@ public class DeadFlatDebuggerAPITest extends AbstractFlatDebuggerAPITest<FlatDeb
 
 	@Test
 	public void testActivateTraceNull() throws Throwable {
+		DebuggerTraceManagerServiceTestAccess.setEnsureActiveTrace(traceManager, false);
 		createAndOpenTrace();
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
@@ -217,6 +219,7 @@ public class DeadFlatDebuggerAPITest extends AbstractFlatDebuggerAPITest<FlatDeb
 
 	@Test
 	public void testActivateThreadNull() throws Throwable {
+		DebuggerTraceManagerServiceTestAccess.setEnsureActiveTrace(traceManager, false);
 		api.activateThread(null);
 		assertEquals(null, traceManager.getCurrentThread());
 

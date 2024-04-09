@@ -117,6 +117,7 @@
 		<attribute schema="VOID" />
 	</schema>
 	<schema name="Inferior" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Activatable" />
 		<interface name="Process" />
 		<interface name="Aggregate" />
 		<interface name="ExecutionStateful" />
@@ -241,6 +242,7 @@
 		<attribute schema="VOID" fixed="yes" hidden="yes" />
 	</schema>
 	<schema name="Thread" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Activatable" />
 		<interface name="Thread" />
 		<interface name="ExecutionStateful" />
 		<interface name="Steppable" />
@@ -349,6 +351,7 @@
 		<attribute schema="VOID" />
 	</schema>
 	<schema name="StackFrame" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Activatable" />
 		<interface name="StackFrame" />
 		<interface name="Aggregate" />
 		<element schema="VOID" />

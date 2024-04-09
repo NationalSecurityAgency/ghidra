@@ -23,7 +23,6 @@ import javax.swing.event.ListSelectionListener;
 import docking.widgets.table.AbstractDynamicTableColumn;
 import docking.widgets.table.TableColumnDescriptor;
 import ghidra.app.plugin.core.debug.gui.model.*;
-import ghidra.app.plugin.core.debug.gui.model.AbstractQueryTablePanel.CellActivationListener;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.columns.TraceValueKeyColumn;
 import ghidra.app.plugin.core.debug.gui.model.columns.TraceValueObjectAttributeColumn;
@@ -46,7 +45,7 @@ import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 
 public class DebuggerStackPanel extends AbstractObjectsTableBasedPanel<TraceObjectStackFrame>
-		implements ListSelectionListener, CellActivationListener {
+		implements ListSelectionListener {
 
 	private static class FrameLevelColumn extends TraceValueKeyColumn {
 		@Override
@@ -137,7 +136,7 @@ public class DebuggerStackPanel extends AbstractObjectsTableBasedPanel<TraceObje
 	}
 
 	@Override
-	protected ObjectTableModel createModel(Plugin plugin) {
+	protected ObjectTableModel createModel() {
 		return new StackTableModel(plugin);
 	}
 
@@ -165,7 +164,11 @@ public class DebuggerStackPanel extends AbstractObjectsTableBasedPanel<TraceObje
 
 	@Override
 	public void cellActivated(JTable table) {
-		// No super
+		/**
+		 * Override, because PC columns is fairly wide and representative of the stack frame.
+		 * Likely, when the user double-clicks, they mean to activate the frame, even if it happens
+		 * to be in that column. Simply going to the address will confuse and/or disappoint.
+		 */
 		ValueRow item = getSelectedItem();
 		if (item != null) {
 			traceManager.activateObject(item.getValue().getChild());

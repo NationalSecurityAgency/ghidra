@@ -28,7 +28,6 @@ import ghidra.program.model.address.*;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.memory.*;
-import ghidra.util.task.TaskMonitor;
 
 public class VisibleROOnceAutoReadMemorySpec implements AutoReadMemorySpec {
 	public static final String CONFIG_NAME = "1_READ_VIS_RO_ONCE";
@@ -92,6 +91,6 @@ public class VisibleROOnceAutoReadMemorySpec implements AutoReadMemorySpec {
 			return CompletableFuture.completedFuture(false);
 		}
 
-		return target.readMemoryAsync(toRead, TaskMonitor.DUMMY).thenApply(__ -> true);
+		return doRead(tool, monitor -> target.readMemoryAsync(toRead, monitor));
 	}
 }

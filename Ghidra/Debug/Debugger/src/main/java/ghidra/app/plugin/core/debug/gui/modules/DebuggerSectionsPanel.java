@@ -211,7 +211,7 @@ public class DebuggerSectionsPanel extends AbstractObjectsTableBasedPanel<TraceO
 	}
 
 	@Override
-	protected ObjectTableModel createModel(Plugin plugin) {
+	protected ObjectTableModel createModel() {
 		return new SectionTableModel(plugin);
 	}
 

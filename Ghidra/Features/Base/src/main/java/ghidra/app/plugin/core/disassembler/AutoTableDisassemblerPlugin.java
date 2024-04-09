@@ -148,11 +148,11 @@ public class AutoTableDisassemblerPlugin extends ProgramPlugin implements Domain
 				return currentProgram != null;
 			}
 		};
-		findTableAction.setHelpLocation(
-			new HelpLocation(HelpTopics.SEARCH, findTableAction.getName()));
-		findTableAction.setMenuBarData(new MenuData(
-			new String[] { ToolConstants.MENU_SEARCH, "For Address Tables" }, null, "search for",
-			-1, "AddressTables"));
+		findTableAction
+				.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, findTableAction.getName()));
+		findTableAction.setMenuBarData(
+			new MenuData(new String[] { ToolConstants.MENU_SEARCH, "For Address Tables" }, null,
+				"search for", -1, "AddressTables"));
 		findTableAction.setDescription(getPluginDescription().getDescription());
 		findTableAction.addToWindowWhen(NavigatableActionContext.class);
 		tool.addAction(findTableAction);
@@ -168,15 +168,15 @@ public class AutoTableDisassemblerPlugin extends ProgramPlugin implements Domain
 
 		int minimumTableSize = addressTableDialog.getMinTableSize();
 		if (minimumTableSize < 2) {
-			addressTableDialog.setDialogText(
-				"Please enter a valid minimum search length. Must be >= 2");
+			addressTableDialog
+					.setDialogText("Please enter a valid minimum search length. Must be >= 2");
 			return;
 		}
 
 		int alignment = addressTableDialog.getAlignment();
 		if (alignment <= 0 || alignment > 8) {
-			addressTableDialog.setDialogText(
-				"Please enter a valid alignment value. Must be > 0 and <= 8");
+			addressTableDialog
+					.setDialogText("Please enter a valid alignment value. Must be > 0 and <= 8");
 			return;
 		}
 
@@ -217,8 +217,8 @@ public class AutoTableDisassemblerPlugin extends ProgramPlugin implements Domain
 			selectedAddresses[i] = model.getAddress(selectedRows[i]);
 		}
 
-		CompoundBackgroundCommand backCmd =
-			new CompoundBackgroundCommand("Disassemble Address Tables", false, true);
+		CompoundBackgroundCommand<Program> backCmd =
+			new CompoundBackgroundCommand<>("Disassemble Address Tables", false, true);
 		offsetLen = addressTableDialog.getOffset();
 
 		// loop over selected table addresses
@@ -237,7 +237,7 @@ public class AutoTableDisassemblerPlugin extends ProgramPlugin implements Domain
 		tool.executeBackgroundCommand(backCmd, currentProgram);
 	}
 
-	private void createDisassemblyCommandsForAddress(CompoundBackgroundCommand backCmd,
+	private void createDisassemblyCommandsForAddress(CompoundBackgroundCommand<Program> backCmd,
 			Address currentAddress) {
 
 		Listing listing = currentProgram.getListing();
@@ -261,8 +261,8 @@ public class AutoTableDisassemblerPlugin extends ProgramPlugin implements Domain
 
 			// need to create a context for each one.  Also disassembleCmd will align the address to disassemble
 			DisassembleCommand disassembleCmd = new DisassembleCommand(addr, null, true);
-			RegisterValue rval = PseudoDisassembler.getTargetContextRegisterValueForDisassembly(
-				currentProgram, addr);
+			RegisterValue rval = PseudoDisassembler
+					.getTargetContextRegisterValueForDisassembly(currentProgram, addr);
 			disassembleCmd.setInitialContext(rval);
 			backCmd.add(disassembleCmd);
 		}

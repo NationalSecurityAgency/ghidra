@@ -17,10 +17,12 @@ package ghidra.app.util.bin.format.dwarf.expression;
 
 import static ghidra.app.util.bin.format.dwarf.expression.DWARFExpressionOpCodes.*;
 
+import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Objects;
 
 import ghidra.app.util.bin.format.dwarf.*;
+import ghidra.app.util.bin.format.dwarf.attribs.DWARFForm;
 import ghidra.program.model.lang.Register;
 
 /**
@@ -41,19 +43,10 @@ public class DWARFExpressionEvaluator {
 	 */
 	private static final int DEFAULT_MAX_STEP_COUNT = 1000;
 
-	private final int intSize;
+	private final DWARFProgram dprog;
+	private final DWARFCompilationUnit cu;
 
 	private int maxStepCount = DEFAULT_MAX_STEP_COUNT;
-
-	/**
-	 * Mirror of {@link DWARFCompilationUnit#getPointerSize()}
-	 */
-	private final byte pointerSize;
-
-	/**
-	 * Mirror of {@link DWARFProgram#isLittleEndian()}
-	 */
-	private final boolean isLittleEndian;
 
 	private DWARFRegisterMappings registerMappings;
 
@@ -87,17 +80,14 @@ public class DWARFExpressionEvaluator {
 	private int currentOpIndex = -1;
 
 	public DWARFExpressionEvaluator(DWARFCompilationUnit cu) {
-		this(cu.getPointerSize(), cu.getProgram().isLittleEndian(), cu.getIntSize(),
-			cu.getProgram().getRegisterMappings());
+		this.cu = cu;
+		this.dprog = cu.getProgram();
+		this.registerMappings =
+			Objects.requireNonNullElse(dprog.getRegisterMappings(), DWARFRegisterMappings.DUMMY);
 	}
 
-	public DWARFExpressionEvaluator(byte pointerSize, boolean isLittleEndian, int intSize,
-			DWARFRegisterMappings registerMappings) {
-		this.pointerSize = pointerSize;
-		this.isLittleEndian = isLittleEndian;
-		this.intSize = intSize;
-		this.registerMappings =
-			Objects.requireNonNullElse(registerMappings, DWARFRegisterMappings.DUMMY);
+	public DWARFCompilationUnit getDWARFCompilationUnit() {
+		return cu;
 	}
 
 	public void setFrameBase(long fb) {
@@ -143,8 +133,8 @@ public class DWARFExpressionEvaluator {
 	}
 
 	public DWARFExpression readExpr(byte[] exprBytes) throws DWARFExpressionException {
-		DWARFExpression tmp =
-			DWARFExpression.read(exprBytes, pointerSize, isLittleEndian, intSize);
+		DWARFExpression tmp = DWARFExpression.read(exprBytes, cu.getPointerSize(),
+			dprog.isLittleEndian(), cu.getIntSize());
 		return tmp;
 	}
 
@@ -526,6 +516,30 @@ public class DWARFExpressionEvaluator {
 					// (on the host) but that the result of this expression gives you value
 					dwarfStackValue = true;
 					break;
+
+				case DW_OP_addrx:
+					try {
+						long addr = dprog.getAddress(DWARFForm.DW_FORM_addrx,
+							currentOp.getOperandValue(0), cu);
+						push(addr);
+						break;
+					}
+					catch (IOException e) {
+						throw new DWARFExpressionException(
+							"Invalid indirect address index: " + currentOp.getOperandValue(0));
+					}
+				case DW_OP_constx: // same as addrx, but different relocation-able specifications
+					try {
+						long addr = dprog.getAddress(DWARFForm.DW_FORM_addrx,
+							currentOp.getOperandValue(0), cu);
+						push(addr);
+						break;
+					}
+					catch (IOException e) {
+						throw new DWARFExpressionException(
+							"Invalid indirect address index: " + currentOp.getOperandValue(0));
+					}
+
 				default:
 					throw new DWARFExpressionException("Unimplemented DWARF expression opcode " +
 						DWARFExpressionOpCodes.toString(opcode));
@@ -546,8 +560,8 @@ public class DWARFExpressionEvaluator {
 
 	@Override
 	public String toString() {
-		return "DWARFExpressionEvaluator [pointerSize=" + pointerSize + ", isLittleEndian=" +
-			isLittleEndian + ", frameOffset=" + frameOffset + ", lastRegister=" + lastRegister +
+		return "DWARFExpressionEvaluator [frameOffset=" + frameOffset + ", lastRegister=" +
+			lastRegister +
 			", lastStackRelative=" + lastStackRelative + ", registerLoc=" + registerLoc +
 			", isDeref=" + isDeref + ", dwarfStackValue=" + dwarfStackValue +
 			", useUnknownRegister=" + useUnknownRegister + "]\nStack:\n" + getStackAsString() +

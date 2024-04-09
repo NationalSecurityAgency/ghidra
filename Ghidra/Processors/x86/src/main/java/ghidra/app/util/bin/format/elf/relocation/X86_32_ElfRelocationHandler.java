@@ -99,12 +99,13 @@ public class X86_32_ElfRelocationHandler
 				catch (NotFoundException e) {
 					markAsError(program, relocationAddress, type, symbolName, symbolIndex,
 						e.getMessage(), elfRelocationContext.getLog());
+					return RelocationResult.FAILURE;
 				}
 				break;
 			case R_386_COPY:
-				markAsWarning(program, relocationAddress, type, symbolName, symbolIndex,
-					"Runtime copy not supported", elfRelocationContext.getLog());
-				break;
+				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
+					sym.getSize(), elfRelocationContext.getLog());
+				return RelocationResult.UNSUPPORTED;
 			// Thread Local Symbol relocations (unimplemented concept)
 			case R_386_TLS_DTPMOD32:
 			case R_386_TLS_DTPOFF32:
@@ -146,6 +147,7 @@ public class X86_32_ElfRelocationHandler
 				catch (NotFoundException e) {
 					markAsError(program, relocationAddress, type, symbolName, symbolIndex,
 						e.getMessage(), elfRelocationContext.getLog());
+					return RelocationResult.FAILURE;
 				}
 				break;
 

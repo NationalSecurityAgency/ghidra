@@ -15,9 +15,11 @@
  */
 package docking.widgets.tab;
 
+import java.awt.Container;
 import java.awt.event.*;
 import java.util.*;
-import java.util.function.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
@@ -59,9 +61,9 @@ public class GTabPanel<T> extends JPanel {
 	private Function<T, String> nameFunction = v -> v.toString();
 	private Function<T, Icon> iconFunction = Dummy.function();
 	private Function<T, String> toolTipFunction = Dummy.function();
-	private Predicate<T> removeTabPredicate = Dummy.predicate();
 	private Consumer<T> selectedTabConsumer = Dummy.consumer();
-	private Consumer<T> removedTabConsumer = Dummy.consumer();
+	private Consumer<T> closeTabConsumer = t -> removeTab(t);
+	private boolean showTabsAlways = true;
 
 	/**
 	 * Constructor
@@ -93,12 +95,15 @@ public class GTabPanel<T> extends JPanel {
 					case KeyEvent.VK_SPACE:
 					case KeyEvent.VK_ENTER:
 						selectHighlightedValue();
+						e.consume();
 						break;
 					case KeyEvent.VK_LEFT:
-						highlightNextTab(false);
+						highlightNextPreviousTab(false);
+						e.consume();
 						break;
 					case KeyEvent.VK_RIGHT:
-						highlightNextTab(true);
+						highlightNextPreviousTab(true);
+						e.consume();
 						break;
 				}
 			}
@@ -148,11 +153,11 @@ public class GTabPanel<T> extends JPanel {
 		highlightedValue = null;
 		// ensure there is a valid selected value
 		if (value == selectedValue) {
-			selectedValue = allValues.isEmpty() ? null : allValues.iterator().next();
+			selectTab(null);
 		}
-
-		rebuildTabs();
-		removedTabConsumer.accept(value);
+		else {
+			rebuildTabs();
+		}
 	}
 
 	/**
@@ -162,12 +167,12 @@ public class GTabPanel<T> extends JPanel {
 	public void removeTabs(Collection<T> values) {
 		allValues.removeAll(values);
 
-		// ensure there is a valid selected value
 		if (!allValues.contains(selectedValue)) {
-			selectedValue = allValues.isEmpty() ? null : allValues.iterator().next();
+			selectTab(null);
 		}
-
-		rebuildTabs();
+		else {
+			rebuildTabs();
+		}
 	}
 
 	/**
@@ -193,10 +198,7 @@ public class GTabPanel<T> extends JPanel {
 	 * @param value the value whose tab is to be selected
 	 */
 	public void selectTab(T value) {
-		if (value == null) {
-			return;
-		}
-		if (!allValues.contains(value)) {
+		if (value != null && !allValues.contains(value)) {
 			throw new IllegalArgumentException(
 				"Attempted to set selected value to non added value");
 		}
@@ -288,12 +290,12 @@ public class GTabPanel<T> extends JPanel {
 	}
 
 	/**
-	 * Moves the highlight the next or previous tab from the current highlight. If there is no
+	 * Moves the highlight to the next or previous tab from the current highlight. If there is no
 	 * current highlight, it will highlight the next or previous tab from the selected tab.
 	 * @param forward true moves the highlight to the right; otherwise move the highlight to the
 	 * left
 	 */
-	public void highlightNextTab(boolean forward) {
+	public void highlightNextPreviousTab(boolean forward) {
 		if (allValues.size() < 2) {
 			return;
 		}
@@ -347,20 +349,13 @@ public class GTabPanel<T> extends JPanel {
 	}
 
 	/**
-	 * Sets the predicate that will be called before removing a tab via the gui close control. If
-	 * the predicate returns true, the tab will be removed, otherwise the remove will be cancelled.
-	 * @param removeTabPredicate the predicate called to decide if a tab value can be removed
+	 * Sets the predicate that will be called before removing a tab via the gui close control. Note
+	 * that that tab panel's default action is to remove the tab value, but if you set your own
+	 * consumer, you have the responsibility to remove the value.
+	 * @param closeTabConsumer the consumer called when the close gui control is clicked.
 	 */
-	public void setRemoveTabActionPredicate(Predicate<T> removeTabPredicate) {
-		this.removeTabPredicate = removeTabPredicate;
-	}
-
-	/**
-	 * Sets the consumer to be notified if a tab value is removed.
-	 * @param removedTabConsumer the consumer to be notified when tab values are removed
-	 */
-	public void setRemovedTabConsumer(Consumer<T> removedTabConsumer) {
-		this.removedTabConsumer = removedTabConsumer;
+	public void setCloseTabConsumer(Consumer<T> closeTabConsumer) {
+		this.closeTabConsumer = closeTabConsumer;
 	}
 
 	/**
@@ -379,6 +374,33 @@ public class GTabPanel<T> extends JPanel {
 		return tabList != null;
 	}
 
+	/**
+	 * Sets whether or not tabs should be display when there is only one tab. 
+	 * @param b true to show one tab; false collapses tab panel when only one tab exists
+	 */
+	public void setShowTabsAlways(boolean b) {
+		showTabsAlways = b;
+		rebuildTabs();
+	}
+
+	/** 
+	 * Returns the value of the tab that generated the given mouse event. If the mouse event
+	 * is not from one of the tabs, then null is returned.
+	 * @param event the MouseEvent to get a value for
+	 * @return the value of the tab that generated the mouse event
+	 */
+	@SuppressWarnings("unchecked")
+	public T getValueFor(MouseEvent event) {
+		Object source = event.getSource();
+		if (source instanceof JLabel label) {
+			Container parent = label.getParent();
+			if (parent instanceof GTab gTab) {
+				return (T) gTab.getValue();
+			}
+		}
+		return null;
+	}
+
 	void showTabList() {
 		if (tabList != null) {
 			return;
@@ -389,9 +411,7 @@ public class GTabPanel<T> extends JPanel {
 	}
 
 	void closeTab(T value) {
-		if (removeTabPredicate.test(value)) {
-			removeTab(value);
-		}
+		closeTabConsumer.accept(value);
 	}
 
 	private void selectHighlightedValue() {
@@ -465,30 +485,28 @@ public class GTabPanel<T> extends JPanel {
 	private void doAddValue(T value) {
 		Objects.requireNonNull(value);
 		allValues.add(value);
-
-		// make the first added value selected, non-empty panels must always have a selected value
-		if (allValues.size() == 1) {
-			selectedValue = value;
-		}
 	}
 
 	private void rebuildTabs() {
 		allTabs.clear();
 		removeAll();
 		closeTabList();
-		if (allValues.isEmpty()) {
-			validate();
+		if (!shouldShowTabs()) {
+			revalidate();
 			repaint();
 			return;
 		}
 
-		GTab<T> selectedTab = new GTab<T>(this, selectedValue, true);
-		int availableWidth = getPanelWidth() - getTabWidth(selectedTab);
-
+		GTab<T> selectedTab = null;
+		int availableWidth = getPanelWidth();
+		if (selectedValue != null) {
+			selectedTab = new GTab<T>(this, selectedValue, true);
+			availableWidth -= getTabWidth(selectedTab);
+		}
 		createNonSelectedTabsForWidth(availableWidth);
 
 		// a negative available width means there wasn't even enough room for the selected value tab
-		if (availableWidth >= 0) {
+		if (selectedValue != null && availableWidth >= 0) {
 			allTabs.add(getIndexToInsertSelectedValue(allTabs.size()), selectedTab);
 		}
 
@@ -504,24 +522,44 @@ public class GTabPanel<T> extends JPanel {
 		}
 		updateTabColors();
 		updateAccessibleName();
-		validate();
+		revalidate();
 		repaint();
+	}
+
+	private boolean shouldShowTabs() {
+		if (allValues.isEmpty()) {
+			return false;
+		}
+		if (allValues.size() == 1 && !showTabsAlways) {
+			return false;
+		}
+		return true;
 	}
 
 	private void updateAccessibleName() {
 		getAccessibleContext().setAccessibleName(getAccessibleName());
 	}
 
-	private String getAccessibleName() {
-		String panelName = tabTypeName + "Tab Panel";
+	String getAccessibleName() {
+		StringBuilder builder = new StringBuilder(tabTypeName);
+		builder.append(" Tab Panel: ");
 		if (allValues.isEmpty()) {
-			return panelName + ": No Tabs";
+			builder.append("No Tabs");
+			return builder.toString();
 		}
-		String accessibleName = panelName + ": " + getDisplayName(selectedValue) + "Selected";
+		if (selectedValue != null) {
+			builder.append(getDisplayName(selectedValue));
+			builder.append(" selected");
+		}
+		else {
+			builder.append("No Selected Tab");
+		}
 		if (highlightedValue != null) {
-			accessibleName += ": " + getDisplayName(highlightedValue) + " highlighted";
+			builder.append(": ");
+			builder.append(getDisplayName(highlightedValue));
+			builder.append(" highlighted");
 		}
-		return accessibleName;
+		return builder.toString();
 	}
 
 	private int getIndexToInsertSelectedValue(int maxIndex) {

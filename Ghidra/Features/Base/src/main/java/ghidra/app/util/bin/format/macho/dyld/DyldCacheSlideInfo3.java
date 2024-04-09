@@ -112,7 +112,7 @@ public class DyldCacheSlideInfo3 extends DyldCacheSlideInfoCommon {
 	}
 
 	/**
-	 * Walks the pointer chain at the given reader offset to find necessary  {@link DyldFixup}s
+	 * Walks the pointer chain at the given reader offset to find necessary {@link DyldFixup}s
 	 * 
 	 * @param segmentOffset The segment offset
 	 * @param pageOffset The page offset

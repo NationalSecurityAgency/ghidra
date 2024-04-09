@@ -1426,7 +1426,8 @@ void Heritage::guardCalls(uint4 fl,const Address &addr,int4 size,vector<Varnode 
       ParamActive *active = fc->getActiveOutput();
       int4 outputCharacter = fc->characterizeAsOutput(transAddr, size);
       if (outputCharacter != ParamEntry::no_containment) {
-	effecttype = EffectRecord::killedbycall; // A potential output is always killed by call
+	if (effecttype != EffectRecord::killedbycall && fc->isAutoKillByCall())
+	  effecttype = EffectRecord::killedbycall;
 	if (outputCharacter == ParamEntry::contained_by) {
 	  if (tryOutputOverlapGuard(fc, addr, transAddr, size, write))
 	    effecttype = EffectRecord::unaffected;	// Range is handled, don't do additional guarding

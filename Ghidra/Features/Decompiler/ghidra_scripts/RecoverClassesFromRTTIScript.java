@@ -190,10 +190,9 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 			hasDebugSymbols = isPDBLoadedInProgram();
 			nameVfunctions = !hasDebugSymbols;
-			recoverClassesFromRTTI =
-				new RTTIWindowsClassRecoverer(currentProgram, currentLocation, state.getTool(),
-					this, BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
-					nameVfunctions, hasDebugSymbols, monitor);
+			recoverClassesFromRTTI = new RTTIWindowsClassRecoverer(currentProgram, state.getTool(),
+				this, BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
+				nameVfunctions, hasDebugSymbols, monitor);
 		}
 		else if (isPE() && isGcc()) {
 
@@ -213,10 +212,9 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			}
 			//run fixup old elf relocations script
 			runScript("FixElfExternalOffsetDataRelocationScript.java");
-			recoverClassesFromRTTI =
-				new RTTIGccClassRecoverer(currentProgram, currentLocation, state.getTool(), this,
-					BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
-					nameVfunctions, hasDebugSymbols, monitor);
+			recoverClassesFromRTTI = new RTTIGccClassRecoverer(currentProgram, state.getTool(),
+				this, BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
+				nameVfunctions, hasDebugSymbols, monitor);
 		}
 		else if (isGcc()) {
 
@@ -245,10 +243,9 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 				return;
 			}
 			nameVfunctions = !hasDebugSymbols;
-			recoverClassesFromRTTI =
-				new RTTIGccClassRecoverer(currentProgram, currentLocation, state.getTool(), this,
-					BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
-					nameVfunctions, hasDebugSymbols, monitor);
+			recoverClassesFromRTTI = new RTTIGccClassRecoverer(currentProgram, state.getTool(),
+				this, BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
+				nameVfunctions, hasDebugSymbols, monitor);
 		}
 		else {
 			println("This script will not work on this program type");

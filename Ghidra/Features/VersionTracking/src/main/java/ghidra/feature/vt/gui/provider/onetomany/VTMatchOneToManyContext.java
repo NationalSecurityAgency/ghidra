@@ -15,9 +15,12 @@
  */
 package ghidra.feature.vt.gui.provider.onetomany;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import docking.DefaultActionContext;
+import ghidra.feature.vt.api.main.VTAssociation;
+import ghidra.feature.vt.api.main.VTAssociationType;
 import ghidra.feature.vt.api.main.VTMatch;
 
 public class VTMatchOneToManyContext extends DefaultActionContext {
@@ -32,4 +35,23 @@ public class VTMatchOneToManyContext extends DefaultActionContext {
 	public List<VTMatch> getSelectedMatches() {
 		return selectedItems;
 	}
+
+	public int getSelectedRowCount() {
+		return selectedItems.size();
+	}
+
+	public List<VTMatch> getFunctionMatches() {
+		List<VTMatch> functionMatches = new ArrayList<>();
+
+		for (VTMatch match : selectedItems) {
+			VTAssociation association = match.getAssociation();
+			if (association.getType() != VTAssociationType.FUNCTION) {
+				continue;
+			}
+
+			functionMatches.add(match);
+		}
+		return functionMatches;
+	}
+
 }

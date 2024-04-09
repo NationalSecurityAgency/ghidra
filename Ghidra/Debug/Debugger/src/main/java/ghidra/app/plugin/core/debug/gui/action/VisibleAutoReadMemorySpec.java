@@ -27,7 +27,6 @@ import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemoryState;
-import ghidra.util.task.TaskMonitor;
 
 public class VisibleAutoReadMemorySpec implements AutoReadMemorySpec {
 	public static final String CONFIG_NAME = "1_READ_VISIBLE";
@@ -68,6 +67,6 @@ public class VisibleAutoReadMemorySpec implements AutoReadMemorySpec {
 			return CompletableFuture.completedFuture(false);
 		}
 
-		return target.readMemoryAsync(toRead, TaskMonitor.DUMMY).thenApply(__ -> true);
+		return doRead(tool, monitor -> target.readMemoryAsync(toRead, monitor));
 	}
 }

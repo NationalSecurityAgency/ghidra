@@ -13,27 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.gui.thread;
+package ghidra.app.plugin.core.debug.gui.trace;
 
-import java.awt.Rectangle;
-import java.awt.event.*;
-import java.util.Objects;
+import java.awt.event.MouseEvent;
 
 import javax.swing.Icon;
-import javax.swing.JList;
-import javax.swing.event.ListSelectionEvent;
 
 import docking.action.DockingAction;
-import docking.widgets.HorizontalTabPanel;
-import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
-import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
+import docking.widgets.tab.GTabPanel;
+import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
+import ghidra.app.plugin.core.debug.gui.thread.DebuggerTraceFileActionContext;
+import ghidra.app.plugin.core.progmgr.MultiTabPlugin;
 import ghidra.app.services.DebuggerTargetService;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.target.TargetPublicationListener;
-import ghidra.debug.api.tracemgr.DebuggerCoordinates;
+import ghidra.framework.model.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginEventListener;
@@ -42,25 +39,20 @@ import ghidra.util.Swing;
 import utilities.util.SuppressableCallback;
 import utilities.util.SuppressableCallback.Suppression;
 
-public class DebuggerTraceTabPanel extends HorizontalTabPanel<Trace>
-		implements PluginEventListener {
+public class DebuggerTraceTabPanel extends GTabPanel<Trace>
+		implements PluginEventListener, DomainObjectListener {
 
 	private class TargetsChangeListener implements TargetPublicationListener {
 		@Override
 		public void targetPublished(Target target) {
-			Swing.runIfSwingOrRunLater(() -> repaint());
-
+			Swing.runIfSwingOrRunLater(() -> refreshTab(target.getTrace()));
 		}
 
 		@Override
 		public void targetWithdrawn(Target target) {
-			Swing.runIfSwingOrRunLater(() -> repaint());
-
+			Swing.runIfSwingOrRunLater(() -> refreshTab(target.getTrace()));
 		}
 	}
-
-	private final DebuggerThreadsPlugin plugin;
-	private final DebuggerThreadsProvider provider;
 
 	// @AutoServiceConsumed by method
 	DebuggerTargetService targetService;
@@ -78,101 +70,80 @@ public class DebuggerTraceTabPanel extends HorizontalTabPanel<Trace>
 
 	private final SuppressableCallback<Void> cbCoordinateActivation = new SuppressableCallback<>();
 
-	private DebuggerTraceFileActionContext myActionContext;
-
-	public DebuggerTraceTabPanel(DebuggerThreadsProvider provider) {
-		this.plugin = provider.plugin;
-		this.provider = provider;
-
+	public DebuggerTraceTabPanel(Plugin plugin) {
+		super("Trace");
 		this.autoServiceWiring = AutoService.wireServicesConsumed(plugin, this);
 
 		PluginTool tool = plugin.getTool();
 		tool.addEventListener(TraceOpenedPluginEvent.class, this);
+		tool.addEventListener(TraceActivatedPluginEvent.class, this);
 		tool.addEventListener(TraceClosedPluginEvent.class, this);
 
-		list.setCellRenderer(new TabListCellRenderer<>() {
-			protected String getText(Trace value) {
-				return value.getName();
-			}
-
-			protected Icon getIcon(Trace value) {
-				if (targetService == null) {
-					return super.getIcon(value);
-				}
-				Target target = targetService.getTarget(value);
-				if (target == null || !target.isValid()) {
-					return super.getIcon(value);
-				}
-				return DebuggerResources.ICON_RECORD;
-			}
-		});
-		list.getSelectionModel().addListSelectionListener(this::traceTabSelected);
-		list.addFocusListener(new FocusAdapter() {
-			@Override
-			public void focusGained(FocusEvent e) {
-				setTraceTabActionContext(null);
-			}
-		});
-		list.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mousePressed(MouseEvent e) {
-				setTraceTabActionContext(e);
-			}
-		});
+		setNameFunction(this::getNameForTrace);
+		setIconFunction(this::getIconForTrace);
+		setToolTipFunction(this::getTipForTrace);
+		setSelectedTabConsumer(this::traceTabSelected);
+		// Cannot use method ref here, since traceManager is still null
+		setCloseTabConsumer(t -> traceManager.closeTrace(t));
 
 		actionCloseTrace = CloseTraceAction.builderPopup(plugin)
 				.withContext(DebuggerTraceFileActionContext.class)
-				.popupWhen(c -> c.getTrace() != null)
+				.popupWhen(c -> {
+					Trace trace = c.getTrace();
+					if (trace == null) {
+						return false;
+					}
+					actionCloseTrace.getPopupMenuData()
+							.setMenuItemName(CloseTraceAction.NAME_PREFIX + getNameForTrace(trace));
+					return true;
+				})
 				.onAction(c -> traceManager.closeTrace(c.getTrace()))
-				.buildAndInstallLocal(provider);
+				.buildAndInstall(tool);
 		actionCloseAllTraces = CloseAllTracesAction.builderPopup(plugin)
 				.withContext(DebuggerTraceFileActionContext.class)
 				.popupWhen(c -> !traceManager.getOpenTraces().isEmpty())
 				.onAction(c -> traceManager.closeAllTraces())
-				.buildAndInstallLocal(provider);
+				.buildAndInstall(tool);
 		actionCloseOtherTraces = CloseOtherTracesAction.builderPopup(plugin)
 				.withContext(DebuggerTraceFileActionContext.class)
 				.popupWhen(c -> traceManager.getOpenTraces().size() > 1 && c.getTrace() != null)
 				.onAction(c -> traceManager.closeOtherTraces(c.getTrace()))
-				.buildAndInstallLocal(provider);
+				.buildAndInstall(tool);
 		actionCloseDeadTraces = CloseDeadTracesAction.builderPopup(plugin)
 				.withContext(DebuggerTraceFileActionContext.class)
 				.popupWhen(c -> !traceManager.getOpenTraces().isEmpty() && targetService != null)
 				.onAction(c -> traceManager.closeDeadTraces())
-				.buildAndInstallLocal(provider);
+				.buildAndInstall(tool);
 	}
 
-	private Trace computeClickedTraceTab(MouseEvent e) {
-		JList<Trace> list = getList();
-		int i = list.locationToIndex(e.getPoint());
-		if (i < 0) {
+	private String getNameForTrace(Trace trace) {
+		return DomainObjectDisplayUtils.getTabText(trace);
+	}
+
+	private Icon getIconForTrace(Trace trace) {
+		if (targetService == null) {
 			return null;
 		}
-		Rectangle cell = list.getCellBounds(i, i);
-		if (!cell.contains(e.getPoint())) {
+		Target target = targetService.getTarget(trace);
+		if (target == null || !target.isValid()) {
 			return null;
 		}
-		return getItem(i);
+		return DebuggerResources.ICON_RECORD;
 	}
 
-	private Trace setTraceTabActionContext(MouseEvent e) {
-		Trace newTrace = e == null ? getSelectedItem() : computeClickedTraceTab(e);
-		actionCloseTrace.getPopupMenuData()
-				.setMenuItemName(
-					CloseTraceAction.NAME_PREFIX + (newTrace == null ? "..." : newTrace.getName()));
-		myActionContext = new DebuggerTraceFileActionContext(newTrace);
-		provider.traceTabsContextChanged();
-		return newTrace;
+	private String getTipForTrace(Trace trace) {
+		return DomainObjectDisplayUtils.getToolTip(trace);
 	}
 
-	public DebuggerTraceFileActionContext getActionContext() {
-		return myActionContext;
-	}
-
-	public void coordinatesActivated(DebuggerCoordinates coordinates) {
-		try (Suppression supp = cbCoordinateActivation.suppress(null)) {
-			setSelectedItem(coordinates.getTrace());
+	public DebuggerTraceFileActionContext getActionContext(MouseEvent e) {
+		if (e == null) {
+			return null;
 		}
+		Trace trace = getValueFor(e);
+		if (trace == null) {
+			return null;
+		}
+		return new DebuggerTraceFileActionContext(trace);
 	}
 
 	@AutoServiceConsumed
@@ -186,28 +157,46 @@ public class DebuggerTraceTabPanel extends HorizontalTabPanel<Trace>
 		}
 	}
 
+	protected void add(Trace trace) {
+		addTab(trace);
+		trace.removeListener(this);
+		trace.addListener(this);
+	}
+
+	protected void remove(Trace trace) {
+		trace.removeListener(this);
+		removeTab(trace);
+	}
+
 	@Override
 	public void eventSent(PluginEvent event) {
-		if (Objects.equals(event.getSourceName(), plugin.getName())) {
-			return;
-		}
 		if (event instanceof TraceOpenedPluginEvent evt) {
 			try (Suppression supp = cbCoordinateActivation.suppress(null)) {
-				addItem(evt.getTrace());
+				add(evt.getTrace());
+			}
+		}
+		else if (event instanceof TraceActivatedPluginEvent evt) {
+			Trace trace = evt.getActiveCoordinates().getTrace();
+			try (Suppression supp = cbCoordinateActivation.suppress(null)) {
+				selectTab(trace);
 			}
 		}
 		else if (event instanceof TraceClosedPluginEvent evt) {
+			Trace trace = evt.getTrace();
 			try (Suppression supp = cbCoordinateActivation.suppress(null)) {
-				removeItem(evt.getTrace());
+				remove(trace);
 			}
 		}
 	}
 
-	private void traceTabSelected(ListSelectionEvent e) {
-		if (e.getValueIsAdjusting()) {
-			return;
+	@Override
+	public void domainObjectChanged(DomainObjectChangedEvent ev) {
+		if (ev.getSource() instanceof Trace trace) {
+			refreshTab(trace);
 		}
-		Trace newTrace = setTraceTabActionContext(null);
+	}
+
+	private void traceTabSelected(Trace newTrace) {
 		cbCoordinateActivation.invoke(() -> {
 			traceManager.activateTrace(newTrace);
 		});

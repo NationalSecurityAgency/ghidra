@@ -229,8 +229,8 @@ public class DebuggerLegacyModulesPanel extends JPanel {
 			int selectedRow = moduleTable.getSelectedRow();
 			int selectedColumn = moduleTable.getSelectedColumn();
 			Object value = moduleTable.getValueAt(selectedRow, selectedColumn);
-			if (value instanceof Address) {
-				provider.listingService.goTo((Address) value, true);
+			if (value instanceof Address address) {
+				provider.listingService.goTo(address, true);
 			}
 		}
 	}

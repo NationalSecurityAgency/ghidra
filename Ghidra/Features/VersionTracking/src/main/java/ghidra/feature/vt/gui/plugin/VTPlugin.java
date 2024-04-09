@@ -16,8 +16,8 @@
 package ghidra.feature.vt.gui.plugin;
 
 import java.net.URL;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.swing.Icon;
 import javax.swing.JFrame;
@@ -42,6 +42,7 @@ import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.util.PluginException;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.framework.preferences.Preferences;
 import ghidra.program.model.address.AddressSetView;
@@ -119,6 +120,7 @@ public class VTPlugin extends Plugin {
 		new ImpliedMatchAssociationHook(controller);
 
 		initializeOptions();
+
 	}
 
 	private DockingActionIf getToolAction(String actionName) {
@@ -141,7 +143,35 @@ public class VTPlugin extends Plugin {
 
 	@Override
 	protected void init() {
+		addCustomPlugins();
+
 		maybeShowHelp();
+	}
+
+	private void addCustomPlugins() {
+
+		List<String> names = new ArrayList<>(
+			List.of("ghidra.app.plugin.core.functioncompare.FunctionComparisonPlugin"));
+		List<Plugin> plugins = tool.getManagedPlugins();
+		Set<String> existingNames =
+			plugins.stream().map(c -> c.getName()).collect(Collectors.toSet());
+
+		// Note: we check to see if the plugins we want to add have already been added to the tool.
+		// We should not needed to do this, but once the tool has been saved with the plugins added,
+		// they will get added again the next time the tool is loaded.  Adding this check here seems
+		// easier than modifying the default to file to load the plugins, since the amount of xml
+		// required for that is non-trivial.
+		try {
+			for (String className : names) {
+				if (!existingNames.contains(className)) {
+					tool.addPlugin(className);
+				}
+			}
+
+		}
+		catch (PluginException e) {
+			Msg.error(this, "Unable to load plugin", e);
+		}
 	}
 
 	private void maybeShowHelp() {

@@ -244,7 +244,7 @@ public class DBTraceObjectBreakpointLocation
 			Boolean locEn = TraceObjectInterfaceUtils.getValue(object, snap,
 				TargetBreakpointSpec.ENABLED_ATTRIBUTE_NAME, Boolean.class, null);
 			if (locEn != null) {
-				return locEn;
+				return locEn && getSpecification().isEnabled(snap);
 			}
 			return getSpecification().isEnabled(snap);
 		}

@@ -23,6 +23,7 @@ import javax.swing.*;
 import docking.ActionContext;
 import docking.DockingUtils;
 import docking.action.*;
+import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
 import docking.widgets.tab.GTabPanel;
 import generic.theme.GIcon;
@@ -32,10 +33,13 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.CodeViewerService;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.model.*;
+import ghidra.framework.options.OptionsChangeListener;
+import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
+import ghidra.util.bean.opteditor.OptionsVetoException;
 
 /**
  * Plugin to show a "tab" for each open program; the selected tab is the activated program.
@@ -53,9 +57,10 @@ import ghidra.util.HelpLocation;
 	eventsConsumed = { ProgramOpenedPluginEvent.class, ProgramClosedPluginEvent.class, ProgramActivatedPluginEvent.class, ProgramVisibilityChangePluginEvent.class }
 )
 //@formatter:on
-public class MultiTabPlugin extends Plugin implements DomainObjectListener {
+public class MultiTabPlugin extends Plugin implements DomainObjectListener, OptionsChangeListener {
 	private final static Icon TRANSIENT_ICON = new GIcon("icon.plugin.programmanager.transient");
 	private final static Icon EMPTY8_ICON = new GIcon("icon.plugin.programmanager.empty.small");
+	private static final String SHOW_TABS_ALWAYS = "Show Program Tabs Always";
 
 	//
 	// Unusual Code Alert!: We can't initialize these fields below because calling
@@ -82,11 +87,31 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener {
 
 	public MultiTabPlugin(PluginTool tool) {
 		super(tool);
-
 		createActions();
 	}
 
 	private void createActions() {
+
+		new ActionBuilder("Close Program", getName())
+				.popupMenuPath("Close")
+				.helpLocation(new HelpLocation("ProgramManagerPlugin", "Close_Program"))
+				.withContext(ProgramTabActionContext.class)
+				.onAction(c -> progService.closeProgram(c.getProgram(), false))
+				.buildAndInstall(tool);
+
+		new ActionBuilder("Close Other Programs", getName())
+				.popupMenuPath("Close Others")
+				.helpLocation(new HelpLocation("ProgramManagerPlugin", "Close_Others"))
+				.withContext(ProgramTabActionContext.class)
+				.onAction(c -> closeOtherPrograms(c.getProgram()))
+				.buildAndInstall(tool);
+
+		new ActionBuilder("Close All Programs", getName())
+				.popupMenuPath("Close All")
+				.helpLocation(new HelpLocation("ProgramManagerPlugin", "Close_All"))
+				.withContext(ProgramTabActionContext.class)
+				.onAction(c -> progService.closeAllPrograms(false))
+				.buildAndInstall(tool);
 
 		String firstGroup = "1";
 		String secondGroup = "2";
@@ -113,7 +138,7 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				// highlight the next tab
-				nextProgramPressed();
+				cycleNextProgram(true);
 			}
 		};
 		goToNextProgramAction.setEnabled(false);
@@ -127,7 +152,7 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				// highlight the previous tab
-				previousProgramPressed();
+				cycleNextProgram(false);
 			}
 		};
 		goToPreviousProgramAction.setEnabled(false);
@@ -164,6 +189,11 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener {
 		tool.addAction(goToPreviousProgramAction);
 	}
 
+	private void closeOtherPrograms(Program keepProgram) {
+		progService.setCurrentProgram(keepProgram);
+		progService.closeOtherPrograms(false);
+	}
+
 	private void updateActionEnablement() {
 		// the next/previous actions should not be enabled if no tabs are hidden
 		boolean enable = (tabPanel.getTabCount() > 1);
@@ -185,79 +215,34 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener {
 		tabPanel.showTabList(!tabPanel.isShowingTabList());
 	}
 
-	private void highlightNextProgram(boolean forwardDirection) {
-		tabPanel.highlightNextTab(forwardDirection);
-	}
-
 	private void selectHighlightedProgram() {
-		tabPanel.selectTab(tabPanel.getHighlightedTabValue());
+		Program highlightedTabValue = tabPanel.getHighlightedTabValue();
+		if (highlightedTabValue != null) {
+			tabPanel.selectTab(highlightedTabValue);
+		}
 	}
 
-	String getStringUsedInList(Program program) {
-		DomainFile df = program.getDomainFile();
-		String changeIndicator = program.isChanged() ? "*" : "";
-		String pathString = getShortPath(df);
-		if (!df.isInWritableProject()) {
-			return pathString + " [Read-Only]" + changeIndicator;
-		}
-		return pathString + changeIndicator;
+	private String getToolTip(Program program) {
+		return DomainObjectDisplayUtils.getToolTip(program);
 	}
 
-	private String getShortPath(DomainFile df) {
-		String pathString = df.toString();
-		int length = pathString.length();
-		if (length < 100) {
-			return pathString;
-		}
-
-		String[] pathParts = pathString.split("/");
-		if (pathParts.length == 2) { // at least 2 for project name and filename
-			return pathString;
-		}
-
-		String projectName = df.getProjectLocator().getName();
-		int parentFolderIndex = pathParts.length - 2;
-		String parentName = pathParts[parentFolderIndex];
-		String filename = df.getName();
-		pathString = projectName + ":/.../" + parentName + "/" + filename;
-		return pathString;
-	}
-
-	String getToolTip(Program program) {
-		return getStringUsedInList(program);
-	}
-
-	String getName(Program program) {
-		DomainFile df = program.getDomainFile();
-		String tabName = df.getName();
-		if (df.isReadOnly()) {
-			int version = df.getVersion();
-			if (!df.canSave() && version != DomainFile.DEFAULT_VERSION) {
-				tabName += "@" + version;
-			}
-			tabName = tabName + " [Read-Only]";
-		}
-		return tabName;
+	private String getTabName(Program program) {
+		return DomainObjectDisplayUtils.getTabText(program);
 	}
 
 	void keyTypedFromListWindow(KeyEvent e) {
 
 		KeyStroke stroke = KeyStroke.getKeyStrokeForEvent(e);
 		if (stroke.equals(NEXT_TAB_KEYSTROKE)) {
-			nextProgramPressed();
+			cycleNextProgram(true);
 		}
 		else if (stroke.equals(PREVIOUS_TAB_KEYSTROKE)) {
-			previousProgramPressed();
+			cycleNextProgram(false);
 		}
 	}
 
-	private void nextProgramPressed() {
-		highlightNextProgram(true);
-		selectHighlightedProgramTimer.restart();
-	}
-
-	private void previousProgramPressed() {
-		highlightNextProgram(false);
+	private void cycleNextProgram(boolean forward) {
+		tabPanel.highlightNextPreviousTab(forward);
 		selectHighlightedProgramTimer.restart();
 	}
 
@@ -276,11 +261,30 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener {
 		tabPanel.setIconFunction(p -> getIcon(p));
 		tabPanel.setToolTipFunction(p -> getToolTip(p));
 		tabPanel.setSelectedTabConsumer(p -> programSelected(p));
-		tabPanel.setRemoveTabActionPredicate(p -> progService.closeProgram(p, false));
+		tabPanel.setCloseTabConsumer(p -> progService.closeProgram(p, false));
+
+		initOptions();
 
 		progService = tool.getService(ProgramManager.class);
 		cvService = tool.getService(CodeViewerService.class);
 		cvService.setNorthComponent(tabPanel);
+	}
+
+	private void initOptions() {
+		ToolOptions options = tool.getOptions(ToolConstants.TOOL_OPTIONS);
+		options.registerOption(SHOW_TABS_ALWAYS, false, null,
+			"If true, program tabs will be displayed even if only one");
+
+		tabPanel.setShowTabsAlways(options.getBoolean(SHOW_TABS_ALWAYS, false));
+		options.addOptionsChangeListener(this);
+	}
+
+	@Override
+	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
+			Object newValue) throws OptionsVetoException {
+		if (optionName.equals(SHOW_TABS_ALWAYS)) {
+			tabPanel.setShowTabsAlways((Boolean) newValue);
+		}
 	}
 
 	private Icon getIcon(Program program) {
@@ -289,22 +293,6 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener {
 			return TRANSIENT_ICON;
 		}
 		return EMPTY8_ICON;
-	}
-
-	private String getTabName(Program program) {
-		DomainFile df = program.getDomainFile();
-		String tabName = df.getName();
-		if (df.isReadOnly()) {
-			int version = df.getVersion();
-			if (!df.canSave() && version != DomainFile.DEFAULT_VERSION) {
-				tabName += "@" + version;
-			}
-			tabName = tabName + " [Read-Only]";
-		}
-		if (program.isChanged()) {
-			tabName = "*" + tabName;
-		}
-		return tabName;
 	}
 
 	boolean removeProgram(Program program) {

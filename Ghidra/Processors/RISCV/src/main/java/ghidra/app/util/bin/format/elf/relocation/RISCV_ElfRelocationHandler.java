@@ -71,6 +71,11 @@ public class RISCV_ElfRelocationHandler
 		return new RISCV_ElfRelocationContext(this, loadHelper, symbolMap);
 	}
 
+	@Override
+	public int getRelrRelocationType() {
+		return RISCV_ElfRelocationType.R_RISCV_RELATIVE.typeId;
+	}
+
 	/**
 	 * Get the adjusted 20 high bits of a 32 bit target.  The lower 12 bits will
 	 * be found in a later instruction, using a sign-extended signed addition.  If those
@@ -201,8 +206,8 @@ public class RISCV_ElfRelocationHandler
 
 			case R_RISCV_COPY:
 				// Runtime relocation must be in executable. not allowed in shared library
-				markAsWarning(program, relocationAddress, type, symbolName, symbolIndex,
-					"Runtime copy not supported", elfRelocationContext.getLog());
+				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
+					sym.getSize(), elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 
 			case R_RISCV_JUMP_SLOT:

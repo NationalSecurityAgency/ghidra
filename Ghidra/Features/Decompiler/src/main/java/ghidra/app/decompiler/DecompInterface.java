@@ -776,20 +776,16 @@ public class DecompInterface {
 	public synchronized DecompileResults decompileFunction(Function func, int timeoutSecs,
 			TaskMonitor monitor) {
 
+		dtmanage.clearTemporaryIds();
 		decompileMessage = "";
-		if (monitor != null && monitor.isCancelled()) {
-			return null;
+
+		if (program == null || (monitor != null && monitor.isCancelled())) {
+			return new DecompileResults(func, pcodelanguage, compilerSpec, dtmanage,
+				decompileMessage, null, DecompileProcess.DisposeState.DISPOSED_ON_CANCEL);
 		}
 
 		if (monitor != null) {
 			monitor.addCancelledListener(monitorListener);
-		}
-
-		dtmanage.clearTemporaryIds();
-
-		if (program == null) {
-			return new DecompileResults(func, pcodelanguage, null, dtmanage, decompileMessage, null,
-				DecompileProcess.DisposeState.DISPOSED_ON_CANCEL);
 		}
 
 		Decoder decoder = null;

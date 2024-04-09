@@ -434,10 +434,6 @@ task createExternalExtensions(type: Copy) {
 	// Make sure that we don't try to copy the same file with the same path.
 	duplicatesStrategy 'exclude'
 	
-	doLast {
-		delete file(DISTRIBUTION_DIR.getPath() + "/" + ZIP_DIR_PREFIX)
-	}
-			
 }
 
 import groovy.io.FileType

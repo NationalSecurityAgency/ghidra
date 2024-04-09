@@ -91,6 +91,12 @@ public class TraceRecorderTarget extends AbstractTarget {
 	}
 
 	@Override
+	public String describe() {
+		return "%s in %s (recorder)".formatted(getTrace().getDomainFile().getName(),
+			recorder.getTarget().getModel().getBrief());
+	}
+
+	@Override
 	public boolean isValid() {
 		return recorder.isRecording();
 	}
@@ -368,6 +374,14 @@ public class TraceRecorderTarget extends AbstractTarget {
 	protected Map<String, ActionEntry> collectRefreshActions(ActionContext context) {
 		// Not necessary to support this here
 		return Map.of();
+	}
+
+	@Override
+	protected Map<String, ActionEntry> collectToggleActions(ActionContext context) {
+		return collectIfaceActions(context, TargetTogglable.class, "Toggle",
+			ActionName.TOGGLE, "Toggle the object",
+			togglable -> true,
+			togglable -> togglable.toggle(!togglable.isEnabled()));
 	}
 
 	@Override

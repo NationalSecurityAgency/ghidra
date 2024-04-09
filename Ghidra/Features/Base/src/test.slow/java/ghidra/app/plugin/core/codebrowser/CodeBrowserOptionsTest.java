@@ -745,7 +745,7 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		loadProgram();
 		Options options = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
 		List<String> names = getOptionNames(options, "Operands Field");
-		assertEquals(15, names.size());
+		assertEquals(16, names.size());
 		assertEquals("Operands Field.Add Space After Separator", names.get(0));
 		assertEquals("Operands Field.Always Show Primary Reference", names.get(1));
 		assertEquals("Operands Field.Display Abbreviated Default Label Names", names.get(2));
@@ -761,6 +761,7 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("Operands Field.Show Block Names", names.get(12));
 		assertEquals("Operands Field.Show Offcut Information", names.get(13));
 		assertEquals("Operands Field.Underline References", names.get(14));
+		assertEquals("Operands Field.Wrap on Semicolons", names.get(15));
 
 		NamespaceWrappedOption namespaceOption =
 			(NamespaceWrappedOption) options.getCustomOption(names.get(3),

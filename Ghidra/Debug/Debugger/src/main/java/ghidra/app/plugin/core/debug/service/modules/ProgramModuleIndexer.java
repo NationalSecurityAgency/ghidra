@@ -410,7 +410,7 @@ public class ProgramModuleIndexer implements DomainFolderChangeListener {
 				continue;
 			}
 			try (PeekOpenedDomainObject peek = new PeekOpenedDomainObject(df)) {
-				if (programs.contains(peek.object)) {
+				if (peek.object != null && programs.contains(peek.object)) {
 					result.add(e);
 				}
 			}

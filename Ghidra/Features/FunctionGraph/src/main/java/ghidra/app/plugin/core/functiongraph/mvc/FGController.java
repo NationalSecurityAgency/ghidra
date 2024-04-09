@@ -497,10 +497,6 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 		return functionGraphData.hasResults();
 	}
 
-	public void requestFocus() {
-		view.requestFocus();
-	}
-
 	public void cleanup() {
 		clear();
 		disposeCache();

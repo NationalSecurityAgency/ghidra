@@ -415,8 +415,10 @@ The Headless Analyzer uses the command-line parameters discussed below. See <a h
     <a name="readOnly"><typewriter>-readOnly</typewriter></a><br>
     If present in <typewriter>-import</typewriter> mode, imported files will NOT be saved to the 
     project. If present in <typewriter>-process</typewriter> mode, any changes made to existing 
-    files by scripts or analysis are discarded.  The <typewriter>-overwrite</typewriter> option
-    will be ignored if this option is specified during import operations.
+    files by scripts or analysis are discarded.  When processing a shared project or URL associated 
+    with a read-only repository, such files will be skipped unless this option is specified.
+    The <typewriter>-overwrite</typewriter> option will be ignored if this option is specified 
+    during import operations.
     </LI>
 
     <br><br>

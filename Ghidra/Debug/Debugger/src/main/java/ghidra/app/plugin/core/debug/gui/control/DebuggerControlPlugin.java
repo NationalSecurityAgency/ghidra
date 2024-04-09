@@ -55,9 +55,6 @@ import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.trace.util.TraceEvents;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.Task;
-import ghidra.util.task.TaskMonitor;
 
 @PluginInfo(
 	shortDescription = "Debugger global controls",
@@ -357,18 +354,7 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		if (target == null) {
 			return;
 		}
-		TargetActionTask.executeTask(tool, new Task("Disconnect", false, false, false) {
-			@Override
-			public void run(TaskMonitor monitor) throws CancelledException {
-				try {
-					target.disconnect();
-				}
-				catch (Exception e) {
-					tool.setStatusInfo("Disconnect failed: " + e, true);
-					Msg.error(this, "Disconnect failed: " + e, e);
-				}
-			}
-		});
+		TargetActionTask.executeTask(tool, new DisconnectTask(tool, List.of(target)));
 	}
 
 	private boolean haveEmuAndTrace() {
