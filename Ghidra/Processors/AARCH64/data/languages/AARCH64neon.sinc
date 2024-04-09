@@ -14460,7 +14460,7 @@ is b_2431=0b01011110 & b_2223=0b00 & b_2121=0 & Rm_VPR128.4S & b_1015=0b000000 &
 :sha1h Rd_FPR32, Rn_FPR32
 is b_2431=0b01011110 & b_2223=0b00 & b_1721=0b10100 & b_1216=0b00000 & b_1011=0b10 & Rn_FPR32 & Rd_FPR32 & Zd
 {
-	Rd_FPR32 = Rn_FPR32 << 30:1;
+	Rd_FPR32 = Rn_FPR32 << 30:1 | (Rn_FPR32 >> 2:1);
 	zext_zs(Zd); # zero upper 28 bytes of Zd
 }
 
