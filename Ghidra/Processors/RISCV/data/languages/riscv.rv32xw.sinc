@@ -52,12 +52,12 @@ clhuspimm: uimm is cop0810 & cop0707 [ uimm = (cop0810 << 1) | (cop0707 << 4); ]
 :c.lhusp cr0204s,clhuspimm(sp) is cr0204s & sp & cop0001=0x0 & cop0506=0x1 & cop1112=0x0 & cop1315=0x4 & clhuspimm
 {
 	local ea:$(XLEN) = clhuspimm + sp;
-	cr0204s = zext(*[ram]:1 ea);
+	cr0204s = zext(*[ram]:2 ea);
 }
 
 # c.shsp Ct,Cm(Cc)
 :c.shsp cr0204s,clhuspimm(sp) is cr0204s & sp & cop0001=0x0 & cop0506=0x3 & cop1112=0x0 & cop1315=0x4 & clhuspimm
 {
 	local ea:$(XLEN) = clhuspimm + sp;
-	*[ram]:1 ea = cr0204s:1;
+	*[ram]:2 ea = cr0204s:2;
 }
