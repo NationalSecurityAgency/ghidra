@@ -115,7 +115,6 @@ task buildCPPParser(type: JavaExec) {
 	args "${inputFile}"
 }	
 
-
 // A public task to tie together private sub-tasks
 task buildJavacc {
 	dependsOn buildCParser, buildCPPParser

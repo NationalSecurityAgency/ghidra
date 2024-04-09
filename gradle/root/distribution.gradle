@@ -485,6 +485,11 @@ task assembleDistribution (type: Copy) {
 		into "support/eclipse"
 	}
 
+	from(generateMetadataFileForMavenPublication) {
+		into "Ghidra"
+		rename("module.json", "ghidra.module")
+	}
+
 	//////////////////////////////////////
 	// Software Bill of Materials (SBOM)
 	//////////////////////////////////////

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 apply plugin: 'eclipse'
+apply plugin: 'maven-publish'
+apply plugin: 'java-platform'
 
 apply from: 'gradle/root/eclipse.gradle'
 apply from: "gradle/support/eclipseLauncher.gradle"
@@ -27,6 +29,27 @@ import org.gradle.util.GradleVersion;
 println "Java: " + JavaVersion.current()
 println "Gradle: " + GradleVersion.current().version
 checkGradleVersion()
+
+group = "ghidra"
+
+dependencies {
+	// The platform declares constraints on all components that
+	// require alignment
+	constraints {
+		subprojects { subproject ->
+			api(subproject)
+		}
+	}
+}
+
+publishing {
+	publications {
+		maven(MavenPublication) {
+			version = rootProject.version
+			from(components.javaPlatform)
+		}
+	}
+}
 
 /***************************************************************************************
  * Define the location of JAVA_HOME

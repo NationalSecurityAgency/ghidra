@@ -85,8 +85,8 @@ task generateGhidraServerClasspath {
 	outputs.upToDateWhen { false }
 	
 	def p = project
-	
-	doLast {		
+
+	doLast {
 		outfile.parentFile.mkdirs()
 		outfile.withPrintWriter { out ->
 			int idx = 0
@@ -291,7 +291,10 @@ def String searchDependenciesForJar (proj, conf, jarFile) {
 		Project dependencyProject = dependency.metaClass.respondsTo(dependency, "getPath")
 			? proj.project(dependency.path)
 			: dependency.getDependencyProject() // Remove this case after upgrading to 8.11 or later
-		Configuration depProjectConf = dependencyProject.getConfigurations().getByName(conf.getName())
+		Configuration depProjectConf = dependencyProject.getConfigurations().findByName(conf.getName())
+		if (depProjectConf == null) {
+			continue
+		}
 		relPath = findJarInDistribution(dependencyProject, depProjectConf, jarFile);
 		if (relPath != null) {
 			return relPath;

@@ -1,3 +1,6 @@
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+
 /* ###
  * IP: GHIDRA
  *
@@ -14,11 +17,11 @@
  * limitations under the License.
  */
 /*****************************************************************************************
-	This file is a "mix-in" gradle script that individual gradle projects should include if it 
+ This file is a "mix-in" gradle script that individual gradle projects should include if it
 	has content that should be included in a distribution. (Unless the content should be included
-	as an "extension", in which case it should include "extensionModule" instead) 
-	
-	A gradle project can add itself to the distribution build by adding the following to its 
+ as an "extension", in which case it should include "extensionModule" instead)
+
+ A gradle project can add itself to the distribution build by adding the following to its
 	build.gradle file:
 
 		apply from: "$rootProject.projectDir/gradle/support/distributableGhidraModule.gradle"
@@ -29,7 +32,7 @@ apply from: "$rootProject.projectDir/gradle/support/distributionCommon.gradle"
 rootProject.assembleDistribution {
 	def p = this.project
 	def zipPath = getZipPath(p)
-	
+
 	from ("${p.projectDir}/Module.manifest") {
 		into  { zipPath }
 	}
@@ -94,7 +97,7 @@ rootProject.assembleDistribution {
 	//
 	fileTree.each { File file ->
 		String filePath = getGlobalFilePathSubDirName(file)
-		
+
 		if (file.name.toLowerCase().endsWith(".md")) {
 			rootProject.assembleMarkdownToHtml {
 				from (file) {
@@ -176,6 +179,40 @@ String getGlobalFilePathSubDirName(File file) {
 
 
 plugins.withType(JavaPlugin) {
+	project.apply plugin: "maven-publish"
+	publishing {
+		publications {
+			maven(MavenPublication) {
+				version = rootProject.version
+				from(components.java)
+			}
+		}
+	}
+
+	def generateModuleFileTask = project.tasks.register("generateGradleModuleFile", Task) {
+		group = 'publish'
+		outputs.file(project.layout.buildDirectory.file("${project.name}.module"))
+
+		Task moduleJsonTask = project.tasks.generateMetadataFileForMavenPublication
+
+		doLast {
+			def module = new JsonSlurper().parse(moduleJsonTask.outputs.files.singleFile)
+
+			module["variants"].each { variant ->
+				variant["files"].each { file ->
+					file["name"] = "${project.name}.jar"
+					file["url"] = "${project.name}.jar"
+				}
+			}
+
+			def moduleJson = JsonOutput.prettyPrint(JsonOutput.toJson(module))
+			def moduleJsonFile = outputs.files.singleFile
+			moduleJsonFile.text = moduleJson
+		}
+
+		dependsOn moduleJsonTask
+	}
+
 	// build up a java classpath for javadocs
 	rootProject.ghidraPath.from(sourceSets.main.compileClasspath)
 
@@ -189,7 +226,11 @@ plugins.withType(JavaPlugin) {
 		dependsOn assemble
 		def p = this.project
 		def zipPath = getZipPath(p)
-		
+
+        from(generateModuleFileTask) {
+            into { zipPath + "/lib" }
+        }
+
 		from (p.jar) {
 			// use closures for getting zip path to delay evaluation. See note at top of file.
 			into { zipPath + "/lib" }		
@@ -210,16 +251,16 @@ plugins.withType(JavaPlugin) {
 			}
 		}
 	}
-}	
+}
 
 rootProject.assembleMarkdownToHtml {
 	def p = this.project
 	def zipPath = getZipPath(p)
-	
+
 	from ("${p.projectDir}/README.md") {
 		into { zipPath }
 	}
-}
+}	
 	
 /////////////////////////////////////////////////////////////////////////////
 // Native 

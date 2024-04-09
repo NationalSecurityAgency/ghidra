@@ -157,6 +157,8 @@ artifacts {
 	Provide test dependencies here so each build file does not have to.
 */  
 dependencies {
+	api(platform(project(":")))
+
 	integrationTestImplementation "org.hamcrest:hamcrest:2.2"
 
 	testImplementation "org.hamcrest:hamcrest:2.2"
