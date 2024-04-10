@@ -90,6 +90,7 @@ class KeyBindingInputDialog extends DialogComponentProvider implements KeyEntryL
 	}
 
 	void setKeyStroke(KeyStroke ks) {
+		this.ks = ks;
 		kbField.setKeyStroke(ks);
 	}
 }

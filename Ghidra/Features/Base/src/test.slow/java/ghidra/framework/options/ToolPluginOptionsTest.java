@@ -346,9 +346,13 @@ public class ToolPluginOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private String clearKeyBinding(Options options) {
 		String keyBindingName = "Go To Next Function (CodeBrowserPlugin)";
-		KeyStroke ks = options.getKeyStroke(keyBindingName, null);
+		ActionTrigger actionTrigger = options.getActionTrigger(keyBindingName, null);
+		assertNotNull(actionTrigger);
+
+		KeyStroke ks = actionTrigger.getKeyStroke();
 		assertNotNull(ks);
-		options.setKeyStroke(keyBindingName, null);
+
+		options.setActionTrigger(keyBindingName, null);
 		return keyBindingName;
 	}
 
@@ -378,7 +382,12 @@ public class ToolPluginOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void verifyKeyBindingIsStillCleared(Options options, String optionName) {
-		KeyStroke ksValue = options.getKeyStroke(optionName, null);
+		ActionTrigger actionTrigger = options.getActionTrigger(optionName, null);
+		if (actionTrigger == null) {
+			return;
+		}
+
+		KeyStroke ksValue = actionTrigger.getKeyStroke();
 		assertNull(ksValue);
 	}
 

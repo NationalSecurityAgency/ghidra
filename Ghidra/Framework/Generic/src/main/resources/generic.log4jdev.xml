@@ -32,13 +32,10 @@
 		<logger name="org.jdom" level="WARN"/>
 		
 	    <logger name="generic.help" level="DEBUG"/>	  	
+	    <logger name="generic.random" level="WARN"/>
 		<logger name="generic.watchdog" level="DEBUG" />     
-		
-		<logger name="docking.help" level="DEBUG"/>
-		<logger name="docking.event.mouse" level="DEBUG" />
-		<logger name="docking.framework" level="DEBUG" />
-		<logger name="docking.widgets.table" level="DEBUG" />
-		<logger name="docking.widgets.filechooser" level="DEBUG" />
+				
+		<logger name="docking" level="DEBUG"/>
 		
 		<logger name="ghidra.feature.fid" level="INFO" />
 		<logger name="ghidra.framework" level="DEBUG"/>
@@ -57,8 +54,6 @@
 		<!-- Ignore warnings about missing content classes in test env -->
 		<logger name="ghidra.framework.project.tool.GhidraToolTemplate" level="ERROR"/>
 		
-		<logger name="functioncalls" level="DEBUG" />
-		<logger name="generic.random" level="WARN"/>
 		<logger name="ghidra.app.plugin.core.progmgr.ProgramManagerPlugin" level="WARN"/>
 		<logger name="ghidra.net" level="WARN"/>		
 		<logger name="ghidra.app.plugin.core.misc.RecoverySnapshotMgrPlugin" level="INFO"/>		
@@ -77,8 +72,10 @@
 		<logger name="ghidra.app.script" level="INFO" />
 		<logger name="ghidra.app.util.importer" level="DEBUG" />
 		<logger name="ghidra.app.util.opinion" level="DEBUG" />
-		<logger name="ghidra.util.classfinder" level="DEBUG" />			
+		<logger name="ghidra.util.classfinder" level="DEBUG" />		
+		<logger name="ghidra.util.extensions" level="DEBUG" />
 		<logger name="ghidra.util.task" level="DEBUG" />		
+		<logger name="functioncalls" level="DEBUG" />
 		<logger name="org.jungrapht.visualization" level="WARN" /> 
 		<logger name="org.jungrapht.visualization.DefaultVisualizationServer" level="DEBUG" /> 
 

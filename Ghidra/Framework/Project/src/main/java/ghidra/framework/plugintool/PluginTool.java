@@ -1402,7 +1402,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 	protected void restoreOptionsFromXml(Element root) {
 		optionsMgr.setConfigState(root.getChild("OPTIONS"));
-		toolActions.restoreKeyBindings();
+		toolActions.optionsRebuilt();
 		setToolOptionsHelpLocation();
 	}
 
@@ -1418,7 +1418,6 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 	protected void restorePluginsFromXml(Element elem) throws PluginException {
 		pluginMgr.restorePluginsFromXml(elem);
-
 	}
 
 	PluginEvent[] getLastEvents() {
@@ -1551,10 +1550,6 @@ public abstract class PluginTool extends AbstractDockingTool {
 	@Override
 	public ComponentProvider getActiveComponentProvider() {
 		return winMgr.getActiveComponentProvider();
-	}
-
-	public void refreshKeybindings() {
-		toolActions.restoreKeyBindings();
 	}
 
 	public void setUnconfigurable() {

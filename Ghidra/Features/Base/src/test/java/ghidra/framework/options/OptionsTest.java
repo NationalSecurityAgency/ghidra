@@ -19,6 +19,8 @@ import static org.junit.Assert.*;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyEditorSupport;
 import java.io.File;
@@ -35,6 +37,7 @@ import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.util.HelpLocation;
 import ghidra.util.bean.opteditor.OptionsVetoException;
 import ghidra.util.exception.InvalidInputException;
+import gui.event.MouseBinding;
 
 public class OptionsTest extends AbstractGuiTest {
 
@@ -161,10 +164,37 @@ public class OptionsTest extends AbstractGuiTest {
 
 	@Test
 	public void testSaveKeyStrokeOption() {
-		options.setKeyStroke("Foo", KeyStroke.getKeyStroke('a', 0));
+		options.setKeyStroke("Foo", KeyStroke.getKeyStroke(KeyEvent.VK_A, 0));
 		saveAndRestoreOptions();
-		assertEquals(KeyStroke.getKeyStroke('a', 0),
-			options.getKeyStroke("Foo", KeyStroke.getKeyStroke('b', 0)));
+		assertEquals(KeyStroke.getKeyStroke(KeyEvent.VK_A, 0), options.getKeyStroke("Foo", null));
+	}
+
+	@Test
+	public void testSaveActionTrigger_KeyStroke() {
+		KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_A, 0);
+		ActionTrigger trigger = new ActionTrigger(ks);
+		options.setActionTrigger("Foo", trigger);
+		saveAndRestoreOptions();
+		assertEquals(trigger, options.getActionTrigger("Foo", null));
+	}
+
+	@Test
+	public void testSaveActionTrigger_MouseBinding() {
+		MouseBinding mb = new MouseBinding(1, InputEvent.CTRL_DOWN_MASK);
+		ActionTrigger trigger = new ActionTrigger(mb);
+		options.setActionTrigger("Foo", trigger);
+		saveAndRestoreOptions();
+		assertEquals(trigger, options.getActionTrigger("Foo", null));
+	}
+
+	@Test
+	public void testSaveActionTrigger_KeyStrokeAndMouseBinding() {
+		KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_A, 0);
+		MouseBinding mb = new MouseBinding(1, InputEvent.CTRL_DOWN_MASK);
+		ActionTrigger trigger = new ActionTrigger(ks, mb);
+		options.setActionTrigger("Foo", trigger);
+		saveAndRestoreOptions();
+		assertEquals(trigger, options.getActionTrigger("Foo", null));
 	}
 
 	@Test

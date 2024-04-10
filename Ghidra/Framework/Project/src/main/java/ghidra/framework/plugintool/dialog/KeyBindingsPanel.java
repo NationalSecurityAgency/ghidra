@@ -28,8 +28,7 @@ import javax.swing.table.TableColumn;
 
 import org.apache.commons.lang3.StringUtils;
 
-import docking.DockingUtils;
-import docking.KeyEntryTextField;
+import docking.*;
 import docking.action.DockingActionIf;
 import docking.actions.*;
 import docking.tool.util.DockingToolConstants;
@@ -37,13 +36,12 @@ import docking.widgets.*;
 import docking.widgets.label.GIconLabel;
 import docking.widgets.table.*;
 import generic.theme.Gui;
-import ghidra.framework.options.Options;
-import ghidra.framework.options.ToolOptions;
+import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.util.HTMLUtilities;
-import ghidra.util.Swing;
+import ghidra.util.*;
 import ghidra.util.layout.PairLayout;
 import ghidra.util.layout.VerticalLayout;
+import gui.event.MouseBinding;
 import help.Help;
 import help.HelpService;
 import resources.Icons;
@@ -66,7 +64,8 @@ public class KeyBindingsPanel extends JPanel {
 	private JPanel infoPanel;
 	private MultiLineLabel collisionLabel;
 	private KeyBindingsTableModel tableModel;
-	private KeyEntryTextField ksField;
+	private ActionBindingListener actionBindingListener = new ActionBindingListener();
+	private ActionBindingPanel actionBindingPanel;
 	private GTableFilterPanel<DockingActionIf> tableFilterPanel;
 	private EmptyBorderButton helpButton;
 
@@ -207,11 +206,11 @@ public class KeyBindingsPanel extends JPanel {
 	}
 
 	private JPanel createKeyEntryPanel() {
-		ksField = new KeyEntryTextField(20, keyStroke -> keyStrokeChanged(keyStroke));
+		actionBindingPanel = new ActionBindingPanel(actionBindingListener);
 
 		// this is the lower panel that holds the key entry text field
 		JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		p.add(ksField);
+		p.add(actionBindingPanel);
 
 		JPanel keyPanel = new JPanel(new BorderLayout());
 
@@ -221,8 +220,7 @@ public class KeyBindingsPanel extends JPanel {
 		MultiLineLabel mlabel =
 			new MultiLineLabel("To add or change a key binding, select an action\n" +
 				"and type any key combination\n \n" +
-				"To remove a key binding, select an action and\n" +
-				"press <Enter> or <Backspace>");
+				"To remove a key binding, select an action and\n" + "press <Enter> or <Backspace>");
 		JPanel labelPanel = new JPanel();
 		labelPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 0));
 		BoxLayout bl = new BoxLayout(labelPanel, BoxLayout.X_AXIS);
@@ -334,8 +332,12 @@ public class KeyBindingsPanel extends JPanel {
 		Map<String, KeyStroke> localActionMap = new HashMap<>();
 		List<String> optionNames = keyBindingOptions.getOptionNames();
 		for (String name : optionNames) {
-			KeyStroke newKeyStroke = keyBindingOptions.getKeyStroke(name, null);
-			localActionMap.put(name, newKeyStroke);
+			ActionTrigger actionTrigger = keyBindingOptions.getActionTrigger(name, null);
+			KeyStroke optionsKs = null;
+			if (actionTrigger != null) {
+				optionsKs = actionTrigger.getKeyStroke();
+			}
+			localActionMap.put(name, optionsKs);
 		}
 		return localActionMap;
 	}
@@ -383,9 +385,9 @@ public class KeyBindingsPanel extends JPanel {
 		return action.getFullName();
 	}
 
-	private void showActionsMappedToKeyStroke(String ksName) {
+	private void showActionsMappedToKeyStroke(KeyStroke ks) {
 
-		String text = keyBindings.getActionsForKeyStrokeText(ksName);
+		String text = keyBindings.getActionsForKeyStrokeText(ks);
 		if (StringUtils.isBlank(text)) {
 			text = " ";
 		}
@@ -413,9 +415,6 @@ public class KeyBindingsPanel extends JPanel {
 
 		Map<String, KeyStroke> keyStrokesByActionName =
 			createActionNameToKeyStrokeMap(keyBindingOptions);
-		if (keyStrokesByActionName == null) {
-			return;
-		}
 
 		boolean changes = false;
 
@@ -445,7 +444,7 @@ public class KeyBindingsPanel extends JPanel {
 	/**
 	 * Processes KeyStroke entry from the text field.
 	 */
-	private void keyStrokeChanged(KeyStroke ks) {
+	private void updateKeyStroke(KeyStroke ks) {
 		clearInfoPanel();
 
 		DockingActionIf action = getSelectedAction();
@@ -458,25 +457,56 @@ public class KeyBindingsPanel extends JPanel {
 		String errorMessage = toolActions.validateActionKeyBinding(action, ks);
 		if (errorMessage != null) {
 			statusLabel.setText(errorMessage);
-			ksField.clearField();
+			actionBindingPanel.clearKeyStroke();
 			return;
 		}
 
-		String selectedActionName = getSelectedActionName();
-		if (selectedActionName != null) {
-			if (setActionKeyStroke(selectedActionName, ks)) {
-				String keyStrokeText = KeyBindingUtils.parseKeyStroke(ks);
-				showActionsMappedToKeyStroke(keyStrokeText);
-				tableModel.fireTableDataChanged();
-				changesMade(true);
-			}
+		String selectedActionName = action.getFullName();
+		if (setActionKeyStroke(selectedActionName, ks)) {
+			showActionsMappedToKeyStroke(ks);
+			tableModel.fireTableDataChanged();
+			changesMade(true);
 		}
+	}
+
+	private void updateMouseBinding(MouseBinding mb) {
+
+		clearInfoPanel();
+
+		DockingActionIf action = getSelectedAction();
+		if (action == null) {
+			statusLabel.setText("No action is selected.");
+			return;
+		}
+
+		String selectedActionName = action.getFullName();
+		if (setMouseBinding(selectedActionName, mb)) {
+			tableModel.fireTableDataChanged();
+			changesMade(true);
+		}
+	}
+
+	private boolean setMouseBinding(String actionName, MouseBinding mouseBinding) {
+
+		if (keyBindings.isMouseBindingInUse(actionName, mouseBinding)) {
+
+			String existingName = keyBindings.getActionForMouseBinding(mouseBinding);
+			String message = """
+					Mouse binding '%s' already in use by '%s'.
+					The existing binding must be cleared before it can be used again.
+					""".formatted(mouseBinding, existingName);
+			Msg.showInfo(this, actionBindingPanel, "Mouse Binding In Use", message);
+			actionBindingPanel.clearMouseBinding();
+			return false;
+		}
+
+		return keyBindings.setActionMouseBinding(actionName, mouseBinding);
 	}
 
 	// returns true if the key stroke is a new value
 	private boolean setActionKeyStroke(String actionName, KeyStroke keyStroke) {
 		if (!isValidKeyStroke(keyStroke)) {
-			ksField.setText("");
+			actionBindingPanel.clearKeyStroke();
 			return keyBindings.removeKeyStroke(actionName);
 		}
 
@@ -513,20 +543,22 @@ public class KeyBindingsPanel extends JPanel {
 			String fullActionName = getSelectedActionName();
 			if (fullActionName == null) {
 				statusLabel.setText("");
+				actionBindingPanel.setEnabled(false);
 				return;
 			}
 
+			actionBindingPanel.setEnabled(true);
+
 			helpButton.setEnabled(true);
-			KeyStroke ks = keyBindings.getKeyStroke(fullActionName);
-			String ksName = "";
 			clearInfoPanel();
 
+			KeyStroke ks = keyBindings.getKeyStroke(fullActionName);
 			if (ks != null) {
-				ksName = KeyBindingUtils.parseKeyStroke(ks);
-				showActionsMappedToKeyStroke(ksName);
+				showActionsMappedToKeyStroke(ks);
 			}
 
-			ksField.setText(ksName);
+			MouseBinding mb = keyBindings.getMouseBinding(fullActionName);
+			actionBindingPanel.setKeyBindingData(ks, mb);
 
 			// make sure the label gets enough space
 			statusLabel.setPreferredSize(
@@ -543,8 +575,7 @@ public class KeyBindingsPanel extends JPanel {
 	}
 
 	private class KeyBindingsTableModel extends AbstractSortedTableModel<DockingActionIf> {
-		private final String[] columnNames =
-			{ "Action Name", "KeyBinding", "Plugin Name" };
+		private final String[] columnNames = { "Action Name", "KeyBinding", "Plugin Name" };
 
 		private List<DockingActionIf> actions;
 
@@ -561,15 +592,23 @@ public class KeyBindingsPanel extends JPanel {
 		@Override
 		public Object getColumnValueForRow(DockingActionIf action, int columnIndex) {
 
+			String fullName = action.getFullName();
 			switch (columnIndex) {
 				case ACTION_NAME:
 					return action.getName();
 				case KEY_BINDING:
-					KeyStroke ks = keyBindings.getKeyStroke(action.getFullName());
+					String text = "";
+					KeyStroke ks = keyBindings.getKeyStroke(fullName);
 					if (ks != null) {
-						return KeyBindingUtils.parseKeyStroke(ks);
+						text += KeyBindingUtils.parseKeyStroke(ks);
 					}
-					return "";
+
+					MouseBinding mb = keyBindings.getMouseBinding(fullName);
+					if (mb != null) {
+						text += " (" + mb.getDisplayText() + ")";
+					}
+
+					return text.trim();
 				case PLUGIN_NAME:
 					return action.getOwnerDescription();
 			}
@@ -604,6 +643,19 @@ public class KeyBindingsPanel extends JPanel {
 		@Override
 		public Class<?> getColumnClass(int columnIndex) {
 			return String.class;
+		}
+	}
+
+	private class ActionBindingListener implements DockingActionInputBindingListener {
+
+		@Override
+		public void keyStrokeChanged(KeyStroke ks) {
+			updateKeyStroke(ks);
+		}
+
+		@Override
+		public void mouseBindingChanged(MouseBinding mb) {
+			updateMouseBinding(mb);
 		}
 	}
 }

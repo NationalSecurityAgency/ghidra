@@ -32,10 +32,12 @@ import docking.*;
 import docking.action.*;
 import docking.test.AbstractDockingTest;
 import docking.tool.util.DockingToolConstants;
+import ghidra.framework.options.ActionTrigger;
 import ghidra.framework.options.ToolOptions;
 import ghidra.util.Msg;
 import ghidra.util.SpyErrorLogger;
 import ghidra.util.exception.AssertException;
+import gui.event.MouseBinding;
 
 public class SharedKeyBindingDockingActionTest extends AbstractDockingTest {
 
@@ -468,7 +470,15 @@ public class SharedKeyBindingDockingActionTest extends AbstractDockingTest {
 
 	private void setSharedKeyBinding(KeyStroke newKs) {
 		ToolOptions options = getKeyBindingOptions();
-		runSwing(() -> options.setKeyStroke(SHARED_FULL_NAME, newKs));
+		runSwing(() -> {
+			ActionTrigger actionTrigger = options.getActionTrigger(SHARED_FULL_NAME, null);
+			MouseBinding existingMouseBinding = null;
+			if (actionTrigger != null) {
+				existingMouseBinding = actionTrigger.getMouseBinding();
+			}
+			ActionTrigger newTrigger = new ActionTrigger(newKs, existingMouseBinding);
+			options.setActionTrigger(SHARED_FULL_NAME, newTrigger);
+		});
 		waitForSwing();
 	}
 
@@ -496,7 +506,10 @@ public class SharedKeyBindingDockingActionTest extends AbstractDockingTest {
 
 		public SharedNameAction(String owner, KeyStroke ks) {
 			super(SHARED_NAME, owner, KeyBindingType.SHARED);
-			setKeyBindingData(new KeyBindingData(ks));
+
+			if (ks != null) {
+				setKeyBindingData(new KeyBindingData(ks));
+			}
 		}
 
 		@Override
