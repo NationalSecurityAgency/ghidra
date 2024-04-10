@@ -37,6 +37,8 @@
   <prefersplit style="inhalf">
     <register name="e4"/>
     <register name="e6"/>
+    <register name="p0"/>
+    <register name="p8"/>
   </prefersplit>
     
   <default_proto>
