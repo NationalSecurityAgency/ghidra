@@ -22,6 +22,24 @@
 
 <BODY>
 
+<H1 align="center">Ghidra 11.0.3 Change History (April 2024)</H1>
+<blockquote><p><u><B>Improvements</B></u></p>
+<ul>
+    <li><I>Decompiler</I>. Fixed v850 Decompiler treatment of global <span class="gcode">GP</span> and <span class="gcode">TP</span> registers as separate registers. (GP-4479, Issue #3515)</li>
+    <li><I>Languages</I>. Added thunk patterns for use of <span class="gcode">BTI C/CJ</span> instruction at start of AARCH64 thunk functions. (GP-3917)</li>
+    <li><I>Processors</I>. Added p0/p8 registers as prefer split to Tricore.cspec (GP-4507, Issue #3515)</li>
+</ul>
+</blockquote>
+<blockquote><p><u><B>Bugs</B></u></p>
+<ul>
+    <li><I>Build</I>. Corrected build problem that causes module src.zip files to be omitted from distribution when a <span class="gcode">externalGhidraExtension</span> is present.  This did not impact the current Public release since it does not include any such modules. (GP-4492)</li>
+    <li><I>Decompiler</I>. Fixed bug causing switch analysis to lay down jump tables with extra entries. (GP-4416)</li>
+    <li><I>Processors</I>. Fixed regression in Tricore calling convention for parameters and returns that are a smaller datatype than the full register size. (GP-4468, Issue #6354)</li>
+    <li><I>Scripting</I>. Fixed <span class="gcode">NullPointerException</span> in the <span class="gcode">RecoverClassFromRTTIScript</span> that happened for Windows programs when a class had a hierarchy at least four levels deep, with a single inheritance chain, and with the root being a virtual class. (GP-4459, Issue #6348)</li>
+    <li><I>Version Tracking</I>. Corrected potential Exception within address correlators that check function parameters. (GP-4490)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 11.0.2 Change History (March 2024)</H1>
 <blockquote><p><u><B>Improvements</B></u></p>
 <ul>
@@ -44,7 +62,7 @@
     <li><I>BSim</I>. Corrected BSim command <span class="gcode">listexes --limit</span> option processing. (GP-4362, Issue #6246)</li>
     <li><I>Build</I>. Removed unused log4j-jcl 2.16.0 jar dependency.  Updated postgresql JDBC driver jar to 42.6.2. (GP-4449)</li>
     <li><I>Debugger</I>. Removed leading slash in executable path for Windows launch options. (GP-4331)</li>
-    <li><I>Debugger:GDB</I>. Fixed issue parsing breakpoints with command lists, especially with <span class="gtitle">Use existing session (new-ui)<span class="gtitle">. (GP-4368, Issue #6257)</li>
+    <li><I>Debugger:GDB</I>. Fixed issue parsing breakpoints with command lists, especially with <span class="gtitle">Use existing session (new-ui)</span>. (GP-4368, Issue #6257)</li>
     <li><I>Debugger:Listing</I>. Auto-disassembly now ignores <span class="gcode">UNKNOWN</span> memory (fixed regression) and re-disassembles if PC lands offcut in an existing instruction. (GP-4278)</li>
     <li><I>Debugger:Recorder</I>. Changed register-recording errors to go to log only, not popup. (GP-4305)</li>
     <li><I>Decompiler</I>. The Decompiler will now convert an indirect branch into a return operation if the branch target  can be traced to the formal return address storage location. (GP-4226)</li>
