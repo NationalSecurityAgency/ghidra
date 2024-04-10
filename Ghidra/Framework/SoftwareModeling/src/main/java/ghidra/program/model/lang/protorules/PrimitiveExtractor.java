@@ -148,7 +148,7 @@ public class PrimitiveExtractor {
 	 * @param offset is the starting offset of the union within the parent
 	 * @return true if a common refinement was found and appended
 	 */
-	private boolean handleUnion(UnionDataType dt, int max, int offset) {
+	private boolean handleUnion(Union dt, int max, int offset) {
 		if (unionInvalid) {
 			return false;
 		}
@@ -232,7 +232,7 @@ public class PrimitiveExtractor {
 				return true;
 			}
 			case PcodeDataTypeManager.TYPE_UNION:
-				return handleUnion((UnionDataType) dt, max, offset);
+				return handleUnion((Union) dt, max, offset);
 			case PcodeDataTypeManager.TYPE_STRUCT:
 				break;
 			default:
