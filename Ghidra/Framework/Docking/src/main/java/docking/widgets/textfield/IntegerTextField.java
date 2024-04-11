@@ -140,6 +140,14 @@ public class IntegerTextField {
 	}
 
 	/**
+	 * Sets the accessible name for the component of this input field.
+	 * @param name the accessible name for this field
+	 */
+	public void setAccessibleName(String name) {
+		textField.getAccessibleContext().setAccessibleName(name);
+	}
+
+	/**
 	 * Removes the changes listener.
 	 *
 	 * @param listener the listener to be removed.

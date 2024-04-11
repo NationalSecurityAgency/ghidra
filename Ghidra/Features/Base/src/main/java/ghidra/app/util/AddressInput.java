@@ -77,6 +77,7 @@ public class AddressInput extends JPanel implements FocusableEditor {
 		textField.setName("JTextField");//for JUnits...
 		combo = new GComboBox<>();
 		combo.setName("JComboBox");//for JUnits...
+		combo.getAccessibleContext().setAccessibleName("Address Space");
 		add(textField, BorderLayout.CENTER);
 		//add(combo, BorderLayout.WEST);
 		comboAdded = false;
@@ -365,6 +366,14 @@ public class AddressInput extends JPanel implements FocusableEditor {
 		super.setEnabled(enabled);
 		textField.setEnabled(enabled);
 		combo.setEnabled(enabled);
+	}
+
+	/**
+	 * Sets the accessible name for this address input field.
+	 * @param name the accessible name for this address field
+	 */
+	public void setAccessibleName(String name) {
+		textField.getAccessibleContext().setAccessibleName(name);
 	}
 
 	/**
