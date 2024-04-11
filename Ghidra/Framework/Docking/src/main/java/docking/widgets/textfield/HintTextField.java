@@ -82,6 +82,14 @@ public class HintTextField extends JTextField {
 	}
 
 	/**
+	 * Sets the hint for this text field
+	 * @param hint the hint text
+	 */
+	public void setHint(String hint) {
+		this.hint = hint;
+	}
+
+	/**
 	 * Key listener allows us to check field validity on every key typed
 	 */
 	public void addListeners() {

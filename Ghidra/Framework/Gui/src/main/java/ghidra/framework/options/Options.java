@@ -116,7 +116,7 @@ public interface Options {
 	 * Note, this method should not be used for
 	 * colors and font as doing so will result in those colors and fonts becoming disconnected
 	 * to the current theme. Instead use
-	 * 
+	 *
 	 * {@link #registerThemeColorBinding(String, String, HelpLocation, String)} or
 	 * {@link #registerThemeFontBinding(String, String, HelpLocation, String)}.
 	 * @param optionName the name of the option being registered.
@@ -139,7 +139,7 @@ public interface Options {
 	 * to the current theme. Instead use
 	 * {@link #registerThemeColorBinding(String, String, HelpLocation, String)} or
 	 * {@link #registerThemeFontBinding(String, String, HelpLocation, String)}.
-	 * 
+	 *
 	 * @param optionName the name of the option being registered.
 	 * @param type the OptionType for this options.
 	 * @param defaultValue the defaultValue for the option. In this version of the method, the default
@@ -166,7 +166,7 @@ public interface Options {
 	 * may be thrown.  This API will not use the supplier when in headless mode, this avoiding the
 	 * creation of GUI components.  For this to work correctly, clients using custom property
 	 * editors must defer construction of the editor until the supplier is called.
-	 * 
+	 *
 	 * @param optionName the name of the option being registered.
 	 * @param type the OptionType for this options.
 	 * @param defaultValue the defaultValue for the option. In this version of the method, the default
@@ -392,15 +392,26 @@ public interface Options {
 	public Font getFont(String optionName, Font defaultValue);
 
 	/**
-	 * Get the KeyStrokg for the given action name.
+	 * Get the KeyStroke for the given action name.
 	 * @param optionName the option name
 	 * @param defaultValue value that is stored and returned if there is no
 	 * option with the given name
 	 * @return KeyStroke option
 	 * @throws IllegalArgumentException is a option exists with the given
 	 * name but it is not a KeyStroke
+	 * @deprecated use {@link #getActionTrigger(String, ActionTrigger)} instead
 	 */
+	@Deprecated(since = "11.1", forRemoval = true)
 	public KeyStroke getKeyStroke(String optionName, KeyStroke defaultValue);
+
+	/**
+	 * Get the {@link ActionTrigger} for the given full action name.
+	 * @param optionName the action name
+	 * @param defaultValue value that is stored and returned if there is no
+	 * option with the given name
+	 * @return the action trigger
+	 */
+	public ActionTrigger getActionTrigger(String optionName, ActionTrigger defaultValue);
 
 	/**
 	 * Get the string value for the given option name.
@@ -507,8 +518,19 @@ public interface Options {
 	 * @param value KeyStroke to set
 	 * @throws IllegalArgumentException if a option with the given
 	 * name already exists, but it is not a KeyStroke
+	 * @deprecated use {@link #setActionTrigger(String, ActionTrigger)} instead
 	 */
+	@Deprecated(since = "11.1", forRemoval = true)
 	public void setKeyStroke(String optionName, KeyStroke value);
+
+	/**
+	 * Sets the action trigger value for the option
+	 * @param optionName name of the option
+	 * @param value action trigger to set
+	 * @throws IllegalArgumentException if a option with the given
+	 * name already exists, but it is not an action trigger
+	 */
+	public void setActionTrigger(String optionName, ActionTrigger value);
 
 	/**
 	 * Set the String value for the option.
@@ -570,14 +592,14 @@ public interface Options {
 
 	/**
 	 * Restores <b>all</b> options contained herein to their default values.
-	 * 
+	 *
 	 * @see #restoreDefaultValue(String)
 	 */
 	public void restoreDefaultValues();
 
 	/**
 	 * Restores the option denoted by the given name to its default value.
-	 * 
+	 *
 	 * @param optionName The name of the option to restore
 	 * @see #restoreDefaultValues()
 	 */
@@ -585,11 +607,11 @@ public interface Options {
 
 	/**
 	 * Returns a Options object that is a sub-options of this options.
-	 * 
+	 *
 	 * <p>Note: the option path can have {@link Options#DELIMITER} characters which will be
 	 * used to create a hierarchy with each element in the path resulting in sub-option of the
 	 * previous path element.
-	 * 
+	 *
 	 * @param path the path for the sub-options object
 	 * @return an Options object that is a sub-options of this options
 	 */

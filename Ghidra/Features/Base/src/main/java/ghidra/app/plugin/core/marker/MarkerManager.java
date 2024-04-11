@@ -247,6 +247,9 @@ public class MarkerManager implements MarkerService {
 	void navigateTo(Navigatable navigatable, Program program, int x, int y, int viewHeight,
 			AddressIndexMap addrMap) {
 		MarkerSetCacheEntry entry = markerSetCache.get(program);
+		if (entry == null) {
+			return; // this can happen when no program is open
+		}
 
 		ProgramLocation loc = entry.getProgramLocation(y, viewHeight, addrMap, x);
 		getGoToService();

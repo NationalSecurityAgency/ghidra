@@ -29,8 +29,7 @@ import javax.swing.*;
 import org.apache.commons.collections4.map.LazyMap;
 import org.jdom.Element;
 
-import docking.action.ActionContextProvider;
-import docking.action.DockingActionIf;
+import docking.action.*;
 import docking.actions.*;
 import docking.widgets.PasswordDialog;
 import generic.util.WindowUtilities;
@@ -41,6 +40,7 @@ import ghidra.util.*;
 import ghidra.util.datastruct.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.SwingUpdateManager;
+import gui.event.MouseBinding;
 import help.Help;
 import help.HelpService;
 import util.CollectionUtils;
@@ -707,7 +707,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 	/**
 	 * Get the local actions installed on the given provider
-	 * 
+	 *
 	 * @param provider the provider
 	 * @return an iterator over the actions
 	 */
@@ -754,7 +754,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * Returns any action that is bound to the given keystroke for the tool associated with this
 	 * DockingWindowManager instance.
 	 *
-	 * @param keyStroke The keystroke to check for key bindings.
+	 * @param keyStroke The keystroke to check for a bound action.
 	 * @return The action that is bound to the keystroke, or null of there is no binding for the
 	 *         given keystroke.
 	 */
@@ -764,6 +764,24 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			// Using a cast here; it didn't make sense to include this 'getAction' on the
 			// DockingToolActions
 			return ((ToolActions) toolActions).getAction(keyStroke);
+		}
+		return null;
+	}
+
+	/**
+	 * Returns any action that is bound to the given mouse binding for the tool associated with this
+	 * DockingWindowManager instance.
+	 *
+	 * @param mouseBinding The mouse binding to check for a bound action.
+	 * @return The action associated with the mouse binding , or null of there is no binding for the
+	 *         given keystroke.
+	 */
+	Action getActionForMouseBinding(MouseBinding mouseBinding) {
+		DockingToolActions toolActions = tool.getToolActions();
+		if (toolActions instanceof ToolActions) {
+			// Using a cast here; it didn't make sense to include this 'getAction' on the
+			// DockingToolActions
+			return ((ToolActions) toolActions).getAction(mouseBinding);
 		}
 		return null;
 	}
@@ -1189,8 +1207,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			return;
 		}
 
-		tool.getToolActions()
-				.removeActions(DOCKING_WINDOWS_OWNER);
+		tool.getToolActions().removeActions(DOCKING_WINDOWS_OWNER);
 
 		Map<String, List<ComponentPlaceholder>> permanentMap =
 			LazyMap.lazyMap(new HashMap<>(), menuName -> new ArrayList<>());
@@ -1206,12 +1223,10 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 			String subMenuName = provider.getWindowSubMenuName();
 			if (provider.isTransient() && !provider.isSnapshot()) {
-				transientMap.get(subMenuName)
-						.add(placeholder);
+				transientMap.get(subMenuName).add(placeholder);
 			}
 			else {
-				permanentMap.get(subMenuName)
-						.add(placeholder);
+				permanentMap.get(subMenuName).add(placeholder);
 			}
 		}
 		promoteSingleMenuGroups(permanentMap);
@@ -1225,8 +1240,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	private boolean isWindowMenuShowing() {
-		MenuElement[] selectedPath = MenuSelectionManager.defaultManager()
-				.getSelectedPath();
+		MenuElement[] selectedPath = MenuSelectionManager.defaultManager().getSelectedPath();
 		if (selectedPath == null || selectedPath.length == 0) {
 			return false;
 		}
@@ -1282,8 +1296,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 			List<ComponentPlaceholder> list = lazyMap.get(key);
 			if (list.size() == 1) {
-				lazyMap.get(null /*submenu name*/)
-						.add(list.get(0));
+				lazyMap.get(null /*submenu name*/).add(list.get(0));
 				lazyMap.remove(key);
 			}
 		}
@@ -1422,10 +1435,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		for (Entry<ComponentProvider, ComponentPlaceholder> entry : entrySet) {
 			ComponentProvider provider = entry.getKey();
 			ComponentPlaceholder placeholder = entry.getValue();
-			if (provider.getOwner()
-					.equals(focusOwner) &&
-				provider.getName()
-						.equals(focusName)) {
+			if (provider.getOwner().equals(focusOwner) && provider.getName().equals(focusName)) {
 				focusReplacement = placeholder;
 				break; // found one!
 			}
@@ -1502,7 +1512,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 	/**
 	 * Clears the docking window manager's notion of the active provider. This is used
-	 * when a component that is not contained within a dockable component gets focus 
+	 * when a component that is not contained within a dockable component gets focus
 	 * (e.g., JTabbedPanes for stacked components).
 	 */
 	private void deactivateFocusedComponent() {
@@ -1552,8 +1562,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
 
-		Window win = KeyboardFocusManager.getCurrentKeyboardFocusManager()
-				.getActiveWindow();
+		Window win = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
 		if (!isMyWindow(win)) {
 			return;
 		}
@@ -1693,8 +1702,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			toolPreferencesElement.getChildren(PreferenceState.PREFERENCE_STATE_NAME);
 		for (Object name : children) {
 			Element preferencesElement = (Element) name;
-			preferenceStateMap.put(preferencesElement.getAttribute("NAME")
-					.getValue(),
+			preferenceStateMap.put(preferencesElement.getAttribute("NAME").getValue(),
 				new PreferenceState(preferencesElement));
 		}
 	}
@@ -1954,7 +1962,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 		/*
 		 	Note: Which window should be the parent of the dialog when the user does not specify?
-		
+
 		 	Some use cases; a dialog is shown from:
 		 		1) A toolbar action
 		 		2) A component provider's code
@@ -1962,7 +1970,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		 		4) A background thread
 		 		5) The help window
 		 		6) A modal password dialog appears over the splash screen
-		
+
 		 	It seems like the parent should be the active window for 1-2.
 		 	Case 3 should probably use the window of the dialog provider.
 		 	Case 4 should probably use the main tool frame, since the user may be
@@ -1970,12 +1978,12 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		 	active window, we can default to the tool's frame.
 		 	Case 5 should use the help window.
 		 	Case 6 should use the splash screen as the parent.
-		
+
 		 	We have not yet solidified how we should parent.  This documentation is meant to
 		 	move us towards clarity as we find Use Cases that don't make sense.  (Once we
 		 	finalize our understanding, we should update the javadoc to list exactly where
 		 	the given Dialog Component will be shown.)
-		
+
 		 	Use Case
 		 		A -The user presses an action on a toolbar from a window on screen 1, while the
 		 		   main tool frame is on screen 2.  We want the popup window to appear on screen
@@ -1994,12 +2002,12 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		 		E -A long-running API shows a non-modal progress dialog.  This API then shows a
 		 		   results dialog which is also non-modal.  We do not want to parent the new dialog
 		 		   to the original dialog, since it is a progress dialog that will go away.
-		
-		
+
+
 		 	For now, the easiest mental model to use is to always prefer the active non-transient
 		 	window so that a dialog will appear in the user's view.  If we find a case where this is
 		 	not desired, then document it here.
-		
+
 		 */
 
 		DockingWindowManager dwm = getActiveInstance();
@@ -2183,8 +2191,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 		setStatusText(text);
 		if (beep) {
-			Toolkit.getDefaultToolkit()
-					.beep();
+			Toolkit.getDefaultToolkit().beep();
 		}
 	}
 
@@ -2201,8 +2208,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	 * A convenience method to make an attention-grabbing noise to the user
 	 */
 	public static void beep() {
-		Toolkit.getDefaultToolkit()
-				.beep();
+		Toolkit.getDefaultToolkit().beep();
 	}
 
 	/*
@@ -2274,8 +2280,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		if (includeMain) {
 			winList.add(root.getMainWindow());
 		}
-		Iterator<DetachedWindowNode> it = root.getDetachedWindows()
-				.iterator();
+		Iterator<DetachedWindowNode> it = root.getDetachedWindows().iterator();
 		while (it.hasNext()) {
 			DetachedWindowNode node = it.next();
 			Window win = node.getWindow();
@@ -2450,8 +2455,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			defaultContextProviderMap.entrySet();
 
 		for (Entry<Class<? extends ActionContext>, ActionContextProvider> entry : entrySet) {
-			contextMap.put(entry.getKey(), entry.getValue()
-					.getActionContext(null));
+			contextMap.put(entry.getKey(), entry.getValue().getActionContext(null));
 		}
 		return contextMap;
 	}
@@ -2472,7 +2476,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 			return context;
 		}
 
-		// Some actions work on a non-active, default component provider. See if this action 
+		// Some actions work on a non-active, default component provider. See if this action
 		// supports that.
 		if (action.supportsDefaultContext()) {
 			context = getDefaultContext(action.getContextClass());

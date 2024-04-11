@@ -30,6 +30,7 @@ import org.apache.commons.lang3.StringUtils;
 import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.dnd.GenericDataFlavor;
+import docking.dnd.StringTransferable;
 import docking.widgets.fieldpanel.Layout;
 import docking.widgets.fieldpanel.internal.*;
 import generic.text.TextLayoutGraphics;
@@ -750,7 +751,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 // Inner Classes
 //==================================================================================================
 
-	private static class LabelStringTransferable implements Transferable {
+	private static class LabelStringTransferable extends StringTransferable {
 
 		public static final DataFlavor labelStringFlavor = new GenericDataFlavor(
 			DataFlavor.javaJVMLocalObjectMimeType + "; class=java.lang.String",
@@ -759,20 +760,18 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		private final DataFlavor[] flavors = { labelStringFlavor, DataFlavor.stringFlavor };
 		private final List<DataFlavor> flavorList = Arrays.asList(flavors);
 
-		private String symbolName;
-
 		LabelStringTransferable(String name) {
-			this.symbolName = name;
+			super(name);
 		}
 
 		@Override
 		public Object getTransferData(DataFlavor flavor)
 				throws UnsupportedFlavorException, IOException {
 			if (flavor.equals(labelStringFlavor)) {
-				return symbolName;
+				return data;
 			}
 			if (flavor.equals(DataFlavor.stringFlavor)) {
-				return symbolName;
+				return data;
 			}
 			throw new UnsupportedFlavorException(flavor);
 		}
@@ -788,7 +787,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		}
 	}
 
-	private static class NonLabelStringTransferable implements Transferable {
+	private static class NonLabelStringTransferable extends StringTransferable {
 
 		public static final DataFlavor nonLabelStringFlavor = new GenericDataFlavor(
 			DataFlavor.javaJVMLocalObjectMimeType + "; class=java.lang.String",
@@ -797,9 +796,11 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		private final DataFlavor[] flavors = { nonLabelStringFlavor, DataFlavor.stringFlavor };
 		private final List<DataFlavor> flavorList = Arrays.asList(flavors);
 
-		private String text;
-
 		NonLabelStringTransferable(String[] text) {
+			super(combine(text));
+		}
+
+		private static String combine(String[] text) {
 			StringBuilder buildy = new StringBuilder();
 			for (String string : text) {
 				if (buildy.length() > 0) {
@@ -807,21 +808,21 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 				}
 				buildy.append(string);
 			}
-			this.text = buildy.toString();
+			return buildy.toString();
 		}
 
 		NonLabelStringTransferable(String text) {
-			this.text = text;
+			super(text);
 		}
 
 		@Override
 		public Object getTransferData(DataFlavor flavor)
 				throws UnsupportedFlavorException, IOException {
 			if (flavor.equals(nonLabelStringFlavor)) {
-				return text;
+				return data;
 			}
 			if (flavor.equals(DataFlavor.stringFlavor)) {
-				return text;
+				return data;
 			}
 			throw new UnsupportedFlavorException(flavor);
 		}

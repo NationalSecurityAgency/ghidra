@@ -15,21 +15,27 @@
  */
 package docking.action;
 
+import java.util.Objects;
+
 import javax.swing.KeyStroke;
 
 import docking.KeyBindingPrecedence;
 import docking.actions.KeyBindingUtils;
+import ghidra.framework.options.ActionTrigger;
+import gui.event.MouseBinding;
 
 /**
- * An object that contains a key stroke and the precedence for when that key stroke should be used.
- * 
- * <p>Note: this class creates key strokes that work on key {@code pressed}.  This effectively
+ * A class for storing an action's key stroke, mouse binding or both.
+ * <p>
+ * Note: this class creates key strokes that work on key {@code pressed}.  This effectively
  * normalizes all client key bindings to work on the same type of key stroke (pressed, typed or
  * released).
  */
 public class KeyBindingData {
 	private KeyStroke keyStroke;
-	private KeyBindingPrecedence keyBindingPrecedence;
+	private KeyBindingPrecedence keyBindingPrecedence = KeyBindingPrecedence.DefaultLevel;
+
+	private MouseBinding mouseBinding;
 
 	public KeyBindingData(KeyStroke keyStroke) {
 		this(keyStroke, KeyBindingPrecedence.DefaultLevel);
@@ -44,14 +50,41 @@ public class KeyBindingData {
 	}
 
 	/**
+	 * Constructs an instance of this class that uses a mouse binding instead of a key stroke.
+	 * @param mouseBinding the mouse binding.
+	 */
+	public KeyBindingData(MouseBinding mouseBinding) {
+		this.mouseBinding = Objects.requireNonNull(mouseBinding);
+	}
+
+	/**
 	 * Creates a key stroke from the given text.  See
 	 * {@link KeyBindingUtils#parseKeyStroke(KeyStroke)}.   The key stroke created for this class
 	 * will always be a key {@code pressed} key stroke.
-	 * 
+	 *
 	 * @param keyStrokeString the key stroke string to parse
 	 */
 	public KeyBindingData(String keyStrokeString) {
 		this(parseKeyStrokeString(keyStrokeString));
+	}
+
+	/**
+	 * Creates a key binding data with the given action trigger.
+	 * @param actionTrigger the trigger; may not be null
+	 */
+	public KeyBindingData(ActionTrigger actionTrigger) {
+		Objects.requireNonNull(actionTrigger);
+		this.keyStroke = actionTrigger.getKeyStroke();
+		this.mouseBinding = actionTrigger.getMouseBinding();
+	}
+
+	public KeyBindingData(KeyStroke keyStroke, KeyBindingPrecedence precedence) {
+		if (precedence == KeyBindingPrecedence.SystemActionsLevel) {
+			throw new IllegalArgumentException(
+				"Can't set precedence to System KeyBindingPrecedence");
+		}
+		this.keyStroke = Objects.requireNonNull(keyStroke);
+		this.keyBindingPrecedence = Objects.requireNonNull(precedence);
 	}
 
 	private static KeyStroke parseKeyStrokeString(String keyStrokeString) {
@@ -62,13 +95,33 @@ public class KeyBindingData {
 		return keyStroke;
 	}
 
-	public KeyBindingData(KeyStroke keyStroke, KeyBindingPrecedence precedence) {
-		if (precedence == KeyBindingPrecedence.SystemActionsLevel) {
-			throw new IllegalArgumentException(
-				"Can't set precedence to System KeyBindingPrecedence");
+	/**
+	 * Returns a key binding data object that matches the given trigger.  If the existing key 
+	 * binding object already matches the new trigger, then the existing key binding data is 
+	 * returned.  If the new trigger is null, the null will be returned.
+	 * 
+	 * @param kbData the existing key binding data; my be null
+	 * @param newTrigger the new action trigger; may be null
+	 * @return a key binding data based on the new action trigger; may be null
+	 */
+	public static KeyBindingData update(KeyBindingData kbData, ActionTrigger newTrigger) {
+		if (kbData == null) {
+			if (newTrigger == null) {
+				return null; // no change
+			}
+			return new KeyBindingData(newTrigger); // trigger added
 		}
-		this.keyStroke = keyStroke;
-		this.keyBindingPrecedence = precedence;
+
+		if (newTrigger == null) {
+			return null; // trigger has been cleared
+		}
+
+		ActionTrigger existingTrigger = kbData.getActionTrigger();
+		if (existingTrigger.equals(newTrigger)) {
+			return kbData;
+		}
+
+		return new KeyBindingData(newTrigger);
 	}
 
 	/**
@@ -87,10 +140,56 @@ public class KeyBindingData {
 		return keyBindingPrecedence;
 	}
 
+	/**
+	 * Returns the mouse binding assigned to this key binding data.
+	 * @return the mouse binding; may be null
+	 */
+	public MouseBinding getMouseBinding() {
+		return mouseBinding;
+	}
+
+	/**
+	 * Creates a new action trigger with the values of this class
+	 * @return the action trigger
+	 */
+	public ActionTrigger getActionTrigger() {
+		return new ActionTrigger(keyStroke, mouseBinding);
+	}
+
 	@Override
 	public String toString() {
 		return getClass().getSimpleName() + "[KeyStroke=" + keyStroke + ", precedence=" +
-			keyBindingPrecedence + "]";
+			keyBindingPrecedence + ", MouseBinding=" + mouseBinding + "]";
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(keyBindingPrecedence, keyStroke, mouseBinding);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+
+		KeyBindingData other = (KeyBindingData) obj;
+		if (keyBindingPrecedence != other.keyBindingPrecedence) {
+			return false;
+		}
+		if (!Objects.equals(keyStroke, other.keyStroke)) {
+			return false;
+		}
+		if (!Objects.equals(mouseBinding, other.mouseBinding)) {
+			return false;
+		}
+		return true;
 	}
 
 	static KeyBindingData createSystemKeyBindingData(KeyStroke keyStroke) {
@@ -118,8 +217,15 @@ public class KeyBindingData {
 
 		KeyBindingPrecedence precedence = newKeyBindingData.getKeyBindingPrecedence();
 		if (precedence == KeyBindingPrecedence.SystemActionsLevel) {
-			return createSystemKeyBindingData(KeyBindingUtils.validateKeyStroke(keyBinding));
+			KeyBindingData kbd =
+				createSystemKeyBindingData(KeyBindingUtils.validateKeyStroke(keyBinding));
+			kbd.mouseBinding = newKeyBindingData.mouseBinding;
+			return kbd;
 		}
-		return new KeyBindingData(KeyBindingUtils.validateKeyStroke(keyBinding), precedence);
+
+		KeyBindingData kbd =
+			new KeyBindingData(KeyBindingUtils.validateKeyStroke(keyBinding), precedence);
+		kbd.mouseBinding = newKeyBindingData.mouseBinding;
+		return kbd;
 	}
 }

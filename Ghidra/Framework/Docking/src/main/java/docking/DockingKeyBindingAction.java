@@ -30,10 +30,9 @@ import docking.actions.KeyBindingUtils;
  */
 public abstract class DockingKeyBindingAction extends AbstractAction {
 
+	protected Tool tool;
 	protected DockingActionIf dockingAction;
-
-	protected final KeyStroke keyStroke;
-	protected final Tool tool;
+	protected KeyStroke keyStroke;
 
 	public DockingKeyBindingAction(Tool tool, DockingActionIf action, KeyStroke keyStroke) {
 		super(KeyBindingUtils.parseKeyStroke(keyStroke));
@@ -42,14 +41,9 @@ public abstract class DockingKeyBindingAction extends AbstractAction {
 		this.keyStroke = keyStroke;
 	}
 
-	KeyStroke getKeyStroke() {
-		return keyStroke;
-	}
-
 	@Override
 	public boolean isEnabled() {
-		// always enable; this is a reserved binding and cannot be disabled
-		return true;
+		return true; // always enable; this is a internal action that cannot be disabled
 	}
 
 	public abstract KeyBindingPrecedence getKeyBindingPrecedence();

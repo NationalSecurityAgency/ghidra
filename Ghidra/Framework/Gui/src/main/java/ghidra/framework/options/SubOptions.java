@@ -64,8 +64,8 @@ public class SubOptions implements Options {
 		Set<String> childCategories = AbstractOptions.getChildCategories(optionPaths);
 		List<Options> childOptions = new ArrayList<>(childCategories.size());
 		for (String categoryName : childCategories) {
-			childOptions.add(new SubOptions(options, categoryName, prefix + categoryName +
-				DELIMITER));
+			childOptions.add(
+				new SubOptions(options, categoryName, prefix + categoryName + DELIMITER));
 		}
 		return childOptions;
 	}
@@ -171,6 +171,11 @@ public class SubOptions implements Options {
 	}
 
 	@Override
+	public ActionTrigger getActionTrigger(String optionName, ActionTrigger defaultValue) {
+		return options.getActionTrigger(prefix + optionName, defaultValue);
+	}
+
+	@Override
 	public String getString(String optionName, String defaultValue) {
 		return options.getString(prefix + optionName, defaultValue);
 	}
@@ -233,6 +238,11 @@ public class SubOptions implements Options {
 	@Override
 	public void setKeyStroke(String optionName, KeyStroke value) {
 		options.setKeyStroke(prefix + optionName, value);
+	}
+
+	@Override
+	public void setActionTrigger(String optionName, ActionTrigger value) {
+		options.setActionTrigger(prefix + optionName, value);
 	}
 
 	@Override
