@@ -59,7 +59,7 @@ import sarif.io.SarifIO;
 	packageName = MiscellaneousPluginPackage.NAME,
 	category = PluginCategoryNames.ANALYSIS,
 	shortDescription = "Sarif Plugin.",
-	description = "From sarif parsing to DL modelling"
+	description = "SARIF parsing and visualization plugin."
 )
 //@formatter:on
 

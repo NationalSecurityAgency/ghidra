@@ -41,8 +41,8 @@ public class SarifObject implements IsfObject {
 		if (SARIF) {
 			message = new JsonObject();
 			message.addProperty("text", key);
-			kind = "INFORMATIONAL";
-			level = "NONE";
+			kind = "informational";  // convention specifies lower-case
+			level = "none";
 			ruleId = ruleKey;
 			properties = new JsonObject();
 			properties.add("additionalProperties", element);
