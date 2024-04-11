@@ -97,38 +97,35 @@ macro subtraction_flags1(register, operand, result) {
 
 macro adc(op1) {
 
-	local result:2 = zext(A) + zext(op1) + zext($(C_FLAG));
-
 	if($(D_FLAG) == 0) goto <NOT_DECIMAL>;
 #<DECIMAL>
 
-	local AL;
-	local AH;
+	local decimalResult:2 = zext(A) + zext(op1) + zext($(C_FLAG));
 
-	AL = (A & 0x0F) + (op1 & 0x0F) + $(C_FLAG); # 10
-	AH = (A >> 4) + (op1 >> 4) + (AL > 15); # 20
+	local low_nibble:1 = (A & 0xf) + (op1 & 0xf) + zext($(C_FLAG));
 
-	local add_6_al = (AL > 9);
-	AL = AL + zext(add_6_al * 6); # AL = 16
-	result = result + zext(add_6_al * 6);
+	local adjust_low:4 = zext(low_nibble >= 0xa);
 
-	$(Z_FLAG) = ((A + op1 + $(C_FLAG)) & 0xFF) == 0;
-	$(N_FLAG) = (AH & 0x8) != 0;
+	local low_nibble2:1 = (!adjust_low:1)*(low_nibble) + (adjust_low:1)*(((low_nibble + 0x6) & 0xF) + 0x10);
 
-	# TODO: the overflow is incorrect
-	$(V_FLAG) = !(((A ^ op1) & 0x80) && ((A ^ (result:1)) & 0x80));
+	local result1:2 = zext(A & 0xf0) + zext(op1 & 0xf0) + zext(low_nibble2);
 
-	local add_6_ah = (AH > 9);
-	AH = AH + zext(add_6_ah * 6); # 26
-	#Y = AH;
+	$(N_FLAG) = (result1:1 & 0x80) != 0;
+	$(V_FLAG) = (((result1:1 ^ A) & (result1:1 ^ op1)) & 0x80) != 0;
 
-	$(C_FLAG) = (AH > 15);
-	A = ((AH << 4) | AL);
-	#Y = AL;
+	local adjust_high:2 = zext(result1 >= 0xa0);
+
+	local result2:2 = result1 + (adjust_high * 0x60);
+
+	$(C_FLAG) = (result2 >> 8) != 0;
+
+	A = result2:1;
+	$(Z_FLAG) = (decimalResult:1 == 0);
+
 	goto <END>;
 
 <NOT_DECIMAL>
-
+	local result:2 = zext(A) + zext(op1) + zext($(C_FLAG));
 	$(Z_FLAG) = (result:1 & 0xFF) == 0;
 
 	$(N_FLAG) = (result & 0x80) != 0;
