@@ -58,8 +58,10 @@ class EditStackReferencePanel extends EditReferencePanel {
 		setBorder(new EmptyBorder(0, 5, 5, 5));
 
 		stackOffset = new JTextField();
+		stackOffset.getAccessibleContext().setAccessibleName("Stack Offset");
 
 		refTypes = new GhidraComboBox<>(STACK_REF_TYPES);
+		refTypes.getAccessibleContext().setAccessibleName("Ref Types");
 
 		add(new GLabel("Stack Offset:", SwingConstants.RIGHT));
 		add(stackOffset);
@@ -129,8 +131,9 @@ class EditStackReferencePanel extends EditReferencePanel {
 			return false;
 		}
 
-		Function f = fromCodeUnit.getProgram().getFunctionManager().getFunctionContaining(
-			fromCodeUnit.getMinAddress());
+		Function f = fromCodeUnit.getProgram()
+				.getFunctionManager()
+				.getFunctionContaining(fromCodeUnit.getMinAddress());
 		if (f == null) {
 			return false;
 		}
