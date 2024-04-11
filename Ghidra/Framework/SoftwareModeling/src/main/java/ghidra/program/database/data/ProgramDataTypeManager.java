@@ -178,6 +178,15 @@ public class ProgramDataTypeManager extends ProgramBasedDataTypeManagerDB implem
 	}
 
 	@Override
+	public void dataTypeSettingsChanged(DataType dt) {
+		super.dataTypeSettingsChanged(dt);
+		if (!isCreatingDataType()) {
+			program.dataTypeChanged(getID(dt), ProgramEvent.DATA_TYPE_SETTING_CHANGED, false, null,
+				dt);
+		}
+	}
+
+	@Override
 	protected void dataTypeAdded(DataType newDt, DataType originalDataType) {
 		super.dataTypeAdded(newDt, originalDataType);
 		program.dataTypeAdded(getID(newDt), ProgramEvent.DATA_TYPE_ADDED, null, newDt);
