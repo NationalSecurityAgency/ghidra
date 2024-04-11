@@ -58,6 +58,9 @@ public class MappedDataEntry extends MappedEntry {
 
 	@Override
 	public boolean isReadOnly() {
+		if (data.isWritable()) {
+			return false;
+		}
 		if (data.isConstant()) {
 			return true;
 		}
