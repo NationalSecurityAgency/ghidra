@@ -101,7 +101,7 @@ public enum ProgramEvent implements EventType {
 	DATA_TYPE_RENAMED,					// a data type was renamed
 	DATA_TYPE_MOVED,					// a data type was moved
 	DATA_TYPE_CHANGED,					// a data type was changed
-	DATA_TYPE_SETTING_CHANGED,			// a data type's settings changed
+	DATA_TYPE_SETTING_CHANGED,			// a data type's settings changed (default or at specific address)
 	DATA_TYPE_REPLACED,					// a data type was replaced
 	SOURCE_ARCHIVE_ADDED,				// a new data type source archive was defined
 	SOURCE_ARCHIVE_CHANGED,				// a data type source archive was changed
