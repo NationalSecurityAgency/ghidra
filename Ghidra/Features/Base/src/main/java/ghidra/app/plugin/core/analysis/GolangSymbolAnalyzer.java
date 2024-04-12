@@ -654,18 +654,15 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 						FunctionDefinitionDataType signature =
 							new FunctionDefinitionDataType(callsite.calledFunc, true);
 						signature.setReturnType(newReturnType);
-						try {
-							HighFunctionDBUtil.writeOverride(callsite.callingFunc,
-								callsite.ref.getFromAddress(), signature);
-						}
-						catch (InvalidInputException e) {
-							Msg.error(this, "Failed to override call", e);
-						}
+						HighFunctionDBUtil.writeOverride(callsite.callingFunc,
+							callsite.ref.getFromAddress(), signature);
 						fixedCallsiteCount++;
 					}
 				}
-				catch (IOException e) {
-					Msg.error(this, "Failed to override call", e);
+				catch (IOException | InvalidInputException e) {
+					markupSession.logWarningAt(callsite.ref.getFromAddress(),
+						"Failed to override with RTTI: " + e.getMessage());
+					unfixedCallsiteCount++;
 				}
 			}
 		}

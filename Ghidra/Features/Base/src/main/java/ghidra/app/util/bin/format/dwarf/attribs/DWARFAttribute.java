@@ -31,7 +31,7 @@ import ghidra.app.util.bin.BinaryReader;
  */
 public enum DWARFAttribute {
 	DW_AT_sibling(0x1, reference),
-	DW_AT_location(0x2, exprloc, loclist),
+	DW_AT_location(0x2, exprloc, loclist, block),
 	DW_AT_name(0x3, string),
 	DW_AT_ordering(0x9, constant),
 	//DW_AT_subscr_data(0xa),
@@ -78,7 +78,7 @@ public enum DWARFAttribute {
 	DW_AT_discr_list(0x3d, block),
 	DW_AT_encoding(0x3e, constant),
 	DW_AT_external(0x3f, flag),
-	DW_AT_frame_base(0x40, exprloc, loclist),
+	DW_AT_frame_base(0x40, exprloc, loclist, block),
 	DW_AT_friend(0x41, reference),
 	DW_AT_identifier_case(0x42, constant),
 	DW_AT_macro_info(0x43, macptr),
