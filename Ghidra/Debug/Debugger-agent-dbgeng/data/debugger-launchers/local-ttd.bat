@@ -9,7 +9,7 @@
 ::@desc </body></html>
 ::@menu-group local
 ::@icon icon.debugger
-::@help TraceRmiLauncherServicePlugin#dbgeng
+::@help TraceRmiLauncherServicePlugin#dbgeng_ttd
 ::@env OPT_PYTHON_EXE:str="python" "Path to python" "The path to the Python 3 interpreter. Omit the full path to resolve using the system PATH."
 :: Use env instead of args, because "all args except first" is terrible to implement in batch
 ::@env OPT_TARGET_IMG:str="" "Trace (.run)" "A trace associated with the target binary executable"

@@ -38,7 +38,7 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-class MockTarget implements Target {
+public class MockTarget implements Target {
 	private final Trace trace;
 	private long snap = 0;
 
@@ -226,7 +226,7 @@ class MockTarget implements Target {
 
 	@Override
 	public boolean isBreakpointValid(TraceBreakpoint breakpoint) {
-		return false;
+		return true;
 	}
 
 	@Override

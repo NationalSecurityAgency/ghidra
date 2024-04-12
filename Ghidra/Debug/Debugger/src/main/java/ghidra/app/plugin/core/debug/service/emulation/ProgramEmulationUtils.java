@@ -92,6 +92,14 @@ public class ProgramEmulationUtils {
 			    </schema>
 			    <schema name='Module' elementResync='NEVER' attributeResync='NEVER'>
 			        <interface name='Module' />
+			        <attribute name='Sections' schema='SectionContainer' />
+			    </schema>
+			    <schema name='SectionContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='NEVER'>
+			        <element schema='Section' />
+			    </schema>
+			    <schema name='Section' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='Section' />
 			    </schema>
 			    <schema name='ThreadContainer' canonical='yes' elementResync='NEVER'
 			            attributeResync='NEVER'>
@@ -99,6 +107,7 @@ public class ProgramEmulationUtils {
 			    </schema>
 			    <schema name='Thread' elementResync='NEVER' attributeResync='NEVER'>
 			        <interface name='Thread' />
+			        <interface name='Activatable' />
 			        <interface name='Aggregate' />
 			        <attribute name='Registers' schema='RegisterContainer' />
 			    </schema>

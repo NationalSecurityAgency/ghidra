@@ -119,7 +119,9 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 		@DBAnnotatedColumn(SCHEMA_COLUMN_NAME)
 		static DBObjectColumn SCHEMA_COLUMN;
 
-		@DBAnnotatedField(column = CONTEXT_COLUMN_NAME, codec = DBTraceObjectSchemaDBFieldCodec.class)
+		@DBAnnotatedField(
+			column = CONTEXT_COLUMN_NAME,
+			codec = DBTraceObjectSchemaDBFieldCodec.class)
 		private SchemaContext context;
 		@DBAnnotatedField(column = SCHEMA_COLUMN_NAME)
 		private String schemaName;
@@ -807,7 +809,7 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 		try (LockHold hold = trace.lockWrite()) {
 			checkDuplicateThread(path, lifespan);
 			TraceObjectThread thread = doAddWithInterface(path, TraceObjectThread.class);
-			thread.setName(lifespan, display);
+			thread.setName(lifespan.withMax(Lifespan.DOMAIN.lmax()), display);
 			thread.getObject().insert(lifespan, ConflictResolution.DENY);
 			return thread;
 		}

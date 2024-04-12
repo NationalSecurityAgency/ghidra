@@ -38,7 +38,14 @@ public class HTMLFileParser {
 			String text;
 			while ((text = rdr.readLine()) != null) {
 				Line line = new Line(file, text, rdr.getLineNumber());
-				processLine(line, rdr, file, tagProcessor);
+				try {
+					processLine(line, rdr, file, tagProcessor);
+				}
+				catch (Exception e) {
+					String message =
+						"Error parsing HTML at %s:%s.".formatted(file, rdr.getLineNumber());
+					throw new IOException(message, e);
+				}
 			}
 			tagProcessor.endOfFile();
 		}

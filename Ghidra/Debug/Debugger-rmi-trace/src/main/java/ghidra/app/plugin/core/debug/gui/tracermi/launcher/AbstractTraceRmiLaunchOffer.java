@@ -441,9 +441,11 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 
 		PtyParent parent = pty.getParent();
 		PtyChild child = pty.getChild();
-		Terminal terminal = terminalService.createWithStreams(Charset.forName("UTF-8"),
+		Terminal terminal = terminalService.createWithStreams(plugin, Charset.forName("UTF-8"),
 			parent.getInputStream(), parent.getOutputStream());
-		terminal.setSubTitle(ShellUtils.generateLine(commandLine));
+
+		List<String> withoutPath = ShellUtils.removePath(commandLine);
+		terminal.setSubTitle(ShellUtils.generateLine(withoutPath));
 		TerminalListener resizeListener = new TerminalListener() {
 			@Override
 			public void resized(short cols, short rows) {
@@ -491,7 +493,7 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 
 		PtyParent parent = pty.getParent();
 		PtyChild child = pty.getChild();
-		Terminal terminal = terminalService.createWithStreams(Charset.forName("UTF-8"),
+		Terminal terminal = terminalService.createWithStreams(plugin, Charset.forName("UTF-8"),
 			parent.getInputStream(), parent.getOutputStream());
 		TerminalListener resizeListener = new TerminalListener() {
 			@Override

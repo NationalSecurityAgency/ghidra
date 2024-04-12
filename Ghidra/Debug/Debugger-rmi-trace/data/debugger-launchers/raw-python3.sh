@@ -25,7 +25,7 @@
 #@desc </body></html>
 #@menu-group raw
 #@icon icon.debugger
-#@help TraceRmiLauncherServicePlugin#gdb
+#@help TraceRmiLauncherServicePlugin#python_raw
 #@env OPT_PYTHON_EXE:str="python" "Path to python" "The path to the Python 3 interpreter. Omit the full path to resolve using the system PATH."
 #@env OPT_LANG:str="DATA:LE:64:default" "Ghidra Language" "The Ghidra LanguageID for the trace"
 #@env OPT_COMP:str="pointer64" "Ghidra Compiler" "The Ghidra CompilerSpecID for the trace"

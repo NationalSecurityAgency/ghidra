@@ -297,18 +297,13 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 	}
 
 	protected static String keyForFlag(TraceMemoryFlag flag) {
-		switch (flag) {
-			case READ:
-				return TargetMemoryRegion.READABLE_ATTRIBUTE_NAME;
-			case WRITE:
-				return TargetMemoryRegion.WRITABLE_ATTRIBUTE_NAME;
-			case EXECUTE:
-				return TargetMemoryRegion.EXECUTABLE_ATTRIBUTE_NAME;
-			case VOLATILE:
-				return KEY_VOLATILE;
-			default:
-				throw new AssertionError();
-		}
+		return switch (flag) {
+			case READ -> TargetMemoryRegion.READABLE_ATTRIBUTE_NAME;
+			case WRITE -> TargetMemoryRegion.WRITABLE_ATTRIBUTE_NAME;
+			case EXECUTE -> TargetMemoryRegion.EXECUTABLE_ATTRIBUTE_NAME;
+			case VOLATILE -> KEY_VOLATILE;
+			default -> throw new AssertionError();
+		};
 	}
 
 	@Override

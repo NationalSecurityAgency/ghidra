@@ -315,12 +315,8 @@ public enum DebuggerStaticMappingUtils {
 		if (mappingService == null) {
 			return null;
 		}
-		TraceThread curThread = coordinates.getThread();
-		if (curThread == null) {
-			return null;
-		}
-		TraceLocation dloc = new DefaultTraceLocation(curThread.getTrace(),
-			curThread, Lifespan.at(coordinates.getSnap()), pc);
+		TraceLocation dloc = new DefaultTraceLocation(coordinates.getTrace(),
+			null, Lifespan.at(coordinates.getSnap()), pc);
 		ProgramLocation sloc = mappingService.getOpenMappedLocation(dloc);
 		if (sloc == null) {
 			return null;
