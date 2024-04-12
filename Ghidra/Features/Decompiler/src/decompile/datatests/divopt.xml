@@ -1,0 +1,292 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!-- Examples of optimized division and modulo for constants
+     81 89 91 93 95 97 99 101 103 107 111 112 115 119 121 123 125 -->
+<bytechunk space="ram" offset="0x100000" readonly="true">
+f30f1efa48ba53069e6ecd0f8b94488b
+0f4889c848f7e24829d148d1e94801ca
+488b4f0848c1ea064889c848891748ba
+e10217b8c0052e7048f7e24829d148d1
+e94801ca488b4f1048c1ea064889c848
+89570848ba176881166881166848f7e2
+4829d148d1e94801ca488b4f1848c1ea
+064889c84889571048ba175860810516
+586048f7e24829d148d1e94801ca488b
+4f2048c1ea064889c84889571848ba31
+d28e150823ed5848f7e24829d148d1e9
+4801ca488b4f2848c1ea064889c84889
+572048bad151812fae7ed05148f7e248
+29d148d1e94801ca488b4f3048c1ea06
+4889c84889572848ba15a8f52b056afd
+4a48f7e24829d148d1e94801ca488b4f
+3848c1ea064889c84889573048bae5ae
+9f2d56866f4448f7e24829d148d1e948
+01ca488b4f4048c1ea064889c8488957
+3848bac527904acecb223e48f7e24829
+d148d1e94801ca488b4f4848c1ea0648
+89c84889574048ba6ff60bb1a2343e32
+48f7e24829d148d1e94801ca488b4f50
+48c1ea064889c84889574848bab95073
+12880b352748f7e24829d148d1e94801
+ca48b9942449922449922448c1ea0648
+895750488b575848c1ea044889d048f7
+e1488b4f604889c84889575848ba07cf
+1128da6af01c48f7e24829d148d1e948
+01ca488b4f6848c1ea064889c8488957
+6048ba5d13815c13815c1348f7e24829
+d148d1e94801ca488b4f7048c1ea0648
+89c84889576848bae3fdc869be56cf0e
+48f7e24829d148d1e94801ca488b4f78
+48c1ea064889c84889577048ba11680a
+81a610680a48f7e24829d148d1e94801
+ca48c1ea0648895778488b8f80000000
+48ba77be9f1a2fdd24064889c848f7e2
+4829d148d1e94801ca48c1ea06488997
+80000000c30000000000000000000000
+f30f1efa48ba9581a75bf3c32265488b
+0f4889c848c1f93f48f7ea48c1fa0548
+29ca488b4f0848891748ba71810b5ce0
+0217b84889c848f7ea4801ca48c1f93f
+48c1fa064829ca488b4f104889570848
+ba032dd0022dd0022d4889c848c1f93f
+48f7ea48c1fa044829ca488b4f184889
+571048ba030b2cb0c0020b2c4889c848
+c1f93f48f7ea48c1fa044829ca488b4f
+204889571848ba1969c70a849176ac48
+89c848f7ea4801ca48c1f93f48c1fa06
+4829ca488b4f284889572048bae9a8c0
+17573fe8a84889c848f7ea4801ca48c1
+f93f48c1fa064829ca488b4f30488957
+2848ba0bd4fa9502b57ea54889c848f7
+ea4801ca48c1f93f48c1fa064829ca48
+8b4f384889573048ba73d7cf162bc337
+a24889c848f7ea4801ca48c1f93f48c1
+fa064829ca488b4f404889573848bae3
+134825e765119f4889c848f7ea4801ca
+48c1f93f48c1fa064829ca488b4f4848
+89574048ba67bf102b4ae323134889c8
+48c1f93f48f7ea48c1fa034829ca488b
+4f504889574848ba5da83909c4859a93
+4889c848f7ea4801ca48c1f93f48c1fa
+064829ca488b4f584889575048ba2549
+9224499224494889c848c1f93f48f7ea
+48c1fa054829ca488b4f604889575848
+bae13902455b0d9e234889c848c1f93f
+48f7ea48c1fa044829ca488b4f684889
+576048baaf8940ae8940ae894889c848
+f7ea4801ca48c1f93f48c1fa064829ca
+488b4f704889576848ba793f729aafd5
+b3434889c848f7ea48c1f93f48c1fa05
+4829ca488b4f784889577048ba093485
+40530834854889c848f7ea4801ca48c1
+f93f48c1fa064829ca48895778488b8f
+8000000048bacff753e3a59bc4204889
+c848c1f93f48f7ea48c1fa044829ca48
+899780000000c3000000000000000000
+f30f1efa488b0f488b775848ba53069e
+6ecd0f8b944889c848f7e24889c84829
+d048d1e84801c248c1ea06488d04d248
+bae10217b8c0052e70488d04c04829c1
+48890f488b4f084889c848f7e24889c8
+4829d048d1e84801c248c1ea06488d04
+92488d0442488d04c248ba1768811668
+8116684829c148894f08488b4f104889
+c848f7e24889c84829d048d1e84801c2
+48c1ea06486bd25b4829d148ba175860
+810516586048894f10488b4f184889c8
+48f7e24889c84829d048d1e84801c248
+c1ea06488d14524889d048c1e0054829
+d048ba31d28e150823ed584829c14889
+4f18488b4f204889c848f7e24889c848
+29d048d1e84801c248c1ea06488d0452
+48c1e0054829d048bad151812fae7ed0
+514829c148894f20488b4f284889c848
+f7e24889c84829d048d1e84801c248c1
+ea06488d045248c1e0054801c24829d1
+48ba15a8f52b056afd4a48894f28488b
+4f304889c848f7e24889c84829d048d1
+e84801c248c1ea06488d04524889c248
+c1e2054801d048bae5ae9f2d56866f44
+4829c148894f30488b4f384889c848f7
+e24889c84829d048d1e84801c248c1ea
+06488d0492488d0480488d048248bac5
+27904acecb223e4829c148894f38488b
+4f404889c848f7e24889c84829d048d1
+e84801c248c1ea06486bd2674829d148
+ba6ff60bb1a2343e3248894f40488b4f
+484889c848f7e24889c84829d048d1e8
+4801c248c1ea06486bd26b4829d148ba
+b9507312880b352748894f48488b4f50
+4889c848f7e24889c84829d048d1e848
+01c248c1ea06486bd26f4829d14889f2
+48c1ea0448894f5048b9942449922449
+92244889d048f7e1488d0cd500000000
+4829d148ba07cf1128da6af01c48c1e1
+044829ce488b4f60488977584889c848
+f7e24889c84829d048d1e84801c248c1
+ea06486bd2734829d148ba5d13815c13
+815c1348894f60488b4f684889c848f7
+e24889c84829d048d1e84801c248c1ea
+06486bd2774829d148bae3fdc869be56
+cf0e48894f68488b4f704889c848f7e2
+4889c84829d048d1e84801c248c1ea06
+4889d048c1e0044829d0488d04c248ba
+11680a81a610680a4829c148894f7048
+8b4f784889c848f7e24889c84829d048
+d1e84801c248c1ea06486bd27b4829d1
+48ba77be9f1a2fdd240648894f78488b
+8f800000004889c848f7e24889c84829
+d048d1e84801c248c1ea064889d048c1
+e0054829d0488d04824829c148898f80
+000000c3000000000000000000000000
+f30f1efa48ba9581a75bf3c32265488b
+0f4889c848f7ea4889c848c1f83f48c1
+fa054829c2488d04d248ba71810b5ce0
+0217b8488d04c04829c148890f488b4f
+084889c848f7ea4889c848c1f83f4801
+ca48c1fa064829c2488d0492488d0442
+488d04c248ba032dd0022dd0022d4829
+c148894f08488b4f104889c848f7ea48
+89c848c1f83f48c1fa044829c2486bd2
+5b4829d148ba030b2cb0c0020b2c4889
+4f10488b4f184889c848f7ea4889c848
+c1f83f48c1fa044829c2488d14524889
+d048c1e0054829d048ba1969c70a8491
+76ac4829c148894f18488b4f204889c8
+48f7ea4889c848c1f83f4801ca48c1fa
+064829c2488d045248c1e0054829d048
+bae9a8c017573fe8a84829c148894f20
+488b4f284889c848f7ea4889c848c1f8
+3f4801ca48c1fa064829c2488d045248
+c1e0054801c24829d148ba0bd4fa9502
+b57ea548894f28488b4f304889c848f7
+ea4889c848c1f83f4801ca48c1fa0648
+29c2488d04524889c248c1e2054801d0
+48ba73d7cf162bc337a24829c148894f
+30488b4f384889c848f7ea4889c848c1
+f83f4801ca48c1fa064829c2488d0492
+488d0480488d048248bae3134825e765
+119f4829c148894f38488b4f404889c8
+48f7ea4889c848c1f83f4801ca48c1fa
+064829c2486bd2674829d148ba67bf10
+2b4ae3231348894f40488b4f484889c8
+48f7ea4889c848c1f83f48c1fa034829
+c2486bd26b4829d148ba5da83909c485
+9a9348894f48488b4f504889c848f7ea
+4889c848c1f83f4801ca48c1fa064829
+c2486bd26f4829d148ba254992244992
+244948894f50488b4f584889c848f7ea
+4889c848c1f83f48c1fa054829c2488d
+04d5000000004829d048bae13902455b
+0d9e2348c1e0044829c148894f58488b
+4f604889c848f7ea4889c848c1f83f48
+c1fa044829c2486bd2734829d148baaf
+8940ae8940ae8948894f60488b4f6848
+89c848f7ea4889c848c1f83f4801ca48
+c1fa064829c2486bd2774829d148ba79
+3f729aafd5b34348894f68488b4f7048
+89c848f7ea4889c848c1fa0548c1f83f
+4829c24889d048c1e0044829d0488d04
+c248ba09348540530834854829c14889
+4f70488b4f784889c848f7ea4889c848
+c1f83f4801ca48c1fa064829c2486bd2
+7b4829d148bacff753e3a59bc4204889
+4f78488b8f800000004889c848f7ea48
+89c848c1f83f48c1fa044829c24889d0
+48c1e0054829d0488d04824829c14889
+8f80000000c3
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="divoptu"/>
+<symbol space="ram" offset="0x100280" name="divopti"/>
+<symbol space="ram" offset="0x100500" name="modoptu"/>
+<symbol space="ram" offset="0x100880" name="modopti"/>
+</binaryimage>
+<script>
+  <com>option integerformat dec</com>
+  <com>parse line extern void divoptu(uint8 *divu);</com>
+  <com>lo fu divoptu</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>parse line extern void divopti(int8 *divi);</com>
+  <com>lo fu divopti</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>parse line extern void modoptu(uint8 *modu);</com>
+  <com>lo fu modoptu</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>parse line extern void modopti(int8 *modi);</com>
+  <com>lo fu modopti</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Unsigned Division #1" min="1" max="1">\*divu = \*divu / 81;</stringmatch>
+<stringmatch name="Unsigned Division #2" min="1" max="1">divu\[1\] = divu\[1\] / 89;</stringmatch>
+<stringmatch name="Unsigned Division #3" min="1" max="1">divu\[2\] = divu\[2\] / 91;</stringmatch>
+<stringmatch name="Unsigned Division #4" min="1" max="1">divu\[3\] = divu\[3\] / 93;</stringmatch>
+<stringmatch name="Unsigned Division #5" min="1" max="1">divu\[4\] = divu\[4\] / 95;</stringmatch>
+<stringmatch name="Unsigned Division #6" min="1" max="1">divu\[5\] = divu\[5\] / 97;</stringmatch>
+<stringmatch name="Unsigned Division #7" min="1" max="1">divu\[6\] = divu\[6\] / 99;</stringmatch>
+<stringmatch name="Unsigned Division #8" min="1" max="1">divu\[7\] = divu\[7\] / 101;</stringmatch>
+<stringmatch name="Unsigned Division #9" min="1" max="1">divu\[8\] = divu\[8\] / 103;</stringmatch>
+<stringmatch name="Unsigned Division #10" min="1" max="1">divu\[9\] = divu\[9\] / 107;</stringmatch>
+<stringmatch name="Unsigned Division #11" min="1" max="1">divu\[10\] = divu\[10\] / 111;</stringmatch>
+<stringmatch name="Unsigned Division #12" min="1" max="1">divu\[11\] = divu\[11\] / 112;</stringmatch>
+<stringmatch name="Unsigned Division #13" min="1" max="1">divu\[12\] = divu\[12\] / 115;</stringmatch>
+<stringmatch name="Unsigned Division #14" min="1" max="1">divu\[13\] = divu\[13\] / 119;</stringmatch>
+<stringmatch name="Unsigned Division #15" min="1" max="1">divu\[14\] = divu\[14\] / 121;</stringmatch>
+<stringmatch name="Unsigned Division #16" min="1" max="1">divu\[15\] = divu\[15\] / 123;</stringmatch>
+<stringmatch name="Unsigned Division #17" min="1" max="1">divu\[16\] = divu\[16\] / 125;</stringmatch>
+<stringmatch name="Signed Division #1" min="1" max="1">\*divi = \*divi / 81;</stringmatch>
+<stringmatch name="Signed Division #2" min="1" max="1">divi\[1\] = divi\[1\] / 89;</stringmatch>
+<stringmatch name="Signed Division #3" min="1" max="1">divi\[2\] = divi\[2\] / 91;</stringmatch>
+<stringmatch name="Signed Division #4" min="1" max="1">divi\[3\] = divi\[3\] / 93;</stringmatch>
+<stringmatch name="Signed Division #5" min="1" max="1">divi\[4\] = divi\[4\] / 95;</stringmatch>
+<stringmatch name="Signed Division #6" min="1" max="1">divi\[5\] = divi\[5\] / 97;</stringmatch>
+<stringmatch name="Signed Division #7" min="1" max="1">divi\[6\] = divi\[6\] / 99;</stringmatch>
+<stringmatch name="Signed Division #8" min="1" max="1">divi\[7\] = divi\[7\] / 101;</stringmatch>
+<stringmatch name="Signed Division #9" min="1" max="1">divi\[8\] = divi\[8\] / 103;</stringmatch>
+<stringmatch name="Signed Division #10" min="1" max="1">divi\[9\] = divi\[9\] / 107;</stringmatch>
+<stringmatch name="Signed Division #11" min="1" max="1">divi\[10\] = divi\[10\] / 111;</stringmatch>
+<stringmatch name="Signed Division #12" min="1" max="1">divi\[11\] = divi\[11\] / 112;</stringmatch>
+<stringmatch name="Signed Division #13" min="1" max="1">divi\[12\] = divi\[12\] / 115;</stringmatch>
+<stringmatch name="Signed Division #14" min="1" max="1">divi\[13\] = divi\[13\] / 119;</stringmatch>
+<stringmatch name="Signed Division #15" min="1" max="1">divi\[14\] = divi\[14\] / 121;</stringmatch>
+<stringmatch name="Signed Division #16" min="1" max="1">divi\[15\] = divi\[15\] / 123;</stringmatch>
+<stringmatch name="Signed Division #17" min="1" max="1">divi\[16\] = divi\[16\] / 125;</stringmatch>
+<stringmatch name="Unsigned Modulo #1" min="1" max="1">\*modu = \*modu % 81;</stringmatch>
+<stringmatch name="Unsigned Modulo #2" min="1" max="1">modu\[1\] = modu\[1\] % 89;</stringmatch>
+<stringmatch name="Unsigned Modulo #3" min="1" max="1">modu\[2\] = modu\[2\] % 91;</stringmatch>
+<stringmatch name="Unsigned Modulo #4" min="1" max="1">modu\[3\] = modu\[3\] % 93;</stringmatch>
+<stringmatch name="Unsigned Modulo #5" min="1" max="1">modu\[4\] = modu\[4\] % 95;</stringmatch>
+<stringmatch name="Unsigned Modulo #6" min="1" max="1">modu\[5\] = modu\[5\] % 97;</stringmatch>
+<stringmatch name="Unsigned Modulo #7" min="1" max="1">modu\[6\] = modu\[6\] % 99;</stringmatch>
+<stringmatch name="Unsigned Modulo #8" min="1" max="1">modu\[7\] = modu\[7\] % 101;</stringmatch>
+<stringmatch name="Unsigned Modulo #9" min="1" max="1">modu\[8\] = modu\[8\] % 103;</stringmatch>
+<stringmatch name="Unsigned Modulo #10" min="1" max="1">modu\[9\] = modu\[9\] % 107;</stringmatch>
+<stringmatch name="Unsigned Modulo #11" min="1" max="1">modu\[10\] = modu\[10\] % 111;</stringmatch>
+<stringmatch name="Unsigned Modulo #12" min="1" max="1">modu\[11\] = modu\[11\] % 112;</stringmatch>
+<stringmatch name="Unsigned Modulo #13" min="1" max="1">modu\[12\] = modu\[12\] % 115;</stringmatch>
+<stringmatch name="Unsigned Modulo #14" min="1" max="1">modu\[13\] = modu\[13\] % 119;</stringmatch>
+<stringmatch name="Unsigned Modulo #15" min="1" max="1">modu\[14\] = modu\[14\] % 121;</stringmatch>
+<stringmatch name="Unsigned Modulo #16" min="1" max="1">modu\[15\] = modu\[15\] % 123;</stringmatch>
+<stringmatch name="Unsigned Modulo #17" min="1" max="1">modu\[16\] = modu\[16\] % 125;</stringmatch>
+<stringmatch name="Signed Modulo #1" min="1" max="1">\*modi = \*modi % 81;</stringmatch>
+<stringmatch name="Signed Modulo #2" min="1" max="1">modi\[1\] = modi\[1\] % 89;</stringmatch>
+<stringmatch name="Signed Modulo #3" min="1" max="1">modi\[2\] = modi\[2\] % 91;</stringmatch>
+<stringmatch name="Signed Modulo #4" min="1" max="1">modi\[3\] = modi\[3\] % 93;</stringmatch>
+<stringmatch name="Signed Modulo #5" min="1" max="1">modi\[4\] = modi\[4\] % 95;</stringmatch>
+<stringmatch name="Signed Modulo #6" min="1" max="1">modi\[5\] = modi\[5\] % 97;</stringmatch>
+<stringmatch name="Signed Modulo #7" min="1" max="1">modi\[6\] = modi\[6\] % 99;</stringmatch>
+<stringmatch name="Signed Modulo #8" min="1" max="1">modi\[7\] = modi\[7\] % 101;</stringmatch>
+<stringmatch name="Signed Modulo #9" min="1" max="1">modi\[8\] = modi\[8\] % 103;</stringmatch>
+<stringmatch name="Signed Modulo #10" min="1" max="1">modi\[9\] = modi\[9\] % 107;</stringmatch>
+<stringmatch name="Signed Modulo #11" min="1" max="1">modi\[10\] = modi\[10\] % 111;</stringmatch>
+<stringmatch name="Signed Modulo #12" min="1" max="1">modi\[11\] = modi\[11\] % 112;</stringmatch>
+<stringmatch name="Signed Modulo #13" min="1" max="1">modi\[12\] = modi\[12\] % 115;</stringmatch>
+<stringmatch name="Signed Modulo #14" min="1" max="1">modi\[13\] = modi\[13\] % 119;</stringmatch>
+<stringmatch name="Signed Modulo #15" min="1" max="1">modi\[14\] = modi\[14\] % 121;</stringmatch>
+<stringmatch name="Signed Modulo #16" min="1" max="1">modi\[15\] = modi\[15\] % 123;</stringmatch>
+<stringmatch name="Signed Modulo #17" min="1" max="1">modi\[16\] = modi\[16\] % 125;</stringmatch>
+</decompilertest>
