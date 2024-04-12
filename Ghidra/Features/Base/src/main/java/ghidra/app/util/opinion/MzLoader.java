@@ -294,10 +294,12 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 					// split here and join to previous
 					Address splitAddr = offAddr.add(1);
 					String oldName = block.getName();
+					String oldSourceName = block.getSourceName();
 					memory.split(block, splitAddr);
 					memory.join(blocks[i - 1], blocks[i]);
 					blocks = memory.getBlocks();
 					blocks[i].setName(oldName);
+					blocks[i].setSourceName(oldSourceName);
 					break;
 				}
 			}
