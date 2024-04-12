@@ -273,8 +273,8 @@ public class ClassSearcher {
 
 		SystemUtilities.runSwingNow(() -> fireClassListChanged());
 
-		t = (new Date()).getTime() - t;
-		String finishedMessage = "Class search complete (" + t + " ms)";
+		String finishedMessage = "Class search complete (%d ms, %d classes loaded)"
+				.formatted((new Date()).getTime() - t, extensionPoints.size());
 		monitor.setMessage(finishedMessage);
 		log.info(finishedMessage);
 	}

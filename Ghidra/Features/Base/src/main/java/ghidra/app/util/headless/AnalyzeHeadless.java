@@ -22,8 +22,7 @@ import java.net.URL;
 import java.util.*;
 
 import generic.stl.Pair;
-import ghidra.GhidraApplicationLayout;
-import ghidra.GhidraLaunchable;
+import ghidra.*;
 import ghidra.app.util.opinion.Loader;
 import ghidra.framework.*;
 import ghidra.framework.model.DomainFolder;
@@ -117,6 +116,9 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 		}
 		HeadlessOptions options = analyzer.getOptions();
 		parseOptions(options, args, optionStartIndex, ghidraURL, filesToImport);
+
+		Msg.info(AnalyzeHeadless.class,
+			"Headless startup complete (" + GhidraLauncher.getMillisecondsFromLaunch() + " ms)");
 
 		// Do the headless processing
 		try {
