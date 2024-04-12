@@ -1,0 +1,65 @@
+# V830 Family:
+# (3) Input port instructions
+# (3) Output port instructions
+
+# V810 Family:
+# (3) Input port instructions
+# (3) Output port instructions
+
+
+#####################################################
+#####		  	Input			#####
+#####################################################
+
+# IN.B disp16[reg1], reg2 - 111000rrrrrRRRRR|dddddddddddddddd
+:in.b s1631[R0004], R0509 is op1015=0x38 & R0004 & R0509; s1631
+{
+	local adr:4 = R0004 + s1631;
+	R0509 = sext(*[port]:1 adr);
+}
+
+# IN.H disp16[reg1], reg2 - 111001rrrrrRRRRR|dddddddddddddddd
+:in.h s1631[R0004], R0509 is op1015=0x39 & R0004 & R0509; s1631
+{
+	local adr:4 = R0004 + s1631;
+	R0509 = sext(*[port]:2 adr);
+}
+
+# IN.W disp16[reg1], reg2 - 111011rrrrrRRRRR|dddddddddddddddd
+:in.w s1631[R0004], R0509 is op1015=0x3B & R0004 & R0509; s1631
+{
+	local adr:4 = R0004 + s1631;
+	R0509 = *[port]:4 adr;
+}
+
+
+
+
+#####################################################
+#####		 	Output			#####
+#####################################################
+
+# OUT.B reg2, disp16[reg1] - 111100rrrrrRRRRR|dddddddddddddddd
+:out.b R0509, s1631[R0004] is op1015=0x3C & R0004 & R0509; s1631
+{
+	local adr:4 = R0004 + s1631;
+	local tmp:4 = R0509;
+	*[port]:1 adr = tmp:1;
+}
+
+# OUT.H reg2, disp16[reg1] - 111101rrrrrRRRRR|dddddddddddddddd
+:out.h R0509, s1631[R0004] is op1015=0x3D & R0004 & R0509; s1631
+{
+	local adr:4 = R0004 + s1631;
+	local tmp:4 = R0509;
+	*[port]:2 adr = tmp:2;
+}
+
+
+# OUT.W reg2, disp16[reg1] - 111111rrrrrRRRRR|dddddddddddddddd
+:out.w R0509, s1631[R0004] is op1015=0x3F & R0004 & R0509; s1631
+{
+	local adr:4 = R0004 + s1631;
+	local tmp:4 = R0509;
+	*[port]:4 adr = tmp;
+}

@@ -1,0 +1,179 @@
+# V830 Family:
+# (5) Load instructions
+# (5) Store instructions
+# (9) Data manipulation instructions
+
+# V810 Family:
+# (3) Load instructions
+# (3) Store instructions
+# (7) Data manipulation instructions
+
+
+
+#####################################################
+#####		  	Load			#####
+#####################################################
+
+
+# LD.B disp16[reg1], reg2 - 110000rrrrrRRRRR|dddddddddddddddd
+:ld.b s1631[R0004], R0509 is op1015=0x30 & R0004 & R0509; s1631
+{
+	local adr:4 = R0004 + s1631;
+	R0509 = sext(*:1 adr);
+}
+
+# LD.H disp16[reg1], reg2 - 110001rrrrrRRRRR|dddddddddddddddd
+:ld.h s1631[R0004], R0509 is op1015=0x31 & R0004 & R0509; s1631
+{
+	local adr:4 = R0004 + s1631;
+	R0509 = sext(*:2 adr);
+}
+
+# LD.W disp16[reg1], reg2 - 110011rrrrrRRRRR|dddddddddddddddd
+:ld.w s1631[R0004], R0509 is op1015=0x33 & R0004 & R0509; s1631
+{
+	local adr:4 = R0004 + s1631;
+	R0509 = *:4 adr;
+}
+
+@if defined(V830)
+# BDLD [reg1], [reg2] - 111110rrrrrRRRRR|100001----------
+:bdld [R0004], [R0509] is op1015=0x3E & R0004 & R0509; op2631=0x21
+{
+	local extadr:4 = R0004;
+	local intadr:4 = R0509;
+	*:16 intadr = *:16 extadr;
+}
+
+# BILD [reg1], [reg2] - 111110rrrrrRRRRR|100000----------
+:bild [R0004], [R0509] is op1015=0x3E & R0004 & R0509; op2631=0x20
+{
+	local extadr:4 = R0004;
+	local intadr:4 = R0509;
+	*:16 intadr = *:16 extadr;
+}
+@endif
+
+
+#####################################################
+#####		 	Store			#####
+#####################################################
+
+# ST.B reg2, disp16[reg1] - 110100rrrrrRRRRR|dddddddddddddddd
+:st.b R0509, s1631[R0004] is op1015=0x34 & R0004 & R0509; s1631
+{
+	local adr:4 = R0004 + s1631;
+	local tmp:4 = R0509;
+	*:1 adr = tmp:1;
+}
+
+# ST.H reg2, disp16[reg1] - 110101rrrrrRRRRR|dddddddddddddddd
+:st.h R0509, s1631[R0004] is op1015=0x35 & R0004 & R0509; s1631
+{
+	local adr:4 = R0004 + s1631;
+	local tmp:4 = R0509;
+	*:2 adr = tmp:2;
+}
+
+
+# ST.W reg2, disp16[reg1] - 110111rrrrrRRRRR|dddddddddddddddd
+:st.w R0509, s1631[R0004] is op1015=0x37 & R0004 & R0509; s1631
+{
+	local adr:4 = R0004 + s1631;
+	local tmp:4 = R0509;
+	*:4 adr = tmp;
+}
+
+@if defined(V830)
+# BDST [reg2], [reg1] - 111110rrrrrRRRRR|100011----------
+:bdst [R0509], [R0004] is op1015=0x3E & R0004 & R0509; op2631=0x23
+{
+	local extadr:4 = R0004;
+	local intadr:4 = R0509;
+	*:16 extadr = *:16 intadr;
+}
+
+
+# BIST [reg2], [reg1] - 111110rrrrrRRRRR|100010----------
+:bist [R0509], [R0004] is op1015=0x3E & R0004 & R0509; op2631=0x22
+{
+	local extadr:4 = R0004;
+	local intadr:4 = R0509;
+	*:16 extadr = *:16 intadr;
+}
+@endif
+
+
+
+#####################################################
+#####		   Data Manipulation		#####
+#####################################################
+
+
+# SAR reg1, reg2 - 000111rrrrrRRRRR
+:sar R0004, R0509 is op1015=0x07 & R0004 & R0509
+{
+	shift_right_arith(R0509, R0509, R0004);
+}
+
+# SAR imm5, reg2 - 010111rrrrriiiii
+:sar op0004, R0509 is op1015=0x17 & op0004 & R0509
+{
+	shift_right_arith(R0509, R0509, op0004:5);
+}
+
+# SETF cond, reg2 - 010010rrrrrxcccc
+:setf^c0003 R0509 is op1015=0x12 & c0003 & R0509
+{
+	R0509 = zext(c0003);
+}
+
+# SHL reg1, reg2 - 000100rrrrrRRRRR
+:shl R0004, R0509 is op1015=0x04 & R0004 & R0509
+{
+	shift_left_logic(R0509, R0509, R0004);
+}
+
+# SHL imm5, reg2 - 010100rrrrriiiii
+:shl op0004, R0509 is op1015=0x14 & op0004 & R0509
+{
+	shift_left_logic(R0509, R0509, op0004:5);
+}
+
+@if defined(V830)
+# SHLD3 reg1, reg2, reg3 - 111110rrrrrRRRRR|011000 00000 wwwww
+:shld3 R0004, R0509, R1620 is op1015=0x3E & R0004 & R0509; op2631=0x18 & R1620
+{
+	local hi:8 = zext(R1620);
+	shift_left_logic_d(hi, hi, 32);
+	local cat:8 = zext(R0509) + hi;
+	local res:8 = 0;
+	shift_left_logic(res, cat, R0004);
+	R1620 = res(4);
+}
+
+# SHRD3 reg1, reg2, reg3 - 111110rrrrrRRRRR|011001 00000 wwwww
+:shrd3 R0004, R0509, R1620 is op1015=0x3E & R0004 & R0509; op2631=0x19 & R1620
+{
+	local hi:8 = zext(R1620);
+	shift_left_logic_d(hi, hi, 32);
+	local cat:8 = zext(R0509) + hi;
+	local res:8 = 0;
+	shift_right_logic(res, cat, R0004);
+	R1620 = res:4;
+}
+@endif
+
+# SHR reg1, reg2 - 000101rrrrrRRRRR
+:shr R0004, R0509 is op1015=0x05 & R0004 & R0509
+{
+	shift_right_logic(R0509, R0509, R0004);
+}
+
+# SHR imm5, reg2 - 010101rrrrriiiii
+:shr op0004, R0509 is op1015=0x15 & op0004 & R0509
+{
+	shift_right_logic(R0509, R0509, op0004:5);
+}
+
+
