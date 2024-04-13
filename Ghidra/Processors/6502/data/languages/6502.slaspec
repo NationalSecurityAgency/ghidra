@@ -106,20 +106,20 @@ macro adc(op1) {
 
 	local adjust_low:4 = zext(low_nibble >= 0xa);
 
-	local low_nibble2:1 = (!adjust_low:1)*(low_nibble) + (adjust_low:1)*(((low_nibble + 0x6) & 0xF) + 0x10);
+	low_nibble = (!adjust_low:1)*(low_nibble) + (adjust_low:1)*(((low_nibble + 0x6) & 0xF) + 0x10);
 
-	local result1:2 = zext(A & 0xf0) + zext(op1 & 0xf0) + zext(low_nibble2);
+	local result1:2 = zext(A & 0xf0) + zext(op1 & 0xf0) + zext(low_nibble);
 
 	$(N_FLAG) = (result1:1 & 0x80) != 0;
 	$(V_FLAG) = (((result1:1 ^ A) & (result1:1 ^ op1)) & 0x80) != 0;
 
 	local adjust_high:2 = zext(result1 >= 0xa0);
 
-	local result2:2 = result1 + (adjust_high * 0x60);
+	result1 = result1 + (adjust_high * 0x60);
 
-	$(C_FLAG) = (result2 >> 8) != 0;
+	$(C_FLAG) = (result1 >> 8) != 0;
 
-	A = result2:1;
+	A = result1:1;
 	$(Z_FLAG) = (decimalResult:1 == 0);
 
 	goto <END>;
@@ -134,6 +134,34 @@ macro adc(op1) {
 	A = (result:1 & 0xFF);
 <END>
 }
+
+# macro to handle SBC instruction in decimal mode
+macro sbc_decimal(op1) {
+
+	local notCarry:2 = zext(!$(C_FLAG));
+	local decimalResult:2 = zext(A) - zext(op1) - notCarry;
+
+	local tmp16:2 = zext(A & 0xf) - zext(op1 & 0xf) - notCarry;
+	local sub_6:2 = zext(tmp16 > 0xf);
+	local tmp16_2:2 = tmp16 - zext(sub_6 * 0x6);
+
+	local or_mask:2 = zext(tmp16_2 > 0xf);
+	local tmp16_3:2 = (tmp16_2 & 0xf) | zext(or_mask * 0xfff0);
+	local tmp16_4:2 =  tmp16_3 + zext(A & 0xf0) - zext(op1 & 0xf0);
+
+	$(V_FLAG) = ((decimalResult ^ zext(A)) & (~decimalResult ^ zext(op1)) & 0x80) != 0;
+	$(N_FLAG) = (tmp16_4:1 & 0x80) != 0;
+	$(Z_FLAG) = (decimalResult:1 == 0);
+
+	local sub_60:2 = zext(tmp16_4 > 0xff);
+	local tmp16_5:2 = tmp16_4 - zext(sub_60 * 0x60);
+	local X_2:2 = zext(tmp16_5 >> 8);
+
+	$(C_FLAG) = (tmp16_5 >> 8) == 0;
+
+	A = tmp16_5:1;
+}
+
 
 # reads two bytes from the specified address
 # if the address straddles a page boundary
@@ -535,7 +563,12 @@ ADDRI:  (imm16)   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 
 :SBC OP1     is (cc=1 & aaa=7) ... & OP1
 {
+	if($(D_FLAG) == 0) goto <NOT_DECIMAL>;
+	sbc_decimal(OP1);
+	goto <END>;
+<NOT_DECIMAL>
 	adc(~OP1);
+<END>
 }
 
 :SEC     is op=0x38
