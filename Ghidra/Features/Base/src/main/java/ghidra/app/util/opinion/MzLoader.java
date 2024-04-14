@@ -67,7 +67,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		OldDOSHeader header = mz.getHeader();
 		if (header.isDosSignature() && !header.hasNewExeHeader() && !header.hasPeHeader()) {
 			List<QueryResult> results =
-				QueryOpinionService.query(getName(), "" + header.e_magic(), null);
+				QueryOpinionService.query(getName(), "" + Short.toUnsignedInt(header.e_magic()), null);
 			for (QueryResult result : results) {
 				loadSpecs.add(new LoadSpec(this, 0, result));
 			}
@@ -139,7 +139,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 			MessageLog log, TaskMonitor monitor) {
 		monitor.setMessage("Marking up headers...");
 		OldDOSHeader header = mz.getHeader();
-		int blockSize = paragraphsToBytes(header.e_cparhdr());
+		int blockSize = paragraphsToBytes(Short.toUnsignedInt(header.e_cparhdr()));
 		try {
 			Address headerSpaceAddr = AddressSpace.OTHER_SPACE.getAddress(0);
 			MemoryBlock headerBlock = MemoryBlockUtils.createInitializedBlock(program, true,
@@ -156,7 +156,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 			if (!relocations.isEmpty()) {
 				DataType relocationType = relocations.get(0).toDataType();
 				int len = relocationType.getLength();
-				addr = addr.add(header.e_lfarlc());
+				addr = addr.add(Short.toUnsignedInt(header.e_lfarlc()));
 				for (int i = 0; i < relocations.size(); i++) {
 					monitor.checkCancelled();
 					DataUtilities.createData(program, addr.add(i * len), relocationType, -1,
@@ -183,11 +183,11 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		Set<SegmentedAddress> knownSegments = new TreeSet<>();
 		relocationFixups.forEach(rf -> knownSegments.add(space.getAddress(rf.segment, 0)));
 		knownSegments.add(space.getAddress(INITIAL_SEGMENT_VAL, 0));
-		if (header.e_cs() > 0) {
-			knownSegments.add(space.getAddress((INITIAL_SEGMENT_VAL + header.e_cs()) & 0xffff, 0));
+		if (Short.toUnsignedInt(header.e_cs()) > 0) {
+			knownSegments.add(space.getAddress((INITIAL_SEGMENT_VAL + Short.toUnsignedInt(header.e_cs())) & 0xffff, 0));
 		}
 		// Allocate an initialized memory block for each segment we know about
-		int endOffset = pagesToBytes(header.e_cp() - 1) + header.e_cblp();
+		int endOffset = pagesToBytes(Short.toUnsignedInt(header.e_cp()) - 1) + Short.toUnsignedInt(header.e_cblp());
 		if (endOffset > reader.length()) {
 			log.appendMsg(
 				"File is 0x%x bytes but header reports 0x%x".formatted(reader.length(), endOffset));
@@ -253,7 +253,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 
 		// Allocate an uninitialized memory block for extra minimum required data space
 		if (lastBlock != null) {
-			int extraAllocSize = paragraphsToBytes(header.e_minalloc());
+			int extraAllocSize = paragraphsToBytes(Short.toUnsignedInt(header.e_minalloc()));
 			if (extraAllocSize > 0) {
 				MemoryBlockUtils.createUninitializedBlock(program, false, "DATA",
 					lastBlock.getEnd().add(1), extraAllocSize, "", "mz", true, true, false, log);
@@ -340,7 +340,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		int ipValue = Short.toUnsignedInt(header.e_ip());
 
 		Address addr =
-			space.getAddress((INITIAL_SEGMENT_VAL + header.e_cs()) & 0xffff, ipValue);
+			space.getAddress((INITIAL_SEGMENT_VAL + Short.toUnsignedInt(header.e_cs())) & 0xffff, ipValue);
 		SymbolTable symbolTable = program.getSymbolTable();
 
 		try {
@@ -397,7 +397,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 				BigInteger.valueOf(Short.toUnsignedLong(header.e_sp())));
 			context.setValue(ss, entry.getAddress(), entry.getAddress(),
 				BigInteger.valueOf(
-					Integer.toUnsignedLong((header.e_ss() + INITIAL_SEGMENT_VAL) & 0xffff)));
+					Integer.toUnsignedLong((Short.toUnsignedInt(header.e_ss()) + INITIAL_SEGMENT_VAL) & 0xffff)));
 
 			for (MemoryBlock block : program.getMemory().getBlocks()) {
 				Address start = block.getStart();
@@ -473,7 +473,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 	 * @return The segmented addresses converted to a file offset
 	 */
 	private int addressToFileOffset(int segment, int offset, OldDOSHeader header) {
-		return (short) segment * 16 + offset + paragraphsToBytes(header.e_cparhdr());
+		return (short) segment * 16 + offset + paragraphsToBytes(Short.toUnsignedInt(header.e_cparhdr()));
 	}
 
 	/**
