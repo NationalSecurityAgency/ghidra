@@ -34,92 +34,28 @@ public class ARMEmulateInstructionStateModifier extends EmulateInstructionStateM
 
 	public ARMEmulateInstructionStateModifier(Emulate emu) {
 		super(emu);
-		TModeReg = language.getRegister("TMode");
-		TBreg = language.getRegister("ISAModeSwitch"); // generic register which mirrors TB register value
-		if (TModeReg != null) {
-			if (TBreg == null) {
-				throw new RuntimeException("Expected language " + language.getLanguageID() +
-					" to have ISAModeSwitch register defined");
-			}
-			tMode = new RegisterValue(TModeReg, BigInteger.ONE);
-			aMode = new RegisterValue(TModeReg, BigInteger.ZERO);
-		}
-
-		/**
-		 * We could registerPcodeOpBehavior for one or more of the following pcodeop's:
-		 *  
-		  Absolute
-		  ClearExclusiveLocal
-		  DataMemoryBarrier
-		  DataSynchronizationBarrier
-		  ExclusiveAccess
-		  HintDebug
-		  HintPreloadData
-		  HintPreloadDataForWrite
-		  HintPreloadInstruction
-		  HintYield
-		  IndexCheck
-		  InstructionSynchronizationBarrier
-		  ReverseBitOrder
-		  SendEvent
-		  SignedDoesSaturate
-		  SignedSaturate
-		  UnsignedDoesSaturate
-		  UnsignedSaturate
-		  WaitForEvent
-		  WaitForInterrupt
-		  coprocessor_function
-		  coprocessor_function2
-		  coprocessor_load
-		  coprocessor_load2
-		  coprocessor_loadlong
-		  coprocessor_loadlong2
-		  coprocessor_movefrom
-		  coprocessor_movefrom2
-		  coprocessor_moveto
-		  coprocessor_moveto2
-		  coprocessor_store
-		  coprocessor_store2
-		  coprocessor_storelong
-		  coprocessor_storelong2
-		  disableDataAbortInterrupts
-		  disableFIQinterrupts
-		  disableIRQinterrupts
-		  enableDataAbortInterrupts
-		  enableFIQinterrupts
-		  enableIRQinterrupts
-		  hasExclusiveAccess
-		  isCurrentModePrivileged
-		  isFIQinterruptsEnabled
-		  isIRQinterruptsEnabled
-		  isThreadMode
-		  jazelle_branch
-		  setAbortMode
-		  setFIQMode
-		  setIRQMode
-		  setSupervisorMode
-		  setSystemMode
-		  setThreadModePrivileged
-		  setUndefinedMode
-		  setUserMode
-		  software_breakpoint
-		  software_interrupt
-		 *
-		 */
+		initializeRegisters();
 	}
 
-	/**
-	 * Initialize TB register based upon context-register state before first instruction is executed.
-	 */
+	private void initializeRegisters() {
+		TModeReg = language.getRegister("TMode");
+		TBreg = language.getRegister("ISAModeSwitch");
+		if (TModeReg != null && TBreg == null) {
+			throw new RuntimeException("Expected language " + language.getLanguageID() +
+				" to have ISAModeSwitch register defined");
+		}
+		tMode = new RegisterValue(TModeReg, BigInteger.ONE);
+		aMode = new RegisterValue(TModeReg, BigInteger.ZERO);
+	}
+
 	@Override
 	public void initialExecuteCallback(Emulate emulate, Address current_address, RegisterValue contextRegisterValue) throws LowlevelError {
 		if (TModeReg == null) {
-			return; // Thumb mode not supported
+			return;
 		}
 		BigInteger tModeValue = BigInteger.ZERO;
 		if (contextRegisterValue != null) {
-			tModeValue =
-				contextRegisterValue.getRegisterValue(TModeReg).getUnsignedValueIgnoreMask();
+			tModeValue = contextRegisterValue.getRegisterValue(TModeReg).getUnsignedValueIgnoreMask();
 		}
 		if (!BigInteger.ZERO.equals(tModeValue)) {
 			tModeValue = BigInteger.ONE;
@@ -127,46 +63,35 @@ public class ARMEmulateInstructionStateModifier extends EmulateInstructionStateM
 		emu.getMemoryState().setValue(TBreg, tModeValue);
 	}
 
-	/**
-	 * Handle odd addresses which may occur when jumping/returning indirectly
-	 * to Thumb mode.  It is assumed that language will properly handle
-	 * context changes during the flow of execution, we need only fix
-	 * the current program counter.
-	 */
 	@Override
-	public void postExecuteCallback(Emulate emulate, Address lastExecuteAddress,
-			PcodeOp[] lastExecutePcode, int lastPcodeIndex, Address currentAddress)
-			throws LowlevelError {
-		if (TModeReg == null) {
-			return; // Thumb mode not supported
-		}
-		if (lastPcodeIndex < 0) {
-			// ignore fall-through condition
+	public void postExecuteCallback(Emulate emulate, Address lastExecuteAddress, PcodeOp[] lastExecutePcode, int lastPcodeIndex, Address currentAddress) throws LowlevelError {
+		if (TModeReg == null || lastPcodeIndex < 0) {
 			return;
 		}
 		int lastOp = lastExecutePcode[lastPcodeIndex].getOpcode();
 		if (lastOp != PcodeOp.BRANCH && lastOp != PcodeOp.CBRANCH && lastOp != PcodeOp.BRANCHIND &&
 			lastOp != PcodeOp.CALL && lastOp != PcodeOp.CALLIND && lastOp != PcodeOp.RETURN) {
-			// only concerned with Branch, Call or Return ops
 			return;
 		}
 		long tbValue = emu.getMemoryState().getValue(TBreg);
 		if (tbValue == 1) {
-			// Thumb mode
-			emu.setContextRegisterValue(tMode); // change context to be consistent with TB value
-			if ((currentAddress.getOffset() & 0x1) == 1) {
-				emulate.setExecuteAddress(currentAddress.previous());
-			}
+			handleThumbMode(emulate, currentAddress);
+		} else if (tbValue == 0) {
+			handleARMMode(emulate, currentAddress);
 		}
-		else if (tbValue == 0) {
+	}
 
-			if ((currentAddress.getOffset() & 0x1) == 1) {
-				throw new LowlevelError(
-					"Flow to odd address occurred without setting TB register (Thumb mode)");
-			}
-
-			// ARM mode
-			emu.setContextRegisterValue(aMode); // change context to be consistent with TB value
+	private void handleThumbMode(Emulate emulate, Address currentAddress) throws LowlevelError {
+		emulate.setContextRegisterValue(tMode);
+		if ((currentAddress.getOffset() & 0x1) == 1) {
+			emulate.setExecuteAddress(currentAddress.previous());
 		}
+	}
+
+	private void handleARMMode(Emulate emulate, Address currentAddress) throws LowlevelError {
+		if ((currentAddress.getOffset() & 0x1) == 1) {
+			throw new LowlevelError("Flow to odd address occurred without setting TB register (Thumb mode)");
+		}
+		emulate.setContextRegisterValue(aMode);
 	}
 }
