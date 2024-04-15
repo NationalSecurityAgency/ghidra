@@ -186,7 +186,7 @@ public abstract class AbstractPcodeTraceDataAccess implements InternalPcodeTrace
 		TraceMemoryOperations ops = getMemoryOps(true);
 		if (ops == null) {
 			throw new AssertionError("Cannot get memory operations for writing. " +
-				"This usually indicates a schema issue.");
+				"This usually indicates a schema issue or a missing object.");
 		}
 		return ops.putBytes(snap, toOverlay(hostStart), buf);
 	}

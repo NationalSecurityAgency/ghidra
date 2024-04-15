@@ -15,6 +15,7 @@
 #  limitations under the License.
 ##
 #@title remote gdb
+#@no-image
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with local <tt>gdb</tt> and connect to a stub (e.g., <tt>gdbserver</tt>)</h3>
 #@desc   <p>This will start <tt>gdb</tt> on the local system and then use it to connect to the remote system. 

@@ -49,6 +49,28 @@ import ghidra.util.table.GhidraTable;
 
 @Category(NightlyCategory.class)
 public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerTest {
+	// NOTE the use of index='1' allowing object-based managers to ID unique path
+	public static final String CTX_XML = """
+			<context>
+			    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
+			        <attribute name='Processes' schema='ProcessContainer' />
+			    </schema>
+			    <schema name='ProcessContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element index='1' schema='Process' />
+			    </schema>
+			    <schema name='Process' elementResync='NEVER' attributeResync='ONCE'>
+			        <attribute name='Threads' schema='ThreadContainer' />
+			    </schema>
+			    <schema name='ThreadContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element schema='Thread' />
+			    </schema>
+			    <schema name='Thread' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='Thread' />
+			        <interface name='Activatable' />
+			    </schema>
+			</context>""";
 
 	DebuggerThreadsProvider provider;
 
@@ -69,28 +91,7 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerTes
 	}
 
 	public void activateObjectsMode() throws Exception {
-		// NOTE the use of index='1' allowing object-based managers to ID unique path
-		ctx = XmlSchemaContext.deserialize("""
-				<context>
-				    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
-				        <attribute name='Processes' schema='ProcessContainer' />
-				    </schema>
-				    <schema name='ProcessContainer' canonical='yes' elementResync='NEVER'
-				            attributeResync='ONCE'>
-				        <element index='1' schema='Process' />
-				    </schema>
-				    <schema name='Process' elementResync='NEVER' attributeResync='ONCE'>
-				        <attribute name='Threads' schema='ThreadContainer' />
-				    </schema>
-				    <schema name='ThreadContainer' canonical='yes' elementResync='NEVER'
-				            attributeResync='ONCE'>
-				        <element schema='Thread' />
-				    </schema>
-				    <schema name='Thread' elementResync='NEVER' attributeResync='NEVER'>
-				        <interface name='Thread' />
-				        <interface name='Activatable' />
-				    </schema>
-				</context>""");
+		ctx = XmlSchemaContext.deserialize(CTX_XML);
 
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getObjectManager().createRootObject(ctx.getSchema(new SchemaName("Session")));

@@ -212,10 +212,10 @@ public class XmlSchemaContext extends DefaultSchemaContext {
 		}
 
 		builder.setCanonicalContainer(parseBoolean(schemaElem, ATTR_CANONICAL));
-		builder.setElementResyncMode(
-			ResyncMode.valueOf(requireAttributeValue(schemaElem, ATTR_ELEMENT_RESYNC)));
-		builder.setAttributeResyncMode(
-			ResyncMode.valueOf(requireAttributeValue(schemaElem, ATTR_ATTRIBUTE_RESYNC)));
+		builder.setElementResyncMode(ResyncMode.valueOf(
+			schemaElem.getAttributeValue(ATTR_ELEMENT_RESYNC, ResyncMode.NEVER.name())));
+		builder.setAttributeResyncMode(ResyncMode.valueOf(
+			schemaElem.getAttributeValue(ATTR_ATTRIBUTE_RESYNC, ResyncMode.NEVER.name())));
 
 		for (Element elemElem : XmlUtilities.getChildren(schemaElem, ELEM_ELEMENT)) {
 			SchemaName schema = name(requireAttributeValue(elemElem, ATTR_SCHEMA));

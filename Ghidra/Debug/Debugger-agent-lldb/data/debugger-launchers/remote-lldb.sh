@@ -15,6 +15,7 @@
 #  limitations under the License.
 ##
 #@title remote lldb
+#@no-image
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with local <tt>lldb</tt> and connect to a stub (e.g., <tt>gdbserver</tt>)</h3>
 #@desc   <p>This will start <tt>lldb</tt> on the local system and then use it to connect to the remote system. 
@@ -29,7 +30,7 @@
 #@desc </body></html>
 #@menu-group remote
 #@icon icon.debugger
-#@help TraceRmiLauncherServicePlugin#lldb
+#@help TraceRmiLauncherServicePlugin#lldb_remote
 #@env OPT_HOST:str="localhost" "Host" "The hostname of the target"
 #@env OPT_PORT:str="9999" "Port" "The host's listening port"
 #@env OPT_ARCH:str="" "Architecture" "Target architecture override"

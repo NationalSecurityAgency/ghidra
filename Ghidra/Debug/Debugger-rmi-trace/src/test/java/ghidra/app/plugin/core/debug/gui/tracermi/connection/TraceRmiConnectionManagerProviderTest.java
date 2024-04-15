@@ -208,7 +208,7 @@ public class TraceRmiConnectionManagerProviderTest extends AbstractGhidraHeadedD
 			TraceRmiConnectionTreeHelper.getAcceptorNodeMap(provider.rootNode).get(acceptor));
 	}
 
-	record Cx(SocketChannel channel, TestTraceRmiClient client,
+	public record Cx(SocketChannel channel, TestTraceRmiClient client,
 			TraceRmiConnection connection)
 			implements AutoCloseable {
 		public static Cx complete(TraceRmiAcceptor acceptor, String description)

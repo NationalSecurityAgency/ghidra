@@ -16,10 +16,12 @@
 package ghidra.app.plugin.core.debug.gui.modules;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.*;
 
 import db.Transaction;
+import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
@@ -79,21 +81,27 @@ public class DebuggerStaticMappingPluginScreenShots extends GhidraScreenShotGene
 	public void testCaptureDebuggerStaticMappingPlugin() throws Throwable {
 		DomainFolder root = tool.getProject().getProjectData().getRootFolder();
 		try (Transaction tx = tb.startTransaction()) {
+			tb.trace.getObjectManager().createRootObject(ProgramEmulationUtils.EMU_SESSION_SCHEMA);
 			long snap = tb.trace.getTimeManager().createSnapshot("First").getKey();
 
 			TraceModule bin = tb.trace.getModuleManager()
-					.addLoadedModule("/bin/bash", "/bin/bash",
+					.addLoadedModule("Modules[/bin/echo]", "/bin/echo",
 						tb.range(0x00400000, 0x0060ffff), snap);
-			bin.addSection("bash[.text]", ".text", tb.range(0x00400000, 0x0040ffff));
-			bin.addSection("bash[.data]", ".data", tb.range(0x00600000, 0x0060ffff));
+			bin.addSection("Modules[/bin/echo].Sections[.text]", ".text",
+				tb.range(0x00400000, 0x0040ffff));
+			bin.addSection("Modules[/bin/echo].Sections[.data]", ".data",
+				tb.range(0x00600000, 0x0060ffff));
+
 			TraceModule lib = tb.trace.getModuleManager()
-					.addLoadedModule("/lib/libc.so.6", "/lib/libc.so.6",
+					.addLoadedModule("Modules[/lib/libc.so.6]", "/lib/libc.so.6",
 						tb.range(0x7fac0000, 0x7faeffff), snap);
-			lib.addSection("libc[.text]", ".text", tb.range(0x7fac0000, 0x7facffff));
-			lib.addSection("libc[.data]", ".data", tb.range(0x7fae0000, 0x7faeffff));
+			lib.addSection("Modules[/lib/libc.so.6].Sections[.text]", ".text",
+				tb.range(0x7fac0000, 0x7facffff));
+			lib.addSection("Modules[/lib/libc.so.6].Sections[.data]", ".data",
+				tb.range(0x7fae0000, 0x7faeffff));
 		}
 
-		progEcho = createDefaultProgram("bash", ProgramBuilder._X64, this);
+		progEcho = createDefaultProgram("echo", ProgramBuilder._X64, this);
 		progLibC = createDefaultProgram("libc.so.6", ProgramBuilder._X64, this);
 
 		try (Transaction tx = progEcho.openTransaction("Add memory")) {
@@ -133,6 +141,8 @@ public class DebuggerStaticMappingPluginScreenShots extends GhidraScreenShotGene
 			Collection<ModuleMapEntry> entries = MapProposal.flatten(proposal.values());
 			mappingService.addModuleMappings(entries, TaskMonitor.DUMMY, false);
 		}
+		mappingService.changesSettled().get(1, TimeUnit.SECONDS);
+		waitForTasks();
 
 		captureIsolatedProvider(DebuggerStaticMappingProvider.class, 700, 400);
 	}

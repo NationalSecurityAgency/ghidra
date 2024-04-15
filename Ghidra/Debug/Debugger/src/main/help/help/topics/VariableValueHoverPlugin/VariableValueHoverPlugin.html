@@ -27,7 +27,7 @@
     functions to follow certain conventions. Thus, it's very easy to break and may frequently be
     incorrect. For hovers that include a <B>Frame</B> row, the displayed value depends on an
     accurately unwound stack. Take the value with a grain of salt, especially if the hover also
-    includes a <B>Warnings:</B> row. To diagnose the unwound stack, use the <A href=
+    includes a <B>Warnings</B> row. To diagnose the unwound stack, use the <A href=
     "help/topics/DebuggerStackPlugin/DebuggerStackPlugin.html#unwind_stack">Unwind Stack</A>
     action.</P>
 
@@ -72,18 +72,11 @@
 
     <H2>Examples</H2>
 
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" border="1" src=
-          "images/VariableValueHoverPluginListing.png"></TD>
-        </TR>
+    <DIV class="image">
+      <IMG alt="" src="images/VariableValueHoverPluginListing.png"> 
 
-        <TR>
-          <TD align="center">A register operand in the Dynamic Listing</TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+      <P>A register operand in the Dynamic Listing</P>
+    </DIV>
 
     <P>When hovering over operands in the Dynamic Listing, that operand is most likely a register.
     The register's value is displayed without regard to the stack frame. It will always use the
@@ -94,18 +87,11 @@
     window, and so the service cannot interpret the value except as an integer. Register values are
     never displayed as raw byte arrays.</P>
 
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" border="1" src=
-          "images/VariableValueHoverPluginBrowser.png"></TD>
-        </TR>
+    <DIV class="image">
+      <IMG alt="" src="images/VariableValueHoverPluginBrowser.png"> 
 
-        <TR>
-          <TD align="center">A stack variable in the Static Listing</TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+      <P>A stack variable in the Static Listing</P>
+    </DIV>
 
     <P>When hovering over operands in the Static Listing, the service will gather context about the
     operand and find a frame for the relevant function. It will take the first appropriate frame it
@@ -120,18 +106,11 @@
     computes the integer value <CODE>1</CODE>. It also interprets the value using the assigned data
     type, giving <CODE>1h</CODE>.</P>
 
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" border="1" src=
-          "images/VariableValueHoverPluginDecompiler.png"></TD>
-        </TR>
+    <DIV class="image">
+      <IMG alt="" src="images/VariableValueHoverPluginDecompiler.png"> 
 
-        <TR>
-          <TD align="center">A stack variable in the Decompiler</TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+      <P>A stack variable in the Decompiler</P>
+    </DIV>
 
     <P>When hovering over variables in the Decompiler, the service behaves similarly to how it does
     for operands in the Static Listing. It locates the appropriate frame and attempts to derive the

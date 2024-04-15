@@ -25,8 +25,7 @@
 #@desc </body></html>
 #@menu-group cross
 #@icon icon.debugger
-#@help TraceRmiLauncherServicePlugin#gdb
-#@enum StartCmd:str run start starti
+#@help TraceRmiLauncherServicePlugin#gdb_qemu
 #@arg :str "Image" "The target binary executable image"
 #@args "Arguments" "Command-line arguments to pass to the target"
 #@env GHIDRA_LANG_EXTTOOL_qemu:str="" "Path to qemu" "The path to qemu for the target architecture."
@@ -53,9 +52,9 @@ target_image="$1"
 
 if [ -z "$TTY_TARGET" ]
 then
-  "$GHIDRA_LANG_EXTTOOL_qemu" $@ &
+  "$GHIDRA_LANG_EXTTOOL_qemu" $OPT_EXTRA_QEMU_ARGS $@ &
 else
-  "$GHIDRA_LANG_EXTTOOL_qemu" $@ <$TTY_TARGET >$TTY_TARGET 2>&1 &
+  "$GHIDRA_LANG_EXTTOOL_qemu" $OPT_EXTRA_QEMU_ARGS $@ <$TTY_TARGET >$TTY_TARGET 2>&1 &
 fi
 
 # Give QEMU a moment to open the socket

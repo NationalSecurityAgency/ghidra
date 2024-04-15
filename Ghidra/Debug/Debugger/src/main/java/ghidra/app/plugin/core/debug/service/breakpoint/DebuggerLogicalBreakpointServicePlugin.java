@@ -851,14 +851,15 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 				info.forgetMismappedBreakpoints(c.r, additionalTraces, additionalPrograms);
 			}
 		}
-		for (Trace t : additionalTraces) {
-			InfoPerTrace info = traceInfos.get(t);
+		// Load program breakpoints first, lest syncing with traces write garbage to program
+		for (Program p : additionalPrograms) {
+			InfoPerProgram info = programInfos.get(p);
 			if (info != null) {
 				info.reloadBreakpoints(c);
 			}
 		}
-		for (Program p : additionalPrograms) {
-			InfoPerProgram info = programInfos.get(p);
+		for (Trace t : additionalTraces) {
+			InfoPerTrace info = traceInfos.get(t);
 			if (info != null) {
 				info.reloadBreakpoints(c);
 			}

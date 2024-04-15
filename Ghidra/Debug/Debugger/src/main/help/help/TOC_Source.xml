@@ -54,7 +54,7 @@
 		        target="help/topics/Debugger/Debugger.html" >
 
 			<tocdef id="DebuggerGettingStarted" text="Getting Started"
-			        sortgroup="a" 
+			        sortgroup="g"
 			        target="help/topics/Debugger/GettingStarted.html" >
 
 				<tocdef id="Launching" text="Launching a Target"
@@ -63,11 +63,11 @@
 			</tocdef>
 
 			<tocdef id="DebuggerTroubleshooting" text="Troubleshooting"
-			        sortgroup="b"
+			        sortgroup="m"
 			        target="help/topics/Debugger/Troubleshooting.html" />
 
 			<tocdef id="DebuggerTargetsPlugin" text="Targets" 
-			        sortgroup="c" 
+			        sortgroup="m"
 			        target="help/topics/DebuggerTargetsPlugin/DebuggerTargetsPlugin.html" >
 
 				<tocdef id="DebuggerModelServicePlugin" text="Tool Actions" 
@@ -76,55 +76,59 @@
 			</tocdef>
 
 			<tocdef id="DebuggerConsolePlugin" text="Debug Console"
-			        sortgroup="c1"
+			        sortgroup="m"
 			        target="help/topics/DebuggerConsolePlugin/DebuggerConsolePlugin.html" />
 
 			<tocdef id="DebuggerCopyActionsPlugin" text="Copy Actions"
-			        sortgroup="c2"
+			        sortgroup="m"
 			        target="help/topics/DebuggerCopyActionsPlugin/DebuggerCopyActionsPlugin.html" />
 
 			<tocdef id="DebuggerObjectsPlugin" text="Commands and Objects" 
-			        sortgroup="d" 
+			        sortgroup="m"
 			        target="help/topics/DebuggerObjectsPlugin/DebuggerObjectsPlugin.html" />
 
+			<tocdef id="DebuggerModelPlugin" text="Model"
+			        sortgroup="m"
+			        target="help/topics/DebuggerModelPlugin/DebuggerModelPlugin.html" />
+
 			<tocdef id="DebuggerInterpreterPlugin" text="Interpreters" 
-			        sortgroup="e" 
+			        sortgroup="m"
 			        target="help/topics/DebuggerInterpreterPlugin/DebuggerInterpreterPlugin.html" />
 
-			<tocdef id="DebuggerThreadsPlugin" text="Threads and Traces" 
-			        sortgroup="f" 
+			<tocdef id="DebuggerThreadsPlugin" text="Threads" 
+			        sortgroup="m"
 			        target="help/topics/DebuggerThreadsPlugin/DebuggerThreadsPlugin.html" />
 
 			<tocdef id="DebuggerTraceManagerServicePlugin" text="Trace Management"
-			        sortgroup="g"
+			        sortgroup="m"
 			        target="help/topics/DebuggerTraceManagerServicePlugin/DebuggerTraceManagerServicePlugin.html" />
 
 			<tocdef id="DebuggerEmulationServicePlugin" text="Emulation"
-			        sortgroup="g1"
+			        sortgroup="m"
 			        target="help/topics/DebuggerEmulationServicePlugin/DebuggerEmulationServicePlugin.html" />
 
 			<tocdef id="DebuggerMemoryBytesPlugin" text="Memory" 
-			        sortgroup="h1" 
+			        sortgroup="m"
 			        target="help/topics/DebuggerMemoryBytesPlugin/DebuggerMemoryBytesPlugin.html" />
 
 			<tocdef id="DebuggerRegistersPlugin" text="Registers" 
-			        sortgroup="h" 
+			        sortgroup="m"
 			        target="help/topics/DebuggerRegistersPlugin/DebuggerRegistersPlugin.html" />
 
 			<tocdef id="DebuggerListingPlugin" text="Dynamic Listing" 
-			        sortgroup="i" 
+			        sortgroup="m"
 			        target="help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html" />
 
 			<tocdef id="DebuggerDisassemblerPlugin" text="Disassembly and Assembly"
-			        sortgroup="i1"
+			        sortgroup="m"
 			        target="help/topics/DebuggerDisassemblerPlugin/DebuggerDisassemblerPlugin.html" />
 
 			<tocdef id="DebuggerStackPlugin" text="Stack" 
-			        sortgroup="j" 
+			        sortgroup="m"
 			        target="help/topics/DebuggerStackPlugin/DebuggerStackPlugin.html" />
 
 			<tocdef id="DebuggerBreakpointsPlugin" text="Breakpoints" 
-			        sortgroup="k" 
+			        sortgroup="m"
 			       target="help/topics/DebuggerBreakpointsPlugin/DebuggerBreakpointsPlugin.html" >
 
 				<tocdef id="DebuggerBreakpointMarkerPlugin" text="In the Listings"
@@ -133,48 +137,48 @@
 			</tocdef>
 
 			<tocdef id="DebuggerRegionsPlugin" text="Memory Regions" 
-			        sortgroup="l" 
+			        sortgroup="m"
 			        target="help/topics/DebuggerRegionsPlugin/DebuggerRegionsPlugin.html" />
 
 			<tocdef id="DebuggerTimePlugin" text="Time" 
-			        sortgroup="m" 
+			        sortgroup="m"
 			        target="help/topics/DebuggerTimePlugin/DebuggerTimePlugin.html" />
 
 			<tocdef id="DebuggerModulesPlugin" text="Modules and Sections" 
-			        sortgroup="n" 
+			        sortgroup="m"
 			        target="help/topics/DebuggerModulesPlugin/DebuggerModulesPlugin.html" >
 
 				<tocdef id="DebuggerStaticMappingPlugin" text="Static Mappings" 
-				        sortgroup="a" 
+				        sortgroup="a"
 				        target="help/topics/DebuggerStaticMappingPlugin/DebuggerStaticMappingPlugin.html" />
 			</tocdef>
 
 			<tocdef id="DebuggerWatchesPlugin" text="Watches"
-			        sortgroup="n"
+			        sortgroup="m"
 			        target="help/topics/DebuggerWatchesPlugin/DebuggerWatchesPlugin.html" />
 
 			<tocdef id="VariableValueHoverPlugin" text="Variable Hovers"
-			        sortgroup="n1"
+			        sortgroup="m"
 			        target="help/topics/VariableValueHoverPlugin/VariableValueHoverPlugin.html" />
 
 			<tocdef id="DebuggerControlPlugin" text="Control and Machine State"
-			        sortgroup="n2"
+			        sortgroup="m"
 			        target="help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html" />
 
 			<tocdef id="DebuggerMemviewPlugin" text="Memview Plot"
-			        sortgroup="o"
+			        sortgroup="m"
 			        target="help/topics/DebuggerMemviewPlugin/DebuggerMemviewPlugin.html" />
 
 			<tocdef id="DebuggerPcodeStepperPlugin" text="P-code Stepper"
-			        sortgroup="p"
+			        sortgroup="m"
 			        target="help/topics/DebuggerPcodeStepperPlugin/DebuggerPcodeStepperPlugin.html" />
 
 			<tocdef id="DebuggerTraceDiffPlugin" text="Comparing Times"
-			        sortgroup="p1"
+			        sortgroup="m"
 			        target="help/topics/DebuggerTraceViewDiffPlugin/DebuggerTraceViewDiffPlugin.html" />
 			
 			<tocdef id="DebuggerPlatformPlugin" text="Platform Selection"
-			        sortgroup="p2"
+			        sortgroup="m"
 			        target="help/topics/DebuggerPlatformPlugin/DebuggerPlatformPlugin.html" />
 		</tocdef>
 	</tocref>

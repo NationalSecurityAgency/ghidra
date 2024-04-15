@@ -26,14 +26,14 @@
 #@desc   file, and most copies of GDB for UNIX will support only ELF. Nevertheless, Ghidra should
 #@desc   recognize the target and map it, giving you symbols and debug info in the front end, even
 #@desc   if not in the GDB CLI.</p>
-#@desc   <p>You will need to locate the <tt>wine</tt> executable on your system, not the script. To
+#@desc   <p>You will need to locate the <tt>wine</tt> executable, not the script, on your system. To
 #@desc   find it, either dissect the <tt>wine</tt> script or consult online documentation for your
 #@desc   distribution of Wine. There are often two executables, one for 32-bit targets and one for
 #@desc   64-bit targets. You must select the correct one.</p>
 #@desc </body></html>
 #@menu-group cross
 #@icon icon.debugger
-#@help TraceRmiLauncherServicePlugin#gdb
+#@help TraceRmiLauncherServicePlugin#gdb_wine
 #@arg :str "Image" "The target binary executable image"
 #@args "Arguments" "Command-line arguments to pass to the target"
 #@env OPT_WINE_PATH:str="/usr/lib/wine/wine64" "Path to wine binary" "The path to the wine executable for your target architecture."

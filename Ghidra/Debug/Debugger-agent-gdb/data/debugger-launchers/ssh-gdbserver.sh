@@ -31,7 +31,7 @@
 #@desc </body></html>
 #@menu-group remote
 #@icon icon.debugger
-#@help TraceRmiLauncherServicePlugin#gdb
+#@help TraceRmiLauncherServicePlugin#gdb_gdbserver_ssh
 #@arg :str "Image" "The target binary executable image on the remote system"
 #@args "Arguments" "Command-line arguments to pass to the target"
 #@env OPT_HOST:str="localhost" "[User@]Host" "The hostname or user@host"

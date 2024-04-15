@@ -481,6 +481,14 @@ public class TraceRmiHandler implements TraceRmiConnection {
 	private interface Dispatcher {
 		RootMessage.Builder dispatch(RootMessage req, RootMessage.Builder rep) throws Exception;
 
+		default String exceptionMessage(Throwable exc) {
+			String msg = exc.getMessage();
+			if (msg == null) {
+				return exc.getClass().getCanonicalName();
+			}
+			return exc.getClass().getCanonicalName() + ": " + msg;
+		}
+
 		default RootMessage handle(RootMessage req) {
 			String desc = toString(req);
 			if (desc != null) {
@@ -494,7 +502,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 			catch (Throwable e) {
 				Msg.error(this, "Exception caused by back end", e);
 				return rep.setError(ReplyError.newBuilder()
-						.setMessage(e.getMessage()))
+						.setMessage(exceptionMessage(e)))
 						.build();
 			}
 		}

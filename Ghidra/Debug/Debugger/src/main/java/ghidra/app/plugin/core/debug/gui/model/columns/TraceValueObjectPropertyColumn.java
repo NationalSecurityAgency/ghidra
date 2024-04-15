@@ -82,7 +82,6 @@ public abstract class TraceValueObjectPropertyColumn<T>
 	public class BooleanPropertyRenderer extends PropertyRenderer {
 		protected GCheckBox cb;
 		{
-			setLayout(new BorderLayout());
 			cb = new GCheckBox();
 			cb.setHorizontalAlignment(CENTER);
 			cb.setOpaque(false);
@@ -103,14 +102,14 @@ public abstract class TraceValueObjectPropertyColumn<T>
 			else {
 				cb.setVisible(false);
 			}
+			setVisible(true);
+			invalidate();
 			return this;
 		}
 
 		@Override
 		public void validate() {
-			synchronized (getTreeLock()) {
-				validateTree();
-			}
+			cb.setBounds(0, 0, getWidth(), getHeight());
 		}
 	}
 
