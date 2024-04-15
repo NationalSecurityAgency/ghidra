@@ -157,7 +157,8 @@ public class MarkupSession {
 				markedupAddrs.add(data.getMinAddress(), data.getMaxAddress());
 			}
 			catch (CodeUnitInsertionException e) {
-				throw new IOException(e);
+				logWarningAt(addr,
+					"Failed to apply data type [%s]: %s".formatted(dt.getName(), e.getMessage()));
 			}
 		}
 	}
@@ -230,7 +231,7 @@ public class MarkupSession {
 			newLabelSym.setPrimary();
 		}
 		catch (InvalidInputException e) {
-			throw new IOException(e);
+			logWarningAt(addr, "Failed to label [%s]: %s".formatted(symbolName, e.getMessage()));
 		}
 	}
 
@@ -425,4 +426,18 @@ public class MarkupSession {
 		refMgr.addMemoryReference(fieldAddr, refDest, RefType.DATA, SourceType.IMPORTED, 0);
 	}
 
+	public void logWarningAt(Address addr, String msg) {
+		logWarningAt(program, addr, msg);
+	}
+
+	public static void logWarningAt(Program program, Address addr, String msg) {
+		BookmarkManager bmm = program.getBookmarkManager();
+		Bookmark existingBM = bmm.getBookmark(addr, BookmarkType.WARNING, "Golang");
+		String existingTxt = existingBM != null ? existingBM.getComment() : "";
+		if (existingTxt.contains(msg)) {
+			return;
+		}
+		msg = !existingTxt.isEmpty() ? existingTxt + "; " + msg : msg;
+		bmm.setBookmark(addr, BookmarkType.WARNING, "Golang", msg);
+	}
 }
