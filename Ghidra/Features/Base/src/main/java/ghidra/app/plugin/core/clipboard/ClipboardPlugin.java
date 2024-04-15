@@ -273,7 +273,7 @@ public class ClipboardPlugin extends ProgramPlugin
 				Clipboard systemClipboard = getSystemClipboard();
 				Transferable transferable = clipboardService.copy(monitor);
 				if (removeQuotes && transferable instanceof StringTransferable stringTransferable) {
-					stringTransferable.removeOuterQuotes();
+					stringTransferable.removeOuterQuotesAndStandardStringPrefix();
 				}
 
 				if (transferable == null) {
