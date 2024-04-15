@@ -201,6 +201,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 			MemoryBlockType.BIT_MAPPED, MemoryBlockType.BYTE_MAPPED };
 
 		comboBox = new GhidraComboBox<>(items);
+		comboBox.getAccessibleContext().setAccessibleName("Block Type");
 		comboBox.addItemListener(e -> blockTypeSelected());
 		panel.add(comboBox);
 		return panel;
@@ -265,6 +266,9 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		initialValueLabel = new GDLabel("Initial Value");
 		initialValueField = new RegisterField(8, null, false);
 		initialValueField.setName("Initial Value");
+		initialValueField.getAccessibleContext().setAccessibleName("Initialized Block Value");
+		initialValueField.getAccessibleContext()
+				.setAccessibleDescription("Enter the initial value for every byte in this block");
 
 		initialValueField.setChangeListener(e -> initialValueChanged());
 
@@ -299,6 +303,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 				return preferredSize;
 			}
 		};
+		fileBytesComboBox.getAccessibleContext().setAccessibleName("Byte Source");
 		fileBytesComboBox.addItemListener(e -> fileBytesChanged());
 		if (!allFileBytes.isEmpty()) {
 			model.setFileBytes(allFileBytes.get(0));
@@ -477,6 +482,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		baseAddrField.setAddressFactory(addrFactory);
 		baseAddrField.setName("Source Addr");
 		baseAddrField.addChangeListener(ev -> baseAddressChanged());
+		baseAddrField.setAccessibleName("Source Address");
 
 		JPanel schemePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
@@ -485,12 +491,14 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		schemeDestByteCountField.setAllowsHexPrefix(false);
 		schemeDestByteCountField.setDecimalMode();
 		schemeDestByteCountField.addChangeListener(ev -> schemeDestByteCountChanged());
+		schemeDestByteCountField.setAccessibleName("Mapping Ratio: Destination Size");
 
 		schemeSrcByteCountField = new IntegerTextField(4, 1);
 		schemeSrcByteCountField.setAllowNegativeValues(false);
 		schemeSrcByteCountField.setAllowsHexPrefix(false);
 		schemeSrcByteCountField.setDecimalMode();
 		schemeSrcByteCountField.addChangeListener(ev -> schemeSrcByteCountChanged());
+		schemeSrcByteCountField.setAccessibleName("Mapping Ratio: Source Size");
 
 		schemePanel.add(schemeDestByteCountField.getComponent());
 		schemePanel.add(new GLabel(" : "));
@@ -516,6 +524,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 	private Component buildCommentField() {
 		commentField = new JTextField();
 		commentField.setName("Comment");
+		commentField.getAccessibleContext().setAccessibleName("Memory Block Comment");
 		commentField.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
 			public void insertUpdate(DocumentEvent e) {
@@ -538,6 +547,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 	private Component buildLengthField() {
 		lengthField = new RegisterField(36, null, false);
 		lengthField.setName("Length");
+		lengthField.getAccessibleContext().setAccessibleName("Memory Block Length");
 		lengthField.setChangeListener(e -> lengthChanged());
 		return lengthField;
 	}
@@ -545,6 +555,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 	private Component buildFileOffsetField() {
 		fileOffsetField = new RegisterField(60, null, false);
 		fileOffsetField.setName("File Offset");
+		fileOffsetField.getAccessibleContext().setAccessibleName("File Offset");
 		fileOffsetField.setChangeListener(e -> fileOffsetChanged());
 		return fileOffsetField;
 	}
@@ -552,6 +563,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 	private Component buildAddressField() {
 		addrField = new AddressInput();
 		addrField.setName("Start Addr");
+		addrField.setAccessibleName("Memory Block Start Address");
 		addrFactory = model.getProgram().getAddressFactory();
 		addrField.setAddressFactory(addrFactory, AddressInput.INCLUDE_ALL_MEMORY_SPACES);
 		addrField.addChangeListener(ev -> addrChanged());
@@ -561,6 +573,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 	private Component buildNameField() {
 		nameField = new JTextField();
 		nameField.setName("Block Name");
+		nameField.getAccessibleContext().setAccessibleName("Memory Block Name");
 		nameField.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
 			public void insertUpdate(DocumentEvent e) {

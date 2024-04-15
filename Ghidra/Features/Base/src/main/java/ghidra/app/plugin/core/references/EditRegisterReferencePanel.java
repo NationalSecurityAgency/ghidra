@@ -56,9 +56,10 @@ class EditRegisterReferencePanel extends EditReferencePanel {
 		setBorder(new EmptyBorder(0, 5, 5, 5));
 
 		regList = new GhidraComboBox<>();
+		regList.getAccessibleContext().setAccessibleName("Registers");
 
 		refTypes = new GhidraComboBox<>(REGISTER_REF_TYPES);
-
+		refTypes.getAccessibleContext().setAccessibleName("Ref Types");
 		add(new GLabel("Register:", SwingConstants.RIGHT));
 		add(regList);
 		add(new GLabel("Ref-Type:", SwingConstants.RIGHT));
@@ -180,8 +181,9 @@ class EditRegisterReferencePanel extends EditReferencePanel {
 			return false;
 		}
 
-		Function f = fromCodeUnit.getProgram().getFunctionManager().getFunctionContaining(
-			fromCodeUnit.getMinAddress());
+		Function f = fromCodeUnit.getProgram()
+				.getFunctionManager()
+				.getFunctionContaining(fromCodeUnit.getMinAddress());
 		if (f == null) {
 			return false;
 		}
@@ -207,8 +209,9 @@ class EditRegisterReferencePanel extends EditReferencePanel {
 			throw new IllegalStateException();
 		}
 
-		Function f = fromCodeUnit.getProgram().getFunctionManager().getFunctionContaining(
-			fromCodeUnit.getMinAddress());
+		Function f = fromCodeUnit.getProgram()
+				.getFunctionManager()
+				.getFunctionContaining(fromCodeUnit.getMinAddress());
 		if (f == null) {
 			// Function no longer exists
 			showInputErr("Register reference not permitted!\nAddress " +

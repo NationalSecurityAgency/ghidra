@@ -286,6 +286,7 @@ public:
   Varnode *newUnique(int4 s,Datatype *ct=(Datatype *)0);	///< Create a new \e temporary Varnode
   Varnode *newCodeRef(const Address &m);			///< Create a code address \e annotation Varnode
   Varnode *setInputVarnode(Varnode *vn);			///< Mark a Varnode as an input to the function
+  Varnode *newExtendedConstant(int4 s,uint8 *val,PcodeOp *op);	///< Create extended precision constant
   void adjustInputVarnodes(const Address &addr,int4 sz);
   void deleteVarnode(Varnode *vn) { vbank.destroy(vn); }	///< Delete the given varnode
 

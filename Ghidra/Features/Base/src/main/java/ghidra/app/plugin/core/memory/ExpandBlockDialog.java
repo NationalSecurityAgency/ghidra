@@ -114,9 +114,13 @@ class ExpandBlockDialog extends DialogComponentProvider implements ChangeListene
 		startAddressInput = new AddressInput();
 		startAddressInput.setName("NewStartAddress");
 		startAddressInput.setAddressFactory(addrFactory);
+		startAddressInput.setAccessibleName("New Start Address");
+
 		endAddressInput = new AddressInput();
 		endAddressInput.setName("EndAddress");
 		endAddressInput.setAddressFactory(addrFactory);
+		endAddressInput.setAccessibleName("New End Address");
+
 		Address start = block.getStart();
 		Address end = block.getEnd();
 
@@ -139,6 +143,7 @@ class ExpandBlockDialog extends DialogComponentProvider implements ChangeListene
 
 		lengthField = new RegisterField(32, null, false);
 		lengthField.setName("BlockLength");
+		lengthField.getAccessibleContext().setAccessibleName("Block Length");
 		lengthField.setValue(Long.valueOf(model.getLength()));
 
 		panel.add(

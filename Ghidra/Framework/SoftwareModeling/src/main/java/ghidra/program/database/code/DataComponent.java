@@ -287,6 +287,10 @@ class DataComponent extends DataDB {
 		if (component != null) {
 			return component.getDefaultSettings();
 		}
+		if (parent instanceof DataComponent) {
+			// Ensure we pickup default component settings for array
+			return parent.getDefaultSettings();
+		}
 		return super.getDefaultSettings();
 	}
 

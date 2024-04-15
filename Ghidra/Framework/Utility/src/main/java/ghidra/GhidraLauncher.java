@@ -17,6 +17,8 @@ package ghidra;
 
 import java.io.*;
 import java.lang.reflect.Constructor;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,6 +37,8 @@ import utility.module.ModuleUtilities;
  */
 public class GhidraLauncher {
 
+	private static Instant START_INSTANT = Instant.now();
+
 	/**
 	 * Launches the given {@link GhidraLaunchable} specified in the first command line argument
 	 * 
@@ -46,7 +50,6 @@ public class GhidraLauncher {
 	 */
 	public static void launch(String[] args) throws Exception {
 
-		// Initialize the Ghidra environment
 		GhidraApplicationLayout layout = initializeGhidraEnvironment();
 
 		// Make sure the thing to launch meets the criteria:
@@ -91,6 +94,13 @@ public class GhidraLauncher {
 	@Deprecated(since = "10.1", forRemoval = true)
 	public static void main(String[] args) throws Exception {
 		launch(args);
+	}
+
+	/**
+	 * {@return the current number of milliseconds that have elapsed since execution began}
+	 */
+	public static long getMillisecondsFromLaunch() {
+		return ChronoUnit.MILLIS.between(START_INSTANT, Instant.now());
 	}
 
 	/**

@@ -71,6 +71,7 @@ class EditExternalReferencePanel extends EditReferencePanel {
 
 		topPanel.add(new GLabel("Name:", SwingConstants.RIGHT));
 		extLibName = new GhidraComboBox<>();
+		extLibName.getAccessibleContext().setAccessibleDescription("Choose external program name");
 		extLibName.setEditable(true);
 		extLibName.addDocumentListener(new DocumentListener() {
 			@Override
@@ -136,10 +137,12 @@ class EditExternalReferencePanel extends EditReferencePanel {
 
 		bottomPanel.add(new GLabel("Label:", SwingConstants.RIGHT));
 		extLabel = new JTextField();
+		extLabel.getAccessibleContext().setAccessibleName("External Label");
 		bottomPanel.add(extLabel);
 
 		bottomPanel.add(new GLabel("Address:", SwingConstants.RIGHT));
 		extAddr = new AddressInput();
+		extAddr.getAccessibleContext().setAccessibleName("External Address");
 		bottomPanel.add(extAddr);
 
 		setLayout(new VerticalLayout(5));

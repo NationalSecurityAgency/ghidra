@@ -159,7 +159,6 @@ public class EditReferenceDialog extends ReusableDialogComponentProvider {
 
 		bottomPanelLayout = new CardLayout();
 		bottomPanel = new JPanel(bottomPanelLayout);
-		bottomPanel.setFocusCycleRoot(true);
 		bottomPanel.setPreferredSize(new Dimension(PREFERRED_PANEL_WIDTH, PREFERRED_PANEL_HEIGHT));
 		bottomPanel.setBorder(new EmptyBorder(0, 2, 0, 2));
 
@@ -235,7 +234,6 @@ public class EditReferenceDialog extends ReusableDialogComponentProvider {
 			activeRefPanel = extRefPanel;
 		}
 		bottomPanelLayout.show(bottomPanel, activeRefPanel.getName());
-		activeRefPanel.requestFocus();
 	}
 
 	public void initDialog(CodeUnit cu, int opIndex, int subIndex, Reference ref) {
@@ -252,7 +250,6 @@ public class EditReferenceDialog extends ReusableDialogComponentProvider {
 		}
 
 		initializing = false;
-		activeRefPanel.requestFocus();
 	}
 
 	private void configureAddReference(int opIndex, int subIndex) {

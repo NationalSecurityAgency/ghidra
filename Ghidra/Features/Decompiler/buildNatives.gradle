@@ -86,6 +86,7 @@ model {
 		                include "emulateutil.cc"
 		                include "flow.cc"
 		                include "userop.cc"
+		                include "multiprecision.cc"
 		                include "funcdata.cc"
 		                include "funcdata_block.cc"
 		                include "funcdata_varnode.cc"

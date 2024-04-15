@@ -94,14 +94,18 @@ class SplitBlockDialog extends DialogComponentProvider {
 		panelOne.setBorder(BorderFactory.createTitledBorder("Block to Split"));
 		blockOneNameField = new JTextField(10);
 		blockOneNameField.setName("BlockOneName");
+		blockOneNameField.getAccessibleContext().setAccessibleName("Name of Block To Split");
 		blockOneStartField = new JTextField(10);
 		blockOneStartField.setName("BlockOneStart");
+		blockOneStartField.getAccessibleContext().setAccessibleName("Address of Block To Split");
 
 		blockOneEnd = new AddressInput();
 		blockOneEnd.setName("BlockOneEnd");
+		blockOneEnd.setAccessibleName("New Block End Adddress");
 
 		blockOneLengthField = new RegisterField(32, null, false);
 		blockOneLengthField.setName("BlockOneLength");
+		blockOneLengthField.getAccessibleContext().setAccessibleName("New Block Length");
 
 		panelOne.add(new GLabel("Block Name:", SwingConstants.RIGHT));
 		panelOne.add(blockOneNameField);
@@ -116,13 +120,16 @@ class SplitBlockDialog extends DialogComponentProvider {
 		panelTwo.setBorder(BorderFactory.createTitledBorder("New Block"));
 		blockTwoNameField = new JTextField(10);
 		blockTwoNameField.setName("BlockTwoName");
+		blockTwoNameField.getAccessibleContext().setAccessibleName("Name of New Block");
 		blockTwoStart = new AddressInput();
 		blockTwoStart.setName("BlockTwoStart");
+		blockTwoStart.setAccessibleName("New Block Start Address");
 		blockTwoEndField = new JTextField(10);
 		blockTwoEndField.setName("BlockTwoEnd");
 
 		blockTwoLengthField = new RegisterField(32, null, false);
 		blockTwoLengthField.setName("BlockTwoLength");
+		blockTwoLengthField.getAccessibleContext().setAccessibleName("New Block Size");
 
 		panelTwo.add(new GLabel("Block Name:", SwingConstants.RIGHT));
 		panelTwo.add(blockTwoNameField);
