@@ -58,7 +58,7 @@ import ghidra.util.xml.XmlUtilities;
 			""",
 	category = PluginCategoryNames.DEBUGGER,
 	packageName = DebuggerPluginPackage.NAME,
-	status = PluginStatus.UNSTABLE,
+	status = PluginStatus.RELEASED,
 	eventsConsumed = {
 		ProgramActivatedPluginEvent.class,
 		ProgramClosedPluginEvent.class,

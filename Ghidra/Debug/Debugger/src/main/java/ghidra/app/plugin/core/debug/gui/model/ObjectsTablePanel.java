@@ -99,7 +99,7 @@ public class ObjectsTablePanel extends AbstractQueryTablePanel<ValueRow, ObjectT
 		if (rootSchema == null) {
 			return DEFAULT_PREF_KEY;
 		}
-		return rootSchema + ":" + schemas
+		return rootSchema.getName() + ":" + schemas
 				.stream()
 				.map(s -> s.getName().toString())
 				.collect(Collectors.joining(",")) +

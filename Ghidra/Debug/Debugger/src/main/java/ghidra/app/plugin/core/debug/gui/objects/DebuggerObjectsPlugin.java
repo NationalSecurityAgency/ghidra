@@ -63,7 +63,7 @@ import ghidra.util.datastruct.CollectionChangeListener;
 public class DebuggerObjectsPlugin extends AbstractDebuggerPlugin
 		implements ObjectUpdateService, CollectionChangeListener<DebuggerObjectModel> {
 
-	static String TITLE_PROVIDER_TARGETS = "Debugger Objects";
+	static final String TITLE_PROVIDER_TARGETS = "Debugger Objects";
 
 	@AutoServiceConsumed
 	protected DebuggerInterpreterService interpreterService;
