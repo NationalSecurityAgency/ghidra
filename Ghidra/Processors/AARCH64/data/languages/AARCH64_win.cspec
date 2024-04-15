@@ -199,7 +199,6 @@
   <pcode>
    <body><![CDATA[
      localx15tmp:8 = x15;
-     x15 = localx15tmp;
    ]]></body>
   </pcode>
 </callfixup>
