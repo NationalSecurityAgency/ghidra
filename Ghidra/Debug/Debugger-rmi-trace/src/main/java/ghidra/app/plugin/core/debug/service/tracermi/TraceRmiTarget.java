@@ -232,7 +232,7 @@ public class TraceRmiTarget extends AbstractTarget {
 		return null;
 	}
 
-	private enum Missing {
+	public enum Missing {
 		MISSING; // The argument requires a prompt
 	}
 
