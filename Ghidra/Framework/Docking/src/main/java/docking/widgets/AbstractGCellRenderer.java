@@ -39,7 +39,7 @@ import utilities.util.reflection.ReflectionUtilities;
  * colors, and highlights the drop target in a drag-n-drop operation.
  * <p>
  * The preferred method to change the font used by this renderer is {@link #setBaseFontId(String)}.
- * If you would like this renderer to use a monospaced font, then, as an alternative  to creating a
+ * If you would like this renderer to use a monospaced font, then, as an alternative to creating a
  * font ID, you can instead override {@link #getDefaultFont()} to return this
  * class's {@link #fixedWidthFont}.  Also, the fixed width font of this class is based on the
  * default font set when calling {@link #setBaseFontId(String)}, so it stays up-to-date with theme

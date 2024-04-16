@@ -15,6 +15,7 @@
  */
 package docking.widgets;
 
+import java.awt.Color;
 import java.awt.event.*;
 
 import javax.swing.*;
@@ -23,6 +24,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import generic.theme.GColor;
 import ghidra.docking.util.LookAndFeelUtils;
 import resources.ResourceManager;
 
@@ -54,6 +56,13 @@ public class EmptyBorderButton extends JButton {
 	 */
 	public static final Border LOWERED_BUTTON_BORDER = BorderFactory.createCompoundBorder(
 		BorderFactory.createLoweredBevelBorder(), BorderFactory.createEmptyBorder(1, 1, 1, 1));
+
+	/**
+	 * A border to signal when the button has focus.
+	 */
+	private static final Color FOCUS_COLOR = new GColor("color.border.button.focused");
+	public static final Border FOCUSED_BUTTON_BORDER = BorderFactory.createCompoundBorder(
+		BorderFactory.createEmptyBorder(2, 2, 2, 2), BorderFactory.createLineBorder(FOCUS_COLOR));
 
 	/**
 	 * Construct a new EmptyBorderButton.
@@ -169,11 +178,15 @@ public class EmptyBorderButton extends JButton {
 			setBorder(getRaisedBorder());
 		}
 		else if (isFocusOwner()) {
-			setBorder(getRaisedBorder());
+			setBorder(getFocusedBorder());
 		}
 		else {
 			setBorder(NO_BUTTON_BORDER);
 		}
+	}
+
+	protected Border getFocusedBorder() {
+		return FOCUSED_BUTTON_BORDER;
 	}
 
 	protected Border getRaisedBorder() {
