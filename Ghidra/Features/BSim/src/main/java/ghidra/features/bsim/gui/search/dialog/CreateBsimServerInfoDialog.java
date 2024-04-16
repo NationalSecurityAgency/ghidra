@@ -101,7 +101,7 @@ public class CreateBsimServerInfoDialog extends DialogComponentProvider {
 			errorMessage = e.getMessage();
 		}
 		int answer = OptionDialog.showYesNoDialog(null, "Connection Test Failed!",
-			"Can't connect to server: " + errorMessage + "\nDo you want create anyway?");
+			"Can't connect to server: " + errorMessage + "\nDo you want to proceed with creation anyway?");
 		return answer == OptionDialog.YES_OPTION;
 	}
 
