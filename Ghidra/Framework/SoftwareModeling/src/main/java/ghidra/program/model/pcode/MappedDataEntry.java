@@ -15,6 +15,7 @@
  */
 package ghidra.program.model.pcode;
 
+import ghidra.program.model.data.MutabilitySettingsDefinition;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.VariableStorage;
 
@@ -57,21 +58,16 @@ public class MappedDataEntry extends MappedEntry {
 	}
 
 	@Override
-	public boolean isReadOnly() {
-		if (data.isWritable()) {
-			return false;
+	public int getMutability() {
+		if (data.isVolatile()) {
+			return MutabilitySettingsDefinition.VOLATILE;
 		}
 		if (data.isConstant()) {
-			return true;
+			return MutabilitySettingsDefinition.CONSTANT;
 		}
-		return super.isReadOnly();
-	}
-
-	@Override
-	public boolean isVolatile() {
-		if (data.isVolatile()) {
-			return true;
+		if (data.isWritable()) {
+			return MutabilitySettingsDefinition.NORMAL;
 		}
-		return super.isVolatile();
+		return super.getMutability();
 	}
 }

@@ -22,6 +22,7 @@ import java.io.IOException;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.data.MutabilitySettingsDefinition;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.listing.VariableStorage;
 import ghidra.util.exception.AssertException;
@@ -115,13 +116,8 @@ public class DynamicEntry extends SymbolEntry {
 	}
 
 	@Override
-	public boolean isReadOnly() {
-		return false;
-	}
-
-	@Override
-	public boolean isVolatile() {
-		return false;
+	public int getMutability() {
+		return MutabilitySettingsDefinition.NORMAL;
 	}
 
 }
