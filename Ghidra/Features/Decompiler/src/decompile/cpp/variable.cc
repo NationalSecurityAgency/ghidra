@@ -533,16 +533,25 @@ SymbolEntry *HighVariable::getSymbolEntry(void) const
   return (SymbolEntry *)0;
 }
 
-/// The data-type its dirtying mechanism is disabled.  The data-type will not change, unless
-/// this method is called again.
-/// \param tp is the data-type to set
-void HighVariable::finalizeDatatype(Datatype *tp)
+/// If there is an associated Symbol, its data-type (or the appropriate piece) is assigned
+/// to \b this. The dirtying mechanism is disabled so that data-type cannot change.
+/// \param typeFactory is the factory used to construct any required piece
+void HighVariable::finalizeDatatype(TypeFactory *typeFactory)
 
 {
+  if (symbol == (Symbol *)0) return;
+  Datatype *cur = symbol->getType();
+  int4 off = symboloffset;
+  if (off < 0)
+    off = 0;
+  int4 sz = inst[0]->getSize();
+  Datatype *tp = typeFactory->getExactPiece(cur, off, sz);
+  if (tp == (Datatype *)0 || tp->getMetatype() == TYPE_UNKNOWN)
+    return;
   type = tp;
   if (type->hasStripped()) {
     if (type->getMetatype() == TYPE_PARTIALUNION) {
-      if (symbol != (Symbol *)0 && symboloffset != -1) {
+      if (symboloffset != -1) {
 	type_metatype meta = symbol->getType()->getMetatype();
 	if (meta != TYPE_STRUCT && meta != TYPE_UNION)	// If partial union does not have a bigger backing symbol
 	  type = type->getStripped();			// strip the partial union

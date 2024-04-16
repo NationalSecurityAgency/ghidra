@@ -1,0 +1,122 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<bytechunk space="ram" offset="0x100000" readonly="true">
+f30f1efa4883ec28660f6f0540020000
+b8616c00004889e766894424140f2904
+24c744241062796520c64424166ce8cd
+0f0000488d7c240ce8c30f00004883c4
+28c3
+</bytechunk>
+<bytechunk space="ram" offset="0x100050" readonly="true">
+f30f1efa48b868656c6c6f2077685548
+83ec10488d6c240348894424034889ef
+c744240b69726c00c644240f00e87e0f
+00004889efc644240f0048b877686972
+6c6564204889442403c744240b706561
+73e85a0f00004883c4105dc3
+</bytechunk>
+<bytechunk space="ram" offset="0x1000b0" readonly="true">
+f30f1efa4883ec38660f6f05a0010000
+4889e70f290424660f6f05a10100000f
+29442410660f6f05a40100000f294424
+20e8220f00004883c438c3
+</bytechunk>
+<bytechunk space="ram" offset="0x1000f0" readonly="true">
+f30f1efa48b86f6e652074776f204883
+ec38893c244889e74889442408b84521
+0000c7442410544852456689442414c6
+4424160089742404e8e30e00004883c4
+38c3
+</bytechunk>
+<bytechunk space="ram" offset="0x100140" readonly="true">
+f30f1efa55b8730000005389fb4883ec
+28660f6f05370100004889e566894424
+104889ef0f290424e8930e00004889ef
+885c2409e8870e00004883c4285b5dc3
+</bytechunk>
+<bytechunk space="ram" offset="0x100180" readonly="true">
+f30f1efa4883ec28b92000000048b84d
+6573736167653a4889042466894c2408
+85ff7524ba0a0000004889e7c7442409
+5a45524f668954240de8420e00004883
+c428c3000000000048b8504f53495449
+56454889e74889442409b80900000066
+89442411e8170e00004883c428c3
+</bytechunk>
+<bytechunk space="ram" offset="0x1001f0" readonly="true">
+f30f1efa83ff647e3748b852616e6765
+206578c6051c0e000000488905070e00
+00b865640000c705000e000063656564
+668905fd0d0000c3
+</bytechunk>
+<bytechunk space="ram" offset="0x100230" readonly="true">
+48b876616c6964c2a300488905d70d00
+00c3
+</bytechunk>
+<bytechunk space="ram" offset="0x100250" readonly="true">
+68656c6c6f20776f726c6400676f6f64
+</bytechunk>
+<bytechunk space="ram" offset="0x100260" readonly="true">
+48000000450000004c0000004c000000
+4f00000020000000570000004f000000
+520000004c0000004400000000000000
+</bytechunk>
+<bytechunk space="ram" offset="0x100290" readonly="true">
+736c656570696e6720646f67206c6965
+</bytechunk>
+<symbol space="ram" offset="0x100000" name="nullbetween"/>
+<symbol space="ram" offset="0x100050" name="twomessages"/>
+<symbol space="ram" offset="0x1000b0" name="utf32message"/>
+<symbol space="ram" offset="0x1000f0" name="stringInStruct"/>
+<symbol space="ram" offset="0x100140" name="alterString"/>
+<symbol space="ram" offset="0x100180" name="conditionalString"/>
+<symbol space="ram" offset="0x1001f0" name="globalString"/>
+<symbol space="ram" offset="0x101000" name="customPrint"/>
+<symbol space="ram" offset="0x101008" name="customPrintWide"/>
+<symbol space="ram" offset="0x101010" name="receiveStruct"/>
+</binaryimage>
+<script>
+  <com>option readonly on</com>
+  <com>parse line struct stringstruct { int4 a; int4 b; char warning[32]; int4 c; };</com>
+  <com>parse line extern void customPrint(char *);</com>
+  <com>parse line extern void customPrintWide(wchar4 *);</com>
+  <com>parse line extern void receiveStruct(stringstruct *);</com>
+  <com>map addr r0x101018 char globstring[32]</com>
+  <com>lo fu nullbetween</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu twomessages</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu utf32message</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu stringInStruct</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu alterString</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu conditionalString</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu globalString</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Stack string #1" min="1" max="1">builtin_strncpy\(acStack_28.*"goodbye all",0xb\);</stringmatch>
+<stringmatch name="Stack string #2" min="1" max="1">builtin_strncpy\(acStack_28,.*"hello world",0xc\);</stringmatch>
+<stringmatch name="Stack string #3" min="1" max="1">builtin_strncpy\(acStack_15,.*"hello whirl",0xc\);</stringmatch>
+<stringmatch name="Stack string #4" min="1" max="1">builtin_strncpy\(acStack_15,.*"whirled peas",0xd\);</stringmatch>
+<stringmatch name="Stack string #5" min="1" max="1">acStack_15\[0xc\] = 0;</stringmatch>
+<stringmatch name="Stack string #6" min="1" max="1">builtin_wcsncpy\(awStack_38,.*"HELLO WORLD",0xc\);</stringmatch>
+<stringmatch name="Stack string #7" min="1" max="1">builtin_strncpy\(sStack_38\.warning,"one two THREE!",0xf\);</stringmatch>
+<stringmatch name="Stack string #8" min="1" max="1">builtin_strncpy\(acStack_38,"sleeping dog lies",0x12\);</stringmatch>
+<stringmatch name="Stack string #9" min="1" max="1">acStack_38\[9\] = param_1;</stringmatch>
+<stringmatch name="Stack string #10" min="1" max="1">builtin_strncpy\(acStack_28,"Message: ",9\);</stringmatch>
+<stringmatch name="Stack string #11" min="1" max="1">builtin_strncpy\(acStack_28 \+ 9,"ZERO\\n",6\);</stringmatch>
+<stringmatch name="Stack string #12" min="1" max="1">builtin_strncpy\(acStack_28 \+ 9,"POSITIVE\\t",10\);</stringmatch>
+<stringmatch name="Stack string #13" min="1" max="1">builtin_strncpy\(globstring,"Range exceeded",0xf\);</stringmatch>
+<stringmatch name="Stack string #14" min="1" max="1">builtin_strncpy\(globstring,"valid&#xc2;&#xa3;",8\);</stringmatch>
+</decompilertest>

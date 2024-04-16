@@ -756,9 +756,9 @@ int4 PcodeOp::compareOrder(const PcodeOp *bop) const
 /// whether a Varnode is a leaf of this tree.
 /// \param rootVn is the given root of the CONCAT tree
 /// \param vn is the Varnode to test as a leaf
-/// \param typeOffset is byte offset of the test Varnode within fully concatenated value
+/// \param relOffset is byte offset of the test Varnode within fully concatenated value (rooted at \b rootVn)
 /// \return \b true is the test Varnode is a leaf of the tree
-bool PieceNode::isLeaf(Varnode *rootVn,Varnode *vn,int4 typeOffset)
+bool PieceNode::isLeaf(Varnode *rootVn,Varnode *vn,int4 relOffset)
 
 {
   if (vn->isMapped() && rootVn->getSymbolEntry() != vn->getSymbolEntry()) {
@@ -770,7 +770,7 @@ bool PieceNode::isLeaf(Varnode *rootVn,Varnode *vn,int4 typeOffset)
   PcodeOp *op = vn->loneDescend();
   if (op == (PcodeOp *)0) return true;
   if (vn->isAddrTied()) {
-    Address addr = rootVn->getAddr() + typeOffset;
+    Address addr = rootVn->getAddr() + relOffset;
     if (vn->getAddr() != addr) return true;
   }
   return false;
@@ -820,17 +820,18 @@ Varnode *PieceNode::findRoot(Varnode *vn)
 /// \param stack holds the markup for each node of the tree
 /// \param rootVn is the given root of the tree
 /// \param op is the current PIECE op to explore as part of the tree
-/// \param baseOffset is the offset associated with the output of the current PIECE op
-void PieceNode::gatherPieces(vector<PieceNode> &stack,Varnode *rootVn,PcodeOp *op,int4 baseOffset)
+/// \param baseOffset is the offset associated with the output of the current PIECE op wihtin the data-type
+/// \param rootOffset is the offset of the \b rootVn within the data-type
+void PieceNode::gatherPieces(vector<PieceNode> &stack,Varnode *rootVn,PcodeOp *op,int4 baseOffset,int4 rootOffset)
 
 {
   for(int4 i=0;i<2;++i) {
     Varnode *vn = op->getIn(i);
     int4 offset = (rootVn->getSpace()->isBigEndian() == (i==1)) ? baseOffset + op->getIn(1-i)->getSize() : baseOffset;
-    bool res = isLeaf(rootVn,vn,offset);
+    bool res = isLeaf(rootVn,vn,offset-rootOffset);
     stack.emplace_back(op,i,offset,res);
     if (!res)
-      gatherPieces(stack,rootVn,vn->getDef(),offset);
+      gatherPieces(stack,rootVn,vn->getDef(),offset,rootOffset);
   }
 }
 

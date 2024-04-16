@@ -2082,8 +2082,10 @@ bool JumpAssisted::recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint
   if (assistOp->code() != CPUI_CALLOTHER) return false;
   if (assistOp->numInput() < 3) return false;
   int4 index = assistOp->getIn(0)->getOffset();
-  userop = dynamic_cast<JumpAssistOp *>(fd->getArch()->userops.getOp(index));
-  if (userop == (JumpAssistOp *)0) return false;
+  UserPcodeOp *tmpOp = fd->getArch()->userops.getOp(index);
+  if (tmpOp->getType() != UserPcodeOp::jumpassist)
+    return false;
+  userop = (JumpAssistOp *)tmpOp;
 
   switchvn = assistOp->getIn(1);		// The switch variable
   for(int4 i=2;i<assistOp->numInput();++i)

@@ -632,7 +632,7 @@ bool Funcdata::replaceVolatile(Varnode *vn)
 {
   PcodeOp *newop;
   if (vn->isWritten()) {	// A written value
-    VolatileWriteOp *vw_op = glb->userops.getVolatileWrite();
+    UserPcodeOp *vw_op = glb->userops.registerBuiltin(UserPcodeOp::BUILTIN_VOLATILE_WRITE);
     if (!vn->hasNoDescend()) throw LowlevelError("Volatile memory was propagated");
     PcodeOp *defop = vn->getDef();
     newop = newOp(3,defop->getAddr());
@@ -651,7 +651,7 @@ bool Funcdata::replaceVolatile(Varnode *vn)
     opInsertAfter(newop,defop); // Insert after defining op
   }
   else {			// A read value
-    VolatileReadOp *vr_op = glb->userops.getVolatileRead();
+    UserPcodeOp *vr_op = glb->userops.registerBuiltin(UserPcodeOp::BUILTIN_VOLATILE_READ);
     if (vn->hasNoDescend()) return false; // Dead
     PcodeOp *readop = vn->loneDescend();
     if (readop == (PcodeOp *)0)
@@ -1002,7 +1002,6 @@ bool Funcdata::syncVarnodesWithSymbol(VarnodeLocSet::const_iterator &iter,uint4 
     if (ct != (Datatype *)0) {
       if (vn->updateType(ct,false,false))
 	updateoccurred = true;
-      vn->getHigh()->finalizeDatatype(ct);	// Permanently set the data-type on the HighVariable
     }
   } while(iter != enditer);
   return updateoccurred;
@@ -1311,6 +1310,41 @@ bool Funcdata::attemptDynamicMappingLate(SymbolEntry *entry,DynamicHash &dhash)
   }
   return true;
 }
+
+/// \brief Create Varnode (and associated PcodeOp) that will display as a string constant
+///
+/// The raw data for the encoded string is given. If the data encodes a legal string, the string
+/// is stored in the StringManager, and a Varnode is created that will display in output as the
+/// quoted string.  A given pointer data-type is assigned to the new Varnode and also indicates
+/// the character data-type associated with the encoding. Internally, a \e stringdata user-op is
+/// also created and its output is the Varnode actually returned.
+/// \param buf is the raw bytes of the encoded string
+/// \param size is the number of bytes
+/// \param ptrType is the given pointer to character data-type
+/// \param readOp is the PcodeOp that will read the new Varnode
+/// \return the new Varnode or null is the encoding isn't a legal string
+Varnode *Funcdata::getInternalString(const uint1 *buf,int4 size,Datatype *ptrType,PcodeOp *readOp)
+
+{
+  if (ptrType->getMetatype() != TYPE_PTR)
+    return (Varnode *)0;
+  Datatype *charType = ((TypePointer *)ptrType)->getPtrTo();
+
+  const Address &addr(readOp->getAddr());
+  uint8 hash = glb->stringManager->registerInternalStringData(addr, buf, size, charType);
+  if (hash == 0)
+    return (Varnode *)0;
+  glb->userops.registerBuiltin(UserPcodeOp::BUILTIN_STRINGDATA);
+  PcodeOp *stringOp = newOp(2,addr);
+  opSetOpcode(stringOp, CPUI_CALLOTHER);
+  stringOp->clearFlag(PcodeOp::call);
+  opSetInput(stringOp, newConstant(4, UserPcodeOp::BUILTIN_STRINGDATA), 0);
+  opSetInput(stringOp, newConstant(8, hash), 1);
+  Varnode *resVn = newUniqueOut(ptrType->getSize(), stringOp);
+  resVn->updateType(ptrType, true, false);
+  opInsertBefore(stringOp, readOp);
+  return resVn;
+};
 
 /// Follow the Varnode back to see if it comes from the return address for \b this function.
 /// If so, return \b true.  The return address can flow through COPY, INDIRECT, and AND operations.
