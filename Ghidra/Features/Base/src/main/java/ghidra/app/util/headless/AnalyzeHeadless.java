@@ -28,6 +28,7 @@ import ghidra.framework.*;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.protocol.ghidra.Handler;
 import ghidra.util.Msg;
+import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.InvalidInputException;
 
 /**
@@ -119,6 +120,7 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 
 		Msg.info(AnalyzeHeadless.class,
 			"Headless startup complete (" + GhidraLauncher.getMillisecondsFromLaunch() + " ms)");
+		ClassSearcher.logStatistics();
 
 		// Do the headless processing
 		try {

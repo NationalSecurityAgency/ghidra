@@ -82,9 +82,8 @@ public class FieldNavigator implements ButtonPressedListener, FieldMouseHandlerS
 			new HashMap<Class<?>, List<FieldMouseHandler>>();
 
 		// find all instances of AnnotatedString
-		List<FieldMouseHandlerExtension> instances =
-			ClassSearcher.getInstances(FieldMouseHandlerExtension.class);
-		for (FieldMouseHandlerExtension fieldMouseHandler : instances) {
+		List<FieldMouseHandler> instances = ClassSearcher.getInstances(FieldMouseHandler.class);
+		for (FieldMouseHandler fieldMouseHandler : instances) {
 			addHandler(map, fieldMouseHandler);
 		}
 

@@ -89,7 +89,7 @@ public class GhidraRun implements GhidraLaunchable {
 				String projectPath = processArguments(args);
 				openProject(projectPath);
 				
-				log.info("Ghidra starup complete (" + GhidraLauncher.getMillisecondsFromLaunch() +
+				log.info("Ghidra startup complete (" + GhidraLauncher.getMillisecondsFromLaunch() +
 					" ms)");
 			});
 		};
