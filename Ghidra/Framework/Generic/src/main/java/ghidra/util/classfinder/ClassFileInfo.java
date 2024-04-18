@@ -15,17 +15,11 @@
  */
 package ghidra.util.classfinder;
 
-import java.util.Set;
-
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
-
 /**
- * Represents a place from which {@link Class}s can be obtained
+ * Information about a class file on disk
+ * 
+ * @param path The path to the class file (or jar containing the class)
+ * @param name The name of the class (including package)
+ * @param suffix The class suffix (i.e., extension point type name)
  */
-interface ClassLocation {
-
-	public static final String CLASS_EXT = ".class";
-
-	public void getClasses(Set<ClassFileInfo> set, TaskMonitor monitor) throws CancelledException;
-}
+public record ClassFileInfo(String path, String name, String suffix) {}

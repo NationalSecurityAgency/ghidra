@@ -33,7 +33,7 @@ class ClassDir {
 		classPackage = new ClassPackage(dir, "", monitor);
 	}
 
-	void getClasses(Set<Class<?>> set, TaskMonitor monitor) throws CancelledException {
+	void getClasses(Set<ClassFileInfo> set, TaskMonitor monitor) throws CancelledException {
 		classPackage.getClasses(set, monitor);
 	}
 

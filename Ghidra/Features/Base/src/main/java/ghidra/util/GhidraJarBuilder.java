@@ -26,7 +26,6 @@ import generic.jar.*;
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
 import ghidra.framework.*;
-import ghidra.util.classfinder.ClassFinder;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
@@ -617,7 +616,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			if (clazz == null) {
 				System.out.println("Couldn't load " + path);
 			}
-			else if (ClassFinder.isClassOfInterest(clazz)) {
+			else if (ClassSearcher.isClassOfInterest(clazz)) {
 				extensionPointClasses.add(clazz.getName());
 			}
 		}
