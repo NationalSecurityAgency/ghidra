@@ -229,8 +229,8 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		DynamicTableColumn<ValueRow, ?, Trace> pcCol = QueryPanelTestHelper
 				.getColumnByNameAndType(tableModel, table, "PC", ValueProperty.class)
 				.column();
-		DynamicTableColumn<ValueRow, Function, Trace> funcCol = QueryPanelTestHelper
-				.getColumnByNameAndType(tableModel, table, "Function", Function.class)
+		DynamicTableColumn<ValueRow, ?, Trace> funcCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "Function", ValueProperty.class)
 				.column();
 
 		assertEquals(PathUtils.makeKey(PathUtils.makeIndex(level)), rowColVal(row, levelCol));
