@@ -74,6 +74,8 @@ public class MachoProgramBuilder {
 	protected AddressSpace space;
 	protected BinaryReader reader;
 
+	private Map<String, AddressSpace> segmentOverlayMap;
+
 	/**
 	 * Creates a new {@link MachoProgramBuilder} based on the given information.
 	 * 
@@ -94,6 +96,7 @@ public class MachoProgramBuilder {
 		this.listing = program.getListing();
 		this.space = program.getAddressFactory().getDefaultAddressSpace();
 		this.reader = new BinaryReader(provider, !memory.isBigEndian());
+		this.segmentOverlayMap = new HashMap<>();
 	}
 
 	/**
@@ -207,6 +210,8 @@ public class MachoProgramBuilder {
 			return;
 		}
 
+		Set<Section> overlaySections = new HashSet<>();
+
 		// Create memory blocks for segments.
 		for (SegmentCommand segment : header.getAllSegments()) {
 			if (monitor.isCancelled()) {
@@ -218,7 +223,7 @@ public class MachoProgramBuilder {
 				if (createMemoryBlock(segment.getSegmentName(),
 					space.getAddress(segment.getVMaddress()), segment.getFileOffset(),
 					segment.getFileSize(), segment.getSegmentName(), source, segment.isRead(),
-					segment.isWrite(), segment.isExecute(), false) == null) {
+					segment.isWrite(), segment.isExecute(), false, false) == null) {
 					log.appendMsg(String.format("Failed to create block: %s 0x%x 0x%x",
 						segment.getSegmentName(), segment.getVMaddress(), segment.getVMsize()));
 				}
@@ -228,10 +233,25 @@ public class MachoProgramBuilder {
 						space.getAddress(segment.getVMaddress()).add(segment.getFileSize()), 0,
 						segment.getVMsize() - segment.getFileSize(), segment.getSegmentName(),
 						source, segment.isRead(), segment.isWrite(), segment.isExecute(),
-						true) == null) {
+						true, false) == null) {
 						log.appendMsg(String.format("Failed to create block: %s 0x%x 0x%x",
 							segment.getSegmentName(), segment.getVMaddress(), segment.getVMsize()));
 					}
+				}
+			}
+			else if (segment.getVMaddress() != 0 && segment.getVMsize() == 0 &&
+				segment.getFileSize() > 0) {
+				MemoryBlock overlayBlock = createMemoryBlock(segment.getSegmentName(),
+					space.getAddress(segment.getVMaddress()), segment.getFileOffset(),
+					segment.getFileSize(), segment.getSegmentName(), source, true, false, false,
+					false, true);
+				if (overlayBlock == null) {
+					log.appendMsg(String.format("Failed to create overlay block: %s 0x%x 0x%x",
+						segment.getSegmentName(), segment.getVMaddress(), segment.getVMsize()));
+				}
+				else {
+					segmentOverlayMap.put(segment.getSegmentName(), overlayBlock.getStart().getAddressSpace());
+					overlaySections.addAll(segment.getSections());
 				}
 			}
 		}
@@ -243,14 +263,16 @@ public class MachoProgramBuilder {
 				if (monitor.isCancelled()) {
 					break;
 				}
-
+				AddressSpace sectionSpace = overlaySections.contains(section)
+						? segmentOverlayMap.get(section.getSegmentName())
+						: space;
 				if (section.getSize() > 0 && section.getOffset() > 0 &&
 					(allowZeroAddr || section.getAddress() != 0)) {
 					if (createMemoryBlock(section.getSectionName(),
-						space.getAddress(section.getAddress()), section.getOffset(),
+						sectionSpace.getAddress(section.getAddress()), section.getOffset(),
 						section.getSize(), section.getSegmentName(), source, section.isRead(),
 						section.isWrite(), section.isExecute(),
-						section.getType() == SectionTypes.S_ZEROFILL) == null) {
+						section.getType() == SectionTypes.S_ZEROFILL, false) == null) {
 						log.appendMsg(String.format("Failed to create block: %s.%s 0x%x 0x%x %s",
 							section.getSegmentName(), section.getSectionName(),
 							section.getAddress(), section.getSize(), source));
@@ -277,12 +299,13 @@ public class MachoProgramBuilder {
 	 * @param x True if the new block has execute-permissions; otherwise, false.
 	 * @param zeroFill True if the new block is zero-filled; otherwise, false.  Newly created
 	 *   zero-filled blocks will be uninitialized to safe space.
+	 * @param overlay True if the new block should be an overlay; otherwise, false.
 	 * @return The newly created (or split) memory block, or null if it failed to be created. 
 	 * @throws Exception If there was a problem creating the new memory block.
 	 */
 	private MemoryBlock createMemoryBlock(String name, Address start, long dataOffset,
 			long dataLength, String comment, String source, boolean r, boolean w, boolean x,
-			boolean zeroFill) throws Exception {
+			boolean zeroFill, boolean overlay) throws Exception {
 
 		// Get a list of all blocks that intersect with the block we wish to create.  There may be
 		// more that one if the containing memory has both initialized and uninitialized pieces.
@@ -301,11 +324,11 @@ public class MachoProgramBuilder {
 		if (intersectingBlocks.isEmpty()) {
 			if (zeroFill) {
 				// Treat zero-fill blocks as uninitialized to save space
-				return MemoryBlockUtils.createUninitializedBlock(program, false, name, start,
+				return MemoryBlockUtils.createUninitializedBlock(program, overlay, name, start,
 					dataLength, comment, source, r, w, x, log);
 			}
 
-			return MemoryBlockUtils.createInitializedBlock(program, false, name, start, fileBytes,
+			return MemoryBlockUtils.createInitializedBlock(program, overlay, name, start, fileBytes,
 				dataOffset, dataLength, comment, source, r, w, x, log);
 		}
 
@@ -354,10 +377,9 @@ public class MachoProgramBuilder {
 		}
 		ProgramModule rootModule = listing.getDefaultRootModule();
 		for (SegmentCommand segment : machoHeader.getAllSegments()) {
-			if (segment.getVMsize() == 0) {
-				continue;
-			}
-			Address segmentStart = space.getAddress(segment.getVMaddress());
+			AddressSpace segmentSpace =
+				segmentOverlayMap.getOrDefault(segment.getSegmentName(), space);
+			Address segmentStart = segmentSpace.getAddress(segment.getVMaddress());
 			Address segmentEnd = segmentStart.add(segment.getVMsize() - 1);
 			if (!memory.contains(segmentStart)) {
 				continue;
@@ -397,7 +419,7 @@ public class MachoProgramBuilder {
 				if (section.getSize() == 0) {
 					continue;
 				}
-				Address sectionStart = space.getAddress(section.getAddress());
+				Address sectionStart = segmentSpace.getAddress(section.getAddress());
 				Address sectionEnd = sectionStart.add(section.getSize() - 1);
 				if (!memory.contains(sectionEnd)) {
 					sectionEnd = memory.getBlock(sectionStart).getEnd();
