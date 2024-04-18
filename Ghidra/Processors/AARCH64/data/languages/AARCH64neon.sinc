@@ -7707,9 +7707,9 @@ is b_31=0 & b_30=1 & b_2229=0b00111100 & b_1215=0b0101 & b_10=0 & Re_VPR128Lo.H 
 :fmls Rd_VPR128.2D, Rn_VPR128.2D, Rm_VPR128.2D
 is b_3131=0 & q=1 & u=0 & b_2428=0xe & advSIMD3.size=3 & b_2121=1 & Rm_VPR128.2D & b_1115=0x19 & b_1010=1 & Rn_VPR128.2D & Rd_VPR128.2D & Zd
 {
-	# simd infix TMPQ1 = Rn_VPR128.2D f* Rd_VPR128.2D on lane size 8
-	TMPQ1[0,64] = Rn_VPR128.2D[0,64] f* Rd_VPR128.2D[0,64];
-	TMPQ1[64,64] = Rn_VPR128.2D[64,64] f* Rd_VPR128.2D[64,64];
+	# simd infix TMPQ1 = Rn_VPR128.2D f* Rm_VPR128.2D on lane size 8
+	TMPQ1[0,64] = Rn_VPR128.2D[0,64] f* Rm_VPR128.2D[0,64];
+	TMPQ1[64,64] = Rn_VPR128.2D[64,64] f* Rm_VPR128.2D[64,64];
 	# simd infix Rd_VPR128.2D = Rd_VPR128.2D f- TMPQ1 on lane size 8
 	Rd_VPR128.2D[0,64] = Rd_VPR128.2D[0,64] f- TMPQ1[0,64];
 	Rd_VPR128.2D[64,64] = Rd_VPR128.2D[64,64] f- TMPQ1[64,64];
