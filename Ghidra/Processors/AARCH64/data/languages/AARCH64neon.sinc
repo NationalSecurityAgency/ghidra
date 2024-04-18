@@ -29134,12 +29134,14 @@ is b_3131=0 & q=1 & b_2429=0xe & advSIMD3.size=1 & b_2121=0 & Rm_VPR128.8H & b_1
 is b_2131=0b11001110100 & Rd_VPR128.2D & Rn_VPR128.2D & Rm_VPR128.2D & LSB_bitfield64_imm & Zd
 {
 	# simd infix TMPQ1 = Rn_VPR128.2D | Rm_VPR128.2D on lane size 8
-	TMPQ1[0,64] = Rn_VPR128.2D[0,64] | Rm_VPR128.2D[0,64];
-	TMPQ1[64,64] = Rn_VPR128.2D[64,64] | Rm_VPR128.2D[64,64];
+	TMPQ1[0,64] = Rn_VPR128.2D[0,64] ^ Rm_VPR128.2D[0,64];
+	TMPQ1[64,64] = Rn_VPR128.2D[64,64] ^ Rm_VPR128.2D[64,64];
 	local tmp2:8 = LSB_bitfield64_imm;
 	# simd infix Rd_VPR128.2D = TMPQ1 >> tmp2 on lane size 8
 	Rd_VPR128.2D[0,64] = TMPQ1[0,64] >> tmp2;
+	Rd_VPR128.2D[0,64] = Rd_VPR128.2D[0,64] | (TMPQ1[0,64] << (64 - tmp2));
 	Rd_VPR128.2D[64,64] = TMPQ1[64,64] >> tmp2;
+	Rd_VPR128.2D[64,64] = Rd_VPR128.2D[64,64] | (TMPQ1[64,64] << (64 - tmp2));
 	zext_zq(Zd); # zero upper 16 bytes of Zd
 }
 
