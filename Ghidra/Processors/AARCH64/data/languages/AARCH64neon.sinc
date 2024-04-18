@@ -7325,9 +7325,9 @@ is b_31=0 & b_30=0 & b_2329=0b0011111 & b_22=0 & b_1215=0b0000 & b_10=0 & Re_VPR
 	# simd resize TMPD3 = float2float(TMPS2) (lane size 2 to 4)
 	TMPD3[0,32] = float2float(TMPS2[0,16]);
 	TMPD3[32,32] = float2float(TMPS2[16,16]);
-	# simd infix Rd_VPR64.2S = Rd_VPR64.2S + TMPD3 on lane size 4
-	Rd_VPR64.2S[0,32] = Rd_VPR64.2S[0,32] + TMPD3[0,32];
-	Rd_VPR64.2S[32,32] = Rd_VPR64.2S[32,32] + TMPD3[32,32];
+	# simd infix Rd_VPR64.2S = Rd_VPR64.2S f+ TMPD3 on lane size 4
+	Rd_VPR64.2S[0,32] = Rd_VPR64.2S[0,32] f+ TMPD3[0,32];
+	Rd_VPR64.2S[32,32] = Rd_VPR64.2S[32,32] f+ TMPD3[32,32];
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 }
 
@@ -7354,11 +7354,11 @@ is b_31=0 & b_30=1 & b_2329=0b0011111 & b_22=0 & b_1215=0b0000 & b_10=0 & Re_VPR
 	TMPQ3[32,32] = float2float(TMPD2[16,16]);
 	TMPQ3[64,32] = float2float(TMPD2[32,16]);
 	TMPQ3[96,32] = float2float(TMPD2[48,16]);
-	# simd infix Rd_VPR128.4S = Rd_VPR128.4S + TMPQ3 on lane size 4
-	Rd_VPR128.4S[0,32] = Rd_VPR128.4S[0,32] + TMPQ3[0,32];
-	Rd_VPR128.4S[32,32] = Rd_VPR128.4S[32,32] + TMPQ3[32,32];
-	Rd_VPR128.4S[64,32] = Rd_VPR128.4S[64,32] + TMPQ3[64,32];
-	Rd_VPR128.4S[96,32] = Rd_VPR128.4S[96,32] + TMPQ3[96,32];
+	# simd infix Rd_VPR128.4S = Rd_VPR128.4S f+ TMPQ3 on lane size 4
+	Rd_VPR128.4S[0,32] = Rd_VPR128.4S[0,32] f+ TMPQ3[0,32];
+	Rd_VPR128.4S[32,32] = Rd_VPR128.4S[32,32] f+ TMPQ3[32,32];
+	Rd_VPR128.4S[64,32] = Rd_VPR128.4S[64,32] f+ TMPQ3[64,32];
+	Rd_VPR128.4S[96,32] = Rd_VPR128.4S[96,32] f+ TMPQ3[96,32];
 	zext_zq(Zd); # zero upper 16 bytes of Zd
 }
 
@@ -7381,9 +7381,9 @@ is b_31=0 & b_30=0 & b_2329=0b1011111 & b_22=0 & b_1215=0b1000 & b_10=0 & Re_VPR
 	# simd resize TMPD3 = float2float(TMPS2) (lane size 2 to 4)
 	TMPD3[0,32] = float2float(TMPS2[0,16]);
 	TMPD3[32,32] = float2float(TMPS2[16,16]);
-	# simd infix Rd_VPR64.2S = Rd_VPR64.2S + TMPD3 on lane size 4
-	Rd_VPR64.2S[0,32] = Rd_VPR64.2S[0,32] + TMPD3[0,32];
-	Rd_VPR64.2S[32,32] = Rd_VPR64.2S[32,32] + TMPD3[32,32];
+	# simd infix Rd_VPR64.2S = Rd_VPR64.2S f+ TMPD3 on lane size 4
+	Rd_VPR64.2S[0,32] = Rd_VPR64.2S[0,32] f+ TMPD3[0,32];
+	Rd_VPR64.2S[32,32] = Rd_VPR64.2S[32,32] f+ TMPD3[32,32];
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 }
 
@@ -7410,11 +7410,11 @@ is b_31=0 & b_30=1 & b_2329=0b1011111 & b_22=0 & b_1215=0b1000 & b_10=0 & Re_VPR
 	TMPQ3[32,32] = float2float(TMPD2[16,16]);
 	TMPQ3[64,32] = float2float(TMPD2[32,16]);
 	TMPQ3[96,32] = float2float(TMPD2[48,16]);
-	# simd infix Rd_VPR128.4S = Rd_VPR128.4S + TMPQ3 on lane size 4
-	Rd_VPR128.4S[0,32] = Rd_VPR128.4S[0,32] + TMPQ3[0,32];
-	Rd_VPR128.4S[32,32] = Rd_VPR128.4S[32,32] + TMPQ3[32,32];
-	Rd_VPR128.4S[64,32] = Rd_VPR128.4S[64,32] + TMPQ3[64,32];
-	Rd_VPR128.4S[96,32] = Rd_VPR128.4S[96,32] + TMPQ3[96,32];
+	# simd infix Rd_VPR128.4S = Rd_VPR128.4S f+ TMPQ3 on lane size 4
+	Rd_VPR128.4S[0,32] = Rd_VPR128.4S[0,32] f+ TMPQ3[0,32];
+	Rd_VPR128.4S[32,32] = Rd_VPR128.4S[32,32] f+ TMPQ3[32,32];
+	Rd_VPR128.4S[64,32] = Rd_VPR128.4S[64,32] f+ TMPQ3[64,32];
+	Rd_VPR128.4S[96,32] = Rd_VPR128.4S[96,32] f+ TMPQ3[96,32];
 	zext_zq(Zd); # zero upper 16 bytes of Zd
 }
 
@@ -7436,9 +7436,9 @@ is b_31=0 & b_30=0 & b_2329=0b0011100 & b_22=0 & b_21=1 & b_1015=0b111011 & Rd_V
 	# simd resize TMPD4 = float2float(TMPS3) (lane size 2 to 4)
 	TMPD4[0,32] = float2float(TMPS3[0,16]);
 	TMPD4[32,32] = float2float(TMPS3[16,16]);
-	# simd infix Rd_VPR64.2S = Rd_VPR64.2S + TMPD4 on lane size 4
-	Rd_VPR64.2S[0,32] = Rd_VPR64.2S[0,32] + TMPD4[0,32];
-	Rd_VPR64.2S[32,32] = Rd_VPR64.2S[32,32] + TMPD4[32,32];
+	# simd infix Rd_VPR64.2S = Rd_VPR64.2S f+ TMPD4 on lane size 4
+	Rd_VPR64.2S[0,32] = Rd_VPR64.2S[0,32] f+ TMPD4[0,32];
+	Rd_VPR64.2S[32,32] = Rd_VPR64.2S[32,32] f+ TMPD4[32,32];
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 }
 
@@ -7464,11 +7464,11 @@ is b_31=0 & b_30=1 & b_2329=0b0011100 & b_22=0 & b_21=1 & b_1015=0b111011 & Rd_V
 	TMPQ4[32,32] = float2float(TMPD3[16,16]);
 	TMPQ4[64,32] = float2float(TMPD3[32,16]);
 	TMPQ4[96,32] = float2float(TMPD3[48,16]);
-	# simd infix Rd_VPR128.4S = Rd_VPR128.4S + TMPQ4 on lane size 4
-	Rd_VPR128.4S[0,32] = Rd_VPR128.4S[0,32] + TMPQ4[0,32];
-	Rd_VPR128.4S[32,32] = Rd_VPR128.4S[32,32] + TMPQ4[32,32];
-	Rd_VPR128.4S[64,32] = Rd_VPR128.4S[64,32] + TMPQ4[64,32];
-	Rd_VPR128.4S[96,32] = Rd_VPR128.4S[96,32] + TMPQ4[96,32];
+	# simd infix Rd_VPR128.4S = Rd_VPR128.4S f+ TMPQ4 on lane size 4
+	Rd_VPR128.4S[0,32] = Rd_VPR128.4S[0,32] f+ TMPQ4[0,32];
+	Rd_VPR128.4S[32,32] = Rd_VPR128.4S[32,32] f+ TMPQ4[32,32];
+	Rd_VPR128.4S[64,32] = Rd_VPR128.4S[64,32] f+ TMPQ4[64,32];
+	Rd_VPR128.4S[96,32] = Rd_VPR128.4S[96,32] f+ TMPQ4[96,32];
 	zext_zq(Zd); # zero upper 16 bytes of Zd
 }
 
@@ -7490,9 +7490,9 @@ is b_31=0 & b_30=0 & b_2329=0b1011100 & b_22=0 & b_21=1 & b_1015=0b110011 & Rd_V
 	# simd resize TMPD4 = float2float(TMPS3) (lane size 2 to 4)
 	TMPD4[0,32] = float2float(TMPS3[0,16]);
 	TMPD4[32,32] = float2float(TMPS3[16,16]);
-	# simd infix Rd_VPR64.2S = Rd_VPR64.2S + TMPD4 on lane size 4
-	Rd_VPR64.2S[0,32] = Rd_VPR64.2S[0,32] + TMPD4[0,32];
-	Rd_VPR64.2S[32,32] = Rd_VPR64.2S[32,32] + TMPD4[32,32];
+	# simd infix Rd_VPR64.2S = Rd_VPR64.2S f+ TMPD4 on lane size 4
+	Rd_VPR64.2S[0,32] = Rd_VPR64.2S[0,32] f+ TMPD4[0,32];
+	Rd_VPR64.2S[32,32] = Rd_VPR64.2S[32,32] f+ TMPD4[32,32];
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 }
 
@@ -7517,11 +7517,11 @@ is b_31=0 & b_30=1 & b_2329=0b1011100 & b_22=0 & b_21=1 & b_1015=0b110011 & Rd_V
 	TMPQ3[32,32] = float2float(TMPD2[16,16]);
 	TMPQ3[64,32] = float2float(TMPD2[32,16]);
 	TMPQ3[96,32] = float2float(TMPD2[48,16]);
-	# simd infix Rd_VPR128.4S = Rd_VPR128.4S + TMPQ3 on lane size 4
-	Rd_VPR128.4S[0,32] = Rd_VPR128.4S[0,32] + TMPQ3[0,32];
-	Rd_VPR128.4S[32,32] = Rd_VPR128.4S[32,32] + TMPQ3[32,32];
-	Rd_VPR128.4S[64,32] = Rd_VPR128.4S[64,32] + TMPQ3[64,32];
-	Rd_VPR128.4S[96,32] = Rd_VPR128.4S[96,32] + TMPQ3[96,32];
+	# simd infix Rd_VPR128.4S = Rd_VPR128.4S f+ TMPQ3 on lane size 4
+	Rd_VPR128.4S[0,32] = Rd_VPR128.4S[0,32] f+ TMPQ3[0,32];
+	Rd_VPR128.4S[32,32] = Rd_VPR128.4S[32,32] f+ TMPQ3[32,32];
+	Rd_VPR128.4S[64,32] = Rd_VPR128.4S[64,32] f+ TMPQ3[64,32];
+	Rd_VPR128.4S[96,32] = Rd_VPR128.4S[96,32] f+ TMPQ3[96,32];
 	zext_zq(Zd); # zero upper 16 bytes of Zd
 }
 
@@ -7815,9 +7815,9 @@ is b_31=0 & b_30=0 & b_2329=0b0011111 & b_22=0 & b_1215=0b0100 & b_10=0 & Re_VPR
 	# simd resize TMPD3 = float2float(TMPS2) (lane size 2 to 4)
 	TMPD3[0,32] = float2float(TMPS2[0,16]);
 	TMPD3[32,32] = float2float(TMPS2[16,16]);
-	# simd infix Rd_VPR64.2S = Rd_VPR64.2S - TMPD3 on lane size 4
-	Rd_VPR64.2S[0,32] = Rd_VPR64.2S[0,32] - TMPD3[0,32];
-	Rd_VPR64.2S[32,32] = Rd_VPR64.2S[32,32] - TMPD3[32,32];
+	# simd infix Rd_VPR64.2S = Rd_VPR64.2S f- TMPD3 on lane size 4
+	Rd_VPR64.2S[0,32] = Rd_VPR64.2S[0,32] f- TMPD3[0,32];
+	Rd_VPR64.2S[32,32] = Rd_VPR64.2S[32,32] f- TMPD3[32,32];
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 }
 
@@ -7845,10 +7845,10 @@ is b_31=0 & b_30=1 & b_2329=0b0011111 & b_22=0 & b_1215=0b0100 & b_10=0 & Re_VPR
 	TMPQ3[64,32] = float2float(TMPD2[32,16]);
 	TMPQ3[96,32] = float2float(TMPD2[48,16]);
 	# simd infix Rd_VPR128.4S = Rd_VPR128.4S - TMPQ3 on lane size 4
-	Rd_VPR128.4S[0,32] = Rd_VPR128.4S[0,32] - TMPQ3[0,32];
-	Rd_VPR128.4S[32,32] = Rd_VPR128.4S[32,32] - TMPQ3[32,32];
-	Rd_VPR128.4S[64,32] = Rd_VPR128.4S[64,32] - TMPQ3[64,32];
-	Rd_VPR128.4S[96,32] = Rd_VPR128.4S[96,32] - TMPQ3[96,32];
+	Rd_VPR128.4S[0,32] = Rd_VPR128.4S[0,32] f- TMPQ3[0,32];
+	Rd_VPR128.4S[32,32] = Rd_VPR128.4S[32,32] f- TMPQ3[32,32];
+	Rd_VPR128.4S[64,32] = Rd_VPR128.4S[64,32] f- TMPQ3[64,32];
+	Rd_VPR128.4S[96,32] = Rd_VPR128.4S[96,32] f- TMPQ3[96,32];
 	zext_zq(Zd); # zero upper 16 bytes of Zd
 }
 
@@ -7871,9 +7871,9 @@ is b_31=0 & b_30=0 & b_2329=0b1011111 & b_22=0 & b_1215=0b1100 & b_10=0 & Re_VPR
 	# simd resize TMPD3 = float2float(TMPS2) (lane size 2 to 4)
 	TMPD3[0,32] = float2float(TMPS2[0,16]);
 	TMPD3[32,32] = float2float(TMPS2[16,16]);
-	# simd infix Rd_VPR64.2S = Rd_VPR64.2S - TMPD3 on lane size 4
-	Rd_VPR64.2S[0,32] = Rd_VPR64.2S[0,32] - TMPD3[0,32];
-	Rd_VPR64.2S[32,32] = Rd_VPR64.2S[32,32] - TMPD3[32,32];
+	# simd infix Rd_VPR64.2S = Rd_VPR64.2S f- TMPD3 on lane size 4
+	Rd_VPR64.2S[0,32] = Rd_VPR64.2S[0,32] f- TMPD3[0,32];
+	Rd_VPR64.2S[32,32] = Rd_VPR64.2S[32,32] f- TMPD3[32,32];
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 }
 
@@ -7900,11 +7900,11 @@ is b_31=0 & b_30=1 & b_2329=0b1011111 & b_22=0 & b_1215=0b1100 & b_10=0 & Re_VPR
 	TMPQ3[32,32] = float2float(TMPD2[16,16]);
 	TMPQ3[64,32] = float2float(TMPD2[32,16]);
 	TMPQ3[96,32] = float2float(TMPD2[48,16]);
-	# simd infix Rd_VPR128.4S = Rd_VPR128.4S - TMPQ3 on lane size 4
-	Rd_VPR128.4S[0,32] = Rd_VPR128.4S[0,32] - TMPQ3[0,32];
-	Rd_VPR128.4S[32,32] = Rd_VPR128.4S[32,32] - TMPQ3[32,32];
-	Rd_VPR128.4S[64,32] = Rd_VPR128.4S[64,32] - TMPQ3[64,32];
-	Rd_VPR128.4S[96,32] = Rd_VPR128.4S[96,32] - TMPQ3[96,32];
+	# simd infix Rd_VPR128.4S = Rd_VPR128.4S f- TMPQ3 on lane size 4
+	Rd_VPR128.4S[0,32] = Rd_VPR128.4S[0,32] f- TMPQ3[0,32];
+	Rd_VPR128.4S[32,32] = Rd_VPR128.4S[32,32] f- TMPQ3[32,32];
+	Rd_VPR128.4S[64,32] = Rd_VPR128.4S[64,32] f- TMPQ3[64,32];
+	Rd_VPR128.4S[96,32] = Rd_VPR128.4S[96,32] f- TMPQ3[96,32];
 	zext_zq(Zd); # zero upper 16 bytes of Zd
 }
 
@@ -7926,9 +7926,9 @@ is b_31=0 & b_30=0 & b_2329=0b0011101 & b_22=0 & b_21=1 & b_1015=0b111011 & Rd_V
 	# simd resize TMPD4 = float2float(TMPS3) (lane size 2 to 4)
 	TMPD4[0,32] = float2float(TMPS3[0,16]);
 	TMPD4[32,32] = float2float(TMPS3[16,16]);
-	# simd infix Rd_VPR64.2S = Rd_VPR64.2S - TMPD4 on lane size 4
-	Rd_VPR64.2S[0,32] = Rd_VPR64.2S[0,32] - TMPD4[0,32];
-	Rd_VPR64.2S[32,32] = Rd_VPR64.2S[32,32] - TMPD4[32,32];
+	# simd infix Rd_VPR64.2S = Rd_VPR64.2S f- TMPD4 on lane size 4
+	Rd_VPR64.2S[0,32] = Rd_VPR64.2S[0,32] f- TMPD4[0,32];
+	Rd_VPR64.2S[32,32] = Rd_VPR64.2S[32,32] f- TMPD4[32,32];
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 }
 
@@ -7954,11 +7954,11 @@ is b_31=0 & b_30=1 & b_2329=0b0011101 & b_22=0 & b_21=1 & b_1015=0b111011 & Rd_V
 	TMPQ4[32,32] = float2float(TMPD3[16,16]);
 	TMPQ4[64,32] = float2float(TMPD3[32,16]);
 	TMPQ4[96,32] = float2float(TMPD3[48,16]);
-	# simd infix Rd_VPR128.4S = Rd_VPR128.4S - TMPQ4 on lane size 4
-	Rd_VPR128.4S[0,32] = Rd_VPR128.4S[0,32] - TMPQ4[0,32];
-	Rd_VPR128.4S[32,32] = Rd_VPR128.4S[32,32] - TMPQ4[32,32];
-	Rd_VPR128.4S[64,32] = Rd_VPR128.4S[64,32] - TMPQ4[64,32];
-	Rd_VPR128.4S[96,32] = Rd_VPR128.4S[96,32] - TMPQ4[96,32];
+	# simd infix Rd_VPR128.4S = Rd_VPR128.4S f- TMPQ4 on lane size 4
+	Rd_VPR128.4S[0,32] = Rd_VPR128.4S[0,32] f- TMPQ4[0,32];
+	Rd_VPR128.4S[32,32] = Rd_VPR128.4S[32,32] f- TMPQ4[32,32];
+	Rd_VPR128.4S[64,32] = Rd_VPR128.4S[64,32] f- TMPQ4[64,32];
+	Rd_VPR128.4S[96,32] = Rd_VPR128.4S[96,32] f- TMPQ4[96,32];
 	zext_zq(Zd); # zero upper 16 bytes of Zd
 }
 
@@ -7980,9 +7980,9 @@ is b_31=0 & b_30=0 & b_2329=0b1011101 & b_22=0 & b_21=1 & b_1015=0b110011 & Rd_V
 	# simd resize TMPD4 = float2float(TMPS3) (lane size 2 to 4)
 	TMPD4[0,32] = float2float(TMPS3[0,16]);
 	TMPD4[32,32] = float2float(TMPS3[16,16]);
-	# simd infix Rd_VPR64.2S = Rd_VPR64.2S - TMPD4 on lane size 4
-	Rd_VPR64.2S[0,32] = Rd_VPR64.2S[0,32] - TMPD4[0,32];
-	Rd_VPR64.2S[32,32] = Rd_VPR64.2S[32,32] - TMPD4[32,32];
+	# simd infix Rd_VPR64.2S = Rd_VPR64.2S f- TMPD4 on lane size 4
+	Rd_VPR64.2S[0,32] = Rd_VPR64.2S[0,32] f- TMPD4[0,32];
+	Rd_VPR64.2S[32,32] = Rd_VPR64.2S[32,32] f- TMPD4[32,32];
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 }
 
@@ -8007,11 +8007,11 @@ is b_31=0 & b_30=1 & b_2329=0b1011101 & b_22=0 & b_21=1 & b_1015=0b110011 & Rd_V
 	TMPQ3[32,32] = float2float(TMPD2[16,16]);
 	TMPQ3[64,32] = float2float(TMPD2[32,16]);
 	TMPQ3[96,32] = float2float(TMPD2[48,16]);
-	# simd infix Rd_VPR128.4S = Rd_VPR128.4S - TMPQ3 on lane size 4
-	Rd_VPR128.4S[0,32] = Rd_VPR128.4S[0,32] - TMPQ3[0,32];
-	Rd_VPR128.4S[32,32] = Rd_VPR128.4S[32,32] - TMPQ3[32,32];
-	Rd_VPR128.4S[64,32] = Rd_VPR128.4S[64,32] - TMPQ3[64,32];
-	Rd_VPR128.4S[96,32] = Rd_VPR128.4S[96,32] - TMPQ3[96,32];
+	# simd infix Rd_VPR128.4S = Rd_VPR128.4S f- TMPQ3 on lane size 4
+	Rd_VPR128.4S[0,32] = Rd_VPR128.4S[0,32] f- TMPQ3[0,32];
+	Rd_VPR128.4S[32,32] = Rd_VPR128.4S[32,32] f- TMPQ3[32,32];
+	Rd_VPR128.4S[64,32] = Rd_VPR128.4S[64,32] f- TMPQ3[64,32];
+	Rd_VPR128.4S[96,32] = Rd_VPR128.4S[96,32] f- TMPQ3[96,32];
 	zext_zq(Zd); # zero upper 16 bytes of Zd
 }
 
