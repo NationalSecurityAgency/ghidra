@@ -28,9 +28,19 @@ import ghidra.program.model.address.*;
 class SynchronizedAddressSet implements AddressSetView {
 
 	private AddressSet set;
+	private int modificationID = 1; // updated if set above ever replaced
 
 	SynchronizedAddressSet() {
 		set = new AddressSet();
+	}
+	
+	/**
+	 * get the modification number of the internal address set
+	 * If the underlying set if ever replaced, modification id is changed
+	 * @return current modification id
+	 */
+	int getModificationID() {
+		return modificationID;
 	}
 
 	/**
@@ -39,7 +49,10 @@ class SynchronizedAddressSet implements AddressSetView {
 	 * @see AddressSet#add(AddressSetView)
 	 */
 	synchronized void add(AddressSet addrSet) {
-		set.add(addrSet);
+		AddressSet newSet = new AddressSet(set);
+		newSet.add(addrSet);
+		set = newSet;
+		modificationID++;
 	}
 
 	/**
@@ -49,7 +62,10 @@ class SynchronizedAddressSet implements AddressSetView {
 	 * @see AddressSet#add(Address, Address)
 	 */
 	synchronized void add(Address start, Address end) {
-		set.add(start, end);
+		AddressSet newSet = new AddressSet(set);
+		newSet.add(start, end);
+		set = newSet;
+		modificationID++;
 	}
 
 	/**
@@ -59,57 +75,75 @@ class SynchronizedAddressSet implements AddressSetView {
 	 * @see AddressSet#delete(Address, Address)
 	 */
 	synchronized void delete(Address start, Address end) {
-		set.delete(start, end);
+		AddressSet newSet = new AddressSet(set);
+		newSet.delete(start, end);
+		set = newSet;
+		modificationID++;
+	}
+	
+	synchronized AddressSet getInternalSet() {
+		return set;
+	}
+	
+	/**
+	 * Check if the internal set has been modified
+	 * If the mod id is different, then the set has changed.
+	 * 
+	 * @param modID modification id to check
+	 * @return true if internal mod id is different
+	 */
+	public boolean hasChanged(int modID) {
+		return modID != modificationID;
 	}
 
 	@Override
-	public synchronized boolean contains(Address addr) {
+	public boolean contains(Address addr) {
 		return set.contains(addr);
 	}
 
 	@Override
-	public synchronized boolean contains(Address start, Address end) {
+	public boolean contains(Address start, Address end) {
 		return set.contains(start, end);
 	}
 
 	@Override
-	public synchronized boolean contains(AddressSetView addrSet) {
+	public boolean contains(AddressSetView addrSet) {
 		return set.contains(addrSet);
 	}
 
 	@Override
-	public synchronized boolean isEmpty() {
+	public boolean isEmpty() {
 		return set.isEmpty();
 	}
 
 	@Override
-	public synchronized Address getMinAddress() {
+	public Address getMinAddress() {
 		return set.getMinAddress();
 	}
 
 	@Override
-	public synchronized Address getMaxAddress() {
+	public Address getMaxAddress() {
 		return set.getMaxAddress();
 	}
 
 	@Override
-	public synchronized int getNumAddressRanges() {
+	public int getNumAddressRanges() {
 		return set.getNumAddressRanges();
 	}
 
 	@Override
-	public synchronized AddressRangeIterator getAddressRanges() {
+	public AddressRangeIterator getAddressRanges() {
 		return set.getAddressRanges();
 	}
 
 	@Override
-	public synchronized AddressRangeIterator getAddressRanges(boolean forward) {
+	public AddressRangeIterator getAddressRanges(boolean forward) {
 		return set.getAddressRanges(forward);
 	}
 
 	@Override
 	public synchronized AddressRangeIterator getAddressRanges(Address start, boolean forward) {
-		return new RecoverableAddressRangeIterator(set, start, forward);
+		return new RecoverableAddressRangeIterator(this, start, forward);
 	}
 
 	@Override
@@ -118,103 +152,102 @@ class SynchronizedAddressSet implements AddressSetView {
 	}
 
 	@Override
-	public synchronized Iterator<AddressRange> iterator(boolean forward) {
+	public Iterator<AddressRange> iterator(boolean forward) {
 		return set.getAddressRanges(forward);
 	}
 
 	@Override
-	public synchronized Iterator<AddressRange> iterator(Address start, boolean forward) {
+	public Iterator<AddressRange> iterator(Address start, boolean forward) {
 		return set.getAddressRanges(start, forward);
 	}
 
 	@Override
-	public synchronized long getNumAddresses() {
+	public long getNumAddresses() {
 		return set.getNumAddresses();
 	}
 
 	@Override
 	public synchronized AddressIterator getAddresses(boolean forward) {
-		return new RecoverableAddressIterator(set, null, forward);
+		return new RecoverableAddressIterator(this, null, forward);
 	}
 
 	@Override
 	public synchronized AddressIterator getAddresses(Address start, boolean forward) {
-		return new RecoverableAddressIterator(set, start, forward);
+		return new RecoverableAddressIterator(this, start, forward);
 	}
 
 	@Override
-	public synchronized boolean intersects(AddressSetView addrSet) {
+	public boolean intersects(AddressSetView addrSet) {
 		return set.intersects(addrSet);
 	}
 
 	@Override
-	public synchronized boolean intersects(Address start, Address end) {
+	public boolean intersects(Address start, Address end) {
 		return set.intersects(start, end);
 	}
 
 	@Override
-	public synchronized AddressSet intersect(AddressSetView addrSet) {
+	public AddressSet intersect(AddressSetView addrSet) {
 		return set.intersect(addrSet);
 	}
 
 	@Override
-	public synchronized AddressSet intersectRange(Address start, Address end) {
+	public AddressSet intersectRange(Address start, Address end) {
 		return set.intersectRange(start, end);
 	}
 
 	@Override
-	public synchronized AddressSet union(AddressSetView addrSet) {
+	public AddressSet union(AddressSetView addrSet) {
 		return set.union(addrSet);
 	}
 
 	@Override
-	public synchronized AddressSet subtract(AddressSetView addrSet) {
+	public AddressSet subtract(AddressSetView addrSet) {
 		return set.subtract(addrSet);
 	}
 
 	@Override
-	public synchronized AddressSet xor(AddressSetView addrSet) {
+	public AddressSet xor(AddressSetView addrSet) {
 		return set.xor(addrSet);
 	}
 
 	@Override
-	public synchronized boolean hasSameAddresses(AddressSetView addrSet) {
+	public boolean hasSameAddresses(AddressSetView addrSet) {
 		return set.hasSameAddresses(addrSet);
 	}
 
 	@Override
-	public synchronized AddressRange getFirstRange() {
+	public AddressRange getFirstRange() {
 		return set.getFirstRange();
 	}
 
 	@Override
-	public synchronized AddressRange getLastRange() {
+	public AddressRange getLastRange() {
 		return set.getLastRange();
 	}
 
 	@Override
-	public synchronized AddressRange getRangeContaining(Address address) {
+	public AddressRange getRangeContaining(Address address) {
 		return set.getRangeContaining(address);
 	}
 
 	@Override
-	public synchronized Address findFirstAddressInCommon(AddressSetView addrSet) {
+	public Address findFirstAddressInCommon(AddressSetView addrSet) {
 		return set.findFirstAddressInCommon(addrSet);
 	}
 
 	@Override
-	public synchronized int hashCode() {
+	public int hashCode() {
 		return set.hashCode();
 	}
 
 	@Override
-	public synchronized boolean equals(Object obj) {
+	public boolean equals(Object obj) {
 		return set.equals(obj);
 	}
 
 	@Override
-	public synchronized String toString() {
+	public String toString() {
 		return set.toString();
 	}
-
 }

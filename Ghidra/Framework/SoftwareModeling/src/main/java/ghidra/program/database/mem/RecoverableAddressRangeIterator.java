@@ -39,10 +39,12 @@ import ghidra.program.model.address.*;
  */
 class RecoverableAddressRangeIterator implements AddressRangeIterator {
 
-	private AddressSetView set;
+	private SynchronizedAddressSet synchSet;
+	private AddressSet internalSet;
 	private boolean forward;
 	private AddressRangeIterator iterator;
 	private AddressRange next;
+	private int changeID;
 
 	/**
 	 * Construct iterator
@@ -50,8 +52,10 @@ class RecoverableAddressRangeIterator implements AddressRangeIterator {
 	 * @param start the address the the first range should contain.
 	 * @param forward true iterators forward, false backwards
 	 */
-	RecoverableAddressRangeIterator(AddressSetView set, Address start, boolean forward) {
-		this.set = set;
+	RecoverableAddressRangeIterator(SynchronizedAddressSet set, Address start, boolean forward) {
+		this.synchSet = set;
+		this.internalSet = set.getInternalSet();
+		changeID = set.getModificationID();
 		this.forward = forward;
 		initIterator(start);
 		try {
@@ -64,10 +68,10 @@ class RecoverableAddressRangeIterator implements AddressRangeIterator {
 
 	private void initIterator(Address start) {
 		if (start == null) {
-			iterator = set.getAddressRanges(forward);
+			iterator = internalSet.getAddressRanges(forward);
 		}
 		else {
-			iterator = set.getAddressRanges(start, forward);
+			iterator = internalSet.getAddressRanges(start, forward);
 		}
 	}
 
@@ -83,9 +87,14 @@ class RecoverableAddressRangeIterator implements AddressRangeIterator {
 			throw new NoSuchElementException();
 		}
 		try {
-			next = iterator.next();
+			if (synchSet.hasChanged(changeID)) {
+				next = recoverNext(range);
+			} else {
+				next = iterator.next();
+			}
 		}
 		catch (ConcurrentModificationException e) {
+			// will never happen, set in hand is never changed
 			next = recoverNext(range);
 		}
 		catch (NoSuchElementException e) {
@@ -95,6 +104,8 @@ class RecoverableAddressRangeIterator implements AddressRangeIterator {
 	}
 
 	private AddressRange recoverNext(AddressRange lastRange) {
+		changeID = synchSet.getModificationID();
+		internalSet = synchSet.getInternalSet();
 		while (true) {
 			try {
 				Address lastAddr = forward ? lastRange.getMaxAddress() : lastRange.getMinAddress();
@@ -114,6 +125,7 @@ class RecoverableAddressRangeIterator implements AddressRangeIterator {
 				return iterator.next(); // skip range and return next
 			}
 			catch (ConcurrentModificationException e) {
+				// will never happen, set in hand is never changed
 				// set must have changed - try re-initializing again
 			}
 			catch (NoSuchElementException e) {

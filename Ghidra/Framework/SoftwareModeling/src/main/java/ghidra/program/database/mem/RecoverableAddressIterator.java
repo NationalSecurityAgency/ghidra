@@ -40,10 +40,12 @@ import ghidra.program.model.address.*;
  */
 class RecoverableAddressIterator implements AddressIterator {
 
-	private AddressSetView set;
+	private SynchronizedAddressSet synchSet;
+	private AddressSet internalSet;
 	private boolean forward;
 	private AddressIterator iterator;
 	private Address next;
+	private int changeID;
 
 	/**
 	 * Construct iterator
@@ -51,8 +53,10 @@ class RecoverableAddressIterator implements AddressIterator {
 	 * @param start address to start iterating at in the address set or null for all addresses
 	 * @param forward if true address are return from lowest to highest, else from highest to lowest
 	 */
-	RecoverableAddressIterator(AddressSetView set, Address start, boolean forward) {
-		this.set = set;
+	RecoverableAddressIterator(SynchronizedAddressSet set, Address start, boolean forward) {
+		this.synchSet = set;
+		this.internalSet = set.getInternalSet();
+		changeID = set.getModificationID();
 		this.forward = forward;
 		initIterator(start);
 		this.next = iterator.next();
@@ -60,10 +64,10 @@ class RecoverableAddressIterator implements AddressIterator {
 
 	private void initIterator(Address start) {
 		if (start == null) {
-			iterator = set.getAddresses(forward);
+			iterator = internalSet.getAddresses(forward);
 		}
 		else {
-			iterator = set.getAddresses(start, forward);
+			iterator = internalSet.getAddresses(start, forward);
 		}
 	}
 
@@ -77,9 +81,14 @@ class RecoverableAddressIterator implements AddressIterator {
 		Address addr = next;
 		if (addr != null) {
 			try {
-				next = iterator.next();
+				if (synchSet.hasChanged(changeID)) {
+					next = recoverNext(addr);
+				} else {
+					next = iterator.next();
+				}
 			}
 			catch (ConcurrentModificationException e) {
+				// will never happen, set in hand is never changed
 				next = recoverNext(addr);
 			}
 		}
@@ -87,6 +96,8 @@ class RecoverableAddressIterator implements AddressIterator {
 	}
 
 	private Address recoverNext(Address lastAddr) {
+		changeID = synchSet.getModificationID();
+		internalSet = synchSet.getInternalSet();
 		while (true) {
 			try {
 				initIterator(lastAddr);
@@ -97,6 +108,7 @@ class RecoverableAddressIterator implements AddressIterator {
 				return a;
 			}
 			catch (ConcurrentModificationException e) {
+				// will never happen, set in hand is never changed
 				// set must have changed - try re-initializing again
 			}
 		}
