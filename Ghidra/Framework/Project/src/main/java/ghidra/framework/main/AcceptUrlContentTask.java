@@ -15,15 +15,15 @@
  */
 package ghidra.framework.main;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Set;
 
 import ghidra.framework.data.FolderLinkContentHandler;
-import ghidra.framework.main.datatree.ProjectDataTreePanel;
-import ghidra.framework.model.DomainFile;
-import ghidra.framework.model.DomainFolder;
-import ghidra.framework.protocol.ghidra.GhidraURL;
+import ghidra.framework.model.*;
 import ghidra.framework.protocol.ghidra.GhidraURLQueryTask;
+import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.task.TaskMonitor;
 
@@ -36,33 +36,87 @@ public class AcceptUrlContentTask extends GhidraURLQueryTask {
 		this.plugin = plugin;
 	}
 
+	private boolean isSameLocalProject(ProjectLocator projectLoc1, ProjectLocator projectLoc2) {
+		if (projectLoc1.isTransient() || projectLoc2.isTransient()) {
+			return false;
+		}
+		if (!projectLoc1.getName().equals(projectLoc2.getName())) {
+			return false;
+		}
+		try {
+			File proj1Dir = projectLoc1.getProjectDir().getCanonicalFile();
+			File proj2Dir = projectLoc2.getProjectDir().getCanonicalFile();
+			return proj1Dir.equals(proj2Dir);
+		}
+		catch (IOException e) {
+			return false;
+		}
+	}
 
 	@Override
 	public void processResult(DomainFile domainFile, URL url, TaskMonitor monitor)
 			throws IOException {
-		Swing.runNow(() -> {
 
+		Project activeProject = AppInfo.getActiveProject();
+		if (activeProject == null) {
+			Msg.showError(this, null, "Ghidra Error",
+				"Unable to accept URL without active project open");
+			return;
+		}
+
+		Swing.runNow(() -> {
 			if (FolderLinkContentHandler.FOLDER_LINK_CONTENT_TYPE
 					.equals(domainFile.getContentType())) {
-				plugin.showLinkedFolder(domainFile);
-				return;
+				// Simply select folder link-file within project - do not follow - let user do that.
+				if (isSameLocalProject(activeProject.getProjectLocator(),
+					domainFile.getProjectLocator())) {
+					// Select file within active project
+					DomainFile df =
+						activeProject.getProjectData().getFile(domainFile.getPathname());
+					if (df == null) {
+						return; // unexpected race condition
+					}
+					plugin.selectFiles(Set.of(df));
+				}
+				else {
+					// Select file within read-only viewed project
+					plugin.showInViewedProject(url, false);
+				}
 			}
-			AppInfo.getFrontEndTool().getToolServices().launchDefaultToolWithURL(url);
+			else {
+				AppInfo.getFrontEndTool().getToolServices().launchDefaultToolWithURL(url);
+			}
 		});
 	}
 
 	@Override
 	public void processResult(DomainFolder domainFolder, URL url, TaskMonitor monitor)
 			throws IOException {
-		ProjectDataPanel projectDataPanel = plugin.getProjectDataPanel();
+
+		Project activeProject = AppInfo.getActiveProject();
+		if (activeProject == null) {
+			Msg.showError(this, null, "Ghidra Error",
+				"Unable to accept URL without active project open");
+			return;
+		}
 
 		Swing.runNow(() -> {
-			ProjectDataTreePanel dtp = projectDataPanel.openView(GhidraURL.getProjectURL(url));
-			if (dtp == null) {
-				return;
+			if (isSameLocalProject(activeProject.getProjectLocator(),
+				domainFolder.getProjectLocator())) {
+				// Select folder within active project
+				DomainFolder df =
+					activeProject.getProjectData().getFolder(domainFolder.getPathname());
+				if (df == null) {
+					return; // unexpected race condition
+				}
+				plugin.selectFolder(df);
 			}
-			dtp.selectDomainFolder(domainFolder);
+			else {
+				// Select folder within read-only viewed project
+				plugin.showInViewedProject(url, true);
+			}
 		});
+
 	}
 
 }
