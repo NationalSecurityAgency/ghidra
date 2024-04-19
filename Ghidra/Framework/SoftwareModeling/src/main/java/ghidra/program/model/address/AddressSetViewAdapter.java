@@ -33,6 +33,13 @@ public class AddressSetViewAdapter implements AddressSetView {
 		this.set = set;
 	}
 
+	/**
+	 * Construct an empty AddressSetViewAdapter.
+	 */
+	public AddressSetViewAdapter() {
+		this.set = new AddressSet();
+	}
+
 	@Override
 	public boolean contains(Address addr) {
 		return set.contains(addr);
