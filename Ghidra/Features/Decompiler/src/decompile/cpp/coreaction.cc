@@ -3857,54 +3857,6 @@ uintb ActionDeadCode::gatherConsumedReturn(Funcdata &data)
   return consumeVal;
 }
 
-/// \brief Determine if the given Varnode may eventually collapse to a constant
-///
-/// Recursively check if the Varnode is either:
-///   - Copied from a constant
-///   - The result of adding constants
-///   - Loaded from a pointer that is a constant
-///
-/// \param vn is the given Varnode
-/// \param addCount is the number of CPUI_INT_ADD operations seen so far
-/// \param loadCount is the number of CPUI_LOAD operations seen so far
-/// \return \b true if the Varnode (might) collapse to a constant
-bool ActionDeadCode::isEventualConstant(Varnode *vn,int4 addCount,int4 loadCount)
-
-{
-  if (vn->isConstant()) return true;
-  if (!vn->isWritten()) return false;
-  PcodeOp *op = vn->getDef();
-  while(op->code() == CPUI_COPY) {
-    vn = op->getIn(0);
-    if (vn->isConstant()) return true;
-    if (!vn->isWritten()) return false;
-    op = vn->getDef();
-  }
-  switch(op->code()) {
-    case CPUI_INT_ADD:
-      if (addCount > 0) return false;
-      if (!isEventualConstant(op->getIn(0),addCount+1,loadCount))
-	return false;
-      return isEventualConstant(op->getIn(1),addCount+1,loadCount);
-    case CPUI_LOAD:
-      if (loadCount > 0) return false;
-      return isEventualConstant(op->getIn(1),0,loadCount+1);
-    case CPUI_INT_LEFT:
-    case CPUI_INT_RIGHT:
-    case CPUI_INT_SRIGHT:
-    case CPUI_INT_MULT:
-      if (!op->getIn(1)->isConstant())
-	return false;
-      return isEventualConstant(op->getIn(0),addCount,loadCount);
-    case CPUI_INT_ZEXT:
-    case CPUI_INT_SEXT:
-      return isEventualConstant(op->getIn(0),addCount,loadCount);
-    default:
-      break;
-  }
-  return false;
-}
-
 /// \brief Check if there are any unconsumed LOADs that may be from volatile addresses.
 ///
 /// It may be too early to remove certain LOAD operations even though their result isn't
@@ -3927,7 +3879,7 @@ bool ActionDeadCode::lastChanceLoad(Funcdata &data,vector<Varnode *> &worklist)
     if (op->isDead()) continue;
     Varnode *vn = op->getOut();
     if (vn->isConsumeVacuous()) continue;
-    if (isEventualConstant(op->getIn(1), 0, 0)) {
+    if (op->getIn(1)->isEventualConstant(3, 1)) {
       pushConsumed(~(uintb)0, vn, worklist);
       vn->setAutoLiveHold();
       res = true;
@@ -4817,6 +4769,37 @@ int4 ActionPrototypeWarnings::apply(Funcdata &data)
   return 0;
 }
 
+int4 ActionInternalStorage::apply(Funcdata &data)
+
+{
+  FuncProto &proto( data.getFuncProto() );
+  vector<VarnodeData>::const_iterator iter = proto.internalBegin();
+  vector<VarnodeData>::const_iterator enditer = proto.internalEnd();
+  while(iter != enditer) {
+    Address addr = (*iter).getAddr();
+    int4 sz = (*iter).size;
+    ++iter;
+
+    VarnodeLocSet::const_iterator viter = data.beginLoc(sz, addr);
+    VarnodeLocSet::const_iterator endviter = data.endLoc(sz, addr);
+    while(viter != endviter) {
+      Varnode *vn = *viter;
+      ++viter;
+      list<PcodeOp *>::const_iterator oiter = vn->beginDescend();
+      while(oiter != vn->endDescend()) {
+	PcodeOp *op = *oiter;
+	++oiter;
+	if (op->code() == CPUI_STORE) {
+	  if (vn->isEventualConstant(3,0)) {
+	    op->setStoreUnmapped();
+	  }
+	}
+      }
+    }
+  }
+  return 0;
+}
+
 #ifdef TYPEPROP_DEBUG
 /// \brief Log a particular data-type propagation action.
 ///
@@ -5399,6 +5382,7 @@ void ActionDatabase::universalAction(Architecture *conf)
       actmainloop->addAction( new ActionHeritage("base") );
       actmainloop->addAction( new ActionParamDouble("protorecovery") );
       actmainloop->addAction( new ActionSegmentize("base"));
+      actmainloop->addAction( new ActionInternalStorage("base") );
       actmainloop->addAction( new ActionForceGoto("blockrecovery") );
       actmainloop->addAction( new ActionDirectWrite("protorecovery_a", true) );
       actmainloop->addAction( new ActionDirectWrite("protorecovery_b", false) );

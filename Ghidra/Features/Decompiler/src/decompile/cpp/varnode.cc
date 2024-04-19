@@ -831,6 +831,55 @@ bool Varnode::isConstantExtended(uint8 *val) const
   return false;
 }
 
+/// Recursively check if the Varnode is either:
+///   - Copied or extended from a constant
+///   - The result of arithmetic or logical operations on constants
+///   - Loaded from a pointer that is a constant
+///
+/// \param maxBinary is the maximum depth of binary operations to inspect (before giving up)
+/// \param maxLoad is the maximum number of CPUI_LOAD operations to allow in a sequence
+/// \return \b true if the Varnode (might) collapse to a constant
+bool Varnode::isEventualConstant(int4 maxBinary,int4 maxLoad) const
+
+{
+  const Varnode *curVn = this;
+  while(!curVn->isConstant()) {
+    if (!curVn->isWritten()) return false;
+    const PcodeOp *op = curVn->getDef();
+    switch(op->code()) {
+      case CPUI_LOAD:
+	if (maxLoad == 0) return false;
+	maxLoad -= 1;
+	curVn = op->getIn(1);
+	break;
+      case CPUI_INT_ADD:
+      case CPUI_INT_SUB:
+      case CPUI_INT_XOR:
+      case CPUI_INT_OR:
+      case CPUI_INT_AND:
+	if (maxBinary == 0) return false;
+	if (!op->getIn(0)->isEventualConstant(maxBinary-1,maxLoad))
+	  return false;
+	return op->getIn(1)->isEventualConstant(maxBinary-1,maxLoad);
+      case CPUI_INT_ZEXT:
+      case CPUI_INT_SEXT:
+      case CPUI_COPY:
+	curVn = op->getIn(0);
+	break;
+      case CPUI_INT_LEFT:
+      case CPUI_INT_RIGHT:
+      case CPUI_INT_SRIGHT:
+      case CPUI_INT_MULT:
+	if (!op->getIn(1)->isConstant()) return false;
+	curVn = op->getIn(0);
+	break;
+      default:
+	return false;
+    }
+  }
+  return true;
+}
+
 /// Make an initial determination of the Datatype of this Varnode. If a Datatype is already
 /// set and locked return it. Otherwise look through all the read PcodeOps and the write PcodeOp
 /// to determine if the Varnode is getting used as an \b int, \b float, or \b pointer, etc.

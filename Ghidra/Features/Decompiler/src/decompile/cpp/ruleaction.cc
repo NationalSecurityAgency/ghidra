@@ -4010,6 +4010,9 @@ int4 RuleStoreVarnode::applyOp(PcodeOp *op,Funcdata &data)
   data.opRemoveInput(op,1);
   data.opRemoveInput(op,0);
   data.opSetOpcode(op, CPUI_COPY );
+  if (op->isStoreUnmapped()) {
+    data.getScopeLocal()->markNotMapped(baseoff, offoff, size, false);
+  }
   return 1;
 }
 

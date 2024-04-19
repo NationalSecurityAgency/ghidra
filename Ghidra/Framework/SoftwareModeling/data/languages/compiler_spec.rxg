@@ -545,6 +545,14 @@
       </optional>
 
       <optional>
+        <element name="internal_storage">
+          <oneOrMore>
+            <ref name="varnode_tags_type"/>
+          </oneOrMore>
+        </element>
+      </optional>
+      
+      <optional>
         <element name="localrange">
           <ref name="rangelist_type"/>
         </element>

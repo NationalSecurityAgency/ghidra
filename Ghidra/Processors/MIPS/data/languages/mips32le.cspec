@@ -78,6 +78,9 @@
         <register name="f28"/>
         <register name="f30"/>
       </unaffected>
+      <internal_storage>
+        <register name="gp"/>  <!-- Compilers may save gp to the stack before a call and restore it afterward -->
+      </internal_storage>
       <localrange>
         <range space="stack" first="0xfff0bdc0" last="0xffffffff"/>
         <range space="stack" first="0" last="15"/>  <!-- This is backup storage space for register params, but we treat as locals -->
@@ -101,6 +104,9 @@
       <unaffected>
         <register name="sp"/>
       </unaffected>
+      <internal_storage>
+        <register name="gp"/>  <!-- Compilers may save gp to the stack before a call and restore it afterward -->
+      </internal_storage>
   </prototype> 
     
 </compiler_spec>
