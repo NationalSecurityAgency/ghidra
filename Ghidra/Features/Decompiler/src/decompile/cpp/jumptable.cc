@@ -31,6 +31,8 @@ ElementId ELEM_NORMADDR = ElementId("normaddr",215);
 ElementId ELEM_NORMHASH = ElementId("normhash",216);
 ElementId ELEM_STARTVAL = ElementId("startval",217);
 
+const uint8 JumpValues::NO_LABEL = 0xBAD1ABE1BAD1ABE1;
+
 /// \param encoder is the stream encoder
 void LoadTable::encode(Encoder &encoder) const
 
@@ -1355,42 +1357,38 @@ bool JumpBasic::foldInOneGuard(Funcdata *fd,GuardRecord &guard,JumpTable *jump)
 
 {
   PcodeOp *cbranch = guard.getBranch();
-  int4 indpath = guard.getPath();	// Get stored path to indirect block
   BlockBasic *cbranchblock = cbranch->getParent();
-  if (cbranchblock->getFlipPath()) // Based on whether out branches have been flipped
-    indpath = 1 - indpath;	// get actual path to indirect block
-  BlockBasic *guardtarget = (BlockBasic *)cbranchblock->getOut(1-indpath);
-  bool change = false;
-  int4 pos;
-
   // Its possible the guard branch has been converted between the switch recovery and now
   if (cbranchblock->sizeOut() != 2) return false; // In which case, we can't fold it in
+  int4 indpath = guard.getPath();	// Get stored path to indirect block
+  if (cbranchblock->getFlipPath()) // Based on whether out branches have been flipped
+    indpath = 1 - indpath;	// get actual path to indirect block
   BlockBasic *switchbl = jump->getIndirectOp()->getParent();
+  if (cbranchblock->getOut(indpath) != switchbl) // Guard must go directly into switch block
+    return false;
+  BlockBasic *guardtarget = (BlockBasic *)cbranchblock->getOut(1-indpath);
+  int4 pos;
+
   for(pos=0;pos<switchbl->sizeOut();++pos)
     if (switchbl->getOut(pos) == guardtarget) break;
+  if (jump->hasFoldedDefault() && jump->getDefaultBlock() != pos)	// There can be only one folded target
+    return false;
+
+  if (!switchbl->noInterveningStatement())
+    return false;
   if (pos == switchbl->sizeOut()) {
-    if (BlockBasic::noInterveningStatement(cbranch,indpath,switchbl->lastOp())) {
-      // Adjust tables and control flow graph
-      // for new jumptable destination
-      jump->addBlockToSwitch(guardtarget,0xBAD1ABE1);
-      jump->setLastAsMostCommon();
-      fd->pushBranch(cbranchblock,1-indpath,switchbl);
-      guard.clear();
-      change = true;
-    }
+    jump->addBlockToSwitch(guardtarget,JumpValues::NO_LABEL);	// Add new destination to table without a label
+    jump->setLastAsDefault();			// treating it as either the default case or an exit
+    fd->pushBranch(cbranchblock,1-indpath,switchbl);	// Turn branch target into target of the switch instead
   }
   else {
-    // We should probably check that there are no intervening
-    // statements between the guard and the switch. But the
-    // fact that the guard target is also a switch target
-    // is a good indicator that there are none
     uintb val = ((indpath==0)!=(cbranch->isBooleanFlip())) ? 0 : 1;
     fd->opSetInput(cbranch,fd->newConstant(cbranch->getIn(0)->getSize(),val),1);
     jump->setDefaultBlock(pos);	// A guard branch generally targets the default case
-    guard.clear();
-    change = true;
   }
-  return change;
+  jump->setFoldedDefault();	// Mark that the default branch has been folded (and cannot take a label)
+  guard.clear();
+  return true;
 }
 
 JumpBasic::~JumpBasic(void)
@@ -1504,12 +1502,12 @@ void JumpBasic::buildLabels(Funcdata *fd,vector<Address> &addresstable,vector<ui
       try {
 	switchval = backup2Switch(fd,val,normalvn,switchvn);		// Do reverse emulation to get original switch value
       } catch(EvaluationError &err) {
-	switchval = 0xBAD1ABE1;
+	switchval = JumpValues::NO_LABEL;
 	needswarning = 2;
       }
     }
     else
-      switchval = 0xBAD1ABE1;	// If can't reverse, hopefully this is the default or exit, otherwise give "badlabel"
+      switchval = JumpValues::NO_LABEL;	// If can't reverse, hopefully this is the default or exit
     if (needswarning==1)
       fd->warning("This code block may not be properly labeled as switch case",addresstable[label.size()]);
     else if (needswarning==2)
@@ -1524,7 +1522,7 @@ void JumpBasic::buildLabels(Funcdata *fd,vector<Address> &addresstable,vector<ui
 
   while(label.size() < addresstable.size()) {
     fd->warning("Bad switch case",addresstable[label.size()]);
-    label.push_back(0xBAD1ABE1);
+    label.push_back(JumpValues::NO_LABEL);
   }
 }
 
@@ -1628,7 +1626,7 @@ bool JumpBasic2::foldInOneGuard(Funcdata *fd,GuardRecord &guard,JumpTable *jump)
   // So we don't make any special mods, in case there are extra statements in these blocks
 
   // The final block in the table is the single value produced by the model2 guard
-  jump->setLastAsMostCommon();	// It should be the default block
+  jump->setLastAsDefault();	// It should be the default block
   guard.clear();		// Mark that we are folded
   return true;
 }
@@ -1977,7 +1975,7 @@ void JumpBasicOverride::buildLabels(Funcdata *fd,vector<Address> &addresstable,v
     try {
       addr = backup2Switch(fd,values[i],normalvn,switchvn);
     } catch(EvaluationError &err) {
-      addr = 0xBAD1ABE1;
+      addr = JumpValues::NO_LABEL;
     }
     label.push_back(addr);
     if (label.size() >= addresstable.size()) break; // This should never happen
@@ -1985,7 +1983,7 @@ void JumpBasicOverride::buildLabels(Funcdata *fd,vector<Address> &addresstable,v
 
   while(label.size() < addresstable.size()) {
     fd->warning("Bad switch case",addresstable[label.size()]); // This should never happen
-    label.push_back(0xBAD1ABE1);
+    label.push_back(JumpValues::NO_LABEL);
   }
 }
 
@@ -2170,7 +2168,7 @@ void JumpAssisted::buildLabels(Funcdata *fd,vector<Address> &addresstable,vector
       label.push_back(output);
     }
   }
-  label.push_back(0xBAD1ABE1);		// Add fake label to match the defaultAddress
+  label.push_back(JumpValues::NO_LABEL);	// Add fake label to match the defaultAddress
 }
 
 Varnode *JumpAssisted::foldInNormalization(Funcdata *fd,PcodeOp *indop)
@@ -2192,7 +2190,7 @@ bool JumpAssisted::foldInGuards(Funcdata *fd,JumpTable *jump)
 
 {
   int4 origVal = jump->getDefaultBlock();
-  jump->setLastAsMostCommon();			// Default case is always the last block
+  jump->setLastAsDefault();			// Default case is always the last block
   return (origVal != jump->getDefaultBlock());
 }
 
@@ -2348,6 +2346,7 @@ JumpTable::JumpTable(Architecture *g,Address ad)
   maxext = 1;
   recoverystage = 0;
   collectloads = false;
+  defaultIsFolded = false;
 }
 
 /// This is a partial clone of another jump-table. Objects that are specific
@@ -2368,6 +2367,7 @@ JumpTable::JumpTable(const JumpTable *op2)
   maxext = op2->maxext;
   recoverystage = op2->recoverystage;
   collectloads = op2->collectloads;
+  defaultIsFolded = false;
 				// We just clone the addresses themselves
   addresstable = op2->addresstable;
   loadpoints = op2->loadpoints;
@@ -2453,7 +2453,7 @@ int4 JumpTable::getIndexByBlock(const FlowBlock *bl,int4 i) const
   throw LowlevelError("Could not get jumptable index for block");
 }
 
-void JumpTable::setLastAsMostCommon(void)
+void JumpTable::setLastAsDefault(void)
 
 {
   defaultBlock = lastBlock;
@@ -2742,7 +2742,7 @@ void JumpTable::encode(Encoder &encoder) const
     if (spc != (AddrSpace *)0)
       spc->encodeAttributes(encoder,off);
     if (i<label.size()) {
-      if (label[i] != 0xBAD1ABE1)
+      if (label[i] != JumpValues::NO_LABEL)
 	encoder.writeUnsignedInteger(ATTRIB_LABEL, label[i]);
     }
     encoder.closeElement(ELEM_DEST);
@@ -2802,7 +2802,7 @@ void JumpTable::decode(Decoder &decoder)
 
   if (label.size()!=0) {
     while(label.size() < addresstable.size())
-      label.push_back(0xBAD1ABE1);
+      label.push_back(JumpValues::NO_LABEL);
   }
 }
 
