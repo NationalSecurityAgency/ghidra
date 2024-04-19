@@ -39,8 +39,8 @@ import ghidra.util.exception.FileInUseException;
  * <code>RepositoryHandleImpl</code> provides a Repository handle to a
  * remote user.
  */
-public class RepositoryHandleImpl extends UnicastRemoteObject implements RemoteRepositoryHandle,
-		Unreferenced {
+public class RepositoryHandleImpl extends UnicastRemoteObject
+		implements RemoteRepositoryHandle, Unreferenced {
 
 //	private final RepositoryChangeEvent NULL_EVENT = new RepositoryChangeEvent(
 //		RepositoryChangeEvent.REP_NULL_EVENT, null, null, null, null);
@@ -191,8 +191,8 @@ public class RepositoryHandleImpl extends UnicastRemoteObject implements RemoteR
 		}
 
 		RepositoryChangeEvent openFileCountEvent =
-			new RepositoryChangeEvent(RepositoryChangeEvent.REP_OPEN_HANDLE_COUNT, null, null,
-				null, Integer.toString(RemoteBufferFileImpl.getOpenFileCount(this)));
+			new RepositoryChangeEvent(RepositoryChangeEvent.REP_OPEN_HANDLE_COUNT, null, null, null,
+				Integer.toString(RemoteBufferFileImpl.getOpenFileCount(this)));
 
 		synchronized (eventQueue) {
 			if (clientActive) {
@@ -211,31 +211,6 @@ public class RepositoryHandleImpl extends UnicastRemoteObject implements RemoteR
 		}
 		RepositoryManager.log(repository.getName(), null, "not listening!", currentUser);
 		dispose();
-	}
-
-	public void fireOpenFileCountChanged() {
-//		if (!isValid) {
-//			return;
-//		}
-//
-//		RepositoryChangeEvent event =
-//			new RepositoryChangeEvent(RepositoryChangeEvent.REP_OPEN_HANDLE_COUNT, null, null,
-//				null, Integer.toString(RemoteBufferFileImpl.getOpenFileCount(this)));
-//		synchronized (eventQueue) {
-//
-//			// Remove existing queued event
-//			Iterator<RepositoryChangeEvent> iterator = eventQueue.iterator();
-//			while (iterator.hasNext()) {
-//				RepositoryChangeEvent queuedEvent = iterator.next();
-//				if (queuedEvent.type == RepositoryChangeEvent.REP_OPEN_HANDLE_COUNT) {
-//					iterator.remove();
-//					break;
-//				}
-//			}
-//
-//			eventQueue.add(event);
-//			eventQueue.notifyAll();
-//		}
 	}
 
 	@Override
@@ -414,16 +389,15 @@ public class RepositoryHandleImpl extends UnicastRemoteObject implements RemoteR
 			if (folder == null) {
 				throw new IOException("Failed to create repository Folder " + parentPath);
 			}
-			LocalManagedBufferFile bf =
-				folder.createDatabase(itemName, fileID, bufferSize, contentType, currentUser,
-					projectPath);
+			LocalManagedBufferFile bf = folder.createDatabase(itemName, fileID, bufferSize,
+				contentType, currentUser, projectPath);
 			return new RemoteManagedBufferFileImpl(bf, this, getPathname(parentPath, itemName));
 		}
 	}
 
 	@Override
-	public RemoteManagedBufferFileImpl openDatabase(String parentPath, String itemName,
-			int version, int minChangeDataVer) throws IOException {
+	public RemoteManagedBufferFileImpl openDatabase(String parentPath, String itemName, int version,
+			int minChangeDataVer) throws IOException {
 		synchronized (syncObject) {
 			validate();
 			RepositoryFile rf = getFile(parentPath, itemName);
@@ -481,9 +455,8 @@ public class RepositoryHandleImpl extends UnicastRemoteObject implements RemoteR
 			validate();
 			repository.validateWritePrivilege(currentUser);
 			checkFolderInUse(oldParentPath, oldFolderName);
-			RepositoryFolder folder =
-				repository.getFolder(currentUser, oldParentPath + FileSystem.SEPARATOR +
-					oldFolderName, false);
+			RepositoryFolder folder = repository.getFolder(currentUser,
+				oldParentPath + FileSystem.SEPARATOR + oldFolderName, false);
 			RepositoryFolder newParent = repository.getFolder(currentUser, newParentPath, true);
 			if (folder != null) {
 				folder.moveTo(newParent, newFolderName, currentUser);
@@ -511,9 +484,8 @@ public class RepositoryHandleImpl extends UnicastRemoteObject implements RemoteR
 	}
 
 	private void checkFileInUse(String parentPath, String itemName) throws FileInUseException {
-		String[] openFileUsers =
-			RemoteBufferFileImpl.getOpenFileUsers(repository.getName(),
-				getPathname(parentPath, itemName));
+		String[] openFileUsers = RemoteBufferFileImpl.getOpenFileUsers(repository.getName(),
+			getPathname(parentPath, itemName));
 		if (openFileUsers != null) {
 			StringBuffer buf = new StringBuffer("");
 			for (String user : openFileUsers) {
@@ -553,9 +525,8 @@ public class RepositoryHandleImpl extends UnicastRemoteObject implements RemoteR
 			if (rf.hasCheckouts()) {
 				return true;
 			}
-			String[] openFileUsers =
-				RemoteBufferFileImpl.getOpenFileUsers(repository.getName(),
-					getPathname(folder.getPathname(), rf.getName()));
+			String[] openFileUsers = RemoteBufferFileImpl.getOpenFileUsers(repository.getName(),
+				getPathname(folder.getPathname(), rf.getName()));
 			if (openFileUsers != null) {
 				return true;
 			}
@@ -622,7 +593,8 @@ public class RepositoryHandleImpl extends UnicastRemoteObject implements RemoteR
 	}
 
 	@Override
-	public ItemCheckoutStatus[] getCheckouts(String parentPath, String itemName) throws IOException {
+	public ItemCheckoutStatus[] getCheckouts(String parentPath, String itemName)
+			throws IOException {
 		synchronized (syncObject) {
 			validate();
 			RepositoryFile rf = getFile(parentPath, itemName);
