@@ -3,6 +3,7 @@
 <compiler_spec>
   <global>
     <range space="ram"/>
+    <range space="io"/>
   </global>
   <stackpointer register="SP" space="ram" growth="negative"/>
   <default_proto>
