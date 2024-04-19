@@ -166,7 +166,7 @@ public class TargetActionTask extends Task {
 	@Override
 	public void run(TaskMonitor monitor) throws CancelledException {
 		try {
-			entry.run(false);
+			entry.run(entry.requiresPrompt());
 		}
 		catch (Throwable e) {
 			reportError(e);

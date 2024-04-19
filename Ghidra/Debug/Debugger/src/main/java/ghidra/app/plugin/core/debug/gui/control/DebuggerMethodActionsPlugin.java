@@ -135,7 +135,8 @@ public class DebuggerMethodActionsPlugin extends Plugin implements PopupActionPr
 
 		List<DockingActionIf> result = new ArrayList<>();
 		for (ActionEntry entry : target.collectActions(null, context).values()) {
-			if (entry.requiresPrompt() || entry.builtIn()) {
+			//if (entry.requiresPrompt() || entry.builtIn()) {
+			if (!entry.isEnabled() || entry.builtIn()) {
 				continue;
 			}
 			result.add(new InvokeActionEntryAction(entry));
