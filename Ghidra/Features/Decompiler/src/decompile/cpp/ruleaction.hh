@@ -51,6 +51,7 @@ class AddTreeState {
   int4 ptrsize;			///< Size of the pointer
   int4 size;			///< Size of data-type being pointed to (in address units) or 0 for open ended pointer
   int4 baseSlot;		///< Slot of the ADD tree base that is holding the pointer
+  uint4 biggestNonMultCoeff;	///< Biggest coefficient that is not a multiple
   uint8 ptrmask;		///< Mask for modulo calculations in ptr space
   uint8 offset;			///< Number of bytes we dig into the base data-type
   uint8 correct;		///< Number of bytes being double counted
@@ -65,7 +66,6 @@ class AddTreeState {
   bool isSubtype;		///< Is there a sub-type (using CPUI_PTRSUB)
   bool valid;			///< Set to \b true if the whole expression can be transformed
   bool isDegenerate;		///< Set to \b true if pointer to unitsize or smaller
-  uint4 findArrayHint(void) const;	///< Look for evidence of an array in a sub-component
   bool hasMatchingSubType(int8 off,uint4 arrayHint,int8 *newoff) const;
   bool checkMultTerm(Varnode *vn,PcodeOp *op,uint8 treeCoeff);	///< Accumulate details of INT_MULT term and continue traversal if appropriate
   bool checkTerm(Varnode *vn,uint8 treeCoeff);			///< Accumulate details of given term and continue tree traversal
