@@ -34,16 +34,12 @@ public class MemSearchTableModel extends AddressBasedTableModel<MemSearchResult>
 	private Address startAddress;
 	private MemorySearchAlgorithm algorithm;
 
-	private int selectionSize = 1;
-
-	MemSearchTableModel(ServiceProvider serviceProvider, int selectionSize, Program program,
-			SearchInfo searchInfo, Address searchStartAddress, ProgramSelection programSelection) {
+	MemSearchTableModel(ServiceProvider serviceProvider, Program program, SearchInfo searchInfo,
+			Address searchStartAddress, ProgramSelection programSelection) {
 		super("Memory Search", serviceProvider, program, null, true);
 		this.searchInfo = searchInfo;
 		this.startAddress = searchStartAddress;
 		this.selection = programSelection;
-
-		this.selectionSize = selectionSize;
 	}
 
 	public boolean isSortedOnAddress() {
@@ -91,14 +87,11 @@ public class MemSearchTableModel extends AddressBasedTableModel<MemSearchResult>
 
 	@Override
 	public ProgramSelection getProgramSelection(int[] rows) {
-		if (selectionSize == 1) {
-			return super.getProgramSelection(rows);
-		}
-
-		int addOn = selectionSize - 1;
 		AddressSet addressSet = new AddressSet();
-		for (int element : rows) {
-			Address minAddr = getAddress(element);
+		for (int row : rows) {
+			MemSearchResult result = getRowObject(row);
+			int addOn = result.getLength() - 1;
+			Address minAddr = getAddress(row);
 			Address maxAddr = minAddr;
 			try {
 				maxAddr = minAddr.addNoWrap(addOn);
