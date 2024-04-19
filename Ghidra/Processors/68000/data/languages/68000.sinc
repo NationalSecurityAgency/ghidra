@@ -329,6 +329,7 @@ attach values quick [ 8 1 2 3 4 5 6 7 ];
 define pcodeop kfactor;
 define pcodeop ftrap;
 define pcodeop __m68k_trap;
+define pcodeop __m68k_bkpt;
 define pcodeop __m68k_trapv;
 define pcodeop reset;
 define pcodeop saveFPUStateFrame;
@@ -1115,7 +1116,7 @@ with : extGUARD=1 {
 	resbitflags(tmp, f_wd-1);
 }
 
-:bkpt "#"op02			is opbig=0x48 & op67=1 & op5=0 & op34=1 & op02			unimpl
+:bkpt "#"^op02			is opbig=0x48 & op67=1 & op5=0 & op34=1 & op02	{ breakpoint:1 = op02; __m68k_bkpt(breakpoint); }
 
 :bra.b addr8			is opbig=0x60 & addr8						{ goto addr8; }
 :bra.w addr16			is opbig=0x60 & d8base=0; addr16				{ goto addr16; }
