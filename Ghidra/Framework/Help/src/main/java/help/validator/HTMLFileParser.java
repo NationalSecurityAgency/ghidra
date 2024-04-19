@@ -20,7 +20,6 @@ import static help.validator.TagProcessor.TagProcessingState.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 
 import help.validator.TagProcessor.TagProcessingState;
@@ -38,14 +37,7 @@ public class HTMLFileParser {
 			String text;
 			while ((text = rdr.readLine()) != null) {
 				Line line = new Line(file, text, rdr.getLineNumber());
-				try {
-					processLine(line, rdr, file, tagProcessor);
-				}
-				catch (Exception e) {
-					String message =
-						"Error parsing HTML at %s:%s.".formatted(file, rdr.getLineNumber());
-					throw new IOException(message, e);
-				}
+				processLine(line, rdr, file, tagProcessor);
 			}
 			tagProcessor.endOfFile();
 		}
@@ -269,9 +261,8 @@ public class HTMLFileParser {
 		buf = new StringBuffer();
 		buf.append('<');
 		buf.append(tagType);
-		Iterator<String> iter = map.keySet().iterator();
-		while (iter.hasNext()) {
-			attr = iter.next();
+		for (String element : map.keySet()) {
+			attr = element;
 			String value = map.get(attr);
 			buf.append(' ');
 			buf.append(attr);
