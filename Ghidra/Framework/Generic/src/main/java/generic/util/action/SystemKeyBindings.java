@@ -36,7 +36,7 @@ public class SystemKeyBindings {
 
 	public static final KeyStroke HELP_KEY1 = KeyStroke.getKeyStroke(VK_HELP, 0);
 	public static final KeyStroke HELP_KEY2 = KeyStroke.getKeyStroke(VK_F1, 0);
-	public static final KeyStroke HELP_INFO_KEY = getKeyStroke(VK_F1, CTRL);
+	public static final KeyStroke HELP_INFO_KEY = getKeyStroke(VK_F1, CTRL_SHIFT);
 
 	public static final KeyStroke CONTEXT_MENU_KEY1 = getKeyStroke(VK_F10, SHIFT_DOWN_MASK);
 	public static final KeyStroke CONTEXT_MENU_KEY2 = getKeyStroke(VK_CONTEXT_MENU, 0);
