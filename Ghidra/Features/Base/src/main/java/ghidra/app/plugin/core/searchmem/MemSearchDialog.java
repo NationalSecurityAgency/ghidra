@@ -551,7 +551,6 @@ class MemSearchDialog extends ReusableDialogComponentProvider {
 
 			setAdvancedPanelVisible(advancedButton.isSelected());
 		});
-		advancedButton.setFocusable(false);
 		JPanel advancedButtonPanel = new JPanel();
 		advancedButtonPanel.setLayout(new BoxLayout(advancedButtonPanel, BoxLayout.X_AXIS));
 		advancedButtonPanel.add(Box.createHorizontalGlue());
