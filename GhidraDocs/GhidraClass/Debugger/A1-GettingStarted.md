@@ -221,7 +221,7 @@ Note this technique is only possible because the target waits for input.
    Probably, you can just click **Launch**.
 1. In the **Model** window (to the left), expand the *Available* node.
 1. In the filter box, type `termmines`.
-1. Note the PID, e.g. 1234, then in the **Terminal** type, e.g., `attach 1234`.
+1. Right click on the node and select **Attach**, or, if you prefer, note the PID, e.g. 1234, then in the **Terminal** type, e.g., `attach 1234`.
 
 ## Exercise: Attach
 
