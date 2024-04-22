@@ -643,7 +643,7 @@ def break_access_expression(expression: str):
 
 
 @REGISTRY.method(action='break_ext', display='Catch Event')
-def break_event(spec: str):
+def break_event(inferior: sch.Schema('Inferior'), spec: str):
     """Set a catchpoint (catch)."""
     gdb.execute(f'catch {spec}')
 
