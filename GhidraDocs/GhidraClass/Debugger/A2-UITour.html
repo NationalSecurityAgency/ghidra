@@ -18,6 +18,70 @@
       vertical-align: middle;
     }
     .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
   </style>
   <link rel="stylesheet" href="style.css" />
   <!--[if lt IE 9]>
@@ -67,10 +131,9 @@ listings seem to move together, but their contents differ.</a></li>
 <li><a href="#there-is-no-step-button."
 id="toc-there-is-no-step-button.">There is no step button.</a></li>
 <li><a
-href="#i-can-step-but-i-dont-see-the-effects-in-the-interpreter-window."
-id="toc-i-can-step-but-i-dont-see-the-effects-in-the-interpreter-window.">I
-can step, but I don’t see the effects in the Interpreter
-window.</a></li>
+href="#i-can-step-but-i-dont-see-the-effects-in-the-terminal-window."
+id="toc-i-can-step-but-i-dont-see-the-effects-in-the-terminal-window.">I
+can step, but I don’t see the effects in the Terminal window.</a></li>
 <li><a href="#the-step-buttons-are-grayed-out."
 id="toc-the-step-buttons-are-grayed-out.">The Step buttons are grayed
 out.</a></li>
@@ -90,8 +153,8 @@ Debugger. We assume some familiarity with trap-and-trace debugging. If
 you have not used GDB or a similar debugger before, you may find the
 Ghidra Debugger difficult to grasp.</p>
 <p>If you would like your tool to look more or less like the one
-presented in the screenshots here, launch <code>termmines</code> from
-the Debugger using GDB.</p>
+presented in the screenshot here, launch <code>termmines</code> from the
+Debugger using GDB.</p>
 <section id="the-debugger-tool" class="level2">
 <h2>The Debugger Tool</h2>
 <p>Like the CodeBrowser tool, the Debugger tool is a preconfigured
@@ -112,15 +175,16 @@ CodeBrowser. Coincidentally, in the screenshot, the debugger-specific
 buttons start just above the Dynamic Listing in the global toolbar. They
 are:</p>
 <ul>
+<li><img src="images/debugger.png" alt="launch button" />
+<strong>Launch</strong>: This launches the current program (from the
+Static Listing) using a suitable back-end debugger. The drop-down menu
+provides a selection of previously-used launchers and a sub-menu of all
+available launchers. Clicking the button will use the most recent
+configuration, whether or not it succeeded.</li>
 <li><img src="images/process.png" alt="emulate button" />
 <strong>Emulate</strong>: To be covered in a later module. This will
 load the current program (from the Static Listing) into the
 emulator.</li>
-<li><img src="images/debugger.png" alt="debug button" />
-<strong>Debug</strong>: This launches the current program (from the
-Static Listing) using a suitable back-end debugger. The drop-down menu
-provides a selection of suitable back-end connectors. Clicking the
-button will use the last successful connector or the default.</li>
 <li><img src="images/record.png" alt="mode button" /> <strong>Control
 Mode</strong>: This drop-down menu sets the mode of the controls and
 machine state edits. By default, all actions are directed to the
@@ -130,8 +194,8 @@ back-end debugger.</li>
 <code>continue</code> in GDB.</li>
 <li><img src="images/interrupt.png" alt="interrupt button" />
 <strong>Interrupt</strong>: Interrupt, suspend, pause, break, etc. This
-is equivalent to <strong>Ctrl-C</strong> or <code>interrupt</code> in
-GDB.</li>
+is equivalent to <strong><code>CTRL</code>-<code>C</code></strong> or
+<code>interrupt</code> in GDB.</li>
 <li><img src="images/kill.png" alt="kill button" />
 <strong>Kill</strong>: Kill, terminate, etc. This is equivalent to
 <code>kill</code> in GDB.</li>
@@ -144,111 +208,138 @@ Typically, this will also end the session. It is equivalent to
 alt="step over button" /> <strong>Step Over</strong>, <img
 src="images/stepout.png" alt="step out button" /> <strong>Step
 Out</strong>, <img src="images/steplast.png" alt="step last button" />
-<strong>Step Last</strong>: These buttons step in various ways. In
+<strong>Step [Extended]</strong>: These buttons step in various ways. In
 order, the equivalent commands in GDB are <code>stepi</code>,
-<code>nexti</code>, and <code>finish</code>. Step Last has no equivalent
-in GDB; it is meant to repeat the last custom/extended step.</li>
+<code>nexti</code>, and <code>finish</code>. Step [Extended] represents
+additional step commands supported by the back end. GDB provides
+<strong>Advance</strong> and <strong>Return</strong>.</li>
 </ul>
 </section>
 <section id="windows" class="level3">
 <h3>Windows</h3>
 <p>Starting at the top left and working clockwise, the windows are:</p>
 <ul>
-<li>The <strong>Debugger Targets</strong> window: This lists active
-sessions or connections. From here, you can establish new sessions or
-terminate existing sessions.</li>
+<li>The <strong>Debug Console</strong> window: (Not to be confused with
+the CodeBrowser’s Console window.) This lists problems, diagnostics,
+progress, and recommendations throughout the tool. Some problems are
+presented with remedial actions, which may expedite your workflow or aid
+in troubleshooting.</li>
+<li>The <strong>Connections</strong> window: This is stacked below the
+Debug Console. This lists active sessions or connections. From here, you
+can establish new sessions or terminate existing sessions.</li>
 <li>The <strong>Dynamic Listing</strong> window: This is the primary
 means of examining the instructions being executed. By default, it
 follows the program counter and disassembles from there until the next
 control transfer instruction. It supports many of the same operations as
 the Static Listing, including patching. The nearest equivalent in GDB is
-something like <code>x/10i $pc</code>.</li>
-<li>The <strong>Interpreter</strong> window: This is essentially a
-terminal emulator providing a command-line interface to the back-end
-debugger. It is useful for diagnostics or for issuing commands that do
-not have a button in the GUI. Some may also prefer to command the
-debugger from here rather than the GUI.</li>
-<li>The <strong>Breakpoints</strong> window: This is stacked below the
-Interpreter. It lists and manages the breakpoints among all open images
-and running targets. The nearest equivalent in GDB is
+something like <code>x/10i $pc</code>. The tabs at the top list the
+active traces. Traces with a <img src="images/record.png"
+alt="record" /> icon represent live targets. The nearest equivalent to
+the tabs in GDB is <code>info inferiors</code>.</li>
+<li>The <strong>Breakpoints</strong> window: This is on the right. It
+lists and manages the breakpoints among all open program databases and
+running targets. The nearest equivalent in GDB is
 <code>info break</code>.</li>
 <li>The <strong>Registers</strong> window: This is stacked below the
 Breakpoints window. It displays and edits the register values for the
 current thread. The nearest equivalent in GDB is
-<code>info registers</code></li>
+<code>info registers</code>.</li>
+<li>The <strong>Memory</strong> window: This is stacked below the
+Breakpoints window. It displays the raw bytes of memory from the current
+trace or target. It supports many of the same operations as the
+CodeBrowser’s Bytes window, including patching.</li>
+<li>The <strong>Decompiler</strong> window: While not a dynamic analysis
+window, it bears mentioning how this operates with the Debugger. It is
+stacked below the Breakpoints window, more or less in the same place as
+in the CodeBrowser. The Dynamic listing strives to synchronize Ghidra’s
+static analysis windows with the dynamic target. So long as the correct
+program database is imported and mapped at the program counter, this
+window should display decompilation of the function containing it.</li>
 <li>The <strong>Modules</strong> window: This is stacked below the
 Registers window. It displays the images (and sections, if applicable)
 loaded by the target. The equivalent in GDB is
 <code>maintenance info sections</code>. Note that this differs from the
 Regions window.</li>
-<li>The <strong>Threads</strong> window: This lists the threads in the
-current target. The tabs at the top list the active targets. The nearest
-equivalents in GDB are <code>info threads</code> and
-<code>info inferiors</code>.</li>
-<li>The <strong>Time</strong> window: This is stacked below the Threads
+<li>The <strong>Terminal</strong> window: This is on the bottom right.
+This is a terminal emulator providing a command-line interface to the
+back-end debugger and/or target I/O. It is useful for diagnostics or for
+issuing commands that do not have a button in the GUI. Some may also
+prefer to command the debugger from here rather than the GUI. In some
+configurations, the target may have its own Terminal, separate from the
+back-end debugger’s.</li>
+<li>The <strong>Threads</strong> window: This is stacked below the
+Terminal window. It lists the threads in the current target. The nearest
+equivalent in GDB is <code>info threads</code>.</li>
+<li>The <strong>Time</strong> window: This is stacked below the Terminal
 window. This lists the events and snapshots taken of the current
 target.</li>
-<li>The <strong>Stack</strong> window: This lists the stack frames for
-the current thread. The equivalent in GDB is
+<li>The <strong>Static Mappings</strong> window: This is stacked below
+the Terminal window. It lists mappings from the current trace (dynamic
+address ranges) to program databases (static address ranges). Generally,
+this list is populated automatically, but may still be useful for
+diagnostics or manual mapping.</li>
+<li>The <strong>Stack</strong> window: This is on the bottom left. It
+lists the stack frames for the current thread. The equivalent in GDB is
 <code>backtrace</code>.</li>
 <li>The <strong>Watches</strong> window: This is stacked below the Stack
 window — pun not intended. It manages current watches. These are
 <em>not</em> watchpoints, but rather expressions or variables whose
-values to display. To manage watchpoints, use the Breakpoints window or
-the Interpreter. The nearest equivalent in GDB is
+values you wish to display. To manage watchpoints, use the Breakpoints
+window or the Terminal. The nearest equivalent in GDB is
 <code>display</code>.</li>
-<li>The <strong>Regions</strong> window: This is stacked below the
-Watches window. It lists memory regions for the current target. It
-differs from the Modules window, since this includes not only
-image-backed regions but other memory regions, e.g., stacks and heaps.
-The equivalent in GDB is <code>info proc mappings</code>.</li>
-<li>The <strong>Debug Console</strong> window: (Not to be confused with
-the Console window from the CodeBrowser.) This displays logging messages
-and problems encountered during a session. Some problems are presented
-with remedial actions, which may expedite your workflow or aid in
-troubleshooting.</li>
-<li>The <strong>Objects</strong> window: This models the back-end
-debugger as a tree of objects and provides generic actions on those
-objects. It is generally more capable, though less integrated, than the
-GUI, but not quite as capable as the Interpreter. It is useful for
-troubleshooting and for advanced use cases.</li>
+<li>The <strong>Regions</strong> window: This is stacked below the Stack
+window. It lists memory regions for the current target. It differs from
+the Modules window, since this includes not only image-backed regions
+but other memory regions, e.g., stacks and heaps. The equivalent in GDB
+is <code>info proc mappings</code>.</li>
+<li>The <strong>Model</strong> window: The back-end debugger populates
+an object model in the trace database. It is from this model that many
+other windows derive their contents: Threads, Modules, Regions, etc.
+This window presents that model and provides access to generic actions
+on the contained objects. It is generally more capable, though less
+integrated, than the other parts of the GUI, but not quite as capable as
+the Terminal. For some advanced use cases, where Ghidra does not yet
+provide built-in actions, it is essential.</li>
 </ul>
 </section>
 </section>
 <section id="controlling-the-target" class="level2">
 <h2>Controlling the Target</h2>
 <p>The control buttons are all located on the global toolbar. Start by
-pressing the <img src="images/stepinto.png" alt="step into" /> Step Into
-button. Notice that the Dynamic Listing moves forward a single
-instruction each time you press it. Also notice that the Static Listing
-moves with the Dynamic Listing. You may navigate in either listing, and
-so long as there is a corresponding location in the other, the two will
-stay synchronized. You may also open the Decompiler just as you would in
-the CodeBrowser, and it will stay in sync, too.</p>
+pressing the <img src="images/stepinto.png" alt="step into" />
+<strong>Step Into</strong> button. Notice that the Dynamic Listing moves
+forward a single instruction each time you press it. Also notice that
+the Static Listing moves with the Dynamic Listing. You may navigate in
+either listing, and so long as there is a corresponding location in the
+other, the two will stay synchronized. You may also open the Decompiler
+just as you would in the CodeBrowser, and it will stay in sync too.</p>
 <p>When you have clicked <img src="images/stepinto.png"
-alt="step into" /> Step Into a sufficient number of times, you should
-end up in a subroutine. You can click <img src="images/stepout.png"
-alt="step out" /> Step Out to leave the subroutine. Note that the target
-is allowed to execute until it returns from the subroutine; it does not
-skip out of it. Now, click <img src="images/stepover.png"
-alt="step over" /> Step Over until you reach another <code>CALL</code>
-instruction. Notice that when you click <img src="images/stepover.png"
-alt="step over" /> Step Over again, it will not descend into the
-subroutine. Instead, the target is allowed to execute the entire
-subroutine before stopping again — after the <code>CALL</code>
+alt="step into" /> <strong>Step Into</strong> a sufficient number of
+times, you should end up in a subroutine. You can click <img
+src="images/stepout.png" alt="step out" /> <strong>Step Out</strong> to
+leave the subroutine. Note that the target is allowed to execute until
+it returns from the subroutine; it does not skip out of it. Now, click
+<img src="images/stepover.png" alt="step over" /> <strong>Step
+Over</strong> until you reach another <code>CALL</code> instruction.
+Notice that when you click <img src="images/stepover.png"
+alt="step over" /> <strong>Step Over</strong> again, it will not descend
+into the subroutine. Instead, the target is allowed to execute the
+entire subroutine before stopping again — after the <code>CALL</code>
 instruction.</p>
-<p>If you prefer, you may use the GDB commands from the Interpreter
-instead of the buttons. Try <code>si</code> and/or <code>ni</code>. You
-can also pass arguments which is not possible with the buttons,
+<p>If you prefer, you may use the GDB commands from the Terminal instead
+of the buttons. Try <code>si</code> and/or <code>ni</code>. You can also
+pass arguments which is not possible with the buttons,
 e.g. <code>si 10</code> to step 10 instructions in one command.</p>
 <p>If you need to terminate the target you should use the <img
-src="images/disconnect.png" alt="disconnect" /> Disconnect button rather
-than the Kill button, in general. Otherwise, each launch will create a
-new connection, and you will end up with several stale connections.
-Additionally, if your target exits or otherwise terminates on its own,
-you will get a stale connection. Use the Targets window to clean such
-connections up. The re-use of connections and/or the use of multiple
-concurrent connections is <em>not</em> covered in this course.</p>
+src="images/disconnect.png" alt="disconnect" />
+<strong>Disconnect</strong> button rather than the <strong>Kill</strong>
+button, in general. Otherwise, each launch will create a new connection,
+and you will end up with several stale connections. Additionally, if
+your target exits or otherwise terminates on its own, you will get a
+stale connection. Use the Connections window to clean such connections
+up, or just type <code>quit</code> into the session’s Terminal. The
+re-use of connections and/or the use of multiple concurrent connections
+is <em>not</em> covered in this course.</p>
 </section>
 <section id="troubleshooting" class="level2">
 <h2>Troubleshooting</h2>
@@ -264,14 +355,23 @@ Listing is its local drop-down menu. Click it and check that
 Listing to see what module you are in. Also check the Debug Console
 window. If you are in a system library, e.g., <code>ld-linux</code>,
 then this is the expected behavior. You may optionally import it, as
-suggested by the Debug Console, but this is covered later.</p>
+suggested by the Debug Console, but this is covered later. You may also
+try typing into the Terminal, <em>one command at a time</em>, checking
+for errors after each:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode gdb"><code class="sourceCode gdbsyntax"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">break</span> main</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>continue</span></code></pre></div>
+<p>That should get you from the system entry into the target’s
+<code>main</code> routine, assuming it has one. Next time you launch,
+check the configuration and change <strong>Run Command</strong> to
+“start”, not “starti”.</p>
 <p>If you are not in a system library, then check the Modules window to
 see if <code>termmines</code> is listed. If so, it seems the module
 mapper failed to realize that module is the current program. Right-click
-the module and select “Map to termmines.” Confirm the dialog. If
-<code>termmines</code> is not listed, then your version of GDB may not
-be supported. If you file a bug report, please include your GDB version,
-Linux distribution, and/or other platform details.</p>
+the module and select <strong>Map to termmines</strong>. Confirm the
+dialog. If <code>termmines</code> is not listed, then your version of
+GDB may not be supported. If you file a bug report, please include your
+GDB version, Linux distribution, and/or other platform details.</p>
 </section>
 <section
 id="the-listings-seem-to-move-together-but-their-contents-differ."
@@ -284,29 +384,32 @@ importing and launching? For other system libraries, this could happen
 if you or an administrator applied system updates since you imported.
 You probably need to re-import the affected module image(s). If this
 happens to you in practice, and you have substantial investment in the
-old import, consider using the Version Tracker to port your knowledge to
-the new import.</p>
+old program database, consider using the Version Tracker to port your
+knowledge to the new database.</p>
 </section>
 <section id="there-is-no-step-button." class="level3">
 <h3>There is no step button.</h3>
-<p>This can happen if the Control Mode is set to the Trace. Perhaps you
-played with the Time window? Change the Control Mode back to “Control
-Target.”</p>
+<p>This can happen if the Control Mode is set to <strong>Control
+Trace</strong>. Perhaps you played with the Time window? The Control
+Mode drop-down is leftmost in the “Control” group, immediately right of
+the <strong>Launch</strong> and <strong>Emulate</strong> buttons. Its
+icon differs for each mode. Change it back to <strong>Control
+Target</strong>.</p>
 </section>
 <section
-id="i-can-step-but-i-dont-see-the-effects-in-the-interpreter-window."
+id="i-can-step-but-i-dont-see-the-effects-in-the-terminal-window."
 class="level3">
-<h3>I can step, but I don’t see the effects in the Interpreter
-window.</h3>
-<p>This can happen if the Control Mode is set to the Emulator. Change
-the Control Mode back to “Control Target.”</p>
+<h3>I can step, but I don’t see the effects in the Terminal window.</h3>
+<p>This can happen if the Control Mode is set to <strong>Control
+Emulator</strong>. See the above heading about Control Mode. Change it
+back to <strong>Control Target</strong>.</p>
 </section>
 <section id="the-step-buttons-are-grayed-out." class="level3">
 <h3>The Step buttons are grayed out.</h3>
 <p>The target has likely terminated, or you have not selected a thread.
-Check the Threads window. If it is empty, re-launch, and perhaps look at
-the Troubleshooting section in <a href="A1-GettingStarted.html">Getting
-Started</a></p>
+Check the Threads window or the Model window. If it is empty, re-launch,
+and perhaps look at the Troubleshooting section in <a
+href="A1-GettingStarted.html">Getting Started</a></p>
 </section>
 </section>
 <section id="exercise-step-around" class="level2">
@@ -318,7 +421,8 @@ you have entered that subroutine. <strong>TIP</strong>: Use the
 Decompiler to help you recognize when you have entered the command-line
 parsing subroutine. Alternatively, use the Static Listing and Decompiler
 to identify the parsing subroutine (as you would in the CodeBrowser),
-and then use the Step buttons to drive the target into it.</p>
+and then use the <strong>Step</strong> buttons to drive the target into
+it.</p>
 </section>
 </section>
 </body>

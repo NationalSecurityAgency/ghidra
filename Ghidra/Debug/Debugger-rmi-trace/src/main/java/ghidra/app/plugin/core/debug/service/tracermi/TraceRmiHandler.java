@@ -810,6 +810,11 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		}
 		DebuggerCoordinates finalCoords = object == null ? coords : coords.object(object);
 		Swing.runLater(() -> {
+			DebuggerTraceManagerService traceManager = this.traceManager;
+			if (traceManager == null) {
+				// Can happen during tear down.
+				return;
+			}
 			if (!traceManager.getOpenTraces().contains(open.trace)) {
 				traceManager.openTrace(open.trace);
 				traceManager.activate(finalCoords, ActivationCause.SYNC_MODEL);

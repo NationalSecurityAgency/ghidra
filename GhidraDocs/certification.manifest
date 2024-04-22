@@ -102,6 +102,8 @@ GhidraClass/Debugger/images/Emulation_PcodeStepper.png||GHIDRA||||END|
 GhidraClass/Debugger/images/Emulation_WatchesForCmdline.png||GHIDRA||||END|
 GhidraClass/Debugger/images/Emulation_WatchesForCmdlineSet.png||GHIDRA||||END|
 GhidraClass/Debugger/images/GettingStarted_DisassemblyAfterLaunch.png||GHIDRA||||END|
+GhidraClass/Debugger/images/GettingStarted_LaunchGDBDialog.png||GHIDRA||||END|
+GhidraClass/Debugger/images/GettingStarted_Termmines.png||GHIDRA||||END|
 GhidraClass/Debugger/images/GettingStarted_ToolWSpecimen.png||GHIDRA||||END|
 GhidraClass/Debugger/images/MemoryMap_CopyNcursesInto.png||GHIDRA||||END|
 GhidraClass/Debugger/images/MemoryMap_ModulesAfterLaunch.png||GHIDRA||||END|
@@ -112,8 +114,9 @@ GhidraClass/Debugger/images/Navigation_DialogCompareTimes.png||GHIDRA||||END|
 GhidraClass/Debugger/images/Navigation_StackInCallRand.png||GHIDRA||||END|
 GhidraClass/Debugger/images/Navigation_ThreadsInCallRand.png||GHIDRA||||END|
 GhidraClass/Debugger/images/Navigation_TimeAfterCallSRandCallRand.png||GHIDRA||||END|
-GhidraClass/Debugger/images/RemoteTargets_Gadp.png||GHIDRA||||END|
-GhidraClass/Debugger/images/RemoteTargets_GdbOverSsh.png||GHIDRA||||END|
+GhidraClass/Debugger/images/RemoteTargets_AcceptTraceRmi.png||GHIDRA||||END|
+GhidraClass/Debugger/images/RemoteTargets_GdbPlusGdbserverViaSsh.png||GHIDRA||||END|
+GhidraClass/Debugger/images/RemoteTargets_GdbViaSsh.png||GHIDRA||||END|
 GhidraClass/Debugger/images/State_BytesStackAfterCallRand.png||GHIDRA||||END|
 GhidraClass/Debugger/images/State_ListingAfterCallRand.png||GHIDRA||||END|
 GhidraClass/Debugger/images/State_ListingStackAfterCallRand.png||GHIDRA||||END|

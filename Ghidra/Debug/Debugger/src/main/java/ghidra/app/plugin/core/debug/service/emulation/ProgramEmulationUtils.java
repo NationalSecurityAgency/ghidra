@@ -42,8 +42,8 @@ import ghidra.trace.database.DBTrace;
 import ghidra.trace.model.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceConflictedMappingException;
-import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.target.TraceObjectKeyPath;
+import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.thread.*;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.*;
@@ -70,7 +70,8 @@ public class ProgramEmulationUtils {
 			        <attribute name='Modules' schema='ModuleContainer' />
 			        <attribute name='Threads' schema='ThreadContainer' />
 			    </schema>
-			    <schema name='BreakpointContainer' elementResync='NEVER' attributeResync='NEVER'>
+			    <schema name='BreakpointContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='NEVER'>
 			        <interface name='BreakpointSpecContainer' />
 			        <interface name='BreakpointLocationContainer' />
 			        <element schema='Breakpoint' />
@@ -494,6 +495,20 @@ public class ProgramEmulationUtils {
 		throw new EmulatorOutOfMemoryException();
 	}
 
+	protected static void createObjects(Trace trace) {
+		TraceObjectManager om = trace.getObjectManager();
+		om.createRootObject(EMU_SESSION_SCHEMA);
+
+		om.createObject(TraceObjectKeyPath.parse("Breakpoints"))
+				.insert(Lifespan.ALL, ConflictResolution.DENY);
+		om.createObject(TraceObjectKeyPath.parse("Memory"))
+				.insert(Lifespan.ALL, ConflictResolution.DENY);
+		om.createObject(TraceObjectKeyPath.parse("Modules"))
+				.insert(Lifespan.ALL, ConflictResolution.DENY);
+		om.createObject(TraceObjectKeyPath.parse("Threads"))
+				.insert(Lifespan.ALL, ConflictResolution.DENY);
+	}
+
 	/**
 	 * Create a new trace with a single thread, ready for emulation of the given program
 	 * 
@@ -510,7 +525,8 @@ public class ProgramEmulationUtils {
 		try {
 			trace = new DBTrace(getTraceName(program), program.getCompilerSpec(), consumer);
 			try (Transaction tx = trace.openTransaction("Emulate")) {
-				trace.getObjectManager().createRootObject(EMU_SESSION_SCHEMA);
+				createObjects(trace);
+
 				TraceSnapshot initial =
 					trace.getTimeManager().createSnapshot(EMULATION_STARTED_AT + pc);
 				long snap = initial.getKey();

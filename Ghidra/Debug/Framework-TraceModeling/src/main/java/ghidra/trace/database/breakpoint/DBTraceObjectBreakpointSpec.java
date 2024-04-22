@@ -182,6 +182,12 @@ public class DBTraceObjectBreakpointSpec
 	}
 
 	@Override
+	public String getExpression() {
+		return TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(),
+			TargetBreakpointSpec.EXPRESSION_ATTRIBUTE_NAME, String.class, null);
+	}
+
+	@Override
 	public Set<TraceThread> getThreads() {
 		throw new UnsupportedOperationException("Ask a location instead");
 	}

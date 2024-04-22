@@ -57,6 +57,7 @@ GNU_DEBUGDATA_PREFIX = ".gnu_debugdata for "
 class Module(namedtuple('BaseModule', ['name', 'base', 'max', 'sections'])):
     pass
 
+
 class Index:
     def __init__(self, regions):
         self.regions = {}
@@ -64,6 +65,7 @@ class Index:
         for r in regions:
             self.regions[r.start] = r
             self.bases.append(r.start)
+
     def compute_base(self, address):
         index = bisect.bisect_right(self.bases, address) - 1
         if index == -1:
@@ -77,6 +79,7 @@ class Index:
                 return address
             else:
                 return region.start
+
 
 class Section(namedtuple('BaseSection', ['name', 'start', 'end', 'offset', 'attrs'])):
     def better(self, other):
@@ -103,8 +106,6 @@ class ModuleInfoReader(object):
         if mat is None:
             return None
         n = mat['name']
-        if n.startswith(GNU_DEBUGDATA_PREFIX):
-            return None
         return None if mat is None else mat['name']
 
     def section_from_line(self, line):
@@ -135,7 +136,7 @@ class ModuleInfoReader(object):
         for line in out.split('\n'):
             n = self.name_from_line(line)
             if n is not None:
-                if name is not None:
+                if name is not None and not name.startswith(GNU_DEBUGDATA_PREFIX):
                     modules[name] = self.finish_module(name, sections, index)
                 name = n
                 sections = {}
@@ -148,7 +149,7 @@ class ModuleInfoReader(object):
                 if s.name in sections:
                     s = s.better(sections[s.name])
                 sections[s.name] = s
-        if name is not None:
+        if name is not None and not name.startswith(GNU_DEBUGDATA_PREFIX):
             modules[name] = self.finish_module(name, sections, index)
         return modules
 
@@ -292,8 +293,9 @@ class BreakpointLocationInfoReaderV8(object):
         inf = gdb.selected_inferior()
         thread_groups = [inf.num]
         if breakpoint.location is not None and breakpoint.location.startswith("*0x"):
-            address = int(breakpoint.location[1:],16)
-            loc = BreakpointLocation(address, breakpoint.enabled, thread_groups)
+            address = int(breakpoint.location[1:], 16)
+            loc = BreakpointLocation(
+                address, breakpoint.enabled, thread_groups)
             return [loc]
         return []
 
@@ -312,7 +314,8 @@ class BreakpointLocationInfoReaderV9(object):
             return []
         try:
             address = gdb.parse_and_eval(breakpoint.location).address
-            loc = BreakpointLocation(address, breakpoint.enabled, thread_groups)
+            loc = BreakpointLocation(
+                address, breakpoint.enabled, thread_groups)
             return [loc]
         except Exception as e:
             print(f"Error parsing bpt location = {breakpoint.location}")
@@ -338,6 +341,7 @@ def _choose_breakpoint_location_info_reader():
 
 BREAKPOINT_LOCATION_INFO_READER = _choose_breakpoint_location_info_reader()
 
+
 def set_bool_param_by_api(name, value):
     gdb.set_parameter(name, value)
 
@@ -353,6 +357,7 @@ def choose_set_parameter():
     else:
         return set_bool_param_by_cmd
 
+
 set_bool_param = choose_set_parameter()
 
 
@@ -360,7 +365,7 @@ def get_level(frame):
     if hasattr(frame, "level"):
         return frame.level()
     else:
-        level = -1;
+        level = -1
         f = frame
         while f is not None:
             level += 1
@@ -371,16 +376,16 @@ def get_level(frame):
 class RegisterDesc(namedtuple('BaseRegisterDesc', ['name'])):
     pass
 
+
 def get_register_descs(arch, group='all'):
     if hasattr(arch, "registers"):
         return arch.registers(group)
     else:
         descs = []
-        regset = gdb.execute(f"info registers {group}", to_string=True).strip().split('\n')
+        regset = gdb.execute(
+            f"info registers {group}", to_string=True).strip().split('\n')
         for line in regset:
             if not line.startswith(" "):
                 tokens = line.strip().split()
-                descs.append(RegisterDesc(tokens[0]))       	
+                descs.append(RegisterDesc(tokens[0]))
         return descs
-
-

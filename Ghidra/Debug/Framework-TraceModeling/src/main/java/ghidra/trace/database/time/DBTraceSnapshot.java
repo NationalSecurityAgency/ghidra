@@ -18,7 +18,12 @@ package ghidra.trace.database.time;
 import java.io.IOException;
 
 import db.DBRecord;
+import ghidra.dbg.target.TargetEventScope;
+import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.TraceSchedule;
@@ -143,7 +148,26 @@ public class DBTraceSnapshot extends DBAnnotatedObject implements TraceSnapshot 
 	@Override
 	public TraceThread getEventThread() {
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
-			return eventThread;
+			if (eventThread != null) {
+				return eventThread;
+			}
+			// TODO: Can it be something other than root?
+			DBTraceObject root = manager.trace.getObjectManager().getRootObject();
+			if (root == null) {
+				return null;
+			}
+			if (!root.getTargetSchema().getInterfaces().contains(TargetEventScope.class)) {
+				return null;
+			}
+			TraceObjectValue eventAttr =
+				root.getAttribute(getKey(), TargetEventScope.EVENT_OBJECT_ATTRIBUTE_NAME);
+			if (eventAttr == null) {
+				return null;
+			}
+			if (!(eventAttr.getValue() instanceof TraceObject eventObj)) {
+				return null;
+			}
+			return eventObj.queryInterface(TraceObjectThread.class);
 		}
 	}
 
