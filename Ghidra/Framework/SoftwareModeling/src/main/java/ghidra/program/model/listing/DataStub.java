@@ -393,6 +393,11 @@ public class DataStub implements Data {
 	}
 
 	@Override
+	public boolean isWritable() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public boolean isVolatile() {
 		throw new UnsupportedOperationException();
 	}
