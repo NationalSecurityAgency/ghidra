@@ -457,10 +457,7 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 
 		searchDialog.setStatusText("Searching...");
 
-		SearchData searchData = info.getSearchData();
-		byte[] searchBytes = searchData.getBytes();
-		int selectionSize = searchBytes.length == 0 ? 1 : searchBytes.length;
-		MemSearchTableModel model = new MemSearchTableModel(tool, selectionSize, program, info,
+		MemSearchTableModel model = new MemSearchTableModel(tool, program, info,
 			getSearchStartAddress(info), navigatable.getSelection());
 
 		currentResultsTableProvider =
