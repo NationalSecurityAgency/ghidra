@@ -168,6 +168,17 @@ class="sourceCode numberSource java numberLines"><code class="sourceCode java"><
 <span id="cb1-6"><a href="#cb1-6"></a>    <span class="kw">protected</span> <span class="dt">void</span> <span class="fu">run</span><span class="op">()</span> <span class="kw">throws</span> <span class="bu">Exception</span> <span class="op">{</span></span>
 <span id="cb1-7"><a href="#cb1-7"></a>    <span class="op">}</span></span>
 <span id="cb1-8"><a href="#cb1-8"></a><span class="op">}</span></span></code></pre></div>
+<p><strong>NOTE</strong>: The scripting API has been refactored a little
+since the transition from Recorder-based to TraceRmi-based targets.
+Parts of the API that are back-end agnostic are accessible from the
+<code>FlatDebuggerAPI</code> interface. Parts of the API that require a
+specific back end are in <code>FlatDebuggerRmiAPI</code> and
+<code>FlatDebuggerRecorderAPI</code>, the latter of which is deprecated.
+If a script written for version 11.0.2 or prior is not compiling, it can
+most likely be patched up by changing
+<code>implements FlatDebuggerAPI</code> to
+<code>implements FlatDebuggerRecorderAPI</code>, but we recommend
+porting it to use <code>implements FlatDebuggerRmiAPI</code>.</p>
 <p>Technically, the Debugger’s “deep” API is accessible to scripts;
 however, the flat API is preferred for scripting. Also, the flat API is
 usually more stable than the deep API. However, because the dynamic
@@ -244,10 +255,11 @@ This allows us to locate that symbol in the dynamic context.</p>
 </section>
 <section id="reading-the-data" class="level3">
 <h3>Reading the Data</h3>
-<p>Now, we want to read the dimensions and the whole board to the trace.
-You should know from earlier exercises that the board is allocated 32
-cells by 32 cells, so we will want to read at least 1024 bytes. Note
-that this will implicitly capture the board to the trace:</p>
+<p>Now, we want to read the dimensions and the whole board from the
+target. You should know from earlier exercises that the board is
+allocated 32 cells by 32 cells, so we will want to read at least 1024
+bytes. Note that this will implicitly capture the board to the
+trace:</p>
 <div class="sourceCode" id="cb5"><pre
 class="sourceCode numberSource java numberLines"><code class="sourceCode java"><span id="cb5-1"><a href="#cb5-1"></a><span class="dt">byte</span><span class="op">[]</span> widthDat <span class="op">=</span> <span class="fu">readMemory</span><span class="op">(</span>widthDyn<span class="op">,</span> <span class="dv">4</span><span class="op">,</span> monitor<span class="op">);</span></span>
 <span id="cb5-2"><a href="#cb5-2"></a><span class="dt">byte</span><span class="op">[]</span> heightDat <span class="op">=</span> <span class="fu">readMemory</span><span class="op">(</span>heightDyn<span class="op">,</span> <span class="dv">4</span><span class="op">,</span> monitor<span class="op">);</span></span>
@@ -271,18 +283,20 @@ class="sourceCode numberSource java numberLines"><code class="sourceCode java"><
 </section>
 <section id="test-the-script" class="level3">
 <h3>Test the Script</h3>
-<p>To test, run <code>termmines</code> in a proper terminal and attach
-to it from Ghidra using GDB. Now, run the script. Resume and play the
-game. Once you win, check that the script output describes the actual
-board.</p>
+<p>To test, launch <code>termmines</code> in Ghidra using GDB. You will
+need to allow it to set up the first game board before running the
+script. The simplest way to do that is to resume and then interrupt the
+target while it waits for input. Now, run the script and examine its
+output. Resume and play the game. Once you win, check that the script
+output describes the actual board.</p>
 </section>
 <section id="exercise-remove-the-mines" class="level3">
 <h3>Exercise: Remove the Mines</h3>
 <p>Write a script that will remove the mines from the board.
 <strong>NOTE</strong>: The <code>writeMemory()</code> and related
-methods are all subject to the current control mode. If the mode is
-read-only, the script cannot modify the target’s machine state using
-those methods.</p>
+methods are all subject to the current <strong>Control Mode</strong>. If
+the mode is read-only, the script cannot modify the target’s machine
+state using those methods.</p>
 </section>
 </section>
 <section id="waiting-on-reacting-to-events" class="level2">
@@ -326,9 +340,9 @@ run.</li>
 <p><strong>NOTE</strong>: The solution to this exercise is given as a
 tutorial below, but give it an honest try before peeking. If you are not
 already familiar with Eclipse’s searching and discovery features, try
-pressing <strong>Ctrl-O</strong> twice in the editor for your script.
-You should now be able to type patterns, optionally with wildcards, to
-help you find applicable methods.</p>
+pressing <strong><code>CTRL</code>-<code>O</code></strong> twice in the
+editor for your script. You should now be able to type patterns,
+optionally with wildcards, to help you find applicable methods.</p>
 <p>Your task is to write a script that will wait for the player to win
 then patch the machine state, so that the game always prints a score of
 0 seconds. Some gotchas to consider up front:</p>
@@ -338,8 +352,8 @@ See <code>getExecutionState()</code> and <code>interrupt()</code>. You
 will not likely be able to place or toggle breakpoints while the target
 is running.</li>
 <li>Methods like <code>writeMemory()</code> are subject to the current
-control mode. You may want to check and/or correct this at the top of
-your script.</li>
+<strong>Control Mode</strong>. You may want to check and/or correct this
+at the top of your script.</li>
 <li>If you require the user to mark code locations with a label, note
 that those labels will likely end up in the containing function’s
 namespace. You will need to provide that namespace to
@@ -351,13 +365,13 @@ breakpoint numbers.</li>
 </ul>
 <p>You are successful when you can attach to a running
 <code>termmines</code> and execute your script. Then, assuming you win
-the game, the game should award you a score of 0 seconds. It is OK if
+the game, the game should award you a score of 0 seconds. It is okay if
 you have to re-execute your script after each win.</p>
 </section>
 <section id="solution-always-win-in-0-seconds" class="level3">
 <h3>Solution: Always Win in 0 Seconds</h3>
-<p>As in the previous scripting tutorial, we will do some verifications
-at the top of the script. Your level of pedantry may vary.</p>
+<p>As in the previous script, we will do some verifications at the top
+of the script. Your level of pedantry may vary.</p>
 <div class="sourceCode" id="cb7"><pre
 class="sourceCode numberSource java numberLines"><code class="sourceCode java"><span id="cb7-1"><a href="#cb7-1"></a>Trace trace <span class="op">=</span> <span class="fu">getCurrentTrace</span><span class="op">();</span></span>
 <span id="cb7-2"><a href="#cb7-2"></a><span class="cf">if</span> <span class="op">(</span>trace <span class="op">==</span> <span class="kw">null</span><span class="op">)</span> <span class="op">{</span></span>
@@ -384,17 +398,17 @@ association of the current program to the current target will be
 implicitly verified when we map symbols. The second block will interrupt
 the target if it is running. We then allow everything to sync up before
 checking the control mode. We could instead change the control mode to
-<strong>Target w/Edits</strong>, but I prefer to keep the user aware
-that the script needs to modify target machine state.</p>
+<strong>Control Target</strong> (with edits), but I prefer to keep the
+user aware that the script needs to modify target machine state.</p>
 <p>Next, we retrieve and map our symbols. This works pretty much the
-same as in the previous scripting tutorial, but with attention to the
-containing function namespace. The way <code>termmines</code> computes
-the score is to record the start time of the game. Then, when the player
-wins, it subtracts the recorded time from the current time. This script
-requires the user to label the start time variable <code>timer</code>,
-and to label the instruction that computes the score
-<code>reset_timer</code>. The function that prints the score must be
-named <code>print_win</code>.</p>
+same as in the previous script, but with attention to the containing
+function namespace. The way <code>termmines</code> computes the score is
+to record the start time of the game. Then, when the player wins, it
+subtracts the recorded time from the current time. This script requires
+the user to label the start time variable <code>timer</code>, and to
+label the instruction that computes the score <code>reset_timer</code>.
+The function that prints the score must be named
+<code>print_win</code>.</p>
 <div class="sourceCode" id="cb8"><pre
 class="sourceCode numberSource java numberLines"><code class="sourceCode java"><span id="cb8-1"><a href="#cb8-1"></a><span class="bu">List</span><span class="op">&lt;</span>Symbol<span class="op">&gt;</span> timerSyms <span class="op">=</span> <span class="fu">getSymbols</span><span class="op">(</span><span class="st">&quot;timer&quot;</span><span class="op">,</span> <span class="kw">null</span><span class="op">);</span></span>
 <span id="cb8-2"><a href="#cb8-2"></a><span class="cf">if</span> <span class="op">(</span>timerSyms<span class="op">.</span><span class="fu">isEmpty</span><span class="op">())</span> <span class="op">{</span></span>
@@ -429,7 +443,7 @@ either. To establish that context, you must use a
 <code>getCurrentView()</code>.</p>
 <p>To avoid creating a pile of breakpoints, we will first attempt to
 enable an existing breakpoint at the desired location. Technically, the
-existing breakpoints may not be execute breakpoints, but we will blindly
+existing breakpoints may not be EXECUTE breakpoints, but we will blindly
 assume they are. Again, your level of pedantry may vary. The
 <code>breakpointsEnable</code> method will return the existing
 breakpoints, so we can check that and create a new breakpoint, if
@@ -453,7 +467,7 @@ breakpoint. We do not need to be precise in this check; it suffices to
 check the program counter:</p>
 <div class="sourceCode" id="cb10"><pre
 class="sourceCode numberSource java numberLines"><code class="sourceCode java"><span id="cb10-1"><a href="#cb10-1"></a><span class="cf">while</span> <span class="op">(</span><span class="kw">true</span><span class="op">)</span> <span class="op">{</span></span>
-<span id="cb10-2"><a href="#cb10-2"></a>    monitor<span class="op">.</span><span class="fu">checkCanceled</span><span class="op">();</span></span>
+<span id="cb10-2"><a href="#cb10-2"></a>    monitor<span class="op">.</span><span class="fu">checkCancelled</span><span class="op">();</span></span>
 <span id="cb10-3"><a href="#cb10-3"></a></span>
 <span id="cb10-4"><a href="#cb10-4"></a>    TargetExecutionState execState <span class="op">=</span> <span class="fu">getExecutionState</span><span class="op">(</span>trace<span class="op">);</span></span>
 <span id="cb10-5"><a href="#cb10-5"></a>    <span class="cf">switch</span> <span class="op">(</span>execState<span class="op">)</span> <span class="op">{</span></span>
@@ -491,12 +505,12 @@ class="sourceCode numberSource java numberLines"><code class="sourceCode java"><
 <span id="cb10-37"><a href="#cb10-37"></a>        <span class="cf">break</span><span class="op">;</span></span>
 <span id="cb10-38"><a href="#cb10-38"></a>    <span class="op">}</span></span>
 <span id="cb10-39"><a href="#cb10-39"></a><span class="op">}</span></span></code></pre></div>
-<p>The “center” of this loop is a call to <code>waitForBreak()</code>.
-This is the simplest primitive for waiting on the target to meet any
-condition. Because we expect the user to take more than a second to win
-the game, we should expect a timeout exception and just keep waiting.
-Using a timeout of 1 second ensures we can terminate promptly should the
-user cancel the script.</p>
+<p>The “center” of this loop is a call to <code>waitForBreak()</code> on
+line 27. This is the simplest primitive for waiting on the target to
+meet any condition. Because we expect the user to take more than a
+second to win the game, we should expect a timeout exception and just
+keep waiting. Using a timeout of 1 second ensures we can terminate
+promptly should the user cancel the script.</p>
 <p>Before waiting, we need to make sure the target is running. Because
 we could repeat the loop while the target is already running, we should
 only call <code>resume()</code> if the target is stopped. There are

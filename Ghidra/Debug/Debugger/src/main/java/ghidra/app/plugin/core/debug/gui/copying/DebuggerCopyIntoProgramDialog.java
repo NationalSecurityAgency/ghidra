@@ -799,7 +799,7 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 
 	protected void executeCapture(AddressRange range, Target target, TaskMonitor monitor)
 			throws Exception {
-		target.readMemory(new AddressSet(range), monitor);
+		target.readMemoryAsync(new AddressSet(range), monitor).get();
 	}
 
 	protected void executePlan(TaskMonitor monitor) throws Exception {

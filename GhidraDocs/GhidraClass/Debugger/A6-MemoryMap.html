@@ -94,26 +94,23 @@ stacks, heaps, or other system objects. The columns are:</p>
 file-backed mappings, this should include the name of the file. It may
 or may not include a section name. Typically, the name will include the
 start address to avoid collisions.</li>
-<li>The <strong>Lifespan</strong> column gives the span of snapshots
-where the region has been observed. Memory maps can change during the
-course of execution, and this is how Ghidra records and presents that
-history.</li>
 <li>The <strong>Start</strong> column gives the minimum address of the
 region.</li>
 <li>The <strong>End</strong> column gives the maximum (inclusive)
 address of the region.</li>
 <li>The <strong>Length</strong> column gives the number of bytes in the
 region.</li>
-<li>The <strong>Read</strong>, <strong>Write</strong>,
-<strong>Execute</strong>, and <strong>Volatile</strong> columns give the
-permissions/flags of the region.</li>
+<li>The <strong>Read</strong>, <strong>Write</strong>, and
+<strong>Execute</strong> columns give the permissions of the
+region.</li>
 </ul>
 <p>Try using the filter and column headers to sift and sort for
 interesting regions. Double-click the start or end address to navigate
 to them in the Dynamic Listing. Select one or more regions, right-click,
 and choose <strong>Select Addresses</strong>. That should select all the
-addresses in those regions in the Dynamic Listing. Used with the Refresh
-button, you can surgically capture memory into the current snapshot.</p>
+addresses in those regions in the Dynamic Listing. Used with the
+<strong>Read Memory</strong> button in the Dynamic Listing, you can
+selectively capture memory into the current snapshot.</p>
 </section>
 <section id="modules" class="level2">
 <h2>Modules</h2>
@@ -122,14 +119,16 @@ button, you can surgically capture memory into the current snapshot.</p>
 alt="Modules window after launch" />
 <figcaption aria-hidden="true">Modules window after launch</figcaption>
 </figure>
-<p>The Modules window has two panes. The top pane displays a list of all
-the <em>modules</em> known to the back-end debugger. The bottom pane
-displays a list of all the <em>sections</em> known to the back-end
-debugger. In practice, not all targets will report module information.
-Fewer targets report section information. The nearest analog to the
-bottom panel from the CodeBrowser is (also) the Memory Map window. The
-top panel has no real analog; however, the tabs above the Static Listing
-pane serve a similar purpose.</p>
+<p>The Modules window has two panes, though the second is disabled by
+default. The top pane displays a list of all the <em>modules</em> known
+to the back-end debugger. The bottom pane displays a list of all the
+<em>sections</em> known to the back-end debugger. In practice, not all
+targets will report module information. Fewer targets report section
+information, and those that do may only report them to Ghidra when
+specifically requested. The nearest analog to the bottom panel from the
+CodeBrowser is (also) the Memory Map window. The top panel has no real
+analog; however, the tabs above the Static Listing pane serve a similar
+purpose.</p>
 <p>For a target that reports section information, the bottom panel will
 display a lot of the same information as the Regions window. The columns
 differ slightly, and the sections panel will <em>not</em> include
@@ -138,44 +137,27 @@ stacks, heaps, etc.</p>
 <ul>
 <li>The <strong>Base</strong> column gives the image base for the
 module. This should be the minimum address of the module.</li>
-<li>The <strong>Max Address</strong> column gives the maximum address of
-the module.</li>
+<li>The <strong>Max</strong> column gives the maximum address of the
+module.</li>
 <li>The <strong>Name</strong> column gives the (short) name of the
 module.</li>
-<li>The <strong>Module Name</strong> column gives the full file path of
-the module <em>on target</em>. In some cases, this gives some other
-description of the module.</li>
-<li>The <strong>Lifespan</strong> column gives the span of snapshots
-where the module has been observed.</li>
+<li>The <strong>Mapping</strong> column gives the mapped Ghidra program
+database for the module.</li>
 <li>The <strong>Length</strong> column gives the distance between the
 base and max address (inclusive). Note that not every address between
 base and max is necessarily mapped to the module. ELF headers specify
 the load address of each section, so the memory footprint usually has
 many gaps.</li>
 </ul>
-<p>The section columns are:</p>
-<ul>
-<li>The <strong>Start Address</strong> gives the minimum address of the
-section.</li>
-<li>The <strong>End Address</strong> gives the maximum (inclusive)
-address of the section.</li>
-<li>The <strong>Section Name</strong> gives the name of the
-section.</li>
-<li>The <strong>Module Name</strong> gives the name of the module
-containing the section.</li>
-<li>The <strong>Length</strong> gives the number of bytes contained in
-the section.</li>
-</ul>
-<p><strong>NOTE</strong>: There is no lifespan column for a section. The
-lifespan of a section is the lifespan of its containing module.</p>
-<p>Try using the filter and column headers in each pane to sift and
-sort. This is especially helpful for the sections: Type the name of a
-module or section. You can also toggle the filter button in the local
-toolbar to filter the sections pane to those contained in a selected
-module from the top pane. Double-click any address to navigate to it.
-Make a selection of modules or sections, right-click, and choose
-<strong>Select Addresses</strong>. Again, combined with the Dynamic
-Listing’s Refresh button, you can capture memory surgically.</p>
+<p>See the Help (press <strong><code>F1</code></strong> in the Modules
+panel) to learn more about the Sections table, if desired. It can be
+enabled using the <strong>Show Sections Table</strong> button in the
+local toolbar.</p>
+<p>Double-click any address to navigate to it. Make a selection of
+modules or sections, right-click, and choose <strong>Select
+Addresses</strong>. Again, combined with the Dynamic Listing’s
+<strong>Read Memory</strong> button, you can capture memory
+selectively.</p>
 </section>
 <section id="optional-exercise-find-the-time-surgically" class="level2">
 <h2>Optional Exercise: Find the Time Surgically</h2>
@@ -232,19 +214,20 @@ and cope with module relocation, especially from ASLR.</p>
 <li>From the Modules window, select one or more modules, and choose from
 the <strong>Map Module</strong> actions. Selecting a single module at a
 time, it is possible to surgically map each to a chosen program.</li>
-<li>From the Sections window, select one or more sections, and choose
+<li>From the Sections panel, select one or more sections, and choose
 from the <strong>Map Section</strong> actions. This is certainly more
 tedious and atypical, but it allows the surgical mapping of each section
 to a chosen memory block from among your open programs.</li>
 <li>From the Regions window, select one or more regions, and choose from
 the <strong>Map Region</strong> actions.</li>
-<li>Click the Map Identically button in the Modules window toolbar.</li>
-<li>Use the Add and Remove buttons in the Static Mappings window
-toolbar.</li>
+<li>Click the <strong>Map Identically</strong> button in the Modules
+window toolbar.</li>
+<li>Use the <strong>Add</strong> and <strong>Remove</strong> buttons in
+the Static Mappings window toolbar.</li>
 </ul>
 <p>These methods are not described in detail here. For more information,
-hover over the relevant actions and press <strong>F1</strong> for
-help.</p>
+hover over the relevant actions and press
+<strong><code>F1</code></strong> for help.</p>
 </section>
 <section id="moving-knowledge-from-dynamic-to-static" class="level2">
 <h2>Moving Knowledge from Dynamic to Static</h2>
@@ -256,14 +239,14 @@ memory is uninitialized in the Static Listing, and you preferred some
 trial and error in the Dynamic Listing, where the memory is populated.
 In this case, you would want to copy those code units (though not
 necessarily the byte values) from the Dynamic Listing into the Static
-Listing. After selecting the units to copy, from the menus, you would
-use <strong>Debugger → Copy Into Current Program</strong>.</p>
+Listing. After selecting the units to copy, you would use
+<strong>Debugger → Copy Into Current Program</strong> in the menus.</p>
 <p>In another example, you might not have an on-disk image for a module,
 but you would still like to perform static analysis on that module. In
 this case, you would want to copy everything within that module from the
 dynamic session into a program database. After selecting the addresses
-in that module, from the menus, you would use <strong>Debugger → Copy
-Into New Program</strong>.</p>
+in that module, you would use <strong>Debugger → Copy Into New
+Program</strong>.</p>
 <p>For demonstration, we will walk through this second case, pretending
 we cannot load <code>libncurses</code> from disk:</p>
 <ol type="1">
@@ -279,20 +262,22 @@ Program</strong>.</p>
 alt="Copy dialog for ncurses" />
 <figcaption aria-hidden="true">Copy dialog for ncurses</figcaption>
 </figure></li>
-<li><p>Keep Destination set to “New Program.”</p></li>
-<li><p>Ensure “Read live target’s memory” is checked. This will spare
-you from having to create a full snapshot manually.</p></li>
-<li><p>Do <em>not</em> check “Use overlays where blocks already
-present.” It should not have any effect for a new program,
+<li><p>Keep <strong>Destination</strong> set to “&lt;New
+Program&gt;.”</p></li>
+<li><p>Ensure <strong>Read live target’s memory</strong> is checked.
+This will spare you from having to create a full snapshot
+manually.</p></li>
+<li><p>Do <em>not</em> check <strong>Use overlays where blocks already
+exist</strong>. It should not have any effect for a new program,
 anyway.</p></li>
-<li><p>It is probably best to include everything, though “Bytes” is the
-bare minimum.</p></li>
+<li><p>It is probably best to include everything, though
+<strong>Bytes</strong> is the bare minimum.</p></li>
 <li><p>The table displays the <em>copy plan</em>. For a new program,
 this will copy with an identical mapping of addresses, which is probably
 the best plan, since the target system has already applied fixups. Do
 not change any addresses, lest your corrupt references in the
 copy.</p></li>
-<li><p>Click Copy.</p></li>
+<li><p>Click <strong>Copy</strong>.</p></li>
 <li><p>When prompted, name the program <code>libncurses</code>.</p></li>
 <li><p>You may need to click the <code>termmines</code> tab in the
 Static Listing to get the UI to completely update.</p></li>
@@ -302,17 +287,13 @@ If you are prompted to analyze, go ahead.</p></li>
 <p>Undoubtedly, we would like to map that new program into our dynamic
 session.</p>
 <ol type="1">
-<li>Again, in the top pane of the Modules window, right-click
-<code>libncurses</code> and choose <strong>Select
-Addresses</strong>.</li>
-<li>Ensure the cursor in the Static Listing is at the minimum address of
-<code>libncurses</code>.</li>
-<li>In the Static Mappings window, click Add in the toolbar.</li>
-<li>Click OK.</li>
+<li>Ensure that the new <code>libncurses</code> capture is still the
+current program.</li>
+<li>In the top pane of the Modules window, right-click
+<code>libncurses</code> and choose <strong>Map to
+libncurses</strong>.</li>
+<li>Check the proposed mapping and click <strong>OK</strong>.</li>
 </ol>
-<p><strong>NOTE</strong>: This should be done by choosing <strong>Map to
-libncurses</strong> in the right-click menu, but a bug seems to stifle
-that, currently.</p>
 </section>
 <section id="exercise-export-and-map-ncurses" class="level2">
 <h2>Exercise: Export and Map <code>ncurses</code></h2>

@@ -1078,6 +1078,12 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		actionMapSectionTo.getPopupMenuData().setMenuItemName(name);
 	}
 
+	public void programOpened(Program program) {
+		// TODO: Debounce this?
+		cueAutoMap = true;
+		doCuedAutoMap();
+	}
+
 	public void programClosed(Program program) {
 		if (currentProgram == program) {
 			currentProgram = null;

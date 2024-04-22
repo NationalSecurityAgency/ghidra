@@ -1224,6 +1224,7 @@ def put_regions():
         regobj.set_value('_executable', r.perms == None or 'x' in r.perms)
         regobj.set_value('_offset', r.offset)
         regobj.set_value('_objfile', r.objfile)
+        regobj.set_value('_display', f'{r.objfile} (0x{r.start:x}-0x{r.end:x})')
         regobj.insert()
     STATE.trace.proxy_object_path(
         MEMORY_PATTERN.format(infnum=inf.num)).retain_values(keys)

@@ -24,6 +24,11 @@ public class DemoDebuggerScript extends GhidraScript implements FlatDebuggerAPI 
 }
 ```
 
+**NOTE**: The scripting API has been refactored a little since the transition from Recorder-based to TraceRmi-based targets.
+Parts of the API that are back-end agnostic are accessible from the `FlatDebuggerAPI` interface.
+Parts of the API that require a specific back end are in `FlatDebuggerRmiAPI` and `FlatDebuggerRecorderAPI`, the latter of which is deprecated.
+If a script written for version 11.0.2 or prior is not compiling, it can most likely be patched up by changing `implements FlatDebuggerAPI` to `implements FlatDebuggerRecorderAPI`, but we recommend porting it to use `implements FlatDebuggerRmiAPI`.
+
 Technically, the Debugger's "deep" API is accessible to scripts; however, the flat API is preferred for scripting.
 Also, the flat API is usually more stable than the deep API.
 However, because the dynamic analysis flat API is newer, it may not be as stable as the static analysis flat API.
@@ -97,7 +102,7 @@ This allows us to locate that symbol in the dynamic context.
 
 ### Reading the Data
 
-Now, we want to read the dimensions and the whole board to the trace.
+Now, we want to read the dimensions and the whole board from the target.
 You should know from earlier exercises that the board is allocated 32 cells by 32 cells, so we will want to read at least 1024 bytes.
 Note that this will implicitly capture the board to the trace:
 
@@ -126,15 +131,17 @@ for (int y = 0; y < height; y++) {
 
 ### Test the Script
 
-To test, run `termmines` in a proper terminal and attach to it from Ghidra using GDB.
-Now, run the script.
+To test, launch `termmines` in Ghidra using GDB.
+You will need to allow it to set up the first game board before running the script.
+The simplest way to do that is to resume and then interrupt the target while it waits for input.
+Now, run the script and examine its output.
 Resume and play the game.
 Once you win, check that the script output describes the actual board.
 
 ### Exercise: Remove the Mines
 
 Write a script that will remove the mines from the board.
-**NOTE**: The `writeMemory()` and related methods are all subject to the current control mode.
+**NOTE**: The `writeMemory()` and related methods are all subject to the current **Control Mode**.
 If the mode is read-only, the script cannot modify the target's machine state using those methods.
 
 ## Waiting on / Reacting to Events
@@ -168,7 +175,7 @@ The general template for waiting on a condition is a bit klunky, but conceptuall
 ### Exercise: Always Win in 0 Seconds
 
 **NOTE**: The solution to this exercise is given as a tutorial below, but give it an honest try before peeking.
-If you are not already familiar with Eclipse's searching and discovery features, try pressing **Ctrl-O** twice in the editor for your script.
+If you are not already familiar with Eclipse's searching and discovery features, try pressing **`CTRL`-`O`** twice in the editor for your script.
 You should now be able to type patterns, optionally with wildcards, to help you find applicable methods.
 
 Your task is to write a script that will wait for the player to win then patch the machine state, so that the game always prints a score of 0 seconds.
@@ -177,7 +184,7 @@ Some gotchas to consider up front:
 * You may want to verify and/or correct the target's execution state.
   See `getExecutionState()` and `interrupt()`.
   You will not likely be able to place or toggle breakpoints while the target is running.
-* Methods like `writeMemory()` are subject to the current control mode.
+* Methods like `writeMemory()` are subject to the current **Control Mode**.
   You may want to check and/or correct this at the top of your script.
 * If you require the user to mark code locations with a label, note that those labels will likely end up in the containing function's namespace.
   You will need to provide that namespace to `getSymbols()`.
@@ -186,11 +193,11 @@ Some gotchas to consider up front:
 
 You are successful when you can attach to a running `termmines` and execute your script.
 Then, assuming you win the game, the game should award you a score of 0 seconds.
-It is OK if you have to re-execute your script after each win.
+It is okay if you have to re-execute your script after each win.
 
 ### Solution: Always Win in 0 Seconds
 
-As in the previous scripting tutorial, we will do some verifications at the top of the script.
+As in the previous script, we will do some verifications at the top of the script.
 Your level of pedantry may vary.
 
 ```java {.numberLines}
@@ -219,10 +226,10 @@ The first two blocks check that there is an active target with `termmines` as th
 As before, the association of the current program to the current target will be implicitly verified when we map symbols.
 The second block will interrupt the target if it is running.
 We then allow everything to sync up before checking the control mode.
-We could instead change the control mode to **Target w/Edits**, but I prefer to keep the user aware that the script needs to modify target machine state.
+We could instead change the control mode to **Control Target** (with edits), but I prefer to keep the user aware that the script needs to modify target machine state.
 
 Next, we retrieve and map our symbols.
-This works pretty much the same as in the previous scripting tutorial, but with attention to the containing function namespace.
+This works pretty much the same as in the previous script, but with attention to the containing function namespace.
 The way `termmines` computes the score is to record the start time of the game.
 Then, when the player wins, it subtracts the recorded time from the current time.
 This script requires the user to label the start time variable `timer`, and to label the instruction that computes the score `reset_timer`.
@@ -261,7 +268,7 @@ For static context, use the current (static) program as the program.
 For dynamic context, use the current (dynamic) trace view as the program &mdash; see `getCurrentView()`.
 
 To avoid creating a pile of breakpoints, we will first attempt to enable an existing breakpoint at the desired location.
-Technically, the existing breakpoints may not be execute breakpoints, but we will blindly assume they are.
+Technically, the existing breakpoints may not be EXECUTE breakpoints, but we will blindly assume they are.
 Again, your level of pedantry may vary.
 The `breakpointsEnable` method will return the existing breakpoints, so we can check that and create a new breakpoint, if necessary:
 
@@ -284,7 +291,7 @@ We do not need to be precise in this check; it suffices to check the program cou
 
 ```java {.numberLines}
 while (true) {
-	monitor.checkCanceled();
+	monitor.checkCancelled();
 
 	TargetExecutionState execState = getExecutionState(trace);
 	switch (execState) {
@@ -324,7 +331,7 @@ while (true) {
 }
 ```
 
-The "center" of this loop is a call to `waitForBreak()`.
+The "center" of this loop is a call to `waitForBreak()` on line 27.
 This is the simplest primitive for waiting on the target to meet any condition.
 Because we expect the user to take more than a second to win the game, we should expect a timeout exception and just keep waiting.
 Using a timeout of 1 second ensures we can terminate promptly should the user cancel the script.
