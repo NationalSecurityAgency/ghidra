@@ -74,13 +74,7 @@ public enum DWARFForm {
 	},
 	DW_FORM_data2(0x5, 2, constant),
 	DW_FORM_data4(0x6, 4, constant),
-	DW_FORM_data8(0x7, 8, constant) {
-		@Override
-		public DWARFAttributeValue readValue(DWARFFormContext context) throws IOException {
-			return new DWARFNumericAttribute(64, context.reader().readNextLong(), true, true,
-				context.def());
-		}
-	},
+	DW_FORM_data8(0x7, 8, constant),
 	DW_FORM_string(0x8, DWARFForm.DYNAMIC_SIZE, string) {
 		@Override
 		public long getSize(DWARFFormContext context) throws IOException {
