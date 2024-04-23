@@ -1516,21 +1516,6 @@ public interface DebuggerResources {
 		}
 	}
 
-	interface SynchronizeTargetAction {
-		String NAME = "Synchronize Target Activation";
-		String DESCRIPTION = "Synchronize trace activation with debugger focus/select";
-		Icon ICON = ICON_SYNC;
-		String HELP_ANCHOR = "sync_target";
-
-		static ToggleActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ToggleActionBuilder(NAME, ownerName).description(DESCRIPTION)
-					.menuPath(NAME)
-					.menuIcon(ICON)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
 	interface SaveByDefaultAction {
 		String NAME = "Save Traces By Default";
 		String DESCRIPTION = "Automatically save traces to the project";
