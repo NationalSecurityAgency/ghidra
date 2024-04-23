@@ -181,6 +181,16 @@ public class AddressSetViewAdapter implements AddressSetView {
 	}
 
 	@Override
+	public boolean equals(Object obj) {
+		return set.equals(obj);
+	}
+
+	@Override
+	public int hashCode() {
+		return set.hashCode();
+	}
+
+	@Override
 	public String toString() {
 		return set.toString();
 	}
