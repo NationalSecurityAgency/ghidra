@@ -30,7 +30,11 @@ from .util import send_delimited, recv_delimited
 # This need not be incremented every Ghidra release. When a breaking protocol
 # change is made, this should be updated to match the first Ghidra release that
 # includes the change.
-VERSION = '10.4'
+# 
+# Other places to change:
+# * every pyproject.toml file (incl. deps)
+# * TraceRmiHandler.VERSION
+VERSION = '11.1'
 
 
 class RemoteResult(Future):
