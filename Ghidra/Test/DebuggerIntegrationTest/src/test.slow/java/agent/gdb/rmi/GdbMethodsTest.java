@@ -542,10 +542,9 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 				RemoteMethod attachObj = conn.getMethod("attach_obj");
 				try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/noname")) {
 					tb = new ToyDBTraceBuilder((Trace) mdo.get());
-					TraceObject inf = Objects.requireNonNull(tb.obj("Inferiors[1]"));
 					TraceObject target =
 						Objects.requireNonNull(tb.obj("Available[%d]".formatted(proc.pid)));
-					attachObj.invoke(Map.of("inferior", inf, "target", target));
+					attachObj.invoke(Map.of("target", target));
 
 					String out = conn.executeCapture("info inferiors");
 					assertThat(out, containsString("process %d".formatted(proc.pid)));
@@ -1156,7 +1155,8 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 
-				breakEvent.invoke(Map.of("spec", "load"));
+				TraceObject inf = Objects.requireNonNull(tb.obj("Inferiors[1]"));
+				breakEvent.invoke(Map.of("inferior", inf, "spec", "load"));
 
 				String out = conn.executeCapture("info break");
 				assertThat(out, containsString("load of library"));
