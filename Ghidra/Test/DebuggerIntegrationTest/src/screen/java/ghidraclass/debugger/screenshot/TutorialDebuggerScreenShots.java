@@ -691,7 +691,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		});
 		waitForCondition(() -> actionNextDiff.isEnabled());
 		flatDbg.goToDynamic(secTermminesData.getStart());
-		// Because auto-strack is a little broken right now
+		// Because auto-track is a little broken right now
 		Thread.sleep(500);
 		flatDbg.goToDynamic(secTermminesData.getStart());
 
