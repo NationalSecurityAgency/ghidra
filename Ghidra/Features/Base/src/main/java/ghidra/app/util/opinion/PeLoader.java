@@ -29,7 +29,7 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.elf.info.ElfInfoItem.ItemWithAddress;
 import ghidra.app.util.bin.format.golang.GoBuildInfo;
-import ghidra.app.util.bin.format.golang.PEGoBuildId;
+import ghidra.app.util.bin.format.golang.GoBuildId;
 import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.bin.format.mz.DOSHeader;
 import ghidra.app.util.bin.format.pe.*;
@@ -298,7 +298,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 	private void processGolangProperties(OptionalHeader optionalHeader, NTHeader ntHeader,
 			Program prog, TaskMonitor monitor) {
 
-		ItemWithAddress<PEGoBuildId> buildId = PEGoBuildId.findBuildId(prog);
+		ItemWithAddress<GoBuildId> buildId = GoBuildId.findBuildId(prog);
 		if (buildId != null) {
 			buildId.item().markupProgram(prog, buildId.address());
 		}
@@ -1141,7 +1141,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			SectionHeader textSection = pe.getNTHeader().getFileHeader().getSectionHeader(".text");
 			if (textSection != null) {
 				try (InputStream is = textSection.getDataStream()) {
-					PEGoBuildId buildId = PEGoBuildId.read(is);
+					GoBuildId buildId = GoBuildId.read(is);
 					buildIdPresent = buildId != null;
 				}
 				catch (IOException e) {

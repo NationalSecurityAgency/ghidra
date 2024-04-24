@@ -24,12 +24,14 @@ import java.util.*;
 
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.elf.info.ElfInfoItem;
+import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.lang.Endian;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.*;
 
@@ -39,7 +41,9 @@ import ghidra.util.*;
  */
 public class GoBuildInfo implements ElfInfoItem {
 
-	public static final String SECTION_NAME = ".go.buildinfo";
+	public static final String SECTION_NAME = "go.buildinfo";
+	public static final String ELF_SECTION_NAME = ".go.buildinfo";
+	public static final String MACHO_SECTION_NAME = "go_buildinfo";
 
 	// Defined in golang src/debug/buildinfo/buildinfo.go
 	// NOTE: ISO_8859_1 charset is required to not mangle the \u00ff when converting to bytes
@@ -73,15 +77,30 @@ public class GoBuildInfo implements ElfInfoItem {
 	 * @return new {@link GoBuildInfo} instance, if present, null if missing or error
 	 */
 	public static ItemWithAddress<GoBuildInfo> findBuildInfo(Program program) {
-		// try as if binary is ELF
-		ItemWithAddress<GoBuildInfo> wrappedItem =
-			ElfInfoItem.readItemFromSection(program, SECTION_NAME, GoBuildInfo::read);
+		ItemWithAddress<GoBuildInfo> wrappedItem = readItemFromSection(program,
+			GoRttiMapper.getFirstGoSection(program, SECTION_NAME, MACHO_SECTION_NAME));
 		if (wrappedItem == null) {
-			// if not present, try common PE location for buildinfo, using "ElfInfoItem" logic
-			// even though this might be a PE binary, cause it doesn't matter
-			wrappedItem = ElfInfoItem.readItemFromSection(program, ".data", GoBuildInfo::read);
+			// if not present, try common PE location for buildinfo
+			wrappedItem = readItemFromSection(program, GoRttiMapper.getGoSection(program, "data"));
 		}
 		return wrappedItem;
+	}
+
+	private static ItemWithAddress<GoBuildInfo> readItemFromSection(Program program,
+			MemoryBlock memBlock) {
+		if (memBlock != null) {
+			try (ByteProvider bp =
+				MemoryByteProvider.createMemoryBlockByteProvider(program.getMemory(), memBlock)) {
+				BinaryReader br = new BinaryReader(bp, !program.getMemory().isBigEndian());
+
+				GoBuildInfo item = read(br, program);
+				return new ItemWithAddress<>(item, memBlock.getStart());
+			}
+			catch (IOException e) {
+				// fall thru, return null
+			}
+		}
+		return null;
 	}
 
 	/**

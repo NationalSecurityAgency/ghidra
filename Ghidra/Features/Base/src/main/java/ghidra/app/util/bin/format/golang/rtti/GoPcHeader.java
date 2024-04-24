@@ -27,7 +27,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -39,7 +38,7 @@ import ghidra.util.task.TaskMonitor;
 @StructureMapping(structureName = "runtime.pcHeader")
 public class GoPcHeader {
 	private static final String RUNTIME_PCLNTAB_SYMBOLNAME = "runtime.pclntab";
-	public static final String GOPCLNTAB_SECTION_NAME = ".gopclntab";
+	public static final String GOPCLNTAB_SECTION_NAME = "gopclntab";
 	public static final int GO_1_2_MAGIC = 0xfffffffb;
 	public static final int GO_1_16_MAGIC = 0xfffffffa;
 	public static final int GO_1_18_MAGIC = 0xfffffff0;
@@ -51,12 +50,12 @@ public class GoPcHeader {
 	 * @return {@link Address} of go pclntab, or null if not present
 	 */
 	public static Address getPclntabAddress(Program program) {
-		MemoryBlock pclntabBlock = program.getMemory().getBlock(GOPCLNTAB_SECTION_NAME);
+		MemoryBlock pclntabBlock = GoRttiMapper.getGoSection(program, GOPCLNTAB_SECTION_NAME);
 		if (pclntabBlock != null) {
 			return pclntabBlock.getStart();
 		}
 		// PE binaries have a symbol instead of a named section
-		Symbol pclntabSymbol = SymbolUtilities.getUniqueSymbol(program, RUNTIME_PCLNTAB_SYMBOLNAME);
+		Symbol pclntabSymbol = GoRttiMapper.getGoSymbol(program, RUNTIME_PCLNTAB_SYMBOLNAME);
 		return pclntabSymbol != null
 				? pclntabSymbol.getAddress()
 				: null;
