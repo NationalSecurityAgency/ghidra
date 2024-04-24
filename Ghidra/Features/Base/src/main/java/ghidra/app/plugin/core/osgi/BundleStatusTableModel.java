@@ -40,7 +40,7 @@ import ghidra.util.table.column.AbstractGColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
 
 /**
- * Model for {@link BundleStatus} objects. 
+ * Model for {@link BundleStatus} objects.
  */
 public class BundleStatusTableModel
 		extends GDynamicColumnTableModel<BundleStatus, List<BundleStatus>> {
@@ -50,7 +50,7 @@ public class BundleStatusTableModel
 	private static final Color COLOR_BUNDLE_DISABLED = new GColor("color.fg.table.bundle.disabled");
 	private static final Color COLOR_BUNDLE_BUSY = new GColor("color.fg.table.bundle.busy");
 	private static final Color COLOR_BUNDLE_INACTIVE = new GColor("color.fg.table.bundle.inactive");
-	private static final Color COLOR_BUNDLE_ACTIVE = new GColor("color.fg.table.bundle.active"); 
+	private static final Color COLOR_BUNDLE_ACTIVE = new GColor("color.fg.table.bundle.active");
 	//@formatter:on
 
 	private BundleHost bundleHost;
@@ -226,7 +226,7 @@ public class BundleStatusTableModel
 	}
 
 	/**
-	 * return the row objects corresponding an array of model row indices.  
+	 * return the row objects corresponding an array of model row indices.
 	 * 
 	 * @param modelRowIndices row indices
 	 * @return status objects
@@ -240,7 +240,7 @@ public class BundleStatusTableModel
 	}
 
 	/**
-	 * overridden to avoid generating events when nothing changed 
+	 * overridden to avoid generating events when nothing changed
 	 */
 	@Override
 	protected void sort(List<BundleStatus> data, TableSortingContext<BundleStatus> sortingContext) {
@@ -278,7 +278,7 @@ public class BundleStatusTableModel
 		}
 	}
 
-	/** 
+	/**
 	 * (re)compute cached mapping from bundleloc to bundlepath
 	 * 
 	 * <p>only used in testing
@@ -560,20 +560,24 @@ public class BundleStatusTableModel
 			GhidraBundle bundle = bundleHost.getGhidraBundle(file);
 			if (bundle == null || bundle instanceof GhidraPlaceholderBundle || !file.exists()) {
 				label.setForeground(COLOR_BUNDLE_ERROR);
+				return label;
+			}
+
+			if (data.isSelected()) {
+				return label; // use default selection colors
+			}
+
+			if (status.isBusy()) {
+				label.setForeground(COLOR_BUNDLE_BUSY);
+			}
+			else if (!status.isEnabled()) {
+				label.setForeground(COLOR_BUNDLE_DISABLED);
+			}
+			else if (status.isActive()) {
+				label.setForeground(COLOR_BUNDLE_ACTIVE);
 			}
 			else {
-				if (status.isBusy()) {
-					label.setForeground(COLOR_BUNDLE_BUSY);
-				}
-				else if (!status.isEnabled()) {
-					label.setForeground(COLOR_BUNDLE_DISABLED);
-				}
-				else if (status.isActive()) {
-					label.setForeground(COLOR_BUNDLE_ACTIVE);
-				}
-				else {
-					label.setForeground(COLOR_BUNDLE_INACTIVE);
-				}
+				label.setForeground(COLOR_BUNDLE_INACTIVE);
 			}
 
 			return label;
