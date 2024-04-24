@@ -150,7 +150,7 @@ public class GoFunctionFixup {
 					paramDT.getLength());
 			VariableStorage varStorage = new VariableStorage(program, List.of(stackVarnode));
 			LocalVariableImpl localVar =
-				new LocalVariableImpl(param.getName() + "-spill", 0, paramDT, varStorage, program);
+				new LocalVariableImpl(param.getName() + "_spill", 0, paramDT, varStorage, program);
 
 			// TODO: needs more thought
 			func.addLocalVariable(localVar, SourceType.USER_DEFINED);
@@ -229,12 +229,12 @@ public class GoFunctionFixup {
 			returnDT = multiReturn.getStruct();
 
 			for (DataTypeComponent dtc : multiReturn.getNormalStorageComponents()) {
-				allocateReturnStorage(program, dtc.getFieldName() + "-return-result-alias",
+				allocateReturnStorage(program, dtc.getFieldName() + "_return_result_alias",
 					dtc.getDataType(), storageAllocator, varnodes, returnResultAliasVars,
 					false);
 			}
 			for (DataTypeComponent dtc : multiReturn.getStackStorageComponents()) {
-				allocateReturnStorage(program, dtc.getFieldName() + "-return-result-alias",
+				allocateReturnStorage(program, dtc.getFieldName() + "_return_result_alias",
 					dtc.getDataType(), storageAllocator, varnodes, returnResultAliasVars,
 					false);
 			}
@@ -249,7 +249,7 @@ public class GoFunctionFixup {
 			varnodes.add(new Varnode(GoRttiMapper.getZerobaseAddress(program), 1));
 		}
 		else {
-			allocateReturnStorage(program, "return-value-alias-variable", returnDT,
+			allocateReturnStorage(program, "return_value_alias_variable", returnDT,
 				storageAllocator, varnodes, returnResultAliasVars, true);
 		}
 

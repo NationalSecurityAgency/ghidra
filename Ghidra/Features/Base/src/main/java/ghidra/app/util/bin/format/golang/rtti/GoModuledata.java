@@ -21,14 +21,12 @@ import java.util.*;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.golang.rtti.types.GoType;
 import ghidra.app.util.bin.format.golang.structmapping.*;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -51,8 +49,23 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	private long pcHeader;	// pointer to the GoPcHeader instance, useful for bootstrapping
 
 	@FieldMapping
+	private long data;
+
+	@FieldMapping
+	private long edata;
+
+	@FieldMapping
 	@MarkupReference
 	private long text;
+
+	@FieldMapping
+	private long etext;
+
+	@FieldMapping
+	private long noptrdata;
+
+	@FieldMapping
+	private long enoptrdata;
 
 	@FieldMapping(fieldName = "types")
 	private long typesOffset;
@@ -62,6 +75,9 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 
 	@FieldMapping(optional = true)
 	private long gofunc;
+
+	@FieldMapping
+	private long end;
 
 	@FieldMapping(fieldName = "typelinks")
 	private GoSlice typeLinks;
@@ -118,6 +134,24 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	 */
 	public Address getText() {
 		return programContext.getCodeAddress(text);
+	}
+
+	public AddressRange getTextRange() {
+		Address textstart = getText();
+		Address textend = programContext.getCodeAddress(etext);
+		return new AddressRangeImpl(textstart, textend);
+	}
+
+	public AddressRange getRoDataRange() {
+		Address roStart = programContext.getCodeAddress(etext); // TODO: rodata is avail in newer govers
+		Address roEnd = programContext.getCodeAddress(end);
+		return new AddressRangeImpl(roStart, roEnd);
+	}
+
+	public AddressRange getDataRange() {
+		Address dataStart = programContext.getCodeAddress(data);
+		Address dataEnd = programContext.getCodeAddress(edata);
+		return new AddressRangeImpl(dataStart, dataEnd);
 	}
 
 	/**
@@ -190,12 +224,12 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	 * @return true if this module data structure contains sane values
 	 */
 	public boolean isValid() {
-		MemoryBlock txtBlock = programContext.getProgram().getMemory().getBlock(".text");
+		MemoryBlock txtBlock = programContext.getGoSection("text");
 		if (txtBlock != null && !txtBlock.contains(getText())) {
 			return false;
 		}
 
-		MemoryBlock typelinkBlock = programContext.getProgram().getMemory().getBlock(".typelink");
+		MemoryBlock typelinkBlock = programContext.getGoSection("typelink");
 		if (typelinkBlock != null &&
 			typelinkBlock.getStart().getOffset() != typeLinks.getArrayOffset()) {
 			return false;
@@ -396,8 +430,7 @@ public class GoModuledata implements StructureMarkup<GoModuledata> {
 	/* package */ static GoModuledata getFirstModuledata(GoRttiMapper context)
 			throws IOException {
 		Program program = context.getProgram();
-		Symbol firstModuleDataSymbol =
-			SymbolUtilities.getUniqueSymbol(program, "runtime.firstmoduledata");
+		Symbol firstModuleDataSymbol = GoRttiMapper.getGoSymbol(program, "runtime.firstmoduledata");
 		if (firstModuleDataSymbol == null) {
 			return null;
 		}

@@ -179,13 +179,13 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 	private void markupWellknownSymbols() throws IOException {
 		Program program = goBinary.getProgram();
 
-		Symbol g0 = SymbolUtilities.getUniqueSymbol(program, "runtime.g0");
+		Symbol g0 = goBinary.getGoSymbol("runtime.g0");
 		Structure gStruct = goBinary.getGhidraDataType("runtime.g", Structure.class);
 		if (g0 != null && gStruct != null) {
 			markupSession.markupAddressIfUndefined(g0.getAddress(), gStruct);
 		}
 
-		Symbol m0 = SymbolUtilities.getUniqueSymbol(program, "runtime.m0");
+		Symbol m0 = goBinary.getGoSymbol("runtime.m0");
 		Structure mStruct = goBinary.getGhidraDataType("runtime.m", Structure.class);
 		if (m0 != null && mStruct != null) {
 			markupSession.markupAddressIfUndefined(m0.getAddress(), mStruct);
@@ -416,13 +416,13 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		Program program = goBinary.getProgram();
 		GoRegisterInfo goRegInfo = goBinary.getRegInfo();
 
-		MemoryBlock txtMemblock = program.getMemory().getBlock(".text");
-		if (txtMemblock != null && goRegInfo.getZeroRegister() != null &&
-			!goRegInfo.isZeroRegisterIsBuiltin()) {
+		if (goRegInfo.getZeroRegister() != null && !goRegInfo.isZeroRegisterIsBuiltin()) {
 			try {
-				program.getProgramContext()
-						.setValue(goRegInfo.getZeroRegister(), txtMemblock.getStart(),
-							txtMemblock.getEnd(), BigInteger.ZERO);
+				for (AddressRange textRange : goBinary.getTextAddresses().getAddressRanges()) {
+					program.getProgramContext()
+							.setValue(goRegInfo.getZeroRegister(), textRange.getMinAddress(),
+								textRange.getMaxAddress(), BigInteger.ZERO);
+				}
 			}
 			catch (ContextChangeException e) {
 				Msg.error(this, "Unexpected Error", e);
@@ -432,7 +432,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		int alignment = goBinary.getPtrSize();
 		long sizeNeeded = 0;
 
-		Symbol zerobase = SymbolUtilities.getUniqueSymbol(program, "runtime.zerobase");
+		Symbol zerobase = goBinary.getGoSymbol("runtime.zerobase");
 		long zerobaseSymbol = sizeNeeded;
 		sizeNeeded += zerobase == null
 				? NumericUtilities.getUnsignedAlignedValue(1 /* sizeof(byte) */, alignment)
@@ -464,14 +464,16 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 			markupSession.labelAddress(gAddr, "CURRENT_G");
 
 			Register currentGoroutineReg = goRegInfo.getCurrentGoroutineRegister();
-			if (currentGoroutineReg != null && txtMemblock != null) {
+			if (currentGoroutineReg != null) {
 				// currentGoroutineReg is set in a platform's arch-golang.register.info in 
 				// the <current_goroutine> element for arch's that have a dedicated processor
 				// register that points at G
 				try {
-					program.getProgramContext()
-							.setValue(currentGoroutineReg, txtMemblock.getStart(),
-								txtMemblock.getEnd(), gAddr.getOffsetAsBigInteger());
+					for (AddressRange textRange : goBinary.getTextAddresses().getAddressRanges()) {
+						program.getProgramContext()
+								.setValue(currentGoroutineReg, textRange.getMinAddress(),
+									textRange.getMaxAddress(), gAddr.getOffsetAsBigInteger());
+					}
 				}
 				catch (ContextChangeException e) {
 					Msg.error(this, "Unexpected Error", e);
@@ -582,6 +584,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		int callingFunctionCount;
 
 		public PropagateRttiBackgroundCommand(GoRttiMapper goBinary) {
+			super("Golang RTTI Propagation (deferred)", true, true, false);
 			this.goBinary = goBinary;
 		}
 

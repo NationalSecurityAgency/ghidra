@@ -20,49 +20,52 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteArrayProvider;
-import ghidra.app.util.bin.format.elf.info.ElfInfoItem;
+import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.format.elf.info.ElfInfoItem.ItemWithAddress;
+import ghidra.app.util.bin.format.elf.info.ElfInfoItem.ReaderFunc;
+import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
 
 /**
- * Similar to {@link NoteGoBuildId}, but re-implemented here because of the different
- * serialization used in PE binaries.  (the logic about the buildid payload is trivial so
- * there is no worry about duplicating code)
+ * This class represents a go build id string, along with a magic header.
  * <p>
- * 
+ * Similar to {@link NoteGoBuildId}, but re-implemented here because of the different
+ * serialization used.
  */
-public class PEGoBuildId implements ElfInfoItem {
+public class GoBuildId {
 	private static final byte[] GO_BUILDID_MAGIC =
 		"\u00ff Go build ID: \"".getBytes(StandardCharsets.ISO_8859_1);
 	private static final int BUILDID_STR_LEN = 83;
 
-	public static ItemWithAddress<PEGoBuildId> findBuildId(Program program) {
-		ItemWithAddress<PEGoBuildId> wrappedItem = ElfInfoItem.readItemFromSection(program,
-			".text", PEGoBuildId::read);
+	public static ItemWithAddress<GoBuildId> findBuildId(Program program) {
+		MemoryBlock txtBlock = GoRttiMapper.getGoSection(program, "text");
+		ItemWithAddress<GoBuildId> wrappedItem =
+			readItemFromSection(program, txtBlock, GoBuildId::read);
 		return wrappedItem;
 	}
 
+
 	/**
-	 * Attempts to read a PEGoBuildId from the specified stream.
+	 * Attempts to read a GoBuildId from the specified stream.
 	 * 
 	 * @param br BinaryReader stream (typically the beginning of the ".text" section)
 	 * @param program_notused not used, but needed to match functional interface
-	 * @return PEGoBuildId instance, or null if not present
+	 * @return GoBuildId instance, or null if not present
 	 */
-	public static PEGoBuildId read(BinaryReader br, Program program_notused) {
+	public static GoBuildId read(BinaryReader br, Program program_notused) {
 		try {
 			byte[] magic = br.readNextByteArray(GO_BUILDID_MAGIC.length);
 			if (!Arrays.equals(magic, GO_BUILDID_MAGIC)) {
 				return null;
 			}
 			String buildIdStr = br.readNextAsciiString(BUILDID_STR_LEN);
-			return new PEGoBuildId(buildIdStr);
+			return new GoBuildId(buildIdStr);
 		}
 		catch (IOException e) {
 			// fall thru and return null
@@ -71,13 +74,13 @@ public class PEGoBuildId implements ElfInfoItem {
 	}
 
 	/**
-	 * Attempts to read a PEGoBuildId from the specified InputStream (useful for early compiler
+	 * Attempts to read a GoBuildId from the specified InputStream (useful for early compiler
 	 * detection before file is loaded).
 	 * 
 	 * @param is {@link InputStream} providing access to the ".text" section of a PE binary 
-	 * @return PEGoBuildId instance, or null if not present
+	 * @return GoBuildId instance, or null if not present
 	 */
-	public static PEGoBuildId read(InputStream is) {
+	public static GoBuildId read(InputStream is) {
 		byte[] buffer = new byte[GO_BUILDID_MAGIC.length + BUILDID_STR_LEN];
 		try {
 			int bytesRead = is.read(buffer);
@@ -94,7 +97,7 @@ public class PEGoBuildId implements ElfInfoItem {
 
 	private final String buildId;
 
-	public PEGoBuildId(String buildId) {
+	public GoBuildId(String buildId) {
 		this.buildId = buildId;
 	}
 
@@ -102,7 +105,6 @@ public class PEGoBuildId implements ElfInfoItem {
 		return buildId;
 	}
 
-	@Override
 	public void markupProgram(Program program, Address address) {
 		program.getOptions(Program.PROGRAM_INFO)
 				.setString(NoteGoBuildId.PROGRAM_INFO_KEY, getBuildId());
@@ -115,7 +117,7 @@ public class PEGoBuildId implements ElfInfoItem {
 			}
 		}
 		catch (CodeUnitInsertionException e) {
-			Msg.error(this, "Failed to markup PEGoBuildId at %s: %s".formatted(address, this));
+			Msg.error(this, "Failed to markup GoBuildId at %s: %s".formatted(address, this));
 		}
 
 	}
@@ -128,4 +130,24 @@ public class PEGoBuildId implements ElfInfoItem {
 
 		return result;
 	}
+
+	//----------------------------------------------------------------------------------------------
+	static <T> ItemWithAddress<T> readItemFromSection(Program program, MemoryBlock memBlock,
+			ReaderFunc<T> readFunc) {
+		if (memBlock != null) {
+			try (ByteProvider bp =
+				MemoryByteProvider.createMemoryBlockByteProvider(program.getMemory(), memBlock)) {
+				BinaryReader br = new BinaryReader(bp, !program.getMemory().isBigEndian());
+
+				T item = readFunc.read(br, program);
+				return item != null ? new ItemWithAddress<>(item, memBlock.getStart()) : null;
+			}
+			catch (IOException e) {
+				Msg.warn(GoBuildId.class,
+					"Unable to read GoBuildId in section: %s".formatted(memBlock.getName()), e);
+			}
+		}
+		return null;
+	}
+
 }

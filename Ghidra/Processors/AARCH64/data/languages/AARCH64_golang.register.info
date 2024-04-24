@@ -1,0 +1,10 @@
+<golang>
+	<!-- see https://github.com/golang/go/blob/master/src/internal/abi/abi_arm64.go -->
+	<register_info versions="V1_17,V1_18,V1_19,V1_20,V1_21">
+		<int_registers list="x0,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15"/>
+		<float_registers list="q0,q1,q2,q3,q4,q5,q6,q7,q8,q9,q10,q11,q12,q13,q14,q15"/>
+		<stack initialoffset="8" maxalign="8"/>
+		<current_goroutine register="x28"/>
+		<zero_register register="ZR"/>
+	</register_info>
+</golang>

@@ -24,6 +24,10 @@ import ghidra.app.plugin.core.analysis.rust.RustUtilities;
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.RelocationException;
+import ghidra.app.util.bin.format.elf.info.ElfInfoItem.ItemWithAddress;
+import ghidra.app.util.bin.format.golang.GoBuildId;
+import ghidra.app.util.bin.format.golang.GoBuildInfo;
+import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.commands.*;
 import ghidra.app.util.bin.format.macho.commands.ExportTrie.ExportEntry;
@@ -154,6 +158,9 @@ public class MachoProgramBuilder {
 		// Set program info
 		setRelocatableProperty();
 		setProgramDescription();
+		if (GoRttiMapper.isGolangProgram(program)) {
+			markupAndSetGolangInitialProgramProperties();
+		}
 
 		// Perform additional actions
 		renameObjMsgSendRtpSymbol();
@@ -1788,6 +1795,17 @@ public class MachoProgramBuilder {
 		for (int i = 0; i < frameworks.size(); ++i) {
 			props.setString("Mach-O Sub-framework " + i,
 				frameworks.get(i).getUmbrellaFrameworkName().getString());
+		}
+	}
+
+	protected void markupAndSetGolangInitialProgramProperties() {
+		ItemWithAddress<GoBuildId> buildId = GoBuildId.findBuildId(program);
+		if (buildId != null) {
+			buildId.item().markupProgram(program, buildId.address());
+		}
+		ItemWithAddress<GoBuildInfo> buildInfo = GoBuildInfo.findBuildInfo(program);
+		if (buildInfo != null) {
+			buildInfo.item().markupProgram(program, buildInfo.address());
 		}
 	}
 
