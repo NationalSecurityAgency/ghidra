@@ -1184,12 +1184,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 
 		DomainFileFilter filter = df -> Program.class.isAssignableFrom(df.getDomainObjectClass());
 
-		// TODO regarding the hack note below, I believe it's fixed, but not sure how to test
-		return new DataTreeDialog(null, "Map Module to Program", DataTreeDialog.OPEN, filter) {
-			{ // TODO/HACK: I get an NPE setting the default selection if I don't fake this.
-				dialogShown();
-			}
-		};
+		return new DataTreeDialog(null, "Map Module to Program", DataTreeDialog.OPEN, filter);
 	}
 
 	public DomainFile askProgram(Program program) {

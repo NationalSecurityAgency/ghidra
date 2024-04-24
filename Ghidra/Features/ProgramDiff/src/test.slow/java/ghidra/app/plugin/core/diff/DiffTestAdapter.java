@@ -665,8 +665,12 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 
 	void pickSecondProgram(final Program program2) {
 
-		OpenVersionedFileDialogTestFake dialog = new OpenVersionedFileDialogTestFake(program2);
-		diffPlugin.setDiffOpenVersionedFileDialog(dialog);
+		OpenVersionedFileDialogTestFake dialog = runSwing(() -> {
+			OpenVersionedFileDialogTestFake openDialog =
+				new OpenVersionedFileDialogTestFake(program2);
+			diffPlugin.setDiffOpenVersionedFileDialog(openDialog);
+			return openDialog;
+		});
 
 		launchDiffByAction();
 

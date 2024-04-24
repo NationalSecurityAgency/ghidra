@@ -430,12 +430,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			}
 		};
 
-		// TODO regarding the hack note below, I believe this issue ahs been fixed, but not sure how to test
-		return new DataTreeDialog(null, OpenTraceAction.NAME, DataTreeDialog.OPEN, filter) {
-			{ // TODO/HACK: Why the NPE if I don't do this?
-				dialogShown();
-			}
-		};
+		return new DataTreeDialog(null, OpenTraceAction.NAME, DataTreeDialog.OPEN, filter);
 	}
 
 	public DomainFile askTrace(Trace trace) {
