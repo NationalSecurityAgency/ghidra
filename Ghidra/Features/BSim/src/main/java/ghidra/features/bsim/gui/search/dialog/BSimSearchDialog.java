@@ -128,8 +128,13 @@ public class BSimSearchDialog extends AbstractBSimSearchDialog {
 		maxResultsField.setAllowsHexPrefix(false);
 		maxResultsField.setShowNumberMode(false);
 
-		panel.add(new JLabel("Max Matches Per Function:"));
-		panel.add(maxResultsField.getComponent());
+		JComponent maxResultsComponent = maxResultsField.getComponent();
+
+		JLabel maxLabel = new JLabel("Max Matches Per Function:");
+		maxLabel.setLabelFor(maxResultsComponent);
+
+		panel.add(maxLabel);
+		panel.add(maxResultsComponent);
 		return panel;
 	}
 
