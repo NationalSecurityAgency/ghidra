@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 
+import org.apache.commons.collections4.map.LazySortedMap;
+
 import ghidra.app.plugin.core.analysis.rust.RustConstants;
 import ghidra.app.plugin.core.analysis.rust.RustUtilities;
 import ghidra.app.util.MemoryBlockUtils;
@@ -147,6 +149,7 @@ public class MachoProgramBuilder {
 		processLocalRelocations();
 		processEncryption();
 		processUnsupportedLoadCommands();
+		processCorruptLoadCommands();
 
 		// Markup structures
 		markupHeaders(machoHeader, setupHeaderAddr(machoHeader.getAllSegments()));
@@ -455,39 +458,58 @@ public class MachoProgramBuilder {
 
 	/**
 	 * Attempts to discover and set the entry point.
+	 * <p>
+	 * A program may declare multiple entry points to, for example, confuse static analysis tools.
+	 * We will sort the discovered entry points by priorities assigned to each type of load
+	 * command, and only use the one with the highest priority.
 	 * 
 	 * @throws Exception If there was a problem discovering or setting the entry point.
 	 */
 	protected void processEntryPoint() throws Exception {
 		monitor.setMessage("Processing entry point...");
-		Address entryPointAddr = null;
 
-		EntryPointCommand entryPointCommand =
-			machoHeader.getFirstLoadCommand(EntryPointCommand.class);
-		if (entryPointCommand != null) {
-			long offset = entryPointCommand.getEntryOffset();
+		final int LC_MAIN_PRIORITY = 1;
+		final int LC_UNIX_THREAD_PRIORITY = 2;
+		final int LC_THREAD_PRIORITY = 3;
+		SortedMap<Integer, List<Address>> priorityMap =
+			LazySortedMap.lazySortedMap(new TreeMap<>(), () -> new ArrayList<>());
+
+		for (EntryPointCommand cmd : machoHeader.getLoadCommands(EntryPointCommand.class)) {
+			long offset = cmd.getEntryOffset();
 			if (offset > 0) {
 				SegmentCommand segment = machoHeader.getSegment("__TEXT");
 				if (segment != null) {
-					entryPointAddr = space.getAddress(segment.getVMaddress()).add(offset);
+					priorityMap.get(LC_MAIN_PRIORITY)
+							.add(space.getAddress(segment.getVMaddress()).add(offset));
 				}
 			}
 		}
 
-		if (entryPointAddr == null) {
-			ThreadCommand threadCommand = machoHeader.getFirstLoadCommand(ThreadCommand.class);
-			if (threadCommand != null) {
-				long pointer = threadCommand.getInitialInstructionPointer();
-				if (pointer != -1) {
-					entryPointAddr = space.getAddress(pointer);
-				}
+		for (ThreadCommand threadCommand : machoHeader.getLoadCommands(ThreadCommand.class)) {
+			int priority = threadCommand.getCommandType() == LoadCommandTypes.LC_UNIXTHREAD
+					? LC_UNIX_THREAD_PRIORITY
+					: LC_THREAD_PRIORITY;
+			long pointer = threadCommand.getInitialInstructionPointer();
+			if (pointer != -1) {
+				priorityMap.get(priority).add(space.getAddress(pointer));
 			}
 		}
 
-		if (entryPointAddr != null) {
-			program.getSymbolTable().createLabel(entryPointAddr, "entry", SourceType.IMPORTED);
-			program.getSymbolTable().addExternalEntryPoint(entryPointAddr);
-			createOneByteFunction("entry", entryPointAddr);
+		if (!priorityMap.isEmpty()) {
+			boolean realEntryFound = false;
+			for (List<Address> addrs : priorityMap.values()) {
+				for (Address addr : addrs) {
+					if (!realEntryFound) {
+						program.getSymbolTable().createLabel(addr, "entry", SourceType.IMPORTED);
+						program.getSymbolTable().addExternalEntryPoint(addr);
+						createOneByteFunction("entry", addr);
+						realEntryFound = true;
+					}
+					else {
+						log.appendMsg("Ignoring entry point at: " + addr);
+					}
+				}
+			}
 		}
 		else {
 			log.appendMsg("Unable to determine entry point.");
@@ -1341,9 +1363,27 @@ public class MachoProgramBuilder {
 	protected void processUnsupportedLoadCommands() throws CancelledException {
 		monitor.setMessage("Processing unsupported load commands...");
 
-		for (LoadCommand loadCommand : machoHeader.getLoadCommands(UnsupportedLoadCommand.class)) {
+		for (LoadCommand cmd : machoHeader.getLoadCommands(UnsupportedLoadCommand.class)) {
 			monitor.checkCancelled();
-			log.appendMsg(loadCommand.getCommandName());
+			log.appendMsg("Skipping unsupported load command: " +
+				LoadCommandTypes.getLoadCommandName(cmd.getCommandType()));
+		}
+	}
+
+	/**
+	 * Processes {@link LoadCommand}s that appear to be corrupt.
+	 * 
+	 * @throws CancelledException if the operation was cancelled.
+	 */
+	protected void processCorruptLoadCommands() throws CancelledException {
+		monitor.setMessage("Processing corrupt load commands...");
+
+		for (CorruptLoadCommand cmd : machoHeader.getLoadCommands(CorruptLoadCommand.class)) {
+			monitor.checkCancelled();
+			log.appendMsg("Skipping corrupt load command: %s (%s: %s)".formatted(
+				LoadCommandTypes.getLoadCommandName(cmd.getCommandType()),
+				cmd.getProblem().getClass().getSimpleName(),
+				cmd.getProblem().getMessage()));
 		}
 	}
 

@@ -219,6 +219,6 @@ public final class LoadCommandTypes {
 				break;
 			}
 		}
-		return "Unknown load command type: " + Integer.toHexString(type);
+		return "LC_UNKNOWN_%X".formatted(type);
 	}
 }
