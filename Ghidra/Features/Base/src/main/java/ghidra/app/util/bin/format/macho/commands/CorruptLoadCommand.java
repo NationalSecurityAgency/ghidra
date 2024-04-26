@@ -22,15 +22,22 @@ import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
-public class UnsupportedLoadCommand extends LoadCommand {
+public class CorruptLoadCommand extends LoadCommand {
 
-	UnsupportedLoadCommand(BinaryReader reader) throws IOException {
+	private Throwable t;
+
+	public CorruptLoadCommand(BinaryReader reader, Throwable t) throws IOException {
 		super(reader);
+		this.t = t;
+	}
+
+	public Throwable getProblem() {
+		return t;
 	}
 
 	@Override
 	public String getCommandName() {
-		return "unsupported_command";
+		return "corrupt_command";
 	}
 
 	@Override
