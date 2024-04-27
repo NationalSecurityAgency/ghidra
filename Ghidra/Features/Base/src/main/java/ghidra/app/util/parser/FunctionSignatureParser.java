@@ -161,6 +161,9 @@ public class FunctionSignatureParser {
 			throw new ParseException("Can't parse function arguments");
 		}
 		String trailingText = newSignatureText.substring(endIndex + 1);
+
+		// remove any trailing whitespace and semicolon
+		trailingText = trailingText.replaceAll("\\s*;?\\s*$", "");
 		if (trailingText.trim().length() > 0) {
 			throw new ParseException(
 				"Unexpected trailing text at end of function: " + trailingText);
@@ -191,6 +194,9 @@ public class FunctionSignatureParser {
 		if (arg.length() == 0) {
 			throw new ParseException("Missing parameter");
 		}
+
+		// remove c keywords that Ghidra doesn't support
+		arg = arg.replaceAll("\\b((const)|(volatile)|(restrict)|(struct)|(union))\\b", "");
 
 		// Attempt to resolve parameter assuming only a datatype is specified
 		DataType dt = resolveDataType(arg);
@@ -260,6 +266,9 @@ public class FunctionSignatureParser {
 			throw new ParseException("Can't find return type");
 		}
 		String returnTypeName = StringUtils.join(split, " ", 0, split.length - 1);
+		
+		// remove any c keywords from the return type name
+		returnTypeName = returnTypeName.replaceAll("\\b((static)|(inline)|(const)|(volatile)|(restrict)|(struct)|(union))\\b", "");
 
 		DataType dt = resolveDataType(returnTypeName);
 		if (dt == null) {
