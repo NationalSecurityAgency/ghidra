@@ -1,4 +1,6 @@
 ##VERSION: 2.0
+##MODULE IP: BSD-3-GOOGLE
+##MODULE IP: BSD-3-PSUTIL
 DEVNOTES.txt||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|

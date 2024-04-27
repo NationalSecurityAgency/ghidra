@@ -77,6 +77,11 @@ else {
 	}
 }
 
+distributePyDep("Pybag-2.2.10-py3-none-any.whl")
+distributePyDep("capstone-5.0.1-py3-none-win_amd64.whl")
+distributePyDep("comtypes-1.4.1-py3-none-any.whl")
+distributePyDep("pywin32-306-cp312-cp312-win_amd64.whl")
+
 tasks.nodepJar {
 	manifest {
 		attributes['Main-Class'] = 'agent.dbgeng.gadp.DbgEngGadpServer'

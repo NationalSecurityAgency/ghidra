@@ -130,6 +130,11 @@ If it is just missing, then install it and try again.
 If you need to tell Ghidra where it is, then in the launcher drop-down, select **Configure and Launch termmines using... &rarr; gdb**.
 DO NOT select **Re-launch termmines using gdb**, since this will not allow you to correct the configuration.
 
+If it looks like there's an error about importing python packages, e.g., "google protobuf," then you need to install some dependencies.
+These are listed in the launcher's description.
+For your convenience, the correct versions are distributed with Ghidra.
+Search for files ending in `.whl` (or `.tar.gz`) and install the required ones using `python3 -m pip install`.
+
 ### The Dynamic Listing is empty
 
 Check for an actual connection.
