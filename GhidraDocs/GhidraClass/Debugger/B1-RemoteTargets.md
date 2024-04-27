@@ -53,23 +53,41 @@ At this point, most things will work the same as they would for a local target.
 In this configuration, Ghidra will be located in the user'ls local environment, while `gdb` and the specimen will be located in the target environment.
 Notice that we are *not* using `gdbserver`.
 We will connect the local Ghidra to the remote `gdb` by forwarding Trace RMI over SSH.
-See the help (press **`F1`** on the **gdb via ssh** menu item for advantages and disadvantages of using this vs. `gdbserver`.
+See the help (press **`F1`** on the **gdb via ssh** menu item for advantages and disadvantages of using this vs. `gdbserver`.)
 
 1. First, prepare the target.
    This is more involved than using `gdbserver`, since you will need to ensure `gdb` and the Trace RMI plugin for it are installed.
-   The packages, which should be included with Ghidra, are `ghidratrace` and `ghidragdb`.
-   If you installed `gdb` and `python3` from your distribution's repositories, installation of the Python packages should just be a matter of using `pip`:
+   The packages, which should be included with Ghidra, are `ghidratrace` and `ghidragdb`, but you may need to build them first.
+   If you installed `gdb` and `python3` from your distribution's repositories, installation of the Python packages should be straightfoward.
+   Search the Ghidra installation for files ending in `.whl`.
+   If the `ghidratrace` and `ghidragdb` packages are there, you can skip this build step and just transfer them to the target.
+   On the local system:
 
    ```bash
-   python3 -m pip install /path/to/ghidratrace....whl
+   python3 -m pip install build # unless you already have it
+   cd /path/to/ghidra/Ghidra/Debug/Debugger-rmi-trace/pypkg
+   python3 -m build
    ```
 
-   Chances are, GDB embeds the same Python, so they become importable from `gdb`:
+   This will output `.tar.gz` and `.whl` files under `pypkg/dist`.
+   Do the same for `Debugger-agent-gdb/pypkg`.
+   Transfer the resulting `.whl` files to the target, then on the target system:
+
+   ```bash
+   python3 -m pip install /path/to/ghidratrace-[version].whl /path/to/ghidragdb-[version].whl
+   ```
+
+   If you are offline, the dependencies are included in the `pypkg/dist` directory for each module.
+   Transfer and install them, too.
+   You may try `python -m pip install --no-index -f /path/to/packages ghidragdb`, if all the packages and dependencies are in the one directory.
+   Chances are, GDB embeds the same Python, so they become importable from GDB.
+   Test using `gdb` on the target system:
 
    ```gdb
    python import ghidragdb
    ```
 
+   No news is good news!
    You can quit GDB, since that was just for verifying the installation.
 
 1. From the launch menu, select **gdb via ssh**.
@@ -87,11 +105,11 @@ At this point, most things will work the same as they would for a local target.
 
 #### I can't find the Python packages to install
 
-These should be located in the Ghidra installation.
-Search for files ending in `.whl`.
-Alternatively, you can build the packages from source.
-The source is included with Ghidra.
+You may need to build them using the instructions above.
+The dependencies are included in the Ghidra installation, but perhaps something has gone missing.
+Search for files ending in `.whl` or `.tar.gz`; they should be located in `pypkg/dist` in various modules.
 If you are able to do local debugging with Ghidra and `gdb`, then the source is definitely present and functioning.
+To (re-)build the packages from source:
 
 ```bash
 python3 -m pip install build
@@ -99,8 +117,9 @@ cd /path/to/ghidra/Ghidra/Debug/Debugger-rmi-trace/pypkg
 python3 -m build
 ```
 
-This should output a `.whl` file.
-Send that over to the target system and install it.
+This should output a `.tar.gz` and a `.whl` file under `pypkg/dist`.
+Send the `.whl` over to the target system and `pip install` it.
+Do the same for Debugger-agent-gdb.
 If that doesn't work, then in the worst case, copy the Python source over and add it to your `PYTHONPATH`.
 
 #### The `python import ghidragdb` command fails
@@ -108,6 +127,7 @@ If that doesn't work, then in the worst case, copy the Python source over and ad
 Double-check that you have installed all the required packages and their dependencies.
 A common forgotten or incorrectly-versioned dependency is `protobuf`.
 We developed using `protobuf==3.20.3`.
+Its "sdist" package is distributed with Ghidra under `Debugger-rmi-trace/pypkg/dist` for your convenience.
 
 It is also possible that `gdb` has embedded a different version of the interpreter than the one that `python3` provides.
 This can happen if you built GDB or Python yourself, or you installed them from a non-standard repository.

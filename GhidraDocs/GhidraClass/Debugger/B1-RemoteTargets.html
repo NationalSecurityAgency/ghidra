@@ -210,24 +210,40 @@ the target environment. Notice that we are <em>not</em> using
 <code>gdb</code> by forwarding Trace RMI over SSH. See the help (press
 <strong><code>F1</code></strong> on the <strong>gdb via ssh</strong>
 menu item for advantages and disadvantages of using this
-vs. <code>gdbserver</code>.</p>
+vs. <code>gdbserver</code>.)</p>
 <ol type="1">
 <li><p>First, prepare the target. This is more involved than using
 <code>gdbserver</code>, since you will need to ensure <code>gdb</code>
 and the Trace RMI plugin for it are installed. The packages, which
 should be included with Ghidra, are <code>ghidratrace</code> and
-<code>ghidragdb</code>. If you installed <code>gdb</code> and
-<code>python3</code> from your distribution’s repositories, installation
-of the Python packages should just be a matter of using
-<code>pip</code>:</p>
+<code>ghidragdb</code>, but you may need to build them first. If you
+installed <code>gdb</code> and <code>python3</code> from your
+distribution’s repositories, installation of the Python packages should
+be straightfoward. Search the Ghidra installation for files ending in
+<code>.whl</code>. If the <code>ghidratrace</code> and
+<code>ghidragdb</code> packages are there, you can skip this build step
+and just transfer them to the target. On the local system:</p>
 <div class="sourceCode" id="cb1"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> pip install /path/to/ghidratrace....whl</span></code></pre></div>
-<p>Chances are, GDB embeds the same Python, so they become importable
-from <code>gdb</code>:</p>
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> pip install build <span class="co"># unless you already have it</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /path/to/ghidra/Ghidra/Debug/Debugger-rmi-trace/pypkg</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> build</span></code></pre></div>
+<p>This will output <code>.tar.gz</code> and <code>.whl</code> files
+under <code>pypkg/dist</code>. Do the same for
+<code>Debugger-agent-gdb/pypkg</code>. Transfer the resulting
+<code>.whl</code> files to the target, then on the target system:</p>
 <div class="sourceCode" id="cb2"><pre
-class="sourceCode gdb"><code class="sourceCode gdbsyntax"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>python import ghidragdb</span></code></pre></div>
-<p>You can quit GDB, since that was just for verifying the
-installation.</p></li>
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> pip install /path/to/ghidratrace-<span class="pp">[</span><span class="ss">version</span><span class="pp">]</span>.whl /path/to/ghidragdb-<span class="pp">[</span><span class="ss">version</span><span class="pp">]</span>.whl</span></code></pre></div>
+<p>If you are offline, the dependencies are included in the
+<code>pypkg/dist</code> directory for each module. Transfer and install
+them, too. You may try
+<code>python -m pip install --no-index -f /path/to/packages ghidragdb</code>,
+if all the packages and dependencies are in the one directory. Chances
+are, GDB embeds the same Python, so they become importable from GDB.
+Test using <code>gdb</code> on the target system:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode gdb"><code class="sourceCode gdbsyntax"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>python import ghidragdb</span></code></pre></div>
+<p>No news is good news! You can quit GDB, since that was just for
+verifying the installation.</p></li>
 <li><p>From the launch menu, select <strong>gdb via ssh</strong>.</p>
 <figure>
 <img src="images/RemoteTargets_GdbViaSsh.png"
@@ -247,38 +263,44 @@ local target.</p>
 <h3>Troubleshooting</h3>
 <section id="i-cant-find-the-python-packages-to-install" class="level4">
 <h4>I can’t find the Python packages to install</h4>
-<p>These should be located in the Ghidra installation. Search for files
-ending in <code>.whl</code>. Alternatively, you can build the packages
-from source. The source is included with Ghidra. If you are able to do
-local debugging with Ghidra and <code>gdb</code>, then the source is
-definitely present and functioning.</p>
-<div class="sourceCode" id="cb3"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> pip install build</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /path/to/ghidra/Ghidra/Debug/Debugger-rmi-trace/pypkg</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> build</span></code></pre></div>
-<p>This should output a <code>.whl</code> file. Send that over to the
-target system and install it. If that doesn’t work, then in the worst
-case, copy the Python source over and add it to your
-<code>PYTHONPATH</code>.</p>
+<p>You may need to build them using the instructions above. The
+dependencies are included in the Ghidra installation, but perhaps
+something has gone missing. Search for files ending in <code>.whl</code>
+or <code>.tar.gz</code>; they should be located in
+<code>pypkg/dist</code> in various modules. If you are able to do local
+debugging with Ghidra and <code>gdb</code>, then the source is
+definitely present and functioning. To (re-)build the packages from
+source:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> pip install build</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /path/to/ghidra/Ghidra/Debug/Debugger-rmi-trace/pypkg</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> <span class="at">-m</span> build</span></code></pre></div>
+<p>This should output a <code>.tar.gz</code> and a <code>.whl</code>
+file under <code>pypkg/dist</code>. Send the <code>.whl</code> over to
+the target system and <code>pip install</code> it. Do the same for
+Debugger-agent-gdb. If that doesn’t work, then in the worst case, copy
+the Python source over and add it to your <code>PYTHONPATH</code>.</p>
 </section>
 <section id="the-python-import-ghidragdb-command-fails" class="level4">
 <h4>The <code>python import ghidragdb</code> command fails</h4>
 <p>Double-check that you have installed all the required packages and
 their dependencies. A common forgotten or incorrectly-versioned
 dependency is <code>protobuf</code>. We developed using
-<code>protobuf==3.20.3</code>.</p>
+<code>protobuf==3.20.3</code>. Its “sdist” package is distributed with
+Ghidra under <code>Debugger-rmi-trace/pypkg/dist</code> for your
+convenience.</p>
 <p>It is also possible that <code>gdb</code> has embedded a different
 version of the interpreter than the one that <code>python3</code>
 provides. This can happen if you built GDB or Python yourself, or you
 installed them from a non-standard repository. Check the actual path of
 the Python library used by <code>gdb</code>:</p>
-<div class="sourceCode" id="cb4"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ldd</span> <span class="va">$(</span><span class="fu">which</span> gdb<span class="va">)</span></span></code></pre></div>
-<p>Or, inside <code>gdb</code>:</p>
 <div class="sourceCode" id="cb5"><pre
-class="sourceCode gdb"><code class="sourceCode gdbsyntax"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>(gdb) python-interactive</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>&gt;&gt;&gt; import sys</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>&gt;&gt;&gt; sys.version</span></code></pre></div>
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ldd</span> <span class="va">$(</span><span class="fu">which</span> gdb<span class="va">)</span></span></code></pre></div>
+<p>Or, inside <code>gdb</code>:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode gdb"><code class="sourceCode gdbsyntax"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>(gdb) python-interactive</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>&gt;&gt;&gt; import sys</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>&gt;&gt;&gt; sys.version</span></code></pre></div>
 <p>Suppose this identifies version 3.7. Retry the installation commands
 using <code>python3.7 -m pip ...</code>. If you have multiple copies of
 the same version in different locations, you may need to invoke
@@ -296,8 +318,8 @@ the same version in different locations, you may need to invoke
 <li><p>First, prepare the target. This time, you will need to start
 <code>gdbserver</code> on the remote system manually. For demonstration,
 we will listen on 10.0.0.1 port 12345:</p>
-<div class="sourceCode" id="cb6"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">gdbserver</span> 10.0.0.1:12345 termmines</span></code></pre></div></li>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">gdbserver</span> 10.0.0.1:12345 termmines</span></code></pre></div></li>
 <li><p>From the launch menu, select <strong>remote
 gdb</strong>.</p></li>
 <li><p>Fill out the options appropriately. Notably, enter “10.0.0.1” for
@@ -330,14 +352,14 @@ it.</p></li>
 acceptor’s port number in the Connections window, e.g.,
 “12345.”</p></li>
 <li><p>Now, on the remote system, start <code>gdb</code> and type:</p>
-<div class="sourceCode" id="cb7"><pre
-class="sourceCode gdb"><code class="sourceCode gdbsyntax"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>python import ghidragdb</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>file termmines</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a># set args, if you&#39;d like</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>ghidra trace connect 10.0.0.1:12345</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>ghidra trace start</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>ghidra trace sync-enable</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>starti</span></code></pre></div></li>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode gdb"><code class="sourceCode gdbsyntax"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>python import ghidragdb</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>file termmines</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a># set args, if you&#39;d like</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>ghidra trace connect 10.0.0.1:12345</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>ghidra trace start</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>ghidra trace sync-enable</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>starti</span></code></pre></div></li>
 </ol>
 <p>At this point, most things will work the same as they would for a
 local target. You may notice Ghidra has not given you a new terminal.

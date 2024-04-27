@@ -327,6 +327,12 @@ tell Ghidra where it is, then in the launcher drop-down, select
 <strong>Configure and Launch termmines using… → gdb</strong>. DO NOT
 select <strong>Re-launch termmines using gdb</strong>, since this will
 not allow you to correct the configuration.</p>
+<p>If it looks like there’s an error about importing python packages,
+e.g., “google protobuf,” then you need to install some dependencies.
+These are listed in the launcher’s description. For your convenience,
+the correct versions are distributed with Ghidra. Search for files
+ending in <code>.whl</code> (or <code>.tar.gz</code>) and install the
+required ones using <code>python3 -m pip install</code>.</p>
 </section>
 <section id="the-dynamic-listing-is-empty" class="level3">
 <h3>The Dynamic Listing is empty</h3>
@@ -457,8 +463,9 @@ the system’s copy of GDB. Probably, you can just click
 <li>In the <strong>Model</strong> window (to the left), expand the
 <em>Available</em> node.</li>
 <li>In the filter box, type <code>termmines</code>.</li>
-<li>Right click on the node and select <strong>Attach</strong>, or, if you prefer, note the PID, e.g. 1234, then in the <strong>Terminal</strong> type,
-e.g., <code>attach 1234</code>.</li>
+<li>Right click on the node and select <strong>Attach</strong>, or, if
+you prefer, note the PID, e.g. 1234, then in the
+<strong>Terminal</strong> type, e.g., <code>attach 1234</code>.</li>
 </ol>
 </section>
 <section id="exercise-attach" class="level2">
