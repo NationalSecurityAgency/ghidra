@@ -184,7 +184,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		relocationFixups.forEach(rf -> knownSegments.add(space.getAddress(rf.segment, 0)));
 		knownSegments.add(space.getAddress(INITIAL_SEGMENT_VAL, 0));
 		if (header.e_cs() > 0) {
-			knownSegments.add(space.getAddress((INITIAL_SEGMENT_VAL + Short.toUnsignedInt(header.e_cs())) & 0xffff, 0));
+			knownSegments.add(space.getAddress((INITIAL_SEGMENT_VAL + header.e_cs()) & 0xffff, 0));
 		}
 		// Allocate an initialized memory block for each segment we know about
 		int endOffset = pagesToBytes(Short.toUnsignedInt(header.e_cp()) - 1) + Short.toUnsignedInt(header.e_cblp());
