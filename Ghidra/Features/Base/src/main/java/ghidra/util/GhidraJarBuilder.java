@@ -328,7 +328,7 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 		Collections.sort(moduleList);
 
 		for (ApplicationModule module : moduleList) {
-			File srcDir = new File(module.getModuleDir(), "src");
+			File srcDir = new File(module.getModuleDir(), "lib");
 			File srcZipFileForModule = new File(srcDir, module.getName() + "-src.zip");
 			if (srcZipFileForModule.exists()) {
 				writeModuleSrcZipToOverallSrcZip(zip, srcZipFileForModule);
@@ -339,15 +339,16 @@ public class GhidraJarBuilder implements GhidraLaunchable {
 			}
 		}
 		if (!wroteToZip) {
-			System.out.println("Can't create source zip!  Has source been downloaded and installed?");
+			System.out
+					.println("Can't create source zip!  Has source been downloaded and installed?");
 		}
-		// zip.close reports error if nothing has been written to it
 		try {
+			// zip.close may report error if nothing has been written to it
 			zip.close();
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			e.printStackTrace();
 		}
-		
 	}
 
 	private void writeModuleSrcZipToOverallSrcZip(Zip zip, File srcZipFileForModule)
