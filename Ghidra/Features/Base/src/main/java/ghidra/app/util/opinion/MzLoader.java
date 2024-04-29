@@ -67,7 +67,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		OldDOSHeader header = mz.getHeader();
 		if (header.isDosSignature() && !header.hasNewExeHeader() && !header.hasPeHeader()) {
 			List<QueryResult> results =
-					QueryOpinionService.query(getName(), "" + header.e_magic(), null);
+				QueryOpinionService.query(getName(), "" + header.e_magic(), null);
 			for (QueryResult result : results) {
 				loadSpecs.add(new LoadSpec(this, 0, result));
 			}
@@ -340,7 +340,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		int ipValue = Short.toUnsignedInt(header.e_ip());
 
 		Address addr =
-				space.getAddress((INITIAL_SEGMENT_VAL + header.e_cs()) & 0xffff, ipValue);
+			space.getAddress((INITIAL_SEGMENT_VAL + header.e_cs()) & 0xffff, ipValue);
 		SymbolTable symbolTable = program.getSymbolTable();
 
 		try {
@@ -397,7 +397,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 				BigInteger.valueOf(Short.toUnsignedLong(header.e_sp())));
 			context.setValue(ss, entry.getAddress(), entry.getAddress(),
 				BigInteger.valueOf(
-						Integer.toUnsignedLong((header.e_ss() + INITIAL_SEGMENT_VAL) & 0xffff)));
+					Integer.toUnsignedLong((header.e_ss() + INITIAL_SEGMENT_VAL) & 0xffff)));
 
 			for (MemoryBlock block : program.getMemory().getBlocks()) {
 				Address start = block.getStart();
