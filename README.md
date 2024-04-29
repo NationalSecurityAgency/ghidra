@@ -48,8 +48,8 @@ To create the latest development build for your platform from this source reposi
 ##### Install build tools:
 * [JDK 17 64-bit][jdk17]
 * [Gradle 7.3+][gradle]
-* [Python3][py3]
-  - [build][py3-build] module: `pip install build`
+* [Python3][python3] and pip3
+  - [build][python3-build] module: `pip3 install build`
 * make, gcc, and g++ (Linux/macOS-only)
 * [Microsoft Visual Studio][vs] 2017+ or [Microsoft C++ Build Tools][vcbuildtools] with the
   following components installed (Windows-only):
@@ -130,8 +130,8 @@ source project.
 [releases]: https://github.com/NationalSecurityAgency/ghidra/releases
 [jdk17]: https://adoptium.net/temurin/releases
 [gradle]: https://gradle.org/releases/
-[py3]: https://www.python.org/downloads/
-[py3-build]: https://pypi.org/project/build/
+[python3]: https://www.python.org/downloads/
+[python3-build]: https://pypi.org/project/build/
 [vs]: https://visualstudio.microsoft.com/vs/community/
 [vcbuildtools]: https://visualstudio.microsoft.com/visual-cpp-build-tools/
 [eclipse]: https://www.eclipse.org/downloads/packages/
