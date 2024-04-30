@@ -48,7 +48,7 @@ To create the latest development build for your platform from this source reposi
 ##### Install build tools:
 * [JDK 17 64-bit][jdk17]
 * [Gradle 7.3+][gradle]
-* [Python3][python3] and pip3
+* [Python3][python3] (version 3.7 to 3.12) with bundled pip
 * make, gcc, and g++ (Linux/macOS-only)
 * [Microsoft Visual Studio][vs] 2017+ or [Microsoft C++ Build Tools][vcbuildtools] with the
   following components installed (Windows-only):
@@ -130,7 +130,6 @@ source project.
 [jdk17]: https://adoptium.net/temurin/releases
 [gradle]: https://gradle.org/releases/
 [python3]: https://www.python.org/downloads/
-[python3-build]: https://pypi.org/project/build/
 [vs]: https://visualstudio.microsoft.com/vs/community/
 [vcbuildtools]: https://visualstudio.microsoft.com/visual-cpp-build-tools/
 [eclipse]: https://www.eclipse.org/downloads/packages/
