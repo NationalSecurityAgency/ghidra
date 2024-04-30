@@ -73,12 +73,15 @@ public class ReadTextDialog extends DialogComponentProvider {
 		textArea = new JTextArea(10, 80);
 		textArea.setText(text);
 		textArea.setEditable(false);
+		textArea.getAccessibleContext().setAccessibleName("Text");
 		textArea.setMargin(new Insets(5, 5, 5, 5));
 //        textArea.setFont(font);
 		DockingUtils.setTransparent(textArea);
 		textArea.setCaretPosition(0);
 		JScrollPane scrolledDetails = new JScrollPane(textArea);
+		scrolledDetails.getAccessibleContext().setAccessibleName("Details");
 		workPanel.add(scrolledDetails, BorderLayout.CENTER);
+		workPanel.getAccessibleContext().setAccessibleName("Read Text");
 		return workPanel;
 	}
 }

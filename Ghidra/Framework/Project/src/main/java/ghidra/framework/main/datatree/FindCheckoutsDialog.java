@@ -104,7 +104,7 @@ public class FindCheckoutsDialog extends DialogComponentProvider {
 
 		table.setPreferredScrollableViewportSize(
 			new Dimension(threadedTablePanel.getPreferredSize().width, 150));
-
+		threadedTablePanel.getAccessibleContext().setAccessibleName("Find Checkouts");
 		addWorkPanel(threadedTablePanel);
 		addDismissButton();
 	}
@@ -126,8 +126,8 @@ public class FindCheckoutsDialog extends DialogComponentProvider {
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		return new ProjectDataContext(null, folder.getProjectData(), null, null,
-			getFileList(), null, true);
+		return new ProjectDataContext(null, folder.getProjectData(), null, null, getFileList(),
+			null, true);
 	}
 
 	private class MyCellRenderer extends GTableCellRenderer {

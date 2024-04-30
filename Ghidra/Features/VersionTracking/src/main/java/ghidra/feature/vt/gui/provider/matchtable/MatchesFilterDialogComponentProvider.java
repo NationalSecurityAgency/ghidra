@@ -24,8 +24,8 @@ import ghidra.util.HelpLocation;
 import ghidra.util.layout.VariableRowHeightGridLayout;
 import ghidra.util.layout.VerticalLayout;
 
-public class MatchesFilterDialogComponentProvider extends
-		AncillaryFilterDialogComponentProvider<VTMatch> {
+public class MatchesFilterDialogComponentProvider
+		extends AncillaryFilterDialogComponentProvider<VTMatch> {
 
 	protected MatchesFilterDialogComponentProvider(VTController controller,
 			FilterDialogModel<VTMatch> dialogModel) {
@@ -60,6 +60,7 @@ public class MatchesFilterDialogComponentProvider extends
 		AssociationStatusFilter associationStatusFilter = new AssociationStatusFilter();
 		addFilter(associationStatusFilter);
 		rowOnePanel.add(associationStatusFilter.getComponent());
+		rowOnePanel.getAccessibleContext().setAccessibleName("Match Type and Status");
 
 		// Row 2 - Left Component        
 		// symbol type filter
@@ -72,6 +73,7 @@ public class MatchesFilterDialogComponentProvider extends
 		AlgorithmFilter algorithmFilter = new AlgorithmFilter();
 		addFilter(algorithmFilter);
 		rowTwoPanel.add(algorithmFilter.getComponent());
+		rowTwoPanel.getAccessibleContext().setAccessibleName("Symbol Type and Algorithm");
 
 		//
 		// row three
@@ -79,6 +81,7 @@ public class MatchesFilterDialogComponentProvider extends
 
 		// address range filter
 		MatchAddressRangeFilter addressRangeFilter = new MatchAddressRangeFilter();
+		addressRangeFilter.getComponent().getAccessibleContext().setAccessibleName("Address Range");
 		addFilter(addressRangeFilter);
 		// added below
 //        addressRangePanel.add( addressRangeFilter.getComponent() );
@@ -88,6 +91,7 @@ public class MatchesFilterDialogComponentProvider extends
 		// row four
 		//
 		TagFilter tagFilter = new TagFilter(controller);
+		tagFilter.getComponent().getAccessibleContext().setAccessibleName("Tag");
 		addFilter(tagFilter);
 		// added below
 
@@ -99,7 +103,7 @@ public class MatchesFilterDialogComponentProvider extends
 		panel.add(rowTwoPanel);
 		panel.add(addressRangeFilter.getComponent());
 		panel.add(tagFilter.getComponent());
-
+		panel.getAccessibleContext().setAccessibleName("Match Filter");
 		return panel;
 	}
 }

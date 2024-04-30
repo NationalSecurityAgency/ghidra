@@ -56,6 +56,7 @@ class ImportGhidraToolsDialog extends DialogComponentProvider {
 		this.tool = tool;
 
 		mainPanel = createPanel();
+		mainPanel.getAccessibleContext().setAccessibleName("Import Ghidra Tools");
 		addWorkPanel(mainPanel);
 
 		addOKButton();
@@ -98,14 +99,17 @@ class ImportGhidraToolsDialog extends DialogComponentProvider {
 		SelectPanel myButtonPanel = new SelectPanel(e -> selectAll(), e -> deselectAll());
 
 		listPanel = new ListPanel<>();
+		listPanel.getAccessibleContext().setAccessibleName("List");
 		listPanel.setCellRenderer(new DataCellRenderer());
 		listPanel.setMouseListener(new ListMouseListener());
 
 		availableToolsPanel.add(myButtonPanel, BorderLayout.EAST);
 		availableToolsPanel.add(listPanel, BorderLayout.CENTER);
 		availableToolsPanel.setBorder(new TitledBorder("Available Tools"));
+		availableToolsPanel.getAccessibleContext().setAccessibleName("Available Toolse");
 
 		panel.add(availableToolsPanel, BorderLayout.CENTER);
+		panel.getAccessibleContext().setAccessibleName("Import Ghidra Tools");
 		return panel;
 	}
 
@@ -140,7 +144,6 @@ class ImportGhidraToolsDialog extends DialogComponentProvider {
 		int elementCount = defaultTools.size() + extraTools.size();
 		tools = new String[elementCount];
 		checkboxes = new GCheckBox[elementCount];
-
 		Iterator<String> itr = defaultToolNames.iterator();
 		int count = 0;
 		while (itr.hasNext()) {

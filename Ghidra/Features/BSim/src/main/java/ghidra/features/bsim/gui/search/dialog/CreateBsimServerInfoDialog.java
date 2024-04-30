@@ -121,19 +121,24 @@ public class CreateBsimServerInfoDialog extends DialogComponentProvider {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(buildTypePanel(), BorderLayout.NORTH);
 		panel.add(buildCardPanel(), BorderLayout.CENTER);
+		panel.getAccessibleContext().setAccessibleName("Create Bsim Server Info");
 		return panel;
 	}
 
 	private Component buildCardPanel() {
 		postgresPanel = new DbPanel(DBType.postgres);
+		postgresPanel.getAccessibleContext().setAccessibleName("Postgress");
 		elasticPanel = new DbPanel(DBType.elastic);
+		elasticPanel.getAccessibleContext().setAccessibleName("Elastic");
 		filePanel = new FilePanel();
+		filePanel.getAccessibleContext().setAccessibleName("File");
 
 		cardPanel = new JPanel(new CardLayout());
 		cardPanel.add(postgresPanel, POSTGRES);
 		cardPanel.add(elasticPanel, ELASTIC);
 		cardPanel.add(filePanel, FILE_H2);
 		activePanel = postgresPanel;
+		cardPanel.getAccessibleContext().setAccessibleName("Cards");
 		return cardPanel;
 	}
 
@@ -143,8 +148,11 @@ public class CreateBsimServerInfoDialog extends DialogComponentProvider {
 		JPanel innerPanel = new JPanel(new HorizontalLayout(20));
 		ButtonGroup group = new ButtonGroup();
 		postgresButton = new GRadioButton(POSTGRES);
+		postgresButton.getAccessibleContext().setAccessibleName("Postgress");
 		elasticButton = new GRadioButton(ELASTIC);
+		elasticButton.getAccessibleContext().setAccessibleName("Elastic");
 		fileButton = new GRadioButton(FILE_H2);
+		fileButton.getAccessibleContext().setAccessibleName("File");
 
 		postgresButton.setSelected(true);
 
@@ -160,8 +168,10 @@ public class CreateBsimServerInfoDialog extends DialogComponentProvider {
 		innerPanel.add(postgresButton);
 		innerPanel.add(elasticButton);
 		innerPanel.add(fileButton);
+		innerPanel.getAccessibleContext().setAccessibleName("Buttons");
 		panel.add(innerPanel);
 
+		panel.getAccessibleContext().setAccessibleName("Types");
 		return panel;
 	}
 

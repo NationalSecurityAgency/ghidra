@@ -184,18 +184,21 @@ public class PasswordDialog extends DialogComponentProvider {
 			workPanel.add(new GLabel(userIdPrompt));
 			nameField = new JTextField(defaultUserId, 16);
 			nameField.setName("NAME-ENTRY-COMPONENT");
+			nameField.getAccessibleContext().setAccessibleName("Name");
 			workPanel.add(nameField);
 		}
 		else if (defaultUserId != null) {
 			workPanel.add(new GLabel(userIdPrompt));
 			JLabel nameLabel = new GLabel(defaultUserId);
 			nameLabel.setName("NAME-COMPONENT");
+			nameLabel.getAccessibleContext().setAccessibleName("Name");
 			workPanel.add(nameLabel);
 		}
 
 		workPanel.add(new GLabel(passPrompt));
 		passwordField = new JPasswordField(16);
 		passwordField.setName("PASSWORD-ENTRY-COMPONENT");
+		passwordField.getAccessibleContext().setAccessibleName("Password Entry");
 		workPanel.add(passwordField);
 
 		passwordField.addKeyListener(new KeyListener() {
@@ -235,7 +238,7 @@ public class PasswordDialog extends DialogComponentProvider {
 				}
 			}
 		});
-
+		workPanel.getAccessibleContext().setAccessibleName("Password");
 		addWorkPanel(workPanel);
 		addOKButton();
 		addCancelButton();

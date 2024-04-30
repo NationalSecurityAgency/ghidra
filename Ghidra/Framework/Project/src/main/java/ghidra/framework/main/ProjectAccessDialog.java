@@ -62,7 +62,7 @@ class ProjectAccessDialog extends DialogComponentProvider {
 		else {
 			projectAccessPanel = new ViewProjectAccessPanel(repository, plugin.getTool());
 		}
-
+		projectAccessPanel.getAccessibleContext().setAccessibleName("Project Access");
 		addWorkPanel(projectAccessPanel);
 
 		if (allowEditing) {

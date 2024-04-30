@@ -46,7 +46,6 @@ class RuntimeInfoProvider extends ReusableDialogComponentProvider {
 		super("Runtime Information", false, false, true, false);
 		this.plugin = plugin;
 
-
 		setHelpLocation(plugin.getRuntimeInfoHelpLocation());
 		addWorkPanel(createWorkPanel());
 	}
@@ -71,7 +70,6 @@ class RuntimeInfoProvider extends ReusableDialogComponentProvider {
 		memoryUsagePanel.hidden();
 	}
 
-
 	private JComponent createWorkPanel() {
 		tabbedPane = new JTabbedPane();
 
@@ -92,6 +90,7 @@ class RuntimeInfoProvider extends ReusableDialogComponentProvider {
 			}
 		};
 		mainPanel.add(tabbedPane, BorderLayout.CENTER);
+		mainPanel.getAccessibleContext().setAccessibleName("Runtime Info Provider");
 		return mainPanel;
 	}
 
@@ -113,6 +112,7 @@ class RuntimeInfoProvider extends ReusableDialogComponentProvider {
 	 */
 	private void addMemory() {
 		memoryUsagePanel = new MemoryUsagePanel();
+		memoryUsagePanel.getAccessibleContext().setAccessibleName("Memory Usage");
 		tabbedPane.add(memoryUsagePanel, "Memory");
 	}
 
@@ -196,7 +196,7 @@ class RuntimeInfoProvider extends ReusableDialogComponentProvider {
 		String name = "Extension Point Info (%d)".formatted(map.size());
 		epTabbedPane.add(
 			new MapTablePanel<String, String>(name, map, "Name", "Path", 400, true, plugin), name);
-		
+
 		// Loaded Extension Points
 		map = ClassSearcher.getLoaded()
 				.stream()
@@ -204,7 +204,7 @@ class RuntimeInfoProvider extends ReusableDialogComponentProvider {
 		name = "Loaded (%d)".formatted(map.size());
 		epTabbedPane.add(
 			new MapTablePanel<String, String>(name, map, "Name", "Type", 400, true, plugin), name);
-		
+
 		// False Positive Extension Points
 		map = ClassSearcher.getFalsePositives()
 				.stream()

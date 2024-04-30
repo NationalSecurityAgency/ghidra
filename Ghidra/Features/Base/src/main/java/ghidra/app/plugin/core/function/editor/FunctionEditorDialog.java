@@ -217,6 +217,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		panel.add(buildPreview(), BorderLayout.NORTH);
 		panel.add(buildCenterPanel(hasOptionalSignatureCommit), BorderLayout.CENTER);
+		panel.getAccessibleContext().setAccessibleName("Function Editor");
 		return panel;
 	}
 
@@ -226,6 +227,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		centerPanel.add(buildAttributePanel(), BorderLayout.NORTH);
 		centerPanel.add(buildTable(), BorderLayout.CENTER);
 		centerPanel.add(buildBottomPanel(hasOptionalSignatureCommit), BorderLayout.SOUTH);
+		centerPanel.getAccessibleContext().setAccessibleName("Function Attributes");
 		return centerPanel;
 	}
 
@@ -241,6 +243,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		Function thunkedFunction = model.getFunction().getThunkedFunction(false);
 		if (thunkedFunction != null) {
 			JPanel thunkedPanel = createThunkedFunctionTextPanel(thunkedFunction);
+			thunkedPanel.getAccessibleContext().setAccessibleName("Thunked Function");
 			thunkedPanel.setBorder(BorderFactory.createTitledBorder(b, "Thunked Function:"));
 			panel.add(thunkedPanel, BorderLayout.CENTER); // provide as much space as possible
 		}
@@ -270,6 +273,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 			panel.add(commitFullParamDetailsCheckBox, BorderLayout.SOUTH);
 		}
 
+		panel.getAccessibleContext().setAccessibleName("Call Fixup and Thunked Function");
 		return panel;
 	}
 
@@ -290,8 +294,10 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	private JComponent buildPreview() {
 		previewPanel = new JPanel(new BorderLayout());
 		JPanel verticalScrollPanel = new VerticalScrollablePanel();
+		verticalScrollPanel.getAccessibleContext().setAccessibleName("Vertical Scroll");
 		verticalScrollPanel.add(createSignatureTextPanel());
 		scroll = new JScrollPane(verticalScrollPanel);
+		scroll.getAccessibleContext().setAccessibleName("Scroll");
 		scroll.setBorder(null);
 		scroll.setOpaque(true);
 		previewPanel.add(scroll, BorderLayout.CENTER);
@@ -304,13 +310,14 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 				signatureTextField.requestFocus();
 			}
 		});
+		previewPanel.getAccessibleContext().setAccessibleName("Preview");
 		return previewPanel;
 	}
 
 	private JComponent createSignatureTextPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
 		signatureTextField = new FunctionSignatureTextField();
-
+		signatureTextField.getAccessibleContext().setAccessibleName("Signature");
 		signatureFieldUndoRedoKeeper = DockingUtils.installUndoRedo(signatureTextField);
 
 		panel.add(signatureTextField);
@@ -368,6 +375,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 
 		signatureTextField
 				.setChangeListener(e -> model.setSignatureFieldText(signatureTextField.getText()));
+		panel.getAccessibleContext().setAccessibleName("Signature Text");
 		return panel;
 	}
 
@@ -413,9 +421,10 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		leftPanel.add(new GLabel("Calling Convention"));
 		leftPanel.add(createCallingConventionCombo());
 		leftPanel.setBorder(BorderFactory.createEmptyBorder(14, 0, 0, 10));
-
+		leftPanel.getAccessibleContext().setAccessibleName("Function");
 		panel.add(leftPanel, BorderLayout.CENTER);
 		panel.add(buildTogglePanel(), BorderLayout.EAST);
+		panel.getAccessibleContext().setAccessibleName("Attributes");
 		return panel;
 	}
 
@@ -423,22 +432,26 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		JPanel panel = new JPanel(new PairLayout());
 		varArgsCheckBox = new GCheckBox("Varargs");
 		varArgsCheckBox.addItemListener(e -> model.setHasVarArgs(varArgsCheckBox.isSelected()));
+		varArgsCheckBox.getAccessibleContext().setAccessibleName("Variable Argument");
 		panel.add(varArgsCheckBox);
 
 		inLineCheckBox = new GCheckBox("In Line");
+		inLineCheckBox.getAccessibleContext().setAccessibleName("In Line");
 		panel.add(inLineCheckBox);
 		inLineCheckBox.addItemListener(e -> model.setIsInLine(inLineCheckBox.isSelected()));
 		inLineCheckBox.setEnabled(model.isInlineAllowed());
 
 		noReturnCheckBox = new GCheckBox("No Return");
+		noReturnCheckBox.getAccessibleContext().setAccessibleName("No Return");
 		noReturnCheckBox.addItemListener(e -> model.setNoReturn(noReturnCheckBox.isSelected()));
 		storageCheckBox = new GCheckBox("Use Custom Storage");
+		storageCheckBox.getAccessibleContext().setAccessibleName("Custom Storage");
 		storageCheckBox
 				.addItemListener(e -> model.setUseCustomizeStorage(storageCheckBox.isSelected()));
 		panel.add(noReturnCheckBox);
 		panel.add(storageCheckBox);
 		panel.setBorder(BorderFactory.createTitledBorder("Function Attributes:"));
-
+		panel.getAccessibleContext().setAccessibleName("Toggle");
 		return panel;
 	}
 
@@ -457,6 +470,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		JPanel panel = new JPanel();
 
 		callFixupComboBox = new GComboBox<>();
+		callFixupComboBox.getAccessibleContext().setAccessibleName("Call Fixup");
 		String[] callFixupNames = model.getCallFixupNames();
 
 		callFixupComboBox.addItem(FunctionEditorModel.NONE_CHOICE);
@@ -475,6 +489,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		}
 
 		panel.add(callFixupComboBox);
+		panel.getAccessibleContext().setAccessibleName("Call Fixup");
 		return panel;
 	}
 
@@ -486,10 +501,13 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		paramTableModel = new ParameterTableModel(model);
 		parameterTable = new ParameterTable(paramTableModel);
 		selectionListener = e -> model.setSelectedParameterRows(parameterTable.getSelectedRows());
+		parameterTable.getAccessibleContext().setAccessibleName("Parameter");
 
 		JScrollPane tableScroll = new JScrollPane(parameterTable);
+		tableScroll.getAccessibleContext().setAccessibleName("Scroll");
 		panel.add(tableScroll, BorderLayout.CENTER);
 		panel.add(buildButtonPanel(), BorderLayout.EAST);
+		panel.getAccessibleContext().setAccessibleName("Function Variables");
 		return panel;
 	}
 
@@ -539,6 +557,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 			}
 		};
 		nameField.getDocument().addDocumentListener(nameFieldDocumentListener);
+		nameField.getAccessibleContext().setAccessibleName("Name");
 		return nameField;
 	}
 

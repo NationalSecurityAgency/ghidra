@@ -41,6 +41,7 @@ public class CheckoutsDialog extends DialogComponentProvider implements ProjectL
 		super("View Checkouts for " + domainFile.getName(), false);
 		setHelpLocation(new HelpLocation(GenericHelpTopics.REPOSITORY, "View_Check_Outs"));
 		panel = new CheckoutsPanel(rootPanel, tool, user, domainFile, checkouts);
+		panel.getAccessibleContext().setAccessibleName("Checkouts");
 		addWorkPanel(panel);
 		addDismissButton();
 		AppInfo.getFrontEndTool().addProjectListener(this);

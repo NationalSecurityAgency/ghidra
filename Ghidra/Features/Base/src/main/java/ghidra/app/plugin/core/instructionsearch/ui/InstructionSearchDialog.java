@@ -393,12 +393,13 @@ public class InstructionSearchDialog extends ReusableDialogComponentProvider imp
 		if (controlPanel == null) {
 			controlPanel = new ControlPanel(plugin, this);
 		}
-
+		controlPanel.getAccessibleContext().setAccessibleName("Control");
+		messagePanel.getAccessibleContext().setAccessibleName("Message");
 		lowerPanel.add(controlPanel);
 		lowerPanel.add(messagePanel);
-
+		lowerPanel.getAccessibleContext().setAccessibleName("Control and Message");
 		mainPanel.add(lowerPanel, BorderLayout.SOUTH);
-
+		mainPanel.getAccessibleContext().setAccessibleName("Instruction Search");
 		return mainPanel;
 	}
 
@@ -454,6 +455,7 @@ public class InstructionSearchDialog extends ReusableDialogComponentProvider imp
 		searchAllButton = new JButton("Search All");
 		searchAllButton.addActionListener(ev -> searchAllButtonActionPerformed());
 		searchAllButton.setName("Search All");
+		searchAllButton.getAccessibleContext().setAccessibleName("Search All");
 		addButton(searchAllButton);
 
 		addCancelButton();

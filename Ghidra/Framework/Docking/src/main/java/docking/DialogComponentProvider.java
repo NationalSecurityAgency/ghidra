@@ -488,6 +488,7 @@ public class DialogComponentProvider
 		okButton = new JButton("OK");
 		okButton.setMnemonic('K');
 		okButton.setName("OK");
+		okButton.getAccessibleContext().setAccessibleName("OK");
 		okButton.addActionListener(e -> okCallback());
 		addButton(okButton);
 	}
@@ -500,6 +501,7 @@ public class DialogComponentProvider
 		cancelButton = new JButton("Cancel");
 		cancelButton.setMnemonic('C');
 		cancelButton.setName("Cancel");
+		cancelButton.getAccessibleContext().setAccessibleName("Cancel");
 		cancelButton.addActionListener(e -> cancelCallback());
 		addButton(cancelButton);
 	}
@@ -512,6 +514,7 @@ public class DialogComponentProvider
 		dismissButton = new JButton("Dismiss");
 		dismissButton.setMnemonic('D');
 		dismissButton.setName("Dismiss");
+		dismissButton.getAccessibleContext().setAccessibleName("Dismiss");
 		dismissButton.addActionListener(e -> dismissCallback());
 		addButton(dismissButton);
 	}
@@ -524,6 +527,7 @@ public class DialogComponentProvider
 		applyButton = new JButton("Apply");
 		applyButton.setMnemonic('A');
 		applyButton.setName("Apply");
+		applyButton.getAccessibleContext().setAccessibleName("Apply");
 		applyButton.addActionListener(e -> applyCallback());
 		addButton(applyButton);
 	}

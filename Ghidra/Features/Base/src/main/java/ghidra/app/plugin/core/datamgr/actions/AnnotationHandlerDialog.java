@@ -69,8 +69,9 @@ class AnnotationHandlerDialog extends DialogComponentProvider {
 
 	JPanel create() {
 		JPanel outerPanel = new JPanel(new BorderLayout());
-
+		outerPanel.getAccessibleContext().setAccessibleName("Annotation Handler");
 		handlerComboBox = new GhidraComboBox<>(handlerList);
+		handlerComboBox.getAccessibleContext().setAccessibleName("Combo Box");
 		handlerComboBox.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent evt) {

@@ -195,6 +195,7 @@ public class InputDialog extends DialogComponentProvider {
 			panel.add(textFields[i]);
 		}
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+		panel.getAccessibleContext().setAccessibleName("Input");
 		this.addWorkPanel(panel);
 	}
 

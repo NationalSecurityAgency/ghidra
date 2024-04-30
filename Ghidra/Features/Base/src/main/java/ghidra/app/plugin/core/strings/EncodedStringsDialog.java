@@ -289,6 +289,7 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 		addWorkPanel(buildWorkPanel());
 		createButton = new JButton("Create");
 		createButton.setName("Create");
+		createButton.getAccessibleContext().setAccessibleName("Create");
 
 		createButton.addActionListener(e -> {
 			if (isSingleStringMode()) {
@@ -308,7 +309,7 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 	private JComponent buildWorkPanel() {
 		optionsPanel = new JPanel(new PairLayout(5, 5));
 		optionsPanel.setBorder(BorderFactory.createTitledBorder("Options"));
-
+		optionsPanel.getAccessibleContext().setAccessibleName("Options");
 		buildCharsetPickerComponents();
 		buildOptionsButtonComponents();
 		buildAdvancedOptionsComponents();
@@ -322,7 +323,9 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 			advancedFailedCountLabel);
 
 		GLabel scriptLabel = new GLabel("Script:", SwingConstants.RIGHT);
+		scriptLabel.getAccessibleContext().setAccessibleName("Script");
 		GLabel allowAddLabel = new GLabel("Allow Additional:");
+		allowAddLabel.getAccessibleContext().setAccessibleName("Allow Additional");
 		scriptRow =
 			addRow(scriptLabel, requiredUnicodeScript, scriptFailedCountLabel, allowAddLabel,
 				allowAnyScriptButton, otherScriptsFailedCountLabel, allowLatinScriptButton,
@@ -338,6 +341,7 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 		else {
 			GLabel minLenLabel = new GLabel("Min Length:", SwingConstants.RIGHT);
 			minLenLabel.setToolTipText(minStringLengthSpinner.getSpinner().getToolTipText());
+			minLenLabel.getAccessibleContext().setAccessibleName("Minimum Length");
 			advOptsRow2 = addRow(null, minLenLabel, minStringLengthSpinner.getSpinner(),
 				minLenFailedCountLabel, alignStartOfStringCB, breakOnRefCB);
 		}
@@ -354,11 +358,12 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 		JPanel previewTablePanel = new JPanel(new BorderLayout());
 		previewTablePanel.add(threadedTablePanel, BorderLayout.CENTER);
 		previewTablePanel.add(filterPanel, BorderLayout.SOUTH);
+		previewTablePanel.getAccessibleContext().setAccessibleName("Preview Table");
 
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(optionsPanel, BorderLayout.NORTH);
 		panel.add(previewTablePanel, BorderLayout.CENTER);
-
+		panel.getAccessibleContext().setAccessibleName("Encoded Strings");
 		return panel;
 	}
 
@@ -418,21 +423,25 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 		JPanel emptyTableOverlay = new JPanel(new GridBagLayout());
 		emptyTableOverlay.add(new GHtmlLabel("<html>No strings matched filter criteria..."),
 			new GridBagConstraints());
+		emptyTableOverlay.getAccessibleContext().setAccessibleName("Empty Table Overlay");
 		threadedTablePanel =
 			new EncodedStringsThreadedTablePanel<>(tableModel, 1000, emptyTableOverlay);
 		threadedTablePanel.setBorder(BorderFactory.createTitledBorder("Preview"));
+		threadedTablePanel.getAccessibleContext().setAccessibleName("Threaded Table");
 		table = threadedTablePanel.getTable();
 		table.setName("DataTable");
+		table.getAccessibleContext().setAccessibleName("Data Table");
 		table.setPreferredScrollableViewportSize(new Dimension(350, 150));
 		table.getSelectionModel().addListSelectionListener(e -> selectedRowChange());
 
 		table.installNavigation(tool);
-
+		filterPanel.getAccessibleContext().setAccessibleName("Filter");
 		filterPanel = new GhidraTableFilterPanel<>(table, tableModel);
 	}
 
 	private void buildCharsetPickerComponents() {
 		charsetComboBox = new GhidraComboBox<>();
+		charsetComboBox.getAccessibleContext().setAccessibleName("Charset Checkboxes");
 		for (String charsetName : CharsetInfo.getInstance().getCharsetNames()) {
 			charsetComboBox.addToModel(charsetName);
 		}
@@ -474,6 +483,7 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 	private void buildOptionsButtonComponents() {
 		showAdvancedOptionsButton = new JToggleButton("Advanced...");
 		showAdvancedOptionsButton.setName("SHOW_ADVANCED_OPTIONS");
+		showAdvancedOptionsButton.getAccessibleContext().setAccessibleName("Show Advanced Options");
 		showAdvancedOptionsButton.setToolTipText("Show advanced options.");
 		showAdvancedOptionsButton.addActionListener(e -> {
 			setRowVisibility(advOptsRow1, showAdvancedOptionsButton.isSelected());
@@ -488,9 +498,11 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 		advancedFailedCountLabel.setToolTipText(
 			"Number of strings excluded due to filtering options in advanced options.");
 		advancedFailedCountLabel.setVisible(!showAdvancedOptionsButton.isSelected());
+		advancedFailedCountLabel.getAccessibleContext().setAccessibleName("Advanced Failed Count");
 
 		showScriptOptionsButton = new JToggleButton("A-Z,\u6211\u7684,\u062d\u064e\u0648\u0651");
 		showScriptOptionsButton.setName("SHOW_SCRIPT_OPTIONS");
+		showScriptOptionsButton.getAccessibleContext().setAccessibleName("Show Script Options");
 		showScriptOptionsButton.setToolTipText("Filter by character scripts (alphabets).");
 		showScriptOptionsButton.addActionListener(e -> {
 			setRowVisibility(scriptRow, showScriptOptionsButton.isSelected());
@@ -499,6 +511,8 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 
 		showTranslateOptionsButton = new JToggleButton("Translate");
 		showTranslateOptionsButton.setName("SHOW_TRANSLATE_OPTIONS");
+		showTranslateOptionsButton.getAccessibleContext()
+				.setAccessibleName("Show Translate Options");
 		showTranslateOptionsButton.setToolTipText("Translate strings after creation.");
 		showTranslateOptionsButton.addActionListener(e -> {
 			setRowVisibility(translateRow, showTranslateOptionsButton.isSelected());
@@ -513,10 +527,13 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 		excludeStringsWithCodecErrorCB.setToolTipText("""
 				<html>Exclude strings that have charset codec errors.<br>
 				(bytes/sequences that are invalid for the chosen charset)""");
+		excludeStringsWithCodecErrorCB.getAccessibleContext()
+				.setAccessibleName("Exclude Strings With Codec Error");
 
 		codecErrorsCountLabel = new GDHtmlLabel();
 		codecErrorsCountLabel.setForeground(GThemeDefaults.Colors.Messages.ERROR);
 		codecErrorsCountLabel.setToolTipText("Number of strings excluded due to codec errors.");
+		codecErrorsCountLabel.getAccessibleContext().setAccessibleName("Codec Errors Count");
 
 		excludeStringsWithNonStdCtrlCharsCB = new GCheckBox("Exclude non-std ctrl chars");
 		excludeStringsWithNonStdCtrlCharsCB.setSelected(!singleStringMode);
@@ -524,11 +541,14 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 				<html>Exclude strings that contain non-standard control characters.<br>
 				(ASCII 1..31, not including tab, CR, LF)""");
 		excludeStringsWithNonStdCtrlCharsCB.addItemListener(this::checkboxItemListener);
-
+		excludeStringsWithNonStdCtrlCharsCB.getAccessibleContext()
+				.setAccessibleName("Exclude Strings with Non-Standard Control Characters");
 		nonStdCtrlCharsErrorsCountLabel = new GDHtmlLabel();
 		nonStdCtrlCharsErrorsCountLabel.setForeground(GThemeDefaults.Colors.Messages.ERROR);
 		nonStdCtrlCharsErrorsCountLabel.setToolTipText(
 			"Number of strings excluded due to non-standard control characters.");
+		nonStdCtrlCharsErrorsCountLabel.getAccessibleContext()
+				.setAccessibleName("Non-Standard Control Character Error Count");
 
 		alignStartOfStringCB = new GCheckBox("Align start of string");
 		alignStartOfStringCB.setToolTipText("""
@@ -536,12 +556,12 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 				strings that begin on an aligned boundary.""");
 		alignStartOfStringCB.setSelected(!singleStringMode);
 		alignStartOfStringCB.addItemListener(this::checkboxItemListener);
-
+		alignStartOfStringCB.getAccessibleContext().setAccessibleName("Align Start of String");
 		breakOnRefCB = new GCheckBox("Truncate at ref");
 		breakOnRefCB.setSelected(true);
 		breakOnRefCB.addItemListener(this::checkboxItemListener);
 		breakOnRefCB.setToolTipText("Truncate strings at references.");
-
+		breakOnRefCB.getAccessibleContext().setAccessibleName("Break on References");
 		minStringLengthSpinner = new IntegerSpinner(new SpinnerNumberModel( // spinner
 			Long.valueOf(Math.min(5, selectedAddresses.getNumAddresses())), // initial 
 			Long.valueOf(0), // min
@@ -553,11 +573,14 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 					"Exclude strings that are shorter (in characters, not bytes) than this minimum");
 		minStringLengthSpinner.getTextField().setShowNumberMode(false);
 		minStringLengthSpinner.getSpinner().addChangeListener(e -> updateOptionsAndRefresh());
-
+		minStringLengthSpinner.getSpinner()
+				.getAccessibleContext()
+				.setAccessibleName("Minimum String Length");
 		minLenFailedCountLabel = new GDHtmlLabel();
 		minLenFailedCountLabel.setForeground(GThemeDefaults.Colors.Messages.ERROR);
 		minLenFailedCountLabel.setToolTipText("Number of strings excluded due to length.");
-
+		minLenFailedCountLabel.getAccessibleContext()
+				.setAccessibleName("Minimum Failed Length Count");
 		stringModelFilenameComboBox = new GhidraComboBox<>();
 		stringModelFilenameComboBox.setEditable(true);
 		for (String builtinStringModelFilename : getBuiltinStringModelFilenames()) {
@@ -574,16 +597,19 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 				Enter the full path to a user-supplied .sng model file,<br>
 				or<br>
 				Clear the field for no string model.""");
-
+		stringModelFilenameComboBox.getAccessibleContext()
+				.setAccessibleName("String Model Filename");
 		requireValidStringCB = new GCheckBox("Exclude invalid strings");
 		requireValidStringCB.setSelected(false);
 		requireValidStringCB.setToolTipText("Verify strings against the string model.");
 		requireValidStringCB.addItemListener(this::checkboxItemListener);
-
+		requireValidStringCB.getAccessibleContext().setAccessibleName("Reguire Valid Sring");
 		stringModelFailedCountLabel = new GDHtmlLabel();
 		stringModelFailedCountLabel.setForeground(GThemeDefaults.Colors.Messages.ERROR);
 		stringModelFailedCountLabel
 				.setToolTipText("Number of strings excluded due to failing string model check.");
+		stringModelFailedCountLabel.getAccessibleContext()
+				.setAccessibleName("String Model Failed Count");
 	}
 
 	private void buildScriptFilterComponents() {
@@ -600,12 +626,12 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 					<p>
 					Note: character scripts that are drawable using the current font will have<br>
 					some example characters displayed to the right of the name.""");
-
+		requiredUnicodeScript.getAccessibleContext().setAccessibleName("Required Unicode Script");
 		scriptFailedCountLabel = new GDHtmlLabel();
 		scriptFailedCountLabel.setForeground(GThemeDefaults.Colors.Messages.ERROR);
 		scriptFailedCountLabel
 				.setToolTipText("Number of strings excluded due to failing script requirements.");
-
+		scriptFailedCountLabel.getAccessibleContext().setAccessibleName("Script Failed Count");
 		allowLatinScriptButton = new JToggleButton("A-Z");
 		allowLatinScriptButton.setName("ALLOW_LATIN_SCRIPT");
 		Gui.registerFont(allowLatinScriptButton, BUTTON_FONT_ID);
@@ -614,12 +640,14 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 			"Allow Latin characters (e.g. A-Z, etc) to also be present in the string.");
 		allowLatinScriptButton.setSelected(true);
 		allowLatinScriptButton.addItemListener(this::checkboxItemListener);
+		allowLatinScriptButton.getAccessibleContext().setAccessibleName("Allow Latin Script");
 
 		latinScriptFailedCountLabel = new GDHtmlLabel();
 		latinScriptFailedCountLabel.setForeground(GThemeDefaults.Colors.Messages.ERROR);
 		latinScriptFailedCountLabel.setToolTipText(
 			"Number of strings excluded because they contained Latin characters.");
-
+		latinScriptFailedCountLabel.getAccessibleContext()
+				.setAccessibleName("Latin Script Failed Count");
 		allowCommonScriptButton = new JToggleButton("0-9,!?");
 		allowCommonScriptButton.setName("ALLOW_COMMON_SCRIPT");
 		Gui.registerFont(allowCommonScriptButton, BUTTON_FONT_ID);
@@ -627,12 +655,13 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 			"Allow common characters (e.g. 0-9, space, punctuation, etc) to also be present in the string.");
 		allowCommonScriptButton.setSelected(true);
 		allowCommonScriptButton.addItemListener(this::checkboxItemListener);
-
+		allowCommonScriptButton.getAccessibleContext().setAccessibleName("Allow Common Script");
 		commonScriptFailedCountLabel = new GDHtmlLabel();
 		commonScriptFailedCountLabel.setForeground(GThemeDefaults.Colors.Messages.ERROR);
 		commonScriptFailedCountLabel.setToolTipText(
 			"Number of strings excluded because they contained Common (0-9, space, punctuation, etc) characters.");
-
+		commonScriptFailedCountLabel.getAccessibleContext()
+				.setAccessibleName("Common Script Failed Count");
 		allowAnyScriptButton = new JToggleButton("Any");
 		allowAnyScriptButton.setName("ALLOW_ANY_SCRIPT");
 		Gui.registerFont(allowAnyScriptButton, BUTTON_FONT_ID);
@@ -640,11 +669,13 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 			"Allow all other character scripts to also be present in the string.");
 		allowAnyScriptButton.setSelected(true);
 		allowAnyScriptButton.addItemListener(this::checkboxItemListener);
-
+		allowAnyScriptButton.getAccessibleContext().setAccessibleName("Allow Any Script");
 		otherScriptsFailedCountLabel = new GDHtmlLabel();
 		otherScriptsFailedCountLabel.setForeground(GThemeDefaults.Colors.Messages.ERROR);
 		otherScriptsFailedCountLabel.setToolTipText(
 			"Number of strings excluded because they contained characters from other scripts (alphabets).");
+		otherScriptsFailedCountLabel.getAccessibleContext()
+				.setAccessibleName("Other Scripts Failed Count");
 	}
 
 	private List<String> getBuiltinStringModelFilenames() {
@@ -660,6 +691,7 @@ public class EncodedStringsDialog extends DialogComponentProvider {
 		List<StringTranslationService> translationServices =
 			StringTranslationService.getCurrentStringTranslationServices(tool);
 		translateComboBox = new GhidraComboBox<>(translationServices);
+		translateComboBox.getAccessibleContext().setAccessibleName("Translate Checkboxes");
 		StringTranslationService defaultSTS = getDefaultTranslationService(translationServices);
 		if (defaultSTS != null) {
 			translateComboBox.setSelectedItem(defaultSTS);
