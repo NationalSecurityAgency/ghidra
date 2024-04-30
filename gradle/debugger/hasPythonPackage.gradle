@@ -80,7 +80,9 @@ def findPython3() {
 		}
 	}
 	// Don't fail until task execution. Just let "python3" fail.
-	return 'python3'
+	// Force use of non-existent python3.7 instead of unsupported python version
+	// which should fail if a python build is performed.
+	return 'python3.7'
 }
 
 ext.PYTHON3 = findPython3()
