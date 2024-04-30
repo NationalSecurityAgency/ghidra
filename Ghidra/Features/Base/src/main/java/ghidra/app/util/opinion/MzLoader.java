@@ -187,7 +187,8 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 			knownSegments.add(space.getAddress((INITIAL_SEGMENT_VAL + header.e_cs()) & 0xffff, 0));
 		}
 		// Allocate an initialized memory block for each segment we know about
-		int endOffset = pagesToBytes(Short.toUnsignedInt(header.e_cp()) - 1) + Short.toUnsignedInt(header.e_cblp());
+		int endOffset = pagesToBytes(Short.toUnsignedInt(header.e_cp()) - 1) +
+			Short.toUnsignedInt(header.e_cblp());
 		if (endOffset > reader.length()) {
 			log.appendMsg(
 				"File is 0x%x bytes but header reports 0x%x".formatted(reader.length(), endOffset));
@@ -475,7 +476,8 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 	 * @return The segmented addresses converted to a file offset
 	 */
 	private int addressToFileOffset(int segment, int offset, OldDOSHeader header) {
-		return (short) segment * 16 + offset + paragraphsToBytes(Short.toUnsignedInt(header.e_cparhdr()));
+		return (short) segment * 16 + offset +
+			paragraphsToBytes(Short.toUnsignedInt(header.e_cparhdr()));
 	}
 
 	/**
@@ -489,7 +491,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 	}
 
 	/**
-	 * Converts pages to bytes.  There are 512 bytes in a paragraph.
+	 * Converts pages to bytes.  There are 512 bytes in a page.
 	 * 
 	 * @param pages The number of pages
 	 * @return The number of bytes in the given number of pages
