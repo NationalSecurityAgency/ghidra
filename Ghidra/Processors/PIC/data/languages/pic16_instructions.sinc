@@ -44,7 +44,7 @@ define context contextreg
 
 @if PROCESSOR == "PIC_16"
 attach variables [ fregCore ] [
-	INDF TMR0 PCL STATUS FSR PORTA PORTB PORTC PORTD PORTE PCLATH INTCON _ _ _ _
+	INDF 	_ 		PCL 	STATUS 	FSR 	_		_		_		_ 	_	PCLATH	INTCON	_ _ _ _
 ];
 
 @elif PROCESSOR == "PIC_16F"
@@ -178,14 +178,14 @@ srcREG: fv		is uf7=0x7 & lf7  [fv = 0x70 + lf7; ]								{
 
 # File register index (f7=0): INDF use implies indirect data access using FSR value and IRP bit in STATUS reg
 @if PROCESSOR == "PIC_16"
-srcREG: fregCore		is f7=0 & fregCore									{ 
+srcREG: INDF		is f7=0 & INDF								{ 
 	addr:2 = (zext(IRP) << 8) + zext(FSR);
 	export *[DATA]:1 addr; 
 }
-srcREG: fregCore		is f7=1	& fregCore								{ 
-     rpval:2 = zext(RP == 1) + zext(RP == 2);
-	 addr:2 = (zext(rpval) << 7) + 1;
-	 export *[DATA]:1 addr;
+srcREG: lf7		is f7=1	& lf7								{ 
+	rpval:2 = zext(RP == 1) + zext(RP == 3);
+    addr:2 = (zext(rpval) << 7) + 1;
+	export *[DATA]:1 addr;
 }
 @elif PROCESSOR == "PIC_16F"
 srcREG: fregCore		is f7=0 & fregCore									{ 
