@@ -66,6 +66,14 @@ public class DebugData {
 	private AbstractPdb pdb;
 	private List<Integer> debugStreams = new ArrayList<>();
 
+	private int getDebugStream(DebugType debugType) {
+		int index = debugType.getValue();
+		if (index < 0 || index >= debugStreams.size()) {
+			return MsfStream.NIL_STREAM_NUMBER;
+		}
+		return debugStreams.get(index);
+	}
+
 	//==============================================================================================
 	// API
 	//==============================================================================================
@@ -85,7 +93,7 @@ public class DebugData {
 	 */
 	public List<FramePointerOmissionRecord> getFramePointerOmissionData()
 			throws CancelledException {
-		int streamNum = debugStreams.get(DebugType.FRAME_POINTER_OMISSION.getValue());
+		int streamNum = getDebugStream(DebugType.FRAME_POINTER_OMISSION);
 		if (streamNum == MsfStream.NIL_STREAM_NUMBER) {
 			return null;
 		}
@@ -106,7 +114,7 @@ public class DebugData {
 	 * @throws CancelledException upon user cancellation
 	 */
 	public SortedMap<Long, Long> getOmapFromSource() throws CancelledException {
-		int streamNum = debugStreams.get(DebugType.OMAP_FROM_SOURCE.getValue());
+		int streamNum = getDebugStream(DebugType.OMAP_FROM_SOURCE);
 		if (streamNum == MsfStream.NIL_STREAM_NUMBER) {
 			return null;
 		}
@@ -119,7 +127,7 @@ public class DebugData {
 	 * @throws CancelledException upon user cancellation
 	 */
 	public List<ImageSectionHeader> getImageSectionHeaders() throws CancelledException {
-		int streamNum = debugStreams.get(DebugType.SECTION_HEADER.getValue());
+		int streamNum = getDebugStream(DebugType.SECTION_HEADER);
 		if (streamNum == MsfStream.NIL_STREAM_NUMBER) {
 			return null;
 		}
@@ -135,7 +143,7 @@ public class DebugData {
 	 */
 	// TODO: just put a return of null Integer for now until figured out.
 	public Integer getXData() throws CancelledException {
-		int streamNum = debugStreams.get(DebugType.SECTION_HEADER_ORIG.getValue());
+		int streamNum = getDebugStream(DebugType.SECTION_HEADER_ORIG);
 		if (streamNum == MsfStream.NIL_STREAM_NUMBER) {
 			return null;
 		}
@@ -150,7 +158,7 @@ public class DebugData {
 	 * @throws CancelledException upon user cancellation
 	 */
 	public List<ImageFunctionEntry> getPData() throws CancelledException {
-		int streamNum = debugStreams.get(DebugType.SECTION_HEADER_ORIG.getValue());
+		int streamNum = getDebugStream(DebugType.SECTION_HEADER_ORIG);
 		if (streamNum == MsfStream.NIL_STREAM_NUMBER) {
 			return null;
 		}
@@ -165,7 +173,7 @@ public class DebugData {
 	 * @throws CancelledException upon user cancellation
 	 */
 	public List<ImageSectionHeader> getImageSectionHeadersOrig() throws CancelledException {
-		int streamNum = debugStreams.get(DebugType.SECTION_HEADER_ORIG.getValue());
+		int streamNum = getDebugStream(DebugType.SECTION_HEADER_ORIG);
 		if (streamNum == MsfStream.NIL_STREAM_NUMBER) {
 			return null;
 		}
@@ -212,7 +220,7 @@ public class DebugData {
 				"DebugData Header had not been deserialized at the appropriate time");
 		}
 		for (DebugType dbg : DebugType.values()) {
-			int streamNum = debugStreams.get(dbg.getValue());
+			int streamNum = getDebugStream(dbg);
 			if (streamNum == MsfStream.NIL_STREAM_NUMBER) {
 				continue;
 			}
@@ -278,8 +286,7 @@ public class DebugData {
 
 	}
 
-	private SortedMap<Long, Long> deserializeOMap(int streamNum)
-			throws CancelledException {
+	private SortedMap<Long, Long> deserializeOMap(int streamNum) throws CancelledException {
 		try {
 			PdbByteReader reader = pdb.getReaderForStreamNumber(streamNum);
 			SortedMap<Long, Long> omap = new TreeMap<>();
@@ -325,8 +332,7 @@ public class DebugData {
 	 *  processing XData
 	 */
 	// TODO: just put a return of null Integer for now until figured out.
-	private Integer deserializeXData(int streamNum)
-			throws CancelledException {
+	private Integer deserializeXData(int streamNum) throws CancelledException {
 		try {
 			PdbByteReader reader = pdb.getReaderForStreamNumber(streamNum);
 			int streamLength = reader.getLimit();
@@ -362,8 +368,7 @@ public class DebugData {
 	}
 
 	// TODO: This is incomplete.
-	private List<ImageFunctionEntry> deserializePData(int streamNum)
-			throws CancelledException {
+	private List<ImageFunctionEntry> deserializePData(int streamNum) throws CancelledException {
 		try {
 			PdbByteReader reader = pdb.getReaderForStreamNumber(streamNum);
 			List<ImageFunctionEntry> myPData = new ArrayList<>();
