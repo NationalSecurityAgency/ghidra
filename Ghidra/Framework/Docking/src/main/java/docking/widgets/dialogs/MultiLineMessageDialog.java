@@ -72,9 +72,8 @@ public class MultiLineMessageDialog extends DialogComponentProvider {
 	public static void showMessageDialog(Component parent, String title, String shortMessage,
 			String detailedMessage, int messageType) {
 		Swing.runNow(() -> {
-			MultiLineMessageDialog dialog =
-				new MultiLineMessageDialog(title, shortMessage, detailedMessage, messageType,
-					false);
+			MultiLineMessageDialog dialog = new MultiLineMessageDialog(title, shortMessage,
+				detailedMessage, messageType, false);
 			DockingWindowManager.showDialog(parent, dialog);
 		});
 	}
@@ -93,10 +92,11 @@ public class MultiLineMessageDialog extends DialogComponentProvider {
 
 		JPanel workPanel = new JPanel(new BorderLayout());
 		workPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
+		workPanel.getAccessibleContext().setAccessibleName("Multi Line Message");
 		if (!StringUtils.isBlank(shortMessage)) {
 			JLabel shortMessageLabel = new GLabel(shortMessage);
 			shortMessageLabel.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 10));
+			shortMessageLabel.getAccessibleContext().setAccessibleName("Short Message");
 			workPanel.add(shortMessageLabel, BorderLayout.NORTH);
 		}
 
@@ -111,6 +111,7 @@ public class MultiLineMessageDialog extends DialogComponentProvider {
 			// to get us back to the same font the rest of the GUI is using.
 
 			JTextPane textPane = new JTextPane();
+			textPane.getAccessibleContext().setAccessibleName("Detailed Message");
 			String fontfamily = textPane.getFont().getFamily();
 			detailedMessage = "<html><body style=\"font-family: " + fontfamily + "\">" +
 				detailedMessage.substring(6);
@@ -125,6 +126,7 @@ public class MultiLineMessageDialog extends DialogComponentProvider {
 
 			DockingUtils.setTransparent(textPane);
 			JScrollPane scrollPane = new JScrollPane(textPane);
+			scrollPane.getAccessibleContext().setAccessibleName("Detailed Mesage");
 			DockingUtils.setTransparent(scrollPane);
 			scrollPane.setBorder(BorderFactory.createEmptyBorder());
 			workPanel.add(scrollPane, BorderLayout.CENTER);
@@ -136,9 +138,10 @@ public class MultiLineMessageDialog extends DialogComponentProvider {
 		else {
 			JTextArea textArea = new JTextArea(detailedMessage);
 			textArea.setEditable(false);
-
+			textArea.getAccessibleContext().setAccessibleName("Detailed Message");
 			DockingUtils.setTransparent(textArea);
 			JScrollPane scrollPane = new JScrollPane(textArea);
+			scrollPane.getAccessibleContext().setAccessibleName("Detailed Message");
 			DockingUtils.setTransparent(scrollPane);
 			workPanel.add(scrollPane, BorderLayout.CENTER);
 

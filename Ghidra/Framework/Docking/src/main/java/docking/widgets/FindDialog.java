@@ -65,12 +65,14 @@ public class FindDialog extends ReusableDialogComponentProvider {
 	private void buildButtons() {
 		nextButton = new JButton("Next");
 		nextButton.setMnemonic('N');
+		nextButton.getAccessibleContext().setAccessibleName("Next");
 		nextButton.addActionListener(ev -> doSearch(true));
 		addButton(nextButton);
 		setDefaultButton(nextButton);
 
 		previousButton = new JButton("Previous");
 		previousButton.setMnemonic('P');
+		previousButton.getAccessibleContext().setAccessibleName("Previous");
 		previousButton.addActionListener(ev -> doSearch(false));
 		addButton(previousButton);
 
@@ -81,14 +83,16 @@ public class FindDialog extends ReusableDialogComponentProvider {
 
 		ButtonGroup formatGroup = new ButtonGroup();
 		stringRadioButton = new GRadioButton("String", true);
+		stringRadioButton.getAccessibleContext().setAccessibleName("String");
 		regexRadioButton = new GRadioButton("Regular Expression", false);
+		regexRadioButton.getAccessibleContext().setAccessibleName("Regular Expresion");
 		formatGroup.add(stringRadioButton);
 		formatGroup.add(regexRadioButton);
 
 		comboBox = new GhidraComboBox<>();
 		comboBox.setEditable(true);
 		comboBox.addActionListener(e -> doSearch(true));
-
+		comboBox.getAccessibleContext().setAccessibleName("Checkboxes");
 		comboBox.setColumns(20);
 		comboBox.addDocumentListener(new DocumentListener() {
 			@Override
@@ -113,19 +117,20 @@ public class FindDialog extends ReusableDialogComponentProvider {
 		});
 
 		JLabel findLabel = new GLabel("Find: ");
-
+		findLabel.getAccessibleContext().setAccessibleName("Find");
 		// associate this label with a mnemonic key that activates the text field
 		findLabel.setDisplayedMnemonic(KeyEvent.VK_N);
 		comboBox.associateLabel(findLabel);
 
 		JPanel mainPanel = new JPanel(new BorderLayout());
 		JPanel textPanel = new JPanel();
+		textPanel.getAccessibleContext().setAccessibleName("Find Label and Checkboxes");
 		textPanel.add(findLabel);
 		textPanel.add(comboBox);
 		mainPanel.add(textPanel, BorderLayout.NORTH);
 		mainPanel.add(buildFormatPanel(), BorderLayout.SOUTH);
 		mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
+		mainPanel.getAccessibleContext().setAccessibleName("Find");
 		return mainPanel;
 	}
 
@@ -140,6 +145,7 @@ public class FindDialog extends ReusableDialogComponentProvider {
 		formatPanel.setLayout(new BoxLayout(formatPanel, BoxLayout.Y_AXIS));
 		formatPanel.add(stringRadioButton);
 		formatPanel.add(regexRadioButton);
+		formatPanel.getAccessibleContext().setAccessibleName("Format");
 		return formatPanel;
 	}
 

@@ -322,7 +322,7 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 		{
 			JPanel opts = new JPanel();
 			opts.setLayout(new BoxLayout(opts, BoxLayout.Y_AXIS));
-
+			opts.getAccessibleContext().setAccessibleName("Options");
 			{
 				Box progBox = Box.createHorizontalBox();
 				progBox.setBorder(BorderFactory.createEmptyBorder(GAP, GAP, GAP, GAP));
@@ -336,7 +336,9 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 					syncCbRelocateEnabled(getDestination());
 					reset();
 				});
+				comboDestination.getAccessibleContext().setAccessibleName("Combo Destination");
 				progBox.add(comboDestination);
+				progBox.getAccessibleContext().setAccessibleName("Program Box");
 				opts.add(progBox);
 			}
 
@@ -344,15 +346,16 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 				// Avoid Swing's automatic indentation
 				JPanel inner = new JPanel(new BorderLayout());
 				inner.setBorder(BorderFactory.createEmptyBorder(0, GAP, GAP, GAP));
-				cbCapture =
-					new JCheckBox("<html>Read live target's memory");
+				cbCapture = new JCheckBox("<html>Read live target's memory");
 				cbCapture.addActionListener(e -> {
 					if (!isVisible()) {
 						return;
 					}
 					reset();
 				});
+				cbCapture.getAccessibleContext().setAccessibleName("Read Target Memory");
 				inner.add(cbCapture);
+				inner.getAccessibleContext().setAccessibleName("Read Target Memory");
 				opts.add(inner);
 			}
 
@@ -368,7 +371,9 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 					}
 					reset();
 				});
+				cbRelocate.getAccessibleContext().setAccessibleName("Relocate via Mappings");
 				inner.add(cbRelocate);
+				inner.getAccessibleContext().setAccessibleName("Relocate via Mappings");
 				opts.add(inner);
 			}
 
@@ -383,7 +388,9 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 					}
 					reset();
 				});
+				cbUseOverlays.getAccessibleContext().setAccessibleName("Use Overlays");
 				inner.add(cbUseOverlays);
+				inner.getAccessibleContext().setAccessibleName("Use Overlays");
 				opts.add(inner);
 			}
 
@@ -391,14 +398,17 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 				JPanel panelInclude = new JPanel(new GridLayout(0, 2, GAP, GAP));
 				panelInclude.setBorder(BorderFactory.createTitledBorder("Include:"));
 				JButton buttonSelectNone = new JButton("Select None");
+				buttonSelectNone.getAccessibleContext().setAccessibleName("Select None");
 				buttonSelectNone.addActionListener(e -> plan.selectNone());
 				panelInclude.add(buttonSelectNone);
 				JButton buttonSelectAll = new JButton("Select All");
+				buttonSelectAll.getAccessibleContext().setAccessibleName("Select All");
 				buttonSelectAll.addActionListener(e -> plan.selectAll());
 				panelInclude.add(buttonSelectAll);
 				for (Copier copier : plan.getAllCopiers()) {
 					panelInclude.add(plan.getCheckBox(copier));
 				}
+				panelInclude.getAccessibleContext().setAccessibleName("Include All or None");
 				opts.add(panelInclude);
 			}
 			panel.add(opts, BorderLayout.NORTH);
@@ -410,11 +420,14 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 			table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 			tablePanel.add(new JScrollPane(table));
 			filterPanel = new GhidraTableFilterPanel<>(table, tableModel);
+			filterPanel.getAccessibleContext().setAccessibleName("Filter");
 			tablePanel.add(filterPanel, BorderLayout.SOUTH);
+			tablePanel.getAccessibleContext().setAccessibleName("Filters");
 			panel.add(tablePanel, BorderLayout.CENTER);
 		}
 
 		panel.setMinimumSize(new Dimension(600, 600));
+		panel.getAccessibleContext().setAccessibleName("Copy Debugger Into Program");
 		addWorkPanel(panel);
 
 		addOKButton();
@@ -433,6 +446,7 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 		resetButton = new JButton("Reset");
 		resetButton.setMnemonic('R');
 		resetButton.setName("Reset");
+		resetButton.getAccessibleContext().setAccessibleName("Reset");
 		resetButton.addActionListener(e -> resetCallback());
 		addButton(resetButton);
 	}
@@ -713,9 +727,9 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 		List<RangeEntry> result = new ArrayList<>();
 		Set<String> taken = new HashSet<>();
 		collectBlockNames(taken, dest);
-		Collection<MappedAddressRange> mappedSet = staticMappingService
-				.getOpenMappedViews(source.getTrace(), set, source.getSnap())
-				.get(dest);
+		Collection<MappedAddressRange> mappedSet =
+			staticMappingService.getOpenMappedViews(source.getTrace(), set, source.getSnap())
+					.get(dest);
 		if (mappedSet == null) {
 			return;
 		}

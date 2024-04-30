@@ -60,6 +60,7 @@ public class VersionControlDialog extends DialogComponentProvider {
 		addWorkPanel(buildMainPanel());
 
 		allButton = new JButton("Apply to All");
+		allButton.getAccessibleContext().setAccessibleName("All");
 		allButton.setMnemonic('A');
 		allButton.addActionListener(e -> {
 			actionID = APPLY_TO_ALL;
@@ -141,24 +142,28 @@ public class VersionControlDialog extends DialogComponentProvider {
 
 		JPanel innerPanel = new JPanel();
 		innerPanel.setLayout(new BoxLayout(innerPanel, BoxLayout.Y_AXIS));
+		innerPanel.getAccessibleContext().setAccessibleName("Version Control");
 		Icon icon = addToVersionControl ? ADD_ICON : CHECK_IN_ICON;
 
 		descriptionLabel = new GDLabel(addToVersionControl ? "Add comments to describe the file."
 				: "Add comments to describe changes",
 			SwingConstants.LEFT);
+		descriptionLabel.getAccessibleContext().setAccessibleName("Description");
 		JPanel dPanel = new JPanel(new BorderLayout(10, 0));
 		dPanel.add(new GIconLabel(icon), BorderLayout.WEST);
 		dPanel.add(descriptionLabel, BorderLayout.CENTER);
+		dPanel.getAccessibleContext().setAccessibleName("Description");
 
 		JPanel cPanel = new JPanel(new BorderLayout());
 		cPanel.add(new GLabel("Comments:", SwingConstants.LEFT));
-
+		cPanel.getAccessibleContext().setAccessibleName("Comments");
 		commentsTextArea = new JTextArea(4, 20);
 		JScrollPane sp = new JScrollPane(commentsTextArea);
-
+		sp.getAccessibleContext().setAccessibleName("Comment");
 		keepCB = new GCheckBox("Keep File Checked Out", true);
 		JPanel kPanel = new JPanel(new BorderLayout());
 		kPanel.add(keepCB, BorderLayout.WEST);
+		kPanel.getAccessibleContext().setAccessibleName("Keep File");
 
 		innerPanel.add(Box.createVerticalStrut(10));
 		innerPanel.add(dPanel);
@@ -172,12 +177,14 @@ public class VersionControlDialog extends DialogComponentProvider {
 			keepFileCB = new GCheckBox("Create \".keep\" file", false);
 			JPanel kpPanel = new JPanel(new BorderLayout());
 			kpPanel.add(keepFileCB, BorderLayout.WEST);
+			kpPanel.getAccessibleContext().setAccessibleName("Keep File");
 			innerPanel.add(kpPanel);
 		}
 
 		JPanel mainPanel = new JPanel(new BorderLayout());
 		mainPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
 		mainPanel.add(innerPanel);
+		mainPanel.getAccessibleContext().setAccessibleName("Version Control");
 		return mainPanel;
 	}
 

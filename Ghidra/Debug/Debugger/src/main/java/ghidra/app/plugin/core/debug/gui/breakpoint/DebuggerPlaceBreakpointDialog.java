@@ -84,6 +84,8 @@ public class DebuggerPlaceBreakpointDialog extends DialogComponentProvider {
 
 		JLabel labelAddress = new JLabel("Address");
 		fieldAddress = new JTextField();
+		labelAddress.getAccessibleContext().setAccessibleName("Address");
+		fieldAddress.getAccessibleContext().setAccessibleName("Address");
 		panel.add(labelAddress);
 		panel.add(fieldAddress);
 
@@ -112,10 +114,13 @@ public class DebuggerPlaceBreakpointDialog extends DialogComponentProvider {
 
 		JLabel labelLength = new JLabel("Length");
 		fieldLength = new JTextField();
+		labelLength.getAccessibleContext().setAccessibleName("Length");
+		fieldLength.getAccessibleContext().setAccessibleName("Length");
 		panel.add(labelLength);
 		panel.add(fieldLength);
 
 		JLabel labelKinds = new JLabel("Kinds");
+		labelKinds.getAccessibleContext().setAccessibleName("Kinds");
 		DefaultComboBoxModel<String> kindModel = new DefaultComboBoxModel<>();
 		// TODO: Let user select whatever combo?
 		kindModel.addElement(TraceBreakpointKindSet.encode(Set.of(SW_EXECUTE)));
@@ -125,14 +130,17 @@ public class DebuggerPlaceBreakpointDialog extends DialogComponentProvider {
 		kindModel.addElement(TraceBreakpointKindSet.encode(Set.of(READ, WRITE)));
 		fieldKinds = new JComboBox<String>(kindModel);
 		fieldKinds.setEditable(true);
+		fieldKinds.getAccessibleContext().setAccessibleName("Kinds");
 		panel.add(labelKinds);
 		panel.add(fieldKinds);
 
 		JLabel labelName = new JLabel("Name");
 		fieldName = new JTextField();
+		labelName.getAccessibleContext().setAccessibleName("Name");
+		fieldName.getAccessibleContext().setAccessibleName("Name");
 		panel.add(labelName);
 		panel.add(fieldName);
-
+		panel.getAccessibleContext().setAccessibleName("Place Debugger Breakpoint");
 		addWorkPanel(panel);
 
 		addOKButton();

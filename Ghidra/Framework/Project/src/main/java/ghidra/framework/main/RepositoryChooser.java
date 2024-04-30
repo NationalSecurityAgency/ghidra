@@ -78,27 +78,33 @@ class RepositoryChooser extends ReusableDialogComponentProvider {
 		serverInfoComponent = new ServerInfoComponent();
 		serverInfoComponent.setStatusListener(this);
 		serverInfoComponent.setChangeListener(e -> serverInfoChanged());
+		serverInfoComponent.getAccessibleContext().setAccessibleName("Server Info");
 		topPanel.add(serverInfoComponent, BorderLayout.CENTER);
 
 		queryButton = new GButton(REFRESH_ICON);
 		queryButton.setToolTipText("Refresh Repository Names List");
 		setDefaultButton(queryButton);
 		queryButton.addActionListener(e -> queryServer());
+		queryButton.getAccessibleContext().setAccessibleName("Query");
 		JPanel buttonPanel = new JPanel(new MiddleLayout());
 		buttonPanel.add(queryButton);
+		buttonPanel.getAccessibleContext().setAccessibleName("Query Button");
 		topPanel.add(buttonPanel, BorderLayout.EAST);
-
+		topPanel.getAccessibleContext().setAccessibleName("Server Info Query");
 		serverInfoPanel.add(topPanel, BorderLayout.NORTH);
 
 		JPanel lowerPanel = new JPanel(new BorderLayout());
+		lowerPanel.getAccessibleContext().setAccessibleName("Name List");
 		JLabel label = new GDLabel("Repository Names", SwingConstants.LEFT);
 		label.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 5));
+		label.getAccessibleContext().setAccessibleName("Repository Name");
 		lowerPanel.add(label, BorderLayout.NORTH);
 
 		listModel = new DefaultListModel<>();
 		nameList = new GList<>(listModel);
 		nameList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		nameList.addListSelectionListener(e -> selectionChanged());
+		nameList.getAccessibleContext().setAccessibleName("Name");
 
 		nameList.addMouseListener(new MouseInputAdapter() {
 			@Override
@@ -117,7 +123,7 @@ class RepositoryChooser extends ReusableDialogComponentProvider {
 		lowerPanel.add(sp);
 
 		serverInfoPanel.add(lowerPanel, BorderLayout.CENTER);
-
+		serverInfoPanel.getAccessibleContext().setAccessibleName("Server Info");
 		return serverInfoPanel;
 	}
 
@@ -125,13 +131,15 @@ class RepositoryChooser extends ReusableDialogComponentProvider {
 		JPanel urlPanel = new JPanel(new BorderLayout(10, 10));
 
 		urlTextField = new JTextField("ghidra:");
+		urlTextField.getAccessibleContext().setAccessibleName("URL");
 
 		JPanel panel = new JPanel(new PairLayout());
 		panel.add(new GLabel("URL:"));
 		panel.add(urlTextField);
+		panel.getAccessibleContext().setAccessibleName("Url Text Field");
 
 		urlPanel.add(panel, BorderLayout.NORTH);
-
+		urlPanel.getAccessibleContext().setAccessibleName("URL");
 		return urlPanel;
 	}
 
@@ -162,12 +170,14 @@ class RepositoryChooser extends ReusableDialogComponentProvider {
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
 		JPanel radioButtonPanel = new JPanel(new PairLayout(5, 5));
+		radioButtonPanel.getAccessibleContext().setAccessibleName("Radio Buttons");
 		radioButtonPanel.setBorder(BorderFactory.createTitledBorder("Repository Specification"));
 
 		ChangeListener choiceListener = e -> {
 			Object src = e.getSource();
 			if (src instanceof JRadioButton) {
 				JRadioButton choiceButton = (JRadioButton) src;
+				choiceButton.getAccessibleContext().setAccessibleName("Choice");
 				if (choiceButton.isSelected()) {
 					choiceActivated(choiceButton);
 				}
@@ -175,12 +185,14 @@ class RepositoryChooser extends ReusableDialogComponentProvider {
 		};
 
 		serverInfoChoice = new GRadioButton("Ghidra Server");
+		serverInfoChoice.getAccessibleContext().setAccessibleName("Ghidra Server");
 		serverInfoChoice.setSelected(true);
 		serverInfoChoice.addChangeListener(choiceListener);
 		radioButtonPanel.add(serverInfoChoice);
 
 		urlChoice = new GRadioButton("Ghidra URL");
 		urlChoice.addChangeListener(choiceListener);
+		urlChoice.getAccessibleContext().setAccessibleName("Ghidra URL");
 		radioButtonPanel.add(urlChoice);
 
 		ButtonGroup panelChoices = new ButtonGroup();
@@ -191,6 +203,7 @@ class RepositoryChooser extends ReusableDialogComponentProvider {
 
 		cardLayout = new CardLayout();
 		cardPanel = new JPanel(cardLayout);
+		cardPanel.getAccessibleContext().setAccessibleName("Card");
 
 		cardPanel.add(buildServerInfoPanel(), SERVER_INFO);
 
@@ -198,7 +211,7 @@ class RepositoryChooser extends ReusableDialogComponentProvider {
 
 		panel.add(cardPanel, BorderLayout.CENTER);
 		cardLayout.show(cardPanel, SERVER_INFO);
-
+		panel.getAccessibleContext().setAccessibleName("Repository Chooser");
 		addWorkPanel(panel);
 
 		addCancelButton();

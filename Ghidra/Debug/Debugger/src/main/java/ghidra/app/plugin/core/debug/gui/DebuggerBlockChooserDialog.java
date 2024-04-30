@@ -176,8 +176,9 @@ public class DebuggerBlockChooserDialog extends ReusableDialogComponentProvider 
 		panel.add(new JScrollPane(table));
 
 		filterPanel = new GhidraTableFilterPanel<>(table, tableModel);
+		filterPanel.getAccessibleContext().setAccessibleName("Filter");
 		panel.add(filterPanel, BorderLayout.SOUTH);
-
+		panel.getAccessibleContext().setAccessibleName("Debugger Block Chooser");
 		addWorkPanel(panel);
 
 		addOKButton();

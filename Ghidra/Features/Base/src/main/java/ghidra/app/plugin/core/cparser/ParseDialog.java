@@ -193,18 +193,22 @@ class ParseDialog extends ReusableDialogComponentProvider {
 
 		comboBox = new GhidraComboBox<>(comboModel);
 		comboItemListener = e -> selectionChanged(e);
+		comboBox.getAccessibleContext().setAccessibleName("Parse Configurations");
 		comboBox.addItemListener(comboItemListener);
 
 		JPanel cPanel = new JPanel(new BorderLayout());
 		cPanel.setBorder(BorderFactory.createTitledBorder("Parse Configuration"));
 		cPanel.add(comboBox);
+		cPanel.getAccessibleContext().setAccessibleName("Configuration");
 		JPanel comboPanel = new JPanel(new BorderLayout());
 		comboPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+		comboPanel.getAccessibleContext().setAccessibleName("Configurations");
 		comboPanel.add(cPanel);
 
 		// enable edits, add to bottom, ordered
 		pathPanel = new PathnameTablePanel(null, true, false, true);
 		pathPanel.setBorder(BorderFactory.createTitledBorder("Source files to parse"));
+		pathPanel.getAccessibleContext().setAccessibleName("Path");
 		String importDir = Preferences.getProperty(LAST_IMPORT_C_DIRECTORY);
 		if (importDir == null) {
 			importDir = Preferences.getProperty(Preferences.LAST_PATH_DIRECTORY);
@@ -223,6 +227,7 @@ class ParseDialog extends ReusableDialogComponentProvider {
 			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 
 				JLabel label = (JLabel) super.getTableCellRendererComponent(data);
+				label.getAccessibleContext().setAccessibleName("Path Data");
 				Object value = data.getValue();
 
 				String pathName = (String) value;
@@ -245,7 +250,6 @@ class ParseDialog extends ReusableDialogComponentProvider {
 				if (!fileExists) {
 					label.setForeground(getErrorForegroundColor(data.isSelected()));
 				}
-
 				return label;
 			}
 		});
@@ -275,6 +279,7 @@ class ParseDialog extends ReusableDialogComponentProvider {
 		parsePathTableModel.addTableModelListener(parsePathTableListener);
 
 		JPanel optionsPanel = new JPanel(new BorderLayout());
+		optionsPanel.getAccessibleContext().setAccessibleName("Options");
 		optionsPanel.setBorder(BorderFactory.createTitledBorder("Parse Options"));
 
 		// create options field
@@ -282,10 +287,12 @@ class ParseDialog extends ReusableDialogComponentProvider {
 		parseOptionsField = new JTextArea(5, 70);
 		JScrollPane pane = new JScrollPane(parseOptionsField);
 		pane.getViewport().setPreferredSize(new Dimension(300, 200));
+		pane.getAccessibleContext().setAccessibleName("Options");
 		optionsPanel.add(pane, BorderLayout.CENTER);
 
 		JPanel archPanel = new JPanel(new BorderLayout());
 		archPanel.setBorder(BorderFactory.createTitledBorder("Program Architecture:"));
+		archPanel.getAccessibleContext().setAccessibleName("Program Architecture");
 		archPanel.add(new GLabel(" ", SwingConstants.RIGHT));
 		languagePanel = buildLanguagePanel();
 		archPanel.add(languagePanel);
@@ -295,11 +302,13 @@ class ParseDialog extends ReusableDialogComponentProvider {
 		parseButton = new JButton("Parse to Program");
 		parseButton.addActionListener(ev -> doParse(false));
 		parseButton.setToolTipText("Parse files and add data types to current program");
+		parseButton.getAccessibleContext().setAccessibleName("Parse to Program");
 		addButton(parseButton);
 
 		parseToFileButton = new JButton("Parse to File...");
 		parseToFileButton.addActionListener(ev -> doParse(true));
 		parseToFileButton.setToolTipText("Parse files and output to archive file");
+		parseToFileButton.getAccessibleContext().setAccessibleName("Parse to File");
 		addButton(parseToFileButton);
 
 		mainPanel.add(comboPanel, BorderLayout.NORTH);
@@ -307,10 +316,12 @@ class ParseDialog extends ReusableDialogComponentProvider {
 		includePathPanel.setPreferredSize(new Dimension(pathPanel.getPreferredSize().width, 200));
 		JSplitPane optionsPane =
 			new JSplitPane(JSplitPane.VERTICAL_SPLIT, includePathPanel, optionsPanel);
+		optionsPane.getAccessibleContext().setAccessibleName("Include Path and Options");
 		optionsPane.setResizeWeight(0.50);
 
 		pathPanel.setPreferredSize(new Dimension(pathPanel.getPreferredSize().width, 200));
 		JSplitPane outerPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, pathPanel, optionsPane);
+		outerPane.getAccessibleContext().setAccessibleName("Path and Options");
 		outerPane.setResizeWeight(0.50);
 
 		mainPanel.add(outerPane, BorderLayout.CENTER);
@@ -322,6 +333,7 @@ class ParseDialog extends ReusableDialogComponentProvider {
 		loadProfile();
 
 		initialBuild = false;
+		mainPanel.getAccessibleContext().setAccessibleName("Parse");
 		return mainPanel;
 	}
 

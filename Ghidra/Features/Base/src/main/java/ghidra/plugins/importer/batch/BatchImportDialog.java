@@ -130,7 +130,7 @@ public class BatchImportDialog extends DialogComponentProvider {
 
 		};
 		table = new GTable(tableModel);
-
+		table.getAccessibleContext().setAccessibleName("Batch Content");
 		table.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -178,11 +178,13 @@ public class BatchImportDialog extends DialogComponentProvider {
 		JPanel sourceListPanel = new JPanel();
 		sourceListPanel.setLayout(new BorderLayout());
 		sourceListPanel.setBorder(createTitledBorder("Import Sources", false));
+		sourceListPanel.getAccessibleContext().setAccessibleName("Source List");
 
 		sourceListModel = new SourcesListModel();
 
 		JList<String> sourceList = new JList<>(sourceListModel);
 		sourceList.setName("batch.import.source.list");
+		sourceList.getAccessibleContext().setAccessibleName("Batch Import Source List");
 		sourceList.addListSelectionListener(e -> {
 			if (!e.getValueIsAdjusting()) {
 				boolean hasSelection = sourceList.getSelectedIndices().length > 0;
@@ -191,8 +193,10 @@ public class BatchImportDialog extends DialogComponentProvider {
 		});
 		JScrollPane sourceListScrollPane = new JScrollPane(sourceList);
 		sourceListPanel.add(sourceListScrollPane, BorderLayout.CENTER);
+		sourceListScrollPane.getAccessibleContext().setAccessibleName("Source List Scroll");
 
 		JPanel sourceOptionsPanel = new JPanel();
+		sourceOptionsPanel.getAccessibleContext().setAccessibleName("Source Options");
 
 		// some padding before the files table
 		sourceOptionsPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
@@ -231,10 +235,13 @@ public class BatchImportDialog extends DialogComponentProvider {
 
 		JPanel sourceListButtonsPanel = new JPanel();
 		sourceListButtonsPanel.setLayout(new BorderLayout());
+		sourceListButtonsPanel.getAccessibleContext().setAccessibleName("Source List Buttons");
 
 		JButton addSourceButton = new JButton("Add");
+		addSourceButton.getAccessibleContext().setAccessibleName("Add Source");
 		this.removeSourceButton = new JButton("Remove");
 		removeSourceButton.setEnabled(false);
+		removeSourceButton.getAccessibleContext().setAccessibleName("Remove");
 
 		addSourceButton.addActionListener(e -> {
 			addSources();
@@ -282,11 +289,13 @@ public class BatchImportDialog extends DialogComponentProvider {
 		});
 
 		JPanel outputOptionsPanel = buildOutputOptionsPanel();
+		outputOptionsPanel.getAccessibleContext().setAccessibleName("Output Options");
 
 		Box box = Box.createVerticalBox();
 		box.add(sourceListPanel);
 		box.add(filesPanel);
 		box.add(outputOptionsPanel);
+		box.getAccessibleContext().setAccessibleName("Batch Import");
 
 		addOKButton();
 		addCancelButton();
@@ -304,21 +313,25 @@ public class BatchImportDialog extends DialogComponentProvider {
 
 		JPanel outputChoicesPanel = new JPanel();
 		outputChoicesPanel.setLayout(new BoxLayout(outputChoicesPanel, BoxLayout.LINE_AXIS));
+		outputChoicesPanel.getAccessibleContext().setAccessibleName("Output Choices");
 
 		GCheckBox stripLeadingCb = new GCheckBox("Strip leading path", stripLeading);
 		stripLeadingCb.addChangeListener(e -> setStripLeading(stripLeadingCb.isSelected()));
 		stripLeadingCb.setToolTipText("The destination folder for imported files will not " +
 			"include the source file's leading path");
+		stripLeadingCb.getAccessibleContext().setAccessibleName("Strip Leading Path");
 
 		GCheckBox stripContainerCb = new GCheckBox("Strip container paths", stripContainer);
 		stripContainerCb.addChangeListener(e -> setStripContainer(stripContainerCb.isSelected()));
 		stripContainerCb.setToolTipText(
 			"The destination folder for imported files will not include any source path names");
+		stripContainerCb.getAccessibleContext().setAccessibleName("Strip Container Paths");
 
 		GCheckBox openAfterImportCb = new GCheckBox("Open after import", openAfterImporting);
-		openAfterImportCb.addChangeListener(
-			e -> setOpenAfterImporting(openAfterImportCb.isSelected()));
+		openAfterImportCb
+				.addChangeListener(e -> setOpenAfterImporting(openAfterImportCb.isSelected()));
 		openAfterImportCb.setToolTipText("Open imported binaries in Code Browser");
+		openAfterImportCb.getAccessibleContext().setAccessibleName("Open After Import");
 
 		outputChoicesPanel.add(stripLeadingCb);
 		outputChoicesPanel.add(stripContainerCb);
@@ -341,6 +354,7 @@ public class BatchImportDialog extends DialogComponentProvider {
 		outputOptionsPanel.setBorder(createTitledBorder("Import Options", true));
 		outputOptionsPanel.add(outputChoicesPanel, BorderLayout.NORTH);
 		outputOptionsPanel.add(destPanel, BorderLayout.SOUTH);
+		outputOptionsPanel.getAccessibleContext().setAccessibleName("Output Options");
 		return outputOptionsPanel;
 	}
 

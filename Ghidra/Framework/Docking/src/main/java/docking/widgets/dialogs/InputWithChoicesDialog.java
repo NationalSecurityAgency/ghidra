@@ -110,11 +110,14 @@ public class InputWithChoicesDialog extends DialogComponentProvider {
 		// COMBO BOX PANEL
 		JLabel messageLabel = new GHtmlLabel(labelText);
 		messageLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+		messageLabel.getAccessibleContext().setAccessibleName("Message");
 		combo = createComboBox(optionValues, initialValue);
+		combo.getAccessibleContext().setAccessibleName("Options");
 
 		JPanel dataPanel = new JPanel(new BorderLayout());
 		dataPanel.add(messageLabel, BorderLayout.NORTH);
 		dataPanel.add(combo, BorderLayout.SOUTH);
+		dataPanel.getAccessibleContext().setAccessibleName("Data");
 
 		workPanel.add(dataPanel, BorderLayout.CENTER);
 
@@ -123,17 +126,20 @@ public class InputWithChoicesDialog extends DialogComponentProvider {
 			JLabel iconLabel = new GDLabel();
 			iconLabel.setIcon(messageIcon);
 			iconLabel.setVerticalAlignment(SwingConstants.TOP);
+			iconLabel.getAccessibleContext().setAccessibleName("Icon");
 
 			JPanel separatorPanel = new JPanel();
 			separatorPanel.setPreferredSize(new Dimension(15, 1));
+			separatorPanel.getAccessibleContext().setAccessibleName("Separator");
 
 			JPanel iconPanel = new JPanel(new BorderLayout());
 			iconPanel.add(iconLabel, BorderLayout.CENTER);
 			iconPanel.add(separatorPanel, BorderLayout.EAST);
+			iconPanel.getAccessibleContext().setAccessibleName("Icon");
 
 			workPanel.add(iconPanel, BorderLayout.WEST);
 		}
-
+		workPanel.getAccessibleContext().setAccessibleName("Input With Choices");
 		addWorkPanel(workPanel);
 	}
 
@@ -145,7 +151,7 @@ public class InputWithChoicesDialog extends DialogComponentProvider {
 		if (initialValue != null) {
 			newComboBox.setSelectedItem(initialValue);
 		}
-
+		newComboBox.getAccessibleContext().setAccessibleName("Options");
 		return newComboBox;
 	}
 

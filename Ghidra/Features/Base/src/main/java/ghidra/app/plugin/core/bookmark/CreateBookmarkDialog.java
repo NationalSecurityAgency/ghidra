@@ -96,7 +96,7 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 		panel.add(buildIconLabel(), BorderLayout.WEST);
 		panel.add(buildCentralPanel(), BorderLayout.CENTER);
 		panel.add(buildCheckboxPanel(), BorderLayout.SOUTH);
-
+		panel.getAccessibleContext().setAccessibleName("Bookmark Creation");
 		return panel;
 	}
 
@@ -106,6 +106,7 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 		JPanel panel = new JPanel();
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
 		panel.add(selectionCB);
+		panel.getAccessibleContext().setAccessibleName("Selection Ranges");
 		return panel;
 	}
 
@@ -125,7 +126,7 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 
 		panel.add(new JLabel("Description: ", SwingConstants.RIGHT));
 		panel.add(descriptionTextField);
-
+		panel.getAccessibleContext().setAccessibleName("Bookmark Details");
 		return panel;
 	}
 
@@ -142,6 +143,7 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 		JLabel imageLabel = new GIconLabel(icon);
 		imageLabel.setPreferredSize(
 			new Dimension(icon.getIconWidth() + 20, icon.getIconHeight() + 20));
+		imageLabel.getAccessibleContext().setAccessibleName("Icons");
 		return imageLabel;
 	}
 

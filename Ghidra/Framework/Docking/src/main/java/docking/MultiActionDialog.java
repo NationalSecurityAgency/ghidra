@@ -101,14 +101,16 @@ public class MultiActionDialog extends DialogComponentProvider {
 		labelPanel.add(new GLabel("Multiple actions have been mapped to " + keystrokeName));
 		labelPanel.add(new GLabel("Actions that can be enabled at the same"));
 		labelPanel.add(new GLabel("time should be mapped to different keys"));
+		labelPanel.getAccessibleContext().setAccessibleName("Label");
 
 		innerPanel.setBorder(BorderFactory.createTitledBorder("Actions"));
-
+		innerPanel.getAccessibleContext().setAccessibleName("Actions");
 		JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
 		Icon icon = UIManager.getIcon("OptionPane.warningIcon");
 		panel.add(new GIconLabel(icon));
 		panel.add(labelPanel);
+		panel.getAccessibleContext().setAccessibleName("Icon");
 
 		listModel = new DefaultListModel<>();
 		actionList = new JList<>(listModel);
@@ -137,12 +139,14 @@ public class MultiActionDialog extends DialogComponentProvider {
 
 		actionList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		actionList.setVisibleRowCount(5);
+		actionList.getAccessibleContext().setAccessibleName("Action");
 		JScrollPane listScrollPane = new JScrollPane(actionList);
-
+		listScrollPane.getAccessibleContext().setAccessibleName("Action List");
 		innerPanel.add(listScrollPane, BorderLayout.CENTER);
 
 		mainPanel.add(panel, BorderLayout.NORTH);
 		mainPanel.add(innerPanel, BorderLayout.CENTER);
+		mainPanel.getAccessibleContext().setAccessibleName("Multi Action");
 		return mainPanel;
 	}
 

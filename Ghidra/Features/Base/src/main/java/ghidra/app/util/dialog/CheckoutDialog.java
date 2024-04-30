@@ -50,6 +50,7 @@ public class CheckoutDialog extends DialogComponentProvider {
 			actionID = CHECKOUT;
 			close();
 		});
+		checkoutButton.getAccessibleContext().setAccessibleName("Checkout file");
 		addButton(checkoutButton);
 
 		JButton noCheckoutButton = new JButton("No");
@@ -57,6 +58,7 @@ public class CheckoutDialog extends DialogComponentProvider {
 			actionID = DO_NOT_CHECKOUT;
 			close();
 		});
+		noCheckoutButton.getAccessibleContext().setAccessibleName("Don't checkout file");
 		addButton(noCheckoutButton);
 
 	}
@@ -78,11 +80,13 @@ public class CheckoutDialog extends DialogComponentProvider {
 		JPanel innerPanel = new JPanel();
 		innerPanel.setLayout(new BorderLayout());
 		innerPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+		innerPanel.getAccessibleContext().setAccessibleName("File Checkout");
 
 		JPanel msgPanel = new JPanel(new BorderLayout());
 		msgPanel.add(
 			new GIconLabel(OptionDialog.getIconForMessageType(OptionDialog.WARNING_MESSAGE)),
 			BorderLayout.WEST);
+		msgPanel.getAccessibleContext().setAccessibleName("Message");
 
 		MultiLineLabel msgText = new MultiLineLabel("File " + df.getName() +
 			" is NOT CHECKED OUT.\n" + "If you want to make changes and save them\n" +
@@ -102,7 +106,10 @@ public class CheckoutDialog extends DialogComponentProvider {
 				exclusiveCB.addActionListener(e -> exclusiveCheckout = exclusiveCB.isSelected());
 				JPanel cbPanel = new JPanel(new BorderLayout());
 				cbPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+				exclusiveCB.getAccessibleContext()
+						.setAccessibleDescription("Exclusize Checkout Box");
 				cbPanel.add(exclusiveCB);
+				cbPanel.getAccessibleContext().setAccessibleDescription("Checkboxes");
 				innerPanel.add(cbPanel, BorderLayout.SOUTH);
 			}
 		}

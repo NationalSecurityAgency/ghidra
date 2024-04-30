@@ -102,6 +102,7 @@ public class DataTypeSelectionDialog extends DialogComponentProvider {
 		});
 
 		JComponent mainPanel = createEditorPanel(editor);
+		mainPanel.getAccessibleContext().setAccessibleName("Data Type Selection");
 		addWorkPanel(mainPanel);
 
 		rootPanel.validate();

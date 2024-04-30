@@ -56,6 +56,7 @@ public class ManagePluginsDialog extends ReusableDialogComponentProvider {
 		pluginComponent = new PluginManagerComponent(tool, pluginConfigurationModel);
 		JScrollPane scrollPane = new JScrollPane(pluginComponent);
 		scrollPane.getViewport().setViewPosition(new Point(0, 0));
+		scrollPane.getAccessibleContext().setAccessibleName("Manage Plugins");
 		addWorkPanel(scrollPane);
 		createActions(addSaveActions);
 		if (tool == AppInfo.getFrontEndTool()) {
@@ -68,6 +69,7 @@ public class ManagePluginsDialog extends ReusableDialogComponentProvider {
 
 		JButton doneButton = new JButton("Close");
 		doneButton.addActionListener(e -> close());
+		doneButton.getAccessibleContext().setAccessibleName("Done");
 		addButton(doneButton);
 	}
 
