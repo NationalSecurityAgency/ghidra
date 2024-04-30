@@ -5651,7 +5651,7 @@ is size.ldstr=2 & b_2429=0x8 & b_23=1 & L=0 & b_21=0 & b_15=1 & addrReg & Rt_GPR
 :stlrb Rt_GPR32, addrReg
 is size.ldstr=0 & b_2429=0x8 & b_23=1 & L=0 & b_21=0 & b_15=1 & addrReg & Rt_GPR32
 {
-	*addrReg = Rt_GPR32;
+	*:1 addrReg = Rt_GPR32:1;
 }
 
 # C6.2.312 STLRH page C6-1849 line 108967 MATCH x48808000/mask=xffe08000
@@ -5662,7 +5662,7 @@ is size.ldstr=0 & b_2429=0x8 & b_23=1 & L=0 & b_21=0 & b_15=1 & addrReg & Rt_GPR
 :stlrh Rt_GPR32, addrReg
 is size.ldstr=1 & b_2429=0x8 & b_23=1 & L=0 & b_21=0 & b_15=1 & addrReg & Rt_GPR32
 {
-	*addrReg = Rt_GPR32;
+	*:2 addrReg = Rt_GPR32:2;
 }
 
 # C6.2.313 STLUR page C6-1850 line 109030 MATCH x99000000/mask=xbfe00c00
