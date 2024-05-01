@@ -32,6 +32,7 @@ import ghidra.app.util.bin.format.pdb.PdbParserConstants;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.PrimitiveMsType;
 import ghidra.app.util.bin.format.pe.cli.tables.CliAbstractTableRow;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.pdb.PdbCategories;
@@ -274,8 +275,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	 * @throws PdbException upon error processing the PDB
 	 * @throws CancelledException upon user cancellation
 	 */
-	public void applyDataTypesAndMainSymbolsAnalysis()
-			throws PdbException, CancelledException {
+	public void applyDataTypesAndMainSymbolsAnalysis() throws PdbException, CancelledException {
 		pdbAnalysisLookupState = getPdbAnalysisLookupState(program, true);
 		doPdbPreWork();
 		doPdbTypesAndMainSymbolsWork();
@@ -297,8 +297,7 @@ public class DefaultPdbApplicator implements PdbApplicator {
 	 * @throws PdbException upon error processing the PDB
 	 * @throws CancelledException upon user cancellation
 	 */
-	public void applyFunctionInternalsAnalysis()
-			throws PdbException, CancelledException {
+	public void applyFunctionInternalsAnalysis() throws PdbException, CancelledException {
 		pdbAnalysisLookupState = getPdbAnalysisLookupState(program, true);
 		doPdbPreWork();
 		doPdbFunctionInternalsWork();
@@ -919,8 +918,16 @@ public class DefaultPdbApplicator implements PdbApplicator {
 		}
 		else if (dataType == null) {
 			AbstractMsType type = getTypeRecord(recordNumber);
-			throw new PdbException("Type not completed for record: " + recordNumber + "; " +
-				type.getClass().getSimpleName());
+			if (!(type instanceof PrimitiveMsType)) {
+				throw new PdbException("Type not completed for record: " + recordNumber + "; " +
+					type.getClass().getSimpleName());
+			}
+			multiphaseResolver.process(recordNumber);
+			dataType = getDataType(recordNumber);
+			if (dataType == null) {
+				throw new PdbException(
+					"Problem creating Primitive data type for record: " + recordNumber);
+			}
 		}
 		return dataType;
 	}
@@ -2347,8 +2354,8 @@ public class DefaultPdbApplicator implements PdbApplicator {
 			symbol =
 				program.getSymbolTable().createLabel(address, name, namespace, SourceType.IMPORTED);
 			if (makePrimary && !symbol.isPrimary()) {
-				SetLabelPrimaryCmd cmd = new SetLabelPrimaryCmd(address, symbol.getName(),
-					symbol.getParentNamespace());
+				SetLabelPrimaryCmd cmd =
+					new SetLabelPrimaryCmd(address, symbol.getName(), symbol.getParentNamespace());
 				cmd.applyTo(program);
 			}
 		}
@@ -2387,8 +2394,8 @@ public class DefaultPdbApplicator implements PdbApplicator {
 
 	private SymbolPath getCleanSymbolPath(String symbolPathString) {
 		if (symbolPathString.startsWith(THUNK_NAME_PREFIX)) {
-			symbolPathString = symbolPathString.substring(THUNK_NAME_PREFIX.length(),
-				symbolPathString.length());
+			symbolPathString =
+				symbolPathString.substring(THUNK_NAME_PREFIX.length(), symbolPathString.length());
 		}
 		SymbolPath symbolPath = new SymbolPath(symbolPathString);
 		symbolPath = symbolPath.replaceInvalidChars();

@@ -41,7 +41,7 @@ public class SymbolApplierFactory {
 
 	MsSymbolApplier getSymbolApplier(AbstractMsSymbol symbol, MsSymbolIterator iter) {
 		MsSymbolApplier applier = getSymbolApplierInternal(symbol, iter);
-		if (!(applier instanceof NoSymbolApplier)) {
+		if (applier instanceof NoSymbolApplier) {
 			applicator.getPdbApplicatorMetrics().witnessCannotApplySymbolType(symbol);
 		}
 		return applier;

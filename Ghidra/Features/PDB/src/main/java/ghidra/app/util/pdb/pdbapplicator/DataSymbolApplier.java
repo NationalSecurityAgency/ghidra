@@ -15,8 +15,7 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import ghidra.app.util.bin.format.pdb2.pdbreader.MsSymbolIterator;
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
+import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractDataMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.program.model.address.Address;
@@ -83,7 +82,11 @@ public class DataSymbolApplier extends MsSymbolApplier
 	}
 
 	boolean createData(Address address) throws CancelledException, PdbException {
-		DataType dataType = applicator.getCompletedDataType(symbol.getTypeRecordNumber());
+		RecordNumber typeRecordNumber = symbol.getTypeRecordNumber();
+		if (typeRecordNumber.isNoType()) {
+			return false;
+		}
+		DataType dataType = applicator.getCompletedDataType(typeRecordNumber);
 		if (dataType == null) { // TODO: check that we can have null here.
 			return false;
 		}
