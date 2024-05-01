@@ -13,79 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-def checkPythonVersion(String pyCmd) {
-	try {
-		def stdout = new ByteArrayOutputStream()
-		exec {
-			commandLine pyCmd, "-c", "import sys; print('{0}.{1}'.format(*sys.version_info))"
-			standardOutput = stdout
-			errorOutput = OutputStream.nullOutputStream()
-		}
-		def version = "$stdout".strip()
-		return version
-	}
-	catch (Exception e) {
-		return "ABSENT"
-	}
-}
-
-ext.MIN_PIP_VERSION = [20, 2] // 20.2+
-
-def checkPipVersion(String pyCmd) {
-	try {
-		def stdout = new ByteArrayOutputStream()
-		exec {
-			commandLine pyCmd, "-c", "import pip; print(pip.__version__)"
-			standardOutput = stdout
-			errorOutput = OutputStream.nullOutputStream()
-		}
-		def version = "$stdout".strip();
-		if (version.length() == 0) {
-			println("Warning: python pip not installed (required for build)")
-		}
-		else {
-			println("Found python pip version ${version}")
-			def (majorVer, minorVer) = version.tokenize('.')
-			def major = majorVer.toInteger()
-			def minor = minorVer.toInteger()
-			if (major < MIN_PIP_VERSION[0] || (major == MIN_PIP_VERSION[0] && minor < MIN_PIP_VERSION[1])) {
-				println("Warning: python pip may require upgrade")
-			}
-		}
-		return version
-	}
-	catch (Exception e) {
-		println("Warning: python pip not installed")
-	}
-}
-
-ext.SUPPORTED_PY_VERSIONS = ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12']
-
-def findPython3() {
-	for (pyCmd in ['py', 'python3', 'python']) {
-		def pyVer = checkPythonVersion(pyCmd)
-		if (pyVer in SUPPORTED_PY_VERSIONS) {
-			println("Using python command:  ${pyCmd} (version ${pyVer})")
-			checkPipVersion(pyCmd)
-			return pyCmd
-		}
-	}
-	for (pyVer in SUPPORTED_PY_VERSIONS) {
-		def pyCmd = "python${pyVer}"
-		if (checkPythonVersion(pyCmd) in SUPPORTED_PY_VERSIONS) {
-			println("Using python command:  ${pyCmd}")
-			checkPipVersion(pyCmd)
-			return pyCmd
-		}
-	}
-	// Don't fail until task execution. Just let "python3" fail.
-	// Force use of non-existent python3.7 instead of unsupported python version
-	// which should fail if a python build is performed.
-	return 'python3.7'
-}
-
-ext.PYTHON3 = findPython3()
+ 
+/**
+ * NOTE: Supported Python3 command is established by root project build.gradle
+ */
 
 ext.findPyDep = { name ->
     File inDeps = file("${DEPS_DIR}/${project.name}/${name}")
@@ -114,7 +45,7 @@ task buildPyPackage {
 		File setuptools = project(":Debugger-rmi-trace").findPyDep(".")
 		exec {
 			workingDir { "build/pypkg" }
-			commandLine	PYTHON3, "-m", "pip"
+			commandLine	rootProject.PYTHON3, "-m", "pip"
 			args "wheel", "-w", "dist/", "--no-index", "--no-deps"
 			args "-f", setuptools
 			args "."
