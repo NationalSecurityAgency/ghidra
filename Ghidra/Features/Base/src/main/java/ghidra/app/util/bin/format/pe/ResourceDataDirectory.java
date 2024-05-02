@@ -269,6 +269,19 @@ public class ResourceDataDirectory extends DataDirectory {
 						}
 						PeUtils.createData(program, addr, dataType, log);
 					}
+					else if (info.getName().startsWith("Rsrc_MIDI")) {
+						DataType dataType = null;
+						// Check for MIDI magic number
+						try {
+							if (program.getMemory().getInt(addr) == 0x6468544d) {
+								dataType = new MIDIDataType();
+							}
+						}
+						catch (MemoryAccessException e) {
+							// ignore - let createData produce error
+						}
+						PeUtils.createData(program, addr, dataType, log);
+					}
 					else if (info.getName().startsWith("Rsrc_WEVT")) {
 						DataType dataType = null;
 						// Check for WEVT magic number "CRIM"

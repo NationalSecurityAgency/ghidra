@@ -19,29 +19,24 @@ import java.awt.event.MouseEvent;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
-import javax.sound.midi.InvalidMidiDataException;
-import javax.sound.midi.MetaEventListener;
-import javax.sound.midi.MetaMessage;
-import javax.sound.midi.MidiSystem;
-import javax.sound.midi.MidiUnavailableException;
-import javax.sound.midi.Sequence;
-import javax.sound.midi.Sequencer;
+import javax.sound.midi.*;
 import javax.swing.Icon;
 
 import generic.theme.GIcon;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
 
+/**
+ * Plays a MIDI score
+ */
 public class ScorePlayer implements Playable, MetaEventListener {
 
+	private static final Icon MIDI_ICON = new GIcon("icon.data.type.audio.player");
 	private static final int END_OF_TRACK_MESSAGE = 47;
 	
-	private static final Icon AUDIO_ICON = new GIcon("icon.data.type.audio.player");
-
 	// This currently only allows one sequence to be played for the entire application,
 	// which seems good enough.  The MIDI instance variables are currently synchronized
 	// by the Swing thread.
-	private static volatile Sequence currentSequence;
 	private static volatile Sequencer currentSequencer;
 
 	private byte[] bytes;
@@ -52,30 +47,23 @@ public class ScorePlayer implements Playable, MetaEventListener {
 
 	@Override
 	public Icon getImageIcon() {
-		return AUDIO_ICON;
+		return MIDI_ICON;
 	}
 
 	@Override
 	public void clicked(MouseEvent event) {
 		try {
-			// any new request should stop any previous sequence being played
-			if (currentSequence != null && currentSequencer != null) {
-				assert currentSequencer.isOpen();
-				currentSequencer.stop();
-				currentSequence = null; // this field is also updated when the sound thread calls back
-				currentSequencer = null; // same as above
+			// Any new request should stop any previous sequence being played
+			if (currentSequencer != null) {
+				stop();
 				return;
 			}
 
 			Sequencer sequencer = MidiSystem.getSequencer(true);
 			sequencer.addMetaEventListener(this);
 			sequencer.setLoopCount(0);
-			Sequence sequence = MidiSystem.getSequence(new ByteArrayInputStream(bytes));
-			if (!sequencer.isOpen()) {
-				sequencer.open();
-			}
-			sequencer.setSequence(sequence);
-			currentSequence = sequence;
+			sequencer.setSequence(MidiSystem.getSequence(new ByteArrayInputStream(bytes)));
+			sequencer.open();
 			currentSequencer = sequencer;
 			currentSequencer.start();
 		}
@@ -86,16 +74,18 @@ public class ScorePlayer implements Playable, MetaEventListener {
 
 	@Override
 	public void meta(MetaMessage message) {
-		if (message.getType() != END_OF_TRACK_MESSAGE) {
+		if (message.getType() == END_OF_TRACK_MESSAGE) {
+			Swing.runNow(() -> stop());
+		}
+	}
+
+	private void stop() {
+		if (currentSequencer == null) {
 			return;
 		}
-		
-		assert currentSequencer != null && currentSequence != null;
 		currentSequencer.removeMetaEventListener(this);
 		currentSequencer.stop();
-		Swing.runNow(() -> {
-			currentSequence = null;
-			currentSequencer = null;
-		});		
+		currentSequencer.close();
+		currentSequencer = null;
 	}
 }
