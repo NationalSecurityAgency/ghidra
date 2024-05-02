@@ -103,7 +103,7 @@ public class MarkAndSelectionAction extends ToggleDockingAction {
 		if (markedLocation != null) {
 			Address address = markedLocation.getByteAddress();
 			menuName = "Create Selection from " + address;
-			description = "Create seletion from marked location: " + address;
+			description = "Create selection from marked location: " + address;
 			icon = armedIcon;
 		}
 
