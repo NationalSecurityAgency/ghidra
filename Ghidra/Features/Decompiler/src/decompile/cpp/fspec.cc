@@ -49,6 +49,7 @@ ElementId ELEM_RESOLVEPROTOTYPE = ElementId("resolveprototype",170);
 ElementId ELEM_RETPARAM = ElementId("retparam",171);
 ElementId ELEM_RETURNSYM = ElementId("returnsym",172);
 ElementId ELEM_UNAFFECTED = ElementId("unaffected",173);
+ElementId ELEM_INTERNAL_STORAGE = ElementId("internal_storage",286);
 
 /// \brief Find a ParamEntry matching the given storage Varnode
 ///
@@ -2324,6 +2325,7 @@ ProtoModel::ProtoModel(const string &nm,const ProtoModel &op2)
 
   effectlist = op2.effectlist;
   likelytrash = op2.likelytrash;
+  internalstorage = op2.internalstorage;
 
   injectUponEntry = op2.injectUponEntry;
   injectUponReturn = op2.injectUponReturn;
@@ -2515,6 +2517,7 @@ void ProtoModel::decode(Decoder &decoder)
   injectUponEntry = -1;
   injectUponReturn = -1;
   likelytrash.clear();
+  internalstorage.clear();
   uint4 elemId = decoder.openElement(ELEM_PROTOTYPE);
   for(;;) {
     uint4 attribId = decoder.getNextAttributeId();
@@ -2612,6 +2615,14 @@ void ProtoModel::decode(Decoder &decoder)
       }
       decoder.closeElement(subId);
     }
+    else if (subId == ELEM_INTERNAL_STORAGE) {
+      decoder.openElement();
+      while(decoder.peekElement() != 0) {
+	internalstorage.emplace_back();
+	internalstorage.back().decode(decoder);
+      }
+      decoder.closeElement(subId);
+    }
     else if (subId == ELEM_PCODE) {
       int4 injectId = glb->pcodeinjectlib->decodeInject("Protomodel : "+name, name,
 							InjectPayload::CALLMECHANISM_TYPE,decoder);
@@ -2631,6 +2642,7 @@ void ProtoModel::decode(Decoder &decoder)
   }
   sort(effectlist.begin(),effectlist.end(),EffectRecord::compareByAddress);
   sort(likelytrash.begin(),likelytrash.end());
+  sort(internalstorage.begin(),internalstorage.end());
   if (!sawlocalrange)
     defaultLocalRange();
   if (!sawparamrange)
@@ -2740,19 +2752,20 @@ void ProtoModelMerged::intersectEffects(const vector<EffectRecord> &efflist)
   effectlist.swap(newlist);
 }
 
-/// The \e likely-trash locations are intersected. Anything in \b this that is not also in the
-/// given \e likely-trash list is removed.
-/// \param trashlist is the given \e likely-trash list
-void ProtoModelMerged::intersectLikelyTrash(const vector<VarnodeData> &trashlist)
+/// The intersection of two containers of register Varnodes is calculated, and the result is
+/// placed in the first container, replacing the original contents.  The containers must already be sorted.
+/// \param regList1 is the first container
+/// \param regList2 is the second container
+void ProtoModelMerged::intersectRegisters(vector<VarnodeData> &regList1,const vector<VarnodeData> &regList2)
 
 {
   vector<VarnodeData> newlist;
 
   int4 i=0;
   int4 j=0;
-  while((i<likelytrash.size())&&(j<trashlist.size())) {
-    const VarnodeData &trs1( likelytrash[i] );
-    const VarnodeData &trs2( trashlist[j] );
+  while((i<regList1.size())&&(j<regList2.size())) {
+    const VarnodeData &trs1( regList1[i] );
+    const VarnodeData &trs2( regList2[j] );
 
     if (trs1 < trs2)
       i += 1;
@@ -2764,7 +2777,7 @@ void ProtoModelMerged::intersectLikelyTrash(const vector<VarnodeData> &trashlist
       j += 1;
     }
   }
-  likelytrash = newlist;
+  regList1.swap(newlist);
 }
 
 /// \param model is the new prototype model to add to the merge
@@ -2795,7 +2808,8 @@ void ProtoModelMerged::foldIn(ProtoModel *model)
     if ((injectUponEntry != model->injectUponEntry)||(injectUponReturn != model->injectUponReturn))
       throw LowlevelError("Cannot merge prototype models with different inject ids");
     intersectEffects(model->effectlist);
-    intersectLikelyTrash(model->likelytrash);
+    intersectRegisters(likelytrash,model->likelytrash);
+    intersectRegisters(internalstorage,model->internalstorage);
     // Take the union of the localrange and paramrange
     set<Range>::const_iterator iter;
     for(iter=model->localrange.begin();iter!=model->localrange.end();++iter)

@@ -1972,6 +1972,8 @@ int4 AncestorRealistic::enterNode(void)
 	if (!vn->isDirectWrite())
 	  return pop_fail;
       }
+      if (op->isStoreUnmapped())
+	return pop_fail;
       op = vn->getDef();
       if (op == (PcodeOp *)0) break;
       OpCode opc = op->code();

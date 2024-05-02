@@ -58,6 +58,7 @@ extern ElementId ELEM_RESOLVEPROTOTYPE;	///< Marshaling element \<resolveprototy
 extern ElementId ELEM_RETPARAM;		///< Marshaling element \<retparam>
 extern ElementId ELEM_RETURNSYM;	///< Marshaling element \<returnsym>
 extern ElementId ELEM_UNAFFECTED;	///< Marshaling element \<unaffected>
+extern ElementId ELEM_INTERNAL_STORAGE;	///< Marshaling element \<internal_storage>
 
 /// \brief Exception thrown when a prototype can't be modeled properly
 struct ParamUnassignedError : public LowlevelError {
@@ -749,6 +750,7 @@ class ProtoModel {
   const ProtoModel *compatModel;	///< The model \b this is a copy of
   vector<EffectRecord> effectlist; ///< List of side-effects
   vector<VarnodeData> likelytrash;	///< Storage locations potentially carrying \e trash values
+  vector<VarnodeData> internalstorage;	///< Registers that hold internal compiler constants
   int4 injectUponEntry;		///< Id of injection to perform at beginning of function (-1 means not used)
   int4 injectUponReturn;	///< Id of injection to perform after a call to this function (-1 means not used)
   RangeList localrange;		///< Memory range(s) of space-based locals
@@ -834,6 +836,8 @@ public:
   vector<EffectRecord>::const_iterator effectEnd(void) const { return effectlist.end(); }	///< Get an iterator to the last EffectRecord
   vector<VarnodeData>::const_iterator trashBegin(void) const { return likelytrash.begin(); }	///< Get an iterator to the first \e likelytrash
   vector<VarnodeData>::const_iterator trashEnd(void) const { return likelytrash.end(); }	///< Get an iterator to the last \e likelytrash
+  vector<VarnodeData>::const_iterator internalBegin(void) const { return internalstorage.begin(); }	///< Get an iterator to the first \e internalstorage
+  vector<VarnodeData>::const_iterator internalEnd(void) const { return internalstorage.end(); }	///< Get an iterator to the last \e internalstorage
 
   /// \brief Characterize whether the given range overlaps parameter storage
   ///
@@ -1068,7 +1072,7 @@ public:
 class ProtoModelMerged : public ProtoModel {
   vector<ProtoModel *> modellist;					///< Constituent models being merged
   void intersectEffects(const vector<EffectRecord> &efflist);		///< Fold EffectRecords into \b this model
-  void intersectLikelyTrash(const vector<VarnodeData> &trashlist);	///< Fold \e likelytrash locations into \b this model
+  static void intersectRegisters(vector<VarnodeData> &regList1,const vector<VarnodeData> &regList2);
 public:
   ProtoModelMerged(Architecture *g) : ProtoModel(g) {}			///< Constructor
   virtual ~ProtoModelMerged(void) {}					///< Destructor
@@ -1539,6 +1543,8 @@ public:
   vector<EffectRecord>::const_iterator effectEnd(void) const;	///< Get iterator to end of EffectRecord list
   vector<VarnodeData>::const_iterator trashBegin(void) const;	///< Get iterator to front of \e likelytrash list
   vector<VarnodeData>::const_iterator trashEnd(void) const;	///< Get iterator to end of \e likelytrash list
+  vector<VarnodeData>::const_iterator internalBegin(void) const { return model->internalBegin(); }	///< Get iterator to front of \e internalstorage list
+  vector<VarnodeData>::const_iterator internalEnd(void) const { return model->internalEnd(); }	///< Get iterator to end of \e internalstorage list
   int4 characterizeAsInputParam(const Address &addr,int4 size) const;
   int4 characterizeAsOutput(const Address &addr,int4 size) const;
   bool possibleInputParam(const Address &addr,int4 size) const;
