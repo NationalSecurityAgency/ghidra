@@ -15,7 +15,7 @@
  */
 package ghidra.framework.task;
 
-import ghidra.framework.model.UndoableDomainObject;
+import ghidra.framework.model.DomainObject;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -35,7 +35,7 @@ public class SimpleTask implements GTask {
 	}
 
 	@Override
-	public void run(UndoableDomainObject obj, TaskMonitor monitor) throws CancelledException {
+	public void run(DomainObject obj, TaskMonitor monitor) throws CancelledException {
 		monitor.checkCancelled();
 		didRun = true;
 	}

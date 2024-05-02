@@ -56,8 +56,8 @@ class LibrarySymbolTable {
 	private String date;
 	private String version;
 	private int tempPurge;
-	private String fowardLibrary = null;
-	private String fowardSymbol = null;
+	private String forwardLibrary = null;
+	private String forwardSymbol = null;
 	private HashMap<String, LibraryExportedSymbol> symMap = new HashMap<>();
 	private ArrayList<LibraryExportedSymbol> exportList = new ArrayList<>();
 	private HashMap<Integer, LibraryExportedSymbol> ordMap = new HashMap<>();
@@ -140,8 +140,8 @@ class LibrarySymbolTable {
 				}
 			}
 
-			fowardLibrary = null;
-			fowardSymbol = null;
+			forwardLibrary = null;
+			forwardSymbol = null;
 			tempPurge = -1;
 			String comment = "";
 
@@ -160,12 +160,12 @@ class LibrarySymbolTable {
 					Reference[] refs = library.getReferenceManager().getReferencesFrom(symAddr);
 					if (refs != null && refs.length > 0 && refs[0].isExternalReference()) {
 						ExternalReference exRef = (ExternalReference) refs[0];
-						fowardLibrary = exRef.getLibraryName();
-						fowardSymbol = exRef.getLabel();
+						forwardLibrary = exRef.getLibraryName();
+						forwardSymbol = exRef.getLabel();
 					}
 				}
 
-				if (fowardLibrary == null || fowardLibrary.length() <= 0) {
+				if (forwardLibrary == null || forwardLibrary.length() <= 0) {
 					MemoryBlock block = library.getMemory().getBlock(symAddr);
 					if (block != null && block.isExecute()) {
 						pseudoDisassemble(library, symAddr);
@@ -179,12 +179,12 @@ class LibrarySymbolTable {
 				noReturn = true;
 			}
 
-			if (fowardLibrary != null && fowardLibrary.length() > 0) {
-				forwards.add(fowardLibrary);
+			if (forwardLibrary != null && forwardLibrary.length() > 0) {
+				forwards.add(forwardLibrary);
 			}
 
 			LibraryExportedSymbol expSym = new LibraryExportedSymbol(tableName, size, ordinal,
-				realName, fowardLibrary, fowardSymbol, tempPurge, noReturn, comment);
+				realName, forwardLibrary, forwardSymbol, tempPurge, noReturn, comment);
 
 			// add to export list in order
 			exportList.add(expSym);
@@ -225,8 +225,8 @@ class LibrarySymbolTable {
 						Scalar scalar = instr.getScalar(0);
 						if (scalar != null) {
 							tempPurge = (int) scalar.getSignedValue();
-							fowardLibrary = null;
-							fowardSymbol = null;
+							forwardLibrary = null;
+							forwardSymbol = null;
 							return false;
 						}
 					}
@@ -234,15 +234,17 @@ class LibrarySymbolTable {
 				if (ftype.isJump() && ftype.isComputed()) {
 					Reference[] refs = instr.getReferencesFrom();
 					if (refs.length > 0) {
-						Data data = instr.getProgram().getListing().getDefinedDataAt(
-							refs[0].getToAddress());
+						Data data = instr.getProgram()
+								.getListing()
+								.getDefinedDataAt(refs[0].getToAddress());
 						if (data != null) {
-							refs = instr.getProgram().getReferenceManager().getReferencesFrom(
-								data.getMinAddress());
+							refs = instr.getProgram()
+									.getReferenceManager()
+									.getReferencesFrom(data.getMinAddress());
 							if (refs != null && refs.length > 0 && refs[0].isExternalReference()) {
 								ExternalReference exRef = (ExternalReference) refs[0];
-								fowardLibrary = exRef.getLibraryName();
-								fowardSymbol = exRef.getLabel();
+								forwardLibrary = exRef.getLibraryName();
+								forwardSymbol = exRef.getLabel();
 							}
 						}
 					}
@@ -425,26 +427,24 @@ class LibrarySymbolTable {
 			version = root.getAttributeValue("VERSION");
 
 			List<Element> children = CollectionUtils.asList(root.getChildren(), Element.class);
-			Iterator<Element> iter = children.iterator();
-			while (iter.hasNext()) {
-				Element export = iter.next();
+			for (Element export : children) {
 				int ordinal = Integer.parseInt(export.getAttributeValue("ORDINAL"));
 				String name = export.getAttributeValue("NAME");
 				int purge = Integer.parseInt(export.getAttributeValue("PURGE"));
 				String comment = export.getAttributeValue("COMMENT");
-				String fowardLibName = export.getAttributeValue("FOWARDLIBRARY");
-				String fowardSymName = export.getAttributeValue("FOWARDSYMBOL");
+				String forwardLibName = export.getAttributeValue("FOWARDLIBRARY");
+				String forwardSymName = export.getAttributeValue("FOWARDSYMBOL");
 
 				String noReturnStr = export.getAttributeValue("NO_RETURN");
 				boolean noReturn = noReturnStr != null && "y".equals(noReturnStr);
 
-				if (fowardLibName != null && fowardLibName.length() > 0 &&
-					!fowardLibName.equals(tableName)) {
-					forwards.add(fowardLibName);
+				if (forwardLibName != null && forwardLibName.length() > 0 &&
+					!forwardLibName.equals(tableName)) {
+					forwards.add(forwardLibName);
 				}
 
 				LibraryExportedSymbol sym = new LibraryExportedSymbol(tableName, size, ordinal,
-					name, fowardLibName, fowardSymName, purge, noReturn, comment);
+					name, forwardLibName, forwardSymName, purge, noReturn, comment);
 
 				exportList.add(sym);
 				symMap.put(name, sym);
@@ -494,10 +494,7 @@ class LibrarySymbolTable {
 		root.setAttribute("DATE", TIMESTAMP_FORMAT.format(new Date(lastModifiedSeconds)));
 		root.setAttribute("VERSION", lversion);
 
-		Iterator<LibraryExportedSymbol> iter = exportList.iterator();
-		while (iter.hasNext()) {
-			LibraryExportedSymbol sym = iter.next();
-
+		for (LibraryExportedSymbol sym : exportList) {
 			Element export = new Element("EXPORT");
 
 			export.setAttribute("ORDINAL", sym.getOrdinal() + "");

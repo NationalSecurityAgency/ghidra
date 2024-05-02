@@ -34,7 +34,8 @@ import ghidra.app.util.viewer.listingpanel.AddressSetDisplayListener;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.util.*;
+import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.task.SwingUpdateManager;
 
@@ -60,13 +61,13 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	//@formatter:off
 	static final String FG = "byteviewer.color.fg";
 	static final String CURSOR = "byteviewer.color.cursor";
-	
-	static final GColor SEPARATOR_COLOR = new GColor("color.fg.byteviewer.separator"); 
+
+	static final GColor SEPARATOR_COLOR = new GColor("color.fg.byteviewer.separator");
 	static final GColor CHANGED_VALUE_COLOR = new GColor("color.fg.byteviewer.changed");
 	static final GColor CURSOR_ACTIVE_COLOR = new GColor("color.cursor.byteviewer.focused.active");
 	static final GColor CURSOR_NON_ACTIVE_COLOR = new GColor("color.cursor.byteviewer.focused.not.active");
 	static final GColor CURSOR_NOT_FOCUSED_COLOR = new GColor("color.cursor.byteviewer.unfocused");
-	
+
 	static final GColor CURRENT_LINE_COLOR = GhidraOptions.DEFAULT_CURSOR_LINE_COLOR;
 	//@formatter:on
 
@@ -162,7 +163,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 	/**
 	 * Notification that an option changed.
-	 * 
+	 *
 	 * @param options options object containing the property that changed
 	 * @param optionName name of option that changed
 	 * @param oldValue old value of the option
@@ -173,7 +174,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 			Object newValue) {
 		if (options.getName().equals("ByteViewer")) {
 			if (optionName.equals(OPTION_FONT)) {
-				setFont(SystemUtilities.adjustForFontSizeOverride((Font) newValue));
+				setFont((Font) newValue);
 			}
 		}
 		else if (options.getName().equals(CATEGORY_BROWSER_FIELDS)) {
@@ -460,7 +461,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 	/**
 	 * Set the status info on the tool.
-	 * 
+	 *
 	 * @param message non-html text to display
 	 */
 	void setStatusMessage(String message) {
@@ -505,7 +506,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 	/**
 	 * Add the {@link AddressSetDisplayListener} to the byte viewer panel
-	 * 
+	 *
 	 * @param listener the listener to add
 	 */
 	public void addDisplayListener(AddressSetDisplayListener listener) {
@@ -514,7 +515,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 	/**
 	 * Remove the {@link AddressSetDisplayListener} from the byte viewer panel
-	 * 
+	 *
 	 * @param listener the listener to remove
 	 */
 	public void removeDisplayListener(AddressSetDisplayListener listener) {

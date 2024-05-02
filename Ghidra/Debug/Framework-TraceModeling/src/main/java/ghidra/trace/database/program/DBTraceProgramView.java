@@ -1046,12 +1046,6 @@ public class DBTraceProgramView implements TraceProgramView {
 	}
 
 	@Override
-	public void invalidate() {
-		// TODO: I imagine I'll find out who uses this pretty quick....
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public Register getRegister(String name) {
 		return language.getRegister(name);
 	}

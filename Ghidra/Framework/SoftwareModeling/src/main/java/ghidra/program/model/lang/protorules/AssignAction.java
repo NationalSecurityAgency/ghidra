@@ -127,6 +127,9 @@ public abstract class AssignAction {
 			boolean consumeMostSig = res.getEntry(0).isBigEndian();
 			action = new MultiMemberAssign(StorageClass.GENERAL, false, consumeMostSig, res);
 		}
+		else if (nm.equals(ELEM_JOIN_DUAL_CLASS.name())) {
+			action = new MultiSlotDualAssign(res);
+		}
 		else {
 			throw new XmlParseException("Unknown model rule action: " + nm);
 		}

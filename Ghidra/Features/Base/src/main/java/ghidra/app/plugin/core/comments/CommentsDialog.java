@@ -278,6 +278,12 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 		eolField = new JTextArea(5, 80);
 		repeatableField = new JTextArea(5, 80);
 
+		preField.getAccessibleContext().setAccessibleName("Pre Comment");
+		postField.getAccessibleContext().setAccessibleName("Post Comment");
+		plateField.getAccessibleContext().setAccessibleName("Plate Comment");
+		eolField.getAccessibleContext().setAccessibleName("EOL Comment");
+		repeatableField.getAccessibleContext().setAccessibleName("Repeatable Comment");
+
 		DocumentListener dl = new DocumentListener() {
 			@Override
 			public void insertUpdate(DocumentEvent e) {
@@ -339,8 +345,24 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 		tab.addTab("  Plate Comment  ", new JScrollPane(plateField));
 		tab.addTab("  Repeatable Comment  ", new JScrollPane(repeatableField));
 
-		tab.addChangeListener(ev -> chooseFocus());
-
+		tab.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				int keyCode = e.getKeyCode();
+				if (keyCode == KeyEvent.VK_SPACE || keyCode == KeyEvent.VK_ENTER) {
+					focusSelectedTab();
+					e.consume();
+				}
+			}
+		});
+		tab.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getButton() == MouseEvent.BUTTON1) {
+					focusSelectedTab();
+				}
+			}
+		});
 		ActionListener addAnnotationAction = e -> {
 			JTextArea currentTextArea = getSelectedTextArea();
 			for (AnnotationAdapterWrapper annotation : annotations) {
@@ -428,7 +450,7 @@ public class CommentsDialog extends ReusableDialogComponentProvider implements K
 		}
 	}
 
-	private void chooseFocus() {
+	private void focusSelectedTab() {
 		getSelectedTextArea().requestFocus();
 	}
 

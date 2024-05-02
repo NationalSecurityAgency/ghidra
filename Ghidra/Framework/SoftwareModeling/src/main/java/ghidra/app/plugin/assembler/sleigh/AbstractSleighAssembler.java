@@ -105,6 +105,16 @@ public abstract class AbstractSleighAssembler<RP extends AssemblyResolvedPattern
 			AssemblyParseBranch tree, AssemblyPatternBlock ctx);
 
 	@Override
+	public SleighLanguage getLanguage() {
+		return lang;
+	}
+
+	@Override
+	public Program getProgram() {
+		return program;
+	}
+
+	@Override
 	public Instruction patchProgram(AssemblyResolvedPatterns res, Address at)
 			throws MemoryAccessException {
 		if (!res.getInstruction().isFullMask()) {
@@ -193,6 +203,7 @@ public abstract class AbstractSleighAssembler<RP extends AssemblyResolvedPattern
 	@Override
 	public AssemblyResolutionResults resolveTree(AssemblyParseResult parse, Address at) {
 		AssemblyPatternBlock ctx = getContextAt(at);
+		// ctx.fillMask()?
 		return resolveTree(parse, at, ctx);
 	}
 

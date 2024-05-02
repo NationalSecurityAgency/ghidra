@@ -33,39 +33,12 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Database version of the DomainObjectAdapter; this version adds the
+ * Database version of the DomainObjectAdapter.  Adds the
  * concept of starting a transaction before a change is made to the
  * domain object and ending the transaction. The transaction allows for
  * undo/redo changes.
- *
- * The implementation class must also satisfy the following requirements:
- * <pre>
- *
- * 1. The following constructor signature must be implemented:
- *
- * 		 **
- *		 * Constructs new Domain Object
- *		 * @param dbh a handle to an open domain object database.
- *		 * @param openMode one of:
- *		 * 		READ_ONLY: the original database will not be modified
- *		 * 		UPDATE: the database can be written to.
- *		 * 		UPGRADE: the database is upgraded to the latest schema as it is opened.
- *		 * @param monitor TaskMonitor that allows the open to be cancelled.
- *	     * @param consumer the object that keeping the program open.
- *		 *
- *		 * @throws IOException if an error accessing the database occurs.
- *		 * @throws VersionException if database version does not match implementation. UPGRADE may be possible.
- *		 **
- *		 public DomainObjectAdapterDB(DBHandle dbh, int openMode, TaskMonitor monitor, Object consumer) throws IOException, VersionException
- *
- * 2. The following static field must be provided:
- *
- * 		 public static final String CONTENT_TYPE
- *
- * </pre>
  */
-public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
-		implements UndoableDomainObject, ErrorHandler, DBConstants {
+public abstract class DomainObjectAdapterDB extends DomainObjectAdapter implements ErrorHandler {
 
 	protected static final int NUM_UNDOS = 50;
 
@@ -100,12 +73,10 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 
 	/**
 	 * Construct a new DomainObjectAdapterDB object.
-	 * If construction of this object fails, be sure to release with consumer
 	 * @param dbh database handle
 	 * @param name name of the domain object
-	 * @param timeInterval the time (in milliseconds) to wait before the
-	 * event queue is flushed.  If a new event comes in before the time expires,
-	 * the timer is reset.
+	 * @param timeInterval the time (in milliseconds) to wait before the event queue is flushed.  
+	 * 			If a new event comes in before the time expires the timer is reset.
 	 * @param consumer the object that created this domain object
 	 */
 	protected DomainObjectAdapterDB(DBHandle dbh, String name, int timeInterval, Object consumer) {
@@ -129,6 +100,7 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 	 * prior to closing a transaction.
 	 */
 	public void flushWriteCache() {
+		// do nothing
 	}
 
 	/**
@@ -137,6 +109,7 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 	 * prior to aborting a transaction.
 	 */
 	public void invalidateWriteCache() {
+		// do nothing
 	}
 
 	/**
@@ -295,6 +268,15 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 		finally {
 			transactionMgr.endTransaction(this, txId, true, true);
 		}
+	}
+
+	/**
+	 * Set instance as immutable by disabling use of transactions.  Attempts to start a transaction
+	 * will result in a {@link TerminatedTransactionException}.  This method should invoked at the end of 
+	 * instance instatiation {@link OpenMode#IMMUTABLE} was used.
+	 */
+	protected void setImmutable() {
+		transactionMgr.setImmutable();
 	}
 
 	/**
@@ -491,6 +473,12 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 		transactionMgr.clearUndo(notifyListeners);
 	}
 
+	@Override
+	public void invalidate() {
+		clearCache(false);
+		super.invalidate();
+	}
+
 	protected void clearCache(boolean all) {
 		options.clearCache();
 	}
@@ -554,7 +542,7 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 		}
 		try {
 
-			ContentHandler ch = DomainObjectAdapter.getContentHandler(this);
+			ContentHandler<?> ch = DomainObjectAdapter.getContentHandler(this);
 			PackedDatabase.packDatabase(dbh, name, ch.getContentType(), outputFile, monitor);
 
 			// TODO :( output method will cause Redo-able transactions to be cleared

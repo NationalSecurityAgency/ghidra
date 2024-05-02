@@ -34,7 +34,7 @@ import ghidra.trace.model.Trace;
 	description = "GUI to browse objects recorded to the trace",
 	category = PluginCategoryNames.DEBUGGER,
 	packageName = DebuggerPluginPackage.NAME,
-	status = PluginStatus.STABLE,
+	status = PluginStatus.RELEASED,
 	eventsConsumed = {
 		TraceActivatedPluginEvent.class,
 		TraceClosedPluginEvent.class,

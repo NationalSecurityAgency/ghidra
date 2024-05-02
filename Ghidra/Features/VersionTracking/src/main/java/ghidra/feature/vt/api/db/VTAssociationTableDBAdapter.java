@@ -23,6 +23,7 @@ import java.util.Set;
 import db.*;
 import ghidra.feature.vt.api.main.VTAssociationStatus;
 import ghidra.feature.vt.api.main.VTAssociationType;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 

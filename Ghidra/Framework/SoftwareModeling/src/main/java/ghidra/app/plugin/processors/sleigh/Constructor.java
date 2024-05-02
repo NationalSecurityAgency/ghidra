@@ -19,21 +19,18 @@
  */
 package ghidra.app.plugin.processors.sleigh;
 
+import static ghidra.pcode.utils.SlaFormat.*;
+
 import java.util.*;
 
 import ghidra.app.plugin.processors.sleigh.symbol.*;
 import ghidra.app.plugin.processors.sleigh.template.ConstructTpl;
 import ghidra.app.plugin.processors.sleigh.template.HandleTpl;
-import ghidra.program.model.lang.UnknownInstructionException;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.util.Msg;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 /**
- * 
- *
  * The primary sleigh concept representing a semantic action
  * taking operands (semantic values) as input
  * producing a semantic value as output
@@ -313,65 +310,59 @@ public class Constructor implements Comparable<Constructor> {
 		return null;
 	}
 
-	public void restoreXml(XmlPullParser parser, SleighLanguage sleigh)
-			throws UnknownInstructionException {
-		XmlElement el = parser.start("constructor");
+	public void decode(Decoder decoder, SleighLanguage sleigh) throws DecoderException {
+		int el = decoder.openElement(ELEM_CONSTRUCTOR);
 		SymbolTable symtab = sleigh.getSymbolTable();
 
-		int myId = SpecXmlUtils.decodeInt(el.getAttribute("parent"));
+		int myId = (int) decoder.readUnsignedInteger(ATTRIB_PARENT);
 		parent = (SubtableSymbol) symtab.findSymbol(myId);
-		firstwhitespace = SpecXmlUtils.decodeInt(el.getAttribute("first"));
-		minimumlength = SpecXmlUtils.decodeInt(el.getAttribute("length"));
-		String sourceAndLine = el.getAttribute("line");
-		String[] parts = sourceAndLine.split(":");
-		if (parts.length != 2) {
-			Msg.error(this, "Bad line attribute in .sla file");
-			lineno = -1;
-			sourceFile = "UNKNOWN";
-		}
-		else {
-			lineno = Integer.parseInt(parts[1].trim());
-			sourceFile = sleigh.getSourceFileIndexer().getFileName(Integer.parseInt(parts[0].trim()));
-		}
+		firstwhitespace = (int) decoder.readSignedInteger(ATTRIB_FIRST);
+		minimumlength = (int) decoder.readSignedInteger(ATTRIB_LENGTH);
+		int srcLine = (int) decoder.readSignedInteger(ATTRIB_SOURCE);
+		lineno = (int) decoder.readSignedInteger(ATTRIB_LINE);
+		sourceFile = sleigh.getSourceFileIndexer().getFileName(srcLine);
 
 		ArrayList<Object> oplist = new ArrayList<>();
 		ArrayList<Object> piecelist = new ArrayList<>();
 		ArrayList<Object> coplist = new ArrayList<>();
-		XmlElement subel = parser.peek();
-		while (!subel.getName().equals("constructor")) {
-			if (subel.getName().equals("oper")) {
-				myId = SpecXmlUtils.decodeInt(subel.getAttribute("id"));
+		int subel = decoder.peekElement();
+		while (subel != 0) {
+			if (subel == ELEM_OPER.id()) {
+				decoder.openElement();
+				myId = (int) decoder.readUnsignedInteger(ATTRIB_ID);
 				oplist.add(symtab.findSymbol(myId));
-				parser.discardSubTree();
+				decoder.closeElementSkipping(subel);
 			}
-			else if (subel.getName().equals("print")) {
-				piecelist.add(subel.getAttribute("piece"));
-				parser.discardSubTree();
+			else if (subel == ELEM_PRINT.id()) {
+				decoder.openElement();
+				piecelist.add(decoder.readString(ATTRIB_PIECE));
+				decoder.closeElementSkipping(subel);
 			}
-			else if (subel.getName().equals("opprint")) {
-				myId = SpecXmlUtils.decodeInt(subel.getAttribute("id"));
+			else if (subel == ELEM_OPPRINT.id()) {
+				decoder.openElement();
+				myId = (int) decoder.readSignedInteger(ATTRIB_ID);
 				String operstring = "\n";
 				char ind = (char) ('A' + myId);
 				operstring += ind;
 				piecelist.add(operstring);
-				parser.discardSubTree();
+				decoder.closeElementSkipping(subel);
 			}
-			else if (subel.getName().equals("context_op")) {
+			else if (subel == ELEM_CONTEXT_OP.id()) {
 				ContextOp c_op = new ContextOp();
-				c_op.restoreXml(parser, sleigh);
+				c_op.decode(decoder, sleigh);
 				coplist.add(c_op);
 			}
-			else if (subel.getName().equals("commit")) {
+			else if (subel == ELEM_COMMIT.id()) {
 				ContextCommit c_op = new ContextCommit();
-				c_op.restoreXml(parser, sleigh);
+				c_op.decode(decoder, sleigh);
 				coplist.add(c_op);
 			}
 			else {
 				ConstructTpl curtempl = new ConstructTpl();
-				int sectionid = curtempl.restoreXml(parser, sleigh.getAddressFactory());
+				int sectionid = curtempl.decode(decoder);
 				if (sectionid < 0) {
 					if (templ != null) {
-						throw new UnknownInstructionException("Duplicate main template section");
+						throw new DecoderException("Duplicate main template section");
 					}
 					templ = curtempl;
 				}
@@ -383,12 +374,12 @@ public class Constructor implements Comparable<Constructor> {
 						namedtempl.add(null);
 					}
 					if (namedtempl.get(sectionid) != null) {
-						throw new UnknownInstructionException("Duplicate named template section");
+						throw new DecoderException("Duplicate named template section");
 					}
 					namedtempl.set(sectionid, curtempl);
 				}
 			}
-			subel = parser.peek();
+			subel = decoder.peekElement();
 		}
 		operands = new OperandSymbol[oplist.size()];
 		separators = new String[operands.length + 1];
@@ -404,7 +395,7 @@ public class Constructor implements Comparable<Constructor> {
 		else {
 			flowthruindex = -1;
 		}
-		parser.end(el);
+		decoder.closeElement(el);
 	}
 
 	/**
@@ -431,10 +422,6 @@ public class Constructor implements Comparable<Constructor> {
 		}
 		return res;
 	}
-
-	/* ***************************** *
-	 * Get these working as map keys *
-	 * ***************************** */
 
 	@Override
 	public int compareTo(Constructor that) {

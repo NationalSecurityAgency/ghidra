@@ -648,12 +648,12 @@ void PrintLanguage::emitLineComment(int4 indent,const Comment *comm)
   comm->setEmitted(true);
 }
 
-/// Tell the emitter whether to emit just the raw tokens or if additional mark-up should be provided.
-/// \param val is \b true for additional mark-up
-void PrintLanguage::setMarkup(bool val)
+/// Select packed or unpacked (XML) output, if the emitter supports it.
+/// \param val is \b true for packed or \b false for unpacked
+void PrintLanguage::setPackedOutput(bool val)
 
 {
-  ((EmitPrettyPrint *)emit)->setMarkup(val);
+  emit->setPackedOutput(val);
 }
 
 /// Emitting formal code structuring can be turned off, causing all control-flow

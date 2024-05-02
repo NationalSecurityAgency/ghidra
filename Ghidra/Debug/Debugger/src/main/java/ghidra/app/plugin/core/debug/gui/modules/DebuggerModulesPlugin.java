@@ -32,6 +32,7 @@ import ghidra.framework.plugintool.util.PluginStatus;
 	packageName = DebuggerPluginPackage.NAME,
 	status = PluginStatus.RELEASED,
 	eventsConsumed = {
+		ProgramOpenedPluginEvent.class,
 		ProgramActivatedPluginEvent.class,
 		ProgramLocationPluginEvent.class,
 		ProgramClosedPluginEvent.class,
@@ -65,7 +66,10 @@ public class DebuggerModulesPlugin extends AbstractDebuggerPlugin {
 	@Override
 	public void processEvent(PluginEvent event) {
 		super.processEvent(event);
-		if (event instanceof ProgramActivatedPluginEvent ev) {
+		if (event instanceof ProgramOpenedPluginEvent ev) {
+			provider.programOpened(ev.getProgram());
+		}
+		else if (event instanceof ProgramActivatedPluginEvent ev) {
 			provider.setProgram(ev.getActiveProgram());
 		}
 		else if (event instanceof ProgramLocationPluginEvent ev) {

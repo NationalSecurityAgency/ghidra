@@ -20,10 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.swift.SwiftStructure;
-import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.StructureDataType;
+import ghidra.app.util.bin.format.swift.SwiftTypeMetadataStructure;
+import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -31,7 +29,7 @@ import ghidra.util.exception.DuplicateNameException;
  * 
  * @see <a href="https://github.com/apple/swift/blob/main/include/swift/RemoteInspection/Records.h">swift/RemoteInspection/Records.h</a> 
  */
-public final class CaptureDescriptor implements SwiftStructure {
+public final class CaptureDescriptor extends SwiftTypeMetadataStructure {
 
 	/**
 	 * The size (in bytes) of a {@link CaptureDescriptor} structure
@@ -52,6 +50,7 @@ public final class CaptureDescriptor implements SwiftStructure {
 	 * @throws IOException if there was an IO-related problem creating the structure
 	 */
 	public CaptureDescriptor(BinaryReader reader) throws IOException {
+		super(reader.getPointerIndex());
 		numCaptureTypes = reader.readNextInt();
 		numMetadataSources = reader.readNextInt();
 		numBindings = reader.readNextInt();

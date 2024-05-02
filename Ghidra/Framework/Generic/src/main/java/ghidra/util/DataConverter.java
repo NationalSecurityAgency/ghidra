@@ -37,7 +37,7 @@ public interface DataConverter extends Serializable {
 	}
 
 	/**
-	 * Returns the endianess of this DataConverter instance.
+	 * Returns the endianness of this DataConverter instance.
 	 * 
 	 * @return boolean flag, true means big-endian
 	 */

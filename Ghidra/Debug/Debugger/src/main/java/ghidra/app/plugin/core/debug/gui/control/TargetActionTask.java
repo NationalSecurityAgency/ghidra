@@ -16,10 +16,13 @@
 package ghidra.app.plugin.core.debug.gui.control;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.services.DebuggerConsoleService;
 import ghidra.app.services.ProgressService;
+import ghidra.async.AsyncUtils;
 import ghidra.debug.api.target.Target.ActionEntry;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
@@ -61,6 +64,29 @@ public class TargetActionTask extends Task {
 		}
 	}
 
+	static class FutureAsTask<T> extends Task {
+		final CompletableFuture<T> future = new CompletableFuture<>();
+		private final Function<TaskMonitor, CompletableFuture<T>> futureSupplier;
+
+		public FutureAsTask(String title, boolean canCancel, boolean hasProgress, boolean isModal,
+				Function<TaskMonitor, CompletableFuture<T>> futureSupplier) {
+			super(title, canCancel, hasProgress, isModal);
+			this.futureSupplier = futureSupplier;
+		}
+
+		@Override
+		public void run(TaskMonitor monitor) throws CancelledException {
+			CompletableFuture<T> future = futureSupplier.apply(monitor);
+			future.handle(AsyncUtils.copyTo(this.future));
+			try {
+				future.get();
+			}
+			catch (InterruptedException | ExecutionException e) {
+				// Client should get it via the copyTo
+			}
+		}
+	}
+
 	/**
 	 * Execute a task
 	 * 
@@ -81,6 +107,30 @@ public class TargetActionTask extends Task {
 		FutureTask wrapper = new FutureTask(task);
 		tool.execute(wrapper);
 		return wrapper.future;
+	}
+
+	/**
+	 * Execute an asynchronous task
+	 * 
+	 * @param tool the tool in which to execute
+	 * @param title the title of the task
+	 * @param canCancel if the task can be cancelled
+	 * @param hasProgress if the task displays progress
+	 * @param isModal if the task is modal
+	 * @param futureSupplier the task, a function of the monitor returning the future
+	 * @return a future which completes in the same way as the one returned by the supplier
+	 */
+	public static <T> CompletableFuture<T> executeTask(PluginTool tool, String title,
+			boolean canCancel, boolean hasProgress, boolean isModal,
+			Function<TaskMonitor, CompletableFuture<T>> futureSupplier) {
+		ProgressService progressService = tool.getService(ProgressService.class);
+		if (progressService != null) {
+			return progressService.execute(canCancel, hasProgress, isModal, futureSupplier);
+		}
+		FutureAsTask<T> task =
+			new FutureAsTask<>(title, canCancel, hasProgress, isModal, futureSupplier);
+		tool.execute(task);
+		return task.future;
 	}
 
 	/**
@@ -116,7 +166,7 @@ public class TargetActionTask extends Task {
 	@Override
 	public void run(TaskMonitor monitor) throws CancelledException {
 		try {
-			entry.run(false);
+			entry.run(entry.requiresPrompt());
 		}
 		catch (Throwable e) {
 			reportError(e);

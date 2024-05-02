@@ -19,6 +19,8 @@ import static org.junit.Assert.*;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyEditorSupport;
 import java.io.File;
@@ -30,7 +32,6 @@ import javax.swing.KeyStroke;
 import org.junit.*;
 
 import docking.test.AbstractDockingTest;
-import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.theme.ThemeManager;
 import ghidra.framework.options.*;
@@ -39,20 +40,19 @@ import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.util.HelpLocation;
 import ghidra.util.exception.InvalidInputException;
+import gui.event.MouseBinding;
 
 public class OptionsDBTest extends AbstractDockingTest {
 
 	private OptionsDB options;
 	private ProgramBuilder builder;
 	private int txID;
-	private GColor testColor;
 
 	public enum fruit {
 		Apple, Pear, Orange
 	}
 
 	public OptionsDBTest() {
-		super();
 	}
 
 	@Before
@@ -62,7 +62,6 @@ public class OptionsDBTest extends AbstractDockingTest {
 		txID = program.startTransaction("Test");
 		options = new OptionsDB(program);
 		ThemeManager.getInstance().setColor("color.test", Palette.MAGENTA);
-		testColor = new GColor("color.test");
 	}
 
 	private void saveAndRestoreOptions() {
@@ -223,10 +222,38 @@ public class OptionsDBTest extends AbstractDockingTest {
 
 	@Test
 	public void testSaveKeyStrokeOption() {
-		options.setKeyStroke("Foo", KeyStroke.getKeyStroke('a', 0));
+		options.setKeyStroke("Foo", KeyStroke.getKeyStroke(KeyEvent.VK_A, 0));
 		saveAndRestoreOptions();
-		assertEquals(KeyStroke.getKeyStroke('a', 0),
-			options.getKeyStroke("Foo", KeyStroke.getKeyStroke('b', 0)));
+		KeyStroke savedKs = options.getKeyStroke("Foo", null);
+		assertEquals(KeyStroke.getKeyStroke(KeyEvent.VK_A, 0), savedKs);
+	}
+
+	@Test
+	public void testSaveActionTrigger_KeyStroke() {
+		KeyStroke ks = KeyStroke.getKeyStroke('a', 0);
+		ActionTrigger trigger = new ActionTrigger(ks);
+		options.setActionTrigger("Foo", trigger);
+		saveAndRestoreOptions();
+		assertEquals(trigger, options.getActionTrigger("Foo", null));
+	}
+
+	@Test
+	public void testSaveActionTrigger_MouseBinding() {
+		MouseBinding mb = new MouseBinding(1, InputEvent.CTRL_DOWN_MASK);
+		ActionTrigger trigger = new ActionTrigger(mb);
+		options.setActionTrigger("Foo", trigger);
+		saveAndRestoreOptions();
+		assertEquals(trigger, options.getActionTrigger("Foo", null));
+	}
+
+	@Test
+	public void testSaveActionTrigger_KeyStrokeAndMouseBinding() {
+		KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_A, 0);
+		MouseBinding mb = new MouseBinding(1, InputEvent.CTRL_DOWN_MASK);
+		ActionTrigger trigger = new ActionTrigger(ks, mb);
+		options.setActionTrigger("Foo", trigger);
+		saveAndRestoreOptions();
+		assertEquals(trigger, options.getActionTrigger("Foo", null));
 	}
 
 	@Test
@@ -303,7 +330,7 @@ public class OptionsDBTest extends AbstractDockingTest {
 	@Test
 	public void testRegisterPropertyEditor() {
 		MyPropertyEditor editor = new MyPropertyEditor();
-		options.registerOption("foo", OptionType.INT_TYPE, 5, null, "description", editor);
+		options.registerOption("foo", OptionType.INT_TYPE, 5, null, "description", () -> editor);
 		assertEquals(editor, options.getRegisteredPropertyEditor("foo"));
 
 	}
@@ -561,12 +588,11 @@ public class OptionsDBTest extends AbstractDockingTest {
 	@Test
 	public void testRegisteringOptionsEditor() {
 		MyOptionsEditor myOptionsEditor = new MyOptionsEditor();
-		options.registerOptionsEditor(myOptionsEditor);
+		options.registerOptionsEditor(() -> myOptionsEditor);
 		assertEquals(myOptionsEditor, options.getOptionsEditor());
 		Options subOptions = options.getOptions("SUB");
-		subOptions.registerOptionsEditor(myOptionsEditor);
+		subOptions.registerOptionsEditor(() -> myOptionsEditor);
 		assertEquals(myOptionsEditor, subOptions.getOptionsEditor());
-
 	}
 
 	@Test
@@ -679,7 +705,7 @@ public class OptionsDBTest extends AbstractDockingTest {
 	}
 
 	public static class MyPropertyEditor extends PropertyEditorSupport {
-
+		//
 	}
 
 }

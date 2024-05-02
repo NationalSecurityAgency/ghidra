@@ -111,4 +111,9 @@ public class ConPtyChild extends ConPtyEndpoint implements PtyChild {
 	public String nullSession(Collection<TermMode> mode) throws IOException {
 		throw new UnsupportedOperationException("ConPTY does not have a name");
 	}
+
+	@Override
+	public void setWindowSize(short cols, short rows) {
+		pseudoConsoleHandle.resize(rows, cols);
+	}
 }

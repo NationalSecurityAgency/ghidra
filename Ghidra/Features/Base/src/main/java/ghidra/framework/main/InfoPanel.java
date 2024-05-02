@@ -29,6 +29,7 @@ import docking.widgets.*;
 import docking.widgets.label.*;
 import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.Gui;
 import generic.util.WindowUtilities;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationProperties;
@@ -44,16 +45,19 @@ class InfoPanel extends JPanel {
 
 	private final static int MARGIN = 10;
 
+	private final static String SPLASH_FILENAME = "splash.txt";
+	private final static String CLOUD_REV_FILENAME = "images/cloudbarReversed.jpg";
+	private final static String GHIDRA_FILENAME = "images/GHIDRA_Splash.png";
+	private final static String CLOUD_FILENAME = "images/cloudbar.jpg";
+
+	private static final String FONT_ID = "font.splash.infopanel";
+
 	private String version;
 	private String marking;
 	private String distributionInfo;
 
 	private Color bgColor; // background color for all panels
 	private int imageWidth;
-	private final static String SPLASH_FILENAME = "splash.txt";
-	private final static String CLOUD_REV_FILENAME = "images/cloudbarReversed.jpg";
-	private final static String GHIDRA_FILENAME = "images/GHIDRA_Splash.png";
-	private final static String CLOUD_FILENAME = "images/cloudbar.jpg";
 
 	InfoPanel() {
 		getAboutInfo();
@@ -170,9 +174,7 @@ class InfoPanel extends JPanel {
 
 	private Component buildVersionLabel() {
 		MultiLineLabel versionLabel = new MultiLineLabel(version, 0, 3, MultiLineLabel.CENTER);
-		Font font = versionLabel.getFont();
-		font = font.deriveFont(14f).deriveFont(Font.BOLD);
-		versionLabel.setFont(font);
+		Gui.registerFont(versionLabel, FONT_ID);
 		versionLabel.setForeground(new GColor("color.fg.infopanel.version"));
 		return versionLabel;
 	}

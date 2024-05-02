@@ -81,8 +81,7 @@ public class VTBaseTestCase extends AbstractGenericTest {
 	}
 
 	public VTSessionDB createVTSession() throws IOException {
-		return VTSessionDB.createVTSession("Test DB", sourceProgram, destinationProgram,
-			VTTestUtils.class);
+		return new VTSessionDB("Test DB", sourceProgram, destinationProgram, VTTestUtils.class);
 	}
 
 	public static int getRandomInt() {

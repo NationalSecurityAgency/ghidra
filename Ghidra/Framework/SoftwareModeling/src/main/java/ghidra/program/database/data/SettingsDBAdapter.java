@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.Set;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.util.exception.CancelledException;
@@ -55,15 +56,15 @@ abstract class SettingsDBAdapter {
 	 * @throws IOException if there was a problem accessing the database
 	 * @throws CancelledException if task cancelled
 	 */
-	static SettingsDBAdapter getAdapter(String tableName, DBHandle handle, int openMode,
+	static SettingsDBAdapter getAdapter(String tableName, DBHandle handle, OpenMode openMode,
 			AddressMap addrMap, TaskMonitor monitor)
 			throws VersionException, IOException, CancelledException {
 
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			return new SettingsDBAdapterV1(tableName, handle, true);
 		}
 
-		if (openMode == DBConstants.READ_ONLY) {
+		if (openMode == OpenMode.IMMUTABLE) {
 			return findReadOnlyAdapter(tableName, handle);
 		}
 
@@ -75,11 +76,11 @@ abstract class SettingsDBAdapter {
 			return adapter;
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			SettingsDBAdapter adapter = findReadOnlyAdapter(tableName, handle);
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = upgrade(handle, adapter, addrMap, monitor);
 			}
 			return adapter;
@@ -126,8 +127,7 @@ abstract class SettingsDBAdapter {
 					rec.setLongValue(SETTINGS_ASSOCIATION_ID_COL, addrMap.getKey(addr, true));
 				}
 				tmpAdapter.createSettingsRecord(rec.getLongValue(SETTINGS_ASSOCIATION_ID_COL),
-					oldAdapter.getSettingName(rec),
-					rec.getString(SETTINGS_STRING_VALUE_COL),
+					oldAdapter.getSettingName(rec), rec.getString(SETTINGS_STRING_VALUE_COL),
 					rec.getLongValue(SETTINGS_LONG_VALUE_COL));
 				monitor.setProgress(++cnt);
 			}
@@ -143,8 +143,7 @@ abstract class SettingsDBAdapter {
 				}
 				DBRecord rec = iter.next();
 				newAdapter.createSettingsRecord(rec.getLongValue(SETTINGS_ASSOCIATION_ID_COL),
-					tmpAdapter.getSettingName(rec),
-					rec.getString(SETTINGS_STRING_VALUE_COL),
+					tmpAdapter.getSettingName(rec), rec.getString(SETTINGS_STRING_VALUE_COL),
 					rec.getLongValue(SETTINGS_LONG_VALUE_COL));
 				monitor.setProgress(++cnt);
 			}

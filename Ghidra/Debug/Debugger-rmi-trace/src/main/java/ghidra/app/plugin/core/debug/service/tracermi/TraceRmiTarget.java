@@ -25,7 +25,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import docking.ActionContext;
 import ghidra.app.context.ProgramLocationActionContext;
-import ghidra.app.plugin.core.debug.gui.model.DebuggerObjectActionContext;
 import ghidra.app.plugin.core.debug.gui.tracermi.RemoteMethodInvocationDialog;
 import ghidra.app.plugin.core.debug.service.target.AbstractTarget;
 import ghidra.app.services.DebuggerConsoleService;
@@ -38,6 +37,8 @@ import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.util.PathMatcher;
 import ghidra.dbg.util.PathPredicates;
 import ghidra.dbg.util.PathPredicates.Align;
+import ghidra.debug.api.model.DebuggerObjectActionContext;
+import ghidra.debug.api.model.DebuggerSingleObjectPathActionContext;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.debug.api.tracermi.*;
@@ -51,6 +52,7 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
 import ghidra.trace.model.guest.TracePlatform;
+import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.memory.TraceObjectMemoryRegion;
 import ghidra.trace.model.stack.*;
 import ghidra.trace.model.target.*;
@@ -78,6 +80,12 @@ public class TraceRmiTarget extends AbstractTarget {
 		this.connection = connection;
 		this.trace = trace;
 		this.supportedBreakpointKinds = computeSupportedBreakpointKinds();
+	}
+
+	@Override
+	public String describe() {
+		return "%s in %s at %s (rmi)".formatted(getTrace().getDomainFile().getName(),
+			connection.getDescription(), connection.getRemoteAddress());
 	}
 
 	@Override
@@ -143,6 +151,20 @@ public class TraceRmiTarget extends AbstractTarget {
 					}
 				}
 			}
+			else if (context instanceof DebuggerSingleObjectPathActionContext ctx) {
+				TraceObject object =
+					trace.getObjectManager().getObjectByCanonicalPath(ctx.getPath());
+				if (object != null) {
+					return object;
+				}
+				object = trace.getObjectManager()
+						.getObjectsByPath(Lifespan.at(getSnap()), ctx.getPath())
+						.findAny()
+						.orElse(null);
+				if (object != null) {
+					return object;
+				}
+			}
 		}
 		if (allowCoordsObject) {
 			DebuggerTraceManagerService traceManager =
@@ -155,13 +177,45 @@ public class TraceRmiTarget extends AbstractTarget {
 		return null;
 	}
 
-	protected Object findArgumentForSchema(ActionContext context, TargetObjectSchema schema,
-			boolean allowContextObject, boolean allowCoordsObject, boolean allowSuitableObject) {
+	/**
+	 * "Find" a boolean value for the given context.
+	 * 
+	 * <p>
+	 * At the moment, this is only used for toggle actions, where the "found" parameter is the
+	 * opposite of the context object's current state. That object is presumed the object argument
+	 * of the "toggle" method.
+	 * 
+	 * @param action the action name, so this is only applied to {@link ActionName#TOGGLE}
+	 * @param context the context in which to find the object whose current state is to be
+	 *            considered
+	 * @param allowContextObject true to allow the object to come from context
+	 * @param allowCoordsObject true to allow the object to come from the current coordinates
+	 * @return a value if found, null if not
+	 */
+	protected Boolean findBool(ActionName action, ActionContext context, boolean allowContextObject,
+			boolean allowCoordsObject) {
+		if (!Objects.equals(action, ActionName.TOGGLE)) {
+			return null;
+		}
+		TraceObject object = findObject(context, allowContextObject, allowCoordsObject);
+		if (object == null) {
+			return null;
+		}
+		TraceObjectValue attrEnabled =
+			object.getAttribute(getSnap(), TargetTogglable.ENABLED_ATTRIBUTE_NAME);
+		boolean enabled = attrEnabled != null && attrEnabled.getValue() instanceof Boolean b && b;
+		return !enabled;
+	}
+
+	protected Object findArgumentForSchema(ActionName action, ActionContext context,
+			TargetObjectSchema schema, boolean allowContextObject, boolean allowCoordsObject,
+			boolean allowSuitableObject) {
 		if (schema instanceof EnumerableTargetObjectSchema prim) {
 			return switch (prim) {
 				case OBJECT -> findObject(context, allowContextObject, allowCoordsObject);
 				case ADDRESS -> findAddress(context);
 				case RANGE -> findRange(context);
+				case BOOL -> findBool(action, context, allowContextObject, allowCoordsObject);
 				default -> null;
 			};
 		}
@@ -178,12 +232,13 @@ public class TraceRmiTarget extends AbstractTarget {
 		return null;
 	}
 
-	private enum Missing {
+	public enum Missing {
 		MISSING; // The argument requires a prompt
 	}
 
-	protected Object findArgument(RemoteParameter parameter, ActionContext context,
-			boolean allowContextObject, boolean allowCoordsObject, boolean allowSuitableObject) {
+	protected Object findArgument(ActionName action, RemoteParameter parameter,
+			ActionContext context, boolean allowContextObject, boolean allowCoordsObject,
+			boolean allowSuitableObject) {
 		SchemaName type = parameter.type();
 		SchemaContext ctx = getSchemaContext();
 		if (ctx == null) {
@@ -195,8 +250,8 @@ public class TraceRmiTarget extends AbstractTarget {
 			Msg.error(this, "Schema " + type + " not in trace! " + trace);
 			return null;
 		}
-		Object arg = findArgumentForSchema(context, schema, allowContextObject, allowCoordsObject,
-			allowSuitableObject);
+		Object arg = findArgumentForSchema(action, context, schema, allowContextObject,
+			allowCoordsObject, allowSuitableObject);
 		if (arg != null) {
 			return arg;
 		}
@@ -210,8 +265,8 @@ public class TraceRmiTarget extends AbstractTarget {
 			boolean allowContextObject, boolean allowCoordsObject, boolean allowSuitableObject) {
 		Map<String, Object> args = new HashMap<>();
 		for (RemoteParameter param : method.parameters().values()) {
-			Object found = findArgument(param, context, allowContextObject, allowCoordsObject,
-				allowSuitableObject);
+			Object found = findArgument(method.action(), param, context, allowContextObject,
+				allowCoordsObject, allowSuitableObject);
 			if (found != null) {
 				args.put(param.name(), found);
 			}
@@ -433,6 +488,12 @@ public class TraceRmiTarget extends AbstractTarget {
 	}
 
 	@Override
+	protected Map<String, ActionEntry> collectToggleActions(ActionContext context) {
+		return collectFromMethods(connection.getMethods().getByAction(ActionName.TOGGLE), context,
+			true, false, false);
+	}
+
+	@Override
 	public boolean isSupportsFocus() {
 		TargetObjectSchema schema = trace.getObjectManager().getRootSchema();
 		if (schema == null) {
@@ -609,6 +670,13 @@ public class TraceRmiTarget extends AbstractTarget {
 			}
 			return matchers(result);
 		}
+	}
+
+	record ExecuteMatcher(int score, List<ParamSpec> spec) implements MethodMatcher {
+		static final ExecuteMatcher HAS_CMD_TOSTRING = new ExecuteMatcher(2, List.of(
+			new TypeParamSpec("command", String.class),
+			new TypeParamSpec("toString", Boolean.class)));
+		static final List<ExecuteMatcher> ALL = matchers(HAS_CMD_TOSTRING);
 	}
 
 	record ReadMemMatcher(int score, List<ParamSpec> spec) implements MethodMatcher {
@@ -842,6 +910,18 @@ public class TraceRmiTarget extends AbstractTarget {
 	}
 
 	@Override
+	public CompletableFuture<String> executeAsync(String command, boolean toString) {
+		MatchedMethod execute = matches.getBest("execute", ActionName.EXECUTE, ExecuteMatcher.ALL);
+		if (execute == null) {
+			return CompletableFuture.failedFuture(new NoSuchElementException());
+		}
+		Map<String, Object> args = new HashMap<>();
+		args.put(execute.params.get("command").name(), command);
+		args.put(execute.params.get("toString").name(), toString);
+		return execute.method.invokeAsync(args).toCompletableFuture().thenApply(v -> (String) v);
+	}
+
+	@Override
 	public CompletableFuture<Void> activateAsync(DebuggerCoordinates prev,
 			DebuggerCoordinates coords) {
 		if (prev.getSnap() != coords.getSnap()) {
@@ -906,15 +986,11 @@ public class TraceRmiTarget extends AbstractTarget {
 	}
 
 	protected TraceObject getProcessForSpace(AddressSpace space) {
-		for (TraceObjectValue objVal : trace.getObjectManager()
-				.getValuesIntersecting(
+		for (TraceMemoryRegion region : trace.getMemoryManager()
+				.getRegionsIntersecting(
 					Lifespan.at(getSnap()),
-					new AddressRangeImpl(space.getMinAddress(), space.getMaxAddress()),
-					TargetMemoryRegion.RANGE_ATTRIBUTE_NAME)) {
-			TraceObject obj = objVal.getParent();
-			if (!obj.getInterfaces().contains(TraceObjectMemoryRegion.class)) {
-				continue;
-			}
+					new AddressRangeImpl(space.getMinAddress(), space.getMaxAddress()))) {
+			TraceObject obj = ((TraceObjectMemoryRegion) region).getObject();
 			return obj.queryCanonicalAncestorsTargetInterface(TargetProcess.class)
 					.findFirst()
 					.orElse(null);
@@ -1203,9 +1279,8 @@ public class TraceRmiTarget extends AbstractTarget {
 			String condition, String commands) {
 		RemoteParameter paramProc = brk.params.get("process");
 		if (paramProc != null) {
-			Object proc =
-				findArgumentForSchema(null, getSchemaContext().getSchema(paramProc.type()), true,
-					true, true);
+			Object proc = findArgumentForSchema(null, null,
+				getSchemaContext().getSchema(paramProc.type()), true, true, true);
 			if (proc == null) {
 				Msg.error(this, "Cannot find required process argument for " + brk.method);
 			}

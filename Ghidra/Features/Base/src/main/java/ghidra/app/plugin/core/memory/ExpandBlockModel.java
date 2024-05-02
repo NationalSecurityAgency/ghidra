@@ -49,7 +49,7 @@ abstract class ExpandBlockModel implements DomainObjectListener {
 
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (!ev.contains(DomainObjectEvent.RESTORED)) {
+		if (program == null || !ev.contains(DomainObjectEvent.RESTORED)) {
 			return;
 		}
 
@@ -148,7 +148,7 @@ abstract class ExpandBlockModel implements DomainObjectListener {
 		program = null;
 	}
 
-	private class ExpandBlockCmd implements Command {
+	private class ExpandBlockCmd implements Command<Program> {
 		private String msg;
 		private MemoryBlock expandBlock;
 
@@ -157,8 +157,7 @@ abstract class ExpandBlockModel implements DomainObjectListener {
 		}
 
 		@Override
-		public boolean applyTo(DomainObject obj) {
-			Program prog = (Program) obj;
+		public boolean applyTo(Program prog) {
 			Memory memory = prog.getMemory();
 			try {
 				String blockName = expandBlock.getName();

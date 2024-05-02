@@ -35,9 +35,11 @@ import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
+import docking.widgets.table.GTable;
 import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.util.AddressInput;
+import ghidra.framework.preferences.Preferences;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.scalar.Scalar;
@@ -56,6 +58,8 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 
 	private static final int MAX_HISTORY_LENGTH = 10;
 
+	private static final String INCLUDE_OTHER_OVERLAY_PREFERENCE = "RefEditIncludeOtherOverlays";
+
 	private WeakHashMap<Program, List<Address>> addrHistoryMap = new WeakHashMap<>();
 
 	private ReferencesPlugin plugin;
@@ -68,6 +72,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 	private Reference editRef;
 	private JLabel addrLabel;
 	private AddressInput toAddressField;
+	private JCheckBox includeOtherOverlaysCheckbox;
 	private JButton addrHistoryButton;
 	private JCheckBox offsetCheckbox;
 	private JTextField offsetField;
@@ -75,7 +80,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 	private long defaultOffset;
 	private JWindow historyWin;
 	private HistoryTableModel model;
-	private JTable displayTable;
+	private GTable displayTable;
 
 	private boolean isValidState;
 
@@ -94,9 +99,13 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 		setLayout(new PairLayout(10, 10, 160));
 
 		offsetCheckbox = new GCheckBox("Offset:");
+		offsetCheckbox.getAccessibleContext()
+				.setAccessibleDescription(
+					"Selecting this checkbox allows entering a refernce offset");
 		offsetCheckbox.setHorizontalAlignment(SwingConstants.RIGHT);
 		offsetCheckbox.addChangeListener(e -> enableOffsetField(offsetCheckbox.isSelected()));
 		offsetField = new JTextField();
+		offsetField.getAccessibleContext().setAccessibleName("Enter Offset");
 
 		addrLabel = new GDLabel("Base Address:");
 		addrLabel.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -104,28 +113,20 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 		addrLabel.setPreferredSize(d);
 
 		toAddressField = new AddressInput();
+		addrLabel.setLabelFor(toAddressField);
 
 		addrHistoryButton = new GButton(MENU_ICON);
-		addrHistoryButton.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mousePressed(MouseEvent e) {
-				if (addrHistoryButton.isEnabled()) {
-					toggleAddressHistoryPopup();
-				}
-			}
-
-			@Override
-			public void mouseReleased(MouseEvent e) {
-				// TODO Auto-generated method stub
-				super.mouseReleased(e);
-			}
-		});
+		addrHistoryButton.addActionListener(e -> toggleAddressHistoryPopup());
 		addrHistoryButton.setText(null);
 		addrHistoryButton.setMargin(new Insets(0, 0, 0, 0));
-		addrHistoryButton.setFocusable(false);
 		addrHistoryButton.setToolTipText("Address History");
 
+		includeOtherOverlaysCheckbox = new JCheckBox("Include OTHER overlay spaces",
+			Boolean.getBoolean(Preferences.getProperty(INCLUDE_OTHER_OVERLAY_PREFERENCE, "false")));
+		includeOtherOverlaysCheckbox.addChangeListener(e -> refreshToAddressField());
+
 		refTypes = new GhidraComboBox<>(MEM_REF_TYPES);
+		refTypes.getAccessibleContext().setAccessibleName("Memory Ref Types");
 
 		JPanel addrPanel = new JPanel(new BorderLayout());
 		addrPanel.add(toAddressField, BorderLayout.CENTER);
@@ -136,6 +137,9 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 
 		add(addrLabel);
 		add(addrPanel);
+
+		add(new JLabel());
+		add(includeOtherOverlaysCheckbox);
 
 		add(new GLabel("Ref-Type:", SwingConstants.RIGHT));
 		add(refTypes);
@@ -182,8 +186,39 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 		}
 	}
 
+	private void refreshToAddressField() {
+		initializeToAddressField(toAddressField.getAddress());
+	}
+
+	private void initializeToAddressField(Address toAddr) {
+		toAddressField.setAddressFactory(fromCodeUnit.getProgram().getAddressFactory(), (s) -> {
+			if (s.isLoadedMemorySpace()) {
+				return true;
+			}
+			if (s.equals(fromCodeUnit.getAddress().getAddressSpace())) {
+				return true;
+			}
+			if (toAddr != null && s.equals(toAddr.getAddressSpace())) {
+				return true;
+			}
+			if (includeOtherOverlaysCheckbox.isSelected() && s.isOverlaySpace()) {
+				return true;
+			}
+			return false;
+		});
+		if (toAddr != null) {
+			toAddressField.setAddress(toAddr);
+			toAddressField.select();
+		}
+		else {
+			toAddressField.clear();
+		}
+		toAddressField.invalidate();
+	}
+
 	@Override
 	void initialize(CodeUnit fromCu, Reference editReference) {
+
 		isValidState = false;
 		this.fromCodeUnit = fromCu;
 		this.editRef = editReference;
@@ -199,8 +234,8 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 			toAddr = toAddr.subtractWrap(defaultOffset);
 		}
 
-		toAddressField.setAddressFactory(fromCu.getProgram().getAddressFactory());
-		toAddressField.setAddress(toAddr);
+		initializeToAddressField(toAddr);
+
 		enableOffsetField(editReference.isOffsetReference());
 
 		RefType rt = editReference.getReferenceType();
@@ -215,6 +250,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 
 	@Override
 	boolean initialize(CodeUnit fromCu, int fromOpIndex, int fromSubIndex) {
+
 		isValidState = false;
 		this.editRef = null;
 		this.fromCodeUnit = fromCu;
@@ -223,8 +259,6 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 		Program p = fromCu.getProgram();
 
 		addrHistoryButton.setEnabled(getAddressHistorySize(p) != 0);
-
-		toAddressField.setAddressFactory(p.getAddressFactory());
 
 		Address cuAddr = fromCu.getMinAddress();
 
@@ -238,15 +272,12 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 			Address toAddr = null;
 			if (p == program && location != null) {
 				toAddr = getSuggestedLocationAddress(program, location);
-			}
-			if (toAddr == null || toAddr.equals(cuAddr)) {
-				toAddressField.clear();
-			}
-			else {
-				toAddressField.setAddress(toAddr);
+				if (toAddr != null && toAddr.equals(cuAddr)) {
+					toAddr = null;
+				}
 			}
 			enableOffsetField(false);
-			toAddressField.select();
+			initializeToAddressField(toAddr);
 			return setOpIndex(fromOpIndex);
 		}
 
@@ -310,13 +341,11 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 			}
 		}
 
-		if (toAddr != null && !toAddr.equals(cuAddr)) {
-			toAddressField.setAddress(toAddr);
-			toAddressField.select();
+		if (toAddr != null && toAddr.equals(cuAddr)) {
+			toAddr = null;
 		}
-		else {
-			toAddressField.clear();
-		}
+
+		initializeToAddressField(toAddr);
 
 		if (toAddr != null) {
 			rt = RefTypeFactory.getDefaultMemoryRefType(fromCu, fromOpIndex, toAddr, false);
@@ -524,25 +553,27 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 			return;
 		}
 
-		List<Address> list = addrHistoryMap.get(fromCodeUnit.getProgram());
-		Address[] addrs = new Address[list.size()];
-		list.toArray(addrs);
-
 		JPanel panel = new JPanel(new BorderLayout(0, 0));
 
 		model = new HistoryTableModel(fromCodeUnit.getProgram());
-		displayTable = new JTable(model);
+		displayTable = new GTable(model);
 		displayTable.setTableHeader(null);
 		displayTable.setBorder(new LineBorder(Colors.BORDER));
 		displayTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		displayTable.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				int keyCode = e.getKeyCode();
+				if (keyCode == KeyEvent.VK_ENTER || keyCode == KeyEvent.VK_SPACE) {
+					e.consume();
+				}
+			}
+		});
 
 		displayTable.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				int row = displayTable.getSelectedRow();
-				Address addr = model.getAddress(row);
-				toAddressField.setAddress(addr);
-				toggleAddressHistoryPopup();
+				chooseEntry();
 			}
 
 			@Override
@@ -566,13 +597,17 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 
 		panel.add(displayTable, BorderLayout.CENTER);
 
+		// Sets the preferred size to the table inside this popup history window so that its width 
+		// is the same as the text field and button to make it resemble the look of a combo box.
+		// We also had to add a fudge factor to the height to keep it from truncating the last
+		// row in the table.
 		int w = toAddressField.getWidth() + addrHistoryButton.getWidth();
 		Dimension d = displayTable.getPreferredSize();
-		displayTable.setPreferredSize(new Dimension(w, d.height));
+		displayTable.setPreferredSize(new Dimension(w, d.height + 10));
 
 		Window dlgWin = findMyWindow();
 		historyWin = new JWindow(dlgWin);
-		historyWin.getContentPane().setLayout(new BorderLayout(0, 0));
+		historyWin.getContentPane().setLayout(new BorderLayout());
 		historyWin.getContentPane().add(panel, BorderLayout.CENTER);
 		historyWin.pack();
 
@@ -623,6 +658,15 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 				// stub
 			}
 		});
+	}
+
+	private void chooseEntry() {
+		int row = displayTable.getSelectedRow();
+		if (row >= 0) {
+			Address addr = model.getAddress(row);
+			toAddressField.setAddress(addr);
+			toggleAddressHistoryPopup();
+		}
 	}
 
 	private void updateTableSelectionForEvent(MouseEvent anEvent) {

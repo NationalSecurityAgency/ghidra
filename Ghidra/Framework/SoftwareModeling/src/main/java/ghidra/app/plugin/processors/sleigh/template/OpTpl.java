@@ -19,17 +19,13 @@
  */
 package ghidra.app.plugin.processors.sleigh.template;
 
+import static ghidra.pcode.utils.SlaFormat.*;
+
 import java.util.ArrayList;
 
-import ghidra.program.model.address.AddressFactory;
-import ghidra.program.model.lang.UnknownInstructionException;
-import ghidra.program.model.pcode.PcodeOp;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
+import ghidra.program.model.pcode.*;
 
 /**
- * 
- *
  * Placeholder for what will resolve to a PcodeOp
  * for a specific InstructionContext
  */
@@ -60,28 +56,28 @@ public class OpTpl {
 		return opcode;
 	}
 
-	public void restoreXml(XmlPullParser parser, AddressFactory factory)
-			throws UnknownInstructionException {
-		XmlElement el = parser.start("op_tpl");
-		opcode = PcodeOp.getOpcode(el.getAttribute("code"));
-		XmlElement outel = parser.peek();
-		if (outel.getName().equals("null")) {
+	public void decode(Decoder decoder) throws DecoderException {
+		int el = decoder.openElement(ELEM_OP_TPL);
+		opcode = decoder.readOpcode(ATTRIB_CODE);
+		int outel = decoder.peekElement();
+		if (outel == ELEM_NULL.id()) {
+			decoder.openElement();
+			decoder.closeElement(outel);
 			output = null;
-			parser.discardSubTree();
 		}
 		else {
 			output = new VarnodeTpl();
-			output.restoreXml(parser, factory);
+			output.decode(decoder);
 		}
 		ArrayList<Object> inputlist = new ArrayList<>();
-		while (!parser.peek().isEnd()) {
+		while (decoder.peekElement() != 0) {
 			VarnodeTpl vn = new VarnodeTpl();
-			vn.restoreXml(parser, factory);
+			vn.decode(decoder);
 			inputlist.add(vn);
 		}
 		input = new VarnodeTpl[inputlist.size()];
 		inputlist.toArray(input);
-		parser.end(el);
+		decoder.closeElement(el);
 	}
 
 	@Override

@@ -17,8 +17,6 @@
 
 namespace ghidra {
 
-const int4 SleighBase::SLA_FORMAT_VERSION = 3;
-
 const uint4 SleighBase::MAX_UNIQUE_SIZE = 128;
 
 int4 SourceFileIndexer::index(const string filename){
@@ -39,26 +37,32 @@ string SourceFileIndexer::getFilename(int4 index){
 	return indexToFile[index];
 }
 
-void SourceFileIndexer::restoreXml(const Element *el){
-	const List &sourceFiles(el->getChildren());
-	List::const_iterator iter = sourceFiles.begin();
-	for (; iter != sourceFiles.end(); ++iter){
-		string filename = (*iter)->getAttributeValue("name");
-		int4 index = stoi((*iter)->getAttributeValue("index"),NULL,10);
-		fileToIndex[filename] = index;
-		indexToFile[index] = filename;
-	}
+void SourceFileIndexer::decode(Decoder &decoder)
+
+{
+  uint4 el = decoder.openElement(sla::ELEM_SOURCEFILES);
+  while(decoder.peekElement() == sla::ELEM_SOURCEFILE) {
+    int4 subel = decoder.openElement();
+    string filename = decoder.readString(sla::ATTRIB_NAME);
+    int4 index = decoder.readSignedInteger(sla::ATTRIB_INDEX);
+    decoder.closeElement(subel);
+    fileToIndex[filename] = index;
+    indexToFile[index] = filename;
+  }
+  decoder.closeElement(el);
 }
 
-void SourceFileIndexer::saveXml(ostream& s) const {
-	s << "<sourcefiles>\n";
-	for (int4 i = 0; i < leastUnusedIndex; ++i){
-		s << ("<sourcefile name=\"");
-		const char *str = indexToFile.at(i).c_str();
-		xml_escape(s,str);
-		s << "\" index=\"" << dec << i << "\"/>\n";
-	}
-	s << "</sourcefiles>\n";
+void SourceFileIndexer::encode(Encoder &encoder) const
+
+{
+  encoder.openElement(sla::ELEM_SOURCEFILES);
+  for (int4 i = 0; i < leastUnusedIndex; ++i){
+    encoder.openElement(sla::ELEM_SOURCEFILE);
+    encoder.writeString(sla::ATTRIB_NAME, indexToFile.at(i));
+    encoder.writeSignedInteger(sla::ATTRIB_INDEX, i);
+    encoder.closeElement(sla::ELEM_SOURCEFILE);
+  }
+  encoder.closeElement(sla::ELEM_SOURCEFILES);
 }
 
 SleighBase::SleighBase(void)
@@ -175,27 +179,55 @@ void SleighBase::getUserOpNames(vector<string> &res) const
   res = userop;		// Return list of all language defined user ops (with index)
 }
 
-/// This does the bulk of the work of creating a .sla file
-/// \param s is the output stream
-void SleighBase::saveXml(ostream &s) const
+/// Write a tag fully describing the details of the space.
+/// \param encoder is the stream being written
+/// \param spc is the given address space
+void SleighBase::encodeSlaSpace(Encoder &encoder,AddrSpace *spc) const
 
 {
-  s << "<sleigh";
-  a_v_i(s,"version",SLA_FORMAT_VERSION);
-  a_v_b(s,"bigendian",isBigEndian());
-  a_v_i(s,"align",alignment);
-  a_v_u(s,"uniqbase",getUniqueBase());
+  if (spc->getType() == IPTR_INTERNAL)
+    encoder.openElement(sla::ELEM_SPACE_UNIQUE);
+  else if (spc->isOtherSpace())
+    encoder.openElement(sla::ELEM_SPACE_OTHER);
+  else
+    encoder.openElement(sla::ELEM_SPACE);
+  encoder.writeString(sla::ATTRIB_NAME,spc->getName());
+  encoder.writeSignedInteger(sla::ATTRIB_INDEX, spc->getIndex());
+  encoder.writeBool(sla::ATTRIB_BIGENDIAN, isBigEndian());
+  encoder.writeSignedInteger(sla::ATTRIB_DELAY, spc->getDelay());
+//  if (spc->getDelay() != spc->getDeadcodeDelay())
+//    encoder.writeSignedInteger(sla::ATTRIB_DEADCODEDELAY, spc->getDeadcodeDelay());
+  encoder.writeSignedInteger(sla::ATTRIB_SIZE, spc->getAddrSize());
+  if (spc->getWordSize() > 1)
+    encoder.writeSignedInteger(sla::ATTRIB_WORDSIZE, spc->getWordSize());
+  encoder.writeBool(sla::ATTRIB_PHYSICAL, spc->hasPhysical());
+  if (spc->getType() == IPTR_INTERNAL)
+    encoder.closeElement(sla::ELEM_SPACE_UNIQUE);
+  else if (spc->isOtherSpace())
+    encoder.closeElement(sla::ELEM_SPACE_OTHER);
+  else
+    encoder.closeElement(sla::ELEM_SPACE);
+}
+
+/// This does the bulk of the work of creating a .sla file
+/// \param encoder is the stream encoder
+void SleighBase::encode(Encoder &encoder) const
+
+{
+  encoder.openElement(sla::ELEM_SLEIGH);
+  encoder.writeSignedInteger(sla::ATTRIB_VERSION, sla::FORMAT_VERSION);
+  encoder.writeBool(sla::ATTRIB_BIGENDIAN, isBigEndian());
+  encoder.writeSignedInteger(sla::ATTRIB_ALIGN, alignment);
+  encoder.writeUnsignedInteger(sla::ATTRIB_UNIQBASE, getUniqueBase());
   if (maxdelayslotbytes > 0)
-    a_v_u(s,"maxdelay",maxdelayslotbytes);
+    encoder.writeUnsignedInteger(sla::ATTRIB_MAXDELAY, maxdelayslotbytes);
   if (unique_allocatemask != 0)
-    a_v_u(s,"uniqmask",unique_allocatemask);
+    encoder.writeUnsignedInteger(sla::ATTRIB_UNIQMASK, unique_allocatemask);
   if (numSections != 0)
-    a_v_u(s,"numsections",numSections);
-  s << ">\n";
-  indexer.saveXml(s);
-  s << "<spaces";
-  a_v(s,"defaultspace",getDefaultCodeSpace()->getName());
-  s << ">\n";
+    encoder.writeUnsignedInteger(sla::ATTRIB_NUMSECTIONS, numSections);
+  indexer.encode(encoder);
+  encoder.openElement(sla::ELEM_SPACES);
+  encoder.writeString(sla::ATTRIB_DEFAULTSPACE, getDefaultCodeSpace()->getName());
   for(int4 i=0;i<numSpaces();++i) {
     AddrSpace *spc = getSpace(i);
     if (spc == (AddrSpace *)0) continue;
@@ -204,76 +236,129 @@ void SleighBase::saveXml(ostream &s) const
 	(spc->getType()==IPTR_IOP)||
 	(spc->getType()==IPTR_JOIN))
       continue;
-    spc->saveXml(s);
+    encodeSlaSpace(encoder,spc);
   }
-  s << "</spaces>\n";
-  symtab.saveXml(s);
-  s << "</sleigh>\n";
+  encoder.closeElement(sla::ELEM_SPACES);
+  symtab.encode(encoder);
+  encoder.closeElement(sla::ELEM_SLEIGH);
+}
+
+/// This is identical to the functionality of decodeSpace, but the AddrSpace information is stored
+/// in the .sla file format.
+/// \param decoder is the stream decoder
+/// \param trans is the translator object to be associated with the new space
+/// \return a pointer to the initialized AddrSpace
+AddrSpace *SleighBase::decodeSlaSpace(Decoder &decoder,const Translate *trans)
+
+{
+  uint4 elemId = decoder.openElement();
+  AddrSpace *res;
+  int4 index = 0;
+  int4 addressSize = 0;
+  int4 delay = -1;
+  int4 deadcodedelay = -1;
+  string name;
+  int4 wordsize = 1;
+  bool bigEnd = false;
+  uint4 flags = 0;
+  for (;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId == sla::ATTRIB_NAME) {
+      name = decoder.readString();
+    }
+    if (attribId == sla::ATTRIB_INDEX)
+      index = decoder.readSignedInteger();
+    else if (attribId == sla::ATTRIB_SIZE)
+      addressSize = decoder.readSignedInteger();
+    else if (attribId == sla::ATTRIB_WORDSIZE)
+      wordsize = decoder.readUnsignedInteger();
+    else if (attribId == sla::ATTRIB_BIGENDIAN) {
+      bigEnd = decoder.readBool();
+    }
+    else if (attribId == sla::ATTRIB_DELAY)
+      delay = decoder.readSignedInteger();
+    else if (attribId == sla::ATTRIB_PHYSICAL) {
+      if (decoder.readBool())
+	flags |= AddrSpace::hasphysical;
+    }
+  }
+  decoder.closeElement(elemId);
+  if (deadcodedelay == -1)
+    deadcodedelay = delay;	// If deadcodedelay attribute not present, set it to delay
+  if (index == 0)
+    throw LowlevelError("Expecting index attribute");
+  if (elemId == sla::ELEM_SPACE_UNIQUE)
+    res = new UniqueSpace(this,trans,index,flags);
+  else if (elemId == sla::ELEM_SPACE_OTHER)
+    res = new OtherSpace(this,trans,index);
+  else {
+    if (addressSize == 0 || delay == -1 || name.size() == 0)
+      throw LowlevelError("Expecting size/delay/name attributes");
+    res = new AddrSpace(this,trans,IPTR_PROCESSOR,name,bigEnd,addressSize,wordsize,index,flags,delay,deadcodedelay);
+  }
+
+  return res;
+}
+
+/// This is identical in functionality to decodeSpaces but the AddrSpace information
+/// is stored in the .sla file format.
+/// \param decoder is the stream decoder
+/// \param trans is the processor translator to be associated with the spaces
+void SleighBase::decodeSlaSpaces(Decoder &decoder,const Translate *trans)
+
+{
+  // The first space should always be the constant space
+  insertSpace(new ConstantSpace(this,trans));
+
+  uint4 elemId = decoder.openElement(sla::ELEM_SPACES);
+  string defname = decoder.readString(sla::ATTRIB_DEFAULTSPACE);
+  while(decoder.peekElement() != 0) {
+    AddrSpace *spc = decodeSlaSpace(decoder,trans);
+    insertSpace(spc);
+  }
+  decoder.closeElement(elemId);
+  AddrSpace *spc = getSpaceByName(defname);
+  if (spc == (AddrSpace *)0)
+    throw LowlevelError("Bad 'defaultspace' attribute: "+defname);
+  setDefaultCodeSpace(spc->getIndex());
 }
 
 /// This parses the main \<sleigh> tag (from a .sla file), which includes the description
 /// of address spaces and the symbol table, with its associated decoding tables
-/// \param el is the root XML element
-void SleighBase::restoreXml(const Element *el)
+/// \param decoder is the stream to decode
+void SleighBase::decode(Decoder &decoder)
 
 {
   maxdelayslotbytes = 0;
   unique_allocatemask = 0;
   numSections = 0;
   int4 version = 0;
-  setBigEndian(xml_readbool(el->getAttributeValue("bigendian")));
-  {
-    istringstream s(el->getAttributeValue("align"));
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    s >> alignment;
+  uint4 el = decoder.openElement(sla::ELEM_SLEIGH);
+  uint4 attrib = decoder.getNextAttributeId();
+  while(attrib != 0) {
+    if (attrib == sla::ATTRIB_BIGENDIAN)
+      setBigEndian(decoder.readBool());
+    else if (attrib == sla::ATTRIB_ALIGN)
+      alignment = decoder.readSignedInteger();
+    else if (attrib == sla::ATTRIB_UNIQBASE)
+      setUniqueBase(decoder.readUnsignedInteger());
+    else if (attrib == sla::ATTRIB_MAXDELAY)
+      maxdelayslotbytes = decoder.readUnsignedInteger();
+    else if (attrib == sla::ATTRIB_UNIQMASK)
+      unique_allocatemask = decoder.readUnsignedInteger();
+    else if (attrib == sla::ATTRIB_NUMSECTIONS)
+      numSections = decoder.readUnsignedInteger();
+    else if (attrib == sla::ATTRIB_VERSION)
+      version = decoder.readSignedInteger();
+    attrib = decoder.getNextAttributeId();
   }
-  {
-    istringstream s(el->getAttributeValue("uniqbase"));
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    uintm ubase;
-    s >> ubase;
-    setUniqueBase(ubase);
-  }
-  int4 numattr = el->getNumAttributes();
-  for(int4 i=0;i<numattr;++i) {
-    const string &attrname( el->getAttributeName(i) );
-    if (attrname == "maxdelay") {
-      istringstream s1(el->getAttributeValue(i));
-      s1.unsetf(ios::dec | ios::hex | ios::oct);
-      s1 >> maxdelayslotbytes;
-    }
-    else if (attrname == "uniqmask") {
-      istringstream s2(el->getAttributeValue(i));
-      s2.unsetf(ios::dec | ios::hex | ios::oct);
-      s2 >> unique_allocatemask;
-    }
-    else if (attrname == "numsections") {
-      istringstream s3(el->getAttributeValue(i));
-      s3.unsetf(ios::dec | ios::hex | ios::oct);
-      s3 >> numSections;
-    }
-    else if (attrname == "version") {
-      istringstream s(el->getAttributeValue(i));
-      s.unsetf(ios::dec | ios::hex | ios::oct);
-      s >> version;
-    }
-  }
-  if (version != SLA_FORMAT_VERSION)
+  if (version != sla::FORMAT_VERSION)
     throw LowlevelError(".sla file has wrong format");
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  iter = list.begin();
-  while((*iter)->getName() == "floatformat") {
-    floatformats.emplace_back();
-    floatformats.back().restoreXml(*iter);
-    ++iter;
-  }
-  indexer.restoreXml(*iter);
-  iter++;
-  XmlDecode decoder(this,*iter);
-  decodeSpaces(decoder,this);
-  iter++;
-  symtab.restoreXml(*iter,this);
+  indexer.decode(decoder);
+  decodeSlaSpaces(decoder,this);
+  symtab.decode(decoder,this);
+  decoder.closeElement(el);
   root = (SubtableSymbol *)symtab.getGlobalScope()->findSymbol("instruction");
   vector<string> errorPairs;
   buildXrefs(errorPairs);

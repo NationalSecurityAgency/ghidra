@@ -66,6 +66,7 @@ public class ThemeChooserDialog extends DialogComponentProvider {
 		}
 	}
 
+	@Override
 	protected void cancelCallback() {
 		close();
 	}

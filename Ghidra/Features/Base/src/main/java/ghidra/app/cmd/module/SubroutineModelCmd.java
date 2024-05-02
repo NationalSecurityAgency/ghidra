@@ -17,7 +17,6 @@ package ghidra.app.cmd.module;
 
 import ghidra.app.services.BlockModelService;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.address.AddressRangeIterator;
@@ -38,7 +37,7 @@ import ghidra.util.task.TaskMonitor;
  * 
  *
  */
-public class SubroutineModelCmd extends BackgroundCommand {
+public class SubroutineModelCmd extends BackgroundCommand<Program> {
 
 	private static final String NEW_MODULE_SUFFIX = " [Subroutines]";
 	private static final String PROGRAM_CHANGED_MESSAGE =
@@ -67,14 +66,8 @@ public class SubroutineModelCmd extends BackgroundCommand {
 		this.modelName = modelName;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.BackgroundCommand#applyTo(ghidra.framework.model.DomainObject,
-	 *      ghidra.util.task.TaskMonitor)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		Program program = (Program) obj;
+	public boolean applyTo(Program program, TaskMonitor monitor) {
 		ProgramModule root = program.getListing().getRootModule(treeName);
 
 		try {
@@ -206,7 +199,7 @@ public class SubroutineModelCmd extends BackgroundCommand {
 	 * one-up number if we get a DuplicateNameException.
 	 * 
 	 * @param root parent module
-	 * @param block code block
+	 * @param nodeName new module name
 	 * @return Fragment new fragment
 	 */
 	private ProgramModule createModule(ProgramModule root, String nodeName) {

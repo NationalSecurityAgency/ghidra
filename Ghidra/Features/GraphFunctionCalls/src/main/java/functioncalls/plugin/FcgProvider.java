@@ -522,16 +522,15 @@ public class FcgProvider
 			}
 		};
 		resetGraphAction.setToolBarData(new ToolBarData(Icons.REFRESH_ICON));
-		resetGraphAction.setDescription(
-			"<html>Resets the graph--All positioning will be <b>lost</b>");
-		resetGraphAction.setHelpLocation(
-			new HelpLocation("FunctionCallGraphPlugin", "Relayout_Graph"));
+		resetGraphAction
+				.setDescription("<html>Resets the graph--All positioning will be <b>lost</b>");
+		resetGraphAction
+				.setHelpLocation(new HelpLocation("FunctionCallGraphPlugin", "Relayout_Graph"));
 
 		addLocalAction(resetGraphAction);
 
 		MultiStateDockingAction<LayoutProvider<FcgVertex, FcgEdge, FunctionCallGraph>> layoutAction =
-			new MultiStateDockingAction<>(
-				RELAYOUT_GRAPH_ACTION_NAME, plugin.getName()) {
+			new MultiStateDockingAction<>(RELAYOUT_GRAPH_ACTION_NAME, plugin.getName()) {
 
 				@Override
 				public void actionPerformed(ActionContext context) {
@@ -971,8 +970,11 @@ public class FcgProvider
 		BowTieExpandVerticesJob job = new BowTieExpandVerticesJob(viewer, collection, true);
 		VisualGraphViewUpdater<FcgVertex, FcgEdge> updater = view.getViewUpdater();
 		updater.scheduleViewChangeJob(job);
-
 		updateTitle();
+
+		String viewName = "Function Call Graph";
+		viewer.setName(viewName);
+		viewer.getAccessibleContext().setAccessibleName(viewName);
 	}
 
 	private void highlightExistingEdges(FcgExpandingVertexCollection collection) {

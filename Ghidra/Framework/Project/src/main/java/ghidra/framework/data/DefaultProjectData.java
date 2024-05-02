@@ -907,15 +907,17 @@ public class DefaultProjectData implements ProjectData {
 	private void findCheckedOutFiles(String folderPath, List<DomainFile> checkoutList,
 			TaskMonitor monitor) throws IOException, CancelledException {
 
-		for (String name : fileSystem.getItemNames(folderPath)) {
+		DomainFolder folder = getFolder(folderPath);
+		if (folder == null) {
+			return;
+		}
+
+		GhidraFolderData folderData = getRootFolderData().getFolderPathData(folderPath, false);
+		for (String name : folderData.getFileNames()) {
 			monitor.checkCancelled();
-			LocalFolderItem item = fileSystem.getItem(folderPath, name);
-			if (item.getCheckoutId() != FolderItem.DEFAULT_CHECKOUT_ID) {
-				GhidraFolderData folderData =
-					getRootFolderData().getFolderPathData(folderPath, false);
-				if (folderData != null) {
-					checkoutList.add(new GhidraFile(folderData.getDomainFolder(), name));
-				}
+			GhidraFileData fileData = folderData.getFileData(name, false);
+			if (fileData != null && fileData.isCheckedOut()) {
+				checkoutList.add(new GhidraFile(folderData.getDomainFolder(), name));
 			}
 		}
 

@@ -56,7 +56,7 @@ void TruncationTag::decode(Decoder &decoder)
 /// \param isFormal is the formal stack space indicator
 SpacebaseSpace::SpacebaseSpace(AddrSpaceManager *m,const Translate *t,const string &nm,int4 ind,int4 sz,
 			       AddrSpace *base,int4 dl,bool isFormal)
-  : AddrSpace(m,t,IPTR_SPACEBASE,nm,sz,base->getWordSize(),ind,0,dl)
+  : AddrSpace(m,t,IPTR_SPACEBASE,nm,t->isBigEndian(),sz,base->getWordSize(),ind,0,dl,dl)
 {
   contain = base;
   hasbaseregister = false;	// No base register assigned yet
@@ -121,15 +121,6 @@ const VarnodeData &SpacebaseSpace::getSpacebaseFull(int4 i) const
   if ((!hasbaseregister)||(i!=0))
     throw LowlevelError("No base register specified for space: "+getName());
   return baseOrig;
-}
-
-void SpacebaseSpace::saveXml(ostream &s) const
-
-{
-  s << "<space_base";
-  saveBasicAttributes(s);
-  a_v(s,"contain",contain->getName());
-  s << "/>\n";
 }
 
 void SpacebaseSpace::decode(Decoder &decoder)

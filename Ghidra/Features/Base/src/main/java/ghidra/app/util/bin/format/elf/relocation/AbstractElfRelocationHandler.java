@@ -156,6 +156,23 @@ abstract public class AbstractElfRelocationHandler<T extends ElfRelocationType, 
 	}
 
 	/**
+	 * Generate error log entry and bookmark at relocationAddress indicating an unspportable
+	 * COPY relocation.  A warning is produced for this COPY relocation failure.
+	 * @param program program
+	 * @param relocationAddress relocation address to be bookmarked
+	 * @param relocationType relocation type
+	 * @param symbolIndex associated symbol index within symbol table
+	 * @param symbolName associated symbol name
+	 * @param symbolSize number of bytes associated with symbol that failed to be copied
+	 * @param log import log
+	 */
+	protected void markAsUnsupportedCopy(Program program, Address relocationAddress,
+			T relocationType, String symbolName, int symbolIndex, long symbolSize, MessageLog log) {
+		markAsWarning(program, relocationAddress, relocationType, symbolName, symbolIndex,
+			"Runtime copy not supported (" + symbolSize + "-bytes)", log);
+	}
+
+	/**
 	 * Generate error log entry and bookmark at relocationAddress indicating 
 	 * an unhandled relocation.
 	 * 

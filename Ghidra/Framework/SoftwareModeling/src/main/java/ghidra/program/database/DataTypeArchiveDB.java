@@ -21,6 +21,7 @@ import java.util.*;
 import db.*;
 import ghidra.framework.Application;
 import ghidra.framework.data.DomainObjectAdapterDB;
+import ghidra.framework.data.OpenMode;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.program.model.data.*;
@@ -113,11 +114,11 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 			int id = startTransaction("create data type archive");
 
 			createDatabase();
-			if (createManagers(CREATE, TaskMonitor.DUMMY) != null) {
+			if (createManagers(OpenMode.CREATE, TaskMonitor.DUMMY) != null) {
 				throw new AssertException("Unexpected version exception on create");
 			}
 			changeSet = new DataTypeArchiveDBChangeSet(NUM_UNDOS);
-			initManagers(CREATE, TaskMonitor.DUMMY);
+			initManagers(OpenMode.CREATE, TaskMonitor.DUMMY);
 			propertiesCreate();
 			endTransaction(id, true);
 			clearUndo(false);
@@ -154,7 +155,7 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 	 * @throws VersionException if database version does not match implementation, UPGRADE may be possible.
 	 * @throws CancelledException if instantiation is canceled by monitor
 	 */
-	public DataTypeArchiveDB(DBHandle dbh, int openMode, TaskMonitor monitor, Object consumer)
+	public DataTypeArchiveDB(DBHandle dbh, OpenMode openMode, TaskMonitor monitor, Object consumer)
 			throws IOException, VersionException, CancelledException {
 
 		super(dbh, "Untitled", 500, consumer);
@@ -165,7 +166,7 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 		try {
 			int id = startTransaction("create data type archive");
 			recordChanges = false;
-			changeable = (openMode != READ_ONLY);
+			changeable = (openMode != OpenMode.IMMUTABLE);
 
 			// check DB version and read name
 			VersionException dbVersionExc = initializeDatabase(openMode);
@@ -182,7 +183,7 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 
 			initManagers(openMode, monitor);
 
-			if (openMode == UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				upgradeDatabase();
 				changed = true;
 			}
@@ -197,6 +198,10 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 			if (!success) {
 				release(consumer);
 			}
+		}
+
+		if (openMode == OpenMode.IMMUTABLE) {
+			setImmutable();
 		}
 
 	}
@@ -396,11 +401,12 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 	 * @throws VersionException if the data is newer than this version of Ghidra and can not be
 	 * upgraded or opened.
 	 */
-	private VersionException initializeDatabase(int openMode) throws IOException, VersionException {
+	private VersionException initializeDatabase(OpenMode openMode)
+			throws IOException, VersionException {
 
 		table = dbh.getTable(TABLE_NAME);
 		if (table == null) {
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				createDatabase();
 			}
 			else {
@@ -412,10 +418,10 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 		if (storedVersion > DB_VERSION) {
 			throw new VersionException(VersionException.NEWER_VERSION, false);
 		}
-		if (openMode != DBConstants.UPGRADE && storedVersion < UPGRADE_REQUIRED_BEFORE_VERSION) {
+		if (openMode != OpenMode.UPGRADE && storedVersion < UPGRADE_REQUIRED_BEFORE_VERSION) {
 			return new VersionException(true);
 		}
-		if (openMode == DBConstants.UPDATE && storedVersion < DB_VERSION) {
+		if (openMode == OpenMode.UPDATE && storedVersion < DB_VERSION) {
 			return new VersionException(true);
 		}
 		return null;
@@ -446,7 +452,7 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 		return 1;
 	}
 
-	private void checkOldProperties(int openMode) {
+	private void checkOldProperties(OpenMode openMode) {
 //		Record record = table.getRecord(new StringField(EXECUTE_PATH));
 //		if (record != null) {
 //			if (openMode == READ_ONLY) {
@@ -468,7 +474,7 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 //		int storedVersion = getStoredVersion();
 	}
 
-	private VersionException createManagers(int openMode, TaskMonitor monitor)
+	private VersionException createManagers(OpenMode openMode, TaskMonitor monitor)
 			throws CancelledException, IOException {
 
 		VersionException versionExc = null;
@@ -491,7 +497,7 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 		return versionExc;
 	}
 
-	private void initManagers(int openMode, TaskMonitor monitor)
+	private void initManagers(OpenMode openMode, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		monitor.checkCancelled();
 		dataTypeManager.archiveReady(openMode, monitor);
@@ -509,9 +515,6 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB implements DataType
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.listing.Program#invalidate()
-	 */
 	@Override
 	public void invalidate() {
 		clearCache(false);

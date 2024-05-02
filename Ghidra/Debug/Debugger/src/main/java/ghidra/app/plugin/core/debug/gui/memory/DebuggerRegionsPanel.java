@@ -25,6 +25,7 @@ import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.columns.*;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.TargetObjectSchema;
+import ghidra.debug.api.model.DebuggerObjectActionContext;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -186,7 +187,7 @@ public class DebuggerRegionsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 	}
 
 	@Override
-	protected ObjectTableModel createModel(Plugin plugin) {
+	protected ObjectTableModel createModel() {
 		return new RegionTableModel(plugin);
 	}
 

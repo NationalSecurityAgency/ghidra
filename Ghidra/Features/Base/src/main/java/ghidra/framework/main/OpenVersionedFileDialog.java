@@ -79,9 +79,20 @@ public class OpenVersionedFileDialog<T extends DomainObject> extends DataTreeDia
 		super(tool.getToolFrame(), title, DataTreeDialog.OPEN, f -> {
 			return domainObjectClass.isAssignableFrom(f.getDomainObjectClass());
 		});
+
 		this.tool = tool;
 		this.domainObjectClass = domainObjectClass;
-		init();
+		updateOkTooltip();
+		checkIfHistoryWasOpen();
+	}
+
+	private void checkIfHistoryWasOpen() {
+		String showHistory =
+			Preferences.getProperty(SHOW_HISTORY_PREFERENCES_KEY, Boolean.FALSE.toString(), true);
+
+		if (Boolean.parseBoolean(showHistory)) {
+			showHistoryPanel(true);
+		}
 	}
 
 	/**
@@ -164,6 +175,10 @@ public class OpenVersionedFileDialog<T extends DomainObject> extends DataTreeDia
 
 	@Override
 	protected JPanel buildMainPanel() {
+		historyButton = new JButton("History>>");
+		historyButton.addActionListener(e -> showHistoryPanel(!historyIsShowing));
+
+		rootPanel.setPreferredSize(getPreferredSizeForHistoryState());
 
 		mainPanel = new JPanel(new BorderLayout());
 		mainPanel.add(super.buildMainPanel(), BorderLayout.CENTER);
@@ -183,17 +198,8 @@ public class OpenVersionedFileDialog<T extends DomainObject> extends DataTreeDia
 		JPanel projectFilePanel = new JPanel(new BorderLayout());
 		projectFilePanel.add(splitPane);
 
-		String showHistory =
-			Preferences.getProperty(SHOW_HISTORY_PREFERENCES_KEY, Boolean.FALSE.toString(), true);
-
-		if (Boolean.parseBoolean(showHistory)) {
-			showHistoryPanel(true);
-		}
-
 		openObjectsTable = null;
 		tabbedPane = null;
-
-		updateOkTooltip();
 
 		if (openDomainObjects == null) {
 			return projectFilePanel; // return Project File selection panel only
@@ -245,7 +251,7 @@ public class OpenVersionedFileDialog<T extends DomainObject> extends DataTreeDia
 		openObjectsTable = new GFilterTable<>(new OpenObjectsTableModel());
 		GTable table = openObjectsTable.getTable();
 		table.getSelectionModel()
-			.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+				.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		openObjectsTable.addSelectionListener(e -> {
 			setOkEnabled(true);
 			okButton.setToolTipText("Use the selected " + domainObjectClass.getSimpleName());
@@ -374,13 +380,6 @@ public class OpenVersionedFileDialog<T extends DomainObject> extends DataTreeDia
 			updateOkTooltip();
 		});
 		return true;
-	}
-
-	private void init() {
-		historyButton = new JButton("History>>");
-		historyButton.addActionListener(e -> showHistoryPanel(!historyIsShowing));
-
-		rootPanel.setPreferredSize(getPreferredSizeForHistoryState());
 	}
 
 	@Override

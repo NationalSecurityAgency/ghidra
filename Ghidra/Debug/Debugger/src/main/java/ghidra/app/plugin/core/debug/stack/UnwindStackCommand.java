@@ -16,7 +16,7 @@
 package ghidra.app.plugin.core.debug.stack;
 
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
-import ghidra.framework.cmd.TypedBackgroundCommand;
+import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.DebuggerPcodeUtils.WatchValue;
 import ghidra.trace.model.Trace;
@@ -27,7 +27,7 @@ import ghidra.util.task.TaskMonitor;
  * A command to unwind as much of the stack as possible and annotate the resulting frame in the
  * dynamic listing
  */
-public class UnwindStackCommand extends TypedBackgroundCommand<Trace> {
+public class UnwindStackCommand extends BackgroundCommand<Trace> {
 
 	private final PluginTool tool;
 	private final DebuggerCoordinates where;
@@ -39,7 +39,7 @@ public class UnwindStackCommand extends TypedBackgroundCommand<Trace> {
 	}
 
 	@Override
-	public boolean applyToTyped(Trace obj, TaskMonitor monitor) {
+	public boolean applyTo(Trace obj, TaskMonitor monitor) {
 		try {
 			StackUnwinder unwinder = new StackUnwinder(tool, where.getPlatform());
 			int prevParamSize = 0;

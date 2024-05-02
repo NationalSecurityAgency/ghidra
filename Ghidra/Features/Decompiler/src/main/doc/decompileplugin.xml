@@ -1326,7 +1326,7 @@
     <informalexample>
       <itemizedlist spacing='compact'>
 	<listitem>Processor family</listitem>
-	<listitem>Endianess</listitem>
+	<listitem>Endianness</listitem>
 	<listitem>Size of the address bus</listitem>
 	<listitem>Processor variant</listitem>
 	<listitem>Compiler producing the Program</listitem>
@@ -4936,6 +4936,19 @@
     parameter information by setting the function's prototype directly (see the
     <xref linkend="ActionCommitParams"/> command).  In this situation, the "Override Signature"
     command is still possible, but it will bring up a confirmation dialog.
+  </para>
+</sect2>
+
+<sect2 id="ActionEditOverride">
+  <title>Edit Signature Override</title>
+  <para>
+    Edit the existing overriding function prototype to the called function under the cursor.
+  </para>
+  <para>
+	This action can only be triggered at call sites with an existing signature override. As with the Override 
+	Signature command, users must select either the token representing the called function's name or the 
+	tokens representing the function pointer at the call site. The action brings up a dialog where the user 
+  	can edit the current overriding function prototype. 
   </para>
 </sect2>
 

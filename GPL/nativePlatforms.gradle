@@ -25,7 +25,8 @@ project.ext.PLATFORMS = [
 	[name: "linux_arm_64", os: "linux", arch: "arm64"],
 	[name: "mac_x86_64", os: "osx", arch: "x86_64"],
 	[name: "mac_arm_64", os: "osx", arch: "arm64"],
-	[name: "freebsd_x86_64", os: "freebsd", arch: "x86_64"]
+	[name: "freebsd_x86_64", os: "freebsd", arch: "x86_64"],
+	[name: "freebsd_arm_64", os: "freebsd", arch: "arm64"]
 ]
 
 /*********************************************************************************

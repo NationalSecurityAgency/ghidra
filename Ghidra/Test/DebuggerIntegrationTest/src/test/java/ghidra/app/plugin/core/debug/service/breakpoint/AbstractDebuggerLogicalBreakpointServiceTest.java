@@ -1330,7 +1330,7 @@ public abstract class AbstractDebuggerLogicalBreakpointServiceTest<T, MR>
 		});
 
 		// NOTE: Still recording in the background
-		traceManager.closeTrace(trace);
+		traceManager.closeTraceNoConfirm(trace);
 		waitForSwing();
 
 		assertEquals(0, breakpointService.getAllBreakpoints().size());

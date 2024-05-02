@@ -598,8 +598,8 @@ const TypeField *Datatype::resolveTruncation(int8 offset,PcodeOp *op,int4 slot,i
   return (const TypeField *)0;
 }
 
-/// Restore the basic properties (name,size,id) of a data-type from an XML element
-/// Properties are read from the attributes of the element
+/// Restore the basic properties (name,size,id) of a data-type from a stream.
+/// Properties are read from the attributes of the element.
 /// \param decoder is the stream decoder
 void Datatype::decodeBasic(Decoder &decoder)
 
@@ -1507,6 +1507,9 @@ void TypeStruct::setFields(const vector<TypeField> &fd,int4 fixedSize,int4 fixed
     size = calcSize;
   alignment = (fixedAlign < 1) ? calcAlign : fixedAlign;
   calcAlignSize();
+  if (fixedSize <= 0) {	// Unless specifically overridden
+    size = alignSize;	// pad out structure to with alignment bytes
+  }
 }
 
 /// Find the proper subfield given an offset. Return the index of that field

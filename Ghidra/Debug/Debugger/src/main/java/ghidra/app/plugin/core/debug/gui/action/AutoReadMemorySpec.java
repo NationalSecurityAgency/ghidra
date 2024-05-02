@@ -18,11 +18,13 @@ package ghidra.app.plugin.core.debug.gui.action;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import javax.swing.Icon;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import ghidra.app.plugin.core.debug.gui.control.TargetActionTask;
 import ghidra.app.plugin.core.debug.utils.MiscellaneousUtils;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.options.SaveState;
@@ -31,6 +33,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.classfinder.ExtensionPoint;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * An interface for specifying how to automatically read target memory.
@@ -42,6 +45,7 @@ public interface AutoReadMemorySpec extends ExtensionPoint {
 
 		private Private() {
 			ClassSearcher.addChangeListener(classListener);
+			classesChanged(null);
 		}
 
 		private synchronized void classesChanged(ChangeEvent evt) {
@@ -93,6 +97,12 @@ public interface AutoReadMemorySpec extends ExtensionPoint {
 	 * follow-up purposes only, and should always complete normally. It should complete with true if
 	 * any memory was actually loaded. Otherwise, it should complete with false.
 	 * 
+	 * <p>
+	 * <b>NOTE:</b> This returns the future, rather than being synchronous, because not all specs
+	 * will actually need to create a background task. If this were synchronous, the caller would
+	 * have to invoke it from a background thread, requiring it to create that thread whether or not
+	 * this method actually does anything.
+	 * 
 	 * @param tool the tool containing the provider
 	 * @param coordinates the provider's current coordinates
 	 * @param visible the provider's visible addresses
@@ -100,4 +110,18 @@ public interface AutoReadMemorySpec extends ExtensionPoint {
 	 */
 	CompletableFuture<Boolean> readMemory(PluginTool tool, DebuggerCoordinates coordinates,
 			AddressSetView visible);
+
+	/**
+	 * A convenience for performing target memory reads with progress displayed
+	 * 
+	 * @param tool the tool for displaying progress
+	 * @param reader the method to perform the read, asynchronously
+	 * @return a future which returns true if the read completes
+	 */
+	default CompletableFuture<Boolean> doRead(PluginTool tool,
+			Function<TaskMonitor, CompletableFuture<Void>> reader) {
+		return TargetActionTask
+				.executeTask(tool, getMenuName(), true, true, false, m -> reader.apply(m))
+				.thenApply(__ -> true);
+	}
 }

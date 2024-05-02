@@ -26,7 +26,6 @@ import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Conv;
@@ -182,14 +181,13 @@ public class ExportDataDirectory extends DataDirectory {
 			if (i == 0) {
 				setPlateComment(program, address, "Export Function Pointers");
 			}
-			PeUtils.createData(program, address, new DWordDataType(), log);
+			PeUtils.createData(program, address, IBO32, log);
 			Data data = program.getListing().getDataAt(address);
-			if (data == null || !(data.getValue() instanceof Scalar)) {
+			if (data == null || !(data.getValue() instanceof Address)) {
 				Msg.warn(this, "Invalid or missing function at " + address);
 				break;
 			}
-			Scalar scalar = (Scalar) data.getValue();
-			Address refAddr = space.getAddress(va(scalar.getUnsignedValue(), isBinary));
+			Address refAddr = (Address) data.getValue();
 			data.addOperandReference(0, refAddr, RefType.DATA, SourceType.IMPORTED);
 			Reference[] refs = data.getOperandReferences(0);
 			for (Reference ref : refs) {
@@ -205,7 +203,7 @@ public class ExportDataDirectory extends DataDirectory {
 			if (i == 0) {
 				setPlateComment(program, address, "Export Ordinal Values");
 			}
-			PeUtils.createData(program, address, new WordDataType(), log);
+			PeUtils.createData(program, address, WORD, log);
 			ordinalAddr += 2;
 		}
 		for (int i = 0; i < getNumberOfNames(); ++i) {
@@ -216,14 +214,13 @@ public class ExportDataDirectory extends DataDirectory {
 			if (i == 0) {
 				setPlateComment(program, address, "Export Name Pointers");
 			}
-			PeUtils.createData(program, address, new DWordDataType(), log);
+			PeUtils.createData(program, address, IBO32, log);
 			Data data = program.getListing().getDataAt(address);
 			if (data == null) {
 				Msg.warn(this, "Invalid or missing data at " + address);
 				break;
 			}
-			Scalar scalar = (Scalar) data.getValue();
-			Address strAddr = space.getAddress(va(scalar.getUnsignedValue(), isBinary));
+			Address strAddr = (Address) data.getValue();
 			data.addOperandReference(0, strAddr, RefType.DATA, SourceType.IMPORTED);
 			Reference[] refs = data.getOperandReferences(0);
 			for (Reference ref : refs) {
@@ -255,10 +252,6 @@ public class ExportDataDirectory extends DataDirectory {
 			minorVersion = reader.readNextShort();
 			name = reader.readNextInt();
 			ptr = ntHeader.rvaToPointer(name);
-			if (name > 0 && ptr < 0) {
-				Msg.error(this, "Invalid RVA " + Integer.toHexString(name));
-				return false;
-			}
 			base = reader.readNextInt();
 			numberOfFunctions = reader.readNextInt();
 			numberOfNames = reader.readNextInt();
@@ -383,17 +376,17 @@ public class ExportDataDirectory extends DataDirectory {
 	@Override
 	public DataType toDataType() throws DuplicateNameException {
 		StructureDataType struct = new StructureDataType(NAME, 0);
-		struct.add(new DWordDataType(), "Characteristics", null);
-		struct.add(new DWordDataType(), "TimeDateStamp", null);
-		struct.add(new WordDataType(), "MajorVersion", null);
-		struct.add(new WordDataType(), "MinorVersion", null);
-		struct.add(new DWordDataType(), "Name", null);
-		struct.add(new DWordDataType(), "Base", null);
-		struct.add(new DWordDataType(), "NumberOfFunctions", null);
-		struct.add(new DWordDataType(), "NumberOfNames", null);
-		struct.add(new DWordDataType(), "AddressOfFunctions", null);
-		struct.add(new DWordDataType(), "AddressOfNames", null);
-		struct.add(new DWordDataType(), "AddressOfNameOrdinals", null);
+		struct.add(DWORD, "Characteristics", null);
+		struct.add(DWORD, "TimeDateStamp", null);
+		struct.add(WORD, "MajorVersion", null);
+		struct.add(WORD, "MinorVersion", null);
+		struct.add(IBO32, "Name", null);
+		struct.add(DWORD, "Base", null);
+		struct.add(DWORD, "NumberOfFunctions", null);
+		struct.add(DWORD, "NumberOfNames", null);
+		struct.add(IBO32, "AddressOfFunctions", null);
+		struct.add(IBO32, "AddressOfNames", null);
+		struct.add(IBO32, "AddressOfNameOrdinals", null);
 		struct.setCategoryPath(new CategoryPath("/PE"));
 		return struct;
 	}

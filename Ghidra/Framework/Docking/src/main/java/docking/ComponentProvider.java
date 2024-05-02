@@ -115,6 +115,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	private String inceptionInformation;
 
 	private String registeredFontId;
+	private Component defaultFocusComponent;
 
 	private ThemeListener themeListener = this::themeChanged;
 
@@ -225,21 +226,38 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		return instanceID;
 	}
 
-	// Default implementation
-	public void requestFocus() {
-
-		JComponent component = getComponent();
-		if (component == null) {
-			return; // this shouldn't happen; this implies we have been disposed
-		}
-
-		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-		Component focusOwner = kfm.getFocusOwner();
-		if (focusOwner != null && SwingUtilities.isDescendingFrom(focusOwner, component)) {
+	public final void requestFocus() {
+		if (!isVisible()) {
 			return;
 		}
 
-		component.requestFocus();
+		dockingTool.toFront();
+		if (defaultFocusComponent != null) {
+			DockingWindowManager.requestFocus(defaultFocusComponent);
+			return;
+		}
+
+		JComponent component = getComponent();
+		Container parent = component == null ? null : component.getParent();
+		if (parent == null) {
+			return;	// we are either disposed or not added to the tool yet
+		}
+
+		Container focusCycleRoot = parent.getFocusCycleRootAncestor();
+		if (focusCycleRoot == null) {
+			return;
+		}
+
+		// Only request focus if next component in focus traversal belongs to this provider
+		FocusTraversalPolicy policy = focusCycleRoot.getFocusTraversalPolicy();
+		Component firstComponent = policy.getComponentAfter(focusCycleRoot, parent);
+		if (firstComponent != null && SwingUtilities.isDescendingFrom(firstComponent, parent)) {
+			DockingWindowManager.requestFocus(firstComponent);
+		}
+	}
+
+	protected void setDefaultFocusComponent(Component component) {
+		this.defaultFocusComponent = component;
 	}
 
 	/**
@@ -307,6 +325,14 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	}
 
 	/**
+	 * Returns all the local actions registered for this component provider.
+	 * @return all the local actions registered for this component provider
+	 */
+	public Set<DockingActionIf> getLocalActions() {
+		return dockingTool.getLocalActions(this);
+	}
+
+	/**
 	 * Removes all local actions from this component provider
 	 */
 	protected void removeAllLocalActions() {
@@ -360,7 +386,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	 * @return true if this provider is showing.
 	 */
 	public boolean isVisible() {
-		return dockingTool.isVisible(this);
+		return dockingTool != null && dockingTool.isVisible(this);
 	}
 
 	/**
@@ -618,6 +644,22 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		}
 
 		dockingTool.getWindowManager().setIcon(this, icon);
+	}
+
+	/**
+	 * Get the icon provided to {@link #setIcon(Icon)}
+	 * 
+	 * <p>
+	 * This method is final, guaranteeing there is always a means for extensions of this class to
+	 * obtain the original icon. Some classes may override {@link #getIcon()} to apply modifications
+	 * when the icon is displayed in the UI. Further extensions of that class may wish to override
+	 * {@link #getIcon()}, too, and so might want access to the original base icon. This method
+	 * provides that access.
+	 * 
+	 * @return the base icon
+	 */
+	protected final Icon getBaseIcon() {
+		return icon;
 	}
 
 	/**

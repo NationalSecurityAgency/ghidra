@@ -113,7 +113,7 @@ public class DyldCacheSlideInfo4 extends DyldCacheSlideInfoCommon {
 	}
 
 	/**
-	 * Create a new {@link DyldCacheSlideInfo3}.
+	 * Create a new {@link DyldCacheSlideInfo4}.
 	 * 
 	 * @param reader A {@link BinaryReader} positioned at the start of a DYLD slide info 3
 	 * @param mappingAddress The base address of where the slide fixups will take place
@@ -138,9 +138,9 @@ public class DyldCacheSlideInfo4 extends DyldCacheSlideInfoCommon {
 	}
 
 	@Override
-	public List<DyldCacheSlideFixup> getSlideFixups(BinaryReader reader, int pointerSize,
+	public List<DyldFixup> getSlideFixups(BinaryReader reader, int pointerSize,
 			MessageLog log, TaskMonitor monitor) throws IOException, CancelledException {
-		List<DyldCacheSlideFixup> fixups = new ArrayList<>();
+		List<DyldFixup> fixups = new ArrayList<>();
 
 		monitor.initialize(pageStartsCount, "Getting DYLD Cache V4 slide fixups...");
 		for (int index = 0; index < pageStartsCount; index++) {
@@ -175,20 +175,19 @@ public class DyldCacheSlideInfo4 extends DyldCacheSlideInfoCommon {
 	}
 
 	/**
-	 * Walks the pointer chain at the given reader offset to find necessary 
-	 * {@link DyldCacheSlideFixup}s
+	 * Walks the pointer chain at the given reader offset to find necessary {@link DyldFixup}s
 	 * 
 	 * @param segmentOffset The segment offset
 	 * @param pageOffset The page offset
 	 * @param reader A reader positioned at the start of the segment to fix
 	 * @param monitor A cancellable monitor
-	 * @return A {@link List} of {@link DyldCacheSlideFixup}s
+	 * @return A {@link List} of {@link DyldFixup}s
 	 * @throws IOException If an IO-related error occurred
 	 * @throws CancelledException If the user cancelled the operation
 	 */
-	private List<DyldCacheSlideFixup> processPointerChain(long segmentOffset, long pageOffset,
+	private List<DyldFixup> processPointerChain(long segmentOffset, long pageOffset,
 			BinaryReader reader, TaskMonitor monitor) throws IOException, CancelledException {
-		List<DyldCacheSlideFixup> fixups = new ArrayList<>(1024);
+		List<DyldFixup> fixups = new ArrayList<>(1024);
 		long valueMask = ~deltaMask;
 		long deltaShift = Long.numberOfTrailingZeros(deltaMask);
 
@@ -210,7 +209,7 @@ public class DyldCacheSlideInfo4 extends DyldCacheSlideInfoCommon {
 				chainValue += valueAdd /* + slide */;
 			}
 
-			fixups.add(new DyldCacheSlideFixup(dataOffset, chainValue, 4));
+			fixups.add(new DyldFixup(dataOffset, chainValue, 4, null, null));
 		}
 
 		return fixups;

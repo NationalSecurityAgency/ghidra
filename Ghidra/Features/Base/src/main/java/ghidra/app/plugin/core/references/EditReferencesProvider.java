@@ -1019,8 +1019,6 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 	private class RefCellTextRenderer extends GTableCellRenderer {
 
 		RefCellTextRenderer() {
-			defaultFont = getFont();
-			boldFont = defaultFont.deriveFont(defaultFont.getStyle() | Font.BOLD);
 			setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
 		}
 

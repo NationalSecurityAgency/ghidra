@@ -15,15 +15,16 @@
  */
 package ghidra.app.plugin.processors.sleigh.expression;
 
+import static ghidra.pcode.utils.SlaFormat.*;
+
 import ghidra.app.plugin.processors.sleigh.ParserWalker;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.xml.XmlPullParser;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 /**
- * 
- *
  * The integer offset of the address following the current instruction
  */
 public class Next2InstructionValue extends PatternValue {
@@ -56,8 +57,9 @@ public class Next2InstructionValue extends PatternValue {
 	}
 
 	@Override
-	public void restoreXml(XmlPullParser parser, SleighLanguage lang) {
-		parser.discardSubTree("next2_exp");
+	public void decode(Decoder decoder, SleighLanguage lang) throws DecoderException {
+		int el = decoder.openElement(ELEM_NEXT2_EXP);
+		decoder.closeElement(el);
 		// Nothing to do
 	}
 

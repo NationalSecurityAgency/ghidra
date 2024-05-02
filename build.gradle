@@ -45,6 +45,12 @@ if ("32".equals(System.getProperty("sun.arch.data.model"))) {
 	throw new GradleException("\n\n\t32-bit Java detected!  Please use 64-bit Java.\n\n");
 }
 
+/***************************************************************************************
+ * Identify supported Python command
+ ***************************************************************************************/
+project.ext.SUPPORTED_PY_VERSIONS = ['3.12', '3.11', '3.10', '3.9', '3.8', '3.7']
+project.ext.PYTHON3 = findPython3()
+
 /*********************************************************************************
  *  Define the location of bin repo
  *********************************************************************************/
@@ -143,6 +149,74 @@ def checkGradleVersion() {
 	if (GradleVersion.current() < min || (max && GradleVersion.current() >= max)) {
 		throw new GradleException("Requires ${gradleRange}, but was run with $gradle.gradleVersion")
 	}
+}
+
+
+/*********************************************************************************
+ * Identifies supported python3 command to be used when building and checks for pip install.
+ * Although warnings may be produced no exception is thrown since python only required
+ * for specific build tasks and is not required for prepdev
+ *********************************************************************************/
+def checkPythonVersion(String pyCmd) {
+	try {
+		def stdout = new ByteArrayOutputStream()
+		exec {
+			commandLine pyCmd, "-c", "import sys; print('{0}.{1}'.format(*sys.version_info))"
+			standardOutput = stdout
+			errorOutput = OutputStream.nullOutputStream()
+		}
+		def version = "$stdout".strip()
+		return version
+	}
+	catch (Exception e) {
+		return "ABSENT"
+	}
+}
+
+def checkPip(String pyCmd) {
+	try {
+		def stdout = new ByteArrayOutputStream()
+		exec {
+			commandLine pyCmd, "-c", "import pip; print(pip.__version__)"
+			standardOutput = stdout
+			errorOutput = OutputStream.nullOutputStream()
+		}
+		def version = "$stdout".strip();
+		if (version.length() == 0) {
+			println("Warning: Python3 pip not installed (required for build)")
+		}
+		else {
+			println("Python3 pip version: ${version}")
+		}
+		return version
+	}
+	catch (Exception e) {
+		println("Warning: Python3 pip not installed (required for build)")
+	}
+}
+
+def findPython3() {
+	for (pyCmd in ['py', 'python3', 'python']) {
+		def pyVer = checkPythonVersion(pyCmd)
+		if (pyVer in SUPPORTED_PY_VERSIONS) {
+			println("Python3 command:  ${pyCmd} (version ${pyVer})")
+			checkPip(pyCmd)
+			return pyCmd
+		}
+	}
+	for (pyVer in SUPPORTED_PY_VERSIONS) {
+		def pyCmd = "python${pyVer}"
+		if (checkPythonVersion(pyCmd) in SUPPORTED_PY_VERSIONS) {
+			println("Python3 command:  ${pyCmd}")
+			checkPip(pyCmd)
+			return pyCmd
+		}
+	}
+	// Don't fail until task execution. Just let "python3" fail.
+	// Force use of non-existent python3.7 instead of unsupported python version
+	// which should fail if a python build is performed.
+	println("Warning: Python3 command not found (required for build)")
+	return 'python3.7'
 }
 
 /******************************************************************************************

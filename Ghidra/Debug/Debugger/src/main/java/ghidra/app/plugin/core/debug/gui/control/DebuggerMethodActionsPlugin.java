@@ -29,9 +29,9 @@ import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.gui.model.DebuggerObjectActionContext;
 import ghidra.app.services.*;
 import ghidra.debug.api.control.ControlMode;
+import ghidra.debug.api.model.DebuggerObjectActionContext;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.target.Target.ActionEntry;
@@ -135,7 +135,8 @@ public class DebuggerMethodActionsPlugin extends Plugin implements PopupActionPr
 
 		List<DockingActionIf> result = new ArrayList<>();
 		for (ActionEntry entry : target.collectActions(null, context).values()) {
-			if (entry.requiresPrompt() || entry.builtIn()) {
+			//if (entry.requiresPrompt() || entry.builtIn()) {
+			if (!entry.isEnabled() || entry.builtIn()) {
 				continue;
 			}
 			result.add(new InvokeActionEntryAction(entry));

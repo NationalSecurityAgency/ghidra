@@ -27,6 +27,7 @@ import javax.swing.*;
 import docking.ComponentProvider;
 import docking.Tool;
 import generic.theme.GColor;
+import generic.theme.Gui;
 import generic.util.WindowUtilities;
 import generic.util.image.ImageUtils;
 import ghidra.app.DeveloperPluginPackage;
@@ -110,6 +111,8 @@ public class WindowLocationPlugin extends Plugin {
 
 	private class WindowLocationPanel extends JPanel {
 
+		private static final String FONT_ID = "font.plugin.window.location";
+
 		private MouseListener mousy = new MouseListener();
 
 		WindowLocationPanel() {
@@ -188,9 +191,8 @@ public class WindowLocationPlugin extends Plugin {
 		}
 
 		private void paintWindows(Graphics2D g2d, AffineTransform xform) {
-			Font f = g2d.getFont();
-			Font biggerFont = f.deriveFont(40f);
-			g2d.setFont(biggerFont);
+			Font f = Gui.getFont(FONT_ID);
+			g2d.setFont(f);
 			g2d.setColor(FG_COLOR_WINDOW_TEXT);
 
 			Window[] windows = Window.getWindows();
@@ -423,10 +425,7 @@ public class WindowLocationPlugin extends Plugin {
 
 		@Override
 		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((window == null) ? 0 : window.hashCode());
-			return result;
+			return Objects.hash(window);
 		}
 
 		@Override

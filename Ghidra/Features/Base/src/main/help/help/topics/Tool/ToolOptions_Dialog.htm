@@ -283,7 +283,12 @@
 
                 <TH align="left"><B>Description</B></TH>
               </TR>
+              <TR valign="middle">
+                <TD valign="top" width="200" align="left">Copy Strings Without Quotes</TD>
 
+                <TD valign="top" align="left">If selected, copying strings to the clipboard from
+                the listing, decompiler, or bytes viewer will remove outer quotes.</TD>
+              </TR>
               <TR valign="middle">
                 <TD valign="top" width="200" align="left">Docking Windows On Top</TD>
 
@@ -291,6 +296,13 @@
                 its parent tool window; the undocked window will not get "lost" behind its parent
                 window. Unselected means that the undocked window may go behind other windows once
                 it loses focus. Use the Windows menu to make the undocked window visible.</TD>
+              </TR>
+
+              <TR valign="middle">
+                <TD valign="top" width="200" align="left">Goto Dialog Memory</TD>
+
+                <TD valign="top" align="left">Selected means that the last goto query will
+                remain in the dialog the next time the dialog is invoked.</TD>
               </TR>
 
               <TR valign="middle">
@@ -302,10 +314,23 @@
               </TR>
 
               <TR valign="middle">
+                <TD valign="top" width="200" align="left">Max Navigation History Size</TD>
+
+                <TD valign="top" align="left">Max number of items to retain in the navigation
+                history.</A> dialog</TD>
+              </TR>
+
+              <TR valign="middle">
+                <TD valign="top" width="200" align="left">Show Program Tabs Always</TD>
+
+                <TD valign="top" align="left">If selected, a program tab will be displayed even
+                there is only one program open.</TD>
+              </TR>
+              <TR valign="middle">
                 <TD valign="top" width="200" align="left">Subroutine Model</TD>
 
                 <TD valign="top" align="left">
-                  <P>Sets the default subroutine model. This setting is mainly used when creating
+                  Sets the default subroutine model. This setting is mainly used when creating
                   call graphs. See <A href=
                   "help/topics/BlockModel/Block_Model.htm#BlockModelDefinition">Block Models</A>
                   for a description of the valid Models.</P>
@@ -370,21 +395,29 @@
 
                 <TH valign="top" align="left"><B>Description</B></TH>
               </TR>
-
-              <TR>
-                <TD valign="top" width="200" align="left">Swing Look and Feel</TD>
-
-                <TD valign="top" align="left"><A name="Look_And_Feel"></A> This controls the
-                appearance of the UI widgets for things such as colors and fonts. Each operating
-                system provides a different default Look and Feel. Some of these work better than
-                others.</TD>
-              </TR>
-
               <TR>
                 <TD valign="top" width="200" align="left">Automatically Save Tools</TD>
 
                 <TD valign="top" align="left">This controls whether Ghidra will save tool state
                 when the tool is closed.</TD>
+              </TR>
+
+               <TR>
+                <TD valign="top" width="200" align="left">Default Tool Launch Mode</TD>
+
+                <TD valign="top" align="left">This controls if a new or already running tool should
+                be used during default launch. Tool "reuse" mode will open selected file within a
+                suitable running tool if one can be identified, otherwise a new tool will be
+                launched.</TD>
+              </TR>
+                            
+            <TR valign="middle">
+                <TD valign="top" width="200" align="left">Docking Windows On Top</TD>
+
+                <TD valign="top" align="left">Selected means to show each undocked window on top of
+                its parent tool window; the undocked window will not get "lost" behind its parent
+                window. Unselected means that the undocked window may go behind other windows once
+                it loses focus. Use the Windows menu to make the undocked window visible.</TD>
               </TR>
 
               <TR>
@@ -394,37 +427,26 @@
                 opens the previously loaded project on startup.</TD>
               </TR>
 
-              <TR>
-                <TD valign="top" width="200" align="left">Default Tool Launch Mode</TD>
-
-                <TD valign="top" align="left">This controls if a new or already running tool should
-                be used during default launch. Tool "reuse" mode will open selected file within a
-                suitable running tool if one can be identified, otherwise a new tool will be
-                launched.</TD>
+             <TR>
+                <TD valign="top" width="200" align="left">Show Tooltips</TD>
+			
+                <TD valign="top" align="left">This controls whether or not Ghidra will show
+                tooltips.</TD>
               </TR>
-
-              <TR>
-                <TD valign="top" width="200" align="left"><A name="Use_Inverted_Colors"></A>Use
-                Inverted Colors</TD>
-
-                <TD valign="top" align="left">
-                  <P>This is a <B>prototype</B> feature that allows the user to invert each color
-                  of the UI. Doing this effectively creates a Dark Theme, which some users find
-                  less visually straining.</P>
-
-                  <BLOCKQUOTE style="background-color: #FFF0E0; color: black;">
-                    <P><IMG alt="" border="0" src="help/shared/warning.png"> As a prototype
-                    feature, this feature has many known issues, including:</P>
-
-                    <UL>
-                      <LI>Pre-generated content, such as images, icons and help files will have
-                      inverted colors,</LI>
-
-                      <LI>Some color combinations will be difficult to read</LI>
-                    </UL>
-                  </BLOCKQUOTE>
-                </TD>
+             <TR>
+                <TD valign="top" width="200" align="left">Use DataBuffer Output Compression</TD>
+			
+                <TD valign="top" align="left">This controls whether or not Ghidra will compress
+                data being sent to the server.</TD>
               </TR>
+             <TR>
+                <TD valign="top" width="200" align="left">Use Notification Animation</TD>
+			
+                <TD valign="top" align="left">This controls whether or not Ghidra will use
+                automations to provide visual feedback that something is happening, such as
+                launching a tool.</TD>
+              </TR>
+              
             </TBODY>
           </TABLE>
         </CENTER>

@@ -102,6 +102,9 @@ public abstract class AbstractScriptTraceRmiLaunchOffer extends AbstractTraceRmi
 		List<String> commandLine = new ArrayList<>();
 		Map<String, String> env = new HashMap<>(System.getenv());
 		prepareSubprocess(commandLine, env, args, address);
+		if (program != null) {
+			env.put("GHIDRA_LANGUAGE_ID", program.getLanguageID().toString());
+		}
 
 		for (Map.Entry<String, TtyCondition> ent : attrs.extraTtys().entrySet()) {
 			if (!ent.getValue().isActive(args)) {
@@ -114,5 +117,10 @@ public abstract class AbstractScriptTraceRmiLaunchOffer extends AbstractTraceRmi
 
 		sessions.put("Shell",
 			runInTerminal(commandLine, env, script.getParentFile(), sessions.values()));
+	}
+
+	@Override
+	public boolean requiresImage() {
+		return !attrs.noImage();
 	}
 }

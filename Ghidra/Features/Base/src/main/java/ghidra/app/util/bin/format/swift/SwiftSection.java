@@ -35,8 +35,9 @@ public enum SwiftSection {
 	BLOCK_PROTOCS("__swift5_protos", "swift5_protocols", ".sw5prt"),
 	BLOCK_ACFUNCS("__swift5_acfuncs", "swift5_accessible_functions", ".sw5acfn"),
 	BLOCK_MPENUM("__swift5_mpenum", "swift5_mpenum", ".sw5mpen"),
-	BLOCK_TYPES("__swift5_types", "swift5_types", ".sw5tymd"),
-	BLOCK_ENTRY("__swift5_entry", "swift5_entry", ".sw5entr");
+	BLOCK_TYPES("__swift5_types", "swift5_type_metadata", ".sw5tymd"),
+	BLOCK_ENTRY("__swift5_entry", "swift5_entry", ".sw5entr"),
+	BLOCK_SWIFTAST("__swift_ast", ".swift_ast", "swiftast");
 
 	private List<String> sectionNames;
 	

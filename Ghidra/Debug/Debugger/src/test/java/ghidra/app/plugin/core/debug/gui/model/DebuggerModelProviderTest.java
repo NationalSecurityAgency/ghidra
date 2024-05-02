@@ -25,6 +25,7 @@ import org.jdom.JDOMException;
 import org.junit.*;
 
 import db.Transaction;
+import docking.ActionContext;
 import docking.widgets.table.*;
 import docking.widgets.table.ColumnSortState.SortDirection;
 import docking.widgets.tree.GTree;
@@ -66,6 +67,8 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 					        <element schema='Process' />
 					    </schema>
 					    <schema name='Process' elementResync='NEVER' attributeResync='ONCE'>
+					        <interface name='Process' />
+					        <interface name='Activatable' />
 					        <attribute name='Threads' schema='ThreadContainer' />
 					        <attribute name='Handles' schema='HandleContainer' />
 					    </schema>
@@ -75,6 +78,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 					    </schema>
 					    <schema name='Thread' elementResync='NEVER' attributeResync='NEVER'>
 					        <interface name='Thread' />
+					        <interface name='Activatable' />
 					        <attribute name='_display' schema='STRING' />
 					        <attribute name='_self' schema='Thread' />
 					        <attribute name='Stack' schema='Stack' />
@@ -86,6 +90,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 					    </schema>
 					    <schema name='Frame' elementResync='NEVER' attributeResync='NEVER'>
 					        <interface name='StackFrame' />
+					        <interface name='Activatable' />
 					    </schema>
 					    <schema name='HandleContainer' canonical='yes' elementResync='NEVER'
 					            attributeResync='ONCE'>
@@ -408,26 +413,26 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 
 		TraceObjectManager objects = tb.trace.getObjectManager();
 		TraceObject root = objects.getRootObject();
-		TraceObjectKeyPath processesPath = TraceObjectKeyPath.parse("Processes");
-		TraceObject processes = objects.getObjectByCanonicalPath(processesPath);
+		TraceObjectKeyPath process0Path = TraceObjectKeyPath.parse("Processes[0]");
+		TraceObject process0 = objects.getObjectByCanonicalPath(process0Path);
 		traceManager.activateObject(root);
 		waitForTasks();
 
-		modelProvider.setTreeSelection(processesPath, EventOrigin.USER_GENERATED);
+		modelProvider.setTreeSelection(process0Path, EventOrigin.USER_GENERATED);
 		waitForSwing();
 
 		GTree tree = modelProvider.objectsTreePanel.tree;
 		GTreeNode node = waitForPass(() -> {
 			GTreeNode n = Unique.assertOne(tree.getSelectedNodes());
 			assertEquals(
-				"Processes@%d".formatted(System.identityHashCode(processes.getCanonicalParent(0))),
+				"[0]@%d".formatted(System.identityHashCode(process0.getCanonicalParent(0))),
 				n.getName());
 			return n;
 		});
 		clickTreeNode(tree, node, MouseEvent.BUTTON1);
 		clickTreeNode(tree, node, MouseEvent.BUTTON1);
 		waitForSwing();
-		waitForPass(() -> assertEquals(processes, traceManager.getCurrentObject()));
+		waitForPass(() -> assertEquals(process0, traceManager.getCurrentObject()));
 	}
 
 	@Test
@@ -568,8 +573,8 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		});
 		clickTableCell(modelProvider.attributesTablePanel.table, rowIndex, 0, 2);
 
-		assertEquals(TraceObjectKeyPath.parse("Processes[0].Threads"),
-			traceManager.getCurrentObject().getCanonicalPath());
+		// ThreadContainer is not activatable, so only changes provider's path
+		assertEquals(TraceObjectKeyPath.parse("Processes[0].Threads"), modelProvider.getPath());
 	}
 
 	@Test
@@ -641,8 +646,10 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		selectAttribute("_next");
 		waitForSwing();
 
-		assertEnabled(modelProvider, modelProvider.actionFollowLink);
-		performAction(modelProvider.actionFollowLink, modelProvider, true);
+		ActionContext ctx =
+			runSwing(() -> modelProvider.attributesTableListener.computeContext(true));
+		assertTrue(runSwing(() -> modelProvider.actionFollowLink.isEnabledForContext(ctx)));
+		performAction(modelProvider.actionFollowLink, ctx, true);
 
 		TraceObjectKeyPath thread3Path = TraceObjectKeyPath.parse("Processes[0].Threads[3]");
 		assertPathIs(thread3Path, 0, 5);
@@ -1185,23 +1192,24 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 				.orElse(null);
 	}
 
+	protected TraceValueLifePlotColumn getPlotColumn() {
+		return findColumnOfType(modelProvider.elementsTablePanel.tableModel,
+			TraceValueLifePlotColumn.class);
+	}
+
 	@Test
 	public void testLifePlotColumnFitsSnapshotsOnActivate() throws Throwable {
-		TraceValueLifePlotColumn plotCol = findColumnOfType(
-			modelProvider.elementsTablePanel.tableModel, TraceValueLifePlotColumn.class);
 		createTraceAndPopulateObjects();
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
 		// NB. The plot adds a margin of 1
-		assertEquals(Lifespan.span(0, 21), plotCol.getFullRange());
+		assertEquals(Lifespan.span(0, 21), getPlotColumn().getFullRange());
 	}
 
 	@Test
 	public void testLifePlotColumnFitsSnapshotsOnAddSnapshot() throws Throwable {
-		TraceValueLifePlotColumn plotCol = findColumnOfType(
-			modelProvider.elementsTablePanel.tableModel, TraceValueLifePlotColumn.class);
 		createTraceAndPopulateObjects();
 
 		traceManager.activateTrace(tb.trace);
@@ -1213,20 +1221,18 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		waitForDomainObject(tb.trace);
 
 		// NB. The plot adds a margin of 1
-		assertEquals(Lifespan.span(0, 31), plotCol.getFullRange());
+		assertEquals(Lifespan.span(0, 31), getPlotColumn().getFullRange());
 
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getTimeManager().getSnapshot(31, true);
 		}
 		waitForDomainObject(tb.trace);
 
-		assertEquals(Lifespan.span(0, 32), plotCol.getFullRange());
+		assertEquals(Lifespan.span(0, 32), getPlotColumn().getFullRange());
 	}
 
 	@Test
 	public void testLifePlotColumnFitsSnapshotsOnAddSnapshotSupressEvents() throws Throwable {
-		TraceValueLifePlotColumn plotCol = findColumnOfType(
-			modelProvider.elementsTablePanel.tableModel, TraceValueLifePlotColumn.class);
 		createTraceAndPopulateObjects();
 
 		traceManager.activateTrace(tb.trace);
@@ -1240,6 +1246,6 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		waitForDomainObject(tb.trace);
 
 		// NB. The plot adds a margin of 1
-		assertEquals(Lifespan.span(0, 31), plotCol.getFullRange());
+		assertEquals(Lifespan.span(0, 31), getPlotColumn().getFullRange());
 	}
 }

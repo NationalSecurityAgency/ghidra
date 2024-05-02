@@ -30,7 +30,11 @@ from .util import send_delimited, recv_delimited
 # This need not be incremented every Ghidra release. When a breaking protocol
 # change is made, this should be updated to match the first Ghidra release that
 # includes the change.
-VERSION = '10.4'
+# 
+# Other places to change:
+# * every pyproject.toml file (incl. deps)
+# * TraceRmiHandler.VERSION
+VERSION = '11.1'
 
 
 class RemoteResult(Future):
@@ -62,8 +66,9 @@ class Receiver(Thread):
             Client._write_value(
                 reply.xreply_invoke_method.return_value, result)
         except BaseException as e:
-            reply.xreply_invoke_method.error = ''.join(
-                traceback.format_exc())
+            print("Error caused by front end")
+            traceback.print_exc()
+            reply.xreply_invoke_method.error = repr(e)
         self.client._send(reply)
 
     def _handle_reply(self, reply):
@@ -92,7 +97,11 @@ class Receiver(Thread):
         dbg_seq = 0
         while not self._is_shutdown:
             #print("Receiving message")
-            reply = recv_delimited(self.client.s, bufs.RootMessage(), dbg_seq)
+            try:
+                reply = recv_delimited(self.client.s, bufs.RootMessage(), dbg_seq)
+            except BaseException as e:
+                self._is_shutdown = True
+                return
             #print(f"Got one: {reply.WhichOneof('msg')}")
             dbg_seq += 1
             try:
@@ -283,14 +292,19 @@ class Trace(object):
                 self._snap += 1
             return self._snap
 
-    def snapshot(self, description, datetime=None):
+    def snapshot(self, description, datetime=None, snap=None):
         """
         Create a snapshot.
 
         Future state operations implicitly modify this new snapshot.
+        The snap argument is optional.  If ommitted, this creates a snapshot immediately
+        after the last created snapshot.  If given, it creates the given snapshot.
         """
 
-        snap = self._next_snap()
+        if snap is None:
+            snap = self._next_snap()
+        else:
+            self._snap = snap
         self.client._snapshot(self.id, description, datetime, snap)
         return snap
 
@@ -328,6 +342,14 @@ class Trace(object):
         return self.client._delete_bytes(self.id, snap, range)
 
     def put_registers(self, space, values, snap=None):
+        """
+        TODO
+
+        values is a dictionary, where each key is a a register name, and the
+        value is a byte array. No matter the target architecture, the value is
+        given in big-endian byte order.
+        """
+
         if snap is None:
             snap = self.snap()
         return self.client._put_registers(self.id, snap, space, values)
@@ -535,8 +557,16 @@ class Batch(object):
     def append(self, fut):
         self.futures.append(fut)
 
+    @staticmethod
+    def _get_result(f, timeout):
+        try:
+            return f.result(timeout)
+        except BaseException as e:
+            print(f"Exception in batch operation: {repr(e)}")
+            return e
+
     def results(self, timeout=None):
-        return [f.result(timeout) for f in self.futures]
+        return [self._get_result(f, timeout) for f in self.futures]
 
 
 class Client(object):

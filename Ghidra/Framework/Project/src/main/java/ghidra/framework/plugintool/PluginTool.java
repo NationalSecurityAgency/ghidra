@@ -25,6 +25,7 @@ import java.net.URL;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 import javax.swing.*;
 
@@ -501,8 +502,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 		pluginMgr.close();
 		if (project != null) {
 			if (project.getToolManager() != null) {
-				project.getToolManager()
-						.disconnectTool(this);
+				project.getToolManager().disconnectTool(this);
 			}
 		}
 
@@ -693,6 +693,39 @@ public abstract class PluginTool extends AbstractDockingTool {
 	}
 
 	/**
+	 * Execute the given command in the foreground.  Required domain object transaction will be
+	 * started with delayed end to ensure that any follow-on analysis starts prior to transaction 
+	 * end.
+	 * 
+	 * @param <T> {@link DomainObject} implementation interface
+	 * @param commandName command name to be associated with transaction
+	 * @param domainObject domain object to be modified
+	 * @param f command function callback which should return true on success or false on failure.
+	 * @return result from command function callback
+	 */
+	public <T extends DomainObject> boolean execute(String commandName, T domainObject,
+			Function<T, Boolean> f) {
+		return taskMgr.execute(commandName, domainObject, f);
+	}
+
+	/**
+	 * Execute the given command in the foreground.  Required domain object transaction will be
+	 * started with delayed end to ensure that any follow-on analysis starts prior to transaction 
+	 * end.
+	 * 
+	 * @param <T> {@link DomainObject} implementation interface
+	 * @param commandName command name to be associated with transaction
+	 * @param domainObject domain object to be modified
+	 * @param r command function runnable
+	 */
+	public <T extends DomainObject> void execute(String commandName, T domainObject, Runnable r) {
+		execute(commandName, domainObject, d -> {
+			r.run();
+			return true;
+		});
+	}
+
+	/**
 	 * Call the applyTo() method on the given command to make some change to
 	 * the domain object; the command is done in the AWT thread, therefore,
 	 * the command that is to be executed should be a relatively quick operation
@@ -701,9 +734,9 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * @param command command to apply
 	 * @param obj domain object that the command will be applied to
 	 * @return status of the command's applyTo() method
-	 * @see #executeBackgroundCommand(BackgroundCommand, UndoableDomainObject)
+	 * @see #executeBackgroundCommand(BackgroundCommand, DomainObject)
 	 */
-	public boolean execute(Command command, DomainObject obj) {
+	public <T extends DomainObject> boolean execute(Command<T> command, T obj) {
 		return taskMgr.execute(command, obj);
 	}
 
@@ -721,8 +754,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 */
 	public boolean threadIsBackgroundTaskThread() {
 		ThreadGroup taskGroup = taskMgr.getTaskThreadGroup();
-		ThreadGroup group = Thread.currentThread()
-				.getThreadGroup();
+		ThreadGroup group = Thread.currentThread().getThreadGroup();
 		while (group != null && group != taskGroup) {
 			group = group.getParent();
 		}
@@ -738,7 +770,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * AWT Thread)
 	 * @param obj domain object that the command will be applied to
 	 */
-	public void executeBackgroundCommand(BackgroundCommand cmd, UndoableDomainObject obj) {
+	public <T extends DomainObject> void executeBackgroundCommand(BackgroundCommand<T> cmd, T obj) {
 		taskMgr.executeCommand(cmd, obj);
 	}
 
@@ -748,7 +780,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * @param cmd background command to submit
 	 * @param obj the domain object to be modified by the command.
 	 */
-	public void scheduleFollowOnCommand(BackgroundCommand cmd, UndoableDomainObject obj) {
+	public <T extends DomainObject> void scheduleFollowOnCommand(BackgroundCommand<T> cmd, T obj) {
 		taskMgr.scheduleFollowOnCommand(cmd, obj);
 	}
 
@@ -1332,8 +1364,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * @param height height in pixels
 	 */
 	public void setSize(int width, int height) {
-		winMgr.getMainWindow()
-				.setSize(new Dimension(width, height));
+		winMgr.getMainWindow().setSize(new Dimension(width, height));
 	}
 
 	/**
@@ -1341,8 +1372,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * @return dimension of this tool's frame
 	 */
 	public Dimension getSize() {
-		return winMgr.getMainWindow()
-				.getSize();
+		return winMgr.getMainWindow().getSize();
 	}
 
 	/**
@@ -1351,8 +1381,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * @param y screen y coordinate
 	 */
 	public void setLocation(int x, int y) {
-		winMgr.getMainWindow()
-				.setLocation(x, y);
+		winMgr.getMainWindow().setLocation(x, y);
 	}
 
 	/**
@@ -1360,8 +1389,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * @return location of this tool's frame
 	 */
 	public Point getLocation() {
-		return winMgr.getMainWindow()
-				.getLocation();
+		return winMgr.getMainWindow().getLocation();
 	}
 
 	private void updateTitle() {
@@ -1374,7 +1402,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 	protected void restoreOptionsFromXml(Element root) {
 		optionsMgr.setConfigState(root.getChild("OPTIONS"));
-		toolActions.restoreKeyBindings();
+		toolActions.optionsRebuilt();
 		setToolOptionsHelpLocation();
 	}
 
@@ -1390,7 +1418,6 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 	protected void restorePluginsFromXml(Element elem) throws PluginException {
 		pluginMgr.restorePluginsFromXml(elem);
-
 	}
 
 	PluginEvent[] getLastEvents() {
@@ -1523,10 +1550,6 @@ public abstract class PluginTool extends AbstractDockingTool {
 	@Override
 	public ComponentProvider getActiveComponentProvider() {
 		return winMgr.getActiveComponentProvider();
-	}
-
-	public void refreshKeybindings() {
-		toolActions.restoreKeyBindings();
 	}
 
 	public void setUnconfigurable() {

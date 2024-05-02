@@ -113,8 +113,7 @@ public:
 class EmulateFunction : public EmulatePcodeOp {
   Funcdata *fd;				///< The function being emulated
   map<Varnode *,uintb> varnodeMap;	///< Light-weight memory state based on Varnodes
-  bool collectloads;			///< Set to \b true if the emulator collects individual LOAD addresses
-  vector<LoadTable> loadpoints;		///< The set of collected LOAD records
+  vector<LoadTable> *loadpoints;	///< The set of collected LOAD records (if non-null)
   virtual void executeLoad(void);
   virtual void executeBranch(void);
   virtual void executeBranchind(void);
@@ -124,12 +123,11 @@ class EmulateFunction : public EmulatePcodeOp {
   virtual void fallthruOp(void);
 public:
   EmulateFunction(Funcdata *f);		///< Constructor
-  void setLoadCollect(bool val) { collectloads = val; }	///< Set whether we collect LOAD information
+  void setLoadCollect(vector<LoadTable> *val) { loadpoints = val; }	///< Set where/if we collect LOAD information
   virtual void setExecuteAddress(const Address &addr);
   virtual uintb getVarnodeValue(Varnode *vn) const;
   virtual void setVarnodeValue(Varnode *vn,uintb val);
   uintb emulatePath(uintb val,const PathMeld &pathMeld,PcodeOp *startop,Varnode *startvn);
-  void collectLoadPoints(vector<LoadTable> &res) const;	///< Recover any LOAD table descriptions
 };
 
 class FlowInfo;
@@ -186,6 +184,7 @@ public:
   virtual PcodeOp *getStartOp(void) const=0;		///< Get the PcodeOp associated with the current value
   virtual bool isReversible(void) const=0;	///< Return \b true if the current value can be reversed to get a label
   virtual JumpValues *clone(void) const=0;	///< Clone \b this iterator
+  static const uint8 NO_LABEL;			///< Jump-table label reserved to indicate \e no \e label
 };
 
 /// \brief single entry switch variable that can take a range of values
@@ -271,7 +270,9 @@ public:
   /// \param indop is the root BRANCHIND of the switch
   /// \param addresstable will hold the list of Addresses
   /// \param loadpoints if non-null will hold LOAD table information used by the model
-  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,vector<LoadTable> *loadpoints) const=0;
+  /// \param loadcounts if non-null will hold number of LOADs per switch value
+  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+			      vector<LoadTable> *loadpoints,vector<int4> *loadcounts) const=0;
 
   /// \brief Recover the unnormalized switch variable
   ///
@@ -316,11 +317,16 @@ public:
   /// Individual addresses are checked against the function or its program to determine
   /// if they are reasonable. This method can optionally remove addresses from the table.
   /// If it does so, the underlying model is changed to reflect the removal.
+  /// Passing in \b loadcounts indicates that LOAD addresses were collected in \b loadpoints,
+  /// which may need to have elements removed as well.
   /// \param fd is the function containing the switch
   /// \param indop is the root BRANCHIND of the switch
   /// \param addresstable is the list of recovered Addresses, which may be modified
+  /// \param loadpoints are any LOAD addresses associated with the table
+  /// \param loadcounts (if non-null) associates each switch value with the count of LOADs used
   /// \return \b true if there are (at least some) reasonable addresses in the table
-  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable)=0;
+  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+			   vector<LoadTable> &loadpoints,vector<int4> *loadcounts)=0;
 
   virtual JumpModel *clone(JumpTable *jt) const=0;	///< Clone \b this model
 
@@ -351,12 +357,14 @@ public:
   virtual bool isOverride(void) const { return false; }
   virtual int4 getTableSize(void) const { return size; }
   virtual bool recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 maxtablesize);
-  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,vector<LoadTable> *loadpoints) const;
+  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+			      vector<LoadTable> *loadpoints,vector<int4> *loadcounts) const;
   virtual void findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext) {}
   virtual void buildLabels(Funcdata *fd,vector<Address> &addresstable,vector<uintb> &label,const JumpModel *orig) const;
   virtual Varnode *foldInNormalization(Funcdata *fd,PcodeOp *indop) { return (Varnode *)0; }
   virtual bool foldInGuards(Funcdata *fd,JumpTable *jump) { return false; }
-  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable) { return true; }
+  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+			   vector<LoadTable> &loadpoints,vector<int4> *loadcounts) { return true; }
   virtual JumpModel *clone(JumpTable *jt) const;
 };
 
@@ -408,12 +416,14 @@ public:
   virtual bool isOverride(void) const { return false; }
   virtual int4 getTableSize(void) const { return jrange->getSize(); }
   virtual bool recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 maxtablesize);
-  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,vector<LoadTable> *loadpoints) const;
+  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+			      vector<LoadTable> *loadpoints,vector<int4> *loadcounts) const;
   virtual void findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext);
   virtual void buildLabels(Funcdata *fd,vector<Address> &addresstable,vector<uintb> &label,const JumpModel *orig) const;
   virtual Varnode *foldInNormalization(Funcdata *fd,PcodeOp *indop);
   virtual bool foldInGuards(Funcdata *fd,JumpTable *jump);
-  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable);
+  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+			   vector<LoadTable> &loadpoints,vector<int4> *loadcounts);
   virtual JumpModel *clone(JumpTable *jt) const;
   virtual void clear(void);
 };
@@ -471,12 +481,14 @@ public:
   virtual bool isOverride(void) const { return true; }
   virtual int4 getTableSize(void) const { return addrtable.size(); }
   virtual bool recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 maxtablesize);
-  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,vector<LoadTable> *loadpoints) const;
+  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+			      vector<LoadTable> *loadpoints,vector<int4> *loadcounts) const;
   // findUnnormalized inherited from JumpBasic
   virtual void buildLabels(Funcdata *fd,vector<Address> &addresstable,vector<uintb> &label,const JumpModel *orig) const;
   // foldInNormalization inherited from JumpBasic
   virtual bool foldInGuards(Funcdata *fd,JumpTable *jump) { return false; }
-  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable) { return true; }
+  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+			   vector<LoadTable> &loadpoints,vector<int4> *loadcounts) { return true; }
   virtual JumpModel *clone(JumpTable *jt) const;
   virtual void clear(void);
   virtual void encode(Encoder &encoder) const;
@@ -508,31 +520,36 @@ public:
   virtual bool isOverride(void) const { return false; }
   virtual int4 getTableSize(void) const { return sizeIndices+1; }
   virtual bool recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 maxtablesize);
-  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,vector<LoadTable> *loadpoints) const;
+  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+			      vector<LoadTable> *loadpoints,vector<int4> *loadcounts) const;
   virtual void findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext) {}
   virtual void buildLabels(Funcdata *fd,vector<Address> &addresstable,vector<uintb> &label,const JumpModel *orig) const;
   virtual Varnode *foldInNormalization(Funcdata *fd,PcodeOp *indop);
   virtual bool foldInGuards(Funcdata *fd,JumpTable *jump);
-  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable) { return true; }
+  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,
+			   vector<LoadTable> &loadpoints,vector<int4> *loadcounts) { return true; }
   virtual JumpModel *clone(JumpTable *jt) const;
   virtual void clear(void) { assistOp = (PcodeOp *)0; switchvn = (Varnode *)0; }
 };
 
 /// \brief A map from values to control-flow targets within a function
 ///
-/// A JumpTable is attached to a specific CPUI_BRANCHIND and encapsulates all
-/// the information necessary to model the indirect jump as a \e switch statement.
-/// It knows how to map from specific switch variable values to the destination
-/// \e case block and how to label the value.
+/// A JumpTable is attached to a specific CPUI_BRANCHIND and encapsulates all the information necessary
+/// to model the indirect jump as a \e switch statement. It knows how to map from specific switch variable
+/// values to the destination \e case block and how to label the value.  The table also establishes a
+/// \e default target which is either
+///   - the \e default case of the switch or
+///   - the exit point of the switch
 class JumpTable {
 public:
   /// \brief Recovery status for a specific JumpTable
   enum RecoveryMode {
-    success = 0,			///< JumpTable is fully recovered
+    success = 0,		///< JumpTable is fully recovered
     fail_normal = 1,		///< Normal failure to recover
     fail_thunk = 2,		///< Likely \b thunk
     fail_noflow = 3,		///< No legal flow to BRANCHIND
-    fail_return = 4  		///< Likely \b return operation
+    fail_return = 4,  		///< Likely \b return operation
+    fail_callother = 5		///< Address formed by CALLOTHER
   };
 private:
   /// \brief An address table index and its corresponding out-edge
@@ -560,9 +577,10 @@ private:
   uint4 maxext;			///< Maximum extensions to normalize
   int4 recoverystage;		///< 0=no stages recovered, 1=additional stage needed, 2=complete
   bool collectloads;		///< Set to \b true if information about in-memory model data is/should be collected
+  bool defaultIsFolded;		///< The \e default block is the target of a folded CBRANCH (and cannot have a label)
   void recoverModel(Funcdata *fd);	///< Attempt recovery of the jump-table model
   void trivialSwitchOver(void);	///< Switch \b this table over to a trivial model
-  void sanityCheck(Funcdata *fd);	///< Perform sanity check on recovered address targets
+  void sanityCheck(Funcdata *fd,vector<int4> *loadpoints);	///< Perform sanity check on recovered address targets
   int4 block2Position(const FlowBlock *bl) const;	///< Convert a basic-block to an out-edge index from the switch.
   static bool isReachable(PcodeOp *op);	///< Check if the given PcodeOp still seems reachable in its function
 public:
@@ -586,9 +604,11 @@ public:
   int4 numIndicesByBlock(const FlowBlock *bl) const;
   int4 getIndexByBlock(const FlowBlock *bl,int4 i) const;
   Address getAddressByIndex(int4 i) const { return addresstable[i]; }	///< Get the i-th address table entry
-  void setLastAsMostCommon(void);		///< Set the most common jump-table target to be the last address in the table
+  void setLastAsDefault(void);		///< Set the \e default jump-table target to be the last address in the table
   void setDefaultBlock(int4 bl) { defaultBlock = bl; }		///< Set out-edge of the switch destination considered to be \e default
   void setLoadCollect(bool val) { collectloads = val; }		///< Set whether LOAD records should be collected
+  void setFoldedDefault(void) { defaultIsFolded = true; }	///< Mark that the \e default block is a folded CBRANCH target
+  bool hasFoldedDefault(void) const { return defaultIsFolded; }	///< Return \b true if the \e default block is a folded CBRANCH target
   void addBlockToSwitch(BlockBasic *bl,uintb lab);		///< Force a given basic-block to be a switch destination
   void switchOver(const FlowInfo &flow);				///< Convert absolute addresses to block indices
   uintb getLabelByIndex(int4 index) const { return label[index]; }	///< Given a \e case index, get its label

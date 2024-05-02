@@ -19,13 +19,12 @@
  */
 package ghidra.app.plugin.processors.sleigh.template;
 
+import static ghidra.pcode.utils.SlaFormat.*;
+
 import java.util.ArrayList;
 
-import ghidra.program.model.address.AddressFactory;
-import ghidra.program.model.lang.UnknownInstructionException;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 /**
  * A constructor template, representing the semantic action of a SLEIGH constructor, without
@@ -40,7 +39,6 @@ import ghidra.xml.XmlPullParser;
  * The final PcodeOps are produced by handing this to the build() method of PcodeEmit which has
  * the InstructionContext necessary for final resolution.
  */
-
 public class ConstructTpl {
 
 	private int numlabels = 0;			// Number of relative-offset labels in this template
@@ -48,7 +46,7 @@ public class ConstructTpl {
 	private HandleTpl result;			// The final semantic value
 
 	/**
-	 * Constructor for use with restoreXML
+	 * Constructor for use with decode
 	 */
 	public ConstructTpl() {
 	}
@@ -98,42 +96,44 @@ public class ConstructTpl {
 	}
 
 	/**
-	 * Restore this template from a \<construct_tpl> tag in an XML stream.
-	 * @param parser is the XML stream
-	 * @param factory is for manufacturing Address objects
+	 * Decode this template from a \<construct_tpl> tag in the stream.
+	 * @param decoder is the stream
 	 * @return the constructor section id described by the tag
-	 * @throws UnknownInstructionException if the p-code templates contain unknown op-codes
+	 * @throws DecoderException for errors in the encoding
 	 */
-	public int restoreXml(XmlPullParser parser, AddressFactory factory)
-			throws UnknownInstructionException {
+	public int decode(Decoder decoder) throws DecoderException {
 		int sectionid = -1;
-		XmlElement el = parser.start("construct_tpl");
-		String nmlabelstr = el.getAttribute("labels");
-		if (nmlabelstr != null) {
-			numlabels = SpecXmlUtils.decodeInt(nmlabelstr);
+		numlabels = 0;
+		int el = decoder.openElement(ELEM_CONSTRUCT_TPL);
+		int attrib = decoder.getNextAttributeId();
+		while (attrib != 0) {
+			if (attrib == ATTRIB_LABELS.id()) {
+				numlabels = (int) decoder.readSignedInteger();
+			}
+			else if (attrib == ATTRIB_SECTION.id()) {
+				sectionid = (int) decoder.readSignedInteger();
+			}
+			attrib = decoder.getNextAttributeId();
 		}
-		String sectionidstr = el.getAttribute("section");
-		if (sectionidstr != null) {
-			sectionid = SpecXmlUtils.decodeInt(sectionidstr);
-		}
-		XmlElement handel = parser.peek();
-		if (handel.getName().equals("null")) {
+		int handel = decoder.peekElement();
+		if (handel == ELEM_NULL.id()) {
+			decoder.openElement();
+			decoder.closeElement(handel);
 			result = null;
-			parser.discardSubTree();
 		}
 		else {
 			result = new HandleTpl();
-			result.restoreXml(parser, factory);
+			result.decode(decoder);
 		}
 		ArrayList<Object> oplist = new ArrayList<>();
-		while (!parser.peek().isEnd()) {
+		while (decoder.peekElement() != 0) {
 			OpTpl op = new OpTpl();
-			op.restoreXml(parser, factory);
+			op.decode(decoder);
 			oplist.add(op);
 		}
 		vec = new OpTpl[oplist.size()];
 		oplist.toArray(vec);
-		parser.end(el);
+		decoder.closeElement(el);
 		return sectionid;
 	}
 

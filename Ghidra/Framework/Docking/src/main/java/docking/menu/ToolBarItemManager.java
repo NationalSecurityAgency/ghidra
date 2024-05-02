@@ -21,10 +21,9 @@ import java.beans.PropertyChangeListener;
 
 import javax.swing.JButton;
 
-import docking.ActionContext;
+import docking.DockingActionPerformer;
 import docking.DockingWindowManager;
 import docking.action.*;
-import ghidra.util.Swing;
 
 /**
  * Class to manager toolbar buttons.
@@ -113,23 +112,7 @@ public class ToolBarItemManager implements PropertyChangeListener, ActionListene
 
 	@Override
 	public void actionPerformed(ActionEvent event) {
-		DockingWindowManager.clearMouseOverHelp();
-		ActionContext context = getWindowManager().createActionContext(toolBarAction);
-
-		context.setSourceObject(event.getSource());
-		context.setEventClickModifiers(event.getModifiers());
-
-		// this gives the UI some time to repaint before executing the action
-		Swing.runLater(() -> {
-			if (toolBarAction.isValidContext(context) &&
-				toolBarAction.isEnabledForContext(context)) {
-				if (toolBarAction instanceof ToggleDockingActionIf) {
-					ToggleDockingActionIf toggleAction = (ToggleDockingActionIf) toolBarAction;
-					toggleAction.setSelected(!toggleAction.isSelected());
-				}
-				toolBarAction.actionPerformed(context);
-			}
-		});
+		DockingActionPerformer.perform(toolBarAction, event, getWindowManager());
 	}
 
 	private DockingWindowManager getWindowManager() {

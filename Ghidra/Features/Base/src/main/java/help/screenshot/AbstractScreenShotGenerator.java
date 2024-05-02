@@ -71,16 +71,18 @@ import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginException;
 import ghidra.program.database.data.ProgramDataTypeManager;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.BuiltInDataTypeManager;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.Memory;
 import ghidra.program.util.ProgramSelection;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.ColorUtils;
 import ghidra.util.exception.AssertException;
+import ghidra.util.exception.UsrException;
+import ghidra.util.task.TaskMonitor;
 import resources.ResourceManager;
 
 public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIntegrationTest {
@@ -111,7 +113,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 		setInstanceField("allowTestTools", ToolUtils.class, Boolean.FALSE);
 		setDockIcon();
 
-		ThemeManager.getInstance().setTheme(new FlatLightTheme());
+		runSwing(() -> ThemeManager.getInstance().setTheme(new FlatLightTheme()));
 	}
 
 	protected TestEnv newTestEnv() throws Exception {
@@ -161,6 +163,19 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	public Program loadProgram(final String programName) {
 		runSwing(() -> {
 			program = env.getProgram(programName);
+
+			try {
+				program.withTransaction("Add OTHER Overlay Space", () -> {
+					Memory memory = program.getMemory();
+					memory.createInitializedBlock("OtherOv1",
+						AddressSpace.OTHER_SPACE.getAddress(0), 100, (byte) 0, TaskMonitor.DUMMY,
+						true);
+				});
+			}
+			catch (UsrException e) {
+				failWithException("Unexpected", e);
+			}
+
 			ProgramManager pm = tool.getService(ProgramManager.class);
 			pm.openProgram(program.getDomainFile());
 		});
@@ -1637,7 +1652,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-		g2.setColor(Colors.BORDER);
+		g2.setColor(Color.BLACK);
 		g2.setStroke(new BasicStroke(3f));
 		g2.draw(topPath);
 		g2.draw(bottomPath);

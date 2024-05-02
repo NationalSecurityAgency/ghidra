@@ -194,6 +194,15 @@
   </default_proto>
   <modelalias name="__stdcall" parent="__cdecl"/>
 
+<callfixup name="chkstk">
+  <target name="__chkstk"/>
+  <pcode>
+   <body><![CDATA[
+     localx15tmp:8 = x15;
+   ]]></body>
+  </pcode>
+</callfixup>
+
   <callfixup name="security_push_cookie">
   <target name="__security_push_cookie"/>
   <pcode>

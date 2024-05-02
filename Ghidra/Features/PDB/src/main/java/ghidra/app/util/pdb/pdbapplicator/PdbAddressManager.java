@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import java.io.IOException;
 import java.util.*;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
@@ -71,24 +70,28 @@ public class PdbAddressManager {
 
 	private PdbAddressCalculator addressCalculator;
 
+	private boolean isInitialized;
 	//==============================================================================================
 	// API
 	//==============================================================================================
+
+	public PdbAddressManager() {
+		isInitialized = false;
+	}
+
 	/**
 	 * Manager
-	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
-	 * @param imageBase Address from which all other addresses are based.
+	 * @param applicatorArg {@link DefaultPdbApplicator} for which this class is working.
+	 * @param imageBaseArg Address from which all other addresses are based.
 	 * @throws PdbException If Program is null;
 	 * @throws CancelledException upon user cancellation
-	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes
 	 */
-	PdbAddressManager(DefaultPdbApplicator applicator, Address imageBase)
-			throws PdbException, CancelledException, IOException {
-		Objects.requireNonNull(applicator, "applicator may not be null");
-		Objects.requireNonNull(imageBase, "imageBase may not be null");
-		this.applicator = applicator;
-		this.imageBase = imageBase;
+	void initialize(DefaultPdbApplicator applicatorArg, Address imageBaseArg)
+			throws PdbException, CancelledException {
+		Objects.requireNonNull(applicatorArg, "applicator may not be null");
+		Objects.requireNonNull(imageBaseArg, "imageBase may not be null");
+		this.applicator = applicatorArg;
+		this.imageBase = imageBaseArg;
 		memoryGroupRefinement = new ArrayList<>();
 		memorySectionRefinement = new ArrayList<>();
 
@@ -103,6 +106,15 @@ public class PdbAddressManager {
 //		determineMemoryBlocks_orig();
 		mapPreExistingSymbols();
 		createAddressRemap();
+		isInitialized = true;
+	}
+
+	/**
+	 * Returns {@code true} if already initialized
+	 * @return {@code true}" if initialized
+	 */
+	boolean isInitialized() {
+		return isInitialized;
 	}
 
 	/**
@@ -342,11 +354,8 @@ public class PdbAddressManager {
 	/**
 	 * Determines memory blocks
 	 * @throws CancelledException upon user cancellation
-	 * @throws PdbException upon error in processing components
-	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes
 	 */
-	private void determineMemoryBlocks() throws CancelledException, PdbException, IOException {
+	private void determineMemoryBlocks() throws CancelledException {
 		AbstractPdb pdb = applicator.getPdb();
 		PdbDebugInfo debugInfo = pdb.getDebugInfo();
 		segmentMapList = debugInfo.getSegmentMapList();

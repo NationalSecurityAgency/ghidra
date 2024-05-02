@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.function.tags;
 
 import java.awt.Component;
-import java.awt.Font;
 import java.awt.event.MouseEvent;
 import java.util.Set;
 
@@ -36,8 +35,8 @@ import ghidra.util.table.GhidraTableCellRenderer;
  */
 public class FunctionTagTable extends GhidraTable {
 
-	/** 
-	 * If true, disable any rows that have already been assigned 
+	/**
+	 * If true, disable any rows that have already been assigned
 	 * to a function (and thus cannot be added again)
 	 */
 	private boolean disable = false;
@@ -49,7 +48,7 @@ public class FunctionTagTable extends GhidraTable {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param model the table model
 	 */
 	public FunctionTagTable(FunctionTagTableModel model) {
@@ -109,12 +108,10 @@ public class FunctionTagTable extends GhidraTable {
 			}
 			c.setEnabled(enableRow);
 
-			c.setFont(getFont().deriveFont(Font.PLAIN));
-
 			int column = data.getColumnViewIndex();
 			if (column == nameColumn) {
 				if (rowObject.isImmutable()) {
-					c.setFont(getFont().deriveFont(Font.ITALIC));
+					setItalic();
 				}
 			}
 

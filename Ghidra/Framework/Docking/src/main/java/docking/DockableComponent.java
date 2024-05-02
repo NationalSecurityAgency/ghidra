@@ -20,7 +20,6 @@ import java.awt.dnd.*;
 import java.awt.event.*;
 
 import javax.swing.*;
-import javax.swing.FocusManager;
 
 import docking.action.DockingActionIf;
 import ghidra.util.CascadedDropTarget;
@@ -46,7 +45,7 @@ public class DockableComponent extends JPanel implements ContainerListener {
 	private MouseListener popupListener;
 	private ComponentPlaceholder placeholder;
 	private JComponent providerComp;
-	private Component focusedComponent;
+	private Component lastFocusedComponent;
 	private DockingWindowManager winMgr;
 	private ActionToGuiMapper actionMgr;
 	private DropTarget dockableDropTarget;
@@ -140,10 +139,6 @@ public class DockableComponent extends JPanel implements ContainerListener {
 
 		helpService.registerHelp(provider, helpLocation);
 		return helpLocation;
-	}
-
-	public Component getFocusedComponent() {
-		return focusedComponent;
 	}
 
 	void showContextMenu(PopupMenuContext popupContext) {
@@ -446,17 +441,21 @@ public class DockableComponent extends JPanel implements ContainerListener {
 	}
 
 	@Override
-	// we aren't focusable, so pass focus to a valid child component
 	public void requestFocus() {
-		focusedComponent = findFocusedComponent();
-		if (focusedComponent != null) {
-			DockingWindowManager.requestFocus(focusedComponent);
+		if (lastFocusedComponent != null && lastFocusedComponent.isShowing()) {
+			lastFocusedComponent.requestFocus();
+			return;
 		}
+
+		if (placeholder == null) {
+			return;	// this implies we have been disposed
+		}
+		placeholder.getProvider().requestFocus();
 	}
 
 	void setFocusedComponent(Component newFocusedComponet) {
 		// remember it so we can restore it later when necessary
-		focusedComponent = newFocusedComponet;
+		lastFocusedComponent = newFocusedComponet;
 	}
 
 	private void componentSelected(Component component) {
@@ -465,22 +464,6 @@ public class DockableComponent extends JPanel implements ContainerListener {
 			// change the active DockableComponent
 			requestFocus();
 		}
-	}
-
-	// find the first available component that can take focus
-	private Component findFocusedComponent() {
-		if (focusedComponent != null && focusedComponent.isShowing()) {
-			return focusedComponent;
-		}
-
-		DefaultFocusManager dfm = (DefaultFocusManager) FocusManager.getCurrentManager();
-		Component component = dfm.getComponentAfter(this, this);
-
-		// component must be a child of this DockableComponent
-		if (component != null && SwingUtilities.isDescendingFrom(component, this)) {
-			return component;
-		}
-		return null;
 	}
 
 	@Override

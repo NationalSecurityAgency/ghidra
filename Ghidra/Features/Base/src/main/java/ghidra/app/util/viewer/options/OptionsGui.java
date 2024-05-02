@@ -40,7 +40,6 @@ import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.GhidraOptions;
 import ghidra.app.util.viewer.field.ListingColors;
 import ghidra.app.util.viewer.field.ListingColors.*;
-import ghidra.util.SystemUtilities;
 
 /**
  * Class for displaying and manipulating field colors and fonts.
@@ -133,13 +132,13 @@ public class OptionsGui extends JPanel {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param font the base font for the fields.
 	 * @param listener the listener to be notified when options change.
 	 */
 	public OptionsGui(Font font, PropertyChangeListener listener) {
 		propertyChangeListener = listener;
-		setBaseFont(SystemUtilities.adjustForFontSizeOverride(font));
+		setBaseFont(font);
 		genLayouts();
 		buildPanel();
 		fieldPanel.setBackgroundColor(BACKGROUND.getColor());
@@ -217,7 +216,7 @@ public class OptionsGui extends JPanel {
 
 	/**
 	 * callback for when the selected display field changes.
-	 * 
+	 *
 	 * @param index the index in the JList of the selected field.
 	 */
 	private void setSelectedIndex(int index) {
@@ -735,7 +734,7 @@ public class OptionsGui extends JPanel {
 
 	/**
 	 * This listener will be notified when changes are made that need to be applied.
-	 * 
+	 *
 	 * @param listener The listener to be notified.
 	 */
 	void setOptionsPropertyChangeListener(PropertyChangeListener listener) {
@@ -774,9 +773,9 @@ public class OptionsGui extends JPanel {
 		setSelectedIndex(selectedIndex);
 	}
 
-//==================================================================================================	
+//==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	/**
 	 * Simple layoutModel to be used for the preview panel.
@@ -850,7 +849,7 @@ public class OptionsGui extends JPanel {
 
 		/**
 		 * Constructor
-		 * 
+		 *
 		 * @param size the number of fields in the layout
 		 */
 		LayoutBuilder(int size) {

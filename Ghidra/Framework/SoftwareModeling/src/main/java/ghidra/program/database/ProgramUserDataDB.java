@@ -20,6 +20,7 @@ import java.util.*;
 
 import db.*;
 import ghidra.framework.data.DomainObjectAdapterDB;
+import ghidra.framework.data.OpenMode;
 import ghidra.framework.store.FileSystem;
 import ghidra.program.database.map.AddressMapDB;
 import ghidra.program.database.properties.*;
@@ -134,7 +135,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 			int id = startTransaction("create user data");
 
 			createDatabase();
-			if (createManagers(CREATE, program, TaskMonitor.DUMMY) != null) {
+			if (createManagers(OpenMode.CREATE, program, TaskMonitor.DUMMY) != null) {
 				throw new AssertException("Unexpected version exception on create");
 			}
 			//initManagers(CREATE, TaskMonitorAdapter.DUMMY_MONITOR);
@@ -185,7 +186,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 
 			addressFactory = program.getAddressFactory();
 
-			VersionException versionExc = createManagers(UPGRADE, program, monitor);
+			VersionException versionExc = createManagers(OpenMode.UPGRADE, program, monitor);
 			if (dbVersionExc != null) {
 				versionExc = dbVersionExc.combine(versionExc);
 			}
@@ -373,8 +374,8 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 		table.putRecord(record);
 	}
 
-	private VersionException createManagers(int openMode, ProgramDB program1, TaskMonitor monitor)
-			throws CancelledException, IOException {
+	private VersionException createManagers(OpenMode openMode, ProgramDB program1,
+			TaskMonitor monitor) throws CancelledException, IOException {
 
 		VersionException versionExc = null;
 
@@ -389,8 +390,8 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 			try {
-				addressMap =
-					new AddressMapDB(dbh, READ_ONLY, addressFactory, baseImageOffset, monitor);
+				addressMap = new AddressMapDB(dbh, OpenMode.IMMUTABLE, addressFactory,
+					baseImageOffset, monitor);
 			}
 			catch (VersionException e1) {
 				if (e1.isUpgradable()) {
@@ -522,26 +523,26 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 			int type = rec.getIntValue(PROPERTY_TYPE_COL);
 			switch (type) {
 				case PROPERTY_TYPE_STRING:
-					map = new StringPropertyMapDB(dbh, DBConstants.UPGRADE, this, changeMgr,
+					map = new StringPropertyMapDB(dbh, OpenMode.UPGRADE, this, changeMgr,
 						addressMap, rec.getString(PROPERTY_NAME_COL), TaskMonitor.DUMMY);
 					break;
 				case PROPERTY_TYPE_LONG:
-					map = new LongPropertyMapDB(dbh, DBConstants.UPGRADE, this, changeMgr,
-						addressMap, rec.getString(PROPERTY_NAME_COL), TaskMonitor.DUMMY);
+					map = new LongPropertyMapDB(dbh, OpenMode.UPGRADE, this, changeMgr, addressMap,
+						rec.getString(PROPERTY_NAME_COL), TaskMonitor.DUMMY);
 					break;
 				case PROPERTY_TYPE_INT:
-					map = new IntPropertyMapDB(dbh, DBConstants.UPGRADE, this, changeMgr,
-						addressMap, rec.getString(PROPERTY_NAME_COL), TaskMonitor.DUMMY);
+					map = new IntPropertyMapDB(dbh, OpenMode.UPGRADE, this, changeMgr, addressMap,
+						rec.getString(PROPERTY_NAME_COL), TaskMonitor.DUMMY);
 					break;
 				case PROPERTY_TYPE_BOOLEAN:
-					map = new VoidPropertyMapDB(dbh, DBConstants.UPGRADE, this, changeMgr,
-						addressMap, rec.getString(PROPERTY_NAME_COL), TaskMonitor.DUMMY);
+					map = new VoidPropertyMapDB(dbh, OpenMode.UPGRADE, this, changeMgr, addressMap,
+						rec.getString(PROPERTY_NAME_COL), TaskMonitor.DUMMY);
 					break;
 				case PROPERTY_TYPE_SAVEABLE:
 					String className = rec.getString(PROPERTY_CLASS_COL);
 					Class<? extends Saveable> c =
 						ObjectPropertyMapDB.getSaveableClassForName(className);
-					return new ObjectPropertyMapDB<>(dbh, DBConstants.UPGRADE, this, changeMgr,
+					return new ObjectPropertyMapDB<>(dbh, OpenMode.UPGRADE, this, changeMgr,
 						addressMap, rec.getString(PROPERTY_NAME_COL), c, TaskMonitor.DUMMY, true);
 				default:
 					throw new IllegalArgumentException("Unsupported property type: " + type);

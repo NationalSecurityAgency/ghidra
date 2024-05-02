@@ -198,7 +198,12 @@ public interface PcodeMachine<T> {
 	/**
 	 * Set the suspension state of the machine
 	 * 
+	 * <p>
+	 * This does not simply suspend all threads, but sets a machine-wide flag. A thread is suspended
+	 * if either the thread's flag is set, or the machine's flag is set.
+	 * 
 	 * @see PcodeThread#setSuspended(boolean)
+	 * @param suspended true to suspend the machine, false to let it run
 	 */
 	void setSuspended(boolean suspended);
 
@@ -206,6 +211,7 @@ public interface PcodeMachine<T> {
 	 * Check the suspension state of the machine
 	 * 
 	 * @see PcodeThread#isSuspended()
+	 * @return true if suspended
 	 */
 	boolean isSuspended();
 

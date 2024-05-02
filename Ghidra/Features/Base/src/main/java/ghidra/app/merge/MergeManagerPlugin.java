@@ -33,7 +33,7 @@ public abstract class MergeManagerPlugin extends Plugin
 
 	protected MergeManager mergeManager;
 	protected MergeManagerProvider provider;
-	protected UndoableDomainObject currentDomainObject;
+	protected DomainObject currentDomainObject;
 
 	/**
 	 * Constructor for plugin that handles multi-user merge of programs.
@@ -42,7 +42,7 @@ public abstract class MergeManagerPlugin extends Plugin
 	 * @param domainObject the current domain object
 	 */
 	public MergeManagerPlugin(PluginTool tool, MergeManager mergeManager,
-			UndoableDomainObject domainObject) {
+			DomainObject domainObject) {
 		super(tool);
 		this.mergeManager = mergeManager;
 		this.currentDomainObject = domainObject;
@@ -210,26 +210,26 @@ public abstract class MergeManagerPlugin extends Plugin
 		return false;
 	}
 
-	public boolean closeDomainObject(UndoableDomainObject domainObject, boolean ignoreChanges) {
+	public boolean closeDomainObject(DomainObject domainObject, boolean ignoreChanges) {
 		return false;
 	}
 
-	public UndoableDomainObject[] getAllOpenDomainObjects() {
-		return new UndoableDomainObject[] { mergeManager.getDomainObject(MergeConstants.RESULT),
+	public DomainObject[] getAllOpenDomainObjects() {
+		return new DomainObject[] { mergeManager.getDomainObject(MergeConstants.RESULT),
 			mergeManager.getDomainObject(MergeConstants.LATEST),
 			mergeManager.getDomainObject(MergeConstants.MY),
 			mergeManager.getDomainObject(MergeConstants.ORIGINAL) };
 	}
 
-	public UndoableDomainObject getCurrentDomainObject() {
+	public DomainObject getCurrentDomainObject() {
 		return currentDomainObject;
 	}
 
-	public int getSearchPriority(UndoableDomainObject domainObject) {
+	public int getSearchPriority(DomainObject domainObject) {
 		return 0;
 	}
 
-	public boolean isVisible(UndoableDomainObject domainObject) {
+	public boolean isVisible(DomainObject domainObject) {
 		return false;
 	}
 
@@ -245,26 +245,26 @@ public abstract class MergeManagerPlugin extends Plugin
 		return null;
 	}
 
-	public void openDomainObject(UndoableDomainObject domainObject) {
+	public void openDomainObject(DomainObject domainObject) {
 	}
 
-	public void openDomainObject(UndoableDomainObject domainObject, boolean current) {
+	public void openDomainObject(DomainObject domainObject, boolean current) {
 	}
 
-	public void openDomainObject(UndoableDomainObject domainObject, int state) {
+	public void openDomainObject(DomainObject domainObject, int state) {
 	}
 
-	public void releaseDomainObject(UndoableDomainObject domainObject, Object persistentOwner) {
+	public void releaseDomainObject(DomainObject domainObject, Object persistentOwner) {
 	}
 
-	public void setCurrentDomainObject(UndoableDomainObject domainObject) {
+	public void setCurrentDomainObject(DomainObject domainObject) {
 	}
 
-	public boolean setPersistentOwner(UndoableDomainObject domainObject, Object owner) {
+	public boolean setPersistentOwner(DomainObject domainObject, Object owner) {
 		return false;
 	}
 
-	public void setSearchPriority(UndoableDomainObject domainObject, int priority) {
+	public void setSearchPriority(DomainObject domainObject, int priority) {
 	}
 
 }

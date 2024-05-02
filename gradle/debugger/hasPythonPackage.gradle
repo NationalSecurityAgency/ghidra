@@ -13,33 +13,68 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+ 
+/**
+ * NOTE: Supported Python3 command is established by root project build.gradle
+ */
+
+ext.findPyDep = { name ->
+    File inDeps = file("${DEPS_DIR}/${project.name}/${name}")
+    File inRepo = file("${BIN_REPO}/${getGhidraRelativePath(project)}/${name}")
+    if (inDeps.exists()) {
+        return inDeps
+    }
+    if (inRepo.exists()) {
+        return inRepo
+    }
+    println("Warning: Could not find '${name}' for ${project.name}")
+    return inDeps
+}
 
 task assemblePyPackage(type: Copy) {
 	from "src/main/py"
 	into "build/pypkg/"
 }
 
-rootProject.tasks.prepDev.dependsOn(assemblePyPackage)
-
-task buildPyPackage(type: Exec) {
+task buildPyPackage {
 	ext.dist = { file("build/pypkg/dist") }
 	inputs.files(assemblePyPackage)
 	outputs.dir(dist)
 
-	workingDir { "build/pypkg" }
-	commandLine "python3", "-m", "build"
+	doLast {
+		File setuptools = project(":Debugger-rmi-trace").findPyDep(".")
+		exec {
+			workingDir { "build/pypkg" }
+			commandLine	rootProject.PYTHON3, "-m", "pip"
+			args "wheel", "-w", "dist/", "--no-index", "--no-deps"
+			args "-f", setuptools
+			args "."
+		}
+	}
 }
 
 // At the moment, any module with a python package also distributes it.
 // We can separate this into `distributePythonPackage` later, if necessary.
 
 rootProject.assembleDistribution {
+	dependsOn(buildPyPackage)
 	def p = this.project
 	def zipPath = getZipPath(p)
 	from (p.assemblePyPackage) {
 		exclude '**/*.pyc'
 		exclude '**/*.pyo'
 		exclude '**/__pycache__/**'
+		exclude 'dist/*.tar.gz'
 		into { zipPath + "/pypkg" }
 	}
+}
+
+ext.distributePyDep = { name ->
+    File dep = findPyDep(name)
+    def zipPath = getZipPath(project) 
+    rootProject.assembleDistribution {
+        into ("${zipPath}/pypkg/dist") {
+            from dep
+        }
+    }
 }

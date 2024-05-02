@@ -17,6 +17,7 @@
 #define __MARSHAL_HH__
 
 #include "xml.hh"
+#include "opcodes.hh"
 #include <list>
 #include <unordered_map>
 
@@ -43,11 +44,11 @@ class AttributeId {
   string name;			///< The name of the attribute
   uint4 id;			///< The (internal) id of the attribute
 public:
-  AttributeId(const string &nm,uint4 i);	///< Construct given a name and id
+  AttributeId(const string &nm,uint4 i,int4 scope=0);	///< Construct given a name and id
   const string &getName(void) const { return name; }				///< Get the attribute's name
   uint4 getId(void) const { return id; }					///< Get the attribute's id
   bool operator==(const AttributeId &op2) const { return (id == op2.id); }	///< Test equality with another AttributeId
-  static uint4 find(const string &nm);			///< Find the id associated with a specific attribute name
+  static uint4 find(const string &nm,int4 scope);	///< Find the id associated with a specific attribute name
   static void initialize(void);				///< Populate a hashtable with all AttributeId objects
   friend bool operator==(uint4 id,const AttributeId &op2) { return (id == op2.id); }	///< Test equality of a raw integer id with an AttributeId
   friend bool operator==(const AttributeId &op1,uint4 id) { return (op1.id == id); }	///< Test equality of an AttributeId with a raw integer id
@@ -67,11 +68,11 @@ class ElementId {
   string name;			///< The name of the element
   uint4 id;			///< The (internal) id of the attribute
 public:
-  ElementId(const string &nm,uint4 i);		///< Construct given a name and id
+  ElementId(const string &nm,uint4 i,int4 scope=0);		///< Construct given a name and id
   const string &getName(void) const { return name; }				///< Get the element's name
   uint4 getId(void) const { return id; }					///< Get the element's id
   bool operator==(const ElementId &op2) const { return (id == op2.id); }	///< Test equality with another ElementId
-  static uint4 find(const string &nm);			///< Find the id associated with a specific element name
+  static uint4 find(const string &nm,int4 scope);	///< Find the id associated with a specific element name
   static void initialize(void);				///< Populate a hashtable with all ElementId objects
   friend bool operator==(uint4 id,const ElementId &op2) { return (id == op2.id); }	///< Test equality of a raw integer id with an ElementId
   friend bool operator==(const ElementId &op1,uint4 id) { return (op1.id == id); }	///< Test equality of an ElementId with a raw integer id
@@ -269,6 +270,21 @@ public:
   /// \return the address space associated with the attribute
   virtual AddrSpace *readSpace(const AttributeId &attribId)=0;
 
+  /// \brief Parse the current attribute as a p-code OpCode
+  ///
+  /// The last attribute, as returned by getNextAttributeId, is returned as an OpCode.
+  /// \return the OpCode associated with the current attribute
+  virtual OpCode readOpcode(void)=0;
+
+  /// \brief Find the specific attribute in the current element and return it as an OpCode
+  ///
+  /// Search attributes from the current element for a match to the given attribute id.
+  /// Return this attribute as an OpCode. If there is no matching attribute id, an exception is thrown.
+  /// Parse via getNextAttributeId is reset.
+  /// \param attribId is the specific attribute id to match
+  /// \return the OpCode associated with the attribute
+  virtual OpCode readOpcode(AttributeId &attribId)=0;
+
   /// \brief Skip parsing of the next element
   ///
   /// The element skipped is the one that would be opened by the next call to openElement.
@@ -350,6 +366,13 @@ public:
   /// \param attribId is the given AttributeId annotation
   /// \param spc is the address space to encode
   virtual void writeSpace(const AttributeId &attribId,const AddrSpace *spc)=0;
+
+  /// \brief Write a p-code operation opcode into the encoding, associating it with the given annotation
+  ///
+  /// \param attribId is the given annotation
+  /// \param opc is the opcode
+  virtual void writeOpcode(const AttributeId &attribId,OpCode opc)=0;
+
 };
 
 /// \brief An XML based decoder
@@ -363,12 +386,13 @@ class XmlDecode : public Decoder {
   vector<const Element *> elStack;		///< Stack of currently \e open elements
   vector<List::const_iterator> iterStack;	///< Index of next child for each \e open element
   int4 attributeIndex;				///< Position of \e current attribute to parse (in \e current element)
+  int4 scope;					///< Scope of element/attribute tags to look up
   int4 findMatchingAttribute(const Element *el,const string &attribName);
 public:
-  XmlDecode(const AddrSpaceManager *spc,const Element *root) : Decoder(spc) {
-    document = (Document *)0; rootElement = root; attributeIndex = -1; }	///< Constructor with preparsed root
-  XmlDecode(const AddrSpaceManager *spc) : Decoder(spc) {
-    document = (Document *)0; rootElement = (const Element *)0; attributeIndex = -1; }	///< Constructor for use with ingestStream
+  XmlDecode(const AddrSpaceManager *spc,const Element *root,int4 sc=0) : Decoder(spc) {
+    document = (Document *)0; rootElement = root; attributeIndex = -1; scope = sc; }	///< Constructor with preparsed root
+  XmlDecode(const AddrSpaceManager *spc,int4 sc=0) : Decoder(spc) {
+    document = (Document *)0; rootElement = (const Element *)0; attributeIndex = -1; scope=sc; }	///< Constructor for use with ingestStream
   const Element *getCurrentXmlElement(void) const { return elStack.back(); }	///< Get pointer to underlying XML element object
   virtual ~XmlDecode(void);
   virtual void ingestStream(istream &s);
@@ -392,6 +416,8 @@ public:
   virtual string readString(const AttributeId &attribId);
   virtual AddrSpace *readSpace(void);
   virtual AddrSpace *readSpace(const AttributeId &attribId);
+  virtual OpCode readOpcode(void);
+  virtual OpCode readOpcode(AttributeId &attribId);
 };
 
 /// \brief An XML based encoder
@@ -400,10 +426,20 @@ public:
 /// receive the XML document as calls are made on the encoder.
 class XmlEncode : public Encoder {
   friend class XmlDecode;
+  enum {
+    tag_start = 0,			///< Tag has been opened, attributes can be written
+    tag_content = 1,			///< Opening tag and content have been written
+    tag_stop = 2			///< No tag is currently being written
+  };
+  static const char spaces[];		///< Array of ' ' characters for emitting indents
+  static const int4 MAX_SPACES;		///< Maximum number of leading spaces when indenting XML
   ostream &outStream;			///< The stream receiving the encoded data
-  bool elementTagIsOpen;		///< If \b true, new attributes can be written to the current element
+  int4 tagStatus;			///< Stage of writing an element tag
+  int4 depth;				///< Depth of open elements
+  bool doFormatting;			///< \b true if encoder should indent and emit newlines
+  void newLine(void);			///< Emit a newline and proper indenting for the next tag
 public:
-  XmlEncode(ostream &s) : outStream(s) { elementTagIsOpen = false; } ///< Construct from a stream
+  XmlEncode(ostream &s,bool doFormat=true) : outStream(s) { depth=0; tagStatus=tag_stop; doFormatting=doFormat; } ///< Construct from a stream
   virtual void openElement(const ElementId &elemId);
   virtual void closeElement(const ElementId &elemId);
   virtual void writeBool(const AttributeId &attribId,bool val);
@@ -412,6 +448,7 @@ public:
   virtual void writeString(const AttributeId &attribId,const string &val);
   virtual void writeStringIndexed(const AttributeId &attribId,uint4 index,const string &val);
   virtual void writeSpace(const AttributeId &attribId,const AddrSpace *spc);
+  virtual void writeOpcode(const AttributeId &attribId,OpCode opc);
 };
 
 /// \brief Protocol format for PackedEncode and PackedDecode classes
@@ -505,6 +542,9 @@ private:
   void findMatchingAttribute(const AttributeId &attribId);	///< Find attribute matching the given id in open element
   void skipAttribute(void);		///< Skip over the attribute at the current position
   void skipAttributeRemaining(uint1 typeByte);	///< Skip over remaining attribute data, after a mismatch
+protected:
+  uint1 *allocateNextInputBuffer(int4 pad);	///< Allocate the next chunk of space in the input stream
+  void endIngest(int4 bufPos);		///< Finish set up for reading input stream
 public:
   PackedDecode(const AddrSpaceManager *spcManager) : Decoder(spcManager) {}	///< Constructor
   virtual ~PackedDecode(void);
@@ -529,6 +569,8 @@ public:
   virtual string readString(const AttributeId &attribId);
   virtual AddrSpace *readSpace(void);
   virtual AddrSpace *readSpace(const AttributeId &attribId);
+  virtual OpCode readOpcode(void);
+  virtual OpCode readOpcode(AttributeId &attribId);
 };
 
 /// \brief A byte-based encoder designed to marshal from the decompiler efficiently
@@ -548,6 +590,7 @@ public:
   virtual void writeString(const AttributeId &attribId,const string &val);
   virtual void writeStringIndexed(const AttributeId &attribId,uint4 index,const string &val);
   virtual void writeSpace(const AttributeId &attribId,const AddrSpace *spc);
+  virtual void writeOpcode(const AttributeId &attribId,OpCode opc);
 };
 
 /// An exception is thrown if the position currently points to the last byte in the stream
@@ -602,6 +645,17 @@ inline void PackedDecode::advancePosition(Position &pos,int4 skip)
   pos.current += skip;
 }
 
+/// Allocate an array of BUFFER_SIZE bytes and add it to the in-memory stream
+/// \param pad is the number of bytes of padding to add to the allocation size, above BUFFER_SIZE
+/// \return the newly allocated buffer
+inline uint1 *PackedDecode::allocateNextInputBuffer(int4 pad)
+
+{
+  uint1 *buf = new uint1[BUFFER_SIZE + pad];
+  inStream.emplace_back(buf,buf+BUFFER_SIZE);
+  return buf;
+}
+
 /// \param header is the type of header
 /// \param id is the id associated with the element or attribute
 inline void PackedEncode::writeHeader(uint1 header,uint4 id)
@@ -624,29 +678,35 @@ extern ElementId ELEM_UNKNOWN;		///< Special element to represent an element wit
 extern AttributeId ATTRIB_UNKNOWN;	///< Special attribute  to represent an attribute with an unrecognized name
 extern AttributeId ATTRIB_CONTENT;	///< Special attribute for XML text content of an element
 
-/// The name is looked up in the global list of all attributes.  If the attribute is not in the list, a special
+/// The name is looked up in the scoped list of attributes.  If the attribute is not in the list, a special
 /// placeholder attribute, ATTRIB_UNKNOWN, is returned as a placeholder for attributes with unrecognized names.
 /// \param nm is the name of the attribute
+/// \param scope is the id of the scope in which to lookup of the name
 /// \return the associated id
-inline uint4 AttributeId::find(const string &nm)
+inline uint4 AttributeId::find(const string &nm,int4 scope)
 
 {
-  unordered_map<string,uint4>::const_iterator iter = lookupAttributeId.find(nm);
-  if (iter != lookupAttributeId.end())
-    return (*iter).second;
+  if (scope == 0) {		// Current only support reverse look up for scope 0
+    unordered_map<string,uint4>::const_iterator iter = lookupAttributeId.find(nm);
+    if (iter != lookupAttributeId.end())
+      return (*iter).second;
+  }
   return ATTRIB_UNKNOWN.id;
 }
 
-/// The name is looked up in the global list of all elements.  If the element is not in the list, a special
+/// The name is looked up in the scoped list of elements.  If the element is not in the list, a special
 /// placeholder element, ELEM_UNKNOWN, is returned as a placeholder for elements with unrecognized names.
 /// \param nm is the name of the element
+/// \param scope is the id of the scope in which to search
 /// \return the associated id
-inline uint4 ElementId::find(const string &nm)
+inline uint4 ElementId::find(const string &nm,int4 scope)
 
 {
-  unordered_map<string,uint4>::const_iterator iter = lookupElementId.find(nm);
-  if (iter != lookupElementId.end())
-    return (*iter).second;
+  if (scope == 0) {
+    unordered_map<string,uint4>::const_iterator iter = lookupElementId.find(nm);
+    if (iter != lookupElementId.end())
+      return (*iter).second;
+  }
   return ELEM_UNKNOWN.id;
 }
 

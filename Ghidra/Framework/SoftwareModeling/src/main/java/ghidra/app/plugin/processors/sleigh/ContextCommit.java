@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +15,12 @@
  */
 package ghidra.app.plugin.processors.sleigh;
 
+import static ghidra.pcode.utils.SlaFormat.*;
+
 import ghidra.app.plugin.processors.sleigh.symbol.TripleSymbol;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 public class ContextCommit implements ContextChange {
 
@@ -32,6 +32,7 @@ public class ContextCommit implements ContextChange {
 		sym = null;
 	}
 
+	@Override
 	public void apply(ParserWalker walker, SleighDebugLogger debug) throws MemoryAccessException {
 		walker.getParserContext().addCommit(walker.getState(), sym, num, mask);
 		if (debug != null) {
@@ -40,13 +41,14 @@ public class ContextCommit implements ContextChange {
 		}
 	}
 
-	public void restoreXml(XmlPullParser parser, SleighLanguage lang) {
-		XmlElement el = parser.start("commit");
-		int id = SpecXmlUtils.decodeInt(el.getAttribute("id"));
+	@Override
+	public void decode(Decoder decoder, SleighLanguage lang) throws DecoderException {
+		int el = decoder.openElement(ELEM_COMMIT);
+		int id = (int) decoder.readUnsignedInteger(ATTRIB_ID);
 		sym = (TripleSymbol) lang.getSymbolTable().findSymbol(id);
-		num = SpecXmlUtils.decodeInt(el.getAttribute("num"));
-		mask = SpecXmlUtils.decodeInt(el.getAttribute("mask"));
-		parser.end(el);
+		num = (int) decoder.readSignedInteger(ATTRIB_NUMBER);
+		mask = (int) decoder.readUnsignedInteger(ATTRIB_MASK);
+		decoder.closeElement(el);
 	}
 
 }

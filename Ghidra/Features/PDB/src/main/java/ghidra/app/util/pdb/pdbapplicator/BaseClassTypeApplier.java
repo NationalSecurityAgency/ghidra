@@ -15,24 +15,21 @@
  */
 package ghidra.app.util.pdb.pdbapplicator;
 
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
-import ghidra.program.model.data.DataType;
-import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link AbstractBaseClassMsType}, {@link AbstractVirtualBaseClassMsType}, and
  * {@link AbstractIndirectVirtualBaseClassMsType} types.
  */
-public class BaseClassTypeApplier extends MsTypeApplier {
+public class BaseClassTypeApplier extends MsDataTypeComponentApplier {
 
 	// Intended for: AbstractBaseClassMsType, AbstractVirtualBaseClassMsType, or
 	//  AbstractIndirectVirtualBaseClassMsType
 	/**
-	 * Constructor for base class applier.
-	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
-	 * @throws IllegalArgumentException Upon invalid arguments.
+	 * Constructor for base class applier
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working
+	 * @throws IllegalArgumentException Upon invalid arguments
 	 */
 	public BaseClassTypeApplier(DefaultPdbApplicator applicator)
 			throws IllegalArgumentException {
@@ -52,13 +49,6 @@ public class BaseClassTypeApplier extends MsTypeApplier {
 			return virtualType.getBaseClassRecordNumber();
 		}
 		return ((AbstractIndirectVirtualBaseClassMsType) type).getBaseClassRecordNumber();
-	}
-
-	@Override
-	DataType apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
-			throws PdbException, CancelledException {
-		// do nothing
-		return null;
 	}
 
 	private static AbstractMsType validateType(AbstractMsType type)

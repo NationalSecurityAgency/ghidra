@@ -28,8 +28,8 @@ dependencies {
 	api project(':SoftwareModeling')
 	api project(':ProposedUtils')
 
-	api "net.java.dev.jna:jna:5.4.0"
-	api "net.java.dev.jna:jna-platform:5.4.0"
+	api "net.java.dev.jna:jna:5.14.0"
+	api "net.java.dev.jna:jna-platform:5.14.0"
 
 	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
 }
@@ -49,10 +49,11 @@ task testSpecimenWin_x86_64 {
 
 task testSpecimenLinux_x86_64 {
 	dependsOn 'expCloneExecExecutable'//Linux_x86_64Executable'
-	dependsOn 'expCloneExitExecutable'//Linux_x86_64Executable'
+	dependsOn 'expCloneExitLinux_x86_64Executable'
 	//dependsOn 'expCloneSpinExecutable'//Linux_x86_64Executable'
 	dependsOn 'expForkExecutable'//Linux_x86_64Executable'
 	dependsOn 'expPrintLinux_x86_64Executable'
+	dependsOn 'expReadLinux_x86_64Executable'
 	dependsOn 'expSpinLinux_x86_64Executable'
 	//dependsOn 'expTypesExecutable'//Linux_x86_64Executable'
 	dependsOn 'expRegistersLinux_x86_64Executable'
@@ -65,6 +66,12 @@ task testSpecimenLinux_x86_64 {
 			commandLine "strip", "-o", "expSpin.stripped", "expSpin"
 		}
 	}
+}
+
+task testSpecimenMac_arm_64 {
+	dependsOn 'expCloneExitMac_arm_64Executable'
+	dependsOn 'expPrintMac_arm_64Executable'
+	dependsOn 'expReadMac_arm_64Executable'
 }
 
 // TODO: testSpecimenMac_x86_64 (Intel)
@@ -91,6 +98,7 @@ model {
 		expCloneExit(NativeExecutableSpec) {
 			targetPlatform "linux_x86_64"
 			//targetPlatform "linux_x86_32" // TODO: Test on these
+			targetPlatform "mac_arm_64"
 		}
 		expCloneSpin(NativeExecutableSpec) {
 			targetPlatform "linux_x86_64"
@@ -105,6 +113,11 @@ model {
 			//targetPlatform "linux_x86_32" // TODO: Test on these
 			targetPlatform "win_x86_64"
 			targetPlatform "win_x86_32" // TODO: Test on these
+			targetPlatform "mac_arm_64"
+		}
+		expRead(NativeExecutableSpec) {
+			targetPlatform "linux_x86_64"
+			targetPlatform "mac_arm_64"
 		}
 		expSpin(NativeExecutableSpec) {
 			targetPlatform "linux_x86_64"

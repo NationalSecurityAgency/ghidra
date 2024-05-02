@@ -24,7 +24,6 @@ import ghidra.async.AsyncUtils;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.target.Target;
-import ghidra.debug.api.target.Target.ActionEntry;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
@@ -39,12 +38,17 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-class MockTarget implements Target {
+public class MockTarget implements Target {
 	private final Trace trace;
 	private long snap = 0;
 
 	public MockTarget(Trace trace) {
 		this.trace = trace;
+	}
+
+	@Override
+	public String describe() {
+		return "Mock Target";
 	}
 
 	@Override
@@ -113,6 +117,16 @@ class MockTarget implements Target {
 
 	@Override
 	public void invalidateMemoryCaches() {
+	}
+
+	@Override
+	public CompletableFuture<String> executeAsync(String command, boolean toString) {
+		return AsyncUtils.nil();
+	}
+
+	@Override
+	public String execute(String command, boolean toString) {
+		return null;
 	}
 
 	@Override
@@ -212,7 +226,7 @@ class MockTarget implements Target {
 
 	@Override
 	public boolean isBreakpointValid(TraceBreakpoint breakpoint) {
-		return false;
+		return true;
 	}
 
 	@Override

@@ -136,6 +136,13 @@ public interface Target {
 	}
 
 	/**
+	 * Describe the target for display in the UI
+	 * 
+	 * @return the description
+	 */
+	String describe();
+
+	/**
 	 * Check if the target is still valid
 	 * 
 	 * @return true if valid
@@ -168,6 +175,20 @@ public interface Target {
 	 * @return the collected actions
 	 */
 	Map<String, ActionEntry> collectActions(ActionName name, ActionContext context);
+
+	/**
+	 * @see #execute(String, boolean)
+	 */
+	CompletableFuture<String> executeAsync(String command, boolean toString);
+
+	/**
+	 * Execute a command as if in the CLI
+	 * 
+	 * @param command the command
+	 * @param toString true to capture the output and return it, false to print to the terminal
+	 * @return the captured output, or null if {@code toString} is false
+	 */
+	String execute(String command, boolean toString);
 
 	/**
 	 * Get the trace thread that contains the given object

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,12 +16,14 @@
 package ghidra.app.util.pdb.pdbapplicator;
 
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.app.util.SymbolPath;
 import ghidra.app.util.bin.format.pdb.DefaultCompositeMember;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
+import ghidra.app.util.pdb.pdbapplicator.ClassFieldAttributes.Access;
 import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
@@ -43,8 +45,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 
 	// Intended for: AbstractCompositeMsType
 	/**
-	 * Constructor for composite type applier, for transforming a composite into a
-	 * Ghidra DataType
+	 * Constructor for composite type applier, for transforming a composite into a Ghidra DataType
 	 * @param applicator {@link DefaultPdbApplicator} for which this class is working
 	 */
 	public CompositeTypeApplier(DefaultPdbApplicator applicator) {
@@ -75,15 +76,17 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 
 		String mangledName = compositeMsType.getMangledName();
 
+		int size = myApplicator.bigIntegerToInt(compositeMsType.getSize());
+
 		if (compositeMsType instanceof AbstractClassMsType) {
 			myApplicator.predefineClass(fixedSymbolPath);
-			myComposite = new StructureDataType(categoryPath, fixedSymbolPath.getName(), 0,
+			myComposite = new StructureDataType(categoryPath, fixedSymbolPath.getName(), size,
 				myApplicator.getDataTypeManager());
 			myClassType = new CppCompositeType(myComposite, mangledName);
 			myClassType.setClass();
 		}
 		else if (compositeMsType instanceof AbstractStructureMsType) {
-			myComposite = new StructureDataType(categoryPath, fixedSymbolPath.getName(), 0,
+			myComposite = new StructureDataType(categoryPath, fixedSymbolPath.getName(), size,
 				myApplicator.getDataTypeManager());
 			myClassType = new CppCompositeType(myComposite, mangledName);
 			myClassType.setStruct();
@@ -101,35 +104,39 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 			return null;
 		}
 		myClassType.setName(name);
-		myClassType.setSize(myApplicator.bigIntegerToInt(compositeMsType.getSize()));
+		myClassType.setSize(size);
 		myClassType.setFinal(compositeMsType.getMsProperty().isSealed());
 
 		return new ComboType(myComposite, myClassType);
 	}
 
 	@Override
-	DataType apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
-			throws PdbException, CancelledException {
-		return apply((AbstractCompositeMsType) type, fixupContext, breakCycle);
+	boolean apply(AbstractMsType type) throws PdbException, CancelledException {
+		return apply((AbstractCompositeMsType) type);
 	}
 
-	private void applyInternal(ComboType combo, AbstractCompositeMsType type,
-			FixupContext fixupContext, boolean breakCycle) throws CancelledException, PdbException {
+	private boolean applyInternal(ComboType combo, AbstractCompositeMsType type)
+			throws CancelledException, PdbException {
 		FieldListTypeApplier fieldListApplier = FieldListTypeApplier
 				.getFieldListApplierSpecial(applicator, type.getFieldDescriptorListRecordNumber());
 		FieldListTypeApplier.FieldLists lists =
 			fieldListApplier.getFieldLists(type.getFieldDescriptorListRecordNumber());
+		if (!precheckOrScheduleDependencies(lists)) {
+			return false;
+		}
+
 		if (type instanceof AbstractUnionMsType) {
-			applyBasic(combo, type, lists, fixupContext, breakCycle);
+			applyBasic(combo, type, lists);
 		}
 		else {
-			applyCpp(combo, type, lists, fixupContext, breakCycle);
+			applyCpp(combo, type, lists);
 		}
+		return true;
 	}
 
 	//==============================================================================================
 	private void applyBasic(ComboType combo, AbstractCompositeMsType type,
-			FieldListTypeApplier.FieldLists lists, FixupContext fixupContext, boolean breakCycle)
+			FieldListTypeApplier.FieldLists lists)
 			throws CancelledException, PdbException {
 		Composite composite = combo.dt();
 		CppCompositeType classType = combo.ct();
@@ -137,10 +144,8 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		int size = getSizeInt(type);
 		clearComponents(composite);
 		List<DefaultPdbUniversalMember> myMembers = new ArrayList<>();
-		addVftPtrs(composite, classType, lists.vftPtrs(), type, myMembers, fixupContext,
-			breakCycle);
-		addMembers(composite, classType, lists.nonstaticMembers(), type, myMembers, fixupContext,
-			breakCycle);
+		addVftPtrs(composite, classType, lists.vftPtrs(), type, myMembers);
+		addMembers(composite, classType, lists.nonstaticMembers(), type, myMembers);
 
 		if (!DefaultCompositeMember.applyDataTypeMembers(composite, isClass, size, myMembers,
 			msg -> reconstructionWarn(msg, hasHiddenComponents(lists)),
@@ -151,18 +156,15 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 
 	//==============================================================================================
 	private void applyCpp(ComboType combo, AbstractCompositeMsType type,
-			FieldListTypeApplier.FieldLists lists, FixupContext fixupContext, boolean breakCycle)
+			FieldListTypeApplier.FieldLists lists)
 			throws PdbException, CancelledException {
 		Composite composite = combo.dt();
 		CppCompositeType classType = combo.ct();
 		clearComponents(composite);
 		List<DefaultPdbUniversalMember> myMembers = new ArrayList<>();
-		addClassTypeBaseClassesNew(composite, classType, lists.bases(), type, fixupContext,
-			breakCycle);
-		addVftPtrs(composite, classType, lists.vftPtrs(), type, myMembers, fixupContext,
-			breakCycle);
-		addMembers(composite, classType, lists.nonstaticMembers(), type, myMembers, fixupContext,
-			breakCycle);
+		addClassTypeBaseClasses(composite, classType, lists.bases(), type);
+		addVftPtrs(composite, classType, lists.vftPtrs(), type, myMembers);
+		addMembers(composite, classType, lists.nonstaticMembers(), type, myMembers);
 
 		if (!classType.validate()) {
 			// TODO: Investigate.  We should do this check for some classes somewhere.  Should
@@ -205,14 +207,17 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		return (lists.methods().size() != 0 || lists.bases().size() != 0);
 	}
 
-	private void addClassTypeBaseClassesNew(Composite composite, CppCompositeType myClassType,
-			List<AbstractMsType> msBases, AbstractMsType type, FixupContext fixupContext,
-			boolean breakCycle) throws PdbException, CancelledException {
+	private void addClassTypeBaseClasses(Composite composite, CppCompositeType myClassType,
+			List<AbstractMsType> msBases, AbstractMsType type)
+			throws PdbException, CancelledException {
 
 		AbstractCompositeMsType cType = (AbstractCompositeMsType) type;
+		ClassFieldAttributes.Access defaultAccess =
+			(type instanceof AbstractClassMsType) ? ClassFieldAttributes.Access.PRIVATE
+					: ClassFieldAttributes.Access.PUBLIC;
 
 		for (AbstractMsType baseType : msBases) {
-
+			applicator.checkCancelled();
 			MsTypeApplier baseApplier = applicator.getTypeApplier(baseType);
 			if (!(baseApplier instanceof BaseClassTypeApplier baseTypeApplier)) {
 				applicator.appendLogMsg(baseApplier.getClass().getSimpleName() +
@@ -221,15 +226,14 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 			}
 
 			if (baseType instanceof AbstractBaseClassMsType baseClassType) {
-				applyDirectBaseClass(baseClassType, myClassType, fixupContext);
+				applyDirectBaseClass(baseClassType, myClassType, defaultAccess);
 			}
 			else if (baseType instanceof AbstractVirtualBaseClassMsType virtualBaseClassType) {
-				applyDirectVirtualBaseClass(virtualBaseClassType, myClassType, fixupContext,
-					breakCycle);
+				applyDirectVirtualBaseClass(virtualBaseClassType, myClassType, defaultAccess);
 			}
 			else if (baseType instanceof AbstractIndirectVirtualBaseClassMsType indirectVirtualBaseClassType) {
 				applyIndirectVirtualBaseClass(indirectVirtualBaseClassType, myClassType,
-					fixupContext, breakCycle);
+					defaultAccess);
 			}
 			else {
 				throw new AssertException(
@@ -239,62 +243,61 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 	}
 
 	private void applyDirectBaseClass(AbstractBaseClassMsType base, CppCompositeType myClassType,
-			FixupContext fixupContext) throws PdbException, CancelledException {
+			Access defaultAccess)
+			throws PdbException {
 		CppCompositeType underlyingClassType =
-			getUnderlyingClassType(base.getBaseClassRecordNumber(), fixupContext);
+			getUnderlyingClassType(base.getBaseClassRecordNumber());
 		if (underlyingClassType == null) {
 			return;
 		}
 		ClassFieldMsAttributes atts = base.getAttributes();
 		int offset = applicator.bigIntegerToInt(base.getOffset());
-		myClassType.addDirectBaseClass(underlyingClassType, convertAttributes(atts), offset);
+		myClassType.addDirectBaseClass(underlyingClassType,
+			ClassFieldAttributes.convert(atts, defaultAccess), offset);
 	}
 
 	private void applyDirectVirtualBaseClass(AbstractVirtualBaseClassMsType base,
-			CppCompositeType myClassType, FixupContext fixupContext, boolean breakCycle)
-			throws PdbException, CancelledException {
+			CppCompositeType myClassType, Access defaultAccess) throws PdbException {
 		CppCompositeType underlyingCt =
-			getUnderlyingClassType(base.getBaseClassRecordNumber(), fixupContext);
+			getUnderlyingClassType(base.getBaseClassRecordNumber());
 		if (underlyingCt == null) {
 			return;
 		}
 		DataType vbtptr = getVirtualBaseTablePointerDataType(
-			base.getVirtualBasePointerRecordNumber(), fixupContext, breakCycle);
+			base.getVirtualBasePointerRecordNumber());
 		ClassFieldMsAttributes atts = base.getAttributes();
 		int basePointerOffset = applicator.bigIntegerToInt(base.getBasePointerOffset());
 		int offsetFromVbt = applicator.bigIntegerToInt(base.getBaseOffsetFromVbt());
-		myClassType.addDirectVirtualBaseClass(underlyingCt, convertAttributes(atts),
+		myClassType.addDirectVirtualBaseClass(underlyingCt,
+			ClassFieldAttributes.convert(atts, defaultAccess),
 			basePointerOffset, vbtptr, offsetFromVbt);
 	}
 
 	private void applyIndirectVirtualBaseClass(AbstractIndirectVirtualBaseClassMsType base,
-			CppCompositeType myClassType, FixupContext fixupContext, boolean breakCycle)
-			throws PdbException, CancelledException {
+			CppCompositeType myClassType, Access defaultAccess) throws PdbException {
 		CppCompositeType underlyingCt =
-			getUnderlyingClassType(base.getBaseClassRecordNumber(), fixupContext);
+			getUnderlyingClassType(base.getBaseClassRecordNumber());
 		if (underlyingCt == null) {
 			return;
 		}
-		DataType vbtptr = getVirtualBaseTablePointerDataType(
-			base.getVirtualBasePointerRecordNumber(), fixupContext, breakCycle);
+		DataType vbtptr =
+			getVirtualBaseTablePointerDataType(base.getVirtualBasePointerRecordNumber());
 		ClassFieldMsAttributes atts = base.getAttributes();
 		int basePointerOffset = applicator.bigIntegerToInt(base.getBasePointerOffset());
 		int offsetFromVbt = applicator.bigIntegerToInt(base.getBaseOffsetFromVbt());
-		myClassType.addIndirectVirtualBaseClass(underlyingCt, convertAttributes(atts),
+		myClassType.addIndirectVirtualBaseClass(underlyingCt,
+			ClassFieldAttributes.convert(atts, defaultAccess),
 			basePointerOffset, vbtptr, offsetFromVbt);
 	}
 
-	private CppCompositeType getUnderlyingClassType(RecordNumber recordNumber,
-			FixupContext fixupContext) throws CancelledException, PdbException {
+	private CppCompositeType getUnderlyingClassType(RecordNumber recordNumber) {
 
-		AbstractMsType type = applicator.getPdb().getTypeRecord(recordNumber);
+		AbstractMsType type = applicator.getTypeRecord(recordNumber);
 		if (!(type instanceof AbstractCompositeMsType comp)) {
 			applicator.appendLogMsg(type.getClass().getSimpleName() +
 				" seen where Composite Type expected for base class.");
 			return null;
 		}
-		// not sure if need to do this.  TODO: evaluate
-		applicator.getProcessedDataType(recordNumber, fixupContext, false);
 
 		MsTypeApplier baseUnderlyingApplier = applicator.getTypeApplier(recordNumber);
 		if (!(baseUnderlyingApplier instanceof CompositeTypeApplier)) {
@@ -310,124 +313,183 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		return underlyingClassType;
 	}
 
-	private DataType getVirtualBaseTablePointerDataType(RecordNumber recordNumber,
-			FixupContext fixupContext, boolean breakCycle) throws CancelledException, PdbException {
-		DataType dt = applicator.getProcessedDataType(recordNumber, fixupContext, breakCycle);
-		if (dt != null) {
-			return dt;
+	private DataType getVirtualBaseTablePointerDataType(RecordNumber recordNumber)
+			throws PdbException {
+		DataType dataType = applicator.getDataType(recordNumber);
+		if (dataType == null) {
+			throw new PdbException("Type not processed for record: " + recordNumber);
 		}
-		applicator.appendLogMsg("Generating a generic Virtual Base Table Pointer.");
-		return new PointerDataType();
-	}
-
-	private static CppCompositeType.ClassFieldAttributes convertAttributes(
-			ClassFieldMsAttributes atts) {
-		CppCompositeType.Access myAccess;
-		switch (atts.getAccess()) {
-			case PUBLIC:
-				myAccess = CppCompositeType.Access.PUBLIC;
-				break;
-			case PROTECTED:
-				myAccess = CppCompositeType.Access.PROTECTED;
-				break;
-			case PRIVATE:
-				myAccess = CppCompositeType.Access.PRIVATE;
-				break;
-			default:
-				myAccess = CppCompositeType.Access.BLANK;
-				break;
-		}
-		CppCompositeType.Property myProperty;
-		switch (atts.getProperty()) {
-			case VIRTUAL:
-				myProperty = CppCompositeType.Property.VIRTUAL;
-				break;
-			case STATIC:
-				myProperty = CppCompositeType.Property.STATIC;
-				break;
-			case FRIEND:
-				myProperty = CppCompositeType.Property.FRIEND;
-				break;
-			default:
-				myProperty = CppCompositeType.Property.BLANK;
-				break;
-		}
-		return new CppCompositeType.ClassFieldAttributes(myAccess, myProperty);
+		return dataType;
 	}
 
 	private void addMembers(Composite composite, CppCompositeType myClassType,
 			List<AbstractMemberMsType> msMembers, AbstractCompositeMsType type,
-			List<DefaultPdbUniversalMember> myMembers, FixupContext fixupContext,
-			boolean breakCycle) throws CancelledException, PdbException {
-
+			List<DefaultPdbUniversalMember> myMembers)
+			throws CancelledException, PdbException {
+		ClassFieldAttributes.Access defaultAccess =
+			(type instanceof AbstractClassMsType) ? ClassFieldAttributes.Access.PRIVATE
+					: ClassFieldAttributes.Access.PUBLIC;
 		for (int index = 0; index < msMembers.size(); index++) {
 			applicator.checkCancelled();
 			AbstractMemberMsType memberType = msMembers.get(index);
 			DefaultPdbUniversalMember member =
-				getNonStaticMember(composite, memberType, index, fixupContext, breakCycle);
+				getNonStaticMember(composite, defaultAccess, memberType, index);
 			DataType dt = member.getDataType().getDataType();
-			if (applicator.isPlaceholderType(dt)) {
-				fixupContext.putFixup(index);
-			}
 			myMembers.add(member);
 			myClassType.addMember(member.getName(), dt, member.isZeroLengthArray(),
 				member.getAttributes(), member.getOffset(), member.getComment());
 		}
 	}
 
+	// Does not use applier... goes straight to vftptr type
 	private void addVftPtrs(Composite composite, CppCompositeType myClassType,
 			List<AbstractVirtualFunctionTablePointerMsType> msVftPtrs, AbstractCompositeMsType type,
-			List<DefaultPdbUniversalMember> myMembers, FixupContext fixupContext,
-			boolean breakCycle) throws CancelledException, PdbException {
+			List<DefaultPdbUniversalMember> myMembers)
+			throws CancelledException, PdbException {
 		for (AbstractVirtualFunctionTablePointerMsType vftPtr : msVftPtrs) {
-			MsTypeApplier applierIterated = applicator.getTypeApplier(vftPtr);
-			if (applierIterated instanceof VirtualFunctionTablePointerTypeApplier vtPtrApplier) {
-				DefaultPdbUniversalMember member =
-					getVftPtrMember(vftPtr, vtPtrApplier, fixupContext, breakCycle);
-				myMembers.add(member);
-				myClassType.addVirtualFunctionTablePointer(member.getName(),
-					member.getDataType().getDataType(), member.getOffset());
+			applicator.checkCancelled();
+			RecordNumber recordNumber = vftPtr.getPointerTypeRecordNumber();
+			DataType dataType = applicator.getDataType(recordNumber);
+			if (dataType == null) {
+				throw new PdbException("Type not processed for record: " + recordNumber);
 			}
+			int offset = vftPtr.getOffset();
+			String vftPtrMemberName = vftPtr.getName();
+			DefaultPdbUniversalMember member =
+				new DefaultPdbUniversalMember(vftPtrMemberName, dataType, offset);
+			myMembers.add(member);
+			myClassType.addVirtualFunctionTablePointer(member.getName(),
+				member.getDataType().getDataType(), member.getOffset());
 		}
 	}
 
-	// We broke up the big addMembers() method that had static and non-static members, along with
-	//  vftptrs, and the items in this method.  These were not really processed in the older
-	//  method, but we wanted to capture the types that still possible
-	private void addOthers(Composite composite, CppCompositeType myClassType,
-			List<AbstractMsType> msMembers, AbstractCompositeMsType type,
-			List<DefaultPdbUniversalMember> myMembers, FixupContext fixupContext)
-			throws CancelledException, PdbException {
-
-		for (AbstractMsType typeIterated : msMembers) {
-			MsTypeApplier applierIterated = applicator.getTypeApplier(typeIterated);
-			if (applierIterated instanceof EnumerateTypeApplier enumerateApplier &&
-				typeIterated instanceof AbstractEnumerateMsType enumerateType) {
-				processEnumerate(type, enumerateApplier, enumerateType);
-			}
-			else if (applierIterated instanceof NestedTypeApplier nestedTypeApplier) {
-				processNestedType(type, nestedTypeApplier, typeIterated);
-			}
-			else if (applierIterated instanceof NoTypeApplier) {
-				if (typeIterated instanceof AbstractStaticMemberMsType) {
-					// TODO: Investigate anything that hits here (set break point), see if we
-					//  see dot apply the information.  If so, probably should create an applier
-					//  for the contained MS type.
+	/**
+	 * Uses {@link DefaultPdbApplicator#getDataTypeOrSchedule(RecordNumber)}) on all underlying
+	 *  types to ensure that the types get scheduled... and detects whether any types were not yet
+	 *  available so that this composite type is denoted as not done.
+	 * @param lists the lists of all underlying types
+	 * @return {@code true} if all underlying types are already available
+	 * @throws PdbException upon processing issue
+	 * @throws CancelledException upon user cancellation
+	 */
+	private boolean precheckOrScheduleDependencies(FieldListTypeApplier.FieldLists lists)
+			throws PdbException, CancelledException {
+		boolean done = true;
+		for (AbstractMsType base : lists.bases()) {
+			applicator.checkCancelled();
+			if (base instanceof AbstractBaseClassMsType bc) {
+				RecordNumber recordNumber = bc.getBaseClassRecordNumber();
+				DataType dt = applicator.getDataTypeOrSchedule(recordNumber);
+				if (dt == null) {
+					done = false;
 				}
-				else {
-					processNotHandled(composite, applierIterated, typeIterated);
+			}
+			else if (base instanceof AbstractVirtualBaseClassMsType vbc) {
+				RecordNumber recordNumber = vbc.getVirtualBasePointerRecordNumber();
+				DataType dt = applicator.getDataTypeOrSchedule(recordNumber);
+				if (dt == null) {
+					done = false;
+				}
+				recordNumber = vbc.getBaseClassRecordNumber();
+				dt = applicator.getDataTypeOrSchedule(recordNumber);
+				if (dt == null) {
+					done = false;
+				}
+			}
+			else if (base instanceof AbstractIndirectVirtualBaseClassMsType ivbc) {
+				RecordNumber recordNumber = ivbc.getVirtualBasePointerRecordNumber();
+				DataType dt = applicator.getDataTypeOrSchedule(recordNumber);
+				if (dt == null) {
+					done = false;
+				}
+				recordNumber = ivbc.getBaseClassRecordNumber();
+				dt = applicator.getDataTypeOrSchedule(recordNumber);
+				if (dt == null) {
+					done = false;
 				}
 			}
 			else {
-				processNotHandled(composite, applierIterated, typeIterated);
+				throw new PdbException("Unhandled type: " + base.getClass().getSimpleName());
+			}
+		}
+		for (AbstractMsType method : lists.methods()) {
+			applicator.checkCancelled();
+			if (method instanceof AbstractOneMethodMsType oneMethod) {
+				RecordNumber recordNumber = oneMethod.getProcedureTypeRecordNumber();
+				DataType dt = applicator.getDataTypeOrSchedule(recordNumber);
+				if (dt == null) {
+					done = false;
+				}
+			}
+			else if (method instanceof AbstractOverloadedMethodMsType overloadedMethod) {
+				RecordNumber recordNumber = overloadedMethod.getTypeMethodListRecordNumber();
+				AbstractMsType msType = applicator.getTypeRecord(recordNumber);
+				if (msType instanceof AbstractMethodListMsType methodList) {
+					List<AbstractMethodRecordMs> methodRecords = methodList.getList();
+					for (AbstractMethodRecordMs methodRecord : methodRecords) {
+						recordNumber = methodRecord.getProcedureTypeRecordNumber();
+						DataType dt = applicator.getDataTypeOrSchedule(recordNumber);
+						if (dt == null) {
+							done = false;
+						}
+					}
+				}
+			}
+			else {
+				throw new PdbException("Unhandled type: " + method.getClass().getSimpleName());
+			}
+		}
+		// Might cause problems, so remove until understood and possibly needed
+//		for (AbstractNestedTypeMsType nested : lists.nestedTypes()) {
+//			applicator.checkCancelled();
+//			RecordNumber recordNumber = nested.getNestedTypeDefinitionRecordNumber();
+//			DataType dt = applicator.getDataTypeOrSchedule(recordNumber);
+//			if (dt == null) {
+//				done = false;
+//			}
+//		}
+		for (AbstractMemberMsType nonstaticMember : lists.nonstaticMembers()) {
+			applicator.checkCancelled();
+			RecordNumber recordNumber = nonstaticMember.getFieldTypeRecordNumber();
+			DataType dt = applicator.getDataTypeOrSchedule(recordNumber);
+			if (dt == null) {
+				done = false;
+			}
+		}
+		for (AbstractStaticMemberMsType staticMember : lists.staticMembers()) {
+			applicator.checkCancelled();
+			RecordNumber recordNumber = staticMember.getFieldTypeRecordNumber();
+			DataType dt = applicator.getDataTypeOrSchedule(recordNumber);
+			if (dt == null) {
+				done = false;
 			}
 		}
 
+		// Not doing enumerates for now... look at EnumTypeApplier, too, regarding how to deal
+		//  with not storing a type with applicator.putDataType and yet getting removed from or
+		//  not being added to the "todo" schedule.
+//		for (AbstractEnumerateMsType enumerate : lists.enumerates()) {
+//			applicator.checkCancelled();
+//			RecordNumber recordNumber = enumerate.getRecordNumber();
+//			DataType dt = applicator.getDataTypeOrSchedule(recordNumber);
+//			if (dt == null) {
+//				done = false;
+//			}
+//		}
+		for (AbstractVirtualFunctionTablePointerMsType msVftPtr : lists.vftPtrs()) {
+			applicator.checkCancelled();
+			RecordNumber recordNumber = msVftPtr.getPointerTypeRecordNumber();
+			DataType dt = applicator.getDataTypeOrSchedule(recordNumber);
+			if (dt == null) {
+				done = false;
+			}
+		}
+		return done;
 	}
 
 	private DefaultPdbUniversalMember getNonStaticMember(Composite container,
-			AbstractMemberMsType memberMsType, int ordinal, FixupContext fixupContext,
-			boolean breakCycle) throws CancelledException, PdbException {
+			Access defaultAccess, AbstractMemberMsType memberMsType, int ordinal)
+			throws CancelledException, PdbException {
 
 		MsTypeApplier applier = applicator.getTypeApplier(memberMsType);
 		if (!(applier instanceof MemberTypeApplier memberApplier)) {
@@ -440,16 +502,22 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		ClassFieldMsAttributes memberAttributes = memberMsType.getAttribute();
 		memberAttributes.getAccess(); // TODO: do something with this and other attributes
 
-		AbstractMsType fieldType =
-			applicator.getPdb().getTypeRecord(memberMsType.getFieldTypeRecordNumber());
+		RecordNumber typeRecordNumber = memberMsType.getFieldTypeRecordNumber();
+		AbstractMsType fieldType = applicator.getTypeRecord(typeRecordNumber);
 		MsTypeApplier fieldApplier = applicator.getTypeApplier(fieldType);
 
 		String memberComment = null;
-		DataType fieldDataType = applicator.getProcessedDataType(
-			memberMsType.getFieldTypeRecordNumber(), fixupContext, breakCycle);
-		if (fieldApplier instanceof PointerTypeApplier ptrApplier) {
+		RecordNumber fieldRecordNumber = memberMsType.getFieldTypeRecordNumber();
+		DataType fieldDataType = applicator.getDataType(fieldRecordNumber);
+		if (fieldDataType == null) {
+			throw new PdbException("Type not processed for record: " + fieldRecordNumber);
+		}
+		else if (fieldApplier instanceof PointerTypeApplier ptrApplier) {
+			// The above placeholder could be a pointer, but then we wouldn't be getting
+			//  a comment here anyways, so the "else" is perfect... we don't want to overwrite
+			//  the placeholder comment
 			AbstractPointerMsType pointerType = (AbstractPointerMsType) fieldType;
-			memberComment = ptrApplier.getPointerCommentField(pointerType, fixupContext);
+			memberComment = ptrApplier.getPointerCommentField(pointerType);
 		}
 
 		boolean isZeroLengthArray = (fieldDataType instanceof Array &&
@@ -457,20 +525,12 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 			arrayApplier.isFlexibleArray(fieldType));
 
 		DefaultPdbUniversalMember member = new DefaultPdbUniversalMember(memberName, fieldDataType,
-			isZeroLengthArray, offset, convertAttributes(memberAttributes), memberComment);
+			isZeroLengthArray, offset,
+			ClassFieldAttributes.convert(memberAttributes, defaultAccess), memberComment);
 		return member;
 	}
 
-	private DefaultPdbUniversalMember getVftPtrMember(
-			AbstractVirtualFunctionTablePointerMsType type,
-			VirtualFunctionTablePointerTypeApplier vtPtrApplier, FixupContext fixupContext,
-			boolean breakCycle) throws CancelledException, PdbException {
-		String vftPtrMemberName = vtPtrApplier.getMemberName(type);
-		int offset = vtPtrApplier.getOffset(type);
-		DataType dt = vtPtrApplier.apply(type, fixupContext, breakCycle);
-		return new DefaultPdbUniversalMember(vftPtrMemberName, dt, offset);
-	}
-
+	// Not yet working: not sure of the work we will do
 	private void processEnumerate(AbstractCompositeMsType type, EnumerateTypeApplier applier,
 			AbstractEnumerateMsType enumerateType) {
 		String fieldName = enumerateType.getName();
@@ -480,6 +540,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 			fieldName + " and value " + numeric + ".");
 	}
 
+	// Not yet working: not sure of the work we will do
 	private void processNestedType(AbstractCompositeMsType type,
 			NestedTypeApplier nestedTypeApplier, AbstractMsType enumerateType) {
 		// Need to make sure that "this" class id dependent on all elements composing the
@@ -512,35 +573,12 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 
 	}
 
-	private void processNotHandled(Composite composite, MsTypeApplier applier,
-			AbstractMsType memberType) {
-		applicator.appendLogMsg(applier.getClass().getSimpleName() + " with contained " +
-			memberType.getClass().getSimpleName() + " unexpected for " + composite.getName());
-	}
-
 	//==============================================================================================
-	DataType fixup(AbstractCompositeMsType type, Map<Integer, DataType> contextMap)
-			throws CancelledException, PdbException {
-		DataType dt = applicator.getDataType(type);
-		if (dt instanceof DataTypeImpl || !(dt instanceof Composite)) {
-			throw new PdbException("Can only fixup Composite DB ");
-		}
-		return null;
-	}
+	boolean apply(AbstractCompositeMsType type) throws CancelledException, PdbException {
 
-	//==============================================================================================
-	DataType apply(AbstractCompositeMsType type, FixupContext fixupContext, boolean breakCycle)
-			throws CancelledException, PdbException {
+		RecordNumber recordNumber = type.getRecordNumber();
 
-		int typeNumber = type.getRecordNumber().getNumber();
-		int mappedNumber = applicator.getMappedComplexType(typeNumber);
-		DataType existingDt = applicator.getDataType(mappedNumber);
-		if (existingDt != null) {
-			return existingDt;
-		}
-
-		AbstractMsType msType =
-			applicator.getPdb().getTypeRecord(RecordNumber.typeRecordNumber(mappedNumber));
+		AbstractMsType msType = applicator.getMappedTypeRecord(recordNumber);
 		if (!(msType instanceof AbstractCompositeMsType)) {
 			throw new PdbException("PDB processing error");
 		}
@@ -554,147 +592,30 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 			composite = combo.dt();
 			myClassType = combo.ct();
 			applicator.putClassType(type, myClassType);
+			// Since we are delaying resolve, we should be able to store this data type earlier...
+			//  which is what I'm now doing before applyInternal().  This should save doing some
+			//  fixups (e.g., where my ball of types wants a pointer to this particular type).
+			// Composite is only type that we store before it is finished... this does cycle-break
+			//  in two ways...
+			//  1) from the data type perspective, a pointer can always find the underlying type
+			//    if it is a composite, thus whatever cycles can be created from composites are
+			//    taken care of
+			//  2) from a processing perspective, we allow dependencies to get trickled up on the
+			//    processing todo stack if they are not found in the applicator map.  This could
+			//    cause processing oscillation because of dependencies, but since we push the
+			//    type here, it will always be found in the map and never trickled upward
+			applicator.putDataType(msType, composite);
 		}
 		else {
 			composite = myClassType.getComposite();
 			combo = new ComboType(composite, myClassType);
 		}
 
-		applyInternal(combo, type, fixupContext, breakCycle);
-
-		composite = (Composite) applicator.resolve(composite);
-		applicator.putDataType(mappedNumber, composite);
-		return composite;
+		return applyInternal(combo, type);
 	}
 
 	private AbstractCompositeMsType getDefinitionType(AbstractComplexMsType type) {
 		return getDefinitionType(type, AbstractCompositeMsType.class);
-	}
-
-	public void fixUp(FixupContext fixupContext) throws PdbException, CancelledException {
-
-		Integer indexNumber = fixupContext.peekFixupRecord();
-		if (indexNumber == null) {
-			return;
-		}
-
-		AbstractMsType t =
-			applicator.getPdb().getTypeRecord(RecordNumber.typeRecordNumber(indexNumber));
-		if (!(t instanceof AbstractComplexMsType type)) {
-			throw new PdbException("error");
-		}
-		AbstractCompositeMsType defType = getDefinitionType(type);
-
-		DataType dataType = applicator.getDataType(indexNumber);
-		if (dataType == null) {
-			applicator.appendLogMsg("Null type for index: " + indexNumber);
-			return;
-		}
-		if (dataType instanceof DataTypeImpl) {
-			applicator.appendLogMsg("Impl type for index: " + indexNumber);
-			return;
-		}
-		if (!(dataType instanceof Composite compositeDB)) {
-			applicator.appendLogMsg("Composite expected type for index: " + indexNumber);
-			return;
-		}
-
-		FieldListTypeApplier fieldListApplier = FieldListTypeApplier.getFieldListApplierSpecial(
-			applicator, defType.getFieldDescriptorListRecordNumber());
-		FieldListTypeApplier.FieldLists lists =
-			fieldListApplier.getFieldLists(defType.getFieldDescriptorListRecordNumber());
-
-		List<AbstractMemberMsType> msMembers = lists.nonstaticMembers();
-
-		List<Integer> fixupIndices = fixupContext.getFixups();
-		for (int index : fixupIndices) {
-			applicator.checkCancelled();
-			AbstractMemberMsType memberType = msMembers.get(index);
-			// Using a null FixupContext signifies "doing" vs. creating fixups.
-			DefaultPdbUniversalMember member =
-				getNonStaticMember(compositeDB, memberType, index, null, false);
-			replaceComponentDataType(compositeDB, member);
-		}
-	}
-
-	private void replaceComponentDataType(Composite compositeDB, DefaultPdbUniversalMember member)
-			throws CancelledException, PdbException {
-		DataType dt = member.getDataType().getDataType();
-		if (applicator.isPlaceholderPointer(dt)) {
-			throw new PdbException("Placeholder pointer not expected");
-		}
-		if (!recurseReplacement(compositeDB, 0, member)) {
-			/**
-			 * We want to throw the exception below, but for now, we are only making a warning.
-			 *  This is because we have a situation where we still do not accurately map
-			 *  definitions with forward references and when this causes a size calculation within
-			 *  the {@link ArrayTypeApplier}, we fill in the array with dummy undefined1 types,
-			 *  which can cause the replacement issue here.  When that gets fixed, the warning
-			 *  here should be replaced with the PdbException.
-			 */
-			Msg.warn(this,
-				"PDB: Unable to replace placeholder component of: " + compositeDB.getName());
-//			throw new PdbException(
-//				"Unable to replace placeholder component of: " + compositeDB.getName());
-		}
-	}
-
-	private boolean recurseReplacement(Composite compositeDB, int baseOffset,
-			DefaultPdbUniversalMember member) throws CancelledException, PdbException {
-		DataTypeComponent[] components = compositeDB.getDefinedComponents();
-		for (DataTypeComponent component : components) {
-			if (member.getOffset() > baseOffset + component.getEndOffset()) {
-				continue;
-			}
-			if (member.getOffset() < baseOffset + component.getOffset()) {
-				continue;
-			}
-			DataType componentDt = component.getDataType();
-			// We would normally just check for a union, expecting any other component to be
-			//  a fully defined datatype, but using DefaultPdbUniveralMember to unflatten
-			//  a union can result in nested structures that are not otherwise resolved.  Thus,
-			//  we must check for any composite: union or structure.
-			if (!applicator.isPlaceholderType(componentDt) &&
-				componentDt instanceof Composite nestedComposite) {
-				if (recurseReplacement(nestedComposite, baseOffset + component.getOffset(),
-					member)) {
-					return true;
-				}
-				continue;
-			}
-			if (applicator.isPlaceholderType(componentDt) &&
-				component.getFieldName().equals(member.getName()) &&
-				member.getOffset() == baseOffset + component.getOffset()) {
-				DataType replacementDt = member.getDataType().getDataType();
-				int length = replacementDt.getLength();
-				if (length != componentDt.getLength()) {
-					throw new PdbException("Mismatch component type length on replacement: " +
-						replacementDt.getName());
-				}
-				int ordinal = component.getOrdinal();
-				replaceComponent(compositeDB, ordinal, replacementDt);
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private static void replaceComponent(Composite composite, int ordinal, DataType newType)
-			throws PdbException {
-		if (composite instanceof Structure struct) {
-			DataTypeComponent dtc = struct.getComponent(ordinal);
-			struct.replace(ordinal, newType, newType.getLength(), dtc.getFieldName(),
-				dtc.getComment());
-		}
-		else if (composite instanceof Union union) {
-			DataTypeComponent dtc = union.getComponent(ordinal);
-			union.delete(ordinal);
-			union.insert(ordinal, newType, newType.getLength(), dtc.getFieldName(),
-				dtc.getComment());
-		}
-		else {
-			throw new PdbException("Not struct or union: " + composite.getClass().getSimpleName());
-		}
 	}
 
 }

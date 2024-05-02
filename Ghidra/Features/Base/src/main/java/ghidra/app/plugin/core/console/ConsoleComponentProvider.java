@@ -39,8 +39,7 @@ import ghidra.program.model.symbol.SymbolTable;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 
-public class ConsoleComponentProvider extends ComponentProviderAdapter
-		implements ConsoleService {
+public class ConsoleComponentProvider extends ComponentProviderAdapter implements ConsoleService {
 
 	private static final String OLD_NAME = "ConsolePlugin";
 	private static final String NAME = "Console";
@@ -111,9 +110,13 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter
 	private void build() {
 
 		textPane = new ConsoleTextPane(tool);
-		textPane.setName("CONSOLE");
 		Gui.registerFont(textPane, DEFAULT_FONT_ID);
 		textPane.setEditable(false);
+
+		String textPaneName = "Console Text Pane";
+		textPane.setName(textPaneName);
+		textPane.getAccessibleContext().setAccessibleName(textPaneName);
+
 		textPane.addMouseMotionListener(new MouseMotionAdapter() {
 			@Override
 			public void mouseMoved(MouseEvent e) {
@@ -277,9 +280,8 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter
 			}
 		};
 		scrollAction.setDescription("Scroll Lock");
-		scrollAction
-				.setToolBarData(
-					new ToolBarData(new GIcon("icon.plugin.console.scroll.lock"), null));
+		scrollAction.setToolBarData(
+			new ToolBarData(new GIcon("icon.plugin.console.scroll.lock"), null));
 
 		scrollAction.setEnabled(true);
 		scrollAction.setSelected(scrollLock);
@@ -395,19 +397,6 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter
 	@Override
 	public JComponent getComponent() {
 		return component;
-	}
-
-	@Override
-	public void requestFocus() {
-		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-		Component focusOwner = kfm.getFocusOwner();
-		if (focusOwner != null) {
-			if (SwingUtilities.isDescendingFrom(focusOwner, component)) {
-				return; // nothing to do
-			}
-		}
-
-		component.requestFocus();
 	}
 
 	public void setCurrentProgram(Program program) {

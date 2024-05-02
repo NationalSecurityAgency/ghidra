@@ -126,6 +126,9 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		fieldPanel.addFieldLocationListener(this);
 		fieldPanel.addLayoutListener(this);
 
+		fieldPanel.setName("Decompiler View");
+		fieldPanel.getAccessibleContext().setAccessibleName("Decompiler View");
+
 		fieldPanel.addComponentListener(new ComponentAdapter() {
 			@Override
 			public void componentResized(ComponentEvent e) {

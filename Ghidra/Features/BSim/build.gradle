@@ -32,12 +32,11 @@ dependencies {
 	api project(":Decompiler")
 	api project(":CodeCompare")
 
-	api "org.postgresql:postgresql:42.6.0"
+	api "org.postgresql:postgresql:42.6.2"
     api "com.googlecode.json-simple:json-simple:1.1.1"
     api "org.apache.commons:commons-dbcp2:2.9.0"
     api "org.apache.commons:commons-pool2:2.11.1"
     api "commons-logging:commons-logging:1.2"
-    api "org.apache.logging.log4j:log4j-jcl:2.16.0"
     api "com.h2database:h2:2.2.220"
 }
 

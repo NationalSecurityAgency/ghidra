@@ -16,6 +16,7 @@
 package ghidra.app.services;
 
 import java.util.Collection;
+import java.util.List;
 
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
 import ghidra.framework.plugintool.ServiceInfo;
@@ -35,4 +36,12 @@ public interface TraceRmiLauncherService {
 	 * @return the offers
 	 */
 	Collection<TraceRmiLaunchOffer> getOffers(Program program);
+
+	/**
+	 * Get offers with a saved configuration, ordered by most-recently-saved
+	 * 
+	 * @param program the program
+	 * @return the offers
+	 */
+	List<TraceRmiLaunchOffer> getSavedOffers(Program program);
 }

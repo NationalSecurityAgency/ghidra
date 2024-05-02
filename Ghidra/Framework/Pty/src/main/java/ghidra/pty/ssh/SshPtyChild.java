@@ -118,4 +118,8 @@ public class SshPtyChild extends SshPtyEndpoint implements PtyChild {
 	public OutputStream getOutputStream() {
 		throw new UnsupportedOperationException("The child is not local");
 	}
+	@Override
+	public void setWindowSize(short cols, short rows) {
+		channel.setPtySize(Short.toUnsignedInt(cols), Short.toUnsignedInt(rows), 0, 0);
+	}
 }

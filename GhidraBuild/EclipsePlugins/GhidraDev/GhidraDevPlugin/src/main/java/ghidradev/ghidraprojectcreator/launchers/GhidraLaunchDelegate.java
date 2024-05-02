@@ -73,6 +73,15 @@ public class GhidraLaunchDelegate extends JavaLaunchDelegate {
 			return;
 		}
 
+		// Make sure there isn't a build/ directory present...it messes up the classpath.
+		// The build directory could exist if the user built an extension from the command line
+		// rather than from the Eclipse wizard
+		if (javaProject.getProject().getFolder("build").exists()) {
+			EclipseMessageUtils.showErrorDialog("Failed to launch project \"" + projectName +
+				"\".\nDelete top-level 'build' directory and try again.");
+			return;
+		}
+
 		// Set program arguments
 		String customProgramArgs =
 			configuration.getAttribute(GhidraLaunchUtils.ATTR_PROGAM_ARGUMENTS, "").trim();

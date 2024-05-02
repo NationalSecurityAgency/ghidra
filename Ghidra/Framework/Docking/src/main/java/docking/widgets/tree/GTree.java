@@ -248,6 +248,25 @@ public class GTree extends JPanel implements BusyListener {
 		add(filterProvider.getFilterComponent(), BorderLayout.SOUTH);
 	}
 
+	/**
+	 * Sets an accessible name on the GTree. This prefix will be used to assign
+	 * meaningful accessible names to the tree, filter text field and the filter options button such
+	 * that screen readers will properly describe them. 
+	 * <P>
+	 * This prefix should be the base name that describes the type of items in the tree. 
+	 * This method will then append the necessary information to name the text field and the button.
+	 *
+	 * @param namePrefix the accessible name prefix to assign to the filter component. For
+	 * example if the tree contains fruits, then "Fruits" would be an appropriate prefix name.
+	 */
+	public void setAccessibleNamePrefix(String namePrefix) {
+		setName(namePrefix + "GTree");
+		tree.setName(namePrefix + " Tree");
+		tree.getAccessibleContext().setAccessibleName(namePrefix);
+		tree.getAccessibleContext().setAccessibleDescription("");
+		filterProvider.setAccessibleNamePrefix(namePrefix);
+	}
+
 	public void setCellRenderer(GTreeRenderer renderer) {
 		this.renderer = renderer;
 		tree.setCellRenderer(renderer);
@@ -1094,17 +1113,17 @@ public class GTree extends JPanel implements BusyListener {
 			Consumer<GTreeNode> consumer) {
 
 		/*
-
+		
 			If the GTree were to use Java's CompletableStage API, then the code below
 			could be written thusly:
-
+		
 			tree.getNewNode(modelParent, newName)
 				.thenCompose(newModelChild -> {
 			 		tree.ignoreFilter(newModelChild);
 			 		return tree.getNewNode(viewParent, newName);
 			 	))
 			 	.thenAccept(consumer);
-
+		
 		*/
 
 		// ensure we operate on the model node which will always have the given child not the view

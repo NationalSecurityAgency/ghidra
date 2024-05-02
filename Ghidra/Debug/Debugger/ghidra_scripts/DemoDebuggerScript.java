@@ -27,12 +27,12 @@ import java.util.concurrent.TimeUnit;
 
 import ghidra.app.script.GhidraScript;
 import ghidra.debug.api.breakpoint.LogicalBreakpoint;
-import ghidra.debug.api.model.DebuggerProgramLaunchOffer.LaunchResult;
-import ghidra.debug.flatapi.FlatDebuggerAPI;
+import ghidra.debug.api.tracermi.TraceRmiLaunchOffer.LaunchResult;
+import ghidra.debug.flatapi.FlatDebuggerRmiAPI;
 import ghidra.program.model.address.Address;
 import ghidra.trace.model.Trace;
 
-public class DemoDebuggerScript extends GhidraScript implements FlatDebuggerAPI {
+public class DemoDebuggerScript extends GhidraScript implements FlatDebuggerRmiAPI {
 
 	@Override
 	protected void run() throws Exception {
@@ -55,25 +55,19 @@ public class DemoDebuggerScript extends GhidraScript implements FlatDebuggerAPI 
 		if (result.exception() != null) {
 			printerr("Failed to launch " + currentProgram + ": " + result.exception());
 
-			if (result.model() != null) {
-				result.model().close();
-			}
-
-			if (result.recorder() != null) {
-				closeTrace(result.recorder().getTrace());
-			}
+			result.close();
 			return;
 		}
-		Trace trace = result.recorder().getTrace();
+		Trace trace = result.trace();
 		println("Successfully launched in trace " + trace);
 
 		/**
-		 * Breakpoints are highly dependent on the module map. To work correctly: 1) The target
-		 * debugger must provide the module map. 2) Ghidra must have recorded that module map into
-		 * the trace. 3) Ghidra must recognize the module names and map them to programs open in the
-		 * tool. These events all occur asynchronously, usually immediately after launch. Most
-		 * launchers will wait for the target program module to be mapped to its Ghidra program
-		 * database, but the breakpoint service may still be processing the new mapping.
+		 * Breakpoints are highly dependent on the module map. To work correctly, the target
+		 * debugger must record the module map into the trace, and Ghidra must recognize the module
+		 * names and map them to programs open in the tool. These events all occur asynchronously,
+		 * usually immediately after launch. Most launchers will wait for the target program module
+		 * to be mapped to its Ghidra program database, but the breakpoint service may still be
+		 * processing the new mapping.
 		 */
 		flushAsyncPipelines(trace);
 
@@ -104,8 +98,8 @@ public class DemoDebuggerScript extends GhidraScript implements FlatDebuggerAPI 
 		while (isTargetAlive()) {
 			waitForBreak(10, TimeUnit.SECONDS);
 			/**
-			 * The recorder is going to schedule some reads upon break, so let's allow them to
-			 * settle.
+			 * The target is going to perform some reads upon break, so let's allow them to
+			 * complete.
 			 */
 			flushAsyncPipelines(trace);
 

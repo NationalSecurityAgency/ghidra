@@ -9,6 +9,12 @@
         <constraint primary="16777228" processor="AARCH64"     endian="little" size="64" variant="AppleSilicon" />
         <constraint primary="33554444" processor="AARCH64"     endian="little" size="32" variant="ilp32" />
     </constraint>
+    <constraint loader="Mac OS X Mach-O" compilerSpecID="swift">
+        <constraint primary="16777228" secondary="swift" processor="AARCH64" endian="little" size="64" variant="AppleSilicon" />
+    </constraint>
+    <constraint loader="Mac OS X Mach-O" compilerSpecID="golang">
+        <constraint primary="16777228" secondary="golang" processor="AARCH64" endian="little" size="64" variant="AppleSilicon" />
+    </constraint>
     <constraint loader="DYLD Cache" compilerSpecID="default">
         <constraint primary="AARCH64"  processor="AARCH64"     endian="little" size="64" variant="AppleSilicon" />
         <constraint primary="ARM64_32" processor="AARCH64"     endian="little" size="32" variant="ilp32" />

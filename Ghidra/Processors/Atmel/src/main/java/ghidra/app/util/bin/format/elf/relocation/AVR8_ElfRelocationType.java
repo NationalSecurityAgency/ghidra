@@ -52,7 +52,8 @@ public enum AVR8_ElfRelocationType implements ElfRelocationType {
 	R_AVR_DIFF32(32),
 	R_AVR_LDS_STS_16(33),
 	R_AVR_PORT6(34),
-	R_AVR_PORT5(35);
+	R_AVR_PORT5(35),
+	R_AVR_32_PCREL(36);
 
 	public final int typeId;
 

@@ -30,6 +30,7 @@ import ghidra.util.*;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.AssertException;
+import gui.event.MouseBinding;
 import resources.ResourceManager;
 import utilities.util.reflection.ReflectionUtilities;
 
@@ -323,6 +324,10 @@ public abstract class DockingAction implements DockingActionIf {
 		return menuItem;
 	}
 
+	private MouseBinding getMouseBinding() {
+		return keyBindingData == null ? null : keyBindingData.getMouseBinding();
+	}
+
 	@Override
 	public KeyBindingType getKeyBindingType() {
 		return keyBindingType;
@@ -383,6 +388,10 @@ public abstract class DockingAction implements DockingActionIf {
 
 	@Override
 	public void setUnvalidatedKeyBindingData(KeyBindingData newKeyBindingData) {
+		if (Objects.equals(keyBindingData, newKeyBindingData)) {
+			return;
+		}
+
 		KeyBindingData oldData = keyBindingData;
 		keyBindingData = newKeyBindingData;
 		firePropertyChanged(KEYBINDING_DATA_PROPERTY, oldData, keyBindingData);
@@ -492,8 +501,8 @@ public abstract class DockingAction implements DockingActionIf {
 
 		// menu path
 		if (menuBarData != null) {
-			buffer.append("        MENU PATH:           ")
-					.append(menuBarData.getMenuPathAsString());
+			buffer.append("        MENU PATH:           ").append(
+				menuBarData.getMenuPathAsString());
 			buffer.append('\n');
 			buffer.append("        MENU GROUP:        ").append(menuBarData.getMenuGroup());
 			buffer.append('\n');
@@ -519,8 +528,8 @@ public abstract class DockingAction implements DockingActionIf {
 
 		// popup menu path
 		if (popupMenuData != null) {
-			buffer.append("        POPUP PATH:         ")
-					.append(popupMenuData.getMenuPathAsString());
+			buffer.append("        POPUP PATH:         ").append(
+				popupMenuData.getMenuPathAsString());
 			buffer.append('\n');
 			buffer.append("        POPUP GROUP:      ").append(popupMenuData.getMenuGroup());
 			buffer.append('\n');
@@ -569,8 +578,13 @@ public abstract class DockingAction implements DockingActionIf {
 
 		KeyStroke keyStroke = getKeyBinding();
 		if (keyStroke != null) {
-			buffer.append("        KEYBINDING:          ").append(keyStroke.toString());
+			buffer.append("        KEYBINDING:          ").append(keyStroke);
 			buffer.append('\n');
+		}
+
+		MouseBinding mouseBinding = getMouseBinding();
+		if (mouseBinding != null) {
+			buffer.append("        MOUSE BINDING:       ").append(mouseBinding);
 		}
 
 		String inception = getInceptionInformation();

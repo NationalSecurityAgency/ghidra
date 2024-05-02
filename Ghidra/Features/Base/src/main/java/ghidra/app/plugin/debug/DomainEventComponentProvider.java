@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.debug;
 
-import java.awt.Font;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,20 +58,9 @@ public class DomainEventComponentProvider extends ComponentProviderAdapter {
 		return scrollPane;
 	}
 
-	/**
-	 * @see docking.ComponentProvider#componentHidden()
-	 */
 	@Override
 	public void componentHidden() {
 		clear();
-	}
-
-	public Font getFont() {
-		return textArea.getFont();
-	}
-
-	public void setFont(Font font) {
-		textArea.setFont(font);
 	}
 
 	private void createAction() {

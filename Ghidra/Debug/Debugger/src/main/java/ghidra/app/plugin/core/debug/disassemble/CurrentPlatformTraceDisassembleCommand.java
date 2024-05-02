@@ -22,7 +22,7 @@ import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.debug.api.platform.DebuggerPlatformMapper;
 import ghidra.debug.api.platform.DisassemblyResult;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
-import ghidra.framework.cmd.TypedBackgroundCommand;
+import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
@@ -33,7 +33,7 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.task.TaskMonitor;
 
 public final class CurrentPlatformTraceDisassembleCommand
-		extends TypedBackgroundCommand<TraceProgramView> {
+		extends BackgroundCommand<TraceProgramView> {
 	public static final String NAME = "Disassemble";
 
 	public record Reqs(DebuggerPlatformMapper mapper, TraceThread thread, TraceObject object,
@@ -48,8 +48,7 @@ public final class CurrentPlatformTraceDisassembleCommand
 				return null;
 			}
 			Trace trace = view.getTrace();
-			DebuggerCoordinates current = traceManager == null
-					? DebuggerCoordinates.NOWHERE
+			DebuggerCoordinates current = traceManager == null ? DebuggerCoordinates.NOWHERE
 					: traceManager.getCurrentFor(trace);
 			TraceThread thread = current.getThread();
 			TraceObject object = current.getObject();
@@ -74,8 +73,8 @@ public final class CurrentPlatformTraceDisassembleCommand
 	private final Reqs reqs;
 	private final Address address;
 
-	public CurrentPlatformTraceDisassembleCommand(PluginTool tool, AddressSetView set,
-			Reqs reqs, Address address) {
+	public CurrentPlatformTraceDisassembleCommand(PluginTool tool, AddressSetView set, Reqs reqs,
+			Address address) {
 		super(NAME, true, true, false);
 		this.tool = tool;
 		this.set = set;
@@ -84,9 +83,9 @@ public final class CurrentPlatformTraceDisassembleCommand
 	}
 
 	@Override
-	public boolean applyToTyped(TraceProgramView view, TaskMonitor monitor) {
-		DisassemblyResult result = reqs.mapper.disassemble(
-			reqs.thread, reqs.object, address, set, view.getSnap(), monitor);
+	public boolean applyTo(TraceProgramView view, TaskMonitor monitor) {
+		DisassemblyResult result = reqs.mapper.disassemble(reqs.thread, reqs.object, address, set,
+			view.getSnap(), monitor);
 		if (!result.isSuccess()) {
 			tool.setStatusInfo(result.getErrorMessage(), true);
 		}

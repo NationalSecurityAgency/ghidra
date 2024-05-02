@@ -90,12 +90,16 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 		}
 
 		decorationComponent = new DecoratorPanel(panel, isConnected);
-		clipboardProvider = new ByteViewerClipboardProvider(this, tool);
+		clipboardProvider = newClipboardProvider();
 		addToTool();
 
 		createProgramActions();
 		updateTitle();
 		registerNavigatable();
+	}
+
+	protected ByteViewerClipboardProvider newClipboardProvider() {
+		return new ByteViewerClipboardProvider(this, tool);
 	}
 
 	public void createProgramActions() {
@@ -343,11 +347,11 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 	@Override
 	public Icon getIcon() {
 		if (isConnected()) {
-			return super.getIcon();
+			return getBaseIcon();
 		}
 
 		if (navigatableIcon == null) {
-			Icon primaryIcon = super.getIcon();
+			Icon primaryIcon = getBaseIcon();
 			navigatableIcon = NavigatableIconFactory.createSnapshotOverlayIcon(primaryIcon);
 		}
 		return navigatableIcon;
@@ -362,13 +366,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 	public boolean isVisible() {
 		return tool.isVisible(this);
 	}
-
-	@Override
-	public void requestFocus() {
-		panel.getCurrentComponent().requestFocus();
-		tool.toFront(this);
-	}
-
+	
 //==================================================================================================
 // End Navigatable interface methods */
 //==================================================================================================

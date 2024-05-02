@@ -15,14 +15,14 @@
  */
 package ghidra.feature.vt.api.correlator.address;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
-import ghidra.program.util.*;
+import ghidra.program.util.AddressCorrelation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.util.*;
 
 /**
  * Generate address correlations by viewing each function as a list of instructions in address order
@@ -93,33 +93,29 @@ public class StraightLineCorrelation implements AddressCorrelation {
 	/**
 	 * Add address correlations for the parameters.
 	 */
-	protected void computeParamCorrelation() {
-		int sourceCount = sourceFunction.getParameterCount();
-		int destinationCount = destinationFunction.getParameterCount();
+	private void computeParamCorrelation() {
 		Parameter[] sourceParameters = sourceFunction.getParameters();
 		Parameter[] destinationParameters = destinationFunction.getParameters();
-		boolean allMatch = false;
+		if (sourceParameters.length != destinationParameters.length) {
+			return;
+		}
 		Map<Address, AddressRange> map = new HashMap<Address, AddressRange>();
-		if (sourceCount == destinationCount) {
-			allMatch = true;
-			for (int i = 0; i < sourceParameters.length; i++) {
-				Parameter sourceParameter = sourceParameters[i];
-				Parameter destinationParameter = destinationParameters[i];
-				DataType sourceDataType = sourceParameter.getDataType();
-				DataType destinationDataType = destinationParameter.getDataType();
-				int sourceLength = sourceDataType.getLength();
-				int destinationLength = destinationDataType.getLength();
-				Address dest = destinationParameter.getMinAddress();
-				map.put(sourceParameter.getMinAddress(), new AddressRangeImpl(dest, dest));
-				if (sourceLength != destinationLength) {
-					allMatch = false;
-					break;
-				}
+		for (int i = 0; i < sourceParameters.length; i++) {
+			Parameter sourceParameter = sourceParameters[i];
+			Parameter destinationParameter = destinationParameters[i];
+			if (!sourceParameter.isValid() || !destinationParameter.isValid()) {
+				return;
 			}
+			VariableStorage sourceParamStorage = sourceParameter.getVariableStorage();
+			VariableStorage destParamStorage = destinationParameter.getVariableStorage();
+			if (!sourceParamStorage.equals(destParamStorage)) {
+				return;
+			}
+			Address dest = sourceParamStorage.getMinAddress();
+			Address src = destParamStorage.getMinAddress();
+			map.put(src, new AddressRangeImpl(dest, dest));
 		}
-		if (allMatch) {
-			cachedForwardAddressMap.putAll(map);
-		}
+		cachedForwardAddressMap.putAll(map);
 	}
 
 	/**

@@ -109,7 +109,7 @@ public class ProgramDiffDetails {
 		// FUTURE : Add checks to make sure programs are comparable.
 		//          Throw exception if not comparable.
 		initDetails();
-		initAttributes();
+		textAttrSet = new SimpleAttributeSet();
 	}
 
 	private static String getIndentString(int indentCount) {
@@ -119,11 +119,6 @@ public class ProgramDiffDetails {
 			buf.append(' ');
 		}
 		return buf.toString();
-	}
-
-	private void initAttributes() {
-		textAttrSet = new SimpleAttributeSet();
-		textAttrSet.addAttribute(StyleConstants.FontSize, 12);
 	}
 
 	/**

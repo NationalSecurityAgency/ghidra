@@ -18,9 +18,8 @@ package ghidra.program.model.lang.protorules;
 import static ghidra.program.model.pcode.AttributeId.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.pcode.Encoder;
 import ghidra.program.model.pcode.PcodeDataTypeManager;
 import ghidra.xml.*;
@@ -65,79 +64,6 @@ public interface DatatypeFilter {
 	 * @throws XmlParseException if there are problems with the stream
 	 */
 	public void restoreXml(XmlPullParser parser) throws XmlParseException;
-
-	/**
-	 * Extract an ordered list of primitive data-types making up the given data-type
-	 * 
-	 * The primitive data-types are passed back in an ArrayList.  If the given data-type is already
-	 * primitive, it is passed back as is. Otherwise if it is composite, its components are
-	 * recursively listed. If a maximum number of extracted primitives is exceeded, or if the
-	 * primitives are not properly aligned, or if a non-primitive non-composite data-type is
-	 * encountered, false is returned.
-	 * @param dt is the given data-type to extract primitives from
-	 * @param max is the maximum number of primitives to extract before giving up
-	 * @param res will hold the list of primitives
-	 * @return true if all primitives were extracted
-	 */
-	public static boolean extractPrimitives(DataType dt, int max, ArrayList<DataType> res) {
-		if (dt instanceof TypeDef) {
-			dt = ((TypeDef) dt).getBaseDataType();
-		}
-		int metaType = PcodeDataTypeManager.getMetatype(dt);
-		switch (metaType) {
-			case PcodeDataTypeManager.TYPE_UNKNOWN:
-				return false;		// Do not consider undefined data-types as primitive
-			case PcodeDataTypeManager.TYPE_INT:
-			case PcodeDataTypeManager.TYPE_UINT:
-			case PcodeDataTypeManager.TYPE_BOOL:
-			case PcodeDataTypeManager.TYPE_CODE:
-			case PcodeDataTypeManager.TYPE_FLOAT:
-			case PcodeDataTypeManager.TYPE_PTR:
-			case PcodeDataTypeManager.TYPE_PTRREL:
-				if (res.size() >= max) {
-					return false;
-				}
-				res.add(dt);
-				return true;
-			case PcodeDataTypeManager.TYPE_ARRAY: {
-				int numEls = ((Array) dt).getNumElements();
-				DataType base = ((Array) dt).getDataType();
-				for (int i = 0; i < numEls; ++i) {
-					if (!extractPrimitives(base, max, res)) {
-						return false;
-					}
-				}
-				return true;
-			}
-			case PcodeDataTypeManager.TYPE_STRUCT:
-				break;
-			default:
-				return false;
-		}
-		Structure structPtr = (Structure) dt;
-		boolean isPacked = structPtr.isPackingEnabled();
-		int curOff = 0;
-		DataTypeComponent[] components = structPtr.getDefinedComponents();
-		for (DataTypeComponent component : components) {
-			DataType compDT = component.getDataType();
-			if (!isPacked) {
-				int nextOff = component.getOffset();
-				int align = dt.getAlignment();
-				int rem = curOff % align;
-				if (rem != 0) {
-					curOff += (align - rem);
-				}
-				if (curOff != nextOff) {
-					return false;
-				}
-				curOff = nextOff + compDT.getAlignedLength();
-			}
-			if (!extractPrimitives(compDT, max, res)) {
-				return false;
-			}
-		}
-		return true;
-	}
 
 	/**
 	 * Instantiate a filter from the given stream.

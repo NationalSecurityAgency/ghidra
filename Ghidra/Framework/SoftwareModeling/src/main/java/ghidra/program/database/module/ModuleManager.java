@@ -21,6 +21,7 @@ import java.util.HashSet;
 
 import db.*;
 import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMap;
@@ -72,7 +73,7 @@ class ModuleManager {
 	 * @throws VersionException if opening an existing program tree and an underlying table 
 	 * schema version differs from the expected version.
 	 */
-	ModuleManager(TreeManager treeMgr, DBRecord rec, int openMode, TaskMonitor monitor)
+	ModuleManager(TreeManager treeMgr, DBRecord rec, OpenMode openMode, TaskMonitor monitor)
 			throws IOException, CancelledException, VersionException {
 
 		this.treeMgr = treeMgr;
@@ -89,7 +90,7 @@ class ModuleManager {
 		moduleCache = new DBObjectCache<>(100);
 		fragCache = new DBObjectCache<>(100);
 
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			createRootModule();
 		}
 	}
@@ -98,7 +99,7 @@ class ModuleManager {
 		return FRAGMENT_ADDRESS_TABLE_NAME + treeID;
 	}
 
-	private void initializeAdapters(int openMode, TaskMonitor monitor)
+	private void initializeAdapters(OpenMode openMode, TaskMonitor monitor)
 			throws CancelledException, IOException, VersionException {
 
 		DBHandle handle = treeMgr.getDatabaseHandle();
@@ -126,10 +127,10 @@ class ModuleManager {
 		}
 
 		if (addrMap.isUpgraded()) {
-			if (openMode == DBConstants.UPDATE) {
+			if (openMode == OpenMode.UPDATE) {
 				versionExc = (new VersionException(true)).combine(versionExc);
 			}
-			else if (openMode == DBConstants.UPGRADE) {
+			else if (openMode == OpenMode.UPGRADE) {
 				addressUpgrade(handle, monitor);
 			}
 		}
@@ -413,9 +414,8 @@ class ModuleManager {
 			monitor.checkCancelled();
 			fragMap.clearRange(fromAddr, rangeEnd);
 
-			for (int i = 0; i < list.size(); i++) {
+			for (FragmentHolder fh : list) {
 				monitor.checkCancelled();
-				FragmentHolder fh = list.get(i);
 				fragMap.paintRange(fh.range.getMinAddress(), fh.range.getMaxAddress(),
 					new LongField(fh.frag.getKey()));
 				fh.frag.addRange(fh.range);

@@ -56,7 +56,7 @@ class MoveBlockModel implements DomainObjectListener {
 	 */
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (ev.contains(DomainObjectEvent.RESTORED)) {
+		if (program != null && ev.contains(DomainObjectEvent.RESTORED)) {
 			block = program.getMemory().getBlock(blockStart);
 		}
 	}

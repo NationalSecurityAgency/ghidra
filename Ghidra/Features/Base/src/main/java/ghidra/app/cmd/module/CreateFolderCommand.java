@@ -16,20 +16,19 @@
 package ghidra.app.cmd.module;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.listing.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Command to create a folder in a program tree.
  */
-public class CreateFolderCommand implements Command {
+public class CreateFolderCommand implements Command<Program> {
 
 	private String name;
 	private String statusMsg;
 	private String parentName;
 	private String treeName;
-	
+
 	/**
 	 * @param treeName name of the tree where the new Module will reside
 	 * @param name of the new Module
@@ -41,22 +40,20 @@ public class CreateFolderCommand implements Command {
 		this.parentName = parentName;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
-	public boolean applyTo(DomainObject obj) {
-		Program program = (Program)obj;
+	@Override
+	public boolean applyTo(Program program) {
 		Listing listing = program.getListing();
 		ProgramModule m = listing.getModule(treeName, parentName);
 		if (m == null) {
 			statusMsg = "Folder named " + parentName + " does not exist";
 			return false;
-		}		
-		
+		}
+
 		try {
-			m.createModule(name); 
+			m.createModule(name);
 			return true;
-		} catch (DuplicateNameException e) {
+		}
+		catch (DuplicateNameException e) {
 			statusMsg = name + " already exists";
 		}
 		return false;
@@ -65,6 +62,7 @@ public class CreateFolderCommand implements Command {
 	/**
 	 * @see ghidra.framework.cmd.Command#getStatusMsg()
 	 */
+	@Override
 	public String getStatusMsg() {
 		return statusMsg;
 	}
@@ -72,8 +70,9 @@ public class CreateFolderCommand implements Command {
 	/**
 	 * @see ghidra.framework.cmd.Command#getName()
 	 */
+	@Override
 	public String getName() {
-		return "Create Folder"; 
+		return "Create Folder";
 	}
 
 }

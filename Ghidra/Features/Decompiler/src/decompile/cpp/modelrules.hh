@@ -26,6 +26,7 @@ namespace ghidra {
 class ParameterPieces;
 class ParamListStandard;
 class ParamEntry;
+class ParamActive;
 
 extern ElementId ELEM_DATATYPE;		///< Marshaling element \<datatype>
 extern ElementId ELEM_CONSUME;		///< Marshaling element \<consume>
@@ -38,6 +39,44 @@ extern ElementId ELEM_POSITION;		///< Marshaling element \<position>
 extern ElementId ELEM_VARARGS;		///< Marshaling element \<varargs>
 extern ElementId ELEM_HIDDEN_RETURN;	///< Marshaling element \<hidden_return>
 extern ElementId ELEM_JOIN_PER_PRIMITIVE;	///< Marshaling element \<join_per_primitive>
+extern ElementId ELEM_JOIN_DUAL_CLASS;	///< Marshaling element \<join_dual_class>
+
+/// \brief Class for extracting primitive elements of a data-type
+///
+/// This recursively collects the formal \e primitive data-types of a composite data-type,
+/// laying them out with their offsets in an array.  Other boolean properties are collected.
+class PrimitiveExtractor {
+  enum {
+    unknown_element = 1,		///< Contains at least one TYPE_UNKNOWN primitive
+    unaligned = 2,			///< At least one primitive is not properly aligned
+    extra_space = 4,			///< Data-type contains empty space not attributable to alignment padding
+    invalid = 8,			///< Data-type exceeded maximum or contained illegal elements
+    union_invalid = 16			///< Unions are treated as an illegal element
+  };
+public:
+  /// \brief A primitive data-type and its offset within the containing data-type
+  class Primitive {
+  public:
+    Datatype *dt;		///< Primitive data-type
+    int4 offset;		///< Offset within container
+    Primitive(Datatype *d,int4 off) { dt = d; offset = off; }	///< Constructor
+  };
+private:
+  vector<Primitive> primitives;	///< List of extracted primitives
+  uint4 flags;			///< Boolean properties of the data-type
+  int4 checkOverlap(vector<Primitive> &res,vector<Primitive> &small,int4 point,Primitive &big);
+  bool commonRefinement(vector<Primitive> &first,vector<Primitive> &second);
+  bool handleUnion(TypeUnion *dt,int4 max,int4 offset);		///< Add primitives representing a union data-type
+  bool extract(Datatype *dt,int4 max,int4 offset);	///< Extract list of primitives from given data-type
+public:
+  PrimitiveExtractor(Datatype *dt,bool unionIllegal,int4 offset,int4 max);	///< Constructor
+  int4 size(void) const { return primitives.size(); }	///< Return the number of primitives extracted
+  const Primitive &get(int4 i) const { return primitives[i]; }	///< Get a particular primitive
+  bool isValid(void) const { return (flags & invalid) == 0; }	///< Return \b true if primitives were successfully extracted
+  bool containsUnknown(void) const { return (flags & unknown_element)!=0; }	///< Are there \b unknown elements
+  bool isAligned(void) const { return (flags & unaligned)==0; }		///< Are all elements aligned
+  bool containsHoles(void) const { return (flags & extra_space)!=0; }	///< Is there empty space that is not padding
+};
 
 /// \brief A filter selecting a specific class of data-type
 ///
@@ -63,7 +102,6 @@ public:
   /// \param decoder is the given stream decoder
   virtual void decode(Decoder &decoder)=0;
 
-  static bool extractPrimitives(Datatype *dt,int4 max,vector<Datatype *> &res);
   static DatatypeFilter *decodeFilter(Decoder &decoder);	///< Instantiate a filter from the given stream
 };
 
@@ -208,8 +246,12 @@ public:
   };
 protected:
   const ParamListStandard *resource;	///< Resources to which this action applies
+  bool fillinOutputActive;	///< If \b true, fillinOutputMap is active
 public:
-  AssignAction(const ParamListStandard *res) {resource = res; }	///< Constructor
+  AssignAction(const ParamListStandard *res) {resource = res; fillinOutputActive = false; }	///< Constructor
+
+  bool canAffectFillinOutput(void) const { return fillinOutputActive; }	///< Return \b true if fillinOutputMap is active
+
   virtual ~AssignAction(void) {}
 
   /// \brief Make a copy of \b this action
@@ -237,6 +279,14 @@ public:
   virtual uint4 assignAddress(Datatype *dt,const PrototypePieces &proto,int4 pos,TypeFactory &tlist,
 			      vector<int4> &status,ParameterPieces &res) const=0;
 
+  /// \brief Test if \b this action could produce return value storage matching the given set of trials
+  ///
+  /// If there is a return value data-type that could be assigned storage matching the trials by \b this action,
+  /// return \b true.  The trials have their matching ParamEntry and offset already set and are already sorted.
+  /// \param active is the given set of trials
+  /// \return \b true if the trials could form a valid return value
+  virtual bool fillinOutputMap(ParamActive *active) const;
+
   /// \brief Configure any details of how \b this action should behave from the stream
   ///
   /// \param decoder is the given stream decoder
@@ -255,6 +305,7 @@ public:
   virtual AssignAction *clone(const ParamListStandard *newResource) const { return new GotoStack(newResource); }
   virtual uint4 assignAddress(Datatype *dt,const PrototypePieces &proto,int4 pos,TypeFactory &tlist,
 			      vector<int4> &status,ParameterPieces &res) const;
+  virtual bool fillinOutputMap(ParamActive *active) const;
   virtual void decode(Decoder &decoder);
 };
 
@@ -292,6 +343,7 @@ public:
     return new MultiSlotAssign(resourceType,consumeFromStack,consumeMostSig,enforceAlignment,justifyRight,newResource); }
   virtual uint4 assignAddress(Datatype *dt,const PrototypePieces &proto,int4 pos,TypeFactory &tlist,
 			      vector<int4> &status,ParameterPieces &res) const;
+  virtual bool fillinOutputMap(ParamActive *active) const;
   virtual void decode(Decoder &decoder);
 };
 
@@ -310,6 +362,35 @@ public:
     return new MultiMemberAssign(resourceType,consumeFromStack,consumeMostSig,newResource); }
   virtual uint4 assignAddress(Datatype *dt,const PrototypePieces &proto,int4 pos,TypeFactory &tlist,
 			      vector<int4> &status,ParameterPieces &res) const;
+  virtual bool fillinOutputMap(ParamActive *active) const;
+  virtual void decode(Decoder &decoder);
+};
+
+/// \brief Consume multiple registers from different storage classes to pass a data-type
+///
+/// This action is for calling conventions that can use both floating-point and general purpose registers
+/// when assigning storage for a single composite data-type, such as the X86-64 System V ABI
+class MultiSlotDualAssign : public AssignAction {
+  type_class baseType;			///< Resource list from which to consume general tiles
+  type_class altType;			///< Resource list from which to consume alternate tiles
+  bool consumeMostSig;			///< True if resources are consumed starting with most significant bytes
+  bool justifyRight;			///< True if initial bytes are padding for odd data-type sizes
+  int4 tileSize;			///< Number of bytes in a tile
+  list<ParamEntry>::const_iterator baseIter;	///< Iterator to first element in the base resource list
+  list<ParamEntry>::const_iterator altIter;	///< Iterator to first element in alternate resource list
+  void initializeEntries(void);		///< Cache specific ParamEntry needed by the action
+  list<ParamEntry>::const_iterator getFirstUnused(list<ParamEntry>::const_iterator iter,type_class storage,
+						  vector<int4> &status) const;
+  int4 getTileClass(const PrimitiveExtractor &primitives,int4 off,int4 &index) const;
+public:
+  MultiSlotDualAssign(const ParamListStandard *res);		///< Constructor for use with decode
+  MultiSlotDualAssign(type_class baseStore,type_class altStore,bool mostSig,bool justRight,
+		      const ParamListStandard *res);	///< Constructor
+  virtual AssignAction *clone(const ParamListStandard *newResource) const {
+    return new MultiSlotDualAssign(baseType,altType,consumeMostSig,justifyRight,newResource); }
+  virtual uint4 assignAddress(Datatype *dt,const PrototypePieces &proto,int4 pos,TypeFactory &tlist,
+			      vector<int4> &status,ParameterPieces &res) const;
+  virtual bool fillinOutputMap(ParamActive *active) const;
   virtual void decode(Decoder &decoder);
 };
 
@@ -325,6 +406,7 @@ public:
     return new ConsumeAs(resourceType,newResource); }
   virtual uint4 assignAddress(Datatype *dt,const PrototypePieces &proto,int4 pos,TypeFactory &tlist,
 			      vector<int4> &status,ParameterPieces &res) const;
+  virtual bool fillinOutputMap(ParamActive *active) const;
   virtual void decode(Decoder &decoder);
 };
 
@@ -392,8 +474,26 @@ public:
   ~ModelRule(void);	///< Destructor
   uint4 assignAddress(Datatype *dt,const PrototypePieces &proto,int4 pos,TypeFactory &tlist,
 		      vector<int4> &status,ParameterPieces &res) const;
+  bool fillinOutputMap(ParamActive *active) const;	///< Test and mark the trial(s) that can be valid return value
+  bool canAffectFillinOutput(void) const;		///< Return \b true if fillinOutputMap is active for \b this rule
   void decode(Decoder &decoder,const ParamListStandard *res);		///< Decode \b this rule from stream
 };
+
+/// If the assign action could produce the trials as return value storage, return \b true
+/// \param active is the set of trials
+/// \return \b true if the trials form a return value
+inline bool ModelRule::fillinOutputMap(ParamActive *active) const
+
+{
+  return assign->fillinOutputMap(active);
+}
+
+/// \return \b true if the assign action can affect fillinOutputMap()
+inline bool ModelRule::canAffectFillinOutput(void) const
+
+{
+  return assign->canAffectFillinOutput();
+}
 
 } // End namespace ghidra
 #endif

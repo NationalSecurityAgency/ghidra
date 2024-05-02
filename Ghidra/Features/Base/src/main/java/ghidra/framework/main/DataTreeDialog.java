@@ -81,10 +81,7 @@ public class DataTreeDialog extends DialogComponentProvider
 	private Component parent;
 
 	private String searchString;
-	private boolean comboModelInitialized;
 	private boolean cancelled = false;
-	private String pendingNameText;
-	private DomainFolder pendingDomainFolder;
 
 	private ProjectDataExpandAction<DialogProjectTreeContext> expandAction;
 	private ProjectDataCollapseAction<DialogProjectTreeContext> collapseAction;
@@ -134,23 +131,31 @@ public class DataTreeDialog extends DialogComponentProvider
 	public DataTreeDialog(Component parent, String title, int type, DomainFileFilter filter,
 			Project project) {
 		super(title, true, true, true, false);
+
+		if (type < 0 || type > CREATE) {
+			throw new IllegalArgumentException("Invalid type specified: " + type);
+		}
+
 		this.project = project;
 		this.parent = parent;
-		initDataTreeDialog(type, filter);
+		this.type = type;
+		this.filter = filter;
+
+		addWorkPanel(buildMainPanel());
+		initializeButtons();
+		rootPanel.setPreferredSize(new Dimension(WIDTH, HEIGHT));
+
+		initializeFocusedComponent();
+
+		createActions();
 	}
 
-	private static DomainFileFilter getDefaultFilter(int type) {
-		if (type == CHOOSE_FOLDER || type == OPEN) {
-			// return filter which forces folder selection and allow navigation into linked-folders
-			return new DomainFileFilter() {
-
-				@Override
-				public boolean accept(DomainFile df) {
-					return true; // show all files (legacy behavior)
-				}
-			};
+	private void initializeFocusedComponent() {
+		Component focusComponent = nameField;
+		if (!nameField.isEditable()) {
+			focusComponent = treePanel.getFilterField();
 		}
-		return null;
+		setFocusComponent(focusComponent);
 	}
 
 	public void setTreeSelectionMode(int mode) {
@@ -160,34 +165,20 @@ public class DataTreeDialog extends DialogComponentProvider
 		treeSelectionMode = mode;
 	}
 
-	private void initDataTreeDialog(int newType, DomainFileFilter newFilter) {
-
-		if (newType < 0 || newType > CREATE) {
-			throw new IllegalArgumentException("Invalid type specified: " + newType);
-		}
-		this.type = newType;
-		this.filter = newFilter;
-
-		okButton = new JButton("OK");
-		okButton.setMnemonic('K');
-		okButton.addActionListener(ev -> okCallback());
-		addButton(okButton);
+	private void initializeButtons() {
+		addOKButton();
 		addCancelButton();
 
-		if (newType == SAVE) {
+		if (type == SAVE) {
 			okButton.setText("Save");
 			okButton.setMnemonic('S');
 		}
-		else if (newType == CREATE) {
+		else if (type == CREATE) {
 			okButton.setText("Create");
 			okButton.setMnemonic('C');
 		}
+		setOkEnabled(false);
 
-		rootPanel.setPreferredSize(new Dimension(WIDTH, HEIGHT));
-
-		setFocusComponent(nameField);
-
-		createActions();
 	}
 
 	private void createActions() {
@@ -223,7 +214,6 @@ public class DataTreeDialog extends DialogComponentProvider
 	}
 
 	public void show() {
-		doSetup();
 		DockingWindowManager.showDialog(parent, this);
 	}
 
@@ -235,79 +225,13 @@ public class DataTreeDialog extends DialogComponentProvider
 		show();
 	}
 
-	@Override
-	protected void dialogShown() {
-		if (!comboModelInitialized) {
-			doSetup();
-		}
-	}
-
-	private void doSetup() {
-		addWorkPanel(buildMainPanel());
-
-		comboModelInitialized = true;
-		// repopulate the tree
-		ProjectData pd = project.getProjectData();
-		treePanel.setProjectData(project.getName(), pd);
-
-		String nameFieldText = pendingNameText == null ? "" : pendingNameText;
-		pendingNameText = null;
-		initializeSelectedFolder();
-
-		setFocusComponent(nameField);
-		if (type == OPEN) {
-			domainFolder = null;
-			nameField.setText(nameFieldText);
-			nameField.selectAll();
-			populateProjectModel();
-
-			// the name field is disabled; use the filter field
-			setFocusComponent(treePanel.getFilterField());
-		}
-		else if (type == SAVE) {
-			nameField.setText(nameFieldText);
-			nameField.selectAll();
-			initializeSelectedFolder();
-		}
-		else if (type == CREATE) {
-			nameField.setText(nameFieldText);
-			nameField.selectAll();
-			initializeSelectedFolder();
-		}
-		else { // CHOOSE_FOLDER
-			setFocusComponent(treePanel.getFilterField());
-		}
-
-		setOkEnabled(!nameFieldText.isEmpty());
-
-		if (searchString != null) {
-			findAndSelect(searchString);
-		}
-
-		clearStatusText();
-	}
-
-	private void initializeSelectedFolder() {
-		if (pendingDomainFolder != null) {
-			// set the explicitly requested folder to be selected
-			treePanel.selectDomainFolder(pendingDomainFolder);
-			pendingDomainFolder = null;
-		}
-		else {
-			// default case--make sure we have a folder selected
-			domainFolder = treePanel.getSelectedDomainFolder();
-			if (domainFolder == null) {
-				treePanel.selectRootDataFolder();
-			}
-		}
-	}
-
 	public String getNameText() {
 		return nameField.getText();
 	}
 
 	public void setNameText(String name) {
-		pendingNameText = name;
+		nameField.setText(name.trim());
+		nameField.selectAll();
 	}
 
 	/**
@@ -316,7 +240,9 @@ public class DataTreeDialog extends DialogComponentProvider
 	 * @param folder {@link DomainFolder} to select when showing the dialog
 	 */
 	public void setSelectedFolder(DomainFolder folder) {
-		pendingDomainFolder = folder;
+		if (folder != null) {
+			treePanel.selectDomainFolder(folder);
+		}
 	}
 
 	/**
@@ -474,7 +400,6 @@ public class DataTreeDialog extends DialogComponentProvider
 			treePanel.dispose();
 		}
 		treePanel = null;
-		comboModelInitialized = false;
 	}
 
 	protected JPanel buildMainPanel() {
@@ -482,19 +407,26 @@ public class DataTreeDialog extends DialogComponentProvider
 		JPanel panel = new JPanel();
 		panel.setLayout(new BorderLayout());
 
+		JPanel namePanel = createNamePanel();
+
 		// data tree panel must be created before the combo box
 		JPanel dataTreePanel = createDataTreePanel();
+		ProjectData pd = project.getProjectData();
+		treePanel.setProjectData(project.getName(), pd);
+		treePanel.selectRootDataFolder();
 
 		if (type == OPEN) {
 			JPanel comboPanel = createComboBoxPanel();
 
 			panel.add(comboPanel, BorderLayout.NORTH);
+			populateProjectModel();
 		}
-		panel.add(dataTreePanel, BorderLayout.CENTER);
 
-		JPanel namePanel = createNamePanel();
+		panel.add(dataTreePanel, BorderLayout.CENTER);
 		panel.add(namePanel, BorderLayout.SOUTH);
 
+		// can't add tree listeners until everything is built
+		addTreeListeners();
 		return panel;
 	}
 
@@ -537,7 +469,9 @@ public class DataTreeDialog extends DialogComponentProvider
 		treePanel.addTreeSelectionListener(this);
 		treePanel.setPreferredTreePanelSize(new Dimension(150, 150));
 
-		addTreeListeners();
+		// don't put the filter in the dialog when the user can/must type a name, as it's confusing
+		boolean userChoosesName = (type == SAVE) || (type == CREATE);
+		treePanel.setTreeFilterEnabled(!userChoosesName);
 
 		panel.add(treePanel, BorderLayout.CENTER);
 		return panel;
@@ -633,9 +567,6 @@ public class DataTreeDialog extends DialogComponentProvider
 		nameField.setEditable(userChoosesName);
 		nameField.setEnabled(userChoosesName);
 
-		// don't put the filter in the dialog when the user can/must type a name, as it's confusing
-		treePanel.setTreeFilterEnabled(!userChoosesName);
-
 		JPanel namePanel = new JPanel(new PairLayout(2, 5, 100));
 
 		if (!userChoosesName) {
@@ -688,12 +619,24 @@ public class DataTreeDialog extends DialogComponentProvider
 		map = null;
 	}
 
-	public void findAndSelect(String s) {
-		treePanel.findAndSelect(s);
+	public void setSearchText(String s) {
+		if (searchString != null) {
+			treePanel.findAndSelect(s);
+		}
 	}
 
-	public void setSearchText(String string) {
-		searchString = string;
+	private static DomainFileFilter getDefaultFilter(int type) {
+		if (type == CHOOSE_FOLDER || type == OPEN) {
+			// return filter which forces folder selection and allow navigation into linked-folders
+			return new DomainFileFilter() {
+
+				@Override
+				public boolean accept(DomainFile df) {
+					return true; // show all files (legacy behavior)
+				}
+			};
+		}
+		return null;
 	}
 
 	private class FieldKeyListener extends KeyAdapter {
@@ -702,4 +645,5 @@ public class DataTreeDialog extends DialogComponentProvider
 			clearStatusText();
 		}
 	}
+
 }

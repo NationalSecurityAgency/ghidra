@@ -15,17 +15,16 @@
  */
 package ghidra.pcodeCPort.slghpatexpress;
 
-import java.io.PrintStream;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import org.jdom.Element;
+import java.io.IOException;
 
 import generic.stl.VectorSTL;
 import ghidra.pcodeCPort.context.SleighError;
-import ghidra.pcodeCPort.sleighbase.SleighBase;
-import ghidra.pcodeCPort.slghsymbol.*;
-import ghidra.pcodeCPort.translate.Translate;
+import ghidra.pcodeCPort.slghsymbol.Constructor;
+import ghidra.pcodeCPort.slghsymbol.OperandSymbol;
 import ghidra.pcodeCPort.utils.MutableInt;
-import ghidra.pcodeCPort.utils.XmlUtils;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.Location;
 
 public class OperandValue extends PatternValue {
@@ -35,7 +34,7 @@ public class OperandValue extends PatternValue {
 
 	public OperandValue(Location location) {
 		super(location);
-	} // For use with restoreXml
+	}
 
 	public OperandValue(Location location, int ind, Constructor c) {
 		super(location);
@@ -96,29 +95,14 @@ public class OperandValue extends PatternValue {
 	}
 
 	@Override
-	public void saveXml(PrintStream s) {
-		s.append("<operand_exp");
-		s.append(" index=\"");
-		s.print(index);
-		s.append("\"");
-		s.append(" table=\"0x");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_OPERAND_EXP);
+		encoder.writeSignedInteger(ATTRIB_INDEX, index);
 		int id = (ct == null ? 0 : ct.getParent().getId());
-		s.append(Long.toHexString(id));
-		s.append("\"");
-		s.append(" ct=\"0x");
+		encoder.writeUnsignedInteger(ATTRIB_TABLE, id);
 		long ctid = (ct == null ? 0 : ct.getId());
-		s.append(Long.toHexString(ctid));
-		s.append("\"/>\n"); // Save id of our constructor
-	}
-
-	@Override
-	public void restoreXml(Element el, Translate trans) {
-		index = XmlUtils.decodeUnknownInt(el.getAttributeValue("index"));
-		long tabid = XmlUtils.decodeUnknownLong(el.getAttributeValue("table"));
-		long ctid = XmlUtils.decodeUnknownLong(el.getAttributeValue("ct"));
-		SleighBase sleigh = (SleighBase) trans;
-		SubtableSymbol tab = (SubtableSymbol) (sleigh.findSymbol((int) tabid));
-		ct = tab.getConstructor((int) ctid);
+		encoder.writeUnsignedInteger(ATTRIB_CT, ctid);
+		encoder.closeElement(ELEM_OPERAND_EXP);
 	}
 
 }

@@ -2162,6 +2162,26 @@ int4 ActionLikelyTrash::apply(Funcdata &data)
   return 0;
 }
 
+/// Return \b true if either the Varnode is a constant or if it is the not yet simplified
+/// INT_ADD of constants.
+/// \param vn is the given Varnode to test
+/// \return \b true if the Varnode will be a constant
+bool ActionRestructureVarnode::isDelayedConstant(Varnode *vn)
+
+{
+  if (vn->isConstant()) return true;
+  if (!vn->isWritten()) return false;
+  PcodeOp *op = vn->getDef();
+  if (op->code() != CPUI_INT_ADD) return false;
+  if (!op->getIn(1)->isConstant()) return false;
+  Varnode *cvn = op->getIn(0);
+  if (cvn->isConstant()) return true;
+  if (!cvn->isWritten()) return false;
+  PcodeOp *copy = cvn->getDef();
+  if (copy->code() != CPUI_COPY) return false;
+  return copy->getIn(0)->isConstant();
+}
+
 /// Test if the path to the given BRANCHIND originates from a constant but passes through INDIRECT operations.
 /// This indicates that the switch value is produced indirectly, so we mark these INDIRECT
 /// operations as \e not \e collapsible, to guarantee that the indirect value is not lost during analysis.
@@ -2176,9 +2196,16 @@ void ActionRestructureVarnode::protectSwitchPathIndirects(PcodeOp *op)
     uint4 evalType = curOp->getEvalType();
     if ((evalType & (PcodeOp::binary | PcodeOp::ternary)) != 0) {
       if (curOp->numInput() > 1) {
-	if (!curOp->getIn(1)->isConstant()) return;	// Multiple paths
+	if (isDelayedConstant(curOp->getIn(1)))
+	  curVn = curOp->getIn(0);
+	else if (isDelayedConstant(curOp->getIn(0)))
+	  curVn = curOp->getIn(1);
+	else
+	  return;		// Multiple paths
       }
-      curVn = curOp->getIn(0);
+      else {
+	curVn = curOp->getIn(0);
+      }
     }
     else if ((evalType & PcodeOp::unary) != 0)
       curVn = curOp->getIn(0);

@@ -24,6 +24,7 @@ import ghidra.debug.api.platform.DebuggerPlatformMapper;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.lang.*;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.target.TraceObject;
 
 public class DbgengDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpinion {
@@ -39,7 +40,7 @@ public class DbgengDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpini
 		// TODO: Map registers: efl,rfl,rflags->eflags
 
 		@Override
-		protected Collection<DisassemblyInject> getDisassemblyInjections(TraceObject object) {
+		protected Collection<DisassemblyInject> getDisassemblyInjections(TracePlatform platform) {
 			return INJECTS;
 		}
 	}

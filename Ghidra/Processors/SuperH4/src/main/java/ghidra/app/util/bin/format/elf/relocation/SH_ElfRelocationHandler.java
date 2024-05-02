@@ -124,8 +124,8 @@ public class SH_ElfRelocationHandler
 				break;
 
 			case R_SH_COPY:
-				markAsWarning(program, relocationAddress, type, symbolName, symbolIndex,
-					"Runtime copy not supported", elfRelocationContext.getLog());
+				markAsUnsupportedCopy(program, relocationAddress, type, symbolName, symbolIndex,
+					sym.getSize(), elfRelocationContext.getLog());
 				return RelocationResult.UNSUPPORTED;
 
 			case R_SH_RELATIVE:

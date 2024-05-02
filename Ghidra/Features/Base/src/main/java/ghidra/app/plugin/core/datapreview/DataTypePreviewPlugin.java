@@ -117,8 +117,9 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 
 		provider = new DTPPComponentProvider();
 		tool.addComponentProvider(provider, false);
-
 		createActions();
+
+		table.setAccessibleNamePrefix("Data Type Preview");
 	}
 
 	@Override

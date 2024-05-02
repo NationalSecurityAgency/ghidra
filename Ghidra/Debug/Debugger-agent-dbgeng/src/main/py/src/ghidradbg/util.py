@@ -28,12 +28,15 @@ import traceback
 
 from comtypes import CoClass, GUID
 import comtypes
+from comtypes.gen import DbgMod
 from comtypes.hresult import S_OK
 from pybag import pydbg, userdbg, kerneldbg, crashdbg
 from pybag.dbgeng import core as DbgEng
 from pybag.dbgeng import exception
 from pybag.dbgeng import util as DbgUtil
 from pybag.dbgeng.callbacks import DbgEngCallbacks
+
+from ghidradbg.dbgmodel.ihostdatamodelaccess import HostDataModelAccess
 
 
 DbgVersion = namedtuple('DbgVersion', ['full', 'name', 'dotted', 'arch'])
@@ -134,12 +137,12 @@ class DbgExecutor(object):
         self._thread.start()
         self._executing = False
 
-    def submit(self, fn, / , *args, **kwargs):
+    def submit(self, fn, /, *args, **kwargs):
         f = self._submit_no_exit(fn, *args, **kwargs)
         self._ghidra_dbg.exit_dispatch()
         return f
 
-    def _submit_no_exit(self, fn, / , *args, **kwargs):
+    def _submit_no_exit(self, fn, /, *args, **kwargs):
         f = Future()
         if self._executing:
             f.set_exception(DebuggeeRunningException("Debuggee is Running"))
@@ -199,6 +202,7 @@ class GhidraDbg(object):
         # Wait for the executor to be operational before getting base
         self._queue._submit_no_exit(lambda: None).result()
         self._install_stdin()
+        self.use_generics = os.getenv('OPT_USE_DBGMODEL') == "true"
 
         base = self._protected_base
         for name in ['set_output_mask', 'get_output_mask',
@@ -447,6 +451,8 @@ def get_breakpoints():
 @dbg.eng_thread
 def selected_process():
     try:
+        if dbg.use_generics:
+            return dbg._base._systems.GetCurrentProcessSystemId()
         return dbg._base._systems.GetCurrentProcessId()
     except exception.E_UNEXPECTED_Error:
         return None
@@ -455,6 +461,8 @@ def selected_process():
 @dbg.eng_thread
 def selected_thread():
     try:
+        if dbg.use_generics:
+            return dbg._base._systems.GetCurrentThreadSystemId()
         return dbg._base._systems.GetCurrentThreadId()
     except exception.E_UNEXPECTED_Error:
         return None
@@ -476,11 +484,15 @@ def selected_frame():
 
 @dbg.eng_thread
 def select_process(id: int):
+    if dbg.use_generics:
+        id = get_proc_id(id)
     return dbg._base._systems.SetCurrentProcessId(id)
 
 
 @dbg.eng_thread
 def select_thread(id: int):
+    if dbg.use_generics:
+        id = get_thread_id(id)
     return dbg._base._systems.SetCurrentThreadId(id)
 
 
@@ -638,6 +650,101 @@ def thread_list(running=False):
     finally:
         if not running and curid is not None:
             _dbg._systems.SetCurrentThreadId(curid)
+
+
+@dbg.eng_thread
+def get_proc_id(pid):
+    """Get the list of all processes"""
+    # TODO: Implement GetProcessIdBySystemId and replace this logic
+    _dbg = dbg._base
+    map = {}
+    try:
+        x = _dbg._systems.GetProcessIdsByIndex()
+        for i in range(0, len(x[0])):
+            map[x[1][i]] = x[0][i]
+        return map[pid]
+    except Exception:
+        pass
+    return None
+
+
+@dbg.eng_thread
+def get_thread_id(tid):
+    """Get the list of all threads"""
+    # TODO: Implement GetThreadIdBySystemId and replace this logic
+    _dbg = dbg._base
+    map = {}
+    try:
+        x = _dbg._systems.GetThreadIdsByIndex()
+        for i in range(0, len(x[0])):
+            map[x[1][i]] = x[0][i]
+        return map[tid]
+    except Exception:
+        pass
+    return None
+
+
+def split_path(pathString):
+    list = []
+    segs = pathString.split(".")
+    for s in segs:
+        if s.endswith("]"):
+            index = s.index("[")
+            list.append(s[:index])
+            list.append(s[index:])
+        else:
+            list.append(s)
+    return list
+
+
+def IHostDataModelAccess():
+    return HostDataModelAccess(
+        dbg._base._client._cli.QueryInterface(interface=DbgMod.IHostDataModelAccess))
+
+
+@dbg.eng_thread
+def get_object(relpath):
+    """Get the list of all threads"""
+    _cli = dbg._base._client._cli
+    access = HostDataModelAccess(_cli.QueryInterface(
+        interface=DbgMod.IHostDataModelAccess))
+    (mgr, host) = access.GetDataModel()
+    root = mgr.GetRootNamespace()
+    pathstr = "Debugger"
+    if relpath != '':
+        pathstr += "."+relpath
+    path = split_path(pathstr)
+    return root.GetOffspring(path)
+
+
+@dbg.eng_thread
+def get_attributes(obj):
+    """Get the list of attributes"""
+    return obj.GetAttributes()
+
+
+@dbg.eng_thread
+def get_elements(obj):
+    """Get the list of all threads"""
+    return obj.GetElements()
+
+
+@dbg.eng_thread
+def get_kind(obj):
+    """Get the list of all threads"""
+    return obj.GetKind().value
+
+
+@dbg.eng_thread
+def get_type(obj):
+    """Get the list of all threads"""
+    return obj.GetTypeKind()
+
+
+@dbg.eng_thread
+def get_value(obj):
+    """Get the list of all threads"""
+    return obj.GetValue()
 
 
 conv_map = {}

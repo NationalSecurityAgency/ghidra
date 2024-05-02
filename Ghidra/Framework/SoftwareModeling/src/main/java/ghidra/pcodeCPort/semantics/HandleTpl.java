@@ -15,14 +15,13 @@
  */
 package ghidra.pcodeCPort.semantics;
 
-import java.io.PrintStream;
-import java.util.List;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import org.jdom.Element;
+import java.io.IOException;
 
 import generic.stl.VectorSTL;
 import ghidra.pcodeCPort.space.AddrSpace;
-import ghidra.pcodeCPort.translate.Translate;
+import ghidra.program.model.pcode.Encoder;
 
 public class HandleTpl {
 
@@ -120,27 +119,16 @@ public class HandleTpl {
 		temp_offset.changeHandleIndex(handmap);
 	}
 
-	public void saveXml(PrintStream s) {
-		s.append("<handle_tpl>");
-		space.saveXml(s);
-		size.saveXml(s);
-		ptrspace.saveXml(s);
-		ptroffset.saveXml(s);
-		ptrsize.saveXml(s);
-		temp_space.saveXml(s);
-		temp_offset.saveXml(s);
-		s.append("</handle_tpl>\n");
-	}
-
-	public void restoreXml(Element el, Translate trans) {
-		List<?> list = el.getChildren();
-		space.restoreXml((Element) list.get(0), trans);
-		size.restoreXml((Element) list.get(1), trans);
-		ptrspace.restoreXml((Element) list.get(2), trans);
-		ptroffset.restoreXml((Element) list.get(3), trans);
-		ptrsize.restoreXml((Element) list.get(4), trans);
-		temp_space.restoreXml((Element) list.get(5), trans);
-		temp_offset.restoreXml((Element) list.get(6), trans);
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_HANDLE_TPL);
+		space.encode(encoder);
+		size.encode(encoder);
+		ptrspace.encode(encoder);
+		ptroffset.encode(encoder);
+		ptrsize.encode(encoder);
+		temp_space.encode(encoder);
+		temp_offset.encode(encoder);
+		encoder.closeElement(ELEM_HANDLE_TPL);
 	}
 
 	public void dispose() {

@@ -1936,7 +1936,7 @@ public class StructureDataTypeTest extends AbstractGenericTest {
 	public void testReplaceWith2() throws InvalidDataTypeException {
 
 		// NOTE: pack(disabled) bitfields should remain unchanged when
-		// transitioning endianess even though it makes little sense.
+		// transitioning endianness even though it makes little sense.
 		// pack(disabled) structures are not intended to be portable! 
 
 		TypeDef td = new TypedefDataType("Foo", IntegerDataType.dataType);

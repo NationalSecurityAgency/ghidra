@@ -15,11 +15,9 @@
  */
 package ghidra.app.util.bin.format.macho.dyld;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.mem.Memory;
-import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.reloc.Relocation.Status;
-import ghidra.program.model.reloc.RelocationResult;
+import java.io.IOException;
+
+import ghidra.app.util.bin.BinaryReader;
 
 /**
  * @see <a href="https://github.com/apple-oss-distributions/dyld/blob/main/include/mach-o/fixup-chains.h">mach-o/fixup-chains.h</a> 
@@ -39,6 +37,7 @@ public class DyldChainedPtr {
 		DYLD_CHAINED_PTR_ARM64E_FIRMWARE(10),   // stride 4, unauth target is vmaddr
 		DYLD_CHAINED_PTR_X86_64_KERNEL_CACHE(11),   // stride 1, x86_64 kernel caches
 		DYLD_CHAINED_PTR_ARM64E_USERLAND24(12),   // stride 8, unauth target is vm offset, 24-bit bind
+		DYLD_CHAINED_PTR_ARM64E_SHARED_CACHE(13), // stride 8, regular/auth targets both vm offsets. Only A keys supported
 		DYLD_CHAINED_PTR_TYPE_UNKNOWN(-1);
 
 		private final int val;
@@ -50,33 +49,22 @@ public class DyldChainedPtr {
 		}
 
 		public static DyldChainType lookupChainPtr(int val) {
-			switch (val) {
-				case 1:
-					return DYLD_CHAINED_PTR_ARM64E;
-				case 2:
-					return DYLD_CHAINED_PTR_64;
-				case 3:
-					return DYLD_CHAINED_PTR_32;
-				case 4:
-					return DYLD_CHAINED_PTR_32_CACHE;
-				case 5:
-					return DYLD_CHAINED_PTR_32_FIRMWARE;
-				case 6:
-					return DYLD_CHAINED_PTR_64_OFFSET;
-				case 7:
-					return DYLD_CHAINED_PTR_ARM64E_KERNEL;
-				case 8:
-					return DYLD_CHAINED_PTR_64_KERNEL_CACHE;
-				case 9:
-					return DYLD_CHAINED_PTR_ARM64E_USERLAND;
-				case 10:
-					return DYLD_CHAINED_PTR_ARM64E_FIRMWARE;
-				case 11:
-					return DYLD_CHAINED_PTR_X86_64_KERNEL_CACHE;
-				case 12:
-					return DYLD_CHAINED_PTR_ARM64E_USERLAND24;
-			}
-			return DYLD_CHAINED_PTR_TYPE_UNKNOWN;
+			return switch (val) {
+				case 1 -> DYLD_CHAINED_PTR_ARM64E;
+				case 2 -> DYLD_CHAINED_PTR_64;
+				case 3 -> DYLD_CHAINED_PTR_32;
+				case 4 -> DYLD_CHAINED_PTR_32_CACHE;
+				case 5 -> DYLD_CHAINED_PTR_32_FIRMWARE;
+				case 6 -> DYLD_CHAINED_PTR_64_OFFSET;
+				case 7 -> DYLD_CHAINED_PTR_ARM64E_KERNEL;
+				case 8 -> DYLD_CHAINED_PTR_64_KERNEL_CACHE;
+				case 9 -> DYLD_CHAINED_PTR_ARM64E_USERLAND;
+				case 10 -> DYLD_CHAINED_PTR_ARM64E_FIRMWARE;
+				case 11 -> DYLD_CHAINED_PTR_X86_64_KERNEL_CACHE;
+				case 12 -> DYLD_CHAINED_PTR_ARM64E_USERLAND24;
+				case 13 -> DYLD_CHAINED_PTR_ARM64E_SHARED_CACHE;
+				default -> DYLD_CHAINED_PTR_TYPE_UNKNOWN;
+			};
 		}
 
 		public int getValue() {
@@ -93,11 +81,7 @@ public class DyldChainedPtr {
 	public static final int DYLD_CHAINED_PTR_START_LAST = 0x8000;
 
 	public static long getStride(DyldChainType ptrFormat) {
-		switch (ptrFormat) {
-			case DYLD_CHAINED_PTR_ARM64E:
-			case DYLD_CHAINED_PTR_ARM64E_USERLAND:
-			case DYLD_CHAINED_PTR_ARM64E_USERLAND24:
-				return 8;
+		return switch (ptrFormat) {
 			case DYLD_CHAINED_PTR_64:
 			case DYLD_CHAINED_PTR_64_OFFSET:
 			case DYLD_CHAINED_PTR_ARM64E_KERNEL:
@@ -106,19 +90,24 @@ public class DyldChainedPtr {
 			case DYLD_CHAINED_PTR_32:
 			case DYLD_CHAINED_PTR_32_CACHE:
 			case DYLD_CHAINED_PTR_32_FIRMWARE:
-				return 4;
+				yield 4;
+			case DYLD_CHAINED_PTR_ARM64E:
+			case DYLD_CHAINED_PTR_ARM64E_USERLAND:
+			case DYLD_CHAINED_PTR_ARM64E_USERLAND24:
+			case DYLD_CHAINED_PTR_ARM64E_SHARED_CACHE:
+				yield 8;
 			case DYLD_CHAINED_PTR_X86_64_KERNEL_CACHE:
-				return 1;
 			default:
-				return 1;
-		}
+				yield 1;
+		};
 	}
 
-	public static RelocationResult setChainValue(Memory memory, Address chainLoc,
-			DyldChainType ptrFormat,
-			long value) throws MemoryAccessException {
-		int byteLength;
-		switch (ptrFormat) {
+	public static int getSize(DyldChainType ptrFormat) {
+		return switch (ptrFormat) {
+			case DYLD_CHAINED_PTR_32:
+			case DYLD_CHAINED_PTR_32_CACHE:
+			case DYLD_CHAINED_PTR_32_FIRMWARE:
+				yield 4;
 			case DYLD_CHAINED_PTR_ARM64E:
 			case DYLD_CHAINED_PTR_ARM64E_USERLAND:
 			case DYLD_CHAINED_PTR_ARM64E_USERLAND24:
@@ -128,26 +117,19 @@ public class DyldChainedPtr {
 			case DYLD_CHAINED_PTR_64_KERNEL_CACHE:
 			case DYLD_CHAINED_PTR_ARM64E_FIRMWARE:
 			case DYLD_CHAINED_PTR_X86_64_KERNEL_CACHE:
-				memory.setLong(chainLoc, value);
-				byteLength = 8;
-				break;
-
-			case DYLD_CHAINED_PTR_32:
-			case DYLD_CHAINED_PTR_32_CACHE:
-			case DYLD_CHAINED_PTR_32_FIRMWARE:
-				memory.setInt(chainLoc, (int) (value & 0xFFFFFFFFL));
-				byteLength = 4;
-				break;
-
+			case DYLD_CHAINED_PTR_ARM64E_SHARED_CACHE:
 			default:
-				return RelocationResult.UNSUPPORTED;
-		}
-		return new RelocationResult(Status.APPLIED_OTHER, byteLength);
+				yield 8;
+		};
 	}
 
-	public static long getChainValue(Memory memory, Address chainLoc, DyldChainType ptrFormat)
-			throws MemoryAccessException {
-		switch (ptrFormat) {
+	public static long getChainValue(BinaryReader reader, long chainLoc, DyldChainType ptrFormat)
+			throws IOException {
+		return switch (ptrFormat) {
+			case DYLD_CHAINED_PTR_32:
+			case DYLD_CHAINED_PTR_32_CACHE:
+			case DYLD_CHAINED_PTR_32_FIRMWARE:
+				yield reader.readUnsignedInt(chainLoc);
 			case DYLD_CHAINED_PTR_ARM64E:
 			case DYLD_CHAINED_PTR_ARM64E_USERLAND:
 			case DYLD_CHAINED_PTR_ARM64E_USERLAND24:
@@ -157,104 +139,61 @@ public class DyldChainedPtr {
 			case DYLD_CHAINED_PTR_64_KERNEL_CACHE:
 			case DYLD_CHAINED_PTR_ARM64E_FIRMWARE:
 			case DYLD_CHAINED_PTR_X86_64_KERNEL_CACHE:
-				return memory.getLong(chainLoc);
-
-			case DYLD_CHAINED_PTR_32:
-			case DYLD_CHAINED_PTR_32_CACHE:
-			case DYLD_CHAINED_PTR_32_FIRMWARE:
-				return memory.getInt(chainLoc) & 0xFFFFFFFFL;
+			case DYLD_CHAINED_PTR_ARM64E_SHARED_CACHE:
+				yield reader.readLong(chainLoc);
 			default:
-				return 0;
-		}
+				yield 0;
+		};
 	}
 
 	public static boolean isRelative(DyldChainType ptrFormat) {
-		switch (ptrFormat) {
+		return switch (ptrFormat) {
 			case DYLD_CHAINED_PTR_64_OFFSET:
 			case DYLD_CHAINED_PTR_ARM64E_KERNEL:
 			case DYLD_CHAINED_PTR_ARM64E_USERLAND:
 			case DYLD_CHAINED_PTR_ARM64E_USERLAND24:
 			case DYLD_CHAINED_PTR_64_KERNEL_CACHE:
 			case DYLD_CHAINED_PTR_X86_64_KERNEL_CACHE:
-				return true;
+			case DYLD_CHAINED_PTR_ARM64E_SHARED_CACHE:
+				yield true;
 			default:
-				return false;
-		}
+				yield false;
+		};
 	}
 
 	public static boolean isBound(DyldChainType ptrFormat, long chainValue) {
 
-		switch (ptrFormat) {
+		return switch (ptrFormat) {
 			case DYLD_CHAINED_PTR_ARM64E:
 			case DYLD_CHAINED_PTR_ARM64E_KERNEL:
 			case DYLD_CHAINED_PTR_ARM64E_USERLAND:
 			case DYLD_CHAINED_PTR_ARM64E_USERLAND24:
-				return ((chainValue >>> 62) & 1) != 0;
-
+				yield ((chainValue >>> 62) & 1) != 0;
 			case DYLD_CHAINED_PTR_64:
 			case DYLD_CHAINED_PTR_64_OFFSET:
-				return ((chainValue >>> 63) & 1) != 0;
-
+				yield ((chainValue >>> 63) & 1) != 0;
 			case DYLD_CHAINED_PTR_32:
-				return ((chainValue >>> 31) & 1) != 0;
-
-			// Never bound
-			case DYLD_CHAINED_PTR_ARM64E_FIRMWARE:
-			case DYLD_CHAINED_PTR_X86_64_KERNEL_CACHE:
-			case DYLD_CHAINED_PTR_64_KERNEL_CACHE:
-			case DYLD_CHAINED_PTR_32_CACHE:
-			case DYLD_CHAINED_PTR_32_FIRMWARE:
+				yield ((chainValue >>> 31) & 1) != 0;
 			default:
-				return false;
-		}
+				yield false;
+		};
 	}
 
 	public static boolean isAuthenticated(DyldChainType ptrFormat, long chainValue) {
-		switch (ptrFormat) {
+		return switch (ptrFormat) {
 			case DYLD_CHAINED_PTR_64:
 			case DYLD_CHAINED_PTR_64_OFFSET:
 			case DYLD_CHAINED_PTR_32:
 			case DYLD_CHAINED_PTR_32_CACHE:
 			case DYLD_CHAINED_PTR_32_FIRMWARE:
-				return false;
+				yield false;
 			default:
-				break;
-		}
-
-		boolean isAuthenticated = ((chainValue >>> 63) & 1) != 0;
-
-		return isAuthenticated;
-	}
-
-	public static long getDiversity(DyldChainType ptrFormat, long chainValue) {
-		if (!isAuthenticated(ptrFormat, chainValue)) {
-			return 0;
-		}
-
-		long diversityData = (chainValue >>> 32) & 0xFFFF;
-
-		return diversityData;
-	}
-
-	public static boolean hasAddrDiversity(DyldChainType ptrFormat, long chainValue) {
-		if (!isAuthenticated(ptrFormat, chainValue)) {
-			return false;
-		}
-
-		return ((chainValue >>> 48) & 1) == 1;
-	}
-
-	public static long getKey(DyldChainType ptrFormat, long chainValue) {
-		if (!isAuthenticated(ptrFormat, chainValue)) {
-			return 0;
-		}
-
-		return (chainValue >>> 49L) & 0x3;
+				yield ((chainValue >>> 63) & 1) != 0;
+		};
 	}
 
 	public static long getTarget(DyldChainType ptrFormat, long chainValue) {
 
-		long target = 0;
 		if (isBound(ptrFormat, chainValue)) {
 			return -1;
 		}
@@ -269,12 +208,14 @@ public class DyldChainedPtr {
 				case DYLD_CHAINED_PTR_X86_64_KERNEL_CACHE:
 				case DYLD_CHAINED_PTR_64_KERNEL_CACHE:
 					return (chainValue & 0x3FFFFFFFL); // 30 bits
+				case DYLD_CHAINED_PTR_ARM64E_SHARED_CACHE:
+					return (chainValue & 0x3FFFFFFFFL); // 34 bits
 				default:
 					break;
 			}
 		}
 
-		switch (ptrFormat) {
+		return switch (ptrFormat) {
 			case DYLD_CHAINED_PTR_ARM64E:
 			case DYLD_CHAINED_PTR_ARM64E_USERLAND:
 			case DYLD_CHAINED_PTR_ARM64E_USERLAND24:
@@ -285,8 +226,7 @@ public class DyldChainedPtr {
 				if (top8Bits == 0x80) {
 					top8Bits = 0;
 				}
-				target = (top8Bits << 56) | bottom43Bits;
-				break;
+				yield (top8Bits << 56) | bottom43Bits;
 
 			case DYLD_CHAINED_PTR_64:
 			case DYLD_CHAINED_PTR_64_OFFSET:
@@ -296,30 +236,27 @@ public class DyldChainedPtr {
 				if (top8Bits == 0x80) {
 					top8Bits = 0;
 				}
-				target = (top8Bits << 56) | bottom36Bits;
-				break;
+				yield (top8Bits << 56) | bottom36Bits;
 
 			case DYLD_CHAINED_PTR_32:
-				target = (chainValue & 0x3FFFFF); // 26 bits
-				break;
+				yield (chainValue & 0x3FFFFF); // 26 bits
 
 			case DYLD_CHAINED_PTR_32_CACHE:
-				target = (chainValue & 0x3FFFFFFF); // 30 bits
-				break;
+				yield (chainValue & 0x3FFFFFFF); // 30 bits
 
 			case DYLD_CHAINED_PTR_32_FIRMWARE:
-				target = (chainValue & 0x3FFFFF); // 26 bits
-				break;
+				yield (chainValue & 0x3FFFFF); // 26 bits
 
 			case DYLD_CHAINED_PTR_X86_64_KERNEL_CACHE:
 			case DYLD_CHAINED_PTR_64_KERNEL_CACHE:
-				target = (chainValue & 0x3FFFFFFF); // 30 bits
-				break;
-			default:
-				return 0;
-		}
+				yield (chainValue & 0x3FFFFFFF); // 30 bits
 
-		return target;
+			case DYLD_CHAINED_PTR_ARM64E_SHARED_CACHE:
+				yield (chainValue & 0x3FFFFFFFFL); // 34 bits
+
+			default:
+				yield 0;
+		};
 	}
 
 	public static long getAddend(DyldChainType ptrFormat, long chainValue) {
@@ -328,103 +265,83 @@ public class DyldChainedPtr {
 			return 0;
 		}
 
-		switch (ptrFormat) {
+		return switch (ptrFormat) {
 			case DYLD_CHAINED_PTR_ARM64E:
 			case DYLD_CHAINED_PTR_ARM64E_USERLAND:
 			case DYLD_CHAINED_PTR_ARM64E_USERLAND24:
 				long addend = (chainValue >>> 32) & 0x7FFFF;
 				addend = ((addend & 0x40000) != 0 ? (addend | 0xFFFFFFFFFFFC0000L) : addend);
-				return addend;
+				yield addend;
 
 			case DYLD_CHAINED_PTR_64:
 			case DYLD_CHAINED_PTR_64_OFFSET:
-				return (chainValue >>> 24) & 0xFF;
+				yield (chainValue >>> 24) & 0xFF;
 
 			case DYLD_CHAINED_PTR_32:
-				return (chainValue >>> 20) & 0x3F;  // 6 bits
+				yield (chainValue >>> 20) & 0x3F;  // 6 bits
+
 			default:
-				return 0;
-		}
+				yield 0;
+		};
 	}
 
 	public static long getOrdinal(DyldChainType ptrFormat, long chainValue) {
 
-		long ordinal = -1;
 		if (!isBound(ptrFormat, chainValue)) {
 			return -1;
 		}
 
-		switch (ptrFormat) {
+		return switch (ptrFormat) {
 			case DYLD_CHAINED_PTR_ARM64E:
 			case DYLD_CHAINED_PTR_ARM64E_KERNEL:
 			case DYLD_CHAINED_PTR_ARM64E_USERLAND:
-				ordinal = chainValue & 0xFFFF;
-				break;
+				yield chainValue & 0xFFFF;
 
 			case DYLD_CHAINED_PTR_ARM64E_USERLAND24:
 			case DYLD_CHAINED_PTR_64:
 			case DYLD_CHAINED_PTR_64_OFFSET:
-				ordinal = chainValue & 0xFFFFFF;
-				break;
+				yield chainValue & 0xFFFFFF;
 
 			case DYLD_CHAINED_PTR_32:
-				ordinal = chainValue & 0xFFFFF;
-				break;
+				yield chainValue & 0xFFFFF;
 
-			// Never Ordinal
-			case DYLD_CHAINED_PTR_ARM64E_FIRMWARE:
-			case DYLD_CHAINED_PTR_X86_64_KERNEL_CACHE:
-			case DYLD_CHAINED_PTR_64_KERNEL_CACHE:
-			case DYLD_CHAINED_PTR_32_CACHE:
-			case DYLD_CHAINED_PTR_32_FIRMWARE:
-				break;
 			default:
-				break;
-		}
-
-		return ordinal;
+				yield -1;
+		};
 	}
 
 	public static long getNext(DyldChainType ptrFormat, long chainValue) {
-
-		long next = 1;
-
-		switch (ptrFormat) {
+		return switch (ptrFormat) {
 			case DYLD_CHAINED_PTR_ARM64E:
 			case DYLD_CHAINED_PTR_ARM64E_USERLAND:
 			case DYLD_CHAINED_PTR_ARM64E_USERLAND24:
 			case DYLD_CHAINED_PTR_ARM64E_KERNEL:
-				next = (chainValue >>> 51) & 0x7FF;   // 11-bits
-				break;
+				yield (chainValue >>> 51) & 0x7FF;   // 11-bits
 
 			case DYLD_CHAINED_PTR_64:
 			case DYLD_CHAINED_PTR_64_OFFSET:
 			case DYLD_CHAINED_PTR_X86_64_KERNEL_CACHE:
 			case DYLD_CHAINED_PTR_64_KERNEL_CACHE:
-				next = (chainValue >>> 51) & 0xFFF;  // 12 bits
-				break;
+				yield (chainValue >>> 51) & 0xFFF;  // 12 bits
 
 			case DYLD_CHAINED_PTR_32:
-				next = (chainValue >>> 26) & 0x1F;  // 5 bits
-				break;
+				yield (chainValue >>> 26) & 0x1F;  // 5 bits
 
 			// Never bound
 			case DYLD_CHAINED_PTR_ARM64E_FIRMWARE:
-				next = 0;
-				break;
+				yield 0;
 
 			case DYLD_CHAINED_PTR_32_CACHE:
-				next = (chainValue >>> 30) & 0x3;  // 2 bits
-				break;
+				yield (chainValue >>> 30) & 0x3;  // 2 bits
 
 			case DYLD_CHAINED_PTR_32_FIRMWARE:
-				next = (chainValue >>> 26) & 0x3F;  // 6 bits
-				break;
+				yield (chainValue >>> 26) & 0x3F;  // 6 bits
+
+			case DYLD_CHAINED_PTR_ARM64E_SHARED_CACHE:
+				yield (chainValue >>> 52) & 0x7FF; // 11 bits
 
 			default:
-				break;
-		}
-
-		return next;
+				yield 1;
+		};
 	}
 }

@@ -226,14 +226,13 @@ public class FunctionTagProvider extends ComponentProviderAdapter implements Dom
 		mainPanel.setPreferredSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
 
 		// CENTER PANEL
-		sourcePanel = new SourceTagsPanel(this, tool, "All Tags");
-		targetPanel = new TargetTagsPanel(this, tool, "Assigned To Function");
-		allFunctionsPanel = new AllFunctionsPanel(program, this, "Functions with Selected Tag");
+		sourcePanel = new SourceTagsPanel(this, tool);
+		targetPanel = new TargetTagsPanel(this, tool);
+		allFunctionsPanel = new AllFunctionsPanel(program, this);
 		buttonPanel = new FunctionTagButtonPanel(sourcePanel, targetPanel);
 		sourcePanel.setBorder(BorderFactory.createLineBorder(Colors.BORDER));
 		targetPanel.setBorder(BorderFactory.createLineBorder(Colors.BORDER));
 		allFunctionsPanel.setBorder(BorderFactory.createLineBorder(Colors.BORDER));
-
 		// If we don't set this, then the splitter won't be able to shrink the
 		// target panels below the size required by its header, which can be large
 		// because of the amount of text displayed. Keep the minimum size setting on
@@ -480,9 +479,7 @@ public class FunctionTagProvider extends ComponentProviderAdapter implements Dom
 	private JPanel createInputPanel() {
 
 		tagInputField = new HintTextField("tag 1, tag 2, ...");
-		tagInputField.setName("tagInputTF");
 		tagInputField.addActionListener(e -> processCreates());
-
 		inputPanel = new JPanel();
 		Border outsideBorder = BorderFactory.createBevelBorder(BevelBorder.LOWERED);
 		Border insideBorder = BorderFactory.createEmptyBorder(5, 2, 2, 2);
@@ -491,6 +488,10 @@ public class FunctionTagProvider extends ComponentProviderAdapter implements Dom
 		inputPanel.add(new GLabel(" Create new tag(s):"), BorderLayout.WEST);
 		inputPanel.add(Box.createHorizontalStrut(5));
 		inputPanel.add(tagInputField, BorderLayout.CENTER);
+
+		String inputFieldName = "Tag Input Text Field";
+		tagInputField.setName(inputFieldName);
+		tagInputField.getAccessibleContext().setAccessibleName(inputFieldName);
 
 		return inputPanel;
 	}

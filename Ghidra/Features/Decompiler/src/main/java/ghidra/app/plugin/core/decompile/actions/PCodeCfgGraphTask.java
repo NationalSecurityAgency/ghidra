@@ -40,7 +40,7 @@ import ghidra.util.task.TaskMonitor;
  * Task to create a PCode control flow graph based on decompiler output
  */
 public class PCodeCfgGraphTask extends Task {
-	enum PcodeGraphSubType {
+	public enum PcodeGraphSubType {
 		CONTROL_FLOW_GRAPH("AST Control Flow"), DATA_FLOW_GRAPH("AST Data Flow");
 
 		private String name;
@@ -95,8 +95,7 @@ public class PCodeCfgGraphTask extends Task {
 				createControlFlowGraph(graph, monitor);
 			}
 
-			GraphDisplay display =
-				graphService.getDefaultGraphDisplay(!newGraph, monitor);
+			GraphDisplay display = graphService.getDefaultGraphDisplay(!newGraph, monitor);
 
 			PCodeCfgDisplayListener displayListener =
 				new PCodeCfgDisplayListener(tool, display, hfunction, pcodeGraphType);
@@ -270,10 +269,9 @@ public class PCodeCfgGraphTask extends Task {
 
 	protected void createControlFlowGraph(AttributedGraph graph, TaskMonitor monitor)
 			throws CancelledException {
-		Iterator<PcodeBlockBasic> pblockIter = hfunction.getBasicBlocks().iterator();
-		while (pblockIter.hasNext()) {
+		for (PcodeBlockBasic element : hfunction.getBasicBlocks()) {
 			monitor.checkCancelled();
-			graphPcodeBlock(graph, pblockIter.next(), monitor);
+			graphPcodeBlock(graph, element, monitor);
 		}
 	}
 

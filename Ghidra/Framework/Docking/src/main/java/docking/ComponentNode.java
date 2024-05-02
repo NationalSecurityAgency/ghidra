@@ -76,13 +76,11 @@ class ComponentNode extends Node {
 			String owner = e.getAttributeValue("OWNER");
 			String title = e.getAttributeValue("TITLE");
 			String group = e.getAttributeValue("GROUP");
-			if (group == null || group.trim()
-					.isEmpty()) {
+			if (group == null || group.trim().isEmpty()) {
 				group = ComponentProvider.DEFAULT_WINDOW_GROUP;
 			}
 
-			boolean isActive = Boolean.valueOf(e.getAttributeValue("ACTIVE"))
-					.booleanValue();
+			boolean isActive = Boolean.valueOf(e.getAttributeValue("ACTIVE")).booleanValue();
 
 			long uniqueID = getUniqueID(e, 0);
 
@@ -131,14 +129,10 @@ class ComponentNode extends Node {
 		String name = placeholder.getName();
 		String title = placeholder.getTitle();
 		for (ComponentPlaceholder existingPlaceholder : windowPlaceholders) {
-			if (existingPlaceholder.getOwner()
-					.equals(owner) &&
-				existingPlaceholder.getName()
-						.equals(name) &&
-				existingPlaceholder.getGroup()
-						.equals(group) &&
-				existingPlaceholder.getTitle()
-						.equals(title)) {
+			if (existingPlaceholder.getOwner().equals(owner) &&
+				existingPlaceholder.getName().equals(name) &&
+				existingPlaceholder.getGroup().equals(group) &&
+				existingPlaceholder.getTitle().equals(title)) {
 				return true;
 			}
 		}

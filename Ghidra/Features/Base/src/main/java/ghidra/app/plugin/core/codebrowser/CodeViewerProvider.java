@@ -24,7 +24,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -37,12 +38,15 @@ import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.HoverHandler;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import docking.widgets.fieldpanel.support.*;
+import docking.widgets.tab.GTabPanel;
 import generic.theme.GIcon;
 import ghidra.app.context.ListingActionContext;
-import ghidra.app.nav.*;
+import ghidra.app.nav.ListingPanelContainer;
+import ghidra.app.nav.LocationMemento;
 import ghidra.app.plugin.core.clipboard.CodeBrowserClipboardProvider;
 import ghidra.app.plugin.core.codebrowser.actions.*;
 import ghidra.app.plugin.core.codebrowser.hover.ListingHoverService;
+import ghidra.app.plugin.core.progmgr.ProgramTabActionContext;
 import ghidra.app.services.*;
 import ghidra.app.util.*;
 import ghidra.app.util.viewer.field.ListingField;
@@ -79,7 +83,6 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 	private static final String DIVIDER_LOCATION = "DividerLocation";
 
-	private ImageIcon navigatableIcon;
 	private Map<Program, ListingHighlightProvider> programHighlighterMap = new HashMap<>();
 	private ProgramHighlighterProvider highlighterAdapter;
 
@@ -165,6 +168,7 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 
 		codeViewerClipboardProvider = newClipboardProvider();
 		tool.addPopupActionProvider(this);
+		setDefaultFocusComponent(listingPanel.getFieldPanel());
 	}
 
 	protected CodeBrowserClipboardProvider newClipboardProvider() {
@@ -297,6 +301,17 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 			}
 			return new OtherPanelContext(this, program);
 		}
+
+		JComponent northPanel = decorationPanel.getNorthPanel();
+		if (northPanel != null && northPanel.isAncestorOf((Component) source)) {
+			if (northPanel instanceof GTabPanel tabPanel) {
+				Program tabValue = (Program) tabPanel.getValueFor(event);
+				if (tabValue != null) {
+					return new ProgramTabActionContext(this, tabValue, tabPanel);
+				}
+			}
+		}
+
 		return createContext(getContextForMarginPanels(listingPanel, event));
 	}
 
@@ -846,19 +861,6 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	}
 
 	@Override
-	public Icon getIcon() {
-		if (isConnected()) {
-			return super.getIcon();
-		}
-
-		if (navigatableIcon == null) {
-			Icon primaryIcon = super.getIcon();
-			navigatableIcon = NavigatableIconFactory.createSnapshotOverlayIcon(primaryIcon);
-		}
-		return navigatableIcon;
-	}
-
-	@Override
 	public Icon getNavigatableIcon() {
 		return getIcon();
 	}
@@ -896,11 +898,6 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		}
 		setLocation(location);
 		return true;
-	}
-
-	@Override
-	public void requestFocus() {
-		listingPanel.getFieldPanel().requestFocus();
 	}
 
 	@Override

@@ -21,6 +21,7 @@ import java.util.List;
 
 import db.*;
 import ghidra.feature.vt.api.main.VTProgramCorrelator;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.AddressSet;
 import ghidra.util.exception.VersionException;

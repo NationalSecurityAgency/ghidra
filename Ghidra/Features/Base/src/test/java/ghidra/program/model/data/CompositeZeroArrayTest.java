@@ -19,7 +19,7 @@ import org.junit.Test;
 
 public class CompositeZeroArrayTest extends AbstractCompositeZeroArrayTest {
 
-	// NOTE: In the absence of bit-fields these tests are not sensitive to endianess
+	// NOTE: In the absence of bit-fields these tests are not sensitive to endianness
 
 	private static DataTypeManager dataMgr;
 

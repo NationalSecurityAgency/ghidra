@@ -22,9 +22,11 @@ import java.util.regex.Pattern;
 
 import javax.swing.JLabel;
 import javax.swing.plaf.basic.BasicHTML;
-import javax.swing.text.View;
+import javax.swing.text.*;
 
 import generic.text.TextLayoutGraphics;
+import generic.theme.GAttributes;
+import generic.theme.GColor;
 import ghidra.util.html.HtmlLineSplitter;
 import utilities.util.reflection.ReflectionUtilities;
 
@@ -344,6 +346,67 @@ public class HTMLUtilities {
 	}
 
 	/**
+	 * Escapes and wraps the given text in {@code SPAN} tag with font attributes specified in the
+	 * given attributes.  Specifically, these attributes are used:
+	 *
+	 * <UL>
+	 * <LI>{@link StyleConstants#Foreground} - {@link Color} object</LI>
+	 * <LI>{@link StyleConstants#FontFamily} - font name</LI>
+	 * <LI>{@link StyleConstants#FontSize} - size in pixels</LI>
+	 * <LI>{@link StyleConstants#Italic} - true if italic</LI>
+	 * <LI>{@link StyleConstants#Bold} - true if bold</LI>
+	 * </UL>
+	 * <P>
+	 * See {@link GAttributes} for a convenient way to create the correct attributes for a font and
+	 * color.
+	 *
+	 * @param attributes the attributes
+	 * @param text the content to style
+	 * @return the styled content
+	 * @see GAttributes
+	 */
+	public static String styleText(SimpleAttributeSet attributes, String text) {
+
+		// StyleConstants.Foreground  color: #00FF00;
+		// StyleConstants.FontFamily  font-family: "Tahoma";
+		// StyleConstants.FontSize  font-size: 40px;
+		// StyleConstants.Italic  font-style: italic;
+		// StyleConstants.Bold  font-weight: bold;
+
+		String family = attributes.getAttribute(StyleConstants.FontFamily).toString();
+		String size = attributes.getAttribute(StyleConstants.FontSize).toString();
+		String style = "plain";
+		String weight = "plain";
+		Boolean isItalic = (Boolean) attributes.getAttribute(StyleConstants.Italic);
+		Boolean isBold = (Boolean) attributes.getAttribute(StyleConstants.Bold);
+		if (Boolean.TRUE.equals(isItalic)) {
+			style = "italic";
+		}
+
+		if (Boolean.TRUE.equals(isBold)) {
+			weight = "bold";
+		}
+
+		// color is optional and defaults to the containing component's color
+		String color = "";
+		Object colorAttribute = attributes.getAttribute(StyleConstants.Foreground);
+		if (colorAttribute instanceof Color fgColor) {
+			String hexColor = HTMLUtilities.toHexString(fgColor);
+			color = "color: %s;".formatted(hexColor);
+		}
+
+		String escaped = escapeHTML(text);
+
+		//@formatter:off
+		return """
+	<SPAN STYLE=\"%s font-family: '%s'; font-size: %spx; font-style: %s; font-weight: %s;\">\
+	%s\
+	</SPAN>
+			""".formatted(color, family, size, style, weight, escaped);
+		//@formatter:on
+	}
+
+	/**
 	 * Returns the given text wrapped in {@link #LINK_PLACEHOLDER_OPEN} and close tags.
 	 * If <code>foo</code> is passed for the HTML text, with a content value of <code>123456</code>, then
 	 * the output will look like:
@@ -510,7 +573,7 @@ public class HTMLUtilities {
 
 	/**
 	 * See {@link #friendlyEncodeHTML(String)}
-	 * 
+	 *
 	 * @param text string to be encoded
 	 * @param skipLeadingWhitespace  true signals to ignore any leading whitespace characters.
 	 * 	      This is useful when line wrapping to force wrapped lines to the left
@@ -593,8 +656,7 @@ public class HTMLUtilities {
 	 * Calling this twice will result in text being double-escaped, which will not display correctly.
 	 * <p>
 	 * See also <code>StringEscapeUtils#escapeHtml3(String)</code> if you need quote-safe html encoding.
-	 * <p>
-	 * 
+	 *
 	 * @param text plain-text that might have some characters that should NOT be interpreted as HTML
 	 * @param makeSpacesNonBreaking true to convert spaces into {@value #HTML_SPACE}
 	 * @return string with any html characters replaced with equivalents
@@ -634,7 +696,7 @@ public class HTMLUtilities {
 
 	/**
 	 * Escapes any HTML special characters in the specified text.
-	 * 
+	 *
 	 * @param text plain-text that might have some characters that should NOT be interpreted as HTML
 	 * @return string with any html characters replaced with equivalents
 	 * @see #escapeHTML(String, boolean)
@@ -647,7 +709,7 @@ public class HTMLUtilities {
 	 * Tests a unicode code point (i.e., 32 bit character) to see if it needs to be escaped before
 	 * being added to a HTML document because it is non-printable or a non-standard control
 	 * character
-	 * 
+	 *
 	 * @param codePoint character to test
 	 * @return boolean true if character should be escaped
 	 */
@@ -858,6 +920,9 @@ public class HTMLUtilities {
 	 * @return a string of the format #RRGGBB.
 	 */
 	public static String toHexString(Color color) {
+		if (color instanceof GColor gColor) {
+			return gColor.toHexString();
+		}
 		// this will format a color value as a 6 digit hex string (e.g. #rrggbb)
 		return String.format("#%06X", color.getRGB() & 0xffffff);
 	}

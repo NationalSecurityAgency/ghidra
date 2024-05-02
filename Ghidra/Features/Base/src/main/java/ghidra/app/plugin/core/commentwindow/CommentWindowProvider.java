@@ -104,7 +104,7 @@ class CommentWindowProvider extends ComponentProviderAdapter {
 
 		threadedTablePanel = new GhidraThreadedTablePanel<>(commentModel, 1000);
 		commentTable = threadedTablePanel.getTable();
-		commentTable.setName("CommentTable");
+		commentTable.getAccessibleContext().setAccessibleName("Comment Table");
 		commentTable.setAutoLookupColumn(CommentTableModel.TYPE_COL);
 		commentTable.setPreferredScrollableViewportSize(new Dimension(600, 400));
 		commentTable.setRowSelectionAllowed(true);
@@ -136,6 +136,10 @@ class CommentWindowProvider extends ComponentProviderAdapter {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(threadedTablePanel, BorderLayout.CENTER);
 		panel.add(filterPanel, BorderLayout.SOUTH);
+
+		String namePrefix = "Comments";
+		commentTable.setAccessibleNamePrefix(namePrefix);
+		filterPanel.setAccessibleNamePrefix(namePrefix);
 
 		return panel;
 	}

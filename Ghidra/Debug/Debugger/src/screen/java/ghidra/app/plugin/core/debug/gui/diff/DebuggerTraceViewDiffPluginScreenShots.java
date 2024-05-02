@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.diff;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -29,6 +29,7 @@ import ghidra.app.plugin.core.debug.gui.time.DebuggerTimeSelectionDialog;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.async.AsyncTestUtils;
+import ghidra.framework.model.DomainFolder;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
@@ -37,6 +38,7 @@ import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.Swing;
+import ghidra.util.task.TaskMonitor;
 import help.screenshot.GhidraScreenShotGenerator;
 
 public class DebuggerTraceViewDiffPluginScreenShots extends GhidraScreenShotGenerator
@@ -92,13 +94,16 @@ public class DebuggerTraceViewDiffPluginScreenShots extends GhidraScreenShotGene
 			mm.putBytes(snap2, tb.addr(0x00600000), buf);
 		}
 
+		DomainFolder root = tool.getProject().getProjectData().getRootFolder();
+		root.createFile("tictactoe", tb.trace, TaskMonitor.DUMMY);
+
 		traceManager.openTrace(tb.trace);
 		traceManager.activateTrace(tb.trace);
 		traceManager.activateSnap(snap1);
 		waitForSwing();
 
 		waitOn(diffPlugin.startComparison(TraceSchedule.snap(snap2)));
-		assertTrue(diffPlugin.gotoNextDiff());
+		assertTrue(runSwing(() -> diffPlugin.gotoNextDiff()));
 
 		captureIsolatedProvider(DebuggerListingProvider.class, 900, 600);
 	}

@@ -39,9 +39,9 @@ import ghidra.app.plugin.core.debug.gui.model.QueryPanelTestHelper;
 import ghidra.dbg.target.TargetMemoryRegion;
 import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
+import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.debug.api.modules.RegionMapProposal.RegionMapEntry;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
-import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.program.model.address.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
@@ -57,6 +57,25 @@ import ghidra.util.table.GhidraTable;
 
 @Category(NightlyCategory.class)
 public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerTest {
+	public static final String CTX_XML = """
+			<context>
+			    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
+			        <attribute name='Memory' schema='RegionContainer' />
+			    </schema>
+			    <schema name='RegionContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element schema='Region' />
+			    </schema>
+			    <schema name='Region' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='MemoryRegion' />
+			        <attribute name='_display' schema='STRING' hidden='yes' />
+			        <attribute name='_range' schema='RANGE' hidden='yes' />
+			        <attribute name='_readable' schema='BOOL' hidden='yes' />
+			        <attribute name='_writable' schema='BOOL' hidden='yes' />
+			        <attribute name='_executable' schema='BOOL' hidden='yes' />
+			    </schema>
+			</context>
+			""";
 
 	DebuggerRegionsProvider provider;
 
@@ -82,25 +101,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerTes
 	}
 
 	public void activateObjectsMode() throws Exception {
-		ctx = XmlSchemaContext.deserialize("""
-				<context>
-				    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
-				        <attribute name='Memory' schema='RegionContainer' />
-				    </schema>
-				    <schema name='RegionContainer' canonical='yes' elementResync='NEVER'
-				            attributeResync='ONCE'>
-				        <element schema='Region' />
-				    </schema>
-				    <schema name='Region' elementResync='NEVER' attributeResync='NEVER'>
-				        <interface name='MemoryRegion' />
-				        <attribute name='_display' schema='STRING' hidden='yes' />
-				        <attribute name='_range' schema='RANGE' hidden='yes' />
-				        <attribute name='_readable' schema='BOOL' hidden='yes' />
-				        <attribute name='_writable' schema='BOOL' hidden='yes' />
-				        <attribute name='_executable' schema='BOOL' hidden='yes' />
-				    </schema>
-				</context>
-				""");
+		ctx = XmlSchemaContext.deserialize(CTX_XML);
 
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getObjectManager().createRootObject(ctx.getSchema(new SchemaName("Session")));
@@ -151,20 +152,29 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerTes
 	protected void assertRow(int position, Object object, String name, Address start,
 			Address end, long length, String flags) {
 		ValueRow row = provider.panel.getAllItems().get(position);
-		DynamicTableColumn<ValueRow, ?, Trace> nameCol =
-			provider.panel.getColumnByNameAndType("Name", ValueRow.class).getValue();
-		DynamicTableColumn<ValueRow, ?, Trace> startCol =
-			provider.panel.getColumnByNameAndType("Start", ValueProperty.class).getValue();
-		DynamicTableColumn<ValueRow, ?, Trace> endCol =
-			provider.panel.getColumnByNameAndType("End", ValueProperty.class).getValue();
-		DynamicTableColumn<ValueRow, ?, Trace> lengthCol =
-			provider.panel.getColumnByNameAndType("Length", ValueProperty.class).getValue();
-		DynamicTableColumn<ValueRow, ?, Trace> readCol =
-			provider.panel.getColumnByNameAndType("Read", ValueProperty.class).getValue();
-		DynamicTableColumn<ValueRow, ?, Trace> writeCol =
-			provider.panel.getColumnByNameAndType("Write", ValueProperty.class).getValue();
-		DynamicTableColumn<ValueRow, ?, Trace> executeCol =
-			provider.panel.getColumnByNameAndType("Execute", ValueProperty.class).getValue();
+		var tableModel = QueryPanelTestHelper.getTableModel(provider.panel);
+		GhidraTable table = QueryPanelTestHelper.getTable(provider.panel);
+		DynamicTableColumn<ValueRow, ?, Trace> nameCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "Name", ValueRow.class)
+				.column();
+		DynamicTableColumn<ValueRow, ?, Trace> startCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "Start", ValueProperty.class)
+				.column();
+		DynamicTableColumn<ValueRow, ?, Trace> endCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "End", ValueProperty.class)
+				.column();
+		DynamicTableColumn<ValueRow, ?, Trace> lengthCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "Length", ValueProperty.class)
+				.column();
+		DynamicTableColumn<ValueRow, ?, Trace> readCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "Read", ValueProperty.class)
+				.column();
+		DynamicTableColumn<ValueRow, ?, Trace> writeCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "Write", ValueProperty.class)
+				.column();
+		DynamicTableColumn<ValueRow, ?, Trace> executeCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "Execute", ValueProperty.class)
+				.column();
 
 		assertSame(object, row.getValue().getValue());
 		assertEquals(name, rowColDisplay(row, nameCol));
@@ -349,10 +359,14 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerTes
 		});
 		waitForPass(() -> assertFalse(tb.trace.getProgramView().getMemory().isEmpty()));
 
-		int startColIdx =
-			provider.panel.getColumnByNameAndType("Start", ValueProperty.class).getKey();
-		int endColIdx = provider.panel.getColumnByNameAndType("End", ValueProperty.class).getKey();
+		var tableModel = QueryPanelTestHelper.getTableModel(provider.panel);
 		GhidraTable table = QueryPanelTestHelper.getTable(provider.panel);
+		int startColIdx = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "Start", ValueProperty.class)
+				.viewIndex();
+		int endColIdx = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "End", ValueProperty.class)
+				.viewIndex();
 
 		clickTableCell(table, 0, startColIdx, 2);
 		waitForPass(() -> assertEquals(tb.addr(0x00400000), listing.getLocation().getAddress()));

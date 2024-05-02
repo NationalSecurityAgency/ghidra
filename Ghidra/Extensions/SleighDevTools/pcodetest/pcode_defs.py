@@ -130,6 +130,16 @@ PCodeTest({
 })
 
 PCodeTest({
+    'name': 'ARM_v8m',
+    'build_all': 1,
+    'build_exe': 1,
+    'qemu_command': 'qemu-arm -cpu cortex-m33',
+    'toolchain': 'ARM/arm-eabi',
+    'ccflags': '-mthumb -march=armv8-m.main -mfloat-abi=softfp -L %(toolchain_dir)s/lib/gcc/arm-eabi/%(gcc_version)s/thumb -lgcc',
+    'language_id': 'ARM:LE:32:Cortexv8m',
+})
+
+PCodeTest({
     'name': 'AARCH64',
     'build_all': 1,
     'build_exe': 1,

@@ -58,7 +58,7 @@ public class UnionDBTest extends AbstractGenericTest {
 		DataOrganizationImpl dataOrg = (DataOrganizationImpl) dataMgr.getDataOrganization();
 		dataOrg.setBigEndian(true);
 
-		// re-resolve with modified endianess
+		// re-resolve with modified endianness
 		union = (UnionDB) dataMgr.resolve(unionClone, null);
 	}
 

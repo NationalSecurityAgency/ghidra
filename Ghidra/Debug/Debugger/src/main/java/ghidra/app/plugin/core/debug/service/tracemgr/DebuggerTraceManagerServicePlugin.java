@@ -26,10 +26,13 @@ import java.util.stream.Stream;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
+import docking.widgets.OptionDialog;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
+import ghidra.app.plugin.core.debug.gui.control.DisconnectTask;
+import ghidra.app.plugin.core.debug.gui.control.TargetActionTask;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerControlService.ControlModeChangeListener;
 import ghidra.async.*;
@@ -135,8 +138,8 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 		private void threadDeleted(TraceThread thread) {
 			synchronized (listenersByTrace) {
-				DebuggerCoordinates last = lastCoordsByTrace.get(trace);
-				if (last != null && last.getThread() == thread) {
+				LastCoords last = lastCoordsByTrace.get(trace);
+				if (last != null && last.coords.getThread() == thread) {
 					lastCoordsByTrace.remove(trace);
 				}
 			}
@@ -261,7 +264,20 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		}
 	}
 
-	protected final Map<Trace, DebuggerCoordinates> lastCoordsByTrace = new WeakHashMap<>();
+	protected record LastCoords(Long time, DebuggerCoordinates coords) {
+
+		public static final LastCoords NEVER = new LastCoords(null, DebuggerCoordinates.NOWHERE);
+
+		public LastCoords(DebuggerCoordinates coords) {
+			this(System.currentTimeMillis(), coords);
+		}
+
+		public LastCoords keepTime(DebuggerCoordinates adjusted) {
+			return new LastCoords(time, adjusted);
+		}
+	}
+
+	protected final Map<Trace, LastCoords> lastCoordsByTrace = new WeakHashMap<>();
 	protected final Map<Trace, ListenerForTraceChanges> listenersByTrace = new WeakHashMap<>();
 	protected final Set<Trace> tracesView = Collections.unmodifiableSet(listenersByTrace.keySet());
 
@@ -275,6 +291,8 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	protected final AsyncReference<Boolean, Void> saveTracesByDefault = new AsyncReference<>(true);
 	@AutoConfigStateField(codec = BooleanAsyncConfigFieldCodec.class)
 	protected final AsyncReference<Boolean, Void> autoCloseOnTerminate = new AsyncReference<>(true);
+	// Do not save this one, it's for testing only
+	protected boolean ensureActiveTrace = true;
 
 	// @AutoServiceConsumed via method
 	private DebuggerTargetService targetService;
@@ -412,12 +430,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			}
 		};
 
-		// TODO regarding the hack note below, I believe this issue ahs been fixed, but not sure how to test
-		return new DataTreeDialog(null, OpenTraceAction.NAME, DataTreeDialog.OPEN, filter) {
-			{ // TODO/HACK: Why the NPE if I don't do this?
-				dialogShown();
-			}
-		};
+		return new DataTreeDialog(null, OpenTraceAction.NAME, DataTreeDialog.OPEN, filter);
 	}
 
 	public DomainFile askTrace(Trace trace) {
@@ -431,37 +444,22 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 	@Override
 	public void closeAllTraces() {
-		Swing.runIfSwingOrRunLater(() -> {
-			for (Trace trace : getOpenTraces()) {
-				closeTrace(trace);
-			}
-		});
+		checkCloseTraces(getOpenTraces(), false);
 	}
 
 	@Override
 	public void closeOtherTraces(Trace keep) {
-		Swing.runIfSwingOrRunLater(() -> {
-			for (Trace trace : getOpenTraces()) {
-				if (trace != keep) {
-					closeTrace(trace);
-				}
-			}
-		});
+		checkCloseTraces(getOpenTraces().stream().filter(t -> t != keep).toList(), false);
 	}
 
 	@Override
 	public void closeDeadTraces() {
-		Swing.runIfSwingOrRunLater(() -> {
-			if (targetService == null) {
-				return;
-			}
-			for (Trace trace : getOpenTraces()) {
-				Target target = targetService.getTarget(trace);
-				if (target == null) {
-					closeTrace(trace);
-				}
-			}
-		});
+		checkCloseTraces(targetService == null
+				? getOpenTraces()
+				: getOpenTraces().stream()
+						.filter(t -> targetService.getTarget(t) == null)
+						.toList(),
+			false);
 	}
 
 	@AutoServiceConsumed
@@ -549,7 +547,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			}
 			current = newCurrent;
 			if (newCurrent.getTrace() != null) {
-				lastCoordsByTrace.put(newCurrent.getTrace(), newCurrent);
+				lastCoordsByTrace.put(newCurrent.getTrace(), new LastCoords(newCurrent));
 			}
 		}
 		contextChanged();
@@ -610,11 +608,10 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			if (!listenersByTrace.containsKey(trace)) {
 				return;
 			}
-			DebuggerCoordinates cur =
-				lastCoordsByTrace.getOrDefault(trace, DebuggerCoordinates.NOWHERE);
+			LastCoords cur = lastCoordsByTrace.getOrDefault(trace, LastCoords.NEVER);
 			DebuggerCoordinates adj =
-				cur.platform(getPlatformForMapper(trace, cur.getObject(), mapper));
-			lastCoordsByTrace.put(trace, adj);
+				cur.coords.platform(getPlatformForMapper(trace, cur.coords.getObject(), mapper));
+			lastCoordsByTrace.put(trace, cur.keepTime(adj));
 			if (trace == current.getTrace()) {
 				current = adj;
 				fireLocationEvent(adj, ActivationCause.MAPPER_CHANGED);
@@ -670,7 +667,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		synchronized (listenersByTrace) {
 			// If known, fill in target ASAP, so it determines the time
 			return fillInTarget(trace,
-				lastCoordsByTrace.getOrDefault(trace, DebuggerCoordinates.NOWHERE));
+				lastCoordsByTrace.getOrDefault(trace, LastCoords.NEVER).coords);
 		}
 	}
 
@@ -917,6 +914,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			}
 
 			new TaskLauncher(new Task("Save New Trace", true, true, true) {
+
 				@Override
 				public void run(TaskMonitor monitor) throws CancelledException {
 					String filename = trace.getName();
@@ -958,6 +956,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 						future.completeExceptionally(e);
 					}
 				}
+
 			});
 		}
 		return future;
@@ -994,18 +993,67 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		}
 	}
 
-	@Override
-	public void closeTrace(Trace trace) {
+	protected void doCloseTraces(Collection<Trace> traces, Collection<Target> targets) {
+		for (Trace t : traces) {
+			if (t.getConsumerList().contains(this)) {
+				firePluginEvent(new TraceClosedPluginEvent(getName(), t));
+				doTraceClosed(t);
+			}
+		}
+		TargetActionTask.executeTask(tool, new DisconnectTask(tool, targets));
+	}
+
+	protected static final String MSGPAT_TERMINATE = """
+			<html>
+			  <body width="300px">
+			    <p>This will terminate the following targets:</p>
+			    <ul>
+			      %s
+			    </ul>
+			    <p>Proceed?</p>
+			  </body>
+			</html>
+			""";
+
+	protected static String formatTargets(Collection<Target> targets) {
+		return targets.stream()
+				.map(t -> "<li>%s</li>".formatted(HTMLUtilities.escapeHTML(t.describe())))
+				.sorted()
+				.collect(Collectors.joining("\n"));
+	}
+
+	protected void checkCloseTraces(Collection<Trace> traces, boolean noConfirm) {
+		List<Target> live =
+			traces.stream()
+					.map(t -> targetService.getTarget(t))
+					.filter(t -> t != null)
+					.toList();
 		/**
-		 * A provider may be reading the trace, likely via the Swing thread, so schedule this on the
+		 * A provider may be reading a trace, likely via the Swing thread, so schedule this on the
 		 * same thread to avoid a ClosedException.
 		 */
 		Swing.runIfSwingOrRunLater(() -> {
-			if (trace.getConsumerList().contains(this)) {
-				firePluginEvent(new TraceClosedPluginEvent(getName(), trace));
-				doTraceClosed(trace);
+			if (live.isEmpty() || noConfirm) {
+				doCloseTraces(traces, live);
+				return;
+			}
+			String msg = MSGPAT_TERMINATE.formatted(formatTargets(live));
+			int response = OptionDialog.showYesNoDialog(null, "Terminate", msg);
+			switch (response) {
+				case OptionDialog.YES_OPTION -> doCloseTraces(traces, live);
+				case OptionDialog.NO_OPTION -> List.of();
 			}
 		});
+	}
+
+	@Override
+	public void closeTrace(Trace trace) {
+		checkCloseTraces(List.of(trace), false);
+	}
+
+	@Override
+	public void closeTraceNoConfirm(Trace trace) {
+		checkCloseTraces(List.of(trace), true);
 	}
 
 	@Override
@@ -1034,6 +1082,20 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		return elem.toString();
 	}
 
+	/**
+	 * Gets the most recent coordinates among those traces still open
+	 */
+	protected DebuggerCoordinates getMostRecentCoordinates() {
+		synchronized (listenersByTrace) {
+			return lastCoordsByTrace.values()
+					.stream()
+					.sorted(Comparator.comparing(l -> -l.time))
+					.findFirst()
+					.map(l -> l.coords)
+					.orElse(DebuggerCoordinates.NOWHERE);
+		}
+	}
+
 	@Override
 	public CompletableFuture<Void> activateAndNotify(DebuggerCoordinates coordinates,
 			ActivationCause cause) {
@@ -1047,6 +1109,9 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 				}
 				throw new IllegalStateException(
 					"Trace must be opened before activated: " + newTrace);
+			}
+			if (newTrace == null && ensureActiveTrace) {
+				coordinates = getMostRecentCoordinates(); // Might still be NOWHERE
 			}
 		}
 
@@ -1228,8 +1293,13 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			traces = tracesView.stream().filter(t -> {
 				ProjectLocator loc = t.getDomainFile().getProjectLocator();
 				return loc != null && !loc.isTransient();
-			}).collect(Collectors.toList());
-			coordsByTrace = Map.copyOf(lastCoordsByTrace);
+			}).sorted(Comparator.comparingLong(t -> {
+				LastCoords last = lastCoordsByTrace.get(t);
+				return last == null ? -1 : last.time;
+			})).toList();
+			coordsByTrace = lastCoordsByTrace.entrySet()
+					.stream()
+					.collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue().coords));
 		}
 
 		saveState.putInt(KEY_TRACE_COUNT, traces.size());
@@ -1246,6 +1316,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	@Override
 	public void readDataState(SaveState saveState) {
 		synchronized (listenersByTrace) {
+			long baseTime = System.currentTimeMillis();
 			int traceCount = saveState.getInt(KEY_TRACE_COUNT, 0);
 			for (int index = 0; index < traceCount; index++) {
 				String stateName = PREFIX_OPEN_TRACE + index;
@@ -1253,7 +1324,8 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 				DebuggerCoordinates coords =
 					DebuggerCoordinates.readDataState(tool, saveState, stateName);
 				if (coords.getTrace() != null) {
-					lastCoordsByTrace.put(coords.getTrace(), coords);
+					lastCoordsByTrace.put(coords.getTrace(),
+						new LastCoords(baseTime + index, coords));
 				}
 			}
 		}

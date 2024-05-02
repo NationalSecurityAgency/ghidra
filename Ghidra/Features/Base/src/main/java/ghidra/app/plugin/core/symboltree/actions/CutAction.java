@@ -86,7 +86,7 @@ public class CutAction extends SymbolTreeContextAction {
 
 		clearClipboardFromPreviousCut();
 
-		List<GTreeNode> transferableList = createList(selectionPaths);
+		List<GTreeNode> transferableList = createList(context.getSymbolTree(), selectionPaths);
 		setClipboardContents(context.getSymbolTree(), provider.getClipboard(), transferableList);
 
 		setNodesCut(transferableList, true);
@@ -109,12 +109,13 @@ public class CutAction extends SymbolTreeContextAction {
 		}
 	}
 
-	private List<GTreeNode> createList(TreePath[] paths) {
+	private List<GTreeNode> createList(GTree gTree, TreePath[] paths) {
 		ArrayList<GTreeNode> list = new ArrayList<>();
 		if (paths != null) {
 			for (TreePath element : paths) {
 				GTreeNode node = (GTreeNode) element.getLastPathComponent();
-				list.add(node);
+				GTreeNode modelNode = gTree.getModelNode(node);
+				list.add(modelNode);
 			}
 		}
 		return list;

@@ -13,154 +13,147 @@
   <BODY lang="EN-US">
     <H1><A name="plugin"></A>Debugger: Breakpoints</H1>
 
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" border="1" src=
-          "images/DebuggerBreakpointsPlugin.png"></TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+    <DIV class="image">
+      <IMG alt="" src="images/DebuggerBreakpointsPlugin.png">
+    </DIV>
 
     <P>The breakpoints window tabulates and manipulates breakpoints among all traces, including
     live targets. Only address-based breakpoints are tabulated. For other traps, e.g., "break on
     exception," see the <A href=
-    "help/topics/DebuggerObjectsPlugin/DebuggerObjectsPlugin.html">Objects Window</A>. Breakpoints
-    can also be manipulated from address-based views, especially the disassembly listings. See <A
-    href=
+    "help/topics/DebuggerModelPlugin/DebuggerModelPlugin.html">Model</A> window. Breakpoints can
+    also be manipulated from address-based views, especially the disassembly listings. See <A href=
     "help/topics/DebuggerBreakpointMarkerPlugin/DebuggerBreakpointMarkerPlugin.html">Breakpoints in
     the Listings</A>.</P>
 
     <P>Individual breakpoint locations from among the traces are consolidated into logical
-    breakpoints, based on their addresses in the static listing. The static locations are typically
-    stored as bookmarks in their respective Ghidra programs, comprising the current breakpoint set.
-    See the <A href=
-    "help/topics/DebuggerStaticMappingPlugin/DebuggerStaticMappingPlugin.html">Static Mappings</A>
-    window for the finer details of address mapping. A breakpoint which cannot be mapped to a
-    static address becomes its own logical breakpoint at its dynamic address. The top table of the
-    provider displays logical breakpoints; the bottom table displays individual trace breakpoint
-    locations. <B>NOTE:</B> The breakpoints window cannot display or manipulate breakpoints from a
-    live target until that target is recorded into a trace. Only those breakpoints visible at the
-    current snapshot of each trace are included. For live targets, this is typically the latest
-    snapshot, i.e., the present.</P>
+    breakpoints, based on their addresses in the static listing. The current breakpoint set
+    comprises the static locations, stored as bookmarks in their respective program databases. See
+    the <A href="help/topics/DebuggerStaticMappingPlugin/DebuggerStaticMappingPlugin.html">Static
+    Mappings</A> window for the finer details of address mapping. A breakpoint which cannot be
+    mapped to a static address becomes its own logical breakpoint at its dynamic address. The top
+    table of the provider displays logical breakpoints; the bottom table displays individual
+    breakpoint locations. <B>NOTE:</B> Only those breakpoints visible at the current snapshot of
+    each trace are included. For live targets, this is typically the latest snapshot, i.e., the
+    present.</P>
 
     <P>Depending on what is supported by the connected debugger, breakpoints can trap a target when
     an address or range is executed, read, or written; using software or hardware mechanisms. In
-    the case of "read" or "write" breakpoints, debuggers may differ in terminology. For example,
-    GDB might call them "watchpoints," but Ghidra still calls these "breakpoints." Some debuggers
-    allow the user to specify a breakpoint location other than by address, but ultimately each
-    specification is realized by 0 or more addressable locations. To accommodate this, the <A href=
-    "help/topics/DebuggerObjectsPlugin/DebuggerObjectsPlugin.html">Objects</A> window will
-    typically display a list of specifications, each listing its locations as children. However,
-    the grouping of breakpoint locations into logical breakpoints by Ghidra's breakpoint manager is
-    done <EM>without respect to</EM> the debugger's specifications. A specification may be at a
-    higher stratum than Ghidra natively understands, e.g., the source filename and line number, and
-    so such specifications are not relevant. Also note that the debugger might not permit locations
-    to be manipulated independently of their specifications. This may limit how Ghidra can operate,
-    since in that case, it must configure the specification, which may affect more locations than
+    the case of <EM>read</EM> or <EM>write</EM> breakpoints, debuggers may differ in terminology.
+    For example, GDB might call them <EM>watchpoints</EM>, but Ghidra still calls these
+    <EM>breakpoints</EM>. Some debuggers allow the user to specify a breakpoint location other than
+    by address, but ultimately each specification is realized by 0 or more addressable locations.
+    To accommodate this, the <A href=
+    "help/topics/DebuggerModelPlugin/DebuggerModelPlugin.html">Model</A> window will typically
+    display a list of specifications, each listing its locations as children. However, the grouping
+    of breakpoint locations into logical breakpoints by Ghidra's breakpoint manager is done
+    <EM>without respect to</EM> the debugger's specifications. A specification may be at a higher
+    stratum than Ghidra natively understands, e.g., the source filename and line number, and so
+    such specifications are not relevant. Also note that the debugger might not permit locations to
+    be toggled independently of their specifications. This may limit how Ghidra can operate, since
+    in that case, it must toggle the specification, which may affect more locations than
     intended.</P>
 
     <P>When the <A href="help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html">control
-    mode</A> is set to "trace" or "emulator," it is possible to rewind the trace to past snapshots
-    and examine old breakpoints. You may also emulate from those snapshots, even if the target is
-    no longer alive. By default, those historical breakpoints are disabled in the integrated
-    emulator, but they can be toggled in the usual ways. In addition, the locations can be
-    manipulated independently, since the emulator has its own breakpoint set. Emulated breakpoints
-    can be configured with conditions expressed in Sleigh using the <A href="#set_condition">Set
-    Condition</A> action, or configured to replace the instruction's semantics altogether using the
-    <A href="#set_injection">Set Injection</A> action.</P>
+    mode</A> is set to <B>Trace</B> or <B>Emulator</B>, it is possible to rewind the trace to past
+    snapshots and examine old breakpoints. You may also emulate from those snapshots, even if the
+    target is no longer alive. By default, those historical breakpoints are disabled in the
+    integrated emulator, but they can be toggled in the usual ways. In addition, the locations can
+    be manipulated independently, since the emulator has its own breakpoint set. Emulated
+    breakpoints can be configured with conditions expressed in Sleigh using the <A href=
+    "#set_condition">Set Condition</A> action, or configured to replace the instruction's semantics
+    altogether using the <A href="#set_injection">Set Injection</A> action.</P>
 
     <P>Because of the logical grouping of breakpoints, it is possible for a breakpoint to be in a
     mixed or inconsistent state. This happens quite commonly, e.g., when a breakpoint is placed in
-    a Ghidra program before that program is mapped to any trace. Once mapped, the location of that
-    breakpoint in the trace is computed and noted as missing. A logical breakpoint without any
-    location in a trace is called <EM>ineffective</EM> and is drawn in grey, e.g.: <IMG alt="" src=
-    "images/breakpoint-enable-ineff.png">. An enabled logical breakpoint having a disabled location
-    is called <EM>inconsistent</EM> and its icon will include an exclamation mark: <IMG alt="" src=
-    "images/breakpoint-overlay-inconsistent.png">. A disabled logical breakpoint having an enabled
-    location is similarly inconsistent. Toggling an ineffective or inconsistent logical breakpoint
-    enables and/or places all its mapped locations, aiming for a consistent enabled state. Toggling
-    it again disables all locations.</P>
+    the Static Listing before that program is mapped to any trace. Once mapped, the dynamic
+    location of that breakpoint is computed and noted as missing. A logical breakpoint without any
+    location in a target is called <EM>ineffective</EM> and is drawn in grey, e.g.: <IMG alt=""
+    src="icon.debugger.breakpoint.marker.ineffective.enabled">. An enabled logical breakpoint
+    having a disabled location is called <EM>inconsistent</EM> and its icon will include an
+    exclamation mark: <IMG alt="" src="icon.debugger.breakpoint.overlay.inconsistent">. A disabled
+    logical breakpoint having an enabled location is similarly inconsistent. Toggling an
+    ineffective or inconsistent logical breakpoint enables and/or places all its mapped locations,
+    aiming for a consistent enabled state. Toggling it again disables all locations.</P>
 
     <H2>Tables and Columns</H2>
 
     <P>The top table, which lists logical breakpoints, has the following columns:</P>
 
     <UL>
-      <LI><B>State:</B> displays an icon indicating the state of the breakpoint. If rendered in
-      grey, the breakpoint has no locations, i.e., it is ineffective. If rendered with an
-      exclamation mark overlay, the breakpoint is inconsistent. Clicking the icon toggles the
-      breakpoint.</LI>
+      <LI>State - displays an icon indicating the state of the breakpoint. If rendered in grey, the
+      breakpoint has no locations, i.e., it is ineffective. If rendered with an exclamation mark
+      overlay, the breakpoint is inconsistent. Clicking the icon toggles the breakpoint.</LI>
 
         <UL style="list-style-type: none">
-          <LI><IMG alt="" src="images/breakpoint-enable.png"> <B>Enabled:</B> The logical
-          breakpoint, including all its locations, is enabled.</LI>
+          <LI><IMG alt="" src="icon.debugger.breakpoint.marker.enabled"> <B>Enabled:</B> The
+          logical breakpoint, including all its locations, is enabled.</LI>
 
-          <LI><IMG alt="" src="images/breakpoint-disable.png"> <B>Disabled:</B> The logical
-          breakpoint, including all its locations, is disabled.</LI>
+          <LI><IMG alt="" src="icon.debugger.breakpoint.marker.disabled"> <B>Disabled:</B> The
+          logical breakpoint, including all its locations, is disabled.</LI>
 
-          <LI><IMG alt="" src="images/breakpoint-mixed.png"> <B>Mixed:</B> (Listing only) Two
-          logical breakpoints at the same address have different states.</LI>
+          <LI><IMG alt="" src="icon.debugger.breakpoint.marker.mixed"> <B>Mixed:</B> (<A href=
+          "help/topics/DebuggerBreakpointMarkerPlugin/DebuggerBreakpointMarkerPlugin.html">Listing</A>
+          only) Two logical breakpoints at the same address have different states.</LI>
         </UL>
 
-      <LI><B>Name:</B> gives the user-defined name of the breakpoint. This cell is only populated
-      and modifiable when the breakpoint is bookmarked in a program, since the name is associated
-      with the static location.</LI>
+      <LI>Name - gives the user-defined name of the breakpoint. This cell is only populated and
+      modifiable when the breakpoint is bookmarked in a program, since the name is associated with
+      the static location.</LI>
 
-      <LI><B>Address:</B> gives the address of the breakpoint. This is typically the static
-      address. If the breakpoint cannot be mapped to a static address, this is its dynamic
-      address.</LI>
+      <LI>Address - gives the address of the breakpoint. This is typically the static address. If
+      the breakpoint cannot be mapped to a static address, this is its dynamic address.</LI>
 
-      <LI><B>Image:</B> gives the name of the static image, i.e., Ghidra program. If the breakpoint
+      <LI>Image - gives the name of the static image, i.e., Ghidra program. If the breakpoint
       cannot be mapped to a static location, this is blank.</LI>
 
-      <LI><B>Length:</B> usually 1. For access breakpoints, this is the length in bytes of the
-      address range.</LI>
+      <LI>Length - usually 1. For access breakpoints, this is the length in bytes of the address
+      range.</LI>
 
-      <LI><B>Kinds:</B> indicates the kind(s) of breakpoint: SW_EXECUTE, HW_EXECUTE, READ, and/or
+      <LI>Kinds - indicates the kind(s) of breakpoint: SW_EXECUTE, HW_EXECUTE, READ, and/or
       WRITE.</LI>
 
-      <LI><B>Locations:</B> counts the number of locations included in this logical breakpoint,
-      applying the trace filter if active. Note that a logical breakpoint with 0 locations is
+      <LI>Locations - counts the number of locations included in this logical breakpoint, applying
+      the trace filter if active. Note that a logical breakpoint with 0 locations is
       ineffective.</LI>
 
-      <LI><B>Sleigh:</B> indicates whether or not the breakpoint has a customized Sleigh
-      configuration. This is only relevant for emulation.</LI>
+      <LI>Sleigh - indicates whether or not the breakpoint has a customized Sleigh configuration.
+      This is only relevant for emulation.</LI>
     </UL>
 
     <P>The bottom table, which lists breakpoint locations, has the following columns:</P>
 
     <UL>
-      <LI><B>State:</B> displays an icon indicating the state of the location. If rendered with an
+      <LI>State - displays an icon indicating the state of the location. If rendered with an
       exclamation mark overlay, the location does not agree with its logical breakpoint, or it
       cannot be bookmarked. Clicking the icon toggles the location.</LI>
 
         <UL style="list-style-type: none">
-          <LI><IMG alt="" src="images/breakpoint-enable.png"> <B>Enabled:</B> The location is
-          enabled.</LI>
+          <LI><IMG alt="" src="icon.debugger.breakpoint.marker.enabled"> <B>Enabled:</B> The
+          location is enabled.</LI>
 
-          <LI><IMG alt="" src="images/breakpoint-disable.png"> <B>Disabled:</B> The location is
-          disabled.</LI>
+          <LI><IMG alt="" src="icon.debugger.breakpoint.marker.disabled"> <B>Disabled:</B> The
+          location is disabled.</LI>
 
-          <LI><IMG alt="" src="images/breakpoint-mixed.png"> <B>Mixed:</B> (Listing only) Two
-          locations at the same address have different states.</LI>
+          <LI><IMG alt="" src="icon.debugger.breakpoint.marker.mixed"> <B>Mixed:</B> (<A href=
+          "help/topics/DebuggerBreakpointMarkerPlugin/DebuggerBreakpointMarkerPlugin.html">Listing</A>
+          only) Two locations at the same address have different states.</LI>
         </UL>
 
-      <LI><B>Name:</B> displays the name given to the location by the connected debugger. This
+      <LI>Name - displays the name given to the location by the connected debugger. This field is
+      user modifiable.</LI>
+
+      <LI>Address - gives the dynamic address of this location.</LI>
+
+      <LI>Trace - gives the name of the location's trace.</LI>
+
+      <LI>Threads - (hidden by default) if the breakpoint applies to a limited set of threads,
+      gives the list of threads.</LI>
+
+      <LI>Comment - gives a user comment &mdash; the specification's expression by default. This
       field is user modifiable.</LI>
 
-      <LI><B>Address:</B> gives the dynamic address of this location.</LI>
-
-      <LI><B>Trace:</B> gives the name of the location's trace.</LI>
-
-      <LI><B>Threads:</B> (hidden by default) if the breakpoint applies to a limited set of
-      threads, gives the list of threads.</LI>
-
-      <LI><B>Comment:</B> gives a user comment &mdash; the specification's expression by default.
-      This field is user modifiable.</LI>
-
-      <LI><B>Sleigh:</B> (hidden by default) indicates whether or not the location has a customized
-      Sleigh configuration. This is only relevant for emulation.</LI>
+      <LI>Sleigh - indicates whether or not the location has a customized Sleigh configuration.
+      This is only relevant for emulation.</LI>
     </UL>
 
     <H2>Breakpoint Actions</H2>
@@ -170,44 +163,45 @@
     "help/topics/DebuggerBreakpointMarkerPlugin/DebuggerBreakpointMarkerPlugin.html">Breakpoint
     Marker Actions</A> in the listings.</P>
 
-    <H3><A name="enable_breakpoints"></A><IMG alt="" src="images/breakpoint-enable.png">
+    <H3><A name="enable_breakpoints"></A><IMG alt="" src="icon.debugger.breakpoint.enable">
     Enable</H3>
 
     <P>This action is available when one or more breakpoints or locations are selected. It enables
     each selected breakpoint. For any breakpoint that is already enabled, no action is taken.</P>
 
-    <H3><A name="enable_all_breakpoints"></A><IMG alt="" src="images/breakpoints-enable-all.png">
+    <H3><A name="enable_all_breakpoints"></A><IMG alt="" src="icon.debugger.breakpoint.enable.all">
     Enable All Breakpoints</H3>
 
     <P>This action is always available. It enables every breakpoint. For any breakpoint that is
     already enabled, no action is taken.</P>
 
-    <H3><A name="disable_breakpoints"></A><IMG alt="" src="images/breakpoint-disable.png">
+    <H3><A name="disable_breakpoints"></A><IMG alt="" src="icon.debugger.breakpoint.disable">
     Disable</H3>
 
     <P>This action is available when one or more breakpoints or locations are selected. It disables
     each selected breakpoint. For any breakpoint that is already disabled, no action is taken.</P>
 
-    <H3><A name="disable_all_breakpoints"></A><IMG alt="" src="images/breakpoints-disable-all.png">
-    Disable All Breakpoints</H3>
+    <H3><A name="disable_all_breakpoints"></A><IMG alt="" src=
+    "icon.debugger.breakpoint.disable.all"> Disable All Breakpoints</H3>
 
     <P>This action is always available. It disables every breakpoint. For any breakpoint that is
     already disabled, no action is taken.</P>
 
     <H3><A name="make_breakpoints_effective"></A><IMG alt="" src=
-    "images/breakpoints-make-effective.png"> Make Breakpoints Effective</H3>
+    "icon.debugger.breakpoint.make.effective"> Make Breakpoints Effective</H3>
 
     <P>This action is available whenever there are mapped breakpoints with 0 locations, i.e., it
     corresponds to a target location where the breakpoint is still missing. It places such
     breakpoints where possible. This action is also offered as a resolution in the console. It
     appears in the log any time this action is available.</P>
 
-    <H3><A name="clear_breakpoints"></A><IMG alt="" src="images/breakpoint-clear.png"> Clear</H3>
+    <H3><A name="clear_breakpoints"></A><IMG alt="" src="icon.debugger.breakpoint.clear">
+    Clear</H3>
 
     <P>This action is available when one or more breakpoints or locations are selected. It clears
     (deletes) each selected breakpoint.</P>
 
-    <H3><A name="clear_all_breakpoints"></A><IMG alt="" src="images/breakpoints-clear-all.png">
+    <H3><A name="clear_all_breakpoints"></A><IMG alt="" src="icon.debugger.breakpoint.clear.all">
     Clear All Breakpoints</H3>
 
     <P>This action is always available. <FONT color="red">Use with caution!</FONT> It deletes every
@@ -335,14 +329,14 @@ emu_skip_decoded();
 
     <P>For organizing breakpoints the manager provides the following actions:</P>
 
-    <H3><A name="filter_by_trace"></A><IMG alt="" src="images/video-x-generic16.png"> Filter to
+    <H3><A name="filter_by_trace"></A><IMG alt="" src="icon.content.handler.trace"> Filter to
     Current Trace</H3>
 
     <P>This toggle is always available. It filters the bottom table to those locations in the
     current trace only. Additionally, the "Locations" column of the top table will only count those
     in the current trace.</P>
 
-    <H3><A name="filter_by_logical"></A><IMG alt="" src="images/filter_off.png"> Filter to
+    <H3><A name="filter_by_logical"></A><IMG alt="" src="icon.debugger.filter"> Filter to
     Breakpoint Selection</H3>
 
     <P>This action is always available. It filters the bottom table to those locations belonging to

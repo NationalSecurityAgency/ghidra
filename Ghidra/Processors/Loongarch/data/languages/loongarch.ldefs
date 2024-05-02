@@ -41,6 +41,7 @@
     <description>Loongson 3 64-bit with 32-bit FP</description>
     <compiler name="default" spec="lp64f.cspec" id="default"/>
     <external_name tool="gnu" name="Loongarch64"/>
+    <external_name tool="qemu" name="qemu-mips64el"/>
   </language>
   
   <language processor="Loongarch"
@@ -55,6 +56,7 @@
     <description>Loongson 3 64-bit with 64-bit FP</description>
     <compiler name="default" spec="lp64d.cspec" id="default"/>
     <external_name tool="gnu" name="Loongarch64"/>
+    <external_name tool="qemu" name="qemu-mips64el"/>
   </language>
 
 </language_definitions>

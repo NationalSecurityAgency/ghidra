@@ -28,6 +28,7 @@ import ghidra.framework.GenericRunInfo;
 import ghidra.framework.ToolUtils;
 import ghidra.framework.client.*;
 import ghidra.framework.data.TransientDataManager;
+import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.*;
 import ghidra.framework.preferences.Preferences;
 import ghidra.framework.protocol.ghidra.GhidraURL;
@@ -111,6 +112,8 @@ public class DefaultProjectManager implements ProjectManager {
 			lastOpenedProject = projectLocator;
 			updatePreferences();
 		}
+
+		AppInfo.setActiveProject(currentProject);
 		return currentProject;
 	}
 
@@ -138,6 +141,7 @@ public class DefaultProjectManager implements ProjectManager {
 
 		try {
 			currentProject = new DefaultProject(this, projectLocator, resetOwner);
+			AppInfo.setActiveProject(currentProject);
 			if (doRestore) {
 				currentProject.restore();
 			}
@@ -166,6 +170,7 @@ public class DefaultProjectManager implements ProjectManager {
 				}
 			}
 		}
+		AppInfo.setActiveProject(null);
 		return null;
 	}
 

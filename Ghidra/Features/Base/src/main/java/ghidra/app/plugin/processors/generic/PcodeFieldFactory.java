@@ -55,7 +55,8 @@ public class PcodeFieldFactory extends FieldFactory {
 	}
 
 	public PcodeFieldFactory(String name, FieldFormatModel model,
-			ListingHighlightProvider highlightProvider, Options displayOptions, Options fieldOptions) {
+			ListingHighlightProvider highlightProvider, Options displayOptions,
+			Options fieldOptions) {
 
 		super(name, model, highlightProvider, displayOptions, fieldOptions);
 		setWidth(300);
@@ -67,7 +68,8 @@ public class PcodeFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel myModel, ListingHighlightProvider highlightProvider,
+	public FieldFactory newInstance(FieldFormatModel myModel,
+			ListingHighlightProvider highlightProvider,
 			ToolOptions options, ToolOptions fieldOptions) {
 		return new PcodeFieldFactory(FIELD_NAME, myModel, highlightProvider, options, fieldOptions);
 	}
@@ -81,7 +83,7 @@ public class PcodeFieldFactory extends FieldFactory {
 		}
 		Instruction instr = (Instruction) obj;
 
-		ArrayList<TextFieldElement> elements = new ArrayList<>();
+		List<FieldElement> elements = new ArrayList<>();
 
 		List<AttributedString> pcodeListing = formatter.formatOps(instr.getProgram().getLanguage(),
 			instr.getProgram().getAddressFactory(), Arrays.asList(instr.getPcode(true)));
@@ -91,9 +93,8 @@ public class PcodeFieldFactory extends FieldFactory {
 		}
 
 		if (elements.size() > 0) {
-			FieldElement[] textElements = elements.toArray(new FieldElement[elements.size()]);
-			return ListingTextField.createMultilineTextField(this, proxy, textElements,
-				startX + varWidth, width, Integer.MAX_VALUE, hlProvider);
+			return ListingTextField.createMultilineTextField(this, proxy, elements,
+				startX + varWidth, width, hlProvider);
 		}
 		return null;
 	}

@@ -128,16 +128,14 @@ icon in my Tool Chest</a></li>
 <li><a href="#there-is-no-debug-launch-icon-in-the-global-toolbar"
 id="toc-there-is-no-debug-launch-icon-in-the-global-toolbar">There is no
 Debug / Launch icon in the global toolbar</a></li>
+<li><a href="#there-is-no-gdb-option-in-the-launch-drop-down"
+id="toc-there-is-no-gdb-option-in-the-launch-drop-down">There is no
+<strong>gdb</strong> option in the launch drop-down</a></li>
 <li><a
-href="#there-is-no-debug-termmines-in-gdb-locally-in-vm-option-in-the-launch-drop-down"
-id="toc-there-is-no-debug-termmines-in-gdb-locally-in-vm-option-in-the-launch-drop-down">There
-is no “Debug termmines in GDB locally IN-VM” option in the launch
-drop-down</a></li>
-<li><a
-href="#the-launch-hangs-for-several-seconds-and-then-prompt-for-a-recorder"
-id="toc-the-launch-hangs-for-several-seconds-and-then-prompt-for-a-recorder">The
-launch hangs for several seconds and then prompt for a
-“recorder”</a></li>
+href="#the-launch-hangs-for-several-seconds-and-then-i-get-prompted-with-a-wall-of-text"
+id="toc-the-launch-hangs-for-several-seconds-and-then-i-get-prompted-with-a-wall-of-text">The
+launch hangs for several seconds and then I get prompted with a wall of
+text</a></li>
 <li><a href="#the-dynamic-listing-is-empty"
 id="toc-the-dynamic-listing-is-empty">The Dynamic Listing is
 empty</a></li>
@@ -192,8 +190,16 @@ trust. For <code>termmines</code>, the risk is negligible. Run it:</p>
 <div class="sourceCode" id="cb2"><pre
 class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./termmines</span></span></code></pre></div>
 <p>You should see a 9x9 grid and a cursor you can move with the arrow
-keys. Hit <strong>Ctrl-C</strong> to exit. Probe it for help. Most Linux
-programs accept a <code>-h</code> argument for help:</p>
+keys.</p>
+<figure>
+<img src="images/GettingStarted_Termmines.png"
+alt="Termmines running in a Terminal" />
+<figcaption aria-hidden="true">Termmines running in a
+Terminal</figcaption>
+</figure>
+<p>Hit <strong><code>CTRL</code>-<code>C</code></strong> to exit. Probe
+it for help. Most Linux programs accept a <code>-h</code> argument for
+help:</p>
 <div class="sourceCode" id="cb3"><pre
 class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./termmines</span> <span class="at">-h</span></span></code></pre></div>
 <p>You should now have all the information you need to understand how
@@ -223,7 +229,18 @@ open</figcaption>
 </figure></li>
 <li><p>In the Debugger tool, click the dropdown ▾ for the debug <img
 src="images/debugger.png" alt="debug button" /> icon in the global tool
-bar, and select “Debug termmines in GDB locally IN-VM.”</p></li>
+bar, and select <strong>Configure and Launch termmines using… →
+gdb</strong>.</p>
+<figure>
+<img src="images/GettingStarted_LaunchGDBDialog.png"
+alt="Launch GDB Dialog" />
+<figcaption aria-hidden="true">Launch GDB Dialog</figcaption>
+</figure></li>
+<li><p>Change the <strong>Run Command</strong> to “start” (not
+“starti”). <strong>NOTE</strong>: In practice, this is rarely
+recommended, because most targets do not export their <code>main</code>
+function.</p></li>
+<li><p>Click the <strong>Launch</strong> button in the dialog.</p></li>
 <li><p>Wait a bit then verify the Dynamic Listing window (top) is
 displaying disassembly code.</p>
 <figure>
@@ -236,20 +253,18 @@ termmines</figcaption>
 </section>
 <section id="launching-on-windows" class="level2">
 <h2>Launching on Windows</h2>
-<p>On Windows, we will use dbgeng to debug the specimen. This is the
-engine that backs WinDbg. You may choose an alternative Minesweeper,
-since terminal applications are less representative of Windows
-executables. Follow the same process as for Linux, except import
-<code>termmines.exe</code> and select “Debug termmines.exe in dbgeng
-locally IN-VM.”</p>
+<p>On Windows, we will use the Windows Debugger dbgeng.dll to debug the
+specimen. This is the engine that backs WinDbg. You may choose an
+alternative Minesweeper, since terminal applications are less
+representative of Windows executables. Follow the same process as for
+Linux, except import <code>termmines.exe</code> and select
+<strong>Configure and Launch termmines.exe using… → dbgeng</strong>.</p>
 </section>
 <section id="launching-on-macos" class="level2">
 <h2>Launching on macOS</h2>
-<p>Unfortunately, things are not so simple on macOS. See the
-instructions for <a
-href="../../../Ghidra/Debug/Debugger-swig-lldb/InstructionsForBuildingLLDBInterface.txt">Building
-LLDB-Java Bindings</a>. Once built, follow the same process as for
-Linux, except select “Debug termmines in LLDB locally IN-VM.”</p>
+<p>On macOS, we will use LLDB to debug the specimen. This is the
+debugger included with Xcode. Follow the same process as for Linux,
+except choose <strong>lldb</strong> in the last menu.</p>
 </section>
 <section id="troubleshooting" class="level2">
 <h2>Troubleshooting</h2>
@@ -280,73 +295,77 @@ tool. If it is still not there, then you may need to re-import the
 default Debugger tool as under the previous heading. If it is still not
 there, your installation may be corrupt.</p>
 </section>
-<section
-id="there-is-no-debug-termmines-in-gdb-locally-in-vm-option-in-the-launch-drop-down"
+<section id="there-is-no-gdb-option-in-the-launch-drop-down"
 class="level3">
-<h3>There is no “Debug termmines in GDB locally IN-VM” option in the
-launch drop-down</h3>
-<p>You may need to install GDB and/or configure Ghidra with its
-location. If you have a copy or custom build of GDB in a non-system
-path, note its full path. If you intend to use the system’s copy of GDB,
-then in a terminal:</p>
-<div class="sourceCode" id="cb4"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">which</span> gdb</span></code></pre></div>
-<p>Note the path given. (If you get an error, then you need to install
-GDB.) In a terminal, type the full path of GDB to ensure it executes
-properly. Type <code>q</code> to quit GDB.</p>
-<ol type="1">
-<li>From the Debugger Targets window, click the Connect <img
-src="images/connect.png" alt="connect button" /> button.</li>
-<li>In the Connect dialog, select “gdb” from the dropdown at the
-top.</li>
-<li>Enter the full path, e.g., <code>/usr/bin/gdb</code>, in the “GDB
-launch command” field.</li>
-<li>Click “Connect”</li>
-<li>If you get an Interpreter window, then things have gone well.</li>
-<li>Type <code>echo test</code> into it to verify it’s responsive, then
-type <code>q</code> to disconnect.</li>
-<li>Close the Debugger tool, then retry.</li>
-</ol>
+<h3>There is no <strong>gdb</strong> option in the launch drop-down</h3>
+<p>You may have an older Debugger tool still configured for
+Recorder-based targets. We are transitioning to TraceRmi-based targets.
+Delete your Debugger tool and re-import the default one using the
+instructions above. If it is still not there, it’s possible your
+installation is corrupt. Search for a file called
+<code>local-gdb.sh</code> in your installation. Unlike the previous
+system, Trace RMI will not probe your system for dependencies nor hide
+incompatible launchers. All installed launchers should be present in the
+menus, even though some may not work on your configuration.</p>
 </section>
 <section
-id="the-launch-hangs-for-several-seconds-and-then-prompt-for-a-recorder"
+id="the-launch-hangs-for-several-seconds-and-then-i-get-prompted-with-a-wall-of-text"
 class="level3">
-<h3>The launch hangs for several seconds and then prompt for a
-“recorder”</h3>
-<p>You probably have a stale GDB connection, so when you launched you
-now have multiple connections. For the prompt, select the option with
-the highest score. Examine the Targets window to confirm you have
-multiple GDB connections. If you know which is the stale connection, you
-can right-click it and choose <strong>Disconnect</strong>. Otherwise,
-use <strong>Disconnect All</strong> from the drop-down menu and
-re-launch.</p>
+<h3>The launch hangs for several seconds and then I get prompted with a
+wall of text</h3>
+<p>Read the wall of text. The first line should tell you the exception
+that it encountered. Often this is a timeout. Press the
+<strong>Keep</strong> button and then find the Terminal, usually in the
+bottom right. If you do not see it there, check the <strong>Window →
+Terminals</strong> menu. Once you have found the Terminal, check its
+output <em>starting at the top</em> for diagnostic messages. If you have
+something like <code>bash: gdb: command not found</code>, it is because
+you are missing <code>gdb</code>, or you need to tell Ghidra where to
+find it.</p>
+<p>If it is just missing, then install it and try again. If you need to
+tell Ghidra where it is, then in the launcher drop-down, select
+<strong>Configure and Launch termmines using… → gdb</strong>. DO NOT
+select <strong>Re-launch termmines using gdb</strong>, since this will
+not allow you to correct the configuration.</p>
+<p>If it looks like there’s an error about importing python packages,
+e.g., “google protobuf,” then you need to install some dependencies.
+These are listed in the launcher’s description. For your convenience,
+the correct versions are distributed with Ghidra. Search for files
+ending in <code>.whl</code> (or <code>.tar.gz</code>) and install the
+required ones using <code>python3 -m pip install</code>.</p>
 </section>
 <section id="the-dynamic-listing-is-empty" class="level3">
 <h3>The Dynamic Listing is empty</h3>
 <p>Check for an actual connection. You should see an entry in the
-Debugger Targets window, a populated Object window, and there should be
-an Interpreter window. If not, then your GDB connector may not be
-configured properly. Try the steps under the previous heading.</p>
-<p>If you have an Interpreter window, there are several
+<strong>Connection Manager</strong> window, a populated
+<strong>Model</strong> window, and there should be a
+<strong>Terminal</strong> window. If not, then your GDB connector may
+not be configured properly. Try the steps under the previous
+heading.</p>
+<p>If you have a <strong>Terminal</strong> window, there are several
 possibilities:</p>
 <section id="ghidra-or-gdb-failed-to-launch-the-target" class="level4">
 <h4>Ghidra or GDB failed to launch the target:</h4>
-<p>Check that the original <code>termmines</code> exists and is
-executable. It must be at the path from where it was originally
-imported. If you imported from a share, consider copying it locally,
-setting its permissions, then re-importing.</p>
+<p>If this is the case, you should see an error message in the Terminal,
+e.g.: <code>termmines: no such file or directory</code>. Check that the
+original <code>termmines</code> exists and is executable. You may also
+need to adjust the <strong>Image</strong> option when configuring the
+launch.</p>
 </section>
 <section id="the-target-was-launched-but-immediately-terminated"
 class="level4">
 <h4>The target was launched, but immediately terminated:</h4>
-<p>Check that the specimen has a <code>main</code> symbol. NOTE: It is
+<p>If this is the case, you should see a message in the Terminal, e.g.:
+<code>[Inferior 1 (process 1234) exited normally]</code>. Check that the
+specimen has a <code>main</code> symbol. <strong>NOTE</strong>: It is
 not sufficient to place a <code>main</code> label in Ghidra. The
 original file must have a <code>main</code> symbol.</p>
-<p>Alternatively, in the menus try <strong>Debugger → Debug termmines →
-in GDB locally IN-VM</strong>, and select “Use starti.” This will break
-at the system entry point. If you have labeled <code>main</code> in
-Ghidra, then you can place a breakpoint there and continue — these
-features are covered later in the course.</p>
+<p>Alternatively, in the menus try <strong>Debugger → Configure and
+Launch termmines using → gdb</strong>, and select “starti” for
+<strong>Run Command</strong>. This will break at the system entry point.
+If you have labeled <code>main</code> in Ghidra, then you can place a
+breakpoint there and continue — these features are covered later in the
+course.</p>
 <p>Alternatively, try debugging the target in GDB from a separate
 terminal completely outside of Ghidra to see if things work as
 expected.</p>
@@ -356,37 +375,37 @@ class="level4">
 <h4>The target was launched, but has not stopped, yet</h4>
 <p>Try pressing the Interrupt <img src="images/interrupt.png"
 alt="interrupt button" /> button. If that doesn’t work or is
-unsatisfactory, try the remedies under the previous heading — for an
-immediately terminating target.</p>
+unsatisfactory, try the remedies under the previous heading.</p>
 </section>
 <section
 id="you-hit-an-uncommon-bug-where-the-memory-map-is-not-applied-properly"
 class="level4">
 <h4>You hit an uncommon bug where the memory map is not applied
 properly</h4>
-<p>This is the case if the Dynamic Listing is completely blank but the
-Regions window is replete. The Dynamic Listing just needs to be kicked a
-little. The easiest way is to step once, using the <img
-src="images/stepinto.png" alt="step into" /> Step Into button in the
-main toolbar. If this is not desirable, then you can toggle
-<strong>Force Full View</strong> back and forth. In the Regions window,
-use the drop-down menu to toggle it on, then toggle it off. The Dynamic
-Listing should now be populated. To go to the program counter,
-double-click the “pc = …” label in the top right.</p>
+<p>This is the case if the <strong>Dynamic Listing</strong> is
+completely blank but the <strong>Regions</strong> window is replete. The
+<strong>Dynamic Listing</strong> just needs to be kicked a little. The
+easiest way is to step once, using the <img src="images/stepinto.png"
+alt="step into" /> <strong>Step Into</strong> button in the main
+toolbar. If this is not desirable, then you can toggle <strong>Force
+Full View</strong> back and forth. In the <strong>Regions</strong>
+window, use the drop-down menu to toggle it on, then toggle it off. The
+<strong>Dynamic Listing</strong> should now be populated. To go to the
+program counter, double-click the “pc = …” label in the top right.</p>
 </section>
 <section id="something-else-has-gone-wrong" class="level4">
 <h4>Something else has gone wrong</h4>
 <p>Try typing <code>info inferiors</code> and similar GDB diagnostic
-commands into the Interpreter.</p>
+commands into the <strong>Terminal</strong>.</p>
 </section>
 </section>
 <section
 id="the-listings-are-in-sync-but-the-dynamic-listing-is-grey-00s"
 class="level3">
 <h3>The listings are in sync, but the Dynamic Listing is grey 00s</h3>
-<p>Check the Auto-Read drop-down near the top right of the Dynamic
-Listing. It should be set to <strong>Read Visible Memory, RO
-Once</strong>.</p>
+<p>Check the <strong>Auto-Read</strong> drop-down near the top right of
+the <strong>Dynamic Listing</strong>. It should be set to <strong>Read
+Visible Memory, RO Once</strong>.</p>
 </section>
 </section>
 <section id="exercise-launch-termmines" class="level2">
@@ -395,63 +414,67 @@ Once</strong>.</p>
 <code>termmines</code> and/or start a new Ghidra Project. Starting from
 the beginning, import <code>termmines</code> and launch it in the Ghidra
 Debugger with GDB. When your tool looks like the screenshot with a
-populated Dynamic Listing, you have completed the exercise. Disconnect
-before proceeding to the next exercise.</p>
+populated <strong>Dynamic Listing</strong>, you have completed the
+exercise. Disconnect before proceeding to the next exercise.</p>
 </section>
 <section id="customized-launching" class="level2">
 <h2>Customized Launching</h2>
 <p>For this specimen, you may occasionally need to provide custom
 command-line parameters. By default, Ghidra attempts to launch the
-target without any parameters. In the menus, use <strong>Debugger →
-Debug termmmines → in GDB locally IN-VM</strong> to launch with
-customizations. Ghidra will remember these customizations the next time
-you launch using the drop-down button from the toolbar. The first dialog
-allows you to customize the connection to the back-end debugger. Unless
-you have a special copy of GDB, you should probably just click Connect.
-The second dialog allows you to customize how the back-end debugger
-launches the target. This is where you tweak the command line. You can
-also change the actual image, in case it has moved or you want to
-experiment with a patched version.</p>
+target without any parameters. In the <strong>Debugger</strong> menu, or
+the <strong>Launch</strong> button’s drop-down menu, use
+<strong>Configure and Launch termmmines → gdb</strong> to adjust your
+configuration. This is where you can specify the image path and
+command-line parameters of your target. Ghidra will remember this
+configuration the next time you launch using the drop-down button from
+the toolbar. Launchers with memorized configurations are presented as
+<strong>Re-launch termmines using…</strong> options. Using one of those
+entries will re-launch with the saved configuration rather than
+prompting.</p>
 </section>
 <section id="exercise-launch-with-command-line-help" class="level2">
 <h2>Exercise: Launch with Command-line Help</h2>
 <p>Launch the specimen so that it prints its usage. When successful, you
-will see the usage info in the Debugger’s Interpreter window.
-<strong>NOTE</strong>: The process will terminate after printing its
-usage, and as a result, the rest of the UI will be mostly empty.</p>
+will see the usage info in the Debugger’s <strong>Terminal</strong>
+window. <strong>NOTE</strong>: The process will terminate after printing
+its usage, and as a result, the rest of the UI will be mostly empty.</p>
 </section>
 <section id="attaching" class="level2">
 <h2>Attaching</h2>
-<p>Attaching is slightly more advanced, but because the target will need
-to read from stdin, and Ghidra does not properly attach the Interpreter
-to stdin, we will need to launch the target in a terminal and attach to
-it instead. Note this technique is only possible because the target
-waits for input. Depending on the task for future exercises, you may
-still need to launch from the Debugger instead of attaching.</p>
+<p>Attaching is slightly more advanced, but can be useful if the target
+is part of a larger system, and it needs to be running <em>in situ</em>.
+For this section, we will just run <code>termmines</code> in a separate
+terminal and then attach to it from Ghidra. This used to be required,
+because the older Recorder-based system did not provide target I/O, but
+this limitation is overcome by the new <strong>Terminal</strong> window
+when using Trace RMI. Note this technique is only possible because the
+target waits for input.</p>
 <ol type="1">
-<li>Run <code>termmines</code> in a proper terminal with the desired
-command-line parameters.</li>
-<li>In the Ghidra Debugger, find the Targets window, and click the <img
-src="images/connect.png" alt="connect" /> Connect button.</li>
-<li>Select “gdb” from the drop-down box.</li>
-<li>This dialog should look familiar from the Customized Launching
-section. Just click the Connect button.</li>
-<li>In the Objects window (below the Targets window), expand the node
-labeled “Available.”</li>
+<li>Run <code>termmines</code> in a terminal outside of Ghidra with the
+desired command-line parameters.</li>
+<li>In the Ghidra Debugger, use the <strong>Launch</strong> button
+drop-down and select <strong>Configured and Launch termmines using… →
+raw gdb</strong>. The “raw” connector will give us a GDB session without
+a target.</li>
+<li>Ghidra needs to know the location of gdb and the architecture of the
+intended target. The defaults are correct for 64-bit x86 targets using
+the system’s copy of GDB. Probably, you can just click
+<strong>Launch</strong>.</li>
+<li>In the <strong>Model</strong> window (to the left), expand the
+<em>Available</em> node.</li>
 <li>In the filter box, type <code>termmines</code>.</li>
-<li>Right-click on the termmines process and select Attach. If this
-fails, select Available again, and click the
-<img alt="refresh" src="images/view-refresh.png" width="16px"> Refresh
-button.</li>
+<li>Right click on the node and select <strong>Attach</strong>, or, if
+you prefer, note the PID, e.g. 1234, then in the
+<strong>Terminal</strong> type, e.g., <code>attach 1234</code>.</li>
 </ol>
 </section>
 <section id="exercise-attach" class="level2">
 <h2>Exercise: Attach</h2>
 <p>Try attaching on your own, if you have not already. Check your work
-by typing <code>bt</code> into the Interpreter. If you are in
-<code>read</code> you have completed this exercise. Disconnect before
-proceeding to the next module: <a href="A2-UITour.html">A Tour of the
-UI</a></p>
+by typing <code>bt</code> into the <strong>Terminal</strong>. If you are
+in <code>read</code> you have completed this exercise. Quit GDB from the
+<strong>Terminal</strong> before proceeding to the next module: <a
+href="A2-UITour.html">A Tour of the UI</a></p>
 </section>
 <section id="troubleshooting-1" class="level2">
 <h2>Troubleshooting</h2>
@@ -464,14 +487,15 @@ be traced by any other process and then executes a shell command. Using
 specimen in the permissive process, and thus you can attach to it as if
 <code>ptrace_scope=0</code>, but without reducing the security of the
 rest of the system. For example:</p>
-<div class="sourceCode" id="cb5"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./anyptracer</span> <span class="st">&#39;exec ./termmines&#39;</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./anyptracer</span> <span class="st">&#39;exec ./termmines&#39;</span></span></code></pre></div>
 <p>Alternatively, if you have root access, you can rectify the issue
 using the relevant documentation available online.
-<strong>Beware!</strong> You should not modify this setting on your
-daily driver, as this substantially reduces the security of your system.
-Any compromised process would be allowed to attach to and steal data,
-e.g., credentials, from any other process owned by the same user.</p>
+<strong>Beware!</strong> You should not set <code>ptrace_scope=0</code>
+globally, except on a system set aside for debugging, as this
+substantially reduces the security of that system. Any compromised
+process would be allowed to attach to and steal data, e.g., credentials,
+from any other process owned by the same user.</p>
 </section>
 </section>
 </body>

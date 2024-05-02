@@ -16,8 +16,7 @@
 package ghidra.app.plugin.core.analysis;
 
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.event.*;
 import java.beans.*;
 import java.io.File;
 import java.io.IOException;
@@ -359,8 +358,8 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		}
 		File saveFile = getOptionsSaveFile(saveName);
 		if (saveFile.exists() && OptionDialog.CANCEL_OPTION == OptionDialog
-			.showOptionDialogWithCancelAsDefaultButton(this, "Overwrite Configuration",
-				"Overwrite existing configuration file: " + saveName + " ?", "Overwrite")) {
+				.showOptionDialogWithCancelAsDefaultButton(this, "Overwrite Configuration",
+					"Overwrite existing configuration file: " + saveName + " ?", "Overwrite")) {
 			return;
 		}
 		FileOptions currentOptions = getCurrentOptionsAsFileOptions();
@@ -442,6 +441,22 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		configureEnabledColumnWidth(60);
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		table.getSelectionModel().addListSelectionListener(this::selectedAnalyzerChanged);
+
+		// add ability to toggle analyzers enablement using the keyboard space bar
+		table.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+					int row = table.getSelectedRow();
+					int column = COLUMN_ANALYZER_IS_ENABLED;
+					if (row >= 0) {
+						boolean enabledState = (Boolean) model.getValueAt(row, column);
+						model.setValueAt(!enabledState, row, column);
+					}
+				}
+			}
+		});
+
 	}
 
 	private void selectedAnalyzerChanged(ListSelectionEvent event) {
@@ -697,7 +712,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 					GenericOptionsComponent.createOptionComponent(childState);
 
 				HelpLocation helpLoc = analysisOptions
-					.getHelpLocation(analyzerName + Options.DELIMITER_STRING + childOptionName);
+						.getHelpLocation(analyzerName + Options.DELIMITER_STRING + childOptionName);
 				if (helpLoc != null) {
 					help.registerHelp(comp, helpLoc);
 				}

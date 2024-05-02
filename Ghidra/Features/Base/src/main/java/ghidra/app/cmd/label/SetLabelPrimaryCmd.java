@@ -16,7 +16,6 @@
 package ghidra.app.cmd.label;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CircularDependencyException;
 import ghidra.program.model.listing.Program;
@@ -29,8 +28,8 @@ import ghidra.util.exception.InvalidInputException;
  * makes sense if there is more than one label at the address - otherwise
  * the label will already be primary.
  */
-public class SetLabelPrimaryCmd implements Command {
-	private SymbolTable st;
+public class SetLabelPrimaryCmd implements Command<Program> {
+
 	private Address addr;
 	private String name;
 	private Namespace namespace;
@@ -50,14 +49,9 @@ public class SetLabelPrimaryCmd implements Command {
 		this.namespace = namespace;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		Program program = (Program) obj;
-		st = program.getSymbolTable();
+	public boolean applyTo(Program program) {
+		SymbolTable st = program.getSymbolTable();
 		Symbol oldSymbol = st.getPrimarySymbol(addr);
 
 		if (oldSymbol == null) {
@@ -75,10 +69,8 @@ public class SetLabelPrimaryCmd implements Command {
 			// change the state of the symbol, like changing the namespace of a default symbol, 
 			// which has no effect
 			if (!oldSymbol.isDynamic()) {
-				errorMsg =
-					"Symbol " + name + " does not exist in namespace " + namespace +
-						" at address " +
-						addr;
+				errorMsg = "Symbol " + name + " does not exist in namespace " + namespace +
+					" at address " + addr;
 				return false;
 			}
 			return true;
@@ -103,7 +95,8 @@ public class SetLabelPrimaryCmd implements Command {
 				oldSymbol.setNameAndNamespace(name, namespace, symbolSource);
 				symbol = oldSymbol;
 				// If renamed oldSymbol is now Default source don't keep old name (handles special Thunk rename case)
-				if (oldSource != SourceType.DEFAULT && oldSymbol.getSource() != SourceType.DEFAULT) {
+				if (oldSource != SourceType.DEFAULT &&
+					oldSymbol.getSource() != SourceType.DEFAULT) {
 					// put the other symbol back using the old namespace and old source
 					st.createLabel(addr, oldName, oldParent, oldSource);
 				}
@@ -127,17 +120,11 @@ public class SetLabelPrimaryCmd implements Command {
 		return true;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
 	@Override
 	public String getStatusMsg() {
 		return errorMsg;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
 	@Override
 	public String getName() {
 		return "Set Primary Label";

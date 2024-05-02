@@ -7,6 +7,7 @@ If not, please refer to the previous modules.
 
 This module will address the following features in more depth:
 
+* The Trace tabs &mdash; in the Dynamic Listing window
 * The Threads window
 * The Stack window
 * The Time window
@@ -18,7 +19,7 @@ There are more elements to a "location" in a dynamic session, so we add addition
 All of these elements can affect the information displayed in other windows, especially those dealing with machine state.
 
 * The current *trace*.
-  A trace database is where all of the Debugger windows (except Targets and Objects) gather their information.
+  A trace database is where all of the Debugger windows (except Connections and Terminal) gather their information.
   It is the analog of the program database, but for dynamic analysis.
 * The current *thread*.
   A thread is a unit of execution, either a processor core or a platform-defined virtual thread.
@@ -36,10 +37,23 @@ All of these elements can affect the information displayed in other windows, esp
   "Time" may also include steps of emulation, but that is covered in the [Emulation](B2-Emulation.md) module.
 
 In general, there is a window dedicated to navigating each element of your current coordinates.
+If you do not have an active session already, launch `termmines`.
+
+## Trace Tabs
+
+The Dynamic Listing window has a row of tabs at the very top.
+This is a list of open traces, i.e., of targets you are debugging.
+You can also open old traces to examine a target's machine state *post mortem*.
+In general, you should only have one trace open at a time, but there are use cases where you might have multiple.
+For example, you could debug both the client and server of a network application.
+To switch to another trace, single-click its tab.
+
+When you switch traces, every Debugger window that depends on the current trace will update.
+That's every window except Connections and Terminal.
+(Each connection has its own Terminal windows.)
+The Breakpoints window may change slightly, depending on its configuration, because it is designed to present all breakpoints in the session.
 
 ## Threads
-
-If you do not have an active session already, launch `termmines`.
 
 ![Threads window](images/Navigation_ThreadsInCallRand.png)
 
@@ -51,12 +65,10 @@ The columns are:
 
 * The **Name** column gives the name of the thread.
   This may include the back-end debugger's thread id, the target platform's system thread id, and/or the back-end debugger's display text for the thread.
-* The **Created** column gives the snapshot when the thread was first observed.
-* The **Destroyed** column gives the snapshot when the thread was first observed as terminated.
-  If this is empty, the thread is still alive.
+* The **PC** column gives the program counter of the thread.
+* The **Function** column gives the function from a mapped program database containing the program counter.
 * The **State** column gives the state of the thread.
   This may be one of ALIVE, RUNNING, STOPPED, TERMINATED, or UNKNOWN.
-* The **Comment** column allows you to annotate the thread, e.g., if you discover it has a dedicated purpose.
 * The **Plot** column plots the threads' life spans in a chart.
 
 **NOTE**: Most of the time, switching threads will also change what thread is being controlled by the Control actions in the global toolbar.
@@ -67,19 +79,6 @@ It may step a different thread, it may cause the target to block until the threa
 
 When you switch threads, everything that depends on the current thread may change, in particular the Stack window and any machine-state window that involves register values.
 The Registers window will display the values for the new thread, the Watches window will re-evaluate all expressions, and the Dynamic Listing and Memory views may seek to different addresses, depending on their location tracking configurations.
-
-### Trace Tabs
-
-The Threads window also has a row of tabs at the very top.
-This is a list of open traces, i.e., of targets you are debugging.
-You can also open old traces to examine a target's machine state *post mortem*.
-In general, you should only have one trace open at a time, but there are use cases where you might have multiple.
-For example, you could debug both the client and server of a network application.
-To switch to another trace, single-click its tab.
-
-When you switch traces, every Debugger window that depends on the current trace will update.
-That's every window except Targets and Objects.
-The Breakpoints window may change slightly, depending on its configuration, because it is designed to present all breakpoints in the session.
 
 ## Stack
 
@@ -99,7 +98,7 @@ The columns are:
   The PC of frame 0 is the value of the PC register.
   Then, the PC of frame 1 is the return address of frame 0, and so on.
 * The **Function** column gives the name of the function containing the PC mapped to its static program database, if available.
-* The **Comment** column allows you to annotate the frame.
+* The **Module** column gives the name of the module containing the PC.
 
 Double-click the row with the unnamed function (frame 1) to switch to it.
 When you switch frames, any machine-state window that involves register values may change.
@@ -119,7 +118,7 @@ Now, switch to the Time window.
 ![Time window](images/Navigation_TimeAfterCallSRandCallRand.png)
 
 It displays a list of all the snapshots for the current trace.
-In general, every event generates a snapshot.
+In general, every pause generates a snapshot.
 By default, the most recent snapshot is at the bottom.
 The columns are:
 
@@ -131,23 +130,23 @@ The columns are:
 * The **Schedule** column describes the snapshot in relation to another.
   It typically only applies to emulator / scratch snapshots, which are covered later in this course.
 * The **Description** column describes the event that generated the snapshot.
+  This can be edited in the table, or by pressing **`CTRL`-`SHIFT`-`N`** to mark interesting snapshots.
 
-Switch to the snapshot where you hit `srand` (snapshot 2 in our screenshot) by double-clicking it in the table.
+Before we can navigate back in time, you must change the *Control Mode* to **Control Trace**.
+Now, switch to the snapshot where you hit `srand` (snapshot 1 in our screenshot) by double-clicking it in the table.
 This will cause all the machine-state windows to update including the Stack window.
 If you try navigating around the Dynamic Listing, you will likely find stale areas indicated by a grey background.
 
-**NOTE**: Navigating into the past will automatically change the Control mode.
-This is to avoid confusion, since you may perform a control action based on the state you see, which is no longer the state of the live target.
-Switch back by using the Control mode drop-down button in the global toolbar.
-When you select **Control Target** (with or without edits), the Debugger will navigate forward to the latest snapshot.
+**NOTE**: The control-mode change is required to avoid confusion between recorded and live states.
+When you switch back  to **Control Target** (with or without edits), the Debugger will navigate forward to the latest snapshot and prohibit navigating to the past.
 
 ### Sparse vs. Full Snapshots
 
 Regarding the stale areas: the Debugger cannot request the back-end debugger provide machine state from the past.
-(Integration with timeless back-end debuggers is not yet supported.)
+(Integration with timeless back-end debuggers is nascent.)
 Remember, the trace is used as a cache, so it will only be populated with the pages and registers that you observed at the time.
 Thus, most snapshots are *sparse* snapshots.
-The most straightforward way to capture a *full* snapshot is the <img alt="refresh" src="images/view-refresh.png" width="16px"> Refresh button with a broad selection in the Dynamic Listing.
+The most straightforward way to capture a *full* snapshot is the <img alt="refresh" src="images/view-refresh.png" width="16px"> **Read Memory** button with a broad selection in the Dynamic Listing.
 We give the exact steps in the next heading.
 To capture registers, ensure you navigate to each thread whose registers you want to capture.
 
@@ -164,12 +163,12 @@ Because parsing happens before waiting for user input, we will need to launch (n
 1. Launch `termmines -M 15` in the Debugger.
    (See [Getting Started](A1-GettingStarted.md) to review launching with custom parameters.)
 1. Ensure your breakpoint at `srand` is enabled.
-1. Use **Ctrl-A** to Select All the addresses.
+1. Use **`CTRL`-`A`** to Select All the addresses.
 1. Click the <img alt="refresh" src="images/view-refresh.png" width="16px"> Refresh button.
    **NOTE**: It is normal for some errors to occur here.
    We note a more surgical approach below.
 1. Wait a moment for the capture to finish.
-1. Optionally, press **Ctrl-Shift-N** to rename the snapshot so you can easily identify it later.
+1. Optionally, press **`CTRL`-`SHIFT`-`N`** to rename the snapshot so you can easily identify it later, e.g., "Initial snapshot."
    Alternatively, edit the snapshot's Description from the table in the Time window.
 1. Press ![resume](images/resume.png) Resume, expecting it to break at `srand`.
 1. Capture another full snapshot using Select All and Refresh.
@@ -178,7 +177,7 @@ Because parsing happens before waiting for user input, we will need to launch (n
 
    ![The compare times dialog](images/Navigation_DialogCompareTimes.png)
 
-1. Click OK.
+1. Click **OK**.
 
 The result is a side-by-side listing of the two snapshots with differences highlighted in orange.
 Unlike the Static program comparison tool, this only highlights differences in *byte* values.
@@ -199,9 +198,13 @@ Some alternatives, which we will cover in the [Memory Map](A6-MemoryMap.md) modu
 * Use the Memory Map window (borrowed from the CodeBrowser) to navigate to the `.data` section.
   The Dynamic Listing will stay in sync and consequently capture the contents of the first page.
   This specimen has a small enough `.data` section to fit in a single page, but that is generally not the case in practice.
-* Use the Regions window to select the addresses in the `.data` section, then click Refresh in the Dynamic Listing.
+* If there are more pages, use the Regions window. Click the **Select Rows** then the **Select Addresses** buttons to expand the selection to the whole region containing the cursor.
+  Then click **Read Memory** in the Dynamic Listing.
   This will capture the full `.data` section, no matter how many pages.
-* Use the lower pane of the Modules window to select the addresses in the `.data` section, then click Refresh in the Dynamic Listing.
+* Alternatively, Use the Modules window to select `termmines` and load its sections.
+  (Not all debuggers support this.)
+  Click the **Show Sections Table** button in the local toolbar to enable the lower pane.
+  Use the Sections table to select the addresses in the `.data` section, then click **Read Memory** in the Dynamic Listing.
   This will also capture the full `.data` section.
 
 ### Exercise: Find the Time
@@ -209,7 +212,7 @@ Some alternatives, which we will cover in the [Memory Map](A6-MemoryMap.md) modu
 In `termmines`, unlike other Minesweeper clones, your score is not printed until you win.
 Your goal is to achieve a remarkable score by patching a variable right before winning.
 Considering it is a single-threaded application, take a moment to think about how your time might be measured.
-**TIP**: Because you will need to play the game, you will need to attach rather than launch.
+**TIP**: Because you will need to play the game, you should enable **Inferior TTY** in the launcher.
 Use the snapshot comparison method to locate the variable.
 Then place an appropriate breakpoint, win the game, patch the variable, and score 0 seconds!
 

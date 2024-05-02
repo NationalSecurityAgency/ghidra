@@ -31,7 +31,7 @@ public class EditPrototypeOverrideAction extends AbstractDecompilerAction {
 
 	public EditPrototypeOverrideAction() {
 		super("Edit Signature Override");
-		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionEditOverride"));
+		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionEditOverride")); 
 		setPopupMenuData(new MenuData(new String[] { "Edit Signature Override" }, "Decompile"));
 	}
 

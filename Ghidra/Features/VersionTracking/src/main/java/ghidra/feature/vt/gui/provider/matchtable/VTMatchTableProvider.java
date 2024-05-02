@@ -15,39 +15,170 @@
  */
 package ghidra.feature.vt.gui.provider.matchtable;
 
-import static ghidra.feature.vt.api.impl.VTEvent.*;
-import static ghidra.feature.vt.gui.actions.TableSelectionTrackingState.*;
-import static ghidra.feature.vt.gui.plugin.VTPlugin.*;
-import static ghidra.feature.vt.gui.util.VTOptionDefines.*;
-import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.feature.vt.api.impl.VTEvent.ASSOCIATION_STATUS_CHANGED;
+import static ghidra.feature.vt.api.impl.VTEvent.MATCH_SET_ADDED;
+import static ghidra.feature.vt.gui.actions.TableSelectionTrackingState.MAINTAIN_SELECTED_ROW_INDEX;
+import static ghidra.feature.vt.gui.actions.TableSelectionTrackingState.MAINTAIN_SELECTED_ROW_VALUE;
+import static ghidra.feature.vt.gui.actions.TableSelectionTrackingState.NO_SELECTION_TRACKING;
+import static ghidra.feature.vt.gui.plugin.VTPlugin.FILTERED_ICON;
+import static ghidra.feature.vt.gui.plugin.VTPlugin.UNFILTERED_ICON;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.ACCEPT_MATCH_OPTIONS_NAME;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.APPLY_DATA_NAME_ON_ACCEPT;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.APPLY_FUNCTION_NAME_ON_ACCEPT;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.APPLY_IMPLIED_MATCHES_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.APPLY_MARKUP_OPTIONS_NAME;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.AUTO_CREATE_IMPLIED_MATCH;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.AUTO_VT_DATA_CORRELATOR;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.AUTO_VT_DUPLICATE_FUNCTION_CORRELATOR;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.AUTO_VT_EXACT_FUNCTION_CORRELATORS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.AUTO_VT_IMPLIED_MATCH_CORRELATOR;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.AUTO_VT_OPTIONS_NAME;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.AUTO_VT_REFERENCE_CORRELATORS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.AUTO_VT_SYMBOL_CORRELATOR;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.CALLING_CONVENTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.CALL_FIXUP;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.CREATE_IMPLIED_MATCHES_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DATA_CORRELATOR_MIN_LEN_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DATA_MATCH_DATA_TYPE;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_CALLING_CONVENTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_CALL_FIXUP;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_DATA_MATCH_DATA_TYPE;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_EOL_COMMENTS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_FUNCTION_NAME;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_FUNCTION_RETURN_TYPE;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_FUNCTION_SIGNATURE;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_HIGHEST_NAME_PRIORITY;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_IGNORE_EXCLUDED_MARKUP_ITEMS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_IGNORE_INCOMPLETE_MARKUP_ITEMS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_INLINE;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_LABELS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_NO_RETURN;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PARAMETER_COMMENTS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PARAMETER_DATA_TYPES;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PARAMETER_NAMES;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PARAMETER_NAMES_REPLACE_IF_SAME_PRIORITY;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PLATE_COMMENTS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_POST_COMMENTS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_PRE_COMMENTS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_REPEATABLE_COMMENTS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DEFAULT_OPTION_FOR_VAR_ARGS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DISPLAY_APPLY_MARKUP_OPTIONS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.DUPE_FUNCTION_CORRELATOR_MIN_LEN_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.END_OF_LINE_COMMENT;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.FUNCTION_CORRELATOR_MIN_LEN_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.FUNCTION_NAME;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.FUNCTION_RETURN_TYPE;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.FUNCTION_SIGNATURE;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.HIGHEST_NAME_PRIORITY;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.IGNORE_EXCLUDED_MARKUP_ITEMS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.IGNORE_INCOMPLETE_MARKUP_ITEMS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.INLINE;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.LABELS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.MAX_CONFLICTS_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.MIN_VOTES_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.NO_RETURN;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.PARAMETER_COMMENTS;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.PARAMETER_DATA_TYPES;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.PARAMETER_NAMES;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.PARAMETER_NAMES_REPLACE_IF_SAME_PRIORITY;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.PLATE_COMMENT;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.POST_COMMENT;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.PRE_COMMENT;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.REF_CORRELATOR_MIN_CONF_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.REF_CORRELATOR_MIN_SCORE_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.REPEATABLE_COMMENT;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.RUN_DUPE_FUNCTION_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.RUN_EXACT_DATA_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.RUN_EXACT_FUNCTION_BYTES_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.RUN_EXACT_FUNCTION_INST_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.RUN_EXACT_SYMBOL_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.RUN_REF_CORRELATORS_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.SYMBOL_CORRELATOR_MIN_LEN_OPTION;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.VAR_ARGS;
+import static ghidra.framework.model.DomainObjectEvent.RESTORED;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
+import java.awt.Adjustable;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.*;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 
-import docking.*;
-import docking.widgets.table.*;
+import docking.ActionContext;
+import docking.DockingWindowManager;
+import docking.WindowPosition;
+import docking.action.builder.ActionBuilder;
+import docking.widgets.table.AbstractSortedTableModel;
+import docking.widgets.table.GTable;
+import docking.widgets.table.RowObjectSelectionManager;
+import docking.widgets.table.RowObjectTableModel;
+import docking.widgets.table.SelectionManager;
 import docking.widgets.table.threaded.ThreadedTableModel;
+import generic.theme.GIcon;
+import ghidra.app.services.FunctionComparisonService;
 import ghidra.feature.vt.api.impl.VTEvent;
 import ghidra.feature.vt.api.impl.VersionTrackingChangeRecord;
-import ghidra.feature.vt.api.main.*;
-import ghidra.feature.vt.gui.actions.*;
+import ghidra.feature.vt.api.main.VTMarkupItem;
+import ghidra.feature.vt.api.main.VTMatch;
+import ghidra.feature.vt.api.main.VTSession;
+import ghidra.feature.vt.gui.actions.AcceptMatchAction;
+import ghidra.feature.vt.gui.actions.ApplyBlockedMatchAction;
+import ghidra.feature.vt.gui.actions.ApplyMatchAction;
+import ghidra.feature.vt.gui.actions.ChooseMatchTagAction;
+import ghidra.feature.vt.gui.actions.ClearMatchAction;
+import ghidra.feature.vt.gui.actions.CreateSelectionAction;
+import ghidra.feature.vt.gui.actions.EditAllTagsAction;
+import ghidra.feature.vt.gui.actions.MatchTableSelectionAction;
+import ghidra.feature.vt.gui.actions.RejectMatchAction;
+import ghidra.feature.vt.gui.actions.RemoveMatchAction;
+import ghidra.feature.vt.gui.actions.RemoveMatchTagAction;
+import ghidra.feature.vt.gui.actions.TableSelectionTrackingState;
 import ghidra.feature.vt.gui.editors.MatchTagCellEditor;
-import ghidra.feature.vt.gui.filters.*;
+import ghidra.feature.vt.gui.filters.AncillaryFilterDialogComponentProvider;
+import ghidra.feature.vt.gui.filters.Filter;
 import ghidra.feature.vt.gui.filters.Filter.FilterEditingStatus;
-import ghidra.feature.vt.gui.plugin.*;
-import ghidra.feature.vt.gui.util.*;
-import ghidra.feature.vt.gui.util.AbstractVTMatchTableModel.*;
-import ghidra.framework.model.*;
+import ghidra.feature.vt.gui.filters.FilterDialogModel;
+import ghidra.feature.vt.gui.filters.FilterStatusListener;
+import ghidra.feature.vt.gui.plugin.VTController;
+import ghidra.feature.vt.gui.plugin.VTControllerListener;
+import ghidra.feature.vt.gui.plugin.VTPlugin;
+import ghidra.feature.vt.gui.plugin.VersionTrackingPluginPackage;
+import ghidra.feature.vt.gui.util.AbstractVTMatchTableModel.DestinationLabelTableColumn;
+import ghidra.feature.vt.gui.util.AbstractVTMatchTableModel.SourceLabelTableColumn;
+import ghidra.feature.vt.gui.util.AbstractVTMatchTableModel.StatusTableColumn;
+import ghidra.feature.vt.gui.util.AbstractVTMatchTableModel.TagTableColumn;
+import ghidra.feature.vt.gui.util.AllTextFilter;
+import ghidra.feature.vt.gui.util.FilterIconFlashTimer;
+import ghidra.feature.vt.gui.util.MatchInfo;
+import ghidra.feature.vt.gui.util.MatchStatusRenderer;
+import ghidra.feature.vt.gui.util.VTSymbolRenderer;
+import ghidra.framework.model.DomainObjectChangeRecord;
+import ghidra.framework.model.DomainObjectChangedEvent;
+import ghidra.framework.model.EventType;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
+import ghidra.program.model.listing.Function;
 import ghidra.util.HelpLocation;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.AssertException;
@@ -59,6 +190,8 @@ import help.HelpService;
 
 public class VTMatchTableProvider extends ComponentProviderAdapter
 		implements FilterDialogModel<VTMatch>, VTControllerListener {
+
+	private static final Icon COMPARISON_ICON = new GIcon("icon.plugin.functioncompare.new");
 
 	private static final String TITLE = "Version Tracking Matches";
 	private static final String TABLE_SELECTION_STATE = "TABLE_SELECTION_STATE";
@@ -98,7 +231,6 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		setIcon(VersionTrackingPluginPackage.ICON);
 		setDefaultWindowPosition(WindowPosition.TOP);
 		createActions();
-
 		component = createComponent();
 
 		setVisible(true);
@@ -129,6 +261,42 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		addLocalAction(new CreateSelectionAction(controller));
 		tableSelectionStateAction = new MatchTableSelectionAction(this);
 		addLocalAction(tableSelectionStateAction);
+
+		new ActionBuilder("Compare Functions", getName()).popupMenuPath("Compare Functions")
+				.popupMenuGroup("Selection")
+				.popupMenuIcon(COMPARISON_ICON)
+				.keyBinding("shift c")
+				.sharedKeyBinding()
+				.description("Compares the Function(s) with its remote match")
+				.helpLocation(
+					new HelpLocation("VersionTrackingPlugin", "Match_Table_Compare_Functions"))
+				.withContext(VTMatchContext.class)
+				.enabledWhen(this::isValidFunctionComparison)
+				.onAction(this::compareFunctions)
+				.buildAndInstallLocal(this);
+	}
+
+	private boolean isValidFunctionComparison(VTMatchContext context) {
+		List<VTMatch> functionMatches = context.getFunctionMatches();
+		return !functionMatches.isEmpty();
+	}
+
+	private void compareFunctions(VTMatchContext c) {
+		Set<Function> sourceFunctions = new HashSet<>();
+		Set<Function> destinationFunctions = new HashSet<>();
+		List<VTMatch> matches = c.getFunctionMatches();
+
+		for (VTMatch match : matches) {
+			MatchInfo matchInfo = controller.getMatchInfo(match);
+
+			Function sourceFunction = matchInfo.getSourceFunction();
+			sourceFunctions.add(sourceFunction);
+			Function destinationFunction = matchInfo.getDestinationFunction();
+			destinationFunctions.add(destinationFunction);
+		}
+
+		FunctionComparisonService service = tool.getService(FunctionComparisonService.class);
+		service.compareFunctions(sourceFunctions, destinationFunctions);
 	}
 
 	// callback method from the MatchTableSelectionAction
@@ -219,13 +387,13 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 
 		matchesTable = createMatchesTable();
 		JPanel matchesTablePanel = new JPanel(new BorderLayout());
-
 		JPanel filterAreaPanel = createFilterArea();
 		matchesTablePanel.add(tablePanel, BorderLayout.CENTER);
 		matchesTablePanel.add(filterAreaPanel, BorderLayout.SOUTH);
-
 		JPanel parentPanel = new JPanel(new BorderLayout());
 		parentPanel.add(matchesTablePanel);
+
+		matchesTable.setAccessibleNamePrefix("Matches");
 
 		return parentPanel;
 	}
@@ -602,12 +770,14 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 
 	@Override
 	public void optionsChanged(Options options) {
-		// implemented as ControllerListener.  Don't care about options changed right now.
+		// implemented as ControllerListener. Don't care about options changed right
+		// now.
 	}
 
 	@Override
 	public void markupItemSelected(VTMarkupItem markupItem) {
-		// Do nothing since the matches table doesn't need to respond to the mark-up that is selected.
+		// Do nothing since the matches table doesn't need to respond to the mark-up
+		// that is selected.
 	}
 
 	private void initializeOptions() {
@@ -704,7 +874,7 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 				"should become ignored by applying a match.");
 
 		vtOptions.getOptions(APPLY_MARKUP_OPTIONS_NAME)
-				.registerOptionsEditor(new ApplyMarkupPropertyEditor(controller));
+				.registerOptionsEditor(() -> new ApplyMarkupPropertyEditor(controller));
 		vtOptions.getOptions(DISPLAY_APPLY_MARKUP_OPTIONS)
 				.setOptionsHelpLocation(
 					new HelpLocation("VersionTracking", "Apply Markup Options"));
@@ -829,8 +999,8 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 	}
 
 	/**
-	 * Forces a refilter, even though filtering operations may be disabled. The reload
-	 * is necessary since the model contents may have changed
+	 * Forces a refilter, even though filtering operations may be disabled. The
+	 * reload is necessary since the model contents may have changed
 	 */
 	@Override
 	public void forceRefilter() {
@@ -892,20 +1062,22 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 	}
 
 	/**
-	 * A class meant to override the default table selection behavior <b>in special situations</b>.
+	 * A class meant to override the default table selection behavior <b>in special
+	 * situations</b>.
 	 * <p>
-	 * <u>Issue 1:</u> Accepting or applying a match can trigger the match to be filtered out
-	 * of the table.  The default SelectionManager does not restore the selection for that item,
-	 * as it knows that the item is gone.
+	 * <u>Issue 1:</u> Accepting or applying a match can trigger the match to be
+	 * filtered out of the table. The default SelectionManager does not restore the
+	 * selection for that item, as it knows that the item is gone.
 	 * <p>
-	 * <u>Issue 2:</u> Accepting or applying a match can trigger the match to be moved due to a
-	 * sort operation after the edit.
+	 * <u>Issue 2:</u> Accepting or applying a match can trigger the match to be
+	 * moved due to a sort operation after the edit.
 	 * <p>
-	 * <u>Desired Behavior:</u> Have the selection restored to the previous location, even if the
-	 * item is moved or removed.
+	 * <u>Desired Behavior:</u> Have the selection restored to the previous
+	 * location, even if the item is moved or removed.
 	 * <p>
-	 * Creating this object will cancel the default behavior.  Calling <tt>restoreSelection</tt>
-	 * will set the new selection, depending upon the conditions described above.
+	 * Creating this object will cancel the default behavior. Calling
+	 * <tt>restoreSelection</tt> will set the new selection, depending upon the
+	 * conditions described above.
 	 */
 	private class SelectionOverrideMemento {
 		private final int row;
@@ -947,13 +1119,14 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 			ListSelectionModel selectionModel = matchesTable.getSelectionModel();
 			int rowToSelect = row;
 			if (row > matchesTableModel.getRowCount()) {
-				// The model has shrunk.  Not sure what the best action is?
+				// The model has shrunk. Not sure what the best action is?
 				tryToSelectMatch(selectionModel);// this only works if we are tracking by match and not index
 				return;
 			}
 
 			// At this point the selection model may still believe that its selection is the
-			// value we are setting.  Calling clearSelection() will kick the model.  Without the
+			// value we are setting. Calling clearSelection() will kick the model. Without
+			// the
 			// kick, the setSelectionInterval() call we make may ultimately have no effect.
 			selectionModel.clearSelection();
 
@@ -990,8 +1163,8 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 	}
 
 	/**
-	 * Override the built-in SelectionManager so that we can respond to the current table
-	 * selection mode.
+	 * Override the built-in SelectionManager so that we can respond to the current
+	 * table selection mode.
 	 */
 	private class VTMatchTableSelectionManager extends RowObjectSelectionManager<VTMatch> {
 		VTMatchTableSelectionManager(JTable table, AbstractSortedTableModel<VTMatch> tableModel) {

@@ -297,7 +297,7 @@ public abstract class AbstractMemSearchTest extends AbstractProgramBasedTest {
 		return hlProvider.createHighlights(bytes, field, -1);
 	}
 
-	protected void setEndianess(String text) {
+	protected void setEndianness(String text) {
 		// we use this method because the given button may be disabled, which means we cannot
 		// click it, but we can select it
 		AbstractButton button = findAbstractButtonByText(pane, text);

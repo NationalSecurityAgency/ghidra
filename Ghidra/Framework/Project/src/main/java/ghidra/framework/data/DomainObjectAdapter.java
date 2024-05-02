@@ -81,8 +81,8 @@ public abstract class DomainObjectAdapter implements DomainObject {
 	 * with consumer.
 	 *
 	 * @param name name of the object
-	 * @param timeInterval the time (in milliseconds) to wait before the event queue is flushed. If
-	 *            a new event comes in before the time expires, the timer is reset.
+	 * @param timeInterval the time (in milliseconds) to wait before the event queue is flushed. 
+	 * 			If a new event comes in before the time expires the timer is reset.
 	 * @param consumer the object that created this domain object
 	 */
 	protected DomainObjectAdapter(String name, int timeInterval, Object consumer) {
@@ -94,9 +94,17 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		consumers = new ArrayList<Object>();
 		consumers.add(consumer);
 		if (!UserData.class.isAssignableFrom(getClass())) {
-			// UserData instances do not utilize DomainFile storage
 			domainFile = new DomainFileProxy(name, this);
 		}
+	}
+
+	/**
+	 * Invalidates any caching in a program and generate a {@link DomainObjectEvent#RESTORED}
+	 * event. 
+	 * NOTE: Over-using this method can adversely affect system performance.
+	 */
+	public void invalidate() {
+		fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.RESTORED));
 	}
 
 	@Override
@@ -185,7 +193,12 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		return temporary;
 	}
 
-	protected void setDomainFile(DomainFile df) {
+	/**
+	 * Set the {@link DomainFile} associated with this instance.
+	 * @param df domain file
+	 * @throws DomainObjectException if a severe failure occurs during the operation.
+	 */
+	protected void setDomainFile(DomainFile df) throws DomainObjectException {
 		if (df == null) {
 			throw new IllegalArgumentException("DomainFile must not be null");
 		}
@@ -197,7 +210,6 @@ public abstract class DomainObjectAdapter implements DomainObject {
 		domainFile = df;
 		fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.FILE_CHANGED, oldDf, df));
 		fileChangeListeners.invoke().domainFileChanged(this);
-
 	}
 
 	protected void close() {

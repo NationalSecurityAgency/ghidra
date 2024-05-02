@@ -162,6 +162,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 
 		DockingActionIf action = getAction(plugin, "Split Block");
 		performAction(action, false);
+		waitForBusyTool(tool);
 
 		// find the dialog for the add
 		SplitBlockDialog d = waitForDialogComponent(SplitBlockDialog.class);
@@ -535,7 +536,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 
 		assertTrue(okButton.isEnabled());
 		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
-		waitForSwing();
+		waitForBusyTool(tool);
 
 		assertEquals(".text", model.getValueAt(0, MemoryMapModel.NAME));
 		assertEquals("00002000", model.getValueAt(0, MemoryMapModel.START));
@@ -543,12 +544,16 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("0x1005600", model.getValueAt(0, MemoryMapModel.LENGTH));
 
 		undo(program);
+		waitForBusyTool(tool);
+
 		assertEquals(".text", model.getValueAt(0, MemoryMapModel.NAME));
 		assertEquals("01001000", model.getValueAt(0, MemoryMapModel.START));
 		assertEquals("010075ff", model.getValueAt(0, MemoryMapModel.END));
 		assertEquals("0x6600", model.getValueAt(0, MemoryMapModel.LENGTH));
 
 		redo(program);
+		waitForBusyTool(tool);
+
 		assertEquals(".text", model.getValueAt(0, MemoryMapModel.NAME));
 		assertEquals("00002000", model.getValueAt(0, MemoryMapModel.START));
 		assertEquals("010075ff", model.getValueAt(0, MemoryMapModel.END));
@@ -605,7 +610,8 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 
 		assertTrue(okButton.isEnabled());
 		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
-		waitForSwing();
+
+		waitForBusyTool(tool);
 
 		assertEquals(".text", model.getValueAt(0, MemoryMapModel.NAME));
 		assertEquals("01000000", model.getValueAt(0, MemoryMapModel.START));
@@ -613,12 +619,16 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("0x7600", model.getValueAt(0, MemoryMapModel.LENGTH));
 
 		undo(program);
+		waitForBusyTool(tool);
+
 		assertEquals(".text", model.getValueAt(0, MemoryMapModel.NAME));
 		assertEquals("01001000", model.getValueAt(0, MemoryMapModel.START));
 		assertEquals("010075ff", model.getValueAt(0, MemoryMapModel.END));
 		assertEquals("0x6600", model.getValueAt(0, MemoryMapModel.LENGTH));
 
 		redo(program);
+		waitForBusyTool(tool);
+
 		assertEquals(".text", model.getValueAt(0, MemoryMapModel.NAME));
 		assertEquals("01000000", model.getValueAt(0, MemoryMapModel.START));
 		assertEquals("010075ff", model.getValueAt(0, MemoryMapModel.END));
@@ -735,7 +745,8 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		assertTrue(okButton.isEnabled());
 
 		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
-		waitForSwing();
+
+		waitForBusyTool(tool);
 
 		assertEquals(".text", model.getValueAt(0, MemoryMapModel.NAME));
 		assertEquals("01001000", model.getValueAt(0, MemoryMapModel.START));
@@ -749,6 +760,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 
 		DockingActionIf action = getAction(plugin, "Expand Block Down");
 		performAction(action, false);
+		waitForBusyTool(tool);
 
 		// find the dialog for the add
 		ExpandBlockDialog d = waitForDialogComponent(ExpandBlockDialog.class);
@@ -762,7 +774,8 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		assertTrue(okButton.isEnabled());
 
 		runSwing(() -> okButton.getActionListeners()[0].actionPerformed(null));
-		waitForSwing();
+
+		waitForBusyTool(tool);
 
 		assertEquals(".text", model.getValueAt(0, MemoryMapModel.NAME));
 		assertEquals("01001000", model.getValueAt(0, MemoryMapModel.START));

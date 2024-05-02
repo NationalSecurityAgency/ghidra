@@ -1,0 +1,598 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: Launchers</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="plugin"></A>Debugger: Launchers</H1>
+
+    <P>The Debugger has an updated and simplified launcher system. A nice collection of basic
+    launchers for our supported platforms are provided out of the box. For Linux, we provide a
+    suite of GDB-based launchers. For macOS, we provide a suite of LLDB-based launchers (though,
+    these work on Linux, too). For Windows, we provide a launcher based on the Windows Debugger
+    (<TT>dbgeng.dll</TT> and <TT>dbgmodel.dll</TT>).</P>
+
+    <P>Each launcher automates the creation of a Trace RMI <A href=
+    "help/topics/TraceRmiConnectionManagerPlugin/TraceRmiConnectionManagerPlugin.html#connect_accept">acceptor</A>,
+    executes the back-end shell script in a Terminal, then waits for the resulting target trace. In
+    contrast to the previous system, the Terminal is the first and most basic interface presented.
+    Even if just about everything else goes wrong, the terminal should still be faithfully
+    operational:</P>
+
+    <DIV class="image">
+      <IMG alt="" src="images/GdbTerminal.png">
+    </DIV>
+
+    <P>The Terminal is fully integrated into Ghidra's UI and so can be docked or undocked just like
+    the rest of Ghidra's windows. It provides fairly robust VT-100 emulation. Thus, the user
+    experience from the Terminal is nearly identical to using the same debugger outside of Ghidra.
+    This terminal-first approach also ensures that you interact with the target application's
+    standard I/O. This was not possible in the previous system, as we re-implemented the CLI using
+    the back end's <TT>execute</TT> method. The debugger's (and so also the target's) actual I/O
+    streams were hidden away within a GDB/MI wrapper.</P>
+
+    <P>Each launcher script sets up a &mdash; usually Python &mdash; environment, launches the
+    actual debugger, and provides a sequence of commands for it to load the Trace RMI plugin,
+    connect back to Ghidra, launch the actual target process, and start the target trace. At this
+    point, the plugin generally takes over, reacting to user and target events, accepting front-end
+    requests, and generally keeping Ghidra and the back end synchronized.</P>
+
+    <P><A name="launch_tracermi"></A>The list of launchers can be accessed in either of two places:
+    1) In the <B>Debugger &rarr; Configure and Launch ...</B> menu or more conveniently from the
+    <B>Launch</B> button in the main toolbar. This is the blue bug <IMG alt="" src="icon.debugger">
+    button near the top center. The <B>Configure and Launch ...</B> menu lists all available
+    launchers. Selecting one will prompt for its options then launch. To re-launch quickly, use the
+    <B>Launch</B> button. Clicking it will re-launch using the most recent launcher and
+    configuration for the current program. If this is the first launch of the given program, the
+    button will instead activate its drop-down menu. The drop-down is also accessible by clicking
+    the down arrow next to the <B>Launch</B> button. The drop-down lists all launchers that have
+    been previously configured for the current program. Clicking one will immediately launch the
+    program without prompting. The <B>Configure and Launch ...</B> sub-menu of the drop-down
+    functions exactly like in the <B>Debugger</B> menu.</P>
+
+    <P>The Terminal provides some fairly standard actions. Other keyboard control sequences,
+    notably <B>CTRL-C</B>, are interpreted by the terminal, rather than Ghidra's action system, to
+    achieve their expected behavior, e.g., interrupt.</P>
+
+    <H3><A name="copy"></A>Copy</H3>
+
+    <P>This is accessed using the toolbar button or the key sequence <B>CTRL-SHIFT-C</B>. As
+    expected, it copies the current selection to the system clipboard.</P>
+
+    <H3><A name="paste"></A>Paste</H3>
+
+    <P>This is accessed using the toolbar button or the key sequence <B>CTRL-SHIFT-V</B>. As
+    expected, it pastes the text contents of the system clipboard into the terminal, as if
+    typed.</P>
+
+    <H3><A name="find"></A>Find</H3>
+
+    <P>This is accessed using the local drop-down menu or the key sequence <B>CTRL-SHIFT-F</B>. It
+    displays a dialog for searching the terminal's scrollback buffer.</P>
+
+    <H3><A name="find_next"></A><A name="find_previous"></A>Find Next/Previous</H3>
+
+    <P>These actions are accessed using the local drop-down menu or the key sequence
+    <B>CTRL-SHIFT-H</B> or <B>CTRL-SHIFT-G</B>, respectively. They repeat the last search in the
+    forward or backward direction.</P>
+
+    <H3><A name="terminate"></A>Terminate</H3>
+
+    <P>This action is accessed using the local drop-down menu. It will terminate the Terminal's
+    current session. Exactly what that means is determined by the Terminal's creator. In general,
+    it means to destroy the full debugging session associated with the Terminal. That may cause
+    related terminals, e.g., a secondary terminal for target I/O and associated target traces, to
+    be terminated as well. <B>NOTE:</B> This action is <EM>not</EM> implied by closing the Terminal
+    window. Closing the window with an active session merely hides it. It can be recalled using the
+    <B>Window &rarr; Terminals</B> menu. If the session has already been terminated (indicated by
+    an orange border) then closing the window will, in fact, destroy the Terminal.</P>
+
+    <H2>Stock GDB Launchers</H2>
+
+    <P>The following launchers based on GDB (GNU Debugger) are included out of the box:</P>
+
+    <H3><A name="gdb"></A>GDB</H3>
+
+    <P>This launcher is a Python plugin for GDB, and so is best suited for debugging Linux
+    user-space targets as well as many embedded systems. Please note you may need to obtain a
+    properly-configured build of GDB for your target. If you are working with an embedded system,
+    it is probably safest to install the "multiarch" build of GDB from your package manager.</P>
+
+    <P>Once running, you are presented with GDB's command-line interface in Ghidra's Terminal. This
+    is the <EM>bona fide</EM> GDB command-line interface, so it has all the functionality you would
+    expect. If you command GDB from this shell, the plugin will keep Ghidra in sync. The terminal
+    can also be used to interact with the target application when it is running. The plugin
+    provides an additional set of commands for managing the connection to Ghidra, as well as
+    controlling trace synchronization. These are all in the "<TT>ghidra</TT>" command prefix. You
+    can use tab completion to enumerate the available commands and GDB's "<TT>help</TT>" command to
+    examine their documentation.</P>
+
+    <DIV class="image">
+      <IMG alt="" src="images/GdbLauncher.png">
+    </DIV>
+
+    <H4>Options</H4>
+
+    <UL>
+      <LI><B>Image</B>: This is the path to the target binary image (ELF). Ghidra will try to fill
+      this in based on information gathered when the current program was imported. If the file
+      exists and is executable on the local machine, it will be filled in automatically. Otherwise,
+      it is up to you to locate it. <B>NOTE:</B> If you have patched the current program database,
+      these changes are <EM>not</EM> applied to the target. You can either 1) apply the same
+      patches to the target once it is running, or 2) export a patched copy of your image and
+      direct this launcher to run it.</LI>
+
+      <LI><B>Arguments</B>: These are the command-line arguments to pass into the target process.
+      These are passed as is to GDB's "<TT>set args ...</TT>" command.</LI>
+
+      <LI><B>Path to <TT>gdb</TT></B>: This is the command or path to GDB. We recommend version 13
+      or later. We require version 8 or later.</LI>
+
+      <LI><B>Run command</B>: This is the GDB command to actually launch the target. In most cases
+      this should be "<TT>starti,</TT>" since this will assure you an initial break and a chance to
+      enable your breakpoints.</LI>
+
+      <LI><B>Inferior TTY</B>: Depending on your target and/or personal preference, you may opt to
+      separate the debugger's and the target's I/O. If you check this box, the launcher will use
+      GDB's "<TT>set inferior-tty ...</TT>" command to direct the target's I/O to a second Terminal
+      window.</LI>
+    </UL>
+
+    <H3><A name="gdb_ssh"></A>GDB via SSH</H3>
+
+    <P>This works the same as the GDB launcher, but runs <TT>gdb</TT> on a remote system via
+    <TT>ssh</TT>. In contrast to the previous system, which used an SSH library for Java, this
+    launcher uses the <TT>ssh</TT> command on the local system. Thus, it should have broader
+    compatibility with remote systems, and it should use the same configuration files as you are
+    accustomed to. That said, we developed it using OpenSSH, so your experience will be best if
+    your copy understands the same command-line arguments. It will need to be capable of port
+    forwarding. The remote server must permit remote port forwarding (-R option) and terminal
+    allocation (<TT>-t</TT> option). You will also need to manually install the required Python
+    packages on the target host, comprising our plugin for GDB and its dependencies.</P>
+
+    <H4>Options</H4>
+
+    <UL>
+      <LI><B>Image</B>: This is the path to the target binary image (ELF) <EM>on the remote
+      system</EM>. Ghidra will try to fill this in based on information gathered when the current
+      program was imported; however, it cannot examine the <EM>remote</EM> system. If the file
+      exists and is executable on the <EM>local</EM> machine, it will be filled in automatically.
+      Whether or not it is filled automatically, please ensure the location is correct with respect
+      to the remote system. <B>NOTE:</B> If you have patched the current program database, these
+      changes are <EM>not</EM> applied to the target. You can either 1) apply the same patches to
+      the target once it is running, or 2) export a patched copy of your image, copy it to the
+      target system, and direct this launcher to run it.</LI>
+
+      <LI><B>Arguments</B>: This works the same as in GDB.</LI>
+
+      <LI><B>[User@]Host</B>: This is the host name of the target system, optionally including a
+      user name. This is passed as is to <TT>ssh</TT>, which may interpret it according to local
+      configuration.</LI>
+
+      <LI><B>Remote Trace RMI Port</B>: An available TCP port on the target system, which will
+      listen for GDB's Trace RMI connection and forward it back to Ghidra.</LI>
+
+      <LI><B>Extra <TT>ssh</TT> arguments</B>: These are extra arguments to pass to <TT>ssh</TT>.
+      They are inserted immediately after the <TT>ssh</TT> command but before the host name. Beware
+      that syntax errors may cause strange behavior, and that not all features may be compatible
+      with this launcher.</LI>
+
+      <LI><B>Path to <TT>gdb</TT></B>: This works the same as in GDB, but with respect to the
+      <EM>remote</EM> file system.</LI>
+
+      <LI><B>Run command</B>: This works the same as in GDB.</LI>
+
+      <LI>Note there is no option to create a second Terminal (TTY) for the target.</LI>
+    </UL>
+
+    <H3><A name="gdb_gdbserver_ssh"></A>GDB + <TT>gdbserver</TT> via SSH</H3>
+
+    <P>This works similarly to the GDB via SSH launcher, but instead of tunneling the Trace RMI
+    connection, tunnels the RSP (gdbserver) connection. There is actually a fairly elegant method
+    of doing this straight from within <TT>gdb</TT>, which is exactly what this launcher does:</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+target remote | ssh user@host gdbserver - /path/to/image
+</PRE>
+      </LI>
+    </UL>
+
+    <P>This has some advantages compared to running <TT>gdb</TT> on the remote target:</P>
+
+    <OL>
+      <LI>GDB may not be available on the remote target.</LI>
+
+      <LI>There is no need to install our plugin for GDB on the target.</LI>
+    </OL>
+
+    <P>But, it also has some drawbacks:</P>
+
+    <OL>
+      <LI><TT>gdbserver</TT> must be installed on the remote system, and the local <TT>gdb</TT>
+      must be compatible with it.</LI>
+
+      <LI>It may be slightly more annoying to map modules from the remote system, because of the
+      way GDB reports these modules.</LI>
+
+      <LI>The memory map may be absent. Though this is overcome by creating an entry for the entire
+      address space, if the map is of interest to your analysis, it may not be available.</LI>
+    </OL>
+
+    <H4>Options</H4>
+
+    <UL>
+      <LI><B>Image</B>: This works the same as in GDB via SSH.</LI>
+
+      <LI><B>Arguments</B>: This works the same as in GDB.</LI>
+
+      <LI><B>[User@]Host</B>: This works the same as in GDB via SSH.</LI>
+
+      <LI><B>Remote Trace RMI Port</B>: An available TCP port on the target system, which will
+      listen for GDB's Trace RMI connection and forward it back to Ghidra.</LI>
+
+      <LI><B>Extra <TT>ssh</TT> arguments</B>: This works the same as in GDB via SSH.</LI>
+
+      <LI><B>Path to <TT>gdbserver</TT></B>: This is the command or path to <TT>gdbserver</TT> with
+      respect to the <EM>remote</EM> file system.</LI>
+
+      <LI><B>Extra <TT>gdbserver</TT> arguments</B>: These are extra arguments to pass to
+      <TT>gdbserver</TT>. They are inserted immediately after <TT>gdbserver</TT> but before the
+      dash. Beware that syntax errors may cause strange behavior, and that not all features may be
+      compatible with this launcher.</LI>
+
+      <LI><B>Path to <TT>gdb</TT></B>: This works the same as in GDB, with respect to the
+      <EM>local</EM> file system.</LI>
+
+      <LI>Note there is no option to create a second Terminal (TTY) for the target.</LI>
+    </UL>
+
+    <H3><A name="gdb_qemu"></A>QEMU + GDB</H3>
+
+    <P>This launcher orchestrates a QEMU user-mode target and connects to it using our Python
+    plugin for GDB. You will almost certainly need the "multiarch" build of GDB, and by default,
+    the launcher will try to use <TT>gdb-multiarch</TT>. You must also install the appropriate
+    build of QEMU for your target architecture. Ghidra will inspect the current program and attempt
+    to map its language to the appropriate QEMU command, but this may fail, or be subtly
+    incorrect.</P>
+
+    <H4>Options</H4>
+
+    <UL>
+      <LI><B>Image</B>: This is the path to the target binary image (ELF). This works the same as
+      in GDB, but is passed to QEMU. This will also provide the name to GDB using its "<TT>file
+      ...</TT>" command.</LI>
+
+      <LI><B>Arguments</B>: These are the command-line arguments to pass into the target process.
+      These are passed as is on QEMU's command line.</LI>
+
+      <LI><B>Path to <TT>qemu</TT></B>: The command or path to QEMU.</LI>
+
+      <LI><B>QEMU Port</B>: An available TCP port for QEMU to listen on for GDB.</LI>
+
+      <LI><B>Extra <TT>qemu</TT> arguments</B>: Extra arguments to pass to <TT>qemu</TT>. These are
+      inserted immediately after the <TT>qemu</TT> command but before the target program and
+      arguments. Beware that syntax errors may cause strange behavior, and that not all features
+      may be compatible with this launcher.</LI>
+
+      <LI><B>Path to <TT>gdb</TT></B>: This works the same as in GDB, but defaults to
+      "gdb-multiarch."</LI>
+
+      <LI><B>QEMU TTY</B>: This works similarly as in GDB, but just runs QEMU in the second
+      Terminal window.</LI>
+    </UL>
+
+    <H3><A name="gdb_wine"></A>Wine + GDB</H3>
+
+    <P>This launchers runs <TT>wine</TT> in a <TT>gdb</TT> session on Linux and directs it to a
+    target Windows executable. There are other ways to rig a Windows target in GDB on Linux, but
+    this is the method we have chosen: You will need to install Wine on your system and locate the
+    actual <TT>wine</TT> executable. These are often in some library directory and named
+    "<TT>wine32</TT>" or "<TT>wine64</TT>." To find them, either examine the file list of the
+    installed package, or dissect the wrapper <TT>wine</TT> script, usually on your path:</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+less $(which wine)
+</PRE>
+      </LI>
+    </UL>
+
+    <P>The locations are usually given in variables at the top of the script, e.g.,
+    "<TT>/usr/lib/wine/wine64</TT>". One is for 64-bit Windows targets and another is for 32-bit
+    Windows targets. Unlike native Windows, Wine does not (yet) implement WoW64 (Windows on Windows
+    64). Instead, the 32-bit target is loaded using a 32-bit copy of Wine, and so is serviced by
+    Linux's 32-bit system calls. <FONT color="red"><B>NOTE:</B> Careful attention must be given to
+    select the correct <TT>wine</TT> executable for the target program's architecture!</FONT> Even
+    though the <TT>wine</TT> executable is smart enough to correct this mistake, it results in
+    calls to <TT>exec</TT>, which confuse this launcher. If GDB complains that it cannot place
+    breakpoints because of memory access, it is probably because of this mistake.</P>
+
+    <P>The launcher loads some additional support packages in our plugin for GDB, e.g., to scan the
+    memory map for PE files and amend the module list. Thus, Ghidra can display both Windows and
+    Linux modules, and map them to its program databases accordingly, despite GDB's inability to
+    process PE files. There are perhaps other configurations of GDB for Linux that can process ELFs
+    as well as PEs loaded by Wine, but they do not seem to be readily available in any popular
+    package repositories.</P>
+
+    <H4>Options</H4>
+
+    <UL>
+      <LI><B>Image</B>: This is the path to the target binary image (EXE). This works the same as
+      in GDB, but is passed to Wine via GDB's "<TT>set args ...</TT>". This will also provide the
+      name to GDB using its "<TT>file ...</TT>" command.</LI>
+
+      <LI><B>Arguments</B>: These are the command-line arguments to pass into the target process.
+      These are included in "<TT>set args ...</TT>".</LI>
+
+      <LI><B>Path to <TT>wine</TT> binary</B>: The path to wine for your target architecture. <FONT
+      color="red">See note above!</FONT></LI>
+
+      <LI><B>Path to <TT>gdb</TT></B>: This works the same as in GDB.</LI>
+
+      <LI><B>Inferior TTY</B>: This works the same as in GDB.</LI>
+    </UL>
+
+    <H3><A name="gdb_remote"></A>Remote GDB</H3>
+
+    <P>This launcher can target any TCP-based GDB stub that is compatible with a local copy of
+    <TT>gdb</TT>. Essentially, it just starts <TT>gdb</TT> and then enters</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+target remote [host]:[port]
+</PRE>
+      </LI>
+    </UL>
+
+    <P>into it. It is best to test this command outside of Ghidra to be sure everything is
+    compatible before using this launcher. This launcher does not require an image, nor does it
+    create your target. Thus, it can be used without a current program.</P>
+
+    <H4>Options</H4>
+
+    <UL>
+      <LI><B>Target</B>: The type of target. Either <TT>remote</TT> or <TT>remote-extended</TT>,
+      depending on the capabilities of the stub.</LI>
+
+      <LI><B>Host</B>: The host name of the target stub.</LI>
+
+      <LI><B>Port</B>: The TCP port of the target stub.</LI>
+
+      <LI><B>Architecture</B> (optional): If the stub does not describe its architecture to GDB,
+      you must set it before connecting. This is passed as is to "<TT>set arch ...</TT>"
+      immediately before the "<TT>target ...</TT>" command. Enter "<TT>set arch</TT>" into a GDB
+      session outside of Ghidra to see the list of available options in your configuration. You may
+      want to use <TT>gdb-multiarch</TT>.</LI>
+
+      <LI><B>Path to <TT>gdb</TT></B>: This works the same as in GDB, though you may want to use
+      <TT>gdb-multiarch</TT>.</LI>
+    </UL>
+
+    <H3><A name="gdb_raw"></A>Raw GDB</H3>
+
+    <P>This is hardly a launcher at all. It simply starts <TT>gdb</TT>, gets it connected to
+    Ghidra, and starts a trace. This allows you to create or connect to whatever target your copy
+    of GDB supports. While perhaps the most flexible, it is also the least convenient. It requires
+    no image, so it can be used without a current program. That also means it will make no effort
+    to ensure your target maps to the current program, if you happen to have one. You may have to
+    do it manually.</P>
+
+    <H4>Options</H4>
+
+    <UL>
+      <LI><B>Path to <TT>gdb</TT></B>: This works the same as in GDB.</LI>
+
+      <LI><B>Architecture</B>: Because the trace is created before the target, you must specify the
+      target's architecture.</LI>
+
+      <LI style="list-style: none">This is passed as is to "<TT>set arch ...</TT>" immediately
+      before the "<TT>target ...</TT>" command. Enter "<TT>set arch</TT>" into a GDB session
+      outside of Ghidra to see the list of available options in your configuration.</LI>
+    </UL>
+
+    <H2>Stock LLDB Launchers</H2>
+
+    <P>The following launchers based on the LLDB Debugger are included out of the box:</P>
+
+    <H3><A name="lldb"></A>LLDB</H3>
+
+    <P>This launcher is a Python plugin for LLDB, and so is well suited for debugging user-space
+    targets on a variety of platforms. It is the <EM>de facto</EM> debugger for macOS. It can be
+    obtained by installing XCode from the App Store. Though it may require a bit more careful
+    configuration, it can also be obtained from other repositories like <TT>brew</TT>.</P>
+
+    <P>Once running, you are presented with LLDB's command-line interface in Ghidra's Terminal.
+    This is the <EM>bona fide</EM> LLDB command-line interface, so it has all the functionality you
+    would expect. If you command LLDB from this shell, the plugin will keep Ghidra in sync. The
+    terminal can be used to interact with the target application when it is running. The plugin
+    provides an additional set of commands for managing the connection to Ghidra, as well as
+    controlling trace synchronization. These are all in the "<TT>ghidra</TT>" category. You can use
+    tab completion to enumerate the available commands and LLDB's "<TT>help</TT>" command to
+    examine their documentation.</P>
+
+    <H4>Options</H4>
+
+    <UL>
+      <LI><B>Image</B>: This is the path to the target binary image (executable). Ghidra will try
+      to fill this in based on information gathered when the current program was imported. If the
+      file exists and is executable on the local machine, it will be filled in automatically.
+      Otherwise, it is up to you to locate it. <B>NOTE:</B> If you have patched the current program
+      database, these changes are <EM>not</EM> applied to the target. You can either 1) apply the
+      same patches to the target once it is running, or 2) export a patched copy of your image and
+      direct this launcher to run it.</LI>
+
+      <LI><B>Arguments</B>: These are the command-line arguments to pass into the target. These are
+      passed as is to LLDB's "<TT>settings set target.run-args ...</TT>" command.</LI>
+
+      <LI><B>Path to <TT>lldb</TT></B>: This is the command or path to LLDB. We recommend version
+      15 or later.</LI>
+
+      <LI><B>Run command</B>: This is the LLDB command to actually launch the target. In most cases
+      this should include "<TT>--stop-at-entry</TT>", since this will assure you an initial break
+      and a chance to enable your breakpoints.</LI>
+
+      <LI><B>Target TTY</B>: Depending on your target and/or personal preference, you may opt to
+      separate the debugger's and the target's I/O. If you check this box, the launcher will use
+      LLDB's "<TT>setting set target.output-path ...</TT>" command (and similar for the input) to
+      direct the target's I/O to a second Terminal window.</LI>
+    </UL>
+
+    <H3><A name="lldb_remote"></A>Remote LLDB</H3>
+
+    <P>This launcher can target any TCP-based GDB stub that is compatible with a local copy of
+    <TT>lldb</TT>. Essentially, it just starts <TT>lldb</TT> and then enters</P>
+
+    <UL style="list-style-type: none">
+      <LI>
+<PRE>
+gdb-remote [host]:[port]
+</PRE>
+      </LI>
+    </UL>
+
+    <P>into it. It is best to test this command outside of Ghidra to be sure everything is
+    compatible before using this launcher. This launcher does not require an image, nor does it
+    create your target. Thus, it can be used without a current program.</P>
+
+    <H4>Options</H4>
+
+    <UL>
+      <LI><B>Host</B>: The host name of the target stub.</LI>
+
+      <LI><B>Port</B>: The TCP port of the target stub.</LI>
+
+      <LI><B>Architecture</B> (optional): If the stub does not describe its architecture to GDB,
+      you must set it before connecting. This is passed as is to "<TT>setting set
+      target.default-arch ...</TT>" immediately before the "<TT>gdb-remote ...</TT>" command.</LI>
+
+      <LI><B>Path to <TT>llddb</TT></B>: This works the same as in LLDB.</LI>
+    </UL>
+
+    <H2>Stock Windows Debugger (WinDbg) Launchers</H2>
+
+    <P>The following launchers based on Microsoft's <TT>dbgeng.dll</TT> are included out of the
+    box:</P>
+
+    <H3><A name="dbgeng"></A>dbgeng</H3>
+
+    <P>This launcher is actually a Python implementation of a console debugger based on
+    <TT>dbgeng.dll</TT>. This DLL represents the Microsoft Windows Debugger engine, and so is best
+    suited for debugging Windows user-space targets. Windows kernel targets are not yet supported.
+    This DLL also backs WinDbg and several other debuggers on Windows. By default, the launcher
+    will search for this DLL in an installation of the Windows Debugging Kits version 10. If it
+    does not find it there, it will fall back to the one provided with Windows, which is
+    substantially less capable. Installing WinDbg is highly recommended. Please note on some system
+    configurations, one of the debugger's dependencies <TT>dbghelp.dll</TT> may get loaded from the
+    system directory instead of from the WinDbg installation, usually because a security product
+    has pre-loaded it into the Python process. You might work around this by copying the affected
+    DLLs from your WinDbg installation into your Python installation.</P>
+
+    <P>Once running, you are presented with a command-line interface in Ghidra's Terminal. This CLI
+    accepts your usual WinDbg (kd) commands. You can escape from this CLI and enter a Python 3 REPL
+    by entering "<TT>.exit</TT>". This is not an actual kd command, but our implementation
+    understands this to mean exit the kd REPL. From the Python 3 REPL, you can access the
+    underlying Python-based API <TT>pybag</TT>. This is an uncommon need, but may be useful for
+    diagnostics and/or workarounds. To re-enter the kd REPL, enter "<TT>repl()</TT>".
+    Alternatively, if you are trying to quit, but typed "<TT>.exit</TT>", just type
+    "<TT>quit()</TT>" to terminate the session.</P>
+
+    <H4>Options</H4>
+
+    <UL>
+      <LI><B>Path to <TT>python</TT></B>: This is the command or path to the Python interpreter. It
+      must be version 3. Python 2 is not supported.</LI>
+
+      <LI><B>Image</B>: This is the path to the target binary image (EXE file). Ghidra will try to
+      fill this in based on information gathered when the current program was imported. If the file
+      exists and is executable on the local machine, it will be filled in automatically. Otherwise,
+      it is up to you to locate it. <B>NOTE:</B> If you have patched the current program database,
+      these changes are <EM>not</EM> applied to the target. You can either 1) apply the same
+      patches to the target once it is running, or 2) export a patched copy of your image and
+      direct this launcher to run it.</LI>
+
+      <LI><B>Arguments</B>: These are the command-line arguments to pass into the target process.
+      These are passed as is into WinDbg's "<TT>CreateProcess</TT>" function.</LI>
+
+      <LI><B>Use <TT>dbgmodel</TT></B>: If <TT>dbgmodel.dll</TT> is available on the system, this
+      launcher will use it to populate the trace's object model. Without that DLL, the launcher
+      will invent its own model, roughly approximating the same, using just the information
+      available from <TT>dbgeng.dll</TT>. Disabling this option will prevent the launcher from
+      using <TT>dbgmodel.dll</TT>, even when it is available.</LI>
+
+      <LI><B>Path to <TT>dbgeng</TT></B>: By default, the launcher allows the underlying
+      <TT>pybag</TT> package to locate the Windows Debugger DLLs. This is typically found by
+      examining the registry for a Windows Kits 10 installation. Otherwise, it may check its
+      typical installation directory before falling back to those in the Windows system directory.
+      This option allows you to override this search. For example, if you have installed WinDbg
+      Preview or later from the Microsoft Store and wish to use its DLLs, you will need to fill in
+      this option.</LI>
+    </UL>
+
+    <H3><A name="dbgeng_ttd"></A>TTD (Time-Travel Debugging)</H3>
+
+    <P>This is a nascent extension to our launcher for the Windows Debugger. The launcher itself
+    functions well, but lacks full integration. It is not yet properly packaged for the Ghidra
+    distribution, but is available in development environments. It also needs some additional
+    protocol support, namely to integrate its notion of time travel with Ghidra's notion. For the
+    time being, we map our time specifications as follows. MS TTD uses a tuple for its time specs,
+    both displayed in hexadecimal, e.g., "B5:1A". The first is the "major," which we believe counts
+    the events that warrant a snapshot. The second is the "minor," which we believe counts
+    instructions executed since the major event. Thus, we would like to map the major to a Ghidra
+    trace snapshot and the minor to steps of p-code emulation. For example, the "B5:1A" notation
+    would map to "181:26". It should be no surprise the notations are similar, since both MS TTD
+    and Ghidra (as well as several other "timeless" debuggers) use a snapshot-replay strategy to
+    recover past machine states. However, we have not yet worked out how to have Ghidra cooperate
+    with a back end in the replay part of this strategy. Currently, Ghidra will always apply p-code
+    emulation, despite having a perfectly good and performant back end available. So, for the time
+    being, we multiply the major number by 1000, thus reserving that many Ghidra snapshots between
+    major events for MS TTD minor steps. Thus, the notation "B5:1A" will actually map to "181026",
+    that is snapshot 181026 with no steps of p-code emulation. This hack will fall short if you
+    visit a time where the minor number exceeds 999.</P>
+
+    <P>Furthermore, if you use the Ghidra Debugger UI to visit a past snapshot, the back end is not
+    yet informed of your intent. You will probably only see stale records of the machine state.
+    Instead, please use the kd commands from the Terminal to navigate through time. The back end
+    (MS TTD) will perform the replay, record the snapshot, and command Ghidra to navigate
+    there.</P>
+
+    <H4>Options</H4>
+
+    <P>This launcher has the same options as the WinDbg launcher, except that the DLL path must
+    contain <TT>dbgmodel.dll</TT> and the scripts that implement TTD. These are most easily
+    obtained by installing WinDbg Preview or later.</P>
+
+    <H2>Development and Diagnostic Launchers</H2>
+
+    <P>We currently provide one launcher for Trace RMI API exploration and development:</P>
+
+    <H3><A name="python_raw"></A>Raw Python</H3>
+
+    <P>This launcher runs Python in a Terminal window, connects a Trace RMI client back to Ghidra,
+    then starts a blank trace. Once running, it presents the Python interpreter, with the
+    <TT>ghidratrace</TT> and <TT>ghidratrace.client</TT> packages imported into the local
+    namespace. Thus, a developer can explore the API, invoke methods, and observer how Ghidra
+    reacts.</P>
+
+    <H4>Options</H4>
+
+    <UL>
+      <LI><B>Path to <TT>python</TT></B>: This is the command or path to <TT>python</TT> version 3.
+      Python 2 is not supported.</LI>
+
+      <LI><B>Ghidra Language</B>: The LanguageID for the blank trace.</LI>
+
+      <LI><B>Ghidra Compiler</B>: The CompilerSpecID for the blank trace.</LI>
+    </UL>
+  </BODY>
+</HTML>

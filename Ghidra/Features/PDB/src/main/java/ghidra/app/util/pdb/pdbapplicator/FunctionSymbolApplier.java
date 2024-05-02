@@ -35,11 +35,12 @@ import ghidra.util.task.TaskMonitor;
  * Applier for {@link AbstractProcedureStartMsSymbol} and  {@link AbstractThunkMsSymbol} symbols.
  */
 public class FunctionSymbolApplier extends AbstractBlockContextApplier
-		implements BlockNestingSymbolApplier {
+		implements BlockNestingSymbolApplier, DisassembleableAddressSymbolApplier {
+
+	private Function function = null;
 
 	// Do not trust any of these variables... this is work in progress (possibly getting
 	//  torn up), but non-functioning code in other classes or this class still depend on these
-	private Function function_x = null;
 	private long specifiedFrameSize_x = 0;
 	private long currentFrameSize_x = 0;
 
@@ -69,6 +70,11 @@ public class FunctionSymbolApplier extends AbstractBlockContextApplier
 		processSymbol(iter);
 	}
 
+	@Override
+	public Address getAddressForDisassembly() {
+		return applicator.getAddress(symbol);
+	}
+
 	private void processSymbol(MsSymbolIterator iter)
 			throws CancelledException, PdbException {
 
@@ -87,16 +93,10 @@ public class FunctionSymbolApplier extends AbstractBlockContextApplier
 			return;
 		}
 
-		Function function = applicator.getExistingOrCreateOneByteFunction(address);
+		function = applicator.getExistingOrCreateOneByteFunction(address);
 		if (function == null) {
 			return;
 		}
-
-		// Collecting all addresses from all functions to do one large bulk disassembly of the
-		//  complete AddressSet of function addresses.  We could consider removing this logic
-		//  of collecting them all for bulk disassembly and do individual disassembly at the
-		//  same deferred point in time.
-		applicator.scheduleDisassembly(address);
 
 		boolean succeededSetFunctionSignature = setFunctionDefinition(function, address);
 
@@ -132,7 +132,7 @@ public class FunctionSymbolApplier extends AbstractBlockContextApplier
 
 		function.setNoReturn(isNonReturning());
 
-		AbstractMsType fType = applicator.getPdb().getTypeRecord(typeRecordNumber);
+		AbstractMsType fType = applicator.getTypeRecord(typeRecordNumber);
 		MsTypeApplier applier = applicator.getTypeApplier(fType);
 		if (!(applier instanceof AbstractFunctionTypeApplier)) {
 			applicator.appendLogMsg("Error: Failed to resolve datatype RecordNumber " +
@@ -178,6 +178,15 @@ public class FunctionSymbolApplier extends AbstractBlockContextApplier
 		String name = symbol.getName();
 		Address address = applicator.getAddress(symbol);
 
+		function = applicator.getExistingFunction(address);
+		if (function == null) {
+			// Skip all interim symbols records
+			if (!processEndSymbol(symbol.getEndPointer(), iter)) {
+				applicator.appendLogMsg("PDB: Failed to process function at address " + address);
+			}
+			return;
+		}
+
 		long start = getStartOffset();
 		long end = getEndOffset();
 		Address blockAddress = address.add(start);
@@ -191,7 +200,7 @@ public class FunctionSymbolApplier extends AbstractBlockContextApplier
 	 * @return the Function
 	 */
 	Function getFunction() {
-		return function_x;
+		return function;
 	}
 
 	/**
@@ -268,21 +277,21 @@ public class FunctionSymbolApplier extends AbstractBlockContextApplier
 	 */
 	private int getFrameBaseOffset(TaskMonitor monitor) throws CancelledException {
 
-		int retAddrSize = function_x.getProgram().getDefaultPointerSize();
+		int retAddrSize = function.getProgram().getDefaultPointerSize();
 
 		if (retAddrSize != 8) {
 			// don't do this for 32 bit.
 			return -retAddrSize;  // 32 bit has a -4 byte offset
 		}
 
-		Register frameReg = function_x.getProgram().getCompilerSpec().getStackPointer();
-		Address entryAddr = function_x.getEntryPoint();
+		Register frameReg = function.getProgram().getCompilerSpec().getStackPointer();
+		Address entryAddr = function.getEntryPoint();
 		AddressSet scopeSet = new AddressSet();
 		scopeSet.addRange(entryAddr, entryAddr.add(64));
 		CallDepthChangeInfo valueChange =
-			new CallDepthChangeInfo(function_x, scopeSet, frameReg, monitor);
+			new CallDepthChangeInfo(function, scopeSet, frameReg, monitor);
 		InstructionIterator instructions =
-			function_x.getProgram().getListing().getInstructions(scopeSet, true);
+			function.getProgram().getListing().getInstructions(scopeSet, true);
 		int max = 0;
 		while (instructions.hasNext()) {
 			monitor.checkCancelled();

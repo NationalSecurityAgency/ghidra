@@ -485,7 +485,7 @@ public class GnuDemanglerParser {
 		//
 		setNameAndNamespace(function, simpleName);
 
-		for (DemangledDataType parameter : signatureParts.getParameters()) {
+		for (DemangledParameter parameter : signatureParts.getParameters()) {
 			function.addParameter(parameter);
 		}
 
@@ -630,9 +630,9 @@ public class GnuDemanglerParser {
 	 * Reason being, you need to take into account nested templates
 	 * and function pointers.
 	 */
-	private List<DemangledDataType> parseParameters(String parameterString) {
+	private List<DemangledParameter> parseParameters(String parameterString) {
 		List<String> parameterStrings = tokenizeParameters(parameterString);
-		List<DemangledDataType> parameters = convertIntoParameters(parameterStrings);
+		List<DemangledParameter> parameters = convertIntoParameters(parameterStrings);
 		return parameters;
 	}
 
@@ -735,12 +735,12 @@ public class GnuDemanglerParser {
 	 * This method converts each parameter string into
 	 * actual DemangledDataType objects.
 	 */
-	private List<DemangledDataType> convertIntoParameters(List<String> parameterStrings) {
-		List<DemangledDataType> parameters = new ArrayList<>();
+	private List<DemangledParameter> convertIntoParameters(List<String> parameterStrings) {
+		List<DemangledParameter> parameters = new ArrayList<>();
 
 		for (String parameter : parameterStrings) {
 			DemangledDataType dt = parseParameter(parameter);
-			parameters.add(dt);
+			parameters.add(new DemangledParameter(dt));
 		}
 
 		return parameters;
@@ -1311,10 +1311,10 @@ public class GnuDemanglerParser {
 			contents = string.substring(1, string.length() - 1);
 		}
 
-		List<DemangledDataType> parameters = parseParameters(contents);
+		List<DemangledParameter> parameters = parseParameters(contents);
 		DemangledTemplate template = new DemangledTemplate();
-		for (DemangledDataType parameter : parameters) {
-			template.addParameter(parameter);
+		for (DemangledParameter parameter : parameters) {
+			template.addParameter(parameter.getType());
 		}
 		return template;
 	}
@@ -1399,16 +1399,16 @@ public class GnuDemanglerParser {
 		return dfp;
 	}
 
-	private DemangledFunctionPointer createFunctionPointer(String paramerterString,
+	private DemangledFunctionPointer createFunctionPointer(String parameterString,
 			String returnType) {
 
-		List<DemangledDataType> parameters = parseParameters(paramerterString);
+		List<DemangledParameter> parameters = parseParameters(parameterString);
 
 		DemangledFunctionPointer dfp = new DemangledFunctionPointer(mangledSource, demangledSource);
 		DemangledDataType returnDataType = parseReturnType(returnType);
 		dfp.setReturnType(returnDataType);
-		for (DemangledDataType parameter : parameters) {
-			dfp.addParameter(parameter);
+		for (DemangledParameter parameter : parameters) {
+			dfp.addParameter(parameter.getType());
 		}
 		return dfp;
 	}
@@ -1889,8 +1889,8 @@ public class GnuDemanglerParser {
 			// operator itself could be in a class namespace
 			setNameAndNamespace(function, operatorText);
 
-			List<DemangledDataType> parameters = parseParameters(parametersText);
-			for (DemangledDataType parameter : parameters) {
+			List<DemangledParameter> parameters = parseParameters(parametersText);
+			for (DemangledParameter parameter : parameters) {
 				function.addParameter(parameter);
 			}
 
@@ -2029,7 +2029,7 @@ public class GnuDemanglerParser {
 		private String name;
 		private String rawParameterPrefix;
 
-		private List<DemangledDataType> parameters;
+		private List<DemangledParameter> parameters;
 
 		FunctionSignatureParts(String signatureString) {
 
@@ -2077,7 +2077,7 @@ public class GnuDemanglerParser {
 			return isFunction;
 		}
 
-		List<DemangledDataType> getParameters() {
+		List<DemangledParameter> getParameters() {
 			return parameters;
 		}
 

@@ -149,9 +149,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 
 	public static Window getWindowByTitleContaining(Window parentWindow, String text) {
 		Set<Window> winList = getWindows(parentWindow);
-		Iterator<Window> iter = winList.iterator();
-		while (iter.hasNext()) {
-			Window w = iter.next();
+		for (Window w : winList) {
 			if (!w.isShowing()) {
 				continue;
 			}
@@ -169,9 +167,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 
 	protected static Window getWindowByTitle(Window parentWindow, String title) {
 		Set<Window> winList = getWindows(parentWindow);
-		Iterator<Window> iter = winList.iterator();
-		while (iter.hasNext()) {
-			Window w = iter.next();
+		for (Window w : winList) {
 			if (!w.isShowing()) {
 				continue;
 			}
@@ -212,9 +208,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 		while (totalTime <= timeout) {
 
 			Set<Window> winList = getAllWindows();
-			Iterator<Window> it = winList.iterator();
-			while (it.hasNext()) {
-				Window w = it.next();
+			for (Window w : winList) {
 				if (windowClass.isAssignableFrom(w.getClass()) && w.isShowing()) {
 					return w;
 				}
@@ -499,9 +493,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 		while (totalTime <= DEFAULT_WINDOW_TIMEOUT) {
 
 			Set<Window> winList = getAllWindows();
-			Iterator<Window> iter = winList.iterator();
-			while (iter.hasNext()) {
-				Window w = iter.next();
+			for (Window w : winList) {
 				if ((w instanceof JDialog) && w.isShowing()) {
 					String windowTitle = getTitleForWindow(w);
 					if (title.equals(windowTitle)) {
@@ -534,9 +526,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 		while (totalTime <= DEFAULT_WAIT_TIMEOUT) {
 
 			Set<Window> winList = getWindows(window);
-			Iterator<Window> iter = winList.iterator();
-			while (iter.hasNext()) {
-				Window w = iter.next();
+			for (Window w : winList) {
 				if ((w instanceof JDialog) && w.isShowing()) {
 					String windowTitle = getTitleForWindow(w);
 					if (title.equals(windowTitle)) {
@@ -637,9 +627,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 	private static <T extends DialogComponentProvider> T getDialogComponent(Window parentWindow,
 			Class<T> ghidraClass) {
 		Set<Window> winList = getWindows(parentWindow);
-		Iterator<Window> iter = winList.iterator();
-		while (iter.hasNext()) {
-			Window w = iter.next();
+		for (Window w : winList) {
 			DialogComponentProvider dialogComponentProvider =
 				getDialogComponentProvider(w, ghidraClass);
 			if (dialogComponentProvider != null) {
@@ -953,9 +941,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 				// So, just ignore the exception.  Client code that *really* wants all windows,
 				// like that which waits for windows, should be calling this method repeatedly anyway.
 			}
-			Iterator<Window> iter = dockableWinList.iterator();
-			while (iter.hasNext()) {
-				Window w = iter.next();
+			for (Window w : dockableWinList) {
 				windowSet.add(w);
 				findOwnedWindows(w, windowSet);
 			}
@@ -1123,9 +1109,8 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 	public static Set<DockingActionIf> getActionsByOwnerAndName(Tool tool, String owner,
 			String name) {
 		Set<DockingActionIf> ownerActions = tool.getDockingActionsByOwnerName(owner);
-		return ownerActions.stream()
-				.filter(action -> action.getName().equals(name))
-				.collect(Collectors.toSet());
+		return ownerActions.stream().filter(action -> action.getName().equals(name)).collect(
+			Collectors.toSet());
 	}
 
 	/**
@@ -1283,7 +1268,7 @@ public abstract class AbstractDockingTest extends AbstractGuiTest {
 
 		}, waitForCompletion);
 
-		if (!SwingUtilities.isEventDispatchThread()) {
+		if (!Swing.isSwingThread()) {
 			waitForSwing();
 		}
 	}

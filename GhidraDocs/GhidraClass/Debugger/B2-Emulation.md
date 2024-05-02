@@ -51,9 +51,9 @@ In this tutorial, we will examine the command-line argument parser in `termmines
 1. If you have not already, do a bit of static analysis to identify the argument parsing function.
    It should be the first function called by `main`.
 1. Use a breakpoint to interrupt the live target when it enters this function.
-1. Change the "Control mode" drop-down to "Control Emulator."
-1. Click ![step into button](images/stepinto.png) Step Into to step the emulator forward.
-1. Click ![skip over button](images/skipover.png) Skip Over and ![step back button](images/stepback.png) Step Back to experiment with different execution paths.
+1. Change the **Control mode** drop-down to **Control Emulator**.
+1. Click ![step into button](images/stepinto.png) **Step Into** to step the emulator forward.
+1. Click ![skip over button](images/skipover.png) **Skip Over** and ![step back button](images/stepback.png) **Step Back** to experiment with different execution paths.
 
 About those two new actions:
 
@@ -62,20 +62,20 @@ About those two new actions:
 * ![step back button](images/stepback.png) **Step Back**:
   Step the current thread backward one instruction, or undo an emulated skip or patch.
 
-Try to get the program counter onto the call to `exit(-1)` using only those three step buttons.
+**Quick Exercise**: Try to get the program counter onto the call to `exit(-1)` using only those three step buttons.
 
 You should see things behave more or less the same as they would if it were the live target.
-The main exceptions are the Objects and Interpreter windows.
-Those always display the state of the live target, as they are unaware of the emulator, and their sole purpose is to interact with the live target.
-You can make changes to the emulator's machine state, set breakpoints, etc., just as you would in "Control Target" mode.
-**NOTE**: You may see Ghidra interact with the target, despite being in "Control Emulator" mode, because Ghidra lazily initializes the emulator's state.
+The main exception is the Terminal window.
+It always displays the state of the live target, as it is unaware of the emulator.
+You can make changes to the emulator's machine state, set breakpoints, etc., just as you would in **Control Target** mode.
+**NOTE**: You may see Ghidra interact with the target, despite being in **Control Emulator** mode, because Ghidra lazily initializes the emulator's state.
 If the emulated target reads a variable that Ghidra has not yet captured into the current snapshot, Ghidra will read that variable from the live target, capture it, and provide its value to the emulator.
 
 ### Stepping Schedules
 
 If you had not noticed before, the subtitle of the Threads window gives the current snapshot number.
 If you have stepped in the emulator, it will also contain the sequence of steps emulated.
-Recall the *time* element of the Debugger's "coordinates."
+Recall the *time* element of the Debugger's *coordinates*.
 (See the [Navigation](A5-Navigation.md) module if you need a refresher.)
 The time element, called the *schedule*, consists of both the current snapshot and the sequence of steps to emulate.
 The subtitle displays that schedule.
@@ -106,14 +106,15 @@ Here are some examples:
 * `3:{RAX=0x1234};10` &mdash; Start at snapshot 3. Override RAX with 0x1234, then step 10 instructions.
 
 The explication of schedules allows Ghidra to cache emulated machine states and manage its emulators internally.
-You can have Ghidra recall or generate the machine state for any schedule by pressing **Ctrl-G** or using **Debugger &rarr; Go To Time** in the menus.
+You can have Ghidra recall or generate the machine state for any schedule by pressing **`CTRL`-`G`** or using **Debugger &rarr; Go To Time** in the menus.
 
 Assuming you got the program counter onto `exit(-1)` earlier:
 
 1. Write down the current schedule.
-1. Change back to "Control Target" mode.
+1. Change back to **Control Target** mode.
    Ghidra will navigate back to the current snapshot, so PC will match the live target.
-1. Press **Ctrl-G** and type or paste the schedule in, and click OK.
+1. Change back (again) to **Control Emulator** mode.
+1. Press **`CTRL`-`G`** and type or paste the schedule in, and click **OK**.
    The program counter should be restored to `exit(-1)`.
 
 **NOTE**: The thread IDs used in schedules are internal to the current trace database.
@@ -124,9 +125,9 @@ Most likely, they *do not* correspond to the thread IDs assigned by the back-end
 The board setup routine in `termmines` first places mines randomly and then, for each empty cell, counts the number of neighboring cells with mines.
 In this exercise, you will use extrapolation to experiment and devise a patch to demonstrate all possible counts of neighboring mines:
 
-1. Run `termmines` in a proper terminal and attach to it.
+1. Launch `termmines` using GDB with **Inferior TTY** enabled.
 1. Use a breakpoint to trap it at the point where it has placed mines, but before it has counted the neighboring cells with mines.
-   (Use **Shift-R** in `termmines` to reset the game.)
+   (Use **`SHIFT`-`R`** in `termmines` to reset the game.)
 1. Use the emulator to extrapolate forward and begin understanding how the algorithm works.
 1. Move the mines by patching the board to demonstrate every number of neighboring mines.
    That is, when the board is revealed at the end of the game, all the numbers 1 through 8 should appear somewhere.
@@ -172,33 +173,33 @@ This spares the loader from having to copy a potentially large program image int
 In general, you should refer to the Static listing when following the program counter.
 If you see contents in the Dynamic listing following the program counter, then you are probably dealing with self-modifying code.
 
-**NOTE**: If you prefer to see the Dynamic listing initialized with the program image, you may select **Load Emulator from Program** from the Auto-Read drop-down button in the Dynamic Listing.
+**NOTE**: If you prefer to see the Dynamic listing initialized with the program image, you may select **Load Emulator from Program** from the **Auto-Read** drop-down button in the Dynamic Listing.
 The loading is still done lazily as each page is viewed in the listing pane.
 You will want to change this back when debugging a live target!
 
 Because we can easily step back and forth as well as navigate to arbitrary points in time, emulation should feel relatively free of risk; however, the point about stubbing dependencies will become apparent.
 If you feel the need to start over, there are two methods:
 First, you can end the emulation session and restart it.
-To end the session, in the Threads panel, right-click the "Emulate termmines" tab and select Close.
+To end the session, close the "Emulate termmines" tab in the Dynamic Listing window.
 You can then restart by right-clicking the first instruction as before.
-Second, you can use **Ctrl-G** to go to snapshot 0.
+Second, you can use **`CTRL`-`G`** to go to snapshot 0.
 This method is not as clean as the first, because the trace will retain its scratch snapshots.
 
-Press ![resume button](images/resume.png) Resume to let the emulator run until it crashes.
+Press ![resume button](images/resume.png) **Resume** to let the emulator run until it crashes.
 It should crash pretty quickly and without much ceremony:
 
 ![Listing after crashing](images/Emulation_ListingAfterResume.png)
 
-In this case, the clearest indication that something has gone wrong is in the top-right of the Dynamic listing.
+In this case, the clearest indication that something has gone wrong is in the top-right of the Dynamic Listing.
 Recall that the location label is displayed in red when the program counter points outside of mapped memory.
 Presumably, the crash was caused by the instruction to be executed next.
-To get details about the error, press ![step into button](images/stepinto.png) Step Into.
+To get details about the error, press ![step into button](images/stepinto.png) **Step Into**.
 This should display an error dialog with a full trace of the crash.
 In this case, it should be an instruction decode error.
 When the emulator reads uninitialized memory, it will get stale 0s; however, when the emulator tries to *execute* uninitialized memory, it will crash.
 Most likely, the target called an external function, causing the program counter to land in the fake `EXTERNAL` block.
 
-To diagnose the crash, press ![step back button](images/stepback.png) Step Back.
+To diagnose the crash, press ![step back button](images/stepback.png) **Step Back**.
 After a couple steps back, you should be able to confirm our hypothesis: we got here through a call to the external function `printf`.
 You can continue stepping back until you find the decision point that took us down this path.
 You should notice it was because `param_1` was 0.
@@ -233,17 +234,17 @@ The advantage to patching the trace is that once you have completed your experim
 The disadvantage is that you will need to remember to invalidate the emulator cache any time you change the initial state.
 For this tutorial, we will perform the patches in the emulator.
 
-**NOTE**: If you wish to try patching the trace, then change to "Control Trace" mode and use the "Navigate backward one snapshot" control action that appears, so that you are patching the initial state, and not a scratch snapshot.
+**NOTE**: If you wish to try patching the trace, then change to **Control Trace** mode and use the **Navigate backward one snapshot** control action that appears, so that you are patching the initial state, and not a scratch snapshot.
 Scratch snapshots are ephemeral snapshots in the trace used to display emulated state.
 Changes to these snapshots will affect the display, but will not affect subsequent emulation.
-If your current schedule includes any steps, then "Control Trace" is patching a scratch snapshot.
+If your current schedule includes any steps, then **Control Trace** is patching a scratch snapshot.
 
 Now, we will manually "allocate" memory for `argv`.
 Luckily, Ghidra allocated 16K of stack space for us!
 The target function should not need a full 16K, so we will allocate the lowest addresses of the stack region for our command-line arguments.
 If you prefer, you may use the **Add Region** action in the Regions window to manually fabricate a heap region, instead.
 In the Regions window, filter for "stack" and take note of the start address, e.g., `00001000`.
-We will use the Watches window to perform our patching, though we will also use the Dynamic listing to double check.
+We will use the Watches window to perform our patching, though we will also use the Dynamic Listing to double check.
 Add the following watches:
 
 * `RSP` &mdash; to confirm the stack pointer is far from `argv`.
@@ -258,7 +259,7 @@ First, if the binary actually implements many commands, like `busybox` does, the
 Second, if the binary needs to print usage information, it may like to echo back the actual invocation.
 It is possible we may only need to initialize `argc`, since the parser may not actually *use* the value of `argv[0]`.
 
-Use the Watches window to set `RDI` to 1, then click ![resume button](images/resume.png) Resume.
+Use the Watches window to set `RDI` to 1, then click ![resume button](images/resume.png) **Resume**.
 Like before, the emulator will crash, but this time you should see "pc = 00000000" in red.
 This probably indicates success.
 In the Threads window, you should see a schedule similar to `0:t0-{RDI=0x1);t0-16`.
@@ -271,7 +272,7 @@ Step backward once to confirm this hypothesis.
 For this tutorial, we will set the skill level to Advanced by patching in actual command-line arguments.
 This continues our lesson in state initialization, but we may also need to stub some external calls, e.g., to `strnlen` and `strcmp`.
 We will need to pass in `termmines -s Advanced`, which is three arguments.
-Use **Ctrl-G** to go back to snapshot 0, and add the following watches:
+Use **`CTRL`-`G`** to go back to snapshot 0, and add the following watches:
 
 * `*:8 (RSI + 0)` &mdash; the address of the first argument, i.e., `argv[0]`.
 * `*:30 (*:8 (RSI + 0))` with type `TerminatedCString` &mdash; at most 30 characters of the first argument.
@@ -289,16 +290,16 @@ That was determined by the value of `RSI`, which is essentially telling us we ne
 We can confirm `RSP` is at the upper end of the stack region, so we allocate `argv` at `00001000`.
 To do that, set the value of `RSI` to `0x1000`.
 You should see the Address column update for some other watches.
-You can double-click any of those addresses to go there in the Dynamic listing.
+You can double-click any of those addresses to go there in the Dynamic Listing.
 
-**NOTE**: You *do not have* to allocate things in a listed region, but if you want to see those things in the Dynamic listing, it is easiest if you allocate them in a listed region.
+**NOTE**: You *do not have* to allocate things in a listed region, but if you want to see those things in the Dynamic Listing, it is easiest if you allocate them in a listed region.
 
 Now, we need to allocate space for each argument's string.
 To ensure we do not collide with the space we have already allocated for `argv`, we should place a data unit in the Dynamic listing.
-Double-click the Address `00001000` in the Watches window to go to that address in the Dynamic listing.
-Press **P** then **[** (left square bracket) to place a 3-pointer array at that address.
+Double-click the Address `00001000` in the Watches window to go to that address in the Dynamic Listing.
+Press **`P`** then **`[`** (left square bracket) to place a 3-pointer array at that address.
 We can now see the next available byte is at `00001018`.
-**NOTE**: You might set the Dynamic listing to **Do Not Track**, otherwise it may seek back to the PC every time you patch.
+**NOTE**: You might set the Dynamic Listing to **Do Not Track**, otherwise it may seek back to the PC every time you patch.
 
 Now that we know where to put `argv[0]`, we need to patch it to `0x0001018`.
 This should be the watch on `*:8 (RSI + 0)`.
@@ -306,21 +307,21 @@ When you modify the Value column, you can type either bytes (in little-endian or
 That should cause the watch on `*:30 (*:8 (RSI + 0))` to get the address `00001018`.
 Using the Repr column, set that watch's value to `"termmines"`.
 (The quotes are required.)
-Place a string in the Dynamic listing using the **'** (apostrophe) key.
+Place a string in the Dynamic Listing using the **`'`** (apostrophe) key.
 This shows us the next available address is `00001022`, so repeat the process to allocate `argv[1]` and set it to `"-s"`.
 Then finally, allocate `argv[2]` and set it to `"Advanced"`.
 When you have finished, the Watches pane should look something like this:
 
 ![Watches for patching command-line arguments after setting](images/Emulation_WatchesForCmdlineSet.png)
 
-The Dynamic listing should look something like this:
+The Dynamic Listing should look something like this:
 
 ![Listing after setting command-line arguments](images/Emulation_ListingForCmdlineSet.png)
 
 **NOTE**: The placement of data units is not necessary for the emulator to operate; it only cares about the bytes.
 However, it is a useful aide in devising, understanding, and diagnosing machine state.
 
-Now, click ![resume button](images/resume.png) Resume, and see where the emulator crashes next.
+Now, click ![resume button](images/resume.png) **Resume**, and see where the emulator crashes next.
 Depending on your compilation of `termmines`, it may crash after returning, or it may crash trying to call `strnlen` or `strcmp`.
 If the program counter is `00000000`, then it returned successfully.
 This is unfortunate, because you no longer have motivation to stub external calls.
@@ -335,15 +336,15 @@ There are at least three techniques for overcoming this.
 #### Skip Technique
 
 The skip technique is simplest, but will need to be performed *every time* that call is encountered.
-Press ![skip over button](images/skipover.png) Skip Over, then use the Registers or Watches pane to patch `RAX`.
-Then press ![resume button](images/resume.png) Resume.
+Press ![skip over button](images/skipover.png) **Skip Over**, then use the Registers or Watches pane to patch `RAX`.
+Then press ![resume button](images/resume.png) **Resume**.
 
 #### `CALL` Override Technique
 
 Overriding the `CALL` is also fairly simple.
 While this will handle every encounter, it will not handle other calls to the same external function.
 
-1. Press **K** in the listing to place a breakpoint on the `CALL` instruction.
+1. Press **`K`** in the listing to place a breakpoint on the `CALL` instruction.
 1. Now, in the Breakpoints panel, right-click the new breakpoint and select **Set Injection (Emulator)**.
 1. This is the fun part: you must now implement the function in Sleigh, or at least stub it well enough for this particular call.
 
@@ -382,9 +383,9 @@ The `emu_swi()` userop allows you to maintain breakpoint behavior, perhaps to de
 
 After you have written your Sleigh code:
 
-1. Click OK on the Set Injection dialog.
+1. Click **OK** on the Set Injection dialog.
 1. In the menus, select **Debugger &rarr; Configure Emulator &rarr; Invalidate Emulator Cache**.
-1. Click ![resume button](images/resume.png) Resume.
+1. Click ![resume button](images/resume.png) **Resume**.
 
 Stubbing any remaining external calls is left as an exercise.
 You are successful when the emulator crashes with `pc = 00000000`.
@@ -395,12 +396,12 @@ Clear or disable your breakpoint and invalidate the emulator cache again before 
 
 The target override technique is most thorough, but also the most involved.
 It will handle all calls to the external function, e.g., `strnlen`, no matter the call site.
-If the call goes through a program linkage table (PLT), then you are in luck, because the call target will be visible in the Dynamic listing.
+If the call goes through a program linkage table (PLT), then you are in luck, because the call target will be visible in the Dynamic Listing.
 The PLT entry usually contains a single `JMP` instruction to the actual `strnlen`.
 For real target processes, the `JMP` instruction will transfer control to a lazy linker the first time `strnlen` is called from `termmines`.
 The linker then finds `strnlen` and patches the table.
 In contrast, the Ghidra loader immediately patches the table to point to a fake `<EXTERNAL>::strnlen` symbol.
-The `EXTERNAL` block is not visible in the Dynamic listing, so we will override the `JMP` in the PLT.
+The `EXTERNAL` block is not visible in the Dynamic Listing, so we will override the `JMP` in the PLT.
 
 The Sleigh code is nearly identical, but we must code an x86 `RET` into it.
 Because we allow the `CALL` to execute normally, we must restore the stack.
@@ -429,17 +430,17 @@ You are successful when the emulator crashes with `pc = 00000000`.
 As you can see, depending on the scope of emulation, and the particulars of the target function, emulating a program image can be quite involved.
 Whatever technique you choose, once you have successfully returned from the command-line argument parser, you should check for the expected effects.
 
-In the Static listing, navigate to the variable that stores the board's dimensions.
+In the Static Listing, navigate to the variable that stores the board's dimensions.
 (Finding that variable is a task in the Beginner portion, but it can be found pretty easily with some manual static analysis.)
-In the Dynamic listing, you should notice that the values have changed to reflect the Advanced skill level.
+In the Dynamic Listing, you should notice that the values have changed to reflect the Advanced skill level.
 
 ### Optional Exercise: Patch the Placement Algorithm
 
 In this exercise, you will use emulation to devise an assembly patch to `termmines` to change the mine placement algorithm.
 Instead of random placement, please have them placed left to right, top to bottom.
-We recommend you devise your patch using the Assembler (Patch Instruction action) in the Static listing, then test and debug your patch using the Emulator.
-Perhaps patch the Dynamic listing to try quick tweaks before committing them to the Static listing.
-Once you have it, export the patched binary and run it in a proper terminal.
+We recommend you devise your patch using the Assembler (**Patch Instruction** action) in the Static Listing, then test and debug your patch using the Emulator.
+Perhaps patch the Dynamic Listing to try quick tweaks before committing them to the Static Listing.
+Once you have it, export the patched binary and run it outside of Ghidra.
 
 ## Debugging P-code Semantics
 
@@ -454,10 +455,10 @@ This panel is not included in the default Debugger tool, so it must be configure
 
 1. If you have not already, open the Debugger tool.
 1. In the menus, select **File &rarr; Configure**.
-1. Click the "Configure All Plugins" button in the top right of the dialog.
+1. Click the **Configure All Plugins** button in the top right of the dialog.
 1. Activate the `DebuggerPcodeStepperPlugin`
-1. Click OK
-1. Click Close
+1. Click **OK**
+1. Click **Close**
 
 The stepper should appear stacked over the Threads panel in the bottom right.
 Yours will probably still be empty, but here is what it looks like populated:
@@ -472,7 +473,7 @@ If the current instruction is overridden by a Sleigh breakpoint, the listing wil
 You can then step forward and backward within those.
 As you step, the other windows that display machine state will update.
 
-In addition to registers and memory, p-code has "unique" variables.
+In addition to registers and memory, p-code has *unique* variables.
 These are temporary variables used only within an instruction's implementation.
 They are displayed in the right panel.
 The table of variables works similarly to the Registers pane.
@@ -489,5 +490,5 @@ It is displayed in the stepper's subtitle as well as the Threads panel's subtitl
 P-code stepping is denoted by the portion of the schedule following the dot.
 **NOTE**: You cannot mix instruction steps with p-code op steps.
 The instruction steps always precede the p-code ops.
-If you click Step Into from the global toolbar in the middle of an instruction, the trailing p-code op steps will be removed and replaced with a single instruction step.
+If you click **Step Into** from the global toolbar in the middle of an instruction, the trailing p-code op steps will be removed and replaced with a single instruction step.
 In most cases, this intuitively "finishes" the partial instruction.

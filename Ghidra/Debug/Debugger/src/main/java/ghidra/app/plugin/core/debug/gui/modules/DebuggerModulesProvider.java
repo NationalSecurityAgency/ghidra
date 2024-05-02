@@ -41,11 +41,11 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.action.AutoMapSpec;
 import ghidra.app.plugin.core.debug.gui.action.AutoMapSpec.AutoMapSpecConfigFieldCodec;
 import ghidra.app.plugin.core.debug.gui.action.ByModuleAutoMapSpec;
-import ghidra.app.plugin.core.debug.gui.model.DebuggerObjectActionContext;
 import ghidra.app.plugin.core.debug.service.model.TraceRecorderTarget;
 import ghidra.app.plugin.core.debug.service.modules.MapModulesBackgroundCommand;
 import ghidra.app.plugin.core.debug.service.modules.MapSectionsBackgroundCommand;
 import ghidra.app.services.*;
+import ghidra.debug.api.model.DebuggerObjectActionContext;
 import ghidra.debug.api.modules.*;
 import ghidra.debug.api.modules.ModuleMapProposal.ModuleMapEntry;
 import ghidra.debug.api.modules.SectionMapProposal.SectionMapEntry;
@@ -106,7 +106,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	interface MapManuallyAction {
 		String NAME = DebuggerResources.NAME_MAP_MANUALLY;
 		String DESCRIPTION = DebuggerResources.DESCRIPTION_MAP_MANUALLY;
-		Icon ICON = DebuggerResources.ICON_MAPPINGS;
+		Icon ICON = DebuggerResources.ICON_MAP_MANUALLY;
 		String GROUP = DebuggerResources.GROUP_MAPPING;
 		String HELP_ANCHOR = "map_manually";
 
@@ -196,7 +196,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 
 	interface AutoMapAction {
 		String NAME = "Auto-Map Target Memory";
-		Icon ICON = DebuggerResources.ICON_CONFIG;
+		Icon ICON = DebuggerResources.ICON_MAP_AUTO;
 		String DESCRIPTION = "Automatically map dynamic memory to static counterparts";
 		String GROUP = DebuggerResources.GROUP_MAPPING;
 		String HELP_ANCHOR = "auto_map";
@@ -1078,6 +1078,12 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		actionMapSectionTo.getPopupMenuData().setMenuItemName(name);
 	}
 
+	public void programOpened(Program program) {
+		// TODO: Debounce this?
+		cueAutoMap = true;
+		doCuedAutoMap();
+	}
+
 	public void programClosed(Program program) {
 		if (currentProgram == program) {
 			currentProgram = null;
@@ -1184,12 +1190,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 
 		DomainFileFilter filter = df -> Program.class.isAssignableFrom(df.getDomainObjectClass());
 
-		// TODO regarding the hack note below, I believe it's fixed, but not sure how to test
-		return new DataTreeDialog(null, "Map Module to Program", DataTreeDialog.OPEN, filter) {
-			{ // TODO/HACK: I get an NPE setting the default selection if I don't fake this.
-				dialogShown();
-			}
-		};
+		return new DataTreeDialog(null, "Map Module to Program", DataTreeDialog.OPEN, filter);
 	}
 
 	public DomainFile askProgram(Program program) {

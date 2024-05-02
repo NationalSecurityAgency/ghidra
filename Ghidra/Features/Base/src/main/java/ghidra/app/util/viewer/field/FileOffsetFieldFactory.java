@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.beans.PropertyEditor;
 import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.field.*;
@@ -49,8 +48,6 @@ public class FileOffsetFieldFactory extends FieldFactory {
 
 	private boolean showFilename;
 	private boolean useHex;
-	private PropertyEditor fileOffsetFieldOptionsEditor =
-		new FileOffsetFieldOptionsPropertyEditor();
 
 	/**
 	 * Default Constructor
@@ -77,7 +74,8 @@ public class FileOffsetFieldFactory extends FieldFactory {
 
 		fieldOptions.registerOption(FILE_OFFSET_DISPLAY_OPTIONS_NAME, OptionType.CUSTOM_TYPE,
 			new FileOffsetFieldOptionsWrappedOption(), helpLoc,
-			"Adjusts the File Offset Field display", fileOffsetFieldOptionsEditor);
+			"Adjusts the File Offset Field display",
+			() -> new FileOffsetFieldOptionsPropertyEditor());
 
 		CustomOption customOption =
 			fieldOptions.getCustomOption(FILE_OFFSET_DISPLAY_OPTIONS_NAME, null);
@@ -97,7 +95,8 @@ public class FileOffsetFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel formatModel,
-			ListingHighlightProvider highlightProvider, ToolOptions options, ToolOptions fieldOptions) {
+			ListingHighlightProvider highlightProvider, ToolOptions options,
+			ToolOptions fieldOptions) {
 		return new FileOffsetFieldFactory(formatModel, highlightProvider, options, fieldOptions);
 	}
 

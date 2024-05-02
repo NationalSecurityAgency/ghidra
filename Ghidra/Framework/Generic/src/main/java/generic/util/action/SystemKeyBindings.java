@@ -20,6 +20,8 @@ import static java.awt.event.KeyEvent.*;
 import static javax.swing.KeyStroke.*;
 
 import java.awt.Toolkit;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 
 import javax.swing.KeyStroke;
 
@@ -34,7 +36,7 @@ public class SystemKeyBindings {
 
 	public static final KeyStroke HELP_KEY1 = KeyStroke.getKeyStroke(VK_HELP, 0);
 	public static final KeyStroke HELP_KEY2 = KeyStroke.getKeyStroke(VK_F1, 0);
-	public static final KeyStroke HELP_INFO_KEY = getKeyStroke(VK_F1, CTRL);
+	public static final KeyStroke HELP_INFO_KEY = getKeyStroke(VK_F1, CTRL_SHIFT);
 
 	public static final KeyStroke CONTEXT_MENU_KEY1 = getKeyStroke(VK_F10, SHIFT_DOWN_MASK);
 	public static final KeyStroke CONTEXT_MENU_KEY2 = getKeyStroke(VK_CONTEXT_MENU, 0);
@@ -51,6 +53,9 @@ public class SystemKeyBindings {
 	public static final KeyStroke UPDATE_KEY_BINDINGS_KEY = getKeyStroke(VK_F4, 0);
 
 	public static final KeyStroke COMPONENT_THEME_INFO_KEY = getKeyStroke(VK_F9, CTRL_ALT_SHIFT);
+
+	public static final KeyStroke ACTION_CHOOSER_KEY =
+		KeyStroke.getKeyStroke(KeyEvent.VK_3, InputEvent.CTRL_DOWN_MASK);
 
 	private SystemKeyBindings() {
 		// utils class

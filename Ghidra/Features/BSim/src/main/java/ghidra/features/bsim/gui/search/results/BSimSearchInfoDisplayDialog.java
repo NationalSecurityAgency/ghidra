@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
+import generic.theme.Gui;
 import ghidra.features.bsim.gui.BSimSearchPlugin;
 import ghidra.features.bsim.gui.search.dialog.BSimFilterSet;
 import ghidra.features.bsim.gui.search.dialog.BSimFilterSet.FilterEntry;
@@ -64,7 +65,7 @@ public class BSimSearchInfoDisplayDialog extends DialogComponentProvider {
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
 		JLabel dataLabel = new JLabel("Search Options:");
-		dataLabel.setFont(dataLabel.getFont().deriveFont(Font.ITALIC));
+		Gui.registerFont(dataLabel, Font.ITALIC);
 		panel.add(dataLabel);
 		panel.add(new JLabel(""));
 
@@ -89,7 +90,7 @@ public class BSimSearchInfoDisplayDialog extends DialogComponentProvider {
 		panel.add(new JLabel(""));
 		panel.add(new JLabel(""));
 		JLabel filterLabel = new JLabel("Filters:");
-		filterLabel.setFont(filterLabel.getFont().deriveFont(Font.ITALIC));
+		Gui.registerFont(filterLabel, Font.ITALIC);
 		panel.add(filterLabel);
 		panel.add(new JLabel(""));
 

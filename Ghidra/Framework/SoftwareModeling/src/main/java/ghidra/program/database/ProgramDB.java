@@ -21,11 +21,11 @@ import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 
-import db.DBConstants;
 import db.DBHandle;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.framework.Application;
 import ghidra.framework.data.DomainObjectAdapterDB;
+import ghidra.framework.data.OpenMode;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.store.FileSystem;
@@ -256,12 +256,12 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			int id = startTransaction("create program");
 
 			createProgramInfo();
-			if (createManagers(CREATE, TaskMonitor.DUMMY) != null) {
+			if (createManagers(OpenMode.CREATE, TaskMonitor.DUMMY) != null) {
 				throw new AssertException("Unexpected version exception on create");
 			}
 			listing = new ListingDB();
 			changeSet = new ProgramDBChangeSet(addrMap, NUM_UNDOS);
-			initManagers(CREATE, TaskMonitor.DUMMY);
+			initManagers(OpenMode.CREATE, TaskMonitor.DUMMY);
 			createProgramInformationOptions();
 			programUserData = new ProgramUserDataDB(this);
 			endTransaction(id, true);
@@ -299,7 +299,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 * @throws CancelledException if instantiation is canceled by monitor
 	 * @throws LanguageNotFoundException if a language cannot be found for this program
 	 */
-	public ProgramDB(DBHandle dbh, int openMode, TaskMonitor monitor, Object consumer)
+	public ProgramDB(DBHandle dbh, OpenMode openMode, TaskMonitor monitor, Object consumer)
 			throws IOException, VersionException, LanguageNotFoundException, CancelledException {
 
 		super(dbh, "Untitled", 500, consumer);
@@ -308,11 +308,15 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			monitor = TaskMonitor.DUMMY;
 		}
 
+		if (openMode == null || openMode == OpenMode.CREATE) {
+			throw new IllegalArgumentException("invalid openMode: " + openMode);
+		}
+
 		boolean success = false;
 		try {
 			int id = startTransaction("create program");
 			recordChanges = false;
-			changeable = (openMode != READ_ONLY);
+			changeable = (openMode != OpenMode.IMMUTABLE);
 
 			// check DB version and read name, languageName, languageVersion and languageMinorVersion
 			VersionException dbVersionExc = initializeProgramInfo(openMode);
@@ -348,7 +352,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			if (dbVersionExc != null) {
 				versionExc = dbVersionExc.combine(versionExc);
 			}
-			if (languageVersionExc != null && openMode != UPGRADE) {
+			if (languageVersionExc != null && openMode != OpenMode.UPGRADE) {
 				// Language upgrade required
 				versionExc = languageVersionExc.combine(versionExc);
 			}
@@ -362,7 +366,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 
 			initManagers(openMode, monitor);
 
-			if (openMode == UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				int oldVersion = getStoredVersion();
 				upgradeDatabase(monitor);
 				if (languageUpgradeRequired) {
@@ -402,6 +406,10 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			if (!success) {
 				release(consumer);
 			}
+		}
+
+		if (openMode == OpenMode.IMMUTABLE) {
+			setImmutable();
 		}
 
 		// for tracking during testing
@@ -1413,7 +1421,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 * @throws VersionException if the data is newer than this version of Ghidra and can not be
 	 * upgraded or opened.
 	 */
-	private VersionException initializeProgramInfo(int openMode)
+	private VersionException initializeProgramInfo(OpenMode openMode)
 			throws IOException, VersionException, LanguageNotFoundException {
 		boolean requiresUpgrade = false;
 
@@ -1430,7 +1438,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			}
 			languageID = languageCompilerSpecPair.languageID;
 			compilerSpecID = languageCompilerSpecPair.compilerSpecID;
-			if (openMode != DBConstants.UPGRADE) {
+			if (openMode != OpenMode.UPGRADE) {
 				requiresUpgrade = true;
 			}
 			else {
@@ -1462,10 +1470,10 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		if (storedVersion > DB_VERSION) {
 			throw new VersionException(VersionException.NEWER_VERSION, false);
 		}
-		if (openMode != DBConstants.UPGRADE && storedVersion < UPGRADE_REQUIRED_BEFORE_VERSION) {
+		if (openMode != OpenMode.UPGRADE && storedVersion < UPGRADE_REQUIRED_BEFORE_VERSION) {
 			requiresUpgrade = true;
 		}
-		if (openMode == DBConstants.UPDATE && storedVersion < DB_VERSION) {
+		if (openMode == OpenMode.UPDATE && storedVersion < DB_VERSION) {
 			requiresUpgrade = true;
 		}
 		return requiresUpgrade ? new VersionException(true) : null;
@@ -1518,14 +1526,14 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		return 1;
 	}
 
-	private void checkOldProperties(int openMode, TaskMonitor monitor)
+	private void checkOldProperties(OpenMode openMode, TaskMonitor monitor)
 			throws IOException, VersionException {
 		String exePath = dataMap.get(EXECUTE_PATH);
 		if (exePath != null) {
-			if (openMode == READ_ONLY) {
+			if (openMode == OpenMode.IMMUTABLE) {
 				return; // not important, get on path or format will return "unknown"
 			}
-			if (openMode != UPGRADE) {
+			if (openMode != OpenMode.UPGRADE) {
 				throw new VersionException(true);
 			}
 
@@ -1543,10 +1551,10 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		}
 		int storedVersion = getStoredVersion();
 		if (storedVersion < ANALYSIS_OPTIONS_MOVED_VERSION) {
-			if (openMode == READ_ONLY) {
+			if (openMode == OpenMode.IMMUTABLE) {
 				return;
 			}
-			if (openMode != UPGRADE) {
+			if (openMode != OpenMode.UPGRADE) {
 				throw new VersionException(true);
 			}
 			Options oldList = getOptions("Analysis");
@@ -1555,10 +1563,10 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			}
 		}
 		if (storedVersion < METADATA_ADDED_VERSION) {
-			if (openMode == READ_ONLY) {
+			if (openMode == OpenMode.IMMUTABLE) {
 				return;
 			}
-			if (openMode != UPGRADE) {
+			if (openMode != OpenMode.UPGRADE) {
 				throw new VersionException(true);
 			}
 		}
@@ -1590,7 +1598,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		}
 	}
 
-	private VersionException createManagers(int openMode, TaskMonitor monitor)
+	private VersionException createManagers(OpenMode openMode, TaskMonitor monitor)
 			throws CancelledException, IOException {
 
 		VersionException versionExc = null;
@@ -1602,7 +1610,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 			versionExc = e.combine(versionExc);
 			try {
 				overlaySpaceAdapter =
-					OverlaySpaceDBAdapter.getOverlaySpaceAdapter(dbh, READ_ONLY, monitor);
+					OverlaySpaceDBAdapter.getOverlaySpaceAdapter(dbh, OpenMode.IMMUTABLE, monitor);
 			}
 			catch (VersionException e1) {
 				if (e1.isUpgradable()) {
@@ -1633,8 +1641,8 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
 			try {
-				addrMap =
-					new AddressMapDB(dbh, READ_ONLY, addressFactory, baseImageOffset, monitor);
+				addrMap = new AddressMapDB(dbh, OpenMode.IMMUTABLE, addressFactory, baseImageOffset,
+					monitor);
 			}
 			catch (VersionException e1) {
 				if (e1.isUpgradable()) {
@@ -1673,7 +1681,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 				// Attempt to instantiate the old function manager which may be used for upgrades
 				try {
 					oldFunctionMgr = new OldFunctionManager(dbh, this, addrMap);
-					if (openMode != UPGRADE) {
+					if (openMode != OpenMode.UPGRADE) {
 						// Indicate that program is upgradable
 						oldFunctionMgr = null;
 						versionExc = (new VersionException(true)).combine(versionExc);
@@ -1681,7 +1689,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 					else {
 						// Prepare for upgrade of function manager
 						managers[FUNCTION_MGR] =
-							new FunctionManagerDB(dbh, addrMap, CREATE, lock, monitor);
+							new FunctionManagerDB(dbh, addrMap, OpenMode.CREATE, lock, monitor);
 					}
 				}
 				catch (VersionException e1) {
@@ -1790,7 +1798,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		return versionExc;
 	}
 
-	private void initManagers(int openMode, TaskMonitor monitor)
+	private void initManagers(OpenMode openMode, TaskMonitor monitor)
 			throws CancelledException, IOException {
 		globalNamespace = new GlobalNamespace(getMemory());
 		for (int i = 0; i < NUM_MANAGERS; i++) {
@@ -1799,13 +1807,13 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		}
 		listing.setProgram(this);
 
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			getDataTypeManager().saveDataOrganization();
 		}
 
 		monitor.checkCancelled();
 
-		if (openMode == UPGRADE) {
+		if (openMode == OpenMode.UPGRADE) {
 			if (oldFunctionMgr != null) {
 				// Upgrade Function Manager 
 				oldFunctionMgr.upgrade(this, monitor);
@@ -1840,12 +1848,6 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		finally {
 			lock.release();
 		}
-	}
-
-	@Override
-	public void invalidate() {
-		clearCache(false);
-		fireEvent(new DomainObjectChangeRecord(DomainObjectEvent.RESTORED));
 	}
 
 	@Override
@@ -2106,7 +2108,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 
 				// Force function manager to reconcile calling conventions
 				managers[FUNCTION_MGR].setProgram(this);
-				managers[FUNCTION_MGR].programReady(UPDATE, getStoredVersion(), monitor);
+				managers[FUNCTION_MGR].programReady(OpenMode.UPDATE, getStoredVersion(), monitor);
 
 				if (translator != null) {
 					// allow complex language upgrades to transform instructions/context

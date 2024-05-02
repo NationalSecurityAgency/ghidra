@@ -50,7 +50,7 @@ public class TestDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpinion
 
 		@Override
 		public int getConfidence() {
-			return 1;
+			return HostDebuggerPlatformOpinion.Offers.HOST.getConfidence() + 1;
 		}
 
 		@Override

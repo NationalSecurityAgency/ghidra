@@ -21,17 +21,17 @@ import java.beans.PropertyEditor;
 import java.beans.PropertyEditorManager;
 import java.io.File;
 import java.util.*;
+import java.util.function.Supplier;
 
 import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
 
 import generic.theme.*;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.AssertException;
 import utilities.util.reflection.ReflectionUtilities;
+import utility.function.Dummy;
 
 public abstract class AbstractOptions implements Options {
 	public static final Set<Class<?>> SUPPORTED_CLASSES = buildSupportedClassSet();
@@ -49,6 +49,7 @@ public abstract class AbstractOptions implements Options {
 		set.add(Color.class);
 		set.add(Font.class);
 		set.add(KeyStroke.class);
+		set.add(ActionTrigger.class);
 		set.add(File.class);
 		set.add(Date.class);
 		return set;
@@ -83,7 +84,14 @@ public abstract class AbstractOptions implements Options {
 	protected abstract boolean notifyOptionChanged(String optionName, Object oldValue,
 			Object newValue);
 
-	public synchronized void registerOptionsEditor(String categoryPath, OptionsEditor editor) {
+	public synchronized void registerOptionsEditor(String categoryPath,
+			Supplier<OptionsEditor> editorSupplier) {
+
+		OptionsEditor editor = null;
+		if (!SystemUtilities.isInHeadlessMode()) {
+			editor = editorSupplier.get();
+		}
+
 		optionsEditorMap.put(categoryPath, editor);
 	}
 
@@ -128,12 +136,13 @@ public abstract class AbstractOptions implements Options {
 	@Override
 	public void registerOption(String optionName, OptionType type, Object defaultValue,
 			HelpLocation help, String description) {
-		registerOption(optionName, type, defaultValue, help, description, null);
+		registerOption(optionName, type, defaultValue, help, description,
+			(Supplier<PropertyEditor>) null);
 	}
 
 	@Override
 	public synchronized void registerOption(String optionName, OptionType type, Object defaultValue,
-			HelpLocation help, String description, PropertyEditor editor) {
+			HelpLocation help, String description, Supplier<PropertyEditor> editorSupplier) {
 
 		if (type == OptionType.NO_TYPE) {
 			throw new IllegalArgumentException(
@@ -146,6 +155,17 @@ public abstract class AbstractOptions implements Options {
 		if (type == OptionType.FONT_TYPE) {
 			warnShouldUseTheme("font");
 		}
+		if (type == OptionType.KEYSTROKE_TYPE) {
+			type = OptionType.ACTION_TRIGGER;
+			if (defaultValue instanceof KeyStroke) {
+				defaultValue = new ActionTrigger((KeyStroke) defaultValue);
+			}
+			if (editorSupplier != null) {
+				Msg.error(this, "Custom KeyStroke property editors are no longer supported.  " +
+					"Use ActionTrigger instead");
+				editorSupplier = null;
+			}
+		}
 
 		if (!type.isCompatible(defaultValue)) {
 			throw new IllegalStateException(
@@ -153,10 +173,20 @@ public abstract class AbstractOptions implements Options {
 					", defaultValue = " + defaultValue);
 		}
 
-		if (type == OptionType.CUSTOM_TYPE && editor == null) {
-			throw new IllegalStateException(
-				"Can't register a custom option without a property editor");
+		editorSupplier = Dummy.ifNull(editorSupplier);
+		PropertyEditor editor = null;
+		boolean isHeadless = SystemUtilities.isInHeadlessMode();
+		if (!isHeadless) {
+			editor = editorSupplier.get();
 		}
+
+		if (type == OptionType.CUSTOM_TYPE) {
+			if (!isHeadless && editor == null) {
+				throw new IllegalStateException(
+					"Can't register a custom option without a property editor");
+			}
+		}
+
 		if (description == null) {
 			Msg.error(this, "Registered an option without a description: " + optionName,
 				ReflectionUtilities.createJavaFilteredThrowable());
@@ -216,7 +246,7 @@ public abstract class AbstractOptions implements Options {
 
 		// There are several cases where an existing option may exist when registering an option
 		// 1) the option was accessed before it was registered
-		// 2) the option was loaded from a store (database or toolstate)
+		// 2) the option was loaded from a store (database or tool state)
 		// 3) the option was registered more than once.
 		//
 		// The only time this is a problem is if the exiting option type is not compatible with
@@ -269,11 +299,19 @@ public abstract class AbstractOptions implements Options {
 				valueMap.put(optionName, option);
 			}
 		}
-		else if (type != OptionType.NO_TYPE && type != option.getOptionType()) {
-			throw new IllegalStateException(
-				"Expected option type: " + type + ", but was type: " + option.getOptionType());
-		}
+
+		validateOptionType(option, type);
 		return option;
+	}
+
+	private void validateOptionType(Option option, OptionType type) {
+
+		if (type == option.getOptionType() || type == OptionType.NO_TYPE) {
+			return;
+		}
+
+		throw new IllegalStateException(
+			"Expected option type: " + type + ", but was type: " + option.getOptionType());
 	}
 
 	@Override
@@ -484,9 +522,30 @@ public abstract class AbstractOptions implements Options {
 
 	@Override
 	public KeyStroke getKeyStroke(String optionName, KeyStroke defaultValue) {
-		Option option = getOption(optionName, OptionType.KEYSTROKE_TYPE, defaultValue);
+
+		ActionTrigger defaultTrigger = null;
+		if (defaultValue != null) {
+			defaultTrigger = new ActionTrigger(defaultValue);
+		}
+
+		Option option = getOption(optionName, OptionType.ACTION_TRIGGER, defaultTrigger);
 		try {
-			return (KeyStroke) option.getValue(defaultValue);
+			ActionTrigger actionTrigger = (ActionTrigger) option.getValue(defaultTrigger);
+			if (actionTrigger != null) {
+				return actionTrigger.getKeyStroke();
+			}
+			return null;
+		}
+		catch (ClassCastException e) {
+			return defaultValue;
+		}
+	}
+
+	@Override
+	public ActionTrigger getActionTrigger(String optionName, ActionTrigger defaultValue) {
+		Option option = getOption(optionName, OptionType.ACTION_TRIGGER, defaultValue);
+		try {
+			return (ActionTrigger) option.getValue(defaultValue);
 		}
 		catch (ClassCastException e) {
 			return defaultValue;
@@ -573,7 +632,16 @@ public abstract class AbstractOptions implements Options {
 
 	@Override
 	public void setKeyStroke(String optionName, KeyStroke value) {
-		putObject(optionName, value, OptionType.KEYSTROKE_TYPE);
+		ActionTrigger actionTrigger = null;
+		if (value != null) {
+			actionTrigger = new ActionTrigger(value);
+		}
+		setActionTrigger(optionName, actionTrigger);
+	}
+
+	@Override
+	public void setActionTrigger(String optionName, ActionTrigger value) {
+		putObject(optionName, value, OptionType.ACTION_TRIGGER);
 	}
 
 	@Override
@@ -594,8 +662,8 @@ public abstract class AbstractOptions implements Options {
 
 	@Override
 	public PropertyEditor getPropertyEditor(String optionName) {
-		if (!SwingUtilities.isEventDispatchThread()) {
-			throw new IllegalStateException("This method must be called from the swing thread.");
+		if (!Swing.isSwingThread()) {
+			throw new IllegalStateException("This method must be called from the Swing thread");
 		}
 		Option option = getOption(optionName, OptionType.NO_TYPE, null);
 		PropertyEditor editor = option.getPropertyEditor();
@@ -688,8 +756,8 @@ public abstract class AbstractOptions implements Options {
 	}
 
 	@Override
-	public synchronized void registerOptionsEditor(OptionsEditor editor) {
-		optionsEditorMap.put("", editor);
+	public synchronized void registerOptionsEditor(Supplier<OptionsEditor> editor) {
+		registerOptionsEditor("", editor);
 	}
 
 	@Override

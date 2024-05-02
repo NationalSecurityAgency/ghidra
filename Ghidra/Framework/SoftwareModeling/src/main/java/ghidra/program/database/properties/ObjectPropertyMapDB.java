@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import db.*;
 import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.util.ObjectPropertyMap;
@@ -40,12 +41,12 @@ public class ObjectPropertyMapDB<T extends Saveable> extends PropertyMapDB<T>
 	private Class<T> saveableObjectClass;
 	private int saveableObjectVersion;
 	private boolean supportsPrivate;
-	private boolean saveableErrorReported = false;
 
 	/**
 	 * Construct an Saveable object property map.
 	 * @param dbHandle database handle.
-	 * @param openMode the mode that the program was opened in.
+	 * @param openMode the mode that the program was openned in or null if instantiated during
+	 * cache invalidate.  Used to detect versioning error only.
 	 * @param errHandler database error handler.
 	 * @param changeMgr change manager for event notification
 	 * @param addrMap address map.
@@ -60,9 +61,9 @@ public class ObjectPropertyMapDB<T extends Saveable> extends PropertyMapDB<T>
 	 * if upgrade is true.
 	 */
 	@SuppressWarnings("unchecked")
-	public ObjectPropertyMapDB(DBHandle dbHandle, int openMode, ErrorHandler errHandler,
-			ChangeManager changeMgr, AddressMap addrMap, String name,
-			Class<T> saveableObjectClass, TaskMonitor monitor, boolean supportsPrivate)
+	public ObjectPropertyMapDB(DBHandle dbHandle, OpenMode openMode, ErrorHandler errHandler,
+			ChangeManager changeMgr, AddressMap addrMap, String name, Class<T> saveableObjectClass,
+			TaskMonitor monitor, boolean supportsPrivate)
 			throws VersionException, CancelledException, IOException {
 		super(dbHandle, errHandler, changeMgr, addrMap, name);
 		this.saveableObjectClass = saveableObjectClass;
@@ -130,7 +131,7 @@ public class ObjectPropertyMapDB<T extends Saveable> extends PropertyMapDB<T>
 	 * @throws CancelledException if task is cancelled
 	 * @throws IOException if IO error occurs
 	 */
-	private void checkMapVersion(int openMode, T tokenInstance, TaskMonitor monitor)
+	private void checkMapVersion(OpenMode openMode, T tokenInstance, TaskMonitor monitor)
 			throws VersionException, CancelledException, IOException {
 		if (propertyTable == null) {
 			return;
@@ -145,7 +146,7 @@ public class ObjectPropertyMapDB<T extends Saveable> extends PropertyMapDB<T>
 		}
 		else if (addrMap.isUpgraded() || schemaVersion < saveableObjectVersion) {
 			// An older version was used to create the database
-			if (openMode != DBConstants.UPGRADE) {
+			if (openMode != OpenMode.UPGRADE) {
 				throw new VersionException(true);
 			}
 			if (!upgradeTable(tokenInstance, monitor)) {

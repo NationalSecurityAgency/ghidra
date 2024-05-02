@@ -8,7 +8,7 @@ If not, please refer to the previous modules.
 This module will address the following features in more depth:
 
 * Dynamic Listing window
-* Dynamic Bytes window
+* Dynamic Bytes (Memory) window
 * Registers window
 * Watches window
 * Sleigh expressions
@@ -41,7 +41,7 @@ Edits in any *static* window will **not** patch the live target; they modify the
 Some dynamic windows may present tables with editable cells.
 These will often include a *write-lock* toggle, like the static Byte viewer, to avoid accidental patching.
 Furthermore, you must use the ![control mode](images/record.png) Control Mode toggle in the global toolbar (next to the control actions) to enable patching throughout the Debugger tool.
-For now, please only use the "Control Target" and "Control Target w/ Edits Disabled" options.
+For now, please only use the **Control Target** and **Control Target w/ Edits Disabled** options.
 The write toggle is included here so that actions like copy-paste do not lead to accidental patching.
 
 ## The Dynamic Listing
@@ -65,7 +65,7 @@ Now, we will examine the stack segment.
 Click the ![location tracking](images/register-marker.png) Track Location drop-down and select **Track Stack Pointer**.
 The window should seek to (and highlight in pale green) the address in the stack pointer.
 Since the target has just entered `main`, we should expect a return address at the top of the stack.
-With your cursor at the stack pointer, press **P** to place a pointer there, just like
+With your cursor at the stack pointer, press **`P`** to place a pointer there, just like
 you would in the Static Listing.
 You can now navigate to that address by double-clicking it.
 To return to the stack pointer, you can use the back arrow in the global toolbar, you can click the ![track location](images/register-marker.png) Track Location button, or you can double-click the `sp = [Address]` label in the top right of the Dynamic Listing.
@@ -73,7 +73,7 @@ To return to the stack pointer, you can use the back arrow in the global toolbar
 To examine a more complicated stack segment, we will break at `rand`.
 Ensure your breakpoint at `rand` is enabled and press ![resume](images/resume.png) Resume.
 Your Dynamic Listing should follow the stack pointer.
-In the menus, select **Debugger &rarr; Analysis &rarr; Unwind from frame 0** or press **U**.
+In the menus, select **Debugger &rarr; Analysis &rarr; Unwind from frame 0** or press **`U`**.
 
 ![The dynamic listing of the stack after a call to rand](images/State_ListingStackAfterCallRand.png)
 
@@ -93,12 +93,12 @@ The dynamic listing offers several additional features:
 ### Cache Status Indication
 
 The listing's contents are read from a live target, which may become unresponsive or otherwise temperamental.
-The Debugger uses a database, which acts as a cache separating the GUI from the live target.
+The Debugger uses a trace database, which acts as a cache separating the GUI from the live target.
 The UI requests memory pages from the target, the target asynchronously retrieves those pages and stores them into the database, then the database updates the UI.
 This sequence does not always go as expected; thus, pages with stale data are displayed with a grey background.
 This may also happen if auto-read is disabled.
 Typically, user-space targets are not so temperamental, but others may be, or memory reads could be expensive, in which case disabling automatic memory reads may be advantageous.
-If the back-end debugger reports an error while reading memory, the first address of the page will have a red background.
+If the back-end debugger reports an error while reading memory, the page will have a red background.
 To refresh the visible or selected page(s), click the <img alt="refresh" src="images/view-refresh.png" width="16px"/> Refresh button.
 Examine the Debug Console window for errors / warnings before spamming this button.
 To toggle auto read, use the <img src="images/autoread.png" alt="auto-read" width="16px"/> Auto-Read drop-down button from the local toolbar.
@@ -119,7 +119,7 @@ This can happen when the cursor is outside any known region, which only happens 
 
 ### Go To
 
-The Go To action in the Dynamic Listing differs from the one in the Static Listing.
+The **Go To** action in the Dynamic Listing differs from the one in the Static Listing.
 Like the static one, it accepts an address in hexadecimal, possibly prefixed with the address space and a colon.
 However, it also accepts Sleigh expressions, allowing you to treat `RAX` as a pointer and go to that address, for example.
 We cover Sleigh expressions later in this module.
@@ -147,8 +147,7 @@ You can also experiment by placing code units in the Dynamic Listing before comm
 
 ![The dynamic memory view of the stack after a call to rand](images/State_BytesStackAfterCallRand.png)
 
-Just as the Dynamic Listing is the analog of the Static Listing, the Memory viewer is the analog of the Byte viewer.
-It is not visible by default.
+Just as the Dynamic Listing is the analog of the Static Listing, the Memory viewer is the analog of the Bytes viewer.
 To open it, use **Windows &rarr; Byte Viewer &rarr; Memory ...** in the menus.
 Its default configuration should be Auto PC, the same as the Dynamic Listing's default.
 It has all the same additional Debugger features as the Dynamic Listing.
@@ -209,7 +208,7 @@ Verify your work by playing the round.
 The Watches window gives the values of several user-specified Sleigh expressions.
 This can provide an alternative to the Registers window when you are really only interested in a couple of registers.
 It can also watch values in memory.
-Furthermore, when a watch has a memory address, the expression will appear as an option in the Location Tracking menus of the Listing and Memory viewers.
+Furthermore, when a watch has a memory address, the expression will appear as an option in the **Location Tracking** menus of the Listing and Memory viewers.
 Selecting that option will cause the window to follow that watch as its address changes.
 
 To add a watch, click the ![add](images/add.png) Add button.
@@ -217,7 +216,7 @@ A new entry will appear.
 Double-click the left-most cell of the row to set or edit the Sleigh expression.
 For starters, try something like `RDI`.
 (Conventionally, this is the location for the first parameter on Linux x86-64 systems.)
-The context menus for the Listing and Registers windows include a "Watch" action, which adds the current selection to the Watches window.
+The context menus for the Listing and Registers windows include a **Watch** action, which adds the current selection to the Watches window.
 
 The columns are:
 
@@ -225,7 +224,7 @@ The columns are:
 * The **Address** column is the address of the resulting value, if applicable.
   This may be in `register` space.
   Double-clicking this cell will go to the address in the Dynamic Listing.
-* The **Symbol** column gives the symbol in a mapped static image closest to or containing the address, if applicable.
+* The **Symbol** column gives the symbol in a mapped program database closest to or containing the address, if applicable.
 * The **Value** column gives the "raw" value of the expression.
   If the result is in memory, it displays a byte array; otherwise, it displays an integer.
 * The **Type** and **Representation** columns work the same as in the Registers window, except they do *not* save the data unit to the database.
@@ -236,10 +235,10 @@ The columns are:
 
 ## Sleigh Expressions
 
-Watches and Go-To commands are expressed using Ghidra's Sleigh language.
+Watches and Go-To commands are expressed using Ghidra's *Sleigh* language.
 More precisely, expressions are the sub-language of Sleigh for the right-hand side of assignment statements in semantic sections.
 If you already know this language, then there is little more to learn.
-Of note, you may use labels from mapped program images in your expression.
+Of note, you may use labels from mapped program databases in your expression.
 For example, to see how far a return address is into `main`, you could use `*:8 RSP - main`.
 
 For the complete specification, see the Semantic Section in the [Sleigh documentation](../../../Ghidra/Features/Decompiler/src/main/doc/sleigh.xml).
@@ -303,7 +302,7 @@ To read memory:
 
 * **Dereference**: `*:8 RSP` or `*[ram]:8 RSP`
 
-**NOTE** The `[ram]` part is optional.
+**NOTE**: The `[ram]` part is optional.
 On x86, you will rarely if ever specify the space, since there is only one physical RAM space.
 The `:8` part specifies the number of bytes to read from memory.
 It is also optional, but only if the size can be inferred from the rest of the expression.
@@ -386,7 +385,7 @@ Depending on the particular variable and other circumstances, the hover will con
 * **Frame**: If evaluation required unwinding, a description of the frame used for context
 * **Storage**: The dynamic, physical location of the variable, e.g., `7fffffffe618`
 * **Bytes**: The raw bytes currently stored in the memory allocated to the variable
-* **Integer**: The "raw" integer value of the variable, rendered with varyied signedness and radix
+* **Integer**: The "raw" integer value of the variable, rendered with varied signedness and radix
 * **Value**: The value of the variable, according to its type
 * **Instruction**: If the variable points to code, the target instruction
 * **Warnings**: Warnings emitted during evaluation

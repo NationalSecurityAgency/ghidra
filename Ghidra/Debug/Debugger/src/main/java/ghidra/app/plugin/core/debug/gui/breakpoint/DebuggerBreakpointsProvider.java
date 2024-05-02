@@ -155,34 +155,36 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 
 	protected enum BreakpointLocationTableColumns
 		implements EnumeratedTableColumn<BreakpointLocationTableColumns, BreakpointLocationRow> {
-		STATE("State", State.class, BreakpointLocationRow::getState, BreakpointLocationRow::setState, true),
-		NAME("Name", String.class, BreakpointLocationRow::getName, BreakpointLocationRow::setName, true),
-		ADDRESS("Address", Address.class, BreakpointLocationRow::getAddress, true),
-		TRACE("Trace", String.class, BreakpointLocationRow::getTraceName, true),
-		THREADS("Threads", String.class, BreakpointLocationRow::getThreads, true),
-		COMMENT("Comment", String.class, BreakpointLocationRow::getComment, BreakpointLocationRow::setComment, true),
-		SLEIGH("Sleigh", Boolean.class, BreakpointLocationRow::hasSleigh, true);
+		STATE("State", State.class, BreakpointLocationRow::getState, BreakpointLocationRow::setState, true, true),
+		NAME("Name", String.class, BreakpointLocationRow::getName, BreakpointLocationRow::setName, true, true),
+		ADDRESS("Address", Address.class, BreakpointLocationRow::getAddress, true, true),
+		TRACE("Trace", String.class, BreakpointLocationRow::getTraceName, true, true),
+		THREADS("Threads", String.class, BreakpointLocationRow::getThreads, true, false),
+		COMMENT("Comment", String.class, BreakpointLocationRow::getComment, BreakpointLocationRow::setComment, true, true),
+		SLEIGH("Sleigh", Boolean.class, BreakpointLocationRow::hasSleigh, true, true);
 
 		private final String header;
 		private final Function<BreakpointLocationRow, ?> getter;
 		private final BiConsumer<BreakpointLocationRow, Object> setter;
 		private final boolean sortable;
+		private final boolean visible;
 		private final Class<?> cls;
 
 		<T> BreakpointLocationTableColumns(String header, Class<T> cls,
-				Function<BreakpointLocationRow, T> getter, boolean sortable) {
-			this(header, cls, getter, null, sortable);
+				Function<BreakpointLocationRow, T> getter, boolean sortable, boolean visible) {
+			this(header, cls, getter, null, sortable, visible);
 		}
 
 		@SuppressWarnings("unchecked")
 		<T> BreakpointLocationTableColumns(String header, Class<T> cls,
 				Function<BreakpointLocationRow, T> getter,
-				BiConsumer<BreakpointLocationRow, T> setter, boolean sortable) {
+				BiConsumer<BreakpointLocationRow, T> setter, boolean sortable, boolean visible) {
 			this.header = header;
 			this.cls = cls;
 			this.getter = getter;
 			this.setter = (BiConsumer<BreakpointLocationRow, Object>) setter;
 			this.sortable = sortable;
+			this.visible = visible;
 		}
 
 		@Override
@@ -208,6 +210,11 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		@Override
 		public boolean isSortable() {
 			return sortable;
+		}
+
+		@Override
+		public boolean isVisible() {
+			return visible;
 		}
 
 		@Override
@@ -954,6 +961,10 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		breakpointPanel.add(breakpointFilterPanel, BorderLayout.SOUTH);
 		mainPanel.setLeftComponent(breakpointPanel);
 
+		String namePrefix = "Breakpoints";
+		breakpointTable.setAccessibleNamePrefix(namePrefix);
+		breakpointFilterPanel.setAccessibleNamePrefix(namePrefix);
+
 		JPanel locationPanel = new JPanel(new BorderLayout());
 		locationTable = new GhidraTable(locationTableModel);
 		locationTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -962,8 +973,11 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		locationFilterPanel.setSecondaryFilter(filterLocationsBySelectedBreakpoints);
 		locationPanel.add(locationFilterPanel, BorderLayout.SOUTH);
 		mainPanel.setRightComponent(locationPanel);
-
 		mainPanel.setResizeWeight(0.5);
+
+		String locationsNamePrefix = "Breakpoint Locations";
+		locationTable.setAccessibleNamePrefix(locationsNamePrefix);
+		locationFilterPanel.setAccessibleNamePrefix(locationsNamePrefix);
 
 		breakpointTable.getSelectionModel().addListSelectionListener(evt -> {
 			List<LogicalBreakpointRow> sel = breakpointFilterPanel.getSelectedItems();
@@ -1069,8 +1083,8 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		locsCol.setPreferredWidth(20);
 		TableColumn bptSleighCol =
 			bptColModel.getColumn(LogicalBreakpointTableColumns.SLEIGH.ordinal());
-		bptSleighCol.setMaxWidth(24);
-		bptSleighCol.setMinWidth(24);
+		bptSleighCol.setMaxWidth(30);
+		bptSleighCol.setMinWidth(30);
 
 		GTableColumnModel locColModel = (GTableColumnModel) locationTable.getColumnModel();
 		TableColumn locEnCol =
@@ -1091,11 +1105,12 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 			locColModel.getColumn(BreakpointLocationTableColumns.THREADS.ordinal());
 		TableColumn locSleighCol =
 			locColModel.getColumn(BreakpointLocationTableColumns.SLEIGH.ordinal());
-		locSleighCol.setMaxWidth(24);
-		locSleighCol.setMinWidth(24);
+		locSleighCol.setMaxWidth(30);
+		locSleighCol.setMinWidth(30);
 
 		locColModel.setVisible(locThreadsCol, false);
 		locColModel.setVisible(locSleighCol, false);
+
 	}
 
 	protected void navigateToSelectedBreakpoint() {
@@ -1145,7 +1160,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 			}
 			traceManager.activateTrace(trace);
 		}
-		listingService.goTo(row.getAddress(), true);
+		listingService.goTo(row.getProgramLocation(), true);
 	}
 
 	protected void createActions() {

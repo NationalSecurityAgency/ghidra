@@ -29,6 +29,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.stream.JsonWriter;
 
+import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFormatException;
@@ -96,7 +97,8 @@ public class IsfDataTypeWriter extends AbstractIsfWriter {
 	 * @param baseWriter the writer to use when writing data types
 	 * @throws IOException if there is an exception writing the output
 	 */
-	public IsfDataTypeWriter(DataTypeManager dtm, List<DataType> target, Writer baseWriter) throws IOException {
+	public IsfDataTypeWriter(DataTypeManager dtm, List<DataType> target, Writer baseWriter)
+			throws IOException {
 		super(baseWriter);
 		this.baseWriter = baseWriter;
 		this.dtm = dtm;
@@ -117,11 +119,12 @@ public class IsfDataTypeWriter extends AbstractIsfWriter {
 		STRICT = true;
 	}
 
+	@Override
 	public JsonObject getRootObject(TaskMonitor monitor) throws CancelledException, IOException {
 		genRoot(monitor);
 		return data;
 	}
-	
+
 	@Override
 	protected void genRoot(TaskMonitor monitor) throws CancelledException, IOException {
 		genMetadata();
@@ -160,7 +163,8 @@ public class IsfDataTypeWriter extends AbstractIsfWriter {
 			oskey = metaData.get("Compiler ID");
 			if (metaData.containsKey("PDB Loaded")) {
 				os = gson.toJsonTree(new IsfWinOS(metaData));
-			} else if (metaData.containsKey("Executable Format")) {
+			}
+			else if (metaData.containsKey("Executable Format")) {
 				if (metaData.get("Executable Format").contains("ELF")) {
 					oskey = "linux";
 					os = gson.toJsonTree(new IsfLinuxOS(gson, metaData));
@@ -201,15 +205,18 @@ public class IsfDataTypeWriter extends AbstractIsfWriter {
 						Symbol symbol = iterator.next();
 						symbolToJson(imageBase, symbolTable, linkages, map, symbol);
 					}
-				} else {
+				}
+				else {
 					for (Address addr : requestedAddresses) {
-						Symbol[] symsFromAddr = symbolTable.getSymbols(addr.add(imageBase.getOffset()));
+						Symbol[] symsFromAddr =
+							symbolTable.getSymbols(addr.add(imageBase.getOffset()));
 						for (Symbol symbol : symsFromAddr) {
 							symbolToJson(imageBase, symbolTable, linkages, map, symbol);
 						}
 					}
 				}
-			} else {
+			}
+			else {
 				for (String key : requestedSymbols) {
 					SymbolIterator iter = symbolTable.getSymbols(key);
 					while (iter.hasNext()) {
@@ -263,7 +270,7 @@ public class IsfDataTypeWriter extends AbstractIsfWriter {
 		monitor.setMaximum(keylist.size());
 		for (String key : keylist) {
 			DataType dataType = map.get(key);
-			if (key.contains(".conflict")) {
+			if (DataTypeUtilities.isConflictDataType(dataType)) {
 				continue;
 			}
 			obj = getObjectForDataType(dataType, monitor);
@@ -273,28 +280,34 @@ public class IsfDataTypeWriter extends AbstractIsfWriter {
 			if (dataType instanceof FunctionDefinition) {
 				// Would be nice to support this in the future, but Volatility does not
 				add(functions, dataType.getPathName(), obj);
-			} else if (IsfUtilities.isBaseDataType(dataType)) {
+			}
+			else if (IsfUtilities.isBaseDataType(dataType)) {
 				add(baseTypes, dataType.getPathName(), obj);
-			} else if (dataType instanceof TypeDef) {
+			}
+			else if (dataType instanceof TypeDef) {
 				DataType baseDataType = ((TypeDef) dataType).getBaseDataType();
 				if (IsfUtilities.isBaseDataType(baseDataType)) {
 					add(baseTypes, dataType.getPathName(), obj);
-				} else if (baseDataType instanceof Enum) {
+				}
+				else if (baseDataType instanceof Enum) {
 					add(enums, dataType.getPathName(), obj);
-				} else {
+				}
+				else {
 					add(userTypes, dataType.getPathName(), obj);
 				}
-			} else if (dataType instanceof Enum) {
+			}
+			else if (dataType instanceof Enum) {
 				add(enums, dataType.getPathName(), obj);
-			} else if (dataType instanceof Composite) {
+			}
+			else if (dataType instanceof Composite) {
 				add(userTypes, dataType.getPathName(), obj);
 			}
 			monitor.increment();
 		}
 	}
 
-	private void symbolToJson(Address imageBase, SymbolTable symbolTable, Map<String, Symbol> linkages,
-			Map<String, JsonObject> map, Symbol symbol) {
+	private void symbolToJson(Address imageBase, SymbolTable symbolTable,
+			Map<String, Symbol> linkages, Map<String, JsonObject> map, Symbol symbol) {
 		String key = symbol.getName();
 		Address address = symbol.getAddress();
 		JsonObject sym = map.containsKey(key) ? map.get(key) : new JsonObject();
@@ -305,10 +318,12 @@ public class IsfDataTypeWriter extends AbstractIsfWriter {
 				sym.addProperty("linkage_name", linkage.getName());
 				sym.addProperty("address", linkage.getAddress().getOffset());
 			}
-		} else {
+		}
+		else {
 			if (address.getAddressSpace().equals(imageBase.getAddressSpace())) {
 				sym.addProperty("address", address.subtract(imageBase));
-			} else {
+			}
+			else {
 				sym.addProperty("address", address.getOffset());
 			}
 		}
@@ -323,6 +338,7 @@ public class IsfDataTypeWriter extends AbstractIsfWriter {
 		}
 	}
 
+	@Override
 	public void write(JsonObject obj) {
 		gson.toJson(obj, writer);
 	}
@@ -332,7 +348,8 @@ public class IsfDataTypeWriter extends AbstractIsfWriter {
 		add(baseTypes, "undefined", getTree(newTypedefPointer(null)));
 	}
 
-	protected JsonObject getObjectForDataType(DataType dt, TaskMonitor monitor) throws IOException, CancelledException {
+	protected JsonObject getObjectForDataType(DataType dt, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		IsfObject isf = getIsfObject(dt, monitor);
 		if (isf != null) {
 			JsonObject jobj = (JsonObject) getTree(isf);
@@ -351,7 +368,8 @@ public class IsfDataTypeWriter extends AbstractIsfWriter {
 	 * @param monitor the task monitor
 	 * @throws IOException if there is an exception writing the output
 	 */
-	protected IsfObject getIsfObject(DataType dt, TaskMonitor monitor) throws IOException, CancelledException {
+	protected IsfObject getIsfObject(DataType dt, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		if (dt == null) {
 			throw new IOException("Null datatype passed to getIsfObject");
 		}
@@ -377,21 +395,29 @@ public class IsfDataTypeWriter extends AbstractIsfWriter {
 		if (dt instanceof Dynamic dynamic) {
 			DataType rep = dynamic.getReplacementBaseType();
 			return rep == null ? null : getIsfObject(rep, monitor);
-		} else if (dt instanceof TypeDef typedef) {
+		}
+		else if (dt instanceof TypeDef typedef) {
 			return getObjectTypeDef(typedef, monitor);
-		} else if (dt instanceof Composite composite) {
+		}
+		else if (dt instanceof Composite composite) {
 			return new IsfComposite(composite, this, monitor);
-		} else if (dt instanceof Enum enumm) {
+		}
+		else if (dt instanceof Enum enumm) {
 			return new IsfEnum(enumm);
-		} else if (dt instanceof BuiltInDataType builtin) {
+		}
+		else if (dt instanceof BuiltInDataType builtin) {
 			return new IsfBuiltIn(builtin);
-		} else if (dt instanceof BitFieldDataType) {
+		}
+		else if (dt instanceof BitFieldDataType) {
 			// skip - not hit
-		} else if (dt instanceof FunctionDefinition) { /// FAIL
+		}
+		else if (dt instanceof FunctionDefinition) { /// FAIL
 			// skip - not hit
-		} else if (dt.equals(DataType.DEFAULT)) {
+		}
+		else if (dt.equals(DataType.DEFAULT)) {
 			// skip - not hit
-		} else {
+		}
+		else {
 			Msg.warn(this, "Unable to write datatype. Type unrecognized: " + dt.getClass());
 		}
 
@@ -417,8 +443,8 @@ public class IsfDataTypeWriter extends AbstractIsfWriter {
 					}
 				}
 			}
-			Msg.warn(this,
-					"WARNING! conflicting data type names: " + dt.getPathName() + " - " + resolvedType.getPathName());
+			Msg.warn(this, "WARNING! conflicting data type names: " + dt.getPathName() + " - " +
+				resolvedType.getPathName());
 			return resolved.get(dt);
 		}
 
@@ -465,8 +491,9 @@ public class IsfDataTypeWriter extends AbstractIsfWriter {
 						return newIsfDynamicComponent(dynamic, type, elementCnt);
 
 					}
-					Msg.error(this, dynamic.getClass().getSimpleName() + " returned bad replacementBaseType: "
-							+ replacementBaseType.getClass().getSimpleName());
+					Msg.error(this,
+						dynamic.getClass().getSimpleName() + " returned bad replacementBaseType: " +
+							replacementBaseType.getClass().getSimpleName());
 				}
 			}
 			return null;
@@ -500,7 +527,7 @@ public class IsfDataTypeWriter extends AbstractIsfWriter {
 			IsfObject baseObject = getObjectDataType(IsfUtilities.getBaseDataType(dataType));
 			return new IsfDataTypeTypeDef(dataType, baseObject);
 		}
-		if (dataType.getPathName().contains(".conflict")) {
+		if (DataTypeUtilities.isConflictDataType(dataType)) {
 			if (!deferredKeys.contains(dataType.getPathName())) {
 				deferredKeys.add(dataType.getPathName());
 			}
@@ -513,7 +540,8 @@ public class IsfDataTypeWriter extends AbstractIsfWriter {
 	 * 
 	 * @throws CancelledException if the action is cancelled by the user
 	 */
-	protected IsfObject getObjectTypeDef(TypeDef typeDef, TaskMonitor monitor) throws CancelledException {
+	protected IsfObject getObjectTypeDef(TypeDef typeDef, TaskMonitor monitor)
+			throws CancelledException {
 		DataType dataType = typeDef.getDataType();
 		String typedefName = typeDef.getPathName();
 
@@ -527,7 +555,8 @@ public class IsfDataTypeWriter extends AbstractIsfWriter {
 				return newTypedefUser(typeDef, isfObject);
 			}
 			return newTypedefPointer(typeDef);
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			Msg.error(this, "TypeDef error: " + e);
 		}
 		clearResolve(typedefName, baseType);
@@ -544,7 +573,8 @@ public class IsfDataTypeWriter extends AbstractIsfWriter {
 					return;
 				}
 				requestedAddresses.add(address);
-			} catch (AddressFormatException e) {
+			}
+			catch (AddressFormatException e) {
 				throw new IOException("Bad address format: " + key);
 			}
 		}

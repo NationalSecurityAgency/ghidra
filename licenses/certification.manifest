@@ -2,12 +2,15 @@
 Apache_License_2.0.txt||LICENSE||||END|
 Apache_License_2.0_with_LLVM_Exceptions.txt||LICENSE||||END|
 BSD-2-ORACLE.txt||LICENSE||||END|
+BSD-3-APPLE.txt||LICENSE||||END|
+BSD-3-CAPSTONE.txt||LICENSE||||END|
 BSD-3-GOOGLE.txt||LICENSE||||END|
 BSD-3-GRUVER.txt||LICENSE||||END|
 BSD-3-HAMCREST.txt||LICENSE||||END|
 BSD-3-JUNG.txt||LICENSE||||END|
 BSD-3-ORACLE.txt||LICENSE||||END|
 BSD-3-PARR-HARWELL.txt||LICENSE||||END|
+BSD-3-PSUTIL.txt||LICENSE||||END|
 BSD.txt||LICENSE||||END|
 Bouncy_Castle_License.txt||LICENSE||||END|
 Creative_Commons_Attribution_2.5.html||LICENSE||||END|
@@ -29,4 +32,6 @@ Oxygen_Icons_-_LGPL_3.0.txt||LICENSE||||END|
 PostgresqlJDBC_License.txt||LICENSE||||END|
 Postgresql_License.txt||LICENSE||||END|
 Public_Domain.txt||LICENSE||||END|
+Python_Software_Foundation_License.txt||LICENSE||||END|
 Tango_Icons_-_Public_Domain.txt||LICENSE||||END|
+zlib_License.txt||LICENSE||||END|

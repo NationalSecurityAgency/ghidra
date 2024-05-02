@@ -31,6 +31,7 @@ import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import resources.ResourceManager;
 import utilities.util.reflection.ReflectionUtilities;
+import utility.function.Callback;
 
 /**
  * This class manages application themes and their values. The ThemeManager is an abstract
@@ -80,6 +81,8 @@ public abstract class ThemeManager {
 	// user speed, so using copy on read
 	private WeakSet<ThemeListener> themeListeners =
 		WeakDataStructureFactory.createCopyOnReadWeakSet();
+
+	private boolean isUpdating;
 
 	public static ThemeManager getInstance() {
 		return INSTANCE;
@@ -576,6 +579,21 @@ public abstract class ThemeManager {
 	}
 
 	/**
+	 * Binds the component to the font identified by the given font id. Whenever the font for
+	 * the font id changes, the component will updated with the new font.
+	 * <p>
+	 * This method is fairly niche and should not be called by most clients.  Instead, call
+	 * {@link #registerFont(Component, String)}.
+	 *
+	 * @param component the component to set/update the font
+	 * @param fontId the id of the font to register with the given component
+	 * @param fontStyle the font style
+	 */
+	public void registerFont(Component component, String fontId, int fontStyle) {
+		// do nothing
+	}
+
+	/**
 	 * Returns true if the current theme use dark default values.
 	 * @return true if the current theme use dark default values.
 	 */
@@ -598,6 +616,24 @@ public abstract class ThemeManager {
 			case UNSUPPORTED:
 			default:
 				return new NimbusTheme();
+		}
+	}
+
+	/**
+	 * Returns true if the theme system is in the process of updating
+	 * @return true if the theme system is in the process of updating
+	 */
+	public boolean isUpdatingTheme() {
+		return isUpdating;
+	}
+
+	protected void update(Callback callback) {
+		isUpdating = true;
+		try {
+			callback.call();
+		}
+		finally {
+			isUpdating = false;
 		}
 	}
 

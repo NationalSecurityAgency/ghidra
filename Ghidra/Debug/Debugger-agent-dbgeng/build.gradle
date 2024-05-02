@@ -36,6 +36,52 @@ dependencies {
 	testImplementation project(path: ":Debugger-gadp", configuration: 'testArtifacts')
 }
 
+if ("win_x86_64".equals(getCurrentPlatformName())) {
+
+	String makeName = "win_x86_64DbgmodelTlbMake"
+	task(type: Exec, makeName) {
+		ext.tmpBatch = file("build/buildTlb.bat")
+		ext.idl = file("src/main/py/src/ghidradbg/dbgmodel/DbgModel.idl")
+		ext.tlb = file("build/os/win_x86_64/dbgmodel.tlb")
+		inputs.file(idl)
+		outputs.file(tlb)
+
+		doFirst {
+			file(tlb).parentFile.mkdirs()
+			def midlCmd = "midl /tlb ${tlb} ${idl}"
+			println "Executing: " + midlCmd
+
+			tmpBatch.withWriter { out ->
+				out.println "call " + VISUAL_STUDIO_VCVARS_CMD
+				out.println midlCmd
+			}
+		}
+		doLast {
+			assert file(tlb).exists() : "Failed to build dbgmodel.tlb"
+		}
+
+		commandLine "cmd", "/c", tmpBatch
+	}
+
+	tasks.assemblePyPackage {
+		from(tasks."$makeName") {
+			into("src/ghidradbg/dbgmodel/tlb")
+		}
+	}	
+}
+else {
+	tasks.assemblePyPackage {
+		from(rootProject.BIN_REPO + '/' + getGhidraRelativePath(project) + "/os/win_x86_64/dbgmodel.tlb") {
+			into("src/ghidradbg/dbgmodel/tlb")
+		}
+	}
+}
+
+distributePyDep("Pybag-2.2.10-py3-none-any.whl")
+distributePyDep("capstone-5.0.1-py3-none-win_amd64.whl")
+distributePyDep("comtypes-1.4.1-py3-none-any.whl")
+distributePyDep("pywin32-306-cp312-cp312-win_amd64.whl")
+
 tasks.nodepJar {
 	manifest {
 		attributes['Main-Class'] = 'agent.dbgeng.gadp.DbgEngGadpServer'

@@ -21,7 +21,6 @@ import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.EtchedBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -72,36 +71,42 @@ public class OptionsEditorPanel extends JPanel {
 	}
 
 	private Component buildOptionGroupPanel(List<Option> optionGroup) {
+		JPanel panel = new JPanel(new BorderLayout());
 
+		JPanel innerPanel = buildInnerOptionsPanel(optionGroup);
+		panel.add(innerPanel, BorderLayout.CENTER);
+
+		if (needsSelectAllDeselectAllButton(optionGroup)) {
+			panel.add(buildSelectAllDeselectAllButtonPanel(innerPanel), BorderLayout.SOUTH);
+		}
+
+		panel.setBorder(createBorder(optionGroup.get(0).getGroup()));
+		return panel;
+	}
+
+	private Component buildSelectAllDeselectAllButtonPanel(JPanel innerPanel) {
+		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
+		List<JCheckBox> list = findAllCheckBoxes(innerPanel);
+		buttonPanel.add(buildSelectAll(list));
+		buttonPanel.add(buildDeselectAll(list));
+		buttonPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+		return buttonPanel;
+	}
+
+	private JPanel buildInnerOptionsPanel(List<Option> optionGroup) {
 		JPanel panel = new JPanel(getBestLayout());
-		String group = optionGroup.get(0).getGroup();
 
-		panel.setBorder(createBorder(group));
 		for (Option option : optionGroup) {
 			Component editorComponent = getEditorComponent(option);
 			if (editorComponent != null) {
 				// Editor not available - omit option from panel
-				panel.add(new GLabel(option.getName(), SwingConstants.RIGHT));
+				GLabel label = new GLabel(option.getName(), SwingConstants.RIGHT);
+				panel.add(label);
 				editorComponent.setName(option.getName()); // set the component name to the option name
+				editorComponent.getAccessibleContext().setAccessibleName(option.getName());
 				panel.add(editorComponent);
 			}
 		}
-
-		if (needsSelectAllDeselectAllButton(optionGroup)) {
-			JPanel wrapperPanel = new JPanel(new BorderLayout());
-			wrapperPanel.add(panel, BorderLayout.CENTER);
-			List<JCheckBox> list = findAllCheckBoxes(panel);
-			JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
-			buttonPanel.add(buildSelectAll(list));
-			buttonPanel.add(buildDeselectAll(list));
-			wrapperPanel.add(buttonPanel, BorderLayout.SOUTH);
-			Border etchedBorder = BorderFactory.createEtchedBorder(EtchedBorder.LOWERED);
-			Border marginBorder = BorderFactory.createEmptyBorder(10, 0, 10, 10);
-			panel.setBorder(BorderFactory.createCompoundBorder(etchedBorder, marginBorder));
-			buttonPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
-			return wrapperPanel;
-		}
-
 		return panel;
 	}
 
@@ -154,7 +159,8 @@ public class OptionsEditorPanel extends JPanel {
 	}
 
 	private Map<String, List<Option>> organizeByGroup(List<Option> options) {
-		Map<String, List<Option>> map = LazyMap.lazyMap(new HashMap<>(), () -> new ArrayList<>());
+		Map<String, List<Option>> map =
+			LazyMap.lazyMap(new LinkedHashMap<>(), () -> new ArrayList<>());
 
 		for (Option option : options) {
 			String group = option.getGroup();

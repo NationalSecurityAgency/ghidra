@@ -63,8 +63,7 @@ public class CreateAppliedExactMatchingSessionScript extends GhidraScript {
 			return;
 		}
 
-		VTSession session =
-			VTSessionDB.createVTSession(name, sourceProgram, destinationProgram, this);
+		VTSession session = new VTSessionDB(name, sourceProgram, destinationProgram, this);
 
 		// it seems clunky to have to create this separately, but I'm not sure how else to do it
 		folder.createFile(name, session, monitor);

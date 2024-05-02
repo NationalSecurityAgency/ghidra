@@ -492,11 +492,19 @@ public class VerticalLayoutTextField implements TextField {
 	@Override
 	public RowColLocation dataToScreenLocation(int dataRow, int dataColumn) {
 
-		FieldRow fieldRow = getFieldRowFromDataRow(dataRow);
-		TextField field = fieldRow.field;
-		RowColLocation location = field.dataToScreenLocation(dataRow, dataColumn);
-		int screenRow = fieldRow.screenRow;
-		return location.withRow(screenRow);
+		// search each line looking for a match for the given row and column
+		for (int i = 0; i < subFields.size(); i++) {
+			FieldRow row = subFields.get(i);
+			RowColLocation loc = row.field.dataToScreenLocation(dataRow, dataColumn);
+
+			// A DefaultRowColLocation means that the line did not have an exact match for
+			// the dataRow and dataColumn, so need to keep looking at each line.
+			if (!(loc instanceof DefaultRowColLocation)) {
+				return new RowColLocation(i, loc.col());
+			}
+		}
+
+		return new DefaultRowColLocation();
 	}
 
 	@Override
@@ -550,18 +558,6 @@ public class VerticalLayoutTextField implements TextField {
 			return null;
 		}
 		return subFields.get(screenRow).field;
-	}
-
-	private FieldRow getFieldRowFromDataRow(int dataRow) {
-		int currentRow = 0;
-		for (FieldRow row : subFields) {
-			int length = row.field.getNumDataRows();
-			if (currentRow + length > dataRow) {
-				return row;
-			}
-			currentRow += length;
-		}
-		return subFields.get(subFields.size() - 1);
 	}
 
 	private int getDataRow(TextField field) {

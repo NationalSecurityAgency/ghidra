@@ -33,7 +33,7 @@ import ghidra.util.task.TaskMonitor;
  * Applier for {@link AbstractLabelMsSymbol} symbols.
  */
 public class LabelSymbolApplier extends MsSymbolApplier
-		implements DirectSymbolApplier, NestableSymbolApplier {
+		implements DirectSymbolApplier, NestableSymbolApplier, DisassembleableAddressSymbolApplier {
 
 	private AbstractLabelMsSymbol symbol;
 
@@ -79,6 +79,11 @@ public class LabelSymbolApplier extends MsSymbolApplier
 		else {
 			applicator.createSymbol(symbolAddress, label, false);
 		}
+	}
+
+	@Override
+	public Address getAddressForDisassembly() {
+		return applicator.getAddress(symbol);
 	}
 
 	@Override
@@ -163,7 +168,6 @@ public class LabelSymbolApplier extends MsSymbolApplier
 		if (function == null) {
 			return false;
 		}
-		applicator.scheduleDisassembly(address);
 
 		if (!function.isThunk() &&
 			function.getSignatureSource().isLowerPriorityThan(SourceType.IMPORTED)) {

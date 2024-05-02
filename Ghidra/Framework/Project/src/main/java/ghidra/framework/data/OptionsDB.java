@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
+import javax.swing.KeyStroke;
+
 import db.*;
 import ghidra.framework.options.*;
 import ghidra.util.*;
@@ -362,6 +364,15 @@ class OptionsDB extends AbstractOptions {
 				type = OptionType.values()[record.getByteValue(TYPE_COL)];
 			}
 		}
+
+		else if (type == OptionType.KEYSTROKE_TYPE) {
+			// convert key strokes to action triggers
+			type = OptionType.ACTION_TRIGGER;
+			if (defaultValue instanceof KeyStroke keyStroke) {
+				defaultValue = new ActionTrigger(keyStroke);
+			}
+		}
+
 		return new DBOption(optionName, type, null, null, defaultValue, false, null);
 	}
 

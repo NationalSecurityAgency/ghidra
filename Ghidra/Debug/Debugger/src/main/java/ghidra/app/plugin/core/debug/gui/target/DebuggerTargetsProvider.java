@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.target;
 
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.showError;
+import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 
 import java.awt.BorderLayout;
 import java.awt.event.MouseEvent;
@@ -249,6 +249,8 @@ public class DebuggerTargetsProvider extends ComponentProviderAdapter {
 		tree.setRootVisible(false);
 		tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 		mainPanel.add(tree);
+
+		tree.setAccessibleNamePrefix("Debugger Targets");
 
 		// NB: for both of these, setContext should precede emitEvents
 		tree.getGTSelectionModel().addGTreeSelectionListener(evt -> {

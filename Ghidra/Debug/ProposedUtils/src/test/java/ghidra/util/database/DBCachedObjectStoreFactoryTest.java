@@ -23,6 +23,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.UniversalIdGenerator;
 import ghidra.util.database.annot.*;
 import ghidra.util.exception.VersionException;
@@ -35,7 +36,7 @@ public class DBCachedObjectStoreFactoryTest {
 
 	public static class MyDomainObject extends DBCachedDomainObjectAdapter {
 		protected MyDomainObject(DBHandle dbh, String name, Object consumer) {
-			super(dbh, DBOpenMode.CREATE, TaskMonitor.DUMMY, name, 500, 1000, consumer);
+			super(dbh, OpenMode.CREATE, TaskMonitor.DUMMY, name, 500, 1000, consumer);
 		}
 
 		@Override

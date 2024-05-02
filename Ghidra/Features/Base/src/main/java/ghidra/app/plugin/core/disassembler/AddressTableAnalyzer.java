@@ -107,10 +107,10 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 		processorHasLowBitCode = PseudoDisassembler.hasLowBitCodeModeInAddrValues(program);
 		// don't align based on instruction start rules, data is important too.
 		//   if do this, will miss, runs of ptrs to data/code/data/code/....
-				// ptrAlignment = program.getLanguage().getInstructionAlignment();
-				// if (processorHasLowBitCode) {
-				// 	ptrAlignment = 1;
-				// }
+		// ptrAlignment = program.getLanguage().getInstructionAlignment();
+		// if (processorHasLowBitCode) {
+		// 	ptrAlignment = 1;
+		// }
 		return (addrSize == 32 || addrSize == 64);
 	}
 
@@ -164,8 +164,9 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 					continue;
 				}
 
-				Bookmark bookmark = program.getBookmarkManager().getBookmark(
-					tableEntry.getTopAddress(), BookmarkType.ANALYSIS, "Address Table");
+				Bookmark bookmark = program.getBookmarkManager()
+						.getBookmark(tableEntry.getTopAddress(), BookmarkType.ANALYSIS,
+							"Address Table");
 
 				// nothing to see here, already done.
 				if (!ignoreBookmarks && bookmark != null) {
@@ -186,9 +187,10 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 
 				// put info bookmark in
 				if (createBookmarksEnabled) {
-					program.getBookmarkManager().setBookmark(tableEntry.getTopAddress(),
-						BookmarkType.ANALYSIS, "Address Table",
-						"Address table[" + tableEntry.getNumberAddressEntries() + "] created");
+					program.getBookmarkManager()
+							.setBookmark(tableEntry.getTopAddress(), BookmarkType.ANALYSIS,
+								"Address Table", "Address table[" +
+									tableEntry.getNumberAddressEntries() + "] created");
 				}
 
 				// if all are valid code, disassemble
@@ -268,8 +270,7 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 		//
 		AddressSet badBlocks = new AddressSet();
 		for (MemoryBlock memoryBlock : blocks) {
-			if (memoryBlock.isWrite() || memoryBlock.isRead() || memoryBlock.isExecute() ||
-				memoryBlock.isVolatile()) {
+			if (memoryBlock.isWrite() || memoryBlock.isRead() || memoryBlock.isExecute()) {
 				continue;
 			}
 
@@ -339,15 +340,16 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 
 		AddressIterator addrIter = addrSet.getAddresses(true);
 		long maxBytes = addrSet.getNumAddresses();
-		
-		MemoryBufferImpl buffer = new MemoryBufferImpl(memory, addrSet.getMinAddress(), (int) (maxBytes > 1024 ? 1024 : maxBytes));
+
+		MemoryBufferImpl buffer = new MemoryBufferImpl(memory, addrSet.getMinAddress(),
+			(int) (maxBytes > 1024 ? 1024 : maxBytes));
 
 		while (addrIter.hasNext()) {
 			Address start = addrIter.next();
 
 			// skip over anything that smells like a unicode string
 			//
-			int strLen = getWStrLen(buffer, start, (int)(maxBytes / 2));
+			int strLen = getWStrLen(buffer, start, (int) (maxBytes / 2));
 			if (strLen > 4) {
 				int numBytes = strLen * 2;
 				addrIter = skipBytes(addrIter, addrSet, start, numBytes);

@@ -23,16 +23,14 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 public class UnsupportedLoadCommand extends LoadCommand {
-	private int type;
 
-	UnsupportedLoadCommand(BinaryReader reader, int type) throws IOException {
+	UnsupportedLoadCommand(BinaryReader reader) throws IOException {
 		super(reader);
-		this.type = type;
 	}
 
 	@Override
 	public String getCommandName() {
-		return "Unsupported Load Command Type = 0x" + Integer.toHexString(type);
+		return "unsupported_command";
 	}
 
 	@Override

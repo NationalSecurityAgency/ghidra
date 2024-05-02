@@ -29,7 +29,7 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.elf.info.ElfInfoItem.ItemWithAddress;
 import ghidra.app.util.bin.format.golang.GoBuildInfo;
-import ghidra.app.util.bin.format.golang.PEGoBuildId;
+import ghidra.app.util.bin.format.golang.GoBuildId;
 import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.bin.format.mz.DOSHeader;
 import ghidra.app.util.bin.format.pe.*;
@@ -37,6 +37,7 @@ import ghidra.app.util.bin.format.pe.ImageCor20Header.ImageCor20Flags;
 import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
 import ghidra.app.util.bin.format.pe.debug.DebugCOFFSymbol;
 import ghidra.app.util.bin.format.pe.debug.DebugDirectoryParser;
+import ghidra.app.util.bin.format.swift.SwiftUtils;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.Options;
@@ -297,7 +298,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 	private void processGolangProperties(OptionalHeader optionalHeader, NTHeader ntHeader,
 			Program prog, TaskMonitor monitor) {
 
-		ItemWithAddress<PEGoBuildId> buildId = PEGoBuildId.findBuildId(prog);
+		ItemWithAddress<GoBuildId> buildId = GoBuildId.findBuildId(prog);
 		if (buildId != null) {
 			buildId.item().markupProgram(prog, buildId.address());
 		}
@@ -921,6 +922,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			CLI("cli", "cli"),
 			Rustc(RustConstants.RUST_COMPILER, RustConstants.RUST_COMPILER),
 			GOLANG("golang", "golang"),
+			Swift("swift", "swift"),
 			Unknown("unknown", "unknown"),
 
 			// The following values represent the presence of ambiguous indicators
@@ -985,6 +987,15 @@ public class PeLoader extends AbstractPeDebugLoader {
 					log.appendMsg("Rust error: " + e.getMessage());
 				}
 				return CompilerEnum.Rustc;
+			}
+			
+			// Check for Swift
+			List<String> sectionNames =
+				Arrays.stream(pe.getNTHeader().getFileHeader().getSectionHeaders())
+						.map(section -> section.getName())
+						.toList();
+			if (SwiftUtils.isSwift(sectionNames)) {
+				return CompilerEnum.Swift;
 			}
 
 			// Check for managed code (.NET)
@@ -1130,7 +1141,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			SectionHeader textSection = pe.getNTHeader().getFileHeader().getSectionHeader(".text");
 			if (textSection != null) {
 				try (InputStream is = textSection.getDataStream()) {
-					PEGoBuildId buildId = PEGoBuildId.read(is);
+					GoBuildId buildId = GoBuildId.read(is);
 					buildIdPresent = buildId != null;
 				}
 				catch (IOException e) {

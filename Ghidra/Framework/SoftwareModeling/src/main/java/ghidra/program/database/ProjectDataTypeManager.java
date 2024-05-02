@@ -16,13 +16,15 @@
 package ghidra.program.database;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
 
 import javax.help.UnsupportedOperationException;
 
-import db.*;
+import db.DBHandle;
+import db.Transaction;
 import db.util.ErrorHandler;
-import generic.stl.Pair;
+import ghidra.framework.data.OpenMode;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.store.LockException;
 import ghidra.program.model.data.*;
@@ -65,7 +67,7 @@ public class ProjectDataTypeManager extends StandAloneDataTypeManager
 	 * @throws VersionException if the database does not match the expected version.
 	 * @throws IOException if a database I/O error occurs.
 	 */
-	ProjectDataTypeManager(DataTypeArchiveDB dataTypeArchive, DBHandle handle, int openMode,
+	ProjectDataTypeManager(DataTypeArchiveDB dataTypeArchive, DBHandle handle, OpenMode openMode,
 			ErrorHandler errHandler, Lock lock, TaskMonitor monitor)
 			throws CancelledException, VersionException, IOException {
 		super(handle, openMode, errHandler, lock, monitor);
@@ -238,9 +240,9 @@ public class ProjectDataTypeManager extends StandAloneDataTypeManager
 		return ArchiveType.PROJECT;
 	}
 
-	public void archiveReady(int openMode, TaskMonitor monitor)
+	public void archiveReady(OpenMode openMode, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		if (openMode == DBConstants.UPGRADE) {
+		if (openMode == OpenMode.UPGRADE) {
 			doSourceArchiveUpdates(monitor);
 			migrateOldFlexArrayComponentsIfRequired(monitor);
 		}

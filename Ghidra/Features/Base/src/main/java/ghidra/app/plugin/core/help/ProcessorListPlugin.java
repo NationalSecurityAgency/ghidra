@@ -90,7 +90,8 @@ public class ProcessorListPlugin extends Plugin implements ApplicationLevelPlugi
 		processorListAction.setMenuBarData(new MenuData(
 			new String[] { ToolConstants.MENU_HELP, processorListAction.getName() }, null, "AAAZ"));
 
-		processorListAction.setHelpLocation(new HelpLocation(HelpTopics.ABOUT, "ProcessorList"));
+		processorListAction
+				.setHelpLocation(new HelpLocation(HelpTopics.RUNTIME_INFO, "InstalledProcessors"));
 		processorListAction.setDescription(getPluginDescription().getDescription());
 		tool.addAction(processorListAction);
 	}
@@ -115,8 +116,8 @@ public class ProcessorListPlugin extends Plugin implements ApplicationLevelPlugi
 	private Set<Processor> getProcessors() {
 		TreeSet<Processor> processors = new TreeSet<>();
 		LanguageService languageService = DefaultLanguageService.getLanguageService();
-		for (LanguageDescription languageDescription : languageService.getLanguageDescriptions(
-			true)) {
+		for (LanguageDescription languageDescription : languageService
+				.getLanguageDescriptions(true)) {
 			processors.add(languageDescription.getProcessor());
 		}
 		return processors;
@@ -211,8 +212,8 @@ public class ProcessorListPlugin extends Plugin implements ApplicationLevelPlugi
 
 			TreeSet<Processor> processors = new TreeSet<>();
 			LanguageService languageService = DefaultLanguageService.getLanguageService();
-			for (LanguageDescription languageDescription : languageService.getLanguageDescriptions(
-				true)) {
+			for (LanguageDescription languageDescription : languageService
+					.getLanguageDescriptions(true)) {
 				processors.add(languageDescription.getProcessor());
 			}
 

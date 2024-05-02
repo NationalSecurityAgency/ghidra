@@ -98,10 +98,10 @@ public:
   void encode(Encoder &encoder) const; ///< Encode \b this to a stream
   void encode(Encoder &encoder,int4 size) const; ///< Encode \b this and a size to a stream
 
-  /// Restore an address from parsed XML
+  /// Decode an address from a stream
   static Address decode(Decoder &decoder);
 
-  /// Restore an address and size from parsed XML
+  /// Decode an address and size from a stream
   static Address decode(Decoder &decoder,int4 &size);
 };
 
@@ -221,7 +221,7 @@ class RangeProperties {
   bool seenLast;		///< End of the range is actively specified
 public:
   RangeProperties(void) { first = 0; last = 0; isRegister = false; seenLast = false; }
-  void decode(Decoder &decoder);	///< Restore \b this from an XML stream
+  void decode(Decoder &decoder);	///< Decode \b this from a stream
 };
 
 /// \brief A disjoint set of Ranges, possibly across multiple address spaces
@@ -576,11 +576,6 @@ extern int4 count_leading_zeros(uintb val);		///< Return the number of leading z
 
 extern uintb coveringmask(uintb val);			///< Return a mask that \e covers the given value
 extern int4 bit_transitions(uintb val,int4 sz);		///< Calculate the number of bit transitions in the sized value
-
-extern void mult64to128(uint8 *res,uint8 x,uint8 y);
-extern void unsignedSubtract128(uint8 *a,uint8 *b);
-extern int4 unsignedCompare128(uint8 *a,uint8 *b);
-extern int4 power2Divide(int4 n,uint8 divisor,uint8 &q,uint8 &r);
 
 } // End namespace ghidra
 #endif

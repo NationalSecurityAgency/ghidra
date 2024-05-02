@@ -256,8 +256,8 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 				}
 				MemoryBlock block;
 				if (length > 0) {
-					block = MemoryBlockUtils.createInitializedBlock(program, false,
-						name, addr, fileBytes, offset, length, "", "", r, w, x, log);
+					block = MemoryBlockUtils.createInitializedBlock(program, false, name, addr,
+						fileBytes, offset, length, "", "", r, w, x, log);
 					if (length < minalloc) {
 						// Things actually rely on the block being padded out with real 0's, so we
 						// must expand it
@@ -354,8 +354,7 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 					int length = resource.getFileLengthShifted();
 					if (length > 0) {
 						MemoryBlockUtils.createInitializedBlock(program, false, "Rsrc" + (id++),
-							addr, fileBytes, offset, length, "", "", true,
-							false, false, log);
+							addr, fileBytes, offset, length, "", "", true, false, false, log);
 					}
 				}
 				catch (AddressOverflowException e) {
@@ -445,8 +444,12 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 		String comment = "";
 		String source = "";
 		// This isn't a real block, just place holder addresses, so don't create an initialized block
-		MemoryBlockUtils.createUninitializedBlock(program, false, MemoryBlock.EXTERNAL_BLOCK_NAME,
-			addr, length, comment, source, true, false, false, log);
+		MemoryBlock block = MemoryBlockUtils.createUninitializedBlock(program, false,
+			MemoryBlock.EXTERNAL_BLOCK_NAME, addr, length, comment, source, true, false, false,
+			log);
+
+		// Mark block as an artificial fabrication
+		block.setArtificial(true);
 
 		for (int i = 0; i < names.length; ++i) {
 			String moduleName = names[i].getString();

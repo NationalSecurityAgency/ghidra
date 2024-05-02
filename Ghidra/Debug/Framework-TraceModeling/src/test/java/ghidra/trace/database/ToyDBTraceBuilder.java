@@ -34,6 +34,7 @@ import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.util.PathPredicates;
+import ghidra.framework.data.OpenMode;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.trace.TraceSleighUtils;
 import ghidra.program.disassemble.Disassembler;
@@ -61,7 +62,6 @@ import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
-import ghidra.util.database.DBOpenMode;
 import ghidra.util.exception.*;
 import ghidra.util.task.ConsoleTaskMonitor;
 
@@ -95,7 +95,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	public ToyDBTraceBuilder(File file)
 			throws CancelledException, VersionException, LanguageNotFoundException, IOException {
 		DBHandle handle = new DBHandle(file);
-		this.trace = new DBTrace(handle, DBOpenMode.UPDATE, new ConsoleTaskMonitor(), this);
+		this.trace = new DBTrace(handle, OpenMode.UPDATE, new ConsoleTaskMonitor(), this);
 		this.language = trace.getBaseLanguage();
 		this.host = trace.getPlatformManager().getHostPlatform();
 	}
@@ -553,8 +553,8 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 * @return the instruction unit
 	 * @throws CodeUnitInsertionException if the instruction cannot be created
 	 */
-	public DBTraceInstruction addInstruction(long snap, Address start,
-			TracePlatform platform) throws CodeUnitInsertionException {
+	public DBTraceInstruction addInstruction(long snap, Address start, TracePlatform platform)
+			throws CodeUnitInsertionException {
 		DBTraceCodeManager code = trace.getCodeManager();
 		Language platformLanguage = platform.getLanguage();
 		Disassembler dis =
@@ -637,8 +637,8 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	public DBTraceReference addMemoryReference(long creationSnap, Address from, Address to,
 			int operandIndex) {
 		return trace.getReferenceManager()
-				.addMemoryReference(Lifespan.nowOn(creationSnap), from, to,
-					RefType.DATA, SourceType.DEFAULT, operandIndex);
+				.addMemoryReference(Lifespan.nowOn(creationSnap), from, to, RefType.DATA,
+					SourceType.DEFAULT, operandIndex);
 	}
 
 	/**
@@ -655,8 +655,8 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	public DBTraceReference addOffsetReference(long creationSnap, Address from, Address to,
 			boolean toAddrIsBase, long offset) {
 		return trace.getReferenceManager()
-				.addOffsetReference(Lifespan.nowOn(creationSnap), from, to, toAddrIsBase,
-					offset, RefType.DATA, SourceType.DEFAULT, -1);
+				.addOffsetReference(Lifespan.nowOn(creationSnap), from, to, toAddrIsBase, offset,
+					RefType.DATA, SourceType.DEFAULT, -1);
 	}
 
 	/**
@@ -677,8 +677,8 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	public DBTraceReference addShiftedReference(long creationSnap, Address from, Address to,
 			int shift) {
 		return trace.getReferenceManager()
-				.addShiftedReference(Lifespan.nowOn(creationSnap), from,
-					to, shift, RefType.DATA, SourceType.DEFAULT, -1);
+				.addShiftedReference(Lifespan.nowOn(creationSnap), from, to, shift, RefType.DATA,
+					SourceType.DEFAULT, -1);
 	}
 
 	/**
@@ -696,8 +696,8 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 */
 	public DBTraceReference addRegisterReference(long creationSnap, Address from, String to) {
 		return trace.getReferenceManager()
-				.addRegisterReference(Lifespan.nowOn(creationSnap), from,
-					language.getRegister(to), RefType.DATA, SourceType.DEFAULT, -1);
+				.addRegisterReference(Lifespan.nowOn(creationSnap), from, language.getRegister(to),
+					RefType.DATA, SourceType.DEFAULT, -1);
 	}
 
 	/**
@@ -715,8 +715,8 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 */
 	public DBTraceReference addStackReference(long creationSnap, Address from, int to) {
 		return trace.getReferenceManager()
-				.addStackReference(Lifespan.nowOn(creationSnap), from, to,
-					RefType.DATA, SourceType.DEFAULT, -1);
+				.addStackReference(Lifespan.nowOn(creationSnap), from, to, RefType.DATA,
+					SourceType.DEFAULT, -1);
 	}
 
 	/**
@@ -803,8 +803,8 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 * @param path the path pattern
 	 * @return the object or null
 	 */
-	public TraceObject objAny(String pat) {
-		return objAny(pat, Lifespan.at(0));
+	public TraceObject objAny(String path) {
+		return objAny(path, Lifespan.at(0));
 	}
 
 	public TraceObject objAny(String path, Lifespan span) {

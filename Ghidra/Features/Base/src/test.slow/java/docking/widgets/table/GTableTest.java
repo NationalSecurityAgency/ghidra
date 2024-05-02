@@ -35,7 +35,6 @@ public class GTableTest extends AbstractGhidraHeadedIntegrationTest {
 	private GhidraTable table;
 	private JFrame frame;
 
-	private long testKeyTimeout = 100;
 	private boolean timeoutTriggered;
 
 	@Before
@@ -56,7 +55,7 @@ public class GTableTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void installTestAutoLookupTimeout() {
-		// note: this call will not work due to the unpredictable timing of event 
+		// note: this call will not work due to the unpredictable timing of event
 		//       processing in the various test environments
 		// table.setAutoLookupTimeout(testKeyTimeout);
 

@@ -84,6 +84,18 @@ public class PackedDecode implements Decoder {
 	private LinkedByteBuffer.Position endPos;
 	private boolean attributeRead;
 
+	/**
+	 * Constructor for formats that do not use the readSpace() methods or use
+	 * setAddressFactory() in the middle of decoding
+	 */
+	public PackedDecode() {
+		addrFactory = null;
+		inStream = null;
+		startPos = new LinkedByteBuffer.Position();
+		curPos = new LinkedByteBuffer.Position();
+		endPos = new LinkedByteBuffer.Position();
+	}
+
 	public PackedDecode(AddressFactory addrFactory) {
 		this.addrFactory = addrFactory;
 		inStream = null;
@@ -91,6 +103,28 @@ public class PackedDecode implements Decoder {
 		curPos = new LinkedByteBuffer.Position();
 		endPos = new LinkedByteBuffer.Position();
 		buildAddrSpaceArray();
+	}
+
+	/**
+	 * Build a decoder for an input stream, where the decoder is set to read pages from the stream
+	 * "as needed".  An initial page is read from the stream by this constructor. But then
+	 * the stream must remain open and additional pages are read during the decoding process.
+	 * Calling close() after decoding, will close the underlying stream.
+	 * @param stream is the stream
+	 * @param desc is a descriptive string for the stream used in error messages
+	 * @throws IOException for problems initially reading from the stream
+	 */
+	public PackedDecode(InputStream stream, String desc) throws IOException {
+		addrFactory = null;
+		inStream = null;
+		startPos = new LinkedByteBuffer.Position();
+		curPos = new LinkedByteBuffer.Position();
+		endPos = new LinkedByteBuffer.Position();
+		open(Integer.MAX_VALUE, desc);
+		startPos.buffer = inStream;
+		curPos.buffer = inStream;
+		endPos.buffer = inStream;
+		inStream.ingestStreamAsNeeded(stream, endPos);
 	}
 
 	private void buildAddrSpaceArray() {
@@ -178,13 +212,33 @@ public class PackedDecode implements Decoder {
 	}
 
 	@Override
+	public void setAddressFactory(AddressFactory addrFactory) {
+		this.addrFactory = addrFactory;
+		buildAddrSpaceArray();
+	}
+
+	@Override
 	public void clear() {
 		inStream = null;
 	}
 
 	@Override
-	public void open(int max, String source) {
-		inStream = new LinkedByteBuffer(max, source);
+	public void open(int max, String desc) {
+		inStream = new LinkedByteBuffer(max, ELEMENT_END, desc);
+	}
+
+	/**
+	 * Close stream cached by the ingestStreamAsNeeded method.
+	 * @throws IOException for low-level problems with the stream
+	 */
+	public void close() throws IOException {
+		inStream.close();
+		inStream = null;
+	}
+
+	@Override
+	public void ingestStreamToNextTerminator(InputStream stream) throws IOException {
+		inStream.ingestStreamToNextTerminator(stream);
 	}
 
 	@Override
@@ -193,8 +247,13 @@ public class PackedDecode implements Decoder {
 	}
 
 	@Override
+	public void ingestBytes(byte[] byteArray, int off, int sz) throws IOException {
+		inStream.ingestBytes(byteArray, off, sz);
+	}
+
+	@Override
 	public void endIngest() {
-		inStream.pad(ELEMENT_END);
+		inStream.pad();
 		inStream.getStartPosition(endPos);
 	}
 
@@ -380,6 +439,7 @@ public class PackedDecode implements Decoder {
 			throws DecoderException {
 		long res;
 		LinkedByteBuffer.Position tmpPos = new LinkedByteBuffer.Position();
+		tmpPos.buffer = inStream;
 		tmpPos.copy(curPos);
 		byte header1 = tmpPos.getNextByte();
 		if ((header1 & HEADEREXTEND_MASK) != 0) {
@@ -460,9 +520,9 @@ public class PackedDecode implements Decoder {
 			curPos.advancePosition(length);
 			return res;
 		}
-		StringBuilder buf = new StringBuilder();
-		String res = new String(curPos.array, curPos.current, curLen);
-		buf.append(res);
+		int size = curLen;
+		byte[] buf = new byte[length];
+		System.arraycopy(curPos.array, curPos.current, buf, 0, curLen);
 		length -= curLen;
 		curPos.advancePosition(curLen);
 		while (length > 0) {
@@ -470,13 +530,12 @@ public class PackedDecode implements Decoder {
 			if (curLen > length) {
 				curLen = length;
 			}
-			res = new String(curPos.array, curPos.current, curLen);
-			buf.append(res);
+			System.arraycopy(curPos.array, curPos.current, buf, size, curLen);
+			size += curLen;
 			length -= curLen;
 			curPos.advancePosition(curLen);
 		}
-		res = buf.toString();
-		return res;
+		return new String(buf, 0, size);
 	}
 
 	@Override
@@ -539,4 +598,20 @@ public class PackedDecode implements Decoder {
 		return res;
 	}
 
+	@Override
+	public int readOpcode() throws DecoderException {
+		int val = (int) readSignedInteger();
+		if (val < 0 || val >= PcodeOp.PCODE_MAX) {
+			throw new DecoderException("Bad OpCode");
+		}
+		return val;
+	}
+
+	@Override
+	public int readOpcode(AttributeId attribId) throws DecoderException {
+		findMatchingAttribute(attribId);
+		int opcode = readOpcode();
+		curPos.copy(startPos);
+		return opcode;
+	}
 }

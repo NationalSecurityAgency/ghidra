@@ -75,6 +75,14 @@ public interface FileSystem {
 	public String[] getItemNames(String folderPath) throws IOException;
 
 	/**
+	 * Returns a list of the folder items contained in the given folder.
+	 * @param folderPath the path of the folder.
+	 * @return a list of folder items.
+	 * @throws IOException
+	 */
+	public FolderItem[] getItems(String folderPath) throws IOException;
+
+	/**
 	 * Returns the FolderItem in the given folder with the given name
 	 * @param folderPath the folder path containing the item.
 	 * @param name the name of the item.
@@ -108,8 +116,8 @@ public interface FileSystem {
 	 * all alphanumerics
 	 * @throws IOException thrown if an IO error occurs.
 	 */
-	public void createFolder(String parentPath, String folderName) throws InvalidNameException,
-			IOException;
+	public void createFolder(String parentPath, String folderName)
+			throws InvalidNameException, IOException;
 
 	/**
 	 * Create a new database item within the specified parent folder using the contents
@@ -133,8 +141,8 @@ public interface FileSystem {
 	 */
 	public DatabaseItem createDatabase(String parentPath, String name, String fileID,
 			BufferFile bufferFile, String comment, String contentType, boolean resetDatabaseId,
-			TaskMonitor monitor, String user) throws InvalidNameException, IOException,
-			CancelledException;
+			TaskMonitor monitor, String user)
+			throws InvalidNameException, IOException, CancelledException;
 
 	/**
 	 * Create a new empty database item within the specified parent folder. 
@@ -176,8 +184,8 @@ public interface FileSystem {
 	 * @throws CancelledException if cancelled by monitor
 	 */
 	public DataFileItem createDataFile(String parentPath, String name, InputStream istream,
-			String comment, String contentType, TaskMonitor monitor) throws InvalidNameException,
-			IOException, CancelledException;
+			String comment, String contentType, TaskMonitor monitor)
+			throws InvalidNameException, IOException, CancelledException;
 
 	/**
 	 * Creates a new file item from a packed file.
@@ -195,8 +203,8 @@ public interface FileSystem {
 	 * @throws CancelledException if cancelled by monitor
 	 */
 	public FolderItem createFile(String parentPath, String name, File packedFile,
-			TaskMonitor monitor, String user) throws InvalidNameException, IOException,
-			CancelledException;
+			TaskMonitor monitor, String user)
+			throws InvalidNameException, IOException, CancelledException;
 
 	/**
 	 * Delete the specified folder.

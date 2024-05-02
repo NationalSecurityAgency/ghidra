@@ -21,7 +21,7 @@ import java.util.*;
 import generic.jar.ResourceFile;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.MemoryByteProvider;
-import ghidra.app.util.bin.format.dwarf4.next.DWARFDataTypeConflictHandler;
+import ghidra.app.util.bin.format.dwarf.DWARFDataTypeConflictHandler;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;

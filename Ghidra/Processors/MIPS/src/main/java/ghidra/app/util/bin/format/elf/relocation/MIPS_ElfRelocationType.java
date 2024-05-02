@@ -96,6 +96,7 @@ public enum MIPS_ElfRelocationType implements ElfRelocationType {
 	R_MIPS16_TLS_GOTTPREL(110),
 	R_MIPS16_TLS_TPREL_HI16(111),
 	R_MIPS16_TLS_TPREL_LO16(112),
+	R_MIPS16_PC16_S1(113),
 
 	R_MIPS16_LO(100), // First MIPS16 reloc type
 	R_MIPS16_HI(112), // Last MIPS16 reloc type
@@ -147,7 +148,12 @@ public enum MIPS_ElfRelocationType implements ElfRelocationType {
 	R_MICROMIPS_LO(133), // First MicroMIPS reloc type
 	R_MICROMIPS_HI(173), // Last MicroMIPS reloc type
 
-	R_MIPS_PC32(248);
+	R_MIPS_PC32(248),
+	R_MIPS_EH(249),
+	R_MIPS_GNU_REL16_S2(250),
+
+	R_MIPS_GNU_VTINHERIT(253),
+	R_MIPS_GNU_VTENTRY(254);
 
 	public final int typeId;
 

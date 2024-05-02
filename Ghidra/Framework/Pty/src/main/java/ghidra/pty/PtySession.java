@@ -15,6 +15,9 @@
  */
 package ghidra.pty;
 
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 /**
  * A session led by the child pty
  * 
@@ -30,6 +33,8 @@ public interface PtySession {
 	 * @throws InterruptedException if the wait is interrupted
 	 */
 	int waitExited() throws InterruptedException;
+
+	int waitExited(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException;
 
 	/**
 	 * Take the greatest efforts to terminate the session (leader and descendants)

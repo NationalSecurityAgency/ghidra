@@ -22,6 +22,74 @@
 
 <BODY>
 
+<H1 align="center">Ghidra 11.0.3 Change History (April 2024)</H1>
+<blockquote><p><u><B>Improvements</B></u></p>
+<ul>
+    <li><I>Decompiler</I>. Fixed v850 Decompiler treatment of global <span class="gcode">GP</span> and <span class="gcode">TP</span> registers as separate registers. (GP-4479, Issue #3515)</li>
+    <li><I>Languages</I>. Added thunk patterns for use of <span class="gcode">BTI C/CJ</span> instruction at start of AARCH64 thunk functions. (GP-3917)</li>
+    <li><I>Processors</I>. Added p0/p8 registers as prefer split to Tricore.cspec (GP-4507, Issue #3515)</li>
+</ul>
+</blockquote>
+<blockquote><p><u><B>Bugs</B></u></p>
+<ul>
+    <li><I>Build</I>. Corrected build problem that causes module src.zip files to be omitted from distribution when a <span class="gcode">externalGhidraExtension</span> is present.  This did not impact the current Public release since it does not include any such modules. (GP-4492)</li>
+    <li><I>Decompiler</I>. Fixed bug causing switch analysis to lay down jump tables with extra entries. (GP-4416)</li>
+    <li><I>Processors</I>. Fixed regression in Tricore calling convention for parameters and returns that are a smaller datatype than the full register size. (GP-4468, Issue #6354)</li>
+    <li><I>Scripting</I>. Fixed <span class="gcode">NullPointerException</span> in the <span class="gcode">RecoverClassFromRTTIScript</span> that happened for Windows programs when a class had a hierarchy at least four levels deep, with a single inheritance chain, and with the root being a virtual class. (GP-4459, Issue #6348)</li>
+    <li><I>Version Tracking</I>. Corrected potential Exception within address correlators that check function parameters. (GP-4490)</li>
+</ul>
+</blockquote>
+
+<H1 align="center">Ghidra 11.0.2 Change History (March 2024)</H1>
+<blockquote><p><u><B>Improvements</B></u></p>
+<ul>
+    <li><I>Accessibility</I>. Eliminated redundant screen-reading of text with cursor-up and cursor-down movements in the Decompiler view. (GP-4297, Issue #6177)</li>
+    <li><I>Debugger:GDB</I>. Fixed an issue connecting to GDB on some builds of Windows. (GP-4392, Issue #6107)</li>
+    <li><I>Decompiler</I>. The Decompiler now treats software breakpoints as indirect calls that do not take parameters and do not return. (GP-4332)</li>
+    <li><I>Decompiler</I>. Improved detection of switch variables when their path crosses a call. (GP-4369)</li>
+    <li><I>Headless</I>. Updated analyzer options to not create Java Swing components in headless mode. (GP-4309)</li>
+    <li><I>Importer:ELF</I>. Revised ELF PowerPC relocation processing for <span class="gcode">R_PPC_ADDR16_LO</span> and <span class="gcode">R_PPC_ADDR16_HA</span> to address FreeBSD conventions. (GP-4397)</li>
+    <li><I>Multi-User</I>. Updated Ghidra Server <span class="gcode">server.conf</span> to facilitate specification of enabled TLS cipher suites.  Enabled cipher suites have been constrained by default, consistent with RFC 9151. (GP-4330)</li>
+    <li><I>Multi-User</I>. Made minor improvement to shared project performance when populating folders containing a large number of files.  This was done by caching the FileID associated with each remote project file. (GP-4455)</li>
+    <li><I>Processors</I>. Added support for ARM v8-M Custom Datapath Extension. (GP-1791)</li>
+    <li><I>Scripting</I>. Added check to <span class="gcode">RecoverClassesFromRTTIScript</span> to not run if there are unhandled relocations in GCC programs for the necessary RTTI symbols. (GP-4371)</li>
+</ul>
+</blockquote>
+<blockquote><p><u><B>Bugs</B></u></p>
+<ul>
+    <li><I>Analysis</I>. Fixed analysis lockup if the fall-through of an instruction is overridden to itself. (GP-4312, Issue #6179)</li>
+    <li><I>Analysis</I>. Loosened MIPS jump target function-start pattern. (GP-4442, Issue #3677, #4193)</li>
+    <li><I>BSim</I>. Corrected BSim command <span class="gcode">listexes --limit</span> option processing. (GP-4362, Issue #6246)</li>
+    <li><I>Build</I>. Removed unused log4j-jcl 2.16.0 jar dependency.  Updated postgresql JDBC driver jar to 42.6.2. (GP-4449)</li>
+    <li><I>Debugger</I>. Removed leading slash in executable path for Windows launch options. (GP-4331)</li>
+    <li><I>Debugger:GDB</I>. Fixed issue parsing breakpoints with command lists, especially with <span class="gtitle">Use existing session (new-ui)</span>. (GP-4368, Issue #6257)</li>
+    <li><I>Debugger:Listing</I>. Auto-disassembly now ignores <span class="gcode">UNKNOWN</span> memory (fixed regression) and re-disassembles if PC lands offcut in an existing instruction. (GP-4278)</li>
+    <li><I>Debugger:Recorder</I>. Changed register-recording errors to go to log only, not popup. (GP-4305)</li>
+    <li><I>Decompiler</I>. The Decompiler will now convert an indirect branch into a return operation if the branch target  can be traced to the formal return address storage location. (GP-4226)</li>
+    <li><I>Decompiler</I>. Fixed bug causing <em>"Could not find op at target address"</em> exception when applying <span class="gcode">SwitchOverride</span> script. (GP-4314)</li>
+    <li><I>Decompiler</I>. Fixed bug that could cause the Decompiler display to drop characters with a multi-byte UTF8 encoding. (GP-4360)</li>
+    <li><I>Function Compare</I>. Corrected handling of thunked functions in the <span class="gtitle">Compare Matching Callees</span> action. (GP-4354, Issue #6159)</li>
+    <li><I>GUI</I>. Fixed an <span class="gcode">IllegalArgumentException</span> that occurred when trying to expand data over a selection in the Listing that spanned addresses from multiple address spaces. (GP-701)</li>
+    <li><I>GUI</I>. Fixed screen reader support of tooltips by using the lower-case html tag; some readers could not process an upper-case tag. (GP-4296, Issue #6176)</li>
+    <li><I>GUI</I>. Fixed Data Types tree broken <span class="gcode">Cut</span> operation when the tree is filtered. (GP-4373, Issue #6137)</li>
+    <li><I>GUI</I>. Fixed Structure Editor exception when searching with some columns removed. (GP-4426)</li>
+    <li><I>Headless</I>. Fixed exception looking for extensions when running Headless Ghidra using the single Ghidra Jar mode. (GP-4294, Issue #6178)</li>
+    <li><I>Importer</I>. Fixed an uncaught <span class="gcode">InvalidPathException</span> that could occur when loading libraries during import. (GP-4326, Issue #5894)</li>
+    <li><I>Importer:COFF</I>. Fixed an <span class="gcode">EOFException</span> in the CoffLoader that could occur when parsing symbols. (GP-4344, Issue #6236)</li>
+    <li><I>Importer:Mach-O</I>. The <span class="gcode">dyld_shared_cache</span> loader no longer throws an exception when importing newer versions that use <span class="gcode">dyld_cache_slide_info5</span>. (GP-4457)</li>
+    <li><I>Memory</I>. Fixed an issue with the GUI sometimes showing incorrect file byte offsets for memory blocks that have been joined. (GP-4357)</li>
+    <li><I>Processors</I>. Fixed AARCH64 instructions which could overwrite source registers during reads (<span class="gcode">ldaxp</span>, <span class="gcode">ldnp</span>, <span class="gcode">ldp</span>, <span class="gcode">ldpsw</span>, <span class="gcode">ldxp</span>). (GP-3851, Issue #5791)</li>
+    <li><I>Processors</I>. Fixed 6809 <span class="gcode">clr</span> instruction not clearing the carry flag. (GP-3889, Issue #5838)</li>
+    <li><I>Processors</I>. Fixed several ARM instructions which could potentially overwrite a source register before reading. (GP-3892, Issue #5822)</li>
+    <li><I>Processors</I>. Fixed Z80 8-bit <span class="gcode">INC</span> instructions' setting of the carry flag. (GP-4273, Issue #2247, #2277)</li>
+    <li><I>Processors</I>. Improved Tricore calling conventions. (GP-4319, Issue #5757)</li>
+    <li><I>Processors</I>. Corrected semantics for Tricore <span class="gcode">dextr</span> instruction. (GP-4418, Issue #5756, #6303)</li>
+    <li><I>Processors</I>. Fixed semantics of PowerPC <span class="gcode">lwax</span> instruction. (GP-4419)</li>
+    <li><I>Version Tracking</I>. Fixed broken Version Tracking tag filter. (GP-4336)</li>
+    <li><I>Version Tracking</I>. Fixed <span class="gcode">MemoryAccessException</span> in Version Tracking Data Correlator when data is partially contained in uninitialized memory. (GP-4339, Issue #6238)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 11.0.1 Change History (January 2024)</H1>
 <blockquote><p><u><B>Improvements</B></u></p>
 <ul>
@@ -467,7 +535,7 @@
     <li><I>Build</I>. Added support for building with Gradle 8. (GP-2476, Issue #3527, #5003)</li>
     <li><I>Build</I>. The build now enforces a maximum-supported Gradle version. The current supported versions are Gradle 7.3 or later. (GP-3111)</li>
     <li><I>Build</I>. Ghidra can now run from development/repository mode using Gradle's compiled jars, instead of just relying on Eclipse's compilation output. (GP-3140)</li>
-    <li><I>C Parsing</I>. Provided GDT archives have been updated to include new ProgramArchitecture settings for processor, data organization, and endianess. (GP-1377)</li>
+    <li><I>C Parsing</I>. Provided GDT archives have been updated to include new ProgramArchitecture settings for processor, data organization, and endianness. (GP-1377)</li>
     <li><I>CParser</I>. Removed unnecessary <span class="gcode">-D</span> defines related to wchar_t from CParser <span class="gcode">prf</span> files and GDT parsing scripts. (GP-3294, Issue #5196)</li>
     <li><I>Data Types</I>. Function definitions can now be applied from selected Category instead of only from an entire Archive. (GP-199)</li>
     <li><I>Data Types</I>. Changed Structure/Union editor to show numbers in hex format by default. Also added <span class="gcode">Shift-H</span> keybinding action for toggling hex/decimal view. (GP-2943)</li>
@@ -1760,7 +1828,7 @@
     <li><I>Data Types</I>. Fixed a NullPointerException that occurred when trying to edit a function datatype in a datatype archive when there was no open program in the tool. (GP-356, Issue #2407)</li>
     <li><I>Data Types</I>. Corrected the retention of datatype archive search paths, which did not properly remember disabled paths. (GP-639)</li>
     <li><I>Data Types</I>. Fixed potential deadlock encountered when working with the DataTypes tree. (GP-774, Issue #2832)</li>
-    <li><I>Decompiler</I>. Fixed endianess issue for joined, two-register returns of <code>longlong</code> values for MIPS 32-bit little endian variants. (GP-513)</li>
+    <li><I>Decompiler</I>. Fixed endianness issue for joined, two-register returns of <code>longlong</code> values for MIPS 32-bit little endian variants. (GP-513)</li>
     <li><I>Decompiler</I>. The Decompiler no longer emits comments in the middle of conditional expressions. (GP-621, Issue #1670)</li>
     <li><I>Decompiler</I>. Fixed <code>Redefinition of structure...</code> exceptions in the Decompiler caused by a PNG Image and other opaque datatypes. (GP-820, Issue #2734)</li>
     <li><I>Decompiler</I>. Fixed infinite loop in the Decompiler when analyzing return values. (GP-821, Issue #2851)</li>
@@ -1921,7 +1989,7 @@
     <li><I>Decompiler</I>. Fixed issue with the Auto Create/Fill Structure command that caused it to silently miss some pointer accesses. (GP-344)</li>
     <li><I>Decompiler</I>. Jump table recovery now takes into account encoded bits, like ARM/THUMB mode transition, that may be present in address tables. (GP-387, Issue #2420)</li>
     <li><I>Decompiler</I>. Fixed a bug in the Decompiler <B>renaming</B> action when applied to function references. (GP-477, Issue #2415)</li>
-    <li><I>Decompiler</I>. Corrected 8-byte return value storage specification in compiler-spec affecting <code>longlong</code> and <code>double</code> return values.  Endianess ordering of <code>r0</code>/<code>r1</code> was incorrect. (GP-512, Issue #2547)</li>
+    <li><I>Decompiler</I>. Corrected 8-byte return value storage specification in compiler-spec affecting <code>longlong</code> and <code>double</code> return values.  Endianness ordering of <code>r0</code>/<code>r1</code> was incorrect. (GP-512, Issue #2547)</li>
     <li><I>Graphing</I>. Fixed the Function Graph's <B>drag-to-select-nodes</B> feature. (GP-430)</li>
     <li><I>Graphing</I>. Fixed issue where the graph in the satellite view is sometimes truncated. (GP-469)</li>
     <li><I>Graphing</I>. Fixed a stack trace issue caused by reusing a graph display window to show a graph that is larger than is allowed. (GP-492)</li>

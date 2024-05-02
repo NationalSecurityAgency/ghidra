@@ -20,6 +20,7 @@ import static org.junit.Assert.assertTrue;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.io.*;
+import java.nio.charset.Charset;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.util.*;
@@ -50,23 +51,24 @@ import ghidra.app.plugin.core.debug.gui.memory.DebuggerMemoryBytesProvider;
 import ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionsProvider;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesProvider;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerStaticMappingProvider;
+import ghidra.app.plugin.core.debug.gui.objects.components.DebuggerMethodInvocationDialog;
 import ghidra.app.plugin.core.debug.gui.pcode.DebuggerPcodeStepperPlugin;
 import ghidra.app.plugin.core.debug.gui.pcode.DebuggerPcodeStepperProvider;
 import ghidra.app.plugin.core.debug.gui.register.DebuggerRegistersProvider;
 import ghidra.app.plugin.core.debug.gui.stack.DebuggerStackProvider;
 import ghidra.app.plugin.core.debug.gui.stack.vars.VariableValueHoverPlugin;
-import ghidra.app.plugin.core.debug.gui.target.DebuggerTargetsPlugin;
 import ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsProvider;
 import ghidra.app.plugin.core.debug.gui.time.DebuggerTimeProvider;
 import ghidra.app.plugin.core.debug.gui.time.DebuggerTimeSelectionDialog;
+import ghidra.app.plugin.core.debug.gui.tracermi.connection.TraceRmiConnectionManagerPlugin;
 import ghidra.app.plugin.core.debug.gui.watch.DebuggerWatchesProvider;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin.EmulateProgramAction;
-import ghidra.app.plugin.core.debug.service.model.DebuggerConnectDialog;
 import ghidra.app.plugin.core.debug.stack.StackUnwinderTest;
 import ghidra.app.plugin.core.debug.stack.StackUnwinderTest.HoverLocation;
 import ghidra.app.plugin.core.debug.stack.UnwindStackCommand;
 import ghidra.app.plugin.core.decompile.DecompilerProvider;
+import ghidra.app.plugin.core.terminal.TerminalProvider;
 import ghidra.app.script.GhidraState;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerEmulationService.EmulationResult;
@@ -74,19 +76,17 @@ import ghidra.app.util.importer.AutoImporter;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.LoadResults;
 import ghidra.async.AsyncTestUtils;
-import ghidra.dbg.DebuggerModelFactory;
-import ghidra.dbg.target.TargetLauncher;
-import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
-import ghidra.dbg.testutil.DummyProc;
-import ghidra.dbg.util.ConfigurableFactory.Property;
-import ghidra.debug.api.model.DebuggerProgramLaunchOffer;
-import ghidra.debug.api.model.DebuggerProgramLaunchOffer.*;
+import ghidra.debug.api.modules.ModuleMapProposal;
+import ghidra.debug.api.tracermi.RemoteMethod;
+import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
+import ghidra.debug.api.tracermi.TraceRmiLaunchOffer.*;
 import ghidra.debug.api.watch.WatchRow;
-import ghidra.debug.flatapi.FlatDebuggerAPI;
+import ghidra.debug.flatapi.FlatDebuggerRmiAPI;
 import ghidra.framework.Application;
 import ghidra.framework.TestApplicationUtils;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
@@ -96,11 +96,11 @@ import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.GhidraProgramUtilities;
 import ghidra.program.util.ProgramSelection;
+import ghidra.pty.*;
 import ghidra.test.TestEnv;
-import ghidra.trace.model.breakpoint.TraceBreakpoint;
+import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.guest.TracePlatform;
-import ghidra.trace.model.modules.TraceModule;
-import ghidra.trace.model.modules.TraceSection;
+import ghidra.trace.model.modules.*;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.schedule.*;
 import ghidra.util.InvalidNameException;
@@ -117,26 +117,36 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 
 	protected static final String TERMMINES_PATH = "/tmp/termmines";
 
+	static class MyTestEnv extends TestEnv {
+		public MyTestEnv(String projectName) throws IOException {
+			super(projectName);
+		}
+
+		@Override
+		protected PluginTool launchDefaultToolByName(String toolName) {
+			return super.launchDefaultToolByName(toolName);
+		}
+	}
+
 	protected final ConsoleTaskMonitor monitor = new ConsoleTaskMonitor();
 
+	protected TerminalService terminalService;
 	protected ProgramManager programManager;
 	protected CodeViewerService staticListingService;
-	protected DebuggerModelService modelService;
+	protected MyTestEnv env;
 
-	protected DebuggerModelFactory gdbFactory;
-
-	protected final FlatDebuggerAPI flatDbg = new FlatDebuggerAPI() {
+	protected final FlatDebuggerRmiAPI flatDbg = new FlatDebuggerRmiAPI() {
 		@Override
 		public GhidraState getState() {
 			Navigatable nav = staticListingService.getNavigatable();
-			return new GhidraState(tool, env.getProject(),
-				nav.getProgram(), nav.getLocation(), nav.getSelection(), nav.getHighlight());
+			return new GhidraState(tool, env.getProject(), nav.getProgram(), nav.getLocation(),
+				nav.getSelection(), nav.getHighlight());
 		}
 	};
 
 	@Override
 	protected TestEnv newTestEnv() throws Exception {
-		return new TestEnv("DebuggerCourse");
+		return env = new MyTestEnv("DebuggerCourse");
 	}
 
 	// TODO: Propose this replace waitForProgram
@@ -167,7 +177,7 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 
 	@Override
 	public void prepareTool() {
-		tool = env.launchTool("Debugger");
+		tool = env.launchDefaultToolByName("Debugger");
 	}
 
 	@Override
@@ -214,20 +224,23 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		}
 		termmines.setExecutable(true);
 
+		terminalService = tool.getService(TerminalService.class);
 		programManager = tool.getService(ProgramManager.class);
 		staticListingService = getStaticListingService();
+	}
 
-		modelService = tool.getService(DebuggerModelService.class);
-		gdbFactory = modelService.getModelFactories()
-				.stream()
-				.filter(f -> "gdb".equals(f.getBrief()))
-				.findAny()
-				.get();
+	@Test
+	public void testGettingStarted_Termmines() throws Throwable {
+		Pty pty = PtyFactory.local().openpty();
+		pty.getChild().session(new String[] { TERMMINES_PATH }, Map.of("TERM", "xterm-256color"));
+		PtyParent parent = pty.getParent();
+		try (Terminal terminal =
+			terminalService.createWithStreams(Charset.forName("utf8"), parent.getInputStream(),
+				parent.getOutputStream())) {
 
-		@SuppressWarnings("unchecked")
-		Property<String> gdbPathProp =
-			(Property<String>) gdbFactory.getOptions().get("GDB launch command");
-		gdbPathProp.setValue(DummyProc.which("gdb"));
+			TerminalProvider provider = waitForComponentProvider(TerminalProvider.class);
+			captureIsolatedProvider(provider, 600, 600);
+		}
 	}
 
 	@Test
@@ -235,32 +248,46 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		captureToolWindow(1920, 1080);
 	}
 
-	protected void launchProgramInGdb(String extraArgs) throws Throwable {
-		DebuggerProgramLaunchOffer offer = modelService.getProgramLaunchOffers(program)
-				.filter(o -> "IN-VM GDB".equals(o.getConfigName()))
-				.findFirst()
-				.get();
-		LaunchConfigurator config = new LaunchConfigurator() {
+	protected void captureLaunchDialog(String title) {
+		TraceRmiLaunchOffer offer = flatDbg.getLaunchOffers(program)
+				.stream()
+				.filter(o -> title.equals(o.getTitle()))
+				.findAny()
+				.orElseThrow();
+
+		runSwingLater(() -> offer.launchProgram(monitor, new LaunchConfigurator() {
 			@Override
-			public Map<String, ?> configureLauncher(TargetLauncher launcher,
-					Map<String, ?> arguments, RelPrompt relPrompt) {
-				if (extraArgs.length() == 0) {
-					return arguments;
-				}
-				Map<String, Object> adjusted = new HashMap<>(arguments);
-				TargetCmdLineLauncher.PARAMETER_CMDLINE_ARGS.adjust(adjusted,
-					c -> c + " " + extraArgs);
-				return adjusted;
+			public PromptMode getPromptMode() {
+				return PromptMode.ALWAYS;
 			}
-		};
-		LaunchResult result = waitOn(offer.launchProgram(monitor, PromptMode.NEVER, config));
+		}));
+
+		captureDialog(DebuggerMethodInvocationDialog.class);
+	}
+
+	@Test
+	public void testGettingStarted_LaunchGDBDialog() {
+		captureLaunchDialog("gdb");
+	}
+
+	protected LaunchResult launchProgramInGdb(String extraArgs) throws Throwable {
+		TraceRmiLaunchOffer offer = flatDbg.getLaunchOffers(program)
+				.stream()
+				.filter(o -> "gdb".equals(o.getTitle()))
+				.findAny()
+				.orElseThrow();
+		LaunchResult result = flatDbg.launch(offer, Map.ofEntries(
+			Map.entry("env:OPT_START_CMD", "start"),
+			Map.entry("args", extraArgs)),
+			monitor);
 		if (result.exception() != null) {
 			throw result.exception();
 		}
+		return result;
 	}
 
-	protected void launchProgramInGdb() throws Throwable {
-		launchProgramInGdb("");
+	protected LaunchResult launchProgramInGdb() throws Throwable {
+		return launchProgramInGdb("");
 	}
 
 	@Test
@@ -278,15 +305,33 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		captureProvider(DebuggerBreakpointsProvider.class);
 	}
 
-	protected void placeBreakpointsSRandRand() throws Throwable {
+	protected void waitBreakSpecExists(String expression) {
+		waitForCondition(() -> flatDbg.getAllBreakpoints()
+				.stream()
+				.flatMap(lb -> lb.getTraceBreakpoints().stream())
+				.<TraceObjectBreakpointSpec> mapMulti((loc, down) -> {
+					if (loc instanceof TraceObjectBreakpointLocation oloc) {
+						down.accept(oloc.getSpecification());
+					}
+				})
+				.distinct()
+				.filter(l -> expression.equals(l.getExpression()))
+				.count() == 1);
+	}
+
+	protected void placeBreakpointsSRand() throws Throwable {
 		assertTrue(flatDbg.execute("break srand"));
-		assertTrue(flatDbg.execute("break rand"));
-		waitForCondition(() -> flatDbg.getAllBreakpoints().size() == 2);
+		waitBreakSpecExists("srand");
 	}
 
 	protected void placeBreakpointsRand() throws Throwable {
 		assertTrue(flatDbg.execute("break rand"));
-		waitForCondition(() -> flatDbg.getAllBreakpoints().size() == 1);
+		waitBreakSpecExists("rand");
+	}
+
+	protected void placeBreakpointsSRandRand() throws Throwable {
+		placeBreakpointsSRand();
+		placeBreakpointsRand();
 	}
 
 	@Test
@@ -298,11 +343,16 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		captureProvider(DebuggerBreakpointsProvider.class);
 	}
 
-	protected Address navigateToBreakpoint(String comment) {
+	protected Address navigateToBreakpoint(String expression) {
 		TraceBreakpoint bp = flatDbg.getAllBreakpoints()
 				.stream()
 				.flatMap(l -> l.getTraceBreakpoints().stream())
-				.filter(l -> comment.equals(l.getComment()))
+				.<TraceObjectBreakpointLocation> mapMulti((loc, down) -> {
+					if (loc instanceof TraceObjectBreakpointLocation oloc) {
+						down.accept(oloc);
+					}
+				})
+				.filter(l -> expression.equals(l.getSpecification().getExpression()))
 				.findAny()
 				.get();
 		Address dynAddr = bp.getMinAddress();
@@ -367,6 +417,14 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		Address dynAddr = navigateToBreakpoint("srand");
 		TraceModule modLibC = getModuleContaining(dynAddr);
 		Program progLibC = importModule(modLibC);
+
+		// This module might be symlinked, so module name and file name may not match.
+		DebuggerStaticMappingService mappings = tool.getService(DebuggerStaticMappingService.class);
+		ModuleMapProposal proposal = mappings.proposeModuleMap(modLibC, progLibC);
+		try (Transaction tx = modLibC.getTrace().openTransaction("Map")) {
+			mappings.addModuleMappings(proposal.computeMap().values(), monitor, true);
+		}
+
 		waitForCondition(() -> flatDbg.translateDynamicToStatic(dynAddr) != null);
 		disassembleSymbol(progLibC, "srand");
 		// Just to be sure.
@@ -385,9 +443,16 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		Address dynAddr = navigateToBreakpoint("srand");
 		TraceModule modLibC = getModuleContaining(dynAddr);
 		Program progLibC = importModule(modLibC);
-		waitForCondition(() -> flatDbg.translateDynamicToStatic(dynAddr) != null);
+
+		// This module might be symlinked, so module name and file name may not match.
+		DebuggerStaticMappingService mappings = tool.getService(DebuggerStaticMappingService.class);
+		ModuleMapProposal proposal = mappings.proposeModuleMap(modLibC, progLibC);
+		try (Transaction tx = modLibC.getTrace().openTransaction("Map")) {
+			mappings.addModuleMappings(proposal.computeMap().values(), monitor, true);
+		}
+
+		Address stAddr = waitForValue(() -> flatDbg.translateDynamicToStatic(dynAddr));
 		disassembleSymbol(progLibC, "srand");
-		Address stAddr = flatDbg.translateDynamicToStatic(dynAddr);
 		// Just to be sure.
 		goTo(tool, progLibC, stAddr);
 		flatDbg.resume();
@@ -488,6 +553,18 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 	public void testNavigation_ThreadsInCallRand() throws Throwable {
 		launchProgramInGdb();
 		placeBreakpointsRand();
+		Address dynAddr = navigateToBreakpoint("rand");
+		TraceModule modLibC = getModuleContaining(dynAddr);
+		Program progLibC = importModule(modLibC);
+
+		// This module might be symlinked, so module name and file name may not match.
+		DebuggerStaticMappingService mappings = tool.getService(DebuggerStaticMappingService.class);
+		ModuleMapProposal proposal = mappings.proposeModuleMap(modLibC, progLibC);
+		try (Transaction tx = modLibC.getTrace().openTransaction("Map")) {
+			mappings.addModuleMappings(proposal.computeMap().values(), monitor, true);
+		}
+
+		waitForCondition(() -> flatDbg.translateDynamicToStatic(dynAddr) != null);
 		flatDbg.resume();
 
 		runSwing(() -> tool.setSize(1920, 1080));
@@ -500,7 +577,15 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		placeBreakpointsRand();
 		Address dynAddr = navigateToBreakpoint("rand");
 		TraceModule modLibC = getModuleContaining(dynAddr);
-		importModule(modLibC);
+		Program progLibC = importModule(modLibC);
+
+		// This module might be symlinked, so module name and file name may not match.
+		DebuggerStaticMappingService mappings = tool.getService(DebuggerStaticMappingService.class);
+		ModuleMapProposal proposal = mappings.proposeModuleMap(modLibC, progLibC);
+		try (Transaction tx = modLibC.getTrace().openTransaction("Map")) {
+			mappings.addModuleMappings(proposal.computeMap().values(), monitor, true);
+		}
+
 		waitForCondition(() -> flatDbg.translateDynamicToStatic(dynAddr) != null);
 		flatDbg.resume();
 
@@ -513,8 +598,11 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		launchProgramInGdb();
 		placeBreakpointsSRandRand();
 		flatDbg.resume(); // srand
+		Thread.sleep(500);
 		flatDbg.resume(); // rand.1
+		Thread.sleep(500);
 		flatDbg.stepOut();
+		Thread.sleep(500);
 
 		runSwing(() -> tool.setSize(1920, 1080));
 		captureProvider(DebuggerTimeProvider.class);
@@ -522,18 +610,29 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 
 	@Test
 	public void testNavigation_DialogCompareTimes() throws Throwable {
-		launchProgramInGdb(); // main
+		LaunchResult result = launchProgramInGdb(); // main
 		placeBreakpointsRand();
 		Address pc = flatDbg.getProgramCounter();
 		long snapA = flatDbg.getCurrentSnap();
-		TraceModule modTermmines = Unique.assertOne(flatDbg.getCurrentTrace()
-				.getModuleManager()
-				.getModulesAt(snapA, pc));
+		try (Transaction tx = result.trace().openTransaction("Name snapshot")) {
+			result.trace()
+					.getTimeManager()
+					.getSnapshot(snapA, false)
+					.setDescription("Initial snapshot");
+		}
+		TraceObjectModule modTermmines =
+			(TraceObjectModule) Unique.assertOne(flatDbg.getCurrentTrace()
+					.getModuleManager()
+					.getModulesAt(snapA, pc));
+
+		RemoteMethod refreshSections = result.connection().getMethods().get("refresh_sections");
+		refreshSections.invoke(Map.of("node", modTermmines.getObject()));
 		TraceSection secTermminesData = modTermmines.getSectionByName(".data");
 		flatDbg.readMemory(secTermminesData.getStart(),
 			(int) secTermminesData.getRange().getLength(), monitor);
 
 		flatDbg.resume(); // rand.1
+		Thread.sleep(500);
 		flatDbg.readMemory(secTermminesData.getStart(),
 			(int) secTermminesData.getRange().getLength(), monitor);
 
@@ -547,13 +646,23 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 
 	@Test
 	public void testNavigation_CompareTimes() throws Throwable {
-		launchProgramInGdb("-M 15"); // main
+		LaunchResult result = launchProgramInGdb("-M 15"); // main
 		placeBreakpointsRand();
 		Address pc = flatDbg.getProgramCounter();
 		long snapA = flatDbg.getCurrentSnap();
-		TraceModule modTermmines = Unique.assertOne(flatDbg.getCurrentTrace()
-				.getModuleManager()
-				.getModulesAt(snapA, pc));
+		try (Transaction tx = result.trace().openTransaction("Name snapshot")) {
+			result.trace()
+					.getTimeManager()
+					.getSnapshot(snapA, false)
+					.setDescription("Initial snapshot");
+		}
+		TraceObjectModule modTermmines =
+			(TraceObjectModule) Unique.assertOne(flatDbg.getCurrentTrace()
+					.getModuleManager()
+					.getModulesAt(snapA, pc));
+
+		RemoteMethod refreshSections = result.connection().getMethods().get("refresh_sections");
+		refreshSections.invoke(Map.of("node", modTermmines.getObject()));
 		TraceSection secTermminesData = modTermmines.getSectionByName(".data");
 		flatDbg.readMemory(secTermminesData.getStart(),
 			(int) secTermminesData.getRange().getLength(), monitor);
@@ -582,6 +691,10 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		});
 		waitForCondition(() -> actionNextDiff.isEnabled());
 		flatDbg.goToDynamic(secTermminesData.getStart());
+		// Because auto-track is a little broken right now
+		Thread.sleep(500);
+		flatDbg.goToDynamic(secTermminesData.getStart());
+
 		performAction(actionNextDiff);
 
 		runSwing(() -> tool.setSize(1920, 1080));
@@ -611,7 +724,15 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		showProvider(DebuggerStaticMappingProvider.class);
 		Address dynAddr = navigateToBreakpoint("srand");
 		TraceModule modLibC = getModuleContaining(dynAddr);
-		importModule(modLibC);
+		Program progLibC = importModule(modLibC);
+
+		// This module might be symlinked, so module name and file name may not match.
+		DebuggerStaticMappingService mappings = tool.getService(DebuggerStaticMappingService.class);
+		ModuleMapProposal proposal = mappings.proposeModuleMap(modLibC, progLibC);
+		try (Transaction tx = modLibC.getTrace().openTransaction("Map")) {
+			mappings.addModuleMappings(proposal.computeMap().values(), monitor, true);
+		}
+
 		waitForCondition(() -> flatDbg.translateDynamicToStatic(dynAddr) != null);
 
 		runSwing(() -> tool.setSize(1920, 1080));
@@ -631,29 +752,30 @@ public class TutorialDebuggerScreenShots extends GhidraScreenShotGenerator
 		DebuggerListingService listings = tool.getService(DebuggerListingService.class);
 		runSwing(() -> listings
 				.setCurrentSelection(new ProgramSelection(new AddressSet(modNcurses.getRange()))));
+		DebuggerListingProvider listingProvider =
+			waitForComponentProvider(DebuggerListingProvider.class);
 		performAction("Copy Into New Program",
-			PluginUtils.getPluginNameFromClass(DebuggerCopyActionsPlugin.class), false);
+			PluginUtils.getPluginNameFromClass(DebuggerCopyActionsPlugin.class), listingProvider,
+			false);
 		captureDialog(DebuggerCopyIntoProgramDialog.class);
 	}
 
 	@Test
-	public void testRemoteTargets_GdbOverSsh() throws Throwable {
-		performAction("Connect", PluginUtils.getPluginNameFromClass(DebuggerTargetsPlugin.class),
-			false);
-		DebuggerConnectDialog dialog = waitForDialogComponent(DebuggerConnectDialog.class);
-		runSwing(() -> dialog.setFactoryByBrief("gdb via SSH"));
-
-		captureDialog(dialog);
+	public void testRemoteTargets_GdbPlusGdbserverViaSsh() throws Throwable {
+		captureLaunchDialog("gdb + gdbserver via ssh");
 	}
 
 	@Test
-	public void testRemoteTargets_Gadp() throws Throwable {
-		performAction("Connect", PluginUtils.getPluginNameFromClass(DebuggerTargetsPlugin.class),
-			false);
-		DebuggerConnectDialog dialog = waitForDialogComponent(DebuggerConnectDialog.class);
-		runSwing(() -> dialog.setFactoryByBrief("Ghidra debug agent (GADP)"));
+	public void testRemoteTargets_GdbViaSsh() throws Throwable {
+		captureLaunchDialog("gdb via ssh");
+	}
 
-		captureDialog(dialog);
+	@Test
+	public void testRemoteTargets_AcceptTraceRmi() throws Throwable {
+		performAction("Connect by Accept",
+			PluginUtils.getPluginNameFromClass(TraceRmiConnectionManagerPlugin.class),
+			false);
+		captureDialog(DebuggerMethodInvocationDialog.class);
 	}
 
 	protected Function findCommandLineParser() throws Throwable {

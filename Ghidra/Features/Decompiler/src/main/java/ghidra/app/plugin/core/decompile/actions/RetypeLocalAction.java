@@ -29,6 +29,7 @@ import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.*;
+import ghidra.program.model.pcode.HighFunctionDBUtil.ReturnCommitOption;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.*;
 import ghidra.util.exception.*;
@@ -96,11 +97,7 @@ public class RetypeLocalAction extends AbstractDecompilerAction {
 					hfunction.getFunction().getSignatureSource() != SourceType.DEFAULT;
 				try {
 					HighFunctionDBUtil.commitParamsToDatabase(hfunction, useDataTypes,
-						SourceType.USER_DEFINED);
-					if (useDataTypes) {
-						HighFunctionDBUtil.commitReturnToDatabase(hfunction,
-							SourceType.USER_DEFINED);
-					}
+						ReturnCommitOption.NO_COMMIT, SourceType.USER_DEFINED);
 				}
 				catch (DuplicateNameException e) {
 					throw new AssertException("Unexpected exception", e);

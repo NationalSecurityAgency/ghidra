@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ import java.util.*;
 
 import ghidra.app.util.SymbolPath;
 import ghidra.app.util.SymbolPathParser;
+import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
 import ghidra.app.util.bin.format.pdb2.pdbreader.TypeProgramInterface;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
 import ghidra.util.exception.CancelledException;
@@ -26,7 +27,7 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * Maps forward references with corresponding definitions for composites and enums.  Map is of
- * record number (index) to record number (index)--always of TYPE RecordCategory, as we are not
+ * RecordNumber to RecordNumber--always of TYPE RecordCategory, as we are not
  * expecting Complex type records numbers to be mapped from ITEM RecordCategory lists. We are
  * always creating a map of higher number to lower number, as we are assuming that processing
  * will be done in an increasing-record-number order.
@@ -40,35 +41,27 @@ import ghidra.util.task.TaskMonitor;
 //  tried.
 public class ComplexTypeMapper {
 
-	private Map<Integer, Integer> map;
+	private Map<RecordNumber, RecordNumber> map;
 
 	//==============================================================================================
 	public ComplexTypeMapper() {
 		map = new HashMap<>();
 	}
 
-//	/**
-//	 * Returns map to alternate record number or argument record number if no map.  Result is
-//	 *  record number of alternative record for the complex type.  It should be the lower of the
-//	 *  two numbers for the set of fwdref and def records, with the fwdref generally, but not
-//	 *  always, the lower-numbered record.
-//	 * @param recordNumber the record number for which to do the lookup
-//	 * @return the mapped number
-//	 */
 	/**
 	 * Returns map to alternate record number or argument record number if no map.  Result is
-	 *  record number of alternative record for the complex type.  Map is of fwdref to definition
-	 *  numbers.  The fwdref number is generally, but not always, the lower number
+	 *  RecordNumber of alternative record for the complex type.  Map is of fwdref to definition
+	 *  RecordNumbers.  The fwdref number is generally, but not always, the lower number
 	 * @param recordNumber the record number for which to do the lookup
-	 * @return the mapped number
+	 * @return the mapped record number or the original record number if no mapped entry
 	 */
-	public Integer getMapped(int recordNumber) {
+	public RecordNumber getMapped(RecordNumber recordNumber) {
 		return map.getOrDefault(recordNumber, recordNumber);
 	}
 
 	// Storing type (isFwd or isDef) so that if we decide to parse Types on demand, we will not
 	// have to parse it again to see if it is a fwdref or def.
-	private record NumFwdRef(int number, boolean isFwd) {}
+	private record NumFwdRef(RecordNumber number, boolean isFwd) {}
 
 	//==============================================================================================
 	//==============================================================================================
@@ -131,6 +124,7 @@ public class ComplexTypeMapper {
 
 		SymbolPath symbolPath = new SymbolPath(SymbolPathParser.parse(complexType.getName()));
 		boolean isFwdRef = complexType.getMsProperty().isForwardReference();
+		RecordNumber recordNumber = complexType.getRecordNumber();
 
 		Deque<NumFwdRef> numTypeFIFO = typeFIFOsByPath.get(symbolPath);
 		if (numTypeFIFO == null) {
@@ -138,7 +132,7 @@ public class ComplexTypeMapper {
 			typeFIFOsByPath.put(symbolPath, numTypeFIFO);
 
 			// Putting forward reference or definition (doesn't matter which it is)
-			if (!numTypeFIFO.add(new NumFwdRef(indexNumber, isFwdRef))) {
+			if (!numTypeFIFO.add(new NumFwdRef(recordNumber, isFwdRef))) {
 				// Error
 			}
 		}
@@ -148,7 +142,7 @@ public class ComplexTypeMapper {
 			// If same in FIFO, then add to bottom of the FIFO, as all records on this FIFO
 			//  will be the same per this algorithm.
 			if (firstNumFwdRef.isFwd() == isFwdRef) {
-				if (!numTypeFIFO.add(new NumFwdRef(indexNumber, isFwdRef))) {
+				if (!numTypeFIFO.add(new NumFwdRef(recordNumber, isFwdRef))) {
 					// Error
 				}
 			}
@@ -167,7 +161,7 @@ public class ComplexTypeMapper {
 				//  symbol path and we need the fwdref symbol path to be the same.  Thus we
 				//  want to be able to have ready access to the def record.
 				if (isFwdRef) {
-					map.put(indexNumber, firstNumFwdRef.number());
+					map.put(recordNumber, firstNumFwdRef.number());
 //					// Following is just temporary during development to compare with
 //					//  previous mapping capability.  TODO remove
 //					System.out.println(String.format("%d %s %d -> %d",
@@ -175,7 +169,7 @@ public class ComplexTypeMapper {
 //					indexNumber, firstNumFwdRef.number()));
 				}
 				else {
-					map.put(firstNumFwdRef.number(), indexNumber);
+					map.put(firstNumFwdRef.number(), recordNumber);
 //					// Following is just temporary during development to compare with
 //					//  previous mapping capability.  TODO remove
 //					System.out.println(String.format("%d %s %d <- %d",

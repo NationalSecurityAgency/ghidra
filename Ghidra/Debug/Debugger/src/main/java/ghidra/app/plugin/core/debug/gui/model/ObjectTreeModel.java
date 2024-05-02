@@ -768,6 +768,7 @@ public class ObjectTreeModel implements DisplaysModified {
 		for (AbstractNode node : nodeCache.byObject.values()) {
 			node.fireNodeChanged();
 		}
+		root.fireNodeChanged();
 	}
 
 	protected void reload() {
@@ -779,8 +780,10 @@ public class ObjectTreeModel implements DisplaysModified {
 		try (LockHold hold = trace == null ? null : trace.lockRead()) {
 			for (AbstractNode node : List.copyOf(nodeCache.byObject.values())) {
 				node.reloadChildrenNow();
+				node.fireNodeChanged();
 			}
 			root.reloadChildrenNow();
+			root.fireNodeChanged();
 		}
 	}
 

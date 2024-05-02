@@ -16,7 +16,6 @@
 package ghidra.app.cmd.module;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.listing.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -25,7 +24,7 @@ import ghidra.util.exception.DuplicateNameException;
  * 
  * 
  */
-public class RenameCmd implements Command {
+public class RenameCmd implements Command<Program> {
 
 	private String oldName;
 	private String newName;
@@ -34,7 +33,7 @@ public class RenameCmd implements Command {
 	private String statusMsg;
 	private String treeName;
 	private boolean ignoreDuplicateName;
-	
+
 	/** 
 	 * Construct a new RenameCmd.
 	 * @param treeName name of the tree where the module or fragment resides
@@ -44,8 +43,8 @@ public class RenameCmd implements Command {
 	 * @param ignoreDuplicateName true means to ignore the exception and
 	 * don't do anything
 	 */
-	public RenameCmd(String treeName, boolean isModule, 
-					String oldName, String newName, boolean ignoreDuplicateName) {
+	public RenameCmd(String treeName, boolean isModule, String oldName, String newName,
+			boolean ignoreDuplicateName) {
 		this.treeName = treeName;
 		this.isModule = isModule;
 		this.oldName = oldName;
@@ -56,9 +55,9 @@ public class RenameCmd implements Command {
 		}
 		else {
 			cmdName = "Rename Fragment";
-		}			 					 	
+		}
 	}
-		
+
 	/**
 	 * Construct a new RenameCmd.
 	 * @param treeName name of the tree where the module or fragment resides
@@ -66,35 +65,25 @@ public class RenameCmd implements Command {
 	 * @param oldName current name of the module or fragment
 	 * @param newName new name for the module or fragment
 	 */
-	public RenameCmd(String treeName, boolean isModule, 
-					 String oldName, String newName) {
+	public RenameCmd(String treeName, boolean isModule, String oldName, String newName) {
 		this(treeName, isModule, oldName, newName, false);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
-	public boolean applyTo(DomainObject obj) {
-		Program program = (Program)obj;
-		
+	@Override
+	public boolean applyTo(Program program) {
 		return setName(program, oldName, newName);
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
+	@Override
 	public String getStatusMsg() {
 		return statusMsg;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
+	@Override
 	public String getName() {
 		return cmdName;
 	}
-	
+
 	private boolean setName(Program program, String oldN, String newN) {
 		Listing listing = program.getListing();
 		try {
@@ -107,7 +96,8 @@ public class RenameCmd implements Command {
 				f.setName(newN);
 			}
 			return true;
-		} catch (DuplicateNameException e) {
+		}
+		catch (DuplicateNameException e) {
 			if (ignoreDuplicateName) {
 				newName = oldName;
 				return true;

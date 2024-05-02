@@ -16,14 +16,13 @@
 package ghidra.app.cmd.function;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
-public class CreateExternalFunctionCmd implements Command {
+public class CreateExternalFunctionCmd implements Command<Program> {
 
 	private Symbol extSymbol;
 
@@ -53,6 +52,7 @@ public class CreateExternalFunctionCmd implements Command {
 	 * @param libraryName library name, if null the UNKNOWN library will be used
 	 * @param name function name (required)
 	 * @param address the address of the function's entry point in the external library (optional)
+	 * @param source the source type for this external function
 	 */
 	public CreateExternalFunctionCmd(String libraryName, String name, Address address,
 			SourceType source) {
@@ -94,8 +94,8 @@ public class CreateExternalFunctionCmd implements Command {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		Program program = (Program) obj;
+	public boolean applyTo(Program program) {
+
 		if (extSymbol == null) {
 			return createExternalFunction(program);
 		}

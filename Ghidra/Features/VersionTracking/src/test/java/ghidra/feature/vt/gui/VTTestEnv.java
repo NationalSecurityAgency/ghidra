@@ -69,7 +69,7 @@ public class VTTestEnv extends TestEnv {
 		sourceProgram = getProgram(sourceProgramName);
 		destinationProgram = getProgram(destinationProgramName);
 
-		session = VTSessionDB.createVTSession("Test", sourceProgram, destinationProgram, getTool());
+		session = new VTSessionDB("Test", sourceProgram, destinationProgram, this);
 
 		VTProgramCorrelator correlator = factory.createCorrelator(sourceProgram,
 			sourceProgram.getMemory(), destinationProgram, destinationProgram.getMemory(), null);
@@ -111,7 +111,7 @@ public class VTTestEnv extends TestEnv {
 	}
 
 	private VTSessionDB createAndOpenVTSession() throws IOException {
-		session = VTSessionDB.createVTSession("Test", sourceProgram, destinationProgram, getTool());
+		session = new VTSessionDB("Test", sourceProgram, destinationProgram, this);
 
 		runSwing(() -> controller.openVersionTrackingSession(session), false);
 

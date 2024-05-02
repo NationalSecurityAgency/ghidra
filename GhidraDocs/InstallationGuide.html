@@ -32,6 +32,7 @@ future releases.
   </ul>
   <li><a href="#Layout">Ghidra Installation Directory Layout</a></li>
   <li><a href="#Build">Building Ghidra Native Components</a></li>
+  <li><a href="#DebuggerPython">Installing the Debuggers' Python Dependencies</a></li>
   <li><a href="#Run">Running Ghidra</a></li>
   <ul>
     <li><a href="#RunGUI">GUI Mode</a></li>
@@ -96,6 +97,10 @@ Ghidra team if you have a specific need.</p></blockquote>
       </li>
     </ul>
   </ul>
+  <li>Python 3.9 or later (for Debugger support)</li>
+  <ul>
+    <li>This is available from <a href="https://python.org">Python.org</a> or most operating system's app stores or software repositories.</li>
+  </ul> 
 </ul>
 <p>(<a href="#top">Back to Top</a>)</p>
 
@@ -317,6 +322,7 @@ Ghidra release includes native binaries for the following platforms:</p>
 <ul>
   <li>Linux ARM 64-bit</li>
   <li>FreeBSD x86 64-bit (no debugger support)</li>
+  <li>FreeBSD ARM 64-bit (no debugger support)</li>
 </ul>
 <p>In order to build native binaries for your platform, you will need the following installed on your
 system:</p>
@@ -341,6 +347,19 @@ system:</p>
 the relevant modules' <i>build/os/&lt;platform&gt;/</i> subdirectories, which will override any
 existing pre-built native binaries in the <i>os/&lt;platform&gt;/</i> subdirectories.</p> 
 <p>(<a href="#top">Back to Top</a>)</p>
+
+<h2><a name="DebuggerPython"></a>Installing the Debugger's Python Dependencies</h2>
+<p>The Debugger now uses Python to connect to the host platform's native debuggers. This requires
+Python 3.9 or later and some additional packages. These packages are included in the distribution,
+but you may still install them from PyPI if you prefer:</p>
+<ul>
+<li>psutil</li>
+<li>protobuf==3.20.3</li>
+<li>Pybag&gt;=2.2.10 (for WinDbg support)</li>
+</ul>
+<p>Different native debuggers have varying requirements, so you do not necessarily have to install
+all of the above packages. Each connector will inform you of its specific requirements and where
+they must be installed. In some cases, you may need to install packages on the target system.</p>
 
 <h2><a name="Run"></a>Running Ghidra</h2>
 <h3><a name="RunGUI"></a>GUI Mode</h3>

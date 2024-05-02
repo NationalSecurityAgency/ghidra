@@ -20,16 +20,18 @@ import static org.junit.Assert.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.*;
-import javax.swing.Timer;
 
 import org.junit.*;
 
 import docking.action.DockingAction;
 import docking.widgets.fieldpanel.FieldPanel;
+import docking.widgets.searchlist.SearchList;
+import docking.widgets.searchlist.SearchListModel;
+import docking.widgets.tab.*;
 import generic.test.TestUtils;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
@@ -57,7 +59,7 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private String[] programNames = { "notepad", "login", "tms" };
 	private Program[] programs;
 	private ProgramManager pm;
-	private MultiTabPanel panel;
+	private GTabPanel<Program> panel;
 	private MarkerService markerService;
 
 	@Before
@@ -97,7 +99,7 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		openPrograms(programNames);
 		assertNotNull(panel);
 		assertEquals(programNames.length, panel.getTabCount());
-		assertEquals(programs[programs.length - 1], panel.getSelectedProgram());
+		assertEquals(programs[programs.length - 1], getSelectedTabValue());
 	}
 
 	@Test
@@ -105,7 +107,7 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		openPrograms(programNames);
 		assertEquals(programNames.length, panel.getTabCount());
 
-		panel.addProgram(programs[0]);
+		panel.addTab(programs[0]);
 		assertEquals(programNames.length, panel.getTabCount());
 	}
 
@@ -117,13 +119,13 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		JPanel tab = panel.getTab(programs[1]);
 		Point p = tab.getLocationOnScreen();
 		clickMouse(tab, MouseEvent.BUTTON1, p.x + 1, p.y + 1, 1, 0);
-		assertEquals(programs[1], panel.getSelectedProgram());
+		assertEquals(programs[1], getSelectedTabValue());
 
 		// select first tab
 		tab = panel.getTab(programs[0]);
 		p = tab.getLocationOnScreen();
 		clickMouse(tab, MouseEvent.BUTTON1, p.x + 1, p.y + 1, 1, 0);
-		assertEquals(programs[0], panel.getSelectedProgram());
+		assertEquals(programs[0], getSelectedTabValue());
 	}
 
 	@Test
@@ -152,10 +154,10 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		programNames = new String[] { "notepad", "login", "tms", "taskman", "TestGhidraSearches" };
 		openPrograms(programNames);
-		assertEquals(3, panel.getHiddenCount());
+		assertEquals(3, panel.getHiddenTabs().size());
 
-		runSwing(() -> panel.removeProgram(programs[3]));
-		assertEquals(2, panel.getHiddenCount());
+		runSwing(() -> panel.removeTab(programs[3]));
+		assertEquals(2, panel.getHiddenTabs().size());
 	}
 
 	@Test
@@ -190,29 +192,29 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testShowList() throws Exception {
-		setFrameSize(600, 500);
+		setFrameSize(650, 500);
 
 		programNames = new String[] { "notepad", "login", "tms", "taskman", "TestGhidraSearches" };
 		openPrograms(programNames);
 
 		assertEquals(programNames.length, panel.getTabCount());
-		assertEquals(3, panel.getVisibleTabCount());
-		assertEquals(2, panel.getHiddenCount());
+		assertEquals(3, panel.getVisibleTabs().size());
+		assertEquals(2, panel.getHiddenTabs().size());
 
-		ProgramListPanel listPanel = showList();
+		TabListPopup<?> tabListPopup = showList();
 
-		JList<?> list = findComponent(listPanel, JList.class);
+		@SuppressWarnings("unchecked")
+		SearchList<Program> list = findComponent(tabListPopup, SearchList.class);
 		assertNotNull(list);
-
-		ListModel<?> model = list.getModel();
+		SearchListModel<Program> model = list.getModel();
 		Program[] hiddenPrograms = new Program[] { programs[2], programs[3] };// 4 tabs fit before 5th program was open
 		for (int i = 0; i < hiddenPrograms.length; i++) {
-			assertEquals(hiddenPrograms[i], model.getElementAt(i));
+			assertEquals(hiddenPrograms[i], model.getElementAt(i).value());
 		}
 
 		Program[] shownPrograms = new Program[] { programs[0], programs[1], programs[4] };
 		for (int i = 0; i < shownPrograms.length; i++) {
-			assertEquals(shownPrograms[i], model.getElementAt(i + 2));
+			assertEquals(shownPrograms[i], model.getElementAt(i + 2).value());
 		}
 	}
 
@@ -223,18 +225,13 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		programNames = new String[] { "notepad", "login", "tms", "taskman", "TestGhidraSearches" };
 		openPrograms(programNames);
 
-		ProgramListPanel listPanel = showList();
+		TabListPopup<?> tabListPopup = showList();
 
-		JList<?> list = findComponent(listPanel, JList.class);
-
-		// the first item is expected to be 'login', since the current program is
-		// 'TestGhidraSearches' and that only fits with 'notepad', the rest our put into the 
-		// list in order.
-		list.setSelectedIndex(0);
-		waitForSwing();
-
-		triggerText(listPanel.getFilterField(), "\n");
-		assertEquals(programs[1], panel.getSelectedProgram());
+		@SuppressWarnings("unchecked")
+		SearchList<Program> list = findComponent(tabListPopup, SearchList.class);
+		list.setSelectedItem(programs[1]);
+		triggerText(list.getFilterField(), "\n");
+		assertEquals(programs[1], getSelectedTabValue());
 	}
 
 	@Test
@@ -244,12 +241,12 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		programNames = new String[] { "notepad", "login", "tms", "taskman", "TestGhidraSearches" };
 		openPrograms(programNames);
 
-		ProgramListPanel listPanel = showList();
-		Window window = windowForComponent(listPanel);
+		TabListPopup<?> tabListPopup = showList();
+		Window window = windowForComponent(tabListPopup);
 		assertTrue(window.isShowing());
 
 		// remove notepad
-		runSwing(() -> panel.removeProgram(programs[0]));
+		runSwing(() -> panel.removeTab(programs[0]));
 
 		assertTrue(!window.isShowing());
 	}
@@ -259,23 +256,21 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		setFrameSize(500, 500);
 		programNames = new String[] { "notepad", "login", "tms", "taskman", "TestGhidraSearches" };
 		openPrograms(programNames);
-		JLabel listLabel = (JLabel) findComponentByName(panel, "showList");
-		assertNotNull(listLabel);
+
+		HiddenValuesButton control = findComponent(tool.getToolFrame(), HiddenValuesButton.class);
+		assertNotNull(control);
+
 		assertEquals(programNames.length, panel.getTabCount());
-		assertEquals(2, panel.getVisibleTabCount());
-		assertEquals(3, panel.getHiddenCount());
+		assertEquals(2, panel.getVisibleTabs().size());
+		assertEquals(3, panel.getHiddenTabs().size());
 
 		setFrameSize(925, 500);
 
-		listLabel = (JLabel) findComponentByName(panel, "showList");
+		control = findComponent(tool.getToolFrame(), HiddenValuesButton.class);
 
-		if (listLabel != null) {
-			printResizeDebug();
-		}
-
-		assertNull(listLabel);
-		assertEquals(5, panel.getVisibleTabCount());
-		assertEquals(0, panel.getHiddenCount());
+		assertNull(control);
+		assertEquals(5, panel.getVisibleTabs().size());
+		assertEquals(0, panel.getHiddenTabs().size());
 	}
 
 	@Test
@@ -284,9 +279,8 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		builder.createMemory("test", "0x0", 100);
 		Program p = doOpenProgram(builder.getProgram(), true);
 		p.setTemporary(false); // we need to be notified of changes 
-
 		// select notepad
-		panel.setSelectedProgram(p);
+		selectTab(p);
 		int transactionID = p.startTransaction("test");
 		try {
 			SymbolTable symTable = p.getSymbolTable();
@@ -296,10 +290,10 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 			p.endTransaction(transactionID, true);
 		}
 		p.flushEvents();
-		runSwing(() -> panel.refresh(p));
+		runSwing(() -> panel.refreshTab(p));
 
 		JPanel tab = panel.getTab(p);
-		JLabel label = (JLabel) findComponentByName(tab, "objectName");
+		JLabel label = (JLabel) findComponentByName(tab, "Tab Label");
 		assertTrue(label.getText().startsWith("*"));
 	}
 
@@ -310,8 +304,8 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		openPrograms(programNames);
 		assertHidden(programs[1]);
 
-		runSwing(() -> panel.setSelectedProgram(programs[1]));
-		assertEquals(programs[1], panel.getSelectedProgram());
+		runSwing(() -> panel.selectTab(programs[1]));
+		assertEquals(programs[1], getSelectedTabValue());
 		assertShowing(programs[1]);
 	}
 
@@ -320,7 +314,7 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		openPrograms_HideLastOpened();
 
-		Program startProgram = panel.getSelectedProgram();
+		Program startProgram = getSelectedTabValue();
 
 		MultiTabPlugin plugin = env.getPlugin(MultiTabPlugin.class);
 		DockingAction action =
@@ -331,13 +325,13 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		JPanel tab = panel.getTab(programs[1]);
 		Point p = tab.getLocationOnScreen();
 		clickMouse(tab, MouseEvent.BUTTON1, p.x + 1, p.y + 1, 1, 0);
-		assertEquals(programs[1], panel.getSelectedProgram());
-		assertTrue(!startProgram.equals(panel.getSelectedProgram()));
+		assertEquals(programs[1], getSelectedTabValue());
+		assertTrue(!startProgram.equals(getSelectedTabValue()));
 
 		assertTrue(action.isEnabled());
 
 		performAction(action, true);
-		assertEquals(startProgram, panel.getSelectedProgram());
+		assertEquals(startProgram, getSelectedTabValue());
 	}
 
 	@Test
@@ -369,18 +363,19 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(BigInteger.valueOf(4), fp.getCursorLocation().getIndex());
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testTabUpdate() throws Exception {
 		Program p = openDummyProgram("login", true);
 
 		// select second tab (the "login" program)
-		panel = findComponent(tool.getToolFrame(), MultiTabPanel.class);
+		panel = findComponent(tool.getToolFrame(), GTabPanel.class);
 
 		// don't let focus issues hide the popup list
 		panel.setIgnoreFocus(true);
 
-		panel.setSelectedProgram(p);
-		assertEquals(p, panel.getSelectedProgram());
+		selectTab(p);
+		assertEquals(p, getSelectedTabValue());
 
 		addComment(p);
 
@@ -395,7 +390,7 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// Check the name on the tab and in the tooltip.
 		JPanel tabPanel = getTabPanel(p);
-		JLabel label = (JLabel) findComponentByName(tabPanel, "objectName");
+		JLabel label = (JLabel) findComponentByName(tabPanel, "Tab Label");
 		assertEquals("*" + newName + " [Read-Only]", label.getText());
 		assertTrue(label.getToolTipText().endsWith("/" + newName + " [Read-Only]*"));
 	}
@@ -429,7 +424,7 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// by trial-and-error, we know that 'tms' is the last visible program tab 
 		// after resizing
-		setFrameSize(500, 500);
+		setFrameSize(550, 500);
 		assertShowing(programs[2]);
 		assertHidden(programs[3]);
 
@@ -445,7 +440,8 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		// select the first visible tab and go backwards to trigger the list
 		selectTab(programs[0]);
 		performPreviousAction();
-		assertListWindowShowing();
+		listWindow = getListWindow();
+		assertTrue(listWindow.isShowing());
 	}
 
 	@Test
@@ -465,20 +461,21 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// by trial-and-error, we know that 'tms' is the last visible program tab 
 		// after resizing
-		setFrameSize(500, 500);
+		setFrameSize(600, 500);
 		assertShowing(programs[2]);
 		assertHidden(programs[3]);
 
 		// select 'tms', which is the last tab before the list is shown
 		selectTab(programs[2]);
 		performNextAction();
-		assertListWindowShowing();
+		Window window = getListWindow();
+		assertTrue(window.isShowing());
 
 		// the newly selected program should the first program, as the selection 
 		// should have left the window and wrapped around 'notepad'
 		performNextAction();
 		assertProgramSelected(programs[0]);
-		assertListWindowHidden();
+		assertFalse(window.isShowing());
 
 		//
 		// Now try the other direction, which should wrap back around the other direction,
@@ -486,11 +483,12 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		//		
 		selectTab(programs[0]);// start off at the first tab	
 		performPreviousAction();
-		assertListWindowShowing();
+		Window listWindow = getListWindow();
+		assertTrue(listWindow.isShowing());
 
 		performPreviousAction();
 		assertProgramSelected(programs[2]);// 'tms'--last visible program
-		assertListWindowHidden();
+		assertFalse(listWindow.isShowing());
 	}
 
 //==================================================================================================
@@ -498,65 +496,26 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 //==================================================================================================	
 
 	private void assertProgramSelected(Program p) {
-		Program selectedProgram = panel.getSelectedProgram();
+		Program selectedProgram = getSelectedTabValue();
 		assertEquals(selectedProgram, p);
-	}
-
-	private void printResizeDebug() {
-		//
-		// To show the '>>' label, the number of tabs must exceed the room visible to show them
-		//
-
-		// frame size
-
-		// available width
-		int panelWidth = panel.getWidth();
-		System.out.println("available width: " + panelWidth);
-
-		// size label
-		int totalWidth = 0;
-		JComponent listLabel = (JComponent) getInstanceField("showHiddenListLabel", panel);
-		System.out.println("label width: " + listLabel.getWidth());
-		totalWidth = listLabel.getWidth();
-
-		// size of each tab's panel
-		Map<?, ?> map = (Map<?, ?>) getInstanceField("linkedProgramMap", panel);
-		Collection<?> values = map.values();
-		for (Object object : values) {
-			JComponent c = (JComponent) object;
-			totalWidth += c.getWidth();
-			System.out.println("\t" + c.getWidth());
-		}
-
-		System.out.println("Total width: " + totalWidth + " out of " + panelWidth);
 	}
 
 	private void assertShowing(Program p) throws Exception {
 		waitForConditionWithoutFailing(() -> {
-			boolean isHidden = runSwing(() -> panel.isHidden(p));
+			boolean isHidden = runSwing(() -> panel.getHiddenTabs().contains(p));
 			return !isHidden;
 		});
 
-		boolean isHidden = runSwing(() -> panel.isHidden(p));
+		boolean isHidden = runSwing(() -> panel.getHiddenTabs().contains(p));
 		if (isHidden) {
 			capture(tool.getToolFrame(), "multi.tabs.program2.should.be.showing");
 		}
 
-		assertFalse(runSwing(() -> panel.isHidden(p)));
+		assertFalse(runSwing(() -> panel.getHiddenTabs().contains(p)));
 	}
 
 	private void assertHidden(Program p) {
-		assertTrue(runSwing(() -> panel.isHidden(p)));
-	}
-
-	private void assertListWindowHidden() {
-		Window listWindow = getListWindow();
-		assertFalse(listWindow.isShowing());
-	}
-
-	private void assertListWindowShowing() {
-		Window listWindow = getListWindow();
-		assertTrue(listWindow.isShowing());
+		assertTrue(runSwing(() -> panel.getHiddenTabs().contains(p)));
 	}
 
 	private MarkerSet createMarkers(final Program p) {
@@ -567,9 +526,10 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private Window getListWindow() {
-		Window window = windowForComponent(panel);
-		ProgramListPanel listPanel = findComponent(window, ProgramListPanel.class, true);
-		return windowForComponent(listPanel);
+		TabListPopup<?> tabList =
+			(TabListPopup<?>) waitForWindowByTitleContaining("Popup Window Showing");
+
+		return tabList;
 	}
 
 	private void performPreviousAction() throws Exception {
@@ -593,13 +553,17 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void selectTab(Program p) {
-		JPanel tab = panel.getTab(p);
-		Point point = tab.getLocationOnScreen();
+		JPanel tab = runSwing(() -> panel.getTab(p));
+		Point point = runSwing(() -> tab.getLocationOnScreen());
 		clickMouse(tab, MouseEvent.BUTTON1, point.x + 1, point.y + 1, 1, 0);
-		assertEquals(p, panel.getSelectedProgram());
+		assertEquals(p, getSelectedTabValue());
 	}
 
-	private JPanel getTabPanel(final Program p) {
+	private Program getSelectedTabValue() {
+		return runSwing(() -> panel.getSelectedTabValue());
+	}
+
+	private JPanel getTabPanel(Program p) {
 
 		final AtomicReference<JPanel> ref = new AtomicReference<>();
 		runSwing(() -> ref.set(panel.getTab(p)));
@@ -652,15 +616,19 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		return doOpenProgram(program, makeCurrent);
 	}
 
+	@SuppressWarnings("unchecked")
 	private Program doOpenProgram(Program p, boolean makeCurrent) {
-		int programState = makeCurrent ? ProgramManager.OPEN_CURRENT : ProgramManager.OPEN_VISIBLE;
-		pm.openProgram(p, programState);
+		runSwing(() -> {
+			int programState =
+				makeCurrent ? ProgramManager.OPEN_CURRENT : ProgramManager.OPEN_VISIBLE;
+			pm.openProgram(p, programState);
+			panel = findComponent(tool.getToolFrame(), GTabPanel.class);
+
+			// don't let focus issues hide the popup list
+			panel.setIgnoreFocus(true);
+			panel.setShowTabsAlways(true);
+		});
 		waitForSwing();
-		panel = findComponent(tool.getToolFrame(), MultiTabPanel.class);
-
-		// don't let focus issues hide the popup list
-		panel.setIgnoreFocus(true);
-
 		return p;
 	}
 
@@ -684,15 +652,15 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		waitForSwing();
 	}
 
-	private ProgramListPanel showList() {
-		JLabel listLabel = (JLabel) findComponentByName(panel, "showList");
-		Point p = listLabel.getLocationOnScreen();
-		clickMouse(listLabel, MouseEvent.BUTTON1, p.x + 3, p.y + 2, 1, 0);
+	private TabListPopup<?> showList() {
+		HiddenValuesButton control = findComponent(panel, HiddenValuesButton.class);
+		Point p = control.getLocationOnScreen();
+		clickMouse(control, MouseEvent.BUTTON1, p.x + 3, p.y + 2, 1, 0);
 		waitForSwing();
-		Window window = windowForComponent(panel);
-		ProgramListPanel listPanel = findComponent(window, ProgramListPanel.class, true);
-		assertNotNull(listPanel);
-		return listPanel;
+		TabListPopup<?> tabList =
+			(TabListPopup<?>) waitForWindowByTitleContaining("Popup Window Showing");
+		assertNotNull(tabList);
+		return tabList;
 	}
 
 }

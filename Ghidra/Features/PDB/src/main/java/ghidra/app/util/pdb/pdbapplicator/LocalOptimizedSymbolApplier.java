@@ -55,7 +55,6 @@ public class LocalOptimizedSymbolApplier extends MsSymbolApplier
 
 	private void doWork(FunctionSymbolApplier functionSymbolApplier, MsSymbolIterator iter)
 			throws CancelledException, PdbException {
-		getValidatedSymbol(iter, true);
 		// TODO: Not doing anything with the information yet.
 		symbol.getLocalVariableFlags();
 		symbol.getName();

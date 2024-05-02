@@ -32,7 +32,7 @@ public class TraceValueLifePlotColumn
 
 	private final SpanSetTableCellRenderer<Long> cellRenderer = new SpanSetTableCellRenderer<>();
 	private final RangeCursorTableHeaderRenderer<Long> headerRenderer =
-		new RangeCursorTableHeaderRenderer<>(0L);
+		new RangeCursorTableHeaderRenderer<>(0L, this);
 
 	@Override
 	public String getColumnName() {

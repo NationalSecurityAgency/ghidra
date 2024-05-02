@@ -408,7 +408,9 @@ public class DyldCacheHeader implements StructConverter {
 				DyldCacheSlideInfoCommon slideInfo = DyldCacheSlideInfoCommon.parseSlideInfo(reader,
 					info.getSlideInfoFileOffset(), info.getAddress(), info.getSize(),
 					info.getFileOffset(), log, monitor);
-				slideInfoList.add(slideInfo);
+				if (slideInfo != null) {
+					slideInfoList.add(slideInfo);
+				}
 			}
 		}
 	}

@@ -27,7 +27,6 @@ import java.util.concurrent.*;
 import java.util.stream.*;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import com.google.protobuf.ByteString;
 
@@ -70,7 +69,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateFileException;
 
 public class TraceRmiHandler implements TraceRmiConnection {
-	public static final String VERSION = "10.4";
+	public static final String VERSION = "11.1";
 
 	protected static class VersionMismatchError extends TraceRmiError {
 		public VersionMismatchError(String remote) {
@@ -322,8 +321,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		}
 	}
 
-	protected DomainFolder getOrCreateNewTracesFolder()
-			throws InvalidNameException, IOException {
+	protected DomainFolder getOrCreateNewTracesFolder() throws InvalidNameException, IOException {
 		return getOrCreateFolder(plugin.getTool().getProject().getProjectData().getRootFolder(),
 			"New Traces");
 	}
@@ -483,6 +481,14 @@ public class TraceRmiHandler implements TraceRmiConnection {
 	private interface Dispatcher {
 		RootMessage.Builder dispatch(RootMessage req, RootMessage.Builder rep) throws Exception;
 
+		default String exceptionMessage(Throwable exc) {
+			String msg = exc.getMessage();
+			if (msg == null) {
+				return exc.getClass().getCanonicalName();
+			}
+			return exc.getClass().getCanonicalName() + ": " + msg;
+		}
+
 		default RootMessage handle(RootMessage req) {
 			String desc = toString(req);
 			if (desc != null) {
@@ -494,10 +500,9 @@ public class TraceRmiHandler implements TraceRmiConnection {
 				return rep == null ? null : rep.build();
 			}
 			catch (Throwable e) {
-				return rep
-						.setError(ReplyError.newBuilder()
-								.setMessage(
-									e.getMessage() + "\n" + ExceptionUtils.getStackTrace(e)))
+				Msg.error(this, "Exception caused by back end", e);
+				return rep.setError(ReplyError.newBuilder()
+						.setMessage(exceptionMessage(e)))
 						.build();
 			}
 		}
@@ -509,8 +514,8 @@ public class TraceRmiHandler implements TraceRmiConnection {
 						req.getRequestActivate().getOid().getId(),
 						req.getRequestActivate().getObject().getId(),
 						req.getRequestActivate().getObject().getPath().getPath());
-					case REQUEST_END_TX -> "endTx(%d)".formatted(
-						req.getRequestEndTx().getTxid().getId());
+					case REQUEST_END_TX -> "endTx(%d)"
+							.formatted(req.getRequestEndTx().getTxid().getId());
 					case REQUEST_START_TX -> "startTx(%d,%s)".formatted(
 						req.getRequestStartTx().getTxid().getId(),
 						req.getRequestStartTx().getDescription());
@@ -530,49 +535,40 @@ public class TraceRmiHandler implements TraceRmiConnection {
 	}
 
 	final Dispatcher dispatchNegotiate = (req, rep) -> switch (req.getMsgCase()) {
-		case REQUEST_NEGOTIATE -> rep
-				.setReplyNegotiate(handleNegotiate(req.getRequestNegotiate()));
+		case REQUEST_NEGOTIATE -> rep.setReplyNegotiate(handleNegotiate(req.getRequestNegotiate()));
 		default -> throw new InvalidRequestError(req);
 	};
 
 	final Dispatcher dispatchNominal = (req, rep) -> switch (req.getMsgCase()) {
-		case REQUEST_ACTIVATE -> rep
-				.setReplyActivate(handleActivate(req.getRequestActivate()));
+		case REQUEST_ACTIVATE -> rep.setReplyActivate(handleActivate(req.getRequestActivate()));
 		case REQUEST_CLOSE_TRACE -> rep
 				.setReplyCloseTrace(handleCloseTrace(req.getRequestCloseTrace()));
 		case REQUEST_CREATE_OBJECT -> rep
 				.setReplyCreateObject(handleCreateObject(req.getRequestCreateObject()));
 		case REQUEST_CREATE_OVERLAY -> rep
-				.setReplyCreateOverlay(
-					handleCreateOverlay(req.getRequestCreateOverlay()));
+				.setReplyCreateOverlay(handleCreateOverlay(req.getRequestCreateOverlay()));
 		case REQUEST_CREATE_ROOT_OBJECT -> rep
-				.setReplyCreateObject(
-					handleCreateRootObject(req.getRequestCreateRootObject()));
+				.setReplyCreateObject(handleCreateRootObject(req.getRequestCreateRootObject()));
 		case REQUEST_CREATE_TRACE -> rep
 				.setReplyCreateTrace(handleCreateTrace(req.getRequestCreateTrace()));
 		case REQUEST_DELETE_BYTES -> rep
 				.setReplyDeleteBytes(handleDeleteBytes(req.getRequestDeleteBytes()));
-		case REQUEST_DELETE_REGISTER_VALUE -> rep
-				.setReplyDeleteRegisterValue(
-					handleDeleteRegisterValue(req.getRequestDeleteRegisterValue()));
+		case REQUEST_DELETE_REGISTER_VALUE -> rep.setReplyDeleteRegisterValue(
+			handleDeleteRegisterValue(req.getRequestDeleteRegisterValue()));
 		case REQUEST_DISASSEMBLE -> rep
 				.setReplyDisassemble(handleDisassemble(req.getRequestDisassemble()));
-		case REQUEST_END_TX -> rep
-				.setReplyEndTx(handleEndTx(req.getRequestEndTx()));
+		case REQUEST_END_TX -> rep.setReplyEndTx(handleEndTx(req.getRequestEndTx()));
 		case REQUEST_GET_OBJECT -> rep
 				.setReplyGetObject(handleGetObject(req.getRequestGetObject()));
 		case REQUEST_GET_VALUES -> rep
 				.setReplyGetValues(handleGetValues(req.getRequestGetValues()));
-		case REQUEST_GET_VALUES_INTERSECTING -> rep
-				.setReplyGetValues(
-					handleGetValuesIntersecting(req.getRequestGetValuesIntersecting()));
+		case REQUEST_GET_VALUES_INTERSECTING -> rep.setReplyGetValues(
+			handleGetValuesIntersecting(req.getRequestGetValuesIntersecting()));
 		case REQUEST_INSERT_OBJECT -> rep
 				.setReplyInsertObject(handleInsertObject(req.getRequestInsertObject()));
-		case REQUEST_PUT_BYTES -> rep
-				.setReplyPutBytes(handlePutBytes(req.getRequestPutBytes()));
+		case REQUEST_PUT_BYTES -> rep.setReplyPutBytes(handlePutBytes(req.getRequestPutBytes()));
 		case REQUEST_PUT_REGISTER_VALUE -> rep
-				.setReplyPutRegisterValue(
-					handlePutRegisterValue(req.getRequestPutRegisterValue()));
+				.setReplyPutRegisterValue(handlePutRegisterValue(req.getRequestPutRegisterValue()));
 		case REQUEST_REMOVE_OBJECT -> rep
 				.setReplyRemoveObject(handleRemoveObject(req.getRequestRemoveObject()));
 		case REQUEST_RETAIN_VALUES -> rep
@@ -580,14 +576,10 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		case REQUEST_SAVE_TRACE -> rep
 				.setReplySaveTrace(handleSaveTrace(req.getRequestSaveTrace()));
 		case REQUEST_SET_MEMORY_STATE -> rep
-				.setReplySetMemoryState(
-					handleSetMemoryState(req.getRequestSetMemoryState()));
-		case REQUEST_SET_VALUE -> rep
-				.setReplySetValue(handleSetValue(req.getRequestSetValue()));
-		case REQUEST_SNAPSHOT -> rep
-				.setReplySnapshot(handleSnapshot(req.getRequestSnapshot()));
-		case REQUEST_START_TX -> rep
-				.setReplyStartTx(handleStartTx(req.getRequestStartTx()));
+				.setReplySetMemoryState(handleSetMemoryState(req.getRequestSetMemoryState()));
+		case REQUEST_SET_VALUE -> rep.setReplySetValue(handleSetValue(req.getRequestSetValue()));
+		case REQUEST_SNAPSHOT -> rep.setReplySnapshot(handleSnapshot(req.getRequestSnapshot()));
+		case REQUEST_START_TX -> rep.setReplyStartTx(handleStartTx(req.getRequestStartTx()));
 		case XREPLY_INVOKE_METHOD -> handleXInvokeMethod(req.getXreplyInvokeMethod());
 		default -> throw new InvalidRequestError(req);
 	};
@@ -666,15 +658,11 @@ public class TraceRmiHandler implements TraceRmiConnection {
 	}
 
 	protected static ObjSpec makeObjSpec(TraceObject object) {
-		return ObjSpec.newBuilder()
-				.setId(object.getKey())
-				.build();
+		return ObjSpec.newBuilder().setId(object.getKey()).build();
 	}
 
 	protected static ObjPath makeObjPath(TraceObjectKeyPath path) {
-		return ObjPath.newBuilder()
-				.setPath(path.toString())
-				.build();
+		return ObjPath.newBuilder().setPath(path.toString()).build();
 	}
 
 	protected static ObjDesc makeObjDesc(TraceObject object) {
@@ -767,15 +755,13 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		if (value instanceof int[] ia) {
 			return Value.newBuilder()
 					.setIntArrValue(
-						IntArr.newBuilder()
-								.addAllArr(IntStream.of(ia).mapToObj(i -> i).toList()))
+						IntArr.newBuilder().addAllArr(IntStream.of(ia).mapToObj(i -> i).toList()))
 					.build();
 		}
 		if (value instanceof long[] la) {
 			return Value.newBuilder()
 					.setLongArrValue(
-						LongArr.newBuilder()
-								.addAllArr(LongStream.of(la).mapToObj(l -> l).toList()))
+						LongArr.newBuilder().addAllArr(LongStream.of(la).mapToObj(l -> l).toList()))
 					.build();
 		}
 		if (value instanceof String[] sa) {
@@ -824,6 +810,11 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		}
 		DebuggerCoordinates finalCoords = object == null ? coords : coords.object(object);
 		Swing.runLater(() -> {
+			DebuggerTraceManagerService traceManager = this.traceManager;
+			if (traceManager == null) {
+				// Can happen during tear down.
+				return;
+			}
 			if (!traceManager.getOpenTraces().contains(open.trace)) {
 				traceManager.openTrace(open.trace);
 				traceManager.activate(finalCoords, ActivationCause.SYNC_MODEL);
@@ -847,8 +838,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 
 	protected ReplyCreateObject handleCreateObject(RequestCreateObject req) {
 		OpenTrace open = requireOpenTrace(req.getOid());
-		TraceObject object =
-			open.trace.getObjectManager().createObject(toKeyPath(req.getPath()));
+		TraceObject object = open.trace.getObjectManager().createObject(toKeyPath(req.getPath()));
 		return ReplyCreateObject.newBuilder().setObject(makeObjSpec(object)).build();
 	}
 
@@ -904,8 +894,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		return ReplyDeleteBytes.getDefaultInstance();
 	}
 
-	protected ReplyDeleteRegisterValue handleDeleteRegisterValue(
-			RequestDeleteRegisterValue req) {
+	protected ReplyDeleteRegisterValue handleDeleteRegisterValue(RequestDeleteRegisterValue req) {
 		OpenTrace open = requireOpenTrace(req.getOid());
 		long snap = req.getSnap().getSnap();
 		AddressSpace space = open.trace.getBaseAddressFactory().getAddressSpace(req.getSpace());
@@ -932,15 +921,13 @@ public class TraceRmiHandler implements TraceRmiConnection {
 
 		// Want addresses satisfying {@code known | (readOnly & everKnown)}
 		TraceMemoryManager memoryManager = open.trace.getMemoryManager();
-		AddressSetView readOnly =
-			memoryManager.getRegionsAddressSetWith(snap, r -> !r.isWrite());
+		AddressSetView readOnly = memoryManager.getRegionsAddressSetWith(snap, r -> !r.isWrite());
 		AddressSetView everKnown = memoryManager.getAddressesWithState(Lifespan.since(snap),
 			s -> s == TraceMemoryState.KNOWN);
 		AddressSetView roEverKnown = new IntersectionAddressSetView(readOnly, everKnown);
 		AddressSetView known =
 			memoryManager.getAddressesWithState(snap, s -> s == TraceMemoryState.KNOWN);
-		AddressSetView disassemblable =
-			new AddressSet(new UnionAddressSetView(known, roEverKnown));
+		AddressSetView disassemblable = new AddressSet(new UnionAddressSetView(known, roEverKnown));
 
 		Address start = open.toAddress(req.getStart(), true);
 		TracePlatform host = open.trace.getPlatformManager().getHostPlatform();
@@ -950,7 +937,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 			host.getLanguage(), host.getLanguage().getLanguageID(), start));
 
 		try (CloseableTaskMonitor monitor = plugin.createMonitor()) {
-			dis.applyToTyped(open.trace.getFixedProgramView(snap), monitor);
+			dis.applyTo(open.trace.getFixedProgramView(snap), monitor);
 		}
 
 		return ReplyDisassemble.newBuilder()
@@ -988,21 +975,19 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		OpenTrace open = requireOpenTrace(req.getOid());
 		return ReplyGetValues.newBuilder()
 				.addAllValues(open.trace.getObjectManager()
-						.getValuePaths(toLifespan(req.getSpan()),
-							toPathPattern(req.getPattern()))
+						.getValuePaths(toLifespan(req.getSpan()), toPathPattern(req.getPattern()))
 						.map(TraceRmiHandler::makeValDesc)
 						.sorted(Comparator.comparing(ValDesc::getKey))
 						.toList())
 				.build();
 	}
 
-	protected ReplyGetValues handleGetValuesIntersecting(
-			RequestGetValuesIntersecting req) throws AddressOverflowException {
+	protected ReplyGetValues handleGetValuesIntersecting(RequestGetValuesIntersecting req)
+			throws AddressOverflowException {
 		OpenTrace open = requireOpenTrace(req.getOid());
 		AddressRange range = open.toRange(req.getBox().getRange(), false);
 		String key = req.getKey() == "" ? null : req.getKey();
-		Collection<? extends TraceObjectValue> col = range == null
-				? List.of()
+		Collection<? extends TraceObjectValue> col = range == null ? List.of()
 				: open.trace.getObjectManager()
 						.getValuesIntersecting(toLifespan(req.getBox().getSpan()), range, key);
 		return ReplyGetValues.newBuilder()
@@ -1018,9 +1003,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 				.stream()
 				.map(TraceObjectValue::getLifespan)
 				.reduce(Lifespan.ALL, Lifespan::intersect);
-		return ReplyInsertObject.newBuilder()
-				.setSpan(makeSpan(span))
-				.build();
+		return ReplyInsertObject.newBuilder().setSpan(makeSpan(span)).build();
 	}
 
 	protected ReplyNegotiate handleNegotiate(RequestNegotiate req) {
@@ -1031,8 +1014,8 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		}
 		for (Method m : req.getMethodsList()) {
 			RemoteMethod rm = new RecordRemoteMethod(this, m.getName(),
-				ActionName.name(m.getAction()), m.getDisplay(),
-				m.getDescription(), m.getParametersList()
+				ActionName.name(m.getAction()), m.getDisplay(), m.getDescription(),
+				m.getParametersList()
 						.stream()
 						.collect(Collectors.toMap(MethodParameter::getName, this::makeParameter)),
 				new SchemaName(m.getReturnType().getName()));
@@ -1141,8 +1124,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		return ReplySetMemoryState.getDefaultInstance();
 	}
 
-	protected ReplySetValue handleSetValue(RequestSetValue req)
-			throws AddressOverflowException {
+	protected ReplySetValue handleSetValue(RequestSetValue req) throws AddressOverflowException {
 		ValSpec value = req.getValue();
 		OpenTrace open = requireOpenTrace(req.getOid());
 		Object objVal = open.toValue(value.getValue());
@@ -1152,8 +1134,8 @@ public class TraceRmiHandler implements TraceRmiConnection {
 			return ReplySetValue.newBuilder().setSpan(makeSpan(Lifespan.EMPTY)).build();
 		}
 
-		TraceObjectValue val = object.setValue(toLifespan(value.getSpan()), value.getKey(),
-			objVal, toResolution(req.getResolution()));
+		TraceObjectValue val = object.setValue(toLifespan(value.getSpan()), value.getKey(), objVal,
+			toResolution(req.getResolution()));
 		return ReplySetValue.newBuilder()
 				.setSpan(makeSpan(val == null ? Lifespan.EMPTY : val.getLifespan()))
 				.build();

@@ -40,7 +40,6 @@ public:
   virtual void encodeAttributes(Encoder &encoder,uintb offset) const { encoder.writeString(ATTRIB_SPACE, "iop"); }
   virtual void encodeAttributes(Encoder &encoder,uintb offset,int4 size) const { encoder.writeString(ATTRIB_SPACE, "iop"); }
   virtual void printRaw(ostream &s,uintb offset) const;
-  virtual void saveXml(ostream &s) const;
   virtual void decode(Decoder &decoder);
   static const string NAME;			///< Reserved name for the iop space
 };

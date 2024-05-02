@@ -13,27 +13,21 @@
   <BODY lang="EN-US">
     <H1><A name="plugin"></A>Debugger: Comparing Times</H1>
 
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" border="1" src=
-          "images/DebuggerTraceViewDiffPlugin.png"></TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+    <DIV class="image">
+      <IMG alt="" src="images/DebuggerTraceViewDiffPlugin.png">
+    </DIV>
 
     <P><A name="Toggle_Header"></A>A common strategy in dynamic analysis is to compare machine
-    state between two points in time. To this end, to support comparison of bytes in memory, the
-    "trace diff" plugin extends the <A href=
+    state between two points in time. To this end, the "trace diff" plugin extends the <A href=
     "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html">Dynamic Listing</A> to provide
-    side-by-side comparison of two different points in time. When active, listings for both points
-    in time are displayed and the byte value differences between them are highlighted. <B>NOTE:</B>
-    This does not compare annotations. It only compares raw byte values. Additionally, all stale
-    values are ignored, i.e., to show as a difference, the memory must be observed at <EM>both</EM>
-    points in time, and the values must differ.</P>
+    side-by-side comparison of bytes between points in time. When active, listings for both times
+    are displayed, and the byte value differences between them are highlighted. <B>NOTE:</B> This
+    does not compare annotations. It only compares raw byte values. Additionally, all stale values
+    are ignored, i.e., to show as a difference, the memory must be observed at <EM>both</EM> points
+    in time, and the values must differ.</P>
 
     <P><B>NOTE:</B> This plugin only facilitates the comparison of memory displayed in listings. To
-    compare registers or SLEIGH expressions, use the respective windows: <A href=
+    compare registers or expressions, use the respective windows: <A href=
     "help/topics/DebuggerRegistersPlugin/DebuggerRegistersPlugin.html">Registers</A> and <A href=
     "help/topics/DebuggerWatchesPlugin/DebuggerWatchesPlugin.html">Watches</A>. By navigating back
     and forth between two points in time, using the <A href=
@@ -50,14 +44,9 @@
     <P>This action is available whenever a trace is active in the main listing. It prompts for an
     alternative point in time:</P>
 
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" src=
-          "images/DebuggerTimeSelectionDialog.png"></TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+    <DIV class="image">
+      <IMG alt="" src="images/DebuggerTimeSelectionDialog.png">
+    </DIV>
 
     <P>The snapshot table is exactly the same as that in the <A href=
     "help/topics/DebuggerTimePlugin/DebuggerTimePlugin.html">Time Window</A>. In most cases, simply
@@ -68,11 +57,11 @@
     snapshots thus identifies changes over time; however, there is no guarantee that the desired
     variable was ever observed. Assuming the general vicinity of the variable is known, e.g.,
     "somewhere in the .data section," the <A href=
-    "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html#read_memory">Read Selected
-    Memory</A> action can ensure its value is recorded. Of course, it can also read "all memory,"
-    but that operation and the follow-on comparison could take time. In general, the procedure to
-    locate a variable is to capture a baseline, execute the target until the variable has changed,
-    capture again, then compare:</P>
+    "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html#read_memory">Read Memory</A>
+    action can ensure its value is recorded. Of course, it can also read "all memory," but that
+    operation and the follow-on comparison could take time. In general, the procedure to locate a
+    variable is to capture a baseline, execute the target until the variable has changed, capture
+    again, then compare:</P>
 
     <OL>
       <LI>Execute the target up to a baseline, and take note of the variable's value, as displayed
@@ -88,8 +77,8 @@
       selection.</LI>
 
       <LI>Use the <A href=
-      "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html#read_memory">Read Selected
-      Memory</A> action to ensure the variable's value is stored in the trace.</LI>
+      "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html#read_memory">Read Memory</A>
+      action to ensure the variable's value is stored in the trace.</LI>
 
       <LI>Allow the target to execute until the variable has changed. Ideally, execute as little as
       necessary, so that few or no other variables change.</LI>
@@ -134,7 +123,7 @@
     <P>Alternatively, if the number of steps to reach the end of the block is already known, just
     use the emulation expression in the <B>Compare</B> action's dialog. <B>NOTE:</B> When used this
     way, the baseline snapshot will be in the left pane, and the emulated snapshot in the right,
-    which is opposite the result from the steps above.</P>
+    which is opposite the result from the previous procedure.</P>
 
     <P>In either case, this will highlight any memory that was modified by the emulated code. Of
     course, this could also be accomplished by setting a second breakpoint and allowing the target

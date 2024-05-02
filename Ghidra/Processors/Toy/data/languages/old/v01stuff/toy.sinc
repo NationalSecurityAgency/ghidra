@@ -1,4 +1,4 @@
-# Main slaspec must define endianess and alignment
+# Main slaspec must define endianness and alignment
 
 @ifndef WORDSIZE
 @define WORDSIZE "1"

@@ -21,6 +21,7 @@ import java.awt.event.ItemListener;
 import java.util.*;
 import java.util.List;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
@@ -28,6 +29,7 @@ import docking.DockingWindowManager;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.textfield.FloatingPointTextField;
+import generic.theme.Gui;
 import ghidra.features.bsim.query.BSimServerInfo;
 import ghidra.features.bsim.query.description.DatabaseInformation;
 import ghidra.features.bsim.query.facade.QueryDatabaseException;
@@ -117,9 +119,14 @@ public abstract class AbstractBSimSearchDialog extends DialogComponentProvider {
 		confidenceField.setValue(0);
 		confidenceField.setMinValue(0.0);
 
-		panel.add(new JLabel("Similarity Threshold (0-1):"));
+		JLabel similarityLabel = new JLabel("Similarity Threshold (0-1):");
+		JLabel confidenceLabel = new JLabel("Confidence Threshold:");
+		similarityLabel.setLabelFor(similarityField);
+		confidenceLabel.setLabelFor(confidenceField);
+
+		panel.add(similarityLabel);
 		panel.add(similarityField);
-		panel.add(new JLabel("Confidence Threshold:"));
+		panel.add(confidenceLabel);
 		panel.add(confidenceField);
 		return panel;
 	}
@@ -222,6 +229,10 @@ public abstract class AbstractBSimSearchDialog extends DialogComponentProvider {
 		comboPanel.add(serverCombo, BorderLayout.CENTER);
 		panel.add(comboPanel, BorderLayout.CENTER);
 
+		AccessibleContext context = serverCombo.getAccessibleContext();
+		context.setAccessibleName("BSim Server");
+		context.setAccessibleDescription("Select a predefined Bsim Server");
+
 		JButton button = new EmptyBorderButton(Icons.CONFIGURE_FILTER_ICON);
 		button.setToolTipText("Show Server Manager Dialog");
 		button.addActionListener(e -> managerServers());
@@ -243,7 +254,7 @@ public abstract class AbstractBSimSearchDialog extends DialogComponentProvider {
 		contentPanel.add(comp, fullWidth ? BorderLayout.CENTER : BorderLayout.WEST);
 
 		JLabel label = new JLabel(name);
-		label.setFont(label.getFont().deriveFont(Font.BOLD));
+		Gui.registerFont(label, Font.BOLD);
 		titlePanel.add(label, BorderLayout.NORTH);
 
 		return panel;
@@ -260,7 +271,7 @@ public abstract class AbstractBSimSearchDialog extends DialogComponentProvider {
 
 //==================================================================================================
 // test methods
-//==================================================================================================	
+//==================================================================================================
 	protected void setServer(BSimServerInfo info) {
 		initializeConnection(info);
 	}
@@ -271,7 +282,7 @@ public abstract class AbstractBSimSearchDialog extends DialogComponentProvider {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 	protected abstract class BSimQueryTask extends Task {
 		protected Exception errorException;
 

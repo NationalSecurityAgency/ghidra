@@ -15,10 +15,13 @@
  */
 package ghidra.pcodeCPort.slghpatexpress;
 
-import java.io.PrintStream;
+import static ghidra.pcode.utils.SlaFormat.*;
+
+import java.io.IOException;
 
 import generic.stl.VectorSTL;
 import ghidra.pcodeCPort.utils.MutableInt;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.Location;
 
 public class MinusExpression extends UnaryExpression {
@@ -38,10 +41,10 @@ public class MinusExpression extends UnaryExpression {
 	}
 
 	@Override
-	public void saveXml(PrintStream s) {
-		s.append("<minus_exp>\n");
-		super.saveXml(s);
-		s.append("</minus_exp>\n");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_MINUS_EXP);
+		super.encode(encoder);
+		encoder.closeElement(ELEM_MINUS_EXP);
 	}
 
 }

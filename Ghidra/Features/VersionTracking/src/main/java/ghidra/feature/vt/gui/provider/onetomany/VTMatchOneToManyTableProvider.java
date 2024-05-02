@@ -15,39 +15,70 @@
  */
 package ghidra.feature.vt.gui.provider.onetomany;
 
-import java.awt.*;
+import java.awt.Adjustable;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import javax.swing.JTable;
+import javax.swing.JToggleButton;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.*;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 
 import docking.ActionContext;
+import docking.action.builder.ActionBuilder;
 import docking.widgets.label.GDLabel;
 import docking.widgets.table.GTable;
 import docking.widgets.table.RowObjectTableModel;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import generic.theme.GColor;
 import generic.theme.GIcon;
+import ghidra.app.services.FunctionComparisonService;
 import ghidra.feature.vt.api.impl.VTEvent;
-import ghidra.feature.vt.api.main.*;
-import ghidra.feature.vt.gui.actions.*;
-import ghidra.feature.vt.gui.filters.*;
+import ghidra.feature.vt.api.main.VTMarkupItem;
+import ghidra.feature.vt.api.main.VTMatch;
+import ghidra.feature.vt.api.main.VTSession;
+import ghidra.feature.vt.gui.actions.AcceptMatchAction;
+import ghidra.feature.vt.gui.actions.ClearMatchAction;
+import ghidra.feature.vt.gui.actions.SetVTMatchFromOneToManyAction;
+import ghidra.feature.vt.gui.filters.Filter;
 import ghidra.feature.vt.gui.filters.Filter.FilterEditingStatus;
-import ghidra.feature.vt.gui.plugin.*;
+import ghidra.feature.vt.gui.filters.FilterDialogModel;
+import ghidra.feature.vt.gui.filters.FilterStatusListener;
+import ghidra.feature.vt.gui.plugin.VTController;
+import ghidra.feature.vt.gui.plugin.VTControllerListener;
+import ghidra.feature.vt.gui.plugin.VTPlugin;
+import ghidra.feature.vt.gui.plugin.VTSubToolManager;
+import ghidra.feature.vt.gui.plugin.VTSubToolManagerListener;
 import ghidra.feature.vt.gui.provider.markuptable.DisplayableListingAddress;
 import ghidra.feature.vt.gui.provider.matchtable.MatchTableRenderer;
 import ghidra.feature.vt.gui.util.AbstractVTMatchTableModel.StatusTableColumn;
 import ghidra.feature.vt.gui.util.MatchInfo;
 import ghidra.feature.vt.gui.util.MatchStatusRenderer;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainObjectChangeRecord;
+import ghidra.framework.model.DomainObjectChangedEvent;
+import ghidra.framework.model.DomainObjectEvent;
+import ghidra.framework.model.EventType;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolTable;
@@ -58,24 +89,25 @@ import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraThreadedTablePanel;
 
 /**
- * The docking window that provides a table of the other tool's function matches for the function
- * containing the current cursor location in this tool's listing.
+ * The docking window that provides a table of the other tool's function matches
+ * for the function containing the current cursor location in this tool's
+ * listing.
  */
 public abstract class VTMatchOneToManyTableProvider extends ComponentProviderAdapter
 		implements FilterDialogModel<VTMatch>, VTControllerListener, VTSubToolManagerListener {
 
 	private static final String TITLE_PREFIX = "Version Tracking Matches for ";
 	private static final Icon ICON = new GIcon("icon.version.tracking.provider.one.to.many");
+	private static final Icon COMPARISON_ICON = new GIcon("icon.plugin.functioncompare.new");
 
-	protected static final Color LOCAL_INFO_FOREGROUND_COLOR =
-		new GColor("color.fg.version.tracking.function.match.local.info");
+	protected static final Color LOCAL_INFO_FOREGROUND_COLOR = new GColor(
+		"color.fg.version.tracking.function.match.local.info");
 
 	private JComponent component;
 	private MatchThreadedTablePanel tablePanel;
 	protected GhidraTable matchesTable;
 	private ListSelectionListener matchSelectionListener;
 	protected VTMatchOneToManyTableModel oneToManyTableModel;
-
 	private JToggleButton ancillaryFilterButton;
 	private Set<Filter<VTMatch>> filters = new HashSet<>();
 	private FilterStatusListener refilterListener = new RefilterListener();
@@ -100,7 +132,8 @@ public abstract class VTMatchOneToManyTableProvider extends ComponentProviderAda
 	private VTMatch pendingMatchSelection;
 
 	public VTMatchOneToManyTableProvider(PluginTool tool, VTController controller,
-			VTSubToolManager subToolManager, boolean isSource) {
+			VTSubToolManager subToolManager,
+			boolean isSource) {
 		super(tool, TITLE_PREFIX + (isSource ? "Source" : "Destination"), VTPlugin.OWNER);
 		this.controller = controller;
 		this.subToolManager = subToolManager;
@@ -130,6 +163,43 @@ public abstract class VTMatchOneToManyTableProvider extends ComponentProviderAda
 		addLocalAction(new SetVTMatchFromOneToManyAction(controller, true));
 		addLocalAction(new ClearMatchAction(controller));
 		addLocalAction(new AcceptMatchAction(controller));
+		new ActionBuilder("Compare Functions", getName())
+				.popupMenuPath("Compare Functions")
+				.popupMenuIcon(COMPARISON_ICON)
+				.popupMenuGroup("AAA_VT_Main")
+				.keyBinding("shift c")
+				.sharedKeyBinding()
+				.description("Compares the Function(s) with its remote match")
+				.helpLocation(new HelpLocation("VersionTrackingPlugin", "Compare_Functions"))
+				.withContext(VTMatchOneToManyContext.class)
+				.enabledWhen(this::isValidFunctionComparison)
+				.onAction(this::compareFunctions)
+				.buildAndInstallLocal(this);
+	}
+
+	private boolean isValidFunctionComparison(VTMatchOneToManyContext context) {
+		List<VTMatch> functionMatches = context.getFunctionMatches();
+		return !functionMatches.isEmpty();
+	}
+
+	private void compareFunctions(VTMatchOneToManyContext c) {
+		List<VTMatch> selectedMatches = c.getSelectedMatches();
+
+		for (VTMatch match : selectedMatches) {
+			MatchInfo matchInfo = controller.getMatchInfo(match);
+
+			// Whichever codebrowser we are currently in, is what will be on the left
+			// side of the compare functions window.
+			Function leftFunction = matchInfo.getSourceFunction(),
+					rightFunction = matchInfo.getDestinationFunction();
+			if (!isSource) {
+				leftFunction = matchInfo.getDestinationFunction();
+				rightFunction = matchInfo.getSourceFunction();
+			}
+
+			FunctionComparisonService service = tool.getService(FunctionComparisonService.class);
+			service.compareFunctions(leftFunction, rightFunction);
+		}
 	}
 
 	@Override
@@ -292,9 +362,9 @@ public abstract class VTMatchOneToManyTableProvider extends ComponentProviderAda
 
 	private List<VTMatch> getSelectedMatches() {
 		List<VTMatch> list = new ArrayList<>();
-		int selectedRowCount = matchesTable.getSelectedRowCount();
-		if (selectedRowCount == 1) {
-			int row = matchesTable.getSelectedRow();
+		int[] selectedRows = matchesTable.getSelectedRows();
+
+		for (int row : selectedRows) {
 			VTMatch mySelectedMatch = oneToManyTableModel.getRowObject(row);
 			list.add(mySelectedMatch);
 		}
@@ -467,7 +537,8 @@ public abstract class VTMatchOneToManyTableProvider extends ComponentProviderAda
 
 	@Override
 	public void markupItemSelected(VTMarkupItem markupItem) {
-		// Do nothing since the one to many match table doesn't need to respond to the mark-up that is selected.
+		// Do nothing since the one to many match table doesn't need to respond to the
+		// mark-up that is selected.
 	}
 
 //==================================================================================================

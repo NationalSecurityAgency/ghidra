@@ -17,7 +17,6 @@ package ghidra.app.util.viewer.field;
 
 import java.awt.Color;
 import java.awt.FontMetrics;
-import java.beans.PropertyEditor;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.Map.Entry;
@@ -74,8 +73,6 @@ public class XRefFieldFactory extends FieldFactory {
 		GROUP_TITLE + Options.DELIMITER + "Display Namespace";
 	static final String GROUP_BY_FUNCTION_KEY =
 		GROUP_TITLE + Options.DELIMITER + "Group by Function";
-
-	private PropertyEditor namespaceOptionsEditor = new NamespacePropertyEditor();
 
 	protected String delim = DELIMITER;
 	protected boolean displayBlockName;
@@ -168,7 +165,7 @@ public class XRefFieldFactory extends FieldFactory {
 		// we need to install a custom editor that allows us to edit a group of related options
 		fieldOptions.registerOption(NAMESPACE_OPTIONS_KEY, OptionType.CUSTOM_TYPE,
 			new NamespaceWrappedOption(), new HelpLocation("CodeBrowserPlugin", "XREFs_Field"),
-			"Adjusts the XREFs Field namespace display", namespaceOptionsEditor);
+			"Adjusts the XREFs Field namespace display", () -> new NamespacePropertyEditor());
 		CustomOption customOption = fieldOptions.getCustomOption(NAMESPACE_OPTIONS_KEY, null);
 
 		if (!(customOption instanceof NamespaceWrappedOption)) {
@@ -548,7 +545,7 @@ public class XRefFieldFactory extends FieldFactory {
 			int lastRow = list.size() - 1;
 			AttributedString as =
 				new AttributedString(MORE_XREFS_STRING, XrefColors.DEFAULT, getMetrics());
-			fieldElements.add(new TextFieldElement(as, lastRow, 0));
+			fieldElements.add(new TextFieldElement(as, lastRow + 1, 0));
 		}
 		return fieldElements;
 	}

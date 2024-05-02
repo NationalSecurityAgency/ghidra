@@ -71,6 +71,11 @@ public enum Platform {
 	FREEBSD_X86_64(OperatingSystem.FREE_BSD, Architecture.X86_64, "freebsd_x86_64", ".so", ""),
 
 	/**
+	 * Identifies a FreeBSD ARM 64-bit OS.
+	 */
+	FREEBSD_ARM_64(OperatingSystem.FREE_BSD, Architecture.ARM_64, "freebsd_arm_64", ".so", ""),
+
+	/**
 	 * Identifies an unsupported OS.
 	 */
 	UNSUPPORTED(OperatingSystem.UNSUPPORTED, Architecture.UNKNOWN, null, null, ""),

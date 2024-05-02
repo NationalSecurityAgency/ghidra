@@ -19,8 +19,8 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.*;
 
-import ghidra.app.util.bin.format.dwarf4.DWARFUtil;
-import ghidra.app.util.bin.format.dwarf4.next.DWARFDataInstanceHelper;
+import ghidra.app.util.bin.format.dwarf.DWARFDataInstanceHelper;
+import ghidra.app.util.bin.format.dwarf.DWARFUtil;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
@@ -157,7 +157,8 @@ public class MarkupSession {
 				markedupAddrs.add(data.getMinAddress(), data.getMaxAddress());
 			}
 			catch (CodeUnitInsertionException e) {
-				throw new IOException(e);
+				logWarningAt(addr,
+					"Failed to apply data type [%s]: %s".formatted(dt.getName(), e.getMessage()));
 			}
 		}
 	}
@@ -230,7 +231,7 @@ public class MarkupSession {
 			newLabelSym.setPrimary();
 		}
 		catch (InvalidInputException e) {
-			throw new IOException(e);
+			logWarningAt(addr, "Failed to label [%s]: %s".formatted(symbolName, e.getMessage()));
 		}
 	}
 
@@ -425,4 +426,18 @@ public class MarkupSession {
 		refMgr.addMemoryReference(fieldAddr, refDest, RefType.DATA, SourceType.IMPORTED, 0);
 	}
 
+	public void logWarningAt(Address addr, String msg) {
+		logWarningAt(program, addr, msg);
+	}
+
+	public static void logWarningAt(Program program, Address addr, String msg) {
+		BookmarkManager bmm = program.getBookmarkManager();
+		Bookmark existingBM = bmm.getBookmark(addr, BookmarkType.WARNING, "Golang");
+		String existingTxt = existingBM != null ? existingBM.getComment() : "";
+		if (existingTxt.contains(msg)) {
+			return;
+		}
+		msg = !existingTxt.isEmpty() ? existingTxt + "; " + msg : msg;
+		bmm.setBookmark(addr, BookmarkType.WARNING, "Golang", msg);
+	}
 }

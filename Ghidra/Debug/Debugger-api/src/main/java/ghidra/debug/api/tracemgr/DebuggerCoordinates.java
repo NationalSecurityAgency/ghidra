@@ -45,6 +45,16 @@ import ghidra.util.NotOwnerException;
 
 public class DebuggerCoordinates {
 
+	/**
+	 * Coordinates that indicate no trace is active in the Debugger UI.
+	 * 
+	 * <p>
+	 * Typically, that only happens when no trace is open. Telling the trace manager to activate
+	 * {@code NOWHERE} will cause it to instead activate the most recently active trace, which may
+	 * very well be the current trace, resulting in no change. Internally, the trace manager will
+	 * activate {@code NOWHERE} whenever the current trace is closed, effectively activating the
+	 * most recent trace other than the one just closed.
+	 */
 	public static final DebuggerCoordinates NOWHERE =
 		new DebuggerCoordinates(null, null, null, null, null, null, null, null);
 
@@ -310,8 +320,14 @@ public class DebuggerCoordinates {
 			if (frameLevel == null) {
 				return objThread.getCanonicalPath();
 			}
-			TraceStack stack =
-				thread.getTrace().getStackManager().getStack(thread, time.getSnap(), false);
+			TraceStack stack;
+			try {
+				stack = thread.getTrace().getStackManager().getStack(thread, time.getSnap(), false);
+			}
+			catch (IllegalStateException e) {
+				// Schema does not specify a stack
+				return objThread.getCanonicalPath();
+			}
 			if (stack == null) {
 				return objThread.getCanonicalPath();
 			}
@@ -493,11 +509,9 @@ public class DebuggerCoordinates {
 		else if (trace == null) {
 			throw new IllegalArgumentException("No trace");
 		}
-		else {
-			if (newPath == null) {
-				return new DebuggerCoordinates(trace, platform, target, thread, view, time, frame,
-					newPath);
-			}
+		else if (newPath == null) {
+			return new DebuggerCoordinates(trace, platform, target, thread, view, time, frame,
+				newPath);
 		}
 		TraceThread newThread = target != null
 				? resolveThread(target, newPath)
@@ -508,6 +522,31 @@ public class DebuggerCoordinates {
 
 		return new DebuggerCoordinates(trace, platform, target, newThread, view, time,
 			newFrame, newPath);
+	}
+
+	public DebuggerCoordinates pathNonCanonical(TraceObjectKeyPath newPath) {
+		if (trace == null && newPath == null) {
+			return NOWHERE;
+		}
+		else if (trace == null) {
+			throw new IllegalArgumentException("No trace");
+		}
+		else if (newPath == null) {
+			return new DebuggerCoordinates(trace, platform, target, thread, view, time, frame,
+				newPath);
+		}
+		TraceObject object = trace.getObjectManager().getObjectByCanonicalPath(newPath);
+		if (object != null) {
+			return path(newPath);
+		}
+		object = trace.getObjectManager()
+				.getObjectsByPath(Lifespan.at(getSnap()), newPath)
+				.findAny()
+				.orElse(null);
+		if (object != null) {
+			return path(object.getCanonicalPath());
+		}
+		throw new IllegalArgumentException("No such object at path " + newPath);
 	}
 
 	protected static TraceThread resolveThread(Target target, TraceObjectKeyPath objectPath) {

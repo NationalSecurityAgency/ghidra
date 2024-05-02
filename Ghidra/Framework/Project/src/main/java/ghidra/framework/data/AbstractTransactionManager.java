@@ -30,6 +30,8 @@ abstract class AbstractTransactionManager {
 
 	private volatile LockingTaskMonitor lockingTaskMonitor;
 
+	protected boolean isImmutable = false;
+
 	protected int lockCount = 0;
 	protected String lockReason;
 
@@ -196,6 +198,10 @@ abstract class AbstractTransactionManager {
 			AbortedTransactionListener listener, boolean notify)
 			throws TerminatedTransactionException {
 
+		if (isImmutable) {
+			throw new TerminatedTransactionException("Transaction not permitted: read-only");
+		}
+
 		checkLockingTask();
 
 		synchronized (this) {
@@ -313,5 +319,13 @@ abstract class AbstractTransactionManager {
 	}
 
 	abstract void doClose(DomainObjectAdapterDB object);
+
+	/**
+	 * Set instance as immutable by disabling use of transactions.  Attempts to start a transaction
+	 * will result in a {@link TerminatedTransactionException}.
+	 */
+	public void setImmutable() {
+		isImmutable = true;
+	}
 
 }

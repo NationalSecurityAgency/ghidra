@@ -133,6 +133,8 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 			new SwingUpdateManager(250, 750, () -> setPendingLocationFromUpdateManager());
 
 		clipboardProvider = new FGClipboardProvider(tool, controller);
+		setDefaultFocusComponent(controller.getViewComponent());
+
 	}
 
 	@Override
@@ -1284,16 +1286,6 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		notifyLocationChanged(location);
 		tool.showComponentProvider(this, true);
 		return true;
-	}
-
-	@Override
-	public void requestFocus() {
-		if (!isVisible()) {
-			return; // we will popup incorrectly without this check
-		}
-
-		controller.requestFocus();
-		tool.toFront(this);
 	}
 
 	@Override

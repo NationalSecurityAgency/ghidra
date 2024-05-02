@@ -16,11 +16,10 @@
 package ghidra.app.plugin.core.debug.gui.thread;
 
 import java.util.List;
+import java.util.Objects;
 
-import javax.swing.JTable;
 import javax.swing.event.ListSelectionEvent;
 
-import docking.widgets.table.AbstractDynamicTableColumn;
 import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
 import docking.widgets.table.TableColumnDescriptor;
 import docking.widgets.table.threaded.ThreadedTableModelListener;
@@ -71,6 +70,25 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 		}
 	}
 
+	DebuggerCoordinates coordsForObject(TraceObject object) {
+		if (provider.current.getTrace() != object.getTrace()) {
+			// This can happen transiently, so just find something graceful
+			return DebuggerCoordinates.NOWHERE.object(object).frame(0);
+		}
+		return provider.current.object(object).frame(0);
+	}
+
+	DebuggerCoordinates diffCoordsForObject(TraceObject object) {
+		if (tableModel.getDiffTrace() == null) {
+			return DebuggerCoordinates.NOWHERE;
+		}
+		return DebuggerCoordinates.NOWHERE
+				.trace(tableModel.getDiffTrace())
+				.path(object.getCanonicalPath()) // May not exist in diff trace
+				.frame(0)
+				.snap(tableModel.getDiffSnap());
+	}
+
 	private Address computeProgramCounter(DebuggerCoordinates coords) {
 		// TODO: Cheating a bit. Also, can user configure whether by stack or regs?
 		return PCLocationTrackingSpec.INSTANCE.computeTraceAddress(provider.getTool(),
@@ -85,11 +103,18 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 		@Override
 		public ValueProperty<Address> getProperty(ValueRow row) {
 			TraceObject obj = row.getValue().getChild();
-			DebuggerCoordinates coords = provider.current.object(obj);
+			DebuggerCoordinates coords = coordsForObject(obj);
+			DebuggerCoordinates diffCoords = diffCoordsForObject(obj);
 			return new ValueAddressProperty(row) {
 				@Override
 				public Address getValue() {
 					return computeProgramCounter(coords);
+				}
+
+				@Override
+				public boolean isModified() {
+					return !Objects.equals(computeProgramCounter(coords),
+						computeProgramCounter(diffCoords));
 				}
 			};
 		}
@@ -100,41 +125,91 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 		}
 	}
 
-	private class ThreadFunctionColumn
-			extends AbstractDynamicTableColumn<ValueRow, Function, Trace> {
+	private Function computeFunction(DebuggerCoordinates coords, ServiceProvider serviceProvider) {
+		Address pc = computeProgramCounter(coords);
+		if (pc == null) {
+			return null;
+		}
+		return DebuggerStaticMappingUtils.getFunction(pc, coords, serviceProvider);
+	}
+
+	private class ThreadFunctionColumn extends TraceValueObjectPropertyColumn<Function> {
+		public ThreadFunctionColumn() {
+			super(Function.class);
+		}
+
+		@Override
+		public ValueProperty<Function> getProperty(ValueRow row) {
+			throw new AssertionError(); // overrode caller to this
+		}
+
+		@Override
+		public ValueProperty<Function> getValue(ValueRow row, Settings settings, Trace data,
+				ServiceProvider serviceProvider) {
+			TraceObject obj = row.getValue().getChild();
+			DebuggerCoordinates coords = coordsForObject(obj);
+			DebuggerCoordinates diffCoords = diffCoordsForObject(obj);
+			return new ValueDerivedProperty<>(row, Function.class) {
+				@Override
+				public Function getValue() {
+					return computeFunction(coords, serviceProvider);
+				}
+
+				@Override
+				public boolean isModified() {
+					return !Objects.equals(computeFunction(coords, serviceProvider),
+						computeFunction(diffCoords, serviceProvider));
+				}
+			};
+		}
+
 		@Override
 		public String getColumnName() {
 			return "Function";
 		}
-
-		@Override
-		public Function getValue(ValueRow rowObject, Settings settings, Trace data,
-				ServiceProvider serviceProvider) throws IllegalArgumentException {
-			DebuggerCoordinates coords = provider.current.object(rowObject.currentObject());
-			Address pc = computeProgramCounter(coords);
-			if (pc == null) {
-				return null;
-			}
-			return DebuggerStaticMappingUtils.getFunction(pc, coords, serviceProvider);
-		}
 	}
 
-	private class ThreadModuleColumn extends AbstractDynamicTableColumn<ValueRow, String, Trace> {
+	private String computeModuleName(DebuggerCoordinates coords) {
+		Address pc = computeProgramCounter(coords);
+		if (pc == null) {
+			return null;
+		}
+		return DebuggerStaticMappingUtils.getModuleName(pc, coords);
+	}
+
+	private class ThreadModuleColumn extends TraceValueObjectPropertyColumn<String> {
+		public ThreadModuleColumn() {
+			super(String.class);
+		}
+
+		@Override
+		public ValueProperty<String> getProperty(ValueRow row) {
+			TraceObject obj = row.getValue().getChild();
+			DebuggerCoordinates coords = coordsForObject(obj);
+			DebuggerCoordinates diffCoords = diffCoordsForObject(obj);
+			return new ValueDerivedProperty<>(row, String.class) {
+				@Override
+				public String getValue() {
+					return computeModuleName(coords);
+				}
+
+				@Override
+				public boolean isModified() {
+					return !Objects.equals(computeModuleName(coords),
+						computeModuleName(diffCoords));
+				}
+			};
+		}
+
 		@Override
 		public String getColumnName() {
 			return "Module";
 		}
+	}
 
-		@Override
-		public String getValue(ValueRow rowObject, Settings settings, Trace data,
-				ServiceProvider serviceProvider) throws IllegalArgumentException {
-			DebuggerCoordinates coords = provider.current.object(rowObject.currentObject());
-			Address pc = computeProgramCounter(coords);
-			if (pc == null) {
-				return null;
-			}
-			return DebuggerStaticMappingUtils.getModuleName(pc, coords);
-		}
+	private Address computeStackPointer(DebuggerCoordinates coords) {
+		return SPLocationTrackingSpec.INSTANCE.computeTraceAddress(provider.getTool(),
+			coords);
 	}
 
 	private class ThreadSpColumn extends TraceValueObjectPropertyColumn<Address> {
@@ -144,12 +219,19 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 
 		@Override
 		public ValueProperty<Address> getProperty(ValueRow row) {
-			DebuggerCoordinates coords = provider.current.object(row.currentObject());
+			TraceObject obj = row.getValue().getChild();
+			DebuggerCoordinates coords = coordsForObject(obj);
+			DebuggerCoordinates diffCoords = diffCoordsForObject(obj);
 			return new ValueAddressProperty(row) {
 				@Override
 				public Address getValue() {
-					return SPLocationTrackingSpec.INSTANCE.computeTraceAddress(provider.getTool(),
-						coords);
+					return computeStackPointer(coords);
+				}
+
+				@Override
+				public boolean isModified() {
+					return !Objects.equals(computeStackPointer(coords),
+						computeStackPointer(diffCoords));
 				}
 			};
 		}
@@ -193,6 +275,11 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 		}
 
 		@Override
+		protected TraceValueLifePlotColumn newPlotColumn() {
+			return new ThreadPlotColumn();
+		}
+
+		@Override
 		protected TableColumnDescriptor<ValueRow> createTableColumnDescriptor() {
 			TableColumnDescriptor<ValueRow> descriptor = new TableColumnDescriptor<>();
 			descriptor.addHiddenColumn(new ThreadPathColumn());
@@ -203,7 +290,7 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 			descriptor.addHiddenColumn(new ThreadSpColumn());
 			descriptor.addVisibleColumn(new ThreadStateColumn());
 			descriptor.addHiddenColumn(new ThreadCommentColumn());
-			descriptor.addVisibleColumn(new ThreadPlotColumn());
+			descriptor.addVisibleColumn(getPlotColumn());
 			return descriptor;
 		}
 	}
@@ -250,7 +337,7 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 	}
 
 	@Override
-	protected ObjectTableModel createModel(Plugin plugin) {
+	protected ObjectTableModel createModel() {
 		return new ThreadTableModel(plugin);
 	}
 
@@ -283,15 +370,6 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 	public void coordinatesActivated(DebuggerCoordinates coordinates) {
 		super.coordinatesActivated(coordinates);
 		trySelectCurrentThread();
-	}
-
-	@Override
-	public void cellActivated(JTable table) {
-		// No super
-		ValueRow item = getSelectedItem();
-		if (item != null) {
-			traceManager.activateObject(item.getValue().getChild());
-		}
 	}
 
 	@Override

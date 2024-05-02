@@ -313,6 +313,7 @@ define token instrArm (32)
 	thv_Rm=(16,19)
     thv_Rt2=(24,27)
 	thv_immed=(16,23)
+	thv_cpn=(8,10)
 	    
     # Arbitrary bit fields for 32-bit Little Endian Thumb
 
@@ -330,15 +331,16 @@ define token instrArm (32)
     thv_c2831=(12,15)
     thv_c2828=(12,12)
     thv_c2627=(10,11)
-    thv_c2531=(9,15)
     thv_c2527=(9,11)
     thv_c2525=(9,9)
+    thv_c2431=(8,15)
     thv_c2427=(8,11)
     thv_c2424=(8,8)
     thv_c2331=(7,15)
     thv_c2327=(7,11)
     thv_c2324=(7,8)
     thv_c2323=(7,7)
+    thv_c2223=(6,7)
     thv_c2222=(6,6)
     thv_c2131=(5,15)
     thv_c2127=(5,11)
@@ -415,6 +417,7 @@ define token instrArm (32)
     thv_c0008=(16,24)
     thv_c0007=(16,23)
     thv_c0006=(16,22)
+    thv_c0005=(16,21)
     thv_c0004=(16,20)
     thv_c0003=(16,19)
     thv_c0001=(16,17)
@@ -477,6 +480,7 @@ define token instrArm (32)
 	thv_Rm=(0,3)
     thv_Rt2=(8,11)
 	thv_immed=(0,7)
+	thv_cpn=(24,26)
 	    
     # Arbitrary bit fields for 32-bit Big Endian Thumb
     thv_bit31=(31,31)
@@ -493,15 +497,16 @@ define token instrArm (32)
     thv_c2831=(28,31)
     thv_c2828=(28,28)
     thv_c2627=(26,27)
-    thv_c2531=(25,31)
     thv_c2527=(25,27)
     thv_c2525=(25,25)
+    thv_c2431=(24,31)
     thv_c2427=(24,27)
     thv_c2424=(24,24)
     thv_c2331=(23,31)
     thv_c2327=(23,27)
     thv_c2324=(23,24)
     thv_c2323=(23,23)
+    thv_c2223=(22,23)
     thv_c2222=(22,22)
     thv_c2131=(21,31)
     thv_c2127=(21,27)
@@ -578,6 +583,7 @@ define token instrArm (32)
     thv_c0008=(0,8)
     thv_c0007=(0,7)
     thv_c0006=(0,6)
+    thv_c0005=(0,5)
     thv_c0004=(0,4)
     thv_c0003=(0,3)
     thv_c0001=(0,1)
@@ -594,6 +600,7 @@ attach variables [ CRd CRn CRm ] [ cr0 cr1 cr2 cr3 cr4 cr5 cr6 cr7 cr8 cr9 cr10 
 attach variables [ thv_Rd thv_Rn thv_Rt thv_Rt2 ] [ r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 sp lr pc ];
 
 attach names [ cpn ] [ p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15  ];
+attach names [ thv_cpn ] [ p0 p1 p2 p3 p4 p5 p6 p7  ];
 attach names [ ibOption ] [ opt0 opt1 opt2 opt3 opt4 opt5 opt6 opt7 opt8 opt9 opt10 opt11 opt12 opt13 opt14 SY ];
 attach names [ dbOption ] [ opt0 opt1 OSHST OSH opt4 opt5 NSHST NSH opt8 opt9 ISHST ISH opt12 opt13 ST SY ];
 
@@ -4907,7 +4914,7 @@ macro BitReverse_arm(val) {
 :sdiv^COND   RdHi,RnLo,RmHi    is $(AMODE) & ARMcond=1 & COND & c2027=0x71 & RdHi & c1215=0xf & RmHi & c0407=0x1 & RnLo
 {
     build COND;
-    local result = RnLo / RmHi;
+    local result = RnLo s/ RmHi;
     RdHi = result;
 }
 
@@ -4933,7 +4940,7 @@ macro BitReverse_arm(val) {
 
 @endif # VERSION_6K
 
-# Hopefully we never encounter this instruction since we can not change the effective endianess of the language
+# Hopefully we never encounter this instruction since we can not change the effective endianness of the language
 armEndianNess: "LE" is c0031=0xf1010000 { export 0:1; }
 armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 

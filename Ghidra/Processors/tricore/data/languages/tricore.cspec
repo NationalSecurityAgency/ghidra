@@ -37,6 +37,8 @@
   <prefersplit style="inhalf">
     <register name="e4"/>
     <register name="e6"/>
+    <register name="p0"/>
+    <register name="p8"/>
   </prefersplit>
     
   <default_proto>
@@ -57,19 +59,19 @@
           <pentry minsize="4" maxsize="4" metatype="ptr">
               <register name="a7"/>
           </pentry>
-          <pentry minsize="1" maxsize="4">   <!-- This is the first non pointer -->
+          <pentry minsize="1" maxsize="4" extension="inttype">   <!-- This is the first non pointer -->
               <register name="d4"/>
           </pentry>
-          <pentry minsize="1" maxsize="4">
+          <pentry minsize="1" maxsize="4" extension="inttype">
               <register name="d5"/>
           </pentry>
           <pentry minsize="5" maxsize="8">    <!-- This is the first >4 byte non pointer -->
               <register name="e4"/>
           </pentry>
-          <pentry minsize="1" maxsize="4">
+          <pentry minsize="1" maxsize="4" extension="inttype">
               <register name="d6"/>
           </pentry>
-          <pentry minsize="1" maxsize="4">
+          <pentry minsize="1" maxsize="4" extension="inttype">
               <register name="d7"/>
           </pentry>
           <pentry minsize="5" maxsize="8">
@@ -88,7 +90,7 @@
         <pentry minsize="4" maxsize="4" metatype="ptr">
           <register name="a2"/>
         </pentry>
-        <pentry minsize="1" maxsize="4">
+        <pentry minsize="1" maxsize="4" extension="inttype">
           <register name="d2"/>
         </pentry>        
         <pentry minsize="5" maxsize="8">

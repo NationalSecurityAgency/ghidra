@@ -681,7 +681,7 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 	 * <p>
 	 * The terminal will no longer respond to the window resizing, and scrollbars are displayed as
 	 * needed. If the terminal size changes as a result of this call,
-	 * {@link TerminalListener#resized(int, int)} is invoked.
+	 * {@link TerminalListener#resized(short, short)} is invoked.
 	 * 
 	 * @param cols the number of columns
 	 * @param rows the number of rows
@@ -699,7 +699,7 @@ public class TerminalPanel extends JPanel implements FieldLocationListener, Fiel
 	 * <p>
 	 * Immediately fit the terminal to the window. It will also respond to the window resizing by
 	 * recalculating the rows and columns and adjusting the buffer's contents to fit. Whenever the
-	 * terminal size changes {@link TerminalListener#resized(int, int)} is invoked. The bottom
+	 * terminal size changes {@link TerminalListener#resized(short, short)} is invoked. The bottom
 	 * scrollbar is disabled, and the vertical scrollbar is always displayed, to avoid frenetic
 	 * horizontal resizing.
 	 */

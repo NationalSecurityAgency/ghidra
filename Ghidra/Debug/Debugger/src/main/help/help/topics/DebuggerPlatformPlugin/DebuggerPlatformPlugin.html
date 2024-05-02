@@ -14,56 +14,57 @@
     <H1><A name="plugin"></A>Debugger: Platform Selection</H1>
 
     <P>The Debugger allows the user to work with multiple platforms, i.e., architectures,
-    compilers, etc., within the context of a single debug target. This plugin allows the user to
-    switch among platforms and/or introduce new platforms via overrides.</P>
+    compilers, etc., within the context of a single debug target. This plugin facilitates switching
+    among platforms and introducing new platforms.</P>
 
-    <P>Note we are in a transitional period between two trace database conventions. This plugin is
-    a necessary component when working with the new convention. In the legacy convention, the
-    system must ascertain the target's language and compiler at the time it begins recording. If it
-    fails or makes an incorrect decision, the UI remains mostly empty, or worse, the system
-    interrogates and instructs the target using the wrong architecture. This mode still works in
-    most circumstances and is the default and recommended convention. Additional platforms can
-    still be introduced, but there is perhaps little use for doing so. One case might be to, e.g.,
-    disassemble JVM bytecodes when debugging a Java process at the native level.</P>
+    <P>Note we are currently supporting two trace database conventions. In the first, the system
+    ascertains the target's platform and maps it to a Ghidra language and compiler spec at the time
+    the trace is created. These are called the <EM>base</EM> language and base compiler spec.
+    Together, they comprise the trace's <EM>host platform</EM>. This is used by "Recorder-mode"
+    traces and most "TraceRmi-mode" traces.</P>
 
-    <P>In the new convention, the system always records the target, using the "DATA" language,
-    i.e., no language. The object tree is recorded, and objects with memory are assigned overlay
-    spaces where their contents are recorded. The only way to disassemble instructions is to add a
-    guest platform. This plugin will do that automatically, in more or less the same fashion as the
-    language and compiler are ascertained in legacy mode. If this fails, the recording still
-    proceeds, and most of the UI is still useful. The user can add (perhaps by trial and error) the
-    correct platform later. In the meantime, memory, registers, threads, etc., are all still
-    displayed.</P>
+    <P>However, there are some cases where it is impractical to know the platform before creating
+    the trace, e.g., when setting up "raw" connections. For these cases we have a second
+    convention: The system creates a trace with the host platform
+    <CODE>DATA:BE:64:default:pointer64</CODE>, for example. Thus, disassembly requires the system
+    (or user) to ascertain the platform at a later time. This can then be mapped into the existing
+    trace as a <EM>guest platform</EM>. Either convention permits guest platforms, but they are a
+    necessary aspect of the second. If the system has failed to ascertain the platform, the user
+    may attempt to do so by adding <EM>override</EM> platforms in trial-and-error fashion.
+    Furthermore, even if the system has succeeded, there may be cause to try disassembly in
+    alternative languages, e.g., Java bytecode when debugging its x86 JVM at the native level.</P>
 
     <H2>Actions</H2>
 
-    <P>This plugin adds actions into the Debugger menu under "Choose Platform."</P>
+    <P>This plugin adds actions under the <B>Debugger &rarr; Choose Platform</B> menu.</P>
 
-    <H3><A name="choose_platform"></A>Choose Platform</H3>
+    <H3><A name="choose_host"></A>Host/base</H3>
 
-    <P>This action adds or changes to a specific platform in the current trace. One of these
-    actions is presented for each recommended or previously chosen platform, if any. The
-    recommendations are given by an opinion service, so new options may be added by extension
-    modules. It is possible there are no recommendations for the current trace. The current
-    platform is designated by a check mark or other selection indicator.</P>
+    <P>This action corresponds to the current trace's host platform. Technically, this is just one
+    platform option among possible recommendations, but it is always among them. If the host
+    language is <B>DATA:...</B>, then this platform will not support disassembly. A guest platform
+    is necessary.</P>
+
+    <H3><A name="choose_platform"></A><I>[Platform Name]</I></H3>
+
+    <P>This action is replicated for each recommended platform and for each platform already
+    present in the trace. The recommendations are given by an opinion service, so new options may
+    be added by Ghidra extension modules. It is possible there are no recommendations for the
+    current trace. The current platform is indicated by a check mark.</P>
 
     <H3><A name="choose_more_platforms"></A><A name="prev_diff"></A>More...</H3>
 
     <P>This action is enabled whenever there is a current trace. It presents a dialog with the
     recommended platforms for the trace.</P>
 
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" border="1" src=
-          "images/DebuggerSelectPlatformOfferDialog.png"></TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+    <DIV class="image">
+      <IMG alt="" src="images/DebuggerSelectPlatformOfferDialog.png">
+    </DIV>
 
-    <P>The "Show Only Recommended Offers" check can be disabled to display override offers as well.
+    <P>The "Show Only Recommended Offers" check can be disabled to display <EM>override</EM>
+    platforms as well. Every language-compiler-spec pair is offered as an override platform.
     Selecting an offer and confirming the dialog will add or change to the selected platform in the
-    trace. Furthermore, the choice will be added to the "Choose Platform" menu until the trace is
-    closed.</P>
+    trace. Furthermore, the choice will be added to the <B>Choose Platform</B> menu for the current
+    trace.</P>
   </BODY>
 </HTML>

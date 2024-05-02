@@ -72,54 +72,109 @@ public class HighFunctionDBUtil {
 		return modelName;
 	}
 
-	/**
-	 * Commit the decompiler's version of the function return data-type to the database.
-	 * The decompiler's version of the prototype model is committed as well
-	 * @param highFunction is the decompiler's model of the function
-	 * @param source is the desired SourceType for the commit
-	 */
-	public static void commitReturnToDatabase(HighFunction highFunction, SourceType source) {
-		try {
+	public enum ReturnCommitOption {
+		/**
+		 * {@link #NO_COMMIT} - keep functions existing return parameter
+		 */
+		NO_COMMIT,
 
-			// Change calling convention if needed
-			Function function = highFunction.getFunction();
-			String convention = function.getCallingConventionName();
-			String modelName = getPrototypeModelForCommit(highFunction);
-			if (modelName != null && !modelName.equals(convention)) {
-				function.setCallingConvention(modelName);
-			}
+		/**
+		 * {@link #COMMIT} - commit return parameter as defined by {@link HighFunction}
+		 */
+		COMMIT,
 
-			VariableStorage storage = highFunction.getFunctionPrototype().getReturnStorage();
-			DataType dataType = highFunction.getFunctionPrototype().getReturnType();
-			if (dataType == null) {
-				dataType = DefaultDataType.dataType;
-				source = SourceType.DEFAULT;
-			}
-			function.setReturn(dataType, storage, source);
-		}
-		catch (InvalidInputException e) {
-			Msg.error(HighFunctionDBUtil.class, e.getMessage());
-		}
+		/**
+		 * {@value #COMMIT_NO_VOID} - commit return parameter as defined by {@link HighFunction}
+		 * unless it is {@link VoidDataType} in which case keep existing function return parameter.
+		 */
+		COMMIT_NO_VOID;
 	}
 
 	/**
-	 * Commit all parameters associated with HighFunction to the underlying database.
+	 * Commit all parameters, including optional return, associated with HighFunction to the 
+	 * underlying database.
 	 * @param highFunction is the associated HighFunction
 	 * @param useDataTypes is true if the HighFunction's parameter data-types should be committed
+	 * @param returnCommit controls optional commit of return parameter
 	 * @param source is the signature source type to set
 	 * @throws DuplicateNameException if commit of parameters caused conflict with other
 	 * local variable/label.
 	 * @throws InvalidInputException if specified storage is invalid
 	 */
 	public static void commitParamsToDatabase(HighFunction highFunction, boolean useDataTypes,
-			SourceType source) throws DuplicateNameException, InvalidInputException {
+			ReturnCommitOption returnCommit, SourceType source)
+			throws DuplicateNameException, InvalidInputException {
 		Function function = highFunction.getFunction();
 
+		Parameter returnParam;
+		if (returnCommit == ReturnCommitOption.NO_COMMIT) {
+			returnParam = function.getReturn();
+		}
+		else {
+			returnParam = getReturnParameter(highFunction, useDataTypes, returnCommit);
+		}
+
 		List<Parameter> params = getParameters(highFunction, useDataTypes);
+		boolean hasVarArgs = highFunction.getFunctionPrototype().isVarArg();
 
 		String modelName = getPrototypeModelForCommit(highFunction);
-		commitParamsToDatabase(function, modelName, params,
-			highFunction.getFunctionPrototype().isVarArg(), true, source);
+
+		try {
+			function.updateFunction(modelName, returnParam, params,
+				FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, source);
+		}
+		catch (DuplicateNameException e) {
+			for (Variable param : params) {
+				changeConflictingSymbolNames(param.getName(), returnParam, function);
+			}
+			function.updateFunction(modelName, null, params,
+				FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, source);
+		}
+
+		boolean customStorageReqd =
+			!VariableUtilities.storageMatches(params, function.getParameters());
+		if (returnCommit != ReturnCommitOption.NO_COMMIT) {
+			customStorageReqd |=
+				!returnParam.getVariableStorage().equals(function.getReturn().getVariableStorage());
+		}
+		if (customStorageReqd) {
+			// try again if dynamic storage assignment does not match decompiler's
+			// force into custom storage mode
+			function.updateFunction(modelName, returnParam, params,
+				FunctionUpdateType.CUSTOM_STORAGE, true, source);
+		}
+
+		if (function.hasVarArgs() != hasVarArgs) {
+			function.setVarArgs(hasVarArgs);
+		}
+	}
+
+	private static Parameter getReturnParameter(HighFunction highFunction, boolean useDataTypes,
+			ReturnCommitOption returnCommit) throws InvalidInputException {
+		Function function = highFunction.getFunction();
+		if (returnCommit == ReturnCommitOption.NO_COMMIT) {
+			return function.getReturn();
+		}
+
+		Program program = function.getProgram();
+		DataTypeManager dtm = program.getDataTypeManager();
+
+		VariableStorage returnStorage = highFunction.getFunctionPrototype().getReturnStorage();
+		DataType returnDt = highFunction.getFunctionPrototype().getReturnType();
+
+		if (useDataTypes && returnCommit == ReturnCommitOption.COMMIT_NO_VOID &&
+			(returnDt instanceof VoidDataType)) {
+			return function.getReturn(); // retain current return
+		}
+
+		if (returnDt == null) {
+			returnDt = DefaultDataType.dataType;
+			returnStorage = VariableStorage.UNASSIGNED_STORAGE;
+		}
+		else if (!useDataTypes) {
+			returnDt = Undefined.getUndefinedDataType(returnDt.getLength()).clone(dtm);
+		}
+		return new ReturnParameterImpl(returnDt, returnStorage, program);
 	}
 
 	private static List<Parameter> getParameters(HighFunction highFunction, boolean useDataTypes)
@@ -144,54 +199,6 @@ public class HighFunctionDBUtil {
 			params.add(new ParameterImpl(name, dataType, param.getStorage(), program));
 		}
 		return params;
-	}
-
-	/**
-	 * Commit a specified set of parameters for the given function to the database.
-	 * The name, data-type, and storage is committed for each parameter.  The parameters are
-	 * provided along with a formal PrototypeModel.  If the parameters fit the model, they are
-	 * committed using "dynamic" storage. Otherwise, they are committed using "custom" storage.
-	 * @param function is the Function being modified
-	 * @param modelName is the name of the underlying PrototypeModel
-	 * @param params is the formal list of parameter objects
-	 * @param hasVarArgs is true if the prototype can take variable arguments
-	 * @param renameConflicts if true any name conflicts will be resolved
-	 * by renaming the conflicting local variable/label
-	 * @param source source type
-	 * @throws DuplicateNameException if commit of parameters caused conflict with other
-	 * local variable/label.  Should not occur if renameConflicts is true.
-	 * @throws InvalidInputException for invalid variable names or for parameter data-types that aren't fixed length
-	 * @throws DuplicateNameException is there are collisions between variable names in the function's scope 
-	 */
-	public static void commitParamsToDatabase(Function function, String modelName,
-			List<Parameter> params, boolean hasVarArgs, boolean renameConflicts, SourceType source)
-			throws DuplicateNameException, InvalidInputException {
-
-		try {
-			function.updateFunction(modelName, null, params,
-				FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, source);
-		}
-		catch (DuplicateNameException e) {
-			if (!renameConflicts) {
-				throw e;
-			}
-			for (Variable param : params) {
-				changeConflictingSymbolNames(param.getName(), null, function);
-			}
-			function.updateFunction(modelName, null, params,
-				FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, source);
-		}
-
-		if (!VariableUtilities.storageMatches(params, function.getParameters())) {
-			// try again if dynamic storage assignment does not match decompiler's
-			// force into custom storage mode
-			function.updateFunction(modelName, null, params, FunctionUpdateType.CUSTOM_STORAGE,
-				true, source);
-		}
-
-		if (function.hasVarArgs() != hasVarArgs) {
-			function.setVarArgs(hasVarArgs);
-		}
 	}
 
 	private static void changeConflictingSymbolNames(String name, Variable ignoreVariable,
@@ -454,7 +461,8 @@ public class HighFunctionDBUtil {
 		if (slot >= parameters.length ||
 			!parameters[slot].getVariableStorage().equals(param.getStorage())) {
 			try {
-				commitParamsToDatabase(highFunction, true, SourceType.ANALYSIS);
+				commitParamsToDatabase(highFunction, true, ReturnCommitOption.NO_COMMIT,
+					SourceType.ANALYSIS);
 			}
 			catch (DuplicateNameException e) {
 				throw new AssertException("Unexpected exception", e);
