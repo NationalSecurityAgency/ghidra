@@ -173,7 +173,8 @@ public class EncodedStringsDialogTest extends AbstractProgramBasedTest {
 
 		showDialog(ram.getAddressRange());
 		assertEquals(3, tableModel.getRowCount());
-		dialog.getCreateButton().doClick();
+
+		Swing.runNow(() -> dialog.getCreateButton().doClick());
 
 		waitForSwing();
 
