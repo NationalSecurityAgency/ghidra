@@ -184,25 +184,12 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand<Program> {
 				if (disSetList.contains(caseStart)) {
 					continue;
 				}
-				if (switchContext != null) {
-					try {
-						// Combine flowed switch context with context register value at case address
-						RegisterValue curContext =
-							programContext.getRegisterValue(baseContextRegister, caseStart);
-						if (curContext != null) {
-							curContext = curContext.combineValues(switchContext);
-
-							// lay down the new merged context
-							programContext.setRegisterValue(caseStart, caseStart, curContext);
-						}
-						else {
-							programContext.setRegisterValue(caseStart, caseStart, switchContext);
-						}
-					}
-					catch (ContextChangeException e) {
-						// This can occur when two or more threads are working on the same function
-						continue;
-					}
+				try {
+					setSwitchTargetContext(programContext, caseStart, switchContext);
+				}
+				catch (ContextChangeException e) {
+					// This can occur when two or more threads are working on the same function
+					continue;
 				}
 				disSetList.add(caseStart);
 			}
@@ -227,6 +214,26 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand<Program> {
 				program.getListing().getInstructionAt(fixupFunc.getEntryPoint());
 			CreateFunctionCmd.fixupFunctionBody(program, funcStartInstr, monitor);
 		}
+	}
+
+	private void setSwitchTargetContext(ProgramContext programContext, Address targetStart, RegisterValue switchContext) throws ContextChangeException {
+		if (switchContext == null) {
+			return;
+		}
+		
+		// Combine flowed switch context with context register value at case address
+		RegisterValue curContext =
+			programContext.getNonDefaultValue(switchContext.getRegister(), targetStart);
+		if (curContext != null) {
+			switchContext = curContext.combineValues(switchContext);
+		}
+		
+		if (switchContext == null || !switchContext.hasAnyValue()) {
+			return;
+		}
+
+		// only store if different than what is already there, which could be a default value
+		program.getProgramContext().setRegisterValue(targetStart, targetStart, switchContext);
 	}
 
 	private void labelSwitch(JumpTable table, TaskMonitor monitor) throws CancelledException {
