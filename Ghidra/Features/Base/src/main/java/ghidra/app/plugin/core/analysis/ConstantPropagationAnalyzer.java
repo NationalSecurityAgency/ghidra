@@ -66,7 +66,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 	protected static final String MAX_THREAD_COUNT_OPTION_NAME = "Max Threads";
 	protected static final String MAX_THREAD_COUNT_OPTION_DESCRIPTION =
 		"Maximum threads for constant propagation.  Too many threads causes thrashing in DB.";
-	protected static final int MAX_THREAD_COUNT_OPTION_DEFAULT_VALUE = 2;
+	protected static final int MAX_THREAD_COUNT_OPTION_DEFAULT_VALUE = 1;
 
 	protected static final String MIN_KNOWN_REFADDRESS_OPTION_NAME = "Min absolute reference";
 	protected static final String MIN_KNOWN_REFADDRESS_OPTION_DESCRIPTION =
