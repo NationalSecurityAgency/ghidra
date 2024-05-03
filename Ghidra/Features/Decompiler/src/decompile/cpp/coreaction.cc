@@ -2183,13 +2183,13 @@ bool ActionRestructureVarnode::isDelayedConstant(Varnode *vn)
 }
 
 /// Test if the path to the given BRANCHIND originates from a constant but passes through INDIRECT operations.
-/// This indicates that the switch value is produced indirectly, so we mark these INDIRECT
-/// operations as \e not \e collapsible, to guarantee that the indirect value is not lost during analysis.
+/// This indicates that the switch value is produced indirectly, so we mark the earliest INDIRECT
+/// operation as \e not \e collapsible, to guarantee that the indirect value is not lost during analysis.
 /// \param op is the given BRANCHIND op
 void ActionRestructureVarnode::protectSwitchPathIndirects(PcodeOp *op)
 
 {
-  vector<PcodeOp *> indirects;
+  PcodeOp *lastIndirect = (PcodeOp *)0;
   Varnode *curVn = op->getIn(0);
   while(curVn->isWritten()) {
     PcodeOp *curOp = curVn->getDef();
@@ -2210,20 +2210,34 @@ void ActionRestructureVarnode::protectSwitchPathIndirects(PcodeOp *op)
     else if ((evalType & PcodeOp::unary) != 0)
       curVn = curOp->getIn(0);
     else if (curOp->code() == CPUI_INDIRECT) {
-      indirects.push_back(curOp);
+      lastIndirect = curOp;
       curVn = curOp->getIn(0);
     }
     else if (curOp->code() == CPUI_LOAD) {
       curVn = curOp->getIn(1);
+    }
+    else if (curOp->code() == CPUI_MULTIEQUAL) {
+      // Its possible there is a path from a constant that splits and rejoins.
+      // We test for INDIRECTs coming into the MULTIEQUAL.  If there is at least one, we prevent it from collapsing,
+      // otherwise we assume the MULTIEQUAL itself is unlikely to collapse.
+      for(int4 i=0;i<curOp->numInput();++i) {
+	curVn = curOp->getIn(i);
+	if (!curVn->isWritten()) continue;
+	PcodeOp *inOp = curVn->getDef();
+	if (inOp->code() == CPUI_INDIRECT) {
+	  inOp->setNoIndirectCollapse();
+	  break;
+	}
+      }
+      return;	// In any case, we don't try to backtrack further
     }
     else
       return;
   }
   if (!curVn->isConstant()) return;
   // If we reach here, there is exactly one path, from a constant to a switch
-  for(int4 i=0;i<indirects.size();++i) {
-    indirects[i]->setNoIndirectCollapse();
-  }
+  if (lastIndirect != (PcodeOp *)0)
+    lastIndirect->setNoIndirectCollapse();
 }
 
 /// Run through BRANCHIND ops, treat them as switches and protect the data-flow path to the destination variable
