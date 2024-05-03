@@ -64,6 +64,7 @@ import ghidra.framework.plugintool.util.*;
 import ghidra.framework.preferences.Preferences;
 import ghidra.framework.project.tool.GhidraTool;
 import ghidra.framework.project.tool.GhidraToolTemplate;
+import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.util.*;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.classfinder.ClassSearcher;
@@ -174,6 +175,15 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 	protected void shutdown() {
 		System.exit(0);
+	}
+
+	@Override
+	public boolean accept(URL url) {
+		if (!GhidraURL.isLocalProjectURL(url) && !GhidraURL.isServerRepositoryURL(url)) {
+			return false;
+		}
+		Swing.runLater(() -> execute(new AcceptUrlContentTask(url, plugin)));
+		return true;
 	}
 
 	private void ensureSize() {

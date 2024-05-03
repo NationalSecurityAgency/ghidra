@@ -1067,10 +1067,14 @@ public class GhidraFileData {
 		if (folderItem.isCheckedOut() || versionedFolderItem != null) {
 			throw new IOException("File already versioned");
 		}
-		if (isLinkFile() && !GhidraURL.isServerRepositoryURL(LinkHandler.getURL(folderItem))) {
-			throw new IOException("Local project link-file may not be versioned");
+		ContentHandler<?> contentHandler = getContentHandler();
+		if (contentHandler instanceof LinkHandler linkHandler) {
+			// must check local vs remote URL
+			if (!GhidraURL.isServerRepositoryURL(LinkHandler.getURL(folderItem))) {
+				throw new IOException("Local project link-file may not be versioned");
+			}
 		}
-		if (getContentHandler().isPrivateContentType()) {
+		else if (contentHandler.isPrivateContentType()) {
 			throw new IOException("Content may not be versioned: " + getContentType());
 		}
 	}

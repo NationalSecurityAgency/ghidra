@@ -103,6 +103,14 @@ public class ProjectDataTablePanel extends JPanel {
 		new ProjectDataTableDnDHandler(gTable, model);
 	}
 
+	/**
+	 * Determine if table capacity has been exceeded and files are not shown
+	 * @return true if files are not shown in project data table, else false
+	 */
+	public boolean isCapacityExceeded() {
+		return capacityExceeded;
+	}
+
 	public void dispose() {
 		table.dispose(); // this will dispose the gTable as well
 	}

@@ -22,23 +22,26 @@ import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.go.ipc.GhidraGoListener;
 import ghidra.framework.main.*;
-import ghidra.framework.model.ToolServices;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.util.Msg;
-import ghidra.util.Swing;
 
 //@formatter:off
 @PluginInfo(
 	category = PluginCategoryNames.COMMON,
 	status = PluginStatus.UNSTABLE,
 	packageName = CorePluginPackage.NAME,
-	shortDescription = "Listens for new GhidraURL's to launch using ToolServices",
-	description = "Polls the ghidraGo directory for any url files written by the GhidraGoClient and " +
-		"processes them in Ghidra",
+	shortDescription = "Listens for new GhidraURL's to launch using FrontEndTool's" +
+		" accept method",
+	description = "Polls the ghidraGo directory for any url files written by the " +
+		"GhidraGoSender and processes them in Ghidra",
 	eventsConsumed = {ProjectPluginEvent.class})
 //@formatter:on
+/**
+ * Polls the ghidraGo directory located in the user's temporary directory for any url files written
+ * by the {@link GhidraGoSender} and processes them in Ghidra.
+ */
 public class GhidraGoPlugin extends Plugin implements ApplicationLevelOnlyPlugin {
 	private GhidraGoListener listener;
 
@@ -69,7 +72,7 @@ public class GhidraGoPlugin extends Plugin implements ApplicationLevelOnlyPlugin
 			else {
 				try {
 					listener = new GhidraGoListener((url) -> {
-						processGhidraURL(url);
+						accept(url);
 					});
 				}
 				catch (IOException e) {
@@ -81,26 +84,14 @@ public class GhidraGoPlugin extends Plugin implements ApplicationLevelOnlyPlugin
 	}
 
 	/**
-	 * If the active project is null, do nothing.
-	 * Otherwise, try and open the url using {@link ToolServices} launchDefaultToolWithURL function.
-	 * @param ghidraURL the GhidraURL to open.
+	 * Accept the given url, which is then passed to the FrontEndTool to process.
+	 * @param url a {@link GhidraURL}
+	 * @return true if handled successfully, false otherwise.
 	 */
-	private void processGhidraURL(URL ghidraURL) {
-
-		Msg.info(this, "GhidraGo processing " + ghidraURL);
-
-		try {
-			Msg.info(this,
-				"Accepting the resource at " + GhidraURL.getProjectURL(ghidraURL));
-			Swing.runNow(() -> {
-				FrontEndTool frontEnd = AppInfo.getFrontEndTool();
-				frontEnd.toFront();
-				frontEnd.getToolServices().launchDefaultToolWithURL(ghidraURL);
-			});
-		}
-		catch (IllegalArgumentException e) {
-			Msg.showError(this, null, "GhidraGo Unable to process GhidraURL",
-				"GhidraGo could not process " + ghidraURL, e);
-		}
+	public boolean accept(URL url) {
+		Msg.info(this, "GhidraGo accepting the resource at " + GhidraURL.getProjectURL(url));
+		FrontEndTool frontEndTool = AppInfo.getFrontEndTool();
+		frontEndTool.toFront();
+		return frontEndTool.accept(url);
 	}
 }
