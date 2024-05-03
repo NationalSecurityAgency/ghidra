@@ -3466,8 +3466,32 @@ define pcodeop ptwrite;
 :RCL rm32,imm8      is vexMode=0 & opsize=1 & byte=0xC1; rm32 & check_rm32_dest ... & reg_opcode=2 ... ; imm8 { local cnt=imm8&0x1f; tmp:8=(zext(CF)<<32)|zext(rm32); tmp=(tmp<<cnt)|(tmp>>(33-cnt)); rm32=tmp(0); CF=(tmp&0x100000000)!=0; build check_rm32_dest; }
 @ifdef IA64
 :RCL rm64,n1        is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xD1; rm64 & n1 & reg_opcode=2 ...   { local tmpCF=CF; CF=rm64 s< 0; rm64=(rm64<<1)|zext(tmpCF); OF=CF^(rm64 s< 0);}
-:RCL rm64,CL        is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xD3; CL & rm64 & reg_opcode=2 ...   { local cnt=CL&0x3f; tmp:16=(zext(CF)<<64)|zext(rm64); tmp=(tmp<<cnt)|(tmp>>(65-cnt)); rm64=tmp(0); CF=(tmp&0x1000000000000000)!=0; }
-:RCL rm64,imm8      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xC1; rm64 & reg_opcode=2 ... ; imm8 { local cnt=imm8&0x3f; tmp:16=(zext(CF)<<64)|zext(rm64); tmp=(tmp<<cnt)|(tmp>>(65-cnt)); rm64=tmp(0); CF=(tmp&0x1000000000000000)!=0; }
+
+:RCL rm64,CL        is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xD3; CL & rm64 & reg_opcode=2 ...   
+{ 
+  local cnt:1=CL&0x3f;
+  local rm64_copy:8 = rm64;
+  local CF_copy:1 = CF;
+  rotated:8 = rm64_copy << cnt;
+  rotated = rotated | (rm64_copy >>  (65 -cnt));
+  local CF_bit:8 = zext(CF_copy) << cnt-1;
+  rotated = rotated | CF_bit;
+  conditionalAssign(CF, cnt == 0:1, CF_copy, ((1:8<<(64-cnt)) & rm64_copy) != 0);
+  rm64 = rotated; 
+}
+
+:RCL rm64,imm8      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xC1; rm64 & reg_opcode=2 ... ; imm8 
+{ 
+  local cnt:1=imm8&0x3f; 
+  local rm64_copy:8 = rm64;
+  local CF_copy:1 = CF;
+  rotated:8 = rm64_copy << cnt;
+  rotated = rotated | (rm64_copy >>  (65 -cnt));
+  local CF_bit:8 = zext(CF_copy) << cnt-1;
+  rotated = rotated | CF_bit;
+  conditionalAssign(CF, cnt == 0:1, CF_copy, ((1:8<<(64-cnt)) & rm64_copy) != 0);
+  rm64 = rotated;
+}
 @endif
 
 :RCR  rm8,n1        is vexMode=0 & byte=0xD0; rm8 & n1 & reg_opcode=3 ...           { local tmpCF=CF; OF=rm8 s< 0; CF=(rm8&1)!=0; rm8=(rm8>>1)|(tmpCF<<7); OF=OF^(rm8 s< 0); }
@@ -3481,8 +3505,32 @@ define pcodeop ptwrite;
 :RCR rm32,imm8      is vexMode=0 & opsize=1 & byte=0xC1; rm32 & check_rm32_dest ... & reg_opcode=3 ... ; imm8 { local cnt=imm8&0x1f; tmp:8=(zext(CF)<<32)|zext(rm32); tmp=(tmp>>cnt)|(tmp<<(33-cnt)); rm32=tmp(0); CF=(tmp&0x100000000)!=0; build check_rm32_dest; }
 @ifdef IA64
 :RCR rm64,n1        is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xD1; rm64 & n1 & reg_opcode=3 ...   { local tmpCF=CF; OF=rm64 s< 0; CF=(rm64&1)!=0; rm64=(rm64>>1)|(zext(tmpCF)<<63); OF=OF^(rm64 s< 0); }
-:RCR rm64,CL        is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xD3; CL & rm64 & reg_opcode=3 ...   { local cnt=CL&0x3f; tmp:16=(zext(CF)<<64)|zext(rm64); tmp=(tmp>>cnt)|(tmp<<(65-cnt)); rm64=tmp(0); CF=(tmp&0x1000000000000000)!=0; }
-:RCR rm64,imm8      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xC1; rm64 & reg_opcode=3 ... ; imm8 { local cnt=imm8&0x3f; tmp:16=(zext(CF)<<64)|zext(rm64); tmp=(tmp>>cnt)|(tmp<<(65-cnt)); rm64=tmp(0); CF=(tmp&0x1000000000000000)!=0; }
+
+:RCR rm64,CL        is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xD3; CL & rm64 & reg_opcode=3 ...   
+{ 
+  local cnt:1=CL&0x3f; 
+  local rm64_copy:8 = rm64;
+  local CF_copy:1 = CF;
+  rotated:8 = rm64_copy >> cnt;
+  rotated = rotated | (rm64_copy <<  (65 -cnt));
+  local CF_bit:8 = zext(CF_copy) << 64-cnt;
+  rotated = rotated | CF_bit;
+  conditionalAssign(CF, cnt == 0:1, CF_copy, ((1:8<<(cnt-1)) & rm64_copy) != 0);
+  rm64 = rotated;
+ }
+
+:RCR rm64,imm8      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xC1; rm64 & reg_opcode=3 ... ; imm8 
+{ 
+  local cnt:1=imm8&0x3f; 
+  local rm64_copy:8 = rm64;
+  local CF_copy:1 = CF;
+  rotated:8 = rm64_copy >> cnt;
+  rotated = rotated | (rm64_copy <<  (65 -cnt));
+  local CF_bit:8 = zext(CF_copy) << 64-cnt;
+  rotated = rotated | CF_bit;
+  conditionalAssign(CF, cnt == 0:1, CF_copy, ((1:8<<(cnt-1)) & rm64_copy) != 0);
+  rm64 = rotated;
+ }
 @endif
 
 @ifdef IA64
