@@ -449,7 +449,7 @@ public class GoToHelper {
 		ExternalManager externalManager = program.getExternalManager();
 		String externalLibraryPath = externalManager.getExternalLibraryPath(extProgName);
 		if (!pathName.equals(externalLibraryPath)) {
-			Command cmd = new SetExternalNameCmd(extProgName, domainFile.getPathname());
+			Command<Program> cmd = new SetExternalNameCmd(extProgName, domainFile.getPathname());
 			tool.execute(cmd, program);
 		}
 	}

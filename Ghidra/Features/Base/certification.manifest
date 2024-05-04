@@ -775,7 +775,6 @@ src/main/resources/images/eclipse.png||GHIDRA||||END|
 src/main/resources/images/edit-bomb.png||Oxygen Icons - LGPL 3.0||||END|
 src/main/resources/images/editbytes.gif||GHIDRA||||END|
 src/main/resources/images/emblem-favorite.png||Tango Icons - Public Domain|||tango|END|
-src/main/resources/images/empty8x16.png||GHIDRA||||END|
 src/main/resources/images/emptyFragment.gif||GHIDRA||||END|
 src/main/resources/images/emptyFragmentInView.gif||GHIDRA||||END|
 src/main/resources/images/enum.png||GHIDRA||||END|

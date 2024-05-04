@@ -26,7 +26,7 @@ import ghidra.util.FilterTransformer;
  */
 public interface GTreeFilterProvider {
 	/**
-	 * Returns the component to place at the bottom of a GTree to provider filtering capabilites.
+	 * Returns the component to place at the bottom of a GTree to provider filtering capabilities.
 	 * @return the filter component
 	 */
 	public JComponent getFilterComponent();
@@ -65,10 +65,8 @@ public interface GTreeFilterProvider {
 	/**
 	 * Loads any filter preferences that have been saved.
 	 * @param windowManager the {@link DockingWindowManager} to load preferences from
-	 * @param uniquePreferenceKey the preference key
 	 */
-	public void loadFilterPreference(DockingWindowManager windowManager,
-			String uniquePreferenceKey);
+	public void loadFilterPreference(DockingWindowManager windowManager);
 
 	/**
 	 * Sets an accessible name on the filter component. This prefix will be used to assign
@@ -82,4 +80,18 @@ public interface GTreeFilterProvider {
 	 * example if the tree contains fruits, then "Fruits" would be an appropriate prefix name.
 	 */
 	public void setAccessibleNamePrefix(String namePrefix);
+
+	/**
+	 * Creates a copy of this filter with all current filter settings.
+	 * <P>
+	 * This is meant to be used for GTrees that support creating a new copy.  
+	 * <P>
+	 * Note: Filter providers that do not support copying will return null from this method.
+	 * 
+	 * @param gTree the new tree for the new filter
+	 * @return the copy
+	 */
+	public default GTreeFilterProvider copy(GTree gTree) {
+		return null;
+	}
 }

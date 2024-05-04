@@ -139,8 +139,7 @@ public class GTree extends JPanel implements BusyListener {
 		init();
 
 		DockingWindowManager.registerComponentLoadedListener(this,
-			(windowManager, provider) -> filterProvider.loadFilterPreference(windowManager,
-				uniquePreferenceKey));
+			(windowManager, provider) -> filterProvider.loadFilterPreference(windowManager));
 
 		filterUpdateManager = new SwingUpdateManager(1000, 30000, () -> updateModelFilter());
 		Gui.addThemeListener(themeListener);
@@ -386,6 +385,17 @@ public class GTree extends JPanel implements BusyListener {
 	}
 
 	/**
+	 * Sets the filter restore state.  This method is a way to override the tree's filtering 
+	 * behavior, which is usually set by a call to {@link #saveFilterRestoreState()}.  Most clients
+	 * will never need to call this method.
+	 * 
+	 * @param state the state to set
+	 */
+	protected void setFilterRestoreState(GTreeState state) {
+		this.filterRestoreTreeState = state;
+	}
+
+	/**
 	 * Signal to the tree that it should record its expanded and selected state when a new filter is
 	 * applied
 	 */
@@ -402,6 +412,14 @@ public class GTree extends JPanel implements BusyListener {
 
 	void clearFilterRestoreState() {
 		filterRestoreTreeState = null;
+	}
+
+	/**
+	 * Returns the key that this tree uses to store preferences.
+	 * @return the key that this tree uses to store preferences.
+	 */
+	public String getPreferenceKey() {
+		return uniquePreferenceKey;
 	}
 
 	/**
@@ -689,7 +707,8 @@ public class GTree extends JPanel implements BusyListener {
 			return node; // this node is a valid child of the given root
 		}
 
-		GTreeNode parentNode = getNodeForPath(root, path.getParentPath());
+		TreePath parentPath = path.getParentPath();
+		GTreeNode parentNode = getNodeForPath(root, parentPath);
 		if (parentNode == null) {
 			return null; // must be a path we don't have
 		}

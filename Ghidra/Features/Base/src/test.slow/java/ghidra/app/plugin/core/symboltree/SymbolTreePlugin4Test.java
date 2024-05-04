@@ -17,10 +17,17 @@ package ghidra.app.plugin.core.symboltree;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.tree.TreePath;
+
 import org.junit.*;
 
 import docking.action.DockingActionIf;
-import docking.widgets.tree.GTreeNode;
+import docking.widgets.filter.*;
+import docking.widgets.tree.*;
+import docking.widgets.tree.support.DepthFirstIterator;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.symboltree.nodes.SymbolNode;
 import ghidra.program.model.address.Address;
@@ -259,9 +266,258 @@ public class SymbolTreePlugin4Test extends AbstractGhidraHeadedIntegrationTest {
 			addr("0x1002cf9"), location.getAddress());
 	}
 
+	@Test
+	public void testClone() throws Exception {
+
+		GTreeNode fNode = rootNode.getChild(2);
+		util.expandNode(fNode);
+
+		GTreeNode gNode = fNode.getChild(1);
+		util.expandNode(gNode);
+		util.selectNode(gNode);
+
+		DockingActionIf clone = getAction(plugin, "Symbol Tree Clone");
+		performAction(clone);
+
+		DisconnectedSymbolTreeProvider disconnectedProvider =
+			waitForComponentProvider(DisconnectedSymbolTreeProvider.class);
+
+		GTree gTree = disconnectedProvider.getTree();
+		TreePath selectedPath = gTree.getSelectionPath();
+		GTreeNode selectedNode = (GTreeNode) selectedPath.getLastPathComponent();
+		assertEquals(gNode, selectedNode);
+	}
+
+	@Test
+	public void testClone_WithFilter() throws Exception {
+
+		GTreeNode fNode = rootNode.getChild(2);
+		util.expandNode(fNode);
+
+		GTreeNode gNode = fNode.getChild(1);
+		util.expandNode(gNode);
+		util.selectNode(gNode);
+
+		SymbolGTree gTree = util.getTree();
+		filter(gTree, "param_1");
+
+		assertEquals(6, countNodes(gTree));
+		assertNodes(gTree, "ghidra", "doStuff");
+
+		DockingActionIf clone = getAction(plugin, "Symbol Tree Clone");
+		performAction(clone);
+
+		DisconnectedSymbolTreeProvider disconnectedProvider =
+			waitForComponentProvider(DisconnectedSymbolTreeProvider.class);
+
+		GTree disconnectedGTree = disconnectedProvider.getTree();
+		waitForTree(disconnectedGTree);
+
+		TreePath selectedPath = disconnectedGTree.getSelectionPath();
+		GTreeNode selectedNode = (GTreeNode) selectedPath.getLastPathComponent();
+		assertEquals(gNode, selectedNode);
+
+		assertFilterText(disconnectedGTree, "param_1");
+		assertEquals(6, countNodes(disconnectedGTree));
+		assertNodes(disconnectedGTree, "ghidra", "doStuff");
+	}
+
+	@Test
+	public void testClone_WithFilter_ChangedSettings() throws Exception {
+
+		SymbolGTree gTree = util.getTree();
+		setFilterOptions(gTree, TextFilterStrategy.MATCHES_EXACTLY, false);
+		filter(gTree, "param_1");
+
+		GTreeNode fNode = rootNode.getChild(2);
+		util.expandNode(fNode);
+
+		GTreeNode gNode = fNode.getChild(1);
+		util.expandNode(gNode);
+		util.selectNode(gNode);
+
+		assertEquals(6, countNodes(gTree));
+		assertNodes(gTree, "ghidra", "doStuff");
+
+		DockingActionIf clone = getAction(plugin, "Symbol Tree Clone");
+		performAction(clone);
+
+		DisconnectedSymbolTreeProvider disconnectedProvider =
+			waitForComponentProvider(DisconnectedSymbolTreeProvider.class);
+
+		GTree disconnectedGTree = disconnectedProvider.getTree();
+		waitForTree(disconnectedGTree);
+
+		TreePath selectedPath = disconnectedGTree.getSelectionPath();
+		GTreeNode selectedNode = (GTreeNode) selectedPath.getLastPathComponent();
+		assertEquals(gNode, selectedNode);
+
+		assertFilterText(disconnectedGTree, "param_1");
+		assertFilterSetting(disconnectedGTree, TextFilterStrategy.MATCHES_EXACTLY);
+		assertEquals(6, countNodes(disconnectedGTree));
+		assertNodes(disconnectedGTree, "ghidra", "doStuff");
+	}
+
+	@Test
+	public void testClone_IgnoresProgramActivation() throws Exception {
+
+		GTreeNode fNode = rootNode.getChild(2);
+		util.expandNode(fNode);
+
+		GTreeNode gNode = fNode.getChild(1);
+		util.expandNode(gNode);
+		util.selectNode(gNode);
+
+		DockingActionIf clone = getAction(plugin, "Symbol Tree Clone");
+		performAction(clone);
+
+		DisconnectedSymbolTreeProvider disconnectedProvider =
+			waitForComponentProvider(DisconnectedSymbolTreeProvider.class);
+
+		GTree gTree = disconnectedProvider.getTree();
+		TreePath selectedPath = gTree.getSelectionPath();
+		GTreeNode selectedNode = (GTreeNode) selectedPath.getLastPathComponent();
+		assertEquals(gNode, selectedNode);
+
+		SymbolTreeProvider primaryProvider = util.getProvider();
+		assertEquals(program, primaryProvider.getProgram());
+		assertEquals(program, disconnectedProvider.getProgram());
+
+		Program program2 = util.openProgram2();
+
+		assertEquals(program2, primaryProvider.getProgram());
+		assertEquals(program, disconnectedProvider.getProgram());
+	}
+
+	@Test
+	public void testClone_ClosingProgramClosesClonedProvider() throws Exception {
+
+		DockingActionIf clone = getAction(plugin, "Symbol Tree Clone");
+		performAction(clone);
+
+		DisconnectedSymbolTreeProvider disconnectedProvider =
+			waitForComponentProvider(DisconnectedSymbolTreeProvider.class);
+
+		SymbolTreeProvider primaryProvider = util.getProvider();
+		assertEquals(program, primaryProvider.getProgram());
+		assertEquals(program, disconnectedProvider.getProgram());
+
+		Program program2 = util.openProgram2();
+
+		assertEquals(program2, primaryProvider.getProgram());
+		assertEquals(program, disconnectedProvider.getProgram());
+
+		util.closeProgram();
+
+		assertTrue(primaryProvider.isVisible());
+		assertFalse(disconnectedProvider.isVisible());
+
+		assertEquals(program2, primaryProvider.getProgram());
+		assertNull(disconnectedProvider.getProgram());
+	}
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================
+
+	private void setFilterOptions(GTree gTree, TextFilterStrategy filterStrategy,
+			boolean inverted) {
+
+		runSwing(() -> {
+			FilterOptions filterOptions = new FilterOptions(filterStrategy, false, false, inverted);
+			((DefaultGTreeFilterProvider) gTree.getFilterProvider())
+					.setFilterOptions(filterOptions);
+		});
+		waitForTree(gTree);
+	}
+
+	private void assertFilterSetting(GTree gTree, TextFilterStrategy expectedStrategy) {
+
+		FilterOptions filterOptions = runSwing(() -> {
+			DefaultGTreeFilterProvider provider =
+				((DefaultGTreeFilterProvider) gTree.getFilterProvider());
+			return provider.getFilterOptions();
+		});
+
+		assertEquals(expectedStrategy, filterOptions.getTextFilterStrategy());
+	}
+
+	private int countNodes(GTree gTree) {
+		int n = 0;
+		DepthFirstIterator it = new DepthFirstIterator(gTree.getViewRoot());
+		while (it.hasNext()) {
+			n++;
+			it.next();
+		}
+		return n;
+	}
+
+	private void filter(GTree gTree, String text) {
+
+		FilterTextField filterField = (FilterTextField) gTree.getFilterField();
+		runSwing(() -> {
+			filterField.setText(text);
+		});
+		waitForTree(gTree);
+	}
+
+	private void assertFilterText(GTree gTree, String expectedText) {
+		FilterTextField filterField = (FilterTextField) gTree.getFilterField();
+		String filterText = runSwing(() -> filterField.getText());
+		assertEquals(expectedText, filterText);
+	}
+
+	private void assertNodes(GTree gTree, String... nodeNames) {
+
+		List<GTreeNode> nodes = new ArrayList<>();
+		for (String name : nodeNames) {
+			GTreeNode node = node(name);
+			assertNotNull(node);
+			nodes.add(node);
+		}
+
+		int count = 0;
+		int rows = gTree.getRowCount();
+		for (int i = 0; i < rows; i++) {
+			TreePath path = gTree.getPathForRow(i);
+			GTreeNode node = (GTreeNode) path.getLastPathComponent();
+			if (node.isLeaf()) {
+				if (node.isLeaf()) {
+					count++;
+				}
+			}
+		}
+
+		assertEquals(nodes.size(), count);
+		for (GTreeNode node : nodes) {
+			TreePath path = node.getTreePath();
+			assertTrue("Could not find row for path: " + path, gTree.getRowForPath(path) != -1);
+		}
+	}
+
+	private GTreeNode node(String name) {
+		return findNodeInTree(rootNode, name);
+	}
+
+	private GTreeNode findNodeInTree(GTreeNode node, String name) {
+		if (node.getName().equals(name)) {
+			return node;
+		}
+
+		List<GTreeNode> children = node.getChildren();
+		for (GTreeNode child : children) {
+			if (child.getName().startsWith(name)) {
+				return child;
+			}
+
+			GTreeNode grandChild = findNodeInTree(child, name);
+			if (grandChild != null) {
+				return grandChild;
+			}
+		}
+
+		return null;
+	}
 
 	private Address addr(String address) {
 		return program.getAddressFactory().getAddress(address);
