@@ -84,6 +84,10 @@ public class ActionsModel extends DefaultSearchListModel<DockingActionIf> {
 		context = null;
 	}
 
+	public boolean isDisposed() {
+		return context == null;
+	}
+
 	private void populateActions() {
 		clearData();
 		switch (displayLevel) {
