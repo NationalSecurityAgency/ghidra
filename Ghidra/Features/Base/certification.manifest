@@ -92,6 +92,7 @@ data/typeinfo/golang/golang_1.18_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/golang/golang_1.19_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/golang/golang_1.20_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/golang/golang_1.21_anybit_any.gdt||GHIDRA||||END|
+data/typeinfo/golang/golang_1.22_anybit_any.gdt||GHIDRA||||END|
 data/typeinfo/golang/runtimesnapshot.go||GHIDRA||||END|
 data/typeinfo/mac_10.9/mac_osx.gdt||GHIDRA||||END|
 data/typeinfo/rust/rust-common.gdt||GHIDRA||||END|
