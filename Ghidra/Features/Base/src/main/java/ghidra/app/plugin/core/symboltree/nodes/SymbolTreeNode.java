@@ -97,6 +97,7 @@ public abstract class SymbolTreeNode extends GTreeSlowLoadingNode {
 
 	/**
 	 * Returns true if this nodes handles paste operations
+	 * @param pastedNodes the nodes to be pasted
 	 * @return true if this nodes handles paste operations
 	 */
 	public abstract boolean canPaste(List<GTreeNode> pastedNodes);
@@ -172,8 +173,7 @@ public abstract class SymbolTreeNode extends GTreeSlowLoadingNode {
 	 * @param monitor the task monitor
 	 * @return the node that contains the given symbol.
 	 */
-	public GTreeNode findSymbolTreeNode(SymbolNode key, boolean loadChildren,
-			TaskMonitor monitor) {
+	public GTreeNode findSymbolTreeNode(SymbolNode key, boolean loadChildren, TaskMonitor monitor) {
 
 		// if we don't have to loadChildren and we are not loaded get out.
 		if (!loadChildren && !isLoaded()) {

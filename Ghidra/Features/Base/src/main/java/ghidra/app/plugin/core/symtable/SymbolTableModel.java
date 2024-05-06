@@ -278,27 +278,26 @@ class SymbolTableModel extends AddressBasedTableModel<SymbolRowObject> {
 
 		tool.setStatusInfo("");
 		List<Symbol> deleteList = new LinkedList<>();
-		CompoundCmd cmd = new CompoundCmd("Delete symbol(s)");
+		CompoundCmd<Program> cmd = new CompoundCmd<>("Delete symbol(s)");
 		for (Symbol symbol : rowObjects) {
 			if (symbol.isDynamic()) {
-				continue;//can't delete dynamic symbols...
+				continue; // can't delete dynamic symbols...
 			}
 
 			deleteList.add(symbol);
 			String label = symbol.getName();
+			Address address = symbol.getAddress();
 			if (symbol.getSymbolType() == SymbolType.FUNCTION) {
 				Function function = (Function) symbol.getObject();
 				boolean ignoreMissingFunction = function.isThunk();
-				cmd.add(new DeleteFunctionCmd(symbol.getAddress(), ignoreMissingFunction));
+				cmd.add(new DeleteFunctionCmd(address, ignoreMissingFunction));
 				if (symbol.getSource() != SourceType.DEFAULT) {
 					// remove label which gets created when non-default function is removed
-					cmd.add(new DeleteLabelCmd(symbol.getAddress(), label,
-						symbol.getParentNamespace()));
+					cmd.add(new DeleteLabelCmd(address, label, symbol.getParentNamespace()));
 				}
 			}
 			else {
-				cmd.add(
-					new DeleteLabelCmd(symbol.getAddress(), label, symbol.getParentNamespace()));
+				cmd.add(new DeleteLabelCmd(address, label, symbol.getParentNamespace()));
 			}
 		}
 		if (cmd.size() == 0) {
