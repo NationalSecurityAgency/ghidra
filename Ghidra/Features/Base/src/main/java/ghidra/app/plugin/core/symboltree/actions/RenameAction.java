@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.symboltree.actions;
 import docking.action.MenuData;
 import ghidra.app.plugin.core.symboltree.SymbolTreeActionContext;
 import ghidra.app.plugin.core.symboltree.SymbolTreePlugin;
+import ghidra.app.plugin.core.symboltree.nodes.SymbolNode;
 import ghidra.app.plugin.core.symboltree.nodes.SymbolTreeNode;
 
 public class RenameAction extends SymbolTreeContextAction {
@@ -31,7 +32,7 @@ public class RenameAction extends SymbolTreeContextAction {
 	@Override
 	public boolean isEnabledForContext(SymbolTreeActionContext context) {
 		SymbolTreeNode node = context.getSelectedNode();
-		return node != null;
+		return node instanceof SymbolNode;
 	}
 
 	@Override
