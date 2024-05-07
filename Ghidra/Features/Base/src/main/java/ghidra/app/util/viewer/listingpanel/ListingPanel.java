@@ -311,6 +311,8 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	}
 
 	private void buildPanels() {
+		boolean fieldPanelHasFocus = fieldPanel.hasFocus();
+
 		removeAll();
 		add(buildLeftComponent(), BorderLayout.WEST);
 		add(buildCenterComponent(), BorderLayout.CENTER);
@@ -320,6 +322,10 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		}
 		revalidate();
 		repaint();
+
+		if (fieldPanelHasFocus) {
+			fieldPanel.requestFocusInWindow();
+		}
 	}
 
 	private JComponent buildOverviewComponent() {
