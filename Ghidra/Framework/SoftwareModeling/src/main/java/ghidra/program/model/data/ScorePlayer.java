@@ -68,7 +68,7 @@ public class ScorePlayer implements Playable, MetaEventListener {
 			currentSequencer.start();
 		}
 		catch (MidiUnavailableException | InvalidMidiDataException | IOException e) {
-			Msg.debug(this, "Unable to play score", e);
+			Msg.error(this, "Unable to play score", e);
 		}
 	}
 
