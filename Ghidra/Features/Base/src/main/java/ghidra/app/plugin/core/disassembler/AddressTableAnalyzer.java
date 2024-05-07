@@ -419,11 +419,8 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 			if (cu == null) {
 				continue;
 			}
+
 			boolean atStartOfCU = cu.getMinAddress().equals(targetAddr);
-			// always allow offcuts to strings
-			if (cu instanceof Data data && data.getDataType() instanceof AbstractStringDataType) {
-				continue;
-			}
 			if (!allowOffcutReferences && !atStartOfCU) {
 				// if the processor uses low bit to reference instructions
 				//  allow offcut to an instruction by 1
