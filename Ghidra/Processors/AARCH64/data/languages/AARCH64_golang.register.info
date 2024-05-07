@@ -5,6 +5,6 @@
 		<float_registers list="q0,q1,q2,q3,q4,q5,q6,q7,q8,q9,q10,q11,q12,q13,q14,q15"/>
 		<stack initialoffset="8" maxalign="8"/>
 		<current_goroutine register="x28"/>
-		<zero_register register="ZR"/>
+		<zero_register register="xzr" builtin="true"/>
 	</register_info>
 </golang>
