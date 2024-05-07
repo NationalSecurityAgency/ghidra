@@ -891,7 +891,7 @@ public class BundleHost {
 		}
 
 		if (!bundlesToActivate.isEmpty()) {
-			TaskLauncher.launchNonModal("Restoring bundle state",
+			TaskLauncher.launchModal("Restoring Bundle State",
 				(monitor) -> activateInStages(bundlesToActivate, monitor, new NullPrintWriter()));
 		}
 	}
