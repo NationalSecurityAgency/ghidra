@@ -175,7 +175,7 @@
                      style="push">
                   <parameter
                         name="importWizardId"
-                        value="ghidradev.ghidraprojectcreator.wizards.ImportGhidraModuleWizard">
+                        value="ghidradev.ghidraprojectcreator.wizards.ImportGhidraModuleSourceWizard">
                   </parameter>
                </command>
             </menu>
