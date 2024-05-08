@@ -141,7 +141,7 @@ public enum DWARFAttribute {
 	DW_AT_call_all_tail_calls(0x7c, flag),
 	DW_AT_call_return_pc(0x7d, address),
 	DW_AT_call_value(0x7e, exprloc),
-	DW_AT_call_origin(0x7f, exprloc),
+	DW_AT_call_origin(0x7f, reference),
 	DW_AT_call_parameter(0x80, reference),
 	DW_AT_call_pc(0x81, address),
 	DW_AT_call_tail_call(0x82, flag),
