@@ -3172,26 +3172,18 @@ public class RecoveredClassHelper {
 
 		if (recoveredClass.hasParentClass()) {
 
-			// use this to get direct  parents
-			Map<RecoveredClass, List<RecoveredClass>> classHierarchyMap =
-				recoveredClass.getClassHierarchyMap();
-			Set<RecoveredClass> directParents = classHierarchyMap.keySet();
-
-			// use this to get correct parent order and to get the type of parent
 			Map<RecoveredClass, Boolean> parentToBaseTypeMap =
 				recoveredClass.getParentToBaseTypeMap();
-			Set<RecoveredClass> ancestors = parentToBaseTypeMap.keySet();
-			for (RecoveredClass ancestor : ancestors) {
-				monitor.checkCancelled();
-				if (directParents.contains(ancestor)) {
 
-					Boolean isVirtualParent = parentToBaseTypeMap.get(ancestor);
-					if (isVirtualParent != null && isVirtualParent) {
-						classString = classString.concat(" : virtual " + ancestor.getName());
-					}
-					else {
-						classString = classString.concat(" : " + ancestor.getName());
-					}
+			List<RecoveredClass> parentList = recoveredClass.getParentList();
+			for (RecoveredClass parent : parentList) {
+				monitor.checkCancelled();
+				Boolean isVirtualParent = parentToBaseTypeMap.get(parent);
+				if (isVirtualParent != null && isVirtualParent) {
+					classString = classString.concat(" : virtual " + parent.getName());
+				}
+				else {
+					classString = classString.concat(" : " + parent.getName());
 				}
 			}
 		}
