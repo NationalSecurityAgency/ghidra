@@ -65,7 +65,7 @@ public final class AutoImporter {
 	 *   reserves the right to change it for each {@link Loaded} result. The {@link Loaded} results 
 	 *   should be queried for their true project folder paths using 
 	 *   {@link Loaded#getProjectFolderPath()}.
-	 * @param consumer A consumer
+	 * @param consumer Reference to the object using this Program. Used to ensure the Program is only closed once every consumer is done with it.
 	 * @param messageLog The log
 	 * @param monitor A task monitor
 	 * @return The {@link LoadResults} which contains one ore more {@link Loaded} {@link Program}s 
@@ -106,7 +106,7 @@ public final class AutoImporter {
 	 *   reserves the right to change it for each {@link Loaded} result. The {@link Loaded} results 
 	 *   should be queried for their true project folder paths using 
 	 *   {@link Loaded#getProjectFolderPath()}.
-	 * @param consumer A consumer
+	 * @param consumer Reference to the object using this Program. Used to ensure the Program is only closed once every consumer is done with it.
 	 * @param messageLog The log
 	 * @param monitor A task monitor
 	 * @return The {@link LoadResults} which contains one ore more {@link Loaded} {@link Program}s 
@@ -148,7 +148,7 @@ public final class AutoImporter {
 	 *   reserves the right to change it for each {@link Loaded} result. The {@link Loaded} results 
 	 *   should be queried for their true project folder paths using 
 	 *   {@link Loaded#getProjectFolderPath()}.
-	 * @param consumer A consumer
+	 * @param consumer Reference to the object using this Program. Used to ensure the Program is only closed once every consumer is done with it.
 	 * @param messageLog The log
 	 * @param monitor A task monitor
 	 * @return The {@link LoadResults} which contains one ore more {@link Loaded} {@link Program}s 
@@ -191,7 +191,7 @@ public final class AutoImporter {
 	 *   {@link Loaded#getProjectFolderPath()}.
 	 * @param loaderClass The {@link Loader} class to use
 	 * @param loaderArgs A {@link List} of optional {@link Loader}-specific arguments
-	 * @param consumer A consumer
+	 * @param consumer Reference to the object using this Program. Used to ensure the Program is only closed once every consumer is done with it.
 	 * @param messageLog The log
 	 * @param monitor A task monitor
 	 * @return The {@link LoadResults} which contains one ore more {@link Loaded} {@link Program}s 
@@ -234,7 +234,7 @@ public final class AutoImporter {
 	 *   {@link Loaded#getProjectFolderPath()}.
 	 * @param loaderClass The {@link Loader} class to use
 	 * @param loaderArgs A {@link List} of optional {@link Loader}-specific arguments
-	 * @param consumer A consumer
+	 * @param consumer Reference to the object using this Program. Used to ensure the Program is only closed once every consumer is done with it.
 	 * @param messageLog The log
 	 * @param monitor A task monitor
 	 * @return The {@link LoadResults} which contains one ore more {@link Loaded} {@link Program}s 
@@ -280,7 +280,7 @@ public final class AutoImporter {
 	 *   {@link Loaded#getProjectFolderPath()}.
 	 * @param language The desired {@link Language}
 	 * @param compilerSpec The desired {@link CompilerSpec compiler specification}
-	 * @param consumer A consumer
+	 * @param consumer Reference to the object using this Program. Used to ensure the Program is only closed once every consumer is done with it.
 	 * @param messageLog The log
 	 * @param monitor A task monitor
 	 * @return The {@link LoadResults} which contains one ore more {@link Loaded} {@link Program}s 
@@ -323,7 +323,7 @@ public final class AutoImporter {
 	 *   {@link Loaded#getProjectFolderPath()}.
 	 * @param language The desired {@link Language}
 	 * @param compilerSpec The desired {@link CompilerSpec compiler specification}
-	 * @param consumer A consumer
+	 * @param consumer Reference to the object using this Program. Used to ensure the Program is only closed once every consumer is done with it.
 	 * @param messageLog The log
 	 * @param monitor A task monitor
 	 * @return The {@link LoadResults} which contains one ore more {@link Loaded} {@link Program}s 
@@ -369,7 +369,7 @@ public final class AutoImporter {
 	 * @param loaderArgs A {@link List} of optional {@link Loader}-specific arguments
 	 * @param language The desired {@link Language}
 	 * @param compilerSpec The desired {@link CompilerSpec compiler specification}
-	 * @param consumer A consumer
+	 * @param consumer Reference to the object using this Program. Used to ensure the Program is only closed once every consumer is done with it.
 	 * @param messageLog The log
 	 * @param monitor A task monitor
 	 * @return The {@link LoadResults} which contains one ore more {@link Loaded} {@link Program}s 
@@ -414,7 +414,7 @@ public final class AutoImporter {
 	 * @param loaderArgs A {@link List} of optional {@link Loader}-specific arguments
 	 * @param language The desired {@link Language}
 	 * @param compilerSpec The desired {@link CompilerSpec compiler specification}
-	 * @param consumer A consumer
+	 * @param consumer Reference to the object using this Program. Used to ensure the Program is only closed once every consumer is done with it.
 	 * @param messageLog The log
 	 * @param monitor A task monitor
 	 * @return The {@link LoadResults} which contains one ore more {@link Loaded} {@link Program}s 
@@ -462,7 +462,7 @@ public final class AutoImporter {
 	 *   {@link Loaded#getProjectFolderPath()}.
 	 * @param language The desired {@link Language}
 	 * @param compilerSpec The desired {@link CompilerSpec compiler specification}
-	 * @param consumer A consumer
+	 * @param consumer Reference to the object using this Program. Used to ensure the Program is only closed once every consumer is done with it.
 	 * @param messageLog The log
 	 * @param monitor A task monitor
 	 * @return The {@link Loaded} {@link Program} (created but not saved)
@@ -507,7 +507,7 @@ public final class AutoImporter {
 	 *   {@link Loaded#getProjectFolderPath()}.
 	 * @param language The desired {@link Language}
 	 * @param compilerSpec The desired {@link CompilerSpec compiler specification}
-	 * @param consumer A consumer
+	 * @param consumer Reference to the object using this Program. Used to ensure the Program is only closed once every consumer is done with it.
 	 * @param messageLog The log
 	 * @param monitor A task monitor
 	 * @return The {@link Loaded} {@link Program} (created but not saved)
@@ -557,7 +557,7 @@ public final class AutoImporter {
 	 *   {@link Loader}'s preferred name.
 	 * @param optionChooser A {@link OptionChooser} used to choose what {@link Loader} options get
 	 *   used
-	 * @param consumer A consumer
+	 * @param consumer Reference to the object using this Program. Used to ensure the Program is only closed once every consumer is done with it.
 	 * @param messageLog The log
 	 * @param monitor A task monitor
 	 * @return The {@link LoadResults} which contains one ore more {@link Loaded} {@link Program}s 
@@ -606,7 +606,7 @@ public final class AutoImporter {
 	 *   {@link Loader}'s preferred name.
 	 * @param optionChooser A {@link OptionChooser} used to choose what {@link Loader} options get
 	 *   used
-	 * @param consumer A consumer
+	 * @param consumer Reference to the object using this Program. Used to ensure the Program is only closed once every consumer is done with it.
 	 * @param messageLog The log
 	 * @param monitor A task monitor
 	 * @return The {@link LoadResults} which contains one ore more {@link Loaded} {@link Program}s 
@@ -662,7 +662,7 @@ public final class AutoImporter {
 	 *   {@link Loader}'s preferred name.
 	 * @param optionChooser A {@link OptionChooser} used to choose what {@link Loader} options get
 	 *   used
-	 * @param consumer A consumer
+	 * @param consumer Reference to the object using this Program. Used to ensure the Program is only closed once every consumer is done with it.
 	 * @param messageLog The log
 	 * @param monitor A task monitor
 	 * @return The {@link LoadResults} which contains one ore more {@link Loaded} {@link Program}s 
