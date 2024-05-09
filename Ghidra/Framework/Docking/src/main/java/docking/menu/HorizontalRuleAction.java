@@ -27,7 +27,7 @@ import docking.DockingUtils;
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.label.GDHtmlLabel;
-import generic.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.util.HTMLUtilities;
 
 /**
@@ -57,7 +57,7 @@ public class HorizontalRuleAction extends DockingAction {
 		String bottomHtml = HTMLUtilities.escapeHTML(bottomName);
 		menuData.setMenuItemNamePlain(String.format("""
 				<html><CENTER><FONT SIZE=2 COLOR="%s">%s<BR>%s</FONT></CENTER>
-				""", Palette.SILVER, topHtml, bottomHtml));
+				""", Colors.FOREGROUND_DISABLED, topHtml, bottomHtml));
 		setMenuBarData(menuData);
 
 		// the description is meant to be used for the tooltip and is larger
