@@ -38,7 +38,7 @@ typedef enum _myenum {
 typedef void (*myfunc_p)(int arg0, long arg1);
 typedef void (*myvargfunc_p)(int arg0, long arg1, ...);
 
-typedef myundef;
+typedef int myundef;
 
 int int_var;
 void* void_p_var;
@@ -83,14 +83,14 @@ myundef myundef_var;
 mylist_p mylist_p_var;
 
 int main(int argc, char** argv) {
-    printf("complex: %d\n", sizeof(complex_var));
-    printf("double complex: %d\n", sizeof(double_complex_var));
+    printf("complex: %lu\n", sizeof(complex_var));
+    printf("double complex: %lu\n", sizeof(double_complex_var));
     
-    register mycomplex_p cparts = &complex_var;
+    register mycomplex_p cparts = (mycomplex_p) &complex_var;
     printf("single real: %f\n", cparts->real);
     printf("single imag: %f\n", cparts->imag);
     
-    mydoublex_p dparts = &double_complex_var;
+    mydoublex_p dparts = (mydoublex_p) &double_complex_var;
     printf("double real: %g\n", dparts->real);
     printf("double imag: %g\n", dparts->imag);
     
