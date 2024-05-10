@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.progmgr;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.rmi.ConnectException;
@@ -442,7 +444,7 @@ class ProgramSaveManager {
 
 	private DataTreeDialog getSaveDialog() {
 		DataTreeDialog dialog =
-			new DataTreeDialog(null, "Save As", DataTreeDialog.SAVE, domainFileFilter);
+			new DataTreeDialog(null, "Save As", SAVE, domainFileFilter);
 
 		ActionListener listener = event -> {
 			DomainFolder folder = dialog.getDomainFolder();

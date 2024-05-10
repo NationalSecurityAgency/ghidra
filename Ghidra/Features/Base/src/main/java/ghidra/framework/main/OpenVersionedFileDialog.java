@@ -15,10 +15,11 @@
  */
 package ghidra.framework.main;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -40,7 +41,7 @@ import ghidra.util.Msg;
  * opened.
  * @param <T> domain object class
  */
-public class OpenVersionedFileDialog<T extends DomainObject> extends DataTreeDialog {
+public class OpenVersionedFileDialog<T extends DomainObject> extends AbstractDataTreeDialog {
 	private static final String SHOW_HISTORY_PREFERENCES_KEY = "OPEN_PROGRAM_DIALOG.SHOW_HISTORY";
 	private static final String HEIGHT_PREFERENCES_KEY = "OPEN_PROGRAM_DIALOG.HEIGHT";
 	private static final String WIDTH_NO_HISTORY_PREFERENCES_KEY =
@@ -76,12 +77,30 @@ public class OpenVersionedFileDialog<T extends DomainObject> extends DataTreeDia
 	 * @param domainObjectClass allowed domain object class which corresponds to {@code <T>}
 	 */
 	public OpenVersionedFileDialog(PluginTool tool, String title, Class<T> domainObjectClass) {
-		super(tool.getToolFrame(), title, DataTreeDialog.OPEN, f -> {
+		this(tool, title, domainObjectClass, null);
+	}
+
+	/**
+	 * Constructor
+	 * @param tool tool where the file is being opened.
+	 * @param title title to use
+	 * @param domainObjectClass allowed domain object class which corresponds to {@code <T>}
+	 * @param openDomainObjects if non-null, will cause an additional tab showing the given
+	 * list of open domain objects that the user can select from
+	 */
+	public OpenVersionedFileDialog(PluginTool tool, String title, Class<T> domainObjectClass,
+			List<T> openDomainObjects) {
+		super(tool.getToolFrame(), title, OPEN, f -> {
 			return domainObjectClass.isAssignableFrom(f.getDomainObjectClass());
-		});
+		}, AppInfo.getActiveProject());
 
 		this.tool = tool;
 		this.domainObjectClass = domainObjectClass;
+		this.openDomainObjects = openDomainObjects;
+
+		addWorkPanel(buildMainPanel());
+		initializeFocusedComponent();
+
 		updateOkTooltip();
 		checkIfHistoryWasOpen();
 	}
@@ -93,20 +112,6 @@ public class OpenVersionedFileDialog<T extends DomainObject> extends DataTreeDia
 		if (Boolean.parseBoolean(showHistory)) {
 			showHistoryPanel(true);
 		}
-	}
-
-	/**
-	 * Set an optional list of already open domain objects of type {@code <T>} which may be
-	 * selected instead of a project domain file.  The {@link #getDomainObject(Object, boolean)}
-	 * method should be used when this optional list has been set.  If this dialog is reused
-	 * the list should be set null if previously set.  This method must be invoked prior to 
-	 * showing the dialog.
-	 * @param openDomainObjects list of open domain objects from which a selection may be made.
-	 */
-	public void setOpenObjectChoices(List<T> openDomainObjects) {
-		this.openDomainObjects = (openDomainObjects != null && !openDomainObjects.isEmpty())
-				? new ArrayList<>(openDomainObjects)
-				: null;
 	}
 
 	/**
@@ -173,7 +178,6 @@ public class OpenVersionedFileDialog<T extends DomainObject> extends DataTreeDia
 		return super.getDomainFolder();
 	}
 
-	@Override
 	protected JPanel buildMainPanel() {
 		historyButton = new JButton("History>>");
 		historyButton.addActionListener(e -> showHistoryPanel(!historyIsShowing));
@@ -181,7 +185,7 @@ public class OpenVersionedFileDialog<T extends DomainObject> extends DataTreeDia
 		rootPanel.setPreferredSize(getPreferredSizeForHistoryState());
 
 		mainPanel = new JPanel(new BorderLayout());
-		mainPanel.add(super.buildMainPanel(), BorderLayout.CENTER);
+		mainPanel.add(buildDataTreePanel(), BorderLayout.CENTER);
 		JPanel historyButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 		historyButtonPanel.add(historyButton);
 		mainPanel.add(historyButtonPanel, BorderLayout.SOUTH);
@@ -201,7 +205,7 @@ public class OpenVersionedFileDialog<T extends DomainObject> extends DataTreeDia
 		openObjectsTable = null;
 		tabbedPane = null;
 
-		if (openDomainObjects == null) {
+		if (openDomainObjects == null || openDomainObjects.isEmpty()) {
 			return projectFilePanel; // return Project File selection panel only
 		}
 

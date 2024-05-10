@@ -15,6 +15,8 @@
  */
 package ghidra.app.script;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import java.awt.Color;
 import java.io.*;
 import java.rmi.ConnectException;
@@ -2304,7 +2306,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 
 		DomainFolder choice = doAsk(Program.class, title, "", existingValue, lastValue -> {
 
-			DataTreeDialog dtd = new DataTreeDialog(null, title, DataTreeDialog.CHOOSE_FOLDER);
+			DataTreeDialog dtd = new DataTreeDialog(null, title, CHOOSE_FOLDER);
 			dtd.show();
 			if (dtd.wasCancelled()) {
 				throw new CancelledException();
@@ -2834,7 +2836,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		if (!isRunningHeadless()) {
 			choice = doAsk(Program.class, title, "", choice, lastValue -> {
 
-				DataTreeDialog dtd = new DataTreeDialog(null, title, DataTreeDialog.OPEN);
+				DataTreeDialog dtd = new DataTreeDialog(null, title, OPEN);
 				dtd.show();
 				if (dtd.wasCancelled()) {
 					return null;
@@ -2939,7 +2941,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		String message = "";
 		DomainFile choice = doAsk(DomainFile.class, title, message, existingValue, lastValue -> {
 
-			DataTreeDialog dtd = new DataTreeDialog(null, title, DataTreeDialog.OPEN);
+			DataTreeDialog dtd = new DataTreeDialog(null, title, OPEN);
 			dtd.show();
 			if (dtd.wasCancelled()) {
 				throw new CancelledException();
