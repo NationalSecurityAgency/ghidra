@@ -22,6 +22,7 @@ import javax.swing.*;
 
 import docking.widgets.button.BrowseButton;
 import ghidra.framework.main.DataTreeDialog;
+import ghidra.framework.main.DataTreeDialogType;
 import ghidra.framework.model.*;
 import ghidra.framework.store.FileSystem;
 
@@ -33,10 +34,11 @@ abstract class AbstractProjectBrowserPanel extends JPanel {
 	protected JTextField textField;
 	private JButton browseButton;
 	private DomainFolder startFolder;
-	private int type;
+	private DataTreeDialogType type;
 	protected DomainFileFilter filter = null;
 
-	AbstractProjectBrowserPanel(int type, Project project, String name, String startPath) {
+	AbstractProjectBrowserPanel(DataTreeDialogType type, Project project, String name,
+			String startPath) {
 		super(new BorderLayout());
 		this.type = type;
 		this.project = Objects.requireNonNull(project);

@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.gui.modules;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.lang.invoke.MethodHandles;
@@ -1190,7 +1192,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 
 		DomainFileFilter filter = df -> Program.class.isAssignableFrom(df.getDomainObjectClass());
 
-		return new DataTreeDialog(null, "Map Module to Program", DataTreeDialog.OPEN, filter);
+		return new DataTreeDialog(null, "Map Module to Program", OPEN, filter);
 	}
 
 	public DomainFile askProgram(Program program) {

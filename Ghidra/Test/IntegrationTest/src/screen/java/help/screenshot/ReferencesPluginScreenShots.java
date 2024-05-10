@@ -15,6 +15,8 @@
  */
 package help.screenshot;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -61,7 +63,7 @@ public class ReferencesPluginScreenShots extends GhidraScreenShotGenerator {
 
 		runSwing(() -> {
 			DataTreeDialog dialog = new DataTreeDialog(tool.getToolFrame(),
-				"Choose External Program (" + "Kernel32.dll" + ")", DataTreeDialog.OPEN);
+				"Choose External Program (" + "Kernel32.dll" + ")", OPEN);
 			tool.showDialog(dialog);
 		}, false);
 		captureDialog();
