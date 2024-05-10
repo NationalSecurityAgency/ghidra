@@ -722,6 +722,7 @@ public class CppCompositeType {
 	private List<ClassPdbMember> getDirectBaseClassMembers(TaskMonitor monitor)
 			throws CancelledException {
 		List<ClassPdbMember> myDirectClassPdbMembers = new ArrayList<>();
+		TreeMap<Integer, Member> orderedBaseMembers = new TreeMap<>();
 		for (LayoutBaseClass base : getLayoutBaseClasses()) {
 			monitor.checkCancelled();
 			CppCompositeType baseComposite = base.getBaseClassType();
@@ -733,9 +734,12 @@ public class CppCompositeType {
 						getBaseCategoryName("BaseClass_" + base.getBaseClassType().getName());
 					Member baseMember =
 						new Member("", baseDataType, false, null, offset, cn.toString());
-					addPdbMember(myDirectClassPdbMembers, baseMember);
+					orderedBaseMembers.put(offset, baseMember);
 				}
 			}
+		}
+		for (Member baseMember : orderedBaseMembers.values()) {
+			addPdbMember(myDirectClassPdbMembers, baseMember);
 		}
 		return myDirectClassPdbMembers;
 	}
