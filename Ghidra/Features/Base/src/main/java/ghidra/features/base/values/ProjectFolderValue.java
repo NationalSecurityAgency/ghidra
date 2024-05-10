@@ -15,6 +15,8 @@
  */
 package ghidra.features.base.values;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import javax.swing.JComponent;
 import javax.swing.JTextField;
 
@@ -123,7 +125,7 @@ public class ProjectFolderValue extends AbstractValue<DomainFolder> {
 	class ProjectFolderBrowserPanel extends AbstractProjectBrowserPanel {
 
 		ProjectFolderBrowserPanel(Project project, String name, String startPath) {
-			super(DataTreeDialog.CHOOSE_FOLDER, project, name, startPath);
+			super(CHOOSE_FOLDER, project, name, startPath);
 		}
 
 		void setDomainFolder(DomainFolder value) {

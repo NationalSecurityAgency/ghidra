@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.analysis;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import java.awt.Component;
 import java.awt.event.MouseListener;
 import java.beans.PropertyEditorSupport;
@@ -126,7 +128,7 @@ public class ProjectPathChooserEditor extends PropertyEditorSupport {
 		private void displayFileChooser() {
 			AtomicReference<String> result = new AtomicReference<>();
 			DataTreeDialog dataTreeDialog =
-				new DataTreeDialog(this, title, DataTreeDialog.OPEN, filter);
+				new DataTreeDialog(this, title, OPEN, filter);
 			dataTreeDialog.addOkActionListener(e -> {
 				dataTreeDialog.close();
 				DomainFile df = dataTreeDialog.getDomainFile();

@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.service.tracemgr;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.net.ConnectException;
@@ -430,7 +432,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			}
 		};
 
-		return new DataTreeDialog(null, OpenTraceAction.NAME, DataTreeDialog.OPEN, filter);
+		return new DataTreeDialog(null, OpenTraceAction.NAME, OPEN, filter);
 	}
 
 	public DomainFile askTrace(Trace trace) {

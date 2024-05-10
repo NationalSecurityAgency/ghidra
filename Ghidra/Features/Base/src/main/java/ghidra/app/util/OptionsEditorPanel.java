@@ -15,6 +15,8 @@
  */
 package ghidra.app.util;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -276,7 +278,7 @@ public class OptionsEditorPanel extends JPanel {
 		JButton button = new BrowseButton();
 		button.addActionListener(e -> {
 			DataTreeDialog dataTreeDialog =
-				new DataTreeDialog(this, "Choose a project folder", DataTreeDialog.CHOOSE_FOLDER);
+				new DataTreeDialog(this, "Choose a project folder", CHOOSE_FOLDER);
 			String folderPath = lastFolderPath.isBlank() ? "/" : lastFolderPath;
 			dataTreeDialog.setSelectedFolder(project.getProjectData().getFolder(folderPath));
 			dataTreeDialog.showComponent();

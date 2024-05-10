@@ -15,6 +15,8 @@
  */
 package ghidra.plugin.importer;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -571,7 +573,7 @@ public class ImporterDialog extends DialogComponentProvider {
 
 	private void chooseProjectFolder() {
 		DataTreeDialog dataTreeDialog = new DataTreeDialog(getComponent(),
-			"Choose a project folder", DataTreeDialog.CHOOSE_FOLDER);
+			"Choose a project folder", CHOOSE_FOLDER);
 		dataTreeDialog.setSelectedFolder(destinationFolder);
 		dataTreeDialog.showComponent();
 		DomainFolder folder = dataTreeDialog.getDomainFolder();

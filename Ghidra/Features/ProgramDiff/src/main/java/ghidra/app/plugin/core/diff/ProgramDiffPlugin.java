@@ -150,6 +150,8 @@ public class ProgramDiffPlugin extends ProgramPlugin
 	DiffApplySettingsOptionManager applySettingsMgr;
 	private boolean isHighlightCursorLine;
 	private Program activeProgram;
+
+	// this is used for test injection only. In actual use, the dialog is not reused
 	private OpenVersionedFileDialog<Program> openVersionedFileDialog;
 
 	/**
@@ -1141,10 +1143,9 @@ public class ProgramDiffPlugin extends ProgramPlugin
 			return;
 		}
 
-		final OpenVersionedFileDialog<Program> dialog = getOpenVersionedFileDialog();
-
 		List<Program> openProgramList = getOpenProgramList();
-		dialog.setOpenObjectChoices(openProgramList.isEmpty() ? null : openProgramList);
+
+		OpenVersionedFileDialog<Program> dialog = getOpenVersionedFileDialog(openProgramList);
 
 		dialog.addOkActionListener(e -> {
 			tool.clearStatusInfo();
@@ -1186,14 +1187,17 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		return (rc != OptionDialog.OPTION_ONE);
 	}
 
-	private OpenVersionedFileDialog<Program> getOpenVersionedFileDialog() {
+	private OpenVersionedFileDialog<Program> getOpenVersionedFileDialog(
+			List<Program> openPrograms) {
 
+		// This will always be null except during testing.
 		if (openVersionedFileDialog != null) {
 			return openVersionedFileDialog;
 		}
 
 		OpenVersionedFileDialog<Program> dialog =
-			new OpenVersionedFileDialog<>(tool, "Select Other Program", Program.class);
+			new OpenVersionedFileDialog<>(tool, "Select Other Program", Program.class,
+				openPrograms);
 		dialog.setTreeSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 		dialog.setHelpLocation(new HelpLocation("Diff", "Open_Close_Program_View"));
 		return dialog;
