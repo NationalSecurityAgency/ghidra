@@ -15,30 +15,15 @@
  */
 package ghidra.feature.vt.gui.provider.onetomany;
 
-import java.awt.Adjustable;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
-import javax.swing.Icon;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollBar;
-import javax.swing.JTable;
-import javax.swing.JToggleButton;
-import javax.swing.ListSelectionModel;
+import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
+import javax.swing.table.*;
 
 import docking.ActionContext;
 import docking.action.builder.ActionBuilder;
@@ -50,30 +35,17 @@ import generic.theme.GColor;
 import generic.theme.GIcon;
 import ghidra.app.services.FunctionComparisonService;
 import ghidra.feature.vt.api.impl.VTEvent;
-import ghidra.feature.vt.api.main.VTMarkupItem;
-import ghidra.feature.vt.api.main.VTMatch;
-import ghidra.feature.vt.api.main.VTSession;
-import ghidra.feature.vt.gui.actions.AcceptMatchAction;
-import ghidra.feature.vt.gui.actions.ClearMatchAction;
-import ghidra.feature.vt.gui.actions.SetVTMatchFromOneToManyAction;
-import ghidra.feature.vt.gui.filters.Filter;
+import ghidra.feature.vt.api.main.*;
+import ghidra.feature.vt.gui.actions.*;
+import ghidra.feature.vt.gui.filters.*;
 import ghidra.feature.vt.gui.filters.Filter.FilterEditingStatus;
-import ghidra.feature.vt.gui.filters.FilterDialogModel;
-import ghidra.feature.vt.gui.filters.FilterStatusListener;
-import ghidra.feature.vt.gui.plugin.VTController;
-import ghidra.feature.vt.gui.plugin.VTControllerListener;
-import ghidra.feature.vt.gui.plugin.VTPlugin;
-import ghidra.feature.vt.gui.plugin.VTSubToolManager;
-import ghidra.feature.vt.gui.plugin.VTSubToolManagerListener;
+import ghidra.feature.vt.gui.plugin.*;
 import ghidra.feature.vt.gui.provider.markuptable.DisplayableListingAddress;
 import ghidra.feature.vt.gui.provider.matchtable.MatchTableRenderer;
 import ghidra.feature.vt.gui.util.AbstractVTMatchTableModel.StatusTableColumn;
 import ghidra.feature.vt.gui.util.MatchInfo;
 import ghidra.feature.vt.gui.util.MatchStatusRenderer;
-import ghidra.framework.model.DomainObjectChangeRecord;
-import ghidra.framework.model.DomainObjectChangedEvent;
-import ghidra.framework.model.DomainObjectEvent;
-import ghidra.framework.model.EventType;
+import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
@@ -184,6 +156,8 @@ public abstract class VTMatchOneToManyTableProvider extends ComponentProviderAda
 
 	private void compareFunctions(VTMatchOneToManyContext c) {
 		List<VTMatch> selectedMatches = c.getSelectedMatches();
+		Set<Function> leftFunctions = new HashSet<>();
+		Set<Function> rightFunctions = new HashSet<>();
 
 		for (VTMatch match : selectedMatches) {
 			MatchInfo matchInfo = controller.getMatchInfo(match);
@@ -196,10 +170,16 @@ public abstract class VTMatchOneToManyTableProvider extends ComponentProviderAda
 				leftFunction = matchInfo.getDestinationFunction();
 				rightFunction = matchInfo.getSourceFunction();
 			}
+			leftFunctions.add(leftFunction);
+			rightFunctions.add(rightFunction);
 
-			FunctionComparisonService service = tool.getService(FunctionComparisonService.class);
-			service.compareFunctions(leftFunction, rightFunction);
 		}
+		// NOTE: in this case the left functions will always be the same function (ie the one in the
+		// current codebrowser) so leftFunctions will be size one. The rightFunctions will be one or
+		// more since the src/dst match tables contain all possible matches to the current listing
+		// function.
+		FunctionComparisonService service = tool.getService(FunctionComparisonService.class);
+		service.compareFunctions(leftFunctions, rightFunctions);
 	}
 
 	@Override
