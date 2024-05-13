@@ -15,8 +15,6 @@
  */
 package docking.widgets.pathmanager;
 
-import javax.swing.JComponent;
-
 import docking.DialogComponentProvider;
 
 public abstract class AbstractPathsDialog extends DialogComponentProvider {
@@ -26,7 +24,7 @@ public abstract class AbstractPathsDialog extends DialogComponentProvider {
 	protected AbstractPathsDialog(String title) {
 		super(title);
 		tablePanel = newPathnameTablePanel();
-		addWorkPanel(buildWorkPanel());
+		addWorkPanel(tablePanel);
 		addOKButton();
 		addCancelButton();
 		setPreferredSize(600, 400);
@@ -42,11 +40,6 @@ public abstract class AbstractPathsDialog extends DialogComponentProvider {
 	protected void reset() {
 		String[] paths = loadPaths();
 		tablePanel.setPaths(paths);
-	}
-
-	protected JComponent buildWorkPanel() {
-		reset();
-		return tablePanel;
 	}
 
 	@Override
