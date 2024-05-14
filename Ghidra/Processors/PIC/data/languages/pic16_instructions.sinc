@@ -238,13 +238,13 @@ D: "f"		is d=1										{ }
 
 # Absolute address generated from k11 and PCLATH<4:3>
 absAddr11: k11	is k11									{
-	addr:2 = ((zext(PCLATH) & 0x78) << 8) + k11;
+	addr:2 = ((zext(PCLATH) & 0x18) << 8) | k11;
 	export addr; 
 }
 
 @if PROCESSOR == "PIC_16F"
 
-# Absolute address generated from k11 and PCLATH<4:3>
+# Relative address
 relAddr9: addr	is sk9	[ addr = inst_next + sk9; ]								{
 	export *[CODE]:2 addr;
 }
@@ -327,7 +327,7 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 	tmp:1 = addr:1;
 	setAddFlags(tmp, W);
 	tmp = tmp + W;
-	addr = (zext(PCLATH) << 8) + zext(tmp);
+	addr = ((zext(PCLATH) & 0x1F) << 8) | zext(tmp);
 	PCL = tmp;
 	setResultFlags(tmp);
 	goto [addr];
@@ -365,7 +365,7 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 	$(C) = $(C) | tc;
 	val = val + tmpC;
 	
-	addr = (zext(PCLATH) << 8) + zext(val);
+	addr = ((zext(PCLATH) & 0x1F) << 8) | zext(val);
 	PCL = val;
 	setResultFlags(val);
 	goto [addr];
@@ -799,7 +799,7 @@ srcFSRk: sk6"["fsrk"]" is fsrk & sk6 {
 }
 
 :MOVLP imm7				is op7=0x63 & imm7 {
-	PCLATH = imm7;
+	PCLATH = imm7 & 0x1F;
 }
 @endif
 
@@ -831,7 +831,7 @@ srcFSRk: sk6"["fsrk"]" is fsrk & sk6 {
 	#  --00 0000 1fff ffff
 	#  0000 0000 1000 0010	->	MOVWF PCL
 	PCL = W;
-	addr:2 = (zext(PCLATH) << 8) + zext(PCL);
+	addr:2 = ((zext(PCLATH) & 0x1F) << 8) | zext(PCL);
 	goto [addr];
 }
 
