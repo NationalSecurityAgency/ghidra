@@ -8855,7 +8855,7 @@ define pcodeop extractps;
     local low:1 = shift < 64:1;
     local temp:8;
     conditionalAssign(temp,low,XmmReg[0,64] >> shift,XmmReg[64,64] >> (shift - 64));
-    Mem = temp:1;
+    *Mem = temp:1;
 }
 
 :PEXTRD Rmr32, XmmReg, imm8     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x3A; byte=0x16; mod=3 & XmmReg & Rmr32 & check_Rmr32_dest; imm8 
@@ -8874,7 +8874,7 @@ define pcodeop extractps;
     local low:1 = shift < 64:1;
     local temp:8;
     conditionalAssign(temp,low,XmmReg[0,64] >> shift,XmmReg[64,64] >> (shift - 64));
-    Mem = temp:4;
+    *Mem = temp:4;
 }
 
 @ifdef IA64
@@ -8887,7 +8887,9 @@ define pcodeop extractps;
 :PEXTRQ Mem, XmmReg, imm8     is $(LONGMODE_ON) & vexMode=0 & bit64=1 & $(PRE_66) & $(REX_W) & byte=0x0F; byte=0x3A; byte=0x16; XmmReg ... & Mem; imm8 
 { 
     local high:1 = imm8 & 0x1;
-    conditionalAssign(Mem,high,XmmReg[64,64],XmmReg[0,64]);
+    local temp:8;
+    conditionalAssign(temp,high,XmmReg[64,64],XmmReg[0,64]);
+    *Mem = temp;
 }
 @endif
 
