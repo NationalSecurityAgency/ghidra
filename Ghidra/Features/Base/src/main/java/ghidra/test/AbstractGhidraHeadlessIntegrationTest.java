@@ -180,7 +180,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 * @return result of command applyTo method
 	 * @throws RollbackException thrown if thrown by command applyTo method
 	 */
-	public static boolean applyCmd(Program program, Command cmd) throws RollbackException {
+	public static boolean applyCmd(Program program, Command<Program> cmd) throws RollbackException {
 		int txId = program.startTransaction(cmd.getName());
 		boolean commit = true;
 		try {
@@ -496,6 +496,11 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 		ProgramSelection selection = new ProgramSelection(addresses);
 		tool.firePluginEvent(new ProgramSelectionPluginEvent("Test", selection, p));
 		waitForSwing();
+	}
+
+	public void clearSelection(PluginTool tool, Program p) {
+		AddressSet set = new AddressSet();
+		makeSelection(tool, p, set);
 	}
 
 	/**

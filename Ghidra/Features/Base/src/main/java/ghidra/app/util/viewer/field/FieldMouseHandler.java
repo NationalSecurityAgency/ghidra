@@ -15,13 +15,12 @@
  */
 package ghidra.app.util.viewer.field;
 
-import ghidra.app.nav.Navigatable;
-import ghidra.framework.plugintool.ServiceProvider;
-import ghidra.program.util.ProgramLocation;
-
 import java.awt.event.MouseEvent;
 
 import docking.widgets.fieldpanel.field.Field;
+import ghidra.app.nav.Navigatable;
+import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.program.util.ProgramLocation;
 
 public interface FieldMouseHandler {
 	/**
@@ -32,16 +31,17 @@ public interface FieldMouseHandler {
 	 * @param clickedObject The object that was clicked
 	 * @param sourceNavigatable The source navigatable that was clicked upon.
 	 * @param programLocation The location at the time the click was made. Due to swing delay, this
-	 * location may not be the same as you would get if you asked the navagatable for the current
+	 * location may not be the same as you would get if you asked the navigatable for the current
 	 * location.SC
 	 * @param mouseEvent The mouse event that triggered the click
 	 * @param serviceProvider A service provider used to access system resources.
 	 * @return true if this handler wishes to have exclusive handling rights to processing the
 	 *         <code>clickedObject</code>
-	 * @see   ListingField#getClickedObject(ghidra.util.bean.field.FieldLocation)
+	 * @see ListingField#getClickedObject(docking.widgets.fieldpanel.support.FieldLocation)
 	 */
 	public boolean fieldElementClicked(Object clickedObject, Navigatable sourceNavigatable,
-			ProgramLocation programLocation, MouseEvent mouseEvent, ServiceProvider serviceProvider);
+			ProgramLocation programLocation, MouseEvent mouseEvent,
+			ServiceProvider serviceProvider);
 
 	/**
 	 * Returns an array of types that this handler wishes to handle.

@@ -70,7 +70,8 @@
 		<logger name="ghidra.app.script" level="INFO" />
 		<logger name="ghidra.app.util.importer" level="INFO" />
 		<logger name="ghidra.app.util.opinion" level="DEBUG" />
-		<logger name="ghidra.util.classfinder" level="DEBUG" />			
+		<logger name="ghidra.util.classfinder" level="DEBUG" />
+		<logger name="ghidra.util.extensions" />	
 		<logger name="ghidra.util.task" level="DEBUG" />	
 		<logger name="functioncalls" level="DEBUG" />	
 		<logger name="org.jungrapht.visualization" level="WARN" />
