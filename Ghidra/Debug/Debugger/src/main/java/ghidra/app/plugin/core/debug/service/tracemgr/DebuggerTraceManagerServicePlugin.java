@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.service.tracemgr;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.net.ConnectException;
@@ -430,12 +432,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			}
 		};
 
-		// TODO regarding the hack note below, I believe this issue ahs been fixed, but not sure how to test
-		return new DataTreeDialog(null, OpenTraceAction.NAME, DataTreeDialog.OPEN, filter) {
-			{ // TODO/HACK: Why the NPE if I don't do this?
-				dialogShown();
-			}
-		};
+		return new DataTreeDialog(null, OpenTraceAction.NAME, OPEN, filter);
 	}
 
 	public DomainFile askTrace(Trace trace) {

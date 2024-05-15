@@ -61,6 +61,56 @@ import ghidra.util.task.TaskMonitor;
  * don't know if it's really valuable. In fact, in might obscure the fact that the stack is absent.
  */
 public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest {
+	public static final String CTX_XML = """
+			<context>
+			    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
+			        <attribute name='Processes' schema='ProcessContainer' />
+			    </schema>
+			    <schema name='ProcessContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element schema='Process' />
+			    </schema>
+			    <schema name='Process' elementResync='NEVER' attributeResync='ONCE'>
+			        <attribute name='Threads' schema='ThreadContainer' />
+			        <attribute name='Memory' schema='RegionContainer' />
+			    </schema>
+			    <schema name='ThreadContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element schema='Thread' />
+			    </schema>
+			    <schema name='Thread' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='Thread' />
+			        <interface name='Aggregate' />
+			        <attribute name='Stack' schema='Stack' />
+			        <attribute name='Registers' schema='RegisterContainer' />
+			    </schema>
+			    <schema name='Stack' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <interface name='Stack' />
+			        <element schema='Frame' />
+			    </schema>
+			    <schema name='Frame' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='StackFrame' />
+			        <interface name='Activatable' />
+			    </schema>
+			    <schema name='RegisterContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='NEVER'>
+			        <interface name='RegisterContainer' />
+			        <element schema='Register' />
+			    </schema>
+			    <schema name='Register' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='Register' />
+			    </schema>
+			    <schema name='RegionContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element schema='Region' />
+			    </schema>
+			    <schema name='Region' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='MemoryRegion' />
+			    </schema>
+			</context>
+			""";
+
 	protected DebuggerStackPlugin stackPlugin;
 	protected DebuggerStackProvider stackProvider;
 	protected DebuggerStaticMappingService mappingService;
@@ -111,54 +161,7 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 
 	public void activateObjectsMode() throws Exception {
 		// NOTE the use of index='1' allowing object-based managers to ID unique path
-		ctx = XmlSchemaContext.deserialize("""
-				<context>
-				    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
-				        <attribute name='Processes' schema='ProcessContainer' />
-				    </schema>
-				    <schema name='ProcessContainer' canonical='yes' elementResync='NEVER'
-				            attributeResync='ONCE'>
-				        <element schema='Process' />
-				    </schema>
-				    <schema name='Process' elementResync='NEVER' attributeResync='ONCE'>
-				        <attribute name='Threads' schema='ThreadContainer' />
-				        <attribute name='Memory' schema='RegionContainer' />
-				    </schema>
-				    <schema name='ThreadContainer' canonical='yes' elementResync='NEVER'
-				            attributeResync='ONCE'>
-				        <element schema='Thread' />
-				    </schema>
-				    <schema name='Thread' elementResync='NEVER' attributeResync='NEVER'>
-				        <interface name='Thread' />
-				        <interface name='Aggregate' />
-				        <attribute name='Stack' schema='Stack' />
-				        <attribute name='Registers' schema='RegisterContainer' />
-				    </schema>
-				    <schema name='Stack' canonical='yes' elementResync='NEVER'
-				            attributeResync='ONCE'>
-				        <interface name='Stack' />
-				        <element schema='Frame' />
-				    </schema>
-				    <schema name='Frame' elementResync='NEVER' attributeResync='NEVER'>
-				        <interface name='StackFrame' />
-				    </schema>
-				    <schema name='RegisterContainer' canonical='yes' elementResync='NEVER'
-				            attributeResync='NEVER'>
-				        <interface name='RegisterContainer' />
-				        <element schema='Register' />
-				    </schema>
-				    <schema name='Register' elementResync='NEVER' attributeResync='NEVER'>
-				        <interface name='Register' />
-				    </schema>
-				    <schema name='RegionContainer' canonical='yes' elementResync='NEVER'
-				            attributeResync='ONCE'>
-				        <element schema='Region' />
-				    </schema>
-				    <schema name='Region' elementResync='NEVER' attributeResync='NEVER'>
-				        <interface name='MemoryRegion' />
-				    </schema>
-				</context>
-				""");
+		ctx = XmlSchemaContext.deserialize(CTX_XML);
 
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getObjectManager().createRootObject(ctx.getSchema(new SchemaName("Session")));
@@ -226,8 +229,8 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerTest 
 		DynamicTableColumn<ValueRow, ?, Trace> pcCol = QueryPanelTestHelper
 				.getColumnByNameAndType(tableModel, table, "PC", ValueProperty.class)
 				.column();
-		DynamicTableColumn<ValueRow, Function, Trace> funcCol = QueryPanelTestHelper
-				.getColumnByNameAndType(tableModel, table, "Function", Function.class)
+		DynamicTableColumn<ValueRow, ?, Trace> funcCol = QueryPanelTestHelper
+				.getColumnByNameAndType(tableModel, table, "Function", ValueProperty.class)
 				.column();
 
 		assertEquals(PathUtils.makeKey(PathUtils.makeIndex(level)), rowColVal(row, levelCol));

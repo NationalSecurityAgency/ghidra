@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.gui.tracermi.launcher;
 
+import static ghidra.app.plugin.core.debug.gui.tracermi.launcher.TraceRmiLauncherServicePlugin.getProgramName;
+
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -52,7 +54,7 @@ public class LaunchAction extends MultiActionDockingAction {
 		Program program = plugin.currentProgram;
 		String title = program == null
 				? "Configure and Launch ..."
-				: "Configure and Launch %s using...".formatted(program.getName());
+				: "Configure and Launch %s using...".formatted(getProgramName(program));
 		return Stream.concat(Stream.of(title), menuPath.stream()).toArray(String[]::new);
 	}
 
@@ -77,12 +79,12 @@ public class LaunchAction extends MultiActionDockingAction {
 			Long last = saved.get(offer.getConfigName());
 			if (last == null) {
 				// NB. If program == null, this will always happen.
-				// Thus, no worries about program.getName() below.
+				// Thus, no worries about getProgramName(program) below.
 				continue;
 			}
 			String title = program == null
 					? "Re-launch " + offer.getTitle()
-					: "Re-launch %s using %s".formatted(program.getName(), offer.getTitle());
+					: "Re-launch %s using %s".formatted(getProgramName(program), offer.getTitle());
 			actions.add(new ActionBuilder(offer.getConfigName(), plugin.getName())
 					.popupMenuPath(title)
 					.popupMenuGroup("0", "%016x".formatted(Long.MAX_VALUE - last))
@@ -158,11 +160,11 @@ public class LaunchAction extends MultiActionDockingAction {
 			return "Configure and launch";
 		}
 		if (offer == null) {
-			return "Configure and launch " + program.getName();
+			return "Configure and launch " + getProgramName(program);
 		}
 		if (program == null) {
 			return "Re-launch " + offer.getTitle();
 		}
-		return "Re-launch %s using %s".formatted(program.getName(), offer.getTitle());
+		return "Re-launch %s using %s".formatted(getProgramName(program), offer.getTitle());
 	}
 }

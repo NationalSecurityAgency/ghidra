@@ -13,21 +13,16 @@
   <BODY lang="EN-US">
     <H1><A name="plugin"></A>Debugger: Modules and Sections</H1>
 
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" border="1" src=
-          "images/DebuggerModulesPlugin.png"></TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+    <DIV class="image">
+      <IMG alt="" src="images/DebuggerModulesPlugin.png">
+    </DIV>
 
     <P>The concept of a module may vary from platform to platform, but in most cases, it refers to
     a binary image which is loaded or mapped into memory comprising some portion of the target's
     executable code. Likely, these are the same files that Ghidra can import for static analysis.
     Similarly, the concept of a section may vary, but in most cases, it refers to a portion of a
     module, possibly backed by its binary image. This window displays information about modules,
-    and sometimes their sections, known to the connected debugger. Information in this window
+    and sometimes their sections, known to the back-end debugger. Information in this window
     reflects what has been recorded into the current trace, which in turn comes from a target. The
     top table displays module information, while the bottom table displays section information.</P>
 
@@ -36,39 +31,45 @@
     <P>The top table, which lists modules, has the following columns:</P>
 
     <UL>
-      <LI>Base Address - if available, the minimum address where the module is mapped in the
-      target's memory. Double-clicking this field navigates to the address.</LI>
+      <LI>Base - if available, the minimum address where the module is mapped in the target's
+      memory. Double-clicking this field navigates to the address.</LI>
 
-      <LI>Max Address - if available, the maximum address where the module is mapped in the
-      target's memory. Double-clicking this field navigates to the address.</LI>
+      <LI>Max - if available, the maximum address where the module is mapped in the target's
+      memory. Double-clicking this field navigates to the address.</LI>
 
       <LI>Name - a short name for the module, typically its file name.</LI>
 
-      <LI>Module Name - the name of the module, ideally its full path on the target's
-      filesystem.</LI>
-
-      <LI>Lifespan - denotes the recorded load and unload times of the module, i.e., the span of
-      time for which the module record is applicable.</LI>
+      <LI>Mapping - if mapped to a Ghidra program database, the name of that program. An asterisk
+      is appended if the mapping only covers the module partially. If multiple mappings cover the
+      module, they are all listed.</LI>
 
       <LI>Length - the length from base address to max address, inclusive. Note that not every page
       in the range is necessarily mapped.</LI>
+
+      <LI>Path - the path of the module object in the target's model. This is hidden by default.
+      See the <A href="help/topics/DebuggerModelPlugin/DebuggerModelPlugin.html">Model</A>
+      window.</LI>
     </UL>
 
     <P>The bottom table, which lists sections, has the following columns:</P>
 
     <UL>
-      <LI>Start Address - the minimum virtual memory address of the section. Double-clicking this
-      field navigates to the address.</LI>
+      <LI>Start - the minimum memory address of the section. Double-clicking this field navigates
+      to the address.</LI>
 
-      <LI>End Address - the maximum virtual memory address of the section. Double-clicking this
-      field navigates to the address.</LI>
+      <LI>End - the maximum memory address of the section. Double-clicking this field navigates to
+      the address.</LI>
 
-      <LI>Section Name - the name of the section given by the debugger, usually the same as the
-      name given in the module's header.</LI>
+      <LI>Name - the name of the section given by the debugger, usually the name given in the
+      module binary's header.</LI>
 
       <LI>Module Name - the name of the module containing this section.</LI>
 
       <LI>Length - the number of bytes in the section.</LI>
+
+      <LI>Path - the path of the section object in the target's model. This is hidden by default.
+      See the <A href="help/topics/DebuggerModelPlugin/DebuggerModelPlugin.html">Model</A>
+      window.</LI>
     </UL>
 
     <H2>Actions</H2>
@@ -81,7 +82,7 @@
     <P>This action is available from a module's or section's pop-up menu. It prompts the user to
     import the module from the local file system into Ghidra as a static image.</P>
 
-    <H3><A name="auto_map"></A>Auto-Map</H3>
+    <H3><A name="auto_map"></A><IMG alt="" src="icon.debugger.map.auto"> Auto-Map</H3>
 
     <P>This action is always available. It automatically maps trace memory to static images, using
     Module, Section, or Region information. See the <A href="#map_modules">Map Modules</A>, <A
@@ -91,14 +92,15 @@
     corresponding action whenever the relevant table is updated. By default, it automatically maps
     using Modules.</P>
 
-    <H3><A name="map_identically"></A>Map Identically</H3>
+    <H3><A name="map_identically"></A><IMG alt="" src="icon.debugger.map.identically"> Map
+    Identically</H3>
 
     <P>This action is available when both a trace and a program are opened. It maps the current
     trace to the current program using identical addresses. This action ignores the module list. It
     is a suitable mapping when the current program is loaded in the trace <EM>without
     relocation</EM>. It is also a fallback worth trying in the absence of a module list.</P>
 
-    <H3><A name="map_manually"></A>Map Manually</H3>
+    <H3><A name="map_manually"></A><IMG alt="" src="icon.debugger.map.manual"> Map Manually</H3>
 
     <P>This action is always available. It simply displays the <A href=
     "help/topics/DebuggerStaticMappingPlugin/DebuggerStaticMappingPlugin.html">Static Mappings</A>
@@ -114,14 +116,9 @@
     the user can cause the mapper to re-use the memorized mapping in future sessions. The memorized
     module name is saved to the program database.</P>
 
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" src=
-          "images/DebuggerModuleMapProposalDialog.png"></TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+    <DIV class="image">
+      <IMG alt="" src="images/DebuggerModuleMapProposalDialog.png">
+    </DIV>
 
     <H3><A name="map_module_to"></A>Map Module to Current Program</H3>
 
@@ -136,14 +133,9 @@
     blocks matching the selected sections and proposes new mappings. Users who prefer this to Map
     Modules should also consider setting <A href="#auto_map">Auto-Map</A> to use Sections.</P>
 
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" src=
-          "images/DebuggerSectionMapProposalDialog.png"></TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+    <DIV class="image">
+      <IMG alt="" src="images/DebuggerSectionMapProposalDialog.png">
+    </DIV>
 
     <H3><A name="map_sections_to"></A>Map Sections to Current Program</H3>
 
@@ -157,34 +149,39 @@
     It behaves like Map Sections, except that it will propose the selected section be mapped to the
     block containing the cursor in the static listing.</P>
 
-    <H3><A name="import_missing_module"></A>Import Missing Module</H3>
+    <H3><A name="import_missing_module"></A><IMG alt="" src="icon.debugger.import"> Import Missing
+    Module</H3>
 
     <P>This action is offered to resolve a "missing module" console message. It is equivalent to <A
     href="#import_from_fs">Import From File System</A> on the missing module.</P>
 
-    <H3><A name="map_missing_module"></A>Map Missing Module</H3>
+    <H3><A name="map_missing_module"></A><IMG alt="" src="icon.debugger.map.modules"> Map Missing
+    Module</H3>
 
     <P>This action is offered to resolve a "missing module" console message. It is equivalent to <A
     href="#map_module_to">Map Module To</A> on the missing module.</P>
 
-    <H3><A name="show_sections_table"></A>Show Sections Table</H3>
+    <H3><A name="show_sections_table"></A><IMG alt="" src="icon.debugger.modules.table.sections">
+    Show Sections Table</H3>
 
     <P>This actions is always available. By default the sections table (bottom) is showing. Some
     debuggers do not offer section information, and even for those that do, it can be expensive to
     retrieve it. The visibility of the section table is controlled by toggling this action.</P>
 
-    <H3><A name="filter_by_module"></A>Filter Sections by Module</H3>
+    <H3><A name="filter_by_module"></A><IMG alt="" src="icon.debugger.filter"> Filter Sections by
+    Module</H3>
 
     <P>This action is always available. By default the bottom table displays all sections in the
     current trace. When this toggle is enabled, and at least one module is selected, the bottom
     table will only include sections contained by a selected module.</P>
 
-    <H3><A name="select_addresses"></A>Select Addresses</H3>
+    <H3><A name="select_addresses"></A><IMG alt="" src="icon.debugger.select.addresses"> Select
+    Addresses</H3>
 
     <P>This action is available when at least one module or section is selected. It selects all
     addresses in the dynamic listing contained by the selected modules or sections.</P>
 
-    <H3><A name="select_rows"></A>Select Rows</H3>
+    <H3><A name="select_rows"></A><IMG alt="" src="icon.debugger.select.rows"> Select Rows</H3>
 
     <P>This action is available when the dynamic listing's cursor is at a valid location. It
     selects the module and section, if applicable, containing that cursor. If the dynamic listing

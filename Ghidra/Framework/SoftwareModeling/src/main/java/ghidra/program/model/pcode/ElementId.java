@@ -268,6 +268,7 @@ public record ElementId(String name, int id) {
 	public static final ElementId ELEM_RETPARAM = new ElementId("retparam", 171);
 	public static final ElementId ELEM_RETURNSYM = new ElementId("returnsym", 172);
 	public static final ElementId ELEM_UNAFFECTED = new ElementId("unaffected", 173);
+	public static final ElementId ELEM_INTERNAL_STORAGE = new ElementId("internal_storage", 286);
 
 	// options
 	public static final ElementId ELEM_ALIASBLOCK = new ElementId("aliasblock", 174);
@@ -456,5 +457,5 @@ public record ElementId(String name, int id) {
 		new ElementId("join_per_primitive", 283);
 	public static final ElementId ELEM_JOIN_DUAL_CLASS = new ElementId("join_dual_class", 285);
 
-	public static final ElementId ELEM_UNKNOWN = new ElementId("XMLunknown", 286);
+	public static final ElementId ELEM_UNKNOWN = new ElementId("XMLunknown", 287);
 }

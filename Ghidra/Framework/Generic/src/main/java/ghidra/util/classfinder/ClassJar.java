@@ -36,7 +36,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import utility.application.ApplicationLayout;
 
-class ClassJar extends ClassLocation {
+class ClassJar implements ClassLocation {
 
 	/** 
 	 * Pattern for matching jar files in a module lib dir
@@ -51,6 +51,7 @@ class ClassJar extends ClassLocation {
 	private static final String PATCH_DIR_PATH_FORWARD_SLASHED = getPatchDirPath();
 	private static final Set<String> USER_PLUGIN_PATHS = loadUserPluginPaths();
 
+	private Set<ClassFileInfo> classes = new HashSet<>();
 	private String path;
 
 	ClassJar(String path, TaskMonitor monitor) throws CancelledException {
@@ -61,8 +62,7 @@ class ClassJar extends ClassLocation {
 	}
 
 	@Override
-	protected void getClasses(Set<Class<?>> set, TaskMonitor monitor) {
-		checkForDuplicates(set);
+	public void getClasses(Set<ClassFileInfo> set, TaskMonitor monitor) {
 		set.addAll(classes);
 	}
 
@@ -174,9 +174,9 @@ class ClassJar extends ClassLocation {
 		name = name.substring(0, name.indexOf(CLASS_EXT));
 		name = name.replace('/', '.');
 
-		Class<?> c = ClassFinder.loadExtensionPoint(path, name);
-		if (c != null) {
-			classes.add(c);
+		String epName = ClassSearcher.getExtensionPointSuffix(name);
+		if (epName != null) {
+			classes.add(new ClassFileInfo(path, name, epName));
 		}
 	}
 

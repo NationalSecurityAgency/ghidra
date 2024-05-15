@@ -38,6 +38,7 @@ import ghidra.debug.api.tracermi.TraceRmiLaunchOffer.LaunchConfigurator;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer.PromptMode;
 import ghidra.debug.spi.tracermi.TraceRmiLaunchOpinion;
 import ghidra.formats.gfilesystem.FSRL;
+import ghidra.framework.model.DomainFile;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -58,7 +59,7 @@ import ghidra.util.xml.XmlUtilities;
 			""",
 	category = PluginCategoryNames.DEBUGGER,
 	packageName = DebuggerPluginPackage.NAME,
-	status = PluginStatus.UNSTABLE,
+	status = PluginStatus.RELEASED,
 	eventsConsumed = {
 		ProgramActivatedPluginEvent.class,
 		ProgramClosedPluginEvent.class,
@@ -236,10 +237,18 @@ public class TraceRmiLauncherServicePlugin extends Plugin
 		executeTask(new ConfigureAndLaunchTask(offer));
 	}
 
+	protected static String getProgramName(Program program) {
+		DomainFile df = program.getDomainFile();
+		if (df != null) {
+			return df.getName();
+		}
+		return program.getName();
+	}
+
 	protected String[] constructLaunchMenuPrefix() {
 		return new String[] {
 			DebuggerPluginPackage.NAME,
-			"Configure and Launch " + currentProgram.getName() + " using..." };
+			"Configure and Launch " + getProgramName(currentProgram) + " using..." };
 	}
 
 	protected String[] prependConfigAndLaunch(List<String> menuPath) {

@@ -15,6 +15,8 @@
  */
 package ghidra.feature.vt.gui.wizard;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import java.awt.*;
 import java.util.*;
 
@@ -236,7 +238,7 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 	 */
 	private void browseDataTreeFolders() {
 		final DataTreeDialog dataTreeDialog =
-			new DataTreeDialog(this, "Choose a project folder", DataTreeDialog.CHOOSE_FOLDER);
+			new DataTreeDialog(this, "Choose a project folder", CHOOSE_FOLDER);
 
 		dataTreeDialog.addOkActionListener(e -> {
 			dataTreeDialog.close();

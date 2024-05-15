@@ -81,6 +81,9 @@ public class EmbeddedMediaAnalyzer extends AbstractAnalyzer {
 		addByteSearchPattern(searcher, program, foundMedia, new WAVEDataType(), "WAVE",
 			WAVEDataType.MAGIC, WAVEDataType.MAGIC_MASK);
 
+		addByteSearchPattern(searcher, program, foundMedia, new MIDIDataType(), "MIDI",
+			MIDIDataType.MAGIC, MIDIDataType.MAGIC_MASK);
+
 		addByteSearchPattern(searcher, program, foundMedia, new AUDataType(), "AU",
 			AUDataType.MAGIC, AUDataType.MAGIC_MASK);
 

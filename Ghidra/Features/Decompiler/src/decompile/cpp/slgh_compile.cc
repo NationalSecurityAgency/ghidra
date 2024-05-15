@@ -3706,6 +3706,7 @@ static void findSlaSpecs(vector<string> &res, const string &dir, const string &s
 /// \param enforceLocalKeyWord is \b true to force all local variable definitions to use the \b local keyword
 /// \param largeTemporaryWarning is \b true for individual warnings about temporary varnodes that are too large
 /// \param caseSensitiveRegisterNames is \b true if register names are allowed to be case sensitive
+/// \param debugOutput is \b true if the output file is written using the debug (XML) form of the .sla format
 void SleighCompile::setAllOptions(const map<string,string> &defines, bool unnecessaryPcodeWarning,
 				  bool lenientConflict, bool allCollisionWarning,
 				  bool allNopWarning,bool deadTempWarning,bool enforceLocalKeyWord,

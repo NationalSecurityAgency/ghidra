@@ -57,6 +57,25 @@ import ghidra.util.table.GhidraTable;
 
 @Category(NightlyCategory.class)
 public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerTest {
+	public static final String CTX_XML = """
+			<context>
+			    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
+			        <attribute name='Memory' schema='RegionContainer' />
+			    </schema>
+			    <schema name='RegionContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='ONCE'>
+			        <element schema='Region' />
+			    </schema>
+			    <schema name='Region' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='MemoryRegion' />
+			        <attribute name='_display' schema='STRING' hidden='yes' />
+			        <attribute name='_range' schema='RANGE' hidden='yes' />
+			        <attribute name='_readable' schema='BOOL' hidden='yes' />
+			        <attribute name='_writable' schema='BOOL' hidden='yes' />
+			        <attribute name='_executable' schema='BOOL' hidden='yes' />
+			    </schema>
+			</context>
+			""";
 
 	DebuggerRegionsProvider provider;
 
@@ -82,25 +101,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerTes
 	}
 
 	public void activateObjectsMode() throws Exception {
-		ctx = XmlSchemaContext.deserialize("""
-				<context>
-				    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
-				        <attribute name='Memory' schema='RegionContainer' />
-				    </schema>
-				    <schema name='RegionContainer' canonical='yes' elementResync='NEVER'
-				            attributeResync='ONCE'>
-				        <element schema='Region' />
-				    </schema>
-				    <schema name='Region' elementResync='NEVER' attributeResync='NEVER'>
-				        <interface name='MemoryRegion' />
-				        <attribute name='_display' schema='STRING' hidden='yes' />
-				        <attribute name='_range' schema='RANGE' hidden='yes' />
-				        <attribute name='_readable' schema='BOOL' hidden='yes' />
-				        <attribute name='_writable' schema='BOOL' hidden='yes' />
-				        <attribute name='_executable' schema='BOOL' hidden='yes' />
-				    </schema>
-				</context>
-				""");
+		ctx = XmlSchemaContext.deserialize(CTX_XML);
 
 		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getObjectManager().createRootObject(ctx.getSchema(new SchemaName("Session")));

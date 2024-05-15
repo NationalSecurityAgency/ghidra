@@ -24,6 +24,7 @@ import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.*;
 import ghidra.framework.store.FileSystem;
 import ghidra.util.InvalidNameException;
+import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -45,8 +46,7 @@ public class FolderLinkContentHandler extends LinkHandler<NullFolderDomainObject
 		if (!(obj instanceof URLLinkObject)) {
 			throw new IOException("Unsupported domain object: " + obj.getClass().getName());
 		}
-		return createFile((URLLinkObject) obj, FOLDER_LINK_CONTENT_TYPE, fs, path, name,
-			monitor);
+		return createFile((URLLinkObject) obj, FOLDER_LINK_CONTENT_TYPE, fs, path, name, monitor);
 	}
 
 	@Override
@@ -91,6 +91,11 @@ public class FolderLinkContentHandler extends LinkHandler<NullFolderDomainObject
 		URL url = getURL(folderLinkFile);
 
 		Project activeProject = AppInfo.getActiveProject();
+		if (activeProject == null) {
+			Msg.error(FolderLinkContentHandler.class,
+				"Use of Linked Folders requires active project.");
+			return null;
+		}
 		GhidraFolder parent = ((GhidraFile) folderLinkFile).getParent();
 		return new LinkedGhidraFolder(activeProject, parent, folderLinkFile.getName(), url);
 	}

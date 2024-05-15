@@ -107,7 +107,7 @@ public class MemoryBlockDB implements MemoryBlock {
 	 * @return collection of blocks which map onto this block or null if none identified
 	 */
 	Collection<MemoryBlockDB> getMappedBlocks() {
-		memMap.buildAddressSets(); // updates mappedBlocks if needed
+		memMap.buildAddressSets(false); // updates mappedBlocks if needed
 		return mappedBlocks;
 	}
 

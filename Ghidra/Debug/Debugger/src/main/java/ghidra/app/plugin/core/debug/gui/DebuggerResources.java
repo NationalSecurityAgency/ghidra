@@ -119,7 +119,7 @@ public interface DebuggerResources {
 	Icon ICON_STACK = new GIcon("icon.debugger.provider.stack");
 	Icon ICON_BREAKPOINTS = new GIcon("icon.debugger.provider.breakpoints");
 	Icon ICON_MODULES = new GIcon("icon.debugger.provider.modules");
-	Icon ICON_MAPPINGS = ICON_PROGRAM; // TODO: A better icon 
+	Icon ICON_MAPPINGS = new GIcon("icon.debugger.provider.mappings"); // TODO: A better icon
 	Icon ICON_PCODE = new GIcon("icon.debugger.provider.pcode"); // TODO
 	Icon ICON_REGIONS = new GIcon("icon.debugger.provider.regions");
 	Icon ICON_TIME = new GIcon("icon.debugger.provider.time");
@@ -132,7 +132,7 @@ public interface DebuggerResources {
 	Icon ICON_DELETE = new GIcon("icon.debugger.delete");
 	Icon ICON_CLEAR = new GIcon("icon.debugger.clear");
 	Icon ICON_REFRESH = new GIcon("icon.debugger.refresh");
-	Icon ICON_FILTER = new GIcon("icon.debugger.filter"); // Eww.
+	Icon ICON_FILTER = new GIcon("icon.debugger.filter");
 	Icon ICON_SELECT_ROWS = new GIcon("icon.debugger.select.rows");
 	Icon ICON_AUTOREAD = new GIcon("icon.debugger.autoread");
 
@@ -149,6 +149,8 @@ public interface DebuggerResources {
 	Icon ICON_MAP_MODULES = new GIcon("icon.debugger.map.modules");
 	Icon ICON_MAP_SECTIONS = new GIcon("icon.debugger.map.sections"); // TODO
 	Icon ICON_MAP_REGIONS = new GIcon("icon.debugger.map.regions"); // TODO
+	Icon ICON_MAP_AUTO = new GIcon("icon.debugger.map.auto");
+	Icon ICON_MAP_MANUALLY = new GIcon("icon.debugger.map.manual");
 	Icon ICON_BLOCK = new GIcon("icon.debugger.block"); // TODO
 	// TODO: Draw an icon
 	Icon ICON_SELECT_ADDRESSES = new GIcon("icon.debugger.select.addresses");
@@ -1510,21 +1512,6 @@ public interface DebuggerResources {
 					.menuPath(DebuggerPluginPackage.NAME, NAME)
 					.menuGroup(GROUP, "zzz")
 					.keyBinding("CTRL SHIFT N")
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface SynchronizeTargetAction {
-		String NAME = "Synchronize Target Activation";
-		String DESCRIPTION = "Synchronize trace activation with debugger focus/select";
-		Icon ICON = ICON_SYNC;
-		String HELP_ANCHOR = "sync_target";
-
-		static ToggleActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ToggleActionBuilder(NAME, ownerName).description(DESCRIPTION)
-					.menuPath(NAME)
-					.menuIcon(ICON)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}

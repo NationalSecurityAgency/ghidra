@@ -63,6 +63,7 @@ public class ActionChooserDialog extends DialogComponentProvider {
 			"This dialog initialy shows only locally relevant actions. Repeat initial keybinding " +
 				"to show More. Use up down arrows to scroll through list of actions and press" +
 				" enter to invoke selected action. Type text to filter list.");
+		setOkEnabled(false);
 	}
 
 	@Override
@@ -290,6 +291,10 @@ public class ActionChooserDialog extends DialogComponentProvider {
 				SearchListEntry<DockingActionIf> value, int index, boolean isSelected,
 				boolean hasFocus) {
 			super.getListCellRendererComponent(list, value, index, isSelected, hasFocus);
+			if (model.isDisposed()) {
+				// Some UIs may call the renderer on focus lost after the dialog is closed.
+				return this;
+			}
 			DockingActionIf action = value.value();
 			String category = value.category();
 			Icon icon = getIcon(action, category);
@@ -308,7 +313,8 @@ public class ActionChooserDialog extends DialogComponentProvider {
 			Color fgName = getForeground(); // defaults to list foreground; handles selected state
 			Color fgKeyBinding = isSelected ? getForeground() : Messages.HINT;
 
-			if (!action.isEnabled()) {
+			ActionContext context = model.getContext();
+			if (!(action.isValidContext(context) && action.isEnabledForContext(context))) {
 				fgName = isSelected ? getForeground() : Colors.FOREGROUND_DISABLED;
 				fgKeyBinding = isSelected ? getForeground() : Colors.FOREGROUND_DISABLED;
 				disabledText = isSelected ? " <I>disabled</I>" : "";

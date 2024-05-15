@@ -24,7 +24,10 @@ public class SarifLevelResultHandler extends SarifResultHandler  {
 	}
 
 	public String parse() {
-		return result.getLevel().toString();
+		if (result.getLevel() != null) {
+			return result.getLevel().toString();
+		}
+		return "none";
 	}
 	
 }

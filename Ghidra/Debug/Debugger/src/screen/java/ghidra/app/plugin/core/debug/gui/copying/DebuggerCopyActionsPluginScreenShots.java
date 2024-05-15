@@ -20,18 +20,17 @@ import java.util.Set;
 import org.junit.*;
 
 import db.Transaction;
-import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest.TestDebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
-import ghidra.app.plugin.core.debug.service.model.DebuggerModelServicePlugin;
+import ghidra.app.plugin.core.debug.service.control.MockTarget;
+import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
+import ghidra.app.plugin.core.debug.service.target.DebuggerTargetServicePlugin;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.services.*;
-import ghidra.dbg.model.TestDebuggerModelBuilder;
-import ghidra.debug.api.action.ActionSource;
-import ghidra.debug.api.model.TraceRecorder;
 import ghidra.framework.model.DomainFolder;
+import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.util.ProgramLocation;
@@ -50,31 +49,26 @@ public class DebuggerCopyActionsPluginScreenShots extends GhidraScreenShotGenera
 
 	ProgramManager programManager;
 	DebuggerTraceManagerService traceManager;
-	DebuggerModelService modelService;
+	DebuggerTargetService targetService;
 	DebuggerStaticMappingServicePlugin mappingService;
 	DebuggerListingPlugin listingPlugin;
 	DebuggerListingProvider listingProvider;
 	DebuggerCopyActionsPlugin copyPlugin;
-	TestDebuggerModelBuilder mb;
 	ToyDBTraceBuilder tb;
 
 	@Before
 	public void setUpMine() throws Throwable {
 		programManager = addPlugin(tool, ProgramManagerPlugin.class);
 		traceManager = addPlugin(tool, DebuggerTraceManagerServicePlugin.class);
-		modelService = addPlugin(tool, DebuggerModelServicePlugin.class);
+		targetService = addPlugin(tool, DebuggerTargetServicePlugin.class);
 		mappingService = addPlugin(tool, DebuggerStaticMappingServicePlugin.class);
 		listingPlugin = addPlugin(tool, DebuggerListingPlugin.class);
 		copyPlugin = addPlugin(tool, DebuggerCopyActionsPlugin.class);
 
 		listingProvider = waitForComponentProvider(DebuggerListingProvider.class);
 
-		mb = new TestDebuggerModelBuilder();
-		mb.createTestModel();
-		mb.createTestProcessesAndThreads();
-		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
-			new TestDebuggerTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
-		tb = new ToyDBTraceBuilder(recorder.getTrace());
+		tb = new ToyDBTraceBuilder("echo", ProgramBuilder._TOY64_BE);
+		targetService.publishTarget(new MockTarget(tb.trace));
 	}
 
 	@After
@@ -90,23 +84,25 @@ public class DebuggerCopyActionsPluginScreenShots extends GhidraScreenShotGenera
 	public void testCaptureDebuggerCopyIntoProgramDialog() throws Throwable {
 		long snap;
 		try (Transaction tx = tb.startTransaction()) {
+			tb.trace.getObjectManager().createRootObject(ProgramEmulationUtils.EMU_SESSION_SCHEMA);
+
 			snap = tb.trace.getTimeManager().createSnapshot("First").getKey();
 			DBTraceMemoryManager mem = tb.trace.getMemoryManager();
-			mem.createRegion(".text", snap, tb.range(0x55550000, 0x5555ffff),
+			mem.createRegion("Memory[.text]", snap, tb.range(0x55550000, 0x5555ffff),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
-			mem.createRegion(".data", snap, tb.range(0x55560000, 0x5556ffff),
+			mem.createRegion("Memory[.data]", snap, tb.range(0x55560000, 0x5556ffff),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.WRITE));
-			mem.createRegion("[stack]", snap, tb.range(0x00100000, 0x001fffff),
+			mem.createRegion("Memory[stack]", snap, tb.range(0x00100000, 0x001fffff),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.WRITE));
 
 			DBTraceModuleManager mods = tb.trace.getModuleManager();
-
 			TraceModule modEcho = mods.addLoadedModule("Modules[/bin/echo]", "/bin/echo",
 				tb.range(0x55550000, 0x5556ffff), snap);
 			modEcho.addSection("Modules[/bin/echo].Sections[.text]", ".text",
 				tb.range(0x55550000, 0x5555ffff));
 			modEcho.addSection("Modules[/bin/echo].Sections[.data]", ".data",
 				tb.range(0x55560000, 0x5556ffff));
+
 		}
 
 		program = createDefaultProgram("echo", "Toy:BE:64:default", this);
@@ -122,7 +118,8 @@ public class DebuggerCopyActionsPluginScreenShots extends GhidraScreenShotGenera
 		}
 
 		DomainFolder root = tool.getProject().getProjectData().getRootFolder();
-		root.createFile(tb.trace.getName(), tb.trace, TaskMonitor.DUMMY);
+		DomainFolder traces = root.createFolder("New Traces");
+		traces.createFile(tb.trace.getName(), tb.trace, TaskMonitor.DUMMY);
 		root.createFile(program.getName(), program, TaskMonitor.DUMMY);
 
 		try (Transaction tx = tb.startTransaction()) {
@@ -136,6 +133,7 @@ public class DebuggerCopyActionsPluginScreenShots extends GhidraScreenShotGenera
 
 		traceManager.openTrace(tb.trace);
 		traceManager.activateTrace(tb.trace);
+		waitForTasks();
 
 		programManager.openProgram(program);
 

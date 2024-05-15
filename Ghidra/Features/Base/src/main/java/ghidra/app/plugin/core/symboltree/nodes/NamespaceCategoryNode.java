@@ -32,7 +32,7 @@ public class NamespaceCategoryNode extends SymbolCategoryNode {
 	public static final Icon CLOSED_FOLDER_NAMESPACES_ICON =
 		new GIcon("icon.plugin.symboltree.node.category.namespace.closed");
 
-	NamespaceCategoryNode(Program program) {
+	public NamespaceCategoryNode(Program program) {
 		super(SymbolCategory.NAMESPACE_CATEGORY, program);
 	}
 

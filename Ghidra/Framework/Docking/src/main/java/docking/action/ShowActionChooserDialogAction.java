@@ -46,6 +46,7 @@ public class ShowActionChooserDialogAction extends DockingAction {
 		Tool tool = DockingWindowManager.getActiveInstance().getTool();
 
 		if (focusedWindow instanceof DockingDialog dialog) {
+			context = dialog.getDialogComponent().getActionContext(null);
 			showActionsDialog(tool, dialog, context);
 		}
 		else if (focusedWindow instanceof DockingFrame dockingFrame) {

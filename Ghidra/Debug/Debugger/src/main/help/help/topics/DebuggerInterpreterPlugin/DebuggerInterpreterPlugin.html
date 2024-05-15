@@ -13,10 +13,14 @@
   <BODY lang="EN-US">
     <H1><A name="plugin"></A><A name="interpreter"></A>Debugger: Interpreters</H1>
 
+    <P><IMG alt="" src="help/shared/note.png">This window only supports the older "Recorder-based"
+    targets. For newer "TraceRmi-based" targets, the actual debugger runs in an integrated VT-100
+    terminal emulator.</P>
+
     <P>For debuggers which have built-in interpreters (many do), and whose connectors expose that
     interpreter in the model, the interpreters plugin can provide user access to it via a graphical
-    console emulator. The plugin leverages the existing interpreter console framework in Ghidra, so
-    the interface should be relatively familiar. Typically, the console is accessed via the Objects
+    console. The plugin leverages the existing interpreter console framework in Ghidra, so the
+    interface should be relatively familiar. Typically, the console is accessed via the Objects
     window's <A href=
     "help/topics/DebuggerObjectsPlugin/DebuggerObjectsPlugin.html#console">Console</A> action.
     Output is displayed in a large text field, and user input is taken via a small text field at

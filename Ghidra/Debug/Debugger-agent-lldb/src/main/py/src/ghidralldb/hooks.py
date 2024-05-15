@@ -105,8 +105,9 @@ class ProcessState(object):
     def record_exited(self, exit_code):
         proc = util.get_process()
         ipath = commands.PROCESS_PATTERN.format(procnum=proc.GetProcessID())
-        commands.STATE.trace.proxy_object_path(
-            ipath).set_value('_exit_code', exit_code)
+        procobj = commands.STATE.trace.proxy_object_path(ipath)
+        procobj.set_value('Exit Code', exit_code)
+        procobj.set_value('State', 'TERMINATED')
 
 
 class BrkState(object):

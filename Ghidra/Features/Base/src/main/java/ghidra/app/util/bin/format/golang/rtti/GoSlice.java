@@ -25,6 +25,7 @@ import ghidra.app.util.bin.format.golang.rtti.types.GoSliceType;
 import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.mem.Memory;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -127,6 +128,12 @@ public class GoSlice implements StructureMarkup<GoSlice> {
 		try {
 			Memory memory = programContext.getProgram().getMemory();
 			Address arrayAddr = getArrayAddress();
+			Instruction arrayInstr =
+				programContext.getProgram().getListing().getInstructionAt(arrayAddr);
+			if (arrayInstr != null) {
+				// if slice array is pointing at an instruction (commonly in switch tables)
+				return false;
+			}
 			return memory.contains(arrayAddr) &&
 				memory.contains(arrayAddr.addNoWrap(len * elementSize));
 		}

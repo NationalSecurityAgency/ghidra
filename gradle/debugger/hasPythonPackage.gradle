@@ -13,63 +13,68 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+ 
+/**
+ * NOTE: Supported Python3 command is established by root project build.gradle
+ */
 
-def checkPythonVersion(String pyCmd) {
-	try {
-		def stdout = new ByteArrayOutputStream()
-		exec {
-			commandLine pyCmd, "-c", "import sys; print('{0}.{1}'.format(*sys.version_info))"
-			standardOutput = stdout
-			standardError = null
-		}
-		def version = "$stdout".strip()
-		return version
-	}
-	catch (Exception e) {
-		return "ABSENT"
-	}
+ext.findPyDep = { name ->
+    File inDeps = file("${DEPS_DIR}/${project.name}/${name}")
+    File inRepo = file("${BIN_REPO}/${getGhidraRelativePath(project)}/${name}")
+    if (inDeps.exists()) {
+        return inDeps
+    }
+    if (inRepo.exists()) {
+        return inRepo
+    }
+    println("Warning: Could not find '${name}' for ${project.name}")
+    return inDeps
 }
-
-ext.SUPPORTED_PY_VERSIONS = ['3.7', '3.8', '3.9', '3.10', '3.11', '3.12']
-
-def findPython3() {
-	for (pyCmd in ['python3', 'python']) {
-		if (checkPythonVersion(pyCmd) in SUPPORTED_PY_VERSIONS) {
-			return pyCmd
-		}
-	}
-	// Don't fail until task execution. Just let "python3" fail.
-	return 'python3'
-}
-
-ext.PYTHON3 = findPython3()
 
 task assemblePyPackage(type: Copy) {
 	from "src/main/py"
 	into "build/pypkg/"
 }
 
-rootProject.tasks.prepDev.dependsOn(assemblePyPackage)
-
-task buildPyPackage(type: Exec) {
+task buildPyPackage {
 	ext.dist = { file("build/pypkg/dist") }
 	inputs.files(assemblePyPackage)
 	outputs.dir(dist)
 
-	workingDir { "build/pypkg" }
-	commandLine PYTHON3, "-m", "build"
+	doLast {
+		File setuptools = project(":Debugger-rmi-trace").findPyDep(".")
+		exec {
+			workingDir { "build/pypkg" }
+			commandLine	rootProject.PYTHON3, "-m", "pip"
+			args "wheel", "-w", "dist/", "--no-index", "--no-deps"
+			args "-f", setuptools
+			args "."
+		}
+	}
 }
 
 // At the moment, any module with a python package also distributes it.
 // We can separate this into `distributePythonPackage` later, if necessary.
 
 rootProject.assembleDistribution {
+	dependsOn(buildPyPackage)
 	def p = this.project
 	def zipPath = getZipPath(p)
 	from (p.assemblePyPackage) {
 		exclude '**/*.pyc'
 		exclude '**/*.pyo'
 		exclude '**/__pycache__/**'
+		exclude 'dist/*.tar.gz'
 		into { zipPath + "/pypkg" }
 	}
+}
+
+ext.distributePyDep = { name ->
+    File dep = findPyDep(name)
+    def zipPath = getZipPath(project) 
+    rootProject.assembleDistribution {
+        into ("${zipPath}/pypkg/dist") {
+            from dep
+        }
+    }
 }

@@ -577,10 +577,5 @@ extern int4 count_leading_zeros(uintb val);		///< Return the number of leading z
 extern uintb coveringmask(uintb val);			///< Return a mask that \e covers the given value
 extern int4 bit_transitions(uintb val,int4 sz);		///< Calculate the number of bit transitions in the sized value
 
-extern void mult64to128(uint8 *res,uint8 x,uint8 y);
-extern void unsignedSubtract128(uint8 *a,uint8 *b);
-extern int4 unsignedCompare128(uint8 *a,uint8 *b);
-extern int4 power2Divide(int4 n,uint8 divisor,uint8 &q,uint8 &r);
-
 } // End namespace ghidra
 #endif

@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import org.apache.commons.collections4.BidiMap;
 import org.junit.BeforeClass;
 
 import docking.test.AbstractDockingTest;
@@ -45,6 +46,7 @@ import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.*;
 import ghidra.util.Msg;
+import ghidra.util.classfinder.ClassFileInfo;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.RollbackException;
 import junit.framework.AssertionFailedError;
@@ -608,29 +610,27 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 
 		ServiceManager serviceManager = (ServiceManager) getInstanceField("serviceMgr", tool);
 
-		List<Class<?>> extentions =
-			(List<Class<?>>) getInstanceField("extensionPoints", ClassSearcher.class);
-		Set<Class<?>> set = new HashSet<>(extentions);
-		Iterator<Class<?>> iterator = set.iterator();
-		while (iterator.hasNext()) {
-			Class<?> c = iterator.next();
-			if (service.isAssignableFrom(c)) {
-				iterator.remove();
-				T instance = tool.getService(service);
-				serviceManager.removeService(service, instance);
-			}
+		Map<String, Set<ClassFileInfo>> extensionPointSuffixToInfoMap =
+			(Map<String, Set<ClassFileInfo>>) getInstanceField("extensionPointSuffixToInfoMap",
+				ClassSearcher.class);
+		BidiMap<ClassFileInfo, Class<?>> loadedCache =
+			(BidiMap<ClassFileInfo, Class<?>>) getInstanceField("loadedCache", ClassSearcher.class);
+		String suffix = ClassSearcher.getExtensionPointSuffix(service.getSimpleName());
+
+		if (suffix != null) {
+			Set<ClassFileInfo> serviceSet = extensionPointSuffixToInfoMap.get(suffix);
+			assertNotNull(serviceSet);
+			serviceSet.clear();
+			ClassFileInfo info = new ClassFileInfo("", replacement.getClass().getName(), suffix);
+			serviceSet.add(info);
+			loadedCache.put(info, replacement.getClass());
 		}
 
 		T instance = tool.getService(service);
 		if (instance != null) {
 			serviceManager.removeService(service, instance);
 		}
-
-		set.add(replacement.getClass());
 		serviceManager.addService(service, replacement);
-
-		List<Class<?>> newExtensionPoints = new ArrayList<>(set);
-		setInstanceField("extensionPoints", ClassSearcher.class, newExtensionPoints);
 	}
 
 //==================================================================================================

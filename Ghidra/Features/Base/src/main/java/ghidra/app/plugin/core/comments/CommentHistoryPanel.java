@@ -24,8 +24,7 @@ import javax.swing.text.*;
 
 import generic.theme.*;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.CommentHistory;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.util.DateUtils;
 import ghidra.util.Msg;
 
@@ -47,16 +46,13 @@ class CommentHistoryPanel extends JPanel {
 
 	private int commentType;
 
-	/**
-	 * Construct a new CommentHistoryPanel
-	 * @param commentType comment type
-	 */
-	CommentHistoryPanel(int commentType) {
+	CommentHistoryPanel(int commentType, CodeUnit cu) {
 
 		super(new BorderLayout());
 		setUpAttributes();
 		this.commentType = commentType;
 		create();
+		showCommentHistory(cu.getProgram(), cu.getMinAddress());
 	}
 
 	/**
@@ -64,7 +60,7 @@ class CommentHistoryPanel extends JPanel {
 	 * @param program program
 	 * @param addr address of comment history
 	 */
-	void showCommentHistory(Program program, Address addr) {
+	private void showCommentHistory(Program program, Address addr) {
 
 		textPane.setText("");
 
@@ -89,6 +85,10 @@ class CommentHistoryPanel extends JPanel {
 	private void create() {
 		textPane = new JTextPane();
 		textPane.setEditable(false);
+		// Note that this panel in not focusable which means keyboard users can't navigate to
+		// this text pane and therefore screen readers won't read it. To compensate for this
+		// the history has been added as a tooltip on each tab.
+		textPane.setFocusable(false);
 		add(textPane, BorderLayout.CENTER);
 		doc = textPane.getStyledDocument();
 	}
@@ -124,6 +124,16 @@ class CommentHistoryPanel extends JPanel {
 		tabAttrSet = new SimpleAttributeSet();
 		TabStop tabs = new TabStop(100, StyleConstants.ALIGN_LEFT, TabStop.LEAD_NONE);
 		StyleConstants.setTabSet(tabAttrSet, new TabSet(new TabStop[] { tabs }));
+	}
+
+	public String getHistory() {
+		try {
+			return doc.getText(0, doc.getLength());
+		}
+		catch (BadLocationException e) {
+			Msg.error(this, "This should never happen as the indexes came from the document!");
+			return "";
+		}
 	}
 
 }

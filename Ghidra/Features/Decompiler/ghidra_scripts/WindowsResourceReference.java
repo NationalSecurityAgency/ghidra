@@ -694,10 +694,10 @@ public class WindowsResourceReference extends GhidraScript {
 				followToParam(constUse, defUseList, highFunction, def.getInput(0), doneSet);
 				return;
 			case PcodeOp.MULTIEQUAL:
-				followToParam(constUse, defUseList, highFunction, def.getInput(0), doneSet);
-				@SuppressWarnings("unchecked")
-				ArrayList<PcodeOp> splitUseList = (ArrayList<PcodeOp>) defUseList.clone();
-				followToParam(constUse, splitUseList, highFunction, def.getInput(1), doneSet);
+				for (int i = 0; i < def.getNumInputs(); i++) {
+					ArrayList<PcodeOp> splitUseList = new ArrayList<>(defUseList);
+					followToParam(constUse, splitUseList, highFunction, def.getInput(i), doneSet);
+				}
 				return;
 			case PcodeOp.CAST:
 				// Cast will expose more Pcode, and could be attached to the same address!
@@ -707,7 +707,8 @@ public class WindowsResourceReference extends GhidraScript {
 				followToParam(constUse, defUseList, highFunction, def.getInput(0), doneSet);
 				return;
 			case PcodeOp.INDIRECT:
-				if (def.getOutput().getAddress().equals(def.getInput(0).getAddress())) {
+				Varnode output = def.getOutput();
+				if (output.getAddress().equals(def.getInput(0).getAddress())) {
 					followToParam(constUse, defUseList, highFunction, def.getInput(0), doneSet);
 					return;
 				}

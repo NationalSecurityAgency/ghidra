@@ -15,6 +15,9 @@
  */
 package ghidra.app.plugin.core.symboltree;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -43,14 +46,15 @@ public class SymbolTreePlugin extends Plugin {
 
 	public static final String PLUGIN_NAME = "SymbolTreePlugin";
 
-	private SymbolTreeProvider provider;
+	private SymbolTreeProvider connectedProvider;
+	private List<SymbolTreeProvider> disconnectedProviders = new ArrayList<>();
 	private Program program;
 	private GoToService goToService;
 	private boolean processingGoTo;
 
 	public SymbolTreePlugin(PluginTool tool) {
 		super(tool);
-		provider = new SymbolTreeProvider(tool, this);
+		connectedProvider = new SymbolTreeProvider(tool, this);
 	}
 
 	@Override
@@ -60,14 +64,13 @@ public class SymbolTreePlugin extends Plugin {
 			Program oldProgram = program;
 			program = ev.getActiveProgram();
 			if (oldProgram != null) {
-				provider.programDeactivated(oldProgram);
+				connectedProvider.programDeactivated(oldProgram);
 			}
-			if (program != null) {
-				provider.programActivated(program);
-			}
+
+			connectedProvider.setProgram(program);
 		}
 		else if (event instanceof ProgramClosedPluginEvent) {
-			provider.programClosed(((ProgramClosedPluginEvent) event).getProgram());
+			programClosed(((ProgramClosedPluginEvent) event).getProgram());
 		}
 		else if (event instanceof ProgramLocationPluginEvent) {
 			if (processingGoTo) {
@@ -75,8 +78,30 @@ public class SymbolTreePlugin extends Plugin {
 			}
 
 			ProgramLocation loc = ((ProgramLocationPluginEvent) event).getLocation();
-			provider.locationChanged(loc);
+			connectedProvider.locationChanged(loc);
+
+			for (SymbolTreeProvider provider : disconnectedProviders) {
+				provider.locationChanged(loc);
+			}
 		}
+	}
+
+	private void programClosed(Program p) {
+
+		connectedProvider.programClosed(p);
+
+		List<SymbolTreeProvider> copy = new ArrayList<>(disconnectedProviders);
+		for (SymbolTreeProvider provider : copy) {
+			if (provider.getProgram() == p) {
+				closeDisconnectedProvider(provider);
+			}
+		}
+	}
+
+	void closeDisconnectedProvider(SymbolTreeProvider provider) {
+		disconnectedProviders.remove(provider);
+		tool.removeComponentProvider(provider);
+		provider.dispose();
 	}
 
 	@Override
@@ -86,19 +111,24 @@ public class SymbolTreePlugin extends Plugin {
 
 	@Override
 	protected void dispose() {
-		tool.removeComponentProvider(provider);
-		provider.dispose();
+		tool.removeComponentProvider(connectedProvider);
+		connectedProvider.dispose();
 		program = null;
+
+		List<SymbolTreeProvider> copy = new ArrayList<>(disconnectedProviders);
+		for (SymbolTreeProvider provider : copy) {
+			closeDisconnectedProvider(provider);
+		}
 	}
 
 	@Override
 	public void readConfigState(SaveState saveState) {
-		provider.readConfigState(saveState);
+		connectedProvider.readConfigState(saveState);
 	}
 
 	@Override
 	public void writeConfigState(SaveState saveState) {
-		provider.writeConfigState(saveState);
+		connectedProvider.writeConfigState(saveState);
 	}
 
 	public void goTo(Symbol symbol) {
@@ -145,6 +175,14 @@ public class SymbolTreePlugin extends Plugin {
 	}
 
 	SymbolTreeProvider getProvider() {
-		return provider;
+		return connectedProvider;
+	}
+
+	public DisconnectedSymbolTreeProvider createNewDisconnectedProvider(Program p) {
+		DisconnectedSymbolTreeProvider newProvider =
+			new DisconnectedSymbolTreeProvider(tool, this, p);
+		disconnectedProviders.add(newProvider);
+		tool.showComponentProvider(newProvider, true);
+		return newProvider;
 	}
 }

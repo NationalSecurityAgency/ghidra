@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include <stdio.h>
+#include <unistd.h>
 
 int func(int id) {
     if (id) {

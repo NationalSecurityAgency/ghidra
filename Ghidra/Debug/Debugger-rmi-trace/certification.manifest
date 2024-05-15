@@ -1,7 +1,16 @@
 ##VERSION: 2.0
+##MODULE IP: BSD-3-GOOGLE
+##MODULE IP: BSD-3-PSUTIL
 DEVNOTES.txt||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
+src/main/help/help/TOC_Source.xml||GHIDRA||||END|
+src/main/help/help/topics/TraceRmiConnectionManagerPlugin/TraceRmiConnectionManagerPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/TraceRmiConnectionManagerPlugin/images/ConnectDialog.png||GHIDRA||||END|
+src/main/help/help/topics/TraceRmiConnectionManagerPlugin/images/TraceRmiConnectionManagerPlugin.png||GHIDRA||||END|
+src/main/help/help/topics/TraceRmiLauncherServicePlugin/TraceRmiLauncherServicePlugin.html||GHIDRA||||END|
+src/main/help/help/topics/TraceRmiLauncherServicePlugin/images/GdbLauncher.png||GHIDRA||||END|
+src/main/help/help/topics/TraceRmiLauncherServicePlugin/images/GdbTerminal.png||GHIDRA||||END|
 src/main/py/LICENSE||GHIDRA||||END|
 src/main/py/README.md||GHIDRA||||END|
 src/main/py/pyproject.toml||GHIDRA||||END|

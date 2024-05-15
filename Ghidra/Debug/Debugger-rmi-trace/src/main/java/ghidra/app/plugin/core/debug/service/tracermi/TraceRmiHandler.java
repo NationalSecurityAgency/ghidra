@@ -69,7 +69,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateFileException;
 
 public class TraceRmiHandler implements TraceRmiConnection {
-	public static final String VERSION = "10.4";
+	public static final String VERSION = "11.1";
 
 	protected static class VersionMismatchError extends TraceRmiError {
 		public VersionMismatchError(String remote) {
@@ -481,6 +481,14 @@ public class TraceRmiHandler implements TraceRmiConnection {
 	private interface Dispatcher {
 		RootMessage.Builder dispatch(RootMessage req, RootMessage.Builder rep) throws Exception;
 
+		default String exceptionMessage(Throwable exc) {
+			String msg = exc.getMessage();
+			if (msg == null) {
+				return exc.getClass().getCanonicalName();
+			}
+			return exc.getClass().getCanonicalName() + ": " + msg;
+		}
+
 		default RootMessage handle(RootMessage req) {
 			String desc = toString(req);
 			if (desc != null) {
@@ -494,7 +502,7 @@ public class TraceRmiHandler implements TraceRmiConnection {
 			catch (Throwable e) {
 				Msg.error(this, "Exception caused by back end", e);
 				return rep.setError(ReplyError.newBuilder()
-						.setMessage(e.getMessage()))
+						.setMessage(exceptionMessage(e)))
 						.build();
 			}
 		}
@@ -802,6 +810,11 @@ public class TraceRmiHandler implements TraceRmiConnection {
 		}
 		DebuggerCoordinates finalCoords = object == null ? coords : coords.object(object);
 		Swing.runLater(() -> {
+			DebuggerTraceManagerService traceManager = this.traceManager;
+			if (traceManager == null) {
+				// Can happen during tear down.
+				return;
+			}
 			if (!traceManager.getOpenTraces().contains(open.trace)) {
 				traceManager.openTrace(open.trace);
 				traceManager.activate(finalCoords, ActivationCause.SYNC_MODEL);

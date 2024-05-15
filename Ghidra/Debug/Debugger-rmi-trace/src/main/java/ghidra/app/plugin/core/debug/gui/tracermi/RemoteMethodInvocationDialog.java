@@ -15,13 +15,31 @@
  */
 package ghidra.app.plugin.core.debug.gui.tracermi;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
-import java.beans.*;
-import java.util.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyEditor;
+import java.beans.PropertyEditorManager;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.border.EmptyBorder;
 
 import org.apache.commons.collections4.BidiMap;
@@ -32,6 +50,7 @@ import org.jdom.Element;
 
 import docking.DialogComponentProvider;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
+import ghidra.app.plugin.core.debug.service.tracermi.TraceRmiTarget;
 import ghidra.app.plugin.core.debug.utils.MiscellaneousUtils;
 import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.debug.api.tracermi.RemoteParameter;
@@ -289,13 +308,18 @@ public class RemoteMethodInvocationDialog extends DialogComponentProvider
 		pairPanel.removeAll();
 		paramEditors.clear();
 		for (RemoteParameter param : parameters.values()) {
-			JLabel label = new JLabel(param.display());
+			String text = param.display().equals("") ? param.name() : param.display();
+			JLabel label = new JLabel(text);
 			label.setToolTipText(param.description());
 			pairPanel.add(label);
 
 			PropertyEditor editor = createEditor(param);
 			Object val = computeMemorizedValue(param);
-			editor.setValue(val);
+			if (val == null || val.equals(TraceRmiTarget.Missing.MISSING)) {
+				editor.setValue("");
+			} else {
+				editor.setValue(val);
+			}
 			editor.addPropertyChangeListener(this);
 			pairPanel.add(MiscellaneousUtils.getEditorComponent(editor));
 			paramEditors.put(param, editor);

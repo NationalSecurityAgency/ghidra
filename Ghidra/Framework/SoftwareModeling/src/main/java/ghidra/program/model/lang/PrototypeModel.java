@@ -50,6 +50,7 @@ public class PrototypeModel {
 	private Varnode[] killedbycall;	// Memory ranges definitely affected by calls
 	private Varnode[] returnaddress;	// Memory used to store the return address
 	private Varnode[] likelytrash;	// Memory likely to be meaningless on input
+	private Varnode[] internalstorage;	// Registers holding internal compiler constants
 	private PrototypeModel compatModel;	// The model this is an alias of
 	private AddressSet localRange;	// Range on the stack considered for local storage
 	private AddressSet paramRange;	// Range on the stack considered for parameter storage
@@ -82,6 +83,7 @@ public class PrototypeModel {
 		killedbycall = model.killedbycall;
 		returnaddress = model.returnaddress;
 		likelytrash = model.likelytrash;
+		internalstorage = model.internalstorage;
 		compatModel = model;
 		localRange = new AddressSet(model.localRange);
 		paramRange = new AddressSet(model.paramRange);
@@ -103,6 +105,7 @@ public class PrototypeModel {
 		killedbycall = null;
 		returnaddress = null;
 		likelytrash = null;
+		internalstorage = null;
 		compatModel = null;
 		localRange = null;
 		paramRange = null;
@@ -141,6 +144,16 @@ public class PrototypeModel {
 			likelytrash = new Varnode[0];
 		}
 		return likelytrash;
+	}
+
+	/**
+	 * @return list of registers used to store internal compiler constants
+	 */
+	public Varnode[] getInternalStorage() {
+		if (internalstorage == null) {
+			internalstorage = new Varnode[0];
+		}
+		return internalstorage;
 	}
 
 	/**
@@ -514,6 +527,11 @@ public class PrototypeModel {
 			encodeVarnodes(encoder, likelytrash);
 			encoder.closeElement(ELEM_LIKELYTRASH);
 		}
+		if (internalstorage != null) {
+			encoder.openElement(ELEM_INTERNAL_STORAGE);
+			encodeVarnodes(encoder, internalstorage);
+			encoder.closeElement(ELEM_INTERNAL_STORAGE);
+		}
 		if (returnaddress != null) {
 			encoder.openElement(ELEM_RETURNADDRESS);
 			encodeVarnodes(encoder, returnaddress);
@@ -696,6 +714,9 @@ public class PrototypeModel {
 			else if (elName.equals("likelytrash")) {
 				likelytrash = readVarnodes(parser, cspec);
 			}
+			else if (elName.equals("internal_storage")) {
+				internalstorage = readVarnodes(parser, cspec);
+			}
 			else if (elName.equals("localrange")) {
 				localRange = readAddressSet(parser, cspec);
 			}
@@ -805,6 +826,9 @@ public class PrototypeModel {
 			return false;
 		}
 		if (!SystemUtilities.isArrayEqual(likelytrash, obj.likelytrash)) {
+			return false;
+		}
+		if (!SystemUtilities.isArrayEqual(internalstorage, obj.internalstorage)) {
 			return false;
 		}
 		String compatName = (compatModel != null) ? compatModel.getName() : "";

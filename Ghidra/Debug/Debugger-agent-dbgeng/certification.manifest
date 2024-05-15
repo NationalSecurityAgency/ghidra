@@ -1,5 +1,6 @@
 ##VERSION: 2.0
 ##MODULE IP: Apache License 2.0
+##MODULE IP: MIT
 Module.manifest||GHIDRA||||END|
 data/debugger-launchers/local-dbgeng.bat||GHIDRA||||END|
 data/debugger-launchers/local-ttd.bat||GHIDRA||||END|

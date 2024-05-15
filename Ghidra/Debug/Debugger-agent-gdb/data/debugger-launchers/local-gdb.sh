@@ -28,7 +28,7 @@
 #@arg :str "Image" "The target binary executable image"
 #@args "Arguments" "Command-line arguments to pass to the target"
 #@env OPT_GDB_PATH:str="gdb" "Path to gdb" "The path to gdb. Omit the full path to resolve using the system PATH."
-#@env OPT_START_CMD:StartCmd="start" "Run command" "The gdb command to actually run the target."
+#@env OPT_START_CMD:StartCmd="starti" "Run command" "The gdb command to actually run the target."
 #@env OPT_EXTRA_TTY:bool=false "Inferior TTY" "Provide a separate terminal emulator for the target."
 #@tty TTY_TARGET if env:OPT_EXTRA_TTY
 

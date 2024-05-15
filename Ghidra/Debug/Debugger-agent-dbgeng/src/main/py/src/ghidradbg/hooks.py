@@ -103,8 +103,8 @@ class ProcessState(object):
         proc = util.selected_process()
         ipath = commands.PROCESS_PATTERN.format(procnum=proc)
         procobj = commands.STATE.trace.proxy_object_path(ipath)
-        procobj.set_value('_exit_code', exit_code)
-        procobj.set_value('_state', 'TERMINATED')
+        procobj.set_value('Exit Code', exit_code)
+        procobj.set_value('State', 'TERMINATED')
 
 
 class BrkState(object):

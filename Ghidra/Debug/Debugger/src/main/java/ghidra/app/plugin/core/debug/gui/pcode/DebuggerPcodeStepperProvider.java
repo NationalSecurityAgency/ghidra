@@ -614,7 +614,7 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		pcodeTable.setTableHeader(null);
 		pcodeTable.setBackground(COLOR_BACKGROUND);
 		pcodeTable.setSelectionBackground(COLOR_BACKGROUND_CURSOR);
-		pcodeTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		pcodeTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		pcodeTable.getSelectionModel().addListSelectionListener(evt -> {
 			if (evt.getValueIsAdjusting()) {
 				return;

@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.gui.modules;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.lang.invoke.MethodHandles;
@@ -106,7 +108,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	interface MapManuallyAction {
 		String NAME = DebuggerResources.NAME_MAP_MANUALLY;
 		String DESCRIPTION = DebuggerResources.DESCRIPTION_MAP_MANUALLY;
-		Icon ICON = DebuggerResources.ICON_MAPPINGS;
+		Icon ICON = DebuggerResources.ICON_MAP_MANUALLY;
 		String GROUP = DebuggerResources.GROUP_MAPPING;
 		String HELP_ANCHOR = "map_manually";
 
@@ -196,7 +198,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 
 	interface AutoMapAction {
 		String NAME = "Auto-Map Target Memory";
-		Icon ICON = DebuggerResources.ICON_CONFIG;
+		Icon ICON = DebuggerResources.ICON_MAP_AUTO;
 		String DESCRIPTION = "Automatically map dynamic memory to static counterparts";
 		String GROUP = DebuggerResources.GROUP_MAPPING;
 		String HELP_ANCHOR = "auto_map";
@@ -1078,6 +1080,12 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		actionMapSectionTo.getPopupMenuData().setMenuItemName(name);
 	}
 
+	public void programOpened(Program program) {
+		// TODO: Debounce this?
+		cueAutoMap = true;
+		doCuedAutoMap();
+	}
+
 	public void programClosed(Program program) {
 		if (currentProgram == program) {
 			currentProgram = null;
@@ -1184,12 +1192,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 
 		DomainFileFilter filter = df -> Program.class.isAssignableFrom(df.getDomainObjectClass());
 
-		// TODO regarding the hack note below, I believe it's fixed, but not sure how to test
-		return new DataTreeDialog(null, "Map Module to Program", DataTreeDialog.OPEN, filter) {
-			{ // TODO/HACK: I get an NPE setting the default selection if I don't fake this.
-				dialogShown();
-			}
-		};
+		return new DataTreeDialog(null, "Map Module to Program", OPEN, filter);
 	}
 
 	public DomainFile askProgram(Program program) {

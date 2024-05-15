@@ -109,6 +109,12 @@ img {
 	max-width: 100%;
 }
 
+code {
+	background: #444;
+	border-radius: 1pt;
+	padding: 1pt;
+}
+
 div.sourceCode {
 	position: relative;
 	color: black;
@@ -116,6 +122,10 @@ div.sourceCode {
 	padding: 0.4cm 0.2cm 0.2cm 0.2cm;
 	border-radius: 3px;
 	box-shadow: 0 0 5px black inset;
+}
+
+code.sourceCode {
+    background: transparent;
 }
 
 pre > code.sourceCode > span > a:first-child::before {

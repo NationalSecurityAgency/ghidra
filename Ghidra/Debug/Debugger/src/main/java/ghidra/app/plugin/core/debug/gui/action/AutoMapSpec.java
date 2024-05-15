@@ -26,7 +26,6 @@ import ghidra.app.plugin.core.debug.utils.MiscellaneousUtils;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.AutoConfigState.ConfigFieldCodec;
 import ghidra.framework.plugintool.PluginTool;
@@ -47,6 +46,7 @@ public interface AutoMapSpec extends ExtensionPoint {
 
 		private Private() {
 			ClassSearcher.addChangeListener(classListener);
+			classesChanged(null);
 		}
 
 		private synchronized void classesChanged(ChangeEvent evt) {
@@ -104,9 +104,9 @@ public interface AutoMapSpec extends ExtensionPoint {
 		if (mappingService == null || programManager == null) {
 			return;
 		}
-		BackgroundCommand cmd = new BackgroundCommand(getTaskTitle(), true, true, false) {
+		BackgroundCommand<Trace> cmd = new BackgroundCommand<>(getTaskTitle(), true, true, false) {
 			@Override
-			public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
+			public boolean applyTo(Trace trace, TaskMonitor monitor) {
 				try {
 					performMapping(mappingService, trace, programManager, monitor);
 					return true;

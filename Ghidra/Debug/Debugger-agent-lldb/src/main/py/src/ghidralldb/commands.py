@@ -1410,7 +1410,7 @@ def put_processes():
     keys.append(PROCESS_KEY_PATTERN.format(procnum=proc.GetProcessID()))
     procobj = STATE.trace.create_object(ipath)
     istate = compute_proc_state(proc)
-    procobj.set_value('_state', istate)
+    procobj.set_value('State', istate)
     procobj.insert()
     STATE.trace.proxy_object_path(PROCESSES_PATH).retain_values(keys)
 
@@ -1421,7 +1421,7 @@ def put_state(event_process):
         with STATE.require_trace().open_tx('State'):
             procobj = STATE.trace.create_object(ipath)
             state = "STOPPED" if event_process.is_stopped else "RUNNING"
-            procobj.set_value('_state', state)
+            procobj.set_value('State', state)
             procobj.insert()
 
 
@@ -1448,8 +1448,8 @@ def put_available():
         ppath = AVAILABLE_PATTERN.format(pid=proc.pid)
         procobj = STATE.trace.create_object(ppath)
         keys.append(AVAILABLE_KEY_PATTERN.format(pid=proc.pid))
-        procobj.set_value('_pid', proc.pid)
-        procobj.set_value('_display', f'{proc.pid} {proc.name}')
+        procobj.set_value('PID', proc.pid)
+        procobj.set_value('_display', f'{proc.pid} {proc.name()}')
         procobj.insert()
     STATE.trace.proxy_object_path(AVAILABLES_PATH).retain_values(keys)
 
@@ -1476,11 +1476,11 @@ def put_single_breakpoint(b, ibobj, proc, ikeys):
     bpath = BREAKPOINT_PATTERN.format(breaknum=b.GetID())
     brkobj = STATE.trace.create_object(bpath)
     if b.IsHardware():
-        brkobj.set_value('_expression', util.get_description(b))
-        brkobj.set_value('_kinds', 'HW_EXECUTE')
+        brkobj.set_value('Expression', util.get_description(b))
+        brkobj.set_value('Kinds', 'HW_EXECUTE')
     else:
-        brkobj.set_value('_expression', util.get_description(b))
-        brkobj.set_value('_kinds', 'SW_EXECUTE')
+        brkobj.set_value('Expression', util.get_description(b))
+        brkobj.set_value('Kinds', 'SW_EXECUTE')
     cmdList = lldb.SBStringList()
     if b.GetCommandLineCommands(cmdList):
         list = []
@@ -1507,7 +1507,7 @@ def put_single_breakpoint(b, ibobj, proc, ikeys):
             base, addr = mapper.map(proc, l.GetLoadAddress())
             if base != addr.space:
                 STATE.trace.create_overlay_space(base, addr.space)
-            locobj.set_value('_range', addr.extend(1))
+            locobj.set_value('Range', addr.extend(1))
             locobj.set_value('Enabled', l.IsEnabled())
         else:  # I guess it's a catchpoint
             pass
@@ -1523,16 +1523,16 @@ def put_single_watchpoint(b, ibobj, proc, ikeys):
         procnum=proc.GetProcessID(), watchnum=b.GetID())
     brkobj = STATE.trace.create_object(bpath)
     desc = util.get_description(b, level=0)
-    brkobj.set_value('_expression', desc)
-    brkobj.set_value('_kinds', 'WRITE')
+    brkobj.set_value('Expression', desc)
+    brkobj.set_value('Kinds', 'WRITE')
     if "type = r" in desc:
-        brkobj.set_value('_kinds', 'READ')
+        brkobj.set_value('Kinds', 'READ')
     if "type = rw" in desc:
-        brkobj.set_value('_kinds', 'READ,WRITE')
+        brkobj.set_value('Kinds', 'READ,WRITE')
     base, addr = mapper.map(proc, b.GetWatchAddress())
     if base != addr.space:
         STATE.trace.create_overlay_space(base, addr.space)
-    brkobj.set_value('_range', addr.extend(b.GetWatchSize()))
+    brkobj.set_value('Range', addr.extend(b.GetWatchSize()))
     if b.GetCondition():
         brkobj.set_value('Condition', b.GetCondition())
     brkobj.set_value('Hit Count', b.GetHitCount())
@@ -1613,10 +1613,10 @@ def put_environment():
     proc = util.get_process()
     epath = ENV_PATTERN.format(procnum=proc.GetProcessID())
     envobj = STATE.trace.create_object(epath)
-    envobj.set_value('_debugger', 'lldb')
-    envobj.set_value('_arch', arch.get_arch())
-    envobj.set_value('_os', arch.get_osabi())
-    envobj.set_value('_endian', arch.get_endian())
+    envobj.set_value('Debugger', 'lldb')
+    envobj.set_value('Arch', arch.get_arch())
+    envobj.set_value('OS', arch.get_osabi())
+    envobj.set_value('Endian', arch.get_endian())
     envobj.insert()
 
 
@@ -1655,12 +1655,14 @@ def put_regions():
         start_base, start_addr = mapper.map(proc, r.start)
         if start_base != start_addr.space:
             STATE.trace.create_overlay_space(start_base, start_addr.space)
-        regobj.set_value('_range', start_addr.extend(r.end - r.start))
+        regobj.set_value('Range', start_addr.extend(r.end - r.start))
+        if r.perms != None:
+            regobj.set_value('Permissions', r.perms)
         regobj.set_value('_readable', r.perms == None or 'r' in r.perms)
         regobj.set_value('_writable', r.perms == None or 'w' in r.perms)
         regobj.set_value('_executable', r.perms == None or 'x' in r.perms)
-        regobj.set_value('_offset', r.offset)
-        regobj.set_value('_objfile', r.objfile)
+        regobj.set_value('Offset', hex(r.offset))
+        regobj.set_value('Object File', r.objfile)
         regobj.insert()
     STATE.trace.proxy_object_path(
         MEMORY_PATTERN.format(procnum=proc.GetProcessID())).retain_values(keys)
@@ -1693,12 +1695,12 @@ def put_modules():
         mpath = MODULE_PATTERN.format(procnum=proc.GetProcessID(), modpath=mk)
         modobj = STATE.trace.create_object(mpath)
         mod_keys.append(MODULE_KEY_PATTERN.format(modpath=mk))
-        modobj.set_value('_module_name', m.name)
+        modobj.set_value('Name', m.name)
         base_base, base_addr = mapper.map(proc, m.base)
         if base_base != base_addr.space:
             STATE.trace.create_overlay_space(base_base, base_addr.space)
         if m.max > m.base:
-            modobj.set_value('_range', base_addr.extend(m.max - m.base + 1))
+            modobj.set_value('Range', base_addr.extend(m.max - m.base + 1))
         sec_keys = []
         for sk, s in m.sections.items():
             spath = mpath + SECTION_ADD_PATTERN.format(secname=sk)
@@ -1708,9 +1710,9 @@ def put_modules():
             if start_base != start_addr.space:
                 STATE.trace.create_overlay_space(
                     start_base, start_addr.space)
-            secobj.set_value('_range', start_addr.extend(s.end - s.start + 1))
-            secobj.set_value('_offset', s.offset)
-            secobj.set_value('_attrs', s.attrs)
+            secobj.set_value('Range', start_addr.extend(s.end - s.start + 1))
+            secobj.set_value('Offset', hex(s.offset))
+            secobj.set_value('Attrs', s.attrs)
             secobj.insert()
         # In case there are no sections, we must still insert the module
         modobj.insert()
@@ -1774,11 +1776,10 @@ def put_threads():
             procnum=proc.GetProcessID(), tnum=t.GetThreadID())
         tobj = STATE.trace.create_object(tpath)
         keys.append(THREAD_KEY_PATTERN.format(tnum=t.GetThreadID()))
-        #tobj.set_value('_state', convert_state(t))
-        tobj.set_value('_state', compute_proc_state(proc))
-        tobj.set_value('_name', t.GetName())
+        tobj.set_value('State', compute_proc_state(proc))
+        tobj.set_value('Name', t.GetName())
         tid = t.GetThreadID()
-        tobj.set_value('_tid', tid)
+        tobj.set_value('TID', tid)
         tidstr = f'0x{tid:x}' if radix == 16 else f'0{tid:o}' if radix == 8 else f'{tid}'
         tobj.set_value('_short_display',
                        f'[{proc.GetProcessID()}.{t.GetThreadID()}:{tidstr}]')
@@ -1834,8 +1835,8 @@ def put_frames():
         base, pc = mapper.map(proc, f.GetPC())
         if base != pc.space:
             STATE.trace.create_overlay_space(base, pc.space)
-        fobj.set_value('_pc', pc)
-        fobj.set_value('_func', str(f.GetFunctionName()))
+        fobj.set_value('PC', pc)
+        fobj.set_value('Function', str(f.GetFunctionName()))
         fobj.set_value('_display', util.get_description(f))
         fobj.insert()
     STATE.trace.proxy_object_path(STACK_PATTERN.format(

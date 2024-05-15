@@ -388,7 +388,6 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	public GTreeNode filter(GTreeFilter filter, TaskMonitor monitor)
 			throws CancelledException, CloneNotSupportedException {
 		List<GTreeNode> list = new ArrayList<>();
-
 		if (isLoaded()) {
 			for (GTreeNode child : children()) {
 				monitor.checkCancelled();

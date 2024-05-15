@@ -130,10 +130,10 @@ public abstract class AbstractPointerMsType extends AbstractMsType {
 		FUNCTION_VIRTUAL_INHERITANCE("pmf16_nearvbase", 7),
 		FUNCTION_SINGLE_INHERITANCE_1632("pmf16_farnvsa", 8),
 		FUNCTION_MULTIPLE_INHERITANCE_1632("pmf16_farnvma", 9),
-		FUNCTION_VIRTUAL_INHERITANCE_1632("pmf16_farnvbase", 10),
+		FUNCTION_VIRTUAL_INHERITANCE_1632("pmf16_farvbase", 10),
 		FUNCTION_SINGLE_INHERITANCE_32("pmf32_nvsa", 11),
 		FUNCTION_MULTIPLE_INHERITANCE_32("pmf32_nvma", 12),
-		FUNCTION_VIRTUAL_INHERITANCE_32("pmf32_nvbase", 13);
+		FUNCTION_VIRTUAL_INHERITANCE_32("pmf32_vbase", 13);
 
 		private static final Map<Integer, MemberPointerType> BY_VALUE = new HashMap<>();
 		static {
@@ -327,8 +327,8 @@ public abstract class AbstractPointerMsType extends AbstractMsType {
 		switch (pointerMode) {
 			case MEMBER_DATA_POINTER:
 			case MEMBER_FUNCTION_POINTER:
-				pdb.getTypeRecord(memberPointerContainingClassRecordNumber).emit(builder,
-					Bind.NONE);
+				pdb.getTypeRecord(memberPointerContainingClassRecordNumber)
+						.emit(builder, Bind.NONE);
 				myBuilder.append(pointerMode);
 				myBuilder.append(" <");
 				myBuilder.append(memberPointerType);

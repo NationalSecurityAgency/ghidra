@@ -19,39 +19,79 @@
 
 import java.io.*;
 
+import docking.widgets.values.GValuesMap;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
-import ghidra.util.Msg;
+import ghidra.features.base.values.GhidraValuesMap;
+import ghidra.util.*;
 
 public class PdbDeveloperDumpScript extends GhidraScript {
 
+	private static final String PDB_PROMPT = "Choose a PDB file";
+	private static final String OUTPUT_PROMPT = "Choose an output file";
+
+	private static boolean validatePdb(GValuesMap valueMap, StatusListener status) {
+		File file = valueMap.getFile(PDB_PROMPT);
+		if (file == null) {
+			status.setStatusText("PDB file must be selected.", MessageType.ERROR);
+			return false;
+		}
+		if (!file.exists()) {
+			status.setStatusText(file.getAbsolutePath() + " is not a valid file.",
+				MessageType.ERROR);
+			return false;
+		}
+		String fileName = file.getAbsolutePath();
+		if (!fileName.endsWith(".pdb") && !fileName.endsWith(".PDB")) {
+			status.setStatusText("Expected .pdb file extenstion (got '" + fileName + "').",
+				MessageType.ERROR);
+			return false;
+		}
+		// We do not need to check the existence of an image base because we provide a default
+		//  value
+		return true;
+	}
+
+	private static boolean validateOutput(GValuesMap valueMap, StatusListener status) {
+		File file = valueMap.getFile(OUTPUT_PROMPT);
+		// File will exist, as we supplied a default value
+		String fileName = file.getAbsolutePath();
+		if (fileName.endsWith(".pdb") || fileName.endsWith(".PDB")) {
+			status.setStatusText("Output file may not end with .pdb (got '" + fileName + "').",
+				MessageType.ERROR);
+			return false;
+		}
+		return true;
+	}
+
 	@Override
 	protected void run() throws Exception {
-		File pdbFile = askFile("Choose a PDB file", "OK");
-		if (pdbFile == null) {
-			Msg.info(this, "Canceled execution due to no input file");
-			return;
-		}
-		if (!pdbFile.exists()) {
-			String message = pdbFile.getAbsolutePath() + " is not a valid file.";
-			Msg.info(this, message);
-			popup(message);
-			return;
-		}
-		String pdbFileName = pdbFile.getAbsolutePath();
-		if (!pdbFileName.endsWith(".pdb") && !pdbFileName.endsWith(".PDB")) {
-			String message = "Aborting: Expected input file to have extension of type .pdb (got '" +
-				pdbFileName + "').";
-			Msg.info(this, message);
-			popup(message);
-			return;
-		}
 
-		File dumpFile = askFile("Choose an output file", "OK");
-		if (dumpFile == null) {
-			Msg.info(this, "Canceled execution due to no output file");
-			return;
-		}
+		GhidraValuesMap values = new GhidraValuesMap();
+
+		values.defineFile(PDB_PROMPT, null);
+		values.setValidator((valueMap, status) -> {
+			return validatePdb(valueMap, status);
+		});
+		values = askValues("Enter Values", null, values);
+		File pdbFile = values.getFile(PDB_PROMPT);
+		String pdbFileName = pdbFile.getAbsolutePath();
+
+		// creating a default output and asking again; PDB file should retain its current value
+		//  from above
+		String outputFileName = pdbFileName + ".txt";
+		values.defineFile(OUTPUT_PROMPT, new File(outputFileName));
+		values.setValidator((valueMap, status) -> {
+			if (!validatePdb(valueMap, status)) {
+				return false;
+			}
+			return validateOutput(valueMap, status);
+		});
+		values = askValues("Enter Values", null, values);
+		pdbFile = values.getFile(PDB_PROMPT); // might have changed
+		pdbFileName = pdbFile.getAbsolutePath(); // might have changed
+		File dumpFile = values.getFile(OUTPUT_PROMPT);
+
 		if (dumpFile.exists()) {
 			if (!askYesNo("Confirm Overwrite", "Overwrite file: " + dumpFile.getName())) {
 				Msg.info(this, "Operation canceled");

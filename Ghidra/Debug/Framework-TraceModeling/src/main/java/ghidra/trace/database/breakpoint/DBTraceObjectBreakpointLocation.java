@@ -121,8 +121,19 @@ public class DBTraceObjectBreakpointLocation
 	@Override
 	public String getName() {
 		try (LockHold hold = object.getTrace().lockRead()) {
-			return TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(),
-				TargetObject.DISPLAY_ATTRIBUTE_NAME, String.class, "");
+			String display = TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(),
+				TargetObject.DISPLAY_ATTRIBUTE_NAME, String.class, null);
+			if (display != null) {
+				return display;
+			}
+			TraceObject container =
+				object.queryCanonicalAncestorsTargetInterface(TargetBreakpointSpecContainer.class)
+						.findFirst()
+						.orElse(null);
+			if (container == null) {
+				return ""; // Should be impossible, but maybe not a sane schema
+			}
+			return container.getCanonicalPath().relativize(object.getCanonicalPath()).toString();
 		}
 	}
 
@@ -312,8 +323,16 @@ public class DBTraceObjectBreakpointLocation
 	@Override
 	public String getComment() {
 		try (LockHold hold = object.getTrace().lockRead()) {
-			return TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(), KEY_COMMENT,
-				String.class, "");
+			String comment = TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(),
+				KEY_COMMENT, String.class, "");
+			if (!comment.isBlank()) {
+				return comment;
+			}
+			TraceObjectBreakpointSpec spec = getSpecification();
+			if (spec == null) {
+				return "";
+			}
+			return spec.getExpression();
 		}
 	}
 

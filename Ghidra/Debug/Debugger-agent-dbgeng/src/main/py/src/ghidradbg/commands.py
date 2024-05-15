@@ -210,9 +210,11 @@ def start_trace(name):
     schema_fn = os.path.join(parent, 'schema.xml')
     with open(schema_fn, 'r') as schema_file:
         schema_xml = schema_file.read()
+    using_dbgmodel = os.getenv('OPT_USE_DBGMODEL') == "true"
+    variant = " (dbgmodel)" if using_dbgmodel else " (dbgeng)"
     with STATE.trace.open_tx("Create Root Object"):
-        root = STATE.trace.create_root_object(schema_xml, 'Root')
-        root.set_value('_display', util.DBG_VERSION.full + ' via pybag')
+        root = STATE.trace.create_root_object(schema_xml, 'DbgRoot')
+        root.set_value('_display', util.DBG_VERSION.full + ' via pybag' + variant)
     util.set_convenience_variable('_ghidra_tracing', "true")
 
 
@@ -867,9 +869,9 @@ def put_processes(running=False):
         procobj = STATE.trace.create_object(ipath)
 
         istate = compute_proc_state(i)
-        procobj.set_value('_state', istate)
+        procobj.set_value('State', istate)
         pid = p[0]
-        procobj.set_value('_pid', pid)
+        procobj.set_value('PID', pid)
         procobj.set_value('_display', '{:x} {:x}'.format(i, pid))
         if len(p) > 1:
             procobj.set_value('Name', str(p[1]))
@@ -882,13 +884,13 @@ def put_state(event_process):
     ipath = PROCESS_PATTERN.format(procnum=event_process)
     procobj = STATE.trace.create_object(ipath)
     state = compute_proc_state(event_process)
-    procobj.set_value('_state', state)
+    procobj.set_value('State', state)
     procobj.insert()
     tnum = util.selected_thread()
     if tnum is not None:
         ipath = THREAD_PATTERN.format(procnum=event_process, tnum=tnum)
         threadobj = STATE.trace.create_object(ipath)
-        threadobj.set_value('_state', state)
+        threadobj.set_value('State', state)
         threadobj.insert()
 
 
@@ -922,7 +924,7 @@ def put_available():
         keys.append(AVAILABLE_KEY_PATTERN.format(pid=id))
         pidstr = ('0x{:x}' if radix ==
                   16 else '0{:o}' if radix == 8 else '{}').format(id)
-        procobj.set_value('_pid', id)
+        procobj.set_value('PID', id)
         procobj.set_value('Name', name)
         procobj.set_value('_display', '{} {}'.format(pidstr, name))
         procobj.insert()
@@ -973,22 +975,22 @@ def put_single_breakpoint(bp, ibobj, nproc, ikeys):
         base, addr = mapper.map(nproc, address)
         if base != addr.space:
             STATE.trace.create_overlay_space(base, addr.space)
-        brkobj.set_value('_range', addr.extend(1))
+        brkobj.set_value('Range', addr.extend(1))
     elif expr is not None:  # Implies watchpoint
         try:
             address = int(util.parse_and_eval('&({})'.format(expr)))
             base, addr = mapper.map(inf, address)
             if base != addr.space:
                 STATE.trace.create_overlay_space(base, addr.space)
-            brkobj.set_value('_range', addr.extend(width))
+            brkobj.set_value('Range', addr.extend(width))
         except Exception as e:
             print("Error: Could not get range for breakpoint: {}".format(e))
         else:  # I guess it's a catchpoint
             pass
 
-    brkobj.set_value('_expression', expr)
-    brkobj.set_value('_range', addr.extend(1))
-    brkobj.set_value('_kinds', prot)
+    brkobj.set_value('Expression', expr)
+    brkobj.set_value('Range', addr.extend(1))
+    brkobj.set_value('Kinds', prot)
     brkobj.set_value('Pass Count', bp.GetPassCount())
     brkobj.set_value('Current Pass Count', bp.GetCurrentPassCount())
     brkobj.set_value('Enabled', status)
@@ -1048,10 +1050,10 @@ def put_environment():
     nproc = util.selected_process()
     epath = ENV_PATTERN.format(procnum=nproc)
     envobj = STATE.trace.create_object(epath)
-    envobj.set_value('_debugger', 'pydbg')
-    envobj.set_value('_arch', arch.get_arch())
-    envobj.set_value('_os', arch.get_osabi())
-    envobj.set_value('_endian', arch.get_endian())
+    envobj.set_value('Debugger', 'pydbg')
+    envobj.set_value('Arch', arch.get_arch())
+    envobj.set_value('OS', arch.get_osabi())
+    envobj.set_value('Endian', arch.get_endian())
     envobj.insert()
 
 
@@ -1081,16 +1083,13 @@ def put_regions():
         keys.append(REGION_KEY_PATTERN.format(start=r.BaseAddress))
         regobj = STATE.trace.create_object(rpath)
         (start_base, start_addr) = map_address(r.BaseAddress)
-        regobj.set_value('_range', start_addr.extend(r.RegionSize))
+        regobj.set_value('Range', start_addr.extend(r.RegionSize))
         regobj.set_value('_readable', r.Protect ==
                          None or r.Protect & 0x66 != 0)
         regobj.set_value('_writable', r.Protect ==
                          None or r.Protect & 0xCC != 0)
         regobj.set_value('_executable', r.Protect ==
                          None or r.Protect & 0xF0 != 0)
-        regobj.set_value('_offset', hex(r.BaseAddress))
-        regobj.set_value('Base', hex(r.BaseAddress))
-        regobj.set_value('Size', hex(r.RegionSize))
         regobj.set_value('AllocationBase', hex(r.AllocationBase))
         regobj.set_value('Protect', hex(r.Protect))
         regobj.set_value('Type', hex(r.Type))
@@ -1133,14 +1132,11 @@ def put_modules():
         mpath = MODULE_PATTERN.format(procnum=nproc, modpath=hbase)
         modobj = STATE.trace.create_object(mpath)
         mod_keys.append(MODULE_KEY_PATTERN.format(modpath=hbase))
-        modobj.set_value('_module_name', name)
         base_base, base_addr = mapper.map(nproc, base)
         if base_base != base_addr.space:
             STATE.trace.create_overlay_space(base_base, base_addr.space)
-        modobj.set_value('_range', base_addr.extend(size))
+        modobj.set_value('Range', base_addr.extend(size))
         modobj.set_value('Name', name)
-        modobj.set_value('Base', hbase)
-        modobj.set_value('Size', hex(size))
         modobj.set_value('Flags', hex(size))
         modobj.insert()
 
@@ -1206,7 +1202,7 @@ def put_threads(running=False):
         keys.append(THREAD_KEY_PATTERN.format(tnum=i))
 
         tid = t[0]
-        tobj.set_value('_tid', tid)
+        tobj.set_value('TID', tid)
         tobj.set_value('_short_display',
                        '{:x} {:x}:{:x}'.format(i, pid, tid))
         tobj.set_value('_display', compute_thread_display(i, pid, tid, t))
@@ -1264,16 +1260,24 @@ def put_frames():
             procnum=nproc, tnum=nthrd, level=f.FrameNumber)
         fobj = STATE.trace.create_object(fpath)
         keys.append(FRAME_KEY_PATTERN.format(level=f.FrameNumber))
-        base, pc = mapper.map(nproc, f.InstructionOffset)
-        if base != pc.space:
-            STATE.trace.create_overlay_space(base, pc.space)
-        fobj.set_value('_pc', pc)
-        fobj.set_value('InstructionOffset', hex(f.InstructionOffset))
-        fobj.set_value('StackOffset', hex(f.StackOffset))
-        fobj.set_value('ReturnOffset', hex(f.ReturnOffset))
-        fobj.set_value('FrameOffset', hex(f.FrameOffset))
+        base, offset_inst = mapper.map(nproc, f.InstructionOffset)
+        if base != offset_inst.space:
+            STATE.trace.create_overlay_space(base, offset_inst.space)
+        base, offset_stack = mapper.map(nproc, f.StackOffset)
+        if base != offset_stack.space:
+            STATE.trace.create_overlay_space(base, offset_stack.space)
+        base, offset_ret = mapper.map(nproc, f.ReturnOffset)
+        if base != offset_ret.space:
+            STATE.trace.create_overlay_space(base, offset_ret.space)
+        base, offset_frame = mapper.map(nproc, f.FrameOffset)
+        if base != offset_frame.space:
+            STATE.trace.create_overlay_space(base, offset_frame.space)
+        fobj.set_value('Instruction Offset', offset_inst)
+        fobj.set_value('Stack Offset', offset_stack)
+        fobj.set_value('Return Offset', offset_ret)
+        fobj.set_value('Frame Offset', offset_frame)
         fobj.set_value('_display', "#{} {}".format(
-            f.FrameNumber, hex(f.InstructionOffset)))
+            f.FrameNumber, offset_inst.offset))
         fobj.insert()
     STATE.trace.proxy_object_path(STACK_PATTERN.format(
         procnum=nproc, tnum=nthrd)).retain_values(keys)
@@ -1292,21 +1296,21 @@ def ghidra_trace_put_frames():
 def update_by_container(np, index, obj):
     if np.endswith("Processes") or np.endswith("Threads"):
         istate = compute_proc_state(index)
-        obj.set_value('_state', istate)
+        obj.set_value('State', istate)
     if np.endswith("Processes"):
         create_generic(obj.path)
         id = util.get_proc_id(index)
-        obj.set_value('_pid', index)
+        obj.set_value('PID', index)
         obj.set_value('_display', '{:x} {:x}'.format(id, index))
     if np.endswith("Breakpoints"):
         create_generic(obj.path)
         #id = util.get_thread_id(index)
-        #obj.set_value('_tid', index)
+        #obj.set_value('TID', index)
         #obj.set_value('_display','{:x} {:x}'.format(id, index))
     if np.endswith("Threads"):
         create_generic(obj.path)
         id = util.get_thread_id(index)
-        obj.set_value('_tid', index)
+        obj.set_value('TID', index)
         obj.set_value('_display', '{:x} {:x}'.format(id, index))
     if np.endswith("Frames"):
         mo = util.get_object(obj.path)
@@ -1318,7 +1322,7 @@ def update_by_container(np, index, obj):
         map = util.get_attributes(attr)
         pc = util.get_value(map["InstructionOffset"])
         (pc_base, pc_addr) = map_address(pc)
-        obj.set_value('_pc', pc_addr)
+        obj.set_value('Instruction Offset', pc_addr)
         obj.set_value('_display', '#{:x} 0x{:x}'.format(index, pc))
     if np.endswith("Modules"):
         create_generic(obj.path)
@@ -1327,11 +1331,10 @@ def update_by_container(np, index, obj):
         base = util.get_value(map["BaseAddress"])
         size = util.get_value(map["Size"])
         name = util.get_value(map["Name"])
-        obj.set_value('_module_name', '{}'.format(name))
+        obj.set_value('Name', '{}'.format(name))
         (base_base, base_addr) = map_address(base)
-        obj.set_value('_range', base_addr.extend(size))
+        obj.set_value('Range', base_addr.extend(size))
         obj.set_value('_display', '{:x} {:x} {}'.format(index, base, name))
-        obj.set_value('Base', hex(base))
 
 
 def create_generic(path):
@@ -1353,10 +1356,6 @@ def put_generic(node):
     kind = util.get_kind(mo)
     type = util.get_type(mo)
     vstr = util.get_value(mo)
-    if kind is not None:
-        node.set_value("_kind", kind)
-    if type is not None:
-        node.set_value("_type", type.value)
     # print(f"MO={mo}")
     attributes = util.get_attributes(mo)
     # print(f"ATTR={attributes}")

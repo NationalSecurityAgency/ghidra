@@ -116,6 +116,7 @@
   </default_proto>
 
   <callfixup name="get_pc_thunk_lr">
+    <target name="__get_pc_thunk_lr"/>
     <pcode>
       <body><![CDATA[
       LR = inst_dest + 4;

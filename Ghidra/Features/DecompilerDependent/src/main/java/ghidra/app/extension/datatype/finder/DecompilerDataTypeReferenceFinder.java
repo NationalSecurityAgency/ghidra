@@ -130,6 +130,20 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 		}
 
 		results.addAll(callers);
+		
+		// Add any callers to external function that use any form of the data type
+		it = listing.getExternalFunctions();
+		callers = new HashSet<>();
+		for (Function f : it) {
+			monitor.checkCancelled();
+
+			if (usesAnyType(f, types)) {
+				Set<Function> callingFunctions = f.getCallingFunctions(monitor);
+				callers.addAll(callingFunctions);
+			}
+		}
+		
+		results.addAll(callers);
 
 		return results;
 	}

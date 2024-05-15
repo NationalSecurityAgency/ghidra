@@ -45,6 +45,7 @@ public interface AutoReadMemorySpec extends ExtensionPoint {
 
 		private Private() {
 			ClassSearcher.addChangeListener(classListener);
+			classesChanged(null);
 		}
 
 		private synchronized void classesChanged(ChangeEvent evt) {

@@ -13,14 +13,12 @@
   <BODY lang="EN-US">
     <H1><A name="plugin"></A>Debugger: Targets</H1>
 
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" border="1" src=
-          "images/DebuggerTargetsPlugin.png"></TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+    <DIV class="image">
+      <IMG alt="" src="images/DebuggerTargetsPlugin.png">
+    </DIV>
+
+    <P><IMG alt="" src="help/shared/note.png">This window only supports the older "Recorder-based"
+    targets. For newer "TraceRmi-based" targets, see the Connection Manager window.</P>
 
     <P>The targets window manages connections to live debuggers. In most cases, each item is a
     GADP/TCP connection to a local "agent" process which manages a native debugger, communicating
@@ -33,17 +31,13 @@
 
     <P>This window provides the following actions for managing connections.</P>
 
-    <H3><A name="connect"></A><IMG alt="" src="images/connect.png"> Connect</H3>
+    <H3><A name="connect"></A><IMG alt="" src="icon.debugger.connect"> Connect</H3>
 
     <P>Prompts the user to select a connector and configure its parameters.</P>
 
-    <TABLE width="100%">
-      <TBODY>
-        <TR>
-          <TD align="center" width="100%"><IMG alt="" src="images/DebuggerConnectDialog.png"></TD>
-        </TR>
-      </TBODY>
-    </TABLE>
+    <DIV class="image">
+      <IMG alt="" src="images/DebuggerConnectDialog.png">
+    </DIV>
 
     <P>The top drop-down displays a list of pluggable connectors. A description and the options for
     the currently-selected connector are displayed below. Some will start a new session, while
@@ -52,7 +46,7 @@
     Each connector should provide help in the form of tool tips, accessed by hovering over an
     option's name. Clicking "Connect" will start the connector and dismiss the dialog.</P>
 
-    <H3><A name="disconnect"></A><IMG alt="" src="images/disconnect.png"> Disconnect</H3>
+    <H3><A name="disconnect"></A><IMG alt="" src="icon.debugger.disconnect"> Disconnect</H3>
 
     <P>This action is available when a connection is selected. It closes the connection. Note,
     depending on the robustness of the connector's termination logic, this may not clean up all

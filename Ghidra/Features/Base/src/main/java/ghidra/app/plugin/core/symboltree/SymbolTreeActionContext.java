@@ -22,6 +22,7 @@ import javax.swing.tree.TreePath;
 
 import ghidra.app.context.ProgramSymbolActionContext;
 import ghidra.app.plugin.core.symboltree.nodes.SymbolNode;
+import ghidra.app.plugin.core.symboltree.nodes.SymbolTreeNode;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 
@@ -52,6 +53,58 @@ public class SymbolTreeActionContext extends ProgramSymbolActionContext {
 			return selectionPaths[0];
 		}
 		return null;
+	}
+
+	/**
+	 * Returns a symbol tree node if there is a single node selected and it is a symbol tree node.
+	 * Otherwise, null is returned.
+	 * @return the selected node or null
+	 */
+	public SymbolTreeNode getSelectedNode() {
+		if (selectionPaths != null && selectionPaths.length == 1) {
+			Object object = selectionPaths[0].getLastPathComponent();
+			if (object instanceof SymbolTreeNode node) {
+				return node;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Returns true if the tree's current selection contains at least one {@link SymbolNode}.
+	 * @return true if the tree's current selection contains at least one {@link SymbolNode}.
+	 */
+	public boolean hasSymbolsSelected() {
+		if (selectionPaths == null) {
+			return false;
+		}
+
+		for (TreePath treePath : selectionPaths) {
+			Object object = treePath.getLastPathComponent();
+			if (object instanceof SymbolNode) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Returns all selected {@link SymbolNode}s or an empty list.
+	 * @return all selected {@link SymbolNode}s or an empty list.
+	 */
+	public List<SymbolNode> getSelectedSymbolNodes() {
+		if (selectionPaths == null) {
+			return List.of();
+		}
+
+		List<SymbolNode> symbols = new ArrayList<>();
+		for (TreePath treePath : selectionPaths) {
+			Object object = treePath.getLastPathComponent();
+			if (object instanceof SymbolNode) {
+				symbols.add((SymbolNode) object);
+			}
+		}
+		return symbols;
 	}
 
 	private static List<Symbol> getSymbols(TreePath[] selectionPaths) {

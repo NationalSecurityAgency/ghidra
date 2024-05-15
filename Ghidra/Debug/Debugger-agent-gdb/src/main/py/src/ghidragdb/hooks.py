@@ -117,8 +117,8 @@ class InferiorState(object):
         inf = gdb.selected_inferior()
         ipath = commands.INFERIOR_PATTERN.format(infnum=inf.num)
         infobj = commands.STATE.trace.proxy_object_path(ipath)
-        infobj.set_value('_exit_code', exit_code)
-        infobj.set_value('_state', 'TERMINATED')
+        infobj.set_value('Exit Code', exit_code)
+        infobj.set_value('State', 'TERMINATED')
 
 
 class BrkState(object):

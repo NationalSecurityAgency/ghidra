@@ -23,7 +23,7 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-class ClassPackage extends ClassLocation {
+class ClassPackage implements ClassLocation {
 
 	private static final FileFilter CLASS_FILTER =
 		pathname -> pathname.getName().endsWith(CLASS_EXT);
@@ -32,6 +32,7 @@ class ClassPackage extends ClassLocation {
 	private File rootDir;
 	private File packageDir;
 	private String packageName;
+	private Set<ClassFileInfo> classes = new HashSet<>();
 
 	ClassPackage(File rootDir, String packageName, TaskMonitor monitor) throws CancelledException {
 		monitor.checkCancelled();
@@ -47,9 +48,9 @@ class ClassPackage extends ClassLocation {
 		String path = rootDir.getAbsolutePath();
 		Set<String> allClassNames = getAllClassNames();
 		for (String className : allClassNames) {
-			Class<?> c = ClassFinder.loadExtensionPoint(path, className);
-			if (c != null) {
-				classes.add(c);
+			String epName = ClassSearcher.getExtensionPointSuffix(className);
+			if (epName != null) {
+				classes.add(new ClassFileInfo(path, className, epName));
 			}
 		}
 	}
@@ -88,9 +89,7 @@ class ClassPackage extends ClassLocation {
 	}
 
 	@Override
-	protected void getClasses(Set<Class<?>> set, TaskMonitor monitor) throws CancelledException {
-
-		checkForDuplicates(set);
+	public void getClasses(Set<ClassFileInfo> set, TaskMonitor monitor) throws CancelledException {
 
 		set.addAll(classes);
 

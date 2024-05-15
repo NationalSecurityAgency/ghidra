@@ -500,6 +500,21 @@ public enum PathUtils {
 	}
 
 	/**
+	 * Assuming the first path is an ancestor of the second, compute the relative path from the
+	 * first to the second.
+	 * 
+	 * @param ancestor the ancestor (from)
+	 * @param successor the successor (to)
+	 * @return the relative path
+	 */
+	public static List<String> relativize(List<String> ancestor, List<String> successor) {
+		if (!isAncestor(ancestor, successor)) {
+			throw new IllegalArgumentException("First must be an ancestor of the second");
+		}
+		return successor.subList(ancestor.size(), successor.size());
+	}
+
+	/**
 	 * Check whether a given object-valued attribute is a link.
 	 * 
 	 * <p>
@@ -538,6 +553,7 @@ public enum PathUtils {
 	 * Check whether a given attribute should be displayed.
 	 * 
 	 * @param key the key of the given attribute
+	 * @return true if hidden
 	 */
 	public static boolean isHidden(String key) {
 		return key.startsWith(TargetObject.PREFIX_INVISIBLE);

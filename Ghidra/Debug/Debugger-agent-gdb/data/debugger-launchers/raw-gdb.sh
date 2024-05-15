@@ -26,7 +26,7 @@
 #@desc </body></html>
 #@menu-group raw
 #@icon icon.debugger
-#@help TraceRmiLauncherServicePlugin#gdb
+#@help TraceRmiLauncherServicePlugin#gdb_raw
 #@env OPT_GDB_PATH:str="gdb" "Path to gdb" "The path to gdb. Omit the full path to resolve using the system PATH."
 #@env OPT_ARCH:str="i386:x86-64" "Architecture" "Target architecture"
 
