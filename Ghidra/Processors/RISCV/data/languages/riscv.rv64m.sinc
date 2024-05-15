@@ -5,6 +5,7 @@
 {
 	local tmpr1:4 = rs1:4;
 	local tmpr2:4 = rs2:4;
+	checkDivByZero(tmpr2, rd, ~0);
 	rd = sext(tmpr1 / tmpr2);
 }
 
@@ -14,6 +15,7 @@
 {
 	local tmpr1:4 = rs1:4;
 	local tmpr2:4 = rs2:4;
+	checkDivByZero(tmpr2, rd, ~0);
 	rd = sext(tmpr1 s/ tmpr2);
 }
 
@@ -31,6 +33,7 @@
 {
 	local tmpr1:4 = rs1:4;
 	local tmpr2:4 = rs2:4;
+	checkDivByZero(tmpr2, rd, sext(tmpr1));
 	rd = sext(tmpr1 % tmpr2);
 }
 
@@ -40,5 +43,6 @@
 {
 	local tmpr1:4 = rs1:4;
 	local tmpr2:4 = rs2:4;
+	checkDivByZero(tmpr2, rd, sext(tmpr1));
 	rd = sext(tmpr1 s% tmpr2);
 }
