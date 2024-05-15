@@ -774,6 +774,12 @@ define pcodeop vmxon;    # Enter VMX operation; opcode f3 0f C7 /6
 @endif
 
 @ifdef IA64
+@define BYTE_80_82 "(byte=0x80 | (longMode=0 & byte=0x82))"
+@else
+@define BYTE_80_82 "(byte=0x80 | byte=0x82)"
+@endif
+
+@ifdef IA64
 Reg8:   reg8        is rexprefix=0 & reg8                               { export reg8; }
 Reg8:   reg8_x0     is rexprefix=1 & rexRprefix=0 & reg8_x0             { export reg8_x0; }
 Reg8:   reg8_x1     is rexprefix=1 & rexRprefix=1 & reg8_x1             { export reg8_x1; }
@@ -2073,7 +2079,7 @@ with : lockprefx=0 {
 @ifdef IA64
 :ADC RAX,simm32     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x15; RAX & simm32         { addCarryFlags( RAX, simm32 ); resultflags( RAX ); }
 @endif
-:ADC Rmr8,imm8		is vexMode=0 & (byte=0x80 | byte=0x82); mod=3 & Rmr8 & reg_opcode=2; imm8 { addCarryFlags( Rmr8, imm8:1 ); resultflags( Rmr8 ); }
+:ADC Rmr8,imm8		is vexMode=0 & $(BYTE_80_82); mod=3 & Rmr8 & reg_opcode=2; imm8 { addCarryFlags( Rmr8, imm8:1 ); resultflags( Rmr8 ); }
 :ADC Rmr16,imm16	is vexMode=0 & opsize=0 & byte=0x81; mod=3 & Rmr16 & reg_opcode=2; imm16 { addCarryFlags( Rmr16, imm16:2 ); resultflags( Rmr16 ); }
 :ADC Rmr32,imm32	is vexMode=0 & opsize=1 & byte=0x81; mod=3 & Rmr32 & check_Rmr32_dest & reg_opcode=2; imm32 { addCarryFlags( Rmr32, imm32:4 ); build check_Rmr32_dest; resultflags( Rmr32 ); }
 @ifdef IA64
@@ -2104,7 +2110,7 @@ with : lockprefx=0 {
 @ifdef IA64
 :ADD RAX,simm32     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x5; RAX & simm32          { addflags(  RAX,simm32);   RAX =   RAX + simm32; resultflags(  RAX); }
 @endif
-:ADD Rmr8,imm8		is vexMode=0 & (byte=0x80 | byte=0x82); mod=3 & Rmr8 & reg_opcode=0; imm8		{ addflags(  Rmr8,imm8 );   Rmr8 =   Rmr8 +  imm8; resultflags(  Rmr8); }
+:ADD Rmr8,imm8		is vexMode=0 & $(BYTE_80_82); mod=3 & Rmr8 & reg_opcode=0; imm8		{ addflags(  Rmr8,imm8 );   Rmr8 =   Rmr8 +  imm8; resultflags(  Rmr8); }
 :ADD Rmr16,imm16		is vexMode=0 & opsize=0 & byte=0x81; mod=3 & Rmr16 & reg_opcode=0; imm16	{ addflags( Rmr16,imm16);  Rmr16 =  Rmr16 + imm16; resultflags( Rmr16); }
 :ADD Rmr32,imm32		is vexMode=0 & opsize=1 & byte=0x81; mod=3 & Rmr32 & check_Rmr32_dest & reg_opcode=0; imm32	{ addflags( Rmr32,imm32);  Rmr32 =  Rmr32 + imm32; build check_Rmr32_dest; resultflags( Rmr32); }
 @ifdef IA64
@@ -2135,7 +2141,7 @@ with : lockprefx=0 {
 @ifdef IA64
 :AND RAX,simm32     is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x25; RAX & simm32         { logicalflags();   RAX =   RAX & simm32; resultflags(  RAX); }
 @endif
-:AND Rmr8,imm8      is vexMode=0 & (byte=0x80 | byte=0x82); mod=3 & Rmr8 & reg_opcode=4; imm8     { logicalflags();   Rmr8 =   Rmr8 &  imm8; resultflags(  Rmr8); }
+:AND Rmr8,imm8      is vexMode=0 & $(BYTE_80_82); mod=3 & Rmr8 & reg_opcode=4; imm8     { logicalflags();   Rmr8 =   Rmr8 &  imm8; resultflags(  Rmr8); }
 :AND Rmr16,imm16    is vexMode=0 & opsize=0 & byte=0x81; mod=3 & Rmr16 & reg_opcode=4; imm16  { logicalflags();  Rmr16 =  Rmr16 & imm16; resultflags( Rmr16); }
 :AND Rmr32,imm32    is vexMode=0 & opsize=1 & byte=0x81; mod=3 & Rmr32 & check_Rmr32_dest & reg_opcode=4; imm32  { logicalflags();  Rmr32 =  Rmr32 & imm32; build check_Rmr32_dest; resultflags( Rmr32); }
 @ifdef IA64
@@ -2590,7 +2596,7 @@ define pcodeop clzero;
 @ifdef IA64
 :CMP RAX,simm32      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x3d; RAX & simm32            { subflags(  RAX,simm32); local tmp =   RAX -  simm32; resultflags(tmp); }
 @endif
-:CMP spec_rm8,imm8       is vexMode=0 & (byte=0x80 | byte=0x82); spec_rm8 & reg_opcode=7 ...; imm8        { local temp:1 = spec_rm8; subflags(temp,imm8 ); local diff = temp - imm8; resultflags(diff); }
+:CMP spec_rm8,imm8       is vexMode=0 & $(BYTE_80_82); spec_rm8 & reg_opcode=7 ...; imm8        { local temp:1 = spec_rm8; subflags(temp,imm8 ); local diff = temp - imm8; resultflags(diff); }
 :CMP spec_rm16,imm16     is vexMode=0 & opsize=0 & byte=0x81; spec_rm16 & reg_opcode=7 ...; imm16 { local temp:2 = spec_rm16; subflags(temp,imm16); local diff = temp - imm16; resultflags(diff); }
 :CMP spec_rm32,imm32     is vexMode=0 & opsize=1 & byte=0x81; spec_rm32 & reg_opcode=7 ...; imm32 { local temp:4 = spec_rm32; subflags(temp,imm32); local diff = temp - imm32; resultflags(diff); }
 @ifdef IA64
@@ -3673,7 +3679,7 @@ define pcodeop swap_bytes;
 @ifdef IA64
 :OR  RAX,simm32        is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xd; RAX & simm32         { logicalflags();   RAX =   RAX | simm32; resultflags(  RAX); }
 @endif
-:OR  Rmr8,imm8      is vexMode=0 & (byte=0x80 | byte=0x82); mod=3 & Rmr8 & reg_opcode=1; imm8     { logicalflags();   Rmr8 =   Rmr8 |  imm8; resultflags(  Rmr8); }
+:OR  Rmr8,imm8      is vexMode=0 & $(BYTE_80_82); mod=3 & Rmr8 & reg_opcode=1; imm8     { logicalflags();   Rmr8 =   Rmr8 |  imm8; resultflags(  Rmr8); }
 :OR  Rmr16,imm16        is vexMode=0 & opsize=0 & byte=0x81; mod=3 & Rmr16 & reg_opcode=1; imm16  { logicalflags();  Rmr16 =  Rmr16 | imm16; resultflags( Rmr16); }
 :OR  Rmr32,imm32        is vexMode=0 & opsize=1 & byte=0x81; mod=3 & Rmr32 & check_rm32_dest & reg_opcode=1; imm32  { logicalflags();  Rmr32 =  Rmr32 | imm32; build check_rm32_dest; resultflags( Rmr32); }
 @ifdef IA64
@@ -4066,7 +4072,7 @@ define pcodeop smm_restore_state;
 @ifdef IA64
 :SBB  RAX,imm32    is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x1d; RAX & imm32						{ subCarryFlags( RAX, imm32 ); resultflags(RAX); }
 @endif
-:SBB  Rmr8,imm8     is vexMode=0 & (byte=0x80 | byte=0x82); mod=3 & Rmr8 & reg_opcode=3; imm8								{ subCarryFlags( Rmr8, imm8 ); resultflags(Rmr8); }
+:SBB  Rmr8,imm8     is vexMode=0 & $(BYTE_80_82); mod=3 & Rmr8 & reg_opcode=3; imm8								{ subCarryFlags( Rmr8, imm8 ); resultflags(Rmr8); }
 :SBB  Rmr16,imm16       is vexMode=0 & opsize=0 & byte=0x81; mod=3 & Rmr16 & reg_opcode=3; imm16							{ subCarryFlags( Rmr16, imm16 ); resultflags(Rmr16); }
 :SBB  Rmr32,imm32       is vexMode=0 & opsize=1 & byte=0x81; mod=3 & Rmr32 & check_Rmr32_dest & reg_opcode=3; imm32	{ subCarryFlags( Rmr32, imm32 ); build check_Rmr32_dest; resultflags(Rmr32); }
 @ifdef IA64
@@ -4288,7 +4294,7 @@ define pcodeop skinit;
 @ifdef IA64
 :SUB  RAX,simm32        is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x2d; RAX & simm32         { subflags(  RAX,simm32);   RAX =   RAX - simm32; resultflags(  RAX); }
 @endif
-:SUB  Rmr8,imm8     is vexMode=0 & (byte=0x80 | byte=0x82); mod=3 & Rmr8 & reg_opcode=5; imm8     { subflags(  Rmr8,imm8 );   Rmr8 =   Rmr8 -  imm8; resultflags(  Rmr8); }
+:SUB  Rmr8,imm8     is vexMode=0 & $(BYTE_80_82); mod=3 & Rmr8 & reg_opcode=5; imm8     { subflags(  Rmr8,imm8 );   Rmr8 =   Rmr8 -  imm8; resultflags(  Rmr8); }
 :SUB  Rmr16,imm16       is vexMode=0 & opsize=0 & byte=0x81; mod=3 & Rmr16 & reg_opcode=5; imm16  { subflags( Rmr16,imm16);  Rmr16 =  Rmr16 - imm16; resultflags( Rmr16); }
 :SUB  Rmr32,imm32       is vexMode=0 & opsize=1 & byte=0x81; mod=3 & Rmr32 & check_rm32_dest & reg_opcode=5; imm32  { subflags( Rmr32,imm32);  Rmr32 =  Rmr32 - imm32; build check_rm32_dest; resultflags( Rmr32); }
 @ifdef IA64
@@ -4490,7 +4496,7 @@ define pcodeop xend;
 @ifdef IA64
 :XOR RAX,simm32    is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x35; RAX & simm32            { logicalflags();   RAX =   RAX ^ simm32; resultflags(  RAX); }
 @endif
-:XOR Rmr8,imm8      is vexMode=0 & (byte=0x80 | byte=0x82); mod=3 & Rmr8 & reg_opcode=6; imm8     { logicalflags();   Rmr8 =   Rmr8 ^  imm8; resultflags(  Rmr8); }
+:XOR Rmr8,imm8      is vexMode=0 & $(BYTE_80_82); mod=3 & Rmr8 & reg_opcode=6; imm8     { logicalflags();   Rmr8 =   Rmr8 ^  imm8; resultflags(  Rmr8); }
 :XOR Rmr16,imm16    is vexMode=0 & opsize=0 & byte=0x81; mod=3 & Rmr16 & reg_opcode=6; imm16  { logicalflags();  Rmr16 =  Rmr16 ^ imm16; resultflags( Rmr16); }
 :XOR Rmr32,imm32    is vexMode=0 & opsize=1 & byte=0x81; mod=3 & Rmr32 & check_rm32_dest & reg_opcode=6; imm32  { logicalflags();  Rmr32 =  Rmr32 ^ imm32; build check_rm32_dest; resultflags( Rmr32); }
 @ifdef IA64
