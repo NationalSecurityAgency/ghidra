@@ -4893,7 +4893,7 @@ CMPPS_OPERAND: ", "^imm8 is imm8   { }
 	xmmTmp2_Da = XmmReg2[0,32];
 	xmmTmp2_Db = XmmReg2[32,32];
 	xmmTmp2_Dc = XmmReg2[64,32];
-	xmmTmp2_Dc = XmmReg2[96,32];
+	xmmTmp2_Dd = XmmReg2[96,32];
 	
 	build XmmCondPS;
 	
