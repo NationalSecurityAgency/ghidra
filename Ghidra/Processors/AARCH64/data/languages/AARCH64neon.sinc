@@ -9403,11 +9403,11 @@ frint_vmode: "z" is b_29=0 & b_23=1 & b_12=1 { }
 :frint^frint_vmode Rd_VPR64.4H, Rn_VPR64.4H
 is b_31=0 & b_30=0 & b_29 & b_2428=0b01110 & b_23 & b_1322=0b1111001100 & b_12 & b_1011=0b10 & frint_vmode & Rd_VPR64.4H & Rn_VPR64.4H & Zd
 {
-	# simd unary Rd_VPR64.4H = trunc(Rn_VPR64.4H) on lane size 2
-	Rd_VPR64.4H[0,16] = trunc(Rn_VPR64.4H[0,16]);
-	Rd_VPR64.4H[16,16] = trunc(Rn_VPR64.4H[16,16]);
-	Rd_VPR64.4H[32,16] = trunc(Rn_VPR64.4H[32,16]);
-	Rd_VPR64.4H[48,16] = trunc(Rn_VPR64.4H[48,16]);
+	# simd unary Rd_VPR64.4H = round(Rn_VPR64.4H) on lane size 2
+	Rd_VPR64.4H[0,16] = round(Rn_VPR64.4H[0,16]);
+	Rd_VPR64.4H[16,16] = round(Rn_VPR64.4H[16,16]);
+	Rd_VPR64.4H[32,16] = round(Rn_VPR64.4H[32,16]);
+	Rd_VPR64.4H[48,16] = round(Rn_VPR64.4H[48,16]);
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 }
 
@@ -9427,15 +9427,15 @@ is b_31=0 & b_30=0 & b_29 & b_2428=0b01110 & b_23 & b_1322=0b1111001100 & b_12 &
 :frint^frint_vmode Rd_VPR128.8H, Rn_VPR128.8H
 is b_31=0 & b_30=1 & b_29 & b_2428=0b01110 & b_23 & b_1322=0b1111001100 & b_12 & b_1011=0b10 & frint_vmode & Rd_VPR128.8H & Rn_VPR128.8H & Zd
 {
-	# simd unary Rd_VPR128.8H = trunc(Rn_VPR128.8H) on lane size 2
-	Rd_VPR128.8H[0,16] = trunc(Rn_VPR128.8H[0,16]);
-	Rd_VPR128.8H[16,16] = trunc(Rn_VPR128.8H[16,16]);
-	Rd_VPR128.8H[32,16] = trunc(Rn_VPR128.8H[32,16]);
-	Rd_VPR128.8H[48,16] = trunc(Rn_VPR128.8H[48,16]);
-	Rd_VPR128.8H[64,16] = trunc(Rn_VPR128.8H[64,16]);
-	Rd_VPR128.8H[80,16] = trunc(Rn_VPR128.8H[80,16]);
-	Rd_VPR128.8H[96,16] = trunc(Rn_VPR128.8H[96,16]);
-	Rd_VPR128.8H[112,16] = trunc(Rn_VPR128.8H[112,16]);
+	# simd unary Rd_VPR128.8H = round(Rn_VPR128.8H) on lane size 2
+	Rd_VPR128.8H[0,16] = round(Rn_VPR128.8H[0,16]);
+	Rd_VPR128.8H[16,16] = round(Rn_VPR128.8H[16,16]);
+	Rd_VPR128.8H[32,16] = round(Rn_VPR128.8H[32,16]);
+	Rd_VPR128.8H[48,16] = round(Rn_VPR128.8H[48,16]);
+	Rd_VPR128.8H[64,16] = round(Rn_VPR128.8H[64,16]);
+	Rd_VPR128.8H[80,16] = round(Rn_VPR128.8H[80,16]);
+	Rd_VPR128.8H[96,16] = round(Rn_VPR128.8H[96,16]);
+	Rd_VPR128.8H[112,16] = round(Rn_VPR128.8H[112,16]);
 	zext_zq(Zd); # zero upper 16 bytes of Zd
 }
 
@@ -9455,9 +9455,9 @@ is b_31=0 & b_30=1 & b_29 & b_2428=0b01110 & b_23 & b_1322=0b1111001100 & b_12 &
 :frint^frint_vmode Rd_VPR64.2S, Rn_VPR64.2S
 is b_31=0 & b_30=0 & b_29 & b_2428=0b01110 & b_23 & b_22=0b0 & b_1321=0b100001100 & b_12 & b_1011=0b10 & frint_vmode & Rd_VPR64.2S & Rn_VPR64.2S & Zd
 {
-	# simd unary Rd_VPR64.2S = trunc(Rn_VPR64.2S) on lane size 4
-	Rd_VPR64.2S[0,32] = trunc(Rn_VPR64.2S[0,32]);
-	Rd_VPR64.2S[32,32] = trunc(Rn_VPR64.2S[32,32]);
+	# simd unary Rd_VPR64.2S = round(Rn_VPR64.2S) on lane size 4
+	Rd_VPR64.2S[0,32] = round(Rn_VPR64.2S[0,32]);
+	Rd_VPR64.2S[32,32] = round(Rn_VPR64.2S[32,32]);
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 }
 
@@ -9477,11 +9477,11 @@ is b_31=0 & b_30=0 & b_29 & b_2428=0b01110 & b_23 & b_22=0b0 & b_1321=0b10000110
 :frint^frint_vmode Rd_VPR128.4S, Rn_VPR128.4S
 is b_31=0 & b_30=1 & b_29 & b_2428=0b01110 & b_23 & b_22=0b0 & b_1321=0b100001100 & b_12 & b_1011=0b10 & frint_vmode & Rd_VPR128.4S & Rn_VPR128.4S & Zd
 {
-	# simd unary Rd_VPR128.4S = trunc(Rn_VPR128.4S) on lane size 4
-	Rd_VPR128.4S[0,32] = trunc(Rn_VPR128.4S[0,32]);
-	Rd_VPR128.4S[32,32] = trunc(Rn_VPR128.4S[32,32]);
-	Rd_VPR128.4S[64,32] = trunc(Rn_VPR128.4S[64,32]);
-	Rd_VPR128.4S[96,32] = trunc(Rn_VPR128.4S[96,32]);
+	# simd unary Rd_VPR128.4S = round(Rn_VPR128.4S) on lane size 4
+	Rd_VPR128.4S[0,32] = round(Rn_VPR128.4S[0,32]);
+	Rd_VPR128.4S[32,32] = round(Rn_VPR128.4S[32,32]);
+	Rd_VPR128.4S[64,32] = round(Rn_VPR128.4S[64,32]);
+	Rd_VPR128.4S[96,32] = round(Rn_VPR128.4S[96,32]);
 	zext_zq(Zd); # zero upper 16 bytes of Zd
 }
 
@@ -9501,9 +9501,9 @@ is b_31=0 & b_30=1 & b_29 & b_2428=0b01110 & b_23 & b_22=0b0 & b_1321=0b10000110
 :frint^frint_vmode Rd_VPR128.2D, Rn_VPR128.2D
 is b_31=0 & b_30=1 & b_29 & b_2428=0b01110 & b_23 & b_22=0b1 & b_1321=0b100001100 & b_12 & b_1011=0b10 & frint_vmode & Rd_VPR128.2D & Rn_VPR128.2D & Zd
 {
-	# simd unary Rd_VPR128.2D = trunc(Rn_VPR128.2D) on lane size 8
-	Rd_VPR128.2D[0,64] = trunc(Rn_VPR128.2D[0,64]);
-	Rd_VPR128.2D[64,64] = trunc(Rn_VPR128.2D[64,64]);
+	# simd unary Rd_VPR128.2D = round(Rn_VPR128.2D) on lane size 8
+	Rd_VPR128.2D[0,64] = round(Rn_VPR128.2D[0,64]);
+	Rd_VPR128.2D[64,64] = round(Rn_VPR128.2D[64,64]);
 	zext_zq(Zd); # zero upper 16 bytes of Zd
 }
 
@@ -9534,7 +9534,7 @@ frint_smode: "z" is b_1517=0b011 { }
 :frint^frint_smode Rd_FPR16, Rn_FPR16
 is b_2431=0b00011110 & b_2223=0b11 & b_1821=0b1001 & b_1517 & b_1014=0b10000 & frint_smode & Rd_FPR16 & Rn_FPR16 & Zd
 {
-	Rd_FPR16 = trunc(Rn_FPR16);
+	Rd_FPR16 = round(Rn_FPR16);
 	zext_zh(Zd); # zero upper 30 bytes of Zd
 }
 
@@ -9554,7 +9554,7 @@ is b_2431=0b00011110 & b_2223=0b11 & b_1821=0b1001 & b_1517 & b_1014=0b10000 & f
 :frint^frint_smode Rd_FPR32, Rn_FPR32
 is b_2431=0b00011110 & b_2223=0b00 & b_1821=0b1001 & b_1517 & b_1014=0b10000 & frint_smode & Rd_FPR32 & Rn_FPR32 & Zd
 {
-	Rd_FPR32 = trunc(Rn_FPR32);
+	Rd_FPR32 = round(Rn_FPR32);
 	zext_zs(Zd); # zero upper 28 bytes of Zd
 }
 
@@ -9574,7 +9574,7 @@ is b_2431=0b00011110 & b_2223=0b00 & b_1821=0b1001 & b_1517 & b_1014=0b10000 & f
 :frint^frint_smode Rd_FPR64, Rn_FPR64
 is b_2431=0b00011110 & b_2223=0b01 & b_1821=0b1001 & b_1517 & b_1014=0b10000 & frint_smode & Rd_FPR64 & Rn_FPR64 & Zd
 {
-	Rd_FPR64 = trunc(Rn_FPR64);
+	Rd_FPR64 = round(Rn_FPR64);
 	zext_zd(Zd); # zero upper 24 bytes of Zd
 }
 
