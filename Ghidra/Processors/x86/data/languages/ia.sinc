@@ -5463,8 +5463,9 @@ CMPSS_OPERAND: ", "^imm8 is imm8   { }
 
 :CVTDQ2PD     XmmReg1, XmmReg2  is vexMode=0 &  $(PRE_F3) & byte=0x0F; byte=0xE6; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1[0,64] = int2float( XmmReg2[0,32] );
-    XmmReg1[64,64] = int2float( XmmReg2[32,32] );
+    local tmp:8 = XmmReg2[0,64];
+    XmmReg1[0,64] = int2float( tmp[0,32] );
+    XmmReg1[64,64] = int2float( tmp[32,32] );
 }
 
 :CVTDQ2PS     XmmReg, m128      is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x5B; m128 & XmmReg ...
@@ -5583,8 +5584,9 @@ CMPSS_OPERAND: ", "^imm8 is imm8   { }
 
 :CVTPS2PD     XmmReg1, XmmReg2  is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x5A; xmmmod=3 & XmmReg1 & XmmReg2
 {
-    XmmReg1[0,64] = float2float( XmmReg2[0,32] );
-    XmmReg1[64,64] = float2float( XmmReg2[32,32] );
+    local tmp:8 = XmmReg2[0,64];
+    XmmReg1[0,64] = float2float( tmp[0,32] );
+    XmmReg1[64,64] = float2float( tmp[32,32] );
 }
 
 :CVTPS2PI     mmxreg, m64         is vexMode=0 &  mandover=0 & byte=0x0F; byte=0x2D; mmxreg ... & m64
@@ -5837,8 +5839,9 @@ define pcodeop divps;
 
 :HADDPD        XmmReg1, XmmReg2    is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x7C; xmmmod=3 & XmmReg1 & XmmReg2
 {
+    local tmp:16 = XmmReg2;
     XmmReg1[0,64] = XmmReg1[0,64] f+ XmmReg1[64,64];
-    XmmReg1[64,64] = XmmReg2[0,64] f+ XmmReg2[64,64];
+    XmmReg1[64,64] = tmp[0,64] f+ tmp[64,64];
 }
 
 :HADDPS        XmmReg, m128        is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x7C; m128 & XmmReg ...
@@ -5852,10 +5855,11 @@ define pcodeop divps;
 
 :HADDPS        XmmReg1, XmmReg2    is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x7C; xmmmod=3 & XmmReg1 & XmmReg2
 {
+    local tmp:16 = XmmReg2;
     XmmReg1[0,32] = XmmReg1[0,32] f+ XmmReg1[32,32];
     XmmReg1[32,32] = XmmReg1[64,32] f+ XmmReg1[96,32];
-    XmmReg1[64,32] = XmmReg2[0,32] f+ XmmReg2[32,32];
-    XmmReg1[96,32] = XmmReg2[64,32] f+ XmmReg2[96,32];
+    XmmReg1[64,32] = tmp[0,32] f+ tmp[32,32];
+    XmmReg1[96,32] = tmp[64,32] f+ tmp[96,32];
 }
 
 :HSUBPD        XmmReg, m128        is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x7D; m128 & XmmReg ...
@@ -5867,8 +5871,9 @@ define pcodeop divps;
 
 :HSUBPD        XmmReg1, XmmReg2    is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x7D; xmmmod=3 & XmmReg1 & XmmReg2
 {
+    local tmp:16 = XmmReg2;
     XmmReg1[0,64] = XmmReg1[0,64] f- XmmReg1[64,64];
-    XmmReg1[64,64] = XmmReg2[0,64] f- XmmReg2[64,64];
+    XmmReg1[64,64] = tmp[0,64] f- tmp[64,64];
 }
 
 :HSUBPS        XmmReg, m128        is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x7D; m128 & XmmReg ...
@@ -5882,10 +5887,11 @@ define pcodeop divps;
 
 :HSUBPS        XmmReg1, XmmReg2    is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x7D; xmmmod=3 & XmmReg1 & XmmReg2
 {
+    local tmp:16 = XmmReg2;
     XmmReg1[0,32] = XmmReg1[0,32] f- XmmReg1[32,32];
     XmmReg1[32,32] = XmmReg1[64,32] f- XmmReg1[96,32];
-    XmmReg1[64,32] = XmmReg2[0,32] f- XmmReg2[32,32];
-    XmmReg1[96,32] = XmmReg2[64,32] f- XmmReg2[96,32];
+    XmmReg1[64,32] = tmp[0,32] f- tmp[32,32];
+    XmmReg1[96,32] = tmp[64,32] f- tmp[96,32];
 }
 
 #--------------------
