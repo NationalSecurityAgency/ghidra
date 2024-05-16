@@ -3618,7 +3618,8 @@ define pcodeop swap_bytes;
 @ifdef IA64
 :MOVSX Reg64,spec_rm8    is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0xbe; spec_rm8 & Reg64 ...  { Reg64 = sext(spec_rm8); }
 @endif
-:MOVSX Reg32,spec_rm16   is vexMode=0 &            byte=0xf; byte=0xbf; spec_rm16 & Reg32 ... & check_Reg32_dest ...    { Reg32 = sext(spec_rm16); build check_Reg32_dest; }
+:MOVSX Reg16,spec_rm16   is vexMode=0 & opsize=0 & byte=0xf; byte=0xbf; spec_rm16 & Reg16 ... { Reg16 = spec_rm16; }
+:MOVSX Reg32,spec_rm16   is vexMode=0 & opsize=1 & byte=0xf; byte=0xbf; spec_rm16 & Reg32 ... & check_Reg32_dest ... { Reg32 = sext(spec_rm16); build check_Reg32_dest; }
 @ifdef IA64
 :MOVSX Reg64,spec_rm16   is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0xbf; spec_rm16 & Reg64 ...     { Reg64 = sext(spec_rm16); }
 @endif
@@ -3633,8 +3634,8 @@ define pcodeop swap_bytes;
 @ifdef IA64
 :MOVZX Reg64,spec_rm8    is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0xb6; spec_rm8 & Reg64 ...  { Reg64 = zext(spec_rm8); }
 @endif
-
-:MOVZX Reg32,spec_rm16   is vexMode=0 &            byte=0xf; byte=0xb7; spec_rm16 & Reg32 ... & check_Reg32_dest ...    { Reg32 = zext(spec_rm16); build check_Reg32_dest; }
+:MOVZX Reg16,spec_rm16   is vexMode=0 & opsize=0 & byte=0xf; byte=0xb7; spec_rm16 & Reg16 ... { Reg16 = spec_rm16; }
+:MOVZX Reg32,spec_rm16   is vexMode=0 & opsize=1 & byte=0xf; byte=0xb7; spec_rm16 & Reg32 ... & check_Reg32_dest ...    { Reg32 = zext(spec_rm16); build check_Reg32_dest; }
 @ifdef IA64
 :MOVZX Reg64,spec_rm16   is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0xb7; spec_rm16 & Reg64 ...     { Reg64 = zext(spec_rm16); }
 @endif
