@@ -275,7 +275,7 @@ public class SquashUtils {
 
 			// Store symlink as file. Lookup handled when getting ByteProvider
 			fsih.storeFileWithParent(entry.getFileName(), parentDir, symLinkInode.getNumber(),
-				false, 0, new SquashedFile(symLinkInode, null));
+				false, symLinkInode.getPath().length(), new SquashedFile(symLinkInode, null));
 
 		}
 		else {
