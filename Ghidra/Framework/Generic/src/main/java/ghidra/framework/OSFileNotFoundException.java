@@ -34,7 +34,7 @@ public class OSFileNotFoundException extends FileNotFoundException {
 	 * @param fileName The file name associated with this exception, from the given module
 	 */
 	public OSFileNotFoundException(Platform platform, String moduleName, String fileName) {
-		super(String.format("%sos/%s/%s does not exist", moduleName != null ? moduleName + "/" : "",
+		super(String.format("%sos/%s/%s does not exist (see InstallationGuide.html, 'Building Native Components')", moduleName != null ? moduleName + "/" : "",
 			platform.getDirectoryName(), fileName));
 		this.platform = platform;
 	}
