@@ -278,8 +278,10 @@ public class PathnameTablePanel extends JPanel {
 					pathName = "";
 				}
 				else {
-					File file = new File(pathName);
-					fileExists = file.exists();
+					int colonSlashSlash = pathName.indexOf("://");
+					if (colonSlashSlash <= 0) { // Assume FSRL/URLs always exist
+						fileExists = new File(pathName).exists();
+					}
 				}
 
 				label.setText(pathName.toString());

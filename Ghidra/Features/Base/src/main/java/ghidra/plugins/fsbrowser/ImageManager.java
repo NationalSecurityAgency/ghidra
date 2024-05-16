@@ -61,5 +61,6 @@ public class ImageManager {
 	public final static Icon iOS = new GIcon("icon.plugin.fsbrowser.ios");
 	public final static Icon OPEN_ALL = new GIcon("icon.plugin.fsbrowser.open.all");
 	public final static Icon LIST_MOUNTED = new GIcon("icon.plugin.fsbrowser.list.mounted");
+	public final static Icon LIBRARY = new GIcon("icon.plugin.fsbrowser.library");
 	//@formatter:on
 }

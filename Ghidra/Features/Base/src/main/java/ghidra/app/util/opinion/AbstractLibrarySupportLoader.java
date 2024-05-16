@@ -17,9 +17,11 @@ package ghidra.app.util.opinion;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -584,16 +586,13 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			if (!success) {
 				release(loadedPrograms, consumer);
 			}
-			for (FileSystemSearchPath fsSearchPath : localSearchPaths) {
-				if (!fsSearchPath.fsRef().isClosed()) {
-					fsSearchPath.fsRef().close();
-				}
-			}
-			for (FileSystemSearchPath fsSearchPath : systemSearchPaths) {
-				if (!fsSearchPath.fsRef().isClosed()) {
-					fsSearchPath.fsRef().close();
-				}
-			}
+			Stream.of(customSearchPaths, localSearchPaths, systemSearchPaths)
+					.flatMap(Collection::stream)
+					.forEach(fsSearchPath -> {
+						if (!fsSearchPath.fsRef().isClosed()) {
+							fsSearchPath.fsRef().close();
+						}
+					});
 		}
 	}
 
@@ -1061,9 +1060,10 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @param monitor A cancelable task monitor
 	 * @return A {@link List} of priority-ordered custom {@link FileSystemSearchPath}s used to
 	 *   search for libraries
+	 * @throws CancelledException if the user cancelled the load
 	 */
 	protected List<FileSystemSearchPath> getCustomLibrarySearchPaths(ByteProvider provider,
-			List<Option> options, MessageLog log, TaskMonitor monitor) {
+			List<Option> options, MessageLog log, TaskMonitor monitor) throws CancelledException {
 		return List.of();
 	}
 
@@ -1077,22 +1077,24 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @param monitor A cancelable task monitor
 	 * @return A {@link List} of priority-ordered local {@link FileSystemSearchPath}s used to
 	 *   search for libraries
+	 * @throws CancelledException if the user cancelled the load
 	 */
 	private List<FileSystemSearchPath> getLocalLibrarySearchPaths(ByteProvider provider,
-			List<Option> options, MessageLog log, TaskMonitor monitor) {
+			List<Option> options, MessageLog log, TaskMonitor monitor) throws CancelledException {
+		if (!isLoadLocalLibraries(options) && !shouldSearchAllPaths(options)) {
+			return List.of();
+		}
 		List<FileSystemSearchPath> result = new ArrayList<>();
 		FileSystemService fsService = FileSystemService.getInstance();
-		if (isLoadLocalLibraries(options) || shouldSearchAllPaths(options)) {
-			FSRL providerFsrl = provider.getFSRL();
-			if (providerFsrl != null) {
-				try (RefdFile fileRef = fsService.getRefdFile(providerFsrl, monitor)) {
-					GFile parentFile = fileRef.file.getParentFile();
-					File f = new File(parentFile.getPath()); // File API will sanitize Windows-style paths
-					result.add(new FileSystemSearchPath(fileRef.fsRef, f.toPath()));
-				}
-				catch (IOException | CancelledException e) {
-					log.appendException(e);
-				}
+		FSRL providerFsrl = provider.getFSRL();
+		if (providerFsrl != null) {
+			try (RefdFile fileRef = fsService.getRefdFile(providerFsrl, monitor)) {
+				GFile parentFile = fileRef.file.getParentFile();
+				File f = new File(parentFile.getPath()); // File API will sanitize Windows-style paths
+				result.add(new FileSystemSearchPath(fileRef.fsRef.dup(), f.toPath()));
+			}
+			catch (IOException e) {
+				log.appendException(e);
 			}
 		}
 		return result;
@@ -1107,41 +1109,32 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @param monitor A cancelable task monitor
 	 * @return A {@link List} of priority-ordered system {@link FileSystemSearchPath}s used to 
 	 *   search for libraries
+	 * @throws CancelledException if the user cancelled the load
 	 */
 	private List<FileSystemSearchPath> getSystemLibrarySearchPaths(List<Option> options,
-			MessageLog log, TaskMonitor monitor) {
-		List<FileSystemSearchPath> result = new ArrayList<>();
+			MessageLog log, TaskMonitor monitor) throws CancelledException {
+		if (!isLoadSystemLibraries(options) && !shouldSearchAllPaths(options)) {
+			return List.of();
+		}
+
 		FileSystemService fsService = FileSystemService.getInstance();
-		if (isLoadSystemLibraries(options) || shouldSearchAllPaths(options)) {
-			List<Path> searchPaths = new ArrayList<>();
-			for (String str : LibrarySearchPathManager.getLibraryPathsList()) {
-				str = str.trim();
-				if (str.isEmpty()) {
-					continue;
+		List<FileSystemSearchPath> result = new ArrayList<>();
+		boolean success = false;
+		try {
+			for (FSRL fsrl : LibrarySearchPathManager.getLibraryFsrlList(log, monitor)) {
+				try (RefdFile fileRef = fsService.getRefdFile(fsrl, monitor)) {
+					File f = new File(fileRef.file.getPath()); // File API will sanitize Windows-style paths
+					result.add(new FileSystemSearchPath(fileRef.fsRef.dup(), f.toPath()));
 				}
-				try {
-					Path path = getCheckedPath(str).normalize();
-					if (path.isAbsolute() && Files.exists(path)) {
-						searchPaths.add(path);
-					}
-				}
-				catch (InvalidInputException e) {
-					log.appendMsg("Skipping invalid system library search path: \"" + str + "\"");
+				catch (IOException e) {
+					log.appendMsg(e.getMessage());
 				}
 			}
-			for (Path searchPath : searchPaths) {
-				try {
-					FSRL searchFSRL =
-						fsService.getLocalFSRL(searchPath.toFile().getCanonicalFile());
-					FileSystemRef fsRef =
-						fsService.probeFileForFilesystem(searchFSRL, monitor, null);
-					if (fsRef != null) {
-						result.add(new FileSystemSearchPath(fsRef, null));
-					}
-				}
-				catch (IOException | CancelledException e) {
-					log.appendException(e);
-				}
+			success = true;
+		}
+		finally {
+			if (!success) {
+				result.forEach(fsSearchPath -> fsSearchPath.fsRef().close());
 			}
 		}
 		return result;
@@ -1205,7 +1198,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * case-insensitive lookup may be allowed, and filename extensions may be optional.
 	 * 
 	 * @param fs The {@link GFileSystem file system} to resolve in
-	 * @param libraryParentPath The {@link Path} of the libraries parent directory, relative to the
+	 * @param libraryParentPath The {@link Path} of the library's parent directory, relative to the
 	 *   given file system (could be null)
 	 * @param libraryName The library name
 	 * @return The library resolved to an existing {@link FSRL}, or null if it did not resolve
