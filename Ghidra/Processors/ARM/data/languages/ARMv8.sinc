@@ -119,13 +119,14 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 :ldaexd^COND Rd,Rd2,[Rn]
 	is TMode=0 & ARMcond=1 & COND & c2027=0x1b & Rn & Rd & Rd2 & c0011=0xe9f
 	{
+		local addr:4 = Rn;
 		build COND;
 @if ENDIAN == "big"
-		Rd = *(Rn + 4);
-		Rd2 = *(Rn);
+		Rd = *(addr + 4);
+		Rd2 = *(addr);
 @else	# ENDIAN == "little"
-		Rd = *(Rn);
-		Rd2 = *(Rn + 4);
+		Rd = *(addr);
+		Rd2 = *(addr + 4);
 @endif	# ENDIAN == "little"
 	}
 
@@ -134,13 +135,14 @@ dcps_lev:3		is TMode=1 & thv_c0001=0b11 { export 3:1; }
 	is TMode=1 & thv_c2031=0b111010001101 & thv_c0407=0b1111
 	& ItCond & thv_Rt & thv_Rt2 & thv_Rn
 	{
+		local addr:4 = thv_Rn;
 		build ItCond;
 @if ENDIAN == "big"
-		thv_Rt = *(thv_Rn + 4);
-		thv_Rt2 = *(thv_Rn);
+		thv_Rt = *(addr + 4);
+		thv_Rt2 = *(addr);
 @else	# ENDIAN == "little"
-		thv_Rt = *(thv_Rn);
-		thv_Rt2 = *(thv_Rn + 4);
+		thv_Rt = *(addr);
+		thv_Rt2 = *(addr + 4);
 @endif	# ENDIAN == "little"
 	}
 
