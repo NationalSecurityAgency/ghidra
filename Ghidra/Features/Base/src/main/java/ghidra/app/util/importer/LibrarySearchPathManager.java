@@ -15,9 +15,16 @@
  */
 package ghidra.app.util.importer;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.*;
 
+import ghidra.formats.gfilesystem.FSRL;
+import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.framework.Platform;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * A simple class for managing the library search path
@@ -61,11 +68,39 @@ public class LibrarySearchPathManager {
 	}
 
 	/**
-	 * Returns an array of directories to search for libraries
-	 * @return a list of directories to search for libraries
+	 * Returns a {@link List} of {@link FSRL}s to search for libraries
+	 * @param log The log
+	 * @param monitor A cancellable monitor
+	 * @return a {@link List} of {@link FSRL}s to search for libraries
+	 * @throws CancelledException if the user cancelled the operation
 	 */
-	public static List<String> getLibraryPathsList() {
-		return new ArrayList<>(pathList);
+	public static List<FSRL> getLibraryFsrlList(MessageLog log, TaskMonitor monitor)
+			throws CancelledException {
+		FileSystemService fsService = FileSystemService.getInstance();
+		List<FSRL> fsrlList = new ArrayList<>();
+		for (String path : pathList) {
+			monitor.checkCancelled();
+			path = path.trim();
+			FSRL fsrl = null;
+			try {
+				fsrl = FSRL.fromString(path);
+			}
+			catch (MalformedURLException e) {
+				try {
+					File f = new File(path);
+					if (f.exists() && f.isAbsolute()) {
+						fsrl = fsService.getLocalFSRL(f.getCanonicalFile());
+					}
+				}
+				catch (IOException e2) {
+					log.appendException(e2);
+				}
+			}
+			if (fsrl != null) {
+				fsrlList.add(fsrl);
+			}
+		}
+		return fsrlList;
 	}
 
 	/**
