@@ -445,6 +445,7 @@ public abstract class DecompilerCodeComparisonPanel<T extends DualDecompilerFiel
 
 	@Override
 	public void dispose() {
+		removeProgramListeners();
 		setFieldPanelCoordinator(null);
 		cPanels[LEFT].dispose();
 		cPanels[RIGHT].dispose();
