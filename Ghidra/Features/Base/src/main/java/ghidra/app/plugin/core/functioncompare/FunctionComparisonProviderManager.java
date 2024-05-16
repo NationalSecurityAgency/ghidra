@@ -20,10 +20,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import docking.ComponentProviderActivationListener;
-import ghidra.framework.model.DomainObjectChangeRecord;
-import ghidra.framework.model.DomainObjectChangedEvent;
-import ghidra.framework.model.DomainObjectEvent;
-import ghidra.framework.model.EventType;
+import ghidra.framework.model.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 
@@ -53,6 +50,7 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 	@Override
 	public void providerClosed(FunctionComparisonProvider provider) {
 		providers.remove(provider);
+		provider.dispose();
 		listeners.stream().forEach(l -> l.componentProviderDeactivated(provider));
 	}
 
@@ -217,9 +215,7 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 	 */
 	public void dispose() {
 		for (FunctionComparisonProvider provider : providers) {
-			FunctionComparisonPanel panel = provider.getComponent();
-			panel.setVisible(false);
-			panel.dispose();
+			provider.dispose();
 		}
 		providers.clear();
 	}
