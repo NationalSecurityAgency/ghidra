@@ -33,7 +33,7 @@ import ghidra.util.exception.*;
  */
 public class SymbolUtilities {
 
-	public static final int MAX_SYMBOL_NAME_LENGTH = 2000;
+	public static final int MAX_SYMBOL_NAME_LENGTH = 4000;
 
 	//
 	// The standard prefixes for default labels.
