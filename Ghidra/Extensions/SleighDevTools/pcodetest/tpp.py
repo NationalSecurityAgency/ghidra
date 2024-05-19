@@ -209,19 +209,19 @@ void %(main)s(TestInfo* not_used) {
         self.c_file = False
 
 
-parser = argparse.ArgumentParser(description='Precompile test file',
-    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Precompile test file',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-parser.add_argument('test_file', nargs='*', help='Test file to preprocess, must end with .test')
-parser.add_argument('--entry', default='', help='Create file ENTRY containing a main function that calls all MAIN functions')
+    parser.add_argument('test_file', nargs='*', help='Test file to preprocess, must end with .test')
+    parser.add_argument('--entry', default='', help='Create file ENTRY containing a main function that calls all MAIN functions')
 
-sys.argv.pop(0)
-args = parser.parse_args(sys.argv)
+    sys.argv.pop(0)
+    args = parser.parse_args(sys.argv)
 
-if args.test_file:
-    for test_file in args.test_file:
-        tpp(test_file).parse()
+    if args.test_file:
+        for test_file in args.test_file:
+            tpp(test_file).parse()
 
-if args.entry:
-    tpp(args.entry).create_entry()
-
+    if args.entry:
+        tpp(args.entry).create_entry()
