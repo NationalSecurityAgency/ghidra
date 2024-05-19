@@ -16,15 +16,54 @@
 # limitations under the License.
 ##
 
-import re
-import os
-import sys
-import glob
 import argparse
+import re
+import sys
+from pathlib import Path
 
 
 def print_err(*args, **kwargs):
+    '''
+    Print to stderr.
+    '''
     print(*args, file=sys.stderr, **kwargs)
+
+
+def create_test_entry(filepath: Path) -> bool:
+    '''
+    Create a file in `filepath` that serves as the entry for the tests.
+    The entry function will contain a call to all of the main functions found
+    in test files in the directory of the output file.
+    '''
+    if filepath.exists():
+        print_err(f'WARNING: entry filename {filepath} exists\n')
+        return False
+    # Iterate testfiles in the same folder as filepath and collect entry names
+    test_entries = []
+    for testpath in filepath.parent.glob('*.test'):
+        with testpath.open('r') as testfile:
+            for line in testfile:
+                m = re.match(r'MAIN\s+(\w*).*', line)
+                if m:
+                    test_entries.append(m.group(1))
+    # Generate the file
+    with filepath.open('w') as file:
+        file.write('#include "pcode_test.h"\n')
+        file.write('\n')
+        for t in test_entries:
+            file.write(f'extern void {t}(TestInfo* info);\n')
+        file.write('\n')
+        file.write('void main(void) {\n')
+        file.write('    TestInfo info;\n')
+        file.write('\n')
+        for t in test_entries:
+            file.write(f'    {t}(&info);\n')
+        file.write('\n')
+        file.write('#ifdef BUILD_EXE\n')
+        file.write('    exit(0);\n')
+        file.write('#endif\n')
+        file.write('}\n')
+    return True
 
 
 class tpp:
@@ -182,43 +221,10 @@ void %(main)s(TestInfo* not_used) {
         self.c_file.close()
         self.c_file = False
 
-    def create_entry(self) -> None:
-        '''
-        Create a file named `fname`. The entry function will contain a call to
-        all of the main functions fount in test files in the current directory.
-        '''
-        if os.path.exists(self.fname):
-            print_err(f'WARNING: entry filename {self.fname} exists\n')
-            return
-
-        extern_lines = []
-        main_lines = []
-        for tname in glob.glob(re.sub(r'[^/]*$', '*.test', self.fname)):
-            with open(tname) as tfile:
-                for line in tfile:
-                    if self.match(r'MAIN\s+(\w*).*', line):
-                        extern_lines.append('\textern void %s(TestInfo* not_used);' % self.m.group(1))
-                        main_lines.append('\t%s(&info);' % self.m.group(1))
-        self.c_file = open(self.fname, "w")
-        self.c_write('#include "pcode_test.h"')
-        self.c_write('')
-        #for l in extern_lines:
-        #    self.c_write(l)
-        self.c_write('void main(void) {')
-        self.c_write('\tTestInfo info;')
-        #for l in main_lines:
-        #    self.c_write(l)
-        self.c_write('#ifdef BUILD_EXE')
-        self.c_write('\texit(0);')
-        self.c_write('#endif')
-        self.c_write('}')
-        self.c_file.close()
-        self.c_file = False
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Precompile test file')
-    parser.add_argument('--entry', default='', help='Create file ENTRY containing a main function that calls all MAIN functions')
+    parser.add_argument('--entry', type=Path, default='', help='Create a main entry file containing calls all test functions')
     parser.add_argument('test_file', nargs='*', help='Test file to preprocess, must end with .test')
     args = parser.parse_args()
 
@@ -227,4 +233,4 @@ if __name__ == '__main__':
             tpp(test_file).parse()
 
     if args.entry:
-        tpp(args.entry).create_entry()
+        create_test_entry(args.entry)
