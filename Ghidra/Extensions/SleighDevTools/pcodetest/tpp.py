@@ -182,10 +182,11 @@ void %(main)s(TestInfo* not_used) {
         self.c_file.close()
         self.c_file = False
 
-    # the ENTRY function will contain a call to all of the MAIN
-    # functions found in .test files in the current directory
-
-    def create_entry(self):
+    def create_entry(self) -> None:
+        '''
+        Create a file named `fname`. The entry function will contain a call to
+        all of the main functions fount in test files in the current directory.
+        '''
         if os.path.exists(self.fname):
             print_err(f'WARNING: entry filename {self.fname} exists\n')
             return
