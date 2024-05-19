@@ -22,6 +22,11 @@ import sys
 import glob
 import argparse
 
+
+def print_err(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
+
 class tpp:
 
     def __init__(self, fname):
@@ -44,8 +49,8 @@ class tpp:
     def test_if(self, line):
         if self.data['name']: self.test_body(line)
         elif self.data['ifdef']:
-            sys.stderr.write('ERROR: nested ifdef not allowed in file %s at line %d\n' % (self.fname, self.line_num))
-            sys.exit(1);
+            print_err(f'ERROR: nested ifdef not allowed in file {self.fname} at line {self.line_num}\n')
+            sys.exit(1)
         else: self.data['ifdef'] = line.strip()
 
     def test_endif(self, line):
@@ -147,8 +152,8 @@ void %(main)s(TestInfo* not_used) {
     def parse(self):
 
         if not self.fname.endswith('.test'):
-            sys.stderr.write('ERROR: filename %s must end with .test\n' % self.fname)
-            sys.exit(1);
+            print_err(f'ERROR: filename {self.fname} must end with .test\n')
+            sys.exit(1)
 
         self.c_file = open(re.sub('[.]test', '.c', self.fname), "w")
 
@@ -182,8 +187,8 @@ void %(main)s(TestInfo* not_used) {
 
     def create_entry(self):
         if os.path.exists(self.fname):
-            sys.stderr.write('WARNING: entry filename %s exists\n' % self.fname)
-            return;
+            print_err(f'WARNING: entry filename {self.fname} exists\n')
+            return
 
         extern_lines = []
         main_lines = []
