@@ -3495,18 +3495,18 @@ is b_3131=0 & q=1 & u=1 & b_2428=0xe & advSIMD3.size=0 & b_21=1 & Rm_VPR128.4S &
 is b_31=0 & b_30=0 & b_2129=0b101110010 & b_1015=0b000101 & Rd_VPR64.4H & Rn_VPR64.4H & Rm_VPR64.4H & Zd
 {
 	TMPD1 = 0;
-	# sipd infix TMPD1 = f+(Rm_VPR64.4H,Rn_VPR64.4H) on pairs lane size (2 to 2)
-	local tmp2 = Rm_VPR64.4H[0,16];
-	local tmp3 = Rm_VPR64.4H[16,16];
+	# sipd infix TMPD1 = f+(Rn_VPR64.4H,Rm_VPR64.4H) on pairs lane size (2 to 2)
+	local tmp2 = Rn_VPR64.4H[0,16];
+	local tmp3 = Rn_VPR64.4H[16,16];
 	TMPD1[0,16] = tmp2 f+ tmp3;
-	tmp2 = Rm_VPR64.4H[32,16];
-	tmp3 = Rm_VPR64.4H[48,16];
-	TMPD1[16,16] = tmp2 f+ tmp3;
-	tmp2 = Rn_VPR64.4H[0,16];
-	tmp3 = Rn_VPR64.4H[16,16];
-	TMPD1[32,16] = tmp2 f+ tmp3;
 	tmp2 = Rn_VPR64.4H[32,16];
 	tmp3 = Rn_VPR64.4H[48,16];
+	TMPD1[16,16] = tmp2 f+ tmp3;
+	tmp2 = Rm_VPR64.4H[0,16];
+	tmp3 = Rm_VPR64.4H[16,16];
+	TMPD1[32,16] = tmp2 f+ tmp3;
+	tmp2 = Rm_VPR64.4H[32,16];
+	tmp3 = Rm_VPR64.4H[48,16];
 	TMPD1[48,16] = tmp2 f+ tmp3;
 	Rd_VPR64.4H = TMPD1;
 	zext_zd(Zd); # zero upper 24 bytes of Zd
