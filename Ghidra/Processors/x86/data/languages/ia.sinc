@@ -4044,12 +4044,21 @@ define pcodeop wrpkru;
 define pcodeop wrmsr;
 :WRMSR is vexMode=0 & byte=0xf; byte=0x30 { tmp:8 = (zext(EDX) << 32) | zext(EAX); wrmsr(ECX,tmp); }
 
+macro xadd(dst,src) {
+    local tmp = dst;
+    addflags(tmp,src);
+    local result = tmp + src;
+    dst = result; 
+    src = tmp;
+    resultflags(result);
+}
+
 # See 'lockable.sinc' for memory destination, lockable variants
 :XADD       Rmr8,Reg8 	is vexMode=0 & byte=0x0F; byte=0xC0; mod=3 & Rmr8 & Reg8        { addflags( Rmr8,Reg8 ); local tmp =  Rmr8 +  Reg8;  Reg8 = Rmr8; Rmr8 = tmp;     resultflags(tmp); }
-:XADD      Rmr16,Reg16	is vexMode=0 & opsize=0 & byte=0x0F; byte=0xC1; mod=3 & Rmr16 & Reg16 { addflags(Rmr16,Reg16); local tmp = Rmr16 + Reg16; Reg16 = Rmr16; Rmr16 = tmp; resultflags(tmp); }
-:XADD      Rmr32,Reg32	is vexMode=0 & opsize=1 & byte=0x0F; byte=0xC1; mod=3 & Rmr32 & check_Rmr32_dest & Reg32 & check_Reg32_dest { addflags(Rmr32,Reg32); local tmp = Rmr32 + Reg32; Reg32 = Rmr32; Rmr32 = tmp; build check_Rmr32_dest; build check_Reg32_dest; resultflags(tmp); }
+:XADD      Rmr16,Reg16	is vexMode=0 & opsize=0 & byte=0x0F; byte=0xC1; mod=3 & Rmr16 & Reg16                                       { xadd(Rmr16,Reg16); }
+:XADD      Rmr32,Reg32	is vexMode=0 & opsize=1 & byte=0x0F; byte=0xC1; mod=3 & Rmr32 & check_Rmr32_dest & Reg32 & check_Reg32_dest { xadd(Rmr32,Reg32); build check_Rmr32_dest; build check_Reg32_dest; }
 @ifdef IA64
-:XADD      Rmr64,Reg64	is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x0F; byte=0xC1; mod=3 & Rmr64 & Reg64 { addflags(Rmr64,Reg64); local tmp = Rmr64 + Reg64; Reg64 = Rmr64; Rmr64 = tmp; resultflags(tmp); }
+:XADD      Rmr64,Reg64	is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0x0F; byte=0xC1; mod=3 & Rmr64 & Reg64                      { xadd(Rmr64,Reg64); }
 @endif
 
 define pcodeop xabort;
