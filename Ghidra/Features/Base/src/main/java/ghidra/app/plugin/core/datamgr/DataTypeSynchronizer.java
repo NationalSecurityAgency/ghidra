@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.datamgr;
 
 import java.awt.FontMetrics;
 import java.util.*;
+import java.util.function.Consumer;
 
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
@@ -31,8 +32,8 @@ import ghidra.app.util.html.MissingArchiveDataTypeHTMLRepresentation;
 import ghidra.program.database.data.*;
 import ghidra.program.model.data.*;
 import ghidra.util.*;
-import ghidra.util.exception.AssertException;
-import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.exception.*;
+import utility.function.ExceptionalConsumer;
 
 /**
  * Class for performing basic functions related to synchronizing data types between a program and
@@ -43,8 +44,6 @@ public class DataTypeSynchronizer {
 	private final DataTypeManager dataTypeManager;
 	private final SourceArchive sourceArchive;
 	private final DataTypeManager sourceDTM;
-	private int sourceTransactionID;
-	private int localTransactionID;
 
 	/**
 	 * Creates a DataTypeSynchronizer to be used for synchronizing data types between a program
@@ -63,12 +62,7 @@ public class DataTypeSynchronizer {
 	}
 
 	public List<DataTypeSyncInfo> findOutOfSynchDataTypes() {
-//		long lastChangeTimeForSource = sourceDTM.getLastChangeTimeForMyManager();
-//		long lastSyncTimeForSource = sourceArchive.getLastSyncTime();
-//
-//		if (lastChangeTimeForSource == lastSyncTimeForSource && !sourceArchive.isDirty()) {
-//			return new ArrayList<DataTypeSyncInfo>();
-//		}
+
 		List<DataType> dataTypes = dataTypeManager.getDataTypes(sourceArchive);
 
 		List<DataTypeSyncInfo> dataTypeSyncInfo = new ArrayList<>();
@@ -91,7 +85,7 @@ public class DataTypeSynchronizer {
 		return dataTypeSyncInfo;
 	}
 
-	public static void commit(DataTypeManager sourceDTM, DataType refDT) {
+	private static void commit(DataTypeManager sourceDTM, DataType refDT) {
 		DataTypeManager refDTM = refDT.getDataTypeManager();
 		int sourceTransactionID = sourceDTM.startTransaction("Commit Datatype Changes");
 		int refTransactionID = refDTM.startTransaction("Update DataType Sync Time");
@@ -104,7 +98,7 @@ public class DataTypeSynchronizer {
 		}
 	}
 
-	public static void update(DataTypeManager refDTM, DataType sourceDT) {
+	private static void update(DataTypeManager refDTM, DataType sourceDT) {
 		int transactionID = refDTM.startTransaction("Update Datatype");
 		try {
 			updateAssumingTransactionsOpen(refDTM, sourceDT);
@@ -114,7 +108,7 @@ public class DataTypeSynchronizer {
 		}
 	}
 
-	public static void commitAssumingTransactionsOpen(DataTypeManager sourceDTM, DataType refDT) {
+	static void commitAssumingTransactionsOpen(DataTypeManager sourceDTM, DataType refDT) {
 
 		// Must refresh associations of refDt and its dependencies to ensure that any
 		// non-sourced datatype is properly associated to the sourceDTM
@@ -138,7 +132,7 @@ public class DataTypeSynchronizer {
 		refDT.setLastChangeTimeInSourceArchive(lastChangeTime);
 	}
 
-	public static void updateAssumingTransactionsOpen(DataTypeManager refDTM, DataType sourceDT) {
+	static void updateAssumingTransactionsOpen(DataTypeManager refDTM, DataType sourceDT) {
 		long lastChangeTime = sourceDT.getLastChangeTime();
 		DataType refDT = refDTM.resolve(sourceDT, DataTypeConflictHandler.REPLACE_HANDLER);
 		if (!isPointerOrArray(sourceDT)) {
@@ -215,20 +209,20 @@ public class DataTypeSynchronizer {
 		return sourceArchive.getName();
 	}
 
-	public void openTransactions() {
-		if (sourceDTM != null) {
-			sourceTransactionID = sourceDTM.startTransaction("Data Type Synchronization");
-		}
-		localTransactionID = dataTypeManager.startTransaction("Data Type Synchronization");
-	}
-
-	public void closeTransactions() {
-		dataTypeManager.endTransaction(localTransactionID, true);
-		if (sourceDTM != null) {
-			sourceDTM.endTransaction(sourceTransactionID, true);
-		}
-
-	}
+//	public void openTransactions() {
+////		if (sourceDTM != null) {
+////			sourceTransactionID = sourceDTM.startTransaction("Data Type Synchronization");
+////		}
+//		localTransactionID = dataTypeManager.startTransaction("Data Type Synchronization");
+//	}
+//
+//	public void closeTransactions() {
+//		dataTypeManager.endTransaction(localTransactionID, true);
+////		if (sourceDTM != null) {
+////			sourceDTM.endTransaction(sourceTransactionID, true);
+////		}
+//
+//	}
 
 	/**
 	 * If the indicated data type is associated with a source archive, this will remove the
@@ -542,6 +536,35 @@ public class DataTypeSynchronizer {
 		}
 		finally {
 			dataTypeManager.endTransaction(transactionID, true);
+		}
+	}
+
+	public void performBulkOperation(String actionName, List<DataTypeSyncInfo> selectedList, 
+			ExceptionalConsumer<DataTypeSyncInfo, CancelledException> infoApplier,
+			Consumer<List<DataTypeSyncInfo>> handleOutOfSync, 
+			boolean sourceRequiresTransaction) throws CancelledException {
+		if (sourceDTM == null) {
+			throw new RuntimeException("Source archive required");
+		}
+	
+		int sourceTransactionId = sourceRequiresTransaction ? 
+				sourceDTM.startTransaction(actionName) : 0;
+		int transactionID = dataTypeManager.startTransaction(actionName);
+		try {
+			for (DataTypeSyncInfo info : selectedList) {
+				infoApplier.accept(info);
+			}
+			List<DataTypeSyncInfo> outOfSyncList = findOutOfSynchDataTypes();
+			handleOutOfSync.accept(outOfSyncList);
+			if (outOfSyncList.isEmpty()) {
+				markSynchronized();
+			}
+		}
+		finally {
+			dataTypeManager.endTransaction(transactionID, true);
+			if (sourceRequiresTransaction) {
+				sourceDTM.endTransaction(sourceTransactionId, true);
+			}
 		}
 	}
 }

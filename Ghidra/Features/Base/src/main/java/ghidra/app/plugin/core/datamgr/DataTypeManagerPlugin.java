@@ -84,7 +84,7 @@ import ghidra.util.task.TaskMonitor;
 )
 //@formatter:on
 public class DataTypeManagerPlugin extends ProgramPlugin implements DomainObjectListener,
-		DataTypeManagerService, DataTypeArchiveService, PopupActionProvider {
+		DataTypeManagerService, PopupActionProvider {
 
 	private static final String EXTENSIONS_PATH_PREFIX = Path.GHIDRA_HOME + "/Extensions";
 
