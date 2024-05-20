@@ -1,12 +1,25 @@
 # RV32D  Standard Extension
 
+macro invalidOpForMultD(fr1, fr2) {
+	if ((fr1[0,63] != 0 || fr2[0,63] != 0x7FF0000000000000)
+		&& (fr1[0,63] != 0x7FF0000000000000 || fr2[0,63] != 0)) goto <MULTVALID>;
+	setFflags($(FFLAGNV));
+	<MULTVALID>
+}
+
+macro invalidOpForAddD(fr1, fr2) {
+	if ((fr1 != 0xFFF0000000000000 || fr2 != 0x7FF0000000000000)
+		&& (fr1 != 0x7FF0000000000000 || fr2 != 0xFFF0000000000000)) goto <ADDVALID>;
+	setFflags($(FFLAGNV));
+	<ADDVALID>
+}
 
 # fadd.d D,S,T,m 02000053 fe00007f SIMPLE (0, 0) 
 :fadd.d frd,frs1D,frs2D,FRM is frs1D & frd & frs2D & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x1
 {
+	invalidOpForAddD(frs1D, frs2D);
 	frd = frs1D f+ frs2D;
 }
-
 
 # fclass.d d,S e2001053 fff0707f SIMPLE (0, 0) 
 :fclass.d rd,frs1D is frs1D & rd & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct3=0x1 & funct7=0x71 & op2024=0x0
@@ -63,21 +76,40 @@
 # fcvt.w.d d,S,m c2000053 fff0007f SIMPLE (0, 0) 
 :fcvt.w.d rdW,frs1D,FRM is frs1D & FRM & rdW & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x61 & op2024=0x0
 {
-	rdW = trunc(frs1D);
+	local low:8 = 0xC1E0000000000000;
+	local high:8 = 0x41E0000000000000;
+	if (frs1D f>= low && frs1D f<= high) goto <VALID>;
+	setFflags($(FFLAGNV));
+	<VALID>
+	local tmp:$(WXLEN) = trunc(frs1D);
+	rdW = sext(tmp);
 }
 
 
 # fcvt.wu.d d,S,m c2100053 fff0007f SIMPLE (0, 0) 
 :fcvt.wu.d rdW,frs1D,FRM is frs1D & FRM & rdW & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x61 & op2024=0x1
 {
+	local low:8 = 0x0;
+	local high:8 = 0x41F0000000000000;
+	if (frs1D f>= low && frs1D f<= high) goto <VALID>;
+	setFflags($(FFLAGNV));
+	<VALID>
+	local tmp:$(WXLEN) = trunc(frs1D);
 	#TODO  unsigned
-	rdW = trunc(frs1D);
+	rdW = sext(tmp);
 }
 
 
 # fdiv.d D,S,T,m 1a000053 fe00007f SIMPLE (0, 0) 
 :fdiv.d frd,frs1D,frs2D,FRM is frs1D & frd & frs2D & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0xd
 {
+	if ((frs1D[0,63] != 0 || frs2D[0,63] != 0) 
+		&& (frs1D[0,63] != 0x7FF0000000000000 || frs2D[0,63] != 0x7FF0000000000000)) goto <VALID>;
+	setFflags($(FFLAGNV));
+	<VALID>
+	if (frs1D[52,11] == 0x7ff || frs1D[0,63] == 0 || frs2D[0,63] != 0) goto <NOTDIVZERO>;
+	setFflags($(FFLAGDZ));
+	<NOTDIVZERO>
 	frd = frs1D f/ frs2D;
 }
 
@@ -115,7 +147,10 @@
 # fmadd.d D,S,T,R,m 02000043 0600007f SIMPLE (0, 0) 
 :fmadd.d frd,frs1D,frs2D,frs3D,FRM is frs1D & frd & frs2D & FRM & frs3D & op0001=0x3 & op0204=0x0 & op0506=0x2 & op2526=0x1
 {
-	frd = (frs1D f* frs2D) f+ frs3D;
+	invalidOpForMultD(frs1D, frs2D);
+	local tmp:$(DFLEN) = frs1D f* frs2D;
+	invalidOpForAddD(tmp, frs3D);
+	frd = tmp f+ frs3D;
 }
 
 
@@ -154,13 +189,17 @@
 # fmsub.d D,S,T,R,m 02000047 0600007f SIMPLE (0, 0) 
 :fmsub.d frd,frs1D,frs2D,frs3D,FRM is frs1D & frd & frs2D & FRM & frs3D & op0001=0x3 & op0204=0x1 & op0506=0x2 & op2526=0x1
 {
-	frd = (frs1D f* frs2D) f- frs3D;
+	invalidOpForMultD(frs1D, frs2D);
+	local tmp:$(DFLEN) = frs1D f* frs2D;
+	invalidOpForAddD(tmp, f- frs3D);
+	frd = tmp f- frs3D;
 }
 
 
 # fmul.d D,S,T,m 12000053 fe00007f SIMPLE (0, 0) 
 :fmul.d frd,frs1D,frs2D,FRM is frs1D & frd & frs2D & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x9
 {
+	invalidOpForMultD(frs1D, frs2D);
 	frd = frs1D f* frs2D;
 }
 
@@ -168,14 +207,20 @@
 # fnmadd.d D,S,T,R,m 0200004f 0600007f SIMPLE (0, 0) 
 :fnmadd.d frd,frs1D,frs2D,frs3D,FRM is frs1D & frd & frs2D & FRM & frs3D & op0001=0x3 & op0204=0x3 & op0506=0x2 & op2526=0x1
 {
-	frd = (f- (frs1D f* frs2D)) f- frs3D;
+	invalidOpForMultD(frs1D, frs2D);
+	local tmp:$(DFLEN) = f- (frs1D f* frs2D);
+	invalidOpForAddD(tmp, f- frs3D);
+	frd = tmp f- frs3D;
 }
 
 
 # fnmsub.d D,S,T,R,m 0200004b 0600007f SIMPLE (0, 0) 
 :fnmsub.d frd,frs1D,frs2D,frs3D,FRM is frs1D & frd & frs2D & FRM & frs3D & op0001=0x3 & op0204=0x2 & op0506=0x2 & op2526=0x1
 {
-	frd = (f- (frs1D f* frs2D)) f+ frs3D;
+	invalidOpForMultD(frs1D, frs2D);
+	local tmp:$(DFLEN) = f- (frs1D f* frs2D);
+	invalidOpForAddD(tmp, frs3D);
+	frd = tmp f+ frs3D;
 }
 
 
@@ -235,6 +280,9 @@
 # fsqrt.d D,S,m 5a000053 fff0007f SIMPLE (0, 0) 
 :fsqrt.d frd,frs1D,FRM is frs1D & frd & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x2d & op2024=0x0
 {
+	if (nan(frs1D) | frs1D f>= 0) goto <VALID>;
+	setFflags($(FFLAGNV));
+	<VALID>
 	frd = sqrt(frs1D);
 }
 
@@ -242,5 +290,6 @@
 # fsub.d D,S,T,m 0a000053 fe00007f SIMPLE (0, 0) 
 :fsub.d frd,frs1D,frs2D,FRM is frs1D & frd & frs2D & FRM & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x5
 {
+	invalidOpForAddD(frs1D, f- frs2D);
 	frd = frs1D f- frs2D;
 }
