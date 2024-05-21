@@ -21,7 +21,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import org.apache.commons.collections4.BidiMap;
 import org.junit.BeforeClass;
 
 import docking.test.AbstractDockingTest;
@@ -613,8 +612,8 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 		Map<String, Set<ClassFileInfo>> extensionPointSuffixToInfoMap =
 			(Map<String, Set<ClassFileInfo>>) getInstanceField("extensionPointSuffixToInfoMap",
 				ClassSearcher.class);
-		BidiMap<ClassFileInfo, Class<?>> loadedCache =
-			(BidiMap<ClassFileInfo, Class<?>>) getInstanceField("loadedCache", ClassSearcher.class);
+		HashMap<ClassFileInfo, Class<?>> loadedCache =
+			(HashMap<ClassFileInfo, Class<?>>) getInstanceField("loadedCache", ClassSearcher.class);
 		String suffix = ClassSearcher.getExtensionPointSuffix(service.getSimpleName());
 
 		if (suffix != null) {
