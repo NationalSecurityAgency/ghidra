@@ -268,7 +268,8 @@ def on_process_selected():
 @log_errors
 def on_process_deleted(*args):
     # print("ON_PROCESS_DELETED")
-    proc = args[0]
+    exit_code = args[0]
+    proc = util.selected_process()
     on_exited(proc)
     if proc in PROC_STATE:
         del PROC_STATE[proc]
