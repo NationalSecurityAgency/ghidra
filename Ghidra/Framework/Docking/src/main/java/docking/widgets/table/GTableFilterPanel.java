@@ -26,7 +26,6 @@ import javax.swing.event.*;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.jdom.Element;
 
 import docking.DockingWindowManager;
@@ -751,43 +750,7 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 	 * @param items the row objects to select
 	 */
 	public void setSelectedItems(List<ROW_OBJECT> items) {
-
-		if (CollectionUtils.isEmpty(items)) {
-			table.clearSelection();
-			return;
-		}
-
-		ListSelectionModel selectionModel = table.getSelectionModel();
-		int mode = selectionModel.getSelectionMode();
-		if (mode == ListSelectionModel.SINGLE_SELECTION) {
-			// take the last item to mimic what the selection model does internally
-			ROW_OBJECT item = items.get(items.size() - 1);
-			int viewRow = textFilterModel.getViewIndex(item);
-			table.setRowSelectionInterval(viewRow, viewRow);
-			return;
-		}
-
-		//
-		// For ListSelectionModel SINGLE_INTERVAL_SELECTION and MULTIPLE_INTERVAL_SELECTION, the
-		// model will update any selection given to it to match the current mode.
-		//
-		List<Integer> rows = new ArrayList<>();
-		for (ROW_OBJECT item : items) {
-			int viewRow = textFilterModel.getViewIndex(item);
-			if (viewRow >= 0) {
-				rows.add(viewRow);
-			}
-		}
-		if (rows.isEmpty()) {
-			return; // items may be filtered out of view
-		}
-
-		selectionModel.setValueIsAdjusting(true);
-		selectionModel.clearSelection();
-		for (int row : rows) {
-			selectionModel.addSelectionInterval(row, row);
-		}
-		selectionModel.setValueIsAdjusting(false);
+		TableUtils.setSelectedItems(table, items);
 	}
 
 	/**
