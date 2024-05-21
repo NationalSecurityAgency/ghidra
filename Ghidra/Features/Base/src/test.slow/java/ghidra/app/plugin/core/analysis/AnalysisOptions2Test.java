@@ -24,7 +24,6 @@ import java.util.*;
 import javax.swing.JPanel;
 import javax.swing.table.TableModel;
 
-import org.apache.commons.collections4.BidiMap;
 import org.junit.*;
 
 import docking.ActionContext;
@@ -256,8 +255,8 @@ public class AnalysisOptions2Test extends AbstractGhidraHeadedIntegrationTest {
 		Map<String, Set<ClassFileInfo>> extensionPointSuffixToInfoMap =
 			(Map<String, Set<ClassFileInfo>>) getInstanceField("extensionPointSuffixToInfoMap",
 				ClassSearcher.class);
-		BidiMap<ClassFileInfo, Class<?>> loadedCache =
-			(BidiMap<ClassFileInfo, Class<?>>) getInstanceField("loadedCache", ClassSearcher.class);
+		HashMap<ClassFileInfo, Class<?>> loadedCache =
+			(HashMap<ClassFileInfo, Class<?>>) getInstanceField("loadedCache", ClassSearcher.class);
 
 		// remove any traces of previous test runs
 		Set<ClassFileInfo> analyzerSet = extensionPointSuffixToInfoMap.get("Analyzer");
