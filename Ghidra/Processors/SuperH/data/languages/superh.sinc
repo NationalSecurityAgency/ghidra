@@ -1662,7 +1662,7 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
 
 :jsr    @rm_08_11  is opcode_12_15=0b0100 & rm_08_11 & opcode_00_07=0b00001011 
 {
-    local _pr:4 = inst_start + 4;
+    local _pr:4 = inst_next;
     local _pc:4 = rm_08_11;
 
     delayslot(1);
