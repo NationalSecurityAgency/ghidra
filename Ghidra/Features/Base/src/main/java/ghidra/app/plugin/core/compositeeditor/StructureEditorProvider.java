@@ -64,7 +64,7 @@ public class StructureEditorProvider extends CompositeEditorProvider {
 			new DeleteAction(this),
 			new PointerAction(this),
 			new ArrayAction(this),
-			new FindReferencesToField(this),
+			new FindReferencesToStructureFieldAction(this),
 			new UnpackageAction(this),
 			new EditComponentAction(this),
 			new EditFieldAction(this),
