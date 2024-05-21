@@ -1631,7 +1631,7 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
 
 :bsr    target00_11  is opcode_12_15=0b1011 & target00_11  
 {
-    local _pr:4 = inst_start + 4;
+    local _pr:4 = inst_next;
 
     delayslot(1);
 
