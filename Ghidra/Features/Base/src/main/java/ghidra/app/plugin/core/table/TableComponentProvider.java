@@ -20,6 +20,7 @@ import java.awt.Color;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
@@ -30,7 +31,6 @@ import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.table.AbstractSortedTableModel;
 import docking.widgets.table.GTable;
-import docking.widgets.table.threaded.GThreadedTablePanel;
 import generic.theme.GIcon;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.nav.NavigatableRemovalListener;
@@ -65,6 +65,8 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 	private SelectionNavigationAction selectionNavigationAction;
 	private DockingAction selectAction;
 	private DockingAction removeItemsAction;
+
+	private Function<MouseEvent, ActionContext> contextProvider = null;
 
 	private HelpLocation helpLoc = new HelpLocation(HelpTopics.SEARCH, "Query_Results");
 
@@ -159,8 +161,7 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 				new MakeProgramSelectionAction(navigatable, tableServicePlugin.getName(), table);
 		}
 		else {
-			selectAction =
-				new MakeProgramSelectionAction(tableServicePlugin, table);
+			selectAction = new MakeProgramSelectionAction(tableServicePlugin, table);
 		}
 
 		selectAction.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Make_Selection"));
@@ -309,7 +310,7 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		tableFilterPanel.dispose();
 	}
 
-	public GThreadedTablePanel<T> getThreadedTablePanel() {
+	public GhidraThreadedTablePanel<T> getThreadedTablePanel() {
 		return threadedPanel;
 	}
 
@@ -405,7 +406,17 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
+		if (contextProvider != null) {
+			return contextProvider.apply(event);
+		}
 		return new DefaultActionContext(this, threadedPanel.getTable());
 	}
 
+	/**
+	 * Sets a function that provides context for this component provider.
+	 * @param contextProvider a function that provides context for this component provider.
+	 */
+	public void setActionContextProvider(Function<MouseEvent, ActionContext> contextProvider) {
+		this.contextProvider = contextProvider;
+	}
 }

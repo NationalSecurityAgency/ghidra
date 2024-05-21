@@ -15,9 +15,13 @@
  */
 package docking.widgets.table;
 
-import javax.swing.JLabel;
-import javax.swing.JTable;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.*;
 import javax.swing.table.*;
+
+import org.apache.commons.collections4.CollectionUtils;
 
 import ghidra.docking.settings.Settings;
 import ghidra.util.table.column.GColumnRenderer;
@@ -27,6 +31,60 @@ import ghidra.util.table.column.GColumnRenderer.ColumnConstraintFilterMode;
  * A utility class for JTables used in Ghidra.
  */
 public class TableUtils {
+
+	/**
+	 * Select the given row objects.  No selection will be made if the objects are filtered out of
+	 * view.  Passing a {@code null} list or an empty list will clear the selection.
+	 * 
+	 * @param table the table in which to select the items
+	 * @param items the row objects to select
+	 */
+	public static <ROW_OBJECT> void setSelectedItems(JTable table, List<ROW_OBJECT> items) {
+
+		if (CollectionUtils.isEmpty(items)) {
+			table.clearSelection();
+			return;
+		}
+
+		TableModel model = table.getModel();
+		if (!(model instanceof RowObjectTableModel gModel)) {
+			return;
+		}
+
+		ListSelectionModel selectionModel = table.getSelectionModel();
+		int mode = selectionModel.getSelectionMode();
+		if (mode == ListSelectionModel.SINGLE_SELECTION) {
+			// take the last item to mimic what the selection model does internally
+			ROW_OBJECT item = items.get(items.size() - 1);
+			@SuppressWarnings({ "cast", "unchecked" })
+			int viewRow = gModel.getRowIndex((ROW_OBJECT) item);
+			table.setRowSelectionInterval(viewRow, viewRow);
+			return;
+		}
+
+		//
+		// For ListSelectionModel SINGLE_INTERVAL_SELECTION and MULTIPLE_INTERVAL_SELECTION, the
+		// model will update any selection given to it to match the current mode.
+		//
+		List<Integer> rows = new ArrayList<>();
+		for (ROW_OBJECT item : items) {
+			@SuppressWarnings({ "cast", "unchecked" })
+			int viewRow = gModel.getRowIndex((ROW_OBJECT) item);
+			if (viewRow >= 0) {
+				rows.add(viewRow);
+			}
+		}
+		if (rows.isEmpty()) {
+			return; // items may be filtered out of view
+		}
+
+		selectionModel.setValueIsAdjusting(true);
+		selectionModel.clearSelection();
+		for (int row : rows) {
+			selectionModel.addSelectionInterval(row, row);
+		}
+		selectionModel.setValueIsAdjusting(false);
+	}
 
 	/**
 	 * Uses the given row-based table model, row object and column index to determine what the
@@ -208,7 +266,7 @@ public class TableUtils {
 
 			/*
 			 	Note: this code allows us to disable the 'unsorting' of a table via the UI
-
+			
 				// remove it.  If there is only one, don't remove the last one
 				if (editor.getSortedColumnCount() == 1) {
 					Toolkit.getDefaultToolkit().beep();

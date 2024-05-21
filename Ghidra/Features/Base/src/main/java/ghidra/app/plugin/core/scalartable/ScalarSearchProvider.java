@@ -117,8 +117,7 @@ public class ScalarSearchProvider extends ComponentProviderAdapter {
 			buffy.append(" [filter: ")
 					.append(minValueText)
 					.append(" - ")
-					.append(
-						maxValueText)
+					.append(maxValueText)
 					.append(']');
 		}
 
@@ -179,10 +178,6 @@ public class ScalarSearchProvider extends ComponentProviderAdapter {
 		closeComponent();
 		threadedTablePanel.dispose();
 		filter.dispose();
-	}
-
-	ProgramSelection getSelection() {
-		return scalarTable.getProgramSelection();
 	}
 
 	void reload() {

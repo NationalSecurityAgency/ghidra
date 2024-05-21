@@ -269,6 +269,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		goToExternalAction.setEnabled(false);
 
 		CloneSymbolTreeAction cloneAction = new CloneSymbolTreeAction(plugin, this);
+		CreateSymbolTableAction tableAction = new CreateSymbolTableAction(plugin);
 
 		tool.addLocalAction(this, createImportAction);
 		tool.addLocalAction(this, setExternalProgramAction);
@@ -286,6 +287,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		tool.addLocalAction(this, selectionAction);
 		tool.addLocalAction(this, goToExternalAction);
 		tool.addLocalAction(this, cloneAction);
+		tool.addLocalAction(this, tableAction);
 	}
 
 //==================================================================================================

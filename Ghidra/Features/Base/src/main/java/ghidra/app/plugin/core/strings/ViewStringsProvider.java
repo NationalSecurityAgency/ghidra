@@ -32,7 +32,6 @@ import ghidra.program.model.data.StringDataInstance;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
-import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
 
@@ -169,10 +168,6 @@ public class ViewStringsProvider extends ComponentProviderAdapter {
 
 	private void notifyContextChanged() {
 		tool.contextChanged(this);
-	}
-
-	ProgramSelection getProgramSelection() {
-		return table.getProgramSelection();
 	}
 
 	void add(Data data) {

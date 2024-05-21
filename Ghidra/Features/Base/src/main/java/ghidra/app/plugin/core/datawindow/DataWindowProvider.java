@@ -27,7 +27,6 @@ import generic.theme.GIcon;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
 
@@ -151,10 +150,6 @@ class DataWindowProvider extends ComponentProviderAdapter {
 
 	private void notifyContextChanged() {
 		tool.contextChanged(this);
-	}
-
-	ProgramSelection selectData() {
-		return dataTable.getProgramSelection();
 	}
 
 	private void setDataTableRenderer() {

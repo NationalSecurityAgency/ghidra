@@ -39,8 +39,8 @@ import ghidra.framework.Platform;
 import ghidra.util.ColorUtils;
 import ghidra.util.Msg;
 
-public class GTreeDragNDropAdapter implements DragSourceListener, DragGestureListener,
-		DropTargetListener {
+public class GTreeDragNDropAdapter
+		implements DragSourceListener, DragGestureListener, DropTargetListener {
 
 	private JTree tree;
 	private GTreeDragNDropHandler dragNDropHandler;
@@ -159,9 +159,8 @@ public class GTreeDragNDropAdapter implements DragSourceListener, DragGestureLis
 		GradientPaint mask;
 		Color treeBg = tree.getBackground();
 		Color transparentTreeBackground = ColorUtils.withAlpha(treeBg, 100);
-		mask =
-			new GradientPaint(0, 0, transparentTreeBackground, 0, size.height >> 1,
-				Palette.NO_COLOR);
+		mask = new GradientPaint(0, 0, transparentTreeBackground, 0, size.height >> 1,
+			Palette.NO_COLOR);
 		g2.setPaint(mask);
 
 		// Sets the alpha composite
@@ -195,9 +194,8 @@ public class GTreeDragNDropAdapter implements DragSourceListener, DragGestureLis
 					return;
 				}
 
-				Component renderer =
-					cellRenderer.getTreeCellRendererComponent(tree, node, true, true,
-						node.isLeaf(), row, false);
+				Component renderer = cellRenderer.getTreeCellRendererComponent(tree, node, true,
+					true, node.isLeaf(), row, false);
 				renderer.setSize(renderer.getPreferredSize());
 
 				// move down the point in our graphics space into which we will paint

@@ -563,6 +563,7 @@ src/main/help/help/topics/SymbolTablePlugin/images/Refs_To.png||GHIDRA||||END|
 src/main/help/help/topics/SymbolTablePlugin/images/Symbol_Table.png||GHIDRA||||END|
 src/main/help/help/topics/SymbolTablePlugin/symbol_references.htm||GHIDRA||||END|
 src/main/help/help/topics/SymbolTablePlugin/symbol_table.htm||GHIDRA||||END|
+src/main/help/help/topics/SymbolTablePlugin/symbol_table_transient.htm||GHIDRA||||END|
 src/main/help/help/topics/SymbolTreePlugin/SymbolTree.htm||GHIDRA||||END|
 src/main/help/help/topics/SymbolTreePlugin/images/CreateExternalLocation.png||GHIDRA||||END|
 src/main/help/help/topics/SymbolTreePlugin/images/EditExternalLocation.png||GHIDRA||||END|

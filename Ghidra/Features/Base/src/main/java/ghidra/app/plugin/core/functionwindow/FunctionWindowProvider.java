@@ -30,7 +30,6 @@ import generic.theme.GIcon;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
-import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
 
@@ -154,10 +153,6 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 		container.add(threadedTablePanel, BorderLayout.CENTER);
 		container.add(tableFilterPanel, BorderLayout.SOUTH);
 		return container;
-	}
-
-	ProgramSelection selectFunctions() {
-		return functionTable.getProgramSelection();
 	}
 
 	private void setFunctionTableRenderer() {
