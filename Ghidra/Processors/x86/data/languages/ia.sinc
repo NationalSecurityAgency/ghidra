@@ -773,6 +773,9 @@ define pcodeop vmxon;    # Enter VMX operation; opcode f3 0f C7 /6
 @define LONGMODE_OFF "opsize=opsize" # NOP
 @endif
 
+#when not in 64-bit mode, opcode 0x82 results in the same instruction as opcode 0x80
+#in 64-bit mode, opcode 0x82 results in #UD
+#see 22.15 "Undefined Opcodes" of the intel manual
 @ifdef IA64
 @define BYTE_80_82 "(byte=0x80 | (longMode=0 & byte=0x82))"
 @else
