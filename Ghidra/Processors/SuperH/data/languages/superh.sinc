@@ -1643,7 +1643,7 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
 :bsrf   rm_08_11  is opcode_12_15=0b0000 & rm_08_11 & opcode_00_07=0b00000011 
 {
     local _pr = inst_start + 4;
-    local dest = rm_08_11 + inst_start + 4;
+    local dest = rm_08_11 + inst_next;
 
     delayslot(1);
 
