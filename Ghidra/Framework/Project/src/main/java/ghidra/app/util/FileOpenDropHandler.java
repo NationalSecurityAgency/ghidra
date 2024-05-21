@@ -97,16 +97,6 @@ public class FileOpenDropHandler implements DropTargetHandler, Droppable, Contai
 		}
 	}
 
-	@Override
-	public void dragUnderFeedback(boolean ok, DropTargetDragEvent e) {
-		// nothing to display or do
-	}
-
-	@Override
-	public void undoDragUnderFeedback() {
-		// nothing to display or do
-	}
-
 	private void initializeComponents(Component comp) {
 		if (comp instanceof CellRendererPane) {
 			return;

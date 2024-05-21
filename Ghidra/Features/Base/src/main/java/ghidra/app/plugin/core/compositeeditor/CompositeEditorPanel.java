@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.compositeeditor;
 
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.awt.event.*;
 import java.math.BigInteger;
@@ -34,7 +33,8 @@ import javax.swing.text.JTextComponent;
 
 import docking.DockingWindowManager;
 import docking.actions.KeyBindingUtils;
-import docking.dnd.*;
+import docking.dnd.DropTgtAdapter;
+import docking.dnd.Droppable;
 import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.OptionDialog;
 import docking.widgets.fieldpanel.support.FieldRange;
@@ -68,10 +68,7 @@ import help.HelpService;
  * composite data type. To add your own info panel override the createInfoPanel() method.
  */
 public abstract class CompositeEditorPanel extends JPanel
-		implements CompositeEditorModelListener, ComponentCellEditorListener, Draggable, Droppable {
-
-	// Normal color for selecting components in the table.
-	//protected static final Insets TEXTFIELD_INSETS = new JTextField().getInsets();
+		implements CompositeEditorModelListener, ComponentCellEditorListener, Droppable {
 
 	protected static final Border BEVELED_BORDER = BorderFactory.createLoweredBevelBorder();
 
@@ -90,10 +87,6 @@ public abstract class CompositeEditorPanel extends JPanel
 	/** The table cell renderer for drag-n-drop. */
 	protected DndTableCellRenderer dndTableCellRenderer;
 	protected DndTableCellRenderer dndDtiCellRenderer;
-	private DragSource dragSource;
-	private DragGestureAdapter dragGestureAdapter;
-	private DragSrcAdapter dragSourceAdapter;
-	private int dragAction = DnDConstants.ACTION_MOVE;
 	private DropTarget dropTarget;
 	private DropTgtAdapter dropTargetAdapter;
 	private DataFlavor[] acceptableFlavors; // data flavors that are valid.
@@ -151,8 +144,7 @@ public abstract class CompositeEditorPanel extends JPanel
 	}
 
 	private boolean launchBitFieldEditor(int modelRow, int modelColumn) {
-		if (model.viewComposite instanceof Structure &&
-			!model.viewComposite.isPackingEnabled() &&
+		if (model.viewComposite instanceof Structure && !model.viewComposite.isPackingEnabled() &&
 			model.getDataTypeColumn() == modelColumn && modelRow < model.getNumComponents()) {
 			// check if we are attempting to edit a bitfield
 			DataTypeComponent dtComponent = model.getComponent(modelRow);
@@ -788,99 +780,6 @@ public abstract class CompositeEditorPanel extends JPanel
 		dropTarget =
 			new DropTarget(table, DnDConstants.ACTION_COPY_OR_MOVE, dropTargetAdapter, true);
 		dropTarget.setActive(true);
-
-		// set up the component area as a drag site that provides Data Types.
-		dragSource = DragSource.getDefaultDragSource();
-		dragGestureAdapter = new DragGestureAdapter(this);
-		dragSourceAdapter = new DragSrcAdapter(this);
-		dragSource.createDefaultDragGestureRecognizer(table, dragAction, dragGestureAdapter);
-	}
-
-	/**
-	 * Return true if the object at the location in the DragGesture
-	 * event is draggable.
-	 *
-	 * @param e event passed to a DragGestureListener via its
-	 * dragGestureRecognized() method when a particular DragGestureRecognizer
-	 * detects a platform dependent Drag and Drop action initiating
-	 * gesture has occurred on the Component it is tracking.
-	 * @see docking.dnd.DragGestureAdapter
-	 */
-	@Override
-	public boolean isStartDragOk(DragGestureEvent e) {
-		return false;
-//            boolean dragOk = false;
-//            // Need to check that the location is on a component.
-//            Point point = e.getDragOrigin();
-//          int index = table.rowAtPoint(point);
-//            // If we are on a component then drag is allowed.
-//            if ((index >= 0) && (index < model.getNumComponents())) {
-//                dragOk = true;
-//            }
-//            return dragOk;
-	}
-
-	/**
-	 * Called by the DragGestureAdapter to start the drag.
-	 */
-	@Override
-	public DragSourceListener getDragSourceListener() {
-		return dragSourceAdapter;
-	}
-
-	/**
-	 * Do the move operation; called when the drag and drop operation
-	 * completes.
-	 * @see docking.dnd.DragSrcAdapter#dragDropEnd
-	 */
-	@Override
-	public void move() {
-		// no-op
-	}
-
-	/**
-	 * Method called when the drag operation exits the drop target
-	 * without dropping.
-	 */
-	@Override
-	public void dragCanceled(DragSourceDropEvent event) {
-		// no-op
-	}
-
-	/**
-	 * Get the drag actions supported by this drag source:
-	 * <ul>
-	 * <li>DnDConstants.ACTION_MOVE
-	 * <li>DnDConstants.ACTION_COPY
-	 * <li>DnDConstants.ACTION_COPY_OR_MOVE
-	 * </ul>
-	 *
-	 * @return the drag actions
-	 */
-	@Override
-	public int getDragAction() {
-		return dragAction;
-	}
-
-	/**
-	 * Get the object to transfer.
-	 *
-	 * @param p location of object to transfer
-	 * @return object to transfer
-	 */
-	@Override
-	public Transferable getTransferable(Point p) {
-		int index = table.rowAtPoint(p);
-		int numRows = model.getRowCount();
-		if (index >= numRows) {
-			index = numRows;
-		}
-		DataType dt = DefaultDataType.dataType;
-		// If we are on a component then get the data type.
-		if ((index >= 0)) {
-			dt = model.getComponent(index).getDataType();
-		}
-		return new DataTypeTransferable(dt);
 	}
 
 	@Override
@@ -888,15 +787,6 @@ public abstract class CompositeEditorPanel extends JPanel
 		return true;
 	}
 
-	/**
-	 * Add the object to the droppable component. The DragSrcAdapter calls this method from its
-	 * drop() method.
-	 *
-	 * @param obj Transferable object that is to be dropped.
-	 * @param e  has current state of drop operation
-	 * @param f represents the opaque concept of a data format as
-	 * would appear on a clipboard, during drag and drop.
-	 */
 	@Override
 	public void add(Object obj, DropTargetDropEvent e, DataFlavor f) {
 		if (!(obj instanceof DataType)) {
@@ -1491,8 +1381,8 @@ public abstract class CompositeEditorPanel extends JPanel
 			String status = columnName + " field is not editable";
 
 			boolean isValidRow = row >= 0 && row < model.getNumComponents();
-			boolean isStringColumn = modelColumn == model.getNameColumn() ||
-				modelColumn == model.getCommentColumn();
+			boolean isStringColumn =
+				modelColumn == model.getNameColumn() || modelColumn == model.getCommentColumn();
 			if (isValidRow && isStringColumn) {
 				DataType dt = model.getComponent(row).getDataType();
 				if (dt == DataType.DEFAULT) {
