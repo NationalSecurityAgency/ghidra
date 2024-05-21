@@ -62,8 +62,8 @@ class ClassJar implements ClassLocation {
 	}
 
 	@Override
-	public void getClasses(Set<ClassFileInfo> set, TaskMonitor monitor) {
-		set.addAll(classes);
+	public void getClasses(List<ClassFileInfo> list, TaskMonitor monitor) {
+		list.addAll(classes);
 	}
 
 	private void scanJar(TaskMonitor monitor) throws CancelledException {
