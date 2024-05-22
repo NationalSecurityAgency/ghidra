@@ -84,7 +84,7 @@ class ProcessState(object):
                 except BaseException as e:
                     print(f"Couldn't record page with SP: {e}")
                 self.visited.add(hashable_frame)
-        if first or self.regions or self.threads or self.modules:
+        if first or self.regions or self.modules:
             # Sections, memory syscalls, or stack allocations
             commands.put_regions()
             self.regions = False
@@ -153,7 +153,7 @@ def process_event(self, listener, event):
             print(f"Ignoring {desc} because target is invalid")
             return
         event_process = util.get_process()
-        if event_process.IsValid() and event_process not in PROC_STATE:
+        if event_process.IsValid() and event_process.GetProcessID() not in PROC_STATE:
             PROC_STATE[event_process.GetProcessID()] = ProcessState()
             rc = event_process.GetBroadcaster().AddListener(listener, ALL_EVENTS)
             if not rc:

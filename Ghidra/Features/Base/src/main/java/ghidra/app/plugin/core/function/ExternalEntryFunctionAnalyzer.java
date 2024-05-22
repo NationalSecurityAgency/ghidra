@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +19,7 @@ import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.services.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.*;
-import ghidra.program.model.listing.Listing;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -42,8 +40,6 @@ public class ExternalEntryFunctionAnalyzer extends AbstractAnalyzer {
 	 */
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log) {
 
-		Listing listing = program.getListing();
-
 		AddressSet funcStarts = new AddressSet();
 
 		monitor.setMessage("Finding External Entry Functions");
@@ -53,9 +49,17 @@ public class ExternalEntryFunctionAnalyzer extends AbstractAnalyzer {
 		AddressIterator entryIter = program.getSymbolTable().getExternalEntryPointIterator();
 		while (entryIter.hasNext() && !monitor.isCancelled()) {
 			Address entry = entryIter.next();
-			if (set.contains(entry) && listing.getInstructionAt(entry) != null) {
-				funcStarts.addRange(entry, entry);
+			if (!set.contains(entry)) {
+				continue;
 			}
+			
+			// check for any indicators this is a good start of a function
+			// must have an instruction at the entry, and not be part of another function
+			if (!isGoodFunctionStart(program, entry)) {
+				continue;
+			}
+			
+			funcStarts.addRange(entry, entry);
 		}
 
 		// remove any addresses that are already functions
@@ -76,5 +80,35 @@ public class ExternalEntryFunctionAnalyzer extends AbstractAnalyzer {
 
 		return true;
 	}
+	
+	/**
+	 * Check if address is a good function start.
+	 * Instruction exists at the location.
+	 * No instruction falls through to this one.
+	 * 
+	 * @param program the program
+	 * @param addr address to check if is a good function start
+	 * @return true if would be a good function start, false otherwise
+	 */
+	public static boolean isGoodFunctionStart(Program program, Address addr) {
+		// check location starts with an instruction
+		if (program.getListing().getInstructionAt(addr) == null) {
+			return false;
+		}
 
+		Address addrBefore = addr.previous();
+		if (addrBefore == null) {
+			return true;
+		}
+		
+		// check if instruction before, falls into this one.
+		// other code is responsible for creating functions from references
+		Instruction instr = program.getListing().getInstructionContaining(addrBefore);
+		if (instr != null && addr.equals(instr.getFallThrough())) {
+			return false;
+		}
+
+		// didn't find anything that would indicate is a bad function start
+		return true;
+	}
 }

@@ -41,6 +41,10 @@ def main():
     from ghidradbg import commands as cmd
     from ghidradbg.util import dbg
 
+    # So that the user can re-enter by typing repl()
+    global repl
+    repl = cmd.repl
+
     cmd.ghidra_trace_connect(os.getenv('GHIDRA_TRACE_RMI_ADDR'))
     args = os.getenv('OPT_TARGET_ARGS')
     if args:
@@ -51,7 +55,10 @@ def main():
     cmd.ghidra_trace_sync_enable()
 
     # TODO: HACK
-    dbg.wait()
+    try:
+        dbg.wait()
+    except KeyboardInterrupt as ki:
+        dbg.interrupt()
 
     cmd.repl()
 

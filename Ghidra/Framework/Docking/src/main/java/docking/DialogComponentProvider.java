@@ -800,15 +800,10 @@ public class DialogComponentProvider
 	 * If the status message fits then there is no tool tip.
 	 */
 	private void updateStatusToolTip() {
-		String text = statusLabel.getText();
-		// Get the width of the message.
-		FontMetrics fm = statusLabel.getFontMetrics(statusLabel.getFont());
-		int messageWidth = 0;
-		if ((fm != null) && (text != null)) {
-			messageWidth = fm.stringWidth(text);
-		}
-		if (messageWidth > statusLabel.getWidth()) {
-			statusLabel.setToolTipText(text);
+		Dimension preferredSize = statusLabel.getPreferredSize();
+		Dimension size = statusLabel.getSize();
+		if (preferredSize.width > size.width || preferredSize.height > size.height) {
+			statusLabel.setToolTipText(statusLabel.getOriginalText());
 		}
 		else {
 			statusLabel.setToolTipText(null);

@@ -33,7 +33,7 @@ import ghidra.features.bsim.query.description.DescriptionManager;
 import ghidra.features.bsim.query.file.BSimH2FileDBConnectionManager;
 import ghidra.features.bsim.query.file.BSimH2FileDBConnectionManager.BSimH2FileDataSource;
 import ghidra.features.bsim.query.protocol.*;
-import ghidra.framework.model.DomainFolder;
+import ghidra.framework.model.DomainFile;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.FunctionManager;
@@ -100,14 +100,23 @@ public class AddProgramToH2BSimDatabaseScript extends GhidraScript {
 				gensig.addFunctionTags(dbInfo.functionTags);
 				gensig.addDateColumnName(dbInfo.dateColumnName);
 
-				DomainFolder df = currentProgram.getDomainFile().getParent();
-				URL folderURL = df.getSharedProjectURL();
-				if (folderURL == null) {
-					folderURL = df.getLocalProjectURL();
+				DomainFile dFile = currentProgram.getDomainFile();
+				URL fileURL = dFile.getSharedProjectURL(null);
+				if (fileURL == null) {
+					fileURL = dFile.getLocalProjectURL(null);
 				}
-				String path = GhidraURL.getProjectPathname(folderURL);
+				if (fileURL == null) {
+					popup("Cannot add signatures for program which has never been saved");
+					return;
+				}
 
-				URL normalizedProjectURL = GhidraURL.getProjectURL(folderURL);
+				String path = GhidraURL.getProjectPathname(fileURL);
+				//bsim adds the program name to the path so we need to remove the program
+				//name here
+				int lastSlash = path.lastIndexOf('/');
+				path = lastSlash == 0 ? "/" : path.substring(0, lastSlash);
+
+				URL normalizedProjectURL = GhidraURL.getProjectURL(fileURL);
 				String repo = normalizedProjectURL.toExternalForm();
 
 				gensig.openProgram(this.currentProgram, null, null, null, repo, path);
