@@ -100,7 +100,7 @@ public class SymbolGTreeDragNDropHandler implements GTreeDragNDropHandler {
 	}
 
 	private void dropProgramSelection(Namespace namespace, SelectionTransferData selectionData) {
-		List<Symbol> symbolsToMove = new ArrayList<Symbol>();
+		List<Symbol> symbolsToMove = new ArrayList<>();
 		Program program = plugin.getProgram();
 		FunctionManager functionManager = program.getFunctionManager();
 		AddressSetView addressSet = selectionData.getAddressSet();
@@ -118,7 +118,7 @@ public class SymbolGTreeDragNDropHandler implements GTreeDragNDropHandler {
 	private void dropNodeList(Namespace namespace, Object transferData) {
 		@SuppressWarnings("unchecked")
 		List<GTreeNode> nodeList = (List<GTreeNode>) transferData;
-		List<Symbol> symbolsToMoveList = new ArrayList<Symbol>();
+		List<Symbol> symbolsToMoveList = new ArrayList<>();
 		for (GTreeNode node : nodeList) {
 			// we only allow dragging of SymbolNodes
 			SymbolNode symbolNode = (SymbolNode) node;
@@ -167,7 +167,7 @@ public class SymbolGTreeDragNDropHandler implements GTreeDragNDropHandler {
 
 	@Override
 	public DataFlavor[] getSupportedDataFlavors(List<GTreeNode> transferNodes) {
-		Set<DataFlavor> flavorSet = new HashSet<DataFlavor>();
+		Set<DataFlavor> flavorSet = new HashSet<>();
 		for (GTreeNode node : transferNodes) {
 			SymbolTreeNode symbolNode = (SymbolTreeNode) node;
 			DataFlavor flavor = symbolNode.getNodeDataFlavor();
@@ -189,16 +189,16 @@ public class SymbolGTreeDragNDropHandler implements GTreeDragNDropHandler {
 		if (SymbolDataFlavor.DATA_FLAVOR.equals(flavor)) {
 			return getSymbols(transferNodes);
 		}
-
-		List<GTreeNode> flavorNodes = new ArrayList<>();
-		for (GTreeNode node : transferNodes) {
-			SymbolTreeNode symbolNode = (SymbolTreeNode) node;
-			DataFlavor nodeFlavor = symbolNode.getNodeDataFlavor();
-			if (Objects.equals(flavor, nodeFlavor)) {
-				flavorNodes.add(symbolNode);
+		else if (SymbolTreeDataFlavor.DATA_FLAVOR.equals(flavor)) {
+			List<GTreeNode> nodes = new ArrayList<>();
+			for (GTreeNode node : transferNodes) {
+				SymbolTreeNode symbolNode = (SymbolTreeNode) node;
+				nodes.add(symbolNode);
 			}
+			return nodes;
 		}
-		return flavorNodes;
+
+		throw new UnsupportedFlavorException(flavor);
 	}
 
 	private SymbolTransferData getSymbols(List<GTreeNode> transferNodes) {
