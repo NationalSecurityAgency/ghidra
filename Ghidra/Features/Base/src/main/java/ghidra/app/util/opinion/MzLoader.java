@@ -26,6 +26,7 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.mz.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.database.mem.FileBytes;
+import ghidra.program.database.module.TreeManager;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataUtilities;
@@ -314,6 +315,10 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 				}
 			}
 		}
+
+		// Recreate the Program Tree since it may now be out of sync
+		program.getListing().removeTree(TreeManager.DEFAULT_TREE_NAME);
+		program.getListing().createRootModule(TreeManager.DEFAULT_TREE_NAME);
 	}
 
 	private void processRelocations(Program program, SegmentedAddressSpace space, MzExecutable mz,
