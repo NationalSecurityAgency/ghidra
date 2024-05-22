@@ -55,7 +55,10 @@ def main():
     cmd.ghidra_trace_sync_enable()
 
     # TODO: HACK
-    dbg.wait()
+    try:
+        dbg.wait()
+    except KeyboardInterrupt as ki:
+        dbg.interrupt()
 
     cmd.repl()
 
