@@ -300,9 +300,8 @@ class EnumEditorPanel extends JPanel {
 		table.setRowHeight(table.getRowHeight() + 4);
 		table.setDefaultEditor(String.class, new EnumStringCellEditor());
 		table.getColumnModel()
-			.getColumn(EnumTableModel.VALUE_COL)
-			.setCellEditor(
-				new EnumLongCellEditor());
+				.getColumn(EnumTableModel.VALUE_COL)
+				.setCellEditor(new EnumLongCellEditor());
 		table.setDefaultRenderer(String.class, new GTableCellRenderer());
 		table.setDefaultRenderer(Long.class, new EnumValueRenderer());
 		add(createInfoPanel(), BorderLayout.SOUTH);
@@ -482,6 +481,16 @@ class EnumEditorPanel extends JPanel {
 	void setHexDisplayMode(boolean showHex) {
 		showValuesAsHex = showHex;
 		tableModel.fireTableDataChanged();
+	}
+
+	String getSelectedFieldName() {
+
+		int row = table.getSelectedRow();
+		if (row < 0) {
+			return null;
+		}
+		EnumEntry enumEntry = tableModel.getRowObject(row);
+		return enumEntry.getName();
 	}
 //==================================================================================================
 // Inner Classes

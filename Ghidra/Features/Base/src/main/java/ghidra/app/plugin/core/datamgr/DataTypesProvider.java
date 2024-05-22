@@ -212,7 +212,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 
 		// ZVeryLast group
 		addLocalAction(new FindReferencesToDataTypeAction(plugin)); // DataType
-		addLocalAction(new FindReferencesToFieldAction(plugin)); // DataType
+		addLocalAction(new FindReferencesToFieldByNameOrOffsetAction(plugin)); // DataType
 		addLocalAction(new FindBaseDataTypeAction(plugin)); // DataType
 		addLocalAction(new DisplayTypeAsGraphAction(plugin));
 

@@ -23,106 +23,80 @@ import javax.swing.tree.TreePath;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.ActionContext;
-import docking.action.DockingAction;
-import docking.action.MenuData;
 import docking.widgets.OptionDialog;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
-import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
-import ghidra.app.plugin.core.navigation.FindAppliedDataTypesService;
 import ghidra.app.services.FieldMatcher;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.Plugin;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
-import ghidra.util.*;
+import ghidra.util.NumericUtilities;
 
-public class FindReferencesToFieldAction extends DockingAction {
+/**
+ * An action that can be used on a {@link Composite} or {@link Enum} to find references to a field
+ * by name or offset.
+ */
+public class FindReferencesToFieldByNameOrOffsetAction extends AbstractFindReferencesToFieldAction {
 
-	private final DataTypeManagerPlugin plugin;
-
-	public FindReferencesToFieldAction(DataTypeManagerPlugin plugin) {
-		super("Find Uses of Field", plugin.getName());
-		this.plugin = plugin;
-
-		String menuGroup = "ZVeryLast"; // it's own group; on the bottom
-		setPopupMenuData(new MenuData(new String[] { "Find Uses of Field..." }, null, menuGroup));
-
-		setHelpLocation(new HelpLocation("LocationReferencesPlugin", "Data_Types"));
-		setEnabled(true);
+	public FindReferencesToFieldByNameOrOffsetAction(Plugin plugin) {
+		super(plugin);
 	}
 
 	@Override
-	public boolean isEnabledForContext(ActionContext context) {
+	protected DataTypeAndFields getSelectedType(ActionContext context) {
 		if (!(context instanceof DataTypesActionContext)) {
-			return false;
+			return null;
 		}
 
 		Object contextObject = context.getContextObject();
 		GTree gtree = (GTree) contextObject;
 		TreePath[] selectionPaths = gtree.getSelectionPaths();
 		if (selectionPaths.length != 1) {
-			return false;
+			return null;
 		}
 
 		GTreeNode node = (GTreeNode) selectionPaths[0].getLastPathComponent();
 		if (!(node instanceof DataTypeNode)) {
-			return false;
+			return null;
 		}
 		DataTypeNode dtNode = (DataTypeNode) node;
-		DataType dataType = dtNode.getDataType();
-		return dataType instanceof Composite || dataType instanceof Enum;
+		DataType dt = dtNode.getDataType();
+		if (!(dt instanceof Composite || dt instanceof Enum)) {
+			return null;
+		}
+
+		String[] fields = null;
+		if (dt instanceof Composite) {
+			fields = getCompositeFieldNames((Composite) dt);
+		}
+		else if (dt instanceof Enum) {
+			fields = ((Enum) dt).getNames();
+		}
+
+		return new DataTypeAndFields(dt, fields);
 	}
 
 	@Override
-	public void actionPerformed(ActionContext context) {
-		GTree gTree = (GTree) context.getContextObject();
-		TreePath[] selectionPaths = gTree.getSelectionPaths();
-		final DataTypeNode dataTypeNode = (DataTypeNode) selectionPaths[0].getLastPathComponent();
+	protected FieldMatcher createFieldMatcher(DataTypeAndFields typeAndFields) {
 
-		PluginTool tool = plugin.getTool();
-		FindAppliedDataTypesService service = tool.getService(FindAppliedDataTypesService.class);
-		if (service == null) {
-			Msg.showError(this, null, "Missing Plugin",
-				"The FindAppliedDataTypesService is not installed.\n" +
-					"Please add the plugin implementing this service.");
-			return;
-		}
-
-		DataType dt = dataTypeNode.getDataType();
-		String[] choices = null;
-		if (dt instanceof Composite) {
-			choices = getCompisiteFieldNames((Composite) dt);
-		}
-		else if (dt instanceof Enum) {
-			choices = ((Enum) dt).getNames();
-		}
-
+		DataType dt = typeAndFields.dataType();
 		String message = "Find uses of '" + dt.getName() + "' field by name or offset";
 		String userChoice = OptionDialog.showEditableInputChoiceDialog(null, "Choose Field",
-			message, choices, null, OptionDialog.QUESTION_MESSAGE);
+			message, typeAndFields.fieldNames(), null, OptionDialog.QUESTION_MESSAGE);
 		if (userChoice == null) {
-			return;
+			return null; // cancelled
 		}
 
-		FieldMatcher fieldMatcher;
 		Long longChoice = parseInt(userChoice);
 		if (longChoice != null) {
-			fieldMatcher = new FieldMatcher(dt, longChoice.intValue());
+			return new FieldMatcher(dt, longChoice.intValue());
 		}
-		else {
-			fieldMatcher = new FieldMatcher(dt, userChoice);
-		}
-
-		Swing.runLater(() -> service.findAndDisplayAppliedDataTypeAddresses(dt, fieldMatcher));
+		return new FieldMatcher(dt, userChoice);
 	}
 
-	private Long parseInt(String s) {
-		return NumericUtilities.parseNumber(s, null);
-	}
-
-	private String[] getCompisiteFieldNames(Composite composite) {
+	private String[] getCompositeFieldNames(Composite composite) {
 		DataTypeComponent[] components = composite.getDefinedComponents();
 		List<String> names = new ArrayList<>();
 		for (DataTypeComponent dataTypeComponent : components) {
@@ -139,4 +113,7 @@ public class FindReferencesToFieldAction extends DockingAction {
 		return names.toArray(String[]::new);
 	}
 
+	private Long parseInt(String s) {
+		return NumericUtilities.parseNumber(s, null);
+	}
 }

@@ -24,17 +24,15 @@ import ghidra.program.model.data.DataTypeComponent;
 import ghidra.util.*;
 
 /**
- * An action to show references to the field in the currently selected editor row
+ * An action to show references to the field in the currently selected editor row.
  */
-public class FindReferencesToField extends CompositeEditorTableAction {
+public class FindReferencesToStructureFieldAction extends CompositeEditorTableAction {
 
-	public final static String ACTION_NAME = "Find Uses of";
-	private final static String GROUP_NAME = BASIC_ACTION_GROUP;
+	private final static String ACTION_NAME = "Find Uses of";
 	private final static String DESCRIPTION = "Find uses of field in the selected row";
-	private static String[] popupPath = new String[] { ACTION_NAME };
 
-	public FindReferencesToField(CompositeEditorProvider provider) {
-		super(provider, ACTION_NAME, GROUP_NAME, popupPath, null, null);
+	public FindReferencesToStructureFieldAction(CompositeEditorProvider provider) {
+		super(provider, ACTION_NAME, BASIC_ACTION_GROUP, new String[] { ACTION_NAME }, null, null);
 		setDescription(DESCRIPTION);
 		adjustEnablement();
 		setHelpLocation(new HelpLocation(HelpTopics.FIND_REFERENCES, "Data_Types"));
@@ -46,8 +44,8 @@ public class FindReferencesToField extends CompositeEditorTableAction {
 		FindAppliedDataTypesService service = tool.getService(FindAppliedDataTypesService.class);
 		if (service == null) {
 			Msg.showError(this, null, "Missing Plugin",
-				"The FindAppliedDataTypesService is not installed.\n" +
-					"Please add the plugin implementing this service.");
+				"The %s is not installed.\nPlease add the plugin implementing this service."
+						.formatted(FindAppliedDataTypesService.class.getSimpleName()));
 			return;
 		}
 
