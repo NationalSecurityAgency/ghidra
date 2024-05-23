@@ -716,7 +716,7 @@
 }
 @endif
 
-:INC^lockx  spec_m8	is vexMode=0 & lockx & unlock & byte=0xfe; spec_m8 ...				
+:INC^lockx  spec_m8	is vexMode=0 & lockx & unlock & byte=0xfe; spec_m8 & reg_opcode=0 ...
 {
     build lockx;
     build spec_m8;
@@ -726,7 +726,7 @@
     build unlock; 
 }
 
-:INC^lockx spec_m16	is vexMode=0 & lockx & unlock & opsize=0 & byte=0xff; spec_m16 ...	
+:INC^lockx spec_m16	is vexMode=0 & lockx & unlock & opsize=0 & byte=0xff; spec_m16 & reg_opcode=0 ...
 {
     build lockx;
     build spec_m16;
@@ -736,7 +736,7 @@
     build unlock; 
 }
 
-:INC^lockx spec_m32	is vexMode=0 & lockx & unlock & opsize=1 & byte=0xff; spec_m32 ...	
+:INC^lockx spec_m32	is vexMode=0 & lockx & unlock & opsize=1 & byte=0xff; spec_m32 & reg_opcode=0 ...
 {
     build lockx;
     build spec_m32;
@@ -747,7 +747,7 @@
 }
 
 @ifdef IA64
-:INC^lockx spec_m64	is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0xff; spec_m64 ... 
+:INC^lockx spec_m64	is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0xff; spec_m64 & reg_opcode=0 ...
 {
     build lockx;
     build spec_m64;
