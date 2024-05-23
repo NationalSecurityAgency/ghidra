@@ -1122,12 +1122,28 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		boolean success = false;
 		try {
 			for (FSRL fsrl : LibrarySearchPathManager.getLibraryFsrlList(log, monitor)) {
-				try (RefdFile fileRef = fsService.getRefdFile(fsrl, monitor)) {
-					File f = new File(fileRef.file.getPath()); // File API will sanitize Windows-style paths
-					result.add(new FileSystemSearchPath(fileRef.fsRef.dup(), f.toPath()));
+				if (fsService.isLocal(fsrl)) {
+					try {
+						FileSystemRef fileRef =
+							fsService.probeFileForFilesystem(fsrl, monitor, null);
+						if (fileRef != null) {
+							result.add(new FileSystemSearchPath(fileRef, null));
+						}
+					}
+					catch (IOException e) {
+						log.appendMsg(e.getMessage());
+					}
 				}
-				catch (IOException e) {
-					log.appendMsg(e.getMessage());
+				else {
+					try (RefdFile fileRef = fsService.getRefdFile(fsrl, monitor)) {
+						if (fileRef != null) {
+							File f = new File(fileRef.file.getPath()); // File API will sanitize Windows-style paths
+							result.add(new FileSystemSearchPath(fileRef.fsRef.dup(), f.toPath()));
+						}
+					}
+					catch (IOException e) {
+						log.appendMsg(e.getMessage());
+					}
 				}
 			}
 			success = true;
