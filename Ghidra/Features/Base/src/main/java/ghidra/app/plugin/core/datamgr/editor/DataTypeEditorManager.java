@@ -37,8 +37,6 @@ import ghidra.util.exception.*;
  */
 public class DataTypeEditorManager implements EditorListener {
 
-	public static final String EDIT_ACTION_PREFIX = "Editor: ";
-
 	private List<EditorProvider> editorList;
 	private EditorOptionManager editorOptionMgr; // manages editor tool options
 	private DataTypeManagerPlugin plugin;
@@ -707,7 +705,7 @@ public class DataTypeEditorManager implements EditorListener {
 		private String name;
 
 		DtSharedActionPlaceholder(String name) {
-			this.name = EDIT_ACTION_PREFIX + name;
+			this.name = name;
 		}
 
 		@Override

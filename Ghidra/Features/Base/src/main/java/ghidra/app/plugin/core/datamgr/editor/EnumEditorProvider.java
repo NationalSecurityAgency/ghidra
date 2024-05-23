@@ -325,7 +325,8 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 		showEnumAction.setToolBarData(
 			new ToolBarData(new GIcon("icon.plugin.enum.editor.home"), thirdGroup));
 
-		FindReferencesToEnumFieldAction findReferencesAction = new FindReferencesToEnumFieldAction(plugin);
+		FindReferencesToEnumFieldAction findReferencesAction =
+			new FindReferencesToEnumFieldAction(plugin);
 
 		tool.addLocalAction(this, applyAction);
 		tool.addLocalAction(this, addAction);
@@ -726,8 +727,7 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 		private ActionListener listener;
 
 		EnumPluginAction(String name, ActionListener listener) {
-			super(DataTypeEditorManager.EDIT_ACTION_PREFIX + name, plugin.getName(),
-				KeyBindingType.SHARED);
+			super(name, plugin.getName(), KeyBindingType.SHARED);
 			this.listener = listener;
 			setHelpLocation(new HelpLocation(HELP_TOPIC, name));
 		}
