@@ -509,6 +509,7 @@ ThumbExpandImm12: "#"^imm32           is   immed12_i=1 ; immed12_imm3 & thc0707 
 
 @if defined(VERSION_6T2) || defined(VERSION_7)
 
+thLsbImm: "#"^lsb	is imm3_shft=0 & imm2_shft=0 & (thc0405=0b01 | thc0405=0b10) [lsb = 32; ] { tmp:4 = lsb; export tmp; }
 thLsbImm: "#"^lsb	is imm3_shft & imm2_shft [ lsb= (imm3_shft<<2) | imm2_shft; ] { tmp:4 = lsb; export tmp; }
 thMsbImm: "#"^thc0004	is thc0004 { tmp:4 = thc0004; export tmp; }
 thWidthMinus1: "#"^width	is thc0004 [ width = thc0004 + 1; ] { tmp:4 = thc0004; export tmp; }
