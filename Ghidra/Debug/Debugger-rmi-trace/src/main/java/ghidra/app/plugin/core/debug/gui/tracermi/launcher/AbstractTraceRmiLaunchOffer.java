@@ -321,6 +321,7 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 		DebuggerMethodInvocationDialog dialog =
 			new DebuggerMethodInvocationDialog(tool, getTitle(), "Launch", getIcon());
 		dialog.setDescription(getDescription());
+		dialog.setHelpLocation(getHelpLocation());
 		// NB. Do not invoke read/writeConfigState
 		Map<String, ?> args;
 		boolean reset = false;
@@ -681,6 +682,6 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 	}
 
 	protected ErrPromptResponse promptError(LaunchResult result) {
-		return LaunchFailureDialog.show(result);
+		return LaunchFailureDialog.show(result, getHelpLocation());
 	}
 }

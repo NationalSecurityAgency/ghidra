@@ -18,15 +18,10 @@
 #@no-image
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with local <tt>lldb</tt> and connect to a stub (e.g., <tt>gdbserver</tt>)</h3>
-#@desc   <p>This will start <tt>lldb</tt> on the local system and then use it to connect to the remote system. 
-#@desc   The actual command used is, e.g:</p>
-#@desc   <pre>gdb-remote host:port</pre>
-#@desc   <p>It may be worth testing this manually to ensure everything is configured correctly.
-#@desc   LLDB must be installed on your local system, it must be compatible with the remote system, 
-#@desc   and it must embed the Python 3 interpreter. You will also need <tt>protobuf</tt> installed 
-#@desc   for Python 3 on the local system. There are no Python requirements for the remote system.
-#@desc   Please ensure that Ghidra's current program and the target's image match.  Otherwise, the
-#@desc   modules may not map.</p>
+#@desc   <p>
+#@desc     This will start <tt>lldb</tt> on the local system and then use it to connect to the remote system.
+#@desc     For setup instructions, press <b>F1</b>.
+#@desc   </p>
 #@desc </body></html>
 #@menu-group remote
 #@icon icon.debugger
@@ -34,7 +29,7 @@
 #@env OPT_HOST:str="localhost" "Host" "The hostname of the target"
 #@env OPT_PORT:str="9999" "Port" "The host's listening port"
 #@env OPT_ARCH:str="" "Architecture" "Target architecture override"
-#@env OPT_LLDB_PATH:str="lldb" "Path to lldb" "The path to lldb on the local system. Omit the full path to resolve using the system PATH."
+#@env OPT_LLDB_PATH:str="lldb" "lldb command" "The path to lldb on the local system. Omit the full path to resolve using the system PATH."
 
 if [ -d ${GHIDRA_HOME}/ghidra/.git ]
 then

@@ -21,6 +21,7 @@ import docking.widgets.OptionDialog;
 import ghidra.debug.api.tracermi.TerminalSession;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer.LaunchResult;
 import ghidra.util.HTMLUtilities;
+import ghidra.util.HelpLocation;
 
 public class LaunchFailureDialog extends OptionDialog {
 	private static final String MSGPAT_PART_TOP = """
@@ -116,8 +117,8 @@ public class LaunchFailureDialog extends OptionDialog {
 		return sb.toString();
 	}
 
-	public static ErrPromptResponse show(LaunchResult result) {
-		return switch (new LaunchFailureDialog(result).show()) {
+	public static ErrPromptResponse show(LaunchResult result, HelpLocation helpLocation) {
+		return switch (new LaunchFailureDialog(result, helpLocation).show()) {
 			case OptionDialog.YES_OPTION -> ErrPromptResponse.KEEP;
 			case OptionDialog.NO_OPTION -> ErrPromptResponse.RETRY;
 			case OptionDialog.CANCEL_OPTION -> ErrPromptResponse.TERMINATE;
@@ -125,8 +126,9 @@ public class LaunchFailureDialog extends OptionDialog {
 		};
 	}
 
-	protected LaunchFailureDialog(LaunchResult result) {
+	protected LaunchFailureDialog(LaunchResult result, HelpLocation helpLocation) {
 		super("Launch Failed", formatMessage(result), hasResources(result) ? "&Keep" : null,
 			"&Retry", OptionDialog.ERROR_MESSAGE, null, true, "Retry");
+		setHelpLocation(helpLocation);
 	}
 }
