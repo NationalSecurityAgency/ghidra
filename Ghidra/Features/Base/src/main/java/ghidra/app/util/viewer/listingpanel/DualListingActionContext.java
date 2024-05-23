@@ -16,57 +16,32 @@
 package ghidra.app.util.viewer.listingpanel;
 
 import docking.ComponentProvider;
-import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import ghidra.app.util.viewer.util.CodeComparisonActionContext;
-import ghidra.app.util.viewer.util.CodeComparisonPanel;
-import ghidra.program.model.listing.Function;
 
-// Note: If you want to get the typical actions for things like comments, labels, bookmarks, etc.
-//       that are available in the CodeBrowser then change this to extend ListingActionContext.
-//       This currently extends NavigatableActionContext so that it does NOT get the typical 
-//       CodeBrowser Listing actions.
 /**
  * Action context for a ListingCodeComparisonPanel.
  */
 public class DualListingActionContext extends CodeComparisonActionContext {
 
-	private CodeComparisonPanel<? extends FieldPanelCoordinator> codeComparisonPanel = null;
+	private ListingCodeComparisonPanel codeComparisonPanel = null;
 
 	/**
 	 * Constructor for a dual listing's action context.
 	 * @param provider the provider that uses this action context.
+	 * @param panel the ListingCodeComparisonPanel that generated this context
 	 */
-	public DualListingActionContext(ComponentProvider provider) {
-		super(provider);
+	public DualListingActionContext(ComponentProvider provider, ListingCodeComparisonPanel panel) {
+		super(provider, panel, panel.getActiveListingPanel().getFieldPanel());
+		this.codeComparisonPanel = panel;
 	}
 
 	/**
-	 * Sets the CodeComparisonPanel associated with this context.
-	 * @param codeComparisonPanel the code comparison panel
+	 * Returns the {@link ListingCodeComparisonPanel} that generated this context
+	 * @return the listing comparison panel that generated this context
 	 */
-	public void setCodeComparisonPanel(
-			CodeComparisonPanel<? extends FieldPanelCoordinator> codeComparisonPanel) {
-		this.codeComparisonPanel = codeComparisonPanel;
-	}
-
 	@Override
-	public CodeComparisonPanel<? extends FieldPanelCoordinator> getCodeComparisonPanel() {
+	public ListingCodeComparisonPanel getCodeComparisonPanel() {
 		return codeComparisonPanel;
 	}
 
-	@Override
-	public Function getSourceFunction() {
-		boolean leftHasFocus = codeComparisonPanel.leftPanelHasFocus();
-
-		return leftHasFocus ? codeComparisonPanel.getRightFunction()
-				: codeComparisonPanel.getLeftFunction();
-	}
-
-	@Override
-	public Function getTargetFunction() {
-		boolean leftHasFocus = codeComparisonPanel.leftPanelHasFocus();
-
-		return leftHasFocus ? codeComparisonPanel.getLeftFunction()
-				: codeComparisonPanel.getRightFunction();
-	}
 }

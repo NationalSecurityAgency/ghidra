@@ -20,7 +20,6 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import docking.ComponentProviderActivationListener;
-import ghidra.framework.model.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 
@@ -225,20 +224,10 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 	 * will notify all the function comparison providers. This allows them to 
 	 * refresh if they are showing a function from the program
 	 * 
-	 * @param ev the object changed event
+	 * @param program the program that was restored
 	 */
-	public void domainObjectRestored(DomainObjectChangedEvent ev) {
-		for (DomainObjectChangeRecord domainObjectChangeRecord : ev) {
-			EventType eventType = domainObjectChangeRecord.getEventType();
-			if (eventType != DomainObjectEvent.RESTORED) {
-				return;
-			}
-			Object source = ev.getSource();
-			if (source instanceof Program) {
-				Program program = (Program) source;
-				providers.stream().forEach(p -> p.programRestored(program));
-			}
-		}
+	public void domainObjectRestored(Program program) {
+		providers.stream().forEach(p -> p.programRestored(program));
 	}
 
 }

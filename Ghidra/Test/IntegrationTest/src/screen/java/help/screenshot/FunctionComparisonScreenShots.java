@@ -15,6 +15,8 @@
  */
 package help.screenshot;
 
+import static ghidra.util.datastruct.Duo.Side.*;
+
 import java.io.IOException;
 
 import javax.swing.table.TableColumn;
@@ -102,7 +104,7 @@ public class FunctionComparisonScreenShots extends GhidraScreenShotGenerator {
 				functionComparisonPanel.setCurrentTabbedComponent("Listing View");
 				ListingCodeComparisonPanel dualListing =
 					(ListingCodeComparisonPanel) functionComparisonPanel.getDisplayedPanel();
-				ListingPanel leftPanel = dualListing.getLeftPanel();
+				ListingPanel leftPanel = dualListing.getListingPanel(LEFT);
 				leftPanel.goTo(addr(0x004119aa));
 			});
 			waitForSwing();

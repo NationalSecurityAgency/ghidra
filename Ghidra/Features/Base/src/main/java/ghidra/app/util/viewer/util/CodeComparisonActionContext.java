@@ -20,29 +20,22 @@ import java.awt.Component;
 import docking.ComponentProvider;
 import docking.DefaultActionContext;
 import ghidra.program.model.listing.Function;
+import ghidra.util.datastruct.Duo.Side;
 
 public abstract class CodeComparisonActionContext extends DefaultActionContext
 		implements CodeComparisonPanelActionContext {
-	/** 
-	 * Constructor with no source component and no context object
-	 * @param provider the ComponentProvider that generated this context.
-	 */
-	public CodeComparisonActionContext(ComponentProvider provider) {
-		super(provider);
-	}
+	private CodeComparisonPanel comparisonPanel;
 
-	/**
-	 * Constructor with source component and context object
-	 * 
-	 * @param provider the ComponentProvider that generated this context.
-	 * @param contextObject an optional contextObject that the ComponentProvider can provide; this 
-	 *        can be anything that actions wish to later retrieve
-	 * @param sourceComponent an optional source object; this is intended to be the component that
-	 *        is the source of the context, usually the focused component
+	/** 
+	 * Constructor
+	 * @param provider the ComponentProvider containing the code comparison panel
+	 * @param panel the CodeComparisonPanel that generated this context
+	 * @param component the focusable component for associated with the comparison panel
 	 */
-	public CodeComparisonActionContext(ComponentProvider provider, Object contextObject,
-			Component sourceComponent) {
-		super(provider, contextObject, sourceComponent);
+	public CodeComparisonActionContext(ComponentProvider provider, CodeComparisonPanel panel,
+			Component component) {
+		super(provider, panel, component);
+		this.comparisonPanel = panel;
 	}
 
 	/**
@@ -50,13 +43,18 @@ public abstract class CodeComparisonActionContext extends DefaultActionContext
 	 * side of the function diff window that isn't active. 
 	 * @return the function to get information from
 	 */
-	public abstract Function getSourceFunction();
+	public Function getSourceFunction() {
+		Side activeSide = comparisonPanel.getActiveSide();
+		return comparisonPanel.getFunction(activeSide.otherSide());
+	}
 
 	/**
 	 * Returns the function that is the target of the info being applied. This will be whichever
 	 * side of the function diff window that is active.
 	 * @return the function to apply information to
 	 */
-	public abstract Function getTargetFunction();
-
+	public Function getTargetFunction() {
+		Side activeSide = comparisonPanel.getActiveSide();
+		return comparisonPanel.getFunction(activeSide);
+	}
 }

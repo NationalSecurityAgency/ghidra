@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.decompiler.component;
+package ghidra.codecompare.decompile;
 
+import ghidra.app.decompiler.ClangToken;
 
-public interface DualDecompileResultsListener {
-
-//	void setProvider(DecompilerFunctionComparisonProvider provider);
-
-	void decompileResultsSet(DecompileData leftDecompileData, DecompileData rightDecompileData);
-
+record TokenPair(ClangToken leftToken, ClangToken rightToken) {
 }

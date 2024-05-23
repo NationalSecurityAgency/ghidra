@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.codecompare;
+package ghidra.codecompare.decompile;
+
+import static ghidra.util.datastruct.Duo.Side.*;
 
 import java.util.Iterator;
 import java.util.List;
@@ -22,16 +24,17 @@ import docking.ActionContext;
 import docking.action.DockingAction;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.DecompilerLocation;
-import ghidra.app.decompiler.component.*;
+import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.codecompare.graphanalysis.TokenBin;
 import ghidra.program.model.listing.Program;
+import ghidra.util.datastruct.Duo.Side;
 
 /**
  * This is a base class for actions in a {@link DecompilerDiffCodeComparisonPanel}
  */
 public abstract class AbstractMatchedTokensAction extends DockingAction {
 
-	protected DecompilerDiffCodeComparisonPanel diffPanel;
+	protected DecompilerCodeComparisonPanel diffPanel;
 	protected boolean disableOnReadOnly;
 
 	/**
@@ -43,7 +46,7 @@ public abstract class AbstractMatchedTokensAction extends DockingAction {
 	 * @param disableOnReadOnly if true, action will be disabled for read-only programs
 	 */
 	public AbstractMatchedTokensAction(String actionName, String owner,
-			DecompilerDiffCodeComparisonPanel diffPanel, boolean disableOnReadOnly) {
+			DecompilerCodeComparisonPanel diffPanel, boolean disableOnReadOnly) {
 		super(actionName, owner);
 		this.diffPanel = diffPanel;
 		this.disableOnReadOnly = disableOnReadOnly;
@@ -63,26 +66,20 @@ public abstract class AbstractMatchedTokensAction extends DockingAction {
 		if (!(context instanceof DualDecompilerActionContext compareContext)) {
 			return false;
 		}
-		if (!(compareContext
-				.getCodeComparisonPanel() instanceof DecompilerCodeComparisonPanel decompPanel)) {
-			return false;
-		}
+		DecompilerCodeComparisonPanel decompPanel = compareContext.getCodeComparisonPanel();
 
 		if (disableOnReadOnly) {
 			//get the program corresponding to the panel with focus
-			Program program = decompPanel.getLeftProgram();
+			Side focusedSide = decompPanel.getActiveSide();
+			Program program = decompPanel.getProgram(focusedSide);
 			if (program == null) {
 				return false; //panel initializing; don't enable action
-			}
-			if (!decompPanel.leftPanelHasFocus()) {
-				program = decompPanel.getRightProgram();
 			}
 			if (!program.canSave()) {
 				return false;  //program is read-only, don't enable action
 			}
 		}
 
-		@SuppressWarnings("unchecked")
 		TokenPair currentPair = getCurrentTokenPair(decompPanel);
 		return enabledForTokens(currentPair);
 
@@ -96,9 +93,9 @@ public abstract class AbstractMatchedTokensAction extends DockingAction {
 	 * @return matching tokens (or null if no match)
 	 */
 	protected TokenPair getCurrentTokenPair(
-			DecompilerCodeComparisonPanel<? extends DualDecompilerFieldPanelCoordinator> decompPanel) {
+			DecompilerCodeComparisonPanel decompPanel) {
 
-		DecompilerPanel focusedPanel = decompPanel.getFocusedDecompilerPanel().getDecompilerPanel();
+		DecompilerPanel focusedPanel = decompPanel.getActiveDisplay().getDecompilerPanel();
 
 		if (!(focusedPanel.getCurrentLocation() instanceof DecompilerLocation focusedLocation)) {
 			return null;
@@ -126,7 +123,8 @@ public abstract class AbstractMatchedTokensAction extends DockingAction {
 		while (tokenIter.hasNext()) {
 			ClangToken currentMatch = tokenIter.next();
 			if (currentMatch.getClass().equals(focusedToken.getClass())) {
-				return decompPanel.leftPanelHasFocus() ? new TokenPair(focusedToken, currentMatch)
+				return decompPanel.getActiveSide() == LEFT
+						? new TokenPair(focusedToken, currentMatch)
 						: new TokenPair(currentMatch, focusedToken);
 			}
 		}

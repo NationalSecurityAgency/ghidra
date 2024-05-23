@@ -15,21 +15,27 @@
  */
 package ghidra.app.plugin.core.functioncompare.actions;
 
+import static ghidra.util.datastruct.Duo.Side.*;
+
 import java.awt.event.*;
 import java.util.List;
 
 import javax.swing.Icon;
+import javax.swing.JComboBox;
 
+import docking.ActionContext;
 import docking.action.ToggleDockingAction;
 import docking.action.ToolBarData;
-import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
-import ghidra.app.plugin.core.functioncompare.*;
+import ghidra.app.plugin.core.functioncompare.MultiFunctionComparisonPanel;
+import ghidra.app.plugin.core.functioncompare.MultiFunctionComparisonProvider;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.viewer.util.CodeComparisonPanel;
-import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Program;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.HelpLocation;
+import ghidra.util.datastruct.Duo.Side;
 import resources.Icons;
 
 /**
@@ -50,6 +56,8 @@ public class NavigateToFunctionAction extends ToggleDockingAction {
 
 	private static final Icon NAV_FUNCTION_ICON = Icons.NAVIGATE_ON_INCOMING_EVENT_ICON;
 
+	private MultiFunctionComparisonPanel comparisonPanel;
+
 	/**
 	 * Constructor
 	 * 
@@ -57,6 +65,7 @@ public class NavigateToFunctionAction extends ToggleDockingAction {
 	 */
 	public NavigateToFunctionAction(MultiFunctionComparisonProvider provider) {
 		super("Navigate To Selected Function", provider.getName());
+		comparisonPanel = (MultiFunctionComparisonPanel) provider.getComponent();
 
 		goToService = provider.getTool().getService(GoToService.class);
 
@@ -70,8 +79,15 @@ public class NavigateToFunctionAction extends ToggleDockingAction {
 		setHelpLocation(
 			new HelpLocation(MultiFunctionComparisonPanel.HELP_TOPIC, "Navigate_To_Function"));
 
-		addFocusListeners(provider);
-		addChangeListeners(provider);
+		addFocusListeners();
+		addChangeListeners();
+	}
+
+	@Override
+	public void actionPerformed(ActionContext context) {
+		JComboBox<Function> combo = comparisonPanel.getFocusedComponent();
+		Function f = (Function) combo.getSelectedItem();
+		goToService.goTo(f.getEntryPoint(), f.getProgram());
 	}
 
 	/**
@@ -79,108 +95,75 @@ public class NavigateToFunctionAction extends ToggleDockingAction {
 	 * comparison provider. When a new function is selected, a GoTo event
 	 * is generated for the entry point of the function.
 	 * 
-	 * @param provider the function comparison provider
 	 */
-	private void addChangeListeners(MultiFunctionComparisonProvider provider) {
-		MultiFunctionComparisonPanel panel = (MultiFunctionComparisonPanel) provider.getComponent();
+	private void addChangeListeners() {
+		JComboBox<Function> sourceCombo = comparisonPanel.getSourceComponent();
+		JComboBox<Function> targetCombo = comparisonPanel.getTargetComponent();
+		sourceCombo.addItemListener(new PanelItemListener(LEFT));
+		targetCombo.addItemListener(new PanelItemListener(RIGHT));
 
-		panel.getSourceComponent().addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				if (e.getStateChange() != ItemEvent.SELECTED) {
-					return;
-				}
-
-				if (panel.getFocusedComponent() != panel.getSourceComponent()) {
-					return;
-				}
-
-				if (NavigateToFunctionAction.this.isSelected()) {
-					Function f = (Function) panel.getSourceComponent().getSelectedItem();
-					goToService.goTo(f.getEntryPoint(), f.getProgram());
-				}
-			}
-		});
-
-		panel.getTargetComponent().addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				if (e.getStateChange() != ItemEvent.SELECTED) {
-					return;
-				}
-
-				if (panel.getFocusedComponent() != panel.getTargetComponent()) {
-					return;
-				}
-
-				if (NavigateToFunctionAction.this.isSelected()) {
-					Function f = (Function) panel.getTargetComponent().getSelectedItem();
-					goToService.goTo(f.getEntryPoint(), f.getProgram());
-				}
-			}
-		});
 	}
 
 	/**
 	 * Adds a listener to each panel in the function comparison provider, 
 	 * triggered when focus has been changed. If focused is gained in a panel,
 	 * a GoTo event is issued containing the function start address.
-	 * 
-	 * @param provider the function comparison provider
 	 */
-	private void addFocusListeners(MultiFunctionComparisonProvider provider) {
+	private void addFocusListeners() {
+		List<CodeComparisonPanel> panels = comparisonPanel.getComparisonPanels();
 
-		FunctionComparisonPanel mainPanel = provider.getComponent();
-		List<CodeComparisonPanel<? extends FieldPanelCoordinator>> panels =
-			mainPanel.getComparisonPanels();
+		for (CodeComparisonPanel panel : panels) {
+			panel.getComparisonComponent(LEFT)
+					.addFocusListener(new PanelFocusListener(panel, Side.LEFT));
+			panel.getComparisonComponent(RIGHT)
+					.addFocusListener(new PanelFocusListener(panel, Side.RIGHT));
+		}
+	}
 
-		for (CodeComparisonPanel<? extends FieldPanelCoordinator> panel : panels) {
+	private class PanelItemListener implements ItemListener {
+		private Side side;
 
-			panel.getRightFieldPanel().addFocusListener(new FocusAdapter() {
+		PanelItemListener(Side side) {
+			this.side = side;
+		}
 
-				@Override
-				public void focusGained(FocusEvent e) {
-					if (NavigateToFunctionAction.this.isSelected()) {
+		@Override
+		public void itemStateChanged(ItemEvent e) {
+			if (e.getStateChange() != ItemEvent.SELECTED) {
+				return;
+			}
+			if (comparisonPanel.getFocusedSide() != side) {
+				return;
+			}
 
-						Address addr = null;
+			if (isSelected()) {
+				JComboBox<?> combo = (JComboBox<?>) e.getSource();
+				Function f = (Function) combo.getSelectedItem();
+				goToService.goTo(f.getEntryPoint(), f.getProgram());
+			}
+		}
 
-						if (panel.getRightFunction() != null) {
-							addr = panel.getRightFunction().getBody().getMinAddress();
-						}
-						else if (panel.getRightData() != null) {
-							addr = panel.getRightData().getAddress();
-						}
-						else if (panel.getRightAddresses() != null) {
-							addr = panel.getRightAddresses().getMinAddress();
-						}
+	}
 
-						goToService.goTo(addr, panel.getRightProgram());
-					}
-				}
-			});
+	private class PanelFocusListener extends FocusAdapter {
+		private CodeComparisonPanel panel;
+		private Side side;
 
-			panel.getLeftFieldPanel().addFocusListener(new FocusAdapter() {
+		PanelFocusListener(CodeComparisonPanel panel, Side side) {
+			this.panel = panel;
+			this.side = side;
+		}
 
-				@Override
-				public void focusGained(FocusEvent e) {
-					if (NavigateToFunctionAction.this.isSelected()) {
-						Address addr = null;
-
-						if (panel.getLeftFunction() != null) {
-							addr = panel.getLeftFunction().getBody().getMinAddress();
-						}
-						else if (panel.getLeftData() != null) {
-							addr = panel.getLeftData().getAddress();
-						}
-						else if (panel.getLeftAddresses() != null) {
-							addr = panel.getLeftAddresses().getMinAddress();
-						}
-
-						goToService.goTo(addr, panel.getLeftProgram());
-					}
-				}
-
-			});
+		@Override
+		public void focusGained(FocusEvent e) {
+			if (!isSelected()) {
+				return;
+			}
+			Program program = panel.getProgram(side);
+			AddressSetView addresses = panel.getAddresses(side);
+			if (program != null && addresses != null && !addresses.isEmpty()) {
+				goToService.goTo(addresses.getMinAddress(), program);
+			}
 		}
 	}
 }

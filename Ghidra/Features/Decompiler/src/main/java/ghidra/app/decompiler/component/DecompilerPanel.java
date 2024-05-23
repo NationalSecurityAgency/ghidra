@@ -1214,6 +1214,18 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		buildPanels();
 	}
 
+	@Override
+	public synchronized void addFocusListener(FocusListener l) {
+		// we are not focusable, defer to contained field panel
+		fieldPanel.addFocusListener(l);
+	}
+
+	@Override
+	public synchronized void removeFocusListener(FocusListener l) {
+		// we are not focusable, defer to contained field panel
+		fieldPanel.removeFocusListener(l);
+	}
+
 	private void buildPanels() {
 		removeAll();
 		add(buildLeftComponent(), BorderLayout.WEST);

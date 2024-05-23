@@ -853,16 +853,6 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 	}
 
 	@Override
-	public void formatModelAdded(FieldFormatModel model) {
-		// uninterested
-	}
-
-	@Override
-	public void formatModelRemoved(FieldFormatModel model) {
-		// uninterested
-	}
-
-	@Override
 	public void formatModelChanged(FieldFormatModel model) {
 		tool.setConfigChanged(true);
 	}

@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.decompiler.component;
+package ghidra.codecompare.decompile;
+
+import static ghidra.util.datastruct.Duo.Side.*;
 
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.internal.LineLockedFieldPanelCoordinator;
@@ -22,9 +24,9 @@ import ghidra.program.util.ProgramLocation;
 abstract public class DualDecompilerFieldPanelCoordinator extends LineLockedFieldPanelCoordinator {
 
 	public DualDecompilerFieldPanelCoordinator(
-			DecompilerCodeComparisonPanel<? extends DualDecompilerFieldPanelCoordinator> dualDecompilerPanel) {
-		super(new FieldPanel[] { dualDecompilerPanel.getLeftDecompilerPanel().getFieldPanel(),
-			dualDecompilerPanel.getRightDecompilerPanel().getFieldPanel() });
+			DecompilerCodeComparisonPanel dualDecompilerPanel) {
+		super(new FieldPanel[] { dualDecompilerPanel.getDecompilerPanel(LEFT).getFieldPanel(),
+			dualDecompilerPanel.getDecompilerPanel(RIGHT).getFieldPanel() });
 	}
 
 	abstract public void leftLocationChanged(ProgramLocation leftLocation);
