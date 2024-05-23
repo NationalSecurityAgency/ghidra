@@ -148,6 +148,11 @@ public class ApplicationThemeManager extends ThemeManager {
 
 	@Override
 	public void setLookAndFeel(LafType lafType, boolean useDarkDefaults) {
+
+		if (activeLafType == lafType) {
+			return;
+		}
+
 		if (!lafType.isSupported()) {
 			Msg.error(this, "Attempted to set unsupported Look and Feel: " + lafType);
 			return;
@@ -173,7 +178,7 @@ public class ApplicationThemeManager extends ThemeManager {
 	@Override
 	public void addTheme(GTheme newTheme) {
 		loadThemes();
-		allThemes.remove(newTheme);
+		removeTheme(newTheme);
 		allThemes.add(newTheme);
 	}
 
@@ -183,8 +188,33 @@ public class ApplicationThemeManager extends ThemeManager {
 		if (file != null) {
 			file.delete();
 		}
-		if (allThemes != null) {
-			allThemes.remove(theme);
+
+		removeTheme(theme);
+	}
+
+	/**
+	 * Removes the given theme from the set of themes known by this class.  
+	 * <p>
+	 * Note: this method assumes that there can only exist one theme by a given name in the system.
+	 * The equals() method of the GTheme is based on more than just the name, so we cannot use that
+	 * to remove the theme from this class.
+	 * 
+	 * @param t the theme to remove
+	 */
+	private void removeTheme(GTheme t) {
+		if (allThemes == null) {
+			return;
+		}
+
+		String nameToDelete = t.getName();
+		Iterator<GTheme> it = allThemes.iterator();
+		while (it.hasNext()) {
+			GTheme theme = it.next();
+			String name = theme.getName();
+			if (name.equals(nameToDelete)) {
+				it.remove();
+				return;
+			}
 		}
 	}
 
