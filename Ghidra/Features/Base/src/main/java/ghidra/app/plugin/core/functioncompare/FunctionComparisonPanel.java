@@ -15,6 +15,9 @@
  */
 package ghidra.app.plugin.core.functioncompare;
 
+import static ghidra.app.util.viewer.util.ComparisonData.*;
+import static ghidra.util.datastruct.Duo.Side.*;
+
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Constructor;
@@ -29,11 +32,10 @@ import javax.swing.event.ChangeListener;
 import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.*;
-import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import docking.widgets.tabbedpane.DockingTabRenderer;
 import generic.theme.GIcon;
 import ghidra.app.util.viewer.listingpanel.ListingCodeComparisonPanel;
-import ghidra.app.util.viewer.util.CodeComparisonPanel;
+import ghidra.app.util.viewer.util.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
@@ -43,6 +45,7 @@ import ghidra.program.model.listing.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
+import ghidra.util.datastruct.Duo;
 import help.Help;
 import help.HelpService;
 
@@ -54,11 +57,9 @@ import help.HelpService;
  * be compared, use a {@link MultiFunctionComparisonPanel}
  */
 public class FunctionComparisonPanel extends JPanel implements ChangeListener {
+	private static final String ORIENTATION_PROPERTY_NAME = "ORIENTATION";
 
-	private FunctionComparisonData leftComparisonData;
-	private FunctionComparisonData rightComparisonData;
-
-	private static final String DEFAULT_CODE_COMPARISON_VIEW = ListingCodeComparisonPanel.TITLE;
+	private static final String DEFAULT_CODE_COMPARISON_VIEW = ListingCodeComparisonPanel.NAME;
 	private static final String COMPARISON_VIEW_DISPLAYED = "COMPARISON_VIEW_DISPLAYED";
 	private static final String CODE_COMPARISON_LOCK_SCROLLING_TOGETHER =
 		"CODE_COMPARISON_LOCK_SCROLLING_TOGETHER";
@@ -78,26 +79,22 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	private Map<String, JComponent> tabNameToComponentMap;
 	protected PluginTool tool;
 	protected ComponentProviderAdapter provider;
-	private List<CodeComparisonPanel<? extends FieldPanelCoordinator>> codeComparisonPanels;
+	private List<CodeComparisonPanel> codeComparisonPanels;
 	private ToggleScrollLockAction toggleScrollLockAction;
 	private boolean syncScrolling = false;
+
+	private Duo<ComparisonData> comparisonData = new Duo<ComparisonData>();
 
 	/**
 	 * Constructor
 	 *
 	 * @param provider the GUI provider that includes this panel
 	 * @param tool the tool containing this panel
-	 * @param leftFunction the function displayed in the left side of the panel
-	 * @param rightFunction the function displayed in the right side of the panel
 	 */
-	public FunctionComparisonPanel(ComponentProviderAdapter provider, PluginTool tool,
-			Function leftFunction, Function rightFunction) {
+	public FunctionComparisonPanel(ComponentProviderAdapter provider, PluginTool tool) {
 		this.provider = provider;
 		this.tool = tool;
-		this.leftComparisonData = new FunctionComparisonData();
-		this.rightComparisonData = new FunctionComparisonData();
-		this.leftComparisonData.setFunction(leftFunction);
-		this.rightComparisonData.setFunction(rightFunction);
+		this.comparisonData = new Duo<>(EMPTY, EMPTY);
 		this.codeComparisonPanels = getCodeComparisonPanels();
 		tabNameToComponentMap = new HashMap<>();
 		createMainPanel();
@@ -113,15 +110,11 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	 * @param rightFunction The function for the right side of the panel
 	 */
 	public void loadFunctions(Function leftFunction, Function rightFunction) {
-		leftComparisonData.setFunction(leftFunction);
-		rightComparisonData.setFunction(rightFunction);
-
-		CodeComparisonPanel<? extends FieldPanelCoordinator> activePanel =
-			getActiveComparisonPanel();
-		if (activePanel != null) {
-			activePanel.loadFunctions(leftComparisonData.getFunction(),
-				rightComparisonData.getFunction());
-		}
+		ComparisonData left =
+			leftFunction == null ? EMPTY : new FunctionComparisonData(leftFunction);
+		ComparisonData right =
+			rightFunction == null ? EMPTY : new FunctionComparisonData(rightFunction);
+		loadComparisons(left, right);
 	}
 
 	/**
@@ -131,14 +124,19 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	 * @param rightData The data for the right side of the panel
 	 */
 	public void loadData(Data leftData, Data rightData) {
-		leftComparisonData.setData(leftData);
-		rightComparisonData.setData(rightData);
+		ComparisonData left = new DataComparisonData(leftData, rightData.getLength());
+		ComparisonData right = new DataComparisonData(rightData, leftData.getLength());
+		loadComparisons(left, right);
+	}
 
-		CodeComparisonPanel<? extends FieldPanelCoordinator> activePanel =
-			getActiveComparisonPanel();
+	public void loadComparisons(ComparisonData left, ComparisonData right) {
+		comparisonData = new Duo<>(left, right);
+
+		CodeComparisonPanel activePanel = getActiveComparisonPanel();
 		if (activePanel != null) {
-			activePanel.loadData(leftComparisonData.getData(), rightComparisonData.getData());
+			activePanel.loadComparisons(left, right);
 		}
+
 	}
 
 	/**
@@ -154,17 +152,9 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	 */
 	public void loadAddresses(Program leftProgram, Program rightProgram,
 			AddressSetView leftAddresses, AddressSetView rightAddresses) {
-		leftComparisonData.setAddressSet(leftAddresses);
-		rightComparisonData.setAddressSet(rightAddresses);
-		leftComparisonData.setProgram(leftProgram);
-		rightComparisonData.setProgram(rightProgram);
-		CodeComparisonPanel<? extends FieldPanelCoordinator> activePanel =
-			getActiveComparisonPanel();
-		if (activePanel != null) {
-			activePanel.loadAddresses(leftComparisonData.getProgram(),
-				rightComparisonData.getProgram(), leftComparisonData.getAddressSet(),
-				rightComparisonData.getAddressSet());
-		}
+		ComparisonData left = new AddressSetComparisonData(leftProgram, leftAddresses);
+		ComparisonData right = new AddressSetComparisonData(rightProgram, rightAddresses);
+		loadComparisons(left, right);
 	}
 
 	/**
@@ -183,35 +173,23 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	 * @return the description
 	 */
 	public String getDescription() {
-		Function leftFunc = leftComparisonData.getFunction();
-		Function rightFunc = rightComparisonData.getFunction();
-		Data leftData = leftComparisonData.getData();
-		Data rightData = rightComparisonData.getData();
+		String leftShort = comparisonData.get(LEFT).getShortDescription();
+		String rightShort = comparisonData.get(LEFT).getShortDescription();
 
-		if (leftFunc != null && rightFunc != null) {
-			return leftFunc.getName(true) + " & " + rightFunc.getName(true);
-		}
-		if (leftData != null && rightData != null) {
-			return leftData.getDataType().getName() + " & " + rightData.getDataType().getName();
-		}
-
-		// Otherwise give a simple description for address sets
-		return "Nothing selected";
+		return leftShort + " & " + rightShort;
 	}
 
 	/**
 	 * Clear both sides of this panel
 	 */
 	public void clear() {
-		leftComparisonData.clear();
-		rightComparisonData.clear();
+		comparisonData = new Duo<>(EMPTY, EMPTY);
 
 		// Setting the addresses to be displayed to null effectively clears
 		// the display
-		CodeComparisonPanel<? extends FieldPanelCoordinator> activePanel =
-			getActiveComparisonPanel();
+		CodeComparisonPanel activePanel = getActiveComparisonPanel();
 		if (activePanel != null) {
-			activePanel.loadAddresses(null, null, null, null);
+			activePanel.clearComparisons();
 		}
 	}
 
@@ -222,7 +200,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	 * @return true if the comparison window has no information to display
 	 */
 	public boolean isEmpty() {
-		return leftComparisonData.isEmpty() || rightComparisonData.isEmpty();
+		return comparisonData.get(LEFT).isEmpty() || comparisonData.get(RIGHT).isEmpty();
 	}
 
 	/**
@@ -232,10 +210,9 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	 * @return the comparison panel or null
 	 */
 	public ListingCodeComparisonPanel getDualListingPanel() {
-		for (CodeComparisonPanel<? extends FieldPanelCoordinator> codeComparisonPanel : codeComparisonPanels) {
-			JComponent component = codeComparisonPanel.getComponent();
-			if (component instanceof ListingCodeComparisonPanel) {
-				return (ListingCodeComparisonPanel) component;
+		for (CodeComparisonPanel codeComparisonPanel : codeComparisonPanels) {
+			if (codeComparisonPanel instanceof ListingCodeComparisonPanel listingPanel) {
+				return listingPanel;
 			}
 		}
 		return null;
@@ -300,9 +277,24 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 		tabbedPane.removeAll();
 
 		setVisible(false);
-		for (CodeComparisonPanel<? extends FieldPanelCoordinator> codeComparisonPanel : codeComparisonPanels) {
+		for (CodeComparisonPanel codeComparisonPanel : codeComparisonPanels) {
 			codeComparisonPanel.dispose();
 		}
+	}
+
+	void programClosed(Program program) {
+		for (CodeComparisonPanel codeComparisonPanel : codeComparisonPanels) {
+			codeComparisonPanel.programClosed(program);
+		}
+	}
+
+	CodeComparisonPanel getCodeComparisonPanelByName(String name) {
+		for (CodeComparisonPanel codeComparisonPanel : codeComparisonPanels) {
+			if (name.equals(codeComparisonPanel.getName())) {
+				return codeComparisonPanel;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -317,12 +309,9 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 		add(tabbedPane, BorderLayout.CENTER);
 		setPreferredSize(new Dimension(200, 300));
 
-		for (CodeComparisonPanel<? extends FieldPanelCoordinator> codeComparisonPanel : codeComparisonPanels) {
-			codeComparisonPanel.loadFunctions(leftComparisonData.getFunction(),
-				rightComparisonData.getFunction());
-			JComponent component = codeComparisonPanel.getComponent();
-			tabbedPane.add(codeComparisonPanel.getTitle(), component);
-			tabNameToComponentMap.put(codeComparisonPanel.getTitle(), component);
+		for (CodeComparisonPanel codeComparisonPanel : codeComparisonPanels) {
+			tabbedPane.add(codeComparisonPanel.getName(), codeComparisonPanel);
+			tabNameToComponentMap.put(codeComparisonPanel.getName(), codeComparisonPanel);
 		}
 	}
 
@@ -331,24 +320,11 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	 * the appropriate data to be compared.
 	 */
 	private void tabChanged() {
-		CodeComparisonPanel<? extends FieldPanelCoordinator> activePanel =
-			getActiveComparisonPanel();
+		CodeComparisonPanel activePanel = getActiveComparisonPanel();
 		if (activePanel == null) {
 			return; // initializing
 		}
-
-		if (leftComparisonData.isFunction() || rightComparisonData.isFunction()) {
-			activePanel.loadFunctions(leftComparisonData.getFunction(),
-				rightComparisonData.getFunction());
-		}
-		else if (leftComparisonData.isData() || rightComparisonData.isData()) {
-			activePanel.loadData(leftComparisonData.getData(), rightComparisonData.getData());
-		}
-		else {
-			activePanel.loadAddresses(leftComparisonData.getProgram(),
-				rightComparisonData.getProgram(), leftComparisonData.getAddressSet(),
-				rightComparisonData.getAddressSet());
-		}
+		activePanel.loadComparisons(comparisonData.get(LEFT), comparisonData.get(RIGHT));
 	}
 
 	/**
@@ -357,100 +333,8 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	 * @return the currently selected comparison panel, or null if nothing
 	 * selected
 	 */
-	private CodeComparisonPanel<? extends FieldPanelCoordinator> getActiveComparisonPanel() {
-		JComponent c = (JComponent) tabbedPane.getSelectedComponent();
-		for (CodeComparisonPanel<? extends FieldPanelCoordinator> codeComparisonPanel : codeComparisonPanels) {
-			JComponent component = codeComparisonPanel.getComponent();
-			if (c == component) {
-				return codeComparisonPanel;
-			}
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the comparison data object for the left panel
-	 *
-	 * @return the comparison data object for the left panel
-	 */
-	public FunctionComparisonData getLeftComparisonData() {
-		return leftComparisonData;
-	}
-
-	/**
-	 * Returns the comparison data object for the right panel
-	 *
-	 * @return the comparison data object for the right panel
-	 */
-	public FunctionComparisonData getRightComparisonData() {
-		return rightComparisonData;
-	}
-
-	/**
-	 * Gets the function currently displayed in the left side of this panel
-	 *
-	 * @return the left function or null
-	 */
-	public Function getLeftFunction() {
-		return leftComparisonData.getFunction();
-	}
-
-	/**
-	 * Sets the function to display in the left side of this panel
-	 *
-	 * @param function the function to display
-	 */
-	protected void setLeftFunction(Function function) {
-		loadFunctions(function, rightComparisonData.getFunction());
-	}
-
-	/**
-	 * Gets the function currently displayed in the right side of this panel
-	 *
-	 * @return the right function or null
-	 */
-	public Function getRightFunction() {
-		return rightComparisonData.getFunction();
-	}
-
-	/**
-	 * Sets the function to display in the right side of this panel
-	 *
-	 * @param function the function to display
-	 */
-	protected void setRightFunction(Function function) {
-		loadFunctions(leftComparisonData.getFunction(), function);
-	}
-
-	/**
-	 * Gets the data displayed in the left side of this panel
-	 *
-	 * @return the left data or null
-	 */
-	public Data getLeftData() {
-		return leftComparisonData.getData();
-	}
-
-	/**
-	 * Gets the data displayed in the right side of this panel
-	 *
-	 * @return the right data
-	 */
-	public Data getRightData() {
-		return rightComparisonData.getData();
-	}
-
-	/**
-	 * Enables/disables mouse navigation for all the CodeComparisonPanels
-	 * displayed by this panel
-	 *
-	 * @param enabled true to enable mouse navigation in the panels
-	 */
-	public void setMouseNavigationEnabled(boolean enabled) {
-		for (CodeComparisonPanel<? extends FieldPanelCoordinator> codeComparisonPanel : codeComparisonPanels) {
-			codeComparisonPanel.setMouseNavigationEnabled(enabled);
-		}
+	private CodeComparisonPanel getActiveComparisonPanel() {
+		return (CodeComparisonPanel) tabbedPane.getSelectedComponent();
 	}
 
 	/**
@@ -466,9 +350,10 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 		setCurrentTabbedComponent(currentTabView);
 		setScrollingSyncState(
 			saveState.getBoolean(prefix + CODE_COMPARISON_LOCK_SCROLLING_TOGETHER, true));
-		ListingCodeComparisonPanel dualListingPanel = getDualListingPanel();
-		if (dualListingPanel != null) {
-			dualListingPanel.readConfigState(prefix, saveState);
+
+		for (CodeComparisonPanel panel : codeComparisonPanels) {
+			String key = prefix + panel.getName() + ORIENTATION_PROPERTY_NAME;
+			panel.setSideBySide(saveState.getBoolean(key, true));
 		}
 	}
 
@@ -485,10 +370,13 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 			saveState.putString(prefix + COMPARISON_VIEW_DISPLAYED, getCurrentComponentName());
 		}
 		saveState.putBoolean(prefix + CODE_COMPARISON_LOCK_SCROLLING_TOGETHER, isScrollingSynced());
-		ListingCodeComparisonPanel dualListingPanel = getDualListingPanel();
-		if (dualListingPanel != null) {
-			dualListingPanel.writeConfigState(prefix, saveState);
+
+		for (CodeComparisonPanel panel : codeComparisonPanels) {
+			String key = prefix + panel.getName() + ORIENTATION_PROPERTY_NAME;
+			boolean sideBySide = panel.isSideBySide();
+			saveState.putBoolean(key, sideBySide);
 		}
+
 	}
 
 	/**
@@ -499,18 +387,18 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	 */
 	public DockingAction[] getCodeComparisonActions() {
 		ArrayList<DockingAction> dockingActionList = new ArrayList<>();
+
 		// Get actions for this functionComparisonPanel
 		DockingAction[] functionComparisonActions = getActions();
 		for (DockingAction dockingAction : functionComparisonActions) {
 			dockingActionList.add(dockingAction);
 		}
+
 		// Get actions for each CodeComparisonPanel
-		for (CodeComparisonPanel<? extends FieldPanelCoordinator> codeComparisonPanel : codeComparisonPanels) {
-			DockingAction[] actions = codeComparisonPanel.getActions();
-			for (DockingAction dockingAction : actions) {
-				dockingActionList.add(dockingAction);
-			}
+		for (CodeComparisonPanel codeComparisonPanel : codeComparisonPanels) {
+			dockingActionList.addAll(codeComparisonPanel.getActions());
 		}
+
 		return dockingActionList.toArray(new DockingAction[dockingActionList.size()]);
 	}
 
@@ -524,8 +412,8 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	public void setTitlePrefixes(String leftTitlePrefix, String rightTitlePrefix) {
 		Component[] components = tabbedPane.getComponents();
 		for (Component component : components) {
-			if (component instanceof CodeComparisonPanel<?>) {
-				((CodeComparisonPanel<?>) component).setTitlePrefixes(leftTitlePrefix,
+			if (component instanceof CodeComparisonPanel) {
+				((CodeComparisonPanel) component).setTitlePrefixes(leftTitlePrefix,
 					rightTitlePrefix);
 			}
 		}
@@ -539,33 +427,9 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	 * @return the action context
 	 */
 	public ActionContext getActionContext(MouseEvent event, ComponentProvider componentProvider) {
-		Object source = (event != null) ? event.getSource() : null;
-		Component sourceComponent = (source instanceof Component) ? (Component) source : null;
-		ListingCodeComparisonPanel dualListingPanel = getDualListingPanel();
-		// Is the action being taken on the dual listing.
-		if (dualListingPanel != null && dualListingPanel.isAncestorOf(sourceComponent)) {
-			return dualListingPanel.getActionContext(event, componentProvider);
-		}
-
-		CodeComparisonPanel<? extends FieldPanelCoordinator> activePanel =
-			getFocusedComparisonPanel();
+		CodeComparisonPanel activePanel = getDisplayedPanel();
 		if (activePanel != null) {
 			return activePanel.getActionContext(componentProvider, event);
-		}
-
-		return null;
-	}
-
-	private CodeComparisonPanel<? extends FieldPanelCoordinator> getFocusedComparisonPanel() {
-		Component focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-		if (focused != null) {
-			for (CodeComparisonPanel<? extends FieldPanelCoordinator> codeComparisonPanel : codeComparisonPanels) {
-				JComponent component = codeComparisonPanel.getComponent();
-				boolean isParent = SwingUtilities.isDescendingFrom(focused, component);
-				if (isParent) {
-					return codeComparisonPanel;
-				}
-			}
 		}
 		return null;
 	}
@@ -594,8 +458,8 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 		toggleScrollLockAction.setToolBarData(new ToolBarData(
 			syncScrolling ? SYNC_SCROLLING_ICON : UNSYNC_SCROLLING_ICON, SCROLLING_GROUP));
 		// Notify each comparison panel of the scrolling sync state.
-		for (CodeComparisonPanel<? extends FieldPanelCoordinator> codeComparisonPanel : codeComparisonPanels) {
-			codeComparisonPanel.setScrollingSyncState(syncScrolling);
+		for (CodeComparisonPanel codeComparisonPanel : codeComparisonPanels) {
+			codeComparisonPanel.setSynchronizedScrolling(syncScrolling);
 		}
 		this.syncScrolling = syncScrolling;
 	}
@@ -605,17 +469,17 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	 *
 	 * @return the current panel or null.
 	 */
-	public CodeComparisonPanel<? extends FieldPanelCoordinator> getDisplayedPanel() {
+	public CodeComparisonPanel getDisplayedPanel() {
 		int selectedIndex = tabbedPane.getSelectedIndex();
 		Component component = tabbedPane.getComponentAt(selectedIndex);
-		return (CodeComparisonPanel<?>) component;
+		return (CodeComparisonPanel) component;
 	}
 
 	/**
 	 * Updates the enablement for all actions provided by each panel
 	 */
 	public void updateActionEnablement() {
-		for (CodeComparisonPanel<? extends FieldPanelCoordinator> codeComparisonPanel : codeComparisonPanels) {
+		for (CodeComparisonPanel codeComparisonPanel : codeComparisonPanels) {
 			codeComparisonPanel.updateActionEnablement();
 		}
 	}
@@ -625,8 +489,8 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	*
 	* @return null if there is no code comparison panel
 	*/
-	CodeComparisonPanel<? extends FieldPanelCoordinator> getCurrentComponent() {
-		return (CodeComparisonPanel<?>) tabbedPane.getSelectedComponent();
+	CodeComparisonPanel getCurrentComponent() {
+		return (CodeComparisonPanel) tabbedPane.getSelectedComponent();
 	}
 
 	/**
@@ -677,7 +541,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 		}
 	}
 
-	public List<CodeComparisonPanel<? extends FieldPanelCoordinator>> getComparisonPanels() {
+	public List<CodeComparisonPanel> getComparisonPanels() {
 		return codeComparisonPanels;
 	}
 
@@ -686,17 +550,17 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	 *
 	 * @return the CodeComparisonPanels which are extension points
 	 */
-	private List<CodeComparisonPanel<? extends FieldPanelCoordinator>> getCodeComparisonPanels() {
+	private List<CodeComparisonPanel> getCodeComparisonPanels() {
 		if (codeComparisonPanels == null) {
 			codeComparisonPanels = createAllPossibleCodeComparisonPanels();
-			codeComparisonPanels.sort((p1, p2) -> p1.getTitle().compareTo(p2.getTitle()));
+			codeComparisonPanels.sort((p1, p2) -> p1.getName().compareTo(p2.getName()));
 		}
 		return codeComparisonPanels;
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private ArrayList<CodeComparisonPanel<? extends FieldPanelCoordinator>> createAllPossibleCodeComparisonPanels() {
-		ArrayList<CodeComparisonPanel<? extends FieldPanelCoordinator>> instances =
+	private ArrayList<CodeComparisonPanel> createAllPossibleCodeComparisonPanels() {
+		ArrayList<CodeComparisonPanel> instances =
 			new ArrayList<>();
 		List<Class<? extends CodeComparisonPanel>> classes =
 			ClassSearcher.getClasses(CodeComparisonPanel.class);

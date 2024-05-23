@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.codecompare;
+package ghidra.codecompare.decompile;
+
+import static ghidra.util.datastruct.Duo.Side.*;
 
 import docking.ActionContext;
 import docking.action.MenuData;
 import ghidra.app.decompiler.ClangFuncNameToken;
-import ghidra.app.decompiler.component.DecompilerCodeComparisonPanel;
-import ghidra.app.decompiler.component.DualDecompilerActionContext;
 import ghidra.app.plugin.core.functioncompare.FunctionComparisonProvider;
 import ghidra.app.services.FunctionComparisonService;
 import ghidra.framework.plugintool.PluginTool;
@@ -45,7 +45,7 @@ public class CompareFuncsFromMatchedTokensAction extends AbstractMatchedTokensAc
 	 * @param diffPanel diff Panel
 	 * @param tool tool
 	 */
-	public CompareFuncsFromMatchedTokensAction(DecompilerDiffCodeComparisonPanel diffPanel,
+	public CompareFuncsFromMatchedTokensAction(DecompilerCodeComparisonPanel diffPanel,
 			PluginTool tool) {
 		super(ACTION_NAME, tool.getName(), diffPanel, false);
 		this.tool = tool;
@@ -84,12 +84,8 @@ public class CompareFuncsFromMatchedTokensAction extends AbstractMatchedTokensAc
 			return;
 		}
 
-		if (!(compareContext
-				.getCodeComparisonPanel() instanceof DecompilerCodeComparisonPanel decompPanel)) {
-			return;
-		}
+		DecompilerCodeComparisonPanel decompPanel = compareContext.getCodeComparisonPanel();
 
-		@SuppressWarnings("unchecked")
 		TokenPair currentPair = getCurrentTokenPair(decompPanel);
 		if (currentPair == null || currentPair.leftToken() == null ||
 			currentPair.rightToken() == null) {
@@ -99,8 +95,8 @@ public class CompareFuncsFromMatchedTokensAction extends AbstractMatchedTokensAc
 		ClangFuncNameToken leftFuncToken = (ClangFuncNameToken) currentPair.leftToken();
 		ClangFuncNameToken rightFuncToken = (ClangFuncNameToken) currentPair.rightToken();
 
-		Function leftFunction = getFuncFromToken(leftFuncToken, decompPanel.getLeftProgram());
-		Function rightFunction = getFuncFromToken(rightFuncToken, decompPanel.getRightProgram());
+		Function leftFunction = getFuncFromToken(leftFuncToken, decompPanel.getProgram(LEFT));
+		Function rightFunction = getFuncFromToken(rightFuncToken, decompPanel.getProgram(RIGHT));
 		if (leftFunction == null || rightFunction == null) {
 			return;
 		}

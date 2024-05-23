@@ -26,6 +26,7 @@ import generic.theme.GColor;
 import ghidra.app.decompiler.ClangSyntaxToken;
 import ghidra.app.decompiler.ClangToken;
 import ghidra.app.decompiler.component.*;
+import ghidra.codecompare.decompile.DecompilerCodeComparisonOptions;
 import ghidra.codecompare.graphanalysis.TokenBin;
 import ghidra.util.ColorUtils;
 import ghidra.util.SystemUtilities;

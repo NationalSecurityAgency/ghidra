@@ -15,25 +15,32 @@
  */
 package ghidra.program.util;
 
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Program;
+import ghidra.util.datastruct.Duo.Side;
 
-/**
- * This is the interface for a correlator that associates instructions from one function to
- * instructions from another function. Given an address from one function it determines the matching
- * address in the other function if possible.
- */
-public interface FunctionAddressCorrelation extends ListingAddressCorrelation {
+public class DummyListingAddressCorrelation implements ListingAddressCorrelation {
 
-	/**
-	 * Gets the first function for this address correlator.
-	 * @return the first function.
-	 */
-	public Function getFirstFunction();
+	@Override
+	public Program getProgram(Side side) {
+		return null;
+	}
 
-	/**
-	 * Gets the second function for this address correlator.
-	 * @return the second function.
-	 */
-	public Function getSecondFunction();
+	@Override
+	public Function getFunction(Side side) {
+		return null;
+	}
+
+	@Override
+	public AddressSetView getAddresses(Side side) {
+		return null;
+	}
+
+	@Override
+	public Address getAddress(Side side, Address otherSideAddress) {
+		return null;
+	}
 
 }

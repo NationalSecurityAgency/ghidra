@@ -15,6 +15,9 @@
  */
 package ghidra.app.decompiler.component;
 
+import java.io.File;
+
+import docking.widgets.fieldpanel.support.ViewerPosition;
 import ghidra.app.decompiler.ClangTokenGroup;
 import ghidra.app.decompiler.DecompileResults;
 import ghidra.program.model.address.Address;
@@ -23,10 +26,6 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.util.ProgramLocation;
-
-import java.io.File;
-
-import docking.widgets.fieldpanel.support.ViewerPosition;
 
 public class DecompileData {
 
@@ -41,22 +40,26 @@ public class DecompileData {
 	public DecompileData(Program program, Function function, ProgramLocation location,
 			DecompileResults decompileResults, String errorMessage, File debugFile,
 			ViewerPosition viewerPosition) {
-				this.program = program;
-				this.function = function;
-				this.location = location;
-				this.decompileResults = decompileResults;
-				this.message = errorMessage;
-				this.debugFile = debugFile;
-				this.viewerPosition = viewerPosition;
+		this.program = program;
+		this.function = function;
+		this.location = location;
+		this.decompileResults = decompileResults;
+		this.message = errorMessage;
+		this.debugFile = debugFile;
+		this.viewerPosition = viewerPosition;
 	}
-	
+
 	public boolean hasDecompileResults() {
 		if (decompileResults == null) {
 			return false;
 		}
 		return decompileResults.getCCodeMarkup() != null;
 	}
-	
+
+	public boolean isValid() {
+		return decompileResults != null && decompileResults.isValid();
+	}
+
 	public DecompileResults getDecompileResults() {
 		return decompileResults;
 	}
@@ -75,7 +78,7 @@ public class DecompileData {
 		}
 		return null;
 	}
-	
+
 	public ProgramLocation getLocation() {
 		return location;
 	}
@@ -102,7 +105,7 @@ public class DecompileData {
 		}
 		return "Unknown Error";
 	}
-	
+
 	public File getDebugFile() {
 		return debugFile;
 	}

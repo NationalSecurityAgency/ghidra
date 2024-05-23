@@ -15,6 +15,9 @@
  */
 package ghidra.app.util.viewer.listingpanel;
 
+import java.util.Arrays;
+import java.util.List;
+
 import javax.swing.Icon;
 
 import docking.ActionContext;
@@ -71,9 +74,9 @@ public class ListingDiffActionManager {
 	 * Gets the actions.
 	 * @return the docking actions.
 	 */
-	public DockingAction[] getActions() {
-		return new DockingAction[] { toggleIgnoreByteDiffsAction, toggleIgnoreConstantsAction,
-			toggleIgnoreRegisterNamesAction };
+	public List<DockingAction> getActions() {
+		return Arrays.asList(toggleIgnoreByteDiffsAction, toggleIgnoreConstantsAction,
+			toggleIgnoreRegisterNamesAction);
 	}
 
 	/**

@@ -16,6 +16,7 @@
 package ghidra.feature.vt.gui.provider.functionassociation;
 
 import static ghidra.feature.vt.gui.provider.functionassociation.FilterSettings.*;
+import static ghidra.util.datastruct.Duo.Side.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -220,7 +221,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 			ListingCodeComparisonPanel dualListingPanel =
 				functionComparisonPanel.getDualListingPanel();
 			if (dualListingPanel != null) {
-				ListingPanel leftPanel = dualListingPanel.getLeftPanel();
+				ListingPanel leftPanel = dualListingPanel.getListingPanel(LEFT);
 				return leftPanel.getHeaderActions(getName());
 			}
 		}
@@ -261,7 +262,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 			}
 			// Is the action being taken on a toolbar button while the dual listing is visible?
 			else if (isToolbarButtonAction && isShowingDualListing) {
-				listingPanel = dualListingPanel.getFocusedListingPanel();
+				listingPanel = dualListingPanel.getActiveListingPanel();
 			}
 			// If the dual listing is showing and this is a toolbar action or the action is 
 			// on one of the listings in the ListingCodeComparisonPanel
@@ -367,10 +368,9 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		statusPanel.add(statusLabel, BorderLayout.CENTER);
 		dualTablePanel.add(statusPanel, BorderLayout.SOUTH);
 
-		functionComparisonPanel =
-			new FunctionComparisonPanel(this, tool, (Function) null, (Function) null);
+		functionComparisonPanel = new FunctionComparisonPanel(this, tool);
 		addSpecificCodeComparisonActions();
-		functionComparisonPanel.setCurrentTabbedComponent(ListingCodeComparisonPanel.TITLE);
+		functionComparisonPanel.setCurrentTabbedComponent(ListingCodeComparisonPanel.NAME);
 		functionComparisonPanel.setTitlePrefixes("Source:", "Destination:");
 
 		comparisonSplitPane =

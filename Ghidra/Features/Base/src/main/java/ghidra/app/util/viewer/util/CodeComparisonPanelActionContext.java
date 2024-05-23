@@ -15,8 +15,6 @@
  */
 package ghidra.app.util.viewer.util;
 
-import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
-
 /**
  * Action context for a CodeComparisonPanel.
  */
@@ -26,6 +24,6 @@ public interface CodeComparisonPanelActionContext {
 	 * Gets the CodeComparisonPanel associated with this context.
 	 * @return the code comparison panel.
 	 */
-	public abstract CodeComparisonPanel<? extends FieldPanelCoordinator> getCodeComparisonPanel();
+	public abstract CodeComparisonPanel getCodeComparisonPanel();
 
 }

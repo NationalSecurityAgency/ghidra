@@ -36,15 +36,14 @@ class DualListingNavigator implements Navigatable {
 
 	/**
 	 * Constructor for a dual listing navigator.
-	 * @param dualListingPanel the dual listing whose left or right listing panel is to be controlled.
-	 * @param isLeftSide true indicates that this navigator is for the left side listing.
+	 * @param listingPanel the dual listing whose left or right listing panel is to be controlled.
+	 * @param goToService which side LEFT or RIGHT
 	 * false means it's for the right side listing.
 	 */
-	DualListingNavigator(ListingCodeComparisonPanel dualListingPanel, boolean isLeftSide) {
+	DualListingNavigator(ListingPanel listingPanel, GoToService goToService) {
 
-		this.listingPanel =
-			isLeftSide ? dualListingPanel.getLeftPanel() : dualListingPanel.getRightPanel();
-		this.goToService = dualListingPanel.getGoToService(isLeftSide);
+		this.listingPanel = listingPanel;
+		this.goToService = goToService;
 		id = UniversalIdGenerator.nextID().getValue();
 	}
 
@@ -152,7 +151,8 @@ class DualListingNavigator implements Navigatable {
 	}
 
 	@Override
-	public void removeHighlightProvider(ListingHighlightProvider highlightProvider, Program program) {
+	public void removeHighlightProvider(ListingHighlightProvider highlightProvider,
+			Program program) {
 		// currently unsupported
 	}
 

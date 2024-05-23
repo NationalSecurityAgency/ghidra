@@ -15,14 +15,16 @@
  */
 package ghidra.app.util.viewer.listingpanel;
 
+import docking.DockingWindowManager;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.*;
+import ghidra.app.util.viewer.util.AddressIndexMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.ExternalLocation;
 import ghidra.program.util.ProgramLocation;
-import ghidra.util.datastruct.Duo.Side;
+import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -30,56 +32,124 @@ import ghidra.util.task.TaskMonitor;
  * left or right listing panel of a dual listing panel, since the left and right sides can be
  * displaying totally different addresses.
  */
-class DualListingGoToService implements GoToService {
+class ListingDisplayGoToService implements GoToService {
 
-	private ListingCodeComparisonPanel dualListing;
-	private Side side;
-	private GoToOverrideService overrideService;
-	private GoToService goToService;
+	private ListingPanel listingPanel;
 
 	/**
 	 * Constructs a goTo service for a dual listing panel.
-	 * @param goToService the GoToService that this overrides and that can be used when the
-	 * GoToService methods don't pertain specifically to the left or right listing panel.
-	 * @param dualListing the dual listing panel
-	 * @param side the LEFT or RIGHT side
+	 * @param listingPanel the listing panel to be navigated to
 	 */
-	DualListingGoToService(GoToService goToService, ListingCodeComparisonPanel dualListing,
-			Side side) {
-		this.goToService = goToService;
-		this.dualListing = dualListing;
-		this.side = side;
+	ListingDisplayGoToService(ListingPanel listingPanel) {
+		this.listingPanel = listingPanel;
 	}
 
 	@Override
 	public GoToOverrideService getOverrideService() {
-		return overrideService;
+		return null;
 	}
 
 	@Override
 	public boolean goTo(ProgramLocation loc) {
-		return dualGoTo(loc);
+		return doGoTo(loc);
 	}
 
 	@Override
 	public boolean goTo(Navigatable navigatable, Program program, Address address,
 			Address refAddress) {
-		return dualGoTo(new ProgramLocation(program, address));
+		return doGoTo(new ProgramLocation(program, address));
 	}
 
 	@Override
 	public boolean goTo(ProgramLocation loc, Program program) {
-		return dualGoTo(loc);
+		return doGoTo(loc);
 	}
 
 	@Override
 	public boolean goTo(Navigatable navigatable, ProgramLocation loc, Program program) {
-		return dualGoTo(loc);
+		return doGoTo(loc);
 	}
 
 	@Override
 	public boolean goTo(Navigatable navigatable, Address goToAddress) {
-		return dualGoTo(goToAddress);
+		return doGoTo(goToAddress);
+	}
+
+	@Override
+	public boolean goTo(Address currentAddress, Address goToAddress) {
+		return doGoTo(goToAddress);
+	}
+
+	@Override
+	public boolean goTo(Address goToAddress) {
+		return doGoTo(goToAddress);
+	}
+
+	@Override
+	public boolean goTo(Address goToAddress, Program program) {
+		return doGoTo(goToAddress);
+	}
+
+	@Override
+	public boolean goToExternalLocation(ExternalLocation extLoc, boolean checkNavigationOption) {
+		Msg.showError(this, null, "Go To Failed!",
+			"Can't naviagate to an external function from here");
+		return false;
+	}
+
+	@Override
+	public boolean goToExternalLocation(Navigatable navigatable, ExternalLocation extLoc,
+			boolean checkNavigationOption) {
+		Msg.showError(this, null, "Go To Failed!",
+			"Can't naviagate to an external function from here");
+		return false;
+	}
+
+	@Override
+	public boolean goToQuery(Address fromAddr, QueryData queryData, GoToServiceListener listener,
+			TaskMonitor monitor) {
+		throw new UnsupportedOperationException(
+			"Go To Address or Label Query is not allowed in a dual listing view.");
+	}
+
+	@Override
+	public boolean goToQuery(Navigatable navigatable, Address fromAddr, QueryData queryData,
+			GoToServiceListener listener, TaskMonitor monitor) {
+		throw new UnsupportedOperationException(
+			"Go To Address or Label Query is not allowed in a dual listing view.");
+	}
+
+	@Override
+	public void setOverrideService(GoToOverrideService override) {
+		// ignored
+	}
+
+	@Override
+	public Navigatable getDefaultNavigatable() {
+		return new DualListingNavigator(listingPanel, this);
+	}
+
+	private boolean doGoTo(Address addr) {
+
+		// Only go if the address is in the listing's current address set.
+		if (!validateAddress(addr)) {
+			return false;
+		}
+
+		return listingPanel.goTo(addr);
+	}
+
+	private boolean doGoTo(ProgramLocation loc) {
+		if (loc == null) {
+			return false;
+		}
+
+		// Only go if the location address is in the listing's current address set.
+		if (!validateAddress(loc.getAddress())) {
+			return false;
+		}
+
+		return listingPanel.goTo(loc);
 	}
 
 	/**
@@ -93,89 +163,13 @@ class DualListingGoToService implements GoToService {
 		if (addr == null) {
 			return false;
 		}
-		AddressSetView addresses = dualListing.getAddresses(side);
+		AddressIndexMap map = listingPanel.getAddressIndexMap();
+		AddressSetView addresses = map.getOriginalAddressSet();
 		if (!addresses.contains(addr)) {
-			dualListing.setStatusInfo(
+			DockingWindowManager.getActiveInstance().setStatusText(
 				"\"" + addr.toString() + "\" is outside the current listing's view.");
 			return false;
 		}
 		return true;
-	}
-
-	private boolean dualGoTo(ProgramLocation loc) {
-		if (loc == null) {
-			return false;
-		}
-
-		// Only go if the location address is in the listing's current address set.
-		if (!validateAddress(loc.getAddress())) {
-			return false;
-		}
-
-		ListingPanel listingPanel = dualListing.getListingPanel(side);
-		return listingPanel.goTo(loc);
-	}
-
-	private boolean dualGoTo(Address addr) {
-
-		// Only go if the address is in the listing's current address set.
-		if (!validateAddress(addr)) {
-			return false;
-		}
-
-		ListingPanel listingPanel = dualListing.getListingPanel(side);
-		return listingPanel.goTo(addr);
-	}
-
-	@Override
-	public boolean goTo(Address currentAddress, Address goToAddress) {
-		return dualGoTo(goToAddress);
-	}
-
-	@Override
-	public boolean goTo(Address goToAddress) {
-		return dualGoTo(goToAddress);
-	}
-
-	@Override
-	public boolean goTo(Address goToAddress, Program program) {
-		return dualGoTo(goToAddress);
-	}
-
-	@Override
-	public boolean goToExternalLocation(ExternalLocation extLoc, boolean checkNavigationOption) {
-		throw new UnsupportedOperationException(
-			"Connot Go To an external address from a dual listing view.");
-	}
-
-	@Override
-	public boolean goToExternalLocation(Navigatable navigatable, ExternalLocation extLoc,
-			boolean checkNavigationOption) {
-		throw new UnsupportedOperationException(
-			"Connot Go To an external address from a dual listing view.");
-	}
-
-	@Override
-	public boolean goToQuery(Address fromAddr, QueryData queryData, GoToServiceListener listener,
-			TaskMonitor monitor) {
-		throw new UnsupportedOperationException(
-			"Go To Address or Label is not allowed in a dual listing view.");
-	}
-
-	@Override
-	public boolean goToQuery(Navigatable navigatable, Address fromAddr, QueryData queryData,
-			GoToServiceListener listener, TaskMonitor monitor) {
-		throw new UnsupportedOperationException(
-			"Go To Address or Label is not allowed in a dual listing view.");
-	}
-
-	@Override
-	public void setOverrideService(GoToOverrideService override) {
-		overrideService = override;
-	}
-
-	@Override
-	public Navigatable getDefaultNavigatable() {
-		return goToService.getDefaultNavigatable();
 	}
 }

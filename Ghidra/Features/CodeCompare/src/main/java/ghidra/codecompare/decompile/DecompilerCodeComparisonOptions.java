@@ -13,18 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.codecompare;
+package ghidra.codecompare.decompile;
 
 import java.awt.Color;
 
 import generic.theme.GColor;
+import ghidra.framework.options.OptionsChangeListener;
 import ghidra.framework.options.ToolOptions;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
+import ghidra.util.bean.opteditor.OptionsVetoException;
+import utility.function.Callback;
+import utility.function.Dummy;
 
 /**
  * This class holds the options for the decompiler diff view.
  */
-public class DecompilerCodeComparisonOptions {
+public class DecompilerCodeComparisonOptions implements OptionsChangeListener {
 
 	private static final String MATCHING_TOKEN_HIGHLIGHT_KEY = "Focused Token Match Highlight";
 	private static final String UNMATCHED_TOKEN_HIGHLIGHT_KEY = "Focused Token Unmatched Highlight";
@@ -53,15 +58,18 @@ public class DecompilerCodeComparisonOptions {
 	private Color unmatchedTokenHighlight;
 	private Color ineligibleTokenHighlight;
 	private Color diffHighlight;
+	private Callback optionsChangedCallback;
 
 	public static final String OPTIONS_CATEGORY_NAME = "Decompiler Code Comparison";
 	public static final String HELP_TOPIC = "FunctionComparison";
 
-	/**
-	 * Constructor
-	 */
-	public DecompilerCodeComparisonOptions() {
-
+	public DecompilerCodeComparisonOptions(PluginTool tool, Callback optionsChangedCallback) {
+		this.optionsChangedCallback = Dummy.ifNull(optionsChangedCallback);
+		ToolOptions options =
+			tool.getOptions(DecompilerCodeComparisonOptions.OPTIONS_CATEGORY_NAME);
+		options.addOptionsChangeListener(this);
+		registerOptions(options);
+		loadOptions(options);
 	}
 
 	/**
@@ -134,6 +142,13 @@ public class DecompilerCodeComparisonOptions {
 	 */
 	public Color getDiffHighlightColor() {
 		return diffHighlight;
+	}
+
+	@Override
+	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
+			Object newValue) throws OptionsVetoException {
+		loadOptions(options);
+		optionsChangedCallback.call();
 	}
 
 }

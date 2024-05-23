@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.decompiler.component;
+package ghidra.codecompare.decompile;
+
+import static ghidra.util.datastruct.Duo.Side.*;
 
 import java.awt.event.KeyEvent;
 
@@ -23,17 +25,17 @@ import docking.ActionContext;
 import docking.DockingUtils;
 import docking.action.*;
 import docking.widgets.FindDialog;
-import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
+import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.plugin.core.decompile.actions.DecompilerSearcher;
 import ghidra.app.util.HelpTopics;
-import ghidra.app.util.viewer.util.CodeComparisonPanel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
+import ghidra.util.datastruct.Duo;
+import ghidra.util.datastruct.Duo.Side;
 
 public class DecompilerDiffViewFindAction extends DockingAction {
 
-	private FindDialog leftFindDialog;
-	private FindDialog rightFindDialog;
+	private Duo<FindDialog> findDialogs;
 	private PluginTool tool;
 
 	public DecompilerDiffViewFindAction(String owner, PluginTool tool) {
@@ -53,33 +55,21 @@ public class DecompilerDiffViewFindAction extends DockingAction {
 
 	@Override
 	public boolean isEnabledForContext(ActionContext context) {
-		if (!(context instanceof DualDecompilerActionContext dualContext)) {
-			return false;
-		}
-		CodeComparisonPanel<? extends FieldPanelCoordinator> compPanel =
-			dualContext.getCodeComparisonPanel();
-		if (!(compPanel instanceof DecompilerCodeComparisonPanel decompilerCompPanel)) {
-			return false;
-		}
-		return true;
+		return (context instanceof DualDecompilerActionContext);
 	}
 
 	@Override
 	public void actionPerformed(ActionContext context) {
 		DualDecompilerActionContext dualContext = (DualDecompilerActionContext) context;
-		@SuppressWarnings("unchecked")
-		DecompilerCodeComparisonPanel<? extends FieldPanelCoordinator> decompilerCompPanel =
-			(DecompilerCodeComparisonPanel<? extends FieldPanelCoordinator>) dualContext
-					.getCodeComparisonPanel();
+		DecompilerCodeComparisonPanel decompilerCompPanel =
+			dualContext.getCodeComparisonPanel();
 
-		DecompilerPanel focusedPanel = decompilerCompPanel.getLeftDecompilerPanel();
-		FindDialog dialog = leftFindDialog;
-		if (!decompilerCompPanel.leftPanelHasFocus()) {
-			focusedPanel = decompilerCompPanel.getRightDecompilerPanel();
-			dialog = rightFindDialog;
-		}
+		Side focusedSide = decompilerCompPanel.getActiveSide();
+		DecompilerPanel focusedPanel = decompilerCompPanel.getDecompilerPanel(focusedSide);
+		FindDialog dialog = findDialogs.get(focusedSide);
 		if (dialog == null) {
-			dialog = createFindDialog(focusedPanel, decompilerCompPanel.leftPanelHasFocus());
+			dialog = createFindDialog(focusedPanel, focusedSide);
+			findDialogs = findDialogs.with(focusedSide, dialog);
 		}
 
 		String text = focusedPanel.getSelectedText();
@@ -89,8 +79,8 @@ public class DecompilerDiffViewFindAction extends DockingAction {
 		tool.showDialog(dialog);
 	}
 
-	private FindDialog createFindDialog(DecompilerPanel decompilerPanel, boolean isLeftFocused) {
-		String title = (isLeftFocused ? "Left" : "Right");
+	private FindDialog createFindDialog(DecompilerPanel decompilerPanel, Side side) {
+		String title = (side == LEFT ? "Left" : "Right");
 		title += " Decompiler Find Text";
 
 		FindDialog dialog = new FindDialog(title, new DecompilerSearcher(decompilerPanel)) {
@@ -101,13 +91,6 @@ public class DecompilerDiffViewFindAction extends DockingAction {
 			}
 		};
 		dialog.setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionFind"));
-
-		if (isLeftFocused) {
-			leftFindDialog = dialog;
-		}
-		else {
-			rightFindDialog = dialog;
-		}
 
 		return dialog;
 	}

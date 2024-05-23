@@ -16,7 +16,6 @@
 package ghidra.feature.vt.gui.duallisting;
 
 import docking.ComponentProvider;
-import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.util.viewer.util.CodeComparisonPanel;
@@ -28,7 +27,7 @@ import ghidra.app.util.viewer.util.CodeComparisonPanelActionContext;
 public class VTListingContext extends ListingActionContext
 		implements CodeComparisonPanelActionContext {
 
-	private CodeComparisonPanel<? extends FieldPanelCoordinator> codeComparisonPanel = null;
+	private CodeComparisonPanel codeComparisonPanel = null;
 
 	/**
 	 * Creates an action context for a VT listing.
@@ -44,12 +43,12 @@ public class VTListingContext extends ListingActionContext
 	 * @param codeComparisonPanel the code comparison panel.
 	 */
 	public void setCodeComparisonPanel(
-			CodeComparisonPanel<? extends FieldPanelCoordinator> codeComparisonPanel) {
+			CodeComparisonPanel codeComparisonPanel) {
 		this.codeComparisonPanel = codeComparisonPanel;
 	}
 
 	@Override
-	public CodeComparisonPanel<? extends FieldPanelCoordinator> getCodeComparisonPanel() {
+	public CodeComparisonPanel getCodeComparisonPanel() {
 		return codeComparisonPanel;
 	}
 }

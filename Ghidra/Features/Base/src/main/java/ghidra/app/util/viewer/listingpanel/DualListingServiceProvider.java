@@ -18,6 +18,7 @@ package ghidra.app.util.viewer.listingpanel;
 import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.framework.plugintool.util.ServiceListener;
+import ghidra.util.datastruct.Duo.Side;
 
 /**
  * This provides services, but overrides and implements its own goTo for one of the listing 
@@ -27,22 +28,21 @@ import ghidra.framework.plugintool.util.ServiceListener;
  * the dual listing code comparison panel.
  */
 class DualListingServiceProvider implements ServiceProvider {
-	
+
 	private ServiceProvider serviceProvider;
 	private DualListingGoToService dualListingGoToService;
-	
+
 	/**
 	 * Constructor for a DualListingServiceProvider.
 	 * @param serviceProvider the service provider to use for acquiring services other than goTo.
 	 * @param panel the dual listing code comparison panel.
-	 * @param isLeftPanel true indicates this is the left listing panel of the dual panel. 
-	 * false indicates the right panel.
+	 * @param side LEFT or RIGHT
 	 */
 	DualListingServiceProvider(ServiceProvider serviceProvider, ListingCodeComparisonPanel panel,
-			boolean isLeftPanel) {
+			Side side) {
 		this.serviceProvider = serviceProvider;
 		GoToService goToService = serviceProvider.getService(GoToService.class);
-		this.dualListingGoToService = new DualListingGoToService(goToService, panel, isLeftPanel);
+		this.dualListingGoToService = new DualListingGoToService(goToService, panel, side);
 	}
 
 	@Override

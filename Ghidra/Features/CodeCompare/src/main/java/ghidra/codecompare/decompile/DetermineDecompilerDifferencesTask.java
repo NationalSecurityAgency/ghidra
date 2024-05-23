@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.codecompare;
+package ghidra.codecompare.decompile;
 
 import java.util.List;
 import java.util.Set;
 
 import ghidra.app.decompiler.ClangToken;
+import ghidra.codecompare.DiffClangHighlightController;
 import ghidra.codecompare.graphanalysis.TokenBin;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.Task;

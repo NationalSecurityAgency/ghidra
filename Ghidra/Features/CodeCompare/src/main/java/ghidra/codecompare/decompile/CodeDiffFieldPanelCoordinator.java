@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.codecompare;
+package ghidra.codecompare.decompile;
+
+import static ghidra.util.datastruct.Duo.Side.*;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -25,7 +27,6 @@ import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import docking.widgets.fieldpanel.support.ViewerPosition;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.DecompilerPanel;
-import ghidra.app.decompiler.component.DualDecompilerFieldPanelCoordinator;
 import ghidra.codecompare.graphanalysis.TokenBin;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.util.ProgramLocation;
@@ -52,10 +53,10 @@ public class CodeDiffFieldPanelCoordinator extends DualDecompilerFieldPanelCoord
 	 * Constructor
 	 * @param dualDecompilerPanel decomp comparison panel
 	 */
-	public CodeDiffFieldPanelCoordinator(DecompilerDiffCodeComparisonPanel dualDecompilerPanel) {
+	public CodeDiffFieldPanelCoordinator(DecompilerCodeComparisonPanel dualDecompilerPanel) {
 		super(dualDecompilerPanel);
-		this.leftDecompilerPanel = dualDecompilerPanel.getLeftDecompilerPanel();
-		this.rightDecompilerPanel = dualDecompilerPanel.getRightDecompilerPanel();
+		this.leftDecompilerPanel = dualDecompilerPanel.getDecompilerPanel(LEFT);
+		this.rightDecompilerPanel = dualDecompilerPanel.getDecompilerPanel(RIGHT);
 		leftToRightLineNumberPairing = new DualHashBidiMap<>();
 	}
 
