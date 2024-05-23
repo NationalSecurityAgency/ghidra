@@ -18,16 +18,16 @@
 #@no-image
 #@desc <html><body width="300px">
 #@desc   <h3>Start <tt>gdb</tt></h3>
-#@desc   <p>This will start <tt>gdb</tt> and connect to it. It will not launch
-#@desc   a target, so you can (must) set up your target manually.
-#@desc   GDB must already
-#@desc   be installed on your system, and it must embed the Python 3 interpreter. You will also
-#@desc   need <tt>protobuf</tt> and <tt>psutil</tt> installed for Python 3.</p>
+#@desc   <p>
+#@desc     This will start <tt>gdb</tt> and connect to it.
+#@desc     It will not launch a target, so you can (must) set up your target manually.
+#@desc     For setup instructions, press <b>F1</b>.
+#@desc   </p>
 #@desc </body></html>
 #@menu-group raw
 #@icon icon.debugger
 #@help TraceRmiLauncherServicePlugin#gdb_raw
-#@env OPT_GDB_PATH:str="gdb" "Path to gdb" "The path to gdb. Omit the full path to resolve using the system PATH."
+#@env OPT_GDB_PATH:str="gdb" "gdb command" "The path to gdb. Omit the full path to resolve using the system PATH."
 #@env OPT_ARCH:str="i386:x86-64" "Architecture" "Target architecture"
 
 if [ -d ${GHIDRA_HOME}/ghidra/.git ]

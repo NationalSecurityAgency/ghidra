@@ -19,14 +19,15 @@
 #@no-image
 #@desc <html><body width="300px">
 #@desc   <h3>Start <tt>gdb</tt></h3>
-#@desc   <p>This will start <tt>python</tt>, import <tt>ghidratrace</tt> and connect to it.
-#@desc   This connector is made for those wanting to explore the TraceRMI API and possibly develop
-#@desc   a new connector. You will need <tt>protobuf</tt> installed for Python 3.</p>
+#@desc   <p>
+#@desc     This will start <tt>python</tt>, import <tt>ghidratrace</tt> and connect to it for development purposes.
+#@desc     For setup instructions, press <b>F1</b>.
+#@desc   </p>
 #@desc </body></html>
 #@menu-group raw
 #@icon icon.debugger
 #@help TraceRmiLauncherServicePlugin#python_raw
-#@env OPT_PYTHON_EXE:str="python" "Path to python" "The path to the Python 3 interpreter. Omit the full path to resolve using the system PATH."
+#@env OPT_PYTHON_EXE:str="python" "python command" "The path to the Python 3 interpreter. Omit the full path to resolve using the system PATH."
 #@env OPT_LANG:str="DATA:LE:64:default" "Ghidra Language" "The Ghidra LanguageID for the trace"
 #@env OPT_COMP:str="pointer64" "Ghidra Compiler" "The Ghidra CompilerSpecID for the trace"
 
