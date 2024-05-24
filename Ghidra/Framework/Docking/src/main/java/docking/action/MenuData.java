@@ -116,8 +116,9 @@ public class MenuData {
 	}
 
 	/**
-	 * Returns the menu path as a string. This method filters accelerator chars('&') from the path.
-	 * @return the menu path as a string without unescaped '&' chars
+	 * Returns the menu path as a string. This method filters accelerator chars('&amp;') from the
+	 * path.
+	 * @return the menu path as a string without unescaped '&amp;' chars
 	 */
 	public String getMenuPathDisplayString() {
 		if (menuPath == null || menuPath.length == 0) {

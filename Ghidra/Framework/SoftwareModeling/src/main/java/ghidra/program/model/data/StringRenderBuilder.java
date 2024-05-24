@@ -84,7 +84,6 @@ public class StringRenderBuilder {
 	 * escape sequences, depending on the RENDER_ENUM setting.
 	 *  
 	 * @param bb {@link ByteBuffer} containing bytes of a string
-	 * @param cs {@link Charset} that should be used to decode the bytes
 	 * @param renderSetting {@link RENDER_ENUM}
 	 * @param trimTrailingNulls boolean flag, if true trailing null bytes will not be included
 	 * in the rendered output

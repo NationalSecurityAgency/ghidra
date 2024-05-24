@@ -273,13 +273,11 @@ public class ReDisassembler {
 		/**
 		 * Parse the next instructions, including delay-slotted ones
 		 * 
-		 * @param address the starting address
+		 * @param flow the {@link Flow}
 		 * @return the if the first instruction has fall-through, the flow out from the last
 		 *         instruction parsed. Without delay slots, the first instruction is the last
 		 *         instruction.
 		 * @throws CancelledException
-		 * @throws AddressOverflowException if an instruction would run past the end of the address
-		 *             space
 		 */
 		protected Flow nextInstructionsWithDelays(Flow flow) throws CancelledException {
 			Instruction instruction = nextInstruction(flow, false);
