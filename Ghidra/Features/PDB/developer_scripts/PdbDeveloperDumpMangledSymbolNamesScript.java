@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Dump PDB information from AbstractPdb for PDB developer use.
+// Dump PDB mangled symbol names for PDB developer use
 //
 //@category PDB
 
@@ -22,12 +22,15 @@ import java.io.*;
 import docking.widgets.values.GValuesMap;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
+import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
+import ghidra.app.util.pdb.pdbapplicator.SymbolGroup;
 import ghidra.features.base.values.GhidraValuesMap;
 import ghidra.util.*;
+import ghidra.util.exception.CancelledException;
 
-public class PdbDeveloperDumpScript extends GhidraScript {
+public class PdbDeveloperDumpMangledSymbolNamesScript extends GhidraScript {
 
-	private static final String TITLE = "PDB Dump";
+	private static final String TITLE = "Dump PDB Mangled Symbol Names";
 	private static final String PDB_PROMPT = "Choose a PDB file";
 	private static final String OUTPUT_PROMPT = "Choose an output file";
 
@@ -80,7 +83,7 @@ public class PdbDeveloperDumpScript extends GhidraScript {
 
 		// creating a default output and asking again; PDB file should retain its current value
 		//  from above
-		String outputFileName = pdbFileName + ".txt";
+		String outputFileName = pdbFileName + ".MangledSymbolNames.txt";
 		values.defineFile(OUTPUT_PROMPT, new File(outputFileName));
 		values.setValidator((valueMap, status) -> {
 			return validatePdb(valueMap, status) && validateOutput(valueMap, status);
@@ -104,9 +107,7 @@ public class PdbDeveloperDumpScript extends GhidraScript {
 			pdb.deserialize();
 			FileWriter fileWriter = new FileWriter(dumpFile);
 			BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
-			outputHeaderMessage(bufferedWriter, pdbFileName);
-			pdb.dumpDirectory(bufferedWriter);
-			pdb.dumpSubStreams(bufferedWriter);
+			dumpMangledSymbolNames(pdb, bufferedWriter);
 			bufferedWriter.close();
 		}
 		catch (IOException ioe) {
@@ -118,9 +119,48 @@ public class PdbDeveloperDumpScript extends GhidraScript {
 		Msg.info(this, message);
 	}
 
-	private void outputHeaderMessage(BufferedWriter bufferedWriter, String name) throws Exception {
-		bufferedWriter.append(getClass().getSimpleName() + " dump of: " + name +
-			"\nWARNING: FORMAT SUBJECT TO CHANGE WITHOUT NOTICE--DO NOT PARSE\n\n");
+	private void dumpMangledSymbolNames(AbstractPdb pdb, Writer myWriter)
+			throws PdbException, CancelledException, IOException {
+
+		PdbDebugInfo debugInfo = pdb.getDebugInfo();
+		if (debugInfo == null) {
+			return;
+		}
+
+		int num = debugInfo.getNumModules();
+		for (int moduleNumber = 0; moduleNumber <= num; moduleNumber++) {
+			monitor.checkCancelled();
+			SymbolGroup symbolGroup = new SymbolGroup(pdb, moduleNumber);
+			MsSymbolIterator iter = symbolGroup.getSymbolIterator();
+			dumpIteratedMangledSymbolNames(iter, myWriter);
+		}
+	}
+
+	private void dumpIteratedMangledSymbolNames(MsSymbolIterator iter, Writer myWriter)
+			throws CancelledException, IOException {
+		while (iter.hasNext()) {
+			monitor.checkCancelled();
+			AbstractMsSymbol symbol = iter.next();
+			if (symbol == null) {
+				throw new AssertionError("null symbol");
+			}
+			if (!(symbol instanceof NameMsSymbol s)) {
+				continue;
+			}
+			if (!(symbol instanceof AbstractDataMsSymbol ||
+				symbol instanceof AbstractProcedureMsSymbol ||
+				symbol instanceof AbstractUserDefinedTypeMsSymbol ||
+				symbol instanceof AbstractPublicMsSymbol)) {
+				continue;
+			}
+
+			String name = s.getName();
+			if (name.contains("?") || name.contains("@") || name.contains(".")) {
+				myWriter.write(name);
+				myWriter.write("\n");
+			}
+
+		}
 	}
 
 }
