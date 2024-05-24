@@ -455,7 +455,8 @@ def selected_process():
             return dbg._base._systems.GetCurrentProcessSystemId()
         return dbg._base._systems.GetCurrentProcessId()
     except exception.E_UNEXPECTED_Error:
-        return None
+        # NB: we're intentionally returning 0 instead of None
+        return 0
 
 
 @dbg.eng_thread

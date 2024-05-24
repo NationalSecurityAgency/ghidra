@@ -201,7 +201,7 @@ def on_debuggee_changed(*args):
 
 @log_errors
 def on_session_status_changed(*args):
-    print("ON_STATUS_CHANGED: args={}".format(args))
+    # print("ON_STATUS_CHANGED: args={}".format(args))
     trace = commands.STATE.trace
     if trace is None:
         return
