@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Dump PDB information from AbstractPdb for PDB developer use.
+// Dump PDB mangled type names for PDB developer use
 //
 //@category PDB
 
@@ -22,12 +22,15 @@ import java.io.*;
 import docking.widgets.values.GValuesMap;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractComplexMsType;
+import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractMsType;
 import ghidra.features.base.values.GhidraValuesMap;
 import ghidra.util.*;
+import ghidra.util.exception.CancelledException;
 
-public class PdbDeveloperDumpScript extends GhidraScript {
+public class PdbDeveloperDumpMangledTypeNamesScript extends GhidraScript {
 
-	private static final String TITLE = "PDB Dump";
+	private static final String TITLE = "Dump PDB Mangled Type Names";
 	private static final String PDB_PROMPT = "Choose a PDB file";
 	private static final String OUTPUT_PROMPT = "Choose an output file";
 
@@ -80,7 +83,7 @@ public class PdbDeveloperDumpScript extends GhidraScript {
 
 		// creating a default output and asking again; PDB file should retain its current value
 		//  from above
-		String outputFileName = pdbFileName + ".txt";
+		String outputFileName = pdbFileName + ".MangledTypeNames.txt";
 		values.defineFile(OUTPUT_PROMPT, new File(outputFileName));
 		values.setValidator((valueMap, status) -> {
 			return validatePdb(valueMap, status) && validateOutput(valueMap, status);
@@ -98,15 +101,12 @@ public class PdbDeveloperDumpScript extends GhidraScript {
 		}
 
 		String message = "Processing PDB Dump of: " + pdbFileName;
-		monitor.setMessage(message);
 		Msg.info(this, message);
 		try (AbstractPdb pdb = PdbParser.parse(pdbFile, new PdbReaderOptions(), monitor)) {
 			pdb.deserialize();
 			FileWriter fileWriter = new FileWriter(dumpFile);
 			BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
-			outputHeaderMessage(bufferedWriter, pdbFileName);
-			pdb.dumpDirectory(bufferedWriter);
-			pdb.dumpSubStreams(bufferedWriter);
+			dumpMangledTypeNames(pdb, bufferedWriter);
 			bufferedWriter.close();
 		}
 		catch (IOException ioe) {
@@ -114,13 +114,28 @@ public class PdbDeveloperDumpScript extends GhidraScript {
 			popup(ioe.getMessage());
 		}
 		message = "Results located in: " + dumpFile.getAbsoluteFile();
-		monitor.setMessage(message);
 		Msg.info(this, message);
 	}
 
-	private void outputHeaderMessage(BufferedWriter bufferedWriter, String name) throws Exception {
-		bufferedWriter.append(getClass().getSimpleName() + " dump of: " + name +
-			"\nWARNING: FORMAT SUBJECT TO CHANGE WITHOUT NOTICE--DO NOT PARSE\n\n");
+	private void dumpMangledTypeNames(AbstractPdb pdb, Writer myWriter)
+			throws CancelledException, IOException {
+		TypeProgramInterface tpi = pdb.getTypeProgramInterface();
+		if (tpi == null) {
+			return;
+		}
+		for (int indexNumber = tpi.getTypeIndexMin(); indexNumber < tpi
+				.getTypeIndexMaxExclusive(); indexNumber++) {
+			monitor.checkCancelled();
+			RecordNumber recordNumber = RecordNumber.typeRecordNumber(indexNumber);
+			AbstractMsType msType = pdb.getTypeRecord(recordNumber);
+			if (msType instanceof AbstractComplexMsType type) {
+				String mangled = type.getMangledName();
+				if (mangled != null) {
+					myWriter.write(mangled);
+					myWriter.write("\n");
+				}
+			}
+		}
 	}
 
 }
