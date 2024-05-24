@@ -16,12 +16,12 @@
 package ghidra.app.plugin.core.datamgr.actions;
 
 import java.awt.Component;
+import java.awt.event.KeyEvent;
 
 import javax.swing.tree.TreePath;
 
 import docking.ActionContext;
-import docking.action.DockingAction;
-import docking.action.MenuData;
+import docking.action.*;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.datamgr.*;
@@ -37,6 +37,7 @@ public class CreatePointerAction extends DockingAction {
 		super("Create Pointer", plugin.getName());
 		this.plugin = plugin;
 
+		setKeyBindingData(new KeyBindingData(KeyEvent.VK_P, 0));
 		setPopupMenuData(new MenuData(new String[] { "New", "Pointer" }, null, "Create"));
 	}
 
