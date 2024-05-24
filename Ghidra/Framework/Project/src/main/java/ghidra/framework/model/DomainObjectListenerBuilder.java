@@ -92,7 +92,7 @@ import utility.function.Callback;
  * 
  * or if you also need the event (to get the domainObject that is the event source)
  * 
- * <PRE
+ * <PRE>
  *   new DomainObjectListenerBuilder()
  *	.each(DomainObjectEvent.PROPERTY_CHANGED).call((e, r) -> processPropertyChanged(e, r))
  *	.withRecord(ProgramChangeRecord.class)

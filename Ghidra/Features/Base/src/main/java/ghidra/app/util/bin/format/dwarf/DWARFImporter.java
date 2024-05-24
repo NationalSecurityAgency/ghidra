@@ -200,9 +200,6 @@ public class DWARFImporter {
 
 	/**
 	 * Imports DWARF information according to the {@link DWARFImportOptions} set.
-	 * <p>
-	 * {@link DWARFProgram#checkPreconditions(TaskMonitor)} must be called before this.
-	 * <p>
 	 * @return
 	 * @throws IOException
 	 * @throws DWARFException

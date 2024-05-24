@@ -41,7 +41,6 @@ public interface AssemblyResolution extends Comparable<AssemblyResolution> {
 	 * include in {@link #toString()}, it must override this method to return true when such
 	 * children are present.
 	 * 
-	 * @see #childrenToString(String)
 	 * @return true if this record has children
 	 */
 	boolean hasChildren();
