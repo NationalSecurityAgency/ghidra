@@ -57,7 +57,7 @@ def get_arch():
     try:
         type = util.dbg.get_actual_processor_type()
     except Exception:
-        print("Error getting actual processor type.")
+        #print("Error getting actual processor type.")
         return "Unknown"
     if type is None:
         return "x86_64"

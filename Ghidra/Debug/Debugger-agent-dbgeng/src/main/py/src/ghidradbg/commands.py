@@ -257,7 +257,6 @@ def ghidra_trace_create(command=None, initial_break=True, timeout=DbgEng.WAIT_IN
         dbg._client.CreateProcess(command, DbgEng.DEBUG_PROCESS)
         if initial_break:
             dbg._control.AddEngineOptions(DbgEng.DEBUG_ENGINITIAL_BREAK)
-        dbg.wait(timeout)
     if start_trace:
         ghidra_trace_start(command)
 
