@@ -59,8 +59,7 @@
 		<logger name="ghidra.app.plugin.core.misc.RecoverySnapshotMgrPlugin" level="INFO"/>		
 		<logger name="ghidra.framework.project.extensions" level="DEBUG" />
 		<logger name="ghidra.framework.store.local" level="INFO"/>				
-		<logger name="ghidra.pcodeCPort.slgh_compile" level="INFO"/>	
-		<logger name="ghidra.plugins" level="INFO"/>			
+		<logger name="ghidra.pcodeCPort.slgh_compile" level="INFO"/>			
 		<logger name="ghidra.program.database" level="DEBUG" />
 		<logger name="ghidra.program.model.lang.xml" level="DEBUG"/>		
 		<logger name="ghidra.app.plugin.assembler" level="DEBUG" />		
