@@ -10434,4 +10434,62 @@ int4 RuleLzcountShiftBool::applyOp(PcodeOp *op,Funcdata &data)
   return 0;
 }
 
+/// \class RuleOrCompare
+/// \brief Simplify INT_OR in comparisons with 0.
+/// `(V | W) == 0` => '(V == 0) && (W == 0)'
+/// `(V | W) != 0` => '(V != 0) || (W != 0)'
+void RuleOrCompare::getOpList(vector<uint4> &oplist) const
+
+{
+  oplist.push_back(CPUI_INT_EQUAL);
+  oplist.push_back(CPUI_INT_NOTEQUAL);
+}
+
+int4 RuleOrCompare::applyOp(PcodeOp *op,Funcdata &data)
+
+{
+  // make sure the comparison is against 0
+  if (! op->getIn(1)->constantMatch(0)) return 0;
+
+  // make sure the other operand is an INT_OR
+  PcodeOp *or_op = op->getIn(0)->getDef();
+  if (or_op == (PcodeOp *)0) return 0;
+  if (or_op->code() != CPUI_INT_OR) return 0;
+
+  Varnode* V = or_op->getIn(0);
+  Varnode* W = or_op->getIn(1);
+
+  // make sure V and W are in SSA form
+  if (V->isFree()) return 0;
+  if (W->isFree()) return 0;
+
+  // construct the new segment:
+  // if the original condition was INT_EQUAL: BOOL_AND(INT_EQUAL(V, 0:|V|), INT_EQUAL(W, 0:|W|))
+  // if the original condition was INT_NOTEQUAL: BOOL_OR(INT_NOTEQUAL(V, 0:|V|), INT_NOTEQUAL(W, 0:|W|))
+  Varnode* zero_V = data.newConstant(V->getSize(), 0);
+  Varnode* zero_W = data.newConstant(W->getSize(), 0);
+  PcodeOp* eq_V = data.newOp(2, op->getAddr());
+  data.opSetOpcode(eq_V, op->code());
+  data.opSetInput(eq_V, V, 0);
+  data.opSetInput(eq_V, zero_V, 1);
+  PcodeOp* eq_W = data.newOp(2, op->getAddr());
+  data.opSetOpcode(eq_W, op->code());
+  data.opSetInput(eq_W, W, 0);
+  data.opSetInput(eq_W, zero_W, 1);
+
+  Varnode* eq_V_out = data.newUniqueOut(1, eq_V);
+  Varnode* eq_W_out = data.newUniqueOut(1, eq_W);
+
+  // make sure the comparisons' output is already defined
+  data.opInsertBefore(eq_V, op);
+  data.opInsertBefore(eq_W, op);
+
+  // change the original INT_EQUAL into a BOOL_AND, and INT_NOTEQUAL becomes BOOL_OR
+  data.opSetOpcode(op, op->code() == CPUI_INT_EQUAL ? CPUI_BOOL_AND : CPUI_BOOL_OR);
+  data.opSetInput(op, eq_V_out, 0);
+  data.opSetInput(op, eq_W_out, 1);
+
+  return 1;
+}
+
 } // End namespace ghidra
