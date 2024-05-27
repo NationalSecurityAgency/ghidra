@@ -639,6 +639,9 @@ rm: Rm is Rm				{ export Rm; }
 rs: pc is pc & Rs=15        { tmp:4 = inst_start+8; export tmp; }
 rs: Rs is Rs				{ export Rs; }
 
+rd: pc is pc & Rd=15        { tmp:4 = inst_start+8; export tmp; }
+rd: Rd is Rd				{ export Rd; }
+
 cc: "eq" is cond=0          { export ZR; }
 cc: "ne" is cond=1          { tmp:1 = !ZR; export tmp; }
 cc: "cs" is cond=2          { export CY; }
@@ -5458,11 +5461,11 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 #}
 
 # The following form of str assumes alignment checking is on
-:str^COND Rd,addrmode2 		is $(AMODE) & ARMcond=1 & COND & c2627=1 & B22=0 & L20=0 & Rd & (I25=0 | (I25=1 & c0404=0)) & addrmode2
+:str^COND rd,addrmode2 		is $(AMODE) & ARMcond=1 & COND & c2627=1 & B22=0 & L20=0 & rd & (I25=0 | (I25=1 & c0404=0)) & addrmode2
 {
   build COND;
   build addrmode2;
-  *addrmode2 = Rd;
+  *addrmode2 = rd;
 }
 
 :strb^COND Rd,addrmode2 	is $(AMODE) & ARMcond=1 & COND & c2627=1 & B22=1 & L20=0 & Rd & (I25=0 | (I25=1 & c0404=0)) & addrmode2
@@ -5576,11 +5579,11 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 #}
 
 # The following form of str assumes alignment checking is on
-:strt^COND Rd,addrmode2 	is $(AMODE) & ARMcond=1 & COND & c2627=1 & B22=0 & L20=0 & P24=0 & W21=1 & Rd & (I25=0 | (I25=1 & c0404=0)) & addrmode2
+:strt^COND rd,addrmode2 	is $(AMODE) & ARMcond=1 & COND & c2627=1 & B22=0 & L20=0 & P24=0 & W21=1 & rd & (I25=0 | (I25=1 & c0404=0)) & addrmode2
 {
   build COND;
   build addrmode2;
-  *addrmode2 = Rd;
+  *addrmode2 = rd;
 }
 
 :sub^COND^SBIT_CZNO Rd,rn,shift1	is $(AMODE) & ARMcond=1 & COND & c2124=2 & SBIT_CZNO & rn & Rd & c2627=0 & shift1
