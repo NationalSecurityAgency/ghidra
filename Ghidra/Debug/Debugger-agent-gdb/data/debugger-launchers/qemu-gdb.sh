@@ -26,12 +26,12 @@
 #@menu-group cross
 #@icon icon.debugger
 #@help TraceRmiLauncherServicePlugin#gdb_qemu
-#@arg :str "Image" "The target binary executable image"
+#@arg :file "Image" "The target binary executable image"
 #@args "Arguments" "Command-line arguments to pass to the target"
-#@env GHIDRA_LANG_EXTTOOL_qemu:str="" "QEMU command" "The path to qemu for the target architecture."
+#@env GHIDRA_LANG_EXTTOOL_qemu:file="" "QEMU command" "The path to qemu for the target architecture."
 #@env QEMU_GDB:int=12345 "QEMU Port" "Port for gdb connection to qemu"
 #@env OPT_EXTRA_QEMU_ARGS:str="" "Extra qemu arguments" "Extra arguments to pass to qemu. Use with care."
-#@env OPT_GDB_PATH:str="gdb-multiarch" "gdb command" "The path to gdb. Omit the full path to resolve using the system PATH."
+#@env OPT_GDB_PATH:file="gdb-multiarch" "gdb command" "The path to gdb. Omit the full path to resolve using the system PATH."
 #@env OPT_EXTRA_TTY:bool=false "QEMU TTY" "Provide a separate terminal emulator for the target."
 #@tty TTY_TARGET if env:OPT_EXTRA_TTY
 

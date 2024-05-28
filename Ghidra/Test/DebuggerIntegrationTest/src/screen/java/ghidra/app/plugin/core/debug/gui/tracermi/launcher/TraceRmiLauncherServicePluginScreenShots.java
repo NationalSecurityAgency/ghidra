@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.tracermi.launcher;
 
+import java.nio.file.Paths;
 import java.util.Map;
 
 import org.junit.Test;
@@ -22,6 +23,7 @@ import org.junit.Test;
 import ghidra.app.plugin.core.debug.gui.objects.components.DebuggerMethodInvocationDialog;
 import ghidra.app.plugin.core.terminal.TerminalProvider;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
+import ghidra.framework.plugintool.AutoConfigState.PathIsFile;
 import ghidra.test.ToyProgramBuilder;
 import help.screenshot.GhidraScreenShotGenerator;
 
@@ -49,7 +51,8 @@ public class TraceRmiLauncherServicePluginScreenShots extends GhidraScreenShotGe
 
 	@Test
 	public void testCaptureGdbLauncher() throws Throwable {
-		captureLauncherByTitle("gdb", Map.of("arg:1", "/home/user/demo"));
+		captureLauncherByTitle("gdb",
+			Map.of("arg:1", new PathIsFile(Paths.get("/home/user/demo"))));
 	}
 
 	@Test

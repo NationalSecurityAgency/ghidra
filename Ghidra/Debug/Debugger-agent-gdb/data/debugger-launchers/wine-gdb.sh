@@ -25,10 +25,10 @@
 #@menu-group cross
 #@icon icon.debugger
 #@help TraceRmiLauncherServicePlugin#gdb_wine
-#@arg :str "Image" "The target binary executable image"
+#@arg :file "Image" "The target binary executable image"
 #@args "Arguments" "Command-line arguments to pass to the target"
-#@env OPT_WINE_PATH:str="/usr/lib/wine/wine64" "Path to wine binary" "The path to the wine executable for your target architecture."
-#@env OPT_GDB_PATH:str="gdb" "gdb command" "The path to gdb. Omit the full path to resolve using the system PATH."
+#@env OPT_WINE_PATH:file="/usr/lib/wine/wine64" "Path to wine binary" "The path to the wine executable for your target architecture."
+#@env OPT_GDB_PATH:file="gdb" "gdb command" "The path to gdb. Omit the full path to resolve using the system PATH."
 #@env OPT_EXTRA_TTY:bool=false "Inferior TTY" "Provide a separate terminal emulator for the target."
 #@tty TTY_TARGET if env:OPT_EXTRA_TTY
 

@@ -32,7 +32,7 @@
 #@env OPT_EXTRA_SSH_ARGS:str="" "Extra ssh arguments" "Extra arguments to pass to ssh. Use with care."
 #@env OPT_GDBSERVER_PATH:str="gdbserver" "gdbserver command (remote)" "The path to gdbserver on the remote system. Omit the full path to resolve using the system PATH."
 #@env OPT_EXTRA_GDBSERVER_ARGS:str="" "Extra gdbserver arguments" "Extra arguments to pass to gdbserver. Use with care."
-#@env OPT_GDB_PATH:str="gdb" "gdb command" "The path to gdb on the local system. Omit the full path to resolve using the system PATH."
+#@env OPT_GDB_PATH:file="gdb" "gdb command" "The path to gdb on the local system. Omit the full path to resolve using the system PATH."
 
 if [ -d ${GHIDRA_HOME}/ghidra/.git ]
 then

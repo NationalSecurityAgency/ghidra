@@ -19,6 +19,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeTrue;
 
+import java.nio.file.Paths;
 import java.util.*;
 
 import org.junit.Before;
@@ -30,6 +31,7 @@ import ghidra.app.services.TraceRmiLauncherService;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer;
 import ghidra.debug.api.tracermi.TraceRmiLaunchOffer.*;
 import ghidra.framework.OperatingSystem;
+import ghidra.framework.plugintool.AutoConfigState.PathIsFile;
 import ghidra.util.task.ConsoleTaskMonitor;
 
 public class TraceRmiLauncherServicePluginTest extends AbstractGhidraHeadedDebuggerTest {
@@ -58,7 +60,7 @@ public class TraceRmiLauncherServicePluginTest extends AbstractGhidraHeadedDebug
 			public Map<String, ?> configureLauncher(TraceRmiLaunchOffer offer,
 					Map<String, ?> arguments, RelPrompt relPrompt) {
 				Map<String, Object> args = new HashMap<>(arguments);
-				args.put("arg:1", file);
+				args.put("arg:1", new PathIsFile(Paths.get(file)));
 				args.put("env:OPT_START_CMD", "starti");
 				return args;
 			}
@@ -94,7 +96,7 @@ public class TraceRmiLauncherServicePluginTest extends AbstractGhidraHeadedDebug
 			public Map<String, ?> configureLauncher(TraceRmiLaunchOffer offer,
 					Map<String, ?> arguments, RelPrompt relPrompt) {
 				Map<String, Object> args = new HashMap<>(arguments);
-				args.put("env:OPT_TARGET_IMG", file);
+				args.put("env:OPT_TARGET_IMG", new PathIsFile(Paths.get(file)));
 				return args;
 			}
 		};
