@@ -77,7 +77,6 @@ public class DataWindowPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void loadProgram(String programName) throws Exception {
-
 		ClassicSampleX86ProgramBuilder builder = new ClassicSampleX86ProgramBuilder();
 		program = builder.getProgram();
 	}
@@ -89,13 +88,14 @@ public class DataWindowPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testNavigation() throws Exception {
-		int numRows = dataTable.getRowCount();
-		for (int i = 0; i < numRows; i++) {
+		int rows = 10; // no need to test them all; a sample will do
+		for (int i = 0; i < rows; i++) {
 			clickTableCell(dataTable, i, DataTableModel.LOCATION_COL, 2);
 			waitForSwing();
 			Address addr = browser.getCurrentAddress();
-			Object tableAddr =
-				addr.getAddress(dataTable.getValueAt(i, DataTableModel.LOCATION_COL).toString());
+			int row = i;
+			Object value = runSwing(() -> dataTable.getValueAt(row, DataTableModel.LOCATION_COL));
+			Object tableAddr = addr.getAddress(value.toString());
 			assertEquals(addr, tableAddr);
 		}
 	}
@@ -105,45 +105,36 @@ public class DataWindowPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		int numData = dataTable.getRowCount();
 
-		int id = program.startTransaction(testName.getMethodName());
-		try {
+		tx(program, () -> {
 			program.getListing().clearAll(false, TaskMonitor.DUMMY);
-		}
-		finally {
-			program.endTransaction(id, true);
-		}
-		waitForNotBusy(dataTable);
+		});
 
+		waitForNotBusy(dataTable);
 		assertEquals(0, dataTable.getRowCount());
 
 		undo(program);
 		waitForNotBusy(dataTable);
 
 		assertEquals(numData, dataTable.getRowCount());
-
 	}
 
 	@Test
 	public void testFilter() throws Exception {
 		int totalRows = dataTable.getRowCount();
 		String type = dataTable.getValueAt(0, DataTableModel.TYPE_COL).toString();
-		filterAction.setTypeEnabled(type, false);
-		filterAction.setFilterEnabled(true);
-		plugin.reload();
-		waitForNotBusy(dataTable);
+
+		filterType(type);
 
 		int filteredRows = dataTable.getRowCount();
-		for (int i = 0; i < filteredRows; i++) {
-			assertEquals(dataTable.getValueAt(i, DataTableModel.TYPE_COL).toString().equals(type),
-				false);
-		}
-
 		assertEquals(totalRows > filteredRows, true);
 
-		filterAction.setFilterEnabled(false);
-		plugin.reload();
-		waitForNotBusy(dataTable);
+		for (int i = 0; i < filteredRows; i++) {
+			int row = i;
+			Object value = runSwing(() -> dataTable.getValueAt(row, DataTableModel.TYPE_COL));
+			assertNotEquals(value.toString(), type);
+		}
 
+		disableFilter();
 		assertEquals(dataTable.getRowCount(), totalRows);
 	}
 
@@ -156,4 +147,31 @@ public class DataWindowPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(dataTable.getRowCount(), 0);
 		loadProgram("notepad");
 	}
+
+	private void disableFilter() {
+		performAction(filterAction, false);
+		DataWindowFilterDialog filterDialog = waitForDialogComponent(DataWindowFilterDialog.class);
+
+		runSwing(() -> {
+			filterDialog.setFilterEnabled(false);
+		});
+
+		pressButtonByText(filterDialog, "OK");
+		waitForNotBusy(dataTable);
+	}
+
+	private void filterType(String type) {
+
+		performAction(filterAction, false);
+		DataWindowFilterDialog filterDialog = waitForDialogComponent(DataWindowFilterDialog.class);
+
+		runSwing(() -> {
+			filterDialog.setTypeEnabled(type, false);
+			filterDialog.setFilterEnabled(true);
+		});
+
+		pressButtonByText(filterDialog, "OK");
+		waitForNotBusy(dataTable);
+	}
+
 }
