@@ -27,7 +27,7 @@
 #@menu-group raw
 #@icon icon.debugger
 #@help TraceRmiLauncherServicePlugin#gdb_raw
-#@env OPT_GDB_PATH:str="gdb" "gdb command" "The path to gdb. Omit the full path to resolve using the system PATH."
+#@env OPT_GDB_PATH:file="gdb" "gdb command" "The path to gdb. Omit the full path to resolve using the system PATH."
 #@env OPT_ARCH:str="i386:x86-64" "Architecture" "Target architecture"
 
 if [ -d ${GHIDRA_HOME}/ghidra/.git ]

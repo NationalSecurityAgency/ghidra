@@ -31,7 +31,7 @@
 #@env OPT_HOST:str="localhost" "Host" "The hostname of the target"
 #@env OPT_PORT:str="9999" "Port" "The host's listening port"
 #@env OPT_ARCH:str="" "Architecture (optional)" "Target architecture override"
-#@env OPT_GDB_PATH:str="gdb" "gdb command" "The path to gdb on the local system. Omit the full path to resolve using the system PATH."
+#@env OPT_GDB_PATH:file="gdb" "gdb command" "The path to gdb on the local system. Omit the full path to resolve using the system PATH."
 
 if [ -d ${GHIDRA_HOME}/ghidra/.git ]
 then

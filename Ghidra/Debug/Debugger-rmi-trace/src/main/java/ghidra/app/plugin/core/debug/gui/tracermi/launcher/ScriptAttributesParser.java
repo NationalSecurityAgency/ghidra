@@ -18,6 +18,8 @@ package ghidra.app.plugin.core.debug.gui.tracermi.launcher;
 import java.io.*;
 import java.math.BigInteger;
 import java.net.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -28,6 +30,8 @@ import generic.theme.Gui;
 import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.util.ShellUtils;
 import ghidra.framework.Application;
+import ghidra.framework.plugintool.AutoConfigState.PathIsDir;
+import ghidra.framework.plugintool.AutoConfigState.PathIsFile;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 
@@ -79,13 +83,11 @@ public abstract class ScriptAttributesParser {
 	protected interface OptType<T> {
 		static OptType<?> parse(Location loc, String typeName,
 				Map<String, UserType<?>> userEnums) {
-			OptType<?> type = switch (typeName) {
-				case "str" -> BaseType.STRING;
-				case "int" -> BaseType.INT;
-				case "bool" -> BaseType.BOOL;
-				default -> userEnums.get(typeName);
-			};
+			OptType<?> type = BaseType.parseNoErr(typeName);
 			if (type == null) {
+				type = userEnums.get(typeName);
+			}
+			if (type == null) { // still
 				Msg.error(ScriptAttributesParser.class,
 					"%s: Invalid type %s".formatted(loc, typeName));
 				return null;
@@ -106,13 +108,20 @@ public abstract class ScriptAttributesParser {
 	}
 
 	protected interface BaseType<T> extends OptType<T> {
-		public static BaseType<?> parse(Location loc, String typeName) {
-			BaseType<?> type = switch (typeName) {
+		public static BaseType<?> parseNoErr(String typeName) {
+			return switch (typeName) {
 				case "str" -> BaseType.STRING;
 				case "int" -> BaseType.INT;
 				case "bool" -> BaseType.BOOL;
+				case "path" -> BaseType.PATH;
+				case "dir" -> BaseType.DIR;
+				case "file" -> BaseType.FILE;
 				default -> null;
 			};
+		}
+
+		public static BaseType<?> parse(Location loc, String typeName) {
+			BaseType<?> type = parseNoErr(typeName);
 			if (type == null) {
 				Msg.error(ScriptAttributesParser.class,
 					"%s: Invalid base type %s".formatted(loc, typeName));
@@ -176,6 +185,42 @@ public abstract class ScriptAttributesParser {
 					return null;
 				}
 				return result;
+			}
+		};
+
+		public static final BaseType<Path> PATH = new BaseType<>() {
+			@Override
+			public Class<Path> cls() {
+				return Path.class;
+			}
+
+			@Override
+			public Path decode(Location loc, String str) {
+				return Paths.get(str);
+			}
+		};
+
+		public static final BaseType<PathIsDir> DIR = new BaseType<>() {
+			@Override
+			public Class<PathIsDir> cls() {
+				return PathIsDir.class;
+			}
+
+			@Override
+			public PathIsDir decode(Location loc, String str) {
+				return new PathIsDir(Paths.get(str));
+			}
+		};
+
+		public static final BaseType<PathIsFile> FILE = new BaseType<>() {
+			@Override
+			public Class<PathIsFile> cls() {
+				return PathIsFile.class;
+			}
+
+			@Override
+			public PathIsFile decode(Location loc, String str) {
+				return new PathIsFile(Paths.get(str));
 			}
 		};
 

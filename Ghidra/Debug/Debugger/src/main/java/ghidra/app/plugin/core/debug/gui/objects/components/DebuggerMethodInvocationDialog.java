@@ -18,12 +18,17 @@ package ghidra.app.plugin.core.debug.gui.objects.components;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.beans.*;
+import java.io.File;
 import java.math.BigInteger;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualLinkedHashBidiMap;
@@ -33,12 +38,16 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.jdom.Element;
 
 import docking.DialogComponentProvider;
+import docking.options.editor.FileChooserEditor;
+import docking.widgets.button.BrowseButton;
+import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.filechooser.GhidraFileChooserMode;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.utils.MiscellaneousUtils;
 import ghidra.dbg.target.TargetMethod;
 import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.plugintool.AutoConfigState.ConfigStateField;
+import ghidra.framework.plugintool.AutoConfigState.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
 import ghidra.util.layout.PairLayout;
@@ -63,8 +72,240 @@ public class DebuggerMethodInvocationDialog extends DialogComponentProvider
 		}
 	}
 
+	public static class FileChooserPanel extends JPanel {
+		private final static int NUMBER_OF_COLUMNS = 20;
+
+		private final JTextField textField = new JTextField(NUMBER_OF_COLUMNS);
+		private final JButton browseButton = new BrowseButton();
+		private final Runnable propertyChange;
+
+		private GhidraFileChooser fileChooser; // lazy
+
+		public FileChooserPanel(Runnable propertyChange) {
+			this.propertyChange = propertyChange;
+
+			setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+			add(textField);
+			add(Box.createHorizontalStrut(5));
+			add(browseButton);
+			setBorder(BorderFactory.createEmptyBorder());
+
+			textField.addActionListener(e -> propertyChange.run());
+			textField.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					propertyChange.run();
+				}
+
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					propertyChange.run();
+				}
+
+				@Override
+				public void changedUpdate(DocumentEvent e) {
+					propertyChange.run();
+				}
+			});
+
+			browseButton.addActionListener(e -> displayFileChooser());
+		}
+
+		public void setValue(File file) {
+			textField.setText(file == null ? "" : file.getAbsolutePath());
+		}
+
+		private void displayFileChooser() {
+			if (fileChooser == null) {
+				fileChooser = createFileChooser();
+			}
+
+			String path = textField.getText().trim();
+			if (!path.isEmpty()) {
+				File f = new File(path);
+				if (f.isDirectory()) {
+					fileChooser.setCurrentDirectory(f);
+				}
+				else {
+					File pf = f.getParentFile();
+					if (pf != null && pf.isDirectory()) {
+						fileChooser.setSelectedFile(f);
+					}
+				}
+			}
+
+			File chosen = fileChooser.getSelectedFile(true);
+			if (chosen != null) {
+				textField.setText(chosen.getAbsolutePath());
+				propertyChange.run();
+			}
+		}
+
+		protected String getTitle() {
+			return "Choose Path";
+		}
+
+		protected GhidraFileChooserMode getSelectionMode() {
+			return GhidraFileChooserMode.FILES_AND_DIRECTORIES;
+		}
+
+		private GhidraFileChooser createFileChooser() {
+			GhidraFileChooser chooser = new GhidraFileChooser(browseButton);
+			chooser.setTitle(getTitle());
+			chooser.setApproveButtonText(getTitle());
+			chooser.setFileSelectionMode(getSelectionMode());
+			// No way for script to specify filter....
+
+			return chooser;
+		}
+	}
+
+	/**
+	 * Compared to {@link FileChooserEditor}, this does not require the user to enter a full path.
+	 * Nor will it resolve file names against the working directory. It's just a text box with a
+	 * file browser assist.
+	 */
+	public static class PathEditor extends PropertyEditorSupport {
+		private final FileChooserPanel panel = newChooserPanel();
+
+		protected FileChooserPanel newChooserPanel() {
+			return new FileChooserPanel(this::firePropertyChange);
+		}
+
+		@Override
+		public String getAsText() {
+			return panel.textField.getText().trim();
+		}
+
+		@Override
+		public Object getValue() {
+			String text = panel.textField.getText().trim();
+			if (text.isEmpty()) {
+				return null;
+			}
+			return Paths.get(text);
+		}
+
+		@Override
+		public void setAsText(String text) throws IllegalArgumentException {
+			if (text == null || text.isBlank()) {
+				panel.textField.setText("");
+			}
+			else {
+				panel.textField.setText(text);
+			}
+		}
+
+		@Override
+		public void setValue(Object value) {
+			if (value == null) {
+				panel.textField.setText("");
+			}
+			else if (value instanceof String s) {
+				panel.textField.setText(s);
+			}
+			else if (value instanceof Path p) {
+				panel.textField.setText(p.toString());
+			}
+			else {
+				throw new IllegalArgumentException("value=" + value);
+			}
+		}
+
+		@Override
+		public boolean supportsCustomEditor() {
+			return true;
+		}
+
+		@Override
+		public Component getCustomEditor() {
+			return panel;
+		}
+	}
+
+	public static class PathIsDirEditor extends PathEditor {
+		@Override
+		protected FileChooserPanel newChooserPanel() {
+			return new FileChooserPanel(this::firePropertyChange) {
+				@Override
+				protected String getTitle() {
+					return "Choose Directory";
+				}
+
+				@Override
+				protected GhidraFileChooserMode getSelectionMode() {
+					return GhidraFileChooserMode.DIRECTORIES_ONLY;
+				}
+			};
+		}
+
+		@Override
+		public Object getValue() {
+			Object value = super.getValue();
+			if (value == null) {
+				return null;
+			}
+			if (value instanceof Path p) {
+				return new PathIsDir(p);
+			}
+			throw new AssertionError();
+		}
+
+		@Override
+		public void setValue(Object value) {
+			if (value instanceof PathIsDir dir) {
+				super.setValue(dir.path());
+			}
+			else {
+				super.setValue(value);
+			}
+		}
+	}
+
+	public static class PathIsFileEditor extends PathEditor {
+		@Override
+		protected FileChooserPanel newChooserPanel() {
+			return new FileChooserPanel(this::firePropertyChange) {
+				@Override
+				protected String getTitle() {
+					return "Choose File";
+				}
+
+				@Override
+				protected GhidraFileChooserMode getSelectionMode() {
+					return GhidraFileChooserMode.FILES_ONLY;
+				}
+			};
+		}
+
+		@Override
+		public Object getValue() {
+			Object value = super.getValue();
+			if (value == null) {
+				return null;
+			}
+			if (value instanceof Path p) {
+				return new PathIsFile(p);
+			}
+			throw new AssertionError();
+		}
+
+		@Override
+		public void setValue(Object value) {
+			if (value instanceof PathIsFile file) {
+				super.setValue(file.path());
+			}
+			else {
+				super.setValue(value);
+			}
+		}
+	}
+
 	static {
 		PropertyEditorManager.registerEditor(BigInteger.class, BigIntEditor.class);
+		PropertyEditorManager.registerEditor(Path.class, PathEditor.class);
+		PropertyEditorManager.registerEditor(PathIsDir.class, PathIsDirEditor.class);
+		PropertyEditorManager.registerEditor(PathIsFile.class, PathIsFileEditor.class);
 	}
 
 	private static final String KEY_MEMORIZED_ARGUMENTS = "memorizedArguments";
@@ -335,7 +576,8 @@ public class DebuggerMethodInvocationDialog extends DialogComponentProvider
 			Object val = computeMemorizedValue(param);
 			if (val == null) {
 				editor.setValue("");
-			} else {
+			}
+			else {
 				editor.setValue(val);
 			}
 			editor.addPropertyChangeListener(this);

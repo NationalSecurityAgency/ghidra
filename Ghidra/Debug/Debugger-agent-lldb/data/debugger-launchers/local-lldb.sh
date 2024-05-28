@@ -26,9 +26,9 @@
 #@icon icon.debugger
 #@help TraceRmiLauncherServicePlugin#lldb
 #@enum StartCmd:str "process launch" "process launch --stop-at-entry"
-#@arg :str "Image" "The target binary executable image"
+#@arg :file "Image" "The target binary executable image"
 #@args "Arguments" "Command-line arguments to pass to the target"
-#@env OPT_LLDB_PATH:str="lldb" "lldb command" "The path to lldb. Omit the full path to resolve using the system PATH."
+#@env OPT_LLDB_PATH:file="lldb" "lldb command" "The path to lldb. Omit the full path to resolve using the system PATH."
 #@env OPT_START_CMD:StartCmd="process launch" "Run command" "The lldb command to actually run the target."
 #@env OPT_EXTRA_TTY:bool=false "Target TTY" "Provide a separate terminal emulator for the target."
 #@tty TTY_TARGET if env:OPT_EXTRA_TTY
