@@ -4971,7 +4971,7 @@ is b_1230=0b1011010110000000000 & b_31=1 & b_1011=0b10 & Rn_GPR64 & Rd_GPR64
 :rmif Rn_GPR64, UImm6, NZCVImm_uimm4
 is b_2131=0b10111010000 & b_1014=0b00001 & b_04=0b0 & Rn_GPR64 & UImm6 & NZCVImm_uimm4
 {
-	tmp:8 = Rn_GPR64 >> UImm6;
+	tmp:8 = Rn_GPR64 >> UImm6 | (Rn_GPR64 << (64 - UImm6));
 	condMask:1 = NZCVImm_uimm4;
 	set_NZCV(tmp,condMask);
 }
