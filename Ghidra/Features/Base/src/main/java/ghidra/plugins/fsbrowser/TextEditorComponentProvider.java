@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.editor;
+package ghidra.plugins.fsbrowser;
 
 import java.awt.Dimension;
 import java.awt.Font;
@@ -33,8 +33,8 @@ import docking.options.editor.FontEditor;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import generic.theme.*;
+import ghidra.framework.main.AppInfo;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
-import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.FixedSizeStack;
 import resources.Icons;
@@ -45,7 +45,6 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 	private static final int MAX_UNDO_REDO_SIZE = 50;
 	private static final String LAST_SAVED_TEXT_FILE_DIR = "LastSavedTextFileDirectory";
 
-	private TextEditorManagerPlugin plugin;
 	private File textFile;
 	private String textFileName;
 	private DockingAction saveAction;
@@ -60,23 +59,17 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 	private FixedSizeStack<UndoableEdit> undoStack = new FixedSizeStack<>(MAX_UNDO_REDO_SIZE);
 	private FixedSizeStack<UndoableEdit> redoStack = new FixedSizeStack<>(MAX_UNDO_REDO_SIZE);
 
-	TextEditorComponentProvider(TextEditorManagerPlugin plugin, String textFileName,
-			InputStream inputStream) throws IOException {
-		super(plugin.getTool(), TITLE, plugin.getName());
+	TextEditorComponentProvider(String textFileName, String text) {
+		super(AppInfo.getFrontEndTool(), TITLE, "TextEditorComponentProvider");
 		this.textFileName = textFileName;
-		String textContents = loadTextFile(inputStream);
-		initialize(plugin, textContents);
+		initialize(text);
 	}
 
 	public String getText() {
 		return textarea.getText();
 	}
 
-	private void initialize(TextEditorManagerPlugin p, String textContents) {
-		this.plugin = p;
-
-		setHelpLocation(new HelpLocation(p.getName(), p.getName()));
-
+	private void initialize(String textContents) {
 		title = textFileName + (isReadOnly() ? " (Read-Only) " : "");
 		setTitle(title);
 
@@ -87,9 +80,10 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 
 		addToTool();
 		setVisible(true);
-		p.getTool().setStatusInfo("Press F1 for help.");
 
 		createActions();
+
+		contextChanged();
 	}
 
 	private boolean isReadOnly() {
@@ -99,26 +93,21 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 	private void clearUndoRedoStack() {
 		undoStack.clear();
 		redoStack.clear();
-		updateUndoRedoAction();
-	}
-
-	private void updateUndoRedoAction() {
-		undoAction.setEnabled(!undoStack.isEmpty());
-		redoAction.setEnabled(!redoStack.isEmpty());
+		contextChanged();
 	}
 
 	private void undo() {
 		UndoableEdit item = undoStack.pop();
 		redoStack.push(item);
 		item.undo();
-		updateUndoRedoAction();
+		contextChanged();
 	}
 
 	private void redo() {
 		UndoableEdit item = redoStack.pop();
 		undoStack.push(item);
 		item.redo();
-		updateUndoRedoAction();
+		contextChanged();
 	}
 
 	boolean isChanged() {
@@ -144,27 +133,8 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	private String loadTextFile(InputStream inputStream) throws IOException {
-		try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-			return loadTextFile(reader);
-		}
-	}
-
-	private String loadTextFile(BufferedReader reader) throws IOException {
-		StringBuilder buffer = new StringBuilder();
-		while (true) {
-			String line = reader.readLine();
-			if (line == null) {
-				break;
-			}
-			buffer.append(line);
-			buffer.append('\n');
-		}
-		return buffer.toString();
-	}
-
 	private void createActions() {
-		undoAction = new DockingAction("Undo", plugin.getName()) {
+		undoAction = new DockingAction("Undo", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				undo();
@@ -172,17 +142,15 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 
 			@Override
 			public boolean isEnabledForContext(ActionContext context) {
-				Object contextObject = context.getContextObject();
-				return contextObject == TextEditorComponentProvider.this;
+				return !undoStack.isEmpty();
 			}
 		};
 		undoAction.setDescription("Undo");
-		undoAction.setToolBarData(
-			new ToolBarData(new GIcon("icon.undo"), "UndoRedo"));
-		undoAction.setEnabled(false);
-		plugin.getTool().addLocalAction(this, undoAction);
+		undoAction.setToolBarData(new ToolBarData(new GIcon("icon.undo"), "UndoRedo"));
+		undoAction.setKeyBindingData(new KeyBindingData("ctrl z"));
+		addLocalAction(undoAction);
 
-		redoAction = new DockingAction("Redo", plugin.getName()) {
+		redoAction = new DockingAction("Redo", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				redo();
@@ -190,17 +158,15 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 
 			@Override
 			public boolean isEnabledForContext(ActionContext context) {
-				Object contextObject = context.getContextObject();
-				return contextObject == TextEditorComponentProvider.this;
+				return !redoStack.isEmpty();
 			}
 		};
 		redoAction.setDescription("Redo");
-		redoAction.setToolBarData(
-			new ToolBarData(new GIcon("icon.redo"), "UndoRedo"));
-		redoAction.setEnabled(false);
-		plugin.getTool().addLocalAction(this, redoAction);
+		redoAction.setToolBarData(new ToolBarData(new GIcon("icon.redo"), "UndoRedo"));
+		redoAction.setKeyBindingData(new KeyBindingData("ctrl shift z"));
+		addLocalAction(redoAction);
 
-		saveAction = new DockingAction("Save File", plugin.getName()) {
+		saveAction = new DockingAction("Save File", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				save();
@@ -208,45 +174,33 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 
 			@Override
 			public boolean isEnabledForContext(ActionContext context) {
-				Object contextObject = context.getContextObject();
-				return contextObject == TextEditorComponentProvider.this;
+				return isChanged;
 			}
 		};
 		saveAction.setDescription("Save");
-		saveAction.setToolBarData(
-			new ToolBarData(Icons.SAVE_ICON, "Save"));
-		saveAction.setEnabled(false);
-		plugin.getTool().addLocalAction(this, saveAction);
+		saveAction.setToolBarData(new ToolBarData(Icons.SAVE_ICON, "Save"));
+		saveAction.setKeyBindingData(new KeyBindingData("ctrl-s"));
+		addLocalAction(saveAction);
 
-		saveAsAction = new DockingAction("Save File As", plugin.getName()) {
+		saveAsAction = new DockingAction("Save File As", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				saveAs();
 			}
-
-			@Override
-			public boolean isEnabledForContext(ActionContext context) {
-				Object contextObject = context.getContextObject();
-				return contextObject == TextEditorComponentProvider.this;
-			}
 		};
 		saveAsAction.setDescription("Save As...");
-		saveAsAction.setToolBarData(
-			new ToolBarData(Icons.SAVE_AS_ICON, "Save"));
-		saveAsAction.setEnabled(true);
-		plugin.getTool().addLocalAction(this, saveAsAction);
+		saveAsAction.setToolBarData(new ToolBarData(Icons.SAVE_AS_ICON, "Save"));
+		addLocalAction(saveAsAction);
 
-		fontAction = new DockingAction("Select Font", plugin.getName()) {
+		fontAction = new DockingAction("Select Font", getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				doSelectFont();
 			}
 		};
-		fontAction.setToolBarData(
-			new ToolBarData(new GIcon("icon.font"), "ZZFont"));
+		fontAction.setToolBarData(new ToolBarData(new GIcon("icon.font"), "ZZFont"));
 		fontAction.setDescription("Select Font");
-		fontAction.setEnabled(true);
-		plugin.getTool().addLocalAction(this, fontAction);
+		addLocalAction(fontAction);
 
 		/****************************************************************/
 		// DO NOT REMOVE THIS CODE!!
@@ -341,11 +295,9 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 
 	@Override
 	public void closeComponent() {
-		if (plugin.removeTextFile(this, textFileName)) {
-			clearUndoRedoStack();
-			super.closeComponent();
-			plugin.getTool().removeComponentProvider(this);
-		}
+		clearUndoRedoStack();
+		super.closeComponent();
+		getTool().removeComponentProvider(this);
 	}
 
 	@Override
@@ -357,12 +309,7 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 // Inner Classes
 //==================================================================================================
 
-	/**
-	 * Special JTextArea that knows how to properly handle it's key events.
-	 * @see #processKeyBinding(KeyStroke, KeyEvent, int, boolean)
-	 */
 	private class KeyMasterTextArea extends JTextArea {
-		private static final long serialVersionUID = 1L;
 
 		private KeyMasterTextArea(String text) {
 			super(text);
@@ -390,7 +337,7 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 				UndoableEdit item = e.getEdit();
 				undoStack.push(item);
 				redoStack.clear();
-				updateUndoRedoAction();
+				contextChanged();
 			});
 			setCaretPosition(0);
 		}

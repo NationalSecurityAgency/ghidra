@@ -32,7 +32,8 @@ import docking.widgets.filechooser.GhidraFileChooserMode;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.app.services.*;
+import ghidra.app.services.FileSystemBrowserService;
+import ghidra.app.services.ProgramManager;
 import ghidra.formats.gfilesystem.*;
 import ghidra.framework.main.ApplicationLevelPlugin;
 import ghidra.framework.main.FrontEndService;
@@ -63,13 +64,11 @@ import utilities.util.FileUtilities;
 	shortDescription = "Browse Filesystems in containers",
 	description = "This plugin allows users to browse and use the contents of containers (zips, tars, filesystems, etc)",
 	servicesProvided = { FileSystemBrowserService.class },
-	servicesRequired = { TextEditorService.class },
 	eventsConsumed = { ProgramActivatedPluginEvent.class }
 )
 //@formatter:on
 public class FileSystemBrowserPlugin extends Plugin
-		implements ApplicationLevelPlugin, ProjectListener,
-		FileSystemBrowserService {
+		implements ApplicationLevelPlugin, ProjectListener, FileSystemBrowserService {
 
 	/* package */ DockingAction openFilesystemAction;
 	/* package */ DockingAction showFileSystemImplsAction;

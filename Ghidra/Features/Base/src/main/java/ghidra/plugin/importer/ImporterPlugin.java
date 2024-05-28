@@ -31,7 +31,8 @@ import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.app.services.*;
+import ghidra.app.services.FileImporterService;
+import ghidra.app.services.ProgramManager;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.LibrarySearchPathManager;
 import ghidra.app.util.opinion.LoaderMap;
@@ -71,7 +72,6 @@ import ghidra.util.task.*;
 	category = PluginCategoryNames.COMMON,
 	shortDescription = "Import External Files (NEW)",
 	description = ImporterPlugin.IMPORTER_PLUGIN_DESC,
-	servicesRequired = { TextEditorService.class },
 	servicesProvided = { FileImporterService.class },
 	eventsConsumed = { ProgramActivatedPluginEvent.class }
 )
@@ -281,8 +281,7 @@ public class ImporterPlugin extends Plugin
 					}
 					catch (IOException e) {
 						Msg.showError(JavaFileListHandler.class, tool.getToolFrame(),
-							"Packed DB Import Failed",
-							"Failed to import " + f.getName(), e);
+							"Packed DB Import Failed", "Failed to import " + f.getName(), e);
 					}
 				}
 
