@@ -2852,9 +2852,10 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 :ldrexd^COND Rd,Rd2,[Rn]  is $(AMODE) & ARMcond=1 & COND & c2027=0x1b & Rn & Rd & Rd2 & c0011=0xf9f
 {
-	build COND;
-  	Rd = *(Rn);
-  	Rd2 = *(Rn + 4);
+  build COND;
+  local addr:4 = Rn;
+  Rd = *(addr);
+  Rd2 = *(addr + 4);
 }
 
 :ldrexh^COND Rd,[Rn]  is $(AMODE) & ARMcond=1 & COND & c2027=0x1f & Rn & Rd & c0011=0xf9f
