@@ -33,7 +33,7 @@
 #@env OPT_REMOTE_PORT:int=12345 "Remote Trace RMI Port" "A free port on the remote end to receive and forward the Trace RMI connection."
 #@env OPT_EXTRA_SSH_ARGS:str="" "Extra ssh arguments" "Extra arguments to pass to ssh. Use with care."
 #@env OPT_GDB_PATH:str="gdb" "gdb command" "The path to gdb on the remote system. Omit the full path to resolve using the system PATH."
-#@env OPT_START_CMD:StartCmd="start" "Run command" "The gdb command to actually run the target."
+#@env OPT_START_CMD:StartCmd="starti" "Run command" "The gdb command to actually run the target."
 
 target_image="$1"
 shift

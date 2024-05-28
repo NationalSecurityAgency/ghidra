@@ -150,15 +150,23 @@ public class TraceRmiLauncherServicePlugin extends Plugin
 		return first.getPath();
 	}
 
-	public static File getProgramPath(Program program) {
+	public static String getProgramPath(Program program, boolean isLocal) {
 		if (program == null) {
 			return null;
 		}
 		File exec = tryProgramPath(program.getExecutablePath());
 		if (exec != null) {
-			return exec;
+			return exec.getAbsolutePath();
 		}
-		return tryProgramPath(extractFirstFsrl(program));
+		String first = extractFirstFsrl(program);
+		if (!isLocal) {
+			return first;
+		}
+		exec = tryProgramPath(first);
+		if (exec != null) {
+			return exec.getAbsolutePath();
+		}
+		return null;
 	}
 
 	protected final ToolOptions options;

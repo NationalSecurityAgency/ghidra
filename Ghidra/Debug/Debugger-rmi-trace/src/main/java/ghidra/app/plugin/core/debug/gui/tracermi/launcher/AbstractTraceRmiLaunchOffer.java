@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.charset.Charset;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.*;
@@ -42,6 +43,7 @@ import ghidra.debug.api.modules.ModuleMapProposal.ModuleMapEntry;
 import ghidra.debug.api.tracermi.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.AutoConfigState.ConfigStateField;
+import ghidra.framework.plugintool.AutoConfigState.PathIsFile;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.InstructionIterator;
@@ -263,6 +265,54 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 		saveState(saveLauncherArgsToState(args, params));
 	}
 
+	interface ImageParamSetter {
+		@SuppressWarnings("unchecked")
+		static ImageParamSetter get(ParameterDescription<?> param) {
+			if (param.type == String.class) {
+				return new StringImageParamSetter((ParameterDescription<String>) param);
+			}
+			if (param.type == PathIsFile.class) {
+				return new FileImageParamSetter((ParameterDescription<PathIsFile>) param);
+			}
+			Msg.warn(ImageParamSetter.class,
+				"'Image' parameter has unsupported type: " + param.type);
+			return null;
+		}
+
+		void setImage(Map<String, Object> map, Program program);
+	}
+
+	static class StringImageParamSetter implements ImageParamSetter {
+		private final ParameterDescription<String> param;
+
+		public StringImageParamSetter(ParameterDescription<String> param) {
+			this.param = param;
+		}
+
+		@Override
+		public void setImage(Map<String, Object> map, Program program) {
+			// str-type Image is a hint that the launcher is remote
+			String value = TraceRmiLauncherServicePlugin.getProgramPath(program, false);
+			param.set(map, value);
+		}
+	}
+
+	static class FileImageParamSetter implements ImageParamSetter {
+		private final ParameterDescription<PathIsFile> param;
+
+		public FileImageParamSetter(ParameterDescription<PathIsFile> param) {
+			this.param = param;
+		}
+
+		@Override
+		public void setImage(Map<String, Object> map, Program program) {
+			// file-type Image is a hint that the launcher is local
+			String str = TraceRmiLauncherServicePlugin.getProgramPath(program, true);
+			PathIsFile value = str == null ? null : new PathIsFile(Paths.get(str));
+			param.set(map, value);
+		}
+	}
+
 	/**
 	 * Generate the default launcher arguments
 	 * 
@@ -277,15 +327,13 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 	protected Map<String, ?> generateDefaultLauncherArgs(
 			Map<String, ParameterDescription<?>> params) {
 		Map<String, Object> map = new LinkedHashMap<String, Object>();
-		ParameterDescription<String> paramImage = null;
+		ImageParamSetter imageSetter = null;
 		for (Entry<String, ParameterDescription<?>> entry : params.entrySet()) {
 			ParameterDescription<?> param = entry.getValue();
 			map.put(entry.getKey(), param.defaultValue);
 			if (PARAM_DISPLAY_IMAGE.equals(param.display)) {
-				if (param.type != String.class) {
-					Msg.warn(this, "'Image' parameter has unexpected type: " + paramImage.type);
-				}
-				paramImage = (ParameterDescription<String>) param;
+				imageSetter = ImageParamSetter.get(param);
+				// May still be null if type is not supported
 			}
 			else if (param.name.startsWith(PREFIX_PARAM_EXTTOOL)) {
 				String tool = param.name.substring(PREFIX_PARAM_EXTTOOL.length());
@@ -297,11 +345,8 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 				}
 			}
 		}
-		if (paramImage != null && program != null) {
-			File imageFile = TraceRmiLauncherServicePlugin.getProgramPath(program);
-			if (imageFile != null) {
-				paramImage.set(map, imageFile.getAbsolutePath());
-			}
+		if (imageSetter != null && program != null) {
+			imageSetter.setImage(map, program);
 		}
 		return map;
 	}
