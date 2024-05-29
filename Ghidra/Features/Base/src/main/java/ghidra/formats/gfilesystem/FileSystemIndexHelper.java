@@ -72,6 +72,7 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	public FileSystemIndexHelper(GFileSystem fs, FSRLRoot fsFSRL) {
 		GFile rootGFile = GFileImpl.fromFSRL(fs, null, fsFSRL.withPath("/"), true, -1);
 		rootDir = new FileData<>(rootGFile, null, -1);
+		fileToEntryMap.put(rootDir.file, rootDir);
 		directoryToListing.put(rootDir.file, new HashMap<>());
 	}
 
