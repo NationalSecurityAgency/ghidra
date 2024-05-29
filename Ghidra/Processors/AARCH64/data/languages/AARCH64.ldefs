@@ -12,8 +12,10 @@
     <description>Generic ARM64 v8.5-A LE instructions, LE data, missing some 8.5 vector</description>
     <compiler name="default" spec="AARCH64.cspec" id="default"/>
     <compiler name="Visual Studio" spec="AARCH64_win.cspec" id="windows"/>
+    <compiler name="golang" spec="AARCH64_golang.cspec" id="golang"/>
     <external_name tool="gnu" name="aarch64"/>
     <external_name tool="DWARF.register.mapping.file" name="AARCH64.dwarf"/>
+    <external_name tool="qemu" name="qemu-aarch64"/>
   </language>
   <language processor="AARCH64"
             endian="big"
@@ -27,8 +29,11 @@
             id="AARCH64:BE:64:v8A">
     <description>Generic ARM64 v8.5-A LE instructions, BE data, missing some 8.5 vector</description>
     <compiler name="default" spec="AARCH64.cspec" id="default"/>
+    <compiler name="golang" spec="AARCH64_golang.cspec" id="golang"/>
     <external_name tool="gnu" name="aarch64"/>
     <external_name tool="DWARF.register.mapping.file" name="AARCH64.dwarf"/>
+    <external_name tool="Golang.register.info.file" name="AARCH64_golang.register.info"/>
+    <external_name tool="qemu" name="qemu-aarch64_be"/>
   </language>
   <language processor="AARCH64"
             endian="little"
@@ -42,8 +47,10 @@
     <description>Generic ARM64 v8.5-A LE instructions, LE data, ilp32</description>
     <truncate_space space="ram" size="4"/>
     <compiler name="default" spec="AARCH64_ilp32.cspec" id="default"/>
+    <compiler name="golang" spec="AARCH64_golang.cspec" id="golang"/>
     <external_name tool="gnu" name="aarch64:ilp32"/>
     <external_name tool="DWARF.register.mapping.file" name="AARCH64.dwarf"/>
+    <external_name tool="qemu" name="qemu-aarch64"/>
   </language>
   <language processor="AARCH64"
             endian="big"
@@ -58,7 +65,9 @@
     <description>Generic ARM64 v8.5-A LE instructions, BE data, ilp32</description>
     <truncate_space space="ram" size="4"/>
     <compiler name="default" spec="AARCH64_ilp32.cspec" id="default"/>
+    <compiler name="golang" spec="AARCH64_golang.cspec" id="golang"/>
     <external_name tool="gnu" name="aarch64:ilp32"/>
     <external_name tool="DWARF.register.mapping.file" name="AARCH64.dwarf"/>
+    <external_name tool="qemu" name="qemu-aarch64_be"/>
   </language>
 </language_definitions>

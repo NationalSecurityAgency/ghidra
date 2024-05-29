@@ -37,10 +37,13 @@ public class UnixShellScriptTraceRmiLaunchOffer extends AbstractScriptTraceRmiLa
 	/**
 	 * Create a launch offer from the given shell script.
 	 * 
+	 * @param plugin the launcher service plugin
 	 * @param program the current program, usually the target image. In general, this should be used
 	 *            for at least two purposes. 1) To populate the default command line. 2) To ensure
 	 *            the target image is mapped in the resulting target trace.
-	 * @throws FileNotFoundException
+	 * @param script the script file that implements this offer
+	 * @return the offer
+	 * @throws FileNotFoundException if the script file does not exist
 	 */
 	public static UnixShellScriptTraceRmiLaunchOffer create(TraceRmiLauncherServicePlugin plugin,
 			Program program, File script) throws FileNotFoundException {

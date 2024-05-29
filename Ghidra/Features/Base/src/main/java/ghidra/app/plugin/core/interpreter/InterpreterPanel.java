@@ -28,8 +28,7 @@ import javax.swing.text.*;
 
 import docking.DockingUtils;
 import docking.actions.KeyBindingUtils;
-import generic.theme.GColor;
-import generic.theme.Gui;
+import generic.theme.*;
 import generic.util.WindowUtilities;
 import ghidra.app.plugin.core.console.CodeCompletion;
 import ghidra.framework.options.OptionsChangeListener;
@@ -50,9 +49,9 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		"This is the font that will be used in the Console.  " +
 			"Double-click the font example to change it.";
 
-	private static final Color NORMAL_COLOR = new GColor("color.fg.interpreterconsole");
-	private static final Color ERROR_COLOR = new GColor("color.fg.interpreterconsole.error");
-	private static final Color BG_COLOR = new GColor("color.bg.interpreterconsole");
+	private static final GColor NORMAL_COLOR = new GColor("color.fg.interpreterconsole");
+	private static final GColor ERROR_COLOR = new GColor("color.fg.interpreterconsole.error");
+	private static final GColor BG_COLOR = new GColor("color.bg.interpreterconsole");
 
 	public enum TextType {
 		STDOUT, STDERR, STDIN;
@@ -83,16 +82,6 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 
 	private boolean caretGuard = true;
 	private PluginTool tool;
-
-	private static SimpleAttributeSet createAttributes(Font font, Color color) {
-		SimpleAttributeSet attributeSet = new SimpleAttributeSet();
-		attributeSet.addAttribute(StyleConstants.FontFamily, font.getFamily());
-		attributeSet.addAttribute(StyleConstants.FontSize, font.getSize());
-		attributeSet.addAttribute(StyleConstants.Italic, font.isItalic());
-		attributeSet.addAttribute(StyleConstants.Bold, font.isBold());
-		attributeSet.addAttribute(StyleConstants.Foreground, color);
-		return attributeSet;
-	}
 
 	public InterpreterPanel(PluginTool tool, InterpreterConnection interpreter) {
 		this.tool = tool;
@@ -206,101 +195,9 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 			}
 		});
 
-		outputTextPane.addKeyListener(new KeyListener() {
-			private void handleEvent(KeyEvent e) {
+		outputTextPane.addKeyListener(new OutputTextPaneKeyListener());
 
-				// Ignore the copy event, as the output text pane knows how to copy its text
-				KeyStroke copyKeyStroke =
-					KeyStroke.getKeyStroke(KeyEvent.VK_C, DockingUtils.CONTROL_KEY_MODIFIER_MASK);
-				if (copyKeyStroke.equals(KeyStroke.getKeyStrokeForEvent(e))) {
-					return;
-				}
-
-				// Send everything else down to the inputTextPane.
-				KeyBindingUtils.retargetEvent(inputTextPane, e);
-			}
-
-			@Override
-			public void keyTyped(KeyEvent e) {
-				handleEvent(e);
-			}
-
-			@Override
-			public void keyReleased(KeyEvent e) {
-				handleEvent(e);
-			}
-
-			@Override
-			public void keyPressed(KeyEvent e) {
-				handleEvent(e);
-			}
-		});
-
-		inputTextPane.addKeyListener(new KeyAdapter() {
-			@Override
-			public void keyPressed(KeyEvent e) {
-				CodeCompletionWindow completionWindow = getCodeCompletionWindow();
-
-				switch (e.getKeyCode()) {
-					case KeyEvent.VK_ENTER:
-						if (completionWindow.isVisible()) {
-							/* As opposed to TAB, ENTER inserts the selected
-							 * completion (if there is one selected) then
-							 * *closes* the completionWindow
-							 */
-							insertCompletion(completionWindow.getCompletion());
-							completionWindow.setVisible(false);
-							e.consume();
-						}
-						else {
-							inputTextPane.setCaretPosition(inputTextPane.getDocument().getLength());
-						}
-						break;
-					case KeyEvent.VK_UP:
-						if (completionWindow.isVisible()) {
-							/* scroll up in the completion window */
-							completionWindow.selectPrevious();
-						}
-						else {
-							String historyUp = history.getHistoryUp();
-							if (historyUp != null) {
-								setInputTextPaneText(historyUp);
-							}
-						}
-						e.consume();
-						break;
-					case KeyEvent.VK_DOWN:
-						if (completionWindow.isVisible()) {
-							/* scroll down in the completion window */
-							completionWindow.selectNext();
-						}
-						else {
-							String historyDown = history.getHistoryDown();
-							if (historyDown != null) {
-								setInputTextPaneText(historyDown);
-							}
-						}
-						e.consume();
-						break;
-					case KeyEvent.VK_ESCAPE:
-						completionWindow.setVisible(false);
-						e.consume();
-						break;
-					default:
-
-						// Check for the completion window trigger on input that contains text
-						if (completionWindowTrigger.isTrigger(e) &&
-							!inputTextPane.getText().trim().isEmpty()) {
-							completionWindowTriggered(completionWindow);
-							e.consume();
-							break;
-						}
-
-						updateCompletionList();
-						// and let the key go through to the text input field
-				}
-			}
-		});
+		inputTextPane.addKeyListener(new InputTextPaneKeyListener());
 
 		outputTextPane.addCaretListener(e -> {
 			Caret caret = inputTextPane.getCaret();
@@ -373,9 +270,11 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 
 	private void updateFontAttributes(Font font) {
 		Font boldFont = font.deriveFont(Font.BOLD);
-		STDOUT_SET = createAttributes(font, NORMAL_COLOR);
-		STDERR_SET = createAttributes(font, ERROR_COLOR);
-		STDIN_SET = createAttributes(boldFont, NORMAL_COLOR);
+
+		STDOUT_SET = new GAttributes(font, NORMAL_COLOR);
+		STDOUT_SET = new GAttributes(font, NORMAL_COLOR);
+		STDERR_SET = new GAttributes(font, ERROR_COLOR);
+		STDIN_SET = new GAttributes(boldFont, NORMAL_COLOR);
 
 		setTextPaneFont(inputTextPane, boldFont);
 		setTextPaneFont(promptTextPane, font);
@@ -389,8 +288,7 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		HelpLocation help = new HelpLocation(getName(), "ConsolePlugin");
 		options.setOptionsHelpLocation(help);
 
-		options.registerThemeFontBinding(FONT_OPTION_LABEL, FONT_ID, help,
-			FONT_DESCRIPTION);
+		options.registerThemeFontBinding(FONT_OPTION_LABEL, FONT_ID, help, FONT_DESCRIPTION);
 		options.registerOption(COMPLETION_WINDOW_TRIGGER_LABEL, CompletionWindowTrigger.TAB, help,
 			COMPLETION_WINDOW_TRIGGER_DESCRIPTION);
 
@@ -490,8 +388,8 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 			completionInsertionPosition = inputTextPane.getCaretPosition();
 
 			String text = getInputTextPaneText();
-			List<CodeCompletion> completions = InterpreterPanel.this.interpreter.getCompletions(
-				text, completionInsertionPosition);
+			List<CodeCompletion> completions =
+				InterpreterPanel.this.interpreter.getCompletions(text, completionInsertionPosition);
 			completionWindow.updateCompletionList(completions);
 		});
 	}
@@ -780,6 +678,110 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 			isClosed.set(false);
 			queuedBytes.clear();
 			queuedBytes.offer(EMPTY_BYTES);
+		}
+	}
+
+	private class OutputTextPaneKeyListener implements KeyListener {
+
+		private final KeyStroke COPY_KEY_STROKE =
+			KeyStroke.getKeyStroke(KeyEvent.VK_C, DockingUtils.CONTROL_KEY_MODIFIER_MASK);
+		KeyStroke SELECT_ALL_KEY_STROKE =
+			KeyStroke.getKeyStroke(KeyEvent.VK_A, DockingUtils.CONTROL_KEY_MODIFIER_MASK);
+
+		private void handleEvent(KeyEvent e) {
+
+			// Ignore the events we wish for the output text pane to process
+			if (COPY_KEY_STROKE.equals(KeyStroke.getKeyStrokeForEvent(e))) {
+				return;
+			}
+
+			if (SELECT_ALL_KEY_STROKE.equals(KeyStroke.getKeyStrokeForEvent(e))) {
+				return;
+			}
+
+			// Send everything else down to the inputTextPane.
+			KeyBindingUtils.retargetEvent(inputTextPane, e);
+		}
+
+		@Override
+		public void keyTyped(KeyEvent e) {
+			handleEvent(e);
+		}
+
+		@Override
+		public void keyReleased(KeyEvent e) {
+			handleEvent(e);
+		}
+
+		@Override
+		public void keyPressed(KeyEvent e) {
+			handleEvent(e);
+		}
+	}
+
+	private class InputTextPaneKeyListener extends KeyAdapter {
+		@Override
+		public void keyPressed(KeyEvent e) {
+			CodeCompletionWindow completionWindow = getCodeCompletionWindow();
+
+			switch (e.getKeyCode()) {
+				case KeyEvent.VK_ENTER:
+					if (completionWindow.isVisible()) {
+						/* As opposed to TAB, ENTER inserts the selected
+						 * completion (if there is one selected) then
+						 * *closes* the completionWindow
+						 */
+						insertCompletion(completionWindow.getCompletion());
+						completionWindow.setVisible(false);
+						e.consume();
+					}
+					else {
+						inputTextPane.setCaretPosition(inputTextPane.getDocument().getLength());
+					}
+					break;
+				case KeyEvent.VK_UP:
+					if (completionWindow.isVisible()) {
+						/* scroll up in the completion window */
+						completionWindow.selectPrevious();
+					}
+					else {
+						String historyUp = history.getHistoryUp();
+						if (historyUp != null) {
+							setInputTextPaneText(historyUp);
+						}
+					}
+					e.consume();
+					break;
+				case KeyEvent.VK_DOWN:
+					if (completionWindow.isVisible()) {
+						/* scroll down in the completion window */
+						completionWindow.selectNext();
+					}
+					else {
+						String historyDown = history.getHistoryDown();
+						if (historyDown != null) {
+							setInputTextPaneText(historyDown);
+						}
+					}
+					e.consume();
+					break;
+				case KeyEvent.VK_ESCAPE:
+					completionWindow.setVisible(false);
+					e.consume();
+					break;
+				default:
+
+					// Check for the completion window trigger on input that contains text
+					if (completionWindowTrigger.isTrigger(e) &&
+						!inputTextPane.getText().trim().isEmpty()) {
+						completionWindowTriggered(completionWindow);
+						e.consume();
+						break;
+					}
+
+					updateCompletionList();
+					// and let the key go through to the text input field
+			}
 		}
 	}
 }

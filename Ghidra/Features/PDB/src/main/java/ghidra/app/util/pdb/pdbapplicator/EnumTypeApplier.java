@@ -21,7 +21,6 @@ import ghidra.app.util.SymbolPath;
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
 import ghidra.program.model.data.*;
-import ghidra.program.model.data.Enum;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 
@@ -32,17 +31,15 @@ public class EnumTypeApplier extends AbstractComplexTypeApplier {
 
 	// Intended for: AbstractEnumMsType
 	/**
-	 * Constructor for enum type applier, for transforming a enum into a
-	 * Ghidra DataType.
-	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
+	 * Constructor for enum type applier, for transforming a enum into a Ghidra DataType
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working
 	 */
 	public EnumTypeApplier(DefaultPdbApplicator applicator) {
 		super(applicator);
 	}
 
-	private long getMask(AbstractEnumMsType type, FixupContext fixupContext, boolean breakCycle)
-			throws CancelledException, PdbException {
-		switch (getLength(type, fixupContext, breakCycle)) {
+	private long getMask(AbstractEnumMsType type) {
+		switch (getLength(type)) {
 			case 1:
 				return 0xffL;
 			case 2:
@@ -54,24 +51,21 @@ public class EnumTypeApplier extends AbstractComplexTypeApplier {
 		}
 	}
 
-	private int getLength(AbstractEnumMsType type, FixupContext fixupContext, boolean breakCycle)
-			throws CancelledException, PdbException {
-		DataType underlyingDataType = getUnderlyingDataType(type, fixupContext, breakCycle);
+	private int getLength(AbstractEnumMsType type) {
+		DataType underlyingDataType = getUnderlyingDataType(type);
 		if (underlyingDataType == null) {
 			return 1;
 		}
 		return Integer.max(underlyingDataType.getLength(), 1);
 	}
 
-	private DataType getUnderlyingDataType(AbstractEnumMsType type, FixupContext fixupContext,
-			boolean breakCycle) throws CancelledException, PdbException {
+	private DataType getUnderlyingDataType(AbstractEnumMsType type) {
 		RecordNumber underlyingRecordNumber = type.getUnderlyingRecordNumber();
-		return applicator.getProcessedDataType(underlyingRecordNumber, fixupContext, breakCycle);
+		return applicator.getDataType(underlyingRecordNumber);
 	}
 
-	boolean isSigned(AbstractEnumMsType type, FixupContext fixupContext, boolean breakCycle)
-			throws CancelledException, PdbException {
-		DataType underlyingType = getUnderlyingDataType(type, fixupContext, breakCycle);
+	boolean isSigned(AbstractEnumMsType type) {
+		DataType underlyingType = getUnderlyingDataType(type);
 		if (underlyingType == null) {
 			return false;
 		}
@@ -81,8 +75,7 @@ public class EnumTypeApplier extends AbstractComplexTypeApplier {
 		return false;
 	}
 
-	private EnumDataType createEmptyEnum(AbstractEnumMsType type, FixupContext fixupContext,
-			boolean breakCycle) throws CancelledException, PdbException {
+	private EnumDataType createEmptyEnum(AbstractEnumMsType type) {
 
 		AbstractEnumMsType defType = getDefinitionType(type);
 
@@ -90,39 +83,31 @@ public class EnumTypeApplier extends AbstractComplexTypeApplier {
 		CategoryPath categoryPath = applicator.getCategory(fixedPath.getParent());
 
 		EnumDataType enumDataType = new EnumDataType(categoryPath, fixedPath.getName(),
-			getLength(defType, fixupContext, breakCycle), applicator.getDataTypeManager());
+			getLength(defType), applicator.getDataTypeManager());
 
 		return enumDataType;
 	}
 
 	@Override
-	DataType apply(AbstractMsType type, FixupContext fixupContext, boolean breakCycle)
+	boolean apply(AbstractMsType type)
 			throws PdbException, CancelledException {
 		//Ghidra cannot handle fwdrefs and separate definitions for enumerates as it can for
 		//  composites.  Thus, we will just try to provide the defined version now.
-		Integer number = applicator.getNumber(type);
-		Integer mapped = applicator.getMappedComplexType(number);
-		AbstractEnumMsType definedEnum = (AbstractEnumMsType) applicator.getPdb()
-				.getTypeRecord(RecordNumber.typeRecordNumber(mapped));
+		AbstractEnumMsType definedEnum =
+			(AbstractEnumMsType) applicator.getMappedTypeRecord(type.getRecordNumber());
 
-		DataType existingDt = applicator.getDataType(mapped);
-		if (existingDt != null) {
-			if (!(existingDt instanceof Enum)) {
-				throw new PdbException("PDB error retrieving Enum type");
-			}
-			return existingDt;
-		}
+		// Note that we do not need to check on underlying data types, as there are none.
 
-		EnumDataType enumDataType = createEmptyEnum(definedEnum, fixupContext, breakCycle);
-		applyEnumMsType(enumDataType, definedEnum, fixupContext, breakCycle);
+		EnumDataType enumDataType = createEmptyEnum(definedEnum);
+		applyEnumMsType(enumDataType, definedEnum);
 
-		DataType dataType = applicator.resolve(enumDataType);
-		applicator.putDataType(mapped, dataType);
-		return dataType;
+		DataType dataType = enumDataType;
+		applicator.putDataType(definedEnum, dataType);
+		return true;
 	}
 
-	private EnumDataType applyEnumMsType(EnumDataType enumDataType, AbstractEnumMsType type,
-			FixupContext fixupContext, boolean breakCycle) throws PdbException, CancelledException {
+	private EnumDataType applyEnumMsType(EnumDataType enumDataType, AbstractEnumMsType type)
+			throws PdbException {
 
 		if (enumDataType.getCount() != 0) {
 			//already applied
@@ -147,19 +132,18 @@ public class EnumTypeApplier extends AbstractComplexTypeApplier {
 				enumerates.size() + " available for " + fullPathName);
 		}
 
-		int length = getLength(type, fixupContext, breakCycle);
-		boolean isSigned = isSigned(type, fixupContext, breakCycle);
+		int length = getLength(type);
+		boolean isSigned = isSigned(type);
 		for (AbstractEnumerateMsType enumerateType : enumerates) {
 			SymbolPath memberSymbolPath = new SymbolPath(enumerateType.getName());
 			enumDataType.add(memberSymbolPath.getName(), narrowingConversion(type, length, isSigned,
-				enumerateType.getNumeric(), fixupContext, breakCycle));
+				enumerateType.getNumeric()));
 		}
 		return enumDataType;
 	}
 
 	private long narrowingConversion(AbstractEnumMsType type, int outputSize, boolean outputSigned,
-			Numeric numeric, FixupContext fixupContext, boolean breakCycle)
-			throws CancelledException, PdbException {
+			Numeric numeric) {
 		if (!numeric.isIntegral()) {
 			Msg.info(this, "Non-integral numeric found: " + numeric);
 			return 0;
@@ -168,7 +152,7 @@ public class EnumTypeApplier extends AbstractComplexTypeApplier {
 			pdbLogAndInfoMessage(this, "Using zero in place of non-integral enumerate: " + numeric);
 			return 0L; //
 		}
-		return numeric.getIntegral().longValue() & getMask(type, fixupContext, breakCycle);
+		return numeric.getIntegral().longValue() & getMask(type);
 	}
 
 	private AbstractEnumMsType getDefinitionType(AbstractComplexMsType type) {

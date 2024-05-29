@@ -28,14 +28,14 @@ import ghidra.util.exception.CancelledException;
 /**
  * A {@link GoType} structure that defines a golang interface. 
  */
-@StructureMapping(structureName = "runtime.interfacetype")
+@StructureMapping(structureName = {"runtime.interfacetype", "internal/abi.InterfaceType"})
 public class GoInterfaceType extends GoType {
 
 	@FieldMapping
 	@MarkupReference("getPkgPath")
 	private long pkgpath;	// pointer to name 
 
-	@FieldMapping
+	@FieldMapping(fieldName = {"mhdr", "Methods"})
 	private GoSlice mhdr;
 
 	public GoInterfaceType() {

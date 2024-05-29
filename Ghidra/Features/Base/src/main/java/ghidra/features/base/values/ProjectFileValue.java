@@ -15,6 +15,8 @@
  */
 package ghidra.features.base.values;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import javax.swing.JComponent;
 import javax.swing.JTextField;
 
@@ -168,7 +170,7 @@ public class ProjectFileValue extends AbstractValue<DomainFile> {
 
 		ProjectFileBrowserPanel(Project project, String name, String startPath,
 				Class<? extends DomainObject> projectFileClass) {
-			super(DataTreeDialog.OPEN, project, name, startPath);
+			super(OPEN, project, name, startPath);
 			filter = df -> projectFileClass.isAssignableFrom(df.getDomainObjectClass());
 		}
 

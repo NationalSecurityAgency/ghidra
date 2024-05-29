@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.functioncompare;
 
+import static ghidra.util.datastruct.Duo.Side.*;
+
 import java.awt.event.MouseEvent;
 import java.util.*;
 
@@ -23,7 +25,6 @@ import docking.Tool;
 import docking.action.DockingAction;
 import docking.action.DockingActionIf;
 import docking.actions.PopupActionProvider;
-import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import ghidra.app.services.FunctionComparisonModel;
 import ghidra.app.services.FunctionComparisonService;
 import ghidra.app.util.viewer.listingpanel.ListingCodeComparisonPanel;
@@ -31,7 +32,6 @@ import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.app.util.viewer.util.CodeComparisonPanel;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
-import ghidra.framework.plugintool.Plugin;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
@@ -47,7 +47,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 
 	protected static final String HELP_TOPIC = "FunctionComparison";
 	protected FunctionComparisonPanel functionComparisonPanel;
-	protected Plugin plugin;
+	protected FunctionComparisonPlugin plugin;
 
 	/** Contains all the comparison data to be displayed by this provider */
 	protected FunctionComparisonModel model;
@@ -61,7 +61,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	 *        the same window
 	 * @param owner the provider owner, usually a plugin name
 	 */
-	public FunctionComparisonProvider(Plugin plugin, String name, String owner) {
+	public FunctionComparisonProvider(FunctionComparisonPlugin plugin, String name, String owner) {
 		this(plugin, name, owner, null);
 	}
 
@@ -74,7 +74,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	 * @param owner the provider owner, usually a plugin name
 	 * @param contextType the type of context supported by this provider; may be null
 	 */
-	public FunctionComparisonProvider(Plugin plugin, String name, String owner,
+	public FunctionComparisonProvider(FunctionComparisonPlugin plugin, String name, String owner,
 			Class<?> contextType) {
 		super(plugin.getTool(), name, owner, contextType);
 		this.plugin = plugin;
@@ -88,7 +88,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	@Override
 	public FunctionComparisonPanel getComponent() {
 		if (functionComparisonPanel == null) {
-			functionComparisonPanel = new FunctionComparisonPanel(this, tool, null, null);
+			functionComparisonPanel = new FunctionComparisonPanel(this, tool);
 		}
 		return functionComparisonPanel;
 	}
@@ -97,6 +97,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	public void closeComponent() {
 		super.closeComponent();
 		closeListener.call();
+		closeListener = Callback.dummy();
 	}
 
 	@Override
@@ -107,19 +108,14 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 		buff.append(getName() + "\n");
 		buff.append("Tab Text: ");
 		buff.append(getTabText() + "\n");
-		Function leftFunction = functionComparisonPanel.getLeftFunction();
-		String leftName = (leftFunction != null) ? leftFunction.getName() : "No Function";
-		buff.append("Function 1: " + leftName + "\n");
-		Function rightFunction = functionComparisonPanel.getRightFunction();
-		String rightName = (rightFunction != null) ? rightFunction.getName() : "No Function";
-		buff.append("Function 2: " + rightName + "\n");
+		buff.append(functionComparisonPanel.getDescription());
 		buff.append("tool = " + tool + "\n");
 		return buff.toString();
 	}
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
-		CodeComparisonPanel<? extends FieldPanelCoordinator> currentComponent =
+		CodeComparisonPanel currentComponent =
 			functionComparisonPanel.getCurrentComponent();
 		return currentComponent.getActionContext(this, event);
 	}
@@ -128,6 +124,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	public void removeFromTool() {
 		tool.removePopupActionProvider(this);
 		super.removeFromTool();
+		plugin.providerClosed(this);
 	}
 
 	@Override
@@ -144,7 +141,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 			ListingCodeComparisonPanel dualListingPanel =
 				functionComparisonPanel.getDualListingPanel();
 			if (dualListingPanel != null) {
-				ListingPanel leftPanel = dualListingPanel.getLeftPanel();
+				ListingPanel leftPanel = dualListingPanel.getListingPanel(LEFT);
 				return leftPanel.getHeaderActions(getName());
 			}
 		}
@@ -177,6 +174,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	 * @param program the program being closed
 	 */
 	public void programClosed(Program program) {
+		functionComparisonPanel.programClosed(program);
 		model.removeFunctions(program);
 		closeIfEmpty();
 	}
@@ -198,7 +196,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	 * @param functions the functions to remove
 	 */
 	public void removeFunctions(Set<Function> functions) {
-		functions.stream().forEach(f -> model.removeFunction(f));
+		model.removeFunctions(functions);
 		closeIfEmpty();
 	}
 
@@ -209,7 +207,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	 * @param program the program that was restored (undo/redo)
 	 */
 	public void programRestored(Program program) {
-		CodeComparisonPanel<? extends FieldPanelCoordinator> comparePanel =
+		CodeComparisonPanel comparePanel =
 			functionComparisonPanel.getCurrentComponent();
 		comparePanel.programRestored(program);
 	}
@@ -281,4 +279,13 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	public void setCloseListener(Callback closeListener) {
 		this.closeListener = Callback.dummyIfNull(closeListener);
 	}
+
+	public CodeComparisonPanel getCodeComparisonPanelByName(String name) {
+		return functionComparisonPanel.getCodeComparisonPanelByName(name);
+	}
+
+	public void dispose() {
+		functionComparisonPanel.dispose();
+	}
+
 }

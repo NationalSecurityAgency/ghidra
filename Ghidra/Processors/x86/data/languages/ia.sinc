@@ -809,6 +809,7 @@ m64:  "qword ptr" Mem  	is Mem      { export *:8 Mem; }
 # m80: Mem    is Mem      { export *:10 Mem; }
 m128: "xmmword ptr" Mem	is Mem      { export *:16 Mem; }
 m256: "ymmword ptr" Mem	is Mem      { export *:32 Mem; }
+m512: "64b ptr" Mem	    is Mem      { export *:64 Mem; }
 
 # spec versions of the m8/m16/m32/... tables explicitly print the operand size
 spec_m8: "byte ptr "^Mem     is Mem      { export *:1 Mem; }
@@ -3465,8 +3466,32 @@ define pcodeop ptwrite;
 :RCL rm32,imm8      is vexMode=0 & opsize=1 & byte=0xC1; rm32 & check_rm32_dest ... & reg_opcode=2 ... ; imm8 { local cnt=imm8&0x1f; tmp:8=(zext(CF)<<32)|zext(rm32); tmp=(tmp<<cnt)|(tmp>>(33-cnt)); rm32=tmp(0); CF=(tmp&0x100000000)!=0; build check_rm32_dest; }
 @ifdef IA64
 :RCL rm64,n1        is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xD1; rm64 & n1 & reg_opcode=2 ...   { local tmpCF=CF; CF=rm64 s< 0; rm64=(rm64<<1)|zext(tmpCF); OF=CF^(rm64 s< 0);}
-:RCL rm64,CL        is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xD3; CL & rm64 & reg_opcode=2 ...   { local cnt=CL&0x3f; tmp:16=(zext(CF)<<64)|zext(rm64); tmp=(tmp<<cnt)|(tmp>>(65-cnt)); rm64=tmp(0); CF=(tmp&0x1000000000000000)!=0; }
-:RCL rm64,imm8      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xC1; rm64 & reg_opcode=2 ... ; imm8 { local cnt=imm8&0x3f; tmp:16=(zext(CF)<<64)|zext(rm64); tmp=(tmp<<cnt)|(tmp>>(65-cnt)); rm64=tmp(0); CF=(tmp&0x1000000000000000)!=0; }
+
+:RCL rm64,CL        is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xD3; CL & rm64 & reg_opcode=2 ...   
+{ 
+  local cnt:1=CL&0x3f;
+  local rm64_copy:8 = rm64;
+  local CF_copy:1 = CF;
+  rotated:8 = rm64_copy << cnt;
+  rotated = rotated | (rm64_copy >>  (65 -cnt));
+  local CF_bit:8 = zext(CF_copy) << cnt-1;
+  rotated = rotated | CF_bit;
+  conditionalAssign(CF, cnt == 0:1, CF_copy, ((1:8<<(64-cnt)) & rm64_copy) != 0);
+  rm64 = rotated; 
+}
+
+:RCL rm64,imm8      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xC1; rm64 & reg_opcode=2 ... ; imm8 
+{ 
+  local cnt:1=imm8&0x3f; 
+  local rm64_copy:8 = rm64;
+  local CF_copy:1 = CF;
+  rotated:8 = rm64_copy << cnt;
+  rotated = rotated | (rm64_copy >>  (65 -cnt));
+  local CF_bit:8 = zext(CF_copy) << cnt-1;
+  rotated = rotated | CF_bit;
+  conditionalAssign(CF, cnt == 0:1, CF_copy, ((1:8<<(64-cnt)) & rm64_copy) != 0);
+  rm64 = rotated;
+}
 @endif
 
 :RCR  rm8,n1        is vexMode=0 & byte=0xD0; rm8 & n1 & reg_opcode=3 ...           { local tmpCF=CF; OF=rm8 s< 0; CF=(rm8&1)!=0; rm8=(rm8>>1)|(tmpCF<<7); OF=OF^(rm8 s< 0); }
@@ -3480,8 +3505,32 @@ define pcodeop ptwrite;
 :RCR rm32,imm8      is vexMode=0 & opsize=1 & byte=0xC1; rm32 & check_rm32_dest ... & reg_opcode=3 ... ; imm8 { local cnt=imm8&0x1f; tmp:8=(zext(CF)<<32)|zext(rm32); tmp=(tmp>>cnt)|(tmp<<(33-cnt)); rm32=tmp(0); CF=(tmp&0x100000000)!=0; build check_rm32_dest; }
 @ifdef IA64
 :RCR rm64,n1        is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xD1; rm64 & n1 & reg_opcode=3 ...   { local tmpCF=CF; OF=rm64 s< 0; CF=(rm64&1)!=0; rm64=(rm64>>1)|(zext(tmpCF)<<63); OF=OF^(rm64 s< 0); }
-:RCR rm64,CL        is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xD3; CL & rm64 & reg_opcode=3 ...   { local cnt=CL&0x3f; tmp:16=(zext(CF)<<64)|zext(rm64); tmp=(tmp>>cnt)|(tmp<<(65-cnt)); rm64=tmp(0); CF=(tmp&0x1000000000000000)!=0; }
-:RCR rm64,imm8      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xC1; rm64 & reg_opcode=3 ... ; imm8 { local cnt=imm8&0x3f; tmp:16=(zext(CF)<<64)|zext(rm64); tmp=(tmp>>cnt)|(tmp<<(65-cnt)); rm64=tmp(0); CF=(tmp&0x1000000000000000)!=0; }
+
+:RCR rm64,CL        is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xD3; CL & rm64 & reg_opcode=3 ...   
+{ 
+  local cnt:1=CL&0x3f; 
+  local rm64_copy:8 = rm64;
+  local CF_copy:1 = CF;
+  rotated:8 = rm64_copy >> cnt;
+  rotated = rotated | (rm64_copy <<  (65 -cnt));
+  local CF_bit:8 = zext(CF_copy) << 64-cnt;
+  rotated = rotated | CF_bit;
+  conditionalAssign(CF, cnt == 0:1, CF_copy, ((1:8<<(cnt-1)) & rm64_copy) != 0);
+  rm64 = rotated;
+ }
+
+:RCR rm64,imm8      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xC1; rm64 & reg_opcode=3 ... ; imm8 
+{ 
+  local cnt:1=imm8&0x3f; 
+  local rm64_copy:8 = rm64;
+  local CF_copy:1 = CF;
+  rotated:8 = rm64_copy >> cnt;
+  rotated = rotated | (rm64_copy <<  (65 -cnt));
+  local CF_bit:8 = zext(CF_copy) << 64-cnt;
+  rotated = rotated | CF_bit;
+  conditionalAssign(CF, cnt == 0:1, CF_copy, ((1:8<<(cnt-1)) & rm64_copy) != 0);
+  rm64 = rotated;
+ }
 @endif
 
 @ifdef IA64
@@ -4136,10 +4185,10 @@ define pcodeop f2xm1;
 :FIADD spec_m32     is vexMode=0 & byte=0xDA; reg_opcode=0 ... & spec_m32            { ST0 = ST0 f+ int2float(spec_m32); }   
 :FIADD spec_m16     is vexMode=0 & byte=0xDE; reg_opcode=0 ... & spec_m16            { ST0 = ST0 f+ int2float(spec_m16); }   
 
-define pcodeop convert_bcd;
-:FBLD  spec_m80     is vexMode=0 & byte=0xDF; reg_opcode=4 ... & spec_m80            { fdec(); ST0 = convert_bcd(spec_m80); }
-
-:FBSTP spec_m80     is vexMode=0 & byte=0xDF; reg_opcode=6 ... & spec_m80            { spec_m80 = convert_bcd(ST0); fpop(); }
+define pcodeop from_bcd;
+:FBLD  spec_m80     is vexMode=0 & byte=0xDF; reg_opcode=4 ... & spec_m80            { fdec(); ST0 = from_bcd(spec_m80); }
+define pcodeop to_bcd;
+:FBSTP spec_m80     is vexMode=0 & byte=0xDF; reg_opcode=6 ... & spec_m80            { spec_m80 = to_bcd(ST0); fpop(); }
 
 :FCHS           is vexMode=0 & byte=0xD9; byte=0xE0                 { ST0 = f- ST0; }
 
@@ -4185,7 +4234,7 @@ define pcodeop fcos;
 :FDIV spec_m64      is vexMode=0 & byte=0xDC; reg_opcode=6 ... & spec_m64            { ST0 = ST0 f/ float2float(spec_m64); }    
 :FDIV ST0,freg      is vexMode=0 & byte=0xD8; frow=15 & fpage=0 & freg & ST0        { ST0 = ST0 f/ freg; }            
 :FDIV freg,ST0      is vexMode=0 & byte=0xDC; frow=15 & fpage=1 & freg & ST0        { freg = freg f/ ST0; }           
-:FDIVP freg,ST0     is vexMode=0 & byte=0xDE; frow=15 & fpage=1 & freg & ST0        { freg = ST0 f/ freg; fpop(); }       
+:FDIVP freg,ST0     is vexMode=0 & byte=0xDE; frow=15 & fpage=1 & freg & ST0        { freg = freg f/ ST0; fpop(); }       
 :FDIVP              is vexMode=0 & byte=0xDE; byte=0xF9                 { ST1 = ST1 f/ ST0; fpop(); }         
 :FIDIV spec_m32     is vexMode=0 & byte=0xDA; reg_opcode=6 ... & spec_m32            { ST0 = ST0 f/ int2float(spec_m32); }      
 :FIDIV spec_m16     is vexMode=0 & byte=0xDE; reg_opcode=6 ... & spec_m16            { ST0 = ST0 f/ int2float(spec_m16); }      
@@ -4194,7 +4243,7 @@ define pcodeop fcos;
 :FDIVR spec_m64     is vexMode=0 & byte=0xDC; reg_opcode=7 ... & spec_m64            { ST0 = float2float(spec_m64) f/ ST0; }    
 :FDIVR ST0,freg     is vexMode=0 & byte=0xD8; frow=15 & fpage=1 & freg & ST0        { ST0 = freg f/ ST0; }            
 :FDIVR freg,ST0     is vexMode=0 & byte=0xDC; frow=15 & fpage=0 & freg & ST0        { freg = ST0 f/ freg; }           
-:FDIVRP freg,ST0    is vexMode=0 & byte=0xDE; frow=15 & fpage=0 & freg & ST0        { freg = freg f/ ST0; fpop(); }       
+:FDIVRP freg,ST0    is vexMode=0 & byte=0xDE; frow=15 & fpage=0 & freg & ST0        { freg = ST0 f/ freg; fpop(); }       
 :FDIVRP             is vexMode=0 & byte=0xDE; byte=0xF1                 { ST1 = ST0 f/ ST1; fpop(); }         
 :FIDIVR spec_m32    is vexMode=0 & byte=0xDA; reg_opcode=7 ... & spec_m32            { ST0 = int2float(spec_m32) f/ ST0; }      
 :FIDIVR spec_m16    is vexMode=0 & byte=0xDE; reg_opcode=7 ... & spec_m16            { ST0 = int2float(spec_m16) f/ ST0; }      
@@ -5572,6 +5621,30 @@ define pcodeop minps;
 :MOVQ         rm64, mmxreg   is $(LONGMODE_ON) & vexMode=0 &  opsize=2 & mandover=0 & byte=0x0F; byte=0x7E; rm64 & mmxreg ...         { rm64 = mmxreg; }
 :MOVQ         XmmReg, rm64   is $(LONGMODE_ON) & vexMode=0 &  opsize=2 & $(PRE_66) & byte=0x0F; byte=0x6E; rm64 & XmmReg ...         { XmmReg = zext(rm64); }
 :MOVQ         rm64, XmmReg   is $(LONGMODE_ON) & vexMode=0 &  opsize=2 & $(PRE_66) & byte=0x0F; byte=0x7E; rm64 & XmmReg ...         { rm64 = XmmReg(0); }
+@endif
+
+
+:MOVDIRI Mem,Reg32        is $(LONGMODE_OFF) & vexMode=0 & $(PRE_NO)  & byte=0x0F; byte=0x38; byte=0xF9; Mem & Reg32 ...     { *Mem = Reg32; }
+@ifdef IA64
+:MOVDIRI Mem,Reg64        is  vexMode=0 & $(PRE_NO)        & $(REX_W) & byte=0x0F; byte=0x38; byte=0xF9; Mem & Reg64 ...     { *Mem = Reg64; }
+@endif
+
+define pcodeop movdir64b;
+:MOVDIR64B    Reg16, m512 is $(LONGMODE_OFF) & vexMode=0 & $(PRE_66) & addrsize=0 & byte=0x0F; byte=0x38; byte=0xF8; Reg16 ... & m512 {
+	movdir64b(Reg16, m512);
+}
+:MOVDIR64B    Reg32, m512 is $(LONGMODE_OFF) & vexMode=0 & $(PRE_66) & addrsize=1 & byte=0x0F; byte=0x38; byte=0xF8; Reg32 ... & m512 {
+	movdir64b(Reg32, m512);
+}
+
+@ifdef IA64
+:MOVDIR64B    Reg32, m512 is $(LONGMODE_ON) & vexMode=0 & $(PRE_66) & addrsize=1 & byte=0x0F; byte=0x38; byte=0xF8; Reg32 ... & m512 {
+	movdir64b(Reg32, m512);
+}
+
+:MOVDIR64B    Reg64, m512 is $(LONGMODE_ON) & vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x38; byte=0xF8; Reg64 ... & m512 {
+	movdir64b(Reg64, m512);
+}
 @endif
 
 :MOVDDUP      XmmReg, m64         is vexMode=0 &  $(PRE_F2) & byte=0x0F; byte=0x12; m64 & XmmReg ...

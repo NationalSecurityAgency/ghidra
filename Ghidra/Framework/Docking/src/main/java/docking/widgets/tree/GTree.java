@@ -139,8 +139,7 @@ public class GTree extends JPanel implements BusyListener {
 		init();
 
 		DockingWindowManager.registerComponentLoadedListener(this,
-			(windowManager, provider) -> filterProvider.loadFilterPreference(windowManager,
-				uniquePreferenceKey));
+			(windowManager, provider) -> filterProvider.loadFilterPreference(windowManager));
 
 		filterUpdateManager = new SwingUpdateManager(1000, 30000, () -> updateModelFilter());
 		Gui.addThemeListener(themeListener);
@@ -246,6 +245,25 @@ public class GTree extends JPanel implements BusyListener {
 		mouseListenerDelegate = createMouseListenerDelegate();
 		filterProvider = new DefaultGTreeFilterProvider(this);
 		add(filterProvider.getFilterComponent(), BorderLayout.SOUTH);
+	}
+
+	/**
+	 * Sets an accessible name on the GTree. This prefix will be used to assign
+	 * meaningful accessible names to the tree, filter text field and the filter options button such
+	 * that screen readers will properly describe them. 
+	 * <P>
+	 * This prefix should be the base name that describes the type of items in the tree. 
+	 * This method will then append the necessary information to name the text field and the button.
+	 *
+	 * @param namePrefix the accessible name prefix to assign to the filter component. For
+	 * example if the tree contains fruits, then "Fruits" would be an appropriate prefix name.
+	 */
+	public void setAccessibleNamePrefix(String namePrefix) {
+		setName(namePrefix + "GTree");
+		tree.setName(namePrefix + " Tree");
+		tree.getAccessibleContext().setAccessibleName(namePrefix);
+		tree.getAccessibleContext().setAccessibleDescription("");
+		filterProvider.setAccessibleNamePrefix(namePrefix);
 	}
 
 	public void setCellRenderer(GTreeRenderer renderer) {
@@ -367,6 +385,17 @@ public class GTree extends JPanel implements BusyListener {
 	}
 
 	/**
+	 * Sets the filter restore state.  This method is a way to override the tree's filtering 
+	 * behavior, which is usually set by a call to {@link #saveFilterRestoreState()}.  Most clients
+	 * will never need to call this method.
+	 * 
+	 * @param state the state to set
+	 */
+	protected void setFilterRestoreState(GTreeState state) {
+		this.filterRestoreTreeState = state;
+	}
+
+	/**
 	 * Signal to the tree that it should record its expanded and selected state when a new filter is
 	 * applied
 	 */
@@ -383,6 +412,14 @@ public class GTree extends JPanel implements BusyListener {
 
 	void clearFilterRestoreState() {
 		filterRestoreTreeState = null;
+	}
+
+	/**
+	 * Returns the key that this tree uses to store preferences.
+	 * @return the key that this tree uses to store preferences.
+	 */
+	public String getPreferenceKey() {
+		return uniquePreferenceKey;
 	}
 
 	/**
@@ -670,7 +707,8 @@ public class GTree extends JPanel implements BusyListener {
 			return node; // this node is a valid child of the given root
 		}
 
-		GTreeNode parentNode = getNodeForPath(root, path.getParentPath());
+		TreePath parentPath = path.getParentPath();
+		GTreeNode parentNode = getNodeForPath(root, parentPath);
 		if (parentNode == null) {
 			return null; // must be a path we don't have
 		}
@@ -1094,17 +1132,17 @@ public class GTree extends JPanel implements BusyListener {
 			Consumer<GTreeNode> consumer) {
 
 		/*
-
+		
 			If the GTree were to use Java's CompletableStage API, then the code below
 			could be written thusly:
-
+		
 			tree.getNewNode(modelParent, newName)
 				.thenCompose(newModelChild -> {
 			 		tree.ignoreFilter(newModelChild);
 			 		return tree.getNewNode(viewParent, newName);
 			 	))
 			 	.thenAccept(consumer);
-
+		
 		*/
 
 		// ensure we operate on the model node which will always have the given child not the view
@@ -1693,7 +1731,7 @@ public class GTree extends JPanel implements BusyListener {
 		};
 		//@formatter:off
 		expandAction.setPopupMenuData(new MenuData(
-				new String[] { "Exapnd" },
+				new String[] { "Expand" },
 				Icons.EXPAND_ALL_ICON,
 				actionMenuGroup, NO_MNEMONIC,
 				Integer.toString(subGroupIndex++)

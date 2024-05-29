@@ -21,13 +21,14 @@ import java.util.HashSet;
 
 import db.*;
 import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.DBObjectCache;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.database.util.AddressRangeMapDB;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
-import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.Lock;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -72,7 +73,7 @@ class ModuleManager {
 	 * @throws VersionException if opening an existing program tree and an underlying table 
 	 * schema version differs from the expected version.
 	 */
-	ModuleManager(TreeManager treeMgr, DBRecord rec, int openMode, TaskMonitor monitor)
+	ModuleManager(TreeManager treeMgr, DBRecord rec, OpenMode openMode, TaskMonitor monitor)
 			throws IOException, CancelledException, VersionException {
 
 		this.treeMgr = treeMgr;
@@ -89,7 +90,7 @@ class ModuleManager {
 		moduleCache = new DBObjectCache<>(100);
 		fragCache = new DBObjectCache<>(100);
 
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			createRootModule();
 		}
 	}
@@ -98,7 +99,7 @@ class ModuleManager {
 		return FRAGMENT_ADDRESS_TABLE_NAME + treeID;
 	}
 
-	private void initializeAdapters(int openMode, TaskMonitor monitor)
+	private void initializeAdapters(OpenMode openMode, TaskMonitor monitor)
 			throws CancelledException, IOException, VersionException {
 
 		DBHandle handle = treeMgr.getDatabaseHandle();
@@ -126,16 +127,16 @@ class ModuleManager {
 		}
 
 		if (addrMap.isUpgraded()) {
-			if (openMode == DBConstants.UPDATE) {
+			if (openMode == OpenMode.UPDATE) {
 				versionExc = (new VersionException(true)).combine(versionExc);
 			}
-			else if (openMode == DBConstants.UPGRADE) {
+			else if (openMode == OpenMode.UPGRADE) {
 				addressUpgrade(handle, monitor);
 			}
 		}
 
-		fragMap = new AddressRangeMapDB(handle, addrMap, lock,
-			getFragAddressTableName(treeID), errHandler, LongField.INSTANCE, true);
+		fragMap = new AddressRangeMapDB(handle, addrMap, lock, getFragAddressTableName(treeID),
+			errHandler, LongField.INSTANCE, true);
 
 		if (versionExc != null) {
 			throw versionExc;
@@ -413,9 +414,8 @@ class ModuleManager {
 			monitor.checkCancelled();
 			fragMap.clearRange(fromAddr, rangeEnd);
 
-			for (int i = 0; i < list.size(); i++) {
+			for (FragmentHolder fh : list) {
 				monitor.checkCancelled();
-				FragmentHolder fh = list.get(i);
 				fragMap.paintRange(fh.range.getMinAddress(), fh.range.getMaxAddress(),
 					new LongField(fh.frag.getKey()));
 				fh.frag.addRange(fh.range);
@@ -423,7 +423,7 @@ class ModuleManager {
 			treeMgr.updateTreeRecord(record);
 
 			// generate an event...
-			getProgram().programTreeChanged(treeID, ChangeManager.DOCR_FRAGMENT_MOVED, null,
+			getProgram().programTreeChanged(treeID, ProgramEvent.FRAGMENT_MOVED, null,
 				new AddressRangeImpl(fromAddr, rangeEnd),
 				new AddressRangeImpl(toAddr, toAddr.addNoWrap(length - 1)));
 
@@ -439,7 +439,7 @@ class ModuleManager {
 			ProgramModule parent = getModuleDB(parentID);
 			nameSet.add(fragment.getName());
 			treeMgr.updateTreeRecord(record);
-			getProgram().programTreeChanged(treeID, ChangeManager.DOCR_GROUP_ADDED, null, parent,
+			getProgram().programTreeChanged(treeID, ProgramEvent.GROUP_ADDED, null, parent,
 				fragment);
 		}
 		catch (IOException e) {
@@ -457,8 +457,7 @@ class ModuleManager {
 			ProgramModule parent = getModuleDB(parentID);
 			nameSet.add(module.getName());
 			treeMgr.updateTreeRecord(record);
-			getProgram().programTreeChanged(treeID, ChangeManager.DOCR_GROUP_ADDED, null, parent,
-				module);
+			getProgram().programTreeChanged(treeID, ProgramEvent.GROUP_ADDED, null, parent, module);
 		}
 		catch (IOException e) {
 			errHandler.dbError(e);
@@ -483,8 +482,7 @@ class ModuleManager {
 
 			}
 			treeMgr.updateTreeRecord(record);
-			getProgram().programTreeChanged(treeID, ChangeManager.DOCR_GROUP_REMOVED, null,
-				parentModule,
+			getProgram().programTreeChanged(treeID, ProgramEvent.GROUP_REMOVED, null, parentModule,
 				childName);
 
 		}
@@ -498,7 +496,7 @@ class ModuleManager {
 		try {
 			treeMgr.updateTreeRecord(record);
 
-			getProgram().programTreeChanged(treeID, ChangeManager.DOCR_GROUP_COMMENT_CHANGED, null,
+			getProgram().programTreeChanged(treeID, ProgramEvent.GROUP_COMMENT_CHANGED, null,
 				oldComments, group);
 
 		}
@@ -514,7 +512,7 @@ class ModuleManager {
 			nameSet.remove(oldName);
 			nameSet.add(group.getName());
 			treeMgr.updateTreeRecord(record);
-			getProgram().programTreeChanged(treeID, ChangeManager.DOCR_GROUP_RENAMED, null, oldName,
+			getProgram().programTreeChanged(treeID, ProgramEvent.GROUP_RENAMED, null, oldName,
 				group);
 
 		}
@@ -667,7 +665,7 @@ class ModuleManager {
 			}
 			treeMgr.updateTreeRecord(record);
 
-			getProgram().programTreeChanged(treeID, ChangeManager.DOCR_CODE_MOVED, null, min, max);
+			getProgram().programTreeChanged(treeID, ProgramEvent.FRAGMENT_CHANGED, null, min, max);
 
 		}
 		finally {
@@ -696,15 +694,14 @@ class ModuleManager {
 
 	void childReordered(ModuleDB parentModule, Group child) {
 		treeMgr.updateTreeRecord(record);
-		getProgram().programTreeChanged(treeID, ChangeManager.DOCR_MODULE_REORDERED, parentModule,
-			child,
+		getProgram().programTreeChanged(treeID, ProgramEvent.MODULE_REORDERED, parentModule, child,
 			child);
 	}
 
 	void childReparented(Group group, String oldParentName, String newParentName) {
 		treeMgr.updateTreeRecord(record);
-		getProgram().programTreeChanged(treeID, ChangeManager.DOCR_GROUP_REPARENTED, group,
-			oldParentName, newParentName);
+		getProgram().programTreeChanged(treeID, ProgramEvent.GROUP_REPARENTED, group, oldParentName,
+			newParentName);
 	}
 
 	String[] getParentNames(long childID) {

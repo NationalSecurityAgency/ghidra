@@ -18,7 +18,6 @@ package ghidra.app.plugin.core.functioncompare;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import docking.ComponentProviderActivationListener;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -32,8 +31,8 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ChangeManager;
 import ghidra.program.util.ProgramChangeRecord;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.Swing;
 
 /**
@@ -48,7 +47,7 @@ import ghidra.util.Swing;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.DIFF,
+	category = PluginCategoryNames.CODE_VIEWER,
 	shortDescription = "Compare Functions",
 	description = "Allows users to compare two or more functions",
 	servicesProvided = { FunctionComparisonService.class },
@@ -57,7 +56,7 @@ import ghidra.util.Swing;
 )
 //@formatter:on
 public class FunctionComparisonPlugin extends ProgramPlugin
-	implements DomainObjectListener, FunctionComparisonService {
+		implements DomainObjectListener, FunctionComparisonService {
 
 	static final String MENU_PULLRIGHT = "CompareFunctions";
 	static final String POPUP_MENU_GROUP = "CompareFunction";
@@ -110,19 +109,16 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 		for (int i = 0; i < ev.numRecords(); ++i) {
 			DomainObjectChangeRecord doRecord = ev.getChangeRecord(i);
 
-			int eventType = doRecord.getEventType();
-
-			switch (eventType) {
-				case DomainObject.DO_OBJECT_RESTORED:
-					functionComparisonManager.domainObjectRestored(ev);
-					break;
-				case ChangeManager.DOCR_FUNCTION_REMOVED:
-					ProgramChangeRecord rec = (ProgramChangeRecord) ev.getChangeRecord(i);
-					Function function = (Function) rec.getObject();
-					if (function != null) {
-						removeFunction(function);
-					}
-					break;
+			EventType eventType = doRecord.getEventType();
+			if (eventType == DomainObjectEvent.RESTORED) {
+				functionComparisonManager.domainObjectRestored((Program) ev.getSource());
+			}
+			else if (eventType == ProgramEvent.FUNCTION_REMOVED) {
+				ProgramChangeRecord rec = (ProgramChangeRecord) ev.getChangeRecord(i);
+				Function function = (Function) rec.getObject();
+				if (function != null) {
+					removeFunction(function);
+				}
 			}
 		}
 	}
@@ -132,7 +128,7 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 	}
 
 	private FunctionComparisonProvider getFromSwingBlocking(
-		Supplier<FunctionComparisonProvider> comparer) {
+			Supplier<FunctionComparisonProvider> comparer) {
 
 		if (Swing.isSwingThread()) {
 			return comparer.get();
@@ -141,21 +137,12 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 		return Swing.runNow(comparer);
 	}
 
+	void providerClosed(FunctionComparisonProvider provider) {
+		functionComparisonManager.providerClosed(provider);
+	}
 //==================================================================================================
 // Service Methods
 //==================================================================================================	
-
-	@Override
-	public void addFunctionComparisonProviderListener(
-		ComponentProviderActivationListener listener) {
-		runOnSwingNonBlocking(() -> functionComparisonManager.addProviderListener(listener));
-	}
-
-	@Override
-	public void removeFunctionComparisonProviderListener(
-		ComponentProviderActivationListener listener) {
-		runOnSwingNonBlocking(() -> functionComparisonManager.removeProviderListener(listener));
-	}
 
 	@Override
 	public void removeFunction(Function function) {
@@ -173,8 +160,7 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 	}
 
 	@Override
-	public FunctionComparisonProvider compareFunctions(Function source,
-		Function target) {
+	public FunctionComparisonProvider compareFunctions(Function source, Function target) {
 		return getFromSwingBlocking(
 			() -> functionComparisonManager.compareFunctions(source, target));
 	}
@@ -185,6 +171,13 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 	}
 
 	@Override
+	public FunctionComparisonProvider compareFunctions(Set<Function> sourceFunctions,
+			Set<Function> destinationFunctions) {
+		return getFromSwingBlocking(() -> functionComparisonManager
+				.compareFunctions(sourceFunctions, destinationFunctions));
+	}
+
+	@Override
 	public void compareFunctions(Set<Function> functions, FunctionComparisonProvider provider) {
 		runOnSwingNonBlocking(
 			() -> functionComparisonManager.compareFunctions(functions, provider));
@@ -192,8 +185,9 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 
 	@Override
 	public void compareFunctions(Function source, Function target,
-		FunctionComparisonProvider provider) {
+			FunctionComparisonProvider provider) {
 		runOnSwingNonBlocking(
 			() -> functionComparisonManager.compareFunctions(source, target, provider));
 	}
+
 }

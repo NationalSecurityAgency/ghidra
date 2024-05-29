@@ -36,6 +36,7 @@ public class JavaConfig {
 	private String applicationName; // example: Ghidra
 	private String applicationVersion; // example: 9.0.1
 	private String applicationReleaseName; // example: PUBLIC, DEV, etc
+	private String applicationLayoutVersion; // example: 2
 	private int minSupportedJava;
 	private int maxSupportedJava;
 	private String compilerComplianceLevel;
@@ -299,6 +300,8 @@ public class JavaConfig {
 		applicationVersion = getDefinedProperty(applicationProperties, "application.version");
 		applicationReleaseName =
 			getDefinedProperty(applicationProperties, "application.release.name");
+		applicationLayoutVersion =
+			getDefinedProperty(applicationProperties, "application.layout.version");
 		compilerComplianceLevel =
 			getDefinedProperty(applicationProperties, "application.java.compiler");
 		try {
@@ -359,7 +362,14 @@ public class JavaConfig {
 	 */
 	private void initJavaHomeSaveFile(File installDir) throws FileNotFoundException {
 		boolean isDev = new File(installDir, "build.gradle").isFile();
+		String appName = applicationName.replaceAll("\\s", "").toLowerCase();
 
+		String userSettingsDirName = appName + "_" + applicationVersion + "_" +
+			applicationReleaseName.replaceAll("\\s", "").toUpperCase();
+		if (isDev) {
+			userSettingsDirName += "_location_" + installDir.getParentFile().getName();
+		}
+		
 		// Ensure there is a user home directory (there definitely should be)
 		String userHomeDirPath = System.getProperty("user.home");
 		if (userHomeDirPath == null || userHomeDirPath.isEmpty()) {
@@ -370,18 +380,46 @@ public class JavaConfig {
 			throw new FileNotFoundException("User home directory does not exist: " + userHomeDir);
 		}
 
-		// Get the java home save file from user home directory (it might not exist yet).
-		File userSettingsParentDir =
-			new File(userHomeDir, "." + applicationName.replaceAll("\\s", "").toLowerCase());
+		File userSettingsDir = null;
 
-		String userSettingsDirName = userSettingsParentDir.getName() + "_" + applicationVersion +
-			"_" + applicationReleaseName.replaceAll("\\s", "").toUpperCase();
-
-		if (isDev) {
-			userSettingsDirName += "_location_" + installDir.getParentFile().getName();
+		// Handle legacy application layout
+		if (applicationLayoutVersion.equals("1")) {
+			userSettingsDir = new File(userHomeDir, "." + appName + "/." + userSettingsDirName);
+			javaHomeSaveFile = new File(userSettingsDir, JAVA_HOME_SAVE_NAME);
+			return;
 		}
 
-		File userSettingsDir = new File(userSettingsParentDir, userSettingsDirName);
+		// Look for XDG environment variable
+		String xdgConfigHomeDirStr = System.getenv("XDG_CONFIG_HOME");
+		if (xdgConfigHomeDirStr != null && !xdgConfigHomeDirStr.isEmpty()) {
+			userSettingsDir = new File(xdgConfigHomeDirStr, appName + "/" + userSettingsDirName);
+			javaHomeSaveFile = new File(userSettingsDir, JAVA_HOME_SAVE_NAME);
+			return;
+		}
+
+		// Look in current user settings directory
+		switch (JavaFinder.getCurrentPlatform()) {
+			case WINDOWS:
+				String localAppDataDirPath = System.getenv("APPDATA");
+				if (localAppDataDirPath == null || localAppDataDirPath.trim().isEmpty()) {
+					throw new FileNotFoundException("\"APPDATA\" environment variable is not set");
+				}
+				userSettingsDir =
+					new File(localAppDataDirPath, appName + "/" + userSettingsDirName);
+				break;
+			case LINUX:
+				userSettingsDir =
+					new File(userHomeDir, ".config/" + appName + "/" + userSettingsDirName);
+				break;
+			case MACOS:
+				userSettingsDir =
+					new File(userHomeDir, "Library/" + appName + "/" + userSettingsDirName);
+				break;
+			default:
+				throw new FileNotFoundException(
+					"Failed to find the user settings directory: Unsupported operating system.");
+		}
+
 		javaHomeSaveFile = new File(userSettingsDir, JAVA_HOME_SAVE_NAME);
 	}
 

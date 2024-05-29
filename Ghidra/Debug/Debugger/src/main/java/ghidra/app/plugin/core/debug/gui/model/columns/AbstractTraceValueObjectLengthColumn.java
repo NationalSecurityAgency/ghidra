@@ -58,6 +58,11 @@ public abstract class AbstractTraceValueObjectLengthColumn
 						: ("<html><body style='font-family:monospaced'>0x" +
 							Long.toUnsignedString(value, 16));
 			}
+
+			@Override
+			public boolean isModified() {
+				return row.isAttributeModified(attributeName);
+			}
 		};
 	}
 }

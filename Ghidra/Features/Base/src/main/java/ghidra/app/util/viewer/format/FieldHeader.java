@@ -40,15 +40,6 @@ public class FieldHeader extends JTabbedPane implements ChangeListener {
 
 	private FormatManager formatManager;
 	private FormatModelListener formatListener = new FormatModelListener() {
-		@Override
-		public void formatModelAdded(FieldFormatModel formatModel) {
-			createTabs();
-		}
-
-		@Override
-		public void formatModelRemoved(FieldFormatModel formatModel) {
-			createTabs();
-		}
 
 		@Override
 		public void formatModelChanged(FieldFormatModel formatModel) {

@@ -246,8 +246,6 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 
 		signatureFieldUndoRedoKeeper = DockingUtils.installUndoRedo(signatureTextField);
 
-		Font font = signatureTextField.getFont();
-		signatureTextField.setFont(font.deriveFont(18.0f));
 		panel.add(signatureTextField);
 
 		signatureTextField.setEscapeListener(e -> {
@@ -656,9 +654,9 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 					color = getErrorForegroundColor(isSelected);
 				}
 				String toolTipText = ToolTipUtils.getToolTipText(dataType);
-				String headerText = "<HTML><b>" +
+				String headerText = "<html><b>" +
 					HTMLUtilities.friendlyEncodeHTML(dataType.getPathName()) + "</b><BR>";
-				toolTipText = toolTipText.replace("<HTML>", headerText);
+				toolTipText = toolTipText.replace("<html>", headerText);
 				setToolTipText(toolTipText);
 			}
 			else {

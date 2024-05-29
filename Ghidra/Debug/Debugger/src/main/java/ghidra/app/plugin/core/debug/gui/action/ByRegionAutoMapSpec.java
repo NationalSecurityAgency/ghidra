@@ -24,8 +24,8 @@ import ghidra.debug.api.modules.RegionMapProposal;
 import ghidra.debug.api.modules.RegionMapProposal.RegionMapEntry;
 import ghidra.program.model.listing.Program;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TraceMemoryRegionChangeType;
-import ghidra.trace.util.TraceChangeType;
+import ghidra.trace.util.TraceEvent;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -43,8 +43,8 @@ public class ByRegionAutoMapSpec implements AutoMapSpec {
 	}
 
 	@Override
-	public Collection<TraceChangeType<?, ?>> getChangeTypes() {
-		return List.of(TraceMemoryRegionChangeType.ADDED);
+	public Collection<TraceEvent<?, ?>> getChangeTypes() {
+		return List.of(TraceEvents.REGION_ADDED);
 	}
 
 	@Override

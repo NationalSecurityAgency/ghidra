@@ -16,7 +16,7 @@
 package agent.dbgeng.rmi;
 
 import static org.junit.Assert.*;
-import static org.junit.Assume.*;
+import static org.junit.Assume.assumeTrue;
 
 import java.io.*;
 import java.net.*;
@@ -27,6 +27,7 @@ import java.util.function.Function;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Before;
+import org.junit.BeforeClass;
 
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerTest;
 import ghidra.app.plugin.core.debug.service.tracermi.TraceRmiPlugin;
@@ -63,6 +64,40 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 	protected static final int TIMEOUT_SECONDS = 300;
 	protected static final int QUIT_TIMEOUT_MS = 1000;
 
+	protected static boolean didSetupPython = false;
+
+	public static final String INSTRUMENT_STATE = """
+			import sys
+			from comtypes.hresult import S_OK
+			from ghidradbg import commands, hooks
+			print("Instrumenting")
+			@hooks.log_errors
+			def on_state_changed(*args):
+			    if args[0] != DbgEng.DEBUG_CES_EXECUTION_STATUS:
+			        return S_OK
+			    print("State changed: {:x}".format(args[1]))
+			    sys.stdout.flush()
+			    proc = util.selected_process()
+			    trace = commands.STATE.trace
+			    with commands.STATE.client.batch():
+			        with trace.open_tx("State changed proc {}".format(proc)):
+			            commands.put_state(proc)
+			    return S_OK
+
+			# Without this, the engine seems to GO after the interrupt
+			@hooks.log_errors
+			def on_exception(*args):
+			    return DbgEng.DEBUG_STATUS_BREAK
+
+			@util.dbg.eng_thread
+			def install_hooks():
+			    print("Installing")
+			    util.dbg._base.events.engine_state(handler=on_state_changed)
+			    util.dbg._base.events.exception(handler=on_exception)
+
+			install_hooks()
+			""";
+
 	protected TraceRmiService traceRmi;
 	private Path pythonPath;
 	private Path outFile;
@@ -75,11 +110,17 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 
 	//@BeforeClass
 	public static void setupPython() throws Throwable {
-		new ProcessBuilder("gradle", "Debugger-agent-dbgeng:assemblePyPackage")
+		if (didSetupPython) {
+			// Only do this once when running the full suite.
+			return;
+		}
+		String gradle = DummyProc.which("gradle.bat");
+		new ProcessBuilder(gradle, "Debugger-agent-dbgeng:assemblePyPackage")
 				.directory(TestApplicationUtils.getInstallationDirectory())
 				.inheritIO()
 				.start()
 				.waitFor();
+		didSetupPython = true;
 	}
 
 	protected void setPythonPath(ProcessBuilder pb) throws IOException {
@@ -140,6 +181,10 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 			if (stderr.contains("Error") || (0 != exitCode && 1 != exitCode && 143 != exitCode)) {
 				throw new PythonError(exitCode, stdout, stderr);
 			}
+			System.out.println("--stdout--");
+			System.out.println(stdout);
+			System.out.println("--stderr--");
+			System.out.println(stderr);
 			return stdout;
 		}
 	}
@@ -227,9 +272,9 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 			return execute.invokeAsync(Map.of("cmd", cmd));
 		}
 
-		public String executeCapture(String expr) {
-			RemoteMethod execute = getMethod("evaluate");
-			return (String) execute.invoke(Map.of("expr", expr));
+		public String executeCapture(String cmd) {
+			RemoteMethod execute = getMethod("execute");
+			return (String) execute.invoke(Map.of("cmd", cmd, "to_string", true));
 		}
 
 		@Override
@@ -281,15 +326,15 @@ public abstract class AbstractDbgEngTraceRmiTest extends AbstractGhidraHeadedDeb
 		return stdout;
 	}
 
-	protected void waitStopped() {
+	protected void waitStopped(String message) {
 		TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]", Lifespan.at(0)));
-		waitForPass(() -> assertEquals("STOPPED", tb.objValue(proc, 0, "_state")));
+		waitForPass(() -> assertEquals(message, "STOPPED", tb.objValue(proc, 0, "_state")));
 		waitTxDone();
 	}
 
-	protected void waitRunning() {
+	protected void waitRunning(String message) {
 		TraceObject proc = Objects.requireNonNull(tb.objAny("Processes[]", Lifespan.at(0)));
-		waitForPass(() -> assertEquals("RUNNING", tb.objValue(proc, 0, "_state")));
+		waitForPass(() -> assertEquals(message, "RUNNING", tb.objValue(proc, 0, "_state")));
 		waitTxDone();
 	}
 

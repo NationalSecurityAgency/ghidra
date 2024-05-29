@@ -29,7 +29,7 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.CircularDependencyException;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
-import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.Lock;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.DuplicateNameException;
@@ -94,15 +94,13 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 			if (rec == null) {
 				rec = symbolMgr.getSymbolRecord(key);
 			}
-			if (rec == null ||
-				record.getByteValue(SymbolDatabaseAdapter.SYMBOL_TYPE_COL) != rec.getByteValue(
-					SymbolDatabaseAdapter.SYMBOL_TYPE_COL)) {
+			if (rec == null || record.getByteValue(SymbolDatabaseAdapter.SYMBOL_TYPE_COL) != rec
+					.getByteValue(SymbolDatabaseAdapter.SYMBOL_TYPE_COL)) {
 				return false;
 			}
 			record = rec;
 			address = symbolMgr.getAddressMap()
-					.decodeAddress(
-						rec.getLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL));
+					.decodeAddress(rec.getLongValue(SymbolDatabaseAdapter.SYMBOL_ADDR_COL));
 			return true;
 		}
 		return false;
@@ -130,8 +128,8 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 		updateRecord();
 		Address oldAddr = address;
 		address = addr;
-		program.symbolChanged(this, ChangeManager.DOCR_SYMBOL_ADDRESS_CHANGED, oldAddr, this,
-			oldAddr, addr);
+		program.symbolChanged(this, ProgramEvent.SYMBOL_ADDRESS_CHANGED, oldAddr, this, oldAddr,
+			addr);
 	}
 
 	/**
@@ -634,8 +632,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 					symbolMgr.symbolNamespaceChanged(this, oldNamespace);
 				}
 				if (nameChange) {
-					if (isExternal() &&
-						(type == SymbolType.FUNCTION || type == SymbolType.LABEL)) {
+					if (isExternal() && (type == SymbolType.FUNCTION || type == SymbolType.LABEL)) {
 						ExternalManagerDB externalManager = symbolMgr.getExternalManager();
 						ExternalLocationDB externalLocation =
 							(ExternalLocationDB) externalManager.getExternalLocation(this);
@@ -646,13 +643,12 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 						ProgramDB program = symbolMgr.getProgram();
 						for (int i = 0; i < dynamicallyRenamedSymbols.size(); i++) {
 							Symbol s = dynamicallyRenamedSymbols.get(i);
-							program.symbolChanged(s, ChangeManager.DOCR_SYMBOL_RENAMED,
-								s.getAddress(), s, oldDynamicallyRenamedSymbolNames.get(i),
-								s.getName());
+							program.symbolChanged(s, ProgramEvent.SYMBOL_RENAMED, s.getAddress(), s,
+								oldDynamicallyRenamedSymbolNames.get(i), s.getName());
 						}
 					}
 				}
-				
+
 				if (type == SymbolType.NAMESPACE || type == SymbolType.CLASS) {
 					// function class structure path change may impact auto-params
 					symbolMgr.getProgram().getFunctionManager().invalidateCache(true);
@@ -780,8 +776,8 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 			if (record == null) {
 				return null;
 			}
-			return symbolMgr.getSymbol(
-				record.getLongValue(SymbolDatabaseAdapter.SYMBOL_PARENT_COL));
+			return symbolMgr
+					.getSymbol(record.getLongValue(SymbolDatabaseAdapter.SYMBOL_PARENT_COL));
 		}
 		finally {
 			lock.release();

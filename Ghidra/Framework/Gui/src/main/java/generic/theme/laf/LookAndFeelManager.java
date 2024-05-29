@@ -30,6 +30,7 @@ import generic.theme.*;
 import generic.util.action.*;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
+import utilities.util.reflection.ReflectionUtilities;
 
 /**
  * Manages installing and updating a {@link LookAndFeel}
@@ -38,6 +39,7 @@ public abstract class LookAndFeelManager {
 
 	private LafType laf;
 	private Map<String, ComponentFontRegistry> fontRegistryMap = new HashMap<>();
+	private Map<Component, String> componentToIdMap = new WeakHashMap<>();
 	protected ApplicationThemeManager themeManager;
 	protected Map<String, String> normalizedIdToLafIdMap;
 
@@ -158,7 +160,7 @@ public abstract class LookAndFeelManager {
 	 * Called when one or more fonts have changed.
 	 * <p>
 	 * This will update the Java {@link UIManager} and trigger a reload of the UIs.
-	 * 
+	 *
 	 * @param changedFontIds the set of Java Font ids that are affected by this change; these are
 	 * the normalized ids
 	 */
@@ -202,10 +204,47 @@ public abstract class LookAndFeelManager {
 	 * @param fontId the id of the font to register with the given component
 	 */
 	public void registerFont(Component component, String fontId) {
+
+		checkForAlreadyRegistered(component, fontId);
+		componentToIdMap.put(component, fontId);
+
 		ComponentFontRegistry register =
 			fontRegistryMap.computeIfAbsent(fontId, id -> new ComponentFontRegistry(id));
 
 		register.addComponent(component);
+	}
+
+	/**
+	 * Binds the component to the font identified by the given font id. Whenever the font for
+	 * the font id changes, the component will be updated with the new font.
+	 * <p>
+	 * This method is fairly niche and should not be called by most clients.  Instead, call
+	 * {@link #registerFont(Component, String)}.
+	 *
+	 * @param component the component to set/update the font
+	 * @param fontId the id of the font to register with the given component
+	 * @param fontStyle the font style
+	 */
+	public void registerFont(Component component, String fontId, int fontStyle) {
+
+		checkForAlreadyRegistered(component, fontId);
+		componentToIdMap.put(component, fontId);
+
+		ComponentFontRegistry register =
+			fontRegistryMap.computeIfAbsent(fontId, id -> new ComponentFontRegistry(id));
+
+		register.addComponent(component, fontStyle);
+	}
+
+	private void checkForAlreadyRegistered(Component component, String newFontId) {
+		String existingFontId = componentToIdMap.get(component);
+		if (existingFontId != null) {
+			Msg.warn(this, """
+					Component has a Font ID registered more than once. \
+					Previously registered ID: '%s'.  Newly registered ID: '%s'.
+						""".formatted(existingFontId, newFontId),
+				ReflectionUtilities.createJavaFilteredThrowable());
+		}
 	}
 
 	private Font toUiResource(Font font) {
@@ -292,8 +331,7 @@ public abstract class LookAndFeelManager {
 		return false;
 	}
 
-	protected void setKeyBinding(String existingKsText, String newKsText,
-			String[] prefixValues) {
+	protected void setKeyBinding(String existingKsText, String newKsText, String[] prefixValues) {
 
 		KeyStroke existingKs = KeyStroke.getKeyStroke(existingKsText);
 		KeyStroke newKs = KeyStroke.getKeyStroke(newKsText);

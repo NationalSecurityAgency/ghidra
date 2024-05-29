@@ -15,6 +15,9 @@
  */
 package ghidra.app.plugin.core.function.tags;
 
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
+
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.util.*;
@@ -31,12 +34,14 @@ import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.cmd.function.CreateFunctionTagCmd;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainObjectChangedEvent;
+import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.database.function.FunctionManagerDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
-import ghidra.program.util.*;
+import ghidra.program.util.FunctionLocation;
+import ghidra.program.util.ProgramLocation;
 import ghidra.util.*;
 import ghidra.util.task.SwingUpdateManager;
 import resources.ResourceManager;
@@ -160,16 +165,13 @@ public class FunctionTagProvider extends ComponentProviderAdapter implements Dom
 			return;
 		}
 
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED) ||
-			ev.containsEvent(ChangeManager.DOCR_FUNCTION_TAG_CREATED) ||
-			ev.containsEvent(ChangeManager.DOCR_FUNCTION_TAG_DELETED) ||
-			ev.containsEvent(ChangeManager.DOCR_TAG_REMOVED_FROM_FUNCTION) ||
-			ev.containsEvent(ChangeManager.DOCR_TAG_ADDED_TO_FUNCTION)) {
+		if (ev.contains(RESTORED, FUNCTION_TAG_CREATED, FUNCTION_TAG_DELETED, FUNCTION_TAG_APPLIED,
+			FUNCTION_TAG_UNAPPLIED)) {
 			updater.updateLater();
 			return;
 		}
 
-		if (ev.containsEvent(ChangeManager.DOCR_FUNCTION_TAG_CHANGED)) {
+		if (ev.contains(FUNCTION_TAG_CHANGED)) {
 			repaint();
 		}
 	}
@@ -224,14 +226,13 @@ public class FunctionTagProvider extends ComponentProviderAdapter implements Dom
 		mainPanel.setPreferredSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
 
 		// CENTER PANEL
-		sourcePanel = new SourceTagsPanel(this, tool, "All Tags");
-		targetPanel = new TargetTagsPanel(this, tool, "Assigned To Function");
-		allFunctionsPanel = new AllFunctionsPanel(program, this, "Functions with Selected Tag");
+		sourcePanel = new SourceTagsPanel(this, tool);
+		targetPanel = new TargetTagsPanel(this, tool);
+		allFunctionsPanel = new AllFunctionsPanel(program, this);
 		buttonPanel = new FunctionTagButtonPanel(sourcePanel, targetPanel);
 		sourcePanel.setBorder(BorderFactory.createLineBorder(Colors.BORDER));
 		targetPanel.setBorder(BorderFactory.createLineBorder(Colors.BORDER));
 		allFunctionsPanel.setBorder(BorderFactory.createLineBorder(Colors.BORDER));
-
 		// If we don't set this, then the splitter won't be able to shrink the
 		// target panels below the size required by its header, which can be large
 		// because of the amount of text displayed. Keep the minimum size setting on
@@ -478,9 +479,7 @@ public class FunctionTagProvider extends ComponentProviderAdapter implements Dom
 	private JPanel createInputPanel() {
 
 		tagInputField = new HintTextField("tag 1, tag 2, ...");
-		tagInputField.setName("tagInputTF");
 		tagInputField.addActionListener(e -> processCreates());
-
 		inputPanel = new JPanel();
 		Border outsideBorder = BorderFactory.createBevelBorder(BevelBorder.LOWERED);
 		Border insideBorder = BorderFactory.createEmptyBorder(5, 2, 2, 2);
@@ -489,6 +488,10 @@ public class FunctionTagProvider extends ComponentProviderAdapter implements Dom
 		inputPanel.add(new GLabel(" Create new tag(s):"), BorderLayout.WEST);
 		inputPanel.add(Box.createHorizontalStrut(5));
 		inputPanel.add(tagInputField, BorderLayout.CENTER);
+
+		String inputFieldName = "Tag Input Text Field";
+		tagInputField.setName(inputFieldName);
+		tagInputField.getAccessibleContext().setAccessibleName(inputFieldName);
 
 		return inputPanel;
 	}

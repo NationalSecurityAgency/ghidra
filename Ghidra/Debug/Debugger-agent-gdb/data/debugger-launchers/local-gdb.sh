@@ -17,33 +17,40 @@
 #@title gdb
 #@desc <html><body width="300px">
 #@desc   <h3>Launch with <tt>gdb</tt></h3>
-#@desc   <p>This will launch the target on the local machine using <tt>gdb</tt>. GDB must already
-#@desc   be installed on your system, and it must embed the Python 3 interpreter. You will also
-#@desc   need <tt>protobuf</tt> and <tt>psutil</tt> installed for Python 3.
+#@desc   <p>
+#@desc     This will launch the target on the local machine using <tt>gdb</tt>.
+#@desc     For setup instructions, press <b>F1</b>.
+#@desc   </p>
 #@desc </body></html>
 #@menu-group local
 #@icon icon.debugger
 #@help TraceRmiLauncherServicePlugin#gdb
 #@enum StartCmd:str run start starti
-#@env OPT_GDB_PATH:str="gdb" "Path to gdb" "The path to gdb. Omit the full path to resolve using the system PATH."
-#@env OPT_START_CMD:StartCmd="start" "Run command" "The gdb command to actually run the target."
 #@arg :str "Image" "The target binary executable image"
 #@args "Arguments" "Command-line arguments to pass to the target"
-#@tty TTY_TARGET
+#@env OPT_GDB_PATH:str="gdb" "gdb command" "The path to gdb. Omit the full path to resolve using the system PATH."
+#@env OPT_START_CMD:StartCmd="starti" "Run command" "The gdb command to actually run the target."
+#@env OPT_EXTRA_TTY:bool=false "Inferior TTY" "Provide a separate terminal emulator for the target."
+#@tty TTY_TARGET if env:OPT_EXTRA_TTY
 
 if [ -d ${GHIDRA_HOME}/ghidra/.git ]
 then
-  export PYTHONPATH=$GHIDRA_HOME/ghidra/Ghidra/Debug/Debugger-agent-gdb/build/pypkg/src:$GHIDRA_HOME/ghidra/Ghidra/Debug/Debugger-rmi-trace/build/pypkg/src:$PYTHONPATH
+  export PYTHONPATH=$GHIDRA_HOME/ghidra/Ghidra/Debug/Debugger-agent-gdb/build/pypkg/src:$PYTHONPATH
+  export PYTHONPATH=$GHIDRA_HOME/ghidra/Ghidra/Debug/Debugger-rmi-trace/build/pypkg/src:$PYTHONPATH
 elif [ -d ${GHIDRA_HOME}/.git ]
 then 
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-agent-gdb/build/pypkg/src:$GHIDRA_HOME/Ghidra/Debug/Debugger-rmi-trace/build/pypkg/src:$PYTHONPATH
+  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-agent-gdb/build/pypkg/src:$PYTHONPATH
+  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-rmi-trace/build/pypkg/src:$PYTHONPATH
 else
-  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-agent-gdb/pypkg/src:$GHIDRA_HOME/Ghidra/Debug/Debugger-rmi-trace/build/pypkg/src:$PYTHONPATH
+  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-agent-gdb/pypkg/src:$PYTHONPATH
+  export PYTHONPATH=$GHIDRA_HOME/Ghidra/Debug/Debugger-rmi-trace/pypkg/src:$PYTHONPATH
 fi
 
 target_image="$1"
 shift
 target_args="$@"
+
+# NOTE: Ghidra will leave TTY_TARGET empty, which gdb takes for the same terminal.
 
 "$OPT_GDB_PATH" \
   -q \

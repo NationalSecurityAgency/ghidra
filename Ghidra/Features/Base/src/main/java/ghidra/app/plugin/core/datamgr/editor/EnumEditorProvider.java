@@ -246,13 +246,21 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 		tool.setStatusInfo(msg);
 	}
 
+	@Override
+	public DataTypeManager getDataTypeManager() {
+		return dataTypeManager;
+	}
+
 	String getCategoryText() {
 		return dataTypeManager.getName() + originalCategoryPath;
 	}
 
-	@Override
-	public DataTypeManager getDataTypeManager() {
-		return dataTypeManager;
+	Enum getEnum() {
+		return originalEnum;
+	}
+
+	String getSelectedFieldName() {
+		return editorPanel.getSelectedFieldName();
 	}
 
 //==================================================================================================
@@ -317,10 +325,14 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 		showEnumAction.setToolBarData(
 			new ToolBarData(new GIcon("icon.plugin.enum.editor.home"), thirdGroup));
 
+		FindReferencesToEnumFieldAction findReferencesAction =
+			new FindReferencesToEnumFieldAction(plugin);
+
 		tool.addLocalAction(this, applyAction);
 		tool.addLocalAction(this, addAction);
 		tool.addLocalAction(this, deleteAction);
 		tool.addLocalAction(this, showEnumAction);
+		tool.addLocalAction(this, findReferencesAction);
 	}
 
 	private boolean applyChanges() {
@@ -715,8 +727,7 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 		private ActionListener listener;
 
 		EnumPluginAction(String name, ActionListener listener) {
-			super(DataTypeEditorManager.EDIT_ACTION_PREFIX + name, plugin.getName(),
-				KeyBindingType.SHARED);
+			super(name, plugin.getName(), KeyBindingType.SHARED);
 			this.listener = listener;
 			setHelpLocation(new HelpLocation(HELP_TOPIC, name));
 		}

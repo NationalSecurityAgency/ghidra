@@ -7,7 +7,4 @@
   </properties>
   
   <programcounter register="PC"/>
-  <volatile outputop="write" inputop="read">
-    <range space="ram" first="0x0" last="0x20"/>
-  </volatile>
 </processor_spec>

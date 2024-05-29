@@ -15,8 +15,9 @@
  */
 package ghidra.app.plugin.core.debug.service.model.launch;
 
-import static ghidra.async.AsyncUtils.loop;
+import static ghidra.async.AsyncUtils.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
@@ -105,6 +106,44 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 		return 10000;
 	}
 
+	protected static class TargetResult extends CompletableFuture<TargetObject>
+			implements DebuggerModelListener {
+		private final DebuggerObjectModel model;
+
+		public TargetResult(DebuggerObjectModel model) {
+			this.model = model;
+			exceptionally(this::onError);
+			model.addModelListener(this);
+		}
+
+		protected void checkObject(TargetObject object) {
+			if (DebugModelConventions.liveProcessOrNull(object) == null) {
+				return;
+			}
+			complete(object);
+			model.removeModelListener(this);
+		}
+
+		protected TargetObject onError(Throwable ex) {
+			model.removeModelListener(this);
+			return null;
+		}
+
+		@Override
+		public void created(TargetObject object) {
+			checkObject(object);
+		}
+
+		@Override
+		public void attributesChanged(TargetObject object, Collection<String> removed,
+				Map<String, ?> added) {
+			if (!added.containsKey(TargetExecutionStateful.STATE_ATTRIBUTE_NAME)) {
+				return;
+			}
+			checkObject(object);
+		}
+	}
+
 	/**
 	 * Listen for the launched target in the model
 	 * 
@@ -118,37 +157,33 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 	 * @return a future that completes with the target object
 	 */
 	protected CompletableFuture<TargetObject> listenForTarget(DebuggerObjectModel model) {
-		var result = new CompletableFuture<TargetObject>() {
-			DebuggerModelListener listener = new DebuggerModelListener() {
-				protected void checkObject(TargetObject object) {
-					if (DebugModelConventions.liveProcessOrNull(object) == null) {
-						return;
-					}
-					complete(object);
-					model.removeModelListener(this);
-				}
+		return new TargetResult(model);
+	}
 
-				@Override
-				public void created(TargetObject object) {
-					checkObject(object);
-				}
+	protected static class RecorderResult extends CompletableFuture<TraceRecorder>
+			implements CollectionChangeListener<TraceRecorder> {
+		private final DebuggerModelService service;
+		private final TargetObject target;
 
-				@Override
-				public void attributesChanged(TargetObject object, Collection<String> removed,
-						Map<String, ?> added) {
-					if (!added.containsKey(TargetExecutionStateful.STATE_ATTRIBUTE_NAME)) {
-						return;
-					}
-					checkObject(object);
-				}
-			};
-		};
-		model.addModelListener(result.listener);
-		result.exceptionally(ex -> {
-			model.removeModelListener(result.listener);
+		public RecorderResult(DebuggerModelService service, TargetObject target) {
+			this.service = service;
+			this.target = target;
+			exceptionally(this::onError);
+			service.addTraceRecordersChangedListener(this);
+		}
+
+		protected TraceRecorder onError(Throwable ex) {
+			service.removeTraceRecordersChangedListener(this);
 			return null;
-		});
-		return result;
+		}
+
+		@Override
+		public void elementAdded(TraceRecorder element) {
+			if (element.getTarget() == target) {
+				complete(element);
+				service.removeTraceRecordersChangedListener(this);
+			}
+		}
 	}
 
 	/**
@@ -160,74 +195,79 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 	 */
 	protected CompletableFuture<TraceRecorder> listenForRecorder(DebuggerModelService service,
 			TargetObject target) {
-		var result = new CompletableFuture<TraceRecorder>() {
-			CollectionChangeListener<TraceRecorder> listener = new CollectionChangeListener<>() {
-				@Override
-				public void elementAdded(TraceRecorder element) {
-					if (element.getTarget() == target) {
-						complete(element);
-						service.removeTraceRecordersChangedListener(this);
-					}
-				}
-			};
-		};
-		service.addTraceRecordersChangedListener(result.listener);
-		result.exceptionally(ex -> {
-			service.removeTraceRecordersChangedListener(result.listener);
-			return null;
-		});
-		return result;
+		return new RecorderResult(service, target);
 	}
 
-	protected Address getMappingProbeAddress() {
-		AddressIterator eepi = program.getSymbolTable().getExternalEntryPointIterator();
-		if (eepi.hasNext()) {
-			return eepi.next();
+	protected static class MappingResult extends CompletableFuture<Void>
+			implements DebuggerStaticMappingChangeListener {
+		private final DebuggerStaticMappingService mappingService;
+		private final TraceRecorder recorder;
+		private final Program program;
+
+		private final Trace trace;
+		private final ProgramLocation probe;
+
+		public MappingResult(DebuggerStaticMappingService mappingService, TraceRecorder recorder,
+				Program program) {
+			this.mappingService = mappingService;
+			this.recorder = recorder;
+			this.program = program;
+
+			this.probe = new ProgramLocation(program, getMappingProbeAddress());
+			this.trace = recorder.getTrace();
+
+			exceptionally(this::onError);
+			mappingService.addChangeListener(this);
+			check();
 		}
-		InstructionIterator ii = program.getListing().getInstructions(true);
-		if (ii.hasNext()) {
-			return ii.next().getAddress();
+
+		protected Void onError(Throwable ex) {
+			mappingService.removeChangeListener(this);
+			return null;
 		}
-		AddressSetView es = program.getMemory().getExecuteSet();
-		if (!es.isEmpty()) {
-			return es.getMinAddress();
+
+		protected Address getMappingProbeAddress() {
+			AddressIterator eepi = program.getSymbolTable().getExternalEntryPointIterator();
+			if (eepi.hasNext()) {
+				return eepi.next();
+			}
+			InstructionIterator ii = program.getListing().getInstructions(true);
+			if (ii.hasNext()) {
+				return ii.next().getAddress();
+			}
+			AddressSetView es = program.getMemory().getExecuteSet();
+			if (!es.isEmpty()) {
+				return es.getMinAddress();
+			}
+			if (!program.getMemory().isEmpty()) {
+				return program.getMinAddress();
+			}
+			return null; // There's no hope
 		}
-		if (!program.getMemory().isEmpty()) {
-			return program.getMinAddress();
+
+		@Override
+		public void mappingsChanged(Set<Trace> affectedTraces, Set<Program> affectedPrograms) {
+			if (!affectedPrograms.contains(program) &&
+				!affectedTraces.contains(trace)) {
+				return;
+			}
+			check();
 		}
-		return null; // There's no hope
+
+		protected void check() {
+			TraceLocation result =
+				mappingService.getOpenMappedLocation(trace, probe, recorder.getSnap());
+			if (result == null) {
+				return;
+			}
+			complete(null);
+			mappingService.removeChangeListener(this);
+		}
 	}
 
 	protected CompletableFuture<Void> listenForMapping(
 			DebuggerStaticMappingService mappingService, TraceRecorder recorder) {
-		ProgramLocation probe = new ProgramLocation(program, getMappingProbeAddress());
-		Trace trace = recorder.getTrace();
-		var result = new CompletableFuture<Void>() {
-			DebuggerStaticMappingChangeListener listener = (affectedTraces, affectedPrograms) -> {
-				if (!affectedPrograms.contains(program) &&
-					!affectedTraces.contains(trace)) {
-					return;
-				}
-				check();
-			};
-
-			protected void check() {
-				TraceLocation result =
-					mappingService.getOpenMappedLocation(trace, probe, recorder.getSnap());
-				if (result == null) {
-					return;
-				}
-				complete(null);
-				mappingService.removeChangeListener(listener);
-			}
-		};
-		mappingService.addChangeListener(result.listener);
-		result.check();
-		result.exceptionally(ex -> {
-			mappingService.removeChangeListener(result.listener);
-			return null;
-		});
-		return result;
+		return new MappingResult(mappingService, recorder, program);
 	}
 
 	protected Collection<ModuleMapEntry> invokeMapper(TaskMonitor monitor,
@@ -285,8 +325,10 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 		for (Entry<String, ParameterDescription<?>> entry : params.entrySet()) {
 			map.put(entry.getKey(), entry.getValue().defaultValue);
 		}
+		String almostExecutablePath = program.getExecutablePath();
+		File f = new File(almostExecutablePath);
 		map.put(TargetCmdLineLauncher.CMDLINE_ARGS_NAME,
-			TargetCmdLineLauncher.quoteImagePathIfSpaces(program.getExecutablePath()));
+			TargetCmdLineLauncher.quoteImagePathIfSpaces(f.getAbsolutePath()));
 		return map;
 	}
 
@@ -396,15 +438,17 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 	 * Obtain the launcher args
 	 * 
 	 * <p>
-	 * This should either call {@link #promptLauncherArgs(Map))} or
-	 * {@link #loadLastLauncherArgs(Map, boolean))}. Note if choosing the latter, the user will not
-	 * be prompted to confirm.
+	 * This should either call {@link #promptLauncherArgs(TargetLauncher,LaunchConfigurator)} or
+	 * {@link #loadLastLauncherArgs(TargetLauncher, boolean)}. Note if choosing the latter, the user
+	 * will not be prompted to confirm.
 	 * 
-	 * @param params the parameters of the model's launcher
+	 * @param launcher the model's launcher
+	 * @param prompt true to prompt the user, false to use saved arguments
+	 * @param configurator a means of configuring the launcher
 	 * @return the chosen arguments, or null if the user cancels at the prompt
 	 */
-	public Map<String, ?> getLauncherArgs(TargetLauncher launcher,
-			boolean prompt, LaunchConfigurator configurator) {
+	public Map<String, ?> getLauncherArgs(TargetLauncher launcher, boolean prompt,
+			LaunchConfigurator configurator) {
 		return prompt
 				? configurator.configureLauncher(launcher,
 					promptLauncherArgs(launcher, configurator), RelPrompt.AFTER)
@@ -668,6 +712,7 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 		}).thenApply(__ -> {
 			if (locals.exception != null) {
 				monitor.setMessage("Launch error: " + locals.exception);
+				Msg.error(this, "Launch error", locals.exception);
 				return locals.getResult();
 			}
 			monitor.setMessage("Launch successful");

@@ -22,6 +22,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.database.util.*;
 import ghidra.program.model.address.*;
@@ -61,7 +62,7 @@ abstract class SymbolDatabaseAdapter {
 	/**
 	 * Gets a new SymbolDatabaseAdapter
 	 * @param dbHandle the database handle
-	 * @param openMode the open mode. See {@link DBConstants}
+	 * @param openMode the open mode
 	 * @param addrMap the address map
 	 * @param monitor the progress monitor
 	 * @return a new SymbolDatabaseAdapter
@@ -69,10 +70,11 @@ abstract class SymbolDatabaseAdapter {
 	 * @throws CancelledException if the user cancels an upgrade
 	 * @throws IOException if a database io error occurs
 	 */
-	static SymbolDatabaseAdapter getAdapter(DBHandle dbHandle, int openMode, AddressMap addrMap,
-			TaskMonitor monitor) throws VersionException, CancelledException, IOException {
+	static SymbolDatabaseAdapter getAdapter(DBHandle dbHandle, OpenMode openMode,
+			AddressMap addrMap, TaskMonitor monitor)
+			throws VersionException, CancelledException, IOException {
 
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			return new SymbolDatabaseAdapterV3(dbHandle, addrMap, true);
 		}
 
@@ -81,11 +83,11 @@ abstract class SymbolDatabaseAdapter {
 			return adapter;
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			SymbolDatabaseAdapter adapter = findReadOnlyAdapter(dbHandle, addrMap);
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = upgrade(dbHandle, addrMap, adapter, monitor);
 			}
 			else if (adapter instanceof SymbolDatabaseAdapterV0) {
@@ -138,8 +140,7 @@ abstract class SymbolDatabaseAdapter {
 
 			dbHandle.deleteTable(SYMBOL_TABLE_NAME);
 
-			SymbolDatabaseAdapter newAdapter =
-				new SymbolDatabaseAdapterV3(dbHandle, addrMap, true);
+			SymbolDatabaseAdapter newAdapter = new SymbolDatabaseAdapterV3(dbHandle, addrMap, true);
 
 			copyTempToNewAdapter(tmpAdapter, newAdapter, monitor);
 			return newAdapter;
@@ -308,8 +309,7 @@ abstract class SymbolDatabaseAdapter {
 	 * @return a record iterator for all symbols in the range
 	 * @throws IOException if a database io error occurs
 	 */
-	abstract RecordIterator getSymbols(AddressSetView set, boolean forward)
-			throws IOException;
+	abstract RecordIterator getSymbols(AddressSetView set, boolean forward) throws IOException;
 
 	/** 
 	 * Returns an iterator over the primary symbols in the given range
@@ -421,8 +421,7 @@ abstract class SymbolDatabaseAdapter {
 	 * @param addressKey the encoded address
 	 * @return a database Long field containing the computed hash
 	 */
-	protected static LongField computeLocatorHash(String name, long namespaceID,
-			long addressKey) {
+	protected static LongField computeLocatorHash(String name, long namespaceID, long addressKey) {
 		// Default functions have no name, no point in storing a hash for those.
 		if (StringUtils.isEmpty(name)) {
 			return null;
@@ -437,8 +436,8 @@ abstract class SymbolDatabaseAdapter {
 
 	// This wraps a record iterator to make sure it only returns records for symbols that match
 	// the given name and name space.
-	protected static RecordIterator getNameAndNamespaceFilterIterator(String name,
-			long namespaceId, RecordIterator it) {
+	protected static RecordIterator getNameAndNamespaceFilterIterator(String name, long namespaceId,
+			RecordIterator it) {
 		Query nameQuery = new FieldMatchQuery(SYMBOL_NAME_COL, new StringField(name));
 		Query namespaceQuery = new FieldMatchQuery(SYMBOL_PARENT_COL, new LongField(namespaceId));
 		Query nameAndNamespaceQuery = new AndQuery(nameQuery, namespaceQuery);

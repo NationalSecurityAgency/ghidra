@@ -29,7 +29,7 @@ import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.Msg;
 import ghidra.util.exception.NoValueException;
 
@@ -233,10 +233,9 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 			// Continue walking instructions backwards if a delay-slot instruction is found and 
 			// either the delay slot instruction does not fallthrough or it does not have a 
 			// ref or label on it.
-			while (instr != null && instr.isInDelaySlot() &&
-				(!instr.hasFallthrough() ||
-					!program.getSymbolTable().hasSymbol(instr.getMinAddress())));
-			
+			while (instr != null && instr.isInDelaySlot() && (!instr.hasFallthrough() ||
+				!program.getSymbolTable().hasSymbol(instr.getMinAddress())));
+
 			if (instr == null) {
 				return null;
 			}
@@ -643,7 +642,7 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 		finally {
 			lock.release();
 		}
-		program.setChanged(ChangeManager.DOCR_FLOWOVERRIDE_CHANGED, address, address, null, null);
+		program.setChanged(ProgramEvent.FLOW_OVERRIDE_CHANGED, address, address, null, null);
 	}
 
 	private boolean isSameFlowType(FlowType origFlowType, RefType referenceType) {
@@ -750,8 +749,7 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 				flags &= FALLTHROUGH_CLEAR_MASK;
 			}
 			codeMgr.setFlags(addr, flags);
-			program.setChanged(ChangeManager.DOCR_FALLTHROUGH_CHANGED, address, address, null,
-				null);
+			program.setChanged(ProgramEvent.FALLTHROUGH_CHANGED, address, address, null, null);
 		}
 	}
 
@@ -806,8 +804,8 @@ public class InstructionDB extends CodeUnitDB implements Instruction, Instructio
 		try {
 			checkDeleted();
 			if (doSetLengthOverride(len)) {
-				program.setChanged(ChangeManager.DOCR_LENGTH_OVERRIDE_CHANGED, address, address,
-					null, null);
+				program.setChanged(ProgramEvent.LENGTH_OVERRIDE_CHANGED, address, address, null,
+					null);
 			}
 		}
 		finally {

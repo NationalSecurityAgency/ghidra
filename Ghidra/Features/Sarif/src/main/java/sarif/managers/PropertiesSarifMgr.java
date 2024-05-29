@@ -15,42 +15,23 @@
  */
 package sarif.managers;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Point;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.StringTokenizer;
 
 import javax.swing.KeyStroke;
 
 import com.google.gson.JsonArray;
 
 import ghidra.app.util.importer.MessageLog;
-import ghidra.framework.options.CustomOption;
-import ghidra.framework.options.OptionType;
-import ghidra.framework.options.Options;
+import ghidra.framework.options.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.listing.Bookmark;
-import ghidra.program.model.listing.BookmarkManager;
-import ghidra.program.model.listing.BookmarkType;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.util.IntPropertyMap;
-import ghidra.program.model.util.LongPropertyMap;
-import ghidra.program.model.util.ObjectPropertyMap;
-import ghidra.program.model.util.PropertyMap;
-import ghidra.program.model.util.PropertyMapManager;
-import ghidra.program.model.util.StringPropertyMap;
-import ghidra.program.model.util.VoidPropertyMap;
-import ghidra.util.ColorUtils;
-import ghidra.util.SaveableColor;
-import ghidra.util.SaveablePoint;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.util.*;
+import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskLauncher;
@@ -79,8 +60,8 @@ public class PropertiesSarifMgr extends SarifMgr {
 	////////////////////////////
 
 	@Override
-	public boolean read(Map<String, Object> result, SarifProgramOptions options, TaskMonitor monitor)
-			throws CancelledException {
+	public boolean read(Map<String, Object> result, SarifProgramOptions options,
+			TaskMonitor monitor) throws CancelledException {
 		processProperty(result, options == null || options.isOverwritePropertyConflicts());
 		return true;
 	}
@@ -92,18 +73,20 @@ public class PropertiesSarifMgr extends SarifMgr {
 			Address addr = getLocation(result);
 			if (addr != null) {
 				processPropertyMapEntry(addr, name, result, overwrite);
-			} else {
+			}
+			else {
 				processPropertyListEntry(name, result, overwrite);
 			}
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			log.appendException(e);
 		}
 
 	}
 
 	@SuppressWarnings("unchecked")
-	private void processPropertyMapEntry(Address addr, String name, Map<String, Object> result, boolean overwrite)
-			throws DuplicateNameException {
+	private void processPropertyMapEntry(Address addr, String name, Map<String, Object> result,
+			boolean overwrite) throws DuplicateNameException {
 
 		String type = (String) result.get("type");
 		if (type != null) {
@@ -128,44 +111,51 @@ public class PropertiesSarifMgr extends SarifMgr {
 				voidMap = propMapMgr.createVoidPropertyMap(name);
 			}
 			voidMap.add(addr);
-		} else if ("int".equals(type)) {
+		}
+		else if ("int".equals(type)) {
 			int value = Integer.parseInt(val, 16);
 			IntPropertyMap intMap = propMapMgr.getIntPropertyMap(name);
 			if (intMap == null) {
 				intMap = propMapMgr.createIntPropertyMap(name);
 			}
 			intMap.add(addr, value);
-		} else if ("long".equals(type)) {
+		}
+		else if ("long".equals(type)) {
 			long value = Long.parseLong(val, 16);
 			LongPropertyMap longMap = propMapMgr.getLongPropertyMap(name);
 			if (longMap == null) {
 				longMap = propMapMgr.createLongPropertyMap(name);
 			}
 			longMap.add(addr, value);
-		} else if ("string".equals(type)) {
+		}
+		else if ("string".equals(type)) {
 			String str = val;
 			StringPropertyMap strMap = propMapMgr.getStringPropertyMap(name);
 			if (strMap == null) {
 				strMap = propMapMgr.createStringPropertyMap(name);
 			}
 			strMap.add(addr, str);
-		} else if ("color".equals(type)) {
-			ObjectPropertyMap<SaveableColor> objMap = (ObjectPropertyMap<SaveableColor>) propMapMgr
-					.getObjectPropertyMap(name);
+		}
+		else if ("color".equals(type)) {
+			ObjectPropertyMap<SaveableColor> objMap =
+				(ObjectPropertyMap<SaveableColor>) propMapMgr.getObjectPropertyMap(name);
 			if (objMap == null) {
 				objMap = propMapMgr.createObjectPropertyMap(name, SaveableColor.class);
 			}
 			objMap.add(addr, new SaveableColor(Color.decode(val)));
-		} else if ("point".equals(type)) {
+		}
+		else if ("point".equals(type)) {
 			String xstr = val.substring(val.indexOf("[x="), val.indexOf(","));
 			String ystr = val.substring(val.indexOf("y="), val.indexOf("]"));
-			ObjectPropertyMap<SaveablePoint> objMap = (ObjectPropertyMap<SaveablePoint>) propMapMgr
-					.getObjectPropertyMap(name);
+			ObjectPropertyMap<SaveablePoint> objMap =
+				(ObjectPropertyMap<SaveablePoint>) propMapMgr.getObjectPropertyMap(name);
 			if (objMap == null) {
 				objMap = propMapMgr.createObjectPropertyMap(name, SaveablePoint.class);
 			}
-			objMap.add(addr, new SaveablePoint(new Point(Integer.parseInt(xstr), Integer.parseInt(ystr))));
-		} else if ("bookmarks".equals(type)) {
+			objMap.add(addr,
+				new SaveablePoint(new Point(Integer.parseInt(xstr), Integer.parseInt(ystr))));
+		}
+		else if ("bookmarks".equals(type)) {
 			// Must retain for backward compatibility with old Ver-1 Note bookmarks which
 			// were saved as simple properties
 			BookmarkManager bmMgr = program.getBookmarkManager();
@@ -177,7 +167,8 @@ public class PropertiesSarifMgr extends SarifMgr {
 				}
 			}
 			bmMgr.setBookmark(addr, BookmarkType.NOTE, name, val);
-		} else {
+		}
+		else {
 			log.appendMsg("Unsupported PROPERTY usage");
 		}
 	}
@@ -202,13 +193,14 @@ public class PropertiesSarifMgr extends SarifMgr {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void processPropertyListEntry(String pathname, Map<String, Object> result, boolean overwrite)
-			throws Exception {
+	private void processPropertyListEntry(String pathname, Map<String, Object> result,
+			boolean overwrite) throws Exception {
 
 		String listName = getPropertyList(pathname);
 		String name = getPropertyName(pathname);
 		if (listName == null || name == null) {
-			log.appendMsg("Property NAME attribute must contain both category prefix and property name");
+			log.appendMsg(
+				"Property NAME attribute must contain both category prefix and property name");
 			return;
 		}
 		Options list = program.getOptions(listName);
@@ -223,48 +215,76 @@ public class PropertiesSarifMgr extends SarifMgr {
 		Object val = result.get("value");
 		if (type == null || "void".equals(type)) {
 			log.appendMsg("Unsupported PROPERTY usage");
-		} else if ("int".equals(type)) {
+		}
+		else if ("int".equals(type)) {
 			list.setInt(name, Integer.parseInt((String) val, 16));
-		} else if ("long".equals(type)) {
+		}
+		else if ("long".equals(type)) {
 			list.setLong(name, Long.parseLong((String) val, 16));
-		} else if ("double".equals(type)) {
+		}
+		else if ("double".equals(type)) {
 			list.setDouble(name, Double.parseDouble((String) val));
-		} else if ("float".equals(type)) {
+		}
+		else if ("float".equals(type)) {
 			list.setFloat(name, Float.parseFloat((String) val));
-		} else if ("bool".equals(type)) {
+		}
+		else if ("bool".equals(type)) {
 			list.setBoolean(name, Boolean.parseBoolean((String) val));
-		} else if ("string".equals(type)) {
+		}
+		else if ("string".equals(type)) {
 			list.setString(name, (String) val);
-		} else if ("date".equals(type)) {
+		}
+		else if ("date".equals(type)) {
 			list.setDate(name, new Date(Long.parseLong((String) val, 16)));
-		} else if ("color".equals(type)) {
+		}
+		else if ("color".equals(type)) {
 			Color color = ColorUtils.getColor((Integer) val);
 			list.setColor(name, color);
-		} else if ("file".equals(type)) {
+		}
+		else if ("file".equals(type)) {
 			File file = new File((String) val);
 			list.setFile(name, file);
-		} else if ("enum".equals(type)) {
+		}
+		else if ("enum".equals(type)) {
 			String sarifString = unEscapeElementEntities((String) val);
 			@SuppressWarnings("rawtypes")
 			Enum enuum = (Enum) OptionType.ENUM_TYPE.convertStringToObject(sarifString);
 			list.setEnum(name, enuum);
-		} else if ("font".equals(type)) {
+		}
+		else if ("font".equals(type)) {
 			String sarifString = unEscapeElementEntities((String) val);
 			Font font = (Font) OptionType.FONT_TYPE.convertStringToObject(sarifString);
 			list.setFont(name, font);
-		} else if ("keyStroke".equals(type)) {
+		}
+		else if ("keyStroke".equals(type)) {
 			String sarifString = unEscapeElementEntities((String) val);
-			KeyStroke keyStroke = (KeyStroke) OptionType.KEYSTROKE_TYPE.convertStringToObject(sarifString);
-			list.setKeyStroke(name, keyStroke);
-		} else if ("custom".equals(type)) {
+			KeyStroke keyStroke =
+				(KeyStroke) OptionType.KEYSTROKE_TYPE.convertStringToObject(sarifString);
+
+			ActionTrigger trigger = null;
+			if (keyStroke != null) {
+				trigger = new ActionTrigger(keyStroke);
+			}
+			list.setActionTrigger(name, trigger);
+		}
+		else if ("actionTrigger".equals(type)) {
 			String sarifString = unEscapeElementEntities((String) val);
-			CustomOption custom = (CustomOption) OptionType.CUSTOM_TYPE.convertStringToObject(sarifString);
+			ActionTrigger actionTrigger =
+				(ActionTrigger) OptionType.ACTION_TRIGGER.convertStringToObject(sarifString);
+			list.setActionTrigger(name, actionTrigger);
+		}
+		else if ("custom".equals(type)) {
+			String sarifString = unEscapeElementEntities((String) val);
+			CustomOption custom =
+				(CustomOption) OptionType.CUSTOM_TYPE.convertStringToObject(sarifString);
 			list.setCustomOption(name, custom);
-		} else if ("bytes".equals(type)) {
+		}
+		else if ("bytes".equals(type)) {
 			String sarifString = unEscapeElementEntities((String) val);
 			byte[] bytes = (byte[]) OptionType.BYTE_ARRAY_TYPE.convertStringToObject(sarifString);
 			list.setByteArray(name, bytes);
-		} else {
+		}
+		else {
 			log.appendMsg("Unsupported PROPERTY usage");
 		}
 	}
@@ -273,7 +293,8 @@ public class PropertiesSarifMgr extends SarifMgr {
 	// SARIF WRITE CURRENT DTD //
 	/////////////////////////////
 
-	void write(JsonArray results, AddressSetView set, TaskMonitor monitor) throws IOException, CancelledException {
+	void write(JsonArray results, AddressSetView set, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		monitor.setMessage("Writing PROPERTIES ...");
 
 		List<String> request = program.getOptionsNames();
@@ -290,13 +311,14 @@ public class PropertiesSarifMgr extends SarifMgr {
 		writeAsSARIF(program, set, mapRequest, results);
 	}
 
-	public static void writeAsSARIF(Program program, List<String> request, JsonArray results) throws IOException {
+	public static void writeAsSARIF(Program program, List<String> request, JsonArray results)
+			throws IOException {
 		SarifPropertyListWriter writer = new SarifPropertyListWriter(program, request, null);
 		new TaskLauncher(new SarifWriterTask(SUBKEY, writer, results), null);
 	}
 
-	public static void writeAsSARIF(Program program, AddressSetView set, List<PropertyMap<?>> request,
-			JsonArray results) throws IOException {
+	public static void writeAsSARIF(Program program, AddressSetView set,
+			List<PropertyMap<?>> request, JsonArray results) throws IOException {
 		SarifPropertyMapWriter writer = new SarifPropertyMapWriter(request, program, set, null);
 		new TaskLauncher(new SarifWriterTask(SUBKEY, writer, results), null);
 	}

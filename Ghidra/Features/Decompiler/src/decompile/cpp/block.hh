@@ -132,7 +132,7 @@ private:
 				// the result of the condition being false
   static void replaceEdgeMap(vector<BlockEdge> &vec);	///< Update block references in edges with copy map
   void addInEdge(FlowBlock *b,uint4 lab);	///< Add an edge coming into \b this
-  void decodeNextInEdge(Decoder &decoder,BlockMap &resolver);	///< Restore the next input edge from XML
+  void decodeNextInEdge(Decoder &decoder,BlockMap &resolver);	///< Decode the next input edge from stream
   void halfDeleteInEdge(int4 slot);		///< Delete the \e in half of an edge, correcting indices
   void halfDeleteOutEdge(int4 slot);		///< Delete the \e out half of an edge, correcting indices
   void removeInEdge(int4 slot);			///< Remove an incoming edge
@@ -489,7 +489,7 @@ public:
   list<PcodeOp *>::const_iterator beginOp(void) const { return op.begin(); }	///< Return an iterator to the beginning of the PcodeOps
   list<PcodeOp *>::const_iterator endOp(void) const { return op.end(); }	///< Return an iterator to the end of the PcodeOps
   bool emptyOp(void) const { return op.empty(); }		///< Return \b true if \b block contains no operations
-  static bool noInterveningStatement(PcodeOp *first,int4 path,PcodeOp *last);
+  bool noInterveningStatement(void) const;
   PcodeOp *findMultiequal(const vector<Varnode *> &varArray);		///< Find MULTIEQUAL with given inputs
   static bool liftVerifyUnroll(vector<Varnode *> &varArray,int4 slot);	///< Verify given Varnodes are defined with same PcodeOp
 };

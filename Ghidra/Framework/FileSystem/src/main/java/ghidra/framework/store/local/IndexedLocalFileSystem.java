@@ -604,9 +604,8 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 				deallocateItemStorage(parentPath, name);
 			}
 			finally {
-				Msg.warn(this,
-					"Detected orphaned project file " + conflictedItemStorageName + ": " +
-						getPath(parentPath, name));
+				Msg.warn(this, "Detected orphaned project file " + conflictedItemStorageName +
+					": " + getPath(parentPath, name));
 			}
 		}
 
@@ -893,8 +892,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 	}
 
 	@Override
-	protected String[] getItemNames(String folderPath, boolean includeHiddenFiles)
-			throws IOException {
+	public String[] getItemNames(String folderPath, boolean includeHiddenFiles) throws IOException {
 		if (readOnly) {
 			refreshReadOnlyIndex();
 		}

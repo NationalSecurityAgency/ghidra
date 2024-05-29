@@ -73,7 +73,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	private JPanel component;
 	private RootNode scriptRoot;
 	private GTree scriptCategoryTree;
-	private DraggableScriptTable scriptTable;
+	private GTable scriptTable;
 	private final GhidraScriptInfoManager infoManager;
 	private GhidraScriptTableModel tableModel;
 	private BundleStatusComponentProvider bundleStatusComponentProvider;
@@ -93,12 +93,12 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	private TaskListener cleanupTaskSetListener = new TaskListener() {
 		@Override
 		public void taskCompleted(Task task) {
-			runningScriptTaskSet.remove((RunScriptTask) task);
+			runningScriptTaskSet.remove(task);
 		}
 
 		@Override
 		public void taskCancelled(Task task) {
-			runningScriptTaskSet.remove((RunScriptTask) task);
+			runningScriptTaskSet.remove(task);
 		}
 	};
 
@@ -148,7 +148,6 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		scriptRoot = new RootNode();
 
 		scriptCategoryTree = new GTree(scriptRoot);
-		scriptCategoryTree.setName("CATEGORY_TREE");
 		scriptCategoryTree.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent e) {
@@ -176,7 +175,9 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		});
 
 		scriptCategoryTree.getSelectionModel()
-			.setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+				.setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+
+		scriptCategoryTree.setAccessibleNamePrefix("Script Category");
 	}
 
 	private void build() {
@@ -184,8 +185,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 		tableModel = new GhidraScriptTableModel(this, infoManager);
 
-		scriptTable = new DraggableScriptTable(this, tableModel);
-		scriptTable.setName("SCRIPT_TABLE");
+		scriptTable = new GTable(tableModel);
 		scriptTable.setAutoLookupColumn(tableModel.getNameColumnIndex());
 		scriptTable.setRowSelectionAllowed(true);
 		scriptTable.setAutoCreateColumnsFromModel(false);
@@ -213,6 +213,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 				runScript();
 			}
 		});
+
+		scriptTable.setAccessibleNamePrefix("Scripts");
 
 		TableColumnModel columnModel = scriptTable.getColumnModel();
 		// Set default column sizes
@@ -343,7 +345,8 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			plugin.getTool().setStatusInfo("User cancelled keybinding.");
 			return;
 		}
-		action.setKeyBindingData(new KeyBindingData(dialog.getKeyStroke()));
+		KeyStroke newKs = dialog.getKeyStroke();
+		action.setKeyBindingData(newKs == null ? null : new KeyBindingData(newKs));
 		scriptTable.repaint();
 	}
 
@@ -458,8 +461,12 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		setSelectedScript(renameFile);
 	}
 
-	JTable getTable() {
+	public GTable getTable() {
 		return scriptTable;
+	}
+
+	public GTree getTree() {
+		return scriptCategoryTree;
 	}
 
 	int getScriptIndex(ResourceFile scriptFile) {
@@ -475,11 +482,11 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	 */
 	public List<ResourceFile> getScriptDirectories() {
 		return bundleHost.getGhidraBundles()
-			.stream()
-			.filter(GhidraSourceBundle.class::isInstance)
-			.filter(GhidraBundle::isEnabled)
-			.map(GhidraBundle::getFile)
-			.collect(Collectors.toList());
+				.stream()
+				.filter(GhidraSourceBundle.class::isInstance)
+				.filter(GhidraBundle::isEnabled)
+				.map(GhidraBundle::getFile)
+				.collect(Collectors.toList());
 	}
 
 	/**
@@ -487,12 +494,12 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	 */
 	public List<ResourceFile> getWritableScriptDirectories() {
 		return bundleHost.getGhidraBundles()
-			.stream()
-			.filter(GhidraSourceBundle.class::isInstance)
-			.filter(Predicate.not(GhidraBundle::isSystemBundle))
-			.filter(GhidraBundle::isEnabled)
-			.map(GhidraBundle::getFile)
-			.collect(Collectors.toList());
+				.stream()
+				.filter(GhidraSourceBundle.class::isInstance)
+				.filter(Predicate.not(GhidraBundle::isSystemBundle))
+				.filter(GhidraBundle::isEnabled)
+				.map(GhidraBundle::getFile)
+				.collect(Collectors.toList());
 	}
 
 	boolean isEditorOpen(ResourceFile script) {
@@ -647,9 +654,9 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 		AtomicReference<GhidraScript> ref = new AtomicReference<>();
 		TaskBuilder.withRunnable(monitor -> ref.set(scriptSupplier.get()))
-			.setTitle("Compiling Script Directory")
-			.setLaunchDelay(1000)
-			.launchModal();
+				.setTitle("Compiling Script Directory")
+				.setLaunchDelay(1000)
+				.launchModal();
 
 		return ref.get();
 	}
@@ -1012,15 +1019,19 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 				return list;
 			}
 		});
-		tableFilterPanel.setToolTipText("<HTML>Include scripts with <b>Names</b> or " +
+		tableFilterPanel.setToolTipText("<html>Include scripts with <b>Names</b> or " +
 			"<b>Descriptions</b> containing this text.");
 		tableFilterPanel.setFocusComponent(scriptCategoryTree);
+
+		tableFilterPanel.setAccessibleNamePrefix("Script");
+
 	}
 
 	private JComponent buildDescriptionComponent() {
 		descriptionTextPane = new JTextPane();
 		descriptionTextPane.setEditable(false);
 		descriptionTextPane.setEditorKit(new HTMLEditorKit());
+		descriptionTextPane.setName("Script Description");
 		JPanel descriptionPanel = new JPanel(new BorderLayout());
 		descriptionPanel.add(descriptionTextPane);
 		JScrollPane scrollPane = new JScrollPane(descriptionPanel);
@@ -1038,9 +1049,9 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	private void updateDescriptionPanel() {
 		ResourceFile script = getSelectedScript();
 		ScriptInfo info = infoManager.getExistingScriptInfo(script); // null script is ok
-		String text = script != null
-				? (info != null ? info.getToolTipText() : "Error! no script info!")
-				: null; // no selected script
+		String text =
+			script != null ? (info != null ? info.getToolTipText() : "Error! no script info!")
+					: null; // no selected script
 
 		// have to do an invokeLater here, since the DefaultCaret class runs in an invokeLater,
 		// which will overwrite our location setting

@@ -30,7 +30,6 @@ import generic.theme.GIcon;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
-import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
 
@@ -118,8 +117,6 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 		threadedTablePanel = new GhidraThreadedTablePanel<>(functionModel, 1000);
 
 		functionTable = threadedTablePanel.getTable();
-		functionTable.setName("FunctionTable");
-
 		functionTable.installNavigation(tool);
 		functionTable.setAutoLookupColumn(FunctionTableModel.NAME_COL);
 		functionTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
@@ -148,14 +145,14 @@ public class FunctionWindowProvider extends ComponentProviderAdapter {
 
 		tableFilterPanel = new GhidraTableFilterPanel<>(functionTable, functionModel);
 
+		String namePrefix = "Functions";
+		functionTable.setAccessibleNamePrefix(namePrefix);
+		tableFilterPanel.setAccessibleNamePrefix(namePrefix);
+
 		JPanel container = new JPanel(new BorderLayout());
 		container.add(threadedTablePanel, BorderLayout.CENTER);
 		container.add(tableFilterPanel, BorderLayout.SOUTH);
 		return container;
-	}
-
-	ProgramSelection selectFunctions() {
-		return functionTable.getProgramSelection();
 	}
 
 	private void setFunctionTableRenderer() {

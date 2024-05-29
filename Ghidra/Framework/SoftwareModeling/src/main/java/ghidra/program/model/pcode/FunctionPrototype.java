@@ -132,7 +132,8 @@ public class FunctionPrototype {
 			protoModel = f.getProgram().getCompilerSpec().getDefaultCallingConvention();
 		}
 		hasThis = protoModel.hasThisPointer();
-		modellock = !f.hasUnknownCallingConventionName();
+		modellock =
+			((modelname != null) && !Function.UNKNOWN_CALLING_CONVENTION_STRING.equals(modelname));
 		injectname = f.getCallFixup();
 		voidinputlock = false;
 		Parameter returnparam = f.getReturn();

@@ -33,7 +33,7 @@ public class DefaultMonitorReceiver implements MonitorReceiver {
 
 	private boolean valid = true;
 
-	private String message;
+	private String message = "";
 	private long maximum;
 	private long progress;
 
@@ -70,9 +70,18 @@ public class DefaultMonitorReceiver implements MonitorReceiver {
 
 	void setMessage(String message) {
 		synchronized (lock) {
-			this.message = message;
+			if (message == null) {
+				this.message = "";
+			}
+			else {
+				this.message = message;
+			}
 		}
-		plugin.listeners.invoke().messageUpdated(this, message);
+		plugin.listeners.invoke().messageUpdated(this, this.message);
+	}
+
+	void reportError(Throwable error) {
+		plugin.listeners.invoke().errorReported(this, error);
 	}
 
 	@Override
@@ -158,6 +167,7 @@ public class DefaultMonitorReceiver implements MonitorReceiver {
 		return cancelEnabled;
 	}
 
+	@Override
 	public boolean isShowProgressValue() {
 		return showProgressValue;
 	}

@@ -43,7 +43,7 @@ import ghidra.debug.api.breakpoint.LogicalBreakpointsChangeListener;
 import ghidra.debug.api.control.ControlMode;
 import ghidra.debug.api.target.Target;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
-import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.pcode.exec.SleighUtils;
@@ -52,9 +52,9 @@ import ghidra.program.model.address.AddressRange;
 import ghidra.program.util.MarkerLocation;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceBreakpointChangeType;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.*;
 import ghidra.util.database.ObjectKey;
 import ghidra.util.table.GhidraTable;
@@ -155,34 +155,36 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 
 	protected enum BreakpointLocationTableColumns
 		implements EnumeratedTableColumn<BreakpointLocationTableColumns, BreakpointLocationRow> {
-		STATE("State", State.class, BreakpointLocationRow::getState, BreakpointLocationRow::setState, true),
-		NAME("Name", String.class, BreakpointLocationRow::getName, BreakpointLocationRow::setName, true),
-		ADDRESS("Address", Address.class, BreakpointLocationRow::getAddress, true),
-		TRACE("Trace", String.class, BreakpointLocationRow::getTraceName, true),
-		THREADS("Threads", String.class, BreakpointLocationRow::getThreads, true),
-		COMMENT("Comment", String.class, BreakpointLocationRow::getComment, BreakpointLocationRow::setComment, true),
-		SLEIGH("Sleigh", Boolean.class, BreakpointLocationRow::hasSleigh, true);
+		STATE("State", State.class, BreakpointLocationRow::getState, BreakpointLocationRow::setState, true, true),
+		NAME("Name", String.class, BreakpointLocationRow::getName, BreakpointLocationRow::setName, true, true),
+		ADDRESS("Address", Address.class, BreakpointLocationRow::getAddress, true, true),
+		TRACE("Trace", String.class, BreakpointLocationRow::getTraceName, true, true),
+		THREADS("Threads", String.class, BreakpointLocationRow::getThreads, true, false),
+		COMMENT("Comment", String.class, BreakpointLocationRow::getComment, BreakpointLocationRow::setComment, true, true),
+		SLEIGH("Sleigh", Boolean.class, BreakpointLocationRow::hasSleigh, true, true);
 
 		private final String header;
 		private final Function<BreakpointLocationRow, ?> getter;
 		private final BiConsumer<BreakpointLocationRow, Object> setter;
 		private final boolean sortable;
+		private final boolean visible;
 		private final Class<?> cls;
 
 		<T> BreakpointLocationTableColumns(String header, Class<T> cls,
-				Function<BreakpointLocationRow, T> getter, boolean sortable) {
-			this(header, cls, getter, null, sortable);
+				Function<BreakpointLocationRow, T> getter, boolean sortable, boolean visible) {
+			this(header, cls, getter, null, sortable, visible);
 		}
 
 		@SuppressWarnings("unchecked")
 		<T> BreakpointLocationTableColumns(String header, Class<T> cls,
 				Function<BreakpointLocationRow, T> getter,
-				BiConsumer<BreakpointLocationRow, T> setter, boolean sortable) {
+				BiConsumer<BreakpointLocationRow, T> setter, boolean sortable, boolean visible) {
 			this.header = header;
 			this.cls = cls;
 			this.getter = getter;
 			this.setter = (BiConsumer<BreakpointLocationRow, Object>) setter;
 			this.sortable = sortable;
+			this.visible = visible;
 		}
 
 		@Override
@@ -208,6 +210,11 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		@Override
 		public boolean isSortable() {
 			return sortable;
+		}
+
+		@Override
+		public boolean isVisible() {
+			return visible;
 		}
 
 		@Override
@@ -300,8 +307,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 
 		@Override
 		public boolean isEnabledForContext(ActionContext context) {
-			return contextHasMatchingBreakpoints(context,
-				row -> row.getState() != State.ENABLED,
+			return contextHasMatchingBreakpoints(context, row -> row.getState() != State.ENABLED,
 				row -> row.getState() != State.ENABLED);
 		}
 
@@ -380,8 +386,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 
 		@Override
 		public boolean isEnabledForContext(ActionContext context) {
-			return contextHasMatchingBreakpoints(context,
-				row -> row.getState() != State.DISABLED,
+			return contextHasMatchingBreakpoints(context, row -> row.getState() != State.DISABLED,
 				row -> row.getState() != State.DISABLED);
 		}
 
@@ -546,8 +551,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 
 		static ActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
+			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
 					.popupMenuPath(NAME)
 					.popupMenuGroup(GROUP)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
@@ -562,8 +566,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 
 		static ActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
+			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
 					.popupMenuPath(NAME)
 					.popupMenuGroup(GROUP)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
@@ -605,11 +608,11 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 
 		public ForBreakpointLocationsTraceListener(Trace trace) {
 			this.trace = trace;
-			listenForUntyped(DomainObject.DO_OBJECT_RESTORED, e -> objectRestored());
-			listenFor(TraceBreakpointChangeType.ADDED, this::locationAdded);
-			listenFor(TraceBreakpointChangeType.CHANGED, this::locationChanged);
-			listenFor(TraceBreakpointChangeType.LIFESPAN_CHANGED, this::locationLifespanChanged);
-			listenFor(TraceBreakpointChangeType.DELETED, this::locationDeleted);
+			listenForUntyped(DomainObjectEvent.RESTORED, e -> objectRestored());
+			listenFor(TraceEvents.BREAKPOINT_ADDED, this::locationAdded);
+			listenFor(TraceEvents.BREAKPOINT_CHANGED, this::locationChanged);
+			listenFor(TraceEvents.BREAKPOINT_LIFESPAN_CHANGED, this::locationLifespanChanged);
+			listenFor(TraceEvents.BREAKPOINT_DELETED, this::locationDeleted);
 
 			trace.addListener(this);
 		}
@@ -865,9 +868,8 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 	}
 
 	private void loadBreakpointLocations(Trace trace) {
-		ControlMode mode = controlService == null
-				? ControlMode.DEFAULT
-				: controlService.getCurrentMode(trace);
+		ControlMode mode =
+			controlService == null ? ControlMode.DEFAULT : controlService.getCurrentMode(trace);
 		DebuggerCoordinates currentFor = traceManager.getCurrentFor(trace);
 		Target target = currentFor.getTarget();
 		if (!mode.useEmulatedBreakpoints() && target == null) {
@@ -876,8 +878,8 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		Lifespan span = Lifespan.at(currentFor.getSnap());
 		Collection<TraceBreakpoint> visible = new ArrayList<>();
 		for (AddressRange range : trace.getBaseAddressFactory().getAddressSet()) {
-			Collection<? extends TraceBreakpoint> breaks = trace.getBreakpointManager()
-					.getBreakpointsIntersecting(span, range);
+			Collection<? extends TraceBreakpoint> breaks =
+				trace.getBreakpointManager().getBreakpointsIntersecting(span, range);
 			if (mode.useEmulatedBreakpoints()) {
 				visible.addAll(breaks);
 			}
@@ -959,6 +961,10 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		breakpointPanel.add(breakpointFilterPanel, BorderLayout.SOUTH);
 		mainPanel.setLeftComponent(breakpointPanel);
 
+		String namePrefix = "Breakpoints";
+		breakpointTable.setAccessibleNamePrefix(namePrefix);
+		breakpointFilterPanel.setAccessibleNamePrefix(namePrefix);
+
 		JPanel locationPanel = new JPanel(new BorderLayout());
 		locationTable = new GhidraTable(locationTableModel);
 		locationTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -967,8 +973,11 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		locationFilterPanel.setSecondaryFilter(filterLocationsBySelectedBreakpoints);
 		locationPanel.add(locationFilterPanel, BorderLayout.SOUTH);
 		mainPanel.setRightComponent(locationPanel);
-
 		mainPanel.setResizeWeight(0.5);
+
+		String locationsNamePrefix = "Breakpoint Locations";
+		locationTable.setAccessibleNamePrefix(locationsNamePrefix);
+		locationFilterPanel.setAccessibleNamePrefix(locationsNamePrefix);
 
 		breakpointTable.getSelectionModel().addListSelectionListener(evt -> {
 			List<LogicalBreakpointRow> sel = breakpointFilterPanel.getSelectedItems();
@@ -1039,21 +1048,19 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		});
 
 		TableColumnModel bptColModel = breakpointTable.getColumnModel();
-		TableColumn bptEnCol =
-			bptColModel.getColumn(LogicalBreakpointTableColumns.STATE.ordinal());
+		TableColumn bptEnCol = bptColModel.getColumn(LogicalBreakpointTableColumns.STATE.ordinal());
 		bptEnCol.setCellRenderer(new DebuggerBreakpointStateTableCellRenderer());
-		bptEnCol.setCellEditor(
-			new DebuggerBreakpointStateTableCellEditor<>(breakpointFilterPanel) {
-				@Override
-				protected State getToggledState(LogicalBreakpointRow row, State current) {
-					boolean mapped = row.isMapped();
-					if (!mapped) {
-						tool.setStatusInfo(
-							"Breakpoint has no locations. Only toggling its bookmark.", true);
-					}
-					return current.getToggled(mapped);
+		bptEnCol.setCellEditor(new DebuggerBreakpointStateTableCellEditor<>(breakpointFilterPanel) {
+			@Override
+			protected State getToggledState(LogicalBreakpointRow row, State current) {
+				boolean mapped = row.isMapped();
+				if (!mapped) {
+					tool.setStatusInfo("Breakpoint has no locations. Only toggling its bookmark.",
+						true);
 				}
-			});
+				return current.getToggled(mapped);
+			}
+		});
 		bptEnCol.setMaxWidth(24);
 		bptEnCol.setMinWidth(24);
 		TableColumn bptNameCol =
@@ -1076,8 +1083,8 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 		locsCol.setPreferredWidth(20);
 		TableColumn bptSleighCol =
 			bptColModel.getColumn(LogicalBreakpointTableColumns.SLEIGH.ordinal());
-		bptSleighCol.setMaxWidth(24);
-		bptSleighCol.setMinWidth(24);
+		bptSleighCol.setMaxWidth(30);
+		bptSleighCol.setMinWidth(30);
 
 		GTableColumnModel locColModel = (GTableColumnModel) locationTable.getColumnModel();
 		TableColumn locEnCol =
@@ -1098,11 +1105,12 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 			locColModel.getColumn(BreakpointLocationTableColumns.THREADS.ordinal());
 		TableColumn locSleighCol =
 			locColModel.getColumn(BreakpointLocationTableColumns.SLEIGH.ordinal());
-		locSleighCol.setMaxWidth(24);
-		locSleighCol.setMinWidth(24);
+		locSleighCol.setMaxWidth(30);
+		locSleighCol.setMinWidth(30);
 
 		locColModel.setVisible(locThreadsCol, false);
 		locColModel.setVisible(locSleighCol, false);
+
 	}
 
 	protected void navigateToSelectedBreakpoint() {
@@ -1152,7 +1160,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 			}
 			traceManager.activateTrace(trace);
 		}
-		listingService.goTo(row.getAddress(), true);
+		listingService.goTo(row.getProgramLocation(), true);
 	}
 
 	protected void createActions() {
@@ -1386,6 +1394,6 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 			return;
 		}
 		Msg.error(this, message, ex);
-		consoleService.log(DebuggerResources.ICON_LOG_ERROR, message + " (" + ex + ")");
+		consoleService.log(DebuggerResources.ICON_LOG_ERROR, message, ex);
 	}
 }

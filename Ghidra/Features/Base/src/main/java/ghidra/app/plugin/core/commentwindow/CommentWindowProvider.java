@@ -26,7 +26,6 @@ import docking.ActionContext;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
 
@@ -104,7 +103,7 @@ class CommentWindowProvider extends ComponentProviderAdapter {
 
 		threadedTablePanel = new GhidraThreadedTablePanel<>(commentModel, 1000);
 		commentTable = threadedTablePanel.getTable();
-		commentTable.setName("CommentTable");
+		commentTable.getAccessibleContext().setAccessibleName("Comment Table");
 		commentTable.setAutoLookupColumn(CommentTableModel.TYPE_COL);
 		commentTable.setPreferredScrollableViewportSize(new Dimension(600, 400));
 		commentTable.setRowSelectionAllowed(true);
@@ -137,15 +136,15 @@ class CommentWindowProvider extends ComponentProviderAdapter {
 		panel.add(threadedTablePanel, BorderLayout.CENTER);
 		panel.add(filterPanel, BorderLayout.SOUTH);
 
+		String namePrefix = "Comments";
+		commentTable.setAccessibleNamePrefix(namePrefix);
+		filterPanel.setAccessibleNamePrefix(namePrefix);
+
 		return panel;
 	}
 
 	private void notifyContextChanged() {
 		tool.contextChanged(this);
-	}
-
-	ProgramSelection selectComment() {
-		return commentTable.getProgramSelection();
 	}
 
 	void reload() {

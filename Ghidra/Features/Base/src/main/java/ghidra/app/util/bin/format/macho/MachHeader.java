@@ -171,7 +171,7 @@ public class MachHeader implements StructConverter {
 		for (int i = 0; i < nCmds; ++i) {
 			_reader.setPointerIndex(currentIndex);
 			int type = _reader.readNextInt();
-			int size = _reader.readNextInt();
+			long size = _reader.readNextUnsignedInt();
 			if (type == LoadCommandTypes.LC_SEGMENT || type == LoadCommandTypes.LC_SEGMENT_64) {
 				segmentIndexes.add(currentIndex);
 			}
@@ -198,9 +198,8 @@ public class MachHeader implements StructConverter {
 	 * 
 	 * @return A {@List} of this {@link MachHeader}'s {@link SegmentCommand segments}
 	 * @throws IOException If there was an IO-related error
-	 * @throws MachException if the load command is invalid
 	 */
-	public List<SegmentCommand> parseSegments() throws IOException, MachException {
+	public List<SegmentCommand> parseSegments() throws IOException {
 		List<SegmentCommand> segments = new ArrayList<>();
 		_reader.setPointerIndex(_commandIndex);
 		for (int i = 0; i < nCmds; ++i) {
@@ -210,12 +209,36 @@ public class MachHeader implements StructConverter {
 			}
 			else {
 				type = _reader.readNextInt();
-				int size = _reader.readNextInt();
+				long size = _reader.readNextUnsignedInt();
 				_reader.setPointerIndex(_reader.getPointerIndex() + size - 8);
 			}
 		}
 		sanitizeSegmentSectionNames(segments);
 		return segments;
+	}
+
+	/**
+	 * Parses only this {@link MachHeader}'s {@link LoadCommand}s to check to see if one of the
+	 * given type exists
+	 * 
+	 * @param loadCommandType The type of {@link LoadCommand} to check for
+	 * @return True if this {@link MachHeader} contains the given {@link LoadCommand} type
+	 * @throws IOException If there was an IO-related error
+	 * @see LoadCommandTypes
+	 */
+	public boolean parseAndCheck(int loadCommandType) throws IOException {
+		_reader.setPointerIndex(_commandIndex);
+		for (int i = 0; i < nCmds; ++i) {
+			int type = _reader.peekNextInt();
+			if (type == loadCommandType) {
+				return true;
+			}
+			type = _reader.readNextInt();
+			long size = _reader.readNextUnsignedInt();
+			_reader.setPointerIndex(_reader.getPointerIndex() + size - 8);
+
+		}
+		return false;
 	}
 
 	public int getMagic() {

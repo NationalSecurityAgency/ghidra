@@ -165,8 +165,8 @@ public class BytesPcodeExecutorStateSpace<B> {
 	 * 
 	 * <p>
 	 * If this space is not acting as a cache, this simply delegates to
-	 * {@link #readBytes(long, int)}. Otherwise, it will first ensure the cache covers the requested
-	 * value.
+	 * {@link #readBytes(long, int, Reason)}. Otherwise, it will first ensure the cache covers the
+	 * requested value.
 	 * 
 	 * @param offset the offset
 	 * @param size the number of bytes to read (the size of the value)

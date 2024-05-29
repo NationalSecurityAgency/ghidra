@@ -19,7 +19,6 @@ import java.util.Collections;
 import java.util.List;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.util.exception.CancelledException;
@@ -33,7 +32,7 @@ import ghidra.util.task.TaskMonitor;
  *     by type of bookmark
  *     by category of bookmark
  */
-public class BookmarkDeleteCmd implements Command {
+public class BookmarkDeleteCmd implements Command<Program> {
 
 	private List<Bookmark> bookmarks;
 	private String type;
@@ -162,9 +161,9 @@ public class BookmarkDeleteCmd implements Command {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj) {
+	public boolean applyTo(Program program) {
 
-		BookmarkManager mgr = ((Program) obj).getBookmarkManager();
+		BookmarkManager mgr = program.getBookmarkManager();
 
 		if (bookmarks != null) {
 			deleteBookmarks(mgr, bookmarks);

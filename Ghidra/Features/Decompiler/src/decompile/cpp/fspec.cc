@@ -49,6 +49,7 @@ ElementId ELEM_RESOLVEPROTOTYPE = ElementId("resolveprototype",170);
 ElementId ELEM_RETPARAM = ElementId("retparam",171);
 ElementId ELEM_RETURNSYM = ElementId("returnsym",172);
 ElementId ELEM_UNAFFECTED = ElementId("unaffected",173);
+ElementId ELEM_INTERNAL_STORAGE = ElementId("internal_storage",286);
 
 /// \brief Find a ParamEntry matching the given storage Varnode
 ///
@@ -67,6 +68,24 @@ const ParamEntry *ParamEntry::findEntryByStorage(const list<ParamEntry> &entryLi
     }
   }
   return (const ParamEntry *)0;
+}
+
+/// Check previous ParamEntry, if it exists, and compare storage class.
+/// If it is different, this is the first, and its flag gets set.
+/// \param curList is the list of previous ParamEntry
+void ParamEntry::resolveFirst(list<ParamEntry> &curList)
+
+{
+  list<ParamEntry>::const_iterator iter = curList.end();
+  --iter;
+  if (iter == curList.begin()) {
+    flags |= first_storage;
+    return;
+  }
+  --iter;
+  if (type != (*iter).type) {
+    flags |= first_storage;
+  }
 }
 
 /// If the ParamEntry is initialized with a \e join address, cache the join record and
@@ -536,6 +555,7 @@ void ParamEntry::decode(Decoder &decoder,bool normalstack,bool grouped,list<Para
   }
   if (grouped)
     flags |= is_grouped;
+  resolveFirst(curList);
   resolveJoin(curList);
   resolveOverlap(curList);
 }
@@ -583,11 +603,44 @@ ParamListStandard::~ParamListStandard(void)
   }
 }
 
+/// The entry must have a unique group.
+/// If no matching entry is found, the \b end iterator is returned.
+/// \param type is the storage class
+/// \return the first matching iterator
+list<ParamEntry>::const_iterator ParamListStandard::getFirstIter(type_class type) const
+
+{
+  list<ParamEntry>::const_iterator iter;
+  for(iter=entry.begin();iter!=entry.end();++iter) {
+    const ParamEntry &curEntry( *iter );
+    if (curEntry.getType() == type && curEntry.getAllGroups().size() == 1)
+      return iter;
+  }
+  return iter;
+}
+
+/// If the stack entry is not present, null is returned
+/// \return the stack entry or null
+const ParamEntry *ParamListStandard::getStackEntry(void) const
+
+{
+  list<ParamEntry>::const_iterator iter = entry.end();
+  if (iter != entry.begin()) {
+    --iter;		// Stack entry necessarily must be the last entry
+    const ParamEntry &curEntry( *iter );
+    if (!curEntry.isExclusion() && curEntry.getSpace()->getType() == IPTR_SPACEBASE) {
+      return &(*iter);
+    }
+  }
+  return (const ParamEntry *)0;
+}
+
 /// Find the (first) entry containing the given memory range
 /// \param loc is the starting address of the range
 /// \param size is the number of bytes in the range
+/// \param just is \b true if the search enforces a justified match
 /// \return the pointer to the matching ParamEntry or null if no match exists
-const ParamEntry *ParamListStandard::findEntry(const Address &loc,int4 size) const
+const ParamEntry *ParamListStandard::findEntry(const Address &loc,int4 size,bool just) const
 
 {
   int4 index = loc.getSpace()->getIndex();
@@ -602,7 +655,7 @@ const ParamEntry *ParamListStandard::findEntry(const Address &loc,int4 size) con
     const ParamEntry *testEntry = (*res.first).getParamEntry();
     ++res.first;
     if (testEntry->getMinSize() > size) continue;
-    if (testEntry->justifiedContain(loc,size)==0)	// Make sure the range is properly justified in entry
+    if (!just || testEntry->justifiedContain(loc,size)==0)	// Make sure the range is properly justified in entry
       return testEntry;
   }
   return (const ParamEntry *)0;
@@ -731,7 +784,8 @@ void ParamListStandard::assignMap(const PrototypePieces &proto,TypeFactory &type
   for(int4 i=0;i<proto.intypes.size();++i) {
     res.emplace_back();
     Datatype *dt = proto.intypes[i];
-    if (assignAddress(dt,proto,i,typefactory,status,res.back()) == AssignAction::fail)
+    uint4 responseCode = assignAddress(dt,proto,i,typefactory,status,res.back());
+    if (responseCode == AssignAction::fail || responseCode == AssignAction::no_assignment)
       throw ParamUnassignedError("Cannot assign parameter address for " + dt->getName());
   }
 }
@@ -778,7 +832,7 @@ void ParamListStandard::buildTrialMap(ParamActive *active) const
 
   for(int4 i=0;i<active->getNumTrials();++i) {
     ParamTrial &paramtrial(active->getTrial(i));
-    const ParamEntry *entrySlot = findEntry(paramtrial.getAddress(),paramtrial.getSize());
+    const ParamEntry *entrySlot = findEntry(paramtrial.getAddress(),paramtrial.getSize(),true);
     // Note: if a trial is "definitely not used" but there is a matching entry,
     // we still include it in the map
     if (entrySlot == (const ParamEntry *)0)
@@ -1240,9 +1294,9 @@ void ParamListStandard::fillinMap(ParamActive *active) const
 bool ParamListStandard::checkJoin(const Address &hiaddr,int4 hisize,const Address &loaddr,int4 losize) const
 
 {
-  const ParamEntry *entryHi = findEntry(hiaddr,hisize);
+  const ParamEntry *entryHi = findEntry(hiaddr,hisize,true);
   if (entryHi == (const ParamEntry *)0) return false;
-  const ParamEntry *entryLo = findEntry(loaddr,losize);
+  const ParamEntry *entryLo = findEntry(loaddr,losize,true);
   if (entryLo == (const ParamEntry *)0) return false;
   if (entryHi->getGroup() == entryLo->getGroup()) {
     if (entryHi->isExclusion()||entryLo->isExclusion()) return false;
@@ -1269,9 +1323,9 @@ bool ParamListStandard::checkSplit(const Address &loc,int4 size,int4 splitpoint)
 {
   Address loc2 = loc + splitpoint;
   int4 size2 = size - splitpoint;
-  const ParamEntry *entryNum = findEntry(loc,splitpoint);
+  const ParamEntry *entryNum = findEntry(loc,splitpoint,true);
   if (entryNum == (const ParamEntry *)0) return false;
-  entryNum = findEntry(loc2,size2);
+  entryNum = findEntry(loc2,size2,true);
   if (entryNum == (const ParamEntry *)0) return false;
   return true;
 }
@@ -1279,13 +1333,13 @@ bool ParamListStandard::checkSplit(const Address &loc,int4 size,int4 splitpoint)
 bool ParamListStandard::possibleParam(const Address &loc,int4 size) const
 
 {
-  return ((const ParamEntry *)0 != findEntry(loc,size));
+  return ((const ParamEntry *)0 != findEntry(loc,size,true));
 }
 
 bool ParamListStandard::possibleParamWithSlot(const Address &loc,int4 size,int4 &slot,int4 &slotsize) const
 
 {
-  const ParamEntry *entryNum = findEntry(loc,size);
+  const ParamEntry *entryNum = findEntry(loc,size,true);
   if (entryNum == (const ParamEntry *)0) return false;
   slot = entryNum->getSlot(loc,0);
   if (entryNum->isExclusion()) {
@@ -1472,7 +1526,7 @@ void ParamListRegister::fillinMap(ParamActive *active) const
   // Mark anything active as used
   for(int4 i=0;i<active->getNumTrials();++i) {
     ParamTrial &paramtrial(active->getTrial(i));
-    const ParamEntry *entrySlot = findEntry(paramtrial.getAddress(),paramtrial.getSize());
+    const ParamEntry *entrySlot = findEntry(paramtrial.getAddress(),paramtrial.getSize(),true);
     if (entrySlot == (const ParamEntry *)0)	// There may be no matching entry (if the model was recovered late)
       paramtrial.markNoUse();
     else {
@@ -1503,7 +1557,12 @@ void ParamListStandardOut::assignMap(const PrototypePieces &proto,TypeFactory &t
     return;			// Leave the address as invalid
   }
   uint4 responseCode = assignAddress(proto.outtype,proto,-1,typefactory,status,res.back());
-  if (responseCode != AssignAction::success) { // Could not assign an address (too big)
+
+  if (responseCode == AssignAction::fail)
+    responseCode = AssignAction::hiddenret_ptrparam;	// Invoke default hidden return input assignment action
+
+  if (responseCode == AssignAction::hiddenret_ptrparam || responseCode == AssignAction::hiddenret_specialreg ||
+      responseCode == AssignAction::hiddenret_specialreg_void) { // Could not assign an address (too big)
     AddrSpace *spc = spacebase;
     if (spc == (AddrSpace *)0)
       spc = typefactory.getArch()->getDefaultDataSpace();
@@ -1512,13 +1571,12 @@ void ParamListStandardOut::assignMap(const PrototypePieces &proto,TypeFactory &t
     Datatype *pointertp = typefactory.getTypePointer(pointersize, proto.outtype, wordsize);
     if (responseCode == AssignAction::hiddenret_specialreg_void) {
       res.back().type = typefactory.getTypeVoid();
-      res.back().flags = 0;
     }
     else {
       if (assignAddressFallback(TYPECLASS_PTR,pointertp,false,status,res.back()) == AssignAction::fail)
 	throw ParamUnassignedError("Cannot assign return value as a pointer");
-      res.back().flags = ParameterPieces::indirectstorage;
     }
+    res.back().flags = ParameterPieces::indirectstorage;
 
     res.emplace_back();			// Add extra storage location in the input params
     res.back().type = pointertp;	// that holds a pointer to where the return value should be stored
@@ -1530,10 +1588,31 @@ void ParamListStandardOut::assignMap(const PrototypePieces &proto,TypeFactory &t
   }
 }
 
-void ParamListStandardOut::fillinMap(ParamActive *active) const
+void ParamListStandardOut::initialize(void)
 
 {
-  if (active->getNumTrials() == 0) return; // No trials to check
+  useFillinFallback = true;
+  list<ModelRule>::const_iterator iter;
+  for(iter=modelRules.begin();iter!=modelRules.end();++iter) {
+    if ((*iter).canAffectFillinOutput()) {
+      useFillinFallback = false;
+      break;
+    }
+  }
+}
+
+/// \brief Find the return value storage using the older \e fallback method
+///
+/// Given the active set of trial locations that might hold (pieces of) the return value, calculate
+/// the best matching ParamEntry from \b this ParamList and mark all the trials that are contained
+/// in the ParamEntry as \e used.  If \b firstOnly is \b true, the ParamList is assumed to contain
+/// partial storage locations that might get used for return values split storage.  In this case,
+/// only the first ParamEntry in a storage class is allowed to match.
+/// \param active is the set of active trials
+/// \param firstOnly is \b true if only the first entry in a storage class can match
+void ParamListStandardOut::fillinMapFallback(ParamActive *active,bool firstOnly) const
+
+{
   const ParamEntry *bestentry = (const ParamEntry *)0;
   int4 bestcover = 0;
   type_class bestclass = TYPECLASS_PTR;
@@ -1542,6 +1621,9 @@ void ParamListStandardOut::fillinMap(ParamActive *active) const
   list<ParamEntry>::const_iterator iter;
   for(iter=entry.begin();iter!=entry.end();++iter) {
     const ParamEntry *curentry = &(*iter);
+    if (firstOnly && !curentry->isFirstInClass() && curentry->isExclusion() && curentry->getAllGroups().size() == 1) {
+      continue;	// This is not the first entry in the storage class
+    }
     bool putativematch = false;
     for(int4 j=0;j<active->getNumTrials();++j) { // Evaluate all trials in terms of current ParamEntry
       ParamTrial &paramtrial(active->getTrial(j));
@@ -1611,6 +1693,50 @@ void ParamListStandardOut::fillinMap(ParamActive *active) const
   }
 }
 
+void ParamListStandardOut::fillinMap(ParamActive *active) const
+
+{
+  if (active->getNumTrials() == 0) return; // No trials to check
+  if (useFillinFallback) {
+    fillinMapFallback(active,false);
+    return;
+  }
+  for(int4 i=0;i<active->getNumTrials();++i) {
+    ParamTrial &trial(active->getTrial(i));
+    trial.setEntry((const ParamEntry *)0, 0);
+    if (!trial.isActive()) continue;
+    const ParamEntry *entry = findEntry(trial.getAddress(),trial.getSize(),false);
+    if (entry == (const ParamEntry *)0) {
+      trial.markNoUse();
+      continue;
+    }
+    int4 res = entry->justifiedContain(trial.getAddress(),trial.getSize());
+    if ((trial.isRemFormed() || trial.isIndCreateFormed()) && !entry->isFirstInClass()) {
+      trial.markNoUse();
+      continue;
+    }
+    trial.setEntry(entry,res);
+  }
+  active->sortTrials();
+  list<ModelRule>::const_iterator iter;
+  for(iter=modelRules.begin();iter!=modelRules.end();++iter) {
+    if ((*iter).fillinOutputMap(active)) {
+      for(int4 i=0;i<active->getNumTrials();++i) {
+	ParamTrial &trial(active->getTrial(i));
+	if (trial.isActive()) {
+	  trial.markUsed();
+	}
+	else {
+	  trial.markNoUse();
+	  trial.setEntry((const ParamEntry *)0,0);
+	}
+      }
+      return;
+    }
+  }
+  fillinMapFallback(active, true);
+}
+
 bool ParamListStandardOut::possibleParam(const Address &loc,int4 size) const
 
 {
@@ -1620,6 +1746,13 @@ bool ParamListStandardOut::possibleParam(const Address &loc,int4 size) const
       return true;
   }
   return false;
+}
+
+void ParamListStandardOut::decode(Decoder &decoder,vector<EffectRecord> &effectlist,bool normalstack)
+
+{
+  ParamListStandard::decode(decoder,effectlist,normalstack);
+  initialize();
 }
 
 ParamList *ParamListStandardOut::clone(void) const
@@ -1954,7 +2087,7 @@ const string FspecSpace::NAME = "fspec";
 /// \param t is the associated processor translator
 /// \param ind is the index associated with the space
 FspecSpace::FspecSpace(AddrSpaceManager *m,const Translate *t,int4 ind)
-  : AddrSpace(m,t,IPTR_FSPEC,NAME,sizeof(void *),1,ind,0,1)
+  : AddrSpace(m,t,IPTR_FSPEC,NAME,false,sizeof(void *),1,ind,0,1,1)
 {
   clearFlags(heritaged|does_deadcode|big_endian);
   if (HOST_ENDIAN==1)		// Endianness always set by host
@@ -2001,12 +2134,6 @@ void FspecSpace::printRaw(ostream &s,uintb offset) const
     s << "func_";
     fc->getEntryAddress().printRaw(s);
   }
-}
-
-void FspecSpace::saveXml(ostream &s) const
-
-{
-  throw LowlevelError("Should never encode fspec space to stream");
 }
 
 void FspecSpace::decode(Decoder &decoder)
@@ -2198,6 +2325,7 @@ ProtoModel::ProtoModel(const string &nm,const ProtoModel &op2)
 
   effectlist = op2.effectlist;
   likelytrash = op2.likelytrash;
+  internalstorage = op2.internalstorage;
 
   injectUponEntry = op2.injectUponEntry;
   injectUponReturn = op2.injectUponReturn;
@@ -2389,6 +2517,7 @@ void ProtoModel::decode(Decoder &decoder)
   injectUponEntry = -1;
   injectUponReturn = -1;
   likelytrash.clear();
+  internalstorage.clear();
   uint4 elemId = decoder.openElement(ELEM_PROTOTYPE);
   for(;;) {
     uint4 attribId = decoder.getNextAttributeId();
@@ -2486,6 +2615,14 @@ void ProtoModel::decode(Decoder &decoder)
       }
       decoder.closeElement(subId);
     }
+    else if (subId == ELEM_INTERNAL_STORAGE) {
+      decoder.openElement();
+      while(decoder.peekElement() != 0) {
+	internalstorage.emplace_back();
+	internalstorage.back().decode(decoder);
+      }
+      decoder.closeElement(subId);
+    }
     else if (subId == ELEM_PCODE) {
       int4 injectId = glb->pcodeinjectlib->decodeInject("Protomodel : "+name, name,
 							InjectPayload::CALLMECHANISM_TYPE,decoder);
@@ -2505,6 +2642,7 @@ void ProtoModel::decode(Decoder &decoder)
   }
   sort(effectlist.begin(),effectlist.end(),EffectRecord::compareByAddress);
   sort(likelytrash.begin(),likelytrash.end());
+  sort(internalstorage.begin(),internalstorage.end());
   if (!sawlocalrange)
     defaultLocalRange();
   if (!sawparamrange)
@@ -2614,19 +2752,20 @@ void ProtoModelMerged::intersectEffects(const vector<EffectRecord> &efflist)
   effectlist.swap(newlist);
 }
 
-/// The \e likely-trash locations are intersected. Anything in \b this that is not also in the
-/// given \e likely-trash list is removed.
-/// \param trashlist is the given \e likely-trash list
-void ProtoModelMerged::intersectLikelyTrash(const vector<VarnodeData> &trashlist)
+/// The intersection of two containers of register Varnodes is calculated, and the result is
+/// placed in the first container, replacing the original contents.  The containers must already be sorted.
+/// \param regList1 is the first container
+/// \param regList2 is the second container
+void ProtoModelMerged::intersectRegisters(vector<VarnodeData> &regList1,const vector<VarnodeData> &regList2)
 
 {
   vector<VarnodeData> newlist;
 
   int4 i=0;
   int4 j=0;
-  while((i<likelytrash.size())&&(j<trashlist.size())) {
-    const VarnodeData &trs1( likelytrash[i] );
-    const VarnodeData &trs2( trashlist[j] );
+  while((i<regList1.size())&&(j<regList2.size())) {
+    const VarnodeData &trs1( regList1[i] );
+    const VarnodeData &trs2( regList2[j] );
 
     if (trs1 < trs2)
       i += 1;
@@ -2638,7 +2777,7 @@ void ProtoModelMerged::intersectLikelyTrash(const vector<VarnodeData> &trashlist
       j += 1;
     }
   }
-  likelytrash = newlist;
+  regList1.swap(newlist);
 }
 
 /// \param model is the new prototype model to add to the merge
@@ -2669,7 +2808,8 @@ void ProtoModelMerged::foldIn(ProtoModel *model)
     if ((injectUponEntry != model->injectUponEntry)||(injectUponReturn != model->injectUponReturn))
       throw LowlevelError("Cannot merge prototype models with different inject ids");
     intersectEffects(model->effectlist);
-    intersectLikelyTrash(model->likelytrash);
+    intersectRegisters(likelytrash,model->likelytrash);
+    intersectRegisters(internalstorage,model->internalstorage);
     // Take the union of the localrange and paramrange
     set<Range>::const_iterator iter;
     for(iter=model->localrange.begin();iter!=model->localrange.end();++iter)
@@ -3616,6 +3756,8 @@ void FuncProto::setModel(ProtoModel *m)
       flags |= has_thisptr;
     if (m->isConstructor())
       flags |= is_constructor;
+    if (m->isAutoKillByCall())
+      flags |= auto_killbycall;
     model = m;
   }
   else {
@@ -4388,6 +4530,19 @@ void FuncProto::printRaw(const string &funcname,ostream &s) const
     s << "...";
   }
   s << ") extrapop=" << dec << extrapop;
+}
+
+/// This assumes the storage location has already been determined to be contained
+/// in standard return value location.
+/// \return \b true if the location should be considered killed by call
+bool FuncProto::isAutoKillByCall(void) const
+
+{
+  if ((flags & auto_killbycall)!=0)
+    return true;		// The ProtoModel always does killbycall
+  if (isOutputLocked())
+    return true;		// A locked output location is killbycall by definition
+  return false;
 }
 
 /// \brief Encode \b this to a stream as a \<prototype> element.
@@ -5629,9 +5784,11 @@ bool FuncCallSpecs::setInputBytesConsumed(int4 slot,int4 val) const
   while(inputConsume.size() <= slot)
     inputConsume.push_back(0);
   int4 oldVal = inputConsume[slot];
-  if (oldVal == 0 || val < oldVal)
+  if (oldVal == 0 || val < oldVal) {	// Only let the value get smaller
     inputConsume[slot] = val;
-  return (oldVal != val);
+    return true;
+  }
+  return false;
 }
 
 /// \brief Prepend any extra parameters if a paramshift is required

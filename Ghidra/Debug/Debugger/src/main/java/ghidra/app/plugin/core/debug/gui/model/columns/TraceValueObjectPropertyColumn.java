@@ -54,6 +54,11 @@ public abstract class TraceValueObjectPropertyColumn<T>
 			super.getTableCellRendererComponent(data);
 			@SuppressWarnings("unchecked")
 			ValueProperty<T> p = (ValueProperty<T>) data.getValue();
+			if (p == null) {
+				setText("");
+				setToolTipText("");
+				return this;
+			}
 			setText(p.getHtmlDisplay());
 			setToolTipText(p.getToolTip());
 			setForeground(getForegroundFor(data.getTable(), p.isModified(), data.isSelected()));
@@ -77,7 +82,6 @@ public abstract class TraceValueObjectPropertyColumn<T>
 	public class BooleanPropertyRenderer extends PropertyRenderer {
 		protected GCheckBox cb;
 		{
-			setLayout(new BorderLayout());
 			cb = new GCheckBox();
 			cb.setHorizontalAlignment(CENTER);
 			cb.setOpaque(false);
@@ -98,14 +102,14 @@ public abstract class TraceValueObjectPropertyColumn<T>
 			else {
 				cb.setVisible(false);
 			}
+			setVisible(true);
+			invalidate();
 			return this;
 		}
 
 		@Override
 		public void validate() {
-			synchronized (getTreeLock()) {
-				validateTree();
-			}
+			cb.setBounds(0, 0, getWidth(), getHeight());
 		}
 	}
 

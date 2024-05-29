@@ -16,7 +16,6 @@
 package ghidra.app.cmd.module;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.util.exception.DuplicateNameException;
@@ -28,11 +27,11 @@ import ghidra.util.exception.DuplicateNameException;
  * 
  * 
  */
-public class CreateDefaultTreeCmd implements Command {
+public class CreateDefaultTreeCmd implements Command<Program> {
 
 	private String treeName;
 	private String statusMsg;
-	
+
 	/**
 	 * Constructor for CreateDefaultTreeCmd. 
 	 * @param treeName name of the tree to create
@@ -40,24 +39,21 @@ public class CreateDefaultTreeCmd implements Command {
 	public CreateDefaultTreeCmd(String treeName) {
 		this.treeName = treeName;
 	}
- 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
-	public boolean applyTo(DomainObject obj) {
-		Program program = (Program)obj;
+
+	@Override
+	public boolean applyTo(Program program) {
 		Listing listing = program.getListing();
 		try {
 			listing.createRootModule(treeName);
 			renameFragments(program, treeName);
 			return true;
-		} catch (DuplicateNameException e) {
+		}
+		catch (DuplicateNameException e) {
 			statusMsg = e.getMessage();
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Create a tree in the program with the given tree name.
 	 * @param program program
@@ -65,9 +61,9 @@ public class CreateDefaultTreeCmd implements Command {
 	 * @return Module root module for the new tree
 	 * @throws DuplicateNameException if treeName already exists
 	 */
-	static ProgramModule createRootModule(Program program, String treeName) 
-		throws DuplicateNameException {
-			
+	static ProgramModule createRootModule(Program program, String treeName)
+			throws DuplicateNameException {
+
 		Listing listing = program.getListing();
 		ProgramModule root = listing.createRootModule(treeName);
 		renameFragments(program, treeName);
@@ -80,26 +76,23 @@ public class CreateDefaultTreeCmd implements Command {
 	private static void renameFragments(Program program, String treeName) {
 		Listing listing = program.getListing();
 		MemoryBlock[] blocks = program.getMemory().getBlocks();
-		for (int i=0; i<blocks.length; i++) {
-			ProgramFragment fragment = listing.getFragment(treeName,
-												blocks[i].getStart());
+		for (MemoryBlock block : blocks) {
+			ProgramFragment fragment = listing.getFragment(treeName, block.getStart());
 			try {
-				fragment.setName(blocks[i].getName());
-			} catch (DuplicateNameException e) {
+				fragment.setName(block.getName());
 			}
-		}			
+			catch (DuplicateNameException e) {
+				// ignore
+			}
+		}
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
+	@Override
 	public String getStatusMsg() {
 		return statusMsg;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
+	@Override
 	public String getName() {
 		return "Create Tree " + treeName;
 	}

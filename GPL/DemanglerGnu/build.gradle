@@ -81,6 +81,8 @@ model {
 			targetPlatform "linux_arm_64"
 			targetPlatform "mac_x86_64"
 			targetPlatform "mac_arm_64"
+			targetPlatform "freebsd_x86_64"
+			targetPlatform "freebsd_arm_64"
 			sources {
 				c {
 					source {
@@ -102,6 +104,8 @@ model {
 			targetPlatform "linux_arm_64"
 			targetPlatform "mac_x86_64"
 			targetPlatform "mac_arm_64"
+			targetPlatform "freebsd_x86_64"
+			targetPlatform "freebsd_arm_64"
 			sources {
 				c {
 					source {

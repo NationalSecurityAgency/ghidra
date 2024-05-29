@@ -55,6 +55,7 @@ data/languages/x86-64-compat32.pspec||GHIDRA||||END|
 data/languages/x86-64-gcc.cspec||GHIDRA||||END|
 data/languages/x86-64-golang.cspec||GHIDRA||||END|
 data/languages/x86-64-golang.register.info||GHIDRA||||END|
+data/languages/x86-64-swift.cspec||GHIDRA||||END|
 data/languages/x86-64-win.cspec||GHIDRA||||END|
 data/languages/x86-64.dwarf||GHIDRA||||END|
 data/languages/x86-64.pspec||GHIDRA||||END|

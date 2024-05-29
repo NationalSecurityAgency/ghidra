@@ -1,4 +1,7 @@
 # Golang function names which do not return
+
+#runtime.abort and runtime.systemstack_switch intentionally have bytes that can cause undefined instruction errors in Ghidra 
+runtime.abort
 runtime.abort.abi0
 runtime.exit.abi0
 runtime.dieFromSignal
@@ -7,6 +10,12 @@ runtime.fatal
 runtime.fatalthrow
 runtime.fatalpanic
 runtime.throw
+runtime.systemstack_switch
+runtime.newstack
+runtime.newstack.abi0
+runtime.mstart
+runtime.mstart.abi0
+runtime.mstart0
 
 runtime.gopanic
 runtime.goPanicExtendIndex

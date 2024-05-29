@@ -25,6 +25,7 @@ import generic.jar.ResourceFile;
 import ghidra.app.cmd.function.ApplyFunctionDataTypesCmd;
 import ghidra.app.plugin.core.datamgr.util.DataTypeArchiveUtility;
 import ghidra.app.services.*;
+import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.Application;
 import ghidra.framework.model.*;
@@ -84,7 +85,7 @@ public class ApplyDataArchiveAnalyzer extends AbstractAnalyzer {
 
 	@Override
 	public boolean getDefaultEnablement(Program program) {
-		if ("golang".equals(program.getCompilerSpec().getCompilerSpecID().toString())) {
+		if (GoRttiMapper.isGolangProgram(program)) {
 			return false;
 		}
 		return super.getDefaultEnablement(program);
@@ -126,13 +127,13 @@ public class ApplyDataArchiveAnalyzer extends AbstractAnalyzer {
 
 		options.registerOption(OPTION_NAME_ARCHIVE_CHOOSER, OptionType.STRING_TYPE,
 			CHOOSER_AUTO_DETECT, null, OPTION_DESCRIPTION_ARCHIVE_CHOOSER,
-			new StringWithChoicesEditor(chooserList));
+			() -> new StringWithChoicesEditor(chooserList));
 
 		options.registerOption(OPTION_NAME_GDT_FILEPATH, OptionType.FILE_TYPE, null, null,
 			OPTION_DESCRIPTION_GDT_FILEPATH,
-			new FileChooserEditor(FileDataTypeManager.GDT_FILEFILTER));
+			() -> new FileChooserEditor(FileDataTypeManager.GDT_FILEFILTER));
 		options.registerOption(OPTION_NAME_PROJECT_PATH, OptionType.STRING_TYPE, null, null,
-			OPTION_DESCRIPTION_PROJECT_PATH, new ProjectPathChooserEditor(
+			OPTION_DESCRIPTION_PROJECT_PATH, () -> new ProjectPathChooserEditor(
 				"Choose Data Type Archive", DATATYPEARCHIVE_PROJECT_FILTER));
 	}
 

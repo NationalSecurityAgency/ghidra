@@ -21,7 +21,7 @@
 #define DLLEXPORT __declspec(dllexport)
 #else
 #define DLLEXPORT
-#define OutputDebugString(out) printf("%s\n", out)
+#define OutputDebugString(out) puts(out)
 #endif
 
 DLLEXPORT volatile char overwrite[] = "Hello, World!";

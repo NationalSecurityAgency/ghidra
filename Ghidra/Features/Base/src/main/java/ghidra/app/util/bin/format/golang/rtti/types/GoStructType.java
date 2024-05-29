@@ -18,7 +18,7 @@ package ghidra.app.util.bin.format.golang.rtti.types;
 import java.io.IOException;
 import java.util.*;
 
-import ghidra.app.util.bin.format.dwarf4.DWARFUtil;
+import ghidra.app.util.bin.format.dwarf.DWARFUtil;
 import ghidra.app.util.bin.format.golang.rtti.GoName;
 import ghidra.app.util.bin.format.golang.rtti.GoSlice;
 import ghidra.app.util.bin.format.golang.structmapping.*;
@@ -29,7 +29,7 @@ import ghidra.util.exception.CancelledException;
 /**
  * Golang type information about a specific structure type.
  */
-@StructureMapping(structureName = "runtime.structtype")
+@StructureMapping(structureName = {"runtime.structtype", "internal/abi.StructType"})
 public class GoStructType extends GoType {
 
 	@FieldMapping

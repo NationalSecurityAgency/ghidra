@@ -20,7 +20,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import ghidra.app.plugin.core.debug.mapping.*;
+import ghidra.app.plugin.core.debug.mapping.DefaultDebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.service.model.interfaces.*;
 import ghidra.async.AsyncFence;
 import ghidra.async.AsyncUtils;
@@ -164,7 +164,8 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 	public CompletableFuture<Map<Register, RegisterValue>> captureThreadRegisters(
 			TraceThread thread, int frameLevel, Set<Register> registers) {
 		if (regMapper == null) {
-			throw new IllegalStateException("Have not found register descriptions for " + thread);
+			return CompletableFuture.failedFuture(
+				new IllegalStateException("Have not found register descriptions for " + thread));
 		}
 		List<TargetRegister> tRegs = registers.stream()
 				.map(regMapper::traceToTarget)
@@ -180,20 +181,25 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 
 		Set<TargetRegisterBank> banks = getTargetRegisterBank(thread, frameLevel);
 		if (banks == null) {
-			throw new IllegalArgumentException(
-				"Given thread and frame level does not have a live register bank");
+			return CompletableFuture.failedFuture(new IllegalArgumentException(
+				"Given thread and frame level does not have a live register bank"));
 		}
 		// NOTE: Cache update, if applicable, will cause recorder to write values to trace
 		AsyncFence fence = new AsyncFence();
 		Map<Register, RegisterValue> result = new HashMap<>();
 		for (TargetRegisterBank bank : banks) {
-			fence.include(bank.readRegisters(tRegs)
-					.thenApply(regMapper::targetToTrace)
-					.thenAccept(br -> {
-						synchronized (result) {
-							result.putAll(br);
-						}
-					}));
+			try {
+				fence.include(bank.readRegisters(tRegs)
+						.thenApply(regMapper::targetToTrace)
+						.thenAccept(br -> {
+							synchronized (result) {
+								result.putAll(br);
+							}
+						}));
+			}
+			catch (Exception e) {
+				fence.include(CompletableFuture.failedFuture(e));
+			}
 		}
 		return fence.ready().thenApply(__ -> result);
 	}

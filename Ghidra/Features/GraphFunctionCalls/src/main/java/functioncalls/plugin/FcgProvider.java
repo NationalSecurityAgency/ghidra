@@ -52,7 +52,8 @@ import ghidra.graph.viewer.vertex.VertexClickListener;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.ProgramLocation;
-import ghidra.util.*;
+import ghidra.util.HelpLocation;
+import ghidra.util.SystemUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import resources.Icons;
@@ -172,9 +173,9 @@ public class FcgProvider
 		if (!graphData.hasResults()) {
 			return;
 		}
-		
+
 		// The graph component won't contain valid perspective information if it's not 'initialized'
-		// (i.e. rendered or displayed to the user). It may happen if the graph has been kept minimized 
+		// (i.e. rendered or displayed to the user). It may happen if the graph has been kept minimized
 		// in the separate tab. Related method: `GraphComponent::viewerInitialized`
 		if (view.getGraphComponent().isUninitialized()) {
 			return;
@@ -425,10 +426,10 @@ public class FcgProvider
 		navigateIncomingToggleAction.setSelected(true);
 		navigateIncomingToggleAction.setToolBarData(
 			new ToolBarData(Icons.NAVIGATE_ON_INCOMING_EVENT_ICON, TOOLBAR_GROUP_A));
-		navigateIncomingToggleAction.setDescription(HTMLUtilities.toHTML(
-			"Incoming Navigation<br><br>Toggle <b>On</b>  - change the graphed " +
+		navigateIncomingToggleAction.setDescription(
+			"<html>Incoming Navigation<br><br>Toggle <b>On</b>  - change the graphed " +
 				"function on Listing navigation events" +
-				"<br>Toggled <b>Off</b> - don't change the graph on Listing navigation events"));
+				"<br>Toggled <b>Off</b> - don't change the graph on Listing navigation events");
 		navigateIncomingToggleAction.setHelpLocation(
 			new HelpLocation(plugin.getName(), "Navigation_Incoming"));
 		addLocalAction(navigateIncomingToggleAction);
@@ -521,16 +522,15 @@ public class FcgProvider
 			}
 		};
 		resetGraphAction.setToolBarData(new ToolBarData(Icons.REFRESH_ICON));
-		resetGraphAction.setDescription(
-			"<html>Resets the graph--All positioning will be <b>lost</b>");
-		resetGraphAction.setHelpLocation(
-			new HelpLocation("FunctionCallGraphPlugin", "Relayout_Graph"));
+		resetGraphAction
+				.setDescription("<html>Resets the graph--All positioning will be <b>lost</b>");
+		resetGraphAction
+				.setHelpLocation(new HelpLocation("FunctionCallGraphPlugin", "Relayout_Graph"));
 
 		addLocalAction(resetGraphAction);
 
 		MultiStateDockingAction<LayoutProvider<FcgVertex, FcgEdge, FunctionCallGraph>> layoutAction =
-			new MultiStateDockingAction<>(
-				RELAYOUT_GRAPH_ACTION_NAME, plugin.getName()) {
+			new MultiStateDockingAction<>(RELAYOUT_GRAPH_ACTION_NAME, plugin.getName()) {
 
 				@Override
 				public void actionPerformed(ActionContext context) {
@@ -970,8 +970,11 @@ public class FcgProvider
 		BowTieExpandVerticesJob job = new BowTieExpandVerticesJob(viewer, collection, true);
 		VisualGraphViewUpdater<FcgVertex, FcgEdge> updater = view.getViewUpdater();
 		updater.scheduleViewChangeJob(job);
-
 		updateTitle();
+
+		String viewName = "Function Call Graph";
+		viewer.setName(viewName);
+		viewer.getAccessibleContext().setAccessibleName(viewName);
 	}
 
 	private void highlightExistingEdges(FcgExpandingVertexCollection collection) {

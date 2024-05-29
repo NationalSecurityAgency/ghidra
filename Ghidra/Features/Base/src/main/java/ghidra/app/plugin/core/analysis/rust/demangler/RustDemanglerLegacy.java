@@ -72,6 +72,9 @@ public class RustDemanglerLegacy {
 			element = element.replace("$LP$", "(");
 			element = element.replace("$RP$", ")");
 			element = element.replace("$C$", ",");
+			
+			// Ghidra uses :: between namespace names
+			element = element.replace("..", "::");
 
 			int k = 0;
 			while (k < element.length()) {

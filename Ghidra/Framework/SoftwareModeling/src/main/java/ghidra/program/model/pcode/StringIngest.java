@@ -20,35 +20,47 @@ import java.io.*;
 public class StringIngest implements ByteIngest {
 
 	private ByteArrayOutputStream outStream;
-	private String source;
-	private int maxBytes;
+	private String description;		// Describes the source of bytes, for use in error messages 
+	private int maxBytes;			// Maximum number of bytes that can be ingested
 
 	public StringIngest() {
 		outStream = null;
-		source = null;
+		description = null;
 		maxBytes = 0;
 	}
 
-	public StringIngest(int max, String src) {
-		open(max, src);
-	}
-
 	@Override
-	public void open(int max, String src) {
+	public void open(int max, String desc) {
 		maxBytes = max;
-		source = src;
+		description = desc;
 		outStream = new ByteArrayOutputStream();
 	}
 
 	@Override
-	public void ingestStream(InputStream inStream) throws IOException {
+	public void ingestStreamToNextTerminator(InputStream inStream) throws IOException {
 		int tok = inStream.read();
 		while (tok > 0) {
 			outStream.write(tok);
 			if (outStream.size() >= maxBytes) {
-				throw new IOException("Buffer size exceeded: " + source);
+				throw new IOException("Buffer size exceeded: " + description);
 			}
 			tok = inStream.read();
+		}
+	}
+
+	@Override
+	public void ingestStream(InputStream inStream) throws IOException {
+		throw new IOException("Not supported");
+	}
+
+	@Override
+	public void ingestBytes(byte[] byteArray, int off, int sz) throws IOException {
+		for (int i = 0; i < sz; ++i) {
+			int tok = byteArray[off + i];
+			outStream.write(tok);
+			if (outStream.size() >= maxBytes) {
+				throw new IOException("Buffer size exceeded: " + description);
+			}
 		}
 	}
 
@@ -60,7 +72,7 @@ public class StringIngest implements ByteIngest {
 	@Override
 	public void clear() {
 		outStream = null;
-		source = null;
+		description = null;
 	}
 
 	@Override

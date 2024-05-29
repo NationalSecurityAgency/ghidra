@@ -25,7 +25,7 @@ import ghidra.util.Msg;
 /**
  * A {@link GoType} structure that defines a go channel
  */
-@StructureMapping(structureName = "runtime.chantype")
+@StructureMapping(structureName = {"runtime.chantype", "internal/abi.ChanType"})
 public class GoChanType extends GoType {
 
 	@FieldMapping

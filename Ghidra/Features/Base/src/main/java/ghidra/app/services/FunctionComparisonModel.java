@@ -18,12 +18,20 @@
  */
 package ghidra.app.services;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
 
-import ghidra.app.plugin.core.functioncompare.*;
+import ghidra.app.plugin.core.functioncompare.FunctionComparison;
+import ghidra.app.plugin.core.functioncompare.FunctionComparisonModelListener;
+import ghidra.app.plugin.core.functioncompare.FunctionComparisonProvider;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
@@ -129,6 +137,35 @@ public class FunctionComparisonModel {
 	}
 
 	/**
+	 * Updates the model with two sets of functions to compare. This will add the
+	 * functions to any existing {@link FunctionComparison comparisons} in the 
+	 * model and create new comparisons for functions not represented.
+	 * <p>
+	 * Note: It is assumed that when using this method, all source functions can be
+	 * compared to all destination functions; meaning all functions in the source function set will 
+	 * be added as sources, and all functions in the destination function set will be added as targets. 
+	 * 
+	 * @param sourceFunctions
+	 * @param destinationFunctions
+	 */
+	public void compareFunctions(Set<Function> sourceFunctions,
+			Set<Function> destinationFunctions) {
+		if (CollectionUtils.isEmpty(sourceFunctions) ||
+			CollectionUtils.isEmpty(destinationFunctions)) {
+			return; // not an error, just return
+		}
+
+		for (Function f : sourceFunctions) {
+			FunctionComparison comparison = new FunctionComparison();
+
+			comparison.setSource(f);
+			comparison.addTargets(destinationFunctions);
+			comparisons.add(comparison);
+		}
+		fireModelChanged();
+	}
+
+	/**
 	 * Compares two functions. If a comparison already exists in the model for
 	 * the given source, the target will simply be added to it; otherwise a
 	 * new comparison will be created.
@@ -150,6 +187,22 @@ public class FunctionComparisonModel {
 	 * @param function the function to remove
 	 */
 	public void removeFunction(Function function) {
+		doRemoveFunction(function);
+		fireModelChanged();
+	}
+
+	/**
+	 * Removes all the given functions from all comparisons in the model
+	 * @param functions the functions to remove
+	 */
+	public void removeFunctions(Collection<Function> functions) {
+		for (Function function : functions) {
+			doRemoveFunction(function);
+		}
+		fireModelChanged();
+	}
+
+	private void doRemoveFunction(Function function) {
 		List<FunctionComparison> comparisonsToRemove = new ArrayList<>();
 
 		Iterator<FunctionComparison> iter = comparisons.iterator();
@@ -167,8 +220,6 @@ public class FunctionComparisonModel {
 		}
 
 		comparisons.removeAll(comparisonsToRemove);
-
-		fireModelChanged();
 	}
 
 	/**
@@ -178,19 +229,14 @@ public class FunctionComparisonModel {
 	 * @param program the program to remove functions from
 	 */
 	public void removeFunctions(Program program) {
-		Set<Function> sources = getSourceFunctions();
-		Set<Function> targets = getTargetFunctions();
+		Set<Function> allFunctions = getSourceFunctions();
+		allFunctions.addAll(getTargetFunctions());
 
-		Set<Function> sourcesToRemove = sources.stream()
+		Set<Function> functionsToRemove = allFunctions.stream()
 				.filter(f -> f.getProgram().equals(program))
 				.collect(Collectors.toSet());
 
-		Set<Function> targetsToRemove = targets.stream()
-				.filter(f -> f.getProgram().equals(program))
-				.collect(Collectors.toSet());
-
-		sourcesToRemove.stream().forEach(f -> removeFunction(f));
-		targetsToRemove.stream().forEach(f -> removeFunction(f));
+		removeFunctions(functionsToRemove);
 	}
 
 	/**
@@ -280,8 +326,7 @@ public class FunctionComparisonModel {
 
 			// Remove any functions that already have an comparison in the 
 			// model; these will be ignored
-			functions.removeIf(f -> comparisons.stream()
-					.anyMatch(fc -> f.equals(fc.getSource())));
+			functions.removeIf(f -> comparisons.stream().anyMatch(fc -> f.equals(fc.getSource())));
 
 			monitor.setIndeterminate(false);
 			monitor.setMessage("Creating new comparisons");

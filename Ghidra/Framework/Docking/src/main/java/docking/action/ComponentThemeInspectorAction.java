@@ -29,14 +29,14 @@ import org.apache.commons.lang3.StringUtils;
 import docking.ActionContext;
 import docking.DockingWindowManager;
 import generic.theme.GColor;
-import generic.util.action.ReservedKeyBindings;
+import generic.util.action.SystemKeyBindings;
 import ghidra.util.Msg;
 
 public class ComponentThemeInspectorAction extends DockingAction {
 
 	public ComponentThemeInspectorAction() {
-		super("Component Theme Inspector", DockingWindowManager.DOCKING_WINDOWS_OWNER, false);
-		createReservedKeyBinding(ReservedKeyBindings.COMPONENT_THEME_INFO_KEY);
+		super("Component Theme Inspector", DockingWindowManager.DOCKING_WINDOWS_OWNER, true);
+		createSystemKeyBinding(SystemKeyBindings.COMPONENT_THEME_INFO_KEY);
 
 		// System action; no help needed
 		DockingWindowManager.getHelpService().excludeFromHelp(this);
@@ -99,9 +99,6 @@ public class ComponentThemeInspectorAction extends DockingAction {
 				next = new Entry(component);
 			}
 
-			if (entry != null) {
-				entry.parent = next;
-			}
 			entry = next;
 
 			tree.add(entry);
@@ -199,7 +196,6 @@ public class ComponentThemeInspectorAction extends DockingAction {
 
 	private class Entry {
 
-		private Entry parent;
 		protected Component component;
 		protected Point mouseLocation;
 

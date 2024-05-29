@@ -92,7 +92,7 @@ public class DebuggerMemoryBytesPlugin
 	private void createActions() {
 		actionNewMemory = NewMemoryAction.builder(this)
 				.enabled(true)
-				.onAction(c -> createNewDisconnectedProvider())
+				.onAction(c -> connectedProvider.cloneWindow())
 				.buildAndInstall(tool);
 	}
 
@@ -150,13 +150,11 @@ public class DebuggerMemoryBytesPlugin
 
 	@Override
 	public void processEvent(PluginEvent event) {
-		if (event instanceof TraceActivatedPluginEvent) {
-			TraceActivatedPluginEvent ev = (TraceActivatedPluginEvent) event;
+		if (event instanceof TraceActivatedPluginEvent ev) {
 			current = ev.getActiveCoordinates();
 			allProviders(p -> p.coordinatesActivated(current));
 		}
-		if (event instanceof TraceClosedPluginEvent) {
-			TraceClosedPluginEvent ev = (TraceClosedPluginEvent) event;
+		if (event instanceof TraceClosedPluginEvent ev) {
 			if (current.getTrace() == ev.getTrace()) {
 				current = DebuggerCoordinates.NOWHERE;
 			}

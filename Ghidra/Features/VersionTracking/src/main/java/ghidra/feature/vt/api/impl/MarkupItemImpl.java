@@ -46,7 +46,8 @@ public class MarkupItemImpl implements VTMarkupItem {
 	private static boolean isUnApplyingItems = false;
 	private static boolean gettingStatus = false;
 
-	public MarkupItemImpl(VTAssociation association, VTMarkupType markupType, Address sourceAddress) {
+	public MarkupItemImpl(VTAssociation association, VTMarkupType markupType,
+			Address sourceAddress) {
 		this(new MarkupItemStorageImpl(association, markupType, sourceAddress));
 	}
 
@@ -81,16 +82,14 @@ public class MarkupItemImpl implements VTMarkupItem {
 
 		Address oldDestinationAddress = markupItemStorage.getDestinationAddress();
 		String oldAddressSource = markupItemStorage.getDestinationAddressSource();
-		boolean isResettingAddress =
-			USER_DEFINED_ADDRESS_SOURCE.equals(oldAddressSource) &&
-				!USER_DEFINED_ADDRESS_SOURCE.equals(addressSource);
+		boolean isResettingAddress = USER_DEFINED_ADDRESS_SOURCE.equals(oldAddressSource) &&
+			!USER_DEFINED_ADDRESS_SOURCE.equals(addressSource);
 
 		// The following validation call will change the destination address back to an
 		// appropriate address if necessary.
 		// (For example, function name markup must be on the entry point address.)
-		address =
-			markupType.validateDestinationAddress(markupItemStorage.getAssociation(),
-				markupItemStorage.getSourceAddress(), address);
+		address = markupType.validateDestinationAddress(markupItemStorage.getAssociation(),
+			markupItemStorage.getSourceAddress(), address);
 		if (SystemUtilities.isEqual(address, oldDestinationAddress)) {
 			return; // Either the address wasn't changed or we won't let you change this markup address.
 		}
@@ -110,7 +109,7 @@ public class MarkupItemImpl implements VTMarkupItem {
 
 		VTAssociation association = markupItemStorage.getAssociation();
 		VTSessionDB session = (VTSessionDB) association.getSession();
-		session.setObjectChanged(VTChangeManager.DOCR_VT_MARKUP_ITEM_DESTINATION_CHANGED, this,
+		session.setObjectChanged(VTEvent.MARKUP_ITEM_DESTINATION_CHANGED, this,
 			oldDestinationAddress, address);
 	}
 
@@ -127,9 +126,8 @@ public class MarkupItemImpl implements VTMarkupItem {
 			if (!gettingStatus) {
 				try {
 					gettingStatus = true;
-					boolean conflictsWithOtherMarkup =
-						getMarkupType().conflictsWithOtherMarkup(this,
-							getAssociation().getMarkupItems(TaskMonitor.DUMMY));
+					boolean conflictsWithOtherMarkup = getMarkupType().conflictsWithOtherMarkup(
+						this, getAssociation().getMarkupItems(TaskMonitor.DUMMY));
 					if (conflictsWithOtherMarkup) {
 						return CONFLICT;
 					}
@@ -197,8 +195,8 @@ public class MarkupItemImpl implements VTMarkupItem {
 			markupItemStorage =
 				markupItemStorage.setApplyFailed("Can't apply without a valid destination");
 			fireMarkupItemStatusChanged(oldStatus, FAILED_APPLY);
-			throw new VersionTrackingApplyException("Cannot apply a markup item without first "
-				+ "setting the destination address");
+			throw new VersionTrackingApplyException(
+				"Cannot apply a markup item without first " + "setting the destination address");
 		}
 
 		if (!canApply()) {
@@ -309,8 +307,7 @@ public class MarkupItemImpl implements VTMarkupItem {
 		VTAssociation association = getAssociation();
 		VTAssociationStatus associationStatus = association.getStatus();
 		try {
-			Collection<VTMarkupItem> markupItems =
-				association.getMarkupItems(TaskMonitor.DUMMY);
+			Collection<VTMarkupItem> markupItems = association.getMarkupItems(TaskMonitor.DUMMY);
 			return associationStatus.canApply() && getStatus().isAppliable() &&
 				!markupType.conflictsWithOtherMarkup(this, markupItems);
 		}
@@ -413,9 +410,8 @@ public class MarkupItemImpl implements VTMarkupItem {
 	public Stringable getCurrentDestinationValue() {
 		validateDestinationCache();
 		if (cachedDestinationValue == null) {
-			cachedDestinationValue =
-				markupType.getCurrentDestinationValue(markupItemStorage.getAssociation(),
-					markupItemStorage.getDestinationAddress());
+			cachedDestinationValue = markupType.getCurrentDestinationValue(
+				markupItemStorage.getAssociation(), markupItemStorage.getDestinationAddress());
 		}
 		return cachedDestinationValue;
 	}
@@ -428,9 +424,8 @@ public class MarkupItemImpl implements VTMarkupItem {
 		}
 		validateDestinationCache();
 		if (cachedOriginalDestinationValue == null) {
-			cachedOriginalDestinationValue =
-				markupType.getOriginalDestinationValue(markupItemStorage.getAssociation(),
-					markupItemStorage.getDestinationAddress());
+			cachedOriginalDestinationValue = markupType.getOriginalDestinationValue(
+				markupItemStorage.getAssociation(), markupItemStorage.getDestinationAddress());
 		}
 		return cachedOriginalDestinationValue;
 	}
@@ -443,9 +438,8 @@ public class MarkupItemImpl implements VTMarkupItem {
 		}
 		validateSourceCache();
 		if (cachedSourceValue == null) {
-			cachedSourceValue =
-				markupType.getSourceValue(markupItemStorage.getAssociation(),
-					markupItemStorage.getSourceAddress());
+			cachedSourceValue = markupType.getSourceValue(markupItemStorage.getAssociation(),
+				markupItemStorage.getSourceAddress());
 		}
 		return cachedSourceValue;
 	}
@@ -470,11 +464,17 @@ public class MarkupItemImpl implements VTMarkupItem {
 	}
 
 	private long getSourceModificationNumber() {
-		return markupItemStorage.getAssociation().getSession().getSourceProgram().getModificationNumber();
+		return markupItemStorage.getAssociation()
+				.getSession()
+				.getSourceProgram()
+				.getModificationNumber();
 	}
 
 	private long getDestinationModificationNumber() {
-		return markupItemStorage.getAssociation().getSession().getDestinationProgram().getModificationNumber();
+		return markupItemStorage.getAssociation()
+				.getSession()
+				.getDestinationProgram()
+				.getModificationNumber();
 	}
 
 	@Override
@@ -497,8 +497,8 @@ public class MarkupItemImpl implements VTMarkupItem {
 		VTAssociationDB associationDB = (VTAssociationDB) association;
 		associationDB.markupItemStatusChanged(this);
 		VTSessionDB session = (VTSessionDB) association.getSession();
-		session.setObjectChanged(VTChangeManager.DOCR_VT_MARKUP_ITEM_STATUS_CHANGED,
-			markupItemStorage, oldStatus, newStatus);
+		session.setObjectChanged(VTEvent.MARKUP_ITEM_STATUS_CHANGED, markupItemStorage, oldStatus,
+			newStatus);
 	}
 
 }

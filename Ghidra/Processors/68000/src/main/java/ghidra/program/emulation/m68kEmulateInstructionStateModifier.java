@@ -44,7 +44,7 @@ public class m68kEmulateInstructionStateModifier extends EmulateInstructionState
 		ISA_MODE0 = new RegisterValue(isaModeReg, BigInteger.ZERO);
 */
 
-		registerPcodeOpBehavior("findFirstOne", new FindFirstOneOpBehavior());
+		//registerPcodeOpBehavior("findFirstOne", new FindFirstOneOpBehavior());
 	}
 
 	/**

@@ -75,7 +75,7 @@ public class DataOrganizationImpl implements DataOrganization {
 	private int doubleSize = DEFAULT_DOUBLE_SIZE;
 	private int longDoubleSize = DEFAULT_LONG_DOUBLE_SIZE;
 
-	// Endianess explicitly set and not supported by saveXml/restore
+	// Endianness explicitly set and not supported by saveXml/restore
 	private boolean bigEndian = false;
 
 	private BitFieldPackingImpl bitFieldPacking = new BitFieldPackingImpl();
@@ -99,7 +99,7 @@ public class DataOrganizationImpl implements DataOrganization {
 	 * Creates a new default DataOrganization. This has a mapping which defines the alignment
 	 * of a data type based on its size. The map defines pairs for data types that are
 	 * 1, 2, 4, and 8 bytes in length.
-	 * @param language optional language used to initialize defaults (pointer size, endianess, etc.)
+	 * @param language optional language used to initialize defaults (pointer size, endianness, etc.)
 	 *  (may be null)
 	 * @return a new default DataOrganization.
 	 */
@@ -112,7 +112,7 @@ public class DataOrganizationImpl implements DataOrganization {
 		if (language != null) {
 			// NOTE: Ensure that saveXml always saves pointer size
 			dataOrganization.setPointerSize(language.getDefaultSpace().getPointerSize());
-			// NOTE: Endianess is not handled by saveXml/restore
+			// NOTE: Endianness is not handled by saveXml/restore
 			dataOrganization.setBigEndian(language.isBigEndian());
 		}
 		return dataOrganization;
@@ -195,7 +195,7 @@ public class DataOrganizationImpl implements DataOrganization {
 	}
 
 	/**
-	 * Set data endianess
+	 * Set data endianness
 	 * @param bigEndian true if big-endian, false if little-endian
 	 */
 	public void setBigEndian(boolean bigEndian) {
@@ -803,7 +803,7 @@ public class DataOrganizationImpl implements DataOrganization {
 	public void encode(Encoder encoder) throws IOException {
 		encoder.openElement(ELEM_DATA_ORGANIZATION);
 
-		// NOTE: endianess intentionally omitted from output
+		// NOTE: endianness intentionally omitted from output
 
 		if (absoluteMaxAlignment != NO_MAXIMUM_ALIGNMENT) {
 			encoder.openElement(ELEM_ABSOLUTE_MAX_ALIGNMENT);
@@ -905,13 +905,13 @@ public class DataOrganizationImpl implements DataOrganization {
 	 * Restore settings from an XML stream. This expects to see parser positioned on the
 	 * &lt;data_organization&gt; start tag.  The XML is designed to override existing language-specific
 	 * default settings which are pre-populated with {@link #getDefaultOrganization(Language)}.  This
-	 * will will ensure that the endianess setting is properly established since it is not included
+	 * will will ensure that the endianness setting is properly established since it is not included
 	 * in the XML.
 	 * @param parser is the XML stream
 	 */
 	public void restoreXml(XmlPullParser parser) {
 
-		// NOTE: endianess intentionally omitted from XML.
+		// NOTE: endianness intentionally omitted from XML.
 
 		parser.start();
 		while (parser.peek().isStart()) {

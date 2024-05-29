@@ -16,7 +16,6 @@
 package ghidra.app.cmd.function;
 
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
@@ -31,9 +30,8 @@ import ghidra.util.task.TaskMonitor;
  * also discarded.
  *
  */
-public class CreateMultipleFunctionsCmd extends BackgroundCommand {
+public class CreateMultipleFunctionsCmd extends BackgroundCommand<Program> {
 
-	private Program program;
 	private AddressSetView selection;
 	private SourceType source;
 
@@ -44,8 +42,7 @@ public class CreateMultipleFunctionsCmd extends BackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		program = (Program) obj;
+	public boolean applyTo(Program program, TaskMonitor monitor) {
 
 		Listing listing = program.getListing();
 		AddressSet addressSet = new AddressSet(selection);
@@ -60,8 +57,10 @@ public class CreateMultipleFunctionsCmd extends BackgroundCommand {
 			Function function = listing.getFunctionContaining(address);
 			if (function == null) {
 				// Create the next function.
-				Function createdFunction = createFunction(address, program, monitor);
-				if (createdFunction != null) {
+				CreateFunctionCmd createFunctionCmd =
+					new CreateFunctionCmd(null, address, null, source);
+				if (createFunctionCmd.applyTo(program, monitor)) {
+					function = createFunctionCmd.getFunction();
 					functionsCreated++;
 				}
 			}
@@ -83,19 +82,4 @@ public class CreateMultipleFunctionsCmd extends BackgroundCommand {
 		return true;
 	}
 
-	/**
-	 * Creates a function at entry point in the specified program.
-	 * @param entryPoint the entry point of the function
-	 * @param currentProgram the program where the function should be created
-	 * @param monitor the task monitor that allows the user to cancel
-	 * @return the new function or null if the function was not created
-	 */
-	public final Function createFunction(Address entryPoint, Program currentProgram,
-			TaskMonitor monitor) {
-		CreateFunctionCmd cmd = new CreateFunctionCmd(null, entryPoint, null, source);
-		if (cmd.applyTo(currentProgram, monitor)) {
-			return currentProgram.getListing().getFunctionAt(entryPoint);
-		}
-		return null;
-	}
 }

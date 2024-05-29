@@ -30,6 +30,7 @@ import ghidra.util.*;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.AssertException;
+import gui.event.MouseBinding;
 import resources.ResourceManager;
 import utilities.util.reflection.ReflectionUtilities;
 
@@ -303,7 +304,11 @@ public abstract class DockingAction implements DockingActionIf {
 			String text = menuData.getMenuItemName();
 			String trimmed = StringUtilities.trimMiddle(text, 50);
 			menuItem.setText(trimmed);
-			menuItem.setIcon(menuData.getMenuIcon());
+			Icon icon = menuData.getMenuIcon();
+			menuItem.setIcon(icon);
+			if (icon != null) {
+				menuItem.setDisabledIcon(ResourceManager.getDisabledIcon(icon));
+			}
 			menuItem.setMnemonic(menuData.getMnemonic());
 		}
 		else {
@@ -317,6 +322,10 @@ public abstract class DockingAction implements DockingActionIf {
 		menuItem.setEnabled(isEnabled);
 
 		return menuItem;
+	}
+
+	private MouseBinding getMouseBinding() {
+		return keyBindingData == null ? null : keyBindingData.getMouseBinding();
 	}
 
 	@Override
@@ -368,8 +377,8 @@ public abstract class DockingAction implements DockingActionIf {
 			precedence = kbData.getKeyBindingPrecedence();
 		}
 
-		if (precedence == KeyBindingPrecedence.ReservedActionsLevel) {
-			return true; // reserved actions are special
+		if (precedence == KeyBindingPrecedence.SystemActionsLevel) {
+			return true; // system actions are special
 		}
 
 		// log a trace message instead of throwing an exception, as to not break any legacy code
@@ -379,6 +388,10 @@ public abstract class DockingAction implements DockingActionIf {
 
 	@Override
 	public void setUnvalidatedKeyBindingData(KeyBindingData newKeyBindingData) {
+		if (Objects.equals(keyBindingData, newKeyBindingData)) {
+			return;
+		}
+
 		KeyBindingData oldData = keyBindingData;
 		keyBindingData = newKeyBindingData;
 		firePropertyChanged(KEYBINDING_DATA_PROPERTY, oldData, keyBindingData);
@@ -449,8 +462,8 @@ public abstract class DockingAction implements DockingActionIf {
 	 * other actions are prevented from using the same KeyStroke as a reserved keybinding.
 	 * @param keyStroke the keystroke to be used for the keybinding
 	 */
-	void createReservedKeyBinding(KeyStroke keyStroke) {
-		KeyBindingData data = KeyBindingData.createReservedKeyBindingData(keyStroke);
+	void createSystemKeyBinding(KeyStroke keyStroke) {
+		KeyBindingData data = KeyBindingData.createSystemKeyBindingData(keyStroke);
 		setKeyBindingData(data);
 	}
 
@@ -488,8 +501,8 @@ public abstract class DockingAction implements DockingActionIf {
 
 		// menu path
 		if (menuBarData != null) {
-			buffer.append("        MENU PATH:           ")
-					.append(menuBarData.getMenuPathAsString());
+			buffer.append("        MENU PATH:           ").append(
+				menuBarData.getMenuPathAsString());
 			buffer.append('\n');
 			buffer.append("        MENU GROUP:        ").append(menuBarData.getMenuGroup());
 			buffer.append('\n');
@@ -515,8 +528,8 @@ public abstract class DockingAction implements DockingActionIf {
 
 		// popup menu path
 		if (popupMenuData != null) {
-			buffer.append("        POPUP PATH:         ")
-					.append(popupMenuData.getMenuPathAsString());
+			buffer.append("        POPUP PATH:         ").append(
+				popupMenuData.getMenuPathAsString());
 			buffer.append('\n');
 			buffer.append("        POPUP GROUP:      ").append(popupMenuData.getMenuGroup());
 			buffer.append('\n');
@@ -565,8 +578,13 @@ public abstract class DockingAction implements DockingActionIf {
 
 		KeyStroke keyStroke = getKeyBinding();
 		if (keyStroke != null) {
-			buffer.append("        KEYBINDING:          ").append(keyStroke.toString());
+			buffer.append("        KEYBINDING:          ").append(keyStroke);
 			buffer.append('\n');
+		}
+
+		MouseBinding mouseBinding = getMouseBinding();
+		if (mouseBinding != null) {
+			buffer.append("        MOUSE BINDING:       ").append(mouseBinding);
 		}
 
 		String inception = getInceptionInformation();

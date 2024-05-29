@@ -128,7 +128,7 @@ public:
   /// \return \b true if the SUBPIECE should be represented as a cast
   virtual bool isSubpieceCast(Datatype *outtype,Datatype *intype,uint4 offset) const=0;
 
-  /// \brief Is the given data-type truncation considered a cast, given endianess concerns.
+  /// \brief Is the given data-type truncation considered a cast, given endianness concerns.
   ///
   /// This is equivalent to isSubpieceCast() but where the truncation is accomplished by pulling
   /// bytes directly out of memory.  We assume the input data-type is layed down in memory, and

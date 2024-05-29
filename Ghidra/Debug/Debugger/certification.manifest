@@ -11,10 +11,10 @@ src/main/help/help/TOC_Source.xml||GHIDRA||||END|
 src/main/help/help/topics/Debugger/Debugger.html||GHIDRA||||END|
 src/main/help/help/topics/Debugger/GettingStarted.html||GHIDRA||||END|
 src/main/help/help/topics/Debugger/Troubleshooting.html||GHIDRA||||END|
-src/main/help/help/topics/DebuggerBots/DebuggerBots.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/DebuggerBreakpointMarkerPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/images/DebuggerBreakpointMarkerPlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/images/DebuggerDecompilerBreakpointMargin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/images/DebuggerFunctionGraphBreakpointMargin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointMarkerPlugin/images/DebuggerPlaceBreakpointDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointsPlugin/DebuggerBreakpointsPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerBreakpointsPlugin/images/DebuggerBreakpointsPlugin.png||GHIDRA||||END|
@@ -33,6 +33,8 @@ src/main/help/help/topics/DebuggerMemoryBytesPlugin/DebuggerMemoryBytesPlugin.ht
 src/main/help/help/topics/DebuggerMemoryBytesPlugin/images/DebuggerMemoryBytesPlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerMemviewPlugin/DebuggerMemviewPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerMemviewPlugin/images/DebuggerMemviewPlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerModelPlugin/DebuggerModelPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerModelPlugin/images/DebuggerModelPlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerModelServicePlugin/DebuggerModelServicePlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerModulesPlugin/DebuggerModulesPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerModulesPlugin/images/DebuggerModuleMapProposalDialog.png||GHIDRA||||END|
@@ -42,20 +44,6 @@ src/main/help/help/topics/DebuggerObjectsPlugin/DebuggerObjectsPlugin.html||GHID
 src/main/help/help/topics/DebuggerObjectsPlugin/images/DebuggerBreakpointDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerObjectsPlugin/images/DebuggerMethodInvocationDialog_ForLaunch.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerObjectsPlugin/images/DebuggerObjectsPlugin.png||GHIDRA||||END|
-src/main/help/help/topics/DebuggerObjectsPlugin/images/breakpoint-set.png||GHIDRA||||END|
-src/main/help/help/topics/DebuggerObjectsPlugin/images/display_as_graph.png||GHIDRA||||END|
-src/main/help/help/topics/DebuggerObjectsPlugin/images/display_as_table.png||GHIDRA||||END|
-src/main/help/help/topics/DebuggerObjectsPlugin/images/display_as_tree.png||GHIDRA||||END|
-src/main/help/help/topics/DebuggerObjectsPlugin/images/display_as_xml.png||GHIDRA||||END|
-src/main/help/help/topics/DebuggerObjectsPlugin/images/display_filtered_graph.png||GHIDRA||||END|
-src/main/help/help/topics/DebuggerObjectsPlugin/images/display_filtered_table.png||GHIDRA||||END|
-src/main/help/help/topics/DebuggerObjectsPlugin/images/display_filtered_tree.png||GHIDRA||||END|
-src/main/help/help/topics/DebuggerObjectsPlugin/images/display_filtered_xml.png||GHIDRA||||END|
-src/main/help/help/topics/DebuggerObjectsPlugin/images/export_as_facts.png||GHIDRA||||END|
-src/main/help/help/topics/DebuggerObjectsPlugin/images/export_as_xml.png||GHIDRA||||END|
-src/main/help/help/topics/DebuggerObjectsPlugin/images/import_from_facts.png||GHIDRA||||END|
-src/main/help/help/topics/DebuggerObjectsPlugin/images/import_from_xml.png||GHIDRA||||END|
-src/main/help/help/topics/DebuggerObjectsPlugin/images/stop.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerPcodeStepperPlugin/DebuggerPcodeStepperPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerPcodeStepperPlugin/images/DebuggerPcodeStepperPlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerPlatformPlugin/DebuggerPlatformPlugin.html||GHIDRA||||END|
@@ -139,9 +127,11 @@ src/main/resources/images/steplast.png||GHIDRA||||END|
 src/main/resources/images/stepout.png||GHIDRA||||END|
 src/main/resources/images/stepover.png||GHIDRA||||END|
 src/main/resources/images/system-switch-user.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/table-a.png||FAMFAMFAM Icons - CC 2.5||||END|
+src/main/resources/images/table-e.png||FAMFAMFAM Icons - CC 2.5||||END|
+src/main/resources/images/table-s.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/thread.png||GHIDRA||||END|
 src/main/resources/images/time.png||FAMFAMFAM Icons - CC 2.5||||END|
-src/main/resources/images/write-disabled.png||GHIDRA||||END|
 src/main/resources/images/write-emulator.png||GHIDRA||||END|
 src/main/resources/images/write-target.png||GHIDRA||||END|
 src/main/resources/images/write-trace.png||Tango Icons - Public Domain||||END|
@@ -190,6 +180,9 @@ src/main/svg/stepinto.svg||GHIDRA||||END|
 src/main/svg/steplast.svg||GHIDRA||||END|
 src/main/svg/stepout.svg||GHIDRA||||END|
 src/main/svg/stepover.svg||GHIDRA||||END|
+src/main/svg/table-a.svg||FAMFAMFAM Icons - CC 2.5||||END|
+src/main/svg/table-e.svg||FAMFAMFAM Icons - CC 2.5||||END|
+src/main/svg/table-s.svg||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/svg/thread.svg||GHIDRA||||END|
 src/main/svg/write-disabled.svg||GHIDRA||||END|
 src/main/svg/write-emulator.svg||GHIDRA||||END|

@@ -24,7 +24,10 @@ public class SarifKindResultHandler extends SarifResultHandler  {
 	}
 
 	public String parse() {
-		return result.getKind().toString();
+		if (result.getKind() != null) {
+			return result.getKind().toString();
+		}
+		return "none";
 	}
 	
 }

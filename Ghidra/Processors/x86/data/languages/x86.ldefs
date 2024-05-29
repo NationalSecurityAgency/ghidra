@@ -30,6 +30,7 @@
 	<external_name tool="IDA-PRO" name="metapc"/>
     <external_name tool="DWARF.register.mapping.file" name="x86.dwarf"/>
     <external_name tool="Golang.register.info.file" name="x86-32-golang.register.info"/>
+    <external_name tool="qemu" name="qemu-i386"/>
   </language>
   <language processor="x86"
             endian="little"
@@ -93,11 +94,13 @@
     <compiler name="clang" spec="x86-64-win.cspec" id="clangwindows"/>
     <compiler name="gcc" spec="x86-64-gcc.cspec" id="gcc"/>
     <compiler name="golang" spec="x86-64-golang.cspec" id="golang"/>
+    <compiler name="Swift" spec="x86-64-swift.cspec" id="swift"/>
     <external_name tool="gnu" name="i386:x86-64:intel"/>
     <external_name tool="gnu" name="i386:x86-64"/>
     <external_name tool="IDA-PRO" name="metapc"/>
     <external_name tool="DWARF.register.mapping.file" name="x86-64.dwarf"/>
     <external_name tool="Golang.register.info.file" name="x86-64-golang.register.info"/>
+    <external_name tool="qemu" name="qemu-x86_64"/>
   </language>
   <language processor="x86"
             endian="little"

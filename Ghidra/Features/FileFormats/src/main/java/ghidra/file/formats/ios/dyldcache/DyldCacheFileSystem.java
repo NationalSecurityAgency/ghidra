@@ -49,7 +49,7 @@ public class DyldCacheFileSystem extends GFileSystemBase {
 
 	private SplitDyldCache splitDyldCache;
 	private boolean parsedLocalSymbols = false;
-	private Map<DyldCacheSlideInfoCommon, List<DyldCacheSlideFixup>> slideFixupMap;
+	private Map<DyldCacheSlideInfoCommon, List<DyldFixup>> slideFixupMap;
 	private Map<GFile, Long> addrMap = new HashMap<>();
 	private Map<GFile, Integer> indexMap = new HashMap<>();
 	private Map<Long, MappingRange> stubMap = new HashMap<>();

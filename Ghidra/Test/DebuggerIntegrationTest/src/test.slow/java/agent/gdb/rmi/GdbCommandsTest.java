@@ -243,8 +243,8 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 				quit
 				""".formatted(PREAMBLE));
 		assertEquals("""
-				Selected Ghidra language: DATA:LE:64:default
-				Selected Ghidra compiler: pointer64""",
+				Selected Ghidra language: x86:LE:32:default
+				Selected Ghidra compiler: gcc""",
 			extractOutSection(out, "---Import---"));
 		assertEquals("""
 				Selected Ghidra language: x86:LE:64:default
@@ -409,7 +409,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 			Entry<TraceAddressSnapRange, TraceMemoryState> entry =
 				tb.trace.getMemoryManager().getMostRecentStateEntry(snap, addr);
 			assertEquals(Map.entry(new ImmutableTraceAddressSnapRange(
-				new AddressRangeImpl(addr, 10), Lifespan.at(0)), TraceMemoryState.ERROR), entry);
+				quantize(rng(addr, 10), 4096), Lifespan.at(0)), TraceMemoryState.ERROR), entry);
 		}
 	}
 
@@ -819,7 +819,7 @@ public class GdbCommandsTest extends AbstractGdbTraceRmiTest {
 					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
 			String getObject = extractOutSection(out, "---GetObject---");
-			assertEquals("1\tTest.Objects[1]", getObject);
+			assertEquals("%d\tTest.Objects[1]".formatted(object.getKey()), getObject);
 		}
 	}
 

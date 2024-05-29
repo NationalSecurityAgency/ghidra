@@ -37,24 +37,25 @@ public class LayoutLockedFieldPanelCoordinator extends LineLockedFieldPanelCoord
 	 * Constructor for the coordinator.
 	 * @param panels the field panels that will have their positions coordinated with each other.
 	 */
-	public LayoutLockedFieldPanelCoordinator(FieldPanel[] panels) {
+	public LayoutLockedFieldPanelCoordinator(FieldPanel... panels) {
 		super(panels);
 	}
 
 	@Override
 	public void viewChanged(FieldPanel fp, BigInteger index, int xPos, int yPos) {
-		if (valuesChanging)
+		if (valuesChanging) {
 			return;
+		}
 		try {
 			valuesChanging = true;
 			// "lockedLineIndex" is the IndexMap index indicating where this field panel 
 			// is locked to the other when scrolling.
 			BigInteger lockedLineIndex1 = getLockedLineForPanel(fp);
 			if (lockedLineIndex1 == null) { // This shouldn't happen.
-				throw new AssertException("Couldn't find line number for indicated field panel."
-					+ " FieldPanel is not one of those being managed by this coordinator.");
+				throw new AssertException("Couldn't find line number for indicated field panel." +
+					" FieldPanel is not one of those being managed by this coordinator.");
 			}
-			
+
 			// "topIndex" is the IndexMap index of the top of the listing in view.
 			BigInteger topIndex1 = index;
 			LayoutModel layoutModel1 = fp.getLayoutModel();
@@ -62,7 +63,7 @@ public class LayoutLockedFieldPanelCoordinator extends LineLockedFieldPanelCoord
 			if (lockedLineLayout1 == null) {
 				return; // transitioning from one function to another.
 			}
-			
+
 			// "lockedLineHeight" is the height of the layout in this field panel 
 			// where it is locked to the other panel when scrolling.
 			int lockedLineHeight1 = lockedLineLayout1.getHeight();
@@ -70,10 +71,10 @@ public class LayoutLockedFieldPanelCoordinator extends LineLockedFieldPanelCoord
 			// numIndexes is the total number of indexes in this field panels indexMap.
 			BigInteger numIndexes1 = layoutModel1.getNumIndexes();
 			Layout firstLayout1 = layoutModel1.getLayout(topIndex1);
-			
+
 			// "yPos" is a negative number indicating the number of pixels the start of the current 
 			// layout is above the top of the field panel view.
-			
+
 			// "remainingHeight" is the number of pixels vertically from the first visible pixel 
 			// in the layout at the top of the listing view to the end of that layout.
 			int remainingHeight = firstLayout1.getHeight() + yPos;

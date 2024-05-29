@@ -175,6 +175,7 @@
         <tocdef id="Symbol Table" text="Symbol Table"  target="help/topics/SymbolTablePlugin/symbol_table.htm">
             <tocdef id="Symbol References" sortgroup="a" text="Symbol References"  target="help/topics/SymbolTablePlugin/symbol_references.htm" />
             <tocdef id="Symbol Tree" sortgroup="b" text="Symbol Tree" target="help/topics/SymbolTreePlugin/SymbolTree.htm" />
+            <tocdef id="Temporary Symbol Table" sortgroup="c" text="Temporary Symbol Table" target="help/topics/SymbolTablePlugin/symbol_table_transient.htm" />
         </tocdef>
         
         <tocdef id="Relocation Table" text="Relocation Table"  target="help/topics/RelocationTablePlugin/relocation_table.htm" />
@@ -375,6 +376,7 @@
 
 	</tocdef> <!-- End Ghidra Support -->
 
+	<tocdef id="Keyboard Navigation" sortgroup="gg" text="Keyboard Navigation" target="help/topics/KeyboardNavigation/KeyboardNavigation.html"/>
     <tocdef id="Undo/Redo" sortgroup="h" text="Undo/Redo"  target="help/topics/Tool/Undo_Redo.htm" />
     <tocdef id="Glossary" sortgroup="i" text="Glossary"  target="help/topics/Glossary/glossary.htm" />
     <tocdef id="What's New" sortgroup="j" text="What's New" target="docs/WhatsNew.html" />

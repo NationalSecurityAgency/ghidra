@@ -22,6 +22,7 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import ghidra.util.Msg;
+import ghidra.util.exception.AssertException;
 
 public class ReflectionUtilities {
 
@@ -42,12 +43,12 @@ public class ReflectionUtilities {
 	}
 
 	/**
-	* Locates the field of the name <code>fieldName</code> on the given 
-	* class.  If the given class does not contain the field, then this 
-	* method will recursively call up <code>containingClass</code>'s 
-	* implementation tree looking for a parent implementation of the 
+	* Locates the field of the name <code>fieldName</code> on the given
+	* class.  If the given class does not contain the field, then this
+	* method will recursively call up <code>containingClass</code>'s
+	* implementation tree looking for a parent implementation of the
 	* requested field.
-	* 
+	*
 	* @param fieldName The name of the field to locate.
 	* @param containingClass The class that contains the desired field.
 	* @return The Field object that matches the given name, or null if not
@@ -73,12 +74,12 @@ public class ReflectionUtilities {
 	}
 
 	/**
-	 * Locates the field of the name <code>fieldName</code> on the given 
-	 * class.  If the given class does not contain the field, then this 
-	 * method will recursively call up <code>containingClass</code>'s 
-	 * implementation tree looking for a parent implementation of the 
+	 * Locates the field of the name <code>fieldName</code> on the given
+	 * class.  If the given class does not contain the field, then this
+	 * method will recursively call up <code>containingClass</code>'s
+	 * implementation tree looking for a parent implementation of the
 	 * requested field.
-	 * 
+	 *
 	 * @param fieldName The name of the field to locate.
 	 * @param containingClass The class that contains the desired field.
 	 * @return The Field object that matches the given name, or null if not
@@ -104,12 +105,12 @@ public class ReflectionUtilities {
 	}
 
 	/**
-	 * Locates the method of the name <code>methodName</code> on the given 
-	 * class.  If the given class does not contain the method, then this 
-	 * method will recursively call up <code>containingClass</code>'s 
-	 * implementation tree looking for a parent implementation of the 
+	 * Locates the method of the name <code>methodName</code> on the given
+	 * class.  If the given class does not contain the method, then this
+	 * method will recursively call up <code>containingClass</code>'s
+	 * implementation tree looking for a parent implementation of the
 	 * requested method.
-	 * 
+	 *
 	 * @param methodName The name of the method to locate.
 	 * @param containingClass The class that contains the desired method.
 	 * @param parameterTypes The parameters of the desired method (may be null).
@@ -158,7 +159,7 @@ public class ReflectionUtilities {
 
 	/**
 	 * Get the first field specification contained within containingClass which has the type classType.
-	 * This method is only really useful if it is known that only a single field of 
+	 * This method is only really useful if it is known that only a single field of
 	 * classType exists within the containingClass hierarchy.
 	 * @param classType the class
 	 * @param containingClass the class that contains a field of the given type
@@ -184,51 +185,66 @@ public class ReflectionUtilities {
 	/**
 	 * Returns the class name of the entry in the stack that comes before all references to the
 	 * given classes.  This is useful for figuring out at runtime who is calling a particular
-	 * method. 
+	 * method.
 	 * <p>
-	 * This method can take multiple classes, but you really only need to pass the oldest 
+	 * This method can take multiple classes, but you really only need to pass the oldest
 	 * class of disinterest.
-	 * 
+	 *
 	 * @param classes the classes to ignore
 	 * @return the desired class name
 	 */
 	public static String getClassNameOlderThan(Class<?>... classes) {
-
 		Throwable t = createThrowableWithStackOlderThan(classes);
 		StackTraceElement[] stackTrace = t.getStackTrace();
 		return stackTrace[0].getClassName();
 	}
 
 	/**
-	 * Creates a throwable whose stack trace is based upon the current call stack, with any 
-	 * information coming before, and including, the given classes removed.
-	 * <p>
-	 * This method can take multiple classes, but you really only need to pass the oldest 
-	 * class of disinterest.
-	 * 
-	 * @param classes the classes to ignore
-	 * @return the new throwable
+	 * Returns the class name of the entry in the stack that comes before all references to the
+	 * given patterns.  This is useful for figuring out at runtime who is calling a particular
+	 * method.
+	 *
+	 * @param patterns the patterns to ignore
+	 * @return the desired class name
 	 */
-	public static Throwable createThrowableWithStackOlderThan(Class<?>... classes) {
+	public static String getClassNameOlderThan(String... patterns) {
+		Throwable t = createThrowableWithStackOlderThan(patterns);
+		StackTraceElement[] stackTrace = t.getStackTrace();
+		return stackTrace[0].getClassName();
+	}
 
-		List<String> toFind =
-			Arrays.stream(classes).map(c -> c.getName()).collect(Collectors.toList());
+	/**
+	 * Creates a throwable whose stack trace is based upon the current call stack, with any
+	 * information coming before, and including, the given patterns removed.
+	 *
+	 * @param patterns the strings to ignore (e.g., class or package names)
+	 * @return the new throwable
+	 * @see #createThrowableWithStackOlderThan(Class...)
+	 */
+	public static Throwable createThrowableWithStackOlderThan(String... patterns) {
+		return createThrowableWithStackOlderThan(List.of(patterns));
+	}
 
-		if (toFind.isEmpty()) {
-			// Always ignore our class.  We get this for free if the client passes in any
-			// classes.
-			toFind.add(0, ReflectionUtilities.class.getName());
+	private static Throwable createThrowableWithStackOlderThan(List<String> patterns) {
+		return createThrowableWithStackOlderThan(patterns,
+			StackElementMatcher.CONTAINS_CLASS_OR_METHOD);
+	}
+
+	private static Throwable createThrowableWithStackOlderThan(List<String> patterns,
+			StackElementMatcher matcher) {
+
+		if (patterns.isEmpty()) {
+			// always ignore our class.  We get this for free if the client passes in any classes
+			patterns = new ArrayList<>();
+			patterns.add(ReflectionUtilities.class.getName());
 		}
 
 		Throwable t = new Throwable();
 		StackTraceElement[] trace = t.getStackTrace();
 		int lastIgnoreIndex = -1;
 		for (int i = 0; i < trace.length; i++) {
-
 			StackTraceElement element = trace[i];
-			String className = element.getClassName();
-			int nameIndex = toFind.indexOf(className);
-			if (nameIndex != -1) {
+			if (matchesAnyPattern(element, patterns, matcher)) {
 				lastIgnoreIndex = i;
 			}
 			else {
@@ -242,13 +258,13 @@ public class ReflectionUtilities {
 		if (lastIgnoreIndex == -1) {
 			Msg.error(ReflectionUtilities.class,
 				"Change call to ReflectionUtils.  Did not find the " +
-					"following classes in the call stack: " + Arrays.toString(classes));
+					"following patterns in the call stack: " + patterns);
 		}
 
 		if (lastIgnoreIndex == trace.length - 1) {
 			Msg.error(ReflectionUtilities.class,
-				"Change call to ReflectionUtils. Call stack only contains the classes to ignore: " +
-					Arrays.toString(classes));
+				"Change call to ReflectionUtils. Call stack contains only ignored patterns: " +
+					patterns);
 		}
 
 		int startIndex = lastIgnoreIndex + 1;
@@ -258,11 +274,28 @@ public class ReflectionUtilities {
 	}
 
 	/**
-	 * Finds the first occurrence of the given pattern and then stops filtering when it finds 
+	 * Creates a throwable whose stack trace is based upon the current call stack, with any
+	 * information coming before, and including, the given classes removed.
+	 * <p>
+	 * This method can take multiple classes, but you really only need to pass the oldest
+	 * class of disinterest.
+	 *
+	 * @param classes the classes to ignore
+	 * @return the new throwable
+	 */
+	public static Throwable createThrowableWithStackOlderThan(Class<?>... classes) {
+		List<String> patterns =
+			Arrays.stream(classes).map(c -> c.getName()).collect(Collectors.toList());
+
+		return createThrowableWithStackOlderThan(patterns, StackElementMatcher.EXACT_CLASS);
+	}
+
+	/**
+	 * Finds the first occurrence of the given pattern and then stops filtering when it finds
 	 * something that is not that pattern
-	 * 
+	 *
 	 * @param trace the trace to update
-	 * @param pattern the non-regex patterns used to perform a 
+	 * @param pattern the non-regex patterns used to perform a
 	 * 				  {@link String#contains(CharSequence)} on each {@link StackTraceElement} line
 	 * @return the updated trace
 	 */
@@ -274,9 +307,7 @@ public class ReflectionUtilities {
 		for (int i = 0; i < trace.length; i++) {
 
 			StackTraceElement element = trace[i];
-			String traceString = element.toString();
-
-			boolean matches = containsAny(traceString, pattern);
+			boolean matches = matchesAnyPattern(element, pattern);
 			if (foundIt && !matches) {
 				desiredStartIndex = i;
 				break;
@@ -296,12 +327,12 @@ public class ReflectionUtilities {
 	}
 
 	/**
-	 * Uses the given <code>patterns</code> to remove elements from the given stack trace.     
+	 * Uses the given <code>patterns</code> to remove elements from the given stack trace.
 	 * The current implementation will simply perform a <code>toString()</code> on each element and
 	 * then check to see if that string contains any of the <code>patterns</code>.
-	 * 
+	 *
 	 * @param trace the trace to filter
-	 * @param patterns the non-regex patterns used to perform a 
+	 * @param patterns the non-regex patterns used to perform a
 	 * 				   {@link String#contains(CharSequence)} on each {@link StackTraceElement}
 	 * 				   line.
 	 * @return the filtered trace
@@ -311,8 +342,7 @@ public class ReflectionUtilities {
 
 		List<StackTraceElement> list = new ArrayList<>();
 		for (StackTraceElement element : trace) {
-			String traceString = element.toString();
-			if (containsAny(traceString, patterns)) {
+			if (matchesAnyPattern(element, patterns)) {
 				continue;
 			}
 
@@ -325,15 +355,15 @@ public class ReflectionUtilities {
 	/**
 	 * A convenience method to create a throwable, filtering any lines that contain the given
 	 * non-regex patterns.  This can be useful for emitting diagnostic stack traces.
-	 * 
-	 * @param patterns the non-regex patterns used to perform a 
+	 *
+	 * @param patterns the non-regex patterns used to perform a
 	 * 				   {@link String#contains(CharSequence)} on each {@link StackTraceElement}
 	 * 				   line.
 	 * @return the new throwable
 	 */
 	public static Throwable createFilteredThrowable(String... patterns) {
 
-		Throwable t = createThrowableWithStackOlderThan();
+		Throwable t = createThrowableWithStackOlderThan(new ArrayList<>());
 		StackTraceElement[] trace = t.getStackTrace();
 		StackTraceElement[] filtered = filterStackTrace(trace, patterns);
 		t.setStackTrace(filtered);
@@ -341,40 +371,39 @@ public class ReflectionUtilities {
 	}
 
 	/**
-	 * A convenience method to create a throwable, filtering boiler-plate Java-related 
-	 * lines (e.g., AWT, Swing, Security, etc).  
+	 * A convenience method to create a throwable, filtering boiler-plate Java-related
+	 * lines (e.g., AWT, Swing, Security, etc).
 	 * This can be useful for emitting diagnostic stack traces with reduced noise.
-	 * 
+	 *
 	 * @return the new throwable
 	 */
 	public static Throwable createJavaFilteredThrowable() {
-
-		Throwable t = createThrowableWithStackOlderThan();
+		Throwable t = createThrowableWithStackOlderThan(List.of());
 		return filterJavaThrowable(t);
 	}
 
 	/**
-	 * A convenience method to create a throwable, filtering boiler-plate Java-related 
-	 * lines (e.g., AWT, Swing, Security, etc).  
-	 * This can be useful for emitting diagnostic stack traces with reduced noise.  
-	 * 
+	 * A convenience method to create a throwable, filtering boiler-plate Java-related
+	 * lines (e.g., AWT, Swing, Security, etc).
+	 * This can be useful for emitting diagnostic stack traces with reduced noise.
+	 *
 	 * <p>This method differs from {@link #createJavaFilteredThrowable()} in that this method
 	 * returns a String, which is useful when printing log messages without having to directly
 	 * print the stack trace.
-	 * 
+	 *
 	 * @return the new throwable
 	 */
 	public static String createJavaFilteredThrowableString() {
-		Throwable t = createThrowableWithStackOlderThan();
+		Throwable t = createThrowableWithStackOlderThan(List.of());
 		Throwable filtered = filterJavaThrowable(t);
 		return stackTraceToString(filtered);
 	}
 
 	/**
-	 * A convenience method to take a throwable, filter boiler-plate Java-related 
-	 * lines (e.g., AWT, Swing, Security, etc).  
+	 * A convenience method to take a throwable, filter boiler-plate Java-related
+	 * lines (e.g., AWT, Swing, Security, etc).
 	 * This can be useful for emitting diagnostic stack traces with reduced noise.
-	 * 
+	 *
 	 * @param t the throwable to filter
 	 * @return the throwable
 	 */
@@ -388,9 +417,14 @@ public class ReflectionUtilities {
 		return t;
 	}
 
-	private static boolean containsAny(String s, String... patterns) {
-		for (String p : patterns) {
-			if (s.contains(p)) {
+	private static boolean matchesAnyPattern(StackTraceElement element, String... patterns) {
+		return matchesAnyPattern(element, List.of(patterns), StackElementMatcher.CONTAINS_ANY);
+	}
+
+	private static boolean matchesAnyPattern(StackTraceElement element, List<String> patterns,
+			StackElementMatcher matcher) {
+		for (String pattern : patterns) {
+			if (matcher.matches(element, pattern)) {
 				return true;
 			}
 		}
@@ -418,15 +452,15 @@ public class ReflectionUtilities {
 	}
 
 	/**
-	 * Returns an ordered set of interfaces and classes that are shared amongst the items in 
+	 * Returns an ordered set of interfaces and classes that are shared amongst the items in
 	 * the list.
 	 * <p>
-	 * The order of the items is as they are first encountered, favoring interfaces before 
+	 * The order of the items is as they are first encountered, favoring interfaces before
 	 * classes.  Further, interface hierarchies are examined before concrete parent extensions.
 	 * <p>
 	 * If the given items have no parents in common, then the result will be a list with
 	 * only <code>Object.class</code>.
-	 * 
+	 *
 	 * @param list the items to examine
 	 * @return the set of items
 	 */
@@ -461,15 +495,15 @@ public class ReflectionUtilities {
 	}
 
 	/**
-	 * Returns an ordered set of parent interfaces and classes that are shared 
+	 * Returns an ordered set of parent interfaces and classes that are shared
 	 * amongst the items in the list.
 	 * <p>
-	 * The order of the items is as they are first encountered, favoring interfaces before 
+	 * The order of the items is as they are first encountered, favoring interfaces before
 	 * classes.  Further, interface hierarchies are examined before concrete parent extensions.
 	 * <p>
 	 * If the given items have no parents in common, then the result will be a list with
 	 * only <code>Object.class</code>.
-	 * 
+	 *
 	 * @param list the items to examine
 	 * @return the set of items
 	 */
@@ -494,9 +528,9 @@ public class ReflectionUtilities {
 	}
 
 	/**
-	 * Turns the given {@link Throwable} into a String version of its 
+	 * Turns the given {@link Throwable} into a String version of its
 	 * {@link Throwable#printStackTrace()} method.
-	 * 
+	 *
 	 * @param t the throwable
 	 * @return the string
 	 */
@@ -505,9 +539,9 @@ public class ReflectionUtilities {
 	}
 
 	/**
-	 * Turns the given {@link Throwable} into a String version of its 
+	 * Turns the given {@link Throwable} into a String version of its
 	 * {@link Throwable#printStackTrace()} method.
-	 * 
+	 *
 	 * @param message the preferred message to use.  If null, the throwable message will be used
 	 * @param t the throwable
 	 * @return the string
@@ -543,11 +577,11 @@ public class ReflectionUtilities {
 
 	/**
 	 * Returns an order set of all interfaces implemented and classes extended for the entire
-	 * type structure of the given class. 
+	 * type structure of the given class.
 	 * <p>
-	 * If <code>Object.class</code> is passed to this method, then it will be returned in the 
+	 * If <code>Object.class</code> is passed to this method, then it will be returned in the
 	 * result of this method.
-	 * 
+	 *
 	 * @param c the class to introspect
 	 * @return the set of parents
 	 */
@@ -581,7 +615,7 @@ public class ReflectionUtilities {
 
 	/**
 	 * Returns the type arguments for the given base class and extension.
-	 * 
+	 *
 	 * <p>Caveat: this lookup will only work if the given child class is a concrete class that
 	 * has its type arguments specified.  For example, these cases will work:
 	 * <pre>
@@ -592,17 +626,17 @@ public class ReflectionUtilities {
 	 *
 	 *		// class definition
 	 *		public class MyList implements List&lt;String&gt; {
-	 * </pre> 
-	 * 
+	 * </pre>
+	 *
 	 * Whereas this case will not work:
 	 * <pre>
 	 * 		// local variable with the type specified
 	 * 		List&lt;String&gt; myList = new ArrayList&lt;String&gt;();
 	 * </pre>
-	 * 
+	 *
 	 * <p>Note: a null entry in the result list will exist for any type that was unrecoverable
-	 * 
-	 * 
+	 *
+	 *
 	 * @param <T> the type of the base and child class
 	 * @param baseClass the base class
 	 * @param childClass the child class
@@ -618,7 +652,7 @@ public class ReflectionUtilities {
 		Type baseClassAsType =
 			walkClassHierarchyAndResolveTypes(baseClass, resolvedTypesDictionary, childClass);
 
-		// try to resolve type arguments defined by 'baseClass' to the raw runtime class 
+		// try to resolve type arguments defined by 'baseClass' to the raw runtime class
 		Type[] baseClassDeclaredTypeArguments = getDeclaredTypeArguments(baseClassAsType);
 		return resolveBaseClassTypeArguments(resolvedTypesDictionary,
 			baseClassDeclaredTypeArguments);
@@ -732,6 +766,63 @@ public class ReflectionUtilities {
 			return ((Class<?>) type).getTypeParameters();
 		}
 		return ((ParameterizedType) type).getActualTypeArguments();
+	}
+
+	private static class StackElementMatcher {
+
+		static final StackElementMatcher EXACT_CLASS =
+			new StackElementMatcher(Match.EXACT, Content.CLASS_NAME);
+
+		static final StackElementMatcher CONTAINS_CLASS_OR_METHOD =
+			new StackElementMatcher(Match.CONTAINS, Content.CLASS_AND_METHOD_NAME);
+
+		static final StackElementMatcher CONTAINS_ANY =
+			new StackElementMatcher(Match.CONTAINS, Content.ALL);
+
+		static enum Match {
+			EXACT, CONTAINS;
+
+			boolean matches(String input, String pattern) {
+				switch (this) {
+					case EXACT:
+						return input.equals(pattern);
+					case CONTAINS:
+						return input.contains(pattern);
+					default:
+						throw new AssertException("Missing case type");
+				}
+			}
+		}
+
+		static enum Content {
+			CLASS_NAME, CLASS_AND_METHOD_NAME, ALL;
+
+			String convert(StackTraceElement e) {
+				switch (this) {
+					case CLASS_NAME:
+						return e.getClassName();
+					case CLASS_AND_METHOD_NAME:
+						return e.getClassName() + ' ' + e.getMethodName();
+					case ALL:
+						return e.toString();
+					default:
+						throw new AssertException("Missing case type");
+				}
+			}
+		}
+
+		private Match matchType;
+		private Content contentType;
+
+		StackElementMatcher(Match matchType, Content contentType) {
+			this.matchType = matchType;
+			this.contentType = contentType;
+		}
+
+		boolean matches(StackTraceElement element, String pattern) {
+			String s = contentType.convert(element);
+			return matchType.matches(s, pattern);
+		}
 	}
 
 }

@@ -1,0 +1,517 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>BSim Search</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1>BSim Search</H1>
+
+    <P>The BSim Search features allows the user to perform similar function searches against an
+    existing BSim database. See the <A class="link" href="../BSim/BSimOverview.html">BSim
+    Overview</A> for a full description of BSim. This section describes the actions and related
+    GUIs for conducting either an overview search or a similar functions search and the follow on
+    actions that can be performed on the search results.</P>
+
+    <H2><A name="Adding_BSim_Plugin"></A>Enabling the BSim Search Plugin</H2>
+
+    <P>The BSim Database feature comes with an Ghidra GUI interface for initiating searches. This
+    GUI integrates with Ghidra via a plug-in that can be added to the main Ghidra Code Browser
+    tool. This plug-in is currently called the <B>BSimSearchPlugin</B> within Ghidra and can be
+    enabled from within the <B>Configure Tool</B>menu. If the plug-in is enabled, the Code Browser
+    will contain a BSim menu with actions for managing BSim database definitions, performing an
+    overview query, or perfrorming a similar functions search. Also, the <IMG alt="" src=
+    "icon.bsim.query.dialog.provider">&nbsp; will appear in the toolbar, which is a shortcut for
+    search similar fuctions action.</P>
+
+    <H2><A name="BSim_Servers_Dialog"></A>Defining and Managing BSim Databases</H2>
+
+    <BLOCKQUOTE>
+      <P>Before a BSim overview or search can be performed, one or more BSim database
+      specifications must be defined. BSim database specifications are managed by the BSim Server
+      Manager dialog.</P>
+
+      <P>The server dialog can be invoked either from main toolbar, <B>BSim<IMG src=
+      "help/shared/arrow.gif" alt="-&gt;" border="0">Manage Servers</B>, or using the <IMG alt=""
+      src="Icons.CONFIGURE_FILTER_ICON" border="0"> button in either the <A href=
+      "#BSim_Overview_Dialog">BSim Overview</A> or <A href="#BSim_Search_Dialog">BSim Search</A>
+      dialogs.</P>
+      <BR>
+      <BR>
+       
+
+      <CENTER>
+        <IMG alt="" src="images/ManageServersDialog.png">
+      </CENTER><BR>
+      <BR>
+      <BR>
+       
+
+      <P>The dialog displays a table showing all the currently defined BSim databases/servers. Each
+      entry shows a name for the BSim database, its type (postgres, elastic, or file), a host ip
+      and port (if applicable), and finally the number of active connections.</P>
+
+      <P>There are three primary actions for this dialog:</P>
+      <A name="Manage_Servers_Actions"></A> 
+
+      <UL>
+        <LI><IMG alt="" src="Icons.ADD_ICON">&nbsp;Add a new database/server definition - a
+        Define Server Dialog will be shown.</LI>
+
+        <LI><IMG alt="" src="Icons.DELETE_ICON">&nbsp;Delete a database/server definition - The
+        selected entry will be deleted.</LI>
+
+        <LI><IMG alt="" src="icon.bsim.change.password">&nbsp;Change password - A change password
+        dialog will appear for the selected entry</LI>
+      </UL>
+
+      <H3><A name="Add_Server_Definition_Dialog">Defining a new BSim server/database</A></H3>
+
+      <BLOCKQUOTE>
+        <P>Pressing the <IMG alt="" src="Icons.ADD_ICON"> brings up the <B>Add BSim Server</B>
+        dialog</P>
+        <BR>
+         
+
+        <CENTER>
+          <IMG alt="" src="images/AddServerDialog.png">
+        </CENTER><BR>
+         
+
+        <P>Choose the type of BSim database first as that will affect the type of information that
+        needs to be specified. For postgres and elastic, you need to enter host and port. For file,
+        you see a button for using a filechooser to pick the file that is the local BSim H2
+        database.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2><A name="BSim_Overview_Dialog"></A>BSim Overview Query</H2>
+
+    <P>The BSim Overview action does a search against all functions in the current program, but
+    instead of returning all the specific results for each function, it returns a count of the
+    matching results for each function.</P>
+
+    <P>To invoke an overview search dialog, select <B>BSim<IMG src="help/shared/arrow.gif" alt=
+    "-&gt;" border="0">Overview...</B></P>
+    <BR>
+     
+
+    <CENTER>
+      <IMG alt="" src="images/BSimOverviewDialog.png">
+    </CENTER><BR>
+     <BR>
+     <BR>
+     
+
+    <P>To start the overview task, select a predefined BSim database server from the combo box or
+    press the <IMG alt="" src="Icons.CONFIGURE_FILTER_ICON" border="0"> button to bring up the <A
+    href="#BSim_Servers_Dialog">Manage BSim Servers dialog</A>. Then adjust the similarity and
+    confidence settings as desired, and press the Overview button. See the settings for the <A
+    href="#BSim_Server">Similar Functions Search</A> for more information about similarity and
+    confidence values.</P>
+
+    <H2><A name="BSim_Overview_Results">BSim Overview Results</A></H2>
+
+    <P>After performing a BSim Overview Query, the <B>BSim Function Overview</B> window will
+    appear.</P>
+    <BR>
+     
+
+    <CENTER>
+      <IMG alt="" src="images/BSimOverviewResults.png">
+    </CENTER><BR>
+     
+
+    <P>The table displays an entry for each function that had at least one hit. Each entry displays
+    the address of the function, its name, the number of hits BSim found and the self significance
+    of the function</P>
+    <A name="Overview_Search_Info_Action"></A> 
+
+    <P>The <IMG alt="" src="Icons.INFO_ICON"> action pops up a dialog displaying the search
+    criteria used to generate this overview results set.</P>
+
+    <P>The <IMG alt="" src="Icons.NAVIGATE_ON_INCOMING_EVENT_ICON"> action controls whether or not
+    single clicking in the table will navigate the listing to the selected function. Even if the
+    action is off, navigate will still occur on a double-click.</P>
+
+    <P>The <IMG alt="" src="Icons.MAKE_SELECTION_ICON"> action will create a selection in the
+    listing for the selected row(s).</P>
+
+    <BLOCKQUOTE>
+      <P>There are also several pop-up actions that work on the selected rows.</P>
+
+      <UL>
+        <LI><A name="Overview_Initiate_Search"></A><B>Search Selected Functions</B> Performs a BSim
+        Similar Functions Search on the selected functions in the Overview Results table.</LI>
+
+        <LI><A name="Overview_Initiate_Search_Dialog"><B>Search Selected Functions...</B> Shows the
+        BSim Search Dialog populated with the selected functions in the Overview Results
+        table.</A></LI>
+
+        <LI><A name="Overview_Make_Selection"><B>Make Selection</B> Selects functions in the
+        listing based on the selected rows in the Overview results table.</A></LI>
+      </UL>
+    </BLOCKQUOTE>
+
+    <P>When trying to use the Executable Match Summary to determine if there is a significant match
+    between the currently active program and executables in the database, there are two potential
+    sources of noise in the resulting scores. Very small functions can produce false positives
+    which artificially increase the confidence score for a particular executable. Also, some
+    functions, like those provided by standard language libraries, may be used by a large portion
+    of the executables in the corpus, and incorporating their matches into confidence scores
+    obscures more significant matches. In both cases, the functions have an overly large number of
+    matches in the database. This table, preferably sorted on the Hit Count column, serves as an
+    overview of what, within the context of the active program, are the most common and least
+    common functions in the database. This makes it easy to filter out precisely these kinds of
+    problem functions.</P>
+
+    <P>The standard procedure is to select an upper-bound for a function's Hit Count, select every
+    row in the table below that threshold, and then transfer that selection to the main Code
+    Browser window by clicking on the Make a selection icon in the upper right corner of the table.
+    Then, with selection active, invoke the <A href="#BSim_Search_Dialog">Search Similar
+    Functions</A>.</P>
+
+    <H2><A name="BSim_Search_Dialog"></A>BSim Similar Function Search</H2>
+
+    <P>The BSim Similar Function Search action performs a BSim search against one or more functions
+    in the current program. If there is a selection, it will search all functions in the selection;
+    otherwise it will search on the one function containing the cursor (If the cursor is not in the
+    body of any function, an error dialog will appear).</P>
+
+    <P>To invoke an overview search dialog, select <B>BSim<IMG src="help/shared/arrow.gif" alt=
+    "-&gt;" border="0">Search Functions...</B> or press the <IMG alt="" src=
+    "icon.bsim.query.dialog.provider">&nbsp; button in the main toolbar.</P>
+    <BR>
+     
+
+    <CENTER>
+      <IMG alt="" src="images/BSimSearchDialog.png">
+    </CENTER><BR>
+     <BR>
+     
+
+    <P>This dialog allows you to configure the BSim search. The fields are as follows:</P>
+
+    <BLOCKQUOTE>
+      <H3>Standard Fields</H3>
+
+      <UL>
+        <LI><A name="BSim_Server"></A><B>BSim Server</B> - Choose a BSim database/sever from the
+        drop down list or define a new one using the <IMG alt="" src="Icons.CONFIGURE_FILTER_ICON">
+        button.</LI>
+
+        <LI><A name="Selected Functions"></A><B>Function(s)</B> - Shows the function to be searched
+        or the number of functions being searched. Press the <IMG alt="" src=
+        "icon.bsim.functions.table"> button to see a list of all the selected functions.</LI>
+
+        <LI><A name="Similarity"></A><B>Similarity Threshold</B> - This is a score between 0.0
+        and 1.0 indicating as a percentage how similar two functions are to each other and is
+        calculated as a Cosine Similarity on their feature sets. For two functions that are about
+        the same size, a similarity score of 0.85 indicates that they share about 85% of their
+        features. The score takes into account the relative importance of individual features and
+        will vary from a raw feature percentage.</LI>
+
+        <LI><A name="Confidence"></A><B>Confidence Threshold</B> - Enter a minimum confidence
+        threshold for matches. Confidence is an unbounded score that indicates how likely it is for
+        a given pair of functions to be a causal match. Formally, confidence is a log likelihood
+        ratio that accumulates positive scores for features in common and negative scores for
+        differences. The larger the score, the more significant the result.</LI>
+
+        <LI><A name="Max_Matches"></A><B>Max Matches Per Function</B> - Enter the maximum number of
+        results to return for any one function</LI>
+      </UL>
+
+      <H3><A name="BSim_Filters"></A>Filters</H3>
+
+      <P>Filters allow the search to be further restricted by allowing the user to choose from a
+      list of predefined filter criteria and then specify a value for that critera. Supported
+      filters include:&lt;\P&gt;</P>
+
+      <UL>
+        <LI><B>Executable Name</B> - specify one or more executable names. Only functions from
+        executables with those names will be included.</LI>
+
+        <LI><B>MD5</B> - specify a 32 Hex digit MD5 string. Only functions from executables with
+        that MD5 will be included.</LI>
+
+        <LI><B>Architecture</B> - Specify one or more Ghidra architecture specifications. Only
+        functions from that type of executable will be included.</LI>
+
+        <LI><B>Compiler</B> - Specify one or more Ghidra compiler specifications. Only functions
+        with those compiler specifications will be included</LI>
+
+        <LI><B>Path Starts With</B> - Specify one or more path strings. Only functions from
+        executables with names that start with that path are included.</LI>
+
+        <LI><B>Calls</B> - Specify one or function names. Only functions that calls functions with
+        those names will be included.</LI>
+
+        <LI><B>Ingest Date Earlier</B> - specify a date. Only executables that were ingested into
+        Ghidra prior to that date are included.</LI>
+
+        <LI><B>Ingest Date Later</B> - specify a date. Only executables that were ingested into
+        Ghidra after that date are included.</LI>
+
+        <LI><B>Function tagged as &lt;TAG&gt;</B> - if true, only include functions that were
+        tagged with &lt;TAG&gt; where &lt;TAG&gt; is some predefined function tag string. If false,
+        only include functions that don't have that tag association.</LI>
+      </UL>
+
+      <P>Most of these filters also have NOT versions where only functions that don't match the
+      criteria are included in the results.</P>
+    </BLOCKQUOTE>
+
+    <P>Once all the fields have valid values, press the <B>Search</B> button to initiate the BSim
+    Function search.</P>
+    <A name="BSim_Quick_Search"></A> 
+
+    <P><IMG alt="" src="help/shared/note.png" border="0">A BSim search can also be initiated from
+    either the listing or decompiler by right-clicking to bring up the popup menu and selecting
+    either BSim<IMG src="help/shared/arrow.gif" alt="-&gt;" border="0">Search Function(s) or
+    BSim<IMG src="help/shared/arrow.gif" alt="-&gt;" border="0">Search Function(s)... The only
+    difference is whether or not to bring up the BSim Search Dialog before performing the search.
+    Once one search has been done, subsequent searches can be done using the same settings as the
+    previous search without bringing up the dialog.</P>
+
+    <P>When this action is invoked from the listing, it will apply the function containing the
+    cursors, unless there is a selection, in which case it applies to all functions in the
+    selection. When the action is invoked from the decompiler, it will apply to the function whose
+    name is directly under the cursor.</P>
+
+    <H2><A name="Similar_Functions_Results">Similar Function Search Results</A></H2>
+
+    <P>After initiating a BSim Similar functions search, a BSim Search Results Window will
+    appear.</P>
+
+    <CENTER>
+      <IMG alt="" src="images/BSimResultsProvider.png">
+    </CENTER><BR>
+     
+
+    <P>There are two panels associated with each result set. The top panel is the Function Matches
+    table and the bottom table is the Executables Summary Table. The Executables Summary Table can
+    be hidden using the <IMG alt="" src="icon.bsim.table.split"> tool bar button. Each row will
+    show columns pertaining to the particular match including, the name of the original function
+    queried, the name of the matching function, and the corresponding similarity score. If a single
+    function produces more than one match, each match will produce a separate row. Clicking on the
+    column headers will sort the results on that column, and clicking on individual rows will
+    navigate in the Code Browser to the original function that produced that particular match.</P>
+
+    <BLOCKQUOTE>
+      <H3>Function Matches Panel</H3>
+
+      <P>The Function Matches Panel displays one function match result per row. There can be
+      multiple rows/matches for any queried function. Each row displays the name of the function
+      being queried, the name of the matching function, its associated match scores, and other
+      related information described below. Clicking on column headers will sort on that column and
+      clicking on a row will navigate the tool to function being queried. The columns include (not
+      all are visible by default):</P>
+
+      <UL>
+        <LI><B>Status</B> - This is the status result of attempting to apply names from a matching
+        function to the queried function. Hover on the status to get a description of the apply
+        status.</LI>
+
+        <LI><B>Architecture</B> - The standard Ghidra language ID specifying the
+        processor/architecture of the matching function.</LI>
+
+        <LI><B>Category</B> - A user controlled field for labeling groups of executables.</LI>
+
+        <LI><B>Compiler</B> - The compiler used to build the matching function/executable.</LI>
+
+        <LI><B>Confidence</B> - The confidence score associated with the match.</LI>
+
+        <LI><B>Exe Name</B> - The name of the executable containing the matching function.</LI>
+
+        <LI><B>Ingest Date</B> - The date and time when the executable containing the matching
+        function was ingested into the database.</LI>
+
+        <LI><B>Location</B> - The address of the function being queried.</LI>
+
+        <LI><B>Matching Function Name</B> - The name of the matching function.</LI>
+
+        <LI><B>Md5</B> - The MD5 checksum of the executable containing the function match.</LI>
+
+        <LI><B>Query Function Name</B> - The name of the function being queried.</LI>
+
+        <LI><B>Similarity</B> - The similarity score associated with the match.</LI>
+
+        <LI><B>Matches</B> - The number of matches found for the source function.</LI>
+
+        <LI><B>KNOWN_LIBRARY</B> - Boolean value (check-box) indicating the function is a known
+        statically linked library function, as labeled by the FunctionID (FID) analyzer.</LI>
+
+        <LI><B>HAS_UNIMPLEMENTED</B> - Boolean value (check-box) indicating the function contains
+        instructions that weren't recognized by the decompiler.</LI>
+
+        <LI><B>HAS_BADDATA</B> - Boolean value (check-box) indicating that decompilation of the
+        function was in error or incomplete.</LI>
+      </UL>
+
+      <P>Executable categories added to the specific database instance will also be available here
+      as additional columns. See <A href="../BSim/DatabaseConfiguration.html#ExeCat">Executable
+      Categories</A>. The column name will match the formal category name, and the string values
+      can be sorted like any other column. It is possible for multiple values to be assigned to the
+      same category for a single executable. In this case, the results table will still display a
+      single column, but the cell will display all the values as a sorted and comma-separated list.
+      If a new date column is specifically added to the database, this will <SPAN class=
+      "emphasis"><EM>replace</EM></SPAN> the existing column called 'Ingest Date'. In either case,
+      this column will sort and filter as a proper date.</P>
+
+      <P>Each function tag registered with the BSim instance will produce an additional column
+      available here. See <A href="../BSim/DatabaseConfiguration.html#FunctionTags">Function
+      Tags</A>. The column will be labeled with the tag name, and the row entry will be a
+      check-box, indicating whether the tag was present for that function or not.</P>
+
+      <H3>Executable Match Summary</H3>
+
+      <P>The Executable March Summary table displays a row for each executable that has at least
+      one matching function for the queried function(s). Every function returned as a match is
+      associated with its own executable. This table lists exactly one row for every executable
+      associated with some function match, even if there is more than one such match. Many of the
+      columns are the same as for the Function Match table, but there are two columns that show an
+      aggregated value over all function matches that share that same executable.</P>
+
+      <UL>
+        <LI><B>Confidence</B> - For a query taken from functions in an <I>unknown</I> executable,
+        the greater the number of function matches that come from a single executable, the more
+        significant that executable is overall as a match to the unknown executable. The <B>per
+        executable</B> confidence quantifies this by summing all the function match confidence
+        scores into a single executable score.</LI>
+
+        <LI><B>Function Count</B> - A simple count of the number of function matches that share
+        this same executable.</LI>
+      </UL>
+
+      <P>The executables with the highest aggregate <I>confidence</I> scores share the highest
+      amount of functionality with the subset of functions in the active program that were queried.
+      Users should be aware that this shared functionality is not necessarily the most important
+      functionality. Small functions can produce false positive matches that artificially inflate a
+      confidence score, and matches to library functions increase the score even though the shared
+      functionality is not significant. Proper filtering of the queried subset and of the results
+      may be crucial to getting a meaningful result. See <A href="#BSim_Overview_Dialog">The
+      Overview Query</A>.</P>
+
+      <H3>Actions</H3>
+
+      <H4>Toolbar Actions</H4>
+
+      <UL>
+        <LI><A name="Search_Info_Action"></A><IMG alt="" src="Icons.INFO_ICON">&nbsp; <B>Search
+        Info</B>- Pops up a dialog displaying the search criteria used to generate this results
+        set.</LI>
+
+        <LI><A name="Searched_Functions"></A><IMG alt="" src="icon.bsim.functions.table">&nbsp;
+        <B>Searched Functions</B>- Pops up a dialog showing a table of all searched functions and
+        the match count for each.</LI>
+
+        <LI><A name="Filter_Results_Action"></A><IMG alt="" src=
+        "Icons.CONFIGURE_FILTER_ICON">&nbsp;<B>Post Filters</B> - Pops up a dialog for creating
+        post search filters to further reduce the data being displayed in the table. See <A href=
+        "#BSim_Filters">BSim Filters</A> for a description of the filters.</LI>
+
+        <LI><A name="Hide_Show_Executables_Table"></A><IMG alt="" src=
+        "icon.bsim.table.split">&nbsp; <B>Hide/Show Executables Summary Table</B>- Toggles the
+        Executables Summary table on or off.</LI>
+
+        <LI>&gt;<A name="Navigate_On_Selection"></A><IMG alt="" src=
+        "Icons.NAVIGATE_ON_INCOMING_EVENT_ICON">&nbsp;<B>Navigate on table selection</B>- Toggles
+        whether or not single clicking in the table will cause the tool to navigate. Double
+        clicking will always navigate.</LI>
+      </UL>
+
+      <H4>Popup Actions on Functions Table</H4>
+
+      <UL>
+        <LI><A name="Apply_Name"></A><B>Apply Function Name</B> - For each selected row, Ghidra
+        will attempt to apply the name and namespace of the matching function to the queried
+        function. If more than one match has been selected for the queried function, then nothing
+        will be applied.</LI>
+
+        <LI><A name="Apply_Signature"></A><B>Apply Function Signature</B> - For each selected row,
+        Ghidra will attempt to apply the name, namespace and skeleton signature of the matching
+        function to the queried function. A skeleton signature is a signature where all
+        non-primitive data types have been replaced with empty placeholder structures. This is safer
+        than using all the data types which may not be appropriate for the target program as BSim
+        finds matches against programs with differing architectures and compilers. If more than one
+        match has been selected for the queried function, then nothing will be applied.</LI>
+
+        <LI><A name="Apply_Signature_With_Datatypes"></A><B>Apply Function Signature and
+        Data types</B> - For each selected row, Ghidra will attempt to apply the name, namespace,
+        signature,and referenced data types of the matching function to the queried function. This
+        action should be used with caution as it could result in using many data types that are
+        not appropriate for the target function, especially when applying signatures from different
+        architectures and compilers. If more than one match has been selected for the queried
+        function, then nothing will be applied.</LI>
+
+        <LI><A name="Clear_Error_Status"></A><B>Clear Error Status</B> - Clears any apply error
+        statuses on the selected row(s).</LI>
+
+        <LI><A name="Compare_Functions"></A><B>Compare Functions</B> - The Function Comparison
+        window will be displayed for the selected query and matching function.</LI>
+      </UL>
+
+      <H4>Popup Actions on Executables Summary Table</H4>
+
+      <UL>
+        <LI><A name="Filter_On_Executable"></A><B>Filter on this Executable</B> - This will cause a
+        filter to be applied to the Function Matches table such that only matches from the selected
+        Executable will be displayed.</LI>
+
+        <LI><A name="Load_Executable"></A><B>Load Executable</B> - The selected program will be
+        loaded and displayed in the active tool.</LI>
+      </UL>
+
+      <H3>Comparing Functions</H3>
+
+      <P>For an interesting function match, the user can invoke the <B>CodeDiffPlugin</B> in order
+      to display the decompilation of the two matching functions side-by-side and highlight the
+      differences between them. In order for this to happen, the tool needs to have access to the
+      matching executable. The executable can be pulled in automatically if the Ghidra server
+      corresponding to the BSim Database is running. Every executable record in the database has a
+      URL field providing the host, repository, and path for retrieval. If the executable records
+      were ingested from a Ghidra server using the standard tools, this field should be populated
+      correctly.</P>
+
+      <P>The code comparison is triggered by right-clicking on a particular entry in the Function
+      Match table and selecting <I>Compare Function</I> from the resulting pop-up. If the Ghidra
+      server containing the executable is running, it will be loaded as a separate program directly
+      into the current Code Browser and a comparison window will be displayed. If the Ghidra server
+      is not running, or if the URL field is missing from the record, the comparison will still be
+      triggered if the matching executable is loaded manually as a program in the same Code
+      Browser. The menu action will identify the executable by name.</P>
+
+      <H3>Loading Executables</H3>
+
+      <P>An executable can be loaded into the Code Browser, without immediately triggering a
+      function comparison, by right-clicking on a row in the Executables Summary table and
+      selecting <I>Load Executable</I> from the corresponding pop-up menu.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="BSim_Authentication">Authentication</A></H2>
+
+    <P>Depending on the configuration of the database (See <A href=
+    "../BSim/DatabaseConfiguration.html#PostSecurityAuthentication">Security and
+    Authentication</A>), the user may need to authenticate themselves with the BSim server. This
+    check will be performed immediately upon selected a server definition. If the server requires a
+    password, a separate dialog will be brought up.</P>
+
+    <P>By default Ghidra will connect as the username reported by the OS, but in the password
+    dialog, a different username can be entered if this doesn't match the account established on
+    the server. The title bar of the main dialog indicates the username being used for the current
+    connection.</P>
+
+    <P>If the BSim server requires PKI authentication, the user must register their certificate
+    with the Ghidra client. This is accomplished from the main Project window by selecting <B>Set
+    PKI Certificate...</B> from the <B>Edit</B> menu and pointing the dialog at the certificate
+    file. The same certificate is used for authenticating with BSim and with a Ghidra server, if
+    either require PKI. Ghidra will typically bring up a password dialog once per session to unlock
+    the certificate at the first point it is required.</P>
+  </BODY>
+</HTML>

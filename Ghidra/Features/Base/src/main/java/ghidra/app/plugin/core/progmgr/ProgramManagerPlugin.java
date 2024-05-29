@@ -57,7 +57,7 @@ import ghidra.util.task.TaskLauncher;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.SUPPORT,
+	category = PluginCategoryNames.COMMON,
 	shortDescription = "Manage open programs",
 	description = "This plugin provides actions for opening and closing programs.  It also " +
 			"provides a service to allow plugins to open/close programs.  This plugin is " +
@@ -207,27 +207,29 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 		return program;
 	}
 
-	private Program doOpenProgramSwing(ProgramLocator programLocator, int state) {
+	private Program doOpenProgramSwing(ProgramLocator locator, int state) {
 		// see if already open
-		Program program = programMgr.getOpenProgram(programLocator);
+		Program program = programMgr.getOpenProgram(locator);
 		if (program != null) {
-			showProgram(program, programLocator, state);
+			showProgram(program, locator, state);
 			return program;
 		}
+
 		// see if cached
-		program = programCache.get(programLocator);
+		program = programCache.get(locator);
 		if (program != null) {
-			programMgr.addProgram(program, programLocator, state);
+			programMgr.addProgram(program, locator, state);
 			return program;
 		}
+
 		// ok, then open it
-		OpenProgramTask task = new OpenProgramTask(programLocator, this);
+		OpenProgramTask task = new OpenProgramTask(locator, this);
 		new TaskLauncher(task, tool.getToolFrame());
-		OpenProgramRequest openProgramReq = task.getOpenProgram();
-		if (openProgramReq != null) {
-			program = openProgramReq.getProgram();
-			programMgr.addProgram(program, programLocator, state);
-			openProgramReq.release();
+		OpenProgramRequest request = task.getOpenProgram();
+		if (request != null) {
+			program = request.getProgram();
+			programMgr.addProgram(program, locator, state);
+			request.release();
 			return program;
 		}
 		return null;
@@ -304,7 +306,11 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 		program = programMgr.getOpenProgram(locator);
 		if (program != null) {
 			program.addConsumer(consumer);
-			programCache.put(locator, program);
+			if (!program.isChanged() || ProgramUtilities.isChangedWithUpgradeOnly(program)) {
+				// Don't put modified programs into the cache unless the only change
+				// corresponds to an upgrade during its instantiation.
+				programCache.put(locator, program);
+			}
 			return program;
 		}
 
@@ -341,6 +347,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 
 	@Override
 	public void dispose() {
+		programCache.clear();
 		programMgr.dispose();
 		tool.clearLastEvents();
 	}
@@ -367,9 +374,11 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 		for (Program p : openPrograms) {
 			if (ignoreChanges) {
 				toRemove.add(p);
+				continue;
 			}
 			else if (p.isClosed()) {
 				toRemove.add(p);
+				continue;
 			}
 
 			if (!tool.canCloseDomainObject(p)) {
@@ -597,7 +606,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 		PropertyEditor editor = options.getPropertyEditor(filePropertyName);
 		if (editor == null && options.getType(filePropertyName) == OptionType.STRING_TYPE) {
 			options.registerOption(filePropertyName, OptionType.STRING_TYPE, null, null, null,
-				new StringBasedFileEditor());
+				() -> new StringBasedFileEditor());
 		}
 	}
 
@@ -652,7 +661,9 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager, Opti
 	}
 
 	private void openProgramLocations(List<ProgramLocator> locators) {
-
+		if (locators.isEmpty()) {
+			return;
+		}
 		Set<ProgramLocator> toOpen = new LinkedHashSet<>(locators); 	// preserve order
 
 		// ensure already opened programs are visible in the tool

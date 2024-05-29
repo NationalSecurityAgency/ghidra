@@ -270,7 +270,7 @@ public class OptionDialog extends DialogComponentProvider {
 		if (savedDialogChoicePanel != null) {
 			panel.add(savedDialogChoicePanel, BorderLayout.SOUTH);
 		}
-
+		setAccessibleDescription(message);
 		addWorkPanel(panel);
 		setRememberLocation(false);
 		setRememberSize(false);

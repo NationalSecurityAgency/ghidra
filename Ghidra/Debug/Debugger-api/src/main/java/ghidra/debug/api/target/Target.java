@@ -63,11 +63,14 @@ public interface Target {
 	 * @param name the name of a common debugger command this action implements
 	 * @param details text providing more details, usually displayed in a tool tip
 	 * @param requiresPrompt true if invoking the action requires further user interaction
+	 * @param specificity a relative score of specificity. These are only meaningful when compared
+	 *            among entries returned in the same collection.
 	 * @param enabled a supplier to determine whether an associated action in the UI is enabled.
 	 * @param action a function for invoking this action asynchronously
 	 */
 	record ActionEntry(String display, ActionName name, String details, boolean requiresPrompt,
-			BooleanSupplier enabled, Function<Boolean, CompletableFuture<?>> action) {
+			long specificity, BooleanSupplier enabled,
+			Function<Boolean, CompletableFuture<?>> action) {
 
 		/**
 		 * Check if this action is currently enabled
@@ -133,6 +136,13 @@ public interface Target {
 	}
 
 	/**
+	 * Describe the target for display in the UI
+	 * 
+	 * @return the description
+	 */
+	String describe();
+
+	/**
 	 * Check if the target is still valid
 	 * 
 	 * @return true if valid
@@ -165,6 +175,20 @@ public interface Target {
 	 * @return the collected actions
 	 */
 	Map<String, ActionEntry> collectActions(ActionName name, ActionContext context);
+
+	/**
+	 * @see #execute(String, boolean)
+	 */
+	CompletableFuture<String> executeAsync(String command, boolean toString);
+
+	/**
+	 * Execute a command as if in the CLI
+	 * 
+	 * @param command the command
+	 * @param toString true to capture the output and return it, false to print to the terminal
+	 * @return the captured output, or null if {@code toString} is false
+	 */
+	String execute(String command, boolean toString);
 
 	/**
 	 * Get the trace thread that contains the given object

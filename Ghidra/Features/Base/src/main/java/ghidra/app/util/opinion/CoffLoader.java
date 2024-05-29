@@ -30,8 +30,7 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.Undefined;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
@@ -182,6 +181,7 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 			processSymbols(header, program, monitor, log, sectionsMap, symbolsMap);
 			processEntryPoint(header, program, monitor, log);
 			processRelocations(header, program, sectionsMap, symbolsMap, log, monitor);
+			markupHeaders(header, program, fileBytes, log, monitor);
 		}
 		catch (AddressOverflowException e) {
 			throw new IOException(e);
@@ -242,7 +242,7 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 			Address address = null;
 			try {
 				short sectionNum = symbol.getSectionNumber();
-				if (sectionNum == 0) {//external symbols
+				if (sectionNum == CoffSymbolSectionNumber.N_UNDEF) {//external symbols
 					address = externalAddress;
 					String name = symbol.getName();
 					Symbol sym = symbolTable.getGlobalSymbol(name, address);
@@ -255,13 +255,17 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 					externalAddress = externalAddress
 							.add(getPointerSizeAligned(externalAddress.getAddressSpace()));
 				}
-				else if (sectionNum <= -2) {
+				else if (sectionNum < CoffSymbolSectionNumber.N_DEBUG) {
 					log.appendMsg("Strange symbol " + symbol + " : " + symbol.getBasicType() +
 						" - from section " + sectionNum);
 				}
+				else if (sectionNum == CoffSymbolSectionNumber.N_DEBUG) {
+					// skip debug symbols
+					continue;
+				}
 				else {
 					CoffSectionHeader section = null;
-					if (sectionNum == -1) { // absolute symbols
+					if (sectionNum == CoffSymbolSectionNumber.N_ABS) { // absolute symbols {
 						// usually corresponds to IO or memory registers
 						address = CoffSectionHeader.getAddress(program.getLanguage(),
 							symbol.getValue(), program.getLanguage().getDefaultDataSpace());
@@ -344,6 +348,9 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 
 				// assume any value in external is writable.
 				block.setWrite(true);
+
+				// Mark block as an artificial fabrication
+				block.setArtificial(true);
 
 				Address current = externalAddressStart;
 				while (current.compareTo(externalAddress) < 0) {
@@ -694,7 +701,13 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 								++failureCount;
 								failedAddr = address;
 								handleRelocationError(program, address, relocationType,
-									"Unsupported COFF relocation type", null);
+									"unsupported type", null);
+							}
+							else if (status == Status.FAILURE) {
+								++failureCount;
+								failedAddr = address;
+								handleRelocationError(program, address, relocationType,
+									"unknown reason", null);
 							}
 						}
 					}
@@ -741,8 +754,8 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 		}
 	}
 
-	private void handleRelocationError(Program program, Address address,
-			Short relocationType, String message, Exception causeToReport) {
+	private void handleRelocationError(Program program, Address address, Short relocationType,
+			String message, Exception causeToReport) {
 		String bookmarkMessage =
 			String.format("Failed to apply COFF Relocation type 0x%x: %s", relocationType, message);
 		program.getBookmarkManager()
@@ -750,6 +763,50 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 		String logMessage = String.format("Failed to apply COFF Relocation type 0x%x at %s: %s",
 			relocationType, address.toString(), message);
 		Msg.error(this, program.getName() + ": " + logMessage, causeToReport);
+	}
+
+	private void markupHeaders(CoffFileHeader header, Program program, FileBytes fileBytes,
+			MessageLog log, TaskMonitor monitor) {
+		monitor.setMessage("Marking up headers...");
+		try {
+			Map<Long, DataType> dtMap = new HashMap<>();
+			long blockSize = 0;
+
+			// Header
+			dtMap.put(blockSize, header.toDataType());
+			blockSize += header.sizeof();
+
+			// Optional Header
+			AoutHeader optionalHeader = header.getOptionalHeader();
+			if (header.getOptionalHeader() != null) {
+				dtMap.put(blockSize, optionalHeader.toDataType());
+				blockSize += header.getOptionalHeaderSize();
+			}
+
+			// Sections
+			for (CoffSectionHeader section : header.getSections()) {
+				DataType dt = section.toDataType();
+				dtMap.put(blockSize, dt);
+				blockSize += dt.getLength();
+			}
+
+			// Create memory block
+			Address headerSpaceAddr = AddressSpace.OTHER_SPACE.getAddress(0);
+			MemoryBlock headerBlock =
+				MemoryBlockUtils.createInitializedBlock(program, true, "HEADER", headerSpaceAddr,
+					fileBytes, 0, blockSize, "", "", false, false, false, log);
+			Address addr = headerBlock.getStart();
+
+			// Create data
+			for (long offset : dtMap.keySet()) {
+				DataUtilities.createData(program, addr.add(offset), dtMap.get(offset), -1,
+					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+			}
+
+		}
+		catch (Exception e) {
+			log.appendMsg("Failed to markup headers");
+		}
 	}
 
 	@Override

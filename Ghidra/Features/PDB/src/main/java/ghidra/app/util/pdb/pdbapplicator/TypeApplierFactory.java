@@ -18,8 +18,7 @@ package ghidra.app.util.pdb.pdbapplicator;
 import java.util.HashMap;
 import java.util.Map;
 
-import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
-import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
+import ghidra.app.util.bin.format.pdb2.pdbreader.*;
 import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
 
 /**
@@ -30,10 +29,12 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.type.*;
 public class TypeApplierFactory {
 
 	private DefaultPdbApplicator applicator;
+	private AbstractPdb pdb;
 	private Map<Integer, MsTypeApplier> appliersByPdbId;
 
 	TypeApplierFactory(DefaultPdbApplicator applicator) {
 		this.applicator = applicator;
+		this.pdb = applicator.getPdb();
 		appliersByPdbId = new HashMap<>();
 	}
 
@@ -51,7 +52,7 @@ public class TypeApplierFactory {
 	MsTypeApplier getApplierOrNoTypeSpec(RecordNumber recordNumber,
 			Class<? extends MsTypeApplier> expected) throws PdbException {
 		MsTypeApplier applier = getTypeApplier(recordNumber);
-		AbstractMsType type = applicator.getPdb().getTypeRecord(recordNumber);
+		AbstractMsType type = pdb.getTypeRecord(recordNumber);
 		if (!expected.isInstance(applier)) {
 			if (!(applier instanceof PrimitiveTypeApplier &&
 				((PrimitiveTypeApplier) applier).isNoType(type))) {
@@ -63,7 +64,7 @@ public class TypeApplierFactory {
 	}
 
 	MsTypeApplier getTypeApplier(RecordNumber recordNumber) {
-		return getTypeApplier(applicator.getPdb().getTypeRecord(recordNumber));
+		return getTypeApplier(pdb.getTypeRecord(recordNumber));
 	}
 
 	//==============================================================================================

@@ -84,24 +84,6 @@ public abstract class AssemblyParseTreeNode {
 	protected abstract void print(PrintStream out, String indent);
 
 	/**
-	 * Check if this node yields a subconstructor resolution
-	 * 
-	 * @return true if this node yields a subconstructor resolution
-	 */
-	public boolean isConstructor() {
-		return false;
-	}
-
-	/**
-	 * Check if this node yields a numeric value
-	 * 
-	 * @return true if this node yields a numeric value
-	 */
-	public boolean isNumeric() {
-		return false;
-	}
-
-	/**
 	 * Get the grammar used to parse the tree
 	 * 
 	 * @return the grammar

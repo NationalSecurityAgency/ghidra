@@ -560,6 +560,7 @@ public abstract class PdbDebugInfo {
 		for (ModuleInformation moduleInformation : moduleInformationList) {
 			pdb.checkCancelled();
 			Module module = new Module(pdb, moduleInformation);
+			// Indices: module #1 goes into index 0 and so on.
 			modules.add(module);
 		}
 	}
@@ -574,7 +575,8 @@ public abstract class PdbDebugInfo {
 	 * @return the module
 	 */
 	public Module getModule(int moduleNum) {
-		return modules.get(moduleNum);
+		// Indices: module #1 goes into index 0 and so on.
+		return modules.get(moduleNum - 1);
 	}
 
 	/**
@@ -583,7 +585,7 @@ public abstract class PdbDebugInfo {
 	 * @throws CancelledException upon user cancellation
 	 * @throws PdbException upon not enough data left to parse
 	 */
-	MsSymbolIterator getSymbolIterator() throws CancelledException, PdbException {
+	public MsSymbolIterator getSymbolIterator() throws CancelledException, PdbException {
 		return new MsSymbolIterator(pdb, streamNumberSymbolRecords, 0, MsfStream.MAX_STREAM_LENGTH);
 	}
 
@@ -593,12 +595,11 @@ public abstract class PdbDebugInfo {
 	 * @return an iterator over all symbols of the module
 	 * @throws CancelledException upon user cancellation
 	 * @throws PdbException upon not enough data left to parse
-	 * @throws IOException upon issue reading the stream
 	 */
-	MsSymbolIterator getSymbolIterator(int moduleNum)
-			throws CancelledException, PdbException, IOException {
-		Module module = modules.get(moduleNum);
-		return module.iterator();
+	public MsSymbolIterator getSymbolIterator(int moduleNum)
+			throws CancelledException, PdbException {
+		Module module = getModule(moduleNum);
+		return module.getSymbolIterator();
 	}
 
 	private void dumpSymbols(Writer writer) throws CancelledException, IOException, PdbException {

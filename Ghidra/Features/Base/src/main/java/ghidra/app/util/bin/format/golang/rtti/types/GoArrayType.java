@@ -26,7 +26,7 @@ import ghidra.program.model.data.DataType;
 /**
  * {@link GoType} structure that defines an array.
  */
-@StructureMapping(structureName = "runtime.arraytype")
+@StructureMapping(structureName = {"runtime.arraytype", "internal/abi.ArrayType"})
 public class GoArrayType extends GoType {
 
 	@FieldMapping

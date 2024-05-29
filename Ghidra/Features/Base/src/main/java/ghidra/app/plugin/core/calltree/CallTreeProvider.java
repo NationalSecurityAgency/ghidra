@@ -15,6 +15,9 @@
  */
 package ghidra.app.plugin.core.calltree;
 
+import static ghidra.framework.model.DomainObjectEvent.*;
+import static ghidra.program.util.ProgramEvent.*;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
@@ -36,7 +39,8 @@ import generic.theme.GIcon;
 import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.services.GoToService;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainObjectListener;
+import ghidra.framework.model.DomainObjectListenerBuilder;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.preferences.Preferences;
 import ghidra.program.database.symbol.FunctionSymbol;
@@ -45,14 +49,13 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.*;
-import ghidra.util.HTMLUtilities;
 import ghidra.util.HelpLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.SwingUpdateManager;
 import ghidra.util.task.TaskMonitor;
 import resources.Icons;
 
-public class CallTreeProvider extends ComponentProviderAdapter implements DomainObjectListener {
+public class CallTreeProvider extends ComponentProviderAdapter {
 
 	static final String EXPAND_ACTION_NAME = "Fully Expand Selected Nodes";
 	static final String TITLE = "Function Call Trees";
@@ -92,6 +95,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 	 */
 	private AtomicInteger recurseDepth = new AtomicInteger();
 	private NumberIcon recurseIcon;
+	private DomainObjectListener domainObjectListener = createDomainObjectListener();
 
 	public CallTreeProvider(CallTreePlugin plugin, boolean isPrimary) {
 		super(plugin.getTool(), TITLE, plugin.getName());
@@ -443,10 +447,10 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		navigateIncomingToggleAction.setSelected(isPrimary);
 		navigateIncomingToggleAction.setToolBarData(new ToolBarData(
 			Icons.NAVIGATE_ON_INCOMING_EVENT_ICON, navigationOptionsToolbarGroup, "2"));
-		navigateIncomingToggleAction.setDescription(HTMLUtilities.toHTML("Incoming Navigation" +
+		navigateIncomingToggleAction.setDescription("<html>Incoming Navigation" +
 			"<br><br>Toggle <b>On</b>  - change the displayed " +
 			"function on Listing navigation events" +
-			"<br>Toggled <b>Off</b> - don't change the displayed function on Listing navigation events"));
+			"<br>Toggled <b>Off</b> - don't change the displayed function on Listing navigation events");
 		navigateIncomingToggleAction.setHelpLocation(
 			new HelpLocation(plugin.getName(), "Call_Tree_Action_Incoming_Navigation"));
 		tool.addLocalAction(this, navigateIncomingToggleAction);
@@ -777,9 +781,9 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		GTreeSelectionListener contextSelectionListener = e -> notifyContextChanged();
 		incomingTree.addGTreeSelectionListener(contextSelectionListener);
 		outgoingTree.addGTreeSelectionListener(contextSelectionListener);
-
 		splitPane.setLeftComponent(createTreePanel(true, incomingTree));
 		splitPane.setRightComponent(createTreePanel(false, outgoingTree));
+
 		splitPane.addHierarchyListener(new HierarchyListener() {
 			@Override
 			public void hierarchyChanged(HierarchyEvent e) {
@@ -797,6 +801,9 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		});
 
 		container.add(splitPane, BorderLayout.CENTER);
+
+		incomingTree.setAccessibleNamePrefix("Incoming Function Calls");
+		outgoingTree.setAccessibleNamePrefix("Outgoing Function Calls");
 
 		return container;
 	}
@@ -850,7 +857,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		incomingTree.dispose();
 		outgoingTree.dispose();
 		if (currentProgram != null) {
-			currentProgram.removeListener(this);
+			currentProgram.removeListener(domainObjectListener);
 			currentProgram = null;
 		}
 
@@ -889,7 +896,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 			// changes, which means we will get here while setting the location, but our program
 			// will have been null'ed out.
 			currentProgram = plugin.getCurrentProgram();
-			currentProgram.addListener(this);
+			currentProgram.addListener(domainObjectListener);
 		}
 
 		Function function = plugin.getFunction(location);
@@ -989,7 +996,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		}
 
 		currentProgram = program;
-		currentProgram.addListener(this);
+		currentProgram.addListener(domainObjectListener);
 		doSetLocation(location);
 	}
 
@@ -999,7 +1006,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		}
 
 		currentProgram = program;
-		currentProgram.addListener(this);
+		currentProgram.addListener(domainObjectListener);
 		setLocation(plugin.getCurrentLocation());
 	}
 
@@ -1016,7 +1023,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 			return; // not my program
 		}
 
-		program.removeListener(this);
+		program.removeListener(domainObjectListener);
 		clearState();
 
 		currentProgram = null;
@@ -1042,51 +1049,34 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		return navigateIncomingToggleAction.isSelected();
 	}
 
-	@Override
-	public void domainObjectChanged(DomainObjectChangedEvent event) {
-		if (!isVisible()) {
+	private DomainObjectListener createDomainObjectListener() {
+		// @formatter:off
+		return new DomainObjectListenerBuilder(this)
+			.ignoreWhen(() -> !isVisible() || isEmpty())
+			.any(RESTORED).terminate(() -> setStale(true))
+			.any(MEMORY_BLOCK_MOVED, MEMORY_BLOCK_REMOVED, SYMBOL_ADDED, SYMBOL_REMOVED,
+				 REFERENCE_ADDED, REFERENCE_REMOVED)
+				.call(() -> setStale(true))
+			.with(ProgramChangeRecord.class)
+				.each(SYMBOL_RENAMED).call(r -> handleSymbolRenamed(r))
+			.build();
+		// @formatter:on
+	}
+
+	private void handleSymbolRenamed(ProgramChangeRecord r) {
+		Symbol symbol = (Symbol) r.getObject();
+		if (!(symbol instanceof FunctionSymbol)) {
 			return;
 		}
 
-		if (isEmpty()) {
-			return; // nothing to update
+		FunctionSymbol functionSymbol = (FunctionSymbol) symbol;
+		Function function = (Function) functionSymbol.getObject();
+		if (updateRootNodes(function)) {
+			return; // the entire tree will be rebuilt
 		}
 
-		if (event.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
-			setStale(true);
-			return;
-		}
-
-		for (int i = 0; i < event.numRecords(); i++) {
-			DomainObjectChangeRecord domainObjectRecord = event.getChangeRecord(i);
-			int eventType = domainObjectRecord.getEventType();
-
-			switch (eventType) {
-				case ChangeManager.DOCR_MEMORY_BLOCK_MOVED:
-				case ChangeManager.DOCR_MEMORY_BLOCK_REMOVED:
-				case ChangeManager.DOCR_SYMBOL_ADDED:
-				case ChangeManager.DOCR_SYMBOL_REMOVED:
-				case ChangeManager.DOCR_MEM_REFERENCE_ADDED:
-				case ChangeManager.DOCR_MEM_REFERENCE_REMOVED:
-					setStale(true);
-					break;
-				case ChangeManager.DOCR_SYMBOL_RENAMED:
-					Symbol symbol = (Symbol) ((ProgramChangeRecord) domainObjectRecord).getObject();
-					if (!(symbol instanceof FunctionSymbol)) {
-						break;
-					}
-
-					FunctionSymbol functionSymbol = (FunctionSymbol) symbol;
-					Function function = (Function) functionSymbol.getObject();
-					if (updateRootNodes(function)) {
-						return; // the entire tree will be rebuilt
-					}
-
-					incomingTree.runTask(new UpdateFunctionNodeTask(incomingTree, function));
-					outgoingTree.runTask(new UpdateFunctionNodeTask(outgoingTree, function));
-					break;
-			}
-		}
+		incomingTree.runTask(new UpdateFunctionNodeTask(incomingTree, function));
+		outgoingTree.runTask(new UpdateFunctionNodeTask(outgoingTree, function));
 	}
 
 	private boolean isEmpty() {

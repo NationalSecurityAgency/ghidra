@@ -152,9 +152,7 @@ public class RegisterValueStore {
 		while (rangeIt.hasNext()) {
 			list.add(rangeIt.next());
 		}
-		Iterator<AddressRange> it = list.iterator();
-		while (it.hasNext()) {
-			AddressRange indexRange = it.next();
+		for (AddressRange indexRange : list) {
 			Address rangeStart = indexRange.getMinAddress();
 			Address rangeEnd = indexRange.getMaxAddress();
 			if (rangeStart.compareTo(start) > 0) {
@@ -194,6 +192,8 @@ public class RegisterValueStore {
 	 */
 	public void clearValue(Address start, Address end, Register register) {
 
+		AddressRange.checkValidRange(start, end);
+
 		flushWriteCache();
 
 		// if the mask is all on, then just clear any values that are stored in this range
@@ -208,9 +208,7 @@ public class RegisterValueStore {
 		while (rangeIt.hasNext()) {
 			list.add(rangeIt.next());
 		}
-		Iterator<AddressRange> it = list.iterator();
-		while (it.hasNext()) {
-			AddressRange indexRange = it.next();
+		for (AddressRange indexRange : list) {
 			Address rangeStart = indexRange.getMinAddress();
 			Address rangeEnd = indexRange.getMaxAddress();
 
@@ -243,7 +241,7 @@ public class RegisterValueStore {
 		if (bytes != null) {
 			value = new RegisterValue(register, bytes);
 		}
-		
+
 		synchronized (this) {
 			if (rangeWriteCacheValue != null && address.compareTo(rangeWriteCacheMin) >= 0 &&
 				address.compareTo(rangeWriteCacheMax) <= 0) {

@@ -73,6 +73,7 @@ public class DemangledDataType extends DemangledType {
 	public final static String LONG = "long";
 	public final static String LONG_LONG = "long long";
 	public final static String FLOAT = "float";
+	public final static String FLOAT2 = "float2";
 	public final static String DOUBLE = "double";
 	public final static String INT8 = "__int8";
 	public final static String INT16 = "__int16";
@@ -94,7 +95,7 @@ public class DemangledDataType extends DemangledType {
 
 	public final static String[] PRIMITIVES =
 		{ VOID, BOOL, CHAR, WCHAR_T, WCHAR16, WCHAR32, SHORT, INT, INT0_T, LONG,
-			LONG_LONG, FLOAT, DOUBLE, INT128, FLOAT128, LONG_DOUBLE, };
+			LONG_LONG, FLOAT, FLOAT2, DOUBLE, INT128, FLOAT128, LONG_DOUBLE, };
 
 	private int arrayDimensions = 0;
 	private boolean isClass;
@@ -292,6 +293,9 @@ public class DemangledDataType extends DemangledType {
 		}
 		else if (FLOAT.equals(name)) {
 			dt = FloatDataType.dataType;
+		}
+		else if (FLOAT2.equals(name)) {
+			dt = Float2DataType.dataType;
 		}
 		else if (FLOAT128.equals(name)) {
 			dt = new TypedefDataType(FLOAT128, Float16DataType.dataType);

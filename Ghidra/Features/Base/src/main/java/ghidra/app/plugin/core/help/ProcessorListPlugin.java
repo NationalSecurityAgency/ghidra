@@ -90,7 +90,8 @@ public class ProcessorListPlugin extends Plugin implements ApplicationLevelPlugi
 		processorListAction.setMenuBarData(new MenuData(
 			new String[] { ToolConstants.MENU_HELP, processorListAction.getName() }, null, "AAAZ"));
 
-		processorListAction.setHelpLocation(new HelpLocation(HelpTopics.ABOUT, "ProcessorList"));
+		processorListAction
+				.setHelpLocation(new HelpLocation(HelpTopics.RUNTIME_INFO, "InstalledProcessors"));
 		processorListAction.setDescription(getPluginDescription().getDescription());
 		tool.addAction(processorListAction);
 	}
@@ -115,8 +116,8 @@ public class ProcessorListPlugin extends Plugin implements ApplicationLevelPlugi
 	private Set<Processor> getProcessors() {
 		TreeSet<Processor> processors = new TreeSet<>();
 		LanguageService languageService = DefaultLanguageService.getLanguageService();
-		for (LanguageDescription languageDescription : languageService.getLanguageDescriptions(
-			true)) {
+		for (LanguageDescription languageDescription : languageService
+				.getLanguageDescriptions(true)) {
 			processors.add(languageDescription.getProcessor());
 		}
 		return processors;
@@ -125,7 +126,7 @@ public class ProcessorListPlugin extends Plugin implements ApplicationLevelPlugi
 	private String getProcessorList(boolean asHtml) {
 		StringBuilder strBuilder = new StringBuilder();
 		if (asHtml) {
-			strBuilder.append("<HTML><BODY>\n");
+			strBuilder.append("<html><BODY>\n");
 			strBuilder.append("<table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\">\n<tr>");
 		}
 
@@ -152,7 +153,7 @@ public class ProcessorListPlugin extends Plugin implements ApplicationLevelPlugi
 		}
 		if (asHtml) {
 			strBuilder.append("</ul>\n</td></tr>\n</table>");
-			strBuilder.append("</BODY></HTML>");
+			strBuilder.append("</BODY></html>");
 		}
 		return strBuilder.toString();
 	}
@@ -211,8 +212,8 @@ public class ProcessorListPlugin extends Plugin implements ApplicationLevelPlugi
 
 			TreeSet<Processor> processors = new TreeSet<>();
 			LanguageService languageService = DefaultLanguageService.getLanguageService();
-			for (LanguageDescription languageDescription : languageService.getLanguageDescriptions(
-				true)) {
+			for (LanguageDescription languageDescription : languageService
+					.getLanguageDescriptions(true)) {
 				processors.add(languageDescription.getProcessor());
 			}
 

@@ -33,7 +33,7 @@ public class MultiFunctionComparisonProvider extends FunctionComparisonProvider 
 	 * 
 	 * @param plugin the parent plugin
 	 */
-	protected MultiFunctionComparisonProvider(Plugin plugin) {
+	protected MultiFunctionComparisonProvider(FunctionComparisonPlugin plugin) {
 		super(plugin, "Functions Comparison Provider", plugin.getName());
 	}
 

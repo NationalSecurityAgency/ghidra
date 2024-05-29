@@ -18,12 +18,9 @@ package ghidra.app.plugin.core.analysis;
 import java.io.IOException;
 
 import ghidra.app.services.*;
-import ghidra.app.util.bin.format.dwarf4.DWARFException;
-import ghidra.app.util.bin.format.dwarf4.DWARFPreconditionException;
-import ghidra.app.util.bin.format.dwarf4.next.*;
-import ghidra.app.util.bin.format.dwarf4.next.sectionprovider.DWARFSectionProvider;
-import ghidra.app.util.bin.format.dwarf4.next.sectionprovider.DWARFSectionProviderFactory;
-import ghidra.app.util.bin.format.golang.rtti.GoRttiMapper;
+import ghidra.app.util.bin.format.dwarf.*;
+import ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionProvider;
+import ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionProviderFactory;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.AddressSetView;
@@ -94,23 +91,18 @@ public class DWARFAnalyzer extends AbstractAnalyzer {
 			return false;
 		}
 
-		if (GoRttiMapper.isGolangProgram(program)) {
-			Msg.info(this, "DWARF: Enabling DIE preload for golang binary");
-			importOptions.setPreloadAllDIEs(true);
-		}
-
 		try {
 			try (DWARFProgram prog = new DWARFProgram(program, importOptions, monitor, dsp)) {
 				if (prog.getRegisterMappings() == null && importOptions.isImportFuncs()) {
-					log.appendMsg(
-						"No DWARF to Ghidra register mappings found for this program's language [" +
-							program.getLanguageID().getIdAsString() +
-							"], function information may be incorrect / incomplete.");
+					log.appendMsg("No DWARF to Ghidra register mappings found for this program's " +
+						"language [%s], function information may be incorrect / incomplete."
+								.formatted(program.getLanguageID().getIdAsString()));
 				}
+				prog.init(monitor);
 
-				DWARFParser dp = new DWARFParser(prog, monitor);
-				DWARFImportSummary parseResults = dp.parse();
-				parseResults.logSummaryResults();
+				DWARFImporter importer = new DWARFImporter(prog, monitor);
+				DWARFImportSummary importResults = importer.performImport();
+				importResults.logSummaryResults();
 			}
 			Options propList = program.getOptions(Program.PROGRAM_INFO);
 			propList.setBoolean(DWARF_LOADED_OPTION_NAME, true);
@@ -120,13 +112,7 @@ public class DWARFAnalyzer extends AbstractAnalyzer {
 		catch (CancelledException ce) {
 			throw ce;
 		}
-		catch (DWARFPreconditionException e) {
-			log.appendMsg("Skipping DWARF import because a precondition was not met:");
-			log.appendMsg(e.getMessage());
-			log.appendMsg(
-				"Manually re-run the DWARF analyzer after adjusting the options or start it via Dwarf_ExtractorScript");
-		}
-		catch (DWARFException | IOException e) {
+		catch (IOException e) {
 			log.appendMsg("Error during DWARFAnalyzer import: " + e);
 			Msg.error(this, "Error during DWARFAnalyzer import: ", e);
 		}

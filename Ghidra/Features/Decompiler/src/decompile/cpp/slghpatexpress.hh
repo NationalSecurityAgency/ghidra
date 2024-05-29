@@ -67,14 +67,14 @@ public:
   virtual void listValues(vector<const PatternValue *> &list) const=0;
   virtual void getMinMax(vector<intb> &minlist,vector<intb> &maxlist) const=0;
   virtual intb getSubValue(const vector<intb> &replace,int4 &listpos) const=0;
-  virtual void saveXml(ostream &s) const=0;
-  virtual void restoreXml(const Element *el,Translate *trans)=0;
+  virtual void encode(Encoder &encoder) const=0;
+  virtual void decode(Decoder &decoder,Translate *trans)=0;
   intb getSubValue(const vector<intb> &replace) {
     int4 listpos = 0;
     return getSubValue(replace,listpos); }
   void layClaim(void) { refcount += 1; }
   static void release(PatternExpression *p);
-  static PatternExpression *restoreExpression(const Element *el,Translate *trans);
+  static PatternExpression *decodeExpression(Decoder &decoder,Translate *trans);
 };
 
 class PatternValue : public PatternExpression {
@@ -96,15 +96,15 @@ class TokenField : public PatternValue {
   int4 bytestart,byteend;	// Bytes to read to get value
   int4 shift;			// Amount to shift to align value  (bitstart % 8)
 public:
-  TokenField(void) {}		// For use with restoreXml
+  TokenField(void) {}		// For use with decode
   TokenField(Token *tk,bool s,int4 bstart,int4 bend);
   virtual intb getValue(ParserWalker &walker) const;
   virtual TokenPattern genMinPattern(const vector<TokenPattern> &ops) const { return TokenPattern(tok); }
   virtual TokenPattern genPattern(intb val) const;
   virtual intb minValue(void) const { return 0; }
   virtual intb maxValue(void) const { intb res=0; return zero_extend(~res,bitend-bitstart); }
-  virtual void saveXml(ostream &s) const;
-  virtual void restoreXml(const Element *el,Translate *trans);
+  virtual void encode(Encoder &encoder) const;
+  virtual void decode(Decoder &decoder,Translate *trans);
 };
 
 class ContextField : public PatternValue {
@@ -113,7 +113,7 @@ class ContextField : public PatternValue {
   int4 shift;
   bool signbit;
 public:
-  ContextField(void) {}		// For use with restoreXml
+  ContextField(void) {}		// For use with decode
   ContextField(bool s,int4 sbit,int4 ebit);
   int4 getStartBit(void) const { return startbit; }
   int4 getEndBit(void) const { return endbit; }
@@ -123,22 +123,22 @@ public:
   virtual TokenPattern genPattern(intb val) const;
   virtual intb minValue(void) const { return 0; }
   virtual intb maxValue(void) const { intb res=0; return zero_extend(~res,(endbit-startbit)); }
-  virtual void saveXml(ostream &s) const;
-  virtual void restoreXml(const Element *el,Translate *trans);
+  virtual void encode(Encoder &encoder) const;
+  virtual void decode(Decoder &decoder,Translate *trans);
 };
 
 class ConstantValue : public PatternValue {
   intb val;
 public:
-  ConstantValue(void) {}	// For use with restoreXml
+  ConstantValue(void) {}	// For use with decode
   ConstantValue(intb v) { val = v; }
   virtual intb getValue(ParserWalker &walker) const { return val; }
   virtual TokenPattern genMinPattern(const vector<TokenPattern> &ops) const { return TokenPattern(); }
   virtual TokenPattern genPattern(intb v) const { return TokenPattern(val==v); }
   virtual intb minValue(void) const { return val; }
   virtual intb maxValue(void) const { return val; }
-  virtual void saveXml(ostream &s) const;
-  virtual void restoreXml(const Element *el,Translate *trans);
+  virtual void encode(Encoder &encoder) const;
+  virtual void decode(Decoder &decoder,Translate *trans);
 };
 
 class StartInstructionValue : public PatternValue {
@@ -150,8 +150,8 @@ public:
   virtual TokenPattern genPattern(intb val) const { return TokenPattern(); }
   virtual intb minValue(void) const { return (intb)0; }
   virtual intb maxValue(void) const { return (intb)0; }
-  virtual void saveXml(ostream &s) const { s << "<start_exp/>"; }
-  virtual void restoreXml(const Element *el,Translate *trans) {}
+  virtual void encode(Encoder &encoder) const;
+  virtual void decode(Decoder &decoder,Translate *trans);
 };
                                                                                         
 class EndInstructionValue : public PatternValue {
@@ -163,8 +163,8 @@ public:
   virtual TokenPattern genPattern(intb val) const { return TokenPattern(); }
   virtual intb minValue(void) const { return (intb)0; }
   virtual intb maxValue(void) const { return (intb)0; }
-  virtual void saveXml(ostream &s) const { s << "<end_exp/>"; }
-  virtual void restoreXml(const Element *el,Translate *trans) {}
+  virtual void encode(Encoder &encoder) const;
+  virtual void decode(Decoder &decoder,Translate *trans);
 };
 
 class Next2InstructionValue : public PatternValue {
@@ -176,8 +176,8 @@ public:
   virtual TokenPattern genPattern(intb val) const { return TokenPattern(); }
   virtual intb minValue(void) const { return (intb)0; }
   virtual intb maxValue(void) const { return (intb)0; }
-  virtual void saveXml(ostream &s) const { s << "<next2_exp/>"; }
-  virtual void restoreXml(const Element *el,Translate *trans) {}
+  virtual void encode(Encoder &encoder) const;
+  virtual void decode(Decoder &decoder,Translate *trans);
 };
 
 class Constructor;		// Forward declaration
@@ -186,7 +186,7 @@ class OperandValue : public PatternValue {
   int4 index;			// This is the defining field of expression
   Constructor *ct;		// cached pointer to constructor
 public:
-  OperandValue(void) { } // For use with restoreXml
+  OperandValue(void) { } // For use with decode
   OperandValue(int4 ind,Constructor *c) { index = ind; ct = c; }
   void changeIndex(int4 newind) { index = newind; }
   bool isConstructorRelative(void) const;
@@ -197,8 +197,8 @@ public:
   virtual intb getSubValue(const vector<intb> &replace,int4 &listpos) const;
   virtual intb minValue(void) const;
   virtual intb maxValue(void) const;
-  virtual void saveXml(ostream &s) const;
-  virtual void restoreXml(const Element *el,Translate *trans);
+  virtual void encode(Encoder &encoder) const;
+  virtual void decode(Decoder &decoder,Translate *trans);
 };
 
 class BinaryExpression : public PatternExpression {
@@ -206,7 +206,7 @@ class BinaryExpression : public PatternExpression {
 protected:
   virtual ~BinaryExpression(void);
 public:
-  BinaryExpression(void) { left = (PatternExpression *)0; right = (PatternExpression *)0; } // For use with restoreXml
+  BinaryExpression(void) { left = (PatternExpression *)0; right = (PatternExpression *)0; } // For use with decode
   BinaryExpression(PatternExpression *l,PatternExpression *r);
   PatternExpression *getLeft(void) const { return left; }
   PatternExpression *getRight(void) const { return right; }
@@ -215,8 +215,8 @@ public:
     left->listValues(list); right->listValues(list); }
   virtual void getMinMax(vector<intb> &minlist,vector<intb> &maxlist) const {
     left->getMinMax(minlist,maxlist); right->getMinMax(minlist,maxlist); }
-  virtual void saveXml(ostream &s) const;
-  virtual void restoreXml(const Element *el,Translate *trans);
+  virtual void encode(Encoder &encoder) const;
+  virtual void decode(Decoder &decoder,Translate *trans);
 };
 
 class UnaryExpression : public PatternExpression {
@@ -224,7 +224,7 @@ class UnaryExpression : public PatternExpression {
 protected:
   virtual ~UnaryExpression(void);
 public:
-  UnaryExpression(void) { unary = (PatternExpression *)0; } // For use with restoreXml
+  UnaryExpression(void) { unary = (PatternExpression *)0; } // For use with decode
   UnaryExpression(PatternExpression *u);
   PatternExpression *getUnary(void) const { return unary; }
   virtual TokenPattern genMinPattern(const vector<TokenPattern> &ops) const { return TokenPattern(); }
@@ -233,35 +233,35 @@ public:
   virtual void getMinMax(vector<intb> &minlist,vector<intb> &maxlist) const {
     unary->getMinMax(minlist,maxlist);
   }
-  virtual void saveXml(ostream &s) const;
-  virtual void restoreXml(const Element *el,Translate *trans);
+  virtual void encode(Encoder &encoder) const;
+  virtual void decode(Decoder &decoder,Translate *trans);
 };  
 
 class PlusExpression : public BinaryExpression {
 public:
-  PlusExpression(void) {}	// For use by restoreXml
+  PlusExpression(void) {}	// For use by decode
   PlusExpression(PatternExpression *l,PatternExpression *r) : BinaryExpression(l,r) {}
   virtual intb getValue(ParserWalker &walker) const;
   virtual intb getSubValue(const vector<intb> &replace,int4 &listpos) const;
-  virtual void saveXml(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
 };
   
 class SubExpression : public BinaryExpression {
 public:
-  SubExpression(void) {}	// For use with restoreXml
+  SubExpression(void) {}	// For use with decode
   SubExpression(PatternExpression *l,PatternExpression *r) : BinaryExpression(l,r) {}
   virtual intb getValue(ParserWalker &walker) const;
   virtual intb getSubValue(const vector<intb> &replace,int4 &listpos) const;
-  virtual void saveXml(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
 };
   
 class MultExpression : public BinaryExpression {
 public:
-  MultExpression(void) {}	// For use with restoreXml
+  MultExpression(void) {}	// For use with decode
   MultExpression(PatternExpression *l,PatternExpression *r) : BinaryExpression(l,r) {}
   virtual intb getValue(ParserWalker &walker) const;
   virtual intb getSubValue(const vector<intb> &replace,int4 &listpos) const;
-  virtual void saveXml(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
 };
   
 class LeftShiftExpression : public BinaryExpression {
@@ -270,7 +270,7 @@ public:
   LeftShiftExpression(PatternExpression *l,PatternExpression *r) : BinaryExpression(l,r) {}
   virtual intb getValue(ParserWalker &walker) const;
   virtual intb getSubValue(const vector<intb> &replace,int4 &listpos) const;
-  virtual void saveXml(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
 };
 
 class RightShiftExpression : public BinaryExpression {
@@ -279,7 +279,7 @@ public:
   RightShiftExpression(PatternExpression *l,PatternExpression *r) : BinaryExpression(l,r) {}
   virtual intb getValue(ParserWalker &walker) const;
   virtual intb getSubValue(const vector<intb> &replace,int4 &listpos) const;
-  virtual void saveXml(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
 };
 
 class AndExpression : public BinaryExpression {
@@ -288,7 +288,7 @@ public:
   AndExpression(PatternExpression *l,PatternExpression *r) : BinaryExpression(l,r) {}
   virtual intb getValue(ParserWalker &walker) const;
   virtual intb getSubValue(const vector<intb> &replace,int4 &listpos) const;
-  virtual void saveXml(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
 };
   
 class OrExpression : public BinaryExpression {
@@ -297,7 +297,7 @@ public:
   OrExpression(PatternExpression *l,PatternExpression *r) : BinaryExpression(l,r) {}
   virtual intb getValue(ParserWalker &walker) const;
   virtual intb getSubValue(const vector<intb> &replace,int4 &listpos) const;
-  virtual void saveXml(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
 };
   
 class XorExpression : public BinaryExpression {
@@ -306,7 +306,7 @@ public:
   XorExpression(PatternExpression *l,PatternExpression *r) : BinaryExpression(l,r) {}
   virtual intb getValue(ParserWalker &walker) const;
   virtual intb getSubValue(const vector<intb> &replace,int4 &listpos) const;
-  virtual void saveXml(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
 };
 
 class DivExpression : public BinaryExpression {
@@ -315,7 +315,7 @@ public:
   DivExpression(PatternExpression *l,PatternExpression *r) : BinaryExpression(l,r) {}
   virtual intb getValue(ParserWalker &walker) const;
   virtual intb getSubValue(const vector<intb> &replace,int4 &listpos) const;
-  virtual void saveXml(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
 };
 
 class MinusExpression : public UnaryExpression {
@@ -324,7 +324,7 @@ public:
   MinusExpression(PatternExpression *u) : UnaryExpression(u) {}
   virtual intb getValue(ParserWalker &walker) const;
   virtual intb getSubValue(const vector<intb> &replace,int4 &listpos) const;
-  virtual void saveXml(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
 };  
 
 class NotExpression : public UnaryExpression {
@@ -333,7 +333,7 @@ public:
   NotExpression(PatternExpression *u) : UnaryExpression(u) {}
   virtual intb getValue(ParserWalker &walker) const;
   virtual intb getSubValue(const vector<intb> &replace,int4 &listpos) const;
-  virtual void saveXml(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
 };  
 
 struct OperandResolve {

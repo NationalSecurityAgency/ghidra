@@ -18,6 +18,7 @@ package ghidra.program.database.bookmark;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.exception.VersionException;
 
 abstract class BookmarkTypeDBAdapter {
@@ -29,9 +30,9 @@ abstract class BookmarkTypeDBAdapter {
 	static final Schema SCHEMA =
 		new Schema(0, "ID", new Field[] { StringField.INSTANCE }, new String[] { "Name" });
 
-	static BookmarkTypeDBAdapter getAdapter(DBHandle dbHandle, int openMode)
+	static BookmarkTypeDBAdapter getAdapter(DBHandle dbHandle, OpenMode openMode)
 			throws VersionException, IOException {
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			return new BookmarkTypeDBAdapterV0(dbHandle, true);
 		}
 
@@ -39,11 +40,11 @@ abstract class BookmarkTypeDBAdapter {
 			return new BookmarkTypeDBAdapterV0(dbHandle, false);
 		}
 		catch (VersionException e) {
-			if (openMode == DBConstants.UPDATE) {
+			if (openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			BookmarkTypeDBAdapter adapter = findReadOnlyAdapter(dbHandle);
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = upgrade(dbHandle, adapter);
 			}
 			return adapter;

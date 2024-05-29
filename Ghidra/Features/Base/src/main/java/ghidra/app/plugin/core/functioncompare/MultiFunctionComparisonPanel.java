@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.functioncompare;
 
+import static ghidra.util.datastruct.Duo.Side.*;
+
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -23,11 +25,11 @@ import java.util.Set;
 
 import javax.swing.*;
 
-import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import ghidra.app.services.FunctionComparisonModel;
 import ghidra.app.util.viewer.util.CodeComparisonPanel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Function;
+import ghidra.util.datastruct.Duo.Side;
 import help.Help;
 import help.HelpService;
 
@@ -66,9 +68,8 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 	 * @param provider the comparison provider associated with this panel
 	 * @param tool the active plugin tool
 	 */
-	public MultiFunctionComparisonPanel(MultiFunctionComparisonProvider provider,
-		PluginTool tool) {
-		super(provider, tool, null, null);
+	public MultiFunctionComparisonPanel(MultiFunctionComparisonProvider provider, PluginTool tool) {
+		super(provider, tool);
 
 		JPanel choicePanel = new JPanel(new GridLayout(1, 2));
 		choicePanel.add(createSourcePanel());
@@ -78,7 +79,7 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 		// For the multi-panels we don't need to show the title of each
 		// comparison panel because the name of the function/data being shown 
 		// is already visible in the combo box
-		getComparisonPanels().forEach(p -> p.setShowTitles(false));
+		getComparisonPanels().forEach(p -> p.setShowDataTitles(false));
 		setPreferredSize(new Dimension(1200, 600));
 	}
 
@@ -100,7 +101,6 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 		// Fire a notification to update the UI state; without this the 
 		// actions would not be properly enabled/disabled
 		tool.contextChanged(provider);
-		tool.setStatusInfo("function comparisons updated");
 	}
 
 	/**
@@ -109,10 +109,14 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 	 * @return the focused component
 	 */
 	public JComboBox<Function> getFocusedComponent() {
-		CodeComparisonPanel<? extends FieldPanelCoordinator> currentComponent =
-			getCurrentComponent();
-		boolean sourceHasFocus = currentComponent.leftPanelHasFocus();
-		return sourceHasFocus ? sourceFunctionsCB : targetFunctionsCB;
+		CodeComparisonPanel currentComponent = getCurrentComponent();
+		Side side = currentComponent.getActiveSide();
+		return side == LEFT ? sourceFunctionsCB : targetFunctionsCB;
+	}
+
+	public Side getFocusedSide() {
+		CodeComparisonPanel currentComponent = getCurrentComponent();
+		return currentComponent.getActiveSide();
 	}
 
 	/**
@@ -184,6 +188,21 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 		}
 
 		restoreSelection(targetFunctionsCB, selection);
+
+		// we don't want the initial target to match the source as that is a pointless comparison
+		fixupTargetSelectionToNotMatchSource(source);
+	}
+
+	private void fixupTargetSelectionToNotMatchSource(Function source) {
+		if (targetFunctionsCB.getSelectedItem() != source) {
+			return;
+		}
+		for (int i = 0; i < targetFunctionsCB.getItemCount(); i++) {
+			if (targetFunctionsCB.getItemAt(i) != source) {
+				targetFunctionsCB.setSelectedIndex(i);
+				return;
+			}
+		}
 	}
 
 	/**
@@ -245,9 +264,6 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 				if (e.getStateChange() != ItemEvent.SELECTED) {
 					return;
 				}
-
-				Function selected = (Function) sourceFunctionsCBModel.getSelectedItem();
-				loadFunctions(selected, null);
 
 				// Each time a source function is selected we need
 				// to load the targets associated with it
@@ -312,7 +328,7 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 
 		@Override
 		public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-			boolean isSelected, boolean cellHasFocus) {
+				boolean isSelected, boolean cellHasFocus) {
 
 			if (value == null) {
 				// It's possible during a close program operation to have this 
@@ -329,9 +345,7 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 			String functionAddress = f.getBody().getMinAddress().toString();
 			String text = functionName + "@" + functionAddress + " (" + functionPathToProgram + ")";
 
-			return super.getListCellRendererComponent(list, text, index, isSelected,
-				cellHasFocus);
+			return super.getListCellRendererComponent(list, text, index, isSelected, cellHasFocus);
 		}
 	}
-
 }

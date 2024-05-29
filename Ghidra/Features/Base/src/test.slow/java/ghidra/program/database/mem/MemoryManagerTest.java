@@ -239,6 +239,12 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("Hello", block1.getComment());
 		assertEquals(block1, mem.getBlock(addr(5)));
 
+		block1.setArtificial(false);
+		assertTrue(!block1.isArtificial());
+
+		block1.setArtificial(true);
+		assertTrue(block1.isArtificial());
+
 		block1.setVolatile(false);
 		assertTrue(!block1.isVolatile());
 
@@ -473,6 +479,7 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(newBlock);
 		assertEquals(block.getName() + ".copy", newBlock.getName());
 		assertEquals(addr(500), newBlock.getStart());
+		assertEquals(block.isArtificial(), newBlock.isArtificial());
 		assertEquals(block.isVolatile(), newBlock.isVolatile());
 		assertEquals(block.isExecute(), newBlock.isExecute());
 		assertEquals(block.isRead(), newBlock.isRead());
@@ -667,7 +674,7 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		data = program.getListing().getDataAt(addr(1001));
 		assertEquals("byte", data.getDataType().getName());
 
-		UninitializedBlockCmd cmd = new UninitializedBlockCmd(program, block);
+		UninitializedBlockCmd cmd = new UninitializedBlockCmd(block);
 		cmd.applyTo(program);
 
 		assertNotNull(block);

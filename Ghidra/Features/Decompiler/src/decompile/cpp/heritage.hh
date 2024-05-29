@@ -235,7 +235,7 @@ class Heritage {
   void removeRevisitedMarkers(const vector<Varnode *> &remove,const Address &addr,int4 size);
   int4 collect(Address addr,int4 size,vector<Varnode *> &read,vector<Varnode *> &write,vector<Varnode *> &input,vector<Varnode *> &remove) const;
   bool callOpIndirectEffect(const Address &addr,int4 size,PcodeOp *op) const;
-  Varnode *normalizeReadSize(Varnode *vn,const Address &addr,int4 size);
+  Varnode *normalizeReadSize(Varnode *vn,PcodeOp *op,const Address &addr,int4 size);
   Varnode *normalizeWriteSize(Varnode *vn,const Address &addr,int4 size);
   Varnode *concatPieces(const vector<Varnode *> &vnlist,PcodeOp *insertop,Varnode *finalvn);
   void splitPieces(const vector<Varnode *> &vnlist,PcodeOp *insertop,const Address &addr,int4 size,Varnode *startvn);

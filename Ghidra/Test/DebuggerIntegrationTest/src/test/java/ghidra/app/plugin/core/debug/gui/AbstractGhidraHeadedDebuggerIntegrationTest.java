@@ -49,7 +49,8 @@ public class AbstractGhidraHeadedDebuggerIntegrationTest
 			        <attribute name='Threads' schema='ThreadContainer' />
 			        <attribute name='Memory' schema='Memory' />
 			        <attribute name='Breakpoints' schema='BreakpointContainer' />
-			        <attribute name='_state' schema='EXECUTION_STATE' hidden='yes' />
+			        <attribute name='State' schema='EXECUTION_STATE' />
+			        <attribute-alias from="_state" to="State" />
 			    </schema>
 			    <schema name='ThreadContainer' canonical='yes' elementResync='NEVER'
 			            attributeResync='ONCE'>
@@ -86,10 +87,14 @@ public class AbstractGhidraHeadedDebuggerIntegrationTest
 			    </schema>
 			    <schema name='MemoryRegion' elementResync='NEVER' attributeResync='ONCE'>
 			        <interface name='MemoryRegion' />
-			        <attribute name='_range' schema='RANGE' hidden='yes' />
-			        <attribute name='_readable' schema='BOOL' hidden='yes' />
-			        <attribute name='_writable' schema='BOOL' hidden='yes' />
-			        <attribute name='_executable' schema='BOOL' hidden='yes' />
+			        <attribute name='Range' schema='RANGE' />
+			        <attribute-alias from='_range' to='Range' />
+			        <attribute name='R' schema='BOOL' />
+			        <attribute-alias from='_readable' to='R' />
+			        <attribute name='W' schema='BOOL' />
+			        <attribute-alias from='_writable' to='W' />
+			        <attribute name='X' schema='BOOL' />
+			        <attribute-alias from='_executable' to='X' />
 			    </schema>
 			    <schema name='BreakpointContainer' canonical='yes' elementResync='NEVER'
 			            attributeResync='ONCE'>
@@ -102,14 +107,18 @@ public class AbstractGhidraHeadedDebuggerIntegrationTest
 			        <interface name='BreakpointLocationContainer' />
 			        <interface name='Togglable' />
 			        <element schema='BreakpointLoc' />
-			        <attribute name='_kinds' schema='SET_BREAKPOINT_KIND' hidden='yes' />
-			        <attribute name='_expr' schema='STRING' hidden='yes' />
-			        <attribute name='_enabled' schema='BOOL' hidden='yes' />
+			        <attribute name='Kinds' schema='SET_BREAKPOINT_KIND' />
+			        <attribute-alias from='_kinds' to='Kinds' />
+			        <attribute name='Expression' schema='STRING' />
+			        <attribute-alias from='_expr' to='Expression' />
+			        <attribute name='Enabled' schema='BOOL' />
+			        <attribute-alias from='_enabled' to='Enabled' />
 			    </schema>
 			    <schema name='BreakpointLoc' canonical='yes' elementResync='NEVER'
 			            attributeResync='ONCE'>
 			        <interface name='BreakpointLocation' />
-			        <attribute name='_range' schema='RANGE' hidden='yes' />
+			        <attribute name='Range' schema='RANGE' />
+			        <attribute-alias from='_range' to='Range' />
 			    </schema>
 			</context>
 			""");
@@ -117,6 +126,8 @@ public class AbstractGhidraHeadedDebuggerIntegrationTest
 		SCHEMA_CTX.getSchema(new SchemaName("Session"));
 
 	protected TestTraceRmiConnection rmiCx;
+
+	protected TestRemoteMethod rmiMethodExecute;
 
 	protected TestRemoteMethod rmiMethodResume;
 	protected TestRemoteMethod rmiMethodInterrupt;
@@ -136,41 +147,53 @@ public class AbstractGhidraHeadedDebuggerIntegrationTest
 	protected TestRemoteMethod rmiMethodReadRegs;
 	protected TestRemoteMethod rmiMethodWriteReg;
 
+	protected TestRemoteMethod rmiMethodReadMem;
+	protected TestRemoteMethod rmiMethodWriteMem;
+
 	protected void createRmiConnection() {
 		rmiCx = new TestTraceRmiConnection();
 	}
 
+	protected void addExecuteMethod() {
+		rmiMethodExecute = new TestRemoteMethod("execute", ActionName.EXECUTE, "Execute",
+			"Execut a CLI command", EnumerableTargetObjectSchema.STRING,
+			new TestRemoteParameter("cmd", EnumerableTargetObjectSchema.STRING, true, null,
+				"Command", "The command to execute"),
+			new TestRemoteParameter("to_string", EnumerableTargetObjectSchema.BOOL, true, false,
+				"To String", "Capture output to string"));
+
+		rmiCx.getMethods().add(rmiMethodExecute);
+	}
+
 	protected void addControlMethods() {
-		rmiMethodResume = new TestRemoteMethod("resume", ActionName.RESUME,
-			"Resume the target", EnumerableTargetObjectSchema.VOID.getName(),
+		rmiMethodResume = new TestRemoteMethod("resume", ActionName.RESUME, "Resume",
+			"Resume the target", EnumerableTargetObjectSchema.VOID,
 			new TestRemoteParameter("process", new SchemaName("Process"), true, null, "Process",
 				"The process to resume"));
 
-		rmiMethodInterrupt = new TestRemoteMethod("interrupt", ActionName.INTERRUPT,
-			"Interrupt the target", EnumerableTargetObjectSchema.VOID.getName(),
+		rmiMethodInterrupt = new TestRemoteMethod("interrupt", ActionName.INTERRUPT, "Interrupt",
+			"Interrupt the target", EnumerableTargetObjectSchema.VOID,
 			new TestRemoteParameter("process", new SchemaName("Process"), true, null, "Process",
 				"The process to interrupt"));
 
-		rmiMethodKill = new TestRemoteMethod("kill", ActionName.KILL,
-			"Kill the target", EnumerableTargetObjectSchema.VOID.getName(),
+		rmiMethodKill = new TestRemoteMethod("kill", ActionName.KILL, "Kill",
+			"Kill the target", EnumerableTargetObjectSchema.VOID,
 			new TestRemoteParameter("process", new SchemaName("Process"), true, null, "Process",
 				"The process to kill"));
 
-		rmiMethodStepInto = new TestRemoteMethod("step_into", ActionName.STEP_INTO,
-			"Step the thread, descending into subroutines",
-			EnumerableTargetObjectSchema.VOID.getName(),
+		rmiMethodStepInto = new TestRemoteMethod("step_into", ActionName.STEP_INTO, "Step Into",
+			"Step the thread, descending into subroutines", EnumerableTargetObjectSchema.VOID,
 			new TestRemoteParameter("thread", new SchemaName("Thread"), true, null, "Thread",
 				"The thread to step"));
 
-		rmiMethodStepOver = new TestRemoteMethod("step_over", ActionName.STEP_OVER,
+		rmiMethodStepOver = new TestRemoteMethod("step_over", ActionName.STEP_OVER, "Step Over",
 			"Step the thread, without descending into subroutines",
-			EnumerableTargetObjectSchema.VOID.getName(),
+			EnumerableTargetObjectSchema.VOID,
 			new TestRemoteParameter("thread", new SchemaName("Thread"), true, null, "Thread",
 				"The thread to step"));
 
-		rmiMethodStepOut = new TestRemoteMethod("step_out", ActionName.STEP_OUT,
-			"Allow the thread to finish the current subroutine",
-			EnumerableTargetObjectSchema.VOID.getName(),
+		rmiMethodStepOut = new TestRemoteMethod("step_out", ActionName.STEP_OUT, "Step Out",
+			"Allow the thread to finish the current subroutine", EnumerableTargetObjectSchema.VOID,
 			new TestRemoteParameter("thread", new SchemaName("Thread"), true, null, "Thread",
 				"The thread to step"));
 
@@ -185,49 +208,51 @@ public class AbstractGhidraHeadedDebuggerIntegrationTest
 
 	protected void addBreakpointMethods() {
 		rmiMethodSetHwBreak = new TestRemoteMethod("set_hw_break", ActionName.BREAK_HW_EXECUTE,
-			"Place a hardware execution breakpoint", EnumerableTargetObjectSchema.VOID.getName(),
+			"Hardware Breakpoint", "Place a hardware execution breakpoint",
+			EnumerableTargetObjectSchema.VOID,
 			new TestRemoteParameter("process", new SchemaName("Process"), true, null, "Process",
 				"The process in which to place the breakpoint"),
-			new TestRemoteParameter("address", EnumerableTargetObjectSchema.ADDRESS.getName(), true,
+			new TestRemoteParameter("address", EnumerableTargetObjectSchema.ADDRESS, true,
 				null, "Address", "The desired address"));
 
 		rmiMethodSetSwBreak = new TestRemoteMethod("set_sw_break", ActionName.BREAK_SW_EXECUTE,
-			"Place a software execution breakpoint", EnumerableTargetObjectSchema.VOID.getName(),
+			"Software Breakpoint", "Place a software execution breakpoint",
+			EnumerableTargetObjectSchema.VOID,
 			new TestRemoteParameter("process", new SchemaName("Process"), true, null, "Process",
 				"The process in which to place the breakpoint"),
-			new TestRemoteParameter("address", EnumerableTargetObjectSchema.ADDRESS.getName(), true,
+			new TestRemoteParameter("address", EnumerableTargetObjectSchema.ADDRESS, true,
 				null, "Address", "The desired address"));
 
 		rmiMethodSetReadBreak = new TestRemoteMethod("set_read_break", ActionName.BREAK_READ,
-			"Place a read breakpoint", EnumerableTargetObjectSchema.VOID.getName(),
+			"Read Breakpoint", "Place a read breakpoint", EnumerableTargetObjectSchema.VOID,
 			new TestRemoteParameter("process", new SchemaName("Process"), true, null, "Process",
 				"The process in which to place the breakpoint"),
-			new TestRemoteParameter("range", EnumerableTargetObjectSchema.RANGE.getName(), true,
+			new TestRemoteParameter("range", EnumerableTargetObjectSchema.RANGE, true,
 				null, "Range", "The desired address range"));
 
 		rmiMethodSetWriteBreak = new TestRemoteMethod("set_write_break", ActionName.BREAK_WRITE,
-			"Place a write breakpoint", EnumerableTargetObjectSchema.VOID.getName(),
+			"Write Breakpoint", "Place a write breakpoint", EnumerableTargetObjectSchema.VOID,
 			new TestRemoteParameter("process", new SchemaName("Process"), true, null, "Process",
 				"The process in which to place the breakpoint"),
-			new TestRemoteParameter("range", EnumerableTargetObjectSchema.RANGE.getName(), true,
+			new TestRemoteParameter("range", EnumerableTargetObjectSchema.RANGE, true,
 				null, "Range", "The desired address range"));
 
 		rmiMethodSetAccessBreak = new TestRemoteMethod("set_acc_break", ActionName.BREAK_ACCESS,
-			"Place an access breakpoint", EnumerableTargetObjectSchema.VOID.getName(),
+			"Access Breakpoint", "Place an access breakpoint", EnumerableTargetObjectSchema.VOID,
 			new TestRemoteParameter("process", new SchemaName("Process"), true, null, "Process",
 				"The process in which to place the breakpoint"),
-			new TestRemoteParameter("range", EnumerableTargetObjectSchema.RANGE.getName(), true,
+			new TestRemoteParameter("range", EnumerableTargetObjectSchema.RANGE, true,
 				null, "Range", "The desired address range"));
 
 		rmiMethodToggleBreak = new TestRemoteMethod("toggle_break", ActionName.TOGGLE,
-			"Toggle a breakpoint", EnumerableTargetObjectSchema.VOID.getName(),
+			"Toggle Breakpoint", "Toggle a breakpoint", EnumerableTargetObjectSchema.VOID,
 			new TestRemoteParameter("breakpoint", new SchemaName("BreakpointSpec"), true, null,
 				"Breakpoint", "The breakpoint to toggle"),
-			new TestRemoteParameter("enabled", EnumerableTargetObjectSchema.BOOL.getName(), true,
+			new TestRemoteParameter("enabled", EnumerableTargetObjectSchema.BOOL, true,
 				null, "Enable", "True to enable. False to disable"));
 
 		rmiMethodDeleteBreak = new TestRemoteMethod("delete_break", ActionName.DELETE,
-			"Delete a breakpoint", EnumerableTargetObjectSchema.VOID.getName(),
+			"Delete Breakpoint", "Delete a breakpoint", EnumerableTargetObjectSchema.VOID,
 			new TestRemoteParameter("breakpoint", new SchemaName("BreakpointSpec"), true, null,
 				"Breakpoint", "The breakpoint to delete"));
 
@@ -242,23 +267,45 @@ public class AbstractGhidraHeadedDebuggerIntegrationTest
 	}
 
 	protected void addRegisterMethods() {
-		rmiMethodReadRegs = new TestRemoteMethod("read_regs", ActionName.REFRESH,
-			"Read registers", EnumerableTargetObjectSchema.VOID.getName(),
+		rmiMethodReadRegs = new TestRemoteMethod("read_regs", ActionName.REFRESH, "Read Registers",
+			"Read registers", EnumerableTargetObjectSchema.VOID,
 			new TestRemoteParameter("container", new SchemaName("RegisterContainer"), true, null,
 				"Registers", "The registers node to read"));
 
 		rmiMethodWriteReg = new TestRemoteMethod("write_reg", ActionName.WRITE_REG,
-			"Write a register", EnumerableTargetObjectSchema.VOID.getName(),
+			"Write Register", "Write a register", EnumerableTargetObjectSchema.VOID,
 			new TestRemoteParameter("frame", new SchemaName("Frame"), false, 0, "Frame",
 				"The frame to write to"),
-			new TestRemoteParameter("name", EnumerableTargetObjectSchema.STRING.getName(), true,
+			new TestRemoteParameter("name", EnumerableTargetObjectSchema.STRING, true,
 				null, "Register", "The name of the register to write"),
-			new TestRemoteParameter("value", EnumerableTargetObjectSchema.BYTE_ARR.getName(), true,
+			new TestRemoteParameter("value", EnumerableTargetObjectSchema.BYTE_ARR, true,
 				null, "Value", "The desired value"));
 
 		TestRemoteMethodRegistry reg = rmiCx.getMethods();
 		reg.add(rmiMethodReadRegs);
 		reg.add(rmiMethodWriteReg);
+	}
+
+	protected void addMemoryMethods() {
+		rmiMethodReadMem = new TestRemoteMethod("read_mem", ActionName.READ_MEM, "Read Memory",
+			"Read memory", EnumerableTargetObjectSchema.VOID,
+			new TestRemoteParameter("process", new SchemaName("Process"), true, null,
+				"Process", "The process whose memory to read"),
+			new TestRemoteParameter("range", EnumerableTargetObjectSchema.RANGE, true, null,
+				"Range", "The address range to read"));
+
+		rmiMethodWriteMem = new TestRemoteMethod("write_mem", ActionName.WRITE_MEM, "Write Memory",
+			"Write memory", EnumerableTargetObjectSchema.VOID,
+			new TestRemoteParameter("process", new SchemaName("Process"), true, null,
+				"Process", "The process whose memory to read"),
+			new TestRemoteParameter("start", EnumerableTargetObjectSchema.ADDRESS, true, null,
+				"Start", "The address to start writing"),
+			new TestRemoteParameter("data", EnumerableTargetObjectSchema.BYTE_ARR, true, null,
+				"Data", "The data to write"));
+
+		TestRemoteMethodRegistry reg = rmiCx.getMethods();
+		reg.add(rmiMethodReadMem);
+		reg.add(rmiMethodWriteMem);
 	}
 
 	protected TraceObject addMemoryRegion(TraceObjectManager objs, Lifespan lifespan,

@@ -28,6 +28,7 @@ import docking.ReusableDialogComponentProvider;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.label.GDLabel;
 import generic.theme.GThemeDefaults.Colors.Messages;
+import generic.theme.Gui;
 import ghidra.util.*;
 import help.Help;
 import help.HelpService;
@@ -46,6 +47,8 @@ public class WizardManager extends ReusableDialogComponentProvider implements Wi
 	public static final String BACK = "<< Back";
 
 	private final static String INIT_TITLE = "<< untitled >>";
+
+	private static final String FONT_ID = "font.wizard.border.title";
 
 	private PanelManager panelMgr;
 	private WizardPanel currWizPanel;
@@ -91,7 +94,7 @@ public class WizardManager extends ReusableDialogComponentProvider implements Wi
 	}
 
 	/**
-	 * 
+	 *
 	 * @see docking.wizard.WizardPanelListener#validityChanged()
 	 */
 	@Override
@@ -108,7 +111,7 @@ public class WizardManager extends ReusableDialogComponentProvider implements Wi
 		return getStatusText();
 	}
 
-	/** 
+	/**
 	 * @see docking.wizard.WizardPanelListener#setStatusMessage(String)
 	 */
 	@Override
@@ -220,8 +223,7 @@ public class WizardManager extends ReusableDialogComponentProvider implements Wi
 		titleLabel = (wizardIcon == null ? new GDLabel(INIT_TITLE)
 				: new GDLabel(INIT_TITLE, wizardIcon, SwingConstants.TRAILING));
 
-		EmptyBorderButton helpButton =
-			new EmptyBorderButton(Icons.INFO_ICON);
+		EmptyBorderButton helpButton = new EmptyBorderButton(Icons.INFO_ICON);
 		helpButton.setToolTipText("Help (F1)");
 		helpButton.addActionListener(
 			e -> DockingWindowManager.getHelpService().showHelp(rootPanel, false, rootPanel));
@@ -438,7 +440,7 @@ if (!visitedMap.containsKey(currWizPanel)) {
 			return; // nothing to do
 		}
 
-		// this will have no effect if we are not showing, but the above call will handle that 
+		// this will have no effect if we are not showing, but the above call will handle that
 		// case
 		defaultFocusComponent.requestFocusInWindow();
 	}
@@ -465,14 +467,12 @@ if (!visitedMap.containsKey(currWizPanel)) {
 		if (scrollPane.getVerticalScrollBar().isShowing()) {
 			TitledBorder titledBorder =
 				new TitledBorder(BorderFactory.createEmptyBorder(), "(scroll for more options)");
-
-			Font font = titledBorder.getTitleFont();
-			if (font == null) {
-				// workaround for bug on Java 7
-				font = titleLabel.getFont();
-			}
-
-			titledBorder.setTitleFont(font.deriveFont(10f));
+			Gui.addThemeListener(e -> {
+				if (e.isFontChanged(FONT_ID)) {
+					titledBorder.setTitleFont(Gui.getFont(FONT_ID));
+				}
+			});
+			titledBorder.setTitleFont(Gui.getFont(FONT_ID));
 			titledBorder.setTitleColor(Messages.NORMAL);
 			titledBorder.setTitlePosition(TitledBorder.BOTTOM);
 			titledBorder.setTitleJustification(TitledBorder.TRAILING);

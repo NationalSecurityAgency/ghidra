@@ -54,18 +54,10 @@
 
 import java.io.File;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import classrecovery.DecompilerScriptUtils;
-import classrecovery.RTTIClassRecoverer;
-import classrecovery.RTTIGccClassRecoverer;
-import classrecovery.RTTIWindowsClassRecoverer;
-import classrecovery.RecoveredClass;
-import classrecovery.RecoveredClassHelper;
+import classrecovery.*;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.decompiler.DecompInterface;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
@@ -74,39 +66,25 @@ import ghidra.app.script.GhidraScript;
 import ghidra.app.services.Analyzer;
 import ghidra.app.services.GraphDisplayBroker;
 import ghidra.app.util.NamespaceUtils;
-import ghidra.app.util.bin.format.dwarf4.next.DWARFFunctionImporter;
-import ghidra.app.util.bin.format.dwarf4.next.DWARFProgram;
-import ghidra.app.util.bin.format.dwarf4.next.sectionprovider.DWARFSectionProvider;
-import ghidra.app.util.bin.format.dwarf4.next.sectionprovider.DWARFSectionProviderFactory;
+import ghidra.app.util.bin.format.dwarf.DWARFFunctionImporter;
+import ghidra.app.util.bin.format.dwarf.DWARFProgram;
+import ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionProvider;
+import ghidra.app.util.bin.format.dwarf.sectionprovider.DWARFSectionProviderFactory;
 import ghidra.app.util.bin.format.pdb.PdbParserConstants;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.PeLoader;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSet;
-import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeComponent;
-import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Parameter;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.address.*;
+import ghidra.program.model.data.*;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.reloc.Relocation;
+import ghidra.program.model.reloc.Relocation.Status;
+import ghidra.program.model.reloc.RelocationTable;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.GhidraProgramUtilities;
-import ghidra.service.graph.AttributedEdge;
-import ghidra.service.graph.AttributedGraph;
-import ghidra.service.graph.AttributedVertex;
-import ghidra.service.graph.GraphDisplay;
-import ghidra.service.graph.GraphDisplayOptions;
-import ghidra.service.graph.GraphDisplayOptionsBuilder;
-import ghidra.service.graph.GraphDisplayProvider;
-import ghidra.service.graph.GraphType;
-import ghidra.service.graph.GraphTypeBuilder;
-import ghidra.service.graph.VertexShape;
+import ghidra.service.graph.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.GraphException;
 import ghidra.util.task.TaskMonitor;
@@ -184,16 +162,16 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 	@Override
 	public void run() throws Exception {
-		
+
 		String errorMsg = validate();
-		
+
 		if (!errorMsg.isEmpty()) {
 			println(errorMsg);
 			return;
 		}
-		
+
 		if (!isGcc() && isWindows()) {
-		
+
 			if (!isRttiAnalyzed()) {
 				println("Running the RTTIAnalyzer...");
 				analysisMode = AnalysisMode.ENABLED;
@@ -213,13 +191,12 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 			hasDebugSymbols = isPDBLoadedInProgram();
 			nameVfunctions = !hasDebugSymbols;
-			recoverClassesFromRTTI =
-				new RTTIWindowsClassRecoverer(currentProgram, currentLocation, state.getTool(),
-					this, BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
-					nameVfunctions, hasDebugSymbols, monitor);
+			recoverClassesFromRTTI = new RTTIWindowsClassRecoverer(currentProgram, state.getTool(),
+				this, BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
+				nameVfunctions, hasDebugSymbols, monitor);
 		}
-		else if (isPE() && isGcc()){
-		
+		else if (isPE() && isGcc()) {
+
 			println("Program is a gcc compiled PE.");
 
 			boolean runGcc;
@@ -234,12 +211,10 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			if (!runGcc) {
 				return;
 			}
-			//run fixup old elf relocations script
-			runScript("FixElfExternalOffsetDataRelocationScript.java");
-			recoverClassesFromRTTI =
-				new RTTIGccClassRecoverer(currentProgram, currentLocation, state.getTool(), this,
-					BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
-					nameVfunctions, hasDebugSymbols, monitor);
+
+			recoverClassesFromRTTI = new RTTIGccClassRecoverer(currentProgram, state.getTool(),
+				this, BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
+				nameVfunctions, hasDebugSymbols, monitor);
 		}
 		else if (isGcc()) {
 
@@ -250,15 +225,12 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			}
 			else {
 				runGcc = askYesNo("Gcc Class Recovery Still Under Development",
-				"I understand that Gcc class recovery is still under development and my results will be incomplete but want to run this anyway.");
+					"I understand that Gcc class recovery is still under development and my results will be incomplete but want to run this anyway.");
 			}
 
 			if (!runGcc) {
 				return;
 			}
-
-			//run fixup old elf relocations script
-			runScript("FixElfExternalOffsetDataRelocationScript.java");
 
 			hasDebugSymbols = isDwarfLoadedInProgram();
 			if (hasDwarf() && !hasDebugSymbols) {
@@ -268,10 +240,9 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 				return;
 			}
 			nameVfunctions = !hasDebugSymbols;
-			recoverClassesFromRTTI =
-				new RTTIGccClassRecoverer(currentProgram, currentLocation, state.getTool(), this,
-					BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
-					nameVfunctions, hasDebugSymbols, monitor);
+			recoverClassesFromRTTI = new RTTIGccClassRecoverer(currentProgram, state.getTool(),
+				this, BOOKMARK_FOUND_FUNCTIONS, USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS,
+				nameVfunctions, hasDebugSymbols, monitor);
 		}
 		else {
 			println("This script will not work on this program type");
@@ -405,7 +376,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			DWARFProgram.DWARF_ROOT_NAME) || options.getBoolean("DWARF Loaded", false));
 	}
 
-	public String validate() throws CancelledException {
+	public String validate() throws Exception {
 
 		if (currentProgram == null) {
 			return ("There is no open program");
@@ -439,27 +410,85 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		if (defaultPointerSize != 4 && defaultPointerSize != 8) {
 			return ("This script only works on 32 or 64 bit programs");
 		}
-		
+
 		// check that gcc loader or mingw analyzer has fixed the relocations correctly
-		if(isGcc()) {
+		if (isGcc()) {
+
+			runScript("FixElfExternalOffsetDataRelocationScript.java");
 
 			// first check that there is even rtti by searching the special string in memory
 			if (!isStringInProgramMemory("class_type_info")) {
 				return ("This program does not contain RTTI.");
 			}
-				
+
 			// then check to see if the special typeinfo namespace is in external space
 			// if so then relocations are present and have not been fixed up because when fixed up
 			// the namespace gets moved to inside program space
-			if(isExternalNamespace("__cxxabiv1::__class_type_info")) {
+			if (isExternalNamespace("__cxxabiv1::__class_type_info")) {
 				return ("This program's relocations were not correctly fixed so the script cannot " +
-						"continue. If this program is mingw this is a known issue and " +
-						"will be fixed in a later release. For all other gcc programs please " +
-						"contact the Ghidra team so this issue can be fixed.");
+					"continue. If this program is mingw this is a known issue and " +
+					"will be fixed in a later release. For all other gcc programs please " +
+					"contact the Ghidra team so this issue can be fixed.");
+			}
+
+			if (hasRelocationIssue()) {
+				return ("This program has unhandled elf relocations so cannot continue. Please " +
+					"contact the Ghidra team for assistance.");
 			}
 		}
+
 		return new String();
+
 	}
+
+	/**
+	 * Method to determine if the gcc relocations needed to find the special typeinfos/vtables 
+	 * have any issues that would keep script from running correctly.
+	 * @return true if there are any issues with the relocations, false otherwise
+	 * @throws CancelledException if cancelled
+	 */
+	private boolean hasRelocationIssue() throws CancelledException {
+
+		RelocationTable relocationTable = currentProgram.getRelocationTable();
+
+		Iterator<Relocation> relocations = relocationTable.getRelocations();
+
+		while (relocations.hasNext()) {
+			monitor.checkCancelled();
+			Relocation r = relocations.next();
+
+			String symbolName = r.getSymbolName();
+
+			if (symbolName != null && symbolName.contains("class_type_info")) {
+
+				Status status = r.getStatus();
+
+				// if any relocations for special typeinfo class symbols have failed then there
+				// is an issue
+				if (status == Status.FAILURE) {
+					return true;
+				}
+				
+				// if any relocations for special typeinfo class symbols are unsupported then
+				// determine where the symbol is located before determining if it is an issue
+				if(status == Status.UNSUPPORTED) {
+
+					//if relocation symbol is the same as the symbol at the relcation address
+					//then this situation is not an issue - it indicates a copy relocation at the
+					//location of the special typeinfo vtable which is a use case that can be handled
+					Address address = r.getAddress();
+					Symbol symbolAtAddress  = currentProgram.getSymbolTable().getSymbol(symbolName, address, currentProgram.getGlobalNamespace());
+					if(symbolAtAddress != null) {
+						continue;
+					}
+					return true;
+				}
+
+			}
+		}
+		return false;
+	}
+
 
 	private void analyzeProgramChanges(AddressSetView beforeChanges) throws Exception {
 
@@ -641,18 +670,17 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		}
 		return false;
 	}
-	
-	
+
 	/**
 	 * Method to check if executable format is PE
 	 */
 	private boolean isPE() {
-		
+
 		if (!PeLoader.PE_NAME.equals(currentProgram.getExecutableFormat())) {
 			return false;
 		}
 		return true;
-		
+
 	}
 
 	/**
@@ -669,9 +697,9 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		if (isCompilerSpecGcc) {
 			return true;
 		}
-		
+
 		String compiler = currentProgram.getCompiler();
-		if(compiler != null && compiler.contains("gcc")) {
+		if (compiler != null && compiler.contains("gcc")) {
 			return true;
 		}
 
@@ -700,7 +728,6 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 		return isGcc;
 	}
-	
 
 	/**
 	 * Method to set the global variable isWindows
@@ -1575,7 +1602,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 		return stringBuffer;
 	}
-    
+
 	private boolean isStringInProgramMemory(String string) {
 
 		byte[] byteArrray = string.getBytes();
@@ -1587,19 +1614,19 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		}
 		return false;
 	}
-	
+
 	private boolean isExternalNamespace(String path) throws CancelledException {
-		
+
 		List<Symbol> symbols = NamespaceUtils.getSymbols(path, currentProgram, true);
 
-		for(Symbol symbol : symbols) {
+		for (Symbol symbol : symbols) {
 			monitor.checkCancelled();
-			if(symbol.isExternal() && symbol.getSymbolType().isNamespace()) {
+			if (symbol.isExternal() && symbol.getSymbolType().isNamespace()) {
 				return true;
 			}
 		}
-		
-        return false;
-    }
+
+		return false;
+	}
 
 }

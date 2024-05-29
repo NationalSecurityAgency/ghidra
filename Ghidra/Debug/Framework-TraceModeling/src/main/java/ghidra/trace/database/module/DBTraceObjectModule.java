@@ -15,11 +15,11 @@
  */
 package ghidra.trace.database.module;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import ghidra.dbg.target.*;
+import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathMatcher;
 import ghidra.dbg.util.PathPredicates.Align;
 import ghidra.dbg.util.PathUtils;
@@ -28,46 +28,54 @@ import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.target.*;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TraceModuleChangeType;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.annot.TraceObjectInterfaceUtils;
-import ghidra.trace.util.TraceChangeRecord;
-import ghidra.trace.util.TraceChangeType;
+import ghidra.trace.util.*;
 import ghidra.util.LockHold;
 import ghidra.util.exception.DuplicateNameException;
 
 public class DBTraceObjectModule implements TraceObjectModule, DBTraceObjectInterface {
 
 	protected class ModuleChangeTranslator extends Translator<TraceModule> {
+		private static final Map<TargetObjectSchema, Set<String>> KEYS_BY_SCHEMA =
+			new WeakHashMap<>();
+
+		private final Set<String> keys;
+
 		protected ModuleChangeTranslator(DBTraceObject object, TraceModule iface) {
 			super(TargetModule.RANGE_ATTRIBUTE_NAME, object, iface);
+			TargetObjectSchema schema = object.getTargetSchema();
+			synchronized (KEYS_BY_SCHEMA) {
+				keys = KEYS_BY_SCHEMA.computeIfAbsent(schema, s -> Set.of(
+					s.checkAliasedAttribute(TargetModule.RANGE_ATTRIBUTE_NAME),
+					s.checkAliasedAttribute(TargetObject.DISPLAY_ATTRIBUTE_NAME)));
+			}
 		}
 
 		@Override
-		protected TraceChangeType<TraceModule, Void> getAddedType() {
-			return TraceModuleChangeType.ADDED;
+		protected TraceEvent<TraceModule, Void> getAddedType() {
+			return TraceEvents.MODULE_ADDED;
 		}
 
 		@Override
-		protected TraceChangeType<TraceModule, Lifespan> getLifespanChangedType() {
-			return TraceModuleChangeType.LIFESPAN_CHANGED;
+		protected TraceEvent<TraceModule, Lifespan> getLifespanChangedType() {
+			return TraceEvents.MODULE_LIFESPAN_CHANGED;
 		}
 
 		@Override
-		protected TraceChangeType<TraceModule, Void> getChangedType() {
-			return TraceModuleChangeType.CHANGED;
+		protected TraceEvent<TraceModule, Void> getChangedType() {
+			return TraceEvents.MODULE_CHANGED;
 		}
 
 		@Override
 		protected boolean appliesToKey(String key) {
-			return TargetModule.RANGE_ATTRIBUTE_NAME.equals(key) ||
-				TargetObject.DISPLAY_ATTRIBUTE_NAME.equals(key);
+			return keys.contains(key);
 		}
 
 		@Override
-		protected TraceChangeType<TraceModule, Void> getDeletedType() {
-			return TraceModuleChangeType.DELETED;
+		protected TraceEvent<TraceModule, Void> getDeletedType() {
+			return TraceEvents.MODULE_DELETED;
 		}
 	}
 

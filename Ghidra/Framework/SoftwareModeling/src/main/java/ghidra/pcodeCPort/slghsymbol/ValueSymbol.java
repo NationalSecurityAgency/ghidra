@@ -15,14 +15,13 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import java.io.PrintStream;
-import java.util.List;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import org.jdom.Element;
+import java.io.IOException;
 
-import ghidra.pcodeCPort.sleighbase.SleighBase;
 import ghidra.pcodeCPort.slghpatexpress.PatternExpression;
 import ghidra.pcodeCPort.slghpatexpress.PatternValue;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.Location;
 
 public class ValueSymbol extends FamilySymbol {
@@ -32,7 +31,7 @@ public class ValueSymbol extends FamilySymbol {
 	public ValueSymbol(Location location) {
 		super(location);
 		patval = null;
-	} // For use with restoreXml
+	}
 
 	public ValueSymbol(Location location, String nm, PatternValue pv) {
 		super(location, nm);
@@ -63,29 +62,20 @@ public class ValueSymbol extends FamilySymbol {
 	}
 
 	@Override
-	public void saveXml(PrintStream s) {
-		s.append("<value_sym");
-		saveSleighSymbolXmlHeader(s);
-		s.println(">");
-		patval.saveXml(s);
-		s.println("</value_sym>");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_VALUE_SYM);
+		encoder.writeUnsignedInteger(ATTRIB_ID, id);
+		patval.encode(encoder);
+		encoder.closeElement(ELEM_VALUE_SYM);
 	}
 
 	@Override
-	public void saveXmlHeader(PrintStream s)
+	public void encodeHeader(Encoder encoder) throws IOException
 
 	{
-		s.append("<value_sym_head");
-		saveSleighSymbolXmlHeader(s);
-		s.println("/>");
-	}
-
-	@Override
-	public void restoreXml(Element el, SleighBase trans) {
-		List<?> list = el.getChildren();
-		Element child = (Element) list.get(0);
-		patval = (PatternValue) PatternExpression.restoreExpression(child, trans);
-		patval.layClaim();
+		encoder.openElement(ELEM_VALUE_SYM_HEAD);
+		encodeSleighSymbolHeader(encoder);
+		encoder.closeElement(ELEM_VALUE_SYM_HEAD);
 	}
 
 }

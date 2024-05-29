@@ -1154,8 +1154,8 @@ csr: csr is imm10_14 [csr = $(CSR_OFFSET) + imm10_14 * $(REGSIZE);] {
 :csrxchg  RD, RJsrc, csr is op24_31=0x4 & RD & RJsrc & csr {
 	local csrval:$(REGSIZE) = csr;
 	local mask = RJsrc;
-	csr = RD & mask;
-	RD = csrval & mask;
+	csr = (RD & mask) | (csrval & ~mask);
+	RD = csrval;
 }
 
 :csrrd  RD, csr is op24_31=0x4 & RD & op5_9=0 & csr {

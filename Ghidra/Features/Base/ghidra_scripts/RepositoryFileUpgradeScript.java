@@ -208,7 +208,7 @@ public class RepositoryFileUpgradeScript extends GhidraScript {
 				dobj.release(this);
 				dobj = null;
 				if (df.isVersioned()) {
-					df.checkin(checkinHandler, false, monitor);
+					df.checkin(checkinHandler, monitor);
 					println("Repository file upgraded: " + df.getPathname());
 				}
 				else {

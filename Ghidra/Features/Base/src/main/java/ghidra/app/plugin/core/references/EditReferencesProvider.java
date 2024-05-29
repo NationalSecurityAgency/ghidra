@@ -112,23 +112,6 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 	private DropTgtAdapter dropTargetAdapter;
 	private Droppable dropHandler = new Droppable() {
 
-		/**
-		 * Set drag feedback according to the ok parameter.
-		 *
-		 * @param ok true means the drop action is OK
-		 * @param e event that has current state of drag and drop operation
-		 */
-		@Override
-		public void dragUnderFeedback(boolean ok, DropTargetDragEvent e) {
-			// don't care
-		}
-
-		/**
-		 * Return true if is OK to drop the transferable at the location
-		 * specified the event.
-		 *
-		 * @param e event that has current state of drag and drop operation
-		 */
 		@Override
 		public boolean isDropOk(DropTargetDragEvent e) {
 			if (currentCodeUnit != null) {
@@ -151,24 +134,6 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 			return false;
 		}
 
-		/**
-		 * Revert back to normal if any drag feedback was set.
-		 */
-		@Override
-		public void undoDragUnderFeedback() {
-			// don't care
-		}
-
-		/**
-		 * Add the object to the droppable component. The DropTargetAdapter
-		 * calls this method from its drop() method.
-		 *
-		 * @param obj Transferable object that is to be dropped; in this case,
-		 *            it is an AddressSetView
-		 * @param e has current state of drop operation
-		 * @param f represents the opaque concept of a data format as would
-		 *            appear on a clipboard, during drag and drop.
-		 */
 		@Override
 		public void add(Object obj, DropTargetDropEvent e, DataFlavor f) {
 			AddressSetView view = ((SelectionTransferData) obj).getAddressSet();
@@ -1019,8 +984,6 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 	private class RefCellTextRenderer extends GTableCellRenderer {
 
 		RefCellTextRenderer() {
-			defaultFont = getFont();
-			boldFont = defaultFont.deriveFont(defaultFont.getStyle() | Font.BOLD);
 			setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
 		}
 

@@ -23,7 +23,6 @@ import java.util.function.Predicate;
 
 import docking.ActionContext;
 import ghidra.app.context.ProgramLocationActionContext;
-import ghidra.app.plugin.core.debug.gui.model.DebuggerObjectActionContext;
 import ghidra.app.plugin.core.debug.gui.objects.components.DebuggerMethodInvocationDialog;
 import ghidra.app.plugin.core.debug.service.target.AbstractTarget;
 import ghidra.app.services.DebuggerConsoleService;
@@ -39,7 +38,7 @@ import ghidra.dbg.target.TargetMethod.TargetParameterMap;
 import ghidra.dbg.target.TargetSteppable.TargetStepKind;
 import ghidra.dbg.util.PathMatcher;
 import ghidra.dbg.util.PathPredicates;
-import ghidra.debug.api.model.TraceRecorder;
+import ghidra.debug.api.model.*;
 import ghidra.debug.api.target.ActionName;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.plugintool.PluginTool;
@@ -92,6 +91,12 @@ public class TraceRecorderTarget extends AbstractTarget {
 	}
 
 	@Override
+	public String describe() {
+		return "%s in %s (recorder)".formatted(getTrace().getDomainFile().getName(),
+			recorder.getTarget().getModel().getBrief());
+	}
+
+	@Override
 	public boolean isValid() {
 		return recorder.isRecording();
 	}
@@ -112,6 +117,13 @@ public class TraceRecorderTarget extends AbstractTarget {
 				return null;
 			}
 			return iface.cast(recorder.getTargetObject(suitable));
+		}
+		else if (context instanceof DebuggerSingleObjectPathActionContext ctx) {
+			TargetObject targetObject = recorder.getTargetObject(ctx.getPath());
+			if (targetObject == null) {
+				return null;
+			}
+			return targetObject.getCachedSuitable(iface);
 		}
 		return null;
 	}
@@ -267,8 +279,8 @@ public class TraceRecorderTarget extends AbstractTarget {
 
 	private ActionEntry makeEntry(boolean requiresPrompt, TargetMethod method,
 			Map<String, ?> arguments) {
-		return new ActionEntry(method.getDisplay(), null, null, requiresPrompt, () -> true,
-			prompt -> invokeMethod(prompt, method, arguments));
+		return new ActionEntry(method.getDisplay(), null, null, requiresPrompt,
+			method.getPath().size(), () -> true, prompt -> invokeMethod(prompt, method, arguments));
 	}
 
 	@Override
@@ -289,7 +301,7 @@ public class TraceRecorderTarget extends AbstractTarget {
 			return Map.of();
 		}
 		return Map.of(display, new ActionEntry(display, name, description, false,
-			() -> enabled.test(object), prompt -> action.apply(object)));
+			object.getPath().size(), () -> enabled.test(object), prompt -> action.apply(object)));
 	}
 
 	private TargetExecutionState getStateOf(TargetObject object) {
@@ -356,6 +368,20 @@ public class TraceRecorderTarget extends AbstractTarget {
 			ActionName.STEP_EXT, "Step the target in a target-defined way",
 			stateNullOr(TargetExecutionState::isStopped),
 			steppable -> steppable.step(TargetStepKind.EXTENDED));
+	}
+
+	@Override
+	protected Map<String, ActionEntry> collectRefreshActions(ActionContext context) {
+		// Not necessary to support this here
+		return Map.of();
+	}
+
+	@Override
+	protected Map<String, ActionEntry> collectToggleActions(ActionContext context) {
+		return collectIfaceActions(context, TargetTogglable.class, "Toggle",
+			ActionName.TOGGLE, "Toggle the object",
+			togglable -> true,
+			togglable -> togglable.toggle(!togglable.isEnabled()));
 	}
 
 	@Override
@@ -461,6 +487,18 @@ public class TraceRecorderTarget extends AbstractTarget {
 				.map(TargetObject::invalidateCaches)
 				.toArray(CompletableFuture[]::new);
 		return CompletableFuture.allOf(requests);
+	}
+
+	@Override
+	public CompletableFuture<String> executeAsync(String command, boolean toString) {
+		TargetInterpreter interpreter = findObjectInRecorder(null, TargetInterpreter.class);
+		if (interpreter == null) {
+			return AsyncUtils.nil();
+		}
+		if (toString) {
+			return interpreter.executeCapture(command);
+		}
+		return interpreter.execute(command).thenApply(r -> null);
 	}
 
 	@Override

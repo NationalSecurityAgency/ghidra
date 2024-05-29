@@ -45,7 +45,8 @@ public enum OptionType {
 	FILE_TYPE(File.class, new FileStringAdapter()),
 	COLOR_TYPE(Color.class, new ColorStringAdapter()),
 	FONT_TYPE(Font.class, new FontStringAdapter()),
-	KEYSTROKE_TYPE(KeyStroke.class, new KeyStrokeStringAdapter());
+	KEYSTROKE_TYPE(KeyStroke.class, new KeyStrokeStringAdapter()),
+	ACTION_TRIGGER(ActionTrigger.class, new ActionTriggerStringAdapter());
 
 	private Class<?> clazz;
 	private StringAdapter stringAdapter;
@@ -241,8 +242,7 @@ public enum OptionType {
 			}
 			catch (Exception e) {
 				Msg.error(this,
-					"Can't create customOption instance for: " + customOptionClassName +
-						e);
+					"Can't create customOption instance for: " + customOptionClassName + e);
 			}
 			return null;
 		}
@@ -330,5 +330,12 @@ public enum OptionType {
 			return KeyStroke.getKeyStroke(string);
 		}
 
+	}
+
+	static class ActionTriggerStringAdapter extends StringAdapter {
+		@Override
+		Object stringToObject(String string) {
+			return ActionTrigger.getActionTrigger(string);
+		}
 	}
 }

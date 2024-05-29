@@ -20,12 +20,14 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
+import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.debug.api.modules.MapEntry;
+import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.ProjectData;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.*;
-import ghidra.program.model.listing.Library;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.ExternalManager;
 import ghidra.program.util.ProgramLocation;
@@ -160,11 +162,17 @@ public enum DebuggerStaticMappingUtils {
 		private Address min = null;
 		private Address max = null;
 
+		public void consider(Address min, Address max) {
+			this.min = this.min == null ? min : ComparatorMath.cmin(this.min, min);
+			this.max = this.max == null ? max : ComparatorMath.cmax(this.max, max);
+		}
+
 		public void consider(AddressRange range) {
-			min = min == null ? range.getMinAddress()
-					: ComparatorMath.cmin(min, range.getMinAddress());
-			max = max == null ? range.getMaxAddress()
-					: ComparatorMath.cmax(max, range.getMaxAddress());
+			consider(range.getMinAddress(), range.getMaxAddress());
+		}
+
+		public void consider(Address address) {
+			consider(address, address);
 		}
 
 		public Address getMin() {
@@ -177,6 +185,10 @@ public enum DebuggerStaticMappingUtils {
 
 		public long getLength() {
 			return max.subtract(min) + 1;
+		}
+
+		public AddressRange getRange() {
+			return new AddressRangeImpl(getMin(), getMax());
 		}
 	}
 
@@ -300,5 +312,52 @@ public enum DebuggerStaticMappingUtils {
 			return names.get(0) + "*";
 		}
 		return names.stream().collect(Collectors.joining(","));
+	}
+
+	public static Function getFunction(Address pc, DebuggerCoordinates coordinates,
+			ServiceProvider serviceProvider) {
+		if (pc == null) {
+			return null;
+		}
+		DebuggerStaticMappingService mappingService =
+			serviceProvider.getService(DebuggerStaticMappingService.class);
+		if (mappingService == null) {
+			return null;
+		}
+		TraceLocation dloc = new DefaultTraceLocation(coordinates.getTrace(),
+			null, Lifespan.at(coordinates.getSnap()), pc);
+		ProgramLocation sloc = mappingService.getOpenMappedLocation(dloc);
+		if (sloc == null) {
+			return null;
+		}
+		return sloc.getProgram().getFunctionManager().getFunctionContaining(sloc.getAddress());
+	}
+
+	public static String computeModuleShortName(String path) {
+		int sep = path.lastIndexOf('\\');
+		if (sep > 0 && sep < path.length()) {
+			path = path.substring(sep + 1);
+		}
+		sep = path.lastIndexOf('/');
+		if (sep > 0 && sep < path.length()) {
+			path = path.substring(sep + 1);
+		}
+		return path;
+	}
+
+	public static String getModuleName(Address pc, DebuggerCoordinates coordinates) {
+		if (pc == null) {
+			return null;
+		}
+		Trace trace = coordinates.getTrace();
+		if (trace == null) {
+			return null;
+		}
+		for (TraceModule module : trace.getModuleManager()
+				.getModulesAt(coordinates.getSnap(), pc)) {
+			// Just take the first
+			return computeModuleShortName(module.getName());
+		}
+		return null;
 	}
 }

@@ -78,9 +78,8 @@ public class VTMatchAcceptTest extends AbstractGhidraHeadedIntegrationTest {
 		plugin = getPlugin(tool, VTPlugin.class);
 		controller = new VTControllerImpl(plugin);
 
-		session =
-			VTSessionDB.createVTSession(testName.getMethodName() + " - Test Match Set Manager",
-				sourceProgram, destinationProgram, this);
+		session = new VTSessionDB(testName.getMethodName() + " - Test Match Set Manager",
+			sourceProgram, destinationProgram, this);
 
 		runSwing(() -> controller.openVersionTrackingSession(session));
 

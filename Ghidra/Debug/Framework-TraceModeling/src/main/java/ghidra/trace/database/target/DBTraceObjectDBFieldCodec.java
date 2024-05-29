@@ -22,7 +22,7 @@ import db.LongField;
 import ghidra.util.database.DBAnnotatedObject;
 import ghidra.util.database.DBCachedObjectStoreFactory.AbstractDBFieldCodec;
 
-public class DBTraceObjectDBFieldCodec<OV extends DBAnnotatedObject & InternalTraceObjectValue>
+public class DBTraceObjectDBFieldCodec<OV extends DBAnnotatedObject & TraceObjectValueStorage>
 		extends AbstractDBFieldCodec<DBTraceObject, OV, LongField> {
 	public DBTraceObjectDBFieldCodec(Class<OV> objectType, Field field, int column) {
 		super(DBTraceObject.class, objectType, LongField.class, field, column);
@@ -32,7 +32,7 @@ public class DBTraceObjectDBFieldCodec<OV extends DBAnnotatedObject & InternalTr
 		return value == null ? -1 : value.getKey();
 	}
 
-	protected static DBTraceObject decode(InternalTraceObjectValue ent, long enc) {
+	protected static DBTraceObject decode(TraceObjectValueStorage ent, long enc) {
 		return enc == -1 ? null : ent.getManager().getObjectById(enc);
 	}
 

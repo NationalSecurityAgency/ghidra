@@ -23,7 +23,6 @@ import ghidra.app.decompiler.DecompileResults;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
@@ -40,7 +39,7 @@ import ghidra.util.UndefinedFunction;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
-public class DecompilerSwitchAnalysisCmd extends BackgroundCommand {
+public class DecompilerSwitchAnalysisCmd extends BackgroundCommand<Program> {
 	private static final int DEFAULT_CASE_VALUE = 0xbad1abe1;
 
 	private Program program;
@@ -54,8 +53,8 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		program = (Program) obj;
+	public boolean applyTo(Program p, TaskMonitor monitor) {
+		program = p;
 
 		if (monitor.isCancelled()) {
 			return false;
@@ -185,25 +184,12 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand {
 				if (disSetList.contains(caseStart)) {
 					continue;
 				}
-				if (switchContext != null) {
-					try {
-						// Combine flowed switch context with context register value at case address
-						RegisterValue curContext =
-							programContext.getRegisterValue(baseContextRegister, caseStart);
-						if (curContext != null) {
-							curContext = curContext.combineValues(switchContext);
-
-							// lay down the new merged context
-							programContext.setRegisterValue(caseStart, caseStart, curContext);
-						}
-						else {
-							programContext.setRegisterValue(caseStart, caseStart, switchContext);
-						}
-					}
-					catch (ContextChangeException e) {
-						// This can occur when two or more threads are working on the same function
-						continue;
-					}
+				try {
+					setSwitchTargetContext(programContext, caseStart, switchContext);
+				}
+				catch (ContextChangeException e) {
+					// This can occur when two or more threads are working on the same function
+					continue;
 				}
 				disSetList.add(caseStart);
 			}
@@ -228,6 +214,26 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand {
 				program.getListing().getInstructionAt(fixupFunc.getEntryPoint());
 			CreateFunctionCmd.fixupFunctionBody(program, funcStartInstr, monitor);
 		}
+	}
+
+	private void setSwitchTargetContext(ProgramContext programContext, Address targetStart, RegisterValue switchContext) throws ContextChangeException {
+		if (switchContext == null) {
+			return;
+		}
+		
+		// Combine flowed switch context with context register value at case address
+		RegisterValue curContext =
+			programContext.getNonDefaultValue(switchContext.getRegister(), targetStart);
+		if (curContext != null) {
+			switchContext = curContext.combineValues(switchContext);
+		}
+		
+		if (switchContext == null || !switchContext.hasAnyValue()) {
+			return;
+		}
+
+		// only store if different than what is already there, which could be a default value
+		program.getProgramContext().setRegisterValue(targetStart, targetStart, switchContext);
 	}
 
 	private void labelSwitch(JumpTable table, TaskMonitor monitor) throws CancelledException {

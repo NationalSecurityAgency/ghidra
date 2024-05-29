@@ -42,6 +42,11 @@ public abstract class AbstractTraceValueObjectAddressColumn
 				}
 				return fromRange(range);
 			}
+
+			@Override
+			public boolean isModified() {
+				return row.isAttributeModified(attributeName);
+			}
 		};
 	}
 }

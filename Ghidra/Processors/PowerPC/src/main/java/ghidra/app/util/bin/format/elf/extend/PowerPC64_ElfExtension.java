@@ -22,7 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import ghidra.app.util.bin.format.elf.*;
 import ghidra.app.util.bin.format.elf.ElfDynamicType.ElfDynamicValueType;
-import ghidra.app.util.bin.format.elf.relocation.PowerPC64_ElfRelocationConstants;
+import ghidra.app.util.bin.format.elf.relocation.PowerPC64_ElfRelocationType;
 import ghidra.app.util.opinion.ElfLoader;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
@@ -155,7 +155,7 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 			// paint TOC_BASE value as r2 across executable blocks since r2
 			// is needed to resolve call stubs
 			Symbol tocSymbol = SymbolUtilities.getLabelOrFunctionSymbol(elfLoadHelper.getProgram(),
-				TOC_BASE, err -> elfLoadHelper.getLog().error("PowerPC64_ELF", err));
+				TOC_BASE, err -> elfLoadHelper.getLog().appendMsg("PowerPC64_ELF", err));
 			if (tocSymbol != null) {
 				paintTocAsR2value(tocSymbol.getAddress().getOffset(), elfLoadHelper, monitor);
 			}
@@ -180,8 +180,9 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 				return;
 			}
 
-			int relEntrySize = (dynamicTable.getDynamicValue(
-				ElfDynamicType.DT_PLTREL) == ElfDynamicType.DT_RELA.value) ? 24 : 16;
+			int relEntrySize = (dynamicTable
+					.getDynamicValue(ElfDynamicType.DT_PLTREL) == ElfDynamicType.DT_RELA.value) ? 24
+							: 16;
 
 			long pltEntryCount =
 				dynamicTable.getDynamicValue(ElfDynamicType.DT_PLTRELSZ) / relEntrySize;
@@ -392,8 +393,8 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 		if (function == null) {
 			// Check for potential pointer table (unsure a non-function would be referenced by OPD section)
 			List<Relocation> relocations = program.getRelocationTable().getRelocations(refAddr);
-			if (!relocations.isEmpty() &&
-				relocations.get(0).getType() == PowerPC64_ElfRelocationConstants.R_PPC64_RELATIVE) {
+			if (!relocations.isEmpty() && relocations.get(0)
+					.getType() == PowerPC64_ElfRelocationType.R_PPC64_RELATIVE.typeId) {
 				return program.getSymbolTable().getPrimarySymbol(refAddr);
 			}
 
@@ -455,7 +456,7 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 			// ensure that r12 context has been set on global entry function
 			Symbol entrySymbol = SymbolUtilities.getLabelOrFunctionSymbol(
 				elfLoadHelper.getProgram(), ElfLoader.ELF_ENTRY_FUNCTION_NAME,
-				err -> elfLoadHelper.getLog().error("PowerPC64_ELF", err));
+				err -> elfLoadHelper.getLog().appendMsg("PowerPC64_ELF", err));
 			if (entrySymbol != null && entrySymbol.getSymbolType() == SymbolType.FUNCTION) {
 				setPPC64v2GlobalFunctionR12Context(program, entrySymbol.getAddress());
 			}
@@ -508,8 +509,9 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 				// TODO: global function should be a thunk to the local function - need analyzer to do this
 				String cmt = "local function entry for global function " + name + " at {@address " +
 					address + "}";
-				elfLoadHelper.getProgram().getListing().setComment(localFunctionAddr,
-					CodeUnit.PRE_COMMENT, cmt);
+				elfLoadHelper.getProgram()
+						.getListing()
+						.setComment(localFunctionAddr, CodeUnit.PRE_COMMENT, cmt);
 			}
 			catch (Exception e) {
 				elfLoadHelper.log("Failed to generate local function symbol " + localName + " at " +

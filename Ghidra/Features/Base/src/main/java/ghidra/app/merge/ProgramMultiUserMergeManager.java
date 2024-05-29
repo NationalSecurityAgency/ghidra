@@ -31,7 +31,7 @@ import ghidra.app.nav.*;
 import ghidra.app.plugin.core.navigation.GoToAddressLabelPlugin;
 import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.util.FieldNavigator;
-import ghidra.framework.model.UndoableDomainObject;
+import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.ModalPluginTool;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.util.PluginException;
@@ -140,7 +140,7 @@ public class ProgramMultiUserMergeManager extends MergeManager {
 
 	@Override
 	protected MergeManagerPlugin createMergeManagerPlugin(ModalPluginTool mergePluginTool,
-			MergeManager multiUserMergeManager, UndoableDomainObject modifiableDomainObject) {
+			MergeManager multiUserMergeManager, DomainObject modifiableDomainObject) {
 		return new ProgramMergeManagerPlugin(mergeTool, ProgramMultiUserMergeManager.this,
 			(Program) resultDomainObject);
 	}
@@ -516,7 +516,8 @@ class MergeNavigatable implements Navigatable {
 	}
 
 	@Override
-	public void removeHighlightProvider(ListingHighlightProvider highlightProvider, Program program) {
+	public void removeHighlightProvider(ListingHighlightProvider highlightProvider,
+			Program program) {
 		// currently unsupported
 	}
 

@@ -1,0 +1,51 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+   Switch variable set locally as a constant and then modified indirectly. 
+   Additionally the switch variable path splits and rejoins.
+-->
+<bytechunk space="ram" offset="0x1011e2" readonly="true">
+    f30f1efa554889e54883ec20897d
+ec8975e864488b042528000000488945
+f831c0c745f001000000c745f4020000
+00488d45f04889c7e86cffffff837dec
+0a750a8b45e889c7e88dffffff8b45f4
+83f80f0f879a00000089c0488d148500
+000000488d05be0d00008b0402489848
+8d15b20d00004801d03effe08b55f08b
+45ec01d08905aa2d0000eb7d8b55f08b
+45e801d089059a2d0000eb6d8b45f089
+058f2d0000eb628b45f00faf45ec8905
+802d0000eb538b45f00faf45e8890571
+2d0000eb44c705652d000000000000eb
+38c705592d0000e8030000eb2c8b45ec
+89054e2d0000eb218b45e88905432d00
+00eb168b55ec89d0c1e00301d0c1e003
+01d089052c2d00009090488b45f86448
+330425280000007405e872fdffffc9c3
+
+</bytechunk>
+<bytechunk space="ram" offset="0x102008" readonly="true">
+                cbf2ffff54f2ffff
+cbf2ffffcbf2ffffcbf2ffffcbf2ffff
+cbf2ffff64f2ffff74f2ffffcbf2ffff
+7ff2ffff8ef2ffff9df2ffffa9f2ffff
+b5f2ffffc0f2ffff011b033b
+</bytechunk>
+<symbol space="ram" offset="0x1011e2" name="switchhide"/>
+<symbol space="ram" offset="0x101189" name="glob2struct"/>
+</binaryimage>
+<script>
+  <com>option readonly on</com>
+  <com>parse line struct mystruct { int4 a; int4 b; };</com>
+  <com>parse line extern void glob2struct(mystruct *ptr);</com>
+  <com>lo fu switchhide</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Switch Hide #1" min="9" max="9">case .*:</stringmatch>
+<stringmatch name="Switch Hide #2" min="1" max="1">default:</stringmatch>
+<stringmatch name="Switch Hide #3" min="1" max="1">switch\(mStack_18\.b\)</stringmatch>
+<stringmatch name="Switch Hide #4" min="1" max="1">mStack_18\.b = 2;</stringmatch>
+</decompilertest>

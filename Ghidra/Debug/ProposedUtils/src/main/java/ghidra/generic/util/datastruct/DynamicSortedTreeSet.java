@@ -39,7 +39,7 @@ import java.util.*;
  * 
  * @param <E> the type of the elements
  */
-public class DynamicSortedTreeSet<E> extends AbstractSet<E> implements List<E>, Deque<E> {
+public class DynamicSortedTreeSet<E> extends AbstractSet<E> {
 	private final transient TreeValueSortedMap<E, E>.ValueSortedTreeMapKeySet keys;
 	private final transient TreeValueSortedMap<E, E> map;
 
@@ -70,42 +70,6 @@ public class DynamicSortedTreeSet<E> extends AbstractSet<E> implements List<E>, 
 		return map.put(e, e) == null;
 	}
 
-	/**
-	 * Inserts the element, ignoring index
-	 * 
-	 * @param index ignore since the set is sorted
-	 */
-	@Override
-	public void add(int index, E element) {
-		add(element);
-	}
-
-	/**
-	 * Inserts all elements from the given collection, ignoring index
-	 * 
-	 * @param index ignore since the set is sorted
-	 */
-	@Override
-	public boolean addAll(int index, Collection<? extends E> c) {
-		return addAll(c);
-	}
-
-	/**
-	 * Inserts the element, not necessarily first
-	 */
-	@Override
-	public void addFirst(E e) {
-		add(e);
-	}
-
-	/**
-	 * Inserts the element, not necessarily last
-	 */
-	@Override
-	public void addLast(E e) {
-		add(e);
-	}
-
 	@Override
 	public void clear() {
 		map.clear();
@@ -116,32 +80,10 @@ public class DynamicSortedTreeSet<E> extends AbstractSet<E> implements List<E>, 
 		return map.containsKey(o);
 	}
 
-	@Override
-	public Iterator<E> descendingIterator() {
-		return keys.descendingIterator();
-	}
-
-	@Override
-	public E element() {
-		return keys.element();
-	}
-
-	@Override
 	public E get(int index) {
 		return keys.get(index);
 	}
 
-	@Override
-	public E getFirst() {
-		return keys.getFirst();
-	}
-
-	@Override
-	public E getLast() {
-		return keys.getLast();
-	}
-
-	@Override
 	public int indexOf(Object o) {
 		return keys.indexOf(o);
 	}
@@ -157,92 +99,6 @@ public class DynamicSortedTreeSet<E> extends AbstractSet<E> implements List<E>, 
 	}
 
 	@Override
-	public int lastIndexOf(Object o) {
-		return keys.lastIndexOf(o);
-	}
-
-	@Override
-	public ListIterator<E> listIterator() {
-		return keys.listIterator();
-	}
-
-	@Override
-	public ListIterator<E> listIterator(int index) {
-		return keys.listIterator(index);
-	}
-
-	@Override
-	public boolean offer(E e) {
-		return add(e);
-	}
-
-	/**
-	 * Inserts the element, not necessarily first
-	 */
-	@Override
-	public boolean offerFirst(E e) {
-		return add(e);
-	}
-
-	/**
-	 * Inserts the element, not necessarily last
-	 */
-	@Override
-	public boolean offerLast(E e) {
-		return add(e);
-	}
-
-	@Override
-	public E peek() {
-		return keys.peek();
-	}
-
-	@Override
-	public E peekFirst() {
-		return keys.peekFirst();
-	}
-
-	@Override
-	public E peekLast() {
-		return keys.peekLast();
-	}
-
-	@Override
-	public E poll() {
-		return keys.poll();
-	}
-
-	@Override
-	public E pollFirst() {
-		return keys.pollFirst();
-	}
-
-	@Override
-	public E pollLast() {
-		return keys.pollLast();
-	}
-
-	@Override
-	public E pop() {
-		return keys.pop();
-	}
-
-	@Override
-	public void push(E e) {
-		add(e);
-	}
-
-	@Override
-	public E remove() {
-		return keys.remove();
-	}
-
-	@Override
-	public E remove(int index) {
-		return keys.remove(index);
-	}
-
-	@Override
 	public boolean remove(Object o) {
 		return keys.remove(o);
 	}
@@ -253,43 +109,8 @@ public class DynamicSortedTreeSet<E> extends AbstractSet<E> implements List<E>, 
 	}
 
 	@Override
-	public E removeFirst() {
-		return keys.removeFirst();
-	}
-
-	@Override
-	public boolean removeFirstOccurrence(Object o) {
-		return keys.removeFirstOccurrence(o);
-	}
-
-	@Override
-	public E removeLast() {
-		return keys.removeLast();
-	}
-
-	@Override
-	public boolean removeLastOccurrence(Object o) {
-		return keys.removeLastOccurrence(o);
-	}
-
-	@Override
 	public boolean retainAll(Collection<?> c) {
 		return keys.retainAll(c);
-	}
-
-	/**
-	 * Replace the element at the given index with the given element
-	 * 
-	 * <p>
-	 * Because the set is sorted, the index of the given element may not be the same as
-	 * {@code index}. In fact, this is equivalent to removing the element at the given index, and
-	 * then inserting the given element at its sorted position.
-	 */
-	@Override
-	public E set(int index, E element) {
-		E result = remove(index);
-		add(element);
-		return result;
 	}
 
 	@Override
@@ -300,14 +121,6 @@ public class DynamicSortedTreeSet<E> extends AbstractSet<E> implements List<E>, 
 	@Override
 	public Spliterator<E> spliterator() {
 		return Spliterators.spliterator(this, Spliterator.ORDERED | Spliterator.DISTINCT);
-	}
-
-	/**
-	 * This operation is not supported
-	 */
-	@Override
-	public List<E> subList(int fromIndex, int toIndex) {
-		throw new UnsupportedOperationException();
 	}
 
 	/**

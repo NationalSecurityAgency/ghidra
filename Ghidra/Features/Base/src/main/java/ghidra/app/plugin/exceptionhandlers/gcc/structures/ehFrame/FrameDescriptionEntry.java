@@ -30,6 +30,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.util.DataConverter;
 import ghidra.util.Msg;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
@@ -228,8 +229,8 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 
 		curSize += locTypeSize;
 
-		program.getReferenceManager().addMemoryReference(addr, cieAddr, RefType.DATA,
-			SourceType.ANALYSIS, 0);
+		program.getReferenceManager()
+				.addMemoryReference(addr, cieAddr, RefType.DATA, SourceType.ANALYSIS, 0);
 
 		return addr.add(locTypeSize);
 	}
@@ -267,8 +268,8 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 
 		createAndCommentData(program, addr, encodedDt, comment, CodeUnit.EOL_COMMENT);
 		if (pcBeginAddr.getOffset() != 0x0) {
-			program.getReferenceManager().addMemoryReference(addr, pcBeginAddr, RefType.DATA,
-				SourceType.ANALYSIS, 0);
+			program.getReferenceManager()
+					.addMemoryReference(addr, pcBeginAddr, RefType.DATA, SourceType.ANALYSIS, 0);
 		}
 
 		curSize += encodedLen;
@@ -293,7 +294,12 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 		 */
 		String comment = "(FDE) PcRange";
 
-		intPcRange = (int) GccAnalysisUtils.readDWord(program, addr);
+		DataType dataType = getAddressSizeDataType();
+		byte[] range = new byte[dataType.getLength()];
+		GccAnalysisUtils.readBytes(program, addr, range);
+		DataConverter converter = DataConverter.getInstance(program.getMemory().isBigEndian());
+		intPcRange = (int) converter.getSignedValue(range, range.length);
+
 		if (intPcRange < 0) {
 			return null;
 		}
@@ -303,7 +309,6 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 		}
 		pcEndAddr = pcBeginAddr.add(intPcRange - 1);
 
-		DataType dataType = getAddressSizeDataType();
 		if (dataType.getLength() == 8) {
 			// While this is 64-bit system, this length may be encoded as a 32-bit value, 
 			// arguing a length needn't use all 8 bytes. If it *is* encoded in 8 bytes, the 
@@ -389,8 +394,6 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 	 * @throws MemoryAccessException if the required memory can't be read
 	 */
 	private Address createCallFrameInstructions(Address addr) throws MemoryAccessException {
-		CreateArrayCmd arrayCmd = null;
-
 		// Create initial instructions array with remaining bytes.
 		int instructionLength = intLength - curSize;
 		ArrayDataType adt = new ArrayDataType(ByteDataType.dataType, instructionLength, BYTE_LEN);
@@ -589,16 +592,17 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 
 					createData(program, augmentationDataAddr, DWordDataType.dataType);
 
-					program.getReferenceManager().addMemoryReference(augmentationDataAddr,
-						augmentationDataExAddr, RefType.DATA, SourceType.ANALYSIS, 0);
+					program.getReferenceManager()
+							.addMemoryReference(augmentationDataAddr, augmentationDataExAddr,
+								RefType.DATA, SourceType.ANALYSIS, 0);
 
 					try {
 
 						String label = "eh_augmentation_" + pcBeginAddr + ".." + pcEndAddr + "_" +
 							augmentationDataExAddr;
 
-						program.getSymbolTable().createLabel(augmentationDataExAddr, label,
-							SourceType.ANALYSIS);
+						program.getSymbolTable()
+								.createLabel(augmentationDataExAddr, label, SourceType.ANALYSIS);
 					}
 					catch (InvalidInputException e) {
 						// ignored
@@ -634,8 +638,9 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 			return;
 		}
 
-		program.getReferenceManager().addMemoryReference(augmentationDataAddr, lsdaAddr,
-			RefType.DATA, SourceType.ANALYSIS, 0);
+		program.getReferenceManager()
+				.addMemoryReference(augmentationDataAddr, lsdaAddr, RefType.DATA,
+					SourceType.ANALYSIS, 0);
 
 		if (!program.getMemory().getAllInitializedAddressSet().contains(lsdaAddr)) {
 

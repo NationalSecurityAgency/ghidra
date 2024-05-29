@@ -74,6 +74,9 @@ public class ProgramDnDTree extends DragNDropTree {
 
 	/**
 	 * Construct a ProgramDnDTree with the given model.
+	 * @param treeName The name of the tree to show in the tab
+	 * @param model  the tree model
+	 * @param plugin the program tree plugin
 	 */
 	public ProgramDnDTree(String treeName, DefaultTreeModel model, ProgramTreePlugin plugin) {
 		super(model);
@@ -86,6 +89,10 @@ public class ProgramDnDTree extends DragNDropTree {
 
 		mouseListenerDelegate = new JTreeMouseListenerDelegate(this);
 		initializeKeyEvents();
+
+		treeName += " Program Tree";
+		setName(treeName);
+		getAccessibleContext().setAccessibleName(treeName);
 	}
 
 	private void initializeKeyEvents() {
@@ -154,10 +161,12 @@ public class ProgramDnDTree extends DragNDropTree {
 			if (!super.isDropOk(e)) {
 				return false;
 			}
+
 			if (draggedNodes == null) {
-				return true; // drag initiated from somewhere else, so
-				// if the superclass said it was OK, then it's OK...
+				// drag initiated from elsewhere, if the superclass said it was OK, then it's OK
+				return true;
 			}
+
 			Point p = e.getLocation();
 			ProgramNode destNode = getTreeNode(p);
 			relativeMousePos = comparePointerLocation(p, destNode);
@@ -166,14 +175,13 @@ public class ProgramDnDTree extends DragNDropTree {
 		}
 	}
 
-	/**
-	 * Droppable interface method called from the DropTargetAdapter's
-	 * drop() method.
-	 */
 	@Override
 	public void add(Object data, DropTargetDropEvent e, DataFlavor chosen) {
 
 		synchronized (root) {
+
+			draggedNodes = null;
+
 			if (destinationNode == null) {
 				return;
 			}
@@ -182,20 +190,16 @@ public class ProgramDnDTree extends DragNDropTree {
 				if (e != null) {
 					dropAction = e.getDropAction();
 				}
-				// note: must use destinationNode because the when the user
-				// releases the mouse, the point could have moved, so
-				// the node obtained at the point is not necessarily the
+
+				// Note: must use destinationNode because when the user releases the mouse, the 
+				// point could have moved, so the node obtained at the point is not necessarily the
 				// expected destinationNode.
 				processDropRequest(destinationNode, data, chosen, dropAction);
-				if (dropAction == DnDConstants.ACTION_COPY) {
-					draggedNodes = null;
-				}
 			}
 			catch (Exception ex) {
 				if (!(ex instanceof UsrException)) {
 					Msg.error(this, "Unexpected Exception: " + ex.getMessage(), ex);
 				}
-				draggedNodes = null;
 
 				//let the drop() method handle the error reporting
 				String msg = ex.getMessage();
@@ -212,20 +216,6 @@ public class ProgramDnDTree extends DragNDropTree {
 		}
 	}
 
-	/**
-	 * Method called from the dragDropEnd() method in the
-	 * DragSourceAdapter when the drop has completed.
-	 * The "copy" part is done in the add() method.
-	 * @see #add(Object, DropTargetDropEvent, DataFlavor)
-	 */
-	@Override
-	public void move() {
-		draggedNodes = null;
-	}
-
-	/**
-	 * Set the program for this tree.
-	 */
 	void setProgram(Program p) {
 		if (p == program) {
 			return;
@@ -316,8 +306,7 @@ public class ProgramDnDTree extends DragNDropTree {
 			}
 			try {
 				Object data = e.getTransferable()
-						.getTransferData(
-							SelectionTransferable.localProgramSelectionFlavor);
+						.getTransferData(SelectionTransferable.localProgramSelectionFlavor);
 				SelectionTransferData transferData = (SelectionTransferData) data;
 				return program.getDomainFile().getPathname().equals(transferData.getProgramPath());
 			}
@@ -418,13 +407,6 @@ public class ProgramDnDTree extends DragNDropTree {
 	}
 
 	/**
-	 * Clear the variable that has the dragged data.
-	 */
-	void clearDragData() {
-		draggedNodes = null;
-	}
-
-	/**
 	 * Get the view list.
 	 * 
 	 * @return ArrayList list of tree paths in the view
@@ -500,8 +482,7 @@ public class ProgramDnDTree extends DragNDropTree {
 
 		TreePath path = node.getTreePath();
 
-		for (int i = 0; i < viewList.size(); i++) {
-			TreePath viewPath = viewList.get(i);
+		for (TreePath viewPath : viewList) {
 			if (viewPath.isDescendant(path) && !viewPath.equals(path)) {
 				return true;
 			}
@@ -828,7 +809,7 @@ public class ProgramDnDTree extends DragNDropTree {
 
 				if (parentModuleName.equals(parent.getName())) {
 					TreePath childPath = child.getTreePath();
-					treeModel.removeNodeFromParent(child);
+					model.removeNodeFromParent(child);
 					child.removeAllChildren();
 					child.removeFromParent();
 					if (updateViewList) {
@@ -896,7 +877,7 @@ public class ProgramDnDTree extends DragNDropTree {
 		}
 		ProgramNode child = new ProgramNode(program, group);
 
-		treeModel.insertNodeInto(child, parent, index);
+		model.insertNodeInto(child, parent, index);
 		child.setParentModule(parent.getModule());
 
 		// do the lazy population which means don't
@@ -1007,11 +988,10 @@ public class ProgramDnDTree extends DragNDropTree {
 				}
 
 				parent.insert(node, tempIndex);
-				treeModel.reload(parent);
+				model.reload(parent);
 
 			}
-			for (int i = 0; i < list.size(); i++) {
-				TreePath p = list.get(i);
+			for (TreePath p : list) {
 				expandPath(p);
 			}
 		}
@@ -1175,7 +1155,7 @@ public class ProgramDnDTree extends DragNDropTree {
 		List<TreePath> list = getExpandedPaths(node);
 		TreePath[] paths = getSelectionPaths();
 
-		treeModel.reload(node);
+		model.reload(node);
 
 		expandPaths(list);
 
@@ -1285,6 +1265,10 @@ public class ProgramDnDTree extends DragNDropTree {
 
 	void setTreeName(String treeName) {
 		this.treeName = treeName;
+
+		treeName += " Program Tree";
+		setName(treeName);
+		getAccessibleContext().setAccessibleName(treeName);
 	}
 
 	/**
@@ -1321,8 +1305,7 @@ public class ProgramDnDTree extends DragNDropTree {
 	 * @param list list of TreePaths.
 	 */
 	public void expandPaths(List<TreePath> list) {
-		for (int i = 0; i < list.size(); i++) {
-			TreePath path = list.get(i);
+		for (TreePath path : list) {
 			expandPath(path);
 		}
 	}
@@ -1392,8 +1375,7 @@ public class ProgramDnDTree extends DragNDropTree {
 	 */
 	private TreePath findTreePath(GroupPath groupPath) {
 
-		for (int i = 0; i < nodeList.size(); i++) {
-			ProgramNode node = nodeList.get(i);
+		for (ProgramNode node : nodeList) {
 			GroupPath p = node.getGroupPath();
 			if (p.equals(groupPath)) {
 				return node.getTreePath();
@@ -1743,8 +1725,7 @@ public class ProgramDnDTree extends DragNDropTree {
 	 * garbage collected.
 	 */
 	private void disposeOfNodes() {
-		for (int i = 0; i < nodeList.size(); i++) {
-			ProgramNode node = nodeList.get(i);
+		for (ProgramNode node : nodeList) {
 			node.dispose();
 		}
 	}
@@ -1827,7 +1808,7 @@ public class ProgramDnDTree extends DragNDropTree {
 			versionTag = rm.getVersionTag();
 		}
 
-		treeModel.setRoot(root);
+		model.setRoot(root);
 		root.setTree(this);
 	}
 

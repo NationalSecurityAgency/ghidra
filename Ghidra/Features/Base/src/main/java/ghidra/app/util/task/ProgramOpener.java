@@ -17,6 +17,7 @@ package ghidra.app.util.task;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.concurrent.atomic.AtomicReference;
 
 import docking.widgets.OptionDialog;
 import ghidra.app.plugin.core.progmgr.ProgramLocator;
@@ -25,9 +26,8 @@ import ghidra.framework.client.ClientUtil;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.DomainFile;
-import ghidra.framework.protocol.ghidra.GhidraURLConnection;
-import ghidra.framework.protocol.ghidra.GhidraURLConnection.StatusCode;
-import ghidra.framework.protocol.ghidra.GhidraURLWrappedContent;
+import ghidra.framework.protocol.ghidra.GhidraURLQuery;
+import ghidra.framework.protocol.ghidra.GhidraURLResultHandlerAdapter;
 import ghidra.framework.remote.User;
 import ghidra.framework.store.ExclusiveCheckoutException;
 import ghidra.program.model.lang.LanguageNotFoundException;
@@ -35,6 +35,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
+import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -45,7 +46,7 @@ import ghidra.util.task.TaskMonitor;
 public class ProgramOpener {
 	private final Object consumer;
 	private String openPromptText = "Open";
-	private boolean silent = false; 	// if true operation does not permit interaction
+	private boolean silent = SystemUtilities.isInHeadlessMode(); 	// if true operation does not permit interaction
 	private boolean noCheckout = false; // if true operation should not perform optional checkout
 
 	/**
@@ -84,74 +85,42 @@ public class ProgramOpener {
 	}
 
 	/**
-	 * Opens the program for the given location
+	 * Opens the program for the given location.
+	 * This method is intended to be invoked from within a {@link Task} or for headless operations. 
 	 * @param locator the program location to open
 	 * @param monitor the TaskMonitor used for status and cancelling
 	 * @return the opened program or null if the operation failed or was cancelled
 	 */
 	public Program openProgram(ProgramLocator locator, TaskMonitor monitor) {
 		if (locator.isURL()) {
-			return openURL(locator, monitor);
+			try {
+				return openURL(locator, monitor);
+			}
+			catch (CancelledException e) {
+				return null;
+			}
+			catch (IOException e) {
+				Msg.showError(this, null, "Program Open Failed",
+					"Failed to open Ghidra URL: " + locator.getURL(), e);
+			}
 		}
 		return openProgram(locator, locator.getDomainFile(), monitor);
 	}
 
-	private Program openURL(ProgramLocator locator, TaskMonitor monitor) {
-		URL url = locator.getURL();
-		GhidraURLWrappedContent wrappedContent = getWrappedContent(url);
-		if (wrappedContent == null) {
-			return null;
-		}
-		DomainFile remoteDomainFile = getDomainFile(url, wrappedContent);
-		if (remoteDomainFile == null) {
-			return null;
-		}
+	private Program openURL(ProgramLocator locator, TaskMonitor monitor)
+			throws CancelledException, IOException {
+		URL ghidraUrl = locator.getURL();
 
-		try {
-			return openProgram(locator, remoteDomainFile, monitor);
-		}
-		finally {
-			wrappedContent.release(remoteDomainFile, this);
-		}
-	}
-
-	private DomainFile getDomainFile(URL url, GhidraURLWrappedContent wrappedContent) {
-		try {
-			Object content = wrappedContent.getContent(this);
-			if (content instanceof DomainFile domainFile) {
-				return domainFile;
+		AtomicReference<Program> openedProgram = new AtomicReference<>();
+		GhidraURLQuery.queryUrl(ghidraUrl, new GhidraURLResultHandlerAdapter() {
+			@Override
+			public void processResult(DomainFile domainFile, URL url, TaskMonitor m) {
+				Program p = openProgram(locator, domainFile, m);  // may return null
+				openedProgram.set(p);
 			}
-			messageBadProgramURL(url);
-			if (content != null) {
-				wrappedContent.release(content, this);
-			}
-		}
-		catch (IOException e) {
-			Msg.showError(this, null, "Program Open Failed", "Failed to open Ghidra URL: " + url,
-				e);
-		}
-		return null;
-	}
+		}, monitor);
 
-	private GhidraURLWrappedContent getWrappedContent(URL url) {
-		try {
-			GhidraURLConnection c = (GhidraURLConnection) url.openConnection();
-			Object obj = c.getContent(); // read-only access
-
-			if (c.getStatusCode() == StatusCode.UNAUTHORIZED) {
-				return null; // assume user already notified
-			}
-
-			if (obj instanceof GhidraURLWrappedContent wrappedContent) {
-				return wrappedContent;
-			}
-			return null;
-		}
-		catch (IOException e) {
-			Msg.showError(this, null, "Program Open Failed", "Failed to open Ghidra URL: " + url,
-				e);
-		}
-		return null;
+		return openedProgram.get();
 	}
 
 	private Program openProgram(ProgramLocator locator, DomainFile domainFile,
@@ -295,10 +264,6 @@ public class ProgramOpener {
 			"<html>" + HTMLUtilities.escapeHTML(filename) + " has crash data.<br>" +
 				"Would you like to recover unsaved changes?");
 		return option == OptionDialog.OPTION_ONE;
-	}
-
-	private void messageBadProgramURL(URL url) {
-		Msg.error("Invalid Ghidra URL", "Ghidra URL does not reference a Ghidra Program: " + url);
 	}
 
 }

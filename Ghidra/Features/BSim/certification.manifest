@@ -1,0 +1,51 @@
+##VERSION: 2.0
+##MODULE IP: Apache License 2.0
+##MODULE IP: Creative Commons Attribution 2.5
+##MODULE IP: Crystal Clear Icons - LGPL 2.1
+##MODULE IP: FAMFAMFAM Icons - CC 2.5
+##MODULE IP: H2 Mozilla License 2.0
+##MODULE IP: LGPL 2.1
+##MODULE IP: LGPL 3.0
+##MODULE IP: Oxygen Icons - LGPL 3.0
+##MODULE IP: Postgresql License
+##MODULE IP: PostgresqlJDBC License
+##MODULE IP: Public Domain
+Module.manifest||GHIDRA||||END|
+data/bsim.theme.properties||GHIDRA||||END|
+data/large_32.xml||GHIDRA||||END|
+data/lshweights_32.xml||GHIDRA|||Signature data|END|
+data/lshweights_64.xml||GHIDRA|||Signature data|END|
+data/lshweights_64_32.xml||GHIDRA|||Signature data|END|
+data/lshweights_cpool.xml||GHIDRA||||END|
+data/lshweights_nosize.xml||GHIDRA||||END|
+data/medium_32.xml||GHIDRA||||END|
+data/medium_64.xml||GHIDRA||||END|
+data/medium_cpool.xml||GHIDRA||||END|
+data/medium_nosize.xml||GHIDRA||||END|
+data/serverconfig.xml||GHIDRA||||END|
+src/lshvector/Makefile.lshvector||GHIDRA||||END|
+src/lshvector/lshvector--1.0.sql||GHIDRA||||END|
+src/lshvector/lshvector.control||GHIDRA||||END|
+src/main/help/help/TOC_Source.xml||GHIDRA||||END|
+src/main/help/help/topics/BSim/BSimOverview.html||GHIDRA||||END|
+src/main/help/help/topics/BSim/CommandLineReference.html||GHIDRA||||END|
+src/main/help/help/topics/BSim/DatabaseConfiguration.html||GHIDRA||||END|
+src/main/help/help/topics/BSim/FeatureWeight.html||GHIDRA||||END|
+src/main/help/help/topics/BSim/IngestProcess.html||GHIDRA||||END|
+src/main/help/help/topics/BSimSearchPlugin/BSimSearch.html||GHIDRA||||END|
+src/main/help/help/topics/BSimSearchPlugin/images/AddServerDialog.png||GHIDRA||||END|
+src/main/help/help/topics/BSimSearchPlugin/images/ApplyResultsPanel.png||GHIDRA||||END|
+src/main/help/help/topics/BSimSearchPlugin/images/BSimOverviewDialog.png||GHIDRA||||END|
+src/main/help/help/topics/BSimSearchPlugin/images/BSimOverviewResults.png||GHIDRA||||END|
+src/main/help/help/topics/BSimSearchPlugin/images/BSimResultsProvider.png||GHIDRA||||END|
+src/main/help/help/topics/BSimSearchPlugin/images/BSimSearchDialog.png||GHIDRA||||END|
+src/main/help/help/topics/BSimSearchPlugin/images/ManageServersDialog.png||GHIDRA||||END|
+src/main/resources/bsim.log4j.xml||GHIDRA||||END|
+src/main/resources/images/checkmark_yellow.gif||GHIDRA||||END|
+src/main/resources/images/flag_green.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/resources/images/preferences-desktop-user-password.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/preferences-web-browser-shortcuts-32.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/preferences-web-browser-shortcuts.png||LGPL 3.0|||oxygen|END|
+src/main/resources/images/view_top_bottom.png||Crystal Clear Icons - LGPL 2.1||||END|
+src/main/resources/log4j-appender-console.xml||GHIDRA||||END|
+src/main/resources/log4j-appender-rolling-file.xml||GHIDRA||||END|

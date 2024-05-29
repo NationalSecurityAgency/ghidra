@@ -20,8 +20,6 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import docking.ComponentProviderActivationListener;
-import ghidra.framework.model.*;
-import ghidra.framework.plugintool.Plugin;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 
@@ -37,20 +35,21 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 
 	private Set<FunctionComparisonProvider> providers = new CopyOnWriteArraySet<>();
 	private Set<ComponentProviderActivationListener> listeners = new HashSet<>();
-	private Plugin plugin;
+	private FunctionComparisonPlugin plugin;
 
 	/**
 	 * Constructor
 	 * 
 	 * @param plugin the parent plugin
 	 */
-	public FunctionComparisonProviderManager(Plugin plugin) {
+	public FunctionComparisonProviderManager(FunctionComparisonPlugin plugin) {
 		this.plugin = plugin;
 	}
 
 	@Override
 	public void providerClosed(FunctionComparisonProvider provider) {
 		providers.remove(provider);
+		provider.dispose();
 		listeners.stream().forEach(l -> l.componentProviderDeactivated(provider));
 	}
 
@@ -83,14 +82,30 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 	}
 
 	/**
+	 * Create a new comparison between two given sets of functions
+	 * 
+	 * @param sourceFunctions
+	 * @param destinationFunctions
+	 * @return the new comparison provider
+	 */
+	public FunctionComparisonProvider compareFunctions(Set<Function> sourceFunctions,
+			Set<Function> destinationFunctions) {
+		if (sourceFunctions.isEmpty() || destinationFunctions.isEmpty()) {
+			return null;
+		}
+		FunctionComparisonProvider provider = createProvider();
+		provider.getModel().compareFunctions(sourceFunctions, destinationFunctions);
+		return provider;
+	}
+
+	/**
 	 * Creates a new comparison comparison between two functions
 	 * 
 	 * @param source the source function
 	 * @param target the target function
 	 * @return the new comparison provider
 	 */
-	public FunctionComparisonProvider compareFunctions(Function source,
-		Function target) {
+	public FunctionComparisonProvider compareFunctions(Function source, Function target) {
 		FunctionComparisonProvider provider = new MultiFunctionComparisonProvider(plugin);
 		provider.addToTool();
 		provider.getModel().compareFunctions(source, target);
@@ -123,7 +138,7 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 	 * @param provider the provider to add the functions to
 	 */
 	public void compareFunctions(Function source, Function target,
-		FunctionComparisonProvider provider) {
+			FunctionComparisonProvider provider) {
 		if (provider == null) {
 			return;
 		}
@@ -199,9 +214,7 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 	 */
 	public void dispose() {
 		for (FunctionComparisonProvider provider : providers) {
-			FunctionComparisonPanel panel = provider.getComponent();
-			panel.setVisible(false);
-			panel.dispose();
+			provider.dispose();
 		}
 		providers.clear();
 	}
@@ -211,20 +224,10 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 	 * will notify all the function comparison providers. This allows them to 
 	 * refresh if they are showing a function from the program
 	 * 
-	 * @param ev the object changed event
+	 * @param program the program that was restored
 	 */
-	public void domainObjectRestored(DomainObjectChangedEvent ev) {
-		for (DomainObjectChangeRecord domainObjectChangeRecord : ev) {
-			int eventType = domainObjectChangeRecord.getEventType();
-			if (eventType != DomainObject.DO_OBJECT_RESTORED) {
-				return;
-			}
-			Object source = ev.getSource();
-			if (source instanceof Program) {
-				Program program = (Program) source;
-				providers.stream().forEach(p -> p.programRestored(program));
-			}
-		}
+	public void domainObjectRestored(Program program) {
+		providers.stream().forEach(p -> p.programRestored(program));
 	}
 
 }

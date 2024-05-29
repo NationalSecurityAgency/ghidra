@@ -54,6 +54,7 @@ import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
 import ghidra.app.plugin.core.datamgr.util.DataTypeChooserDialog;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.services.ProgramManager;
+import ghidra.framework.Application;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.data.ProgramDataTypeManager;
@@ -723,7 +724,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 			DataTypeManagerHandler dataTypeManagerHandler = plugin.getDataTypeManagerHandler();
 			File tempArchiveFile;
 			try {
-				tempArchiveFile = File.createTempFile("TestFileArchive", ".gdt");
+				tempArchiveFile = Application.createTempFile("TestFileArchive", ".gdt");
 			}
 			catch (IOException e) {
 				e.printStackTrace();

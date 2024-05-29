@@ -60,7 +60,7 @@ public class ImporterUtilities {
 	 * TODO: will be refactored to use file_extension_icon.xml file info.
 	 */
 	public static final GhidraFileFilter LOADABLE_FILES_FILTER = ExtensionFileFilter.forExtensions(
-		"Loadable files", "exe", "dll", "obj", "drv", "bin", "o", "a", "so", "class", "lib");
+		"Loadable files", "exe", "dll", "obj", "drv", "bin", "hex", "o", "a", "so", "class", "lib");
 
 	/**
 	 * File extension filter for well known 'container' files for GhidraFileChoosers.
@@ -434,6 +434,11 @@ public class ImporterUtilities {
 				// currently we only show results for the imported program, not any libraries
 				displayResults(pluginTool, loaded.getDomainObject(),
 					loaded.getDomainObject().getDomainFile(), importMessages);
+
+				// Optionally echo loader message log to application.log
+				if (!Loader.loggingDisabled && !importMessages.isEmpty()) {
+					Msg.info(ImporterUtilities.class, "Additional info:\n" + importMessages);
+				}
 			}
 			loaded.release(consumer);
 			firstProgram = false;
@@ -459,6 +464,11 @@ public class ImporterUtilities {
 		try (ByteProvider bp = fsService.getByteProvider(fsrl, false, monitor)) {
 			loadSpec.getLoader().loadInto(bp, loadSpec, options, messageLog, program, monitor);
 			displayResults(tool, program, program.getDomainFile(), messageLog.toString());
+
+			// Optionally echo loader message log to application.log
+			if (!Loader.loggingDisabled && messageLog.hasMessages()) {
+				Msg.info(ImporterUtilities.class, "Additional info:\n" + messageLog.toString());
+			}
 		}
 		catch (CancelledException e) {
 			return;

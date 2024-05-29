@@ -19,8 +19,10 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 
-import db.*;
+import db.DBHandle;
+import db.Table;
 import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.ManagerDB;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.code.CodeManager;
@@ -46,7 +48,7 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 	private boolean changing = false;
 
 	public ProgramRegisterContextDB(DBHandle dbHandle, ErrorHandler errHandler, Language lang,
-			CompilerSpec compilerSpec, AddressMap addrMap, Lock lock, int openMode,
+			CompilerSpec compilerSpec, AddressMap addrMap, Lock lock, OpenMode openMode,
 			CodeManager codeMgr, TaskMonitor monitor) throws VersionException, CancelledException {
 		super(lang);
 		this.addrMap = addrMap;
@@ -56,7 +58,7 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 
 		boolean oldContextDataExists = OldProgramContextDB.oldContextDataExists(dbHandle);
 		boolean upgrade = oldContextDataExists && !contextDataExists(dbHandle);
-		if (openMode != DBConstants.UPGRADE && upgrade) {
+		if (openMode != OpenMode.UPGRADE && upgrade) {
 			throw new VersionException(true);
 		}
 
@@ -69,7 +71,7 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 			upgrade(addrMap, monitor);
 		}
 
-		if (openMode == DBConstants.UPGRADE && oldContextDataExists) {
+		if (openMode == OpenMode.UPGRADE && oldContextDataExists) {
 			try {
 				OldProgramContextDB.removeOldContextData(dbHandle);
 			}
@@ -185,7 +187,7 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 	}
 
 	@Override
-	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
+	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 	}
 
@@ -210,6 +212,7 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 
 	@Override
 	public void deleteAddressRange(Address start, Address end, TaskMonitor monitor) {
+		AddressRange.checkValidRange(start, end);
 		lock.acquire();
 		try {
 			super.deleteAddressRange(start, end, monitor);

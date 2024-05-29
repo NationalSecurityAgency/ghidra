@@ -53,6 +53,17 @@ public abstract class RangeMapSetter<E, D, R, V> {
 	protected abstract V getValue(E entry);
 
 	/**
+	 * Check if two values are equal
+	 * 
+	 * @param v1 the first value
+	 * @param v2 the second value
+	 * @return true if equal, false if not
+	 */
+	protected boolean valuesEqual(V v1, V v2) {
+		return Objects.equals(v1, v2);
+	}
+
+	/**
 	 * Remove an entry from the map
 	 * 
 	 * @param entry the entry
@@ -190,7 +201,7 @@ public abstract class RangeMapSetter<E, D, R, V> {
 			R r = getRange(entry);
 			int cmpMin = compare(getLower(r), lower);
 			int cmpMax = compare(getUpper(r), upper);
-			boolean sameVal = Objects.equals(getValue(entry), value);
+			boolean sameVal = valuesEqual(getValue(entry), value);
 			if (cmpMin <= 0 && cmpMax >= 0 && sameVal) {
 				return entry; // The value in this range is already set as specified
 			}

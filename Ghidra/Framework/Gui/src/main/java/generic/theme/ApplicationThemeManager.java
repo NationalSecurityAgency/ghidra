@@ -73,10 +73,12 @@ public class ApplicationThemeManager extends ThemeManager {
 
 	@Override
 	public void restoreThemeValues() {
-		applicationDefaults = loadApplicationDefaults();
-		buildCurrentValues();
-		lookAndFeelManager.resetAll(javaDefaults);
-		notifyThemeChanged(new AllValuesChangedThemeEvent(false));
+		update(() -> {
+			applicationDefaults = loadApplicationDefaults();
+			buildCurrentValues();
+			lookAndFeelManager.resetAll(javaDefaults);
+			notifyThemeChanged(new AllValuesChangedThemeEvent(false));
+		});
 	}
 
 	@Override
@@ -117,27 +119,40 @@ public class ApplicationThemeManager extends ThemeManager {
 
 	@Override
 	public void setTheme(GTheme theme) {
-		if (theme.hasSupportedLookAndFeel()) {
+		if (!theme.hasSupportedLookAndFeel()) {
+			Msg.error(this,
+				"Attempted to set theme with an unsupported Look and Feel: " + theme.getName());
+			return;
+		}
+
+		update(() -> {
+
 			activeTheme = theme;
 			activeLafType = theme.getLookAndFeelType();
 			useDarkDefaults = theme.useDarkDefaults();
 
-			cleanUiDefaults();		// clear out any values previous themes may have installed
+			cleanUiDefaults(); // clear out any values previous themes may have installed
 			lookAndFeelManager = activeLafType.getLookAndFeelManager(this);
 			try {
 				lookAndFeelManager.installLookAndFeel();
+				themePreferences.save(theme);
 				notifyThemeChanged(new AllValuesChangedThemeEvent(true));
 			}
 			catch (Exception e) {
 				Msg.error(this, "Error setting Look and Feel: " + activeLafType.getName(), e);
 			}
-			themePreferences.save(theme);
-		}
+		});
+
 		currentValues.checkForUnresolvedReferences();
 	}
 
 	@Override
 	public void setLookAndFeel(LafType lafType, boolean useDarkDefaults) {
+
+		if (activeLafType == lafType) {
+			return;
+		}
+
 		if (!lafType.isSupported()) {
 			Msg.error(this, "Attempted to set unsupported Look and Feel: " + lafType);
 			return;
@@ -146,21 +161,24 @@ public class ApplicationThemeManager extends ThemeManager {
 		this.activeLafType = lafType;
 		this.useDarkDefaults = useDarkDefaults;
 
-		cleanUiDefaults();
-		lookAndFeelManager = lafType.getLookAndFeelManager(this);
-		try {
-			lookAndFeelManager.installLookAndFeel();
-			notifyThemeChanged(new AllValuesChangedThemeEvent(true));
-		}
-		catch (Exception e) {
-			Msg.error(this, "Error setting Look and Feel: " + lafType.getName(), e);
-		}
+		update(() -> {
+
+			cleanUiDefaults(); // clear out any values previous themes may have installed
+			lookAndFeelManager = lafType.getLookAndFeelManager(this);
+			try {
+				lookAndFeelManager.installLookAndFeel();
+				notifyThemeChanged(new AllValuesChangedThemeEvent(true));
+			}
+			catch (Exception e) {
+				Msg.error(this, "Error setting Look and Feel: " + lafType.getName(), e);
+			}
+		});
 	}
 
 	@Override
 	public void addTheme(GTheme newTheme) {
 		loadThemes();
-		allThemes.remove(newTheme);
+		removeTheme(newTheme);
 		allThemes.add(newTheme);
 	}
 
@@ -170,8 +188,33 @@ public class ApplicationThemeManager extends ThemeManager {
 		if (file != null) {
 			file.delete();
 		}
-		if (allThemes != null) {
-			allThemes.remove(theme);
+
+		removeTheme(theme);
+	}
+
+	/**
+	 * Removes the given theme from the set of themes known by this class.  
+	 * <p>
+	 * Note: this method assumes that there can only exist one theme by a given name in the system.
+	 * The equals() method of the GTheme is based on more than just the name, so we cannot use that
+	 * to remove the theme from this class.
+	 * 
+	 * @param t the theme to remove
+	 */
+	private void removeTheme(GTheme t) {
+		if (allThemes == null) {
+			return;
+		}
+
+		String nameToDelete = t.getName();
+		Iterator<GTheme> it = allThemes.iterator();
+		while (it.hasNext()) {
+			GTheme theme = it.next();
+			String name = theme.getName();
+			if (name.equals(nameToDelete)) {
+				it.remove();
+				return;
+			}
 		}
 	}
 
@@ -207,15 +250,17 @@ public class ApplicationThemeManager extends ThemeManager {
 		if (newValue.equals(currentValue)) {
 			return;
 		}
-		updateChangedValuesMap(currentValue, newValue);
 
-		currentValues.addFont(newValue);
+		update(() -> {
+			updateChangedValuesMap(currentValue, newValue);
+			currentValues.addFont(newValue);
 
-		// update all java LookAndFeel fonts affected by this changed
-		String id = newValue.getId();
-		Set<String> changedFontIds = findChangedJavaFontIds(id);
-		lookAndFeelManager.fontsChanged(changedFontIds);
-		notifyThemeChanged(new FontChangedThemeEvent(currentValues, newValue));
+			// update all java LookAndFeel fonts affected by this changed
+			String id = newValue.getId();
+			Set<String> changedFontIds = findChangedJavaFontIds(id);
+			lookAndFeelManager.fontsChanged(changedFontIds);
+			notifyThemeChanged(new FontChangedThemeEvent(currentValues, newValue));
+		});
 	}
 
 	@Override
@@ -224,10 +269,13 @@ public class ApplicationThemeManager extends ThemeManager {
 		if (newValue.equals(currentValue)) {
 			return;
 		}
-		updateChangedValuesMap(currentValue, newValue);
-		currentValues.addColor(newValue);
-		notifyThemeChanged(new ColorChangedThemeEvent(currentValues, newValue));
-		lookAndFeelManager.colorsChanged();
+
+		update(() -> {
+			updateChangedValuesMap(currentValue, newValue);
+			currentValues.addColor(newValue);
+			notifyThemeChanged(new ColorChangedThemeEvent(currentValues, newValue));
+			lookAndFeelManager.colorsChanged();
+		});
 	}
 
 	@Override
@@ -236,17 +284,18 @@ public class ApplicationThemeManager extends ThemeManager {
 		if (newValue.equals(currentValue)) {
 			return;
 		}
-		updateChangedValuesMap(currentValue, newValue);
 
-		currentValues.addIcon(newValue);
+		update(() -> {
+			updateChangedValuesMap(currentValue, newValue);
+			currentValues.addIcon(newValue);
 
-		// now update the ui
-		// update all java LookAndFeel icons affected by this changed
-		String id = newValue.getId();
-		Set<String> changedIconIds = findChangedJavaIconIds(id);
-		Icon newIcon = newValue.get(currentValues);
-		lookAndFeelManager.iconsChanged(changedIconIds, newIcon);
-		notifyThemeChanged(new IconChangedThemeEvent(currentValues, newValue));
+			// update all java LookAndFeel icons affected by this changed
+			String id = newValue.getId();
+			Set<String> changedIconIds = findChangedJavaIconIds(id);
+			Icon newIcon = newValue.get(currentValues);
+			lookAndFeelManager.iconsChanged(changedIconIds, newIcon);
+			notifyThemeChanged(new IconChangedThemeEvent(currentValues, newValue));
+		});
 	}
 
 	/**
@@ -296,6 +345,11 @@ public class ApplicationThemeManager extends ThemeManager {
 	@Override
 	public void registerFont(Component component, String fontId) {
 		lookAndFeelManager.registerFont(component, fontId);
+	}
+
+	@Override
+	public void registerFont(Component component, String fontId, int fontStyle) {
+		lookAndFeelManager.registerFont(component, fontId, fontStyle);
 	}
 
 	private void installFlatLookAndFeels() {

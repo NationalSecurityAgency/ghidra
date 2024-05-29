@@ -118,4 +118,8 @@ class ArrayDBAdapterV1 extends ArrayDBAdapter {
 		return table.findRecords(new LongField(categoryID), V1_ARRAY_CAT_COL);
 	}
 
+	@Override
+	public int getRecordCount() {
+		return table.getRecordCount();
+	}
 }

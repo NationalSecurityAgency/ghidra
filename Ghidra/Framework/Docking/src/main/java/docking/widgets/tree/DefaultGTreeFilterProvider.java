@@ -17,6 +17,7 @@ package docking.widgets.tree;
 
 import java.awt.BorderLayout;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
 
@@ -45,13 +46,34 @@ public class DefaultGTreeFilterProvider implements GTreeFilterProvider {
 	private JPanel filterPanel;
 	private FilterTransformer<GTreeNode> dataTransformer = new DefaultGTreeDataTransformer();
 
-	private String preferenceKey;
 	private boolean optionsSet;
 
 	public DefaultGTreeFilterProvider(GTree gTree) {
 		this.gTree = gTree;
 		filterFactory = new GTreeFilterFactory(new FilterOptions());
 		filterPanel = createFilterPanel();
+	}
+
+	@Override
+	public GTreeFilterProvider copy(GTree newTree) {
+		DefaultGTreeFilterProvider newProvider = new DefaultGTreeFilterProvider(newTree);
+
+		FilterOptions existingOptions = filterFactory.getFilterOptions();
+		newProvider.setFilterOptions(existingOptions);
+
+		String existingText = filterField.getText();
+		newProvider.setFilterText(existingText);
+
+		if (!filterField.isEnabled()) {
+			newProvider.setEnabled(false);
+		}
+
+		String accessibleNamePrefix = filterField.getAccessibleNamePrefix();
+		if (accessibleNamePrefix != null) {
+			newProvider.setAccessibleNamePrefix(accessibleNamePrefix);
+		}
+
+		return newProvider;
 	}
 
 	@Override
@@ -72,7 +94,31 @@ public class DefaultGTreeFilterProvider implements GTreeFilterProvider {
 		filterField.setEnabled(enabled);
 	}
 
+	@Override
+	public void setAccessibleNamePrefix(String namePrefix) {
+		filterField.setAccessibleNamePrefix(namePrefix);
+
+		String buttonNamePrefix = namePrefix + " Filter Options";
+		filterStateButton.setName(buttonNamePrefix + " Button");
+		AccessibleContext context = filterStateButton.getAccessibleContext();
+
+		// Don't add "Button" to prefix because screen readers reads the name followed by the role,
+		// which in this case, is "button"
+		context.setAccessibleName(buttonNamePrefix);
+
+		// Setting the accessible description to empty string prevents it from reading any tooltips
+		// on the button when the button gets focus. These buttons tend to have particularly large
+		// tooltips which seem excessive to read to the user every time they get focus. We may need
+		// to revisit this decision.
+		context.setAccessibleDescription("");
+	}
+
 	private void updateModelFilter() {
+
+		FilterOptions filterOptions = filterFactory.getFilterOptions();
+		filterStateButton.setIcon(filterOptions.getFilterStateIcon());
+		filterStateButton.setToolTipText(filterOptions.getFilterDescription());
+
 		gTree.filterChanged();
 	}
 
@@ -82,7 +128,7 @@ public class DefaultGTreeFilterProvider implements GTreeFilterProvider {
 
 		DockingWindowManager dwm = DockingWindowManager.getInstance(gTree.getJTree());
 		if (dwm != null) {
-			dwm.putPreferenceState(preferenceKey, preferenceState);
+			dwm.putPreferenceState(gTree.getPreferenceKey(), preferenceState);
 		}
 	}
 
@@ -93,10 +139,12 @@ public class DefaultGTreeFilterProvider implements GTreeFilterProvider {
 		updateModelFilter();
 	}
 
+	public FilterOptions getFilterOptions() {
+		return filterFactory.getFilterOptions();
+	}
+
 	@Override
-	public void loadFilterPreference(DockingWindowManager windowManager,
-			String uniquePreferenceKey) {
-		preferenceKey = uniquePreferenceKey;
+	public void loadFilterPreference(DockingWindowManager windowManager) {
 		if (optionsSet) {  // if the options were specifically set, don't restore saved values
 			return;
 		}
@@ -105,12 +153,12 @@ public class DefaultGTreeFilterProvider implements GTreeFilterProvider {
 			return;
 		}
 
-		PreferenceState preferenceState = windowManager.getPreferenceState(preferenceKey);
-		if (preferenceState == null) {
+		PreferenceState state = windowManager.getPreferenceState(gTree.getPreferenceKey());
+		if (state == null) {
 			return;
 		}
 
-		Element xmlElement = preferenceState.getXmlElement(FILTER_STATE);
+		Element xmlElement = state.getXmlElement(FILTER_STATE);
 		if (xmlElement != null) {
 			FilterOptions filterOptions = FilterOptions.restoreFromXML(xmlElement);
 			filterFactory = new GTreeFilterFactory(filterOptions);
@@ -136,10 +184,6 @@ public class DefaultGTreeFilterProvider implements GTreeFilterProvider {
 			FilterOptions newFilterOptions = dialog.getResultFilterOptions();
 			if (newFilterOptions != null) {
 				filterFactory = new GTreeFilterFactory(newFilterOptions);
-
-				filterStateButton.setIcon(newFilterOptions.getFilterStateIcon());
-				filterStateButton.setToolTipText(newFilterOptions.getFilterDescription());
-
 				saveFilterState();
 				updateModelFilter();
 			}

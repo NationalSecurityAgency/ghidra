@@ -289,12 +289,12 @@ public class ToolTipUtils {
 		}
 		buffy.append(friendlyEncodeHTML(function.getReturnType().getName()));
 		buffy.append(HTML_SPACE);
-		
+
 		String callingConvention = function.getCallingConventionName();
 		if (callingConvention.equals(Function.DEFAULT_CALLING_CONVENTION_STRING)) {
 			callingConvention = function.getCallingConvention().getName();
 		}
-		if (!callingConvention.equals(Function.UNKNOWN_CALLING_CONVENTION_STRING)) {
+		if (!Function.UNKNOWN_CALLING_CONVENTION_STRING.equals(callingConvention)) {
 			String ccHtml = friendlyEncodeHTML(callingConvention);
 			if (function.hasUnknownCallingConventionName()) {
 				ccHtml = colorString(Color.RED, ccHtml);
@@ -302,7 +302,7 @@ public class ToolTipUtils {
 			buffy.append(ccHtml);
 			buffy.append(HTML_SPACE);
 		}
-		
+
 		String functionName = StringUtilities.trimMiddle(function.getName(), LINE_LENGTH);
 		buffy.append(colorString(FunctionColors.NAME, friendlyEncodeHTML(functionName)));
 		buffy.append(HTML_SPACE).append("(");

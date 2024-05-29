@@ -20,10 +20,13 @@ import java.awt.Font;
 import java.beans.PropertyEditor;
 import java.io.File;
 import java.util.*;
+import java.util.function.Supplier;
 
 import javax.swing.KeyStroke;
 
 import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
+import utilities.util.reflection.ReflectionUtilities;
 
 public interface Options {
 	public static final char DELIMITER = '.';
@@ -108,12 +111,12 @@ public interface Options {
 	/**
 	 * Registers an option with a description, help location, and a default value without specifying
 	 * the option type.  This form requires that the default value not be null so that the option
-	 * type can be inferred from the default value. 
+	 * type can be inferred from the default value.
 	 * <P>
 	 * Note, this method should not be used for
 	 * colors and font as doing so will result in those colors and fonts becoming disconnected
-	 * to the current theme. Instead use 
-	 * 
+	 * to the current theme. Instead use
+	 *
 	 * {@link #registerThemeColorBinding(String, String, HelpLocation, String)} or
 	 * {@link #registerThemeFontBinding(String, String, HelpLocation, String)}.
 	 * @param optionName the name of the option being registered.
@@ -133,10 +136,10 @@ public interface Options {
 	 * <P>
 	 * Note, this method should not be used for
 	 * colors and font as doing so will result in those colors and fonts becoming disconnected
-	 * to the current theme. Instead use 
+	 * to the current theme. Instead use
 	 * {@link #registerThemeColorBinding(String, String, HelpLocation, String)} or
 	 * {@link #registerThemeFontBinding(String, String, HelpLocation, String)}.
-	 * 
+	 *
 	 * @param optionName the name of the option being registered.
 	 * @param type the OptionType for this options.
 	 * @param defaultValue the defaultValue for the option. In this version of the method, the default
@@ -153,22 +156,54 @@ public interface Options {
 	 * <P>
 	 * Note, this method should not be used for
 	 * colors and font as doing so will result in those colors and fonts becoming disconnected
-	 * to the current theme. Instead use 
+	 * to the current theme. Instead use
 	 * {@link #registerThemeColorBinding(String, String, HelpLocation, String)} or
 	 * {@link #registerThemeFontBinding(String, String, HelpLocation, String)}.
-	 * 
+	 * <P>
+	 * Note: we use a <i>supplier</i> of a custom editor, instead of a custom editor, to avoid
+	 * creating {@link PropertyEditor}s until needed.  This allows us to use the same API in both
+	 * GUI mode and headless mode.  If GUI property editors are created in headless mode, exceptions
+	 * may be thrown.  This API will not use the supplier when in headless mode, this avoiding the
+	 * creation of GUI components.  For this to work correctly, clients using custom property
+	 * editors must defer construction of the editor until the supplier is called.
+	 *
 	 * @param optionName the name of the option being registered.
 	 * @param type the OptionType for this options.
 	 * @param defaultValue the defaultValue for the option. In this version of the method, the default
 	 * value may be null.
 	 * @param help the HelpLocation for this option.
 	 * @param description a description of the option.
-	 * @param editor an optional custom editor for this property. Note if the option is a custom option,
-	 * then the property editor can't be null;
+	 * @param editor an optional supplier of a custom editor for this property. Note if the option
+	 * is a custom option, then the property editor can't be null;
 	 * @throws IllegalStateException if the options is a custom option and the editor is null.
 	 */
 	public void registerOption(String optionName, OptionType type, Object defaultValue,
-			HelpLocation help, String description, PropertyEditor editor);
+			HelpLocation help, String description, Supplier<PropertyEditor> editor);
+
+	/**
+	 * Use instead
+	 * {@link #registerOption(String, OptionType, Object, HelpLocation, String, Supplier)}
+	 * @param optionName the name of the option being registered.
+	 * @param type the OptionType for this options.
+	 * @param defaultValue the defaultValue for the option. In this version of the method, the default
+	 * value may be null.
+	 * @param help the HelpLocation for this option.
+	 * @param description a description of the option.
+	 * @param editor an optional supplier of a custom editor for this property. Note if the option
+	 * is a custom option, then the property editor can't be null;
+	 * @deprecated Use instead
+	 * {@link #registerOption(String, OptionType, Object, HelpLocation, String, Supplier)}
+	 */
+	@Deprecated(since = "11.0.2", forRemoval = true)
+	default public void registerOption(String optionName, OptionType type, Object defaultValue,
+			HelpLocation help, String description, PropertyEditor editor) {
+		String caller = ReflectionUtilities.getClassNameOlderThan(Options.class);
+		String message = """
+				Using deprecated call to registerOption(PropertyEditor) from % for option %s
+				""".formatted(caller, optionName);
+		Msg.debug(this, message);
+		registerOption(optionName, type, defaultValue, help, description, () -> editor);
+	}
 
 	/**
 	 * Register/binds the option to a theme color id. Changing the option's color via the options
@@ -185,7 +220,7 @@ public interface Options {
 	 * Register/binds the option to a theme font id. Changing the option's font via the options
 	 * Gui will result in directly changing the theme color of the given font id.
 	 * @param optionName the name of the font option
-	 * @param fontId the theme color id whose color value is changed when the option's color 
+	 * @param fontId the theme color id whose color value is changed when the option's color
 	 * is changed
 	 * @param help the HelpLocation for this option
 	 * @param description a description of the option
@@ -194,10 +229,34 @@ public interface Options {
 			String description);
 
 	/**
-	 * Register the options editor that will handle the editing for all the options or a sub group of options.
-	 * @param editor the custom editor panel to be used to edit the options or sub group of options.
+	 * Register the options editor that will handle the editing for all the options or a sub-group
+	 * of options.
+	 * <P>
+	 * Note: we use a <i>supplier</i> of a custom editor, instead of a custom editor, to avoid
+	 * creating {@link PropertyEditor}s until needed.  This allows us to use the same API in both
+	 * GUI mode and headless mode.  If GUI property editors are created in headless mode, exceptions
+	 * may be thrown.  This API will not use the supplier when in headless mode, this avoiding the
+	 * creation of GUI components.  For this to work correctly, clients using custom property
+	 * editors must defer construction of the editor until the supplier is called.
+	 * @param editor a supplier for the custom editor panel to be used to edit the options or
+	 * sub-group of options.
 	 */
-	public void registerOptionsEditor(OptionsEditor editor);
+	public void registerOptionsEditor(Supplier<OptionsEditor> editor);
+
+	/**
+	 * Use instead {@link #registerOptionsEditor(Supplier)}
+	 * @param editor the editor
+	 * @deprecated Use instead {@link #registerOptionsEditor(Supplier)}
+	 */
+	@Deprecated(since = "11.0.2", forRemoval = true)
+	default public void registerOptionsEditor(OptionsEditor editor) {
+		String caller = ReflectionUtilities.getClassNameOlderThan(Options.class);
+		String message = """
+				Using deprecated call to registerOption(OptionsEditor) from % for options %s
+				""".formatted(caller, getName());
+		Msg.debug(this, message);
+		registerOptionsEditor(() -> editor);
+	}
 
 	/**
 	 * Get the editor that will handle editing all the values in this options or sub group of options.
@@ -333,15 +392,26 @@ public interface Options {
 	public Font getFont(String optionName, Font defaultValue);
 
 	/**
-	 * Get the KeyStrokg for the given action name.
+	 * Get the KeyStroke for the given action name.
 	 * @param optionName the option name
 	 * @param defaultValue value that is stored and returned if there is no
 	 * option with the given name
 	 * @return KeyStroke option
 	 * @throws IllegalArgumentException is a option exists with the given
 	 * name but it is not a KeyStroke
+	 * @deprecated use {@link #getActionTrigger(String, ActionTrigger)} instead
 	 */
+	@Deprecated(since = "11.1", forRemoval = true)
 	public KeyStroke getKeyStroke(String optionName, KeyStroke defaultValue);
+
+	/**
+	 * Get the {@link ActionTrigger} for the given full action name.
+	 * @param optionName the action name
+	 * @param defaultValue value that is stored and returned if there is no
+	 * option with the given name
+	 * @return the action trigger
+	 */
+	public ActionTrigger getActionTrigger(String optionName, ActionTrigger defaultValue);
 
 	/**
 	 * Get the string value for the given option name.
@@ -448,8 +518,19 @@ public interface Options {
 	 * @param value KeyStroke to set
 	 * @throws IllegalArgumentException if a option with the given
 	 * name already exists, but it is not a KeyStroke
+	 * @deprecated use {@link #setActionTrigger(String, ActionTrigger)} instead
 	 */
+	@Deprecated(since = "11.1", forRemoval = true)
 	public void setKeyStroke(String optionName, KeyStroke value);
+
+	/**
+	 * Sets the action trigger value for the option
+	 * @param optionName name of the option
+	 * @param value action trigger to set
+	 * @throws IllegalArgumentException if a option with the given
+	 * name already exists, but it is not an action trigger
+	 */
+	public void setActionTrigger(String optionName, ActionTrigger value);
 
 	/**
 	 * Set the String value for the option.
@@ -511,14 +592,14 @@ public interface Options {
 
 	/**
 	 * Restores <b>all</b> options contained herein to their default values.
-	 * 
+	 *
 	 * @see #restoreDefaultValue(String)
 	 */
 	public void restoreDefaultValues();
 
 	/**
 	 * Restores the option denoted by the given name to its default value.
-	 * 
+	 *
 	 * @param optionName The name of the option to restore
 	 * @see #restoreDefaultValues()
 	 */
@@ -526,11 +607,11 @@ public interface Options {
 
 	/**
 	 * Returns a Options object that is a sub-options of this options.
-	 * 
+	 *
 	 * <p>Note: the option path can have {@link Options#DELIMITER} characters which will be
 	 * used to create a hierarchy with each element in the path resulting in sub-option of the
 	 * previous path element.
-	 * 
+	 *
 	 * @param path the path for the sub-options object
 	 * @return an Options object that is a sub-options of this options
 	 */

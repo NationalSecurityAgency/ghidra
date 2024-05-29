@@ -33,6 +33,7 @@ public class ListPanel<T> extends JPanel {
 	private ListSelectionListener listSelectionListener;
 	private ActionListener doubleClickActionListener;
 	private MouseListener mouseListener;
+	private KeyListener keyListener;
 	private JScrollPane scrollpane;
 	private JList<T> list;
 
@@ -256,6 +257,14 @@ public class ListPanel<T> extends JPanel {
 		}
 		list.addMouseListener(l);
 		mouseListener = l;
+	}
+
+	public void setKeyListener(KeyListener l) {
+		if (keyListener != null) {
+			list.removeKeyListener(keyListener);
+		}
+		list.addKeyListener(l);
+		keyListener = l;
 	}
 
 	/**

@@ -23,6 +23,7 @@ import org.apache.commons.collections4.map.LazySortedMap;
 
 import db.*;
 import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.*;
 import ghidra.program.database.external.ExternalManagerDB;
 import ghidra.program.database.map.AddressMap;
@@ -33,7 +34,7 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.*;
-import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.Lock;
 import ghidra.util.Msg;
 import ghidra.util.exception.*;
@@ -71,7 +72,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 	 * @throws IOException if a database io error occurs.
 	 * @throws VersionException if the database version is different from the expected version
 	 */
-	public ReferenceDBManager(DBHandle dbHandle, AddressMap addrMap, int openMode, Lock lock,
+	public ReferenceDBManager(DBHandle dbHandle, AddressMap addrMap, OpenMode openMode, Lock lock,
 			TaskMonitor monitor) throws CancelledException, IOException, VersionException {
 		this.addrMap = addrMap;
 		this.lock = lock;
@@ -87,7 +88,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		}
 		try {
 			oldStackRefAdapter = OldStackRefDBAdpater.getAdapter(dbHandle, openMode, monitor);
-			if (openMode != DBConstants.UPGRADE) {
+			if (openMode != OpenMode.UPGRADE) {
 				// Upgrade required
 				versionExc = (new VersionException(true)).combine(versionExc);
 			}
@@ -100,7 +101,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		}
 	}
 
-	private void initializeAdapters(DBHandle handle, int openMode, TaskMonitor monitor)
+	private void initializeAdapters(DBHandle handle, OpenMode openMode, TaskMonitor monitor)
 			throws VersionException, CancelledException, IOException {
 		VersionException versionExc = null;
 		try {
@@ -118,7 +119,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		if (versionExc != null) {
 			throw versionExc;
 		}
-		if (openMode == DBConstants.UPGRADE) {
+		if (openMode == OpenMode.UPGRADE) {
 			// Delete old table which is no longer used
 			handle.deleteTable("Memory References");
 		}
@@ -127,13 +128,13 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 	@Override
 	public void setProgram(ProgramDB program) {
 		this.program = program;
-		symbolMgr = (SymbolManager) program.getSymbolTable();
+		symbolMgr = program.getSymbolTable();
 	}
 
 	@Override
-	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
+	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		if (openMode == DBConstants.UPGRADE) {
+		if (openMode == OpenMode.UPGRADE) {
 
 			// Eliminate old stack references table
 			processOldAdapterStackRefs(monitor);
@@ -543,8 +544,8 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		}
 
 		if (badOffsetReference) {
-			Msg.warn(this, "Offset Reference from " + fromAddr +
-				" produces bad Xref into EXTERNAL block");
+			Msg.warn(this,
+				"Offset Reference from " + fromAddr + " produces bad Xref into EXTERNAL block");
 		}
 
 		try {
@@ -659,8 +660,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 	public Variable getReferencedVariable(Reference reference) {
 		RefType refType = reference.getReferenceType();
 		return program.getFunctionManager()
-				.getReferencedVariable(reference.getFromAddress(),
-					reference.getToAddress(), 0,
+				.getReferencedVariable(reference.getFromAddress(), reference.getToAddress(), 0,
 					!refType.isWrite() && (refType.isRead() || refType.isIndirect()));
 	}
 
@@ -742,8 +742,8 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		return new Scope(var.getFirstUseOffset(), outOfScopeOffset);
 	}
 
-	private List<Reference> getScopedVariableReferences(VariableStorage storage,
-			Function function, Scope scope) {
+	private List<Reference> getScopedVariableReferences(VariableStorage storage, Function function,
+			Scope scope) {
 
 		SortedMap<Address, List<Reference>> dataReferences =
 			functionCacher.getFunctionDataReferences();
@@ -774,10 +774,8 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		int outOfScopeOffset = scope.getOutOfScopeOffset();
 
 		SortedMap<Address, List<Reference>> subMap = dataReferences.tailMap(minStorageAddr);
-		Iterator<List<Reference>> refListIter = subMap.values().iterator();
-		while (refListIter.hasNext()) {
+		for (List<Reference> refList : subMap.values()) {
 
-			List<Reference> refList = refListIter.next();
 			for (Reference ref : refList) {
 
 				if (ref.getToAddress().compareTo(maxStorageAddr) > 0) {
@@ -1265,8 +1263,8 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 			catch (IOException e) {
 				program.dbError(e);
 			}
-			program.setObjChanged(ChangeManager.DOCR_SYMBOL_ASSOCIATION_ADDED, ref.getFromAddress(),
-				ref, null, s);
+			program.setObjChanged(ProgramEvent.SYMBOL_ASSOCIATION_ADDED, ref.getFromAddress(), ref,
+				null, s);
 		}
 		finally {
 			lock.release();
@@ -1278,8 +1276,8 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		lock.acquire();
 		try {
 			setSymbolID(ref, -1);
-			program.setObjChanged(ChangeManager.DOCR_SYMBOL_ASSOCIATION_REMOVED,
-				ref.getFromAddress(), ref, null, null);
+			program.setObjChanged(ProgramEvent.SYMBOL_ASSOCIATION_REMOVED, ref.getFromAddress(),
+				ref, null, null);
 		}
 		catch (IOException e) {
 			program.dbError(e);
@@ -1604,11 +1602,11 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 	}
 
 	private void externalEntryPointAdded(Address addr) {
-		program.setChanged(ChangeManager.DOCR_EXTERNAL_ENTRY_POINT_ADDED, addr, addr, null, null);
+		program.setChanged(ProgramEvent.EXTERNAL_ENTRY_ADDED, addr, addr, null, null);
 	}
 
 	private void externalEntryPointRemoved(Address addr) {
-		program.setChanged(ChangeManager.DOCR_EXTERNAL_ENTRY_POINT_REMOVED, addr, addr, null, null);
+		program.setChanged(ProgramEvent.EXTERNAL_ENTRY_REMOVED, addr, addr, null, null);
 	}
 
 	private RefList getFromRefs(Address from) {
@@ -1719,7 +1717,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 			addr = null;
 		}
 		functionCacher.clearCache();
-		program.setObjChanged(ChangeManager.DOCR_MEM_REFERENCE_ADDED, addr, ref, null, ref);
+		program.setObjChanged(ProgramEvent.REFERENCE_ADDED, addr, ref, null, ref);
 		if (ref.getReferenceType() == RefType.FALL_THROUGH) {
 			program.getCodeManager().fallThroughChanged(ref.getFromAddress(), ref);
 		}
@@ -1727,8 +1725,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 
 	private void referenceRemoved(Reference ref) {
 		functionCacher.clearCache();
-		program.setObjChanged(ChangeManager.DOCR_MEM_REFERENCE_REMOVED, ref.getFromAddress(), ref,
-			ref, null);
+		program.setObjChanged(ProgramEvent.REFERENCE_REMOVED, ref.getFromAddress(), ref, ref, null);
 		if (ref.getReferenceType() == RefType.FALL_THROUGH) {
 			program.getCodeManager().fallThroughChanged(ref.getFromAddress(), null);
 		}
@@ -1736,7 +1733,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 
 	private void referenceTypeChanged(Reference ref, RefType oldType, RefType newType) {
 		functionCacher.clearCache();
-		program.setObjChanged(ChangeManager.DOCR_MEM_REF_TYPE_CHANGED, ref.getFromAddress(), ref,
+		program.setObjChanged(ProgramEvent.REFERENCE_TYPE_CHANGED, ref.getFromAddress(), ref,
 			oldType, newType);
 		if (oldType == RefType.FALL_THROUGH) {
 			program.getCodeManager().fallThroughChanged(ref.getFromAddress(), null);
@@ -1745,12 +1742,12 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 
 	private void referencePrimaryChanged(Reference ref) {
 		if (ref.isPrimary()) {
-			program.setObjChanged(ChangeManager.DOCR_MEM_REF_PRIMARY_SET, ref.getFromAddress(), ref,
+			program.setObjChanged(ProgramEvent.REFERNCE_PRIMARY_SET, ref.getFromAddress(), ref,
 				null, ref);
 		}
 		else {
-			program.setObjChanged(ChangeManager.DOCR_MEM_REF_PRIMARY_REMOVED, ref.getFromAddress(),
-				ref, ref, null);
+			program.setObjChanged(ProgramEvent.REFERENCE_PRIMARY_REMOVED, ref.getFromAddress(), ref,
+				ref, null);
 		}
 	}
 
@@ -1916,9 +1913,8 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 		Reference memRef;
 		if (ref.isOffsetReference()) {
 			OffsetReference offRef = (OffsetReference) ref;
-			memRef =
-				addOffsetMemReference(from, offRef.getBaseAddress(), true, offRef.getOffset(), type,
-				sourceType, opIndex);
+			memRef = addOffsetMemReference(from, offRef.getBaseAddress(), true, offRef.getOffset(),
+				type, sourceType, opIndex);
 		}
 		else if (ref.isShiftedReference()) {
 			ShiftedReference shiftRef = (ShiftedReference) ref;

@@ -20,6 +20,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import ghidra.app.util.bin.ByteProvider;
+import ghidra.framework.Application;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.CryptoException;
@@ -138,7 +139,7 @@ public abstract class GFileSystemBase implements GFileSystem {
 	protected void debug(byte[] bytes, String fileName) {
 		try {
 			if (SystemUtilities.isInDevelopmentMode()) {
-				File file = File.createTempFile(fileName, ".ghidra.tmp");
+				File file = Application.createTempFile(fileName, ".ghidra.tmp");
 				OutputStream out = new FileOutputStream(file);
 				try {
 					out.write(bytes);

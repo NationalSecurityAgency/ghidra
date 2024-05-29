@@ -21,6 +21,7 @@ import java.util.*;
 import org.apache.commons.lang3.StringUtils;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.framework.store.FileSystem;
 import ghidra.program.database.ManagerDB;
 import ghidra.program.database.ProgramDB;
@@ -66,7 +67,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 	 * @throws IOException if a database io error occurs.
 	 * @throws VersionException if the database version does not match the expected version
 	 */
-	public ExternalManagerDB(DBHandle handle, AddressMap addrMap, int openMode, Lock lock,
+	public ExternalManagerDB(DBHandle handle, AddressMap addrMap, OpenMode openMode, Lock lock,
 			TaskMonitor monitor) throws CancelledException, IOException, VersionException {
 
 		this.addrMap = addrMap;
@@ -74,7 +75,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		initializeOldAdapters(handle, openMode, monitor);
 	}
 
-	private void initializeOldAdapters(DBHandle handle, int openMode, TaskMonitor monitor)
+	private void initializeOldAdapters(DBHandle handle, OpenMode openMode, TaskMonitor monitor)
 			throws VersionException, CancelledException, IOException {
 		try {
 			// Try old adapters needed for upgrade
@@ -84,7 +85,7 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 		catch (VersionException ve) {
 			//ignore
 		}
-		if (oldNameAdapter != null && oldExtRefAdapter != null && openMode != DBConstants.UPGRADE) {
+		if (oldNameAdapter != null && oldExtRefAdapter != null && openMode != OpenMode.UPGRADE) {
 			throw new VersionException(true);
 		}
 	}
@@ -98,9 +99,9 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 	}
 
 	@Override
-	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
+	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		if (openMode != DBConstants.UPGRADE) {
+		if (openMode != OpenMode.UPGRADE) {
 			return;
 		}
 		if (upgradeOldExtRefAdapter(monitor)) {
@@ -226,7 +227,8 @@ public class ExternalManagerDB implements ManagerDB, ExternalManager {
 
 	@Override
 	public ExternalLocation addExtLocation(Namespace extParentNamespace, String extLabel,
-			Address extAddr, SourceType sourceType, boolean reuseExisting) throws InvalidInputException {
+			Address extAddr, SourceType sourceType, boolean reuseExisting)
+			throws InvalidInputException {
 		lock.acquire();
 		try {
 			return addExtLocation(extParentNamespace, extLabel, extAddr, false, sourceType,

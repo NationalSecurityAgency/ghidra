@@ -25,7 +25,7 @@ import ghidra.util.table.column.AbstractGhidraColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
 
 /**
- * Column for the ProjectDataTable (Frontend) to display the endianess of a program.
+ * Column for the ProjectDataTable (Frontend) to display the endianness of a program.
  */
 public class EndianProjectDataColumn extends ProjectDataColumn<Endian> {
 

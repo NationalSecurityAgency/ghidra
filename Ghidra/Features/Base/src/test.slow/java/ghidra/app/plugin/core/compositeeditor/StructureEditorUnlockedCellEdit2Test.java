@@ -27,8 +27,7 @@ import org.junit.Test;
 import generic.test.ConcurrentTestExceptionHandler;
 import ghidra.program.model.data.*;
 
-public class StructureEditorUnlockedCellEdit2Test
-		extends AbstractStructureEditorTest {
+public class StructureEditorUnlockedCellEdit2Test extends AbstractStructureEditorTest {
 
 	@Test
 	public void testF2EditKey() throws Exception {
@@ -764,7 +763,7 @@ public class StructureEditorUnlockedCellEdit2Test
 		enter();
 		assertIsEditingField(rowNum, colNum);
 
-		assertEquals("simpleStructure doesn't fit within 4 bytes, need 29 bytes",
+		assertEquals("simpleStructure doesn't fit within 4 bytes, need 12 bytes",
 			model.getStatus());
 
 		escape();
@@ -778,9 +777,9 @@ public class StructureEditorUnlockedCellEdit2Test
 
 		DataType newDt = getDataType(22);
 		assertEquals("simpleStructure", newDt.getDisplayName());
-		assertEquals(29, newDt.getLength());
-		assertEquals(29, getLength(22));
-		assertEquals(350, model.getLength());
+		assertEquals(12, newDt.getLength());
+		assertEquals(12, getLength(22));
+		assertEquals(333, model.getLength());
 	}
 
 	@Override

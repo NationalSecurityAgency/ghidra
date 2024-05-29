@@ -24,7 +24,7 @@ import ghidra.util.HelpLocation;
 public class ListingCodeComparisonOptions {
 
 	public static final String OPTIONS_CATEGORY_NAME = "Listing Code Comparison";
-	public static final String HELP_TOPIC = "Listing Code Comparison";
+	public static final String HELP_TOPIC = "FunctionComparison";
 
 	private static final String BYTE_DIFFS_COLOR_KEY = "Byte Differences Color";
 	private static final String MNEMONIC_DIFFS_COLOR_KEY = "Mnemonic Differences Color";
@@ -101,7 +101,7 @@ public class ListingCodeComparisonOptions {
 	}
 
 	public void initializeOptions(ToolOptions options) {
-		HelpLocation help = new HelpLocation(HELP_TOPIC, "Options");
+		HelpLocation help = new HelpLocation(HELP_TOPIC, "Listing Code Comparison Options");
 		options.setOptionsHelpLocation(help);
 
 		options.registerThemeColorBinding(BYTE_DIFFS_COLOR_KEY, "color.bg.listing.comparison.bytes",

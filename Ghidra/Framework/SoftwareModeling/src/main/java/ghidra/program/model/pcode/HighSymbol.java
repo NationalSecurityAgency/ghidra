@@ -22,6 +22,7 @@ import java.io.IOException;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.MutabilitySettingsDefinition;
 import ghidra.program.model.lang.DynamicVariableStorage;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Namespace;
@@ -314,10 +315,14 @@ public class HighSymbol {
 	}
 
 	/**
-	 * @return true if the symbol's value is considered read-only (by the decompiler)
+	 * Return one of
+	 *    - MutabilitySettingsDefinition.NORMAL
+	 *    - MutabilitySettingsDefinition.VOLATILE
+	 *    - MutabilitySettingsDefinition.CONSTANT
+	 * @return the mutability setting
 	 */
-	public boolean isReadOnly() {
-		return entryList[0].isReadOnly();
+	public int getMutability() {
+		return entryList[0].getMutability();
 	}
 
 	/**
@@ -384,9 +389,11 @@ public class HighSymbol {
 		encoder.writeString(ATTRIB_NAME, name);
 		encoder.writeBool(ATTRIB_TYPELOCK, typelock);
 		encoder.writeBool(ATTRIB_NAMELOCK, namelock);
-		encoder.writeBool(ATTRIB_READONLY, isReadOnly());
-		boolean isVolatile = entryList[0].isVolatile();
-		if (isVolatile) {
+		int mutability = getMutability();
+		if (mutability == MutabilitySettingsDefinition.CONSTANT) {
+			encoder.writeBool(ATTRIB_READONLY, true);
+		}
+		else if (mutability == MutabilitySettingsDefinition.VOLATILE) {
 			encoder.writeBool(ATTRIB_VOLATILE, true);
 		}
 		if (isIsolated()) {

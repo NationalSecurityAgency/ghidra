@@ -27,7 +27,7 @@ import ghidra.program.model.data.*;
 /**
  * A {@link GoType} structure that defines a function type.
  */
-@StructureMapping(structureName = "runtime.functype")
+@StructureMapping(structureName = {"runtime.functype", "internal/abi.FuncType"})
 public class GoFuncType extends GoType {
 
 	/**

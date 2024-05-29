@@ -19,11 +19,9 @@
  */
 package ghidra.app.plugin.processors.sleigh;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import static ghidra.pcode.utils.SlaFormat.*;
+
+import java.util.*;
 
 import ghidra.app.plugin.processors.sleigh.pattern.DisjointPattern;
 import ghidra.app.plugin.processors.sleigh.pattern.PatternBlock;
@@ -31,13 +29,10 @@ import ghidra.app.plugin.processors.sleigh.symbol.SubtableSymbol;
 import ghidra.program.model.lang.UnknownInstructionException;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 /**
- * 
- *
  * A node in the decision tree for resolving a Constructor in 
  * a SubtableSymbol based on the InstructionContext
  */
@@ -224,33 +219,33 @@ public class DecisionNode {
 //		}
 //	}
 
-	public void restoreXml(XmlPullParser parser, DecisionNode par, SubtableSymbol sub) {
-		XmlElement el = parser.start("decision");
-//		parent = par;
-//		num = SpecXmlUtils.decodeInt(el.getAttributeValue("number"));
-		contextdecision = SpecXmlUtils.decodeBoolean(el.getAttribute("context"));
-		startbit = SpecXmlUtils.decodeInt(el.getAttribute("start"));
-		bitsize = SpecXmlUtils.decodeInt(el.getAttribute("size"));
+	public void decode(Decoder decoder, DecisionNode par, SubtableSymbol sub)
+			throws DecoderException {
+		int el = decoder.openElement(ELEM_DECISION);
+
+		contextdecision = decoder.readBool(ATTRIB_CONTEXT);
+		startbit = (int) decoder.readSignedInteger(ATTRIB_STARTBIT);
+		bitsize = (int) decoder.readSignedInteger(ATTRIB_SIZE);
 
 		ArrayList<Object> patlist = new ArrayList<>();
 		ArrayList<Object> conlist = new ArrayList<>();
 		ArrayList<Object> childlist = new ArrayList<>();
 //		num = 0;
-		XmlElement subel = parser.peek();
-		while (!subel.isEnd()) {
-			if (subel.getName().equals("pair")) {
-				XmlElement start = parser.start();
-				int id = SpecXmlUtils.decodeInt(subel.getAttribute("id"));
+		int subel = decoder.peekElement();
+		while (subel != 0) {
+			if (subel == ELEM_PAIR.id()) {
+				decoder.openElement();
+				int id = (int) decoder.readSignedInteger(ATTRIB_ID);
 				conlist.add(sub.getConstructor(id));
-				patlist.add(DisjointPattern.restoreDisjoint(parser));
-				parser.end(start);
+				patlist.add(DisjointPattern.decodeDisjoint(decoder));
+				decoder.closeElement(subel);
 			}
-			else if (subel.getName().equals("decision")) {
+			else if (subel == ELEM_DECISION.id()) {
 				DecisionNode subnode = new DecisionNode();
-				subnode.restoreXml(parser, this, sub);
+				subnode.decode(decoder, this, sub);
 				childlist.add(subnode);
 			}
-			subel = parser.peek();
+			subel = decoder.peekElement();
 		}
 		patternlist = new DisjointPattern[patlist.size()];
 		patlist.toArray(patternlist);
@@ -258,7 +253,7 @@ public class DecisionNode {
 		conlist.toArray(constructlist);
 		children = new DecisionNode[childlist.size()];
 		childlist.toArray(children);
-		parser.end(el);
+		decoder.closeElement(el);
 
 		unmodifiablePatternList = Collections.unmodifiableList(Arrays.asList(patternlist));
 		unmodifiableConstructorList = Collections.unmodifiableList(Arrays.asList(constructlist));

@@ -16,7 +16,6 @@
 package ghidra.app.cmd.label;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
@@ -25,7 +24,7 @@ import ghidra.util.exception.InvalidInputException;
 /**
  * Command to add a label.
  */
-public class AddLabelCmd implements Command {
+public class AddLabelCmd implements Command<Program> {
 	private Address addr;
 	private String name;
 	private Namespace namespace;
@@ -76,13 +75,9 @@ public class AddLabelCmd implements Command {
 		this(addr, name, null, source);
 	}
 
-	/**
-	 *
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		SymbolTable st = ((Program) obj).getSymbolTable();
+	public boolean applyTo(Program program) {
+		SymbolTable st = program.getSymbolTable();
 		if (namespace == null && useLocalNamespace) {
 			namespace = st.getNamespace(addr);
 		}
@@ -103,17 +98,11 @@ public class AddLabelCmd implements Command {
 
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
 	@Override
 	public String getStatusMsg() {
 		return errorMsg;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
 	@Override
 	public String getName() {
 		return "Add Label";

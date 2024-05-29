@@ -34,6 +34,7 @@ import javax.swing.tree.*;
 
 import org.junit.Assert;
 
+import ghidra.framework.ApplicationConfiguration;
 import ghidra.util.*;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.AssertException;
@@ -48,6 +49,18 @@ import utility.function.ExceptionalCallback;
  * should use AbstractGenericTest instead
  */
 public class AbstractGuiTest extends AbstractGenericTest {
+
+	@Override
+	protected ApplicationConfiguration createApplicationConfiguration() {
+		// A simple way to signal that Gui tests are not headless
+		return new ApplicationConfiguration() {
+			@Override
+			public boolean isHeadless() {
+				return false;
+			}
+		};
+	}
+
 	/**
 	 * Gets all windows in the system (including Frames).
 	 *
@@ -660,10 +673,24 @@ public class AbstractGuiTest extends AbstractGenericTest {
 	 * @param s the supplier
 	 * @return the value returned by the supplier
 	 */
-	public static <T> T runSwing(Supplier<T> s) {
+	public static <T> T getSwing(Supplier<T> s) {
 		AtomicReference<T> ref = new AtomicReference<>();
 		runSwing(() -> ref.set(s.get()));
 		return ref.get();
+	}
+
+	/**
+	 * Returns the value from the given {@link Supplier}, invoking the call in
+	 * the Swing thread. This is useful when you may have values that are being
+	 * changed on the Swing thread and you need the test thread to see the
+	 * changes.
+	 *
+	 * @param s the supplier
+	 * @return the value returned by the supplier
+	 * @see #getSwing(Supplier)
+	 */
+	public static <T> T runSwing(Supplier<T> s) {
+		return getSwing(s);
 	}
 
 	/**

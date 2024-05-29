@@ -26,7 +26,6 @@ import ghidra.app.util.bin.format.macho.dyld.DyldCacheHeader;
 import ghidra.app.util.bin.format.macho.dyld.DyldCacheMappingInfo;
 import ghidra.app.util.bin.format.macho.threadcommand.ThreadCommand;
 import ghidra.app.util.opinion.DyldCacheUtils.SplitDyldCache;
-import ghidra.util.Msg;
 
 /**
  * A factory used to create {@link LoadCommand}s 
@@ -50,113 +49,119 @@ public class LoadCommandFactory {
 	 */
 	public static LoadCommand getLoadCommand(BinaryReader reader, MachHeader header,
 			SplitDyldCache splitDyldCache) throws IOException, MachException {
+		long origIndex = reader.getPointerIndex();
 		int type = reader.peekNextInt();
-		switch (type) {
-			case LC_SEGMENT:
-				return new SegmentCommand(reader, header.is32bit());
-			case LC_SYMTAB:
-				return new SymbolTableCommand(reader,
-					getLinkerLoadCommandReader(reader, header, splitDyldCache), header);
-			case LC_SYMSEG:
-				return new SymbolCommand(reader);
-			case LC_THREAD:
-			case LC_UNIXTHREAD:
-				return new ThreadCommand(reader, header);
-			case LC_LOADFVMLIB:
-			case LC_IDFVMLIB:
-				return new FixedVirtualMemorySharedLibraryCommand(reader);
-			case LC_IDENT:
-				return new IdentCommand(reader);
-			case LC_FVMFILE:
-				return new FixedVirtualMemoryFileCommand(reader);
-			case LC_PREPAGE:
-				return new UnsupportedLoadCommand(reader, type);
-			case LC_DYSYMTAB:
-				return new DynamicSymbolTableCommand(reader,
-					getLinkerLoadCommandReader(reader, header, splitDyldCache), header);
-			case LC_LOAD_DYLIB:
-			case LC_ID_DYLIB:
-			case LC_LOAD_UPWARD_DYLIB:
-				return new DynamicLibraryCommand(reader);
-			case LC_LOAD_DYLINKER:
-			case LC_ID_DYLINKER:
-			case LC_DYLD_ENVIRONMENT:
-				return new DynamicLinkerCommand(reader);
-			case LC_PREBOUND_DYLIB:
-				return new PreboundDynamicLibraryCommand(reader);
-			case LC_ROUTINES:
-				return new RoutinesCommand(reader, header.is32bit());
-			case LC_SUB_FRAMEWORK:
-				return new SubFrameworkCommand(reader);
-			case LC_SUB_UMBRELLA:
-				return new SubUmbrellaCommand(reader);
-			case LC_SUB_CLIENT:
-				return new SubClientCommand(reader);
-			case LC_SUB_LIBRARY:
-				return new SubLibraryCommand(reader);
-			case LC_TWOLEVEL_HINTS:
-				return new TwoLevelHintsCommand(reader);
-			case LC_PREBIND_CKSUM:
-				return new PrebindChecksumCommand(reader);
-			case LC_LOAD_WEAK_DYLIB:
-				return new DynamicLibraryCommand(reader);
-			case LC_SEGMENT_64:
-				return new SegmentCommand(reader, header.is32bit());
-			case LC_ROUTINES_64:
-				return new RoutinesCommand(reader, header.is32bit());
-			case LC_UUID:
-				return new UuidCommand(reader);
-			case LC_RPATH:
-				return new RunPathCommand(reader);
-			case LC_CODE_SIGNATURE:
-				return new CodeSignatureCommand(reader,
-					getLinkerLoadCommandReader(reader, header, splitDyldCache));
-			case LC_SEGMENT_SPLIT_INFO:
-			case LC_OPTIMIZATION_HINT:
-			case LC_DYLIB_CODE_SIGN_DRS:
-				return new LinkEditDataCommand(reader,
-					getLinkerLoadCommandReader(reader, header, splitDyldCache));
-			case LC_REEXPORT_DYLIB:
-				return new DynamicLibraryCommand(reader);
-			case LC_ENCRYPTION_INFO:
-			case LC_ENCRYPTION_INFO_64:
-				return new EncryptedInformationCommand(reader, header.is32bit());
-			case LC_DYLD_INFO:
-			case LC_DYLD_INFO_ONLY:
-				return new DyldInfoCommand(reader,
-					getLinkerLoadCommandReader(reader, header, splitDyldCache), header);
-			case LC_VERSION_MIN_MACOSX:
-			case LC_VERSION_MIN_IPHONEOS:
-			case LC_VERSION_MIN_TVOS:
-			case LC_VERSION_MIN_WATCHOS:
-				return new VersionMinCommand(reader);
-			case LC_FUNCTION_STARTS:
-				return new FunctionStartsCommand(reader,
-					getLinkerLoadCommandReader(reader, header, splitDyldCache));
-			case LC_MAIN:
-				return new EntryPointCommand(reader);
-			case LC_DATA_IN_CODE:
-				return new DataInCodeCommand(reader,
-					getLinkerLoadCommandReader(reader, header, splitDyldCache));
-			case LC_SOURCE_VERSION:
-				return new SourceVersionCommand(reader);
-			case LC_LAZY_LOAD_DYLIB:
-				return new DynamicLibraryCommand(reader);
-			case LC_LINKER_OPTIONS:
-				return new LinkerOptionCommand(reader);
-			case LC_BUILD_VERSION:
-				return new BuildVersionCommand(reader);
-			case LC_DYLD_EXPORTS_TRIE:
-				return new DyldExportsTrieCommand(reader,
-					getLinkerLoadCommandReader(reader, header, splitDyldCache));
-			case LC_DYLD_CHAINED_FIXUPS:
-				return new DyldChainedFixupsCommand(reader,
-					getLinkerLoadCommandReader(reader, header, splitDyldCache));
-			case LC_FILESET_ENTRY:
-				return new FileSetEntryCommand(reader);
-			default:
-				Msg.warn(header, "Unsupported load command " + Integer.toHexString(type));
-				return new UnsupportedLoadCommand(reader, type);
+		try {
+			return switch (type) {
+				case LC_SEGMENT:
+					yield new SegmentCommand(reader, header.is32bit());
+				case LC_SYMTAB:
+					yield new SymbolTableCommand(reader,
+						getLinkerLoadCommandReader(reader, header, splitDyldCache), header);
+				case LC_SYMSEG:
+					yield new SymbolCommand(reader);
+				case LC_THREAD:
+				case LC_UNIXTHREAD:
+					yield new ThreadCommand(reader, header);
+				case LC_LOADFVMLIB:
+				case LC_IDFVMLIB:
+					yield new FixedVirtualMemorySharedLibraryCommand(reader);
+				case LC_IDENT:
+					yield new IdentCommand(reader);
+				case LC_FVMFILE:
+					yield new FixedVirtualMemoryFileCommand(reader);
+				case LC_PREPAGE:
+					yield new UnsupportedLoadCommand(reader);
+				case LC_DYSYMTAB:
+					yield new DynamicSymbolTableCommand(reader,
+						getLinkerLoadCommandReader(reader, header, splitDyldCache), header);
+				case LC_LOAD_DYLIB:
+				case LC_ID_DYLIB:
+				case LC_LOAD_UPWARD_DYLIB:
+					yield new DynamicLibraryCommand(reader);
+				case LC_LOAD_DYLINKER:
+				case LC_ID_DYLINKER:
+				case LC_DYLD_ENVIRONMENT:
+					yield new DynamicLinkerCommand(reader);
+				case LC_PREBOUND_DYLIB:
+					yield new PreboundDynamicLibraryCommand(reader);
+				case LC_ROUTINES:
+					yield new RoutinesCommand(reader, header.is32bit());
+				case LC_SUB_FRAMEWORK:
+					yield new SubFrameworkCommand(reader);
+				case LC_SUB_UMBRELLA:
+					yield new SubUmbrellaCommand(reader);
+				case LC_SUB_CLIENT:
+					yield new SubClientCommand(reader);
+				case LC_SUB_LIBRARY:
+					yield new SubLibraryCommand(reader);
+				case LC_TWOLEVEL_HINTS:
+					yield new TwoLevelHintsCommand(reader);
+				case LC_PREBIND_CKSUM:
+					yield new PrebindChecksumCommand(reader);
+				case LC_LOAD_WEAK_DYLIB:
+					yield new DynamicLibraryCommand(reader);
+				case LC_SEGMENT_64:
+					yield new SegmentCommand(reader, header.is32bit());
+				case LC_ROUTINES_64:
+					yield new RoutinesCommand(reader, header.is32bit());
+				case LC_UUID:
+					yield new UuidCommand(reader);
+				case LC_RPATH:
+					yield new RunPathCommand(reader);
+				case LC_CODE_SIGNATURE:
+					yield new CodeSignatureCommand(reader,
+						getLinkerLoadCommandReader(reader, header, splitDyldCache));
+				case LC_SEGMENT_SPLIT_INFO:
+				case LC_OPTIMIZATION_HINT:
+				case LC_DYLIB_CODE_SIGN_DRS:
+					yield new LinkEditDataCommand(reader,
+						getLinkerLoadCommandReader(reader, header, splitDyldCache));
+				case LC_REEXPORT_DYLIB:
+					yield new DynamicLibraryCommand(reader);
+				case LC_ENCRYPTION_INFO:
+				case LC_ENCRYPTION_INFO_64:
+					yield new EncryptedInformationCommand(reader, header.is32bit());
+				case LC_DYLD_INFO:
+				case LC_DYLD_INFO_ONLY:
+					yield new DyldInfoCommand(reader,
+						getLinkerLoadCommandReader(reader, header, splitDyldCache), header);
+				case LC_VERSION_MIN_MACOSX:
+				case LC_VERSION_MIN_IPHONEOS:
+				case LC_VERSION_MIN_TVOS:
+				case LC_VERSION_MIN_WATCHOS:
+					yield new VersionMinCommand(reader);
+				case LC_FUNCTION_STARTS:
+					yield new FunctionStartsCommand(reader,
+						getLinkerLoadCommandReader(reader, header, splitDyldCache));
+				case LC_MAIN:
+					yield new EntryPointCommand(reader);
+				case LC_DATA_IN_CODE:
+					yield new DataInCodeCommand(reader,
+						getLinkerLoadCommandReader(reader, header, splitDyldCache));
+				case LC_SOURCE_VERSION:
+					yield new SourceVersionCommand(reader);
+				case LC_LAZY_LOAD_DYLIB:
+					yield new DynamicLibraryCommand(reader);
+				case LC_LINKER_OPTIONS:
+					yield new LinkerOptionCommand(reader);
+				case LC_BUILD_VERSION:
+					yield new BuildVersionCommand(reader);
+				case LC_DYLD_EXPORTS_TRIE:
+					yield new DyldExportsTrieCommand(reader,
+						getLinkerLoadCommandReader(reader, header, splitDyldCache));
+				case LC_DYLD_CHAINED_FIXUPS:
+					yield new DyldChainedFixupsCommand(reader,
+						getLinkerLoadCommandReader(reader, header, splitDyldCache));
+				case LC_FILESET_ENTRY:
+					yield new FileSetEntryCommand(reader);
+				default:
+					yield new UnsupportedLoadCommand(reader);
+			};
+		}
+		catch (Exception e) {
+			reader.setPointerIndex(origIndex);
+			return new CorruptLoadCommand(reader, e);
 		}
 	}
 

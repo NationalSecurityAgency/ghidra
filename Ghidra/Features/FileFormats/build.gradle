@@ -18,6 +18,8 @@ apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
 apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
 apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
 apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
+apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
+apply from: "buildNatives.gradle"
 apply plugin: 'eclipse'
 
 eclipse.project.name = 'Features FileFormats'
@@ -49,6 +51,14 @@ dependencies {
 	
 	// include code from src/test/slow in Base
 	testImplementation project(path: ':Base', configuration: 'integrationTestArtifacts')	
+}
+
+// Include buildable native source in distribution
+rootProject.assembleDistribution {
+	from (this.project.projectDir.toString()) {
+		include "src/lzfse/**"
+		into  { getZipPath(this.project) }
+	}
 }
 
 // ***********************************************************************************************

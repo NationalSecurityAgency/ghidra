@@ -73,11 +73,7 @@ public abstract class TerminalFinder {
 		this.wholeWord = options.contains(FindOptions.WHOLE_WORD);
 	}
 
-	protected void lowerBuf(StringBuilder sb) {
-		for (int i = 0; i < sb.length(); i++) {
-			sb.setCharAt(i, Character.toLowerCase(sb.charAt(i)));
-		}
-	}
+	protected abstract void caseBuf(StringBuilder sb);
 
 	protected boolean isWholeWord(int i, String match) {
 		if (i > 0 && VtLine.isWordChar(sb.charAt(i - 1))) {
@@ -113,9 +109,7 @@ public abstract class TerminalFinder {
 			VtLine line = layout.line;
 			sb.delete(0, sb.length());
 			line.gatherText(sb, 0, line.length());
-			if (!caseSensitive) {
-				lowerBuf(sb);
-			}
+			caseBuf(sb);
 			int s;
 			if (index.equals(cur.getIndex())) {
 				s = cur.getCol();
@@ -166,7 +160,12 @@ public abstract class TerminalFinder {
 			if (text.isEmpty()) {
 				throw new IllegalArgumentException("Empty text");
 			}
-			this.text = text;
+			if (!caseSensitive) {
+				this.text = text.toLowerCase();
+			}
+			else {
+				this.text = text;
+			}
 		}
 
 		@Override
@@ -188,6 +187,19 @@ public abstract class TerminalFinder {
 			}
 			return null;
 		}
+
+		protected void lowerBuf(StringBuilder sb) {
+			for (int i = 0; i < sb.length(); i++) {
+				sb.setCharAt(i, Character.toLowerCase(sb.charAt(i)));
+			}
+		}
+
+		@Override
+		protected void caseBuf(StringBuilder sb) {
+			if (!caseSensitive) {
+				lowerBuf(sb);
+			}
+		}
 	}
 
 	/**
@@ -205,7 +217,12 @@ public abstract class TerminalFinder {
 			if (pattern.isEmpty()) {
 				throw new IllegalArgumentException("Empty pattern");
 			}
-			this.pattern = Pattern.compile(pattern);
+			if (!caseSensitive) {
+				this.pattern = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
+			}
+			else {
+				this.pattern = Pattern.compile(pattern);
+			}
 		}
 
 		@Override
@@ -245,6 +262,11 @@ public abstract class TerminalFinder {
 			return new FieldRange(
 				new FieldLocation(index, 0, 0, lastStart),
 				new FieldLocation(index, 0, 0, lastEnd));
+		}
+
+		@Override
+		protected void caseBuf(StringBuilder sb) {
+			// Nothing. Pattern handles it.
 		}
 	}
 }

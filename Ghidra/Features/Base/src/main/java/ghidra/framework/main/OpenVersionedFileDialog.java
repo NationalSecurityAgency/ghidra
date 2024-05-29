@@ -15,10 +15,11 @@
  */
 package ghidra.framework.main;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -40,7 +41,7 @@ import ghidra.util.Msg;
  * opened.
  * @param <T> domain object class
  */
-public class OpenVersionedFileDialog<T extends DomainObject> extends DataTreeDialog {
+public class OpenVersionedFileDialog<T extends DomainObject> extends AbstractDataTreeDialog {
 	private static final String SHOW_HISTORY_PREFERENCES_KEY = "OPEN_PROGRAM_DIALOG.SHOW_HISTORY";
 	private static final String HEIGHT_PREFERENCES_KEY = "OPEN_PROGRAM_DIALOG.HEIGHT";
 	private static final String WIDTH_NO_HISTORY_PREFERENCES_KEY =
@@ -76,26 +77,41 @@ public class OpenVersionedFileDialog<T extends DomainObject> extends DataTreeDia
 	 * @param domainObjectClass allowed domain object class which corresponds to {@code <T>}
 	 */
 	public OpenVersionedFileDialog(PluginTool tool, String title, Class<T> domainObjectClass) {
-		super(tool.getToolFrame(), title, DataTreeDialog.OPEN, f -> {
-			return domainObjectClass.isAssignableFrom(f.getDomainObjectClass());
-		});
-		this.tool = tool;
-		this.domainObjectClass = domainObjectClass;
-		init();
+		this(tool, title, domainObjectClass, null);
 	}
 
 	/**
-	 * Set an optional list of already open domain objects of type {@code <T>} which may be
-	 * selected instead of a project domain file.  The {@link #getDomainObject(Object, boolean)}
-	 * method should be used when this optional list has been set.  If this dialog is reused
-	 * the list should be set null if previously set.  This method must be invoked prior to 
-	 * showing the dialog.
-	 * @param openDomainObjects list of open domain objects from which a selection may be made.
+	 * Constructor
+	 * @param tool tool where the file is being opened.
+	 * @param title title to use
+	 * @param domainObjectClass allowed domain object class which corresponds to {@code <T>}
+	 * @param openDomainObjects if non-null, will cause an additional tab showing the given
+	 * list of open domain objects that the user can select from
 	 */
-	public void setOpenObjectChoices(List<T> openDomainObjects) {
-		this.openDomainObjects = (openDomainObjects != null && !openDomainObjects.isEmpty())
-				? new ArrayList<>(openDomainObjects)
-				: null;
+	public OpenVersionedFileDialog(PluginTool tool, String title, Class<T> domainObjectClass,
+			List<T> openDomainObjects) {
+		super(tool.getToolFrame(), title, OPEN, f -> {
+			return domainObjectClass.isAssignableFrom(f.getDomainObjectClass());
+		}, AppInfo.getActiveProject());
+
+		this.tool = tool;
+		this.domainObjectClass = domainObjectClass;
+		this.openDomainObjects = openDomainObjects;
+
+		addWorkPanel(buildMainPanel());
+		initializeFocusedComponent();
+
+		updateOkTooltip();
+		checkIfHistoryWasOpen();
+	}
+
+	private void checkIfHistoryWasOpen() {
+		String showHistory =
+			Preferences.getProperty(SHOW_HISTORY_PREFERENCES_KEY, Boolean.FALSE.toString(), true);
+
+		if (Boolean.parseBoolean(showHistory)) {
+			showHistoryPanel(true);
+		}
 	}
 
 	/**
@@ -162,11 +178,14 @@ public class OpenVersionedFileDialog<T extends DomainObject> extends DataTreeDia
 		return super.getDomainFolder();
 	}
 
-	@Override
 	protected JPanel buildMainPanel() {
+		historyButton = new JButton("History>>");
+		historyButton.addActionListener(e -> showHistoryPanel(!historyIsShowing));
+
+		rootPanel.setPreferredSize(getPreferredSizeForHistoryState());
 
 		mainPanel = new JPanel(new BorderLayout());
-		mainPanel.add(super.buildMainPanel(), BorderLayout.CENTER);
+		mainPanel.add(buildDataTreePanel(), BorderLayout.CENTER);
 		JPanel historyButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 		historyButtonPanel.add(historyButton);
 		mainPanel.add(historyButtonPanel, BorderLayout.SOUTH);
@@ -183,19 +202,10 @@ public class OpenVersionedFileDialog<T extends DomainObject> extends DataTreeDia
 		JPanel projectFilePanel = new JPanel(new BorderLayout());
 		projectFilePanel.add(splitPane);
 
-		String showHistory =
-			Preferences.getProperty(SHOW_HISTORY_PREFERENCES_KEY, Boolean.FALSE.toString(), true);
-
-		if (Boolean.parseBoolean(showHistory)) {
-			showHistoryPanel(true);
-		}
-
 		openObjectsTable = null;
 		tabbedPane = null;
 
-		updateOkTooltip();
-
-		if (openDomainObjects == null) {
+		if (openDomainObjects == null || openDomainObjects.isEmpty()) {
 			return projectFilePanel; // return Project File selection panel only
 		}
 
@@ -245,7 +255,7 @@ public class OpenVersionedFileDialog<T extends DomainObject> extends DataTreeDia
 		openObjectsTable = new GFilterTable<>(new OpenObjectsTableModel());
 		GTable table = openObjectsTable.getTable();
 		table.getSelectionModel()
-			.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+				.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		openObjectsTable.addSelectionListener(e -> {
 			setOkEnabled(true);
 			okButton.setToolTipText("Use the selected " + domainObjectClass.getSimpleName());
@@ -374,13 +384,6 @@ public class OpenVersionedFileDialog<T extends DomainObject> extends DataTreeDia
 			updateOkTooltip();
 		});
 		return true;
-	}
-
-	private void init() {
-		historyButton = new JButton("History>>");
-		historyButton.addActionListener(e -> showHistoryPanel(!historyIsShowing));
-
-		rootPanel.setPreferredSize(getPreferredSizeForHistoryState());
 	}
 
 	@Override

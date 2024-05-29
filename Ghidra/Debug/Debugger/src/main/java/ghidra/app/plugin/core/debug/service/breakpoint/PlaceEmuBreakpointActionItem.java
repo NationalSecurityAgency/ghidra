@@ -22,7 +22,6 @@ import db.Transaction;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.target.*;
 import ghidra.dbg.util.PathMatcher;
-import ghidra.dbg.util.PathPattern;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;

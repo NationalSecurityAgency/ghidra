@@ -86,7 +86,7 @@ public class DefaultLanguageService implements LanguageService {
 	}
 
 		@Override
-	public List<LanguageDescription> getLanguageDescriptions(Processor processor, Endian endianess,
+	public List<LanguageDescription> getLanguageDescriptions(Processor processor, Endian endianness,
 			Integer size, String variant) {
 		List<LanguageDescription> languageDescriptions = new ArrayList<>();
 		for (LanguageInfo info : languageInfos) {
@@ -94,7 +94,7 @@ public class DefaultLanguageService implements LanguageService {
 			if (processor != null && processor != description.getProcessor()) {
 				continue;
 			}
-			if (endianess != null && endianess != description.getEndian()) {
+			if (endianness != null && endianness != description.getEndian()) {
 				continue;
 			}
 			if (size != null && size.intValue() != description.getSize()) {
@@ -129,7 +129,7 @@ public class DefaultLanguageService implements LanguageService {
 	}
 
 	public List<LanguageDescription> getExternalLanguageDescriptions(String externalProcessorName,
-			String externalTool, Endian endianess, Integer size) {
+			String externalTool, Endian endianness, Integer size) {
 
 		List<LanguageDescription> languageDescriptions = new ArrayList<>();
 		for (LanguageInfo info : languageInfos) {
@@ -140,7 +140,7 @@ public class DefaultLanguageService implements LanguageService {
 				continue;
 			}
 
-			if (endianess != null && endianess != description.getEndian()) {
+			if (endianness != null && endianness != description.getEndian()) {
 				continue;
 			}
 			if (size != null && size.intValue() != description.getSize()) {

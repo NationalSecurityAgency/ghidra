@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,97 +15,66 @@
  */
 package ghidra.program.util;
 
-import ghidra.framework.model.DomainObjectChangeRecord;
 import ghidra.program.model.address.Address;
 
 /**
  * Change record generated when a property on a code unit changes.
  */
-public class CodeUnitPropertyChangeRecord extends DomainObjectChangeRecord {
+public class CodeUnitPropertyChangeRecord extends ProgramChangeRecord {
+	private String propertyName;
 
-    private final static long serialVersionUID = 1;
-    private Object oldValue;
-    private Object newValue;
-    private String propertyName;
-    private Address addr;
-	private Address startAddr;
-	private Address endAddr;
-	
-    /**
-     * Constructor
-     * @param propertyName name of the property
-     * @param codeUnitAddr address of the code unit
-     * @param oldValue old value
-     * @param newValue new value
-     */
-    public CodeUnitPropertyChangeRecord(String propertyName,
-                                        Address codeUnitAddr,
-                                        Object oldValue,
-                                        Object newValue) { 
-        super(ChangeManager.DOCR_CODE_UNIT_PROPERTY_CHANGED);
-        this.propertyName = propertyName;
-        addr = codeUnitAddr;
-        this.oldValue = oldValue;
-        this.newValue = newValue;
-    }
 	/**
-	 * Constructor for change record for removing a range of properties.
-	 * @param propertyName name of the property
-	 * @param start start of the range of properties being removed
-	 * @param end end of the range of properties being removed
+	 * Constructor
+	 * @param type the program event type
+	 * @param propertyName the name of the code unit property
+	 * @param start the start address of the effected range
+	 * @param end the end address of the effected range
+	 * @param oldValue the old property value
+	 * @param newValue the new property value
 	 */
-	public CodeUnitPropertyChangeRecord(String propertyName,
-		Address start, Address end) {
-		super(ChangeManager.DOCR_CODE_UNIT_PROPERTY_RANGE_REMOVED);
+	private CodeUnitPropertyChangeRecord(ProgramEvent type, String propertyName, Address start,
+			Address end, Object oldValue, Object newValue) {
+		super(type, start, end, null, oldValue, newValue);
 		this.propertyName = propertyName;
-		startAddr = start;
-		endAddr = end;
 	}
-		
-    /**
-     * Get the name of the property being changed.
-     */
-    public String getPropertyName() {
-        return propertyName;
-    }
 
-    /**
-     * Get the address of the code unit for this property change.
-     */
-    public Address getAddress() {
-        return addr;
-    }
+	/**
+	 * Constructor for a property change at an address
+	 * @param type the program event type
+	 * @param propertyName the name of the code unit property
+	 * @param address the address of the of the property that was changed.
+	 * @param oldValue the old property value
+	 * @param newValue the new property value
+	 */
+	public CodeUnitPropertyChangeRecord(ProgramEvent type, String propertyName, Address address,
+			Object oldValue, Object newValue) {
+		this(type, propertyName, address, address, oldValue, newValue);
+	}
 
-    /**
-     * Get the original value.
-     */
-    @Override
-    public Object getOldValue() {
-        return oldValue;
-    }
+	/**
+	 * Constructor for events that affect a range of values
+	 * @param type the program event type
+	 * @param propertyName the name of the code unit property
+	 * @param start the start address of the range affected
+	 * @param end the end address of the range affected
+	 */
+	public CodeUnitPropertyChangeRecord(ProgramEvent type, String propertyName, Address start,
+			Address end) {
+		this(type, propertyName, start, end, null, null);
+	}
 
-    /**
-     * Get the new value.
-     */
-    @Override
-    public Object getNewValue() {
-        return newValue;
-    }
-    
-    /**
-     * Get the start address of the range of properties that were removed.
-     * @return null if the event type is not 
-     * ChangeManager.DOCR_CODE_UNIT_PROPERTY_RANGE_REMOVED
-     */
-    public Address getStartAddress() {
-    	return startAddr;
-    }
-    /**
-     * Get the end address of the range of properties that were removed.
-     * @return null if the event type is not 
-     * ChangeManager.DOCR_CODE_UNIT_PROPERTY_RANGE_REMOVED
-     */
-    public Address getEndAddress() {
-    	return endAddr;
-    }
+	/**
+	 * Get the name of the property being changed.
+	 * @return the name of the property being changed
+	 */
+	public String getPropertyName() {
+		return propertyName;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder(super.toString());
+		builder.append(", property = " + propertyName);
+		return builder.toString();
+	}
 }

@@ -22,11 +22,25 @@ package docking.widgets.autocomplete;
  * @see TextFieldAutocompleter
  */
 public interface AutocompletionListener<T> {
+
+	/**
+	 * The user has selected a suggested item.
+	 * 
+	 * <p>
+	 * This means the user has highlighted an item, but has <em>not</em> activated that item.
+	 * 
+	 * @param ev the event describing the selection
+	 */
+	default public void completionSelected(AutocompletionEvent<T> ev) {
+	}
+
 	/**
 	 * The user has activated a suggested item.
 	 * 
+	 * <p>
 	 * This means the user has explicitly activate the item, i.e., pressed enter on or clicked the
 	 * item.
+	 * 
 	 * @param e the event describing the activation
 	 */
 	public void completionActivated(AutocompletionEvent<T> e);

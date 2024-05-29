@@ -15,16 +15,15 @@
  */
 package ghidra.pcodeCPort.semantics;
 
-import java.io.PrintStream;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import org.jdom.Element;
+import java.io.IOException;
 
 import generic.stl.VectorSTL;
 import ghidra.pcodeCPort.error.LowlevelError;
 import ghidra.pcodeCPort.space.AddrSpace;
 import ghidra.pcodeCPort.space.spacetype;
-import ghidra.pcodeCPort.translate.Translate;
-import ghidra.pcodeCPort.utils.XmlUtils;
+import ghidra.program.model.pcode.Encoder;
 
 public class ConstTpl {
 	@Override
@@ -89,8 +88,8 @@ public class ConstTpl {
 		handle_index = ht;
 		select = vf;
 	}
-	
-	public ConstTpl(const_type tp,int ht,v_field vf,long plus) {
+
+	public ConstTpl(const_type tp, int ht, v_field vf, long plus) {
 		type = const_type.handle;
 		handle_index = ht;
 		select = vf;
@@ -117,7 +116,7 @@ public class ConstTpl {
 	public const_type getType() {
 		return type;
 	}
-	
+
 	public v_field getSelect() {
 		return select;
 	}
@@ -224,49 +223,18 @@ public class ConstTpl {
 			case v_offset_plus:
 				long tmp = value_real;
 				copyIntoMe(newhandle.getPtrOffset());
-				if (type == const_type.real)
+				if (type == const_type.real) {
 					value_real += (tmp & 0xffff);
-				else if ((type == const_type.handle)&&(select == v_field.v_offset)) {
+				}
+				else if ((type == const_type.handle) && (select == v_field.v_offset)) {
 					select = v_field.v_offset_plus;
 					value_real = tmp;
 				}
-				else
+				else {
 					throw new LowlevelError("Cannot truncate macro input in this way");
+				}
 				break;
 		}
-	}
-
-	private static void printHandleSelector(PrintStream s, v_field val) {
-		switch (val) {
-			case v_space:
-				s.append("space");
-				break;
-			case v_offset:
-				s.append("offset");
-				break;
-			case v_size:
-				s.append("size");
-				break;
-			case v_offset_plus:
-				s.append("offset_plus");
-				break;
-		}
-	}
-
-	private static v_field readHandleSelector(String name) {
-		if (name.equals("space")) {
-			return v_field.v_space;
-		}
-		if (name.equals("offset")) {
-			return v_field.v_offset;
-		}
-		if (name.equals("size")) {
-			return v_field.v_size;
-		}
-		if (name.equals("offset_plus")) {
-			return v_field.v_offset_plus;
-		}
-		throw new LowlevelError("Bad handle selector");
 	}
 
 	public void changeHandleIndex(VectorSTL<Integer> handmap) {
@@ -275,116 +243,68 @@ public class ConstTpl {
 		}
 	}
 
-	public void saveXml(PrintStream s) {
-		s.append("<const_tpl type=\"");
+	public void encode(Encoder encoder) throws IOException {
 		switch (type) {
 			case real:
-				s.append("real\" val=\"0x");
-				s.append(Long.toHexString(value_real));
-				s.append("\"/>");
+				encoder.openElement(ELEM_CONST_REAL);
+				encoder.writeUnsignedInteger(ATTRIB_VAL, value_real);
+				encoder.closeElement(ELEM_CONST_REAL);
 				break;
 			case handle:
-				s.append("handle\" val=\"");
-				s.print(handle_index);
-				s.append("\" ");
-				s.append("s=\"");
-				printHandleSelector(s, select);
-				s.append('\"');
-				if (select == v_field.v_offset_plus)
-					s.append(" plus=\"0x").append(Long.toHexString(value_real)).append('\"');
-				s.append("/>");
+				encoder.openElement(ELEM_CONST_HANDLE);
+				encoder.writeSignedInteger(ATTRIB_VAL, handle_index);
+				encoder.writeSignedInteger(ATTRIB_S, select.ordinal());
+				if (select == v_field.v_offset_plus) {
+					encoder.writeUnsignedInteger(ATTRIB_PLUS, value_real);
+				}
+				encoder.closeElement(ELEM_CONST_HANDLE);
 				break;
 			case j_start:
-				s.append("start\"/>");
+				encoder.openElement(ELEM_CONST_START);
+				encoder.closeElement(ELEM_CONST_START);
 				break;
 			case j_next:
-				s.append("next\"/>");
+				encoder.openElement(ELEM_CONST_NEXT);
+				encoder.closeElement(ELEM_CONST_NEXT);
 				break;
 			case j_next2:
-				s.append("next2\"/>");
+				encoder.openElement(ELEM_CONST_NEXT2);
+				encoder.closeElement(ELEM_CONST_NEXT2);
 				break;
 			case j_curspace:
-				s.append("curspace\"/>");
+				encoder.openElement(ELEM_CONST_CURSPACE);
+				encoder.closeElement(ELEM_CONST_CURSPACE);
 				break;
 			case j_curspace_size:
-				s.append("curspace_size\"/>");
+				encoder.openElement(ELEM_CONST_CURSPACE_SIZE);
+				encoder.closeElement(ELEM_CONST_CURSPACE_SIZE);
 				break;
 			case spaceid:
-				s.append("spaceid\" name=\"");
-				s.append(spaceid.getName());
-				s.append("\"/>");
+				encoder.openElement(ELEM_CONST_SPACEID);
+				encoder.writeSpace(ATTRIB_SPACE, spaceid.getIndex(), spaceid.getName());
+				encoder.closeElement(ELEM_CONST_SPACEID);
 				break;
 			case j_relative:
-				s.append("relative\" val=\"0x");
-				s.append(Long.toHexString(value_real));
-				s.append("\"/>");
+				encoder.openElement(ELEM_CONST_RELATIVE);
+				encoder.writeUnsignedInteger(ATTRIB_VAL, value_real);
+				encoder.closeElement(ELEM_CONST_RELATIVE);
 				break;
 			case j_flowref:
-				s.append("flowref\"/>");
+				encoder.openElement(ELEM_CONST_FLOWREF);
+				encoder.closeElement(ELEM_CONST_FLOWREF);
 				break;
 			case j_flowref_size:
-				s.append("flowref_size\"/>");
+				encoder.openElement(ELEM_CONST_FLOWREF_SIZE);
+				encoder.closeElement(ELEM_CONST_FLOWREF_SIZE);
 				break;
 			case j_flowdest:
-				s.append("flowdest\"/>");
+				encoder.openElement(ELEM_CONST_FLOWDEST);
+				encoder.closeElement(ELEM_CONST_FLOWDEST);
 				break;
 			case j_flowdest_size:
-				s.append("flowdest_size\"/>");
+				encoder.openElement(ELEM_CONST_FLOWDEST_SIZE);
+				encoder.closeElement(ELEM_CONST_FLOWDEST_SIZE);
 				break;
-		}
-	}
-
-	public void restoreXml(Element el, Translate trans) {
-		String typestring = el.getAttributeValue("type");
-		if (typestring.equals("real")) {
-			type = const_type.real;
-			value_real = XmlUtils.decodeUnknownLong(el.getAttributeValue("val"));
-		}
-		else if (typestring.equals("handle")) {
-			type = const_type.handle;
-			handle_index = XmlUtils.decodeUnknownInt(el.getAttributeValue("val"));
-			select = readHandleSelector(el.getAttributeValue("s"));
-			if (select == v_field.v_offset_plus) {
-				value_real = XmlUtils.decodeUnknownLong(el.getAttributeValue("plus"));
-			}
-		}
-		else if (typestring.equals("start")) {
-			type = const_type.j_start;
-		}
-		else if (typestring.equals("next")) {
-			type = const_type.j_next;
-		}
-		else if (typestring.equals("next2")) {
-			type = const_type.j_next2;
-		}
-		else if (typestring.equals("curspace")) {
-			type = const_type.j_curspace;
-		}
-		else if (typestring.equals("curspace_size")) {
-			type = const_type.j_curspace_size;
-		}
-		else if (typestring.equals("spaceid")) {
-			type = const_type.spaceid;
-			spaceid = trans.getSpaceByName(el.getAttributeValue("name"));
-		}
-		else if (typestring.equals("relative")) {
-			type = const_type.j_relative;
-			value_real = XmlUtils.decodeUnknownLong(el.getAttributeValue("val"));
-		}
-		else if (typestring.equals("flowref")) {
-			type = const_type.j_flowref;
-		}
-		else if (typestring.equals("flowref_size")) {
-			type = const_type.j_flowref_size;
-		}
-		else if (typestring.equals("flowdest")) {
-			type = const_type.j_flowdest;
-		}
-		else if (typestring.equals("flowdest_size")) {
-			type = const_type.j_flowdest_size;
-		}
-		else {
-			throw new LowlevelError("Bad constant type");
 		}
 	}
 

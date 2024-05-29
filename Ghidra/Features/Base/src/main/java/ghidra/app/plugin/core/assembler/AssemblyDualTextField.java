@@ -17,7 +17,9 @@ package ghidra.app.plugin.core.assembler;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.math.BigInteger;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.*;
@@ -37,11 +39,14 @@ import ghidra.app.plugin.assembler.sleigh.parse.AssemblyParseErrorResult;
 import ghidra.app.plugin.assembler.sleigh.parse.AssemblyParseResult;
 import ghidra.app.plugin.assembler.sleigh.sem.*;
 import ghidra.app.plugin.processors.sleigh.*;
+import ghidra.app.util.viewer.field.ListingColors;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.lang.LanguageID;
-import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.lang.*;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.ByteMemBufferImpl;
+import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
 
 /**
@@ -62,11 +67,11 @@ import ghidra.util.NumericUtilities;
  */
 public class AssemblyDualTextField {
 	private static final String FONT_ID = "font.plugin.assembly.dual.text.field";
-	private static Color FG_PREFERENCE_MOST =
+	private static final Color FG_PREFERENCE_MOST =
 		new GColor("color.fg.plugin.assembler.completion.most");
-	private static Color FG_PREFERENCE_MIDDLE =
+	private static final Color FG_PREFERENCE_MIDDLE =
 		new GColor("color.fg.plugin.assembler.completion.middle");
-	private static Color FG_PREFERENCE_LEAST =
+	private static final Color FG_PREFERENCE_LEAST =
 		new GColor("color.fg.plugin.assembler.completion.least");
 
 	protected final TextFieldLinker linker = new TextFieldLinker();
@@ -175,6 +180,34 @@ public class AssemblyDualTextField {
 		}
 	}
 
+	static class ContextChanges implements DisassemblerContextAdapter {
+		private final RegisterValue contextIn;
+		private final Map<Address, RegisterValue> contextsOut = new TreeMap<>();
+
+		public ContextChanges(RegisterValue contextIn) {
+			this.contextIn = contextIn;
+		}
+
+		@Override
+		public RegisterValue getRegisterValue(Register register) {
+			if (register.getBaseRegister() == contextIn.getRegister()) {
+				return contextIn.getRegisterValue(register);
+			}
+			return null;
+		}
+
+		@Override
+		public void setFutureRegisterValue(Address address, RegisterValue value) {
+			RegisterValue current = contextsOut.get(address);
+			RegisterValue combined = current == null ? value : current.combineValues(value);
+			contextsOut.put(address, combined);
+		}
+
+		public void addFlow(ProgramContext progCtx, Address after) {
+			contextsOut.put(after, progCtx.getFlowValue(contextIn));
+		}
+	}
+
 	/**
 	 * Represents an encoding for a complete assembly instruction
 	 * 
@@ -183,15 +216,50 @@ public class AssemblyDualTextField {
 	 * listener.
 	 */
 	static class AssemblyInstruction extends AssemblyCompletion {
-		private byte[] data;
+		private final byte[] data;
+		private final ContextChanges contextChanges;
 
-		public AssemblyInstruction(String text, byte[] data, int preference) {
+		public AssemblyInstruction(Program program, Language language, Address at, String text,
+				byte[] data, RegisterValue ctxVal, int preference) {
 			// TODO?: Description to display constructor tree information
 			super("", NumericUtilities.convertBytesToString(data, " "),
 				preference == 10000 ? FG_PREFERENCE_MOST
 						: preference == 5000 ? FG_PREFERENCE_MIDDLE : FG_PREFERENCE_LEAST,
 				-preference);
 			this.data = data;
+			this.contextChanges = new ContextChanges(ctxVal);
+
+			try {
+				if (program != null) {
+					// Handle flow context first
+					contextChanges.addFlow(program.getProgramContext(), at.addWrap(data.length));
+					// drop prototype, just want context changes (globalsets)
+					language.parse(new ByteMemBufferImpl(at, data, language.isBigEndian()),
+						contextChanges, false);
+				}
+			}
+			catch (InsufficientBytesException | UnknownInstructionException e) {
+				Msg.error(this, "Cannot disassembly just-assembled instruction?: " +
+					NumericUtilities.convertBytesToString(data));
+			}
+			adjustOrderByContextChanges(program);
+		}
+
+		private void adjustOrderByContextChanges(Program program) {
+			if (program == null) {
+				return;
+			}
+			ProgramContext ctx = program.getProgramContext();
+			Register ctxReg = ctx.getBaseContextRegister();
+			for (Entry<Address, RegisterValue> ent : contextChanges.contextsOut.entrySet()) {
+				RegisterValue defVal = ctx.getDefaultDisassemblyContext();
+				RegisterValue newVal = defVal.combineValues(ent.getValue());
+				RegisterValue curVal =
+					defVal.combineValues(ctx.getRegisterValue(ctxReg, ent.getKey()));
+				BigInteger changed =
+					newVal.getUnsignedValueIgnoreMask().xor(curVal.getUnsignedValueIgnoreMask());
+				order += changed.bitCount();
+			}
 		}
 
 		/**
@@ -257,7 +325,8 @@ public class AssemblyDualTextField {
 	 * the linked text boxes when retrieving the prefix. It also delegates the item styling to the
 	 * item instances.
 	 */
-	class AssemblyAutocompleter extends TextFieldAutocompleter<AssemblyCompletion> {
+	class AssemblyAutocompleter extends TextFieldAutocompleter<AssemblyCompletion>
+			implements AutocompletionListener<AssemblyCompletion> {
 		public AssemblyAutocompleter(AutocompletionModel<AssemblyCompletion> model) {
 			super(model);
 		}
@@ -332,8 +401,11 @@ public class AssemblyDualTextField {
 		private static final String CMD_EXHAUST = "Exhaust undefined bits";
 		private static final String CMD_ZERO = "Zero undefined bits";
 
+		private JLabel hints;
+
 		@Override
 		protected void addContent(JPanel content) {
+			JPanel panel = new JPanel(new BorderLayout());
 			Box controls = Box.createHorizontalBox();
 			Icon icon = new GIcon("icon.plugin.assembler.question");
 			EmptyBorderToggleButton button = new EmptyBorderToggleButton(icon);
@@ -350,9 +422,95 @@ public class AssemblyDualTextField {
 			});
 			button.setActionCommand(CMD_EXHAUST);
 			controls.add(button);
-			content.add(controls, BorderLayout.SOUTH);
+			panel.add(controls, BorderLayout.SOUTH);
+			hints = new JLabel();
+			panel.add(hints);
+			content.add(panel, BorderLayout.SOUTH);
+
+			addAutocompletionListener(this);
 		}
 
+		@Override
+		public void completionSelected(AutocompletionEvent<AssemblyCompletion> ev) {
+			if (!(ev.getSelection() instanceof AssemblyInstruction ai)) {
+				hints.setText("");
+				return;
+			}
+
+			Program program = assembler.getProgram();
+			if (program == null) {
+				hints.setText("");
+				return;
+			}
+
+			ProgramContext ctx = program.getProgramContext();
+			Register ctxReg = ctx.getBaseContextRegister();
+			StringBuilder sb = new StringBuilder("""
+					<html><style>
+					ul.addresses {
+					  margin: 0;
+					  padding: 0;
+					}
+					ul.addresses > li {
+					  margin: 0;
+					  padding: 0;
+					  list-style-type: none;
+					}
+					ul.context {
+					  font-family: monospaced;
+					  margin: 0 0 0 20px;
+					}
+					span.addr {
+					  font-family: monospaced;
+					}
+					</style><body width="300px"><ul class="addresses">
+					""".formatted(ListingColors.REGISTER.toHexString()));
+			boolean displayedAny = false;
+			for (Entry<Address, RegisterValue> ent : ai.contextChanges.contextsOut.entrySet()) {
+				RegisterValue defVal = ctx.getDefaultDisassemblyContext();
+				RegisterValue newVal = defVal.combineValues(ent.getValue());
+				RegisterValue curVal =
+					defVal.combineValues(ctx.getRegisterValue(ctxReg, ent.getKey()));
+
+				boolean displayedAddress = false;
+				for (Register sub : ctxReg.getChildRegisters()) {
+					BigInteger newSubVal =
+						newVal.getRegisterValue(sub).getUnsignedValueIgnoreMask();
+					BigInteger curSubVal =
+						curVal.getRegisterValue(sub).getUnsignedValueIgnoreMask();
+					if (Objects.equals(curSubVal, newSubVal)) {
+						continue;
+					}
+					if (!displayedAddress) {
+						sb.append("""
+								<li>At <span class="addr">%s</span></li>
+								<ul class="context">
+								""".formatted(ent.getKey()));
+						displayedAddress = true;
+					}
+					sb.append("""
+							<li>%s := 0x%s</li>
+							""".formatted(sub.getName(), newSubVal.toString(16)));
+					displayedAny = true;
+				}
+				if (displayedAddress) {
+					sb.append("""
+							</ul>
+							""");
+				}
+			}
+			if (!displayedAny) {
+				hints.setText("");
+			}
+			sb.append("""
+					</ul></body></html>
+					""");
+			hints.setText(sb.toString());
+		}
+
+		@Override
+		public void completionActivated(AutocompletionEvent<AssemblyCompletion> e) {
+		}
 	}
 
 	/**
@@ -477,6 +635,7 @@ public class AssemblyDualTextField {
 
 	/**
 	 * For single mode: Get the text field containing the full assembly text
+	 * 
 	 * @return the text field
 	 */
 	public JTextField getAssemblyField() {
@@ -749,13 +908,17 @@ public class AssemblyDualTextField {
 				}
 			}
 		}
-		// HACK (Sort of): circumvents the API to get full text.
+
+		Program program = assembler.getProgram();
+		Language language = assembler.getLanguage();
+		Register ctxReg = language.getContextBaseRegister();
+		RegisterValue ctxVal = new RegisterValue(ctxReg, ctx.toBigInteger(ctxReg.getNumBytes()));
+		// HACK (Sort of): Don't use text passed in. Get full text.
 		String fullText = getText();
 		parses = assembler.parseLine(fullText);
 		for (AssemblyParseResult parse : parses) {
 			if (!parse.isError()) {
-				AssemblyResolutionResults sems =
-					assembler.resolveTree(parse, address, ctx);
+				AssemblyResolutionResults sems = assembler.resolveTree(parse, address, ctx);
 				for (AssemblyResolution ar : sems) {
 					if (ar.isError()) {
 						//result.add(new AssemblyError("", ar.toString()));
@@ -763,8 +926,9 @@ public class AssemblyDualTextField {
 					}
 					AssemblyResolvedPatterns rc = (AssemblyResolvedPatterns) ar;
 					for (byte[] ins : rc.possibleInsVals(ctx)) {
-						result.add(new AssemblyInstruction(text, Arrays.copyOf(ins, ins.length),
-							computePreference(rc)));
+						AssemblyInstruction ai = new AssemblyInstruction(program, language, address,
+							text, Arrays.copyOf(ins, ins.length), ctxVal, computePreference(rc));
+						result.add(ai);
 						if (!exhaustUndefined) {
 							break;
 						}
@@ -772,6 +936,7 @@ public class AssemblyDualTextField {
 				}
 			}
 		}
+
 		if (result.isEmpty()) {
 			result.add(new AssemblyError("", "Invalid instruction and/or prefix"));
 		}

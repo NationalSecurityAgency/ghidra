@@ -29,26 +29,34 @@ import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.*;
 
 /**
- * Allocate the return value as special input register
+ * Allocate the return value as an input parameter
  * 
- * The assignAddress() method signals with hiddenret_specialreg, indicating that the
- * input register assignMap() method should use storage class TYPECLASS_HIDDENRET to assign
- * an additional input register to hold a pointer to the return value.  This is different than
- * the default hiddenret action that assigns a location based TYPECLASS_PTR and generally
- * consumes a general purpose input register.
+ * A pointer to where the return value is to be stored is passed in as an input parameter.
+ * This action signals this by returning one of
+ *   - HIDDENRET_PTRPARAM         - indicating the pointer is allocated as a normal input parameter
+ *   - HIDDENRET_SPECIALREG       - indicating the pointer is passed in a dedicated register
+ *   - HIDDENRET_SPECIALREG_VOID
+ * 
+ * Usually, if a hidden return input is present, the normal register used for return
+ * will also hold the pointer at the point(s) where the function returns.  A signal of
+ * HIDDENRET_SPECIALREG_VOID indicates the normal return register is not used to pass back
+ * the pointer.
  */
 public class HiddenReturnAssign extends AssignAction {
 
+	static public final String STRATEGY_SPECIAL = "special";	// Return pointer in special reg
+	static public final String STRATEGY_NORMAL = "normalparam";	// Return pointer as normal param
+
 	private int retCode;		// The specific signal to pass back
 
-	public HiddenReturnAssign(ParamListStandard res, boolean voidLock) {
+	public HiddenReturnAssign(ParamListStandard res, int code) {
 		super(res);
-		retCode = voidLock ? HIDDENRET_SPECIALREG_VOID : HIDDENRET_SPECIALREG;
+		retCode = code;
 	}
 
 	@Override
 	public AssignAction clone(ParamListStandard newResource) throws InvalidInputException {
-		return new HiddenReturnAssign(newResource, retCode == HIDDENRET_SPECIALREG_VOID);
+		return new HiddenReturnAssign(newResource, retCode);
 	}
 
 	@Override
@@ -69,7 +77,10 @@ public class HiddenReturnAssign extends AssignAction {
 	@Override
 	public void encode(Encoder encoder) throws IOException {
 		encoder.openElement(ELEM_HIDDEN_RETURN);
-		if (retCode == HIDDENRET_SPECIALREG_VOID) {
+		if (retCode == HIDDENRET_PTRPARAM) {
+			encoder.writeString(ATTRIB_STRATEGY, STRATEGY_NORMAL);
+		}
+		else if (retCode == HIDDENRET_SPECIALREG_VOID) {
 			encoder.writeBool(ATTRIB_VOIDLOCK, true);
 		}
 		encoder.closeElement(ELEM_HIDDEN_RETURN);
@@ -79,6 +90,18 @@ public class HiddenReturnAssign extends AssignAction {
 	public void restoreXml(XmlPullParser parser) throws XmlParseException {
 		retCode = HIDDENRET_SPECIALREG;
 		XmlElement elem = parser.start(ELEM_HIDDEN_RETURN.name());
+		String strategyString = elem.getAttribute(ATTRIB_STRATEGY.name());
+		if (strategyString != null) {
+			if (strategyString.equals(STRATEGY_NORMAL)) {
+				retCode = HIDDENRET_PTRPARAM;
+			}
+			else if (strategyString.equals(STRATEGY_SPECIAL)) {
+				retCode = HIDDENRET_SPECIALREG;
+			}
+			else {
+				throw new XmlParseException("Bad <hidden_return> strategy: " + strategyString);
+			}
+		}
 		String voidLockString = elem.getAttribute(ATTRIB_VOIDLOCK.name());
 		if (SpecXmlUtils.decodeBoolean(voidLockString)) {
 			retCode = HIDDENRET_SPECIALREG_VOID;

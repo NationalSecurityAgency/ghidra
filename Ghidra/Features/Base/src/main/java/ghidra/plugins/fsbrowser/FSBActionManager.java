@@ -40,6 +40,7 @@ import docking.widgets.tree.GTreeNode;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.services.TextEditorService;
 import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.importer.LibrarySearchPathManager;
 import ghidra.formats.gfilesystem.*;
 import ghidra.formats.gfilesystem.crypto.CachedPasswordProvider;
 import ghidra.formats.gfilesystem.crypto.CryptoProviders;
@@ -83,6 +84,7 @@ class FSBActionManager {
 	DockingAction actionCollapse;
 	DockingAction actionImportBatch;
 	DockingAction actionAddToProgram;
+	DockingAction actionLibrarySearchPath;
 	DockingAction actionCloseFileSystem;
 	DockingAction actionClearCachedPasswords;
 	/* end package visibility */
@@ -118,6 +120,7 @@ class FSBActionManager {
 		actions.add((actionImport = createImportAction()));
 		actions.add((actionImportBatch = createBatchImportAction()));
 		actions.add((actionAddToProgram = createAddToProgramAction()));
+		actions.add((actionLibrarySearchPath = createLibrarySearchPathAction()));
 		actions.add((actionOpenFileSystemNewWindow = createOpenFileSystemNewWindowAction()));
 		actions.add((actionOpenFileSystemNested = createOpenFileSystemNestedAction()));
 		actions.add((actionOpenFileSystemChooser = createOpenNewFileSystemAction()));
@@ -516,11 +519,11 @@ class FSBActionManager {
 	}
 
 	private DockingAction createGetInfoAction() {
-		return new ActionBuilder("Get Info", plugin.getName())
+		return new ActionBuilder("FSB Get Info", plugin.getName())
 				.withContext(FSBActionContext.class)
 				.enabledWhen(ac -> ac.notBusy() && ac.getFSRL(true) != null)
 				.popupMenuPath("Get Info")
-				.popupMenuGroup("A")
+				.popupMenuGroup("A", "A")
 				.popupMenuIcon(ImageManager.INFO)
 				.description("Show information about a file")
 				.onAction(
@@ -738,6 +741,36 @@ class FSBActionManager {
 						ImporterUtilities.showAddToProgramDialog(fsrl, program, tool, monitor);
 					});
 
+				})
+				.build();
+	}
+
+	private DockingAction createLibrarySearchPathAction() {
+		return new ActionBuilder("FSB Add Library Search Path", plugin.getName())
+				.withContext(FSBActionContext.class)
+				.enabledWhen(ac -> ac.notBusy() && ac.getFSRL(true) != null)
+				.popupMenuPath("Add Library Search Path")
+				.popupMenuGroup("F", "D")
+				.popupMenuIcon(ImageManager.LIBRARY)
+				.description("Add file/folder to library search paths")
+				.onAction(ac -> {
+					try {
+						FSRL fsrl = ac.getFSRL(true);
+						LocalFileSystem localFs = fsService.getLocalFS();
+						String path = fsService.isLocal(fsrl) ? localFs.getLocalFile(fsrl).getPath()
+								: fsrl.toString();
+						if (LibrarySearchPathManager.addPath(path)) {
+							Msg.showInfo(this, gTree, "Add Library Search Path",
+								"Added '%s' to library search paths.".formatted(fsrl));
+						}
+						else {
+							Msg.showInfo(this, gTree, "Add Library Search Path",
+								"Library search path '%s' already exists.".formatted(fsrl));
+						}
+					}
+					catch (IOException e) {
+						Msg.showError(this, gTree, "Add Library Search Path", e);
+					}
 				})
 				.build();
 	}

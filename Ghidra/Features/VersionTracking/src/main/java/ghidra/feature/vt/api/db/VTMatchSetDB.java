@@ -29,6 +29,7 @@ import ghidra.feature.vt.api.correlator.program.ImpliedMatchProgramCorrelator;
 import ghidra.feature.vt.api.correlator.program.ManualMatchProgramCorrelator;
 import ghidra.feature.vt.api.impl.*;
 import ghidra.feature.vt.api.main.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.program.database.DBObjectCache;
@@ -64,8 +65,9 @@ public class VTMatchSetDB extends DatabaseObject implements VTMatchSet {
 		return matchSetDB;
 	}
 
-	public static VTMatchSetDB getMatchSetDB(DBRecord record, VTSessionDB session, DBHandle dbHandle,
-			OpenMode openMode, TaskMonitor monitor, Lock lock) throws VersionException {
+	public static VTMatchSetDB getMatchSetDB(DBRecord record, VTSessionDB session,
+			DBHandle dbHandle, OpenMode openMode, TaskMonitor monitor, Lock lock)
+			throws VersionException {
 
 		VTMatchSetDB matchSetDB = new VTMatchSetDB(record, session, dbHandle, lock);
 		matchSetDB.getTableAdapters(record.getKey(), openMode, monitor);
@@ -177,7 +179,7 @@ public class VTMatchSetDB extends DatabaseObject implements VTMatchSet {
 			lock.release();
 		}
 		if (newMatch != null) {
-			session.setObjectChanged(VTChangeManager.DOCR_VT_MATCH_ADDED, newMatch, null, newMatch);
+			session.setObjectChanged(VTEvent.MATCH_ADDED, newMatch, null, newMatch);
 		}
 		return newMatch;
 	}
@@ -226,7 +228,7 @@ public class VTMatchSetDB extends DatabaseObject implements VTMatchSet {
 		}
 
 		DeletedMatch deletedMatch = new DeletedMatch(sourceAddress, destinationAddress);
-		session.setObjectChanged(VTChangeManager.DOCR_VT_MATCH_DELETED, match, deletedMatch, null);
+		session.setObjectChanged(VTEvent.MATCH_DELETED, match, deletedMatch, null);
 		return true;
 	}
 

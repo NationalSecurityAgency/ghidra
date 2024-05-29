@@ -15,6 +15,8 @@
  */
 package ghidra.app.script;
 
+import static ghidra.framework.main.DataTreeDialogType.*;
+
 import java.awt.Color;
 import java.io.*;
 import java.rmi.ConnectException;
@@ -588,8 +590,8 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		if (isRunningHeadless()) {
 			// only change client authenticator in headless mode
 			try {
-				HeadlessClientAuthenticator
-						.installHeadlessClientAuthenticator(ClientUtil.getUserName(), null, false);
+				HeadlessClientAuthenticator.installHeadlessClientAuthenticator(
+					ClientUtil.getUserName(), null, false);
 			}
 			catch (IOException e) {
 				throw new RuntimeException("Unexpected Exception", e);
@@ -882,7 +884,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @param cmd the command to run
 	 * @return true if the command successfully ran
 	 */
-	public final boolean runCommand(Command cmd) {
+	public final boolean runCommand(Command<Program> cmd) {
 		return cmd.applyTo(currentProgram);
 	}
 
@@ -893,7 +895,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * @param cmd the background command to run
 	 * @return true if the background command successfully ran
 	 */
-	public final boolean runCommand(BackgroundCommand cmd) {
+	public final boolean runCommand(BackgroundCommand<Program> cmd) {
 		return cmd.applyTo(currentProgram, monitor);
 	}
 
@@ -1316,6 +1318,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 				case FILE_TYPE:
 				case FONT_TYPE:
 				case KEYSTROKE_TYPE:
+				case ACTION_TRIGGER:
 					// do nothing; don't allow user to set these options (doesn't make any sense)
 					break;
 
@@ -2303,7 +2306,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 
 		DomainFolder choice = doAsk(Program.class, title, "", existingValue, lastValue -> {
 
-			DataTreeDialog dtd = new DataTreeDialog(null, title, DataTreeDialog.CHOOSE_FOLDER);
+			DataTreeDialog dtd = new DataTreeDialog(null, title, CHOOSE_FOLDER);
 			dtd.show();
 			if (dtd.wasCancelled()) {
 				throw new CancelledException();
@@ -2333,22 +2336,22 @@ public abstract class GhidraScript extends FlatProgramAPI {
 
 	/**
 	 * Prompts for multiple values at the same time. To use this method, you must first
-	 * create a {@link GhidraValuesMap} and define the values that will be supplied by this method. 
+	 * create a {@link GhidraValuesMap} and define the values that will be supplied by this method.
 	 * In the GUI environment, this will result in a single dialog with an entry for each value
 	 * defined in the values map. This method returns a GhidraValuesMap with the values supplied by
-	 * the user in GUI mode or command line arguments in headless mode. If the user cancels the 
-	 * dialog, a cancelled exception will be thrown, and unless it is explicity caught by the 
-	 * script, will terminate the script. Also, if the values map has a {@link ValuesMapValidator}, 
-	 * the values will be validated when the user presses the "OK" button and will only exit the 
+	 * the user in GUI mode or command line arguments in headless mode. If the user cancels the
+	 * dialog, a cancelled exception will be thrown, and unless it is explicity caught by the
+	 * script, will terminate the script. Also, if the values map has a {@link ValuesMapValidator},
+	 * the values will be validated when the user presses the "OK" button and will only exit the
 	 * dialog if the validate check passes. Otherwise, the validator should have reported an error
 	 * message in the dialog and the dialog will remain visible.
-	 * 
+	 *
 	 * <p>
 	 * Regardless of environment -- if script arguments have been set, this method will use the
 	 * next arguments in the array and advance the array index until all values in the values map
 	 * have been satisfied and so the next call to an ask method will get the next argument after
-	 * those consumed by this call. 
-	 * 
+	 * those consumed by this call.
+	 *
 	 * @param title the title of the dialog if in GUI mode
 	 * @param optionalMessage an optional message that is displayed in the dialog, just above the
 	 * list of name/value pairs
@@ -2616,7 +2619,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * 			(in headless mode or when using .properties file)
 	 * @param message the message to display next to the input field (in GUI mode) or the
 	 * 			second part of the variable name (in headless mode or when using .properties file)
-	 * @param defaultValue the optional default address as a String - if null is passed or an invalid 
+	 * @param defaultValue the optional default address as a String - if null is passed or an invalid
 	 * 			address is given no default will be shown in dialog
 	 * @return the user-specified Address value
 	 * @throws CancelledException if the user hit the 'cancel' button in GUI mode
@@ -2732,7 +2735,9 @@ public abstract class GhidraScript extends FlatProgramAPI {
 
 	/**
 	 * Returns a Program, using the title parameter for guidance. The actual behavior of the
-	 * method depends on your environment, which can be GUI or headless.
+	 * method depends on your environment, which can be GUI or headless. If in headless mode,
+	 * the program will not be upgraded (see {@link #askProgram(String, boolean)} if you want
+	 * more control). In GUI mode, the user will be prompted to upgrade.
 	 * <br>
 	 * Regardless of environment -- if script arguments have been set, this method will use the
 	 * next argument in the array and advance the array index so the next call to an ask method
@@ -2757,29 +2762,84 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 *
 	 * @param title the title of the pop-up dialog (in GUI mode) or the variable name (in
 	 * 			headless mode)
-	 * @return the user-selected Program with this script as the consumer or null if a program was 
-	 * not selected.  NOTE: It is very important that the program instance returned by this method 
-	 * ALWAYS be properly released when no longer needed.  The script which invoked this method must be
-	 * specified as the consumer upon release (i.e., {@code program.release(this) } - failure to 
-	 * properly release the program may result in improper project disposal.  If the program was 
+	 * @return the user-selected Program with this script as the consumer if a program was
+	 * selected. Null is returned if a program is not selected. NOTE: It is very important that
+	 * the program instance returned by this method ALWAYS be properly released when no longer
+	 * needed.  The script which invoked this method must be
+	 * specified as the consumer upon release (i.e., {@code program.release(this) } - failure to
+	 * properly release the program may result in improper project disposal.  If the program was
 	 * opened by the tool, the tool will be a second consumer responsible for its own release.
-	 * @throws VersionException if the Program is out-of-date from the version of GHIDRA
+	 * @throws VersionException if the Program is out-of-date from the version of Ghidra and an
+	 * upgrade was not been performed. In non-headless mode, the user will have already been
+	 * notified via a popup dialog.
 	 * @throws IOException if there is an error accessing the Program's DomainObject
-	 * @throws CancelledException if the operation is cancelled
+	 * @throws CancelledException if the program open operation is cancelled
 	 * @throws IllegalArgumentException if in headless mode, there was a missing or invalid	program
 	 * 			specified in the .properties file
 	 */
 	public Program askProgram(String title)
+			throws VersionException, IOException, CancelledException {
+		return askProgram(title, false);
+	}
+
+	/**
+	 * Returns a Program, using the title parameter for guidance with the option to upgrade
+	 * if needed. The actual behavior of the method depends on your environment, which can be
+	 * GUI or headless. You can control whether or not the program is allowed to upgrade via
+	 * the {@code upgradeIfNeeded} parameter.
+	 * <br>
+	 * Regardless of environment -- if script arguments have been set, this method will use the
+	 * next argument in the array and advance the array index so the next call to an ask method
+	 * will get the next argument.  If there are no script arguments and a .properties file
+	 * sharing the same base name as the Ghidra Script exists (i.e., Script1.properties for
+	 * Script1.java), then this method will then look there for the String value to return.
+	 * The method will look in the .properties file by searching for a property name that is the
+	 * title String parameter.  If that property name exists and its value represents a valid
+	 * program, then the .properties value will be used in the following way:
+	 * <ol>
+	 * 		<li>In the GUI environment, this method displays a popup dialog that prompts the user
+	 * 			to select a program.</li>
+	 *		<li>In the headless environment, if a .properties file sharing the same base name as the
+	 *			Ghidra Script exists (i.e., Script1.properties for Script1.java), then this method
+	 *			looks there for the name of the program to return. The method will look in the
+	 *			.properties file by searching for a property name equal to the 'title' parameter. If
+	 *			that property name exists and its value represents a valid Program in the project,
+	 *			then that value	is returned. Otherwise, an Exception is thrown if there is an
+	 *			invalid or missing .properties value.</li>
+	 * </ol>
+	 *
+	 *
+	 * @param title the title of the pop-up dialog (in GUI mode) or the variable name (in
+	 * 			headless mode)
+	 * @param upgradeIfNeeded if true, program will be upgraded if needed and possible. If false,
+	 * the program will only be upgraded after first prompting the user. In headless mode, it will
+	 * attempt to upgrade only if the parameter is true.
+	 * @return the user-selected Program with this script as the consumer if a program was
+	 * selected. Null is returned if a program is not selected. NOTE: It is very important that
+	 * the program instance returned by this method ALWAYS be properly released when no longer
+	 * needed.  The script which invoked this method must be
+	 * specified as the consumer upon release (i.e., {@code program.release(this) } - failure to
+	 * properly release the program may result in improper project disposal.  If the program was
+	 * opened by the tool, the tool will be a second consumer responsible for its own release.
+	 * @throws VersionException if the Program is out-of-date from the version of GHIDRA and an
+	 * upgrade was not been performed. In non-headless mode, the user will have already been
+	 * notified via a popup dialog.
+	 * @throws IOException if there is an error accessing the Program's DomainObject
+	 * @throws CancelledException if the program open operation is cancelled
+	 * @throws IllegalArgumentException if in headless mode, there was a missing or invalid	program
+	 * 			specified in the .properties file
+	 */
+	public Program askProgram(String title, boolean upgradeIfNeeded)
 			throws VersionException, IOException, CancelledException {
 
 		DomainFile choice = loadAskValue(this::parseDomainFile, title);
 		if (!isRunningHeadless()) {
 			choice = doAsk(Program.class, title, "", choice, lastValue -> {
 
-				DataTreeDialog dtd = new DataTreeDialog(null, title, DataTreeDialog.OPEN);
+				DataTreeDialog dtd = new DataTreeDialog(null, title, OPEN);
 				dtd.show();
 				if (dtd.wasCancelled()) {
-					throw new CancelledException();
+					return null;
 				}
 
 				return dtd.getDomainFile();
@@ -2790,7 +2850,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 			return null;
 		}
 
-		Program p = (Program) choice.getDomainObject(this, false, false, monitor);
+		Program p = doOpenProgram(choice, upgradeIfNeeded);
 
 		PluginTool tool = state.getTool();
 		if (tool == null) {
@@ -2800,6 +2860,24 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		ProgramManager pm = tool.getService(ProgramManager.class);
 		pm.openProgram(p);
 		return p;
+	}
+
+	private Program doOpenProgram(DomainFile domainFile, boolean upgradeIfNeeded)
+			throws CancelledException, IOException, VersionException {
+
+		try {
+			return (Program) domainFile.getDomainObject(this, upgradeIfNeeded, false, monitor);
+		}
+		catch (VersionException e) {
+			if (isRunningHeadless()) {
+				throw e;
+			}
+			// in Gui mode, ask the user if they would like to upgrade
+			if (VersionExceptionHandler.isUpgradeOK(null, domainFile, "Open ", e)) {
+				return (Program) domainFile.getDomainObject(this, true, false, monitor);
+			}
+			throw e;
+		}
 	}
 
 	/**
@@ -2863,7 +2941,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 		String message = "";
 		DomainFile choice = doAsk(DomainFile.class, title, message, existingValue, lastValue -> {
 
-			DataTreeDialog dtd = new DataTreeDialog(null, title, DataTreeDialog.OPEN);
+			DataTreeDialog dtd = new DataTreeDialog(null, title, OPEN);
 			dtd.show();
 			if (dtd.wasCancelled()) {
 				throw new CancelledException();
@@ -3064,13 +3142,13 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * only be used in headed mode.
 	 * <p>
 	 * In the GUI environment, this method displays a password popup dialog that prompts the user
-	 * for a password. There is no pre-population of the input. If the user cancels the dialog, it 
-	 * is immediately disposed, and any input to that dialog is cleared from memory. If the user 
-	 * completes the dialog, then the password is returned in a wrapped buffer. The buffer can be 
-	 * cleared by calling {@link Password#close()}; however, it is meant to be used in a 
-	 * {@code try-with-resources} block. The pattern does not guarantee protection of the password, 
+	 * for a password. There is no pre-population of the input. If the user cancels the dialog, it
+	 * is immediately disposed, and any input to that dialog is cleared from memory. If the user
+	 * completes the dialog, then the password is returned in a wrapped buffer. The buffer can be
+	 * cleared by calling {@link Password#close()}; however, it is meant to be used in a
+	 * {@code try-with-resources} block. The pattern does not guarantee protection of the password,
 	 * but it will help you avoid some typical pitfalls:
-	 * 
+	 *
 	 * <pre>
 	 * String user = askString("Login", "Username:");
 	 * Project project;
@@ -3078,12 +3156,12 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * 	project = doLoginAndOpenProject(user, password.getPasswordChars());
 	 * }
 	 * </pre>
-	 * 
+	 *
 	 * The buffer will be zero-filled upon leaving the {@code try-with-resources} block. If, in the
 	 * sample, the {@code doLoginAndOpenProject} method or any part of its implementation needs to
 	 * retain the password, it must make a copy. It is then the implementation's responsibility to
 	 * protect its copy.
-	 * 
+	 *
 	 * @param title the title of the dialog
 	 * @param prompt the prompt to the left of the input field, or null to display "Password:"
 	 * @return the password
@@ -3564,10 +3642,10 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * null is returned.  For more control over the import process, {@link AutoImporter} may be
 	 * directly called.
 	 * <p>
-	 * NOTE: The returned {@link Program} is not automatically saved into the current project. 
+	 * NOTE: The returned {@link Program} is not automatically saved into the current project.
 	 * <p>
 	 * NOTE: It is the responsibility of the script that calls this method to release the returned
-	 * {@link Program} with {@link DomainObject#release(Object consumer)} when it is no longer 
+	 * {@link Program} with {@link DomainObject#release(Object consumer)} when it is no longer
 	 * needed, where <code>consumer</code> is <code>this</code>.
 	 *
 	 * @param file the file to import
@@ -3587,11 +3665,11 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	}
 
 	/**
-	 * Imports the specified file as raw binary.  For more control over the import process, 
+	 * Imports the specified file as raw binary.  For more control over the import process,
 	 * {@link AutoImporter} may be directly called.
 	 * <p>
 	 * NOTE: It is the responsibility of the script that calls this method to release the returned
-	 * {@link Program} with {@link DomainObject#release(Object consumer)} when it is no longer 
+	 * {@link Program} with {@link DomainObject#release(Object consumer)} when it is no longer
 	 * needed, where <code>consumer</code> is <code>this</code>.
 	 *
 	 * @param file the file to import

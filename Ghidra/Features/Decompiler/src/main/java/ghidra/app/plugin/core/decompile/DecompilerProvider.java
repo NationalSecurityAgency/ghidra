@@ -38,16 +38,15 @@ import ghidra.app.plugin.core.decompile.actions.*;
 import ghidra.app.services.*;
 import ghidra.app.util.HelpTopics;
 import ghidra.app.util.ListingHighlightProvider;
-import ghidra.framework.model.*;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.NavigatableComponentProviderAdapter;
 import ghidra.framework.plugintool.util.ServiceListener;
-import ghidra.program.database.SpecExtension;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
-import ghidra.program.util.*;
+import ghidra.program.util.ProgramLocation;
+import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import ghidra.util.Swing;
 import ghidra.util.bean.field.AnnotatedTextFieldElement;
@@ -57,8 +56,8 @@ import resources.MultiIconBuilder;
 import utility.function.Callback;
 
 public class DecompilerProvider extends NavigatableComponentProviderAdapter
-		implements DomainObjectListener, OptionsChangeListener, DecompilerCallbackHandler,
-		DecompilerHighlightService, DecompilerMarginService {
+		implements OptionsChangeListener, DecompilerCallbackHandler, DecompilerHighlightService,
+		DecompilerMarginService {
 
 	private static final String OPTIONS_TITLE = "Decompiler";
 
@@ -101,6 +100,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	private ViewerPosition pendingViewerPosition;
 
 	private SwingUpdateManager redecompileUpdater;
+	private DecompilerProgramListener programListener;
 
 	// Follow-up work can be items that need to happen after a pending decompile is finished, such
 	// as updating highlights after a variable rename
@@ -164,6 +164,8 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		followUpWorkUpdater = new SwingUpdateManager(() -> doFollowUpWork());
 
 		plugin.getTool().addServiceListener(serviceListener);
+		programListener = new DecompilerProgramListener(controller, redecompileUpdater);
+		setDefaultFocusComponent(controller.getDecompilerPanel());
 	}
 
 //==================================================================================================
@@ -286,12 +288,6 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		pendingViewerPosition = decompMemento.getViewerPosition();
 	}
 
-	@Override
-	public void requestFocus() {
-		controller.getDecompilerPanel().requestFocus();
-		tool.toFront(this);
-	}
-
 //==================================================================================================
 // DecompilerHighlightService interface methods
 //==================================================================================================
@@ -310,38 +306,10 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 // DomainObjectListener methods
 //==================================================================================================
 
-	@Override
-	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		// Check for events that signal that a decompiler process' data is stale
-		// and if so force a new process to be spawned
-		if (ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_ADDED) ||
-			ev.containsEvent(ChangeManager.DOCR_MEMORY_BLOCK_REMOVED) ||
-			ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
-			controller.resetDecompiler();
-		}
-		else if (ev.containsEvent(DomainObject.DO_PROPERTY_CHANGED)) {
-			Iterator<DomainObjectChangeRecord> iter = ev.iterator();
-			while (iter.hasNext()) {
-				DomainObjectChangeRecord record = iter.next();
-				if (record.getEventType() == DomainObject.DO_PROPERTY_CHANGED) {
-					if (record.getOldValue() instanceof String) {
-						String value = (String) record.getOldValue();
-						if (value.startsWith(SpecExtension.SPEC_EXTENSION)) {
-							controller.resetDecompiler();
-							break;
-						}
-					}
-				}
-			}
-		}
-
-		// Trigger a redecompile an any program change if the window is active
-		if (isVisible()) {
-			redecompileUpdater.update();
-		}
-	}
-
 	private void doRefresh(boolean optionsChanged) {
+		if (!isVisible()) {
+			return;
+		}
 		ToolOptions fieldOptions = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
 		ToolOptions opt = tool.getOptions(OPTIONS_TITLE);
 
@@ -441,14 +409,14 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	void doSetProgram(Program newProgram) {
 		controller.clear();
 		if (program != null) {
-			program.removeListener(this);
+			program.removeListener(programListener);
 		}
 
 		program = newProgram;
 		currentLocation = null;
 		currentSelection = null;
 		if (program != null) {
-			program.addListener(this);
+			program.addListener(programListener);
 			ToolOptions fieldOptions = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
 			ToolOptions opt = tool.getOptions(OPTIONS_TITLE);
 			decompilerOptions.grabFromToolAndProgram(fieldOptions, opt, program);
@@ -932,6 +900,9 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		OverridePrototypeAction overrideSigAction = new OverridePrototypeAction();
 		setGroupInfo(overrideSigAction, functionGroup, subGroupPosition++);
 
+		EditPrototypeOverrideAction editOverrideSigAction = new EditPrototypeOverrideAction();
+		setGroupInfo(editOverrideSigAction, functionGroup, subGroupPosition++);
+
 		DeletePrototypeOverrideAction deleteSigAction = new DeletePrototypeOverrideAction();
 		setGroupInfo(deleteSigAction, functionGroup, subGroupPosition++);
 
@@ -1171,6 +1142,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		addLocalAction(editDataTypeAction);
 		addLocalAction(specifyCProtoAction);
 		addLocalAction(overrideSigAction);
+		addLocalAction(editOverrideSigAction);
 		addLocalAction(deleteSigAction);
 		addLocalAction(renameFunctionAction);
 		addLocalAction(renameLabelAction);

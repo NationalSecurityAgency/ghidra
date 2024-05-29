@@ -1,0 +1,5 @@
+##VERSION: 2.0
+Module.manifest||GHIDRA||||END|
+data/bsim.theme.properties||GHIDRA||||END|
+src/main/help/help/TOC_Source.xml||GHIDRA||||END|
+src/main/help/help/topics/BSimFeatureVisualizerPlugin/BSimFeatureVisualizerPlugin.htm||GHIDRA||||END|

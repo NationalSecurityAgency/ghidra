@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.functioncompare;
 
+import static ghidra.util.datastruct.Duo.Side.*;
 import static org.junit.Assert.*;
 
 import java.awt.Window;
@@ -149,7 +150,7 @@ public class CompareFunctionsSlowTest extends AbstractGhidraHeadedIntegrationTes
 		assertTrue(prevAction.isEnabledForContext(context));
 
 		JPanel rightPanel =
-			provider.getComponent().getDualListingPanel().getRightPanel().getFieldPanel();
+			provider.getComponent().getDualListingPanel().getListingPanel(RIGHT).getFieldPanel();
 		clickMouse(rightPanel, 1, 30, 30, 1, 0);
 		waitForSwing();
 		provider.getComponent().updateActionEnablement();
@@ -243,7 +244,7 @@ public class CompareFunctionsSlowTest extends AbstractGhidraHeadedIntegrationTes
 	 * Builds a program with 2 functions
 	 */
 	private ProgramBuilder buildTestProgram1() throws Exception {
-		ProgramBuilder builder = new ProgramBuilder("TestPgm1", ProgramBuilder._TOY_BE);
+		ProgramBuilder builder = new ProgramBuilder("Program 1", ProgramBuilder._TOY_BE);
 		builder.createMemory(".text", "0x1001000", 0x6600);
 		builder.setProperty(Program.DATE_CREATED, new Date(100000000)); // arbitrary, but consistent
 
@@ -261,7 +262,7 @@ public class CompareFunctionsSlowTest extends AbstractGhidraHeadedIntegrationTes
 	 * Builds a program with 1 function
 	 */
 	private ProgramBuilder buildTestProgram2() throws Exception {
-		ProgramBuilder builder = new ProgramBuilder("TestPgm1", ProgramBuilder._TOY_BE);
+		ProgramBuilder builder = new ProgramBuilder("Program 2", ProgramBuilder._TOY_BE);
 		builder.createMemory(".text", "0x1001000", 0x6600);
 		builder.setProperty(Program.DATE_CREATED, new Date(100000000)); // arbitrary, but consistent
 

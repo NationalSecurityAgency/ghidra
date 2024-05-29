@@ -33,6 +33,10 @@ import java.util.Map;
  * list may change over time, but that shouldn't matter much. Each back-end should make its best
  * effort to match its methods to these stock actions where applicable, but ultimately, it is up to
  * the UI to decide what is presented where.
+ * 
+ * @param name the name of the action (given as the action attribute on method annotations)
+ * @param builtIn true if the action should <em>not</em> be presented in generic contexts, but
+ *            reserved for built-in, purpose-specific actions
  */
 public record ActionName(String name, boolean builtIn) {
 	private static final Map<String, ActionName> NAMES = new HashMap<>();
@@ -63,7 +67,7 @@ public record ActionName(String name, boolean builtIn) {
 		}
 	}
 
-	public static final ActionName REFRESH = builtIn("refresh");
+	public static final ActionName REFRESH = extended("refresh");
 	/**
 	 * Activate a given object and optionally a time
 	 * 

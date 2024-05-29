@@ -372,6 +372,36 @@ Varnode *Funcdata::setInputVarnode(Varnode *vn)
   return vn;
 }
 
+/// Construct a constant Varnode up to 128 bits,  using INT_ZEXT and PIECE if necessary.
+/// This method is temporary until we have full extended precision constants.
+/// \param s is the size of the Varnode in bytes
+/// \param val is the 128-bit value in 2 64-bit chunks
+/// \param op is point before which any new PcodeOp should get inserted
+/// \return the new effective constant Varnode
+Varnode *Funcdata::newExtendedConstant(int4 s,uint8 *val,PcodeOp *op)
+
+{
+  if (s <= 8)
+    return newConstant(s, val[0]);
+  Varnode *newConstVn;
+  if (val[1] == 0) {
+    PcodeOp *extOp = newOp(1,op->getAddr());
+    opSetOpcode(extOp,CPUI_INT_ZEXT);
+    newConstVn = newUniqueOut(s,extOp);
+    opSetInput(extOp,newConstant(8,val[0]),0);
+    opInsertBefore(extOp,op);
+  }
+  else {
+    PcodeOp *pieceOp = newOp(2,op->getAddr());
+    opSetOpcode(pieceOp,CPUI_PIECE);
+    newConstVn = newUniqueOut(s,pieceOp);
+    opSetInput(pieceOp,newConstant(8,val[1]),0);	// Most significant piece
+    opSetInput(pieceOp,newConstant(8,val[0]),1);	// Least significant piece
+    opInsertBefore(pieceOp,op);
+  }
+  return newConstVn;
+}
+
 /// \brief Adjust input Varnodes contained in the given range
 ///
 /// After this call, a single \e input Varnode will exist that fills the given range.
@@ -1282,6 +1312,40 @@ bool Funcdata::attemptDynamicMappingLate(SymbolEntry *entry,DynamicHash &dhash)
   return true;
 }
 
+/// Follow the Varnode back to see if it comes from the return address for \b this function.
+/// If so, return \b true.  The return address can flow through COPY, INDIRECT, and AND operations.
+/// If there are any other operations in the flow path, or if a standard storage location for the
+/// return address was not defined, return \b false.
+/// \param vn is the given Varnode to trace
+/// \return \b true if flow is from the return address
+bool Funcdata::testForReturnAddress(Varnode *vn)
+
+{
+  VarnodeData &retaddr(glb->defaultReturnAddr);
+  if (retaddr.space == (AddrSpace *)0)
+    return false;			// No standard storage location to compare to
+  while(vn->isWritten()) {
+    PcodeOp *op = vn->getDef();
+    OpCode opc = op->code();
+    if (opc == CPUI_INDIRECT || opc == CPUI_COPY) {
+      vn = op->getIn(0);
+    }
+    else if (opc == CPUI_INT_AND) {
+      // We only want to allow "alignment" style masking
+      if (!op->getIn(1)->isConstant())
+	return false;
+      vn = op->getIn(0);
+    }
+    else
+      return false;
+  }
+  if (vn->getSpace() != retaddr.space || vn->getOffset() != retaddr.offset || vn->getSize() != retaddr.size)
+    return false;
+  if (!vn->isInput())
+    return false;
+  return true;
+}
+
 /// \brief Replace all read references to the first Varnode with a second Varnode
 ///
 /// \param vn is the first Varnode (being replaced)
@@ -1908,6 +1972,8 @@ int4 AncestorRealistic::enterNode(void)
 	if (!vn->isDirectWrite())
 	  return pop_fail;
       }
+      if (op->isStoreUnmapped())
+	return pop_fail;
       op = vn->getDef();
       if (op == (PcodeOp *)0) break;
       OpCode opc = op->code();

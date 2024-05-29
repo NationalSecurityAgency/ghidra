@@ -16,15 +16,15 @@
 package ghidra.app.plugin.core.comments;
 
 import java.awt.BorderLayout;
+import java.awt.Font;
 
 import javax.swing.JPanel;
 import javax.swing.JTextPane;
 import javax.swing.text.*;
 
-import generic.theme.GColor;
+import generic.theme.*;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.CommentHistory;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.util.DateUtils;
 import ghidra.util.Msg;
 
@@ -36,8 +36,8 @@ import ghidra.util.Msg;
 class CommentHistoryPanel extends JPanel {
 
 	private final static String NO_HISTORY = "No History Found";
-	private SimpleAttributeSet userAttrSet;
-	private SimpleAttributeSet dateAttrSet;
+	private SimpleAttributeSet userAttrs;
+	private SimpleAttributeSet dateAttrs;
 	private SimpleAttributeSet textAttrSet;
 	private SimpleAttributeSet tabAttrSet;
 
@@ -46,24 +46,21 @@ class CommentHistoryPanel extends JPanel {
 
 	private int commentType;
 
-	/**
-	 * Construct a new CommentHistoryPanel 
-	 * @param commentType comment type
-	 */
-	CommentHistoryPanel(int commentType) {
+	CommentHistoryPanel(int commentType, CodeUnit cu) {
 
 		super(new BorderLayout());
 		setUpAttributes();
 		this.commentType = commentType;
 		create();
+		showCommentHistory(cu.getProgram(), cu.getMinAddress());
 	}
 
 	/**
 	 * Show the comment history
-	 * @param program program 
+	 * @param program program
 	 * @param addr address of comment history
 	 */
-	void showCommentHistory(Program program, Address addr) {
+	private void showCommentHistory(Program program, Address addr) {
 
 		textPane.setText("");
 
@@ -88,6 +85,10 @@ class CommentHistoryPanel extends JPanel {
 	private void create() {
 		textPane = new JTextPane();
 		textPane.setEditable(false);
+		// Note that this panel in not focusable which means keyboard users can't navigate to
+		// this text pane and therefore screen readers won't read it. To compensate for this
+		// the history has been added as a tooltip on each tab.
+		textPane.setFocusable(false);
 		add(textPane, BorderLayout.CENTER);
 		doc = textPane.getStyledDocument();
 	}
@@ -100,11 +101,11 @@ class CommentHistoryPanel extends JPanel {
 		if (offset > 0) {
 			userName = "\n" + userName;
 		}
-		doc.insertString(offset, userName, userAttrSet);
+		doc.insertString(offset, userName, userAttrs);
 
 		offset = doc.getLength();
 		doc.insertString(offset,
-			"\t" + DateUtils.formatDateTimestamp(history.getModificationDate()), dateAttrSet);
+			"\t" + DateUtils.formatDateTimestamp(history.getModificationDate()), dateAttrs);
 		doc.setParagraphAttributes(offset, 1, tabAttrSet, false);
 
 		offset = doc.getLength();
@@ -112,29 +113,27 @@ class CommentHistoryPanel extends JPanel {
 	}
 
 	private void setUpAttributes() {
-		textAttrSet = new SimpleAttributeSet();
-		textAttrSet.addAttribute(StyleConstants.FontFamily, "Monospaced");
-		textAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(12));
-		textAttrSet.addAttribute(StyleConstants.Foreground,
-			new GColor("color.fg.plugin.comments.history.text"));
 
-		userAttrSet = new SimpleAttributeSet();
-		userAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
-		userAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(12));
-		userAttrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);
-		userAttrSet.addAttribute(StyleConstants.Foreground,
-			new GColor("color.fg.plugin.comments.history.user"));
-
-		dateAttrSet = new SimpleAttributeSet();
-		dateAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
-		dateAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(11));
-		dateAttrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);
-		dateAttrSet.addAttribute(StyleConstants.Foreground,
-			new GColor("color.fg.plugin.comments.history.date"));
+		Font bold = Gui.getFont("font.standard.bold");
+		Font monospaced = Gui.getFont("font.monospaced");
+		textAttrSet =
+			new GAttributes(monospaced, new GColor("color.fg.plugin.comments.history.text"));
+		userAttrs = new GAttributes(bold, new GColor("color.fg.plugin.comments.history.user"));
+		dateAttrs = new GAttributes(bold, new GColor("color.fg.plugin.comments.history.date"));
 
 		tabAttrSet = new SimpleAttributeSet();
 		TabStop tabs = new TabStop(100, StyleConstants.ALIGN_LEFT, TabStop.LEAD_NONE);
 		StyleConstants.setTabSet(tabAttrSet, new TabSet(new TabStop[] { tabs }));
+	}
+
+	public String getHistory() {
+		try {
+			return doc.getText(0, doc.getLength());
+		}
+		catch (BadLocationException e) {
+			Msg.error(this, "This should never happen as the indexes came from the document!");
+			return "";
+		}
 	}
 
 }

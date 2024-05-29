@@ -220,6 +220,7 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		MemoryBlock[] blocks = memory.getBlocks();
 		tool.execute(new AddInitializedMemoryBlockCmd(".test", "comments", "test", getAddr(0),
 			0x100, true, true, true, false, (byte) 1, false), program);
+		waitForBusyTool(tool);
 
 		JTable table = provider.getTable();
 		assertEquals(".test", table.getModel().getValueAt(0, MemoryMapModel.NAME));
@@ -233,6 +234,7 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		tool.execute(
 			new DeleteBlockCmd(new Address[] { blocks[blocks.length - 1].getStart() }, null),
 			program);
+		waitForBusyTool(tool);
 
 		JTable table = provider.getTable();
 		assertEquals(blocks.length - 1, table.getModel().getRowCount());
@@ -261,6 +263,7 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		MemoryBlock[] blocks = memory.getBlocks();
 		tool.execute(new AddUninitializedMemoryBlockCmd(".test", "comments", "test", getAddr(0),
 			0x100, true, true, true, false, false), program);
+		waitForBusyTool(tool);
 		JTable table = provider.getTable();
 		assertEquals(blocks.length + 1, table.getModel().getRowCount());
 		assertEquals(".test", table.getModel().getValueAt(0, MemoryMapModel.NAME));
@@ -281,6 +284,7 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		MemoryBlock[] blocks = memory.getBlocks();
 		tool.execute(new AddInitializedMemoryBlockCmd(".test", "comments", "test", getAddr(0),
 			0x100, true, true, true, false, (byte) 1, false), program);
+		waitForBusyTool(tool);
 		JTable table = provider.getTable();
 		assertEquals(blocks.length + 1, table.getModel().getRowCount());
 

@@ -18,6 +18,7 @@ package ghidra.program.database;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
 import ghidra.program.util.LanguageTranslator;
@@ -42,16 +43,16 @@ abstract class OverlaySpaceDBAdapter {
 		this.db = dbHandle;
 	}
 
-	static OverlaySpaceDBAdapter getOverlaySpaceAdapter(DBHandle dbHandle, int openMode,
+	static OverlaySpaceDBAdapter getOverlaySpaceAdapter(DBHandle dbHandle, OpenMode openMode,
 			TaskMonitor monitor) throws IOException, VersionException, CancelledException {
 		try {
 			return new OverlaySpaceDBAdapterV1(dbHandle, openMode);
 		}
 		catch (VersionException e) {
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				return upgrade(dbHandle, findReadOnlyAdapter(dbHandle), monitor);
 			}
-			if (e.isUpgradable() && openMode == DBConstants.READ_ONLY) {
+			if (e.isUpgradable() && openMode == OpenMode.IMMUTABLE) {
 				return findReadOnlyAdapter(dbHandle);
 			}
 			throw e;
@@ -82,13 +83,13 @@ abstract class OverlaySpaceDBAdapter {
 
 		try {
 			OverlaySpaceDBAdapter tmpAdapter =
-				new OverlaySpaceDBAdapterV1(tmpHandle, DBConstants.CREATE);
+				new OverlaySpaceDBAdapterV1(tmpHandle, OpenMode.CREATE);
 			copyRecords(oldAdapter, tmpAdapter, monitor);
 
 			dbHandle.deleteTable(TABLE_NAME);
 
 			OverlaySpaceDBAdapter newAdapter =
-				new OverlaySpaceDBAdapterV1(dbHandle, DBConstants.CREATE);
+				new OverlaySpaceDBAdapterV1(dbHandle, OpenMode.CREATE);
 			copyRecords(tmpAdapter, newAdapter, monitor);
 
 			tmpHandle.deleteTable(TABLE_NAME);

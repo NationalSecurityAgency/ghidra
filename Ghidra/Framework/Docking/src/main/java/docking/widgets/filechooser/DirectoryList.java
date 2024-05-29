@@ -49,39 +49,54 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 
 	/**
 	 * Create a new DirectoryList instance.
-	 * 
+	 *
 	 * @param chooser the {@link GhidraFileChooser} this instance is nested in
 	 * @param model the {@link DirectoryListModel}
-	 * @param font the parent component's font, used to calculate row height in the list once
 	 */
-	DirectoryList(GhidraFileChooser chooser, DirectoryListModel model, Font font) {
+	DirectoryList(GhidraFileChooser chooser, DirectoryListModel model) {
 		super(model);
 		this.chooser = chooser;
 		this.model = model;
-		build(font);
+		build();
 	}
 
-	private void build(Font font) {
+	@Override
+	public void setFont(Font font) {
+		super.setFont(font);
+		updateCellDimensions(font);
+	}
+
+	private void updateCellDimensions(Font font) {
+
+		if (font == null) {
+			return; // UI is being updated
+		}
+
+		ListCellRenderer<? super File> renderer = getCellRenderer();
+		if (!(renderer instanceof FileListCellRenderer cellRenderer)) {
+			return; // initializing
+		}
+
+		// Enable the list to calculate the width of the cells on its own, but manually specify the
+		// height to ensure some padding between rows.
+		//
+		// Use 1/3 of the line height of the font to ensure visually consistent padding between
+		// rows.  (Historically, 5px was used as the padding between the default 12pt (15px line
+		// height) rows, so 15px line height/5px padding equals .333 ratio.)
+		FontMetrics metrics = cellRenderer.getFontMetrics(font);
+		setFixedCellHeight(Math.max(metrics.getHeight(), DEFAULT_ICON_SIZE) +
+			Math.max(metrics.getHeight() / 3, MIN_HEIGHT_PADDING));
+		setFixedCellWidth(-1);
+	}
+
+	private void build() {
 
 		setLayoutOrientation(JList.VERTICAL_WRAP);
 
 		FileListCellRenderer cellRenderer = new FileListCellRenderer(chooser);
 		setCellRenderer(cellRenderer);
 
-		// Enable the list to calculate the width of the cells on its own, but manually
-		// specify the height to ensure some padding between rows.
-		// We need the parent component's Font instead of using our
-		// own #getFont() because we are not a child of the parent yet and
-		// the font may be set to something other than the default.
-		// Use 1/3 of the line height of the font to ensure visually consistent
-		// padding between rows.  (historically, 5px was used as the padding
-		// between the default 12pt (15px lineht) rows, so 15px lineht/5px padding
-		// equals .333 ratio.) 
-		FontMetrics metrics = cellRenderer.getFontMetrics(font);
-		setFixedCellHeight(
-			Math.max(metrics.getHeight(), DEFAULT_ICON_SIZE) +
-				Math.max(metrics.getHeight() / 3, MIN_HEIGHT_PADDING));
-		setFixedCellWidth(-1);
+		updateCellDimensions(getFont());
 
 		addMouseListener(new GMouseListenerAdapter() {
 			@Override

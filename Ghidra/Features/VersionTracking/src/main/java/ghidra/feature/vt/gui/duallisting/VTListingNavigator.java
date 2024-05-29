@@ -92,13 +92,7 @@ public class VTListingNavigator implements Navigatable {
 
 	@Override
 	public boolean goTo(Program program, ProgramLocation location) {
-		boolean went = listingPanel.goTo(location);
-		// If we tried to go but couldn't, try again after showing entire listing.
-		if (!went && !dualListingPanel.isEntireListingShowing()) {
-			dualListingPanel.showEntireListing(true);
-			return listingPanel.goTo(location);
-		}
-		return went;
+		return listingPanel.goTo(location);
 	}
 
 	@Override
@@ -147,7 +141,8 @@ public class VTListingNavigator implements Navigatable {
 	}
 
 	@Override
-	public void removeHighlightProvider(ListingHighlightProvider highlightProvider, Program program) {
+	public void removeHighlightProvider(ListingHighlightProvider highlightProvider,
+			Program program) {
 		// currently unsupported
 	}
 

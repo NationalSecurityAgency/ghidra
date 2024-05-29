@@ -16,7 +16,7 @@
 package ghidra.app.util.viewer.listingpanel;
 
 import java.awt.Color;
-import java.util.ArrayList;
+import java.util.*;
 
 import docking.widgets.fieldpanel.support.Highlight;
 import ghidra.app.util.ListingHighlightProvider;
@@ -26,6 +26,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.util.ListingDiff;
+import ghidra.util.datastruct.Duo.Side;
 
 public class ListingDiffHighlightProvider implements ListingHighlightProvider {
 
@@ -33,22 +34,22 @@ public class ListingDiffHighlightProvider implements ListingHighlightProvider {
 	private static final String DEFAULT_OPERAND_SEPARATOR = ",";
 
 	private ListingDiff listingDiff;
-	private boolean isListing1;
+	private Side side;
 	private ListingCodeComparisonOptions comparisonOptions;
 
 	/**
 	 * Constructor for this highlight provider.
 	 * @param listingDiff the ListingDiff to use to determine where there are differences that 
 	 * need highlighting.
-	 * @param isListing1 true means that these are the highlights for the first listing.
+	 * @param side LEFT or RIGHT
 	 * false means the highlights are for the second listing.
 	 * @param comparisonOptions the tool options that indicate the current 
 	 * background colors for the Listing code comparison panel.
 	 */
-	public ListingDiffHighlightProvider(ListingDiff listingDiff, boolean isListing1,
+	public ListingDiffHighlightProvider(ListingDiff listingDiff, Side side,
 			ListingCodeComparisonOptions comparisonOptions) {
 		this.listingDiff = listingDiff;
-		this.isListing1 = isListing1;
+		this.side = side;
 		this.comparisonOptions = comparisonOptions;
 	}
 
@@ -77,14 +78,12 @@ public class ListingDiffHighlightProvider implements ListingHighlightProvider {
 	private Highlight[] getByteDiffHighlights(String text, CodeUnit codeUnit,
 			int cursorTextOffset) {
 		Address minAddress = codeUnit.getMinAddress();
-		AddressSetView unmatchedDiffs = (isListing1) ? listingDiff.getListing1UnmatchedCode()
-				: listingDiff.getListing2UnmatchedCode();
+		AddressSetView unmatchedDiffs = listingDiff.getUnmatchedCode(side);
 		if (unmatchedDiffs.contains(minAddress)) {
 			return NO_HIGHLIGHTS;
 		}
 		Color byteDiffsBackgroundColor = comparisonOptions.getByteDiffsBackgroundColor();
-		AddressSetView byteDiffs =
-			(isListing1) ? listingDiff.getListing1ByteDiffs() : listingDiff.getListing2ByteDiffs();
+		AddressSetView byteDiffs = listingDiff.getByteDiffs(side);
 		// Get intersection of Byte Diff addresses and this code unit's addresses
 		AddressSet diffSet = new AddressSet(codeUnit.getMinAddress(), codeUnit.getMaxAddress());
 		diffSet = diffSet.intersect(byteDiffs);
@@ -108,19 +107,17 @@ public class ListingDiffHighlightProvider implements ListingHighlightProvider {
 	private Highlight[] getMnemonicDiffHighlights(String text, CodeUnit codeUnit,
 			int cursorTextOffset) {
 		Address minAddress = codeUnit.getMinAddress();
-		AddressSetView unmatchedDiffs = (isListing1) ? listingDiff.getListing1UnmatchedCode()
-				: listingDiff.getListing2UnmatchedCode();
+		AddressSetView unmatchedDiffs = listingDiff.getUnmatchedCode(side);
 		if (unmatchedDiffs.contains(minAddress)) {
 			return NO_HIGHLIGHTS;
 		}
 		Color mnemonicDiffsBackgroundColor = comparisonOptions.getMnemonicDiffsBackgroundColor();
-		AddressSetView codeUnitDiffs = (isListing1) ? listingDiff.getListing1CodeUnitDiffs()
-				: listingDiff.getListing2CodeUnitDiffs();
+		AddressSetView codeUnitDiffs = listingDiff.getCodeUnitDiffs(side);
 		// Get intersection of Code Unit Diff addresses and this code unit's addresses
 		AddressSet diffSet = new AddressSet(codeUnit.getMinAddress(), codeUnit.getMaxAddress());
 		diffSet = diffSet.intersect(codeUnitDiffs);
 		if (!diffSet.isEmpty()) {
-			CodeUnit otherCodeUnit = listingDiff.getMatchingCodeUnit(codeUnit, isListing1);
+			CodeUnit otherCodeUnit = listingDiff.getMatchingCodeUnit(codeUnit, side);
 			if (otherCodeUnit == null) {
 				return entireTextHighlight(text, cursorTextOffset, mnemonicDiffsBackgroundColor);
 			}
@@ -137,33 +134,33 @@ public class ListingDiffHighlightProvider implements ListingHighlightProvider {
 	private Highlight[] getOperandDiffHighlights(String text, CodeUnit codeUnit,
 			int cursorTextOffset) {
 		Address minAddress = codeUnit.getMinAddress();
-		AddressSetView unmatchedDiffs = (isListing1) ? listingDiff.getListing1UnmatchedCode()
-				: listingDiff.getListing2UnmatchedCode();
+		AddressSetView unmatchedDiffs = listingDiff.getUnmatchedCode(side);
 		if (unmatchedDiffs.contains(minAddress)) {
 			return NO_HIGHLIGHTS;
 		}
 		Color operandDiffsBackgroundColor = comparisonOptions.getOperandDiffsBackgroundColor();
-		AddressSetView codeUnitDiffs = (isListing1) ? listingDiff.getListing1CodeUnitDiffs()
-				: listingDiff.getListing2CodeUnitDiffs();
+		AddressSetView codeUnitDiffs = listingDiff.getCodeUnitDiffs(side);
 		// Get intersection of Code Unit Diff addresses and this code unit's addresses
 		AddressSet diffSet = new AddressSet(codeUnit.getMinAddress(), codeUnit.getMaxAddress());
 		diffSet = diffSet.intersect(codeUnitDiffs);
 		if (!diffSet.isEmpty()) {
-			CodeUnit matchingCodeUnit = listingDiff.getMatchingCodeUnit(codeUnit, isListing1);
+			CodeUnit matchingCodeUnit = listingDiff.getMatchingCodeUnit(codeUnit, side);
 			if (listingDiff.doesEntireOperandSetDiffer(codeUnit, matchingCodeUnit)) {
 				return entireTextHighlight(text, cursorTextOffset, operandDiffsBackgroundColor);
 			}
-			Pair[] pairs = getOperandPairs(text, codeUnit);
+			List<Range> operandRanges = getOperandRanges(text, codeUnit);
 			int numOperands = codeUnit.getNumOperands();
-			if (pairs.length != numOperands) {
+			if (operandRanges.size() != numOperands) {
 				return entireTextHighlight(text, cursorTextOffset, operandDiffsBackgroundColor);
 			}
 			int[] diffOpIndices = listingDiff.getOperandsThatDiffer(codeUnit, matchingCodeUnit);
 			ArrayList<Highlight> highlights = new ArrayList<>();
 			for (int diffOpIndex : diffOpIndices) {
 				// Highlight each operand that differs.
-				highlights.add(new Highlight(pairs[diffOpIndex].start, pairs[diffOpIndex].end,
-					operandDiffsBackgroundColor));
+				highlights.add(
+					new Highlight(operandRanges.get(diffOpIndex).start,
+						operandRanges.get(diffOpIndex).end,
+						operandDiffsBackgroundColor));
 			}
 			return highlights.toArray(new Highlight[highlights.size()]);
 		}
@@ -174,15 +171,15 @@ public class ListingDiffHighlightProvider implements ListingHighlightProvider {
 	 * Gets an array of start/end positions for each operand within the operand field's full text. 
 	 * @param text the full text from the operand field
 	 * @param codeUnit the code unit whose operand text is provided
-	 * @return the operand pairs indicating the start and end offsets for each individual operand
+	 * @return the operand ranges indicating the start and end offsets for each individual operand
 	 * within the text.
 	 */
-	private Pair[] getOperandPairs(String text, CodeUnit codeUnit) {
+	private List<Range> getOperandRanges(String text, CodeUnit codeUnit) {
 		if (text == null || text.isEmpty()) {
-			return new Pair[0];
+			return Collections.emptyList();
 		}
 		Instruction instruction = (codeUnit instanceof Instruction) ? (Instruction) codeUnit : null;
-		ArrayList<Pair> list = new ArrayList<>();
+		ArrayList<Range> list = new ArrayList<>();
 		int opIndex = 0;
 		int textLength = text.length();
 		int start = 0; // Start index in the text for the current operand.
@@ -197,7 +194,7 @@ public class ListingDiffHighlightProvider implements ListingHighlightProvider {
 			separatorIndex = text.indexOf(separator, start);
 			start = separatorIndex + separator.length();
 		}
-		// Get a start/end Pair of indexes for each operand.
+		// Get a start/end range of indexes for each operand.
 		while (start < textLength) {
 			++opIndex; // Increment the opIndex since we find the separator before an operand.
 			separator = DEFAULT_OPERAND_SEPARATOR; // default separator
@@ -209,17 +206,15 @@ public class ListingDiffHighlightProvider implements ListingHighlightProvider {
 			separatorIndex =
 				(separator != null && !separator.isEmpty()) ? text.indexOf(separator, start) : -1;
 			if (separatorIndex == -1) {
-				// Add the last operand's index Pair to the list.
-				list.add(new Pair(start, textLength - 1));
+				list.add(new Range(start, textLength - 1));
 				start = textLength;
 				continue;
 			}
-			// Add the current operand's index Pair to the list.
-			list.add(new Pair(start, separatorIndex - 1));
+			list.add(new Range(start, separatorIndex - 1));
 			// Move start to the beginning of the next operand.
 			start = separatorIndex + separator.length();
 		}
-		return list.toArray(new Pair[list.size()]);
+		return list;
 	}
 
 	private Highlight[] entireTextHighlight(String text, int cursorTextOffset, Color color) {
@@ -229,21 +224,12 @@ public class ListingDiffHighlightProvider implements ListingHighlightProvider {
 		return new Highlight[] { highlight };
 	}
 
-	/**
-	 * Determines if this highlight provider is for the first listing of the ListingDiff.
-	 * @return true if this provider's highlights are for the first listing. false if the
-	 * highlights are for the second listing.
-	 */
-	public boolean isListing1() {
-		return isListing1;
-	}
-
-	private class Pair {
+	private class Range {
 
 		private int start;
 		private int end;
 
-		private Pair(int start, int end) {
+		private Range(int start, int end) {
 			this.start = start;
 			this.end = end;
 		}

@@ -90,6 +90,8 @@ public class AbstractProtoModelTest extends AbstractGenericTest {
 			dtManager.addDataType(new FloatDataType(), null);
 			dtManager.addDataType(new DoubleDataType(), null);
 			dtManager.addDataType(new Float16DataType(), null);
+			dtManager.addDataType(new Undefined4DataType(), null);
+			dtManager.addDataType(new Undefined8DataType(), null);
 		}
 		finally {
 			dtManager.endTransaction(txID, true);

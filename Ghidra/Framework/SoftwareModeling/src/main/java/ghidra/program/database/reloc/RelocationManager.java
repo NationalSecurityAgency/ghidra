@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.*;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.framework.options.Options;
 import ghidra.program.database.ManagerDB;
 import ghidra.program.database.ProgramDB;
@@ -31,7 +32,7 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.reloc.Relocation;
 import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.reloc.RelocationTable;
-import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.Lock;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
@@ -60,14 +61,14 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 	 * @throws VersionException
 	 * @throws IOException
 	 */
-	public RelocationManager(DBHandle handle, AddressMap addrMap, int openMode, Lock lock,
+	public RelocationManager(DBHandle handle, AddressMap addrMap, OpenMode openMode, Lock lock,
 			TaskMonitor monitor) throws VersionException, IOException {
 		this.addrMap = addrMap;
 		this.lock = lock;
 		initializeAdapters(handle, openMode, monitor);
 	}
 
-	private void initializeAdapters(DBHandle handle, int openMode, TaskMonitor monitor)
+	private void initializeAdapters(DBHandle handle, OpenMode openMode, TaskMonitor monitor)
 			throws VersionException, IOException {
 		adapter = RelocationDBAdapter.getAdapter(handle, openMode, addrMap, monitor);
 	}
@@ -83,10 +84,10 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 	}
 
 	@Override
-	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
+	public void programReady(OpenMode openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
-		if (openMode == DBConstants.UPGRADE &&
+		if (openMode == OpenMode.UPGRADE &&
 			currentRevision < ProgramDB.RELOCATION_STATUS_ADDED_VERSION) {
 			RelocationDBAdapter.preV6DataMigrationUpgrade(adapter, program, monitor);
 		}
@@ -149,12 +150,11 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 			byte flags = RelocationDBAdapter.getFlags(status, 0);
 			adapter.add(addr, flags, type, values, bytes, symbolName);
 			Relocation reloc = new Relocation(addr, status, type, values,
-				getOriginalBytes(addr, status, bytes, 0),
-				symbolName);
+				getOriginalBytes(addr, status, bytes, 0), symbolName);
 
 			// fire event
 			// TODO: full change support is missing
-			program.setChanged(ChangeManager.DOCR_RELOCATION_ADDED, null, reloc);
+			program.setChanged(ProgramEvent.RELOCATION_ADDED, null, reloc);
 
 			return reloc;
 		}
@@ -175,12 +175,11 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 			byte flags = RelocationDBAdapter.getFlags(status, byteLength);
 			adapter.add(addr, flags, type, values, null, symbolName);
 			Relocation reloc = new Relocation(addr, status, type, values,
-				getOriginalBytes(addr, status, null, byteLength),
-				symbolName);
+				getOriginalBytes(addr, status, null, byteLength), symbolName);
 
 			// fire event
 			// TODO: full change support is missing
-			program.setChanged(ChangeManager.DOCR_RELOCATION_ADDED, null, reloc);
+			program.setChanged(ProgramEvent.RELOCATION_ADDED, null, reloc);
 
 			return reloc;
 		}
@@ -249,12 +248,11 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 		int length = RelocationDBAdapter.getByteLength(flags);
 		BinaryCodedField valuesField =
 			new BinaryCodedField((BinaryField) rec.getFieldValue(RelocationDBAdapter.VALUE_COL));
-		byte[] originalBytes =
-			getOriginalBytes(addr, status, rec.getBinaryData(RelocationDBAdapter.BYTES_COL),
-				length);
+		byte[] originalBytes = getOriginalBytes(addr, status,
+			rec.getBinaryData(RelocationDBAdapter.BYTES_COL), length);
 		return new Relocation(addr, status, rec.getIntValue(RelocationDBAdapter.TYPE_COL),
-			valuesField.getLongArray(),
-			originalBytes, rec.getString(RelocationDBAdapter.SYMBOL_NAME_COL));
+			valuesField.getLongArray(), originalBytes,
+			rec.getString(RelocationDBAdapter.SYMBOL_NAME_COL));
 	}
 
 	@Override
@@ -385,7 +383,8 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 	}
 
 	@Override
-	public void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor) {
+	public void moveAddressRange(Address fromAddr, Address toAddr, long length,
+			TaskMonitor monitor) {
 		// do nothing here
 	}
 

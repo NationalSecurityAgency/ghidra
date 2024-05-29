@@ -57,12 +57,14 @@ dependencies {
 	}
 
 	// some tests use classes in Base, FunctionGraph and PDB
+	testImplementation project(path: ':Pty', configuration: 'testArtifacts')
 	testImplementation project(path: ':Base', configuration: 'testArtifacts')
 	testImplementation project(path: ':Base', configuration: 'integrationTestArtifacts')	
 	testImplementation project(path: ':FunctionGraph', configuration: 'testArtifacts')	
 	testImplementation project(path: ':PDB', configuration: 'testArtifacts')
 	testImplementation project(path: ':GnuDemangler', configuration: 'testArtifacts')
 
+	testImplementation project(path: ':ProposedUtils', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-TraceModeling', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-AsyncComm', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')

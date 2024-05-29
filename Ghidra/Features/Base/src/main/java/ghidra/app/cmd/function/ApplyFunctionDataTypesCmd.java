@@ -20,7 +20,6 @@ import java.util.*;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.util.PseudoDisassembler;
 import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.*;
@@ -36,7 +35,7 @@ import ghidra.util.task.TaskMonitor;
  * any user defined label that has the same name as the function
  * signature.
  */
-public class ApplyFunctionDataTypesCmd extends BackgroundCommand {
+public class ApplyFunctionDataTypesCmd extends BackgroundCommand<Program> {
 	private Program program;
 	private BookmarkManager bookmarkMgr;
 	private List<Category> sourceCategories;
@@ -83,8 +82,8 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand {
 	 * @param createBookmarksEnabled true to create a bookmark when a function signature
 	 * 								 has been applied.
 	 */
-	public ApplyFunctionDataTypesCmd(Category sourceCategory, AddressSetView set,
-			SourceType source, boolean alwaysReplace, boolean createBookmarksEnabled) {
+	public ApplyFunctionDataTypesCmd(Category sourceCategory, AddressSetView set, SourceType source,
+			boolean alwaysReplace, boolean createBookmarksEnabled) {
 		super("Apply Function Data Types", true, false, false);
 		this.sourceCategories = List.of(sourceCategory);
 		this.addresses = set;
@@ -102,8 +101,8 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-		program = (Program) obj;
+	public boolean applyTo(Program p, TaskMonitor monitor) {
+		program = p;
 		bookmarkMgr = program.getBookmarkManager();
 
 		monitor.setMessage("Applying Function Signatures");
@@ -179,8 +178,8 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand {
 	 * @param symbolMap symbol map where possible function definitions may be applied
 	 * @throws CancelledException if task cancelled
 	 */
-	private void applyFunctionDefinitions(TaskMonitor monitor,
-			Map<String, List<Symbol>> symbolMap) throws CancelledException {
+	private void applyFunctionDefinitions(TaskMonitor monitor, Map<String, List<Symbol>> symbolMap)
+			throws CancelledException {
 
 		Map<String, FunctionDefinition> functionNameMap = new HashMap<>();
 		for (Category cat : sourceCategories) {
@@ -321,7 +320,7 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand {
 		if (instrBefore != null && address.equals(instrBefore.getFallThrough())) {
 			return false;
 		}
-		
+
 		// check if part of a larger code-block
 		ReferenceIterator referencesTo = program.getReferenceManager().getReferencesTo(address);
 		for (Reference reference : referencesTo) {
@@ -399,7 +398,7 @@ public class ApplyFunctionDataTypesCmd extends BackgroundCommand {
 	 * 
 	 * @param symbolMap map of symbol names to all matching symbols
 	 * @param prefix  optional prefix on symbol to lookup
-	 * @param fdef    function definition
+	 * @param functionName    function name
 	 * @return symbol definition; null if no symbol is found for the given name
 	 */
 	private List<Symbol> lookupSymbol(Map<String, List<Symbol>> symbolMap, String prefix,

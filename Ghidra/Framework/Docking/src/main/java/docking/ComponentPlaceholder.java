@@ -15,10 +15,9 @@
  */
 package docking;
 
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.awt.Frame;
+import java.awt.Window;
+import java.util.*;
 
 import javax.swing.*;
 
@@ -277,7 +276,7 @@ public class ComponentPlaceholder {
 	 * Requests focus for the component associated with this placeholder.
 	 */
 	void requestFocus() {
-		Component tmp = comp;// put in temp variable in case another thread deletes it
+		DockableComponent tmp = comp;// put in temp variable in case another thread deletes it
 		if (tmp == null) {
 			return;
 		}

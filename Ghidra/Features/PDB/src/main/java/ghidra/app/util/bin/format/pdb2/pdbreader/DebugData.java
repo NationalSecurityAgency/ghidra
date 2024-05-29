@@ -66,6 +66,14 @@ public class DebugData {
 	private AbstractPdb pdb;
 	private List<Integer> debugStreams = new ArrayList<>();
 
+	private int getDebugStream(DebugType debugType) {
+		int index = debugType.getValue();
+		if (index < 0 || index >= debugStreams.size()) {
+			return MsfStream.NIL_STREAM_NUMBER;
+		}
+		return debugStreams.get(index);
+	}
+
 	//==============================================================================================
 	// API
 	//==============================================================================================
@@ -80,15 +88,12 @@ public class DebugData {
 
 	/**
 	 * Returns the Frame Pointer Omission data
-	 * @return the framePointerOmissionData or null if does not exist
-	 * @throws PdbException PdbException upon error in processing components
+	 * @return the framePointerOmissionData or null if does not exist or problem parsing
 	 * @throws CancelledException upon user cancellation
-	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes
 	 */
 	public List<FramePointerOmissionRecord> getFramePointerOmissionData()
-			throws CancelledException, PdbException, IOException {
-		int streamNum = debugStreams.get(DebugType.FRAME_POINTER_OMISSION.getValue());
+			throws CancelledException {
+		int streamNum = getDebugStream(DebugType.FRAME_POINTER_OMISSION);
 		if (streamNum == MsfStream.NIL_STREAM_NUMBER) {
 			return null;
 		}
@@ -105,15 +110,11 @@ public class DebugData {
 
 	/**
 	 * Returns the OMAP_FROM_SOURCE mapping of RVA to RVA
-	 * @return the omapFromSource or null if does not exist.
-	 * @throws PdbException PdbException upon error in processing components
+	 * @return the omapFromSource or null if does not exist or problem parsing
 	 * @throws CancelledException upon user cancellation
-	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes
 	 */
-	public SortedMap<Long, Long> getOmapFromSource()
-			throws CancelledException, PdbException, IOException {
-		int streamNum = debugStreams.get(DebugType.OMAP_FROM_SOURCE.getValue());
+	public SortedMap<Long, Long> getOmapFromSource() throws CancelledException {
+		int streamNum = getDebugStream(DebugType.OMAP_FROM_SOURCE);
 		if (streamNum == MsfStream.NIL_STREAM_NUMBER) {
 			return null;
 		}
@@ -122,15 +123,11 @@ public class DebugData {
 
 	/**
 	 * Returns the {@link List}&lt;{@link ImageSectionHeader}&gt;
-	 * @return the imageSectionHeaders or null if does not exist
-	 * @throws PdbException PdbException upon error in processing components
+	 * @return the imageSectionHeaders or null if does not exist or problem parsing
 	 * @throws CancelledException upon user cancellation
-	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes
 	 */
-	public List<ImageSectionHeader> getImageSectionHeaders()
-			throws CancelledException, PdbException, IOException {
-		int streamNum = debugStreams.get(DebugType.SECTION_HEADER.getValue());
+	public List<ImageSectionHeader> getImageSectionHeaders() throws CancelledException {
+		int streamNum = getDebugStream(DebugType.SECTION_HEADER);
 		if (streamNum == MsfStream.NIL_STREAM_NUMBER) {
 			return null;
 		}
@@ -141,16 +138,12 @@ public class DebugData {
 	 * Returns XData
 	 * When this returns a non-null list the OMAP_FROM_SRC should be
 	 * used for remapping global symbols
-	 * @return the imageSectionHeadersOrig or null if does not exist
-	 * @throws PdbException PdbException upon error in processing components
+	 * @return the imageSectionHeadersOrig or null if does not exist or problem parsing
 	 * @throws CancelledException upon user cancellation
-	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes
 	 */
 	// TODO: just put a return of null Integer for now until figured out.
-	public Integer getXData()
-			throws CancelledException, PdbException, IOException {
-		int streamNum = debugStreams.get(DebugType.SECTION_HEADER_ORIG.getValue());
+	public Integer getXData() throws CancelledException {
+		int streamNum = getDebugStream(DebugType.SECTION_HEADER_ORIG);
 		if (streamNum == MsfStream.NIL_STREAM_NUMBER) {
 			return null;
 		}
@@ -161,15 +154,11 @@ public class DebugData {
 	 * Returns PData
 	 * When this returns a non-null list the OMAP_FROM_SRC should be
 	 * used for remapping global symbols
-	 * @return the imageSectionHeadersOrig or null if does not exist
-	 * @throws PdbException PdbException upon error in processing components
+	 * @return the imageSectionHeadersOrig or null if does not exist or problem parsing
 	 * @throws CancelledException upon user cancellation
-	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes
 	 */
-	public List<ImageFunctionEntry> getPData()
-			throws CancelledException, PdbException, IOException {
-		int streamNum = debugStreams.get(DebugType.SECTION_HEADER_ORIG.getValue());
+	public List<ImageFunctionEntry> getPData() throws CancelledException {
+		int streamNum = getDebugStream(DebugType.SECTION_HEADER_ORIG);
 		if (streamNum == MsfStream.NIL_STREAM_NUMBER) {
 			return null;
 		}
@@ -180,15 +169,11 @@ public class DebugData {
 	 * Returns the {@link List}&lt;{@link ImageSectionHeader}&gt;.
 	 * When this returns a non-null list the OMAP_FROM_SRC should be
 	 * used for remapping global symbols
-	 * @return the imageSectionHeadersOrig or null if does not exist
-	 * @throws PdbException PdbException upon error in processing components
+	 * @return the imageSectionHeadersOrig or null if does not exist or problem parsing
 	 * @throws CancelledException upon user cancellation
-	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes
 	 */
-	public List<ImageSectionHeader> getImageSectionHeadersOrig()
-			throws CancelledException, PdbException, IOException {
-		int streamNum = debugStreams.get(DebugType.SECTION_HEADER_ORIG.getValue());
+	public List<ImageSectionHeader> getImageSectionHeadersOrig() throws CancelledException {
+		int streamNum = getDebugStream(DebugType.SECTION_HEADER_ORIG);
 		if (streamNum == MsfStream.NIL_STREAM_NUMBER) {
 			return null;
 		}
@@ -208,8 +193,7 @@ public class DebugData {
 	 * @throws PdbException upon error in processing components
 	 * @throws CancelledException upon user cancellation
 	 */
-	public void deserializeHeader(PdbByteReader reader)
-			throws PdbException, CancelledException {
+	public void deserializeHeader(PdbByteReader reader) throws PdbException, CancelledException {
 		while (reader.hasMore()) {
 			pdb.checkCancelled();
 			int debugStreamNumber = reader.parseUnsignedShortVal();
@@ -230,14 +214,13 @@ public class DebugData {
 	 *  inability to read required bytes
 	 */
 	@Deprecated
-	public void deserialize()
-			throws PdbException, CancelledException, IOException {
+	public void deserialize() throws PdbException, CancelledException, IOException {
 		if (debugStreams.isEmpty()) {
 			throw new PdbException(
 				"DebugData Header had not been deserialized at the appropriate time");
 		}
 		for (DebugType dbg : DebugType.values()) {
-			int streamNum = debugStreams.get(dbg.getValue());
+			int streamNum = getDebugStream(dbg);
 			if (streamNum == MsfStream.NIL_STREAM_NUMBER) {
 				continue;
 			}
@@ -281,44 +264,66 @@ public class DebugData {
 	}
 
 	private List<FramePointerOmissionRecord> deserializeFramePointerOmissionData(int streamNum)
-			throws PdbException, CancelledException, IOException {
+			throws CancelledException {
 		// TODO: check implementation for completeness.
-		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNum);
-		List<FramePointerOmissionRecord> fpOmissionData = new ArrayList<>();
-		while (reader.hasMore()) {
-			pdb.checkCancelled();
-			FramePointerOmissionRecord framePointerOmissionRecord =
-				new FramePointerOmissionRecord();
-			framePointerOmissionRecord.parse(reader);
-			fpOmissionData.add(framePointerOmissionRecord);
+		try {
+			PdbByteReader reader = pdb.getReaderForStreamNumber(streamNum);
+			List<FramePointerOmissionRecord> fpOmissionData = new ArrayList<>();
+			while (reader.hasMore()) {
+				pdb.checkCancelled();
+				FramePointerOmissionRecord framePointerOmissionRecord =
+					new FramePointerOmissionRecord();
+				framePointerOmissionRecord.parse(reader);
+				fpOmissionData.add(framePointerOmissionRecord);
+			}
+			return fpOmissionData;
 		}
-		return fpOmissionData;
+		catch (PdbException | IOException e) {
+			PdbLog.message("Returning null Debug Frame Pointer Omission Data due to" +
+				" problem during deserialization from stream" + streamNum + ": " + e.getMessage());
+			return null;
+		}
+
 	}
 
-	private SortedMap<Long, Long> deserializeOMap(int streamNum)
-			throws PdbException, CancelledException, IOException {
-		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNum);
-		SortedMap<Long, Long> omap = new TreeMap<>();
-		while (reader.hasMore()) {
-			pdb.checkCancelled();
-			long v1 = reader.parseUnsignedIntVal();
-			long v2 = reader.parseUnsignedIntVal();
-			omap.put(v1, v2);
+	private SortedMap<Long, Long> deserializeOMap(int streamNum) throws CancelledException {
+		try {
+			PdbByteReader reader = pdb.getReaderForStreamNumber(streamNum);
+			SortedMap<Long, Long> omap = new TreeMap<>();
+			while (reader.hasMore()) {
+				pdb.checkCancelled();
+				long v1 = reader.parseUnsignedIntVal();
+				long v2 = reader.parseUnsignedIntVal();
+				omap.put(v1, v2);
+			}
+			return omap;
 		}
-		return omap;
+		catch (PdbException | IOException e) {
+			PdbLog.message("Returning null Debug OMap due to" +
+				" problem during deserialization from stream" + streamNum + ": " + e.getMessage());
+			return null;
+		}
+
 	}
 
 	private List<ImageSectionHeader> deserializeSectionHeaders(int streamNum)
-			throws PdbException, CancelledException, IOException {
-		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNum);
-		List<ImageSectionHeader> sectionHeaders = new ArrayList<>();
-		while (reader.hasMore()) {
-			pdb.checkCancelled();
-			ImageSectionHeader imageSectionHeader = new ImageSectionHeader(pdb);
-			imageSectionHeader.parse(reader);
-			sectionHeaders.add(imageSectionHeader);
+			throws CancelledException {
+		try {
+			PdbByteReader reader = pdb.getReaderForStreamNumber(streamNum);
+			List<ImageSectionHeader> sectionHeaders = new ArrayList<>();
+			while (reader.hasMore()) {
+				pdb.checkCancelled();
+				ImageSectionHeader imageSectionHeader = new ImageSectionHeader(pdb);
+				imageSectionHeader.parse(reader);
+				sectionHeaders.add(imageSectionHeader);
+			}
+			return sectionHeaders;
 		}
-		return sectionHeaders;
+		catch (PdbException | IOException e) {
+			PdbLog.message("Returning null Debug Image Section Headers due to" +
+				" problem during deserialization from stream" + streamNum + ": " + e.getMessage());
+			return null;
+		}
 	}
 
 	// TODO: This is incomplete.
@@ -327,56 +332,62 @@ public class DebugData {
 	 *  processing XData
 	 */
 	// TODO: just put a return of null Integer for now until figured out.
-	private Integer deserializeXData(int streamNum)
-			throws PdbException, CancelledException, IOException {
-		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNum);
-		int streamLength = reader.getLimit();
-		//System.out.println(reader.dump(0x20));
-		RvaVaDebugHeader header = new RvaVaDebugHeader();
+	private Integer deserializeXData(int streamNum) throws CancelledException {
+		try {
+			PdbByteReader reader = pdb.getReaderForStreamNumber(streamNum);
+			int streamLength = reader.getLimit();
+			//System.out.println(reader.dump(0x20));
+			RvaVaDebugHeader header = new RvaVaDebugHeader();
 
-		header.deserialize(reader);
-		//System.out.println(header.dump());
-		if (header.getHeaderVersion() != 1) {
-			return null; // Silent... TODO: add logging event.
+			header.deserialize(reader);
+			//System.out.println(header.dump());
+			if (header.getHeaderVersion() != 1) {
+				return null; // Silent... TODO: add logging event.
+			}
+			long headerLength = header.getHeaderLength();
+			long dataLength = header.getDataLength();
+			if (headerLength + dataLength > streamLength) {
+				throw new PdbException("Problem parsing Debug XData");
+			}
+			reader.setIndex((int) headerLength);
+			//System.out.println(reader.dump());
+			PdbByteReader xDataReader = reader.getSubPdbByteReader(reader.numRemaining());
+			// TODO: This is a partial implementation.  We need to figure out more to know
+			//  how to deal with it.  The only API information regarding the XData is with
+			//  regard to processing PData when the "machine" is IA64 or AMD64.  The interpretation
+			//  for these machines is not real clear (or a bit of work), and there is no other
+			//  interpretation available when the machine is different.
 		}
-		long headerLength = header.getHeaderLength();
-		long dataLength = header.getDataLength();
-		if (headerLength + dataLength > streamLength) {
-			throw new PdbException("Problem parsing Debug XData");
+		catch (PdbException | IOException e) {
+			PdbLog.message("Returning null Debug XData" +
+				" problem during deserialization from stream" + streamNum + ": " + e.getMessage());
+			return null;
 		}
-		reader.setIndex((int) headerLength);
-		//System.out.println(reader.dump());
-		PdbByteReader xDataReader = reader.getSubPdbByteReader(reader.numRemaining());
-		// TODO: This is a partial implementation.  We need to figure out more to know
-		//  how to deal with it.  The only API information regarding the XData is with
-		//  regard to processing PData when the "machine" is IA64 or AMD64.  The interpretation
-		//  for these machines is not real clear (or a bit of work), and there is no other
-		//  interpretation available when the machine is different.
 
 		return null;
 	}
 
 	// TODO: This is incomplete.
-	private List<ImageFunctionEntry> deserializePData(int streamNum)
-			throws PdbException, CancelledException, IOException {
-		PdbByteReader reader = pdb.getReaderForStreamNumber(streamNum);
-		List<ImageFunctionEntry> myPData = new ArrayList<>();
-		int streamLength = reader.getLimit();
-		RvaVaDebugHeader header = new RvaVaDebugHeader();
-		header.deserialize(reader);
-		//System.out.println(header.dump());
-		if (header.getHeaderVersion() != 1) {
-			return myPData; // Silent... TODO: add logging event.
-		}
-		long headerLength = header.getHeaderLength();
-		long dataLength = header.getDataLength();
-		if (headerLength + dataLength > streamLength) {
-			throw new PdbException("Problem parsing Debug PData");
-		}
-		reader.setIndex((int) headerLength);
-		//System.out.println(reader.dump());
-		// TODO: current partial implementation does not work (throws exception)
-		//  for ucrtbase.dll arm64.  Need to look at this closer.
+	private List<ImageFunctionEntry> deserializePData(int streamNum) throws CancelledException {
+		try {
+			PdbByteReader reader = pdb.getReaderForStreamNumber(streamNum);
+			List<ImageFunctionEntry> myPData = new ArrayList<>();
+			int streamLength = reader.getLimit();
+			RvaVaDebugHeader header = new RvaVaDebugHeader();
+			header.deserialize(reader);
+			//System.out.println(header.dump());
+			if (header.getHeaderVersion() != 1) {
+				return myPData; // Silent... TODO: add logging event.
+			}
+			long headerLength = header.getHeaderLength();
+			long dataLength = header.getDataLength();
+			if (headerLength + dataLength > streamLength) {
+				throw new PdbException("Problem parsing Debug PData");
+			}
+			reader.setIndex((int) headerLength);
+			//System.out.println(reader.dump());
+			// TODO: current partial implementation does not work (throws exception)
+			//  for ucrtbase.dll arm64.  Need to look at this closer.
 //		while (reader.hasMore()) {
 //			pdb.checkCancelled();
 //			ImageFunctionEntry entry = new ImageFunctionEntry();
@@ -389,23 +400,30 @@ public class DebugData {
 //			xDataReader.setIndex((int) index);
 //			//System.out.println(xDataReader.dumpBytes(0x20));
 //		}
-		// TODO: More work possible.  See XData processing and notes there.  This is very
-		//  incomplete.
-		PdbDebugInfo debugInfo = pdb.getDebugInfo();
-		if (debugInfo instanceof PdbNewDebugInfo) {
-			//Processor target = pdb.getTargetProcessor();
-			PdbNewDebugInfo dbi = (PdbNewDebugInfo) debugInfo;
-			ImageFileMachine machine = dbi.getMachineType();
-			switch (machine) {
-				case IA64:
-					break;
-				case AMD64:
-					break;
-				default:
-					break;
+			// TODO: More work possible.  See XData processing and notes there.  This is very
+			//  incomplete.
+			PdbDebugInfo debugInfo = pdb.getDebugInfo();
+			if (debugInfo instanceof PdbNewDebugInfo) {
+				//Processor target = pdb.getTargetProcessor();
+				PdbNewDebugInfo dbi = (PdbNewDebugInfo) debugInfo;
+				ImageFileMachine machine = dbi.getMachineType();
+				switch (machine) {
+					case IA64:
+						break;
+					case AMD64:
+						break;
+					default:
+						break;
+				}
 			}
+			return myPData;
 		}
-		return myPData;
+		catch (PdbException | IOException e) {
+			PdbLog.message("Returning null Debug PData due to" +
+				" problem during deserialization from stream" + streamNum + ": " + e.getMessage());
+			return null;
+		}
+
 	}
 
 	/**

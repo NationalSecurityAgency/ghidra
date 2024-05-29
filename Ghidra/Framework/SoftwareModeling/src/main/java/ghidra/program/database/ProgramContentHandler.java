@@ -19,15 +19,15 @@ import java.io.IOException;
 
 import javax.swing.Icon;
 
-import db.*;
-import db.buffers.BufferFile;
-import db.buffers.ManagedBufferFile;
+import db.DBHandle;
+import db.Field;
+import db.buffers.*;
 import generic.theme.GIcon;
-import ghidra.framework.data.DBWithUserDataContentHandler;
-import ghidra.framework.data.DomainObjectMergeManager;
+import ghidra.framework.data.*;
 import ghidra.framework.model.ChangeSet;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.*;
+import ghidra.framework.store.local.LocalDatabaseItem;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -58,8 +58,7 @@ public class ProgramContentHandler extends DBWithUserDataContentHandler<ProgramD
 		if (!(obj instanceof ProgramDB)) {
 			throw new IOException("Unsupported domain object: " + obj.getClass().getName());
 		}
-		return createFile((ProgramDB) obj, PROGRAM_CONTENT_TYPE, fs, path, name,
-			monitor);
+		return createFile((ProgramDB) obj, PROGRAM_CONTENT_TYPE, fs, path, name, monitor);
 	}
 
 	@Override
@@ -78,8 +77,7 @@ public class ProgramContentHandler extends DBWithUserDataContentHandler<ProgramD
 		try {
 			bf = dbItem.open(version, minChangeVersion);
 			dbh = new DBHandle(bf);
-			int openMode = DBConstants.READ_ONLY;
-			program = new ProgramDB(dbh, openMode, monitor, consumer);
+			program = new ProgramDB(dbh, OpenMode.IMMUTABLE, monitor, consumer);
 			getProgramChangeSet(program, bf);
 			success = true;
 			return program;
@@ -130,7 +128,7 @@ public class ProgramContentHandler extends DBWithUserDataContentHandler<ProgramD
 		try {
 			bf = dbItem.open(version);
 			dbh = new DBHandle(bf);
-			int openMode = okToUpgrade ? DBConstants.UPGRADE : DBConstants.UPDATE;
+			OpenMode openMode = okToUpgrade ? OpenMode.UPGRADE : OpenMode.UPDATE;
 			program = new ProgramDB(dbh, openMode, monitor, consumer);
 			getProgramChangeSet(program, bf);
 			program.setProgramUserData(new ProgramUserDataDB(program));
@@ -183,7 +181,7 @@ public class ProgramContentHandler extends DBWithUserDataContentHandler<ProgramD
 		try {
 			bf = dbItem.openForUpdate(checkoutId);
 			dbh = new DBHandle(bf, recover, monitor);
-			int openMode = okToUpgrade ? DBConstants.UPGRADE : DBConstants.UPDATE;
+			OpenMode openMode = okToUpgrade ? OpenMode.UPGRADE : OpenMode.UPDATE;
 			program = new ProgramDB(dbh, openMode, monitor, consumer);
 			if (checkoutId == FolderItem.DEFAULT_CHECKOUT_ID) {
 				getProgramChangeSet(program, bf);
@@ -293,8 +291,7 @@ public class ProgramContentHandler extends DBWithUserDataContentHandler<ProgramD
 		try {
 			bf = dbItem.open(toVer, fromVer);
 			dbh = new DBHandle(bf);
-			int openMode = DBConstants.READ_ONLY;
-			program = new ProgramDB(dbh, openMode, null, this);
+			program = new ProgramDB(dbh, OpenMode.IMMUTABLE, null, this);
 			return getProgramChangeSet(program, bf);
 		}
 		catch (VersionException | IOException e) {
@@ -361,6 +358,23 @@ public class ProgramContentHandler extends DBWithUserDataContentHandler<ProgramD
 	@Override
 	public ProgramLinkContentHandler getLinkHandler() {
 		return linkHandler;
+	}
+
+	@Override
+	public boolean canResetDBSourceFile() {
+		return true;
+	}
+
+	@Override
+	public void resetDBSourceFile(FolderItem item, DomainObjectAdapterDB domainObj)
+			throws IOException {
+		if (!(item instanceof LocalDatabaseItem dbItem) ||
+			!(domainObj instanceof ProgramDB program)) {
+			throw new IllegalArgumentException("LocalDatabaseItem and ProgramDB required");
+		}
+		LocalManagedBufferFile bf = dbItem.openForUpdate(FolderItem.DEFAULT_CHECKOUT_ID);
+		program.getDBHandle().setDBVersionedSourceFile(bf);
+		getProgramChangeSet(program, bf);
 	}
 
 }

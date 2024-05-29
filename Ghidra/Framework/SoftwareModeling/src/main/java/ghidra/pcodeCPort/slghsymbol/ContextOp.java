@@ -15,15 +15,16 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import java.io.PrintStream;
+import static ghidra.pcode.utils.SlaFormat.*;
 
-import org.jdom.Element;
+import java.io.IOException;
 
 import generic.stl.VectorSTL;
 import ghidra.pcodeCPort.context.SleighError;
-import ghidra.pcodeCPort.sleighbase.SleighBase;
 import ghidra.pcodeCPort.slghpatexpress.*;
-import ghidra.pcodeCPort.utils.*;
+import ghidra.pcodeCPort.utils.MutableInt;
+import ghidra.pcodeCPort.utils.Utils;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.Location;
 
 public class ContextOp extends ContextChange {
@@ -36,7 +37,7 @@ public class ContextOp extends ContextChange {
 
 	public ContextOp(Location location) {
 		this.location = location;
-	} // For use with restoreXml
+	}
 
 	@Override
 	public void dispose() {
@@ -78,29 +79,13 @@ public class ContextOp extends ContextChange {
 	}
 
 	@Override
-	public void saveXml(PrintStream s) {
-		s.append("<context_op");
-		s.append(" i=\"");
-		s.print(num);
-		s.append("\"");
-		s.append(" shift=\"");
-		s.print(shift);
-		s.append("\"");
-		s.append(" mask=\"0x");
-		s.append(Utils.toUnsignedIntHex(mask));
-		s.append("\" >\n");
-		patexp.saveXml(s);
-		s.append("</context_op>\n");
-	}
-
-	@Override
-	public void restoreXml(Element el, SleighBase trans) {
-		num = XmlUtils.decodeUnknownInt(el.getAttributeValue("i"));
-		shift = XmlUtils.decodeUnknownInt(el.getAttributeValue("shift"));
-		mask = XmlUtils.decodeUnknownInt(el.getAttributeValue("mask"));
-		Element child = (Element) el.getChildren().get(0);
-		patexp = PatternExpression.restoreExpression(child, trans);
-		patexp.layClaim();
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_CONTEXT_OP);
+		encoder.writeSignedInteger(ATTRIB_I, num);
+		encoder.writeSignedInteger(ATTRIB_SHIFT, shift);
+		encoder.writeUnsignedInteger(ATTRIB_MASK, Utils.unsignedInt(mask));
+		patexp.encode(encoder);
+		encoder.closeElement(ELEM_CONTEXT_OP);
 	}
 
 }

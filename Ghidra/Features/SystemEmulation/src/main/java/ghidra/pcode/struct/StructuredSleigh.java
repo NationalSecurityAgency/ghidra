@@ -1574,7 +1574,7 @@ public class StructuredSleigh {
 	 * 
 	 * <pre>
 	 * Var arr = lang("r0", "/int *");
-	 * for (int i = 1; i < 16; i++) {
+	 * for (int i = 1; i &lt; 16; i++) {
 	 * 	arr.index(i).deref().set(arr.index(0).deref());
 	 * }
 	 * </pre>
@@ -1904,8 +1904,7 @@ public class StructuredSleigh {
 	 * 
 	 * <p>
 	 * The default is to log a warning and continue. If permitted to continue, the resulting type
-	 * will be {@code void}, likely resulting in more issues. See
-	 * {@link #computeDerefType(DataType)}.
+	 * will be {@code void}, likely resulting in more issues. See {@link #computeDerefType(RVal)}.
 	 * 
 	 * @param addr the value being dereferenced
 	 */

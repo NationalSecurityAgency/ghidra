@@ -50,7 +50,13 @@ public class ParamListStandardOut extends ParamListStandard {
 			return;		// Don't assign storage for VOID
 		}
 		int responseCode = assignAddress(proto.outtype, proto, -1, dtManager, status, store);
-		if (responseCode != AssignAction.SUCCESS) {
+		if (responseCode == AssignAction.FAIL) {
+			// Invoke default hidden return input assignment action
+			responseCode = AssignAction.HIDDENRET_PTRPARAM;
+		}
+		if (responseCode == AssignAction.HIDDENRET_PTRPARAM ||
+			responseCode == AssignAction.HIDDENRET_SPECIALREG ||
+			responseCode == AssignAction.HIDDENRET_SPECIALREG_VOID) {
 			// If the storage is not assigned (because the datatype is too big) create a hidden input parameter
 			int sz = (spacebase == null) ? -1 : spacebase.getPointerSize();
 			DataType pointerType = dtManager.getPointer(proto.outtype, sz);
@@ -60,8 +66,8 @@ public class ParamListStandardOut extends ParamListStandard {
 			else {
 				assignAddressFallback(StorageClass.PTR, pointerType, false, status, store);
 				store.type = pointerType;
-				store.isIndirect = true;	// Signal that there is a hidden return
 			}
+			store.isIndirect = true;	// Signal that there is a hidden return
 			if (addAutoParams) {
 				ParameterPieces hiddenRet = new ParameterPieces();
 				hiddenRet.type = pointerType;

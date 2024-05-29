@@ -108,7 +108,6 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 					file bash
 					ghidra trace start
 					%s
-					ghidra trace tx-open "Fake" 'ghidra trace create-obj Breakpoints'
 					starti"""
 					.formatted(INSTRUMENT_STOPPED));
 			RemoteMethod refreshBreakpoints = conn.getMethod("refresh_breakpoints");
@@ -543,10 +542,9 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 				RemoteMethod attachObj = conn.getMethod("attach_obj");
 				try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/noname")) {
 					tb = new ToyDBTraceBuilder((Trace) mdo.get());
-					TraceObject inf = Objects.requireNonNull(tb.obj("Inferiors[1]"));
 					TraceObject target =
 						Objects.requireNonNull(tb.obj("Available[%d]".formatted(proc.pid)));
-					attachObj.invoke(Map.of("inferior", inf, "target", target));
+					attachObj.invoke(Map.of("target", target));
 
 					String out = conn.executeCapture("info inferiors");
 					assertThat(out, containsString("process %d".formatted(proc.pid)));
@@ -853,7 +851,7 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 					%s
 					start"""
 					.formatted(INSTRUMENT_STOPPED));
-			RemoteMethod stepAdvance = conn.getMethod("Advance");
+			RemoteMethod stepAdvance = conn.getMethod("step_advance");
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
@@ -881,7 +879,7 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 					%s
 					start"""
 					.formatted(INSTRUMENT_STOPPED));
-			RemoteMethod stepReturn = conn.getMethod("Return");
+			RemoteMethod stepReturn = conn.getMethod("step_return");
 			try (ManagedDomainObject mdo = openDomainObject("/New Traces/gdb/bash")) {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
@@ -1157,7 +1155,8 @@ public class GdbMethodsTest extends AbstractGdbTraceRmiTest {
 				tb = new ToyDBTraceBuilder((Trace) mdo.get());
 				waitStopped();
 
-				breakEvent.invoke(Map.of("spec", "load"));
+				TraceObject inf = Objects.requireNonNull(tb.obj("Inferiors[1]"));
+				breakEvent.invoke(Map.of("inferior", inf, "spec", "load"));
 
 				String out = conn.executeCapture("info break");
 				assertThat(out, containsString("load of library"));

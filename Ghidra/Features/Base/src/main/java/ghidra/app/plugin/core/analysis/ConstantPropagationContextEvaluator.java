@@ -56,7 +56,7 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 	private long minStoreLoadOffset = 4;
 	private long minSpeculativeOffset = 1024;   // from the beginning of memory
 	private long maxSpeculativeOffset = 256;    // from the end of memory
-	
+
 	protected TaskMonitor monitor;
 	private final int NULL_TERMINATOR_PROBE = -1;
 
@@ -73,22 +73,23 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 		this.trustMemoryWrite = trustMemoryWrite;
 	}
 
-	public ConstantPropagationContextEvaluator(TaskMonitor monitor,
-			boolean trustWriteMemOption, long minStoreLoadRefAddress,
-			long minSpeculativeRefAddress, long maxSpeculativeRefAddress) {
+	public ConstantPropagationContextEvaluator(TaskMonitor monitor, boolean trustWriteMemOption,
+			long minStoreLoadRefAddress, long minSpeculativeRefAddress,
+			long maxSpeculativeRefAddress) {
 		this(monitor, trustWriteMemOption);
 		this.minStoreLoadOffset = minStoreLoadRefAddress;
 		this.minSpeculativeOffset = minSpeculativeRefAddress;
 		this.maxSpeculativeOffset = maxSpeculativeRefAddress;
 	}
-	
+
 	/**
 	 * Set option to trust reads from memory that is marked writeable
 	 * 
 	 * @param trustWriteableMemOption true to trust values read from memory that is marked writable
 	 * @return this
 	 */
-	public ConstantPropagationContextEvaluator setTrustWritableMemory(boolean trustWriteableMemOption) {
+	public ConstantPropagationContextEvaluator setTrustWritableMemory(
+			boolean trustWriteableMemOption) {
 		trustMemoryWrite = trustWriteableMemOption;
 		return this;
 	}
@@ -99,22 +100,24 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 	 * @param minSpeculativeRefAddress minimum address offset
 	 * @return this
 	 */
-	public ConstantPropagationContextEvaluator setMinSpeculativeOffset(long minSpeculativeRefAddress) {
+	public ConstantPropagationContextEvaluator setMinSpeculativeOffset(
+			long minSpeculativeRefAddress) {
 		minSpeculativeOffset = minSpeculativeRefAddress;
 		return this;
 	}
-	
+
 	/**
 	 * Set maximum speculative memory offset for references
 	 * 
 	 * @param maxSpeculativeRefAddress maximum address offset
 	 * @return this
 	 */
-	public ConstantPropagationContextEvaluator setMaxSpeculativeOffset(long maxSpeculativeRefAddress) {
+	public ConstantPropagationContextEvaluator setMaxSpeculativeOffset(
+			long maxSpeculativeRefAddress) {
 		maxSpeculativeOffset = maxSpeculativeRefAddress;
 		return this;
 	}
-	
+
 	/**
 	 * Set maximum speculative memory offset for references
 	 * 
@@ -125,18 +128,19 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 		maxSpeculativeOffset = minStoreLoadRefAddress;
 		return this;
 	}
-	
+
 	/**
 	 * Set option to create complex data for pointers if the datatype is known
 	 * 
 	 * @param doCreateData true to create complex data types if the data type is known
 	 * @return this
 	 */
-	public ConstantPropagationContextEvaluator setCreateComplexDataFromPointers(boolean doCreateData) {
+	public ConstantPropagationContextEvaluator setCreateComplexDataFromPointers(
+			boolean doCreateData) {
 		createDataFromPointers = doCreateData;
 		return this;
 	}
-	
+
 	/**
 	 * The computed destination set is useful if follow on switch analysis is to be done.
 	 * 
@@ -181,7 +185,7 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 	@Override
 	public boolean evaluateReference(VarnodeContext context, Instruction instr, int pcodeop,
 			Address address, int size, DataType dataType, RefType refType) {
-		
+
 		// special check for parameters, evaluating the call, an uncomputed call wouldn't get here normally
 		// really there should be another callback when adding parameters
 		if (refType.isCall() && !refType.isComputed() && pcodeop == PcodeOp.UNIMPLEMENTED) {
@@ -211,8 +215,8 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 		}
 
 		Program program = instr.getProgram();
-		AutoAnalysisManager aMgr= AutoAnalysisManager.getAnalysisManager(program);
-		
+		AutoAnalysisManager aMgr = AutoAnalysisManager.getAnalysisManager(program);
+
 		// if data reference, handle data
 		if (refType.isData()) {
 			createPointedToData(aMgr, program, address, refType, dataType, size);
@@ -221,8 +225,8 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 		// if flowing to an address, disassemble it
 		// only disassemble in executable memory
 		Memory memory = program.getMemory();
-		if (refType.isFlow() && !refType.isIndirect() &&
-			!memory.isExternalBlockAddress(address) && memory.getExecuteSet().contains(address)) {
+		if (refType.isFlow() && !refType.isIndirect() && !memory.isExternalBlockAddress(address) &&
+			memory.getExecuteSet().contains(address)) {
 			Data udata = program.getListing().getUndefinedDataAt(address);
 			if (udata != null) {
 				DisassembleCommand cmd = new DisassembleCommand(address, null, true);
@@ -238,39 +242,41 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 
 		return true;
 	}
-	
-	private int createPointedToData(AutoAnalysisManager aMgr, Program program, Address address, RefType refType, DataType dataType, int size) {
+
+	private int createPointedToData(AutoAnalysisManager aMgr, Program program, Address address,
+			RefType refType, DataType dataType, int size) {
 		// don't do in external memory
 		if (program.getMemory().isExternalBlockAddress(address) || address.isExternalAddress()) {
 			return 0;
 		}
-		
+
 		// don't create if not in real memory
 		if (!program.getMemory().contains(address)) {
 			return 0;
 		}
-		
+
 		// Get the data type that is pointed to, strip off pointer, or pointer typedef
 		DataType pointedToDT = null;
 		if (dataType instanceof Pointer ptr) {
 			pointedToDT = ptr.getDataType();
 		}
-		else if ((dataType instanceof TypeDef typeDef && typeDef.getBaseDataType() instanceof Pointer ptr)) {
+		else if ((dataType instanceof TypeDef typeDef &&
+			typeDef.getBaseDataType() instanceof Pointer ptr)) {
 			pointedToDT = ptr.getDataType();
 		}
-		
+
 		// if this is a function pointer, create the code/function/signature
 		if (pointedToDT instanceof FunctionDefinition funcDefn) {
 			createFunctionApplySignature(aMgr, program, address, funcDefn);
 			return dataType.getLength();
 		}
-		
+
 		// otherwise it is data
-		
+
 		if (dataType != null) {
 			// System.out.println("@ " + address + " Data Type - " + dataType);
 		}
-		
+
 		return createData(program, address, pointedToDT, size);
 	}
 
@@ -289,10 +295,10 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 		if (data == null || !Undefined.isUndefined(data.getDataType())) {
 			return 0;
 		}
-		
+
 		// get a default undefined data type of the right size for the access
 		DataType dt = Undefined.getUndefinedDataType(size);
-		
+
 		int maxLen = -1;
 		if (createDataFromPointers && dataType != null) {
 			DataType originalDT = dataType;
@@ -301,35 +307,43 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 			if (dataType instanceof TypeDef typeDef) {
 				dataType = typeDef.getBaseDataType();
 			}
-			
+
 			if (dataType instanceof CharDataType) {
 				// Use Terminated in case strings are referenced offcut
-				maxLen = getRestrictedStringLen(program, address, TerminatedStringDataType.dataType, MAX_CHAR_STRING__LEN);
+				maxLen = getRestrictedStringLen(program, address, TerminatedStringDataType.dataType,
+					MAX_CHAR_STRING__LEN);
 				if (maxLen > 0) {
 					dt = TerminatedStringDataType.dataType;
 				}
-			} else if (dataType instanceof WideCharDataType) {
-				maxLen = getRestrictedStringLen(program, address, TerminatedUnicodeDataType.dataType, MAX_UNICODE_STRING_LEN);
+			}
+			else if (dataType instanceof WideCharDataType) {
+				maxLen = getRestrictedStringLen(program, address,
+					TerminatedUnicodeDataType.dataType, MAX_UNICODE_STRING_LEN);
 				if (maxLen > 0) {
 					dt = TerminatedUnicodeDataType.dataType;
 				}
-			} else if (dataType instanceof Composite comp) {
+			}
+			else if (dataType instanceof Composite comp) {
 				// create empty structures, they can get filled out later
 				// if they don't fit later because they grow, then there will be an error at the location
 				dt = originalDT; // original might have been a typedef, use original
-			} else if (dataType instanceof VoidDataType) {
+			}
+			else if (dataType instanceof VoidDataType) {
 				// ptr to void should be ignored
 				return 0;
-			} else if (dataType instanceof AbstractFloatDataType) {
+			}
+			else if (dataType instanceof AbstractFloatDataType) {
 				dt = dataType;
-			} else {
+			}
+			else {
 				// don't do any other types other than above for now
 				return 0;
 			}
-		} else if (size < 1 || size > 8) {
+		}
+		else if (size < 1 || size > 8) {
 			return 0;
 		}
-		
+
 		try {
 			// create data at the location so that we record the access size
 			//   the data is undefined, and SHOULD be overwritten if something
@@ -337,7 +351,8 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 			if (maxLen > 0) {
 				data = DataUtilities.createData(program, address, dt, maxLen,
 					ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
-			} else {
+			}
+			else {
 				data = DataUtilities.createData(program, address, dt, -1,
 					ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
 			}
@@ -364,13 +379,13 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 		// System.out.println("@ " + address + " - Typedef Function " + ((FunctionDefinition)ptrToDT).getPrototypeString());
 
 		Listing listing = program.getListing();
-		
+
 		// defined data (that isn't an undefined) don't do anything
 		Data data = listing.getDefinedDataContaining(address);
 		if (data != null) {
 			return;
 		}
-		
+
 		// if memory is undefined bytes, don't disassemble or create function
 		MemoryBlock block = program.getMemory().getBlock(address);
 		if (block == null || !block.isInitialized()) {
@@ -378,20 +393,22 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 		}
 
 		// normalize the address to where code should start (ARM and MIPS can be offset by one)
-		Address normalizedAddr = PseudoDisassembler.getNormalizedDisassemblyAddress(program, address);
+		Address normalizedAddr =
+			PseudoDisassembler.getNormalizedDisassemblyAddress(program, address);
 		if (!listing.isUndefined(normalizedAddr, normalizedAddr)) {
 			// if not undefined, must be an instruction to continue
 			Instruction instr = listing.getInstructionAt(normalizedAddr);
 			if (instr == null) {
 				return;
 			}
-		} else {
+		}
+		else {
 			// if nothing defined here, disassemble
 			address = PseudoDisassembler.setTargetContextForDisassembly(program, address);
 			DisassembleCommand cmd = new DisassembleCommand(address, null, true);
 			cmd.applyTo(program, monitor);
 		}
-		
+
 		// see if there is an existing function
 		FunctionManager funcMgr = program.getFunctionManager();
 		Function func = funcMgr.getFunctionAt(address);
@@ -403,7 +420,7 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 				return;
 			}
 		}
-		
+
 		if (func != null) {
 			if (func.isThunk()) {
 				return;
@@ -413,29 +430,34 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 			if (SourceType.ANALYSIS.isLowerPriorityThan(mostTrusted)) {
 				return;
 			}
-		} else {
+		}
+		else {
 			CreateFunctionCmd createFunctionCmd = new CreateFunctionCmd(address, false);
 			aMgr.schedule(createFunctionCmd, AnalysisPriority.FUNCTION_ANALYSIS.priority());
 		}
-		
+
 		// only apply the signature if actually creating data, the function/code has already been created
 		if (!createDataFromPointers) {
 			return;
 		}
-		
+
 		// if no arguments, could be an opaque function pointer, don't apply arguments
 		ParameterDefinition[] arguments = funcDefn.getArguments();
 		DataType returnType = funcDefn.getReturnType();
-		if (arguments == null || (arguments.length == 0 && (returnType==null || Undefined.isUndefined(returnType)))) {
+		if (arguments == null ||
+			(arguments.length == 0 && (returnType == null || Undefined.isUndefined(returnType)))) {
 			return;
 		}
 
 		// applying function signatures considered data
 		// don't change name, even default name
-		ApplyFunctionSignatureCmd applyFunctionSignatureCmd = new ApplyFunctionSignatureCmd(address, funcDefn, SourceType.ANALYSIS, true, FunctionRenameOption.NO_CHANGE);
-		aMgr.schedule(applyFunctionSignatureCmd, AnalysisPriority.FUNCTION_ANALYSIS.after().priority());
+		ApplyFunctionSignatureCmd applyFunctionSignatureCmd =
+			new ApplyFunctionSignatureCmd(address, funcDefn, SourceType.ANALYSIS, true, false,
+				DataTypeConflictHandler.DEFAULT_HANDLER, FunctionRenameOption.NO_CHANGE);
+		aMgr.schedule(applyFunctionSignatureCmd,
+			AnalysisPriority.FUNCTION_ANALYSIS.after().priority());
 	}
-	
+
 	private SourceType getMostTrustedParameterSource(Function func) {
 		SourceType highestSource = func.getSignatureSource();
 		Parameter[] parameters = func.getParameters();
@@ -476,7 +498,7 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 	public boolean allowAccess(VarnodeContext context, Address addr) {
 		return trustMemoryWrite;
 	}
-	
+
 	/**
 	 * Looks at bytes at given address and converts to format String
 	 * 
@@ -484,28 +506,29 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 	 * @param pointer Pointer "type" of string
 	 * @return format String
 	 */
-	int getRestrictedStringLen(Program program, Address address, AbstractStringDataType dataType, int maxLength) {
-		
+	int getRestrictedStringLen(Program program, Address address, AbstractStringDataType dataType,
+			int maxLength) {
+
 		maxLength = getMaxStringLength(program, address, maxLength);
 
-		MemoryBufferImpl memoryBuffer =
-			new MemoryBufferImpl(program.getMemory(), address);
-		
-		StringDataInstance stringDataInstance = dataType.getStringDataInstance(memoryBuffer, dataType.getDefaultSettings(), -1);
+		MemoryBufferImpl memoryBuffer = new MemoryBufferImpl(program.getMemory(), address);
+
+		StringDataInstance stringDataInstance =
+			dataType.getStringDataInstance(memoryBuffer, dataType.getDefaultSettings(), -1);
 		stringDataInstance.getStringDataTypeGuess();
-		
+
 		int detectedLength = stringDataInstance.getStringLength();
 		if (detectedLength == -1) {
 			return 0;
 		}
-		
+
 		if (detectedLength > maxLength) {
 			detectedLength = maxLength;
 		}
-		
+
 		return detectedLength;
 	}
-	
+
 	/**
 	 * Get the number of bytes to the next reference, or the max length
 	 * 
@@ -514,12 +537,13 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 	 * @return maximum length to create the string
 	 */
 	private int getMaxStringLength(Program program, Address address, int maxLen) {
-		AddressIterator refIter = program.getReferenceManager().getReferenceDestinationIterator(address.next(), true);
+		AddressIterator refIter =
+			program.getReferenceManager().getReferenceDestinationIterator(address.next(), true);
 		Address next = refIter.next();
 		if (next == null) {
 			return -1;
 		}
-		
+
 		long len = -1;
 		try {
 			len = next.subtract(address);
@@ -527,7 +551,8 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 				len = maxLen;
 			}
 			return (int) len;
-		} catch (IllegalArgumentException exc) {
+		}
+		catch (IllegalArgumentException exc) {
 			// bad address subtraction
 		}
 		return (int) len;

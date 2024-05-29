@@ -102,4 +102,9 @@ class PointerDBAdapterV2 extends PointerDBAdapter {
 	public DBRecord translateRecord(DBRecord rec) {
 		return rec;
 	}
+
+	@Override
+	public int getRecordCount() {
+		return table.getRecordCount();
+	}
 }

@@ -98,7 +98,7 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 
 		ToolOptions displayOptions = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_DISPLAY);
 		ToolOptions fieldOptions = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
-		displayOptions.registerOptionsEditor(new ListingDisplayOptionsEditor(displayOptions));
+		displayOptions.registerOptionsEditor(() -> new ListingDisplayOptionsEditor(displayOptions));
 		displayOptions.setOptionsHelpLocation(
 			new HelpLocation(getName(), GhidraOptions.CATEGORY_BROWSER_DISPLAY));
 		fieldOptions.setOptionsHelpLocation(
@@ -350,7 +350,11 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 	@Override
 	public void setNorthComponent(JComponent comp) {
 		connectedProvider.setNorthComponent(comp);
+	}
 
+	@Override
+	public void requestFocus() {
+		connectedProvider.requestFocus();
 	}
 
 	@Override
@@ -616,7 +620,7 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 		options.registerOption(ManualViewerCommandWrappedOption.MANUAL_VIEWER_OPTIONS,
 			OptionType.CUSTOM_TYPE,
 			ManualViewerCommandWrappedOption.getDefaultBrowserLoaderOptions(), helpLocation,
-			"Options for running manual viewer", new ManualViewerCommandEditor());
+			"Options for running manual viewer", () -> new ManualViewerCommandEditor());
 
 	}
 
@@ -849,16 +853,6 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 	}
 
 	@Override
-	public void formatModelAdded(FieldFormatModel model) {
-		// uninterested
-	}
-
-	@Override
-	public void formatModelRemoved(FieldFormatModel model) {
-		// uninterested
-	}
-
-	@Override
 	public void formatModelChanged(FieldFormatModel model) {
 		tool.setConfigChanged(true);
 	}
@@ -870,14 +864,14 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
-		if (ev.containsEvent(DomainObject.DO_DOMAIN_FILE_CHANGED)) {
+		if (ev.contains(DomainObjectEvent.FILE_CHANGED)) {
 			connectedProvider.updateTitle();
 		}
 
 		if (viewManager != null) {
 			return;
 		}
-		if (ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
+		if (ev.contains(DomainObjectEvent.RESTORED)) {
 			viewChanged(currentProgram.getMemory());
 		}
 	}

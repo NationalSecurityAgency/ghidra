@@ -17,7 +17,6 @@ package ghidra.app.cmd.function;
 
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.framework.store.FileSystem;
 import ghidra.program.model.address.Address;
@@ -28,7 +27,7 @@ import ghidra.program.model.listing.*;
  * Command for creating a function definition data type based on the
  * function signature for a function at an address.  
  */
-public class CreateFunctionDefinitionCmd implements Command {
+public class CreateFunctionDefinitionCmd implements Command<Program> {
 	private Address entry;
 	private final ServiceProvider serviceProvider;
 	private String statusMsg = "";
@@ -37,28 +36,23 @@ public class CreateFunctionDefinitionCmd implements Command {
 	 * Constructs a new command for creating a function definition.
 	 * @param entry entry point address for the function whose signature is to 
 	 * be used to create the function defintion data type.
+	 * @param serviceProvider optional service provider (may be null).  If specified and the 
+	 * {@link DataTypeManagerService} is found, the newly created function definition
+	 * will be selected within the GUI.
 	 */
 	public CreateFunctionDefinitionCmd(Address entry, ServiceProvider serviceProvider) {
 		this.entry = entry;
 		this.serviceProvider = serviceProvider;
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
 	@Override
 	public String getName() {
 		return "Create Function Definition";
 	}
 
-	/**
-	 * 
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		Program program = (Program) obj;
+	public boolean applyTo(Program program) {
+
 		// save off the function signature
 		//   get the body, comment, stack, return type
 		Listing listing = program.getListing();
@@ -83,17 +77,16 @@ public class CreateFunctionDefinitionCmd implements Command {
 		FunctionDefinitionDataType functionDef = new FunctionDefinitionDataType(sig);
 		DataType newType = dtm.resolve(functionDef, null);
 
-		DataTypeManagerService service = serviceProvider.getService(DataTypeManagerService.class);
-		if (service != null) {
-			service.setDataTypeSelected(newType);
+		if (serviceProvider != null) {
+			DataTypeManagerService service =
+				serviceProvider.getService(DataTypeManagerService.class);
+			if (service != null) {
+				service.setDataTypeSelected(newType);
+			}
 		}
-
 		return true;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
 	@Override
 	public String getStatusMsg() {
 		return statusMsg;

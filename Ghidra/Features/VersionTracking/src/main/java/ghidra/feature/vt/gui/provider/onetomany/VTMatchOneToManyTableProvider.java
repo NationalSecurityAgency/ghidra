@@ -26,13 +26,15 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.*;
 
 import docking.ActionContext;
+import docking.action.builder.ActionBuilder;
 import docking.widgets.label.GDLabel;
 import docking.widgets.table.GTable;
 import docking.widgets.table.RowObjectTableModel;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import generic.theme.GColor;
 import generic.theme.GIcon;
-import ghidra.feature.vt.api.impl.VTChangeManager;
+import ghidra.app.services.FunctionComparisonService;
+import ghidra.feature.vt.api.impl.VTEvent;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.gui.actions.*;
 import ghidra.feature.vt.gui.filters.*;
@@ -48,6 +50,7 @@ import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolTable;
@@ -58,24 +61,25 @@ import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraThreadedTablePanel;
 
 /**
- * The docking window that provides a table of the other tool's function matches for the function
- * containing the current cursor location in this tool's listing.
+ * The docking window that provides a table of the other tool's function matches
+ * for the function containing the current cursor location in this tool's
+ * listing.
  */
 public abstract class VTMatchOneToManyTableProvider extends ComponentProviderAdapter
 		implements FilterDialogModel<VTMatch>, VTControllerListener, VTSubToolManagerListener {
 
 	private static final String TITLE_PREFIX = "Version Tracking Matches for ";
 	private static final Icon ICON = new GIcon("icon.version.tracking.provider.one.to.many");
+	private static final Icon COMPARISON_ICON = new GIcon("icon.plugin.functioncompare.new");
 
-	protected static final Color LOCAL_INFO_FOREGROUND_COLOR =
-		new GColor("color.fg.version.tracking.function.match.local.info");
+	protected static final Color LOCAL_INFO_FOREGROUND_COLOR = new GColor(
+		"color.fg.version.tracking.function.match.local.info");
 
 	private JComponent component;
 	private MatchThreadedTablePanel tablePanel;
 	protected GhidraTable matchesTable;
 	private ListSelectionListener matchSelectionListener;
 	protected VTMatchOneToManyTableModel oneToManyTableModel;
-
 	private JToggleButton ancillaryFilterButton;
 	private Set<Filter<VTMatch>> filters = new HashSet<>();
 	private FilterStatusListener refilterListener = new RefilterListener();
@@ -100,7 +104,8 @@ public abstract class VTMatchOneToManyTableProvider extends ComponentProviderAda
 	private VTMatch pendingMatchSelection;
 
 	public VTMatchOneToManyTableProvider(PluginTool tool, VTController controller,
-			VTSubToolManager subToolManager, boolean isSource) {
+			VTSubToolManager subToolManager,
+			boolean isSource) {
 		super(tool, TITLE_PREFIX + (isSource ? "Source" : "Destination"), VTPlugin.OWNER);
 		this.controller = controller;
 		this.subToolManager = subToolManager;
@@ -130,6 +135,51 @@ public abstract class VTMatchOneToManyTableProvider extends ComponentProviderAda
 		addLocalAction(new SetVTMatchFromOneToManyAction(controller, true));
 		addLocalAction(new ClearMatchAction(controller));
 		addLocalAction(new AcceptMatchAction(controller));
+		new ActionBuilder("Compare Functions", getName())
+				.popupMenuPath("Compare Functions")
+				.popupMenuIcon(COMPARISON_ICON)
+				.popupMenuGroup("AAA_VT_Main")
+				.keyBinding("shift c")
+				.sharedKeyBinding()
+				.description("Compares the Function(s) with its remote match")
+				.helpLocation(new HelpLocation("VersionTrackingPlugin", "Compare_Functions"))
+				.withContext(VTMatchOneToManyContext.class)
+				.enabledWhen(this::isValidFunctionComparison)
+				.onAction(this::compareFunctions)
+				.buildAndInstallLocal(this);
+	}
+
+	private boolean isValidFunctionComparison(VTMatchOneToManyContext context) {
+		List<VTMatch> functionMatches = context.getFunctionMatches();
+		return !functionMatches.isEmpty();
+	}
+
+	private void compareFunctions(VTMatchOneToManyContext c) {
+		List<VTMatch> selectedMatches = c.getSelectedMatches();
+		Set<Function> leftFunctions = new HashSet<>();
+		Set<Function> rightFunctions = new HashSet<>();
+
+		for (VTMatch match : selectedMatches) {
+			MatchInfo matchInfo = controller.getMatchInfo(match);
+
+			// Whichever codebrowser we are currently in, is what will be on the left
+			// side of the compare functions window.
+			Function leftFunction = matchInfo.getSourceFunction(),
+					rightFunction = matchInfo.getDestinationFunction();
+			if (!isSource) {
+				leftFunction = matchInfo.getDestinationFunction();
+				rightFunction = matchInfo.getSourceFunction();
+			}
+			leftFunctions.add(leftFunction);
+			rightFunctions.add(rightFunction);
+
+		}
+		// NOTE: in this case the left functions will always be the same function (ie the one in the
+		// current codebrowser) so leftFunctions will be size one. The rightFunctions will be one or
+		// more since the src/dst match tables contain all possible matches to the current listing
+		// function.
+		FunctionComparisonService service = tool.getService(FunctionComparisonService.class);
+		service.compareFunctions(leftFunctions, rightFunctions);
 	}
 
 	@Override
@@ -292,9 +342,9 @@ public abstract class VTMatchOneToManyTableProvider extends ComponentProviderAda
 
 	private List<VTMatch> getSelectedMatches() {
 		List<VTMatch> list = new ArrayList<>();
-		int selectedRowCount = matchesTable.getSelectedRowCount();
-		if (selectedRowCount == 1) {
-			int row = matchesTable.getSelectedRow();
+		int[] selectedRows = matchesTable.getSelectedRows();
+
+		for (int row : selectedRows) {
 			VTMatch mySelectedMatch = oneToManyTableModel.getRowObject(row);
 			list.add(mySelectedMatch);
 		}
@@ -435,20 +485,19 @@ public abstract class VTMatchOneToManyTableProvider extends ComponentProviderAda
 		boolean matchesContextChanged = false;
 		for (int i = 0; i < ev.numRecords(); i++) {
 			DomainObjectChangeRecord doRecord = ev.getChangeRecord(i);
-			int eventType = doRecord.getEventType();
+			EventType eventType = doRecord.getEventType();
 
-			if (eventType == VTChangeManager.DOCR_VT_ASSOCIATION_MARKUP_STATUS_CHANGED ||
-				eventType == VTChangeManager.DOCR_VT_ASSOCIATION_STATUS_CHANGED ||
-				eventType == VTChangeManager.DOCR_VT_MATCH_TAG_CHANGED) {
+			if (eventType == VTEvent.ASSOCIATION_MARKUP_STATUS_CHANGED ||
+				eventType == VTEvent.ASSOCIATION_STATUS_CHANGED ||
+				eventType == VTEvent.MATCH_TAG_CHANGED) {
 
 				oneToManyTableModel.refresh();
 				repaint();
 				matchesContextChanged = true;
 			}
-			else if (eventType == DomainObject.DO_OBJECT_RESTORED ||
-				eventType == VTChangeManager.DOCR_VT_MATCH_SET_ADDED ||
-				eventType == VTChangeManager.DOCR_VT_MATCH_ADDED ||
-				eventType == VTChangeManager.DOCR_VT_MATCH_DELETED) {
+			else if (eventType == DomainObjectEvent.RESTORED ||
+				eventType == VTEvent.MATCH_SET_ADDED || eventType == VTEvent.MATCH_ADDED ||
+				eventType == VTEvent.MATCH_DELETED) {
 
 				reload();
 				repaint();
@@ -468,7 +517,8 @@ public abstract class VTMatchOneToManyTableProvider extends ComponentProviderAda
 
 	@Override
 	public void markupItemSelected(VTMarkupItem markupItem) {
-		// Do nothing since the one to many match table doesn't need to respond to the mark-up that is selected.
+		// Do nothing since the one to many match table doesn't need to respond to the
+		// mark-up that is selected.
 	}
 
 //==================================================================================================

@@ -28,7 +28,6 @@ import docking.widgets.OptionDialog;
 import docking.widgets.table.*;
 import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors.Palette;
-import generic.theme.Gui;
 import ghidra.app.cmd.register.SetRegisterCmd;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.services.MarkerService;
@@ -498,7 +497,11 @@ class RegisterValueRenderer extends GTableCellRenderer {
 
 	RegisterValueRenderer(JTable table) {
 		setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
-		Gui.registerFont(this, "font.monospaced");
+	}
+
+	@Override
+	protected Font getDefaultFont() {
+		return fixedWidthFont;
 	}
 
 	@Override

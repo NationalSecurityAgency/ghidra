@@ -21,6 +21,7 @@ import java.io.IOException;
 
 import db.*;
 import ghidra.feature.vt.api.impl.MarkupItemStorage;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 

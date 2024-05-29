@@ -19,16 +19,15 @@
  */
 package ghidra.app.plugin.processors.sleigh;
 
+import static ghidra.pcode.utils.SlaFormat.*;
+
 import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 import ghidra.util.NumericUtilities;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
 
 /**
- * 
- *
  * An operation on the context (bit-packed form) of an instruction
  */
 public class ContextOp implements ContextChange {
@@ -51,13 +50,13 @@ public class ContextOp implements ContextChange {
 	}
 
 	@Override
-	public void restoreXml(XmlPullParser parser, SleighLanguage lang) {
-		XmlElement el = parser.start("context_op");
-		num = SpecXmlUtils.decodeInt(el.getAttribute("i"));
-		shift = SpecXmlUtils.decodeInt(el.getAttribute("shift"));
-		mask = SpecXmlUtils.decodeInt(el.getAttribute("mask"));
-		patexp = PatternExpression.restoreExpression(parser, lang);
-		parser.end(el);
+	public void decode(Decoder decoder, SleighLanguage lang) throws DecoderException {
+		int el = decoder.openElement(ELEM_CONTEXT_OP);
+		num = (int) decoder.readSignedInteger(ATTRIB_I);
+		shift = (int) decoder.readSignedInteger(ATTRIB_SHIFT);
+		mask = (int) decoder.readUnsignedInteger(ATTRIB_MASK);
+		patexp = PatternExpression.decodeExpression(decoder, lang);
+		decoder.closeElement(el);
 	}
 
 	public PatternExpression getPatternExpression() {

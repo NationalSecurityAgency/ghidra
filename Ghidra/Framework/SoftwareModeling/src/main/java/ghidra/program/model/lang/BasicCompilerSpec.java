@@ -1089,7 +1089,7 @@ public class BasicCompilerSpec implements CompilerSpec {
 
 	@Override
 	public PrototypeModel matchConvention(String conventionName) {
-		if (conventionName == null || CALLING_CONVENTION_unknown.equals(conventionName) ||
+		if (CompilerSpec.isUnknownCallingConvention(conventionName) ||
 			CALLING_CONVENTION_default.equals(conventionName)) {
 			return defaultModel;
 		}

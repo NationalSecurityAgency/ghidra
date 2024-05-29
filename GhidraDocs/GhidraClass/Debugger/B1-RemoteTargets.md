@@ -20,165 +20,188 @@ Depending on your particular target and platform, there may be several options a
 Consider a remote Linux target in user space.
 While this list is not exhaustive, some options are:
 
- * Use `gdbserver`
- * Use SSH
- * Use GADP
- * Use a pty
+ * Use `gdbserver` over SSH
+ * Use Trace RMI over SSH
+ * Use `gdbserver` and connect to it manually
+ * Connect Trace RMI manually
 
 Generally, for each of these options it boils down to which components will be colocated with the target and which will be colocated with Ghidra.
 
-## Using `gdbserver`
+## Using `gdbserver` over SSH
 
 In this configuration, Ghidra and GDB will be located in the user's local environment, while `gdbserver` and the specimen will be located in the target environment.
-The procedure follows directly from GDB's manual, but with some Ghidra-specific steps.
-First, prepare the target, which for demonstration purposes has the IP address 10.0.0.1:
+We will connect the local `gdb` to the remote `gdbserver` by forwarding stdio over SSH.
 
-```bash
-gdbserver 10.0.0.1:12345 termmines
-```
+1. First, prepare the target, which for demonstration purposes has the IP address 10.0.0.1.
+   Generally, this just means booting it up and ensuring it has `gdbserver` installed.
+   **NOTE**: You do not need to run `gdbserver` or the target binary.
+   The launcher will do that for you.
+1. From the launch menu, select **gdb + gdbserver via ssh**.
 
-Then, connect from Ghidra using GDB:
+   ![Connect dialog for gdb + gdbserver via ssh](images/RemoteTargets_GdbPlusGdbserverViaSsh.png)
 
-1. From the Targets window, click Connect, select "gdb," and click Connect.
-1. In the Interpreter, do as you would in GDB:
+1. Read the wall of text, at least the first time, and verify the remote system is prepared.
+1. Fill out the options appropriately.
+   Notably, correct the location of the target image to point at its location on the *target* system.
+   Enter "user@10.0.0.1" for the **[User@]Host** option, substituting your username for the remote system.
+1. Click **Launch**.
 
-   ```gdb
-   target remote 10.0.0.1:12345
-   ```
+At this point, most things will work the same as they would for a local target.
 
-The target should now be added to the Debugger session, and things should work as usual.
+## Using Trace RMI over SSH
 
-## Using SSH
+In this configuration, Ghidra will be located in the user'ls local environment, while `gdb` and the specimen will be located in the target environment.
+Notice that we are *not* using `gdbserver`.
+We will connect the local Ghidra to the remote `gdb` by forwarding Trace RMI over SSH.
+See the help (press **`F1`** on the **gdb via ssh** menu item for advantages and disadvantages of using this vs. `gdbserver`.)
 
-In this configuration, only Ghidra is required to be in the user's local environment, while `sshd`, `gdb` and the specimen will be located in the target environment.
-**NOTE**: The full `gdb`, not just `gdbserver`, must be installed on the target system.
-
-1. From the Targets window, click Connect, and select "gdb via SSH."
-
-   ![Connect dialog for gdb via SSH](images/RemoteTargets_GdbOverSsh.png)
-
-1. Set "GDB launch command" to the path of gdb *on the remote file system*.
-1. Leave "Use existing session via new-ui" unchecked.
-1. Set "SSH hostname" to the name or IP address of the target system.
-1. If you are not using the standard SSH port, set "SSH TCP port" accordingly.
-1. Set "SSH username" to your username on the target system.
-1. Set "Open SSH config file" to the client config file *on the local file system*.
-1. If the remote uses DOS line endings (unlikely for a Linux remote), then check the "Use DOS line endings" box.
-1. Click Connect.
-1. If prompted, enter your SSH credentials.
-
-If everything goes well, the Objects window should populate, and you should get an Interpreter window presenting the remote GDB CLI.
-You may use it in the usual manner to launch your target.
-Alternatively, in the Objects window, click the Launch or Quick Launch button to launch the current program.
-If prompted for the target command line, remember you must provide the path *on the remote file system*.
-
-The target should now be added to the Debugger session, and things should work as usual.
-
-## Using GADP
-
-GADP (Ghidra Asynchronous Debugging Protocol) is a protocol contributed by the Ghidra Debugger.
-It allows any of Ghidra's back-end connectors to be deployed as an *agent*.
-The agent connects to the back-end as usual, but then opens a TCP socket and waits for Ghidra to connect.
-
-### Using GADP Locally
-
-When debugging locally, the UI may offer "GADP" as an alternative to "IN-VM".
-If the back-end connector tends to crash Ghidra, you may prefer to select GADP.
-Typically, GADP will slow things down as information is marshalled across a TCP connection.
-However, if the connector crashes, Ghidra will simply drop the connection, whereas the IN-VM connector would crash Ghidra, too.
-
-### Using GADP Remotely
-
-In this configuration, only Ghidra is required to be in the user's local environment.
-The target environment must have `gdb`, `java`, and some portion of Ghidra installed.
-
-If you can install Ghidra on the remote system, there is a script to launch the headless agent:
-
-```bash
-cd /path/to/ghidra
-support/gdbGADPServerRun -h
-```
-
-This should print help for you.
-Typically, you can just run the agent without any extra command-line arguments:
-
-```bash
-support/gdbGADPServerRun
-```
-
-If not, then you probably just need to tell it where you installed `gdb`:
-
-```bash
-support/gdbGADPServerRun --agent-args -g /path/to/bin/gdb
-```
-
-If you cannot install Ghidra, or do not want to, then you can build a standalone jar.
-You will still need to install the JRE on the target, likely the same version as recommended for Ghidra.
-
-Refer to the root README file to get started with a build from source.
-You may stop short of the `gradle buildGhidra` step, though it may be helpful to avoid trouble.
-Then, build the executable jar for the GDB agent:
-
-```bash
-gradle Debugger-agent-gdb:nodepJar
-```
-
-This will create the file `Ghidra/Debug/Debugger-agent-gdb/build/libs/Debugger-agent-gdb-nodep.jar`.
-Copy the file to the target system.
-Now, run it:
-
-```bash
-java -jar Debugger-agent-gdb-nodep.jar -h
-```
-
-Once the agent is running, it should print its port number, and you can connect from Ghidra.
-For demonstration, we will assume it is listening at 10.0.0.2 on port 15432.
-
-1. From the Targets window, click Connect.
-1. Select "Ghidra debug agent (GADP)" from the drop-down.
-1. For "Agent network address", enter 10.0.0.2.
-1. For "Agent TCP port", enter 15432.
-1. Click Connect.
-
-That should complete the connection.
-You should see Objects populated and get an Interpreter window.
-You can then proceed to launch or attach a target in that connection using either the Objects window or
-the Interpreter window.
-
-## Using a pty (pseudo-terminal)
-
-If your copy of GDB supports the `new-ui` command (all versions 8.0 and up should), then you may use any of the GDB connectors (including the local IN-VM one) to join Ghidra to an existing GDB session:
-
-1. Run `gdb` from a proper terminal:
+1. First, prepare the target.
+   This is more involved than using `gdbserver`, since you will need to ensure `gdb` and the Trace RMI plugin for it are installed.
+   The packages, which should be included with Ghidra, are `ghidratrace` and `ghidragdb`, but you may need to build them first.
+   If you installed `gdb` and `python3` from your distribution's repositories, installation of the Python packages should be straightfoward.
+   Search the Ghidra installation for files ending in `.whl`.
+   If the `ghidratrace` and `ghidragdb` packages are there, you can skip this build step and just transfer them to the target.
+   On the local system:
 
    ```bash
-   gdb termmines
+   python3 -m pip install build # unless you already have it
+   cd /path/to/ghidra/Ghidra/Debug/Debugger-rmi-trace/pypkg
+   python3 -m build
    ```
 
-1. If needed, do whatever you would like to do before connecting with Ghidra.
-1. In Ghidra, from the Targets window, click Connect, and select `gdb`.
-1. Check the "Use existing session via new-ui" box.
-1. Click Connect.
-1. You will be prompted with the name of a pseudo terminal, e.g., `/dev/pts/1`.
-1. Back in `gdb`:
+   This will output `.tar.gz` and `.whl` files under `pypkg/dist`.
+   Do the same for `Debugger-agent-gdb/pypkg`.
+   Transfer the resulting `.whl` files to the target, then on the target system:
+
+   ```bash
+   python3 -m pip install /path/to/ghidratrace-[version].whl /path/to/ghidragdb-[version].whl
+   ```
+
+   If you are offline, the dependencies are included in the `pypkg/dist` directory for each module.
+   Transfer and install them, too.
+   You may try `python -m pip install --no-index -f /path/to/packages ghidragdb`, if all the packages and dependencies are in the one directory.
+   Chances are, GDB embeds the same Python, so they become importable from GDB.
+   Test using `gdb` on the target system:
 
    ```gdb
-   new-ui /dev/pts/1
+   python import ghidragdb
    ```
 
-That should complete the connection.
-If there was a target active in the existing GDB session, Ghidra should recognize it, and things should work as usual.
-If there was not a target, then you should at least see Objects populated and get an Interpreter window.
-You can then proceed to launch or attach a target in that connection using either the Objects window or the Interpreter window.
+   No news is good news!
+   You can quit GDB, since that was just for verifying the installation.
 
-This same checkbox is available in the "gdb via SSH" connector.
-Note that the remote system must support pseudo terminals, and the name of the pseudo terminal is from the *remote file system*.
+1. From the launch menu, select **gdb via ssh**.
 
-To activate this configuration in the standalone GADP agent, use the `-x` option:
+   ![Connect dialog for gdb via SSH](images/RemoteTargets_GdbViaSsh.png)
+
+1. Fill out the options appropriately.
+   Notably, correct the location of the target image to point at its location on the *target* system.
+   Enter "user@10.0.0.1" for the **[User@]Host** option, substituting your username for the remote system.
+1. Click **Launch**.
+
+At this point, most things will work the same as they would for a local target.
+
+### Troubleshooting
+
+#### I can't find the Python packages to install
+
+You may need to build them using the instructions above.
+The dependencies are included in the Ghidra installation, but perhaps something has gone missing.
+Search for files ending in `.whl` or `.tar.gz`; they should be located in `pypkg/dist` in various modules.
+If you are able to do local debugging with Ghidra and `gdb`, then the source is definitely present and functioning.
+To (re-)build the packages from source:
 
 ```bash
-java -jar Debugger-agent-gdb-node.jar --agent-args -x
+python3 -m pip install build
+cd /path/to/ghidra/Ghidra/Debug/Debugger-rmi-trace/pypkg
+python3 -m build
 ```
+
+This should output a `.tar.gz` and a `.whl` file under `pypkg/dist`.
+Send the `.whl` over to the target system and `pip install` it.
+Do the same for Debugger-agent-gdb.
+If that doesn't work, then in the worst case, copy the Python source over and add it to your `PYTHONPATH`.
+
+#### The `python import ghidragdb` command fails
+
+Double-check that you have installed all the required packages and their dependencies.
+A common forgotten or incorrectly-versioned dependency is `protobuf`.
+We developed using `protobuf==3.20.3`.
+Its "sdist" package is distributed with Ghidra under `Debugger-rmi-trace/pypkg/dist` for your convenience.
+
+It is also possible that `gdb` has embedded a different version of the interpreter than the one that `python3` provides.
+This can happen if you built GDB or Python yourself, or you installed them from a non-standard repository.
+Check the actual path of the Python library used by `gdb`:
+
+```bash
+ldd $(which gdb)
+```
+
+Or, inside `gdb`:
+
+```gdb
+(gdb) python-interactive
+>>> import sys
+>>> sys.version
+```
+
+Suppose this identifies version 3.7.
+Retry the installation commands using `python3.7 -m pip ...`.
+If you have multiple copies of the same version in different locations, you may need to invoke `python3` using its complete path.
+
+In the worst case, copy the Python source over and add it to your `PYTHONPATH`.
+
+## Using `gdbserver` manually
+
+The configuration and result here are similar using `gdbserver` over SSH, but will be performed manually.
+
+1. First, prepare the target.
+   This time, you will need to start `gdbserver` on the remote system manually.
+   For demonstration, we will listen on 10.0.0.1 port 12345:
+
+   ```bash
+   gdbserver 10.0.0.1:12345 termmines
+   ```
+
+1. From the launch menu, select **remote gdb**.
+1. Fill out the options appropriately.
+   Notably, enter "10.0.0.1" for the **Host** option, and "12345" for the **Port** option.
+1. Click **Launch**.
+
+At this point, most things will work the same as they would for a local target.
+
+## Connecting Trace RMI manually
+
+The configuration and result here are similar to using Trace RMI over SSH, but will be performed manually.
+
+1. First, prepare the target.
+   Follow the same installation steps as above for Trace RMI over SSH, if you have not already.
+1. In Ghidra's Connections window, click **Accept a single inbound TCP connection** in the local toolbar.
+
+   ![TraceRMI Accept Dialog](images/RemoteTargets_AcceptTraceRmi.png)
+
+1. Set **Host/Address** to "10.0.0.1", so that we can connect to it over the network.
+   **NOTE**: You may leave the port as "0" or pick a specific port, assuming you have permission to use it.
+1. Click **Listen**, and then take note of the acceptor's port number in the Connections window, e.g., "12345."
+1. Now, on the remote system, start `gdb` and type:
+
+   ```gdb
+   python import ghidragdb
+   file termmines
+   # set args, if you'd like
+   ghidra trace connect 10.0.0.1:12345
+   ghidra trace start
+   ghidra trace sync-enable
+   starti
+   ```
+
+At this point, most things will work the same as they would for a local target.
+You may notice Ghidra has not given you a new terminal.
+Just use the one you already have on the remote target.
+
+A notable advantage of this configuration is that you can enter whatever `gdb` commands you want to start your target.
+Here we demonstrated the simplest case of a "native" target.
+It is also possible to use this procedure to connect Ghidra into a running `gdb` session.
 
 ## Rube Goldberg Configurations
 
@@ -189,7 +212,7 @@ For example, to debug a native Android target from Windows, you could run Ghidra
 
 If you are in a classroom setting, pair up.
 Otherwise, play both roles, preferably using separate machines for Ghidra and the target.
-Using either `gdbserver`, gdb via SSH, or the GDB agent, debug `termmines`.
+Using one of the above procedures, debug `termmines`.
 One of you should prepare the target environment.
 The other should connect to it and launch the specimen.
-Then trade roles, choose a different configuration, and do it again.
+Then trade roles, choose a different procedure, and do it again.

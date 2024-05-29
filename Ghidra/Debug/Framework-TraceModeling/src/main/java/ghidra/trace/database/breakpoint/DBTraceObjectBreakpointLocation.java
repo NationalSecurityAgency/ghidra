@@ -27,7 +27,6 @@ import ghidra.program.model.address.AddressRange;
 import ghidra.trace.database.target.*;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.Trace.TraceBreakpointChangeType;
 import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.annot.TraceObjectInterfaceUtils;
@@ -40,37 +39,47 @@ import ghidra.util.exception.DuplicateNameException;
 public class DBTraceObjectBreakpointLocation
 		implements TraceObjectBreakpointLocation, DBTraceObjectInterface {
 
-	protected class BreakpointChangeTranslator extends Translator<TraceBreakpoint> {
+	protected static class BreakpointChangeTranslator extends Translator<TraceBreakpoint> {
+		private static final Map<TargetObjectSchema, Set<String>> KEYS_BY_SCHEMA =
+			new WeakHashMap<>();
+
+		private final Set<String> keys;
+
 		protected BreakpointChangeTranslator(DBTraceObject object, TraceBreakpoint iface) {
 			super(TargetBreakpointLocation.RANGE_ATTRIBUTE_NAME, object, iface);
+			TargetObjectSchema schema = object.getTargetSchema();
+			synchronized (KEYS_BY_SCHEMA) {
+				keys = KEYS_BY_SCHEMA.computeIfAbsent(schema, s -> Set.of(
+					schema.checkAliasedAttribute(TargetBreakpointLocation.RANGE_ATTRIBUTE_NAME),
+					schema.checkAliasedAttribute(TargetObject.DISPLAY_ATTRIBUTE_NAME),
+					schema.checkAliasedAttribute(TargetTogglable.ENABLED_ATTRIBUTE_NAME),
+					schema.checkAliasedAttribute(KEY_COMMENT)));
+			}
 		}
 
 		@Override
-		protected TraceChangeType<TraceBreakpoint, Void> getAddedType() {
-			return TraceBreakpointChangeType.ADDED;
+		protected TraceEvent<TraceBreakpoint, Void> getAddedType() {
+			return TraceEvents.BREAKPOINT_ADDED;
 		}
 
 		@Override
-		protected TraceChangeType<TraceBreakpoint, Lifespan> getLifespanChangedType() {
-			return TraceBreakpointChangeType.LIFESPAN_CHANGED;
+		protected TraceEvent<TraceBreakpoint, Lifespan> getLifespanChangedType() {
+			return TraceEvents.BREAKPOINT_LIFESPAN_CHANGED;
 		}
 
 		@Override
-		protected TraceChangeType<TraceBreakpoint, Void> getChangedType() {
-			return TraceBreakpointChangeType.CHANGED;
+		protected TraceEvent<TraceBreakpoint, Void> getChangedType() {
+			return TraceEvents.BREAKPOINT_CHANGED;
 		}
 
 		@Override
 		protected boolean appliesToKey(String key) {
-			return TargetBreakpointLocation.RANGE_ATTRIBUTE_NAME.equals(key) ||
-				TargetObject.DISPLAY_ATTRIBUTE_NAME.equals(key) ||
-				TargetBreakpointSpec.ENABLED_ATTRIBUTE_NAME.equals(key) ||
-				KEY_COMMENT.equals(key);
+			return keys.contains(key);
 		}
 
 		@Override
-		protected TraceChangeType<TraceBreakpoint, Void> getDeletedType() {
-			return TraceBreakpointChangeType.DELETED;
+		protected TraceEvent<TraceBreakpoint, Void> getDeletedType() {
+			return TraceEvents.BREAKPOINT_DELETED;
 		}
 	}
 
@@ -112,8 +121,19 @@ public class DBTraceObjectBreakpointLocation
 	@Override
 	public String getName() {
 		try (LockHold hold = object.getTrace().lockRead()) {
-			return TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(),
-				TargetObject.DISPLAY_ATTRIBUTE_NAME, String.class, "");
+			String display = TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(),
+				TargetObject.DISPLAY_ATTRIBUTE_NAME, String.class, null);
+			if (display != null) {
+				return display;
+			}
+			TraceObject container =
+				object.queryCanonicalAncestorsTargetInterface(TargetBreakpointSpecContainer.class)
+						.findFirst()
+						.orElse(null);
+			if (container == null) {
+				return ""; // Should be impossible, but maybe not a sane schema
+			}
+			return container.getCanonicalPath().relativize(object.getCanonicalPath()).toString();
 		}
 	}
 
@@ -235,7 +255,7 @@ public class DBTraceObjectBreakpointLocation
 			Boolean locEn = TraceObjectInterfaceUtils.getValue(object, snap,
 				TargetBreakpointSpec.ENABLED_ATTRIBUTE_NAME, Boolean.class, null);
 			if (locEn != null) {
-				return locEn;
+				return locEn && getSpecification().isEnabled(snap);
 			}
 			return getSpecification().isEnabled(snap);
 		}
@@ -303,8 +323,16 @@ public class DBTraceObjectBreakpointLocation
 	@Override
 	public String getComment() {
 		try (LockHold hold = object.getTrace().lockRead()) {
-			return TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(), KEY_COMMENT,
-				String.class, "");
+			String comment = TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(),
+				KEY_COMMENT, String.class, "");
+			if (!comment.isBlank()) {
+				return comment;
+			}
+			TraceObjectBreakpointSpec spec = getSpecification();
+			if (spec == null) {
+				return "";
+			}
+			return spec.getExpression();
 		}
 	}
 
@@ -358,6 +386,11 @@ public class DBTraceObjectBreakpointLocation
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			object.removeTree(computeSpan());
 		}
+	}
+
+	@Override
+	public boolean isValid(long snap) {
+		return object.getCanonicalParent(snap) != null;
 	}
 
 	@Override

@@ -18,6 +18,7 @@ package ghidra.program.database.data;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
@@ -53,10 +54,9 @@ abstract class EnumDBAdapter {
 	 * @throws IOException if there is trouble accessing the database.
 	 * @throws CancelledException if task cancelled
 	 */
-	static EnumDBAdapter getAdapter(DBHandle handle, int openMode, String tablePrefix,
-			TaskMonitor monitor)
-			throws VersionException, IOException, CancelledException {
-		if (openMode == DBConstants.CREATE) {
+	static EnumDBAdapter getAdapter(DBHandle handle, OpenMode openMode, String tablePrefix,
+			TaskMonitor monitor) throws VersionException, IOException, CancelledException {
+		if (openMode == OpenMode.CREATE) {
 			return new EnumDBAdapterV1(handle, tablePrefix, true);
 		}
 		try {
@@ -64,7 +64,7 @@ abstract class EnumDBAdapter {
 		}
 		catch (VersionException e) {
 			EnumDBAdapter adapter = findReadOnlyAdapter(handle);
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = upgrade(handle, adapter, tablePrefix, monitor);
 			}
 			return adapter;
@@ -103,8 +103,7 @@ abstract class EnumDBAdapter {
 	 * @throws CancelledException if task cancelled
 	 */
 	private static EnumDBAdapter upgrade(DBHandle handle, EnumDBAdapter oldAdapter,
-			String tablePrefix,
-			TaskMonitor monitor)
+			String tablePrefix, TaskMonitor monitor)
 			throws VersionException, IOException, CancelledException {
 
 		DBHandle tmpHandle = new DBHandle();
@@ -215,5 +214,11 @@ abstract class EnumDBAdapter {
 	 */
 	abstract DBRecord getRecordWithIDs(UniversalID sourceID, UniversalID datatypeID)
 			throws IOException;
+
+	/**
+	 * Get the number of enum datatype records
+	 * @return total number of composite records
+	 */
+	public abstract int getRecordCount();
 
 }

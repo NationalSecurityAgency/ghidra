@@ -17,7 +17,6 @@ package ghidra.app.services;
 
 import java.util.Set;
 
-import docking.ComponentProviderActivationListener;
 import ghidra.app.plugin.core.functioncompare.FunctionComparisonPlugin;
 import ghidra.app.plugin.core.functioncompare.FunctionComparisonProvider;
 import ghidra.framework.plugintool.ServiceInfo;
@@ -65,6 +64,19 @@ public interface FunctionComparisonService {
 	public FunctionComparisonProvider compareFunctions(Set<Function> functions);
 
 	/**
+	 * Creates a comparison between two sets of functions, where all the functions in source list can 
+	 * be compared against all functions in the destination list. 
+	 * <p>
+	 * Note that this method will always create a new provider.
+	 * 
+	 * @param sourceFunctions
+	 * @param destinationFunctions
+	 * @return the new comparison provider
+	 */
+	public FunctionComparisonProvider compareFunctions(Set<Function> sourceFunctions,
+			Set<Function> destinationFunctions);
+
+	/**
 	 * Creates a comparison between two functions, where the source function
 	 * will be shown on the left side of the comparison dialog and the target 
 	 * on the right. 
@@ -91,7 +103,7 @@ public interface FunctionComparisonService {
 	 * @param provider the provider to add the comparisons to
 	 */
 	public void compareFunctions(Set<Function> functions,
-		FunctionComparisonProvider provider);
+			FunctionComparisonProvider provider);
 
 	/**
 	 * Creates a comparison between two functions and adds it to a given
@@ -106,7 +118,7 @@ public interface FunctionComparisonService {
 	 * @param provider the provider to add the comparison to
 	 */
 	public void compareFunctions(Function source, Function target,
-		FunctionComparisonProvider provider);
+			FunctionComparisonProvider provider);
 
 	/**
 	 * Removes a given function from all comparisons across all comparison 
@@ -124,20 +136,4 @@ public interface FunctionComparisonService {
 	 * @param provider the comparison provider to remove functions from
 	 */
 	public void removeFunction(Function function, FunctionComparisonProvider provider);
-
-	/**
-	 * Adds the given listener to the list of subscribers who wish to be 
-	 * notified of provider activation events (eg: provider open/close)
-	 * 
-	 * @param listener the listener to be added
-	 */
-	public void addFunctionComparisonProviderListener(ComponentProviderActivationListener listener);
-
-	/**
-	 * Removes a listener from the list of provider activation event subscribers
-	 * 
-	 * @param listener the listener to remove
-	 */
-	public void removeFunctionComparisonProviderListener(
-		ComponentProviderActivationListener listener);
 }

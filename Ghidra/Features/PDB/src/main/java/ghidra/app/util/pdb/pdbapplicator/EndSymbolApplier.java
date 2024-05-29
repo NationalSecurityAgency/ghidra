@@ -17,60 +17,45 @@ package ghidra.app.util.pdb.pdbapplicator;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.MsSymbolIterator;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
-import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.*;
+import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
+import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.EndMsSymbol;
 import ghidra.util.exception.AssertException;
+import ghidra.util.exception.CancelledException;
 
 /**
  * Applier for {@link EndMsSymbol} symbols.
  */
-public class EndSymbolApplier extends MsSymbolApplier {
+public class EndSymbolApplier extends MsSymbolApplier
+		implements BlockNestingSymbolApplier, NestableSymbolApplier {
+
+	private EndMsSymbol symbol;
 
 	/**
 	 * Constructor
 	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
-	 * @param iter the Iterator containing the symbol sequence being processed
+	 * @param symbol the symbol for this applier
 	 */
-	public EndSymbolApplier(DefaultPdbApplicator applicator, MsSymbolIterator iter) {
-		super(applicator, iter);
-		AbstractMsSymbol abstractSymbol = iter.next();
-		if (!(abstractSymbol instanceof EndMsSymbol ||
-			abstractSymbol instanceof ProcedureIdEndMsSymbol)) {
+	public EndSymbolApplier(DefaultPdbApplicator applicator, EndMsSymbol symbol) {
+		super(applicator);
+		this.symbol = symbol;
+	}
+
+	@Override
+	public void applyTo(NestingSymbolApplier applyToApplier, MsSymbolIterator iter)
+			throws PdbException, CancelledException {
+		getValidatedSymbol(iter, true);
+		if (applyToApplier instanceof AbstractBlockContextApplier applier) {
+			applier.endBlock();
+		}
+	}
+
+	private EndMsSymbol getValidatedSymbol(MsSymbolIterator iter, boolean iterate) {
+		AbstractMsSymbol abstractSymbol = iterate ? iter.next() : iter.peek();
+		if (!(abstractSymbol instanceof EndMsSymbol endSymbol)) {
 			throw new AssertException(
 				"Invalid symbol type: " + abstractSymbol.getClass().getSimpleName());
 		}
+		return endSymbol;
 	}
 
-	@Override
-	void apply() throws PdbException {
-		pdbLogAndInfoMessage(this,
-			String.format("Cannot apply %s directly to program (stream:0X%04X, offset:0X%08X)",
-				this.getClass().getSimpleName(), iter.getStreamNumber(), iter.getCurrentOffset()));
-	}
-
-	@Override
-	void applyTo(MsSymbolApplier applyToApplier) {
-		if (!(applyToApplier instanceof FunctionSymbolApplier)) {
-			return;
-		}
-//		FunctionSymbolApplier functionSymbolApplier = (FunctionSymbolApplier) applyToApplier;
-//		functionSymbolApplier.endBlock();
-	}
-
-	@Override
-	void manageBlockNesting(MsSymbolApplier applierParam) {
-		if (applierParam instanceof FunctionSymbolApplier) {
-			FunctionSymbolApplier functionSymbolApplier = (FunctionSymbolApplier) applierParam;
-			functionSymbolApplier.endBlock();
-		}
-		else if (applierParam instanceof SeparatedCodeSymbolApplier) {
-			SeparatedCodeSymbolApplier separatedCodeSymbolApplier =
-				(SeparatedCodeSymbolApplier) applierParam;
-			separatedCodeSymbolApplier.endBlock();
-		}
-		else if (applierParam instanceof ManagedProcedureSymbolApplier) {
-			ManagedProcedureSymbolApplier procedureSymbolApplier =
-				(ManagedProcedureSymbolApplier) applierParam;
-			procedureSymbolApplier.endBlock();
-		}
-	}
 }

@@ -153,8 +153,8 @@ public class UiDefaultsMapper {
 	 * the user changeable values for affecting the Java LookAndFeel colors, fonts, and icons.
 	 * <p>
 	 * The keys in the returned map have been normalized and all start with 'laf.'
-	 * 
-	 * 
+	 *
+	 *
 	 * @return a map of changeable values that affect java LookAndFeel values
 	 */
 	public GThemeValueMap getNormalizedJavaDefaults() {
@@ -184,7 +184,7 @@ public class UiDefaultsMapper {
 	 * Returns a mapping of normalized LaF Ids so that when fonts and icons get changed using the
 	 * normalized ids that are presented to the user, we know which LaF ids need to be updated in
 	 * the UiDefaults so that the LookAndFeel will pick up and use the changes.
-	 * 
+	 *
 	 * @return a mapping of normalized LaF ids to original LaF ids.
 	 */
 	public Map<String, String> getNormalizedIdToLafIdMap() {
@@ -281,7 +281,7 @@ public class UiDefaultsMapper {
 
 	/**
 	 * This allows clients to hard-code a chosen color for a group
-	 * 
+	 *
 	 * @param group the system color id to assign the given color
 	 * @param color the color to be assigned to the system color id
 	 */
@@ -291,7 +291,7 @@ public class UiDefaultsMapper {
 
 	/**
 	 * This allows clients to hard-code a chosen font for a group
-	 * 
+	 *
 	 * @param group the system font id to assign the given font
 	 * @param font the font to be assigned to the system font id
 	 */
@@ -693,7 +693,7 @@ public class UiDefaultsMapper {
 	 * Groups allow us to use the same group id for many components that by default have the same
 	 * value (Color or Font).  This grouper allows us to specify the precedence to use when
 	 * searching for the best group.
-	 * 
+	 *
 	 * @param <T> The theme value type (Color or Font)
 	 */
 	private abstract class ValueGrouper<T> {

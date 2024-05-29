@@ -17,10 +17,9 @@ from concurrent.futures import Future, Executor
 from contextlib import contextmanager
 import re
 
+import gdb
 from ghidratrace import sch
 from ghidratrace.client import MethodRegistry, ParamDesc, Address, AddressRange
-
-import gdb
 
 from . import commands, hooks, util
 
@@ -28,17 +27,17 @@ from . import commands, hooks, util
 @contextmanager
 def no_pagination():
     before = gdb.parameter('pagination')
-    gdb.set_parameter('pagination', False)
+    util.set_bool_param('pagination', False)
     yield
-    gdb.set_parameter('pagination', before)
+    util.set_bool_param('pagination', before)
 
 
 @contextmanager
 def no_confirm():
     before = gdb.parameter('confirm')
-    gdb.set_parameter('confirm', False)
+    util.set_bool_param('confirm', False)
     yield
-    gdb.set_parameter('confirm', before)
+    util.set_bool_param('confirm', before)
 
 
 class GdbExecutor(Executor):
@@ -75,9 +74,10 @@ THREADS_PATTERN = extre(INFERIOR_PATTERN, '\.Threads')
 THREAD_PATTERN = extre(THREADS_PATTERN, '\[(?P<tnum>\\d*)\]')
 STACK_PATTERN = extre(THREAD_PATTERN, '\.Stack')
 FRAME_PATTERN = extre(STACK_PATTERN, '\[(?P<level>\\d*)\]')
-REGS_PATTERN = extre(FRAME_PATTERN, '.Registers')
+REGS_PATTERN = extre(FRAME_PATTERN, '\.Registers')
 MEMORY_PATTERN = extre(INFERIOR_PATTERN, '\.Memory')
 MODULES_PATTERN = extre(INFERIOR_PATTERN, '\.Modules')
+MODULE_PATTERN = extre(MODULES_PATTERN, '\[(?P<modname>.*)\]')
 
 
 def find_availpid_by_pattern(pattern, object, err_msg):
@@ -132,6 +132,17 @@ def find_inf_by_modules_obj(object):
     return find_inf_by_pattern(object, MODULES_PATTERN, "a ModuleContainer")
 
 
+def find_inf_by_mod_obj(object):
+    return find_inf_by_pattern(object, MODULE_PATTERN, "a Module")
+
+
+def find_module_name_by_mod_obj(object):
+    mat = MODULE_PATTERN.fullmatch(object.path)
+    if mat is None:
+        raise TypeError(f"{object} is not a Module")
+    return mat['modname']
+
+
 def find_thread_by_num(inf, tnum):
     for t in inf.threads():
         if t.num == tnum:
@@ -163,7 +174,7 @@ def find_frame_by_level(thread, level):
     f = gdb.selected_frame()
 
     # Navigate up or down, because I can't just get by level
-    down = level - f.level()
+    down = level - util.get_level(f)
     while down > 0:
         f = f.older()
         if f is None:
@@ -176,7 +187,6 @@ def find_frame_by_level(thread, level):
             raise KeyError(
                 f"Inferiors[{thread.inferior.num}].Threads[{thread.num}].Stack[{level}] does not exist")
         down += 1
-    assert f.level() == level
     return f
 
 
@@ -203,7 +213,7 @@ def find_frame_by_regs_obj(object):
 
 # Because there's no method to get a register by name....
 def find_reg_by_name(f, name):
-    for reg in f.architecture().registers():
+    for reg in util.get_register_descs(f.architecture()):
         # TODO: gdb appears to be case sensitive, but until we encounter a
         # situation where case matters, we'll be insensitive
         if reg.name.lower() == name.lower():
@@ -257,7 +267,7 @@ def find_bpt_loc_by_obj(object):
 def switch_inferior(inferior):
     if gdb.selected_inferior().num == inferior.num:
         return
-    gdb.execute("inferior {}".format(inferior.num))
+    gdb.execute(f'inferior {inferior.num}')
 
 
 @REGISTRY.method
@@ -266,14 +276,14 @@ def execute(cmd: str, to_string: bool=False):
     return gdb.execute(cmd, to_string=to_string)
 
 
-@REGISTRY.method(action='refresh')
+@REGISTRY.method(action='refresh', display='Refresh Available')
 def refresh_available(node: sch.Schema('AvailableContainer')):
     """List processes on gdb's host system."""
     with commands.open_tracked_tx('Refresh Available'):
         gdb.execute('ghidra trace put-available')
 
 
-@REGISTRY.method(action='refresh')
+@REGISTRY.method(action='refresh', display='Refresh Breakpoints')
 def refresh_breakpoints(node: sch.Schema('BreakpointContainer')):
     """
     Refresh the list of breakpoints (including locations for the current
@@ -283,14 +293,14 @@ def refresh_breakpoints(node: sch.Schema('BreakpointContainer')):
         gdb.execute('ghidra trace put-breakpoints')
 
 
-@REGISTRY.method(action='refresh')
+@REGISTRY.method(action='refresh', display='Refresh Inferiors')
 def refresh_inferiors(node: sch.Schema('InferiorContainer')):
     """Refresh the list of inferiors."""
     with commands.open_tracked_tx('Refresh Inferiors'):
         gdb.execute('ghidra trace put-inferiors')
 
 
-@REGISTRY.method(action='refresh')
+@REGISTRY.method(action='refresh', display='Refresh Breakpoint Locations')
 def refresh_inf_breakpoints(node: sch.Schema('BreakpointLocationContainer')):
     """
     Refresh the breakpoint locations for the inferior.
@@ -303,7 +313,7 @@ def refresh_inf_breakpoints(node: sch.Schema('BreakpointLocationContainer')):
         gdb.execute('ghidra trace put-breakpoints')
 
 
-@REGISTRY.method(action='refresh')
+@REGISTRY.method(action='refresh', display='Refresh Environment')
 def refresh_environment(node: sch.Schema('Environment')):
     """Refresh the environment descriptors (arch, os, endian)."""
     switch_inferior(find_inf_by_env_obj(node))
@@ -311,7 +321,7 @@ def refresh_environment(node: sch.Schema('Environment')):
         gdb.execute('ghidra trace put-environment')
 
 
-@REGISTRY.method(action='refresh')
+@REGISTRY.method(action='refresh', display='Refresh Threads')
 def refresh_threads(node: sch.Schema('ThreadContainer')):
     """Refresh the list of threads in the inferior."""
     switch_inferior(find_inf_by_threads_obj(node))
@@ -319,7 +329,7 @@ def refresh_threads(node: sch.Schema('ThreadContainer')):
         gdb.execute('ghidra trace put-threads')
 
 
-@REGISTRY.method(action='refresh')
+@REGISTRY.method(action='refresh', display='Refresh Stack')
 def refresh_stack(node: sch.Schema('Stack')):
     """Refresh the backtrace for the thread."""
     find_thread_by_stack_obj(node).switch()
@@ -327,7 +337,7 @@ def refresh_stack(node: sch.Schema('Stack')):
         gdb.execute('ghidra trace put-frames')
 
 
-@REGISTRY.method(action='refresh')
+@REGISTRY.method(action='refresh', display='Refresh Registers')
 def refresh_registers(node: sch.Schema('RegisterValueContainer')):
     """Refresh the register values for the frame."""
     find_frame_by_regs_obj(node).select()
@@ -336,7 +346,7 @@ def refresh_registers(node: sch.Schema('RegisterValueContainer')):
         gdb.execute('ghidra trace putreg')
 
 
-@REGISTRY.method(action='refresh')
+@REGISTRY.method(action='refresh', display='Refresh Memory')
 def refresh_mappings(node: sch.Schema('Memory')):
     """Refresh the list of memory regions for the inferior."""
     switch_inferior(find_inf_by_mem_obj(node))
@@ -344,16 +354,36 @@ def refresh_mappings(node: sch.Schema('Memory')):
         gdb.execute('ghidra trace put-regions')
 
 
-@REGISTRY.method(action='refresh')
+@REGISTRY.method(action='refresh', display="Refresh Modules")
 def refresh_modules(node: sch.Schema('ModuleContainer')):
     """
-    Refresh the modules and sections list for the inferior.
-
-    This will refresh the sections for all modules, not just the selected one.
+    Refresh the modules list for the inferior.
     """
     switch_inferior(find_inf_by_modules_obj(node))
     with commands.open_tracked_tx('Refresh Modules'):
         gdb.execute('ghidra trace put-modules')
+
+
+# node is Module so this appears in Modules panel
+@REGISTRY.method(display='Refresh all Modules and all Sections')
+def load_all_sections(node: sch.Schema('Module')):
+    """
+    Load/refresh all modules and all sections.
+    """
+    switch_inferior(find_inf_by_mod_obj(node))
+    with commands.open_tracked_tx('Refresh all Modules and all Sections'):
+        gdb.execute('ghidra trace put-sections -all-objects')
+
+
+@REGISTRY.method(action='refresh', display="Refresh Module and Sections")
+def refresh_sections(node: sch.Schema('Module')):
+    """
+    Load/refresh the module and its sections.
+    """
+    switch_inferior(find_inf_by_mod_obj(node))
+    with commands.open_tracked_tx('Refresh Module and Sections'):
+        modname = find_module_name_by_mod_obj(node)
+        gdb.execute(f'ghidra trace put-sections {modname}')
 
 
 @REGISTRY.method(action='activate')
@@ -374,7 +404,7 @@ def activate_frame(frame: sch.Schema('StackFrame')):
     find_frame_by_obj(frame).select()
 
 
-@REGISTRY.method
+@REGISTRY.method(display='Add Inferior')
 def add_inferior(container: sch.Schema('InferiorContainer')):
     """Add a new inferior."""
     gdb.execute('add-inferior')
@@ -388,36 +418,36 @@ def delete_inferior(inferior: sch.Schema('Inferior')):
 
 
 # TODO: Separate method for each of core, exec, remote, etc...?
-@REGISTRY.method
+@REGISTRY.method(display='Connect Target')
 def connect(inferior: sch.Schema('Inferior'), spec: str):
     """Connect to a target machine or process."""
     switch_inferior(find_inf_by_obj(inferior))
     gdb.execute(f'target {spec}')
 
 
-@REGISTRY.method(action='attach')
-def attach_obj(inferior: sch.Schema('Inferior'), target: sch.Schema('Attachable')):
+@REGISTRY.method(action='attach', display='Attach')
+def attach_obj(target: sch.Schema('Attachable')):
     """Attach the inferior to the given target."""
-    switch_inferior(find_inf_by_obj(inferior))
+    #switch_inferior(find_inf_by_obj(inferior))
     pid = find_availpid_by_obj(target)
     gdb.execute(f'attach {pid}')
 
 
-@REGISTRY.method(action='attach')
+@REGISTRY.method(action='attach', display='Attach by PID')
 def attach_pid(inferior: sch.Schema('Inferior'), pid: int):
     """Attach the inferior to the given target."""
     switch_inferior(find_inf_by_obj(inferior))
     gdb.execute(f'attach {pid}')
 
 
-@REGISTRY.method
+@REGISTRY.method(display='Detach')
 def detach(inferior: sch.Schema('Inferior')):
     """Detach the inferior's target."""
     switch_inferior(find_inf_by_obj(inferior))
     gdb.execute('detach')
 
 
-@REGISTRY.method(action='launch')
+@REGISTRY.method(action='launch', display='Launch at main')
 def launch_main(inferior: sch.Schema('Inferior'),
                 file: ParamDesc(str, display='File'),
                 args: ParamDesc(str, display='Arguments')=''):
@@ -435,7 +465,8 @@ def launch_main(inferior: sch.Schema('Inferior'),
     ''')
 
 
-@REGISTRY.method(action='launch', condition=util.GDB_VERSION.major >= 9)
+@REGISTRY.method(action='launch', display='Launch at Loader',
+                 condition=util.GDB_VERSION.major >= 9)
 def launch_loader(inferior: sch.Schema('Inferior'),
                   file: ParamDesc(str, display='File'),
                   args: ParamDesc(str, display='Arguments')=''):
@@ -451,7 +482,7 @@ def launch_loader(inferior: sch.Schema('Inferior'),
     ''')
 
 
-@REGISTRY.method(action='launch')
+@REGISTRY.method(action='launch', display='Launch and Run')
 def launch_run(inferior: sch.Schema('Inferior'),
                file: ParamDesc(str, display='File'),
                args: ParamDesc(str, display='Arguments')=''):
@@ -514,7 +545,7 @@ def step_out(thread: sch.Schema('Thread')):
     gdb.execute('finish')
 
 
-@REGISTRY.method(action='step_ext', name='Advance')
+@REGISTRY.method(action='step_ext', display='Advance')
 def step_advance(thread: sch.Schema('Thread'), address: Address):
     """Continue execution up to the given address (advance)."""
     t = find_thread_by_obj(thread)
@@ -523,7 +554,7 @@ def step_advance(thread: sch.Schema('Thread'), address: Address):
     gdb.execute(f'advance *0x{offset:x}')
 
 
-@REGISTRY.method(action='step_ext', name='Return')
+@REGISTRY.method(action='step_ext', display='Return')
 def step_return(thread: sch.Schema('Thread'), value: int=None):
     """Skip the remainder of the current function (return)."""
     find_thread_by_obj(thread).switch()
@@ -611,8 +642,8 @@ def break_access_expression(expression: str):
     gdb.execute(f'awatch {expression}')
 
 
-@REGISTRY.method(action='break_ext')
-def break_event(spec: str):
+@REGISTRY.method(action='break_ext', display='Catch Event')
+def break_event(inferior: sch.Schema('Inferior'), spec: str):
     """Set a catchpoint (catch)."""
     gdb.execute(f'catch {spec}')
 
@@ -653,7 +684,12 @@ def read_mem(inferior: sch.Schema('Inferior'), range: AddressRange):
     offset_start = inferior.trace.memory_mapper.map_back(
         inf, Address(range.space, range.min))
     with commands.open_tracked_tx('Read Memory'):
-        gdb.execute(f'ghidra trace putmem 0x{offset_start:x} {range.length()}')
+        try:
+            gdb.execute(
+                f'ghidra trace putmem 0x{offset_start:x} {range.length()}')
+        except:
+            gdb.execute(
+                f'ghidra trace putmem-state 0x{offset_start:x} {range.length()} error')
 
 
 @REGISTRY.method

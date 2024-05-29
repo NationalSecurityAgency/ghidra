@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.util.List;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.mem.*;
@@ -35,7 +36,7 @@ abstract class MemoryMapDBAdapter {
 	static final int NAME_COL = MemoryMapDBAdapterV3.V3_NAME_COL;
 	static final int COMMENTS_COL = MemoryMapDBAdapterV3.V3_COMMENTS_COL;
 	static final int SOURCE_COL = MemoryMapDBAdapterV3.V3_SOURCE_COL;
-	static final int PERMISSIONS_COL = MemoryMapDBAdapterV3.V3_PERMISSIONS_COL;
+	static final int FLAGS_COL = MemoryMapDBAdapterV3.V3_FLAGS_COL;
 	static final int START_ADDR_COL = MemoryMapDBAdapterV3.V3_START_ADDR_COL;
 	static final int LENGTH_COL = MemoryMapDBAdapterV3.V3_LENGTH_COL;
 	static final int SEGMENT_COL = MemoryMapDBAdapterV3.V3_SEGMENT_COL;
@@ -75,21 +76,21 @@ abstract class MemoryMapDBAdapter {
 	static final byte SUB_TYPE_UNINITIALIZED = MemoryMapDBAdapterV3.V3_SUB_TYPE_UNINITIALIZED;
 	static final byte SUB_TYPE_FILE_BYTES = MemoryMapDBAdapterV3.V3_SUB_TYPE_FILE_BYTES;
 
-	static MemoryMapDBAdapter getAdapter(DBHandle handle, int openMode, MemoryMapDB memMap,
+	static MemoryMapDBAdapter getAdapter(DBHandle handle, OpenMode openMode, MemoryMapDB memMap,
 			TaskMonitor monitor) throws VersionException, IOException {
 
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			return new MemoryMapDBAdapterV3(handle, memMap, Memory.GBYTE, true);
 		}
 		try {
 			return new MemoryMapDBAdapterV3(handle, memMap, Memory.GBYTE, false);
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			MemoryMapDBAdapter adapter = findReadOnlyAdapter(handle, memMap);
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = upgrade(handle, adapter, memMap, monitor);
 			}
 			return adapter;
@@ -130,7 +131,7 @@ abstract class MemoryMapDBAdapter {
 				if (block.isInitialized()) {
 					DBBuffer buf = block.getBuffer();
 					newBlock = newAdapter.createInitializedBlock(block.getName(), block.getStart(),
-						buf, block.getPermissions());
+						buf, block.getFlags());
 				}
 				else {
 					Address mappedAddress = null;
@@ -141,7 +142,7 @@ abstract class MemoryMapDBAdapter {
 					}
 					newBlock =
 						newAdapter.createBlock(block.getType(), block.getName(), block.getStart(),
-							block.getSize(), mappedAddress, false, block.getPermissions(), 0);
+							block.getSize(), mappedAddress, false, block.getFlags(), 0);
 				}
 				newBlock.setComment(block.getComment());
 				newBlock.setSourceName(block.getSourceName());
@@ -185,26 +186,26 @@ abstract class MemoryMapDBAdapter {
 	 * @param startAddr the start address of the block.
 	 * @param is data source or null for zero initialization
 	 * @param length size of block
-	 * @param permissions the new block permissions
+	 * @param flags the new block flags
 	 * @return new memory block
-	 * @throws IOException
+	 * @throws IOException if a database IO error occurs.
 	 * @throws AddressOverflowException if block length is too large for the underlying space
 	 */
 	abstract MemoryBlockDB createInitializedBlock(String name, Address startAddr, InputStream is,
-			long length, int permissions) throws AddressOverflowException, IOException;
+			long length, int flags) throws AddressOverflowException, IOException;
 
 	/**
 	 * Creates a new initialized block object
 	 * @param name the name of the block
 	 * @param startAddr the start address of the block.
 	 * @param buf the DBBuffer used to hold the bytes for the block.
-	 * @param permissions the new block permissions
+	 * @param flags the new block flags
 	 * @return new memory block
 	 * @throws IOException if a database IO error occurs.
 	 * @throws AddressOverflowException if block length is too large for the underlying space
 	 */
 	abstract MemoryBlockDB createInitializedBlock(String name, Address startAddr, DBBuffer buf,
-			int permissions) throws AddressOverflowException, IOException;
+			int flags) throws AddressOverflowException, IOException;
 
 	/**
 	 * Creates a new memory block that doesn't have associated bytes.
@@ -216,14 +217,14 @@ abstract class MemoryMapDBAdapter {
 	 * the block. (used for bit/byte-mapped blocks only)
 	 * @param initializeBytes if true, creates a database buffer for storing the 
 	 * bytes in the block (applies to initialized default blocks only)
-	 * @param permissions the new block permissions
+	 * @param flags the new block flags
 	 * @param encodedMappingScheme byte mapping scheme (used by byte-mapped blocks only)
 	 * @return new memory block
 	 * @throws IOException if a database IO error occurs.
 	 * @throws AddressOverflowException if block length is too large for the underlying space
 	 */
 	abstract MemoryBlockDB createBlock(MemoryBlockType blockType, String name, Address startAddr,
-			long length, Address mappedAddress, boolean initializeBytes, int permissions,
+			long length, Address mappedAddress, boolean initializeBytes, int flags,
 			int encodedMappingScheme) throws AddressOverflowException, IOException;
 
 	/**
@@ -289,13 +290,13 @@ abstract class MemoryMapDBAdapter {
 	 * @param name the name of the block
 	 * @param startAddress the start address of the block
 	 * @param length the length of the block
-	 * @param permissions the permissions for the block
+	 * @param flags the flags for the block
 	 * @param splitBlocks the list of subBlock objects that make up this block
 	 * @return the new MemoryBlock
 	 * @throws IOException if a database error occurs
 	 */
 	protected abstract MemoryBlockDB createBlock(String name, Address startAddress, long length,
-			int permissions, List<SubMemoryBlock> splitBlocks) throws IOException;
+			int flags, List<SubMemoryBlock> splitBlocks) throws IOException;
 
 	/**
 	 * Creates a new memory block using a FileBytes
@@ -304,12 +305,12 @@ abstract class MemoryMapDBAdapter {
 	 * @param length the length of the block
 	 * @param fileBytes the {@link FileBytes} object that provides the bytes for this block
 	 * @param offset the offset into the {@link FileBytes} object
-	 * @param permissions the permissions for the block
+	 * @param flags the flags for the block
 	 * @return the new MemoryBlock
 	 * @throws IOException if a database error occurs
 	 * @throws AddressOverflowException if block length is too large for the underlying space
 	 */
 	protected abstract MemoryBlockDB createFileBytesBlock(String name, Address startAddress,
-			long length, FileBytes fileBytes, long offset, int permissions)
+			long length, FileBytes fileBytes, long offset, int flags)
 			throws IOException, AddressOverflowException;
 }

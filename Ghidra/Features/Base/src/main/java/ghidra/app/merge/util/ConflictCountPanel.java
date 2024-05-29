@@ -27,8 +27,8 @@ import ghidra.util.Msg;
 /**
  * Panel that shows the current conflict number and the total number of
  * conflicts.
- * 
- * 
+ *
+ *
  */
 public class ConflictCountPanel extends JPanel {
 
@@ -87,7 +87,6 @@ public class ConflictCountPanel extends JPanel {
 		set.addAttribute(StyleConstants.Foreground, Messages.ERROR);
 
 		textAttrSet = new SimpleAttributeSet();
-		textAttrSet.addAttribute(StyleConstants.FontSize, 12);
 
 		countAttrSet = new SimpleAttributeSet();
 		countAttrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);

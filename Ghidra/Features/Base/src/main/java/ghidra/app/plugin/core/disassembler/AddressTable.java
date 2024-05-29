@@ -17,6 +17,8 @@ package ghidra.app.plugin.core.disassembler;
 
 import java.util.*;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.cmd.label.AddLabelCmd;
@@ -94,6 +96,29 @@ public class AddressTable {
 		this.addrSize = addrByteSize;
 		this.skipAmount = skipAmount;
 		this.shiftedAddr = shiftedAddr;
+	}
+	
+
+	/**
+	 * Create a new address table from any remaining table entries starting at startPos
+	 * 
+	 * @param startPos new start position in list of existing table entries
+	 * @return new address table if any elements left, null otherwise
+	 */
+	public AddressTable newRemainingAddressTable(int startPos) {
+		if (topIndexAddress != null) {
+			return null;
+		}
+		if (startPos <= 0 || startPos >= tableElements.length) {
+			return null;
+		}
+		int byteLength = getByteLength(0, startPos - 1, false);
+		Address newTop = topAddress.add(byteLength);
+
+		Address newElementArray[] =
+			ArrayUtils.subarray(tableElements, startPos, tableElements.length);
+
+		return new AddressTable(newTop, newElementArray, addrSize, skipAmount, shiftedAddr);
 	}
 
 	/**
@@ -1098,15 +1123,6 @@ public class AddressTable {
 
 				// See if the tested address is contained in memory
 				if (!memory.contains(testAddr)) {
-//					if (addrSize == 8) {  // don't try to look up in database, it polutes the key lookup in the DB
-//						break;
-//					}
-//
-//					// TODO: what is this doing?  doesn't seem like anything, always breaks!
-//					Symbol syms[] = program.getSymbolTable().getSymbols(testAddr);
-//					if (syms == null || syms.length == 0 || syms[0].getSource() == SourceType.DEFAULT) {
-//						break;
-//					}
 					break;
 				}
 
@@ -1207,7 +1223,7 @@ public class AddressTable {
 				Data data = definedData.next();
 				// no data found or past end of table
 				Address dataAddr = data.getMinAddress();
-				if (data == null || dataAddr.compareTo(endAddr) > 0) {
+				if (dataAddr.compareTo(endAddr) > 0) {
 					break;
 				}
 				// data found at start of pointer
@@ -1217,6 +1233,12 @@ public class AddressTable {
 						continue;
 					}
 				}
+				
+				// undefined data is OK, could be a pointer
+				if (data.getDataType() instanceof Undefined) {
+					continue;
+				}
+				
 				// data intersects, calculate valid entries and stop looking
 				if (pointerSet.intersects(dataAddr, data.getMaxAddress())) {
 					count = (int) (dataAddr.subtract(topAddr) / (addrSize + skipAmount));

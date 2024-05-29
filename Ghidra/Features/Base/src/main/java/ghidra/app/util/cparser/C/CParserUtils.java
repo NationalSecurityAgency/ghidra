@@ -24,6 +24,7 @@ import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.cparser.CPP.PreProcessor;
+import ghidra.framework.Application;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.framework.store.LockException;
 import ghidra.program.model.data.*;
@@ -535,7 +536,7 @@ public class CParserUtils {
 		String fName = dtMgr.getName();
 		
 		// make a path to tmpdir with name of data type manager
-		String path = System.getProperty("java.io.tmpdir") + File.pathSeparator + fName;
+		String path = new File(Application.getUserTempDirectory(), fName).getAbsolutePath();
 		// if file data type manager, use path to .gdt file
 		if (dtMgr instanceof FileDataTypeManager) {
 			path = ((FileDataTypeManager) dtMgr).getPath();

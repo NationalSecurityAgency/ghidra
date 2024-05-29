@@ -28,18 +28,23 @@ import java.util.stream.IntStream;
 
 import org.junit.Test;
 
+import db.Transaction;
 import generic.Unique;
 import ghidra.app.plugin.core.debug.utils.ManagedDomainObject;
 import ghidra.dbg.util.PathPredicates;
 import ghidra.debug.api.tracermi.TraceRmiAcceptor;
 import ghidra.debug.api.tracermi.TraceRmiConnection;
+import ghidra.framework.Application;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.model.address.*;
+import ghidra.program.model.data.Float10DataType;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.listing.TraceCodeSpace;
+import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.target.*;
@@ -176,9 +181,11 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 					%s
 					print('---Import---')
 					ghidra_trace_info()
+					print('---BeforeConnect---')
 					ghidra_trace_connect('%s')
 					print('---Connect---')
 					ghidra_trace_info()
+					print('---Create---')
 					ghidra_trace_create('notepad.exe')
 					print('---Start---')
 					ghidra_trace_info()
@@ -196,20 +203,19 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				Not connected to Ghidra""",
 			extractOutSection(out, "---Import---"));
 		assertEquals("""
-				Connected to Ghidra at %s
-
-				No trace""".formatted(refAddr.get()),
-			extractOutSection(out, "---Connect---").replaceAll("\r", "").substring(0, 48));
-		String expected = """
-				Connected to Ghidra at %s
-
-				Trace active""".formatted(refAddr.get());
-		String actual = extractOutSection(out, "---Start---").replaceAll("\r", "");
-		assertEquals(expected, actual.substring(0, expected.length()));
+				Connected to %s %s at %s
+				No trace""".formatted(
+			Application.getName(), Application.getApplicationVersion(), refAddr.get()),
+			extractOutSection(out, "---Connect---").replaceAll("\r", ""));
 		assertEquals("""
-				Connected to Ghidra at %s
-
-				No trace""".formatted(refAddr.get()),
+				Connected to %s %s at %s
+				Trace active""".formatted(
+			Application.getName(), Application.getApplicationVersion(), refAddr.get()),
+			extractOutSection(out, "---Start---").replaceAll("\r", ""));
+		assertEquals("""
+				Connected to %s %s at %s
+				No trace""".formatted(
+			Application.getName(), Application.getApplicationVersion(), refAddr.get()),
 			extractOutSection(out, "---Stop---").replaceAll("\r", ""));
 		assertEquals("""
 				Not connected to Ghidra""",
@@ -224,7 +230,7 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 					%s
 					print('---Import---')
 					ghidra_trace_info_lcsp()
-					print('---')
+					print('---Create---')
 					ghidra_trace_create('notepad.exe', start_trace=False)
 					print('---File---')
 					ghidra_trace_info_lcsp()
@@ -237,21 +243,16 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 					quit()
 					""".formatted(PREAMBLE));
 
-		assertTrue(
-			extractOutSection(out, "---File---").replaceAll("\r", "")
-					.contains(
-						"""
-								Selected Ghidra language: x86:LE:64:default
-
-								Selected Ghidra compiler: windows"""));
+		assertEquals("""
+				Selected Ghidra language: x86:LE:64:default
+				Selected Ghidra compiler: windows""",
+			extractOutSection(out, "---File---").replaceAll("\r", ""));
 		assertEquals("""
 				Selected Ghidra language: Toy:BE:64:default
-
 				Selected Ghidra compiler: default""",
 			extractOutSection(out, "---Language---").replaceAll("\r", ""));
 		assertEquals("""
 				Selected Ghidra language: Toy:BE:64:default
-
 				Selected Ghidra compiler: posStack""",
 			extractOutSection(out, "---Compiler---").replaceAll("\r", ""));
 	}
@@ -319,11 +320,11 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_create('notepad.exe')
 				ghidra_trace_txstart('Create snapshot')
 				ghidra_trace_new_snap('Scripted snapshot')
-				ghidra_trace_putmem('$pc 16')
+				pc = util.get_pc()
+				ghidra_trace_putmem(pc, 16)
 				ghidra_trace_txcommit()
 				print('---Dump---')
-				pc = util.get_debugger().reg.get_pc()
-				util.get_debugger().dd(pc, count=1)
+				util.dbg.dd(pc, count=1)
 				print('---')
 				ghidra_trace_kill()
 				quit()
@@ -348,11 +349,11 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_create('notepad.exe')
 				ghidra_trace_txstart('Create snapshot')
 				ghidra_trace_new_snap('Scripted snapshot')
-				ghidra_trace_putmem_state('$pc 16 error')
+				pc = util.get_pc()
+				ghidra_trace_putmem_state(pc, 16, 'error', pages=False)
 				ghidra_trace_txcommit()
 				print('---Start---')
-				pc = util.get_debugger().reg.get_pc()
-				util.get_debugger().dd(pc, count=1)
+				util.dbg.dd(pc, count=1)
 				print('---')
 				ghidra_trace_kill()
 				quit()
@@ -368,7 +369,7 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 			Entry<TraceAddressSnapRange, TraceMemoryState> entry =
 				tb.trace.getMemoryManager().getMostRecentStateEntry(snap, addr);
 			assertEquals(Map.entry(new ImmutableTraceAddressSnapRange(
-				new AddressRangeImpl(addr, 16), Lifespan.at(0)), TraceMemoryState.ERROR), entry);
+				rng(addr, 16), Lifespan.at(0)), TraceMemoryState.ERROR), entry);
 		}
 	}
 
@@ -380,12 +381,12 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_create('notepad.exe')
 				ghidra_trace_txstart('Create snapshot')
 				ghidra_trace_new_snap('Scripted snapshot')
-				ghidra_trace_putmem('$pc 16')
-				ghidra_trace_delmem('$pc 8')
+				pc = util.get_pc()
+				ghidra_trace_putmem(pc, 16)
+				ghidra_trace_delmem(pc, 8)
 				ghidra_trace_txcommit()
 				print('---Dump---')
-				pc = util.get_debugger().reg.get_pc()
-				util.get_debugger().dd(pc, count=1)
+				util.dbg.dd(pc, count=1)
 				print('---')
 				ghidra_trace_kill()
 				quit()
@@ -412,9 +413,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				%s
 				ghidra_trace_connect('%s')
 				ghidra_trace_create('notepad.exe')
-				regs = util.get_debugger().reg
-				regs._set_register("rax", int(0xdeadbeef))
-				regs._set_register("st0", int(1.5))
+				util.dbg.cmd('r rax=0xdeadbeef')
+				util.dbg.cmd('r st0=1.5')
 				ghidra_trace_txstart('Create snapshot')
 				ghidra_trace_new_snap('Scripted snapshot')
 				ghidra_trace_putreg()
@@ -438,20 +438,15 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 			RegisterValue rax = regs.getValue(snap, tb.reg("rax"));
 			assertEquals("deadbeef", rax.getUnsignedValue().toString(16));
 
-			// TODO:  Pybag currently doesn't suppport non-int assignments
-			/*
-			 * // RegisterValue ymm0 = regs.getValue(snap, tb.reg("ymm0")); // // LLDB
-			 * treats registers in arch's endian // assertEquals(
-			 * "1f1e1d1c1b1a191817161514131211100f0e0d0c0b0a09080706050403020100", //
-			 * ymm0.getUnsignedValue().toString(16));
-			 * 
-			 * // TraceData st0; // try (Transaction tx =
-			 * tb.trace.openTransaction("Float80 unit")) { // TraceCodeSpace code =
-			 * tb.trace.getCodeManager().getCodeSpace(t1f0, true); // st0 =
-			 * code.definedData() // .create(Lifespan.nowOn(0), tb.reg("st0"),
-			 * Float10DataType.dataType); // } // assertEquals("1.5",
-			 * st0.getDefaultValueRepresentation());
-			 */
+			TraceData st0;
+			try (Transaction tx = tb.trace.openTransaction("Float80 unit")) {
+				TraceCodeSpace code = tb.trace.getCodeManager().getCodeSpace(t1f0, true);
+				st0 = code.definedData()
+						.create(Lifespan.nowOn(0), tb.reg("st0"), Float10DataType.dataType);
+			}
+
+			// TODO: Pybag doesn't support non-integer registers
+			// assertEquals("1.5", st0.getDefaultValueRepresentation());
 		}
 	}
 
@@ -464,8 +459,7 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				%s
 				ghidra_trace_connect('%s')
 				ghidra_trace_create('notepad.exe')
-				regs = util.get_debugger().reg
-				regs._set_register("st0", int(1.5))
+				util.dbg.cmd('r rax=0xdeadbeef')
 				ghidra_trace_txstart('Create snapshot')
 				ghidra_trace_new_snap('Scripted snapshot')
 				ghidra_trace_putreg()
@@ -490,19 +484,6 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 
 			RegisterValue rax = regs.getValue(snap, tb.reg("rax"));
 			assertEquals("0", rax.getUnsignedValue().toString(16));
-
-			// TODO: As above, not currently supported by pybag
-			/*
-			 * // RegisterValue ymm0 = regs.getValue(snap, tb.reg("ymm0")); //
-			 * assertEquals("0", ymm0.getUnsignedValue().toString(16));
-			 * 
-			 * // TraceData st0; // try (Transaction tx =
-			 * tb.trace.openTransaction("Float80 unit")) { // TraceCodeSpace code =
-			 * tb.trace.getCodeManager().getCodeSpace(t1f0, true); // st0 =
-			 * code.definedData() // .create(Lifespan.nowOn(0), tb.reg("st0"),
-			 * Float10DataType.dataType); // } // assertEquals("0.0",
-			 * st0.getDefaultValueRepresentation());
-			 */
 		}
 	}
 
@@ -551,9 +532,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 			assertNotNull(object);
 			Lifespan life = Unique.assertOne(object.getLife().spans());
 			assertEquals(Lifespan.nowOn(0), life);
-			String expected = "Inserted object: lifespan=[0,+inf)";
-			String actual = extractOutSection(out, "---Lifespan---");
-			assertEquals(expected, actual.substring(0, expected.length()));
+			assertEquals("Inserted object: lifespan=[0,+inf)",
+				extractOutSection(out, "---Lifespan---"));
 		}
 	}
 
@@ -788,9 +768,7 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 			TraceObject object = tb.trace.getObjectManager()
 					.getObjectByCanonicalPath(TraceObjectKeyPath.parse("Test.Objects[1]"));
 			assertNotNull(object);
-			String expected = "1\tTest.Objects[1]";
-			String actual = extractOutSection(out, "---GetObject---");
-			assertEquals(expected, actual.substring(0, expected.length()));
+			assertEquals("1\tTest.Objects[1]", extractOutSection(out, "---GetObject---"));
 		}
 	}
 
@@ -834,8 +812,9 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
-			String expected = """
+			assertEquals("""
 					Parent          Key       Span     Value           Type
+					Test.Objects[1] vaddr     [0,+inf) ram:deadbeef    ADDRESS
 					Test.Objects[1] vbool     [0,+inf) True            BOOL
 					Test.Objects[1] vboolarr  [0,+inf) [True, False]   BOOL_ARR
 					Test.Objects[1] vbyte     [0,+inf) 1               BYTE
@@ -849,16 +828,8 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 					Test.Objects[1] vobj      [0,+inf) Test.Objects[1] OBJECT
 					Test.Objects[1] vshort    [0,+inf) 2               SHORT
 					Test.Objects[1] vshortarr [0,+inf) [1, 2, 3]       SHORT_ARR
-					Test.Objects[1] vstring   [0,+inf) 'Hello'         STRING
-					Test.Objects[1] vaddr     [0,+inf) ram:deadbeef    ADDRESS"""
-					.replaceAll(" ", "")
-					.replaceAll("\n", "");
-			String actual = extractOutSection(out, "---GetValues---").replaceAll(" ", "")
-					.replaceAll("\r", "")
-					.replaceAll("\n", "");
-			assertEquals(
-				expected,
-				actual.substring(0, expected.length()));
+					Test.Objects[1] vstring   [0,+inf) 'Hello'         STRING""",
+				extractOutSection(out, "---GetValues---").replaceAll("\r", ""));
 		}
 	}
 
@@ -874,19 +845,17 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_set_value('Test.Objects[1]', 'vaddr', '(void*)0xdeadbeef', 'ADDRESS')
 				ghidra_trace_txcommit()
 				print('---GetValues---')
-				ghidra_trace_get_values_rng('(void*)0xdeadbeef 10')
+				ghidra_trace_get_values_rng(0xdeadbeef, 10)
 				print('---')
 				ghidra_trace_kill()
 				quit()
 				""".formatted(PREAMBLE, addr));
 		try (ManagedDomainObject mdo = openDomainObject("/New Traces/pydbg/notepad.exe")) {
 			tb = new ToyDBTraceBuilder((Trace) mdo.get());
-			String expected = """
+			assertEquals("""
 					Parent          Key   Span     Value        Type
-
-					Test.Objects[1] vaddr [0,+inf) ram:deadbeef ADDRESS""";
-			String actual = extractOutSection(out, "---GetValues---").replaceAll("\r", "");
-			assertEquals(expected, actual.substring(0, expected.length()));
+					Test.Objects[1] vaddr [0,+inf) ram:deadbeef ADDRESS""",
+				extractOutSection(out, "---GetValues---").replaceAll("\r", ""));
 		}
 	}
 
@@ -919,9 +888,10 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_connect('%s')
 				ghidra_trace_create('notepad.exe')
 				ghidra_trace_txstart('Tx')
-				ghidra_trace_putmem('$pc 16')
+				pc = util.get_pc()
+				ghidra_trace_putmem(pc, 16)
 				print('---Disassemble---')
-				ghidra_trace_disassemble('$pc')
+				ghidra_trace_disassemble(pc)
 				print('---')
 				ghidra_trace_txcommit()
 				ghidra_trace_kill()
@@ -991,10 +961,9 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				%s
 				ghidra_trace_connect('%s')
 				ghidra_trace_create('notepad.exe')
-				dbg = util.get_debugger()
-				pc = dbg.reg.get_pc()
-				dbg.bp(expr=pc)
-				dbg.ba(expr=pc+4)
+				pc = util.get_pc()
+				util.dbg.bp(expr=pc)
+				util.dbg.ba(expr=pc+4)
 				ghidra_trace_txstart('Tx')
 				ghidra_trace_put_breakpoints()
 				ghidra_trace_txcommit()
@@ -1007,6 +976,7 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 					.getValuePaths(Lifespan.at(0),
 						PathPredicates.parse("Processes[].Breakpoints[]"))
 					.map(p -> p.getLastEntry())
+					.sorted(Comparator.comparing(TraceObjectValue::getEntryKey))
 					.toList();
 			assertEquals(2, procBreakLocVals.size());
 			AddressRange rangeMain =
@@ -1029,11 +999,10 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 				ghidra_trace_connect('%s')
 				ghidra_trace_create('notepad.exe')
 				ghidra_trace_txstart('Tx')
-				dbg = util.get_debugger()
-				pc = dbg.reg.get_pc()
-				dbg.ba(expr=pc, access=DbgEng.DEBUG_BREAK_EXECUTE)
-				dbg.ba(expr=pc+4, access=DbgEng.DEBUG_BREAK_READ)
-				dbg.ba(expr=pc+8, access=DbgEng.DEBUG_BREAK_WRITE)
+				pc = util.get_pc()
+				util.dbg.ba(expr=pc, access=DbgEng.DEBUG_BREAK_EXECUTE)
+				util.dbg.ba(expr=pc+4, access=DbgEng.DEBUG_BREAK_READ)
+				util.dbg.ba(expr=pc+8, access=DbgEng.DEBUG_BREAK_WRITE)
 				ghidra_trace_put_breakpoints()
 				ghidra_trace_txcommit()
 				ghidra_trace_kill()
@@ -1045,6 +1014,7 @@ public class DbgEngCommandsTest extends AbstractDbgEngTraceRmiTest {
 					.getValuePaths(Lifespan.at(0),
 						PathPredicates.parse("Processes[].Breakpoints[]"))
 					.map(p -> p.getLastEntry())
+					.sorted(Comparator.comparing(TraceObjectValue::getEntryKey))
 					.toList();
 			assertEquals(3, procBreakVals.size());
 			AddressRange rangeMain0 =

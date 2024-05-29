@@ -16,7 +16,8 @@
 package db;
 
 import java.awt.*;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 import javax.swing.*;
@@ -240,7 +241,7 @@ public class DbViewer extends JFrame {
 		return stats;
 	}
 
-	public static void main(String[] args) throws FileNotFoundException {
+	public static void main(String[] args) throws IOException {
 		ApplicationLayout layout = new GenericApplicationLayout("DB Viewer", "1.0");
 		DockingApplicationConfiguration configuration = new DockingApplicationConfiguration();
 		configuration.setShowSplashScreen(false);

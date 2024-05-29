@@ -18,6 +18,7 @@ from ghidratrace.client import Address, RegVal
 import gdb
 
 # NOTE: This map is derived from the ldefs using a script
+# i386 is hand-patched
 language_map = {
     'aarch64': ['AARCH64:BE:64:v8A', 'AARCH64:LE:64:AppleSilicon', 'AARCH64:LE:64:v8A'],
     'aarch64:ilp32': ['AARCH64:BE:32:ilp32', 'AARCH64:LE:32:ilp32', 'AARCH64:LE:64:AppleSilicon'],
@@ -48,6 +49,7 @@ language_map = {
     'avr:51': ['avr8:LE:16:atmega256'],
     'avr:6': ['avr8:LE:16:atmega256'],
     'hppa2.0w': ['pa-risc:BE:32:default'],
+    'i386': ['x86:LE:32:default'],
     'i386:intel': ['x86:LE:32:default'],
     'i386:x86-64': ['x86:LE:64:default'],
     'i386:x86-64:intel': ['x86:LE:64:default'],
@@ -115,7 +117,7 @@ def get_endian():
 
 def get_osabi():
     parm = gdb.parameter('osabi')
-    if not parm in ['auto', 'default']:
+    if not parm in ['', 'auto', 'default']:
         return parm
     # We have to hack around the fact the GDB won't give us the current OS ABI
     # via the API if it is "auto" or "default". Using "show", we can get it, but

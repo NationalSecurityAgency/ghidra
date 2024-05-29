@@ -23,7 +23,7 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.*;
 import ghidra.program.model.util.AddressSetPropertyMap;
-import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.Lock;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
@@ -99,7 +99,7 @@ public class AddressSetPropertyMapDB implements AddressSetPropertyMap {
 		lock.acquire();
 		try {
 			propertyMap.paintRange(startAddr, endAddr, FIELD);
-			program.setChanged(ChangeManager.DOCR_ADDRESS_SET_PROPERTY_MAP_CHANGED, null, mapName);
+			program.setChanged(ProgramEvent.ADDRESS_PROPERTY_MAP_CHANGED, null, mapName);
 		}
 		finally {
 			lock.release();
@@ -121,7 +121,7 @@ public class AddressSetPropertyMapDB implements AddressSetPropertyMap {
 				AddressRange range = iter.next();
 				add(range.getMinAddress(), range.getMaxAddress());
 			}
-			program.setChanged(ChangeManager.DOCR_ADDRESS_SET_PROPERTY_MAP_CHANGED, null, mapName);
+			program.setChanged(ProgramEvent.ADDRESS_PROPERTY_MAP_CHANGED, null, mapName);
 		}
 		finally {
 			lock.release();
@@ -138,7 +138,7 @@ public class AddressSetPropertyMapDB implements AddressSetPropertyMap {
 		try {
 			clear();
 			add(addressSet);
-			program.setChanged(ChangeManager.DOCR_ADDRESS_SET_PROPERTY_MAP_CHANGED, null, mapName);
+			program.setChanged(ProgramEvent.ADDRESS_PROPERTY_MAP_CHANGED, null, mapName);
 		}
 		finally {
 			lock.release();
@@ -154,7 +154,7 @@ public class AddressSetPropertyMapDB implements AddressSetPropertyMap {
 		lock.acquire();
 		try {
 			propertyMap.clearRange(startAddr, endAddr);
-			program.setChanged(ChangeManager.DOCR_ADDRESS_SET_PROPERTY_MAP_CHANGED, null, mapName);
+			program.setChanged(ProgramEvent.ADDRESS_PROPERTY_MAP_CHANGED, null, mapName);
 		}
 		finally {
 			lock.release();
@@ -175,7 +175,7 @@ public class AddressSetPropertyMapDB implements AddressSetPropertyMap {
 				AddressRange range = iter.next();
 				remove(range.getMinAddress(), range.getMaxAddress());
 			}
-			program.setChanged(ChangeManager.DOCR_ADDRESS_SET_PROPERTY_MAP_CHANGED, null, mapName);
+			program.setChanged(ProgramEvent.ADDRESS_PROPERTY_MAP_CHANGED, null, mapName);
 		}
 		finally {
 			lock.release();
@@ -240,7 +240,7 @@ public class AddressSetPropertyMapDB implements AddressSetPropertyMap {
 		lock.acquire();
 		try {
 			propertyMap.dispose();
-			program.setChanged(ChangeManager.DOCR_ADDRESS_SET_PROPERTY_MAP_CHANGED, null, mapName);
+			program.setChanged(ProgramEvent.ADDRESS_PROPERTY_MAP_CHANGED, null, mapName);
 		}
 		finally {
 			lock.release();

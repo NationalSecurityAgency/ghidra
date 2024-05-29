@@ -18,6 +18,7 @@ package ghidra.program.database.code;
 import java.io.IOException;
 
 import db.*;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.map.AddressKeyIterator;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
@@ -40,10 +41,10 @@ abstract class InstDBAdapter {
 	static final int PROTO_ID_COL = 0;
 	static final int FLAGS_COL = 1;
 
-	static InstDBAdapter getAdapter(DBHandle dbHandle, int openMode, AddressMap addrMap,
+	static InstDBAdapter getAdapter(DBHandle dbHandle, OpenMode openMode, AddressMap addrMap,
 			TaskMonitor monitor) throws VersionException, CancelledException, IOException {
 
-		if (openMode == DBConstants.CREATE) {
+		if (openMode == OpenMode.CREATE) {
 			return new InstDBAdapterV1(dbHandle, addrMap, true);
 		}
 
@@ -55,11 +56,11 @@ abstract class InstDBAdapter {
 			return adapter;
 		}
 		catch (VersionException e) {
-			if (!e.isUpgradable() || openMode == DBConstants.UPDATE) {
+			if (!e.isUpgradable() || openMode == OpenMode.UPDATE) {
 				throw e;
 			}
 			InstDBAdapter adapter = findReadOnlyAdapter(dbHandle, addrMap);
-			if (openMode == DBConstants.UPGRADE) {
+			if (openMode == OpenMode.UPGRADE) {
 				adapter = upgrade(dbHandle, addrMap, adapter, monitor);
 			}
 			return adapter;

@@ -218,8 +218,41 @@ public class TerminalTextFieldElement implements FieldElement {
 
 	@Override
 	public void paint(JComponent c, Graphics g, int x, int y) {
-		line.forEachRun(
-			(attrs, start, end) -> paintChars(c, g, x, y, attrs, start, end));
+		if (!(g instanceof Graphics2D g2)) {
+			line.forEachRun(
+				(attrs, start, end) -> paintChars(c, g, x, y, attrs, start, end));
+			return;
+		}
+		Object aaHint = c.getClientProperty(RenderingHints.KEY_TEXT_ANTIALIASING);
+		Object lcdHint = c.getClientProperty(RenderingHints.KEY_TEXT_LCD_CONTRAST);
+		Object aaOld =
+			aaHint == null ? null : g2.getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING);
+		Object lcdOld =
+			lcdHint == null ? null : g2.getRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST);
+		if (aaOld == aaHint) {
+			aaHint = null;
+		}
+		if (lcdOld == lcdHint) {
+			lcdHint = null;
+		}
+		try {
+			if (aaHint != null) {
+				g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, aaHint);
+			}
+			if (lcdHint != null) {
+				g2.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, lcdHint);
+			}
+			line.forEachRun(
+				(attrs, start, end) -> paintChars(c, g, x, y, attrs, start, end));
+		}
+		finally {
+			if (aaHint != null) {
+				g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, aaOld);
+			}
+			if (lcdHint != null) {
+				g2.setRenderingHint(RenderingHints.KEY_TEXT_LCD_CONTRAST, lcdOld);
+			}
+		}
 	}
 
 	@Override

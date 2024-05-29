@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.debug.disassemble;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 import docking.ActionContext;
 import docking.Tool;
@@ -27,21 +28,20 @@ import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingActionContext;
 import ghidra.app.services.DebuggerPlatformService;
 import ghidra.app.services.DebuggerTraceManagerService;
-import ghidra.debug.api.platform.DebuggerPlatformMapper;
 import ghidra.framework.plugintool.*;
-import ghidra.framework.plugintool.AutoService.Wiring;
-import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.program.util.ProgramContextImpl;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
 import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.guest.TracePlatform;
+import ghidra.trace.model.memory.*;
 import ghidra.trace.model.program.TraceProgramView;
-import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.thread.TraceThread;
+import ghidra.util.IntersectionAddressSetView;
+import ghidra.util.UnionAddressSetView;
 
 @PluginInfo(
 	shortDescription = "Disassemble trace bytes in the debugger",
@@ -60,21 +60,6 @@ import ghidra.trace.model.thread.TraceThread;
 	servicesProvided = {
 	})
 public class DebuggerDisassemblerPlugin extends Plugin implements PopupActionProvider {
-
-	protected static class Reqs {
-		final DebuggerPlatformMapper mapper;
-		final TraceThread thread;
-		final TraceObject object;
-		final TraceProgramView view;
-
-		public Reqs(DebuggerPlatformMapper mapper, TraceThread thread, TraceObject object,
-				TraceProgramView view) {
-			this.mapper = mapper;
-			this.thread = thread;
-			this.object = object;
-			this.view = view;
-		}
-	}
 
 	public static RegisterValue deriveAlternativeDefaultContext(Language language,
 			LanguageID alternative, Address address) {
@@ -100,19 +85,94 @@ public class DebuggerDisassemblerPlugin extends Plugin implements PopupActionPro
 		return result;
 	}
 
-	@AutoServiceConsumed
-	DebuggerTraceManagerService traceManager;
-	@AutoServiceConsumed
-	DebuggerPlatformService platformService;
-	@SuppressWarnings("unused")
-	private final Wiring autoServiceWiring;
+	/**
+	 * Determine whether the given address is known, or has ever been known in read-only memory, for
+	 * the given snapshot
+	 * 
+	 * <p>
+	 * This first examines the memory state. If the current state is {@link TraceMemoryState#KNOWN},
+	 * then it returns the snap for the entry. (Because scratch snaps are allowed, the returned snap
+	 * may be from an "earlier" snap in the viewport.) Then, it examines the most recent entry. If
+	 * one cannot be found, or the found entry's state is <em>not</em>
+	 * {@link TraceMemoryState#KNOWN}, it returns null. If the most recent (but not current) entry
+	 * is {@link TraceMemoryState#KNOWN}, then it checks whether or not the memory is writable. If
+	 * it's read-only, then the snap for that most-recent entry is returned. Otherwise, this check
+	 * assumes the memory could have changed since, and so it returns null.
+	 * 
+	 * @param start the address to check
+	 * @param trace the trace whose memory to examine
+	 * @param snap the lastest snapshot key, possibly a scratch snapshot, to consider
+	 * @return null to indicate the address failed the test, or the defining snapshot key if the
+	 *         address passed the test.
+	 */
+	public static Long isKnownRWOrEverKnownRO(Address start, Trace trace, long snap) {
+		TraceMemoryManager memoryManager = trace.getMemoryManager();
+		Entry<Long, TraceMemoryState> kent = memoryManager.getViewState(snap, start);
+		if (kent != null && kent.getValue() == TraceMemoryState.KNOWN) {
+			return kent.getKey();
+		}
+		Entry<TraceAddressSnapRange, TraceMemoryState> mrent =
+			memoryManager.getViewMostRecentStateEntry(snap, start);
+		if (mrent == null || mrent.getValue() != TraceMemoryState.KNOWN) {
+			// It has never been known up to this snap
+			return null;
+		}
+		TraceMemoryRegion region =
+			memoryManager.getRegionContaining(mrent.getKey().getY1(), start);
+		if (region == null || region.isWrite()) {
+			// It could have changed this snap, so unknown
+			return null;
+		}
+		return mrent.getKey().getY1();
+	}
+
+	/**
+	 * Compute a lazy address set for restricting auto-disassembly
+	 * 
+	 * <p>
+	 * The view contains the addresses in {@code known | (readOnly & everKnown)}, where {@code
+	 * known} is the set of addresses in the {@link TraceMemoryState#KNOWN} state, {@code readOnly}
+	 * is the set of addresses in a {@link TraceMemoryRegion} having
+	 * {@link TraceMemoryRegion#isWrite()} false, and {@code everKnown} is the set of addresses in
+	 * the {@link TraceMemoryState#KNOWN} state in any previous snapshot.
+	 * 
+	 * <p>
+	 * In plainer English, we want addresses that have freshly read bytes right now, or addresses in
+	 * read-only memory that have ever been read. Anything else is either the default 0s (never
+	 * read), or could have changed since last read, and so we will refrain from disassembling.
+	 * 
+	 * <p>
+	 * TODO: Is this composition of laziness upon laziness efficient enough? Can experiment with
+	 * ordering of address-set-view "expression" to optimize early termination.
+	 * 
+	 * @param start the intended starting address for disassembly
+	 * @param trace the trace whose memory to disassemble
+	 * @param snap the current snapshot key, possibly a scratch snapshot
+	 * @return the lazy address set
+	 */
+	public static AddressSetView computeAutoDisassembleAddresses(Address start, Trace trace,
+			long snap) {
+		Long ks = isKnownRWOrEverKnownRO(start, trace, snap);
+		if (ks == null) {
+			return null;
+		}
+		TraceMemoryManager memoryManager = trace.getMemoryManager();
+		AddressSetView readOnly =
+			memoryManager.getRegionsAddressSetWith(ks, r -> !r.isWrite());
+		AddressSetView everKnown = memoryManager.getAddressesWithState(Lifespan.since(ks),
+			s -> s == TraceMemoryState.KNOWN);
+		AddressSetView roEverKnown = new IntersectionAddressSetView(readOnly, everKnown);
+		AddressSetView known =
+			memoryManager.getAddressesWithState(ks, s -> s == TraceMemoryState.KNOWN);
+		AddressSetView disassemblable = new UnionAddressSetView(known, roEverKnown);
+		return disassemblable;
+	}
 
 	CurrentPlatformTraceDisassembleAction actionDisassemble;
 	CurrentPlatformTracePatchInstructionAction actionPatchInstruction;
 
 	public DebuggerDisassemblerPlugin(PluginTool tool) {
 		super(tool);
-		this.autoServiceWiring = AutoService.wireServicesProvidedAndConsumed(this);
 	}
 
 	@Override

@@ -95,6 +95,7 @@ public class GhidraTool extends PluginTool {
 		addManagePluginsAction();
 		addOptionsAction();
 		addHelpActions();
+		addNextPreviousProviderActions();
 	}
 
 	@Override

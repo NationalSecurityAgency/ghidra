@@ -81,9 +81,8 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		VTPlugin plugin = getPlugin(tool, VTPlugin.class);
 		controller = new VTControllerImpl(plugin);
 
-		session =
-			VTSessionDB.createVTSession(testName.getMethodName() + " - Test Match Set Manager",
-				sourceProgram, destinationProgram, this);
+		session = new VTSessionDB(testName.getMethodName() + " - Test Match Set Manager",
+			sourceProgram, destinationProgram, this);
 
 		runSwing(() -> controller.openVersionTrackingSession(session));
 
@@ -95,6 +94,20 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 //		Logger variableLogger = Logger.getLogger(VariableSymbolDB.class);
 //		Configurator.setLevel(variableLogger.getName(), org.apache.logging.log4j.Level.TRACE);
 
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		if (sourceProgram != null) {
+			sourceProgram.release(this);
+		}
+		if (destinationProgram != null) {
+			destinationProgram.release(this);
+		}
+		if (session != null) {
+			session.release(this);
+		}
+		env.dispose();
 	}
 
 	private StructureDataType getPersonStruct(Program program) {
@@ -114,74 +127,91 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 	private Program createSourceProgram() throws Exception {
 
 		ProgramBuilder builder = new ProgramBuilder("Wallace", ProgramBuilder._X86, this);
-		Program p = builder.getProgram();
+		try {
+			Program p = builder.getProgram();
 
-		builder.createClassNamespace("Gadget", null, SourceType.IMPORTED);
+			builder.createClassNamespace("Gadget", null, SourceType.IMPORTED);
 
-		StructureDataType struct = getPersonStruct(p);
-		Pointer ptr1 = PointerDataType.getPointer(struct, p.getDataTypeManager());
-		Pointer ptr2 = PointerDataType.getPointer(ptr1, p.getDataTypeManager());
+			StructureDataType struct = getPersonStruct(p);
+			Pointer ptr1 = PointerDataType.getPointer(struct, p.getDataTypeManager());
+			Pointer ptr2 = PointerDataType.getPointer(ptr1, p.getDataTypeManager());
 
-		Pointer charPtr = PointerDataType.getPointer(CharDataType.dataType, p.getDataTypeManager());
+			Pointer charPtr =
+				PointerDataType.getPointer(CharDataType.dataType, p.getDataTypeManager());
 
-		builder.createMemory(".text", "0x401000", 0x200);
+			builder.createMemory(".text", "0x401000", 0x200);
 
-		// undefined _stdcall addPerson(Person * * list, char * personName)
-		builder.createEmptyFunction("addPerson", null, CompilerSpec.CALLING_CONVENTION_stdcall,
-			false, "0x4011a0", 10, DataType.DEFAULT, new ParameterImpl("list", ptr2, p),
-			new ParameterImpl("personName", charPtr, p));
+			// undefined _stdcall addPerson(Person * * list, char * personName)
+			builder.createEmptyFunction("addPerson", null, CompilerSpec.CALLING_CONVENTION_stdcall,
+				false, "0x4011a0", 10, DataType.DEFAULT, new ParameterImpl("list", ptr2, p),
+				new ParameterImpl("personName", charPtr, p));
 
-		// undefined _thiscall Gadget::use(Gadget * this, Person * person)
-		builder.createEmptyFunction("use", "Gadget", CompilerSpec.CALLING_CONVENTION_thiscall,
-			false, "0x401040", 10, DataType.DEFAULT, new ParameterImpl("person", ptr1, p));
+			// undefined _thiscall Gadget::use(Gadget * this, Person * person)
+			builder.createEmptyFunction("use", "Gadget", CompilerSpec.CALLING_CONVENTION_thiscall,
+				false, "0x401040", 10, DataType.DEFAULT, new ParameterImpl("person", ptr1, p));
 
-		return p;
+			p.addConsumer(this);
+			return p;
+		}
+		finally {
+			builder.dispose();
+		}
 	}
 
 	private Program createDestinationProgram() throws Exception {
 
 		ProgramBuilder builder = new ProgramBuilder("WallaceVersion2", ProgramBuilder._X86, this);
-		Program p = builder.getProgram();
-
-		Pointer ptr1 = PointerDataType.getPointer(VoidDataType.dataType, p.getDataTypeManager());
-		Pointer ptr2 = PointerDataType.getPointer(ptr1, p.getDataTypeManager());
-
-		Pointer charPtr = PointerDataType.getPointer(CharDataType.dataType, p.getDataTypeManager());
-
-		builder.createMemory(".text", "0x401000", 0x200);
-
-		// undefined _stdcall FUN_004011a0(void * * param_1, char * param_2)
-		Function f1 = builder.createEmptyFunction((String) null, (String) null,
-			CompilerSpec.CALLING_CONVENTION_stdcall, "0x4011a0", 10, DataType.DEFAULT, ptr2,
-			charPtr);
-
-		// undefined _thiscall FUN_00401040(void * this, undefined4 param_1)
-		Function f2 = builder.createEmptyFunction((String) null, (String) null,
-			CompilerSpec.CALLING_CONVENTION_thiscall, "0x401040", 10, DataType.DEFAULT,
-			Undefined4DataType.dataType);
-
-		int txId = p.startTransaction("Set SourceType");
 		try {
-			f1.setSignatureSource(SourceType.DEFAULT);
-			f2.setSignatureSource(SourceType.ANALYSIS);
+			Program p = builder.getProgram();
+
+			Pointer ptr1 =
+				PointerDataType.getPointer(VoidDataType.dataType, p.getDataTypeManager());
+			Pointer ptr2 = PointerDataType.getPointer(ptr1, p.getDataTypeManager());
+
+			Pointer charPtr =
+				PointerDataType.getPointer(CharDataType.dataType, p.getDataTypeManager());
+
+			builder.createMemory(".text", "0x401000", 0x200);
+
+			// undefined _stdcall FUN_004011a0(void * * param_1, char * param_2)
+			Function f1 = builder.createEmptyFunction((String) null, (String) null,
+				CompilerSpec.CALLING_CONVENTION_stdcall, "0x4011a0", 10, DataType.DEFAULT, ptr2,
+				charPtr);
+
+			// undefined _thiscall FUN_00401040(void * this, undefined4 param_1)
+			Function f2 = builder.createEmptyFunction((String) null, (String) null,
+				CompilerSpec.CALLING_CONVENTION_thiscall, "0x401040", 10, DataType.DEFAULT,
+				Undefined4DataType.dataType);
+
+			p.withTransaction("Set SourceType", () -> {
+				f1.setSignatureSource(SourceType.DEFAULT);
+				f2.setSignatureSource(SourceType.ANALYSIS);
+			});
+
+			p.addConsumer(this);
+			return p;
 		}
 		finally {
-			p.endTransaction(txId, true);
+			builder.dispose();
 		}
-
-		return p;
 	}
 
 	private Program createToyDestinationProgram() throws Exception {
 
 		ProgramBuilder builder = new ProgramBuilder("helloProgram", ProgramBuilder._TOY, this);
-		Program p = builder.getProgram();
+		try {
+			Program p = builder.getProgram();
 
-		builder.createMemory(".text", "0x10938", 0x10);
+			builder.createMemory(".text", "0x10938", 0x10);
 
-		builder.createEmptyFunction(null, "0x10938", 0x10, DataType.DEFAULT);
+			builder.createEmptyFunction(null, "0x10938", 0x10, DataType.DEFAULT);
 
-		return p;
+			p.addConsumer(this);
+			return p;
+		}
+		finally {
+			builder.dispose();
+		}
 	}
 
 	private void setAllOptionsToDoNothing() {
@@ -206,20 +236,6 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 		applyOptions.setEnum(VTOptionDefines.PARAMETER_COMMENTS, CommentChoices.EXCLUDE);
 //		applyOptions.putEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE, ReplaceChoices.EXCLUDE);
 		applyOptions.setEnum(VTOptionDefines.LABELS, LabelChoices.EXCLUDE);
-	}
-
-	@After
-	public void tearDown() throws Exception {
-		if (sourceProgram != null) {
-			sourceProgram.release(this);
-		}
-		if (destinationProgram != null) {
-			destinationProgram.release(this);
-		}
-//		env.release(sourceProgram);
-//		env.release(destinationProgram);
-		env.dispose();
-
 	}
 
 	@Test
@@ -390,8 +406,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 	}
 
 	@Test
-	public void testApplyMatch_ReplaceSignature_CustomSourceAndDest()
-			throws Exception {
+	public void testApplyMatch_ReplaceSignature_CustomSourceAndDest() throws Exception {
 
 		useMatch("0x00401040", "0x00401040");
 
@@ -442,8 +457,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 	}
 
 	@Test
-	public void testApplyMatch_ReplaceSignature_NormalSourceCustomDest()
-			throws Exception {
+	public void testApplyMatch_ReplaceSignature_NormalSourceCustomDest() throws Exception {
 
 		useMatch("0x00401040", "0x00401040");
 
@@ -666,9 +680,8 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 
 		env.release(destinationProgram);
 		destinationProgram = createToyDestinationProgram();// env.getProgram("helloProgram"); // get a program without cdecl
-		session =
-			VTSessionDB.createVTSession(testName.getMethodName() + " - Test Match Set Manager",
-				sourceProgram, destinationProgram, this);
+		session = new VTSessionDB(testName.getMethodName() + " - Test Match Set Manager",
+			sourceProgram, destinationProgram, this);
 		runSwing(() -> controller.openVersionTrackingSession(session));
 
 		useMatch("0x00401040", "0x00010938");

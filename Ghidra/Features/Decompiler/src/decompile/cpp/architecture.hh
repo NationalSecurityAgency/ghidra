@@ -236,7 +236,7 @@ public:
   void setPrototype(const PrototypePieces &pieces);	///< Set the prototype for a particular function
   void setPrintLanguage(const string &nm);		///< Establish a particular output language
   void globalify(void);					///< Mark \e all spaces as global
-  void decodeFlowOverride(Decoder &decoder);		///< Set flow overrides from XML
+  void decodeFlowOverride(Decoder &decoder);		///< Decode flow overrides from a stream
   virtual ~Architecture(void);				///< Destructor
 
   /// \brief Get a string describing \b this architecture

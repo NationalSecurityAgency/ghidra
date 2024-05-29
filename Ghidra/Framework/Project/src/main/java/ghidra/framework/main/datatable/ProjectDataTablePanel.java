@@ -16,8 +16,10 @@
 package ghidra.framework.main.datatable;
 
 import java.awt.*;
+import java.awt.datatransfer.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
@@ -25,10 +27,12 @@ import javax.swing.*;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
+import docking.dnd.GTableDragProvider;
 import docking.widgets.label.GHtmlLabel;
 import docking.widgets.table.*;
 import docking.widgets.table.threaded.*;
 import ghidra.framework.main.FrontEndPlugin;
+import ghidra.framework.main.datatree.DataTreeDragNDropHandler;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.*;
@@ -54,9 +58,9 @@ public class ProjectDataTablePanel extends JPanel {
 	public Set<DomainFile> filesPendingSelection;
 
 	private GHtmlLabel capacityExceededText =
-		new GHtmlLabel("<HTML><CENTER><I>Table view disabled for very large projects, or<BR>" +
+		new GHtmlLabel("<html><CENTER><I>Table view disabled for very large projects, or<BR>" +
 			"if an older project/repository filesystem is in use.<BR>" +
-			"View will remain disabled until project is closed.</I></CENTER></HTML>");
+			"View will remain disabled until project is closed.</I></CENTER></html>");
 
 	private GGlassPanePainter painter = new TableGlassPanePainter();
 
@@ -95,12 +99,21 @@ public class ProjectDataTablePanel extends JPanel {
 				checkOpen(e);
 			}
 		});
-		gTable.getSelectionModel().addListSelectionListener(
-			e -> plugin.getTool().contextChanged(null));
+		gTable.getSelectionModel()
+				.addListSelectionListener(e -> plugin.getTool().contextChanged(null));
 		gTable.setDefaultRenderer(Date.class, new DateCellRenderer());
 		gTable.setDefaultRenderer(DomainFileType.class, new TypeCellRenderer());
 
-		new ProjectDataTableDnDHandler(gTable, model);
+		// self-registering drag provider
+		new ProjectDataTableDragProvider();
+	}
+
+	/**
+	 * Determine if table capacity has been exceeded and files are not shown
+	 * @return true if files are not shown in project data table, else false
+	 */
+	public boolean isCapacityExceeded() {
+		return capacityExceeded;
 	}
 
 	public void dispose() {
@@ -275,7 +288,59 @@ public class ProjectDataTablePanel extends JPanel {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
+
+	private class ProjectDataTableDragProvider extends GTableDragProvider<DomainFileInfo> {
+
+		private static final DataFlavor DOMAIN_FILE_LIST_FLAVOR =
+			DataTreeDragNDropHandler.localDomainFileFlavor;
+		private static final DataFlavor[] ROW_DATA_FLAVORS = { DOMAIN_FILE_LIST_FLAVOR };
+
+		ProjectDataTableDragProvider() {
+			super(gTable, model);
+		}
+
+		@Override
+		protected Transferable createDragTransferable(List<DomainFileInfo> items) {
+			return new DomainFileTransferable(items);
+		}
+
+		private class DomainFileTransferable implements Transferable {
+			private List<DomainFileInfo> list;
+
+			DomainFileTransferable(List<DomainFileInfo> list) {
+				this.list = list;
+			}
+
+			@Override
+			public Object getTransferData(DataFlavor flavor)
+					throws UnsupportedFlavorException, IOException {
+				if (DOMAIN_FILE_LIST_FLAVOR.equals(flavor)) {
+					return getDomainFileList();
+				}
+				throw new UnsupportedFlavorException(flavor);
+			}
+
+			private Object getDomainFileList() {
+				List<DomainFile> domainFileList = new ArrayList<>();
+				for (DomainFileInfo domainFileInfo : list) {
+					domainFileList.add(domainFileInfo.getDomainFile());
+				}
+				return domainFileList;
+			}
+
+			@Override
+			public DataFlavor[] getTransferDataFlavors() {
+				return ROW_DATA_FLAVORS;
+			}
+
+			@Override
+			public boolean isDataFlavorSupported(DataFlavor flavor) {
+				return DOMAIN_FILE_LIST_FLAVOR.equals(flavor);
+			}
+		}
+
+	}
 
 	private class ProjectDataTableDomainFolderChangeListener implements DomainFolderChangeListener {
 
@@ -364,11 +429,6 @@ public class ProjectDataTablePanel extends JPanel {
 		}
 
 		@Override
-		public void domainFolderSetActive(DomainFolder folder) {
-			// don't care
-		}
-
-		@Override
 		public void domainFileStatusChanged(DomainFile file, boolean fileIDset) {
 			if (ignoreChanges()) {
 				return;
@@ -378,24 +438,6 @@ public class ProjectDataTablePanel extends JPanel {
 			plugin.getTool().contextChanged(null);
 		}
 
-		@Override
-		public void domainFileObjectReplaced(DomainFile file, DomainObject oldObject) {
-			if (ignoreChanges()) {
-				return;
-			}
-			clearInfo(file);
-			table.repaint();
-		}
-
-		@Override
-		public void domainFileObjectOpenedForUpdate(DomainFile file, DomainObject object) {
-			// don't care
-		}
-
-		@Override
-		public void domainFileObjectClosed(DomainFile file, DomainObject object) {
-			// don't care
-		}
 	}
 
 	/**

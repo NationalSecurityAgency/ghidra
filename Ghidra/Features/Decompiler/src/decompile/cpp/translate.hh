@@ -185,7 +185,6 @@ public:
   virtual const VarnodeData &getSpacebaseFull(int4 i) const;
   virtual bool stackGrowsNegative(void) const { return isNegativeStack; }
   virtual AddrSpace *getContain(void) const { return contain; } ///< Return containing space
-  virtual void saveXml(ostream &s) const;
   virtual void decode(Decoder &decoder);
 };
 
@@ -235,7 +234,7 @@ class AddrSpaceManager {
   vector<JoinRecord *> splitlist; ///< JoinRecords indexed by join address
 protected:
   AddrSpace *decodeSpace(Decoder &decoder,const Translate *trans); ///< Add a space to the model based an on XML tag
-  void decodeSpaces(Decoder &decoder,const Translate *trans); ///< Restore address spaces in the model from an XML tag
+  void decodeSpaces(Decoder &decoder,const Translate *trans); ///< Restore address spaces in the model from a stream
   void setDefaultCodeSpace(int4 index); ///< Set the default address space (for code)
   void setDefaultDataSpace(int4 index);	///< Set the default address space for data
   void setReverseJustified(AddrSpace *spc); ///< Set reverse justified property on this space

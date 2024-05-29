@@ -253,9 +253,7 @@ public class TestEnv {
 		AbstractGuiTest.runSwing(() -> {
 			disposeSingleTool(tool);
 
-			Iterator<PluginTool> it = extraTools.iterator();
-			while (it.hasNext()) {
-				PluginTool pt = it.next();
+			for (PluginTool pt : extraTools) {
 				disposeSingleTool(pt);
 			}
 			extraTools.clear();
@@ -801,15 +799,15 @@ public class TestEnv {
 	}
 
 	/**
-	 * Open a read-only test program from the test data directory.
-	 * This program must be released prior to disposing this test environment.
+	 * Open a read-only test program from the test data directory. The returned program must be 
+	 * {@link #release(Program) released} prior to disposing this test environment.
+	 * <br>
 	 * NOTE: Some tests rely on this method returning null when file does
 	 * not yet exist within the resource area (e.g., test binaries for P-Code Tests)
 	 *
 	 * @param programName name of program database within the test data directory.
 	 * @return program or null if program file not found
 	 */
-
 	public ProgramDB getProgram(String programName) {
 		ProgramDB p = programManager.getProgram(programName);
 		return p;
@@ -1017,9 +1015,7 @@ public class TestEnv {
 
 			Collection<WeakSet<PluginTool>> values = toolMap.values();
 			for (WeakSet<PluginTool> toolSet : values) {
-				Iterator<PluginTool> iterator = toolSet.iterator();
-				while (iterator.hasNext()) {
-					PluginTool aaTool = iterator.next();
+				for (PluginTool aaTool : toolSet) {
 					manager.removeTool(aaTool);
 				}
 			}

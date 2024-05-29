@@ -15,11 +15,11 @@
  */
 package ghidra.app.plugin.core.debug.disassemble;
 
-import ghidra.app.plugin.core.debug.disassemble.DisassemblyInjectInfo.CompilerInfo;
+import ghidra.app.plugin.core.debug.disassemble.DisassemblyInjectInfo.PlatformInfo;
+import ghidra.debug.api.platform.DebuggerPlatformMapper;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.lang.Language;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ExtensionPoint;
@@ -38,7 +38,7 @@ import ghidra.util.classfinder.ExtensionPoint;
  * configure the disassembler (namely seeding its context), the one invoked last will have "the last
  * word." As such, each inject should avoid unnecessarily erasing existing context.
  */
-@DisassemblyInjectInfo(compilers = {}) // Use as default
+@DisassemblyInjectInfo(platforms = {}) // Use as default
 public interface DisassemblyInject extends ExtensionPoint {
 	/**
 	 * If present, get the information annotation on this inject
@@ -56,16 +56,16 @@ public interface DisassemblyInject extends ExtensionPoint {
 	}
 
 	/**
-	 * Check if this inject applies to the given trace
+	 * Check if this inject applies to the given trace platform
 	 * 
-	 * @param trace the trace to check
+	 * @param platform the platform to check
 	 * @return true if applicable, false otherwise
 	 */
-	default boolean isApplicable(Trace trace) {
-		for (CompilerInfo info : getInfo().compilers()) {
-			if (info.langID().equals(trace.getBaseLanguage().getLanguageID().toString())) {
+	default boolean isApplicable(TracePlatform platform) {
+		for (PlatformInfo info : getInfo().platforms()) {
+			if (info.langID().equals(platform.getLanguage().getLanguageID().toString())) {
 				if (info.compilerID().isBlank() || info.compilerID()
-						.equals(trace.getBaseCompilerSpec().getCompilerSpecID().toString())) {
+						.equals(platform.getCompilerSpec().getCompilerSpecID().toString())) {
 					return true;
 				}
 			}
@@ -86,36 +86,35 @@ public interface DisassemblyInject extends ExtensionPoint {
 	 * A pre-auto disassembly hook
 	 * 
 	 * <p>
-	 * This hook is invoked by the {@link DisassembleAtPcDebuggerBot} before disassembly actually
+	 * This hook is invoked by the {@link DebuggerPlatformMapper} before disassembly actually
 	 * begins. The callback occurs within the command's background thread. In general, the inject
 	 * should limit its operation to inspecting the trace database and configuring the command.
 	 * 
 	 * @param tool the tool that will execute the command
 	 * @param command the command to be configured, which is about to execute
-	 * @param trace the trace whose bytes to disassemble
-	 * @param language the language for the disassembler
+	 * @param platform the trace platform for the disassembler
 	 * @param snap the snap the snap at which to disassemble
 	 * @param thread the thread whose PC is being disassembled
 	 * @param startSet the starting address set, usually just the PC
 	 * @param restricted the set of disassemblable addresses
 	 */
-	default void pre(PluginTool tool, TraceDisassembleCommand command, Trace trace,
-			Language language, long snap, TraceThread thread, AddressSetView startSet,
-			AddressSetView restricted) {
+	default void pre(PluginTool tool, TraceDisassembleCommand command, TracePlatform platform,
+			long snap, TraceThread thread, AddressSetView startSet, AddressSetView restricted) {
 	}
 
 	/**
 	 * A post-auto disassembly hook
 	 * 
 	 * <p>
-	 * This hook is invoked by the {@link DisassembleAtPcDebuggerBot} after disassembly completes.
-	 * The callback occurs within the command's background thread.
+	 * This hook is invoked by the {@link DebuggerPlatformMapper} after disassembly completes. The
+	 * callback occurs within the command's background thread.
 	 * 
 	 * @param tool the tool that just executed the disassembly command
-	 * @param trace the trace whose bytes were disassembled
+	 * @param platform the trace platform for the disassembler
 	 * @param snap the snap the snap at which disassembly was performed
 	 * @param disassembled the addresses that were actually disassembled
 	 */
-	default void post(PluginTool tool, Trace trace, long snap, AddressSetView disassembled) {
+	default void post(PluginTool tool, TracePlatform platform, long snap,
+			AddressSetView disassembled) {
 	}
 }

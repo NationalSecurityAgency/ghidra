@@ -80,9 +80,9 @@ public interface PtyChild extends PtyEndpoint {
 	 * Start a session without a real leader, instead obtaining the pty's name
 	 * 
 	 * <p>
-	 * This method or {@link #session(String[], Map, Collection)} can only be invoked once per pty.
-	 * It must be called before anyone reads the parent's output stream, since obtaining the
-	 * filename may be implemented by the parent sending commands to its child.
+	 * This method or any other {@code session} method can only be invoked once per pty. It must be
+	 * called before anyone reads the parent's output stream, since obtaining the filename may be
+	 * implemented by the parent sending commands to its child.
 	 * 
 	 * <p>
 	 * If the child end of the pty is on a remote system, this should be the file (or other
@@ -101,4 +101,12 @@ public interface PtyChild extends PtyEndpoint {
 	default String nullSession(TermMode... mode) throws IOException {
 		return nullSession(List.of(mode));
 	}
+
+	/**
+	 * Resize the terminal window to the given width and height, in characters
+	 * 
+	 * @param cols the width in characters
+	 * @param rows the height in characters
+	 */
+	void setWindowSize(short cols, short rows);
 }

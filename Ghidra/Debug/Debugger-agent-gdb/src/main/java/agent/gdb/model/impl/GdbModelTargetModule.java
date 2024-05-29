@@ -40,7 +40,7 @@ import ghidra.program.model.address.*;
 public class GdbModelTargetModule extends
 		DefaultTargetObject<TargetObject, GdbModelTargetModuleContainer> implements TargetModule {
 
-	public static final String VISIBLE_RANGE_ATTRIBUTE_NAME = "range";
+	public static final String VISIBLE_RANGE_ATTRIBUTE_NAME = "Range";
 	public static final String VISIBLE_MODULE_NAME_ATTRIBUTE_NAME = "module name";
 
 	protected static String indexModule(GdbModule module) {

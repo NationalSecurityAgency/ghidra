@@ -11,6 +11,8 @@ Module.manifest||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
 data/docking.theme.properties||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
+src/main/help/help/topics/KeyboardNavigation/KeyboardNavigation.html||GHIDRA||||END|
+src/main/help/help/topics/KeyboardNavigation/images/ActionsDialog.png||GHIDRA||||END|
 src/main/help/help/topics/Misc/Welcome_to_Help.htm||GHIDRA||||END|
 src/main/help/help/topics/Theming/ThemingDeveloperDocs.html||GHIDRA||||END|
 src/main/help/help/topics/Theming/ThemingInternals.html||GHIDRA||||END|
@@ -30,6 +32,7 @@ src/main/resources/images/Minus.png||GHIDRA||||END|
 src/main/resources/images/Plus.png||GHIDRA||reviewed||END|
 src/main/resources/images/StackFrameElement.png||GHIDRA||reviewed||END|
 src/main/resources/images/StackFrame_Red.png||GHIDRA||reviewed||END|
+src/main/resources/images/VCRFastForward.gif||GHIDRA||||END|
 src/main/resources/images/accessories-text-editor.png||Tango Icons - Public Domain||||END|
 src/main/resources/images/application-vnd.oasis.opendocument.spreadsheet-template.png||Oxygen Icons - LGPL 3.0|||oxygen|END|
 src/main/resources/images/application_xp.png||FAMFAMFAM Icons - CC 2.5|||fam fam|END|
@@ -53,6 +56,7 @@ src/main/resources/images/eatbits7.png||GHIDRA||reviewed||END|
 src/main/resources/images/edit-clear.png||Tango Icons - Public Domain|||tango icon set|END|
 src/main/resources/images/edit-redo.png||Tango Icons - Public Domain|||tango icon set|END|
 src/main/resources/images/edit-undo.png||Tango Icons - Public Domain|||tango icon set|END|
+src/main/resources/images/empty8x16.png||GHIDRA||||END|
 src/main/resources/images/expand.gif||GHIDRA||||END|
 src/main/resources/images/filter_off.png||GHIDRA||||END|
 src/main/resources/images/filter_on.png||GHIDRA||||END|
@@ -83,6 +87,7 @@ src/main/resources/images/page_code.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/page_excel.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/page_go.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/page_green.png||FAMFAMFAM Icons - CC 2.5||||END|
+src/main/resources/images/pinkX.gif||GHIDRA||||END|
 src/main/resources/images/play.png||GHIDRA||||END|
 src/main/resources/images/preferences-system-windows.png||Tango Icons - Public Domain||||END|
 src/main/resources/images/software-update-available.png||Tango Icons - Public Domain|||tango icon set|END|
@@ -97,6 +102,7 @@ src/main/resources/images/view-filter.png||Oxygen Icons - LGPL 3.0|||Oxygen icon
 src/main/resources/images/warning.help.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/www_128.png||Nuvola Icons - LGPL 2.1|||nuvola www.png|END|
 src/main/resources/images/www_16.png||Nuvola Icons - LGPL 2.1|||nuvola www 16x16|END|
+src/main/resources/images/x.gif||GHIDRA||||END|
 src/main/resources/images/zoom.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/zoom_in.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/zoom_out.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|

@@ -24,15 +24,14 @@ import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.util.*;
-import ghidra.util.exception.AssertException;
-import ghidra.util.exception.NotFoundException;
+import ghidra.util.exception.*;
 
 /**
  * <code>X86_64_ElfRelocationContext</code> provides ability to generate a
  * Global Offset Table (GOT) to facilitate GOT related relocations encountered within 
  * object modules.
  */
-class X86_64_ElfRelocationContext extends ElfRelocationContext {
+class X86_64_ElfRelocationContext extends ElfRelocationContext<X86_64_ElfRelocationHandler> {
 
 	private AddressRange allocatedGotLimits;
 	private Address allocatedGotAddress;
@@ -50,7 +49,10 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 	public long getSymbolValue(ElfSymbol symbol) {
 		long symbolValue = super.getSymbolValue(symbol);
 		if (symbolValue == 0 && ElfConstants.GOT_SYMBOL_NAME.equals(symbol.getNameAsString())) {
-			Address gotAddr = allocateGot();
+			Address gotAddr = symbolMap.get(symbol);
+			if (gotAddr == null) {
+				gotAddr = allocateGot();
+			}
 			if (gotAddr != null) {
 				return gotAddr.getOffset();
 			}
@@ -87,7 +89,7 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 		// NOTE: GOT allocation calculation assumes all GOT entries correspond to a specific
 		// symbol and not a computed offset.  This assumption may need to be revised based upon 
 		// uses of getGotEntryAddress method
-		Set<Object> uniqueSymbolValues = new HashSet<>();
+		Set<Long> uniqueSymbolValues = new HashSet<>();
 		for (ElfRelocationTable rt : getElfHeader().getRelocationTables()) {
 			ElfSymbolTable st = rt.getAssociatedSymbolTable();
 			if (st == null) {
@@ -102,24 +104,35 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 				if (elfSymbol == null) {
 					continue;
 				}
-				long value = elfSymbol.getValue();
-				Object uniqueValue = value == 0 ? elfSymbol.getNameAsString() : Long.valueOf(value);
-				uniqueSymbolValues.add(uniqueValue);
+				long symbolValue = getSymbolValue(elfSymbol);
+				if (!uniqueSymbolValues.add(symbolValue)) {
+					System.out.println("Duplicate sym value 0x" + Long.toHexString(symbolValue) +
+						" for " + elfSymbol.getNameAsString());
+				}
 			}
 		}
 		return Math.max(8, uniqueSymbolValues.size() * 8);
 	}
 
 	private boolean requiresGotEntry(ElfRelocation r) {
-		switch (r.getType()) {
-			case X86_64_ElfRelocationConstants.R_X86_64_GOTPCREL:
-			case X86_64_ElfRelocationConstants.R_X86_64_GOTOFF64:
-			case X86_64_ElfRelocationConstants.R_X86_64_GOTPC32:
-			case X86_64_ElfRelocationConstants.R_X86_64_GOT64:
-			case X86_64_ElfRelocationConstants.R_X86_64_GOTPCREL64:
-			case X86_64_ElfRelocationConstants.R_X86_64_GOTPC64:
-			case X86_64_ElfRelocationConstants.R_X86_64_GOTPCRELX:
-			case X86_64_ElfRelocationConstants.R_X86_64_REX_GOTPCRELX:
+
+		X86_64_ElfRelocationType type = handler.getRelocationType(r.getType());
+		if (type == null) {
+			return false;
+		}
+
+		switch (type) {
+			case R_X86_64_GOTPCREL:
+//			case R_X86_64_GOTOFF64:
+//			case R_X86_64_GOTPC32:
+//			case R_X86_64_GOT64:
+			case R_X86_64_GOTPCREL64:
+//			case R_X86_64_GOTPC64:
+				return true;
+			case R_X86_64_GOTPCRELX:
+			case R_X86_64_REX_GOTPCRELX:
+				// NOTE: Relocation may not actually require GOT entry in which case %got 
+				// may be over-allocated, but is required in some cases.
 				return true;
 			default:
 				return false;
@@ -134,23 +147,31 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 		ElfSymbol gotElfSymbol = findGotElfSymbol();
 
 		if (gotElfSymbol == null && !getElfHeader().isRelocatable()) {
-			loadHelper.log(
-				"GOT allocatiom failed. " + ElfConstants.GOT_SYMBOL_NAME + " not defined");
+			loadHelper
+					.log("GOT allocatiom failed. " + ElfConstants.GOT_SYMBOL_NAME + " not defined");
 			return null;
 		}
 
-		if (gotElfSymbol != null && getSymbolAddress(gotElfSymbol) != null) {
+		if (gotElfSymbol != null && gotElfSymbol.getValue() != 0) {
 			throw new AssertException(ElfConstants.GOT_SYMBOL_NAME + " already allocated");
 		}
 
 		int alignment = getLoadAdapter().getLinkageBlockAlignment();
-		allocatedGotLimits =
-			getLoadHelper().allocateLinkageBlock(alignment, computeRequiredGotSize(),
-				ElfRelocationHandler.GOT_BLOCK_NAME);
+		int gotSize = computeRequiredGotSize();
+		allocatedGotLimits = getLoadHelper().allocateLinkageBlock(alignment, gotSize,
+			ElfRelocationHandler.GOT_BLOCK_NAME);
 		if (allocatedGotLimits != null &&
 			allocatedGotLimits.getMinAddress().getOffset() < Integer.MAX_VALUE) {
-			// GOT must fall within first 32-bit segment
+			// NOTE: GOT must fall within first 32-bit segment
 			if (gotElfSymbol != null) {
+				// remember where GOT was allocated
+				try {
+					loadHelper.createSymbol(allocatedGotLimits.getMinAddress(),
+						ElfConstants.GOT_SYMBOL_NAME, true, false, null);
+				}
+				catch (InvalidInputException e) {
+					throw new AssertionError("Unexpected exception", e);
+				}
 				symbolMap.put(gotElfSymbol, allocatedGotLimits.getMinAddress());
 			}
 			allocatedGotAddress = allocatedGotLimits.getMinAddress();
@@ -207,10 +228,11 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 	/**
 	 * Get or allocate a GOT entry for the specified symbolValue.
 	 * NOTE: This is restricted to object modules only which do not of a GOT.
-	 * @param symbolValue symbol value
+	 * @param elfSymbol ELF symbol
 	 * @return GOT entry address or null if unable to allocate
 	 */
-	public Address getGotEntryAddress(long symbolValue) {
+	public Address getGotEntryAddress(ElfSymbol elfSymbol) {
+		long symbolValue = getSymbolValue(elfSymbol);
 		Address addr = null;
 		if (gotMap != null) {
 			addr = gotMap.get(symbolValue);
@@ -237,18 +259,16 @@ class X86_64_ElfRelocationContext extends ElfRelocationContext {
 				ElfRelocationHandler.GOT_BLOCK_NAME, allocatedGotAddress, size,
 				"NOTE: This block is artificial and allows ELF Relocations to work correctly",
 				"Elf Loader", true, false, false, loadHelper.getLog());
+
+			// Mark block as an artificial fabrication
+			block.setArtificial(true);
+
 			DataConverter converter =
 				program.getMemory().isBigEndian() ? BigEndianDataConverter.INSTANCE
 						: LittleEndianDataConverter.INSTANCE;
 			for (long symbolValue : gotMap.keySet()) {
 				Address addr = gotMap.get(symbolValue);
-				byte[] bytes;
-				if (program.getDefaultPointerSize() == 4) {
-					bytes = converter.getBytes((int) symbolValue);
-				}
-				else {
-					bytes = converter.getBytes(symbolValue);
-				}
+				byte[] bytes = converter.getBytes(symbolValue); // 8-byte pointer value
 				block.putBytes(addr, bytes);
 				loadHelper.createData(addr, PointerDataType.dataType);
 			}

@@ -21,7 +21,6 @@ import java.util.List;
 import docking.widgets.OptionDialog;
 import ghidra.app.cmd.memory.DeleteBlockCmd;
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.store.LockException;
 import ghidra.program.model.address.*;
@@ -77,7 +76,7 @@ class MemoryMapManager {
 		}
 	}
 
-	private void renameFragment(Address start, String name) {
+	private static void renameFragment(Program program, Address start, String name) {
 
 		Listing listing = program.getListing();
 		String[] treeNames = listing.getTreeNames();
@@ -183,6 +182,7 @@ class MemoryMapManager {
 
 	/**
 	 * Delete the list of memory blocks.
+	 * @param blocks list of memory blocks to be removed
 	 */
 	void deleteBlocks(final List<MemoryBlock> blocks) {
 
@@ -236,7 +236,7 @@ class MemoryMapManager {
 		tool.executeBackgroundCommand(cmd, program);
 	}
 
-	private class SplitBlockCmd implements Command {
+	private static class SplitBlockCmd implements Command<Program> {
 
 		private MemoryBlock block;
 		private Address newStart;
@@ -250,11 +250,11 @@ class MemoryMapManager {
 		}
 
 		@Override
-		public boolean applyTo(DomainObject obj) {
-			Program p = (Program) obj;
-			Memory memory = p.getMemory();
+		public boolean applyTo(Program program) {
 
-			if (!p.hasExclusiveAccess()) {
+			Memory memory = program.getMemory();
+
+			if (!program.hasExclusiveAccess()) {
 				msg = "Exclusive access required";
 				return false;
 			}
@@ -300,7 +300,7 @@ class MemoryMapManager {
 		}
 	}
 
-	private class MergeBlocksCmd implements Command {
+	private static class MergeBlocksCmd implements Command<Program> {
 
 		private String msg;
 		private List<MemoryBlock> blocks;
@@ -310,9 +310,9 @@ class MemoryMapManager {
 		}
 
 		@Override
-		public boolean applyTo(DomainObject obj) {
-			Program p = (Program) obj;
-			Memory mem = p.getMemory();
+		public boolean applyTo(Program program) {
+
+			Memory mem = program.getMemory();
 			Address min = null;
 			Address max = null;
 
@@ -363,6 +363,7 @@ class MemoryMapManager {
 							newBlock.setWrite(bigBlock.isWrite());
 							newBlock.setExecute(bigBlock.isExecute());
 							newBlock.setVolatile(bigBlock.isVolatile());
+							newBlock.setArtificial(bigBlock.isArtificial());
 							newBlock.setSourceName("Resized Memory Block");
 						}
 						else {
@@ -375,7 +376,7 @@ class MemoryMapManager {
 					}
 
 					//  Rename the fragment based on the first block
-					renameFragment(start, bigBlock.getName());
+					renameFragment(program, start, bigBlock.getName());
 
 					//   join block with block after
 					bigBlock = mem.join(bigBlock, nextBlock);

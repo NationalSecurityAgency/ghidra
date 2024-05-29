@@ -37,7 +37,7 @@ public class EolExtraCommentsPropertyEditor extends PropertyEditorSupport
 	private static final String ABBREVIATED_LABEL = "Use Abbreviated Comments";
 
 	private static final String REPEATABLE_TOOLTIP =
-		"<HTML>For repeatable comments:" +
+		"<html>For repeatable comments:" +
 			"<UL>" +
 			"	<LI>ALWAYS - show even if an EOL comment exists</LI>" +
 			"	<LI>DEFAULT - show only when no EOL comment exists</LI>" +
@@ -45,7 +45,7 @@ public class EolExtraCommentsPropertyEditor extends PropertyEditorSupport
 			"</UL>";
 
 	private static final String REF_REPEATABLE_TOOLTIP =
-		"<HTML>For referenced repeatable comments:" +
+		"<html>For referenced repeatable comments:" +
 			"<UL>" +
 			"	<LI>ALWAYS - show even if a higher priority comment exists</LI>" +
 			"	<LI>DEFAULT - show only when no higher priority comment exists</LI>" +
@@ -53,7 +53,7 @@ public class EolExtraCommentsPropertyEditor extends PropertyEditorSupport
 			"</UL>";
 
 	private static final String AUTO_TOOLTIP =
-		"<HTML>For automatic comments:" +
+		"<html>For automatic comments:" +
 			"<UL>" +
 			"	<LI>ALWAYS - show even if a higher priority comment exists</LI>" +
 			"	<LI>DEFAULT - show only when no higher priority comment exists</LI>" +

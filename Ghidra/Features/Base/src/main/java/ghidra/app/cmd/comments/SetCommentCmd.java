@@ -17,14 +17,13 @@ package ghidra.app.cmd.comments;
 
 import ghidra.app.util.viewer.field.CommentUtils;
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 
 /**
  *  Command to set a specific type of comment on a code unit.
  */
-public class SetCommentCmd implements Command {
+public class SetCommentCmd implements Command<Program> {
 
 	private Address address;
 	private int commentType;
@@ -67,8 +66,7 @@ public class SetCommentCmd implements Command {
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		Program program = (Program) obj;
+	public boolean applyTo(Program program) {
 		CodeUnit cu = getCodeUnit(program);
 		if (cu == null) {
 			message = "No Instruction or Data found for address " + address.toString() +

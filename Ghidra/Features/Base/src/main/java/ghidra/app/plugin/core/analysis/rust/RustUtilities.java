@@ -25,6 +25,7 @@ import ghidra.app.plugin.processors.sleigh.SleighException;
 import ghidra.framework.Application;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.SpecExtension;
+import ghidra.program.model.lang.Processor;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.util.Msg;
@@ -36,50 +37,63 @@ import ghidra.xml.XmlParseException;
  */
 public class RustUtilities {
 	/**
-	 * Checks if a given {@link Program} was written in Rust
+	 * Checks if a given {@link MemoryBlock} contains a Rust signature
 	 * 
-	 * @param program The {@link Program} to check
-	 * @param blockName The name of the {@link MemoryBlock} to scan for Rust signatures
-	 * @return True if the given {@link Program} was written in Rust; otherwise, false
+	 * @param block The {@link MemoryBlock} to scan for Rust signatures
+	 * @return True if the given {@link MemoryBlock} is not null and contains a Rust signature; 
+	 *   otherwise, false
 	 * @throws IOException if there was an IO-related error
 	 */
-	public static boolean isRust(Program program, String blockName) throws IOException {
-		MemoryBlock[] blocks = program.getMemory().getBlocks();
-		for (MemoryBlock block : blocks) {
-			if (block.getName().equals(blockName)) {
-				byte[] bytes = block.getData().readAllBytes();
-				if (containsBytes(bytes, RustConstants.RUST_SIGNATURE_1)) {
-					return true;
-				}
-				if (containsBytes(bytes, RustConstants.RUST_SIGNATURE_2)) {
-					return true;
-				}
-			}
+	public static boolean isRust(MemoryBlock block) throws IOException {
+		if (block == null) {
+			return false;
+		}
+		byte[] bytes = block.getData().readAllBytes();
+		if (containsBytes(bytes, RustConstants.RUST_SIGNATURE_1)) {
+			return true;
+		}
+		if (containsBytes(bytes, RustConstants.RUST_SIGNATURE_2)) {
+			return true;
 		}
 		return false;
 	}
 
+	/**
+	 * Returns true if the given program has earlier been tagged as having a Rust compiler by
+	 * the loader.
+	 *  
+	 * @param program {@link Program}
+	 * @return boolean true if program's compiler property includes rust
+	 */
+	public static boolean isRustProgram(Program program) {
+		String name = program.getCompiler();
+		return name != null && name.contains(RustConstants.RUST_COMPILER);
+	}
+
 	public static int addExtensions(Program program, TaskMonitor monitor, String subPath)
 			throws IOException {
-		var processor = program.getLanguageCompilerSpecPair().getLanguage().getProcessor();
+		Processor processor = program.getLanguageCompilerSpecPair().getLanguage().getProcessor();
 		ResourceFile module = Application.getModuleDataSubDirectory(processor.toString(),
 			RustConstants.RUST_EXTENSIONS_PATH + subPath);
 
 		int extensionCount = 0;
 
 		ResourceFile[] files = module.listFiles();
-		for (ResourceFile file : files) {
-			InputStream stream = file.getInputStream();
-			byte[] bytes = stream.readAllBytes();
-			String xml = new String(bytes);
+		if (files != null) {
+			for (ResourceFile file : files) {
+				InputStream stream = file.getInputStream();
+				byte[] bytes = stream.readAllBytes();
+				String xml = new String(bytes);
 
-			try {
-				SpecExtension extension = new SpecExtension(program);
-				extension.addReplaceCompilerSpecExtension(xml, monitor);
-				extensionCount += 1;
-			}
-			catch (SleighException | SAXException | XmlParseException | LockException e) {
-				Msg.error(program, "Failed to load load cspec extensions");
+				try {
+					SpecExtension extension = new SpecExtension(program);
+					extension.addReplaceCompilerSpecExtension(xml, monitor);
+					extensionCount++;
+				}
+				catch (SleighException | SAXException | XmlParseException | LockException e) {
+					Msg.error(RustUtilities.class,
+						"Failed to load Rust cspec extension: " + file.getAbsolutePath(), e);
+				}
 			}
 		}
 

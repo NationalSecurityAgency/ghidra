@@ -21,14 +21,15 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.stream.Collectors;
 
 import db.DBHandle;
+import ghidra.framework.data.OpenMode;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceManager;
 import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectManager;
 import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace.TraceThreadChangeType;
 import ghidra.trace.model.thread.*;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.exception.DuplicateNameException;
@@ -44,7 +45,7 @@ public class DBTraceThreadManager implements TraceThreadManager, DBTraceManager 
 	protected final DBCachedObjectStore<DBTraceThread> threadStore;
 	protected final DBCachedObjectIndex<String, DBTraceThread> threadsByPath;
 
-	public DBTraceThreadManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
+	public DBTraceThreadManager(DBHandle dbh, OpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, DBTrace trace, DBTraceObjectManager objectManager)
 			throws IOException, VersionException {
 		this.lock = lock;
@@ -77,10 +78,9 @@ public class DBTraceThreadManager implements TraceThreadManager, DBTraceManager 
 		if (objectManager.hasSchema()) {
 			return objectManager.assertMyThread(thread);
 		}
-		if (!(thread instanceof DBTraceThread)) {
+		if (!(thread instanceof DBTraceThread dbThread)) {
 			throw new IllegalArgumentException("Thread " + thread + " is not part of this trace");
 		}
-		DBTraceThread dbThread = (DBTraceThread) thread;
 		if (dbThread.manager != this) {
 			throw new IllegalArgumentException("Thread " + thread + " is not part of this trace");
 		}
@@ -105,8 +105,7 @@ public class DBTraceThreadManager implements TraceThreadManager, DBTraceManager 
 	}
 
 	@Override
-	public TraceThread addThread(String path, Lifespan lifespan)
-			throws DuplicateNameException {
+	public TraceThread addThread(String path, Lifespan lifespan) throws DuplicateNameException {
 		return addThread(path, path, lifespan);
 	}
 
@@ -122,7 +121,7 @@ public class DBTraceThreadManager implements TraceThreadManager, DBTraceManager 
 			thread = threadStore.create();
 			thread.set(path, display, lifespan);
 		}
-		trace.setChanged(new TraceChangeRecord<>(TraceThreadChangeType.ADDED, null, thread));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.THREAD_ADDED, null, thread));
 		return thread;
 	}
 
@@ -169,8 +168,7 @@ public class DBTraceThreadManager implements TraceThreadManager, DBTraceManager 
 	public Collection<? extends TraceThread> getLiveThreads(long snap) {
 		if (objectManager.hasSchema()) {
 			try (LockHold hold = LockHold.lock(lock.readLock())) {
-				return objectManager
-						.queryAllInterface(Lifespan.at(snap), TraceObjectThread.class)
+				return objectManager.queryAllInterface(Lifespan.at(snap), TraceObjectThread.class)
 						// Exclude the destruction
 						.filter(thread -> thread.getCreationSnap() <= snap &&
 							snap < thread.getDestructionSnap())
@@ -192,6 +190,6 @@ public class DBTraceThreadManager implements TraceThreadManager, DBTraceManager 
 
 	public void deleteThread(DBTraceThread thread) {
 		threadStore.delete(thread);
-		trace.setChanged(new TraceChangeRecord<>(TraceThreadChangeType.DELETED, null, thread));
+		trace.setChanged(new TraceChangeRecord<>(TraceEvents.THREAD_DELETED, null, thread));
 	}
 }

@@ -113,6 +113,46 @@ public class GhidraFileData {
 		refresh();
 	}
 
+	/**
+	 * Construct a new file instance with a specified name and a corresponding parent folder using
+	 * up-to-date folder items.
+	 * @param parent parent folder
+	 * @param name file name
+	 * @param folderItem local folder item
+	 * @param versionedFolderItem versioned folder item
+	 */
+	GhidraFileData(GhidraFolderData parent, String name, LocalFolderItem folderItem,
+			FolderItem versionedFolderItem) {
+		this.parent = parent;
+		this.name = name;
+		this.folderItem = folderItem;
+		this.versionedFolderItem = versionedFolderItem;
+
+		this.projectData = parent.getProjectData();
+		this.fileSystem = parent.getLocalFileSystem();
+		this.versionedFileSystem = parent.getVersionedFileSystem();
+		this.listener = parent.getChangeListener();
+
+		validateCheckout();
+		updateFileID();
+	}
+
+	void refresh(LocalFolderItem localFolderItem, FolderItem verFolderItem) {
+		icon = null;
+		disabledIcon = null;
+
+		this.folderItem = localFolderItem;
+		this.versionedFolderItem = verFolderItem;
+
+		validateCheckout();
+		boolean fileIDset = updateFileID();
+
+		if (parent.visited()) {
+			// NOTE: we should maintain some cached data so we can determine if something really changed
+			listener.domainFileStatusChanged(getDomainFile(), fileIDset);
+		}
+	}
+
 	private boolean refresh() throws IOException {
 		String parentPath = parent.getPathname();
 		if (folderItem == null) {
@@ -138,9 +178,12 @@ public class GhidraFileData {
 		if (folderItem == null && versionedFolderItem == null) {
 			throw new FileNotFoundException(name + " not found");
 		}
+		return updateFileID();
+	}
+
+	private boolean updateFileID() {
 		boolean fileIdWasNull = fileID == null;
 		fileID = folderItem != null ? folderItem.getFileID() : versionedFolderItem.getFileID();
-
 		return fileIdWasNull && fileID != null;
 	}
 
@@ -157,26 +200,32 @@ public class GhidraFileData {
 		disabledIcon = null;
 		fileIDset |= refresh();
 		if (parent.visited()) {
+			// NOTE: we should maintain some cached data so we can determine if something really changed
 			listener.domainFileStatusChanged(getDomainFile(), fileIDset);
 		}
 	}
 
-	private void validateCheckout() throws IOException {
+	private void validateCheckout() {
 		if (fileSystem.isReadOnly() || !versionedFileSystem.isOnline()) {
 			return;
 		}
-		if (folderItem != null && folderItem.isCheckedOut()) {
-			// Cleanup checkout status which may be stale
-			if (versionedFolderItem != null) {
-				ItemCheckoutStatus coStatus =
-					versionedFolderItem.getCheckout(folderItem.getCheckoutId());
-				if (coStatus == null) {
+		try {
+			if (folderItem != null && folderItem.isCheckedOut()) {
+				// Cleanup checkout status which may be stale
+				if (versionedFolderItem != null) {
+					ItemCheckoutStatus coStatus =
+						versionedFolderItem.getCheckout(folderItem.getCheckoutId());
+					if (coStatus == null) {
+						folderItem.clearCheckout();
+					}
+				}
+				else {
 					folderItem.clearCheckout();
 				}
 			}
-			else {
-				folderItem.clearCheckout();
-			}
+		}
+		catch (IOException e) {
+			// ignore
 		}
 	}
 
@@ -218,8 +267,8 @@ public class GhidraFileData {
 	}
 
 	/**
-	 * Returns a unique file-ID 
-	 * @return the ID
+	 * Returns a unique file-ID if one has been established or null
+	 * @return the file-ID or null if failed to obtain ID
 	 */
 	String getFileID() {
 		return fileID;
@@ -436,9 +485,8 @@ public class GhidraFileData {
 	ChangeSet getChangesByOthersSinceCheckout() throws VersionException, IOException {
 		synchronized (fileSystem) {
 			if (versionedFolderItem != null && folderItem != null && folderItem.isCheckedOut()) {
-				ContentHandler<?> ch = getContentHandler();
-				return ch.getChangeSet(versionedFolderItem, folderItem.getCheckoutVersion(),
-					versionedFolderItem.getCurrentVersion());
+				return getContentHandler().getChangeSet(versionedFolderItem,
+					folderItem.getCheckoutVersion(), versionedFolderItem.getCurrentVersion());
 			}
 			return null;
 		}
@@ -478,6 +526,12 @@ public class GhidraFileData {
 	 */
 	DomainObject getDomainObject(Object consumer, boolean okToUpgrade, boolean okToRecover,
 			TaskMonitor monitor) throws VersionException, IOException, CancelledException {
+
+		// Don't allow this call while versioning operation is on-going
+		if (busy.get()) {
+			throw new FileInUseException("Cannot open during versioning operation");
+		}
+
 		FolderItem myFolderItem;
 		DomainObjectAdapter domainObj = null;
 		synchronized (fileSystem) {
@@ -494,9 +548,9 @@ public class GhidraFileData {
 					return domainObj;
 				}
 			}
-			ContentHandler<?> ch = getContentHandler();
+			ContentHandler<?> contentHandler = getContentHandler();
 			if (folderItem == null) {
-				DomainObjectAdapter doa = ch.getReadOnlyObject(versionedFolderItem,
+				DomainObjectAdapter doa = contentHandler.getReadOnlyObject(versionedFolderItem,
 					DomainFile.DEFAULT_VERSION, true, consumer, monitor);
 				doa.setChanged(false);
 				DomainFileProxy proxy = new DomainFileProxy(name, parent.getPathname(), doa,
@@ -506,7 +560,7 @@ public class GhidraFileData {
 			}
 			myFolderItem = folderItem;
 
-			domainObj = ch.getDomainObject(myFolderItem, parent.getUserFileSystem(),
+			domainObj = contentHandler.getDomainObject(myFolderItem, parent.getUserFileSystem(),
 				FolderItem.DEFAULT_CHECKOUT_ID, okToUpgrade, okToRecover, consumer, monitor);
 			projectData.setDomainObject(getPathname(), domainObj);
 
@@ -528,6 +582,9 @@ public class GhidraFileData {
 			projectData.clearDomainObject(getPathname());
 			// generate IOException
 			Throwable cause = e.getCause();
+			if (cause == null) {
+				cause = e;
+			}
 			if (cause instanceof IOException) {
 				throw (IOException) cause;
 			}
@@ -564,8 +621,8 @@ public class GhidraFileData {
 			FolderItem item =
 				(folderItem != null && version == DomainFile.DEFAULT_VERSION) ? folderItem
 						: versionedFolderItem;
-			ContentHandler<?> ch = getContentHandler();
-			DomainObjectAdapter doa = ch.getReadOnlyObject(item, version, true, consumer, monitor);
+			DomainObjectAdapter doa =
+				getContentHandler().getReadOnlyObject(item, version, true, consumer, monitor);
 			doa.setChanged(false);
 
 			// Notify file manager of in-use domain object.
@@ -603,13 +660,14 @@ public class GhidraFileData {
 			throws VersionException, IOException, CancelledException {
 		synchronized (fileSystem) {
 			DomainObjectAdapter obj = null;
-			ContentHandler<?> ch = getContentHandler();
+			ContentHandler<?> contentHandler = getContentHandler();
 			if (versionedFolderItem == null ||
 				(version == DomainFile.DEFAULT_VERSION && folderItem != null) || isHijacked()) {
-				obj = ch.getImmutableObject(folderItem, consumer, version, -1, monitor);
+				obj = contentHandler.getImmutableObject(folderItem, consumer, version, -1, monitor);
 			}
 			else {
-				obj = ch.getImmutableObject(versionedFolderItem, consumer, version, -1, monitor);
+				obj = contentHandler.getImmutableObject(versionedFolderItem, consumer, version, -1,
+					monitor);
 			}
 
 			// Notify file manager of in-use domain object.
@@ -831,9 +889,12 @@ public class GhidraFileData {
 	}
 
 	/**
-	 * Returns whether the object is read-only. From a framework point of view a read-only object 
-	 * can never be changed.
-	 * @return true if read-only
+	 * Returns whether this file is explicitly marked as read-only.  This method is only supported
+	 * by the local file system and does not apply to a versioned file that is not checked-out.
+	 * A versioned file that is not checked-out will always return false, while a 
+	 * {@link DomainFileProxy} will always return true.
+	 * From a framework point of view a read-only file can never be changed.
+	 * @return true if this file is marked read-only
 	 */
 	boolean isReadOnly() {
 		synchronized (fileSystem) {
@@ -861,33 +922,6 @@ public class GhidraFileData {
 	boolean isHijacked() {
 		synchronized (fileSystem) {
 			return folderItem != null && versionedFolderItem != null && !folderItem.isCheckedOut();
-		}
-	}
-
-	/**
-	 * Returns true if this private file may be added to the associated repository.
-	 * @return true if can add to the repository
-	 */
-	boolean canAddToRepository() {
-		synchronized (fileSystem) {
-			try {
-				if (fileSystem.isReadOnly() || versionedFileSystem.isReadOnly()) {
-					return false;
-				}
-				if (folderItem == null || versionedFolderItem != null) {
-					return false;
-				}
-				if (folderItem.isCheckedOut()) {
-					return false;
-				}
-				if (isLinkFile()) {
-					return GhidraURL.isServerRepositoryURL(LinkHandler.getURL(folderItem));
-				}
-				return !getContentHandler().isPrivateContentType();
-			}
-			catch (IOException e) {
-				return false;
-			}
 		}
 	}
 
@@ -1015,6 +1049,36 @@ public class GhidraFileData {
 		}
 	}
 
+	/**
+	 * Perform neccessary check to ensure this file may be added to version control.
+	 * @throws IOException if any checks fail or other IO error occurs
+	 */
+	void checkCanAddToRepository() throws IOException {
+		if (!versionedFileSystem.isOnline()) {
+			throw new NotConnectedException("Not connected to repository server");
+		}
+		if (fileSystem.isReadOnly() || versionedFileSystem.isReadOnly()) {
+			throw new ReadOnlyException(
+				"versioning permitted within writeable project and repository only");
+		}
+		if (folderItem == null) {
+			throw new FileNotFoundException("File not found");
+		}
+		if (folderItem.isCheckedOut() || versionedFolderItem != null) {
+			throw new IOException("File already versioned");
+		}
+		ContentHandler<?> contentHandler = getContentHandler();
+		if (contentHandler instanceof LinkHandler linkHandler) {
+			// must check local vs remote URL
+			if (!GhidraURL.isServerRepositoryURL(LinkHandler.getURL(folderItem))) {
+				throw new IOException("Local project link-file may not be versioned");
+			}
+		}
+		else if (contentHandler.isPrivateContentType()) {
+			throw new IOException("Content may not be versioned: " + getContentType());
+		}
+	}
+
 	/** 
 	 * Adds this private file to version control.
 	 * @param comment new version comment
@@ -1027,76 +1091,87 @@ public class GhidraFileData {
 	 */
 	void addToVersionControl(String comment, boolean keepCheckedOut, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		DomainObjectAdapter oldDomainObj = null;
-		synchronized (fileSystem) {
-			if (!canAddToRepository()) {
-				if (fileSystem.isReadOnly() || versionedFileSystem.isReadOnly()) {
-					throw new ReadOnlyException(
-						"addToVersionControl permitted within writeable project and repository only");
-				}
-				throw new IOException("addToVersionControl not allowed for file");
-			}
+
+		checkCanAddToRepository();
+
+		if (busy.getAndSet(true)) {
+			throw new FileInUseException(name + " is busy");
+		}
+
+		DomainObjectAdapterDB inUseDomainObj = null;
+		projectData.mergeStarted();
+		try {
+			inUseDomainObj = getAndLockInUseDomainObjectForMergeUpdate("checkin");
+
 			if (isLinkFile()) {
 				keepCheckedOut = false;
 			}
-			String parentPath = parent.getPathname();
-			String user = ClientUtil.getUserName();
-			try {
-				if (folderItem instanceof DatabaseItem) {
-					DatabaseItem databaseItem = (DatabaseItem) folderItem;
-					BufferFile bufferFile = databaseItem.open();
-					try {
-						versionedFolderItem = versionedFileSystem.createDatabase(parentPath, name,
-							folderItem.getFileID(), bufferFile, comment,
-							folderItem.getContentType(), false, monitor, user);
-					}
-					finally {
-						bufferFile.dispose();
-					}
-				}
-				else if (folderItem instanceof DataFileItem) {
-					DataFileItem dataFileItem = (DataFileItem) folderItem;
-					InputStream istream = dataFileItem.getInputStream();
-					try {
-						versionedFolderItem = versionedFileSystem.createDataFile(parentPath, name,
-							istream, comment, folderItem.getContentType(), monitor);
-					}
-					finally {
-						istream.close();
-					}
-				}
-				else {
-					throw new AssertException("Unknown folder item type");
-				}
-			}
-			catch (InvalidNameException e) {
-				throw new AssertException("Unexpected error", e);
+			else if (inUseDomainObj != null && !keepCheckedOut) {
+				keepCheckedOut = true;
+				Msg.warn(this, "File currently open - must keep checked-out: " + name);
 			}
 
-			oldDomainObj = getOpenedDomainObject();
+			synchronized (fileSystem) {
 
-			if (keepCheckedOut) {
-				boolean exclusive = !versionedFileSystem.isShared();
-				ProjectLocator projectLocator = parent.getProjectLocator();
-				CheckoutType checkoutType;
-				if (projectLocator.isTransient()) {
-					checkoutType = CheckoutType.TRANSIENT;
-					exclusive = true;
+				String parentPath = parent.getPathname();
+				String user = ClientUtil.getUserName();
+				try {
+					if (folderItem instanceof DatabaseItem) {
+						DatabaseItem databaseItem = (DatabaseItem) folderItem;
+						BufferFile bufferFile = databaseItem.open();
+						try {
+							versionedFolderItem = versionedFileSystem.createDatabase(parentPath,
+								name, folderItem.getFileID(), bufferFile, comment,
+								folderItem.getContentType(), false, monitor, user);
+						}
+						finally {
+							bufferFile.dispose();
+						}
+					}
+					else if (folderItem instanceof DataFileItem) {
+						DataFileItem dataFileItem = (DataFileItem) folderItem;
+						InputStream istream = dataFileItem.getInputStream();
+						try {
+							versionedFolderItem = versionedFileSystem.createDataFile(parentPath,
+								name, istream, comment, folderItem.getContentType(), monitor);
+						}
+						finally {
+							istream.close();
+						}
+					}
+					else {
+						throw new AssertException("Unknown folder item type");
+					}
+				}
+				catch (InvalidNameException e) {
+					throw new AssertException("Unexpected error", e);
+				}
+
+				if (keepCheckedOut) {
+
+					// Maintain exclusive chekout if private repository or file is open for update
+					boolean exclusive = !versionedFileSystem.isShared() || (inUseDomainObj != null);
+
+					ProjectLocator projectLocator = parent.getProjectLocator();
+					CheckoutType checkoutType;
+					if (projectLocator.isTransient()) {
+						checkoutType = CheckoutType.TRANSIENT;
+						exclusive = true;
+					}
+					else {
+						// All checkouts for non-shared versioning are treated as exclusive
+						checkoutType =
+							(exclusive || !versionedFileSystem.isShared()) ? CheckoutType.EXCLUSIVE
+									: CheckoutType.NORMAL;
+					}
+					ItemCheckoutStatus checkout = versionedFolderItem.checkout(checkoutType, user,
+						ItemCheckoutStatus.getProjectPath(projectLocator.toString(),
+							projectLocator.isTransient()));
+					folderItem.setCheckout(checkout.getCheckoutId(), exclusive,
+						checkout.getCheckoutVersion(), folderItem.getCurrentVersion());
 				}
 				else {
-					// All checkouts for non-shared versioning are treated as exclusive
-					checkoutType =
-						(exclusive || !versionedFileSystem.isShared()) ? CheckoutType.EXCLUSIVE
-								: CheckoutType.NORMAL;
-				}
-				ItemCheckoutStatus checkout = versionedFolderItem.checkout(checkoutType, user,
-					ItemCheckoutStatus.getProjectPath(projectLocator.toString(),
-						projectLocator.isTransient()));
-				folderItem.setCheckout(checkout.getCheckoutId(), exclusive,
-					checkout.getCheckoutVersion(), folderItem.getCurrentVersion());
-			}
-			else {
-				if (oldDomainObj == null) {
+					// NOTE: file open read-only may prevent removal and result in hijack
 					try {
 						folderItem.delete(-1, ClientUtil.getUserName());
 						folderItem = null;
@@ -1105,27 +1180,23 @@ public class GhidraFileData {
 						// Ignore - should result in Hijacked file
 					}
 				}
-			}
-			if (oldDomainObj != null) {
 
-				// TODO: Develop way to re-use and re-init domain object instead of a switch-a-roo approach
+				if (inUseDomainObj != null) {
+					getContentHandler().resetDBSourceFile(folderItem, inUseDomainObj);
+				}
+			} // end of synchronized block
 
-				projectData.clearDomainObject(getPathname());
-
-				oldDomainObj.setDomainFile(new DomainFileProxy("~" + name, oldDomainObj));
-				oldDomainObj.setTemporary(true);
+			if (inUseDomainObj != null) {
+				inUseDomainObj.invalidate();
 			}
 		}
-		if (oldDomainObj != null) {
-			// Complete re-open of file
-			DomainFile df = getDomainFile();
-			listener.domainFileObjectClosed(df, oldDomainObj);
-			listener.domainFileObjectReplaced(df, oldDomainObj);
-		}
-		if (!keepCheckedOut) {
+		finally {
+			unlockDomainObject(inUseDomainObj);
+			busy.set(false);
+			projectData.mergeEnded();
 			parent.deleteLocalFolderIfEmpty();
+			parent.fileChanged(name);
 		}
-		statusChanged();
 	}
 
 	/**
@@ -1252,7 +1323,8 @@ public class GhidraFileData {
 				if (versionedFolderItem.getCurrentVersion() != folderItem.getCheckoutVersion()) {
 					return false;
 				}
-// TODO: assumes folderItem is local - should probably defer createNewVersion to folderItem if possible (requires refactor)
+				// TODO: assumes folderItem is local - should probably defer createNewVersion 
+				// to folderItem if possible (requires refactor)
 				srcFile = (LocalManagedBufferFile) ((DatabaseItem) folderItem).open();
 			}
 
@@ -1260,18 +1332,15 @@ public class GhidraFileData {
 			if (checkinHandler.createKeepFile()) {
 				DomainObject sourceObj = null;
 				try {
-					ContentHandler<?> ch = getContentHandler();
-					sourceObj = ch.getImmutableObject(folderItem, this, DomainFile.DEFAULT_VERSION,
-						-1, monitor);
+					sourceObj = getContentHandler().getImmutableObject(folderItem, this,
+						DomainFile.DEFAULT_VERSION, -1, monitor);
 					createKeepFile(sourceObj, monitor);
 				}
 				catch (VersionException e) {
 					// ignore - unable to create keep file
 				}
 				finally {
-					if (sourceObj != null) {
-						sourceObj.release(this);
-					}
+					release(sourceObj);
 				}
 			}
 			monitor.checkCancelled();
@@ -1292,13 +1361,13 @@ public class GhidraFileData {
 	}
 
 	/**
-	 * Verify that current user is the checkout user for this file
+	 * Verify checkout status and that current user is the checkout user for this file
 	 * @param operationName name of user case (e.g., checkin)
 	 * @throws IOException if server/repository will not permit current user to checkin,
 	 * or update checkout version of current file.  (i.e., server login does not match
 	 * user name used at time of initial checkout)
 	 */
-	private void verifyRepoUser(String operationName) throws IOException {
+	private void verifyCheckout(String operationName) throws IOException {
 		if (versionedFileSystem instanceof LocalFileSystem) {
 			return; // rely on local project ownership
 		}
@@ -1321,15 +1390,13 @@ public class GhidraFileData {
 	 * Performs check in to associated repository.  File must be checked-out 
 	 * and modified since checkout.
 	 * @param checkinHandler provides user input data to complete checkin process.
-	 * @param okToUpgrade if true an upgrade will be performed if needed
 	 * @param monitor the TaskMonitor.
 	 * @throws IOException if an IO or access error occurs
 	 * @throws VersionException if unable to handle domain object version in versioned filesystem.
-	 * If okToUpgrade was false, check exception to see if it can be upgraded
-	 * sometime after doing a checkout.
+	 * We are unable to upgrade since this would only occur if checkout is not exclusive.
 	 * @throws CancelledException if task monitor cancelled operation
 	 */
-	void checkin(CheckinHandler checkinHandler, boolean okToUpgrade, TaskMonitor monitor)
+	void checkin(CheckinHandler checkinHandler, TaskMonitor monitor)
 			throws IOException, VersionException, CancelledException {
 
 		if (!versionedFileSystem.isOnline()) {
@@ -1351,15 +1418,29 @@ public class GhidraFileData {
 		if (!modifiedSinceCheckout()) {
 			throw new IOException("File has not been modified since checkout");
 		}
-		verifyRepoUser("checkin");
+		verifyCheckout("checkin");
 		if (monitor == null) {
 			monitor = TaskMonitor.DUMMY;
 		}
+
 		if (busy.getAndSet(true)) {
 			throw new FileInUseException(name + " is busy");
 		}
+
+		DomainObjectAdapterDB inUseDomainObj = null;
 		projectData.mergeStarted();
 		try {
+			ContentHandler<?> contentHandler = getContentHandler();
+
+			inUseDomainObj = getAndLockInUseDomainObjectForMergeUpdate("checkin");
+
+			boolean keepCheckedOut = checkinHandler.keepCheckedOut();
+
+			if (inUseDomainObj != null && !keepCheckedOut) {
+				keepCheckedOut = true;
+				Msg.warn(this, "File currently open - must keep checked-out: " + name);
+			}
+
 			boolean quickCheckin = ALWAYS_MERGE ? false : quickCheckin(checkinHandler, monitor);
 
 			if (!quickCheckin) {
@@ -1371,9 +1452,8 @@ public class GhidraFileData {
 
 				Msg.info(this, "Checkin with merge for " + name);
 
-				ContentHandler<?> ch = getContentHandler();
-				DomainObjectAdapter checkinObj = ch.getDomainObject(versionedFolderItem, null,
-					folderItem.getCheckoutId(), okToUpgrade, false, this, monitor);
+				DomainObjectAdapter checkinObj = contentHandler.getDomainObject(versionedFolderItem,
+					null, folderItem.getCheckoutId(), false, false, this, monitor);
 				checkinObj.setDomainFile(new DomainFileProxy(name, getParent().getPathname(),
 					checkinObj, versionedFolderItem.getCurrentVersion() + 1, fileID,
 					parent.getProjectLocator()));
@@ -1384,15 +1464,15 @@ public class GhidraFileData {
 				try {
 					synchronized (fileSystem) {
 						int coVer = folderItem.getCheckoutVersion();
-						sourceObj = ch.getImmutableObject(folderItem, this,
+						sourceObj = contentHandler.getImmutableObject(folderItem, this,
 							DomainFile.DEFAULT_VERSION, -1, monitor);
-						originalObj =
-							ch.getImmutableObject(versionedFolderItem, this, coVer, -1, monitor);
-						latestObj = ch.getImmutableObject(versionedFolderItem, this,
+						originalObj = contentHandler.getImmutableObject(versionedFolderItem, this,
+							coVer, -1, monitor);
+						latestObj = contentHandler.getImmutableObject(versionedFolderItem, this,
 							DomainFile.DEFAULT_VERSION, coVer, monitor);
 					}
-					DomainObjectMergeManager mergeMgr =
-						ch.getMergeManager(checkinObj, sourceObj, originalObj, latestObj);
+					DomainObjectMergeManager mergeMgr = contentHandler.getMergeManager(checkinObj,
+						sourceObj, originalObj, latestObj);
 
 					if (!mergeMgr.merge(monitor)) {
 						Msg.info(this, "Checkin with merge terminated for " + name);
@@ -1411,26 +1491,13 @@ public class GhidraFileData {
 				}
 				finally {
 					checkinObj.release(this);
-					if (sourceObj != null) {
-						sourceObj.release(this);
-					}
-					if (originalObj != null) {
-						originalObj.release(this);
-					}
-					if (latestObj != null) {
-						latestObj.release(this);
-					}
+					release(sourceObj);
+					release(originalObj);
+					release(latestObj);
 				}
 			}
 
-			DomainObjectAdapter oldDomainObj = null;
-
-			FolderItem oldLocalItem = null;
-			boolean keepCheckedOut = checkinHandler.keepCheckedOut();
-
 			synchronized (fileSystem) {
-
-				oldDomainObj = getOpenedDomainObject();
 
 				versionedFolderItem = versionedFileSystem.getItem(parent.getPathname(), name);
 				if (versionedFolderItem == null) {
@@ -1450,7 +1517,17 @@ public class GhidraFileData {
 					}
 					finally {
 						if (!success) {
+							// Failed to update checkout for unknown reason
 							try {
+								if (inUseDomainObj != null) {
+									// On error disassociate open domain object from this file
+									projectData.clearDomainObject(getPathname());
+									// An invalid version (-2) is specified to avoid file match
+									inUseDomainObj.setDomainFile(new DomainFileProxy(name,
+										parent.getPathname(), inUseDomainObj, -2, fileID,
+										parent.getProjectLocator()));
+									inUseDomainObj.setTemporary(true);
+								}
 								undoCheckout(false, true);
 							}
 							catch (IOException e) {
@@ -1460,53 +1537,71 @@ public class GhidraFileData {
 					}
 				}
 				else {
-					if (oldDomainObj != null) {
-						oldLocalItem = folderItem;
-						folderItem = null;
-					}
-					else {
-						undoCheckout(false, true);
-					}
+					undoCheckout(false, true);
 				}
-				if (oldDomainObj != null) {
 
-					// TODO: Develop way to re-use and re-init domain object instead of a switch-a-roo approach
-
-					projectData.clearDomainObject(getPathname());
-
-					oldDomainObj.setDomainFile(new DomainFileProxy(name, parent.getPathname(),
-						oldDomainObj, -2, fileID, parent.getProjectLocator())); // invalid version (-2) specified to avoid file match
-					oldDomainObj.setTemporary(true);
+				if (inUseDomainObj != null) {
+					contentHandler.resetDBSourceFile(folderItem, inUseDomainObj);
 				}
-			}
 
-			if (oldDomainObj != null) {
-				// complete re-open of domain file
-				DomainFile df = getDomainFile();
-				listener.domainFileObjectClosed(df, oldDomainObj);
-				listener.domainFileObjectReplaced(df, oldDomainObj);
-			}
+			} // end of synchronized block
 
-			if (oldLocalItem != null) {
-				synchronized (fileSystem) {
-					// Undo checkout of old item - this will fail on Windows if item is open
-					long checkoutId = oldLocalItem.getCheckoutId();
-					oldLocalItem.delete(-1, ClientUtil.getUserName());
-					versionedFolderItem.terminateCheckout(checkoutId, true);
-				}
+			if (inUseDomainObj != null) {
+				inUseDomainObj.invalidate();
 			}
 		}
 		finally {
+			unlockDomainObject(inUseDomainObj);
 			busy.set(false);
-			try {
-				parent.deleteLocalFolderIfEmpty();
-				parent.fileChanged(name);
+			projectData.mergeEnded();
+			parent.deleteLocalFolderIfEmpty();
+			parent.fileChanged(name);
+		}
+	}
+
+	private void release(DomainObject domainObj) {
+		if (domainObj != null) {
+			domainObj.release(this);
+		}
+	}
+
+	private void unlockDomainObject(DomainObjectAdapterDB lockedDomainObject) {
+		try {
+			if (lockedDomainObject != null) {
+				lockedDomainObject.unlock();
 			}
-			finally {
-				projectData.mergeEnded();
+		}
+		catch (Exception e) {
+			Msg.error(this, "Unexpected " + getContentType() + " lock error: " + getName());
+		}
+	}
+
+	private DomainObjectAdapterDB getAndLockInUseDomainObjectForMergeUpdate(String operation)
+			throws IOException {
+		DomainObjectAdapterDB inUseDomainObj;
+		synchronized (fileSystem) {
+			DomainObjectAdapter domainObj = getOpenedDomainObject();
+			if (domainObj == null) {
+				return null;
+			}
+			// If we proceed with file in-use it must be instance of DomainObjectAdapterDB
+			if (!(domainObj instanceof DomainObjectAdapterDB)) {
+				throw new FileInUseException(name + " is in use");
+			}
+			inUseDomainObj = (DomainObjectAdapterDB) domainObj;
+			if (inUseDomainObj.isChanged()) {
+				throw new FileInUseException(name + " is in use w/ unsaved changes");
 			}
 		}
 
+		// Ensure that existing domain object will support DB merge update and is can be locked
+		ContentHandler<?> contentHandler = getContentHandler();
+		if (!contentHandler.canResetDBSourceFile() || !inUseDomainObj.lock(operation) ||
+			inUseDomainObj.getDBHandle().hasUncommittedChanges()) {
+			throw new FileInUseException(name + " is in use");
+		}
+
+		return inUseDomainObj;
 	}
 
 	/**
@@ -1613,7 +1708,7 @@ public class GhidraFileData {
 				throw new IOException("File not checked out");
 			}
 			if (!doForce) {
-				verifyRepoUser("undo-checkout");
+				verifyCheckout("undo-checkout");
 				long checkoutId = folderItem.getCheckoutId();
 				versionedFolderItem.terminateCheckout(checkoutId, true);
 			}
@@ -1660,7 +1755,7 @@ public class GhidraFileData {
 		return false;
 	}
 
-	private void createKeepFile(DomainObject oldDomainObj, TaskMonitor monitor) {
+	private void createKeepFile(DomainObject sourceObj, TaskMonitor monitor) {
 		String keepName = name + ".keep";
 		try {
 			GhidraFileData keepFileData = parent.getFileData(keepName, false);
@@ -1677,7 +1772,7 @@ public class GhidraFileData {
 			}
 			keepName = getKeepName();
 			Msg.info(this, "Creating old version keep file: " + keepName);
-			parent.createFile(keepName, oldDomainObj, monitor);
+			parent.createFile(keepName, sourceObj, monitor);
 		}
 		catch (InvalidNameException e) {
 			throw new AssertException("Unexpected error", e);
@@ -1759,10 +1854,10 @@ public class GhidraFileData {
 
 	private void removeAssociatedUserDataFile() {
 		try {
-			ContentHandler<?> ch = getContentHandler();
-			if (ch instanceof DBWithUserDataContentHandler) {
+			ContentHandler<?> contentHandler = getContentHandler();
+			if (contentHandler instanceof DBWithUserDataContentHandler) {
 				FolderItem item = folderItem != null ? folderItem : versionedFolderItem;
-				((DBWithUserDataContentHandler<?>) ch).removeUserDataFile(item,
+				((DBWithUserDataContentHandler<?>) contentHandler).removeUserDataFile(item,
 					parent.getUserFileSystem());
 			}
 		}
@@ -1806,7 +1901,7 @@ public class GhidraFileData {
 		if (canRecover()) {
 			throw new IOException("File recovery data exists");
 		}
-		verifyRepoUser("merge");
+		verifyCheckout("merge");
 		if (monitor == null) {
 			monitor = TaskMonitor.DUMMY;
 		}
@@ -1815,8 +1910,11 @@ public class GhidraFileData {
 		}
 
 		FolderItem tmpItem = null;
+		DomainObjectAdapterDB inUseDomainObj = null;
 		projectData.mergeStarted();
 		try {
+			inUseDomainObj = getAndLockInUseDomainObjectForMergeUpdate("merge");
+
 			if (!modifiedSinceCheckout()) {
 				// Quick merge
 				folderItem.updateCheckout(versionedFolderItem, true, monitor);
@@ -1824,17 +1922,17 @@ public class GhidraFileData {
 			else {
 
 				if (SystemUtilities.isInHeadlessMode()) {
-					throw new IOException(
-						"Merge failed, file merge is not supported in headless mode");
+					throw new IOException("Merge failed, merge is not supported in headless mode");
 				}
 
-				ContentHandler<?> ch = getContentHandler();
+				ContentHandler<?> contentHandler = getContentHandler();
 
 				// Test versioned file for VersionException
 				int mergeVer = versionedFolderItem.getCurrentVersion();
 				if (!okToUpgrade) {
-					DomainObject testObj =
-						ch.getReadOnlyObject(versionedFolderItem, mergeVer, false, this, monitor);
+					// verify remote version can be opened without verion error
+					DomainObject testObj = contentHandler.getReadOnlyObject(versionedFolderItem,
+						mergeVer, false, this, monitor);
 					testObj.release(this);
 				}
 
@@ -1860,21 +1958,21 @@ public class GhidraFileData {
 
 				tmpItem.setCheckout(checkoutId, folderItem.isCheckedOutExclusive(), mergeVer, 0);
 
-				DomainObject mergeObj =
-					ch.getDomainObject(tmpItem, null, -1, okToUpgrade, false, this, monitor);
+				DomainObject mergeObj = contentHandler.getDomainObject(tmpItem, null, -1,
+					okToUpgrade, false, this, monitor);
 				DomainObject sourceObj = null;
 				DomainObject originalObj = null;
 				DomainObject latestObj = null; // TODO: Is there some way to leverage the buffer file we already copied into tmpItem? Missing required change set
 				try {
-					sourceObj = ch.getImmutableObject(folderItem, this, DomainFile.DEFAULT_VERSION,
-						-1, monitor);
-					originalObj =
-						ch.getImmutableObject(versionedFolderItem, this, coVer, -1, monitor);
-					latestObj =
-						ch.getImmutableObject(versionedFolderItem, this, mergeVer, coVer, monitor);
+					sourceObj = contentHandler.getImmutableObject(folderItem, this,
+						DomainFile.DEFAULT_VERSION, -1, monitor);
+					originalObj = contentHandler.getImmutableObject(versionedFolderItem, this,
+						coVer, -1, monitor);
+					latestObj = contentHandler.getImmutableObject(versionedFolderItem, this,
+						mergeVer, coVer, monitor);
 
 					DomainObjectMergeManager mergeMgr =
-						ch.getMergeManager(mergeObj, sourceObj, originalObj, latestObj);
+						contentHandler.getMergeManager(mergeObj, sourceObj, originalObj, latestObj);
 
 					if (!mergeMgr.merge(monitor)) {
 						Msg.info(this, "Merge terminated for " + name);
@@ -1882,19 +1980,14 @@ public class GhidraFileData {
 					}
 
 					mergeObj.save("Merge with version " + mergeVer, monitor);
+
 					createKeepFile(sourceObj, monitor);
 				}
 				finally {
-					mergeObj.release(this);
-					if (sourceObj != null) {
-						sourceObj.release(this);
-					}
-					if (originalObj != null) {
-						originalObj.release(this);
-					}
-					if (latestObj != null) {
-						latestObj.release(this);
-					}
+					release(mergeObj);
+					release(sourceObj);
+					release(originalObj);
+					release(latestObj);
 				}
 
 				// Update folder item
@@ -1903,29 +1996,18 @@ public class GhidraFileData {
 					ClientUtil.getUserName());
 				tmpItem = null;
 				Msg.info(this, "Merge completed for " + name);
-			}
 
-			DomainObjectAdapter oldDomainObj = null;
-
-			// TODO: Develop way to re-use and re-init domain object instead of a switch-a-roo approach
-
-			synchronized (fileSystem) {
-				oldDomainObj = getOpenedDomainObject();
-				if (oldDomainObj != null) {
-					projectData.clearDomainObject(getPathname());
-					oldDomainObj.setDomainFile(new DomainFileProxy("~" + name, oldDomainObj));
-					oldDomainObj.setTemporary(true);
+				if (inUseDomainObj != null) {
+					contentHandler.resetDBSourceFile(folderItem, inUseDomainObj);
 				}
 			}
 
-			if (oldDomainObj != null) {
-				// Complete re-open of file
-				DomainFile df = getDomainFile();
-				listener.domainFileObjectClosed(df, oldDomainObj);
-				listener.domainFileObjectReplaced(df, oldDomainObj);
+			if (inUseDomainObj != null) {
+				inUseDomainObj.invalidate();
 			}
 		}
 		finally {
+			unlockDomainObject(inUseDomainObj);
 			busy.set(false);
 			try {
 				if (tmpItem != null) {
@@ -2275,19 +2357,22 @@ public class GhidraFileData {
 	/**
 	 * Returns an ordered map containing the metadata stored within a specific {@link FolderItem}
 	 * database. The map contains key,value pairs and are ordered by their insertion order. 
+	 * @param item folder item whose metadata should be read
 	 * @return a map containing the metadata that has been associated with the corresponding domain 
 	 * object.  Map will be empty for a non-database item.
 	 */
 	static Map<String, String> getMetadata(FolderItem item) {
+		if (!(item instanceof DatabaseItem databaseItem)) {
+			return new HashMap<>();
+		}
+		ManagedBufferFile bf = null;
+		DBHandle dbh = null;
 		GenericDomainObjectDB genericDomainObj = null;
 		try {
-			if (item instanceof DatabaseItem) {
-				DatabaseItem databaseItem = (DatabaseItem) item;
-				BufferFile bf = databaseItem.open();
-				DBHandle dbh = new DBHandle(bf);
-				genericDomainObj = new GenericDomainObjectDB(dbh);
-				return genericDomainObj.getMetadata();
-			}
+			bf = databaseItem.open();
+			dbh = new DBHandle(bf);
+			genericDomainObj = new GenericDomainObjectDB(dbh);
+			return genericDomainObj.getMetadata();
 		}
 		catch (FileNotFoundException e) {
 			// file has been deleted, just return an empty map.
@@ -2301,6 +2386,12 @@ public class GhidraFileData {
 		finally {
 			if (genericDomainObj != null) {
 				genericDomainObj.release();
+			}
+			if (dbh != null) {
+				dbh.close();
+			}
+			if (bf != null) {
+				bf.dispose();
 			}
 		}
 		return new HashMap<>();

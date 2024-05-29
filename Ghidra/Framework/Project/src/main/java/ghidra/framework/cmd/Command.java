@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +20,9 @@ import ghidra.framework.model.DomainObject;
 /**
  * Interface to define a change made to a domain object.
  *
+ * @param <T> {@link DomainObject} implementation interface
  */
-public interface Command {
+public interface Command<T extends DomainObject> {
 
 	/**
 	 * Applies the command to the given domain object.
@@ -31,8 +31,8 @@ public interface Command {
 	 * 
 	 * @return true if the command applied successfully
 	 */
-	public boolean applyTo(DomainObject obj);
-	
+	public boolean applyTo(T obj);
+
 	/**
 	 * Returns the status message indicating the status of the command.
 	 * 
@@ -40,7 +40,7 @@ public interface Command {
 	 *         was successful
 	 */
 	public String getStatusMsg();
-	
+
 	/**
 	 * Returns the name of this command.
 	 * 

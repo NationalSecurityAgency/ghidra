@@ -622,65 +622,54 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 
 	@Override
 	public int getBytes(byte[] b, int offset) {
-		lock.acquire();
-		try {
-			checkIsValid();
-			populateByteArray();
-			if (offset < 0 || (offset + b.length) > bytes.length) {
-				return program.getMemory().getBytes(address.add(offset), b);
-			}
-			System.arraycopy(bytes, offset, b, 0, b.length);
+		refreshIfNeeded();
+		byte localBytes[] = populateByteArray();
+		if (offset >= 0 && (offset + b.length) <= localBytes.length) {
+			System.arraycopy(localBytes, offset, b, 0, b.length);
 			return b.length;
 		}
-		catch (AddressOutOfBoundsException | MemoryAccessException e) {
-			return 0;
+		
+		try {
+			return program.getMemory().getBytes(address.add(offset), b);
 		}
-		finally {
-			lock.release();
+		catch (MemoryAccessException | AddressOutOfBoundsException e) {
+			return 0;
 		}
 	}
 
 	@Override
 	public byte[] getBytes() throws MemoryAccessException {
-		lock.acquire();
-		try {
-			checkIsValid();
-			populateByteArray();
-			int len = getLength();
-			byte[] b = new byte[len];
-			if (bytes.length < len) {
-				if (program.getMemory().getBytes(address, b) != len) {
-					throw new MemoryAccessException("Couldn't get all bytes for CodeUnit");
-				}
-			}
-			else {
-				System.arraycopy(bytes, 0, b, 0, b.length);
-			}
+		refreshIfNeeded();
+		byte localBytes[] = populateByteArray();
+		int locallen = getLength();
+		if (localBytes.length >= locallen ) {
+			byte[] b = new byte[locallen];
+			System.arraycopy(localBytes, 0, b, 0, b.length);
 			return b;
 		}
-		finally {
-			lock.release();
+		
+		int len = getLength();
+		byte[] b = new byte[len];
+
+		if (program.getMemory().getBytes(address, b) != len) {
+			throw new MemoryAccessException("Couldn't get all bytes for CodeUnit");
 		}
+		return b;
 	}
 
 	@Override
 	public byte getByte(int offset) throws MemoryAccessException {
-		lock.acquire();
-		try {
-			checkIsValid();
-			populateByteArray();
-			if (offset < 0 || offset >= bytes.length) {
-				try {
-					return program.getMemory().getByte(address.add(offset));
-				}
-				catch (AddressOutOfBoundsException e) {
-					throw new MemoryAccessException(e.getMessage());
-				}
-			}
-			return bytes[offset];
+		refreshIfNeeded();
+		byte localBytes[] = populateByteArray();
+		if (offset >= 0 && offset < localBytes.length) {
+			return localBytes[offset];
 		}
-		finally {
-			lock.release();
+
+		try {
+			return program.getMemory().getByte(address.add(offset));
+		}
+		catch (AddressOutOfBoundsException e) {
+			throw new MemoryAccessException(e.getMessage());
 		}
 	}
 
@@ -785,24 +774,27 @@ abstract class CodeUnitDB extends DatabaseObject implements CodeUnit, ProcessorC
 		}
 	}
 
-	private void populateByteArray() {
-		if (bytes != null) {
-			return;
+	private byte[] populateByteArray() {
+		byte[] localBytes = bytes;
+		if (localBytes != null) {
+			return localBytes;
 		}
 		int cacheLength = getPreferredCacheLength();
-		bytes = new byte[cacheLength];
+		localBytes = new byte[cacheLength];
 		if (cacheLength != 0) {
 			int nbytes = 0;
 			try {
-				nbytes = program.getMemory().getBytes(address, bytes);
+				nbytes = program.getMemory().getBytes(address, localBytes);
 			}
 			catch (MemoryAccessException e) {
 				// ignore
 			}
-			if (nbytes != bytes.length) {
-				bytes = new byte[0];
+			if (nbytes != localBytes.length) {
+				localBytes = new byte[0];
 			}
 		}
+		bytes = localBytes;
+		return localBytes;
 	}
 
 	protected int getPreferredCacheLength() {

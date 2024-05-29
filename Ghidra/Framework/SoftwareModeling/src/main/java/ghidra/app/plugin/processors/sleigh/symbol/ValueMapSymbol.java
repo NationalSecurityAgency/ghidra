@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.processors.sleigh.symbol;
 
+import static ghidra.pcode.utils.SlaFormat.*;
+
 import java.util.*;
 
 import ghidra.app.plugin.processors.sleigh.*;
@@ -22,9 +24,8 @@ import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
 import ghidra.app.plugin.processors.sleigh.expression.PatternValue;
 import ghidra.program.model.lang.UnknownInstructionException;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.util.xml.SpecXmlUtils;
-import ghidra.xml.XmlElement;
-import ghidra.xml.XmlPullParser;
+import ghidra.program.model.pcode.Decoder;
+import ghidra.program.model.pcode.DecoderException;
 
 public class ValueMapSymbol extends ValueSymbol {
 	private long[] valuetable;		// Map from natural encoding to attached values
@@ -43,14 +44,12 @@ public class ValueMapSymbol extends ValueSymbol {
 		long max = getPatternValue().maxValue();
 		tableisfilled = (min >= 0) && (max < valuetable.length);
 		for (long element : valuetable) {
-			if (element == 0xBADBEEF)
+			if (element == 0xBADBEEF) {
 				tableisfilled = false;
+			}
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.symbol.TripleSymbol#resolve(ghidra.app.plugin.processors.sleigh.ParserWalker, ghidra.app.plugin.processors.sleigh.SleighDebugLogger)
-	 */
 	@Override
 	public Constructor resolve(ParserWalker walker, SleighDebugLogger debug)
 			throws MemoryAccessException, UnknownInstructionException {
@@ -68,9 +67,6 @@ public class ValueMapSymbol extends ValueSymbol {
 		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.plugin.processors.sleigh.symbol.TripleSymbol#getFixedHandle(ghidra.app.plugin.processors.sleigh.FixedHandle, ghidra.app.plugin.processors.sleigh.ParserWalker)
-	 */
 	@Override
 	public void getFixedHandle(FixedHandle hand, ParserWalker walker) throws MemoryAccessException {
 		int ind = (int) getPatternValue().getValue(walker);
@@ -87,28 +83,30 @@ public class ValueMapSymbol extends ValueSymbol {
 		// ind is already known to be a valid array index via resolve
 		long val = valuetable[ind];
 		String res;
-		if (val >= 0)
+		if (val >= 0) {
 			res = "0x" + Long.toHexString(val);
-		else
+		}
+		else {
 			res = "-0x" + Long.toHexString(-val);
+		}
 		return res;
 	}
 
 	@Override
-	public void restoreXml(XmlPullParser parser, SleighLanguage sleigh) {
-		XmlElement el = parser.start("valuemap_sym");
-		patval = (PatternValue) PatternExpression.restoreExpression(parser, sleigh);
-		ArrayList<String> values = new ArrayList<>();
-		XmlElement valuetab;
-		while ((valuetab = parser.softStart("valuetab")) != null) {
-			values.add(valuetab.getAttribute("val"));
-			parser.end(valuetab);
+	public void decode(Decoder decoder, SleighLanguage sleigh) throws DecoderException {
+//		int el = decoder.openElement(ELEM_VALUEMAP_SYM);
+		patval = (PatternValue) PatternExpression.decodeExpression(decoder, sleigh);
+		ArrayList<Long> values = new ArrayList<>();
+		while (decoder.peekElement() == ELEM_VALUETAB.id()) {
+			decoder.openElement();
+			values.add(decoder.readSignedInteger(ATTRIB_VAL));
+			decoder.closeElement(ELEM_VALUETAB.id());
 		}
 		valuetable = new long[values.size()];
 		for (int i = 0; i < valuetable.length; ++i) {
-			valuetable[i] = SpecXmlUtils.decodeLong(values.get(i));
+			valuetable[i] = values.get(i);
 		}
 		checkTableFill();
-		parser.end(el);
+		decoder.closeElement(ELEM_VALUEMAP_SYM.id());
 	}
 }

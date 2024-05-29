@@ -166,7 +166,7 @@ class PropertiesXmlMgr {
 			strMap.add(addr, str);
 		}
 		else if ("bookmarks".equals(type)) {
-			// Must retain for backward compatibility with old Ver-1 Note bookmarks which 
+			// Must retain for backward compatibility with old Ver-1 Note bookmarks which
 			// were saved as simple properties
 			BookmarkManager bmMgr = program.getBookmarkManager();
 			if (!overwrite) {
@@ -254,8 +254,7 @@ class PropertiesXmlMgr {
 			list.setDate(name, new Date(value));
 		}
 		else if ("color".equals(type)) {
-			Color color =
-				ColorUtils.getColor(XmlUtilities.parseInt(element.getAttribute("VALUE")));
+			Color color = ColorUtils.getColor(XmlUtilities.parseInt(element.getAttribute("VALUE")));
 			list.setColor(name, color);
 		}
 		else if ("file".equals(type)) {
@@ -280,7 +279,19 @@ class PropertiesXmlMgr {
 			String xmlString = XmlUtilities.unEscapeElementEntities(escapedXML);
 			KeyStroke keyStroke =
 				(KeyStroke) OptionType.KEYSTROKE_TYPE.convertStringToObject(xmlString);
-			list.setKeyStroke(name, keyStroke);
+
+			ActionTrigger trigger = null;
+			if (keyStroke != null) {
+				trigger = new ActionTrigger(keyStroke);
+			}
+			list.setActionTrigger(name, trigger);
+		}
+		else if ("actionTrigger".equals(type)) {
+			String escapedXML = element.getAttribute("VALUE");
+			String xmlString = XmlUtilities.unEscapeElementEntities(escapedXML);
+			ActionTrigger actionTrigger =
+				(ActionTrigger) OptionType.ACTION_TRIGGER.convertStringToObject(xmlString);
+			list.setActionTrigger(name, actionTrigger);
 		}
 		else if ("custom".equals(type)) {
 			String escapedXML = element.getAttribute("VALUE");
@@ -401,9 +412,15 @@ class PropertiesXmlMgr {
 						attrs.addAttribute("VALUE", XmlUtilities.escapeElementEntities(xmlString));
 						break;
 					case KEYSTROKE_TYPE:
-						attrs.addAttribute("TYPE", "keyStroke");
-						KeyStroke keyStroke = propList.getKeyStroke(name, null);
-						xmlString = OptionType.KEYSTROKE_TYPE.convertObjectToString(keyStroke);
+						attrs.addAttribute("TYPE", "actionTrigger");
+						ActionTrigger trigger = propList.getActionTrigger(name, null);
+						xmlString = OptionType.ACTION_TRIGGER.convertObjectToString(trigger);
+						attrs.addAttribute("VALUE", XmlUtilities.escapeElementEntities(xmlString));
+						break;
+					case ACTION_TRIGGER:
+						attrs.addAttribute("TYPE", "actionTrigger");
+						ActionTrigger actionTrigger = propList.getActionTrigger(name, null);
+						xmlString = OptionType.ACTION_TRIGGER.convertObjectToString(actionTrigger);
 						attrs.addAttribute("VALUE", XmlUtilities.escapeElementEntities(xmlString));
 						break;
 					case CUSTOM_TYPE:

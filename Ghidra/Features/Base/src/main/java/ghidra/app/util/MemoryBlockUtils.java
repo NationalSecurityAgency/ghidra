@@ -209,7 +209,7 @@ public class MemoryBlockUtils {
 	 * @param w the write permission for the new block.
 	 * @param x the execute permission for the new block.
 	 * @param log a {@link MessageLog} for appending error messages
-	 * @return the new created block
+	 * @return the newly created block or null if the operation failed
 	 * @throws AddressOverflowException if the address 
 	 */
 	public static MemoryBlock createInitializedBlock(Program program, boolean isOverlay,
@@ -262,7 +262,7 @@ public class MemoryBlockUtils {
 	 * @param x the execute permission for the new block.
 	 * @param log a {@link MessageLog} for appending error messages
 	 * @param monitor the monitor for canceling this potentially long running operation.
-	 * @return the new created block
+	 * @return the newly created block or null if the operation failed
 	 * @throws AddressOverflowException if the address 
 	 */
 	public static MemoryBlock createInitializedBlock(Program program, boolean isOverlay,

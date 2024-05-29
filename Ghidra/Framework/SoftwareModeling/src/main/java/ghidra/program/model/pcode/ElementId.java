@@ -268,6 +268,7 @@ public record ElementId(String name, int id) {
 	public static final ElementId ELEM_RETPARAM = new ElementId("retparam", 171);
 	public static final ElementId ELEM_RETURNSYM = new ElementId("returnsym", 172);
 	public static final ElementId ELEM_UNAFFECTED = new ElementId("unaffected", 173);
+	public static final ElementId ELEM_INTERNAL_STORAGE = new ElementId("internal_storage", 286);
 
 	// options
 	public static final ElementId ELEM_ALIASBLOCK = new ElementId("aliasblock", 174);
@@ -423,6 +424,20 @@ public record ElementId(String name, int id) {
 	public static final ElementId ELEM_COMMAND_GETUSEROPNAME =
 		new ElementId("command_getuseropname", COMMAND_GETUSEROPNAME);
 
+	// signature
+	public static final ElementId ELEM_BLOCKSIG = new ElementId("blocksig", 258);
+	public static final ElementId ELEM_CALL = new ElementId("call", 259);
+	public static final ElementId ELEM_GENSIG = new ElementId("gensig", 260);
+	public static final ElementId ELEM_MAJOR = new ElementId("major", 261);
+	public static final ElementId ELEM_MINOR = new ElementId("minor", 262);
+	public static final ElementId ELEM_COPYSIG = new ElementId("copysig", 263);
+	public static final ElementId ELEM_SETTINGS = new ElementId("settings", 264);
+	public static final ElementId ELEM_SIG = new ElementId("sig", 265);
+	public static final ElementId ELEM_SIGNATUREDESC = new ElementId("signaturedesc", 266);
+	public static final ElementId ELEM_SIGNATURES = new ElementId("signatures", 267);
+	public static final ElementId ELEM_SIGSETTINGS = new ElementId("sigsettings", 268);
+	public static final ElementId ELEM_VARSIG = new ElementId("varsig", 269);
+
 	public static final ElementId ELEM_SPLITDATATYPE = new ElementId("splitdatatype", 270);
 	public static final ElementId ELEM_JUMPTABLEMAX = new ElementId("jumptablemax", 271);
 	public static final ElementId ELEM_NANIGNORE = new ElementId("nanignore", 272);
@@ -440,6 +455,7 @@ public record ElementId(String name, int id) {
 	public static final ElementId ELEM_HIDDEN_RETURN = new ElementId("hidden_return", 282);
 	public static final ElementId ELEM_JOIN_PER_PRIMITIVE =
 		new ElementId("join_per_primitive", 283);
+	public static final ElementId ELEM_JOIN_DUAL_CLASS = new ElementId("join_dual_class", 285);
 
-	public static final ElementId ELEM_UNKNOWN = new ElementId("XMLunknown", 285);
+	public static final ElementId ELEM_UNKNOWN = new ElementId("XMLunknown", 287);
 }

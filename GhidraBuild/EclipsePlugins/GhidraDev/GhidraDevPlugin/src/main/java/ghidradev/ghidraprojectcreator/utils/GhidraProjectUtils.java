@@ -16,6 +16,7 @@
 package ghidradev.ghidraprojectcreator.utils;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.*;
 
@@ -43,6 +44,7 @@ import utility.module.ModuleUtilities;
 /**
  * Utility methods for working with Eclipse Ghidra projects.
  */
+@SuppressWarnings("restriction")
 public class GhidraProjectUtils {
 
 	/**
@@ -289,6 +291,9 @@ public class GhidraProjectUtils {
 		project.create(projectDescription, monitor);
 		IJavaProject javaProject = JavaCore.create(project);
 		project.open(monitor);
+
+		// Set the project's default encoding
+		project.setDefaultCharset(StandardCharsets.UTF_8.displayName(), monitor);
 
 		// Clear the project's classpath
 		javaProject.setRawClasspath(new IClasspathEntry[0], monitor);

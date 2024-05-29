@@ -36,6 +36,7 @@ import ghidra.app.util.bin.format.elf.extend.ElfLoadAdapter;
 import ghidra.app.util.bin.format.elf.info.ElfInfoProducer;
 import ghidra.app.util.bin.format.elf.relocation.*;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.framework.Application;
 import ghidra.framework.options.Options;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.mem.FileBytes;
@@ -878,10 +879,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 		monitor.initialize(totalCount);
 
-		ElfRelocationContext context = null;
-		if (processRelocations) {
-			context = ElfRelocationContext.getRelocationContext(this, symbolMap);
-		}
+		ElfRelocationContext context = ElfRelocationContext.getRelocationContext(this, symbolMap);
 		try {
 			for (ElfRelocationTable relocationTable : relocationTables) {
 				monitor.checkCancelled();
@@ -978,7 +976,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 
 		boolean relrTypeUnknown = false;
-		long relrRelocationType = 0;
+		int relrRelocationType = 0;
 		if (relocationTable.isRelrTable() && context != null) {
 			relrRelocationType = context.getRelrRelocationType();
 			if (relrRelocationType == 0) {
@@ -992,7 +990,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			monitor.checkCancelled();
 			monitor.incrementProgress(1);
 
-			long type = reloc.getType();
+			int type = reloc.getType();
 			if (type == 0) {
 				continue; // ignore relocation type 0 (i.e., ..._NONE)
 			}
@@ -1022,8 +1020,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			try {
 				if (unableToApplyRelocs) {
 					status = Status.FAILURE;
-					ElfRelocationHandler.markAsError(program, relocAddr, type, symbolName,
-						"missing symbol table", log);
+					context.markRelocationError(relocAddr, type, symbolIndex, symbolName,
+						"Missing symbol table");
 					continue;
 				}
 
@@ -1038,9 +1036,10 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					catch (Exception e) {
 						status = Status.FAILURE;
 						Msg.error(this,
-							"Unexpected exception while converting block to initialized", e);
-						ElfRelocationHandler.markAsUninitializedMemory(program, relocAddr, type,
-							reloc.getSymbolIndex(), symbolName, log);
+							"Unexpected exception while converting block to initialized for relocations",
+							e);
+						context.markRelocationError(relocAddr, type, symbolIndex, symbolName,
+							"Uninitialized memory");
 						continue;
 					}
 				}
@@ -1048,7 +1047,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				if (context != null) {
 					if (relrTypeUnknown) {
 						status = Status.UNSUPPORTED;
-						ElfRelocationHandler.markAsUnsupportedRelr(program, relocAddr);
+						ElfRelocationHandler.bookmarkUnsupportedRelr(program, relocAddr,
+							symbolIndex, symbolName);
 					}
 					else {
 						RelocationResult result = context.processRelocation(reloc, relocAddr);
@@ -1360,12 +1360,22 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	}
 
 	private void allocateUndefinedSymbolData(HashMap<Address, Integer> dataAllocationMap) {
+		if (!ElfLoaderOptionsFactory.applyUndefinedSymbolData(options)) {
+			return;
+		}
 		for (Address addr : dataAllocationMap.keySet()) {
+
+			MemoryBlock block = memory.getBlock(addr);
+			if (block == null) {
+				continue;
+			}
+
 			// Create undefined data for each data/object symbol
 			Integer symbolSize = dataAllocationMap.get(addr);
 			if (symbolSize != null) {
 				try {
-					createUndefined(addr, symbolSize);
+					DataType undefined = Undefined.getUndefinedDataType(symbolSize);
+					listing.createData(addr, undefined);
 				}
 				catch (CodeUnitInsertionException e) {
 					// ignore conflicts which can be caused by other markup
@@ -1536,6 +1546,10 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			// assume any value in external is writable.
 			block.setWrite(true);
+
+			// Mark block as an artificial fabrication
+			block.setArtificial(true);
+
 			block.setSourceName(BLOCK_SOURCE_NAME);
 			block.setComment(
 				"NOTE: This block is artificial and allows ELF Relocations to work correctly");
@@ -1606,7 +1620,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		Address debugDataAddr = findLoadAddress(debugDataSection, 0);
 		if (debugDataAddr != null) {
 			try {
-				File tmpFile = File.createTempFile("ghidra_gnu_debugdata", null);
+				File tmpFile = Application.createTempFile("ghidra_gnu_debugdata", null);
 				try (ByteProviderWrapper compressedDebugDataBP = new ByteProviderWrapper(
 					new MemoryByteProvider(memory, debugDataAddr), 0, debugDataSection.getSize());
 						XZCompressorInputStream xzIS =
@@ -1792,13 +1806,22 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 				symbolSpace = symSectionBase.getAddressSpace();
 
-				if (elf.isRelocatable()) {
+				Long relOffset = loadAdapter.getSectionSymbolRelativeOffset(symSection,
+					symSectionBase, elfSymbol);
+				if (relOffset != null) {
 					// Section relative symbol - ensure that symbol remains in
 					// overlay space even if beyond bounds of associated block
-					// Note: don't use symOffset variable since it may have been
-					//   adjusted for image base
-					return symSectionBase.addWrapSpace(elfSymbol.getValue() *
-						symSectionBase.getAddressSpace().getAddressableUnitSize());
+					try {
+						return symSectionBase.addNoWrap(
+							relOffset * symSectionBase.getAddressSpace().getAddressableUnitSize());
+					}
+					catch (AddressOverflowException e) {
+						log("Unable to place symbol within section (address overflow): " +
+							elfSymbol.getFormattedName() + " - value=0x" +
+							Long.toHexString(elfSymbol.getValue()) + ", section=" +
+							symSection.getNameAsString());
+						return null;
+					}
 				}
 			}
 
@@ -2310,6 +2333,9 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 	@Override
 	public Data createUndefinedData(Address address, int length) {
+		if (!ElfLoaderOptionsFactory.applyUndefinedSymbolData(options)) {
+			return null;
+		}
 		try {
 			// If it is bigger than 8, just let it go through and create a single undefined
 			// Otherwise this would create an array of undefined, might get in the way
@@ -2443,15 +2469,15 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	private void setCompiler(TaskMonitor monitor) {
 		// Check for Rust
 		try {
-			if (RustUtilities.isRust(program, ElfSectionHeaderConstants.dot_rodata)) {
+			if (RustUtilities.isRust(memory.getBlock(ElfSectionHeaderConstants.dot_rodata))) {
+				program.setCompiler(RustConstants.RUST_COMPILER);
 				int extensionCount = RustUtilities.addExtensions(program, monitor,
 					RustConstants.RUST_EXTENSIONS_UNIX);
 				log.appendMsg("Installed " + extensionCount + " Rust cspec extensions");
-				program.setCompiler("rustc");
 			}
 		}
 		catch (IOException e) {
-			log.appendException(e);
+			log.appendMsg("Rust error: " + e.getMessage());
 		}
 	}
 
@@ -3547,16 +3573,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 	private String pad(int value) {
 		return StringUtilities.pad("" + value, ' ', 4);
-	}
-
-	private Data createUndefined(Address addr, int size) throws CodeUnitInsertionException {
-
-		MemoryBlock block = memory.getBlock(addr);
-		if (block == null) {
-			return null;
-		}
-		DataType undefined = Undefined.getUndefinedDataType(size);
-		return listing.createData(addr, undefined);
 	}
 
 	@Override

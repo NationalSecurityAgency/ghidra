@@ -18,6 +18,8 @@ package ghidra.trace.database.program;
 import java.io.InputStream;
 import java.math.BigInteger;
 
+import javax.help.UnsupportedOperationException;
+
 import ghidra.framework.store.LockException;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
@@ -57,7 +59,7 @@ public class DBTraceProgramViewMemoryRegionBlock extends AbstractDBTraceProgramV
 	}
 
 	@Override
-	public int getPermissions() {
+	public int getFlags() {
 		int bits = 0;
 		for (TraceMemoryFlag flag : region.getFlags()) {
 			bits |= flag.getBits();
@@ -144,5 +146,16 @@ public class DBTraceProgramViewMemoryRegionBlock extends AbstractDBTraceProgramV
 	@Override
 	public void setVolatile(boolean v) {
 		region.setVolatile(v);
+	}
+
+	@Override
+	public boolean isArtificial() {
+		// By definition, any region present on target is non-artificial
+		return false;
+	}
+
+	@Override
+	public void setArtificial(boolean a) {
+		throw new UnsupportedOperationException();
 	}
 }

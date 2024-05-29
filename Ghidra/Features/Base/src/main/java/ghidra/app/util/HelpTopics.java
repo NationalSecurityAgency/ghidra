@@ -18,7 +18,7 @@ package ghidra.app.util;
 /**
  * Topics for Help. The strings correspond to a folder under the "topics"
  * resource.
- * 
+ *
  */
 public interface HelpTopics {
 
@@ -165,7 +165,12 @@ public interface HelpTopics {
 	 */
 	public final static String REPOSITORY = GenericHelpTopics.REPOSITORY;
 
-	/** 
+	/**
+	 * Help Topic for the Runtime Info Plugin.
+	 */
+	public final static String RUNTIME_INFO = "RuntimeInfoPlugin";
+
+	/**
 	 * Help Topic for search functions.
 	 */
 	public final static String SEARCH = "Search";

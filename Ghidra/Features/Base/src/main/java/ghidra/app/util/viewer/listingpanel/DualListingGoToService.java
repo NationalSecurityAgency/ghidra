@@ -22,6 +22,7 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.ExternalLocation;
 import ghidra.program.util.ProgramLocation;
+import ghidra.util.datastruct.Duo.Side;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -32,7 +33,7 @@ import ghidra.util.task.TaskMonitor;
 class DualListingGoToService implements GoToService {
 
 	private ListingCodeComparisonPanel dualListing;
-	private boolean isLeftSide;
+	private Side side;
 	private GoToOverrideService overrideService;
 	private GoToService goToService;
 
@@ -41,13 +42,13 @@ class DualListingGoToService implements GoToService {
 	 * @param goToService the GoToService that this overrides and that can be used when the
 	 * GoToService methods don't pertain specifically to the left or right listing panel.
 	 * @param dualListing the dual listing panel
-	 * @param isLeftSide true means this GoToService is for the left listing panel of the dual listing.
+	 * @param side the LEFT or RIGHT side
 	 */
 	DualListingGoToService(GoToService goToService, ListingCodeComparisonPanel dualListing,
-			boolean isLeftSide) {
+			Side side) {
 		this.goToService = goToService;
 		this.dualListing = dualListing;
-		this.isLeftSide = isLeftSide;
+		this.side = side;
 	}
 
 	@Override
@@ -92,8 +93,7 @@ class DualListingGoToService implements GoToService {
 		if (addr == null) {
 			return false;
 		}
-		AddressSetView addresses =
-			isLeftSide ? dualListing.getLeftAddresses() : dualListing.getRightAddresses();
+		AddressSetView addresses = dualListing.getAddresses(side);
 		if (!addresses.contains(addr)) {
 			dualListing.setStatusInfo(
 				"\"" + addr.toString() + "\" is outside the current listing's view.");
@@ -112,8 +112,7 @@ class DualListingGoToService implements GoToService {
 			return false;
 		}
 
-		ListingPanel listingPanel =
-			(isLeftSide) ? dualListing.getLeftPanel() : dualListing.getRightPanel();
+		ListingPanel listingPanel = dualListing.getListingPanel(side);
 		return listingPanel.goTo(loc);
 	}
 
@@ -124,8 +123,7 @@ class DualListingGoToService implements GoToService {
 			return false;
 		}
 
-		ListingPanel listingPanel =
-			(isLeftSide) ? dualListing.getLeftPanel() : dualListing.getRightPanel();
+		ListingPanel listingPanel = dualListing.getListingPanel(side);
 		return listingPanel.goTo(addr);
 	}
 

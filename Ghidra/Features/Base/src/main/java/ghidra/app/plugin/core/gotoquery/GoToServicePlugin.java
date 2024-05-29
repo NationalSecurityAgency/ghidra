@@ -40,7 +40,7 @@ import ghidra.program.util.ProgramSelection;
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.SUPPORT,
+	category = PluginCategoryNames.COMMON,
 	shortDescription = "Go To Service",
 	description = "This plugin provides the service used by other plugins to " +
 			"go to an address in the program, or to an address in another program." +
@@ -225,7 +225,8 @@ public final class GoToServicePlugin extends ProgramPlugin {
 		}
 
 		@Override
-		public void removeHighlightProvider(ListingHighlightProvider highlightProvider, Program program) {
+		public void removeHighlightProvider(ListingHighlightProvider highlightProvider,
+				Program program) {
 			CodeViewerService service = tool.getService(CodeViewerService.class);
 			if (service != null) {
 				service.removeHighlightProvider(highlightProvider, program);
@@ -233,7 +234,8 @@ public final class GoToServicePlugin extends ProgramPlugin {
 		}
 
 		@Override
-		public void setHighlightProvider(ListingHighlightProvider highlightProvider, Program program) {
+		public void setHighlightProvider(ListingHighlightProvider highlightProvider,
+				Program program) {
 			CodeViewerService service = tool.getService(CodeViewerService.class);
 			if (service != null) {
 				service.setHighlightProvider(highlightProvider, program);

@@ -17,15 +17,11 @@ package ghidra.app.plugin.core.strings;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Predicate;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 
-import docking.ActionContext;
 import docking.widgets.table.GTableTextCellEditor;
 import docking.widgets.table.threaded.ThreadedTableModelListener;
 import generic.theme.GIcon;
@@ -36,10 +32,8 @@ import ghidra.program.model.data.StringDataInstance;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
-import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * Provider for the defined strings table.
@@ -76,8 +70,8 @@ public class ViewStringsProvider extends ComponentProviderAdapter {
 	}
 
 	@Override
-	public ActionContext getActionContext(MouseEvent event) {
-		return new ViewStringsContext(this, table);
+	public ViewStringsContext getActionContext(MouseEvent event) {
+		return new ViewStringsContext(this, table, stringModel);
 	}
 
 	@Override
@@ -117,7 +111,6 @@ public class ViewStringsProvider extends ComponentProviderAdapter {
 
 		threadedTablePanel = new GhidraThreadedTablePanel<>(stringModel, 1000);
 		table = threadedTablePanel.getTable();
-		table.setName("DataTable");
 		table.setPreferredScrollableViewportSize(new Dimension(350, 150));
 		table.getSelectionModel().addListSelectionListener(e -> notifyContextChanged());
 
@@ -125,8 +118,8 @@ public class ViewStringsProvider extends ComponentProviderAdapter {
 			int rowCount = stringModel.getRowCount();
 			int unfilteredCount = stringModel.getUnfilteredRowCount();
 
-			setSubTitle("" + rowCount + " items" +
-				(rowCount != unfilteredCount ? " (of " + unfilteredCount + ")" : ""));
+			setSubTitle("%d items%s".formatted(rowCount,
+				rowCount != unfilteredCount ? " (of " + unfilteredCount + ")" : ""));
 		});
 
 		stringModel.addThreadedTableModelListener(new ThreadedTableModelListener() {
@@ -155,18 +148,20 @@ public class ViewStringsProvider extends ComponentProviderAdapter {
 			}
 		});
 		TableColumn stringRepCol = table.getColumnModel()
-				.getColumn(
-					ViewStringsTableModel.COLUMNS.STRING_REP_COL.ordinal());
+				.getColumn(ViewStringsTableModel.COLUMNS.STRING_REP_COL.ordinal());
 
 		stringRepCol.setCellEditor(new StringRepCellEditor());
 
 		table.installNavigation(tool);
 
 		filterPanel = new GhidraTableFilterPanel<>(table, stringModel);
-
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(threadedTablePanel, BorderLayout.CENTER);
 		panel.add(filterPanel, BorderLayout.SOUTH);
+
+		String namePrefix = "Defined Strings";
+		table.setAccessibleNamePrefix(namePrefix);
+		filterPanel.setAccessibleNamePrefix(namePrefix);
 
 		return panel;
 	}
@@ -175,13 +170,9 @@ public class ViewStringsProvider extends ComponentProviderAdapter {
 		tool.contextChanged(this);
 	}
 
-	ProgramSelection getProgramSelection() {
-		return table.getProgramSelection();
-	}
-
 	void add(Data data) {
 		if (isVisible()) {
-			stringModel.addDataInstance(currentProgram, data, TaskMonitor.DUMMY);
+			stringModel.addDataInstance(currentProgram, data);
 		}
 	}
 
@@ -242,55 +233,6 @@ public class ViewStringsProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	public int getSelectedRowCount() {
-		return table.getSelectedRowCount();
-	}
-
-	public Data getSelectedData() {
-		int selectedRow = table.getSelectedRow();
-		if (selectedRow < 0) {
-			return null;
-		}
-		ProgramLocation location = stringModel.getRowObject(selectedRow);
-		return DataUtilities.getDataAtLocation(location);
-	}
-
-	public List<Data> getSelectedDataList(Predicate<Data> filter) {
-		List<Data> list = new ArrayList<>();
-		int[] selectedRows = table.getSelectedRows();
-		for (int row : selectedRows) {
-			ProgramLocation location = stringModel.getRowObject(row);
-			Data data = DataUtilities.getDataAtLocation(location);
-			if (passesFilter(data, filter)) {
-				list.add(data);
-			}
-		}
-		return list;
-	}
-
-	public List<ProgramLocation> getSelectedDataLocationList(Predicate<Data> filter) {
-		List<ProgramLocation> result = new ArrayList<>();
-		int[] selectedRows = table.getSelectedRows();
-		for (int row : selectedRows) {
-			ProgramLocation location = stringModel.getRowObject(row);
-			Data data = DataUtilities.getDataAtLocation(location);
-			if (passesFilter(data, filter)) {
-				result.add(location);
-			}
-		}
-		return result;
-	}
-
-	private boolean passesFilter(Data data, Predicate<Data> filter) {
-		if (data == null) {
-			return false;
-		}
-		if (filter == null) {
-			return true;
-		}
-		return filter.test(data);
-	}
-
 	public Program getProgram() {
 		return currentProgram;
 	}
@@ -322,10 +264,11 @@ public class ViewStringsProvider extends ComponentProviderAdapter {
 
 		@Override
 		public Component getTableCellEditorComponent(JTable jTable, Object value,
-				boolean isSelected, int row, int column) {
-			if (value instanceof StringDataInstance) {
+				boolean isSelected, int rowIndex, int columnIndex) {
+			Data data = DataUtilities.getDataAtLocation(stringModel.getRowObject(rowIndex));
+			if (data != null) {
 				textField.setEditable(true);
-				StringDataInstance sdi = (StringDataInstance) value;
+				StringDataInstance sdi = StringDataInstance.getStringDataInstance(data);
 				if (sdi.isShowTranslation() && sdi.getTranslatedValue() != null) {
 					textField.setText(sdi.getTranslatedValue());
 				}
@@ -334,8 +277,8 @@ public class ViewStringsProvider extends ComponentProviderAdapter {
 				}
 			}
 			else {
-				textField.setText("");
 				textField.setEditable(false);
+				textField.setText("unsupported");
 			}
 			return textField;
 		}

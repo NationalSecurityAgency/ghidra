@@ -36,10 +36,10 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAdd
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager.DBTraceSpaceEntry;
 import ghidra.trace.database.space.DBTraceSpaceBased;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceChangeRecord;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.*;
 import ghidra.util.AddressIteratorAdapter;
 import ghidra.util.database.*;
@@ -160,8 +160,7 @@ public class DBTraceMemorySpace
 				regionMapSpace.put(new ImmutableTraceAddressSnapRange(range, lifespan), null);
 			region.set(path, path, flags);
 			trace.updateViewsAddRegionBlock(region);
-			trace.setChanged(
-				new TraceChangeRecord<>(TraceMemoryRegionChangeType.ADDED, this, region));
+			trace.setChanged(new TraceChangeRecord<>(TraceEvents.REGION_ADDED, this, region));
 			return region;
 		}
 	}
@@ -244,7 +243,7 @@ public class DBTraceMemorySpace
 			regionCache.remove(region);
 			trace.updateViewsDeleteRegionBlock(region);
 			trace.setChanged(
-				new TraceChangeRecord<>(TraceMemoryRegionChangeType.DELETED, this, region));
+				new TraceChangeRecord<>(TraceEvents.REGION_DELETED, this, region));
 		}
 	}
 
@@ -316,7 +315,7 @@ public class DBTraceMemorySpace
 		}.set(start, end, state);
 
 		if (l.changed) {
-			trace.setChanged(new TraceChangeRecord<>(TraceMemoryStateChangeType.CHANGED, this,
+			trace.setChanged(new TraceChangeRecord<>(TraceEvents.BYTES_STATE_CHANGED, this,
 				new ImmutableTraceAddressSnapRange(start, end, snap, snap), state));
 		}
 	}
@@ -663,8 +662,8 @@ public class DBTraceMemorySpace
 				buf.get(pos, bytes);
 				ImmutableTraceAddressSnapRange tasr = new ImmutableTraceAddressSnapRange(start,
 					start.add(result - 1), snap, lastSnap.snap);
-				trace.setChanged(new TraceChangeRecord<>(TraceMemoryBytesChangeType.CHANGED,
-					this, tasr, oldBytes.array(), bytes));
+				trace.setChanged(new TraceChangeRecord<>(TraceEvents.BYTES_CHANGED, this, tasr,
+					oldBytes.array(), bytes));
 
 				// Fixup affected code units
 				DBTraceCodeSpace codeSpace = trace.getCodeManager().get(this, false);
@@ -993,8 +992,8 @@ public class DBTraceMemorySpace
 			doSetState(snap, start, end, TraceMemoryState.UNKNOWN);
 
 			// Fire event
-			trace.setChanged(new TraceChangeRecord<>(TraceMemoryBytesChangeType.CHANGED,
-				this, new ImmutableTraceAddressSnapRange(start,
+			trace.setChanged(new TraceChangeRecord<>(
+				TraceEvents.BYTES_CHANGED, this, new ImmutableTraceAddressSnapRange(start,
 					start.add(newBytes.position() - 1), snap, lastSnap.snap),
 				oldBytes.array(), newBytes.array()));
 

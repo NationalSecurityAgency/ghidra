@@ -15,6 +15,7 @@
  */
 package ghidra.dbg.util;
 
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -107,6 +108,19 @@ public class ShellUtils {
 
 		}
 		return argsList;
+	}
+
+	public static String removePath(String exec) {
+		return Paths.get(exec).getFileName().toString();
+	}
+
+	public static List<String> removePath(List<String> args) {
+		if (args.isEmpty()) {
+			return List.of();
+		}
+		List<String> copy = new ArrayList<>(args);
+		copy.set(0, removePath(args.get(0)));
+		return List.copyOf(copy);
 	}
 
 	public static String generateLine(List<String> args) {

@@ -124,7 +124,7 @@ public class DomainObjectEventQueues {
 		this.eventsEnabled = eventsEnabled;
 		if (eventsEnabled) {
 			DomainObjectChangeRecord restored =
-				new DomainObjectChangeRecord(DomainObject.DO_OBJECT_RESTORED);
+				new DomainObjectChangeRecord(DomainObjectEvent.RESTORED);
 			eventQueue.fireEvent(restored);
 			for (PrivateQueue privateQueue : privateEventQueues.values()) {
 				privateQueue.fireEvent(restored);

@@ -26,8 +26,9 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.util.datastruct.ListenerSet;
 
+//@formatter:off
 @PluginInfo(
-	category = PluginCategoryNames.MISC,
+	category = PluginCategoryNames.DEBUGGER,
 	shortDescription = "Service for monitoring task progress",
 	description = """
 			Implements a pub-sub model for notifying of tasks and progress. Publishers can create
@@ -36,7 +37,9 @@ import ghidra.util.datastruct.ListenerSet;
 			""",
 	servicesProvided = { ProgressService.class },
 	packageName = DebuggerPluginPackage.NAME,
-	status = PluginStatus.STABLE)
+	status = PluginStatus.RELEASED
+)
+//@formatter:on
 public class ProgressServicePlugin extends Plugin implements ProgressService {
 	ListenerSet<ProgressListener> listeners = new ListenerSet<>(ProgressListener.class, true);
 

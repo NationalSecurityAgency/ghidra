@@ -1,4 +1,4 @@
-<prototype name="rustcall" extrapop="8" stackshift="8">
+<prototype name="__rustcall" extrapop="8" stackshift="8">
     <input pointermax="8">
 	<pentry minsize="4" maxsize="8" metatype="float">
 	    <register name="XMM0_Qa"/>
@@ -46,7 +46,7 @@
 	    <addr offset="8" space="stack"/>
 	</pentry>
 	<rule>
-        <datatype name="any" minsize="9"/>
+        <datatype name="any" minsize="9" maxsize="16" />
         <join align="true"/>          <!-- Chunk from general purpose registers -->
     </rule>
     </input>

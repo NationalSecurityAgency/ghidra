@@ -1,0 +1,13 @@
+<dbconfig>
+<info>
+ <name>Large 32-bit</name>
+ <owner>Example Owner</owner>
+ <description>A large (~100 million functions) database tuned for 32-bit executables</description>
+ <major>0</major>
+ <minor>0</minor>
+ <settings>0x49</settings>
+</info>
+<k>19</k>
+<L>232</L>
+<weightsfile>lshweights_32.xml</weightsfile>
+</dbconfig>

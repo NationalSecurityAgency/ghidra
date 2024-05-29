@@ -242,7 +242,7 @@ disppc2: @(disp,pc) is disp_00_07 & pc
 }
 
 # the following two instructions share the same opcodes but differ if rm == rn
-:mov.b  @rm_04_07+,rn_08_11  is opcode_12_15=0b0110 & rn_08_11 & rm_04_07 & opcode_00_03=0b0100 & (opcode_04_07=opcode_08_11)
+:mov.b  @rm_04_07+,rn_08_11  is opcode_12_15=0b0110 & rn_08_11 & rm_04_07 & opcode_00_03=0b0100 & opcode_04_07=opcode_08_11
 {
     rn_08_11 =  sext(*:1 rm_04_07);
 }
@@ -254,24 +254,24 @@ disppc2: @(disp,pc) is disp_00_07 & pc
 }
 
 # the following two instructions share the same opcodes but differ if rm == rn
-:mov.w  @rm_04_07+,rn_08_11  is opcode_12_15=0b0110 & rn_08_11 & rm_04_07 & opcode_00_03=0b0101 & (opcode_04_07=opcode_08_11)
+:mov.w  @rm_04_07+,rn_08_11  is opcode_12_15=0b0110 & rn_08_11 & rm_04_07 & opcode_00_03=0b0101 & opcode_04_07=opcode_08_11
 {
     rn_08_11 =  sext(*:2 rm_04_07);
 }
 
-:mov.w  @rm_04_07+,rn_08_11  is opcode_12_15=0b0110 & rn_08_11 & rm_04_07 & opcode_00_03=0b0101 & opcode_04_07 & opcode_08_11
+:mov.w  @rm_04_07+,rn_08_11  is opcode_12_15=0b0110 & rn_08_11 & rm_04_07 & opcode_00_03=0b0101
 {
     rn_08_11 =  sext(*:2 rm_04_07);
     rm_04_07 = rm_04_07 + 2;
 }
 
 # the following two instructions share the same opcodes but differ if rm == rn
-:mov.l  @rm_04_07+,rn_08_11  is opcode_12_15=0b0110 & rn_08_11 & rm_04_07 & opcode_00_03=0b0110 & (opcode_04_07=opcode_08_11)
+:mov.l  @rm_04_07+,rn_08_11  is opcode_12_15=0b0110 & rn_08_11 & rm_04_07 & opcode_00_03=0b0110 & opcode_04_07=opcode_08_11
 {
     rn_08_11 =  *:4 rm_04_07;
 }
 
-:mov.l  @rm_04_07+,rn_08_11  is opcode_12_15=0b0110 & rn_08_11 & rm_04_07 & opcode_00_03=0b0110 & opcode_04_07 & opcode_08_11
+:mov.l  @rm_04_07+,rn_08_11  is opcode_12_15=0b0110 & rn_08_11 & rm_04_07 & opcode_00_03=0b0110
 {
     rn_08_11 =  *:4 rm_04_07;
     rm_04_07 = rm_04_07 + 4;
@@ -280,13 +280,13 @@ disppc2: @(disp,pc) is disp_00_07 & pc
 :mov.b  rm_04_07,@-rn_08_11  is opcode_12_15=0b0010 & rn_08_11 & rm_04_07 & opcode_00_03=0b0100 
 {
     rn_08_11 = rn_08_11 -1;
-    *:1 rn_08_11 = rm_04_07;
+    *:1 rn_08_11 = rm_04_07:1;
 }
 
 :mov.w  rm_04_07,@-rn_08_11  is opcode_12_15=0b0010 & rn_08_11 & rm_04_07 & opcode_00_03=0b0101 
 {
     rn_08_11 = rn_08_11 -2;
-    *:2 rn_08_11 = rm_04_07;
+    *:2 rn_08_11 = rm_04_07:2;
 }
 
 :mov.l  rm_04_07,@-rn_08_11  is opcode_12_15=0b0010 & rn_08_11 & rm_04_07 & opcode_00_03=0b0110 
@@ -396,7 +396,7 @@ disppc2: @(disp,pc) is disp_00_07 & pc
 :mov.b r0, @rn_08_11+
     is r0 & opcode_12_15=0b0100 & rn_08_11 & opcode_00_07=0b10001011
 {
-    *:1 (rn_08_11) = r0;
+    *:1 (rn_08_11) = r0:1;
     rn_08_11 = rn_08_11 + 1;
 }
 
@@ -404,7 +404,7 @@ disppc2: @(disp,pc) is disp_00_07 & pc
 :mov.w r0, @rn_08_11+
     is r0 & opcode_12_15=0b0100 & rn_08_11 & opcode_00_07=0b10011011
 {
-    *:2 (rn_08_11) = r0;
+    *:2 (rn_08_11) = r0:2;
     rn_08_11 = rn_08_11 + 2;
 }
 
@@ -443,7 +443,7 @@ disppc2: @(disp,pc) is disp_00_07 & pc
 # MOV.B Rm, @(disp12, Rn)    0011nnnnmmmm0001 0000dddddddddddd      Rm -> (disp+Rn)
 :mov.b  l_rm_20_23, @(l_disp_00_11, l_rn_24_27)  is l_opcode_28_31=0b0011 & l_rn_24_27 & l_rm_20_23 & l_opcode_16_19=0b0001 & l_opcode_12_15=0b0000 & l_disp_00_11
 {
-   *:1 (l_rn_24_27 + l_disp_00_11) = l_rm_20_23;
+   *:1 (l_rn_24_27 + l_disp_00_11) = l_rm_20_23:1;
 }
 
 # MOV.W Rm, @(disp12, Rn)   0011nnnnmmmm0001 0001dddddddddddd       Rm → (disp×2+Rn)
@@ -451,7 +451,7 @@ disppc2: @(disp,pc) is disp_00_07 & pc
     is l_opcode_28_31=0b0011 & l_rn_24_27 & l_rm_20_23 & l_opcode_16_19=0b0001 & l_opcode_12_15=0b0001 & l_disp_00_11
     [ disp = 2*l_disp_00_11; ]
 {
-   *:2 (l_rn_24_27 + disp) = l_rm_20_23;
+   *:2 (l_rn_24_27 + disp) = l_rm_20_23:2;
 }
 
 # MOV.L Rm, @(disp12, Rn)   0011nnnnmmmm0001 0010dddddddddddd       Rm → (disp×4+Rn)
@@ -876,7 +876,7 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
     local temp1;
     
     temp1 = rn_08_11 + rm_04_07;
-    temp0 = temp1;
+    temp0 = rn_08_11;
 
     rn_08_11 = temp1 + zext($(T_FLAG));    
     
@@ -944,20 +944,12 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
 
 :cmp"/str"  rm_04_07,rn_08_11  is opcode_12_15=0b0010 & rn_08_11 & rm_04_07 & opcode_00_03=0b1100 
 {
-    local temp:4;
-    local HH:4;
-    local HL:4;
-    local LH:4;
-    local LL:4;
+    local tmp0:1 = (rm_04_07[0,8] == rn_08_11[0,8]);
+    local tmp1:1 = (rm_04_07[8,8] == rn_08_11[8,8]);
+    local tmp2:1 = (rm_04_07[16,8] == rn_08_11[16,8]);
+    local tmp3:1 = (rm_04_07[24,8] == rn_08_11[24,8]);
     
-    temp = rn_08_11 ^ rm_04_07;
-    
-    HH = (temp & 0xFF000000) >> 24;
-    HL = (temp & 0x00FF0000) >> 16;
-    LH = (temp & 0x0000FF00) >> 8;
-    LL = (temp & 0x000000FF);
-
-    $(T_FLAG) = (HH != 0) && (HL != 0) && (LH != 0) && (LL != 0);
+    $(T_FLAG) = tmp0 || tmp1 || tmp2 || tmp3;
 }
 
 @if SH_VERSION == "2A"
@@ -1002,8 +994,8 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
 
 :div0s  rm_04_07,rn_08_11  is opcode_12_15=0b0010 & rn_08_11 & rm_04_07 & opcode_00_03=0b0111 
 {
-    $(Q_FLAG) = !((rn_08_11 & 0x80000000) == 0);
-    $(M_FLAG) = !((rm_04_07 & 0x80000000) == 0);
+    $(Q_FLAG) = rn_08_11 s< 0;
+    $(M_FLAG) = rm_04_07 s< 0;
     
     $(T_FLAG) = !($(M_FLAG) == $(Q_FLAG));
 }
@@ -1099,12 +1091,14 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
 
 :extu.b rm_04_07,rn_08_11  is opcode_12_15=0b0110 & rn_08_11 & rm_04_07 & opcode_00_03=0b1100 
 {
-    rn_08_11 = rm_04_07 & 0x000000FF;
+    local temp:1 = rm_04_07:1;
+    rn_08_11 = zext(temp);
 }
 
 :extu.w rm_04_07,rn_08_11  is opcode_12_15=0b0110 & rn_08_11 & rm_04_07 & opcode_00_03=0b1101 
 {
-    rn_08_11 = rm_04_07 & 0x0000FFFF;
+    local temp:2 = rm_04_07:2;
+    rn_08_11 = zext(temp);
 }
 
 @if (SH_VERSION == "2") || (SH_VERSION == "2A")
@@ -1305,28 +1299,24 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
 
 :muls.w rm_04_07,rn_08_11  is opcode_12_15=0b0010 & rn_08_11 & rm_04_07 & opcode_00_03=0b1111 
 {
-    macl = sext(rn_08_11:2 & 0xFFFF) * sext(rm_04_07:2 & 0xFFFF);
+    macl = sext(rn_08_11:2) * sext(rm_04_07:2);
 }
 
 :mulu.w rm_04_07,rn_08_11  is opcode_12_15=0b0010 & rn_08_11 & rm_04_07 & opcode_00_03=0b1110 
 {
-    macl = (rn_08_11 & 0xFFFF) * (rm_04_07 & 0xFFFF);
+    macl = zext(rn_08_11:2) * zext(rm_04_07:2);
 }
 
 :neg    rm_04_07,rn_08_11  is opcode_12_15=0b0110 & rn_08_11 & rm_04_07 & opcode_00_03=0b1011 
 {
-    rn_08_11 = 0 - rm_04_07;
+    rn_08_11 = -rm_04_07;
 }
 
 :negc   rm_04_07,rn_08_11  is opcode_12_15=0b0110 & rn_08_11 & rm_04_07 & opcode_00_03=0b1010 
 {
-    local temp;
-    
-    temp = 0 - rm_04_07;
+    local temp:4 = -rm_04_07;
     rn_08_11 = temp - zext($(T_FLAG));
     
-    # FIXME: should temp be signed or unsigned??
-    # Documentation says if(0 < temp) not 0 != temp
     $(T_FLAG) = (0 != temp) || (temp < rn_08_11);
 }
 
@@ -1641,7 +1631,7 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
 
 :bsr    target00_11  is opcode_12_15=0b1011 & target00_11  
 {
-    local _pr:4 = inst_next;
+    local _pr:4 = inst_start + 4;
 
     delayslot(1);
 
@@ -1652,8 +1642,8 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
 @if (SH_VERSION == "2") || (SH_VERSION == "2A")
 :bsrf   rm_08_11  is opcode_12_15=0b0000 & rm_08_11 & opcode_00_07=0b00000011 
 {
-    local _pr = inst_next;
-    local dest = rm_08_11 + inst_next;
+    local _pr = inst_start + 4;
+    local dest = rm_08_11 + inst_start + 4;
 
     delayslot(1);
 
@@ -1672,7 +1662,7 @@ MovMUReg2: MovMUReg2_15 is MovMUReg2_15 {
 
 :jsr    @rm_08_11  is opcode_12_15=0b0100 & rm_08_11 & opcode_00_07=0b00001011 
 {
-    local _pr:4 = inst_next;
+    local _pr:4 = inst_start + 4;
     local _pc:4 = rm_08_11;
 
     delayslot(1);

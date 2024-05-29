@@ -21,12 +21,15 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.jdom.JDOMException;
+
 import db.Transaction;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils.Extrema;
 import ghidra.app.services.DebuggerEmulationService;
 import ghidra.dbg.target.*;
-import ghidra.dbg.target.schema.TargetObjectSchema;
+import ghidra.dbg.target.schema.*;
+import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.util.*;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.model.address.*;
@@ -39,8 +42,8 @@ import ghidra.trace.database.DBTrace;
 import ghidra.trace.model.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceConflictedMappingException;
-import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.target.TraceObjectKeyPath;
+import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.thread.*;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.*;
@@ -55,6 +58,80 @@ import ghidra.util.exception.DuplicateNameException;
  */
 public class ProgramEmulationUtils {
 	private ProgramEmulationUtils() {
+	}
+
+	public static final String EMU_CTX_XML = """
+			<context>
+			    <schema name='EmuSession' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='Process' />
+			        <interface name='Aggregate' />
+			        <attribute name='Breakpoints' schema='BreakpointContainer' />
+			        <attribute name='Memory' schema='RegionContainer' />
+			        <attribute name='Modules' schema='ModuleContainer' />
+			        <attribute name='Threads' schema='ThreadContainer' />
+			    </schema>
+			    <schema name='BreakpointContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='NEVER'>
+			        <interface name='BreakpointSpecContainer' />
+			        <interface name='BreakpointLocationContainer' />
+			        <element schema='Breakpoint' />
+			    </schema>
+			    <schema name='Breakpoint' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='BreakpointSpec' />
+			        <interface name='BreakpointLocation' />
+			    </schema>
+			    <schema name='RegionContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='NEVER'>
+			        <element schema='Region' />
+			    </schema>
+			    <schema name='Region' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='MemoryRegion' />
+			    </schema>
+			    <schema name='ModuleContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='NEVER'>
+			        <element schema='Module' />
+			    </schema>
+			    <schema name='Module' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='Module' />
+			        <attribute name='Sections' schema='SectionContainer' />
+			    </schema>
+			    <schema name='SectionContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='NEVER'>
+			        <element schema='Section' />
+			    </schema>
+			    <schema name='Section' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='Section' />
+			    </schema>
+			    <schema name='ThreadContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='NEVER'>
+			        <element schema='Thread' />
+			    </schema>
+			    <schema name='Thread' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='Thread' />
+			        <interface name='Activatable' />
+			        <interface name='Aggregate' />
+			        <attribute name='Registers' schema='RegisterContainer' />
+			    </schema>
+			    <schema name='RegisterContainer' canonical='yes' elementResync='NEVER'
+			            attributeResync='NEVER'>
+			        <interface name='RegisterContainer' />
+			        <element schema='Register' />
+			    </schema>
+			    <schema name='Register' elementResync='NEVER' attributeResync='NEVER'>
+			        <interface name='Register' />
+			    </schema>
+			</context>
+			""";
+	public static final SchemaContext EMU_CTX;
+	public static final TargetObjectSchema EMU_SESSION_SCHEMA;
+	static {
+		try {
+			EMU_CTX = XmlSchemaContext.deserialize(EMU_CTX_XML);
+		}
+		catch (JDOMException e) {
+			throw new AssertionError(e);
+		}
+		EMU_SESSION_SCHEMA = EMU_CTX.getSchema(new SchemaName("EmuSession"));
 	}
 
 	public static final String BLOCK_NAME_STACK = "STACK";
@@ -104,7 +181,7 @@ public class ProgramEmulationUtils {
 	 */
 	public static Set<TraceMemoryFlag> getRegionFlags(MemoryBlock block) {
 		Set<TraceMemoryFlag> result = EnumSet.noneOf(TraceMemoryFlag.class);
-		int mask = block.getPermissions();
+		int mask = block.getFlags();
 		if ((mask & MemoryBlock.READ) != 0) {
 			result.add(TraceMemoryFlag.READ);
 		}
@@ -193,11 +270,8 @@ public class ProgramEmulationUtils {
 		// N.B. Bytes will be loaded lazily
 	}
 
-	public static PathPattern computePattern(Trace trace, Class<? extends TargetObject> iface) {
-		TargetObjectSchema root = trace.getObjectManager().getRootSchema();
-		if (root == null) {
-			return new PathPattern(PathUtils.parse("Memory[]"));
-		}
+	public static PathPattern computePattern(TargetObjectSchema root, Trace trace,
+			Class<? extends TargetObject> iface) {
 		PathMatcher matcher = root.searchFor(iface, true);
 		PathPattern pattern = matcher.getSingletonPattern();
 		if (pattern == null || pattern.countWildcards() != 1) {
@@ -208,11 +282,19 @@ public class ProgramEmulationUtils {
 	}
 
 	public static PathPattern computePatternRegion(Trace trace) {
-		return computePattern(trace, TargetMemoryRegion.class);
+		TargetObjectSchema root = trace.getObjectManager().getRootSchema();
+		if (root == null) {
+			return new PathPattern(PathUtils.parse("Memory[]"));
+		}
+		return computePattern(root, trace, TargetMemoryRegion.class);
 	}
 
 	public static PathPattern computePatternThread(Trace trace) {
-		return computePattern(trace, TargetThread.class);
+		TargetObjectSchema root = trace.getObjectManager().getRootSchema();
+		if (root == null) {
+			return new PathPattern(PathUtils.parse("Threads[]"));
+		}
+		return computePattern(root, trace, TargetThread.class);
 	}
 
 	/**
@@ -413,6 +495,20 @@ public class ProgramEmulationUtils {
 		throw new EmulatorOutOfMemoryException();
 	}
 
+	protected static void createObjects(Trace trace) {
+		TraceObjectManager om = trace.getObjectManager();
+		om.createRootObject(EMU_SESSION_SCHEMA);
+
+		om.createObject(TraceObjectKeyPath.parse("Breakpoints"))
+				.insert(Lifespan.ALL, ConflictResolution.DENY);
+		om.createObject(TraceObjectKeyPath.parse("Memory"))
+				.insert(Lifespan.ALL, ConflictResolution.DENY);
+		om.createObject(TraceObjectKeyPath.parse("Modules"))
+				.insert(Lifespan.ALL, ConflictResolution.DENY);
+		om.createObject(TraceObjectKeyPath.parse("Threads"))
+				.insert(Lifespan.ALL, ConflictResolution.DENY);
+	}
+
 	/**
 	 * Create a new trace with a single thread, ready for emulation of the given program
 	 * 
@@ -429,6 +525,8 @@ public class ProgramEmulationUtils {
 		try {
 			trace = new DBTrace(getTraceName(program), program.getCompilerSpec(), consumer);
 			try (Transaction tx = trace.openTransaction("Emulate")) {
+				createObjects(trace);
+
 				TraceSnapshot initial =
 					trace.getTimeManager().createSnapshot(EMULATION_STARTED_AT + pc);
 				long snap = initial.getKey();

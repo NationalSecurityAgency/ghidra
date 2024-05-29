@@ -23,7 +23,8 @@ import org.junit.Ignore;
 
 import agent.gdb.manager.GdbManager;
 import ghidra.pty.PtySession;
-import ghidra.pty.linux.LinuxPty;
+import ghidra.pty.linux.LinuxIoctls;
+import ghidra.pty.unix.UnixPty;
 import ghidra.util.Msg;
 
 @Ignore("Need compatible GDB version for CI")
@@ -45,13 +46,13 @@ public class JoinedGdbManagerTest extends AbstractGdbManagerTest {
 		}
 	}
 
-	protected LinuxPty ptyUserGdb;
+	protected UnixPty ptyUserGdb;
 	protected PtySession gdb;
 
 	@Override
 	protected CompletableFuture<Void> startManager(GdbManager manager) {
 		try {
-			ptyUserGdb = LinuxPty.openpty();
+			ptyUserGdb = UnixPty.openpty(LinuxIoctls.INSTANCE);
 			manager.start(null);
 			Msg.debug(this, "Starting GDB and invoking new-ui mi2 " + manager.getMi2PtyName());
 

@@ -14,6 +14,7 @@
     <compiler name="default" spec="SuperH4_be.cspec" id="default"/>
     <external_name tool="IDA-PRO" name="sh4b"/>
     <external_name tool="gnu" name="sh4"/>
+    <external_name tool="qemu" name="qemu-sh4eb"/>
   </language>
   <language processor="SuperH4"
             endian="little"
@@ -29,5 +30,6 @@
     <compiler name="Visual Studio" spec="SuperH4_le.cspec" id="windows"/>
     <external_name tool="IDA-PRO" name="sh4"/>
     <external_name tool="gnu" name="sh4"/>
+    <external_name tool="qemu" name="qemu-sh4"/>
   </language>
 </language_definitions>

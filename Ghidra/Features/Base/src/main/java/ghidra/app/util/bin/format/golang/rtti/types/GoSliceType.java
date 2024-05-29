@@ -29,7 +29,7 @@ import ghidra.program.model.data.*;
  * See {@link GoRttiMapper#getGenericSliceDT()} or the "runtime.slice" type for the definition of
  * a instance of a slice variable in memory. 
 */
-@StructureMapping(structureName = "runtime.slicetype")
+@StructureMapping(structureName = {"runtime.slicetype", "internal/abi.SliceType"})
 public class GoSliceType extends GoType {
 
 	@FieldMapping
@@ -52,18 +52,23 @@ public class GoSliceType extends GoType {
 
 	@Override
 	public DataType recoverDataType() throws IOException {
+		Structure genericSliceDT = programContext.getGenericSliceDT();
+
 		StructureDataType sliceDT =
 			new StructureDataType(programContext.getRecoveredTypesCp(getPackagePathString()),
-				getUniqueTypename(), 0, programContext.getDTM());
+				getUniqueTypename(), genericSliceDT.getLength(), programContext.getDTM());
+
+		// ensure the sliceDT is filled out before getting the element's data type to ensure
+		// any other data types pulled in that ref this slice don't change size when trying to
+		// enable packing
+		sliceDT.replaceWith(genericSliceDT);
+
 		programContext.cacheRecoveredDataType(this, sliceDT);
 
 		// fixup the generic void* field with the specific element* type
 		GoType elementType = getElement();
 		DataType elementDT = programContext.getRecoveredType(elementType);
 		Pointer elementPtrDT = programContext.getDTM().getPointer(elementDT);
-
-		Structure genericSliceDT = programContext.getGenericSliceDT();
-		sliceDT.replaceWith(genericSliceDT);
 
 		int arrayPtrComponentIndex = 0; /* HACK, field ordinal of void* data field in slice type */
 		DataTypeComponent arrayDTC = genericSliceDT.getComponent(arrayPtrComponentIndex);

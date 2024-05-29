@@ -29,6 +29,7 @@ import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.DWordDataType;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
@@ -207,5 +208,56 @@ public class CreateFunctionThunkTest extends AbstractGhidraHeadedIntegrationTest
 		Function isThunk = program.getFunctionManager().getFunctionAt(builder.addr(0x10000));
 		assertEquals(true, isThunk.isThunk());
 		assertEquals("thunker", isThunk.getName());
+	}
+	
+	/**
+	 * Tests that the Function start analyzer will create a thunk given the thunk tag on a matching function
+	 * Tests that constant propagation creates a reference using the callfixup value in LR
+	 * 
+	 */
+	@Test
+	public void testPPCblrlThunk() throws Exception {
+
+		builder = new ProgramBuilder("thunk", ProgramBuilder._PPC_32);
+
+		/**
+         *  bl         __get_pc_thunk_lr
+         *  mfspr      r30,LR
+         *  lbz        r3,0x0(r30)
+         *  blr
+		 */
+		builder.setBytes("0x00002000", "42 80 00 31 7f c8 02 a6 88 1e 00 00 4e 80 00 20");
+		builder.disassemble("0x00002000", 27, true);
+
+		/**
+         *  blrl
+         *  lbz        r12,0x0(r10)
+         *  blr
+		 */
+		builder.setBytes("0x0002030", "4e 80 00 21 89 8a 00 00 4e 80 00 20");
+		builder.disassemble("0x0002030", 27, true);
+
+		builder.createFunction("0x0002000");
+		
+		builder.createFunction("0x0002030");
+
+		program = builder.getProgram();
+
+		analyze();
+		
+		
+		Instruction instruction = program.getListing().getInstructionAt(builder.addr(0x2008));
+		assertNotNull(instruction);
+		Reference[] referencesFrom = instruction.getReferencesFrom();
+		
+		// Thunk will set a value in LR that is not normal from the assumed return of a function
+		// used to calculate a constant reference
+		// TODO: There is a left-over BAD reference.  Need to clean references on re-analysis
+		assertEquals(0x2034L, referencesFrom[1].getToAddress().getOffset());
+		
+
+		Function thunker = program.getFunctionManager().getFunctionAt(builder.addr(0x0002030));
+		assertEquals("__get_pc_thunk_lr", thunker.getName());
+		assertEquals("get_pc_thunk_lr", thunker.getCallFixup());
 	}
 }

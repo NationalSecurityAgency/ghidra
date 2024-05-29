@@ -16,7 +16,6 @@
 package ghidra.app.cmd.data;
 
 import ghidra.framework.cmd.Command;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
@@ -27,7 +26,7 @@ import ghidra.program.model.util.CodeUnitInsertionException;
  * Command to create a String and optionally label it.
  *
  */
-public class CreateStringCmd implements Command {
+public class CreateStringCmd implements Command<Program> {
 	private final Address addr;
 	private final AbstractStringDataType stringDataType;
 	private int length = -1;
@@ -39,6 +38,14 @@ public class CreateStringCmd implements Command {
 				: (length > 0) ? new StringDataType() : new TerminatedStringDataType();
 	}
 
+	/**
+	 * Construct command for creating string Data
+	 * @param addr address where string should be created.
+	 * @param stringDataType string datatype
+	 * @param length maximum string length (treatment is specific to specified datatype).
+	 * @param clearMode {@link ClearDataMode} which indicates how existing Data conflicts
+	 * should be handled.
+	 */
 	public CreateStringCmd(Address addr, AbstractStringDataType stringDataType, int length,
 			ClearDataMode clearMode) {
 		this.addr = addr;
@@ -48,41 +55,49 @@ public class CreateStringCmd implements Command {
 	}
 
 	/**
-	 * Constructs a new command for creating strings.
+	 * Construct command for creating fixed-length ASCII or Unicode string Data
+	 * @param addr address where string should be created.
+	 * @param length byte-length of string
+	 * @param unicode if true Unicode string will be created, else ASCII
+	 * @param clearMode {@link ClearDataMode} which indicates how existing Data conflicts
+	 * should be handled.
 	 */
 	public CreateStringCmd(Address addr, int length, boolean unicode, ClearDataMode clearMode) {
 		this(addr, getStringDataType(unicode, length), length, clearMode);
 	}
 
 	/**
-	 * Constructs a new command for creating strings.
+	 * Construct command for creating fixed-length ASCII or Unicode string Data.
+	 * Current Data at addr will be cleared if it already exists.
+	 * @param addr address where string should be created.
+	 * @param length byte-length of string
+	 * @param unicode if true Unicode string will be created, else ASCII
 	 */
 	public CreateStringCmd(Address addr, int length, boolean unicode) {
 		this(addr, getStringDataType(unicode, length), length, ClearDataMode.CLEAR_SINGLE_DATA);
 	}
 
 	/**
-	 * Constructs a new command for creating strings.
+	 * Construct command for creating null-terminated ASCII string Data.
+	 * Current Data at addr will be cleared if it already exists.
+	 * @param addr address where string should be created.
 	 */
 	public CreateStringCmd(Address addr) {
 		this(addr, -1, false);
 	}
 
 	/**
-	 * Constructs a new command for creating strings.
+	 * Construct command for creating fixed-length ASCII string Data.
+	 * Current Data at addr will be cleared if it already exists.
+	 * @param addr address where string should be created.
+	 * @param length byte-length of string
 	 */
 	public CreateStringCmd(Address addr, int length) {
 		this(addr, length, false);
 	}
 
-	/**
-	 *
-	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
-	 */
 	@Override
-	public boolean applyTo(DomainObject obj) {
-		Program program = (Program) obj;
-
+	public boolean applyTo(Program program) {
 		try {
 			DataUtilities.createData(program, addr, stringDataType, length, clearMode);
 		}
@@ -94,17 +109,11 @@ public class CreateStringCmd implements Command {
 		return true;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getStatusMsg()
-	 */
 	@Override
 	public String getStatusMsg() {
 		return msg;
 	}
 
-	/**
-	 * @see ghidra.framework.cmd.Command#getName()
-	 */
 	@Override
 	public String getName() {
 		return "Create String";

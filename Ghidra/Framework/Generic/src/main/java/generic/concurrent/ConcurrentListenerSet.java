@@ -48,4 +48,9 @@ public class ConcurrentListenerSet<T> implements Iterable<T> {
 	public List<T> asList() {
 		return new ArrayList<>(storage.keySet());
 	}
+
+	@Override
+	public String toString() {
+		return asList().toString();
+	}
 }

@@ -20,6 +20,7 @@ import java.util.*;
 
 import db.*;
 import db.util.ErrorHandler;
+import ghidra.framework.data.OpenMode;
 import ghidra.program.database.ManagerDB;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMap;
@@ -28,7 +29,7 @@ import ghidra.program.model.listing.ProgramFragment;
 import ghidra.program.model.listing.ProgramModule;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ProgramEvent;
 import ghidra.util.Lock;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -66,8 +67,8 @@ public class TreeManager implements ManagerDB {
 	 * @throws VersionException if the database version is different from the expected version
 	 * @throws CancelledException if instantiation has been cancelled
 	 */
-	public TreeManager(DBHandle handle, ErrorHandler errHandler, AddressMap addrMap, int openMode,
-			Lock lock, TaskMonitor monitor)
+	public TreeManager(DBHandle handle, ErrorHandler errHandler, AddressMap addrMap,
+			OpenMode openMode, Lock lock, TaskMonitor monitor)
 			throws IOException, VersionException, CancelledException {
 
 		this.handle = handle;
@@ -90,7 +91,7 @@ public class TreeManager implements ManagerDB {
 	}
 
 	@Override
-	public void programReady(int openMode1, int currentRevision, TaskMonitor monitor)
+	public void programReady(OpenMode openMode1, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		// Nothing to do
 	}
@@ -98,9 +99,7 @@ public class TreeManager implements ManagerDB {
 	public void imageBaseChanged(boolean commit) {
 		lock.acquire();
 		try {
-			Iterator<ModuleManager> iter = treeMap.values().iterator();
-			while (iter.hasNext()) {
-				ModuleManager m = iter.next();
+			for (ModuleManager m : treeMap.values()) {
 				m.imageBaseChanged(commit);
 			}
 		}
@@ -125,13 +124,12 @@ public class TreeManager implements ManagerDB {
 					"Root module named " + treeName + " already exists");
 			}
 			DBRecord record = treeAdapter.createRecord(treeName);
-			ModuleManager m =
-				new ModuleManager(this, record, DBConstants.CREATE, TaskMonitor.DUMMY);
+			ModuleManager m = new ModuleManager(this, record, OpenMode.CREATE, TaskMonitor.DUMMY);
 			treeMap.put(treeName, m);
 			addMemoryBlocks(m);
 			if (program != null) {
 				// no notification for initial default tree
-				program.programTreeAdded(record.getKey(), ChangeManager.DOCR_TREE_CREATED, null,
+				program.programTreeAdded(record.getKey(), ProgramEvent.PROGRAM_TREE_CREATED, null,
 					treeName);
 			}
 			return m.getRootModule();
@@ -236,8 +234,8 @@ public class TreeManager implements ManagerDB {
 
 			treeMap.remove(oldName);
 			treeMap.put(newName, moduleMgr);
-			program.programTreeChanged(moduleMgr.getTreeID(), ChangeManager.DOCR_TREE_RENAMED, null,
-				oldName, newName);
+			program.programTreeChanged(moduleMgr.getTreeID(), ProgramEvent.PROGRAM_TREE_RENAMED,
+				null, oldName, newName);
 
 		}
 		finally {
@@ -258,7 +256,7 @@ public class TreeManager implements ManagerDB {
 				treeAdapter.deleteRecord(rec.getKey());
 				ModuleManager mm = treeMap.remove(treeName);
 				mm.dispose();
-				program.programTreeChanged(rec.getKey(), ChangeManager.DOCR_TREE_REMOVED, null,
+				program.programTreeChanged(rec.getKey(), ProgramEvent.PROGRAM_TREE_REMOVED, null,
 					treeName, null);
 				return true;
 			}
@@ -376,6 +374,7 @@ public class TreeManager implements ManagerDB {
 	@Override
 	public void deleteAddressRange(Address startAddr, Address endAddr, TaskMonitor monitor)
 			throws CancelledException {
+		AddressRange.checkValidRange(startAddr, endAddr);
 		lock.acquire();
 		try {
 			Iterator<String> keys = treeMap.keySet().iterator();
@@ -473,7 +472,7 @@ public class TreeManager implements ManagerDB {
 	 * @throws VersionException if a DB schema version differs from expected version
 	 * @throws CancelledException if operation cancelled
 	 */
-	private void initTreeMap(int openMode, TaskMonitor monitor)
+	private void initTreeMap(OpenMode openMode, TaskMonitor monitor)
 			throws IOException, CancelledException, VersionException {
 		treeMap = new HashMap<>();
 		RecordIterator iter = treeAdapter.getRecords();
@@ -516,7 +515,7 @@ public class TreeManager implements ManagerDB {
 			}
 			if (mm == null) {
 				try {
-					mm = new ModuleManager(this, rec, DBConstants.UPDATE, TaskMonitor.DUMMY);
+					mm = new ModuleManager(this, rec, OpenMode.UPDATE, TaskMonitor.DUMMY);
 				}
 				catch (VersionException | CancelledException e) {
 					throw new RuntimeException(e); // unexpected exception

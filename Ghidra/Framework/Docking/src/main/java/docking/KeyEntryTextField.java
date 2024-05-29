@@ -17,16 +17,20 @@ package docking;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.Objects;
 
-import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 
 import docking.actions.KeyBindingUtils;
+import docking.widgets.textfield.HintTextField;
 
 /**
  * Text field captures key strokes and notifies a listener to process the key entry.
  */
-public class KeyEntryTextField extends JTextField {
+public class KeyEntryTextField extends HintTextField {
+
+	private static final String HINT = "Type a key";
+	private String disabledHint = HINT;
 
 	private KeyEntryListener listener;
 	private String ksName;
@@ -38,9 +42,26 @@ public class KeyEntryTextField extends JTextField {
 	 * @param listener listener that is notified when the a key is pressed
 	 */
 	public KeyEntryTextField(int columns, KeyEntryListener listener) {
-		super(columns);
+		super(HINT);
+		setName("Key Entry Text Field");
+		getAccessibleContext().setAccessibleName(getName());
+		setColumns(columns);
 		this.listener = listener;
 		addKeyListener(new MyKeyListener());
+	}
+
+	@Override
+	public void setEnabled(boolean enabled) {
+		setHint(enabled ? HINT : disabledHint);
+		super.setEnabled(enabled);
+	}
+
+	/**
+	 * Sets the hint text that will be displayed when this field is disabled
+	 * @param disabledHint the hint text
+	 */
+	public void setDisabledHint(String disabledHint) {
+		this.disabledHint = Objects.requireNonNull(disabledHint);
 	}
 
 	/**
@@ -56,19 +77,8 @@ public class KeyEntryTextField extends JTextField {
 	 * @param ks the new key stroke
 	 */
 	public void setKeyStroke(KeyStroke ks) {
-		processEntry(ks);
-		setText(parseKeyStroke(ks));
-	}
-
-	/**
-	 * Converts the toString() form of the keyStroke, e.g., Ctrl-M is returned as 
-	 * "keyCode CtrlM-P" and we want it to look like: "Ctrl-M"
-	 * 
-	 * @param ks the keystroke to parse
-	 * @return the parse string for the keystroke
-	 */
-	public static String parseKeyStroke(KeyStroke ks) {
-		return KeyBindingUtils.parseKeyStroke(ks);
+		processKeyStroke(ks, false);
+		setText(KeyBindingUtils.parseKeyStroke(ks));
 	}
 
 	public void clearField() {
@@ -77,7 +87,7 @@ public class KeyEntryTextField extends JTextField {
 		currentKeyStroke = null;
 	}
 
-	private void processEntry(KeyStroke ks) {
+	private void processKeyStroke(KeyStroke ks, boolean notify) {
 		ksName = null;
 
 		currentKeyStroke = ks;
@@ -90,7 +100,10 @@ public class KeyEntryTextField extends JTextField {
 				ksName = KeyBindingUtils.parseKeyStroke(ks);
 			}
 		}
-		listener.processEntry(ks);
+
+		if (notify) {
+			listener.processEntry(ks);
+		}
 	}
 
 	private class MyKeyListener implements KeyListener {
@@ -114,21 +127,12 @@ public class KeyEntryTextField extends JTextField {
 		@Override
 		public void keyPressed(KeyEvent e) {
 			int keyCode = e.getKeyCode();
-			if (isHelpKey(keyCode)) {
-				return;
-			}
-
 			KeyStroke keyStroke = null;
 			if (!isClearKey(keyCode) && !isModifiersOnly(e)) {
 				keyStroke = KeyStroke.getKeyStroke(keyCode, e.getModifiersEx());
 			}
-
-			processEntry(keyStroke);
+			processKeyStroke(keyStroke, true);
 			e.consume();
-		}
-
-		private boolean isHelpKey(int keyCode) {
-			return keyCode == KeyEvent.VK_F1 || keyCode == KeyEvent.VK_HELP;
 		}
 
 		private boolean isClearKey(int keyCode) {

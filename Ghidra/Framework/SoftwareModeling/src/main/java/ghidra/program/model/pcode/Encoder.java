@@ -16,7 +16,6 @@
 package ghidra.program.model.pcode;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 import ghidra.program.model.address.AddressSpace;
 
@@ -34,12 +33,6 @@ import ghidra.program.model.address.AddressSpace;
  * must be the last write*() call associated with the specific element.
  */
 public interface Encoder {
-
-	/**
-	 * Clear any state associated with the encoder
-	 * The encoder should be ready to write a new document after this call.
-	 */
-	void clear();
 
 	/**
 	 * Begin a new element in the encoding
@@ -116,15 +109,22 @@ public interface Encoder {
 	void writeSpace(AttributeId attribId, AddressSpace spc) throws IOException;
 
 	/**
-	 * Dump all the accumulated bytes in this encoder to the stream.
-	 * @param stream is the output stream
-	 * @throws IOException for errors during the write operation
+	 * Write an address space reference into the encoding.
+	 * An address space identified by its name and unique index is associated with the given
+	 * annotation and the current open element.
+	 * @param attribId is the given annotation
+	 * @param index is the unique index of the address space
+	 * @param name is the name of the address space
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public void writeTo(OutputStream stream) throws IOException;
+	void writeSpace(AttributeId attribId, int index, String name) throws IOException;
 
 	/**
-	 * The encoder is considered empty if the writeTo() method would output zero bytes
-	 * @return true if there are no bytes in the encoder
+	 * Write a p-code operation opcode into the encoding, associating it with the given
+	 * annotation. The opcode is specified based on the constants defined in {@link PcodeOp}.
+	 * @param attribId is the given annotation
+	 * @param opcode is the opcode constant
+	 * @throws IOException for errors in the underlying stream
 	 */
-	public boolean isEmpty();
+	void writeOpcode(AttributeId attribId, int opcode) throws IOException;
 }

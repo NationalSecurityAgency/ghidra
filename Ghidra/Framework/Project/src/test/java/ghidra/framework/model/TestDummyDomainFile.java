@@ -287,7 +287,7 @@ public class TestDummyDomainFile implements DomainFile {
 	}
 
 	@Override
-	public void checkin(CheckinHandler checkinHandler, boolean okToUpgrade, TaskMonitor monitor)
+	public void checkin(CheckinHandler checkinHandler, TaskMonitor monitor)
 			throws IOException, VersionException, CancelledException {
 		throw new UnsupportedOperationException();
 	}

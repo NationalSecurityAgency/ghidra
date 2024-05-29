@@ -33,16 +33,16 @@ import ghidra.app.plugin.core.debug.gui.DebuggerSnapActionContext;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.debug.api.tracemgr.DebuggerCoordinates;
 import ghidra.docking.settings.Settings;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.DomainObjectChangeRecord;
+import ghidra.framework.model.DomainObjectEvent;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
+import ghidra.program.model.address.Address;
 import ghidra.trace.model.*;
-import ghidra.trace.model.Trace.TraceSnapshotChangeType;
-import ghidra.trace.model.Trace.TraceThreadChangeType;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.thread.TraceThreadManager;
 import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.util.TraceEvents;
 import ghidra.util.database.ObjectKey;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
@@ -56,32 +56,40 @@ public class DebuggerLegacyThreadsPanel extends JPanel {
 
 	protected enum ThreadTableColumns
 		implements EnumeratedTableColumn<ThreadTableColumns, ThreadRow> {
-		NAME("Name", String.class, ThreadRow::getName, ThreadRow::setName, true),
-		CREATED("Created", Long.class, ThreadRow::getCreationSnap, true),
-		DESTROYED("Destroyed", String.class, ThreadRow::getDestructionSnap, true),
-		STATE("State", ThreadState.class, ThreadRow::getState, true),
-		COMMENT("Comment", String.class, ThreadRow::getComment, ThreadRow::setComment, true),
-		PLOT("Plot", Lifespan.class, ThreadRow::getLifespan, false);
+		NAME("Name", String.class, ThreadRow::getName, ThreadRow::setName, true, true),
+		PC("PC", Address.class, ThreadRow::getProgramCounter, true, true),
+		FUNCTION("Function", ghidra.program.model.listing.Function.class, ThreadRow::getFunction, //
+				true, true),
+		MODULE("Module", String.class, ThreadRow::getModule, true, false),
+		SP("SP", Address.class, ThreadRow::getStackPointer, true, false),
+		CREATED("Created", Long.class, ThreadRow::getCreationSnap, true, false),
+		DESTROYED("Destroyed", String.class, ThreadRow::getDestructionSnap, true, false),
+
+		STATE("State", ThreadState.class, ThreadRow::getState, true, true),
+		COMMENT("Comment", String.class, ThreadRow::getComment, ThreadRow::setComment, true, false),
+		PLOT("Plot", Lifespan.class, ThreadRow::getLifespan, false, true);
 
 		private final String header;
 		private final Function<ThreadRow, ?> getter;
 		private final BiConsumer<ThreadRow, Object> setter;
 		private final boolean sortable;
+		private final boolean visible;
 		private final Class<?> cls;
 
 		<T> ThreadTableColumns(String header, Class<T> cls, Function<ThreadRow, T> getter,
-				boolean sortable) {
-			this(header, cls, getter, null, sortable);
+				boolean sortable, boolean visible) {
+			this(header, cls, getter, null, sortable, visible);
 		}
 
 		@SuppressWarnings("unchecked")
 		<T> ThreadTableColumns(String header, Class<T> cls, Function<ThreadRow, T> getter,
-				BiConsumer<ThreadRow, T> setter, boolean sortable) {
+				BiConsumer<ThreadRow, T> setter, boolean sortable, boolean visible) {
 			this.header = header;
 			this.cls = cls;
 			this.getter = getter;
 			this.setter = (BiConsumer<ThreadRow, Object>) setter;
 			this.sortable = sortable;
+			this.visible = visible;
 		}
 
 		@Override
@@ -110,6 +118,11 @@ public class DebuggerLegacyThreadsPanel extends JPanel {
 		}
 
 		@Override
+		public boolean isVisible() {
+			return visible;
+		}
+
+		@Override
 		public void setValueOf(ThreadRow row, Object value) {
 			setter.accept(row, value);
 		}
@@ -120,22 +133,21 @@ public class DebuggerLegacyThreadsPanel extends JPanel {
 
 		public ThreadTableModel(DebuggerThreadsProvider provider) {
 			super(provider.getTool(), "Threads", ThreadTableColumns.class,
-				TraceThread::getObjectKey, t -> new ThreadRow(provider, t),
-				ThreadRow::getThread);
+				TraceThread::getObjectKey, t -> new ThreadRow(provider, t), ThreadRow::getThread);
 		}
 	}
 
 	private class ForThreadsListener extends TraceDomainObjectListener {
 		public ForThreadsListener() {
-			listenForUntyped(DomainObject.DO_OBJECT_RESTORED, this::objectRestored);
+			listenForUntyped(DomainObjectEvent.RESTORED, this::objectRestored);
 
-			listenFor(TraceThreadChangeType.ADDED, this::threadAdded);
-			listenFor(TraceThreadChangeType.CHANGED, this::threadChanged);
-			listenFor(TraceThreadChangeType.LIFESPAN_CHANGED, this::threadChanged);
-			listenFor(TraceThreadChangeType.DELETED, this::threadDeleted);
+			listenFor(TraceEvents.THREAD_ADDED, this::threadAdded);
+			listenFor(TraceEvents.THREAD_CHANGED, this::threadChanged);
+			listenFor(TraceEvents.THREAD_LIFESPAN_CHANGED, this::threadChanged);
+			listenFor(TraceEvents.THREAD_DELETED, this::threadDeleted);
 
-			listenFor(TraceSnapshotChangeType.ADDED, this::snapAdded);
-			listenFor(TraceSnapshotChangeType.DELETED, this::snapDeleted);
+			listenFor(TraceEvents.SNAPSHOT_ADDED, this::snapAdded);
+			listenFor(TraceEvents.SNAPSHOT_DELETED, this::snapDeleted);
 		}
 
 		private void objectRestored(DomainObjectChangeRecord rec) {
@@ -177,8 +189,7 @@ public class DebuggerLegacyThreadsPanel extends JPanel {
 
 	/* package access for testing */
 	final SpanTableCellRenderer<Long> spanRenderer = new SpanTableCellRenderer<>();
-	final RangeCursorTableHeaderRenderer<Long> headerRenderer =
-		new RangeCursorTableHeaderRenderer<>(0L);
+	final RangeCursorTableHeaderRenderer<Long> headerRenderer;
 
 	final TableCellRenderer boldCurrentRenderer = new AbstractGColumnRenderer<Object>() {
 		@Override
@@ -214,6 +225,8 @@ public class DebuggerLegacyThreadsPanel extends JPanel {
 		this.autoServiceWiring = AutoService.wireServicesConsumed(plugin, this);
 
 		threadTableModel = new ThreadTableModel(provider);
+		headerRenderer = new RangeCursorTableHeaderRenderer<>(0L,
+			threadTableModel.getColumn(ThreadTableColumns.PLOT.ordinal()));
 		threadTable = new GhidraTable(threadTableModel);
 		threadTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		add(new JScrollPane(threadTable));
@@ -255,29 +268,28 @@ public class DebuggerLegacyThreadsPanel extends JPanel {
 
 		TableColumnModel columnModel = threadTable.getColumnModel();
 		TableColumn colName = columnModel.getColumn(ThreadTableColumns.NAME.ordinal());
-		colName.setPreferredWidth(100);
 		colName.setCellRenderer(boldCurrentRenderer);
 		TableColumn colCreated = columnModel.getColumn(ThreadTableColumns.CREATED.ordinal());
-		colCreated.setPreferredWidth(10);
 		colCreated.setCellRenderer(boldCurrentRenderer);
 		TableColumn colDestroyed = columnModel.getColumn(ThreadTableColumns.DESTROYED.ordinal());
-		colDestroyed.setPreferredWidth(10);
 		colDestroyed.setCellRenderer(boldCurrentRenderer);
 		TableColumn colState = columnModel.getColumn(ThreadTableColumns.STATE.ordinal());
-		colState.setPreferredWidth(20);
 		colState.setCellRenderer(boldCurrentRenderer);
 		TableColumn colComment = columnModel.getColumn(ThreadTableColumns.COMMENT.ordinal());
-		colComment.setPreferredWidth(100);
 		colComment.setCellRenderer(boldCurrentRenderer);
 		TableColumn colPlot = columnModel.getColumn(ThreadTableColumns.PLOT.ordinal());
-		colPlot.setPreferredWidth(200);
 		colPlot.setCellRenderer(spanRenderer);
 		colPlot.setHeaderRenderer(headerRenderer);
 
 		headerRenderer.addSeekListener(seekListener = pos -> {
 			long snap = Math.round(pos);
-			if (current.getTrace() == null || snap < 0) {
+			if (snap < 0) {
 				snap = 0;
+			}
+			long max =
+				current.getTrace() == null ? 0 : current.getTrace().getTimeManager().getMaxSnap();
+			if (snap > max) {
+				snap = max;
 			}
 			traceManager.activateSnap(snap);
 			myActionContext = new DebuggerSnapActionContext(current.getTrace(), snap);

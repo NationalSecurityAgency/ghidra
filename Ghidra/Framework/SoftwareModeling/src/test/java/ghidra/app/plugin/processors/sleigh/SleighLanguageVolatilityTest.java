@@ -215,7 +215,7 @@ public class SleighLanguageVolatilityTest extends AbstractGenericTest {
 	public ResourceFile createCustomPspecFile(String name, String content) {
 		File newPspecFile = null;
 		try {
-			newPspecFile = File.createTempFile(name, ".pspec");
+			newPspecFile = Application.createTempFile(name, ".pspec");
 			BufferedWriter bw = new BufferedWriter(new FileWriter(newPspecFile));
 			bw.write(content);
 			bw.close();
@@ -239,7 +239,7 @@ public class SleighLanguageVolatilityTest extends AbstractGenericTest {
 		}
 
 		try {
-			File editedPspecFile = File.createTempFile(name, ".ldefs");
+			File editedPspecFile = Application.createTempFile(name, ".ldefs");
 			BufferedReader br = new BufferedReader(new FileReader(originalLdefFile.getFile(false)));
 			BufferedWriter bw = new BufferedWriter(new FileWriter(editedPspecFile));
 			String s;

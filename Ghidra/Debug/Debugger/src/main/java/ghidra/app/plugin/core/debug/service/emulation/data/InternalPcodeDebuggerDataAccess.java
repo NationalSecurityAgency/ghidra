@@ -16,14 +16,14 @@
 package ghidra.app.plugin.core.debug.service.emulation.data;
 
 import ghidra.debug.api.target.Target;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.lifecycle.Internal;
 import ghidra.pcode.exec.trace.data.InternalPcodeTraceDataAccess;
 import ghidra.trace.model.TraceTimeViewport;
 
 @Internal
 public interface InternalPcodeDebuggerDataAccess extends InternalPcodeTraceDataAccess {
-	PluginTool getTool();
+	ServiceProvider getServiceProvider();
 
 	Target getTarget();
 

@@ -555,7 +555,6 @@ class ActionDeadCode : public Action {
   static bool neverConsumed(Varnode *vn,Funcdata &data);
   static void markConsumedParameters(FuncCallSpecs *fc,vector<Varnode *> &worklist);
   static uintb gatherConsumedReturn(Funcdata &data);
-  static bool isEventualConstant(Varnode *vn,int4 addCount,int4 loadCount);
   static bool lastChanceLoad(Funcdata &data,vector<Varnode *> &worklist);
 public:
   ActionDeadCode(const string &g) : Action(0,"deadcode",g) {}	///< Constructor
@@ -832,6 +831,7 @@ public:
 /// This produces on intermediate view of symbols on the stack.
 class ActionRestructureVarnode : public Action {
   int4 numpass;			///< Number of passes performed for this function
+  static bool isDelayedConstant(Varnode *vn);		///< Determine if given Varnode is or will be a constant
   static void protectSwitchPathIndirects(PcodeOp *op);	///< Protect path to the given switch from INDIRECT collapse
   static void protectSwitchPaths(Funcdata &data);	///< Look for switches and protect path of switch variable
 public:
@@ -1031,6 +1031,19 @@ public:
   virtual Action *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Action *)0;
     return new ActionPrototypeWarnings(getGroup());
+  }
+  virtual int4 apply(Funcdata &data);
+};
+
+/// \brief Check for constants getting written to the stack from \e internal \e storage registers
+///
+/// The constant is internal to the compiler and its storage location on the stack should not be addressable.
+class ActionInternalStorage : public Action {
+public:
+  ActionInternalStorage(const string &g) : Action(rule_onceperfunc,"internalstorage",g) {}	///< Constructor
+  virtual Action *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Action *)0;
+    return new ActionInternalStorage(getGroup());
   }
   virtual int4 apply(Funcdata &data);
 };
