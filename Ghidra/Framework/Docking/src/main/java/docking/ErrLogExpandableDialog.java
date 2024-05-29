@@ -378,6 +378,16 @@ public class ErrLogExpandableDialog extends AbstractErrDialog {
 		public boolean doesIndent() {
 			return false;
 		}
+
+		@Override
+		public int hashCode() {
+			return System.identityHashCode(this);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return this == obj;
+		}
 	}
 
 	static class ReportExceptionNode extends GTreeLazyNode implements NodeWithText {
@@ -444,6 +454,16 @@ public class ErrLogExpandableDialog extends AbstractErrDialog {
 		public boolean doesIndent() {
 			return true;
 		}
+
+		@Override
+		public int hashCode() {
+			return System.identityHashCode(this);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return this == obj;
+		}
 	}
 
 	static class ReportStackTraceNode extends GTreeLazyNode implements NodeWithText {
@@ -496,6 +516,16 @@ public class ErrLogExpandableDialog extends AbstractErrDialog {
 		@Override
 		public boolean doesIndent() {
 			return false;
+		}
+
+		@Override
+		public int hashCode() {
+			return System.identityHashCode(this);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return this == obj;
 		}
 	}
 
@@ -560,6 +590,16 @@ public class ErrLogExpandableDialog extends AbstractErrDialog {
 		@Override
 		public boolean doesIndent() {
 			return false;
+		}
+
+		@Override
+		public int hashCode() {
+			return System.identityHashCode(this);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			return this == obj;
 		}
 	}
 

@@ -38,7 +38,6 @@ import docking.widgets.label.GIconLabel;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.services.ProgramManager;
-import ghidra.app.services.TextEditorService;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.LibrarySearchPathManager;
 import ghidra.formats.gfilesystem.*;
@@ -58,6 +57,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.CryptoException;
 import ghidra.util.task.TaskLauncher;
 import ghidra.util.task.TaskMonitor;
+import utilities.util.FileUtilities;
 
 /**
  * Handles the menu actions for the {@link FileSystemBrowserComponentProvider}.
@@ -92,8 +92,6 @@ class FSBActionManager {
 	protected FileSystemBrowserPlugin plugin;
 	protected FileSystemBrowserComponentProvider provider;
 
-	private TextEditorService textEditorService;
-
 	private GTree gTree;
 
 	private GhidraFileChooser chooserExport;
@@ -103,12 +101,11 @@ class FSBActionManager {
 	private FileSystemService fsService = FileSystemService.getInstance();
 
 	FSBActionManager(FileSystemBrowserPlugin plugin, FileSystemBrowserComponentProvider provider,
-			TextEditorService textEditorService, GTree gTree) {
+			GTree gTree) {
 
 		this.plugin = plugin;
 		this.provider = provider;
 
-		this.textEditorService = textEditorService;
 		this.gTree = gTree;
 
 		createActions();
@@ -201,9 +198,9 @@ class FSBActionManager {
 			OptionDialog.showYesNoDialog(null, "Search Project for matching program?",
 				"Search entire Project for matching program? (WARNING, could take large amount of time)") == OptionDialog.YES_OPTION;
 
-		Map<FSRL, DomainFile> matchedFSRLs = doSearch
-				? ProgramMappingService.searchProjectForMatchingFiles(List.of(fsrl), monitor)
-				: Map.of();
+		Map<FSRL, DomainFile> matchedFSRLs =
+			doSearch ? ProgramMappingService.searchProjectForMatchingFiles(List.of(fsrl), monitor)
+					: Map.of();
 
 		DomainFile domainFile = matchedFSRLs.get(fsrl);
 		if (domainFile != null) {
@@ -293,9 +290,9 @@ class FSBActionManager {
 				"Search entire Project for matching programs? " +
 					"(WARNING, could take large amount of time)") == OptionDialog.YES_OPTION;
 
-		Map<FSRL, DomainFile> matchedFSRLs = doSearch
-				? ProgramMappingService.searchProjectForMatchingFiles(fsrlList, monitor)
-				: Map.of();
+		Map<FSRL, DomainFile> matchedFSRLs =
+			doSearch ? ProgramMappingService.searchProjectForMatchingFiles(fsrlList, monitor)
+					: Map.of();
 
 		List<FSRL> unmatchedFSRLs = new ArrayList<>();
 		for (FSRL fsrl : fsrlList) {
@@ -342,43 +339,40 @@ class FSBActionManager {
 	// DockingActions
 	//----------------------------------------------------------------------------------
 	private DockingAction createExportAction() {
-		return new ActionBuilder("FSB Export", plugin.getName())
-				.withContext(FSBActionContext.class)
+		return new ActionBuilder("FSB Export", plugin.getName()).withContext(FSBActionContext.class)
 				.enabledWhen(ac -> ac.notBusy() && ac.getFileFSRL() != null)
 				.popupMenuIcon(ImageManager.EXTRACT)
 				.popupMenuPath("Export...")
 				.popupMenuGroup("F", "C")
-				.onAction(
-					ac -> {
-						FSRL fsrl = ac.getFileFSRL();
-						if (fsrl == null) {
+				.onAction(ac -> {
+					FSRL fsrl = ac.getFileFSRL();
+					if (fsrl == null) {
+						return;
+					}
+					if (chooserExport == null) {
+						chooserExport = new GhidraFileChooser(provider.getComponent());
+						chooserExport.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
+						chooserExport.setTitle("Select Where To Export File");
+						chooserExport.setApproveButtonText("Export");
+					}
+					File selectedFile =
+						new File(chooserExport.getCurrentDirectory(), fsrl.getName());
+					chooserExport.setSelectedFile(selectedFile);
+					File outputFile = chooserExport.getSelectedFile();
+					if (outputFile == null) {
+						return;
+					}
+					if (outputFile.exists()) {
+						int answer = OptionDialog.showYesNoDialog(provider.getComponent(),
+							"Confirm Overwrite", outputFile.getAbsolutePath() + "\n" +
+								"The file already exists.\n" + "Do you want to overwrite it?");
+						if (answer == OptionDialog.NO_OPTION) {
 							return;
 						}
-						if (chooserExport == null) {
-							chooserExport = new GhidraFileChooser(provider.getComponent());
-							chooserExport.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
-							chooserExport.setTitle("Select Where To Export File");
-							chooserExport.setApproveButtonText("Export");
-						}
-						File selectedFile =
-							new File(chooserExport.getCurrentDirectory(), fsrl.getName());
-						chooserExport.setSelectedFile(selectedFile);
-						File outputFile = chooserExport.getSelectedFile();
-						if (outputFile == null) {
-							return;
-						}
-						if (outputFile.exists()) {
-							int answer = OptionDialog.showYesNoDialog(provider.getComponent(),
-								"Confirm Overwrite", outputFile.getAbsolutePath() + "\n" +
-									"The file already exists.\n" +
-									"Do you want to overwrite it?");
-							if (answer == OptionDialog.NO_OPTION) {
-								return;
-							}
-						}
-						gTree.runTask(monitor -> doExtractFile(fsrl, outputFile,
-							ac.getSelectedNode(), monitor));
-					})
+					}
+					gTree.runTask(
+						monitor -> doExtractFile(fsrl, outputFile, ac.getSelectedNode(), monitor));
+				})
 				.build();
 	}
 
@@ -389,37 +383,36 @@ class FSBActionManager {
 				.popupMenuIcon(ImageManager.EXTRACT)
 				.popupMenuPath("Export All...")
 				.popupMenuGroup("F", "C")
-				.onAction(
-					ac -> {
-						FSRL fsrl = ac.getFSRL(true);
-						if (fsrl == null) {
-							return;
-						}
-						if (fsrl instanceof FSRLRoot) {
-							fsrl = fsrl.appendPath("/");
-						}
-						if (chooserExportAll == null) {
-							chooserExportAll = new GhidraFileChooser(provider.getComponent());
-							chooserExportAll
-									.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
-							chooserExportAll.setTitle("Select Export Directory");
-							chooserExportAll.setApproveButtonText("Export All");
-						}
-						chooserExportAll.setSelectedFile(null);
-						File outputFile = chooserExportAll.getSelectedFile();
-						if (outputFile == null) {
-							return;
-						}
+				.onAction(ac -> {
+					FSRL fsrl = ac.getFSRL(true);
+					if (fsrl == null) {
+						return;
+					}
+					if (fsrl instanceof FSRLRoot) {
+						fsrl = fsrl.appendPath("/");
+					}
+					if (chooserExportAll == null) {
+						chooserExportAll = new GhidraFileChooser(provider.getComponent());
+						chooserExportAll
+								.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
+						chooserExportAll.setTitle("Select Export Directory");
+						chooserExportAll.setApproveButtonText("Export All");
+					}
+					chooserExportAll.setSelectedFile(null);
+					File outputFile = chooserExportAll.getSelectedFile();
+					if (outputFile == null) {
+						return;
+					}
 
-						if (!outputFile.isDirectory()) {
-							Msg.showInfo(this, provider.getComponent(), "Export All",
-								"Selected file is not a directory.");
-							return;
-						}
-						Component parentComp = plugin.getTool().getActiveWindow();
-						TaskLauncher.launch(
-							new GFileSystemExtractAllTask(fsrl, outputFile, parentComp));
-					})
+					if (!outputFile.isDirectory()) {
+						Msg.showInfo(this, provider.getComponent(), "Export All",
+							"Selected file is not a directory.");
+						return;
+					}
+					Component parentComp = plugin.getTool().getActiveWindow();
+					TaskLauncher
+							.launch(new GFileSystemExtractAllTask(fsrl, outputFile, parentComp));
+				})
 				.build();
 	}
 
@@ -430,14 +423,13 @@ class FSBActionManager {
 				.popupMenuIcon(ImageManager.VIEW_AS_IMAGE)
 				.popupMenuPath("View As Image")
 				.popupMenuGroup("G")
-				.onAction(
-					ac -> {
-						FSRL fsrl = ac.getFileFSRL();
-						if (fsrl != null) {
-							gTree.runTask(
-								monitor -> doViewAsImage(fsrl, ac.getSelectedNode(), monitor));
-						}
-					})
+				.onAction(ac -> {
+					FSRL fsrl = ac.getFileFSRL();
+					if (fsrl != null) {
+						gTree.runTask(
+							monitor -> doViewAsImage(fsrl, ac.getSelectedNode(), monitor));
+					}
+				})
 				.build();
 	}
 
@@ -448,14 +440,12 @@ class FSBActionManager {
 				.popupMenuIcon(ImageManager.VIEW_AS_TEXT)
 				.popupMenuPath("View As Text")
 				.popupMenuGroup("G")
-				.onAction(
-					ac -> {
-						FSRL fsrl = ac.getFileFSRL();
-						if (fsrl != null) {
-							gTree.runTask(
-								monitor -> doViewAsText(fsrl, ac.getSelectedNode(), monitor));
-						}
-					})
+				.onAction(ac -> {
+					FSRL fsrl = ac.getFileFSRL();
+					if (fsrl != null) {
+						gTree.runTask(monitor -> doViewAsText(fsrl, ac.getSelectedNode(), monitor));
+					}
+				})
 				.build();
 	}
 
@@ -471,8 +461,7 @@ class FSBActionManager {
 				.popupMenuGroup("L")
 				.onAction(ac -> {
 					FSRLRoot fsFSRL = SelectFromListDialog.selectFromList(
-						fsService.getMountedFilesystems(),
-						"Select filesystem",
+						fsService.getMountedFilesystems(), "Select filesystem",
 						"Choose filesystem to view", f -> f.toPrettyString());
 
 					FileSystemRef fsRef;
@@ -526,11 +515,10 @@ class FSBActionManager {
 				.popupMenuGroup("A", "A")
 				.popupMenuIcon(ImageManager.INFO)
 				.description("Show information about a file")
-				.onAction(
-					ac -> {
-						FSRL fsrl = ac.getFSRL(true);
-						gTree.runTask(monitor -> showInfoForFile(fsrl, monitor));
-					})
+				.onAction(ac -> {
+					FSRL fsrl = ac.getFSRL(true);
+					gTree.runTask(monitor -> showInfoForFile(fsrl, monitor));
+				})
 				.build();
 	}
 
@@ -541,20 +529,19 @@ class FSBActionManager {
 				.popupMenuIcon(ImageManager.OPEN_FILE_SYSTEM)
 				.popupMenuPath("Open File System in new window")
 				.popupMenuGroup("C")
-				.onAction(
-					ac -> {
-						if (!(ac.getSelectedNode() instanceof FSBFileNode) ||
-							ac.getSelectedNode().getFSRL() == null) {
-							return;
-						}
-						FSBFileNode selectedNode = (FSBFileNode) ac.getSelectedNode();
-						FSRL containerFSRL = selectedNode.getFSRL();
-						if (containerFSRL != null) {
-							gTree.runTask(monitor -> {
-								doOpenFileSystem(containerFSRL, selectedNode, false, monitor);
-							});
-						}
-					})
+				.onAction(ac -> {
+					if (!(ac.getSelectedNode() instanceof FSBFileNode) ||
+						ac.getSelectedNode().getFSRL() == null) {
+						return;
+					}
+					FSBFileNode selectedNode = (FSBFileNode) ac.getSelectedNode();
+					FSRL containerFSRL = selectedNode.getFSRL();
+					if (containerFSRL != null) {
+						gTree.runTask(monitor -> {
+							doOpenFileSystem(containerFSRL, selectedNode, false, monitor);
+						});
+					}
+				})
 				.build();
 	}
 
@@ -620,8 +607,7 @@ class FSBActionManager {
 	}
 
 	private DockingAction createCloseAction() {
-		return new ActionBuilder("FSB Close", plugin.getName())
-				.withContext(FSBActionContext.class)
+		return new ActionBuilder("FSB Close", plugin.getName()).withContext(FSBActionContext.class)
 				.enabledWhen(ac -> ac.notBusy() && ac.getSelectedNode() instanceof FSBRootNode)
 				.description("Close")
 				.toolBarIcon(ImageManager.CLOSE)
@@ -724,7 +710,7 @@ class FSBActionManager {
 					if (fsrl == null) {
 						return;
 					}
-						
+
 					gTree.runTask(monitor -> {
 						if (!ensureFileAccessable(fsrl, ac.getSelectedNode(), monitor)) {
 							return;
@@ -782,15 +768,13 @@ class FSBActionManager {
 				.popupMenuPath("Clear Cached Passwords")
 				.popupMenuGroup("Z", "B")
 				.description("Clear cached container file passwords")
-				.onAction(
-					ac -> {
-						CachedPasswordProvider ccp =
-							CryptoProviders.getInstance().getCachedCryptoProvider();
-						int preCount = ccp.getCount();
-						ccp.clearCache();
-						Msg.info(this,
-							"Cleared " + (preCount - ccp.getCount()) + " cached passwords.");
-					})
+				.onAction(ac -> {
+					CachedPasswordProvider ccp =
+						CryptoProviders.getInstance().getCachedCryptoProvider();
+					int preCount = ccp.getCount();
+					ccp.clearCache();
+					Msg.info(this, "Cleared " + (preCount - ccp.getCount()) + " cached passwords.");
+				})
 				.build();
 	}
 
@@ -816,10 +800,9 @@ class FSBActionManager {
 		}
 		monitor.setMessage("Exporting...");
 		try (ByteProvider fileBP = fsService.getByteProvider(fsrl, false, monitor)) {
-			long bytesCopied =
-				FSUtilities.copyByteProviderToFile(fileBP, outputFile, monitor);
-			Msg.info(this, "Exported " + fsrl.getName() + " to " + outputFile + ", " +
-				bytesCopied + " bytes copied.");
+			long bytesCopied = FSUtilities.copyByteProviderToFile(fileBP, outputFile, monitor);
+			Msg.info(this, "Exported " + fsrl.getName() + " to " + outputFile + ", " + bytesCopied +
+				" bytes copied.");
 		}
 		catch (IOException | CancelledException | UnsupportedOperationException e) {
 			FSUtilities.displayException(this, plugin.getTool().getActiveWindow(),
@@ -873,8 +856,7 @@ class FSBActionManager {
 		}
 		catch (IOException | CancelledException e) {
 			FSUtilities.displayException(this, plugin.getTool().getActiveWindow(),
-				"Open Filesystem",
-				"Error opening filesystem for " + containerFSRL.getName(), e);
+				"Open Filesystem", "Error opening filesystem for " + containerFSRL.getName(), e);
 		}
 	}
 
@@ -894,13 +876,13 @@ class FSBActionManager {
 			}
 			Swing.runLater(() -> {
 				JLabel label = new GIconLabel(icon);
-				JOptionPane.showMessageDialog(null, label,
-					"Image Viewer: " + fsrl.getName(), JOptionPane.INFORMATION_MESSAGE);
+				JOptionPane.showMessageDialog(null, label, "Image Viewer: " + fsrl.getName(),
+					JOptionPane.INFORMATION_MESSAGE);
 			});
 		}
 		catch (IOException | CancelledException e) {
-			FSUtilities.displayException(this, parent, "Error Viewing Image File",
-				e.getMessage(), e);
+			FSUtilities.displayException(this, parent, "Error Viewing Image File", e.getMessage(),
+				e);
 		}
 	}
 
@@ -923,13 +905,15 @@ class FSBActionManager {
 					"File " + fsrl.getName() + " is empty (0 bytes).");
 				return;
 			}
+
 			try {
-				// textEditorService closes the inputStream, and must be
-				// called on the swing thread or you get concurrentmodification
-				// exceptions.
 				ByteArrayInputStream bais =
 					new ByteArrayInputStream(fileBP.readBytes(0, fileBP.length()));
-				Swing.runLater(() -> textEditorService.edit(fsrl.getName(), bais));
+
+				String text = FileUtilities.getText(bais);
+				Swing.runLater(() -> {
+					new TextEditorComponentProvider(fsrl.getName(), text);
+				});
 			}
 			catch (IOException e) {
 				Msg.showError(this, parent, "View As Text Failed",
@@ -937,8 +921,8 @@ class FSBActionManager {
 			}
 		}
 		catch (IOException | CancelledException e) {
-			FSUtilities.displayException(this, parent, "Error Viewing Text File",
-				e.getMessage(), e);
+			FSUtilities.displayException(this, parent, "Error Viewing Text File", e.getMessage(),
+				e);
 		}
 	}
 
@@ -1009,27 +993,19 @@ class FSBActionManager {
 	// static lookup tables for rendering file attributes
 	//---------------------------------------------------------------------------------------------
 	private static final Function<Object, String> PLAIN_TOSTRING = o -> o.toString();
-	private static final Function<Object, String> SIZE_TOSTRING = o -> (o instanceof Long)
-			? FSUtilities.formatSize((Long) o)
-			: o.toString();
-	private static final Function<Object, String> UNIX_ACL_TOSTRING = o -> (o instanceof Number)
-			? String.format("%05o", (Number) o)
-			: o.toString();
-	private static final Function<Object, String> DATE_TOSTRING = o -> (o instanceof Date)
-			? FSUtilities.formatFSTimestamp((Date) o)
-			: o.toString();
-	private static final Function<Object, String> FSRL_TOSTRING = o -> (o instanceof FSRL)
-			? ((FSRL) o).toPrettyString().replace("|", "|\n\t")
-			: o.toString();
+	private static final Function<Object, String> SIZE_TOSTRING =
+		o -> (o instanceof Long) ? FSUtilities.formatSize((Long) o) : o.toString();
+	private static final Function<Object, String> UNIX_ACL_TOSTRING =
+		o -> (o instanceof Number) ? String.format("%05o", (Number) o) : o.toString();
+	private static final Function<Object, String> DATE_TOSTRING =
+		o -> (o instanceof Date) ? FSUtilities.formatFSTimestamp((Date) o) : o.toString();
+	private static final Function<Object, String> FSRL_TOSTRING =
+		o -> (o instanceof FSRL) ? ((FSRL) o).toPrettyString().replace("|", "|\n\t") : o.toString();
 
 	private static final Map<FileAttributeType, Function<Object, String>> FAT_TOSTRING_FUNCS =
-		Map.ofEntries(
-			entry(FSRL_ATTR, FSRL_TOSTRING),
-			entry(SIZE_ATTR, SIZE_TOSTRING),
-			entry(COMPRESSED_SIZE_ATTR, SIZE_TOSTRING),
-			entry(CREATE_DATE_ATTR, DATE_TOSTRING),
-			entry(MODIFIED_DATE_ATTR, DATE_TOSTRING),
-			entry(ACCESSED_DATE_ATTR, DATE_TOSTRING),
+		Map.ofEntries(entry(FSRL_ATTR, FSRL_TOSTRING), entry(SIZE_ATTR, SIZE_TOSTRING),
+			entry(COMPRESSED_SIZE_ATTR, SIZE_TOSTRING), entry(CREATE_DATE_ATTR, DATE_TOSTRING),
+			entry(MODIFIED_DATE_ATTR, DATE_TOSTRING), entry(ACCESSED_DATE_ATTR, DATE_TOSTRING),
 			entry(UNIX_ACL_ATTR, UNIX_ACL_TOSTRING));
 
 	/**
@@ -1096,8 +1072,7 @@ class FSBActionManager {
 	}
 
 	private String getHTMLInfoStringForAttributes(List<FileAttributes> fileAttributesList) {
-		StringBuilder sb =
-			new StringBuilder("<html>\n<table>\n");
+		StringBuilder sb = new StringBuilder("<html>\n<table>\n");
 		sb.append("<tr><th>Property</th><th>Value</th></tr>\n");
 		for (FileAttributes fattrs : fileAttributesList) {
 			if (fattrs != fileAttributesList.get(0)) {
@@ -1105,17 +1080,15 @@ class FSBActionManager {
 				sb.append("<tr><td colspan=2><hr></td></tr>");
 			}
 			List<FileAttribute<?>> sortedAttribs = fattrs.getAttributes();
-			Collections.sort(sortedAttribs,
-				(o1, o2) -> Integer.compare(o1.getAttributeType().ordinal(),
-					o2.getAttributeType().ordinal()));
+			Collections.sort(sortedAttribs, (o1, o2) -> Integer
+					.compare(o1.getAttributeType().ordinal(), o2.getAttributeType().ordinal()));
 
 			FileAttributeTypeGroup group = null;
 			for (FileAttribute<?> attr : sortedAttribs) {
 				if (attr.getAttributeType().getGroup() != group) {
 					group = attr.getAttributeType().getGroup();
 					if (group != FileAttributeTypeGroup.GENERAL_INFO) {
-						sb
-								.append("<tr><td><b>")
+						sb.append("<tr><td><b>")
 								.append(group.getDescriptiveName())
 								.append("</b></td><td><hr></td></tr>\n");
 					}
@@ -1126,8 +1099,7 @@ class FSBActionManager {
 
 				String html = HTMLUtilities.escapeHTML(valStr);
 				html = html.replace("\n", "<br>\n");
-				sb
-						.append("<tr><td>")
+				sb.append("<tr><td>")
 						.append(attr.getAttributeDisplayName())
 						.append(":</td><td>")
 						.append(html)
