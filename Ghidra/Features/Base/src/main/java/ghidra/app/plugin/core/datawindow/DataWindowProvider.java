@@ -20,7 +20,7 @@ import java.awt.Dimension;
 import java.awt.event.MouseEvent;
 
 import javax.swing.*;
-import javax.swing.table.JTableHeader;
+import javax.swing.table.TableColumnModel;
 
 import docking.ActionContext;
 import generic.theme.GIcon;
@@ -30,9 +30,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
 
-/**
- * Provider for the equates table.
- */
 class DataWindowProvider extends ComponentProviderAdapter {
 
 	public static final Icon ICON = new GIcon("icon.plugin.datawindow.provider");
@@ -76,9 +73,6 @@ class DataWindowProvider extends ComponentProviderAdapter {
 		return mainPanel;
 	}
 
-	/*
-	 * @see ghidra.framework.docking.HelpTopic#getHelpLocation()
-	 */
 	@Override
 	public HelpLocation getHelpLocation() {
 		return new HelpLocation(plugin.getName(), plugin.getName());
@@ -131,8 +125,6 @@ class DataWindowProvider extends ComponentProviderAdapter {
 
 		dataTable.installNavigation(tool);
 
-		JTableHeader dataHeader = dataTable.getTableHeader();
-		dataHeader.setUpdateTableInRealTime(true);
 		setDataTableRenderer();
 
 		filterPanel = new GhidraTableFilterPanel<>(dataTable, dataModel);
@@ -153,11 +145,10 @@ class DataWindowProvider extends ComponentProviderAdapter {
 	}
 
 	private void setDataTableRenderer() {
-		dataTable.getColumnModel()
-				.getColumn(DataTableModel.LOCATION_COL)
+		TableColumnModel columnModel = dataTable.getColumnModel();
+		columnModel.getColumn(DataTableModel.LOCATION_COL)
 				.setPreferredWidth(DataTableModel.ADDRESS_COL_WIDTH);
-		dataTable.getColumnModel()
-				.getColumn(DataTableModel.SIZE_COL)
+		columnModel.getColumn(DataTableModel.SIZE_COL)
 				.setPreferredWidth(DataTableModel.SIZE_COL_WIDTH);
 	}
 
@@ -173,7 +164,7 @@ class DataWindowProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	public GhidraTable getTable() {
+	GhidraTable getTable() {
 		return dataTable;
 	}
 }

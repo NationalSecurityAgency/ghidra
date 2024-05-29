@@ -27,10 +27,10 @@ public class DataWindowPluginScreenShots extends GhidraScreenShotGenerator {
 		super();
 	}
 
-@Test
-    public void testDataWindow() {
+	@Test
+	public void testDataWindow() {
 
-		performAction("Defined Data", "DockingWindows", true);
+		performAction("Data Window", "DataWindowPlugin", true);
 
 		ComponentProvider provider = getProvider("Data Window");
 
@@ -42,9 +42,9 @@ public class DataWindowPluginScreenShots extends GhidraScreenShotGenerator {
 		captureIsolatedProviderWindow(provider.getClass(), 500, 300);
 	}
 
-@Test
-    public void testDataWindowFilter() {
-		performAction("Defined Data", "DockingWindows", true);
+	@Test
+	public void testDataWindowFilter() {
+		performAction("Data Window", "DataWindowPlugin", true);
 
 		performAction("Filter Data Types", "DataWindowPlugin", false);
 
