@@ -2877,12 +2877,12 @@ control: "control" 			is epsilon {}
 
 @if defined(VERSION_7M)
 
-msripsr: "i"	is thc0000=1 { }
-msripsr: 		is thc0000=0 { }
-msrepsr: "e"	is thc0101=1 { }
-msrepsr: 		is thc0101=0 { }
-msrapsr: 		is thc0202=1 { }
-msrapsr: "a"	is thc0202=0 & Rn0003 {
+msripsr: "i"	is Rn0003; thc0000=1 { }
+msripsr: 		is Rn0003; thc0000=0 { }
+msrepsr: "e"	is Rn0003; thc0101=1 { }
+msrepsr: 		is Rn0003; thc0101=0 { }
+msrapsr: 		is Rn0003; thc0202=1 { }
+msrapsr: "a"	is Rn0003; thc0202=0 {
 	cpsr = cpsr | (Rn0003 & 0xf8000000);
 	writeAPSR_nzcvq(cpsr);
 }
@@ -2890,11 +2890,11 @@ msrapsr: "a"	is thc0202=0 & Rn0003 {
 msrpsr: msripsr^msrepsr^msrapsr^"psr"	is	msripsr & msrepsr & msrapsr	{
 	build msrapsr;
 }
-msrpsr: "xpsr"	is	sysm02=3 & msrapsr	{
+msrpsr: "xpsr"	is	(Rn0003 ; sysm02=3) & msrapsr	{
 	build msrapsr;
 }
 
-:msr^ItCond msrpsr,Rn0003 		is TMode=1 & ItCond & op4=0xf38 & Rn0003; op12=0x8 & th_psrmask=8 & sysm37=0 & msrpsr
+:msr^ItCond msrpsr,Rn0003 		is TMode=1 & ItCond & (op4=0xf38 & Rn0003; op12=0x8 & th_psrmask=8 & sysm37=0) & msrpsr
 {
   build ItCond;
   build msrpsr;
