@@ -2999,7 +2999,7 @@ define pcodeop LocalDescriptorTableRegister;
 
 :LODSB^rep^reptail dseSI1   is vexMode=0 & rep & reptail & byte=0xAC & dseSI1           { build rep; build dseSI1; AL=dseSI1; build reptail; }
 :LODSW^rep^reptail dseSI2   is vexMode=0 & rep & reptail & opsize=0 & byte=0xAD & dseSI2    { build rep; build dseSI2; AX=dseSI2; build reptail; }
-:LODSD^rep^reptail dseSI4   is vexMode=0 & rep & reptail & opsize=1 & byte=0xAD & dseSI4    { build rep; build dseSI4; EAX=dseSI4; build reptail; }
+:LODSD^rep^reptail dseSI4   is vexMode=0 & rep & reptail & opsize=1 & byte=0xAD & dseSI4 & check_EAX_dest { build rep; build dseSI4; EAX=dseSI4; build check_EAX_dest; build reptail; }
 @ifdef IA64
 :LODSQ^rep^reptail dseSI8   is $(LONGMODE_ON) & vexMode=0 & rep & reptail & opsize=2 & byte=0xAD & dseSI8    { build rep; build dseSI8; RAX=dseSI8; build reptail; }
 @endif
