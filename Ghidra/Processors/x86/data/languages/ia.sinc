@@ -954,26 +954,35 @@ moffs64: segWide^[imm32]  is addrsize=1 & highseg=1 & segWide & imm32   { tmp:8 
 @endif
 # TODO: segment register offset in 64bit might not be right
 
+@ifdef IA64
+check_EDI_dest: is $(LONGMODE_ON)	{ RDI = zext(EDI); }
+check_ESI_dest: is $(LONGMODE_ON)	{ RSI = zext(ESI); }
+check_ECX_dest: is $(LONGMODE_ON)	{ RCX = zext(ECX); }
+@endif
+check_EDI_dest:	is epsilon  		{ }
+check_ESI_dest:	is epsilon  		{ }
+check_ECX_dest:	is epsilon  		{ }
+
 # String memory access
 dseSI1: seg16^SI    is addrsize=0 & seg16 & SI  { tmp:4 = segment(seg16,SI); SI = SI + 1-2*zext(DF); export *:1 tmp; }
-dseSI1: segWide^ESI   is addrsize=1 & segWide & ESI { tmp:4 = ESI; ESI = ESI + 1-2*zext(DF); export *:1 tmp; }
+dseSI1: segWide^ESI   is addrsize=1 & segWide & ESI & check_ESI_dest { tmp:4 = ESI; ESI = ESI + 1-2*zext(DF); build check_ESI_dest; export *:1 tmp; }
 dseSI2: seg16^SI    is addrsize=0 & seg16 & SI  { tmp:4 = segment(seg16,SI); SI = SI + 2-4*zext(DF); export *:2 tmp; }
-dseSI2: segWide^ESI   is addrsize=1 & segWide & ESI { tmp:4 = ESI; ESI = ESI + 2-4*zext(DF); export *:2 tmp; }
+dseSI2: segWide^ESI   is addrsize=1 & segWide & ESI & check_ESI_dest { tmp:4 = ESI; ESI = ESI + 2-4*zext(DF); build check_ESI_dest; export *:2 tmp; }
 dseSI4: seg16^SI    is addrsize=0 & seg16 & SI  { tmp:4 = segment(seg16,SI); SI = SI + 4-8*zext(DF); export *:4 tmp; }
-dseSI4: segWide^ESI   is addrsize=1 & segWide & ESI { tmp:4 = ESI; ESI = ESI + 4-8*zext(DF); export *:4 tmp; }
+dseSI4: segWide^ESI   is addrsize=1 & segWide & ESI & check_ESI_dest { tmp:4 = ESI; ESI = ESI + 4-8*zext(DF); build check_ESI_dest; export *:4 tmp; }
 eseDI1: ES:DI       is addrsize=0 & ES & DI     { tmp:4 = segment(ES,DI); DI = DI + 1-2*zext(DF); export *:1 tmp; }
-eseDI1: ES:EDI      is addrsize=1 & ES & EDI    { tmp:4 = EDI; EDI=EDI+1-2*zext(DF); export *:1 tmp; }
+eseDI1: ES:EDI      is addrsize=1 & ES & EDI & check_EDI_dest { tmp:4 = EDI; EDI=EDI+1-2*zext(DF); build check_EDI_dest; export *:1 tmp; }
 eseDI2: ES:DI       is addrsize=0 & ES & DI     { tmp:4 = segment(ES,DI); DI = DI + 2-4*zext(DF); export *:2 tmp; }
-eseDI2: ES:EDI      is addrsize=1 & ES & EDI    { tmp:4 = EDI; EDI=EDI+2-4*zext(DF); export *:2 tmp; }
+eseDI2: ES:EDI      is addrsize=1 & ES & EDI & check_EDI_dest { tmp:4 = EDI; EDI=EDI+2-4*zext(DF); build check_EDI_dest; export *:2 tmp; }
 eseDI4: ES:DI       is addrsize=0 & ES & DI     { tmp:4 = segment(ES,DI); DI = DI + 4-8*zext(DF); export *:4 tmp; }
-eseDI4: ES:EDI      is addrsize=1 & ES & EDI    { tmp:4 = EDI; EDI=EDI+4-8*zext(DF); export *:4 tmp; }
+eseDI4: ES:EDI      is addrsize=1 & ES & EDI & check_EDI_dest { tmp:4 = EDI; EDI=EDI+4-8*zext(DF); build check_EDI_dest; export *:4 tmp; }
 
 @ifdef IA64
 # quadword string functions
 dseSI8: seg16^SI    is addrsize=0 & seg16 & SI  { tmp:4 = segment(seg16,SI); SI = SI + 8-16*zext(DF); export *:8 tmp; }
-dseSI8: segWide^ESI   is addrsize=1 & segWide & ESI { tmp:4 = ESI; ESI = ESI + 8-16*zext(DF); export *:8 tmp; }
+dseSI8: segWide^ESI   is addrsize=1 & segWide & ESI & check_ESI_dest { tmp:4 = ESI; ESI = ESI + 8-16*zext(DF); build check_ESI_dest; export *:8 tmp; }
 eseDI8: ES:DI       is addrsize=0 & ES & DI     { tmp:4 = segment(ES,DI); DI = DI + 8-16*zext(DF); export *:8 tmp; }
-eseDI8: ES:EDI      is addrsize=1 & ES & EDI    { tmp:4 = EDI; EDI=EDI+8-16*zext(DF); export *:8 tmp; }
+eseDI8: ES:EDI      is addrsize=1 & ES & EDI & check_EDI_dest { tmp:4 = EDI; EDI=EDI+8-16*zext(DF); build check_EDI_dest; export *:8 tmp; }
 
 dseSI1: RSI   is addrsize=2 & RSI { local tmp = RSI; RSI = RSI + 1-2*zext(DF); export *:1 tmp; }
 dseSI2: RSI   is addrsize=2 & RSI { local tmp = RSI; RSI = RSI + 2-4*zext(DF); export *:2 tmp; }
