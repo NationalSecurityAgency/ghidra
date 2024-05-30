@@ -100,13 +100,13 @@ public class MDQualification extends MDParsableItem implements Iterable<MDQualif
 			int loc = dmang.getIndex();
 			MDQualifier qual = new MDQualifier(dmang);
 			qual.parse();
-			quals.add(qual);
 			// This is a quick fix to prevent infinite looping when the next character is not
 			//  expected.  TODO: need to work on code the breaks symbols on these other
 			//  characters that we have seen such as '.' and '`'.
 			if (dmang.getIndex() == loc) {
 				break;
 			}
+			quals.add(qual);
 		}
 		if (dmang.peek() == '@') {
 			dmang.increment(); // Skip past @.
