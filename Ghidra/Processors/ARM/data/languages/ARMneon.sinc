@@ -4676,14 +4676,14 @@ vpushSd64List: "{"^buildVpushSd64List^"}"	is TMode=1 & thv_D22 & thv_c1215 & thv
 }
 
 buildVpopSdList: Sreg					is counter=0 & Sreg			[ regNum=regNum+1; ]
-   { tmp:4 = *mult_addr; Sreg = zext(tmp); mult_addr = mult_addr + 4; }
+   { tmp:4 = *mult_addr; Sreg = zext(tmp); mult_addr = mult_addr - 4; }
 buildVpopSdList: Sreg,buildVpopSdList	is Sreg & buildVpopSdList	[ counter=counter-1; regNum=regNum+1; ]
-   { tmp:4 = *mult_addr; Sreg = zext(tmp); mult_addr = mult_addr + 4; }
+   { tmp:4 = *mult_addr; Sreg = zext(tmp); mult_addr = mult_addr - 4; }
 
 vpopSdList: "{"^buildVpopSdList^"}"	is TMode=0 & D22 & c1215 & c0007 & buildVpopSdList [ regNum=(c1215<<1)+D22-1; counter=c0007-1; ]
-   { mult_addr = sp; sp = sp + c0007 * 4; build buildVpopSdList; }
+   { mult_addr = sp + ((c0007 - 1) * 4); sp = sp + c0007 * 4; build buildVpopSdList; }
 vpopSdList: "{"^buildVpopSdList^"}"	is TMode=1 & thv_D22 & thv_c1215 & thv_c0007 & buildVpopSdList [ regNum=(thv_c1215<<1)+thv_D22-1; counter=thv_c0007-1; ]
-   { mult_addr = sp; sp = sp + thv_c0007 * 4; build buildVpopSdList; }
+   { mult_addr = sp + ((thv_c0007 - 1) * 4); sp = sp + thv_c0007 * 4; build buildVpopSdList; }
 
 buildVpopSd64List: Dreg					is counter=0 & Dreg			[ regNum=regNum+1; ]
    { Dreg = *mult_addr; mult_addr = mult_addr + 8; }
