@@ -3004,20 +3004,20 @@ define pcodeop LocalDescriptorTableRegister;
 :LODSQ^rep^reptail dseSI8   is $(LONGMODE_ON) & vexMode=0 & rep & reptail & opsize=2 & byte=0xAD & dseSI8    { build rep; build dseSI8; RAX=dseSI8; build reptail; }
 @endif
 
-:LOOP   rel8        is vexMode=0 & addrsize=0 & byte=0xE2; rel8             { CX = CX -1; if (CX!=0) goto rel8; }
-:LOOP   rel8        is vexMode=0 & addrsize=1 & byte=0xE2; rel8             { ECX = ECX -1; if (ECX!=0) goto rel8; }
+:LOOP   rel8        is vexMode=0 & addrsize=0 & byte=0xE2; rel8                  { CX = CX -1; if (CX!=0) goto rel8; }
+:LOOP   rel8        is vexMode=0 & addrsize=1 & byte=0xE2; rel8 & check_ECX_dest { ECX = ECX -1; build check_ECX_dest; if (ECX!=0) goto rel8; }
 @ifdef IA64
 :LOOP   rel8        is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & byte=0xE2; rel8             { RCX = RCX -1; if (RCX!=0) goto rel8; }
 @endif
 
-:LOOPZ  rel8        is vexMode=0 & addrsize=0 & byte=0xE1; rel8             { CX = CX -1; if (CX!=0 && ZF!=0) goto rel8; }
-:LOOPZ  rel8        is vexMode=0 & addrsize=1 & byte=0xE1; rel8             { ECX = ECX -1; if (ECX!=0 && ZF!=0) goto rel8; }
+:LOOPZ  rel8        is vexMode=0 & addrsize=0 & byte=0xE1; rel8                  { CX = CX -1; if (CX!=0 && ZF!=0) goto rel8; }
+:LOOPZ  rel8        is vexMode=0 & addrsize=1 & byte=0xE1; rel8 & check_ECX_dest { ECX = ECX -1; build check_ECX_dest; if (ECX!=0 && ZF!=0) goto rel8; }
 @ifdef IA64
 :LOOPZ  rel8        is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & byte=0xE1; rel8             { RCX = RCX -1; if (RCX!=0 && ZF!=0) goto rel8; }
 @endif
 
-:LOOPNZ rel8        is vexMode=0 & addrsize=0 & byte=0xE0; rel8             { CX = CX -1; if (CX!=0 && ZF==0) goto rel8; }
-:LOOPNZ rel8        is vexMode=0 & addrsize=1 & byte=0xE0; rel8             { ECX = ECX -1; if (ECX!=0 && ZF==0) goto rel8; }
+:LOOPNZ rel8        is vexMode=0 & addrsize=0 & byte=0xE0; rel8                  { CX = CX -1; if (CX!=0 && ZF==0) goto rel8; }
+:LOOPNZ rel8        is vexMode=0 & addrsize=1 & byte=0xE0; rel8 & check_ECX_dest { ECX = ECX -1; build check_ECX_dest; if (ECX!=0 && ZF==0) goto rel8; }
 @ifdef IA64
 :LOOPNZ rel8        is $(LONGMODE_ON) & vexMode=0 & addrsize=2 & byte=0xE0; rel8             { RCX = RCX -1; if (RCX!=0 && ZF==0) goto rel8; }
 @endif
