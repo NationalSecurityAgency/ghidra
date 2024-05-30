@@ -68,22 +68,11 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 	protected record PtyTerminalSession(Terminal terminal, Pty pty, PtySession session,
 			Thread waiter) implements TerminalSession {
 		@Override
-		public void close() throws IOException {
-			terminate();
-			terminal.close();
-		}
-
-		@Override
 		public void terminate() throws IOException {
 			terminal.terminated();
 			session.destroyForcibly();
 			pty.close();
 			waiter.interrupt();
-		}
-
-		@Override
-		public boolean isTerminated() {
-			return terminal.isTerminated();
 		}
 
 		@Override
@@ -95,20 +84,9 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 	protected record NullPtyTerminalSession(Terminal terminal, Pty pty, String name)
 			implements TerminalSession {
 		@Override
-		public void close() throws IOException {
-			terminate();
-			terminal.close();
-		}
-
-		@Override
 		public void terminate() throws IOException {
 			terminal.terminated();
 			pty.close();
-		}
-
-		@Override
-		public boolean isTerminated() {
-			return terminal.isTerminated();
 		}
 
 		@Override
@@ -700,6 +678,7 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 				if (prompt) {
 					switch (promptError(result)) {
 						case KEEP:
+							result.showTerminals();
 							return result;
 						case RETRY:
 							try {
