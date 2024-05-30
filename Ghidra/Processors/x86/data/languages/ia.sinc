@@ -1067,7 +1067,7 @@ cc: "G" is cond=15          { local tmp = !ZF && (OF == SF); export tmp; }
 
 # repeat prefixes
 rep: ".REP" is ((repprefx=1 & repneprefx=0)|(repprefx=0 & repneprefx=1)) & addrsize=0  { if (CX==0) goto inst_next; CX=CX-1; }
-rep: ".REP" is ((repprefx=1 & repneprefx=0)|(repprefx=0 & repneprefx=1)) & addrsize=1  { if (ECX==0) goto inst_next; ECX=ECX-1; }
+rep: ".REP" is ((repprefx=1 & repneprefx=0)|(repprefx=0 & repneprefx=1)) & addrsize=1 & check_ECX_dest  { if (ECX==0) goto inst_next; ECX=ECX-1; build check_ECX_dest; }
 @ifdef IA64
 rep: ".REP" is ((repprefx=1 & repneprefx=0)|(repprefx=0 & repneprefx=1)) & addrsize=2  { if (RCX==0) goto inst_next; RCX=RCX-1; }
 @endif
@@ -1077,12 +1077,12 @@ reptail:	is ((repprefx=1 & repneprefx=0)|(repprefx=0 & repneprefx=1))			{ goto i
 reptail:	is repprefx=0 & repneprefx=0			{ }
 
 repe: ".REPE"   is repprefx=1 & repneprefx=0 & addrsize=0  { if (CX==0) goto inst_next; CX=CX-1; }
-repe: ".REPE"   is repprefx=1 & repneprefx=0 & addrsize=1  { if (ECX==0) goto inst_next; ECX=ECX-1; }
+repe: ".REPE"   is repprefx=1 & repneprefx=0 & addrsize=1 & check_ECX_dest { if (ECX==0) goto inst_next; ECX=ECX-1; build check_ECX_dest; }
 @ifdef IA64
 repe: ".REPE"   is repprefx=1 & repneprefx=0 & addrsize=2  { if (RCX==0) goto inst_next; RCX=RCX-1; }
 @endif
 repe: ".REPNE"  is repneprefx=1 & repprefx=0 & addrsize=0    { if (CX==0) goto inst_next; CX=CX-1; }
-repe: ".REPNE"  is repneprefx=1 & repprefx=0 & addrsize=1    { if (ECX==0) goto inst_next; ECX=ECX-1; }
+repe: ".REPNE"  is repneprefx=1 & repprefx=0 & addrsize=1 & check_ECX_dest { if (ECX==0) goto inst_next; ECX=ECX-1; build check_ECX_dest; }
 @ifdef IA64
 repe: ".REPNE"  is repneprefx=1 & repprefx=0 & addrsize=2    { if (RCX==0) goto inst_next; RCX=RCX-1; }
 @endif
