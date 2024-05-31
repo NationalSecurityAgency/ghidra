@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.modules;
 
-import static ghidra.framework.main.DataTreeDialogType.OPEN;
+import static ghidra.framework.main.DataTreeDialogType.*;
 
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -1447,7 +1447,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	}
 
 	protected void cleanMissingProgramMessages(Trace closedTrace, Program closedProgram) {
-		if (traceManager == null) {
+		if (traceManager == null || consoleService == null) {
 			return;
 		}
 		for (ActionContext ctx : consoleService.getActionContexts()) {
