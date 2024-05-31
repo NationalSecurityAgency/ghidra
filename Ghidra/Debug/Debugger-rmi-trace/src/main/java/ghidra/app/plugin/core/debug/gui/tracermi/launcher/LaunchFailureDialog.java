@@ -15,7 +15,10 @@
  */
 package ghidra.app.plugin.core.debug.gui.tracermi.launcher;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import docking.widgets.OptionDialog;
 import ghidra.debug.api.tracermi.TerminalSession;
@@ -26,7 +29,7 @@ import ghidra.util.HelpLocation;
 public class LaunchFailureDialog extends OptionDialog {
 	private static final String MSGPAT_PART_TOP = """
 			<html><body width="400px">
-			<h3>Failed to launch %s due to an exception:</h3>
+			<h3>Failed to launch '%s' due to an exception:</h3>
 
 			<tt>%s</tt>
 
@@ -56,6 +59,7 @@ public class LaunchFailureDialog extends OptionDialog {
 			""";
 	private static final String MSGPAT_WITH_RESOURCES = MSGPAT_PART_TOP + MSGPAT_PART_RESOURCES;
 	private static final String MSGPAT_WITHOUT_RESOURCES = MSGPAT_PART_TOP;
+	private static final int MAX_TERM_CONTENT_LINES = 2;
 
 	public enum ErrPromptResponse {
 		KEEP, RETRY, TERMINATE;
@@ -90,6 +94,25 @@ public class LaunchFailureDialog extends OptionDialog {
 			result.trace() != null;
 	}
 
+	protected static String htmlContent(TerminalSession session) {
+		String content = session.content().trim();
+		List<String> lines = Arrays.asList(content.split("\n"));
+		String note = "";
+		if (lines.size() >= MAX_TERM_CONTENT_LINES) {
+			note = "(last %d lines)".formatted(MAX_TERM_CONTENT_LINES);
+			content = lines.subList(lines.size() - MAX_TERM_CONTENT_LINES, lines.size())
+					.stream()
+					.collect(Collectors.joining("\n"));
+		}
+		return """
+				<div style="font:bold;">Title: %s</div>%s
+				<div style="background:black;color:white;">
+				<pre>%s</pre>""".formatted(
+			session.title(),
+			note,
+			content);
+	}
+
 	protected static String htmlResources(LaunchResult result) {
 		StringBuilder sb = new StringBuilder();
 		for (Entry<String, TerminalSession> ent : result.sessions().entrySet()) {
@@ -100,6 +123,9 @@ public class LaunchFailureDialog extends OptionDialog {
 			if (session.isTerminated()) {
 				sb.append(" (Terminated)");
 			}
+			sb.append("<div>\n");
+			sb.append(htmlContent(session));
+			sb.append("</div>");
 			sb.append("</li>\n");
 		}
 		if (result.acceptor() != null) {
