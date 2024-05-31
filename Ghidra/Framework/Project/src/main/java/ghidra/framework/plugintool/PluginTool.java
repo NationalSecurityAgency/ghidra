@@ -1465,22 +1465,6 @@ public abstract class PluginTool extends AbstractDockingTool {
 	}
 
 	/**
-	 * Display an text edit box on top of the specified component.
-	 * @param defaultText initial text to be displayed in edit box
-	 * @param comp component over which the edit box will be placed
-	 * @param rect specifies the bounds of the edit box relative to the
-	 * component.  The height is ignored.  The default text field height
-	 * is used as the preferred height.
-	 * @param listener when the edit is complete, this listener is notified
-	 * with the new text.  The edit box is dismissed prior to notifying
-	 * the listener.
-	 */
-	public void showEditWindow(String defaultText, Component comp, Rectangle rect,
-			EditListener listener) {
-		winMgr.showEditWindow(defaultText, comp, rect, listener);
-	}
-
-	/**
 	 * Cancel the current task in the tool.
 	 */
 	public void cancelCurrentTask() {
