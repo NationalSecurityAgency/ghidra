@@ -482,6 +482,23 @@ public class TerminalProviderTest extends AbstractGhidraHeadedDebuggerTest {
 		}
 	}
 
+	@Test
+	@SuppressWarnings("resource")
+	public void testGetFullText() throws Exception {
+		terminalService = addPlugin(tool, TerminalPlugin.class);
+
+		try (DefaultTerminal term = (DefaultTerminal) terminalService
+				.createNullTerminal(Charset.forName("UTF-8"), buf -> {
+				})) {
+			term.setFixedSize(80, 25);
+			term.injectDisplayOutput(TEST_CONTENTS);
+
+			assertEquals("""
+					term Term
+					noterm""", term.getFullText().trim());
+		}
+	}
+
 	protected String csi(char f, int... params) {
 		return "\033[" +
 			IntStream.of(params).mapToObj(Integer::toString).collect(Collectors.joining(";")) + f;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.gui.modules;
+package ghidra.debug.api.modules;
 
 import java.util.Objects;
 
@@ -43,10 +43,9 @@ public class DebuggerMissingModuleActionContext extends DefaultActionContext {
 		if (this == obj) {
 			return true;
 		}
-		if (!(obj instanceof DebuggerMissingModuleActionContext)) {
+		if (!(obj instanceof DebuggerMissingModuleActionContext that)) {
 			return false;
 		}
-		DebuggerMissingModuleActionContext that = (DebuggerMissingModuleActionContext) obj;
 		if (!this.module.equals(that.module)) {
 			return false;
 		}

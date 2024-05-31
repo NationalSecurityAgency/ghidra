@@ -71,6 +71,12 @@ public interface TraceRmiLaunchOffer {
 			this.exception = exception;
 		}
 
+		public void showTerminals() {
+			for (TerminalSession session : sessions.values()) {
+				session.show();
+			}
+		}
+
 		@Override
 		public void close() throws Exception {
 			if (connection != null) {

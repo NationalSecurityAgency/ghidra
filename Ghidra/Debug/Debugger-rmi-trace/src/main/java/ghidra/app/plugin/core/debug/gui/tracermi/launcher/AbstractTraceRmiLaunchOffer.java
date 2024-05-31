@@ -45,16 +45,14 @@ import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.AutoConfigState.ConfigStateField;
 import ghidra.framework.plugintool.AutoConfigState.PathIsFile;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.program.model.address.*;
-import ghidra.program.model.listing.InstructionIterator;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.pty.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceLocation;
 import ghidra.trace.model.modules.TraceModule;
-import ghidra.util.MessageType;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
@@ -68,22 +66,11 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 	protected record PtyTerminalSession(Terminal terminal, Pty pty, PtySession session,
 			Thread waiter) implements TerminalSession {
 		@Override
-		public void close() throws IOException {
-			terminate();
-			terminal.close();
-		}
-
-		@Override
 		public void terminate() throws IOException {
 			terminal.terminated();
 			session.destroyForcibly();
 			pty.close();
 			waiter.interrupt();
-		}
-
-		@Override
-		public boolean isTerminated() {
-			return terminal.isTerminated();
 		}
 
 		@Override
@@ -95,20 +82,9 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 	protected record NullPtyTerminalSession(Terminal terminal, Pty pty, String name)
 			implements TerminalSession {
 		@Override
-		public void close() throws IOException {
-			terminate();
-			terminal.close();
-		}
-
-		@Override
 		public void terminate() throws IOException {
 			terminal.terminated();
 			pty.close();
-		}
-
-		@Override
-		public boolean isTerminated() {
-			return terminal.isTerminated();
 		}
 
 		@Override
@@ -171,25 +147,8 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 	}
 
 	protected Address getMappingProbeAddress() {
-		if (program == null) {
-			return null;
-		}
-		AddressIterator eepi = program.getSymbolTable().getExternalEntryPointIterator();
-		if (eepi.hasNext()) {
-			return eepi.next();
-		}
-		InstructionIterator ii = program.getListing().getInstructions(true);
-		if (ii.hasNext()) {
-			return ii.next().getAddress();
-		}
-		AddressSetView es = program.getMemory().getExecuteSet();
-		if (!es.isEmpty()) {
-			return es.getMinAddress();
-		}
-		if (!program.getMemory().isEmpty()) {
-			return program.getMinAddress();
-		}
-		return null; // I guess we won't wait for a mapping, then
+		// May be null, in which case, we won't wait for a mapping
+		return DebuggerMissingProgramActionContext.getMappingProbeAddress(program);
 	}
 
 	protected CompletableFuture<Void> listenForMapping(DebuggerStaticMappingService mappingService,
@@ -686,6 +645,22 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 				}
 				return new LaunchResult(program, Map.of(), null, null, null, lastExc);
 			}
+			catch (NoStaticMappingException e) {
+				DebuggerConsoleService consoleService =
+					tool.getService(DebuggerConsoleService.class);
+				if (consoleService == null) {
+					Msg.error(this, e.getMessage());
+				}
+				else {
+					consoleService.log(DebuggerResources.ICON_MODULES,
+						"<html>The trace <b>%s</b> has no mapping to its program <b>%s</b></html>"
+								.formatted(
+									HTMLUtilities.escapeHTML(trace.getDomainFile().getName()),
+									HTMLUtilities.escapeHTML(program.getDomainFile().getName())),
+						new DebuggerMissingProgramActionContext(trace, program));
+				}
+				return new LaunchResult(program, sessions, acceptor, connection, trace, e);
+			}
 			catch (Exception e) {
 				DebuggerConsoleService consoleService =
 					tool.getService(DebuggerConsoleService.class);
@@ -700,6 +675,7 @@ public abstract class AbstractTraceRmiLaunchOffer implements TraceRmiLaunchOffer
 				if (prompt) {
 					switch (promptError(result)) {
 						case KEEP:
+							result.showTerminals();
 							return result;
 						case RETRY:
 							try {

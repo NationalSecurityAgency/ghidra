@@ -20,6 +20,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.AbstractDebuggerPlugin;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceActivatedPluginEvent;
+import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.app.services.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
@@ -37,6 +38,7 @@ import ghidra.framework.plugintool.util.PluginStatus;
 		ProgramLocationPluginEvent.class,
 		ProgramClosedPluginEvent.class,
 		TraceActivatedPluginEvent.class,
+		TraceClosedPluginEvent.class,
 	},
 	servicesRequired = {
 		DebuggerStaticMappingService.class,
@@ -80,6 +82,9 @@ public class DebuggerModulesPlugin extends AbstractDebuggerPlugin {
 		}
 		else if (event instanceof TraceActivatedPluginEvent ev) {
 			provider.coordinatesActivated(ev.getActiveCoordinates());
+		}
+		else if (event instanceof TraceClosedPluginEvent ev) {
+			provider.traceClosed(ev.getTrace());
 		}
 	}
 
