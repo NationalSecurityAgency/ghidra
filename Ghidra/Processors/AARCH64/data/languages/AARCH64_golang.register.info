@@ -6,5 +6,14 @@
 		<stack initialoffset="8" maxalign="8"/>
 		<current_goroutine register="x28"/>
 		<zero_register register="xzr" builtin="true"/>
+		<duffzero dest="x20" zero_arg="" zero_type=""/>
 	</register_info>
+	<register_info versions="V1_16">
+		<int_registers list=""/>
+		<float_registers list=""/>
+		<stack initialoffset="8" maxalign="8"/>
+		<current_goroutine register="x28"/>
+		<zero_register register="xzr" builtin="true"/>
+		<duffzero dest="x20" zero_arg="" zero_type=""/>
+	</register_info>	
 </golang>

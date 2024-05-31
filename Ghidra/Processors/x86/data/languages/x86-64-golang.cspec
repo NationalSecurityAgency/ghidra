@@ -26,16 +26,16 @@
 	<global>
 		<range space="ram"/>
 	</global>
-  
+
 	<context_data>
 	</context_data>
-  
+
 	<stackpointer register="RSP" space="ram"/>
-  
+
 	<returnaddress>
 		<varnode space="stack" offset="0" size="8"/>
 	</returnaddress>
-  
+
 	<default_proto>
 		<prototype name="abi-internal" extrapop="8" stackshift="8">
 			<input>
@@ -63,7 +63,7 @@
 				<pentry minsize="4" maxsize="8" metatype="float">
 					<register name="XMM7_Qa"/>
 				</pentry>
-		        
+				
 				<pentry minsize="1" maxsize="8">
 					<register name="RAX"/>
 				</pentry>
@@ -195,6 +195,14 @@
 			<register name="RDI"/>
 		</killedbycall>
 		<unaffected>
+			<register name="RAX"/>
+			<register name="RBX"/>
+			<register name="RCX"/>
+			<register name="RSI"/>
+			<register name="R8"/>
+			<register name="R9"/>
+			<register name="R10"/>
+			<register name="R11"/>
 			<register name="RSP"/>
 			<register name="RBP"/>
 			<register name="R14"/>        
@@ -228,8 +236,6 @@
 			<register name="RAX"/>
 			<register name="RBX"/>
 			<register name="RCX"/>
-			<register name="RDI"/>
-			<register name="RSI"/>
 			<register name="R8"/>
 			<register name="R9"/>
 			<register name="R10"/>

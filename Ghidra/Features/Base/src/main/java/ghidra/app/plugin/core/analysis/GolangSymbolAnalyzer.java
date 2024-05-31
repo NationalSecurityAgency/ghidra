@@ -177,8 +177,6 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 	}
 
 	private void markupWellknownSymbols() throws IOException {
-		Program program = goBinary.getProgram();
-
 		Symbol g0 = goBinary.getGoSymbol("runtime.g0");
 		Structure gStruct = goBinary.getGhidraDataType("runtime.g", Structure.class);
 		if (g0 != null && gStruct != null) {
@@ -317,31 +315,25 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 		Program program = goBinary.getProgram();
 		GoRegisterInfo regInfo = goBinary.getRegInfo();
 		DataType voidPtr = program.getDataTypeManager().getPointer(VoidDataType.dataType);
-		DataType uintDT = goBinary.getTypeOrDefault("uint", DataType.class,
-			AbstractIntegerDataType.getUnsignedDataType(goBinary.getPtrSize(), null));
 
 		GoFuncData duffzeroFuncdata = goBinary.getFunctionByName("runtime.duffzero");
 		Function duffzeroFunc = duffzeroFuncdata != null
 				? program.getFunctionManager().getFunctionAt(duffzeroFuncdata.getFuncAddress())
 				: null;
-		if (duffzeroFunc != null &&
-			goBinary.hasCallingConvention(GOLANG_DUFFZERO_CALLINGCONVENTION_NAME)) {
+		List<Variable> duffzeroParams = regInfo.getDuffzeroParams(program);
+		if (duffzeroFunc != null && !duffzeroParams.isEmpty()) {
+			// NOTE: some go archs don't create duffzero functions.  See
+			// cmd/compile/internal/ssa/config.go and look for flag noDuffDevice in each arch.
 			try {
-				// NOTE: some duffzero funcs need a zero value supplied to them via a register set
-				// by the caller.  (depending on the arch)  The duffzero calling convention defined 
-				// by the callspec should take care of this by defining that register as the second 
-				// storage location. Otherwise, the callspec will only have a single storage 
-				// location defined.
-				boolean needZeroValueParam = regInfo.getZeroRegister() == null;
-				List<Variable> params = new ArrayList<>();
-				params.add(new ParameterImpl("dest", voidPtr, program));
-				if (needZeroValueParam) {
-					params.add(new ParameterImpl("zeroValue", uintDT, program));
-				}
 
-				duffzeroFunc.updateFunction(GOLANG_DUFFZERO_CALLINGCONVENTION_NAME,
-					new ReturnParameterImpl(VoidDataType.dataType, program), params,
-					FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.ANALYSIS);
+				// NOTE: even though we are specifying custom storage for the arguments, the
+				// calling convention name is still important as it tells the decompiler which
+				// registers are unaffected vs killed-by-call
+
+				ReturnParameterImpl voidRet = new ReturnParameterImpl(VoidDataType.dataType,
+					VariableStorage.VOID_STORAGE, program);
+				duffzeroFunc.updateFunction(GOLANG_DUFFZERO_CALLINGCONVENTION_NAME, voidRet,
+					duffzeroParams, FunctionUpdateType.CUSTOM_STORAGE, true, SourceType.ANALYSIS);
 
 				markupSession.appendComment(duffzeroFunc, null,
 					"Golang special function: duffzero");
@@ -527,6 +519,7 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 			String duffComment = program.getListing()
 					.getCodeUnitAt(duffFunc.getEntryPoint())
 					.getComment(CodeUnit.PLATE_COMMENT);
+
 			monitor.setMessage("Fixing alternate duffzero/duffcopy entry points");
 			for (FunctionIterator funcIt =
 				program.getFunctionManager().getFunctions(funcBody, true); funcIt.hasNext();) {
@@ -538,9 +531,11 @@ public class GolangSymbolAnalyzer extends AbstractAnalyzer {
 					func.setName(duffFunc.getName() + "_" + func.getEntryPoint(),
 						SourceType.ANALYSIS);
 					func.setParentNamespace(funcNS);
+					FunctionUpdateType fut = duffFunc.hasCustomVariableStorage()
+							? FunctionUpdateType.CUSTOM_STORAGE
+							: FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS;
 					func.updateFunction(ccName, duffFunc.getReturn(),
-						Arrays.asList(duffFunc.getParameters()),
-						FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.ANALYSIS);
+						Arrays.asList(duffFunc.getParameters()), fut, true, SourceType.ANALYSIS);
 					if (duffComment != null && !duffComment.isBlank()) {
 						new SetCommentCmd(func.getEntryPoint(), CodeUnit.PLATE_COMMENT, duffComment)
 								.applyTo(program);

@@ -63,6 +63,22 @@ public @interface FieldMapping {
 	boolean optional() default false;
 
 	/**
+	 * Marks this field as only present in certain context configurations.
+	 * <p>
+	 * The specified string is interpreted by the specific {@link DataTypeMapper} and its
+	 * {@link DataTypeMapperContext context}.
+	 * <p>
+	 * For example, a version number could be used to allow some optional fields to be skipped
+	 * depending on the the concrete {@link DataTypeMapper}'s information during structure
+	 * mapping registration.
+	 * <p>
+	 * Similar to {@link #optional()}
+	 * 
+	 * @return String
+	 */
+	String presentWhen() default "";
+
+	/**
 	 * Specifies the name of a setter method that will be used to assign the deserialized value
 	 * to the java field.
 	 * <p>
