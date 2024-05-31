@@ -109,6 +109,7 @@
 }
 @endif
 
+define pcodeop InterlockedAdd;
 :ADD^lockx spec_m8,imm8		is vexMode=0 & lockx & unlock & (byte=0x80 | byte=0x82); spec_m8 & reg_opcode=0 ...; imm8		
 {
     build lockx;
@@ -140,6 +141,7 @@
 }
 
 @ifdef IA64
+define pcodeop InterlockedAdd64;
 :ADD^lockx spec_m64,simm32		is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0x81; spec_m64 & reg_opcode=0 ...; simm32	
 {
     build lockx;
@@ -183,45 +185,51 @@
 }
 @endif
 
-:ADD^lockx m8,Reg8      is vexMode=0 & lockx & unlock & byte=0x00; m8 & Reg8 ...                 
+
+
+:ADD^lockx_ Mem,Reg8    is vexMode=0 & lockx_ & lockprefx & byte=0x00; Mem & Reg8 ...
 {
-    build lockx;
-    build m8;
-    addflags(  m8,Reg8 );
-    m8 =   m8 +  Reg8;
-    resultflags(  m8);
-    build unlock;
+    tmp:1 = lockprefx;
+    if (tmp == 1) goto <interlocked>;
+    *:1 Mem = *:1 Mem + Reg8;
+    goto <end>;
+<interlocked>
+    *:1 Mem = InterlockedAdd(Mem, Reg8);
+<end>
 }
 
-:ADD^lockx m16,Reg16    is vexMode=0 & lockx & unlock & opsize=0 & byte=0x1; m16 & Reg16 ...     
+:ADD^lockx_ Mem,Reg16   is vexMode=0 & lockx_ & lockprefx & opsize=0 & byte=0x1; Mem & Reg16 ...
 {
-    build lockx;
-    build m16;
-    addflags( m16,Reg16);
-    m16 =  m16 + Reg16;
-    resultflags( m16);
-    build unlock;
+    tmp:1 = lockprefx;
+    if (tmp == 1) goto <interlocked>;
+    *:2 Mem = *:2 Mem + Reg16;
+    goto <end>;
+<interlocked>
+    *:2 Mem = InterlockedAdd(Mem, Reg16);
+<end>
 }
 
-:ADD^lockx m32,Reg32    is vexMode=0 & lockx & unlock & opsize=1 & byte=0x1; m32 & Reg32 ...     
+:ADD^lockx_ Mem,Reg32   is vexMode=0 & lockx_ & lockprefx & opsize=1 & byte=0x1; Mem & Reg32 ...
 {
-    build lockx;
-    build m32;
-    addflags( m32,Reg32);
-    m32 =  m32 + Reg32;
-    resultflags( m32);
-    build unlock;
+    tmp:1 = lockprefx;
+    if (tmp == 1) goto <interlocked>;
+    *:4 Mem = *:4 Mem + Reg32;
+    goto <end>;
+<interlocked>
+    *:4 Mem = InterlockedAdd(Mem, Reg32);
+<end>
 }
 
 @ifdef IA64
-:ADD^lockx m64,Reg64    is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0x1; m64 & Reg64 ...    
+:ADD^lockx_ Mem,Reg64   is $(LONGMODE_ON) & vexMode=0 & lockx_ & lockprefx & opsize=2 & byte=0x1; Mem & Reg64 ...
 {
-    build lockx;
-    build m64;
-    addflags( m64,Reg64);
-    m64 =  m64 + Reg64;
-    resultflags( m64);
-    build unlock;
+    tmp:1 = lockprefx;
+    if (tmp == 1) goto <interlocked>;
+    *:8 Mem = *:8 Mem + Reg64;
+    goto <end>;
+<interlocked>
+    *:8 Mem = InterlockedAdd(Mem, Reg64);
+<end>
 }
 @endif
 
@@ -572,78 +580,33 @@
 }
 @endif
 
-:CMPXCHG^lockx m8,Reg8  is vexMode=0 & lockx & unlock & byte=0xf; byte=0xb0; m8 & Reg8 ...           
+define pcodeop InterlockedCompareExchange;
+define pcodeop InterlockedCompareExchange8;
+define pcodeop InterlockedCompareExchange16;
+:CMPXCHG^lockx_ Mem,Reg8    is vexMode=0 & lockx_ & byte=0xf; byte=0xb0; Mem & Reg8 ...
 {
-    build lockx;
-    local dest = m8;
-    subflags(AL,dest); 
-    local diff = AL-dest; 
-    resultflags(diff);
-    if (ZF) goto <equal>;
-    AL = dest;
-    goto <inst_end>;
-<equal>
-    m8 = Reg8;
-<inst_end>
-    build unlock;
+    AL = InterlockedCompareExchange8(Mem, Reg8, AL);
 }
 
-:CMPXCHG^lockx m16,Reg16    is vexMode=0 & lockx & unlock & opsize=0 & byte=0xf; byte=0xb1; m16 & Reg16 ...  
+:CMPXCHG^lockx_ Mem,Reg16   is vexMode=0 & lockx_ & opsize=0 & byte=0xf; byte=0xb1; Mem & Reg16 ...
 {
-    build lockx;
-    local dest = m16;
-    subflags(AX,dest); 
-    local diff = AX-dest; 
-    resultflags(diff);
-    if (ZF) goto <equal>;
-    AX = dest;
-    goto <inst_end>;
-<equal>
-    m16 = Reg16;
-<inst_end>
-    build unlock; 
+    AX = InterlockedCompareExchange16(Mem, Reg16, AX);
 }
 
-:CMPXCHG^lockx m32,Reg32    is vexMode=0 & lockx & unlock & opsize=1 & byte=0xf; byte=0xb1; m32 & Reg32 ... & check_EAX_dest ...
+:CMPXCHG^lockx_ Mem,Reg32   is vexMode=0 & lockx_ & opsize=1 & byte=0xf; byte=0xb1; Mem & Reg32 ...
 {
-    build lockx;
-    #this instruction writes to either EAX or Rmr32
-	#in 64-bit mode, a 32-bit register that is written to 
-	#(and only the register that is written to) 
-	#must be zero-extended to 64 bits
-    local dest = m32;
-    subflags(EAX,dest); 
-    local diff = EAX-dest; 
-    resultflags(diff);
-    if (ZF) goto <equal>;
-    EAX = dest;
-    build check_EAX_dest;
-    goto <inst_end>;
-<equal>
-    m32 = Reg32;
-<inst_end>
-    build unlock;
+    EAX = InterlockedCompareExchange(Mem, Reg32, EAX);
 }
 
 @ifdef IA64
-:CMPXCHG^lockx m64,Reg64    is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0xf; byte=0xb1; m64 & Reg64 ...  
+define pcodeop InterlockedCompareExchange64;
+:CMPXCHG^lockx_ Mem,Reg64   is $(LONGMODE_ON) & vexMode=0 & lockx_ & opsize=2 & byte=0xf; byte=0xb1; Mem & Reg64 ...
 {
-    build lockx;
-    local dest = m64;
-    subflags(RAX,dest); 
-    local diff = RAX-dest; 
-    resultflags(diff);
-    if (ZF) goto <equal>;
-    RAX = dest;
-    goto <inst_end>;
-<equal>
-    m64 = Reg64;
-<inst_end>
-    build unlock;
+    RAX = InterlockedCompareExchange64(Mem, Reg64, RAX);
 }
 @endif
 
-:CMPXCHG8B^lockx  m64        is vexMode=0 & lockx & unlock & byte=0xf; byte=0xc7; ( mod != 0b11 & reg_opcode=1 ) ... & m64 
+:CMPXCHG8B^lockx  m64        is vexMode=0 & lockx & unlock & byte=0xf; byte=0xc7; ( mod != 0b11 & reg_opcode=1 ) ... & m64
 {
     build lockx;
     local dest = m64;
@@ -674,87 +637,101 @@
 }
 @endif
 
-:DEC^lockx spec_m8       is vexMode=0 & lockx & unlock & byte=0xfe; spec_m8 & reg_opcode=1 ...         
+define pcodeop InterlockedDecrement;
+define pcodeop InterlockedDecrement16;
+:DEC^lockx_ Mem	is vexMode=0 & lockx_ & lockprefx & byte=0xfe; Mem & reg_opcode=1 ...
 {
-    build lockx;
-    build spec_m8;
-    OF = sborrow(spec_m8,1);
-    spec_m8 =  spec_m8 - 1;
-    resultflags( spec_m8);
-    build unlock; 
+    tmp:1 = lockprefx;
+    if (tmp == 1) goto <interlocked>;
+    *:1 Mem = *:1 Mem - 1;
+    goto <end>;
+<interlocked>
+    InterlockedDecrement(Mem);
+<end>
 }
 
-:DEC^lockx spec_m16      is vexMode=0 & lockx & unlock & opsize=0 & byte=0xff; spec_m16 & reg_opcode=1 ... 
+:DEC^lockx_ Mem	is vexMode=0 & lockx_ & lockprefx & opsize=0 & byte=0xff; Mem & reg_opcode=1 ...
 {
-    build lockx;
-    build spec_m16;
-    OF = sborrow(spec_m16,1);
-    spec_m16 = spec_m16 - 1;
-    resultflags(spec_m16);
-    build unlock; 
+    tmp:1 = lockprefx;
+    if (tmp == 1) goto <interlocked>;
+    *:2 Mem = *:2 Mem - 1;
+    goto <end>;
+<interlocked>
+    InterlockedDecrement16(Mem);
+<end>
 }
 
-:DEC^lockx spec_m32      is vexMode=0 & lockx & unlock & opsize=1 & byte=0xff; spec_m32 & reg_opcode=1 ... 
+:DEC^lockx_ Mem	is vexMode=0 & lockx_ & lockprefx & opsize=1 & byte=0xff; Mem & reg_opcode=1 ...
 {
-    build lockx;
-    build spec_m32;
-    OF = sborrow(spec_m32,1);
-    spec_m32 = spec_m32 - 1;
-    resultflags(spec_m32);
-    build unlock; 
+    tmp:1 = lockprefx;
+    if (tmp == 1) goto <interlocked>;
+    *:4 Mem = *:4 Mem - 1;
+    goto <end>;
+<interlocked>
+    InterlockedDecrement(Mem);
+<end>
 }
 
 @ifdef IA64
-:DEC^lockx spec_m64      is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0xff; spec_m64 & reg_opcode=1 ... 
+define pcodeop InterlockedDecrement64;
+:DEC^lockx_ Mem	is $(LONGMODE_ON) & vexMode=0 & lockx_ & lockprefx & opsize=2 & byte=0xff; Mem & reg_opcode=1 ...
 {
-    build lockx;
-    build spec_m64;
-    OF = sborrow(spec_m64,1);
-    spec_m64 = spec_m64 - 1;
-    resultflags(spec_m64);
-    build unlock; 
+    tmp:1 = lockprefx;
+    if (tmp == 1) goto <interlocked>;
+    *:8 Mem = *:8 Mem - 1;
+    goto <end>;
+<interlocked>
+    InterlockedDecrement64(Mem);
+<end>
 }
 @endif
 
-:INC^lockx  spec_m8	is vexMode=0 & lockx & unlock & byte=0xfe; spec_m8 ...				
+define pcodeop InterlockedIncrement;
+define pcodeop InterlockedIncrement16;
+:INC^lockx_ Mem	is vexMode=0 & lockx_ & lockprefx & byte=0xfe; Mem ...
 {
-    build lockx;
-    build spec_m8;
-    OF = scarry(spec_m8,1);
-    spec_m8 =  spec_m8 + 1;
-    resultflags( spec_m8);
-    build unlock; 
+    tmp:1 = lockprefx;
+    if (tmp == 1) goto <interlocked>;
+    *:1 Mem = *:1 Mem + 1;
+    goto <end>;
+<interlocked>
+    InterlockedIncrement(Mem);
+<end>
 }
 
-:INC^lockx spec_m16	is vexMode=0 & lockx & unlock & opsize=0 & byte=0xff; spec_m16 ...	
+:INC^lockx_ Mem	is vexMode=0 & lockx_ & lockprefx & opsize=0 & byte=0xff; Mem ...
 {
-    build lockx;
-    build spec_m16;
-    OF = scarry(spec_m16,1);
-    spec_m16 = spec_m16 + 1;
-    resultflags(spec_m16);
-    build unlock; 
+    tmp:1 = lockprefx;
+    if (tmp == 1) goto <interlocked>;
+    *:2 Mem = *:2 Mem + 1;
+    goto <end>;
+<interlocked>
+    InterlockedIncrement16(Mem);
+<end>
 }
 
-:INC^lockx spec_m32	is vexMode=0 & lockx & unlock & opsize=1 & byte=0xff; spec_m32 ...	
+:INC^lockx_ Mem	is vexMode=0 & lockx_ & lockprefx & opsize=1 & byte=0xff; Mem ...
 {
-    build lockx;
-    build spec_m32;
-    OF = scarry(spec_m32,1);
-    spec_m32 = spec_m32 + 1;
-    resultflags(spec_m32);
-    build unlock; 
+    tmp:1 = lockprefx;
+    if (tmp == 1) goto <interlocked>;
+    *:4 Mem = *:4 Mem - 1;
+    goto <end>;
+<interlocked>
+    InterlockedIncrement(Mem);
+<end>
 }
 
 @ifdef IA64
-:INC^lockx spec_m64	is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0xff; spec_m64 ... 
+define pcodeop InterlockedIncrement64;
+:INC^lockx_ Mem	is $(LONGMODE_ON) & vexMode=0 & lockx_ & lockprefx & opsize=2 & byte=0xff; Mem ...
 {
-    build lockx;
-    build spec_m64;
-    OF = scarry(spec_m64,1);
-    spec_m64 = spec_m64 + 1;
-    resultflags(spec_m64);
-    build unlock; 
+    tmp:1 = lockprefx;
+    if (tmp == 1) goto <interlocked>;
+    *:8 Mem = *:8 Mem + 1;
+    goto <end>;
+<interlocked>
+    InterlockedIncrement64(Mem);
+<end>
 }
 @endif
 
@@ -1172,100 +1149,54 @@
 }
 @endif
 
-:XADD^lockx  m8,Reg8 	is vexMode=0 & lockx & unlock & byte=0x0F; byte=0xC0;  m8 & Reg8  ...        
+define pcodeop InterlockedExchangeAdd;
+:XADD^lockx_ Mem,Reg8	is vexMode=0 & lockx_ & byte=0x0F; byte=0xC0;  Mem & Reg8  ...
 {
-    build lockx;
-    build m8;
-    addflags( m8,Reg8 );
-    local tmp =  m8 +  Reg8;
-    Reg8 = m8;
-    m8 = tmp;
-    resultflags(tmp);
-    build unlock; 
+    Reg8 = InterlockedExchangeAdd(Mem, Reg8);
 }
 
-:XADD^lockx m16,Reg16	is vexMode=0 & lockx & unlock & opsize=0 & byte=0x0F; byte=0xC1; m16 & Reg16 ... 
+:XADD^lockx_ Mem,Reg16	is vexMode=0 & lockx_ & opsize=0 & byte=0x0F; byte=0xC1; Mem & Reg16 ...
 {
-    build lockx;
-    build m16;
-    addflags(m16,Reg16);
-    local tmp = m16 + Reg16;
-    Reg16 = m16;
-    m16 = tmp;
-    resultflags(tmp);
-    build unlock; 
+    Reg16 = InterlockedExchangeAdd(Mem, Reg16);
 }
 
-:XADD^lockx m32,Reg32	is vexMode=0 & lockx & unlock & opsize=1 & byte=0x0F; byte=0xC1; m32 & Reg32 ... 
+:XADD^lockx_ Mem,Reg32	is vexMode=0 & lockx_ & opsize=1 & byte=0x0F; byte=0xC1; Mem & Reg32 ...
 {
-    build lockx;
-    build m32;
-    addflags(m32,Reg32);
-    local tmp = m32 + Reg32;
-    Reg32 = m32;
-    m32 = tmp;
-    resultflags(tmp);
-    build unlock; 
+    Reg32 = InterlockedExchangeAdd(Mem, Reg32);
 }
 
 @ifdef IA64
-:XADD^lockx m64,Reg64	is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0x0F; byte=0xC1; m64 & Reg64 ... 
+define pcodeop InterlockedExchangeAdd64;
+:XADD^lockx_ Mem,Reg64	is $(LONGMODE_ON) & vexMode=0 & lockx_ & opsize=2 & byte=0x0F; byte=0xC1; Mem & Reg64 ...
 {
-    build lockx;
-    build m64;
-    addflags(m64,Reg64);
-    local tmp = m64 + Reg64;
-    Reg64 = m64;
-    m64 = tmp;
-    resultflags(tmp);
-    build unlock; 
+    Reg64 = InterlockedExchangeAdd64(Mem, Reg64);
 }
 @endif
 
+define pcodeop InterlockedExchange;
+define pcodeop InterlockedExchange8;
+define pcodeop InterlockedExchange16;
 # XCHG with memory operands always asserts a lock signal regardless of prefix presence
-:XCHG^xacq_xrel_prefx^alwaysLock   m8,Reg8        is vexMode=0 & xacq_xrel_prefx & alwaysLock & byte=0x86; m8 & Reg8  ...                
-{ 
-   build xacq_xrel_prefx;
-   build alwaysLock; 
-   build m8;
-   local tmp = m8;  
-   m8 = Reg8;
-   Reg8 = tmp; 
-   UNLOCK();
+:XCHG^xacq_xrel_prefx^alwaysLock Mem,Reg8	is vexMode=0 & xacq_xrel_prefx & alwaysLock & byte=0x86; Mem & Reg8 ...
+{
+    Reg8 = InterlockedExchange8(Mem, Reg8);
 }
 
-:XCHG^xacq_xrel_prefx^alwaysLock  m16,Reg16   is vexMode=0 & xacq_xrel_prefx & alwaysLock & opsize=0 & byte=0x87; m16 & Reg16 ...        
-{ 
-   build xacq_xrel_prefx;
-   build alwaysLock;
-   build m16;
-   local tmp = m16; 
-   m16 = Reg16; 
-   Reg16 = tmp; 
-   UNLOCK();
+:XCHG^xacq_xrel_prefx^alwaysLock Mem,Reg16	is vexMode=0 & xacq_xrel_prefx & alwaysLock & opsize=0 & byte=0x87; Mem & Reg16 ...
+{
+    Reg16 = InterlockedExchange16(Mem, Reg16);
 }
 
-:XCHG^xacq_xrel_prefx^alwaysLock  m32,Reg32   is vexMode=0 & xacq_xrel_prefx & alwaysLock & opsize=1 & byte=0x87; m32 & Reg32 ...        
-{ 
-  build xacq_xrel_prefx;
-  build alwaysLock;
-  build m32;
-  local tmp = m32; 
-  m32 = Reg32; 
-  Reg32 = tmp; 
-  UNLOCK(); 
+:XCHG^xacq_xrel_prefx^alwaysLock Mem,Reg32	is vexMode=0 & xacq_xrel_prefx & alwaysLock & opsize=1 & byte=0x87; Mem & Reg32 ...
+{
+    Reg32 = InterlockedExchange(Mem, Reg32);
 }
 
 @ifdef IA64
-:XCHG^xacq_xrel_prefx^alwaysLock m64,Reg64   is $(LONGMODE_ON) & vexMode=0 & xacq_xrel_prefx & alwaysLock & opsize=2 & byte=0x87; m64 & Reg64 ...        
+define pcodeop InterlockedExchange64;
+:XCHG^xacq_xrel_prefx^alwaysLock Mem,Reg64	is $(LONGMODE_ON) & vexMode=0 & xacq_xrel_prefx & alwaysLock & opsize=2 & byte=0x87; Mem & Reg64 ...
 { 
-  build xacq_xrel_prefx; 
-  build alwaysLock;
-  build m64;
-  local tmp = m64; 
-  m64 = Reg64; 
-  Reg64 = tmp; 
-  UNLOCK(); 
+    Reg64 = InterlockedExchange64(Mem, Reg64);
 }
 @endif
 
