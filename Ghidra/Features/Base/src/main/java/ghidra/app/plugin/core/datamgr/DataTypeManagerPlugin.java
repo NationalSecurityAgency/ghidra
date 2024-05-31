@@ -30,6 +30,7 @@ import org.apache.commons.lang3.StringUtils;
 import docking.ActionContext;
 import docking.Tool;
 import docking.action.*;
+import docking.action.builder.ActionBuilder;
 import docking.actions.PopupActionProvider;
 import docking.widgets.tree.GTreeNode;
 import generic.jar.ResourceFile;
@@ -47,6 +48,7 @@ import ghidra.app.plugin.core.datamgr.util.DataDropOnBrowserHandler;
 import ghidra.app.plugin.core.datamgr.util.DataTypeChooserDialog;
 import ghidra.app.services.*;
 import ghidra.app.util.HelpTopics;
+import ghidra.app.util.datatype.DataTypeSelectionDialog;
 import ghidra.framework.Application;
 import ghidra.framework.main.OpenVersionedFileDialog;
 import ghidra.framework.model.*;
@@ -60,6 +62,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.DataTypeArchive;
 import ghidra.program.model.listing.Program;
 import ghidra.util.*;
+import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 import ghidra.util.datastruct.LRUMap;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
@@ -443,10 +446,34 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	 */
 	private void createActions() {
 		createStandardArchivesMenu();
+
+		//@formatter:off
+		new ActionBuilder("Edit Data Type", getName())
+			.keyBinding("Control Shift D")
+			.onAction(this::edit)
+			.buildAndInstall(tool);
+		//@formatter:on
 	}
 
 	private void removeRecentAction(DockingAction action) {
 		tool.removeLocalAction(provider, action);
+	}
+
+	private void edit(ActionContext c) {
+		DataType dt = chooseType();
+		if (dt != null) {
+			edit(dt);
+		}
+	}
+
+	private DataType chooseType() {
+
+		int noSizeRestriction = -1;
+		DataTypeSelectionDialog selectionDialog =
+			new DataTypeSelectionDialog(tool, null, noSizeRestriction, AllowedDataTypes.ALL);
+
+		tool.showDialog(selectionDialog);
+		return selectionDialog.getUserChosenDataType();
 	}
 
 //**********************************************************************************************
