@@ -220,6 +220,7 @@ public class LibraryLookupTable {
 		String cacheKey = LibrarySymbolTable.getCacheKey(dllName, size);
 		LibrarySymbolTable symTab = cacheMap.get(cacheKey);
 		if (symTab != null) {
+			log.appendMsg("Applying cached symbols from " + dllName);
 			return symTab;
 		}
 
