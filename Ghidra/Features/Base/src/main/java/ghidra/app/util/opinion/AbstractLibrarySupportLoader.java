@@ -408,24 +408,6 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	}
 
 	/**
-	 * Checks whether or not the given library should be loaded.
-	 * <p>
-	 * It may be appropriate to not load a specific library after examining its bytes.
-	 * 
-	 * @param libraryName The name of the library
-	 * @param libraryFsrl The library {@link FSRL}
-	 * @param provider The library bytes
-	 * @param desiredLoadSpec The desired {@link LoadSpec}
-	 * @param log The log
-	 * @return True if the given library should be loaded; otherwise, false
-	 * @throws IOException If an IO-related error occurred
-	 */
-	protected boolean shouldLoadLibrary(String libraryName, FSRL libraryFsrl,
-			ByteProvider provider, LoadSpec desiredLoadSpec, MessageLog log) throws IOException {
-		return true;
-	}
-
-	/**
 	 * Performs optional follow-on actions after an the given library has been loaded
 	 * 
 	 * @param library The loaded library {@link Program}
@@ -513,7 +495,6 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 					// options turned off (if shouldSearchAllPaths() is overridden to return true).
 					// In this case, we still want to process those libraries, but we 
 					// do not want to save them, so they can be released.
-					boolean found = false;
 					boolean loaded = false;
 					if (!customSearchPaths.isEmpty()) {
 						log.appendMsg("Searching %d custom path%s for library %s...".formatted(
@@ -523,7 +504,6 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 							provider, customSearchPaths, libraryDestFolderPath, unprocessed, depth,
 							desiredLoadSpec, options, log, consumer, monitor);
 						if (loadedLibrary != null) {
-							found = true;
 							loaded = true;
 							loadedPrograms.add(loadedLibrary);
 						}
@@ -536,7 +516,6 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 							provider, localSearchPaths, libraryDestFolderPath, unprocessed, depth,
 							desiredLoadSpec, options, log, consumer, monitor);
 						if (loadedLibrary != null) {
-							found = true;
 							if (loadLocalLibraries) {
 								loaded = true;
 								loadedPrograms.add(loadedLibrary);
@@ -554,7 +533,6 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 							provider, systemSearchPaths, libraryDestFolderPath, unprocessed, depth,
 							desiredLoadSpec, options, log, consumer, monitor);
 						if (loadedLibrary != null) {
-							found = true;
 							if (loadSystemLibraries) {
 								loaded = true;
 								loadedPrograms.add(loadedLibrary);
@@ -563,9 +541,6 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 								loadedLibrary.release(consumer);
 							}
 						}
-					}
-					if (!found) {
-						log.appendMsg("Library not found.");
 					}
 					else {
 						if (loaded) {
@@ -641,6 +616,11 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		try {
 			List<FSRL> candidateLibraryFsrls =
 				findLibrary(getCheckedPath(libraryName), fsSearchPaths, log, monitor);
+			if (candidateLibraryFsrls.isEmpty()) {
+				log.appendMsg("Library not found.");
+				return null;
+			}
+
 			for (FSRL candidateLibraryFsrl : candidateLibraryFsrls) {
 				monitor.checkCancelled();
 				List<String> newLibraryList = new ArrayList<>();
@@ -831,9 +811,6 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 
 		try (ByteProvider provider =
 			createLibraryByteProvider(libraryFsrl, desiredLoadSpec, log, monitor)) {
-			if (!shouldLoadLibrary(libraryName, libraryFsrl, provider, desiredLoadSpec, log)) {
-				return null;
-			}
 
 			LoadSpec libLoadSpec = matchSupportedLoadSpec(desiredLoadSpec, provider);
 			if (libLoadSpec == null) {
