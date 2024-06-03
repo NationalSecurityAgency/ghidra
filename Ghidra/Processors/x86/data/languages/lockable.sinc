@@ -979,11 +979,11 @@
 }
 
 @ifdef IA64
-:SBB^lockx  m64,imm32       is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0x81; m64 & reg_opcode=3 ...; imm32							
+:SBB^lockx  m64,simm32       is $(LONGMODE_ON) & vexMode=0 & lockx & unlock & opsize=2 & byte=0x81; m64 & reg_opcode=3 ...; simm32							
 {
     build lockx;
     build m64;
-    subCarryFlags( m64, imm32 );
+    subCarryFlags( m64, simm32 );
     resultflags(m64);
     build unlock; 
 }
