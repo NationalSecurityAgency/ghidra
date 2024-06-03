@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #----------------------------------------
-# Ghidra Python launch
+# Ghidra Jython launch
 #----------------------------------------
 
 # Maximum heap memory may be changed if default is inadequate. This will generally be up to 1/4 of 
@@ -31,6 +31,6 @@ VMARG_LIST+="-Djava.awt.headless=true "
 SCRIPT_FILE="$(readlink -f "$0" 2>/dev/null || readlink "$0" 2>/dev/null || echo "$0")"
 SCRIPT_DIR="${SCRIPT_FILE%/*}"
 
-# Launch Ghidra Python
+# Launch Ghidra Jython
 # DEBUG_ADDRESS set via environment for launch.sh
-DEBUG_ADDRESS=${DEBUG_ADDRESS} "${SCRIPT_DIR}"/launch.sh "${LAUNCH_MODE}" jdk "Ghidra-Python" "${MAXMEM}" "${VMARG_LIST}" ghidra.python.PythonRun "$@"
+DEBUG_ADDRESS=${DEBUG_ADDRESS} "${SCRIPT_DIR}"/launch.sh "${LAUNCH_MODE}" jdk "Ghidra-Jython" "${MAXMEM}" "${VMARG_LIST}" ghidra.jython.JythonRun "$@"

@@ -1,4 +1,4 @@
-:: Ghidra python launch
+:: Ghidra jython launch
 
 @echo off
 setlocal
@@ -24,4 +24,4 @@ set DEBUG_ADDRESS=127.0.0.1:13002
 set VMARG_LIST=-XX:ParallelGCThreads=2
 set VMARG_LIST=%VMARG_LIST% -XX:CICompilerCount=2
 
-call "%~dp0launch.bat" %LAUNCH_MODE% jdk Ghidra-Python "%MAXMEM%" "%VMARG_LIST%" ghidra.python.PythonRun %*
+call "%~dp0launch.bat" %LAUNCH_MODE% jdk Ghidra-Jython "%MAXMEM%" "%VMARG_LIST%" ghidra.jython.JythonRun %*
