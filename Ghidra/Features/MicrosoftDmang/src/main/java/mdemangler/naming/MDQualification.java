@@ -96,6 +96,16 @@ public class MDQualification extends MDParsableItem implements Iterable<MDQualif
 
 	@Override
 	protected void parseInternal() throws MDException {
+		// We currently have a check to see if the index has moved (loc) to know to abort the
+		//  processing of this loop.  We could have also done a loop check on the '`' character
+		//  from an LLVM suffix on mangled "type" name that looks like:
+		//  "`fedcba98" ('`' character followed by exactly 8 (zero padded) hex digits
+		//  TODO:  need to determine what they are and where they should get processed... but
+		//    could be part of end of MDQualification, MDQualifiedName, MDClassType,
+		//    MDQuestionModifierType, or at same level as complete mangled name.  For now, we
+		//    have put the processing in MDQuestionModifierType, but this will take future study
+		//    to determine what it is and to what object it belongs.
+		//    We have a similar issue with dot-separated symbols... needs more study.
 		while ((dmang.peek() != MDMang.DONE) && (dmang.peek() != '@')) {
 			int loc = dmang.getIndex();
 			MDQualifier qual = new MDQualifier(dmang);
@@ -111,6 +121,21 @@ public class MDQualification extends MDParsableItem implements Iterable<MDQualif
 		if (dmang.peek() == '@') {
 			dmang.increment(); // Skip past @.
 		}
+//		// For future debugging to try to figure out where to process the '`' suffix
+//		if (dmang.peek() == '`') {
+//			Exception e = new Exception();
+//			StackTraceElement[] trace = e.getStackTrace();
+//			StringBuilder builder = new StringBuilder();
+//			for (StackTraceElement t : trace) {
+//				String s = t.toString();
+//				builder.append(s);
+//				builder.append('\n');
+//				if (s.contains("MDMang.demangle(")) {
+//					System.out.println(builder.toString());
+//					break;
+//				}
+//			}
+//		}
 	}
 
 	@Override

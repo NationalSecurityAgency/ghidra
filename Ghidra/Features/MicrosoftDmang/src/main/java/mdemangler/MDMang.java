@@ -21,6 +21,7 @@ import java.util.List;
 
 import mdemangler.MDContext.MDContextType;
 import mdemangler.datatype.MDDataType;
+import mdemangler.datatype.MDDataTypeParser;
 import mdemangler.datatype.modifier.MDCVMod;
 import mdemangler.naming.MDFragmentName;
 import mdemangler.naming.MDQualification;
@@ -117,6 +118,57 @@ public class MDMang {
 	}
 
 	/**
+	 * Demangles the mangled "type" name and returns a parsed MDDataType
+	 *
+	 * @param mangledIn the mangled "type" string to be demangled
+	 * @param errorOnRemainingChars
+	 *            boolean flag indicating whether remaining characters causes an
+	 *            error
+	 * @return the parsed MDDataType
+	 * @throws MDException upon parsing error
+	 */
+	public MDDataType demangleType(String mangledIn, boolean errorOnRemainingChars)
+			throws MDException {
+		if (mangledIn == null || mangledIn.isEmpty()) {
+			throw new MDException("Invalid mangled symbol.");
+		}
+		setMangledSymbol(mangledIn);
+		return demangleType(errorOnRemainingChars);
+	}
+
+	/**
+	 * Demangles the mangled "type" name already stored and returns a parsed MDDataType
+	 *
+	 * @param errorOnRemainingChars
+	 *            boolean flag indicating whether remaining characters causes an
+	 *            error
+	 * @return the parsed MDDataType
+	 * @throws MDException upon parsing error
+	 */
+	public MDDataType demangleType(boolean errorOnRemainingChars) throws MDException {
+		if (mangled == null) {
+			throw new MDException("MDMang: Mangled string is null.");
+		}
+		pushContext();
+		if (peek() != '.') {
+			throw new MDException("MDMang: Mangled string is not that of a type.");
+		}
+		increment();
+		MDDataType mdDataType = MDDataTypeParser.parseDataType(this, false);
+		item = mdDataType;
+		if (mdDataType != null) {
+			mdDataType.parse();
+		}
+		int numCharsRemaining = getNumCharsRemaining();
+		popContext();
+		if (errorOnRemainingChars && (numCharsRemaining > 0)) {
+			throw new MDException(
+				"MDMang: characters remain after demangling: " + numCharsRemaining + ".");
+		}
+		return mdDataType;
+	}
+
+	/**
 	 * Sets the mangled string to be demangled.
 	 *
 	 * @param mangledIn
@@ -202,6 +254,14 @@ public class MDMang {
 	 */
 	public void setIndex(int index) {
 		iter.setIndex(index);
+	}
+
+	/**
+	 * Returns true if there are no more characters to iterate
+	 * @return {@code true} if done
+	 */
+	public boolean done() {
+		return peek() == DONE;
 	}
 
 	/**

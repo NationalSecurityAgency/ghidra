@@ -15,7 +15,7 @@
  */
 package mdemangler;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.util.List;
 
@@ -46,7 +46,7 @@ public class MDMangExtraTest extends AbstractGenericTest {
 		String functionNamespaceTruth = "public: static int __cdecl Foo2b::Bar3(void)";
 
 		MDMangGhidra demangler = new MDMangGhidra();
-		MDParsableItem item = demangler.demangle(mangled, true);
+		MDParsableItem item = demangler.demangle(mangled, true, true);
 
 		String demangled = item.toString();
 		assertEquals(wholeTruth, demangled);
@@ -54,7 +54,7 @@ public class MDMangExtraTest extends AbstractGenericTest {
 		String mangledFunctionNamespace = obj.getNamespace().getNamespace().getMangledString();
 		assertEquals(functionNamespaceMangledTruth, mangledFunctionNamespace);
 
-		item = demangler.demangle(mangledFunctionNamespace, true);
+		item = demangler.demangle(mangledFunctionNamespace, true, true);
 		demangled = item.toString();
 		assertEquals(functionNamespaceTruth, demangled);
 	}
@@ -66,7 +66,7 @@ public class MDMangExtraTest extends AbstractGenericTest {
 		String truth = "const b::a::`vftable'{for `e::d::c's `h::g::f's `k::j::i'}";
 
 		MDMangGhidra demangler = new MDMangGhidra();
-		MDParsableItem item = demangler.demangle(mangled, true);
+		MDParsableItem item = demangler.demangle(mangled, true, true);
 
 		String demangled = item.toString();
 		assertEquals(truth, demangled);
