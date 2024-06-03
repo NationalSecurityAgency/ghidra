@@ -10,6 +10,7 @@
     <compiler name="clang" id="clangwindows" />
     <compiler name="gcc" id="gcc" />
     <compiler name="golang" id="golang" />
+    <compiler name="Swift" id="swift" />
     <spaces>
         <space name="ram" type="ram" size="8" default="yes" />
         <space name="register" type="register" size="4" />
