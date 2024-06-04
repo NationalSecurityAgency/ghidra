@@ -150,7 +150,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 		markupItemsTablePanel.add(tablePanel, BorderLayout.CENTER);
 		markupItemsTablePanel.add(filterAreaPanel, BorderLayout.SOUTH);
 
-		functionComparisonPanel = new FunctionComparisonPanel(this, tool);
+		functionComparisonPanel = new FunctionComparisonPanel(tool, getName());
 		addSpecificCodeComparisonActions();
 		functionComparisonPanel.setCurrentTabbedComponent(ListingCodeComparisonPanel.NAME);
 		functionComparisonPanel.setTitlePrefixes("Source:", "Destination:");

@@ -368,7 +368,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		statusPanel.add(statusLabel, BorderLayout.CENTER);
 		dualTablePanel.add(statusPanel, BorderLayout.SOUTH);
 
-		functionComparisonPanel = new FunctionComparisonPanel(this, tool);
+		functionComparisonPanel = new FunctionComparisonPanel(tool, getName());
 		addSpecificCodeComparisonActions();
 		functionComparisonPanel.setCurrentTabbedComponent(ListingCodeComparisonPanel.NAME);
 		functionComparisonPanel.setTitlePrefixes("Source:", "Destination:");

@@ -37,7 +37,6 @@ import generic.theme.GIcon;
 import ghidra.app.util.viewer.listingpanel.ListingCodeComparisonPanel;
 import ghidra.app.util.viewer.util.*;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.address.AddressSetView;
@@ -77,28 +76,19 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 
 	private JTabbedPane tabbedPane;
 	private Map<String, JComponent> tabNameToComponentMap;
-	protected PluginTool tool;
-	protected ComponentProviderAdapter provider;
 	private List<CodeComparisonPanel> codeComparisonPanels;
 	private ToggleScrollLockAction toggleScrollLockAction;
 	private boolean syncScrolling = false;
 
 	private Duo<ComparisonData> comparisonData = new Duo<ComparisonData>();
 
-	/**
-	 * Constructor
-	 *
-	 * @param provider the GUI provider that includes this panel
-	 * @param tool the tool containing this panel
-	 */
-	public FunctionComparisonPanel(ComponentProviderAdapter provider, PluginTool tool) {
-		this.provider = provider;
-		this.tool = tool;
+	public FunctionComparisonPanel(PluginTool tool, String owner) {
 		this.comparisonData = new Duo<>(EMPTY, EMPTY);
-		this.codeComparisonPanels = getCodeComparisonPanels();
+
+		codeComparisonPanels = getCodeComparisonPanels(tool, owner);
 		tabNameToComponentMap = new HashMap<>();
 		createMainPanel();
-		createActions();
+		createActions(owner);
 		setScrollingSyncState(true);
 		help.registerHelp(this, new HelpLocation(HELP_TOPIC, "Function Comparison"));
 	}
@@ -224,13 +214,6 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	}
 
 	/**
-	 * Refreshes the contents of the panel
-	 */
-	public void reload() {
-		// do nothing by default; override in subs if necessary
-	}
-
-	/**
 	 * Set the current tabbed panel to be the component with the given name
 	 *
 	 * @param name name of view to set as the current tab
@@ -273,7 +256,6 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	 * Remove all views in the tabbed pane
 	 */
 	public void dispose() {
-		tool.removeComponentProvider(provider);
 		tabbedPane.removeAll();
 
 		setVisible(false);
@@ -514,16 +496,16 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	/**
 	 * Creates the actions available for this panel
 	 */
-	private void createActions() {
-		toggleScrollLockAction = new ToggleScrollLockAction();
+	private void createActions(String owner) {
+		toggleScrollLockAction = new ToggleScrollLockAction(owner);
 	}
 
 	/**
 	 * Action that sets the scrolling state of the comparison panels
 	 */
 	private class ToggleScrollLockAction extends ToggleDockingAction {
-		ToggleScrollLockAction() {
-			super("Synchronize Scrolling of Dual View", provider.getName());
+		ToggleScrollLockAction(String owner) {
+			super("Synchronize Scrolling of Dual View", owner);
 			setDescription("Lock/Unlock Synchronized Scrolling of Dual View");
 			setToolBarData(new ToolBarData(UNSYNC_SCROLLING_ICON, SCROLLING_GROUP));
 			setEnabled(true);
@@ -550,25 +532,27 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	 *
 	 * @return the CodeComparisonPanels which are extension points
 	 */
-	private List<CodeComparisonPanel> getCodeComparisonPanels() {
+	private List<CodeComparisonPanel> getCodeComparisonPanels(PluginTool tool, String owner) {
 		if (codeComparisonPanels == null) {
-			codeComparisonPanels = createAllPossibleCodeComparisonPanels();
+			codeComparisonPanels = createAllPossibleCodeComparisonPanels(tool, owner);
 			codeComparisonPanels.sort((p1, p2) -> p1.getName().compareTo(p2.getName()));
 		}
 		return codeComparisonPanels;
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private ArrayList<CodeComparisonPanel> createAllPossibleCodeComparisonPanels() {
-		ArrayList<CodeComparisonPanel> instances =
-			new ArrayList<>();
+	private List<CodeComparisonPanel> createAllPossibleCodeComparisonPanels(PluginTool tool,
+			String owner) {
+
+		List<CodeComparisonPanel> instances = new ArrayList<>();
+
 		List<Class<? extends CodeComparisonPanel>> classes =
 			ClassSearcher.getClasses(CodeComparisonPanel.class);
+
 		for (Class<? extends CodeComparisonPanel> panelClass : classes) {
 			try {
 				Constructor<? extends CodeComparisonPanel> constructor =
 					panelClass.getConstructor(String.class, PluginTool.class);
-				CodeComparisonPanel panel = constructor.newInstance(provider.getName(), tool);
+				CodeComparisonPanel panel = constructor.newInstance(owner, tool);
 				instances.add(panel);
 			}
 			catch (NoSuchMethodException | SecurityException | InstantiationException

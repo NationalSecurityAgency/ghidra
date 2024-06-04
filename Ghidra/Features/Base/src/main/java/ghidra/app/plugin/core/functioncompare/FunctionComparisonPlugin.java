@@ -15,16 +15,16 @@
  */
 package ghidra.app.plugin.core.functioncompare;
 
-import java.util.Set;
-import java.util.function.Supplier;
+import java.util.*;
+import java.util.function.Consumer;
 
+import docking.action.builder.ActionBuilder;
 import ghidra.app.CorePluginPackage;
+import ghidra.app.context.FunctionSupplierContext;
 import ghidra.app.events.*;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
-import ghidra.app.plugin.core.functioncompare.actions.CompareFunctionsAction;
-import ghidra.app.plugin.core.functioncompare.actions.CompareFunctionsFromListingAction;
-import ghidra.app.services.FunctionComparisonService;
+import ghidra.app.services.*;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
@@ -33,7 +33,9 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramChangeRecord;
 import ghidra.program.util.ProgramEvent;
+import ghidra.util.HelpLocation;
 import ghidra.util.Swing;
+import utility.function.Callback;
 
 /**
  * Allows users to create function comparisons that are displayed
@@ -58,31 +60,18 @@ import ghidra.util.Swing;
 public class FunctionComparisonPlugin extends ProgramPlugin
 		implements DomainObjectListener, FunctionComparisonService {
 
-	static final String MENU_PULLRIGHT = "CompareFunctions";
-	static final String POPUP_MENU_GROUP = "CompareFunction";
+	// Keep a stack of recently added providers so that the "add to comparison" service methods
+	// can easily add to the last created provider.
+	private Deque<FunctionComparisonProvider> providers = new ArrayDeque<>();
 
-	private FunctionComparisonProviderManager functionComparisonManager;
-
-	/**
-	 * Constructor
-	 * 
-	 * @param tool the tool that owns this plugin
-	 */
 	public FunctionComparisonPlugin(PluginTool tool) {
 		super(tool);
-		functionComparisonManager = new FunctionComparisonProviderManager(this);
-	}
-
-	@Override
-	protected void init() {
-		CompareFunctionsAction compareFunctionsAction =
-			new CompareFunctionsFromListingAction(tool, getName());
-		tool.addAction(compareFunctionsAction);
+		createActions();
 	}
 
 	@Override
 	public void dispose() {
-		functionComparisonManager.dispose();
+		foreEachProvider(p -> p.closeComponent());
 	}
 
 	@Override
@@ -92,8 +81,8 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 
 	@Override
 	protected void programClosed(Program program) {
-		functionComparisonManager.closeProviders(program);
 		program.removeListener(this);
+		foreEachProvider(p -> p.programClosed(program));
 	}
 
 	/**
@@ -111,7 +100,7 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 
 			EventType eventType = doRecord.getEventType();
 			if (eventType == DomainObjectEvent.RESTORED) {
-				functionComparisonManager.domainObjectRestored((Program) ev.getSource());
+				domainObjectRestored((Program) ev.getSource());
 			}
 			else if (eventType == ProgramEvent.FUNCTION_REMOVED) {
 				ProgramChangeRecord rec = (ProgramChangeRecord) ev.getChangeRecord(i);
@@ -123,71 +112,113 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 		}
 	}
 
-	private void runOnSwingNonBlocking(Runnable r) {
-		Swing.runIfSwingOrRunLater(r);
-	}
-
-	private FunctionComparisonProvider getFromSwingBlocking(
-			Supplier<FunctionComparisonProvider> comparer) {
-
-		if (Swing.isSwingThread()) {
-			return comparer.get();
-		}
-
-		return Swing.runNow(comparer);
-	}
-
 	void providerClosed(FunctionComparisonProvider provider) {
-		functionComparisonManager.providerClosed(provider);
+		providers.remove(provider);
 	}
+
+	void removeFunction(Function function) {
+		Swing.runIfSwingOrRunLater(() -> doRemoveFunction(function));
+	}
+
+	private void foreEachProvider(Consumer<FunctionComparisonProvider> c) {
+		// copy needed because this may cause callbacks to remove a provider from our list
+		List<FunctionComparisonProvider> localCopy = new ArrayList<>(providers);
+		localCopy.forEach(c);
+
+	}
+
+	private void domainObjectRestored(Program program) {
+		foreEachProvider(p -> p.programRestored(program));
+	}
+
+	private void createActions() {
+		new ActionBuilder("Compare Functions", getName())
+				.description("Create Function Comparison")
+				.popupMenuPath("Compare Function(s)")
+				.helpLocation(new HelpLocation("FunctionComparison", "Function_Comparison"))
+				.popupMenuGroup("Functions", "Z1")
+				.withContext(FunctionSupplierContext.class)
+				.enabledWhen(c -> c.hasFunctions())
+				.onAction(c -> createComparison(c.getFunctions()))
+				.buildAndInstall(tool);
+
+		new ActionBuilder("Add To Last Function Comparison", getName())
+				.description("Add the selected function(s) to the last Function Comparison window")
+				.popupMenuPath("Add To Last Comparison")
+				.helpLocation(new HelpLocation("FunctionComparison", "Function_Comparison_Add_To"))
+				.popupMenuGroup("Functions", "Z2")
+				.withContext(FunctionSupplierContext.class)
+				.enabledWhen(c -> c.hasFunctions())
+				.onAction(c -> addToComparison(c.getFunctions()))
+				.buildAndInstall(tool);
+	}
+
+	private void doRemoveFunction(Function function) {
+		foreEachProvider(p -> p.getModel().removeFunction(function));
+	}
+
+	private FunctionComparisonProvider createProvider(FunctionComparisonModel model) {
+		return createProvider(model, null);
+	}
+
+	private FunctionComparisonProvider createProvider(FunctionComparisonModel model,
+			Callback closeListener) {
+		FunctionComparisonProvider provider =
+			new FunctionComparisonProvider(this, model, closeListener);
+
+		// insert at the top so the last created provider is first when searching for a provider
+		providers.addFirst(provider);
+		return provider;
+	}
+
+	private FunctionComparisonProvider findLastDefaultProviderModel() {
+		for (FunctionComparisonProvider provider : providers) {
+			if (provider.getModel() instanceof DefaultFunctionComparisonModel) {
+				return provider;
+			}
+		}
+		return null;
+	}
+
 //==================================================================================================
 // Service Methods
 //==================================================================================================	
-
 	@Override
-	public void removeFunction(Function function) {
-		runOnSwingNonBlocking(() -> functionComparisonManager.removeFunction(function));
+	public void createComparison(Collection<Function> functions) {
+		if (functions.isEmpty()) {
+			return;
+		}
+		DefaultFunctionComparisonModel model = new DefaultFunctionComparisonModel(functions);
+		Swing.runLater(() -> createProvider(model));
 	}
 
 	@Override
-	public void removeFunction(Function function, FunctionComparisonProvider provider) {
-		runOnSwingNonBlocking(() -> functionComparisonManager.removeFunction(function, provider));
+	public void createComparison(Function left, Function right) {
+		DefaultFunctionComparisonModel model = new DefaultFunctionComparisonModel(left, right);
+		Swing.runLater(() -> createProvider(model));
 	}
 
 	@Override
-	public FunctionComparisonProvider createFunctionComparisonProvider() {
-		return getFromSwingBlocking(() -> functionComparisonManager.createProvider());
+	public void addToComparison(Collection<Function> functions) {
+		FunctionComparisonProvider lastProvider = findLastDefaultProviderModel();
+		if (lastProvider == null) {
+			createComparison(functions);
+		}
+		else {
+			DefaultFunctionComparisonModel model =
+				(DefaultFunctionComparisonModel) lastProvider.getModel();
+			Swing.runLater(() -> model.addFunctions(functions));
+		}
 	}
 
 	@Override
-	public FunctionComparisonProvider compareFunctions(Function source, Function target) {
-		return getFromSwingBlocking(
-			() -> functionComparisonManager.compareFunctions(source, target));
+	public void addToComparison(Function function) {
+		addToComparison(Arrays.asList(function));
 	}
 
 	@Override
-	public FunctionComparisonProvider compareFunctions(Set<Function> functions) {
-		return getFromSwingBlocking(() -> functionComparisonManager.compareFunctions(functions));
-	}
-
-	@Override
-	public FunctionComparisonProvider compareFunctions(Set<Function> sourceFunctions,
-			Set<Function> destinationFunctions) {
-		return getFromSwingBlocking(() -> functionComparisonManager
-				.compareFunctions(sourceFunctions, destinationFunctions));
-	}
-
-	@Override
-	public void compareFunctions(Set<Function> functions, FunctionComparisonProvider provider) {
-		runOnSwingNonBlocking(
-			() -> functionComparisonManager.compareFunctions(functions, provider));
-	}
-
-	@Override
-	public void compareFunctions(Function source, Function target,
-			FunctionComparisonProvider provider) {
-		runOnSwingNonBlocking(
-			() -> functionComparisonManager.compareFunctions(source, target, provider));
+	public void createCustomComparison(FunctionComparisonModel model, Callback closeListener) {
+		Swing.runLater(() -> createProvider(model, closeListener));
 	}
 
 }

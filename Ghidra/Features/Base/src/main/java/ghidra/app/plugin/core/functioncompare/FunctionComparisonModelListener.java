@@ -15,9 +15,9 @@
  */
 package ghidra.app.plugin.core.functioncompare;
 
-import java.util.List;
-
 import ghidra.app.services.FunctionComparisonModel;
+import ghidra.program.model.listing.Function;
+import ghidra.util.datastruct.Duo.Side;
 
 /**
  * Allows subscribers to register for {@link FunctionComparisonModel function
@@ -26,9 +26,15 @@ import ghidra.app.services.FunctionComparisonModel;
 public interface FunctionComparisonModelListener {
 
 	/**
-	 * Invoked when the comparison model has changed
-	 * 
-	 * @param model the current state of the model
+	 * Notification that the selected function changed on one side or the other.
+	 * @param side the side whose selected function changed
+	 * @param function the new selected function for the given side
 	 */
-	public void modelChanged(List<FunctionComparison> model);
+	public void activeFunctionChanged(Side side, Function function);
+
+	/**
+	 * Notification that the set of functions on at least one side changed. The selected functions
+	 * on either side may have also changed.
+	 */
+	public void modelDataChanged();
 }

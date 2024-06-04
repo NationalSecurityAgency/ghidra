@@ -19,9 +19,10 @@ import static ghidra.util.datastruct.Duo.Side.*;
 import static org.junit.Assert.*;
 
 import java.awt.Window;
-import java.util.Date;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import javax.swing.JComboBox;
 import javax.swing.JPanel;
 
 import org.junit.*;
@@ -32,8 +33,8 @@ import docking.widgets.dialogs.TableSelectionDialog;
 import docking.widgets.table.GFilterTable;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.function.FunctionPlugin;
-import ghidra.app.plugin.core.functionwindow.FunctionRowObject;
-import ghidra.app.plugin.core.functionwindow.FunctionTableModel;
+import ghidra.app.services.FunctionComparisonModel;
+import ghidra.app.services.MatchedFunctionComparisonModel;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.ByteDataType;
@@ -42,12 +43,13 @@ import ghidra.program.model.listing.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
+import ghidra.util.datastruct.Duo.Side;
 
 /**
  * Tests for the {@link FunctionComparisonPlugin function comparison plugin}
  * that involve the GUI
  */
-public class CompareFunctionsSlowTest extends AbstractGhidraHeadedIntegrationTest {
+public class CompareFunctionsProviderTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private TestEnv env;
 	private Program program1;
@@ -79,75 +81,63 @@ public class CompareFunctionsSlowTest extends AbstractGhidraHeadedIntegrationTes
 
 	@Test
 	public void testRemoveLastItem() throws Exception {
-		Set<Function> functions = CompareFunctionsTestUtility.getFunctionsAsSet(foo);
-		provider = compareFunctions(functions);
-		runSwing(() -> plugin.removeFunction(foo, provider));
+		provider = compareFunctions(Set.of(foo));
+		assertTrue(provider.isVisible());
+		plugin.removeFunction(foo);
+		waitForSwing();
 		assertFalse(provider.isVisible());
 	}
 
 	@Test
 	public void testCloseProgram() throws Exception {
-		Set<Function> functions = CompareFunctionsTestUtility.getFunctionsAsSet(foo, bar);
+		Set<Function> functions = Set.of(foo, bar);
 		provider = compareFunctions(functions);
 
-		CompareFunctionsTestUtility.checkSourceFunctions(provider, foo, bar);
-		CompareFunctionsTestUtility.checkTargetFunctions(provider, foo, foo, bar);
-		CompareFunctionsTestUtility.checkTargetFunctions(provider, bar, foo, bar);
+		checkFunctions(LEFT, foo, foo, bar);
+		checkFunctions(RIGHT, bar, foo, bar);
 
 		runSwing(() -> plugin.programClosed(program1));
+		waitForSwing();
 
-		CompareFunctionsTestUtility.checkSourceFunctions(provider, bar);
-		CompareFunctionsTestUtility.checkTargetFunctions(provider, bar, bar);
+		checkFunctions(LEFT, bar, bar);
+		checkFunctions(RIGHT, bar, bar);
 
 		runSwing(() -> plugin.programClosed(program2));
-
-		CompareFunctionsTestUtility.checkSourceFunctions(provider);
+		waitForSwing();
+		assertFalse(provider.isVisible());
+		assertFalse(provider.isInTool());
 	}
 
 	@Test
 	public void testNextPreviousAction() {
-		Set<Function> functions = CompareFunctionsTestUtility.getFunctionsAsSet(foo, bar);
+		Set<Function> functions = Set.of(foo, bar);
 		provider = compareFunctions(functions);
 
-		// Must do this or there will be no "active" provider in the actions
-		// initiated below
-		clickComponentProvider(provider);
-
 		DockingActionIf nextAction = getAction(plugin, "Compare Next Function");
-		DockingActionIf prevAction = getAction(plugin, "Compare Previous Function");
+		DockingActionIf previousAction = getAction(plugin, "Compare Previous Function");
 
 		ActionContext context = provider.getActionContext(null);
-		assertTrue(nextAction.isEnabledForContext(context));
-		assertFalse(prevAction.isEnabledForContext(context));
+		assertEnabled(nextAction, context);
+		assertNotEnabled(previousAction, context);
 
 		performAction(nextAction);
 
 		context = provider.getActionContext(null);
-		assertFalse(nextAction.isEnabledForContext(context));
-		assertTrue(prevAction.isEnabledForContext(context));
+		assertNotEnabled(nextAction, context);
+		assertEnabled(previousAction, context);
 	}
 
 	@Test
 	public void testNextPreviousActionSwitchPanelFocus() {
-		Set<Function> functions = CompareFunctionsTestUtility.getFunctionsAsSet(foo, bar);
+		Set<Function> functions = Set.of(foo, bar);
 		provider = compareFunctions(functions);
-
-		// Must do this or there will be no "active" provider in the actions
-		// initiated below
-		clickComponentProvider(provider);
-
 		DockingActionIf nextAction = getAction(plugin, "Compare Next Function");
-		DockingActionIf prevAction = getAction(plugin, "Compare Previous Function");
+		DockingActionIf previousAction = getAction(plugin, "Compare Previous Function");
 
+		// left panel has focus, so nextAction should be enabled and previous should be disabled
 		ActionContext context = provider.getActionContext(null);
-		assertTrue(nextAction.isEnabledForContext(context));
-		assertFalse(prevAction.isEnabledForContext(context));
-
-		performAction(nextAction);
-
-		context = provider.getActionContext(null);
-		assertFalse(nextAction.isEnabledForContext(context));
-		assertTrue(prevAction.isEnabledForContext(context));
+		assertEnabled(nextAction, context);
+		assertNotEnabled(previousAction, context);
 
 		JPanel rightPanel =
 			provider.getComponent().getDualListingPanel().getListingPanel(RIGHT).getFieldPanel();
@@ -155,19 +145,16 @@ public class CompareFunctionsSlowTest extends AbstractGhidraHeadedIntegrationTes
 		waitForSwing();
 		provider.getComponent().updateActionEnablement();
 
+		// right panel has focus, so nextAction should be disabled and previous should be enabled
 		context = provider.getActionContext(null);
-		assertTrue(nextAction.isEnabledForContext(context));
-		assertFalse(prevAction.isEnabledForContext(context));
+		assertNotEnabled(nextAction, context);
+		assertEnabled(previousAction, context);
 	}
 
 	@Test
 	public void testOpenFunctionTableActionForAdd() {
-		Set<Function> functions = CompareFunctionsTestUtility.getFunctionsAsSet(foo, bar);
+		Set<Function> functions = Set.of(foo, bar);
 		provider = compareFunctions(functions);
-
-		// Must do this or the context for the action initiated below will be
-		// for the listing, not the comparison provider
-		clickComponentProvider(provider);
 
 		DockingActionIf openTableAction = getAction(plugin, "Add Functions To Comparison");
 		performAction(openTableAction, provider, false);
@@ -179,33 +166,28 @@ public class CompareFunctionsSlowTest extends AbstractGhidraHeadedIntegrationTes
 
 	@Test
 	public void testAddFunctionToExistingCompare() {
-		Set<Function> functions = CompareFunctionsTestUtility.getFunctionsAsSet(foo);
+		Set<Function> functions = Set.of(foo);
 		provider = compareFunctions(functions);
 
-		// Must do this or there will be no "active" provider in the actions initiated below
-		clickComponentProvider(provider);
-
-		assertEquals(provider.getModel().getSourceFunctions().size(), 1);
-		assertTrue(provider.getModel().getSourceFunctions().contains(foo));
+		assertEquals(provider.getModel().getFunctions(LEFT).size(), 1);
+		assertTrue(provider.getModel().getFunctions(LEFT).contains(foo));
 
 		DockingActionIf openTableAction = getAction(plugin, "Add Functions To Comparison");
 		performAction(openTableAction, provider, false);
 
-		@SuppressWarnings("unchecked")
-		TableSelectionDialog<FunctionTableModel> chooser =
+		TableSelectionDialog<?> chooser =
 			waitForDialogComponent(TableSelectionDialog.class);
-		@SuppressWarnings("unchecked")
-		GFilterTable<FunctionRowObject> table =
-			(GFilterTable<FunctionRowObject>) getInstanceField("gFilterTable", chooser);
+
+		GFilterTable<?> table = (GFilterTable<?>) getInstanceField("gFilterTable", chooser);
 
 		waitForCondition(() -> table.getModel().getRowCount() == 2);
 		clickTableCell(table.getTable(), 1, 0, 1);
 
 		pressButtonByText(chooser, "OK");
 		waitForSwing();
-		assertEquals(provider.getModel().getSourceFunctions().size(), 2);
-		assertTrue(provider.getModel().getSourceFunctions().contains(foo));
-		assertTrue(provider.getModel().getSourceFunctions().contains(bat));
+		assertEquals(provider.getModel().getFunctions(LEFT).size(), 2);
+		assertTrue(provider.getModel().getFunctions(LEFT).contains(foo));
+		assertTrue(provider.getModel().getFunctions(LEFT).contains(bat));
 	}
 
 	/**
@@ -215,29 +197,99 @@ public class CompareFunctionsSlowTest extends AbstractGhidraHeadedIntegrationTes
 	 */
 	@Test
 	public void testDeleteFunctionFromListing() {
-		Set<Function> functions = CompareFunctionsTestUtility.getFunctionsAsSet(foo, bar);
+		Set<Function> functions = Set.of(foo, bar);
 		provider = compareFunctions(functions);
 
-		assertEquals(provider.getModel().getSourceFunctions().size(), 2);
-		assertTrue(provider.getModel().getSourceFunctions().contains(foo));
-		assertTrue(provider.getModel().getSourceFunctions().contains(bar));
+		assertEquals(provider.getModel().getFunctions(LEFT).size(), 2);
+		assertTrue(provider.getModel().getFunctions(LEFT).contains(foo));
+		assertTrue(provider.getModel().getFunctions(LEFT).contains(bar));
 
-		Address addr = program1.getAddressFactory().getAddress("10018cf");
-		ProgramLocation loc = new ProgramLocation(program1, addr);
+		Address address = program1.getAddressFactory().getAddress("10018cf");
+		ProgramLocation loc = new ProgramLocation(program1, address);
 		cbPlugin.goTo(loc);
 		DockingActionIf deleteAction = getAction(functionPlugin, "Delete Function");
 		performAction(deleteAction, cbPlugin.getProvider().getActionContext(null), true);
 		waitForSwing();
 
-		assertEquals(provider.getModel().getSourceFunctions().size(), 1);
-		assertTrue(provider.getModel().getSourceFunctions().contains(bar));
+		assertEquals(provider.getModel().getFunctions(LEFT).size(), 1);
+		assertTrue(provider.getModel().getFunctions(LEFT).contains(bar));
+	}
+
+	@Test
+	public void testCustomComparison() {
+		MatchedFunctionComparisonModel model = new MatchedFunctionComparisonModel();
+		model.addMatch(foo, bar);
+		model.addMatch(bar, bat);
+		plugin.createCustomComparison(model, null);
+		waitForSwing();
+		provider = waitForComponentProvider(FunctionComparisonProvider.class);
+		assertEquals(model, provider.getModel());
+
+		setLeftFunction(foo);
+
+		assertEquals(model.getFunctions(LEFT).size(), 2);
+		assertTrue(model.getFunctions(LEFT).contains(foo));
+		assertTrue(model.getFunctions(LEFT).contains(bar));
+		assertEquals(model.getFunctions(RIGHT).size(), 1);
+		assertTrue(model.getFunctions(RIGHT).contains(bar));
+
+		setLeftFunction(bar);
+
+		assertEquals(model.getFunctions(RIGHT).size(), 1);
+		assertTrue(model.getFunctions(RIGHT).contains(bat));
+	}
+
+	private void setLeftFunction(Function function) {
+		FunctionComparisonPanel component = provider.getComponent();
+		JComboBox<?> combo = (JComboBox<?>) findComponentByName(component, "LEFTFunctionComboBox");
+		runSwing(() -> combo.setSelectedItem(function));
+	}
+
+	@Test
+	public void testCustomComparitorCloseCallack() {
+		final AtomicBoolean closed = new AtomicBoolean(false);
+		MatchedFunctionComparisonModel model = new MatchedFunctionComparisonModel();
+		model.addMatch(foo, bar);
+		model.addMatch(bar, bat);
+		plugin.createCustomComparison(model, () -> closed.set(true));
+		waitForSwing();
+		provider = waitForComponentProvider(FunctionComparisonProvider.class);
+		assertEquals(model, provider.getModel());
+
+		assertFalse(closed.get());
+		runSwing(() -> provider.closeComponent());
+		waitForSwing();
+		assertTrue(closed.get());
+
+	}
+
+	@Test
+	public void testAddToComparison() {
+		Set<Function> functions = Set.of(foo, bar);
+		provider = compareFunctions(functions);
+
+		checkFunctions(LEFT, foo, foo, bar);
+		checkFunctions(RIGHT, bar, foo, bar);
+
+		runSwing(() -> plugin.addToComparison(bat));
+		waitForSwing();
+
+		checkFunctions(LEFT, foo, foo, bar, bat);
+		checkFunctions(RIGHT, bat, foo, bar, bat);
+	}
+
+	private void assertEnabled(DockingActionIf action, ActionContext context) {
+		assertTrue(runSwing(() -> action.isEnabledForContext(context)));
+	}
+
+	private void assertNotEnabled(DockingActionIf action, ActionContext context) {
+		assertFalse(runSwing(() -> action.isEnabledForContext(context)));
 	}
 
 	private FunctionComparisonProvider compareFunctions(Set<Function> functions) {
-		provider = runSwing(() -> plugin.compareFunctions(functions));
-		provider.setVisible(true);
+		runSwing(() -> plugin.createComparison(functions));
 		waitForSwing();
-		return provider;
+		return waitForComponentProvider(FunctionComparisonProvider.class);
 	}
 
 	/**
@@ -256,6 +308,17 @@ public class CompareFunctionsSlowTest extends AbstractGhidraHeadedIntegrationTes
 
 		program1 = builder.getProgram();
 		return builder;
+	}
+
+	private void checkFunctions(Side side, Function activeFunction, Function... functions) {
+		Set<Function> funcs = Set.of(functions);
+
+		FunctionComparisonModel model = provider.getModel();
+		assertEquals(activeFunction, model.getActiveFunction(side));
+
+		List<Function> fcs = model.getFunctions(side);
+		assertEquals(fcs.size(), funcs.size());
+		assertTrue(fcs.containsAll(funcs));
 	}
 
 	/**

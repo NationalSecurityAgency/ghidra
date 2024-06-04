@@ -20,8 +20,6 @@ import static ghidra.util.datastruct.Duo.Side.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.Iterator;
-import java.util.Set;
 
 import javax.swing.*;
 
@@ -29,295 +27,180 @@ import ghidra.app.services.FunctionComparisonModel;
 import ghidra.app.util.viewer.util.CodeComparisonPanel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Function;
+import ghidra.util.datastruct.Duo;
 import ghidra.util.datastruct.Duo.Side;
-import help.Help;
-import help.HelpService;
 
 /**
  * Extends the basic {@link FunctionComparisonPanel one-to-one comparison panel}
  * to allow a many-to-many relationship. The panel provides a pair of combo
  * boxes above the function display area that allows users to select which 
  * functions are to be compared.
- * <p>
- * Throughout this class the terms <code>source</code> and <code>target</code>
- * are used when referencing functions. This is because the model that backs 
- * this panel maintains a relationship between the functions being compared
- * such that each source function can only be compared to a specific set
- * of target functions. For all practical purposes, the source functions
- * appear in the left-side panel and targets appear on the right.
- *    
+ * <P>
+ * This behavior of this class is driven by the given {@link FunctionComparisonModel}. The default
+ * model displays the same set of functions on both sides. But the model interface allows for
+ * other behaviors such as having different sets of function on each side and even changing the
+ * set of functions on one side base on what is selected on the other side.
  */
-public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
+public class MultiFunctionComparisonPanel extends FunctionComparisonPanel
+		implements FunctionComparisonModelListener {
 
-	/** Functions that will show up on the left side of the panel */
-	private JComboBox<Function> sourceFunctionsCB;
-
-	/** Functions that will show up on the right side of the panel */
-	private JComboBox<Function> targetFunctionsCB;
-
-	/** Data models backing the source and target combo boxes */
-	private DefaultComboBoxModel<Function> sourceFunctionsCBModel;
-	private DefaultComboBoxModel<Function> targetFunctionsCBModel;
-
-	protected static final HelpService help = Help.getHelpService();
 	public static final String HELP_TOPIC = "FunctionComparison";
+
+	private FunctionComparisonModel model;
+	private Duo<JComboBox<Function>> comboBoxes;
+	private Duo<ItemListener> comboListeners;
 
 	/**
 	 * Constructor
 	 * 
 	 * @param provider the comparison provider associated with this panel
 	 * @param tool the active plugin tool
+	 * @param model the comparison data model
 	 */
-	public MultiFunctionComparisonPanel(MultiFunctionComparisonProvider provider, PluginTool tool) {
-		super(provider, tool);
+	public MultiFunctionComparisonPanel(FunctionComparisonProvider provider, PluginTool tool,
+			FunctionComparisonModel model) {
+		super(tool, provider.getName());
+		this.model = model;
+		model.addFunctionComparisonModelListener(this);
 
-		JPanel choicePanel = new JPanel(new GridLayout(1, 2));
-		choicePanel.add(createSourcePanel());
-		choicePanel.add(createTargetPanel());
-		add(choicePanel, BorderLayout.NORTH);
+		buildComboPanels();
 
-		// For the multi-panels we don't need to show the title of each
-		// comparison panel because the name of the function/data being shown 
-		// is already visible in the combo box
 		getComparisonPanels().forEach(p -> p.setShowDataTitles(false));
 		setPreferredSize(new Dimension(1200, 600));
+		modelDataChanged();
 	}
 
-	/**
-	 * Clears out the source and targets lists and reloads them to 
-	 * ensure that they reflect the current state of the data model. Any
-	 * currently-selected list items will be restored after the lists
-	 * are reloaded.
-	 */
 	@Override
-	public void reload() {
-
-		reloadSourceList();
-		Function selectedSource = (Function) sourceFunctionsCBModel.getSelectedItem();
-		reloadTargetList(selectedSource);
-		loadFunctions(selectedSource, (Function) targetFunctionsCBModel.getSelectedItem());
-		updateTabText();
-
-		// Fire a notification to update the UI state; without this the 
-		// actions would not be properly enabled/disabled
-		tool.contextChanged(provider);
+	public void activeFunctionChanged(Side side, Function function) {
+		updateComboBoxSelectIfNeeded(side, function);
+		loadFunctions(model.getActiveFunction(LEFT), model.getActiveFunction(RIGHT));
 	}
 
-	/**
-	 * Returns the combo box (source or target) which has focus
-	 * 
-	 * @return the focused component
-	 */
-	public JComboBox<Function> getFocusedComponent() {
-		CodeComparisonPanel currentComponent = getCurrentComponent();
-		Side side = currentComponent.getActiveSide();
-		return side == LEFT ? sourceFunctionsCB : targetFunctionsCB;
+	@Override
+	public void modelDataChanged() {
+		intializeComboBox(LEFT);
+		intializeComboBox(RIGHT);
+		loadFunctions(model.getActiveFunction(LEFT), model.getActiveFunction(RIGHT));
 	}
 
-	public Side getFocusedSide() {
+	@Override
+	public void dispose() {
+		model.removeFunctionComparisonModelListener(this);
+		super.dispose();
+	}
+
+	Side getActiveSide() {
 		CodeComparisonPanel currentComponent = getCurrentComponent();
 		return currentComponent.getActiveSide();
 	}
 
-	/**
-	 * Returns the source combo box
-	 * 
-	 * @return the source combo box
-	 */
-	public JComboBox<Function> getSourceComponent() {
-		return sourceFunctionsCB;
+	boolean canCompareNextFunction() {
+		Side activeSide = getActiveSide();
+		JComboBox<Function> combo = comboBoxes.get(activeSide);
+		int index = combo.getSelectedIndex();
+		return index < combo.getModel().getSize() - 1;
 	}
 
-	/**
-	 * Returns the target combo box
-	 * 
-	 * @return the target combo box
-	 */
-	public JComboBox<Function> getTargetComponent() {
-		return targetFunctionsCB;
+	boolean canComparePreviousFunction() {
+		Side activeSide = getActiveSide();
+		JComboBox<Function> combo = comboBoxes.get(activeSide);
+		int index = combo.getSelectedIndex();
+		return index > 0;
 	}
 
-	/**
-	 * Clears out and reloads the source function list. Any selection currently
-	 * made on the list will be reestablished.
-	 */
-	private void reloadSourceList() {
+	void compareNextFunction() {
+		Side activeSide = getActiveSide();
+		JComboBox<Function> combo = comboBoxes.get(activeSide);
+		int index = combo.getSelectedIndex();
+		combo.setSelectedIndex(index + 1);
+	}
 
-		// Save off any selected item so we can restore if it later
-		Function selection = (Function) sourceFunctionsCBModel.getSelectedItem();
+	void comparePreviousFunction() {
+		Side activeSide = getActiveSide();
+		JComboBox<Function> combo = comboBoxes.get(activeSide);
+		int index = combo.getSelectedIndex();
+		combo.setSelectedIndex(index - 1);
+	}
 
-		// Remove all functions
-		sourceFunctionsCBModel.removeAllElements();
+	boolean canRemoveActiveFunction() {
+		Side activeSide = getActiveSide();
+		return model.getActiveFunction(activeSide) != null;
+	}
 
-		// Reload the functions
-		FunctionComparisonModel model = ((FunctionComparisonProvider) provider).getModel();
-		Iterator<FunctionComparison> compIter = model.getComparisons().iterator();
-		while (compIter.hasNext()) {
-			FunctionComparison fc = compIter.next();
-			sourceFunctionsCBModel.addElement(fc.getSource());
+	void removeActiveFunction() {
+		Side activeSide = getActiveSide();
+		model.removeFunction(model.getActiveFunction(activeSide));
+	}
+
+	private void buildComboPanels() {
+		JPanel choicePanel = new JPanel(new GridLayout(1, 2));
+		createComboBoxes();
+		choicePanel.add(createPanel(LEFT));
+		choicePanel.add(createPanel(RIGHT));
+		add(choicePanel, BorderLayout.NORTH);
+	}
+
+	private void intializeComboBox(Side side) {
+		JComboBox<Function> comboBox = comboBoxes.get(side);
+		comboBox.removeItemListener(comboListeners.get(side));
+
+		DefaultComboBoxModel<Function> comboModel =
+			(DefaultComboBoxModel<Function>) comboBox.getModel();
+		comboModel.removeAllElements();
+		comboModel.addAll(model.getFunctions(side));
+
+		Function activeFunction = model.getActiveFunction(side);
+		if (activeFunction != null) {
+			comboBox.setSelectedItem(activeFunction);
 		}
 
-		restoreSelection(sourceFunctionsCB, selection);
+		comboBox.addItemListener(comboListeners.get(side));
 	}
 
-	/**
-	 * Clears out and reloads the target function list with functions 
-	 * associated with the given source function. Any selection currently made 
-	 * on the list will be reestablished.
-	 * 
-	 * @param source the selected source function
-	 */
-	private void reloadTargetList(Function source) {
+	private void createComboBoxes() {
+		createComboBoxListeners();
+		JComboBox<Function> leftComboBox = buildComboBox(LEFT);
+		JComboBox<Function> rightComboBox = buildComboBox(RIGHT);
+		comboBoxes = new Duo<>(leftComboBox, rightComboBox);
+	}
 
-		// Save off any selected item so we can restore if it later
-		Function selection = (Function) targetFunctionsCBModel.getSelectedItem();
+	private void createComboBoxListeners() {
+		ItemListener leftListener = e -> comboChanged(e, LEFT);
+		ItemListener rightListener = e -> comboChanged(e, RIGHT);
+		comboListeners = new Duo<>(leftListener, rightListener);
+	}
 
-		// Remove all functions
-		targetFunctionsCBModel.removeAllElements();
-
-		// Find all target functions associated with the given source function
-		// and add them to the combo box model
-		FunctionComparisonModel model = ((FunctionComparisonProvider) provider).getModel();
-		Iterator<FunctionComparison> compIter = model.getComparisons().iterator();
-		while (compIter.hasNext()) {
-			FunctionComparison fc = compIter.next();
-			if (fc.getSource().equals(source)) {
-				Set<Function> targets = fc.getTargets();
-				targetFunctionsCBModel.addAll(targets);
-			}
+	private void comboChanged(ItemEvent e, Side side) {
+		if (e.getStateChange() == ItemEvent.DESELECTED) {
+			return;		// only care when a function is selected
 		}
-
-		restoreSelection(targetFunctionsCB, selection);
-
-		// we don't want the initial target to match the source as that is a pointless comparison
-		fixupTargetSelectionToNotMatchSource(source);
+		model.setActiveFunction(side, (Function) e.getItem());
 	}
 
-	private void fixupTargetSelectionToNotMatchSource(Function source) {
-		if (targetFunctionsCB.getSelectedItem() != source) {
+	private JComboBox<Function> buildComboBox(Side side) {
+		DefaultComboBoxModel<Function> leftModel = new DefaultComboBoxModel<>();
+		JComboBox<Function> comboBox = new JComboBox<>(leftModel);
+		comboBox.setName(side + "FunctionComboBox");
+		comboBox.setRenderer(new FunctionListCellRenderer());
+		comboBox.addItemListener(comboListeners.get(side));
+		return comboBox;
+	}
+
+	private JPanel createPanel(Side side) {
+		JPanel panel = new JPanel(new BorderLayout());
+		JComboBox<Function> comboBox = comboBoxes.get(side);
+		panel.add(comboBox, BorderLayout.CENTER);
+		return panel;
+	}
+
+	private void updateComboBoxSelectIfNeeded(Side side, Function function) {
+		JComboBox<Function> combo = comboBoxes.get(side);
+		if (combo.getSelectedItem() == function) {
 			return;
 		}
-		for (int i = 0; i < targetFunctionsCB.getItemCount(); i++) {
-			if (targetFunctionsCB.getItemAt(i) != source) {
-				targetFunctionsCB.setSelectedIndex(i);
-				return;
-			}
-		}
-	}
-
-	/**
-	 * Sets the text on the current tab to match whatever is displayed in the
-	 * comparison panels
-	 */
-	private void updateTabText() {
-		String tabText = getDescription();
-		provider.setTabText(tabText);
-		provider.setTitle(tabText);
-	}
-
-	/**
-	 * Sets a given function to be the selected item in a given combo
-	 * box. If the function isn't found, the first item in the box is
-	 * set.
-	 * 
-	 * @param cb the combo box
-	 * @param selection the function to set
-	 */
-	private void restoreSelection(JComboBox<Function> cb, Function selection) {
-		ComboBoxModel<Function> model = cb.getModel();
-
-		boolean found = false;
-		for (int i = 0; i < model.getSize(); i++) {
-			Function f = model.getElementAt(i);
-			if (f.equals(selection)) {
-				model.setSelectedItem(f);
-				found = true;
-				break;
-			}
-		}
-
-		if (!found && model.getSize() > 0) {
-			cb.setSelectedIndex(0);
-		}
-	}
-
-	/**
-	 * Creates the panel displaying the source combo box
-	 * <p>
-	 * Note: The custom renderer is used so the name of the program associated
-	 * with each function can be displayed in the combo box; this is necessary
-	 * since a combo box may show functions from any number of programs, and
-	 * the default is to simply show the function name<br>
-	 * eg: "init (notepad)"<br>
-	 * 
-	 * @return the source panel
-	 */
-	private JPanel createSourcePanel() {
-		JPanel panel = new JPanel(new BorderLayout());
-		sourceFunctionsCB = new JComboBox<>();
-		sourceFunctionsCBModel = new DefaultComboBoxModel<>();
-		sourceFunctionsCB.setModel(sourceFunctionsCBModel);
-		sourceFunctionsCB.setRenderer(new FunctionListCellRenderer());
-		sourceFunctionsCB.addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				if (e.getStateChange() != ItemEvent.SELECTED) {
-					return;
-				}
-
-				// Each time a source function is selected we need
-				// to load the targets associated with it
-				reloadTargetList((Function) sourceFunctionsCBModel.getSelectedItem());
-
-				updateTabText();
-
-				// Fire a notification to update the UI state; without this the 
-				// actions would not be properly enabled/disabled
-				tool.contextChanged(provider);
-			}
-		});
-
-		panel.add(sourceFunctionsCB, BorderLayout.CENTER);
-		return panel;
-	}
-
-	/**
-	 * Creates the panel for the target functions selection components
-	 * <p>
-	 * Note: The custom renderer is used so the name of the program associated
-	 * with each function can be displayed in the combo box; this is necessary
-	 * since a combo box may show functions from any number of programs, and
-	 * the default is to simply show the function name<br>
-	 * eg: "init (notepad)"<br>
-	 * 
-	 * @return the target panel
-	 */
-	private JPanel createTargetPanel() {
-		JPanel panel = new JPanel(new BorderLayout());
-		targetFunctionsCB = new JComboBox<>();
-		targetFunctionsCBModel = new DefaultComboBoxModel<>();
-		targetFunctionsCB.setModel(targetFunctionsCBModel);
-		targetFunctionsCB.setRenderer(new FunctionListCellRenderer());
-		targetFunctionsCB.addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				if (e.getStateChange() != ItemEvent.SELECTED) {
-					return;
-				}
-
-				Function selected = (Function) targetFunctionsCBModel.getSelectedItem();
-				loadFunctions((Function) sourceFunctionsCBModel.getSelectedItem(), selected);
-
-				updateTabText();
-
-				// Fire a notification to update the UI state; without this the 
-				// actions would not be properly enabled/disabled
-				tool.contextChanged(provider);
-			}
-		});
-
-		panel.add(targetFunctionsCB, BorderLayout.CENTER);
-		return panel;
+		combo.removeItemListener(comboListeners.get(side));
+		combo.setSelectedItem(function);
+		combo.addItemListener(comboListeners.get(side));
 	}
 
 	/**

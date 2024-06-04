@@ -55,7 +55,7 @@ import resources.MultiIcon;
 public class DecompilerCodeComparisonPanel
 		extends CodeComparisonPanel {
 
-	public static final String NAME = "Decompile Diff View";
+	public static final String NAME = "Decompiler View";
 
 	private boolean isStale = true;
 

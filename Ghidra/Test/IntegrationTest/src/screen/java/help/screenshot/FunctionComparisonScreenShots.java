@@ -25,7 +25,7 @@ import javax.swing.table.TableColumnModel;
 import org.junit.Test;
 
 import docking.action.DockingActionIf;
-import docking.widgets.dialogs.TableChooserDialog;
+import docking.widgets.dialogs.TableSelectionDialog;
 import docking.widgets.table.GFilterTable;
 import docking.widgets.table.GTable;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
@@ -94,12 +94,11 @@ public class FunctionComparisonScreenShots extends GhidraScreenShotGenerator {
 			f2.setName("FunctionB", SourceType.USER_DEFINED);
 			destListing.setComment(addr(0x004118c0), CodeUnit.PLATE_COMMENT, null);
 
-			FunctionComparisonProviderManager providerMgr =
-				getInstanceFieldByClassType(FunctionComparisonProviderManager.class, plugin);
-			FunctionComparisonProvider functionComparisonProvider =
-				providerMgr.compareFunctions(f1, f2);
+			plugin.createComparison(f1, f2);
+			FunctionComparisonProvider provider =
+				waitForComponentProvider(FunctionComparisonProvider.class);
 			FunctionComparisonPanel functionComparisonPanel =
-				functionComparisonProvider.getComponent();
+				provider.getComponent();
 			runSwing(() -> {
 				functionComparisonPanel.setCurrentTabbedComponent("Listing View");
 				ListingCodeComparisonPanel dualListing =
@@ -125,9 +124,7 @@ public class FunctionComparisonScreenShots extends GhidraScreenShotGenerator {
 		Function f1 = getFunction(sourceProgram, addr(0x004118f0));
 		Function f2 = getFunction(destinationProgram, addr(0x004118c0));
 
-		FunctionComparisonProviderManager providerMgr =
-			getInstanceFieldByClassType(FunctionComparisonProviderManager.class, plugin);
-		providerMgr.compareFunctions(f1, f2);
+		plugin.createComparison(f1, f2);
 
 		captureActionIcon("Add Functions To Comparison");
 	}
@@ -137,9 +134,7 @@ public class FunctionComparisonScreenShots extends GhidraScreenShotGenerator {
 		Function f1 = getFunction(sourceProgram, addr(0x004118f0));
 		Function f2 = getFunction(destinationProgram, addr(0x004118c0));
 
-		FunctionComparisonProviderManager providerMgr =
-			getInstanceFieldByClassType(FunctionComparisonProviderManager.class, plugin);
-		providerMgr.compareFunctions(f1, f2);
+		plugin.createComparison(f1, f2);
 
 		captureActionIcon("Remove Functions");
 	}
@@ -149,9 +144,7 @@ public class FunctionComparisonScreenShots extends GhidraScreenShotGenerator {
 		Function f1 = getFunction(sourceProgram, addr(0x004118f0));
 		Function f2 = getFunction(destinationProgram, addr(0x004118c0));
 
-		FunctionComparisonProviderManager providerMgr =
-			getInstanceFieldByClassType(FunctionComparisonProviderManager.class, plugin);
-		providerMgr.compareFunctions(CollectionUtils.asSet(f1, f2));
+		plugin.createComparison(CollectionUtils.asSet(f1, f2));
 
 		captureActionIcon("Compare Next Function");
 	}
@@ -161,13 +154,7 @@ public class FunctionComparisonScreenShots extends GhidraScreenShotGenerator {
 		Function f1 = getFunction(sourceProgram, addr(0x004118f0));
 		Function f2 = getFunction(destinationProgram, addr(0x004118c0));
 
-		FunctionComparisonProviderManager providerMgr =
-			getInstanceFieldByClassType(FunctionComparisonProviderManager.class, plugin);
-		FunctionComparisonProvider functionComparisonProvider =
-			providerMgr.compareFunctions(CollectionUtils.asSet(f1, f2));
-		MultiFunctionComparisonPanel panel =
-			(MultiFunctionComparisonPanel) functionComparisonProvider.getComponent();
-		panel.getFocusedComponent().setSelectedIndex(1);
+		plugin.createComparison(CollectionUtils.asSet(f1, f2));
 
 		captureActionIcon("Compare Previous Function");
 	}
@@ -177,21 +164,18 @@ public class FunctionComparisonScreenShots extends GhidraScreenShotGenerator {
 		Function f1 = getFunction(sourceProgram, addr(0x004118f0));
 		Function f2 = getFunction(destinationProgram, addr(0x004118c0));
 
-		FunctionComparisonProviderManager providerMgr =
-			getInstanceFieldByClassType(FunctionComparisonProviderManager.class, plugin);
-		providerMgr.compareFunctions(CollectionUtils.asSet(f1, f2));
+		plugin.createComparison(CollectionUtils.asSet(f1, f2));
 		waitForSwing();
 
-		DockingActionIf openTableAction = getAction(plugin, "Add Functions To Comparison");
+		DockingActionIf openTableAction = getAction(tool, "Add Functions To Comparison");
 		performAction(openTableAction, false);
 
-		TableChooserDialog<?> dialog =
-			waitForDialogComponent(TableChooserDialog.class);
+		TableSelectionDialog<?> dialog = waitForDialogComponent(TableSelectionDialog.class);
 		setColumnSizes(dialog);
 		captureDialog(dialog);
 	}
 
-	private void setColumnSizes(TableChooserDialog<?> dialog) {
+	private void setColumnSizes(TableSelectionDialog<?> dialog) {
 		// note: these values are rough values found by trial-and-error
 
 		GFilterTable<?> filter = (GFilterTable<?>) getInstanceField("gFilterTable", dialog);

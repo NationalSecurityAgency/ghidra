@@ -18,24 +18,14 @@
  */
 package ghidra.app.services;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
-import org.apache.commons.collections4.CollectionUtils;
-
-import ghidra.app.plugin.core.functioncompare.FunctionComparison;
 import ghidra.app.plugin.core.functioncompare.FunctionComparisonModelListener;
 import ghidra.app.plugin.core.functioncompare.FunctionComparisonProvider;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
-import ghidra.util.Msg;
-import ghidra.util.task.TaskLauncher;
+import ghidra.util.datastruct.Duo.Side;
 
 /**
  * A collection of {@link FunctionComparison function comparison} 
@@ -49,348 +39,70 @@ import ghidra.util.task.TaskLauncher;
  * Note: Subscribers may register to be informed of changes to this model via the
  * {@link FunctionComparisonModelListener comparison model listener} interface.
  */
-public class FunctionComparisonModel {
-
-	private List<FunctionComparison> comparisons = new ArrayList<>();
-	private List<FunctionComparisonModelListener> listeners = new ArrayList<>();
+public interface FunctionComparisonModel {
 
 	/**
-	 * Adds the given subscriber to the list of those to be notified of model
-	 * changes
+	 * Adds the given listener to the list of those to be notified of model changes.
 	 * 
-	 * @param listener the model change subscriber
+	 * @param listener the listener to add
 	 */
-	public void addFunctionComparisonModelListener(FunctionComparisonModelListener listener) {
-		listeners.add(listener);
-	}
+	public void addFunctionComparisonModelListener(FunctionComparisonModelListener listener);
 
 	/**
-	 * Returns a list of all comparisons in the model, in sorted order by 
-	 * source function name
+	 * Removes the given listener from the list of those to be notified of model changes.
 	 * 
-	 * @return a list of all comparisons in the model
+	 * @param listener the listener to remove
 	 */
-	public List<FunctionComparison> getComparisons() {
-		List<FunctionComparison> toReturn = new ArrayList<>();
-		toReturn.addAll(comparisons);
-		Collections.sort(toReturn);
-		return toReturn;
-	}
+	public void removeFunctionComparisonModelListener(FunctionComparisonModelListener listener);
 
 	/**
-	 * Replaces the current model with the comparisons provided
-	 * 
-	 * @param comparisons the new comparison model
+	 * Sets the function for the given side. The function must be one of the functions from that
+	 * side's set of functions
+	 * @param side the side to set the function for
+	 * @param function the function so set for the given side
+	 * @return true if the function was made active or false if the function does not exist for the
+	 * given side
 	 */
-	public void setComparisons(List<FunctionComparison> comparisons) {
-		this.comparisons = comparisons;
-	}
+	public boolean setActiveFunction(Side side, Function function);
 
 	/**
-	 * Adds a single comparison to the model
-	 * 
-	 * @param comparison the comparison to add
+	 * Returns the active (selected) function for the given side.
+	 * @param side the side to get the active function for
+	 * @return the active function for the given side
 	 */
-	public void addComparison(FunctionComparison comparison) {
-		comparisons.add(comparison);
-	}
+	public Function getActiveFunction(Side side);
 
 	/**
-	 * Returns a list of all targets in the model (across all comparisons) for
-	 * a given source function
-	 * 
-	 * @param source the source function
-	 * @return list of associated target functions
+	 * Returns the list of all functions on the given side that could be made active.
+	 * @param side the side to get functions for
+	 * @return the list of all functions on the given side that could be made active
 	 */
-	public Set<Function> getTargets(Function source) {
-		Set<Function> targets = new HashSet<>();
-		for (FunctionComparison fc : comparisons) {
-			if (fc.getSource().equals(source)) {
-				targets.addAll(fc.getTargets());
-			}
-		}
-
-		return targets;
-	}
+	public List<Function> getFunctions(Side side);
 
 	/**
-	 * Updates the model with a set of functions to compare. This will add the
-	 * functions to any existing {@link FunctionComparison comparisons} in the 
-	 * model and create new comparisons for functions not represented.
-	 * <p>
-	 * Note: It is assumed that when using this method, all functions can be
-	 * compared with all other functions; meaning each function will be added as 
-	 * both a source AND a target. To specify a specific source/target
-	 * relationship, use {@link #compareFunctions(Function, Function)}.
-	 * 
-	 * @param functions the set of functions to compare
-	 */
-	public void compareFunctions(Set<Function> functions) {
-		if (CollectionUtils.isEmpty(functions)) {
-			return; // not an error, just return
-		}
-
-		addToExistingComparisons(functions);
-		createNewComparisons(functions);
-
-		fireModelChanged();
-	}
-
-	/**
-	 * Updates the model with two sets of functions to compare. This will add the
-	 * functions to any existing {@link FunctionComparison comparisons} in the 
-	 * model and create new comparisons for functions not represented.
-	 * <p>
-	 * Note: It is assumed that when using this method, all source functions can be
-	 * compared to all destination functions; meaning all functions in the source function set will 
-	 * be added as sources, and all functions in the destination function set will be added as targets. 
-	 * 
-	 * @param sourceFunctions
-	 * @param destinationFunctions
-	 */
-	public void compareFunctions(Set<Function> sourceFunctions,
-			Set<Function> destinationFunctions) {
-		if (CollectionUtils.isEmpty(sourceFunctions) ||
-			CollectionUtils.isEmpty(destinationFunctions)) {
-			return; // not an error, just return
-		}
-
-		for (Function f : sourceFunctions) {
-			FunctionComparison comparison = new FunctionComparison();
-
-			comparison.setSource(f);
-			comparison.addTargets(destinationFunctions);
-			comparisons.add(comparison);
-		}
-		fireModelChanged();
-	}
-
-	/**
-	 * Compares two functions. If a comparison already exists in the model for
-	 * the given source, the target will simply be added to it; otherwise a
-	 * new comparison will be created.
-	 * 
-	 * @param source the source function
-	 * @param target the target function
-	 */
-	public void compareFunctions(Function source, Function target) {
-		FunctionComparison fc = getOrCreateComparison(source);
-		fc.addTarget(target);
-
-		fireModelChanged();
-	}
-
-	/**
-	 * Removes the given function from all comparisons in the model, whether
-	 * stored as a source or target
+	 * Removes the given function from both sides of the comparison.
 	 * 
 	 * @param function the function to remove
 	 */
-	public void removeFunction(Function function) {
-		doRemoveFunction(function);
-		fireModelChanged();
-	}
+	public void removeFunction(Function function);
 
 	/**
-	 * Removes all the given functions from all comparisons in the model
+	 * Removes all the given functions from both sides of the comparison.
+	 * 
 	 * @param functions the functions to remove
 	 */
-	public void removeFunctions(Collection<Function> functions) {
-		for (Function function : functions) {
-			doRemoveFunction(function);
-		}
-		fireModelChanged();
-	}
-
-	private void doRemoveFunction(Function function) {
-		List<FunctionComparison> comparisonsToRemove = new ArrayList<>();
-
-		Iterator<FunctionComparison> iter = comparisons.iterator();
-		while (iter.hasNext()) {
-
-			// First remove any comparisons that have the function as its source
-			FunctionComparison fc = iter.next();
-			if (fc.getSource().equals(function)) {
-				comparisonsToRemove.add(fc);
-				continue;
-			}
-
-			// Now remove the function from the target list (if it's there)
-			fc.getTargets().remove(function);
-		}
-
-		comparisons.removeAll(comparisonsToRemove);
-	}
+	public void removeFunctions(Collection<Function> functions);
 
 	/**
-	 * Removes all functions in the model that come from the given
-	 * program
-	 * 
-	 * @param program the program to remove functions from
+	 * Removes all functions from the given program from both sides of the comparison
+	 * @param program that program whose functions should be removed from this model
 	 */
-	public void removeFunctions(Program program) {
-		Set<Function> allFunctions = getSourceFunctions();
-		allFunctions.addAll(getTargetFunctions());
-
-		Set<Function> functionsToRemove = allFunctions.stream()
-				.filter(f -> f.getProgram().equals(program))
-				.collect(Collectors.toSet());
-
-		removeFunctions(functionsToRemove);
-	}
+	public void removeFunctions(Program program);
 
 	/**
-	 * Returns all source functions in the model
-	 * 
-	 * @return a set of all source functions
+	 * Returns true if the model has no function to compare. 
+	 * @return true if the model has no functions to compare
 	 */
-	public Set<Function> getSourceFunctions() {
-		Set<Function> items = new HashSet<>();
-		for (FunctionComparison fc : comparisons) {
-			items.add(fc.getSource());
-		}
-		return items;
-	}
+	public boolean isEmpty();
 
-	/**
-	 * Returns all target functions in the model
-	 * 
-	 * @return a set of all target functions
-	 */
-	public Set<Function> getTargetFunctions() {
-		Set<Function> items = new HashSet<>();
-		Iterator<FunctionComparison> iter = comparisons.iterator();
-		while (iter.hasNext()) {
-			FunctionComparison fc = iter.next();
-			items.addAll(fc.getTargets());
-		}
-
-		return items;
-	}
-
-	/**
-	 * Returns a set of all target functions for a given source
-	 * 
-	 * @param source the source function to search for
-	 * @return the set of associated target functions
-	 */
-	public Set<Function> getTargetFunctions(Function source) {
-		Set<Function> items = new HashSet<>();
-		Iterator<FunctionComparison> iter = comparisons.iterator();
-		while (iter.hasNext()) {
-			FunctionComparison fc = iter.next();
-			if (!fc.getSource().equals(source)) {
-				continue;
-			}
-			items.addAll(fc.getTargets());
-		}
-
-		return items;
-	}
-
-	/**
-	 * Creates a {@link FunctionComparison comparison} for each function
-	 * given, such that each comparison will have every other function as its 
-	 * targets. For example, given three functions, f1, f2, and f3, this is what the
-	 * model will look like after this call:
-	 * <li>comparison 1:</li>
-	 *    <ul>
-	 *    <li> source: f1</li>
-	 *    <li> targets: f2, f3</li>
-	 *    </ul>
-	 * <li>comparison 2:</li>
-	 *    <ul>
-	 *    <li> source: f2</li>
-	 *    <li> targets: f1, f3</li>
-	 *    </ul>
-	 * <li>comparison 3:</li>
-	 *    <ul>
-	 *    <li> source: f3</li>
-	 *    <li> targets: f1, f2</li>
-	 *    </ul>
-	 *   
-	 * If this model already contains a comparison for a given function 
-	 * (meaning the model contains a comparison with the function as the 
-	 * source) then that function is skipped. 
-	 * <p>
-	 * Note that this could be a long-running process if many (thousands) 
-	 * functions are chosen to compare, hence the monitored task. In practice 
-	 * this should never be the case, as users will likely not be
-	 * comparing more than a handful of functions at any given time.
-	 * 
-	 * @param functions the set of functions to create comparisons for
-	 */
-	private void createNewComparisons(Set<Function> functions) {
-
-		TaskLauncher.launchModal("Creating Comparisons", (monitor) -> {
-
-			// Remove any functions that already have an comparison in the 
-			// model; these will be ignored
-			functions.removeIf(f -> comparisons.stream().anyMatch(fc -> f.equals(fc.getSource())));
-
-			monitor.setIndeterminate(false);
-			monitor.setMessage("Creating new comparisons");
-			monitor.initialize(functions.size());
-
-			// Save off all the existing targets in the model; these have to be 
-			// added to any new comparisons
-			Set<Function> existingTargets = getTargetFunctions();
-
-			// Now loop over the given functions and create new comparisons
-			for (Function f : functions) {
-				if (monitor.isCancelled()) {
-					Msg.info(this, "Function comparison operation cancelled");
-					return;
-				}
-
-				FunctionComparison fc = new FunctionComparison();
-				fc.setSource(f);
-				fc.addTargets(functions);
-				fc.addTargets(existingTargets);
-				comparisons.add(fc);
-				monitor.incrementProgress(1);
-			}
-		});
-
-	}
-
-	/**
-	 * Searches the model for a comparison that has the given function as its
-	 * source; if not found, a new comparison is created
-	 * 
-	 * @param source the source function to search for
-	 * @return a function comparison object for the given source
-	 */
-	private FunctionComparison getOrCreateComparison(Function source) {
-		for (FunctionComparison fc : comparisons) {
-			if (fc.getSource().equals(source)) {
-				return fc;
-			}
-		}
-
-		FunctionComparison fc = new FunctionComparison();
-		fc.setSource(source);
-		comparisons.add(fc);
-		return fc;
-	}
-
-	/**
-	 * Adds a given set of functions to every target list in every 
-	 * comparison in the model
-	 * 
-	 * @param functions the functions to add
-	 */
-	private void addToExistingComparisons(Set<Function> functions) {
-		for (FunctionComparison fc : comparisons) {
-			fc.getTargets().addAll(functions);
-		}
-	}
-
-	/**
-	 * Sends model-change notifications to all subscribers. The updated model
-	 * is sent in the callback.
-	 */
-	private void fireModelChanged() {
-		listeners.forEach(l -> l.modelChanged(comparisons));
-	}
 }

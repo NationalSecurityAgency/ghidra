@@ -15,18 +15,23 @@
  */
 package ghidra.app.plugin.compare;
 
+import static ghidra.util.datastruct.Duo.Side.*;
 import static org.junit.Assert.*;
 
+import java.util.List;
 import java.util.Set;
 
 import org.junit.*;
 
-import ghidra.app.plugin.core.functioncompare.*;
+import ghidra.app.plugin.core.functioncompare.FunctionComparisonPlugin;
+import ghidra.app.plugin.core.functioncompare.FunctionComparisonProvider;
+import ghidra.app.services.FunctionComparisonModel;
 import ghidra.codecompare.decompile.CDisplay;
 import ghidra.codecompare.decompile.DecompilerCodeComparisonPanel;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.test.*;
+import ghidra.util.datastruct.Duo.Side;
 
 /**
  * Tests for the {@link FunctionComparisonPlugin function comparison plugin}
@@ -39,7 +44,6 @@ public class CompareFunctionsDecompilerViewTest extends AbstractGhidraHeadedInte
 	private Function fun1;
 	private Function fun2;
 	private FunctionComparisonPlugin plugin;
-	private FunctionComparisonProvider provider;
 
 	@Before
 	public void setUp() throws Exception {
@@ -65,10 +69,13 @@ public class CompareFunctionsDecompilerViewTest extends AbstractGhidraHeadedInte
 
 	@Test
 	public void testDecompDifView() throws Exception {
-		Set<Function> functions = CompareFunctionsTestUtility.getFunctionsAsSet(fun1, fun2);
-		provider = compareFunctions(functions);
+		Set<Function> functions = Set.of(fun1, fun2);
+		compareFunctions(functions);
 
-		CompareFunctionsTestUtility.checkSourceFunctions(provider, fun1, fun2);
+		FunctionComparisonProvider provider =
+			waitForComponentProvider(FunctionComparisonProvider.class);
+
+		checkFunctions(provider, LEFT, fun1, fun1, fun2);
 		DecompilerCodeComparisonPanel panel =
 			(DecompilerCodeComparisonPanel) provider
 					.getCodeComparisonPanelByName(DecompilerCodeComparisonPanel.NAME);
@@ -76,6 +83,18 @@ public class CompareFunctionsDecompilerViewTest extends AbstractGhidraHeadedInte
 		waitForDecompiler(panel);
 		assertHasLines(panel.getLeftPanel(), 28);
 		assertHasLines(panel.getRightPanel(), 23);
+	}
+
+	private void checkFunctions(FunctionComparisonProvider provider, Side side,
+			Function activeFunction, Function... functions) {
+		Set<Function> funcs = Set.of(functions);
+
+		FunctionComparisonModel model = provider.getModel();
+		assertEquals(activeFunction, model.getActiveFunction(side));
+
+		List<Function> fcs = model.getFunctions(side);
+		assertEquals(fcs.size(), funcs.size());
+		assertTrue(fcs.containsAll(funcs));
 	}
 
 	private void assertHasLines(CDisplay panel, int lineCount) {
@@ -88,11 +107,9 @@ public class CompareFunctionsDecompilerViewTest extends AbstractGhidraHeadedInte
 		waitForSwing();
 	}
 
-	private FunctionComparisonProvider compareFunctions(Set<Function> functions) {
-		provider = runSwing(() -> plugin.compareFunctions(functions));
-		provider.setVisible(true);
+	private void compareFunctions(Set<Function> functions) {
+		runSwing(() -> plugin.createComparison(functions));
 		waitForSwing();
-		return provider;
 	}
 
 	private Program buildTestProgram() throws Exception {
