@@ -48,6 +48,10 @@ public class MDQualifier extends MDParsableItem {
 		return nameNested;
 	}
 
+	public MDReusableName getAnonymousName() {
+		return nameAnonymous;
+	}
+
 	@Override
 	public void insert(StringBuilder builder) {
 		// Only one of these will hit.

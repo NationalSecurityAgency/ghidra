@@ -70,7 +70,24 @@ public class MDMangObjectParser {
 	public static MDParsableItem parseDefaultStandard(MDMang dmang) throws MDException {
 		MDParsableItem item;
 		dmang.setProcessingMode(ProcessingMode.DEFAULT_STANDARD);
-		if (dmang.peek() == '?') {
+
+		// We believe this should adequately distinguish between a mangled "type" name vs. a
+		//  dot-separated mangled "symbol" name.
+		// => This does not work on three of the tests that begin with "?.cctor"
+//		if (dmang.getMangledSymbol().substring(1).contains(".")) {
+//			// Dot-separated name
+//			// TODO: we need to deal with these
+//			// item = new MDDotSeparatedItem(dmang); // for research purposes; might not keep
+//			item = null;
+//		}
+		// Moved the following up for now because we failed (above) to properly distinguish
+		//  dot-separated names for three tests.  Ultimately, it might be better to not have
+		//  a separate MDDotSeparatedItem, but to be able to set some attributes on a main item.
+		if (dmang.peek() == '.' && !dmang.getMangledSymbol().substring(1).contains(".")) {
+			dmang.increment();
+			item = MDDataTypeParser.parseDataType(dmang, false);
+		}
+		else if (dmang.peek() == '?') {
 			if (dmang.peek(1) == '@') {
 				item = new MDObjectCodeView(dmang);
 			}
@@ -85,10 +102,11 @@ public class MDMangObjectParser {
 			((dmang.peek(1) == '_') || ((dmang.peek(1) >= 'A') && (dmang.peek(1) <= 'Z')))) {
 			item = parseObjectReserved(dmang);
 		}
-		else if (dmang.peek() == '.') {
-			dmang.increment();
-			item = MDDataTypeParser.parseDataType(dmang, false);
-		}
+//		else if (dmang.peek() == '.' ) {
+//			// Dot-separated will not enter here, as they are distinguished earlier.
+//			dmang.increment();
+//			item = MDDataTypeParser.parseDataType(dmang, false);
+//		}
 		else {
 			item = new MDObjectC(dmang);
 		}
@@ -150,7 +168,7 @@ public class MDMangObjectParser {
 	 * @throws MDException Upon <b><code>MDMang</code></b> parsing issues that cause us to fail
 	 *  processing.
 	 */
-	public static MDParsableItem parseObjectReserved(MDMang dmang) {
+	private static MDParsableItem parseObjectReserved(MDMang dmang) {
 		MDParsableItem item;
 		if (dmang.positionStartsWith("__TI")) {
 			dmang.increment("__TI".length());

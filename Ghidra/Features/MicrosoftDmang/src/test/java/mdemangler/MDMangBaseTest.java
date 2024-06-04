@@ -3707,6 +3707,14 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testFunctionNoExcept() throws Exception {
+		mangled = "?fnii@@YAHH@_E";
+		msTruth = "int __cdecl fnii(int) noexcept";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
 	public void testFunctionThrow_a() throws Exception {
 		mangled = "?fnii@@YAHH@@";
 		msTruth = "int __cdecl fnii(int) throw()";
@@ -14740,6 +14748,174 @@ public class MDMangBaseTest extends AbstractGenericTest {
 		mdTruth = msTruth;
 		demangleAndTest();
 	}
+
+	//=====================
+
+	@Test
+	public void testUnionType() throws Exception {
+		mangled = ".?ATmyUnion@@";
+		msTruth = "union myUnion";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testStructType() throws Exception {
+		mangled = ".?AUmyStruct@@";
+		msTruth = "struct myStruct";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testClassType() throws Exception {
+		mangled = ".?AVmyClass@@";
+		msTruth = "class myClass";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Test
+	public void testEnumType() throws Exception {
+		mangled = ".?AW4myEnum@@";
+		msTruth = "enum myEnum";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	//=====================
+	// The following are tests to support working on dot-separated symbol names.  They are
+	//  ignored for now, as we have nothing to support the processing at this time
+
+	// MSFT CLI symbol from loader.  Has anonymous namespace (mangled), a dot delimiter to
+	//  represent namespace delimiter, and then a "normal" name (which in this case is a
+	//  demangled name with spaces).
+	@Ignore
+	public void testDotSeparatedSymbolCliOrig() throws Exception {
+		mangled = "?A0xfedcba98.name0<struct _name1,struct _name2 const >";
+		msTruth = "";
+		mdTruth = "";
+		demangleAndTest();
+	}
+
+	//Same MSFT CLI symbol from loader, but where SymbolUtilities was used to replace spaces
+	//  with underscores.  We need to determine that we can process either way... then need to
+	//  make decision on whether symbols from load should get processed by demangler before
+	//  SymbolUtilities gets a hold of them... this is generally contrary to what we would want,
+	//  but if we cannot lay down symbols with spaces, then we need to make sure we can still
+	//  operate either way
+	@Ignore
+	public void testDotSeparatedSymbolCliWithUnderscores() throws Exception {
+		mangled = "?A0xfedcba98.name0<struct__name1,struct__name2_const_>";
+		msTruth = "";
+		mdTruth = "";
+		demangleAndTest();
+	}
+
+	// Complete LLVM type symbol with weak prefix and associated suffix
+	@Ignore
+	public void testLLVMWeakPrefixDefaultXmmSuffix() throws Exception {
+		mangled = ".weak.??_7name0@@6B@.default.__xmm@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+		//llTruth = ""; // fail
+		msTruth = "";
+		mdTruth = "const name0::`vftable'";
+		demangleAndTest();
+	}
+
+	// Not expected to be a true symbol, but want to understand partial processing with
+	//  complete suffix
+	@Ignore
+	public void testVftableLLVMWeakPartial1() throws Exception {
+		mangled = "??_7name0@@6B@.default.__xmm@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+		//llTruth = "const name0::`vftable'";
+		msTruth = "";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	// Not expected to be a true symbol, but want to understand partial processing with
+	//  partial suffix
+	@Ignore
+	public void testVftableLLVMWeakPartial2() throws Exception {
+		mangled = "??_7name0@@6B@.default";
+		//llTruth = "const name0::`vftable'";
+		msTruth = "";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	@Ignore
+	public void testVftable() throws Exception {
+		mangled = "??_7name0@@6B@";
+		msTruth = "const name0::`vftable'";
+		mdTruth = msTruth;
+		demangleAndTest();
+	}
+
+	//=====================
+
+	@Test
+	public void testLLVM177639() throws Exception {
+		mangled =
+			".?AVname0@?3??name1@name2@?Aname3@@QEAA_KQEBXQEAX_KQ6A_K2PEAX3P6A_KPEAD23@_E@Z@Z@`fedcba98";
+		//llTruth = ""; // fails
+		msTruth = "";
+		mdTruth =
+			"class `public: unsigned __int64 __cdecl `anonymous namespace'::name2::name1(void const * __ptr64 const,void * __ptr64 const,unsigned __int64,unsigned __int64 (__cdecl*const)(unsigned __int64,void * __ptr64,void * __ptr64,unsigned __int64 (__cdecl*)(char * __ptr64,unsigned __int64,void * __ptr64) noexcept)) __ptr64'::`4'::name0";
+		demangleAndTest();
+	}
+
+	//=====================
+
+	@Test
+	public void testLLVMType1WithSuffix() throws Exception {
+		mangled =
+			".?AVname0@?1??name1@name2@name3@name4@@AEAA?AU?$name5@V?$name6@V?$name7@U?$name8@Uname9@name2@name3@name4@@@name4@@@name4@@@name4@@E@4@_K0@Z@`fedcba98";
+		//llTruth = ""; // fails
+		msTruth = "";
+		// We don't do anything with the suffix at this time... TODO: consider options as
+		//  things are figured out
+		mdTruth =
+			"class `private: struct name4::name5<class name4::name6<class name4::name7<struct name4::name8<struct name4::name3::name2::name9> > >,unsigned char> __cdecl name4::name3::name2::name1(unsigned __int64,unsigned __int64) __ptr64'::`2'::name0";
+		demangleAndTest();
+	}
+
+	@Test
+	public void testLLVMType1MinusSuffix() throws Exception {
+		mangled =
+			".?AVname0@?1??name1@name2@name3@name4@@AEAA?AU?$name5@V?$name6@V?$name7@U?$name8@Uname9@name2@name3@name4@@@name4@@@name4@@@name4@@E@4@_K0@Z@";
+		//llTruth = "";
+		msTruth = "";
+		mdTruth =
+			"class `private: struct name4::name5<class name4::name6<class name4::name7<struct name4::name8<struct name4::name3::name2::name9> > >,unsigned char> __cdecl name4::name3::name2::name1(unsigned __int64,unsigned __int64) __ptr64'::`2'::name0";
+		demangleAndTest();
+	}
+
+	//=====================
+
+	@Test
+	public void testLLVMType2WithSuffix() throws Exception {
+		mangled =
+			".?AVname0@?1???$name1@Vname0@?3??name2@name3@?Aname4@@QEAA_KQEBXQEAX_KQ6A_K2PEAX3P6A_KPEAD23@_E@Z@Z@@?Aname4@@YA_KQ6A_K_KPEAX1P6A_KPEAD01@_E@Z_KQEAXV0?3??name2@name3@1@QEAA_KQEBX604@Z@@Z@`fedcba98";
+		msTruth = "";
+		// We don't do anything with the suffix at this time... TODO: consider options as
+		//  things are figured out
+		mdTruth =
+			"class `unsigned __int64 __cdecl `anonymous namespace'::name1<class `public: unsigned __int64 __cdecl `anonymous namespace'::name3::name2(void const * __ptr64 const,void * __ptr64 const,unsigned __int64,unsigned __int64 (__cdecl*const)(unsigned __int64,void * __ptr64,void * __ptr64,unsigned __int64 (__cdecl*)(char * __ptr64,unsigned __int64,void * __ptr64) noexcept)) __ptr64'::`4'::name0>(unsigned __int64 (__cdecl*const)(unsigned __int64,void * __ptr64,void * __ptr64,unsigned __int64 (__cdecl*)(char * __ptr64,unsigned __int64,void * __ptr64) noexcept),unsigned __int64,void * __ptr64 const,class `public: unsigned __int64 __cdecl Aname4::name3::name2(void const * __ptr64 const,void * __ptr64 const,unsigned __int64,unsigned __int64 (__cdecl*const)(unsigned __int64,void * __ptr64,void * __ptr64,unsigned __int64 (__cdecl*)(char * __ptr64,unsigned __int64,void * __ptr64) noexcept)) __ptr64'::`4'::name0)'::`2'::name0";
+		demangleAndTest();
+	}
+
+	@Test
+	public void testLLVMType2MinusSuffix() throws Exception {
+		mangled =
+			".?AVname0@?1???$name1@Vname0@?3??name2@name3@?Aname4@@QEAA_KQEBXQEAX_KQ6A_K2PEAX3P6A_KPEAD23@_E@Z@Z@@?Aname4@@YA_KQ6A_K_KPEAX1P6A_KPEAD01@_E@Z_KQEAXV0?3??name2@name3@1@QEAA_KQEBX604@Z@@Z@";
+		msTruth = "";
+		mdTruth =
+			"class `unsigned __int64 __cdecl `anonymous namespace'::name1<class `public: unsigned __int64 __cdecl `anonymous namespace'::name3::name2(void const * __ptr64 const,void * __ptr64 const,unsigned __int64,unsigned __int64 (__cdecl*const)(unsigned __int64,void * __ptr64,void * __ptr64,unsigned __int64 (__cdecl*)(char * __ptr64,unsigned __int64,void * __ptr64) noexcept)) __ptr64'::`4'::name0>(unsigned __int64 (__cdecl*const)(unsigned __int64,void * __ptr64,void * __ptr64,unsigned __int64 (__cdecl*)(char * __ptr64,unsigned __int64,void * __ptr64) noexcept),unsigned __int64,void * __ptr64 const,class `public: unsigned __int64 __cdecl Aname4::name3::name2(void const * __ptr64 const,void * __ptr64 const,unsigned __int64,unsigned __int64 (__cdecl*const)(unsigned __int64,void * __ptr64,void * __ptr64,unsigned __int64 (__cdecl*)(char * __ptr64,unsigned __int64,void * __ptr64) noexcept)) __ptr64'::`4'::name0)'::`2'::name0";
+		demangleAndTest();
+	}
+
+	//=====================
 
 	//TODO: ignore for now.
 	@Ignore
