@@ -67,7 +67,7 @@ public class DataTypeArchiveIDTest extends AbstractGenericTest {
 		FileDataTypeManager dtm = null;
 		try {
 			dtm = FileDataTypeManager.openFileArchive(gdtFile, false);
-			assertEquals(ArchiveWarning.NONE, dtm.getWarning());
+			assertEquals(dtm.getWarningMessage(true), ArchiveWarning.NONE, dtm.getWarning());
 			return dtm.getUniversalID().toString();
 		}
 		catch (IOException e) {

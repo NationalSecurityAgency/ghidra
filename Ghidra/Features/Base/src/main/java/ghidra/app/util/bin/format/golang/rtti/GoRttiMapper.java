@@ -22,8 +22,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
-import javax.help.UnsupportedOperationException;
-
 import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.analysis.TransientProgramProperties;
@@ -37,13 +35,13 @@ import ghidra.app.util.bin.format.golang.structmapping.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.*;
 import ghidra.framework.Platform;
-import ghidra.framework.store.LockException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataTypeConflictHandler.ConflictResult;
-import ghidra.program.model.data.StandAloneDataTypeManager.LanguageUpdateOption;
-import ghidra.program.model.lang.*;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.lang.Endian;
+import ghidra.program.model.lang.LanguageID;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolType;
@@ -843,8 +841,7 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 		// to avoid traces of the original program name as a deleted source archive link in the
 		// gdt data base.  This method only leaves the target gdt filename + ".step1" in the db.
 		File tmpGDTFile = new File(gdtFile.getParentFile(), gdtFile.getName() + ".step1.gdt");
-		FileDataTypeManager tmpFdtm = createFileArchive(tmpGDTFile, program.getLanguage(),
-			program.getCompilerSpec().getCompilerSpecID(), monitor);
+		FileDataTypeManager tmpFdtm = FileDataTypeManager.createFileArchive(tmpGDTFile);
 		int tx = -1;
 		try {
 			tx = tmpFdtm.startTransaction("Import");
@@ -889,8 +886,7 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 
 		tmpFdtm.save();
 
-		FileDataTypeManager fdtm = createFileArchive(gdtFile, program.getLanguage(),
-			program.getCompilerSpec().getCompilerSpecID(), monitor);
+		FileDataTypeManager fdtm = FileDataTypeManager.createFileArchive(gdtFile);
 		tx = -1;
 		try {
 			tx = fdtm.startTransaction("Import");
@@ -913,19 +909,6 @@ public class GoRttiMapper extends DataTypeMapper implements DataTypeMapperContex
 		fdtm.close();
 
 		tmpGDTFile.delete();
-	}
-
-	private FileDataTypeManager createFileArchive(File gdtFile, Language lang,
-			CompilerSpecID compilerId, TaskMonitor monitor) throws IOException {
-		try {
-			FileDataTypeManager fdtm = FileDataTypeManager.createFileArchive(gdtFile);
-			fdtm.setProgramArchitecture(lang, compilerId, LanguageUpdateOption.CLEAR, monitor);
-			return fdtm;
-		}
-		catch (IOException | CancelledException | LockException | UnsupportedOperationException
-				| IncompatibleLanguageException e) {
-			throw new IOException("Failed to create file data type manager: " + gdtFile, e);
-		}
 	}
 
 	private DataType structMappingInfoToDataType(StructureMappingInfo<?> smi) {
