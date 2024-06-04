@@ -22,6 +22,178 @@
 
 <BODY>
 
+<H1 align="center">Ghidra 11.1 Change History (June 2024)</H1>
+<blockquote><p><u><B>New Features</B></u></p>
+<ul>
+    <li><I>Assembler</I>. Added the <span class="gcode">WildcardAssembler</span> module and API for allowing the masking of operands. (GP-4287, Issue #6118)</li>
+    <li><I>Basic Infrastructure</I>. Replaced the <span class="gtitle">Show VM Memory</span> dialog with an upgraded <span class="gtitle">Runtime Information</span> dialog.  The dialog contains more information which can aid in debugging, including version information, classpath, defined properties, environment variables, and more. (GP-3844, Issue #5760)</li>
+    <li><I>Debugger</I>. Added a Trace RMI launcher for Windows targets on Linux using Wine. (GP-3891)</li>
+    <li><I>Debugger</I>. Added Trace RMI connector for Microsoft Time-Travel Debugging. (GP-4182)</li>
+    <li><I>Debugger:Agents</I>. Added TraceRMI protocol to provide access to the trace database API over protobufs. This is a simpler alternative to GADP.  Implemented TraceRMI client for Python3; added TraceRMI plugins for GDB, LLDB, and WinDbg (dbgeng).  Added services, APIs and GUI components for managing TraceRMI connections. (GP-3816)</li>
+    <li><I>Debugger:dbgeng.dll</I>. Extended dbgeng Trace RMI connector to support dbgmodel. (GP-4290)</li>
+    <li><I>Debugger:GDB</I>. Added Trace RMI connector for QEMU with GDB. (GP-3838)</li>
+    <li><I>Debugger:GDB</I>. Added <span class="gcode">raw</span> GDB and Python 3 connectors. (GP-4439)</li>
+    <li><I>DWARF</I>. Added DWARF5 support. (GP-2798, Issue #4088)</li>
+    <li><I>Eclipse Integration</I>. The GhidraDev Eclipse plugin has a new wizard for importing an existing Ghidra module source directory.  This will work best with Ghidra module projects created against Ghidra 11.1 or later. (GP-707, Issue #284)</li>
+    <li><I>FileSystems</I>. Added a new <span class="gcode">GFileSystem</span> for Mach-O file sets (i.e., the kernelcache). (GP-3770, Issue #4827)</li>
+    <li><I>FileSystems</I>. Added support for SquashFS FileSystems. (GP-3946)</li>
+    <li><I>FileSystems</I>. Added support for decompressing LZFSE files (iOS/macOS kernelcache) to the File System Browser. (GP-4391)</li>
+    <li><I>GhidraGo</I>. Remote and local GhidraURL's that locate DomainFolders are now acceptable input for GhidraGo. Both result in opening the read-only view for the project and selecting the DomainFolder in the FrontEnd.  If the local URL refers to the currently active project, the domain folder will be selected within that. (GP-4433)</li>
+    <li><I>Languages</I>. Improved Swift support by adding Swift Demangler, Swift cspecs, Swift opinions, and by applying type metadata where possible. (GP-3535)</li>
+    <li><I>Version Tracking</I>. Added ability for Version Tracking Session files to be checked into a version control repository.  Versioned use is restricted to exclusive checkout use only since there no ability to merge VT Session data. (GP-4085)</li>
+</ul>
+</blockquote>
+<blockquote><p><u><B>Improvements</B></u></p>
+<ul>
+    <li><I>Accessibility</I>. Improved filter options dialog for accessibility. (GP-2264)</li>
+    <li><I>Accessibility</I>. Fixed several focus traversal issues. Also, added convenience actions for moving to next/previous window (<span class="gcode">Ctrl-F3</span>/<span class="gcode">Shift-Ctrl-F3</span>) and next/previous component provider (<span class="gcode">Ctrl-J</span>/<span class="gcode">Shift-Ctrl-J</span>). (GP-4227)</li>
+    <li><I>Accessibility</I>. Added quick action dialog to make actions accessible and more convenient for users who prefer to use keyboard more than mouse. <span class="gcode">Ctrl-3</span> will bring up the dialog. (GP-4267)</li>
+    <li><I>Accessibility</I>. Added accessible names to most main provider components. (GP-4275)</li>
+    <li><I>Accessibility</I>. Improved analyzer enablement so that checkboxes can be changed via the keyboard using the spacebar. (GP-4375, Issue #6261)</li>
+    <li><I>Accessibility</I>. Improved export options window to allow changing checkboxes via keyboard using the spacebar. (GP-4414, Issue #6279)</li>
+    <li><I>Accessibility</I>. Improved keyboard navigation in <span class="gtitle">Add Reference</span> dialog. (GP-4491, Issue #5761)</li>
+    <li><I>Accessibility</I>. Improved Accessibility for assorted <span class="gtitle">Memory Map</span> dialogs. (GP-4511)</li>
+    <li><I>Analysis</I>. Sped up switch recovery analysis on AArch64 objectiveC binaries where <span class="gcode">BRK</span> instruction is used throughout the code for exceptions. (GP-4364)</li>
+    <li><I>Analysis</I>. Added pattern to recognize PPC <span class="gcode">get_pc_thunk_lr</span> position-independent-code-related function. (GP-4474)</li>
+    <li><I>Analysis</I>. The speed of the <span class="gtitle">Create Address Tables</span> analyzer has been improved for large runs of addresses. (GP-4477)</li>
+    <li><I>API</I>. Created builder for <span class="gcode">DomainObjectListeners</span> to express even-handling logic more concisely. (GP-4222)</li>
+    <li><I>API</I>. Revised <span class="gcode">DomainObject</span> java interface while eliminating separate <span class="gcode">UndoableDomainObject</span> and <span class="gcode">Undoable</span> java interface classes.  Revised tool-based foreground <span class="gcode">Command</span>-processing to defer event-flushing into a background task.  Additional <span class="gcode">execute</span> methods were added to <span class="gcode">PluginTool</span> which allow lambda functions to be used in the place of a <span class="gcode">Command</span> object. (GP-4390)</li>
+    <li><I>Assembler</I>. Added context hints to <span class="gtitle">Patch Instruction</span> (Assembler) results. (GP-3993)</li>
+    <li><I>Assembler</I>. Context is re-flowed and instructions re-disassembled following the <span class="gtitle">Patch Instruction</span> action. (GP-4014)</li>
+    <li><I>Assembler</I>. By virtue of API changes, the Assembler is now more extensible by plugins for advanced use cases. (GP-4185)</li>
+    <li><I>Basic Infrastructure</I>. Ghidra now supports the XDG Base Directory Specification.  Default locations of the user settings, cache, and temporary directories have moved to more standardized platform-specific locations.  See comments in the <span class="gcode">support/launch.properties</span> file for more detailed information on how these directories are determined and overridden. (GP-1164, Issue #908)</li>
+    <li><I>Basic Infrastructure</I>. Improved the start up time of Ghidra by only loading <span class="gcode">ExtensionPoints</span> when they are first requested. (GP-4515)</li>
+    <li><I>Build</I>. Fixed compilation of <span class="gcode">TreeValueSortedMap</span> for Java 21. (GP-3923, Issue #6083)</li>
+    <li><I>Build</I>. Ghidra will now run on FreeBSD with user-built native components using the <span class="gcode">support/buildNatives</span> script.  See the Installation Guide for more information on building native components.  NOTE:  <span class="gcode">bash</span> is required to be installed in order for Ghidra to launch on FreeBSD.  Additionally, the Debugger is not currently supported on FreeBSD. (GP-4235, Issue #6117)</li>
+    <li><I>Byte Viewer</I>. Added the ability to resize the <span class="gtitle">Address</span> column in the ByteViewer window. (GP-2147)</li>
+    <li><I>Data</I>. Added <span class="gcode">writable</span> Mutability data setting to allow chosen data within a read-only memory block to deviate from the block setting.   Decompiler was updated to respect this setting. (GP-4505)</li>
+    <li><I>Data Types</I>. Improved datatype resolution and conflict handling as well as datatype name sorting. (GP-3632)</li>
+    <li><I>Debugger</I>. Domain Object event ID numbers have been refactored to be enums. (GP-2076)</li>
+    <li><I>Debugger</I>. Removed TargetRecorder-dependent methods from FlatDebuggerAPI. Moved them to deprecated FlatDebuggerRecorderAPI. Ported FlatDebuggerAPI to Target interface. Added FlatDebuggerRmiAPI. (GP-3872)</li>
+    <li><I>Debugger</I>. Moved launch and control command progress monitors to the <span class="gtitle">Debug Console</span>. (GP-3997)</li>
+    <li><I>Debugger</I>. The <span class="gtitle">Sections Table</span> pane can now be toggled on and off in the <span class="gtitle">Modules</span> window. (GP-4156)</li>
+    <li><I>Debugger</I>. Upgraded to most current release of llvm/lldb (17.x). (GP-4385)</li>
+    <li><I>Debugger</I>. Added Trace RMI connector for GDB <span class="gcode">target remote</span>. (GP-4437)</li>
+    <li><I>Debugger</I>. Made modifications to accommodate remote embedded targets. (GP-4441)</li>
+    <li><I>Debugger</I>. Released Trace RMI as the default Debugger back end. (GP-4485)</li>
+    <li><I>Debugger</I>. Made modifications to enable traceRMI dialog-driven methods. (GP-4527)</li>
+    <li><I>Debugger:Agents</I>. Released version 11.1 of Trace RMI python packages and protocol. (GP-4487)</li>
+    <li><I>Debugger:Agents</I>. The launch failure dialog now previews the last two lines of each Terminal. Selecting <span class="gtitle">Keep</span> will automatically bring those terminals to the front. (GP-4637)</li>
+    <li><I>Debugger:Emulator</I>. Pure emulation use cases can now involve thread creation and destruction and they can be recorded linearly in a trace. (GP-4374)</li>
+    <li><I>Debugger:Listing</I>. Added context menu to location label in <span class="gtitle">Dynamic Listing</span> and <span class="gtitle">Memory Bytes</span> windows. (GP-4311)</li>
+    <li><I>Debugger:Listing</I>. Progress for memory reads now displays in the <span class="gtitle">Debug Console</span> window. (GP-4399)</li>
+    <li><I>Debugger:Mappings</I>. Moved initial mapping failure at launch to the <span class="gtitle">Debug Console</span>, rather than popping the launch failure dialog. (GP-4636)</li>
+    <li><I>Debugger:Memory</I>. Made <span class="gtitle">Memory</span> window more consistent with <span class="gtitle">Dynamic Listing</span> window in terms of appearance and operation. (GP-1625)</li>
+    <li><I>Debugger:Stack</I>. Added <span class="gtitle">Module</span> column to <span class="gtitle">Stack</span> window. (GP-4093)</li>
+    <li><I>Debugger:Threads</I>. Moved trace selection tabs to <span class="gtitle">Dynamic Listing</span>. (GP-1608)</li>
+    <li><I>Debugger:Threads</I>. Added <span class="gtitle">PC</span>, <span class="gtitle">Function</span>, <span class="gtitle">Module</span>, and <span class="gtitle">SP</span> columns to the <span class="gtitle">Threads</span> table. (GP-4236)</li>
+    <li><I>Debugger:Threads</I>. Removed <span class="gtitle">Synchronize Target Activation</span> toggle. Time navigation is now prohibited in Target control mode, especially using the Plot column header. (GP-4334)</li>
+    <li><I>Decompiler</I>. Added  <span class="gtitle">Edit Signature Override</span> action to Decompiler.  Improved cleanup of unused override signature datatypes. (GP-4263, Issue #6000)</li>
+    <li><I>Decompiler</I>. The Decompiler is now able to simplify additional forms of 64-bit optimized integer division. (GP-4300, Issue #5733)</li>
+    <li><I>Decompiler</I>. Added additional Decompiler support for recovering the addresses of calls and other global symbols for MIPS binaries compiled with Position-Independent Code (PIC) options. (GP-4370)</li>
+    <li><I>Decompiler</I>. The Decompiler now displays array index constants using the configured <span class="gcode">Integer format</span>, rather than always using base 10. (GP-4394, Issue #6019)</li>
+    <li><I>Disassembly</I>. Created <span class="gcode">FixOffcutInstructionScript</span> that attempts to automatically fix an offcut instruction and its references in a restricted fashion. This script can be bound to a hotkey for a user to quickly attempt fixups throughout a program.  Also, updated the set instruction length override action to automatically suggest a reasonable length, based on offcut flows, and to disassemble these flows if used. (GP-4034, Issue #5928)</li>
+    <li><I>Disassembly</I>. Fixed storage of default disassembly context to the program database.  Programs with no stored context, which is most, will disassemble faster. (GP-4535)</li>
+    <li><I>Disassembly</I>. Improved disassembly speed and use of instructions for any purpose by delaying check of instruction overrides until needed. (GP-4536)</li>
+    <li><I>Documentation</I>. Updated Debugger training materials for Trace RMI. (GP-3887)</li>
+    <li><I>Eclipse Integration</I>. Upgraded the GhidraDev Eclipse plugin to make it compatible with Ghidra 11.1. (GP-4176)</li>
+    <li><I>Eclipse Integration</I>. The Ghidra Eclipse preferences and formatter files are now included in the release under <span class="gcode">support/eclipse/</span>. (GP-4233, Issue #5999)</li>
+    <li><I>Framework</I>. Updated system actions to allow for user-defined key bindings. (GP-4317)</li>
+    <li><I>GUI</I>. Added tool option to remove quotes from strings before putting into clipboard. (GP-3871, Issue #1155)</li>
+    <li><I>GUI</I>. Simplified the dialog for switching themes. (GP-4172, Issue #6024)</li>
+    <li><I>GUI</I>. Updated the Help Info keybinding to <span class="gcode">Ctrl-Shift-F1</span> in order for components to allow <span class="gcode">Ctrl-F1</span> to work for showing tooltips. (GP-4304)</li>
+    <li><I>GUI</I>. Added a <span class="gtitle">Copy Special</span> action to the Listing to copy the byte source offset of the selected address. (GP-4318, Issue #6195)</li>
+    <li><I>GUI</I>. Updated Key Binding options for actions to allow users to set mouse bindings. (GP-4436, Issue #208)</li>
+    <li><I>Importer</I>. Added ability to import/export multiple program trees using SARIF. (GP-4079)</li>
+    <li><I>Importer</I>. The MzLoader can now load binaries whose file size is less than the size that is reported in its header. (GP-4260, Issue #6029)</li>
+    <li><I>Importer</I>. The Importer post-load message log is now echoed to the application.log file. This behavior can be disabled in the <span class="gcode">support/launch.properties</span> file by uncommenting the <span class="gcode">VMARGS=-Ddisable.loader.logging=true</span> line. (GP-4313)</li>
+    <li><I>Importer</I>. The PeLoader now pads memory blocks with zeros instead of creating an uninitialized block with the same name. (GP-4347, Issue #6238)</li>
+    <li><I>Importer</I>. Fixed an issue in the MzLoader where the default Program Tree was out of sync with the Memory Map. (GP-4432, Issue #6277)</li>
+    <li><I>Importer:COFF</I>. COFF headers are now marked up. (GP-4184)</li>
+    <li><I>Importer:ELF</I>. Added relocation handlers for the TI_MSP430 and TI_MSP430X processors. (GP-4152)</li>
+    <li><I>Importer:ELF</I>. Added ELF Import option to enable/disable the creation of undefined data for data symbols with known sizes.  This option is enabled by default. (GP-4178)</li>
+    <li><I>Importer:ELF</I>. Transitioned to new <span class="gcode">AbstractElfRelocationHandler</span> implementation which uses <span class="gcode">ElfRelocationType</span> enums specific to each handler. (GP-4239)</li>
+    <li><I>Importer:ELF</I>. Relaxed ELF <span class="gcode">PT_DYNAMIC</span> restriction to allow it to be processed when not covered by a <span class="gcode">PT_LOAD</span>. (GP-4291, Issue #5784)</li>
+    <li><I>Importer:Mach-O</I>. Improved handling of Mach-O <span class="gcode">DYLD_CHAINED_PTR_ARM64E_KERNEL</span> chained pointer fixups. (GP-4259, Issue #6144, #6145)</li>
+    <li><I>Importer:Mach-O</I>. The <span class="gcode">dyld_shared_cache</span> loader now implements pointer fixups for newer versions that use <span class="gcode">dyld_cache_slide_info5</span>. (GP-4380)</li>
+    <li><I>Importer:Mach-O</I>. The MachoLoader now does a better job at importing binaries with corrupted load commands. (GP-4561, Issue #6271)</li>
+    <li><I>Languages</I>. Added support for structured data-type parameters for x86 64-bit System V ABI. (GP-4031)</li>
+    <li><I>Languages</I>. Added Golang 1.21 support. (GP-4183, Issue #6072)</li>
+    <li><I>Languages</I>. Added support for Apple Silicon and AARCH64 Golang binaries. (GP-4465)</li>
+    <li><I>Languages</I>. Added support for Golang 1.22.  Versions supported are now 1.17-1.22. (GP-4579)</li>
+    <li><I>Listing</I>. Added options to wrap operand fields on semicolons. This is to better support processors that have more than one instruction at an address. (GP-4289)</li>
+    <li><I>Memory</I>. Added <span class="gcode">Artificial</span> memory block flag intended to identify those blocks that the Debugger should not map into a running target. (GP-4125)</li>
+    <li><I>Memory</I>. Removed lock contention on reading and update of memory AddressSet cache. (GP-4534)</li>
+    <li><I>Multi-User</I>. Significantly improved shared project directory performance when directories contain a very large number of files. (GP-4456)</li>
+    <li><I>PDB</I>. Modified <span class="gcode">LoadPdbTask</span> to schedule <span class="gcode">EntryPointAnalyzer</span>. (GP-4244)</li>
+    <li><I>PDB</I>. Modified <span class="gcode">PdbUniversalAnalyzer</span> to do work into multiple phases so that this work can benefit from work done in interim analyzers. (GP-4245)</li>
+    <li><I>PDB</I>. Reduced number of data type conflicts by delaying the resolve step in the multi-phased resolve process.  Also refactored the multi-phased resolve, removing placeholder types. (GP-4246)</li>
+    <li><I>PDB</I>. Stubbed additional larger-than-64-bit pointers to ensure they do not cause problem when used. (GP-4264)</li>
+    <li><I>PDB</I>. Improved mechanism for setting primary symbols; reduced memory footprint by removing primary symbol map and using the now-more-performant ghidra primary symbol methods. (GP-4335, Issue #3497)</li>
+    <li><I>Processors</I>. Added subset of Tricore relocations as well as function start patterns. (GP-3110, Issue #1449)</li>
+    <li><I>Processors</I>. Corrected errors in the MSP430 SLEIGH specification. (GP-4401, Issue #4120)</li>
+    <li><I>Processors</I>. Corrected implementation of <span class="gcode">ZR</span> (aka <span class="gcode">R0</span>) register access for MCS-96 processor. (GP-4407, Issue #6181)</li>
+    <li><I>Processors</I>. Added callfixup for <span class="gcode">__chkstk()</span> found in windows AARCH64 binaries. (GP-4513)</li>
+    <li><I>ProgramDB</I>. Improved locking behavior of Instructions and Data when retrieving bytes from memory. (GP-4568)</li>
+    <li><I>Project</I>. Added an abstract <span class="gcode">GhidraURLQueryTask</span> and related <span class="gcode">GhidraURLQuery</span> utlity class to failitate proper GhidraURL queries and to avoid replication of code. (GP-4447)</li>
+    <li><I>Scripting</I>. Python scripts now have access to the <span class="gcode">this</span> variable, which is a reference to its parent GhidraScript object.  It may be necessary to refer to <span class="gcode">this</span> in certain scenarios, such as when releasing the consumer of a Program object returned by <span class="gcode">askProgram()</span>. (GP-4157)</li>
+    <li><I>Scripting</I>. Updated <span class="gcode">RecoverClassesFromRTTIScript</span>'s GCC class recovery to handle copy relocations. (GP-4396)</li>
+    <li><I>Scripting</I>. Added script to paste address/bytes copied as text from a Ghidra Listing. (GP-4480)</li>
+    <li><I>Scripting</I>. Upgraded OSGi-related jars. (GP-4550)</li>
+    <li><I>Sleigh</I>. Compiled SLEIGH (<span class="gcode">.sla</span>) files are now stored in a compressed format to save disk space and shorten language load times. (GP-4285)</li>
+    <li><I>Testing</I>. Upgraded jacoco to version 0.8.11. (GP-4262)</li>
+    <li><I>Version Tracking</I>. Added <span class="gtitle">Function Compare</span> action to the <span class="gtitle">Version Tracking</span> main match table and associated match tables. (GP-4251, Issue #6010)</li>
+</ul>
+</blockquote>
+<blockquote><p><u><B>Bugs</B></u></p>
+<ul>
+    <li><I>Analysis</I>. Improved recovery of additional windows resource references in certain cases by handling the decompiler produced <span class="gcode">MULTI_EQUAL</span> pcode operation. (GP-7)</li>
+    <li><I>Analysis</I>. Exported symbols are now checked that they are not symbols internal to a function before creating a function. (GP-4506)</li>
+    <li><I>Data</I>. Corrected improper Data pointer stacking behavior when applying a pointer data type onto an existing pointer. (GP-4181)</li>
+    <li><I>Data Types</I>. Corrected various Data settings issues where Listing display failed to update properly with settings change. (GP-4212, Issue #5922)</li>
+    <li><I>Data Types</I>. Corrected transaction error when disassociating a datatype from an archive not open for update. (GP-4524, Issue #6424)</li>
+    <li><I>Data Types</I>. Fixed searching for references to structure fields when the field is referenced in a local structure that is then passed to an external function.  This has a major effect on Windows programs. (GP-4592, Issue #5652)</li>
+    <li><I>Data Types</I>. Corrected data type source archive transaction error when performing bulk archive revert, update, and disassociate actions. (GP-4615, Issue #6503)</li>
+    <li><I>Debugger</I>. Fixed module map to ignore artificial blocks, especially <span class="gcode">tdb</span> on Windows. (GP-4072, Issue #5994)</li>
+    <li><I>Debugger</I>. Fixed thread-specific stepping in dbgmodel. (GP-4279)</li>
+    <li><I>Debugger:Emulator</I>. Fixed issue where step command is ignored after the emulator encounters an error; e.g., undefined userop. (GP-4248, Issue #6086)</li>
+    <li><I>Debugger:Listing</I>. <span class="gtitle">GoTo</span> in Dynamic Listing can now find symbols with external linkage; e.g., IAT entries. (GP-3408)</li>
+    <li><I>Debugger:Listing</I>. Fixed issue with incorrect byte values in Debugger's snapshot comparison listing. (GP-4528)</li>
+    <li><I>Debugger:Memory</I>. Fixed error message regarding closed programs in the navigation history when using the <span class="gtitle">Memory</span> (dynamic hex) viewer. (GP-4100)</li>
+    <li><I>Decompiler</I>. Corrected issue with Decompiler return/param commit which could cause return details to revert to default state. (GP-4434, Issue #6318)</li>
+    <li><I>Decompiler</I>. Fixed Decompiler bug causing erroneous <span class="gcode">case</span> labels for some switches contained in an <span class="gcode">if</span> block. (GP-4514, Issue #6128)</li>
+    <li><I>Demangler</I>. Fixed out-of-memory issue in MDMang due to infinite loop. (GP-4641, Issue #6586)</li>
+    <li><I>FID</I>. Corrected FID error caused by Functions defined where no memory block resides. (GP-4584, Issue #6453)</li>
+    <li><I>Graphing</I>. Fixed <span class="gcode">NullPointerException</span> in the <span class="gcode">ChkDominanceAlgorithm</span>. (GP-4530)</li>
+    <li><I>GUI</I>. Fixed Listing to navigate to requested address when opening from a URL. (GP-4281, Issue #6166)</li>
+    <li><I>GUI</I>. Fixed Memory Search results to select all matched address when making a selection from the results table. (GP-4538, Issue #6415)</li>
+    <li><I>GUI</I>. Fixed stack overflow in Bundle Manager window when trying to remove all bundles. (GP-4604)</li>
+    <li><I>Importer</I>. Fixed the handling of non-default address spaces, specific to SARIF. (GP-4097)</li>
+    <li><I>Importer</I>. Fixed <span class="gcode">NullPointerException</span>s in the SARIF handlers. (GP-4510)</li>
+    <li><I>Importer</I>. Fixed an issue in the MzLoader that would prevent some 16-bit MZ binaries from loading correctly. (GP-4575, Issue #5970)</li>
+    <li><I>Importer</I>. Fixed a regression that prevented library search paths from getting saved. (GP-4594)</li>
+    <li><I>Importer:Mach-O</I>. The MachoLoader no longer throws an exception when importing DWARF dSYM companion files. (GP-4417, Issue #6302)</li>
+    <li><I>Importer:PE</I>. Fixed an <span class="gcode">EOFException</span> in the PeLoader that could occur when data directories point to section padding bytes. (GP-4496, Issue #6380)</li>
+    <li><I>Importer:PE</I>. Fixed an issue with the provided <span class="gcode">.exports</span> files not getting properly used in some scenarios. (GP-4628)</li>
+    <li><I>Languages</I>. Corrected handling of operand-size override prefix with x86 <span class="gcode">MOVSX</span>/<span class="gcode">MOVZX</span> instructions. (GP-4629, Issue #6525)</li>
+    <li><I>Multi-User</I>. Corrected potential deadlock condition within Ghidra Server. (GP-4531)</li>
+    <li><I>PDB</I>. Removed PDB symbol server URLs from default list that don't publish PDBs. (GP-4266, Issue #3109, #6152)</li>
+    <li><I>PDB</I>. Fixed issue preventing VS6 PDB from being processed due to unexpected unavailable <span class="gcode">DebugData</span> streams. (GP-4571, Issue #6464)</li>
+    <li><I>Processors</I>. Added support for x86 AVX512 instructions (GP-1561, Issue #2209, #4704, #6458)</li>
+    <li><I>Processors</I>. Added PIC16F <span class="gcode">movlb</span> variant instruction form to processor module. (GP-3723)</li>
+    <li><I>Processors</I>. Fixed Xtensa <span class="gcode">bany</span> semantics and added simplifying cases for <span class="gcode">sext</span> instruction. (GP-4254, Issue #6113)</li>
+    <li><I>Processors</I>. Corrected register sizing for the x86 <span class="gcode">str</span> instruction. (GP-4272, Issue #6156)</li>
+    <li><I>Processors</I>. Fixed bug in the M68000 processor with instructions referencing immediate byte values displaying erroneous two-byte values. (GP-4377, Issue #4191, #6260)</li>
+    <li><I>Processors</I>. Fixed operand ordering in x86 <span class="gcode">FDIVP</span> instruction. (GP-4381, Issue #6266)</li>
+    <li><I>Processors</I>. Made several bug fixes for SuperH processor module. (GP-4498, Issue #5967, #6013)</li>
+    <li><I>Processors</I>. Fixed AARCH64 <span class="gcode">ldst</span> instruction to properly support register writeback. (GP-4499)</li>
+    <li><I>Processors</I>. Fixed Tricore <span class="gcode">st.da</span> instruction writing half-words instead of words. (GP-4552, Issue #6456)</li>
+    <li><I>Processors</I>. Updated x86-64 <span class="gcode">RCL</span> and <span class="gcode">RCR</span> instructions to set  <span class="gcode">CF</span> correctly. (GP-4576, Issue #6423)</li>
+    <li><I>References</I>. Updated <span class="gcode">EditMemoryReferencePanel</span> to enable inclusion of <span class="gcode">OTHER</span> overlay spaces for address specification. (GP-4345, Issue #6245)</li>
+    <li><I>Version Tracking</I>. Improved Version Tracking <span class="gtitle">Implied Match</span> determination to make sure the destination location is a function if the source location is a function. (GP-4283)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 11.0.3 Change History (April 2024)</H1>
 <blockquote><p><u><B>Improvements</B></u></p>
 <ul>
