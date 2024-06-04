@@ -19,14 +19,21 @@ import static ghidra.util.datastruct.Duo.Side.*;
 
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.stream.Collectors;
+
+import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.Tool;
-import docking.action.DockingAction;
-import docking.action.DockingActionIf;
+import docking.action.*;
+import docking.action.builder.ActionBuilder;
+import docking.action.builder.ToggleActionBuilder;
 import docking.actions.PopupActionProvider;
-import ghidra.app.services.FunctionComparisonModel;
-import ghidra.app.services.FunctionComparisonService;
+import docking.widgets.dialogs.TableSelectionDialog;
+import generic.theme.GIcon;
+import ghidra.app.plugin.core.functionwindow.FunctionRowObject;
+import ghidra.app.plugin.core.functionwindow.FunctionTableModel;
+import ghidra.app.services.*;
 import ghidra.app.util.viewer.listingpanel.ListingCodeComparisonPanel;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.app.util.viewer.util.CodeComparisonPanel;
@@ -34,7 +41,10 @@ import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
-import ghidra.util.HelpLocation;
+import ghidra.util.*;
+import ghidra.util.datastruct.Duo.Side;
+import resources.Icons;
+import util.CollectionUtils;
 import utility.function.Callback;
 
 /**
@@ -44,60 +54,53 @@ import utility.function.Callback;
  */
 public class FunctionComparisonProvider extends ComponentProviderAdapter
 		implements PopupActionProvider, FunctionComparisonModelListener {
+	private static final String ADD_COMPARISON_GROUP = "A9_AddToComparison";
+	private static final String NAV_GROUP = "A9 FunctionNavigate";
+	private static final String REMOVE_FUNCTIONS_GROUP = "A9_RemoveFunctions";
 
-	protected static final String HELP_TOPIC = "FunctionComparison";
-	protected FunctionComparisonPanel functionComparisonPanel;
-	protected FunctionComparisonPlugin plugin;
+	private static final Icon ADD_TO_COMPARISON_ICON =
+		new GIcon("icon.plugin.functioncompare.open.function.table");
+	private static final Icon NAV_FUNCTION_ICON = Icons.NAVIGATE_ON_INCOMING_EVENT_ICON;
+	private static final Icon NEXT_FUNCTION_ICON =
+		new GIcon("icon.plugin.functioncompare.function.next");
+	private static final Icon PREVIOUS_FUNCTION_ICON =
+		new GIcon("icon.plugin.functioncompare.function.previous");
+	private static final Icon REMOVE_FUNCTION_ICON =
+		new GIcon("icon.plugin.functioncompare.function.remove");
 
-	/** Contains all the comparison data to be displayed by this provider */
-	protected FunctionComparisonModel model;
+	private static final String HELP_TOPIC = "FunctionComparison";
+
+	private FunctionComparisonPlugin plugin;
+	private FunctionComparisonModel model;
+	private MultiFunctionComparisonPanel functionComparisonPanel;
+
 	private Callback closeListener = Callback.dummy();
+	private ToggleDockingAction navigateToAction;
 
-	/**
-	 * Constructor
-	 * 
-	 * @param plugin the active plugin
-	 * @param name the providers name; used to group similar providers into a tab within
-	 *        the same window
-	 * @param owner the provider owner, usually a plugin name
-	 */
-	public FunctionComparisonProvider(FunctionComparisonPlugin plugin, String name, String owner) {
-		this(plugin, name, owner, null);
-	}
-
-	/**
-	 * Constructor
-	 * 
-	 * @param plugin the active plugin
-	 * @param name the providers name; used to group similar providers into a tab within
-	 *        the same window
-	 * @param owner the provider owner, usually a plugin name
-	 * @param contextType the type of context supported by this provider; may be null
-	 */
-	public FunctionComparisonProvider(FunctionComparisonPlugin plugin, String name, String owner,
-			Class<?> contextType) {
-		super(plugin.getTool(), name, owner, contextType);
+	public FunctionComparisonProvider(FunctionComparisonPlugin plugin,
+			FunctionComparisonModel model, Callback closeListener) {
+		super(plugin.getTool(), "Function Comparison Provider", plugin.getName());
 		this.plugin = plugin;
-		setTransient();
-		model = new FunctionComparisonModel();
+		this.model = model;
+		this.closeListener = Callback.dummyIfNull(closeListener);
+
+		functionComparisonPanel = new MultiFunctionComparisonPanel(this, tool, model);
 		model.addFunctionComparisonModelListener(this);
-		functionComparisonPanel = getComponent();
-		initFunctionComparisonPanel();
+
+		setTabText(functionComparisonPanel.getDescription());
+		tool.addPopupActionProvider(this);
+		setHelpLocation(new HelpLocation(HELP_TOPIC, "Function Comparison"));
+
+		createActions();
+		addSpecificCodeComparisonActions();
+		setTransient();
+		addToTool();
+		setVisible(true);
 	}
 
 	@Override
 	public FunctionComparisonPanel getComponent() {
-		if (functionComparisonPanel == null) {
-			functionComparisonPanel = new FunctionComparisonPanel(this, tool);
-		}
 		return functionComparisonPanel;
-	}
-
-	@Override
-	public void closeComponent() {
-		super.closeComponent();
-		closeListener.call();
-		closeListener = Callback.dummy();
 	}
 
 	@Override
@@ -121,18 +124,28 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	}
 
 	@Override
-	public void removeFromTool() {
-		tool.removePopupActionProvider(this);
-		super.removeFromTool();
-		plugin.providerClosed(this);
+	public void modelDataChanged() {
+		updateTabAndTitle();
+		tool.contextChanged(this);
+
+		// The component will be disposed if all functions are gone. Do this later to prevent
+		// concurrent modification exception since we are in a listener callback.
+		Swing.runLater(this::closeIfEmpty);
 	}
 
 	@Override
-	public void modelChanged(List<FunctionComparison> data) {
-		this.model.setComparisons(data);
-		functionComparisonPanel.reload();
-		setTabText(functionComparisonPanel.getDescription());
-		closeIfEmpty();
+	public void activeFunctionChanged(Side side, Function function) {
+		updateTabAndTitle();
+		tool.contextChanged(this);
+		if (navigateToAction.isSelected()) {
+			goToFunction(function);
+		}
+	}
+
+	@Override
+	public void contextChanged() {
+		super.contextChanged();
+		maybeGoToActiveFunction();
 	}
 
 	@Override
@@ -155,15 +168,6 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	 */
 	public FunctionComparisonModel getModel() {
 		return model;
-	}
-
-	/**
-	 * Replaces the comparison model with the one provided
-	 * 
-	 * @param model the comparison model
-	 */
-	public void setModel(FunctionComparisonModel model) {
-		this.model = model;
 	}
 
 	/**
@@ -232,30 +236,131 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 		functionComparisonPanel.writeConfigState(getName(), saveState);
 	}
 
-	/**
-	 * Perform initialization for this provider and its panel
-	 */
-	protected void initFunctionComparisonPanel() {
-		setTabText(functionComparisonPanel.getDescription());
-		addSpecificCodeComparisonActions();
-		tool.addPopupActionProvider(this);
-		setHelpLocation(new HelpLocation(HELP_TOPIC, "Function Comparison"));
+	@Override
+	public void removeFromTool() {
+		tool.removePopupActionProvider(this);
+		super.removeFromTool();
+		dispose();
 	}
 
-	/**
-	 * Returns true if the comparison panel is empty
-	 * 
-	 * @return true if the panel is empty
-	 */
-	boolean isEmpty() {
-		return functionComparisonPanel.isEmpty();
+	private void updateTabAndTitle() {
+		String description = functionComparisonPanel.getDescription();
+		setTabText(description);
+		setTitle(description);
+
+	}
+
+	private void createActions() {
+		new ActionBuilder("Compare Next Function", plugin.getName())
+				.description("Compare the next function for the side with focus.")
+				.helpLocation(new HelpLocation(HELP_TOPIC, "Navigate Next"))
+				.keyBinding("control shift N")
+				.popupMenuPath("Compare Next Function")
+				.popupMenuGroup(NAV_GROUP)
+				.toolBarIcon(NEXT_FUNCTION_ICON)
+				.toolBarGroup(NAV_GROUP)
+				.enabledWhen(c -> functionComparisonPanel.canCompareNextFunction())
+				.onAction(c -> functionComparisonPanel.compareNextFunction())
+				.buildAndInstallLocal(this);
+
+		new ActionBuilder("Compare Previous Function", plugin.getName())
+				.description("Compare the previous function for the side with focus.")
+				.helpLocation(new HelpLocation(HELP_TOPIC, "Navigate Previous"))
+				.keyBinding("control shift P")
+				.popupMenuPath("Compare Previous Function")
+				.popupMenuGroup(NAV_GROUP)
+				.toolBarIcon(PREVIOUS_FUNCTION_ICON)
+				.toolBarGroup(NAV_GROUP)
+				.enabledWhen(c -> functionComparisonPanel.canComparePreviousFunction())
+				.onAction(c -> functionComparisonPanel.comparePreviousFunction())
+				.buildAndInstallLocal(this);
+
+		new ActionBuilder("Remove Function", plugin.getName())
+				.description("Removes the active function from the comparison")
+				.helpLocation(new HelpLocation(HELP_TOPIC, "Remove_From_Comparison"))
+				.keyBinding("control shift R")
+				.popupMenuPath("Remove Function")
+				.popupMenuGroup(REMOVE_FUNCTIONS_GROUP)
+				.toolBarIcon(REMOVE_FUNCTION_ICON)
+				.toolBarGroup(REMOVE_FUNCTIONS_GROUP)
+				.enabledWhen(c -> functionComparisonPanel.canRemoveActiveFunction())
+				.onAction(c -> functionComparisonPanel.removeActiveFunction())
+				.buildAndInstallLocal(this);
+
+		navigateToAction = new ToggleActionBuilder("Navigate to Selected Function",
+			plugin.getName())
+				.description(HTMLUtilities.toHTML("Toggle <b>On</b> means to navigate to " +
+					"whatever function is selected in the comparison panel, when focus changes" +
+					" or a new function is selected."))
+				.helpLocation(new HelpLocation(HELP_TOPIC, "Navigate_To_Function"))
+				.toolBarIcon(NAV_FUNCTION_ICON)
+				.onAction(c -> maybeGoToActiveFunction())
+				.buildAndInstallLocal(this);
+
+		if (model instanceof DefaultFunctionComparisonModel) {
+			createDefaultModelActions();
+		}
+	}
+
+	// Only the default model supports adding to the current comparison
+	private void createDefaultModelActions() {
+		new ActionBuilder("Add Functions To Comparison", plugin.getName())
+				.description("Add functions to this comparison")
+				.helpLocation(new HelpLocation(HELP_TOPIC, "Add_To_Comparison"))
+				.popupMenuPath("Add Functions")
+				.popupMenuGroup(ADD_COMPARISON_GROUP)
+				.toolBarIcon(ADD_TO_COMPARISON_ICON)
+				.toolBarGroup(ADD_COMPARISON_GROUP)
+				.enabledWhen(c -> model instanceof DefaultFunctionComparisonModel)
+				.onAction(c -> addFunctions())
+				.buildAndInstallLocal(this);
+
+	}
+
+	private void addFunctions() {
+		ProgramManager service = tool.getService(ProgramManager.class);
+		Program currentProgram = service.getCurrentProgram();
+		FunctionTableModel functionTableModel = new FunctionTableModel(tool, currentProgram);
+
+		TableSelectionDialog<FunctionRowObject> diag = new TableSelectionDialog<>(
+			"Select Functions: " + currentProgram.getName(), functionTableModel, true);
+		tool.showDialog(diag);
+		List<FunctionRowObject> rows = diag.getSelectionItems();
+		if (CollectionUtils.isBlank(rows)) {
+			return; // the table chooser can return null if the operation was cancelled
+		}
+
+		List<Function> functions =
+			rows.stream().map(row -> row.getFunction()).collect(Collectors.toList());
+
+		if (model instanceof DefaultFunctionComparisonModel defaultModel) {
+			defaultModel.addFunctions(functions);
+		}
+
+	}
+
+	private void maybeGoToActiveFunction() {
+		if (navigateToAction.isSelected()) {
+			Side activeSide = functionComparisonPanel.getActiveSide();
+			Function function = model.getActiveFunction(activeSide);
+			goToFunction(function);
+		}
+	}
+
+	private void goToFunction(Function function) {
+		GoToService goToService = tool.getService(GoToService.class);
+		if (goToService == null) {
+			Msg.warn(this, "Can't navigate to selected function because GoToService is missing!");
+			return;
+		}
+		goToService.goTo(function.getEntryPoint(), function.getProgram());
 	}
 
 	/**
 	 * Closes this provider if there are no comparisons to view
 	 */
-	void closeIfEmpty() {
-		if (isEmpty()) {
+	private void closeIfEmpty() {
+		if (model.isEmpty()) {
 			closeComponent();
 		}
 	}
@@ -271,21 +376,14 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 		}
 	}
 
-	public void removeAddFunctionsAction() {
-		//TODO merge multi and this into one
-
-	}
-
-	public void setCloseListener(Callback closeListener) {
-		this.closeListener = Callback.dummyIfNull(closeListener);
-	}
-
 	public CodeComparisonPanel getCodeComparisonPanelByName(String name) {
 		return functionComparisonPanel.getCodeComparisonPanelByName(name);
 	}
 
-	public void dispose() {
+	private void dispose() {
+		plugin.providerClosed(this);
+		closeListener.call();
+		closeListener = Callback.dummy();
 		functionComparisonPanel.dispose();
 	}
-
 }

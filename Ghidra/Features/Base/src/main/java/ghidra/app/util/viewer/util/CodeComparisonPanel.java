@@ -36,6 +36,7 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HTMLUtilities;
+import ghidra.util.HelpLocation;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.classfinder.ExtensionPoint;
 import ghidra.util.datastruct.Duo;
@@ -385,6 +386,8 @@ public abstract class CodeComparisonPanel extends JPanel
 			super(name + " Toggle Orientation", "FunctionComparison");
 			setDescription(
 				"<html>Toggle the layout to be either side by side or one above the other");
+			setHelpLocation(
+				new HelpLocation("FunctionComparison", "Dual_" + name + "_Toggle_Orientation"));
 			setEnabled(true);
 			MenuData menuData =
 				new MenuData(new String[] { "Show " + name + " Side-by-Side" }, "Orientation");

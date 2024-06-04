@@ -20,7 +20,6 @@ import static ghidra.util.datastruct.Duo.Side.*;
 import docking.ActionContext;
 import docking.action.MenuData;
 import ghidra.app.decompiler.ClangFuncNameToken;
-import ghidra.app.plugin.core.functioncompare.FunctionComparisonProvider;
 import ghidra.app.services.FunctionComparisonService;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
@@ -106,10 +105,7 @@ public class CompareFuncsFromMatchedTokensAction extends AbstractMatchedTokensAc
 			Msg.error(this, "Function Comparison Service not found!");
 			return;
 		}
-
-		FunctionComparisonProvider comparisonProvider = service.createFunctionComparisonProvider();
-		comparisonProvider.removeAddFunctionsAction();
-		comparisonProvider.getModel().compareFunctions(leftFunction, rightFunction);
+		service.createComparison(leftFunction, rightFunction);
 	}
 
 	private Function getFuncFromToken(ClangFuncNameToken funcToken, Program program) {

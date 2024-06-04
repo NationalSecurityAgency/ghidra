@@ -18,12 +18,10 @@ package ghidra.app.plugin.core.functionwindow;
 import static ghidra.framework.model.DomainObjectEvent.*;
 import static ghidra.program.util.ProgramEvent.*;
 
-import docking.action.DockingAction;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramClosedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
-import ghidra.app.plugin.core.functioncompare.actions.CompareFunctionsFromFunctionTableAction;
 import ghidra.app.services.FunctionComparisonService;
 import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.model.DomainObjectListenerBuilder;
@@ -35,8 +33,6 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.ProgramChangeRecord;
-import ghidra.util.table.SelectionNavigationAction;
-import ghidra.util.table.actions.MakeProgramSelectionAction;
 import ghidra.util.task.SwingUpdateManager;
 
 //@formatter:off
@@ -51,8 +47,6 @@ import ghidra.util.task.SwingUpdateManager;
 //@formatter:on
 public class FunctionWindowPlugin extends ProgramPlugin {
 
-	private DockingAction selectAction;
-	private DockingAction compareFunctionsAction;
 	private FunctionWindowProvider provider;
 	private SwingUpdateManager swingMgr;
 	private DomainObjectListener domainObjectListener;
@@ -68,7 +62,6 @@ public class FunctionWindowPlugin extends ProgramPlugin {
 		super.init();
 		provider = new FunctionWindowProvider(this);
 		domainObjectListener = createDomainObjectListener();
-		createActions();
 
 		/**
 		 * Kicks the tool actions to set the proper enablement when selection changes
@@ -94,17 +87,14 @@ public class FunctionWindowPlugin extends ProgramPlugin {
 	@Override
 	public void serviceAdded(Class<?> interfaceClass, Object service) {
 		if (interfaceClass == FunctionComparisonService.class) {
-			compareFunctionsAction = new CompareFunctionsFromFunctionTableAction(tool, getName());
-			tool.addLocalAction(provider, compareFunctionsAction);
-			tool.contextChanged(provider);
+			provider.createCompareAction();
 		}
 	}
 
 	@Override
 	public void serviceRemoved(Class<?> interfaceClass, Object service) {
 		if (interfaceClass == FunctionComparisonService.class) {
-			tool.removeLocalAction(provider, compareFunctionsAction);
-			compareFunctionsAction = null;
+			provider.removeCompareAction();
 		}
 	}
 
@@ -173,17 +163,6 @@ public class FunctionWindowPlugin extends ProgramPlugin {
 
 	Program getProgram() {
 		return currentProgram;
-	}
-
-	private void createActions() {
-		DockingAction action = new SelectionNavigationAction(this, provider.getTable());
-		tool.addLocalAction(provider, action);
-
-		selectAction = new MakeProgramSelectionAction(this, provider.getTable());
-		tool.addLocalAction(provider, selectAction);
-
-		// note that the compare functions action is only added when the compare functions service
-		// is added to the tool
 	}
 
 	void showFunctions() {

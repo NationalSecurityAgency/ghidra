@@ -101,8 +101,9 @@ public class ProgramOpener {
 			}
 			catch (IOException e) {
 				Msg.showError(this, null, "Program Open Failed",
-					"Failed to open Ghidra URL: " + locator.getURL(), e);
+					"Failed to open Ghidra URL: " + locator.getURL());
 			}
+			return null;
 		}
 		return openProgram(locator, locator.getDomainFile(), monitor);
 	}
