@@ -274,7 +274,8 @@ public class ProgramTreePlugin extends ProgramPlugin
 		for (int i = 0; i < numberOfViews; i++) {
 			treeNames[i] = saveState.getString(TREE_NAME + "-" + i, null);
 		}
-		ArrayList<TreeViewProvider> providerList = new ArrayList<>();
+
+		List<TreeViewProvider> providerList = new ArrayList<>();
 		for (String element : treeNames) {
 			TreeViewProvider provider = providerMap.get(element);
 			if (provider != null) {
@@ -309,11 +310,20 @@ public class ProgramTreePlugin extends ProgramPlugin
 
 		selectionToggleAction.setSelected(saveState.getBoolean(TOGGLE_STATE, true));
 
+		restoreTreeViews();
+
+		viewProvider.readDataState(saveState);
+	}
+
+	private void restoreTreeViews() {
+		if (currentProgram == null) {
+			return;
+		}
+
 		//
-		// At this point, all tree views have been restored.  The low level components have cache
-		// that needs to get updated.  We want to maintain the order of the tree views so that the
-		// UI does not move around on the user.  Use the view names as they are stored in the 
-		// program to provide a consistent order.
+		// Update low-level component cache.  We want to maintain the order of the tree views so 
+		// that the UI does not move around on the user.  Use the view names as they are stored in 
+		// the program to provide a consistent order.
 		//		
 		List<TreeViewProvider> list = new ArrayList<>();
 		String[] orderedTreeNames = currentProgram.getListing().getTreeNames();
@@ -323,8 +333,6 @@ public class ProgramTreePlugin extends ProgramPlugin
 		}
 
 		viewProvider.treeViewsRestored(list);
-		viewProvider.readDataState(saveState);
-
 	}
 
 	@Override
