@@ -149,14 +149,14 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerTes
 		assertEquals(size, provider.panel.getAllItems().size());
 	}
 
-	protected void assertRow(int position, Object object, String name, Address start,
-			Address end, long length, String flags) {
+	protected void assertRow(int position, Object object, String name, Address start, Address end,
+			long length, String flags) {
 		ValueRow row = provider.panel.getAllItems().get(position);
 		var tableModel = QueryPanelTestHelper.getTableModel(provider.panel);
 		GhidraTable table = QueryPanelTestHelper.getTable(provider.panel);
-		DynamicTableColumn<ValueRow, ?, Trace> nameCol = QueryPanelTestHelper
-				.getColumnByNameAndType(tableModel, table, "Name", ValueRow.class)
-				.column();
+		DynamicTableColumn<ValueRow, ?, Trace> nameCol =
+			QueryPanelTestHelper.getColumnByNameAndType(tableModel, table, "Name", ValueRow.class)
+					.column();
 		DynamicTableColumn<ValueRow, ?, Trace> startCol = QueryPanelTestHelper
 				.getColumnByNameAndType(tableModel, table, "Start", ValueProperty.class)
 				.column();
@@ -474,8 +474,8 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 		waitForPass(() -> {
 			assertTableSize(1);
-			assertRow(0, region.getObject(), "bin:.text", tb.addr(0x00400000),
-				tb.addr(0x0040ffff), 0x10000, "rx");
+			assertRow(0, region.getObject(), "bin:.text", tb.addr(0x00400000), tb.addr(0x0040ffff),
+				0x10000, "rx");
 		});
 		waitForPass(() -> assertFalse(tb.trace.getProgramView().getMemory().isEmpty()));
 
@@ -523,12 +523,13 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerTes
 
 		waitForPass(() -> {
 			assertTableSize(1);
-			assertRow(0, region.getObject(), "bin:.text", tb.addr(0x00400000),
-				tb.addr(0x0040ffff), 0x10000, "rx");
+			assertRow(0, region.getObject(), "bin:.text", tb.addr(0x00400000), tb.addr(0x0040ffff),
+				0x10000, "rx");
 		});
 		waitForPass(() -> assertFalse(tb.trace.getProgramView().getMemory().isEmpty()));
 
-		listing.setSelection(new ProgramSelection(tb.set(tb.range(0x00401234, 0x00404321))));
+		runSwing(() -> listing
+				.setSelection(new ProgramSelection(tb.set(tb.range(0x00401234, 0x00404321)))));
 		waitForPass(() -> assertEquals(tb.set(tb.range(0x00401234, 0x00404321)),
 			new AddressSet(listing.getSelection())));
 

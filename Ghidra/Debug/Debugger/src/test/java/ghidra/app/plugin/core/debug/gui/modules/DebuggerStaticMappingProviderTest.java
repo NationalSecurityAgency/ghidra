@@ -139,7 +139,7 @@ public class DebuggerStaticMappingProviderTest extends AbstractGhidraHeadedDebug
 
 		ProgramSelection traceSel =
 			new ProgramSelection(tb.addr(0xdeadbeefL), tb.addr(0xdeadbeefL + 0x0f));
-		listingPlugin.getProvider().setSelection(traceSel);
+		runSwing(() -> listingPlugin.getProvider().setSelection(traceSel));
 		codeViewerPlugin.goTo(new ProgramLocation(program, addr(program, 0xc0de1234L)), true);
 		waitForSwing();
 
