@@ -922,7 +922,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			CLI("cli", "cli"),
 			Rustc(RustConstants.RUST_COMPILER, RustConstants.RUST_COMPILER),
 			GOLANG("golang", "golang"),
-			Swift("swift", "swift"),
+			Swift(SwiftUtils.SWIFT_COMPILER, SwiftUtils.SWIFT_COMPILER),
 			Unknown("unknown", "unknown"),
 
 			// The following values represent the presence of ambiguous indicators
