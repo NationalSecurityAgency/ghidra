@@ -29,6 +29,8 @@ import ghidra.program.model.mem.MemoryBlock;
  */
 public class SwiftUtils {
 
+	public static final String SWIFT_COMPILER = "swift";
+
 	/**
 	 * A {@link PointerTypedef pointer} to a relative 4-byte offset
 	 */
