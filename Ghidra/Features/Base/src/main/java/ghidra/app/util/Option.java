@@ -17,6 +17,13 @@ package ghidra.app.util;
 
 import java.awt.Component;
 
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+
+import ghidra.framework.main.AppInfo;
+import ghidra.framework.model.Project;
+import ghidra.framework.options.SaveState;
 import ghidra.program.model.address.*;
 import ghidra.util.NumericUtilities;
 
@@ -28,6 +35,7 @@ public class Option {
 	private final String name;
 	private final Class<?> valueClass;
 	private final String commandLineArgument;
+	private final String stateKey;
 
 	private Object value;
 	private OptionListener listener;
@@ -85,11 +93,27 @@ public class Option {
 	 * @param group Name for group of options
 	 */
 	public Option(String name, Class<?> valueClass, Object value, String arg, String group) {
+		this(name, valueClass, value, arg, group, null);
+	}
+
+	/**
+	 * Construct a new Option
+	 *
+	 * @param name name of the option
+	 * @param valueClass class of the option's value
+	 * @param value value of the option
+	 * @param arg the option's command line argument
+	 * @param group Name for group of options
+	 * @param stateKey state key name
+	 */
+	public Option(String name, Class<?> valueClass, Object value, String arg, String group,
+			String stateKey) {
 		this.name = name;
 		this.valueClass = valueClass;
 		this.commandLineArgument = arg;
 		this.group = group;
 		this.value = value;
+		this.stateKey = stateKey;
 	}
 
 	public void setOptionListener(OptionListener listener) {
@@ -110,29 +134,28 @@ public class Option {
 	}
 
 	/**
-	 * Return the class of the value for this Option.
+	 * {@return the class of the value for this option}
 	 */
 	public Class<?> getValueClass() {
 		return valueClass;
 	}
 
 	/**
-	 * Return the group name for this option; may be null if group was
-	 * not specified.
+	 * {@return the group name for this option; may be null if group was not specified}
 	 */
 	public String getGroup() {
 		return group;
 	}
 
 	/**
-	 * Return the name of this Option.
+	 * {@return the name of this option}
 	 */
 	public String getName() {
 		return name;
 	}
 
 	/**
-	 * Return the value of this Option.
+	 * {@return the value of this option}
 	 */
 	public Object getValue() {
 		return value;
@@ -168,19 +191,12 @@ public class Option {
 			return false;
 		}
 		if (Boolean.class.isAssignableFrom(getValueClass())) {
-			Boolean b = null;
-			if (str.equalsIgnoreCase("true") || str.equalsIgnoreCase("t") ||
-				str.equalsIgnoreCase("yes") || str.equalsIgnoreCase("y")) {
-				b = true;
+			try {
+				setValue(BooleanUtils.toBoolean(str, "true", "false"));
 			}
-			else if (str.equalsIgnoreCase("false") || str.equalsIgnoreCase("f") ||
-				str.equalsIgnoreCase("no") || str.equalsIgnoreCase("n")) {
-				b = false;
-			}
-			if (b == null) {
+			catch (IllegalArgumentException e) {
 				return false;
 			}
-			setValue(b);
 		}
 		else if (HexLong.class.isAssignableFrom(getValueClass())) {
 			try {
@@ -231,18 +247,45 @@ public class Option {
 	}
 
 	/**
-	 * Return the command line argument for this Option.
-	 *
-	 * @return The command line argument for this Option.  Could be null.
+	 * {@return the command line argument for this option (could be null)}
 	 */
 	public String getArg() {
 		return commandLineArgument;
 	}
 
+	/**
+	 * {@return the state key name (could be null)}
+	 */
+	public String getStateKey() {
+		return stateKey;
+	}
+
+	/**
+	 * {@return the current project state associated with this option (could be null)}
+	 */
+	public SaveState getState() {
+		Project project = AppInfo.getActiveProject();
+		if (project == null) {
+			return null;
+		}
+		final SaveState state;
+		SaveState existingState = stateKey != null ? project.getSaveableData(stateKey) : null;
+		if (existingState != null) {
+			state = existingState;
+		}
+		else if (stateKey != null) {
+			state = new SaveState();
+			project.setSaveableData(stateKey, state);
+		}
+		else {
+			state = null;
+		}
+		return state;
+	}
+
 	@Override
 	public String toString() {
-		return "Group:\"" + group + "\" Name:\"" + name + "\" Arg:\"" + commandLineArgument +
-			"\" Type:\"" + valueClass + "\" Value:\"" + value + "\"";
+		return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
 	}
 
 	/**
@@ -250,7 +293,7 @@ public class Option {
 	 * @return  a copy of this Option object.
 	 */
 	public Option copy() {
-		return new Option(name, valueClass, value, commandLineArgument, group);
+		return new Option(name, valueClass, value, commandLineArgument, group, stateKey);
 	}
 
 	private static Class<?> getValueClass(Object v) {

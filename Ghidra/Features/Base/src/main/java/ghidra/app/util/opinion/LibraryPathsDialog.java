@@ -44,7 +44,7 @@ public class LibraryPathsDialog extends AbstractPathsDialog {
 	protected PathnameTablePanel newPathnameTablePanel() {
 		// disable edits, add to top, ordered
 		PathnameTablePanel panel =
-			new PathnameTablePanel(loadPaths(), this::reset, false, true, true);
+			new PathnameTablePanel(loadPaths(), this::reset, false, true, true, true);
 		panel.setFileChooserProperties("Select Directory or Filesystem",
 			"LibrarySearchDirectory", GhidraFileChooserMode.FILES_AND_DIRECTORIES, false, null);
 		return panel;
