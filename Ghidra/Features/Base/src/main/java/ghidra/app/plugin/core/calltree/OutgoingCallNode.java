@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.calltree;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import javax.swing.Icon;
@@ -47,25 +46,21 @@ public abstract class OutgoingCallNode extends CallNode {
 	protected final Function function;
 	protected String name;
 	private final Address sourceAddress;
-	protected final boolean filterDuplicates;
 	private final Icon baseIcon;
 
 	OutgoingCallNode(Program program, Function function, Address sourceAddress, Icon baseIcon,
-			boolean filterDuplicates, AtomicInteger filterDepth) {
-		super(filterDepth);
+			CallTreeOptions callTreeOptions) {
+		super(callTreeOptions);
 		this.program = program;
 		this.function = function;
-		this.name = function.getName();
+		this.name = function.getName(callTreeOptions.showNamespace());
 		this.sourceAddress = sourceAddress;
 		this.baseIcon = baseIcon;
-		this.filterDuplicates = filterDuplicates;
 
 		MultiIcon outgoingFunctionIcon = new MultiIcon(OUTGOING_ICON, false, 32, 16);
 		TranslateIcon translateIcon = new TranslateIcon(baseIcon, 16, 0);
 		outgoingFunctionIcon.addIcon(translateIcon);
 		OUTGOING_FUNCTION_ICON = outgoingFunctionIcon;
-
-		setAllowsDuplicates(!filterDuplicates);
 	}
 
 	@Override
@@ -92,11 +87,10 @@ public abstract class OutgoingCallNode extends CallNode {
 			createNode(nodesByFunction, reference, calledFunction);
 		}
 
-		List<GTreeNode> children =
-			nodesByFunction.values()
-					.stream()
-					.flatMap(list -> list.stream())
-					.collect(Collectors.toList());
+		List<GTreeNode> children = nodesByFunction.values()
+				.stream()
+				.flatMap(list -> list.stream())
+				.collect(Collectors.toList());
 		Collections.sort(children, new CallNodeComparator());
 
 		return children;
@@ -104,16 +98,16 @@ public abstract class OutgoingCallNode extends CallNode {
 
 	private void createNode(LazyMap<Function, List<GTreeNode>> nodes, Reference reference,
 			Function calledFunction) {
+		Address fromAddress = reference.getFromAddress();
 		if (calledFunction != null) {
 			if (isExternalCall(calledFunction)) {
 				CallNode node =
-					new ExternalCallNode(calledFunction, reference.getFromAddress(), baseIcon);
-				node.setAllowsDuplicates(!filterDuplicates);
+					new ExternalCallNode(calledFunction, fromAddress, baseIcon, callTreeOptions);
 				addNode(nodes, node);
 			}
 			else {
-				addNode(nodes, new OutgoingFunctionCallNode(program, calledFunction,
-					reference.getFromAddress(), filterDuplicates, filterDepth));
+				addNode(nodes,
+					new OutgoingFunctionCallNode(program, calledFunction, fromAddress, callTreeOptions));
 			}
 		}
 		else if (isCallReference(reference)) {
@@ -121,14 +115,12 @@ public abstract class OutgoingCallNode extends CallNode {
 			Function externalFunction = getExternalFunctionTempHackWorkaround(reference);
 			if (externalFunction != null) {
 				CallNode node =
-					new ExternalCallNode(externalFunction, reference.getFromAddress(), baseIcon);
-				node.setAllowsDuplicates(!filterDuplicates);
+					new ExternalCallNode(externalFunction, fromAddress, baseIcon, callTreeOptions);
 				addNode(nodes, node);
 			}
 			else {
 				// we have a call reference, but no function
-				CallNode node = new DeadEndNode(program, reference);
-				node.setAllowsDuplicates(!filterDuplicates);
+				CallNode node = new DeadEndNode(program, reference, callTreeOptions);
 				addNode(nodes, node);
 			}
 		}
