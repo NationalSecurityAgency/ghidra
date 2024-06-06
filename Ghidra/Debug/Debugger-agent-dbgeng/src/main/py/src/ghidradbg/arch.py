@@ -20,7 +20,8 @@ from . import util
 
 
 language_map = {
-    'ARM': ['AARCH64:BE:64:v8A', 'AARCH64:LE:64:AppleSilicon', 'AARCH64:LE:64:v8A', 'ARM:BE:64:v8', 'ARM:LE:64:v8'],
+    'AARCH64': ['AARCH64:LE:64:AppleSilicon'],
+    'ARM': ['ARM:LE:32:v8'],
     'Itanium': [],
     'x86': ['x86:LE:32:default'],
     'x86_64': ['x86:LE:64:default'],
@@ -37,7 +38,7 @@ x86_compiler_map = {
 }
 
 arm_compiler_map = {
-    'windows': 'windows',
+    'windows': 'default',
 }
 
 compiler_map = {
@@ -57,12 +58,14 @@ def get_arch():
     try:
         type = util.dbg.get_actual_processor_type()
     except Exception:
-        #print("Error getting actual processor type.")
+        print("Error getting actual processor type.")
         return "Unknown"
     if type is None:
         return "x86_64"
     if type == 0x8664:
         return "x86_64"
+    if type == 0xAA64:
+        return "AARCH64"
     if type == 0x014c:
         return "x86"
     if type == 0x01c0:
