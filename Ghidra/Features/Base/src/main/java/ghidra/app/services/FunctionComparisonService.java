@@ -17,21 +17,19 @@ package ghidra.app.services;
 
 import java.util.Collection;
 
-import ghidra.app.plugin.core.functioncompare.FunctionComparisonPlugin;
-import ghidra.app.plugin.core.functioncompare.FunctionComparisonProvider;
-import ghidra.framework.plugintool.ServiceInfo;
+import ghidra.features.base.codecompare.model.FunctionComparisonModel;
+import ghidra.features.base.codecompare.model.MatchedFunctionComparisonModel;
 import ghidra.program.model.listing.Function;
 import utility.function.Callback;
 
 /**
  * Service interface to create comparisons between functions which will be displayed
- * side-by-side in a {@link FunctionComparisonProvider}. Each side in the 
+ * side-by-side in a function comparison window. Each side in the 
  * display will allow the user to select one or more functions 
  * 
  * <p>Concurrent usage: All work performed by this service will be done asynchronously on the
  * Swing thread.  
  */
-@ServiceInfo(defaultProvider = FunctionComparisonPlugin.class)
 public interface FunctionComparisonService {
 
 	/**

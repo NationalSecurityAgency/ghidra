@@ -19,8 +19,8 @@ import javax.swing.Icon;
 
 import ghidra.app.nav.*;
 import ghidra.app.util.ListingHighlightProvider;
-import ghidra.app.util.viewer.listingpanel.ListingCodeComparisonPanel;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
+import ghidra.features.base.codecompare.listing.ListingCodeComparisonPanel;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;

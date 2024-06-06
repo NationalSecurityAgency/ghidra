@@ -23,11 +23,11 @@ import java.util.Set;
 
 import org.junit.*;
 
-import ghidra.app.plugin.core.functioncompare.FunctionComparisonPlugin;
-import ghidra.app.plugin.core.functioncompare.FunctionComparisonProvider;
-import ghidra.app.services.FunctionComparisonModel;
-import ghidra.codecompare.decompile.CDisplay;
-import ghidra.codecompare.decompile.DecompilerCodeComparisonPanel;
+import ghidra.features.base.codecompare.model.FunctionComparisonModel;
+import ghidra.features.codecompare.decompile.CDisplay;
+import ghidra.features.codecompare.decompile.DecompilerCodeComparisonPanel;
+import ghidra.features.codecompare.plugin.FunctionComparisonPlugin;
+import ghidra.features.codecompare.plugin.FunctionComparisonProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.test.*;

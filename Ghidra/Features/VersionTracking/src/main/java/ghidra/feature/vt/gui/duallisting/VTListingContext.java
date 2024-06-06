@@ -18,8 +18,8 @@ package ghidra.feature.vt.gui.duallisting;
 import docking.ComponentProvider;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.nav.Navigatable;
-import ghidra.app.util.viewer.util.CodeComparisonPanel;
-import ghidra.app.util.viewer.util.CodeComparisonPanelActionContext;
+import ghidra.features.base.codecompare.panel.CodeComparisonPanel;
+import ghidra.features.base.codecompare.panel.CodeComparisonPanelActionContext;
 
 /**
  * Action context for a version tracking listing.
