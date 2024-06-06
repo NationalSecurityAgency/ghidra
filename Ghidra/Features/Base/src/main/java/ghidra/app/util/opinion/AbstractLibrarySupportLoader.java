@@ -29,8 +29,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.importer.LibrarySearchPathManager;
-import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.importer.*;
 import ghidra.formats.gfilesystem.*;
 import ghidra.framework.model.*;
 import ghidra.program.model.address.Address;
@@ -57,11 +56,10 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	public static final String LINK_SEARCH_FOLDER_OPTION_NAME = "Project Library Search Folder";
 	static final String LINK_SEARCH_FOLDER_OPTION_DEFAULT = "";
 
-	public static final String LOCAL_LIBRARY_OPTION_NAME = "Load Local Libraries From Disk";
-	static final boolean LOCAL_LIBRARY_OPTION_DEFAULT = false;
+	public static final String LOAD_LIBRARY_OPTION_NAME = "Load Libraries From Disk";
+	static final boolean LOAD_LIBRARY_OPTION_DEFAULT = false;
 
-	public static final String SYSTEM_LIBRARY_OPTION_NAME = "Load System Libraries From Disk";
-	static final boolean SYSTEM_LIBRARY_OPTION_DEFAULT = false;
+	public static final String LIBRARY_SEARCH_PATH_DUMMY_OPTION_NAME = "Library Search Paths";
 
 	public static final String DEPTH_OPTION_NAME = "Recursive Library Load Depth";
 	static final int DEPTH_OPTION_DEFAULT = 1;
@@ -143,8 +141,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		if (loadedPrograms.isEmpty()) {
 			return;
 		}
-		if (isLinkExistingLibraries(options) || isLoadLocalLibraries(options) ||
-			isLoadSystemLibraries(options)) {
+		if (isLinkExistingLibraries(options) || isLoadLibraries(options)) {
 			String projectFolderPath = loadedPrograms.get(0).getProjectFolderPath();
 			List<DomainFolder> searchFolders = new ArrayList<>();
 			String destPath = getLibraryDestinationFolderPath(project, projectFolderPath, options);
@@ -177,18 +174,19 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			DomainObject domainObject, boolean loadIntoProgram) {
 		List<Option> list =
 			super.getDefaultOptions(provider, loadSpec, domainObject, loadIntoProgram);
+
 		list.add(new Option(LINK_EXISTING_OPTION_NAME, LINK_EXISTING_OPTION_DEFAULT, Boolean.class,
 			Loader.COMMAND_LINE_ARG_PREFIX + "-linkExistingProjectLibraries"));
-		list.add(new Option(LINK_SEARCH_FOLDER_OPTION_NAME, LINK_SEARCH_FOLDER_OPTION_DEFAULT,
-			String.class, Loader.COMMAND_LINE_ARG_PREFIX + "-projectLibrarySearchFolder"));
-		list.add(new Option(LOCAL_LIBRARY_OPTION_NAME, LOCAL_LIBRARY_OPTION_DEFAULT, Boolean.class,
-			Loader.COMMAND_LINE_ARG_PREFIX + "-loadLocalLibraries"));
-		list.add(new Option(SYSTEM_LIBRARY_OPTION_NAME, SYSTEM_LIBRARY_OPTION_DEFAULT, Boolean.class,
-			Loader.COMMAND_LINE_ARG_PREFIX + "-loadSystemLibraries"));
+		list.add(new DomainFolderOption(LINK_SEARCH_FOLDER_OPTION_NAME,
+			Loader.COMMAND_LINE_ARG_PREFIX + "-projectLibrarySearchFolder"));
+		list.add(new Option(LOAD_LIBRARY_OPTION_NAME, LOAD_LIBRARY_OPTION_DEFAULT, Boolean.class,
+			Loader.COMMAND_LINE_ARG_PREFIX + "-loadLibraries"));
+		list.add(new LibrarySearchPathDummyOption(LIBRARY_SEARCH_PATH_DUMMY_OPTION_NAME));
 		list.add(new Option(DEPTH_OPTION_NAME, DEPTH_OPTION_DEFAULT, Integer.class,
 			Loader.COMMAND_LINE_ARG_PREFIX + "-libraryLoadDepth"));
-		list.add(new Option(LIBRARY_DEST_FOLDER_OPTION_NAME, LIBRARY_DEST_FOLDER_OPTION_DEFAULT,
-			String.class, Loader.COMMAND_LINE_ARG_PREFIX + "-libraryDestinationFolder"));
+		list.add(new DomainFolderOption(LIBRARY_DEST_FOLDER_OPTION_NAME,
+			Loader.COMMAND_LINE_ARG_PREFIX + "-libraryDestinationFolder"));
+
 		return list;
 	}
 
@@ -199,8 +197,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			for (Option option : options) {
 				String name = option.getName();
 				if (name.equals(LINK_EXISTING_OPTION_NAME) ||
-					name.equals(LOCAL_LIBRARY_OPTION_NAME) ||
-					name.equals(SYSTEM_LIBRARY_OPTION_NAME)) {
+					name.equals(LOAD_LIBRARY_OPTION_NAME)) {
 					if (!Boolean.class.isAssignableFrom(option.getValueClass())) {
 						return "Invalid type for option: " + name + " - " + option.getValueClass();
 					}
@@ -271,27 +268,14 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	}
 
 	/**
-	 * Checks to see if local libraries should be loaded.  Local libraries are libraries that live
-	 * in the same directory as the imported program.
+	 * Checks to see if libraries from disk should be loaded
 	 * 
 	 * @param options a {@link List} of {@link Option}s
-	 * @return True if local libraries should be loaded; otherwise, false
+	 * @return True if libraries from disk should be loaded; otherwise, false
 	 */
-	protected boolean isLoadLocalLibraries(List<Option> options) {
-		return OptionUtils.getOption(LOCAL_LIBRARY_OPTION_NAME, options,
-			LOCAL_LIBRARY_OPTION_DEFAULT);
-	}
-
-	/**
-	 * Checks to see if system libraries should be loaded.  System libraries are libraries that live
-	 * in the directories specified in the GUI path list.
-	 * 
-	 * @param options a {@link List} of {@link Option}s
-	 * @return True if system libraries should be loaded; otherwise, false
-	 */
-	protected boolean isLoadSystemLibraries(List<Option> options) {
-		return OptionUtils.getOption(SYSTEM_LIBRARY_OPTION_NAME, options,
-			SYSTEM_LIBRARY_OPTION_DEFAULT);
+	protected boolean isLoadLibraries(List<Option> options) {
+		return OptionUtils.getOption(LOAD_LIBRARY_OPTION_NAME, options,
+			LOAD_LIBRARY_OPTION_DEFAULT);
 	}
 
 	/**
@@ -348,7 +332,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		if (project == null || libraryDestinationFolderPath == null) {
 			return null;
 		}
-		if (!isLoadLocalLibraries(options) && !isLoadSystemLibraries(options)) {
+		if (!isLoadLibraries(options)) {
 			return null;
 		}
 		return project.getProjectData().getFolder(libraryDestinationFolderPath);
@@ -454,14 +438,11 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		Set<String> processed = new TreeSet<>(getLibraryNameComparator());
 		Queue<UnprocessedLibrary> unprocessed =
 			createUnprocessedQueue(libraryNameList, getLibraryLoadDepth(options));
-		boolean loadLocalLibraries = isLoadLocalLibraries(options);
-		boolean loadSystemLibraries = isLoadSystemLibraries(options);
+		boolean loadLibraries = isLoadLibraries(options);
 		List<FileSystemSearchPath> customSearchPaths =
 			getCustomLibrarySearchPaths(provider, options, log, monitor);
-		List<FileSystemSearchPath> localSearchPaths =
-			getLocalLibrarySearchPaths(provider, options, log, monitor);
-		List<FileSystemSearchPath> systemSearchPaths =
-			getSystemLibrarySearchPaths(options, log, monitor);
+		List<FileSystemSearchPath> searchPaths =
+			getLibrarySearchPaths(provider, options, log, monitor);
 		DomainFolder linkSearchFolder = getLinkSearchFolder(project, projectFolderPath, options);
 		String libraryDestFolderPath =
 			getLibraryDestinationFolderPath(project, projectFolderPath, options);
@@ -489,9 +470,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 					log.appendMsg("Found %s in %s...".formatted(libraryName, linkSearchFolder));
 					log.appendMsg("------------------------------------------------\n");
 				}
-				else if (!customSearchPaths.isEmpty() || !localSearchPaths.isEmpty() ||
-					!systemSearchPaths.isEmpty()) {
-					// Note that it is possible to have local (or system) search paths with those
+				else if (!customSearchPaths.isEmpty() || !searchPaths.isEmpty()) {
+					// Note that it is possible to have search paths with those
 					// options turned off (if shouldSearchAllPaths() is overridden to return true).
 					// In this case, we still want to process those libraries, but we 
 					// do not want to save them, so they can be released.
@@ -508,32 +488,14 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 							loadedPrograms.add(loadedLibrary);
 						}
 					}
-					if (!loaded && !localSearchPaths.isEmpty()) {
-						log.appendMsg("Searching %d local path%s for library %s...".formatted(
-							localSearchPaths.size(), localSearchPaths.size() > 1 ? "s" : "",
-							libraryName));
+					if (!loaded && !searchPaths.isEmpty()) {
+						log.appendMsg("Searching %d path%s for library %s...".formatted(
+							searchPaths.size(), searchPaths.size() > 1 ? "s" : "", libraryName));
 						Loaded<Program> loadedLibrary = loadLibraryFromSearchPaths(libraryName,
-							provider, localSearchPaths, libraryDestFolderPath, unprocessed, depth,
+							provider, searchPaths, libraryDestFolderPath, unprocessed, depth,
 							desiredLoadSpec, options, log, consumer, monitor);
 						if (loadedLibrary != null) {
-							if (loadLocalLibraries) {
-								loaded = true;
-								loadedPrograms.add(loadedLibrary);
-							}
-							else {
-								loadedLibrary.release(consumer);
-							}
-						}
-					}
-					if (!loaded && !systemSearchPaths.isEmpty()) {
-						log.appendMsg("Searching %d system path%s for library %s...".formatted(
-							systemSearchPaths.size(), systemSearchPaths.size() > 1 ? "s" : "",
-							libraryName));
-						Loaded<Program> loadedLibrary = loadLibraryFromSearchPaths(libraryName,
-							provider, systemSearchPaths, libraryDestFolderPath, unprocessed, depth,
-							desiredLoadSpec, options, log, consumer, monitor);
-						if (loadedLibrary != null) {
-							if (loadSystemLibraries) {
+							if (loadLibraries) {
 								loaded = true;
 								loadedPrograms.add(loadedLibrary);
 							}
@@ -561,7 +523,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			if (!success) {
 				release(loadedPrograms, consumer);
 			}
-			Stream.of(customSearchPaths, localSearchPaths, systemSearchPaths)
+			Stream.of(customSearchPaths, searchPaths)
 					.flatMap(Collection::stream)
 					.forEach(fsSearchPath -> {
 						if (!fsSearchPath.fsRef().isClosed()) {
@@ -1045,52 +1007,20 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	}
 
 	/**
-	 * Gets a {@link List} of priority-ordered local {@link FileSystemSearchPath}s used to search 
-	 * for libraries
+	 * Gets a {@link List} of priority-ordered {@link FileSystemSearchPath}s used to search for 
+	 * libraries
 	 * 
 	 * @param provider The {@link ByteProvider} of the program being loaded
 	 * @param options The options
 	 * @param log The log
 	 * @param monitor A cancelable task monitor
-	 * @return A {@link List} of priority-ordered local {@link FileSystemSearchPath}s used to
-	 *   search for libraries
+	 * @return A {@link List} of priority-ordered {@link FileSystemSearchPath}s used to search for 
+	 *   libraries
 	 * @throws CancelledException if the user cancelled the load
 	 */
-	private List<FileSystemSearchPath> getLocalLibrarySearchPaths(ByteProvider provider,
+	private List<FileSystemSearchPath> getLibrarySearchPaths(ByteProvider provider,
 			List<Option> options, MessageLog log, TaskMonitor monitor) throws CancelledException {
-		if (!isLoadLocalLibraries(options) && !shouldSearchAllPaths(options)) {
-			return List.of();
-		}
-		List<FileSystemSearchPath> result = new ArrayList<>();
-		FileSystemService fsService = FileSystemService.getInstance();
-		FSRL providerFsrl = provider.getFSRL();
-		if (providerFsrl != null) {
-			try (RefdFile fileRef = fsService.getRefdFile(providerFsrl, monitor)) {
-				GFile parentFile = fileRef.file.getParentFile();
-				File f = new File(parentFile.getPath()); // File API will sanitize Windows-style paths
-				result.add(new FileSystemSearchPath(fileRef.fsRef.dup(), f.toPath()));
-			}
-			catch (IOException e) {
-				log.appendException(e);
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * Gets a {@link List} of priority-ordered system {@link FileSystemSearchPath}s used to search 
-	 * for libraries
-	 * 
-	 * @param options The options
-	 * @param log The log
-	 * @param monitor A cancelable task monitor
-	 * @return A {@link List} of priority-ordered system {@link FileSystemSearchPath}s used to 
-	 *   search for libraries
-	 * @throws CancelledException if the user cancelled the load
-	 */
-	private List<FileSystemSearchPath> getSystemLibrarySearchPaths(List<Option> options,
-			MessageLog log, TaskMonitor monitor) throws CancelledException {
-		if (!isLoadSystemLibraries(options) && !shouldSearchAllPaths(options)) {
+		if (!isLoadLibraries(options) && !shouldSearchAllPaths(options)) {
 			return List.of();
 		}
 
@@ -1098,7 +1028,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		List<FileSystemSearchPath> result = new ArrayList<>();
 		boolean success = false;
 		try {
-			for (FSRL fsrl : LibrarySearchPathManager.getLibraryFsrlList(log, monitor)) {
+			for (FSRL fsrl : LibrarySearchPathManager.getLibraryFsrlList(provider, log, monitor)) {
 				if (fsService.isLocal(fsrl)) {
 					try {
 						FileSystemRef fileRef =

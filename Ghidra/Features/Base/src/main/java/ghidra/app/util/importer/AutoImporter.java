@@ -17,8 +17,7 @@ package ghidra.app.util.importer;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 
 import generic.stl.Pair;
@@ -718,6 +717,8 @@ public final class AutoImporter {
 		Msg.info(AutoImporter.class, "Using Loader: " + loadSpec.getLoader().getName());
 		Msg.info(AutoImporter.class,
 			"Using Language/Compiler: " + loadSpec.getLanguageCompilerSpec());
+		Msg.info(AutoImporter.class, "Using Library Search Path: " +
+			Arrays.toString(LibrarySearchPathManager.getLibraryPaths()));
 		LoadResults<? extends DomainObject> loadResults = loadSpec.getLoader()
 				.load(provider, importName, project, projectFolderPath, loadSpec, loaderOptions,
 					messageLog, consumer, monitor);
