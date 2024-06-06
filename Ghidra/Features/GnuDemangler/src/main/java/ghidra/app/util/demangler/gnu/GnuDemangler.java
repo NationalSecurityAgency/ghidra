@@ -196,6 +196,12 @@ public class GnuDemangler implements Demangler {
 
 		// This is the current list of known demangler start patterns.  Add to this list if we
 		// find any other known GNU start patterns.
+		if (mangled.startsWith(GLOBAL_PREFIX)) {
+			int index = mangled.indexOf("_Z");
+			if (index > 0) {
+				return false;
+			}
+		}
 		if (mangled.startsWith("_Z")) {
 			return false;
 		}

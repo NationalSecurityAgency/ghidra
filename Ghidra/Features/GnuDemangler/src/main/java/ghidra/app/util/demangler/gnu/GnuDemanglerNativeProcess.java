@@ -18,6 +18,7 @@ package ghidra.app.util.demangler.gnu;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -25,6 +26,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.framework.*;
+import ghidra.util.Msg;
 
 /**
  * A class that allows for the reuse of native demangler executable processes.  This class will
@@ -37,6 +39,16 @@ public class GnuDemanglerNativeProcess {
 	private static final String DEFAULT_NATIVE_OPTIONS = "";
 	private static final Map<String, GnuDemanglerNativeProcess> processesByName =
 		new HashMap<>();
+	
+	private static boolean errorDisplayed = false;
+	
+	private static synchronized boolean getAndSetErrorDisplayed() {
+		boolean b = errorDisplayed;
+		if (!b) {
+			errorDisplayed = true;
+		}
+		return b;
+	}
 
 	private String applicationName;
 	private String options;
@@ -153,16 +165,51 @@ public class GnuDemanglerNativeProcess {
 	private void createProcess() throws IOException {
 
 		String[] command = buildCommand();
-		process = Runtime.getRuntime().exec(command);
-
-		InputStream in = process.getInputStream();
-		OutputStream out = process.getOutputStream();
-		reader = new BufferedReader(new InputStreamReader(in));
-		writer = new PrintWriter(out);
-
+		IOException exc = null;
+		String err = "";
+		isDisposed = true;
+		try {
+			process = Runtime.getRuntime().exec(command);
+			// Give process time to load and report possible error
+			process.waitFor(200, TimeUnit.MILLISECONDS);
+			InputStream in = process.getInputStream();
+			OutputStream out = process.getOutputStream();
+			reader = new BufferedReader(new InputStreamReader(in));
+			writer = new PrintWriter(out);
+			isDisposed = !process.isAlive();
+			if (isDisposed) {
+				err = new String(process.getErrorStream().readAllBytes());
+				process.destroy();          			
+				process = null;
+			}
+		}
+		catch (IOException e) {
+			exc = e;
+		}
+		catch (InterruptedException e) {
+			// ignore
+		}
+		finally {
+			if (isDisposed) {
+				if (!getAndSetErrorDisplayed()) {
+					String errorDetail = err;
+					if (exc != null) {
+						errorDetail = exc.getMessage() + "\n" + errorDetail;
+					}
+					errorDetail = "GNU Demangler executable may not be compatible with your system and may need to be rebuilt.\n" +
+							"(see InstallationGuide.html, 'Building Native Components').\n\n" +
+							errorDetail;		
+					Msg.showError(this, null, "Failed to launch GNU Demangler process", errorDetail);
+				}
+				if (exc == null) {
+					throw new IOException("GNU Demangler process failed to launch (see log for details)");
+				}
+				throw exc;
+			}
+		}
+		
 		checkForError(command);
 
-		isDisposed = false;
 		String key = getKey(applicationName, options);
 		processesByName.put(key, this);
 	}
